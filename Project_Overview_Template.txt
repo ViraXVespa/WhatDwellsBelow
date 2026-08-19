@@ -1,0 +1,603 @@
+What Dwells Below - Project Overview (Structured Template)
+Working title: What Dwells Below (WDB)
+Engine: Godot 4.7 (existing project)
+Reference: see Project_Overview.txt for the original freeform vision.
+
+How to use this file
+- Lines without [TODO] are already decided in the original overview. Edit them if the vision changes.
+- Fill every [TODO] before we treat that section as build-ready.
+- Numbers in [TODO] can be placeholders; a rough number is better than none.
+- Keep item tables, XP curves, recipes, and dialogue out of this file.
+
+Feedback convention (slice vs later)
+The player does not label notes as slice vs full game. Grok decides:
+- If it is required for the current vertical-slice loop (plaza, Great Axe + pickaxe, 2–3 dungeon floors, hold-attack / dash / slam, mine, clerks, death/dispel recap, pad UI, honesty of those systems), **build it**.
+- If it is a law or feature of the full game (other skills, biomes, co-op camera, stealth, extra weapons, polish beyond rectangles), **write it here** and do not expand the slice unless the player corrects that call.
+- When unsure, park it in this file and ask only if the slice would be built wrong without an answer.
+
+================================================================
+1. Pitch & pillars
+================================================================
+
+One-liner
+[TODO] One sentence: who you are, what you do, why it's fun.
+Example shape: "A gamepad-first 2D dungeon crawler where you pilot disposable spirit avatars, extract loot to the surface, and slowly remember the skills you earned in the dark."
+
+Elevator pitch (from original)
+WDB is a mashup of RuneScape and Heroes of Hammerwatch. Gameplay is gamepad-focused with a 2D art style closer to Hammerwatch than RuneScape. The player empowers an extravagant number of skills and abilities through play. Skills such as woodcutting, mining, and smithing gather resources and craft armaments. Weapons each have their own experience and levels: big bonuses for that weapon type, smaller bonuses for all weapons, to encourage using a variety of weapons.
+
+Play spaces
+- City (**Vylenheim**, provisional): static hub with vendors and skilling facilities. Layout only changes via story progress or facility upgrades. Contains the dungeon entrance.
+- Dungeon: randomly generated each delve. Collect materials, gain XP, reach lower floors. No return to the city once inside.
+
+Core fantasy
+You do not physically enter the dungeon. You transfer consciousness into a Spirit Avatar. Avatars cannot leave; the connection must be destroyed or dispelled to wake up. Death/recall feels like waking from a dream: most of the adventure is forgotten, a fragment remains.
+
+Pillars
+[TODO] List 3-5 non-negotiable pillars. Drafts to edit or replace:
+1. Every delve feels like a new adventure; permanence is a fragment, not a full carry-over.
+2. Extraction is the real win condition — send it up or lose it.
+3. Gamepad-first Diablo/Hammerwatch action: smaller enemy groups, longer fights, not trash-mob swarms.
+4. Skills and weapon mastery are the long-term character. No classes; same starting stats; you are what you play. Equipment is visible on the 64×64 sprite.
+5. Solo and co-op are both first-class. Modes get unique tweaks, not just a player-count slider.
+
+Non-goals
+[TODO] Explicitly say what this is NOT. Suggested strikes to confirm or rewrite:
+- Not an MMO / not a persistent shared world. Co-op is party-based (form up in the city, enter together), not drop-in lobby-as-hub.
+- Not click-to-move RuneScape combat.
+- Not Hammerwatch-style high-quantity trash-mob waves; fights are smaller groups and last longer.
+- Not full permadeath of the player character / account.
+- Not a deckbuilder / autobattler / survival-crafting sandbox in the vein of Core Keeper unless you want that.
+- Not grimdark; dying is a shitty work hazard, not cosmic horror.
+- Not a dating sim by default (DanMachi is a *tone* reference, not a genre reference) unless we add that later.
+
+Tone
+Decided: **hopeful and humorous**. Universe tonality in the neighborhood of *Is It Wrong to Try to Pick Up Girls in a Dungeon?* — dungeon diving is a **noble career path**, not a cursed last resort. Wonder at what could be found below.
+Decided: death is an **inconvenient inevitability** of the job. Player-side it can sting from *frustration* (almost had the next floor). In-universe it **hurts like hell**; that shock is a big reason adventurers lose most memories of a delve (the XP-fragment rule has a diegetic cause).
+Decided: not grimdark. Recap screen can be light; the lore text can admit it hurt.
+
+Comparable games (steal vs reject)
+- Heroes of Hammerwatch: steal 2D gamepad dungeon crawling, right-stick aim, melee-forward facing, town/dungeon split, passive dodge-as-stat, party of independent characters entering together. Reject high-quantity mob swarms and very short trash fights. [TODO] shop-between-floors? perm town upgrades?
+- Diablo: steal smaller packs, longer combat, passive block, mix of automatic defense and a few bound active skills. Reject isometric click-to-move and PC-first ARPG inventory-as-gameplay (unless later decided).
+- Heroes of Hammerwatch 2 / Halls of Torment: steal the 3/4 overhead camera (square tiles, readable on a TV). Art follows HoW2 (pixel sprites), not Halls of Torment's retro-3D rotating models.
+- RuneScape: steal skills, gathering, crafting, weapon diversity / reject [TODO] tick combat, click movement, grand exchange, quest-log structure?
+- [TODO] Other comps (Hades, Dead Cells, Moonlighter, Core Keeper, Darkest Dungeon, etc.) and what you steal vs reject.
+
+================================================================
+2. Player fantasy & identity
+================================================================
+
+Who is the player on the surface?
+Decided: create-a-character. Each player (including each couch player) makes their own adventurer. Not a single named hero you merely dress.
+Decided: adventuring is a noble career. The player is (or is becoming) a professional dungeon diver — origin can be **dumpster-diving behind the guild** until the receptionist recruits them (optional intro).
+
+Who is the avatar in the dungeon?
+Decided: a Spirit Avatar piloted by transferring consciousness. Bound by dungeon magic; cannot exit intact.
+Decided: in co-op, each player has their own avatar (not one shared body).
+
+Solo vs co-op
+Decided: both modes are a key part of the game. It must work well solo and in co-op, with extra tweaks so the modes feel different from each other.
+Decided: co-op players form a party in the city, then all enter the dungeon at the same time.
+Decided (mode-tweak example): each player is limited to a single resource-gathering tool per delve. Solo, mixed chokepoints are impassable (trees + rocks if you only brought a pickaxe; vines if you didn't bring a sickle). Co-op, a balanced tool split (hatchet + pickaxe + sickle) can open those paths.
+Decided: max party size is 4.
+Decided: couch co-op on console is the ideal vision (friends on one TV). Solo console is second. Online is not the orientation.
+Decided: **online later, don’t block it, not in the slice.** Couch/local is v1. Keep seedable dungeons and per-player banks so online can reuse the same rules. Online players would each have a full screen (no two-pane).
+Decided: any co-op player may leave at any time (dispel or death). They **cannot rejoin that dungeon**. Remaining party continues. On couch co-op, that player's avatar is gone — same as if they died (no extra linger/spectate rule unless we add one later).
+Decided: per-player. Your extracts go to **your** bank and **your** gear analysis. Co-op is not a shared mailbox. **No trading** (gear is progression; sharing would power-level).
+Decided: floor *access* in co-op uses the party's best (any member's deepest). Personal banks/XP stay per-player.
+
+Classes vs skills
+Decided: no classes. One character empowered by many skills/abilities. All players start with the same stats and become different through gameplay (RuneScape-style).
+Decided: character creation is appearance (HoW2-like options) plus a starting **weapon** and starting **gathering tool** — not a class pick.
+Decided: avatar appearance is customizable and must read in-world at 64×64 (not just on a paper-doll menu).
+Decided: anything equippable is visible on the sprite (armor, weapon, tool, etc.).
+[TODO] Exact appearance sliders/presets (hair, skin, body, clothing colors) — match HoW2's depth unless we cut for slice.
+[TODO] Optional late specializations / titles, or never?
+
+What "stronger" feels like
+- After one good run: [TODO] e.g. a new recreatable weapon and a sliver of mining XP.
+- After 10 hours: [TODO]
+- After 100 hours: [TODO] extravagant skill list, city upgraded, deep floors, weapon masteries.
+
+================================================================
+3. Platforms, camera, controls
+================================================================
+
+Platforms
+The Godot project currently has the Mobile renderer/feature flag — that is not the design target.
+Decided rank:
+1. Xbox (primary). Design the ideal vision around a group of friends on a console with couch co-op.
+2. Solo on console (second).
+3. PC should work, but is not the orientation when choosing camera, UI, or control schemes.
+4. Mobile is "nice if it works," not a requirement.
+Steam Deck inherits PC. PlayStation / Switch are later-if-ever ports.
+Decided: **PlayStation / Switch later if ever.** **Steam Deck inherits PC.**
+[TODO] Drop or keep the Godot Mobile renderer once we start building for Xbox/PC TV-distance UI (likely switch off Mobile as default).
+
+Camera / presentation
+Decided: 2D, Hammerwatch-like (not RuneScape's 3D).
+Decided: 3/4 overhead (slightly angled), same family as Heroes of Hammerwatch 2 and Halls of Torment. Square tiles, not isometric diamonds. You see character faces and the front of walls — not a true top-down "disc of a skull" (Hotline Miami / Isaac) and not Diablo 2 / Hades isometric.
+Decided: pixel-art sprites on a **64×64** grid so avatar customization actually reads (hair, armor, tools) at couch distance, including in two-pane split.
+[TODO] Target play resolution / integer scale on Xbox (e.g. 1920×1080 with N× pixel scale).
+Decided: couch presentation is a hybrid, not full 4-way split.
+- Default: one shared camera (Hammerwatch-style).
+- If one or two players wander off the main group, the TV splits into **two** shared panes: one for the main party, one for the scout or pair.
+- The party cannot split into 3–4 independent views (unreadable on many TVs).
+- Intent: someone can scout ahead, or the group can search in pairs, without turning into four postage stamps.
+[TODO] Split trigger: distance from group centroid, leaving the current room, or a manual "split off" action?
+[TODO] How panes are laid out (top/bottom vs left/right) and whether a 3+1 (three together, one scout) uses the same two-pane rule — yes, implied.
+[TODO] How large is the player sprite on a TV from the couch, in full-shared vs two-pane? How many tiles visible in each?
+
+Input
+Decided: gamepad-focused. Combat/movement is a Diablo + Hammerwatch mix.
+Decided: left-stick move; right stick aims (Hammerwatch-style). Clicking the right stick (R3) enters target mode: aim locks onto one enemy; right stick cycles/changes the target.
+Decided: dodge and block are mostly **passive skills**. Named actives (e.g. Shield Raise) can exist and need button bindings.
+Decided: there **is** a **dash** like Hammerwatch (active movement, similar to a dodge-roll, with similar i-frames, on cooldown). Separate from the Dodge *stat*. In the slice.
+Decided: gamepad on console is the design center. Keyboard/mouse is a PC fallback so it works there, not a layout we design around.
+Decided (partial): hold trigger/face-button to attack. Interact is separate (gathering channel). Dash is a dedicated button.
+Decided: **slice = 1 extra skill** besides hold-to-attack + interact + R3 target + pause-dispel + **dash**. That skill is Great Axe **Slam (cooldown)**. Dash has Hammerwatch-like i-frames, on cooldown.
+Decided ship: **2–4 actives** on bumpers/face buttons; **potions on D-pad**.
+Decided Xbox defaults (slice):
+- Left stick move, right stick aim, R3 target-lock
+- **RT** hold-to-attack
+- **A** interact (gather, clerks, stairs/crystal)
+- **B** dash
+- **X** Slam
+- **Y** inventory/bag
+- **D-pad Up** potion
+- **D-pad Left** bound food item
+- **Menu** pause → Dispel Avatar
+- LB/RB reserved for extra actives at ship
+- View: minimap focus (optional)
+
+HUD
+Decided: **Gauntlet-style HUD** so solo and couch co-op use the same language. Each player gets a dedicated strip (portrait/color, HP, mana, dash/slam cooldowns). Scales from 1 to 4 without a different UI mode.
+Must-have per strip: **HP**, **mana**, skill/dash cooldowns, **gold**, **bag fullness**, **floor number**. All on the Gauntlet strip so two-pane and solo match.
+
+================================================================
+4. Core loops
+================================================================
+
+Minute-to-minute
+Decided combat verbs: move, aim (or target-lock), **hold to attack** in that direction, **dash**, let passive dodge/block work, fire the occasional bound active.
+Decided gathering: RuneScape-style channel (walk up, interact, stand while a bar fills). Full verbs: move, fight, channel-gather, use floor facilities, greed vs extract.
+Decided extract: **dialogue with an NPC** at an extraction station (not a silent shrine channel). "What to send" picker, then send. Stations are **non-combat areas** — you get a real decision, not a panic channel under aggro.
+
+One delve
+Decided flow:
+1. In the city, choose to enter the dungeon.
+2. Configure loadout.
+3. Enter; cannot return to the city.
+4. Push floors: kill, gather, find extract facilities, find stairs.
+5. Town: big entrance crystal to any floor you've ever reached. In-dungeon: crystals skip **down** to previously reached deeper floors. Stairs are down-only.
+6. Extract resources/gear to the surface when you find a facility.
+7. Terminate the avatar (death or pause-menu dispel) to wake up.
+8. Keep extracted unlocks + a small fragment of XP; lose unsent resources and most XP.
+
+Decided: voluntary wake is **Pause Menu → Dispel Avatar (Return to Town)** (Hades / Hammerwatch). Not a world object. It is **abandoning the run** — the only way to send items home is extract facilities. Dispel is going home empty-handed on whatever you didn't extract.
+Decided: a good run is **20–30 minutes** (several floors, a couple of clerk stops, then death/dispel recap). Shorter “one floor and mail” and longer greed pushes are allowed, not the balance target.
+Decided: success is what you **extracted** (plus the XP fragment), not whether you lived. Dying and pause-dispel are the same kind of exit; a death after mailing gear home is still a good run. A dispel with a full unsent bag is abandoning.
+
+Between delves (city meta)
+Decided: vendors, anvils, public kitchen, facility upgrades, story-driven layout changes, loadout before next delve.
+[TODO] Other hub verbs: bank, skill training dummies, quest NPCs, recreation forge, museum of extracted gear?
+
+Win / lose / exit rules
+- Unsent resources: lost on death/termination. (decided)
+- XP: only a small fragment is permanent. (decided)
+- Extracted gear: analyzed and recreatable later; limited slots per type. (decided)
+Decided: extracted raw materials persist as **banked stacks** on the surface (50 ore sent = 50 ore in your bank). Gear is still analysis + recreation. Materials are counts; gear is unlocks with limited slots per type.
+Decided: extract does **not** end the run. You send stuff up at a facility, then keep delving or later abandon via pause dispel / death. Extract = mail home; dispel = wake up.
+
+================================================================
+5. Combat
+================================================================
+
+Model
+Decided: melee-forward Hammerwatch, mixed with Diablo. Real-time action, not click-to-move.
+Decided: smaller enemy groups and longer fights than Hammerwatch. Not a high-quantity mob-swarm game.
+Decided: right stick aims. R3 toggles target mode — focus one enemy; right stick changes target while locked.
+Decided: dodge and block are passive skills (Hammerwatch dodge / Diablo block). Automatic. Optional bound actives such as Shield Raise exist on top, not instead.
+Decided: **Dodge** = % chance the hit **fully evades** (no damage). **Block** = % chance to **reduce** the hit (not a full immune).
+Decided: **Dash** is in the **slice**. Hammerwatch-like **i-frames**, on **cooldown** (no stamina). Separate from passive Dodge.
+Decided: starting **Sword** is 1-handed; it **comes with a starter shield** to offset that (the protection is the shield, not the sword type). Shield stays its own armor slot — you can replace the starter. Starting **Wand** likewise **comes with a tome** to offset 1-handed.
+Decided: hold-to-attack (trigger/button). You keep swinging/shooting while held; release to stop. Fits longer Diablo-like fights and leaves interact free for RS-style gathering channels.
+Resolved: Dodge = full evade chance; Block = DR chance; Dash has Hammerwatch i-frames.
+Decided: **mana bar** for some skills. Other skills are **cooldown-only** (no mana). Hold-to-attack basic swings do not spend mana. **No stamina bar** — dash is cooldown + i-frames.
+
+Weapons in play, not just stats
+Decided: many weapon types, per-type XP, type bonus + smaller global bonus. These nine are **starting weapons only**; many other types exist later.
+Starting weapons (creation pick — one of):
+- Great Axe — longer-range melee arc, slower.
+- Sword — 1-handed, mid-range melee arc, moderate speed. Starts bundled with a **shield** (offset for 1H). Weapon type is **Sword**, not "shield-and-sword."
+- Dual Daggers — fast; a quick burst of two short-range melee arcs.
+- Longbow — long-range single-target projectile, slower.
+- Shortbow — mid-range single-target projectile, moderate speed.
+- Crossbow — shorter-range single-target projectile, fast.
+- Greatstaff (Fire) — long-range magic, large AoE projectile, slower.
+- Staff (Lightning) — mid-range magic, chain projectile, moderate speed.
+- Wand (Arcane) — 1-handed, short-range magic, single-target projectile, fast. Starts bundled with a **tome** (offset for 1H), same idea as Sword+shield.
+[TODO] Full post-start weapon-type list (spears, hammers, thrown, etc.).
+Decided (partial): combat has both **character traits** (Strength, Defense, Dexterity, …) and **per-type weapon mastery**. Magic has **Magic Masteries** in addition to staff/wand types.
+[TODO] How XP splits when you swing a Great Axe: trait(s) + Great Axe mastery + maybe Adventuring? Magic Masteries vs Greatstaff (Fire) XP.
+Decided: Dual Daggers = **two hits per attack tick** while hold-to-attack is held (fast double-hit, not a combo sequence).
+
+Damage / roles
+Decided (at least): physical melee, physical ranged, and elemental magic (Fire / Lightning / Arcane on the starting caster weapons).
+[TODO] More damage types later? How armor/resist interacts. Starter Sword's protection comes from the bundled **shield** (block chance), not from the sword type itself.
+[TODO] Status effects (burn, slow, stun?).
+Decided slice: **three roles**, smaller packs, longer fights: **Melee bruiser**, **Ranged**, **Tank**. No boss. Extra roles later.
+Decided: **story bosses at campaign beats** in the full game. **Slice: a basic Floor Guardian every 3rd floor** (3 and 6). Stairs stay locked while it lives. Slice caps at floor 6.
+Decided slice melee: bruisers and tanks **telegraph a lunge** (windup pose, then dash-strike). Direction locks at windup so the player can sidestep. Contact-walk-into-you is not the melee kit.
+Decided slice ranged: goblin archer **draws** (windup sprite) then looses. Shot direction locks on the draw.
+
+Gathering during combat
+Decided (for now): interruptible, but allowed — you can start a channel with enemies around; taking a hit (or moving?) interrupts the channel. If keeping combat keybinds during a channel is awkward on a gamepad, we may swap to "clear the room first." Revisit after the first playable.
+Decided: a gather channel is interrupted by **taking damage** or **moving**. Attacking isn't separately needed (you'd have to move or cancel interact). Revisit if pad-feel is bad.
+
+Death in the dungeon
+Decided: avatar destroyed/dispelled; consciousness returns; dream-like memory loss.
+Decided: pause-menu Dispel Avatar is the voluntary version of the same exit. Same rewards/losses as dying for unsent stuff (extract is the only send-home). Co-op: leaver is out of this run; others continue.
+Decided recap (death and pause-dispel): **light tone**. Show floor reached, XP fragment kept per skill, materials banked, gear analyzed (or that there was no Gopher), gold mailed vs lost, bag that vanished. Co-op: **party recap**, each player a **Gauntlet-style strip** of their own results.
+
+================================================================
+6. Dungeon laws
+================================================================
+
+Generation
+Decided: layout random each entry; per-floor enemies, resources, and aesthetics stay consistent between delves. Aesthetics are **biome-driven** (dungeon / field / cave / sky city / …).
+Decided: **mixed by biome**, not one topology for the whole hole. A floor's biome picks the vibe and the layout language. Examples: traditional dungeon, open fields, caves, even a **sky city**. "The dungeon" is a stacked otherworld, not only stone corridors.
+Decided slice biome: **traditional dungeon** (rooms/corridors, stone). Campaign biome list later.
+Decided: **same floor laws in every biome, different dressing.** Crystal / down-exit / clerks / bag / extract / gold / tool-gates-as-side-paths always apply. A sky-city “stairs” can be a balloon; an open field can be a cave mouth. Biomes may add **extra flavor traits** (weather, mounts, updrafts, etc.) on top — they don’t replace the laws. [TODO] List flavor traits per biome later.
+Decided: floors are **expansive** — branching rooms, long dead-end corridors, hidden loot stashes at the far end of those dead ends (gold / ore / white-green gear). Stairs can be found before you've looted; side paths are optional RNG dopamine. A full clear can overshoot the 20–30 min "good run"; skipping to stairs is valid.
+Decided: generation must be shareable across a party (same dungeon at the same time). Treat layouts as seedable.
+Decided: **stairs are always reachable with any one tool (or none).** Tool gates are **side paths, extra nodes, extra clerks, extra loot** — never the only way down. Co-op sees more of the floor; solo still completes the loop. Trees / rocks / vines / etc. block bonuses, not the campaign path.
+
+Vertical structure
+Decided: stairs to the next floor (down only — no walking back up). Crystal at the entrance of each floor.
+Decided crystal rules:
+- **From town:** a special, bigger crystal in the city's dungeon entrance. Teleport to **any floor you have reached in any run**.
+- **From inside the dungeon:** crystal skip to **any floor deeper than your current floor** that you reached on a **previous** run. This-run new depth is walked via stairs first. No crystal-up.
+- **Co-op:** the party may access up to the **deepest floor any member has reached** (their personal-best is shared for access).
+Decided: **finite campaign path, then endless after**. Beat the campaign beat / "the thing," then deeper challenge floors keep going.
+[TODO] How many campaign floors vs where endless challenge starts.
+Decided slice: **2–3 floors** so a first playable can still land in the 20–30 min window (or a shorter tutorial run).
+
+Contents per floor
+Decided: enemies, resource nodes, random facilities that can send resources/gear to the surface.
+Decided extract clerks:
+
+Gathering clerks — **1 per floor**, type from:
+- Mining → Pickaxe → Ore → **Miner**
+- Woodcutting → Hatchet → Wood → **Lumberjack**
+- Harvesting → Sickle → Plants → **Alchemist**
+- Quarrying → Stonehammer → Stone → **Stonemason**
+- Fishing → Tacklebox → Fish → **Fishmonger**
+
+Misc clerks — **1 per floor**, type from:
+- Gear → **Gear Gopher**
+- Misc → **Guild Runner**
+
+Special clerks — **random**:
+- All → **Packmule Patty**
+
+So a floor always has 1 gathering clerk + 1 misc clerk; Patty is extra luck. Confirmed: misc is **1-from-2** — a floor can have a Guild Runner and **no Gear Gopher**. Gathering clerk may not match your tool. Gear mail is not guaranteed every floor.
+Decided: clerks are **hidden in safe alcoves / side rooms**, not parked at the entrance crystal. Stairs can be found before extract — hunting the station is the tension. Entrance is crystal + spawn only.
+Decided: **any** of those clerks can instead mail **gold** (50% of carried → town, 10% clerk fee, 40% stays on you). That **clerk instance** is then spent — no ore/gear from them after.
+Decided: floors are combat + gathering nodes + stairs/crystal + extract clerks, plus **fun random finds**. First-pass extra roster (all of these exist):
+- Production stations (anvil, etc.)
+- Campfires
+- Shrines
+- Ghost vendor
+- Rest spots
+- Puzzle bits
+[TODO] What each actually *does* (campfire = cook? shrine = buff? ghost vendor = buys/sells in-dungeon for gold? rest = HP/mana? puzzles = loot/shortcut?). Spec per type later; they should feel like discoveries, not homework.
+Decided slice: **mining veins sit in room walls** (floor tiles with exactly one wall neighbor), with **collision** so they block like rocks. Not mid-room pickups. Other skills' nodes later by floor band.
+[TODO] Full-game: which gathering skills appear on which floor bands.
+Decided: **explored fog of war** + a **simple minimap of visited tiles**. No lighting puzzle / torch meter. Unvisited area is hidden; visited stays known (this run). Decided: fog resets each run (layouts are random anyway).
+
+Extraction (surface-send)
+Decided: send resources and gear up; gear is analyzed and recreatable; limited stored gear per type.
+Decided: extract is NPC dialogue + a "what to send" menu, only in non-combat areas. Not a gathering-style channel, not interruptible combat. Each floor: 1 gathering clerk + 1 misc clerk; Packmule Patty at random. Types may mismatch what you're carrying.
+Decided: no implied use-limit on a clerk beyond "they only take their category." Talk to them as much as you want in that safe room.
+Decided storage **type** = the weapon type (e.g. all Great Axes together, not all 2h melee, not per unique item id). Same grain as starting-weapon types.
+Decided: **3 slots per type**. When full, you **pick in the Gopher dialogue** what to keep / overwrite. No auto-replace-if-better.
+Decided: ore/logs/plants sent up are real banked stacks on that player's surface account.
+
+Pressure
+Decided: **no extra meters.** No hunger, durability, timer, or darkness-as-resource. Pressure is **greed and death** (small bag, extract clerks that might be the wrong type, gold tax, tool-gates, going deeper). Food is a heal, not a hunger clock.
+
+Difficulty
+Decided: **harder by floor number**, not scaled to the party’s awake stats. A high-level diver still finds floor 12 nastier than floor 4; they just survive it better. [TODO] What “nastier” means in numbers (HP, damage, packs, elites) — tune in play.
+Decided: story bosses at campaign beats; slice has none. Endless-challenge floors can get nastier without new story bosses unless we add them later.
+
+================================================================
+7. City / hub
+================================================================
+
+Name
+Decided (provisional): **Vylenheim**. Town sprouted around a newly discovered dungeon. Player is among the **earliest adventurers** here.
+
+Organization
+Decided: **Adventure Guild** — one node in a network of guilds that are **independent from the government**. The guild handles dungeon access (main economic driver).
+Decided: **parties** are the social unit (not "familias").
+Decided mix of authority:
+- Guild-sponsored: access + a lot of practical management.
+- Freelance: many settlers showed up on their own after the dungeon was found.
+- Kingdom-sponsored in name: the hole sits in a lord's domain; the lord leaves most town management to the guild and local government.
+
+Layout
+Decided: static unless story progress or facility upgrades change it.
+Decided slice: **one plaza**. Full-game districts later.
+[TODO] Fast travel inside the city?
+
+Facilities (known)
+- Vendors (variety). Decided: buy/sell for gold. [TODO] Who, and what each stocks.
+- Anvils. Decided: same Smithing skill as in the dungeon; surface XP is 100% but much slower.
+- Public kitchen. Decided: **Cooking** is a skill. Food is eaten from the dungeon bag (quantity-limited) as a primary heal.
+- Dungeon entrance + loadout UI before entry. Entrance is a **large teleport crystal** (not a hole you walk into). From town it can send you to any floor that character has ever reached (co-op: up to the party's best).
+
+Facilities (unknown)
+Decided: each player has a surface bank of extracted material stacks.
+Decided: city forge recreates analyzed gear. **First forge in the city is the gate**; after it has been forged, bringing a copy into a delve is **free**.
+Decided: city skilling (anvils, kitchen, etc.) grants **100% awake XP at a much slower rate** than dungeon work. Catch-up, not the main grind.
+[TODO] Upgradeable buildings: list, cost resource, effect.
+
+Loadout screen
+Decided: shown when choosing to enter the dungeon.
+Decided: one resource-gathering tool per player per delve (mode-tweak; makes solo/co-op pathing differ). Tools are not weapons.
+Decided: new characters pick a starting weapon and starting tool at creation (replaces a class select). Equipped weapon/tool/armor should show on the sprite.
+Decided starting tool options: Hatchet (wood/trees), Pickaxe (ore/rocks), Sickle (plants/vines). Later: Stonehammer (quarry), Tacklebox (fish). Still one tool per delve.
+Decided starting weapon options: Great Axe, Sword (bundled starter shield), Dual Daggers, Longbow, Shortbow, Crossbow, Greatstaff (Fire), Staff (Lightning), Wand (Arcane, bundled starter tome).
+Decided: loadout includes weapon, tool, **armor**, and **consumables** (food, potions).
+Decided: dungeon bag is **28 slots**, no weight limit. Gold is not a slot. Food/potions occupy bag slots; **D-pad Up** uses a potion, **D-pad Left** uses the bound food item.
+Decided: after an analyzed item has been **forged once in the city**, copies are **free to bring** on later delves. The 3-per-type stash is what you're allowed to have forged/ready.
+Decided (partial): party picks **loot drop mode** before the delve (FFA / killer-then-free / killer-locked / personal loot).
+[TODO] In co-op, is loadout locked after the party readies, so you can see each other's tools? Same screen as loot-mode?
+
+Story vs hub
+Decided: main story can change the city layout.
+Decided: **the crystal is always available.** Story unlocks extras and explains bosses; it **does not block diving**. You can grind floors as a job without watching cutscenes.
+Decided: **optional intro** — the **guild receptionist** spots the player **digging through the trash behind the guild** and convinces them to **sign up as an adventurer** instead of dumpster-diving. Skippable; crystal doesn't wait on it. Hopeful/humorous origin (broke, not chosen-one).
+
+================================================================
+8. Skills, XP, weapon mastery
+================================================================
+
+Skill list
+Decided sickle skill name: **Harvesting**.
+Decided starting list (will grow):
+- Woodcutting (hatchet)
+- Mining (pickaxe / ore)
+- Harvesting (sickle / plants)
+- Quarrying (rocks, not ore — "like mining")
+- Fishing
+- Smithing
+- Cooking (confirmed; food heals)
+- Fletching
+- Crafting
+- Construction
+- Botany (Herblore-like)
+- Adventuring (Firemaking and other misc. adventurey things)
+- Acrobatics
+- Stealth
+- Magic Masteries
+- Weapon mastery (per weapon type, already decided)
+- Character traits: Strength, Defense, Dexterity, etc.
+Decided: **Cooking** is its own skill (public kitchen + food heals).
+[TODO] Prayer / runecraft / other RS classics still not on the list unless we add them.
+Healing
+Decided: **food** from the bag, limited by quantity. **Potions** exist, limited by **cooldown** (not just stack count). **HP regen works in combat**, but is too slow to keep you up in a real fight — food/potions/block are the actual survival tools.
+[TODO] Overlaps to resolve later: pickaxe trains Mining vs Quarrying depending on node? Acrobatics vs passive Dodge? Magic Masteries vs staff/wand weapon XP? Traits vs weapon mastery (both train in combat?).
+Decided slice skills: **mining + smithing + one weapon type**. (Harvesting/tools beyond pickaxe can wait.)
+Decided slice weapon: **Great Axe**.
+Decided: **production in both** (smith, cook, fletch, craft, construct, botany, etc. — city and dungeon if a station exists). **Gathering is dungeon-only** (no town ore/trees/fish as a skill loop). City anvils/kitchen are for processing what you extracted.
+
+XP rules
+Decided: dungeon XP is mostly forgotten when the avatar connection ends; a small fragment is applied permanently. Goal: each delve feels new, with smaller lasting rewards.
+Decided: fragment is **per skill**, not one shared pool. Uses **keep-N-per-run** (a cap): a long greed run cannot bank unbounded awake XP.
+Decided: base cap is **2%**. That base number **increases with the player's awake (permanent) level in that same skill** — a high-level miner remembers more mining from the dream than a newbie. Permanent character = "awake" skills; run XP = dream.
+Placeholder formula (slice): keep **2% of XP earned this run** in that skill (always the 2%, not "keep all of tiny amounts"). Awake-level scaling of that 2% comes later.
+Decided: **surface skilling keeps 100% XP, but is much slower.** Safe catch-up / crafting XP in Vylenheim; the dungeon is still the real place to train. Anvils and kitchen grant awake XP at a crawl.
+[TODO] Soft caps, prestiges, or none.
+[TODO] Max level.
+
+Weapon mastery
+Decided: each weapon (type) has its own XP/levels; large bonus for that type, smaller bonus for all weapons.
+[TODO] Bonus shape (e.g. +2% damage per type level to that type, +0.5% to all).
+[TODO] Does "weapon" mean item instance, weapon type, or both?
+[TODO] Does using a sword also train a shared Melee skill?
+
+Abilities
+Decided: extravagant number of skills and abilities empowered by gameplay.
+Decided: **mix**.
+- **Items** can have **built-in skills** (rolled on the Borderlands-style loot).
+- **Learnable abilities:** find the required **tome in the dungeon**, meet the **skill-level requirement**, then learn it from a **City Trainer**. After that the player can **assign** that ability (the 2–4 bound actives).
+Slice stays Slam-only (starting Great Axe kit); tomes/trainers later.
+Decided: slice has **1 extra skill** (plus hold-to-attack): Great Axe **Slam, on cooldown** (not mana). Ship has 2–4 bound actives.
+
+================================================================
+9. Gear, extraction, recreation
+================================================================
+
+Gear loop (decided)
+Find or craft gear in the dungeon -> send it to the surface via a facility -> it is analyzed -> recreatable indefinitely on future runs -> not lost when the avatar dies. Storage: **3 analyzed items per type**. Weapons: per weapon family (e.g. 3 Great Axes). Armor: head / body / legs. Off-hand: one slot for a shield **or** a tome. **Tools: per tool family** (e.g. 3 Pickaxes). Same Gopher overwrite + forge-then-free. All of these use the Borderlands proc pool.
+
+Decided: armor uses the **same 3-per-type slots**. Types: head / body / legs / **off-hand** (shields *or* tomes equipped, one slot). Stash is still 3 shields and 3 tomes as separate types. Overwrite in the Gear Gopher dialogue; forge once in the city; copies free to wear.
+Decided: **one off-hand slot**, shared by **shields and tomes** (mutually exclusive). 3-stash per type still (3 shields, 3 tomes). Sword starter = Sword + shield in off-hand. Wand starter = Wand + tome in off-hand. You can mix (sword+tome, wand+shield) if you want.
+Decided (assumed): Dual Daggers occupies both hands — **no off-hand**. 2H weapons (Great Axe, bows, staves, greatstaff) also skip the off-hand.
+Decided: **Borderlands-style loot pool** — procedural parts/affixes, millions of combinations, not a short iron/steel name list. The 3-per-type stash keeps the *rolls* you want; forge recreates that exact roll.
+Decided rarity: **common → uncommon → rare → epic → legendary** (white → green → blue → purple → orange). Legendaries are **named uniques** with a special effect, still on the part/affix system. Extra rungs (pearl etc.) later if ever.
+Decided slice: **tiny loot generator** — whites and greens, prefix/suffix (or simple parts). Not a single stub axe. Blues+ and named legendaries come later.
+Decided: gathering tools are loadout items, **not weapons**. Clear separation: weapon fights, tool gathers/clears. One tool per delve. They gate gathering and some dungeon paths.
+Starting tools (creation pick — one of):
+- Hatchet — wood / trees. Woodcutting. Clerk: Lumberjack.
+- Pickaxe — ore. Mining. Clerk: Miner. [TODO] Side-path "rocks": pickaxe, Stonehammer, or both? (Main path is never tool-locked.)
+- Sickle — plants / vines. Harvesting. Clerk: Alchemist.
+Further tools:
+- Stonehammer — stone. Quarrying. Clerk: Stonemason.
+- Tacklebox — fish. Fishing. Clerk: Fishmonger.
+Decided: tools are **full Borderlands loot** — prefix/suffix/parts, rarity ladder, 3-per-type stash (all Pickaxes, all Hatchets, …), Gear Gopher, forge-once-then-free. A white pickaxe still opens mining side paths; an orange one can have built-in gather skills / faster channels. Still **one tool equipped per delve**. Starting creation pick is a basic white of that tool.
+Decided: recreation is **free after it has been forged in the city** (the forge step is the cost/gate). Overwrite of the 3 slots is manual, in the Gopher send dialogue.
+Decided: **no trading / no giving / no dropping loot to teammates.** Equipment is progression; swapping would be power-leveling. What you pick up is yours until extract or vanish.
+Decided: **floor-drop rules are a party option** (picked before the delve). All of:
+- Free-for-all until picked up
+- Tagged to the killer, then free after a few seconds
+- Always tagged to the killer
+- **Personal loot** — each player gets their own drops (not killer-focused), so high-level members can't loot-raid newbs
+[TODO] Where the option is set: party board in Vylenheim / loadout screen. Host vs vote.
+
+================================================================
+10. Economy & inventory
+================================================================
+
+Currencies
+Decided: **gold** exists. Drops from enemies. Also from selling things to **town vendors**.
+Decided gold extract: **no gold clerk**. Any extract clerk can mail gold **instead of** their normal resource/gear send. Percents are of **gold you're carrying right now** (not the surface bank).
+Example: carrying 100g, ask the Miner to send gold:
+- **50g** to town
+- **10g** to that clerk (their cut)
+- **40g** stays in the bag
+- **No ore** (or whatever that clerk handles) is sent, and **that clerk instance cannot send their normal category anymore** this visit/spawn.
+So 50% mailed, 10% fee, 40% kept on you. One gold-send spends the clerk.
+
+Resources
+Decided (list): raw = ore, logs, stone, plants, fish. Processed = bars, planks, etc. Slice only needs **ore** (and food/potions as consumables).
+Decided: unsent resources **vanish** on death/dispel — they do not drop for co-op partners.
+
+Inventory in the dungeon
+Decided: **small slot bag**. Full = you **can't pick up** more (no auto-drop of old items). Gold is a **separate counter**, not a bag slot. No separate extract-queue; the bag *is* what clerks can send from.
+Decided: **28 slots**. [TODO] Stack sizes (placeholder 50 for ore/food is fine until economy exists).
+
+Surface storage
+Decided: real material stacks per player + limited analyzed-gear slots per type (recreatable).
+[TODO] Bank tabs / UI organization. Shared city chest? No — per player.
+
+Vendors
+Decided: town vendors **buy and sell for gold**. Selling extracted materials/items is a gold source alongside enemy drops.
+
+================================================================
+11. Story / lore (short)
+================================================================
+
+Decided mechanic-lore
+- Player body stays on the surface.
+- Consciousness pilots a Spirit Avatar.
+- Avatars cannot leave the dungeon; they must be destroyed or dispelled to return.
+- Terminating the connection wipes most memories, like waking from a dream. That is why most XP does not stick.
+- In-universe, dying hurts badly; the shock is a major reason those memories don't stick. Dungeon diving is a respected career. [TODO] Voluntary pause-dispel: same pain/shock, or a cleaner (but still lossy) disconnect?
+
+World questions
+[TODO] Why avatars exist and who/what binds them. Guild likely administers access/crystals.
+Decided: Vylenheim grew up around a new dungeon. Diving is the town's economy and a respected career. Early-days frontier, not an ancient mega-city on a millennia-old hole.
+[TODO] What the city / guild / lord each believe the dungeon is.
+Decided: the title is wonder/adventure at the unknown below, not a specific creature-as-logo. Campaign has an end beat; then endless deeper floors.
+[TODO] What the campaign beat actually is (may stay secret in this doc).
+Decided (partial): story is optional context around an always-open hole. [TODO] Mix of NPC text vs environmental vs campaign-boss reveal — tune later. Not a cutscene-gated campaign.
+Decided: hopeful, humorous, career-adventurer (DanMachi-adjacent tonality — not a dating sim by default). Not grimdark, not dry-mythic.
+Decided (partial): intro is dumpster-to-adventurer gag with a receptionist — humorous NPC voice. [TODO] How much anime-banter vs dry game-manual for the rest of the cast.
+
+Do not put the script in this file.
+
+================================================================
+12. Art / audio / UI
+================================================================
+
+Art
+Decided: 2D presentation, closer to Heroes of Hammerwatch than RuneScape. Camera is 3/4 overhead.
+Decided: pixel sprites (HoW / HoW2 pipeline), not retro-3D rotating models. Target **8 facings** for ship; **4-dir** (or blobs) until the loop is fun. Not 360° turn.
+Decided: **64×64** pixel grid so avatar customization (body, gear, tools) is actually visible on a TV. Tiles should match that grid 1:1 unless we later use smaller ground tiles under a 64px character.
+Decided: **8-dir for ship**, **4-dir until the loop is fun**. Placeholders can be 4-dir (or even rectangles). Customization layers assume 8-dir as the real art target.
+[TODO] Palette (warm town vs cold dungeon, or one shared palette).
+Decided: 64×64 must keep a readable silhouette on a TV (couch + two-pane). Customization is extra detail on top of a clear body shape, not noise.
+[TODO] Animation density: Hammerwatch-snappy vs more frames.
+Decided: slice art is **4-dir placeholder sprites** for the player (no gear layers). Enemies may stay simple until the loop is fun. Ship target remains 8-dir + customization.
+
+Audio
+[TODO] Hub music mood.
+[TODO] Per-floor music vs one dungeon theme.
+Decided: recap is light/humorous (career hazard), not a grim game-over. [TODO] A short sting SFX is still fine.
+[TODO] Voice acting: none / grunts / full.
+
+UI
+Decided: extract is a **dialogue + send-list** on a pad (TV-readable). Must work in couch co-op without covering the whole two-pane view forever.
+Decided: HUD is **Gauntlet strips** (per player: HP, mana, cooldowns, gold, bag, floor). Same in solo and 4-player.
+Decided (partial): death recap is a **Gauntlet-strip party results** screen, light tone. Extract = dialogue + send list. HUD = Gauntlet strips.
+[TODO] Inventory, skills, loadout — sketch or reference screens later.
+Decided: UI must read at TV distance on Xbox (couch). PC can reuse that; do not shrink to mouse-desktop or phone density.
+
+================================================================
+13. Technical constraints (brief)
+================================================================
+
+Already true in the repo
+- Godot 4.7 project named "What Dwells Below"
+- 2D stretch mode canvas_items / aspect expand
+- Mobile rendering method currently selected
+- Jolt listed as 3D physics engine (likely unused if we stay 2D)
+
+Build notes (not implementation)
+Decided: **2D TileMap** dungeon (Godot TileMap / TileSet), 64×64 grid matching sprites.
+Decided save (slice): awake skill XP (fragments), banked material stacks, 3-per-type analyzed gear, deepest floor reached, gold on the surface, loadout. City upgrades later.
+Decided: **60 fps** on Xbox/PC/Deck. **30 allowed on two-pane split** if we have to. Do not tune for phones.
+Decided: solo and co-op both ship as real modes. Design center is local couch co-op on Xbox (max 4, shared camera with optional two-pane split); PC is supported; mobile is optional. Dungeon generation must be seedable/shared for a party on one machine (and later for online if that happens).
+Decided: local multiplayer is multiple gamepads, one Godot instance, one TV. Camera system must support 1 shared view and 2 sub-views.
+Decided: online is **out of slice**, **don’t block**. Host model (Godot multiplayer / listen server) only when we take that on. Local = multiple pads, one instance.
+
+================================================================
+14. Vertical slice vs full vision
+================================================================
+
+Full vision (from original)
+Extravagant skills, many weapon types, a living city, deep procgen dungeon, extraction/recreation, dreamlike XP, story that can reshape the hub.
+
+Now (vertical slice) — **build contract**
+The slice sentence (this is what we implement first):
+**Walk Vylenheim's plaza as a placeholder avatar, take a Great Axe and pickaxe through the guild crystal, clear 2–3 traditional-dungeon floors (hold-to-attack, dash, slam, mine ore), mail loot at clerks, die or pause-dispel, and wake up with banked ore, 2% of run XP, and any analyzed white/green axes. It has to be fun with rectangles.**
+
+Locked contents:
+- 1 city plaza: big crystal, guild presence, one vendor, anvil (smithing). Optional dumpster-intro can wait.
+- Loadout: Great Axe + pickaxe. 28-slot bag. Food D-pad Left, potion D-pad Up.
+- Dungeon: 2–3 floors, traditional dungeon tileset, three enemy roles (melee bruiser, ranged, tank), mining nodes. Main path never tool-locked; optional pickaxe side room is fine.
+- Clerks: 1 gathering + 1 misc per floor (real rules). Gold extract rule included.
+- Combat: hold RT, B dash (i-frames), X slam (cooldown), R3 lock, A interact. Channel mine; damage or move interrupts.
+- Tiny loot generator: white/green Great Axes (and pickaxes) with prefix/suffix.
+- Recap: Gauntlet strips, light tone. Keep 2% XP this run (placeholder), banked stacks, analyzed gear; bag vanishes.
+- Art: 64×64 tile grid. **4-dir placeholder player sprites** (baked starter Great Axe, no customization layers) so facing reads in combat. Enemies/props can stay simpler until the loop is fun. 2D TileMap. Gauntlet HUD.
+- Co-op camera can be solo-first in the slice; don't block 2-pane later. Online out of slice.
+
+Next
+[TODO] Second weapon type, city upgrade, second skill, biome/floor 2 aesthetics.
+
+Later
+[TODO] Full skill list, bosses, story beats, extra facilities, more weapon masteries.
+
+Full-game constraints parked from play (do not implement in the slice)
+- **Stealth / cover:** using walls as cover should train Stealth later. Keep LOS/cover honest in combat code so detection can hang on it. Not a stealth meter or crouch in the slice.
+
+================================================================
+15. Open questions (blocker list)
+================================================================
+
+Copy resolved items up into the sections above and delete them here.
+
+Combat & feel
+Resolved: Diablo + Hammerwatch mix. Left stick move, right stick aim, R3 target-lock; smaller groups, longer fights; dodge/block mostly passive; named actives like Shield Raise on buttons.
+Resolved: solo and co-op are both key. Each player is their own avatar. Party up in the city, enter together. One gathering tool per delve so some paths need mixed tools.
+Resolved: Xbox primary. Ideal vision = friends on a console with couch co-op. Second = solo console. PC must work. Mobile = nice if it works.
+Resolved: max 4. Shared camera by default; two-pane split if 1–2 players wander (main party | scout or pair). No 3- or 4-way split.
+
+Run rules
+Resolved: Pause → Dispel Avatar (Return to Town). Abandons the run; extract is facilities-only. Co-op: anyone can leave, no rejoin; couch treats it like that player died. The rest keep delving.
+Resolved: per-skill keep-N cap, base 2% of XP earned this run (slice placeholder). Awake-level scaling later.
+Resolved: materials = per-player banked stacks. Gear = analysis/recreation with limited slots per type.
+Resolved: town big crystal = any floor ever reached. In-dungeon = skip down to previous-run deeper floors only. Stairs down-only. Co-op access = deepest any party member has reached. Banks/XP stay per-player.
+
+Identity
+Resolved (provisional): Vylenheim. Guild network (gov-independent), parties as social unit, frontier town around a new dungeon, mix of guild / freelance settlers / distant lord.
+Resolved: create-a-character; HoW2-like appearance; start with a weapon + tool, not a class; same starting stats; build via gameplay; equipment is visible on the sprite.
+Resolved: title is the *sense of wonder* at what could be found below, not a promise of one named final monster. Campaign still has a thing to beat, then endless challenge floors.
+[TODO] What the campaign beat actually is (can stay secret).
+
+Slice
+Locked: Walk Vylenheim's plaza as a placeholder avatar, take a Great Axe and pickaxe through the guild crystal, clear 2–3 traditional-dungeon floors (hold-to-attack, dash, slam, mine ore), mail loot at clerks, die or pause-dispel, and wake up with banked ore, 2% of run XP, and any analyzed white/green axes. It has to be fun with rectangles.

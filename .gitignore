@@ -1,0 +1,17 @@
+# Godot
+.godot/
+/android/
+*.translation
+
+# Local scratch from asset processing
+_src/
+_atk_*.jpg
+_inspect_*.jpg
+_rng*.jpg
+_gen_*.jpg
+_rngw_*.jpg
+
+# OS / editor
+Thumbs.db
+.DS_Store
+*.tmp

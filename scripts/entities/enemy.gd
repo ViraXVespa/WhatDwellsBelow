@@ -1,0 +1,371 @@
+class_name Enemy
+extends CharacterBody2D
+
+enum Phase { CHASE, WINDUP, LUNGE, RECOVER }
+
+var role := "bruiser"
+var hp := 30.0
+var max_hp := 30.0
+var move_speed := 70.0
+var contact_damage := 10.0
+var attack_cd := 0.0
+var attack_period := 1.35
+var range_melee := 78.0
+var lunge_range := 130.0
+var windup_time := 0.48
+var lunge_time := 0.20
+var recover_time := 0.45
+var lunge_speed := 420.0
+var shoot_cd := 0.0
+var flash := 0.0
+var rng := RandomNumberGenerator.new()
+var prefer_left := true
+var stuck_t := 0.0
+var phase: int = Phase.CHASE
+var phase_t := 0.0
+var lunge_dir := Vector2.DOWN
+var hit_this_lunge := false
+var body_sprite: Sprite2D
+var sprites: Dictionary = {}
+var facing := "down"
+var aim := Vector2.DOWN
+var is_boss := false
+
+
+func setup(p_role: String, floor_number: int, p_boss: bool = false) -> void:
+	role = p_role
+	is_boss = p_boss
+	rng.randomize()
+	prefer_left = rng.randf() < 0.5
+	match role:
+		"ranged":
+			hp = 22.0 + floor_number * 4.0
+			move_speed = 55.0
+			contact_damage = 8.0
+			attack_period = 1.15
+			windup_time = 0.55
+			lunge_time = 0.14
+			recover_time = 0.4
+		"tank":
+			hp = 55.0 + floor_number * 8.0
+			move_speed = 36.0
+			contact_damage = 16.0
+			attack_period = 1.7
+			range_melee = 86.0
+			lunge_range = 110.0
+			windup_time = 0.72
+			lunge_time = 0.18
+			recover_time = 0.7
+			lunge_speed = 340.0
+		_:
+			hp = 28.0 + floor_number * 6.0
+			move_speed = 68.0
+			contact_damage = 14.0
+			attack_period = 1.25
+			range_melee = 78.0
+			lunge_range = 140.0
+			windup_time = 0.42
+			lunge_time = 0.22
+			recover_time = 0.4
+			lunge_speed = 460.0
+	max_hp = hp
+	_load_sprites()
+	_build_visual()
+	if is_boss:
+		_apply_boss()
+
+
+func _apply_boss() -> void:
+	add_to_group("boss")
+	hp = 200.0 + float(Game.run.current_floor) * 40.0 if Game.run else 240.0
+	max_hp = hp
+	contact_damage = 22.0
+	windup_time = 0.62
+	lunge_time = 0.24
+	recover_time = 0.55
+	lunge_speed = 400.0
+	range_melee = 96.0
+	if body_sprite:
+		body_sprite.scale = Vector2(1.22, 1.22)
+	for c in get_children():
+		if c is CollisionShape2D and c.shape is RectangleShape2D:
+			(c.shape as RectangleShape2D).size = Vector2(52, 52)
+	var tag := Label.new()
+	tag.text = "GUARDIAN"
+	tag.position = Vector2(-48, -70)
+	tag.size = Vector2(96, 18)
+	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tag.add_theme_font_size_override("font_size", 14)
+	tag.add_theme_color_override("font_color", Color(0.95, 0.78, 0.25))
+	tag.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
+	tag.add_theme_constant_override("outline_size", 4)
+	add_child(tag)
+
+
+func _ready() -> void:
+	add_to_group("enemies")
+	collision_layer = 4
+	collision_mask = 1
+	motion_mode = MOTION_MODE_FLOATING
+	var cs := CollisionShape2D.new()
+	var sh := RectangleShape2D.new()
+	sh.size = Vector2(36, 36)
+	cs.shape = sh
+	add_child(cs)
+
+
+func _folder() -> String:
+	if role == "tank":
+		return "tank"
+	if role == "ranged":
+		return "ranged"
+	return "bruiser"
+
+
+func _load_sprites() -> void:
+	var folder := _folder()
+	for pose in ["idle", "windup", "strike"]:
+		for dir in ["down", "up", "left", "right"]:
+			var path := "res://assets/sprites/enemies/%s/%s_%s.png" % [folder, pose, dir]
+			if ResourceLoader.exists(path):
+				sprites["%s_%s" % [pose, dir]] = load(path)
+
+
+func _build_visual() -> void:
+	body_sprite = Sprite2D.new()
+	body_sprite.name = "Body"
+	body_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	body_sprite.scale = Vector2(0.82, 0.82)
+	add_child(body_sprite)
+	_apply_sprite()
+	if body_sprite.texture == null:
+		var col := Color(0.72, 0.22, 0.22)
+		if role == "ranged":
+			col = Color(0.28, 0.62, 0.32)
+		elif role == "tank":
+			col = Color(0.28, 0.32, 0.72)
+		body_sprite.texture = Art.body(Vector2i(64, 64), col, col.lightened(0.3))
+
+
+func _physics_process(delta: float) -> void:
+	if get_tree().paused:
+		return
+	attack_cd = maxf(0.0, attack_cd - delta)
+	shoot_cd = maxf(0.0, shoot_cd - delta)
+	if flash > 0.0:
+		flash -= delta
+	var player := _player()
+	if player == null:
+		return
+	var to: Vector2 = player.global_position - global_position
+	var dist := to.length()
+	var los := _has_los(player)
+	if to.length() > 0.01 and phase == Phase.CHASE:
+		aim = to.normalized()
+		_update_facing(aim)
+	if role == "ranged":
+		_ai_ranged(delta, player, to, dist, los)
+	else:
+		_ai_melee(delta, player, to, dist, los)
+	_apply_sprite()
+	if flash > 0.0:
+		modulate = Color(1.5, 1.5, 1.5)
+	elif phase == Phase.WINDUP:
+		var pulse := 0.85 + 0.15 * sin(phase_t * 28.0)
+		modulate = Color(1.15, pulse, pulse)
+	else:
+		modulate = Color.WHITE
+
+
+func _ai_ranged(delta: float, _player: Player, to: Vector2, dist: float, los: bool) -> void:
+	match phase:
+		Phase.CHASE:
+			var steer := _steer(to, los)
+			if los and dist < 140.0:
+				velocity = -to.normalized() * move_speed
+			elif dist > 220.0 or not los:
+				velocity = steer * move_speed
+			else:
+				velocity = Vector2.ZERO
+			if los and dist < 420.0 and dist > 70.0 and shoot_cd <= 0.0:
+				phase = Phase.WINDUP
+				phase_t = 0.0
+				lunge_dir = aim
+				velocity = Vector2.ZERO
+			move_and_slide()
+			_stuck(delta)
+		Phase.WINDUP:
+			velocity = Vector2.ZERO
+			move_and_slide()
+			phase_t += delta
+			if phase_t >= windup_time:
+				_shoot(lunge_dir)
+				phase = Phase.LUNGE
+				phase_t = 0.0
+		Phase.LUNGE:
+			velocity = Vector2.ZERO
+			move_and_slide()
+			phase_t += delta
+			if phase_t >= lunge_time:
+				phase = Phase.RECOVER
+				phase_t = 0.0
+		Phase.RECOVER:
+			velocity = Vector2.ZERO
+			move_and_slide()
+			phase_t += delta
+			if phase_t >= recover_time:
+				phase = Phase.CHASE
+				shoot_cd = attack_period
+
+
+func _ai_melee(delta: float, player: Player, to: Vector2, dist: float, los: bool) -> void:
+	match phase:
+		Phase.CHASE:
+			var steer := _steer(to, los)
+			if los and dist <= range_melee and attack_cd <= 0.0:
+				phase = Phase.WINDUP
+				phase_t = 0.0
+				lunge_dir = aim
+				velocity = Vector2.ZERO
+			else:
+				velocity = steer * move_speed
+			move_and_slide()
+			_stuck(delta)
+		Phase.WINDUP:
+			velocity = Vector2.ZERO
+			move_and_slide()
+			phase_t += delta
+			if phase_t >= windup_time:
+				phase = Phase.LUNGE
+				phase_t = 0.0
+				hit_this_lunge = false
+		Phase.LUNGE:
+			velocity = lunge_dir * lunge_speed
+			move_and_slide()
+			phase_t += delta
+			if not hit_this_lunge and global_position.distance_to(player.global_position) <= 46.0:
+				player.take_damage(contact_damage)
+				hit_this_lunge = true
+			if phase_t >= lunge_time:
+				phase = Phase.RECOVER
+				phase_t = 0.0
+				velocity = Vector2.ZERO
+		Phase.RECOVER:
+			velocity = Vector2.ZERO
+			move_and_slide()
+			phase_t += delta
+			if phase_t >= recover_time:
+				phase = Phase.CHASE
+				attack_cd = attack_period
+
+
+func _update_facing(dir: Vector2) -> void:
+	if absf(dir.x) > absf(dir.y):
+		facing = "right" if dir.x > 0.0 else "left"
+	else:
+		facing = "down" if dir.y >= 0.0 else "up"
+
+
+func _pose_name() -> String:
+	match phase:
+		Phase.WINDUP:
+			return "windup"
+		Phase.LUNGE:
+			return "strike"
+		_:
+			return "idle"
+
+
+func _apply_sprite() -> void:
+	if body_sprite == null:
+		return
+	var pose := _pose_name()
+	var key := "%s_%s" % [pose, facing]
+	if sprites.has(key):
+		body_sprite.texture = sprites[key]
+		return
+	var idle_key := "idle_%s" % facing
+	if sprites.has(idle_key):
+		body_sprite.texture = sprites[idle_key]
+
+
+func _steer(to_player: Vector2, los: bool) -> Vector2:
+	if to_player.length() < 0.001:
+		return Vector2.ZERO
+	var desired := to_player.normalized()
+	if los:
+		return desired
+	var space := get_world_2d().direct_space_state
+	var q := PhysicsRayQueryParameters2D.create(global_position, global_position + desired * 56.0)
+	q.collision_mask = 1
+	q.exclude = [self]
+	var hit := space.intersect_ray(q)
+	if hit.is_empty():
+		return desired
+	var n: Vector2 = hit.get("normal", Vector2.UP)
+	if n.length() < 0.1:
+		n = -desired
+	var tangent := Vector2(-n.y, n.x)
+	if prefer_left:
+		tangent = -tangent
+	if tangent.dot(desired) < 0.0:
+		tangent = -tangent
+	return (tangent * 0.85 + n * 0.25).normalized()
+
+
+func _has_los(target: Node2D) -> bool:
+	var space := get_world_2d().direct_space_state
+	var q := PhysicsRayQueryParameters2D.create(global_position, target.global_position)
+	q.collision_mask = 1
+	q.exclude = [self]
+	var hit := space.intersect_ray(q)
+	return hit.is_empty()
+
+
+func _shoot(dir: Vector2) -> void:
+	var p := Projectile.new()
+	p.global_position = global_position + dir * 28.0
+	p.setup(dir, contact_damage)
+	get_parent().add_child(p)
+
+
+func _stuck(delta: float) -> void:
+	var real_v := get_real_velocity().length()
+	if velocity.length() > 10.0 and real_v < 12.0:
+		stuck_t += delta
+		if stuck_t > 0.3:
+			prefer_left = not prefer_left
+			stuck_t = 0.0
+	else:
+		stuck_t = 0.0
+
+
+func take_damage(amount: float, _from: Node = null) -> void:
+	hp -= amount
+	flash = 0.08
+	if hp <= 0.0:
+		_die()
+
+
+func _die() -> void:
+	if Game.run:
+		var gold_amt := rng.randi_range(3, 12) + Game.run.current_floor
+		if is_boss:
+			gold_amt = rng.randi_range(40, 70) + Game.run.current_floor * 8
+			Game.run.great_axe_xp_run += 40.0
+			var drop := LootGen.roll_gear("great_axe", rng)
+			drop.rarity = ItemData.Rarity.GREEN
+			Game.add_to_bag(drop)
+		else:
+			Game.run.great_axe_xp_run += 8.0
+			if rng.randf() < 0.16:
+				var fam := "great_axe" if rng.randf() < 0.65 else "pickaxe"
+				var drop := LootGen.roll_gear(fam, rng)
+				Game.add_to_bag(drop)
+		Game.add_run_gold(gold_amt)
+	queue_free()
+
+
+func _player() -> Player:
+	var n := get_tree().get_first_node_in_group("player")
+	return n as Player
