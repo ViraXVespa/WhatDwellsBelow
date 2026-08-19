@@ -2,6 +2,9 @@
 .godot/
 /android/
 *.translation
+export_credentials.cfg
+export_credentials.cfg.uid
+
 
 # Local scratch from asset processing
 _src/
@@ -19,3 +22,5 @@ tools/__pycache__/
 Thumbs.db
 .DS_Store
 *.tmp
+godot-*.log
+godot-*.err
