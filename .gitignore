@@ -11,6 +11,10 @@ _rng*.jpg
 _gen_*.jpg
 _rngw_*.jpg
 
+# Python
+tools/__pycache__/
+*.pyc
+
 # OS / editor
 Thumbs.db
 .DS_Store
