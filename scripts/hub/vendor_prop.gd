@@ -5,9 +5,11 @@ extends Interactable
 func _ready() -> void:
 	super._ready()
 	prompt = "Vendor"
-	var spr := Sprite2D.new()
-	spr.texture = Art.body(Vector2i(56, 56), Color(0.55, 0.35, 0.2), Color(0.9, 0.75, 0.4))
-	add_child(spr)
+	var tex := Art.load_tex("res://assets/sprites/npcs/vendor.png")
+	if tex == null:
+		tex = Art.body(Vector2i(56, 56), Color(0.55, 0.35, 0.2), Color(0.9, 0.75, 0.4))
+	add_child(Art.make_sprite(tex, 0.82))
+	Art.add_blocker(self, Vector2(30, 36))
 
 
 func interact(_player: Node) -> void:

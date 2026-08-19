@@ -7,9 +7,10 @@ var destinations: Array = []
 func _ready() -> void:
 	super._ready()
 	prompt = "Floor crystal"
-	var spr := Sprite2D.new()
-	spr.texture = Art.solid(Vector2i(44, 64), Color(0.35, 0.85, 0.9))
-	add_child(spr)
+	var tex := Art.load_tex("res://assets/sprites/props/crystal.png")
+	if tex == null:
+		tex = Art.solid(Vector2i(44, 64), Color(0.35, 0.85, 0.9))
+	add_child(Art.make_sprite(tex, 0.85))
 
 
 func get_prompt() -> String:

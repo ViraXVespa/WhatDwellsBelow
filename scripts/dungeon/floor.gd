@@ -87,7 +87,7 @@ func _collisions() -> void:
 
 func _fog() -> void:
 	fog_img = Image.create(data.w, data.h, false, Image.FORMAT_RGBA8)
-	fog_img.fill(Color(0.02, 0.02, 0.04, 0.88))
+	fog_img.fill(Color(0, 0, 0, 1))
 	fog_tex = ImageTexture.create_from_image(fog_img)
 	fog_sprite = Sprite2D.new()
 	fog_sprite.texture = fog_tex

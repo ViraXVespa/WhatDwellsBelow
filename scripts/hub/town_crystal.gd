@@ -5,9 +5,12 @@ extends Interactable
 func _ready() -> void:
 	super._ready()
 	prompt = "Enter the dungeon"
-	var spr := Sprite2D.new()
-	spr.texture = Art.solid(Vector2i(56, 80), Color(0.3, 0.85, 0.92))
-	add_child(spr)
+	var tex := Art.load_tex("res://assets/sprites/props/crystal.png")
+	if tex == null:
+		tex = Art.solid(Vector2i(56, 80), Color(0.3, 0.85, 0.92))
+	add_child(Art.make_sprite(tex, 0.95))
+	# Plinth sits below the texture center.
+	Art.add_blocker(self, Vector2(54, 28), Vector2(0, 38))
 
 
 func interact(_player: Node) -> void:

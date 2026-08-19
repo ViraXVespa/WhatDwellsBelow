@@ -20,9 +20,10 @@ func _ready() -> void:
 	sh.radius = 8
 	cs.shape = sh
 	add_child(cs)
-	var spr := Sprite2D.new()
-	spr.texture = Art.solid(Vector2i(12, 12), Color(0.85, 0.35, 0.2))
-	add_child(spr)
+	var tex := Art.load_tex("res://assets/sprites/props/bolt.png")
+	if tex == null:
+		tex = Art.solid(Vector2i(12, 12), Color(0.85, 0.35, 0.2))
+	add_child(Art.make_sprite(tex, 0.55))
 	body_entered.connect(_on_body)
 
 

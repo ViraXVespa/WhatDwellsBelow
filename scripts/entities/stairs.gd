@@ -7,9 +7,10 @@ var locked := false
 func _ready() -> void:
 	super._ready()
 	prompt = "Descend"
-	var spr := Sprite2D.new()
-	spr.texture = Art.stairs(Vector2i(64, 64))
-	add_child(spr)
+	var tex := Art.load_tex("res://assets/sprites/props/stairs.png")
+	if tex == null:
+		tex = Art.stairs(Vector2i(64, 64))
+	add_child(Art.make_sprite(tex, 0.9))
 	var lab := Label.new()
 	lab.text = "STAIRS"
 	lab.position = Vector2(-34, -50)

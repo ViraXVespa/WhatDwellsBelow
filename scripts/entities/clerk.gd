@@ -55,14 +55,16 @@ func family_accepted() -> String:
 
 func _ready() -> void:
 	super._ready()
-	var col := Color(0.75, 0.62, 0.28)
-	if clerk_id == "gopher":
-		col = Color(0.55, 0.45, 0.75)
-	elif clerk_id == "runner":
-		col = Color(0.45, 0.6, 0.75)
-	var spr := Sprite2D.new()
-	spr.texture = Art.body(Vector2i(56, 56), col, Color(0.95, 0.9, 0.7))
-	add_child(spr)
+	var path := "res://assets/sprites/npcs/%s.png" % clerk_id
+	var tex := Art.load_tex(path)
+	if tex == null:
+		var col := Color(0.75, 0.62, 0.28)
+		if clerk_id == "gopher":
+			col = Color(0.55, 0.45, 0.75)
+		elif clerk_id == "runner":
+			col = Color(0.45, 0.6, 0.75)
+		tex = Art.body(Vector2i(56, 56), col, Color(0.95, 0.9, 0.7))
+	add_child(Art.make_sprite(tex, 0.82))
 	prompt = display_name()
 
 

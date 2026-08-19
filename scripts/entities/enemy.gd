@@ -109,8 +109,9 @@ func _ready() -> void:
 	motion_mode = MOTION_MODE_FLOATING
 	var cs := CollisionShape2D.new()
 	var sh := RectangleShape2D.new()
-	sh.size = Vector2(36, 36)
+	sh.size = Vector2(32, 36)
 	cs.shape = sh
+	cs.position = Vector2.ZERO
 	add_child(cs)
 
 
@@ -132,10 +133,8 @@ func _load_sprites() -> void:
 
 
 func _build_visual() -> void:
-	body_sprite = Sprite2D.new()
+	body_sprite = Art.make_sprite(null, 0.82)
 	body_sprite.name = "Body"
-	body_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	body_sprite.scale = Vector2(0.82, 0.82)
 	add_child(body_sprite)
 	_apply_sprite()
 	if body_sprite.texture == null:
@@ -144,7 +143,7 @@ func _build_visual() -> void:
 			col = Color(0.28, 0.62, 0.32)
 		elif role == "tank":
 			col = Color(0.28, 0.32, 0.72)
-		body_sprite.texture = Art.body(Vector2i(64, 64), col, col.lightened(0.3))
+		Art.apply_tex(body_sprite, Art.body(Vector2i(64, 64), col, col.lightened(0.3)))
 
 
 func _physics_process(delta: float) -> void:
@@ -282,11 +281,11 @@ func _apply_sprite() -> void:
 	var pose := _pose_name()
 	var key := "%s_%s" % [pose, facing]
 	if sprites.has(key):
-		body_sprite.texture = sprites[key]
+		Art.apply_tex(body_sprite, sprites[key], true)
 		return
 	var idle_key := "idle_%s" % facing
 	if sprites.has(idle_key):
-		body_sprite.texture = sprites[idle_key]
+		Art.apply_tex(body_sprite, sprites[idle_key], true)
 
 
 func _steer(to_player: Vector2, los: bool) -> Vector2:

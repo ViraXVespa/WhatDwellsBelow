@@ -9,9 +9,10 @@ func _ready() -> void:
 	super._ready()
 	rng.randomize()
 	prompt = "Search stash"
-	var spr := Sprite2D.new()
-	spr.texture = Art.chest(Vector2i(48, 40))
-	add_child(spr)
+	var tex := Art.load_tex("res://assets/sprites/props/chest.png")
+	if tex == null:
+		tex = Art.chest(Vector2i(48, 40))
+	add_child(Art.make_sprite(tex, 0.78))
 
 
 func get_prompt() -> String:

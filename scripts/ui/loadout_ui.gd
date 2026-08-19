@@ -4,9 +4,11 @@ extends CanvasLayer
 var panel: Panel
 var axe_list: ItemList
 var pick_list: ItemList
-var floor_list: ItemList
+var floor_box: HBoxContainer
+var floor_group: ButtonGroup
 var axes: Array = []
 var picks: Array = []
+var chosen_floor: int = 1
 
 
 func _ready() -> void:
@@ -38,10 +40,15 @@ func _ready() -> void:
 	pick_list = ItemList.new()
 	pick_list.custom_minimum_size = Vector2(0, 140)
 	v.add_child(pick_list)
-	v.add_child(_lab("Start at floor (town crystal)"))
-	floor_list = ItemList.new()
-	floor_list.custom_minimum_size = Vector2(0, 120)
-	v.add_child(floor_list)
+	v.add_child(_lab("Start at floor  (D-pad L/R)"))
+	floor_box = HBoxContainer.new()
+	floor_box.add_theme_constant_override("separation", 10)
+	v.add_child(floor_box)
+	var hint := Label.new()
+	hint.text = "D-pad / stick: move   A: confirm   B: back"
+	hint.add_theme_font_size_override("font_size", 16)
+	hint.add_theme_color_override("font_color", Color(0.75, 0.72, 0.65))
+	v.add_child(hint)
 	v.add_child(_btn("Enter the dungeon", _enter))
 	v.add_child(_btn("Cancel", close))
 	PadUi.wire(panel)
@@ -70,7 +77,9 @@ func close() -> void:
 func _fill() -> void:
 	axe_list.clear()
 	pick_list.clear()
-	floor_list.clear()
+	for c in floor_box.get_children():
+		floor_box.remove_child(c)
+		c.free()
 	axes = [ItemData.make_starter_axe()]
 	picks = [ItemData.make_starter_pickaxe()]
 	for it in Game.save.analyzed_axes:
@@ -86,20 +95,35 @@ func _fill() -> void:
 		pick_list.add_item(it.full_name())
 	pick_list.select(0)
 	var deep: int = Game.save.deepest_floor
+	floor_group = ButtonGroup.new()
+	chosen_floor = 1
 	for f in range(1, deep + 1):
-		floor_list.add_item("Floor %d" % f)
-	floor_list.select(0)
+		var b := Button.new()
+		b.text = "  %d  " % f
+		b.toggle_mode = true
+		b.button_group = floor_group
+		b.focus_mode = Control.FOCUS_ALL
+		b.custom_minimum_size = Vector2(72, 52)
+		b.set_meta("floor", f)
+		b.pressed.connect(_pick_floor.bind(f))
+		b.focus_entered.connect(_pick_floor.bind(f))
+		floor_box.add_child(b)
+		if f == 1:
+			b.button_pressed = true
+	PadUi.wire(floor_box)
 
 
 func _enter() -> void:
 	var ai := 0 if axe_list.get_selected_items().is_empty() else axe_list.get_selected_items()[0]
 	var pi := 0 if pick_list.get_selected_items().is_empty() else pick_list.get_selected_items()[0]
-	var fi := 0 if floor_list.get_selected_items().is_empty() else floor_list.get_selected_items()[0]
 	var w: ItemData = axes[ai]
 	var t: ItemData = picks[pi]
-	var fl := fi + 1
 	close()
-	Game.begin_run(w, t, fl)
+	Game.begin_run(w, t, chosen_floor)
+
+
+func _pick_floor(f: int) -> void:
+	chosen_floor = f
 
 
 func _lab(s: String) -> Label:

@@ -31,9 +31,10 @@ func _ready() -> void:
 	body.add_child(body_cs)
 	add_child(body)
 
-	var spr := Sprite2D.new()
-	spr.texture = Art.ore_vein(Vector2i(56, 56))
-	add_child(spr)
+	var tex := Art.load_tex("res://assets/sprites/props/ore.png")
+	if tex == null:
+		tex = Art.ore_vein(Vector2i(56, 56))
+	add_child(Art.make_sprite(tex, 0.72))
 
 
 func get_prompt() -> String:

@@ -295,6 +295,8 @@ Decided: floors are combat + gathering nodes + stairs/crystal + extract clerks, 
 Decided slice: **mining veins sit in room walls** (floor tiles with exactly one wall neighbor), with **collision** so they block like rocks. Not mid-room pickups. Other skills' nodes later by floor band.
 [TODO] Full-game: which gathering skills appear on which floor bands.
 Decided: **explored fog of war** + a **simple minimap of visited tiles**. No lighting puzzle / torch meter. Unvisited area is hidden; visited stays known (this run). Decided: fog resets each run (layouts are random anyway).
+Decided: unexplored and off-map is **black void**, not a gray rectangle of the generated grid. The minimap is a **local view around the player** (same void) — it must not show the floor’s bounding box. Cave walls that actually touch a room still draw; padding / unused fill does not.
+Decided (full game, not slice): **Cartography** is a real skill. Awake Cartography **widens the fog/minimap reveal radius** around that player. Slice keeps a fixed radius (currently 5 tiles) so the loop doesn’t wait on a fourth skill.
 
 Extraction (surface-send)
 Decided: send resources and gear up; gear is analyzed and recreatable; limited stored gear per type.
@@ -381,6 +383,7 @@ Decided starting list (will grow):
 - Adventuring (Firemaking and other misc. adventurey things)
 - Acrobatics
 - Stealth
+- Cartography (fog / minimap reveal; dungeon-only — see below)
 - Magic Masteries
 - Weapon mastery (per weapon type, already decided)
 - Character traits: Strength, Defense, Dexterity, etc.
@@ -388,8 +391,9 @@ Decided: **Cooking** is its own skill (public kitchen + food heals).
 [TODO] Prayer / runecraft / other RS classics still not on the list unless we add them.
 Healing
 Decided: **food** from the bag, limited by quantity. **Potions** exist, limited by **cooldown** (not just stack count). **HP regen works in combat**, but is too slow to keep you up in a real fight — food/potions/block are the actual survival tools.
-[TODO] Overlaps to resolve later: pickaxe trains Mining vs Quarrying depending on node? Acrobatics vs passive Dodge? Magic Masteries vs staff/wand weapon XP? Traits vs weapon mastery (both train in combat?).
-Decided slice skills: **mining + smithing + one weapon type**. (Harvesting/tools beyond pickaxe can wait.)
+[TODO] Overlaps to resolve later: pickaxe trains Mining vs Quarrying depending on node? Acrobatics vs passive Dodge? Magic Masteries vs staff/wand weapon XP? Traits vs weapon mastery (both train in combat?). Cartography vs Adventuring (mapping is Cartography, not Adventuring).
+Decided slice skills: **mining + smithing + one weapon type**. (Harvesting/tools beyond pickaxe can wait. **Cartography is full-game**, not slice.)
+Decided (full game): **Cartography** — awake level **widens fog/minimap reveal** around you. Run XP is a **lump on floor-leave** from **% of walkable tiles revealed** this floor (stairs / crystal-skip / death / dispel), then the usual 2% keep. Not a walk-around drip. No clerk. See §14 parked spec.
 Decided slice weapon: **Great Axe**.
 Decided: **production in both** (smith, cook, fletch, craft, construct, botany, etc. — city and dungeon if a station exists). **Gathering is dungeon-only** (no town ore/trees/fish as a skill loop). City anvils/kitchen are for processing what you extracted.
 
@@ -574,6 +578,11 @@ Later
 
 Full-game constraints parked from play (do not implement in the slice)
 - **Stealth / cover:** using walls as cover should train Stealth later. Keep LOS/cover honest in combat code so detection can hang on it. Not a stealth meter or crouch in the slice.
+- **Cartography:** exploration skill. Not gathering, no clerk, no town ore-loop. Dungeon-only run XP (same 2% keep-N fragment as other dungeon skills).
+  - **Level benefit:** awake Cartography increases **that player’s fog/minimap reveal radius** (slice is a flat 5-tile circle). Higher level = you light more floor as you walk. Fog is still per-run and shared on a floor in co-op; a high-cartography scout fills the party map faster because *their* circle is bigger. [TODO] Radius curve (placeholder: +1 tile per 10 awake levels, cap before a spawn-reveal-the-whole-floor).
+  - **XP grant:** not a drip while walking. When you **leave a floor** (stairs down, in-dungeon crystal skip to a deeper floor, death, or dispel), snapshot **% of walkable tiles revealed** on *that* floor (ignore solid walls — standing next to a wall doesn’t count toward 100%). Convert that % into Cartography run XP for everyone who was on the floor. You get paid for how much of the map you actually charted before moving on; a stairs-rush pays almost nothing, clearing alcoves pays. Last floor of a run still pays (death/dispel is a leave). Never paid twice for the same floor in one run.
+  - **XP shape:** `run_xp += floor_pot * revealed_walkable / total_walkable`. Linear with %. 0% explore = 0 XP. [TODO] `floor_pot` (scale vs a floor of mining). [TODO] optional small bonus for hitting 100% so finishing the last alcove isn’t a wash.
+  - Recap shows the Cartography fragment like Mining / Great Axe / Smithing. No extracted “map item” unless we add one later.
 
 ================================================================
 15. Open questions (blocker list)

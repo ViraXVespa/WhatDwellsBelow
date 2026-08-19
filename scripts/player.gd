@@ -39,12 +39,11 @@ func _ready() -> void:
 	motion_mode = MOTION_MODE_FLOATING
 	var cs := CollisionShape2D.new()
 	var sh := RectangleShape2D.new()
-	sh.size = Vector2(40, 40)
+	sh.size = Vector2(32, 40)
 	cs.shape = sh
+	cs.position = Vector2.ZERO
 	add_child(cs)
-	body_sprite = Sprite2D.new()
-	body_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	body_sprite.scale = Vector2(0.78, 0.78)
+	body_sprite = Art.make_sprite(null, 0.78)
 	add_child(body_sprite)
 	_load_facings()
 	_apply_facing()
@@ -124,10 +123,12 @@ func _apply_facing() -> void:
 	if key == facing_key and body_sprite.texture != null:
 		return
 	facing_key = key
+	var tex: Texture2D = null
 	if facing_sprites.has(key):
-		body_sprite.texture = facing_sprites[key]
+		tex = facing_sprites[key]
 	elif facing_sprites.has("down"):
-		body_sprite.texture = facing_sprites["down"]
+		tex = facing_sprites["down"]
+	Art.apply_tex(body_sprite, tex, true)
 
 
 func _cooldowns(delta: float) -> void:

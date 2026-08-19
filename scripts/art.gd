@@ -1,6 +1,92 @@
 class_name Art
 extends Object
 
+# Pin texture by offset so the sprite sits on the collider (not a half-size right shift).
+static func make_sprite(tex: Texture2D = null, scale := 1.0) -> Sprite2D:
+	var s := Sprite2D.new()
+	s.centered = false
+	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	s.scale = Vector2(scale, scale)
+	if tex:
+		apply_tex(s, tex)
+	return s
+
+
+static func apply_tex(s: Sprite2D, tex: Texture2D, anchor_body: bool = false) -> void:
+	s.texture = tex
+	if tex:
+		s.centered = false
+		s.offset = -body_pivot(tex) if anchor_body else -tex.get_size() * 0.5
+	else:
+		s.offset = Vector2.ZERO
+
+
+## Texture-space point that should sit on the node origin (torso / stand-point),
+## not the canvas center — otherwise 4-dir swaps orbit around the weapon.
+static func body_pivot(tex: Texture2D) -> Vector2:
+	if tex.has_meta("wdb_pivot"):
+		return tex.get_meta("wdb_pivot")
+	var fallback := tex.get_size() * 0.5
+	var img := tex.get_image()
+	if img == null:
+		return fallback
+	if img.is_compressed():
+		img.decompress()
+	var w := img.get_width()
+	var h := img.get_height()
+	var miny := h
+	var maxy := 0
+	for y in h:
+		for x in w:
+			if img.get_pixel(x, y).a > 0.1:
+				miny = mini(miny, y)
+				maxy = maxi(maxy, y)
+	if maxy <= miny:
+		tex.set_meta("wdb_pivot", fallback)
+		return fallback
+	var y0 := miny + int(float(maxy - miny) * 0.86)
+	var xs: Array[int] = []
+	var feet_y := miny
+	for y in range(y0, maxy + 1):
+		for x in w:
+			var c := img.get_pixel(x, y)
+			if c.a <= 0.1:
+				continue
+			var cyan := c.b > c.r + 0.06 and c.b > c.g + 0.04 and c.b > 0.32
+			if cyan:
+				continue
+			xs.append(x)
+			feet_y = maxi(feet_y, y)
+	if xs.is_empty():
+		tex.set_meta("wdb_pivot", fallback)
+		return fallback
+	xs.sort()
+	var fx := xs[xs.size() / 2]
+	var ty := feet_y - int(float(maxy - miny) * 0.38)
+	var pivot := Vector2(fx, ty)
+	tex.set_meta("wdb_pivot", pivot)
+	return pivot
+
+
+static func load_tex(path: String) -> Texture2D:
+	if path != "" and ResourceLoader.exists(path):
+		return load(path) as Texture2D
+	return null
+
+
+static func add_blocker(host: Node, size: Vector2, local_pos: Vector2 = Vector2.ZERO) -> void:
+	var body := StaticBody2D.new()
+	body.collision_layer = 1
+	body.collision_mask = 0
+	body.position = local_pos
+	var cs := CollisionShape2D.new()
+	var sh := RectangleShape2D.new()
+	sh.size = size
+	cs.shape = sh
+	body.add_child(cs)
+	host.add_child(body)
+
+
 static func solid(size: Vector2i, fill: Color) -> Texture2D:
 	var img := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
 	img.fill(fill)
