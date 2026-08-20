@@ -100,7 +100,7 @@ func _props() -> void:
 	add_child(crystal)
 	var guild := SignProp.new()
 	guild.position = Vector2(5.5 * TILE, 6.6 * TILE)
-	guild.setup("Guild", "The Adventure Guild. Crystal's always open. Dying's a workplace hazard — pack snacks.")
+	guild.setup("Guild", "Welcome to Placeholdia, pop. whoever showed up. Real city's still in permitting. Crystal's open. Dying's a workplace hazard — pack snacks.")
 	add_child(guild)
 	var vendor := VendorProp.new()
 	vendor.position = Vector2(18.5 * TILE, 6.6 * TILE)

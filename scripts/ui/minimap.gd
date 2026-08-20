@@ -18,7 +18,7 @@ func refresh() -> void:
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 1))
 	if not Game.in_dungeon:
-		draw_string(ThemeDB.fallback_font, Vector2(12, 28), "Town", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.9, 0.85, 0.7))
+		draw_string(ThemeDB.fallback_font, Vector2(12, 28), Game.DEMO_TOWN, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.9, 0.85, 0.7))
 		_border()
 		return
 	var dungeon := get_tree().current_scene

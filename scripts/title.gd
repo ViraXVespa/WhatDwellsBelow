@@ -42,9 +42,20 @@ func _ready() -> void:
 	var sub := _lab("A playable demo", 22, Color(0.86, 0.82, 0.72))
 	card.add_child(sub)
 
-	var prompt := _lab("A / Start  ·  click  to enter Vylenheim", 20, Color(0.95, 0.86, 0.4))
+	var prompt := _lab("A / Start  ·  click  to enter %s" % Game.DEMO_TOWN, 20, Color(0.95, 0.86, 0.4))
 	prompt.name = "Prompt"
 	card.add_child(prompt)
+
+	var patreon := LinkButton.new()
+	patreon.text = "Support on Patreon"
+	patreon.uri = Game.PATREON_URL
+	patreon.underline = LinkButton.UNDERLINE_MODE_ON_HOVER
+	patreon.add_theme_font_size_override("font_size", 18)
+	patreon.add_theme_color_override("font_color", Color(0.95, 0.55, 0.42))
+	patreon.add_theme_color_override("font_hover_color", Color(1.0, 0.72, 0.55))
+	patreon.add_theme_color_override("font_outline_color", Color(0.03, 0.05, 0.08))
+	patreon.add_theme_constant_override("outline_size", 6)
+	card.add_child(patreon)
 
 	fade = ColorRect.new()
 	fade.set_anchors_preset(Control.PRESET_FULL_RECT)

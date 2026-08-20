@@ -11,9 +11,10 @@ How to use this file
 
 Feedback convention (demo vs full game)
 The player does not label notes as demo vs full game. Grok decides:
-- If it belongs in the **public playable demo** — the included loop (Vylenheim plaza, Great Axe + pickaxe, 2–6 dungeon floors, hold-attack / dash / slam, mine, clerks, smashables, death/dispel recap, pad UI) **or** the look/feel/honesty of those systems so a stranger would take the game seriously — **build it**.
-- If it is a full-game system that this demo simply **omits** (other skills, biomes, extra weapons, co-op camera, stealth, story, Combat Level UI), **write it here**. Do not stub it as a greybox; leave it out until it can ship at demo quality.
-- This build is a **promotional playable demo / technical proof of concept**, not an in-studio vertical slice. It should feel like the finished game with features cut, not a limited prototype. Polish of included systems is in-scope.
+- If it belongs in the **public playable demo** — the included dungeon loop (Great Axe + pickaxe, 2–6 floors, hold-attack / dash / slam, mine, clerks, smashables, death/dispel recap, pad UI) **or** the look/feel/honesty of those systems so a stranger would take the game seriously — **build it**.
+- **Do not expand the demo city** (Placeholdia) unless the player explicitly asks. It is a staging fragment: crystal, guild, vendor, anvil, dumpster. City notes go in this file.
+- If it is a full-game system that this demo simply **omits** (other skills, biomes, extra weapons, co-op camera, stealth, story, Combat Level UI, the real city), **write it here**. Do not stub it as a greybox; leave it out until it can ship at demo quality.
+- This build is a **promotional playable demo / technical proof of concept**, not an in-studio vertical slice. It should feel like the finished game with features cut, not a limited prototype. Polish of included systems is in-scope. Hub expansion is not.
 - When unsure, park it in this file and ask only if the demo would be built wrong without an answer.
 
 ================================================================
@@ -324,7 +325,8 @@ Decided: story bosses at campaign beats; slice has none. Endless-challenge floor
 ================================================================
 
 Name
-Decided (provisional): **Vylenheim**. Town sprouted around a newly discovered dungeon. Player is among the **earliest adventurers** here.
+Decided (provisional, **full game**): **Vylenheim**. Town sprouted around a newly discovered dungeon. Player is among the **earliest adventurers** here.
+Decided (**demo hub**): **Placeholdia**. A pithy staging yard, not a city. It exists so you can reach the crystal, anvil, vendor, and dumpster. It is **not** Vylenheim and should not be built out toward Vylenheim unless the player explicitly asks. New plaza buildings, NPCs, districts, and hub quests are full-game (or a specific ask).
 
 Organization
 Decided: **Adventure Guild** — one node in a network of guilds that are **independent from the government**. The guild handles dungeon access (main economic driver).
@@ -336,7 +338,7 @@ Decided mix of authority:
 
 Layout
 Decided: static unless story progress or facility upgrades change it.
-Decided slice: **one plaza**. Full-game districts later.
+Decided demo: **one tiny plaza (Placeholdia)**. Full-game Vylenheim districts later. Do not grow Placeholdia into a fake Vylenheim.
 [TODO] Fast travel inside the city?
 
 Facilities (known)
@@ -577,10 +579,10 @@ Full vision (from original)
 Extravagant skills, many weapon types, a living city, deep procgen dungeon, extraction/recreation, dreamlike XP, story that can reshape the hub. Couch co-op on Xbox is the long-term design center.
 
 Now (playable demo) — **build contract**
-**Walk Vylenheim, take a Great Axe and pickaxe through the guild crystal, delve 2–6 traditional-dungeon floors (hold-to-attack, dash, slam, mine, smash pots), mail loot at clerks, die or pause-dispel, and wake with banked ore, a fragment of XP, and any analyzed white/green axes. A stranger should recognize this as What Dwells Below, not a prototype of it.**
+**Stage out of Placeholdia (a joke of a hub, not the real city), take a Great Axe and pickaxe through the guild crystal, delve 2–6 traditional-dungeon floors (hold-to-attack, dash, slam, mine, smash pots), mail loot at clerks, die or pause-dispel, and wake with banked ore, a fragment of XP, and any analyzed white/green axes. The dungeon should feel like What Dwells Below; the town should feel like a labeled placeholder.**
 
 What's in this demo:
-- 1 city plaza: big crystal, guild presence, one vendor, anvil (smithing). Optional dumpster-intro can wait.
+- **Placeholdia**: one tiny plaza — crystal, guild sign, vendor, anvil, dumpster. Frozen unless the player asks to change the hub. Not Vylenheim.
 - Loadout: Great Axe + pickaxe. 28-slot bag. Food D-pad Left, potion D-pad Up.
 - Dungeon: 2–6 floors, traditional dungeon tileset, three enemy roles (melee bruiser, ranged, tank), mining nodes, smashable pots/barrels. Floor Guardian every 3rd floor. Main path never tool-locked; optional pickaxe side room is fine.
 - Clerks: 1 gathering + 1 misc per floor (real rules). Gold extract rule included. Crystal next to floor spawn.
@@ -591,10 +593,10 @@ What's in this demo:
 - Solo only in this demo. Don't block 2-pane / couch later. Online out of demo.
 
 What's *not* in (full game, cut — not unfinished):
-Other gathering/production skills, extra starting weapons, biomes, co-op, character customization layers, story/intro, Combat Level UI, Cartography, city districts/upgrades, blues+ loot.
+Other gathering/production skills, extra starting weapons, biomes, co-op, character customization layers, story/intro, Combat Level UI, Cartography, **Vylenheim / city districts / hub upgrades**, blues+ loot.
 
 Next (still demo-quality if we add them)
-[TODO] Second weapon type, city upgrade, second skill, biome/floor 2 aesthetics — only when they can ship at the same presentation bar.
+[TODO] Second weapon type, second skill, biome/floor 2 aesthetics — only when they can ship at the same presentation bar. City work only on an explicit ask.
 
 Later
 [TODO] Full skill list, bosses, story beats, extra facilities, more weapon masteries, couch co-op.

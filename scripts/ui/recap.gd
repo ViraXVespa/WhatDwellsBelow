@@ -55,7 +55,7 @@ func _ready() -> void:
 	s.add_theme_font_size_override("font_size", 22)
 	strip.add_child(s)
 	var b := Button.new()
-	b.text = "Back to Vylenheim"
+	b.text = "Back to %s" % Game.DEMO_TOWN
 	b.custom_minimum_size = Vector2(0, 56)
 	b.pressed.connect(func(): Game.go_plaza())
 	v.add_child(b)

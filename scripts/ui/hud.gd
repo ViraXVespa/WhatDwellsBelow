@@ -236,7 +236,8 @@ func _process(_delta: float) -> void:
 		mana_bar.value = 50
 		hp_val.text = "100/100"
 		mana_val.text = "50/50"
-		info.text = "Vylenheim    Gold %d    Ore %d    Deepest %d    Axe L%d  Mine L%d  Smith L%d" % [
+		info.text = "%s    Gold %d    Ore %d    Deepest %d    Axe L%d  Mine L%d  Smith L%d" % [
+			Game.DEMO_TOWN,
 			Game.save.gold if Game.save else 0,
 			Game.save.banked_ore if Game.save else 0,
 			Game.save.deepest_floor if Game.save else 1,

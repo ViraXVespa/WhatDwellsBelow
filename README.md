@@ -2,11 +2,13 @@
 
 A gamepad-first 2D dungeon crawler: RuneScape-style skills mashed with Heroes of Hammerwatch.
 
-**Playable demo** — a polished proof of the full game, not a greybox. Walk Vylenheim, take a Great Axe and pickaxe into the dungeon, fight, mine, extract, and wake with a fragment of what you earned. It should look and feel like What Dwells Below; a lot of the full game (other skills, weapons, biomes, co-op, story) is simply not in this build yet.
+**Playable demo** — a polished proof of the full game, not a greybox. Staging hub is **Placeholdia** (a fragment, not the real city). Take a Great Axe and pickaxe into the dungeon, fight, mine, extract, and wake with a fragment of what you earned. It should look and feel like What Dwells Below; a lot of the full game (other skills, weapons, biomes, co-op, story, the actual city) is simply not in this build yet.
 
 ## Play in the browser
 
 **[Play the demo](https://viraxvespa.github.io/WhatDwellsBelow/)** on GitHub Pages.
+
+Support development on **[Patreon](https://www.patreon.com/cw/ViraXVespa)**.
 
 Click the game once so the canvas can take keyboard / gamepad input. Xbox pad works in Chromium-based browsers; WASD + mouse still work.
 
@@ -28,4 +30,4 @@ That writes into `docs/`, which Pages serves from `main`.
 Editor: Play (`F5`).  
 Keyboard: WASD, mouse aim, LMB hold-attack, Space dash, Shift slam, E interact.
 
-Proudly vibecoded with Grok by [@ViraXVespa](https://github.com/ViraXVespa).
+Proudly vibecoded with Grok by [@ViraXVespa](https://github.com/ViraXVespa). [Patreon](https://www.patreon.com/cw/ViraXVespa).

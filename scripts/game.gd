@@ -6,6 +6,9 @@ signal gold_changed
 signal floor_changed
 signal skill_leveled(skill: String, new_level: int)
 
+const DEMO_TOWN := "Placeholdia"
+const PATREON_URL := "https://www.patreon.com/cw/ViraXVespa"
+
 var save: SaveData
 var run: RunState
 var in_dungeon: bool = false
