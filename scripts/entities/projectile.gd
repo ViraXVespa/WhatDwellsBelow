@@ -39,7 +39,7 @@ func _physics_process(delta: float) -> void:
 	if not hit.is_empty():
 		var col = hit.get("collider")
 		if col is Player:
-			(col as Player).take_damage(damage)
+			(col as Player).take_damage(damage, global_position)
 		queue_free()
 		return
 	position += motion
@@ -50,7 +50,7 @@ func _physics_process(delta: float) -> void:
 
 func _on_body(body: Node) -> void:
 	if body is Player:
-		(body as Player).take_damage(damage)
+		(body as Player).take_damage(damage, global_position)
 		queue_free()
 		return
 	if body is StaticBody2D:

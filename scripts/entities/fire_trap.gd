@@ -42,6 +42,6 @@ func _process(delta: float) -> void:
 			var p := a as Player
 			if p.iframe > 0.0:
 				continue
-			p.take_damage(DMG)
+			p.take_damage(DMG, global_position)
 			burned = true
 			break

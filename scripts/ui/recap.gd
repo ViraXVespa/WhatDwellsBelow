@@ -33,11 +33,16 @@ func _ready() -> void:
 	sub.add_theme_font_size_override("font_size", 20)
 	v.add_child(sub)
 	var strip := Panel.new()
-	strip.custom_minimum_size = Vector2(0, 280)
+	strip.custom_minimum_size = Vector2(0, 300)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.07, 0.08, 0.11, 0.94)
+	sb.border_color = Color(0.45, 0.38, 0.22)
+	sb.set_border_width_all(2)
+	strip.add_theme_stylebox_override("panel", sb)
 	v.add_child(strip)
 	var s := Label.new()
 	s.position = Vector2(24, 16)
-	s.size = Vector2(900, 250)
+	s.size = Vector2(900, 270)
 	var gear_lines := ""
 	for g in r.get("gear", []):
 		gear_lines += "\n  mailed: %s" % str(g)

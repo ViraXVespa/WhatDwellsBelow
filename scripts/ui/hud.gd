@@ -240,8 +240,6 @@ func _process(_delta: float) -> void:
 	if Game.run:
 		hp_bar.max_value = Game.run.max_hp
 		hp_bar.value = Game.run.hp
-		mana_bar.max_value = Game.run.max_mana
-		mana_bar.value = Game.run.mana
 		hp_val.text = "%d/%d" % [int(Game.run.hp), int(Game.run.max_hp)]
 		if pot_bar:
 			var pcd := Game.run.potion_cd
@@ -272,8 +270,6 @@ func _process(_delta: float) -> void:
 	else:
 		hp_bar.max_value = 100
 		hp_bar.value = 100
-		mana_bar.max_value = 50
-		mana_bar.value = 50
 		hp_val.text = "100/100"
 		if pot_val:
 			pot_val.text = "—"
@@ -316,7 +312,7 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("map_view") and Game.in_dungeon:
+	if event.is_action_pressed("map_view") and Game.in_dungeon and not get_tree().paused:
 		map_open = not map_open
 		if big_map:
 			big_map.visible = map_open

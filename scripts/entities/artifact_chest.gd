@@ -29,7 +29,9 @@ func interact(_player: Node) -> void:
 	modulate = Color(0.5, 0.5, 0.52)
 	var art_s = load("res://scripts/data/artifacts.gd")
 	var art: Dictionary = art_s.pick(rng, Game.run.artifact_ids)
-	Game.give_artifact(str(art.id))
 	var gold_amt := rng.randi_range(8, 22)
 	Game.add_run_gold(gold_amt)
-	Game.toast("%s  (+%dg)" % [str(art.get("name", "Relic")), gold_amt], Color(0.92, 0.78, 0.45))
+	if Game.give_artifact(str(art.id)):
+		Game.toast("%s  (+%dg)" % [str(art.get("name", "Relic")), gold_amt], Color(0.92, 0.78, 0.45))
+	else:
+		Game.toast("Coin, and a relic you already carry. (+%dg)" % gold_amt, Color(0.92, 0.78, 0.45))

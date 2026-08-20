@@ -5,6 +5,7 @@ var panel: Panel
 var hint: Label
 var list: ItemList
 var stock: Array = []
+var bought := 0
 var rng := RandomNumberGenerator.new()
 
 
@@ -83,12 +84,11 @@ func _roll_stock() -> void:
 func _refresh() -> void:
 	list.clear()
 	var gold := Game.run.gold if Game.run else 0
-	var buys := Game.run.shop_buys if Game.run else 0
-	hint.text = "Gold on you: %d\nI don't mail gold. Clerks do that. Two artifacts max, then I just look smug.\nArtifacts bought: %d/2" % [gold, buys]
+	hint.text = "Gold on you: %d\nI don't mail gold. Clerks do that. Two relics max from me, then I just look smug.\nArtifacts bought: %d/2" % [gold, bought]
 	for i in stock.size():
 		var row: Dictionary = stock[i]
 		var tag := "SOLD" if row.get("sold") else "%dg" % int(row.price)
-		if row.get("kind") == "art" and Game.run and Game.run.shop_buys >= 2 and not row.get("sold"):
+		if row.get("kind") == "art" and bought >= 2 and not row.get("sold"):
 			tag = "LOCKED"
 		list.add_item("%s  [%s]  %s" % [str(row.name), tag, str(row.get("desc", ""))])
 		list.set_item_metadata(list.item_count - 1, {"kind": "stock", "i": i})
@@ -114,21 +114,28 @@ func _buy() -> void:
 	var row: Dictionary = stock[i]
 	if row.get("sold"):
 		return
-	if row.get("kind") == "art" and Game.run.shop_buys >= 2:
+	if row.get("kind") == "art" and bought >= 2:
 		hint.text = "Two's the house limit. Snacks still exist. Gold still doesn't go up."
+		return
+	if row.get("kind") == "art" and Game.run.artifact_ids.has(str(row.id)):
+		hint.text = "You already carry that whisper. I don't double-charge ghosts."
 		return
 	var price := int(row.price)
 	if Game.run.gold < price:
 		hint.text = "Cute. Come back with coins that aren't imaginary."
 		return
-	Game.run.gold -= price
-	Game.gold_changed.emit()
 	if row.get("kind") == "art":
-		Game.give_artifact(str(row.id))
-		Game.run.shop_buys += 1
+		if not Game.give_artifact(str(row.id)):
+			hint.text = "That one's already living in your dream."
+			return
+		Game.run.gold -= price
+		Game.gold_changed.emit()
+		bought += 1
 		row.sold = true
 		stock[i] = row
 	else:
+		Game.run.gold -= price
+		Game.gold_changed.emit()
 		if not Game.add_to_bag(ItemData.make_food(1)):
 			var p := get_tree().get_first_node_in_group("player")
 			var pos := p.global_position if p is Node2D else Vector2.ZERO

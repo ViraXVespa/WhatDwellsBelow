@@ -13,7 +13,6 @@ var save: SaveData
 var run: RunState
 var in_dungeon: bool = false
 var last_recap: Dictionary = {}
-var overwrite_queue: ItemData = null
 
 var plaza_scene := "res://scenes/plaza.tscn"
 var dungeon_scene := "res://scenes/dungeon_floor.tscn"
@@ -58,7 +57,6 @@ func wipe_save() -> void:
 	run = null
 	in_dungeon = false
 	last_recap = {}
-	overwrite_queue = null
 	get_tree().paused = false
 	var da := DirAccess.open("user://")
 	if da:
@@ -389,14 +387,16 @@ func _maybe_destroy_hold(it: ItemData) -> void:
 			return
 
 
-func give_artifact(id: String) -> void:
+func give_artifact(id: String) -> bool:
 	if run == null:
-		return
+		return false
 	var art_s := load("res://scripts/data/artifacts.gd")
 	var nm := str(art_s.apply(run, id))
-	if nm != "":
-		toast("Artifact: %s" % nm, Color(0.85, 0.72, 1.0))
-		Sfx.play("level")
+	if nm == "" or nm == "<null>":
+		return false
+	toast("Artifact: %s" % nm, Color(0.85, 0.72, 1.0))
+	Sfx.play("level")
+	return true
 
 
 func extract_misc(index: int) -> bool:

@@ -288,7 +288,7 @@ func _ai_melee(delta: float, player: Player, to: Vector2, dist: float, los: bool
 			move_and_slide()
 			phase_t += delta
 			if not hit_this_lunge and global_position.distance_to(player.global_position) <= 46.0:
-				player.take_damage(contact_damage)
+				player.take_damage(contact_damage, global_position)
 				hit_this_lunge = true
 			if phase_t >= lunge_time:
 				phase = Phase.RECOVER
@@ -461,8 +461,6 @@ func _die() -> void:
 			gold_amt = rng.randi_range(40, 70) + Game.run.current_floor * 8
 			Game.grant_xp("great_axe", 40.0)
 			var drop := LootGen.roll_gear("great_axe", rng)
-			if rng.randf() < 0.55:
-				drop.rarity = ItemData.Rarity.GREEN
 			Game.give_or_drop(drop, global_position)
 			if rng.randf() < 0.5:
 				var art_s = load("res://scripts/data/artifacts.gd")

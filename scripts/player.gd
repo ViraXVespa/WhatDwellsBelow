@@ -35,6 +35,8 @@ var attack_i := 0
 var attack_t := 0.0
 var attacking := false
 var dying := false
+var knock := Vector2.ZERO
+var knock_t := 0.0
 const WALK_FPS := 8.0
 const ATTACK_FPS := 10.0
 
@@ -66,6 +68,12 @@ func _physics_process(delta: float) -> void:
 	if get_tree().paused:
 		return
 	_cooldowns(delta)
+	if knock_t > 0.0:
+		knock_t -= delta
+		velocity = knock
+		move_and_slide()
+		_apply_facing(delta)
+		return
 	if channeling:
 		_process_channel(delta)
 		velocity = Vector2.ZERO
@@ -396,7 +404,7 @@ func interrupt_channel() -> void:
 	channel_t = 0.0
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, from_pos: Vector2 = Vector2.INF) -> void:
 	if iframe > 0.0:
 		return
 	if not Game.in_dungeon or Game.run == null:
@@ -404,6 +412,11 @@ func take_damage(amount: float) -> void:
 	interrupt_channel()
 	flash = 0.12
 	iframe = 0.08
+	if from_pos != Vector2.INF:
+		var k := global_position - from_pos
+		if k.length() > 0.01:
+			knock = k.normalized() * 280.0
+			knock_t = 0.12
 	Sfx.play("hurt")
 	var n := FloatNum.new()
 	n.global_position = global_position + Vector2(0, -40)
@@ -456,6 +469,7 @@ func _use_consumable(family: String) -> void:
 		return
 	var it := Game.run.consume_family(family)
 	if it == null:
+		Game.toast("No food in the bag.", Color(0.9, 0.7, 0.55))
 		return
 	Game.heal_player(it.heal)
 	Game.bag_changed.emit()

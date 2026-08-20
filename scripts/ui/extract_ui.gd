@@ -36,7 +36,9 @@ func _ready() -> void:
 	list.custom_minimum_size = Vector2(0, 280)
 	v.add_child(list)
 	v.add_child(_btn("Analyze selected (recipe)", _send_selected))
-	v.add_child(_btn("Send selected for Smithing XP", _send_xp))
+	var xp_b := _btn("Send selected for Smithing XP", _send_xp)
+	xp_b.name = "XpBtn"
+	v.add_child(xp_b)
 	v.add_child(_btn("Send gold instead (50% to town, 10% fee, clerk spent)", _send_gold))
 	v.add_child(_btn("Close", close))
 	PadUi.wire(panel)
@@ -74,6 +76,9 @@ func _refresh() -> void:
 	if clerk == null or Game.run == null:
 		return
 	title.text = clerk.display_name()
+	var xp_b := panel.find_child("XpBtn", true, false) as Button
+	if xp_b:
+		xp_b.visible = clerk.clerk_id == "gopher" or clerk.clerk_id == "patty"
 	if clerk.clerk_id == "gopher":
 		hint.text = "Gear Gopher. Unequip first — I only take bag gear. Analyze now = anvil recipe. If you already unlocked that family, you can send extras for Smithing XP instead."
 		if clerk.spent_normal:
@@ -87,7 +92,7 @@ func _refresh() -> void:
 				list.add_item("%s  [%s]" % [it.full_name(), extra])
 				list.set_item_metadata(list.item_count - 1, row.index)
 	elif clerk.clerk_id == "runner":
-		hint.text = "Guild Runner. Food, potions, junk. Not rocks, not your fancy axe. I have a route."
+		hint.text = "Guild Runner. Food and junk. Gear and drinks go to the Gopher. I have a route."
 		if clerk.spent_normal:
 			hint.text += "\nThat's my last parcel."
 		else:
@@ -177,6 +182,9 @@ func _send_gold() -> void:
 	if clerk == null or Game.run == null:
 		return
 	if clerk.spent_gold:
+		return
+	if Game.run.gold <= 0:
+		hint.text = "You're not carrying gold to mail."
 		return
 	Game.mail_gold()
 	clerk.spent_gold = true

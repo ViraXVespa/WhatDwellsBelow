@@ -49,9 +49,7 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 		if d > best_d:
 			best_d = d
 			stairs_room = r
-	var gather: String = "miner"
-	if floor_number != 1:
-		gather = String(GATHER_TYPES[rng.randi_range(0, GATHER_TYPES.size() - 1)])
+	var gather: String = String(GATHER_TYPES[rng.randi_range(0, GATHER_TYPES.size() - 1)])
 	var misc: String = String(MISC_TYPES[rng.randi_range(0, MISC_TYPES.size() - 1)])
 	# Crystal sits on the north wall of the start room; player appears one tile south.
 	var crystal := Vector2i(entrance.position.x + entrance.size.x / 2, entrance.position.y + 1)

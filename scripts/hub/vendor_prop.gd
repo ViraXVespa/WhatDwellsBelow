@@ -1,9 +1,12 @@
 class_name VendorProp
 extends Interactable
 
+var _layer: CanvasLayer
+
 
 func _ready() -> void:
 	super._ready()
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	prompt = "Talk: stall auntie"
 	var tex := Art.load_tex("res://assets/sprites/npcs/vendor.png")
 	if tex == null:
@@ -13,7 +16,17 @@ func _ready() -> void:
 
 
 func interact(_player: Node) -> void:
+	if _layer:
+		return
 	_open()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _layer == null:
+		return
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
+		_close_shop()
+		get_viewport().set_input_as_handled()
 
 
 func _open() -> void:
@@ -65,14 +78,18 @@ func _open() -> void:
 		Game.save.write()
 		lab.text = _copy() + "\nUgly ore. Pretty coins. Everybody wins."
 	))
-	v.add_child(_btn("Close", func():
-		get_tree().paused = false
-		layer.queue_free()
-	))
+	v.add_child(_btn("Close", _close_shop))
 	PadUi.wire(panel)
+	_layer = layer
 	get_tree().root.add_child(layer)
 	PadUi.focus_first(panel)
-	layer.set_process_unhandled_input(true)
+
+
+func _close_shop() -> void:
+	get_tree().paused = false
+	if _layer:
+		_layer.queue_free()
+		_layer = null
 
 
 func _copy() -> String:
