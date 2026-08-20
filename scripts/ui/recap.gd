@@ -14,11 +14,15 @@ func _ready() -> void:
 	v.add_theme_constant_override("separation", 12)
 	add_child(v)
 	var title := Label.new()
-	title.text = "You woke up." if r.get("voluntary", false) else "You woke up. That one stung."
+	var sub := Label.new()
+	if r.get("voluntary", false):
+		title.text = "You pulled the plug."
+		sub.text = "Cleaner disconnect. Still forgot most of it. That's the job."
+	else:
+		title.text = "You woke up. That one stung."
+		sub.text = "Hurt like hell. That's why the dream doesn't stick. Shake it off."
 	title.add_theme_font_size_override("font_size", 40)
 	v.add_child(title)
-	var sub := Label.new()
-	sub.text = "Career hazard. Shake it off."
 	sub.add_theme_font_size_override("font_size", 20)
 	v.add_child(sub)
 	var strip := Panel.new()

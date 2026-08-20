@@ -27,7 +27,7 @@ var body_sprite: Sprite2D
 var flash := 0.0
 var facing_sprites: Dictionary = {}
 var walk_sprites: Dictionary = {}
-var attack_sprites: Array = []
+var attack_sprites: Dictionary = {}
 var facing_key := "down"
 var walk_i := 0
 var walk_t := 0.0
@@ -124,10 +124,14 @@ func _load_facings() -> void:
 			walk_sprites[k] = frames
 	if facing_sprites.is_empty():
 		facing_sprites["down"] = Art.body(Vector2i(64, 64), Color(0.24, 0.49, 0.72), Color(0.94, 0.84, 0.38))
-	for i in 8:
-		var ap := "res://assets/sprites/player/attack_down_%d.png" % i
-		if ResourceLoader.exists(ap):
-			attack_sprites.append(load(ap))
+	for k in ["down", "up", "left", "right"]:
+		var frames: Array = []
+		for i in 8:
+			var ap := "res://assets/sprites/player/attack_%s_%d.png" % [k, i]
+			if ResourceLoader.exists(ap):
+				frames.append(load(ap))
+		if not frames.is_empty():
+			attack_sprites[k] = frames
 
 
 func _walk_key(key: String) -> String:
@@ -140,16 +144,21 @@ func _apply_facing(delta: float) -> void:
 	var key := Art.pick_facing(aim_dir, facing_sprites)
 	facing_key = key
 	var tex: Texture2D = null
-	if attacking and not attack_sprites.is_empty():
-		attack_t += delta
-		var adv := int(attack_t * ATTACK_FPS)
-		if adv >= attack_sprites.size():
-			attacking = false
-			attack_t = 0.0
-			attack_i = 0
-		else:
-			attack_i = adv
-			tex = attack_sprites[attack_i]
+	if attacking:
+		var ak := Art.cardinal_from_dir(aim_dir)
+		if not attack_sprites.has(ak):
+			ak = "down"
+		if attack_sprites.has(ak):
+			var frames: Array = attack_sprites[ak]
+			attack_t += delta
+			var adv := int(attack_t * ATTACK_FPS)
+			if adv >= frames.size():
+				attacking = false
+				attack_t = 0.0
+				attack_i = 0
+			else:
+				attack_i = adv
+				tex = frames[attack_i]
 	var moving := velocity.length() > 28.0 and dash_timer <= 0.0 and not attacking
 	if tex == null and moving:
 		var wk := _walk_key(key)
@@ -175,6 +184,7 @@ func _cooldowns(delta: float) -> void:
 	iframe = maxf(0.0, iframe - delta)
 	if Game.run:
 		Game.run.potion_cd = maxf(0.0, Game.run.potion_cd - delta)
+		Game.run.shrine_buff_t = maxf(0.0, Game.run.shrine_buff_t - delta)
 
 
 func _update_aim(move: Vector2) -> void:
@@ -245,7 +255,9 @@ func _try_attack() -> void:
 		return
 	var w := _weapon()
 	attack_cd = w.attack_period
-	var dmg := w.damage
+	var dmg := w.damage * Skills.axe_damage_mult()
+	if Game.run and Game.run.shrine_buff_t > 0.0:
+		dmg *= 1.2
 	attacking = true
 	attack_t = 0.0
 	attack_i = 0
@@ -303,7 +315,7 @@ func _try_slam() -> bool:
 	slam_cd = SLAM_CD
 	attack_cd = maxf(attack_cd, 0.4)
 	Sfx.play("slam")
-	_hit_in_arc(_weapon().damage * 1.6, SLAM_RADIUS, false)
+	_hit_in_arc(_weapon().damage * 1.6 * Skills.axe_damage_mult(), SLAM_RADIUS, false)
 	var ring := Polygon2D.new()
 	ring.color = Color(0.9, 0.7, 0.2, 0.35)
 	var pts := PackedVector2Array()
@@ -372,6 +384,7 @@ func take_damage(amount: float) -> void:
 	interrupt_channel()
 	flash = 0.12
 	iframe = 0.08
+	Sfx.play("hurt")
 	Game.damage_player(amount)
 
 

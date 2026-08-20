@@ -151,6 +151,18 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 			occupied[bp] = true
 			breakables.append({"pos": bp, "kind": "pot" if rng.randf() < 0.6 else "barrel"})
 			placed += 1
+	var campfires: Array = []
+	var shrines: Array = []
+	var extras: Array[Rect2i] = []
+	for r: Rect2i in rooms:
+		if r == entrance or r == stairs_room or _is_safe_room(r, safe_rooms):
+			continue
+		extras.append(r)
+	extras.shuffle()
+	if extras.size() > 0:
+		campfires.append(_center(extras[0]))
+	if extras.size() > 1 and rng.randf() < 0.7:
+		shrines.append(_center(extras[1]))
 	return {
 		"w": W,
 		"h": H,
@@ -166,6 +178,8 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 		"enemies": enemies,
 		"loot": loot,
 		"breakables": breakables,
+		"campfires": campfires,
+		"shrines": shrines,
 		"boss": boss_floor,
 		"boss_pos": Vector2i(_center(stairs_room).x, _center(stairs_room).y - 1),
 		"spawn": spawn,

@@ -20,6 +20,14 @@ static func level_from_xp(xp: float) -> int:
 	return lvl
 
 
+static func axe_damage_mult() -> float:
+	return 1.0 + 0.04 * float(maxi(0, Game.skill_level("great_axe") - 1))
+
+
+static func mine_speed_mult() -> float:
+	return 1.0 + 0.05 * float(maxi(0, Game.skill_level("mining") - 1))
+
+
 static func label(skill: String) -> String:
 	match skill:
 		"mining":

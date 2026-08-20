@@ -58,7 +58,7 @@ func channel_time(_player: Node) -> float:
 	var mult := 1.0
 	if Game.run and Game.run.tool:
 		mult = Game.run.tool.gather_mult
-	return maxf(0.85, 1.85 / maxf(0.5, mult))
+	return maxf(0.7, 1.85 / maxf(0.5, mult) / Skills.mine_speed_mult())
 
 
 func complete_channel(player: Node) -> void:

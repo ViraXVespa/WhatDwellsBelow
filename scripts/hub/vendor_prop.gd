@@ -4,7 +4,7 @@ extends Interactable
 
 func _ready() -> void:
 	super._ready()
-	prompt = "Vendor"
+	prompt = "Talk: stall auntie"
 	var tex := Art.load_tex("res://assets/sprites/npcs/vendor.png")
 	if tex == null:
 		tex = Art.body(Vector2i(56, 56), Color(0.55, 0.35, 0.2), Color(0.9, 0.75, 0.4))
@@ -32,25 +32,38 @@ func _open() -> void:
 	v.offset_right = -24
 	v.offset_bottom = -24
 	panel.add_child(v)
+	Sfx.play("ui")
 	var lab := Label.new()
-	lab.text = "Vendor — gold: %d\nRation 5g  |  Potion 15g" % Game.save.gold
-	lab.add_theme_font_size_override("font_size", 22)
+	lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lab.text = _copy()
+	lab.add_theme_font_size_override("font_size", 20)
 	v.add_child(lab)
-	v.add_child(_btn("Buy ration (5g)", func():
+	v.add_child(_btn("Buy ration (5g) — next bag", func():
 		if Game.save.gold < 5:
+			lab.text = "I'm flattered. Your purse isn't."
 			return
 		Game.save.gold -= 5
 		Game.save.extra_food += 1
 		Game.save.write()
-		lab.text = "Vendor — gold: %d\nBought a ration (goes in your next delve bag)." % Game.save.gold
+		lab.text = _copy() + "\nRation's on the next dive. Don't skip breakfast in a hole."
 	))
-	v.add_child(_btn("Buy potion (15g)", func():
+	v.add_child(_btn("Buy potion (15g) — next bag", func():
 		if Game.save.gold < 15:
+			lab.text = "Potions are 15. That's not a negotiation, that's arithmetic."
 			return
 		Game.save.gold -= 15
 		Game.save.extra_potion += 1
 		Game.save.write()
-		lab.text = "Vendor — gold: %d\nBought a potion (goes in your next delve bag)." % Game.save.gold
+		lab.text = _copy() + "\nRed bottle. For when the job gets opinionated."
+	))
+	v.add_child(_btn("Sell 5 ore (10g)", func():
+		if Game.save.banked_ore < 5:
+			lab.text = "Bring me five rocks that used to be a wall. Then we talk."
+			return
+		Game.save.banked_ore -= 5
+		Game.save.gold += 10
+		Game.save.write()
+		lab.text = _copy() + "\nUgly ore. Pretty coins. Everybody wins."
 	))
 	v.add_child(_btn("Close", func():
 		get_tree().paused = false
@@ -60,6 +73,13 @@ func _open() -> void:
 	get_tree().root.add_child(layer)
 	PadUi.focus_first(panel)
 	layer.set_process_unhandled_input(true)
+
+
+func _copy() -> String:
+	return "Placeholdia stall. Gold %d. Banked ore %d.\nRations 5g. Potions 15g. I'll take 5 ore for 10g." % [
+		Game.save.gold if Game.save else 0,
+		Game.save.banked_ore if Game.save else 0,
+	]
 
 
 func _btn(text: String, cb: Callable) -> Button:

@@ -170,6 +170,16 @@ func _spawn_entities() -> void:
 			br.position = _world(row.pos)
 			add_child(br)
 			br.setup(String(row.kind))
+	if data.has("campfires"):
+		for cp in data.campfires:
+			var fire := Campfire.new()
+			fire.position = _world(cp)
+			add_child(fire)
+	if data.has("shrines"):
+		for sp in data.shrines:
+			var sh := FloorShrine.new()
+			sh.position = _world(sp)
+			add_child(sh)
 
 
 func _world(t: Vector2i) -> Vector2:

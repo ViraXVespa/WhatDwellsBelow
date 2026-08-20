@@ -74,7 +74,7 @@ func _refresh() -> void:
 		return
 	title.text = clerk.display_name()
 	if clerk.clerk_id == "gopher":
-		hint.text = "I'll take gear for analysis. 3 slots per type. You pick what to overwrite."
+		hint.text = "Gear Gopher. I'll take axes and picks for analysis. Three per type — you pick what to evict."
 		if clerk.spent_normal:
 			hint.text += "\nI've already done my gear run. Gold only — or goodbye."
 		else:
@@ -83,7 +83,7 @@ func _refresh() -> void:
 				list.add_item("%s  [%s]" % [it.full_name(), "green" if it.rarity == ItemData.Rarity.GREEN else "white"])
 				list.set_item_metadata(list.item_count - 1, row.index)
 	elif clerk.clerk_id == "runner":
-		hint.text = "Guild Runner. Misc goods — food, potions, junk. Not ore, not gear."
+		hint.text = "Guild Runner. Food, potions, junk. Not rocks, not your fancy axe. I have a route."
 		if clerk.spent_normal:
 			hint.text += "\nThat's my last parcel."
 		else:
@@ -94,7 +94,7 @@ func _refresh() -> void:
 					list.set_item_metadata(list.item_count - 1, i)
 	else:
 		var fam := clerk.family_accepted()
-		hint.text = "I'll take %s. If you want gold mailed instead, that's my whole shift." % fam
+		hint.text = "I'll take %s. Gold mail is my whole shift if you ask — pick one, I've got a lunch." % fam
 		if clerk.spent_normal:
 			hint.text = "I already took my category. Gold's still an option until I close shop."
 		else:

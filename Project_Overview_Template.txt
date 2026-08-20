@@ -22,8 +22,7 @@ The player does not label notes as demo vs full game. Grok decides:
 ================================================================
 
 One-liner
-[TODO] One sentence: who you are, what you do, why it's fun.
-Example shape: "A gamepad-first 2D dungeon crawler where you pilot disposable spirit avatars, extract loot to the surface, and slowly remember the skills you earned in the dark."
+Decided (public): **A gamepad-first dungeon crawler where you pilot disposable spirit avatars, mail loot home, and slowly remember the skills you earned in the dark.**
 
 Elevator pitch (from original)
 WDB is a mashup of RuneScape and Heroes of Hammerwatch. Gameplay is gamepad-focused with a 2D art style closer to Hammerwatch than RuneScape. The player empowers an extravagant number of skills and abilities through play. Skills such as woodcutting, mining, and smithing gather resources and craft armaments. Weapons each have their own experience and levels: big bonuses for that weapon type, smaller bonuses for all weapons, to encourage using a variety of weapons.
@@ -36,7 +35,7 @@ Core fantasy
 You do not physically enter the dungeon. You transfer consciousness into a Spirit Avatar. Avatars cannot leave; the connection must be destroyed or dispelled to wake up. Death/recall feels like waking from a dream: most of the adventure is forgotten, a fragment remains.
 
 Pillars
-[TODO] List 3-5 non-negotiable pillars. Drafts to edit or replace:
+Decided (public pitch — all five). Demo is solo; co-op is still a pillar of the *game*, sold as coming:
 1. Every delve feels like a new adventure; permanence is a fragment, not a full carry-over.
 2. Extraction is the real win condition — send it up or lose it.
 3. Gamepad-first Diablo/Hammerwatch action: smaller enemy groups, longer fights, not trash-mob swarms.
@@ -97,7 +96,7 @@ Decided: anything equippable is visible on the sprite (armor, weapon, tool, etc.
 [TODO] Optional late specializations / titles, or never?
 
 What "stronger" feels like
-- After one good run: [TODO] e.g. a new recreatable weapon and a sliver of mining XP.
+- After one good **demo** run: mailed **ore/gold** *and* a **visible power bump** from persistent XP (axe hits harder, mining channels faster). Recap sells both.
 - After 10 hours: [TODO]
 - After 100 hours: [TODO] extravagant skill list, city upgraded, deep floors, weapon masteries.
 
@@ -299,6 +298,7 @@ Decided: floors are combat + gathering nodes + stairs/crystal + extract clerks, 
 - Rest spots
 - Puzzle bits
 [TODO] What each actually *does* (campfire = cook? shrine = buff? ghost vendor = buys/sells in-dungeon for gold? rest = HP/mana? puzzles = loot/shortcut?). Spec per type later; they should feel like discoveries, not homework.
+Decided (**demo finds**): **campfire** (heal HP/mana) **and a shrine** (short combat buff). Ghost vendor / puzzles stay full-game.
 Decided slice: **mining veins sit in room walls** (floor tiles with exactly one wall neighbor), with **collision** so they block like rocks. Not mid-room pickups. Other skills' nodes later by floor band.
 [TODO] Full-game: which gathering skills appear on which floor bands.
 Decided: **explored fog of war** + a **simple minimap of visited tiles**. No lighting puzzle / torch meter. Unvisited area is hidden; visited stays known (this run). Decided: fog resets each run (layouts are random anyway).
@@ -342,7 +342,8 @@ Decided demo: **one tiny plaza (Placeholdia)**. Full-game Vylenheim districts la
 [TODO] Fast travel inside the city?
 
 Facilities (known)
-- Vendors (variety). Decided: buy/sell for gold. [TODO] Who, and what each stocks.
+- Vendors (variety). Decided: buy/sell for gold. [TODO] Who, and what each stocks (full Vylenheim).
+Decided (**demo, Placeholdia stall**): **buys ore for gold; sells food and potions.** No new building.
 - Anvils. Decided: same Smithing skill as in the dungeon; surface XP is 100% but much slower.
 - Public kitchen. Decided: **Cooking** is a skill. Food is eaten from the dungeon bag (quantity-limited) as a primary heal.
 - Dungeon entrance + loadout UI before entry. Entrance is a **large teleport crystal** (not a hole you walk into). From town it can send you to any floor that character has ever reached (co-op: up to the party's best).
@@ -411,6 +412,7 @@ Decided: fragment is **per skill**, not one shared pool. Uses **keep-N-per-run**
 Decided: base cap is **2%**. That base number **increases with the player's awake (permanent) level in that same skill** — a high-level miner remembers more mining from the dream than a newbie. Permanent character = "awake" skills; run XP = dream.
 Placeholder formula (slice): keep **2% of XP earned this run** in that skill (always the 2%, not "keep all of tiny amounts"). Awake-level scaling of that 2% comes later.
 Decided slice: **level-up feedback**. Crossing a level in Mining / Great Axe / Smithing pops a toast (`Great Axe level 3!`). HUD shows current levels. Recap notes if the 2% fragment pushed an awake level. Slice curve is a simple ramp (not OSRS's exact table).
+Decided (**demo math**): levels grant **small honest bonuses**. Great Axe level nudges damage. Mining level nudges channel speed. Smithing stays display-only for now. Floor number still rules difficulty.
 Decided: **surface skilling keeps 100% XP, but is much slower.** Safe catch-up / crafting XP in Vylenheim; the dungeon is still the real place to train. Anvils and kitchen grant awake XP at a crawl.
 [TODO] Soft caps, prestiges, or none.
 [TODO] Max level.
@@ -504,7 +506,8 @@ Decided mechanic-lore
 - Consciousness pilots a Spirit Avatar.
 - Avatars cannot leave the dungeon; they must be destroyed or dispelled to return.
 - Terminating the connection wipes most memories, like waking from a dream. That is why most XP does not stick.
-- In-universe, dying hurts badly; the shock is a major reason those memories don't stick. Dungeon diving is a respected career. [TODO] Voluntary pause-dispel: same pain/shock, or a cleaner (but still lossy) disconnect?
+- In-universe, dying hurts badly; the shock is a major reason those memories don't stick. Dungeon diving is a respected career.
+Decided: **death vs pause-dispel** share rewards/losses. Recap uses **one layout, richer distinction**: death copy admits it hurt; dispel is a cleaner (still lossy) disconnect.
 
 World questions
 [TODO] Why avatars exist and who/what binds them. Guild likely administers access/crystals.
@@ -514,7 +517,9 @@ Decided: the title is wonder/adventure at the unknown below, not a specific crea
 [TODO] What the campaign beat actually is (may stay secret in this doc).
 Decided (partial): story is optional context around an always-open hole. [TODO] Mix of NPC text vs environmental vs campaign-boss reveal — tune later. Not a cutscene-gated campaign.
 Decided: hopeful, humorous, career-adventurer (DanMachi-adjacent tonality — not a dating sim by default). Not grimdark, not dry-mythic.
-Decided (partial): intro is dumpster-to-adventurer gag with a receptionist — humorous NPC voice. [TODO] How much anime-banter vs dry game-manual for the rest of the cast.
+Decided (partial): intro is dumpster-to-adventurer gag with a receptionist — humorous NPC voice.
+Decided (**demo voice of copy**): **hopeful banter** — short career-hazard jokes. Not lore lectures. Clerks, recap, and Placeholdia signs share that voice.
+Decided (**demo VO**): **combat grunts only** (hit / hurt / effort). No spoken lines. Full VO later.
 
 Do not put the script in this file.
 
@@ -636,3 +641,12 @@ Resolved: title is the *sense of wonder* at what could be found below, not a pro
 
 Demo
 Locked: public playable demo / tech proof of concept. Same sentence as §14. Looks like the final game; omitted systems are cut, not stubbed. Promotional (Patreon and similar), not in-studio-only.
+
+Demo questions (2026-08)
+Decided: public one-liner as in §1.
+Decided: all five pillars; demo is solo, co-op sold as coming.
+Decided: one good run = mailed materials **and** a persistent XP power bump.
+Decided: hopeful banter; combat grunts only; small level bonuses; stall buys ore / sells food+pots; campfire + shrine; richer death vs dispel recap.
+Decided next art: **facing-correct axe swings first**, then enemy walk cycles.
+[TODO] Demo save: persist forever, or a visible New Demo wipe.
+[TODO] Passive Dodge / Block in the demo, or still slam/dash/HP only.

@@ -23,6 +23,7 @@ var visited_deepest: int = 1
 var seed_value: int = 0
 var gathering_spent: Dictionary = {}
 var misc_spent: Dictionary = {}
+var shrine_buff_t: float = 0.0
 
 
 func _init() -> void:

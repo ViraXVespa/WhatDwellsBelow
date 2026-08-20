@@ -105,17 +105,25 @@ def pick_loop(paths: list[Path], count: int = 4) -> list[Path]:
     return [span[int(i * step)] for i in range(count)]
 
 
+ATTACK_JOBS = {
+    "down": SESSION_VID / "4.mp4",
+    "up": SESSION_VID / "6.mp4",
+    "left": SESSION_VID / "7.mp4",
+}
+
+
 def pack_attack() -> None:
-    vid = SESSION_VID / "4.mp4"
-    if not vid.exists():
-        return
-    raw = extract(vid, RAW / "player_attack_down")
-    chosen = pick_loop(raw, 4)
     out = ROOT / "assets" / "sprites" / "player"
-    for i, src in enumerate(chosen):
-        dest = out / f"attack_down_{i}.png"
-        fit(Image.open(src)).save(dest)
-        print("wrote", dest.name)
+    for facing, vid in ATTACK_JOBS.items():
+        if not vid.exists():
+            print("missing attack", vid)
+            continue
+        raw = extract(vid, RAW / f"player_attack_{facing}")
+        chosen = pick_loop(raw, 4)
+        for i, src in enumerate(chosen):
+            dest = out / f"attack_{facing}_{i}.png"
+            fit(Image.open(src)).save(dest)
+            print("wrote", dest.name)
 
 
 def main() -> None:

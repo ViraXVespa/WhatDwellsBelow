@@ -111,6 +111,7 @@ def sfx() -> None:
     write_wav(OUT / "sfx_pickup.wav", mix(tone(660, 0.08, 0.14), tone(880, 0.10, 0.10)))
     write_wav(OUT / "sfx_ui.wav", tone(520, 0.05, 0.10, "tri"))
     write_wav(OUT / "sfx_level.wav", mix(tone(392, 0.12, 0.14), note(523, 0.10, 0.16, 0.12), note(659, 0.22, 0.20, 0.12)))
+    write_wav(OUT / "sfx_hurt.wav", mix(tone(180, 0.11, 0.2, "sq"), tone(90, 0.14, 0.12, "noise")))
 
 
 if __name__ == "__main__":

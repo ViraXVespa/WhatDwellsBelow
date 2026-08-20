@@ -41,6 +41,8 @@ func _ready() -> void:
 
 	var sub := _lab("A playable demo", 22, Color(0.86, 0.82, 0.72))
 	card.add_child(sub)
+	var line := _lab("Pilot an avatar. Mail it home. Remember a fragment.", 18, Color(0.78, 0.84, 0.86))
+	card.add_child(line)
 
 	var prompt := _lab("A / Start  ·  click  to enter %s" % Game.DEMO_TOWN, 20, Color(0.95, 0.86, 0.4))
 	prompt.name = "Prompt"

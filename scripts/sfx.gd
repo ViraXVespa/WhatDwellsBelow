@@ -10,7 +10,7 @@ func _ready() -> void:
 	music = AudioStreamPlayer.new()
 	music.bus = "Master"
 	add_child(music)
-	for name in ["hit", "slam", "dash", "mine", "smash", "pickup", "ui", "level"]:
+	for name in ["hit", "slam", "dash", "mine", "smash", "pickup", "ui", "level", "hurt"]:
 		var p := AudioStreamPlayer.new()
 		var path := "res://assets/audio/sfx_%s.wav" % name
 		if ResourceLoader.exists(path):
