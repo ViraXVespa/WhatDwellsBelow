@@ -133,13 +133,13 @@ func _load_sprites() -> void:
 	var folder := _folder()
 	for pose in ["idle", "windup", "strike"]:
 		for dir in Art.FACING_KEYS:
-			var path := "res://assets/sprites/enemies/%s/%s_%s.png" % [folder, pose, dir]
+			var path := "res://assets/3d/enemies/%s/%s_%s.png" % [folder, pose, dir]
 			if ResourceLoader.exists(path):
 				sprites["%s_%s" % [pose, dir]] = load(path)
 	for dir in ["down", "up", "left", "right"]:
 		var frames: Array = []
 		for i in 8:
-			var wp := "res://assets/sprites/enemies/%s/walk_%s_%d.png" % [folder, dir, i]
+			var wp := "res://assets/3d/enemies/%s/walk_%s_%d.png" % [folder, dir, i]
 			if ResourceLoader.exists(wp):
 				frames.append(load(wp))
 		if not frames.is_empty():

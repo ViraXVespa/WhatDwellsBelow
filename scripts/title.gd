@@ -55,7 +55,7 @@ func _ready() -> void:
 	views.add_theme_constant_override("separation", 18)
 	card.add_child(views)
 	views.add_child(_view_btn("Classic 2D", false))
-	views.add_child(_view_btn("Hammerwatch 3D", true))
+	views.add_child(_view_btn("Gloam 3D", true))
 
 	var patreon := LinkButton.new()
 	patreon.text = "Support on Patreon"

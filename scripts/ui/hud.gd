@@ -47,8 +47,9 @@ func _ready() -> void:
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	if ResourceLoader.exists("res://assets/sprites/player/down.png"):
-		portrait.texture = load("res://assets/sprites/player/down.png")
+	var portrait_path := "res://assets/3d/player/down.png" if Game.using_3d() else "res://assets/sprites/player/down.png"
+	if ResourceLoader.exists(portrait_path):
+		portrait.texture = load(portrait_path)
 	strip.add_child(portrait)
 
 	var p_tag := Label.new()
@@ -211,7 +212,7 @@ func _ready() -> void:
 	view_lab.add_theme_color_override("font_color", Color(0.75, 0.82, 0.88))
 	view_lab.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
 	view_lab.add_theme_constant_override("outline_size", 4)
-	view_lab.text = "Hammerwatch 3D" if Game.using_3d() else "Classic 2D"
+	view_lab.text = "Gloam 3D" if Game.using_3d() else "Classic 2D"
 	add_child(view_lab)
 	big_map = Minimap.new()
 	big_map.position = Vector2(480, 220)

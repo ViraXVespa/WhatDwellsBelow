@@ -68,7 +68,7 @@ func setup_pickup(p_kind: String, p_amount: float, pos: Vector3) -> void:
 	sh.radius = 0.28
 	cs.shape = sh
 	add_child(cs)
-	var path := "res://assets/sprites/props/%s_orb.png" % p_kind
+	var path := "res://assets/3d/props/%s_orb.png" % p_kind
 	var tex := Art.load_tex(path)
 	if tex == null:
 		tex = Art.solid(Vector2i(16, 16), Color(0.85, 0.2, 0.2))

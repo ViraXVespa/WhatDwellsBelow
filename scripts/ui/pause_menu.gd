@@ -343,12 +343,12 @@ func _build_sys() -> void:
 	body.add_child(_slider_row("SFX", "sfx"))
 	body.add_child(_slider_row("Zoom", "zoom"))
 	var view_lab := Label.new()
-	view_lab.text = "Current view: " + ("Hammerwatch 3D" if Game.using_3d() else "Classic 2D")
+	view_lab.text = "Current view: " + ("Gloam 3D" if Game.using_3d() else "Classic 2D")
 	view_lab.add_theme_font_size_override("font_size", 18)
 	view_lab.add_theme_color_override("font_color", Color(0.9, 0.86, 0.7))
 	body.add_child(view_lab)
 	var switch_to_3d := not Game.using_3d()
-	var view_txt := "Switch to Hammerwatch 3D" if switch_to_3d else "Switch to Classic 2D"
+	var view_txt := "Switch to Gloam 3D" if switch_to_3d else "Switch to Classic 2D"
 	if Game.in_dungeon:
 		view_txt += " (next floor)"
 	body.add_child(_btn(view_txt, func():
