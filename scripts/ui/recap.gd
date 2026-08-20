@@ -1,6 +1,7 @@
 extends Control
 
 func _ready() -> void:
+	Sfx.set_music("hub")
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var bg := ColorRect.new()
 	bg.color = Color(0.08, 0.09, 0.12)

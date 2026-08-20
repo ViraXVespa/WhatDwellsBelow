@@ -26,7 +26,16 @@ var last_pos := Vector2.ZERO
 var body_sprite: Sprite2D
 var flash := 0.0
 var facing_sprites: Dictionary = {}
+var walk_sprites: Dictionary = {}
+var attack_sprites: Array = []
 var facing_key := "down"
+var walk_i := 0
+var walk_t := 0.0
+var attack_i := 0
+var attack_t := 0.0
+var attacking := false
+const WALK_FPS := 8.0
+const ATTACK_FPS := 10.0
 
 var dash_cd_max := DASH_CD
 var slam_cd_max := SLAM_CD
@@ -46,7 +55,7 @@ func _ready() -> void:
 	body_sprite = Art.make_sprite(null, 0.78)
 	add_child(body_sprite)
 	_load_facings()
-	_apply_facing()
+	_apply_facing(0.016)
 	last_pos = global_position
 
 
@@ -71,6 +80,7 @@ func _physics_process(delta: float) -> void:
 			dash_timer = DASH_TIME
 			dash_cd = DASH_CD
 			iframe = DASH_TIME
+			Sfx.play("dash")
 			if move.length() > 0.2:
 				aim_dir = move.normalized()
 	move_and_slide()
@@ -92,7 +102,7 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("food"):
 		_use_consumable("food")
 	_regen(delta)
-	_apply_facing()
+	_apply_facing(delta)
 	if flash > 0.0:
 		flash -= delta
 		modulate = Color(1.6, 0.7, 0.7)
@@ -105,20 +115,56 @@ func _load_facings() -> void:
 		var path := "res://assets/sprites/player/%s.png" % k
 		if ResourceLoader.exists(path):
 			facing_sprites[k] = load(path)
+		var frames: Array = []
+		for i in 8:
+			var wp := "res://assets/sprites/player/walk_%s_%d.png" % [k, i]
+			if ResourceLoader.exists(wp):
+				frames.append(load(wp))
+		if not frames.is_empty():
+			walk_sprites[k] = frames
 	if facing_sprites.is_empty():
 		facing_sprites["down"] = Art.body(Vector2i(64, 64), Color(0.24, 0.49, 0.72), Color(0.94, 0.84, 0.38))
+	for i in 8:
+		var ap := "res://assets/sprites/player/attack_down_%d.png" % i
+		if ResourceLoader.exists(ap):
+			attack_sprites.append(load(ap))
 
 
-func _apply_facing() -> void:
+func _walk_key(key: String) -> String:
+	if walk_sprites.has(key):
+		return key
+	return Art.cardinal_from_dir(aim_dir)
+
+
+func _apply_facing(delta: float) -> void:
 	var key := Art.pick_facing(aim_dir, facing_sprites)
-	if key == facing_key and body_sprite.texture != null:
-		return
 	facing_key = key
 	var tex: Texture2D = null
-	if facing_sprites.has(key):
-		tex = facing_sprites[key]
-	elif facing_sprites.has("down"):
-		tex = facing_sprites["down"]
+	if attacking and not attack_sprites.is_empty():
+		attack_t += delta
+		var adv := int(attack_t * ATTACK_FPS)
+		if adv >= attack_sprites.size():
+			attacking = false
+			attack_t = 0.0
+			attack_i = 0
+		else:
+			attack_i = adv
+			tex = attack_sprites[attack_i]
+	var moving := velocity.length() > 28.0 and dash_timer <= 0.0 and not attacking
+	if tex == null and moving:
+		var wk := _walk_key(key)
+		if walk_sprites.has(wk):
+			var frames: Array = walk_sprites[wk]
+			walk_t += delta
+			walk_i = int(walk_t * WALK_FPS) % frames.size()
+			tex = frames[walk_i]
+	if tex == null:
+		if facing_sprites.has(key):
+			tex = facing_sprites[key]
+		elif facing_sprites.has("down"):
+			tex = facing_sprites["down"]
+		walk_t = 0.0
+		walk_i = 0
 	Art.apply_tex(body_sprite, tex, true)
 
 
@@ -200,6 +246,10 @@ func _try_attack() -> void:
 	var w := _weapon()
 	attack_cd = w.attack_period
 	var dmg := w.damage
+	attacking = true
+	attack_t = 0.0
+	attack_i = 0
+	Sfx.play("hit")
 	_hit_in_arc(dmg, AXE_RANGE)
 	Game.grant_xp("great_axe", 4.0)
 	_swing_flash()
@@ -252,6 +302,7 @@ func _try_slam() -> bool:
 		return false
 	slam_cd = SLAM_CD
 	attack_cd = maxf(attack_cd, 0.4)
+	Sfx.play("slam")
 	_hit_in_arc(_weapon().damage * 1.6, SLAM_RADIUS, false)
 	var ring := Polygon2D.new()
 	ring.color = Color(0.9, 0.7, 0.2, 0.35)

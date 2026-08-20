@@ -589,7 +589,7 @@ What's in this demo:
 - Combat: hold RT, B dash (i-frames), X slam (cooldown), R3 lock, A interact. Channel mine; damage or move interrupts. Enemy LOS and HP bars.
 - Tiny loot generator: white/green Great Axes (and pickaxes) with prefix/suffix.
 - Recap: Gauntlet strips, light tone. Keep 2% XP this run, banked stacks, analyzed gear; bag vanishes. Level-up toasts.
-- Art: 64×64 tile grid. 8-dir player (baked starter Great Axe). Enemies/props may still be 4-dir until those sheets exist — but they must be real sprites, not placeholders. Solid wall fill. Gauntlet HUD. Credit splash (portrait + Grok/xAI) then a real title screen.
+- Art: 64×64 tile grid. 8-dir player idle (baked starter Great Axe) plus cardinal walk / down-swing frames. Enemies 4-dir (tank attacks complete). Real sprites, not placeholders. Solid wall fill. Gauntlet HUD. Credit splash then title. Placeholder hub/dungeon loops + SFX until Vira's final music.
 - Solo only in this demo. Don't block 2-pane / couch later. Online out of demo.
 
 What's *not* in (full game, cut — not unfinished):

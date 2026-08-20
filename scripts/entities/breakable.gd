@@ -28,6 +28,7 @@ func setup(p_kind: String) -> void:
 func take_damage(amount: float, _from: Node = null) -> void:
 	hp -= amount
 	if hp <= 0.0:
+		Sfx.play("smash")
 		_smash()
 
 

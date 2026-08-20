@@ -63,6 +63,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func open() -> void:
+	Sfx.play("ui")
 	panel.visible = true
 	get_tree().paused = true
 	_fill()

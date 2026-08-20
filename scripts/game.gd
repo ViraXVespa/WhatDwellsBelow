@@ -32,6 +32,7 @@ func go_title() -> void:
 	in_dungeon = false
 	run = null
 	get_tree().paused = false
+	Sfx.set_music("hub")
 	get_tree().call_deferred("change_scene_to_file", title_scene)
 
 
@@ -39,6 +40,7 @@ func go_plaza() -> void:
 	in_dungeon = false
 	run = null
 	get_tree().paused = false
+	Sfx.set_music("hub")
 	get_tree().call_deferred("change_scene_to_file", plaza_scene)
 
 
@@ -202,6 +204,7 @@ func grant_xp(skill: String, amount: float, awake: bool = false) -> void:
 	var after := skill_level(skill)
 	if after > before:
 		skill_leveled.emit(skill, after)
+		Sfx.play("level")
 		toast("%s level %d!" % [Skills.label(skill), after], Color(1.0, 0.92, 0.42))
 
 

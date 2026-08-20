@@ -55,6 +55,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func open_for(c: Clerk) -> void:
 	clerk = c
+	Sfx.play("ui")
 	panel.visible = true
 	get_tree().paused = true
 	_refresh()

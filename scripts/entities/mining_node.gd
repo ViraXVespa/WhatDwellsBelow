@@ -70,6 +70,7 @@ func complete_channel(player: Node) -> void:
 			(player as Player).interrupt_channel()
 		return
 	remaining -= 1
+	Sfx.play("mine")
 	Game.grant_xp("mining", 12.0 * float(amt))
 	if remaining <= 0:
 		modulate = Color(0.45, 0.45, 0.48)

@@ -50,4 +50,5 @@ func _on_body(body: Node) -> void:
 		Game.heal_player(amount)
 	elif kind == "mana":
 		Game.restore_mana(amount)
+	Sfx.play("pickup")
 	queue_free()
