@@ -15,6 +15,7 @@ var overwrite_queue: ItemData = null
 var plaza_scene := "res://scenes/plaza.tscn"
 var dungeon_scene := "res://scenes/dungeon_floor.tscn"
 var recap_scene := "res://scenes/recap.tscn"
+var title_scene := "res://scenes/title.tscn"
 
 
 func _ready() -> void:
@@ -22,6 +23,13 @@ func _ready() -> void:
 	_register_input()
 	save = SaveData.load_or_create()
 	randomize()
+
+
+func go_title() -> void:
+	in_dungeon = false
+	run = null
+	get_tree().paused = false
+	get_tree().call_deferred("change_scene_to_file", title_scene)
 
 
 func go_plaza() -> void:
