@@ -63,6 +63,9 @@ func go_plaza() -> void:
 
 
 func begin_run(weapon: ItemData, tool: ItemData, start_floor: int) -> void:
+	if save:
+		save.has_dived = true
+		save.write()
 	run = RunState.new()
 	run.setup(save, weapon, tool)
 	run.current_floor = maxi(1, start_floor)
@@ -149,13 +152,39 @@ func add_to_bag(it: ItemData) -> bool:
 	return ok
 
 
+func give_or_drop(it: ItemData, world_pos: Vector2) -> bool:
+	if add_to_bag(it):
+		return true
+	toast("Bag full — drop's on the floor.", Color(0.95, 0.72, 0.35))
+	var scene := get_tree().current_scene
+	if scene:
+		var drop = (load("res://scripts/entities/ground_drop.gd") as GDScript).new()
+		drop.position = world_pos + Vector2(randf_range(-18, 18), randf_range(-12, 12))
+		scene.add_child(drop)
+		drop.setup(it)
+	return false
+
+
+func hitstop(sec := 0.055) -> void:
+	if Engine.time_scale < 0.5:
+		return
+	Engine.time_scale = 0.07
+	get_tree().create_timer(sec, true, false, true).timeout.connect(func(): Engine.time_scale = 1.0)
+
+
 func damage_player(amount: float) -> void:
 	if run == null:
+		return
+	if run.hp <= 0.0:
 		return
 	run.hp = maxf(0.0, run.hp - amount)
 	run_hp_changed.emit()
 	if run.hp <= 0.0:
-		end_run(false)
+		var p := get_tree().get_first_node_in_group("player")
+		if p and p.has_method("begin_death"):
+			p.begin_death()
+		else:
+			end_run(false)
 
 
 func heal_player(amount: float) -> void:

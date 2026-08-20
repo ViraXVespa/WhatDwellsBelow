@@ -36,6 +36,11 @@ func _ready() -> void:
 	v.add_child(_slider_row("Music", "music"))
 	v.add_child(_slider_row("SFX", "sfx"))
 	v.add_child(_slider_row("Zoom", "zoom"))
+	var cred := Label.new()
+	cred.text = "Dungeon: 8-Bit — ViraXVespa"
+	cred.add_theme_font_size_override("font_size", 15)
+	cred.add_theme_color_override("font_color", Color(0.7, 0.72, 0.74))
+	v.add_child(cred)
 	var pat := LinkButton.new()
 	pat.text = "Support on Patreon"
 	pat.uri = Game.PATREON_URL

@@ -65,10 +65,10 @@ func complete_channel(player: Node) -> void:
 	if remaining <= 0:
 		return
 	var amt := rng.randi_range(1, 2)
-	if not Game.add_to_bag(ItemData.make_ore(amt)):
+	var ore := ItemData.make_ore(amt)
+	if not Game.give_or_drop(ore, global_position):
 		if player is Player:
 			(player as Player).interrupt_channel()
-		return
 	remaining -= 1
 	Sfx.play("mine")
 	Game.grant_xp("mining", 12.0 * float(amt))

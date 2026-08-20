@@ -31,19 +31,20 @@ func interact(_player: Node) -> void:
 	bits.append("%dg" % gold_amt)
 	if rng.randf() < 0.55:
 		var ore := rng.randi_range(1, 4)
-		if Game.add_to_bag(ItemData.make_ore(ore)):
+		var ore_it := ItemData.make_ore(ore)
+		if Game.give_or_drop(ore_it, global_position):
 			bits.append("%d ore" % ore)
 		else:
-			bits.append("ore (bag full)")
+			bits.append("ore (on the floor)")
 	if rng.randf() < 0.32:
 		var fam := "great_axe" if rng.randf() < 0.6 else "pickaxe"
 		var gear := LootGen.roll_gear(fam, rng)
 		if rng.randf() < 0.25:
 			gear.rarity = ItemData.Rarity.GREEN
-		if Game.add_to_bag(gear):
+		if Game.give_or_drop(gear, global_position):
 			bits.append(gear.full_name())
 		else:
-			bits.append("gear (bag full)")
+			bits.append("gear (on the floor)")
 	_toast("Stash: " + ", ".join(bits))
 
 

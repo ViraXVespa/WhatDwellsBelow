@@ -101,7 +101,10 @@ func _props() -> void:
 	add_child(crystal)
 	var guild := SignProp.new()
 	guild.position = Vector2(5.5 * TILE, 6.6 * TILE)
-	guild.setup("Guild", "Welcome to Placeholdia, pop. whoever showed up. Real city's still in permitting. Crystal's open. Dying's a workplace hazard — pack snacks.")
+	var guild_body := "Welcome to Placeholdia, pop. whoever showed up. Real city's still in permitting. Crystal's open. Dying's a workplace hazard — pack snacks."
+	if Game.save and not Game.save.has_dived:
+		guild_body = "First time? Eh, I'm sure you'll be able to figure it out.\n\n" + guild_body
+	guild.setup("Guild", guild_body)
 	add_child(guild)
 	var vendor := VendorProp.new()
 	vendor.position = Vector2(18.5 * TILE, 6.6 * TILE)

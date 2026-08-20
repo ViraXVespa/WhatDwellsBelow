@@ -652,4 +652,13 @@ Decided (**demo save**): **persist forever** (browser user://). No wipe button. 
 Decided (**demo defense**): **no passive Dodge/Block yet.** Slam, dash i-frames, food, pots. Full evade/DR waits until the feedback reads on a couch.
 Decided (**demo end**): **loop forever.** Floor 6 Guardian is the nastiest floor, not a credits gate.
 Decided (**pause**): **Patreon link + music/SFX volume.** Zoom is an adjustable setting; default is current 1.0 camera scale.
-Decided (**placeholder score aim**): Placeholdia = **warm, hopeful, a bit jokey, not grand** (stand-in loop). Dungeon = Vira's **8-Bit.mp3**: play the intro on first start, then loop the body (offset ~14.85s).
+Decided (**placeholder score aim**): Placeholdia = **warm, hopeful, a bit jokey, not grand** (stand-in loop). Dungeon = Vira's **8-Bit.mp3**: intro once, then loop from **measure 11 beat 1** (~**15.385s** at 156 BPM).
+Decided: credit **8-Bit — ViraXVespa** on title and pause.
+Decided: **gentle ramp**, but **20–30 dives** to reliably clear 1→6. First floor-1 clear with no levels/gear/knowledge is a **real challenge** and should feel like an accomplishment.
+Decided: floor 1 is **full rules**, lighter only in the sense of the ramp. Guild flavor if never dived: "First time? Eh, I'm sure you'll be able to figure it out."
+Decided: bag full → **toast + leave loot on the ground**.
+Decided: hit feel = **floating numbers + hitstop + knockback**.
+Decided: death = **longer downed pose, short fade, then recap**.
+Decided: **Packmule Patty** is a rare extra clerk in the demo.
+Decided: keep **wrong-clerk mismatch**.
+Decided: dumpster intro = **sign only**.

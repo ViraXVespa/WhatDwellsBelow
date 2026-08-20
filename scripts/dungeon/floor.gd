@@ -151,6 +151,13 @@ func _spawn_entities() -> void:
 	m.setup("misc", data.misc_type)
 	m.position = _world(data.clerk_misc)
 	add_child(m)
+	if data.has("clerk_patty"):
+		var pp: Vector2i = data.clerk_patty
+		if pp.x >= 0:
+			var pat := Clerk.new()
+			pat.setup("misc", "patty")
+			pat.position = _world(pp)
+			add_child(pat)
 	for mp in data.mines:
 		var node := MiningNode.new()
 		node.position = _world(mp)

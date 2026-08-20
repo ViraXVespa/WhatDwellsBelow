@@ -75,6 +75,10 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 	var clerk_b := _hide_clerk(grid, rooms, host_b, rng, safe_rooms)
 	_ensure_floor(grid, clerk_a)
 	_ensure_floor(grid, clerk_b)
+	var patty := Vector2i(-1, -1)
+	if rng.randf() < 0.14 and hosts.size() > 2:
+		patty = _hide_clerk(grid, rooms, hosts[2], rng, safe_rooms)
+		_ensure_floor(grid, patty)
 	var loot: Array = []
 	var pocket_hosts: Array[Rect2i] = []
 	for r: Rect2i in rooms:
@@ -172,6 +176,7 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 		"stairs": stairs,
 		"clerk_gather": clerk_a,
 		"clerk_misc": clerk_b,
+		"clerk_patty": patty,
 		"gather_type": gather,
 		"misc_type": misc,
 		"mines": mines,

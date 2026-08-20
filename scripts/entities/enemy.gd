@@ -44,17 +44,17 @@ func setup(p_role: String, floor_number: int, p_boss: bool = false) -> void:
 	prefer_left = rng.randf() < 0.5
 	match role:
 		"ranged":
-			hp = 22.0 + floor_number * 4.0
+			hp = 48.0 + floor_number * 10.0
 			move_speed = 55.0
-			contact_damage = 8.0
+			contact_damage = 11.0 + floor_number * 1.6
 			attack_period = 1.15
 			windup_time = 0.55
 			lunge_time = 0.14
 			recover_time = 0.4
 		"tank":
-			hp = 55.0 + floor_number * 8.0
+			hp = 100.0 + floor_number * 22.0
 			move_speed = 36.0
-			contact_damage = 16.0
+			contact_damage = 18.0 + floor_number * 2.2
 			attack_period = 1.7
 			range_melee = 86.0
 			lunge_range = 110.0
@@ -63,9 +63,9 @@ func setup(p_role: String, floor_number: int, p_boss: bool = false) -> void:
 			recover_time = 0.7
 			lunge_speed = 340.0
 		_:
-			hp = 28.0 + floor_number * 6.0
+			hp = 62.0 + floor_number * 16.0
 			move_speed = 68.0
-			contact_damage = 14.0
+			contact_damage = 16.0 + floor_number * 2.0
 			attack_period = 1.25
 			range_melee = 78.0
 			lunge_range = 140.0
@@ -82,9 +82,9 @@ func setup(p_role: String, floor_number: int, p_boss: bool = false) -> void:
 
 func _apply_boss() -> void:
 	add_to_group("boss")
-	hp = 200.0 + float(Game.run.current_floor) * 40.0 if Game.run else 240.0
+	hp = 320.0 + float(Game.run.current_floor) * 70.0 if Game.run else 400.0
 	max_hp = hp
-	contact_damage = 22.0
+	contact_damage = 26.0 + (float(Game.run.current_floor) if Game.run else 3.0) * 2.0
 	windup_time = 0.62
 	lunge_time = 0.24
 	recover_time = 0.55
@@ -374,8 +374,17 @@ func take_damage(amount: float, _from: Node = null) -> void:
 	hp -= amount
 	flash = 0.08
 	aware = true
+	var n := FloatNum.new()
+	n.global_position = global_position + Vector2(0, -36)
+	n.setup(amount)
+	if get_parent():
+		get_parent().add_child(n)
 	if _from is Node2D:
-		last_seen = (_from as Node2D).global_position
+		var src := _from as Node2D
+		last_seen = src.global_position
+		var k := (global_position - src.global_position).normalized()
+		velocity = k * 220.0
+	Game.hitstop(0.05)
 	if hp <= 0.0:
 		_die()
 	else:
@@ -418,13 +427,13 @@ func _die() -> void:
 			Game.grant_xp("great_axe", 40.0)
 			var drop := LootGen.roll_gear("great_axe", rng)
 			drop.rarity = ItemData.Rarity.GREEN
-			Game.add_to_bag(drop)
+			Game.give_or_drop(drop, global_position)
 		else:
 			Game.grant_xp("great_axe", 8.0)
 			if rng.randf() < 0.16:
 				var fam := "great_axe" if rng.randf() < 0.65 else "pickaxe"
 				var drop := LootGen.roll_gear(fam, rng)
-				Game.add_to_bag(drop)
+				Game.give_or_drop(drop, global_position)
 		Game.add_run_gold(gold_amt)
 	queue_free()
 

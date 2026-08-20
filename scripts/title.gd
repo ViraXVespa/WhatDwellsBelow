@@ -43,6 +43,8 @@ func _ready() -> void:
 	card.add_child(sub)
 	var line := _lab("Pilot an avatar. Mail it home. Remember a fragment.", 18, Color(0.78, 0.84, 0.86))
 	card.add_child(line)
+	var cred := _lab("Dungeon: 8-Bit — ViraXVespa", 16, Color(0.62, 0.66, 0.7))
+	card.add_child(cred)
 
 	var prompt := _lab("A / Start  ·  click  to enter %s" % Game.DEMO_TOWN, 20, Color(0.95, 0.86, 0.4))
 	prompt.name = "Prompt"

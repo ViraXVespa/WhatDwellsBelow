@@ -92,6 +92,16 @@ func _refresh() -> void:
 				if it and it.kind == ItemData.Kind.CONSUMABLE:
 					list.add_item(it.full_name())
 					list.set_item_metadata(list.item_count - 1, i)
+	elif clerk.clerk_id == "patty":
+		hint.text = "Packmule Patty. Lucky day — I'll haul whatever isn't nailed down."
+		if clerk.spent_normal:
+			hint.text += "\nMule's loaded. Gold's still an option."
+		else:
+			for i in RunState.BAG_SIZE:
+				var it: ItemData = Game.run.bag[i]
+				if it:
+					list.add_item(it.full_name())
+					list.set_item_metadata(list.item_count - 1, i)
 	else:
 		var fam := clerk.family_accepted()
 		hint.text = "I'll take %s. Gold mail is my whole shift if you ask — pick one, I've got a lunch." % fam
@@ -125,6 +135,21 @@ func _send_selected() -> void:
 		return
 	if clerk.clerk_id == "runner":
 		Game.extract_misc(idx)
+		_refresh()
+		return
+	if clerk.clerk_id == "patty":
+		var it: ItemData = Game.run.bag[idx] if idx >= 0 and idx < RunState.BAG_SIZE else null
+		if it == null:
+			return
+		if it.family == "ore":
+			Game.extract_ore(idx)
+		elif it.kind == ItemData.Kind.WEAPON or it.kind == ItemData.Kind.TOOL:
+			var result = Game.extract_gear(idx)
+			if result is Array:
+				_overwrite_picker(result)
+				return
+		else:
+			Game.extract_misc(idx)
 		_refresh()
 		return
 	Game.extract_ore(idx)

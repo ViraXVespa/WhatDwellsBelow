@@ -34,6 +34,7 @@ var walk_t := 0.0
 var attack_i := 0
 var attack_t := 0.0
 var attacking := false
+var dying := false
 const WALK_FPS := 8.0
 const ATTACK_FPS := 10.0
 
@@ -60,6 +61,8 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if dying:
+		return
 	if get_tree().paused:
 		return
 	_cooldowns(delta)
@@ -385,7 +388,37 @@ func take_damage(amount: float) -> void:
 	flash = 0.12
 	iframe = 0.08
 	Sfx.play("hurt")
+	var n := FloatNum.new()
+	n.global_position = global_position + Vector2(0, -40)
+	n.setup(amount)
+	if get_parent():
+		get_parent().add_child(n)
+	Game.hitstop(0.045)
 	Game.damage_player(amount)
+
+
+func begin_death() -> void:
+	if dying:
+		return
+	dying = true
+	interrupt_channel()
+	velocity = Vector2.ZERO
+	rotation = 0.35
+	modulate = Color(0.55, 0.45, 0.48)
+	var fade := ColorRect.new()
+	fade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fade.color = Color(0, 0, 0, 0)
+	var layer := CanvasLayer.new()
+	layer.layer = 90
+	layer.add_child(fade)
+	get_tree().root.add_child(layer)
+	var tw := create_tween()
+	tw.tween_interval(1.15)
+	tw.tween_property(fade, "color:a", 1.0, 0.55)
+	tw.tween_callback(func():
+		layer.queue_free()
+		Game.end_run(false)
+	)
 
 
 func _use_consumable(family: String) -> void:

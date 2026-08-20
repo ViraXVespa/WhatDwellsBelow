@@ -43,7 +43,8 @@ func play(name: String) -> void:
 
 # Vira's 8-Bit.mp3: play the intro once, then loop the body.
 # 14.85s is one 8-bar phrase at ~130 BPM (opening swell + first statement).
-const DUNGEON_LOOP_OFFSET := 14.85
+# 156 BPM, 4/4: bar = 1.538s. Measure 11 beat 1 = 10 bars = 15.385s.
+const DUNGEON_LOOP_OFFSET := 15.385
 
 
 func set_music(which: String) -> void:
