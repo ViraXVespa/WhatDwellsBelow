@@ -55,6 +55,9 @@ func _open() -> void:
 		if Game.save.gold < 5:
 			lab.text = "I'm flattered. Your purse isn't."
 			return
+		if Game.save.extra_food >= 20:
+			lab.text = "Twenty rations is a picnic, not a dive. Eat some first."
+			return
 		Game.save.gold -= 5
 		Game.save.extra_food += 1
 		Game.save.write()
@@ -81,6 +84,7 @@ func _open() -> void:
 	v.add_child(_btn("Close", _close_shop))
 	PadUi.wire(panel)
 	_layer = layer
+	layer.add_to_group("wdb_modal")
 	get_tree().root.add_child(layer)
 	PadUi.focus_first(panel)
 

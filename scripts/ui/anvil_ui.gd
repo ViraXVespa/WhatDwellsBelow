@@ -44,7 +44,7 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not panel.visible:
 		return
-	if event.is_action_pressed("ui_cancel"):
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		close()
 		get_viewport().set_input_as_handled()
 
@@ -59,7 +59,6 @@ func open() -> void:
 
 func close() -> void:
 	panel.visible = false
-	forging = false
 	get_tree().paused = false
 
 
@@ -111,22 +110,27 @@ func _forge() -> void:
 		hint.text = "Need %dg and %d ore." % [cost.gold, cost.ore]
 		return
 	forging = true
-	hint.text = "Hammering…"
-	await get_tree().create_timer(Skills.smith_bar_time(Game.skill_level("smithing")), true, true).timeout
-	forging = false
-	if not panel.visible:
-		return
 	Game.save.gold -= int(cost.gold)
 	Game.save.banked_ore -= int(cost.ore)
 	it.forged_once = true
+	Game.save.write()
+	hint.text = "Hammering…"
+	await get_tree().create_timer(Skills.smith_bar_time(Game.skill_level("smithing")), true, true).timeout
 	Game.save.add_hold(it)
 	Game.grant_xp("smithing", 18.0 if first else 10.0, true)
 	Game.save.write()
 	Sfx.play("ui")
-	_refresh()
+	forging = false
+	if panel.visible:
+		_refresh()
+	else:
+		Game.toast("Forged %s. It's in a hold." % it.full_name(), Color(0.85, 0.82, 0.55))
 
 
 func _destroy_prompt() -> void:
+	if forging:
+		hint.text = "Wait for the hammer."
+		return
 	if list.get_selected_items().is_empty():
 		return
 	var meta = list.get_item_metadata(list.get_selected_items()[0])

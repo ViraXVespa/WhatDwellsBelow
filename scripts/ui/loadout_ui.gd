@@ -63,7 +63,7 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not panel.visible:
 		return
-	if event.is_action_pressed("ui_cancel"):
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		close()
 		get_viewport().set_input_as_handled()
 
@@ -90,7 +90,7 @@ func _fill() -> void:
 		il.clear()
 		il.set_meta("items", [])
 		var arr: Array = []
-		if k in ["head", "body", "legs", "potion"]:
+		if k in ["head", "body", "legs"]:
 			il.add_item("(empty)")
 			arr.append(null)
 		for it in Game.save.holds_of(str(hold_map[k])):

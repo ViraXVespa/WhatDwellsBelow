@@ -53,6 +53,8 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
+		if _blocking_modal():
+			return
 		if open:
 			_close()
 		else:
@@ -62,6 +64,15 @@ func _unhandled_input(event: InputEvent) -> void:
 	if open and event.is_action_pressed("ui_cancel"):
 		_close()
 		get_viewport().set_input_as_handled()
+
+
+func _blocking_modal() -> bool:
+	for g in ["shop_ui", "extract_ui", "anvil_ui", "loadout_ui"]:
+		for n in get_tree().get_nodes_in_group(g):
+			var p = n.get("panel")
+			if p is Control and (p as Control).visible:
+				return true
+	return not get_tree().get_nodes_in_group("wdb_modal").is_empty()
 
 
 func _open() -> void:

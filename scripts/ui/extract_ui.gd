@@ -47,7 +47,7 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not panel.visible:
 		return
-	if event.is_action_pressed("ui_cancel"):
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		close()
 		get_viewport().set_input_as_handled()
 		return
@@ -131,37 +131,38 @@ func _send_selected() -> void:
 		return
 	if clerk.spent_gold:
 		return
-	if clerk.spent_normal and clerk.clerk_id != "gopher" and clerk.clerk_id != "patty":
+	if clerk.spent_normal:
+		hint.text = "That's my one parcel. Gold's still on the table if you didn't already spend me."
 		return
 	if list.get_selected_items().is_empty():
 		return
 	var idx: int = list.get_item_metadata(list.get_selected_items()[0])
+	var ok := false
 	if clerk.clerk_id == "gopher":
-		Game.analyze_gear(idx, false)
-		_refresh()
-		return
-	if clerk.clerk_id == "runner":
-		Game.extract_misc(idx)
-		_refresh()
-		return
-	if clerk.clerk_id == "patty":
+		ok = Game.analyze_gear(idx, false) != ""
+	elif clerk.clerk_id == "runner":
+		ok = Game.extract_misc(idx)
+	elif clerk.clerk_id == "patty":
 		var it: ItemData = Game.run.bag[idx] if idx >= 0 and idx < RunState.BAG_SIZE else null
 		if it == null:
 			return
 		if it.family == "ore":
-			Game.extract_ore(idx)
+			ok = Game.extract_ore(idx) > 0
 		elif it.kind in [ItemData.Kind.WEAPON, ItemData.Kind.TOOL, ItemData.Kind.ARMOR, ItemData.Kind.POTION]:
-			Game.analyze_gear(idx, false)
+			ok = Game.analyze_gear(idx, false) != ""
 		else:
-			Game.extract_misc(idx)
-		_refresh()
-		return
-	Game.extract_ore(idx)
+			ok = Game.extract_misc(idx)
+	else:
+		ok = Game.extract_ore(idx) > 0
+	if ok:
+		clerk.spent_normal = true
 	_refresh()
 
 
 func _send_xp() -> void:
 	if clerk == null or Game.run == null:
+		return
+	if clerk.spent_gold:
 		return
 	if clerk.clerk_id != "gopher" and clerk.clerk_id != "patty":
 		return
@@ -171,10 +172,14 @@ func _send_xp() -> void:
 	var it: ItemData = Game.run.bag[idx] if idx >= 0 else null
 	if it == null:
 		return
+	if clerk.spent_normal:
+		hint.text = "That's my one parcel. Gold's still on the table if you didn't already spend me."
+		return
 	if not Game.save.family_unlocked(it.hold_key()):
 		hint.text = "Nothing to duplicate yet. Analyze it first so the anvil knows the family."
 		return
-	Game.analyze_gear(idx, true)
+	if Game.analyze_gear(idx, true) != "":
+		clerk.spent_normal = true
 	_refresh()
 
 

@@ -47,7 +47,7 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not panel.visible:
 		return
-	if event.is_action_pressed("ui_cancel"):
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		close()
 		get_viewport().set_input_as_handled()
 
@@ -78,7 +78,15 @@ func _roll_stock() -> void:
 		var art: Dictionary = art_s.pick(rng, used)
 		used.append(str(art.id))
 		stock.append({"kind": "art", "id": str(art.id), "name": str(art.name), "desc": str(art.desc), "price": int(art.price), "sold": false})
-	stock.append({"kind": "food", "name": "Emergency ration", "desc": "Town sells these for 5g. Down here? 25.", "price": 25, "sold": false})
+	var snacks: Array = [
+		{"name": "Emergency ration", "desc": "Town sells these for 5g. Down here? 25."},
+		{"name": "Dusty biscuit", "desc": "Keeps. That's the nicest thing I can say."},
+		{"name": "Hole jerky", "desc": "Don't ask which hole."},
+	]
+	snacks.shuffle()
+	for i in rng.randi_range(2, 3):
+		var sn: Dictionary = snacks[i]
+		stock.append({"kind": "food", "name": str(sn.name), "desc": str(sn.desc), "price": 25, "sold": false})
 
 
 func _refresh() -> void:
@@ -134,6 +142,9 @@ func _buy() -> void:
 		row.sold = true
 		stock[i] = row
 	else:
+		if Game.run.food_count() >= 20:
+			hint.text = "Twenty rations is the lid. Eat some or I keep the jerky."
+			return
 		Game.run.gold -= price
 		Game.gold_changed.emit()
 		if not Game.add_to_bag(ItemData.make_food(1)):

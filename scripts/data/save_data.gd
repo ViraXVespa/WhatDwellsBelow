@@ -200,6 +200,7 @@ func add_hold(it: ItemData) -> bool:
 func restock_if_broke() -> void:
 	# Cushion is 3 rations + 1 potion. Stall is 5g/ration and 15g/potion.
 	# If you're short of the mins and can't afford to buy the missing amount, fill it free.
+	extra_food = clampi(extra_food, 0, 20)
 	var missing_food := maxi(0, 3 - extra_food)
 	if missing_food > 0 and gold < missing_food * 5:
 		extra_food = 3

@@ -36,8 +36,6 @@ var dmg_mult: float = 1.0
 var gold_mult: float = 1.0
 var mine_mult: float = 1.0
 var lucky_mine: bool = false
-var shop_buys: int = 0
-var shop_locked: bool = false
 var saw_stairs: bool = false
 var guardian_low: bool = false
 
@@ -56,6 +54,10 @@ func setup(save: SaveData, chosen: Dictionary) -> void:
 	if tool == null:
 		tool = ItemData.make_starter_pickaxe()
 	potion = _copy_item(chosen.get("potion", null))
+	if potion == null and save:
+		var pots: Array = save.holds_of("potion")
+		if not pots.is_empty():
+			potion = _copy_item(pots[pots.size() - 1])
 	armor_head = _copy_item(chosen.get("head", null))
 	armor_body = _copy_item(chosen.get("body", null))
 	armor_legs = _copy_item(chosen.get("legs", null))
@@ -79,7 +81,9 @@ func setup(save: SaveData, chosen: Dictionary) -> void:
 
 func _copy_item(it) -> ItemData:
 	if it is ItemData:
-		return (it as ItemData).duplicate_item()
+		var c := (it as ItemData).duplicate_item()
+		c.unique_id = it.unique_id
+		return c
 	return null
 
 
@@ -137,9 +141,23 @@ func total_defense() -> float:
 	return d
 
 
+func food_count() -> int:
+	var n := 0
+	for it in bag:
+		if it and it.family == "food":
+			n += it.count
+	return n
+
+
 func add_item(it: ItemData) -> bool:
 	if it == null:
 		return false
+	if it.family == "food":
+		var room := 20 - food_count()
+		if room <= 0:
+			return false
+		if it.count > room:
+			it.count = room
 	var stackable := it.kind == ItemData.Kind.MATERIAL or (it.kind == ItemData.Kind.CONSUMABLE and it.family == "food")
 	if stackable:
 		for i in BAG_SIZE:

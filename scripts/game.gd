@@ -101,7 +101,6 @@ func enter_floor(n: int) -> void:
 	run.current_floor = n
 	run.saw_stairs = false
 	run.guardian_low = false
-	run.shop_buys = 0
 	if n > run.visited_deepest:
 		run.visited_deepest = n
 	if n > save.deepest_floor:
@@ -411,7 +410,7 @@ func extract_misc(index: int) -> bool:
 		return false
 	if it.family == "food":
 		run.remove_item_at(index, -1)
-		save.extra_food += it.count
+		save.extra_food = mini(20, save.extra_food + it.count)
 		bag_changed.emit()
 		save.write()
 		return true
