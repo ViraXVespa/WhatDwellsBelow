@@ -20,4 +20,6 @@ The game should feature a 2D art style similar to Heroes of Hammerwatch. The cit
 
 This document is a work in progress and will be added to as the project evolves. All important design choices as well as their reasoning should be added to this document for ease of access throughout development.
 
+Current public build: a **playable demo / technical proof of concept** for sharing (Patreon and similar). It should look and feel like the finished game with systems omitted, not an internal vertical slice. See Project_Overview_Template.txt §14.
+
 Combat Level (full game): derived display number from the combat skills that match the equipped weapon style (OSRS-style), not a separately trained Melee/Ranged/Magic skill. See Project_Overview_Template.txt §8.

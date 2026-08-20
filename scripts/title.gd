@@ -39,7 +39,7 @@ func _ready() -> void:
 	var game := _lab("WHAT DWELLS BELOW", 56, Color(0.55, 0.92, 0.96))
 	card.add_child(game)
 
-	var sub := _lab("A vertical slice", 22, Color(0.86, 0.82, 0.72))
+	var sub := _lab("A playable demo", 22, Color(0.86, 0.82, 0.72))
 	card.add_child(sub)
 
 	var prompt := _lab("A / Start  ·  click  to enter Vylenheim", 20, Color(0.95, 0.86, 0.4))

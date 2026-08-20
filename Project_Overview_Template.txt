@@ -9,11 +9,12 @@ How to use this file
 - Numbers in [TODO] can be placeholders; a rough number is better than none.
 - Keep item tables, XP curves, recipes, and dialogue out of this file.
 
-Feedback convention (slice vs later)
-The player does not label notes as slice vs full game. Grok decides:
-- If it is required for the current vertical-slice loop (plaza, Great Axe + pickaxe, 2–3 dungeon floors, hold-attack / dash / slam, mine, clerks, death/dispel recap, pad UI, honesty of those systems), **build it**.
-- If it is a law or feature of the full game (other skills, biomes, co-op camera, stealth, extra weapons, polish beyond the current plaza/dungeon loop), **write it here** and do not expand the slice unless the player corrects that call.
-- When unsure, park it in this file and ask only if the slice would be built wrong without an answer.
+Feedback convention (demo vs full game)
+The player does not label notes as demo vs full game. Grok decides:
+- If it belongs in the **public playable demo** — the included loop (Vylenheim plaza, Great Axe + pickaxe, 2–6 dungeon floors, hold-attack / dash / slam, mine, clerks, smashables, death/dispel recap, pad UI) **or** the look/feel/honesty of those systems so a stranger would take the game seriously — **build it**.
+- If it is a full-game system that this demo simply **omits** (other skills, biomes, extra weapons, co-op camera, stealth, story, Combat Level UI), **write it here**. Do not stub it as a greybox; leave it out until it can ship at demo quality.
+- This build is a **promotional playable demo / technical proof of concept**, not an in-studio vertical slice. It should feel like the finished game with features cut, not a limited prototype. Polish of included systems is in-scope.
+- When unsure, park it in this file and ask only if the demo would be built wrong without an answer.
 
 ================================================================
 1. Pitch & pillars
@@ -561,32 +562,42 @@ Decided: local multiplayer is multiple gamepads, one Godot instance, one TV. Cam
 Decided: online is **out of slice**, **don’t block**. Host model (Godot multiplayer / listen server) only when we take that on. Local = multiple pads, one instance.
 
 ================================================================
-14. Vertical slice vs full vision
+14. Playable demo vs full vision
 ================================================================
 
+Purpose of this build
+This version is a **public playable demo** and **technical proof of concept**, meant to be shared (Patreon and similar) so people can feel the game and want to back the rest. It is not an internal vertical slice, greybox, or “fun with rectangles” studio prototype.
+
+Quality bar
+- **Looks and feels like the final game.** Included rooms, combat, HUD, and art should be presentable to a stranger on a couch.
+- **Features are omitted, not stubbed.** If a system is not in the demo, it is absent — not a rectangle, not a “coming soon” dummy, not a broken half-feature.
+- **Honesty of what *is* in.** LOS, bars, extract, recap, pad UI, and the plaza→dungeon→wake loop have to play as themselves.
+
 Full vision (from original)
-Extravagant skills, many weapon types, a living city, deep procgen dungeon, extraction/recreation, dreamlike XP, story that can reshape the hub.
+Extravagant skills, many weapon types, a living city, deep procgen dungeon, extraction/recreation, dreamlike XP, story that can reshape the hub. Couch co-op on Xbox is the long-term design center.
 
-Now (vertical slice) — **build contract**
-The slice sentence (this is what we implement first):
-**Walk Vylenheim's plaza as a placeholder avatar, take a Great Axe and pickaxe through the guild crystal, clear 2–3 traditional-dungeon floors (hold-to-attack, dash, slam, mine ore), mail loot at clerks, die or pause-dispel, and wake up with banked ore, 2% of run XP, and any analyzed white/green axes. It has to be fun with rectangles.**
+Now (playable demo) — **build contract**
+**Walk Vylenheim, take a Great Axe and pickaxe through the guild crystal, delve 2–6 traditional-dungeon floors (hold-to-attack, dash, slam, mine, smash pots), mail loot at clerks, die or pause-dispel, and wake with banked ore, a fragment of XP, and any analyzed white/green axes. A stranger should recognize this as What Dwells Below, not a prototype of it.**
 
-Locked contents:
+What's in this demo:
 - 1 city plaza: big crystal, guild presence, one vendor, anvil (smithing). Optional dumpster-intro can wait.
 - Loadout: Great Axe + pickaxe. 28-slot bag. Food D-pad Left, potion D-pad Up.
-- Dungeon: 2–3 floors, traditional dungeon tileset, three enemy roles (melee bruiser, ranged, tank), mining nodes. Main path never tool-locked; optional pickaxe side room is fine.
-- Clerks: 1 gathering + 1 misc per floor (real rules). Gold extract rule included.
-- Combat: hold RT, B dash (i-frames), X slam (cooldown), R3 lock, A interact. Channel mine; damage or move interrupts.
+- Dungeon: 2–6 floors, traditional dungeon tileset, three enemy roles (melee bruiser, ranged, tank), mining nodes, smashable pots/barrels. Floor Guardian every 3rd floor. Main path never tool-locked; optional pickaxe side room is fine.
+- Clerks: 1 gathering + 1 misc per floor (real rules). Gold extract rule included. Crystal next to floor spawn.
+- Combat: hold RT, B dash (i-frames), X slam (cooldown), R3 lock, A interact. Channel mine; damage or move interrupts. Enemy LOS and HP bars.
 - Tiny loot generator: white/green Great Axes (and pickaxes) with prefix/suffix.
-- Recap: Gauntlet strips, light tone. Keep 2% XP this run (placeholder), banked stacks, analyzed gear; bag vanishes.
-- Art: 64×64 tile grid. **8-dir player sprites** (baked starter Great Axe, no customization layers) so analog aim does not snap to a cardinal. Enemies/props can stay 4-dir until the loop is fun. 2D TileMap. Gauntlet HUD. Solid wall fill instead of black padding.
-- Co-op camera can be solo-first in the slice; don't block 2-pane later. Online out of slice.
+- Recap: Gauntlet strips, light tone. Keep 2% XP this run, banked stacks, analyzed gear; bag vanishes. Level-up toasts.
+- Art: 64×64 tile grid. 8-dir player (baked starter Great Axe). Enemies/props may still be 4-dir until those sheets exist — but they must be real sprites, not placeholders. Solid wall fill. Gauntlet HUD. Credit splash (portrait + Grok/xAI) then a real title screen.
+- Solo only in this demo. Don't block 2-pane / couch later. Online out of demo.
 
-Next
-[TODO] Second weapon type, city upgrade, second skill, biome/floor 2 aesthetics.
+What's *not* in (full game, cut — not unfinished):
+Other gathering/production skills, extra starting weapons, biomes, co-op, character customization layers, story/intro, Combat Level UI, Cartography, city districts/upgrades, blues+ loot.
+
+Next (still demo-quality if we add them)
+[TODO] Second weapon type, city upgrade, second skill, biome/floor 2 aesthetics — only when they can ship at the same presentation bar.
 
 Later
-[TODO] Full skill list, bosses, story beats, extra facilities, more weapon masteries.
+[TODO] Full skill list, bosses, story beats, extra facilities, more weapon masteries, couch co-op.
 
 Full-game constraints parked from play (do not implement in the slice)
 - **Combat Level:** derived OSRS-style display from melee/ranged/magic relevant skills + equipped weapon. Not a separately trained skill. See §8.
@@ -621,5 +632,5 @@ Resolved: create-a-character; HoW2-like appearance; start with a weapon + tool, 
 Resolved: title is the *sense of wonder* at what could be found below, not a promise of one named final monster. Campaign still has a thing to beat, then endless challenge floors.
 [TODO] What the campaign beat actually is (can stay secret).
 
-Slice
-Locked: Walk Vylenheim's plaza as a placeholder avatar, take a Great Axe and pickaxe through the guild crystal, clear 2–6 traditional-dungeon floors (hold-to-attack, dash, slam, mine ore), mail loot at clerks, die or pause-dispel, and wake up with banked ore, 2% of run XP, and any analyzed white/green axes.
+Demo
+Locked: public playable demo / tech proof of concept. Same sentence as §14. Looks like the final game; omitted systems are cut, not stubbed. Promotional (Patreon and similar), not in-studio-only.

@@ -1,12 +1,12 @@
 # What Dwells Below
 
-A gamepad-first 2D dungeon crawler: RuneScape-style skills mashed with Heroes of Hammerwatch. Godot 4.7.
+A gamepad-first 2D dungeon crawler: RuneScape-style skills mashed with Heroes of Hammerwatch.
 
-**Vertical slice** — Vylenheim plaza, Great Axe + pickaxe, 2–6 dungeon floors, mining, extract clerks, floor guardians every 3 floors.
+**Playable demo** — a polished proof of the full game, not a greybox. Walk Vylenheim, take a Great Axe and pickaxe into the dungeon, fight, mine, extract, and wake with a fragment of what you earned. It should look and feel like What Dwells Below; a lot of the full game (other skills, weapons, biomes, co-op, story) is simply not in this build yet.
 
 ## Play in the browser
 
-**[Play the slice](https://viraxvespa.github.io/WhatDwellsBelow/)** on GitHub Pages.
+**[Play the demo](https://viraxvespa.github.io/WhatDwellsBelow/)** on GitHub Pages.
 
 Click the game once so the canvas can take keyboard / gamepad input. Xbox pad works in Chromium-based browsers; WASD + mouse still work.
 
