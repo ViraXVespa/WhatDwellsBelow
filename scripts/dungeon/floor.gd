@@ -31,6 +31,7 @@ func _ready() -> void:
 	cam.position_smoothing_enabled = true
 	cam.position_smoothing_speed = 8.0
 	player.add_child(cam)
+	Game.apply_cam(cam)
 	cam.make_current()
 	add_child(Hud.new())
 	add_child(PauseMenu.new())

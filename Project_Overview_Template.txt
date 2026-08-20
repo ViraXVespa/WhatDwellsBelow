@@ -648,5 +648,8 @@ Decided: all five pillars; demo is solo, co-op sold as coming.
 Decided: one good run = mailed materials **and** a persistent XP power bump.
 Decided: hopeful banter; combat grunts only; small level bonuses; stall buys ore / sells food+pots; campfire + shrine; richer death vs dispel recap.
 Decided next art: **facing-correct axe swings first**, then enemy walk cycles.
-[TODO] Demo save: persist forever, or a visible New Demo wipe.
-[TODO] Passive Dodge / Block in the demo, or still slam/dash/HP only.
+Decided (**demo save**): **persist forever** (browser user://). No wipe button. New machine = new diver.
+Decided (**demo defense**): **no passive Dodge/Block yet.** Slam, dash i-frames, food, pots. Full evade/DR waits until the feedback reads on a couch.
+Decided (**demo end**): **loop forever.** Floor 6 Guardian is the nastiest floor, not a credits gate.
+Decided (**pause**): **Patreon link + music/SFX volume.** Zoom is an adjustable setting; default is current 1.0 camera scale.
+Decided (**placeholder score aim**): Placeholdia = **warm, hopeful, a bit jokey, not grand.** Dungeon = **low, tense, career-hazard — not horror.** Vira replaces both later.

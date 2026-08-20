@@ -17,9 +17,26 @@ func _ready() -> void:
 			p.stream = load(path)
 		add_child(p)
 		players[name] = p
+	apply_volumes()
+
+
+func apply_volumes() -> void:
+	var mv := 0.7
+	var sv := 0.85
+	if Game.save:
+		mv = Game.save.music_vol
+		sv = Game.save.sfx_vol
+	music.volume_db = linear_to_db(maxf(0.0001, mv)) - 6.0
+	if mv <= 0.01:
+		music.volume_db = -80.0
+	for p in players.values():
+		(p as AudioStreamPlayer).volume_db = linear_to_db(maxf(0.0001, sv))
+		if sv <= 0.01:
+			(p as AudioStreamPlayer).volume_db = -80.0
 
 
 func play(name: String) -> void:
+	apply_volumes()
 	if players.has(name) and players[name].stream:
 		players[name].play()
 
@@ -40,7 +57,7 @@ func set_music(which: String) -> void:
 	if stream is AudioStreamWAV:
 		(stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_FORWARD
 	music.stream = stream
-	music.volume_db = -8.0
+	apply_volumes()
 	music.play()
 
 

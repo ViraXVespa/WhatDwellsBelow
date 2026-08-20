@@ -75,31 +75,33 @@ def note(freq: float, start: float, dur: float, amp: float, kind: str = "tri") -
 
 
 def loop_hub() -> None:
-    # Slow, slightly warm fifths. 4 seconds, loops.
+    # Warm, hopeful, a bit jokey — major pentatonic, not grand.
     bars = mix(
-        note(196.0, 0.00, 0.70, 0.10),
-        note(247.0, 0.00, 0.70, 0.07),
-        note(220.0, 1.00, 0.70, 0.10),
-        note(277.0, 1.00, 0.70, 0.06),
-        note(196.0, 2.00, 0.70, 0.10),
-        note(294.0, 2.00, 0.55, 0.07),
-        note(175.0, 3.00, 0.90, 0.11),
-        note(220.0, 3.00, 0.90, 0.06),
+        note(262.0, 0.00, 0.55, 0.09),
+        note(330.0, 0.00, 0.55, 0.06),
+        note(392.0, 0.55, 0.40, 0.07),
+        note(294.0, 1.10, 0.50, 0.08),
+        note(349.0, 1.10, 0.50, 0.05),
+        note(330.0, 1.80, 0.45, 0.08),
+        note(262.0, 2.40, 0.70, 0.09),
+        note(196.0, 2.40, 0.70, 0.05),
+        note(294.0, 3.20, 0.70, 0.07),
+        note(392.0, 3.40, 0.35, 0.05),
     )
     write_wav(OUT / "music_hub.wav", pad(bars, 4.0))
 
 
 def loop_dungeon() -> None:
+    # Low, tense, career-hazard — not horror stingers.
     bars = mix(
-        note(110.0, 0.00, 0.90, 0.12, "sq"),
-        note(146.8, 0.50, 0.40, 0.06),
-        note(98.0, 1.20, 0.80, 0.11, "sq"),
-        note(130.8, 1.70, 0.35, 0.05),
-        note(110.0, 2.40, 0.70, 0.12, "sq"),
-        note(164.8, 2.80, 0.30, 0.05),
-        note(82.4, 3.30, 0.65, 0.13, "sq"),
+        note(98.0, 0.00, 1.10, 0.11, "sq"),
+        note(104.0, 0.80, 0.35, 0.04),
+        note(87.3, 1.40, 1.00, 0.10, "sq"),
+        note(130.8, 2.20, 0.28, 0.04),
+        note(82.4, 2.70, 1.20, 0.12, "sq"),
+        note(110.0, 3.40, 0.40, 0.035),
     )
-    write_wav(OUT / "music_dungeon.wav", pad(bars, 4.0))
+    write_wav(OUT / "music_dungeon.wav", pad(bars, 4.2))
 
 
 def sfx() -> None:

@@ -28,6 +28,24 @@ func _ready() -> void:
 	randomize()
 
 
+func apply_cam(cam: Camera2D) -> void:
+	cam.add_to_group("wdb_cam")
+	var z := 1.0
+	if save:
+		z = save.cam_zoom
+	cam.zoom = Vector2(z, z)
+
+
+func set_cam_zoom(z: float) -> void:
+	if save == null:
+		return
+	save.cam_zoom = clampf(z, 1.0, 1.75)
+	save.write()
+	for n in get_tree().get_nodes_in_group("wdb_cam"):
+		if n is Camera2D:
+			(n as Camera2D).zoom = Vector2(save.cam_zoom, save.cam_zoom)
+
+
 func go_title() -> void:
 	in_dungeon = false
 	run = null

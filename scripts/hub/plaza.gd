@@ -14,6 +14,7 @@ func _ready() -> void:
 	var cam := Camera2D.new()
 	cam.position_smoothing_enabled = true
 	player.add_child(cam)
+	Game.apply_cam(cam)
 	cam.make_current()
 	add_child(Hud.new())
 	add_child(PauseMenu.new())

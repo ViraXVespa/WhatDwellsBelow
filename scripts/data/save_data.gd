@@ -14,6 +14,9 @@ var analyzed_axes: Array = []
 var analyzed_pickaxes: Array = []
 var extra_food: int = 0
 var extra_potion: int = 0
+var music_vol: float = 0.7
+var sfx_vol: float = 0.85
+var cam_zoom: float = 1.0
 
 
 static func load_or_create() -> SaveData:
@@ -53,6 +56,9 @@ func to_dict() -> Dictionary:
 		"analyzed_pickaxes": picks,
 		"extra_food": extra_food,
 		"extra_potion": extra_potion,
+		"music_vol": music_vol,
+		"sfx_vol": sfx_vol,
+		"cam_zoom": cam_zoom,
 	}
 
 
@@ -67,6 +73,9 @@ static func from_dict(d: Dictionary) -> SaveData:
 	s.deepest_floor = int(d.get("deepest_floor", 1))
 	s.extra_food = int(d.get("extra_food", 0))
 	s.extra_potion = int(d.get("extra_potion", 0))
+	s.music_vol = clampf(float(d.get("music_vol", 0.7)), 0.0, 1.0)
+	s.sfx_vol = clampf(float(d.get("sfx_vol", 0.85)), 0.0, 1.0)
+	s.cam_zoom = clampf(float(d.get("cam_zoom", 1.0)), 1.0, 1.75)
 	for row in d.get("analyzed_axes", []):
 		if row is Dictionary:
 			s.analyzed_axes.append(ItemData.from_dict(row))
