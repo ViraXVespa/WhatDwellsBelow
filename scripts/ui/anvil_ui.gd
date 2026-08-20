@@ -1,6 +1,8 @@
 class_name AnvilUI
 extends CanvasLayer
 
+const SkillMath := preload("res://scripts/data/skills.gd")
+
 var panel: Panel
 var list: ItemList
 var hint: Label
@@ -64,7 +66,7 @@ func close() -> void:
 
 func _refresh() -> void:
 	list.clear()
-	var sm := Game.skill_level("smithing")
+	var sm: int = Game.skill_level("smithing")
 	hint.text = "Gold %d   Ore %d   Smithing L%d\nRecipes are unlimited. 3 forged holds per type is what you can actually take on a run.\nFirst forge costs gold+ore. Re-forge after destroy is cheaper (no new root)." % [
 		Game.save.gold, Game.save.banked_ore, sm
 	]
@@ -117,7 +119,7 @@ func _forge() -> void:
 	it.forged_once = true
 	Game.save.write()
 	hint.text = "Hammering…"
-	await get_tree().create_timer(Skills.smith_bar_time(Game.skill_level("smithing")), true, true).timeout
+	await get_tree().create_timer(SkillMath.smith_bar_time(Game.skill_level("smithing")), true, true).timeout
 	Game.save.add_hold(it)
 	Game.grant_xp("smithing", 18.0 if first else 10.0, true)
 	Game.save.write()

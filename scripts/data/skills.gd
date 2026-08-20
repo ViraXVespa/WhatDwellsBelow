@@ -1,5 +1,5 @@
 class_name Skills
-extends Object
+extends RefCounted
 
 const L2 := 90.0
 

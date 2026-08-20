@@ -1,6 +1,8 @@
 class_name PauseMenu
 extends CanvasLayer
 
+const SkillMath := preload("res://scripts/data/skills.gd")
+
 var panel: Panel
 var open := false
 var page := "inv"
@@ -147,7 +149,7 @@ func _paint_tabs() -> void:
 func _show(p: String) -> void:
 	if p == "wipe":
 		page = "wipe"
-	elif TAB_ORDER.has(p):
+	elif p in TAB_ORDER:
 		page = p
 	for c in body.get_children():
 		body.remove_child(c)
@@ -318,10 +320,10 @@ func _build_skills() -> void:
 	lines.append("")
 	for sk in ["great_axe", "strength", "defense", "hitpoints", "mining", "smithing"]:
 		var xp := Game.skill_xp(sk)
-		var lv := Skills.level_from_xp(xp)
-		var into := xp - Skills.xp_for_level(lv)
-		var need := Skills.xp_to_next(lv)
-		lines.append("%s  Lv %d    %.0f / %.0f to next" % [Skills.label(sk), lv, into, need])
+		var lv: int = SkillMath.level_from_xp(xp)
+		var into: float = xp - SkillMath.xp_for_level(lv)
+		var need: float = SkillMath.xp_to_next(lv)
+		lines.append("%s  Lv %d    %.0f / %.0f to next" % [SkillMath.label(sk), lv, into, need])
 	lines.append("\n2% of this-run XP is kept on wake. Dungeon is the real grind.")
 	if Game.run:
 		lines.append("This dream:  axe %.0f  str %.0f  def %.0f  hp %.0f  mine %.0f  smith %.0f" % [

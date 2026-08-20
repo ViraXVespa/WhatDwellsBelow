@@ -1,6 +1,8 @@
 class_name Player
 extends CharacterBody2D
 
+const SkillMath := preload("res://scripts/data/skills.gd")
+
 const SPEED := 190.0
 const DASH_SPEED := 620.0
 const DASH_TIME := 0.16
@@ -274,7 +276,7 @@ func _try_attack() -> void:
 		return
 	var w := _weapon()
 	attack_cd = w.attack_period
-	var dmg := w.damage * Skills.axe_damage_mult(Game.skill_level("great_axe")) * Skills.strength_mult(Game.skill_level("strength"))
+	var dmg: float = w.damage * SkillMath.axe_damage_mult(Game.skill_level("great_axe")) * SkillMath.strength_mult(Game.skill_level("strength"))
 	if Game.run:
 		dmg *= Game.run.dmg_mult
 		if Game.run.shrine_buff_t > 0.0:
@@ -342,7 +344,7 @@ func _try_slam() -> bool:
 	slam_cd = SLAM_CD
 	attack_cd = maxf(attack_cd, 0.4)
 	Sfx.play("slam")
-	var dmg := _weapon().damage * 1.6 * Skills.axe_damage_mult(Game.skill_level("great_axe")) * Skills.strength_mult(Game.skill_level("strength"))
+	var dmg: float = _weapon().damage * 1.6 * SkillMath.axe_damage_mult(Game.skill_level("great_axe")) * SkillMath.strength_mult(Game.skill_level("strength"))
 	if Game.run:
 		dmg *= Game.run.dmg_mult * Game.run.slam_dmg_mult
 		if Game.run.shrine_buff_t > 0.0:

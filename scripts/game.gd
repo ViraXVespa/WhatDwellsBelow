@@ -1,5 +1,7 @@
 extends Node
 
+const SkillMath := preload("res://scripts/data/skills.gd")
+
 signal run_hp_changed
 signal bag_changed
 signal gold_changed
@@ -131,13 +133,13 @@ func end_run(_voluntary: bool) -> void:
 	var keep := {}
 	var leveled: Array = []
 	for sk in ["mining", "great_axe", "smithing", "strength", "defense", "hitpoints"]:
-		var k := run.xp_run_of(sk) * 0.02
+		var k: float = run.xp_run_of(sk) * 0.02
 		keep[sk] = k
-		var before := Skills.level_from_xp(save.xp_of(sk))
+		var before: int = SkillMath.level_from_xp(save.xp_of(sk))
 		save.add_xp(sk, k)
-		var after := Skills.level_from_xp(save.xp_of(sk))
+		var after: int = SkillMath.level_from_xp(save.xp_of(sk))
 		if after > before:
-			leveled.append("%s %d" % [Skills.label(sk), after])
+			leveled.append("%s %d" % [SkillMath.label(sk), after])
 	if run.visited_deepest > save.deepest_floor:
 		save.deepest_floor = run.visited_deepest
 	last_recap = {
@@ -227,22 +229,22 @@ func skill_xp(skill: String) -> float:
 
 
 func skill_level(skill: String) -> int:
-	return Skills.level_from_xp(skill_xp(skill))
+	return SkillMath.level_from_xp(skill_xp(skill))
 
 
 func combat_level() -> int:
-	return Skills.combat_level(skill_xp("great_axe"), skill_xp("strength"), skill_xp("defense"), skill_xp("hitpoints"))
+	return SkillMath.combat_level(skill_xp("great_axe"), skill_xp("strength"), skill_xp("defense"), skill_xp("hitpoints"))
 
 
 func combat_level_precise() -> float:
-	return Skills.combat_level_precise(skill_xp("great_axe"), skill_xp("strength"), skill_xp("defense"), skill_xp("hitpoints"))
+	return SkillMath.combat_level_precise(skill_xp("great_axe"), skill_xp("strength"), skill_xp("defense"), skill_xp("hitpoints"))
 
 
 func grant_xp(skill: String, amount: float, awake: bool = false) -> void:
 	if amount == 0.0:
 		return
-	var before := skill_level(skill)
-	var cl_before := combat_level()
+	var before: int = skill_level(skill)
+	var cl_before: int = combat_level()
 	if awake or run == null:
 		if save == null:
 			return
@@ -251,12 +253,12 @@ func grant_xp(skill: String, amount: float, awake: bool = false) -> void:
 		run.add_xp_run(skill, amount)
 	if skill == "hitpoints" and run:
 		run.refresh_max_hp(false)
-	var after := skill_level(skill)
+	var after: int = skill_level(skill)
 	if after > before:
 		skill_leveled.emit(skill, after)
 		Sfx.play("level")
-		toast("%s level %d!" % [Skills.label(skill), after], Color(1.0, 0.92, 0.42))
-	var cl_after := combat_level()
+		toast("%s level %d!" % [SkillMath.label(skill), after], Color(1.0, 0.92, 0.42))
+	var cl_after: int = combat_level()
 	if cl_after > cl_before:
 		toast("Combat level %d!" % cl_after, Color(1.0, 0.86, 0.35))
 

@@ -1,6 +1,8 @@
 class_name Hud
 extends CanvasLayer
 
+const SkillMath := preload("res://scripts/data/skills.gd")
+
 var hp_bar: ProgressBar
 var pot_bar: ProgressBar
 var dash_bar: ProgressBar
@@ -337,7 +339,7 @@ func _process(_delta: float) -> void:
 		if floor_lab:
 			floor_lab.text = "F%d" % Game.run.current_floor
 	else:
-		var mx := 100.0 + Skills.hitpoints_bonus(Game.skill_level("hitpoints"))
+		var mx: float = 100.0 + SkillMath.hitpoints_bonus(Game.skill_level("hitpoints"))
 		hp_bar.max_value = mx
 		hp_bar.value = mx
 		hp_val.text = "%d/%d" % [int(mx), int(mx)]

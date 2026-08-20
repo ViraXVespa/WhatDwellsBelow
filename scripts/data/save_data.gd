@@ -1,6 +1,8 @@
 class_name SaveData
 extends RefCounted
 
+const SkillMath := preload("res://scripts/data/skills.gd")
+
 const PATH := "user://wdb_save.json"
 const HOLD_KEYS := ["great_axe", "pickaxe", "potion", "head", "body", "legs"]
 
@@ -196,7 +198,7 @@ func add_hold(it: ItemData) -> bool:
 	var copy := it.duplicate_item()
 	copy.forged = true
 	copy.forged_once = true
-	var sm := Skills.smith_out_mult(Skills.level_from_xp(smithing_xp))
+	var sm: float = SkillMath.smith_out_mult(SkillMath.level_from_xp(smithing_xp))
 	if copy.kind == ItemData.Kind.WEAPON:
 		copy.damage *= sm
 	if copy.kind == ItemData.Kind.ARMOR:

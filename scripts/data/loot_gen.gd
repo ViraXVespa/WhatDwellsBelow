@@ -1,5 +1,7 @@
 class_name LootGen
-extends Object
+extends RefCounted
+
+const SkillMath := preload("res://scripts/data/skills.gd")
 
 const WHITE_PREFIXES := ["Rusty", "Worn", "Crude", "Plain", "Nicked"]
 const GREEN_PREFIXES := ["Keen", "Heavy", "Balanced", "Notched", "Hardy"]
@@ -97,7 +99,7 @@ static func forge_cost(it: ItemData, first: bool, smith_lv: int = 1) -> Dictiona
 	if not first:
 		gold = int(ceil(float(gold) * 0.7))
 		ore = maxi(1, int(ceil(float(ore) * 0.7)))
-	var m := Skills.smith_cost_mult(maxi(1, smith_lv))
+	var m: float = SkillMath.smith_cost_mult(maxi(1, smith_lv))
 	gold = maxi(1, int(ceil(float(gold) * m)))
 	ore = maxi(1, int(ceil(float(ore) * m)))
 	return {"gold": gold, "ore": ore}

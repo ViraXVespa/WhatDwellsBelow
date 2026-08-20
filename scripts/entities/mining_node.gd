@@ -1,6 +1,8 @@
 class_name MiningNode
 extends Interactable
 
+const SkillMath := preload("res://scripts/data/skills.gd")
+
 var remaining := 4
 var rng := RandomNumberGenerator.new()
 
@@ -64,7 +66,7 @@ func channel_time(_player: Node) -> float:
 	var art := 1.0
 	if Game.run:
 		art = Game.run.mine_mult
-	return maxf(0.55, 1.85 / maxf(0.5, mult) / Skills.mine_speed_mult(Game.skill_level("mining")) / art)
+	return maxf(0.55, 1.85 / maxf(0.5, mult) / SkillMath.mine_speed_mult(Game.skill_level("mining")) / art)
 
 
 func complete_channel(player: Node) -> void:

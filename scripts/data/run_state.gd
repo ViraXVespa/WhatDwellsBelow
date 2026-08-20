@@ -1,6 +1,8 @@
 class_name RunState
 extends RefCounted
 
+const SkillMath := preload("res://scripts/data/skills.gd")
+
 const BAG_SIZE := 28
 
 var current_floor: int = 1
@@ -134,7 +136,7 @@ func armor_bonus_sum(key: String) -> float:
 
 func refresh_max_hp(fill: bool = false) -> void:
 	var old := max_hp
-	max_hp = 100.0 + armor_bonus_sum("hp") + Skills.hitpoints_bonus(Game.skill_level("hitpoints"))
+	max_hp = 100.0 + armor_bonus_sum("hp") + SkillMath.hitpoints_bonus(Game.skill_level("hitpoints"))
 	if artifact_ids.has("second_wind"):
 		max_hp += 20.0
 	if fill:
@@ -149,7 +151,7 @@ func total_defense() -> float:
 	for it in [armor_head, armor_body, armor_legs]:
 		if it:
 			d += it.defense
-	d += Skills.defense_points(Game.skill_level("defense"))
+	d += SkillMath.defense_points(Game.skill_level("defense"))
 	return d
 
 
