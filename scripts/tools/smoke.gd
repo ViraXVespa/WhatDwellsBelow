@@ -36,7 +36,7 @@ func _initialize() -> void:
 		if load(sp) == null:
 			_log("SMOKE: FAIL load " + sp)
 	if game.save:
-		game.save.view_3d = true
+		game.save.presentation = "live"
 	game.begin_run({"weapon": ItemData.make_starter_axe(), "tool": ItemData.make_starter_pickaxe()}, 1)
 	_log("SMOKE: begin_run 3d called")
 

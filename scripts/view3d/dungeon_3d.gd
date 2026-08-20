@@ -92,11 +92,11 @@ func _draw_tiles() -> void:
 				if near_floor:
 					walls.append(pos)
 	if not fa.is_empty():
-		add_child(V3.tile_mm("res://assets/3d/tiles/dungeon_floor.png", fa, 0.0))
+		add_child(V3.tile_mm(V3.a("tiles", "dungeon_floor.png"), fa, 0.0))
 	if not fb.is_empty():
-		add_child(V3.tile_mm("res://assets/3d/tiles/dungeon_floor_b.png", fb, 0.0))
+		add_child(V3.tile_mm(V3.a("tiles", "dungeon_floor_b.png"), fb, 0.0))
 	if not walls.is_empty():
-		add_child(V3.wall_mm("res://assets/3d/tiles/dungeon_wall.png", walls))
+		add_child(V3.wall_mm(V3.a("tiles", "dungeon_wall.png"), walls))
 	var void_mesh := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(200.0, 160.0)
@@ -179,9 +179,9 @@ func _reveal_around(tile: Vector2i) -> void:
 
 
 func _spawn_entities() -> void:
-	_iact("floor_crystal", data.crystal, "res://assets/3d/props/crystal.png")
+	_iact("floor_crystal", data.crystal, V3.a("props", "crystal.png"))
 	var st_locked := Game.run.current_floor >= DungeonGen.SLICE_MAX_FLOOR
-	_iact("stairs", data.stairs, "res://assets/3d/props/stairs.png", {"locked": st_locked})
+	_iact("stairs", data.stairs, V3.a("props", "stairs.png"), {"locked": st_locked})
 	if data.get("boss", false):
 		var boss = Enemy3D.new()
 		boss.position = _world(data.boss_pos)
@@ -194,7 +194,7 @@ func _spawn_entities() -> void:
 		if pp.x >= 0:
 			_clerk("misc", "patty", pp)
 	for mp in data.mines:
-		_iact("mining", mp, "res://assets/3d/props/ore.png")
+		_iact("mining", mp, V3.a("props", "ore.png"))
 	for e in data.enemies:
 		var en = Enemy3D.new()
 		en.position = _world(e.pos)
@@ -202,7 +202,7 @@ func _spawn_entities() -> void:
 		en.setup(e.role, Game.run.current_floor)
 	if data.has("loot"):
 		for lp in data.loot:
-			_iact("loot_stash", lp, "res://assets/3d/props/chest.png")
+			_iact("loot_stash", lp, V3.a("props", "chest.png"))
 	if data.has("breakables"):
 		for row in data.breakables:
 			var br = Solid3D.new()
@@ -211,17 +211,17 @@ func _spawn_entities() -> void:
 			br.setup_breakable(String(row.kind))
 	if data.has("campfires"):
 		for cp in data.campfires:
-			_iact("campfire", cp, "res://assets/3d/props/campfire.png")
+			_iact("campfire", cp, V3.a("props", "campfire.png"))
 	if data.has("shrines"):
 		for sp in data.shrines:
 			_iact("shrine", sp)
 	if data.has("shop"):
 		var sp: Vector2i = data.shop
 		if sp.x >= 0:
-			_iact("ghost_shop", sp, "res://assets/3d/npcs/shopkeep.png")
+			_iact("ghost_shop", sp, V3.a("npcs", "shopkeep.png"))
 	if data.has("chests"):
 		for cp in data.chests:
-			_iact("artifact_chest", cp, "res://assets/3d/props/chest.png")
+			_iact("artifact_chest", cp, V3.a("props", "chest.png"))
 	if data.has("fires"):
 		for fp in data.fires:
 			var ft = Area3DS.new()

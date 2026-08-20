@@ -21,7 +21,7 @@ func setup_breakable(p_kind: String) -> void:
 	add_to_group("breakables")
 	add_to_group("hittable")
 	col = V3.add_box(self, Vector3(0.44, 0.55, 0.44), Vector3(0, 0.28, 0))
-	var path := "res://assets/3d/props/%s.png" % kind
+	var path := V3.a("props", "%s.png" % kind)
 	var tex := Art.load_tex(path)
 	if tex == null:
 		tex = Art.chest(Vector2i(40, 40)) if kind == "barrel" else Art.solid(Vector2i(28, 32), Color(0.62, 0.38, 0.2))

@@ -52,15 +52,15 @@ func _build() -> void:
 	match kind:
 		"town_crystal":
 			prompt = "Enter the dungeon"
-			_spr_from(tex_path if tex_path != "" else "res://assets/3d/props/crystal.png", 1.35, true)
+			_spr_from(tex_path if tex_path != "" else V3.a("props", "crystal.png"), 1.35, true)
 			V3.add_box(self, Vector3(0.85, 0.45, 0.45), Vector3(0, 0.22, 0.2))
 		"receptionist":
 			prompt = "Talk: Guild clerk"
-			_spr_from("res://assets/3d/npcs/receptionist.png", 1.1, true)
+			_spr_from(V3.a("npcs", "receptionist.png"), 1.1, true)
 			V3.add_cyl(self, 0.18, 0.5, Vector3(0, 0.25, 0))
 		"sign":
 			prompt = title if title != "" else "Sign"
-			_spr_from(tex_path if tex_path != "" else "res://assets/3d/props/sign.png", 0.95 if tex_path.ends_with("dumpster.png") else 0.85, true)
+			_spr_from(tex_path if tex_path != "" else V3.a("props", "sign.png"), 0.95 if tex_path.ends_with("dumpster.png") else 0.85, true)
 			if tex_path.ends_with("dumpster.png"):
 				V3.add_box(self, Vector3(1.2, 0.8, 0.75), Vector3(0, 0.4, 0))
 			else:
@@ -68,38 +68,38 @@ func _build() -> void:
 		"vendor":
 			prompt = "Talk: Stallkeep"
 			process_mode = Node.PROCESS_MODE_ALWAYS
-			_spr_from("res://assets/3d/npcs/vendor.png", 1.05, true)
+			_spr_from(V3.a("npcs", "vendor.png"), 1.05, true)
 			V3.add_cyl(self, 0.2, 0.5, Vector3(0, 0.25, 0.1))
 		"anvil":
 			prompt = "Anvil"
-			_spr_from("res://assets/3d/props/anvil.png", 0.7, true)
+			_spr_from(V3.a("props", "anvil.png"), 0.7, true)
 			V3.add_box(self, Vector3(1.1, 0.55, 0.65), Vector3(0, 0.28, 0.15))
 		"clerk":
 			prompt = display_name()
-			var path := "res://assets/3d/npcs/%s.png" % clerk_id
+			var path := V3.a("npcs", "%s.png" % clerk_id)
 			_spr_from(path, 1.1, true)
 			V3.add_cyl(self, 0.2, 0.55, Vector3(0, 0.28, 0))
 		"stairs":
 			prompt = "That's as deep as this expedition maps" if locked else "Descend stairs"
-			_spr_from("res://assets/3d/props/stairs.png", 1.0, true)
+			_spr_from(V3.a("props", "stairs.png"), 1.0, true)
 			V3.add_box(self, Vector3(0.7, 0.2, 0.7), Vector3(0, 0.1, 0))
 		"floor_crystal":
 			prompt = "Floor crystal"
 			process_mode = Node.PROCESS_MODE_ALWAYS
-			_spr_from("res://assets/3d/props/crystal.png", 1.2, true)
+			_spr_from(V3.a("props", "crystal.png"), 1.2, true)
 			V3.add_box(self, Vector3(0.55, 0.4, 0.55), Vector3(0, 0.2, 0))
 		"mining":
 			prompt = "Mine ore"
 			remaining = rng.randi_range(3, 5)
-			_spr_from("res://assets/3d/props/ore.png", 0.75, true)
+			_spr_from(V3.a("props", "ore.png"), 0.75, true)
 			V3.add_box(self, Vector3(0.8, 0.7, 0.8), Vector3(0, 0.35, 0))
 		"loot_stash":
 			prompt = "Search stash"
-			_spr_from("res://assets/3d/props/chest.png", 0.75, true)
+			_spr_from(V3.a("props", "chest.png"), 0.75, true)
 			V3.add_box(self, Vector3(0.7, 0.5, 0.55), Vector3(0, 0.25, 0))
 		"campfire":
 			prompt = "Warm up"
-			_spr_from("res://assets/3d/props/campfire.png", 0.7, true)
+			_spr_from(V3.a("props", "campfire.png"), 0.7, true)
 			V3.add_cyl(self, 0.28, 0.3, Vector3(0, 0.15, 0))
 		"shrine":
 			prompt = "Touch shrine"
@@ -107,13 +107,13 @@ func _build() -> void:
 			V3.add_box(self, Vector3(0.4, 0.7, 0.4), Vector3(0, 0.35, 0))
 		"ghost_shop":
 			prompt = "Talk: shopkeep (safe)"
-			_spr_from("res://assets/3d/npcs/shopkeep.png", 1.1, true)
+			_spr_from(V3.a("npcs", "shopkeep.png"), 1.1, true)
 			if spr:
 				spr.modulate = Color(0.75, 0.9, 1.0, 0.92)
 			V3.add_cyl(self, 0.25, 0.6, Vector3(0, 0.3, 0))
 		"artifact_chest":
 			prompt = "Open chest"
-			_spr_from("res://assets/3d/props/chest.png", 0.8, true)
+			_spr_from(V3.a("props", "chest.png"), 0.8, true)
 			if spr:
 				spr.modulate = Color(0.95, 0.78, 0.35)
 			V3.add_box(self, Vector3(0.7, 0.5, 0.55), Vector3(0, 0.25, 0))

@@ -30,24 +30,36 @@ func _ready() -> void:
 	save = SaveData.load_or_create()
 	randomize()
 	if "--wdb-smoke-3d" in OS.get_cmdline_user_args():
-		save.view_3d = true
+		save.presentation = "live"
 		call_deferred("begin_run", {"weapon": ItemData.make_starter_axe(), "tool": ItemData.make_starter_pickaxe()}, 1)
 
 
+func presentation() -> String:
+	if save == null:
+		return "live"
+	return save.presentation
+
+
 func using_3d() -> bool:
-	return save != null and save.view_3d
+	return presentation() != "classic_2d"
 
 
-func set_view_3d(on: bool, reload := true) -> void:
+func using_experiment_art() -> bool:
+	return presentation() == "art_experiment"
+
+
+func set_presentation(id: String, reload := true) -> void:
 	if save == null:
 		return
-	if save.view_3d != on:
-		save.view_3d = on
+	if id != "live" and id != "classic_2d" and id != "art_experiment":
+		id = "live"
+	if save.presentation != id:
+		save.presentation = id
 		save.write()
 	if not reload:
 		return
 	if in_dungeon:
-		toast("View applies on the next floor.", Color(0.85, 0.82, 0.55))
+		toast("Look applies on the next floor.", Color(0.85, 0.82, 0.55))
 		return
 	go_plaza()
 

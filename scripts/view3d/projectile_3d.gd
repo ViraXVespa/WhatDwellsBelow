@@ -21,7 +21,7 @@ func _ready() -> void:
 	sh.radius = 0.13
 	cs.shape = sh
 	add_child(cs)
-	var tex := Art.load_tex("res://assets/3d/props/bolt.png")
+	var tex := Art.load_tex(V3.a("props", "bolt.png"))
 	if tex == null:
 		tex = Art.solid(Vector2i(12, 12), Color(0.85, 0.35, 0.2))
 	add_child(V3.sprite(tex, 0.35, true))

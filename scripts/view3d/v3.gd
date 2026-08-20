@@ -1,6 +1,6 @@
 extends Object
 
-## Gloam 3D: 1 tile = 1 world unit, 64px = 1u, Y-up, XZ ground. Painted sprites live here.
+## 3D world: 1 tile = 1 world unit, 64px = 1u, Y-up, XZ ground.
 const TILE := 1.0
 const PX := 64.0
 const WALL_H := 1.45
@@ -8,11 +8,31 @@ const CAM_PITCH := -58.0
 const CAM_HEIGHT := 14.0
 const INTERACT_R := 72.0 / 64.0
 const PLAYER_R := 12.0 / 64.0
-const ART := "res://assets/3d/"
 
 
-static func tex(rel: String) -> String:
-	return ART + rel
+static func _game() -> Node:
+	if Engine.get_main_loop() == null:
+		return null
+	return Engine.get_main_loop().root.get_node_or_null("/root/Game")
+
+
+static func painted() -> bool:
+	var g := _game()
+	return g != null and bool(g.call("using_experiment_art"))
+
+
+static func a(kind: String, file: String) -> String:
+	if painted():
+		return "res://assets/3d/%s/%s" % [kind, file]
+	if kind == "tiles":
+		return "res://assets/tiles/%s" % file
+	return "res://assets/sprites/%s/%s" % [kind, file]
+
+
+static func filter() -> BaseMaterial3D.TextureFilter:
+	if painted():
+		return BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	return BaseMaterial3D.TEXTURE_FILTER_NEAREST
 
 static var _mats: Dictionary = {}
 static var _box_mesh: BoxMesh
@@ -98,7 +118,7 @@ static func mat(path: String, unshaded := true) -> StandardMaterial3D:
 	if _mats.has(key):
 		return _mats[key]
 	var m := StandardMaterial3D.new()
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	m.texture_filter = filter()
 	m.roughness = 1.0
 	m.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 	if unshaded:
@@ -118,7 +138,7 @@ static func mat_color(col: Color, unshaded := true) -> StandardMaterial3D:
 		return _mats[key]
 	var m := StandardMaterial3D.new()
 	m.albedo_color = col
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	m.texture_filter = filter()
 	m.roughness = 1.0
 	m.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED if unshaded else BaseMaterial3D.SHADING_MODE_PER_PIXEL
@@ -144,17 +164,26 @@ static func add_world(host: Node3D, dungeon: bool) -> void:
 	var env := WorldEnvironment.new()
 	var e := Environment.new()
 	e.background_mode = Environment.BG_COLOR
-	e.background_color = Color(0.03, 0.04, 0.055) if dungeon else Color(0.07, 0.11, 0.12)
+	var paint := painted()
+	if paint:
+		e.background_color = Color(0.03, 0.04, 0.055) if dungeon else Color(0.07, 0.11, 0.12)
+		e.ambient_light_color = Color(0.72, 0.62, 0.48) if dungeon else Color(0.95, 0.78, 0.55)
+	else:
+		e.background_color = Color(0.03, 0.035, 0.05) if dungeon else Color(0.22, 0.38, 0.48)
+		e.ambient_light_color = Color(0.78, 0.74, 0.68) if dungeon else Color(0.92, 0.9, 0.82)
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color(0.72, 0.62, 0.48) if dungeon else Color(0.95, 0.78, 0.55)
 	e.ambient_light_energy = 0.9
 	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.environment = e
 	host.add_child(env)
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-52.0, 28.0, 0.0)
-	sun.light_energy = 0.75 if dungeon else 1.05
-	sun.light_color = Color(1.0, 0.72, 0.42) if not dungeon else Color(0.75, 0.88, 0.95)
+	if paint:
+		sun.light_energy = 0.75 if dungeon else 1.05
+		sun.light_color = Color(1.0, 0.72, 0.42) if not dungeon else Color(0.75, 0.88, 0.95)
+	else:
+		sun.light_energy = 0.7 if dungeon else 0.95
+		sun.light_color = Color(1.0, 0.94, 0.82) if not dungeon else Color(0.85, 0.88, 0.95)
 	sun.shadow_enabled = false
 	host.add_child(sun)
 
@@ -171,7 +200,7 @@ static func sprite(tex: Texture2D, world_h: float, y_billboard: bool) -> Sprite3
 	s.double_sided = true
 	s.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	s.alpha_scissor_threshold = 0.35
-	s.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	s.texture_filter = filter()
 	s.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y if y_billboard else BaseMaterial3D.BILLBOARD_DISABLED
 	s.render_priority = 1
 	if tex:

@@ -25,7 +25,7 @@ One-liner
 Decided (public): **A gamepad-first dungeon crawler where you pilot disposable spirit avatars, mail loot home, and slowly remember the skills you earned in the dark.**
 
 Elevator pitch (from original)
-WDB is a mashup of RuneScape and Heroes of Hammerwatch. Gameplay is gamepad-focused with a 2D art style closer to Hammerwatch than RuneScape. The player empowers an extravagant number of skills and abilities through play. Skills such as woodcutting, mining, and smithing gather resources and craft armaments. Weapons each have their own experience and levels: big bonuses for that weapon type, smaller bonuses for all weapons, to encourage using a variety of weapons.
+WDB is a mashup of RuneScape and Heroes of Hammerwatch. Gameplay is gamepad-focused. It *reads* like a 2D action game (pixel sprites, 3/4 overhead, square tiles) but the live world is 3D so walls have height, depth is real, and movement can feel natural. The player empowers an extravagant number of skills and abilities through play. Skills such as woodcutting, mining, and smithing gather resources and craft armaments. Weapons each have their own experience and levels: big bonuses for that weapon type, smaller bonuses for all weapons, to encourage using a variety of weapons.
 
 Play spaces
 - City (**Vylenheim**, provisional): static hub with vendors and skilling facilities. Layout only changes via story progress or facility upgrades. Contains the dungeon entrance.
@@ -61,7 +61,7 @@ Comparable games (steal vs reject)
 Decided: **no shop-between-floors.** Hidden **in-dungeon shops** (HoW-style finds) spend **unextracted gold**. **In the demo too.**
 Decided: **permanent town upgrades = Vylenheim only.** Placeholdia never upgrades.
 - Diablo: steal smaller packs, longer combat, passive block, mix of automatic defense and a few bound active skills. Reject isometric click-to-move and PC-first ARPG inventory-as-gameplay (unless later decided).
-- Heroes of Hammerwatch 2 / Halls of Torment: steal the 3/4 overhead camera (square tiles, readable on a TV). Art follows HoW2 (pixel sprites), not Halls of Torment's retro-3D rotating models.
+- Heroes of Hammerwatch 2 / Halls of Torment: steal the 3/4 overhead *read* (square tiles, faces and wall-fronts visible on a TV). Live ship is a **3D world with 2D-looking sprites** (locked ortho camera, billboard characters/props) — not a flat canvas and not rotating 3D character models.
 - RuneScape: steal skills, gathering, crafting, weapon diversity. **Reject** tick combat, click-to-move, and a **Grand Exchange**. **Light quest journal later** (optional guild notes, not RS quest-req checklists). Not in the demo.
 - [TODO] Other comps (Hades, Dead Cells, Moonlighter, Darkest Dungeon, etc.) and what you steal vs reject.
 
@@ -118,12 +118,15 @@ Decided: **PlayStation / Switch later if ever.** **Steam Deck inherits PC.**
 [TODO] Drop or keep the Godot Mobile renderer once we start building for Xbox/PC TV-distance UI (likely switch off Mobile as default).
 
 Camera / presentation
-Decided: 2D, Hammerwatch-like (not RuneScape's 3D).
-Decided: 3/4 overhead (slightly angled), same family as Heroes of Hammerwatch 2 and Halls of Torment. Square tiles, not isometric diamonds. You see character faces and the front of walls — not a true top-down "disc of a skull" (Hotline Miami / Isaac) and not Diablo 2 / Hades isometric.
-Decided: pixel-art sprites on a **64×64** grid so avatar customization actually reads (hair, armor, tools) at couch distance, including in two-pane split.
+Decided: **3D world, 2D vibe.** The live game is not a flat canvas and not a third-person 3D action game. It is a 3D stage shot so it still *looks* like a 2D 3/4 action game.
+Decided: locked **orthographic** Camera3D, high 3/4 pitch (~55–60° down), yaw fixed (camera looks “north”). No free orbit, no perspective foreshortening. Square tiles, not isometric diamonds. You see character faces and the front of walls — not a true top-down "disc of a skull" (Hotline Miami / Isaac) and not Diablo 2 / Hades isometric.
+Decided: **1 tile = 1.0 world unit.** Sprite pixels map **64px = 1.0u** so the old 64×64 art grid still matches the floor. Camera ortho height tracks the same zoom the 2D camera used (design 1080p height / 64 / zoom).
+Decided: **characters and props are 2D sprites standing in the 3D world** (Sprite3D, Y-billboard so they stay upright and face the camera horizontally). Buildings/trees may be standing cutouts (no yaw billboard) so they don't spin as you walk. Ground and walls are real 3D meshes (floors as quads, walls as boxes with height) so occlusion and collision have depth. HUD, pause, shops, and toasts stay **CanvasLayer 2D UI**.
+Decided: **the people and the place do not change with the camera.** Placeholdia, the diver, clerks, and the dungeon roster stay the same cast and setting. Presentation is 3D; identity is still the 2D-vibe pixel sprites. (A separate archived art experiment exists; it is not the live look — see Archives under UI.)
+Decided: pixel-art sprites on a **64×64** grid so avatar customization actually reads (hair, armor, tools) at couch distance, including in two-pane split. Live 3D uses **nearest** filtering on those sprites so they stay crisp, not painty.
 [TODO] Target play resolution / integer scale on Xbox (e.g. 1920×1080 with N× pixel scale).
 Decided: couch presentation is a hybrid, not full 4-way split.
-- Default: one shared camera (Hammerwatch-style).
+- Default: one shared camera (same locked 3/4 as solo).
 - If one or two players wander off the main group, the TV splits into **two** shared panes: one for the main party, one for the scout or pair.
 - The party cannot split into 3–4 independent views (unreadable on many TVs).
 - Intent: someone can scout ahead, or the group can search in pairs, without turning into four postage stamps.
@@ -572,14 +575,15 @@ Do not put the script in this file.
 ================================================================
 
 Art
-Decided: 2D presentation, closer to Heroes of Hammerwatch than RuneScape. Camera is 3/4 overhead.
-Decided: pixel sprites (HoW / HoW2 pipeline), not retro-3D rotating models. Target **8 facings** for ship; **4-dir** (or blobs) until the loop is fun. Not 360° turn.
-Decided: **64×64** pixel grid so avatar customization (body, gear, tools) is actually visible on a TV. Tiles should match that grid 1:1 unless we later use smaller ground tiles under a 64px character.
+Decided: **live look = 3D with a 2D vibe.** Pixel sprites, 8-dir (player) / 4-dir fallback (enemies), snappy few-frame anims, 64×64 grid — same family as the 2D slice — standing in a 3D town/dungeon so walls occlude and collision has height. Not photoreal 3D characters. Not rotating 3D models. Not a new cast or a new setting.
+Decided: pixel sprites (same pipeline as the 2D slice), not retro-3D rotating models. Target **8 facings** for ship; **4-dir** (or blobs) until the loop is fun. Not 360° turn. Facings are sprite sheets, not a 3D mesh turning.
+Decided: **64×64** pixel grid so avatar customization (body, gear, tools) is actually visible on a TV. Floor tiles are 1×1 world units; sprite height is authored so 64px ≈ 1 tile. Tiles texture the 3D floor/wall meshes (seamless, no landmark motifs).
 Decided: **8-dir in the slice** for the player (4-dir snap was visually distracting on analog aim). Enemies may still fall back to 4-dir art until those sheets exist. Customization layers still assume 8-dir as the real art target.
-Decided: **warm town, cold dungeon** — same pixel family, different temperature. Placeholdia stays hopeful/jokey warmth; the hole is cooler stone.
+Decided: **warm town, cold dungeon** — same pixel family, different temperature. Placeholdia stays hopeful/jokey warmth; the hole is cooler stone. 3D lighting follows that (warmer hub sun, cooler dungeon) without turning the hub into a different biome.
 Decided: 64×64 must keep a readable silhouette on a TV (couch + two-pane). Customization is extra detail on top of a clear body shape, not noise.
-Decided: **Hammerwatch-snappy** animation (few frames, readable at couch distance). Matches current 4-dir enemy sheets.
+Decided: **snappy** animation (few frames, readable at couch distance). Same as the 2D slice sheets.
 Decided: slice art is **8-dir player sprites** (baked starter Great Axe, no customization layers). Enemies may stay 4-dir until the loop is fun. Ship target remains 8-dir + customization.
+Decided: **2D-vibe sprites are the live art.** Wild one-off packs (different people, different place) are not the game; they may be kept as an archive snapshot and/or harvested later for *other dungeon biomes* as enemies/props, not as a replacement identity for Placeholdia or the diver.
 
 Audio
 Decided (**demo**): Placeholdia = warm, hopeful, a bit jokey (stand-in loop). Dungeon = one theme (**8-Bit**, intro once then loop). [TODO] Full game: per-biome / per-floor themes later.
@@ -593,6 +597,7 @@ Decided: HUD is **Gauntlet strips** (per player: HP, cooldowns, gold, bag, floor
 Decided (partial): death recap is a **Gauntlet-strip party results** screen, light tone. Extract = dialogue + send list. HUD = Gauntlet strips.
 [TODO] Inventory, skills, loadout — sketch or reference screens later.
 Decided: UI must read at TV distance on Xbox (couch). PC can reuse that; do not shrink to mouse-desktop or phone density.
+Decided: **development archives stay playable.** The live game is 3D-with-2D-vibe. Earlier looks (the original flat 2D canvas, and a one-off 3D art experiment that is *not* the live cast/setting) stay in the build forever so players can follow how the demo grew (Patreon build-history videos). Access is a small **Archives** submenu on the title screen and in Pause → System — not the main Play button. Archives use the same save; they are a look, not a second character. HUD should mark when you are in an archive. Play / A / Start always enters the live look.
 
 ================================================================
 13. Technical constraints (brief)
@@ -602,10 +607,10 @@ Already true in the repo
 - Godot 4.7 project named "What Dwells Below"
 - 2D stretch mode canvas_items / aspect expand
 - Mobile rendering method currently selected
-- Jolt listed as 3D physics engine (likely unused if we stay 2D)
+- Jolt is the 3D physics engine (used by the live 3D presentation)
 
 Build notes (not implementation)
-Decided: **2D TileMap** dungeon (Godot TileMap / TileSet), 64×64 grid matching sprites.
+Decided: live dungeon/hub **geometry is 3D** (floor quads + wall boxes, CharacterBody3D on the XZ plane, Y locked). Shared **DungeonGen** grid still authors layout (same 64-wide cell grid). Collision layer 1 = world, 2 = player, 4 = enemies — same idea as the 2D slice. The flat 2D TileMap/draw path is kept only as the Classic 2D archive, not the live builder.
 Decided save (slice): awake skill XP (fragments), banked material stacks, 3-per-type analyzed gear, deepest floor reached, gold on the surface, loadout. City upgrades later.
 Decided: **60 fps** on Xbox/PC/Deck. **30 allowed on two-pane split** if we have to. Do not tune for phones.
 Decided: solo and co-op both ship as real modes. Design center is local couch co-op on Xbox (max 4, shared camera with optional two-pane split); PC is supported; mobile is optional. Dungeon generation must be seedable/shared for a party on one machine (and later for online if that happens).
@@ -746,7 +751,9 @@ Decided: Artifact chests **0–3 per floor** (avg ~1; 2 lucky, 3 extremely lucky
 Decided: shopkeep voice = **hopeful banter, a bit eerie**.
 Decided: recap sting = **LttP-like** — light most of the time, **depressing if you were about to beat a boss or clear a floor**.
 Decided: palette = **warm town, cold dungeon**.
-Decided: animation = **Hammerwatch-snappy**.
+Decided: animation = **snappy** (few frames, couch-readable).
+Decided: live presentation = **3D world, 2D-vibe sprites** (ortho 3/4, billboards, 1 tile = 1u). Cast and setting unchanged.
+Decided: **Archives** submenu (title + pause) keeps earlier looks playable for build-history; Play always launches live.
 Decided: potions are **extractable gear** (Gopher, 3-stash, forge-once). Demo rolls **white/green potions with affixes** (heal, CD, CDR).
 Decided: after 2 Artifact buys, leftovers stay **listed but locked**; snacks still for sale; cap does not reset on re-entry.
 Decided: demo puzzles = **timed fire-breathing traps** (dash on the off-beat) + **cracked walls** (visible tell) + **plates and levers** opening **gates to chests**. Never block stairs.

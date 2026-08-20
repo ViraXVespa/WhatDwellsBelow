@@ -125,12 +125,12 @@ func _physics_process(delta: float) -> void:
 
 func _load_facings() -> void:
 	for k in Art.FACING_KEYS:
-		var path := "res://assets/3d/player/%s.png" % k
+		var path := V3.a("player", "%s.png" % k)
 		if ResourceLoader.exists(path):
 			facing_sprites[k] = load(path)
 		var frames: Array = []
 		for i in 8:
-			var wp := "res://assets/3d/player/walk_%s_%d.png" % [k, i]
+			var wp := V3.a("player", "walk_%s_%d.png" % [k, i])
 			if ResourceLoader.exists(wp):
 				frames.append(load(wp))
 		if not frames.is_empty():
@@ -140,7 +140,7 @@ func _load_facings() -> void:
 	for k in Art.FACING_KEYS:
 		var frames: Array = []
 		for i in 8:
-			var ap := "res://assets/3d/player/attack_%s_%d.png" % [k, i]
+			var ap := V3.a("player", "attack_%s_%d.png" % [k, i])
 			if ResourceLoader.exists(ap):
 				frames.append(load(ap))
 		if not frames.is_empty():

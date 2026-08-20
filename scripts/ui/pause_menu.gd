@@ -163,6 +163,8 @@ func _show(p: String) -> void:
 		_build_skills()
 	elif p == "wipe":
 		_build_wipe()
+	elif p == "arch":
+		_build_arch()
 	else:
 		_build_sys()
 	_paint_tabs()
@@ -342,22 +344,7 @@ func _build_sys() -> void:
 	body.add_child(_slider_row("Music", "music"))
 	body.add_child(_slider_row("SFX", "sfx"))
 	body.add_child(_slider_row("Zoom", "zoom"))
-	var view_lab := Label.new()
-	view_lab.text = "Current view: " + ("Gloam 3D" if Game.using_3d() else "Classic 2D")
-	view_lab.add_theme_font_size_override("font_size", 18)
-	view_lab.add_theme_color_override("font_color", Color(0.9, 0.86, 0.7))
-	body.add_child(view_lab)
-	var switch_to_3d := not Game.using_3d()
-	var view_txt := "Switch to Gloam 3D" if switch_to_3d else "Switch to Classic 2D"
-	if Game.in_dungeon:
-		view_txt += " (next floor)"
-	body.add_child(_btn(view_txt, func():
-		Game.set_view_3d(switch_to_3d)
-		if not Game.in_dungeon:
-			_close()
-		else:
-			_show("sys")
-	))
+	body.add_child(_btn("Archives…", func(): _show("arch")))
 	var cred := Label.new()
 	cred.text = "Dungeon: 8-Bit — ViraXVespa"
 	cred.add_theme_font_size_override("font_size", 15)
@@ -377,6 +364,34 @@ func _build_sys() -> void:
 	wipe_n.add_theme_color_override("font_color", Color(0.85, 0.72, 0.62))
 	body.add_child(wipe_n)
 	body.add_child(_btn("Delete save data…", func(): _show("wipe")))
+
+
+func _build_arch() -> void:
+	var cur := Game.presentation()
+	var now := Label.new()
+	now.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var cur_lab := "Live (current game)"
+	if cur == "classic_2d":
+		cur_lab = "Archive: Classic 2D"
+	elif cur == "art_experiment":
+		cur_lab = "Archive: art experiment"
+	now.text = "Now: %s\nFrozen looks from earlier builds. Your save still applies. Live is the game." % cur_lab
+	now.add_theme_font_size_override("font_size", 18)
+	now.add_theme_color_override("font_color", Color(0.88, 0.84, 0.72))
+	body.add_child(now)
+	var suffix := " (next floor)" if Game.in_dungeon else ""
+	body.add_child(_btn("Live — 3D world, 2D sprites" + suffix, func(): _pick_pres("live")))
+	body.add_child(_btn("Classic 2D — early slice" + suffix, func(): _pick_pres("classic_2d")))
+	body.add_child(_btn("Art experiment — different cast, kept as a snapshot" + suffix, func(): _pick_pres("art_experiment")))
+	body.add_child(_btn("Back to System", func(): _show("sys")))
+
+
+func _pick_pres(id: String) -> void:
+	Game.set_presentation(id)
+	if not Game.in_dungeon:
+		_close()
+	else:
+		_show("arch")
 
 
 func _build_wipe() -> void:

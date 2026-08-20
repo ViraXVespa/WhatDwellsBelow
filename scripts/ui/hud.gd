@@ -47,7 +47,7 @@ func _ready() -> void:
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	var portrait_path := "res://assets/3d/player/down.png" if Game.using_3d() else "res://assets/sprites/player/down.png"
+	var portrait_path := "res://assets/3d/player/down.png" if Game.using_experiment_art() else "res://assets/sprites/player/down.png"
 	if ResourceLoader.exists(portrait_path):
 		portrait.texture = load(portrait_path)
 	strip.add_child(portrait)
@@ -204,16 +204,21 @@ func _ready() -> void:
 	shrine_lab.add_theme_font_size_override("font_size", 18)
 	shrine_lab.add_theme_color_override("font_color", Color(0.95, 0.82, 0.4))
 	add_child(shrine_lab)
-	var view_lab := Label.new()
-	view_lab.position = Vector2(860, 16)
-	view_lab.size = Vector2(200, 22)
-	view_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	view_lab.add_theme_font_size_override("font_size", 14)
-	view_lab.add_theme_color_override("font_color", Color(0.75, 0.82, 0.88))
-	view_lab.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
-	view_lab.add_theme_constant_override("outline_size", 4)
-	view_lab.text = "Gloam 3D" if Game.using_3d() else "Classic 2D"
-	add_child(view_lab)
+	var pres := Game.presentation()
+	if pres != "live":
+		var view_lab := Label.new()
+		view_lab.position = Vector2(760, 16)
+		view_lab.size = Vector2(400, 22)
+		view_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		view_lab.add_theme_font_size_override("font_size", 14)
+		view_lab.add_theme_color_override("font_color", Color(0.95, 0.82, 0.45))
+		view_lab.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
+		view_lab.add_theme_constant_override("outline_size", 4)
+		if pres == "classic_2d":
+			view_lab.text = "ARCHIVE · Classic 2D"
+		else:
+			view_lab.text = "ARCHIVE · Art experiment"
+		add_child(view_lab)
 	big_map = Minimap.new()
 	big_map.position = Vector2(480, 220)
 	big_map.size = Vector2(960, 640)

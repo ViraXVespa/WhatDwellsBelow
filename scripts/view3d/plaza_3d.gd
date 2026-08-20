@@ -58,11 +58,11 @@ func _build_ground() -> void:
 			else:
 				grass_p.append(pos)
 	if not grass_p.is_empty():
-		add_child(V3.tile_mm("res://assets/3d/tiles/plaza_grass.png", grass_p, 0.0))
+		add_child(V3.tile_mm(V3.a("tiles", "plaza_grass.png"), grass_p, 0.0))
 	if not ga_p.is_empty():
-		add_child(V3.tile_mm("res://assets/3d/tiles/plaza_ground.png", ga_p, 0.0))
+		add_child(V3.tile_mm(V3.a("tiles", "plaza_ground.png"), ga_p, 0.0))
 	if not gb_p.is_empty():
-		add_child(V3.tile_mm("res://assets/3d/tiles/plaza_ground_b.png", gb_p, 0.0))
+		add_child(V3.tile_mm(V3.a("tiles", "plaza_ground_b.png"), gb_p, 0.0))
 
 
 func _outer_walls() -> void:
@@ -84,10 +84,10 @@ func _place_cutout(path: String, foot: Vector2, scale: float) -> Sprite3D:
 
 
 func _fence_and_trees() -> void:
-	var fence := Art.load_tex("res://assets/3d/props/fence.png")
-	var gate := Art.load_tex("res://assets/3d/props/gate.png")
-	var tree := Art.load_tex("res://assets/3d/props/tree.png")
-	var bush := Art.load_tex("res://assets/3d/props/bush.png")
+	var fence := Art.load_tex(V3.a("props", "fence.png"))
+	var gate := Art.load_tex(V3.a("props", "gate.png"))
+	var tree := Art.load_tex(V3.a("props", "tree.png"))
+	var bush := Art.load_tex(V3.a("props", "bush.png"))
 	var gx := 20
 	for x in range(FX0, FX1 + 1):
 		if absi(x - gx) <= 1:
@@ -127,7 +127,7 @@ func _fence_and_trees() -> void:
 		V3.plant(spr, pos)
 		add_child(spr)
 		V3.block_px(walls, pos, Vector2(18, 14) if use_tree else Vector2(16, 12), Vector2(0, -6), 1.0)
-	var banner := Art.load_tex("res://assets/3d/props/banner.png")
+	var banner := Art.load_tex(V3.a("props", "banner.png"))
 	if banner:
 		var b := V3.sprite(banner, float(banner.get_height()) / V3.PX * 0.95, false)
 		V3.plant(b, Vector2(float(gx) + 0.5, float(FY1) - 0.2))
@@ -159,17 +159,17 @@ func _fence_seg(foot: Vector2, tex: Texture2D, horiz: bool) -> void:
 
 
 func _buildings() -> void:
-	var guild := _place_cutout("res://assets/3d/buildings/guild.png", Vector2(9.4, 11.2), 0.88)
+	var guild := _place_cutout(V3.a("buildings", "guild.png"), Vector2(9.4, 11.2), 0.88)
 	if guild:
 		V3.block_px(walls, Vector2(guild.position.x, guild.position.z), Vector2(150, 42), Vector2(0, -16), 1.6)
-	var wing := _place_cutout("res://assets/3d/buildings/guild_reception.png", Vector2(15.0, 11.4), 1.0)
+	var wing := _place_cutout(V3.a("buildings", "guild_reception.png"), Vector2(15.0, 11.4), 1.0)
 	if wing:
 		var fp := Vector2(wing.position.x, wing.position.z)
 		V3.block_px(walls, fp, Vector2(200, 18), Vector2(0, -110), 1.8)
 		V3.block_px(walls, fp, Vector2(18, 90), Vector2(-92, -50), 1.8)
 		V3.block_px(walls, fp, Vector2(18, 90), Vector2(92, -50), 1.8)
 		V3.block_px(walls, fp, Vector2(70, 16), Vector2(0, -58), 1.4)
-	var stall := _place_cutout("res://assets/3d/buildings/stall.png", Vector2(28.4, 11.3), 0.92)
+	var stall := _place_cutout(V3.a("buildings", "stall.png"), Vector2(28.4, 11.3), 0.92)
 	if stall:
 		V3.block_px(walls, Vector2(stall.position.x, stall.position.z), Vector2(200, 28), Vector2(0, -12), 1.4)
 
@@ -182,19 +182,19 @@ func _prop(kind: String, xz: Vector2, tex := "", extra: Dictionary = {}) -> void
 
 
 func _props() -> void:
-	_prop("town_crystal", Vector2(20.0, 9.2), "res://assets/3d/props/crystal.png")
+	_prop("town_crystal", Vector2(20.0, 9.2), V3.a("props", "crystal.png"))
 	_prop("receptionist", Vector2(15.0, 10.55))
-	_prop("sign", Vector2(7.2, 12.4), "res://assets/3d/props/sign.png", {
+	_prop("sign", Vector2(7.2, 12.4), V3.a("props", "sign.png"), {
 		"title": "Guild notice",
 		"body": "Diver board. Pack food. Mail ore. Don't die with a full bag if you can help it.",
 	})
 	_prop("vendor", Vector2(28.4, 12.0))
-	_prop("anvil", Vector2(8.2, 18.2), "res://assets/3d/props/anvil.png")
-	_prop("sign", Vector2(30.2, 18.4), "res://assets/3d/props/dumpster.png", {
+	_prop("anvil", Vector2(8.2, 18.2), V3.a("props", "anvil.png"))
+	_prop("sign", Vector2(30.2, 18.4), V3.a("props", "dumpster.png"), {
 		"title": "Dumpster",
 		"body": "You used to eat from this. Career upgrade pending.",
 	})
-	_prop("sign", Vector2(18.5, 16.6), "res://assets/3d/props/notice_board.png", {
+	_prop("sign", Vector2(18.5, 16.6), V3.a("props", "notice_board.png"), {
 		"title": "Notice board",
 		"body": "Hold RT / LMB to swing.\nB / Space dash.\nX / Shift slam.\nA / E talk.\nD-pad Up / 1 potion.\nD-pad Left / 2 food.\nStart / Esc pause bag.\nSelect / M map (in the hole).\nLB / RB pause tabs.",
 	})
