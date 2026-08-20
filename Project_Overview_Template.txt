@@ -43,12 +43,11 @@ Decided (public pitch — all five). Demo is solo; co-op is still a pillar of th
 5. Solo and co-op are both first-class. Modes get unique tweaks, not just a player-count slider.
 
 Non-goals
-[TODO] Explicitly say what this is NOT. Suggested strikes to confirm or rewrite:
+Decided:
 - Not an MMO / not a persistent shared world. Co-op is party-based (form up in the city, enter together), not drop-in lobby-as-hub.
 - Not click-to-move RuneScape combat.
 - Not Hammerwatch-style high-quantity trash-mob waves; fights are smaller groups and last longer.
 - Not full permadeath of the player character / account.
-- Not a deckbuilder / autobattler / survival-crafting sandbox in the vein of Core Keeper unless you want that.
 - Not grimdark; dying is a shitty work hazard, not cosmic horror.
 - Not a dating sim by default (DanMachi is a *tone* reference, not a genre reference) unless we add that later.
 
@@ -58,11 +57,13 @@ Decided: death is an **inconvenient inevitability** of the job. Player-side it c
 Decided: not grimdark. Recap screen can be light; the lore text can admit it hurt.
 
 Comparable games (steal vs reject)
-- Heroes of Hammerwatch: steal 2D gamepad dungeon crawling, right-stick aim, melee-forward facing, town/dungeon split, passive dodge-as-stat, party of independent characters entering together. Reject high-quantity mob swarms and very short trash fights. [TODO] shop-between-floors? perm town upgrades?
+- Heroes of Hammerwatch: steal 2D gamepad dungeon crawling, right-stick aim, melee-forward facing, town/dungeon split, passive dodge-as-stat, party of independent characters entering together. Reject high-quantity mob swarms and very short trash fights.
+Decided: **no shop-between-floors.** Hidden **in-dungeon shops** (HoW-style finds) spend **unextracted gold**. **In the demo too.**
+Decided: **permanent town upgrades = Vylenheim only.** Placeholdia never upgrades.
 - Diablo: steal smaller packs, longer combat, passive block, mix of automatic defense and a few bound active skills. Reject isometric click-to-move and PC-first ARPG inventory-as-gameplay (unless later decided).
 - Heroes of Hammerwatch 2 / Halls of Torment: steal the 3/4 overhead camera (square tiles, readable on a TV). Art follows HoW2 (pixel sprites), not Halls of Torment's retro-3D rotating models.
-- RuneScape: steal skills, gathering, crafting, weapon diversity / reject [TODO] tick combat, click movement, grand exchange, quest-log structure?
-- [TODO] Other comps (Hades, Dead Cells, Moonlighter, Core Keeper, Darkest Dungeon, etc.) and what you steal vs reject.
+- RuneScape: steal skills, gathering, crafting, weapon diversity. **Reject** tick combat, click-to-move, and a **Grand Exchange**. **Light quest journal later** (optional guild notes, not RS quest-req checklists). Not in the demo.
+- [TODO] Other comps (Hades, Dead Cells, Moonlighter, Darkest Dungeon, etc.) and what you steal vs reject.
 
 ================================================================
 2. Player fantasy & identity
@@ -91,14 +92,15 @@ Classes vs skills
 Decided: no classes. One character empowered by many skills/abilities. All players start with the same stats and become different through gameplay (RuneScape-style).
 Decided: character creation is appearance (HoW2-like options) plus a starting **weapon** and starting **gathering tool** — not a class pick.
 Decided: avatar appearance is customizable and must read in-world at 64×64 (not just on a paper-doll menu).
-Decided: anything equippable is visible on the sprite (armor, weapon, tool, etc.).
-[TODO] Exact appearance sliders/presets (hair, skin, body, clothing colors) — match HoW2's depth unless we cut for slice.
-[TODO] Optional late specializations / titles, or never?
+Decided: anything equippable is visible on the sprite (armor, weapon, tool, etc.) **in the full game**.
+Decided: appearance sliders match **HoW2-like depth** (hair, skin, body, clothing colors) when customization ships. **Not in the demo.**
+Decided (**full game, not demo**): **achievements** (e.g. "Heal 100K from food") unlock **permanent buffs** and **titles**. Titles grant **Artifact-like bonuses from the start of a run**. None of this is in the demo.
+Decided (**demo exception**): **armor still drops** (white/green) and works as gear, but **no doll / no sprite layers**. Stats apply; you look like the baked starter until customization.
 
 What "stronger" feels like
 - After one good **demo** run: mailed **ore/gold** *and* a **visible power bump** from persistent XP (axe hits harder, mining channels faster). Recap sells both.
-- After 10 hours: [TODO]
-- After 100 hours: [TODO] extravagant skill list, city upgraded, deep floors, weapon masteries.
+- After 10 hours: a **real kit + skill identity** — forged rolls you care about, noticeable skill levels, **Vylenheim starting to build up** (Placeholdia is demo-only and stays a fragment).
+- After 100 hours: **deep floors, many skills, living city** — extravagant skills, upgraded Vylenheim, weapon masteries, endless after the campaign beat.
 
 ================================================================
 3. Platforms, camera, controls
@@ -125,7 +127,7 @@ Decided: couch presentation is a hybrid, not full 4-way split.
 - If one or two players wander off the main group, the TV splits into **two** shared panes: one for the main party, one for the scout or pair.
 - The party cannot split into 3–4 independent views (unreadable on many TVs).
 - Intent: someone can scout ahead, or the group can search in pairs, without turning into four postage stamps.
-[TODO] Split trigger: distance from group centroid, leaving the current room, or a manual "split off" action?
+Decided: split trigger = **distance from the group centroid**. Walking back merges. No extra button. Not in the demo.
 [TODO] How panes are laid out (top/bottom vs left/right) and whether a 3+1 (three together, one scout) uses the same two-pane rule — yes, implied.
 [TODO] How large is the player sprite on a TV from the couch, in full-shared vs two-pane? How many tiles visible in each?
 
@@ -144,16 +146,17 @@ Decided Xbox defaults (slice):
 - **A** interact (gather, clerks, stairs/crystal)
 - **B** dash
 - **X** Slam
-- **Y** inventory/bag
+- **Y** unused in the demo (inventory lives on pause). Reserved for a later active.
 - **D-pad Up** potion
 - **D-pad Left** bound food item
-- **Menu** pause → Dispel Avatar
+- **Menu** pause → **inventory** (bag + Head / Body / Legs / weapon / tool / potion slots), **skills page**, Dispel Avatar, volume/zoom/Patreon.
+Decided (**inventory**): **not on Y.** Pause-menu page. **Solo: the game pauses.** **Co-op: the world keeps running** for everyone else (that player's menu is an overlay). Named equip slots, stats/names only, no doll. Mid-run equip. Can **drop equipped** (slot empty). Drop = pile at feet until you leave the floor. Defense on item text. Empty potion + D-pad Up = toast.
 - LB/RB reserved for extra actives at ship
-- View: minimap focus (optional)
+- View: toggles a **large explored-map overlay**; the game **keeps running**. Corner mini stays. Visited marks: stairs, crystal, clerks, shop, you. Unvisited stays fog. No floor bounding-box of walls.
 
 HUD
-Decided: **Gauntlet-style HUD** so solo and couch co-op use the same language. Each player gets a dedicated strip (portrait/color, HP, mana, dash/slam cooldowns). Scales from 1 to 4 without a different UI mode.
-Must-have per strip: **HP**, **mana**, skill/dash cooldowns, **gold**, **bag fullness**, **floor number**. All on the Gauntlet strip so two-pane and solo match.
+Decided: **Gauntlet-style HUD** so solo and couch co-op use the same language. Each player gets a dedicated strip (portrait/color, HP, dash/slam/potion cooldowns). Scales from 1 to 4 without a different UI mode. **Mana hidden** in the demo.
+Must-have per strip: **HP**, skill/dash/potion cooldowns, **gold**, **bag fullness**, **floor number**. Shrine buff shows a **HUD timer**. **Mana is hidden** until something spends it. Defense is **not** on the strip (item text / pause inventory only). All on the Gauntlet strip so two-pane and solo match.
 
 ================================================================
 4. Core loops
@@ -184,10 +187,10 @@ Decided: vendors, anvils, public kitchen, facility upgrades, story-driven layout
 [TODO] Other hub verbs: bank, skill training dummies, quest NPCs, recreation forge, museum of extracted gear?
 
 Win / lose / exit rules
-- Unsent resources: lost on death/termination. (decided)
+- Unsent resources and **unforged bag gear**: lost on death/termination. (decided)
 - XP: only a small fragment is permanent. (decided)
-- Extracted gear: analyzed and recreatable later; limited slots per type. (decided)
-Decided: extracted raw materials persist as **banked stacks** on the surface (50 ore sent = 50 ore in your bank). Gear is still analysis + recreation. Materials are counts; gear is unlocks with limited slots per type.
+- **Forged** holds **snap back** on death (even if dropped). **Sell/destroy** frees a hold; recipe stays. Recipes are unlimited; **3 usable forged items per type**.
+Decided: extracted raw materials persist as **banked stacks** on the surface (50 ore sent = 50 ore in your bank). Gear uses the stash → analyze → forge loop in §9.
 Decided: extract does **not** end the run. You send stuff up at a facility, then keep delving or later abandon via pause dispel / death. Extract = mail home; dispel = wake up.
 
 ================================================================
@@ -220,13 +223,15 @@ Starting weapons (creation pick — one of):
 - Wand (Arcane) — 1-handed, short-range magic, single-target projectile, fast. Starts bundled with a **tome** (offset for 1H), same idea as Sword+shield.
 [TODO] Full post-start weapon-type list (spears, hammers, thrown, etc.).
 Decided (partial): combat has both **character traits** (Strength, Defense, Dexterity, …) and **per-type weapon mastery**. Magic has **Magic Masteries** in addition to staff/wand types.
-[TODO] How XP splits when you swing a Great Axe: trait(s) + Great Axe mastery + maybe Adventuring? Magic Masteries vs Greatstaff (Fire) XP.
+Decided: swinging a weapon trains **that weapon's mastery** plus a **little of the matching trait** (Great Axe → Great Axe + Strength). Magic weapons → type + Magic Masteries. Demo HUD can still only show Great Axe / Mining / Smithing.
 Decided: Dual Daggers = **two hits per attack tick** while hold-to-attack is held (fast double-hit, not a combo sequence).
 
 Damage / roles
 Decided (at least): physical melee, physical ranged, and elemental magic (Fire / Lightning / Arcane on the starting caster weapons).
 [TODO] More damage types later? How armor/resist interacts. Starter Sword's protection comes from the bundled **shield** (block chance), not from the sword type itself.
-[TODO] Status effects (burn, slow, stun?).
+Decided (**demo**): **Slam staggers ~0.5s** (readable punish, not a stun-lock). Guardian stagger is shorter. Burn / slow / other stuns wait.
+Decided (**demo fire traps**): hit = **~40 HP** of 100, you keep going. Cycle **~2s safe / 1s flame**. Dash **i-frames can carry you through**. Puzzle-only rooms (no packs). Optional chest-path only; never on stairs.
+Decided (**demo plates/levers**): levers stay flipped. **Solo: plates latch open.** **Co-op: stand-to-hold** so one player can open the chest; **once the chest is opened the plate latches** so the standing player can still receive their loot if loot-mode would grant them any. Never on stairs.
 Decided slice: **three roles**, smaller packs, longer fights: **Melee bruiser**, **Ranged**, **Tank**. No boss. Extra roles later.
 Decided: **story bosses at campaign beats** in the full game. **Slice: a basic Floor Guardian every 3rd floor** (3 and 6). Stairs stay locked while it lives. Slice caps at floor 6.
 Decided slice melee: bruisers and tanks **telegraph a lunge** (windup pose, then dash-strike). Direction locks at windup so the player can sidestep. Contact-walk-into-you is not the melee kit.
@@ -264,8 +269,8 @@ Decided: in-dungeon crystal is **next to the floor spawn / entrance**, not rolle
 - **From inside the dungeon:** crystal skip to **any floor deeper than your current floor** that you reached on a **previous** run. This-run new depth is walked via stairs first. No crystal-up.
 - **Co-op:** the party may access up to the **deepest floor any member has reached** (their personal-best is shared for access).
 Decided: **finite campaign path, then endless after**. Beat the campaign beat / "the thing," then deeper challenge floors keep going.
-[TODO] How many campaign floors vs where endless challenge starts.
-Decided slice: **2–3 floors** so a first playable can still land in the 20–30 min window (or a shorter tutorial run).
+Decided: campaign path is **100 floors**, then **endless**. Demo still caps at 6 and loops.
+Decided demo: **floors 1–6**, looping. A good run is still 20–30 min; shorter and greedier runs are allowed.
 
 Contents per floor
 Decided: enemies, resource nodes, random facilities that can send resources/gear to the surface.
@@ -288,26 +293,37 @@ Special clerks — **random**:
 So a floor always has 1 gathering clerk + 1 misc clerk; Patty is extra luck. Confirmed: misc is **1-from-2** — a floor can have a Guild Runner and **no Gear Gopher**. Gathering clerk may not match your tool. Gear mail is not guaranteed every floor.
 Decided: clerks are **hidden in safe alcoves / side rooms**, not parked at the entrance crystal. Stairs can be found before extract — hunting the station is the tension. Entrance is crystal + spawn only.
 Decided: **any** of those clerks can instead mail **gold** (50% of carried → town, 10% clerk fee, 40% stays on you). That **clerk instance** is then spent — no ore/gear from them after.
-Decided slice: Hammerwatch-style **breakable pots/barrels** scatter in combat rooms. They smash on a hit and can drop **gold** plus **HP / mana pickups** (walk-over orbs). Microtasks, not a skill. Full-game roster can add more smashables.
+Decided slice: Hammerwatch-style **breakable pots/barrels** scatter in combat rooms. They smash on a hit and can drop **gold** plus **HP pickups** (walk-over orbs). **No mana orbs** while mana is hidden. Microtasks, not a skill. Full-game roster can add more smashables.
 
 Decided: floors are combat + gathering nodes + stairs/crystal + extract clerks, plus **fun random finds**. First-pass extra roster (all of these exist):
 - Production stations (anvil, etc.)
 - Campfires
 - Shrines
-- Ghost vendor
+- Ghost vendor (in-dungeon shop)
 - Rest spots
 - Puzzle bits
-[TODO] What each actually *does* (campfire = cook? shrine = buff? ghost vendor = buys/sells in-dungeon for gold? rest = HP/mana? puzzles = loot/shortcut?). Spec per type later; they should feel like discoveries, not homework.
-Decided (**demo finds**): **campfire** (heal HP/mana) **and a shrine** (short combat buff). Ghost vendor / puzzles stay full-game.
+[TODO] Full-game extras: rest spots, production stations, heavier puzzle sets — spec per type later; they should feel like discoveries, not homework.
+Decided (**demo finds**): **campfire** (heal **HP**, **one sit** — no mana until something spends it), **shrine** (**+20% damage for 45s**, timer on HUD), **hidden ghost shop** (safe room like clerks), **Artifact chests**, light **movement puzzles** as chest hiding spots: **timed fire-breathing traps** (puzzle-only, no packs), **cracked walls** (any axe hit including Slam), **plates and levers** opening **gates/doors**. These never block stairs. Rest spots / extra production stations stay full-game.
+Decided (**demo shop**): **~1 in 3 floors**, parked in **dead-end loot rooms** (optional corridors, not clerk alcoves, not the entrance). Spend **unextracted gold**. **New ghost/shopkeep sprite** — do not reuse the Placeholdia stall vendor. Voice: **hopeful banter, a bit eerie**.
+Decided: ghost shop **cannot mail gold** (or anything else) to town. Extract clerks only. The shop room is **non-combat / safe**, like a clerk alcove.
+Decided: shop lists **2–4 Artifacts** (player may **buy at most 2** from that shop) plus a **small food-only snack selection** (**25g**, vs stall **5g**). After 2 Artifact buys, leftovers stay **listed but locked**; snacks remain. Leaving does **not** reset the 2-buy cap. Player **can pawn gear or potions** for **very little gold** (bag space, or a few coins short). **Must bag the equipped potion before pawning** — shop buys from the bag, not the HUD slot. Not a real gold farm.
+Decided: shop prices are **tempting, mailing still wins** — a useful Artifact costs about a floor of carried gold.
+Decided (**Artifacts**): run-bound treasures. **Instant HoW apply** on buy/pickup (no bag slot, no equip screen). **No cap** besides luck/gold. **Cannot extract** (clerks refuse them). Lore: bound to the dungeon; they vanish on death/dispel.
+Decided: Artifacts also in **chests** (new chest prop). Existing **stashes stay gold / ore / white-green gear** — no Artifacts from stashes.
+Decided: **0–3 Artifact chests per floor**, averaging **~1**. Two feels lucky; three feels extremely lucky. Not dead-ends-only: chests can sit behind **timed fire traps**, **plate/lever gates**, or **cracked destructible walls** (cracked tile you can notice if you're looking). Never required for stairs.
+Decided: Floor Guardian extra loot = **more gold** and **twice the Artifact-chest luck** of a normal chest. **Not a guaranteed green.** Not a guaranteed Artifact.
+Decided: demo Artifact roster is **~6–8 simple passives** (Grok invents: damage, HP, gold find, mine speed, dash, etc.). Named and readable.
 Decided slice: **mining veins sit in room walls** (floor tiles with exactly one wall neighbor), with **collision** so they block like rocks. Not mid-room pickups. Other skills' nodes later by floor band.
 [TODO] Full-game: which gathering skills appear on which floor bands.
 Decided: **explored fog of war** + a **simple minimap of visited tiles**. No lighting puzzle / torch meter. Unvisited area is hidden; visited stays known (this run). Decided: fog resets each run (layouts are random anyway).
-Decided: unused fill and off-map padding is **solid repeating wall masonry** (the dungeon is carved from rock), not a black void. Fog of war still hides unvisited walkable tiles as black. The minimap stays a **local view around the player** of visited floor tiles — it must not show the floor’s bounding box as a wall rectangle.
+Decided: unused fill and off-map padding is **solid repeating wall masonry** (the dungeon is carved from rock), not a black void. Fog of war still hides unvisited walkable tiles as black. The corner minimap stays a **local view around the player** of visited floor tiles — it must not show the floor’s bounding box as a wall rectangle.
+Decided (**View map**): toggle a **large overlay** of visited tiles; combat/movement **keep running**. Marks when visited: **stairs, crystal, clerks, shop, you**.
 Decided (full game, not slice): **Cartography** is a real skill. Awake Cartography **widens the fog/minimap reveal radius** around that player. Slice keeps a fixed radius (currently 5 tiles) so the loop doesn’t wait on a fourth skill.
 
 Extraction (surface-send)
 Decided: send resources and gear up; gear is analyzed and recreatable; limited stored gear per type.
 Decided: extract is NPC dialogue + a "what to send" menu, only in non-combat areas. Not a gathering-style channel, not interruptible combat. Each floor: 1 gathering clerk + 1 misc clerk; Packmule Patty at random. Types may mismatch what you're carrying.
+Decided: Gopher (and pawn) is **bag-only** — **unequip first**. Equipped kit is not on the send list until it sits in the 28.
 Decided: no implied use-limit on a clerk beyond "they only take their category." Talk to them as much as you want in that safe room.
 Decided storage **type** = the weapon type (e.g. all Great Axes together, not all 2h melee, not per unique item id). Same grain as starting-weapon types.
 Decided: **3 slots per type**. When full, you **pick in the Gopher dialogue** what to keep / overwrite. No auto-replace-if-better.
@@ -339,12 +355,13 @@ Decided mix of authority:
 Layout
 Decided: static unless story progress or facility upgrades change it.
 Decided demo: **one tiny plaza (Placeholdia)**. Full-game Vylenheim districts later. Do not grow Placeholdia into a fake Vylenheim.
-[TODO] Fast travel inside the city?
+Decided (**full game**): **district crystals** for fast travel once Vylenheim is large. Placeholdia is too small to need it.
 
 Facilities (known)
 - Vendors (variety). Decided: buy/sell for gold. [TODO] Who, and what each stocks (full Vylenheim).
 Decided (**demo, Placeholdia stall**): **buys ore for gold; sells food and potions.** No new building.
 - Anvils. Decided: same Smithing skill as in the dungeon; surface XP is 100% but much slower.
+Decided (**demo anvil**): analyze (from stash or as Gopher option) then **forge**. Costs **gold + banked ore + the extracted root item**; more for better items. Forge bar time and cost shrink with **Smithing**; copies come out **slightly stronger**. Recipe stays; re-forge if sold/destroyed. No furnace / ore variants. Same-family extras mail for **Smithing XP**.
 - Public kitchen. Decided: **Cooking** is a skill. Food is eaten from the dungeon bag (quantity-limited) as a primary heal.
 - Dungeon entrance + loadout UI before entry. Entrance is a **large teleport crystal** (not a hole you walk into). From town it can send you to any floor that character has ever reached (co-op: up to the party's best).
 
@@ -360,9 +377,11 @@ Decided: one resource-gathering tool per player per delve (mode-tweak; makes sol
 Decided: new characters pick a starting weapon and starting tool at creation (replaces a class select). Equipped weapon/tool/armor should show on the sprite.
 Decided starting tool options: Hatchet (wood/trees), Pickaxe (ore/rocks), Sickle (plants/vines). Later: Stonehammer (quarry), Tacklebox (fish). Still one tool per delve.
 Decided starting weapon options: Great Axe, Sword (bundled starter shield), Dual Daggers, Longbow, Shortbow, Crossbow, Greatstaff (Fire), Staff (Lightning), Wand (Arcane, bundled starter tome).
-Decided: loadout includes weapon, tool, **armor**, and **consumables** (food, potions).
-Decided: dungeon bag is **28 slots**, no weight limit. Gold is not a slot. Food/potions occupy bag slots; **D-pad Up** uses a potion, **D-pad Left** uses the bound food item.
-Decided: after an analyzed item has been **forged once in the city**, copies are **free to bring** on later delves. The 3-per-type stash is what you're allowed to have forged/ready.
+Decided: loadout includes weapon, tool, **armor**, **food**, and a **potion**.
+Decided: dungeon bag is **28 slots**, no weight limit. Gold is not a slot. **D-pad Up** drinks the **equipped potion** (cooldown). **D-pad Left** uses the bound food item.
+Decided (**potions**): **dedicated HUD/equipment slot**, not a stacked consumable. Extra potions go in the **bag as equipment** you can swap onto that slot. **Cooldown does not reset on equip** (no infinite-heal swap). If the newly equipped potion has a **cooldown-reduction affix**, it applies only to the **remaining** cooldown (already-elapsed portion stays elapsed).
+Decided (**demo forge**): Gopher **Analyze now** → unlimited anvil recipe (does not touch the 3-holds). **3 holds per type are forged usable items.** First forge: gold + ore + root into a free hold. Re-forge: gold + ore, no root. Forged gear **snaps back on death** even if dropped. Sell/destroy frees a hold. Duplicates of an unlocked family → **Smithing XP**. No furnace.
+Decided (**demo loadout**): picker among the **3 forged holds** per slot. Armor may be empty. Last-forged is the default highlight. First dives wear starter axe/pick/potion; no armor until you forge some. Broke-restock does not give armor.
 Decided (partial): party picks **loot drop mode** before the delve (FFA / killer-then-free / killer-locked / personal loot).
 [TODO] In co-op, is loadout locked after the party readies, so you can see each other's tools? Same screen as loot-mode?
 
@@ -397,9 +416,9 @@ Decided starting list (will grow):
 - Weapon mastery (per weapon type, already decided)
 - Character traits: Strength, Defense, Dexterity, etc.
 Decided: **Cooking** is its own skill (public kitchen + food heals).
-[TODO] Prayer / runecraft / other RS classics still not on the list unless we add them.
+Decided: **Prayer / Runecraft / other unlisted RS classics stay off** unless we later find a WDB reason. Not in the demo.
 Healing
-Decided: **food** from the bag, limited by quantity. **Potions** exist, limited by **cooldown** (not just stack count). **HP regen works in combat**, but is too slow to keep you up in a real fight — food/potions/block are the actual survival tools.
+Decided: **food** from the bag, **20 per stack**. **Potions do not stack** — dedicated HUD slot, extras are bag **equipment** you swap on. Drink is cooldown-gated. **HP regen works in combat**, but is too slow to keep you up in a real fight — food/potions/block are the actual survival tools. Keep current heal amounts (food 30, potion 50) until retuned. Current drink CD is **8s** until retuned.
 [TODO] Overlaps to resolve later: pickaxe trains Mining vs Quarrying depending on node? Acrobatics vs passive Dodge? Magic Masteries vs staff/wand weapon XP? Traits vs weapon mastery (both train in combat?). Cartography vs Adventuring (mapping is Cartography, not Adventuring).
 Decided slice skills: **mining + smithing + one weapon type**. (Harvesting/tools beyond pickaxe can wait. **Cartography is full-game**, not slice.)
 Decided (full game): **Cartography** — awake level **widens fog/minimap reveal** around you. Run XP is a **lump on floor-leave** from **% of walkable tiles revealed** this floor (stairs / crystal-skip / death / dispel), then the usual 2% keep. Not a walk-around drip. No clerk. See §14 parked spec.
@@ -414,13 +433,13 @@ Placeholder formula (slice): keep **2% of XP earned this run** in that skill (al
 Decided slice: **level-up feedback**. Crossing a level in Mining / Great Axe / Smithing pops a toast (`Great Axe level 3!`). HUD shows current levels. Recap notes if the 2% fragment pushed an awake level. Slice curve is a simple ramp (not OSRS's exact table).
 Decided (**demo math**): levels grant **small honest bonuses**. Great Axe level nudges damage. Mining level nudges channel speed. Smithing stays display-only for now. Floor number still rules difficulty.
 Decided: **surface skilling keeps 100% XP, but is much slower.** Safe catch-up / crafting XP in Vylenheim; the dungeon is still the real place to train. Anvils and kitchen grant awake XP at a crawl.
-[TODO] Soft caps, prestiges, or none.
-[TODO] Max level.
+Decided: **no max level, no soft cap.** XP required **doubles every 14 levels** (OSRS-ish, but slower than RS's ~7). **Level 2 costs ~80–100 XP** (placeholder table may sit at ~88). Smaller per-level bonuses so growth stays constant forever. Tune the exact table later; shape is locked.
+Decided (for now): Great Axe **+4% damage per level** until we retune when combat feels real.
 
 Weapon mastery
 Decided: each weapon (type) has its own XP/levels; large bonus for that type, smaller bonus for all weapons.
-[TODO] Bonus shape (e.g. +2% damage per type level to that type, +0.5% to all).
-[TODO] Does "weapon" mean item instance, weapon type, or both?
+Decided: **+4% damage to that type** per level, and **+0.4% to all weapons in that category** (Melee / Ranged / Magic). Slice Great Axe: +4% axe / +0.4% melee per level.
+Decided: mastery is **weapon TYPE** (all Great Axes share one XP bar), not a per-item instance.
 Decided (lean, **full game**, not slice): **Combat Level is a derived display number**, not its own grindable skill — same idea as OSRS combat level. It is computed from the combat skills that apply to what you have equipped, not a third XP bar you train by existing.
 - Melee style: Strength + Attack / weapon mastery + Defense (and Hitpoints if we add it).
 - Ranged style: Ranged + Defense (+ Hitpoints).
@@ -441,39 +460,60 @@ Decided: slice has **1 extra skill** (plus hold-to-attack): Great Axe **Slam, on
 9. Gear, extraction, recreation
 ================================================================
 
-Gear loop (decided)
-Find or craft gear in the dungeon -> send it to the surface via a facility -> it is analyzed -> recreatable indefinitely on future runs -> not lost when the avatar dies. Storage: **3 analyzed items per type**. Weapons: per weapon family (e.g. 3 Great Axes). Armor: head / body / legs. Off-hand: one slot for a shield **or** a tome. **Tools: per tool family** (e.g. 3 Pickaxes). Same Gopher overwrite + forge-then-free. All of these use the Borderlands proc pool.
+Gear loop (decided — corrected 2026-08)
+Find gear → bag it (unequip first if it was worn) → Gopher.
 
-Decided: armor uses the **same 3-per-type slots**. Types: head / body / legs / **off-hand** (shields *or* tomes equipped, one slot). Stash is still 3 shields and 3 tomes as separate types. Overwrite in the Gear Gopher dialogue; forge once in the city; copies free to wear.
+**Gopher choices (gear):**
+- **Analyze now** — skip the 3-holds entirely. The roll becomes an **anvil recipe**. Recipes are **unlimited**.
+- **Same family already unlocked** — send for **Smithing XP** instead of another unlock.
+- Gold send / ore send still as elsewhere. Ghost shop **cannot** mail gold.
+
+**3 holds per type = forged items you can actually use on runs.** Demo types: Great Axes, Pickaxes, Potions, Head, Body, Legs. You may have **three saved usable items** of that type. A 4th means **destroy or sell** one of the three, then **forge** (or analyze+forge a newly extracted roll) into the empty hold.
+
+**Anvil:**
+- First forge of a recipe: **gold + banked ore + root item**, cost scales with quality. Fills one free hold.
+- Re-forge after sell/destroy: **gold + ore, no root.** Smithing discounts this.
+- **Smithing level** (demo): cheaper cost, **shorter forge bar**, **slightly stronger** copies.
+- Demo: **no ore variants / no furnace**.
+
+**Death / drop:** forged instances **snap back to town**. Dropping a forged axe and dying does **not** destroy it. **Sell or destroy** is how you free a hold. Recipe remains.
+
+**Loadout:** picker among the **3 forged holds** per slot (armor may be empty). Starter weapon/tool/potion count as already-forged so the first death doesn't strip your only kit.
+
+Decided: armor uses the **same 3-per-type stash**. Types: head / body / legs / **off-hand** (shields *or* tomes). Demo drops head/body/legs only.
 Decided: **one off-hand slot**, shared by **shields and tomes** (mutually exclusive). 3-stash per type still (3 shields, 3 tomes). Sword starter = Sword + shield in off-hand. Wand starter = Wand + tome in off-hand. You can mix (sword+tome, wand+shield) if you want.
 Decided (assumed): Dual Daggers occupies both hands — **no off-hand**. 2H weapons (Great Axe, bows, staves, greatstaff) also skip the off-hand.
 Decided: **Borderlands-style loot pool** — procedural parts/affixes, millions of combinations, not a short iron/steel name list. The 3-per-type stash keeps the *rolls* you want; forge recreates that exact roll.
 Decided rarity: **common → uncommon → rare → epic → legendary** (white → green → blue → purple → orange). Legendaries are **named uniques** with a special effect, still on the part/affix system. Extra rungs (pearl etc.) later if ever.
-Decided slice: **tiny loot generator** — whites and greens, prefix/suffix (or simple parts). Not a single stub axe. Blues+ and named legendaries come later.
+Decided slice: **tiny loot generator** — whites and greens, prefix/suffix (or simple parts). Rolls **Great Axes, pickaxes, potions, and armor** (head / body / legs only — **no shields/tomes**). Armor **stats apply**; **no sprite visualization** in the demo. Blues+ and named legendaries come later.
+Decided: demo armor **defaults to Defense**. **Greens** can roll **small bonuses to other stats** as well. White is Defense-only.
+Decided: **green gear has noticeably better numbers** than white (not just a tint). White is the junk/starter band. Potions roll heal amount, cooldown, and **CDR** among affixes.
 Decided: gathering tools are loadout items, **not weapons**. Clear separation: weapon fights, tool gathers/clears. One tool per delve. They gate gathering and some dungeon paths.
 Starting tools (creation pick — one of):
 - Hatchet — wood / trees. Woodcutting. Clerk: Lumberjack.
-- Pickaxe — ore. Mining. Clerk: Miner. [TODO] Side-path "rocks": pickaxe, Stonehammer, or both? (Main path is never tool-locked.)
+- Pickaxe — ore. Mining. Clerk: Miner. **Ore veins = pickaxe.** Quarry rock side-paths = **Stonehammer** (full game). Demo only has ore + pickaxe. Main path is never tool-locked.
 - Sickle — plants / vines. Harvesting. Clerk: Alchemist.
 Further tools:
 - Stonehammer — stone. Quarrying. Clerk: Stonemason.
 - Tacklebox — fish. Fishing. Clerk: Fishmonger.
-Decided: tools are **full Borderlands loot** — prefix/suffix/parts, rarity ladder, 3-per-type stash (all Pickaxes, all Hatchets, …), Gear Gopher, forge-once-then-free. A white pickaxe still opens mining side paths; an orange one can have built-in gather skills / faster channels. Still **one tool equipped per delve**. Starting creation pick is a basic white of that tool.
-Decided: recreation is **free after it has been forged in the city** (the forge step is the cost/gate). Overwrite of the 3 slots is manual, in the Gopher send dialogue.
+Decided: tools are **full Borderlands loot** — prefix/suffix/parts, rarity ladder, 3-per-type stash, Gear Gopher, analyze/forge as above. A white pickaxe still opens mining side paths; an orange one can have built-in gather skills / faster channels. Still **one tool equipped per delve**. Starting creation pick is a basic white of that tool (treated as already-forged so the first death doesn't strip your only axe/pick).
 Decided: **no trading / no giving / no dropping loot to teammates.** Equipment is progression; swapping would be power-leveling. What you pick up is yours until extract or vanish.
 Decided: **floor-drop rules are a party option** (picked before the delve). All of:
 - Free-for-all until picked up
 - Tagged to the killer, then free after a few seconds
 - Always tagged to the killer
 - **Personal loot** — each player gets their own drops (not killer-focused), so high-level members can't loot-raid newbs
-[TODO] Where the option is set: party board in Vylenheim / loadout screen. Host vs vote.
+Decided: loot-drop mode is set on the **loadout screen before the crystal**. Not in the demo (solo).
 
 ================================================================
 10. Economy & inventory
 ================================================================
 
+Starting kit
+Decided (**demo**): new diver starts with **0 gold**, **3 food**, **1 potion**. If they later wake in town **below those mins** and **cannot afford** the stall, **restock that starter cushion** (food/pot only — still no free gold).
+
 Currencies
-Decided: **gold** exists. Drops from enemies. Also from selling things to **town vendors**.
+Decided: **gold** exists. Drops from enemies. Also from selling things to **town vendors**. New characters start at **0**.
 Decided gold extract: **no gold clerk**. Any extract clerk can mail gold **instead of** their normal resource/gear send. Percents are of **gold you're carrying right now** (not the surface bank).
 Example: carrying 100g, ask the Miner to send gold:
 - **50g** to town
@@ -488,7 +528,11 @@ Decided: unsent resources **vanish** on death/dispel — they do not drop for co
 
 Inventory in the dungeon
 Decided: **small slot bag**. Full = you **can't pick up** more (no auto-drop of old items). Gold is a **separate counter**, not a bag slot. No separate extract-queue; the bag *is* what clerks can send from.
-Decided: **28 slots**. [TODO] Stack sizes (placeholder 50 for ore/food is fine until economy exists).
+Decided: **28 slots**.
+Decided stacks:
+- **Resources (ore, etc.): uncapped** per slot.
+- **Food: 20 per slot.**
+- **Potions: no stacks.** Dedicated HUD slot; extras are bag equipment you equip. Swap does not reset cooldown.
 
 Surface storage
 Decided: real material stacks per player + limited analyzed-gear slots per type (recreatable).
@@ -515,7 +559,7 @@ Decided: Vylenheim grew up around a new dungeon. Diving is the town's economy an
 [TODO] What the city / guild / lord each believe the dungeon is.
 Decided: the title is wonder/adventure at the unknown below, not a specific creature-as-logo. Campaign has an end beat; then endless deeper floors.
 [TODO] What the campaign beat actually is (may stay secret in this doc).
-Decided (partial): story is optional context around an always-open hole. [TODO] Mix of NPC text vs environmental vs campaign-boss reveal — tune later. Not a cutscene-gated campaign.
+Decided (partial): story is optional context around an always-open hole. **Light quest journal later** (guild notes, not RS checklists). Not in the demo. Mix of NPC text vs environmental vs campaign-boss reveal — tune later. Not a cutscene-gated campaign.
 Decided: hopeful, humorous, career-adventurer (DanMachi-adjacent tonality — not a dating sim by default). Not grimdark, not dry-mythic.
 Decided (partial): intro is dumpster-to-adventurer gag with a receptionist — humorous NPC voice.
 Decided (**demo voice of copy**): **hopeful banter** — short career-hazard jokes. Not lore lectures. Clerks, recap, and Placeholdia signs share that voice.
@@ -532,16 +576,16 @@ Decided: 2D presentation, closer to Heroes of Hammerwatch than RuneScape. Camera
 Decided: pixel sprites (HoW / HoW2 pipeline), not retro-3D rotating models. Target **8 facings** for ship; **4-dir** (or blobs) until the loop is fun. Not 360° turn.
 Decided: **64×64** pixel grid so avatar customization (body, gear, tools) is actually visible on a TV. Tiles should match that grid 1:1 unless we later use smaller ground tiles under a 64px character.
 Decided: **8-dir in the slice** for the player (4-dir snap was visually distracting on analog aim). Enemies may still fall back to 4-dir art until those sheets exist. Customization layers still assume 8-dir as the real art target.
-[TODO] Palette (warm town vs cold dungeon, or one shared palette).
+Decided: **warm town, cold dungeon** — same pixel family, different temperature. Placeholdia stays hopeful/jokey warmth; the hole is cooler stone.
 Decided: 64×64 must keep a readable silhouette on a TV (couch + two-pane). Customization is extra detail on top of a clear body shape, not noise.
-[TODO] Animation density: Hammerwatch-snappy vs more frames.
+Decided: **Hammerwatch-snappy** animation (few frames, readable at couch distance). Matches current 4-dir enemy sheets.
 Decided: slice art is **8-dir player sprites** (baked starter Great Axe, no customization layers). Enemies may stay 4-dir until the loop is fun. Ship target remains 8-dir + customization.
 
 Audio
-[TODO] Hub music mood.
-[TODO] Per-floor music vs one dungeon theme.
-Decided: recap is light/humorous (career hazard), not a grim game-over. [TODO] A short sting SFX is still fine.
-[TODO] Voice acting: none / grunts / full.
+Decided (**demo**): Placeholdia = warm, hopeful, a bit jokey (stand-in loop). Dungeon = one theme (**8-Bit**, intro once then loop). [TODO] Full game: per-biome / per-floor themes later.
+Decided: recap is light/humorous (career hazard), not a grim game-over.
+Decided (**recap sting**): *A Link to the Past*-like beat — **somewhat lighthearted most of the time**, but **absolutely depressing** if the player was **right on the verge of beating a boss or clearing a floor**.
+Decided: demo = **combat grunts only**. Full VO later.
 
 UI
 Decided: extract is a **dialogue + send-list** on a pad (TV-readable). Must work in couch co-op without covering the whole two-pane view forever.
@@ -588,17 +632,32 @@ Now (playable demo) — **build contract**
 
 What's in this demo:
 - **Placeholdia**: one tiny plaza — crystal, guild sign, vendor, anvil, dumpster. Frozen unless the player asks to change the hub. Not Vylenheim.
-- Loadout: Great Axe + pickaxe. 28-slot bag. Food D-pad Left, potion D-pad Up.
+- Loadout: Great Axe + pickaxe. 28-slot bag. Food D-pad Left, potion D-pad Up (timer equipment, not stacked).
 - Dungeon: 2–6 floors, traditional dungeon tileset, three enemy roles (melee bruiser, ranged, tank), mining nodes, smashable pots/barrels. Floor Guardian every 3rd floor. Main path never tool-locked; optional pickaxe side room is fine.
 - Clerks: 1 gathering + 1 misc per floor (real rules). Gold extract rule included. Crystal next to floor spawn.
 - Combat: hold RT, B dash (i-frames), X slam (cooldown), R3 lock, A interact. Channel mine; damage or move interrupts. Enemy LOS and HP bars.
-- Tiny loot generator: white/green Great Axes (and pickaxes) with prefix/suffix.
+- Tiny loot generator: white/green Great Axes, pickaxes, **potions, and armor** (head/body/legs). Greens are a noticeable stat step. Armor **stats only — no sprite layers**. Potions: Gear Gopher / 3-stash / forge-once.
+- Slam **staggers ~0.5s** (Guardian shorter).
+- Recap sting: light, unless Guardian was under ~25% HP or stairs were found and unused — then the depressing LttP beat.
+- Hidden ghost shop on **~1 in 3 floors**, in **dead-end loot rooms**: **2–4 Artifacts listed, max 2 purchases**, plus snacks. New shopkeep (hopeful, a bit eerie). **Cannot mail gold.** Can pawn gear/pots for peanuts.
+- Artifact **chests** 0–3/floor (avg ~1; 2 lucky, 3 jackpot). Not dead-ends-only: **timed fire traps**, **plate/lever gates**, **cracked walls** can hide them. Stashes stay gold/ore/gear. Artifacts **instant apply, no cap, cannot extract**.
+- Potion: **HUD equipment slot**. Extras in bag as gear you swap; **CD does not reset on equip**; CDR affix hits remaining CD only. **Bag it before pawning**. Stall still sells a potion (rebuy if pawned). Extractable (3-stash).
+- Start: **0 gold, 3 food, 1 pot**. Broke-in-town restock of that cushion.
+- Shrine: **+20% damage, 45s, HUD timer**. Campfire: one sit, **HP only**.
+- **Mana hidden.** Smashables: gold + HP orbs (no mana orbs).
+- Pause inventory: Head / Body / Legs + weapon / tool / potion slots. Defense on item text. **Last-forged armor** comes on the next dive; first dives wear none. **Solo pauses; co-op world keeps running.** Y does not open the bag.
+- Ghost shop is a **safe room**. Puzzle rooms have **no packs**. Cracked walls: **any axe hit including Slam**.
+- Gopher gear: **Analyze now** (unlimited recipe, skip holds) or duplicate-family **Smithing XP**. Anvil forge into a **free one of 3 forged holds**. Re-forge = gold+ore, no root. Forged **snaps back on death**. Sell/destroy to free a hold.
+- Loadout picker among the **3 forged holds** (armor may be empty). Mid-run equip from pause inventory.
+- Pause has **inventory + skills**. **Solo pauses. Co-op keeps playing behind that player's menu.** Drop equipped allowed. Piles last the floor. Empty potion → toast. Gopher still **bag-only**.
+- Ghost-shop food **25g**. Fire traps hit **~40 HP**.
+- View toggles a **large overlay** (game keeps running). Marks: stairs, crystal, clerks, shop, you.
 - Recap: Gauntlet strips, light tone. Keep 2% XP this run, banked stacks, analyzed gear; bag vanishes. Level-up toasts.
 - Art: 64×64 tile grid. 8-dir player idle (baked starter Great Axe) plus cardinal walk / down-swing frames. Enemies 4-dir (tank attacks complete). Real sprites, not placeholders. Solid wall fill. Gauntlet HUD. Credit splash then title. Placeholder hub/dungeon loops + SFX until Vira's final music.
 - Solo only in this demo. Don't block 2-pane / couch later. Online out of demo.
 
 What's *not* in (full game, cut — not unfinished):
-Other gathering/production skills, extra starting weapons, biomes, co-op, character customization layers, story/intro, Combat Level UI, Cartography, **Vylenheim / city districts / hub upgrades**, blues+ loot.
+Other gathering/production skills, extra starting weapons, biomes, co-op, character customization layers (armor still drops, just invisible), story/intro, Combat Level UI, Cartography, **Vylenheim / city districts / hub upgrades**, titles/achievements, blues+ loot.
 
 Next (still demo-quality if we add them)
 [TODO] Second weapon type, second skill, biome/floor 2 aesthetics — only when they can ship at the same presentation bar. City work only on an explicit ask.
@@ -662,3 +721,57 @@ Decided: death = **longer downed pose, short fade, then recap**.
 Decided: **Packmule Patty** is a rare extra clerk in the demo.
 Decided: keep **wrong-clerk mismatch**.
 Decided: dumpster intro = **sign only**.
+Decided: shrine buff **shows a timer on the HUD**. Campfire is **one sit**.
+Decided: **hidden in-dungeon shop** (HoW) is in the **demo** — spend gold you haven't mailed. Not a between-floor shop.
+Decided: shop stock = **Artifacts** (run bonuses) + **consumables**. **~1 in 3 floors**. **New ghost/shopkeep sprite** (not the stall vendor).
+Decided: Artifacts also in **chests**. **Cannot extract.** Lore: dungeon-bound; vanish on death/dispel.
+Decided: **~80–100 XP to level 2**; double every 14; no cap.
+Decided: mastery is **weapon TYPE**.
+Decided: greens have **noticeably better numbers**.
+Decided: start **0 gold, 3 food, 1 pot**. If later in town without those mins and without gold to buy them, restock that cushion.
+Decided: keep current food/potion heal amounts.
+Decided: shrine = **+20% damage for 45s**, timer on HUD.
+Decided: **View toggles a bigger map**.
+Decided: Artifacts **apply instantly** (HoW). **No cap** besides luck/gold. Roster: Grok invents **~6–8 simple passives**.
+Decided: shop prices **tempting, mailing still wins**.
+Decided: View overlay **keeps the game running**. Marks: **stairs, crystal, clerks, shop, you**.
+Decided: shop hides in **dead-end loot rooms**.
+Decided: Artifacts from **new chests only**. Stashes stay gold/ore/gear.
+Decided: shop **sells only as a store**, plus **pawn gear or potions for very little gold**. **Cannot mail gold** (extract clerks only).
+Decided stacks: **resources uncapped**, **food capped at 20**, **potions do not stack**.
+Decided: potion is a **dedicated HUD slot**. Extras go in the bag as **equipment** you can swap on. **Cooldown does not reset on equip.** CDR affix applies to the **remaining** cooldown only.
+Decided: Placeholdia stall **still sells potions** (rebuy if pawned). Broke-restock still grants one if you can't afford it.
+Decided: ghost shop lists **2–4 Artifacts**, **buy at most 2**, plus a small snack selection.
+Decided: Artifact chests **0–3 per floor** (avg ~1; 2 lucky, 3 extremely lucky). Can be in **movement puzzles** or behind **hidden destructible walls**, not dead-ends only.
+Decided: shopkeep voice = **hopeful banter, a bit eerie**.
+Decided: recap sting = **LttP-like** — light most of the time, **depressing if you were about to beat a boss or clear a floor**.
+Decided: palette = **warm town, cold dungeon**.
+Decided: animation = **Hammerwatch-snappy**.
+Decided: potions are **extractable gear** (Gopher, 3-stash, forge-once). Demo rolls **white/green potions with affixes** (heal, CD, CDR).
+Decided: after 2 Artifact buys, leftovers stay **listed but locked**; snacks still for sale; cap does not reset on re-entry.
+Decided: demo puzzles = **timed fire-breathing traps** (dash on the off-beat) + **cracked walls** (visible tell) + **plates and levers** opening **gates to chests**. Never block stairs.
+Decided: Slam stagger **~0.5s** (Guardian shorter).
+Decided: **armor drops white/green in the demo**, stats apply, **no doll/sprite layers**.
+Decided (**full game**): achievements unlock **permanent buffs** and **titles** (Artifact-like from run start). Not in the demo.
+Decided: campaign path **100 floors**, then endless.
+Decided: Vylenheim fast travel = **district crystals** once the city is large.
+Decided: **no Grand Exchange**. **Light quest journal later**. Not in the demo.
+Decided: appearance sliders = **HoW2-like depth** when customization ships. Not in the demo.
+Decided: recap depressing sting = Guardian **under ~25% HP**, or **stairs found and unused**.
+Decided: shop snacks = **food only**.
+Decided: **must bag the equipped potion before pawning**.
+Decided: demo status = **Slam stagger only**.
+Decided: Floor Guardian loot = **more gold** + **2× Artifact-chest luck** vs a normal chest. Not a guaranteed green.
+Decided: fire traps = **HP chunk**, keep going; **~2s safe / 1s flame**; dash i-frames work; **puzzle-only (no packs)**. Head/body/legs armor only (no off-hand). Armor = **Defense**; greens may add **small other-stat bonuses** (Grok invents the pool).
+Decided: **solo plates latch**; **co-op plates are stand-to-hold until the chest opens, then latch**. Levers stay flipped.
+Decided: **mana HUD hidden** until something spends mana. Smashables drop gold + HP only. Campfire heals HP only.
+Decided: pause inventory has **Head / Body / Legs** named slots (no doll). Defense on item text, not the strip. **Not on Y.**
+Decided: next dive wears **last-forged armor**; first dives unequipped.
+Decided: ghost shop is a **safe room**. Cracked walls fall to **any axe hit including Slam**. Anvil forge-once = **gold + ore + root item** (scales up). Duplicates mailed for **Smithing XP**. No furnace/ore-types in demo.
+Decided: **loadout picker** among the **3 forged holds** (last-forged default). Can leave armor slots empty. Mid-run equip from **pause inventory**.
+Decided: Gopher **Analyze now** skips the 3-holds (unlimited recipes). The **3 per type are forged usable items**. Forged gear **snaps back on death** (even if dropped). Re-forge after sell/destroy = **gold + ore, no root**. To use a 4th roll, destroy/sell one of the three first.
+Decided: **inventory is on the pause menu, not Y.** **Solo: pause.** **Co-op: world keeps running** (that player's overlay only). **Drop equipped allowed** (slot empty). Piles last **until you leave the floor**. Empty potion → **toast**. Gopher mail is analyze (or duplicate XP); pawn still **bag first**.
+Decided: pause menu has **inventory + skills**. Ghost-shop food **25g**. Fire traps **~40 HP**.
+Decided: Smithing (demo) = **cheaper forge, shorter forge bar, slightly stronger forgings**.
+Decided: duplicates for Smithing XP = **same family after that type is already unlocked**.
+Decided (full game, already answered — not asking more of these): axe swing XP = mastery + a little Strength; mastery **+4% type / +0.4% category**; co-op split = distance; no Prayer/Runecraft unless later; pickaxe=ore / Stonehammer=quarry; loot mode = loadout screen.

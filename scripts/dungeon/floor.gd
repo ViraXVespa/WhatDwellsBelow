@@ -1,6 +1,14 @@
 extends Node2D
 
 const TILE := 64
+const ShopUIS := preload("res://scripts/ui/shop_ui.gd")
+const GhostShopS := preload("res://scripts/entities/ghost_shop.gd")
+const ArtifactChestS := preload("res://scripts/entities/artifact_chest.gd")
+const FireTrapS := preload("res://scripts/entities/fire_trap.gd")
+const GateDoorS := preload("res://scripts/entities/gate_door.gd")
+const PressurePlateS := preload("res://scripts/entities/pressure_plate.gd")
+const DungeonLeverS := preload("res://scripts/entities/dungeon_lever.gd")
+const CrackedWallS := preload("res://scripts/entities/cracked_wall.gd")
 
 var data: Dictionary
 var fog_visited: PackedByteArray
@@ -36,7 +44,7 @@ func _ready() -> void:
 	add_child(Hud.new())
 	add_child(PauseMenu.new())
 	add_child(ExtractUI.new())
-	add_child(InventoryUI.new())
+	add_child(ShopUIS.new())
 	_reveal_around(spawn)
 	var loot_n := 0
 	if data.has("loot"):
@@ -120,6 +128,10 @@ func _reveal_around(tile: Vector2i) -> void:
 			dirty = true
 	if dirty:
 		fog_tex.update(fog_img)
+	if Game.run and data.has("stairs"):
+		var st: Vector2i = data.stairs
+		if st.x >= 0 and fog_visited[DungeonGen.idx(st.x, st.y)] == 1:
+			Game.run.saw_stairs = true
 
 
 func _process(_delta: float) -> void:
@@ -188,6 +200,45 @@ func _spawn_entities() -> void:
 			var sh := FloorShrine.new()
 			sh.position = _world(sp)
 			add_child(sh)
+	if data.has("shop"):
+		var sp: Vector2i = data.shop
+		if sp.x >= 0:
+			var gs = GhostShopS.new()
+			gs.position = _world(sp)
+			add_child(gs)
+	if data.has("chests"):
+		for cp in data.chests:
+			var ch = ArtifactChestS.new()
+			ch.position = _world(cp)
+			add_child(ch)
+	if data.has("fires"):
+		for fp in data.fires:
+			var ft = FireTrapS.new()
+			ft.position = _world(fp)
+			add_child(ft)
+	if data.has("gates"):
+		for row in data.gates:
+			var gd = GateDoorS.new()
+			gd.position = _world(row.pos)
+			add_child(gd)
+			gd.setup(int(row.id))
+	if data.has("plates"):
+		for row in data.plates:
+			var pl = PressurePlateS.new()
+			pl.position = _world(row.pos)
+			add_child(pl)
+			pl.setup(int(row.id))
+	if data.has("levers"):
+		for row in data.levers:
+			var lv = DungeonLeverS.new()
+			lv.position = _world(row.pos)
+			add_child(lv)
+			lv.setup(int(row.id))
+	if data.has("cracks"):
+		for cp in data.cracks:
+			var cw = CrackedWallS.new()
+			cw.position = _world(cp)
+			add_child(cw)
 
 
 func _world(t: Vector2i) -> Vector2:

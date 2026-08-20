@@ -58,16 +58,20 @@ func go_plaza() -> void:
 	in_dungeon = false
 	run = null
 	get_tree().paused = false
+	if save:
+		save.restock_if_broke()
+		save.write()
 	Sfx.set_music("hub")
 	get_tree().call_deferred("change_scene_to_file", plaza_scene)
 
 
-func begin_run(weapon: ItemData, tool: ItemData, start_floor: int) -> void:
+func begin_run(chosen: Dictionary, start_floor: int) -> void:
 	if save:
 		save.has_dived = true
+		save.restock_if_broke()
 		save.write()
 	run = RunState.new()
-	run.setup(save, weapon, tool)
+	run.setup(save, chosen)
 	run.current_floor = maxi(1, start_floor)
 	run.visited_deepest = run.current_floor
 	if run.current_floor > save.deepest_floor:
@@ -124,6 +128,7 @@ func end_run(_voluntary: bool) -> void:
 		save.deepest_floor = run.visited_deepest
 	last_recap = {
 		"voluntary": _voluntary,
+		"verge": (not _voluntary) and (run.guardian_low or (run.saw_stairs and run.current_floor == run.visited_deepest)),
 		"floor": run.visited_deepest,
 		"mining_kept": keep_m,
 		"axe_kept": keep_a,
@@ -177,7 +182,9 @@ func damage_player(amount: float) -> void:
 		return
 	if run.hp <= 0.0:
 		return
-	run.hp = maxf(0.0, run.hp - amount)
+	var def := run.total_defense()
+	var taken := amount * (100.0 / (100.0 + def))
+	run.hp = maxf(0.0, run.hp - taken)
 	run_hp_changed.emit()
 	if run.hp <= 0.0:
 		var p := get_tree().get_first_node_in_group("player")
@@ -282,7 +289,10 @@ func toast(text: String, col: Color = Color(1.0, 0.86, 0.35)) -> void:
 func add_run_gold(n: int) -> void:
 	if run == null:
 		return
-	run.gold += n
+	var amt := n
+	if run.gold_mult != 1.0:
+		amt = int(round(float(n) * run.gold_mult))
+	run.gold += amt
 	gold_changed.emit()
 
 
@@ -313,31 +323,62 @@ func extract_ore(index: int) -> int:
 	return it.count
 
 
-func extract_gear(index: int) -> Variant:
+func analyze_gear(index: int, as_xp: bool = false) -> String:
 	if run == null:
-		return null
+		return ""
 	var it := run.remove_item_at(index, -1)
 	if it == null:
-		return null
-	it.forged = false
-	var blocked: Array = save.stash_gear(it)
+		return ""
 	bag_changed.emit()
-	if blocked.is_empty():
-		run.gear_extracted.append(it.full_name())
+	if as_xp:
+		grant_xp("smithing", 14.0 + (8.0 if it.rarity == ItemData.Rarity.GREEN else 0.0))
+		run.gear_extracted.append("smithing XP (%s)" % it.full_name())
 		save.write()
-		return true
-	overwrite_queue = it
-	return blocked
-
-
-func confirm_overwrite(family: String, slot: int) -> void:
-	if overwrite_queue == null:
-		return
-	save.overwrite_gear(overwrite_queue, slot)
-	run.gear_extracted.append(overwrite_queue.full_name())
-	overwrite_queue = null
+		return "xp"
+	save.add_recipe(it)
+	run.gear_extracted.append(it.full_name())
 	save.write()
+	return "recipe"
+
+
+func pawn_bag_item(index: int) -> int:
+	if run == null:
+		return 0
+	var it := run.remove_item_at(index, -1)
+	if it == null:
+		return 0
+	var gold_amt := 2
+	if it.rarity == ItemData.Rarity.GREEN:
+		gold_amt = 6
+	if it.kind == ItemData.Kind.POTION:
+		gold_amt = 3
+	_maybe_destroy_hold(it)
+	add_run_gold(gold_amt)
 	bag_changed.emit()
+	return gold_amt
+
+
+func _maybe_destroy_hold(it: ItemData) -> void:
+	if save == null or it == null:
+		return
+	var key := it.hold_key()
+	var list := save.holds_of(key)
+	for i in list.size():
+		var h: ItemData = list[i]
+		if h and h.unique_id == it.unique_id:
+			save.destroy_hold(key, i)
+			save.write()
+			return
+
+
+func give_artifact(id: String) -> void:
+	if run == null:
+		return
+	var art_s := load("res://scripts/data/artifacts.gd")
+	var nm := str(art_s.apply(run, id))
+	if nm != "":
+		toast("Artifact: %s" % nm, Color(0.85, 0.72, 1.0))
+		Sfx.play("level")
 
 
 func extract_misc(index: int) -> bool:
@@ -376,7 +417,7 @@ func _register_input() -> void:
 	_act("target_lock", [KEY_Q], JOY_BUTTON_RIGHT_STICK)
 	_act("potion", [KEY_1], JOY_BUTTON_DPAD_UP)
 	_act("food", [KEY_2], JOY_BUTTON_DPAD_LEFT)
-	_act("inventory", [KEY_TAB], JOY_BUTTON_Y)
+	_act("map_view", [KEY_M], JOY_BUTTON_BACK)
 	_act("pause", [KEY_ESCAPE], JOY_BUTTON_START)
 	_bind_ui_actions()
 

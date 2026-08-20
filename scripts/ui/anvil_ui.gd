@@ -4,6 +4,7 @@ extends CanvasLayer
 var panel: Panel
 var list: ItemList
 var hint: Label
+var forging := false
 
 
 func _ready() -> void:
@@ -12,15 +13,15 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	panel = Panel.new()
 	panel.visible = false
-	panel.position = Vector2(560, 180)
-	panel.size = Vector2(800, 620)
+	panel.position = Vector2(480, 80)
+	panel.size = Vector2(960, 820)
 	add_child(panel)
 	var v := VBoxContainer.new()
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
 	v.offset_left = 24
-	v.offset_top = 24
+	v.offset_top = 20
 	v.offset_right = -24
-	v.offset_bottom = -24
+	v.offset_bottom = -20
 	v.add_theme_constant_override("separation", 10)
 	panel.add_child(v)
 	var t := Label.new()
@@ -29,12 +30,13 @@ func _ready() -> void:
 	v.add_child(t)
 	hint = Label.new()
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.add_theme_font_size_override("font_size", 16)
 	v.add_child(hint)
 	list = ItemList.new()
-	list.custom_minimum_size = Vector2(0, 260)
+	list.custom_minimum_size = Vector2(0, 360)
 	v.add_child(list)
-	v.add_child(_btn("Forge selected (free after analysis)", _forge))
-	v.add_child(_btn("Smelt 1 ore → bar (slow smithing XP)", _smelt))
+	v.add_child(_btn("Forge selected into a free hold", _forge))
+	v.add_child(_btn("Destroy a hold (frees a slot)", _destroy_prompt))
 	v.add_child(_btn("Close", close))
 	PadUi.wire(panel)
 
@@ -62,41 +64,75 @@ func close() -> void:
 
 func _refresh() -> void:
 	list.clear()
-	hint.text = "Banked ore: %d   Bars: %d   Smithing XP: %.0f\nForge analyzed gear so you can bring copies next delve." % [
-		Game.save.banked_ore, Game.save.banked_bars, Game.save.smithing_xp
+	var sm := Game.skill_level("smithing")
+	hint.text = "Gold %d   Ore %d   Smithing L%d\nRecipes are unlimited. 3 forged holds per type is what you can actually take on a run.\nFirst forge costs gold+ore. Re-forge after destroy is cheaper (no new root)." % [
+		Game.save.gold, Game.save.banked_ore, sm
 	]
+	list.add_item("— RECIPES —")
+	list.set_item_disabled(list.item_count - 1, true)
 	var i := 0
-	for it in Game.save.analyzed_axes:
-		list.add_item("%s  [%s]" % [it.full_name(), "forged" if it.forged else "needs forge"])
-		list.set_item_metadata(list.item_count - 1, {"fam": "axe", "i": i})
+	for it in Game.save.recipes:
+		var cost := LootGen.forge_cost(it, not it.forged_once, sm)
+		var key := it.hold_key()
+		var n: int = Game.save.holds_of(key).size()
+		list.add_item("%s  %s   forge %dg + %d ore   holds %d/3" % [it.full_name(), it.stat_line(), cost.gold, cost.ore, n])
+		list.set_item_metadata(list.item_count - 1, {"kind": "recipe", "i": i})
 		i += 1
-	i = 0
-	for it in Game.save.analyzed_pickaxes:
-		list.add_item("%s  [%s]" % [it.full_name(), "forged" if it.forged else "needs forge"])
-		list.set_item_metadata(list.item_count - 1, {"fam": "pick", "i": i})
-		i += 1
-	if list.item_count > 0:
-		list.select(0)
+	list.add_item("— HOLDS —")
+	list.set_item_disabled(list.item_count - 1, true)
+	for k in SaveData.HOLD_KEYS:
+		var j := 0
+		for it in Game.save.holds_of(k):
+			list.add_item("[%s %d]  %s  %s" % [k, j + 1, it.full_name(), it.stat_line()])
+			list.set_item_metadata(list.item_count - 1, {"kind": "hold", "key": k, "i": j})
+			j += 1
+	if list.item_count > 1:
+		list.select(1)
 
 
 func _forge() -> void:
+	if forging:
+		return
 	if list.get_selected_items().is_empty():
 		return
-	var meta: Dictionary = list.get_item_metadata(list.get_selected_items()[0])
-	var arr: Array = Game.save.analyzed_axes if meta.fam == "axe" else Game.save.analyzed_pickaxes
-	var it: ItemData = arr[meta.i]
-	it.forged = true
-	Game.grant_xp("smithing", 8.0, true)
+	var meta = list.get_item_metadata(list.get_selected_items()[0])
+	if not (meta is Dictionary) or meta.get("kind") != "recipe":
+		hint.text = "Pick a recipe, not a hold."
+		return
+	var it: ItemData = Game.save.recipes[int(meta.i)]
+	var key := it.hold_key()
+	if Game.save.holds_of(key).size() >= 3:
+		hint.text = "That type is full (3/3). Destroy a hold first."
+		return
+	var first := not it.forged_once
+	var cost := LootGen.forge_cost(it, first, Game.skill_level("smithing"))
+	if Game.save.gold < int(cost.gold) or Game.save.banked_ore < int(cost.ore):
+		hint.text = "Need %dg and %d ore." % [cost.gold, cost.ore]
+		return
+	forging = true
+	hint.text = "Hammering…"
+	await get_tree().create_timer(Skills.smith_bar_time(Game.skill_level("smithing"))).timeout
+	forging = false
+	if not panel.visible:
+		return
+	Game.save.gold -= int(cost.gold)
+	Game.save.banked_ore -= int(cost.ore)
+	it.forged_once = true
+	Game.save.add_hold(it)
+	Game.grant_xp("smithing", 18.0 if first else 10.0, true)
 	Game.save.write()
+	Sfx.play("ui")
 	_refresh()
 
 
-func _smelt() -> void:
-	if Game.save.banked_ore <= 0:
+func _destroy_prompt() -> void:
+	if list.get_selected_items().is_empty():
 		return
-	Game.save.banked_ore -= 1
-	Game.save.banked_bars += 1
-	Game.grant_xp("smithing", 6.0, true)
+	var meta = list.get_item_metadata(list.get_selected_items()[0])
+	if not (meta is Dictionary) or meta.get("kind") != "hold":
+		hint.text = "Select a hold line to destroy it. Recipe stays."
+		return
+	Game.save.destroy_hold(str(meta.key), int(meta.i))
 	Game.save.write()
 	_refresh()
 

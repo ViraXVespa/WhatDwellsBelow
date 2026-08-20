@@ -35,7 +35,8 @@ func _ready() -> void:
 	list = ItemList.new()
 	list.custom_minimum_size = Vector2(0, 280)
 	v.add_child(list)
-	v.add_child(_btn("Send selected", _send_selected))
+	v.add_child(_btn("Analyze selected (recipe)", _send_selected))
+	v.add_child(_btn("Send selected for Smithing XP", _send_xp))
 	v.add_child(_btn("Send gold instead (50% to town, 10% fee, clerk spent)", _send_gold))
 	v.add_child(_btn("Close", close))
 	PadUi.wire(panel)
@@ -74,13 +75,16 @@ func _refresh() -> void:
 		return
 	title.text = clerk.display_name()
 	if clerk.clerk_id == "gopher":
-		hint.text = "Gear Gopher. I'll take axes and picks for analysis. Three per type — you pick what to evict."
+		hint.text = "Gear Gopher. Unequip first — I only take bag gear. Analyze now = anvil recipe. If you already unlocked that family, you can send extras for Smithing XP instead."
 		if clerk.spent_normal:
 			hint.text += "\nI've already done my gear run. Gold only — or goodbye."
 		else:
-			for row in Game.run.items_of_kind(ItemData.Kind.WEAPON) + Game.run.items_of_kind(ItemData.Kind.TOOL):
+			for row in Game.run.mailable_gear():
 				var it: ItemData = row.item
-				list.add_item("%s  [%s]" % [it.full_name(), "green" if it.rarity == ItemData.Rarity.GREEN else "white"])
+				var extra := "recipe"
+				if Game.save.family_unlocked(it.hold_key()):
+					extra = "already unlocked — analyze or XP"
+				list.add_item("%s  [%s]" % [it.full_name(), extra])
 				list.set_item_metadata(list.item_count - 1, row.index)
 	elif clerk.clerk_id == "runner":
 		hint.text = "Guild Runner. Food, potions, junk. Not rocks, not your fancy axe. I have a route."
@@ -126,11 +130,7 @@ func _send_selected() -> void:
 		return
 	var idx: int = list.get_item_metadata(list.get_selected_items()[0])
 	if clerk.clerk_id == "gopher":
-		var result = Game.extract_gear(idx)
-		if result is Array:
-			_overwrite_picker(result)
-			return
-		clerk.spent_normal = false
+		Game.analyze_gear(idx, false)
 		_refresh()
 		return
 	if clerk.clerk_id == "runner":
@@ -143,11 +143,8 @@ func _send_selected() -> void:
 			return
 		if it.family == "ore":
 			Game.extract_ore(idx)
-		elif it.kind == ItemData.Kind.WEAPON or it.kind == ItemData.Kind.TOOL:
-			var result = Game.extract_gear(idx)
-			if result is Array:
-				_overwrite_picker(result)
-				return
+		elif it.kind in [ItemData.Kind.WEAPON, ItemData.Kind.TOOL, ItemData.Kind.ARMOR, ItemData.Kind.POTION]:
+			Game.analyze_gear(idx, false)
 		else:
 			Game.extract_misc(idx)
 		_refresh()
@@ -173,6 +170,24 @@ func _overwrite_picker(existing: Array) -> void:
 		_refresh()
 	)
 	panel.get_child(0).add_child(confirm)
+
+
+func _send_xp() -> void:
+	if clerk == null or Game.run == null:
+		return
+	if clerk.clerk_id != "gopher" and clerk.clerk_id != "patty":
+		return
+	if list.get_selected_items().is_empty():
+		return
+	var idx: int = list.get_item_metadata(list.get_selected_items()[0])
+	var it: ItemData = Game.run.bag[idx] if idx >= 0 else null
+	if it == null:
+		return
+	if not Game.save.family_unlocked(it.hold_key()):
+		hint.text = "Nothing to duplicate yet. Analyze it first so the anvil knows the family."
+		return
+	Game.analyze_gear(idx, true)
+	_refresh()
 
 
 func _send_gold() -> void:

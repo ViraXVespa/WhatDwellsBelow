@@ -3,17 +3,22 @@ extends CanvasLayer
 
 var hp_bar: ProgressBar
 var mana_bar: ProgressBar
+var pot_bar: ProgressBar
 var dash_bar: ProgressBar
 var slam_bar: ProgressBar
 var channel_bar: ProgressBar
 var hp_val: Label
 var mana_val: Label
+var pot_val: Label
 var dash_val: Label
 var slam_val: Label
 var info: Label
 var prompt: Label
+var shrine_lab: Label
 var channel_lab: Label
 var minimap: Control
+var big_map: Control
+var map_open := false
 var portrait: TextureRect
 var boss_wrap: Control
 var boss_bar: ProgressBar
@@ -64,10 +69,16 @@ func _ready() -> void:
 	strip.add_child(hp_val)
 
 	mana_bar = _bar(Color(0.28, 0.48, 0.92), Vector2(170, 46), Vector2(280, 22))
+	mana_bar.visible = false
 	strip.add_child(mana_bar)
-	strip.add_child(_name_lab("MANA", Vector2(112, 44), Color(0.55, 0.7, 1.0)))
 	mana_val = _val_lab(Vector2(456, 44))
+	mana_val.visible = false
 	strip.add_child(mana_val)
+	pot_bar = _bar(Color(0.82, 0.28, 0.55), Vector2(170, 46), Vector2(280, 22))
+	strip.add_child(pot_bar)
+	strip.add_child(_name_lab("POT", Vector2(112, 44), Color(0.95, 0.55, 0.75)))
+	pot_val = _val_lab(Vector2(456, 44))
+	strip.add_child(pot_val)
 
 	dash_bar = _bar(Color(0.25, 0.78, 0.82), Vector2(170, 74), Vector2(160, 22))
 	strip.add_child(dash_bar)
@@ -99,7 +110,7 @@ func _ready() -> void:
 	strip.add_child(info)
 
 	var hint := Label.new()
-	hint.text = "RT / LMB hold-attack    A / E interact    Y / Tab bag    Start / Esc pause"
+	hint.text = "RT / LMB hold-attack    A / E interact    Start / Esc pause+bag    M / Select map"
 	hint.position = Vector2(14, 184)
 	hint.size = Vector2(532, 36)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -156,13 +167,25 @@ func _ready() -> void:
 	minimap.position = Vector2(1680, 16)
 	add_child(minimap)
 	var map_tag := Label.new()
-	map_tag.text = "MAP"
+	map_tag.text = "MAP  (M)"
 	map_tag.position = Vector2(1680, 180)
 	map_tag.size = Vector2(220, 20)
 	map_tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	map_tag.add_theme_font_size_override("font_size", 14)
 	map_tag.add_theme_color_override("font_color", Color(0.75, 0.72, 0.65))
 	add_child(map_tag)
+	shrine_lab = Label.new()
+	shrine_lab.position = Vector2(20, 250)
+	shrine_lab.size = Vector2(520, 28)
+	shrine_lab.add_theme_font_size_override("font_size", 18)
+	shrine_lab.add_theme_color_override("font_color", Color(0.95, 0.82, 0.4))
+	add_child(shrine_lab)
+	big_map = Minimap.new()
+	big_map.position = Vector2(480, 220)
+	big_map.size = Vector2(960, 640)
+	big_map.custom_minimum_size = Vector2(960, 640)
+	big_map.visible = false
+	add_child(big_map)
 
 
 func _name_lab(text: String, pos: Vector2, col: Color) -> Label:
@@ -220,7 +243,24 @@ func _process(_delta: float) -> void:
 		mana_bar.max_value = Game.run.max_mana
 		mana_bar.value = Game.run.mana
 		hp_val.text = "%d/%d" % [int(Game.run.hp), int(Game.run.max_hp)]
-		mana_val.text = "%d/%d" % [int(Game.run.mana), int(Game.run.max_mana)]
+		if pot_bar:
+			var pcd := Game.run.potion_cd
+			var pmax := 8.0
+			if Game.run.potion:
+				pmax = maxf(0.5, Game.run.potion.potion_cd)
+			pot_bar.max_value = pmax
+			pot_bar.value = pmax - pcd
+			if Game.run.potion == null:
+				pot_val.text = "NONE"
+			elif pcd <= 0.04:
+				pot_val.text = "READY"
+			else:
+				pot_val.text = "%.1fs" % pcd
+		if shrine_lab:
+			if Game.run.shrine_buff_t > 0.0:
+				shrine_lab.text = "Shrine +20% dmg   %.0fs" % Game.run.shrine_buff_t
+			else:
+				shrine_lab.text = ""
 		info.text = "Floor %d    Gold %d    Bag %d/28    Axe L%d    Mine L%d    Smith L%d" % [
 			Game.run.current_floor,
 			Game.run.gold,
@@ -235,7 +275,10 @@ func _process(_delta: float) -> void:
 		mana_bar.max_value = 50
 		mana_bar.value = 50
 		hp_val.text = "100/100"
-		mana_val.text = "50/50"
+		if pot_val:
+			pot_val.text = "—"
+		if shrine_lab:
+			shrine_lab.text = ""
 		info.text = "%s    Gold %d    Ore %d    Deepest %d    Axe L%d  Mine L%d  Smith L%d" % [
 			Game.DEMO_TOWN,
 			Game.save.gold if Game.save else 0,
@@ -268,6 +311,16 @@ func _process(_delta: float) -> void:
 			boss_val.text = "%d/%d" % [int(b.hp), int(b.max_hp)]
 	if minimap and minimap.has_method("refresh"):
 		minimap.refresh()
+	if map_open and big_map and big_map.has_method("refresh"):
+		big_map.refresh()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("map_view") and Game.in_dungeon:
+		map_open = not map_open
+		if big_map:
+			big_map.visible = map_open
+		get_viewport().set_input_as_handled()
 
 
 func _prompt_near(p: Player) -> String:

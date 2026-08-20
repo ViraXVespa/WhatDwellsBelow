@@ -18,6 +18,9 @@ func _ready() -> void:
 	if r.get("voluntary", false):
 		title.text = "You pulled the plug."
 		sub.text = "Cleaner disconnect. Still forgot most of it. That's the job."
+	elif r.get("verge", false):
+		title.text = "So close it hurts."
+		sub.text = "The stairs were there. Or the guardian was. Then the dream ended. That's a bad one."
 	else:
 		title.text = "You woke up. That one stung."
 		sub.text = "Hurt like hell. That's why the dream doesn't stick. Shake it off."

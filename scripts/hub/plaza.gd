@@ -19,7 +19,6 @@ func _ready() -> void:
 	add_child(Hud.new())
 	add_child(PauseMenu.new())
 	add_child(LoadoutUI.new())
-	add_child(InventoryUI.new())
 	add_child(AnvilUI.new())
 
 

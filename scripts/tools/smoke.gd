@@ -28,7 +28,7 @@ func _initialize() -> void:
 		_log("SMOKE: Game is null")
 		quit()
 		return
-	game.begin_run(ItemData.make_starter_axe(), ItemData.make_starter_pickaxe(), 1)
+	game.begin_run({"weapon": ItemData.make_starter_axe(), "tool": ItemData.make_starter_pickaxe()}, 1)
 	_log("SMOKE: begin_run called")
 
 
@@ -52,7 +52,7 @@ func _test_gen() -> void:
 
 
 func _test_skills() -> void:
-	_log("SMOKE: level0=%d level88=%d" % [Skills.level_from_xp(0.0), Skills.level_from_xp(88.0)])
+	_log("SMOKE: level0=%d level90=%d" % [Skills.level_from_xp(0.0), Skills.level_from_xp(90.0)])
 	var face := Art.facing_from_dir(Vector2(1, 1).normalized())
 	_log("SMOKE: facing_down_right=%s" % face)
 

@@ -37,13 +37,6 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("inventory"):
-		if open_flag:
-			close()
-		else:
-			open()
-		get_viewport().set_input_as_handled()
-		return
 	if open_flag and event.is_action_pressed("ui_cancel"):
 		close()
 		get_viewport().set_input_as_handled()

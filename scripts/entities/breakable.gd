@@ -39,8 +39,6 @@ func _smash() -> void:
 		Game.add_run_gold(rng.randi_range(1, 5))
 	if rng.randf() < 0.42:
 		_spawn_pickup(parent, pos + Vector2(rng.randf_range(-10, 10), rng.randf_range(-8, 8)), "hp", rng.randf_range(10.0, 18.0))
-	if rng.randf() < 0.32:
-		_spawn_pickup(parent, pos + Vector2(rng.randf_range(-10, 10), rng.randf_range(-8, 8)), "mana", rng.randf_range(8.0, 16.0))
 	queue_free()
 
 

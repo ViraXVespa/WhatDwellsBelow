@@ -58,13 +58,18 @@ func channel_time(_player: Node) -> float:
 	var mult := 1.0
 	if Game.run and Game.run.tool:
 		mult = Game.run.tool.gather_mult
-	return maxf(0.7, 1.85 / maxf(0.5, mult) / Skills.mine_speed_mult())
+	var art := 1.0
+	if Game.run:
+		art = Game.run.mine_mult
+	return maxf(0.55, 1.85 / maxf(0.5, mult) / Skills.mine_speed_mult(Game.skill_level("mining")) / art)
 
 
 func complete_channel(player: Node) -> void:
 	if remaining <= 0:
 		return
 	var amt := rng.randi_range(1, 2)
+	if Game.run and Game.run.lucky_mine and rng.randf() < 0.22:
+		amt += 1
 	var ore := ItemData.make_ore(amt)
 	if not Game.give_or_drop(ore, global_position):
 		if player is Player:

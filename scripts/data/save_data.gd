@@ -2,22 +2,33 @@ class_name SaveData
 extends RefCounted
 
 const PATH := "user://wdb_save.json"
+const HOLD_KEYS := ["great_axe", "pickaxe", "potion", "head", "body", "legs"]
 
 var mining_xp: float = 0.0
 var smithing_xp: float = 0.0
 var great_axe_xp: float = 0.0
-var gold: int = 25
+var gold: int = 0
 var banked_ore: int = 0
 var banked_bars: int = 0
 var deepest_floor: int = 1
-var analyzed_axes: Array = []
-var analyzed_pickaxes: Array = []
+var recipes: Array = []
+var holds: Dictionary = {}
 var extra_food: int = 0
 var extra_potion: int = 0
 var has_dived: bool = false
 var music_vol: float = 0.7
 var sfx_vol: float = 0.85
 var cam_zoom: float = 1.0
+
+
+func _init() -> void:
+	_ensure_holds()
+
+
+func _ensure_holds() -> void:
+	for k in HOLD_KEYS:
+		if not holds.has(k) or not (holds[k] is Array):
+			holds[k] = []
 
 
 static func load_or_create() -> SaveData:
@@ -28,8 +39,19 @@ static func load_or_create() -> SaveData:
 			if json.parse(f.get_as_text()) == OK and json.data is Dictionary:
 				return from_dict(json.data)
 	var s := SaveData.new()
+	s._seed_starters()
 	s.write()
 	return s
+
+
+func _seed_starters() -> void:
+	_ensure_holds()
+	if (holds["great_axe"] as Array).is_empty():
+		(holds["great_axe"] as Array).append(ItemData.make_starter_axe())
+	if (holds["pickaxe"] as Array).is_empty():
+		(holds["pickaxe"] as Array).append(ItemData.make_starter_pickaxe())
+	if (holds["potion"] as Array).is_empty():
+		(holds["potion"] as Array).append(ItemData.make_potion())
 
 
 func write() -> void:
@@ -39,12 +61,15 @@ func write() -> void:
 
 
 func to_dict() -> Dictionary:
-	var axes: Array = []
-	for it in analyzed_axes:
-		axes.append((it as ItemData).to_dict())
-	var picks: Array = []
-	for it in analyzed_pickaxes:
-		picks.append((it as ItemData).to_dict())
+	var rec: Array = []
+	for it in recipes:
+		rec.append((it as ItemData).to_dict())
+	var h := {}
+	for k in HOLD_KEYS:
+		var arr: Array = []
+		for it in holds.get(k, []):
+			arr.append((it as ItemData).to_dict())
+		h[k] = arr
 	return {
 		"mining_xp": mining_xp,
 		"smithing_xp": smithing_xp,
@@ -53,8 +78,8 @@ func to_dict() -> Dictionary:
 		"banked_ore": banked_ore,
 		"banked_bars": banked_bars,
 		"deepest_floor": deepest_floor,
-		"analyzed_axes": axes,
-		"analyzed_pickaxes": picks,
+		"recipes": rec,
+		"holds": h,
 		"extra_food": extra_food,
 		"extra_potion": extra_potion,
 		"has_dived": has_dived,
@@ -69,7 +94,7 @@ static func from_dict(d: Dictionary) -> SaveData:
 	s.mining_xp = float(d.get("mining_xp", 0))
 	s.smithing_xp = float(d.get("smithing_xp", 0))
 	s.great_axe_xp = float(d.get("great_axe_xp", 0))
-	s.gold = int(d.get("gold", 25))
+	s.gold = int(d.get("gold", 0))
 	s.banked_ore = int(d.get("banked_ore", 0))
 	s.banked_bars = int(d.get("banked_bars", 0))
 	s.deepest_floor = int(d.get("deepest_floor", 1))
@@ -79,24 +104,101 @@ static func from_dict(d: Dictionary) -> SaveData:
 	s.music_vol = clampf(float(d.get("music_vol", 0.7)), 0.0, 1.0)
 	s.sfx_vol = clampf(float(d.get("sfx_vol", 0.85)), 0.0, 1.0)
 	s.cam_zoom = clampf(float(d.get("cam_zoom", 1.0)), 1.0, 1.75)
-	for row in d.get("analyzed_axes", []):
+	s._ensure_holds()
+	for row in d.get("recipes", []):
 		if row is Dictionary:
-			s.analyzed_axes.append(ItemData.from_dict(row))
-	for row in d.get("analyzed_pickaxes", []):
-		if row is Dictionary:
-			s.analyzed_pickaxes.append(ItemData.from_dict(row))
+			s.recipes.append(ItemData.from_dict(row))
+	if d.has("holds") and d.holds is Dictionary:
+		for k in HOLD_KEYS:
+			var arr: Array = []
+			for row in d.holds.get(k, []):
+				if row is Dictionary:
+					var it := ItemData.from_dict(row)
+					it.forged = true
+					arr.append(it)
+			s.holds[k] = arr
+	else:
+		_migrate_old(s, d)
+	s._seed_starters()
+	s.restock_if_broke()
 	return s
 
 
-func stash_gear(it: ItemData) -> Array:
-	var list: Array = analyzed_axes if it.family == "great_axe" else analyzed_pickaxes
-	if list.size() < 3:
-		list.append(it)
-		return []
-	return list
+static func _migrate_old(s: SaveData, d: Dictionary) -> void:
+	for row in d.get("analyzed_axes", []):
+		if row is Dictionary:
+			var it := ItemData.from_dict(row)
+			if it.forged:
+				(s.holds["great_axe"] as Array).append(it)
+			else:
+				s.recipes.append(it)
+	for row in d.get("analyzed_pickaxes", []):
+		if row is Dictionary:
+			var it := ItemData.from_dict(row)
+			if it.forged:
+				(s.holds["pickaxe"] as Array).append(it)
+			else:
+				s.recipes.append(it)
 
 
-func overwrite_gear(it: ItemData, index: int) -> void:
-	var list: Array = analyzed_axes if it.family == "great_axe" else analyzed_pickaxes
-	if index >= 0 and index < list.size():
-		list[index] = it
+func family_unlocked(family: String) -> bool:
+	for it in recipes:
+		if it.family == family or it.hold_key() == family:
+			return true
+	var list: Array = holds.get(family, [])
+	return list.size() > 0
+
+
+func holds_of(key: String) -> Array:
+	_ensure_holds()
+	if not holds.has(key):
+		holds[key] = []
+	return holds[key]
+
+
+func add_recipe(it: ItemData) -> void:
+	if it == null:
+		return
+	var copy := it.duplicate_item()
+	copy.forged = false
+	recipes.append(copy)
+
+
+func destroy_hold(key: String, index: int) -> ItemData:
+	var list := holds_of(key)
+	if index < 0 or index >= list.size():
+		return null
+	var it: ItemData = list[index]
+	list.remove_at(index)
+	return it
+
+
+func add_hold(it: ItemData) -> bool:
+	if it == null:
+		return false
+	var key := it.hold_key()
+	var list := holds_of(key)
+	if list.size() >= 3:
+		return false
+	var copy := it.duplicate_item()
+	copy.forged = true
+	copy.forged_once = true
+	var sm := Skills.smith_out_mult(Skills.level_from_xp(smithing_xp))
+	if copy.kind == ItemData.Kind.WEAPON:
+		copy.damage *= sm
+	if copy.kind == ItemData.Kind.ARMOR:
+		copy.defense *= sm
+	if copy.kind == ItemData.Kind.TOOL:
+		copy.gather_mult *= sm
+	if copy.kind == ItemData.Kind.POTION:
+		copy.heal *= sm
+	list.append(copy)
+	return true
+
+
+func restock_if_broke() -> void:
+	var pots := holds_of("potion")
+	if pots.is_empty() and gold < 15:
+		pots.append(ItemData.make_potion())
+	if extra_food < 0:
+		extra_food = 0

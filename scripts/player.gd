@@ -78,10 +78,13 @@ func _physics_process(delta: float) -> void:
 		dash_timer -= delta
 		iframe = maxf(iframe, dash_timer)
 	else:
-		velocity = move * SPEED
+		var spd := SPEED
+		if Game.run:
+			spd *= Game.run.move_mult
+		velocity = move * spd
 		if Input.is_action_just_pressed("dash") and dash_cd <= 0.0 and move.length() + aim_dir.length() > 0.0:
 			dash_timer = DASH_TIME
-			dash_cd = DASH_CD
+			dash_cd = DASH_CD * (Game.run.dash_cd_mult if Game.run else 1.0)
 			iframe = DASH_TIME
 			Sfx.play("dash")
 			if move.length() > 0.2:
@@ -258,9 +261,11 @@ func _try_attack() -> void:
 		return
 	var w := _weapon()
 	attack_cd = w.attack_period
-	var dmg := w.damage * Skills.axe_damage_mult()
-	if Game.run and Game.run.shrine_buff_t > 0.0:
-		dmg *= 1.2
+	var dmg := w.damage * Skills.axe_damage_mult(Game.skill_level("great_axe"))
+	if Game.run:
+		dmg *= Game.run.dmg_mult
+		if Game.run.shrine_buff_t > 0.0:
+			dmg *= 1.2
 	attacking = true
 	attack_t = 0.0
 	attack_i = 0
@@ -303,11 +308,14 @@ func _can_hit(node: Node2D, max_range: float, check_arc: bool) -> bool:
 	return true
 
 
-func _hit_in_arc(dmg: float, max_range: float, check_arc: bool = true) -> void:
+func _hit_in_arc(dmg: float, max_range: float, check_arc: bool = true, slam := false) -> void:
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if e is Node2D and _can_hit(e, max_range, check_arc) and e.has_method("take_damage"):
-			e.take_damage(dmg, self)
-	for b in get_tree().get_nodes_in_group("breakables"):
+			var st := 0.0
+			if slam:
+				st = 0.25 if bool(e.get("is_boss")) else 0.5
+			e.take_damage(dmg, self, st)
+	for b in get_tree().get_nodes_in_group("hittable"):
 		if b is Node2D and _can_hit(b, max_range, check_arc) and b.has_method("take_damage"):
 			b.take_damage(dmg, self)
 
@@ -318,7 +326,12 @@ func _try_slam() -> bool:
 	slam_cd = SLAM_CD
 	attack_cd = maxf(attack_cd, 0.4)
 	Sfx.play("slam")
-	_hit_in_arc(_weapon().damage * 1.6 * Skills.axe_damage_mult(), SLAM_RADIUS, false)
+	var dmg := _weapon().damage * 1.6 * Skills.axe_damage_mult(Game.skill_level("great_axe"))
+	if Game.run:
+		dmg *= Game.run.dmg_mult * Game.run.slam_dmg_mult
+		if Game.run.shrine_buff_t > 0.0:
+			dmg *= 1.2
+	_hit_in_arc(dmg, SLAM_RADIUS, false, true)
 	var ring := Polygon2D.new()
 	ring.color = Color(0.9, 0.7, 0.2, 0.35)
 	var pts := PackedVector2Array()
@@ -424,15 +437,20 @@ func begin_death() -> void:
 func _use_consumable(family: String) -> void:
 	if Game.run == null:
 		return
-	if family == "potion" and Game.run.potion_cd > 0.0:
+	if family == "potion":
+		if Game.run.potion == null:
+			Game.toast("No potion equipped.", Color(0.9, 0.7, 0.55))
+			return
+		if Game.run.potion_cd > 0.0:
+			return
+		Game.heal_player(Game.run.potion.heal)
+		Game.run.potion_cd = Game.run.potion.potion_cd
 		return
 	var it := Game.run.consume_family(family)
 	if it == null:
 		return
 	Game.heal_player(it.heal)
 	Game.bag_changed.emit()
-	if family == "potion":
-		Game.run.potion_cd = 8.0
 
 
 func _regen(delta: float) -> void:
@@ -441,7 +459,6 @@ func _regen(delta: float) -> void:
 	if Game.run.hp <= 0.0:
 		return
 	Game.run.hp = minf(Game.run.max_hp, Game.run.hp + REGEN * delta)
-	Game.run.mana = minf(Game.run.max_mana, Game.run.mana + 2.0 * delta)
 
 
 func channel_ratio() -> float:
@@ -450,9 +467,12 @@ func channel_ratio() -> float:
 	return clampf(channel_t / channel_need, 0.0, 1.0)
 
 
-func dash_ratio() -> float:
-	return 1.0 - clampf(dash_cd / DASH_CD, 0.0, 1.0)
-
-
 func slam_ratio() -> float:
 	return 1.0 - clampf(slam_cd / SLAM_CD, 0.0, 1.0)
+
+
+func dash_ratio() -> float:
+	var m := DASH_CD * (Game.run.dash_cd_mult if Game.run else 1.0)
+	if m <= 0.001:
+		return 1.0
+	return 1.0 - clampf(dash_cd / m, 0.0, 1.0)

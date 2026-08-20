@@ -167,6 +167,75 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 		campfires.append(_center(extras[0]))
 	if extras.size() > 1 and rng.randf() < 0.7:
 		shrines.append(_center(extras[1]))
+	var shop := Vector2i(-1, -1)
+	if rng.randf() < 0.34:
+		var shost: Rect2i = entrance
+		if pocket_hosts.size() > 0:
+			shost = pocket_hosts[0]
+		elif extras.size() > 0:
+			shost = extras[0]
+		var salc := _try_alcove(grid, rooms, shost, rng, rng.randi_range(2, 4))
+		if salc.size.x > 0:
+			rooms.append(salc)
+			safe_rooms.append(salc)
+			shop = _center(salc)
+	var chest_n := 0
+	var cr := rng.randf()
+	if cr < 0.30:
+		chest_n = 0
+	elif cr < 0.75:
+		chest_n = 1
+	elif cr < 0.95:
+		chest_n = 2
+	else:
+		chest_n = 3
+	var chests: Array = []
+	var fires: Array = []
+	var plates: Array = []
+	var levers: Array = []
+	var gates: Array = []
+	var cracks: Array = []
+	for ci in chest_n:
+		var kind := rng.randi_range(0, 3)
+		var host: Rect2i = extras[mini(ci + 2, extras.size() - 1)] if extras.size() > 0 else entrance
+		if kind == 0:
+			var alc := _try_alcove(grid, rooms, host, rng, 3)
+			if alc.size.x > 0:
+				rooms.append(alc)
+				safe_rooms.append(alc)
+				var cpos := _center(alc)
+				chests.append(cpos)
+				var a := _center(host)
+				var b := cpos
+				var steps := maxi(absi(b.x - a.x), absi(b.y - a.y))
+				for s in range(1, maxi(1, steps)):
+					var t := float(s) / float(steps)
+					var ft := Vector2i(int(round(lerpf(a.x, b.x, t))), int(round(lerpf(a.y, b.y, t))))
+					if ft != cpos and grid[idx(ft.x, ft.y)] == FLOOR:
+						fires.append(ft)
+		elif kind == 1 or kind == 2:
+			var alc := _try_alcove(grid, rooms, host, rng, 2)
+			if alc.size.x > 0:
+				rooms.append(alc)
+				safe_rooms.append(alc)
+				var cpos := _center(alc)
+				chests.append(cpos)
+				var gpos := Vector2i(( _center(host).x + cpos.x ) / 2, ( _center(host).y + cpos.y ) / 2)
+				_ensure_floor(grid, gpos)
+				gates.append({"pos": gpos, "id": ci})
+				if kind == 1:
+					plates.append({"pos": _center(host), "id": ci})
+				else:
+					levers.append({"pos": Vector2i(_center(host).x, _center(host).y + 1), "id": ci})
+					_ensure_floor(grid, levers[levers.size() - 1].pos)
+		else:
+			var alc := _try_alcove(grid, rooms, host, rng, 1)
+			if alc.size.x > 0:
+				rooms.append(alc)
+				safe_rooms.append(alc)
+				chests.append(_center(alc))
+				var mid := Vector2i((_center(host).x + _center(alc).x) / 2, (_center(host).y + _center(alc).y) / 2)
+				cracks.append(mid)
 	return {
 		"w": W,
 		"h": H,
@@ -188,6 +257,13 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 		"boss": boss_floor,
 		"boss_pos": Vector2i(_center(stairs_room).x, _center(stairs_room).y - 1),
 		"spawn": spawn,
+		"shop": shop,
+		"chests": chests,
+		"fires": fires,
+		"plates": plates,
+		"levers": levers,
+		"gates": gates,
+		"cracks": cracks,
 	}
 
 

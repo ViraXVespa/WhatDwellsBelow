@@ -36,9 +36,8 @@ func interact(_player: Node) -> void:
 			bits.append("%d ore" % ore)
 		else:
 			bits.append("ore (on the floor)")
-	if rng.randf() < 0.32:
-		var fam := "great_axe" if rng.randf() < 0.6 else "pickaxe"
-		var gear := LootGen.roll_gear(fam, rng)
+	if rng.randf() < 0.38:
+		var gear := LootGen.roll_any(rng)
 		if rng.randf() < 0.25:
 			gear.rarity = ItemData.Rarity.GREEN
 		if Game.give_or_drop(gear, global_position):

@@ -1,13 +1,16 @@
 class_name Minimap
 extends Control
 
-const TILE_PX := 5.0
+var tile_px := 5.0
 const BORDER := Color(0.45, 0.38, 0.22, 0.95)
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(220, 160)
-	size = Vector2(220, 160)
+	if custom_minimum_size == Vector2.ZERO:
+		custom_minimum_size = Vector2(220, 160)
+		size = Vector2(220, 160)
+	if size.x > 400:
+		tile_px = 8.0
 	clip_contents = true
 
 
@@ -38,8 +41,8 @@ func _draw() -> void:
 	if p:
 		cx = p.position.x / 64.0
 		cy = p.position.y / 64.0
-	var half_x := size.x / (2.0 * TILE_PX)
-	var half_y := size.y / (2.0 * TILE_PX)
+	var half_x := size.x / (2.0 * tile_px)
+	var half_y := size.y / (2.0 * tile_px)
 	var x0 := maxi(0, int(floorf(cx - half_x)) - 1)
 	var y0 := maxi(0, int(floorf(cy - half_y)) - 1)
 	var x1 := mini(w - 1, int(ceilf(cx + half_x)) + 1)
@@ -51,11 +54,14 @@ func _draw() -> void:
 				continue
 			if data.grid[i] != DungeonGen.FLOOR:
 				continue
-			var px := (float(x) - cx) * TILE_PX + size.x * 0.5
-			var py := (float(y) - cy) * TILE_PX + size.y * 0.5
-			draw_rect(Rect2(px, py, TILE_PX + 0.5, TILE_PX + 0.5), Color(0.42, 0.44, 0.52))
+			var px := (float(x) - cx) * tile_px + size.x * 0.5
+			var py := (float(y) - cy) * tile_px + size.y * 0.5
+			draw_rect(Rect2(px, py, tile_px + 0.5, tile_px + 0.5), Color(0.42, 0.44, 0.52))
 	_mark(data, visited, cx, cy, "crystal", Color(0.45, 0.85, 0.9))
 	_mark(data, visited, cx, cy, "stairs", Color(0.95, 0.82, 0.28))
+	_mark(data, visited, cx, cy, "clerk_gather", Color(0.55, 0.85, 0.45))
+	_mark(data, visited, cx, cy, "clerk_misc", Color(0.7, 0.55, 0.9))
+	_mark(data, visited, cx, cy, "shop", Color(0.95, 0.55, 0.85))
 	draw_circle(size * 0.5, 3.0, Color(0.95, 0.85, 0.3))
 	_border()
 
@@ -68,9 +74,9 @@ func _mark(data: Dictionary, visited: PackedByteArray, cx: float, cy: float, key
 		return
 	if visited[t.x + t.y * DungeonGen.W] == 0:
 		return
-	var px := (float(t.x) - cx) * TILE_PX + size.x * 0.5
-	var py := (float(t.y) - cy) * TILE_PX + size.y * 0.5
-	draw_rect(Rect2(px, py, TILE_PX + 0.5, TILE_PX + 0.5), col)
+	var px := (float(t.x) - cx) * tile_px + size.x * 0.5
+	var py := (float(t.y) - cy) * tile_px + size.y * 0.5
+	draw_rect(Rect2(px, py, tile_px + 0.5, tile_px + 0.5), col)
 
 
 func _border() -> void:

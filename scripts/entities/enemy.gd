@@ -35,6 +35,7 @@ var is_boss := false
 var aware := false
 var last_seen := Vector2.ZERO
 var lost_t := 0.0
+var stagger_t := 0.0
 
 
 func setup(p_role: String, floor_number: int, p_boss: bool = false) -> void:
@@ -155,6 +156,12 @@ func _build_visual() -> void:
 
 func _physics_process(delta: float) -> void:
 	if get_tree().paused:
+		return
+	if stagger_t > 0.0:
+		stagger_t -= delta
+		velocity = velocity.move_toward(Vector2.ZERO, 800.0 * delta)
+		move_and_slide()
+		_refresh_hp_bar()
 		return
 	attack_cd = maxf(0.0, attack_cd - delta)
 	shoot_cd = maxf(0.0, shoot_cd - delta)
@@ -370,10 +377,14 @@ func _stuck(delta: float) -> void:
 		stuck_t = 0.0
 
 
-func take_damage(amount: float, _from: Node = null) -> void:
+func take_damage(amount: float, _from: Node = null, stagger := 0.0) -> void:
 	hp -= amount
 	flash = 0.08
 	aware = true
+	if stagger > 0.0:
+		stagger_t = maxf(stagger_t, stagger)
+	if is_boss and Game.run and hp / max_hp <= 0.25:
+		Game.run.guardian_low = true
 	var n := FloatNum.new()
 	n.global_position = global_position + Vector2(0, -36)
 	n.setup(amount)
@@ -426,8 +437,13 @@ func _die() -> void:
 			gold_amt = rng.randi_range(40, 70) + Game.run.current_floor * 8
 			Game.grant_xp("great_axe", 40.0)
 			var drop := LootGen.roll_gear("great_axe", rng)
-			drop.rarity = ItemData.Rarity.GREEN
+			if rng.randf() < 0.55:
+				drop.rarity = ItemData.Rarity.GREEN
 			Game.give_or_drop(drop, global_position)
+			if rng.randf() < 0.5:
+				var art_s = load("res://scripts/data/artifacts.gd")
+				var art: Dictionary = art_s.pick(rng, Game.run.artifact_ids)
+				Game.give_artifact(str(art.id))
 		else:
 			Game.grant_xp("great_axe", 8.0)
 			if rng.randf() < 0.16:
