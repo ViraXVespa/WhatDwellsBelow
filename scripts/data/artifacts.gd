@@ -38,23 +38,9 @@ static func apply(run: RunState, id: String) -> String:
 	if run.artifact_ids.has(id):
 		return ""
 	run.artifact_ids.append(id)
-	match id:
-		"second_wind":
-			run.max_hp += 20.0
-			run.hp = minf(run.max_hp, run.hp + 20.0)
-		"fleet_foot":
-			run.move_mult *= 1.12
-		"short_fuse":
-			run.dash_cd_mult *= 0.85
-		"heavy_hands":
-			run.slam_dmg_mult *= 1.2
-		"iron_appetite":
-			run.dmg_mult *= 1.15
-		"deep_pockets":
-			run.gold_mult *= 1.25
-		"quick_vein":
-			run.mine_mult *= 1.2
-		"lucky_spark":
-			run.lucky_mine = true
+	var hp_before := run.hp
+	run._apply_armor_non_hp()
+	if id == "second_wind":
+		run.hp = minf(run.max_hp, hp_before + 20.0)
 	var row := by_id(id)
 	return str(row.get("name", id))

@@ -87,6 +87,24 @@ func _apply_armor_non_hp() -> void:
 	move_mult = 1.0
 	gold_mult = 1.0
 	mine_mult = 1.0
+	dash_cd_mult = 1.0
+	slam_dmg_mult = 1.0
+	dmg_mult = 1.0
+	lucky_mine = false
+	if artifact_ids.has("fleet_foot"):
+		move_mult *= 1.12
+	if artifact_ids.has("deep_pockets"):
+		gold_mult *= 1.25
+	if artifact_ids.has("quick_vein"):
+		mine_mult *= 1.2
+	if artifact_ids.has("short_fuse"):
+		dash_cd_mult *= 0.85
+	if artifact_ids.has("heavy_hands"):
+		slam_dmg_mult *= 1.2
+	if artifact_ids.has("iron_appetite"):
+		dmg_mult *= 1.15
+	if artifact_ids.has("lucky_spark"):
+		lucky_mine = true
 	for it in [armor_head, armor_body, armor_legs]:
 		if it == null:
 			continue
@@ -97,6 +115,10 @@ func _apply_armor_non_hp() -> void:
 				gold_mult += it.bonus_val
 			"mine":
 				mine_mult += it.bonus_val
+	max_hp = 100.0 + armor_bonus_sum("hp")
+	if artifact_ids.has("second_wind"):
+		max_hp += 20.0
+	hp = minf(hp, max_hp)
 
 
 func armor_bonus_sum(key: String) -> float:
@@ -118,7 +140,8 @@ func total_defense() -> float:
 func add_item(it: ItemData) -> bool:
 	if it == null:
 		return false
-	if it.kind == ItemData.Kind.MATERIAL or (it.kind == ItemData.Kind.CONSUMABLE and it.family == "food"):
+	var stackable := it.kind == ItemData.Kind.MATERIAL or (it.kind == ItemData.Kind.CONSUMABLE and it.family == "food")
+	if stackable:
 		for i in BAG_SIZE:
 			var mar := bag[i] as ItemData
 			if mar and mar.stacks_with(it):
@@ -130,6 +153,24 @@ func add_item(it: ItemData) -> bool:
 				it.count -= take
 				if it.count <= 0:
 					return true
+		while it.count > 0:
+			var put := mini(it.count, it.stack_cap())
+			var slot := -1
+			for i in BAG_SIZE:
+				if bag[i] == null:
+					slot = i
+					break
+			if slot < 0:
+				return false
+			if put == it.count:
+				bag[slot] = it
+				return true
+			var part := ItemData.from_dict(it.to_dict())
+			part.count = put
+			part.unique_id = ItemData.next_id()
+			bag[slot] = part
+			it.count -= put
+		return true
 	for i in BAG_SIZE:
 		if bag[i] == null:
 			bag[i] = it
@@ -264,7 +305,5 @@ func equip_from_bag(index: int, slot: String) -> bool:
 		_:
 			return false
 	bag[index] = cur
-	max_hp = 100.0 + armor_bonus_sum("hp")
-	hp = minf(hp, max_hp)
 	_apply_armor_non_hp()
 	return true

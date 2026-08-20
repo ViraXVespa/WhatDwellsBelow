@@ -59,6 +59,7 @@ func open() -> void:
 
 func close() -> void:
 	panel.visible = false
+	forging = false
 	get_tree().paused = false
 
 
@@ -111,7 +112,7 @@ func _forge() -> void:
 		return
 	forging = true
 	hint.text = "Hammering…"
-	await get_tree().create_timer(Skills.smith_bar_time(Game.skill_level("smithing"))).timeout
+	await get_tree().create_timer(Skills.smith_bar_time(Game.skill_level("smithing")), true, true).timeout
 	forging = false
 	if not panel.visible:
 		return

@@ -101,6 +101,9 @@ func enter_floor(n: int) -> void:
 	if run == null:
 		return
 	run.current_floor = n
+	run.saw_stairs = false
+	run.guardian_low = false
+	run.shop_buys = 0
 	if n > run.visited_deepest:
 		run.visited_deepest = n
 	if n > save.deepest_floor:
@@ -402,14 +405,18 @@ func extract_misc(index: int) -> bool:
 	var it: ItemData = run.bag[index]
 	if it == null:
 		return false
-	if it.kind == ItemData.Kind.WEAPON or it.kind == ItemData.Kind.TOOL:
+	if it.kind == ItemData.Kind.WEAPON or it.kind == ItemData.Kind.TOOL or it.kind == ItemData.Kind.ARMOR:
 		return false
 	if it.family == "ore":
 		return false
-	if it.family == "food" or it.family == "potion":
+	if it.family == "food":
 		run.remove_item_at(index, -1)
+		save.extra_food += it.count
 		bag_changed.emit()
+		save.write()
 		return true
+	if it.kind == ItemData.Kind.POTION or it.family == "potion":
+		return false
 	run.remove_item_at(index, -1)
 	bag_changed.emit()
 	return true

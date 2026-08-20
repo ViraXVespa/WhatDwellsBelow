@@ -259,6 +259,8 @@ func _weapon() -> ItemData:
 func _try_attack() -> void:
 	if attack_cd > 0.0:
 		return
+	if Game.run == null or Game.run.weapon == null:
+		return
 	var w := _weapon()
 	attack_cd = w.attack_period
 	var dmg := w.damage * Skills.axe_damage_mult(Game.skill_level("great_axe"))
@@ -322,6 +324,8 @@ func _hit_in_arc(dmg: float, max_range: float, check_arc: bool = true, slam := f
 
 func _try_slam() -> bool:
 	if slam_cd > 0.0:
+		return false
+	if Game.run == null or Game.run.weapon == null:
 		return false
 	slam_cd = SLAM_CD
 	attack_cd = maxf(attack_cd, 0.4)
@@ -403,7 +407,11 @@ func take_damage(amount: float) -> void:
 	Sfx.play("hurt")
 	var n := FloatNum.new()
 	n.global_position = global_position + Vector2(0, -40)
-	n.setup(amount)
+	var taken := amount
+	if Game.run:
+		var def := Game.run.total_defense()
+		taken = amount * (100.0 / (100.0 + def))
+	n.setup(taken)
 	if get_parent():
 		get_parent().add_child(n)
 	Game.hitstop(0.045)

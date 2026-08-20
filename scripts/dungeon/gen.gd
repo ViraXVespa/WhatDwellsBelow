@@ -196,8 +196,12 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 	var gates: Array = []
 	var cracks: Array = []
 	for ci in chest_n:
+		if extras.is_empty():
+			break
 		var kind := rng.randi_range(0, 3)
-		var host: Rect2i = extras[mini(ci + 2, extras.size() - 1)] if extras.size() > 0 else entrance
+		var host: Rect2i = extras[mini(ci + 2, extras.size() - 1)]
+		if host == entrance or host == stairs_room:
+			continue
 		if kind == 0:
 			var alc := _try_alcove(grid, rooms, host, rng, 3)
 			if alc.size.x > 0:
@@ -211,7 +215,7 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 				for s in range(1, maxi(1, steps)):
 					var t := float(s) / float(steps)
 					var ft := Vector2i(int(round(lerpf(a.x, b.x, t))), int(round(lerpf(a.y, b.y, t))))
-					if ft != cpos and grid[idx(ft.x, ft.y)] == FLOOR:
+					if ft != cpos and ft != spawn and ft != crystal and ft != stairs and grid[idx(ft.x, ft.y)] == FLOOR:
 						fires.append(ft)
 		elif kind == 1 or kind == 2:
 			var alc := _try_alcove(grid, rooms, host, rng, 2)

@@ -124,7 +124,9 @@ func _refresh() -> void:
 func _send_selected() -> void:
 	if clerk == null or Game.run == null:
 		return
-	if clerk.spent_normal or clerk.spent_gold:
+	if clerk.spent_gold:
+		return
+	if clerk.spent_normal and clerk.clerk_id != "gopher" and clerk.clerk_id != "patty":
 		return
 	if list.get_selected_items().is_empty():
 		return

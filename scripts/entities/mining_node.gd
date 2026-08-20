@@ -46,6 +46,9 @@ func get_prompt() -> String:
 func interact(player: Node) -> void:
 	if remaining <= 0:
 		return
+	if Game.run == null or Game.run.tool == null or Game.run.tool.family != "pickaxe":
+		Game.toast("Need a pickaxe equipped.", Color(0.9, 0.75, 0.5))
+		return
 	if player is Player:
 		(player as Player).start_channel(self, channel_time(player))
 
