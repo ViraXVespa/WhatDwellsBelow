@@ -71,9 +71,10 @@ func _refresh() -> void:
 	list.add_item("— RECIPES —")
 	list.set_item_disabled(list.item_count - 1, true)
 	var i := 0
-	for it in Game.save.recipes:
+	for raw in Game.save.recipes:
+		var it: ItemData = raw
 		var cost := LootGen.forge_cost(it, not it.forged_once, sm)
-		var key := it.hold_key()
+		var key: String = it.hold_key()
 		var n: int = Game.save.holds_of(key).size()
 		list.add_item("%s  %s   forge %dg + %d ore   holds %d/3" % [it.full_name(), it.stat_line(), cost.gold, cost.ore, n])
 		list.set_item_metadata(list.item_count - 1, {"kind": "recipe", "i": i})
@@ -82,8 +83,9 @@ func _refresh() -> void:
 	list.set_item_disabled(list.item_count - 1, true)
 	for k in SaveData.HOLD_KEYS:
 		var j := 0
-		for it in Game.save.holds_of(k):
-			list.add_item("[%s %d]  %s  %s" % [k, j + 1, it.full_name(), it.stat_line()])
+		for raw_h in Game.save.holds_of(k):
+			var hold: ItemData = raw_h
+			list.add_item("[%s %d]  %s  %s" % [k, j + 1, hold.full_name(), hold.stat_line()])
 			list.set_item_metadata(list.item_count - 1, {"kind": "hold", "key": k, "i": j})
 			j += 1
 	if list.item_count > 1:
@@ -100,7 +102,7 @@ func _forge() -> void:
 		hint.text = "Pick a recipe, not a hold."
 		return
 	var it: ItemData = Game.save.recipes[int(meta.i)]
-	var key := it.hold_key()
+	var key: String = it.hold_key()
 	if Game.save.holds_of(key).size() >= 3:
 		hint.text = "That type is full (3/3). Destroy a hold first."
 		return

@@ -73,6 +73,7 @@ static func combat_level(axe_xp: float, str_xp: float, def_xp: float, hp_xp: flo
 
 
 static func mine_speed_mult(level: int) -> float:
+	return 1.0 + 0.05 * float(maxi(0, level - 1))
 
 
 static func smith_cost_mult(level: int) -> float:
