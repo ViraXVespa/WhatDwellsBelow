@@ -35,12 +35,15 @@ func _draw() -> void:
 	var w: int = data.w
 	var h: int = data.h
 	var visited: PackedByteArray = dungeon.fog_visited
-	var p := get_tree().get_first_node_in_group("player") as Node2D
+	var p := get_tree().get_first_node_in_group("player")
 	var cx: float = float(w) * 0.5
 	var cy: float = float(h) * 0.5
-	if p:
-		cx = p.position.x / 64.0
-		cy = p.position.y / 64.0
+	if p is Node3D:
+		cx = (p as Node3D).position.x
+		cy = (p as Node3D).position.z
+	elif p is Node2D:
+		cx = (p as Node2D).position.x / 64.0
+		cy = (p as Node2D).position.y / 64.0
 	var half_x := size.x / (2.0 * tile_px)
 	var half_y := size.y / (2.0 * tile_px)
 	var x0 := maxi(0, int(floorf(cx - half_x)) - 1)

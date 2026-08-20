@@ -295,19 +295,18 @@ func _drop_sel() -> void:
 		it = Game.run.remove_item_at(int(m.i), -1)
 	if it == null:
 		return
-	var scene := get_tree().current_scene
-	if scene:
-		var drop = (load("res://scripts/entities/ground_drop.gd") as GDScript).new()
-		drop.position = _player_pos() + Vector2(randf_range(-18, 18), randf_range(-12, 12))
-		scene.add_child(drop)
-		drop.setup(it)
+	Game.spawn_drop(it, _player_pos())
 	Game.bag_changed.emit()
 	_refresh_inv()
 
 
 func _player_pos() -> Vector2:
 	var p := get_tree().get_first_node_in_group("player")
-	return p.global_position if p is Node2D else Vector2.ZERO
+	if p is Node3D:
+		return Vector2((p as Node3D).global_position.x, (p as Node3D).global_position.z)
+	if p is Node2D:
+		return (p as Node2D).global_position
+	return Vector2.ZERO
 
 
 func _build_skills() -> void:
@@ -343,6 +342,22 @@ func _build_sys() -> void:
 	body.add_child(_slider_row("Music", "music"))
 	body.add_child(_slider_row("SFX", "sfx"))
 	body.add_child(_slider_row("Zoom", "zoom"))
+	var view_lab := Label.new()
+	view_lab.text = "Current view: " + ("Hammerwatch 3D" if Game.using_3d() else "Classic 2D")
+	view_lab.add_theme_font_size_override("font_size", 18)
+	view_lab.add_theme_color_override("font_color", Color(0.9, 0.86, 0.7))
+	body.add_child(view_lab)
+	var switch_to_3d := not Game.using_3d()
+	var view_txt := "Switch to Hammerwatch 3D" if switch_to_3d else "Switch to Classic 2D"
+	if Game.in_dungeon:
+		view_txt += " (next floor)"
+	body.add_child(_btn(view_txt, func():
+		Game.set_view_3d(switch_to_3d)
+		if not Game.in_dungeon:
+			_close()
+		else:
+			_show("sys")
+	))
 	var cred := Label.new()
 	cred.text = "Dungeon: 8-Bit — ViraXVespa"
 	cred.add_theme_font_size_override("font_size", 15)

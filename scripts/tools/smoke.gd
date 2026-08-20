@@ -28,8 +28,17 @@ func _initialize() -> void:
 		_log("SMOKE: Game is null")
 		quit()
 		return
+	_log("SMOKE: plaza3d=%s dungeon3d=%s" % [
+		str(ResourceLoader.exists("res://scenes/plaza_3d.tscn")),
+		str(ResourceLoader.exists("res://scenes/dungeon_3d.tscn")),
+	])
+	for sp in ["res://scripts/view3d/v3.gd", "res://scripts/view3d/player_3d.gd", "res://scripts/view3d/enemy_3d.gd", "res://scripts/view3d/plaza_3d.gd", "res://scripts/view3d/dungeon_3d.gd"]:
+		if load(sp) == null:
+			_log("SMOKE: FAIL load " + sp)
+	if game.save:
+		game.save.view_3d = true
 	game.begin_run({"weapon": ItemData.make_starter_axe(), "tool": ItemData.make_starter_pickaxe()}, 1)
-	_log("SMOKE: begin_run called")
+	_log("SMOKE: begin_run 3d called")
 
 
 func _test_gen() -> void:

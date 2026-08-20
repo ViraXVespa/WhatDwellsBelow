@@ -4,7 +4,7 @@ extends CanvasLayer
 var panel: Panel
 var title: Label
 var list: ItemList
-var clerk: Clerk
+var clerk: Node
 var hint: Label
 
 
@@ -56,7 +56,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func open_for(c: Clerk) -> void:
+func open_for(c: Node) -> void:
 	clerk = c
 	Sfx.play("ui")
 	panel.visible = true
@@ -112,7 +112,7 @@ func _refresh() -> void:
 					list.add_item(it.full_name())
 					list.set_item_metadata(list.item_count - 1, i)
 	else:
-		var fam := clerk.family_accepted()
+		var fam: String = str(clerk.call("family_accepted"))
 		hint.text = "I'll take %s. Gold mail is my whole shift if you ask — pick one, I've got a lunch." % fam
 		if clerk.spent_normal:
 			hint.text = "I already took my category. Gold's still an option until I close shop."

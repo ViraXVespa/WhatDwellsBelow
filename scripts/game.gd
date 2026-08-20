@@ -18,6 +18,8 @@ var last_recap: Dictionary = {}
 
 var plaza_scene := "res://scenes/plaza.tscn"
 var dungeon_scene := "res://scenes/dungeon_floor.tscn"
+var plaza_3d_scene := "res://scenes/plaza_3d.tscn"
+var dungeon_3d_scene := "res://scenes/dungeon_3d.tscn"
 var recap_scene := "res://scenes/recap.tscn"
 var title_scene := "res://scenes/title.tscn"
 
@@ -27,6 +29,27 @@ func _ready() -> void:
 	_register_input()
 	save = SaveData.load_or_create()
 	randomize()
+	if "--wdb-smoke-3d" in OS.get_cmdline_user_args():
+		save.view_3d = true
+		call_deferred("begin_run", {"weapon": ItemData.make_starter_axe(), "tool": ItemData.make_starter_pickaxe()}, 1)
+
+
+func using_3d() -> bool:
+	return save != null and save.view_3d
+
+
+func set_view_3d(on: bool, reload := true) -> void:
+	if save == null:
+		return
+	if save.view_3d != on:
+		save.view_3d = on
+		save.write()
+	if not reload:
+		return
+	if in_dungeon:
+		toast("View applies on the next floor.", Color(0.85, 0.82, 0.55))
+		return
+	go_plaza()
 
 
 func apply_cam(cam: Camera2D) -> void:
@@ -45,6 +68,8 @@ func set_cam_zoom(z: float) -> void:
 	for n in get_tree().get_nodes_in_group("wdb_cam"):
 		if n is Camera2D:
 			(n as Camera2D).zoom = Vector2(save.cam_zoom, save.cam_zoom)
+		elif n is Camera3D:
+			(n as Camera3D).size = 1080.0 / 64.0 / save.cam_zoom
 
 
 func go_title() -> void:
@@ -80,7 +105,8 @@ func go_plaza() -> void:
 		save.restock_if_broke()
 		save.write()
 	Sfx.set_music("hub")
-	get_tree().call_deferred("change_scene_to_file", plaza_scene)
+	var path := plaza_3d_scene if using_3d() else plaza_scene
+	get_tree().call_deferred("change_scene_to_file", path)
 
 
 func begin_run(chosen: Dictionary, start_floor: int) -> void:
@@ -97,7 +123,7 @@ func begin_run(chosen: Dictionary, start_floor: int) -> void:
 	in_dungeon = true
 	Engine.time_scale = 1.0
 	get_tree().paused = false
-	get_tree().call_deferred("change_scene_to_file", dungeon_scene)
+	get_tree().call_deferred("change_scene_to_file", dungeon_3d_scene if using_3d() else dungeon_scene)
 	floor_changed.emit()
 
 
@@ -114,7 +140,7 @@ func enter_floor(n: int) -> void:
 		save.write()
 	in_dungeon = true
 	Engine.time_scale = 1.0
-	get_tree().call_deferred("change_scene_to_file", dungeon_scene)
+	get_tree().call_deferred("change_scene_to_file", dungeon_3d_scene if using_3d() else dungeon_scene)
 	floor_changed.emit()
 
 
@@ -182,13 +208,23 @@ func give_or_drop(it: ItemData, world_pos: Vector2) -> bool:
 	if add_to_bag(it):
 		return true
 	toast("Bag full — drop's on the floor.", Color(0.95, 0.72, 0.35))
-	var scene := get_tree().current_scene
-	if scene:
-		var drop = (load("res://scripts/entities/ground_drop.gd") as GDScript).new()
-		drop.position = world_pos + Vector2(randf_range(-18, 18), randf_range(-12, 12))
-		scene.add_child(drop)
-		drop.setup(it)
+	spawn_drop(it, world_pos)
 	return false
+
+
+func spawn_drop(it: ItemData, world_pos: Vector2) -> void:
+	var scene := get_tree().current_scene
+	if scene == null:
+		return
+	if scene is Node3D:
+		var drop3 = (load("res://scripts/view3d/drop_3d.gd") as GDScript).new()
+		scene.add_child(drop3)
+		drop3.setup(it, Vector3(world_pos.x + randf_range(-0.28, 0.28), 0.2, world_pos.y + randf_range(-0.2, 0.2)))
+		return
+	var drop = (load("res://scripts/entities/ground_drop.gd") as GDScript).new()
+	drop.position = world_pos + Vector2(randf_range(-18, 18), randf_range(-12, 12))
+	scene.add_child(drop)
+	drop.setup(it)
 
 
 func hitstop(sec := 0.055) -> void:

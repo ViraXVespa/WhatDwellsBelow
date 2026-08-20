@@ -149,7 +149,11 @@ func _buy() -> void:
 		Game.gold_changed.emit()
 		if not Game.add_to_bag(ItemData.make_food(1)):
 			var p := get_tree().get_first_node_in_group("player")
-			var pos := p.global_position if p is Node2D else Vector2.ZERO
+			var pos: Vector2 = Vector2.ZERO
+			if p is Node3D:
+				pos = Vector2((p as Node3D).global_position.x, (p as Node3D).global_position.z)
+			elif p is Node2D:
+				pos = (p as Node2D).global_position
 			Game.give_or_drop(ItemData.make_food(1), pos)
 	_refresh()
 

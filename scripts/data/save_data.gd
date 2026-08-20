@@ -24,6 +24,7 @@ var has_dived: bool = false
 var music_vol: float = 0.7
 var sfx_vol: float = 0.85
 var cam_zoom: float = 1.0
+var view_3d: bool = false
 
 
 func _init() -> void:
@@ -99,6 +100,7 @@ func to_dict() -> Dictionary:
 		"music_vol": music_vol,
 		"sfx_vol": sfx_vol,
 		"cam_zoom": cam_zoom,
+		"view_3d": view_3d,
 	}
 
 
@@ -120,6 +122,7 @@ static func from_dict(d: Dictionary) -> SaveData:
 	s.music_vol = clampf(float(d.get("music_vol", 0.7)), 0.0, 1.0)
 	s.sfx_vol = clampf(float(d.get("sfx_vol", 0.85)), 0.0, 1.0)
 	s.cam_zoom = clampf(float(d.get("cam_zoom", 1.0)), 1.0, 1.75)
+	s.view_3d = bool(d.get("view_3d", false))
 	s._ensure_holds()
 	for row in d.get("recipes", []):
 		if row is Dictionary:

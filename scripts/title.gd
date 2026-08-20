@@ -30,8 +30,8 @@ func _ready() -> void:
 	card.set_anchors_preset(Control.PRESET_CENTER)
 	card.offset_left = -560
 	card.offset_right = 560
-	card.offset_top = -160
-	card.offset_bottom = 200
+	card.offset_top = -220
+	card.offset_bottom = 260
 	card.alignment = BoxContainer.ALIGNMENT_CENTER
 	card.add_theme_constant_override("separation", 12)
 	add_child(card)
@@ -46,9 +46,16 @@ func _ready() -> void:
 	var cred := _lab("Dungeon: 8-Bit — ViraXVespa", 16, Color(0.62, 0.66, 0.7))
 	card.add_child(cred)
 
-	var prompt := _lab("A / Start  ·  click  to enter %s" % Game.DEMO_TOWN, 20, Color(0.95, 0.86, 0.4))
+	var prompt := _lab("Pick a view  ·  A / Start uses last choice", 20, Color(0.95, 0.86, 0.4))
 	prompt.name = "Prompt"
 	card.add_child(prompt)
+
+	var views := HBoxContainer.new()
+	views.alignment = BoxContainer.ALIGNMENT_CENTER
+	views.add_theme_constant_override("separation", 18)
+	card.add_child(views)
+	views.add_child(_view_btn("Classic 2D", false))
+	views.add_child(_view_btn("Hammerwatch 3D", true))
 
 	var patreon := LinkButton.new()
 	patreon.text = "Support on Patreon"
@@ -67,6 +74,15 @@ func _ready() -> void:
 	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(fade)
 	card.modulate.a = 0.0
+
+
+func _view_btn(text: String, as_3d: bool) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(280, 56)
+	b.add_theme_font_size_override("font_size", 22)
+	b.pressed.connect(func(): _enter(as_3d))
+	return b
 
 
 func _lab(text: String, size: int, col: Color) -> Label:
@@ -99,15 +115,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _done or not ready_in:
 		return
 	if event.is_action_pressed("ui_accept") or event.is_action_pressed("interact") or event.is_action_pressed("pause"):
-		_finish()
-		get_viewport().set_input_as_handled()
-	elif event is InputEventMouseButton and event.pressed:
-		_finish()
+		_enter(Game.using_3d())
 		get_viewport().set_input_as_handled()
 
 
-func _finish() -> void:
+func _enter(as_3d: bool) -> void:
 	if _done:
 		return
 	_done = true
+	Game.set_view_3d(as_3d, false)
 	Game.go_plaza()

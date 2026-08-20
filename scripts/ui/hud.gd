@@ -203,6 +203,16 @@ func _ready() -> void:
 	shrine_lab.add_theme_font_size_override("font_size", 18)
 	shrine_lab.add_theme_color_override("font_color", Color(0.95, 0.82, 0.4))
 	add_child(shrine_lab)
+	var view_lab := Label.new()
+	view_lab.position = Vector2(860, 16)
+	view_lab.size = Vector2(200, 22)
+	view_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	view_lab.add_theme_font_size_override("font_size", 14)
+	view_lab.add_theme_color_override("font_color", Color(0.75, 0.82, 0.88))
+	view_lab.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
+	view_lab.add_theme_constant_override("outline_size", 4)
+	view_lab.text = "Hammerwatch 3D" if Game.using_3d() else "Classic 2D"
+	add_child(view_lab)
 	big_map = Minimap.new()
 	big_map.position = Vector2(480, 220)
 	big_map.size = Vector2(960, 640)
@@ -301,7 +311,7 @@ func _bar(col: Color, pos: Vector2, size: Vector2) -> ProgressBar:
 
 
 func _process(_delta: float) -> void:
-	var p := get_tree().get_first_node_in_group("player") as Player
+	var p := get_tree().get_first_node_in_group("player")
 	var in_town := not Game.in_dungeon
 	if minimap:
 		minimap.visible = not in_town
@@ -360,15 +370,15 @@ func _process(_delta: float) -> void:
 	cl_bar.max_value = 1.0
 	cl_bar.value = clf - float(cl)
 	cl_val.text = str(cl)
-	if p:
+	if p and p.has_method("dash_ratio") and p.has_method("slam_ratio"):
 		dash_bar.max_value = 1.0
 		slam_bar.max_value = 1.0
 		dash_bar.value = p.dash_ratio()
 		slam_bar.value = p.slam_ratio()
-		dash_val.text = "READY" if p.dash_cd <= 0.04 else "%.1fs" % p.dash_cd
-		slam_val.text = "READY" if p.slam_cd <= 0.04 else "%.1fs" % p.slam_cd
+		dash_val.text = "READY" if float(p.get("dash_cd")) <= 0.04 else "%.1fs" % float(p.get("dash_cd"))
+		slam_val.text = "READY" if float(p.get("slam_cd")) <= 0.04 else "%.1fs" % float(p.get("slam_cd"))
 		var wrap: Control = channel_bar.get_meta("wrap") as Control
-		var ch := p.channel_ratio()
+		var ch := float(p.channel_ratio()) if p.has_method("channel_ratio") else 0.0
 		if wrap:
 			wrap.visible = ch > 0.0
 		channel_bar.value = ch
@@ -376,11 +386,13 @@ func _process(_delta: float) -> void:
 	var bosses := get_tree().get_nodes_in_group("boss")
 	if boss_wrap:
 		boss_wrap.visible = bosses.size() > 0
-		if bosses.size() > 0 and bosses[0] is Enemy:
-			var b: Enemy = bosses[0]
-			boss_bar.max_value = b.max_hp
-			boss_bar.value = b.hp
-			boss_val.text = "%d/%d" % [int(b.hp), int(b.max_hp)]
+		if bosses.size() > 0:
+			var b = bosses[0]
+			var bhp := float(b.get("hp"))
+			var bmax := float(b.get("max_hp"))
+			boss_bar.max_value = bmax
+			boss_bar.value = bhp
+			boss_val.text = "%d/%d" % [int(bhp), int(bmax)]
 	if minimap and minimap.visible and minimap.has_method("refresh"):
 		minimap.refresh()
 	if map_open and big_map and big_map.has_method("refresh"):
@@ -395,13 +407,28 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func _prompt_near(p: Player) -> String:
+func _prompt_near(p: Node) -> String:
 	var best := ""
-	var best_d := 72.0
+	var origin := Vector2.ZERO
+	var is3 := p is Node3D
+	if is3:
+		origin = Vector2((p as Node3D).global_position.x, (p as Node3D).global_position.z)
+	elif p is Node2D:
+		origin = (p as Node2D).global_position
+	else:
+		return ""
+	var best_d := 72.0 / 64.0 if is3 else 72.0
 	for n in get_tree().get_nodes_in_group("interactable"):
-		if n is Interactable:
-			var d: float = p.global_position.distance_to(n.global_position)
-			if d < best_d:
-				best_d = d
-				best = (n as Interactable).get_prompt()
+		var np := Vector2.INF
+		if n is Node3D:
+			np = Vector2((n as Node3D).global_position.x, (n as Node3D).global_position.z)
+		elif n is Node2D:
+			np = (n as Node2D).global_position
+		else:
+			continue
+		var d: float = origin.distance_to(np)
+		if d < best_d:
+			best_d = d
+			if n.has_method("get_prompt"):
+				best = str(n.get_prompt())
 	return best
