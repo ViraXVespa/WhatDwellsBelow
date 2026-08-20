@@ -27,6 +27,7 @@ func setup_breakable(p_kind: String) -> void:
 		tex = Art.chest(Vector2i(40, 40)) if kind == "barrel" else Art.solid(Vector2i(28, 32), Color(0.62, 0.38, 0.2))
 	spr = V3.sprite(tex, 0.7 if kind == "barrel" else 0.55, true)
 	add_child(spr)
+	V3.depth_sort(spr, global_position)
 
 
 func setup_cracked() -> void:
@@ -38,6 +39,7 @@ func setup_cracked() -> void:
 	col = V3.add_box(self, Vector3(1.0, V3.WALL_H, 1.0), Vector3(0, V3.WALL_H * 0.5, 0))
 	spr = V3.sprite(Art.solid(Vector2i(62, 62), Color(0.38, 0.34, 0.32)), 1.05, false)
 	add_child(spr)
+	V3.depth_sort(spr, global_position)
 
 
 func setup_gate(id: int) -> void:
@@ -49,6 +51,7 @@ func setup_gate(id: int) -> void:
 	col = V3.add_box(self, Vector3(1.0, V3.WALL_H, 1.0), Vector3(0, V3.WALL_H * 0.5, 0))
 	spr = V3.sprite(Art.solid(Vector2i(58, 58), Color(0.42, 0.38, 0.34)), 1.15, false)
 	add_child(spr)
+	V3.depth_sort(spr, global_position)
 
 
 func open_gate() -> void:

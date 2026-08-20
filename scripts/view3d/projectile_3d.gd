@@ -24,7 +24,9 @@ func _ready() -> void:
 	var tex := Art.load_tex(V3.a("props", "bolt.png"))
 	if tex == null:
 		tex = Art.solid(Vector2i(12, 12), Color(0.85, 0.35, 0.2))
-	add_child(V3.sprite(tex, 0.35, true))
+	var bolt := V3.sprite(tex, 0.35, true)
+	add_child(bolt)
+	V3.depth_sort(bolt, global_position)
 	body_entered.connect(_on_body)
 
 

@@ -67,6 +67,8 @@ func _physics_process(delta: float) -> void:
 		velocity = knock
 		move_and_slide()
 		global_position.y = 0.0
+		if body_sprite:
+			V3.depth_sort(body_sprite, global_position)
 		_apply_facing(delta)
 		return
 	if channeling:
@@ -94,6 +96,8 @@ func _physics_process(delta: float) -> void:
 				aim_dir = move.normalized()
 	move_and_slide()
 	global_position.y = 0.0
+	if body_sprite:
+		V3.depth_sort(body_sprite, global_position)
 	if Input.is_action_just_pressed("target_lock"):
 		_toggle_target()
 	if target_mode:
@@ -213,14 +217,14 @@ func _update_aim(move: Vector2) -> void:
 	if stick.length() > 0.35:
 		aim_dir = stick.normalized()
 		return
+	if move.length() > 0.2:
+		aim_dir = move.normalized()
+		return
 	if Input.get_connected_joypads().is_empty():
 		var cam := get_viewport().get_camera_3d()
 		var mdir := V3.mouse_xz(cam, global_position)
 		if mdir.length() > 0.01:
 			aim_dir = mdir
-			return
-	if move.length() > 0.2:
-		aim_dir = move.normalized()
 
 
 func _toggle_target() -> void:

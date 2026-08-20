@@ -56,11 +56,11 @@ func _build_ground() -> void:
 			else:
 				grass_p.append(pos)
 	if not grass_p.is_empty():
-		add_child(V3.tile_mm(V3.a("tiles", "plaza_grass.png"), grass_p, 0.0))
+		add_child(V3.tile_mm(V3.a("tiles", "plaza_grass.png"), grass_p, V3.FLOOR_Y))
 	if not ga_p.is_empty():
-		add_child(V3.tile_mm(V3.a("tiles", "plaza_ground.png"), ga_p, 0.0))
+		add_child(V3.tile_mm(V3.a("tiles", "plaza_ground.png"), ga_p, V3.FLOOR_Y))
 	if not gb_p.is_empty():
-		add_child(V3.tile_mm(V3.a("tiles", "plaza_ground_b.png"), gb_p, 0.0))
+		add_child(V3.tile_mm(V3.a("tiles", "plaza_ground_b.png"), gb_p, V3.FLOOR_Y))
 
 
 func _outer_walls() -> void:
@@ -106,6 +106,7 @@ func _fence_and_trees() -> void:
 		V3.block(walls, Vector2(sg.position.x, sg.position.z), Vector2(1.72, 0.34), Vector2(0.0, -0.12))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 42
+	var planted: Array[Vector2] = []
 	for i in 28:
 		var tx: int
 		var ty: int
@@ -116,6 +117,13 @@ func _fence_and_trees() -> void:
 			tx = rng.randi_range(0, W - 1)
 			ty = rng.randi_range(0, 3) if rng.randf() < 0.5 else rng.randi_range(H - 4, H - 1)
 		var pos := Vector2(float(tx) + 0.5 + rng.randf_range(-0.16, 0.16), float(ty) + 0.85)
+		var too_close := false
+		for other: Vector2 in planted:
+			if pos.distance_to(other) < 1.2:
+				too_close = true
+				break
+		if too_close:
+			continue
 		var use_tree := tree != null and rng.randf() < 0.55
 		var tex: Texture2D = tree if use_tree else bush
 		if tex == null:
@@ -124,6 +132,7 @@ func _fence_and_trees() -> void:
 		var spr := V3.sprite(tex, float(tex.get_height()) / V3.PX * sc, true)
 		V3.plant(spr, pos)
 		add_child(spr)
+		planted.append(pos)
 		V3.block(walls, pos, Vector2(0.28, 0.22) if use_tree else Vector2(0.25, 0.19), Vector2(0.0, -0.09), 1.0)
 	var banner := Art.load_tex(V3.a("props", "banner.png"))
 	if banner:
@@ -145,13 +154,23 @@ func _fence_and_trees() -> void:
 func _fence_seg(foot: Vector2, tex: Texture2D, horiz: bool) -> void:
 	if tex == null:
 		return
-	var s := V3.sprite(tex, float(tex.get_height()) / V3.PX, false)
-	V3.plant(s, foot)
+	var world_h := float(tex.get_height()) / V3.PX
+	var s := V3.sprite(tex, world_h, false)
+	var world_w: float = float(tex.get_width()) * s.pixel_size
+	if world_w > 0.98:
+		s.pixel_size *= 0.98 / world_w
+		s.position.y = float(tex.get_height()) * s.pixel_size * 0.5 + V3.FEET_LIFT
+	var planted := foot
+	if horiz:
+		planted.y += float(int(foot.x) % 2) * 0.008
+	else:
+		planted.x += float(int(foot.y) % 2) * 0.008
+	V3.plant(s, planted)
 	if not horiz:
 		s.rotation_degrees.y = 90.0
 	add_child(s)
 	if horiz:
-		V3.block(walls, foot, Vector2(1.12, 0.22), Vector2(0.0, -0.09), 0.9)
+		V3.block(walls, foot, Vector2(0.98, 0.22), Vector2(0.0, -0.09), 0.9)
 	else:
 		V3.block(walls, foot, Vector2(0.28, 0.75), Vector2(0.0, -0.09), 0.9)
 

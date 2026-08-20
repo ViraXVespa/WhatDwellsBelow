@@ -30,6 +30,8 @@ const STEER_RAY := 0.88
 const STUCK_WANT := 0.16
 const STUCK_GOT := 0.19
 const SAFE_LOOK := 0.44
+const FEET_LIFT := 0.03
+const FLOOR_Y := -0.02
 
 
 static func _game() -> Node:
@@ -239,6 +241,14 @@ static func add_world(host: Node3D, dungeon: bool) -> void:
 static func plant(s: Node3D, xz: Vector2) -> void:
 	var keep_y := s.position.y
 	s.position = Vector3(xz.x, keep_y, xz.y)
+	if s is GeometryInstance3D:
+		depth_sort(s as GeometryInstance3D, s.position)
+
+
+static func depth_sort(s: GeometryInstance3D, world: Vector3) -> void:
+	if s == null:
+		return
+	s.sorting_offset = world.z * 4.0 + world.x * 0.05
 
 
 static func sprite(tex: Texture2D, world_h: float, y_billboard: bool) -> Sprite3D:
@@ -247,18 +257,15 @@ static func sprite(tex: Texture2D, world_h: float, y_billboard: bool) -> Sprite3
 	s.shaded = false
 	s.double_sided = true
 	s.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	s.alpha_scissor_threshold = 0.35
+	s.alpha_scissor_threshold = 0.4
 	s.texture_filter = filter()
 	s.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y if y_billboard else BaseMaterial3D.BILLBOARD_DISABLED
 	s.render_priority = 1
 	if tex:
-		s.texture = tex
-		var th := float(maxi(1, tex.get_height()))
-		s.pixel_size = world_h / th
-		s.position.y = world_h * 0.5
+		apply_sprite_tex(s, tex, world_h)
 	else:
 		s.pixel_size = world_h / PX
-		s.position.y = world_h * 0.5
+		s.position.y = world_h * 0.5 + FEET_LIFT
 	return s
 
 
@@ -266,9 +273,13 @@ static func apply_sprite_tex(s: Sprite3D, tex: Texture2D, world_h: float) -> voi
 	if s == null or tex == null:
 		return
 	s.texture = tex
+	var tw := float(maxi(1, tex.get_width()))
 	var th := float(maxi(1, tex.get_height()))
 	s.pixel_size = world_h / th
-	s.position.y = world_h * 0.5
+	s.centered = true
+	var pivot := Art.body_pivot(tex)
+	s.offset = Vector2(tw * 0.5 - pivot.x, 0.0)
+	s.position.y = world_h * 0.5 + FEET_LIFT
 
 
 static func tex_height(path: String, scale := 1.0) -> float:

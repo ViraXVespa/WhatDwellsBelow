@@ -90,9 +90,9 @@ func _draw_tiles() -> void:
 				if near_floor:
 					walls.append(pos)
 	if not fa.is_empty():
-		add_child(V3.tile_mm(V3.a("tiles", "dungeon_floor.png"), fa, 0.0))
+		add_child(V3.tile_mm(V3.a("tiles", "dungeon_floor.png"), fa, V3.FLOOR_Y))
 	if not fb.is_empty():
-		add_child(V3.tile_mm(V3.a("tiles", "dungeon_floor_b.png"), fb, 0.0))
+		add_child(V3.tile_mm(V3.a("tiles", "dungeon_floor_b.png"), fb, V3.FLOOR_Y))
 	if not walls.is_empty():
 		add_child(V3.wall_mm(V3.a("tiles", "dungeon_wall.png"), walls))
 	var void_mesh := MeshInstance3D.new()

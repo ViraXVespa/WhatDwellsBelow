@@ -177,6 +177,8 @@ func _physics_process(delta: float) -> void:
 		velocity = velocity.move_toward(Vector3.ZERO, 12.5 * delta)
 		move_and_slide()
 		global_position.y = 0.0
+		if body_sprite:
+			V3.depth_sort(body_sprite, global_position)
 		_refresh_hp()
 		return
 	attack_cd = maxf(0.0, attack_cd - delta)
@@ -208,6 +210,7 @@ func _physics_process(delta: float) -> void:
 		_ai_melee(delta, player, to, dist, los)
 	_apply_sprite(delta)
 	if body_sprite:
+		V3.depth_sort(body_sprite, global_position)
 		if flash > 0.0:
 			body_sprite.modulate = Color(1.5, 1.5, 1.5)
 		elif phase == Phase.WINDUP:

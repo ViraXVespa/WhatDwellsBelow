@@ -35,6 +35,7 @@ func setup_fire() -> void:
 	add_child(cs)
 	spr = V3.sprite(Art.solid(Vector2i(48, 48), Color(0.35, 0.22, 0.12)), 0.45, true)
 	add_child(spr)
+	V3.depth_sort(spr, global_position)
 	t = randf() * SAFE
 	set_process(true)
 

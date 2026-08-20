@@ -71,6 +71,7 @@ func _spr_from(path: String, h: float, billboard: bool, fallback: Texture2D = nu
 		tex = fallback if fallback else Art.solid(Vector2i(40, 48), Color(0.55, 0.45, 0.3))
 	spr = V3.sprite(tex, h, billboard)
 	add_child(spr)
+	V3.depth_sort(spr, global_position)
 
 
 func _close_layer() -> void:
