@@ -98,6 +98,8 @@ func _show(p: String) -> void:
 		_build_inv()
 	elif p == "skills":
 		_build_skills()
+	elif p == "wipe":
+		_build_wipe()
 	else:
 		_build_sys()
 	PadUi.wire(body)
@@ -286,6 +288,27 @@ func _build_sys() -> void:
 	pat.add_theme_font_size_override("font_size", 20)
 	pat.add_theme_color_override("font_color", Color(0.95, 0.55, 0.42))
 	body.add_child(pat)
+	var wipe_n := Label.new()
+	wipe_n.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	wipe_n.text = "This browser keeps your diver in user://. Clearing it deletes XP, gold, recipes, and holds. Cannot undo."
+	wipe_n.add_theme_font_size_override("font_size", 16)
+	wipe_n.add_theme_color_override("font_color", Color(0.85, 0.72, 0.62))
+	body.add_child(wipe_n)
+	body.add_child(_btn("Delete save data…", func(): _show("wipe")))
+
+
+func _build_wipe() -> void:
+	var lab := Label.new()
+	lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lab.text = "Really delete this diver?\n\nXP, gold, forged holds, and recipes are gone. Next launch is a fresh adventurer. This cannot be undone."
+	lab.add_theme_font_size_override("font_size", 20)
+	lab.add_theme_color_override("font_color", Color(0.95, 0.55, 0.42))
+	body.add_child(lab)
+	body.add_child(_btn("Yes — delete save and return to title", func():
+		_close()
+		Game.wipe_save()
+	))
+	body.add_child(_btn("No — keep my diver", func(): _show("sys")))
 
 
 func _slider_row(label: String, kind: String) -> HBoxContainer:

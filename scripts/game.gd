@@ -54,6 +54,21 @@ func go_title() -> void:
 	get_tree().call_deferred("change_scene_to_file", title_scene)
 
 
+func wipe_save() -> void:
+	run = null
+	in_dungeon = false
+	last_recap = {}
+	overwrite_queue = null
+	get_tree().paused = false
+	var da := DirAccess.open("user://")
+	if da:
+		da.remove("wdb_save.json")
+	save = SaveData.load_or_create()
+	Sfx.apply_volumes()
+	toast("Save cleared. New diver.", Color(0.85, 0.9, 0.7))
+	go_title()
+
+
 func go_plaza() -> void:
 	in_dungeon = false
 	run = null

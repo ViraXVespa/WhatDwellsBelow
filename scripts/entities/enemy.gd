@@ -29,6 +29,10 @@ var body_sprite: Sprite2D
 var hp_bg: ColorRect
 var hp_fg: ColorRect
 var sprites: Dictionary = {}
+var walk_frames: Dictionary = {}
+var walk_t := 0.0
+var walk_i := 0
+const WALK_FPS := 8.0
 var facing := "down"
 var aim := Vector2.DOWN
 var is_boss := false
@@ -137,6 +141,14 @@ func _load_sprites() -> void:
 			var path := "res://assets/sprites/enemies/%s/%s_%s.png" % [folder, pose, dir]
 			if ResourceLoader.exists(path):
 				sprites["%s_%s" % [pose, dir]] = load(path)
+	for dir in ["down", "up", "left", "right"]:
+		var frames: Array = []
+		for i in 8:
+			var wp := "res://assets/sprites/enemies/%s/walk_%s_%d.png" % [folder, dir, i]
+			if ResourceLoader.exists(wp):
+				frames.append(load(wp))
+		if not frames.is_empty():
+			walk_frames[dir] = frames
 
 
 func _build_visual() -> void:
@@ -188,7 +200,7 @@ func _physics_process(delta: float) -> void:
 		_ai_ranged(delta, player, to, dist, los)
 	else:
 		_ai_melee(delta, player, to, dist, los)
-	_apply_sprite()
+	_apply_sprite(delta)
 	if flash > 0.0:
 		modulate = Color(1.5, 1.5, 1.5)
 	elif phase == Phase.WINDUP:
@@ -305,10 +317,22 @@ func _pose_name() -> String:
 			return "idle"
 
 
-func _apply_sprite() -> void:
+func _apply_sprite(delta := 0.016) -> void:
 	if body_sprite == null:
 		return
 	var pose := _pose_name()
+	var moving := pose == "idle" and get_real_velocity().length() > 18.0
+	var wdir := facing
+	if not walk_frames.has(wdir):
+		wdir = Art.cardinal_from_dir(aim)
+	if moving and walk_frames.has(wdir):
+		var frames: Array = walk_frames[wdir]
+		walk_t += delta
+		walk_i = int(walk_t * WALK_FPS) % frames.size()
+		Art.apply_tex(body_sprite, frames[walk_i], true)
+		return
+	walk_t = 0.0
+	walk_i = 0
 	var key := "%s_%s" % [pose, facing]
 	if sprites.has(key):
 		Art.apply_tex(body_sprite, sprites[key], true)
