@@ -420,18 +420,23 @@ func _unhandled_input(event: InputEvent) -> void:
 func _prompt_near(p: Node) -> String:
 	var best := ""
 	var origin := Vector2.ZERO
-	var is3 := p is Node3D
-	if is3:
+	var live3 := Game.using_3d()
+	if live3:
+		if not (p is Node3D):
+			return ""
 		origin = Vector2((p as Node3D).global_position.x, (p as Node3D).global_position.z)
 	elif p is Node2D:
 		origin = (p as Node2D).global_position
 	else:
 		return ""
-	var best_d := 72.0 / 64.0 if is3 else 72.0
+	var best_d := 1.13 if live3 else 72.0
 	for n in get_tree().get_nodes_in_group("interactable"):
 		var np := Vector2.INF
-		if n is Node3D:
-			np = Vector2((n as Node3D).global_position.x, (n as Node3D).global_position.z)
+		if live3:
+			if n is Node3D:
+				np = Vector2((n as Node3D).global_position.x, (n as Node3D).global_position.z)
+			else:
+				continue
 		elif n is Node2D:
 			np = (n as Node2D).global_position
 		else:

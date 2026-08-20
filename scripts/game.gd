@@ -101,7 +101,7 @@ func set_cam_zoom(z: float) -> void:
 		if n is Camera2D:
 			(n as Camera2D).zoom = Vector2(save.cam_zoom, save.cam_zoom)
 		elif n is Camera3D:
-			(n as Camera3D).size = 1080.0 / 64.0 / save.cam_zoom
+			(n as Camera3D).size = (load("res://scripts/view3d/v3.gd") as GDScript).ortho_size()
 
 
 func go_title() -> void:
@@ -235,6 +235,17 @@ func add_to_bag(it: ItemData) -> bool:
 	return ok
 
 
+func player_world_pos() -> Vector2:
+	var p := get_tree().get_first_node_in_group("player")
+	if p == null:
+		return Vector2.ZERO
+	if using_3d() and p is Node3D:
+		return Vector2((p as Node3D).global_position.x, (p as Node3D).global_position.z)
+	if p is Node2D:
+		return (p as Node2D).global_position
+	return Vector2.ZERO
+
+
 func give_or_drop(it: ItemData, world_pos: Vector2) -> bool:
 	if add_to_bag(it):
 		return true
@@ -247,7 +258,7 @@ func spawn_drop(it: ItemData, world_pos: Vector2) -> void:
 	var scene := get_tree().current_scene
 	if scene == null:
 		return
-	if scene is Node3D:
+	if using_3d() and scene is Node3D:
 		var drop3 = (load("res://scripts/view3d/drop_3d.gd") as GDScript).new()
 		scene.add_child(drop3)
 		drop3.setup(it, Vector3(world_pos.x + randf_range(-0.28, 0.28), 0.2, world_pos.y + randf_range(-0.2, 0.2)))

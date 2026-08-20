@@ -327,6 +327,10 @@ static func world_has_los(grid: PackedByteArray, from_world: Vector2, to_world: 
 	return has_grid_los(grid, a, b)
 
 
+static func tile_has_los(grid: PackedByteArray, from_xz: Vector2, to_xz: Vector2) -> bool:
+	return has_grid_los(grid, Vector2i(int(from_xz.x), int(from_xz.y)), Vector2i(int(to_xz.x), int(to_xz.y)))
+
+
 static func _cell_blocks_los(grid: PackedByteArray, x: int, y: int) -> bool:
 	if x < 0 or y < 0 or x >= W or y >= H:
 		return true

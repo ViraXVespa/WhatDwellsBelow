@@ -115,10 +115,10 @@ func _tick_pickup(delta: float) -> void:
 		return
 	var p: Node3D = player
 	var to := Vector3(p.global_position.x - global_position.x, 0.0, p.global_position.z - global_position.z)
-	if to.length() < V3.u(90.0):
+	if to.length() < V3.PICKUP_PULL_R:
 		pulled = true
 	if pulled:
-		global_position += to.normalized() * V3.u(220.0) * delta
+		global_position += to.normalized() * V3.PICKUP_SUCK * delta
 
 
 func _on_plate(body: Node) -> void:

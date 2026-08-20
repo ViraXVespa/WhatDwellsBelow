@@ -56,6 +56,9 @@ func _test_gen() -> void:
 	var clear := DungeonGen.has_grid_los(grid, Vector2i(4, 4), Vector2i(4, 6))
 	var blocked := DungeonGen.has_grid_los(grid, Vector2i(4, 4), Vector2i(6, 4))
 	_log("SMOKE: los_open=%s (expect true) los_through_wall=%s (expect false)" % [str(clear), str(blocked)])
+	var t_clear := DungeonGen.tile_has_los(grid, Vector2(4.4, 4.4), Vector2(4.4, 6.2))
+	var t_block := DungeonGen.tile_has_los(grid, Vector2(4.4, 4.4), Vector2(6.2, 4.4))
+	_log("SMOKE: tile_los_open=%s (expect true) tile_los_wall=%s (expect false)" % [str(t_clear), str(t_block)])
 	var br: Array = data.get("breakables", [])
 	_log("SMOKE: breakables=%d" % br.size())
 

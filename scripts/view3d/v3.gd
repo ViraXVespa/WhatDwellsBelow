@@ -6,8 +6,30 @@ const PX := 64.0
 const WALL_H := 1.45
 const CAM_PITCH := -58.0
 const CAM_HEIGHT := 14.0
-const INTERACT_R := 72.0 / 64.0
-const PLAYER_R := 12.0 / 64.0
+const INTERACT_R := 1.13
+const PLAYER_R := 0.19
+const PLAYER_H := 1.18
+const PLAYER_SPEED := 2.97
+const DASH_SPEED := 9.69
+const DASH_TIME := 0.16
+const DASH_CD := 1.15
+const SLAM_CD := 5.0
+const SLAM_RADIUS := 2.75
+const AXE_RANGE := 1.84
+const AXE_ARC := 0.96
+const KNOCK_SPEED := 4.38
+const MOVE_EPS := 0.44
+const AWARE_R := 7.19
+const LUNGE_HIT_R := 0.72
+const PICKUP_PULL_R := 1.41
+const PICKUP_SUCK := 3.44
+const PROJ_SPEED := 3.75
+const ENEMY_R := 0.28
+const ENEMY_H := 1.12
+const STEER_RAY := 0.88
+const STUCK_WANT := 0.16
+const STUCK_GOT := 0.19
+const SAFE_LOOK := 0.44
 
 
 static func _game() -> Node:
@@ -67,9 +89,7 @@ static func tile_center(tx: int, ty: int, y := 0.0) -> Vector3:
 
 
 static func los(grid: PackedByteArray, from3: Vector3, to3: Vector3) -> bool:
-	var a := Vector2i(int(from3.x), int(from3.z))
-	var b := Vector2i(int(to3.x), int(to3.z))
-	return DungeonGen.has_grid_los(grid, a, b)
+	return DungeonGen.tile_has_los(grid, xz(from3), xz(to3))
 
 
 static func cam_back() -> float:
@@ -95,13 +115,32 @@ static func apply_cam(cam: Camera3D) -> void:
 	cam.current = true
 
 
+static func attach_cam(host: Node3D) -> Camera3D:
+	var rig := Node3D.new()
+	rig.name = "CamRig"
+	host.add_child(rig)
+	var cam := Camera3D.new()
+	cam.name = "Cam"
+	rig.add_child(cam)
+	cam.position = Vector3(0.0, CAM_HEIGHT, cam_back())
+	apply_cam(cam)
+	return cam
+
+
 static func follow_cam(cam: Camera3D, target: Vector3) -> void:
 	if cam == null:
 		return
+	var rig := cam.get_parent()
+	if rig is Node3D and rig.name == "CamRig":
+		(rig as Node3D).global_position = target
+		var look := target + Vector3(0.0, 0.42, 0.0)
+		if cam.global_position.distance_squared_to(look) > 0.0001:
+			cam.look_at(look, Vector3.UP)
+		return
 	cam.global_position = target + Vector3(0.0, CAM_HEIGHT, cam_back())
-	var look := target + Vector3(0.0, 0.42, 0.0)
-	if cam.global_position.distance_squared_to(look) > 0.0001:
-		cam.look_at(look, Vector3.UP)
+	var look2 := target + Vector3(0.0, 0.42, 0.0)
+	if cam.global_position.distance_squared_to(look2) > 0.0001:
+		cam.look_at(look2, Vector3.UP)
 
 
 static func mouse_xz(cam: Camera3D, origin: Vector3) -> Vector2:
@@ -218,7 +257,7 @@ static func sprite(tex: Texture2D, world_h: float, y_billboard: bool) -> Sprite3
 		s.pixel_size = world_h / th
 		s.position.y = world_h * 0.5
 	else:
-		s.pixel_size = world_h / 64.0
+		s.pixel_size = world_h / PX
 		s.position.y = world_h * 0.5
 	return s
 
@@ -270,9 +309,61 @@ static func wall_body(host: Node3D, name := "Walls") -> StaticBody3D:
 
 
 static func block_px(body: StaticBody3D, foot_xz: Vector2, size_px: Vector2, local_px: Vector2 = Vector2.ZERO, h := 1.2) -> void:
-	var center := foot_xz + Vector2(local_px.x, local_px.y) / PX
-	var sz := size_px / PX
-	add_box(body, Vector3(sz.x, h, sz.y), Vector3(center.x, h * 0.5, center.y))
+	block(body, foot_xz, size_px / PX, local_px / PX, h)
+
+
+static func block(body: StaticBody3D, foot_xz: Vector2, size_xz: Vector2, local := Vector2.ZERO, h := 1.2) -> void:
+	var center := foot_xz + local
+	add_box(body, Vector3(size_xz.x, h, size_xz.y), Vector3(center.x, h * 0.5, center.y))
+
+
+static func add_merged_walls(body: StaticBody3D, grid: PackedByteArray, w: int, h: int) -> void:
+	var need := {}
+	for y in h:
+		for x in w:
+			if grid[DungeonGen.idx(x, y)] != DungeonGen.FLOOR:
+				continue
+			for n: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var wx: int = x + n.x
+				var wy: int = y + n.y
+				if wx < 0 or wy < 0 or wx >= w or wy >= h:
+					continue
+				if grid[DungeonGen.idx(wx, wy)] != DungeonGen.WALL:
+					continue
+				need[Vector2i(wx, wy)] = true
+	var used := {}
+	var keys: Array = need.keys()
+	keys.sort_custom(func(a, b):
+		if a.y == b.y:
+			return a.x < b.x
+		return a.y < b.y
+	)
+	for k in keys:
+		var origin: Vector2i = k
+		if used.has(origin):
+			continue
+		var x0 := origin.x
+		var y0 := origin.y
+		var x1 := x0
+		while need.has(Vector2i(x1 + 1, y0)) and not used.has(Vector2i(x1 + 1, y0)):
+			x1 += 1
+		var y1 := y0
+		while true:
+			var row_ok := true
+			for x in range(x0, x1 + 1):
+				var cell := Vector2i(x, y1 + 1)
+				if not need.has(cell) or used.has(cell):
+					row_ok = false
+					break
+			if not row_ok:
+				break
+			y1 += 1
+		for y in range(y0, y1 + 1):
+			for x in range(x0, x1 + 1):
+				used[Vector2i(x, y)] = true
+		var sx := float(x1 - x0 + 1)
+		var sz := float(y1 - y0 + 1)
+		add_box(body, Vector3(sx, WALL_H, sz), Vector3(float(x0) + sx * 0.5, WALL_H * 0.5, float(y0) + sz * 0.5))
 
 
 static func tile_mm(tex_path: String, positions: Array, y: float, unshaded := true) -> MultiMeshInstance3D:

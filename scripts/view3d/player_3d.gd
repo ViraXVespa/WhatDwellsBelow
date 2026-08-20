@@ -3,15 +3,15 @@ extends CharacterBody3D
 const SkillMath := preload("res://scripts/data/skills.gd")
 const V3 := preload("res://scripts/view3d/v3.gd")
 
-const SPEED := 190.0 / 64.0
-const DASH_SPEED := 620.0 / 64.0
-const DASH_TIME := 0.16
-const DASH_CD := 1.15
-const SLAM_CD := 5.0
-const SLAM_RADIUS := 176.0 / 64.0
-const AXE_RANGE := 118.0 / 64.0
-const AXE_ARC := 0.96
-const BODY_H := 1.18
+const SPEED := V3.PLAYER_SPEED
+const DASH_SPEED := V3.DASH_SPEED
+const DASH_TIME := V3.DASH_TIME
+const DASH_CD := V3.DASH_CD
+const SLAM_CD := V3.SLAM_CD
+const SLAM_RADIUS := V3.SLAM_RADIUS
+const AXE_RANGE := V3.AXE_RANGE
+const AXE_ARC := V3.AXE_ARC
+const BODY_H := V3.PLAYER_H
 
 var aim_dir := Vector2.DOWN
 var target_mode := false
@@ -177,7 +177,7 @@ func _apply_facing(delta: float) -> void:
 				attack_i = adv
 				tex = frames[attack_i]
 	var planar := Vector2(velocity.x, velocity.z)
-	var moving := planar.length() > V3.u(28.0) and dash_timer <= 0.0 and not attacking
+	var moving := planar.length() > V3.MOVE_EPS and dash_timer <= 0.0 and not attacking
 	if tex == null and moving:
 		var wk := _walk_key(key)
 		if walk_sprites.has(wk):
@@ -409,7 +409,7 @@ func take_damage(amount: float, from_pos: Vector2 = Vector2.INF) -> void:
 	if from_pos != Vector2.INF:
 		var k := V3.xz(global_position) - from_pos
 		if k.length() > 0.01:
-			knock = Vector3(k.x, 0.0, k.y).normalized() * V3.u(280.0)
+			knock = Vector3(k.x, 0.0, k.y).normalized() * V3.KNOCK_SPEED
 			knock_t = 0.12
 	Sfx.play("hurt")
 	var taken := amount

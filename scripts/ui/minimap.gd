@@ -38,7 +38,7 @@ func _draw() -> void:
 	var p := get_tree().get_first_node_in_group("player")
 	var cx: float = float(w) * 0.5
 	var cy: float = float(h) * 0.5
-	if p is Node3D:
+	if Game.using_3d() and p is Node3D:
 		cx = (p as Node3D).position.x
 		cy = (p as Node3D).position.z
 	elif p is Node2D:

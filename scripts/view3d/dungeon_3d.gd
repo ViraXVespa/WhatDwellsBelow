@@ -34,9 +34,7 @@ func _ready() -> void:
 	var spawn: Vector2i = data.spawn
 	player.position = V3.tile_center(spawn.x, spawn.y)
 	add_child(player)
-	cam = Camera3D.new()
-	add_child(cam)
-	V3.apply_cam(cam)
+	cam = V3.attach_cam(self)
 	V3.follow_cam(cam, player.global_position)
 	add_child(Hud.new())
 	add_child(PauseMenu.new())
@@ -108,26 +106,7 @@ func _draw_tiles() -> void:
 
 func _collisions() -> void:
 	var body := V3.wall_body(self, "DungeonWalls")
-	var w: int = data.w
-	var h: int = data.h
-	var grid: PackedByteArray = data.grid
-	var marked := {}
-	for y in h:
-		for x in w:
-			if grid[DungeonGen.idx(x, y)] != DungeonGen.FLOOR:
-				continue
-			for n: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-				var wx: int = x + n.x
-				var wy: int = y + n.y
-				var key := Vector2i(wx, wy)
-				if wx < 0 or wy < 0 or wx >= w or wy >= h:
-					continue
-				if grid[DungeonGen.idx(wx, wy)] != DungeonGen.WALL:
-					continue
-				if marked.has(key):
-					continue
-				marked[key] = true
-				V3.add_box(body, Vector3(1.0, V3.WALL_H, 1.0), Vector3(float(wx) + 0.5, V3.WALL_H * 0.5, float(wy) + 0.5))
+	V3.add_merged_walls(body, data.grid, data.w, data.h)
 
 
 func _fog() -> void:
@@ -256,8 +235,7 @@ func _world(t: Vector2i) -> Vector3:
 
 
 func _iact(kind: String, t: Vector2i, tex := "", extra: Dictionary = {}) -> void:
-	var n = Interact3D.new()
-	n.configure(kind, tex, extra)
+	var n = Interact3D.make(kind, tex, extra)
 	n.position = _world(t)
 	add_child(n)
 

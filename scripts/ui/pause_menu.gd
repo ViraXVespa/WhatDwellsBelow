@@ -281,7 +281,7 @@ func _unequip_sel() -> void:
 	if it == null:
 		return
 	if not Game.run.add_item(it):
-		Game.give_or_drop(it, _player_pos())
+		Game.give_or_drop(it, Game.player_world_pos())
 	Game.bag_changed.emit()
 	_refresh_inv()
 
@@ -297,18 +297,9 @@ func _drop_sel() -> void:
 		it = Game.run.remove_item_at(int(m.i), -1)
 	if it == null:
 		return
-	Game.spawn_drop(it, _player_pos())
+	Game.spawn_drop(it, Game.player_world_pos())
 	Game.bag_changed.emit()
 	_refresh_inv()
-
-
-func _player_pos() -> Vector2:
-	var p := get_tree().get_first_node_in_group("player")
-	if p is Node3D:
-		return Vector2((p as Node3D).global_position.x, (p as Node3D).global_position.z)
-	if p is Node2D:
-		return (p as Node2D).global_position
-	return Vector2.ZERO
 
 
 func _build_skills() -> void:

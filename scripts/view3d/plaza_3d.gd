@@ -26,9 +26,7 @@ func _ready() -> void:
 	var player = Player3D.new()
 	player.position = Vector3(20.0, 0.0, 14.0)
 	add_child(player)
-	cam = Camera3D.new()
-	add_child(cam)
-	V3.apply_cam(cam)
+	cam = V3.attach_cam(self)
 	V3.follow_cam(cam, player.global_position)
 	add_child(Hud.new())
 	add_child(PauseMenu.new())
@@ -101,11 +99,11 @@ func _fence_and_trees() -> void:
 		var ng := V3.sprite(gate, float(gate.get_height()) / V3.PX, false)
 		V3.plant(ng, Vector2(float(gx) + 0.5, float(FY0) + 0.85))
 		add_child(ng)
-		V3.block_px(walls, Vector2(ng.position.x, ng.position.z), Vector2(110, 22), Vector2(0, -8))
+		V3.block(walls, Vector2(ng.position.x, ng.position.z), Vector2(1.72, 0.34), Vector2(0.0, -0.12))
 		var sg := V3.sprite(gate, float(gate.get_height()) / V3.PX, false)
 		V3.plant(sg, Vector2(float(gx) + 0.5, float(FY1) + 0.85))
 		add_child(sg)
-		V3.block_px(walls, Vector2(sg.position.x, sg.position.z), Vector2(110, 22), Vector2(0, -8))
+		V3.block(walls, Vector2(sg.position.x, sg.position.z), Vector2(1.72, 0.34), Vector2(0.0, -0.12))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 42
 	for i in 28:
@@ -117,7 +115,7 @@ func _fence_and_trees() -> void:
 		else:
 			tx = rng.randi_range(0, W - 1)
 			ty = rng.randi_range(0, 3) if rng.randf() < 0.5 else rng.randi_range(H - 4, H - 1)
-		var pos := Vector2(float(tx) + 0.5 + rng.randf_range(-10, 10) / V3.PX, float(ty) + 0.85)
+		var pos := Vector2(float(tx) + 0.5 + rng.randf_range(-0.16, 0.16), float(ty) + 0.85)
 		var use_tree := tree != null and rng.randf() < 0.55
 		var tex: Texture2D = tree if use_tree else bush
 		if tex == null:
@@ -126,7 +124,7 @@ func _fence_and_trees() -> void:
 		var spr := V3.sprite(tex, float(tex.get_height()) / V3.PX * sc, true)
 		V3.plant(spr, pos)
 		add_child(spr)
-		V3.block_px(walls, pos, Vector2(18, 14) if use_tree else Vector2(16, 12), Vector2(0, -6), 1.0)
+		V3.block(walls, pos, Vector2(0.28, 0.22) if use_tree else Vector2(0.25, 0.19), Vector2(0.0, -0.09), 1.0)
 	var banner := Art.load_tex(V3.a("props", "banner.png"))
 	if banner:
 		var b := V3.sprite(banner, float(banner.get_height()) / V3.PX * 0.95, false)
@@ -153,30 +151,29 @@ func _fence_seg(foot: Vector2, tex: Texture2D, horiz: bool) -> void:
 		s.rotation_degrees.y = 90.0
 	add_child(s)
 	if horiz:
-		V3.block_px(walls, foot, Vector2(72, 14), Vector2(0, -6), 0.9)
+		V3.block(walls, foot, Vector2(1.12, 0.22), Vector2(0.0, -0.09), 0.9)
 	else:
-		V3.block_px(walls, foot, Vector2(18, 48), Vector2(0, -6), 0.9)
+		V3.block(walls, foot, Vector2(0.28, 0.75), Vector2(0.0, -0.09), 0.9)
 
 
 func _buildings() -> void:
 	var guild := _place_cutout(V3.a("buildings", "guild.png"), Vector2(9.4, 11.2), 0.88)
 	if guild:
-		V3.block_px(walls, Vector2(guild.position.x, guild.position.z), Vector2(150, 42), Vector2(0, -16), 1.6)
+		V3.block(walls, Vector2(guild.position.x, guild.position.z), Vector2(2.34, 0.66), Vector2(0.0, -0.25), 1.6)
 	var wing := _place_cutout(V3.a("buildings", "guild_reception.png"), Vector2(15.0, 11.4), 1.0)
 	if wing:
 		var fp := Vector2(wing.position.x, wing.position.z)
-		V3.block_px(walls, fp, Vector2(200, 18), Vector2(0, -110), 1.8)
-		V3.block_px(walls, fp, Vector2(18, 90), Vector2(-92, -50), 1.8)
-		V3.block_px(walls, fp, Vector2(18, 90), Vector2(92, -50), 1.8)
-		V3.block_px(walls, fp, Vector2(70, 16), Vector2(0, -58), 1.4)
+		V3.block(walls, fp, Vector2(3.12, 0.28), Vector2(0.0, -1.72), 1.8)
+		V3.block(walls, fp, Vector2(0.28, 1.41), Vector2(-1.44, -0.78), 1.8)
+		V3.block(walls, fp, Vector2(0.28, 1.41), Vector2(1.44, -0.78), 1.8)
+		V3.block(walls, fp, Vector2(1.09, 0.25), Vector2(0.0, -0.91), 1.4)
 	var stall := _place_cutout(V3.a("buildings", "stall.png"), Vector2(28.4, 11.3), 0.92)
 	if stall:
-		V3.block_px(walls, Vector2(stall.position.x, stall.position.z), Vector2(200, 28), Vector2(0, -12), 1.4)
+		V3.block(walls, Vector2(stall.position.x, stall.position.z), Vector2(3.12, 0.44), Vector2(0.0, -0.19), 1.4)
 
 
 func _prop(kind: String, xz: Vector2, tex := "", extra: Dictionary = {}) -> void:
-	var n = Interact3D.new()
-	n.configure(kind, tex, extra)
+	var n = Interact3D.make(kind, tex, extra)
 	n.position = Vector3(xz.x, 0.0, xz.y)
 	add_child(n)
 

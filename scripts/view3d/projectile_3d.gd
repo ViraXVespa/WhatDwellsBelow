@@ -3,7 +3,7 @@ extends Area3D
 const V3 := preload("res://scripts/view3d/v3.gd")
 
 var dir := Vector2.RIGHT
-var speed := 240.0 / 64.0
+var speed := V3.PROJ_SPEED
 var damage := 8.0
 var life := 2.2
 

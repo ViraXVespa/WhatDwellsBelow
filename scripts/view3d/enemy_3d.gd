@@ -8,16 +8,16 @@ enum Phase { CHASE, WINDUP, LUNGE, RECOVER }
 var role := "bruiser"
 var hp := 30.0
 var max_hp := 30.0
-var move_speed := 70.0 / 64.0
+var move_speed := 1.09
 var contact_damage := 10.0
 var attack_cd := 0.0
 var attack_period := 1.35
-var range_melee := 78.0 / 64.0
-var lunge_range := 130.0 / 64.0
+var range_melee := 1.22
+var lunge_range := 2.03
 var windup_time := 0.48
 var lunge_time := 0.20
 var recover_time := 0.45
-var lunge_speed := 420.0 / 64.0
+var lunge_speed := 6.56
 var shoot_cd := 0.0
 var flash := 0.0
 var rng := RandomNumberGenerator.new()
@@ -34,7 +34,7 @@ var walk_frames: Dictionary = {}
 var walk_t := 0.0
 var walk_i := 0
 const WALK_FPS := 8.0
-const BODY_H := 1.12
+const BODY_H := V3.ENEMY_H
 var facing := "down"
 var aim := Vector2.DOWN
 var is_boss := false
@@ -52,7 +52,7 @@ func setup(p_role: String, floor_number: int, p_boss: bool = false) -> void:
 	match role:
 		"ranged":
 			hp = 48.0 + floor_number * 10.0
-			move_speed = 55.0 / 64.0
+			move_speed = 0.86
 			contact_damage = 11.0 + floor_number * 1.6
 			attack_period = 1.15
 			windup_time = 0.55
@@ -60,26 +60,26 @@ func setup(p_role: String, floor_number: int, p_boss: bool = false) -> void:
 			recover_time = 0.4
 		"tank":
 			hp = 100.0 + floor_number * 22.0
-			move_speed = 36.0 / 64.0
+			move_speed = 0.56
 			contact_damage = 18.0 + floor_number * 2.2
 			attack_period = 1.7
-			range_melee = 86.0 / 64.0
-			lunge_range = 110.0 / 64.0
+			range_melee = 1.34
+			lunge_range = 1.72
 			windup_time = 0.72
 			lunge_time = 0.18
 			recover_time = 0.7
-			lunge_speed = 340.0 / 64.0
+			lunge_speed = 5.31
 		_:
 			hp = 62.0 + floor_number * 16.0
-			move_speed = 68.0 / 64.0
+			move_speed = 1.06
 			contact_damage = 16.0 + floor_number * 2.0
 			attack_period = 1.25
-			range_melee = 78.0 / 64.0
-			lunge_range = 140.0 / 64.0
+			range_melee = 1.22
+			lunge_range = 2.19
 			windup_time = 0.42
 			lunge_time = 0.22
 			recover_time = 0.4
-			lunge_speed = 460.0 / 64.0
+			lunge_speed = 7.19
 	max_hp = hp
 	_load_sprites()
 	_build_visual()
@@ -95,8 +95,8 @@ func _apply_boss() -> void:
 	windup_time = 0.62
 	lunge_time = 0.24
 	recover_time = 0.55
-	lunge_speed = 400.0 / 64.0
-	range_melee = 96.0 / 64.0
+	lunge_speed = 6.25
+	range_melee = 1.50
 	if body_sprite:
 		V3.apply_sprite_tex(body_sprite, body_sprite.texture, BODY_H * 1.22)
 	var tag := Label3D.new()
@@ -118,7 +118,7 @@ func _ready() -> void:
 	collision_mask = 1
 	motion_mode = MOTION_MODE_FLOATING
 	axis_lock_linear_y = true
-	V3.add_cyl(self, 0.28, 0.7, Vector3(0, 0.35, 0))
+	V3.add_cyl(self, V3.ENEMY_R, 0.7, Vector3(0, 0.35, 0))
 
 
 func _folder() -> String:
@@ -174,7 +174,7 @@ func _physics_process(delta: float) -> void:
 		return
 	if stagger_t > 0.0:
 		stagger_t -= delta
-		velocity = velocity.move_toward(Vector3.ZERO, V3.u(800.0) * delta)
+		velocity = velocity.move_toward(Vector3.ZERO, 12.5 * delta)
 		move_and_slide()
 		global_position.y = 0.0
 		_refresh_hp()
@@ -191,7 +191,7 @@ func _physics_process(delta: float) -> void:
 	var los := _has_los(player)
 	if _world_is_safe(player.global_position):
 		los = false
-	if los and dist < V3.u(460.0):
+	if los and dist < V3.AWARE_R:
 		aware = true
 		last_seen = player.global_position
 		lost_t = 0.0
@@ -228,14 +228,14 @@ func _ai_ranged(delta: float, player: Node3D, to: Vector2, dist: float, los: boo
 				return
 			var chase_to := to if los else (V3.xz(last_seen) - V3.xz(global_position))
 			var steer := _steer(chase_to, los)
-			if los and dist < V3.u(140.0):
+			if los and dist < 2.19:
 				velocity = Vector3(-to.x, 0.0, -to.y).normalized() * move_speed
-			elif (los and dist > V3.u(220.0)) or not los:
+			elif (los and dist > 3.44) or not los:
 				velocity = Vector3(steer.x, 0.0, steer.y) * move_speed
 			else:
 				velocity = Vector3.ZERO
 			velocity = _block_safe_step(velocity)
-			if los and dist < V3.u(420.0) and dist > V3.u(70.0) and shoot_cd <= 0.0:
+			if los and dist < 6.56 and dist > 1.09 and shoot_cd <= 0.0:
 				phase = Phase.WINDUP
 				phase_t = 0.0
 				lunge_dir = aim
@@ -298,7 +298,7 @@ func _ai_melee(delta: float, player: Node3D, to: Vector2, dist: float, los: bool
 			velocity = _block_safe_step(Vector3(lunge_dir.x, 0.0, lunge_dir.y) * lunge_speed)
 			move_and_slide()
 			phase_t += delta
-			if not hit_this_lunge and V3.xz(global_position).distance_to(V3.xz(player.global_position)) <= V3.u(46.0):
+			if not hit_this_lunge and V3.xz(global_position).distance_to(V3.xz(player.global_position)) <= V3.LUNGE_HIT_R:
 				if player.has_method("take_damage"):
 					player.take_damage(contact_damage, V3.xz(global_position))
 				hit_this_lunge = true
@@ -334,7 +334,7 @@ func _apply_sprite(delta := 0.016) -> void:
 		return
 	var pose := _pose_name()
 	var planar := Vector2(get_real_velocity().x, get_real_velocity().z)
-	var moving := pose == "idle" and planar.length() > V3.u(18.0)
+	var moving := pose == "idle" and planar.length() > 0.28
 	var wdir := facing
 	if not walk_frames.has(wdir):
 		wdir = Art.cardinal_from_dir(aim)
@@ -363,7 +363,7 @@ func _steer(to_player: Vector2, los: bool) -> Vector2:
 		return desired
 	var space := get_world_3d().direct_space_state
 	var from := global_position + Vector3(0, 0.4, 0)
-	var q := PhysicsRayQueryParameters3D.create(from, from + Vector3(desired.x, 0.0, desired.y) * V3.u(56.0))
+	var q := PhysicsRayQueryParameters3D.create(from, from + Vector3(desired.x, 0.0, desired.y) * V3.STEER_RAY)
 	q.collision_mask = 1
 	q.exclude = [self]
 	var hit := space.intersect_ray(q)
@@ -408,7 +408,7 @@ func _shoot(dir: Vector2) -> void:
 
 func _stuck(delta: float) -> void:
 	var real_v := Vector2(get_real_velocity().x, get_real_velocity().z).length()
-	if Vector2(velocity.x, velocity.z).length() > V3.u(10.0) and real_v < V3.u(12.0):
+	if Vector2(velocity.x, velocity.z).length() > V3.STUCK_WANT and real_v < V3.STUCK_GOT:
 		stuck_t += delta
 		if stuck_t > 0.3:
 			prefer_left = not prefer_left
@@ -432,7 +432,7 @@ func take_damage(amount: float, _from: Node = null, stagger := 0.0) -> void:
 		var k := V3.xz(global_position) - V3.xz(src.global_position)
 		if k.length() > 0.01:
 			var kn := k.normalized()
-			velocity = Vector3(kn.x, 0.0, kn.y) * V3.u(220.0)
+			velocity = Vector3(kn.x, 0.0, kn.y) * 3.44
 	Game.hitstop(0.05)
 	if hp <= 0.0:
 		_die()
@@ -463,7 +463,7 @@ func _world_is_safe(world: Vector3) -> bool:
 func _block_safe_step(vel: Vector3) -> Vector3:
 	if vel.length() < 0.01:
 		return vel
-	var next := global_position + vel.normalized() * V3.u(28.0)
+	var next := global_position + vel.normalized() * V3.SAFE_LOOK
 	if _world_is_safe(next) and not _world_is_safe(global_position):
 		return Vector3.ZERO
 	return vel
