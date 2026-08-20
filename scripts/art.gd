@@ -121,6 +121,18 @@ static func load_tex(path: String) -> Texture2D:
 	return null
 
 
+static func foot_sprite(tex: Texture2D, scale := 1.0) -> Sprite2D:
+	var s := Sprite2D.new()
+	s.centered = false
+	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	s.scale = Vector2(scale, scale)
+	if tex:
+		s.texture = tex
+		var sz: Vector2 = tex.get_size()
+		s.offset = Vector2(-sz.x * 0.5, -sz.y)
+	return s
+
+
 static func add_blocker(host: Node, size: Vector2, local_pos: Vector2 = Vector2.ZERO) -> void:
 	var body := StaticBody2D.new()
 	body.collision_layer = 1

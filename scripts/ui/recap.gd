@@ -53,7 +53,8 @@ func _ready() -> void:
 		lvl_lines += "\n  woke up %s" % str(lv)
 	s.text = (
 		"Floor reached: %d\n" +
-		"XP kept  mining %.1f  |  great axe %.1f  |  smithing %.1f%s\n" +
+		"XP kept  mining %.1f  |  axe %.1f  |  str %.1f  |  def %.1f  |  hp %.1f  |  smith %.1f%s\n" +
+		"Combat level: %d\n" +
 		"Ore banked: %d\n" +
 		"Gold mailed: %d   lost in the dream: %d\n" +
 		"Bag vanished: %d slots of stuff%s"
@@ -61,8 +62,12 @@ func _ready() -> void:
 		int(r.get("floor", 1)),
 		float(r.get("mining_kept", 0)),
 		float(r.get("axe_kept", 0)),
+		float(r.get("strength_kept", 0)),
+		float(r.get("defense_kept", 0)),
+		float(r.get("hitpoints_kept", 0)),
 		float(r.get("smithing_kept", 0)),
 		lvl_lines,
+		int(r.get("combat_level", 1)),
 		int(r.get("ore_banked", 0)),
 		int(r.get("gold_mailed", 0)),
 		int(r.get("gold_lost", 0)),

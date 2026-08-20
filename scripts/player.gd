@@ -37,7 +37,7 @@ var attacking := false
 var dying := false
 var knock := Vector2.ZERO
 var knock_t := 0.0
-const WALK_FPS := 8.0
+const WALK_FPS := 6.5
 const ATTACK_FPS := 10.0
 
 var dash_cd_max := DASH_CD
@@ -49,11 +49,13 @@ func _ready() -> void:
 	collision_layer = 2
 	collision_mask = 1
 	motion_mode = MOTION_MODE_FLOATING
+	wall_min_slide_angle = 0.0
+	safe_margin = 0.12
 	var cs := CollisionShape2D.new()
-	var sh := RectangleShape2D.new()
-	sh.size = Vector2(32, 40)
+	var sh := CircleShape2D.new()
+	sh.radius = 12.0
 	cs.shape = sh
-	cs.position = Vector2.ZERO
+	cs.position = Vector2(0, 10)
 	add_child(cs)
 	body_sprite = Art.make_sprite(null, 0.78)
 	add_child(body_sprite)
@@ -137,7 +139,7 @@ func _load_facings() -> void:
 			walk_sprites[k] = frames
 	if facing_sprites.is_empty():
 		facing_sprites["down"] = Art.body(Vector2i(64, 64), Color(0.24, 0.49, 0.72), Color(0.94, 0.84, 0.38))
-	for k in ["down", "up", "left", "right"]:
+	for k in Art.FACING_KEYS:
 		var frames: Array = []
 		for i in 8:
 			var ap := "res://assets/sprites/player/attack_%s_%d.png" % [k, i]
@@ -158,7 +160,9 @@ func _apply_facing(delta: float) -> void:
 	facing_key = key
 	var tex: Texture2D = null
 	if attacking:
-		var ak := Art.cardinal_from_dir(aim_dir)
+		var ak := Art.pick_facing(aim_dir, attack_sprites)
+		if not attack_sprites.has(ak):
+			ak = Art.cardinal_from_dir(aim_dir)
 		if not attack_sprites.has(ak):
 			ak = "down"
 		if attack_sprites.has(ak):
@@ -270,7 +274,7 @@ func _try_attack() -> void:
 		return
 	var w := _weapon()
 	attack_cd = w.attack_period
-	var dmg := w.damage * Skills.axe_damage_mult(Game.skill_level("great_axe"))
+	var dmg := w.damage * Skills.axe_damage_mult(Game.skill_level("great_axe")) * Skills.strength_mult(Game.skill_level("strength"))
 	if Game.run:
 		dmg *= Game.run.dmg_mult
 		if Game.run.shrine_buff_t > 0.0:
@@ -281,6 +285,7 @@ func _try_attack() -> void:
 	Sfx.play("hit")
 	_hit_in_arc(dmg, AXE_RANGE)
 	Game.grant_xp("great_axe", 4.0)
+	Game.grant_xp("strength", 1.2)
 	_swing_flash()
 
 
@@ -337,7 +342,7 @@ func _try_slam() -> bool:
 	slam_cd = SLAM_CD
 	attack_cd = maxf(attack_cd, 0.4)
 	Sfx.play("slam")
-	var dmg := _weapon().damage * 1.6 * Skills.axe_damage_mult(Game.skill_level("great_axe"))
+	var dmg := _weapon().damage * 1.6 * Skills.axe_damage_mult(Game.skill_level("great_axe")) * Skills.strength_mult(Game.skill_level("strength"))
 	if Game.run:
 		dmg *= Game.run.dmg_mult * Game.run.slam_dmg_mult
 		if Game.run.shrine_buff_t > 0.0:
@@ -353,6 +358,7 @@ func _try_slam() -> bool:
 	add_child(ring)
 	get_tree().create_timer(0.18).timeout.connect(ring.queue_free)
 	Game.grant_xp("great_axe", 10.0)
+	Game.grant_xp("strength", 3.0)
 	return true
 
 
@@ -427,6 +433,8 @@ func take_damage(amount: float, from_pos: Vector2 = Vector2.INF) -> void:
 	if get_parent():
 		get_parent().add_child(n)
 	Game.hitstop(0.045)
+	Game.grant_xp("hitpoints", 2.4)
+	Game.grant_xp("defense", 1.1)
 	Game.damage_player(amount)
 
 

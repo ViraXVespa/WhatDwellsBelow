@@ -156,7 +156,7 @@ Decided (**inventory**): **not on Y.** Pause-menu page. **Solo: the game pauses.
 
 HUD
 Decided: **Gauntlet-style HUD** so solo and couch co-op use the same language. Each player gets a dedicated strip (portrait/color, HP, dash/slam/potion cooldowns). Scales from 1 to 4 without a different UI mode. **Mana hidden** in the demo.
-Must-have per strip: **HP**, skill/dash/potion cooldowns, **gold**, **bag fullness**, **floor number**. Shrine buff shows a **HUD timer**. **Mana is hidden** until something spends it. Defense is **not** on the strip (item text / pause inventory only). All on the Gauntlet strip so two-pane and solo match.
+Must-have per strip: **HP**, dash/potion/slam cooldowns, **Combat Level bar**, **gold** (icon box), **bag fullness**, **floor number**. Shrine buff shows a **HUD timer**. **Mana is hidden** until something spends it. Defense is **not** on the strip (item text / pause inventory only). Control tips live on the Placeholdia notice board, not the HUD. All on the Gauntlet strip so two-pane and solo match.
 
 ================================================================
 4. Core loops
@@ -440,13 +440,13 @@ Weapon mastery
 Decided: each weapon (type) has its own XP/levels; large bonus for that type, smaller bonus for all weapons.
 Decided: **+4% damage to that type** per level, and **+0.4% to all weapons in that category** (Melee / Ranged / Magic). Slice Great Axe: +4% axe / +0.4% melee per level.
 Decided: mastery is **weapon TYPE** (all Great Axes share one XP bar), not a per-item instance.
-Decided (lean, **full game**, not slice): **Combat Level is a derived display number**, not its own grindable skill — same idea as OSRS combat level. It is computed from the combat skills that apply to what you have equipped, not a third XP bar you train by existing.
+Decided (lean): **Combat Level is a derived display number**, not its own grindable skill — same idea as OSRS combat level. It is computed from the combat skills that apply to what you have equipped, not a third XP bar you train by existing.
 - Melee style: Strength + Attack / weapon mastery + Defense (and Hitpoints if we add it).
 - Ranged style: Ranged + Defense (+ Hitpoints).
 - Magic style: Magic Masteries + Defense (+ Hitpoints).
 - Shown combat level uses the **highest of the three styles**. Equipped weapon type picks which style is the HUD focal point (axe out → you read as a melee adventurer even if you also have ranged levels). Off-hand (shield vs tome) can nudge defense vs magic.
 - Alternative parked: separate grindable Melee / Ranged / Magic skills on top of traits and weapon masteries — rejected for now because it would double-tax the same swings.
-[TODO] Exact weights (OSRS-like 0.325/0.25 or a simpler average). Do not implement Combat Level UI in the slice — only Great Axe exists, so there is no second style to compare.
+Decided (**demo, 2026-08 Placeholdia pass**): Combat Level **is on the HUD** as one bar. Demo melee set is **Great Axe (mastery) + Strength + Defense + Hitpoints**. Formula: `floor(0.25*(Def+HP) + 0.325*(Axe+Str))`. Swings train mastery + a little Strength. Taking hits trains Hitpoints + a little Defense. Mining / Smithing stay on the pause Skills page, not the strip.
 
 Abilities
 Decided: extravagant number of skills and abilities empowered by gameplay.

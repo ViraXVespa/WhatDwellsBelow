@@ -7,12 +7,12 @@ var _layer: CanvasLayer
 func _ready() -> void:
 	super._ready()
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	prompt = "Talk: stall auntie"
+	prompt = "Talk: Stallkeep"
 	var tex := Art.load_tex("res://assets/sprites/npcs/vendor.png")
 	if tex == null:
 		tex = Art.body(Vector2i(56, 56), Color(0.55, 0.35, 0.2), Color(0.9, 0.75, 0.4))
-	add_child(Art.make_sprite(tex, 0.82))
-	Art.add_blocker(self, Vector2(30, 36))
+	add_child(Art.make_sprite(tex, 0.45))
+	Art.add_blocker(self, Vector2(22, 20), Vector2(0, 8))
 
 
 func interact(_player: Node) -> void:

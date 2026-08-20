@@ -2,45 +2,41 @@ class_name Hud
 extends CanvasLayer
 
 var hp_bar: ProgressBar
-var mana_bar: ProgressBar
 var pot_bar: ProgressBar
 var dash_bar: ProgressBar
 var slam_bar: ProgressBar
 var channel_bar: ProgressBar
+var cl_bar: ProgressBar
 var hp_val: Label
-var mana_val: Label
 var pot_val: Label
 var dash_val: Label
 var slam_val: Label
-var info: Label
-var prompt: Label
+var cl_val: Label
 var shrine_lab: Label
 var channel_lab: Label
+var prompt: Label
 var minimap: Control
 var big_map: Control
 var map_open := false
+var map_tag: Label
+var town_help: Panel
 var portrait: TextureRect
 var boss_wrap: Control
 var boss_bar: ProgressBar
 var boss_val: Label
+var gold_amt: Label
+var ore_amt: Label
+var bag_amt: Label
+var floor_lab: Label
+var ore_wrap: Control
 
 
 func _ready() -> void:
 	layer = 20
 	var strip := Panel.new()
 	strip.position = Vector2(20, 16)
-	strip.size = Vector2(560, 228)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.07, 0.08, 0.11, 0.92)
-	sb.border_color = Color(0.45, 0.38, 0.22)
-	sb.set_border_width_all(2)
-	sb.corner_radius_top_left = 6
-	sb.corner_radius_top_right = 6
-	sb.corner_radius_bottom_left = 6
-	sb.corner_radius_bottom_right = 6
-	sb.content_margin_left = 10
-	sb.content_margin_top = 10
-	strip.add_theme_stylebox_override("panel", sb)
+	strip.size = Vector2(560, 248)
+	strip.add_theme_stylebox_override("panel", _panel_sb())
 	add_child(strip)
 
 	portrait = TextureRect.new()
@@ -68,15 +64,17 @@ func _ready() -> void:
 	hp_val = _val_lab(Vector2(456, 16))
 	strip.add_child(hp_val)
 
-	mana_bar = _bar(Color(0.28, 0.48, 0.92), Vector2(170, 46), Vector2(280, 22))
-	mana_bar.visible = false
-	strip.add_child(mana_bar)
-	mana_val = _val_lab(Vector2(456, 44))
-	mana_val.visible = false
-	strip.add_child(mana_val)
 	pot_bar = _bar(Color(0.82, 0.28, 0.55), Vector2(170, 46), Vector2(280, 22))
 	strip.add_child(pot_bar)
-	strip.add_child(_name_lab("POT", Vector2(112, 44), Color(0.95, 0.55, 0.75)))
+	var pot_icon := TextureRect.new()
+	pot_icon.position = Vector2(112, 42)
+	pot_icon.size = Vector2(48, 28)
+	pot_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pot_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	pot_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if ResourceLoader.exists("res://assets/ui/icon_potion.png"):
+		pot_icon.texture = load("res://assets/ui/icon_potion.png")
+	strip.add_child(pot_icon)
 	pot_val = _val_lab(Vector2(456, 44))
 	strip.add_child(pot_val)
 
@@ -94,29 +92,37 @@ func _ready() -> void:
 	slam_val.size = Vector2(80, 22)
 	strip.add_child(slam_val)
 
-	var binds := Label.new()
-	binds.text = "B / Space\nX / Shift"
-	binds.position = Vector2(430, 72)
-	binds.size = Vector2(120, 52)
-	binds.add_theme_font_size_override("font_size", 13)
-	binds.add_theme_color_override("font_color", Color(0.7, 0.7, 0.72))
-	strip.add_child(binds)
+	cl_bar = _bar(Color(0.85, 0.72, 0.28), Vector2(170, 130), Vector2(280, 18))
+	strip.add_child(cl_bar)
+	strip.add_child(_name_lab("CL", Vector2(112, 128), Color(0.95, 0.82, 0.4)))
+	cl_val = _val_lab(Vector2(456, 128))
+	strip.add_child(cl_val)
 
-	info = Label.new()
-	info.position = Vector2(14, 128)
-	info.size = Vector2(532, 52)
-	info.add_theme_font_size_override("font_size", 16)
-	info.add_theme_color_override("font_color", Color(0.9, 0.88, 0.8))
-	strip.add_child(info)
-
-	var hint := Label.new()
-	hint.text = "RT / LMB hold-attack    A / E interact    Start / Esc pause+bag    M / Select map"
-	hint.position = Vector2(14, 184)
-	hint.size = Vector2(532, 36)
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.add_theme_font_size_override("font_size", 13)
-	hint.add_theme_color_override("font_color", Color(0.62, 0.6, 0.55))
-	strip.add_child(hint)
+	var widgets := HBoxContainer.new()
+	widgets.position = Vector2(14, 168)
+	widgets.size = Vector2(532, 36)
+	widgets.add_theme_constant_override("separation", 8)
+	strip.add_child(widgets)
+	floor_lab = Label.new()
+	floor_lab.add_theme_font_size_override("font_size", 16)
+	floor_lab.add_theme_color_override("font_color", Color(0.9, 0.88, 0.8))
+	widgets.add_child(floor_lab)
+	widgets.add_child(_stat_box("res://assets/ui/icon_gold.png", gold_amt))
+	ore_wrap = _stat_box("res://assets/ui/icon_ore.png", ore_amt)
+	widgets.add_child(ore_wrap)
+	var bag_wrap := Panel.new()
+	bag_wrap.custom_minimum_size = Vector2(92, 32)
+	var bb := StyleBoxFlat.new()
+	bb.bg_color = Color(0.12, 0.12, 0.14, 0.95)
+	bb.border_color = Color(0.45, 0.38, 0.22)
+	bb.set_border_width_all(1)
+	bag_wrap.add_theme_stylebox_override("panel", bb)
+	bag_amt = Label.new()
+	bag_amt.position = Vector2(8, 4)
+	bag_amt.size = Vector2(80, 24)
+	bag_amt.add_theme_font_size_override("font_size", 15)
+	bag_wrap.add_child(bag_amt)
+	widgets.add_child(bag_wrap)
 
 	prompt = Label.new()
 	prompt.position = Vector2(560, 980)
@@ -166,16 +172,31 @@ func _ready() -> void:
 	minimap = Minimap.new()
 	minimap.position = Vector2(1680, 16)
 	add_child(minimap)
-	var map_tag := Label.new()
-	map_tag.text = "MAP  (M)"
+	map_tag = Label.new()
+	map_tag.text = "MAP"
 	map_tag.position = Vector2(1680, 180)
 	map_tag.size = Vector2(220, 20)
 	map_tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	map_tag.add_theme_font_size_override("font_size", 14)
 	map_tag.add_theme_color_override("font_color", Color(0.75, 0.72, 0.65))
 	add_child(map_tag)
+
+	town_help = Panel.new()
+	town_help.position = Vector2(1680, 16)
+	town_help.size = Vector2(220, 168)
+	town_help.add_theme_stylebox_override("panel", _panel_sb())
+	var th := Label.new()
+	th.text = "Placeholdia\n\nTalk to people.\nUse the crystal\nto delve.\nPause for bag\nand skills.\nRead the board."
+	th.position = Vector2(12, 10)
+	th.size = Vector2(196, 148)
+	th.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	th.add_theme_font_size_override("font_size", 15)
+	th.add_theme_color_override("font_color", Color(0.88, 0.84, 0.72))
+	town_help.add_child(th)
+	add_child(town_help)
+
 	shrine_lab = Label.new()
-	shrine_lab.position = Vector2(20, 250)
+	shrine_lab.position = Vector2(20, 276)
 	shrine_lab.size = Vector2(520, 28)
 	shrine_lab.add_theme_font_size_override("font_size", 18)
 	shrine_lab.add_theme_color_override("font_color", Color(0.95, 0.82, 0.4))
@@ -186,6 +207,48 @@ func _ready() -> void:
 	big_map.custom_minimum_size = Vector2(960, 640)
 	big_map.visible = false
 	add_child(big_map)
+
+
+func _panel_sb() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.07, 0.08, 0.11, 0.92)
+	sb.border_color = Color(0.45, 0.38, 0.22)
+	sb.set_border_width_all(2)
+	sb.corner_radius_top_left = 6
+	sb.corner_radius_top_right = 6
+	sb.corner_radius_bottom_left = 6
+	sb.corner_radius_bottom_right = 6
+	return sb
+
+
+func _stat_box(icon_path: String, amt_ref: Label) -> Control:
+	var wrap := Panel.new()
+	wrap.custom_minimum_size = Vector2(108, 32)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.12, 0.12, 0.14, 0.95)
+	sb.border_color = Color(0.45, 0.38, 0.22)
+	sb.set_border_width_all(1)
+	wrap.add_theme_stylebox_override("panel", sb)
+	var ic := TextureRect.new()
+	ic.position = Vector2(4, 2)
+	ic.size = Vector2(28, 28)
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	ic.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if ResourceLoader.exists(icon_path):
+		ic.texture = load(icon_path)
+	wrap.add_child(ic)
+	var lab := Label.new()
+	lab.position = Vector2(34, 4)
+	lab.size = Vector2(70, 24)
+	lab.add_theme_font_size_override("font_size", 16)
+	lab.add_theme_color_override("font_color", Color(0.95, 0.9, 0.7))
+	wrap.add_child(lab)
+	if icon_path.ends_with("gold.png"):
+		gold_amt = lab
+	else:
+		ore_amt = lab
+	return wrap
 
 
 func _name_lab(text: String, pos: Vector2, col: Color) -> Label:
@@ -237,53 +300,64 @@ func _bar(col: Color, pos: Vector2, size: Vector2) -> ProgressBar:
 
 func _process(_delta: float) -> void:
 	var p := get_tree().get_first_node_in_group("player") as Player
+	var in_town := not Game.in_dungeon
+	if minimap:
+		minimap.visible = not in_town
+	if map_tag:
+		map_tag.visible = not in_town
+	if town_help:
+		town_help.visible = in_town
+	if ore_wrap:
+		ore_wrap.visible = in_town
 	if Game.run:
 		hp_bar.max_value = Game.run.max_hp
 		hp_bar.value = Game.run.hp
 		hp_val.text = "%d/%d" % [int(Game.run.hp), int(Game.run.max_hp)]
-		if pot_bar:
-			var pcd := Game.run.potion_cd
-			var pmax := 8.0
-			if Game.run.potion:
-				pmax = maxf(0.5, Game.run.potion.potion_cd)
-			pot_bar.max_value = pmax
-			pot_bar.value = pmax - pcd
-			if Game.run.potion == null:
-				pot_val.text = "NONE"
-			elif pcd <= 0.04:
-				pot_val.text = "READY"
-			else:
-				pot_val.text = "%.1fs" % pcd
+		var pcd := Game.run.potion_cd
+		var pmax := 8.0
+		if Game.run.potion:
+			pmax = maxf(0.5, Game.run.potion.potion_cd)
+		pot_bar.max_value = pmax
+		pot_bar.value = pmax - pcd
+		if Game.run.potion == null:
+			pot_val.text = "NONE"
+		elif pcd <= 0.04:
+			pot_val.text = "READY"
+		else:
+			pot_val.text = "%.1fs" % pcd
 		if shrine_lab:
 			if Game.run.shrine_buff_t > 0.0:
 				shrine_lab.text = "Shrine +20% dmg   %.0fs" % Game.run.shrine_buff_t
 			else:
 				shrine_lab.text = ""
-		info.text = "Floor %d    Gold %d    Bag %d/28    Axe L%d    Mine L%d    Smith L%d" % [
-			Game.run.current_floor,
-			Game.run.gold,
-			Game.run.bag_count(),
-			Game.skill_level("great_axe"),
-			Game.skill_level("mining"),
-			Game.skill_level("smithing"),
-		]
+		if gold_amt:
+			gold_amt.text = str(Game.run.gold)
+		if bag_amt:
+			bag_amt.text = "%d/28" % Game.run.bag_count()
+		if floor_lab:
+			floor_lab.text = "F%d" % Game.run.current_floor
 	else:
-		hp_bar.max_value = 100
-		hp_bar.value = 100
-		hp_val.text = "100/100"
+		var mx := 100.0 + Skills.hitpoints_bonus(Game.skill_level("hitpoints"))
+		hp_bar.max_value = mx
+		hp_bar.value = mx
+		hp_val.text = "%d/%d" % [int(mx), int(mx)]
 		if pot_val:
 			pot_val.text = "—"
 		if shrine_lab:
 			shrine_lab.text = ""
-		info.text = "%s    Gold %d    Ore %d    Deepest %d    Axe L%d  Mine L%d  Smith L%d" % [
-			Game.DEMO_TOWN,
-			Game.save.gold if Game.save else 0,
-			Game.save.banked_ore if Game.save else 0,
-			Game.save.deepest_floor if Game.save else 1,
-			Game.skill_level("great_axe"),
-			Game.skill_level("mining"),
-			Game.skill_level("smithing"),
-		]
+		if gold_amt:
+			gold_amt.text = str(Game.save.gold if Game.save else 0)
+		if ore_amt:
+			ore_amt.text = str(Game.save.banked_ore if Game.save else 0)
+		if bag_amt:
+			bag_amt.text = "town"
+		if floor_lab:
+			floor_lab.text = Game.DEMO_TOWN
+	var cl := Game.combat_level()
+	var clf := Game.combat_level_precise()
+	cl_bar.max_value = 1.0
+	cl_bar.value = clf - float(cl)
+	cl_val.text = str(cl)
 	if p:
 		dash_bar.max_value = 1.0
 		slam_bar.max_value = 1.0
@@ -305,7 +379,7 @@ func _process(_delta: float) -> void:
 			boss_bar.max_value = b.max_hp
 			boss_bar.value = b.hp
 			boss_val.text = "%d/%d" % [int(b.hp), int(b.max_hp)]
-	if minimap and minimap.has_method("refresh"):
+	if minimap and minimap.visible and minimap.has_method("refresh"):
 		minimap.refresh()
 	if map_open and big_map and big_map.has_method("refresh"):
 		big_map.refresh()
@@ -328,6 +402,4 @@ func _prompt_near(p: Player) -> String:
 			if d < best_d:
 				best_d = d
 				best = (n as Interactable).get_prompt()
-	if best != "":
-		return "[A / E]  " + best
-	return ""
+	return best

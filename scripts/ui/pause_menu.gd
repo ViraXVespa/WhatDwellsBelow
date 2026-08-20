@@ -8,6 +8,8 @@ var body: VBoxContainer
 var list: ItemList
 var hint: Label
 var skills_lab: Label
+var tab_btns: Dictionary = {}
+const TAB_ORDER := ["inv", "skills", "sys"]
 
 
 func _ready() -> void:
@@ -17,6 +19,17 @@ func _ready() -> void:
 	panel.visible = false
 	panel.position = Vector2(420, 60)
 	panel.size = Vector2(1080, 920)
+	var psb := StyleBoxFlat.new()
+	psb.bg_color = Color(0.07, 0.08, 0.12, 0.96)
+	psb.border_color = Color(0.55, 0.45, 0.26)
+	psb.set_border_width_all(3)
+	psb.corner_radius_top_left = 10
+	psb.corner_radius_top_right = 10
+	psb.corner_radius_bottom_left = 10
+	psb.corner_radius_bottom_right = 10
+	psb.shadow_color = Color(0, 0, 0, 0.45)
+	psb.shadow_size = 12
+	panel.add_theme_stylebox_override("panel", psb)
 	add_child(panel)
 	var v := VBoxContainer.new()
 	v.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -29,13 +42,21 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = "Paused"
 	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_color_override("font_color", Color(0.95, 0.86, 0.55))
 	v.add_child(title)
+	var tab_hint := Label.new()
+	tab_hint.text = "LB / RB  cycle pages"
+	tab_hint.add_theme_font_size_override("font_size", 14)
+	tab_hint.add_theme_color_override("font_color", Color(0.65, 0.62, 0.58))
+	v.add_child(tab_hint)
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 8)
 	v.add_child(tabs)
-	tabs.add_child(_btn("Inventory", func(): _show("inv"), 0, 44))
-	tabs.add_child(_btn("Skills", func(): _show("skills"), 0, 44))
-	tabs.add_child(_btn("System", func(): _show("sys"), 0, 44))
+	tab_btns["inv"] = _tab_btn("Inventory", "inv")
+	tab_btns["skills"] = _tab_btn("Skills", "skills")
+	tab_btns["sys"] = _tab_btn("System", "sys")
+	for k in TAB_ORDER:
+		tabs.add_child(tab_btns[k])
 	body = VBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 8)
@@ -63,6 +84,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if open and event.is_action_pressed("ui_cancel"):
 		_close()
+		get_viewport().set_input_as_handled()
+		return
+	if open and event.is_action_pressed("tab_right"):
+		_cycle_tab(1)
+		get_viewport().set_input_as_handled()
+	elif open and event.is_action_pressed("tab_left"):
+		_cycle_tab(-1)
 		get_viewport().set_input_as_handled()
 
 
@@ -97,8 +125,30 @@ func _dispel() -> void:
 	Game.end_run(true)
 
 
+func _cycle_tab(dir: int) -> void:
+	var cur := TAB_ORDER.find(page)
+	if cur < 0:
+		cur = 0
+	_show(TAB_ORDER[(cur + dir + TAB_ORDER.size()) % TAB_ORDER.size()])
+
+
+func _tab_btn(text: String, id: String) -> Button:
+	var b := _btn(text, func(): _show(id), 0, 44)
+	b.toggle_mode = true
+	return b
+
+
+func _paint_tabs() -> void:
+	for k in tab_btns.keys():
+		var b: Button = tab_btns[k]
+		b.set_pressed_no_signal(k == page)
+
+
 func _show(p: String) -> void:
-	page = p
+	if p == "wipe":
+		page = "wipe"
+	elif TAB_ORDER.has(p):
+		page = p
 	for c in body.get_children():
 		body.remove_child(c)
 		c.queue_free()
@@ -113,6 +163,7 @@ func _show(p: String) -> void:
 		_build_wipe()
 	else:
 		_build_sys()
+	_paint_tabs()
 	PadUi.wire(body)
 
 
@@ -263,7 +314,9 @@ func _build_skills() -> void:
 	skills_lab.add_theme_font_size_override("font_size", 20)
 	body.add_child(skills_lab)
 	var lines: PackedStringArray = []
-	for sk in ["great_axe", "mining", "smithing"]:
+	lines.append("Combat level %d   (Great Axe + Strength + Defense + Hitpoints)" % Game.combat_level())
+	lines.append("")
+	for sk in ["great_axe", "strength", "defense", "hitpoints", "mining", "smithing"]:
 		var xp := Game.skill_xp(sk)
 		var lv := Skills.level_from_xp(xp)
 		var into := xp - Skills.xp_for_level(lv)
@@ -271,8 +324,9 @@ func _build_skills() -> void:
 		lines.append("%s  Lv %d    %.0f / %.0f to next" % [Skills.label(sk), lv, into, need])
 	lines.append("\n2% of this-run XP is kept on wake. Dungeon is the real grind.")
 	if Game.run:
-		lines.append("This dream:  axe %.0f   mine %.0f   smith %.0f" % [
-			Game.run.great_axe_xp_run, Game.run.mining_xp_run, Game.run.smithing_xp_run
+		lines.append("This dream:  axe %.0f  str %.0f  def %.0f  hp %.0f  mine %.0f  smith %.0f" % [
+			Game.run.great_axe_xp_run, Game.run.strength_xp_run, Game.run.defense_xp_run,
+			Game.run.hitpoints_xp_run, Game.run.mining_xp_run, Game.run.smithing_xp_run
 		])
 		if not Game.run.artifact_ids.is_empty():
 			lines.append("Artifacts this run:")
@@ -372,4 +426,21 @@ func _btn(text: String, cb: Callable, w: int = 0, h: int = 52) -> Button:
 	b.text = text
 	b.custom_minimum_size = Vector2(w, h)
 	b.pressed.connect(cb)
+	var nsb := StyleBoxFlat.new()
+	nsb.bg_color = Color(0.16, 0.15, 0.18, 1)
+	nsb.border_color = Color(0.45, 0.38, 0.22)
+	nsb.set_border_width_all(1)
+	nsb.corner_radius_top_left = 4
+	nsb.corner_radius_top_right = 4
+	nsb.corner_radius_bottom_left = 4
+	nsb.corner_radius_bottom_right = 4
+	var hsb := nsb.duplicate() as StyleBoxFlat
+	hsb.bg_color = Color(0.28, 0.24, 0.16, 1)
+	var psb := nsb.duplicate() as StyleBoxFlat
+	psb.bg_color = Color(0.42, 0.34, 0.16, 1)
+	b.add_theme_stylebox_override("normal", nsb)
+	b.add_theme_stylebox_override("hover", hsb)
+	b.add_theme_stylebox_override("pressed", psb)
+	b.add_theme_stylebox_override("focus", hsb)
+	b.add_theme_color_override("font_color", Color(0.92, 0.88, 0.78))
 	return b

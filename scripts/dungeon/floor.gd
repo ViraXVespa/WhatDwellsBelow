@@ -21,6 +21,7 @@ func _ready() -> void:
 	if Game.run == null:
 		Game.go_plaza()
 		return
+	y_sort_enabled = true
 	Sfx.set_music("dungeon")
 	var seed_value := Game.run.seed_value + Game.run.current_floor * 997
 	data = DungeonGen.generate(Game.run.current_floor, seed_value)

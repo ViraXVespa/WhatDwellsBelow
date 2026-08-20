@@ -22,4 +22,4 @@ This document is a work in progress and will be added to as the project evolves.
 
 Current public build: a **playable demo / technical proof of concept** for sharing (Patreon: https://www.patreon.com/cw/ViraXVespa). It should look and feel like the finished game with systems omitted, not an internal vertical slice. Demo hub is **Placeholdia** (a fragment); do not build out the city unless asked. Real city remains **Vylenheim**. See Project_Overview_Template.txt §7 and §14.
 
-Combat Level (full game): derived display number from the combat skills that match the equipped weapon style (OSRS-style), not a separately trained Melee/Ranged/Magic skill. See Project_Overview_Template.txt §8.
+Combat Level (demo): derived display from Great Axe + Strength + Defense + Hitpoints. HUD shows one CL bar. Pause Skills lists the rest. See Project_Overview_Template.txt §8.

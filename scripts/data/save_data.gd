@@ -7,6 +7,9 @@ const HOLD_KEYS := ["great_axe", "pickaxe", "potion", "head", "body", "legs"]
 var mining_xp: float = 0.0
 var smithing_xp: float = 0.0
 var great_axe_xp: float = 0.0
+var strength_xp: float = 0.0
+var defense_xp: float = 0.0
+var hitpoints_xp: float = 0.0
 var gold: int = 0
 var banked_ore: int = 0
 var banked_bars: int = 0
@@ -79,6 +82,9 @@ func to_dict() -> Dictionary:
 		"mining_xp": mining_xp,
 		"smithing_xp": smithing_xp,
 		"great_axe_xp": great_axe_xp,
+		"strength_xp": strength_xp,
+		"defense_xp": defense_xp,
+		"hitpoints_xp": hitpoints_xp,
 		"gold": gold,
 		"banked_ore": banked_ore,
 		"banked_bars": banked_bars,
@@ -99,6 +105,9 @@ static func from_dict(d: Dictionary) -> SaveData:
 	s.mining_xp = float(d.get("mining_xp", 0))
 	s.smithing_xp = float(d.get("smithing_xp", 0))
 	s.great_axe_xp = float(d.get("great_axe_xp", 0))
+	s.strength_xp = float(d.get("strength_xp", 0))
+	s.defense_xp = float(d.get("defense_xp", 0))
+	s.hitpoints_xp = float(d.get("hitpoints_xp", 0))
 	s.gold = int(d.get("gold", 0))
 	s.banked_ore = int(d.get("banked_ore", 0))
 	s.banked_bars = int(d.get("banked_bars", 0))
@@ -198,6 +207,40 @@ func add_hold(it: ItemData) -> bool:
 		copy.heal *= sm
 	list.append(copy)
 	return true
+
+
+func xp_of(skill: String) -> float:
+	match skill:
+		"mining":
+			return mining_xp
+		"smithing":
+			return smithing_xp
+		"great_axe":
+			return great_axe_xp
+		"strength":
+			return strength_xp
+		"defense":
+			return defense_xp
+		"hitpoints":
+			return hitpoints_xp
+		_:
+			return 0.0
+
+
+func add_xp(skill: String, n: float) -> void:
+	match skill:
+		"mining":
+			mining_xp += n
+		"smithing":
+			smithing_xp += n
+		"great_axe":
+			great_axe_xp += n
+		"strength":
+			strength_xp += n
+		"defense":
+			defense_xp += n
+		"hitpoints":
+			hitpoints_xp += n
 
 
 func restock_if_broke() -> void:

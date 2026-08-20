@@ -19,6 +19,9 @@ var armor_legs: ItemData
 var mining_xp_run: float = 0.0
 var great_axe_xp_run: float = 0.0
 var smithing_xp_run: float = 0.0
+var strength_xp_run: float = 0.0
+var defense_xp_run: float = 0.0
+var hitpoints_xp_run: float = 0.0
 var ore_extracted: int = 0
 var gold_mailed: int = 0
 var gear_extracted: Array = []
@@ -61,8 +64,7 @@ func setup(save: SaveData, chosen: Dictionary) -> void:
 	armor_head = _copy_item(chosen.get("head", null))
 	armor_body = _copy_item(chosen.get("body", null))
 	armor_legs = _copy_item(chosen.get("legs", null))
-	max_hp = 100.0 + armor_bonus_sum("hp")
-	hp = max_hp
+	refresh_max_hp(true)
 	mana = max_mana
 	gold = 0
 	seed_value = randi()
@@ -119,10 +121,7 @@ func _apply_armor_non_hp() -> void:
 				gold_mult += it.bonus_val
 			"mine":
 				mine_mult += it.bonus_val
-	max_hp = 100.0 + armor_bonus_sum("hp")
-	if artifact_ids.has("second_wind"):
-		max_hp += 20.0
-	hp = minf(hp, max_hp)
+	refresh_max_hp(false)
 
 
 func armor_bonus_sum(key: String) -> float:
@@ -133,12 +132,59 @@ func armor_bonus_sum(key: String) -> float:
 	return t
 
 
+func refresh_max_hp(fill: bool = false) -> void:
+	var old := max_hp
+	max_hp = 100.0 + armor_bonus_sum("hp") + Skills.hitpoints_bonus(Game.skill_level("hitpoints"))
+	if artifact_ids.has("second_wind"):
+		max_hp += 20.0
+	if fill:
+		hp = max_hp
+	elif max_hp > old:
+		hp += max_hp - old
+	hp = minf(hp, max_hp)
+
+
 func total_defense() -> float:
 	var d := 0.0
 	for it in [armor_head, armor_body, armor_legs]:
 		if it:
 			d += it.defense
+	d += Skills.defense_points(Game.skill_level("defense"))
 	return d
+
+
+func xp_run_of(skill: String) -> float:
+	match skill:
+		"mining":
+			return mining_xp_run
+		"smithing":
+			return smithing_xp_run
+		"great_axe":
+			return great_axe_xp_run
+		"strength":
+			return strength_xp_run
+		"defense":
+			return defense_xp_run
+		"hitpoints":
+			return hitpoints_xp_run
+		_:
+			return 0.0
+
+
+func add_xp_run(skill: String, n: float) -> void:
+	match skill:
+		"mining":
+			mining_xp_run += n
+		"smithing":
+			smithing_xp_run += n
+		"great_axe":
+			great_axe_xp_run += n
+		"strength":
+			strength_xp_run += n
+		"defense":
+			defense_xp_run += n
+		"hitpoints":
+			hitpoints_xp_run += n
 
 
 func food_count() -> int:

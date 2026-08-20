@@ -128,31 +128,28 @@ func end_run(_voluntary: bool) -> void:
 	if run == null:
 		go_plaza()
 		return
-	var keep_m := run.mining_xp_run * 0.02
-	var keep_a := run.great_axe_xp_run * 0.02
-	var keep_s := run.smithing_xp_run * 0.02
-	var mine_lv := Skills.level_from_xp(save.mining_xp)
-	var axe_lv := Skills.level_from_xp(save.great_axe_xp)
-	var smith_lv := Skills.level_from_xp(save.smithing_xp)
-	save.mining_xp += keep_m
-	save.great_axe_xp += keep_a
-	save.smithing_xp += keep_s
+	var keep := {}
 	var leveled: Array = []
-	if Skills.level_from_xp(save.mining_xp) > mine_lv:
-		leveled.append("Mining %d" % Skills.level_from_xp(save.mining_xp))
-	if Skills.level_from_xp(save.great_axe_xp) > axe_lv:
-		leveled.append("Great Axe %d" % Skills.level_from_xp(save.great_axe_xp))
-	if Skills.level_from_xp(save.smithing_xp) > smith_lv:
-		leveled.append("Smithing %d" % Skills.level_from_xp(save.smithing_xp))
+	for sk in ["mining", "great_axe", "smithing", "strength", "defense", "hitpoints"]:
+		var k := run.xp_run_of(sk) * 0.02
+		keep[sk] = k
+		var before := Skills.level_from_xp(save.xp_of(sk))
+		save.add_xp(sk, k)
+		var after := Skills.level_from_xp(save.xp_of(sk))
+		if after > before:
+			leveled.append("%s %d" % [Skills.label(sk), after])
 	if run.visited_deepest > save.deepest_floor:
 		save.deepest_floor = run.visited_deepest
 	last_recap = {
 		"voluntary": _voluntary,
 		"verge": (not _voluntary) and (run.guardian_low or (run.saw_stairs and run.current_floor == run.visited_deepest)),
 		"floor": run.visited_deepest,
-		"mining_kept": keep_m,
-		"axe_kept": keep_a,
-		"smithing_kept": keep_s,
+		"mining_kept": keep.get("mining", 0.0),
+		"axe_kept": keep.get("great_axe", 0.0),
+		"smithing_kept": keep.get("smithing", 0.0),
+		"strength_kept": keep.get("strength", 0.0),
+		"defense_kept": keep.get("defense", 0.0),
+		"hitpoints_kept": keep.get("hitpoints", 0.0),
 		"ore_banked": run.ore_extracted,
 		"gold_mailed": run.gold_mailed,
 		"gold_lost": run.gold,
@@ -164,6 +161,7 @@ func end_run(_voluntary: bool) -> void:
 	save.write()
 	run = null
 	in_dungeon = false
+	last_recap["combat_level"] = combat_level()
 	Engine.time_scale = 1.0
 	get_tree().paused = false
 	get_tree().call_deferred("change_scene_to_file", recap_scene)
@@ -223,24 +221,8 @@ func heal_player(amount: float) -> void:
 
 
 func skill_xp(skill: String) -> float:
-	var awake := 0.0
-	var dream := 0.0
-	if save:
-		match skill:
-			"mining":
-				awake = save.mining_xp
-			"great_axe":
-				awake = save.great_axe_xp
-			"smithing":
-				awake = save.smithing_xp
-	if run:
-		match skill:
-			"mining":
-				dream = run.mining_xp_run
-			"great_axe":
-				dream = run.great_axe_xp_run
-			"smithing":
-				dream = run.smithing_xp_run
+	var awake := save.xp_of(skill) if save else 0.0
+	var dream := run.xp_run_of(skill) if run else 0.0
 	return awake + dream
 
 
@@ -248,33 +230,35 @@ func skill_level(skill: String) -> int:
 	return Skills.level_from_xp(skill_xp(skill))
 
 
+func combat_level() -> int:
+	return Skills.combat_level(skill_xp("great_axe"), skill_xp("strength"), skill_xp("defense"), skill_xp("hitpoints"))
+
+
+func combat_level_precise() -> float:
+	return Skills.combat_level_precise(skill_xp("great_axe"), skill_xp("strength"), skill_xp("defense"), skill_xp("hitpoints"))
+
+
 func grant_xp(skill: String, amount: float, awake: bool = false) -> void:
 	if amount == 0.0:
 		return
 	var before := skill_level(skill)
+	var cl_before := combat_level()
 	if awake or run == null:
 		if save == null:
 			return
-		match skill:
-			"mining":
-				save.mining_xp += amount
-			"great_axe":
-				save.great_axe_xp += amount
-			"smithing":
-				save.smithing_xp += amount
+		save.add_xp(skill, amount)
 	else:
-		match skill:
-			"mining":
-				run.mining_xp_run += amount
-			"great_axe":
-				run.great_axe_xp_run += amount
-			"smithing":
-				run.smithing_xp_run += amount
+		run.add_xp_run(skill, amount)
+	if skill == "hitpoints" and run:
+		run.refresh_max_hp(false)
 	var after := skill_level(skill)
 	if after > before:
 		skill_leveled.emit(skill, after)
 		Sfx.play("level")
 		toast("%s level %d!" % [Skills.label(skill), after], Color(1.0, 0.92, 0.42))
+	var cl_after := combat_level()
+	if cl_after > cl_before:
+		toast("Combat level %d!" % cl_after, Color(1.0, 0.86, 0.35))
 
 
 func toast(text: String, col: Color = Color(1.0, 0.86, 0.35)) -> void:
@@ -440,6 +424,8 @@ func _register_input() -> void:
 	_act("food", [KEY_2], JOY_BUTTON_DPAD_LEFT)
 	_act("map_view", [KEY_M], JOY_BUTTON_BACK)
 	_act("pause", [KEY_ESCAPE], JOY_BUTTON_START)
+	_act("tab_left", [KEY_BRACKETLEFT], JOY_BUTTON_LEFT_SHOULDER)
+	_act("tab_right", [KEY_BRACKETRIGHT], JOY_BUTTON_RIGHT_SHOULDER)
 	_bind_ui_actions()
 
 
