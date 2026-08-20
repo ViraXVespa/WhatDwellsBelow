@@ -48,6 +48,7 @@ func set_cam_zoom(z: float) -> void:
 func go_title() -> void:
 	in_dungeon = false
 	run = null
+	Engine.time_scale = 1.0
 	get_tree().paused = false
 	Sfx.set_music("hub")
 	get_tree().call_deferred("change_scene_to_file", title_scene)
@@ -62,6 +63,7 @@ func wipe_save() -> void:
 	if da:
 		da.remove("wdb_save.json")
 	save = SaveData.load_or_create()
+	Engine.time_scale = 1.0
 	Sfx.apply_volumes()
 	toast("Save cleared. New diver.", Color(0.85, 0.9, 0.7))
 	go_title()
@@ -70,6 +72,7 @@ func wipe_save() -> void:
 func go_plaza() -> void:
 	in_dungeon = false
 	run = null
+	Engine.time_scale = 1.0
 	get_tree().paused = false
 	if save:
 		save.restock_if_broke()
@@ -90,6 +93,7 @@ func begin_run(chosen: Dictionary, start_floor: int) -> void:
 	if run.current_floor > save.deepest_floor:
 		save.deepest_floor = run.current_floor
 	in_dungeon = true
+	Engine.time_scale = 1.0
 	get_tree().paused = false
 	get_tree().call_deferred("change_scene_to_file", dungeon_scene)
 	floor_changed.emit()
@@ -107,6 +111,7 @@ func enter_floor(n: int) -> void:
 		save.deepest_floor = n
 		save.write()
 	in_dungeon = true
+	Engine.time_scale = 1.0
 	get_tree().call_deferred("change_scene_to_file", dungeon_scene)
 	floor_changed.emit()
 
@@ -159,6 +164,7 @@ func end_run(_voluntary: bool) -> void:
 	save.write()
 	run = null
 	in_dungeon = false
+	Engine.time_scale = 1.0
 	get_tree().paused = false
 	get_tree().call_deferred("change_scene_to_file", recap_scene)
 
@@ -214,12 +220,6 @@ func heal_player(amount: float) -> void:
 		return
 	run.hp = minf(run.max_hp, run.hp + amount)
 	run_hp_changed.emit()
-
-
-func restore_mana(amount: float) -> void:
-	if run == null:
-		return
-	run.mana = minf(run.max_mana, run.mana + amount)
 
 
 func skill_xp(skill: String) -> float:

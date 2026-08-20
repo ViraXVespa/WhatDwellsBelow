@@ -7,8 +7,13 @@ var used := false
 func _ready() -> void:
 	super._ready()
 	prompt = "Touch shrine"
-	var tex := Art.load_tex("res://assets/sprites/props/crystal.png")
-	add_child(Art.make_sprite(tex if tex else Art.solid(Vector2i(28, 48), Color(0.85, 0.72, 0.25)), 0.62))
+	add_child(Art.make_sprite(Art.solid(Vector2i(22, 40), Color(0.78, 0.58, 0.18)), 0.78))
+	var cap := ColorRect.new()
+	cap.size = Vector2(18, 8)
+	cap.position = Vector2(-9, -28)
+	cap.color = Color(0.95, 0.82, 0.35, 0.95)
+	cap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(cap)
 
 
 func get_prompt() -> String:

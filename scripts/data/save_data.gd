@@ -45,12 +45,16 @@ static func load_or_create() -> SaveData:
 	return s
 
 
-func _seed_starters() -> void:
+func _seed_kit() -> void:
 	_ensure_holds()
 	if (holds["great_axe"] as Array).is_empty():
 		(holds["great_axe"] as Array).append(ItemData.make_starter_axe())
 	if (holds["pickaxe"] as Array).is_empty():
 		(holds["pickaxe"] as Array).append(ItemData.make_starter_pickaxe())
+
+
+func _seed_starters() -> void:
+	_seed_kit()
 	if (holds["potion"] as Array).is_empty():
 		(holds["potion"] as Array).append(ItemData.make_potion())
 
@@ -120,7 +124,7 @@ static func from_dict(d: Dictionary) -> SaveData:
 			s.holds[k] = arr
 	else:
 		_migrate_old(s, d)
-	s._seed_starters()
+	s._seed_kit()
 	s.restock_if_broke()
 	return s
 
@@ -146,8 +150,7 @@ func family_unlocked(family: String) -> bool:
 	for it in recipes:
 		if it.family == family or it.hold_key() == family:
 			return true
-	var list: Array = holds.get(family, [])
-	return list.size() > 0
+	return false
 
 
 func holds_of(key: String) -> Array:

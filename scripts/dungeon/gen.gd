@@ -193,6 +193,7 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 	var levers: Array = []
 	var gates: Array = []
 	var cracks: Array = []
+	var quiet: Array[Rect2i] = []
 	for ci in chest_n:
 		if extras.is_empty():
 			break
@@ -205,6 +206,7 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 			if alc.size.x > 0:
 				rooms.append(alc)
 				safe_rooms.append(alc)
+				quiet.append(host)
 				var cpos := _center(alc)
 				chests.append(cpos)
 				var a := _center(host)
@@ -220,9 +222,10 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 			if alc.size.x > 0:
 				rooms.append(alc)
 				safe_rooms.append(alc)
+				quiet.append(host)
 				var cpos := _center(alc)
 				chests.append(cpos)
-				var gpos := Vector2i(( _center(host).x + cpos.x ) / 2, ( _center(host).y + cpos.y ) / 2)
+				var gpos := _alcove_mouth(host, alc)
 				_ensure_floor(grid, gpos)
 				gates.append({"pos": gpos, "id": ci})
 				if kind == 1:
@@ -235,18 +238,23 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 			if alc.size.x > 0:
 				rooms.append(alc)
 				safe_rooms.append(alc)
+				quiet.append(host)
 				chests.append(_center(alc))
-				var mid := Vector2i((_center(host).x + _center(alc).x) / 2, (_center(host).y + _center(alc).y) / 2)
-				cracks.append(mid)
+				cracks.append(_alcove_mouth(host, alc))
 	var kept: Array = []
 	for e in enemies:
 		var ep: Vector2i = e.pos
-		var in_safe := false
+		var banned := false
 		for s: Rect2i in safe_rooms:
 			if s.has_point(ep):
-				in_safe = true
+				banned = true
 				break
-		if not in_safe:
+		if not banned:
+			for q: Rect2i in quiet:
+				if q.has_point(ep):
+					banned = true
+					break
+		if not banned:
 			kept.append(e)
 	enemies = kept
 	return {
@@ -277,6 +285,7 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 		"levers": levers,
 		"gates": gates,
 		"cracks": cracks,
+		"safe_rooms": safe_rooms,
 	}
 
 
@@ -430,6 +439,20 @@ static func _carve_room(grid: PackedByteArray, r: Rect2i) -> void:
 
 static func _center(r: Rect2i) -> Vector2i:
 	return r.position + r.size / 2
+
+
+static func _alcove_mouth(host: Rect2i, alc: Rect2i) -> Vector2i:
+	var hc := _center(host)
+	var best := _center(alc)
+	var best_d := 999999
+	for y in range(alc.position.y, alc.position.y + alc.size.y):
+		for x in range(alc.position.x, alc.position.x + alc.size.x):
+			var p := Vector2i(x, y)
+			var d: int = p.distance_squared_to(hc)
+			if d < best_d:
+				best_d = d
+				best = p
+	return best
 
 
 static func _wall_edge_floors(grid: PackedByteArray, room: Rect2i) -> Array:

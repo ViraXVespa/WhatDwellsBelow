@@ -97,9 +97,11 @@ func _close_shop() -> void:
 
 
 func _copy() -> String:
-	return "Placeholdia stall. Gold %d. Banked ore %d.\nRations 5g. Potions 15g. I'll take 5 ore for 10g." % [
+	return "Placeholdia stall. Gold %d. Banked ore %d.\nPacked for the next dive: %d/20 rations, %d potions in the sack.\nRations 5g. Potions 15g. I'll take 5 ore for 10g." % [
 		Game.save.gold if Game.save else 0,
 		Game.save.banked_ore if Game.save else 0,
+		Game.save.extra_food if Game.save else 0,
+		Game.save.extra_potion if Game.save else 0,
 	]
 
 

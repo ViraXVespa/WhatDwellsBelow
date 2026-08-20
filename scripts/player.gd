@@ -9,7 +9,7 @@ const SLAM_CD := 5.0
 const SLAM_RADIUS := 176.0
 const AXE_RANGE := 118.0
 const AXE_ARC := 0.96
-const REGEN := 0.5
+
 
 var aim_dir := Vector2.DOWN
 var target_mode := false
@@ -115,7 +115,6 @@ func _physics_process(delta: float) -> void:
 		_use_consumable("potion")
 	if Input.is_action_just_pressed("food"):
 		_use_consumable("food")
-	_regen(delta)
 	_apply_facing(delta)
 	if flash > 0.0:
 		flash -= delta
@@ -473,14 +472,6 @@ func _use_consumable(family: String) -> void:
 		return
 	Game.heal_player(it.heal)
 	Game.bag_changed.emit()
-
-
-func _regen(delta: float) -> void:
-	if Game.run == null or not Game.in_dungeon:
-		return
-	if Game.run.hp <= 0.0:
-		return
-	Game.run.hp = minf(Game.run.max_hp, Game.run.hp + REGEN * delta)
 
 
 func channel_ratio() -> float:

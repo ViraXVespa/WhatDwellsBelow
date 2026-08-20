@@ -185,6 +185,8 @@ func _physics_process(delta: float) -> void:
 	var to: Vector2 = player.global_position - global_position
 	var dist := to.length()
 	var los := _has_los(player)
+	if _world_is_safe(player.global_position):
+		los = false
 	if los and dist < 460.0:
 		aware = true
 		last_seen = player.global_position
@@ -226,6 +228,7 @@ func _ai_ranged(delta: float, _player: Player, to: Vector2, dist: float, los: bo
 				velocity = steer * move_speed
 			else:
 				velocity = Vector2.ZERO
+			velocity = _block_safe_step(velocity)
 			if los and dist < 420.0 and dist > 70.0 and shoot_cd <= 0.0:
 				phase = Phase.WINDUP
 				phase_t = 0.0
@@ -238,7 +241,8 @@ func _ai_ranged(delta: float, _player: Player, to: Vector2, dist: float, los: bo
 			move_and_slide()
 			phase_t += delta
 			if phase_t >= windup_time:
-				_shoot(lunge_dir)
+				if _player and not _world_is_safe(_player.global_position):
+					_shoot(lunge_dir)
 				phase = Phase.LUNGE
 				phase_t = 0.0
 		Phase.LUNGE:
@@ -273,6 +277,7 @@ func _ai_melee(delta: float, player: Player, to: Vector2, dist: float, los: bool
 				velocity = Vector2.ZERO
 			else:
 				velocity = steer * move_speed
+			velocity = _block_safe_step(velocity)
 			move_and_slide()
 			_stuck(delta)
 		Phase.WINDUP:
@@ -284,7 +289,7 @@ func _ai_melee(delta: float, player: Player, to: Vector2, dist: float, los: bool
 				phase_t = 0.0
 				hit_this_lunge = false
 		Phase.LUNGE:
-			velocity = lunge_dir * lunge_speed
+			velocity = _block_safe_step(lunge_dir * lunge_speed)
 			move_and_slide()
 			phase_t += delta
 			if not hit_this_lunge and global_position.distance_to(player.global_position) <= 46.0:
@@ -454,6 +459,27 @@ func _refresh_hp_bar() -> void:
 	hp_fg.color = Color(0.92, 0.58, 0.18) if ratio <= 0.35 else Color(0.82, 0.22, 0.2)
 
 
+func _world_is_safe(world: Vector2) -> bool:
+	var dungeon := get_tree().current_scene
+	if dungeon == null or not (dungeon.get("data") is Dictionary):
+		return false
+	var rooms = dungeon.data.get("safe_rooms", [])
+	var t := Vector2i(int(world.x / 64.0), int(world.y / 64.0))
+	for r in rooms:
+		if r is Rect2i and (r as Rect2i).has_point(t):
+			return true
+	return false
+
+
+func _block_safe_step(vel: Vector2) -> Vector2:
+	if vel.length() < 0.01:
+		return vel
+	var next := global_position + vel.normalized() * 28.0
+	if _world_is_safe(next) and not _world_is_safe(global_position):
+		return Vector2.ZERO
+	return vel
+
+
 func _die() -> void:
 	if Game.run:
 		var gold_amt := rng.randi_range(3, 12) + Game.run.current_floor
@@ -462,10 +488,11 @@ func _die() -> void:
 			Game.grant_xp("great_axe", 40.0)
 			var drop := LootGen.roll_gear("great_axe", rng)
 			Game.give_or_drop(drop, global_position)
-			if rng.randf() < 0.5:
-				var art_s = load("res://scripts/data/artifacts.gd")
-				var art: Dictionary = art_s.pick(rng, Game.run.artifact_ids)
-				Game.give_artifact(str(art.id))
+			var art_s = load("res://scripts/data/artifacts.gd")
+			for _i in 2:
+				if rng.randf() < 0.5:
+					var art: Dictionary = art_s.pick(rng, Game.run.artifact_ids)
+					Game.give_artifact(str(art.id))
 		else:
 			Game.grant_xp("great_axe", 8.0)
 			if rng.randf() < 0.16:

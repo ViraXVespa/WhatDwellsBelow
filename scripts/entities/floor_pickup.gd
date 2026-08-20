@@ -22,7 +22,7 @@ func setup(p_kind: String, p_amount: float) -> void:
 	var path := "res://assets/sprites/props/%s_orb.png" % kind
 	var tex := Art.load_tex(path)
 	if tex == null:
-		var col := Color(0.85, 0.2, 0.2) if kind == "hp" else Color(0.25, 0.45, 0.95)
+		var col := Color(0.85, 0.2, 0.2)
 		tex = Art.solid(Vector2i(16, 16), col)
 	add_child(Art.make_sprite(tex, 0.38))
 	body_entered.connect(_on_body)
@@ -48,7 +48,5 @@ func _on_body(body: Node) -> void:
 		return
 	if kind == "hp":
 		Game.heal_player(amount)
-	elif kind == "mana":
-		Game.restore_mana(amount)
 	Sfx.play("pickup")
 	queue_free()
