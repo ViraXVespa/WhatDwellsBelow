@@ -652,4 +652,4 @@ Decided (**demo save**): **persist forever** (browser user://). No wipe button. 
 Decided (**demo defense**): **no passive Dodge/Block yet.** Slam, dash i-frames, food, pots. Full evade/DR waits until the feedback reads on a couch.
 Decided (**demo end**): **loop forever.** Floor 6 Guardian is the nastiest floor, not a credits gate.
 Decided (**pause**): **Patreon link + music/SFX volume.** Zoom is an adjustable setting; default is current 1.0 camera scale.
-Decided (**placeholder score aim**): Placeholdia = **warm, hopeful, a bit jokey, not grand.** Dungeon = **low, tense, career-hazard — not horror.** Vira replaces both later.
+Decided (**placeholder score aim**): Placeholdia = **warm, hopeful, a bit jokey, not grand** (stand-in loop). Dungeon = Vira's **8-Bit.mp3**: play the intro on first start, then loop the body (offset ~14.85s).

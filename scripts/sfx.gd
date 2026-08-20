@@ -41,6 +41,11 @@ func play(name: String) -> void:
 		players[name].play()
 
 
+# Vira's 8-Bit.mp3: play the intro once, then loop the body.
+# 14.85s is one 8-bar phrase at ~130 BPM (opening swell + first statement).
+const DUNGEON_LOOP_OFFSET := 14.85
+
+
 func set_music(which: String) -> void:
 	if which == current_music:
 		return
@@ -49,13 +54,19 @@ func set_music(which: String) -> void:
 	if which == "hub":
 		path = "res://assets/audio/music_hub.wav"
 	elif which == "dungeon":
-		path = "res://assets/audio/music_dungeon.wav"
+		if ResourceLoader.exists("res://assets/audio/music_dungeon.mp3"):
+			path = "res://assets/audio/music_dungeon.mp3"
+		else:
+			path = "res://assets/audio/music_dungeon.wav"
 	if path == "" or not ResourceLoader.exists(path):
 		music.stop()
 		return
 	var stream: AudioStream = load(path)
 	if stream is AudioStreamWAV:
 		(stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_FORWARD
+	elif stream is AudioStreamMP3:
+		(stream as AudioStreamMP3).loop = true
+		(stream as AudioStreamMP3).loop_offset = DUNGEON_LOOP_OFFSET
 	music.stream = stream
 	apply_volumes()
 	music.play()
