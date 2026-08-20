@@ -24,8 +24,15 @@ static func painted() -> bool:
 static func a(kind: String, file: String) -> String:
 	if painted():
 		return "res://assets/3d/%s/%s" % [kind, file]
+	var live := ""
 	if kind == "tiles":
+		live = "res://assets/live/tiles/%s" % file
+		if ResourceLoader.exists(live):
+			return live
 		return "res://assets/tiles/%s" % file
+	live = "res://assets/live/%s/%s" % [kind, file]
+	if ResourceLoader.exists(live):
+		return live
 	return "res://assets/sprites/%s/%s" % [kind, file]
 
 
@@ -60,7 +67,9 @@ static func tile_center(tx: int, ty: int, y := 0.0) -> Vector3:
 
 
 static func los(grid: PackedByteArray, from3: Vector3, to3: Vector3) -> bool:
-	return DungeonGen.world_has_los(grid, to_px(from3), to_px(to3))
+	var a := Vector2i(int(from3.x), int(from3.z))
+	var b := Vector2i(int(to3.x), int(to3.z))
+	return DungeonGen.has_grid_los(grid, a, b)
 
 
 static func cam_back() -> float:

@@ -47,7 +47,11 @@ func _ready() -> void:
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	var portrait_path := "res://assets/3d/player/down.png" if Game.using_experiment_art() else "res://assets/sprites/player/down.png"
+	var portrait_path := "res://assets/sprites/player/down.png"
+	if Game.using_experiment_art():
+		portrait_path = "res://assets/3d/player/down.png"
+	elif ResourceLoader.exists("res://assets/live/player/down.png"):
+		portrait_path = "res://assets/live/player/down.png"
 	if ResourceLoader.exists(portrait_path):
 		portrait.texture = load(portrait_path)
 	strip.add_child(portrait)

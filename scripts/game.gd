@@ -16,10 +16,12 @@ var run: RunState
 var in_dungeon: bool = false
 var last_recap: Dictionary = {}
 
-var plaza_scene := "res://scenes/plaza.tscn"
-var dungeon_scene := "res://scenes/dungeon_floor.tscn"
+var plaza_scene := "res://archives/classic_2d/scenes/plaza.tscn"
+var dungeon_scene := "res://archives/classic_2d/scenes/dungeon_floor.tscn"
 var plaza_3d_scene := "res://scenes/plaza_3d.tscn"
 var dungeon_3d_scene := "res://scenes/dungeon_3d.tscn"
+var plaza_experiment_scene := "res://archives/art_experiment/scenes/plaza.tscn"
+var dungeon_experiment_scene := "res://archives/art_experiment/scenes/dungeon.tscn"
 var recap_scene := "res://scenes/recap.tscn"
 var title_scene := "res://scenes/title.tscn"
 
@@ -46,6 +48,24 @@ func using_3d() -> bool:
 
 func using_experiment_art() -> bool:
 	return presentation() == "art_experiment"
+
+
+func plaza_path() -> String:
+	var p := presentation()
+	if p == "classic_2d":
+		return plaza_scene
+	if p == "art_experiment":
+		return plaza_experiment_scene
+	return plaza_3d_scene
+
+
+func dungeon_path() -> String:
+	var p := presentation()
+	if p == "classic_2d":
+		return dungeon_scene
+	if p == "art_experiment":
+		return dungeon_experiment_scene
+	return dungeon_3d_scene
 
 
 func set_presentation(id: String, reload := true) -> void:
@@ -117,8 +137,7 @@ func go_plaza() -> void:
 		save.restock_if_broke()
 		save.write()
 	Sfx.set_music("hub")
-	var path := plaza_3d_scene if using_3d() else plaza_scene
-	get_tree().call_deferred("change_scene_to_file", path)
+	get_tree().call_deferred("change_scene_to_file", plaza_path())
 
 
 func begin_run(chosen: Dictionary, start_floor: int) -> void:
@@ -135,7 +154,7 @@ func begin_run(chosen: Dictionary, start_floor: int) -> void:
 	in_dungeon = true
 	Engine.time_scale = 1.0
 	get_tree().paused = false
-	get_tree().call_deferred("change_scene_to_file", dungeon_3d_scene if using_3d() else dungeon_scene)
+	get_tree().call_deferred("change_scene_to_file", dungeon_path())
 	floor_changed.emit()
 
 
@@ -152,7 +171,7 @@ func enter_floor(n: int) -> void:
 		save.write()
 	in_dungeon = true
 	Engine.time_scale = 1.0
-	get_tree().call_deferred("change_scene_to_file", dungeon_3d_scene if using_3d() else dungeon_scene)
+	get_tree().call_deferred("change_scene_to_file", dungeon_path())
 	floor_changed.emit()
 
 
@@ -233,7 +252,7 @@ func spawn_drop(it: ItemData, world_pos: Vector2) -> void:
 		scene.add_child(drop3)
 		drop3.setup(it, Vector3(world_pos.x + randf_range(-0.28, 0.28), 0.2, world_pos.y + randf_range(-0.2, 0.2)))
 		return
-	var drop = (load("res://scripts/entities/ground_drop.gd") as GDScript).new()
+	var drop = (load("res://archives/classic_2d/scripts/entities/ground_drop.gd") as GDScript).new()
 	drop.position = world_pos + Vector2(randf_range(-18, 18), randf_range(-12, 12))
 	scene.add_child(drop)
 	drop.setup(it)
