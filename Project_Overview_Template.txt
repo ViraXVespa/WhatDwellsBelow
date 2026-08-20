@@ -589,7 +589,7 @@ Decided: demo = **combat grunts only**. Full VO later.
 
 UI
 Decided: extract is a **dialogue + send-list** on a pad (TV-readable). Must work in couch co-op without covering the whole two-pane view forever.
-Decided: HUD is **Gauntlet strips** (per player: HP, mana, cooldowns, gold, bag, floor). Same in solo and 4-player.
+Decided: HUD is **Gauntlet strips** (per player: HP, cooldowns, gold, bag, floor). Mana hidden in the demo. Same in solo and 4-player.
 Decided (partial): death recap is a **Gauntlet-strip party results** screen, light tone. Extract = dialogue + send list. HUD = Gauntlet strips.
 [TODO] Inventory, skills, loadout — sketch or reference screens later.
 Decided: UI must read at TV distance on Xbox (couch). PC can reuse that; do not shrink to mouse-desktop or phone density.
@@ -628,7 +628,7 @@ Full vision (from original)
 Extravagant skills, many weapon types, a living city, deep procgen dungeon, extraction/recreation, dreamlike XP, story that can reshape the hub. Couch co-op on Xbox is the long-term design center.
 
 Now (playable demo) — **build contract**
-**Stage out of Placeholdia (a joke of a hub, not the real city), take a Great Axe and pickaxe through the guild crystal, delve 2–6 traditional-dungeon floors (hold-to-attack, dash, slam, mine, smash pots), mail loot at clerks, die or pause-dispel, and wake with banked ore, a fragment of XP, and any analyzed white/green axes. The dungeon should feel like What Dwells Below; the town should feel like a labeled placeholder.**
+**Stage out of Placeholdia (a joke of a hub, not the real city), take a Great Axe and pickaxe through the guild crystal, delve 2–6 traditional-dungeon floors (hold-to-attack, dash, slam, mine, smash pots), mail loot at clerks, die or pause-dispel, and wake with banked ore, a fragment of XP, and any forged white/green kit. The dungeon should feel like What Dwells Below; the town should feel like a labeled placeholder.**
 
 What's in this demo:
 - **Placeholdia**: one tiny plaza — crystal, guild sign, vendor, anvil, dumpster. Frozen unless the player asks to change the hub. Not Vylenheim.

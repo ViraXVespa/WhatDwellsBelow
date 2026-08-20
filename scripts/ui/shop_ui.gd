@@ -91,7 +91,14 @@ func _refresh() -> void:
 		if row.get("kind") == "art" and Game.run and Game.run.shop_buys >= 2 and not row.get("sold"):
 			tag = "LOCKED"
 		list.add_item("%s  [%s]  %s" % [str(row.name), tag, str(row.get("desc", ""))])
-		list.set_item_metadata(list.item_count - 1, i)
+		list.set_item_metadata(list.item_count - 1, {"kind": "stock", "i": i})
+	list.add_item("— pawn from bag (unequip first) —")
+	list.set_item_disabled(list.item_count - 1, true)
+	if Game.run:
+		for row in Game.run.mailable_gear():
+			var it: ItemData = row.item
+			list.add_item("Pawn %s  (a few coins)" % it.full_name())
+			list.set_item_metadata(list.item_count - 1, {"kind": "pawn", "i": int(row.index)})
 	if list.item_count > 0:
 		list.select(0)
 
@@ -99,7 +106,11 @@ func _refresh() -> void:
 func _buy() -> void:
 	if Game.run == null or list.get_selected_items().is_empty():
 		return
-	var i: int = list.get_item_metadata(list.get_selected_items()[0])
+	var meta = list.get_item_metadata(list.get_selected_items()[0])
+	if not (meta is Dictionary) or meta.get("kind") != "stock":
+		hint.text = "That's a pawn line. Use the pawn button."
+		return
+	var i: int = int(meta.i)
 	var row: Dictionary = stock[i]
 	if row.get("sold"):
 		return
@@ -119,21 +130,25 @@ func _buy() -> void:
 		stock[i] = row
 	else:
 		if not Game.add_to_bag(ItemData.make_food(1)):
-			Game.give_or_drop(ItemData.make_food(1), Vector2.ZERO)
+			var p := get_tree().get_first_node_in_group("player")
+			var pos := p.global_position if p is Node2D else Vector2.ZERO
+			Game.give_or_drop(ItemData.make_food(1), pos)
 	_refresh()
 
 
 func _pawn() -> void:
-	if Game.run == null:
+	if Game.run == null or list.get_selected_items().is_empty():
 		return
-	hint.text = "Open pause inventory, drop the piece into the bag, then talk to me again.\nOr pick a bag index below if you already did."
-	# Pawn first mailable gear/potion in bag.
-	for row in Game.run.mailable_gear():
-		var g := Game.pawn_bag_item(int(row.index))
-		hint.text = "I'll take it off your hands. +%dg. Don't spend it all on ghosts." % g
-		_refresh()
+	var meta = list.get_item_metadata(list.get_selected_items()[0])
+	if not (meta is Dictionary) or meta.get("kind") != "pawn":
+		hint.text = "Unequip it into the bag first, then pick the pawn line. I don't lift off a living belt."
 		return
-	hint.text = "Nothing in the bag I'd insult with a price."
+	var g := Game.pawn_bag_item(int(meta.i))
+	if g <= 0:
+		hint.text = "Nothing in the bag I'd insult with a price."
+		return
+	hint.text = "I'll take it off your hands. +%dg. Don't spend it all on ghosts." % g
+	_refresh()
 
 
 func _btn(text: String, cb: Callable) -> Button:

@@ -49,31 +49,38 @@ func _init() -> void:
 
 
 func setup(save: SaveData, chosen: Dictionary) -> void:
-	weapon = chosen.get("weapon", ItemData.make_starter_axe())
-	tool = chosen.get("tool", ItemData.make_starter_pickaxe())
-	potion = chosen.get("potion", null)
-	armor_head = chosen.get("head", null)
-	armor_body = chosen.get("body", null)
-	armor_legs = chosen.get("legs", null)
+	weapon = _copy_item(chosen.get("weapon", null))
+	if weapon == null:
+		weapon = ItemData.make_starter_axe()
+	tool = _copy_item(chosen.get("tool", null))
+	if tool == null:
+		tool = ItemData.make_starter_pickaxe()
+	potion = _copy_item(chosen.get("potion", null))
+	armor_head = _copy_item(chosen.get("head", null))
+	armor_body = _copy_item(chosen.get("body", null))
+	armor_legs = _copy_item(chosen.get("legs", null))
 	max_hp = 100.0 + armor_bonus_sum("hp")
 	hp = max_hp
 	mana = max_mana
 	gold = 0
 	seed_value = randi()
-	var food_n := 3 + (save.extra_food if save else 0)
-	add_item(ItemData.make_food(food_n))
+	var food_n := save.extra_food if save else 0
+	if food_n > 0:
+		add_item(ItemData.make_food(food_n))
 	if save:
 		save.extra_food = 0
 		if save.extra_potion > 0:
 			for _i in save.extra_potion:
 				add_item(ItemData.make_potion())
 			save.extra_potion = 0
-	if potion == null and save:
-		var pots: Array = save.holds_of("potion")
-		if not pots.is_empty():
-			potion = pots[0]
 	visited_deepest = 1
 	_apply_armor_non_hp()
+
+
+func _copy_item(it) -> ItemData:
+	if it is ItemData:
+		return (it as ItemData).duplicate_item()
+	return null
 
 
 func _apply_armor_non_hp() -> void:

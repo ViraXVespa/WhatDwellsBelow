@@ -107,9 +107,7 @@ func _fill() -> void:
 				arr.append(p)
 		il.set_meta("items", arr)
 		if il.item_count > 0:
-			il.select(0 if k in ["weapon", "tool", "potion"] else 0)
-			if k in ["head", "body", "legs"] and arr.size() > 1:
-				il.select(arr.size() - 1)
+			il.select(arr.size() - 1)
 	var deep: int = Game.save.deepest_floor
 	floor_group = ButtonGroup.new()
 	chosen_floor = 1

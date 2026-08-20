@@ -236,6 +236,17 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 				chests.append(_center(alc))
 				var mid := Vector2i((_center(host).x + _center(alc).x) / 2, (_center(host).y + _center(alc).y) / 2)
 				cracks.append(mid)
+	var kept: Array = []
+	for e in enemies:
+		var ep: Vector2i = e.pos
+		var in_safe := false
+		for s: Rect2i in safe_rooms:
+			if s.has_point(ep):
+				in_safe = true
+				break
+		if not in_safe:
+			kept.append(e)
+	enemies = kept
 	return {
 		"w": W,
 		"h": H,

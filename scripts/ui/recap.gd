@@ -2,6 +2,10 @@ extends Control
 
 func _ready() -> void:
 	Sfx.set_music("hub")
+	if Game.last_recap.get("verge", false) and not Game.last_recap.get("voluntary", false):
+		Sfx.play("hurt")
+	else:
+		Sfx.play("ui")
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var bg := ColorRect.new()
 	bg.color = Color(0.08, 0.09, 0.12)
@@ -36,7 +40,7 @@ func _ready() -> void:
 	s.size = Vector2(900, 250)
 	var gear_lines := ""
 	for g in r.get("gear", []):
-		gear_lines += "\n  analyzed: %s" % str(g)
+		gear_lines += "\n  mailed: %s" % str(g)
 	if gear_lines == "":
 		gear_lines = "\n  no Gear Gopher this run (or you mailed none)"
 	var lvl_lines := ""

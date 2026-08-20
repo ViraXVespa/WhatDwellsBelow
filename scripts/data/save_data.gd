@@ -40,6 +40,7 @@ static func load_or_create() -> SaveData:
 				return from_dict(json.data)
 	var s := SaveData.new()
 	s._seed_starters()
+	s.restock_if_broke()
 	s.write()
 	return s
 
@@ -197,8 +198,11 @@ func add_hold(it: ItemData) -> bool:
 
 
 func restock_if_broke() -> void:
+	# Cushion is 3 rations + 1 potion. Stall is 5g/ration and 15g/potion.
+	# If you're short of the mins and can't afford to buy the missing amount, fill it free.
+	var missing_food := maxi(0, 3 - extra_food)
+	if missing_food > 0 and gold < missing_food * 5:
+		extra_food = 3
 	var pots := holds_of("potion")
 	if pots.is_empty() and gold < 15:
 		pots.append(ItemData.make_potion())
-	if extra_food < 0:
-		extra_food = 0

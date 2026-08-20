@@ -61,6 +61,7 @@ func _draw() -> void:
 	_mark(data, visited, cx, cy, "stairs", Color(0.95, 0.82, 0.28))
 	_mark(data, visited, cx, cy, "clerk_gather", Color(0.55, 0.85, 0.45))
 	_mark(data, visited, cx, cy, "clerk_misc", Color(0.7, 0.55, 0.9))
+	_mark(data, visited, cx, cy, "clerk_patty", Color(0.95, 0.7, 0.4))
 	_mark(data, visited, cx, cy, "shop", Color(0.95, 0.55, 0.85))
 	draw_circle(size * 0.5, 3.0, Color(0.95, 0.85, 0.3))
 	_border()

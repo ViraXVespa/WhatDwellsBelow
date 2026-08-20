@@ -153,25 +153,6 @@ func _send_selected() -> void:
 	_refresh()
 
 
-func _overwrite_picker(existing: Array) -> void:
-	list.clear()
-	hint.text = "Stash full. Pick a slot to overwrite."
-	for i in existing.size():
-		var it: ItemData = existing[i]
-		list.add_item("Replace: " + it.full_name())
-		list.set_item_metadata(i, i)
-	for child in panel.get_children():
-		pass
-	var confirm := _btn("Overwrite selected slot", func():
-		if list.get_selected_items().is_empty():
-			return
-		var slot: int = list.get_item_metadata(list.get_selected_items()[0])
-		Game.confirm_overwrite("", slot)
-		_refresh()
-	)
-	panel.get_child(0).add_child(confirm)
-
-
 func _send_xp() -> void:
 	if clerk == null or Game.run == null:
 		return
