@@ -31,9 +31,12 @@ func _ready() -> void:
 		gear_lines += "\n  analyzed: %s" % str(g)
 	if gear_lines == "":
 		gear_lines = "\n  no Gear Gopher this run (or you mailed none)"
+	var lvl_lines := ""
+	for lv in r.get("awake_levels", []):
+		lvl_lines += "\n  woke up %s" % str(lv)
 	s.text = (
 		"Floor reached: %d\n" +
-		"XP kept  mining %.1f  |  great axe %.1f  |  smithing %.1f\n" +
+		"XP kept  mining %.1f  |  great axe %.1f  |  smithing %.1f%s\n" +
 		"Ore banked: %d\n" +
 		"Gold mailed: %d   lost in the dream: %d\n" +
 		"Bag vanished: %d slots of stuff%s"
@@ -42,6 +45,7 @@ func _ready() -> void:
 		float(r.get("mining_kept", 0)),
 		float(r.get("axe_kept", 0)),
 		float(r.get("smithing_kept", 0)),
+		lvl_lines,
 		int(r.get("ore_banked", 0)),
 		int(r.get("gold_mailed", 0)),
 		int(r.get("gold_lost", 0)),

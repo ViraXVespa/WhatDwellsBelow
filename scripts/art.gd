@@ -1,6 +1,53 @@
 class_name Art
 extends Object
 
+const FACING_KEYS := ["right", "down_right", "down", "down_left", "left", "up_left", "up", "up_right"]
+
+
+static func facing_from_dir(dir: Vector2) -> String:
+	if dir.length_squared() < 0.0001:
+		return "down"
+	var oct := int(round(atan2(dir.y, dir.x) / (PI * 0.25)))
+	match oct:
+		0:
+			return "right"
+		1:
+			return "down_right"
+		2:
+			return "down"
+		3:
+			return "down_left"
+		4, -4:
+			return "left"
+		-3:
+			return "up_left"
+		-2:
+			return "up"
+		-1:
+			return "up_right"
+		_:
+			return "down"
+
+
+static func cardinal_from_dir(dir: Vector2) -> String:
+	if absf(dir.x) > absf(dir.y):
+		return "right" if dir.x > 0.0 else "left"
+	return "down" if dir.y >= 0.0 else "up"
+
+
+static func pick_facing(dir: Vector2, sprites: Dictionary, prefix: String = "") -> String:
+	var key := facing_from_dir(dir)
+	if sprites.has(prefix + key):
+		return key
+	key = cardinal_from_dir(dir)
+	if sprites.has(prefix + key):
+		return key
+	for fallback in ["down", "right", "left", "up"]:
+		if sprites.has(prefix + fallback):
+			return fallback
+	return "down"
+
+
 # Pin texture by offset so the sprite sits on the collider (not a half-size right shift).
 static func make_sprite(tex: Texture2D = null, scale := 1.0) -> Sprite2D:
 	var s := Sprite2D.new()

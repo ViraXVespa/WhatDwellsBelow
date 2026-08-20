@@ -70,8 +70,7 @@ func complete_channel(player: Node) -> void:
 			(player as Player).interrupt_channel()
 		return
 	remaining -= 1
-	if Game.run:
-		Game.run.mining_xp_run += 12.0 * amt
+	Game.grant_xp("mining", 12.0 * float(amt))
 	if remaining <= 0:
 		modulate = Color(0.45, 0.45, 0.48)
 		prompt = "Depleted vein"

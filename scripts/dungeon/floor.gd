@@ -39,7 +39,10 @@ func _ready() -> void:
 	var loot_n := 0
 	if data.has("loot"):
 		loot_n = data.loot.size()
-	print("WDB floor ", Game.run.current_floor, " gather=", data.gather_type, " misc=", data.misc_type, " enemies=", data.enemies.size(), " mines=", data.mines.size(), " loot=", loot_n, " rooms=", data.rooms.size())
+	var br_n := 0
+	if data.has("breakables"):
+		br_n = data.breakables.size()
+	print("WDB floor ", Game.run.current_floor, " gather=", data.gather_type, " misc=", data.misc_type, " enemies=", data.enemies.size(), " mines=", data.mines.size(), " loot=", loot_n, " breakables=", br_n, " rooms=", data.rooms.size())
 
 
 func _draw_tiles() -> void:
@@ -160,6 +163,12 @@ func _spawn_entities() -> void:
 			var stash := LootStash.new()
 			stash.position = _world(lp)
 			add_child(stash)
+	if data.has("breakables"):
+		for row in data.breakables:
+			var br := Breakable.new()
+			br.position = _world(row.pos)
+			add_child(br)
+			br.setup(String(row.kind))
 
 
 func _world(t: Vector2i) -> Vector2:

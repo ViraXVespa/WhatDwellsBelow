@@ -4,6 +4,7 @@ signal run_hp_changed
 signal bag_changed
 signal gold_changed
 signal floor_changed
+signal skill_leveled(skill: String, new_level: int)
 
 var save: SaveData
 var run: RunState
@@ -72,9 +73,19 @@ func end_run(_voluntary: bool) -> void:
 	var keep_m := run.mining_xp_run * 0.02
 	var keep_a := run.great_axe_xp_run * 0.02
 	var keep_s := run.smithing_xp_run * 0.02
+	var mine_lv := Skills.level_from_xp(save.mining_xp)
+	var axe_lv := Skills.level_from_xp(save.great_axe_xp)
+	var smith_lv := Skills.level_from_xp(save.smithing_xp)
 	save.mining_xp += keep_m
 	save.great_axe_xp += keep_a
 	save.smithing_xp += keep_s
+	var leveled: Array = []
+	if Skills.level_from_xp(save.mining_xp) > mine_lv:
+		leveled.append("Mining %d" % Skills.level_from_xp(save.mining_xp))
+	if Skills.level_from_xp(save.great_axe_xp) > axe_lv:
+		leveled.append("Great Axe %d" % Skills.level_from_xp(save.great_axe_xp))
+	if Skills.level_from_xp(save.smithing_xp) > smith_lv:
+		leveled.append("Smithing %d" % Skills.level_from_xp(save.smithing_xp))
 	if run.visited_deepest > save.deepest_floor:
 		save.deepest_floor = run.visited_deepest
 	last_recap = {
@@ -89,6 +100,7 @@ func end_run(_voluntary: bool) -> void:
 		"gear": run.gear_extracted.duplicate(),
 		"bag_lost": run.bag_count(),
 		"gopher": not run.gear_extracted.is_empty(),
+		"awake_levels": leveled,
 	}
 	save.write()
 	run = null
@@ -120,6 +132,90 @@ func heal_player(amount: float) -> void:
 		return
 	run.hp = minf(run.max_hp, run.hp + amount)
 	run_hp_changed.emit()
+
+
+func restore_mana(amount: float) -> void:
+	if run == null:
+		return
+	run.mana = minf(run.max_mana, run.mana + amount)
+
+
+func skill_xp(skill: String) -> float:
+	var awake := 0.0
+	var dream := 0.0
+	if save:
+		match skill:
+			"mining":
+				awake = save.mining_xp
+			"great_axe":
+				awake = save.great_axe_xp
+			"smithing":
+				awake = save.smithing_xp
+	if run:
+		match skill:
+			"mining":
+				dream = run.mining_xp_run
+			"great_axe":
+				dream = run.great_axe_xp_run
+			"smithing":
+				dream = run.smithing_xp_run
+	return awake + dream
+
+
+func skill_level(skill: String) -> int:
+	return Skills.level_from_xp(skill_xp(skill))
+
+
+func grant_xp(skill: String, amount: float, awake: bool = false) -> void:
+	if amount == 0.0:
+		return
+	var before := skill_level(skill)
+	if awake or run == null:
+		if save == null:
+			return
+		match skill:
+			"mining":
+				save.mining_xp += amount
+			"great_axe":
+				save.great_axe_xp += amount
+			"smithing":
+				save.smithing_xp += amount
+	else:
+		match skill:
+			"mining":
+				run.mining_xp_run += amount
+			"great_axe":
+				run.great_axe_xp_run += amount
+			"smithing":
+				run.smithing_xp_run += amount
+	var after := skill_level(skill)
+	if after > before:
+		skill_leveled.emit(skill, after)
+		toast("%s level %d!" % [Skills.label(skill), after], Color(1.0, 0.92, 0.42))
+
+
+func toast(text: String, col: Color = Color(1.0, 0.86, 0.35)) -> void:
+	var tree := get_tree()
+	if tree == null or tree.root == null:
+		return
+	for c in tree.root.get_children():
+		if c.name == "ToastLayer":
+			c.queue_free()
+	var layer := CanvasLayer.new()
+	layer.name = "ToastLayer"
+	layer.layer = 80
+	var lab := Label.new()
+	lab.text = text
+	lab.position = Vector2(360, 110)
+	lab.size = Vector2(1200, 56)
+	lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lab.add_theme_font_size_override("font_size", 32)
+	lab.add_theme_color_override("font_color", col)
+	lab.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
+	lab.add_theme_constant_override("outline_size", 8)
+	layer.add_child(lab)
+	tree.root.add_child(layer)
+	tree.create_timer(2.2, true, false, true).timeout.connect(layer.queue_free)
 
 
 func add_run_gold(n: int) -> void:

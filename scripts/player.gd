@@ -101,25 +101,16 @@ func _physics_process(delta: float) -> void:
 
 
 func _load_facings() -> void:
-	var paths := {
-		"down": "res://assets/sprites/player/down.png",
-		"up": "res://assets/sprites/player/up.png",
-		"left": "res://assets/sprites/player/left.png",
-		"right": "res://assets/sprites/player/right.png",
-	}
-	for k in paths:
-		if ResourceLoader.exists(paths[k]):
-			facing_sprites[k] = load(paths[k])
+	for k in Art.FACING_KEYS:
+		var path := "res://assets/sprites/player/%s.png" % k
+		if ResourceLoader.exists(path):
+			facing_sprites[k] = load(path)
 	if facing_sprites.is_empty():
 		facing_sprites["down"] = Art.body(Vector2i(64, 64), Color(0.24, 0.49, 0.72), Color(0.94, 0.84, 0.38))
 
 
 func _apply_facing() -> void:
-	var key := "down"
-	if absf(aim_dir.x) > absf(aim_dir.y):
-		key = "right" if aim_dir.x > 0.0 else "left"
-	else:
-		key = "down" if aim_dir.y >= 0.0 else "up"
+	var key := Art.pick_facing(aim_dir, facing_sprites)
 	if key == facing_key and body_sprite.texture != null:
 		return
 	facing_key = key
@@ -209,18 +200,8 @@ func _try_attack() -> void:
 	var w := _weapon()
 	attack_cd = w.attack_period
 	var dmg := w.damage
-	for e in get_tree().get_nodes_in_group("enemies"):
-		if not is_instance_valid(e):
-			continue
-		var to: Vector2 = e.global_position - global_position
-		var dist := to.length()
-		if dist > AXE_RANGE or dist < 0.001:
-			continue
-		if absf(aim_dir.angle_to(to.normalized())) <= AXE_ARC:
-			if e.has_method("take_damage"):
-				e.take_damage(dmg, self)
-	if Game.run:
-		Game.run.great_axe_xp_run += 4.0
+	_hit_in_arc(dmg, AXE_RANGE)
+	Game.grant_xp("great_axe", 4.0)
 	_swing_flash()
 
 
@@ -240,15 +221,38 @@ func _swing_flash() -> void:
 	tw.timeout.connect(poly.queue_free)
 
 
+func _can_hit(node: Node2D, max_range: float, check_arc: bool) -> bool:
+	if not is_instance_valid(node):
+		return false
+	var to: Vector2 = node.global_position - global_position
+	var dist := to.length()
+	if dist > max_range or dist < 0.001:
+		return false
+	if check_arc and absf(aim_dir.angle_to(to.normalized())) > AXE_ARC:
+		return false
+	var dungeon := get_tree().current_scene
+	if dungeon and dungeon.get("data") is Dictionary:
+		var grid: PackedByteArray = dungeon.data.get("grid", PackedByteArray())
+		if not grid.is_empty() and not DungeonGen.world_has_los(grid, global_position, node.global_position):
+			return false
+	return true
+
+
+func _hit_in_arc(dmg: float, max_range: float, check_arc: bool = true) -> void:
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if e is Node2D and _can_hit(e, max_range, check_arc) and e.has_method("take_damage"):
+			e.take_damage(dmg, self)
+	for b in get_tree().get_nodes_in_group("breakables"):
+		if b is Node2D and _can_hit(b, max_range, check_arc) and b.has_method("take_damage"):
+			b.take_damage(dmg, self)
+
+
 func _try_slam() -> bool:
 	if slam_cd > 0.0:
 		return false
 	slam_cd = SLAM_CD
 	attack_cd = maxf(attack_cd, 0.4)
-	for e in get_tree().get_nodes_in_group("enemies"):
-		if global_position.distance_to(e.global_position) <= SLAM_RADIUS:
-			if e.has_method("take_damage"):
-				e.take_damage(_weapon().damage * 1.6, self)
+	_hit_in_arc(_weapon().damage * 1.6, SLAM_RADIUS, false)
 	var ring := Polygon2D.new()
 	ring.color = Color(0.9, 0.7, 0.2, 0.35)
 	var pts := PackedVector2Array()
@@ -258,8 +262,7 @@ func _try_slam() -> bool:
 	ring.polygon = pts
 	add_child(ring)
 	get_tree().create_timer(0.18).timeout.connect(ring.queue_free)
-	if Game.run:
-		Game.run.great_axe_xp_run += 10.0
+	Game.grant_xp("great_axe", 10.0)
 	return true
 
 

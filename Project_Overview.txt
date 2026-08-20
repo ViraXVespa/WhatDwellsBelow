@@ -19,3 +19,5 @@ The game should feature a 2D art style similar to Heroes of Hammerwatch. The cit
 === Notes ===
 
 This document is a work in progress and will be added to as the project evolves. All important design choices as well as their reasoning should be added to this document for ease of access throughout development.
+
+Combat Level (full game): derived display number from the combat skills that match the equipped weapon style (OSRS-style), not a separately trained Melee/Ranged/Magic skill. See Project_Overview_Template.txt §8.

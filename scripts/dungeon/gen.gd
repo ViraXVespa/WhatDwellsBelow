@@ -53,7 +53,11 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 	if floor_number != 1:
 		gather = String(GATHER_TYPES[rng.randi_range(0, GATHER_TYPES.size() - 1)])
 	var misc: String = String(MISC_TYPES[rng.randi_range(0, MISC_TYPES.size() - 1)])
-	var crystal := _center(entrance)
+	# Crystal sits on the north wall of the start room; player appears one tile south.
+	var crystal := Vector2i(entrance.position.x + entrance.size.x / 2, entrance.position.y + 1)
+	var spawn := Vector2i(crystal.x, crystal.y + 1)
+	_ensure_floor(grid, crystal)
+	_ensure_floor(grid, spawn)
 	var stairs := _center(stairs_room)
 	var hosts: Array[Rect2i] = []
 	for r: Rect2i in rooms:
@@ -101,7 +105,7 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 		var vein_n := 1 + (1 if rng.randf() < 0.45 else 0)
 		for i in mini(vein_n, edges.size()):
 			var mp: Vector2i = edges[i]
-			if mp == stairs or mp == crystal:
+			if mp == stairs or mp == crystal or mp == spawn:
 				continue
 			mines.append(mp)
 			mine_set[mp] = true
@@ -117,6 +121,36 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 			_ensure_floor(grid, ep)
 			enemies.append({"pos": ep, "role": roles[rng.randi_range(0, 2)]})
 			spawned += 1
+	var occupied := {}
+	occupied[crystal] = true
+	occupied[spawn] = true
+	occupied[stairs] = true
+	occupied[clerk_a] = true
+	occupied[clerk_b] = true
+	for mp in mines:
+		occupied[mp] = true
+	for e in enemies:
+		occupied[e.pos] = true
+	for lp in loot:
+		occupied[lp] = true
+	var breakables: Array = []
+	for r: Rect2i in rooms:
+		if r == entrance or _is_safe_room(r, safe_rooms):
+			continue
+		var n := rng.randi_range(1, 3)
+		var guard := 0
+		var placed := 0
+		while placed < n and guard < 24:
+			guard += 1
+			var bp := Vector2i(
+				r.position.x + rng.randi_range(0, maxi(0, r.size.x - 1)),
+				r.position.y + rng.randi_range(0, maxi(0, r.size.y - 1))
+			)
+			if occupied.has(bp) or grid[idx(bp.x, bp.y)] != FLOOR:
+				continue
+			occupied[bp] = true
+			breakables.append({"pos": bp, "kind": "pot" if rng.randf() < 0.6 else "barrel"})
+			placed += 1
 	return {
 		"w": W,
 		"h": H,
@@ -131,10 +165,55 @@ static func generate(floor_number: int, seed_value: int) -> Dictionary:
 		"mines": mines,
 		"enemies": enemies,
 		"loot": loot,
+		"breakables": breakables,
 		"boss": boss_floor,
 		"boss_pos": Vector2i(_center(stairs_room).x, _center(stairs_room).y - 1),
-		"spawn": Vector2i(crystal.x, crystal.y + 2),
+		"spawn": spawn,
 	}
+
+
+static func has_grid_los(grid: PackedByteArray, a: Vector2i, b: Vector2i) -> bool:
+	if a == b:
+		return true
+	var x := a.x
+	var y := a.y
+	var dx := absi(b.x - a.x)
+	var dy := absi(b.y - a.y)
+	var sx := 1 if b.x > a.x else -1
+	var sy := 1 if b.y > a.y else -1
+	var err := dx - dy
+	while x != b.x or y != b.y:
+		var e2 := err * 2
+		var nx := x
+		var ny := y
+		if e2 > -dy:
+			err -= dy
+			nx += sx
+		if e2 < dx:
+			err += dx
+			ny += sy
+		if nx != x and ny != y:
+			if _cell_blocks_los(grid, nx, y) or _cell_blocks_los(grid, x, ny):
+				return false
+		x = nx
+		y = ny
+		if x == b.x and y == b.y:
+			break
+		if _cell_blocks_los(grid, x, y):
+			return false
+	return true
+
+
+static func world_has_los(grid: PackedByteArray, from_world: Vector2, to_world: Vector2) -> bool:
+	var a := Vector2i(int(from_world.x / 64.0), int(from_world.y / 64.0))
+	var b := Vector2i(int(to_world.x / 64.0), int(to_world.y / 64.0))
+	return has_grid_los(grid, a, b)
+
+
+static func _cell_blocks_los(grid: PackedByteArray, x: int, y: int) -> bool:
+	if x < 0 or y < 0 or x >= W or y >= H:
+		return true
+	return grid[idx(x, y)] != FLOOR
 
 
 static func idx(x: int, y: int) -> int:

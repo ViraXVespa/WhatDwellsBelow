@@ -85,7 +85,7 @@ func _forge() -> void:
 	var arr: Array = Game.save.analyzed_axes if meta.fam == "axe" else Game.save.analyzed_pickaxes
 	var it: ItemData = arr[meta.i]
 	it.forged = true
-	Game.save.smithing_xp += 8.0
+	Game.grant_xp("smithing", 8.0, true)
 	Game.save.write()
 	_refresh()
 
@@ -95,7 +95,7 @@ func _smelt() -> void:
 		return
 	Game.save.banked_ore -= 1
 	Game.save.banked_bars += 1
-	Game.save.smithing_xp += 6.0
+	Game.grant_xp("smithing", 6.0, true)
 	Game.save.write()
 	_refresh()
 

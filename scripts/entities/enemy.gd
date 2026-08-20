@@ -26,10 +26,15 @@ var phase_t := 0.0
 var lunge_dir := Vector2.DOWN
 var hit_this_lunge := false
 var body_sprite: Sprite2D
+var hp_bg: ColorRect
+var hp_fg: ColorRect
 var sprites: Dictionary = {}
 var facing := "down"
 var aim := Vector2.DOWN
 var is_boss := false
+var aware := false
+var last_seen := Vector2.ZERO
+var lost_t := 0.0
 
 
 func setup(p_role: String, floor_number: int, p_boss: bool = false) -> void:
@@ -100,6 +105,7 @@ func _apply_boss() -> void:
 	tag.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
 	tag.add_theme_constant_override("outline_size", 4)
 	add_child(tag)
+	_refresh_hp_bar()
 
 
 func _ready() -> void:
@@ -126,7 +132,7 @@ func _folder() -> String:
 func _load_sprites() -> void:
 	var folder := _folder()
 	for pose in ["idle", "windup", "strike"]:
-		for dir in ["down", "up", "left", "right"]:
+		for dir in Art.FACING_KEYS:
 			var path := "res://assets/sprites/enemies/%s/%s_%s.png" % [folder, pose, dir]
 			if ResourceLoader.exists(path):
 				sprites["%s_%s" % [pose, dir]] = load(path)
@@ -137,6 +143,7 @@ func _build_visual() -> void:
 	body_sprite.name = "Body"
 	add_child(body_sprite)
 	_apply_sprite()
+	_build_hp_bar()
 	if body_sprite.texture == null:
 		var col := Color(0.72, 0.22, 0.22)
 		if role == "ranged":
@@ -159,7 +166,15 @@ func _physics_process(delta: float) -> void:
 	var to: Vector2 = player.global_position - global_position
 	var dist := to.length()
 	var los := _has_los(player)
-	if to.length() > 0.01 and phase == Phase.CHASE:
+	if los and dist < 460.0:
+		aware = true
+		last_seen = player.global_position
+		lost_t = 0.0
+	elif aware:
+		lost_t += delta
+		if lost_t > 2.2:
+			aware = false
+	if los and to.length() > 0.01 and phase == Phase.CHASE:
 		aim = to.normalized()
 		_update_facing(aim)
 	if role == "ranged":
@@ -174,15 +189,21 @@ func _physics_process(delta: float) -> void:
 		modulate = Color(1.15, pulse, pulse)
 	else:
 		modulate = Color.WHITE
+	_refresh_hp_bar()
 
 
 func _ai_ranged(delta: float, _player: Player, to: Vector2, dist: float, los: bool) -> void:
 	match phase:
 		Phase.CHASE:
-			var steer := _steer(to, los)
+			if not aware and not los:
+				velocity = Vector2.ZERO
+				move_and_slide()
+				return
+			var chase_to := to if los else (last_seen - global_position)
+			var steer := _steer(chase_to, los)
 			if los and dist < 140.0:
 				velocity = -to.normalized() * move_speed
-			elif dist > 220.0 or not los:
+			elif (los and dist > 220.0) or not los:
 				velocity = steer * move_speed
 			else:
 				velocity = Vector2.ZERO
@@ -220,7 +241,12 @@ func _ai_ranged(delta: float, _player: Player, to: Vector2, dist: float, los: bo
 func _ai_melee(delta: float, player: Player, to: Vector2, dist: float, los: bool) -> void:
 	match phase:
 		Phase.CHASE:
-			var steer := _steer(to, los)
+			if not aware and not los:
+				velocity = Vector2.ZERO
+				move_and_slide()
+				return
+			var chase_to := to if los else (last_seen - global_position)
+			var steer := _steer(chase_to, los)
 			if los and dist <= range_melee and attack_cd <= 0.0:
 				phase = Phase.WINDUP
 				phase_t = 0.0
@@ -259,10 +285,7 @@ func _ai_melee(delta: float, player: Player, to: Vector2, dist: float, los: bool
 
 
 func _update_facing(dir: Vector2) -> void:
-	if absf(dir.x) > absf(dir.y):
-		facing = "right" if dir.x > 0.0 else "left"
-	else:
-		facing = "down" if dir.y >= 0.0 else "up"
+	facing = Art.pick_facing(dir, sprites, _pose_name() + "_")
 
 
 func _pose_name() -> String:
@@ -313,12 +336,20 @@ func _steer(to_player: Vector2, los: bool) -> Vector2:
 
 
 func _has_los(target: Node2D) -> bool:
+	var dungeon := get_tree().current_scene
+	if dungeon and dungeon.get("data") is Dictionary:
+		var grid: PackedByteArray = dungeon.data.get("grid", PackedByteArray())
+		if not grid.is_empty() and not DungeonGen.world_has_los(grid, global_position, target.global_position):
+			return false
 	var space := get_world_2d().direct_space_state
 	var q := PhysicsRayQueryParameters2D.create(global_position, target.global_position)
 	q.collision_mask = 1
 	q.exclude = [self]
 	var hit := space.intersect_ray(q)
-	return hit.is_empty()
+	if hit.is_empty():
+		return true
+	var col = hit.get("collider")
+	return col == target or (col is Node and (col as Node).is_in_group("player"))
 
 
 func _shoot(dir: Vector2) -> void:
@@ -342,8 +373,41 @@ func _stuck(delta: float) -> void:
 func take_damage(amount: float, _from: Node = null) -> void:
 	hp -= amount
 	flash = 0.08
+	aware = true
+	if _from is Node2D:
+		last_seen = (_from as Node2D).global_position
 	if hp <= 0.0:
 		_die()
+	else:
+		_refresh_hp_bar()
+
+
+func _build_hp_bar() -> void:
+	var w := 42.0 if not is_boss else 56.0
+	var y := -46.0 if not is_boss else -80.0
+	hp_bg = ColorRect.new()
+	hp_bg.size = Vector2(w, 5)
+	hp_bg.position = Vector2(-w * 0.5, y)
+	hp_bg.color = Color(0.08, 0.08, 0.1, 0.92)
+	hp_bg.z_index = 12
+	hp_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(hp_bg)
+	hp_fg = ColorRect.new()
+	hp_fg.size = Vector2(w, 5)
+	hp_fg.position = Vector2(-w * 0.5, y)
+	hp_fg.color = Color(0.82, 0.22, 0.2)
+	hp_fg.z_index = 13
+	hp_fg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(hp_fg)
+
+
+func _refresh_hp_bar() -> void:
+	if hp_bg == null or hp_fg == null:
+		return
+	var w: float = hp_bg.size.x
+	var ratio := 0.0 if max_hp <= 0.0 else clampf(hp / max_hp, 0.0, 1.0)
+	hp_fg.size = Vector2(w * ratio, 5)
+	hp_fg.color = Color(0.92, 0.58, 0.18) if ratio <= 0.35 else Color(0.82, 0.22, 0.2)
 
 
 func _die() -> void:
@@ -351,12 +415,12 @@ func _die() -> void:
 		var gold_amt := rng.randi_range(3, 12) + Game.run.current_floor
 		if is_boss:
 			gold_amt = rng.randi_range(40, 70) + Game.run.current_floor * 8
-			Game.run.great_axe_xp_run += 40.0
+			Game.grant_xp("great_axe", 40.0)
 			var drop := LootGen.roll_gear("great_axe", rng)
 			drop.rarity = ItemData.Rarity.GREEN
 			Game.add_to_bag(drop)
 		else:
-			Game.run.great_axe_xp_run += 8.0
+			Game.grant_xp("great_axe", 8.0)
 			if rng.randf() < 0.16:
 				var fam := "great_axe" if rng.randf() < 0.65 else "pickaxe"
 				var drop := LootGen.roll_gear(fam, rng)

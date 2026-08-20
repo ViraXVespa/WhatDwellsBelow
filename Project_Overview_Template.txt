@@ -12,7 +12,7 @@ How to use this file
 Feedback convention (slice vs later)
 The player does not label notes as slice vs full game. Grok decides:
 - If it is required for the current vertical-slice loop (plaza, Great Axe + pickaxe, 2–3 dungeon floors, hold-attack / dash / slam, mine, clerks, death/dispel recap, pad UI, honesty of those systems), **build it**.
-- If it is a law or feature of the full game (other skills, biomes, co-op camera, stealth, extra weapons, polish beyond rectangles), **write it here** and do not expand the slice unless the player corrects that call.
+- If it is a law or feature of the full game (other skills, biomes, co-op camera, stealth, extra weapons, polish beyond the current plaza/dungeon loop), **write it here** and do not expand the slice unless the player corrects that call.
 - When unsure, park it in this file and ask only if the slice would be built wrong without an answer.
 
 ================================================================
@@ -230,6 +230,8 @@ Decided slice: **three roles**, smaller packs, longer fights: **Melee bruiser**,
 Decided: **story bosses at campaign beats** in the full game. **Slice: a basic Floor Guardian every 3rd floor** (3 and 6). Stairs stay locked while it lives. Slice caps at floor 6.
 Decided slice melee: bruisers and tanks **telegraph a lunge** (windup pose, then dash-strike). Direction locks at windup so the player can sidestep. Contact-walk-into-you is not the melee kit.
 Decided slice ranged: goblin archer **draws** (windup sprite) then looses. Shot direction locks on the draw.
+Decided: enemies need **line of sight**. Walls block aggro, shots, and melee windup. They may hunt a last-seen point briefly after losing LOS, then idle. Player axe/slam also cannot hit through walls.
+Decided: **enemy health bars** (world-space) so you can read how close a pack is to dropping. Floor Guardian keeps the HUD bar too.
 
 Gathering during combat
 Decided (for now): interruptible, but allowed — you can start a channel with enemies around; taking a hit (or moving?) interrupts the channel. If keeping combat keybinds during a channel is awkward on a gamepad, we may swap to "clear the room first." Revisit after the first playable.
@@ -256,6 +258,7 @@ Decided: **stairs are always reachable with any one tool (or none).** Tool gates
 Vertical structure
 Decided: stairs to the next floor (down only — no walking back up). Crystal at the entrance of each floor.
 Decided crystal rules:
+Decided: in-dungeon crystal is **next to the floor spawn / entrance**, not rolled into a random room. You appear beside it.
 - **From town:** a special, bigger crystal in the city's dungeon entrance. Teleport to **any floor you have reached in any run**.
 - **From inside the dungeon:** crystal skip to **any floor deeper than your current floor** that you reached on a **previous** run. This-run new depth is walked via stairs first. No crystal-up.
 - **Co-op:** the party may access up to the **deepest floor any member has reached** (their personal-best is shared for access).
@@ -284,6 +287,8 @@ Special clerks — **random**:
 So a floor always has 1 gathering clerk + 1 misc clerk; Patty is extra luck. Confirmed: misc is **1-from-2** — a floor can have a Guild Runner and **no Gear Gopher**. Gathering clerk may not match your tool. Gear mail is not guaranteed every floor.
 Decided: clerks are **hidden in safe alcoves / side rooms**, not parked at the entrance crystal. Stairs can be found before extract — hunting the station is the tension. Entrance is crystal + spawn only.
 Decided: **any** of those clerks can instead mail **gold** (50% of carried → town, 10% clerk fee, 40% stays on you). That **clerk instance** is then spent — no ore/gear from them after.
+Decided slice: Hammerwatch-style **breakable pots/barrels** scatter in combat rooms. They smash on a hit and can drop **gold** plus **HP / mana pickups** (walk-over orbs). Microtasks, not a skill. Full-game roster can add more smashables.
+
 Decided: floors are combat + gathering nodes + stairs/crystal + extract clerks, plus **fun random finds**. First-pass extra roster (all of these exist):
 - Production stations (anvil, etc.)
 - Campfires
@@ -295,7 +300,7 @@ Decided: floors are combat + gathering nodes + stairs/crystal + extract clerks, 
 Decided slice: **mining veins sit in room walls** (floor tiles with exactly one wall neighbor), with **collision** so they block like rocks. Not mid-room pickups. Other skills' nodes later by floor band.
 [TODO] Full-game: which gathering skills appear on which floor bands.
 Decided: **explored fog of war** + a **simple minimap of visited tiles**. No lighting puzzle / torch meter. Unvisited area is hidden; visited stays known (this run). Decided: fog resets each run (layouts are random anyway).
-Decided: unexplored and off-map is **black void**, not a gray rectangle of the generated grid. The minimap is a **local view around the player** (same void) — it must not show the floor’s bounding box. Cave walls that actually touch a room still draw; padding / unused fill does not.
+Decided: unused fill and off-map padding is **solid repeating wall masonry** (the dungeon is carved from rock), not a black void. Fog of war still hides unvisited walkable tiles as black. The minimap stays a **local view around the player** of visited floor tiles — it must not show the floor’s bounding box as a wall rectangle.
 Decided (full game, not slice): **Cartography** is a real skill. Awake Cartography **widens the fog/minimap reveal radius** around that player. Slice keeps a fixed radius (currently 5 tiles) so the loop doesn’t wait on a fourth skill.
 
 Extraction (surface-send)
@@ -402,6 +407,7 @@ Decided: dungeon XP is mostly forgotten when the avatar connection ends; a small
 Decided: fragment is **per skill**, not one shared pool. Uses **keep-N-per-run** (a cap): a long greed run cannot bank unbounded awake XP.
 Decided: base cap is **2%**. That base number **increases with the player's awake (permanent) level in that same skill** — a high-level miner remembers more mining from the dream than a newbie. Permanent character = "awake" skills; run XP = dream.
 Placeholder formula (slice): keep **2% of XP earned this run** in that skill (always the 2%, not "keep all of tiny amounts"). Awake-level scaling of that 2% comes later.
+Decided slice: **level-up feedback**. Crossing a level in Mining / Great Axe / Smithing pops a toast (`Great Axe level 3!`). HUD shows current levels. Recap notes if the 2% fragment pushed an awake level. Slice curve is a simple ramp (not OSRS's exact table).
 Decided: **surface skilling keeps 100% XP, but is much slower.** Safe catch-up / crafting XP in Vylenheim; the dungeon is still the real place to train. Anvils and kitchen grant awake XP at a crawl.
 [TODO] Soft caps, prestiges, or none.
 [TODO] Max level.
@@ -410,7 +416,13 @@ Weapon mastery
 Decided: each weapon (type) has its own XP/levels; large bonus for that type, smaller bonus for all weapons.
 [TODO] Bonus shape (e.g. +2% damage per type level to that type, +0.5% to all).
 [TODO] Does "weapon" mean item instance, weapon type, or both?
-[TODO] Does using a sword also train a shared Melee skill?
+Decided (lean, **full game**, not slice): **Combat Level is a derived display number**, not its own grindable skill — same idea as OSRS combat level. It is computed from the combat skills that apply to what you have equipped, not a third XP bar you train by existing.
+- Melee style: Strength + Attack / weapon mastery + Defense (and Hitpoints if we add it).
+- Ranged style: Ranged + Defense (+ Hitpoints).
+- Magic style: Magic Masteries + Defense (+ Hitpoints).
+- Shown combat level uses the **highest of the three styles**. Equipped weapon type picks which style is the HUD focal point (axe out → you read as a melee adventurer even if you also have ranged levels). Off-hand (shield vs tome) can nudge defense vs magic.
+- Alternative parked: separate grindable Melee / Ranged / Magic skills on top of traits and weapon masteries — rejected for now because it would double-tax the same swings.
+[TODO] Exact weights (OSRS-like 0.325/0.25 or a simpler average). Do not implement Combat Level UI in the slice — only Great Axe exists, so there is no second style to compare.
 
 Abilities
 Decided: extravagant number of skills and abilities empowered by gameplay.
@@ -511,11 +523,11 @@ Art
 Decided: 2D presentation, closer to Heroes of Hammerwatch than RuneScape. Camera is 3/4 overhead.
 Decided: pixel sprites (HoW / HoW2 pipeline), not retro-3D rotating models. Target **8 facings** for ship; **4-dir** (or blobs) until the loop is fun. Not 360° turn.
 Decided: **64×64** pixel grid so avatar customization (body, gear, tools) is actually visible on a TV. Tiles should match that grid 1:1 unless we later use smaller ground tiles under a 64px character.
-Decided: **8-dir for ship**, **4-dir until the loop is fun**. Placeholders can be 4-dir (or even rectangles). Customization layers assume 8-dir as the real art target.
+Decided: **8-dir in the slice** for the player (4-dir snap was visually distracting on analog aim). Enemies may still fall back to 4-dir art until those sheets exist. Customization layers still assume 8-dir as the real art target.
 [TODO] Palette (warm town vs cold dungeon, or one shared palette).
 Decided: 64×64 must keep a readable silhouette on a TV (couch + two-pane). Customization is extra detail on top of a clear body shape, not noise.
 [TODO] Animation density: Hammerwatch-snappy vs more frames.
-Decided: slice art is **4-dir placeholder sprites** for the player (no gear layers). Enemies may stay simple until the loop is fun. Ship target remains 8-dir + customization.
+Decided: slice art is **8-dir player sprites** (baked starter Great Axe, no customization layers). Enemies may stay 4-dir until the loop is fun. Ship target remains 8-dir + customization.
 
 Audio
 [TODO] Hub music mood.
@@ -567,7 +579,7 @@ Locked contents:
 - Combat: hold RT, B dash (i-frames), X slam (cooldown), R3 lock, A interact. Channel mine; damage or move interrupts.
 - Tiny loot generator: white/green Great Axes (and pickaxes) with prefix/suffix.
 - Recap: Gauntlet strips, light tone. Keep 2% XP this run (placeholder), banked stacks, analyzed gear; bag vanishes.
-- Art: 64×64 tile grid. **4-dir placeholder player sprites** (baked starter Great Axe, no customization layers) so facing reads in combat. Enemies/props can stay simpler until the loop is fun. 2D TileMap. Gauntlet HUD.
+- Art: 64×64 tile grid. **8-dir player sprites** (baked starter Great Axe, no customization layers) so analog aim does not snap to a cardinal. Enemies/props can stay 4-dir until the loop is fun. 2D TileMap. Gauntlet HUD. Solid wall fill instead of black padding.
 - Co-op camera can be solo-first in the slice; don't block 2-pane later. Online out of slice.
 
 Next
@@ -577,6 +589,7 @@ Later
 [TODO] Full skill list, bosses, story beats, extra facilities, more weapon masteries.
 
 Full-game constraints parked from play (do not implement in the slice)
+- **Combat Level:** derived OSRS-style display from melee/ranged/magic relevant skills + equipped weapon. Not a separately trained skill. See §8.
 - **Stealth / cover:** using walls as cover should train Stealth later. Keep LOS/cover honest in combat code so detection can hang on it. Not a stealth meter or crouch in the slice.
 - **Cartography:** exploration skill. Not gathering, no clerk, no town ore-loop. Dungeon-only run XP (same 2% keep-N fragment as other dungeon skills).
   - **Level benefit:** awake Cartography increases **that player’s fog/minimap reveal radius** (slice is a flat 5-tile circle). Higher level = you light more floor as you walk. Fog is still per-run and shared on a floor in co-op; a high-cartography scout fills the party map faster because *their* circle is bigger. [TODO] Radius curve (placeholder: +1 tile per 10 awake levels, cap before a spawn-reveal-the-whole-floor).
@@ -609,4 +622,4 @@ Resolved: title is the *sense of wonder* at what could be found below, not a pro
 [TODO] What the campaign beat actually is (can stay secret).
 
 Slice
-Locked: Walk Vylenheim's plaza as a placeholder avatar, take a Great Axe and pickaxe through the guild crystal, clear 2–3 traditional-dungeon floors (hold-to-attack, dash, slam, mine ore), mail loot at clerks, die or pause-dispel, and wake up with banked ore, 2% of run XP, and any analyzed white/green axes. It has to be fun with rectangles.
+Locked: Walk Vylenheim's plaza as a placeholder avatar, take a Great Axe and pickaxe through the guild crystal, clear 2–6 traditional-dungeon floors (hold-to-attack, dash, slam, mine ore), mail loot at clerks, die or pause-dispel, and wake up with banked ore, 2% of run XP, and any analyzed white/green axes.

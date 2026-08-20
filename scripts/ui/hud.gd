@@ -221,12 +221,13 @@ func _process(_delta: float) -> void:
 		mana_bar.value = Game.run.mana
 		hp_val.text = "%d/%d" % [int(Game.run.hp), int(Game.run.max_hp)]
 		mana_val.text = "%d/%d" % [int(Game.run.mana), int(Game.run.max_mana)]
-		info.text = "Floor %d    Gold %d    Bag %d/28    Axe XP +%.0f    Mine XP +%.0f" % [
+		info.text = "Floor %d    Gold %d    Bag %d/28    Axe L%d    Mine L%d    Smith L%d" % [
 			Game.run.current_floor,
 			Game.run.gold,
 			Game.run.bag_count(),
-			Game.run.great_axe_xp_run,
-			Game.run.mining_xp_run,
+			Game.skill_level("great_axe"),
+			Game.skill_level("mining"),
+			Game.skill_level("smithing"),
 		]
 	else:
 		hp_bar.max_value = 100
@@ -235,10 +236,13 @@ func _process(_delta: float) -> void:
 		mana_bar.value = 50
 		hp_val.text = "100/100"
 		mana_val.text = "50/50"
-		info.text = "Vylenheim    Gold %d    Ore bank %d    Deepest floor %d" % [
+		info.text = "Vylenheim    Gold %d    Ore %d    Deepest %d    Axe L%d  Mine L%d  Smith L%d" % [
 			Game.save.gold if Game.save else 0,
 			Game.save.banked_ore if Game.save else 0,
 			Game.save.deepest_floor if Game.save else 1,
+			Game.skill_level("great_axe"),
+			Game.skill_level("mining"),
+			Game.skill_level("smithing"),
 		]
 	if p:
 		dash_bar.max_value = 1.0
