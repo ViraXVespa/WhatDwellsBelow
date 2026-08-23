@@ -805,6 +805,9 @@ This document is ready to be used as the single source of truth for building the
 **Next Expected Step**  
 Hand this document (plus the repository) to a fresh Grok Build instance and begin implementation, or request the companion Full-Game (non-demo) GDD questions.
 
+**Archived Source Documents**  
+The original questionnaire (`GDD_Questions.md`) and additions document (`GDD_Additions.md`) have been moved to `archives/development_documents/` for historical reference. All decisions from those documents have been fully incorporated into this GDD.
+
 ---
 
 ### 21. Mandatory Player Sprite & Paper-Doll Generation Pipeline
@@ -825,6 +828,9 @@ SW | S  | SE
 - All full-body views in neutral standing pose  
 - Center cell = clear head/face close-up  
 - This single image is the primary design reference for all subsequent generations
+
+**A reference of what the final primary Character Bible should look like is located at:**  
+`assets/sprites/player/gdd_reference_bible.jpg`
 
 #### 21.2 Generation Rules
 
