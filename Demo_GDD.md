@@ -1,3 +1,48 @@
+# Grok Build Contract (Read First)
+
+**Version**: 1.3 – Archive-then-Clean-Rewrite  
+**Authority**: This document is the single source of truth.
+
+### Mandatory Workflow for Any Fresh Grok Build Instance
+
+1. **Archive the current build first**  
+   Follow Section 22 exactly. Create a new fully standalone snapshot under `archives/` that captures the project state as it exists at the moment this GDD is handed over. This becomes a historical museum piece. Do not modify the live path while creating the archive.
+
+2. **Then rewrite the live path from scratch**  
+   After the archive is complete and verified as isolated, implement the entire playable demo as a clean new live codebase.  
+   - Do **not** extend, patch, or carry forward the previous live code, scenes, scripts, or architectural decisions.  
+   - The previous pure-2D design philosophy and its accumulated compromises are retired.  
+   - The new live path must be designed from the ground up around the orthographic Camera3D system described in Section 4 (fixed ~–58° pitch, proper depth sorting that respects implied real-world positions, paper-doll sprites, readable 64×64 art, etc.).
+
+3. **Preserve the Archives system and presentation switcher**  
+   The three-mode switcher (live / classic_2d / art_experiment) plus the Archives browser must ship. Selecting “Play” always launches the new clean live path. classic_2d and art_experiment (and any future archives) remain completely isolated standalone snapshots per Section 22.
+
+### Hard Constraints (Non-Negotiable)
+
+- Solo play only.  
+- Exactly the six skills listed.  
+- White and green rarity only.  
+- Repeating 5-floor structure with Floor Guardians (1–4) and Gate Master (5).  
+- New hit-based mining system.  
+- All numeric values exposed and tunable in a full debug menu.  
+- Production / Gold quality on every system that ships.  
+- Consistent 60 FPS minimum on target hardware.  
+- No co-op scaffolding left active in the live path.  
+- No new systems, skills, rarities, hub upgrades, or meta-progression beyond what this document explicitly requires.
+
+### Success Criterion
+
+A first-time player on a couch with a gamepad can reach a successful extraction in 5–10 minutes without external guidance, understand the core risk/reward of extraction vs. death, and experience the permanent progression feedback on the recap screen — all at stable 60 FPS — using only the new clean live path.
+
+### How to Use This Document
+
+- Treat every requirement in Sections 1–18 and 21 as mandatory design intent for the new live implementation.  
+- Section 21 (sprite pipeline) is non-negotiable for all character art.  
+- Section 22 governs Archives isolation and must be obeyed.  
+- The public repository supplies reusable assets and the Archives infrastructure. It is **not** a code base to extend for the live path.
+
+All previously open design questions are closed. Do not invent additional systems or reopen settled decisions.
+
 **What Dwells Below — Demo Game Design Document**  
 **Version 1.1**  
 (Compiled from all locked decisions + final sprite pipeline)
@@ -159,7 +204,7 @@ All numeric values (base speed, dash speed, dash duration, dash cooldown, slam c
 - Animation playback speeds are tunable.
 
 **Mining / Stationary Actions**  
-The old channel bar system is fully replaced by the new hit-based mining rules (see Interactables). While mining the player must remain stationary.
+Mining uses the new hit-based system defined in Section 12. While mining the player must remain stationary.
 
 **Death & Dispel Avatar Sequences**  
 Both sequences lock all player input and share the deathrattle VO “hurk”.  
@@ -184,7 +229,7 @@ After the animation completes the screen fades to black and the recap screen app
 **Critical Hits**  
 - Deal double damage.  
 - Target receives a white flash.  
-- Floating text “CRIT!” appears.  
+- Floating damage number is shown in yellow + magenta (no additional “CRIT!” text).  
 - This is the minimum required implementation; additional juice may be added later.
 
 **Slam**  
@@ -346,11 +391,12 @@ Warm, slightly hopeful and lightly comedic stand-in music and ambient sound are 
 - There is no hard maximum depth; death is the only cap.
 
 **Map Generation**  
-- Grid size, room count, room size ranges, and connection algorithm (MST + extra loops) are treated as tunable starting points.  
-- Current values produce floors that feel too small; generation must be tuned upward so floors feel expansive and support the 5–10 minute first-extraction target and longer skilled runs.
+Grid size, room count, room size ranges, and connection algorithm (MST + extra loops) are fully tunable.  
+Target: floors must feel expansive enough to support a 5–10 minute first successful extraction for a new player and longer skilled runs. Starting values should be chosen to achieve this feel on the new Camera3D live path.
 
 **Key Object Placement**  
-Current placement rules and probabilities for crystal, stairs, clerks, mining nodes, breakables, shrine, campfire, ghost shop, puzzle elements, and chests are the starting point and are fully tunable.  
+Placement rules and probabilities for crystal, stairs, clerks, mining nodes, breakables, shrine, campfire, ghost shop, puzzle elements, and chests are fully tunable.  
+Safe rooms (clerk, ghost shop, puzzle) must remain enemy-free.
 
 **Safe Rooms**  
 - Clerk rooms, ghost shop rooms, and puzzle rooms are always enemy-free.
@@ -392,10 +438,10 @@ Floor Guardians (floors 1–4) and the Gate Master (floor 5) use the Tank role a
 - Exact timings, lunge speeds, and ranges are tunable.
 
 **AI Behavior**  
-- Enemies require line-of-sight to begin attacking or chasing.  
-- When LOS is lost they may briefly hunt the last-seen position, then return to idle.  
-- Standard steering, separation, and stuck-handling logic from the current implementation is the baseline (tunable).  
-- Rare flee event (approximately once every three floors): after the group has taken sufficient damage, the fastest enemy in the encounter flashes a clear “!” overhead and flees to spawn reinforcements. No other telegraph is required beyond the “!”.
+Enemies require line-of-sight to begin attacking or chasing.  
+When LOS is lost they may briefly hunt the last-seen position, then return to idle.  
+Implement clean steering, separation, and stuck-handling appropriate for the orthographic Camera3D live path. All related values are tunable.  
+Rare flee event (approximately once every three floors): after the group has taken sufficient damage, the fastest enemy in the encounter flashes a clear “!” overhead and flees to spawn reinforcements. No other telegraph is required beyond the “!”.
 
 **Death Presentation**  
 1. Play death animation.  
@@ -453,9 +499,9 @@ All base HP, damage, speed, scaling per floor, and drop rates are exposed in the
 - Safe interaction.
 
 **Artifact Chests, Pressure Plates, Levers, Gates, Cracked Walls**  
-- Retain current behaviors as the baseline.  
+- Implement these as clean new systems for the live path.  
 - Puzzle elements are never required for progression and never appear on the critical path to stairs.  
-- Cracked walls have higher HP than normal breakables (baseline 8, tunable).
+- Cracked walls have higher HP than normal breakables (suggested start: 8, fully tunable).
 
 **Stairs & Floor Crystal**  
 - Both only allow travel deeper.  
@@ -544,7 +590,7 @@ Triggered on every death or Dispel.
 
 **Toasts & Floating Combat Text**  
 - Floating damage / heal numbers: integers only, rise and fade quickly.  
-- Critical hits add the text “CRIT!”.  
+- Critical hits use yellow + magenta colored damage numbers (no extra “CRIT!” text).  
 - Toasts appear for bag-full, level-up, extraction success, and other system events. Short, readable, non-stacking or lightly stacking.
 
 ---
@@ -761,35 +807,42 @@ Changes made in the debug menu take effect immediately where safe, or on next fl
 
 ### 19. Implementation Notes for Grok Build
 
-This document is the authoritative specification for the demo of *What Dwells Below*.  
+This document is the authoritative specification for the demo of *What Dwells Below*.
 
-A fresh instance of Grok Build must be able to recreate the entire playable demo from:  
-- This GDD  
-- The public repository at https://github.com/ViraXVespa/WhatDwellsBelow (for existing assets, project structure, and reference only)  
-- The locked design decisions contained herein  
+A fresh Grok Build instance must:
 
-**Key Construction Rules**  
-- Treat every numeric value as tunable and expose it in the debug menu.  
-- Prefer extending the existing systems rather than rewriting them.  
-- The demo must be solo-only. Any co-op scaffolding that still exists in the repository must be disabled or removed from the live path.  
-- All player and enemy character art must follow the mandatory pipeline defined in **Section 21**.  
-- The 5-floor repeating loop with Floor Guardians and Gate Master, the new hit-based mining system, Adrenaline Rush, food-over-time, and the full debug menu are mandatory.  
-- Production quality is required for every system that ships; placeholders are allowed only under the explicit policy in Section 14.  
+1. First create a fully isolated archive of the current project state following the exact rules in Section 22.  
+2. Then implement a clean, from-scratch live path that satisfies every requirement in this GDD.
 
-**Order of Implementation Suggestion**  
-1. Core movement, camera, input, and player animation states  
-2. Combat (including crits, Slam, Dash, Adrenaline Rush)  
-3. Dungeon generation + boss doors + locked stairs  
-4. Enemies + flee event  
-5. Mining, breakables, and all interactables  
-6. Inventory, extraction, anvil, loadout  
-7. HUD, pause menu, debug menu, recap  
-8. Save / backup system  
-9. Hub layout and polish pass  
-10. Final audio pass and placeholder replacement  
+**Core Construction Rules**
 
-**Success Criterion**  
-When a new player can enter Placeholdia, dive, fight, mine, extract or die, see the XP drain sequence on the recap, and return with permanent progress — all at a stable 60 FPS — the demo is considered complete under this document.
+- The live path is a clean rewrite. Do not extend, refactor, or reuse runtime code, scenes, scripts, autoloads, or architectural patterns from the pre-archive live codebase. The previous pure-2D design flow and its accumulated compromises are retired.  
+- Design the live path from the ground up around the orthographic Camera3D system (Section 4): fixed pitch ≈ –58°, correct depth sorting that respects implied real-world positions of player/enemies/walls/props, paper-doll sprites, player-adjustable zoom 1.0–1.75, independent HUD scale, and readable 64×64 art.  
+- The live path must never share runtime code, scenes, scripts, or global state with any archived build.  
+- Treat every numeric value as tunable and expose it in a comprehensive debug menu.  
+- Prefer simple, readable, production-quality implementations over clever legacy workarounds.  
+- All player and enemy character art must follow the mandatory pipeline in Section 21.  
+- The 5-floor repeating loop, Floor Guardians + Gate Master, new hit-based mining system, Adrenaline Rush, food-over-time, forged holds, extraction via clerks, and full debug menu are mandatory.  
+- Production / Gold quality is required for every system that ships. Placeholders are allowed only under the explicit policy in Section 14.
+
+**Suggested Order of Implementation (Clean Live Path)**
+
+1. New project scaffolding + Camera3D + input + basic player movement/animation states (Section 21 sprites).  
+2. Core combat (Great Axe hold-to-attack, Slam, Dash, target-lock, crits, Adrenaline Rush) with proper depth sorting and juice.  
+3. Dungeon generation + boss doors + locked stairs + Floor Guardians / Gate Master.  
+4. Enemies (Bruiser / Ranged / Tank roles) + flee event.  
+5. New hit-based mining, breakables, and all interactables.  
+6. Inventory, equipment, forged holds, extraction/clerks, anvil, loadout.  
+7. Full HUD, pause menu (three tabs), debug/balance page, recap screen with XP drain sequence.  
+8. Save / load with backup + isolated save paths for archives.  
+9. Placeholdia hub layout and polish.  
+10. Final audio pass, placeholder replacement, and Archives browser verification.
+
+**Success Criterion**
+
+When a new player can enter Placeholdia on the clean live path, dive, fight, mine, extract or die, see the XP drain sequence on the recap, and return with permanent progress — all at a stable 60 FPS — the demo is considered complete under this document.
+
+The public repository is used for assets and for the Archives system only. The live codebase created by this process must stand alone and must not be constrained by any pre-archive implementation decisions.
 
 ---
 
@@ -798,6 +851,7 @@ When a new player can enter Placeholdia, dive, fight, mine, extract or die, see 
 **Version**  
 1.1 – Updated with final sprite generation pipeline (Section 21) and consistency fixes across related sections.
 1.2 – Updated with more detailed archival system info.
+1.3 – Switched to archive-first + clean live rewrite focused on Camera3D architecture.
 
 **Status**  
 All previously open design questions have been resolved.  
@@ -1062,3 +1116,61 @@ This policy guarantees two things simultaneously:
 2. The main development path remains free of legacy baggage.
 
 Any future archived build must follow these rules from the moment it is created.
+
+---
+
+## Appendix A – Suggested Starting Values (All Tunable via Debug Menu)
+
+These are recommended starting points for the clean live implementation.  
+Every value **must** be exposed in the debug menu and treated as non-final.
+
+### Movement & Combat
+
+| Parameter                      | Suggested Start | Notes                                              |
+|--------------------------------|-----------------|----------------------------------------------------|
+| Base move speed                | 4.5             | Feel weighty but responsive                        |
+| Dash speed multiplier          | 2.8             | Full i-frames for entire duration                  |
+| Dash duration                  | 0.28 s          |                                                    |
+| Dash cooldown                  | 1.1 s           |                                                    |
+| Slam wind-up                   | 0.22 s          |                                                    |
+| Slam recovery                  | 0.35 s          |                                                    |
+| Slam damage multiplier         | 1.8×            | vs basic attack                                    |
+| Basic attack arc (degrees)     | 110             |                                                    |
+| Crit chance                    | 12 %            | Double damage + yellow/magenta colored numbers     |
+| Adrenaline kill window         | 4.5 s           |                                                    |
+| Adrenaline kill threshold      | 4               |                                                    |
+
+### Mining (Hit-Based)
+
+| Parameter                      | Suggested Start | Notes                                              |
+|--------------------------------|-----------------|----------------------------------------------------|
+| Hits per node                  | 4               | Range 3–5                                          |
+| Time between hits              | 2.4 s           |                                                    |
+| Base reward chance             | 65 %            | Scaled by Mining skill + pickaxe                   |
+
+### Dungeon Generation
+
+| Parameter                      | Suggested Start | Notes                                              |
+|--------------------------------|-----------------|----------------------------------------------------|
+| Floor grid size                | 48×48 – 64×64   | Must feel expansive                                |
+| Fog of war reveal radius       | 5 tiles         | Visited tiles stay revealed                        |
+| Max clerks per floor           | 3               |                                                    |
+| Ghost shop chance              | ~33 %           | Always in safe room                                |
+
+### Progression & Economy
+
+| Parameter                      | Suggested Start | Notes                                              |
+|--------------------------------|-----------------|----------------------------------------------------|
+| Bag capacity                   | 28              |                                                    |
+| Permanent XP keep rate on death| 15–25 %         | Must feel meaningful after a good run              |
+| Shrine damage buff             | +20 % / 45 s    |                                                    |
+| Campfire heal                  | 40 % max HP     |                                                    |
+
+### UI / Feel Targets
+
+| Parameter                      | Suggested Start | Notes                                              |
+|--------------------------------|-----------------|----------------------------------------------------|
+| Camera zoom range              | 1.0 – 1.75      | Persisted in save                                  |
+| Target first-extraction time   | 5–10 min        | New player on gamepad                              |
+
+All other values (enemy stats, drop rates, forge costs, etc.) should be chosen to support the same feel targets and must also be exposed in the debug menu.
