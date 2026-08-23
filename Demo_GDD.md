@@ -813,7 +813,7 @@ The original questionnaire (`GDD_Questions.md`) and additions document (`GDD_Add
 ### 21. Mandatory Player Sprite & Paper-Doll Generation Pipeline
 
 This section is mandatory for any Grok Build instance.  
-It exists because pure image-generation models (including Grok Imagine) have consistent, well-documented limitations with side-view walk cycles, multi-frame consistency, identity drift, and pixel-perfect output. The pipeline below is the most reliable process currently achievable.
+It exists because pure image-generation models (including Grok Imagine) have consistent, well-documented limitations with multi-frame consistency, identity drift, spatial layout in grids, and pixel-perfect output. The pipeline below is the most reliable process currently achievable after extensive testing.
 
 All character art (player and enemies) must follow this pipeline. Props may use a simplified stills-only variant.
 
@@ -825,23 +825,34 @@ All character art (player and enemies) must follow this pipeline. Props may use 
 - Prefer fewer high-quality, readable frames over many mediocre ones. The engine can hold or simple-tween if needed.
 - Generate and fully clean one complete directional set (idle + walk at minimum) as a proof before scaling to all directions and states.
 - Final engine resolution target: 128×128 canvases (recommended for detail and alignment). Nearest-neighbor downscale to 64×64 is permitted only if required by import settings; document the choice. Base resolution in Section 14 remains 64×64 for world units, but sprite assets ship at 128×128 unless otherwise specified.
+- Use **game-centric direction names** exclusively: Up, Down, Left, Right, Up-Left, Up-Right, Down-Left, Down-Right. These match the orthographic camera, Y-billboard, and 16-directional aim system.
 
 #### 21.1 Character Bible
 
-Create and lock **one primary 3×3 Character Bible** on a solid pure magenta (#FF00FF) background:
+Create and lock **one primary 3×3 Character Bible** on a solid pure magenta (#FF00FF) background.
 
-```
-NW | N  | NE
-W  | Face close-up | E
-SW | S  | SE
-```
+**Strict cell layout (do not swap, reverse rows, reverse columns, or move any figure):**
 
-Requirements:
-- Clean limited-palette pixel-art style.
-- All eight full-body views in neutral standing pose (no weapons, no action props).
-- Center cell = clear head/face close-up.
-- Consistent silhouette height and foot baseline across all full-body cells.
-- Extract and lock the exact palette used (store as `palette.json` or equivalent).
+Top row:  
+- Top-left: Up-Left full-body (complete head-to-feet, neutral standing)  
+- Top-center: Up full-body (complete head-to-feet, full back view, neutral standing)  
+- Top-right: Up-Right full-body (complete head-to-feet, neutral standing)  
+
+Middle row:  
+- Middle-left: Left full-body (complete head-to-feet, left profile, neutral standing)  
+- Exact center: clear head-and-shoulders face close-up of the same character  
+- Middle-right: Right full-body (complete head-to-feet, right profile, neutral standing)  
+
+Bottom row:  
+- Bottom-left: Down-Left full-body (complete head-to-feet, neutral standing)  
+- Bottom-center: Down full-body (complete head-to-feet, front view, neutral standing)  
+- Bottom-right: Down-Right full-body (complete head-to-feet, neutral standing)  
+
+Requirements:  
+- Clean limited-palette pixel-art style.  
+- All eight full-body views in neutral standing pose (no weapons, no action props).  
+- Consistent silhouette height and foot baseline across all full-body cells.  
+- Extract and lock the exact palette used.  
 
 This single image is the primary design reference for all subsequent generations.
 
@@ -850,9 +861,36 @@ A visual reference example of the desired final style and quality can be found a
 
 **Important:** This file is only a style/quality reference. Grok Build must generate the actual Character Bible and all animation frames from scratch using the rules in this section. Do not treat the reference image as an input asset to be edited or extended.
 
-Generate 2–4 candidates. Lock the best one and store it as:  
+Generate 2–4 candidates using the prompt template below. Lock the best one (ideally one with correct layout *and* strong identity consistency) and store it as:  
 `assets/sprites/player/bible_locked.png`  
 (+ locked palette). Treat the locked Bible as immutable.
+
+**Best-performing Bible prompt template:**
+
+```
+Create a single clean image that is a perfect 3×3 Character Bible grid on solid pure magenta #FF00FF background for the player character of "What Dwells Below".
+
+Strict cell layout (do not swap, reverse rows, reverse columns, or move any figure):
+
+Top row:
+- Top-left: Up-Left full-body, complete head-to-feet, character facing Up-Left, neutral standing
+- Top-center: Up full-body, complete head-to-feet, character facing Up (full back view), neutral standing
+- Top-right: Up-Right full-body, complete head-to-feet, character facing Up-Right, neutral standing
+
+Middle row:
+- Middle-left: Left full-body, complete head-to-feet, character facing Left (left profile), neutral standing
+- Exact center: clear head-and-shoulders face close-up of the same character
+- Middle-right: Right full-body, complete head-to-feet, character facing Right (right profile), neutral standing
+
+Bottom row:
+- Bottom-left: Down-Left full-body, complete head-to-feet, character facing Down-Left, neutral standing
+- Bottom-center: Down full-body, complete head-to-feet, character facing Down (front view), neutral standing
+- Bottom-right: Down-Right full-body, complete head-to-feet, character facing Down-Right, neutral standing
+
+All eight full-body figures must have identical proportions and silhouette height, feet on the same baseline. Character locked across every cell: rugged human diver, practical layered leather and metal armor, short messy dark hair, determined expression, bright green scarf around neck, limited muted palette (grays, browns, dark greens, skin tones, metal). Crisp true pixel-art style, integer pixel edges, no anti-aliasing, no smoothing. Do not swap any cells. Do not place the face close-up anywhere except the exact center. No cropping of limbs, no props, no weapons, no text, no numbers, no borders, no grid lines. Perfect even 3×3 grid.
+```
+
+**Note on reliability:** Single-pass 3×3 generation currently produces the highest identity consistency. Chained image-edits from a single anchor introduce cumulative off-model drift and should be avoided for the Bible itself. If layout errors persist after 3–4 attempts, fall back to generating the eight full-body views + face individually (using soft identity language) and compositing them deterministically with a script.
 
 #### 21.2 Generation Hierarchy (ordered by reliability)
 
@@ -861,116 +899,86 @@ Always work **one direction + one action at a time**. Never hard-code exact fram
 **Priority order:**
 
 1. **Image-to-video (highest reliability for locomotion)**  
-   Use whenever available (Grok video capabilities, Seedance/WAN-style, Spriterrific-style tools). Feed the locked Bible or a single clean directional still as the first-frame / identity lock. Extract frames, then curate 4–8 clean ones. Prefer this path for all walk cycles.
+   Use whenever available. Feed the locked Bible (or a single clean directional still) as the first-frame / identity lock. Extract frames, then curate 4–8 clean ones.
 
 2. **Individual classic key poses**  
-   Contact → Down → Passing → Up (and any needed extremes). Generate one pose at a time against the Bible. Highest reliability fallback when video is unavailable or fails.
+   Contact → Down → Passing → Up (and any needed extremes). Generate one pose at a time against the Bible.
 
 3. **Short in-place horizontal strip**  
-   Use the prompt template below. Medium-high reliability when carefully constrained.
+   Use the prompt template style from 21.1, adapted for the specific action and single direction.
 
 4. **Forbidden**  
-   Full multi-direction strips, hard frame-count demands (“exactly 4 frames”, “exactly 6 frames”), or multi-action sheets in one generation.
+   Full multi-direction strips, hard frame-count demands, or multi-action sheets in one generation.
 
 **Soft identity language (mandatory in every prompt):**  
 “Keep the same overall character design, face, hair, armor, green scarf, proportions, palette, and sprite style from the Bible. Do not redesign, repaint, recolor, simplify, smooth, or invent new details.”
 
-**Best-performing in-place walk prompt template (adapt for other actions):**
-
-```
-Using this 3×3 Character Bible as the strict design reference, create a clean horizontal sprite strip of a simple in-place walk cycle for the player character of “What Dwells Below”.
-
-Direction: pure West (facing left)
-
-Keep the same overall character design, face, hair, armor, green scarf, proportions, palette, and sprite style from the Bible.
-Do not redesign, repaint, recolor, simplify, smooth, or invent new details.
-
-Motion requirements:
-- In-place walk cycle (character does not drift horizontally or vertically)
-- Clear alternating left/right stride poses
-- Left foot forward while right foot back, then right foot forward while left foot back
-- Include proper Passing Position (legs close together or crossing)
-- Arms counter-swing opposite the legs
-- Do not move both feet together
-- Do not keep the legs in a wide stride in every frame
-- Feet planted on the same invisible ground line in every frame
-- Character stays centered; no vertical bob
-
-Solid background color #FF00FF (pure magenta)
-Fully opaque frames
-Crisp pixel-art style, integer pixel edges only, no anti-aliasing, no ghosting, no sub-pixel noise
-One character only. No scene. No new props. No text. No borders.
-
-Output only the sprite strip.
-```
-
-Generate one full cardinal direction (idle + walk + attack, etc.) completely before deriving others. Horizontal flip is acceptable for the opposite side when the design is mostly symmetric; the green scarf and any asymmetric details must be corrected or regenerated. Diagonals may be generated or approximated after the four cardinals are solid.
+Generate one full cardinal direction (Down + Left + Right + Up) completely before deriving diagonals. Horizontal flip is acceptable for opposite sides when the design is mostly symmetric; asymmetric details (green scarf, etc.) must be corrected or regenerated.
 
 #### 21.3 Required Player States
 
 Minimum required states (from Sections 5 and 14):  
 idle, walk, attack, slam, mining, death, dispel.
 
-Prioritize idle + walk first — they expose the majority of consistency problems. Animation playback speeds remain tunable.
+Prioritize idle + walk first. Animation playback speeds remain tunable.
 
 #### 21.4 Paper-Doll / Equipment Layers
 
 Generate each equipment piece against a **single clean base-body frame** from the correct direction (not the full Bible).  
 Use the same soft identity language, pure magenta background, and cleanup/registration requirements.  
-A small registration cross or foot marker may be included in the base if the model tolerates it; remove it during cleanup.  
 Pivot and registration alignment across layers is mandatory.
 
 #### 21.5 Mandatory Cleanup & Normalization Pipeline
 
-All AI-generated frames **must** pass through cleanup before use in the game. This step is currently unavoidable for production-quality results.
+All AI-generated frames **must** pass through cleanup before use in the game.
 
 Recommended tools:  
-- Existing project scripts in `tools/` (`process_sprites.py`, `process_session_sprites.py`, `pack_walk.py`, `pack_facing_form.py`, `process_enemies.py`, etc.)  
+- Existing project scripts in `tools/`  
 - Or Aseprite + DeAI PixelKit / Pixel Refiner / Alpha Remover  
-- Or equivalent browser tools (PixelRefiner, etc.)
+- Or equivalent browser tools
 
-**Required cleanup tasks (in order):**
-1. Flood-key or chroma-key pure magenta (#FF00FF). Sample background from corners; use a tunable distance threshold. Apply despill for any fringe.
-2. Crop to content bounding box + fixed transparent padding.
-3. Nearest-neighbor scale/fit to exact target canvas (128×128 recommended).
-4. Center horizontally.
-5. **Lock feet to a common baseline Y** across all frames of a cycle (critical — prevents sliding).
-6. Quantize / lock to the Bible palette.
-7. Eliminate anti-aliasing, sub-pixel noise, and ghosting.
-8. For video/strip sources: even frame selection, skip settling frames, validate loop (first ≈ last pose).
-9. Trim to the exact frame count needed by the engine.
+**Required cleanup tasks (in order):**  
+1. Flood-key or chroma-key pure magenta (#FF00FF). Apply despill for any fringe.  
+2. Crop to content bounding box + fixed transparent padding.  
+3. Nearest-neighbor scale/fit to exact target canvas (128×128 recommended).  
+4. Center horizontally.  
+5. **Lock feet to a common baseline Y** across all frames of a cycle.  
+6. Quantize / lock to the Bible palette.  
+7. Eliminate anti-aliasing, sub-pixel noise, and ghosting.  
+8. For video/strip sources: even frame selection, skip settling frames, validate loop.  
+9. Trim to the exact frame count needed by the engine.  
 10. Output individual frames or engine-ready sheets + simple manifest (frame size, count, fps, pivot/anchor).
-
-Consolidate or extend the existing Python tools into a single deterministic entry point where practical so Grok Build can invoke them reliably.
 
 #### 21.6 Success Criteria & Failure Recovery
 
-A generation is acceptable only if it meets **all** of the following after cleanup:
-- Readable silhouette at target size.
-- Correct facing and pose intent.
-- No extra limbs, props, or invented details.
-- No palette drift from the locked Bible.
-- No background remnants or magenta spill.
-- Consistent scale and foot baseline with the Bible and sibling frames.
+A generation is acceptable only if it meets **all** of the following after cleanup:  
+- Readable silhouette at target size.  
+- Correct facing and pose intent.  
+- No extra limbs, props, or invented details.  
+- No palette drift from the locked Bible.  
+- No background remnants or magenta spill.  
+- Consistent scale and foot baseline with the Bible and sibling frames.  
 - Integer pixel edges, no anti-aliasing.
 
-**Recovery decision tree:**
-- Fail after 2–3 retries of the current method → drop one level in the Generation Hierarchy (I2V → individual key poses → in-place strip).
-- Persistent identity or scale failure → return to Bible and re-lock if necessary.
-- Log the failure mode for future pipeline hardening.
+**Recovery decision tree:**  
+- Fail after 2–3 retries of the current method → drop one level in the Generation Hierarchy.  
+- Persistent identity or scale failure → return to Bible and re-lock if necessary.  
+- Log the failure mode.
 
 #### 21.7 Summary Reliability Table
 
 | Technique                                      | Reliability   | Recommendation                  |
 |------------------------------------------------|---------------|---------------------------------|
 | Locked 3×3 magenta Character Bible + palette   | High          | Mandatory                       |
+| Game-centric direction names (Up/Down/Left/Right) | High       | Use always                      |
 | Soft identity language                         | High          | Use always                      |
+| Single-pass 3×3 for the Bible                  | Highest for identity | Preferred for Bible          |
 | Image-to-video walk cycles                     | Highest       | Primary path when available     |
 | Individual classic key poses                   | High          | Preferred fallback              |
-| In-place strip + strong motion language        | Medium-High   | Best pure-image option          |
 | Foot baseline locking in post                  | High          | Mandatory                       |
 | Hard frame-count demands                       | Low           | Avoid                           |
 | Full multi-direction strips                    | Very Low      | Forbidden                       |
+| Chained image-edits for Bible directions       | Medium-Low    | Avoid (causes drift)            |
 | Aseprite / scripted pixel-grid cleanup         | Mandatory     | Always perform                  |
 
 This is the most reliable pipeline currently achievable with Grok Imagine and related tools for the player character (and enemies) of *What Dwells Below*. Follow it exactly. Deviations require explicit justification and re-validation under the orthographic camera + Y-billboard + nearest-neighbor filtering.
