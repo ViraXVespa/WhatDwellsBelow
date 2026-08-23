@@ -797,6 +797,7 @@ When a new player can enter Placeholdia, dive, fight, mine, extract or die, see 
 
 **Version**  
 1.1 – Updated with final sprite generation pipeline (Section 21) and consistency fixes across related sections.
+1.2 – Updated with more detailed archival system info.
 
 **Status**  
 All previously open design questions have been resolved.  
@@ -982,3 +983,82 @@ A generation is acceptable only if it meets **all** of the following after clean
 | Aseprite / scripted pixel-grid cleanup         | Mandatory     | Always perform                  |
 
 This is the most reliable pipeline currently achievable with Grok Imagine and related tools for the player character (and enemies) of *What Dwells Below*. Follow it exactly. Deviations require explicit justification and re-validation under the orthographic camera + Y-billboard + nearest-neighbor filtering.
+
+---
+
+### 22. Archived Builds System (Standalone Snapshots)
+
+The Archives system (classic_2d, art_experiment, and any future historical builds) exists solely to support the Patreon development narrative and let players experience the game **exactly as it was at specific points in development**.
+
+**Core Rule (Non-Negotiable):**  
+Every archived build must be a **completely standalone, self-contained version of the game**.  
+
+- An archived build must not share runtime code, scenes, scripts, autoloads, or global state with the live (main) path.  
+- The live path must never be required to maintain compatibility with, or be limited by, any archived code.  
+- Conversely, loading an archived build must never pull in or be altered by any live/current code.  
+
+If either of the above occurs, the archive no longer represents the historical state and the live game becomes artificially constrained by legacy requirements. Both outcomes are forbidden.
+
+#### Technical Requirements
+
+1. **Isolation**  
+   - Each archived build lives in its own self-contained folder under `archives/` (e.g. `archives/classic_2d/`, `archives/art_experiment/`).  
+   - These folders contain (or point to) a complete, frozen Godot project snapshot, including all scenes, scripts, assets, and project settings as they existed at the moment of archiving.  
+   - No `#ifdef`, feature flags, or runtime conditionals that allow live code to reach into an archive (or vice versa) are permitted.
+
+2. **Launch Behaviour**  
+   - Selecting an archived build from the Archives browser must launch that snapshot as an independent instance (or fully replace the current main scene / project context).  
+   - Selecting “Play” from the main menu or any live UI **always** launches the current live path.  
+   - There is no “hybrid” mode in which live and archived systems run simultaneously or share state.
+
+3. **Creating a New Archive**  
+   - To create a new historical snapshot:  
+     1. Freeze the current live project state.  
+     2. Copy the entire relevant project contents into a new dated or named folder under `archives/`.  
+     3. Remove any live-only systems that did not exist at that point in time.  
+     4. Verify the archived build runs completely independently and produces the exact experience of that moment.  
+   - Once archived, the snapshot is immutable. Future live changes must never be back-ported into it.
+
+4. **Presentation Switcher Integration**  
+   - The existing three-mode switcher (live / classic_2d / art_experiment) plus the Archives browser remains.  
+   - classic_2d and art_experiment are treated as the first two archived builds and must obey the same standalone rules above.  
+   - The switcher is only a launcher; it does not keep multiple versions loaded or share state.
+
+5. **Save Data**  
+   - Each archived build uses its own isolated save path (or a clearly versioned prefix) so progress in an old build cannot affect or be affected by the live save.
+
+#### Archives Browser UI Layout
+
+The Archives browser is accessed from the Pause Menu → System tab (or equivalent).
+
+**Main Layout**  
+- **Left side**: Vertical list of all archived builds by name.  
+- **Right side**: Info panel that updates whenever a build is highlighted/selected in the list.
+
+**Info Panel Contents** (updates on highlight)  
+- Brief description of the selected build.  
+- **Video** button  
+  - When pressed, plays the associated video for that build.  
+  - Videos do not currently exist.  
+  - If no video is available for the selected build, the button is grayed out and disabled.  
+- **Documents** button  
+  - When pressed, opens a list of documents related to that specific build for the player to view.  
+  - If no documents exist for the selected build, the button is grayed out and disabled.  
+- **Play** button  
+  - Launches the selected archived build (subject to the isolation rules above).
+
+The list and info panel must remain fully functional even when some buttons are disabled. Disabled buttons should be visually clear (grayed out) and non-interactive.
+
+#### Implementation Notes for Grok Build
+
+- Prefer full project snapshots over partial scene overrides.  
+- If the current repository structure still shares code between live and `archives/classic_2d` or `archives/art_experiment`, refactor until the isolation rules above are met.  
+- The live codebase may grow and change freely. Archived builds are frozen museum pieces and must never constrain that growth.  
+- Document the exact commit / date of each archive inside its folder (e.g. `ARCHIVE_INFO.md`).  
+- The Archives browser UI must be built so that adding future builds (new folders + metadata) requires no changes to the live game code beyond registering the new entry in the list.
+
+This policy guarantees two things simultaneously:  
+1. Players can experience the game exactly as it was at any archived moment.  
+2. The main development path remains free of legacy baggage.
+
+Any future archived build must follow these rules from the moment it is created.
