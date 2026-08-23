@@ -829,8 +829,10 @@ SW | S  | SE
 - Center cell = clear head/face close-up  
 - This single image is the primary design reference for all subsequent generations
 
-**A reference of what the final primary Character Bible should look like is located at:**  
-`assets/sprites/player/gdd_reference_bible.jpg`
+A visual reference example of the desired final style and quality can be found at:  
+`assets/sprites/player/gdd_reference_bible.jpg`  
+
+**Important:** This file is only a style/quality reference. Grok Build must generate the actual Character Bible and all animation frames from scratch using the prompt rules in this section. Do not treat the reference image as an input asset to be edited or extended.
 
 #### 21.2 Generation Rules
 
