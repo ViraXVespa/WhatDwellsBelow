@@ -17,21 +17,10 @@
 3. **Preserve the Archives system and presentation switcher**  
    The three-mode switcher (live / classic_2d / art_experiment) plus the Archives browser must ship. Selecting “Play” always launches the new clean live path. classic_2d and art_experiment (and any future archives, including the one created in step 1) remain completely isolated standalone snapshots per Section 20.
 
-### Hard Constraints (Non-Negotiable)
+### Hard Constraints & Scope (Non-Negotiable)
 
-- Solo play only.  
-- Exactly the eleven skills listed in Section 7.  
-- White, green, and blue rarity only (blue is boss-only).  
-- Repeating 5-floor structure with Floor Guardians (1–4) and Gate Master (5).  
-- Hit-based gathering system for both mining and woodcutting.  
-- All numeric values exposed and tunable in a full debug menu.  
-- Production / Gold quality on every system that ships.  
-- Consistent 60 FPS minimum on target hardware.  
-- No co-op scaffolding left active in the live path.  
-- No systems, skills, rarities, hub upgrades, or meta-progression beyond what this document explicitly requires.  
-- Player animations use exactly 8 directions (matching the Character Bible layout).  
-- Artifact collections / sets are required (see Section 8).  
-- The secret debug menu (including Save/Load profiles, Automated Playtest / AI Player system with weapon-balance awareness, telemetry, impact coefficients, baseline coefficients, and recommended configurations) must ship but remains hidden behind the documented input sequence.
+See **Section 2** for the complete In-Scope list, Explicit Non-Goals, Design Pillars, and Acceptance Criteria.  
+Additional non-negotiables: Solo play only; exactly the eleven skills listed in Section 7; white, green, and blue rarity only (blue is boss-only); repeating 5-floor structure with Floor Guardians (1–4) and Gate Master (5); hit-based gathering system for both mining and woodcutting; Artifact collections / sets required (exactly eight, see Section 8); player animations use exactly 8 directions (matching the Character Bible layout); all numeric values exposed and tunable in the secret debug menu; Production / Gold quality on every system that ships; consistent 60 FPS minimum on target hardware; no co-op scaffolding left active in the live path; no systems, skills, rarities, hub upgrades, or meta-progression beyond what this document explicitly requires; the secret debug menu (including Save/Load profiles, Automated Playtest / AI Player system with weapon-balance awareness, telemetry, impact coefficients, baseline coefficients, and recommended configurations) must ship but remains hidden behind the documented input sequence.
 
 ### Success Criterion
 
@@ -40,11 +29,10 @@ A first-time player on a couch with a gamepad can reach a successful extraction 
 ### How to Use This Document
 
 - Treat every requirement in Sections 1–17 and 19 as mandatory design intent for the new live implementation.  
-- Section 19 (sprite pipeline) is non-negotiable for all character art and now includes post-generation viability analysis + video-fill fallback.  
+- Section 19 (sprite pipeline) is non-negotiable for all character art and includes post-generation viability analysis + video-fill fallback.  
 - Section 20 governs Archives isolation and must be obeyed.  
 - The public repository supplies reusable assets and the Archives infrastructure. It is **not** a code base to extend for the live path.  
-- The secret debug / Automated Playtest system is a shipping feature (behind the input sequence) and must be implemented to production quality.
-
+- The secret debug / Automated Playtest system is a shipping feature (behind the input sequence) and must be implemented to production quality.  
 All previously open design questions are closed. Do not invent additional systems or reopen settled decisions.
 
 ---
@@ -76,9 +64,6 @@ A complete, production-ready vertical slice that can ship as a free demo. Every 
 5. Extract via clerk or die / voluntarily Dispel  
 6. Recap screen  
 7. Return to hub with permanent gains (or losses)
-
-**Success Definition for a New Player**  
-A first-time player on a couch with a gamepad can reach a successful extraction in 5–10 minutes without external guidance and understand the core risk/reward of extraction vs. death.
 
 ---
 
@@ -118,11 +103,11 @@ A first-time player on a couch with a gamepad can reach a successful extraction 
 2. Extraction is meaningful — the tension of what to keep vs. what to risk is the heart of every run.  
 3. Permanent progression is visible and satisfying after a single good run.  
 4. Floors feel expansive enough to support the target times and multiple points of interest.  
-5. Tone is light and slightly irreverent on the surface, serious in the depths, never grimdark.  
+5. Tone is light and slightly irreverent on the surface, serious in the depths, never grimdark.
 
 **Acceptance Criteria**  
 - A fresh Grok Build instance can recreate the entire demo from this document + the public repository.  
-- All numeric values are exposed in the secret debug menu and treated as tunable.  
+- All numeric values are exposed in the debug menu and treated as tunable.  
 - The demo runs at a consistent 60 FPS (higher allowed) on target hardware.  
 - Every system that ships is considered production/Gold and will not be rewritten for the full game.
 
@@ -149,9 +134,6 @@ No mandatory intro cutscene or long exposition is required. The player learns th
 - Empty floor-1 death/dispel recap must include the line: “They lived just to die. What a waste.”  
 - Credit splash must show the word “Proudly” crossed out and the word “Shamelessly” written above it in graffiti style so the phrase reads as vandalized: “Shamelessly Vibecoded with Grok.”  
 - The dungeon music track is titled “Bitter” (YouTube and Spotify links provided by the designer). No other track requires named external linking at this time.
-
-**What the Player Does Not Need to Know**  
-Origin of the guild, the true nature of the entity that “dwells below,” the fate of previous divers, or any larger world lore beyond what is directly visible in Placeholdia and the first several floors.
 
 ---
 
@@ -229,20 +211,9 @@ All numeric values (base speed, dash speed, dash duration, dash cooldown, specia
 - 8-directional facing derived from aim direction using smooth radial detection (not movement direction). Directions exactly match the Character Bible layout: Up, Down, Left, Right, Up-Left, Up-Right, Down-Left, Down-Right.  
 - Character art is generated and assembled according to the mandatory pipeline in **Section 19**.  
 - Required player states at minimum: idle, walk, attack (per weapon), special (per weapon), gathering (mining/woodcutting), death, dispel.  
-- Animation playback speeds are tunable.  
-- Each weapon (Great Axe, Lightning Staff, Longbow) has its own paper-doll equip appearance and full associated animations.  
-- All directional variants of the same animation state must contain exactly the same number of frames so that direction changes remain seamless.
-
-**Gathering / Stationary Actions**  
-Gathering uses the hit-based system defined in Section 12. While gathering the player must remain stationary.
-
-**Death & Dispel Avatar Sequences**  
-Both sequences lock all player input and share the deathrattle VO “hurk” (with separate female VO performances).  
-
-- **Death**: Player slowly drops to their knees, collapses to the ground, blood pool forms. Camera hangs on the body, then fades out from the edges toward the player.  
-- **Dispel**: Player draws a knife and performs a ritual motion while still standing, plays the deathrattle, then the normal death animation plays at accelerated speed ending with a comedic thud. Same camera treatment.  
-
-After the animation completes the screen fades to black and the recap screen appears. Exact fade timings are tunable.
+- Each weapon requires its own paper-doll equip appearance and associated animations.  
+- Male and female player characters must maintain full animation parity.  
+- All directional variants of the same animation state must contain exactly the same number of frames.
 
 ---
 
@@ -291,7 +262,10 @@ All player attacks (basic and special) must clearly telegraph their range and pr
 
 **Defense**  
 - Uses a diminishing-returns formula (exact formula tunable).  
-- Armor pieces contribute defense and may carry minor secondary stats.  
+- Armor pieces contribute defense and may carry minor secondary stats.
+
+**Target-lock**  
+See Section 4 for full behavior.
 
 Floating damage numbers show integer values only, appear briefly, then disappear.  
 All damage values, multipliers, cooldowns, periods, radii, and scaling rates are exposed in the debug menu.
@@ -944,20 +918,18 @@ A fresh Grok Build instance must:
 1. First create a fully isolated archive of the current project state following the exact rules in Section 20. This archive becomes the next selectable build in the Archives browser.  
 2. Then implement a clean, from-scratch live path that satisfies every requirement in this GDD.
 
-**Core Construction Rules**
-
-- The live path is a clean rewrite. Do not extend, refactor, or reuse runtime code, scenes, scripts, autoloads, or architectural patterns from the pre-archive live codebase. The previous pure-2D design flow and its accumulated compromises are retired.  
-- Design the live path from the ground up around the orthographic Camera3D system (Section 4): fixed pitch ≈ –58°, correct depth sorting that respects implied real-world positions of player/enemies/walls/props, paper-doll sprites, player-adjustable zoom 1.0–1.75, independent HUD scale, readable 64×64 art, and 8-directional facing.  
+**Core Construction Rules**  
+- The live path is a clean rewrite. Do not extend, refactor, or reuse runtime code, scenes, scripts, autoloads, or architectural patterns from the pre-archive live codebase.  
+- Design the live path from the ground up around the orthographic Camera3D system (Section 4).  
 - The live path must never share runtime code, scenes, scripts, or global state with any archived build.  
 - Treat every numeric value as tunable and expose it in the secret debug menu.  
 - Prefer simple, readable, production-quality implementations over clever legacy workarounds.  
-- All player and enemy character art must follow the mandatory pipeline in Section 19 (including post-generation viability analysis, equal frame counts across directions, and Image-to-Video fill-in for missing passing/crossover frames).  
-- Male and female player characters with full animation parity, the three-weapon system (Great Axe, Lightning Staff, Longbow), hit-based mining and woodcutting, eleven skills, blue rarity (boss-only), named monsters, enemy bases, quest system, artifact collections/sets, aim-line indicator, and gamepad-first UI with initial focus are mandatory.  
-- The secret debug menu (including profile Save/Load, Automated Playtest / AI Player system with weapon-balance awareness, telemetry, impact coefficients, baseline coefficients generated at build time, and recommended configurations) must ship at production quality but remain hidden behind the documented shoulder-button sequence.  
+- All player and enemy character art must follow the mandatory pipeline in Section 19.  
+- Male and female player characters with full animation parity, the three-weapon system, hit-based mining and woodcutting, eleven skills, blue rarity (boss-only), named monsters, enemy bases, quest system, artifact collections/sets, aim-line indicator, and gamepad-first UI with initial focus are mandatory.  
+- The secret debug menu (including profile Save/Load, Automated Playtest / AI Player system) must ship at production quality but remain hidden behind the documented shoulder-button sequence.  
 - Production / Gold quality is required for every system that ships. Placeholders are allowed only under the explicit policy in Section 14.
 
-**Suggested Order of Implementation (Clean Live Path)**
-
+**Suggested Order of Implementation (Clean Live Path)**  
 1. New project scaffolding + Camera3D + input + basic player movement/animation states (Section 19 sprites, 8 directions) for both male and female characters.  
 2. Core combat (three weapons with basic + LT specials, Dash, target-lock, crits, Adrenaline Rush, full attack telegraphs, aim-line indicator) with proper depth sorting and juice.  
 3. Dungeon generation + boss doors + locked stairs + Floor Guardians / Gate Master + enemy bases.  
@@ -968,12 +940,6 @@ A fresh Grok Build instance must:
 8. Save / load with backup + isolated save paths for archives and for the two autoplay saves.  
 9. Placeholdia hub layout (buildings with real depth) and polish.  
 10. Final audio pass, placeholder replacement, and Archives browser verification.
-
-**Success Criterion**
-
-When a new player can enter Placeholdia on the clean live path, choose character type, dive, fight with any of the three weapons, gather (mine or woodcut), extract or die, see the XP drain sequence on the recap, and return with permanent progress — all at a stable 60 FPS — the demo is considered complete under this document.
-
-The public repository is used for assets and for the Archives system only. The live codebase created by this process must stand alone and must not be constrained by any pre-archive implementation decisions.
 
 ---
 
@@ -1180,8 +1146,6 @@ A generation is acceptable only if it meets **all** of the following after clean
 
 This is the most reliable pipeline currently achievable with Grok Imagine and related tools for the player characters (and enemies) of *What Dwells Below*. Follow it exactly. Deviations require explicit justification and re-validation under the orthographic camera + Y-billboard + nearest-neighbor filtering.
 
----
-
 ### 20. Archived Builds System (Standalone Snapshots)
 
 The Archives system (classic_2d, art_experiment, and any future historical builds) exists solely to support the Patreon development narrative and let players experience the game **exactly as it was at specific points in development**.
@@ -1244,15 +1208,7 @@ The Archives browser is accessed from the Pause Menu → System tab (or equivale
 - **Play** button  
   - Launches the selected archived build (subject to the isolation rules above).
 
-The list and info panel must remain fully functional even when some buttons are disabled. Disabled buttons should be visually clear (grayed out) and non-interactive.
-
-#### Implementation Notes for Grok Build
-
-- Prefer full project snapshots over partial scene overrides.  
-- If the current repository structure still shares code between live and `archives/classic_2d` or `archives/art_experiment`, refactor until the isolation rules above are met.  
-- The live codebase may grow and change freely. Archived builds are frozen museum pieces and must never constrain that growth.  
-- Document the exact commit / date of each archive inside its folder (e.g. `ARCHIVE_INFO.md`).  
-- The Archives browser UI must be built so that adding future builds (new folders + metadata) requires no changes to the live game code beyond registering the new entry in the list.
+The list and info panel update dynamically when a new archive is added.
 
 This policy guarantees two things simultaneously:  
 1. Players can experience the game exactly as it was at any archived moment.  
