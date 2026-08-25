@@ -26,6 +26,23 @@ Additional non-negotiables: Solo play only; exactly the eleven skills listed in 
 
 A first-time player on a couch with a gamepad can reach a successful extraction in 5–10 minutes without external guidance, understand the core risk/reward of extraction vs. death, and experience the permanent progression feedback on the recap screen — all at stable 60 FPS — using only the new clean live path.
 
+**Demo-Complete Checklist (True Non-Negotiables)**  
+A build meets the contract only when all of the following are true:
+
+- The Success Criterion above is achieved on the clean live path  
+- Mandatory Workflow (archive-then-clean-rewrite) has been followed  
+- Exactly the eleven skills listed in Section 7  
+- Exactly eight artifact sets (run-only)  
+- Hit-based gathering for mining and woodcutting  
+- Repeating 5-floor structure with Floor Guardians (1–4) and Gate Master (5)  
+- White / green / blue rarity only (blue is boss-only)  
+- Player animations use exactly 8 directions with full male/female parity  
+- Secret debug menu (including Medium-bar Automated Playtest) ships but remains hidden  
+- Every shipping system is Production / Gold quality and fully exposed to the debug menu  
+- Consistent 60 FPS minimum  
+- Solo play only; no co-op scaffolding  
+- No systems, skills, rarities, hub upgrades, or meta-progression beyond what this document explicitly requires
+
 ### How to Use This Document
 
 - Treat every requirement in Sections 1–17 and 19 as mandatory design intent for the new live implementation.  
@@ -34,6 +51,13 @@ A first-time player on a couch with a gamepad can reach a successful extraction 
 - The public repository supplies reusable assets and the Archives infrastructure. It is **not** a code base to extend for the live path.  
 - The secret debug / Automated Playtest system is a shipping feature (behind the input sequence) and must be implemented to production quality.  
 All previously open design questions are closed. Do not invent additional systems or reopen settled decisions.
+
+**Variation Philosophy**  
+Numbers, exact formulas, enemy specifics, and artifact-set bonuses are deliberately left open so each clean live build produces a varied but coherent first implementation. Starting values in Appendix A are only suggested seeds.  
+
+The secret debug menu and Automated Playtest system exist to drive rapid, data-driven tuning toward the Success Criterion and Design Pillars. Variation *within* the required systems is expected and desired.  
+
+Everything that is marked tunable or left for Grok to invent should be treated as a starting point that will be refined through the tuning tools.
 
 ---
 
@@ -335,7 +359,7 @@ This is a required feel target.
 - Fixed capacity (current value 28, fully tunable).  
 - When the bag is full, any new loot the player walks over cannot be picked up. A toast is shown and the item remains on the ground.
 
-**EquipmentSlots**  
+**Equipment Slots**  
 - Weapon  
 - Tool (pickaxe **or** hatchet — only one kind may be selected per run at loadout and is locked for the entire run)  
 - Potion (dedicated quick-use slot)  
@@ -361,7 +385,10 @@ Food discovered inside the dungeon must be equipped to be used with the quick bu
 - Artifacts with similar effects are grouped into collections (sets). The demo contains exactly eight distinct sets.  
 - Typical set size is 2–3 artifacts; one or two sets may contain 4–5 artifacts.  
 - Collecting multiple artifacts from the same set grants additional set bonuses. Bonuses begin at 2 pieces and may require higher thresholds depending on set size.  
-- Set bonuses are progressive and are invented by Grok Build at implementation time to remain consistent with existing artifact power level (designer may adjust later).  
+- Set bonuses are progressive and are invented by Grok Build at implementation time.  
+- Artifact set bonuses should feel like a natural addition to the items that make up the set. For example, if a set is made up of two items that increase health regeneration, the set bonus could provide an additional boost to health regen or a matching bonus to mana regen.  
+- For 2–3 piece sets, the bonus should be roughly equal in power to the bonus from an individual piece of the set.  
+- For larger sets, the bonuses should feel more powerful as more items in the collection are gathered.  
 - Active set bonuses are displayed beneath the normal artifact descriptions in the relevant UI.  
 - Set pieces count toward bonuses while carried or equipped in the current run.
 
@@ -485,7 +512,9 @@ Safe rooms (clerk, ghost shop, puzzle) must remain enemy-free.
 - Minimum of 12 different types of normal enemies.  
 - At least 5 different types appear on each floor.  
 - Enemies must have varied attack patterns, movement types (hopping, walking, flying, etc.), and appearances so they feel distinct in combat.  
-- Palette swaps and stat swaps between floors are used to increase perceived variety.
+- Palette swaps and stat swaps between floors are used to increase perceived variety.  
+- Enemies should use a variety of classic fantasy representations (slimes, goblins, orcs, etc.).  
+- All enemies must feel distinct from one another and remain visually consistent with the dungeon style and tone of the game.
 
 **Roles Present in Demo**  
 - Bruiser (melee)  
@@ -598,18 +627,19 @@ All numeric values (hit counts, timers, heal amounts, spawn chances, etc.) are t
 **HUD – Gauntlet Strip (mandatory elements and behavior)**  
 The HUD is a persistent horizontal strip that must remain visible at all times during dungeon play and must be readable from couch distance on a 1080p television.
 
-Required elements (no more, no less unless later expanded by debug):  
-- Player portrait  
-- HP bar with numeric value  
-- Potion quick-slot icon + cooldown sweep / numeric cooldown  
-- Dash cooldown indicator  
-- Special (LT) cooldown indicator  
-- Level (highest global Combat Level; if the equipped weapon’s style level is lower it appears in parentheses, e.g. `Level 14 (Magic 11)`)  
-- Current gold  
-- Current ore / wood  
-- Current floor number (e.g. “F3”)  
-- Shrine buff icon + remaining time (appears only while active)  
-- Boss / Floor Guardian / Gate Master HP bar (appears only while the boss is alive and in range / engaged)  
+| Required Element | Notes |
+|------------------|-------|
+| Player portrait | |
+| HP bar with numeric value | |
+| Potion quick-slot icon + cooldown sweep / numeric cooldown | |
+| Dash cooldown indicator | |
+| Special (LT) cooldown indicator | |
+| Level | Highest global Combat Level; if the equipped weapon’s style level is lower it appears in parentheses (e.g. `Level 14 (Magic 11)`) |
+| Current gold | |
+| Current ore / wood | |
+| Current floor number | e.g. “F3” |
+| Shrine buff icon + remaining time | Appears only while active |
+| Boss / Floor Guardian / Gate Master HP bar | Appears only while the boss is alive and in range / engaged |
 
 Bag-fullness indicator is explicitly removed and must not appear.  
 All cooldowns must show both a visual fill/sweep and be understandable at a glance. Exact pixel positions, colors, and sizes are left to implementation so long as the information hierarchy is preserved and the strip does not obscure critical gameplay.
@@ -645,6 +675,16 @@ This menu contains:
 - All other content that was formerly under Pause → System that is not listed above
 
 **Automated Playtest / AI Player System (inside Secret Debug Menu)**  
+
+**Must-ship (Medium bar)**  
+The system must be able to:  
+- Run both the fresh-start save and the progressed save  
+- Collect the core telemetry (total gameplay time, time in vs. out of combat, near-death events, and additional metrics useful for balance)  
+- Keep Great Axe, Lightning Staff, and Longbow roughly balanced  
+- Calculate per-variable impact coefficients  
+- Offer three recommended configurations per save type (one most-ideal + two close alternatives) that the user can further edit before applying  
+
+**Full target (everything below is still required if time/compute allows, but the Medium bar above is the mandatory shipping floor)**  
 - Replicates natural human gameplay as closely as practical, allowing intentional sub-optimality.  
 - Selects different loadouts at the start of runs; deep in-run equipment swapping is not required.  
 - Uses two completely independent save files (never the player’s normal save):  
@@ -721,23 +761,26 @@ Triggered on every death or Dispel.
 - Credit line “Bitter — ViraXVespa” must appear on the title screen and in the pause menu where appropriate.
 
 **SFX – Minimum Required Set**  
-- Melee hit  
-- Player hurt  
-- Special / Slam impact  
-- Dash  
-- Mining hit  
-- Woodcutting hit  
-- Breakable smash  
-- Item pickup  
-- UI click / confirm / cancel  
-- Level-up  
-- Adrenaline Rush start (warcry)  
-- Adrenaline Rush loop (woosh / crackle)  
-- Critical hit  
-- Potion use  
-- Food use  
-- Deathrattle “hurk” (separate male and female performances)  
-- Comedic thud (Dispel)  
+
+| SFX | Notes |
+|-----|-------|
+| Melee hit | |
+| Player hurt | Separate male and female VO performances |
+| Special / Slam impact | |
+| Dash | |
+| Mining hit | |
+| Woodcutting hit | |
+| Breakable smash | |
+| Item pickup | |
+| UI click / confirm / cancel | |
+| Level-up | |
+| Adrenaline Rush start (warcry) | |
+| Adrenaline Rush loop (woosh / crackle) | |
+| Critical hit | |
+| Potion use | |
+| Food use | |
+| Deathrattle “hurk” | Separate male and female performances |
+| Comedic thud (Dispel) | |
 
 Additional short UI, weapon-specific, and ambient sounds may be added. All volumes are controlled by the SFX slider.
 
@@ -746,7 +789,18 @@ Additional short UI, weapon-specific, and ambient sounds may be added. All volum
 - Nearest-neighbor filtering only (no linear filtering on sprites).  
 - All characters use Y-billboard so they remain upright under the orthographic camera.  
 - Character art (player and enemies) is generated and assembled according to the mandatory pipeline defined in **Section 19**.  
-- Required player states at minimum: idle, walk, attack (per weapon), special (per weapon), gathering (mining/woodcutting), death, dispel.  
+- Required player states at minimum:
+
+| State | Notes |
+|-------|-------|
+| idle | |
+| walk | |
+| attack | Per weapon |
+| special | Per weapon |
+| gathering | Mining / woodcutting |
+| death | |
+| dispel | |
+
 - Each weapon requires its own paper-doll equip appearance and associated animations.  
 - Male and female player characters must maintain full animation parity.  
 - Player and enemy animations use exactly 8 directions matching the Character Bible layout.  
@@ -1278,3 +1332,34 @@ Every value **must** be exposed in the debug menu and treated as non-final.
 | Target first-extraction time   | 5–10 min        | New player on gamepad                              |
 
 All other values (enemy stats, drop rates, forge costs, weapon-specific damage/ranges, quest rewards, etc.) should be chosen to support the same feel targets and must also be exposed in the debug menu.
+
+---
+
+## Appendix B – Demo-Complete Checklist (True Non-Negotiables)
+
+A build meets the contract only when **all** of the following are true:
+
+**Core Success**
+- The Success Criterion is achieved on the clean live path (first-time gamepad/couch player reaches successful extraction in 5–10 minutes, understands extraction-vs-death risk/reward, experiences permanent progression feedback on the recap screen, all at stable 60 FPS)
+
+**Process**
+- Mandatory Workflow (archive-then-clean-rewrite per Section 20) has been followed
+- Live path shares no runtime code, scenes, scripts, or global state with any archived build
+
+**Exact Scope**
+- Exactly the eleven skills listed in Section 7
+- Exactly eight artifact sets (run-only)
+- Hit-based gathering for both mining and woodcutting
+- Repeating 5-floor structure with Floor Guardians (1–4) and Gate Master (5)
+- White / green / blue rarity only (blue is boss-only)
+- Player animations use exactly 8 directions with full male/female parity and separate female VOs
+- Solo play only; no co-op scaffolding left active
+
+**Systems & Quality**
+- Secret debug menu (including the Medium-bar Automated Playtest system) ships but remains hidden behind the documented input sequence
+- Every shipping system is Production / Gold quality
+- All numeric values are exposed and tunable in the secret debug menu
+- Consistent 60 FPS minimum on target hardware
+- No systems, skills, rarities, hub upgrades, or meta-progression beyond what this document explicitly requires
+
+This checklist is the authoritative definition of “demo complete.”
