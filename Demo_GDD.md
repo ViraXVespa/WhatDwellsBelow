@@ -1,21 +1,21 @@
 # Grok Build Contract (Read First)
 
-**Version**: 1.4 – Archive-then-Clean-Rewrite (Respec Integrated)  
+**Version**: 1.5 – Archive-then-Clean-Rewrite (Respec Integrated + Debug QA + Artifact Sets + 8-Dir Sprites)  
 **Authority**: This document is the single source of truth.
 
 ### Mandatory Workflow for Any Fresh Grok Build Instance
 
 1. **Archive the current build first**  
-   Follow Section 22 exactly. Create a new fully standalone snapshot under `archives/` that captures the project state as it exists at the moment this GDD is handed over. This snapshot becomes the next selectable build in the Archives browser / presentation switcher and is preserved as a historical museum piece. Do not modify the live path while creating the archive.
+   Follow Section 20 exactly. Create a new fully standalone snapshot under `archives/` that captures the project state as it exists at the moment this GDD is handed over. This snapshot becomes the next selectable build in the Archives browser / presentation switcher and is preserved as a historical museum piece. Do not modify the live path while creating the archive.
 
 2. **Then rewrite the live path from scratch**  
    After the archive is complete and verified as isolated, implement the entire playable demo as a clean new live codebase.  
    - Do **not** extend, patch, or carry forward the previous live code, scenes, scripts, or architectural decisions.  
    - The previous pure-2D design philosophy and its accumulated compromises are retired.  
-   - The new live path must be designed from the ground up around the orthographic Camera3D system described in Section 4 (fixed ~–58° pitch, proper depth sorting that respects implied real-world positions, paper-doll sprites, readable 64×64 art, etc.).
+   - The new live path must be designed from the ground up around the orthographic Camera3D system described in Section 4 (fixed ~–58° pitch, proper depth sorting that respects implied real-world positions, paper-doll sprites, readable 64×64 art, 8-directional facing, etc.).
 
 3. **Preserve the Archives system and presentation switcher**  
-   The three-mode switcher (live / classic_2d / art_experiment) plus the Archives browser must ship. Selecting “Play” always launches the new clean live path. classic_2d and art_experiment (and any future archives, including the one created in step 1) remain completely isolated standalone snapshots per Section 22.
+   The three-mode switcher (live / classic_2d / art_experiment) plus the Archives browser must ship. Selecting “Play” always launches the new clean live path. classic_2d and art_experiment (and any future archives, including the one created in step 1) remain completely isolated standalone snapshots per Section 20.
 
 ### Hard Constraints (Non-Negotiable)
 
@@ -28,7 +28,10 @@
 - Production / Gold quality on every system that ships.  
 - Consistent 60 FPS minimum on target hardware.  
 - No co-op scaffolding left active in the live path.  
-- No systems, skills, rarities, hub upgrades, or meta-progression beyond what this document explicitly requires.
+- No systems, skills, rarities, hub upgrades, or meta-progression beyond what this document explicitly requires.  
+- Player animations use exactly 8 directions (matching the Character Bible layout).  
+- Artifact collections / sets are required (see Section 8).  
+- The secret debug menu (including Save/Load profiles, Automated Playtest / AI Player system with weapon-balance awareness, telemetry, impact coefficients, baseline coefficients, and recommended configurations) must ship but remains hidden behind the documented input sequence.
 
 ### Success Criterion
 
@@ -36,10 +39,11 @@ A first-time player on a couch with a gamepad can reach a successful extraction 
 
 ### How to Use This Document
 
-- Treat every requirement in Sections 1–17 and 21 as mandatory design intent for the new live implementation.  
-- Section 21 (sprite pipeline) is non-negotiable for all character art.  
-- Section 22 governs Archives isolation and must be obeyed.  
-- The public repository supplies reusable assets and the Archives infrastructure. It is **not** a code base to extend for the live path.
+- Treat every requirement in Sections 1–17 and 19 as mandatory design intent for the new live implementation.  
+- Section 19 (sprite pipeline) is non-negotiable for all character art and now includes post-generation viability analysis + video-fill fallback.  
+- Section 20 governs Archives isolation and must be obeyed.  
+- The public repository supplies reusable assets and the Archives infrastructure. It is **not** a code base to extend for the live path.  
+- The secret debug / Automated Playtest system is a shipping feature (behind the input sequence) and must be implemented to production quality.
 
 All previously open design questions are closed. Do not invent additional systems or reopen settled decisions.
 
@@ -86,14 +90,17 @@ A first-time player on a couch with a gamepad can reach a successful extraction 
 - Procedural dungeon floors in a repeating 5-floor structure that continues indefinitely until death  
 - Floor Guardians (floors 1–4) and Gate Master (floor 5) with boss doors and locked stairs  
 - Complete combat system (Great Axe, Lightning Staff, Longbow, weapon-specific specials on LT, Dash, target-lock, critical hits, Adrenaline Rush) with clear range telegraphs and active-attack indicators on every attack  
+- Aim-line indicator (tunable, dungeon-only, System-tab toggle + opacity, persisted)  
 - Hit-based gathering system for both mining (pickaxe) and woodcutting (hatchet)  
 - Eleven skills (Great Axe, Staff, Longbow, Strength, Magic, Ranged, Defense, Hitpoints, Mining, Woodcutting, Smithing) with permanent XP fragments  
 - Inventory, equipment slots (including single Tool slot locked to one type per run), forged holds (max 3 per slot), extraction via clerks  
-- Male and female player characters (selectable on first load, switchable later from pause menu) with full animation parity and separate female VOs  
+- Artifact collections / sets (exactly eight sets, run-only, bonuses displayed under descriptions)  
+- Male and female player characters (selectable on first load, switchable later from pause menu) with full animation parity, separate female VOs, and exactly 8 directional animations  
 - Ghost shop, shrine, campfire, breakables, puzzle elements, stairs, floor crystal  
 - Named monsters, enemy bases, and expanded enemy variety (≥12 normal types, ≥5 types per floor)  
 - Quest system (3 random choices, 1 active at a time)  
-- Full HUD, pause menu (with debug/balance page), all interaction UIs, recap screen  
+- Full HUD, pause menu (with System tab containing aim-line controls), all interaction UIs, recap screen  
+- Secret debug / balance menu (shoulder-button sequence) containing all tunable values, profile Save/Load, and the Automated Playtest / AI Player system  
 - Save / load with backup, presentation switcher + Archives, 60 FPS minimum  
 - Debug menu that exposes every balance and generation value  
 - Gamepad-first design for all controls, gameplay, and interfaces (every menu opens with valid initial focus)
@@ -115,7 +122,7 @@ A first-time player on a couch with a gamepad can reach a successful extraction 
 
 **Acceptance Criteria**  
 - A fresh Grok Build instance can recreate the entire demo from this document + the public repository.  
-- All numeric values are exposed in the debug menu and treated as tunable.  
+- All numeric values are exposed in the secret debug menu and treated as tunable.  
 - The demo runs at a consistent 60 FPS (higher allowed) on target hardware.  
 - Every system that ships is considered production/Gold and will not be rewritten for the full game.
 
@@ -183,6 +190,15 @@ The demo must ship with the existing three-mode switcher (live / classic_2d / ar
 
 All controls, gameplay, and interfaces must be designed with a gamepad-first intent. Every menu must open with a valid initial focus already set so the player can immediately navigate and select using only the gamepad (no requirement to first highlight an element with the mouse).
 
+**Aim-Line Indicator**  
+- Simple opaque visual indicator that extends outward from the player in the direction they are facing/aiming.  
+- Appearance and length are fully tunable (default style inspired by Heroes of Hammerwatch and similar games; length may optionally scale toward the farthest point the currently equipped weapon can hit).  
+- Always visible while the player is inside the dungeon; never visible in Placeholdia.  
+- Always draws the full configured distance (does not respect line-of-sight or stop at walls).  
+- Toggleable on/off and with an independent opacity slider in the System tab of the pause menu.  
+- On/off state and opacity are persisted with the player profile.  
+- Fully functional with both gamepad and keyboard/mouse aiming (parity required).
+
 **Input – Keyboard / Mouse (Fully Featured Fallback)**  
 All gamepad actions must have keyboard/mouse equivalents. Mouse aim + hold-LMB for attack is the default mouse scheme. Rebinding of all actions is required.
 
@@ -210,11 +226,12 @@ All numeric values (base speed, dash speed, dash duration, dash cooldown, specia
 - The player must correctly depth-sort against walls, props, enemies, and other world objects using a system that respects implied real-world positions.  
 
 **Facing & Animation System**  
-- 16-directional facing derived from aim direction using smooth radial detection (not movement direction).  
-- Character art is generated and assembled according to the mandatory pipeline in **Section 21**.  
+- 8-directional facing derived from aim direction using smooth radial detection (not movement direction). Directions exactly match the Character Bible layout: Up, Down, Left, Right, Up-Left, Up-Right, Down-Left, Down-Right.  
+- Character art is generated and assembled according to the mandatory pipeline in **Section 19**.  
 - Required player states at minimum: idle, walk, attack (per weapon), special (per weapon), gathering (mining/woodcutting), death, dispel.  
 - Animation playback speeds are tunable.  
-- Each weapon (Great Axe, Lightning Staff, Longbow) has its own paper-doll equip appearance and full associated animations.
+- Each weapon (Great Axe, Lightning Staff, Longbow) has its own paper-doll equip appearance and full associated animations.  
+- All directional variants of the same animation state must contain exactly the same number of frames so that direction changes remain seamless.
 
 **Gathering / Stationary Actions**  
 Gathering uses the hit-based system defined in Section 12. While gathering the player must remain stationary.
@@ -281,58 +298,58 @@ All damage values, multipliers, cooldowns, periods, radii, and scaling rates are
 
 ---
 
-7. Skills, XP, Progression & Combat Level
+### 7. Skills, XP, Progression & Combat Level
 
 Skills Included in the Demo  
-Great Axe  
-Staff  
-Longbow  
-Strength  
-Magic  
-Ranged  
-Defense  
-Hitpoints  
-Mining  
-Woodcutting  
-Smithing  
+- Great Axe  
+- Staff  
+- Longbow  
+- Strength  
+- Magic  
+- Ranged  
+- Defense  
+- Hitpoints  
+- Mining  
+- Woodcutting  
+- Smithing  
 
 These eleven are mandatory.
 
-XP Gain & Permanent Progression  
-All XP curves, per-level multipliers, and the permanent keep-rate on death/dispel are fully tunable via the debug menu.  
-During a run the player accumulates “run XP” in each skill.  
-On death or voluntary Dispel, only a small fragment of that run XP is kept permanently.  
-The recap screen must contain a clear visual sequence that shows the run XP values draining down to the permanent fragment amounts, after which the new permanent XP totals and resulting levels are displayed.
+**XP Gain & Permanent Progression**  
+- All XP curves, per-level multipliers, and the permanent keep-rate on death/dispel are fully tunable via the debug menu.  
+- During a run the player accumulates “run XP” in each skill.  
+- On death or voluntary Dispel, only a small fragment of that run XP is kept permanently.  
+- The recap screen must contain a clear visual sequence that shows the run XP values draining down to the permanent fragment amounts, after which the new permanent XP totals and resulting levels are displayed.
 
-Weapon-Specific XP Rules  
-Great Axe attacks grant Great Axe XP + Strength XP.  
-Lightning Staff melee attacks grant Strength XP + Staff XP.  
-Lightning Staff special attacks grant Magic XP + Staff XP.  
-Longbow attacks (both basic and special) grant Ranged XP + Longbow XP.
+**Weapon-Specific XP Rules**  
+- Great Axe attacks grant Great Axe XP + Strength XP.  
+- Lightning Staff melee attacks grant Strength XP + Staff XP.  
+- Lightning Staff special attacks grant Magic XP + Staff XP.  
+- Longbow attacks (both basic and special) grant Ranged XP + Longbow XP.
 
-Combat Level  
-Three separate style-specific combat levels are tracked:  
-  Melee = Great Axe + Strength  
-  Magic = Staff + Magic  
-  Ranged = Longbow + Ranged  
-Defense and Hitpoints feed into the global Combat Level.  
-The HUD displays the player’s highest (global) Combat Level.  
-If the currently equipped weapon’s style Combat Level is lower than the highest, that style level is shown in parentheses next to it (e.g. CL 14 (Magic 11)).  
-Exact weights and formulas remain fully tunable.
+**Combat Level**  
+- Three separate style-specific combat levels are tracked:  
+  - Melee = Great Axe + Strength  
+  - Magic = Staff + Magic  
+  - Ranged = Longbow + Ranged  
+- Defense and Hitpoints feed into the global Combat Level.  
+- The HUD displays the player’s highest (global) Combat Level.  
+- If the currently equipped weapon’s style Combat Level is lower than the highest, that style level is shown in parentheses next to it (e.g. CL 14 (Magic 11)).  
+- Exact weights and formulas remain fully tunable.
 
-Skill Effects (High-Level)  
-Great Axe, Staff, Longbow, Strength, Magic, and Ranged: increase damage dealt with the corresponding style or weapon (with possible differential scaling on specials).  
-Defense & Hitpoints: increase survivability.  
-Mining: improves reward chance and effectiveness with the hit-based mining system.  
-Woodcutting: improves reward chance and effectiveness with the hit-based woodcutting system.  
-Smithing: reduces forge cost/time and improves output at the anvil.  
+**Skill Effects (High-Level)**  
+- Great Axe, Staff, Longbow, Strength, Magic, and Ranged: increase damage dealt with the corresponding style or weapon (with possible differential scaling on specials).  
+- Defense & Hitpoints: increase survivability.  
+- Mining: improves reward chance and effectiveness with the hit-based mining system.  
+- Woodcutting: improves reward chance and effectiveness with the hit-based woodcutting system.  
+- Smithing: reduces forge cost/time and improves output at the anvil.  
 
 Exact formulas are treated as tunable suggestions only.
 
 Visible Power Gain After One Good Run  
 After a single successful extraction and return to Placeholdia the player must be able to notice either:  
-a few permanent skill levels, or  
-at least one new piece of usable forged gear (or both).  
+- a few permanent skill levels, or  
+- at least one new piece of usable forged gear (or both).  
 
 This is a required feel target.
 
@@ -363,6 +380,16 @@ Food discovered inside the dungeon must be equipped to be used with the quick bu
 - The player may maintain up to three forged “holds” per equipment slot.  
 - Forged holds always return to Placeholdia on death or Dispel, even if the item was dropped on the floor.  
 - All unextracted resources and any non-forged items still in the bag are lost on death or Dispel.
+
+**Artifacts & Collections**  
+- Artifacts are obtained from the Ghost Shop, boss chests, and (optionally) dead-end or trap-room chests.  
+- Artifacts cannot be extracted via clerks; they function as run-only items and are lost on death or Dispel.  
+- Artifacts with similar effects are grouped into collections (sets). The demo contains exactly eight distinct sets.  
+- Typical set size is 2–3 artifacts; one or two sets may contain 4–5 artifacts.  
+- Collecting multiple artifacts from the same set grants additional set bonuses. Bonuses begin at 2 pieces and may require higher thresholds depending on set size.  
+- Set bonuses are progressive and are invented by Grok Build at implementation time to remain consistent with existing artifact power level (designer may adjust later).  
+- Active set bonuses are displayed beneath the normal artifact descriptions in the relevant UI.  
+- Set pieces count toward bonuses while carried or equipped in the current run.
 
 **Extraction / Mailing**  
 - Performed exclusively through clerks.  
@@ -580,14 +607,15 @@ All base HP, damage, speed, scaling per floor, and drop rates are exposed in the
 
 **Artifact Chests, Pressure Plates, Levers, Gates, Cracked Walls**  
 - Puzzle elements are never required for progression and never appear on the critical path to stairs.  
-- Cracked walls have higher HP than normal breakables (suggested start: 8, fully tunable).
+- Cracked walls have higher HP than normal breakables (suggested start: 8, fully tunable).  
+- Dead-end chests and trap-room chests may optionally contain Artifacts in addition to normal loot.
 
 **Stairs & Floor Crystal**  
 - Both only allow travel deeper.  
 - Stairs remain locked behind the boss door until the Floor Guardian or Gate Master is defeated.  
 - Interaction prompts must be clear and confirmation-safe where appropriate.
 
-All numeric values (hit counts, timers, heal amounts, spawn chances, etc.) are tunable via the debug menu.
+All numeric values (hit counts, timers, heal amounts, spawn chances, etc.) are tunable via the secret debug menu.
 
 ---
 
@@ -617,19 +645,46 @@ Opened with Menu / Start / Esc. Freezes gameplay.
 Every menu (including this one) must open with valid initial focus so it is immediately navigable by gamepad.
 
 Exactly three tabs, navigable with LB/RB or equivalent:  
-1. Inventory – full bag grid, equipment slots, ability to use/consume/drop/equip (including mid-run weapon changes).  
+1. Inventory – full bag grid, equipment slots, ability to use/consume/drop/equip (including mid-run weapon changes). Active artifact set bonuses are shown beneath each artifact’s normal description.  
 2. Skills – list of the eleven skills with current level, XP bar to next level, and permanent XP total.  
 3. System – must contain every one of the following:  
    - Master / Music / SFX volume sliders  
    - Camera zoom slider (1.0–1.75)  
    - HUD scale slider  
-   - Full debug / balance menu  
+   - Aim-line toggle and opacity slider  
    - Presentation mode switcher + Archives browser  
    - Control rebinding screen  
    - Character type switch (male / female)  
    - Patreon link  
    - “Delete Save Data” with confirmation  
    - Dispel Avatar button with strong confirmation prompt  
+
+The full debug / balance menu is **no longer** present in the Pause Menu.
+
+**Secret Debug / Balance Menu**  
+Accessed only by the following input sequence (gamepad): all four shoulder buttons (RT + RB + LT + LB) must go from pressed → released → pressed → released within a 1.5-second window. The 1.5-second timer resets after the first release so a full 1.5 seconds remains for the second press-and-release.  
+The menu opening itself is the sole confirmation that the sequence succeeded.  
+This menu contains:  
+- Every previously available debug / balance page (all numeric values exposed and tunable)  
+- Debug profile Save / Load / Delete / Rename system (unlimited named profiles, free naming/renaming, saved to files by default, persist across live-path sessions)  
+- Automated Playtest / AI Player system (see dedicated subsection below)  
+- All other content that was formerly under Pause → System that is not listed above
+
+**Automated Playtest / AI Player System (inside Secret Debug Menu)**  
+- Replicates natural human gameplay as closely as practical, allowing intentional sub-optimality.  
+- Selects different loadouts at the start of runs; deep in-run equipment swapping is not required.  
+- Uses two completely independent save files (never the player’s normal save):  
+  1. Fresh-start save – repeatedly cleared so every test begins clean.  
+  2. Progressed save – contains full progression in all eleven skills; can be reset to a fixed default progressed state.  
+- Weapon-aware: actively works to keep Great Axe, Lightning Staff, and Longbow balanced so no single weapon is clearly stronger.  
+- Records run history together with the exact variable configuration used.  
+- Collects comprehensive telemetry (baseline list generated by Grok Build at implementation; includes at minimum total gameplay time, time in vs. out of combat, near-death events, and additional metrics useful for balance).  
+- Calculates per-variable impact coefficients (breakdown of effect on every telemetry metric plus an overall difficulty value primarily tied to run duration) separately for the fresh-start and progressed saves.  
+- Ships with deduced baseline impact coefficients generated at build time; these are refined by real telemetry.  
+- Presents ideal values as fly-out information when a variable is highlighted: one ideal for the fresh-start save (tuned toward first-extraction goals) and one ideal for the progressed save (tuned toward later GDD constraints).  
+- Offers three recommended configurations per save type (one most-ideal to meet spec + two close alternatives). The player may further edit any recommended configuration before applying it. This flow is visible only inside the secret debug menu.  
+- Supports accelerated, background, and headless runs. Unlimited queued runs; any run is interruptible without loss of already-collected telemetry.  
+- The entire system ships in the public demo but remains hidden behind the secret input sequence.
 
 **Extraction / Clerk UI**  
 - Opens on interact with any clerk.  
@@ -643,7 +698,8 @@ Exactly three tabs, navigable with LB/RB or equivalent:
 - Player may purchase a maximum of two Artifacts per visit.  
 - Lists snacks with prices.  
 - Option to pawn any currently carried gear for a low gold return.  
-- Clean confirmation on every transaction.
+- Clean confirmation on every transaction.  
+- Active set bonuses are shown beneath artifact descriptions.
 
 **Anvil UI**  
 - Shows the three holds for the selected slot.  
@@ -715,10 +771,12 @@ Additional short UI, weapon-specific, and ambient sounds may be added. All volum
 - Base resolution for characters and most props: 64×64 pixels.  
 - Nearest-neighbor filtering only (no linear filtering on sprites).  
 - All characters use Y-billboard so they remain upright under the orthographic camera.  
-- Character art (player and enemies) is generated and assembled according to the mandatory pipeline defined in **Section 21**.  
+- Character art (player and enemies) is generated and assembled according to the mandatory pipeline defined in **Section 19**.  
 - Required player states at minimum: idle, walk, attack (per weapon), special (per weapon), gathering (mining/woodcutting), death, dispel.  
 - Each weapon requires its own paper-doll equip appearance and associated animations.  
 - Male and female player characters must maintain full animation parity.  
+- Player and enemy animations use exactly 8 directions matching the Character Bible layout.  
+- All directional variants of the same animation state must contain exactly the same number of frames.  
 - Wall height, tile size (1 unit = 64 px), and depth-sorting must produce correct layering with no arbitrary popping.  
 - Buildings in Placeholdia must have actual depth and realistic dimensions.  
 - Lighting, fog color/density, and void plane must create a clear visual contrast between the warmer Placeholdia hub and the colder, darker dungeon floors.
@@ -750,10 +808,20 @@ Every other sprite, animation, tileset, prop, UI graphic, music track (except th
   - Unlocked deepest floor  
   - Selected character type (male / female)  
   - Camera zoom and HUD scale settings  
+  - Aim-line on/off state and opacity  
   - Any other player settings and debug overrides that should persist  
 
 **Restock-on-Return**  
 If the player returns to Placeholdia with gold or consumables below configurable thresholds, a limited free restock of basic food and potions is granted. Exact thresholds and costs are tunable.
+
+**Debug Profiles**  
+Named debug profiles (unlimited) are saved to files by default and persist across live-path sessions. Archives builds use the default values that existed at the moment of archiving.
+
+**Automated Playtest Saves**  
+The Automated Playtest / AI Player system maintains two completely independent save files that never interact with the player’s normal save data:  
+1. Fresh-start save – repeatedly cleared by the system.  
+2. Progressed save – contains full skill progression and can be reset to a fixed default progressed state.  
+Both are stored under isolated paths and follow the same primary + backup safety rules.
 
 **Presentation Switcher**  
 The live / classic_2d / art_experiment switcher and the Archives browser must ship in the final demo. Selecting “Play” always launches the live presentation path. This system exists to support the Patreon development narrative and must not be removed.
@@ -765,7 +833,7 @@ The live / classic_2d / art_experiment switcher and the Archives browser must sh
 **Performance**  
 - Consistent 60 FPS minimum on target hardware at all times. Higher frame rates are allowed and desirable.  
 - Frame time and memory usage must remain stable even on the deepest floors with full enemy and particle load.  
-- All performance-related budgets are subject to the debug menu where applicable.
+- All performance-related budgets are subject to the secret debug menu where applicable.
 
 **Renderer**  
 Compatibility renderer is preferred for the shippable build if it does not break the web export. Mobile renderer may be retained only if required for web stability.
@@ -793,14 +861,20 @@ After one successful extraction and return to Placeholdia the player must be abl
 - at least one new usable piece of forged gear  
 (or both). This is a required psychological reward.
 
+**Weapon Balance**  
+The three weapons (Great Axe, Lightning Staff, Longbow) must remain balanced with one another so that no single weapon type is clearly stronger. The Automated Playtest system actively monitors and supports this constraint.
+
 **Accessibility (Mandatory)**  
 - Full control rebinding for gamepad and keyboard/mouse.  
 - Independent HUD scale control.  
+- Aim-line toggle and opacity.  
 - Gamepad-first design with valid initial focus on every menu.  
 - These features are required for the demo ship. Additional accessibility options may be added but are not mandatory.
 
 **Polish Bar**  
-Every system that appears in the demo is considered production / Gold. No “temp” or “programmer art will do” exceptions are allowed for systems that ship. Placeholder assets are permitted only under the explicit policy in the Audio/Visual section and must be replaced before release.
+Every system that appears in the demo is considered production / Gold. No “temp” or “programmer art will do” exceptions are allowed for systems that ship. Placeholder assets are permitted only under the explicit policy in the Audio/Visual section and must be replaced before release.  
+
+The Automated Playtest / AI Player system (secret debug menu) exists to continuously generate telemetry and recommended configurations that help the demo meet the above targets.
 
 ---
 
@@ -829,7 +903,8 @@ Every system that appears in the demo is considered production / Gold. No “tem
 - Primary save is attempted first.  
 - On any failure to load or parse, the game silently falls back to the backup of the last successfully loaded save.  
 - If the backup also fails, a completely fresh diver is created.  
-- No partial or corrupted data is ever presented to the player.
+- No partial or corrupted data is ever presented to the player.  
+- The same primary + backup rules apply independently to the two Automated Playtest save files.
 
 **Locked Stairs / Boss Door**  
 - Stairs are inaccessible while the Floor Guardian or Gate Master is alive.  
@@ -839,6 +914,19 @@ Every system that appears in the demo is considered production / Gold. No “tem
 
 **Tool Type Lock**  
 - Once a tool type (pickaxe or hatchet) is selected at loadout, the player cannot equip the other type during that run even if one is found.
+
+**Artifact Sets**  
+- Set bonuses only count artifacts currently carried or equipped in the active run.  
+- Artifacts are never extractable and are lost on death or Dispel.
+
+**Secret Debug Sequence**  
+- The shoulder-button sequence must be performed exactly as specified.  
+- No feedback is given on partial or failed attempts so that regular players remain unaware of the menu’s existence.  
+- Opening the menu is the only confirmation of success.
+
+**Automated Playtest Interruption**  
+- Any running or queued automated playthrough can be interrupted at any time.  
+- All telemetry and run data collected up to the interruption point are preserved.
 
 **Other Failure Modes**  
 - Attempting to use a potion or food when none is equipped/available produces a clear toast and no effect.  
@@ -853,30 +941,31 @@ This document is the authoritative specification for the demo of *What Dwells Be
 
 A fresh Grok Build instance must:
 
-1. First create a fully isolated archive of the current project state following the exact rules in Section 21 (formerly 22). This archive becomes the next selectable build in the Archives browser.  
+1. First create a fully isolated archive of the current project state following the exact rules in Section 20. This archive becomes the next selectable build in the Archives browser.  
 2. Then implement a clean, from-scratch live path that satisfies every requirement in this GDD.
 
 **Core Construction Rules**
 
 - The live path is a clean rewrite. Do not extend, refactor, or reuse runtime code, scenes, scripts, autoloads, or architectural patterns from the pre-archive live codebase. The previous pure-2D design flow and its accumulated compromises are retired.  
-- Design the live path from the ground up around the orthographic Camera3D system (Section 4): fixed pitch ≈ –58°, correct depth sorting that respects implied real-world positions of player/enemies/walls/props, paper-doll sprites, player-adjustable zoom 1.0–1.75, independent HUD scale, and readable 64×64 art.  
+- Design the live path from the ground up around the orthographic Camera3D system (Section 4): fixed pitch ≈ –58°, correct depth sorting that respects implied real-world positions of player/enemies/walls/props, paper-doll sprites, player-adjustable zoom 1.0–1.75, independent HUD scale, readable 64×64 art, and 8-directional facing.  
 - The live path must never share runtime code, scenes, scripts, or global state with any archived build.  
-- Treat every numeric value as tunable and expose it in a comprehensive debug menu.  
+- Treat every numeric value as tunable and expose it in the secret debug menu.  
 - Prefer simple, readable, production-quality implementations over clever legacy workarounds.  
-- All player and enemy character art must follow the mandatory pipeline in Section 20 (formerly 21).  
-- Male and female player characters with full animation parity, the three-weapon system (Great Axe, Lightning Staff, Longbow), hit-based mining and woodcutting, eleven skills, blue rarity (boss-only), named monsters, enemy bases, quest system, and gamepad-first UI with initial focus are mandatory.  
+- All player and enemy character art must follow the mandatory pipeline in Section 19 (including post-generation viability analysis, equal frame counts across directions, and Image-to-Video fill-in for missing passing/crossover frames).  
+- Male and female player characters with full animation parity, the three-weapon system (Great Axe, Lightning Staff, Longbow), hit-based mining and woodcutting, eleven skills, blue rarity (boss-only), named monsters, enemy bases, quest system, artifact collections/sets, aim-line indicator, and gamepad-first UI with initial focus are mandatory.  
+- The secret debug menu (including profile Save/Load, Automated Playtest / AI Player system with weapon-balance awareness, telemetry, impact coefficients, baseline coefficients generated at build time, and recommended configurations) must ship at production quality but remain hidden behind the documented shoulder-button sequence.  
 - Production / Gold quality is required for every system that ships. Placeholders are allowed only under the explicit policy in Section 14.
 
 **Suggested Order of Implementation (Clean Live Path)**
 
-1. New project scaffolding + Camera3D + input + basic player movement/animation states (Section 20 sprites) for both male and female characters.  
-2. Core combat (three weapons with basic + LT specials, Dash, target-lock, crits, Adrenaline Rush, full attack telegraphs) with proper depth sorting and juice.  
+1. New project scaffolding + Camera3D + input + basic player movement/animation states (Section 19 sprites, 8 directions) for both male and female characters.  
+2. Core combat (three weapons with basic + LT specials, Dash, target-lock, crits, Adrenaline Rush, full attack telegraphs, aim-line indicator) with proper depth sorting and juice.  
 3. Dungeon generation + boss doors + locked stairs + Floor Guardians / Gate Master + enemy bases.  
 4. Enemies (≥12 types, variety, named monsters, flee event).  
-5. Hit-based mining and woodcutting, breakables, and all interactables.  
-6. Inventory, equipment (including tool type lock), forged holds, extraction/clerks, anvil, loadout, quest system.  
-7. Full HUD, pause menu (three tabs + character switch), debug/balance page, recap screen with XP drain sequence.  
-8. Save / load with backup + isolated save paths for archives.  
+5. Hit-based mining and woodcutting, breakables, and all interactables (including expanded Artifact sources).  
+6. Inventory, equipment (including tool type lock), forged holds, extraction/clerks, anvil, loadout, quest system, artifact collections/sets.  
+7. Full HUD, pause menu (three tabs + character switch + aim-line controls), secret debug menu (profiles + Automated Playtest system), recap screen with XP drain sequence.  
+8. Save / load with backup + isolated save paths for archives and for the two autoplay saves.  
 9. Placeholdia hub layout (buildings with real depth) and polish.  
 10. Final audio pass, placeholder replacement, and Archives browser verification.
 
@@ -894,7 +983,8 @@ This section is mandatory for any Grok Build instance.
 It exists because pure image-generation models (including Grok Imagine) have consistent, well-documented limitations with multi-frame consistency, identity drift, spatial layout in grids, and pixel-perfect output. The pipeline below is the most reliable process currently achievable after extensive testing.
 
 All character art (player and enemies) must follow this pipeline. Props may use a simplified stills-only variant.  
-Male and female player characters must each have their own locked Character Bible and must maintain full animation parity so that weapon paper-doll layers and animations function on either without special per-gender tweaks.
+Male and female player characters must each have their own locked Character Bible and must maintain full animation parity so that weapon paper-doll layers and animations function on either without special per-gender tweaks.  
+Player and enemy animations use exactly 8 directions matching the Character Bible layout.
 
 #### 19.0 Goals & Non-Negotiables
 
@@ -904,7 +994,8 @@ Male and female player characters must each have their own locked Character Bibl
 - Prefer fewer high-quality, readable frames over many mediocre ones. The engine can hold or simple-tween if needed.
 - Generate and fully clean one complete directional set (idle + walk at minimum) as a proof before scaling to all directions and states.
 - Final engine resolution target: 128×128 canvases (recommended for detail and alignment). Nearest-neighbor downscale to 64×64 is permitted only if required by import settings; document the choice. Base resolution in Section 14 remains 64×64 for world units, but sprite assets ship at 128×128 unless otherwise specified.
-- Use **game-centric direction names** exclusively: Up, Down, Left, Right, Up-Left, Up-Right, Down-Left, Down-Right. These match the orthographic camera, Y-billboard, and 16-directional aim system.
+- Use **game-centric direction names** exclusively: Up, Down, Left, Right, Up-Left, Up-Right, Down-Left, Down-Right. These match the orthographic camera, Y-billboard, and 8-directional aim system.
+- All directional variants of the same animation state for a given character must contain exactly the same number of frames.
 
 #### 19.1 Character Bible
 
@@ -1001,18 +1092,38 @@ Minimum required states (from Sections 5 and 14):
 idle, walk, attack (per weapon), special (per weapon), gathering (mining/woodcutting), death, dispel.
 
 Prioritize idle + walk first. Animation playback speeds remain tunable.  
-Full parity between male and female is required for every state and every weapon.
+Full parity between male and female is required for every state and every weapon.  
+The same frame-count rule applies to every animation state.
 
 #### 19.4 Paper-Doll / Equipment Layers
 
 Generate each equipment piece (especially the three weapons) against a **single clean base-body frame** from the correct direction (not the full Bible).  
-Use the same soft identity language, pure magenta background, and cleanup/registration requirements.  
-Pivot and registration alignment across layers is mandatory.  
+Use the same soft identity language, pure magenta background, and cleanup rules.  
 Weapon paper-doll layers must work correctly on both male and female base bodies.
 
-#### 19.5 Mandatory Cleanup & Normalization Pipeline
+#### 19.5 Post-Generation Viability Analysis & Video Fill-In
 
-All AI-generated frames **must** pass through cleanup before use in the game.
+After the initial animation-generation phase, Grok Build must automatically analyze the collected sprite-frame pool for every animation state and every direction.
+
+The analysis must verify:  
+- Sufficient frames exist in the “passing” / leg-crossover stage of the cycle.  
+- Generated frames correctly show both legs and arms crossing (forwards/backwards or in-front/behind) as required for natural locomotion and action.  
+- All directional variants of the same animation state contain exactly the same number of frames.
+
+If any requisite frames are missing or incorrect, Grok Build shall:  
+1. Use the locked Character Bible(s) as the identity and style reference.  
+2. Prefer Image-to-Video seeded from a single clean Bible-derived still of the needed direction (or multi-reference with up to several Bible cells).  
+3. Generate a short video of the required animation using a motion-focused prompt that explicitly requests the missing passing/crossover frames and correct limb crossing.  
+4. Extract candidate frames from the video.  
+5. Run every extracted frame through the full mandatory cleanup pipeline (magenta key + despill, crop + padding, nearest-neighbor scale to target canvas, foot-baseline lock, palette quantize, anti-aliasing removal, etc.).  
+6. Integrate the new frames into the pool provided they remain on-model.
+
+Maximum practical retries follow the existing generation hierarchy (2–3 Image-to-Video attempts before falling back).  
+If video-extracted frames still fail the on-model / crossing checks, note the failure, continue the build using the available animations, and at completion inform the user of the failure together with a suggestion for manual cleanup.
+
+#### 19.6 Mandatory Cleanup & Normalization Pipeline
+
+All AI-generated frames (including those extracted from video) **must** pass through cleanup before use in the game.
 
 Recommended tools:  
 - Existing project scripts in `tools/`  
@@ -1028,10 +1139,10 @@ Recommended tools:
 6. Quantize / lock to the Bible palette.  
 7. Eliminate anti-aliasing, sub-pixel noise, and ghosting.  
 8. For video/strip sources: even frame selection, skip settling frames, validate loop.  
-9. Trim to the exact frame count needed by the engine.  
+9. Trim to the exact frame count needed by the engine (ensuring directional parity).  
 10. Output individual frames or engine-ready sheets + simple manifest (frame size, count, fps, pivot/anchor).
 
-#### 19.6 Success Criteria & Failure Recovery
+#### 19.7 Success Criteria & Failure Recovery
 
 A generation is acceptable only if it meets **all** of the following after cleanup:  
 - Readable silhouette at target size.  
@@ -1040,24 +1151,28 @@ A generation is acceptable only if it meets **all** of the following after clean
 - No palette drift from the locked Bible.  
 - No background remnants or magenta spill.  
 - Consistent scale and foot baseline with the Bible and sibling frames.  
-- Integer pixel edges, no anti-aliasing.
+- Integer pixel edges, no anti-aliasing.  
+- Correct limb crossing and sufficient passing-stage frames.  
+- Identical frame counts across all directions of the same animation state.
 
 **Recovery decision tree:**  
 - Fail after 2–3 retries of the current method → drop one level in the Generation Hierarchy.  
 - Persistent identity or scale failure → return to Bible and re-lock if necessary.  
+- Video fill-in still fails checks → note failure, proceed with available frames, inform user at end of build for manual cleanup.  
 - Log the failure mode.
 
-#### 19.7 Summary Reliability Table
+#### 19.8 Summary Reliability Table
 
 | Technique                                      | Reliability   | Recommendation                  |
 |------------------------------------------------|---------------|---------------------------------|
 | Locked 3×3 magenta Character Bible + palette   | High          | Mandatory                       |
-| Game-centric direction names (Up/Down/Left/Right) | High       | Use always                      |
+| Game-centric direction names (8-dir)           | High          | Use always                      |
 | Soft identity language                         | High          | Use always                      |
 | Single-pass 3×3 for the Bible                  | Highest for identity | Preferred for Bible          |
-| Image-to-video walk cycles                     | Highest       | Primary path when available     |
+| Image-to-video walk cycles (Bible-seeded)      | Highest       | Primary path for fill-in        |
 | Individual classic key poses                   | High          | Preferred fallback              |
 | Foot baseline locking in post                  | High          | Mandatory                       |
+| Equal frame counts per direction               | High          | Mandatory                       |
 | Hard frame-count demands                       | Low           | Avoid                           |
 | Full multi-direction strips                    | Very Low      | Forbidden                       |
 | Chained image-edits for Bible directions       | Medium-Low    | Avoid (causes drift)            |
