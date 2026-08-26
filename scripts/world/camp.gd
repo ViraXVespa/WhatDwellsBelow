@@ -61,10 +61,15 @@ func _process(_delta: float) -> void:
 	if prompt:
 		prompt.text = App.interact_prompt
 	var id := App.pad_id()
-	if Time.get_ticks_msec() % 1000 < 30:
-		print("id=", id,
-			" L=", App.pad_move() if App.has_method("pad_move") else "no-shim",
-			" buttons=", id >= 0)
+	if id >= 0:
+		var down: PackedStringArray = []
+		for i in 16:
+			if Input.is_joy_button_pressed(id, i):
+				down.append(str(i))
+		if down.size() > 0:
+			print("held buttons ", down,
+				" LT=", Input.get_joy_axis(id, JOY_AXIS_TRIGGER_LEFT),
+				" RT=", Input.get_joy_axis(id, JOY_AXIS_TRIGGER_RIGHT))
 
 
 func _world() -> void:
