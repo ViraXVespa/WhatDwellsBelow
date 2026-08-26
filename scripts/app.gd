@@ -95,6 +95,7 @@ func _ready() -> void:
 	bal = BalanceS.new()
 	prog = ProgressS.new()
 	_register_input()
+	get_tree().scene_changed.connect(_on_scene_changed)
 	sfx_node = SfxS.new()
 	add_child(sfx_node)
 	tel = TelS.new()
@@ -119,6 +120,8 @@ func _ready() -> void:
 	if "--wdb-debug" in OS.get_cmdline_user_args():
 		call_deferred("_open_debug")
 
+func _on_scene_changed(_scene: Node) -> void:
+	call_deferred("wake_web_pad")
 
 func _open_debug() -> void:
 	if debug and debug.has_method("show_menu"):
@@ -175,16 +178,15 @@ func go_title() -> void:
 		music.stop_music()
 	get_tree().paused = false
 	Engine.time_scale = 1.0
-	get_tree().call_deferred("change_scene_to_file", TITLE_SCENE) -> void:
-		call_deferred("wake_web_pad")
+	get_tree().call_deferred("change_scene_to_file", TITLE_SCENE)
+	call_deferred("wake_web_pad")
 
 
 func go_foundation() -> void:
 	in_dungeon = true
 	get_tree().paused = false
 	Engine.time_scale = 1.0
-	get_tree().call_deferred("change_scene_to_file", FOUNDATION_SCENE) -> void:
-		call_deferred("wake_web_pad")
+	get_tree().call_deferred("change_scene_to_file", FOUNDATION_SCENE)
 
 
 func go_camp() -> void:
@@ -195,8 +197,8 @@ func go_camp() -> void:
 	Engine.time_scale = 1.0
 	if music and music.has_method("play_hub"):
 		music.play_hub()
-	get_tree().call_deferred("change_scene_to_file", CAMP_SCENE) -> void:
-		call_deferred("wake_web_pad")
+	get_tree().call_deferred("change_scene_to_file", CAMP_SCENE)
+	call_deferred("wake_web_pad")
 
 
 func begin_run() -> void:
@@ -237,8 +239,8 @@ func go_dungeon() -> void:
 		Engine.time_scale = 1.0
 	if music and music.has_method("play_dungeon") and str(music.get("kind")) != "dungeon":
 		music.play_dungeon()
-	get_tree().call_deferred("change_scene_to_file", DUNGEON_SCENE) -> void:
-		call_deferred("wake_web_pad")
+	get_tree().call_deferred("change_scene_to_file", DUNGEON_SCENE)
+	call_deferred("wake_web_pad")
 
 
 func next_floor() -> void:
