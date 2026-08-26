@@ -60,16 +60,11 @@ func _process(_delta: float) -> void:
 		hint.text = "Placeholdia  ·  bank %dg  %d ore  %d wood  ·  deepest F%d%s\nCrystal  ·  Anvil  ·  Vendor  ·  Guild  ·  Billboard  ·  Start pause" % [App.bank_gold, App.bank_ore, App.bank_wood, App.prog.deepest, hot]
 	if prompt:
 		prompt.text = App.interact_prompt
-	var id := App.pad_id()
-	if id >= 0:
-		var down: PackedStringArray = []
-		for i in 16:
-			if Input.is_joy_button_pressed(id, i):
-				down.append(str(i))
-		if down.size() > 0:
-			print("held buttons ", down,
-				" LT=", Input.get_joy_axis(id, JOY_AXIS_TRIGGER_LEFT),
-				" RT=", Input.get_joy_axis(id, JOY_AXIS_TRIGGER_RIGHT))
+	var bt := App.web_buttons()
+	if bt.size() > 0 and Time.get_ticks_msec() % 400 < 30:
+		print("js0=", bt[0] if bt.size() > 0 else -1,
+			" js1=", bt[1] if bt.size() > 1 else -1,
+			" js9=", bt[9] if bt.size() > 9 else -1)
 
 
 func _world() -> void:

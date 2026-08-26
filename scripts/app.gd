@@ -705,6 +705,7 @@ func _key(name: String, keycode: int) -> void:
 	e.physical_keycode = keycode
 	InputMap.action_add_event(name, e)
 
+
 func wake_web_pad() -> void:
 	get_viewport().gui_release_focus()
 	if not OS.has_feature("web"):
@@ -718,9 +719,11 @@ func wake_web_pad() -> void:
 		})();
 	""", true)
 
+
 func pad_id() -> int:
 	var pads := Input.get_connected_joypads()
 	return pads[0] if not pads.is_empty() else -1
+
 
 func pad_stick(lx: int, ly: int, dead := 0.24) -> Vector2:
 	var id := pad_id()
@@ -729,17 +732,20 @@ func pad_stick(lx: int, ly: int, dead := 0.24) -> Vector2:
 	var v := Vector2(Input.get_joy_axis(id, lx), Input.get_joy_axis(id, ly))
 	return v if v.length() >= dead else Vector2.ZERO
 
+
 func pad_move() -> Vector2:
 	var v := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if v.length() > 0.01:
 		return v
 	return pad_stick(JOY_AXIS_LEFT_X, JOY_AXIS_LEFT_Y)
 
+
 func pad_aim() -> Vector2:
 	var v := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
 	if v.length() > 0.01:
 		return v
 	return pad_stick(JOY_AXIS_RIGHT_X, JOY_AXIS_RIGHT_Y)
+
 
 func pad_held(action: String) -> bool:
 	if Input.is_action_pressed(action):
@@ -766,10 +772,33 @@ func pad_held(action: String) -> bool:
 			return Input.is_joy_button_pressed(id, JOY_BUTTON_DPAD_LEFT)
 	return false
 
+
 var _pad_was: Dictionary = {}
+
 
 func pad_just(action: String) -> bool:
 	var now := pad_held(action)
 	var was := bool(_pad_was.get(action, false))
 	_pad_was[action] = now
 	return now and not was
+
+
+func web_buttons() -> PackedFloat32Array:
+	if not OS.has_feature("web"):
+		return PackedFloat32Array()
+	var raw := str(JavaScriptBridge.eval("""
+		(function () {
+			var pads = navigator.getGamepads ? navigator.getGamepads() : [];
+			for (var i = 0; i < pads.length; i++) {
+				if (!pads[i] || !pads[i].buttons) continue;
+				return JSON.stringify(pads[i].buttons.map(function (b) { return b.value; }));
+			}
+			return "[]";
+		})();
+	""", true))
+	var parsed: Variant = JSON.parse_string(raw)
+	var out := PackedFloat32Array()
+	if parsed is Array:
+		for v in parsed:
+			out.append(float(v))
+	return out
