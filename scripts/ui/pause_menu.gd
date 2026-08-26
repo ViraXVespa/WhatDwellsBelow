@@ -1,469 +1,340 @@
-class_name PauseMenu
 extends CanvasLayer
 
-const SkillMath := preload("res://scripts/data/skills.gd")
+const ThemeS := preload("res://scripts/ui/theme.gd")
+const CatalogS := preload("res://scripts/data/catalog.gd")
+const T := preload("res://scripts/data/tunables.gd")
 
-var panel: Panel
 var open := false
-var page := "inv"
-var body: VBoxContainer
-var list: ItemList
-var hint: Label
-var skills_lab: Label
-var tab_btns: Dictionary = {}
-const TAB_ORDER := ["inv", "skills", "sys"]
+var tab := 0
+var box: VBoxContainer
+var tabs: HBoxContainer
+var status: Label
+var focus_btn: Button
+var pending := false
+var pending_id := ""
+var pending_fn: Callable
+var rebind_action := ""
+var sys_page := "main"
 
 
 func _ready() -> void:
-	layer = 40
+	layer = 55
+	visible = false
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	panel = Panel.new()
-	panel.visible = false
-	panel.position = Vector2(420, 60)
-	panel.size = Vector2(1080, 920)
-	var psb := StyleBoxFlat.new()
-	psb.bg_color = Color(0.07, 0.08, 0.12, 0.96)
-	psb.border_color = Color(0.55, 0.45, 0.26)
-	psb.set_border_width_all(3)
-	psb.corner_radius_top_left = 10
-	psb.corner_radius_top_right = 10
-	psb.corner_radius_bottom_left = 10
-	psb.corner_radius_bottom_right = 10
-	psb.shadow_color = Color(0, 0, 0, 0.45)
-	psb.shadow_size = 12
-	panel.add_theme_stylebox_override("panel", psb)
+	var dim := ColorRect.new()
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.color = Color(0.03, 0.02, 0.02, 0.78)
+	add_child(dim)
+	var panel := ColorRect.new()
+	panel.color = Color(0.13, 0.1, 0.08, 0.96)
+	panel.position = Vector2(220, 40)
+	panel.size = Vector2(1480, 1000)
 	add_child(panel)
-	var v := VBoxContainer.new()
-	v.set_anchors_preset(Control.PRESET_FULL_RECT)
-	v.offset_left = 28
-	v.offset_top = 20
-	v.offset_right = -28
-	v.offset_bottom = -20
-	v.add_theme_constant_override("separation", 8)
-	panel.add_child(v)
-	var title := Label.new()
-	title.text = "Paused"
-	title.add_theme_font_size_override("font_size", 30)
-	title.add_theme_color_override("font_color", Color(0.95, 0.86, 0.55))
-	v.add_child(title)
-	var tab_hint := Label.new()
-	tab_hint.text = "LB / RB  cycle pages"
-	tab_hint.add_theme_font_size_override("font_size", 14)
-	tab_hint.add_theme_color_override("font_color", Color(0.65, 0.62, 0.58))
-	v.add_child(tab_hint)
-	var tabs := HBoxContainer.new()
-	tabs.add_theme_constant_override("separation", 8)
-	v.add_child(tabs)
-	tab_btns["inv"] = _tab_btn("Inventory", "inv")
-	tab_btns["skills"] = _tab_btn("Skills", "skills")
-	tab_btns["sys"] = _tab_btn("System", "sys")
-	for k in TAB_ORDER:
-		tabs.add_child(tab_btns[k])
-	body = VBoxContainer.new()
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 8)
-	v.add_child(body)
-	v.add_child(_btn("Resume", _close))
-	var d := Button.new()
-	d.name = "Dispel"
-	d.text = "Dispel Avatar (Return to Town)"
-	d.custom_minimum_size = Vector2(0, 48)
-	d.pressed.connect(_dispel)
-	v.add_child(d)
-	PadUi.wire(panel)
-	_show("inv")
+	var edge := ColorRect.new()
+	edge.color = Color(0.55, 0.42, 0.22, 1)
+	edge.position = Vector2(220, 40)
+	edge.size = Vector2(1480, 8)
+	add_child(edge)
+	tabs = HBoxContainer.new()
+	tabs.position = Vector2(244, 60)
+	tabs.size = Vector2(1432, 56)
+	tabs.add_theme_constant_override("separation", 12)
+	add_child(tabs)
+	var scroll := ScrollContainer.new()
+	scroll.position = Vector2(244, 128)
+	scroll.size = Vector2(1432, 880)
+	add_child(scroll)
+	box = VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", 8)
+	scroll.add_child(box)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("pause"):
-		if _blocking_modal():
-			return
-		if open:
-			_close()
-		else:
-			_open()
-		get_viewport().set_input_as_handled()
-		return
-	if open and event.is_action_pressed("ui_cancel"):
-		_close()
-		get_viewport().set_input_as_handled()
-		return
-	if open and event.is_action_pressed("tab_right"):
-		_cycle_tab(1)
-		get_viewport().set_input_as_handled()
-	elif open and event.is_action_pressed("tab_left"):
-		_cycle_tab(-1)
-		get_viewport().set_input_as_handled()
+func toggle() -> void:
+	if open:
+		close_ui()
+	else:
+		show_menu()
 
 
-func _blocking_modal() -> bool:
-	for g in ["shop_ui", "extract_ui", "anvil_ui", "loadout_ui"]:
-		for n in get_tree().get_nodes_in_group(g):
-			var p = n.get("panel")
-			if p is Control and (p as Control).visible:
-				return true
-	return not get_tree().get_nodes_in_group("wdb_modal").is_empty()
-
-
-func _open() -> void:
+func show_menu() -> void:
 	open = true
-	panel.visible = true
+	visible = true
+	App.ui_open = true
 	get_tree().paused = true
-	var d: Button = panel.find_child("Dispel", true, false)
-	if d:
-		d.visible = Game.in_dungeon
-	_show(page)
-	PadUi.focus_first(panel)
+	tab = 0
+	sys_page = "main"
+	_rebuild()
 
 
-func _close() -> void:
+func close_ui() -> void:
 	open = false
-	panel.visible = false
+	visible = false
+	pending = false
+	pending_id = ""
+	rebind_action = ""
+	sys_page = "main"
+	App.ui_open = false
 	get_tree().paused = false
+	App.save_now()
+
+
+func _rebuild() -> void:
+	for c in tabs.get_children():
+		c.queue_free()
+	for c in box.get_children():
+		c.queue_free()
+	focus_btn = null
+	status = null
+	var names := ["Inventory", "Skills", "System"]
+	for i in 3:
+		var ii := i
+		var b := ThemeS.btn(names[i], func(): tab = ii; _rebuild())
+		if i == tab:
+			b.add_theme_color_override("font_color", Color(1, 0.92, 0.45))
+		tabs.add_child(b)
+		if focus_btn == null:
+			focus_btn = b
+	match tab:
+		0:
+			_inv()
+		1:
+			_skills()
+		_:
+			_system()
+	call_deferred("_focus")
+
+
+func _focus() -> void:
+	if focus_btn:
+		focus_btn.grab_focus()
+
+
+func _inv() -> void:
+	box.add_child(ThemeS.lab("Bag %d/%d" % [App.prog.bag_count(), int(App.bal.bag_cap)], 22, Color(0.92, 0.84, 0.62)))
+	status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
+	box.add_child(status)
+	box.add_child(ThemeS.lab("Equipment", 20, Color(0.95, 0.82, 0.5)))
+	for s in App.prog.SLOTS:
+		var eq_it: Dictionary = App.prog.slots.get(s, {})
+		var nm := str(eq_it.get("name", "—"))
+		var slot := str(s)
+		var eq_row := HBoxContainer.new()
+		eq_row.add_theme_constant_override("separation", 8)
+		var eq_lab := ThemeS.btn("%s: %s" % [slot, nm], func(): _st(nm))
+		eq_lab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		eq_row.add_child(eq_lab)
+		if not eq_it.is_empty():
+			eq_row.add_child(ThemeS.btn("Unequip", func(): _st(App.prog.unequip_slot(slot)); _rebuild()))
+			eq_row.add_child(ThemeS.btn("Drop", func(): _confirm(func(): _st(App.prog.drop_slot(slot)); _rebuild(), "drop_slot_" + slot)))
+		box.add_child(eq_row)
+	box.add_child(ThemeS.btn("Use potion", func(): _st(App.prog.use_potion())))
+	box.add_child(ThemeS.btn("Use food", func(): _st(App.prog.use_food())))
+	for bag_it in App.prog.bag:
+		var uid := int(bag_it.uid)
+		var line := "%s  ·  %s" % [bag_it.name, bag_it.desc]
+		if str(bag_it.kind) == "artifact":
+			line += "\n" + App.prog.set_bonus_text(str(bag_it.set))
+		var bag_row := HBoxContainer.new()
+		bag_row.add_theme_constant_override("separation", 8)
+		var use_b := ThemeS.btn(line, func(): _inv_act(uid))
+		use_b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		bag_row.add_child(use_b)
+		bag_row.add_child(ThemeS.btn("Drop", func(): _confirm(func(): _drop(uid), "drop_bag_%d" % uid)))
+		box.add_child(bag_row)
+	if not App.in_dungeon and App.prog.bank_items.size() > 0:
+		box.add_child(ThemeS.lab("Mailed stash — safe in Placeholdia. Forge at the anvil.", 18, Color(0.75, 0.85, 0.7)))
+		for stash_it in App.prog.bank_items:
+			var stash_uid := int(stash_it.uid)
+			var stash_row := HBoxContainer.new()
+			stash_row.add_theme_constant_override("separation", 8)
+			var stash_lab := ThemeS.btn("%s  ·  mailed" % str(stash_it.name), func(): _st("Forge this at the anvil."))
+			stash_lab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			stash_row.add_child(stash_lab)
+			stash_row.add_child(ThemeS.btn("Discard", func(): _confirm(func(): _st(App.prog.drop_stash(stash_uid)); _rebuild(), "stash_%d" % stash_uid)))
+			box.add_child(stash_row)
+	box.add_child(ThemeS.btn("Close  (B)", func(): close_ui()))
+
+
+func _inv_act(uid: int) -> void:
+	var it := {}
+	for b in App.prog.bag:
+		if int(b.uid) == uid:
+			it = b
+			break
+	if it.is_empty():
+		_st("Gone.")
+		return
+	if str(it.kind) == "potion" or str(it.kind) == "food":
+		_st(App.prog.use_from_bag(uid))
+	else:
+		_st(App.prog.equip_uid(uid))
+	_rebuild()
+
+
+func _drop(uid: int) -> void:
+	_st(App.prog.drop_uid(uid))
+	_rebuild()
+
+
+func _skills() -> void:
+	box.add_child(ThemeS.lab("Combat Level %d" % App.prog.combat_lv(), 24, Color(0.95, 0.82, 0.5)))
+	var names := {
+		"axe": "Great Axe", "staff": "Staff", "bow": "Longbow", "str": "Strength", "mag": "Magic",
+		"rng": "Ranged", "def": "Defense", "hp": "Hitpoints", "mine": "Mining", "wood": "Woodcutting", "smith": "Smithing",
+	}
+	for id in App.prog.SKILLS:
+		var runx := float(App.prog.skills_run.get(id, 0.0))
+		var perm := float(App.prog.skills_perm.get(id, 0.0))
+		var lv := App.prog.skill_lv(id)
+		var into := fmod(runx + perm, 40.0)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		row.add_child(ThemeS.lab("%s  Lv %d" % [names.get(id, id), lv], 18, Color(0.9, 0.84, 0.7)))
+		var back := ColorRect.new()
+		back.custom_minimum_size = Vector2(360, 16)
+		back.color = Color(0.12, 0.1, 0.08)
+		var fill := ColorRect.new()
+		fill.size = Vector2(360.0 * (into / 40.0), 16)
+		fill.color = Color(0.55, 0.42, 0.22)
+		back.add_child(fill)
+		row.add_child(back)
+		row.add_child(ThemeS.lab("run %.0f   perm %.0f" % [runx, perm], 16, Color(0.75, 0.7, 0.6)))
+		box.add_child(row)
+	box.add_child(ThemeS.btn("Close  (B)", func(): close_ui()))
+
+
+func _system() -> void:
+	if sys_page == "rebind":
+		_rebind_page()
+		return
+	status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
+	box.add_child(status)
+	box.add_child(_slider("Master volume", App.vol_master, func(v): App.set_volume("master", v)))
+	box.add_child(_slider("Music volume", App.vol_music, func(v): App.set_volume("music", v)))
+	box.add_child(_slider("SFX volume", App.vol_sfx, func(v): App.set_volume("sfx", v)))
+	box.add_child(_slider("Camera zoom", App.cam_zoom, func(v): App.set_zoom(v), 1.0, 1.75, 0.05))
+	box.add_child(_slider("HUD scale", App.hud_scale, func(v): App.hud_scale = v, 0.8, 1.4, 0.05))
+	box.add_child(ThemeS.btn("Aim-line: %s" % ("ON" if App.bal.aim_line_on else "OFF"), func(): App.bal.aim_line_on = not App.bal.aim_line_on; _rebuild()))
+	box.add_child(_slider("Aim-line opacity", App.bal.aim_line_opacity, func(v): App.bal.aim_line_opacity = v, 0.05, 1.0, 0.05))
+	box.add_child(ThemeS.btn("Archives / presentation", func(): _open_archives()))
+	box.add_child(ThemeS.btn("Rebind controls", func(): sys_page = "rebind"; _rebuild()))
+	box.add_child(ThemeS.btn("Character: %s  (switch)" % App.character_type, func(): _confirm(func(): _switch_char(), "char")))
+	box.add_child(ThemeS.lab("Bitter — ViraXVespa", 16, Color(0.7, 0.74, 0.78)))
+	box.add_child(ThemeS.btn("Patreon — ViraXVespa", func(): OS.shell_open(T.PATREON_URL)))
+	box.add_child(ThemeS.btn("Bitter on YouTube", func(): OS.shell_open(T.BITTER_YT)))
+	box.add_child(ThemeS.btn("Bitter on Spotify", func(): OS.shell_open(T.BITTER_SPOTIFY)))
+	box.add_child(ThemeS.btn("Delete Save Data", func(): _confirm(func(): App.wipe_save(); App.toast("Save cleared."); _st("Cleared."), "wipe")))
+	box.add_child(ThemeS.btn("“Dispel” Avatar", func(): _confirm(func(): _dispel(), "dispel")))
+	box.add_child(ThemeS.btn("Close  (B)", func(): close_ui()))
+
+
+func _slider(label: String, val: float, cb: Callable, lo := 0.0, hi := 1.0, step := 0.05) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_child(ThemeS.lab(label, 18, Color(0.88, 0.82, 0.7)))
+	var sl := HSlider.new()
+	sl.min_value = lo
+	sl.max_value = hi
+	sl.step = step
+	sl.value = val
+	sl.custom_minimum_size = Vector2(360, 28)
+	sl.add_theme_stylebox_override("slider", ThemeS.sb(Color(0.18, 0.14, 0.1), Color(0.5, 0.38, 0.2)))
+	sl.add_theme_stylebox_override("grabber_area", ThemeS.sb(Color(0.45, 0.32, 0.16), Color(0.7, 0.55, 0.28)))
+	sl.add_theme_stylebox_override("grabber_area_highlight", ThemeS.sb(Color(0.6, 0.45, 0.22), Color(0.9, 0.7, 0.3)))
+	sl.value_changed.connect(cb)
+	h.add_child(sl)
+	return h
+
+
+func _open_archives() -> void:
+	if App.archives_ui and App.archives_ui.has_method("show_browser"):
+		App.archives_ui.show_browser()
+
+
+func _rebind_page() -> void:
+	status = ThemeS.lab("Highlight an action, then press a key, mouse button, or pad control. That binding replaces the old one.", 18, Color(0.85, 0.8, 0.7))
+	box.add_child(status)
+	focus_btn = ThemeS.btn("Back to System", func(): sys_page = "main"; rebind_action = ""; _rebuild())
+	box.add_child(focus_btn)
+	for a in App.BIND_ACTIONS:
+		var act: String = str(a)
+		box.add_child(ThemeS.btn("%s  —  %s" % [act, ThemeS.bind_text(act)], func(): rebind_action = act; _st("Press a control for " + act)))
+
+
+func _switch_char() -> void:
+	var n := "female" if App.character_type == "male" else "male"
+	App.set_character(n)
+	var p := get_tree().get_first_node_in_group("player")
+	if p and p.has_method("reload_character"):
+		p.reload_character()
+	_st("Now " + n)
+	_rebuild()
 
 
 func _dispel() -> void:
-	_close()
-	Game.end_run(true)
+	close_ui()
+	App.end_run("dispel", "")
 
 
-func _cycle_tab(dir: int) -> void:
-	var cur := TAB_ORDER.find(page)
-	if cur < 0:
-		cur = 0
-	_show(TAB_ORDER[(cur + dir + TAB_ORDER.size()) % TAB_ORDER.size()])
-
-
-func _tab_btn(text: String, id: String) -> Button:
-	var b := _btn(text, func(): _show(id), 0, 44)
-	b.toggle_mode = true
-	return b
-
-
-func _paint_tabs() -> void:
-	for k in tab_btns.keys():
-		var b: Button = tab_btns[k]
-		b.set_pressed_no_signal(k == page)
-
-
-func _show(p: String) -> void:
-	if p == "wipe":
-		page = "wipe"
-	elif p in TAB_ORDER:
-		page = p
-	for c in body.get_children():
-		body.remove_child(c)
-		c.queue_free()
-	list = null
-	hint = null
-	skills_lab = null
-	if p == "inv":
-		_build_inv()
-	elif p == "skills":
-		_build_skills()
-	elif p == "wipe":
-		_build_wipe()
-	elif p == "arch":
-		_build_arch()
-	else:
-		_build_sys()
-	_paint_tabs()
-	PadUi.wire(body)
-
-
-func _build_inv() -> void:
-	hint = Label.new()
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.add_theme_font_size_override("font_size", 16)
-	body.add_child(hint)
-	list = ItemList.new()
-	list.custom_minimum_size = Vector2(0, 420)
-	body.add_child(list)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	body.add_child(row)
-	if Game.run:
-		row.add_child(_btn("Equip", _equip_sel, 140, 44))
-		row.add_child(_btn("Unequip to bag", _unequip_sel, 180, 44))
-		row.add_child(_btn("Drop", _drop_sel, 120, 44))
-	_refresh_inv()
-
-
-func _refresh_inv() -> void:
-	if list == null:
+func _confirm(fn: Callable, id := "anon") -> void:
+	if not pending or pending_id != id:
+		pending = true
+		pending_id = id
+		pending_fn = fn
+		_st("A again to confirm. B cancels.")
 		return
-	list.clear()
-	if Game.run == null:
-		if hint:
-			hint.text = "No bag in town. Loadout is on the crystal."
+	pending = false
+	pending_id = ""
+	fn.call()
+
+
+func _st(msg: String) -> void:
+	if status:
+		status.text = msg
+	App.sfx("ui")
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not open:
 		return
-	var r := Game.run
-	hint.text = "Equipped:\n  Axe  %s\n  Pick %s\n  Pot  %s\n  Head %s\n  Body %s\n  Legs %s\nDef %.0f   Bag %d/28\nSelect a bag row, then Equip / Drop. Drop equipped from the top lines." % [
-		_nm(r.weapon), _nm(r.tool), _nm(r.potion), _nm(r.armor_head), _nm(r.armor_body), _nm(r.armor_legs),
-		r.total_defense(), r.bag_count()
-	]
-	_add_eq("weapon", r.weapon)
-	_add_eq("tool", r.tool)
-	_add_eq("potion", r.potion)
-	_add_eq("head", r.armor_head)
-	_add_eq("body", r.armor_body)
-	_add_eq("legs", r.armor_legs)
-	for i in RunState.BAG_SIZE:
-		var it: ItemData = r.bag[i]
-		if it:
-			list.add_item("%02d  %s  %s" % [i + 1, it.full_name(), it.stat_line()])
-			list.set_item_metadata(list.item_count - 1, {"kind": "bag", "i": i})
+	if App.archives_ui and bool(App.archives_ui.get("open")):
+		return
+	if rebind_action != "" and event.is_action_pressed("ui_cancel"):
+		rebind_action = ""
+		_st("Cancelled.")
+		get_viewport().set_input_as_handled()
+		return
+	if rebind_action != "" and event.is_pressed() and (event is InputEventKey or event is InputEventJoypadButton or event is InputEventMouseButton or event is InputEventJoypadMotion):
+		if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+			return
+		if not InputMap.has_action(rebind_action):
+			InputMap.add_action(rebind_action)
+		InputMap.action_erase_events(rebind_action)
+		InputMap.action_add_event(rebind_action, event)
+		_st("Bound " + rebind_action + " to " + ThemeS.bind_text(rebind_action))
+		rebind_action = ""
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("tab_right"):
+		tab = (tab + 1) % 3
+		_rebuild()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("tab_left"):
+		tab = (tab + 2) % 3
+		_rebuild()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
+		if pending:
+			pending = false
+			pending_id = ""
+			App.sfx("ui_cancel")
+			_st("Cancelled.")
+		elif sys_page == "rebind":
+			sys_page = "main"
+			rebind_action = ""
+			App.sfx("ui_cancel")
+			_rebuild()
 		else:
-			list.add_item("%02d  —" % (i + 1))
-			list.set_item_metadata(list.item_count - 1, {"kind": "bag", "i": i})
-
-
-func _add_eq(slot: String, it: ItemData) -> void:
-	var label := slot.capitalize()
-	if it:
-		list.add_item("[EQ %s]  %s  %s" % [label, it.full_name(), it.stat_line()])
-	else:
-		list.add_item("[EQ %s]  empty" % label)
-	list.set_item_metadata(list.item_count - 1, {"kind": "eq", "slot": slot})
-
-
-func _nm(it: ItemData) -> String:
-	return it.full_name() if it else "—"
-
-
-func _sel() -> Dictionary:
-	if list == null or list.get_selected_items().is_empty():
-		return {}
-	var m = list.get_item_metadata(list.get_selected_items()[0])
-	return m if m is Dictionary else {}
-
-
-func _equip_sel() -> void:
-	if Game.run == null:
-		return
-	var m := _sel()
-	if m.get("kind") != "bag":
-		return
-	var it: ItemData = Game.run.bag[int(m.i)]
-	if it == null:
-		return
-	var slot := ""
-	match it.kind:
-		ItemData.Kind.WEAPON:
-			slot = "weapon"
-		ItemData.Kind.TOOL:
-			slot = "tool"
-		ItemData.Kind.POTION:
-			slot = "potion"
-		ItemData.Kind.ARMOR:
-			slot = it.armor_slot
-	if slot == "":
-		return
-	var old_cd := Game.run.potion_cd
-	Game.run.equip_from_bag(int(m.i), slot)
-	if slot == "potion" and Game.run.potion:
-		var remain := old_cd
-		if remain > 0.0 and Game.run.potion.potion_cdr > 0.0:
-			Game.run.potion_cd = remain * (1.0 - Game.run.potion.potion_cdr)
-		else:
-			Game.run.potion_cd = remain
-	Game.bag_changed.emit()
-	_refresh_inv()
-
-
-func _unequip_sel() -> void:
-	if Game.run == null:
-		return
-	var m := _sel()
-	if m.get("kind") != "eq":
-		return
-	var it := Game.run.drop_equipped(str(m.slot))
-	if it == null:
-		return
-	if not Game.run.add_item(it):
-		Game.give_or_drop(it, Game.player_world_pos())
-	Game.bag_changed.emit()
-	_refresh_inv()
-
-
-func _drop_sel() -> void:
-	if Game.run == null:
-		return
-	var m := _sel()
-	var it: ItemData = null
-	if m.get("kind") == "eq":
-		it = Game.run.drop_equipped(str(m.slot))
-	elif m.get("kind") == "bag":
-		it = Game.run.remove_item_at(int(m.i), -1)
-	if it == null:
-		return
-	Game.spawn_drop(it, Game.player_world_pos())
-	Game.bag_changed.emit()
-	_refresh_inv()
-
-
-func _build_skills() -> void:
-	skills_lab = Label.new()
-	skills_lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	skills_lab.add_theme_font_size_override("font_size", 20)
-	body.add_child(skills_lab)
-	var lines: PackedStringArray = []
-	lines.append("Combat level %d   (Great Axe + Strength + Defense + Hitpoints)" % Game.combat_level())
-	lines.append("")
-	for sk in ["great_axe", "strength", "defense", "hitpoints", "mining", "smithing"]:
-		var xp := Game.skill_xp(sk)
-		var lv: int = SkillMath.level_from_xp(xp)
-		var into: float = xp - SkillMath.xp_for_level(lv)
-		var need: float = SkillMath.xp_to_next(lv)
-		lines.append("%s  Lv %d    %.0f / %.0f to next" % [SkillMath.label(sk), lv, into, need])
-	lines.append("\n2% of this-run XP is kept on wake. Dungeon is the real grind.")
-	if Game.run:
-		lines.append("This dream:  axe %.0f  str %.0f  def %.0f  hp %.0f  mine %.0f  smith %.0f" % [
-			Game.run.great_axe_xp_run, Game.run.strength_xp_run, Game.run.defense_xp_run,
-			Game.run.hitpoints_xp_run, Game.run.mining_xp_run, Game.run.smithing_xp_run
-		])
-		if not Game.run.artifact_ids.is_empty():
-			lines.append("Artifacts this run:")
-			for id in Game.run.artifact_ids:
-				var art_s = load("res://scripts/data/artifacts.gd")
-				var row: Dictionary = art_s.by_id(str(id))
-				lines.append("  · %s" % str(row.get("name", id)))
-	skills_lab.text = "\n".join(lines)
-
-
-func _build_sys() -> void:
-	body.add_child(_slider_row("Music", "music"))
-	body.add_child(_slider_row("SFX", "sfx"))
-	body.add_child(_slider_row("Zoom", "zoom"))
-	body.add_child(_btn("Archives…", func(): _show("arch")))
-	var cred := Label.new()
-	cred.text = "Dungeon: 8-Bit — ViraXVespa"
-	cred.add_theme_font_size_override("font_size", 15)
-	cred.add_theme_color_override("font_color", Color(0.7, 0.72, 0.74))
-	body.add_child(cred)
-	var pat := LinkButton.new()
-	pat.text = "Support on Patreon"
-	pat.uri = Game.PATREON_URL
-	pat.underline = LinkButton.UNDERLINE_MODE_ON_HOVER
-	pat.add_theme_font_size_override("font_size", 20)
-	pat.add_theme_color_override("font_color", Color(0.95, 0.55, 0.42))
-	body.add_child(pat)
-	var wipe_n := Label.new()
-	wipe_n.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	wipe_n.text = "This browser keeps your diver in user://. Clearing it deletes XP, gold, recipes, and holds. Cannot undo."
-	wipe_n.add_theme_font_size_override("font_size", 16)
-	wipe_n.add_theme_color_override("font_color", Color(0.85, 0.72, 0.62))
-	body.add_child(wipe_n)
-	body.add_child(_btn("Delete save data…", func(): _show("wipe")))
-
-
-func _build_arch() -> void:
-	var cur := Game.presentation()
-	var now := Label.new()
-	now.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	var cur_lab := "Live (current game)"
-	if cur == "classic_2d":
-		cur_lab = "Archive: Classic 2D"
-	elif cur == "art_experiment":
-		cur_lab = "Archive: art experiment"
-	now.text = "Now: %s\nFrozen looks from earlier builds. Your save still applies. Live is the game." % cur_lab
-	now.add_theme_font_size_override("font_size", 18)
-	now.add_theme_color_override("font_color", Color(0.88, 0.84, 0.72))
-	body.add_child(now)
-	var suffix := " (next floor)" if Game.in_dungeon else ""
-	body.add_child(_btn("Live — 3D world, 2D sprites" + suffix, func(): _pick_pres("live")))
-	body.add_child(_btn("Classic 2D — early slice" + suffix, func(): _pick_pres("classic_2d")))
-	body.add_child(_btn("Art experiment — different cast, kept as a snapshot" + suffix, func(): _pick_pres("art_experiment")))
-	body.add_child(_btn("Back to System", func(): _show("sys")))
-
-
-func _pick_pres(id: String) -> void:
-	Game.set_presentation(id)
-	if not Game.in_dungeon:
-		_close()
-	else:
-		_show("arch")
-
-
-func _build_wipe() -> void:
-	var lab := Label.new()
-	lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lab.text = "Really delete this diver?\n\nXP, gold, forged holds, and recipes are gone. Next launch is a fresh adventurer. This cannot be undone."
-	lab.add_theme_font_size_override("font_size", 20)
-	lab.add_theme_color_override("font_color", Color(0.95, 0.55, 0.42))
-	body.add_child(lab)
-	body.add_child(_btn("Yes — delete save and return to title", func():
-		_close()
-		Game.wipe_save()
-	))
-	body.add_child(_btn("No — keep my diver", func(): _show("sys")))
-
-
-func _slider_row(label: String, kind: String) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	var lab := Label.new()
-	lab.text = label
-	lab.custom_minimum_size = Vector2(90, 0)
-	lab.add_theme_font_size_override("font_size", 18)
-	row.add_child(lab)
-	var sl := HSlider.new()
-	sl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	sl.custom_minimum_size = Vector2(280, 28)
-	if kind == "zoom":
-		sl.min_value = 1.0
-		sl.max_value = 1.75
-		sl.step = 0.05
-		sl.value = Game.save.cam_zoom if Game.save else 1.0
-	elif kind == "music":
-		sl.min_value = 0.0
-		sl.max_value = 1.0
-		sl.step = 0.05
-		sl.value = Game.save.music_vol if Game.save else 0.7
-	else:
-		sl.min_value = 0.0
-		sl.max_value = 1.0
-		sl.step = 0.05
-		sl.value = Game.save.sfx_vol if Game.save else 0.85
-	sl.value_changed.connect(func(v: float): _slide(kind, v))
-	row.add_child(sl)
-	return row
-
-
-func _slide(kind: String, v: float) -> void:
-	if Game.save == null:
-		return
-	if kind == "zoom":
-		Game.set_cam_zoom(v)
-		return
-	if kind == "music":
-		Game.save.music_vol = v
-	else:
-		Game.save.sfx_vol = v
-	Game.save.write()
-	Sfx.apply_volumes()
-
-
-func _btn(text: String, cb: Callable, w: int = 0, h: int = 52) -> Button:
-	var b := Button.new()
-	b.text = text
-	b.custom_minimum_size = Vector2(w, h)
-	b.pressed.connect(cb)
-	var nsb := StyleBoxFlat.new()
-	nsb.bg_color = Color(0.16, 0.15, 0.18, 1)
-	nsb.border_color = Color(0.45, 0.38, 0.22)
-	nsb.set_border_width_all(1)
-	nsb.corner_radius_top_left = 4
-	nsb.corner_radius_top_right = 4
-	nsb.corner_radius_bottom_left = 4
-	nsb.corner_radius_bottom_right = 4
-	var hsb := nsb.duplicate() as StyleBoxFlat
-	hsb.bg_color = Color(0.28, 0.24, 0.16, 1)
-	var psb := nsb.duplicate() as StyleBoxFlat
-	psb.bg_color = Color(0.42, 0.34, 0.16, 1)
-	b.add_theme_stylebox_override("normal", nsb)
-	b.add_theme_stylebox_override("hover", hsb)
-	b.add_theme_stylebox_override("pressed", psb)
-	b.add_theme_stylebox_override("focus", hsb)
-	b.add_theme_color_override("font_color", Color(0.92, 0.88, 0.78))
-	return b
+			App.sfx("ui_cancel")
+			close_ui()
+		get_viewport().set_input_as_handled()

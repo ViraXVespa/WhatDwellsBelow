@@ -12,7 +12,7 @@ Support development on **[Patreon](https://www.patreon.com/cw/ViraXVespa)**.
 
 Click the game once so the canvas can take keyboard / gamepad input. Xbox pad works in Chromium-based browsers; WASD + mouse still work.
 
-Keyboard: WASD move, mouse aim, LMB hold-attack, Space dash, Shift slam, E interact, 1 potion, 2 food, Esc pause (inventory / skills / options), M bigger map. Wipe save is Pause → System → Delete save data.
+Keyboard: WASD move, mouse aim, LMB hold-attack, R special, Space dash, E interact, F potion, C food, Esc pause (inventory / skills / system), M bigger map, Q target-lock. Wipe save is Pause → System → Delete Save Data. Voluntary exit is **“Dispel”**.
 
 This is a no-threads Web export so it runs on GitHub Pages without special COOP/COEP headers. Rebuild with:
 
@@ -32,4 +32,4 @@ That writes into `docs/`, which Pages serves from `main`.
 Editor: Play (`F5`).  
 Keyboard: WASD, mouse aim, LMB hold-attack, Space dash, Shift slam, E interact, Esc pause/inventory, M map.
 
-Proudly vibecoded with Grok by [@ViraXVespa](https://github.com/ViraXVespa). [Patreon](https://www.patreon.com/cw/ViraXVespa).
+Shamelessly Vibecoded with Grok by [@ViraXVespa](https://github.com/ViraXVespa). [Patreon](https://www.patreon.com/cw/ViraXVespa). Dungeon music: **Bitter** — ViraXVespa.
