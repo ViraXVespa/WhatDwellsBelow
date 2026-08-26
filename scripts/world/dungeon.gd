@@ -96,7 +96,7 @@ func _process(delta: float) -> void:
 	if fog_dirty or (map_layer and map_layer.visible):
 		_redraw_map()
 		fog_dirty = false
-	if Input.is_action_just_pressed("pause"):
+	if Input.is_action_just_pressed("pause") or App.pad_just("pause"):
 		if App.debug and App.debug.get("open"):
 			pass
 		elif App.recap and App.recap.get("open"):
@@ -105,7 +105,7 @@ func _process(delta: float) -> void:
 			ui.close_ui()
 		elif App.pause_menu and App.pause_menu.has_method("toggle"):
 			App.pause_menu.toggle()
-	if Input.is_action_just_pressed("map_view"):
+	if Input.is_action_just_pressed("map_view") or App.pad_just("map_view"):
 		if map_layer:
 			map_layer.visible = not map_layer.visible
 			if map_layer.visible:

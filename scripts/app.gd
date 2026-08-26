@@ -84,6 +84,21 @@ var _seq := 0
 var _seq_timer := 0.0
 var _seq_down := false
 
+const PAD := {
+	"interact": JOY_BUTTON_A,
+	"dash": JOY_BUTTON_B,
+	"target_lock": JOY_BUTTON_RIGHT_STICK,
+	"pause": JOY_BUTTON_START,
+	"map_view": JOY_BUTTON_BACK,
+	"potion": JOY_BUTTON_DPAD_UP,
+	"food": JOY_BUTTON_DPAD_LEFT,
+	"tab_left": JOY_BUTTON_LEFT_SHOULDER,
+	"tab_right": JOY_BUTTON_RIGHT_SHOULDER,
+}
+
+var _pad_was: Dictionary = {}
+var _pad_edge: Dictionary = {}
+
 const TITLE_SCENE := "res://scenes/title.tscn"
 const FOUNDATION_SCENE := "res://scenes/foundation.tscn"
 const DUNGEON_SCENE := "res://scenes/dungeon.tscn"
@@ -430,6 +445,11 @@ func note_clerk() -> void:
 
 
 func _process(delta: float) -> void:
+	_pad_tick()
+	if pad_just("interact"):
+		var f := get_viewport().gui_get_focus_owner()
+		if f is BaseButton and not (f as BaseButton).disabled:
+			(f as BaseButton).pressed.emit()
 	clock += delta
 	if shrine_t > 0.0:
 		shrine_t = maxf(0.0, shrine_t - delta)
@@ -719,6 +739,7 @@ func wake_web_pad() -> void:
 		})();
 	""", true)
 
+var _pad_was: Dictionary = {}
 
 func pad_id() -> int:
 	var pads := Input.get_connected_joypads()
@@ -753,35 +774,29 @@ func pad_held(action: String) -> bool:
 	var id := pad_id()
 	if id < 0:
 		return false
-	match action:
-		"attack":
-			return Input.get_joy_axis(id, JOY_AXIS_TRIGGER_RIGHT) > 0.45 \
-				or Input.is_joy_button_pressed(id, 7)
-		"special":
-			return Input.get_joy_axis(id, JOY_AXIS_TRIGGER_LEFT) > 0.45 \
-				or Input.is_joy_button_pressed(id, 6)
-		"dash":
-			return Input.is_joy_button_pressed(id, JOY_BUTTON_B)
-		"interact":
-			return Input.is_joy_button_pressed(id, JOY_BUTTON_A)
-		"target_lock":
-			return Input.is_joy_button_pressed(id, JOY_BUTTON_RIGHT_STICK)
-		"potion":
-			return Input.is_joy_button_pressed(id, JOY_BUTTON_DPAD_UP)
-		"food":
-			return Input.is_joy_button_pressed(id, JOY_BUTTON_DPAD_LEFT)
+	if action == "attack":
+		return Input.get_joy_axis(id, JOY_AXIS_TRIGGER_RIGHT) > 0.45 \
+			or Input.is_joy_button_pressed(id, 7)
+	if action == "special":
+		return Input.get_joy_axis(id, JOY_AXIS_TRIGGER_LEFT) > 0.45 \
+			or Input.is_joy_button_pressed(id, 6)
+	if PAD.has(action):
+		return Input.is_joy_button_pressed(id, int(PAD[action]))
 	return false
 
 
-var _pad_was: Dictionary = {}
-
-
 func pad_just(action: String) -> bool:
-	var now := pad_held(action)
-	var was := bool(_pad_was.get(action, false))
-	_pad_was[action] = now
-	return now and not was
+	return bool(_pad_edge.get(action, false))
 
+
+func _pad_tick() -> void:
+	_pad_edge.clear()
+	var names: Array = PAD.keys()
+	names.append_array(["attack", "special"])
+	for action in names:
+		var now := pad_held(str(action))
+		_pad_edge[action] = now and not bool(_pad_was.get(action, false))
+		_pad_was[action] = now
 
 func web_buttons() -> PackedFloat32Array:
 	if not OS.has_feature("web"):

@@ -48,7 +48,7 @@ func world_ui() -> Node:
 
 
 func _process(_delta: float) -> void:
-	if Input.is_action_just_pressed("pause"):
+	if Input.is_action_just_pressed("pause") or App.pad_just("pause"):
 		if App.ui_open and ui and ui.visible:
 			ui.close_ui()
 		elif App.pause_menu and App.pause_menu.has_method("toggle"):
@@ -60,11 +60,6 @@ func _process(_delta: float) -> void:
 		hint.text = "Placeholdia  ·  bank %dg  %d ore  %d wood  ·  deepest F%d%s\nCrystal  ·  Anvil  ·  Vendor  ·  Guild  ·  Billboard  ·  Start pause" % [App.bank_gold, App.bank_ore, App.bank_wood, App.prog.deepest, hot]
 	if prompt:
 		prompt.text = App.interact_prompt
-	var bt := App.web_buttons()
-	if bt.size() > 0 and Time.get_ticks_msec() % 400 < 30:
-		print("js0=", bt[0] if bt.size() > 0 else -1,
-			" js1=", bt[1] if bt.size() > 1 else -1,
-			" js9=", bt[9] if bt.size() > 9 else -1)
 
 
 func _world() -> void:

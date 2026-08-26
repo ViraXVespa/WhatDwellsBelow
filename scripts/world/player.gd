@@ -235,11 +235,11 @@ func _physics_process(delta: float) -> void:
 	if rig and rig.has_method("follow"):
 		rig.follow(global_position)
 	_refresh_prompt()
-	if _ai_just("interact") or Input.is_action_just_pressed("interact"):
+	if _ai_just("interact") or App.pad_just("interact"):
 		_try_interact()
-	if _ai_just("potion") or Input.is_action_just_pressed("potion"):
+	if _ai_just("potion") or App.pad_just("potion"):
 		App.prog.use_potion()
-	if _ai_just("food") or Input.is_action_just_pressed("food"):
+	if _ai_just("food") or App.pad_just("food"):
 		App.prog.use_food()
 
 
@@ -411,15 +411,6 @@ func _ai_or_vec(which: String) -> Vector2:
 			var v: Vector2 = raw
 			if which != "aim" or v.length() > 0.1:
 				return v
-	if OS.has_feature("web") and App.web_pad and App.web_pad.device_ok:
-		if which == "aim":
-			var a: Vector2 = App.web_pad.aim
-			if a.length() > 0.01:
-				return a
-		else:
-			var m: Vector2 = App.web_pad.move
-			if m.length() > 0.01:
-				return m
 	if which == "aim":
 		return App.pad_aim()
 	return App.pad_move()
@@ -445,7 +436,7 @@ func _ai_held(action: String) -> bool:
 
 
 func _lock_and_aim(move: Vector2, delta: float) -> void:
-	if Input.is_action_just_pressed("target_lock"):
+	if Input.is_action_just_pressed("target_lock") or App.pad_just("target_lock"):
 		if lock_armed:
 			lock_armed = false
 			lock_target = null
@@ -529,7 +520,7 @@ func _update_aim(move: Vector2) -> void:
 func _try_dash(move: Vector2) -> void:
 	if dash_t > 0.0:
 		return
-	if not (_ai_just("dash") or Input.is_action_just_pressed("dash")):
+	if not (_ai_just("dash") or App.pad_just("dash")):
 		return
 	if dash_cd > 0.0:
 		return
@@ -546,7 +537,7 @@ func _try_dash(move: Vector2) -> void:
 
 
 func _try_special() -> void:
-	var held := _ai_held("special") or Input.is_action_pressed("special")
+	var held := _ai_held("special") or App.pad_held("special")
 	var pressed := held and not special_held
 	special_held = held
 	if not pressed:
@@ -565,7 +556,7 @@ func _try_special() -> void:
 func _try_basic() -> void:
 	if atk_state != ATK_NONE or dash_t > 0.0:
 		return
-	if not (_ai_held("attack") or Input.is_action_pressed("attack")):
+	if not (_ai_held("attack") or App.pad_held("attack")):
 		return
 	atk_state = ATK_BASIC
 	atk_t = 0.0
