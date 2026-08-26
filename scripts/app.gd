@@ -110,7 +110,6 @@ func _ready() -> void:
 	bal = BalanceS.new()
 	prog = ProgressS.new()
 	_register_input()
-	get_tree().scene_changed.connect(_on_scene_changed)
 	sfx_node = SfxS.new()
 	add_child(sfx_node)
 	tel = TelS.new()
@@ -135,8 +134,6 @@ func _ready() -> void:
 	if "--wdb-debug" in OS.get_cmdline_user_args():
 		call_deferred("_open_debug")
 
-func _on_scene_changed() -> void:
-	call_deferred("wake_web_pad")
 
 func _open_debug() -> void:
 	if debug and debug.has_method("show_menu"):
@@ -739,7 +736,6 @@ func wake_web_pad() -> void:
 		})();
 	""", true)
 
-var _pad_was: Dictionary = {}
 
 func pad_id() -> int:
 	var pads := Input.get_connected_joypads()
@@ -769,20 +765,15 @@ func pad_aim() -> Vector2:
 
 
 func pad_held(action: String) -> bool:
-	if Input.is_action_pressed(action):
-		return true
 	var id := pad_id()
-	if id < 0:
-		return false
-	if action == "attack":
-		return Input.get_joy_axis(id, JOY_AXIS_TRIGGER_RIGHT) > 0.45 \
-			or Input.is_joy_button_pressed(id, 7)
-	if action == "special":
-		return Input.get_joy_axis(id, JOY_AXIS_TRIGGER_LEFT) > 0.45 \
-			or Input.is_joy_button_pressed(id, 6)
-	if PAD.has(action):
-		return Input.is_joy_button_pressed(id, int(PAD[action]))
-	return false
+	if id >= 0:
+		if action == "attack":
+			return Input.get_joy_axis(id, JOY_AXIS_TRIGGER_RIGHT) > 0.45
+		if action == "special":
+			return Input.get_joy_axis(id, JOY_AXIS_TRIGGER_LEFT) > 0.45
+		if PAD.has(action):
+			return Input.is_joy_button_pressed(id, int(PAD[action]))
+	return Input.is_action_pressed(action)
 
 
 func pad_just(action: String) -> bool:
