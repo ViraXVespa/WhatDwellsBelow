@@ -181,6 +181,7 @@ func _make_named(given: String, _floor_n: int) -> void:
 	atk_range *= 1.12
 	tag.text = named_name
 	tag.visible = true
+	tag.position = Vector3(0.0, 0.08, 0.0)
 	tag.modulate = Color(1.0, 0.92, 0.18)
 	tag.outline_modulate = Color(0, 0, 0)
 	tag.outline_size = 12
@@ -213,7 +214,10 @@ func _load_tex(boss_title := "") -> void:
 		spr.pixel_size = size_u / th
 	spr.position.y = size_u * 0.48
 	spr.modulate = base_mod
-	tag.position.y = size_u * 0.95 + 0.35
+	if is_named:
+		tag.position.y = 0.08
+	else:
+		tag.position.y = size_u * 0.95 + 0.35
 	bang.position.y = size_u * 0.95 + 0.65
 
 
@@ -290,8 +294,11 @@ func _die() -> void:
 	if is_boss:
 		App.notify_boss_dead()
 	_drop_loot()
+	state = ST_REC
 	var tw := create_tween()
-	tw.tween_property(spr, "modulate:a", 0.0, 0.22)
+	tw.tween_property(spr, "modulate:a", 0.0, 0.42)
+	if spr:
+		tw.parallel().tween_property(spr, "pixel_size", spr.pixel_size * 0.86, 0.42)
 	tw.finished.connect(queue_free)
 
 
@@ -426,8 +433,8 @@ func _begin_windup() -> void:
 
 
 func _do_attack(delta: float) -> void:
-	velocity = Vector3.ZERO
 	if state == ST_WIND:
+		velocity = Vector3.ZERO
 		wind_t += delta
 		_draw_tele(false)
 		if wind_t >= wind_dur:
@@ -437,14 +444,20 @@ func _do_attack(delta: float) -> void:
 			_strike()
 		return
 	if state == ST_STRIKE:
+		if role == "melee":
+			_move_dir(locked_aim, 2.35, delta)
+		else:
+			velocity = Vector3.ZERO
 		wind_t += delta
 		if wind_t >= 0.14:
 			state = ST_REC
 			rec_t = 0.0
+			velocity = Vector3.ZERO
 			if telegraph:
 				telegraph.hide_now()
 		return
 	if state == ST_REC:
+		velocity = Vector3.ZERO
 		rec_t += delta
 		if rec_t >= App.bal.enemy_recover:
 			state = ST_CHASE

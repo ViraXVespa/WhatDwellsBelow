@@ -37,6 +37,7 @@ var wood := 0
 var bank_gold := 0
 var bank_ore := 0
 var bank_wood := 0
+var bank_root := 0
 var mine_lv := 1
 var wood_lv := 1
 var mine_xp := 0.0
@@ -413,7 +414,12 @@ func _process(delta: float) -> void:
 		var fighting := false
 		var p := get_tree().get_first_node_in_group("player")
 		if p:
-			fighting = p.get("lock_target") != null
+			fighting = int(p.get("atk_state")) != 0 or p.get("lock_target") != null
+			if not fighting:
+				for e in get_tree().get_nodes_in_group("enemies"):
+					if e != null and is_instance_valid(e) and int(e.get("state")) >= 1 and int(e.get("state")) <= 6:
+						fighting = true
+						break
 		tel.tick(delta, fighting)
 	if prog:
 		prog.tick_food(delta)
@@ -493,7 +499,7 @@ const BIND_ACTIONS: PackedStringArray = [
 	"move_left", "move_right", "move_up", "move_down",
 	"aim_left", "aim_right", "aim_up", "aim_down",
 	"attack", "special", "dash", "target_lock", "interact", "pause",
-	"tab_left", "tab_right", "weapon_1", "weapon_2", "weapon_3",
+	"tab_left", "tab_right",
 	"map_view", "potion", "food",
 	"anim_model_prev", "anim_model_next", "anim_idle", "anim_play",
 	"anim_list_up", "anim_list_down", "anim_back",
@@ -578,6 +584,9 @@ func reset_binds() -> void:
 
 
 func _register_input() -> void:
+	for extra in ["weapon_1", "weapon_2", "weapon_3"]:
+		if InputMap.has_action(extra):
+			InputMap.erase_action(extra)
 	for a in BIND_ACTIONS:
 		if InputMap.has_action(a):
 			InputMap.action_erase_events(a)
@@ -598,9 +607,6 @@ func _register_input() -> void:
 	_act("pause", [KEY_ESCAPE], JOY_BUTTON_START)
 	_act("tab_left", [KEY_BRACKETLEFT], JOY_BUTTON_LEFT_SHOULDER)
 	_act("tab_right", [KEY_BRACKETRIGHT], JOY_BUTTON_RIGHT_SHOULDER)
-	_act("weapon_1", [KEY_1])
-	_act("weapon_2", [KEY_2])
-	_act("weapon_3", [KEY_3])
 	_act("map_view", [KEY_M], JOY_BUTTON_BACK)
 	_act("potion", [KEY_F], JOY_BUTTON_DPAD_UP)
 	_act("food", [KEY_C], JOY_BUTTON_DPAD_LEFT)

@@ -961,7 +961,11 @@ func _ensure_world() -> void:
 		add_child(sh)
 		_note("shop")
 	if int(counts.get("puzzle", 0)) < 1:
-		_spawn_puzzle(spawn_r)
+		var pr := _find_kind_room("normal")
+		if pr.is_empty():
+			pr = _find_kind_room("base")
+		if not pr.is_empty() and str(pr.get("kind", "")) != "spawn" and str(pr.get("kind", "")) != "boss":
+			_spawn_puzzle(pr)
 
 
 func _tick_plates() -> void:

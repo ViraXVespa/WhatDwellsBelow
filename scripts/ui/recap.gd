@@ -85,6 +85,13 @@ func _rebuild(cond: String) -> void:
 	box.add_child(ThemeS.lab(sub, 22, Color(0.82, 0.76, 0.66)))
 	var end_n := "“Dispel”" if cond == "dispel" else ("Death" if cond == "death" else cond)
 	box.add_child(ThemeS.lab("End: %s   Floor F%d" % [end_n, App.floor_n], 18, Color(0.8, 0.75, 0.65)))
+	var dur := 0
+	var kills := 0
+	if App.tel:
+		dur = int(App.tel.duration)
+		kills = int(App.tel.kills)
+	box.add_child(ThemeS.lab("Run  %ds  ·  %d kills  ·  %s  ·  %s  ·  %s" % [dur, kills, App.weapon, App.prog.tool_type, App.character_type], 18, Color(0.82, 0.76, 0.66)))
+	box.add_child(ThemeS.lab("Carried  %dg  %d ore  %d wood  ·  bag %d" % [App.gold, App.ore, App.wood, App.prog.bag_count()], 18, Color(0.82, 0.76, 0.66)))
 	flavor = ThemeS.lab("XP draining…", 18, Color(0.9, 0.84, 0.7))
 	box.add_child(flavor)
 	skill_labs.clear()

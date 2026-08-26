@@ -341,15 +341,7 @@ func _process(delta: float) -> void:
 func _stick_facing() -> void:
 	var v := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
 	if v.length() < 0.55:
-		v = Vector2.ZERO
-		if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP):
-			v.y -= 1.0
-		if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):
-			v.y += 1.0
-		if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT):
-			v.x -= 1.0
-		if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT):
-			v.x += 1.0
+		v = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if v.length() < 0.55:
 		return
 	var k := Facing.from_aim(v)

@@ -14,7 +14,9 @@ var spec_fill: ColorRect
 var lvl: Label
 var res: Label
 var floor_lab: Label
+var shrine_icon: TextureRect
 var shrine_lab: Label
+var food_icon: TextureRect
 var food_lab: Label
 var boss_wrap: Control
 var boss_fill: ColorRect
@@ -68,9 +70,29 @@ func _ready() -> void:
 	lvl = _lab(strip, Vector2(530, 18), Vector2(280, 28), 22)
 	res = _lab(strip, Vector2(530, 48), Vector2(420, 28), 18)
 	floor_lab = _lab(strip, Vector2(960, 18), Vector2(120, 32), 28)
-	shrine_lab = _lab(strip, Vector2(1100, 16), Vector2(280, 28), 18)
+	shrine_icon = TextureRect.new()
+	shrine_icon.position = Vector2(1080, 14)
+	shrine_icon.size = Vector2(28, 28)
+	shrine_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shrine_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	shrine_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if ResourceLoader.exists("res://assets/sprites/props/shrine.png"):
+		shrine_icon.texture = load("res://assets/sprites/props/shrine.png")
+	shrine_icon.visible = false
+	strip.add_child(shrine_icon)
+	shrine_lab = _lab(strip, Vector2(1112, 16), Vector2(260, 28), 18)
 	shrine_lab.add_theme_color_override("font_color", Color(1.0, 0.72, 0.35))
-	food_lab = _lab(strip, Vector2(1100, 46), Vector2(280, 28), 18)
+	food_icon = TextureRect.new()
+	food_icon.position = Vector2(1080, 44)
+	food_icon.size = Vector2(28, 28)
+	food_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	food_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	food_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if ResourceLoader.exists("res://assets/sprites/props/hp_orb.png"):
+		food_icon.texture = load("res://assets/sprites/props/hp_orb.png")
+	food_icon.visible = false
+	strip.add_child(food_icon)
+	food_lab = _lab(strip, Vector2(1112, 46), Vector2(260, 28), 18)
 	food_lab.add_theme_color_override("font_color", Color(0.7, 0.92, 0.5))
 	boss_wrap = Control.new()
 	boss_wrap.position = Vector2(1400, 16)
@@ -156,7 +178,8 @@ func refresh(player: Node, dungeon: Node) -> void:
 	var pot: Dictionary = App.prog.slots.get("potion", {})
 	var pn := int(pot.get("stack", 0))
 	var pcd: float = App.prog.potion_cd
-	_fill(pot_fill, 120.0, 1.0 if pcd <= 0.0 and pn > 0 else 1.0 - clampf(pcd / 1.2, 0.0, 1.0))
+	var pmax: float = maxf(0.05, App.bal.potion_cooldown)
+	_fill(pot_fill, 120.0, 1.0 if pcd <= 0.0 and pn > 0 else 1.0 - clampf(pcd / pmax, 0.0, 1.0))
 	if pcd > 0.0:
 		pot_lab.text = "Potion x%d  %.1fs" % [pn, pcd]
 	else:
@@ -172,14 +195,18 @@ func refresh(player: Node, dungeon: Node) -> void:
 	res.text = "%dg   %d ore   %d wood" % [App.gold, App.ore, App.wood]
 	floor_lab.text = "F%d" % App.floor_n
 	if App.shrine_t > 0.0:
+		shrine_icon.visible = true
 		shrine_lab.visible = true
 		shrine_lab.text = "Shrine +%d%%  %ds" % [int(App.bal.shrine_dmg * 100.0), int(ceil(App.shrine_t))]
 	else:
+		shrine_icon.visible = false
 		shrine_lab.visible = false
 	if App.prog.food_t > 0.0:
+		food_icon.visible = true
 		food_lab.visible = true
 		food_lab.text = "Food HoT  %ds" % int(ceil(App.prog.food_t))
 	else:
+		food_icon.visible = false
 		food_lab.visible = false
 	prompt.text = App.interact_prompt
 	toast.text = App.toast_msg if App.toast_t > 0.0 else ""

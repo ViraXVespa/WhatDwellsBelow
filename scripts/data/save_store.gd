@@ -65,6 +65,7 @@ static func collect() -> Dictionary:
 		"bank_gold": App.bank_gold,
 		"bank_ore": App.bank_ore,
 		"bank_wood": App.bank_wood,
+		"bank_root": App.bank_root,
 		"binds": App.collect_binds(),
 		"prog": App.prog.to_meta(),
 	}
@@ -83,6 +84,7 @@ static func apply(data: Dictionary) -> void:
 	App.bank_gold = int(data.get("bank_gold", 0))
 	App.bank_ore = int(data.get("bank_ore", 0))
 	App.bank_wood = int(data.get("bank_wood", 0))
+	App.bank_root = int(data.get("bank_root", 0))
 	var p: Variant = data.get("prog", {})
 	if p is Dictionary:
 		App.prog.from_meta(p)
@@ -133,6 +135,7 @@ static func fresh_delver() -> void:
 	App.bank_gold = 0
 	App.bank_ore = 0
 	App.bank_wood = 0
+	App.bank_root = 0
 	App.character_type = "male"
 	App.character_chosen = false
 	App.cam_zoom = 1.0

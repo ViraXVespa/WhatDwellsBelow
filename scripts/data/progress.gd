@@ -126,6 +126,8 @@ func _clear_mailed() -> void:
 
 
 func _clamp_food_slot() -> void:
+	if App.in_dungeon:
+		return
 	var cap := int(App.bal.food_bring_max)
 	var fd: Dictionary = slots.get("food", {})
 	if fd.is_empty():
@@ -236,7 +238,10 @@ func add_item(it: Dictionary) -> bool:
 	if str(it.kind) == "potion" or str(it.kind) == "food":
 		var slot_it: Dictionary = slots.get(str(it.slot), {})
 		if not slot_it.is_empty() and str(slot_it.get("food", "")) == str(it.get("food", "")) and str(it.kind) == "food":
-			slot_it.stack = mini(int(slot_it.stack) + int(it.stack), int(App.bal.food_bring_max))
+			var nxt := int(slot_it.stack) + int(it.stack)
+			if not App.in_dungeon:
+				nxt = mini(nxt, int(App.bal.food_bring_max))
+			slot_it.stack = nxt
 			slots[str(it.slot)] = slot_it
 			return true
 		if not slot_it.is_empty() and str(it.kind) == "potion" and str(slot_it.kind) == "potion":
@@ -290,6 +295,7 @@ func equip_uid(uid: int) -> String:
 		if p and p.has_method("set_weapon"):
 			p.set_weapon(App.weapon)
 	_sync_artifacts()
+	_refresh_player_hp()
 	return "Equipped " + str(it.name)
 
 
@@ -311,6 +317,7 @@ func unequip_slot(slot: String) -> String:
 	if not add_item(it):
 		return "Bag full."
 	_fill_slot_after_remove(slot)
+	_refresh_player_hp()
 	return "Unequipped " + str(it.name)
 
 
@@ -321,6 +328,7 @@ func drop_slot(slot: String) -> String:
 	if it.is_empty():
 		return "Empty."
 	_fill_slot_after_remove(slot)
+	_refresh_player_hp()
 	App.spawn_floor_item(it)
 	App.toast("Dropped " + str(it.name))
 	return "Dropped."
@@ -346,6 +354,7 @@ func take_slot(slot: String) -> Dictionary:
 	if it.is_empty():
 		return {}
 	_fill_slot_after_remove(slot)
+	_refresh_player_hp()
 	return it
 
 
@@ -404,7 +413,7 @@ func _drink(it: Dictionary, from_slot: bool) -> String:
 	if p == null or not p.has_method("heal"):
 		return "Not now."
 	p.heal(App.bal.potion_heal if App.bal.potion_heal > 1.0 else App.bal.player_max_hp * App.bal.potion_heal)
-	potion_cd = 1.2
+	potion_cd = App.bal.potion_cooldown
 	App.sfx("potion")
 	App.toast("Potion — instant.")
 	_consume(it, from_slot)
@@ -629,22 +638,31 @@ func _sync_artifacts() -> void:
 			App.run_artifacts.append(str(it.id))
 
 
-func extractable() -> Array:
+func extractable(role := "") -> Array:
 	var out: Array = []
-	if App.gold > 0:
-		out.append({"kind": "gold", "name": "Gold", "n": App.gold})
-	if App.ore > 0:
-		out.append({"kind": "ore", "name": "Ore", "n": App.ore})
-	if App.wood > 0:
-		out.append({"kind": "wood", "name": "Wood", "n": App.wood})
-	if root > 0:
-		out.append({"kind": "root", "name": "Root", "n": root})
-	for it in bag:
-		if it.get("extract", true) and str(it.kind) != "artifact":
-			out.append(it)
-	for s in SLOTS:
-		var it: Dictionary = slots.get(s, {})
-		if not it.is_empty() and it.get("extract", true) and str(it.kind) != "artifact" and str(it.kind) != "tool":
+	var gather := role == "" or role == "gather" or role == "patty"
+	var misc := role == "" or role == "misc" or role == "patty"
+	if gather:
+		if App.ore > 0:
+			out.append({"kind": "ore", "name": "Ore", "n": App.ore})
+		if App.wood > 0:
+			out.append({"kind": "wood", "name": "Wood", "n": App.wood})
+		if root > 0:
+			out.append({"kind": "root", "name": "Root", "n": root})
+	if misc:
+		if App.gold > 0:
+			out.append({"kind": "gold", "name": "Gold", "n": App.gold})
+		for it in bag:
+			if it.get("extract", true) and str(it.kind) != "artifact" and str(it.kind) != "tool" and not bool(it.get("hold", false)):
+				out.append(it)
+		for s in SLOTS:
+			var it: Dictionary = slots.get(s, {})
+			if it.is_empty():
+				continue
+			if not bool(it.get("extract", true)):
+				continue
+			if str(it.kind) == "artifact" or str(it.kind) == "tool" or bool(it.get("hold", false)):
+				continue
 			var copy := it.duplicate(true)
 			copy["from_slot"] = s
 			out.append(copy)
@@ -663,6 +681,7 @@ func extract_all(role: String) -> String:
 		r = root
 		App.bank_ore += App.ore
 		App.bank_wood += App.wood
+		App.bank_root += root
 		_quest_extract_ore(App.ore)
 		App.ore = 0
 		root = 0
@@ -676,7 +695,7 @@ func extract_all(role: String) -> String:
 		mailed_gold += g
 		var keep: Array = []
 		for it in bag:
-			if it.get("extract", true) and str(it.kind) != "artifact":
+			if it.get("extract", true) and str(it.kind) != "artifact" and str(it.kind) != "tool" and not bool(it.get("hold", false)):
 				bank_items.append(it)
 				mailed_names.append(str(it.name))
 				items += 1
@@ -687,7 +706,7 @@ func extract_all(role: String) -> String:
 			var it: Dictionary = slots.get(s, {})
 			if it.is_empty():
 				continue
-			if str(it.kind) == "artifact":
+			if str(it.kind) == "artifact" or str(it.kind) == "tool" or bool(it.get("hold", false)):
 				continue
 			if not bool(it.get("extract", true)):
 				continue
@@ -695,6 +714,9 @@ func extract_all(role: String) -> String:
 			mailed_names.append(str(it.name))
 			slots[s] = {}
 			items += 1
+		if slots.weapon.is_empty():
+			_fill_slot_after_remove("weapon")
+		_refresh_player_hp()
 	App.extracted = g + o + w + r + items > 0
 	if App.extracted:
 		App.toast("Sent to the surface.")
@@ -730,6 +752,7 @@ func extract_one(it: Dictionary, role: String) -> String:
 		return "Sent %d wood." % n
 	if k == "root" and (role == "gather" or role == "patty"):
 		var n := root
+		App.bank_root += root
 		root = 0
 		App.extracted = true
 		mailed_root += n
@@ -743,9 +766,12 @@ func extract_one(it: Dictionary, role: String) -> String:
 			slots[str(it.from_slot)] = {}
 		if got.is_empty():
 			return "Gone."
-		if str(got.kind) == "artifact":
+		if str(got.kind) == "artifact" or bool(got.get("hold", false)):
+			if str(got.kind) == "artifact":
+				add_item(got)
+				return "Artifacts cannot be mailed."
 			add_item(got)
-			return "Artifacts cannot be mailed."
+			return "Forged holds stay with you."
 		bank_items.append(got)
 		App.extracted = true
 		mailed_names.append(str(got.name))
@@ -765,8 +791,13 @@ func forge_cost(first: bool) -> Dictionary:
 	return {"gold": maxi(4, g), "ore": maxi(1, o), "root": maxi(0, r)}
 
 
+func forge_duration() -> float:
+	var sm := skill_lv("smith")
+	return maxf(0.2, App.bal.forge_time / (1.0 + float(maxi(0, sm - 1)) * 0.12))
+
+
 func can_pay(c: Dictionary) -> bool:
-	return App.bank_gold + App.gold >= int(c.gold) and App.bank_ore + App.ore >= int(c.ore) and root >= int(c.root)
+	return App.bank_gold + App.gold >= int(c.gold) and App.bank_ore + App.ore >= int(c.ore) and App.bank_root + root >= int(c.root)
 
 
 func pay(c: Dictionary) -> void:
@@ -780,7 +811,11 @@ func pay(c: Dictionary) -> void:
 	App.ore -= use
 	o -= use
 	App.bank_ore = maxi(0, App.bank_ore - o)
-	root = maxi(0, root - int(c.root))
+	var rpay := int(c.root)
+	use = mini(root, rpay)
+	root -= use
+	rpay -= use
+	App.bank_root = maxi(0, App.bank_root - rpay)
 
 
 func forge_item(it: Dictionary) -> String:
@@ -796,6 +831,7 @@ func forge_item(it: Dictionary) -> String:
 	pay(cost)
 	var copy := it.duplicate(true)
 	copy.hold = true
+	copy.extract = false
 	copy.rarity = "green" if copy.rarity == "white" else copy.rarity
 	copy.dmg = int(copy.dmg) + 1 + int(skill_lv("smith") / 4)
 	copy.def = int(copy.def) + 1
@@ -815,11 +851,14 @@ func roll_quests(keep_active: bool) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	var types: PackedStringArray = ["slime", "goblin", "bat", "spider", "archer", "orc", "wolf"]
+	var kt := types[rng.randi() % types.size()]
+	var nt := types[rng.randi() % types.size()]
+	var ff := maxi(1, rng.randi_range(1, maxi(1, deepest)))
 	var pool: Array = [
-		{"kind": "kill", "title": "Cull the %s" % types[rng.randi() % types.size()], "type": types[rng.randi() % types.size()], "need": 4, "have": 0, "reward": "xp"},
+		{"kind": "kill", "title": "Cull the %s" % kt, "type": kt, "need": 4, "have": 0, "reward": "xp"},
 		{"kind": "ore", "title": "Mail 8 ore", "need": 8, "have": 0, "reward": "gold"},
-		{"kind": "fetch", "title": "Retrieve a guild cache", "floor": mini(deepest, 3), "have": 0, "need": 1, "reward": "gear"},
-		{"kind": "named", "title": "Vanquish a named foe", "type": types[rng.randi() % types.size()], "nname": "", "need": 1, "have": 0, "reward": "xp"},
+		{"kind": "fetch", "title": "Retrieve a guild cache from floor %d" % ff, "floor": ff, "have": 0, "need": 1, "reward": "gear"},
+		{"kind": "named", "title": "Vanquish a named foe", "type": nt, "nname": "", "need": 1, "have": 0, "reward": "xp"},
 	]
 	quests_offered = []
 	var used := {}
@@ -900,13 +939,17 @@ func _try_complete() -> void:
 		return
 	var rw := str(quest_active.get("reward", "gold"))
 	if rw == "xp":
-		add_run_xp("str", 20.0)
-		add_run_xp("hp", 12.0)
+		var sa := SKILLS[randi() % SKILLS.size()]
+		var sb := SKILLS[randi() % SKILLS.size()]
+		skills_perm[sa] = float(skills_perm.get(sa, 0.0)) + 24.0
+		skills_perm[sb] = float(skills_perm.get(sb, 0.0)) + 16.0
+		App.toast("Quest complete — %s / %s XP." % [sa, sb])
 	elif rw == "gear":
 		add_item(_unowned_gear())
+		App.toast("Quest complete.")
 	else:
 		App.gain_gold(25)
-	App.toast("Quest complete.")
+		App.toast("Quest complete.")
 	quest_active = {}
 	App.quest_named_type = ""
 	App.quest_named_name = ""
@@ -917,6 +960,20 @@ func _unowned_gear() -> Dictionary:
 		if (holds[s] as Array).is_empty():
 			return make_armor(s, "green")
 	return make_weapon(pick_weapon, "green")
+
+
+func _refresh_player_hp() -> void:
+	var p := _player()
+	if p == null:
+		return
+	var maxh: float = App.bal.player_max_hp + gear_hp()
+	var old := float(p.get("max_hp"))
+	p.set("max_hp", maxh)
+	var cur := float(p.get("hp"))
+	if maxh > old:
+		p.set("hp", cur + (maxh - old))
+	else:
+		p.set("hp", minf(cur, maxh))
 
 
 func _player() -> Node:
@@ -947,6 +1004,7 @@ func to_meta() -> Dictionary:
 		"quest_active": quest_active.duplicate(true),
 		"quests_offered": quests_offered.duplicate(true),
 		"forge_count": forge_count,
+		"hold_pick": hold_pick.duplicate(),
 	}
 
 
@@ -982,6 +1040,9 @@ func from_meta(d: Dictionary) -> void:
 	if qo is Array:
 		quests_offered = (qo as Array).duplicate(true)
 	forge_count = int(d.get("forge_count", 0))
+	var hpicks: Variant = d.get("hold_pick", {})
+	if hpicks is Dictionary:
+		hold_pick = (hpicks as Dictionary).duplicate(true)
 
 
 func restock() -> String:
@@ -989,13 +1050,15 @@ func restock() -> String:
 	if App.bank_gold < int(App.bal.restock_gold):
 		App.bank_gold = int(App.bal.restock_gold)
 		msg += "A few coins. "
+	var need_p := int(App.bal.restock_potion)
 	var pot: Dictionary = slots.get("potion", {})
-	if pot.is_empty() or int(pot.get("stack", 0)) < 1:
-		slots["potion"] = make_potion(2)
+	if need_p > 0 and (pot.is_empty() or int(pot.get("stack", 0)) < need_p):
+		slots["potion"] = make_potion(need_p)
 		msg += "Potions. "
+	var need_f := int(App.bal.restock_food)
 	var fd: Dictionary = slots.get("food", {})
-	if fd.is_empty() or int(fd.get("stack", 0)) < 1:
-		slots["food"] = make_food("ration", 3)
+	if need_f > 0 and (fd.is_empty() or int(fd.get("stack", 0)) < need_f):
+		slots["food"] = make_food("ration", need_f)
 		msg += "Rations. "
 	if msg == "":
 		return ""

@@ -17,6 +17,8 @@ var loadout_floor := 1
 var loadout_tool := "pickaxe"
 var loadout_wpn := "great_axe"
 var anvil_item: Dictionary = {}
+var forge_t := 0.0
+var forge_it: Dictionary = {}
 
 
 func _ready() -> void:
@@ -52,6 +54,8 @@ func close_ui() -> void:
 	visible = false
 	pending = false
 	pending_id = ""
+	forge_t = 0.0
+	forge_it = {}
 	App.ui_open = false
 	get_tree().paused = false
 
@@ -246,7 +250,7 @@ func _rebuild_extract() -> void:
 	box.add_child(status)
 	focus_btn = ThemeS.btn("Send All  (confirm)", func(): _confirm(func(): _do_send_all(), "send_all"))
 	box.add_child(focus_btn)
-	for it in App.prog.extractable():
+	for it in App.prog.extractable(extract_role):
 		var cap := str(it.get("name", "?"))
 		if it.has("n"):
 			cap += "  x%d" % int(it.n)
@@ -305,7 +309,7 @@ func _buy_snack() -> void:
 		_st("Not enough gold.")
 		return
 	App.gold -= int(App.bal.snack_cost)
-	App.shop_buys += 1
+	_shop_spend(int(App.bal.snack_cost))
 	var p := get_tree().get_first_node_in_group("player")
 	if p and p.has_method("heal"):
 		p.heal(App.bal.snack_heal)
@@ -328,7 +332,7 @@ func _buy_art(id: String, nm: String) -> void:
 	App.gold -= int(App.bal.art_cost)
 	shop_spot.bought = int(shop_spot.bought) + 1
 	App.prog.add_item(App.prog.make_artifact(id))
-	App.shop_buys += 1
+	_shop_spend(int(App.bal.art_cost))
 	var keep: Array = []
 	var stripped := false
 	for a in shop_spot.stock:
@@ -341,6 +345,14 @@ func _buy_art(id: String, nm: String) -> void:
 	App.toast("Artifact: " + nm)
 	_rebuild_shop()
 	_show()
+
+
+func _shop_spend(n: int) -> void:
+	App.shop_buys += 1
+	App.shop_spent += n
+	if App.tel:
+		App.tel.shop_buys += 1
+		App.tel.shop_spent += n
 
 
 func _pawn(uid: int) -> void:
@@ -369,8 +381,8 @@ func _rebuild_anvil() -> void:
 	_clear()
 	box.add_child(ThemeS.lab("Anvil", 32, Color(0.95, 0.82, 0.5)))
 	var smith := App.prog.skill_lv("smith")
-	box.add_child(ThemeS.lab("Analyze → first forge (gold + ore + root) → cheaper re-forges. Smithing %d." % smith, 18, Color(0.82, 0.76, 0.66)))
-	box.add_child(ThemeS.lab("Bank %dg  %d ore   Root %d   Carried %dg %d ore" % [App.bank_gold, App.bank_ore, App.prog.root, App.gold, App.ore], 18, Color(0.8, 0.85, 0.7)))
+	box.add_child(ThemeS.lab("Analyze → first forge (gold + ore + root) → cheaper re-forges. Smithing %d shortens the wait." % smith, 18, Color(0.82, 0.76, 0.66)))
+	box.add_child(ThemeS.lab("Bank %dg  %d ore  %d root   Carried %dg %d ore %d root" % [App.bank_gold, App.bank_ore, App.bank_root, App.gold, App.ore, App.prog.root], 18, Color(0.8, 0.85, 0.7)))
 	status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
 	box.add_child(status)
 	if anvil_item.is_empty():
@@ -419,7 +431,8 @@ func _anvil_analyze() -> void:
 	var smith := App.prog.skill_lv("smith")
 	box.add_child(ThemeS.lab("Analysis — %s" % str(it.name), 26, Color(0.95, 0.86, 0.55)))
 	box.add_child(ThemeS.lab("Slot %s   Rarity %s   +%d dmg   +%d def   +%d HP" % [slot, str(it.get("rarity", "white")), int(it.get("dmg", 0)), int(it.get("def", 0)), int(it.get("hp", 0))], 18, Color(0.88, 0.82, 0.7)))
-	box.add_child(ThemeS.lab("Smithing %d: cheaper materials, better output. Holds %d/3." % [smith, h.size()], 18, Color(0.8, 0.85, 0.7)))
+	var wait := App.prog.forge_duration()
+	box.add_child(ThemeS.lab("Smithing %d: cheaper, faster, better. Holds %d/3. Forge time %.1fs." % [smith, h.size(), wait], 18, Color(0.8, 0.85, 0.7)))
 	if first:
 		status.text = "First forge: %dg  %d ore  %d root. A again to confirm." % [cost.gold, cost.ore, cost.root]
 		focus_btn = ThemeS.btn("First Forge  (confirm)", func(): _confirm(func(): _do_forge(it), "forge"))
@@ -431,12 +444,19 @@ func _anvil_analyze() -> void:
 
 
 func _do_forge(it: Dictionary) -> void:
-	var msg := App.prog.forge_item(it)
-	_st(msg)
-	if msg.begins_with("Forged"):
-		anvil_item = {}
-	_rebuild_anvil()
-	_show()
+	if forge_t > 0.0:
+		return
+	var slot := str(it.get("slot", ""))
+	var h: Array = App.prog.holds[slot] if App.prog.holds.has(slot) else []
+	var first := h.size() < 3 and not bool(it.get("hold", false))
+	var cost: Dictionary = App.prog.forge_cost(first)
+	if not App.prog.can_pay(cost):
+		_st("Need %dg, %d ore, %d root." % [cost.gold, cost.ore, cost.root])
+		App.toast("Not enough gold / ore / root.")
+		return
+	forge_it = it.duplicate(true)
+	forge_t = App.prog.forge_duration()
+	_st("Forging… %.1fs. Smithing shortens this. B cancels." % forge_t)
 
 
 func _rebuild_loadout() -> void:
@@ -545,18 +565,19 @@ func _rebuild_vendor() -> void:
 	box.add_child(ThemeS.lab("Bank %dg  %d ore   ·   potions and rations for the next drop." % [App.bank_gold, App.bank_ore], 18, Color(0.82, 0.76, 0.66)))
 	status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
 	box.add_child(status)
-	focus_btn = ThemeS.btn("Buy potion  (15g)", func(): _vend_potion())
+	focus_btn = ThemeS.btn("Buy potion  (%dg)" % int(App.bal.vendor_potion_cost), func(): _vend_potion())
 	box.add_child(focus_btn)
-	box.add_child(ThemeS.btn("Buy ration  (8g, food slot)", func(): _vend_food()))
-	box.add_child(ThemeS.btn("Sell 1 ore  (3g)", func(): _vend_sell()))
+	box.add_child(ThemeS.btn("Buy ration  (%dg, food slot)" % int(App.bal.vendor_food_cost), func(): _vend_food()))
+	box.add_child(ThemeS.btn("Sell 1 ore  (%dg)" % int(App.bal.vendor_ore_gold), func(): _vend_sell()))
 	box.add_child(ThemeS.btn("Leave  (B)", func(): close_ui()))
 
 
 func _vend_potion() -> void:
-	if App.bank_gold < 15:
+	var cost := int(App.bal.vendor_potion_cost)
+	if App.bank_gold < cost:
 		_st("Not enough banked gold.")
 		return
-	App.bank_gold -= 15
+	App.bank_gold -= cost
 	var pot: Dictionary = App.prog.slots.get("potion", {})
 	if pot.is_empty():
 		App.prog.slots["potion"] = App.prog.make_potion(1)
@@ -568,7 +589,8 @@ func _vend_potion() -> void:
 
 
 func _vend_food() -> void:
-	if App.bank_gold < 8:
+	var cost := int(App.bal.vendor_food_cost)
+	if App.bank_gold < cost:
 		_st("Not enough banked gold.")
 		return
 	var fd: Dictionary = App.prog.slots.get("food", {})
@@ -576,7 +598,7 @@ func _vend_food() -> void:
 	if not fd.is_empty() and int(fd.get("stack", 0)) >= cap:
 		_st("Food slot is full (%d)." % cap)
 		return
-	App.bank_gold -= 8
+	App.bank_gold -= cost
 	if fd.is_empty():
 		App.prog.slots["food"] = App.prog.make_food("ration", 1)
 	else:
@@ -591,7 +613,7 @@ func _vend_sell() -> void:
 		_st("No ore in the bank.")
 		return
 	App.bank_ore -= 1
-	App.bank_gold += 3
+	App.bank_gold += int(App.bal.vendor_ore_gold)
 	_st("Sold 1 ore.")
 	App.save_now()
 
@@ -637,6 +659,27 @@ func _confirm(fn: Callable, id := "anon") -> void:
 
 func _extract_all() -> void:
 	App.prog.extract_all("patty")
+
+
+func _process(delta: float) -> void:
+	if forge_t <= 0.0:
+		return
+	forge_t = maxf(0.0, forge_t - delta)
+	if status:
+		status.text = "Forging… %.1fs. B cancels." % forge_t
+	if forge_t > 0.0:
+		return
+	var it: Dictionary = forge_it
+	forge_it = {}
+	if it.is_empty():
+		return
+	var msg := App.prog.forge_item(it)
+	_st(msg)
+	if msg.begins_with("Forged"):
+		anvil_item = {}
+	if open and mode == "anvil":
+		_rebuild_anvil()
+		_show()
 
 
 func _unhandled_input(event: InputEvent) -> void:

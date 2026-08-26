@@ -31,6 +31,7 @@ var aim_line
 var iframe := 0.0
 var dash_t := 0.0
 var dash_cd := 0.0
+var dash_dir := Vector2.DOWN
 var trail_acc := 0.0
 var atk_state := ATK_NONE
 var atk_t := 0.0
@@ -211,7 +212,7 @@ func _physics_process(delta: float) -> void:
 	if atk_state == ATK_WIND or atk_state == ATK_ACT or atk_state == ATK_REC:
 		spd *= 0.2
 	if dash_t > 0.0:
-		var d := aim_dir if aim_dir.length_squared() > 0.0001 else Vector2.DOWN
+		var d := dash_dir if dash_dir.length_squared() > 0.0001 else (aim_dir if aim_dir.length_squared() > 0.0001 else Vector2.DOWN)
 		velocity = Vector3(d.x, 0.0, d.y) * App.bal.move_speed * App.bal.dash_speed_mult
 		_trail(delta)
 	else:
@@ -261,6 +262,7 @@ func take_hit(raw: float, from_dir: Vector2, crit: bool, src := "") -> void:
 	stop_gather()
 	if App.tel:
 		App.tel.note_damage_taken(dmg, hp, max_hp)
+	App.prog.add_run_xp("def", 0.4)
 	if hp <= 0.0:
 		_player_die()
 
@@ -274,6 +276,8 @@ func _player_die() -> void:
 
 
 func heal(amount: float) -> void:
+	if amount > 0.0 and hp < max_hp:
+		App.prog.add_run_xp("hp", 0.15)
 	hp = minf(max_hp, hp + amount)
 
 
@@ -506,7 +510,7 @@ func _update_aim(move: Vector2) -> void:
 		if mouse_aim.length() > 0.2:
 			aim_dir = mouse_aim
 			return
-	if move.length() > 0.2:
+	if _ai_on() and move.length() > 0.2:
 		aim_dir = move.normalized()
 
 
@@ -518,7 +522,9 @@ func _try_dash(move: Vector2) -> void:
 	if dash_cd > 0.0:
 		return
 	if move.length() > 0.2:
-		aim_dir = move.normalized()
+		dash_dir = move.normalized()
+	elif aim_dir.length() > 0.2:
+		dash_dir = aim_dir
 	dash_t = App.bal.dash_duration
 	dash_cd = App.bal.dash_cooldown
 	iframe = App.bal.dash_duration
@@ -541,7 +547,7 @@ func _try_special() -> void:
 	spec_point = _special_point()
 	_draw_special_tele(false)
 	if App.tel:
-		App.tel.note_special(true)
+		App.tel.note_special(false)
 
 
 func _try_basic() -> void:
@@ -724,6 +730,11 @@ func _damage_enemy(e: Node, dmg: float, stagger: bool, xp := "auto") -> void:
 		e.take_hit(dmg, aim_dir, crit)
 	if App.tel:
 		App.tel.note_damage_dealt(dmg if not crit else dmg * App.bal.crit_mult, crit)
+		if atk_state == ATK_ACT or atk_state == ATK_WIND:
+			App.tel.spec_hit += 1
+			var key := App.weapon
+			if App.tel.wpn.has(key):
+				App.tel.wpn[key].spec_hit = int(App.tel.wpn[key].spec_hit) + 1
 	if stagger and e.has_method("apply_stagger"):
 		e.apply_stagger(App.bal.slam_stagger)
 
@@ -942,8 +953,7 @@ func _apply_facing(delta: float) -> void:
 			atk_i = idx
 	var planar := Vector2(velocity.x, velocity.z)
 	var moving := planar.length() > T.MOVE_EPS and dash_t <= 0.0 and atk_state == ATK_NONE
-	var armed := not equip.is_empty()
-	if tex == null and moving and not armed and walk.has(key):
+	if tex == null and moving and walk.has(key):
 		var frames: Array = walk[key]
 		walk_t += delta
 		tex = frames[int(walk_t * T.WALK_FPS) % frames.size()]

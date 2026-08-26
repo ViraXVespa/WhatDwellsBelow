@@ -148,8 +148,15 @@ var potion_heal := 100.0
 var forge_gold := 18.0
 var forge_ore := 6.0
 var forge_root := 2.0
+var forge_time := 2.0
 var xp_keep := 0.2
 var restock_gold := 8.0
+var restock_potion := 2.0
+var restock_food := 3.0
+var potion_cooldown := 1.2
+var vendor_potion_cost := 15.0
+var vendor_food_cost := 8.0
+var vendor_ore_gold := 3.0
 var bitter_loop_offset := 15.52
 var music_fade := 0.35
 var playtest_scale := 6.0
@@ -293,8 +300,15 @@ func schema() -> Array:
 		["forge_gold", 1.0, 80.0, 1.0],
 		["forge_ore", 1.0, 20.0, 1.0],
 		["forge_root", 0.0, 10.0, 1.0],
+		["forge_time", 0.2, 8.0, 0.1],
 		["xp_keep", 0.05, 0.5, 0.01],
 		["restock_gold", 0.0, 40.0, 1.0],
+		["restock_potion", 0.0, 10.0, 1.0],
+		["restock_food", 0.0, 20.0, 1.0],
+		["potion_cooldown", 0.0, 8.0, 0.1],
+		["vendor_potion_cost", 1.0, 80.0, 1.0],
+		["vendor_food_cost", 1.0, 80.0, 1.0],
+		["vendor_ore_gold", 1.0, 40.0, 1.0],
 		["bitter_loop_offset", 0.0, 120.0, 0.01],
 		["music_fade", 0.0, 3.0, 0.05],
 		["playtest_scale", 1.0, 12.0, 0.5],
