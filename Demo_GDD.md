@@ -1,5 +1,4 @@
-**Grok Build Contract (Read First)**  
-**Version**: 1.8 – Archive-then-Clean-Rewrite (Telemetry Cap + Animation Browser + Review Pass)  
+**Version**: 1.9 – Archive-then-Clean-Rewrite (Review Pass + Restored Archive Locks)  
 **Authority**: This document is the single source of truth.
 
 ### Agent Execution Protocol (Mandatory for Every Grok Build Instance)
@@ -124,11 +123,11 @@ A complete, production-ready vertical slice that can ship as a free demo. Every 
 **Primary Loop**  
 1. Placeholdia hub  
 2. Loadout selection at the Floor Crystal (including character type, starting weapon, and tool type)  
-3. Enter dungeon at chosen floor  
+3. Confirm enter → consciousness-transfer VFX → dungeon at chosen floor  
 4. Explore, fight, gather, interact  
-5. Extract via clerk or die / voluntarily Dispel  
+5. Extract via clerk or die / voluntarily “Dispel”  
 6. Recap screen  
-7. Return to hub with permanent gains (or losses)
+7. Return to Placeholdia with wake-up sequence and permanent gains (or losses)
 
 ---
 
@@ -147,7 +146,10 @@ A complete, production-ready vertical slice that can ship as a free demo. Every 
 - Male and female player characters (selectable on first load, switchable later from pause menu) with full animation parity, each with its own complete voice-over set, and exactly 8 directional animations  
 - Ghost shop, shrine, campfire, breakables, puzzle elements, stairs, floor crystal  
 - Named monsters, enemy bases, and expanded enemy variety (≥12 normal types, ≥5 types per floor)  
+- Idle / pressure enemy spawns outside safe rooms  
 - Quest system (3 random choices, 1 active at a time)  
+- Distinct food (heal-over-time) and potion (instant heal) rules  
+- Consciousness-transfer VFX on dungeon enter and wake-up sequence on return to Placeholdia  
 - Full HUD, pause menu (with System tab containing aim-line controls), all interaction UIs, recap screen — all dungeon-themed; no default / unskinned player-facing UI  
 - Secret debug / balance menu (shoulder-button sequence) containing all tunable values, profile Save/Load, the Automated Playtest / AI Player system, and the Animation Browser  
 - Save / load with backup, presentation switcher + Archives (including `full_3d_pass`), 60 FPS minimum  
@@ -193,11 +195,15 @@ No mandatory intro cutscene or long exposition is required. The player learns th
 - Receptionist and clerk lines (kept minimal).  
 - Recap screen titles, subtitles, and special case lines (including verge and empty-run variants).  
 - The mechanical consequences of death versus successful extraction.  
+- Consciousness-transfer VFX when leaving Placeholdia and a wake-up sequence when returning.
 
 **Specific Locked Flavor**  
-- Empty floor-1 death/dispel recap MUST include the line: “They lived just to die. What a waste.”  
+- Empty floor-1 death/“Dispel” recap MUST include the line: “They lived just to die. What a waste.”  
 - Credit splash MUST show the word “Proudly” crossed out and the word “Shamelessly” written above it in graffiti style so the phrase reads as vandalized: “Shamelessly Vibecoded with Grok.”  
-- The dungeon music track is titled “Bitter” (YouTube and Spotify links provided by the designer). No other track requires named external linking at this time.
+- The dungeon music track is titled “Bitter”. Authoritative links:  
+  - YouTube: https://youtu.be/b3Cq_-ymFVU?si=YHZRCFmxf88BXmHW  
+  - Spotify: https://open.spotify.com/track/5ronKOeupSInit9Y21z80f?si=WB-zeKUGQO6V31dPEITdRA&utm_source=copy-link&context=spotify%3Atrack%3A5ronKOeupSInit9Y21z80f  
+- Player-facing UI, pause menu, recap, and prompts MUST write the voluntary exit action as **“Dispel”** (quotation marks included) for the locked humorous tone. Internal code identifiers MAY omit the quotes.
 
 ---
 
@@ -270,7 +276,7 @@ Prefer the Compatibility renderer for the final shippable build if it does not c
 **Facing & Animation System**  
 - 8-directional facing derived from aim direction using smooth radial detection (not movement direction). Directions exactly match the Character Bible layout: Up, Down, Left, Right, Up-Left, Up-Right, Down-Left, Down-Right.  
 - Character art is generated and assembled according to the mandatory pipeline in **Section 19**.  
-- Required player states at minimum: idle, walk, attack (per weapon), special (per weapon), gathering (mining/woodcutting), death, dispel.  
+- Required player states at minimum: idle, walk, attack (per weapon), special (per weapon), gathering (mining/woodcutting), death, “Dispel”.  
 - Each weapon requires its own paper-doll equip appearance and associated animations.  
 - Male and female player characters MUST maintain full animation parity.  
 - All directional variants of the same animation state MUST contain exactly the same number of frames.
@@ -348,7 +354,7 @@ These eleven are mandatory.
 
 **XP Gain & Permanent Progression**  
 - During a run the player accumulates “run XP” in each skill.  
-- On death or voluntary Dispel, only a small fragment of that run XP is kept permanently.  
+- On death or voluntary “Dispel”, only a small fragment of that run XP is kept permanently.  
 - The recap screen MUST contain a clear visual sequence that shows the run XP values draining down to the permanent fragment amounts, after which the new permanent XP totals and resulting levels are displayed.
 
 **Weapon-Specific XP Rules**  
@@ -398,18 +404,26 @@ This is a required feel target. Concrete proxy: after one successful run the per
 
 Food discovered inside the dungeon MUST be equipped to be used with the quick button, but may also be consumed directly from the inventory UI. Potion and food have distinct visual and audio feedback when used.
 
+**Food vs Potion (locked distinction)**  
+- **Potion:** Instant heal of Z HP (Z tunable; may be a full heal if Z is set to max HP). Effect applies immediately on use.  
+- **Food:** Heal-over-time. Restores a total of X HP smoothly over Y seconds (X and Y tunable).  
+- While a food effect is active, a HUD indicator MUST show that food is ticking.  
+- Using the same food type again while its effect is active does NOT stack and does NOT consume another item until the current effect ends.  
+- Using a different food type while an effect is active cancels the current effect, consumes the new item, and starts the new food’s effect.  
+- Potion and food MUST remain audibly and visually distinct.
+
 **Gear Rules**  
 - White, green, and blue rarity appear in the demo.  
 - Blue items have improved stats over green items and are obtainable only from bosses (Floor Guardians and Gate Master).  
 - Stats take effect immediately.  
 - Weapons require paper-doll visual layers and associated animations. Armor and other gear may remain stats-only.  
 - The player may maintain up to three forged “holds” per equipment slot.  
-- Forged holds always return to Placeholdia on death or Dispel, even if the item was dropped on the floor.  
-- All unextracted resources and any non-forged items still in the bag are lost on death or Dispel.
+- Forged holds always return to Placeholdia on death or “Dispel”, even if the item was dropped on the floor.  
+- All unextracted resources and any non-forged items still in the bag are lost on death or “Dispel”.
 
 **Artifacts & Collections**  
 - Artifacts are obtained from the Ghost Shop, boss chests, and (optionally) dead-end or trap-room chests.  
-- Artifacts cannot be extracted via clerks; they function as run-only items and are lost on death or Dispel.  
+- Artifacts cannot be extracted via clerks; they function as run-only items and are lost on death or “Dispel”.  
 - Artifacts with similar effects are grouped into collections (sets). The demo contains exactly eight distinct sets.  
 - Typical set size is 2–3 artifacts; one or two sets may contain 4–5 artifacts.  
 - Collecting multiple artifacts from the same set grants additional set bonuses. Bonuses begin at 2 pieces and may require higher thresholds depending on set size.  
@@ -451,7 +465,12 @@ All buildings MUST have actual depth and realistic 3D dimensions (not flat 2D sp
 - That UI includes: select holds per slot (fallback to starter Great Axe + pickaxe or hatchet + potion if no holds exist), choose starting weapon, choose tool type (pickaxe or hatchet — locked for the entire run), choose starting floor, confirm enter.  
 - Floor list allows travel only to deeper floors the player has previously reached. It never permits travel backward.  
 - Interaction and confirmation MUST be clear and cancellable (no single-press accidental enter).  
+- On confirmed enter, play a **consciousness-transfer VFX** before the dungeon loads. This is a short presentation beat, not a story cutscene.  
 - Visual presentation MUST be clean, TV-readable, dungeon-themed, and consistent with the other hub / dungeon UIs.
+
+**Return / Wake-Up**  
+- After recap from death or “Dispel”, arriving back in Placeholdia MUST play a short **wake-up sequence**.  
+- This is a presentation beat (animation + VFX/SFX), not a mandatory dialogue tree or cutscene.
 
 **Anvil**  
 - Full forge flow: analyze item → first forge (consumes gold + ore + root) → subsequent re-forges at reduced cost.  
@@ -516,7 +535,8 @@ Safe rooms (clerk, ghost shop, puzzle) MUST remain enemy-free.
 - Intended to be challenging unless the player is over-levelled for the current floor.
 
 **Safe Rooms**  
-- Clerk rooms, ghost shop rooms, and puzzle rooms are always enemy-free.
+- Clerk rooms, ghost shop rooms, and puzzle rooms are always enemy-free.  
+- Idle / pressure spawns MUST NOT occur inside safe rooms.
 
 **Boss / Guardian Rules**  
 - Each Floor Guardian and the Gate Master spawns behind a special boss door that the player can see and prepare in front of.  
@@ -569,6 +589,7 @@ Floor Guardians (floors 1–4) and the Gate Master (floor 5) MUST have high heal
 - All enemy attacks MUST have clear, readable wind-ups.  
 - Melee (Bruiser / Tank): visible wind-up pose → lunge. Direction locks at the start of the wind-up.  
 - Ranged: visible draw / charge pose → projectile release. Direction locks on draw.  
+- Mage / other non-melee styles: visible charge / cast pose → readable area or projectile. Direction or target locks at the start of the telegraph.  
 - All telegraphs respect line-of-sight.  
 
 **AI Behavior**  
@@ -578,6 +599,12 @@ Enemies MUST also drop pursuit if the distance to the player exceeds a tunable l
 Exact leash distance, hunt duration after lost LOS, and re-aggro rules are tunable via the secret debug menu.  
 Implement clean steering, separation, and stuck-handling appropriate for the orthographic Camera3D live path.  
 Flee event occurs an average of 2 times per floor on a full clear: after the group has taken sufficient damage, the fastest enemy in the encounter flashes a clear “!” overhead, receives a small but noticeable speed boost, and flees to spawn reinforcements. No other telegraph is required beyond the “!”.
+
+**Idle / pressure spawns**  
+If the player remains idle too long outside a safe room, or stops revealing new map area for a tunable duration, additional enemies MUST spawn around the player.  
+- MUST NOT spawn inside safe rooms (clerk, ghost shop, puzzle).  
+- Idle timer, no-reveal timer, spawn count, and spawn radius are tunable via the secret debug menu.  
+- Purpose: the dungeon stays reactive if the player camps or stalls exploration.
 
 **Death Presentation**  
 1. Play death animation.  
@@ -672,6 +699,7 @@ The HUD is a persistent horizontal strip that MUST remain visible at all times d
 | Current ore / wood | |
 | Current floor number | e.g. “F3” |
 | Shrine buff icon + remaining time | Appears only while active |
+| Food heal-over-time icon + remaining time | Appears only while a food effect is active |
 | Boss / Floor Guardian / Gate Master HP bar | Appears only while the boss is alive and in range / engaged |
 
 Bag-fullness indicator is explicitly removed and MUST NOT appear.  
@@ -694,7 +722,7 @@ Exactly three tabs, navigable with LB/RB or equivalent:
    - Character type switch (male / female)  
    - Patreon link  
    - “Delete Save Data” with confirmation  
-   - Dispel Avatar button with strong confirmation prompt  
+   - “Dispel” Avatar button with strong confirmation prompt  
 
 The full debug / balance menu is **no longer** present in the Pause Menu.
 
@@ -725,7 +753,7 @@ The system MUST be able to:
 Implement the following. MAY add a small number of closely related fields if a Medium-bar recommendation cannot be computed without them. MUST NOT add heatmaps, session replay, input recordings, per-frame combat traces, per-projectile logs, exploration pathing maps, quest-step traces, artifact-set timelines, or any other open-ended analytics product.
 
 *A. Run outcome (one row per run)*  
-- End condition: extraction / death / Dispel / interrupted playtest  
+- End condition: extraction / death / “Dispel” / interrupted playtest  
 - Run duration  
 - Deepest floor reached  
 - Cycle index (which 5-floor loop)  
@@ -735,7 +763,7 @@ Implement the following. MAY add a small number of closely related fields if a M
 *B. Success-criterion proxies*  
 - Time to first clerk interaction  
 - Time to first successful extraction (fresh-start save only)  
-- Deaths / Dispels before first extraction (fresh-start)  
+- Deaths / “Dispels” before first extraction (fresh-start)  
 - Recap XP-drain completed (bool)
 
 *C. Combat load*  
@@ -817,7 +845,7 @@ The Animation Browser is a full-screen page. It MUST be TV-readable and gamepad-
 **Animation list**  
 - Lists only animations available on the current model **for the current facing**.  
 - Idle / None lists only clips that belong to that bucket (idle and any other non-directional clips shipped for that model).  
-- A compass facing lists only clips that exist for that facing (walk, attack, special, gather, death, dispel, directional attacks, and any other shipped per-facing clips).  
+- A compass facing lists only clips that exist for that facing (walk, attack, special, gather, death, “Dispel”, directional attacks, and any other shipped per-facing clips).  
 - If the newly selected facing or model does not have the previously selected animation, select the first available animation for that facing.  
 - If a facing has no clips, show an empty list and a clear empty state in the preview; do not keep a clip from the old facing.  
 - The list MUST refresh when the selected model or facing changes.  
@@ -873,13 +901,14 @@ Exact compare-two, frame-scrubber, and bible-overlay extras MAY be invented at i
 - Active quest status visible where appropriate.
 
 **Recap Screen (mandatory sequence)**  
-Triggered on every death or Dispel.  
+Triggered on every death or “Dispel”.  
 1. Display run statistics.  
 2. Play a clear visual sequence that shows each skill’s run XP value draining down to the permanent fragment amount.  
 3. After the drain completes, display the new permanent XP totals and the resulting levels.  
 4. Show gold and items successfully extracted (if any).  
 5. Title / subtitle variants according to performance, including verge states.  
-6. Special case: death or Dispel on floor 1 with an empty bag MUST include the exact flavor line “They lived just to die. What a waste.”
+6. Special case: death or “Dispel” on floor 1 with an empty bag MUST include the exact flavor line “They lived just to die. What a waste.”  
+7. After the player dismisses recap, play the Placeholdia wake-up sequence.
 
 **Minimap & Large Map**  
 - Small minimap on HUD shows only visited tiles + important markers (stairs, crystal, clerks, shop, player).  
@@ -895,7 +924,10 @@ Triggered on every death or Dispel.
 
 ### 14. Audio, Visual & Art Constraints
 **Music**  
-- The primary dungeon music track is the piece titled “Bitter”. The designer has supplied the authoritative YouTube and Spotify links; these MUST be referenced in the project for attribution and replacement.  
+- The primary dungeon music track is the piece titled “Bitter”.  
+- Authoritative links MUST be referenced in the project for attribution and replacement:  
+  - YouTube: https://youtu.be/b3Cq_-ymFVU?si=YHZRCFmxf88BXmHW  
+  - Spotify: https://open.spotify.com/track/5ronKOeupSInit9Y21z80f?si=WB-zeKUGQO6V31dPEITdRA&utm_source=copy-link&context=spotify%3Atrack%3A5ronKOeupSInit9Y21z80f  
 - First playthrough starts at the beginning of the track, including the full intro.  
 - The loop point is the **1st beat of the 10th measure**. After that point is reached, subsequent loops MUST start there and MUST NOT replay anything before it.  
 - The equivalent timestamp of that beat MUST be measured from the supplied master and exposed in the secret debug menu as the loop offset. If the measured time and the score disagree, the score rule (1st beat of measure 10) wins until the User locks a timestamp.  
@@ -911,7 +943,7 @@ See Appendix E for the complete list. All volumes are controlled by the SFX slid
 - Nearest-neighbor filtering only (no linear filtering on sprites).  
 - All characters use Y-billboard so they remain upright under the orthographic camera.  
 - Character art (player and enemies) is generated and assembled according to the mandatory pipeline defined in **Section 19**.  
-- Required player states at minimum: idle, walk, attack (per weapon), special (per weapon), gathering (mining/woodcutting), death, dispel.  
+- Required player states at minimum: idle, walk, attack (per weapon), special (per weapon), gathering (mining/woodcutting), death, “Dispel”.  
 - Each weapon requires its own paper-doll equip appearance and associated animations.  
 - Male and female player characters MUST maintain full animation parity.  
 - Male and female characters each require a complete, dedicated voice-over set of equal scope.  
@@ -919,7 +951,8 @@ See Appendix E for the complete list. All volumes are controlled by the SFX slid
 - All directional variants of the same animation state MUST contain exactly the same number of frames.  
 - Wall height, tile size (1 unit = 64 px), and depth-sorting SHOULD produce correct layering. Arbitrary popping MUST be avoided wherever possible, but it is not a hard failure if a small amount remains after best-effort sorting.  
 - Buildings in Placeholdia MUST have actual depth and realistic dimensions.  
-- Lighting, fog color/density, and void plane MUST create a clear visual contrast between the warmer Placeholdia hub and the colder, darker dungeon floors.
+- Lighting, fog color/density, and void plane MUST create a clear visual contrast between the warmer Placeholdia hub and the colder, darker dungeon floors.  
+- Consciousness-transfer VFX on dungeon enter and wake-up VFX on return to Placeholdia are required presentation beats.
 
 **Credit Splash → Title Sequence**  
 - Existing timing may be used as a baseline.  
@@ -981,6 +1014,7 @@ Compatibility renderer is preferred for the shippable build if it does not break
 ### 16. Balancing, Feel & Polish Targets
 **Time Targets**  
 - A brand-new player SHOULD be able to achieve their first successful extraction in 5–10 minutes.  
+- A competent player SHOULD be able to reach and clear floor 6 in roughly 5–10 hours of total play. This is a feel target, not a hard cap.  
 - Skilled play SHOULD support significantly longer continuous runs.
 
 **Death & Learning Curve**  
@@ -1016,7 +1050,7 @@ The Automated Playtest / AI Player system (secret debug menu) exists to generate
 ---
 
 ### 17. Edge Cases & Failure Modes
-**Dispel or Death on Floor 1 with Empty Bag**  
+**“Dispel” or Death on Floor 1 with Empty Bag**  
 - Full recap screen is still shown.  
 - The exact flavor line “They lived just to die. What a waste.” MUST appear.  
 - All normal XP-drain and permanent-fragment logic still executes (even if values are zero).
@@ -1026,9 +1060,9 @@ The Automated Playtest / AI Player system (secret debug menu) exists to generate
 - A clear toast is displayed.  
 - The item remains on the ground and can be picked up later if space is made.
 
-**Death or Dispel During Gathering / Dash / Special**  
+**Death or “Dispel” During Gathering / Dash / Special**  
 - All actions are immediately interrupted.  
-- The appropriate death or Dispel animation sequence begins with no residual movement, gathering hits, or i-frames carrying over.
+- The appropriate death or “Dispel” animation sequence begins with no residual movement, gathering hits, or i-frames carrying over.
 
 **Multiple Clerks / Shops**  
 - Hard limit: maximum one Ghost Shop per floor.  
@@ -1053,7 +1087,7 @@ The Automated Playtest / AI Player system (secret debug menu) exists to generate
 
 **Artifact Sets**  
 - Set bonuses only count artifacts currently carried or equipped in the active run.  
-- Artifacts are never extractable and are lost on death or Dispel.
+- Artifacts are never extractable and are lost on death or “Dispel”.
 
 **Secret Debug Sequence**  
 - The shoulder-button sequence MUST be performed exactly as specified.  
@@ -1066,8 +1100,9 @@ The Automated Playtest / AI Player system (secret debug menu) exists to generate
 
 **Other Failure Modes**  
 - Attempting to use a potion or food when none is equipped/available produces a clear toast and no effect.  
+- Attempting to use food of the same type while its heal-over-time is still running does not consume another item.  
 - Attempting to forge without sufficient resources produces a clear failure message and no consumption of partial materials.  
-- All confirmation prompts (Dispel, Delete Save, major extractions, character switch, etc.) MUST be cancellable and MUST NOT be triggerable by accident with a single button press.
+- All confirmation prompts (“Dispel”, Delete Save, major extractions, character switch, etc.) MUST be cancellable and MUST NOT be triggerable by accident with a single button press.
 
 ---
 
@@ -1086,7 +1121,7 @@ A fresh Grok Build instance MUST:
 - Treat every numeric value as tunable and expose it in the secret debug menu.  
 - Prefer simple, readable, production-quality implementations over clever legacy workarounds.  
 - All player and enemy character art MUST follow the mandatory pipeline in Section 19.  
-- Male and female player characters with full animation parity and complete peer voice-over sets, the three-weapon system, hit-based mining and woodcutting, eleven skills, blue rarity (boss-only), named monsters, enemy bases, quest system, artifact collections/sets, aim-line indicator, Controls Billboard, Floor Crystal loadout, and gamepad-first UI with initial focus are mandatory.  
+- Male and female player characters with full animation parity and complete peer voice-over sets, the three-weapon system, hit-based mining and woodcutting, eleven skills, blue rarity (boss-only), named monsters, enemy bases, quest system, artifact collections/sets, aim-line indicator, Controls Billboard, Floor Crystal loadout, idle/pressure spawns, food vs potion distinction, enter/wake VFX, and gamepad-first UI with initial focus are mandatory.  
 - The secret debug menu (including profile Save/Load, Automated Playtest / AI Player system) MUST ship at production quality but remain hidden behind the documented shoulder-button sequence.  
 - Automated Playtest hooks MUST live in the same systems the player uses. Telemetry is limited to the Section 13 cap.  
 - Animation Browser controls belong in the first secret-debug implementation; the full viewer is required at Demo-Complete, not in early phases.  
@@ -1109,27 +1144,27 @@ Dungeon generation + boss doors + locked stairs + Floor Guardians / Gate Master 
 *Exit criteria*: Repeating 5-floor loop generates, bosses spawn behind doors, stairs lock/unlock correctly. Report to User.
 
 **Phase 4 – Enemies**  
-≥12 types, variety, named monsters, flee event, telegraphs, AI including leash / drop-pursuit.  
-*Exit criteria*: At least 5 types per floor, named monsters appear, flee event triggers, all telegraphs readable, enemies drop pursuit at leash range. Report to User.
+≥12 types, variety, named monsters, flee event, telegraphs, AI including leash / drop-pursuit and idle / pressure spawns.  
+*Exit criteria*: At least 5 types per floor, named monsters appear, flee event triggers, all telegraphs readable, enemies drop pursuit at leash range, idle/pressure spawns function outside safe rooms. Report to User.
 
 **Phase 5 – Gathering & Interactables**  
 Hit-based mining and woodcutting, breakables, and all interactables (including expanded Artifact sources).  
 *Exit criteria*: Nodes function with correct hit timing and rewards; all listed interactables present and usable. Report to User.
 
 **Phase 6 – Progression Systems**  
-Inventory, equipment (including tool type lock), forged holds, extraction/clerks, anvil, Floor Crystal loadout, quest system, artifact collections/sets (exactly eight).  
-*Exit criteria*: Full inventory/extraction/forge/quest/artifact loop works; loadout opens from the Floor Crystal; eight sets with progressive bonuses. Report to User.
+Inventory, equipment (including tool type lock), food vs potion rules, forged holds, extraction/clerks, anvil, Floor Crystal loadout, quest system, artifact collections/sets (exactly eight).  
+*Exit criteria*: Full inventory/extraction/forge/quest/artifact loop works; loadout opens from the Floor Crystal; eight sets with progressive bonuses; food HoT and potion instant heal behave as specified. Report to User.
 
 **Phase 7 – UI & Debug**  
-Full HUD, pause menu (three tabs + character switch + aim-line controls), secret debug menu (profiles + Automated Playtest Medium bar + Animation Browser *entry*), recap screen with XP drain sequence. Player-facing UI uses dungeon theming.  
+Full HUD (including food HoT indicator), pause menu (three tabs + character switch + aim-line controls + “Dispel” Avatar), secret debug menu (profiles + Automated Playtest Medium bar + Animation Browser *entry*), recap screen with XP drain sequence. Player-facing UI uses dungeon theming.  
 *Exit criteria*: All UI elements present, gamepad-first with initial focus, no unskinned player-facing UI, secret menu accessible only via sequence, Medium-bar Automated Playtest functional using the Section 13 telemetry cap, Animation Browser control present and focusable (stub allowed). Report to User.
 
 **Phase 8 – Persistence & Hub**  
-Save / load with backup + isolated save paths for archives and for the two autoplay saves. Placeholdia hub layout (buildings with real depth) including Controls Billboard and Floor Crystal loadout.  
-*Exit criteria*: Save/load + backup works; hub complete with all listed interactables and depth; Archives switcher functional including `full_3d_pass`. Report to User.
+Save / load with backup + isolated save paths for archives and for the two autoplay saves. Placeholdia hub layout (buildings with real depth) including Controls Billboard, Floor Crystal loadout, consciousness-transfer enter VFX, and wake-up return sequence.  
+*Exit criteria*: Save/load + backup works; hub complete with all listed interactables and depth; enter/wake presentation beats play; Archives switcher functional including `full_3d_pass`. Report to User.
 
 **Phase 9 – Final Polish & Verification**  
-Final audio pass (including Bitter loop rule), placeholder replacement, no default UI on the playable path, Archives browser verification, full Animation Browser viewer, full Demo-Complete Checklist self-audit, 60 FPS under load, Success Criterion simulation.  
+Final audio pass (including Bitter loop rule and linked masters), placeholder replacement, no default UI on the playable path, Archives browser verification, full Animation Browser viewer, full Demo-Complete Checklist self-audit, 60 FPS under load, Success Criterion simulation.  
 *Exit criteria*: Checklist fully satisfied including the complete Animation Browser; report final verification results to User and await confirmation before declaring complete.
 
 ---
@@ -1261,7 +1296,7 @@ Generate one full cardinal direction (Down + Left + Right + Up) completely befor
 
 #### 19.3 Required Player States
 Minimum required states (from Sections 5 and 14):  
-idle, walk, attack (per weapon), special (per weapon), gathering (mining/woodcutting), death, dispel.
+idle, walk, attack (per weapon), special (per weapon), gathering (mining/woodcutting), death, “Dispel”.
 
 Prioritize idle + walk first. Animation playback speeds remain tunable.  
 Full parity between male and female is required for every state and every weapon.  
@@ -1445,6 +1480,7 @@ Every value **MUST** be exposed in the debug menu and treated as non-final. Cons
 | Ghost shop chance              | ~33 %           | Always in safe room                                |
 | Named monster rate             | ~1 every 3 floors |                                                  |
 | Flee events per full clear     | Average 2       | With small speed boost on fleeing enemy            |
+| Idle / pressure spawn timer    | 20–30 s         | Outside safe rooms; also if no new tiles revealed  |
 
 ### Progression & Economy
 | Parameter                      | Suggested Start | Notes                                              |
@@ -1453,12 +1489,16 @@ Every value **MUST** be exposed in the debug menu and treated as non-final. Cons
 | Permanent XP keep rate on death| 15–25 %         | Must feel meaningful after a good run              |
 | Shrine damage buff             | +20 % / 45 s    |                                                    |
 | Campfire heal                  | 40 % max HP     |                                                    |
+| Food HoT total (X)             | 40 HP           | Delivered over Y seconds                           |
+| Food HoT duration (Y)          | 8 s             | Same food does not restack                         |
+| Potion instant heal (Z)        | 100 % max HP    | Instant; distinct from food                        |
 
 ### UI / Feel Targets
 | Parameter                      | Suggested Start | Notes                                              |
 |--------------------------------|-----------------|----------------------------------------------------|
 | Camera zoom range              | 1.0 – 1.75      | Persisted in save                                  |
 | Target first-extraction time   | 5–10 min        | New player on gamepad                              |
+| Target floor-6 clear time      | 5–10 hours      | Competent player; feel target                      |
 
 All other values (enemy stats, drop rates, forge costs, weapon-specific damage/ranges, quest rewards, leash range, Bitter loop offset timestamp, etc.) should be chosen to support the same feel targets and MUST also be exposed in the debug menu.
 
@@ -1557,7 +1597,9 @@ All eight full-body figures must have identical proportions and silhouette heigh
 | Adrenaline Rush start (warcry) | Separate male and female performances of equal scope |
 | Adrenaline Rush loop (woosh / crackle) | |
 | Critical hit | |
-| Potion use | |
-| Food use | |
+| Potion use | Instant heal; distinct from food |
+| Food use | Heal-over-time start; distinct from potion |
 | Deathrattle “hurk” | Separate male and female performances of equal scope |
-| Comedic thud (Dispel) | |
+| Comedic thud (“Dispel”) | |
+| Consciousness-transfer (enter dungeon) | Short presentation beat |
+| Wake-up (return to Placeholdia) | Short presentation beat |
