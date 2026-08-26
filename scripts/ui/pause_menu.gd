@@ -77,6 +77,7 @@ func close_ui() -> void:
 	App.ui_open = false
 	get_tree().paused = false
 	App.save_now()
+	App.wake_web_pad()
 
 
 func _rebuild() -> void:

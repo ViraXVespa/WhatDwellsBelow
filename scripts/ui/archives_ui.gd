@@ -78,6 +78,7 @@ func hide_browser() -> void:
 	if App.pause_menu == null or not bool(App.pause_menu.get("open")):
 		if get_tree().current_scene == null or str(get_tree().current_scene.scene_file_path).find("title") < 0:
 			App.ui_open = false
+		App.wake_web_pad()
 	if App.pause_menu and bool(App.pause_menu.get("open")) and App.pause_menu.has_method("_focus"):
 		App.pause_menu._focus()
 

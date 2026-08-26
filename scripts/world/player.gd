@@ -411,6 +411,15 @@ func _ai_or_vec(which: String) -> Vector2:
 			var v: Vector2 = raw
 			if which != "aim" or v.length() > 0.1:
 				return v
+	if OS.has_feature("web") and App.web_pad and App.web_pad.device_ok:
+		if which == "aim":
+			var a: Vector2 = App.web_pad.aim
+			if a.length() > 0.01:
+				return a
+		else:
+			var m: Vector2 = App.web_pad.move
+			if m.length() > 0.01:
+				return m
 	if which == "aim":
 		return Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
 	return Input.get_vector("move_left", "move_right", "move_up", "move_down")

@@ -58,6 +58,7 @@ func close_ui() -> void:
 	forge_it = {}
 	App.ui_open = false
 	get_tree().paused = false
+	App.wake_web_pad()
 
 
 func _show() -> void:

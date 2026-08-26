@@ -175,14 +175,16 @@ func go_title() -> void:
 		music.stop_music()
 	get_tree().paused = false
 	Engine.time_scale = 1.0
-	get_tree().call_deferred("change_scene_to_file", TITLE_SCENE)
+	get_tree().call_deferred("change_scene_to_file", TITLE_SCENE) -> void:
+		call_deferred("wake_web_pad")
 
 
 func go_foundation() -> void:
 	in_dungeon = true
 	get_tree().paused = false
 	Engine.time_scale = 1.0
-	get_tree().call_deferred("change_scene_to_file", FOUNDATION_SCENE)
+	get_tree().call_deferred("change_scene_to_file", FOUNDATION_SCENE) -> void:
+		call_deferred("wake_web_pad")
 
 
 func go_camp() -> void:
@@ -193,7 +195,8 @@ func go_camp() -> void:
 	Engine.time_scale = 1.0
 	if music and music.has_method("play_hub"):
 		music.play_hub()
-	get_tree().call_deferred("change_scene_to_file", CAMP_SCENE)
+	get_tree().call_deferred("change_scene_to_file", CAMP_SCENE) -> void:
+		call_deferred("wake_web_pad")
 
 
 func begin_run() -> void:
@@ -234,7 +237,8 @@ func go_dungeon() -> void:
 		Engine.time_scale = 1.0
 	if music and music.has_method("play_dungeon") and str(music.get("kind")) != "dungeon":
 		music.play_dungeon()
-	get_tree().call_deferred("change_scene_to_file", DUNGEON_SCENE)
+	get_tree().call_deferred("change_scene_to_file", DUNGEON_SCENE) -> void:
+		call_deferred("wake_web_pad")
 
 
 func next_floor() -> void:
@@ -650,6 +654,13 @@ func _register_input() -> void:
 	_joy("ui_right", JOY_BUTTON_DPAD_RIGHT)
 	_joy("ui_up", JOY_BUTTON_DPAD_UP)
 	_joy("ui_down", JOY_BUTTON_DPAD_DOWN)
+	if OS.has_feature("web"):
+		var rt := InputEventJoypadButton.new()
+		rt.button_index = 7
+		InputMap.action_add_event("attack", rt)
+		var lt := InputEventJoypadButton.new()
+		lt.button_index = 6
+		InputMap.action_add_event("special", lt)
 
 
 func _act(name: String, keys: Array, button: int = -1, axis: int = -1, axis_value: float = 0.0) -> void:
@@ -691,3 +702,16 @@ func _key(name: String, keycode: int) -> void:
 	var e := InputEventKey.new()
 	e.physical_keycode = keycode
 	InputMap.action_add_event(name, e)
+
+func wake_web_pad() -> void:
+	get_viewport().gui_release_focus()
+	if not OS.has_feature("web"):
+		return
+	JavaScriptBridge.eval("""
+		(function () {
+			var c = document.getElementById('canvas');
+			if (!c) return;
+			c.tabIndex = 0;
+			c.focus();
+		})();
+	""", true)
