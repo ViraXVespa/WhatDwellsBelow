@@ -120,7 +120,7 @@ func _ready() -> void:
 	if "--wdb-debug" in OS.get_cmdline_user_args():
 		call_deferred("_open_debug")
 
-func _on_scene_changed(_scene: Node) -> void:
+func _on_scene_changed() -> void:
 	call_deferred("wake_web_pad")
 
 func _open_debug() -> void:

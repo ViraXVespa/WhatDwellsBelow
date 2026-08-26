@@ -60,10 +60,11 @@ func _process(_delta: float) -> void:
 		hint.text = "Placeholdia  ·  bank %dg  %d ore  %d wood  ·  deepest F%d%s\nCrystal  ·  Anvil  ·  Vendor  ·  Guild  ·  Billboard  ·  Start pause" % [App.bank_gold, App.bank_ore, App.bank_wood, App.prog.deepest, hot]
 	if prompt:
 		prompt.text = App.interact_prompt
-	if OS.has_feature("web") and Time.get_ticks_msec() % 500 < 20:
-		print("pads=", Input.get_connected_joypads(),
-			" move=", Input.get_vector("move_left","move_right","move_up","move_down"),
-			" js=", App.web_pad.move if App.web_pad else Vector2.ZERO)
+	var id := App.pad_id()
+	if Time.get_ticks_msec() % 1000 < 30:
+		print("id=", id,
+			" L=", App.pad_move() if App.has_method("pad_move") else "no-shim",
+			" buttons=", id >= 0)
 
 
 func _world() -> void:
