@@ -306,18 +306,18 @@ func _drop_loot() -> void:
 	var host := get_parent()
 	if host == null:
 		return
-	var gold_n := 1 + randi() % (2 + mini(4, App.floor_n))
+	var gold_n := int(App.bal.enemy_gold_base) + randi() % maxi(1, int(App.bal.enemy_gold_span) + mini(4, App.floor_n))
 	if is_boss:
-		gold_n += 6
+		gold_n += int(App.bal.boss_gold_extra)
 	var PickupS := load("res://scripts/world/pickup.gd")
 	var g: Node3D = PickupS.new()
 	host.add_child(g)
 	g.setup("gold", global_position + Vector3(randf_range(-0.2, 0.2), 0.0, randf_range(-0.2, 0.2)), gold_n)
 	if is_boss:
 		return
-	if randf() < 0.12 + 0.02 * float(App.floor_n):
+	if randf() < App.bal.enemy_gear_chance + App.bal.enemy_gear_floor * float(App.floor_n):
 		var rarity := "white"
-		if randf() < 0.18:
+		if randf() < App.bal.enemy_gear_green:
 			rarity = "green"
 		var item := App.prog.make_armor(["head", "body", "legs"][randi() % 3], rarity)
 		if not App.prog.add_item(item):

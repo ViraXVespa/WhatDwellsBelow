@@ -72,11 +72,13 @@ var tel: TelS
 var wake_pending := false
 var saw_stairs := false
 var boss_low := false
+var run_hp := -1.0
 var adrenaline := false
 var adrenaline_xp := 1.0
 var run_xp := 0.0
 var clock := 0.0
 var last_kill := -999.0
+var last_style := "str"
 var kill_times: Array[float] = []
 var _seq := 0
 var _seq_timer := 0.0
@@ -204,9 +206,11 @@ func begin_run() -> void:
 	boss_low = false
 	run_xp = 0.0
 	adrenaline = false
+	last_style = "str"
 	floors_since_named = 0
 	shrine_t = 0.0
 	extracted = false
+	run_hp = -1.0
 	clerk_t = -1.0
 	mine_hits_landed = 0
 	mine_success = 0
@@ -226,13 +230,17 @@ func go_dungeon() -> void:
 	in_dungeon = true
 	interact_prompt = ""
 	get_tree().paused = false
-	Engine.time_scale = 1.0
+	if playtest == null or not bool(playtest.get("live_running")):
+		Engine.time_scale = 1.0
 	if music and music.has_method("play_dungeon") and str(music.get("kind")) != "dungeon":
 		music.play_dungeon()
 	get_tree().call_deferred("change_scene_to_file", DUNGEON_SCENE)
 
 
 func next_floor() -> void:
+	var p := get_tree().get_first_node_in_group("player")
+	if p:
+		run_hp = float(p.get("hp"))
 	floor_n += 1
 	prog.deepest = maxi(prog.deepest, floor_n)
 	boss_dead = false
@@ -357,6 +365,17 @@ func on_kill() -> void:
 		_start_adrenaline()
 	var mult := adrenaline_xp if adrenaline else 1.0
 	run_xp += bal.xp_per_kill * mult
+	if prog:
+		var half: float = bal.xp_per_kill * 0.5 * (mult if adrenaline else 1.0)
+		if weapon == "staff":
+			prog.add_run_xp("staff", half)
+			prog.add_run_xp(last_style if last_style == "mag" else "str", half)
+		elif weapon == "longbow":
+			prog.add_run_xp("bow", half)
+			prog.add_run_xp("rng", half)
+		else:
+			prog.add_run_xp("axe", half)
+			prog.add_run_xp("str", half)
 	if tel:
 		tel.note_kill()
 

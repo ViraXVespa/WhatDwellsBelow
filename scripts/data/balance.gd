@@ -162,9 +162,91 @@ var music_fade := 0.35
 var playtest_scale := 6.0
 var playtest_limit := 90.0
 
+var xp_level := 40.0
+var xp_hit_weapon := 1.2
+var xp_hit_style := 0.8
+var xp_gather := 6.0
+var xp_smith := 12.0
+var xp_def_hit := 0.4
+var xp_hp_heal := 0.15
+var skill_dmg_weapon := 0.04
+var skill_dmg_style := 0.03
+var skill_special_bonus := 0.02
+var skill_def_per_lv := 1.5
+var skill_hp_per_lv := 4.0
+
+var gear_white_dmg := 2.0
+var gear_green_dmg := 5.0
+var gear_blue_dmg := 9.0
+var gear_white_def := 2.0
+var gear_green_def := 5.0
+var gear_blue_def := 9.0
+var gear_white_hp := 4.0
+var gear_green_hp := 10.0
+var gear_blue_hp := 18.0
+
+var enemy_gear_chance := 0.12
+var enemy_gear_floor := 0.02
+var enemy_gear_green := 0.18
+var enemy_gold_base := 1.0
+var enemy_gold_span := 2.0
+var boss_gold_extra := 6.0
+var chest_gold_base := 8.0
+var chest_gold_span := 12.0
+var boss_chest_gold := 20.0
+var boss_blue_chance := 0.45
+var chest_green_chance := 0.35
+var chest_gear_chance := 0.55
+
+var shop_stock_min := 2.0
+var shop_stock_max := 4.0
+var shop_buy_max := 2.0
+
+var quest_kill_need := 4.0
+var quest_ore_need := 8.0
+var quest_gold := 25.0
+var quest_xp_a := 24.0
+var quest_xp_b := 16.0
+
+var near_death_hp := 0.2
+var cam_pitch := -58.0
+var cam_height := 14.0
+var look_lift := 0.42
+
+var set_cinder_1 := 1.0
+var set_cinder_2 := 3.0
+var set_tide_1 := 4.0
+var set_tide_2 := 8.0
+var set_root_1 := 0.03
+var set_root_2 := 0.06
+var set_root_3 := 0.08
+var set_ash_1 := 1.5
+var set_ash_2 := 4.0
+var set_ash_3 := 6.0
+var set_spark_1 := 0.03
+var set_spark_2 := 0.06
+var set_bone_1 := 3.0
+var set_bone_2 := 6.0
+var set_bone_3 := 10.0
+var set_veil_1 := 0.04
+var set_veil_2 := 0.08
+var set_veil_3 := 0.08
+var set_veil_4 := 0.12
+var set_iron_1 := 2.0
+var set_iron_2 := 5.0
+var set_iron_3 := 5.0
+var set_iron_4 := 6.0
+var set_iron_5 := 10.0
+
+const ENEMY_IDS: PackedStringArray = [
+	"slime", "goblin", "orc", "skeleton", "bat", "spider",
+	"archer", "shaman", "imp", "wolf", "beetle", "wisp",
+]
+var enemy_stats: Dictionary = {}
+
 
 func schema() -> Array:
-	return [
+	var rows := [
 		["move_speed", 0.2, 12.0, 0.1],
 		["dash_speed_mult", 1.0, 6.0, 0.05],
 		["dash_duration", 0.05, 1.2, 0.01],
@@ -313,17 +395,146 @@ func schema() -> Array:
 		["music_fade", 0.0, 3.0, 0.05],
 		["playtest_scale", 1.0, 12.0, 0.5],
 		["playtest_limit", 10.0, 600.0, 5.0],
+		["xp_level", 10.0, 120.0, 1.0],
+		["xp_hit_weapon", 0.0, 20.0, 0.1],
+		["xp_hit_style", 0.0, 20.0, 0.1],
+		["xp_gather", 0.0, 40.0, 0.5],
+		["xp_smith", 0.0, 40.0, 0.5],
+		["xp_def_hit", 0.0, 8.0, 0.05],
+		["xp_hp_heal", 0.0, 8.0, 0.05],
+		["skill_dmg_weapon", 0.0, 0.2, 0.005],
+		["skill_dmg_style", 0.0, 0.2, 0.005],
+		["skill_special_bonus", 0.0, 0.2, 0.005],
+		["skill_def_per_lv", 0.0, 12.0, 0.1],
+		["skill_hp_per_lv", 0.0, 20.0, 0.5],
+		["gear_white_dmg", 0.0, 40.0, 1.0],
+		["gear_green_dmg", 0.0, 40.0, 1.0],
+		["gear_blue_dmg", 0.0, 40.0, 1.0],
+		["gear_white_def", 0.0, 40.0, 1.0],
+		["gear_green_def", 0.0, 40.0, 1.0],
+		["gear_blue_def", 0.0, 40.0, 1.0],
+		["gear_white_hp", 0.0, 60.0, 1.0],
+		["gear_green_hp", 0.0, 60.0, 1.0],
+		["gear_blue_hp", 0.0, 60.0, 1.0],
+		["enemy_gear_chance", 0.0, 1.0, 0.01],
+		["enemy_gear_floor", 0.0, 0.2, 0.005],
+		["enemy_gear_green", 0.0, 1.0, 0.01],
+		["enemy_gold_base", 0.0, 20.0, 1.0],
+		["enemy_gold_span", 1.0, 20.0, 1.0],
+		["boss_gold_extra", 0.0, 40.0, 1.0],
+		["chest_gold_base", 0.0, 40.0, 1.0],
+		["chest_gold_span", 1.0, 40.0, 1.0],
+		["boss_chest_gold", 0.0, 80.0, 1.0],
+		["boss_blue_chance", 0.0, 1.0, 0.05],
+		["chest_green_chance", 0.0, 1.0, 0.05],
+		["chest_gear_chance", 0.0, 1.0, 0.05],
+		["shop_stock_min", 1.0, 6.0, 1.0],
+		["shop_stock_max", 1.0, 8.0, 1.0],
+		["shop_buy_max", 1.0, 6.0, 1.0],
+		["quest_kill_need", 1.0, 20.0, 1.0],
+		["quest_ore_need", 1.0, 40.0, 1.0],
+		["quest_gold", 0.0, 200.0, 1.0],
+		["quest_xp_a", 0.0, 80.0, 1.0],
+		["quest_xp_b", 0.0, 80.0, 1.0],
+		["near_death_hp", 0.05, 0.6, 0.05],
+		["cam_pitch", -80.0, -20.0, 1.0],
+		["cam_height", 4.0, 40.0, 0.5],
+		["look_lift", 0.0, 2.0, 0.02],
+		["set_cinder_1", 0.0, 20.0, 0.5],
+		["set_cinder_2", 0.0, 20.0, 0.5],
+		["set_tide_1", 0.0, 20.0, 0.5],
+		["set_tide_2", 0.0, 40.0, 0.5],
+		["set_root_1", 0.0, 0.2, 0.005],
+		["set_root_2", 0.0, 0.2, 0.005],
+		["set_root_3", 0.0, 0.2, 0.005],
+		["set_ash_1", 0.0, 20.0, 0.5],
+		["set_ash_2", 0.0, 20.0, 0.5],
+		["set_ash_3", 0.0, 20.0, 0.5],
+		["set_spark_1", 0.0, 0.3, 0.01],
+		["set_spark_2", 0.0, 0.3, 0.01],
+		["set_bone_1", 0.0, 20.0, 0.5],
+		["set_bone_2", 0.0, 20.0, 0.5],
+		["set_bone_3", 0.0, 40.0, 0.5],
+		["set_veil_1", 0.0, 0.4, 0.01],
+		["set_veil_2", 0.0, 0.4, 0.01],
+		["set_veil_3", 0.0, 0.4, 0.01],
+		["set_veil_4", 0.0, 0.4, 0.01],
+		["set_iron_1", 0.0, 20.0, 0.5],
+		["set_iron_2", 0.0, 20.0, 0.5],
+		["set_iron_3", 0.0, 20.0, 0.5],
+		["set_iron_4", 0.0, 20.0, 0.5],
+		["set_iron_5", 0.0, 40.0, 0.5],
 	]
+	_ensure_enemies()
+	for id in ENEMY_IDS:
+		rows.append(["e_%s_hp" % id, 5.0, 200.0, 1.0])
+		rows.append(["e_%s_dmg" % id, 1.0, 80.0, 1.0])
+		rows.append(["e_%s_spd" % id, 0.4, 8.0, 0.05])
+		rows.append(["e_%s_range" % id, 0.4, 12.0, 0.05])
+		rows.append(["e_%s_def" % id, 0.0, 40.0, 1.0])
+	return rows
+
+
+func _init() -> void:
+	_ensure_enemies()
+
+
+func _ensure_enemies() -> void:
+	if not enemy_stats.is_empty():
+		return
+	enemy_stats = {
+		"slime": {"hp": 24.0, "dmg": 6.0, "spd": 2.2, "range": 0.95, "def": 2.0},
+		"goblin": {"hp": 32.0, "dmg": 8.0, "spd": 3.15, "range": 1.15, "def": 1.0},
+		"orc": {"hp": 58.0, "dmg": 12.0, "spd": 2.05, "range": 1.35, "def": 8.0},
+		"skeleton": {"hp": 36.0, "dmg": 9.0, "spd": 2.7, "range": 1.2, "def": 3.0},
+		"bat": {"hp": 20.0, "dmg": 7.0, "spd": 4.05, "range": 0.9, "def": 0.0},
+		"spider": {"hp": 28.0, "dmg": 8.0, "spd": 3.25, "range": 1.05, "def": 2.0},
+		"archer": {"hp": 26.0, "dmg": 7.0, "spd": 2.85, "range": 6.2, "def": 1.0},
+		"shaman": {"hp": 30.0, "dmg": 11.0, "spd": 2.35, "range": 3.4, "def": 2.0},
+		"imp": {"hp": 22.0, "dmg": 10.0, "spd": 3.55, "range": 4.2, "def": 0.0},
+		"wolf": {"hp": 34.0, "dmg": 10.0, "spd": 3.85, "range": 1.1, "def": 2.0},
+		"beetle": {"hp": 52.0, "dmg": 9.0, "spd": 1.85, "range": 1.05, "def": 10.0},
+		"wisp": {"hp": 18.0, "dmg": 8.0, "spd": 2.95, "range": 5.4, "def": 0.0},
+	}
+
+
+func _enemy_key(name: String) -> Array:
+	if not name.begins_with("e_"):
+		return []
+	var cut := name.substr(2)
+	var us := cut.rfind("_")
+	if us <= 0:
+		return []
+	return [cut.substr(0, us), cut.substr(us + 1)]
 
 
 func getv(name: String) -> float:
+	var ek := _enemy_key(name)
+	if ek.size() == 2:
+		_ensure_enemies()
+		var id := str(ek[0])
+		var key := str(ek[1])
+		if enemy_stats.has(id) and (enemy_stats[id] as Dictionary).has(key):
+			return float((enemy_stats[id] as Dictionary)[key])
+		return 0.0
 	var v: Variant = get(name)
 	if v is bool:
 		return 1.0 if v else 0.0
+	if v == null:
+		return 0.0
 	return float(v)
 
 
 func setv(name: String, value: float) -> void:
+	var ek := _enemy_key(name)
+	if ek.size() == 2:
+		_ensure_enemies()
+		var id := str(ek[0])
+		var key := str(ek[1])
+		if not enemy_stats.has(id):
+			enemy_stats[id] = {}
+		(enemy_stats[id] as Dictionary)[key] = value
+		return
 	var cur: Variant = get(name)
 	if cur is bool:
 		set(name, value >= 0.5)
@@ -331,6 +542,13 @@ func setv(name: String, value: float) -> void:
 		set(name, int(round(value)))
 	else:
 		set(name, value)
+
+
+func snapshot() -> Dictionary:
+	var d := {}
+	for row in schema():
+		d[str(row[0])] = getv(str(row[0]))
+	return d
 
 
 func apply_defense(raw: float, defense: float) -> float:

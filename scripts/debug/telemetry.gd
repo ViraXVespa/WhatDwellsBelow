@@ -142,7 +142,7 @@ func note_damage_dealt(n: float, crit: bool) -> void:
 
 func note_damage_taken(n: float, hp: float, max_hp: float) -> void:
 	dmg_taken += n
-	if max_hp > 0.0 and hp / max_hp <= 0.2:
+	if max_hp > 0.0 and hp / max_hp <= App.bal.near_death_hp:
 		near_death += 1
 
 

@@ -67,6 +67,7 @@ static func collect() -> Dictionary:
 		"bank_wood": App.bank_wood,
 		"bank_root": App.bank_root,
 		"binds": App.collect_binds(),
+		"debug_bal": App.bal.snapshot(),
 		"prog": App.prog.to_meta(),
 	}
 
@@ -85,6 +86,10 @@ static func apply(data: Dictionary) -> void:
 	App.bank_ore = int(data.get("bank_ore", 0))
 	App.bank_wood = int(data.get("bank_wood", 0))
 	App.bank_root = int(data.get("bank_root", 0))
+	var db: Variant = data.get("debug_bal", {})
+	if db is Dictionary:
+		for k in (db as Dictionary).keys():
+			App.bal.setv(str(k), float((db as Dictionary)[k]))
 	var p: Variant = data.get("prog", {})
 	if p is Dictionary:
 		App.prog.from_meta(p)
@@ -136,6 +141,7 @@ static func fresh_delver() -> void:
 	App.bank_ore = 0
 	App.bank_wood = 0
 	App.bank_root = 0
+	App.bal = (load("res://scripts/data/balance.gd") as GDScript).new()
 	App.character_type = "male"
 	App.character_chosen = false
 	App.cam_zoom = 1.0

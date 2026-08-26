@@ -49,7 +49,11 @@ func setup_clerk(role_id: String, pos: Vector3) -> void:
 
 func setup_shop(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	setup("shop", pos)
-	var n := rng.randi_range(2, 4)
+	var lo := int(App.bal.shop_stock_min)
+	var hi := int(App.bal.shop_stock_max)
+	if hi < lo:
+		hi = lo
+	var n := rng.randi_range(lo, hi)
 	stock = Catalog.pick(rng, n)
 
 
@@ -271,9 +275,9 @@ func _open_chest() -> String:
 	if used:
 		return "Empty."
 	used = true
-	var gold := 8 + randi() % 12
+	var gold := int(App.bal.chest_gold_base) + randi() % maxi(1, int(App.bal.chest_gold_span))
 	if kind == "chest":
-		gold += 20
+		gold += int(App.bal.boss_chest_gold)
 	App.gain_gold(gold)
 	var art := ""
 	var msg_gear := ""
@@ -291,10 +295,10 @@ func _open_chest() -> String:
 				App.spawn_floor_item(art_it, global_position)
 	var rarity := "white"
 	if kind == "chest":
-		rarity = "blue" if randf() < 0.45 else "green"
-	elif randf() < 0.35:
+		rarity = "blue" if randf() < App.bal.boss_blue_chance else "green"
+	elif randf() < App.bal.chest_green_chance:
 		rarity = "green"
-	if kind == "chest" or randf() < 0.55:
+	if kind == "chest" or randf() < App.bal.chest_gear_chance:
 		var gear: Dictionary = App.prog.make_armor(["head", "body", "legs"][randi() % 3], rarity)
 		if kind == "chest" and randf() < 0.5:
 			gear = App.prog.make_weapon(["great_axe", "staff", "longbow"][randi() % 3], rarity)

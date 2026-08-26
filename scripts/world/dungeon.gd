@@ -830,21 +830,7 @@ func _spawn_world() -> void:
 			_note("shop")
 		elif kind == "puzzle":
 			_spawn_puzzle(r)
-		elif kind == "spawn":
-			var fire := SpotS.new()
-			fire.setup("campfire", _cell_pos(_rand_cell(r)))
-			add_child(fire)
-			_note("campfire")
-		elif kind == "normal":
-			_scatter_room(r)
-	var shrine_r := _find_kind_room("normal")
-	if shrine_r.is_empty():
-		shrine_r = _find_kind_room("spawn")
-	if not shrine_r.is_empty() and int(App.bal.shrine_count) > 0:
-		var sh := SpotS.new()
-		sh.setup("shrine", _cell_pos(_rand_cell(shrine_r)))
-		add_child(sh)
-		_note("shrine")
+	_scatter_counts()
 	_ensure_world()
 	if str(App.prog.quest_active.get("kind", "")) == "fetch" and int(App.prog.quest_active.get("floor", 1)) == App.floor_n:
 		var spawn_r := _find_kind_room("normal")
@@ -860,22 +846,66 @@ func _center_room(r: Dictionary) -> Vector2i:
 	return Vector2i(int(r.x) + int(r.w) / 2, int(r.y) + int(r.h) / 2)
 
 
-func _scatter_room(r: Dictionary) -> void:
-	if floor_rng.randf() < 0.55:
-		var n := GatherS.new()
-		n.setup("mine", _cell_pos(_rand_cell(r)))
-		add_child(n)
-		_note("mine")
-	if floor_rng.randf() < 0.45:
-		var w := GatherS.new()
-		w.setup("wood", _cell_pos(_rand_cell(r)))
-		add_child(w)
-		_note("wood")
-	if floor_rng.randf() < 0.7:
-		var b := BreakS.new()
-		b.setup("pot" if floor_rng.randf() < 0.6 else "barrel", _cell_pos(_rand_cell(r)))
-		add_child(b)
-		_note("break")
+func _scatter_rooms() -> Array:
+	var out: Array = []
+	for r in data.get("rooms", []):
+		var k := str(r.get("kind", "normal"))
+		if k == "normal" or k == "base" or k == "spawn":
+			out.append(r)
+	return out
+
+
+func _shuffle_rooms(rooms: Array) -> Array:
+	var pool: Array = rooms.duplicate()
+	for i in pool.size():
+		var j := floor_rng.randi_range(i, pool.size() - 1)
+		var tmp: Variant = pool[i]
+		pool[i] = pool[j]
+		pool[j] = tmp
+	return pool
+
+
+func _scatter_counts() -> void:
+	var rooms: Array = _scatter_rooms()
+	_place_n(rooms, int(App.bal.mine_nodes), "mine")
+	_place_n(rooms, int(App.bal.wood_nodes), "wood")
+	_place_n(rooms, int(App.bal.break_count), "break")
+	_place_n(rooms, int(App.bal.campfire_count), "campfire")
+	_place_n(rooms, int(App.bal.shrine_count), "shrine")
+
+
+func _place_n(rooms: Array, n: int, what: String) -> void:
+	if n <= 0 or rooms.is_empty():
+		return
+	var pool: Array = _shuffle_rooms(rooms)
+	for i in n:
+		var r: Dictionary = pool[i % pool.size()]
+		var pos := _cell_pos(_rand_cell(r))
+		if what == "mine":
+			var node := GatherS.new()
+			node.setup("mine", pos)
+			add_child(node)
+			_note("mine")
+		elif what == "wood":
+			var wood := GatherS.new()
+			wood.setup("wood", pos)
+			add_child(wood)
+			_note("wood")
+		elif what == "break":
+			var br := BreakS.new()
+			br.setup("pot" if floor_rng.randf() < 0.6 else "barrel", pos)
+			add_child(br)
+			_note("break")
+		elif what == "campfire":
+			var fire := SpotS.new()
+			fire.setup("campfire", pos)
+			add_child(fire)
+			_note("campfire")
+		elif what == "shrine":
+			var sh := SpotS.new()
+			sh.setup("shrine", pos)
+			add_child(sh)
+			_note("shrine")
 
 
 func _spawn_puzzle(r: Dictionary) -> void:

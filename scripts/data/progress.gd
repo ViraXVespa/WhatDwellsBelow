@@ -65,6 +65,9 @@ func reset_meta() -> void:
 
 
 func begin_run_loadout() -> void:
+	for it in bag:
+		if str(it.get("kind", "")) != "artifact":
+			bank_items.append(it)
 	bag.clear()
 	clear_food()
 	potion_cd = 0.0
@@ -73,11 +76,17 @@ func begin_run_loadout() -> void:
 	var keep_pot: Dictionary = (slots.get("potion", {}) as Dictionary).duplicate(true)
 	var keep_food: Dictionary = (slots.get("food", {}) as Dictionary).duplicate(true)
 	for s in SLOTS:
+		if s == "potion" or s == "food":
+			continue
 		slots[s] = _slot_for_run(s)
-	if (holds["potion"] as Array).is_empty() and not keep_pot.is_empty() and int(keep_pot.get("stack", 0)) > 0:
+	if not keep_pot.is_empty() and int(keep_pot.get("stack", 0)) > 0:
 		slots["potion"] = keep_pot
-	if (holds["food"] as Array).is_empty() and not keep_food.is_empty() and int(keep_food.get("stack", 0)) > 0:
+	else:
+		slots["potion"] = _slot_for_run("potion")
+	if not keep_food.is_empty() and int(keep_food.get("stack", 0)) > 0:
 		slots["food"] = keep_food
+	else:
+		slots["food"] = _slot_for_run("food")
 	tool_type = str(slots.tool.get("tool", tool_type))
 	App.weapon = str(slots.weapon.get("weapon", pick_weapon))
 	App.gold = 0
@@ -157,11 +166,11 @@ func make_weapon(wpn: String, rarity: String) -> Dictionary:
 		n = "Lightning Staff"
 	elif wpn == "longbow":
 		n = "Longbow"
-	var dmg := 2
+	var dmg := int(App.bal.gear_white_dmg)
 	if rarity == "green":
-		dmg = 5
+		dmg = int(App.bal.gear_green_dmg)
 	elif rarity == "blue":
-		dmg = 9
+		dmg = int(App.bal.gear_blue_dmg)
 	return _item("weapon", n, {"slot": "weapon", "weapon": wpn, "rarity": rarity, "dmg": dmg, "desc": "%s %s. +%d damage." % [rarity.capitalize(), n, dmg]})
 
 
@@ -171,14 +180,14 @@ func make_tool(kind: String) -> Dictionary:
 
 
 func make_armor(slot: String, rarity: String) -> Dictionary:
-	var def := 2
-	var hp := 4
+	var def := int(App.bal.gear_white_def)
+	var hp := int(App.bal.gear_white_hp)
 	if rarity == "green":
-		def = 5
-		hp = 10
+		def = int(App.bal.gear_green_def)
+		hp = int(App.bal.gear_green_hp)
 	elif rarity == "blue":
-		def = 9
-		hp = 18
+		def = int(App.bal.gear_blue_def)
+		hp = int(App.bal.gear_blue_hp)
 	return _item(slot, "%s %s" % [rarity.capitalize(), slot.capitalize()], {"slot": slot, "rarity": rarity, "def": def, "hp": hp, "desc": "+%d def, +%d HP." % [def, hp]})
 
 
@@ -254,6 +263,7 @@ func add_item(it: Dictionary) -> bool:
 	bag.append(it)
 	if str(it.kind) == "artifact":
 		_sync_artifacts()
+		_refresh_player_hp()
 	return true
 
 
@@ -263,6 +273,8 @@ func remove_uid(uid: int) -> Dictionary:
 			var it: Dictionary = bag[i]
 			bag.remove_at(i)
 			_sync_artifacts()
+			if str(it.kind) == "artifact":
+				_refresh_player_hp()
 			return it
 	return {}
 
@@ -409,6 +421,9 @@ func use_food() -> String:
 
 
 func _drink(it: Dictionary, from_slot: bool) -> String:
+	if potion_cd > 0.0:
+		App.toast("Potion cooling down.")
+		return "Not ready."
 	var p := _player()
 	if p == null or not p.has_method("heal"):
 		return "Not now."
@@ -475,7 +490,7 @@ func clear_food() -> void:
 
 
 func skill_lv(id: String) -> int:
-	return 1 + int((float(skills_run.get(id, 0.0)) + float(skills_perm.get(id, 0.0))) / 40.0)
+	return 1 + int((float(skills_run.get(id, 0.0)) + float(skills_perm.get(id, 0.0))) / maxf(1.0, App.bal.xp_level))
 
 
 func add_run_xp(id: String, amt: float) -> void:
@@ -486,6 +501,62 @@ func add_run_xp(id: String, amt: float) -> void:
 	if skill_lv(id) > before:
 		App.sfx("level")
 		App.toast("Level up — %s %d" % [id, skill_lv(id)])
+		_refresh_player_hp()
+
+
+func skill_dmg_mult(is_special := false) -> float:
+	var wpn := "axe"
+	var sty := "str"
+	if App.weapon == "staff":
+		wpn = "staff"
+		sty = "mag" if is_special else "str"
+	elif App.weapon == "longbow":
+		wpn = "bow"
+		sty = "rng"
+	var m := 1.0
+	m += float(maxi(0, skill_lv(wpn) - 1)) * App.bal.skill_dmg_weapon
+	m += float(maxi(0, skill_lv(sty) - 1)) * App.bal.skill_dmg_style
+	if is_special:
+		m += float(maxi(0, skill_lv(wpn) - 1)) * App.bal.skill_special_bonus
+	return m
+
+
+func skill_def() -> float:
+	return float(maxi(0, skill_lv("def") - 1)) * App.bal.skill_def_per_lv
+
+
+func skill_hp() -> float:
+	return float(maxi(0, skill_lv("hp") - 1)) * App.bal.skill_hp_per_lv
+
+
+func tool_quality() -> float:
+	var it: Dictionary = slots.get("tool", {})
+	if it.is_empty():
+		return 1.0
+	var q := 1.0
+	var r := str(it.get("rarity", "white"))
+	if r == "green":
+		q = 2.0
+	elif r == "blue":
+		q = 3.0
+	if bool(it.get("hold", false)):
+		q += 1.0
+	return q
+
+
+func skill_grant_hit(is_special := false) -> void:
+	if App.weapon == "staff":
+		add_run_xp("staff", App.bal.xp_hit_weapon)
+		add_run_xp("mag" if is_special else "str", App.bal.xp_hit_style)
+		App.last_style = "mag" if is_special else "str"
+	elif App.weapon == "longbow":
+		add_run_xp("bow", App.bal.xp_hit_weapon)
+		add_run_xp("rng", App.bal.xp_hit_style)
+		App.last_style = "rng"
+	else:
+		add_run_xp("axe", App.bal.xp_hit_weapon)
+		add_run_xp("str", App.bal.xp_hit_style)
+		App.last_style = "str"
 
 
 func keep_fragments() -> void:
@@ -574,49 +645,53 @@ func set_stats() -> Dictionary:
 	var gather := 0.0
 	var spd := 0.0
 	if int(c.cinder) >= 1:
-		dmg += 1.0 * int(c.cinder)
+		dmg += App.bal.set_cinder_1 * int(c.cinder)
 	if int(c.cinder) >= 2:
-		dmg += 3.0
+		dmg += App.bal.set_cinder_2
 	if int(c.tide) >= 1:
-		hp += 4.0 * int(c.tide)
+		hp += App.bal.set_tide_1 * int(c.tide)
 	if int(c.tide) >= 2:
-		hp += 8.0
+		hp += App.bal.set_tide_2
 	if int(c.root) >= 1:
-		gather += 0.03 * int(c.root)
+		gather += App.bal.set_root_1 * int(c.root)
 	if int(c.root) >= 2:
-		gather += 0.06
+		gather += App.bal.set_root_2
 	if int(c.root) >= 3:
-		gather += 0.08
+		gather += App.bal.set_root_3
 	if int(c.ash) >= 1:
-		def += 1.5 * int(c.ash)
+		def += App.bal.set_ash_1 * int(c.ash)
 	if int(c.ash) >= 2:
-		def += 4.0
+		def += App.bal.set_ash_2
 	if int(c.ash) >= 3:
-		def += 6.0
+		def += App.bal.set_ash_3
 	if int(c.spark) >= 1:
-		crit += 0.03 * int(c.spark)
+		crit += App.bal.set_spark_1 * int(c.spark)
 	if int(c.spark) >= 2:
-		crit += 0.06
+		crit += App.bal.set_spark_2
 	if int(c.bone) >= 1:
-		hp += 3.0 * int(c.bone)
+		hp += App.bal.set_bone_1 * int(c.bone)
 	if int(c.bone) >= 2:
-		hp += 6.0
+		hp += App.bal.set_bone_2
 	if int(c.bone) >= 3:
-		hp += 10.0
+		hp += App.bal.set_bone_3
+	if int(c.veil) >= 1:
+		spd += App.bal.set_veil_1 * int(c.veil)
 	if int(c.veil) >= 2:
-		spd += 0.08
+		spd += App.bal.set_veil_2
 	if int(c.veil) >= 3:
-		spd += 0.08
+		spd += App.bal.set_veil_3
 	if int(c.veil) >= 4:
-		spd += 0.12
+		spd += App.bal.set_veil_4
+	if int(c.iron) >= 1:
+		def += App.bal.set_iron_1 * int(c.iron)
 	if int(c.iron) >= 2:
-		def += 5.0
+		def += App.bal.set_iron_2
 	if int(c.iron) >= 3:
-		def += 5.0
+		def += App.bal.set_iron_3
 	if int(c.iron) >= 4:
-		def += 6.0
+		def += App.bal.set_iron_4
 	if int(c.iron) >= 5:
-		def += 10.0
+		def += App.bal.set_iron_5
 	return {"dmg": dmg, "def": def, "hp": hp, "crit": crit, "gather": gather, "spd": spd}
 
 
@@ -684,6 +759,7 @@ func extract_all(role: String) -> String:
 		App.bank_root += root
 		_quest_extract_ore(App.ore)
 		App.ore = 0
+		App.wood = 0
 		root = 0
 		mailed_ore += o
 		mailed_wood += w
@@ -775,6 +851,11 @@ func extract_one(it: Dictionary, role: String) -> String:
 		bank_items.append(got)
 		App.extracted = true
 		mailed_names.append(str(got.name))
+		if it.has("from_slot"):
+			var sl := str(it.from_slot)
+			if sl == "weapon" or sl == "tool":
+				_fill_slot_after_remove(sl)
+			_refresh_player_hp()
 		return "Sent " + str(got.name)
 	return "Nothing."
 
@@ -829,22 +910,58 @@ func forge_item(it: Dictionary) -> String:
 		App.toast("Not enough gold / ore / root.")
 		return "Need %dg, %d ore, %d root." % [cost.gold, cost.ore, cost.root]
 	pay(cost)
+	if bool(it.get("hold", false)):
+		for i in h.size():
+			if int(h[i].uid) == int(it.uid):
+				var up: Dictionary = (h[i] as Dictionary).duplicate(true)
+				up.dmg = int(up.dmg) + 1 + int(skill_lv("smith") / 4)
+				up.def = int(up.def) + 1
+				if str(up.rarity) == "white":
+					up.rarity = "green"
+				h[i] = up
+				holds[slot] = h
+				forge_count += 1
+				add_perm_xp("smith", App.bal.xp_smith)
+				App.sfx("slam")
+				App.toast("Hold re-forged.")
+				App.save_now()
+				return "Re-forged hold (%d/3)." % h.size()
 	var copy := it.duplicate(true)
 	copy.hold = true
 	copy.extract = false
 	copy.rarity = "green" if copy.rarity == "white" else copy.rarity
 	copy.dmg = int(copy.dmg) + 1 + int(skill_lv("smith") / 4)
 	copy.def = int(copy.def) + 1
-	copy.name = "Forged " + str(copy.name)
+	if not str(copy.name).begins_with("Forged "):
+		copy.name = "Forged " + str(copy.name)
 	if h.size() >= 3:
 		h.remove_at(0)
 	h.append(copy)
 	holds[slot] = h
 	forge_count += 1
-	add_run_xp("smith", 12.0)
+	_consume_forge_source(it)
+	add_perm_xp("smith", App.bal.xp_smith)
 	App.sfx("slam")
 	App.toast("Hold forged.")
+	App.save_now()
 	return "Forged into a hold (%d/3)." % h.size()
+
+
+func add_perm_xp(id: String, amt: float) -> void:
+	var before := skill_lv(id)
+	skills_perm[id] = float(skills_perm.get(id, 0.0)) + amt
+	if skill_lv(id) > before:
+		App.sfx("level")
+		App.toast("Level up — %s %d" % [id, skill_lv(id)])
+
+
+func _consume_forge_source(it: Dictionary) -> void:
+	if it.has("uid"):
+		remove_uid(int(it.uid))
+		for i in bank_items.size():
+			if int(bank_items[i].uid) == int(it.uid):
+				bank_items.remove_at(i)
+				break
 
 
 func roll_quests(keep_active: bool) -> void:
@@ -855,8 +972,8 @@ func roll_quests(keep_active: bool) -> void:
 	var nt := types[rng.randi() % types.size()]
 	var ff := maxi(1, rng.randi_range(1, maxi(1, deepest)))
 	var pool: Array = [
-		{"kind": "kill", "title": "Cull the %s" % kt, "type": kt, "need": 4, "have": 0, "reward": "xp"},
-		{"kind": "ore", "title": "Mail 8 ore", "need": 8, "have": 0, "reward": "gold"},
+		{"kind": "kill", "title": "Cull the %s" % kt, "type": kt, "need": int(App.bal.quest_kill_need), "have": 0, "reward": "xp"},
+		{"kind": "ore", "title": "Mail %d ore" % int(App.bal.quest_ore_need), "need": int(App.bal.quest_ore_need), "have": 0, "reward": "gold"},
 		{"kind": "fetch", "title": "Retrieve a guild cache from floor %d" % ff, "floor": ff, "have": 0, "need": 1, "reward": "gear"},
 		{"kind": "named", "title": "Vanquish a named foe", "type": nt, "nname": "", "need": 1, "have": 0, "reward": "xp"},
 	]
@@ -941,15 +1058,16 @@ func _try_complete() -> void:
 	if rw == "xp":
 		var sa := SKILLS[randi() % SKILLS.size()]
 		var sb := SKILLS[randi() % SKILLS.size()]
-		skills_perm[sa] = float(skills_perm.get(sa, 0.0)) + 24.0
-		skills_perm[sb] = float(skills_perm.get(sb, 0.0)) + 16.0
+		skills_perm[sa] = float(skills_perm.get(sa, 0.0)) + App.bal.quest_xp_a
+		skills_perm[sb] = float(skills_perm.get(sb, 0.0)) + App.bal.quest_xp_b
 		App.toast("Quest complete — %s / %s XP." % [sa, sb])
+		_refresh_player_hp()
 	elif rw == "gear":
-		add_item(_unowned_gear())
-		App.toast("Quest complete.")
+		bank_items.append(_unowned_gear())
+		App.toast("Quest complete — gear mailed to stash.")
 	else:
-		App.gain_gold(25)
-		App.toast("Quest complete.")
+		App.bank_gold += int(App.bal.quest_gold)
+		App.toast("Quest complete — %dg banked." % int(App.bal.quest_gold))
 	quest_active = {}
 	App.quest_named_type = ""
 	App.quest_named_name = ""
@@ -966,7 +1084,7 @@ func _refresh_player_hp() -> void:
 	var p := _player()
 	if p == null:
 		return
-	var maxh: float = App.bal.player_max_hp + gear_hp()
+	var maxh: float = App.bal.player_max_hp + gear_hp() + skill_hp()
 	var old := float(p.get("max_hp"))
 	p.set("max_hp", maxh)
 	var cur := float(p.get("hp"))
@@ -1043,9 +1161,35 @@ func from_meta(d: Dictionary) -> void:
 	var hpicks: Variant = d.get("hold_pick", {})
 	if hpicks is Dictionary:
 		hold_pick = (hpicks as Dictionary).duplicate(true)
+	if str(quest_active.get("kind", "")) == "named":
+		App.quest_named_type = str(quest_active.get("type", ""))
+		App.quest_named_name = str(quest_active.get("nname", ""))
+	else:
+		App.quest_named_type = ""
+		App.quest_named_name = ""
+
+
+func _withdraw_bank_consumables() -> void:
+	var keep: Array = []
+	for it in bank_items:
+		var k := str(it.get("kind", ""))
+		if k == "potion" or k == "food":
+			var slot := "potion" if k == "potion" else "food"
+			var cur: Dictionary = slots.get(slot, {})
+			if cur.is_empty():
+				slots[slot] = it
+			elif k == "potion" or str(cur.get("food", "")) == str(it.get("food", "")):
+				cur.stack = int(cur.get("stack", 0)) + int(it.get("stack", 1))
+				slots[slot] = cur
+			else:
+				keep.append(it)
+		else:
+			keep.append(it)
+	bank_items = keep
 
 
 func restock() -> String:
+	_withdraw_bank_consumables()
 	var msg := ""
 	if App.bank_gold < int(App.bal.restock_gold):
 		App.bank_gold = int(App.bal.restock_gold)

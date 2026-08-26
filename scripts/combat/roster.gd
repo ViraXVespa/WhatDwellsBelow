@@ -28,9 +28,21 @@ static func floor_types(floor_n: int) -> PackedStringArray:
 
 static func def(id: String) -> Dictionary:
 	var all := _all()
-	if all.has(id):
-		return all[id]
-	return all["goblin"]
+	var d: Dictionary = all[id] if all.has(id) else all["goblin"]
+	d = d.duplicate()
+	if App.bal:
+		d.hp = App.bal.getv("e_%s_hp" % id) if App.bal.getv("e_%s_hp" % id) > 0.0 else float(d.hp)
+		var dv := App.bal.getv("e_%s_dmg" % id)
+		if dv > 0.0:
+			d.dmg = dv
+		var sv := App.bal.getv("e_%s_spd" % id)
+		if sv > 0.0:
+			d.spd = sv
+		var rv := App.bal.getv("e_%s_range" % id)
+		if rv > 0.0:
+			d.range = rv
+		d.def = App.bal.getv("e_%s_def" % id)
+	return d
 
 
 static func make_name(rng: RandomNumberGenerator) -> String:

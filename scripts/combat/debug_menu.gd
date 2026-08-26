@@ -252,6 +252,7 @@ func show_menu() -> void:
 func hide_menu() -> void:
 	open = false
 	visible = false
+	App.save_now()
 
 
 func toggle() -> void:

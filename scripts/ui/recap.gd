@@ -125,6 +125,7 @@ func _process(delta: float) -> void:
 	if not left:
 		draining = false
 		App.prog.keep_fragments()
+		App.save_now()
 		App.tel.recap_drain = true
 		_refresh_skills()
 		if flavor:
@@ -174,6 +175,7 @@ func skip_drain() -> void:
 		shown[id] = float(targets[id])
 	draining = false
 	App.prog.keep_fragments()
+	App.save_now()
 	App.tel.recap_drain = true
 	_refresh_skills()
 	if flavor:

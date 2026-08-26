@@ -275,7 +275,7 @@ func _rebuild_shop() -> void:
 	_clear()
 	box.add_child(ThemeS.lab("Ghost Shop", 32, Color(0.75, 0.9, 1.0)))
 	box.add_child(ThemeS.lab("Two artifacts a visit. Snacks %dg. Artifacts are run-only." % int(App.bal.snack_cost), 18, Color(0.82, 0.76, 0.66)))
-	box.add_child(ThemeS.lab("Gold %d   Bought %d/2" % [App.gold, int(shop_spot.get("bought") if shop_spot else 0)], 20, Color(0.9, 0.88, 0.78)))
+	box.add_child(ThemeS.lab("Gold %d   Bought %d/%d" % [App.gold, int(shop_spot.get("bought") if shop_spot else 0), int(App.bal.shop_buy_max)], 20, Color(0.9, 0.88, 0.78)))
 	box.add_child(ThemeS.lab(_sets_blurb(), 18, Color(0.85, 0.72, 0.45)))
 	status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
 	box.add_child(status)
@@ -320,7 +320,7 @@ func _buy_snack() -> void:
 func _buy_art(id: String, nm: String) -> void:
 	if shop_spot == null:
 		return
-	if int(shop_spot.bought) >= 2:
+	if int(shop_spot.bought) >= int(App.bal.shop_buy_max):
 		_st("Two artifacts a visit.")
 		return
 	if App.gold < int(App.bal.art_cost):
@@ -408,6 +408,8 @@ func _anvil_pick() -> void:
 		var it: Dictionary = App.prog.slots.get(s, {})
 		if not it.is_empty():
 			sources.append(it)
+		for hold_it in App.prog.holds[s]:
+			sources.append(hold_it)
 	var any := false
 	for it in sources:
 		if str(it.get("slot", "")) in ["weapon", "tool", "head", "body", "legs"]:
@@ -495,15 +497,23 @@ func _set_wpn(w: String) -> void:
 	loadout_wpn = w
 	App.weapon = w
 	App.prog.pick_weapon = w
-	App.prog.hold_pick["weapon"] = -1
+	App.prog.hold_pick["weapon"] = _matching_hold("weapon", "weapon", w)
 	status.text = "Weapon %s   Tool %s   Floor %d" % [loadout_wpn, loadout_tool, loadout_floor]
 
 
 func _set_tool(t: String) -> void:
 	loadout_tool = t
 	App.prog.tool_type = t
-	App.prog.hold_pick["tool"] = -1
+	App.prog.hold_pick["tool"] = _matching_hold("tool", "tool", t)
 	status.text = "Weapon %s   Tool %s   Floor %d" % [loadout_wpn, loadout_tool, loadout_floor]
+
+
+func _matching_hold(slot: String, key: String, want: String) -> int:
+	var h: Array = App.prog.holds[slot]
+	for i in h.size():
+		if str(h[i].get(key, "")) == want:
+			return i
+	return -1
 
 
 func _floor(d: int) -> void:

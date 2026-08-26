@@ -16,14 +16,37 @@ func _ready() -> void:
 	cam.current = true
 	_place_local()
 	apply_zoom(App.cam_zoom)
-	var look := global_position + Vector3(0.0, T.LOOK_LIFT, 0.0)
-	if cam.global_position.distance_squared_to(look) > 0.0001:
+	_look()
+
+
+func _pitch() -> float:
+	if App.bal:
+		return App.bal.cam_pitch
+	return T.CAM_PITCH
+
+
+func _height() -> float:
+	if App.bal:
+		return App.bal.cam_height
+	return T.CAM_HEIGHT
+
+
+func _lift() -> float:
+	if App.bal:
+		return App.bal.look_lift
+	return T.LOOK_LIFT
+
+
+func _look() -> void:
+	var look := global_position + Vector3(0.0, _lift(), 0.0)
+	if cam and cam.global_position.distance_squared_to(look) > 0.0001:
 		cam.look_at(look, Vector3.UP)
 
 
 func _place_local() -> void:
-	var back := T.CAM_HEIGHT / tan(deg_to_rad(absf(T.CAM_PITCH)))
-	cam.position = Vector3(0.0, T.CAM_HEIGHT, back)
+	var h := _height()
+	var back := h / tan(deg_to_rad(absf(_pitch())))
+	cam.position = Vector3(0.0, h, back)
 
 
 func apply_zoom(z: float) -> void:
@@ -35,9 +58,8 @@ func apply_zoom(z: float) -> void:
 
 func follow(target: Vector3) -> void:
 	global_position = target
-	var look := target + Vector3(0.0, T.LOOK_LIFT, 0.0)
-	if cam and cam.global_position.distance_squared_to(look) > 0.0001:
-		cam.look_at(look, Vector3.UP)
+	_place_local()
+	_look()
 
 
 func mouse_aim(origin: Vector3) -> Vector2:

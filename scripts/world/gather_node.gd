@@ -54,12 +54,12 @@ func strike() -> Dictionary:
 	hits -= 1
 	var chance := App.bal.wood_chance if kind == "wood" else App.bal.mine_chance
 	if kind == "wood":
-		chance += float(App.prog.skill_lv("wood")) * App.bal.skill_gather + float(App.hatchet_q) * App.bal.tool_gather + float(App.prog.set_stats().gather)
+		chance += float(App.prog.skill_lv("wood")) * App.bal.skill_gather + App.prog.tool_quality() * App.bal.tool_gather + float(App.prog.set_stats().gather)
 		App.wood_hits_landed += 1
 		if App.tel:
 			App.tel.wood_hits += 1
 	else:
-		chance += float(App.prog.skill_lv("mine")) * App.bal.skill_gather + float(App.pickaxe_q) * App.bal.tool_gather + float(App.prog.set_stats().gather)
+		chance += float(App.prog.skill_lv("mine")) * App.bal.skill_gather + App.prog.tool_quality() * App.bal.tool_gather + float(App.prog.set_stats().gather)
 		App.mine_hits_landed += 1
 		if App.tel:
 			App.tel.mine_hits += 1
@@ -72,7 +72,7 @@ func strike() -> Dictionary:
 			wood = 1
 			App.wood += wood
 			App.wood_success += 1
-			App.prog.add_run_xp("wood", 6.0)
+			App.prog.add_run_xp("wood", App.bal.xp_gather)
 			if App.tel:
 				App.tel.wood_ok += 1
 			if randf() < 0.18:
@@ -81,7 +81,7 @@ func strike() -> Dictionary:
 			ore = 1
 			App.ore += ore
 			App.mine_success += 1
-			App.prog.add_run_xp("mine", 6.0)
+			App.prog.add_run_xp("mine", App.bal.xp_gather)
 			if App.tel:
 				App.tel.mine_ok += 1
 		if randf() < 0.25:

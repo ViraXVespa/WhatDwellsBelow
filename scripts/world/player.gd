@@ -81,8 +81,11 @@ func _ready() -> void:
 	telegraph.hide_now()
 	aim_line = AimLineS.new()
 	add_child(aim_line)
-	max_hp = App.bal.player_max_hp + App.prog.gear_hp()
-	hp = max_hp
+	max_hp = App.bal.player_max_hp + App.prog.gear_hp() + App.prog.skill_hp()
+	if App.run_hp >= 0.0:
+		hp = clampf(App.run_hp, 0.0, max_hp)
+	else:
+		hp = max_hp
 	_apply_tex(_pose_tex("down"))
 	_apply_facing(0.016)
 
@@ -204,7 +207,7 @@ func _physics_process(delta: float) -> void:
 	_try_special()
 	_try_basic()
 	_try_dash(move)
-	var spd: float = App.bal.move_speed
+	var spd: float = App.bal.move_speed * (1.0 + float(App.prog.set_stats().spd))
 	if App.adrenaline:
 		spd *= App.bal.adrenaline_speed
 	if atk_state == ATK_BASIC:
@@ -251,7 +254,7 @@ func take_hit(raw: float, from_dir: Vector2, crit: bool, src := "") -> void:
 		return
 	if src != "":
 		last_hit = src
-	var dmg: float = App.bal.apply_defense(raw, App.prog.gear_def())
+	var dmg: float = App.bal.apply_defense(raw, App.prog.gear_def() + App.prog.skill_def())
 	if crit:
 		dmg *= App.bal.crit_mult
 	hp = maxf(0.0, hp - dmg)
@@ -262,7 +265,7 @@ func take_hit(raw: float, from_dir: Vector2, crit: bool, src := "") -> void:
 	stop_gather()
 	if App.tel:
 		App.tel.note_damage_taken(dmg, hp, max_hp)
-	App.prog.add_run_xp("def", 0.4)
+	App.prog.add_run_xp("def", App.bal.xp_def_hit)
 	if hp <= 0.0:
 		_player_die()
 
@@ -277,7 +280,7 @@ func _player_die() -> void:
 
 func heal(amount: float) -> void:
 	if amount > 0.0 and hp < max_hp:
-		App.prog.add_run_xp("hp", 0.15)
+		App.prog.add_run_xp("hp", App.bal.xp_hp_heal)
 	hp = minf(max_hp, hp + amount)
 
 
@@ -650,7 +653,7 @@ func _special_point() -> Vector3:
 
 func _apply_basic() -> void:
 	if App.weapon == "longbow":
-		_spawn_arrow(aim_dir, App.bal.bow_damage, App.bal.bow_range, App.bal.bow_proj_speed, App.bal.bow_los)
+		_spawn_arrow(aim_dir, _scaled_dmg(App.bal.bow_damage, false), App.bal.bow_range, App.bal.bow_proj_speed, App.bal.bow_los)
 		App.sfx("bow")
 		return
 	var rng: float = App.bal.axe_range
@@ -671,12 +674,12 @@ func _apply_basic() -> void:
 func _apply_special() -> void:
 	if App.weapon == "great_axe":
 		App.sfx("slam")
-		_hit_circle(global_position, App.bal.slam_radius, App.bal.axe_damage * App.bal.axe_slam_mult, false, true)
+		_hit_circle(global_position, App.bal.slam_radius, App.bal.axe_damage * App.bal.axe_slam_mult, false, true, "auto", true)
 		_fx("res://assets/fx/crack.png", global_position, 2.4, false)
 		return
 	if App.weapon == "staff":
 		App.sfx("bolt")
-		_hit_circle(spec_point, App.bal.staff_special_radius, App.bal.staff_special_damage, false, false, "magic")
+		_hit_circle(spec_point, App.bal.staff_special_radius, App.bal.staff_special_damage, false, false, "magic", true)
 		_fx("res://assets/fx/lightning.png", spec_point, 2.6, true)
 		return
 	App.sfx("bow")
@@ -687,7 +690,7 @@ func _apply_special() -> void:
 		var t := 0.0 if n <= 1 else (float(i) / float(n - 1)) - 0.5
 		var a := base + t * cone
 		var d := Vector2(cos(a), sin(a))
-		_spawn_arrow(d, App.bal.bow_special_damage, App.bal.bow_special_range, App.bal.bow_proj_speed, App.bal.bow_los)
+		_spawn_arrow(d, _scaled_dmg(App.bal.bow_special_damage, true), App.bal.bow_special_range, App.bal.bow_proj_speed, App.bal.bow_los)
 
 
 func _hit_arc(rng: float, arc: float, dmg: float, need_los: bool, stagger: bool) -> void:
@@ -701,11 +704,11 @@ func _hit_arc(rng: float, arc: float, dmg: float, need_los: bool, stagger: bool)
 			continue
 		if need_los and not Combat.los(global_position, p, get_world_3d()):
 			continue
-		_damage_enemy(e, dmg, stagger, "auto")
+		_damage_enemy(e, dmg, stagger, "auto", false)
 	_hit_breakables_arc(rng, arc, dmg, need_los)
 
 
-func _hit_circle(origin: Vector3, radius: float, dmg: float, need_los: bool, stagger: bool, xp := "auto") -> void:
+func _hit_circle(origin: Vector3, radius: float, dmg: float, need_los: bool, stagger: bool, xp := "auto", is_special := false) -> void:
 	for e in Combat.enemies():
 		if e == null or not is_instance_valid(e):
 			continue
@@ -716,12 +719,21 @@ func _hit_circle(origin: Vector3, radius: float, dmg: float, need_los: bool, sta
 			continue
 		if need_los and not Combat.los(origin, p, get_world_3d()):
 			continue
-		_damage_enemy(e, dmg, stagger, xp)
+		_damage_enemy(e, dmg, stagger, xp, is_special)
 	_hit_breakables_circle(origin, radius, dmg, need_los)
 
 
-func _damage_enemy(e: Node, dmg: float, stagger: bool, xp := "auto") -> void:
-	dmg += App.prog.gear_dmg()
+func _scaled_dmg(base: float, is_special: bool) -> float:
+	var d: float = base * App.prog.skill_dmg_mult(is_special) + App.prog.gear_dmg()
+	if App.shrine_t > 0.0:
+		d *= 1.0 + App.bal.shrine_dmg
+	return d
+
+
+func _damage_enemy(e: Node, dmg: float, stagger: bool, xp := "auto", is_special := false) -> void:
+	if xp == "magic":
+		is_special = true
+	dmg = dmg * App.prog.skill_dmg_mult(is_special) + App.prog.gear_dmg()
 	if App.shrine_t > 0.0:
 		dmg *= 1.0 + App.bal.shrine_dmg
 	_grant_hit_xp(xp)
@@ -751,17 +763,13 @@ func _grant_hit_xp(xp: String) -> void:
 		else:
 			mode = "melee_axe"
 	if mode == "magic":
-		App.prog.add_run_xp("staff", 1.2)
-		App.prog.add_run_xp("mag", 0.8)
+		App.prog.skill_grant_hit(true)
 	elif mode == "ranged":
-		App.prog.add_run_xp("bow", 1.2)
-		App.prog.add_run_xp("rng", 0.8)
+		App.prog.skill_grant_hit(false)
 	elif mode == "melee_staff":
-		App.prog.add_run_xp("staff", 1.2)
-		App.prog.add_run_xp("str", 0.8)
+		App.prog.skill_grant_hit(false)
 	else:
-		App.prog.add_run_xp("axe", 1.2)
-		App.prog.add_run_xp("str", 0.8)
+		App.prog.skill_grant_hit(false)
 
 
 func _hit_breakables_arc(rng: float, arc: float, dmg: float, need_los: bool) -> void:
@@ -797,7 +805,7 @@ func _spawn_arrow(dir: Vector2, dmg: float, rng: float, spd: float, need_los: bo
 		host.add_child(p)
 	else:
 		add_child(p)
-	var crit := Combat.roll_crit(App.bal.crit_chance)
+	var crit := Combat.roll_crit(App.bal.crit_chance + float(App.prog.set_stats().crit))
 	p.setup(global_position, dir, spd, rng, dmg, need_los, crit, false, "", true)
 
 

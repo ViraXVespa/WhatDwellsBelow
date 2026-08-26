@@ -96,8 +96,7 @@ func _physics_process(delta: float) -> void:
 
 func _hit(e: Node) -> void:
 	if grant_xp:
-		App.prog.add_run_xp("bow", 1.2)
-		App.prog.add_run_xp("rng", 0.8)
+		App.prog.skill_grant_hit(false)
 	if e.has_method("take_hit"):
 		e.take_hit(damage, dir, crit)
 	if grant_xp and App.tel:
