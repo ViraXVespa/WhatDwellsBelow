@@ -421,8 +421,8 @@ func _ai_or_vec(which: String) -> Vector2:
 			if m.length() > 0.01:
 				return m
 	if which == "aim":
-		return Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
-	return Input.get_vector("move_left", "move_right", "move_up", "move_down")
+		return App.pad_aim()
+	return App.pad_move()
 
 
 func _ai_just(action: String) -> bool:
