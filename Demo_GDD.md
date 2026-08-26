@@ -1,5 +1,5 @@
 **Grok Build Contract (Read First)**  
-**Version**: 1.6 – Archive-then-Clean-Rewrite (Grok Build Optimized + Gated Phases + Agent Protocol)  
+**Version**: 1.7 – Archive-then-Clean-Rewrite (Telemetry Cap + Animation Browser + Integrated Autoplay)  
 **Authority**: This document is the single source of truth.
 
 ### Agent Execution Protocol (Mandatory for Every Grok Build Instance)
@@ -46,6 +46,8 @@ On multi-session or compacted runs, re-affirm the Hard Constraints and current p
 - Consistent 60 FPS minimum on target hardware.
 - No systems, skills, rarities, hub upgrades, or meta-progression beyond what this document explicitly requires.
 - The secret debug menu (including Save/Load profiles, Automated Playtest / AI Player system with weapon-balance awareness, telemetry, impact coefficients, baseline coefficients, and recommended configurations) MUST ship but remains hidden behind the documented input sequence.
+- The Automated Playtest / AI Player system exists so simulation, telemetry hooks, and recommended-config application are implemented *inside* the same live systems the player uses (combat, inventory, extraction, save, debug values). It is an integration requirement, not a parallel “AI game.” Keep programmatic impact low: one code path wherever practical.
+- The Animation Browser is a shipping debug page. Its *controls* MUST exist in the secret debug menu from the first debug-menu implementation (Phase 7). The *full viewer* is a late-stage (Phase 9) Demo-Complete item and MUST ship in the final product.
 
 **Global rule**: Unless otherwise noted, all numeric values, formulas, rates, ranges, timings, and scaling are fully tunable via the secret debug menu and treated as non-final starting points. MAY invent coherent values freely within the Variation Philosophy.
 
@@ -70,6 +72,8 @@ A build meets the contract only when **all** of the following are true:
 - White / green / blue rarity only (blue is boss-only).
 - Player animations use exactly 8 directions with full male/female parity and separate female VOs.
 - Secret debug menu (including Medium-bar Automated Playtest) ships but remains hidden.
+- Automated Playtest Medium bar ships, hidden behind the documented sequence, using the capped telemetry set in Section 13 (no open-ended analytics product).
+- Secret debug menu includes a focusable Animation Browser entry from Phase 7 onward, and the full Animation Browser viewer ships by Demo-Complete (Phase 9).
 - Every shipping system is Production / Gold quality and fully exposed to the debug menu.
 - Consistent 60 FPS minimum.
 - Solo play only; no co-op scaffolding.
@@ -81,6 +85,8 @@ A build meets the contract only when **all** of the following are true:
 - Section 20 governs Archives isolation and MUST be obeyed.
 - The public repository supplies reusable assets and the Archives infrastructure. It is **not** a code base to extend for the live path.
 - The secret debug / Automated Playtest system is a shipping feature (behind the input sequence) and MUST be implemented to production quality.
+- Automated Playtest is specified so its hooks live in base systems from the start and do not have to be retrofitted. Implement only the telemetry listed in Section 13 unless a Medium-bar recommendation cannot be computed without a closely related field.
+- The Animation Browser is specified early so its menu entry, label, and gamepad focus exist when the secret debug menu is first built. Full viewer behavior is a late-stage implementation task, not an early-phase blocker, but it is required for Demo-Complete.
 - All previously open design questions are closed. Do not invent additional systems or reopen settled decisions.
 
 **Variation Philosophy**  
@@ -132,7 +138,7 @@ A complete, production-ready vertical slice that can ship as a free demo. Every 
 - Named monsters, enemy bases, and expanded enemy variety (≥12 normal types, ≥5 types per floor)  
 - Quest system (3 random choices, 1 active at a time)  
 - Full HUD, pause menu (with System tab containing aim-line controls), all interaction UIs, recap screen  
-- Secret debug / balance menu (shoulder-button sequence) containing all tunable values, profile Save/Load, and the Automated Playtest / AI Player system  
+- Secret debug / balance menu (shoulder-button sequence) containing all tunable values, profile Save/Load, the Automated Playtest / AI Player system, and the Animation Browser  
 - Save / load with backup, presentation switcher + Archives, 60 FPS minimum  
 - Debug menu that exposes every balance and generation value  
 - Gamepad-first design for all controls, gameplay, and interfaces (every menu opens with valid initial focus)
@@ -300,7 +306,7 @@ All player attacks (basic and special) MUST clearly telegraph their range and pr
 **Target-lock**  
 See Section 4 for full behavior.
 
-Floating damage numbers show integer values only, appear briefly, then disappear.  
+Floating damage numbers show integer values only, appear briefly, then disappear.
 
 ### 7. Skills, XP, Progression & Combat Level
 **Skills Included in the Demo**  
@@ -451,7 +457,7 @@ All buildings MUST have actual depth and realistic 3D dimensions (not flat 2D sp
 - It MUST NOT be implemented as an interactable object or as floating text above a blank banner.
 
 **Hub Audio / Atmosphere**  
-Warm, slightly hopeful and lightly comedic stand-in music and ambient sound are acceptable until final assets. Lighting and mood MUST contrast with the darker dungeon.
+- Warm, slightly hopeful and lightly comedic stand-in music and ambient sound are acceptable until final assets. Lighting and mood MUST contrast with the darker dungeon.
 
 ### 10. Dungeon Generation & Floor Rules
 **Overall Structure**  
@@ -648,19 +654,74 @@ This menu contains:
 - Every previously available debug / balance page (all numeric values exposed and tunable)  
 - Debug profile Save / Load / Delete / Rename system (unlimited named profiles, free naming/renaming, saved to files by default, persist across live-path sessions)  
 - Automated Playtest / AI Player system (see dedicated subsection below)  
+- Animation Browser page (entry MUST exist when this menu is first implemented; full viewer MAY be a stub until Phase 9, and MUST be complete for Demo-Complete)  
 - All other content that was formerly under Pause → System that is not listed above
 
-**Automated Playtest / AI Player System (inside Secret Debug Menu)**  
+**Automated Playtest / AI Player System (inside Secret Debug Menu)**
+
+**Why this system is in the GDD**  
+The Automated Playtest system is included so its recording, simulation, and recommendation hooks are designed into the same code the player already runs. That keeps programmatic impact low: playtest actors should drive existing input, combat, inventory, extraction, recap, and save flows rather than a second parallel simulation. MUST NOT invent a separate “AI game” with its own combat, loot, or progression implementations.
 
 **Must-ship (Medium bar)**  
 The system MUST be able to:  
 - Run both the fresh-start save and the progressed save  
-- Collect the core telemetry (total gameplay time, time in vs. out of combat, near-death events, and additional metrics useful for balance)  
+- Collect **only** the capped telemetry set below  
 - Keep Great Axe, Lightning Staff, and Longbow roughly balanced  
-- Calculate per-variable impact coefficients  
+- Calculate per-variable impact coefficients from that set  
 - Offer three recommended configurations per save type (one most-ideal + two close alternatives) that the user can further edit before applying  
 
-**Full target (everything below is still required if time/compute allows, but the Medium bar above is the mandatory shipping floor)**  
+**Capped telemetry set (non-exhaustive on purpose)**  
+Implement the following. MAY add a small number of closely related fields if a Medium-bar recommendation cannot be computed without them. MUST NOT add heatmaps, session replay, input recordings, per-frame combat traces, per-projectile logs, exploration pathing maps, quest-step traces, artifact-set timelines, or any other open-ended analytics product.
+
+*A. Run outcome (one row per run)*  
+- End condition: extraction / death / Dispel / interrupted playtest  
+- Run duration  
+- Deepest floor reached  
+- Cycle index (which 5-floor loop)  
+- Starting weapon + tool type  
+- Character type (male / female)
+
+*B. Success-criterion proxies*  
+- Time to first clerk interaction  
+- Time to first successful extraction (fresh-start save only)  
+- Deaths / Dispels before first extraction (fresh-start)  
+- Recap XP-drain completed (bool)
+
+*C. Combat load*  
+- Time in combat vs out of combat  
+- Near-death events (HP crossed a tunable threshold; default ~20%)  
+- Damage dealt / damage taken  
+- Kills  
+- Player deaths attributed to role: Bruiser / Ranged / Tank / Guardian / Gate Master / other  
+- Dash uses; special (LT) uses  
+- Adrenaline Rush activations and uptime  
+- Crits landed (count only)
+
+*D. Weapon balance (required for Medium bar)*  
+Per weapon (Great Axe / Lightning Staff / Longbow), while that weapon was equipped:  
+- Time equipped  
+- Damage dealt  
+- Kills  
+- Deaths while equipped  
+- Specials used / specials that hit  
+
+*E. Gathering & economy (light)*  
+- Mining hits landed / successful reward rolls  
+- Woodcutting hits landed / successful reward rolls  
+- Time spent gathering  
+- Gold gained / gold extracted / gold lost on death  
+- Ore + wood extracted vs lost  
+- Ghost Shop purchases (count + gold spent)  
+- Forge actions this session (count only)
+
+*F. Playtest meta*  
+- Save type: fresh-start vs progressed  
+- Exact debug-variable configuration snapshot / hash used for that run  
+- Human run vs Automated Playtest run
+
+**Medium-bar shipping floor:** A–D + F, plus enough of E to detect whether gathering/economy is starving first-extraction. Impact coefficients and recommended configurations MUST be computed from this set.
+
+**Full target** (still required if time/compute allows; Medium bar remains the mandatory early shipping floor for the *playtest runner itself*):  
 - Replicates natural human gameplay as closely as practical, allowing intentional sub-optimality.  
 - Selects different loadouts at the start of runs; deep in-run equipment swapping is not required.  
 - Uses two completely independent save files (never the player’s normal save):  
@@ -668,13 +729,25 @@ The system MUST be able to:
   2. Progressed save – contains full progression in all eleven skills; can be reset to a fixed default progressed state.  
 - Weapon-aware: actively works to keep Great Axe, Lightning Staff, and Longbow balanced so no single weapon is clearly stronger.  
 - Records run history together with the exact variable configuration used.  
-- Collects comprehensive telemetry (baseline list generated by Grok Build at implementation; includes at minimum total gameplay time, time in vs. out of combat, near-death events, and additional metrics useful for balance).  
-- Calculates per-variable impact coefficients (breakdown of effect on every telemetry metric plus an overall difficulty value primarily tied to run duration) separately for the fresh-start and progressed saves.  
 - Ships with deduced baseline impact coefficients generated at build time; these are refined by real telemetry.  
 - Presents ideal values as fly-out information when a variable is highlighted: one ideal for the fresh-start save (tuned toward first-extraction goals) and one ideal for the progressed save (tuned toward later GDD constraints).  
-- Offers three recommended configurations per save type (one most-ideal to meet spec + two close alternatives). The player may further edit any recommended configuration before applying it. This flow is visible only inside the secret debug menu.  
 - Supports accelerated, background, and headless runs. Unlimited queued runs; any run is interruptible without loss of already-collected telemetry.  
 - The entire system ships in the public demo but remains hidden behind the secret input sequence.
+
+**Animation Browser (secret debug page)**  
+Purpose: let the User review player and enemy animation states so art and facing can be checked without playing a full run.
+
+**Phase rule**  
+- Phase 7: the Animation Browser control MUST exist in the secret debug menu. It MUST be labeled, gamepad-focusable, and reachable with the same tab/page navigation as other debug pages. A stub panel (“Animation Browser — implemented in Phase 9”) is acceptable.  
+- Phase 9 / Demo-Complete: the full viewer MUST ship. This is a vital development tool in the final product. It is deliberately *not* part of early build logic so sprite pipelines and combat can land first.
+
+**Full viewer requirements (Phase 9, Demo-Complete)**  
+- Browse player animations for both male and female characters.  
+- Browse enemy animations for every shipped enemy type (including Floor Guardians and Gate Master).  
+- Select animation state (idle, walk, attack, special, gather, death, dispel, and any other shipped state for that actor).  
+- Select facing among the eight Character Bible directions.  
+- Play / pause the selected clip on a readable preview.  
+- Exact layout, compare-two, frame scrubber, and bible-overlay details MAY be invented at implementation time so long as the browse + play requirements above are met and the page stays TV-readable and gamepad-first.
 
 **Extraction / Clerk UI**  
 - Opens on interact with any clerk.  
@@ -835,7 +908,7 @@ The three weapons (Great Axe, Lightning Staff, Longbow) MUST remain balanced wit
 **Polish Bar**  
 Every system that appears in the demo is considered production / Gold. No “temp” or “programmer art will do” exceptions are allowed for systems that ship. Placeholder assets are permitted only under the explicit policy in the Audio/Visual section and MUST be replaced before release.  
 
-The Automated Playtest / AI Player system (secret debug menu) exists to continuously generate telemetry and recommended configurations that help the demo meet the above targets.
+The Automated Playtest / AI Player system (secret debug menu) exists to generate telemetry and recommended configurations from the capped set in Section 13 so the demo can meet the targets above without a parallel simulation stack or an unbounded metrics product.
 
 ### 17. Edge Cases & Failure Modes
 **Dispel or Death on Floor 1 with Empty Bag**  
@@ -908,6 +981,8 @@ A fresh Grok Build instance MUST:
 - All player and enemy character art MUST follow the mandatory pipeline in Section 19.  
 - Male and female player characters with full animation parity, the three-weapon system, hit-based mining and woodcutting, eleven skills, blue rarity (boss-only), named monsters, enemy bases, quest system, artifact collections/sets, aim-line indicator, and gamepad-first UI with initial focus are mandatory.  
 - The secret debug menu (including profile Save/Load, Automated Playtest / AI Player system) MUST ship at production quality but remain hidden behind the documented shoulder-button sequence.  
+- Automated Playtest hooks MUST live in the same systems the player uses. Telemetry is limited to the Section 13 cap.  
+- Animation Browser controls belong in the first secret-debug implementation; the full viewer is required at Demo-Complete, not in early phases.  
 - Production / Gold quality is required for every system that ships. Placeholders are allowed only under the explicit policy in Section 14.
 
 **Gated Implementation Phases (Hard Blockers)**  
@@ -938,16 +1013,16 @@ Inventory, equipment (including tool type lock), forged holds, extraction/clerks
 *Exit criteria*: Full inventory/extraction/forge/quest/artifact loop works; eight sets with progressive bonuses. Report to User.
 
 **Phase 7 – UI & Debug**  
-Full HUD, pause menu (three tabs + character switch + aim-line controls), secret debug menu (profiles + Automated Playtest Medium bar), recap screen with XP drain sequence.  
-*Exit criteria*: All UI elements present, gamepad-first with initial focus, secret menu accessible only via sequence, Medium-bar Automated Playtest functional. Report to User.
+Full HUD, pause menu (three tabs + character switch + aim-line controls), secret debug menu (profiles + Automated Playtest Medium bar + Animation Browser *entry*), recap screen with XP drain sequence.  
+*Exit criteria*: All UI elements present, gamepad-first with initial focus, secret menu accessible only via sequence, Medium-bar Automated Playtest functional using the Section 13 telemetry cap, Animation Browser control present and focusable (stub allowed). Report to User.
 
 **Phase 8 – Persistence & Hub**  
 Save / load with backup + isolated save paths for archives and for the two autoplay saves. Placeholdia hub layout (buildings with real depth) and polish.  
 *Exit criteria*: Save/load + backup works; hub complete with all interactables and depth; Archives switcher functional. Report to User.
 
 **Phase 9 – Final Polish & Verification**  
-Final audio pass, placeholder replacement, Archives browser verification, full Demo-Complete Checklist self-audit, 60 FPS under load, Success Criterion simulation.  
-*Exit criteria*: Checklist fully satisfied; report final verification results to User and await confirmation before declaring complete.
+Final audio pass, placeholder replacement, Archives browser verification, full Animation Browser viewer, full Demo-Complete Checklist self-audit, 60 FPS under load, Success Criterion simulation.  
+*Exit criteria*: Checklist fully satisfied including the complete Animation Browser; report final verification results to User and await confirmation before declaring complete.
 
 ### 19. Mandatory Player Sprite & Paper-Doll Generation Pipeline
 This section is mandatory for any Grok Build instance.  
@@ -1219,6 +1294,24 @@ All other values (enemy stats, drop rates, forge costs, weapon-specific damage/r
 ## Appendix B – Demo-Complete Checklist (True Non-Negotiables)
 (Identical to the front-matter checklist for quick reference.)
 
+A build meets the contract only when **all** of the following are true:
+- The Success Criterion above is achieved on the clean live path.
+- Mandatory Workflow (archive-then-clean-rewrite) has been followed.
+- Live path shares no runtime code, scenes, scripts, or global state with any archived build.
+- Exactly the eleven skills listed in Section 7.
+- Exactly eight artifact sets (run-only).
+- Hit-based gathering for mining and woodcutting.
+- Repeating 5-floor structure with Floor Guardians (1–4) and Gate Master (5).
+- White / green / blue rarity only (blue is boss-only).
+- Player animations use exactly 8 directions with full male/female parity and separate female VOs.
+- Secret debug menu (including Medium-bar Automated Playtest) ships but remains hidden.
+- Automated Playtest Medium bar ships, hidden behind the documented sequence, using the capped telemetry set in Section 13 (no open-ended analytics product).
+- Secret debug menu includes a focusable Animation Browser entry from Phase 7 onward, and the full Animation Browser viewer ships by Demo-Complete (Phase 9).
+- Every shipping system is Production / Gold quality and fully exposed to the debug menu.
+- Consistent 60 FPS minimum.
+- Solo play only; no co-op scaffolding.
+- No systems, skills, rarities, hub upgrades, or meta-progression beyond what this document explicitly requires.
+
 ---
 
 ## Appendix C – Full Character Bible Prompt Template
@@ -1284,7 +1377,7 @@ All eight full-body figures must have identical proportions and silhouette heigh
 | Item pickup | |
 | UI click / confirm / cancel | |
 | Level-up | |
-| Adrenaline Rush start (warcry) | |
+| Adrenaline Rush start (warcry) | Separate male and female performances |
 | Adrenaline Rush loop (woosh / crackle) | |
 | Critical hit | |
 | Potion use | |
