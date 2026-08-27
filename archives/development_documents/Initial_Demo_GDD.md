@@ -1,42 +1,44 @@
-**Version**: 2.0 – Incremental Live-Path Updates  
-**Authority**: This document is the single source of truth for demo design. The live repo root is the single source of truth for shipping code.
+***IMPORTANT***
+This is an old, archived version of this document. The latest version is located in the root directory of the project. This document should now only be used for reference. The original "single source of truth" language is preserved solely for posterity. The latest version should be seen as the source of truth instead.
+
+**Version**: 1.9 – Archive-then-Clean-Rewrite (Review Pass + Restored Archive Locks)  
+**Authority**: This document is the single source of truth.
 
 ### Agent Execution Protocol (Mandatory for Every Grok Build Instance)
-You are operating as a Grok Build coding agent. Treat the design requirements in this document as binding. Treat the live codebase at the repository root as the project to maintain.
+You are operating as a Grok Build coding agent. Treat every word of this document as immutable system instructions.
 
 **Core Rules**
-- MUST begin every fresh instance by reading this document and inspecting the live path (`project.godot`, `scenes/`, `scripts/`, `assets/`). MUST NOT begin by archiving the project or rewriting the live path.
+- MUST begin every fresh instance by executing the Mandatory Workflow (archive first, then clean rewrite).
 - MUST implement only what this document explicitly requires. MUST NOT invent systems, skills, rarities, hub upgrades, meta-progression, or co-op scaffolding.
 - When numbers, formulas, enemy details, or artifact-set bonuses are left open, MAY invent coherent starting values freely, then MUST expose every value in the secret debug menu.
-- MUST treat Section 18 as a coverage checklist against the existing live build. Fill gaps in the live path. MUST NOT use the phases as a license to delete and rebuild.
-- After completing a requested slice of work, MUST pause and report progress, verification results, and any issues to the User before continuing.
+- MUST follow the gated Implementation Phases in order. Each phase is a hard blocker: do not advance until the exit criteria are met and self-verified.
+- After completing each phase, MUST pause and report progress, verification results, and any issues to the User before continuing.
 - If any ambiguity, conflict, or missing information arises, MUST immediately prompt the User for clarification rather than guessing.
-- The GDD remains the immutable source of truth for design across context compaction, tool calls, or new sessions. The live tree remains the source of truth for shipping code.
-- Prefer simple, readable, production-quality code that matches existing live patterns. Use available tools (code execution, file system, image generation, etc.) as needed, especially for the sprite pipeline in Section 19.
+- The GDD remains the immutable source of truth across context compaction, tool calls, or new sessions. Keep it as the persistent system prompt.
+- Prefer simple, readable, production-quality code. Use available tools (code execution, file system, image generation, etc.) as needed, especially for the sprite pipeline in Section 19.
 - Self-verify continuously against the Demo-Complete Checklist. Only declare the build complete when every item is satisfied.
 
 **Long-Running Behavior**  
-On multi-session or compacted runs, re-affirm the Hard Constraints and the current requested work before resuming. Never allow live-path code to share state with any archive. Do not “recover” a stale session by archiving or rewriting the live path.
+On multi-session or compacted runs, re-affirm the Hard Constraints and current phase before resuming work. Never allow live-path code to share state with any archive.
 
 ### Mandatory Workflow for Any Fresh Grok Build Instance
-1. **Orient on the live path**  
-   Read this GDD and the live tree at the repository root. Existing archives under `archives/` are historical snapshots only. `full_3d_pass` already captured the live path as it existed at the earlier GDD handover; that snapshot is done and frozen. Do not create, refresh, or overwrite `classic_2d`, `art_experiment`, or `full_3d_pass` unless the User explicitly orders a new archive.
+1. **Archive the current build first**  
+   Follow Section 20 exactly. Create a new fully standalone snapshot under `archives/` that captures the project state as it exists at the moment this GDD is handed over. Store this archive as its own Archives-browser entry with the id **`full_3d_pass`** (folder / switcher id `archives/full_3d_pass/` or equivalent; on-screen label **Full 3D Pass**). Do not overwrite `classic_2d` or `art_experiment`. `full_3d_pass` is the historical snapshot of the live path as it existed at GDD handover, before the clean rewrite. This snapshot becomes the next selectable build in the Archives browser / presentation switcher and is preserved as a historical museum piece. Do not modify the live path while creating the archive.  
+   **Verification (MUST)**: Launch the new archive independently and confirm it runs with zero live-path scenes, scripts, autoloads, or global state.
 
-2. **Change the live path in place**  
-   Implement the requested work by updating the current live scenes, scripts, autoloads, assets, and project settings.  
-   - MUST extend, patch, and reuse live scenes, scripts, and architectural decisions unless they contradict this GDD or the User's request.  
-   - MUST NOT replace the live tree with a greenfield rewrite.  
-   - MUST NOT copy archive scripts or scenes over live files as a default strategy.  
-   - The live path remains designed around the orthographic Camera3D system described in Section 4 (fixed ~–58° pitch, proper depth sorting that respects implied real-world positions, paper-doll sprites, readable 64×64 art, 8-directional facing, etc.).  
-   - Match surrounding style. When presenting a revised source file to the User, output the entire file and indent with tab characters.
+2. **Then rewrite the live path from scratch**  
+   After the archive is complete and verified as isolated, implement the entire playable demo as a clean new live codebase.  
+   - MUST NOT extend, patch, or carry forward the previous live code, scenes, scripts, or architectural decisions.  
+   - The previous pure-2D design philosophy and its accumulated compromises are retired.  
+   - The new live path MUST be designed from the ground up around the orthographic Camera3D system described in Section 4 (fixed ~–58° pitch, proper depth sorting that respects implied real-world positions, paper-doll sprites, readable 64×64 art, 8-directional facing, etc.).
 
 3. **Preserve the Archives system and presentation switcher**  
-   The presentation switcher (live / classic_2d / art_experiment) plus the Archives browser MUST ship. Selecting “Play” always launches the current live path.  
-   There are **four** selectable builds:  
-   - **live** — the current shipping path at the repo root  
+   The presentation switcher (live / classic_2d / art_experiment) plus the Archives browser MUST ship. Selecting “Play” always launches the new clean live path.  
+   After the Mandatory Workflow archive step there are **four** selectable builds:  
+   - **live** — the new clean rewrite  
    - **classic_2d** — existing isolated archive  
    - **art_experiment** — existing isolated archive  
-   - **full_3d_pass** — the standalone snapshot of the previous live path already stored under `archives/full_3d_pass/` (on-screen label **Full 3D Pass**)  
+   - **full_3d_pass** — the standalone snapshot of the previous live path created in step 1 (on-screen label **Full 3D Pass**)  
 
    classic_2d, art_experiment, and full_3d_pass remain completely isolated standalone snapshots per Section 20.
 
@@ -59,7 +61,7 @@ On multi-session or compacted runs, re-affirm the Hard Constraints and the curre
 **Global rule**: Unless otherwise noted, all numeric values, formulas, rates, ranges, timings, and scaling are fully tunable via the secret debug menu and treated as non-final starting points. MAY invent coherent values freely within the Variation Philosophy.
 
 ### Success Criterion
-A first-time player on a couch with a gamepad can reach a successful extraction in 5–10 minutes without external guidance, understand the core risk/reward of extraction vs. death, and experience the permanent progression feedback on the recap screen — all at stable 60 FPS — using only the current live path.
+A first-time player on a couch with a gamepad can reach a successful extraction in 5–10 minutes without external guidance, understand the core risk/reward of extraction vs. death, and experience the permanent progression feedback on the recap screen — all at stable 60 FPS — using only the new clean live path.
 
 **Concrete self-check proxies (MUST verify before final sign-off)**  
 - Simulated new-player path reaches extraction in ≤10 minutes under default settings.  
@@ -69,8 +71,8 @@ A first-time player on a couch with a gamepad can reach a successful extraction 
 
 ### Demo-Complete Checklist (True Non-Negotiables)
 A build meets the contract only when **all** of the following are true:
-- The Success Criterion above is achieved on the current live path.
-- Live path at repo root is the playable shipping build. Archives remain frozen snapshots.
+- The Success Criterion above is achieved on the clean live path.
+- Mandatory Workflow (archive-then-clean-rewrite) has been followed.
 - Live path shares no runtime code, scenes, scripts, or global state with any archived build.
 - Exactly the eleven skills listed in Section 7.
 - Exactly eight artifact sets (run-only).
@@ -87,17 +89,17 @@ A build meets the contract only when **all** of the following are true:
 - No systems, skills, rarities, hub upgrades, or meta-progression beyond what this document explicitly requires.
 
 ### How to Use This Document
-- Treat every requirement in Sections 1–17 and 19 as mandatory design intent for the current live implementation.
+- Treat every requirement in Sections 1–17 and 19 as mandatory design intent for the new live implementation.
 - Section 19 (sprite pipeline) is non-negotiable for all character art and includes post-generation viability analysis + video-fill fallback. Consult Appendix C and D on demand for full templates and reliability data.
-- Section 20 governs Archives isolation and MUST be obeyed. Existing archives are frozen; new archives are created only when the User explicitly requests one.
-- The public repository live path (`project.godot`, `scenes/`, `scripts/`, `assets/`) is the codebase to update. Archives under `archives/` are historical snapshots, not a source to overwrite the live path.
+- Section 20 governs Archives isolation and MUST be obeyed.
+- The public repository supplies reusable assets and the Archives infrastructure. It is **not** a code base to extend for the live path.
 - The secret debug / Automated Playtest system is a shipping feature (behind the input sequence) and MUST be implemented to production quality.
 - Automated Playtest is specified so its hooks live in base systems from the start and do not have to be retrofitted. Implement only the telemetry listed in Section 13 unless a Medium-bar recommendation cannot be computed without a closely related field.
 - The Animation Browser is specified early so its menu entry, label, and gamepad focus exist when the secret debug menu is first built. Full viewer behavior is a late-stage implementation task, not an early-phase blocker, but it is required for Demo-Complete.
 - All previously open design questions are closed. Do not invent additional systems or reopen settled decisions.
 
 **Variation Philosophy**  
-Numbers, exact formulas, enemy specifics, and artifact-set bonuses are deliberately left open so implementations can produce a varied but coherent result. Starting values in Appendix A are only suggested seeds.  
+Numbers, exact formulas, enemy specifics, and artifact-set bonuses are deliberately left open so each clean live build produces a varied but coherent first implementation. Starting values in Appendix A are only suggested seeds.  
 The secret debug menu and Automated Playtest system exist to drive rapid, data-driven tuning toward the Success Criterion and Design Pillars. Variation *within* the required systems is expected and desired.  
 Everything that is marked tunable or left for Grok to invent should be treated as a starting point that will be refined through the tuning tools.
 
@@ -173,7 +175,7 @@ A complete, production-ready vertical slice that can ship as a free demo. Every 
 5. Tone is light and slightly irreverent on the surface, serious in the depths, never grimdark.
 
 **Acceptance Criteria**  
-- A fresh Grok Build instance can continue and complete the demo from this document + the live repository path.  
+- A fresh Grok Build instance can recreate the entire demo from this document + the public repository.  
 - All numeric values are exposed in the debug menu and treated as tunable.  
 - The demo runs at a consistent 60 FPS (higher allowed) on target hardware.  
 - Every system that ships is considered production/Gold and will not be rewritten for the full game.  
@@ -224,7 +226,7 @@ No mandatory intro cutscene or long exposition is required. The player learns th
 - Depth sorting SHOULD respect implied real-world positions of the player, enemies, walls, and props. Arbitrary front/back popping MUST be avoided wherever possible, but perfect freedom from popping is not required.
 
 **Presentation Switcher**  
-The demo MUST ship with the existing presentation switcher (live / classic_2d / art_experiment) plus the Archives system. This is required for the Patreon development narrative. Selecting “Play” always launches the live path. The Archives browser also includes **`full_3d_pass`** (on-screen label **Full 3D Pass**), the isolated snapshot of the previous live path already stored under `archives/full_3d_pass/`. classic_2d, art_experiment, and full_3d_pass remain standalone archives per Section 20.
+The demo MUST ship with the existing presentation switcher (live / classic_2d / art_experiment) plus the Archives system. This is required for the Patreon development narrative. Selecting “Play” always launches the live path. The Archives browser also includes **`full_3d_pass`** (on-screen label **Full 3D Pass**), the isolated snapshot of the previous live path created at GDD handover. classic_2d, art_experiment, and full_3d_pass remain standalone archives per Section 20.
 
 **Input – Gamepad (Primary, Xbox Layout)**  
 - Left Stick: Movement  
@@ -524,7 +526,7 @@ All buildings MUST have actual depth and realistic 3D dimensions (not flat 2D sp
 
 **Map Generation**  
 Grid size, room count, room size ranges, and connection algorithm (MST + extra loops) are fully tunable.  
-Target: floors MUST feel expansive enough to support a 5–10 minute first successful extraction for a new player and longer skilled runs. Starting values should be chosen to achieve this feel on the Camera3D live path.
+Target: floors MUST feel expansive enough to support a 5–10 minute first successful extraction for a new player and longer skilled runs. Starting values should be chosen to achieve this feel on the new Camera3D live path.
 
 **Key Object Placement**  
 Placement rules and probabilities for crystal, stairs, clerks, mining nodes, wood nodes, breakables, shrine, campfire, ghost shop, puzzle elements, chests, and enemy bases are fully tunable.  
@@ -1107,24 +1109,20 @@ The Automated Playtest / AI Player system (secret debug menu) exists to generate
 
 ---
 
-### 18. Implementation Phases for Grok Build (Coverage Checklist)
+### 18. Implementation Phases for Grok Build (Hard-Gated)
 This document is the authoritative specification for the demo of *What Dwells Below*.
-
-The live path already exists. Phases below are a hard coverage list, not a license to delete and rebuild.
 
 A fresh Grok Build instance MUST:
 
-1. Read this GDD and the live tree. Do not archive or rewrite as a first action.  
-2. Confirm which phases the live path already satisfies.  
-3. Fill gaps in the live path until the requested work and the relevant exit criteria are met.  
-4. Stop and report to the User after the requested slice.
+1. First create a fully isolated archive of the current project state following the exact rules in Section 20, stored as **`full_3d_pass`** (on-screen label **Full 3D Pass**). This archive becomes the next selectable build in the Archives browser.  
+2. Then implement a clean, from-scratch live path that satisfies every requirement in this GDD.
 
 **Core Construction Rules**  
-- Work in the live path. MUST NOT archive-then-rewrite on a fresh instance. MUST NOT discard live scenes, scripts, autoloads, or architectural patterns to start over.  
-- Keep the live path designed around the orthographic Camera3D system (Section 4).  
+- The live path is a clean rewrite. MUST NOT extend, refactor, or reuse runtime code, scenes, scripts, autoloads, or architectural patterns from the pre-archive live codebase.  
+- Design the live path from the ground up around the orthographic Camera3D system (Section 4).  
 - The live path MUST never share runtime code, scenes, scripts, or global state with any archived build.  
 - Treat every numeric value as tunable and expose it in the secret debug menu.  
-- Prefer simple, readable, production-quality implementations that match surrounding live code.  
+- Prefer simple, readable, production-quality implementations over clever legacy workarounds.  
 - All player and enemy character art MUST follow the mandatory pipeline in Section 19.  
 - Male and female player characters with full animation parity and complete peer voice-over sets, the three-weapon system, hit-based mining and woodcutting, eleven skills, blue rarity (boss-only), named monsters, enemy bases, quest system, artifact collections/sets, aim-line indicator, Controls Billboard, Floor Crystal loadout, idle/pressure spawns, food vs potion distinction, enter/wake VFX, and gamepad-first UI with initial focus are mandatory.  
 - The secret debug menu (including profile Save/Load, Automated Playtest / AI Player system) MUST ship at production quality but remain hidden behind the documented shoulder-button sequence.  
@@ -1133,11 +1131,11 @@ A fresh Grok Build instance MUST:
 - Player-facing UI MUST be dungeon-themed. Default / unskinned controls are allowed only in the secret debug menu.  
 - Production / Gold quality is required for every system that ships. Placeholders are allowed only under the explicit policy in Section 14.
 
-**Coverage Phases**  
-Use these to find gaps. Advance a requested slice only after its exit criteria are met, self-verified, and progress is reported to the User. Do not self-start an unrequested full-phase rebuild.
+**Gated Implementation Phases (Hard Blockers)**  
+Advance only after exit criteria are met, self-verified, and progress is reported to the User.
 
 **Phase 1 – Foundation**  
-Camera3D + input + basic player movement/animation states (Section 19 sprites, 8 directions) for both male and female characters on the existing live path.  
+New project scaffolding + Camera3D + input + basic player movement/animation states (Section 19 sprites, 8 directions) for both male and female characters.  
 *Exit criteria*: Player can move, face 8 directions, and idle/walk with Y-billboard at 60 FPS. Depth sorting SHOULD be correct under implied real-world positions, with popping avoided wherever possible. Report to User.
 
 **Phase 2 – Core Combat**  
@@ -1380,16 +1378,13 @@ This is the most reliable pipeline currently achievable with Grok Imagine and re
 The Archives system (classic_2d, art_experiment, full_3d_pass, and any future historical builds) exists solely to support the Patreon development narrative and let players experience the game **exactly as it was at specific points in development**.
 
 **Core Rule (Non-Negotiable):**  
-`archives/classic_2d/`, `archives/art_experiment/`, and `archives/full_3d_pass/` are immutable historical snapshots. The live path is the shipping game.
-
 Every archived build MUST be a **completely standalone, self-contained version of the game**.  
 
 - An archived build MUST NOT share runtime code, scenes, scripts, autoloads, or global state with the live (main) path.  
 - The live path MUST never be required to maintain compatibility with, or be limited by, any archived code.  
 - Conversely, loading an archived build MUST never pull in or be altered by any live/current code.  
-- Grok MUST NOT create, refresh, or overwrite those archives as a default first action. A new archive is allowed only when the User explicitly requests one.
 
-If either of the isolation rules is broken, the archive no longer represents the historical state and the live game becomes artificially constrained by legacy requirements. Both outcomes are forbidden.
+If either of the above occurs, the archive no longer represents the historical state and the live game becomes artificially constrained by legacy requirements. Both outcomes are forbidden.
 
 #### Technical Requirements
 1. **Isolation**  
@@ -1403,19 +1398,19 @@ If either of the isolation rules is broken, the archive no longer represents the
    - There is no “hybrid” mode in which live and archived systems run simultaneously or share state.
 
 3. **Creating a New Archive**  
-   - Create a new historical snapshot only when the User explicitly requests one:  
+   - To create a new historical snapshot:  
      1. Freeze the current live project state.  
      2. Copy the entire relevant project contents into a new dated or named folder under `archives/`.  
      3. Remove any live-only systems that did not exist at that point in time.  
      4. Verify the archived build runs completely independently and produces the exact experience of that moment.  
-   - Do not overwrite `classic_2d`, `art_experiment`, or `full_3d_pass`.  
-   - `full_3d_pass` (on-screen label **Full 3D Pass**) already exists and MUST remain the snapshot of the previous live path.  
+   - The archive created at the start of this GDD contract MUST use the id **`full_3d_pass`** (on-screen label **Full 3D Pass**) and MUST NOT overwrite `classic_2d` or `art_experiment`.  
+   - The newly created archive becomes the next selectable build in the Archives browser.  
    - Once archived, the snapshot is immutable. Future live changes MUST never be back-ported into it.  
-   **Verification (MUST)**: After creation of a User-requested archive, launch the archive independently and confirm zero shared runtime elements with the live path. Report result to User.
+   **Verification (MUST)**: After creation, launch the archive independently and confirm zero shared runtime elements with the live path. Report result to User.
 
 4. **Presentation Switcher Integration**  
    - The existing presentation switcher (live / classic_2d / art_experiment) plus the Archives browser remains.  
-   - classic_2d and art_experiment are treated as the first two archived builds. `full_3d_pass` is the third archived build (the previous live path at the earlier GDD handover). All three MUST obey the same standalone rules above.  
+   - classic_2d and art_experiment are treated as the first two archived builds. `full_3d_pass` is the third archived build (the previous live path at GDD handover). All three MUST obey the same standalone rules above.  
    - The switcher is only a launcher; it does not keep multiple versions loaded or share state.
 
 5. **Save Data**  
@@ -1440,18 +1435,18 @@ The Archives browser is accessed from the Pause Menu → System tab (or equivale
 - **Play** button  
   - Launches the selected archived build (subject to the isolation rules above).
 
-The list and info panel update dynamically when a new archive is added. The list MUST include at least classic_2d, art_experiment, and full_3d_pass (Full 3D Pass).
+The list and info panel update dynamically when a new archive is added. After the Mandatory Workflow archive step the list MUST include at least classic_2d, art_experiment, and full_3d_pass (Full 3D Pass).
 
 This policy guarantees two things simultaneously:  
 1. Players can experience the game exactly as it was at any archived moment.  
-2. The main development path remains free of legacy baggage from archived snapshots, while still being the path Grok updates in place.
+2. The main development path remains free of legacy baggage.
 
 Any future archived build MUST follow these rules from the moment it is created.
 
 ---
 
 ## Appendix A – Suggested Starting Values (All Tunable via Debug Menu)
-These are recommended starting points for the current live implementation.  
+These are recommended starting points for the clean live implementation.  
 Every value **MUST** be exposed in the debug menu and treated as non-final. Consult on demand.
 
 ### Movement & Combat
@@ -1516,8 +1511,8 @@ All other values (enemy stats, drop rates, forge costs, weapon-specific damage/r
 (Identical to the front-matter checklist for quick reference.)
 
 A build meets the contract only when **all** of the following are true:
-- The Success Criterion above is achieved on the current live path.
-- Live path at repo root is the playable shipping build. Archives remain frozen snapshots.
+- The Success Criterion above is achieved on the clean live path.
+- Mandatory Workflow (archive-then-clean-rewrite) has been followed.
 - Live path shares no runtime code, scenes, scripts, or global state with any archived build.
 - Exactly the eleven skills listed in Section 7.
 - Exactly eight artifact sets (run-only).
