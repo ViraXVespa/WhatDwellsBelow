@@ -252,6 +252,7 @@ func take_hit(raw: float, from_dir: Vector2, crit: bool) -> void:
 	else:
 		flash = 0.08
 	hp = maxf(0.0, hp - dmg)
+	(load("res://scripts/combat/hp_bar.gd") as GDScript).pulse(self, hp, max_hp)
 	knock = Vector3(from_dir.x, 0.0, from_dir.y) * App.bal.knockback
 	knock_t = 0.12
 	_float(int(round(dmg)), crit)

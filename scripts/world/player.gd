@@ -55,6 +55,8 @@ var exit_t := 0.0
 var exit_cond := ""
 var exit_killer := ""
 var last_hit := ""
+var interact_lock := 0.0
+var ui_latch := false
 
 
 func _ready() -> void:
@@ -190,6 +192,31 @@ func _physics_process(delta: float) -> void:
 		_tick_exit(delta)
 		return
 	_cooldowns(delta)
+	if App.ui_open:
+		ui_latch = true
+		stop_gather()
+		atk_state = ATK_NONE
+		dash_t = 0.0
+		special_held = _ai_held("special") or App.pad_held("special")
+		velocity = Vector3.ZERO
+		move_and_slide()
+		global_position.y = 0.0
+		if body:
+			Depth.apply(body, global_position)
+		_apply_facing(delta)
+		if telegraph:
+			telegraph.hide_now()
+		if rig and rig.has_method("follow"):
+			rig.follow(global_position)
+		return
+	var close_block := false
+	if ui_latch:
+		ui_latch = false
+		close_block = true
+		interact_lock = maxf(interact_lock, 0.2)
+		special_held = _ai_held("special") or App.pad_held("special")
+		if App.has_method("swallow_close_pad"):
+			App.swallow_close_pad()
 	var move := _ai_or_vec("move")
 	if gathering != null:
 		_tick_gather(delta, move)
@@ -204,9 +231,10 @@ func _physics_process(delta: float) -> void:
 				rig.follow(global_position)
 			return
 	_lock_and_aim(move, delta)
-	_try_special()
-	_try_basic()
-	_try_dash(move)
+	if not close_block:
+		_try_special()
+		_try_basic()
+		_try_dash(move)
 	var spd: float = App.bal.move_speed * (1.0 + float(App.prog.set_stats().spd))
 	if App.adrenaline:
 		spd *= App.bal.adrenaline_speed
@@ -236,12 +264,13 @@ func _physics_process(delta: float) -> void:
 	if rig and rig.has_method("follow"):
 		rig.follow(global_position)
 	_refresh_prompt()
-	if _ai_just("interact") or App.pad_just("interact"):
-		_try_interact()
-	if _ai_just("potion") or App.pad_just("potion"):
-		App.prog.use_potion()
-	if _ai_just("food") or App.pad_just("food"):
-		App.prog.use_food()
+	if not close_block:
+		if _ai_just("interact") or App.pad_just("interact"):
+			_try_interact()
+		if _ai_just("potion") or App.pad_just("potion"):
+			App.prog.use_potion()
+		if _ai_just("food") or App.pad_just("food"):
+			App.prog.use_food()
 
 
 func is_alive() -> bool:
@@ -378,6 +407,8 @@ func _refresh_prompt() -> void:
 
 
 func _try_interact() -> void:
+	if App.ui_open or interact_lock > 0.0:
+		return
 	var best: Node = null
 	var best_d := 1.25
 	for n in get_tree().get_nodes_in_group("interact"):
@@ -396,6 +427,7 @@ func _try_interact() -> void:
 func _cooldowns(delta: float) -> void:
 	dash_cd = maxf(0.0, dash_cd - delta)
 	iframe = maxf(0.0, iframe - delta)
+	interact_lock = maxf(0.0, interact_lock - delta)
 	if dash_t > 0.0:
 		dash_t = maxf(0.0, dash_t - delta)
 		iframe = maxf(iframe, dash_t)
@@ -506,19 +538,16 @@ func _nearest(exclude: Node, dir: Vector2) -> Node:
 
 func _update_aim(move: Vector2) -> void:
 	var stick := _ai_or_vec("aim")
-	if stick.length() > 0.28:
+	if stick.length() >= 0.24:
 		aim_dir = stick.normalized()
 		return
-	if (not _ai_on()) and rig:
-		var mouse_aim: Vector2 = rig.mouse_aim(global_position)
-		if mouse_aim.length() > 0.2:
-			aim_dir = mouse_aim
-			return
-	if _ai_on() and move.length() > 0.2:
+	if move.length() >= 0.12:
 		aim_dir = move.normalized()
 
 
 func _try_dash(move: Vector2) -> void:
+	if App.ui_open or interact_lock > 0.0:
+		return
 	if dash_t > 0.0:
 		return
 	if not (_ai_just("dash") or App.pad_just("dash")):
@@ -538,6 +567,9 @@ func _try_dash(move: Vector2) -> void:
 
 
 func _try_special() -> void:
+	if App.ui_open:
+		special_held = _ai_held("special") or App.pad_held("special")
+		return
 	var held := _ai_held("special") or App.pad_held("special")
 	var pressed := held and not special_held
 	special_held = held
@@ -555,6 +587,8 @@ func _try_special() -> void:
 
 
 func _try_basic() -> void:
+	if App.ui_open:
+		return
 	if atk_state != ATK_NONE or dash_t > 0.0:
 		return
 	if not (_ai_held("attack") or App.pad_held("attack")):

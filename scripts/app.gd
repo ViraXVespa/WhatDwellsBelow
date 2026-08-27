@@ -780,14 +780,33 @@ func pad_just(action: String) -> bool:
 	return bool(_pad_edge.get(action, false))
 
 
+func swallow_close_pad() -> void:
+	# B closes windows and is also dash. Eat the press and the held-through
+	# release so closing a window never starts a dash (or other combat input).
+	for action in ["dash", "attack", "special", "interact", "potion", "food", "target_lock"]:
+		_pad_edge[action] = false
+		_pad_was[action] = true
+
+
+func _pad_blocked(action: String) -> bool:
+	if not ui_open:
+		return false
+	return action in ["dash", "attack", "special", "interact", "potion", "food", "target_lock"]
+
+
 func _pad_tick() -> void:
 	_pad_edge.clear()
 	var names: Array = PAD.keys()
 	names.append_array(["attack", "special"])
 	for action in names:
-		var now := pad_held(str(action))
-		_pad_edge[action] = now and not bool(_pad_was.get(action, false))
-		_pad_was[action] = now
+		var key := str(action)
+		var now := pad_held(key)
+		if _pad_blocked(key):
+			_pad_edge[key] = false
+		else:
+			_pad_edge[key] = now and not bool(_pad_was.get(key, false))
+		_pad_was[key] = now
+
 
 func web_buttons() -> PackedFloat32Array:
 	if not OS.has_feature("web"):

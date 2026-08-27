@@ -6,6 +6,11 @@ const SpotS := preload("res://scripts/world/interact.gd")
 const UiS := preload("res://scripts/ui/progress_ui.gd")
 const StoreS := preload("res://scripts/data/save_store.gd")
 
+const GROUND_W := 36
+const GROUND_D := 32
+const GROUND_OX := -2
+const GROUND_OZ := -2
+
 var player: CharacterBody3D
 var ui: CanvasLayer
 var hint: Label
@@ -81,27 +86,65 @@ func _world() -> void:
 
 func _ground() -> void:
 	var body := StaticBody3D.new()
+	body.name = "Ground"
 	body.collision_layer = 1
 	add_child(body)
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = Vector3(36.0, 0.4, 32.0)
+	sh.size = Vector3(float(GROUND_W), 0.4, float(GROUND_D))
 	cs.shape = sh
 	cs.position = Vector3(16.0, -0.2, 14.0)
 	body.add_child(cs)
-	var vis := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(36.0, 0.08, 32.0)
-	vis.mesh = box
-	vis.position = Vector3(16.0, -0.02, 14.0)
+	var grass: Array = []
+	var packed_a: Array = []
+	var packed_b: Array = []
+	var path: Array = []
+	for z in GROUND_D:
+		for x in GROUND_W:
+			var gx := GROUND_OX + x
+			var gz := GROUND_OZ + z
+			var pos := Vector3(float(gx) + 0.5, T.FLOOR_Y, float(gz) + 0.5)
+			var in_yard := gx >= 2 and gx <= 30 and gz >= 4 and gz <= 24
+			var on_path := (gz >= 13 and gz <= 16 and gx >= 6 and gx <= 26) or (gx >= 15 and gx <= 17 and gz >= 8 and gz <= 22)
+			if not in_yard:
+				grass.append(pos)
+			elif on_path:
+				path.append(pos)
+			elif (gx * 3 + gz) % 7 == 0:
+				packed_b.append(pos)
+			else:
+				packed_a.append(pos)
+	_tile_layer("res://assets/tiles/plaza_grass.png", grass, Color(0.34, 0.46, 0.24))
+	_tile_layer("res://assets/tiles/plaza_ground.png", packed_a, Color(0.46, 0.42, 0.30))
+	_tile_layer("res://assets/tiles/plaza_ground_b.png", packed_b, Color(0.40, 0.36, 0.26))
+	_tile_layer("res://assets/tiles/plaza_ground_b.png", path, Color(0.38, 0.34, 0.24))
+
+
+func _tile_layer(tex_path: String, points: Array, fallback: Color) -> void:
+	if points.is_empty():
+		return
+	var mesh := PlaneMesh.new()
+	mesh.size = Vector2(T.TILE, T.TILE)
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = mesh
+	mm.instance_count = points.size()
+	for i in points.size():
+		var xf := Transform3D.IDENTITY
+		xf.origin = points[i]
+		mm.set_instance_transform(i, xf)
+	var inst := MultiMeshInstance3D.new()
+	inst.multimesh = mm
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_color = Color(0.42, 0.48, 0.32)
-	if ResourceLoader.exists("res://assets/tiles/plaza_ground.png"):
-		mat.albedo_texture = load("res://assets/tiles/plaza_ground.png")
-		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	vis.material_override = mat
-	add_child(vis)
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	mat.albedo_color = Color.WHITE
+	if ResourceLoader.exists(tex_path):
+		mat.albedo_texture = load(tex_path)
+	else:
+		mat.albedo_color = fallback
+	inst.material_override = mat
+	add_child(inst)
 
 
 func _buildings() -> void:
@@ -394,7 +437,3 @@ func _smoke8() -> void:
 
 func _on_smoke_enter() -> void:
 	smoke_entered = true
-
-
-
-

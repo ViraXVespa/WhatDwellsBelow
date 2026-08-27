@@ -27,6 +27,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	dim.color = Color(0.04, 0.03, 0.02, 0.74)
 	add_child(dim)
 	var panel := ColorRect.new()
@@ -58,6 +59,10 @@ func close_ui() -> void:
 	forge_it = {}
 	App.ui_open = false
 	get_tree().paused = false
+	var p := get_tree().get_first_node_in_group("player")
+	if p:
+		p.set("interact_lock", 0.25)
+	App.swallow_close_pad()
 	App.wake_web_pad()
 
 
@@ -100,6 +105,10 @@ func open_extract(role: String) -> void:
 	pending = false
 	_rebuild_extract()
 	_show()
+
+
+func open_clerk(role: String) -> void:
+	open_extract(role)
 
 
 func open_shop(spot: Node) -> void:
@@ -696,13 +705,20 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not open:
 		return
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
 		if pending:
 			pending = false
 			pending_id = ""
 			App.sfx("ui_cancel")
 			_st("Cancelled.")
+		elif forge_t > 0.0:
+			forge_t = 0.0
+			forge_it = {}
+			App.sfx("ui_cancel")
+			_st("Forge cancelled.")
 		else:
 			App.sfx("ui_cancel")
 			close_ui()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("interact") or event.is_action_pressed("ui_accept"):
 		get_viewport().set_input_as_handled()

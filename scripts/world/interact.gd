@@ -161,6 +161,8 @@ func _title() -> String:
 
 
 func interact(who: Node) -> String:
+	if App.ui_open:
+		return ""
 	refresh()
 	if hidden:
 		return ""
