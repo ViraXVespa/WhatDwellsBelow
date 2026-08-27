@@ -1207,4 +1207,3 @@ func restock() -> String:
 	if msg == "":
 		return ""
 	return "The guild slips you a restock: " + msg
-

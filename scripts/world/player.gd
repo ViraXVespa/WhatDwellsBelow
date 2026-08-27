@@ -217,7 +217,8 @@ func _physics_process(delta: float) -> void:
 	if dash_t > 0.0:
 		var d := dash_dir if dash_dir.length_squared() > 0.0001 else (aim_dir if aim_dir.length_squared() > 0.0001 else Vector2.DOWN)
 		velocity = Vector3(d.x, 0.0, d.y) * App.bal.move_speed * App.bal.dash_speed_mult
-		_trail(delta)
+		if is_inside_tree():
+			_trail(delta)
 	else:
 		velocity = Vector3(move.x, 0.0, move.y) * spd
 	move_and_slide()
@@ -832,11 +833,18 @@ func _fx(path: String, pos: Vector3, h: float, ybill: bool) -> void:
 
 
 func _trail(delta: float) -> void:
+	if not is_inside_tree():
+		return
+	if body == null or not is_instance_valid(body) or not body.is_inside_tree():
+		return
+	if body.texture == null:
+		return
 	trail_acc += delta
 	if trail_acc < App.bal.trail_gap:
 		return
 	trail_acc = 0.0
-	if body == null or body.texture == null:
+	var host := get_parent()
+	if host == null or not is_instance_valid(host) or not host.is_inside_tree():
 		return
 	var g := Sprite3D.new()
 	g.texture = body.texture
@@ -847,10 +855,8 @@ func _trail(delta: float) -> void:
 	g.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	g.pixel_size = body.pixel_size
 	g.modulate = Color(0.45, 0.85, 1.0, 0.55)
+	host.add_child(g)
 	g.global_position = body.global_position
-	var host := get_parent()
-	if host:
-		host.add_child(g)
 	var tw := g.create_tween()
 	tw.tween_property(g, "modulate:a", 0.0, App.bal.trail_life)
 	tw.finished.connect(g.queue_free)
