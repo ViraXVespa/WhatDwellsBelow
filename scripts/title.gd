@@ -5,6 +5,7 @@ const T := preload("res://scripts/data/tunables.gd")
 var _busy := false
 var _archives_open := false
 
+
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -48,6 +49,7 @@ func _ready() -> void:
 	_wire_focus(play_a, play_b, archives)
 	call_deferred("_focus_first")
 
+
 func _wire_focus(play_a: Button, play_b: Button, archives: Button) -> void:
 	if play_a == null or archives == null:
 		return
@@ -84,10 +86,12 @@ func _wire_focus(play_a: Button, play_b: Button, archives: Button) -> void:
 	archives.focus_next = play_a.get_path()
 	archives.focus_previous = play_b.get_path()
 
+
 func _focus_first() -> void:
 	for n in find_children("*", "Button", true, false):
 		(n as Button).grab_focus()
 		return
+
 
 func _lab(text: String, size: int, col: Color) -> Label:
 	var l := Label.new()
@@ -102,6 +106,7 @@ func _lab(text: String, size: int, col: Color) -> Label:
 	l.focus_mode = Control.FOCUS_NONE
 	return l
 
+
 func _btn(text: String, cb: Callable) -> Button:
 	var ThemeS := load("res://scripts/ui/theme.gd")
 	var b: Button = ThemeS.btn(text, cb)
@@ -109,10 +114,12 @@ func _btn(text: String, cb: Callable) -> Button:
 	b.focus_mode = Control.FOCUS_ALL
 	return b
 
+
 func _process(_delta: float) -> void:
 	if _archives_open and (App.archives_ui == null or not bool(App.archives_ui.get("open"))):
 		_archives_open = false
 		_focus_first()
+
 
 func _unhandled_input(_event: InputEvent) -> void:
 	if _busy:
@@ -120,13 +127,18 @@ func _unhandled_input(_event: InputEvent) -> void:
 	if App.archives_ui and bool(App.archives_ui.get("open")):
 		return
 
+
 func _play(kind: String) -> void:
 	if _busy:
 		return
 	_busy = true
 	App.set_character(kind)
 	App.save_now()
-	App.go_camp()
+	if App.has_method("play_from_menu"):
+		App.play_from_menu()
+	else:
+		App.go_camp()
+
 
 func _open_archives() -> void:
 	if _busy:
@@ -134,6 +146,7 @@ func _open_archives() -> void:
 	_archives_open = true
 	if App.archives_ui and App.archives_ui.has_method("show_browser"):
 		App.archives_ui.show_browser()
+
 
 func _close_archives() -> void:
 	_archives_open = false

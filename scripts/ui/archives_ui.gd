@@ -179,8 +179,8 @@ func _play() -> void:
 	var e := _cur()
 	if e.is_empty():
 		return
-	hide_browser()
 	App.launch_archive(str(e.id))
+	hide_browser()
 
 
 func _docs_of(e: Dictionary) -> PackedStringArray:

@@ -14,6 +14,7 @@ const MusicS := preload("res://scripts/audio/music.gd")
 const AnimS := preload("res://scripts/debug/anim_browser.gd")
 const ArchS := preload("res://scripts/ui/archives_ui.gd")
 const PlayS := preload("res://scripts/debug/playtest.gd")
+const LoaderS := preload("res://scripts/ui/loader.gd")
 
 var character_type := "male"
 var character_chosen := false
@@ -68,6 +69,8 @@ var music
 var anim_browser
 var archives_ui
 var playtest
+var loader
+var _menu_loading := false
 var tel: TelS
 var wake_pending := false
 var saw_stairs := false
@@ -130,6 +133,8 @@ func _ready() -> void:
 	add_child(anim_browser)
 	archives_ui = ArchS.new()
 	add_child(archives_ui)
+	loader = LoaderS.new()
+	add_child(loader)
 	if not _phase_smoke():
 		Store.load_slot("live")
 	if "--wdb-debug" in OS.get_cmdline_user_args():
@@ -212,6 +217,123 @@ func go_camp() -> void:
 		music.play_hub()
 	get_tree().call_deferred("change_scene_to_file", CAMP_SCENE)
 	call_deferred("wake_web_pad")
+
+
+func play_from_menu() -> void:
+	if _menu_loading:
+		return
+	if playtest and bool(playtest.get("live_running")):
+		go_camp()
+		return
+	_menu_loading = true
+	_play_from_menu_async()
+
+
+func _play_from_menu_async() -> void:
+	if loader:
+		loader.begin("Placeholdia", "Gathering the square…")
+	await _preload_hub()
+	if loader:
+		loader.set_status("Raising Placeholdia…")
+		loader.set_progress(0.96)
+	go_camp()
+	ui_open = true
+	var guard := 0
+	while guard < 180:
+		guard += 1
+		var s := get_tree().current_scene
+		if s and str(s.scene_file_path).find("camp") >= 0 and s.is_node_ready():
+			break
+		await get_tree().process_frame
+	if loader:
+		loader.set_progress(1.0)
+		loader.set_status("The square holds.")
+		await get_tree().create_timer(0.12, true, false, true).timeout
+		loader.finish()
+	_menu_loading = false
+
+
+func _hub_preload_paths() -> PackedStringArray:
+	var paths := PackedStringArray([
+		CAMP_SCENE,
+		"res://scripts/world/camp.gd",
+		"res://scripts/world/player.gd",
+		"res://scripts/world/interact.gd",
+		"res://scripts/ui/progress_ui.gd",
+		"res://assets/tiles/plaza_grass.png",
+		"res://assets/tiles/plaza_ground.png",
+		"res://assets/tiles/plaza_ground_b.png",
+		"res://assets/sprites/buildings/guild.png",
+		"res://assets/sprites/buildings/guild_reception.png",
+		"res://assets/sprites/buildings/stall.png",
+		"res://assets/props/banner.png",
+		"res://assets/sprites/props/banner.png",
+		"res://assets/audio/music_hub.wav",
+	])
+	var kind := character_type if character_type in ["male", "female"] else "male"
+	var dirs := PackedStringArray(["up", "up_right", "right", "down_right", "down", "down_left", "left", "up_left"])
+	for d in dirs:
+		paths.append("res://assets/sprites/player/%s/idle_%s.png" % [kind, d])
+		for i in 4:
+			paths.append("res://assets/sprites/player/%s/walk_%s_%d.png" % [kind, d, i])
+	var out := PackedStringArray()
+	var seen := {}
+	for p in paths:
+		if seen.has(p):
+			continue
+		seen[p] = true
+		if ResourceLoader.exists(p):
+			out.append(p)
+	return out
+
+
+func _preload_hub() -> void:
+	var paths := _hub_preload_paths()
+	var n := paths.size()
+	if n <= 0:
+		if loader:
+			loader.set_progress(0.9)
+		return
+	var sub := not OS.has_feature("web")
+	for i in n:
+		var path := paths[i]
+		if loader:
+			loader.set_status(_hub_status_for(path))
+		var err := ResourceLoader.load_threaded_request(path, "", sub)
+		if err != OK:
+			if loader:
+				loader.set_progress(float(i + 1) / float(n) * 0.92)
+			continue
+		var guard := 0
+		while guard < 240:
+			guard += 1
+			var prog: Array = []
+			var st := ResourceLoader.load_threaded_get_status(path, prog)
+			var local := float(prog[0]) if prog.size() > 0 else 0.0
+			if loader:
+				loader.set_progress((float(i) + clampf(local, 0.0, 1.0)) / float(n) * 0.92)
+			if st == ResourceLoader.THREAD_LOAD_LOADED:
+				ResourceLoader.load_threaded_get(path)
+				break
+			if st == ResourceLoader.THREAD_LOAD_FAILED or st == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+				break
+			await get_tree().process_frame
+		if loader:
+			loader.set_progress(float(i + 1) / float(n) * 0.92)
+
+
+func _hub_status_for(path: String) -> String:
+	if path.ends_with("camp.tscn") or path.ends_with("camp.gd"):
+		return "Unfolding Placeholdia…"
+	if path.find("/player/") >= 0:
+		return "Waking a delver…"
+	if path.find("music_hub") >= 0:
+		return "Tuning the square…"
+	if path.find("buildings") >= 0 or path.find("banner") >= 0:
+		return "Raising the guild row…"
+	if path.find("tiles") >= 0:
+		return "Gathering the square…"
+	return "Crossing the veil…"
 
 
 func begin_run() -> void:
@@ -520,14 +642,42 @@ func _shoulders_up() -> bool:
 
 
 func launch_archive(id: String) -> void:
+	if _menu_loading:
+		return
+	_menu_loading = true
+	_launch_archive_async(id)
+
+
+func _archive_label(id: String) -> String:
+	for e in T.archive_catalog():
+		if str(e.get("id", "")) == id:
+			return str(e.get("label", id))
+	return id
+
+
+func _launch_archive_async(id: String) -> void:
 	## classic_2d / art_experiment have no project.godot; they live inside the frozen
 	## full_3d_pass snapshot and launch as that independent --path instance.
+	var heading := _archive_label(id)
+	if loader:
+		loader.begin(heading, "Opening snapshot…")
+		loader.set_progress(0.12)
 	var root := ProjectSettings.globalize_path("res://").trim_suffix("/")
 	var arch := root.path_join("archives").path_join("full_3d_pass")
 	if not DirAccess.dir_exists_absolute(arch):
 		push_warning("Archive missing: " + arch)
 		toast("Archive missing.")
+		if loader:
+			loader.set_status("Archive missing.")
+			loader.set_progress(1.0)
+			await get_tree().create_timer(0.35, true, false, true).timeout
+			loader.finish()
+		_menu_loading = false
 		return
+	if loader:
+		loader.set_status("Handing off the snapshot…")
+		loader.set_progress(0.62)
+	await get_tree().process_frame
 	var pres := "live"
 	if id == "classic_2d" or id == "art_experiment":
 		pres = id
@@ -536,6 +686,19 @@ func launch_archive(id: String) -> void:
 	if code == -1:
 		push_warning("Could not spawn archive process (web builds cannot).")
 		toast("Could not launch archive.")
+		if loader:
+			loader.set_status("Could not launch archive.")
+			loader.set_progress(1.0)
+			await get_tree().create_timer(0.45, true, false, true).timeout
+			loader.finish()
+		_menu_loading = false
+		return
+	if loader:
+		loader.set_status("Snapshot running.")
+		loader.set_progress(1.0)
+		await get_tree().create_timer(0.28, true, false, true).timeout
+		loader.finish()
+	_menu_loading = false
 
 
 const BIND_ACTIONS: PackedStringArray = [
