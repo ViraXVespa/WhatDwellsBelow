@@ -32,6 +32,140 @@ static func btn(t: String, cb: Callable, enabled := true) -> Button:
 	return b
 
 
+static func skill_row_sb(lit: bool) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	if lit:
+		s.bg_color = Color(0.26, 0.19, 0.12, 0.72)
+		s.border_color = Color(0.95, 0.78, 0.35)
+	else:
+		s.bg_color = Color(0.16, 0.12, 0.09, 0.18)
+		s.border_color = Color(0.32, 0.24, 0.16, 0.4)
+	s.set_border_width_all(2)
+	s.content_margin_left = 18
+	s.content_margin_right = 18
+	s.content_margin_top = 8
+	s.content_margin_bottom = 10
+	return s
+
+
+static func skill_row() -> PanelContainer:
+	var p := PanelContainer.new()
+	p.focus_mode = Control.FOCUS_ALL
+	p.mouse_filter = Control.MOUSE_FILTER_STOP
+	p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	p.custom_minimum_size = Vector2(0, 52)
+	p.add_theme_stylebox_override("panel", skill_row_sb(false))
+	return p
+
+
+static func skill_name(id: String) -> String:
+	match id:
+		"axe":
+			return "Great Axe"
+		"staff":
+			return "Staff"
+		"bow":
+			return "Longbow"
+		"str":
+			return "Strength"
+		"mag":
+			return "Magic"
+		"rng":
+			return "Ranged"
+		"def":
+			return "Defense"
+		"hp":
+			return "Hitpoints"
+		"mine":
+			return "Mining"
+		"wood":
+			return "Woodcutting"
+		"smith":
+			return "Smithing"
+	return id
+
+
+static func _pct(v: float) -> String:
+	return "%d%%" % int(round(v * 100.0))
+
+
+static func skill_tip(id: String, lv: int) -> String:
+	lv = maxi(1, lv)
+	var ranks := maxi(0, lv - 1)
+	var n := skill_name(id)
+	var wpn := float(App.bal.skill_dmg_weapon)
+	var sty := float(App.bal.skill_dmg_style)
+	var spec := float(App.bal.skill_special_bonus)
+	var now := ""
+	var per := ""
+	match id:
+		"axe":
+			if ranks <= 0:
+				now = "Now: no damage bonus yet."
+			else:
+				now = "Now: +%s Great Axe damage.\n	  +%s Great Axe special damage." % [_pct(ranks * wpn), _pct(ranks * spec)]
+			per = "Each level after 1: +%s Great Axe damage, +%s special damage." % [_pct(wpn), _pct(spec)]
+		"staff":
+			if ranks <= 0:
+				now = "Now: no damage bonus yet."
+			else:
+				now = "Now: +%s staff damage.\n	  +%s staff special damage." % [_pct(ranks * wpn), _pct(ranks * spec)]
+			per = "Each level after 1: +%s staff damage, +%s special damage." % [_pct(wpn), _pct(spec)]
+		"bow":
+			if ranks <= 0:
+				now = "Now: no damage bonus yet."
+			else:
+				now = "Now: +%s Longbow damage.\n	  +%s Longbow special damage." % [_pct(ranks * wpn), _pct(ranks * spec)]
+			per = "Each level after 1: +%s Longbow damage, +%s special damage." % [_pct(wpn), _pct(spec)]
+		"str":
+			if ranks <= 0:
+				now = "Now: no style bonus yet."
+			else:
+				now = "Now: +%s melee-style damage (Great Axe and staff melee)." % _pct(ranks * sty)
+			per = "Each level after 1: +%s style damage." % _pct(sty)
+		"mag":
+			if ranks <= 0:
+				now = "Now: no style bonus yet."
+			else:
+				now = "Now: +%s magic-style damage (staff special)." % _pct(ranks * sty)
+			per = "Each level after 1: +%s style damage." % _pct(sty)
+		"rng":
+			if ranks <= 0:
+				now = "Now: no style bonus yet."
+			else:
+				now = "Now: +%s ranged-style damage (Longbow)." % _pct(ranks * sty)
+			per = "Each level after 1: +%s style damage." % _pct(sty)
+		"def":
+			var dnow := float(ranks) * float(App.bal.skill_def_per_lv)
+			if ranks <= 0:
+				now = "Now: no defense bonus yet."
+			else:
+				now = "Now: +%.1f defense." % dnow
+			per = "Each level after 1: +%.1f defense." % float(App.bal.skill_def_per_lv)
+		"hp":
+			var hnow := int(round(float(ranks) * float(App.bal.skill_hp_per_lv)))
+			if ranks <= 0:
+				now = "Now: no Hitpoints bonus yet."
+			else:
+				now = "Now: +%d max HP." % hnow
+			per = "Each level after 1: +%d max HP." % int(round(float(App.bal.skill_hp_per_lv)))
+		"mine":
+			now = "Now: +%s mining success chance." % _pct(float(lv) * float(App.bal.skill_gather))
+			per = "Each level: +%s mining success chance." % _pct(float(App.bal.skill_gather))
+		"wood":
+			now = "Now: +%s woodcutting success chance." % _pct(float(lv) * float(App.bal.skill_gather))
+			per = "Each level: +%s woodcutting success chance." % _pct(float(App.bal.skill_gather))
+		"smith":
+			var speed := 1.0 + float(ranks) * 0.12
+			var extra := int(lv / 4)
+			now = "Now: forge cost −%dg −%d ore.\n	  Forge time ÷ %.2f.\n	  Forged weapons +%d extra damage." % [lv * 2, lv, speed, extra]
+			per = "Each level: −2g −1 ore on forge cost.\nEach level after 1: 12% faster forging.\nEvery 4 levels: +1 extra forged weapon damage."
+		_:
+			now = "Now: no listed bonus."
+			per = "No per-level bonus is defined."
+	return "%s  ·  Level %d\n\n%s\n\n%s" % [n, lv, now, per]
+
+
 static func bind_text(action: String) -> String:
 	if not InputMap.has_action(action):
 		return "(unbound)"

@@ -4,17 +4,37 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const CatalogS := preload("res://scripts/data/catalog.gd")
 const T := preload("res://scripts/data/tunables.gd")
 
+const SKILL_NAMES := {
+	"axe": "Great Axe",
+	"staff": "Staff",
+	"bow": "Longbow",
+	"str": "Strength",
+	"mag": "Magic",
+	"rng": "Ranged",
+	"def": "Defense",
+	"hp": "Hitpoints",
+	"mine": "Mining",
+	"wood": "Woodcutting",
+	"smith": "Smithing",
+}
+
 var open := false
 var tab := 0
 var box: VBoxContainer
 var tabs: HBoxContainer
+var scroll: ScrollContainer
 var status: Label
-var focus_btn: Button
+var focus_btn: Control
 var pending := false
 var pending_id := ""
 var pending_fn: Callable
 var rebind_action := ""
 var sys_page := "main"
+var tip_host: PanelContainer
+var tip_lab: Label
+var tip_id := ""
+var tip_kind := ""
+var tip_from: Control = null
 
 
 func _ready() -> void:
@@ -40,15 +60,36 @@ func _ready() -> void:
 	tabs.size = Vector2(1432, 56)
 	tabs.add_theme_constant_override("separation", 12)
 	add_child(tabs)
-	var scroll := ScrollContainer.new()
+	scroll = ScrollContainer.new()
 	scroll.position = Vector2(244, 128)
 	scroll.size = Vector2(1432, 880)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.focus_mode = Control.FOCUS_NONE
+	scroll.follow_focus = true
 	add_child(scroll)
 	box = VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.custom_minimum_size = Vector2(1400, 0)
 	box.add_theme_constant_override("separation", 8)
 	scroll.add_child(box)
+	_make_tip()
+
+
+func _make_tip() -> void:
+	tip_host = PanelContainer.new()
+	tip_host.visible = false
+	tip_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tip_host.z_index = 20
+	tip_host.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.09, 0.07, 0.05, 0.97), Color(0.85, 0.68, 0.32)))
+	tip_lab = Label.new()
+	tip_lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tip_lab.custom_minimum_size = Vector2(380, 0)
+	tip_lab.add_theme_font_size_override("font_size", 18)
+	tip_lab.add_theme_color_override("font_color", Color(0.93, 0.86, 0.72))
+	tip_lab.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
+	tip_lab.add_theme_constant_override("outline_size", 6)
+	tip_host.add_child(tip_lab)
+	add_child(tip_host)
 
 
 func toggle() -> void:
@@ -68,6 +109,7 @@ func show_menu() -> void:
 	pending = false
 	pending_id = ""
 	rebind_action = ""
+	_hide_tip()
 	_rebuild()
 
 
@@ -78,6 +120,7 @@ func close_ui() -> void:
 	pending_id = ""
 	rebind_action = ""
 	sys_page = "main"
+	_hide_tip()
 	App.ui_open = false
 	get_tree().paused = false
 	App.save_now()
@@ -86,6 +129,7 @@ func close_ui() -> void:
 
 
 func _rebuild() -> void:
+	_hide_tip()
 	for c in tabs.get_children():
 		c.queue_free()
 	for c in box.get_children():
@@ -168,44 +212,199 @@ func _inv() -> void:
 	box.add_child(ThemeS.btn("Close  (B)", close_ui))
 
 
+func _xp_span() -> float:
+	return maxf(1.0, App.bal.xp_level)
+
+
+func _xp_lv(total: float) -> int:
+	return 1 + int(total / _xp_span())
+
+
+func _xp_to_next(total: float) -> int:
+	var span := _xp_span()
+	var into := fmod(total, span)
+	if into <= 0.0001:
+		return int(round(span))
+	return int(round(span - into))
+
+
+func _xp_ratio(total: float) -> float:
+	return clampf(fmod(total, _xp_span()) / _xp_span(), 0.0, 1.0)
+
+
+func _skill_title(id: String) -> String:
+	return str(SKILL_NAMES.get(id, id))
+
+
+func _perm_line(id: String, perm: float) -> String:
+	return "%s Lv %d | Next Level: %dXP | Total XP: %dXP" % [
+		_skill_title(id),
+		_xp_lv(perm),
+		_xp_to_next(perm),
+		int(round(perm)),
+	]
+
+
+func _run_line(id: String, perm: float, runx: float) -> String:
+	var live := perm + runx
+	return "%s Lv %d | This Run: %dXP | Next Level: %dXP" % [
+		_skill_title(id),
+		_xp_lv(live),
+		int(round(runx)),
+		_xp_to_next(live),
+	]
+
+
+func _skill_lab(text: String, size := 16, col := Color(0.9, 0.84, 0.7)) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.autowrap_mode = TextServer.AUTOWRAP_OFF
+	l.clip_text = false
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.custom_minimum_size = Vector2(0, 22)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", col)
+	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
+	l.add_theme_constant_override("outline_size", 6)
+	return l
+
+
+func _xp_bar(ratio: float, fill_col: Color) -> ColorRect:
+	var track := ColorRect.new()
+	track.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	track.custom_minimum_size = Vector2(0, 16)
+	track.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	track.color = Color(0.18, 0.14, 0.1)
+	track.clip_contents = true
+	var fill := ColorRect.new()
+	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fill.color = fill_col
+	fill.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fill.anchor_right = clampf(ratio, 0.0, 1.0)
+	fill.offset_left = 0.0
+	fill.offset_top = 0.0
+	fill.offset_right = 0.0
+	fill.offset_bottom = 0.0
+	track.add_child(fill)
+	return track
+
+
+func _skill_block(id: String, kind: String, text: String, ratio: float, fill_col: Color) -> PanelContainer:
+	var wrap := ThemeS.skill_row()
+	var inner := VBoxContainer.new()
+	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inner.add_theme_constant_override("separation", 4)
+	inner.add_child(_skill_lab(text))
+	inner.add_child(_xp_bar(ratio, fill_col))
+	wrap.add_child(inner)
+	wrap.set_meta("skill_id", id)
+	wrap.set_meta("skill_kind", kind)
+	wrap.focus_entered.connect(_on_skill_focus.bind(id, kind, wrap))
+	wrap.mouse_entered.connect(_on_skill_focus.bind(id, kind, wrap))
+	wrap.focus_exited.connect(_on_skill_blur.bind(wrap))
+	wrap.mouse_exited.connect(_on_skill_blur.bind(wrap))
+	return wrap
+
+
+func _on_skill_focus(id: String, kind: String, from: Control) -> void:
+	if from is PanelContainer:
+		(from as PanelContainer).add_theme_stylebox_override("panel", ThemeS.skill_row_sb(true))
+	tip_id = id
+	tip_kind = kind
+	tip_from = from
+	_paint_tip()
+
+
+func _on_skill_blur(from: Control) -> void:
+	if from is PanelContainer and not from.has_focus():
+		(from as PanelContainer).add_theme_stylebox_override("panel", ThemeS.skill_row_sb(false))
+	call_deferred("_blur_tip")
+
+
+func _blur_tip() -> void:
+	var f := get_viewport().gui_get_focus_owner()
+	if f != null and f.has_meta("skill_id"):
+		return
+	_hide_tip()
+
+
+func _hide_tip() -> void:
+	tip_id = ""
+	tip_kind = ""
+	tip_from = null
+	if tip_host:
+		tip_host.visible = false
+
+
+func _tip_lv(id: String, kind: String) -> int:
+	var perm := float(App.prog.skills_perm.get(id, 0.0))
+	var runx := float(App.prog.skills_run.get(id, 0.0))
+	if kind == "run":
+		return _xp_lv(perm + runx)
+	return _xp_lv(perm)
+
+
+func _paint_tip() -> void:
+	if tip_id == "" or tip_from == null or not is_instance_valid(tip_from):
+		if tip_host:
+			tip_host.visible = false
+		return
+	tip_lab.text = ThemeS.skill_tip(tip_id, _tip_lv(tip_id, tip_kind))
+	var w := 404.0
+	tip_lab.custom_minimum_size = Vector2(w - 24.0, 0.0)
+	var h := maxf(80.0, tip_lab.get_minimum_size().y + 20.0)
+	tip_host.size = Vector2(w, h)
+	var r := tip_from.get_global_rect()
+	var pos := Vector2(r.position.x, r.position.y + r.size.y + 8.0)
+	if pos.y + h > 1060.0:
+		pos.y = r.position.y - h - 8.0
+	if pos.x + w > 1900.0:
+		pos.x = 1900.0 - w
+	if pos.x < 20.0:
+		pos.x = 20.0
+	tip_host.position = pos
+	tip_host.visible = true
+
+
 func _skills() -> void:
-	var names := {
-		"axe": "Great Axe",
-		"staff": "Staff",
-		"bow": "Longbow",
-		"str": "Strength",
-		"mag": "Magic",
-		"rng": "Ranged",
-		"def": "Defense",
-		"hp": "Hitpoints",
-		"mine": "Mining",
-		"wood": "Woodcutting",
-		"smith": "Smithing",
-	}
 	box.add_child(_cap("Combat Level %d" % App.prog.combat_lv(), 24, Color(0.95, 0.8, 0.45)))
-	var span := maxf(1.0, App.bal.xp_level)
-	for id in App.prog.SKILLS:
-		var wrap := VBoxContainer.new()
-		wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		wrap.add_theme_constant_override("separation", 4)
-		box.add_child(wrap)
-		var runx := float(App.prog.skills_run.get(id, 0.0))
-		var perm := float(App.prog.skills_perm.get(id, 0.0))
-		var lv := App.prog.skill_lv(id)
-		wrap.add_child(_cap("%s	Lv %d	run %.0f	perm %.0f" % [
-			names.get(id, id), lv, runx, perm
-		], 18, Color(0.9, 0.84, 0.7)))
-		var track := ColorRect.new()
-		track.custom_minimum_size = Vector2(720, 16)
-		track.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		track.color = Color(0.18, 0.14, 0.1)
-		wrap.add_child(track)
-		var fill := ColorRect.new()
-		var into := fmod(runx + perm, span)
-		fill.position = Vector2.ZERO
-		fill.size = Vector2(720.0 * clampf(into / span, 0.0, 1.0), 16)
-		fill.color = Color(0.72, 0.56, 0.28)
-		track.add_child(fill)
+	box.add_child(_cap("Highlight a skill for its bonuses.", 16, Color(0.78, 0.74, 0.66)))
+	var perm_col := Color(0.72, 0.56, 0.28)
+	var run_col := Color(0.86, 0.74, 0.32)
+	var first: PanelContainer = null
+	if App.in_dungeon:
+		var heads := HBoxContainer.new()
+		heads.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		heads.add_theme_constant_override("separation", 24)
+		heads.add_child(_skill_lab("Permanent", 18, Color(0.95, 0.8, 0.45)))
+		heads.add_child(_skill_lab("Dungeon XP", 18, Color(0.95, 0.8, 0.45)))
+		box.add_child(heads)
+		for id in App.prog.SKILLS:
+			var perm := float(App.prog.skills_perm.get(id, 0.0))
+			var runx := float(App.prog.skills_run.get(id, 0.0))
+			var row := HBoxContainer.new()
+			row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			row.add_theme_constant_override("separation", 24)
+			var left := _skill_block(id, "perm", _perm_line(id, perm), _xp_ratio(perm), perm_col)
+			var right := _skill_block(id, "run", _run_line(id, perm, runx), _xp_ratio(perm + runx), run_col)
+			row.add_child(left)
+			row.add_child(right)
+			box.add_child(row)
+			if first == null:
+				first = left
+	else:
+		for id in App.prog.SKILLS:
+			var perm := float(App.prog.skills_perm.get(id, 0.0))
+			var row := _skill_block(id, "perm", _perm_line(id, perm), _xp_ratio(perm), perm_col)
+			box.add_child(row)
+			if first == null:
+				first = row
+	if first:
+		focus_btn = first
 	box.add_child(ThemeS.btn("Close  (B)", close_ui))
 
 
