@@ -257,6 +257,43 @@ func add_item(it: Dictionary) -> bool:
 			slot_it.stack = int(slot_it.stack) + int(it.stack)
 			slots["potion"] = slot_it
 			return true
+	return add_to_bag(it)
+
+
+func _bag_stack_index(it: Dictionary) -> int:
+	var k := str(it.get("kind", ""))
+	if k != "potion" and k != "food":
+		return -1
+	for i in bag.size():
+		var b: Dictionary = bag[i]
+		if str(b.get("kind", "")) != k:
+			continue
+		if k == "food" and str(b.get("food", "")) != str(it.get("food", "")):
+			continue
+		return i
+	return -1
+
+
+func bag_can_accept(it: Dictionary) -> bool:
+	if it.is_empty():
+		return false
+	if _bag_stack_index(it) >= 0:
+		return true
+	return not bag_full()
+
+
+func add_to_bag(it: Dictionary) -> bool:
+	if it.is_empty():
+		return false
+	var idx := _bag_stack_index(it)
+	if idx >= 0:
+		var b: Dictionary = bag[idx]
+		var nxt := int(b.get("stack", 1)) + int(it.get("stack", 1))
+		if str(it.kind) == "food" and not App.in_dungeon:
+			nxt = mini(nxt, int(App.bal.food_bring_max))
+		b.stack = nxt
+		bag[idx] = b
+		return true
 	if bag_full():
 		App.toast("Bag full.")
 		return false
@@ -285,18 +322,22 @@ func equip_uid(uid: int) -> String:
 		return "Gone."
 	var slot := str(it.get("slot", ""))
 	if SLOTS.find(slot) < 0:
-		add_item(it)
+		add_to_bag(it)
 		return "Can't equip that."
 	if slot == "tool":
 		var t := str(it.get("tool", ""))
 		if t != "" and t != tool_type:
-			add_item(it)
+			add_to_bag(it)
 			return "Tool locked to %s this run." % tool_type
 	var cur: Dictionary = slots.get(slot, {})
 	if not cur.is_empty():
-		if not add_item(cur):
+		if not bag_can_accept(cur):
+			add_to_bag(it)
+			return "Bag full."
+		slots[slot] = {}
+		if not add_to_bag(cur):
 			slots[slot] = cur
-			add_item(it)
+			add_to_bag(it)
 			return "Bag full."
 	slots[slot] = it
 	if slot == "food":
@@ -326,9 +367,18 @@ func unequip_slot(slot: String) -> String:
 	var it: Dictionary = slots.get(slot, {})
 	if it.is_empty():
 		return "Empty."
-	if not add_item(it):
+	if not bag_can_accept(it):
+		App.toast("Bag full.")
 		return "Bag full."
-	_fill_slot_after_remove(slot)
+	slots[slot] = {}
+	if not add_to_bag(it):
+		slots[slot] = it
+		return "Bag full."
+	if slot == "weapon":
+		var p := _player()
+		if p and p.has_method("set_weapon") and App.weapon != "":
+			p.set_weapon(App.weapon)
+	_sync_artifacts()
 	_refresh_player_hp()
 	return "Unequipped " + str(it.name)
 
@@ -730,17 +780,6 @@ func extractable(role := "") -> Array:
 		for it in bag:
 			if it.get("extract", true) and str(it.kind) != "artifact" and str(it.kind) != "tool" and not bool(it.get("hold", false)):
 				out.append(it)
-		for s in SLOTS:
-			var it: Dictionary = slots.get(s, {})
-			if it.is_empty():
-				continue
-			if not bool(it.get("extract", true)):
-				continue
-			if str(it.kind) == "artifact" or str(it.kind) == "tool" or bool(it.get("hold", false)):
-				continue
-			var copy := it.duplicate(true)
-			copy["from_slot"] = s
-			out.append(copy)
 	return out
 
 
@@ -778,21 +817,6 @@ func extract_all(role: String) -> String:
 			else:
 				keep.append(it)
 		bag = keep
-		for s in SLOTS:
-			var it: Dictionary = slots.get(s, {})
-			if it.is_empty():
-				continue
-			if str(it.kind) == "artifact" or str(it.kind) == "tool" or bool(it.get("hold", false)):
-				continue
-			if not bool(it.get("extract", true)):
-				continue
-			bank_items.append(it)
-			mailed_names.append(str(it.name))
-			slots[s] = {}
-			items += 1
-		if slots.weapon.is_empty():
-			_fill_slot_after_remove("weapon")
-		_refresh_player_hp()
 	App.extracted = g + o + w + r + items > 0
 	if App.extracted:
 		App.toast("Sent to the surface.")
@@ -835,27 +859,21 @@ func extract_one(it: Dictionary, role: String) -> String:
 		return "Sent %d root." % n
 	if role == "gather":
 		return "This clerk takes ore, wood, and root."
+	if it.has("from_slot"):
+		return "Unequip that first."
 	if it.has("uid"):
 		var got := remove_uid(int(it.uid))
-		if got.is_empty() and it.has("from_slot"):
-			got = slots[str(it.from_slot)]
-			slots[str(it.from_slot)] = {}
 		if got.is_empty():
 			return "Gone."
 		if str(got.kind) == "artifact" or bool(got.get("hold", false)):
 			if str(got.kind) == "artifact":
-				add_item(got)
+				add_to_bag(got)
 				return "Artifacts cannot be mailed."
-			add_item(got)
+			add_to_bag(got)
 			return "Forged holds stay with you."
 		bank_items.append(got)
 		App.extracted = true
 		mailed_names.append(str(got.name))
-		if it.has("from_slot"):
-			var sl := str(it.from_slot)
-			if sl == "weapon" or sl == "tool":
-				_fill_slot_after_remove(sl)
-			_refresh_player_hp()
 		return "Sent " + str(got.name)
 	return "Nothing."
 

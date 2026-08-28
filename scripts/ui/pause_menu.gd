@@ -18,6 +18,18 @@ const SKILL_NAMES := {
 	"smith": "Smithing",
 }
 
+const SLOT_NAMES := {
+	"weapon": "Weapon",
+	"tool": "Tool",
+	"potion": "Potion",
+	"food": "Food",
+	"head": "Head",
+	"body": "Body",
+	"legs": "Legs",
+}
+
+const BAG_COLS := 7
+
 var open := false
 var tab := 0
 var box: VBoxContainer
@@ -35,6 +47,12 @@ var tip_lab: Label
 var tip_id := ""
 var tip_kind := ""
 var tip_from: Control = null
+var inv_sel := ""
+var inv_detail: Label
+var inv_btn_use: Button
+var inv_btn_equip: Button
+var inv_btn_unequip: Button
+var inv_btn_drop: Button
 
 
 func _ready() -> void:
@@ -109,6 +127,7 @@ func show_menu() -> void:
 	pending = false
 	pending_id = ""
 	rebind_action = ""
+	inv_sel = "slot:weapon"
 	_hide_tip()
 	_rebuild()
 
@@ -136,6 +155,11 @@ func _rebuild() -> void:
 		c.queue_free()
 	focus_btn = null
 	status = null
+	inv_detail = null
+	inv_btn_use = null
+	inv_btn_equip = null
+	inv_btn_unequip = null
+	inv_btn_drop = null
 	var names := ["Inventory", "Skills", "System"]
 	for i in 3:
 		var ii := i
@@ -160,6 +184,11 @@ func _rebuild() -> void:
 
 
 func _focus() -> void:
+	if tab == 0:
+		var hit := _inv_find_sel()
+		if hit:
+			hit.grab_focus()
+			return
 	if focus_btn:
 		focus_btn.grab_focus()
 		return
@@ -188,28 +217,414 @@ func _inv() -> void:
 	box.add_child(_cap("Carried  %dg   %d ore   %d wood   bag %d/%d" % [
 		App.gold, App.ore, App.wood, App.prog.bag_count(), int(App.bal.bag_cap)
 	], 22, Color(0.95, 0.8, 0.45)))
-	box.add_child(_cap("Equipped", 20, Color(0.88, 0.82, 0.7)))
-	for s in App.prog.SLOTS:
-		var it: Dictionary = App.prog.slots.get(s, {})
-		var line := "%s  —  empty" % str(s)
-		if not it.is_empty():
-			line = "%s  —  %s" % [str(s), str(it.get("name", s))]
-			var extra := str(it.get("desc", ""))
-			if extra != "":
-				line += "   " + extra
-		box.add_child(_cap(line, 18, Color(0.86, 0.8, 0.68)))
-	box.add_child(_cap("Bag", 20, Color(0.88, 0.82, 0.7)))
-	if App.prog.bag.is_empty():
-		box.add_child(_cap("Nothing in the bag.", 18, Color(0.7, 0.66, 0.6)))
+	box.add_child(_cap(_inv_status_line(), 16, Color(0.78, 0.74, 0.66)))
+	var hint := "A on an item uses or equips it. Buttons below act on the highlighted item."
+	if App.in_dungeon:
+		hint += " Drop puts it on the floor."
 	else:
-		for it in App.prog.bag:
-			var nm := str(it.get("name", "item"))
-			if bool(it.get("hold", false)):
-				nm += "  (hold)"
-			box.add_child(_cap(nm, 18, Color(0.86, 0.8, 0.68)))
+		hint += " Drop is dungeon-only."
+	box.add_child(_cap(hint, 16, Color(0.7, 0.66, 0.6)))
+	inv_detail = _cap("Select an item.", 18, Color(0.9, 0.84, 0.7))
+	inv_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	inv_detail.custom_minimum_size = Vector2(1360, 72)
+	box.add_child(inv_detail)
+	var acts := HBoxContainer.new()
+	acts.add_theme_constant_override("separation", 10)
+	inv_btn_use = ThemeS.btn("Use", _inv_use)
+	inv_btn_equip = ThemeS.btn("Equip", _inv_equip)
+	inv_btn_unequip = ThemeS.btn("Unequip", _inv_unequip)
+	inv_btn_drop = ThemeS.btn("Drop", _inv_drop)
+	acts.add_child(inv_btn_use)
+	acts.add_child(inv_btn_equip)
+	acts.add_child(inv_btn_unequip)
+	acts.add_child(inv_btn_drop)
+	box.add_child(acts)
+	box.add_child(_cap("Equipped", 20, Color(0.88, 0.82, 0.7)))
+	var first_row: Control = null
+	for s in App.prog.SLOTS:
+		var row := _inv_slot_btn(s)
+		box.add_child(row)
+		if first_row == null:
+			first_row = row
+	var sets_line := _inv_sets_line()
+	if sets_line != "":
+		box.add_child(_cap("Artifact sets", 20, Color(0.88, 0.82, 0.7)))
+		var sl := _cap(sets_line, 18, Color(0.82, 0.76, 0.62))
+		sl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		sl.custom_minimum_size = Vector2(1360, 0)
+		box.add_child(sl)
+	box.add_child(_cap("Bag", 20, Color(0.88, 0.82, 0.7)))
+	var grid := GridContainer.new()
+	grid.columns = BAG_COLS
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	var cap := maxi(int(App.bal.bag_cap), App.prog.bag.size())
+	for i in cap:
+		var it: Dictionary = {}
+		if i < App.prog.bag.size() and App.prog.bag[i] is Dictionary:
+			it = App.prog.bag[i]
+		grid.add_child(_inv_bag_cell(it, i))
+	box.add_child(grid)
+	if first_row:
+		focus_btn = first_row
 	status = _cap("", 16, Color(0.78, 0.74, 0.66))
 	box.add_child(status)
 	box.add_child(ThemeS.btn("Close  (B)", close_ui))
+	_inv_refresh_detail()
+
+
+func _inv_status_line() -> String:
+	var bits: PackedStringArray = PackedStringArray()
+	var pot: Dictionary = App.prog.slots.get("potion", {})
+	if pot.is_empty() or int(pot.get("stack", 0)) <= 0:
+		bits.append("Potion slot empty")
+	elif App.prog.potion_cd > 0.05:
+		bits.append("Potion CD %.1fs" % App.prog.potion_cd)
+	else:
+		bits.append("Potion x%d ready" % int(pot.stack))
+	if App.prog.food_t > 0.05:
+		bits.append("Food ticking %.1fs" % App.prog.food_t)
+	else:
+		var fd: Dictionary = App.prog.slots.get("food", {})
+		if fd.is_empty() or int(fd.get("stack", 0)) <= 0:
+			bits.append("Food slot empty")
+		else:
+			bits.append("%s x%d ready" % [str(fd.get("name", "Food")), int(fd.stack)])
+	return "  ·  ".join(bits)
+
+
+func _inv_sets_line() -> String:
+	var counts: Dictionary = App.prog.set_counts()
+	var parts: PackedStringArray = PackedStringArray()
+	for sid in CatalogS.set_ids():
+		var n := int(counts.get(sid, 0))
+		if n <= 0:
+			continue
+		var need := CatalogS.set_size(sid)
+		var bit := "%s %d/%d" % [str(sid).capitalize(), n, need]
+		if n >= 2:
+			var bonus := CatalogS.set_bonus_line(sid, n)
+			if bonus != "":
+				bit += " — " + bonus
+		parts.append(bit)
+	return "   ".join(parts)
+
+
+func _inv_slot_btn(slot: String) -> Button:
+	var it: Dictionary = App.prog.slots.get(slot, {})
+	var title := str(SLOT_NAMES.get(slot, slot))
+	var body := "empty"
+	if not it.is_empty():
+		body = _inv_item_short(it)
+	var b := ThemeS.btn("%s	%s" % [title, body], func():
+		inv_sel = "slot:" + slot
+		_inv_refresh_detail()
+		_inv_primary()
+	)
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.add_theme_color_override("font_color", _inv_item_color(it))
+	b.set_meta("inv_key", "slot:" + slot)
+	b.focus_entered.connect(func():
+		inv_sel = "slot:" + slot
+		_inv_refresh_detail()
+	)
+	return b
+
+
+func _inv_bag_cell(it: Dictionary, index: int) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(188, 64)
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.add_theme_font_size_override("font_size", 16)
+	b.add_theme_color_override("font_hover_color", Color(1, 0.95, 0.75))
+	b.add_theme_color_override("font_focus_color", Color(1, 0.92, 0.55))
+	b.add_theme_color_override("font_disabled_color", Color(0.38, 0.35, 0.32))
+	b.add_theme_stylebox_override("normal", ThemeS.sb(Color(0.18, 0.14, 0.1), Color(0.4, 0.3, 0.18)))
+	b.add_theme_stylebox_override("hover", ThemeS.sb(Color(0.26, 0.2, 0.13), Color(0.75, 0.58, 0.28)))
+	b.add_theme_stylebox_override("pressed", ThemeS.sb(Color(0.14, 0.11, 0.08), Color(0.9, 0.7, 0.3)))
+	b.add_theme_stylebox_override("focus", ThemeS.sb(Color(0.28, 0.2, 0.12), Color(0.95, 0.78, 0.35)))
+	b.add_theme_stylebox_override("disabled", ThemeS.sb(Color(0.11, 0.09, 0.08), Color(0.22, 0.18, 0.14)))
+	if it.is_empty():
+		b.text = "—"
+		b.disabled = true
+		b.focus_mode = Control.FOCUS_NONE
+		b.add_theme_color_override("font_color", Color(0.4, 0.36, 0.32))
+		return b
+	var key := "bag:" + str(int(it.uid))
+	b.text = _inv_item_cell(it)
+	b.add_theme_color_override("font_color", _inv_item_color(it))
+	b.set_meta("inv_key", key)
+	b.pressed.connect(func():
+		inv_sel = key
+		_inv_refresh_detail()
+		_inv_primary()
+	)
+	b.focus_entered.connect(func():
+		inv_sel = key
+		_inv_refresh_detail()
+	)
+	return b
+
+
+func _inv_item_short(it: Dictionary) -> String:
+	if it.is_empty():
+		return "empty"
+	var nm := str(it.get("name", "item"))
+	var stack := int(it.get("stack", 1))
+	if stack > 1:
+		nm += "  x%d" % stack
+	var rare := str(it.get("rarity", "white"))
+	if rare != "" and rare != "white" and str(it.get("kind", "")) != "artifact":
+		nm += "  [%s]" % rare
+	if bool(it.get("hold", false)):
+		nm += "  (hold)"
+	return nm
+
+
+func _inv_item_cell(it: Dictionary) -> String:
+	var nm := str(it.get("name", "item"))
+	var stack := int(it.get("stack", 1))
+	if stack > 1:
+		nm += "\nx%d" % stack
+	elif bool(it.get("hold", false)):
+		nm += "\nhold"
+	elif str(it.get("kind", "")) == "artifact":
+		nm += "\n" + str(it.get("set", "relic"))
+	return nm
+
+
+func _inv_item_color(it: Dictionary) -> Color:
+	if it.is_empty():
+		return Color(0.62, 0.58, 0.52)
+	match str(it.get("rarity", "white")):
+		"green":
+			return Color(0.55, 0.86, 0.52)
+		"blue":
+			return Color(0.52, 0.7, 1.0)
+		_:
+			if str(it.get("kind", "")) == "artifact":
+				return Color(0.92, 0.78, 0.48)
+			return Color(0.92, 0.84, 0.62)
+
+
+func _inv_selected() -> Dictionary:
+	if inv_sel.begins_with("slot:"):
+		var slot := inv_sel.substr(5)
+		var it: Dictionary = App.prog.slots.get(slot, {})
+		return it if it is Dictionary else {}
+	if inv_sel.begins_with("bag:"):
+		var uid := int(inv_sel.substr(4))
+		for raw in App.prog.bag:
+			if raw is Dictionary and int(raw.uid) == uid:
+				return raw
+	return {}
+
+
+func _inv_selected_slot() -> String:
+	if inv_sel.begins_with("slot:"):
+		return inv_sel.substr(5)
+	return ""
+
+
+func _inv_selected_uid() -> int:
+	if inv_sel.begins_with("bag:"):
+		return int(inv_sel.substr(4))
+	var it := _inv_selected()
+	if it.is_empty():
+		return 0
+	return int(it.get("uid", 0))
+
+
+func _inv_from_bag() -> bool:
+	return inv_sel.begins_with("bag:")
+
+
+func _inv_find_sel() -> Control:
+	if inv_sel == "":
+		return null
+	for n in box.find_children("*", "Button", true, false):
+		if str(n.get_meta("inv_key", "")) == inv_sel:
+			return n
+	return null
+
+
+func _inv_refresh_detail() -> void:
+	var it := _inv_selected()
+	if inv_detail:
+		inv_detail.text = _inv_detail_text(it)
+	var can_use := _inv_can_use(it)
+	var can_equip := _inv_can_equip(it)
+	var can_unequip := (not it.is_empty()) and not _inv_from_bag()
+	var can_drop := (not it.is_empty()) and App.in_dungeon
+	if inv_btn_use:
+		inv_btn_use.disabled = not can_use
+	if inv_btn_equip:
+		inv_btn_equip.disabled = not can_equip
+	if inv_btn_unequip:
+		inv_btn_unequip.disabled = not can_unequip
+	if inv_btn_drop:
+		inv_btn_drop.disabled = not can_drop
+
+
+func _inv_detail_text(it: Dictionary) -> String:
+	if it.is_empty():
+		if inv_sel.begins_with("slot:"):
+			return "%s — empty" % str(SLOT_NAMES.get(_inv_selected_slot(), "Slot"))
+		return "Empty bag slot."
+	var lines: PackedStringArray = PackedStringArray()
+	var head := str(it.get("name", "Item"))
+	var kind := str(it.get("kind", ""))
+	var rare := str(it.get("rarity", "white"))
+	if kind != "artifact" and rare != "":
+		head += "   ·   " + rare.capitalize()
+	if int(it.get("stack", 1)) > 1:
+		head += "   ·   x%d" % int(it.stack)
+	if bool(it.get("hold", false)):
+		head += "   ·   forged hold"
+	if kind == "artifact":
+		head += "   ·   run relic"
+	lines.append(head)
+	var desc := str(it.get("desc", ""))
+	if desc != "":
+		lines.append(desc)
+	var stats := _inv_stat_line(it)
+	if stats != "":
+		lines.append(stats)
+	var sid := str(it.get("set", ""))
+	if sid != "":
+		lines.append(App.prog.set_bonus_text(sid))
+	return "\n".join(lines)
+
+
+func _inv_stat_line(it: Dictionary) -> String:
+	var bits: PackedStringArray = PackedStringArray()
+	if int(it.get("dmg", 0)) > 0:
+		bits.append("+%d damage" % int(it.dmg))
+	if int(it.get("def", 0)) > 0:
+		bits.append("+%d defense" % int(it.def))
+	if int(it.get("hp", 0)) > 0:
+		bits.append("+%d HP" % int(it.hp))
+	var slot := str(it.get("slot", ""))
+	if slot != "" and str(SLOT_NAMES.get(slot, "")) != "":
+		bits.append(str(SLOT_NAMES[slot]) + " slot")
+	if str(it.get("tool", "")) != "":
+		bits.append("Tool: " + str(it.tool))
+		if App.in_dungeon and str(it.tool) != App.prog.tool_type:
+			bits.append("locked out this run")
+	if kind_extract_note(it) != "":
+		bits.append(kind_extract_note(it))
+	return "   ·   ".join(bits)
+
+
+func kind_extract_note(it: Dictionary) -> String:
+	if str(it.get("kind", "")) == "artifact":
+		return "Cannot mail. Lost on death or Dispel."
+	if bool(it.get("hold", false)):
+		return "Hold returns to Placeholdia."
+	if App.in_dungeon:
+		return "Mail through a clerk to keep it."
+	return ""
+
+
+func _inv_can_use(it: Dictionary) -> bool:
+	if it.is_empty():
+		return false
+	var k := str(it.get("kind", ""))
+	return k == "potion" or k == "food"
+
+
+func _inv_can_equip(it: Dictionary) -> bool:
+	if it.is_empty() or not _inv_from_bag():
+		return false
+	var slot := str(it.get("slot", ""))
+	if App.prog.SLOTS.find(slot) < 0:
+		return false
+	if slot == "tool":
+		var t := str(it.get("tool", ""))
+		if t != "" and t != App.prog.tool_type:
+			return false
+	return true
+
+
+func _inv_act(msg: String) -> void:
+	_st(msg)
+	App.save_now()
+	_rebuild()
+
+
+func _inv_primary() -> void:
+	var it := _inv_selected()
+	if it.is_empty():
+		return
+	if _inv_can_use(it):
+		_inv_use()
+		return
+	if _inv_can_equip(it):
+		_inv_equip()
+		return
+	_inv_refresh_detail()
+
+
+func _inv_use() -> void:
+	var it := _inv_selected()
+	if not _inv_can_use(it):
+		_st("Can't use that.")
+		return
+	var msg := ""
+	if _inv_from_bag():
+		msg = App.prog.use_from_bag(int(it.uid))
+	elif str(it.kind) == "potion":
+		msg = App.prog.use_potion()
+	else:
+		msg = App.prog.use_food()
+	_inv_act(msg)
+
+
+func _inv_equip() -> void:
+	var it := _inv_selected()
+	if not _inv_can_equip(it):
+		_st("Can't equip that.")
+		return
+	var slot := str(it.get("slot", ""))
+	var msg := App.prog.equip_uid(int(it.uid))
+	inv_sel = "slot:" + slot
+	_inv_act(msg)
+
+
+func _inv_unequip() -> void:
+	if _inv_from_bag():
+		_st("Already in the bag.")
+		return
+	var slot := _inv_selected_slot()
+	if slot == "":
+		_st("Nothing to unequip.")
+		return
+	var msg := App.prog.unequip_slot(slot)
+	if msg.begins_with("Unequipped"):
+		var it: Dictionary = {}
+		if App.prog.bag.size() > 0:
+			it = App.prog.bag[App.prog.bag.size() - 1]
+		if not it.is_empty():
+			inv_sel = "bag:" + str(int(it.uid))
+	_inv_act(msg)
+
+
+func _inv_drop() -> void:
+	if not App.in_dungeon:
+		_st("Drop on the dungeon floor only.")
+		return
+	var it := _inv_selected()
+	if it.is_empty():
+		_st("Nothing to drop.")
+		return
+	var msg := ""
+	if _inv_from_bag():
+		msg = App.prog.drop_uid(int(it.uid))
+	else:
+		msg = App.prog.drop_slot(_inv_selected_slot())
+	inv_sel = "slot:weapon"
+	_inv_act(msg)
 
 
 func _xp_span() -> float:
