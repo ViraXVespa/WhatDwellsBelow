@@ -60,21 +60,3 @@ func follow(target: Vector3) -> void:
 	global_position = target
 	_place_local()
 	_look()
-
-
-func mouse_aim(origin: Vector3) -> Vector2:
-	if cam == null:
-		return Vector2.ZERO
-	var mouse: Vector2 = cam.get_viewport().get_mouse_position()
-	var from := cam.project_ray_origin(mouse)
-	var dir := cam.project_ray_normal(mouse)
-	if absf(dir.y) < 0.0001:
-		return Vector2.ZERO
-	var t: float = -from.y / dir.y
-	if t < 0.0:
-		return Vector2.ZERO
-	var hit := from + dir * t
-	var d := Vector2(hit.x - origin.x, hit.z - origin.z)
-	if d.length_squared() < 0.0004:
-		return Vector2.ZERO
-	return d.normalized()

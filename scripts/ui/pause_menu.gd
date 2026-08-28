@@ -602,4 +602,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			App.sfx("ui_cancel")
 			close_ui()
+		if App.has_method("swallow_close_pad"):
+			App.swallow_close_pad()
 		get_viewport().set_input_as_handled()

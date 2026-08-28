@@ -230,6 +230,8 @@ func _physics_process(delta: float) -> void:
 			if rig and rig.has_method("follow"):
 				rig.follow(global_position)
 			return
+	if rig and rig.has_method("follow"):
+		rig.follow(global_position)
 	_lock_and_aim(move, delta)
 	if not close_block:
 		_try_special()
@@ -520,7 +522,6 @@ func _cycle_lock(dir: Vector2) -> void:
 
 
 func _nearest(exclude: Node, dir: Vector2) -> Node:
-	var cam: Camera3D = get_viewport().get_camera_3d()
 	var best: Node = null
 	var best_s := 1.0e9
 	for e in Combat.enemies():
@@ -536,10 +537,31 @@ func _nearest(exclude: Node, dir: Vector2) -> Node:
 	return best
 
 
+func _mouse_aim_dir() -> Vector2:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return Vector2.ZERO
+	var mouse := get_viewport().get_mouse_position()
+	var from := cam.project_ray_origin(mouse)
+	var dir := cam.project_ray_normal(mouse)
+	var hit: Variant = Plane(Vector3.UP, 0.0).intersects_ray(from, dir)
+	if hit == null:
+		return Vector2.ZERO
+	var p: Vector3 = hit
+	var d := Vector2(p.x - global_position.x, p.z - global_position.z)
+	if d.length_squared() < 0.0004:
+		return Vector2.ZERO
+	return d.normalized()
+
+
 func _update_aim(move: Vector2) -> void:
 	var stick := _ai_or_vec("aim")
 	if stick.length() >= 0.24:
 		aim_dir = stick.normalized()
+		return
+	var mouse_dir := _mouse_aim_dir()
+	if mouse_dir.length_squared() > 0.0001:
+		aim_dir = mouse_dir
 		return
 	if move.length() >= 0.12:
 		aim_dir = move.normalized()

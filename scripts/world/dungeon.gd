@@ -97,13 +97,15 @@ func _process(delta: float) -> void:
 	if fog_dirty or (map_layer and map_layer.visible):
 		_redraw_map()
 		fog_dirty = false
-	if Input.is_action_just_pressed("pause") or App.pad_just("pause"):
+	if App.pause_just() if App.has_method("pause_just") else (Input.is_action_just_pressed("pause") or App.pad_just("pause")):
 		if App.debug and App.debug.get("open"):
 			pass
 		elif App.recap and App.recap.get("open"):
 			pass
 		elif App.ui_open and ui and ui.has_method("close_ui") and ui.visible:
 			ui.close_ui()
+			if App.has_method("swallow_close_pad"):
+				App.swallow_close_pad()
 		elif App.pause_menu and App.pause_menu.has_method("toggle"):
 			App.pause_menu.toggle()
 	if Input.is_action_just_pressed("map_view") or App.pad_just("map_view"):
@@ -1309,5 +1311,3 @@ func _smoke9() -> void:
 			printerr("P9: playtest_live_ok=" + str(App.playtest.moved or App.playtest.sim_t > 0.2))
 		get_tree().quit()
 	)
-
-

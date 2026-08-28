@@ -53,9 +53,11 @@ func world_ui() -> Node:
 
 
 func _process(_delta: float) -> void:
-	if Input.is_action_just_pressed("pause") or App.pad_just("pause"):
+	if App.pause_just() if App.has_method("pause_just") else (Input.is_action_just_pressed("pause") or App.pad_just("pause")):
 		if App.ui_open and ui and ui.visible:
 			ui.close_ui()
+			if App.has_method("swallow_close_pad"):
+				App.swallow_close_pad()
 		elif App.pause_menu and App.pause_menu.has_method("toggle"):
 			App.pause_menu.toggle()
 	if hint:
