@@ -78,12 +78,17 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 	if spawn_r.is_empty() or boss_r.is_empty():
 		return {"ok": false, "rooms": rooms}
 	var spawn := _center(spawn_r)
+	var openings: Array = boss_openings(grid, w, h, boss_r)
 	var door := _boss_door_cell(grid, w, h, boss_r, spawn)
+	if openings.is_empty() and door != Vector2i(-1, -1):
+		openings = [make_opening(_guess_side(boss_r, door), [door])]
+	if openings.is_empty() or door == Vector2i(-1, -1):
+		if openings.is_empty():
+			return {"ok": false, "rooms": rooms}
+		door = openings[0]["cells"][0]
 	var stairs := _far_cell(boss_r, door)
 	var crystal := spawn
 	var boss_pos := _center(boss_r)
-	if door == Vector2i(-1, -1):
-		return {"ok": false, "rooms": rooms}
 	return {
 		"ok": true,
 		"grid": grid,
@@ -94,6 +99,7 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 		"crystal": crystal,
 		"stairs": stairs,
 		"door": door,
+		"openings": openings,
 		"boss": boss_pos,
 		"bases": _kind_centers(rooms, "base"),
 		"safe": _kind_centers(rooms, "clerk") + _kind_centers(rooms, "shop") + _kind_centers(rooms, "puzzle"),
@@ -107,7 +113,7 @@ static func _overlap(x: int, y: int, bw: int, bh: int, r: Dictionary) -> bool:
 static func _carve_room(grid: PackedByteArray, w: int, h: int, r: Dictionary) -> void:
 	for yy in range(r.y, r.y + r.h):
 		for xx in range(r.x, r.x + r.w):
-			if xx <= 0 or yy <= 0 or xx >= w - 1 or yy >= h - 1:
+			if xx <= 0 or yy <= 0 or xx >= w - 1 or xx >= h - 1:
 				continue
 			grid[idx(xx, yy, w)] = FLOOR
 
@@ -182,6 +188,137 @@ static func _dig(grid: PackedByteArray, w: int, h: int, x: int, y: int) -> void:
 	if x <= 0 or y <= 0 or x >= w - 1 or y >= h - 1:
 		return
 	grid[idx(x, y, w)] = FLOOR
+
+
+static func _outside_floor(grid: PackedByteArray, w: int, h: int, boss: Dictionary, x: int, y: int) -> bool:
+	if x < 0 or y < 0 or x >= w or y >= h:
+		return false
+	var bx := _ri(boss, "x")
+	var by := _ri(boss, "y")
+	var bw := _ri(boss, "w")
+	var bh := _ri(boss, "h")
+	if x >= bx and y >= by and x < bx + bw and y < by + bh:
+		return false
+	return grid[idx(x, y, w)] == FLOOR
+
+
+static func _guess_side(boss: Dictionary, cell: Vector2i) -> String:
+	var bx := _ri(boss, "x")
+	var by := _ri(boss, "y")
+	var bw := _ri(boss, "w")
+	var bh := _ri(boss, "h")
+	if cell.y == by:
+		return "n"
+	if cell.y == by + bh - 1:
+		return "s"
+	if cell.x == bx:
+		return "w"
+	if cell.x == bx + bw - 1:
+		return "e"
+	return "s"
+
+
+static func make_opening(side: String, cells: Array) -> Dictionary:
+	var packed: Array = []
+	for raw in cells:
+		packed.append(Vector2i(raw))
+	if packed.is_empty():
+		return {}
+	var minx: int = packed[0].x
+	var maxx: int = packed[0].x
+	var miny: int = packed[0].y
+	var maxy: int = packed[0].y
+	for c in packed:
+		var cell: Vector2i = c
+		minx = mini(minx, cell.x)
+		maxx = maxi(maxx, cell.x)
+		miny = mini(miny, cell.y)
+		maxy = maxi(maxy, cell.y)
+	var thick := 1.05
+	var pad := 0.2
+	var sx: float
+	var sz: float
+	if side == "n" or side == "s":
+		sx = float(maxx - minx + 1) + pad
+		sz = thick
+	else:
+		sx = thick
+		sz = float(maxy - miny + 1) + pad
+	var cx := (float(minx) + float(maxx) + 1.0) * 0.5
+	var cz := (float(miny) + float(maxy) + 1.0) * 0.5
+	var span := maxf(sx, sz)
+	return {
+		"side": side,
+		"cells": packed,
+		"cx": cx,
+		"cz": cz,
+		"sx": sx,
+		"sz": sz,
+		"reach": maxf(1.85, span * 0.5 + 1.1),
+	}
+
+
+static func boss_openings(grid: PackedByteArray, w: int, h: int, boss: Dictionary) -> Array:
+	var out: Array = []
+	if boss.is_empty():
+		return out
+	var bx := _ri(boss, "x")
+	var by := _ri(boss, "y")
+	var bw := _ri(boss, "w")
+	var bh := _ri(boss, "h")
+	var north: Array = []
+	var south: Array = []
+	var east: Array = []
+	var west: Array = []
+	for y in range(by, by + bh):
+		for x in range(bx, bx + bw):
+			if grid[idx(x, y, w)] != FLOOR:
+				continue
+			var cell := Vector2i(x, y)
+			if _outside_floor(grid, w, h, boss, x, y - 1):
+				north.append(cell)
+			if _outside_floor(grid, w, h, boss, x, y + 1):
+				south.append(cell)
+			if _outside_floor(grid, w, h, boss, x - 1, y):
+				west.append(cell)
+			if _outside_floor(grid, w, h, boss, x + 1, y):
+				east.append(cell)
+	out.append_array(_side_runs("n", north))
+	out.append_array(_side_runs("s", south))
+	out.append_array(_side_runs("e", east))
+	out.append_array(_side_runs("w", west))
+	return out
+
+
+static func _side_runs(side: String, cells: Array) -> Array:
+	var uniq := {}
+	var list: Array = []
+	for raw in cells:
+		var c := Vector2i(raw)
+		if uniq.has(c):
+			continue
+		uniq[c] = true
+		list.append(c)
+	if side == "n" or side == "s":
+		list.sort_custom(func(a, b): return a.x < b.x)
+	else:
+		list.sort_custom(func(a, b): return a.y < b.y)
+	var runs: Array = []
+	var cur: Array = []
+	for c in list:
+		if cur.is_empty():
+			cur.append(c)
+			continue
+		var prev: Vector2i = cur[cur.size() - 1]
+		var gap := absi(c.x - prev.x) + absi(c.y - prev.y)
+		if gap == 1:
+			cur.append(c)
+		else:
+			runs.append(make_opening(side, cur))
+			cur = [c]
+	if not cur.is_empty():
+		runs.append(make_opening(side, cur))
+	return runs
 
 
 static func _assign_kinds(rng: RandomNumberGenerator, rooms: Array, bal: Object) -> void:
@@ -332,6 +469,9 @@ static func _fallback(floor_n: int, w: int, h: int) -> Dictionary:
 	if door == Vector2i(-1, -1):
 		door = Vector2i(boss_r.x, _center(boss_r).y)
 		_dig(grid, w, h, door.x - 1, door.y)
+	var openings: Array = boss_openings(grid, w, h, boss_r)
+	if openings.is_empty() and door != Vector2i(-1, -1):
+		openings = [make_opening(_guess_side(boss_r, door), [door])]
 	return {
 		"ok": true,
 		"grid": grid,
@@ -342,6 +482,7 @@ static func _fallback(floor_n: int, w: int, h: int) -> Dictionary:
 		"crystal": spawn,
 		"stairs": _far_cell(boss_r, door),
 		"door": door,
+		"openings": openings,
 		"boss": _center(boss_r),
 		"bases": [_center(rooms[1])],
 		"safe": [_center(rooms[2])],

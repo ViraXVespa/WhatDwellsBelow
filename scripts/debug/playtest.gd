@@ -417,25 +417,50 @@ func _has_los_from(pos: Vector3, b: Node) -> bool:
 		return true
 	return Combat.los(pos, (b as Node3D).global_position, w3)
 
+func _go_open_door(p: Node, gate: Node) -> void:
+	if gate == null:
+		move = _steer(p, Vector2.ZERO)
+		return
+	aim = _xz_to(p, gate)
+	attack = false
+	if _dist(p, gate) <= 1.85:
+		_use_prop(p, gate, 1.7)
+		return
+	if path_goal != gate:
+		path.clear()
+		path_i = 0
+		path_goal = gate
+	move = _steer(p, _follow_or_direct(p, gate))
+
 
 func _door_between(a: Node, b: Node) -> bool:
-	var door := _closed_door()
-	if door == null or a == null or b == null:
+	if a == null or b == null:
 		return false
-	var pa: Vector3 = (a as Node3D).global_position
-	var pb: Vector3 = (b as Node3D).global_position
-	var pc: Vector3 = (door as Node3D).global_position
-	var av := Vector2(pa.x, pa.z)
-	var bv := Vector2(pb.x, pb.z)
-	var cv := Vector2(pc.x, pc.z)
+	var av := Vector2((a as Node3D).global_position.x, (a as Node3D).global_position.z)
+	var bv := Vector2((b as Node3D).global_position.x, (b as Node3D).global_position.z)
 	var ab := bv - av
 	var den := ab.length_squared()
 	if den < 0.0001:
 		return false
-	var t := clampf((cv - av).dot(ab) / den, 0.0, 1.0)
-	if t < 0.08 or t > 0.92:
-		return false
-	return av.lerp(bv, t).distance_to(cv) < 0.95
+	for door in _closed_doors():
+		for cell in _door_cells(door):
+			var cv := Vector2(float(cell.x) + 0.5, float(cell.y) + 0.5)
+			var t := clampf((cv - av).dot(ab) / den, 0.0, 1.0)
+			if t < 0.08 or t > 0.92:
+				continue
+			if av.lerp(bv, t).distance_to(cv) < 1.05:
+				return true
+	return false
+
+
+func _door_blocks_cell(c: Vector2i) -> bool:
+	for d in _closed_doors():
+		if d.has_method("occupies_cell") and d.occupies_cell(c):
+			return true
+		for cell in _door_cells(d):
+			if cell == c:
+				return true
+	return false
 
 
 func _has_wide_los(a: Node, b: Node) -> bool:
@@ -512,6 +537,18 @@ func _grid_floor(c: Vector2i) -> bool:
 		return false
 	return grid[c.y * w + c.x] == 1
 
+func _door_cells(door: Node) -> Array:
+	var out: Array = []
+	if door == null:
+		return out
+	var occ = door.get("cells")
+	if occ is Array and not (occ as Array).is_empty():
+		for raw in occ:
+			out.append(Vector2i(raw))
+		return out
+	out.append(_cell_of_node(door))
+	return out
+
 
 func _obstacle_cell(c: Vector2i) -> bool:
 	var tree := get_tree()
@@ -520,9 +557,8 @@ func _obstacle_cell(c: Vector2i) -> bool:
 	for g in tree.get_nodes_in_group("gates"):
 		if g and is_instance_valid(g) and not bool(g.get("open")) and _cell_of_node(g) == c:
 			return true
-	for d in tree.get_nodes_in_group("boss_door"):
-		if d and is_instance_valid(d) and not bool(d.get("open")) and _cell_of_node(d) == c:
-			return true
+	if _door_blocks_cell(c):
+		return true
 	for b in tree.get_nodes_in_group("breakables"):
 		if b and is_instance_valid(b) and _cell_of_node(b) == c:
 			return true
@@ -709,10 +745,26 @@ func _closed_door() -> Node:
 	var tree := get_tree()
 	if tree == null:
 		return null
+	var p: Node = tree.get_first_node_in_group("player")
+	var best: Node = null
+	var best_d := 99999.0
+	for d in _closed_doors():
+		var dd := _dist(p, d) if p else 0.0
+		if dd < best_d:
+			best_d = dd
+			best = d
+	return best
+
+
+func _closed_doors() -> Array:
+	var out: Array = []
+	var tree := get_tree()
+	if tree == null:
+		return out
 	for d in tree.get_nodes_in_group("boss_door"):
 		if d and is_instance_valid(d) and not bool(d.get("open")):
-			return d
-	return null
+			out.append(d)
+	return out
 
 
 func _near_closed_door(p: Node) -> bool:
@@ -721,13 +773,16 @@ func _near_closed_door(p: Node) -> bool:
 
 
 func _dir_hits_door(p: Node, dir: Vector2) -> bool:
-	var d := _closed_door()
-	if d == null or dir.length() < 0.05:
+	if dir.length() < 0.05:
 		return false
 	var from: Vector3 = (p as Node3D).global_position
-	var nxt := from + Vector3(dir.x, 0.0, dir.y) * 0.75
-	var dp: Vector3 = (d as Node3D).global_position
-	return Vector2(nxt.x - dp.x, nxt.z - dp.z).length() < 1.12
+	var n: Vector2 = dir.normalized()
+	var probes: PackedFloat32Array = PackedFloat32Array([0.55, 0.95, 1.25])
+	for step in probes:
+		var nxt: Vector3 = from + Vector3(n.x, 0.0, n.y) * step
+		if _door_blocks_cell(_cell_of_pos(nxt)):
+			return true
+	return false
 
 
 func _door_away(p: Node) -> Vector2:
@@ -754,22 +809,15 @@ func _nearest_boss(p: Node) -> Node:
 
 
 func _approach_boss(p: Node, boss: Node) -> void:
-	if _door_between(p, boss):
-		var side := _door_bypass(p, boss)
-		aim = _xz_to(p, boss)
-		move = _steer(p, side if side != Vector2.ZERO else _door_away(p))
-		attack = false
+	var gate := _closed_door()
+	if gate != null and (_door_between(p, boss) or _near_closed_door(p) or not _has_path(p, boss)):
+		_go_open_door(p, gate)
 		return
 	if _has_los(p, boss) and _dist(p, boss) <= 6.5:
 		_fight(p, boss)
 		return
 	if _has_path(p, boss):
 		_follow_goal(p, boss)
-		aim = _xz_to(p, boss)
-		return
-	if _near_closed_door(p):
-		var side := _door_bypass(p, boss)
-		move = _steer(p, side if side != Vector2.ZERO else _door_away(p))
 		aim = _xz_to(p, boss)
 		return
 	move = _steer(p, Vector2.ZERO)
@@ -1103,10 +1151,11 @@ func _gather_cargo() -> int:
 
 func _misc_cargo() -> int:
 	var n := App.gold
-	if App.prog and App.prog.has_method("extractable"):
-		for it in App.prog.extractable("misc"):
-			if str(it.get("kind", "")) != "gold":
-				n += 1
+	if App.prog == null:
+		return n
+	for it in App.prog.bag:
+		if it is Dictionary and bool(it.get("extract", true)) and str(it.get("kind", "")) != "artifact" and str(it.get("kind", "")) != "tool" and not bool(it.get("hold", false)):
+			n += 1
 	return n
 
 
@@ -1275,8 +1324,7 @@ func _follow_goal(p: Node, dest: Node) -> void:
 		move = _steer(p, Vector2.ZERO)
 		return
 	if _door_between(p, dest):
-		var bypass := _door_bypass(p, dest)
-		move = _steer(p, bypass if bypass != Vector2.ZERO else _door_away(p))
+		_go_open_door(p, _closed_door())
 		return
 	if stuck_t > 0.7:
 		path.clear()

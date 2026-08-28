@@ -16,6 +16,7 @@ const HudS := preload("res://scripts/ui/hud.gd")
 var data: Dictionary = {}
 var player: CharacterBody3D
 var door: Node
+var doors: Array = []
 var stairs: Node
 var visited: PackedByteArray
 var fog_dirty := true
@@ -258,10 +259,7 @@ func _spawns() -> void:
 	var sp: Vector2i = data.spawn
 	player.position = Vector3(float(sp.x) + 1.5, 0.0, float(sp.y) + 0.5)
 	add_child(player)
-	var door_c: Vector2i = data.door
-	door = DoorS.new()
-	door.setup(Vector3(float(door_c.x) + 0.5, 0.0, float(door_c.y) + 0.5))
-	add_child(door)
+	_place_doors()
 	var st: Vector2i = data.stairs
 	stairs = SpotS.new()
 	stairs.setup("stairs", Vector3(float(st.x) + 0.5, 0.0, float(st.y) + 0.5), not App.boss_dead)
@@ -289,8 +287,35 @@ func _spawns() -> void:
 	add_child(ui)
 
 
+func _place_doors() -> void:
+	doors.clear()
+	var openings: Array = data.get("openings", [])
+	if openings.is_empty():
+		var boss_r := {}
+		for r in data.get("rooms", []):
+			if str(r.get("kind", "")) == "boss":
+				boss_r = r
+				break
+		if not boss_r.is_empty():
+			openings = Gen.boss_openings(data.grid, int(data.w), int(data.h), boss_r)
+	if openings.is_empty():
+		var c: Vector2i = data.door
+		openings = [Gen.make_opening("s", [c])]
+	for o in openings:
+		if o.is_empty():
+			continue
+		var d := DoorS.new()
+		d.setup_opening(o)
+		add_child(d)
+		doors.append(d)
+	door = doors[0] if not doors.is_empty() else null
+
+
 func _on_boss_dead() -> void:
 	App.boss_dead = true
+	for d in doors:
+		if d and d.has_method("open_door"):
+			d.open_door()
 	if door and door.has_method("open_door"):
 		door.open_door()
 	for n in get_tree().get_nodes_in_group("interact"):
@@ -378,7 +403,13 @@ func _redraw_map() -> void:
 			map_img.set_pixel(x, y, col)
 	_dot(data.crystal, Color(0.3, 0.9, 1.0), true)
 	_dot(data.stairs, Color(0.95, 0.75, 0.25), true)
-	_dot(data.door, Color(0.9, 0.2, 0.15), true)
+	var marked := false
+	for o in data.get("openings", []):
+		for raw in o.get("cells", []):
+			_dot(Vector2i(raw), Color(0.9, 0.2, 0.15), true)
+			marked = true
+	if not marked:
+		_dot(data.door, Color(0.9, 0.2, 0.15), true)
 	for n in get_tree().get_nodes_in_group("interact"):
 		if n is Node3D:
 			var k := str(n.get("kind"))
@@ -390,6 +421,7 @@ func _redraw_map() -> void:
 	if player:
 		_dot(Vector2i(int(player.global_position.x), int(player.global_position.z)), Color(1, 1, 1), false)
 	map_tex.update(map_img)
+
 
 
 func _note_verge() -> void:
