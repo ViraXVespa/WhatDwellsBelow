@@ -1,6 +1,8 @@
 extends RefCounted
 
 ## All Phase 2 combat numbers. Mutated by the secret debug menu.
+## Bump BAL_REV when shipping new defaults that old saves should receive.
+const BAL_REV := 2
 
 var move_speed := 4.5
 var dash_speed_mult := 2.8
@@ -69,12 +71,12 @@ var atk_fps := 10.0
 var trail_gap := 0.045
 var trail_life := 0.22
 
-var gen_w := 48
-var gen_h := 48
-var gen_rooms := 12
+var gen_w := 216
+var gen_h := 216
+var gen_rooms := 36
 var gen_room_min := 5
 var gen_room_max := 9
-var gen_extra_loops := 3
+var gen_extra_loops := 8
 var fog_radius := 5
 var max_clerks := 3
 var ghost_shop_chance := 0.33
@@ -135,9 +137,9 @@ var snack_heal := 22.0
 var art_cost := 40.0
 var pawn_gold := 8.0
 var chest_art := 0.35
-var mine_nodes := 5
-var wood_nodes := 4
-var break_count := 8
+var mine_nodes := 18
+var wood_nodes := 14
+var break_count := 24
 var shrine_count := 1
 var campfire_count := 1
 var bag_cap := 28
@@ -305,12 +307,12 @@ func schema() -> Array:
 		["atk_fps", 4.0, 20.0, 0.5],
 		["trail_gap", 0.01, 0.2, 0.005],
 		["trail_life", 0.05, 1.0, 0.01],
-		["gen_w", 24.0, 64.0, 1.0],
-		["gen_h", 24.0, 64.0, 1.0],
-		["gen_rooms", 6.0, 24.0, 1.0],
+		["gen_w", 24.0, 256.0, 1.0],
+		["gen_h", 24.0, 256.0, 1.0],
+		["gen_rooms", 6.0, 80.0, 1.0],
 		["gen_room_min", 4.0, 10.0, 1.0],
 		["gen_room_max", 5.0, 16.0, 1.0],
-		["gen_extra_loops", 0.0, 12.0, 1.0],
+		["gen_extra_loops", 0.0, 40.0, 1.0],
 		["fog_radius", 2.0, 12.0, 1.0],
 		["max_clerks", 1.0, 3.0, 1.0],
 		["ghost_shop_chance", 0.0, 1.0, 0.05],
@@ -369,9 +371,9 @@ func schema() -> Array:
 		["art_cost", 5.0, 200.0, 1.0],
 		["pawn_gold", 1.0, 80.0, 1.0],
 		["chest_art", 0.0, 1.0, 0.05],
-		["mine_nodes", 1.0, 16.0, 1.0],
-		["wood_nodes", 1.0, 16.0, 1.0],
-		["break_count", 1.0, 24.0, 1.0],
+		["mine_nodes", 1.0, 40.0, 1.0],
+		["wood_nodes", 1.0, 40.0, 1.0],
+		["break_count", 1.0, 48.0, 1.0],
 		["shrine_count", 0.0, 3.0, 1.0],
 		["campfire_count", 0.0, 3.0, 1.0],
 		["bag_cap", 8.0, 40.0, 1.0],
@@ -523,6 +525,20 @@ func getv(name: String) -> float:
 	if v == null:
 		return 0.0
 	return float(v)
+
+
+func migrate_from(old_rev: int) -> bool:
+	if old_rev >= BAL_REV:
+		return false
+	if old_rev < 2:
+		gen_w = 216
+		gen_h = 216
+		gen_rooms = 36
+		gen_extra_loops = 8
+		mine_nodes = 18
+		wood_nodes = 14
+		break_count = 24
+	return true
 
 
 func setv(name: String, value: float) -> void:

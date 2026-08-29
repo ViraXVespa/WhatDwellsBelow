@@ -2,6 +2,8 @@ extends RefCounted
 
 ## Primary + backup saves. Isolated live vs playtest slots.
 
+static var _migrated := false
+
 const LIVE := "user://live"
 const FRESH := "user://playtest/fresh"
 const PROG := "user://playtest/progressed"
@@ -53,6 +55,7 @@ static func read_payload(path: String) -> Dictionary:
 static func collect() -> Dictionary:
 	return {
 		"v": 1,
+		"bal_rev": App.bal.BAL_REV,
 		"character_type": App.character_type,
 		"character_chosen": App.character_chosen,
 		"cam_zoom": App.cam_zoom,
@@ -73,6 +76,7 @@ static func collect() -> Dictionary:
 
 
 static func apply(data: Dictionary) -> void:
+	_migrated = false
 	App.character_type = str(data.get("character_type", "male"))
 	App.character_chosen = bool(data.get("character_chosen", false))
 	App.cam_zoom = float(data.get("cam_zoom", 1.0))
@@ -90,6 +94,9 @@ static func apply(data: Dictionary) -> void:
 	if db is Dictionary:
 		for k in (db as Dictionary).keys():
 			App.bal.setv(str(k), float((db as Dictionary)[k]))
+	var old_rev := int(data.get("bal_rev", 0))
+	if App.bal.has_method("migrate_from") and App.bal.migrate_from(old_rev):
+		_migrated = true
 	var p: Variant = data.get("prog", {})
 	if p is Dictionary:
 		App.prog.from_meta(p)
@@ -101,6 +108,13 @@ static func apply(data: Dictionary) -> void:
 	App.set_volume("master", App.vol_master)
 	App.set_volume("music", App.vol_music)
 	App.set_volume("sfx", App.vol_sfx)
+
+
+static func _persist_if_migrated(slot: String) -> void:
+	if not _migrated:
+		return
+	_migrated = false
+	save_slot(slot)
 
 
 static func save_slot(slot := "live") -> bool:
@@ -125,11 +139,13 @@ static func load_slot(slot := "live") -> String:
 	if not pri.is_empty() and int(pri.get("v", 0)) >= 1:
 		apply(pri)
 		write_payload(backup_path(slot), pri)
+		_persist_if_migrated(slot)
 		return "primary"
 	var bak := read_payload(backup_path(slot))
 	if not bak.is_empty() and int(bak.get("v", 0)) >= 1:
 		apply(bak)
 		write_payload(primary_path(slot), bak)
+		_persist_if_migrated(slot)
 		return "backup"
 	fresh_delver()
 	return "fresh"

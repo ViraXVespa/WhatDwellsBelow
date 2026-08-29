@@ -428,7 +428,6 @@ func _redraw_map() -> void:
 	map_tex.update(map_img)
 
 
-
 func _note_verge() -> void:
 	if stairs and not bool(stairs.get("locked")):
 		App.saw_stairs = true
@@ -976,6 +975,13 @@ func _spawn_world() -> void:
 			add_child(s)
 			_mark_cell(sc)
 			_note("shop")
+		elif kind == "stash":
+			var st := _center_room(r)
+			var chest := SpotS.new()
+			chest.setup("chest", _cell_pos(st), false)
+			add_child(chest)
+			_mark_cell(st)
+			_note("chest")
 		elif kind == "puzzle":
 			_spawn_puzzle(r)
 	_scatter_counts()
@@ -1193,7 +1199,7 @@ func _ensure_world() -> void:
 		var pr := {}
 		for r in data.get("rooms", []):
 			var k := str(r.get("kind", ""))
-			if k == "spawn" or k == "boss" or k == "clerk" or k == "shop" or k == "puzzle":
+			if k == "spawn" or k == "boss" or k == "clerk" or k == "shop" or k == "puzzle" or k == "stash":
 				continue
 			var center := _center_room(r)
 			var blocked := false
