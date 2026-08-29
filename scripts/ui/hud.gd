@@ -1,6 +1,13 @@
 extends CanvasLayer
 
-## Dungeon gauntlet strip. Custom ColorRects, no default ProgressBar.
+## Dungeon gauntlet cluster (top-left) + minimap (top-right).
+## Custom ColorRects, no default ProgressBar.
+
+const STRIP_W := 540.0
+const STRIP_H := 196.0
+const MINI_W := 350.0
+const MINI_H := 250.0
+const MARGIN := 24.0
 
 var strip: Control
 var portrait: TextureRect
@@ -23,6 +30,7 @@ var boss_fill: ColorRect
 var boss_lab: Label
 var prompt: Label
 var toast: Label
+var mini_wrap: Control
 var mini: TextureRect
 var fps_lab: Label
 var portrait_path := ""
@@ -30,18 +38,15 @@ var portrait_path := ""
 
 func _ready() -> void:
 	layer = 20
-	var sc: float = App.hud_scale
 	strip = Control.new()
-	strip.position = Vector2(24, 16)
-	strip.scale = Vector2(sc, sc)
 	add_child(strip)
 	var bg := ColorRect.new()
 	bg.color = Color(0.08, 0.06, 0.05, 0.88)
-	bg.size = Vector2(1872, 118)
+	bg.size = Vector2(STRIP_W, STRIP_H)
 	strip.add_child(bg)
 	var edge := ColorRect.new()
 	edge.color = Color(0.55, 0.42, 0.22, 1)
-	edge.size = Vector2(1872, 5)
+	edge.size = Vector2(STRIP_W, 5)
 	strip.add_child(edge)
 	portrait = TextureRect.new()
 	portrait.position = Vector2(10, 14)
@@ -67,11 +72,11 @@ func _ready() -> void:
 	spec_fill = _meter(strip, Vector2(400, 48), Vector2(112, 16), Color(0.9, 0.55, 0.2))
 	_lab(strip, Vector2(280, 64), Vector2(112, 18), 13).text = "Dash"
 	_lab(strip, Vector2(400, 64), Vector2(112, 18), 13).text = "LT"
-	lvl = _lab(strip, Vector2(530, 18), Vector2(280, 28), 22)
-	res = _lab(strip, Vector2(530, 48), Vector2(420, 28), 18)
-	floor_lab = _lab(strip, Vector2(960, 18), Vector2(120, 32), 28)
+	lvl = _lab(strip, Vector2(112, 86), Vector2(280, 28), 22)
+	floor_lab = _lab(strip, Vector2(400, 86), Vector2(120, 28), 28)
+	res = _lab(strip, Vector2(112, 114), Vector2(410, 24), 18)
 	shrine_icon = TextureRect.new()
-	shrine_icon.position = Vector2(1080, 14)
+	shrine_icon.position = Vector2(10, 140)
 	shrine_icon.size = Vector2(28, 28)
 	shrine_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	shrine_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -80,10 +85,10 @@ func _ready() -> void:
 		shrine_icon.texture = load("res://assets/sprites/props/shrine.png")
 	shrine_icon.visible = false
 	strip.add_child(shrine_icon)
-	shrine_lab = _lab(strip, Vector2(1112, 16), Vector2(260, 28), 18)
+	shrine_lab = _lab(strip, Vector2(42, 142), Vector2(220, 28), 18)
 	shrine_lab.add_theme_color_override("font_color", Color(1.0, 0.72, 0.35))
 	food_icon = TextureRect.new()
-	food_icon.position = Vector2(1080, 44)
+	food_icon.position = Vector2(270, 140)
 	food_icon.size = Vector2(28, 28)
 	food_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	food_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -92,26 +97,28 @@ func _ready() -> void:
 		food_icon.texture = load("res://assets/sprites/props/hp_orb.png")
 	food_icon.visible = false
 	strip.add_child(food_icon)
-	food_lab = _lab(strip, Vector2(1112, 46), Vector2(260, 28), 18)
+	food_lab = _lab(strip, Vector2(302, 142), Vector2(220, 28), 18)
 	food_lab.add_theme_color_override("font_color", Color(0.7, 0.92, 0.5))
+	prompt = _lab(strip, Vector2(10, 168), Vector2(520, 24), 18)
+	prompt.add_theme_color_override("font_color", Color(0.95, 0.82, 0.4))
+	toast = _lab(self, Vector2(24, 16 + STRIP_H + 8), Vector2(540, 28), 20)
+	toast.add_theme_color_override("font_color", Color(1.0, 0.88, 0.45))
 	boss_wrap = Control.new()
-	boss_wrap.position = Vector2(1400, 16)
-	boss_wrap.size = Vector2(450, 50)
-	strip.add_child(boss_wrap)
+	boss_wrap.size = Vector2(520, 50)
+	add_child(boss_wrap)
 	boss_fill = _meter(boss_wrap, Vector2(0, 18), Vector2(360, 18), Color(0.75, 0.15, 0.2))
 	boss_lab = _lab(boss_wrap, Vector2(0, 0), Vector2(360, 20), 16)
-	prompt = _lab(strip, Vector2(112, 82), Vector2(900, 28), 20)
-	prompt.add_theme_color_override("font_color", Color(0.95, 0.82, 0.4))
-	toast = _lab(strip, Vector2(1020, 82), Vector2(700, 28), 20)
-	toast.add_theme_color_override("font_color", Color(1.0, 0.88, 0.45))
+	mini_wrap = Control.new()
+	add_child(mini_wrap)
 	mini = TextureRect.new()
-	mini.position = Vector2(1720, 8)
-	mini.size = Vector2(140, 100)
+	mini.position = Vector2(0, 0)
+	mini.size = Vector2(MINI_W, MINI_H)
 	mini.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	mini.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	mini.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	strip.add_child(mini)
-	fps_lab = _lab(self, Vector2(1760, 140), Vector2(140, 28), 16)
+	mini_wrap.add_child(mini)
+	fps_lab = _lab(self, Vector2(0, 0), Vector2(140, 28), 16)
+	_layout()
 	_load_portrait()
 
 
@@ -141,6 +148,20 @@ func _lab(host: Node, pos: Vector2, sz: Vector2, fs: int) -> Label:
 	return l
 
 
+func _layout() -> void:
+	var sc: float = App.hud_scale
+	var vp := get_viewport().get_visible_rect().size
+	strip.scale = Vector2(sc, sc)
+	strip.position = Vector2(MARGIN, 16)
+	mini_wrap.scale = Vector2(sc, sc)
+	mini_wrap.position = Vector2(vp.x - MARGIN - MINI_W * sc, 16)
+	toast.scale = Vector2(sc, sc)
+	toast.position = Vector2(MARGIN, 16 + STRIP_H * sc + 8)
+	boss_wrap.scale = Vector2(sc, sc)
+	boss_wrap.position = Vector2(MARGIN, toast.position.y + 32 * sc)
+	fps_lab.position = Vector2(mini_wrap.position.x, mini_wrap.position.y + MINI_H * sc + 4)
+
+
 func _load_portrait() -> void:
 	var p := "res://assets/sprites/player/%s/idle_down.png" % App.character_type
 	if p == portrait_path:
@@ -155,7 +176,7 @@ func bind_map(tex: Texture2D) -> void:
 
 
 func refresh(player: Node, dungeon: Node) -> void:
-	strip.scale = Vector2(App.hud_scale, App.hud_scale)
+	_layout()
 	_load_portrait()
 	var hp := 1.0
 	var maxh := 1.0

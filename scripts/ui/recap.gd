@@ -33,7 +33,7 @@ var run0: Dictionary = {}
 var keep0: Dictionary = {}
 var gain_now: Dictionary = {}
 var rows: Dictionary = {}
-var focus_btn: Button
+var focus_btn: Control
 var flavor: Label
 var mailed_lab: Label
 var head_right: Label
@@ -172,7 +172,7 @@ func _rebuild(cond: String) -> void:
 	box.add_child(heads)
 	skill_labs.clear()
 	rows.clear()
-	var first: Button = null
+	var first: Control = null
 	for id in App.prog.SKILLS:
 		var row := HBoxContainer.new()
 		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -194,11 +194,10 @@ func _rebuild(cond: String) -> void:
 			first = perm_block.wrap
 	mailed_lab = ThemeS.lab("", 18, Color(0.78, 0.86, 0.7))
 	box.add_child(mailed_lab)
-	focus_btn = ThemeS.btn("Continue  (A)", func(): _finish())
-	focus_btn.disabled = true
-	box.add_child(focus_btn)
-	if first:
-		focus_btn = first
+	var cont := ThemeS.btn("Continue  (A)", func(): _finish())
+	cont.disabled = true
+	box.add_child(cont)
+	focus_btn = first if first else cont
 	_refresh_skills()
 	call_deferred("_focus")
 

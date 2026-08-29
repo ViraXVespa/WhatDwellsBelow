@@ -47,6 +47,8 @@ var ui: CanvasLayer
 var toast_lab: Label
 var shrine_lab: Label
 var counts: Dictionary = {}
+var occupied: Dictionary = {}
+const PROP_GAP := 2
 
 
 func _ready() -> void:
@@ -327,9 +329,10 @@ func _on_boss_dead() -> void:
 		return
 	_cleared = true
 	var chest = SpotS.new()
-	var bp: Vector2i = data.boss
-	chest.setup("chest", Vector3(float(bp.x) + 0.6, 0.0, float(bp.y) + 0.6), false)
+	var bp: Vector2i = _free_near(data.boss)
+	chest.setup("chest", _cell_pos(bp), false)
 	add_child(chest)
+	_mark_cell(bp)
 
 
 func _reveal_around(c: Vector2i, rad: int) -> bool:
@@ -598,6 +601,110 @@ func _cell_pos(c: Vector2i) -> Vector3:
 	return Vector3(float(c.x) + 0.5, 0.0, float(c.y) + 0.5)
 
 
+func _world_cell(p: Vector3) -> Vector2i:
+	return Vector2i(int(round(p.x - 0.5)), int(round(p.z - 0.5)))
+
+
+func _mark_cell(c: Vector2i) -> void:
+	if c.x >= 0 and c.y >= 0:
+		occupied[c] = true
+
+
+func _cell_clear(c: Vector2i, gap: int = PROP_GAP) -> bool:
+	if not _is_floor_cell(c):
+		return false
+	for p in occupied.keys():
+		var o: Vector2i = p
+		if maxi(absi(o.x - c.x), absi(o.y - c.y)) < gap:
+			return false
+	return true
+
+
+func _free_cell(r: Dictionary, gap: int = PROP_GAP) -> Vector2i:
+	if r.is_empty():
+		return Vector2i(-1, -1)
+	var rx := int(r.x)
+	var ry := int(r.y)
+	var rw := int(r.w)
+	var rh := int(r.h)
+	var opts: Array[Vector2i] = []
+	for y in range(ry + 1, ry + maxi(2, rh) - 1):
+		for x in range(rx + 1, rx + maxi(2, rw) - 1):
+			var c := Vector2i(x, y)
+			if _cell_clear(c, gap):
+				opts.append(c)
+	if not opts.is_empty():
+		return opts[floor_rng.randi() % opts.size()]
+	opts.clear()
+	for y in range(ry + 1, ry + maxi(2, rh) - 1):
+		for x in range(rx + 1, rx + maxi(2, rw) - 1):
+			var c2 := Vector2i(x, y)
+			if _cell_clear(c2, 1):
+				opts.append(c2)
+	if not opts.is_empty():
+		return opts[floor_rng.randi() % opts.size()]
+	return _rand_cell(r)
+
+
+func _free_cell_world(prefer: Dictionary, gap: int = PROP_GAP) -> Vector2i:
+	var rooms: Array = []
+	if not prefer.is_empty():
+		rooms.append(prefer)
+	for r in data.get("rooms", []):
+		if r in rooms:
+			continue
+		rooms.append(r)
+	for g in [gap, 1]:
+		for r in rooms:
+			var c := _free_cell(r, g)
+			if c.x >= 0 and _cell_clear(c, g):
+				return c
+	if not prefer.is_empty():
+		return _rand_cell(prefer)
+	return Vector2i(int(data.spawn.x), int(data.spawn.y))
+
+
+func _free_near(center: Vector2i, gap: int = PROP_GAP) -> Vector2i:
+	if _cell_clear(center, gap):
+		return center
+	for rad in range(1, 7):
+		var opts: Array[Vector2i] = []
+		for y in range(center.y - rad, center.y + rad + 1):
+			for x in range(center.x - rad, center.x + rad + 1):
+				var c := Vector2i(x, y)
+				if _cell_clear(c, gap):
+					opts.append(c)
+		if not opts.is_empty():
+			return opts[floor_rng.randi() % opts.size()]
+	for rad in range(1, 7):
+		var opts2: Array[Vector2i] = []
+		for y in range(center.y - rad, center.y + rad + 1):
+			for x in range(center.x - rad, center.x + rad + 1):
+				var c2 := Vector2i(x, y)
+				if _cell_clear(c2, 1):
+					opts2.append(c2)
+		if not opts2.is_empty():
+			return opts2[floor_rng.randi() % opts2.size()]
+	return center
+
+
+func _seed_occupied() -> void:
+	occupied.clear()
+	_mark_cell(data.spawn)
+	_mark_cell(data.crystal)
+	_mark_cell(data.stairs)
+	_mark_cell(data.boss)
+	_mark_cell(data.door)
+	for o in data.get("openings", []):
+		for raw in o.get("cells", []):
+			_mark_cell(Vector2i(raw))
+	if player:
+		_mark_cell(_world_cell(player.global_position))
+	for n in get_tree().get_nodes_in_group("interact"):
+		if n is Node3D:
+			_mark_cell(_world_cell((n as Node3D).global_position))
+
+
 func _is_floor_cell(c: Vector2i) -> bool:
 	var w: int = data.w
 	var h: int = data.h
@@ -845,6 +952,7 @@ func _note(k: String) -> void:
 
 func _spawn_world() -> void:
 	counts.clear()
+	_seed_occupied()
 	var clerk_i := 0
 	for r in data.get("rooms", []):
 		var kind := str(r.get("kind", "normal"))
@@ -853,14 +961,20 @@ func _spawn_world() -> void:
 			if role == "":
 				role = "gather" if clerk_i == 0 else ("misc" if clerk_i == 1 else "patty")
 			clerk_i += 1
+			var cc := _free_cell(r)
 			var c := SpotS.new()
-			c.setup_clerk(role, _cell_pos(_rand_cell(r)))
+			c.setup_clerk(role, _cell_pos(cc))
 			add_child(c)
+			_mark_cell(cc)
 			_note("clerk")
 		elif kind == "shop":
+			var sc := _free_cell(r)
+			if not _cell_clear(sc, 1):
+				sc = _center_room(r)
 			var s := SpotS.new()
-			s.setup_shop(_cell_pos(_center_room(r)), floor_rng)
+			s.setup_shop(_cell_pos(sc), floor_rng)
 			add_child(s)
+			_mark_cell(sc)
 			_note("shop")
 		elif kind == "puzzle":
 			_spawn_puzzle(r)
@@ -871,9 +985,11 @@ func _spawn_world() -> void:
 		if spawn_r.is_empty():
 			spawn_r = _find_kind_room("spawn")
 		if not spawn_r.is_empty():
+			var qc := _free_cell_world(spawn_r)
 			var q := SpotS.new()
-			q.setup("quest_item", _cell_pos(_rand_cell(spawn_r)))
+			q.setup("quest_item", _cell_pos(qc))
 			add_child(q)
+			_mark_cell(qc)
 
 
 func _center_room(r: Dictionary) -> Vector2i:
@@ -912,9 +1028,18 @@ func _place_n(rooms: Array, n: int, what: String) -> void:
 	if n <= 0 or rooms.is_empty():
 		return
 	var pool: Array = _shuffle_rooms(rooms)
-	for i in n:
-		var r: Dictionary = pool[i % pool.size()]
-		var pos := _cell_pos(_rand_cell(r))
+	var placed := 0
+	var attempts := 0
+	var ri := 0
+	var budget := n * maxi(8, pool.size() * 3)
+	while placed < n and attempts < budget:
+		attempts += 1
+		var r: Dictionary = pool[ri % pool.size()]
+		ri += 1
+		var cell := _free_cell(r)
+		if not _cell_clear(cell, 1):
+			continue
+		var pos := _cell_pos(cell)
 		if what == "mine":
 			var node := GatherS.new()
 			node.setup("mine", pos)
@@ -940,6 +1065,21 @@ func _place_n(rooms: Array, n: int, what: String) -> void:
 			sh.setup("shrine", pos)
 			add_child(sh)
 			_note("shrine")
+		else:
+			continue
+		_mark_cell(cell)
+		placed += 1
+
+
+func _puzzle_cells(c: Vector2i) -> Array[Vector2i]:
+	return [
+		c,
+		Vector2i(c.x + 2, c.y),
+		Vector2i(c.x, c.y - 2),
+		Vector2i(c.x, c.y - 3),
+		Vector2i(c.x - 2, c.y),
+		Vector2i(c.x - 1, c.y),
+	]
 
 
 func _spawn_puzzle(r: Dictionary) -> void:
@@ -973,6 +1113,55 @@ func _spawn_puzzle(r: Dictionary) -> void:
 	crack.reveal = hidden
 	add_child(crack)
 	_note("crack")
+	for cell in _puzzle_cells(c):
+		_mark_cell(cell)
+
+
+func _place_one(kind: String, prefer: Dictionary) -> Vector2i:
+	var cell := _free_cell_world(prefer)
+	var pos := _cell_pos(cell)
+	if kind == "mine":
+		var n := GatherS.new()
+		n.setup("mine", pos)
+		add_child(n)
+		_note("mine")
+	elif kind == "wood":
+		var w := GatherS.new()
+		w.setup("wood", pos)
+		add_child(w)
+		_note("wood")
+	elif kind == "break":
+		var b := BreakS.new()
+		b.setup("pot", pos)
+		add_child(b)
+		_note("break")
+	elif kind == "clerk_gather":
+		var c := SpotS.new()
+		c.setup_clerk("gather", pos)
+		add_child(c)
+		_note("clerk")
+	elif kind == "clerk_misc":
+		var m := SpotS.new()
+		m.setup_clerk("misc", pos)
+		add_child(m)
+		_note("clerk")
+	elif kind == "campfire":
+		var f := SpotS.new()
+		f.setup("campfire", pos)
+		add_child(f)
+		_note("campfire")
+	elif kind == "shrine":
+		var s := SpotS.new()
+		s.setup("shrine", pos)
+		add_child(s)
+		_note("shrine")
+	elif kind == "shop":
+		var sh := SpotS.new()
+		sh.setup_shop(pos, floor_rng)
+		add_child(sh)
+		_note("shop")
+	_mark_cell(cell)
+	return cell
 
 
 func _ensure_world() -> void:
@@ -980,52 +1169,43 @@ func _ensure_world() -> void:
 	if spawn_r.is_empty():
 		return
 	if int(counts.get("mine", 0)) < 1:
-		var n := GatherS.new()
-		n.setup("mine", _cell_pos(_rand_cell(spawn_r)))
-		add_child(n)
-		_note("mine")
+		_place_one("mine", spawn_r)
 	if int(counts.get("wood", 0)) < 1:
-		var w := GatherS.new()
-		w.setup("wood", _cell_pos(_rand_cell(spawn_r)))
-		add_child(w)
-		_note("wood")
+		_place_one("wood", spawn_r)
 	if int(counts.get("break", 0)) < 1:
-		var b := BreakS.new()
-		b.setup("pot", _cell_pos(_rand_cell(spawn_r)))
-		add_child(b)
-		_note("break")
+		_place_one("break", spawn_r)
 	if int(counts.get("clerk", 0)) < 1:
-		var c := SpotS.new()
-		c.setup_clerk("gather", _cell_pos(_rand_cell(spawn_r)))
-		add_child(c)
-		_note("clerk")
+		_place_one("clerk_gather", spawn_r)
 	var has_misc := false
 	for n in get_tree().get_nodes_in_group("interact"):
 		if str(n.get("kind")) == "clerk_misc":
 			has_misc = true
 			break
 	if not has_misc:
-		var m := SpotS.new()
-		m.setup_clerk("misc", _cell_pos(_rand_cell(spawn_r)))
-		add_child(m)
-		_note("clerk")
+		_place_one("clerk_misc", spawn_r)
 	if int(counts.get("campfire", 0)) < 1:
-		var f := SpotS.new()
-		f.setup("campfire", _cell_pos(_rand_cell(spawn_r)))
-		add_child(f)
-		_note("campfire")
+		_place_one("campfire", spawn_r)
 	if int(counts.get("shrine", 0)) < 1:
-		var s := SpotS.new()
-		s.setup("shrine", _cell_pos(_rand_cell(spawn_r)))
-		add_child(s)
-		_note("shrine")
+		_place_one("shrine", spawn_r)
 	if int(counts.get("shop", 0)) < 1 and "--wdb-phase5-smoke" in OS.get_cmdline_user_args():
-		var sh := SpotS.new()
-		sh.setup_shop(_cell_pos(_rand_cell(spawn_r)), floor_rng)
-		add_child(sh)
-		_note("shop")
+		_place_one("shop", spawn_r)
 	if int(counts.get("puzzle", 0)) < 1:
-		var pr := _find_kind_room("normal")
+		var pr := {}
+		for r in data.get("rooms", []):
+			var k := str(r.get("kind", ""))
+			if k == "spawn" or k == "boss" or k == "clerk" or k == "shop" or k == "puzzle":
+				continue
+			var center := _center_room(r)
+			var blocked := false
+			for cell in _puzzle_cells(center):
+				if occupied.has(cell):
+					blocked = true
+					break
+			if not blocked:
+				pr = r
+				break
+		if pr.is_empty():
+			pr = _find_kind_room("normal")
 		if pr.is_empty():
 			pr = _find_kind_room("base")
 		if not pr.is_empty() and str(pr.get("kind", "")) != "spawn" and str(pr.get("kind", "")) != "boss":
