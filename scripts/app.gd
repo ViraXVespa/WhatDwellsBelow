@@ -102,6 +102,7 @@ const PAD := {
 var _pad_was: Dictionary = {}
 var _pad_edge: Dictionary = {}
 var _eat_pause := false
+var pad_mode := false
 
 const TITLE_SCENE := "res://scenes/title.tscn"
 const FOUNDATION_SCENE := "res://scenes/foundation.tscn"
@@ -593,6 +594,24 @@ func _process(delta: float) -> void:
 	_debug_sequence(delta)
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventJoypadButton and event.pressed:
+		pad_mode = true
+		return
+	if event is InputEventJoypadMotion and absf((event as InputEventJoypadMotion).axis_value) >= 0.24:
+		pad_mode = true
+		return
+	if event is InputEventMouseButton and event.pressed:
+		pad_mode = false
+		return
+	if event is InputEventMouseMotion and (event as InputEventMouseMotion).relative.length() > 2.0:
+		pad_mode = false
+
+
+func using_pad() -> bool:
+	return pad_mode
+
+
 func _debug_sequence(delta: float) -> void:
 	var down := _shoulders_down()
 	var up := _shoulders_up()
@@ -1044,12 +1063,27 @@ func _pad_blocked(action: String) -> bool:
 
 
 func _pad_tick() -> void:
+	if pad_stick(JOY_AXIS_LEFT_X, JOY_AXIS_LEFT_Y).length() >= 0.24:
+		pad_mode = true
+	elif pad_stick(JOY_AXIS_RIGHT_X, JOY_AXIS_RIGHT_Y).length() >= 0.24:
+		pad_mode = true
 	_pad_edge.clear()
 	var names: Array = PAD.keys()
 	names.append_array(["attack", "special"])
 	for action in names:
 		var key := str(action)
 		var now := pad_held(key)
+		if now and pad_id() >= 0:
+			var id := pad_id()
+			var from_pad := false
+			if key == "attack" and Input.get_joy_axis(id, JOY_AXIS_TRIGGER_RIGHT) > 0.45:
+				from_pad = true
+			elif key == "special" and Input.get_joy_axis(id, JOY_AXIS_TRIGGER_LEFT) > 0.45:
+				from_pad = true
+			elif PAD.has(key) and Input.is_joy_button_pressed(id, int(PAD[key])):
+				from_pad = true
+			if from_pad:
+				pad_mode = true
 		if _pad_blocked(key):
 			_pad_edge[key] = false
 		else:

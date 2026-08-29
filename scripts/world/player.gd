@@ -559,6 +559,10 @@ func _update_aim(move: Vector2) -> void:
 	if stick.length() >= 0.24:
 		aim_dir = stick.normalized()
 		return
+	if App.using_pad():
+		if move.length() >= 0.12:
+			aim_dir = move.normalized()
+		return
 	var mouse_dir := _mouse_aim_dir()
 	if mouse_dir.length_squared() > 0.0001:
 		aim_dir = mouse_dir

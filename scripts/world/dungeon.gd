@@ -49,6 +49,12 @@ var shrine_lab: Label
 var counts: Dictionary = {}
 var occupied: Dictionary = {}
 const PROP_GAP := 2
+const STREAM_IN := 28
+const STREAM_OUT := 42
+const SPAWN_CLEAR := 16
+var spawn_jobs: Array = []
+var stream_t := 0.0
+var stream_all := false
 
 
 func _ready() -> void:
@@ -68,7 +74,10 @@ func _ready() -> void:
 	_hud()
 	_map()
 	_reveal_around(data.spawn, int(App.bal.fog_radius) + 2)
+	_tick_stream(1.0)
 	var args := OS.get_cmdline_user_args()
+	if "--wdb-phase3-smoke" in args or "--wdb-phase4-smoke" in args:
+		_stream_force_all()
 	if "--wdb-phase3-smoke" in args:
 		_smoke()
 	if "--wdb-phase4-smoke" in args:
@@ -92,6 +101,7 @@ func _process(delta: float) -> void:
 		var t := Vector2i(int(player.global_position.x), int(player.global_position.z))
 		var grew := _reveal_around(t, int(App.bal.fog_radius))
 		_tick_pressure(delta, grew)
+		_tick_stream(delta)
 		if grew:
 			fog_dirty = true
 	_note_verge()
@@ -259,6 +269,7 @@ func _mm_boxes(positions: Array, tex_path: String, fallback: Color) -> MultiMesh
 
 func _spawns() -> void:
 	floor_rng.seed = App.run_seed * 10007 + App.floor_n * 9176
+	spawn_jobs.clear()
 	player = PlayerS.new()
 	var sp: Vector2i = data.spawn
 	player.position = Vector3(float(sp.x) + 1.5, 0.0, float(sp.y) + 0.5)
@@ -274,9 +285,9 @@ func _spawns() -> void:
 	add_child(crystal)
 	var pool: PackedStringArray = Roster.floor_types(App.floor_n)
 	for r in data.get("rooms", []):
-		_spawn_room(r, pool)
-	_ensure_pool(pool)
-	_maybe_named(pool)
+		_queue_room(r, pool)
+	_queue_pool(pool)
+	_queue_named(pool)
 	var boss = EnemyS.new()
 	var bp: Vector2i = data.boss
 	boss.position = Vector3(float(bp.x) + 0.5, 0.0, float(bp.y) + 0.5)
@@ -287,6 +298,7 @@ func _spawns() -> void:
 	if App.boss_dead:
 		_on_boss_dead()
 	_spawn_world()
+	_queue_ambushes(pool)
 	ui = UiS.new()
 	add_child(ui)
 
@@ -330,7 +342,8 @@ func _on_boss_dead() -> void:
 	_cleared = true
 	var chest = SpotS.new()
 	var bp: Vector2i = _free_near(data.boss)
-	chest.setup("chest", _cell_pos(bp), false)
+	var gate := bool(data.get("gate_master", false)) or Gen.is_gate_master(App.floor_n)
+	chest.setup("chest" if gate else "base_chest", _cell_pos(bp), false)
 	add_child(chest)
 	_mark_cell(bp)
 
@@ -450,6 +463,258 @@ func _dot(p: Vector2i, col: Color, need_seen := false) -> void:
 	map_img.set_pixel(p.x, p.y, col)
 
 
+func _player_cell() -> Vector2i:
+	if player == null:
+		return Vector2i(int(data.spawn.x), int(data.spawn.y))
+	return Vector2i(int(player.global_position.x), int(player.global_position.z))
+
+
+func _cell_manhattan(a: Vector2i, b: Vector2i) -> int:
+	return absi(a.x - b.x) + absi(a.y - b.y)
+
+
+func _near_spawn(c: Vector2i, rad: int = SPAWN_CLEAR) -> bool:
+	return _cell_manhattan(c, data.spawn) < rad
+
+
+func _away_room() -> Dictionary:
+	var best := {}
+	var best_d := -1
+	for r in data.get("rooms", []):
+		var k := str(r.get("kind", "normal"))
+		if k == "spawn" or k == "boss":
+			continue
+		var d := _cell_manhattan(_center_room(r), data.spawn)
+		if d < SPAWN_CLEAR:
+			continue
+		if d > best_d:
+			best_d = d
+			best = r
+	if not best.is_empty():
+		return best
+	for r in data.get("rooms", []):
+		if str(r.get("kind", "")) != "spawn":
+			return r
+	return {}
+
+
+func _new_job(kind: String, cell: Vector2i, room: Dictionary, ids: PackedStringArray, named: bool, nname: String) -> Dictionary:
+	var gid := next_group
+	next_group += 1
+	return {
+		"kind": kind,
+		"cell": cell,
+		"room": room,
+		"ids": ids,
+		"named": named,
+		"nname": nname,
+		"gid": gid,
+		"live": [],
+		"state": "pending",
+	}
+
+
+func _queue_room(r: Dictionary, pool: PackedStringArray) -> void:
+	var kind := str(r.get("kind", "normal"))
+	if kind == "spawn" or kind == "boss" or Gen.is_safe_kind(kind):
+		return
+	if _near_spawn(_center_room(r)):
+		return
+	if pool.is_empty():
+		return
+	var n := mini(2, maxi(1, int(App.bal.room_pack)))
+	if kind == "base":
+		n = mini(3, maxi(2, int(App.bal.base_guards)))
+		var chest = SpotS.new()
+		var c := Vector2i(int(r.x) + int(r.w) / 2, int(r.y) + int(r.h) / 2)
+		chest.setup("base_chest", Vector3(float(c.x) + 0.5, 0.0, float(c.y) + 0.5), false)
+		add_child(chest)
+	var ids := PackedStringArray()
+	for i in n:
+		ids.append(pool[floor_rng.randi() % pool.size()])
+	spawn_jobs.append(_new_job("room", _center_room(r), r, ids, false, ""))
+
+
+func _queue_pool(pool: PackedStringArray) -> void:
+	var room := _combat_room()
+	if room.is_empty() or pool.is_empty():
+		return
+	if _near_spawn(_center_room(room)):
+		return
+	var ids := PackedStringArray()
+	for id in pool:
+		var have := types_present.find(id) >= 0
+		if not have:
+			for job in spawn_jobs:
+				if (job.ids as PackedStringArray).find(id) >= 0:
+					have = true
+					break
+		if have:
+			continue
+		ids.append(id)
+	if ids.is_empty():
+		return
+	spawn_jobs.append(_new_job("fill", _center_room(room), room, ids, false, ""))
+
+
+func _queue_named(pool: PackedStringArray) -> void:
+	var ntype := ""
+	var nname := ""
+	if App.quest_named_type != "":
+		ntype = App.quest_named_type
+		nname = App.quest_named_name
+	else:
+		var due := App.floors_since_named + 1 >= int(App.bal.named_every)
+		var roll := floor_rng.randf() < (1.0 / maxf(1.0, App.bal.named_every))
+		if not due and not roll:
+			App.floors_since_named += 1
+			return
+		ntype = pool[floor_rng.randi() % pool.size()] if not pool.is_empty() else "goblin"
+		nname = Roster.make_name(floor_rng)
+	App.floors_since_named = 0
+	var room := _combat_room()
+	if room.is_empty():
+		return
+	last_named = nname
+	var ids := PackedStringArray()
+	ids.append(ntype)
+	spawn_jobs.append(_new_job("named", _center_room(room), room, ids, true, nname))
+
+
+func _queue_ambushes(pool: PackedStringArray) -> void:
+	if pool.is_empty():
+		return
+	var spots: Array = data.get("ambushes", [])
+	var max_spots := mini(12, spots.size())
+	var placed := 0
+	for si in spots.size():
+		if placed >= max_spots:
+			break
+		var center := Vector2i(spots[si])
+		if not _is_floor_cell(center):
+			continue
+		if _near_spawn(center):
+			continue
+		var n := floor_rng.randi_range(1, 2)
+		var ids := PackedStringArray()
+		for i in n:
+			ids.append(pool[floor_rng.randi() % pool.size()])
+		spawn_jobs.append(_new_job("ambush", center, {}, ids, false, ""))
+		placed += 1
+
+
+func _job_anchor(job: Dictionary) -> Vector2i:
+	return Vector2i(job.cell)
+
+
+func _activate_job(job: Dictionary) -> void:
+	if str(job.state) != "pending":
+		return
+	if _near_spawn(_job_anchor(job), 8):
+		job.state = "cleared"
+		return
+	var ids: PackedStringArray = job.ids
+	if ids.is_empty():
+		job.state = "cleared"
+		return
+	var live: Array = []
+	var room: Dictionary = job.get("room", {})
+	for i in ids.size():
+		var cell := _job_anchor(job)
+		if not room.is_empty():
+			cell = _rand_cell(room)
+		elif i > 0:
+			var near := _walkable_near(_job_anchor(job), 2, false)
+			if near != Vector2i(-1, -1):
+				cell = near
+		if _near_spawn(cell, 8):
+			continue
+		var e := _add_enemy(ids[i], _cell_pos(cell), int(job.gid), bool(job.named), str(job.nname))
+		if e and bool(job.named):
+			e.add_to_group("named")
+		live.append(e)
+	job.live = live
+	job.state = "live" if not live.is_empty() else "cleared"
+
+
+func _sleep_job(job: Dictionary) -> void:
+	if str(job.state) != "live":
+		return
+	var remain := PackedStringArray()
+	var live: Array = job.get("live", [])
+	for raw in live:
+		if raw == null or not is_instance_valid(raw):
+			continue
+		var e := raw as Node
+		if e == null:
+			continue
+		var alive := true
+		if e.has_method("is_alive"):
+			alive = e.is_alive()
+		if alive:
+			remain.append(str(e.get("type_id")))
+		e.queue_free()
+	job.live = []
+	if groups.has(int(job.gid)):
+		groups.erase(int(job.gid))
+	if remain.is_empty():
+		job.state = "cleared"
+		job.ids = PackedStringArray()
+		return
+	job.ids = remain
+	job.gid = next_group
+	next_group += 1
+	job.state = "pending"
+
+
+func _job_in_combat(job: Dictionary) -> bool:
+	if player == null:
+		return false
+	var live: Array = job.get("live", [])
+	var kept: Array = []
+	var close := false
+	for raw in live:
+		if raw == null or not is_instance_valid(raw):
+			continue
+		var e := raw as Node
+		if e == null:
+			continue
+		kept.append(e)
+		if e.has_method("is_alive") and not e.is_alive():
+			continue
+		var d := Vector2(e.global_position.x - player.global_position.x, e.global_position.z - player.global_position.z).length()
+		if d < 8.0:
+			close = true
+	job.live = kept
+	return close
+
+
+func _tick_stream(delta: float) -> void:
+	stream_t += delta
+	if stream_t < 0.2 and delta < 0.9:
+		return
+	stream_t = 0.0
+	if player == null:
+		return
+	var pc := _player_cell()
+	for job in spawn_jobs:
+		var st := str(job.state)
+		if st == "cleared":
+			continue
+		var d := _cell_manhattan(pc, _job_anchor(job))
+		if st == "pending" and (stream_all or d <= STREAM_IN):
+			_activate_job(job)
+		elif st == "live" and not stream_all and d >= STREAM_OUT and not _job_in_combat(job):
+			_sleep_job(job)
+
+
+func _stream_force_all() -> void:
+	stream_all = true
+	for job in spawn_jobs:
+		if str(job.state) == "pending":
+			_activate_job(job)
+
+
 func _smoke() -> void:
 	printerr("P3: res=" + ProjectSettings.globalize_path("res://"))
 	printerr("P3: ok=" + str(data.get("ok", false)))
@@ -501,58 +766,25 @@ func _smoke_after_kill() -> void:
 
 
 func _spawn_room(r: Dictionary, pool: PackedStringArray) -> void:
-	var kind := str(r.get("kind", "normal"))
-	if kind == "spawn" or kind == "boss" or Gen.is_safe_kind(kind):
-		return
-	if pool.is_empty():
-		return
-	var gid := next_group
-	next_group += 1
-	var n := int(App.bal.room_pack)
-	if kind == "base":
-		n = maxi(4, int(App.bal.base_guards))
-		var chest = SpotS.new()
-		var c := Vector2i(int(r.x) + int(r.w) / 2, int(r.y) + int(r.h) / 2)
-		chest.setup("base_chest", Vector3(float(c.x) + 0.5, 0.0, float(c.y) + 0.5), false)
-		add_child(chest)
-	for i in n:
-		var id := pool[floor_rng.randi() % pool.size()]
-		var cell := _rand_cell(r)
-		_add_enemy(id, _cell_pos(cell), gid, false, "")
+	_queue_room(r, pool)
+	for job in spawn_jobs:
+		if str(job.state) == "pending" and job.get("room", {}) == r:
+			_activate_job(job)
 
 
 func _maybe_named(pool: PackedStringArray) -> void:
-	var ntype := ""
-	var nname := ""
-	if App.quest_named_type != "":
-		ntype = App.quest_named_type
-		nname = App.quest_named_name
-	else:
-		var due := App.floors_since_named + 1 >= int(App.bal.named_every)
-		var roll := floor_rng.randf() < (1.0 / maxf(1.0, App.bal.named_every))
-		if not due and not roll:
-			App.floors_since_named += 1
-			return
-		ntype = pool[floor_rng.randi() % pool.size()] if not pool.is_empty() else "goblin"
-		nname = Roster.make_name(floor_rng)
-	App.floors_since_named = 0
-	var room := _combat_room()
-	if room.is_empty():
-		return
-	var gid := next_group
-	next_group += 1
-	var e := _add_enemy(ntype, _cell_pos(_rand_cell(room)), gid, true, nname)
-	last_named = nname
-	if e:
-		e.add_to_group("named")
+	_queue_named(pool)
 
 
 func _combat_room() -> Dictionary:
 	for r in data.get("rooms", []):
 		var kind := str(r.get("kind", "normal"))
-		if kind == "normal" or kind == "base":
-			return r
-	return {}
+		if kind != "normal" and kind != "base":
+			continue
+		if _near_spawn(_center_room(r)):
+			continue
+		return r
+	return _away_room()
 
 
 func _add_enemy(id: String, pos: Vector3, gid: int, named: bool, nname: String) -> Node:
@@ -571,15 +803,7 @@ func _add_enemy(id: String, pos: Vector3, gid: int, named: bool, nname: String) 
 
 
 func _ensure_pool(pool: PackedStringArray) -> void:
-	var room := _combat_room()
-	if room.is_empty():
-		return
-	var gid := next_group
-	next_group += 1
-	for id in pool:
-		if types_present.find(id) >= 0:
-			continue
-		_add_enemy(id, _cell_pos(_rand_cell(room)), gid, false, "")
+	_queue_pool(pool)
 
 
 func _rand_cell(r: Dictionary) -> Vector2i:
@@ -647,20 +871,23 @@ func _free_cell(r: Dictionary, gap: int = PROP_GAP) -> Vector2i:
 
 func _free_cell_world(prefer: Dictionary, gap: int = PROP_GAP) -> Vector2i:
 	var rooms: Array = []
-	if not prefer.is_empty():
+	if not prefer.is_empty() and str(prefer.get("kind", "")) != "spawn" and not _near_spawn(_center_room(prefer)):
 		rooms.append(prefer)
 	for r in data.get("rooms", []):
 		if r in rooms:
+			continue
+		if str(r.get("kind", "")) == "spawn" or _near_spawn(_center_room(r)):
 			continue
 		rooms.append(r)
 	for g in [gap, 1]:
 		for r in rooms:
 			var c := _free_cell(r, g)
-			if c.x >= 0 and _cell_clear(c, g):
+			if c.x >= 0 and _cell_clear(c, g) and not _near_spawn(c):
 				return c
-	if not prefer.is_empty():
-		return _rand_cell(prefer)
-	return Vector2i(int(data.spawn.x), int(data.spawn.y))
+	var away := _away_room()
+	if not away.is_empty():
+		return _rand_cell(away)
+	return Vector2i(int(data.spawn.x) + 8, int(data.spawn.y) + 8)
 
 
 func _free_near(center: Vector2i, gap: int = PROP_GAP) -> Vector2i:
@@ -714,6 +941,8 @@ func _is_floor_cell(c: Vector2i) -> bool:
 
 
 func _is_safe_cell(c: Vector2i) -> bool:
+	if _near_spawn(c, 8):
+		return true
 	for r in data.get("rooms", []):
 		if not Gen.is_safe_kind(str(r.get("kind", ""))):
 			continue
@@ -955,6 +1184,9 @@ func _spawn_world() -> void:
 	var clerk_i := 0
 	for r in data.get("rooms", []):
 		var kind := str(r.get("kind", "normal"))
+		if _near_spawn(_center_room(r)) and kind != "spawn":
+			if kind == "clerk" or kind == "vein" or kind == "shop":
+				continue
 		if kind == "clerk":
 			var role := str(r.get("role", ""))
 			if role == "":
@@ -978,10 +1210,12 @@ func _spawn_world() -> void:
 		elif kind == "stash":
 			var st := _center_room(r)
 			var chest := SpotS.new()
-			chest.setup("chest", _cell_pos(st), false)
+			chest.setup("base_chest", _cell_pos(st), false)
 			add_child(chest)
 			_mark_cell(st)
 			_note("chest")
+		elif kind == "vein":
+			_spawn_vein(r)
 		elif kind == "puzzle":
 			_spawn_puzzle(r)
 	_scatter_counts()
@@ -989,13 +1223,32 @@ func _spawn_world() -> void:
 	if str(App.prog.quest_active.get("kind", "")) == "fetch" and int(App.prog.quest_active.get("floor", 1)) == App.floor_n:
 		var spawn_r := _find_kind_room("normal")
 		if spawn_r.is_empty():
-			spawn_r = _find_kind_room("spawn")
+			spawn_r = _away_room()
 		if not spawn_r.is_empty():
 			var qc := _free_cell_world(spawn_r)
 			var q := SpotS.new()
 			q.setup("quest_item", _cell_pos(qc))
 			add_child(q)
 			_mark_cell(qc)
+
+
+func _spawn_vein(r: Dictionary) -> void:
+	if _near_spawn(_center_room(r)):
+		return
+	var what := str(r.get("vein", ""))
+	if what != "mine" and what != "wood" and what != "break":
+		var roll := floor_rng.randf()
+		if roll < 0.4:
+			what = "wood"
+		elif roll < 0.8:
+			what = "mine"
+		else:
+			what = "break"
+	var n := 7
+	if what == "wood" or what == "break":
+		n = 8
+	_place_n([r], n, what)
+	_note("vein")
 
 
 func _center_room(r: Dictionary) -> Vector2i:
@@ -1006,8 +1259,16 @@ func _scatter_rooms() -> Array:
 	var out: Array = []
 	for r in data.get("rooms", []):
 		var k := str(r.get("kind", "normal"))
-		if k == "normal" or k == "base" or k == "spawn":
+		if k == "spawn" or k == "boss" or k == "clerk" or k == "shop" or k == "puzzle":
+			continue
+		if _near_spawn(_center_room(r)):
+			continue
+		if k == "normal" or k == "base":
 			out.append(r)
+	if out.is_empty():
+		var fallback := _away_room()
+		if not fallback.is_empty():
+			out.append(fallback)
 	return out
 
 
@@ -1043,7 +1304,7 @@ func _place_n(rooms: Array, n: int, what: String) -> void:
 		var r: Dictionary = pool[ri % pool.size()]
 		ri += 1
 		var cell := _free_cell(r)
-		if not _cell_clear(cell, 1):
+		if not _cell_clear(cell, 1) or _near_spawn(cell):
 			continue
 		var pos := _cell_pos(cell)
 		if what == "mine":
@@ -1125,6 +1386,10 @@ func _spawn_puzzle(r: Dictionary) -> void:
 
 func _place_one(kind: String, prefer: Dictionary) -> Vector2i:
 	var cell := _free_cell_world(prefer)
+	if _near_spawn(cell):
+		var away := _away_room()
+		if not away.is_empty():
+			cell = _free_cell(away)
 	var pos := _cell_pos(cell)
 	if kind == "mine":
 		var n := GatherS.new()
@@ -1171,35 +1436,37 @@ func _place_one(kind: String, prefer: Dictionary) -> Vector2i:
 
 
 func _ensure_world() -> void:
-	var spawn_r := _find_kind_room("spawn")
-	if spawn_r.is_empty():
+	var prefer := _away_room()
+	if prefer.is_empty():
 		return
 	if int(counts.get("mine", 0)) < 1:
-		_place_one("mine", spawn_r)
+		_place_one("mine", prefer)
 	if int(counts.get("wood", 0)) < 1:
-		_place_one("wood", spawn_r)
+		_place_one("wood", prefer)
 	if int(counts.get("break", 0)) < 1:
-		_place_one("break", spawn_r)
+		_place_one("break", prefer)
 	if int(counts.get("clerk", 0)) < 1:
-		_place_one("clerk_gather", spawn_r)
+		_place_one("clerk_gather", prefer)
 	var has_misc := false
 	for n in get_tree().get_nodes_in_group("interact"):
 		if str(n.get("kind")) == "clerk_misc":
 			has_misc = true
 			break
 	if not has_misc:
-		_place_one("clerk_misc", spawn_r)
+		_place_one("clerk_misc", prefer)
 	if int(counts.get("campfire", 0)) < 1:
-		_place_one("campfire", spawn_r)
+		_place_one("campfire", prefer)
 	if int(counts.get("shrine", 0)) < 1:
-		_place_one("shrine", spawn_r)
+		_place_one("shrine", prefer)
 	if int(counts.get("shop", 0)) < 1 and "--wdb-phase5-smoke" in OS.get_cmdline_user_args():
-		_place_one("shop", spawn_r)
+		_place_one("shop", prefer)
 	if int(counts.get("puzzle", 0)) < 1:
 		var pr := {}
 		for r in data.get("rooms", []):
 			var k := str(r.get("kind", ""))
-			if k == "spawn" or k == "boss" or k == "clerk" or k == "shop" or k == "puzzle" or k == "stash":
+			if k == "spawn" or k == "boss" or k == "clerk" or k == "shop" or k == "puzzle" or k == "stash" or k == "vein":
+				continue
+			if _near_spawn(_center_room(r)):
 				continue
 			var center := _center_room(r)
 			var blocked := false
