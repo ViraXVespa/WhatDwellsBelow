@@ -1,0 +1,134 @@
+# Player UI, HUD, menus, recap
+
+Status: binding design + live snapshot
+Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, or loading
+Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `recap.gd`, `loader.gd`, `progress_ui.gd`, `present.gd`, `theme.gd`
+See also: `design/debug.md`, `design/inventory.md`, `design/skills.md`
+
+## UI theme (playable surfaces)
+
+Every player-facing UI and HUD element in the live path MUST be designed with dungeon theming and MUST NOT ship as a default, unskinned, or engine-debug control. This includes the gauntlet strip, pause menu, clerk / extraction UI, Ghost Shop, anvil, Floor Crystal loadout UI, quest UI, Controls Billboard, recap, maps, toasts, title / credit flow, confirmation prompts, and any other surface a normal player can open.
+
+The secret debug menu (including Automated Playtest, profiles, Animation Browser chrome, and raw value editors) MAY use default or lightly skinned engine controls. Appearance there is not a Demo-Complete art requirement.
+
+## HUD – gauntlet strip (mandatory elements and behavior)
+
+The HUD is a persistent horizontal strip that MUST remain visible at all times during dungeon play and MUST be readable from couch distance on a 1080p television.
+
+| Required Element | Notes |
+|------------------|-------|
+| Player portrait | |
+| HP bar with numeric value | |
+| Potion quick-slot icon + cooldown sweep / numeric cooldown | |
+| Dash cooldown indicator | |
+| Special (LT) cooldown indicator | |
+| Level | Highest global Combat Level; if the equipped weapon’s style level is lower it appears in parentheses (e.g. `Level 14 (Magic 11)`) |
+| Current gold | |
+| Current ore / wood | |
+| Current floor number | e.g. “F3” |
+| Shrine buff icon + remaining time | Appears only while active |
+| Food heal-over-time icon + remaining time | Appears only while a food effect is active |
+| Boss / Floor Guardian / Gate Master HP bar | Appears only while the boss is alive and in range / engaged |
+
+Bag-fullness indicator is explicitly removed and MUST NOT appear.
+All cooldowns MUST show both a visual fill/sweep and be understandable at a glance. Exact pixel positions, colors, and sizes are left to implementation so long as the information hierarchy is preserved and the strip does not obscure critical gameplay.
+
+## Pause menu
+
+Opened with Menu / Start / Esc. Freezes gameplay.
+Every menu (including this one) MUST open with valid initial focus so it is immediately navigable by gamepad.
+
+Exactly three tabs, navigable with LB/RB or equivalent:
+1. Inventory – full bag grid, equipment slots, ability to use/consume/drop/equip (including mid-run weapon changes). Active artifact set bonuses are shown beneath each artifact’s normal description.
+2. Skills – list of the eleven skills with current level, XP bar to next level, and permanent XP total.
+3. System – MUST contain every one of the following:
+   - Master / Music / SFX volume sliders
+   - Camera zoom slider (1.0–1.75)
+   - HUD scale slider
+   - Aim-line toggle and opacity slider
+   - Presentation mode switcher + Archives browser
+   - Control rebinding screen
+   - Character type switch (male / female)
+   - Patreon link
+   - “Delete Save Data” with confirmation
+   - “Dispel” Avatar button with strong confirmation prompt
+
+The full debug / balance menu is **no longer** present in the Pause Menu.
+
+## Extraction / Clerk UI
+
+- Opens on interact with any clerk.
+- Shows a clear, scrollable list of every item currently in the player’s bag and equipped slots that can be extracted.
+- Player can select individual items or use a “Send All” option.
+- Confirmation step required before items are removed from the run and marked as banked.
+- MUST be fully usable with gamepad only and readable from couch distance.
+
+## Ghost Shop UI
+
+- Lists available Artifacts (2–4) with short descriptions and prices.
+- Player may purchase a maximum of two Artifacts per visit.
+- Lists snacks with prices.
+- Option to pawn any currently carried gear for a low gold return.
+- Clean confirmation on every transaction.
+- Active set bonuses are shown beneath artifact descriptions.
+
+## Anvil UI
+
+- Shows the three holds for the selected slot.
+- Analyze → First Forge → Re-forge flow with clear cost breakdown (gold, ore, root).
+- Smithing level influence visible.
+- Confirmation on every forge action.
+
+## Loadout UI
+
+- Opens only by interacting with the Floor Crystal in Placeholdia. There is no separate loadout station.
+- Select holds per slot (fallback to starters), choose starting weapon, choose tool type (pickaxe or hatchet — locked for the run), choose starting floor (deeper previously reached floors only; never backward), confirm enter.
+- Visual presentation MUST meet the same clean, dungeon-themed, TV-readable standard as the other interaction UIs.
+- Confirmation MUST be cancellable.
+
+## Quest UI
+
+- Accessible from the guild in Placeholdia.
+- Displays three random quests.
+- Clear accept / decline flow.
+- Active quest status visible where appropriate.
+
+## Recap screen (mandatory sequence)
+
+Triggered on every death or “Dispel”.
+1. Display run statistics.
+2. Play a clear visual sequence that shows each skill’s run XP value draining down to the permanent fragment amount.
+3. After the drain completes, display the new permanent XP totals and the resulting levels.
+4. Show gold and items successfully extracted (if any).
+5. Title / subtitle variants according to performance, including verge states.
+6. Special case: death or “Dispel” on floor 1 with an empty bag MUST include the exact flavor line “They lived just to die. What a waste.”
+7. After the player dismisses recap, play the Placeholdia wake-up sequence.
+
+## Minimap and large map
+
+- Small minimap on HUD shows only visited tiles + important markers (stairs, crystal, clerks, shop, player).
+- View / Back button opens a large full-screen map overlay. Gameplay continues underneath.
+- Fog of war and visited tracking follow the rules in `design/dungeon.md`.
+
+## Toasts and floating combat text
+
+- Floating damage / heal numbers: integers only, rise and fade quickly.
+- Critical hits use yellow + magenta colored damage numbers (no extra “CRIT!” text).
+- Toasts appear for bag-full, level-up, extraction success, and other system events. Short, readable, non-stacking or lightly stacking.
+
+## Live snapshot — HUD / pause
+
+`hud.gd`: strip top-left, minimap top-right, boss bar when near, toast. Level string uses combat level and parenthetical style level.
+Pause Skills also shows run XP earned this descent.
+Inventory bag grid is 7 columns.
+
+## Live snapshot — loading bar (`loader.gd`)
+
+`CanvasLayer` that survives scene changes. Used on title → Placeholdia (`App.play_from_menu`) and similar heavy transitions.
+
+- `begin(heading, status)`
+- `set_status(text)`
+- `set_progress(0..1)`
+- `finish()` snaps to 100%, hides, calls `App.wake_web_pad()`
+
+Visual: dim overlay, heading, status, percent, 720 px track with smoothed fill.
