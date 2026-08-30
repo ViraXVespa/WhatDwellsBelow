@@ -331,20 +331,12 @@ func _focus() -> void:
 		focus_btn.grab_focus()
 
 
-func _xp_span() -> float:
-	return maxf(1.0, App.bal.xp_level)
-
-
 func _xp_lv(total: float) -> int:
-	return 1 + int(total / _xp_span())
+	return App.prog.level_from_xp(total)
 
 
 func _xp_to_next(total: float) -> int:
-	var span := _xp_span()
-	var into := fmod(total, span)
-	if into <= 0.0001:
-		return int(round(span))
-	return int(round(span - into))
+	return int(round(App.prog.xp_to_next(total)))
 
 
 func _skill_title(id: String) -> String:
@@ -359,17 +351,14 @@ func _set_span(fill: ColorRect, left_r: float, right_r: float) -> void:
 
 
 func _perm_ratios(start_xp: float, gain: float) -> Vector2:
-	var span := _xp_span()
 	var total := start_xp + gain
-	var into := fmod(total, span)
 	var start_lv := _xp_lv(start_xp)
 	var now_lv := _xp_lv(total)
+	var into := App.prog.xp_ratio(total)
 	if now_lv > start_lv:
-		return Vector2(0.0, clampf(into / span, 0.0, 1.0))
-	var base_into := fmod(start_xp, span)
-	var base_r := clampf(base_into / span, 0.0, 1.0)
-	var gain_r := clampf((into - base_into) / span, 0.0, 1.0)
-	return Vector2(base_r, gain_r)
+		return Vector2(0.0, into)
+	var base_r := App.prog.xp_ratio(start_xp)
+	return Vector2(base_r, clampf(into - base_r, 0.0, 1.0))
 
 
 func _xfer_speed(id: String, rem: float) -> float:
@@ -472,8 +461,7 @@ func _refresh_skills() -> void:
 		_set_span(rec.perm_gain, pr.x, pr.x + pr.y)
 		(rec.perm_base as ColorRect).color = COL_PERM
 		(rec.perm_gain as ColorRect).color = COL_GAIN
-		var span := _xp_span()
-		var run_r := clampf(fmod(run_total, span) / span, 0.0, 1.0)
+		var run_r := App.prog.xp_ratio(run_total)
 		_set_span(rec.run_fill, 0.0, run_r)
 		(rec.run_fill as ColorRect).color = COL_DUNGEON
 	if tip_id != "":

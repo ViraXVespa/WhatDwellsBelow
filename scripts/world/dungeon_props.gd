@@ -65,7 +65,7 @@ static func spawn_vein(host: Node, r: Dictionary) -> void:
 		return
 	var what := str(r.get("vein", ""))
 	if what != "mine" and what != "wood" and what != "break":
-		var roll := host.floor_rng.randf()
+		var roll: float = host.floor_rng.randf()
 		if roll < 0.4:
 			what = "wood"
 		elif roll < 0.8:
@@ -99,7 +99,7 @@ static func scatter_rooms(host: Node) -> Array:
 static func shuffle_rooms(host: Node, rooms: Array) -> Array:
 	var pool: Array = rooms.duplicate()
 	for i in pool.size():
-		var j := host.floor_rng.randi_range(i, pool.size() - 1)
+		var j: int = host.floor_rng.randi_range(i, pool.size() - 1)
 		var tmp: Variant = pool[i]
 		pool[i] = pool[j]
 		pool[j] = tmp

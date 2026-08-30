@@ -627,24 +627,16 @@ func _inv_drop() -> void:
 	_inv_act(msg)
 
 
-func _xp_span() -> float:
-	return maxf(1.0, App.bal.xp_level)
-
-
 func _xp_lv(total: float) -> int:
-	return 1 + int(total / _xp_span())
+	return App.prog.level_from_xp(total)
 
 
 func _xp_to_next(total: float) -> int:
-	var span := _xp_span()
-	var into := fmod(total, span)
-	if into <= 0.0001:
-		return int(round(span))
-	return int(round(span - into))
+	return int(round(App.prog.xp_to_next(total)))
 
 
 func _xp_ratio(total: float) -> float:
-	return clampf(fmod(total, _xp_span()) / _xp_span(), 0.0, 1.0)
+	return App.prog.xp_ratio(total)
 
 
 func _skill_title(id: String) -> String:

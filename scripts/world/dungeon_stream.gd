@@ -37,14 +37,14 @@ static func queue_room(host: Node, r: Dictionary, pool: PackedStringArray) -> vo
 
 
 static func queue_pool(host: Node, pool: PackedStringArray) -> void:
-	var room := host._combat_room()
+	var room: Dictionary = host._combat_room()
 	if room.is_empty() or pool.is_empty():
 		return
 	if host._near_spawn(host._center_room(room)):
 		return
 	var ids := PackedStringArray()
 	for id in pool:
-		var have := host.types_present.find(id) >= 0
+		var have: bool = host.types_present.find(id) >= 0
 		if not have:
 			for job in host.spawn_jobs:
 				if (job.ids as PackedStringArray).find(id) >= 0:
@@ -66,14 +66,14 @@ static func queue_named(host: Node, pool: PackedStringArray) -> void:
 		nname = App.quest_named_name
 	else:
 		var due := App.floors_since_named + 1 >= int(App.bal.named_every)
-		var roll := host.floor_rng.randf() < (1.0 / maxf(1.0, App.bal.named_every))
+		var roll: float = host.floor_rng.randf() < (1.0 / maxf(1.0, App.bal.named_every))
 		if not due and not roll:
 			App.floors_since_named += 1
 			return
 		ntype = pool[host.floor_rng.randi() % pool.size()] if not pool.is_empty() else "goblin"
 		nname = Roster.make_name(host.floor_rng)
 	App.floors_since_named = 0
-	var room := host._combat_room()
+	var room: Dictionary = host._combat_room()
 	if room.is_empty():
 		return
 	host.last_named = nname
@@ -96,7 +96,7 @@ static func queue_ambushes(host: Node, pool: PackedStringArray) -> void:
 			continue
 		if host._near_spawn(center):
 			continue
-		var n := host.floor_rng.randi_range(1, 2)
+		var n: int = host.floor_rng.randi_range(1, 2)
 		var ids := PackedStringArray()
 		for i in n:
 			ids.append(pool[host.floor_rng.randi() % pool.size()])
@@ -141,12 +141,12 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 		if not room.is_empty():
 			cell = host._rand_cell(room)
 		elif i > 0:
-			var near := host._walkable_near(job_anchor(job), 2, false)
+			var near: Vector2i = host._walkable_near(job_anchor(job), 2, false)
 			if near != Vector2i(-1, -1):
 				cell = near
 		if host._near_spawn(cell, 8):
 			continue
-		var e := host._add_enemy(ids[i], host._cell_pos(cell), int(job.gid), bool(job.named), str(job.nname))
+		var e: Node = host._add_enemy(ids[i], host._cell_pos(cell), int(job.gid), bool(job.named), str(job.nname))
 		if e and bool(job.named):
 			e.add_to_group("named")
 		live.append(e)

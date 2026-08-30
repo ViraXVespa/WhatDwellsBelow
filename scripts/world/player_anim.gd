@@ -139,7 +139,7 @@ static func apply_facing(host: Node, delta: float) -> void:
 			tex = frames[idx]
 			host.atk_i = idx
 	var planar := Vector2(host.velocity.x, host.velocity.z)
-	var moving := planar.length() > T.MOVE_EPS and host.dash_t <= 0.0 and host.atk_state == host.ATK_NONE
+	var moving: bool = planar.length() > T.MOVE_EPS and host.dash_t <= 0.0 and host.atk_state == host.ATK_NONE
 	if tex == null and moving and host.walk.has(key):
 		var frames: Array = host.walk[key]
 		host.walk_t += delta

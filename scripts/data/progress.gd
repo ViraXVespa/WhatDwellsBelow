@@ -539,8 +539,56 @@ func clear_food() -> void:
 	food_left = 0.0
 
 
+func skill_xp(id: String) -> float:
+	return float(skills_run.get(id, 0.0)) + float(skills_perm.get(id, 0.0))
+
+
 func skill_lv(id: String) -> int:
-	return 1 + int((float(skills_run.get(id, 0.0)) + float(skills_perm.get(id, 0.0))) / maxf(1.0, App.bal.xp_level))
+	return level_from_xp(skill_xp(id))
+
+
+## Cumulative XP required to *be* `level`. Level 1 is 0.
+## Totals grow so T(L + period) approaches 2 × T(L). The 1→2 step stays `xp_level`.
+func xp_period() -> float:
+	return maxf(1.0, App.bal.xp_double_every)
+
+
+func xp_unit() -> float:
+	return maxf(1.0, App.bal.xp_level)
+
+
+func xp_to_reach(level: int) -> float:
+	var lv := maxi(1, level)
+	if lv <= 1:
+		return 0.0
+	var period := xp_period()
+	var unit := xp_unit()
+	var r := pow(2.0, 1.0 / period)
+	return unit * (pow(r, float(lv - 1)) - 1.0) / (r - 1.0)
+
+
+func level_from_xp(total: float) -> int:
+	var t := maxf(0.0, total)
+	var period := xp_period()
+	var unit := xp_unit()
+	var r := pow(2.0, 1.0 / period)
+	var n := 1.0 + log(1.0 + t * (r - 1.0) / unit) / log(r)
+	return maxi(1, int(n))
+
+
+func xp_to_next(total: float) -> float:
+	var lv := level_from_xp(total)
+	return maxf(0.0, xp_to_reach(lv + 1) - maxf(0.0, total))
+
+
+func xp_ratio(total: float) -> float:
+	var lv := level_from_xp(total)
+	var a := xp_to_reach(lv)
+	var b := xp_to_reach(lv + 1)
+	var span := b - a
+	if span <= 0.0001:
+		return 1.0
+	return clampf((maxf(0.0, total) - a) / span, 0.0, 1.0)
 
 
 func add_run_xp(id: String, amt: float) -> void:

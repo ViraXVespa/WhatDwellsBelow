@@ -2,7 +2,7 @@ extends RefCounted
 
 ## All Phase 2 combat numbers. Mutated by the secret debug menu.
 ## Bump BAL_REV when shipping new defaults that old saves should receive.
-const BAL_REV := 2
+const BAL_REV := 3
 
 var move_speed := 4.5
 var dash_speed_mult := 2.8
@@ -164,7 +164,8 @@ var music_fade := 0.35
 var playtest_scale := 6.0
 var playtest_limit := 90.0
 
-var xp_level := 40.0
+var xp_level := 100.0
+var xp_double_every := 14.0
 var xp_hit_weapon := 1.2
 var xp_hit_style := 0.8
 var xp_gather := 6.0
@@ -397,7 +398,8 @@ func schema() -> Array:
 		["music_fade", 0.0, 3.0, 0.05],
 		["playtest_scale", 1.0, 12.0, 0.5],
 		["playtest_limit", 10.0, 600.0, 5.0],
-		["xp_level", 10.0, 120.0, 1.0],
+		["xp_level", 10.0, 400.0, 1.0],
+		["xp_double_every", 4.0, 40.0, 1.0],
 		["xp_hit_weapon", 0.0, 20.0, 0.1],
 		["xp_hit_style", 0.0, 20.0, 0.1],
 		["xp_gather", 0.0, 40.0, 0.5],
@@ -538,6 +540,9 @@ func migrate_from(old_rev: int) -> bool:
 		mine_nodes = 18
 		wood_nodes = 14
 		break_count = 24
+	if old_rev < 3:
+		xp_double_every = 14.0
+		xp_level = 100.0
 	return true
 
 
