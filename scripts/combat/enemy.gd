@@ -8,6 +8,7 @@ const Facing := preload("res://scripts/world/facing.gd")
 const TelegraphS := preload("res://scripts/combat/telegraph.gd")
 const ProjS := preload("res://scripts/combat/projectile.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
+const HpBarS := preload("res://scripts/combat/hp_bar.gd")
 
 const ST_IDLE := 0
 const ST_CHASE := 1
@@ -134,6 +135,7 @@ func setup(id: String, floor_n: int, named := false, given_name := "") -> void:
 	max_hp = hp
 	_paint_rank()
 	_load_tex()
+	HpBarS.ensure(self)
 	call_deferred("_mark_post")
 
 
@@ -168,6 +170,7 @@ func setup_boss(title: String, floor_n: int) -> void:
 	tag.modulate = Color(1.0, 0.82, 0.35)
 	tag.outline_modulate = Color(0, 0, 0)
 	_load_tex(title)
+	HpBarS.ensure(self)
 	call_deferred("_mark_post")
 
 
@@ -209,12 +212,6 @@ func _make_named(given: String, _floor_n: int) -> void:
 	base_mod *= Color(1.08, 1.05, 0.9)
 
 
-func _mark_post() -> void:
-	post = global_position
-	last_seen = global_position
-	last_pos = global_position
-
-
 func _load_tex(boss_title := "") -> void:
 	if spr == null:
 		return
@@ -242,38 +239,24 @@ func _load_tex(boss_title := "") -> void:
 	bang.position.y = size_u * 0.95 + 0.65
 
 
-func force_kill() -> void:
-	hp = 0.0
-	_die()
-
-
-func is_alive() -> bool:
-	return not dead and hp > 0.0
-
-
-func start_flee() -> void:
-	if dead or is_boss:
-		return
-	state = ST_FLEE
-	flee_t = App.bal.flee_run_time
-	spawned_help = false
-	bang.visible = true
-	if telegraph:
-		telegraph.hide_now()
-	_call_help()
+func _mark_post() -> void:
+	post = global_position
+	last_seen = global_position
+	last_pos = global_position
 
 
 func take_hit(raw: float, from_dir: Vector2, crit: bool) -> void:
 	if dead:
 		return
 	var dmg: float = App.bal.apply_defense(raw, defense)
+	dmg *= Threat.received_mult(combat_lv)
 	if crit:
 		dmg *= App.bal.crit_mult
 		flash = 0.16
 	else:
 		flash = 0.08
 	hp = maxf(0.0, hp - dmg)
-	(load("res://scripts/combat/hp_bar.gd") as GDScript).pulse(self, hp, max_hp)
+	HpBarS.pulse(self, hp, max_hp, combat_lv)
 	knock = Vector3(from_dir.x, 0.0, from_dir.y) * App.bal.knockback
 	knock_t = 0.12
 	_float(int(round(dmg)), crit)
@@ -311,6 +294,7 @@ func _die() -> void:
 	App.on_kill()
 	App.prog.note_kill(type_id, named_name)
 	collision_layer = 0
+	HpBarS.pulse(self, 0.0, max_hp, combat_lv)
 	if telegraph:
 		telegraph.hide_now()
 	if is_boss:
@@ -324,29 +308,25 @@ func _die() -> void:
 	tw.finished.connect(queue_free)
 
 
-func _drop_loot() -> void:
-	var host := get_parent()
-	if host == null:
+func force_kill() -> void:
+	hp = 0.0
+	_die()
+
+
+func is_alive() -> bool:
+	return not dead and hp > 0.0
+
+
+func start_flee() -> void:
+	if dead or is_boss:
 		return
-	var gold_n := int(App.bal.enemy_gold_base) + randi() % maxi(1, int(App.bal.enemy_gold_span) + mini(4, App.floor_n))
-	if is_boss:
-		gold_n += int(App.bal.boss_gold_extra)
-	var PickupS := load("res://scripts/world/pickup.gd")
-	var g: Node3D = PickupS.new()
-	host.add_child(g)
-	g.setup("gold", global_position + Vector3(randf_range(-0.2, 0.2), 0.0, randf_range(-0.2, 0.2)), gold_n)
-	if is_boss:
-		return
-	if randf() < App.bal.enemy_gear_chance + App.bal.enemy_gear_floor * float(App.floor_n):
-		var rarity := "white"
-		if randf() < App.bal.enemy_gear_green:
-			rarity = "green"
-		var item := App.prog.make_armor(["head", "body", "legs"][randi() % 3], rarity)
-		if not App.prog.add_item(item):
-			App.spawn_floor_item(item, global_position)
-		else:
-			App.toast(str(item.name))
-			App.sfx("pickup")
+	state = ST_FLEE
+	flee_t = App.bal.flee_run_time
+	spawned_help = false
+	bang.visible = true
+	if telegraph:
+		telegraph.hide_now()
+	_call_help()
 
 
 func _physics_process(delta: float) -> void:
@@ -373,6 +353,29 @@ func _physics_process(delta: float) -> void:
 	global_position.y = 0.0
 	_stuck(delta)
 	_present(delta)
+
+
+func _present(delta: float) -> void:
+	if spr == null:
+		return
+	var lift := 0.0
+	if move_kind == "fly":
+		lift = App.bal.fly_height + sin(bob_t * 5.0) * 0.08
+	elif move_kind == "hop" and hop_t > 0.18:
+		lift = App.bal.hop_height * (hop_t / 0.42)
+	spr.position.y = size_u * 0.48 + lift
+	var fk := Facing.from_aim(aim)
+	spr.flip_h = fk == "left" or fk == "up_left" or fk == "down_left"
+	Depth.apply(spr, global_position)
+	if flash > 0.0:
+		flash -= delta
+		spr.modulate = Color(1.7, 1.7, 1.7)
+	elif state == ST_WIND:
+		spr.modulate = base_mod * Color(1.15, 0.85, 0.55)
+	else:
+		spr.modulate = base_mod
+	if bang.visible and state != ST_FLEE:
+		bang.visible = false
 
 
 func _ai(delta: float) -> void:
@@ -548,13 +551,13 @@ func _strike() -> void:
 
 func _hit_player(player: Node, mult := 1.0) -> void:
 	if player and player.has_method("take_hit"):
-		player.take_hit(damage * mult, locked_aim, false, kill_tag())
+		player.take_hit(damage * mult * Threat.dealt_mult(combat_lv), locked_aim, false, kill_tag())
 
 
 func kill_tag() -> String:
 	if is_boss:
 		var title := str(tag.text) if tag else ""
-		return "gate_master" if title == "Gate Master" else "guardian"
+		return "gate_master" if title.begins_with("Gate Master") else "guardian"
 	return type_id
 
 
@@ -568,7 +571,7 @@ func _spawn_shot(dir: Vector2) -> void:
 	var tex := "res://assets/fx/arrow.png"
 	if role == "mage":
 		tex = "res://assets/fx/lightning.png"
-	p.setup(global_position, dir, App.bal.enemy_proj_speed, atk_range + 1.5, damage, true, false, true, tex)
+	p.setup(global_position, dir, App.bal.enemy_proj_speed, atk_range + 1.5, damage * Threat.dealt_mult(combat_lv), true, false, true, tex)
 	p.source = kill_tag()
 
 
@@ -583,15 +586,38 @@ func _do_flee(delta: float, to_p: Vector2) -> void:
 		state = ST_CHASE
 
 
-func _call_help() -> void:
-	if spawned_help:
-		return
-	spawned_help = true
+func _drop_loot() -> void:
 	var host := get_parent()
-	if host and host.has_method("spawn_reinforcement"):
-		var n := int(App.bal.flee_help)
-		for i in n:
-			host.spawn_reinforcement(type_id, global_position, group_id)
+	if host == null:
+		return
+	var gold_n := int(App.bal.enemy_gold_base) + randi() % maxi(1, int(App.bal.enemy_gold_span) + mini(4, App.floor_n))
+	if is_boss:
+		gold_n += int(App.bal.boss_gold_extra)
+	var PickupS := load("res://scripts/world/pickup.gd")
+	var g: Node3D = PickupS.new()
+	host.add_child(g)
+	g.setup("gold", global_position + Vector3(randf_range(-0.2, 0.2), 0.0, randf_range(-0.2, 0.2)), gold_n)
+	if is_boss:
+		return
+	if randf() < App.bal.enemy_gear_chance + App.bal.enemy_gear_floor * float(App.floor_n):
+		var rarity := "white"
+		if randf() < App.bal.enemy_gear_green:
+			rarity = "green"
+		var item := App.prog.make_armor(["head", "body", "legs"][randi() % 3], rarity)
+		if not App.prog.add_item(item):
+			App.spawn_floor_item(item, global_position)
+		else:
+			App.toast(str(item.name))
+			App.sfx("pickup")
+
+
+func _steer_to(dest: Vector3, _delta: float) -> void:
+	var d := Vector2(dest.x - global_position.x, dest.z - global_position.z)
+	if d.length_squared() < 0.0004:
+		velocity = Vector3.ZERO
+		return
+	aim = d.normalized()
+	_move_dir(aim, 1.0, _delta)
 
 
 func _idle(delta: float) -> void:
@@ -607,44 +633,6 @@ func _idle(delta: float) -> void:
 		_steer_to(dest, delta)
 	else:
 		velocity = Vector3.ZERO
-
-
-func _steer_to(dest: Vector3, delta: float) -> void:
-	var d := Vector2(dest.x - global_position.x, dest.z - global_position.z)
-	if d.length_squared() < 0.0004:
-		velocity = Vector3.ZERO
-		return
-	aim = d.normalized()
-	_move_dir(aim, 1.0, delta)
-
-
-func _move_dir(dir: Vector2, spd_m: float, delta: float) -> void:
-	var sep := _sep()
-	var wish := dir.normalized() * move_spd * spd_m
-	wish += Vector2(sep.x, sep.z)
-	if move_kind == "hop":
-		hop_t -= delta
-		if hop_t <= 0.0:
-			hop_t = 0.42
-			velocity = Vector3(wish.x, 0.0, wish.y) * 1.35
-		else:
-			velocity = velocity.move_toward(Vector3.ZERO, move_spd * 3.0 * delta)
-	else:
-		velocity = Vector3(wish.x, 0.0, wish.y)
-
-
-func _sep() -> Vector3:
-	var push := Vector3.ZERO
-	var lim: float = App.bal.enemy_sep
-	for e in Combat.enemies():
-		if e == self or e == null or not is_instance_valid(e):
-			continue
-		var d: Vector3 = global_position - (e as Node3D).global_position
-		d.y = 0.0
-		var L := d.length()
-		if L < lim and L > 0.01:
-			push += d / L * (lim - L) * 2.4
-	return push
 
 
 func _stuck(delta: float) -> void:
@@ -666,27 +654,44 @@ func _stuck(delta: float) -> void:
 		stuck_t = 0.0
 
 
-func _present(delta: float) -> void:
-	if spr == null:
+func _sep() -> Vector3:
+	var push := Vector3.ZERO
+	var lim: float = App.bal.enemy_sep
+	for e in Combat.enemies():
+		if e == self or e == null or not is_instance_valid(e):
+			continue
+		var d: Vector3 = global_position - (e as Node3D).global_position
+		d.y = 0.0
+		var L := d.length()
+		if L < lim and L > 0.01:
+			push += d / L * (lim - L) * 2.4
+	return push
+
+
+func _call_help() -> void:
+	if spawned_help:
 		return
-	var lift := 0.0
-	if move_kind == "fly":
-		lift = App.bal.fly_height + sin(bob_t * 5.0) * 0.08
-	elif move_kind == "hop" and hop_t > 0.18:
-		lift = App.bal.hop_height * (hop_t / 0.42)
-	spr.position.y = size_u * 0.48 + lift
-	var fk := Facing.from_aim(aim)
-	spr.flip_h = fk == "left" or fk == "up_left" or fk == "down_left"
-	Depth.apply(spr, global_position)
-	if flash > 0.0:
-		flash -= delta
-		spr.modulate = Color(1.7, 1.7, 1.7)
-	elif state == ST_WIND:
-		spr.modulate = base_mod * Color(1.15, 0.85, 0.55)
+	spawned_help = true
+	var host := get_parent()
+	if host and host.has_method("spawn_reinforcement"):
+		var n := int(App.bal.flee_help)
+		for i in n:
+			host.spawn_reinforcement(type_id, global_position, group_id)
+
+
+func _move_dir(dir: Vector2, spd_m: float, delta: float) -> void:
+	var sep := _sep()
+	var wish := dir.normalized() * move_spd * spd_m
+	wish += Vector2(sep.x, sep.z)
+	if move_kind == "hop":
+		hop_t -= delta
+		if hop_t <= 0.0:
+			hop_t = 0.42
+			velocity = Vector3(wish.x, 0.0, wish.y) * 1.35
+		else:
+			velocity = velocity.move_toward(Vector3.ZERO, move_spd * 3.0 * delta)
 	else:
-		spr.modulate = base_mod
-	if bang.visible and state != ST_FLEE:
-		bang.visible = false
+		velocity = Vector3(wish.x, 0.0, wish.y)
 
 
 func _player() -> Node3D:
@@ -719,11 +724,3 @@ func state_name() -> String:
 			return "flee"
 		_:
 			return "unk"
-
-
-func smoke_force_leash() -> String:
-	post = global_position
-	global_position = post + Vector3(App.bal.leash_range + 2.5, 0.0, 0.0)
-	state = ST_CHASE
-	_ai(0.016)
-	return state_name()

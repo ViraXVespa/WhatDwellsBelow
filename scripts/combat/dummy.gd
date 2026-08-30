@@ -4,10 +4,12 @@ const Combat := preload("res://scripts/combat/combat.gd")
 const Depth := preload("res://scripts/world/depth.gd")
 const FloatS := preload("res://scripts/combat/float_num.gd")
 const T := preload("res://scripts/data/tunables.gd")
+const HpBarS := preload("res://scripts/combat/hp_bar.gd")
 
 var hp := 80.0
 var max_hp := 80.0
 var defense := 0.0
+var combat_lv := 1
 var flash := 0.0
 var stagger := 0.0
 var knock := Vector3.ZERO
@@ -56,6 +58,7 @@ func _ready() -> void:
 	tag.pixel_size = 0.011
 	tag.visible = false
 	add_child(tag)
+	call_deferred("_pin_bar")
 
 
 func setup_boss(title: String, floor_n: int) -> void:
@@ -74,6 +77,7 @@ func setup_boss(title: String, floor_n: int) -> void:
 	tag.text = title
 	tag.visible = true
 	tag.modulate = Color(1.0, 0.82, 0.35)
+	_pin_bar()
 
 
 func setup_guard() -> void:
@@ -84,6 +88,7 @@ func setup_guard() -> void:
 	tag.visible = true
 	tag.modulate = Color(0.95, 0.45, 0.35)
 	tag.font_size = 28
+	_pin_bar()
 
 
 func force_kill() -> void:
@@ -105,7 +110,7 @@ func take_hit(raw: float, from_dir: Vector2, crit: bool) -> void:
 	else:
 		flash = 0.08
 	hp = maxf(0.0, hp - dmg)
-	(load("res://scripts/combat/hp_bar.gd") as GDScript).pulse(self, hp, max_hp)
+	HpBarS.pulse(self, hp, max_hp, combat_lv)
 	knock = Vector3(from_dir.x, 0.0, from_dir.y) * App.bal.knockback
 	knock_t = 0.12
 	_float(int(round(dmg)), crit)
@@ -120,6 +125,10 @@ func apply_stagger(sec: float) -> void:
 		stagger = maxf(stagger, App.bal.slam_stagger_boss)
 	else:
 		stagger = maxf(stagger, sec)
+
+
+func _pin_bar() -> void:
+	HpBarS.ensure(self)
 
 
 func _float(amount: int, crit: bool) -> void:
@@ -139,6 +148,7 @@ func _die() -> void:
 	dead = true
 	App.on_kill()
 	collision_layer = 0
+	HpBarS.pulse(self, 0.0, max_hp, combat_lv)
 	if is_boss:
 		App.notify_boss_dead()
 	var tw := create_tween()
