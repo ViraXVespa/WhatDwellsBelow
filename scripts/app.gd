@@ -15,6 +15,7 @@ const AnimS := preload("res://scripts/debug/anim_browser.gd")
 const ArchS := preload("res://scripts/ui/archives_ui.gd")
 const PlayS := preload("res://scripts/debug/playtest.gd")
 const LoaderS := preload("res://scripts/ui/loader.gd")
+const Smoke := preload("res://scripts/debug/smoke.gd")
 
 var character_type := "male"
 var character_chosen := false
@@ -136,7 +137,7 @@ func _ready() -> void:
 	add_child(archives_ui)
 	loader = LoaderS.new()
 	add_child(loader)
-	if not _phase_smoke():
+	if not Smoke.active():
 		Store.load_slot("live")
 	if "--wdb-debug" in OS.get_cmdline_user_args():
 		call_deferred("_open_debug")
@@ -145,14 +146,6 @@ func _ready() -> void:
 func _open_debug() -> void:
 	if debug and debug.has_method("show_menu"):
 		debug.show_menu()
-
-
-func _phase_smoke() -> bool:
-	for a in OS.get_cmdline_user_args():
-		var s := str(a)
-		if s.begins_with("--wdb-phase") and s.find("smoke") >= 0:
-			return true
-	return false
 
 
 func save_now() -> void:

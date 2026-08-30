@@ -8,6 +8,7 @@ const Combat := preload("res://scripts/combat/combat.gd")
 const TelegraphS := preload("res://scripts/combat/telegraph.gd")
 const AimLineS := preload("res://scripts/combat/aim_line.gd")
 const ProjS := preload("res://scripts/combat/projectile.gd")
+const Smoke := preload("res://scripts/debug/smoke.gd")
 
 const ATK_NONE := 0
 const ATK_BASIC := 1
@@ -303,8 +304,7 @@ func take_hit(raw: float, from_dir: Vector2, crit: bool, src := "") -> void:
 
 
 func _player_die() -> void:
-	var args := OS.get_cmdline_user_args()
-	if "--wdb-phase4-smoke" in args or "--wdb-phase3-smoke" in args or "--wdb-phase5-smoke" in args or "--wdb-phase7-smoke" in args:
+	if Smoke.hold_player():
 		hp = max_hp
 		return
 	play_exit("death", last_hit)

@@ -12,6 +12,7 @@ const GatherS := preload("res://scripts/world/gather_node.gd")
 const BreakS := preload("res://scripts/world/breakable.gd")
 const UiS := preload("res://scripts/ui/progress_ui.gd")
 const HudS := preload("res://scripts/ui/hud.gd")
+const Smoke := preload("res://scripts/debug/smoke.gd")
 
 var data: Dictionary = {}
 var player: CharacterBody3D
@@ -31,7 +32,6 @@ var map_tex: ImageTexture
 var map_rect: TextureRect
 var frame_acc := 0.0
 var frame_n := 0
-var smoke_frames := 0
 var walls: StaticBody3D
 var _cleared := false
 var groups: Dictionary = {}
@@ -75,23 +75,10 @@ func _ready() -> void:
 	_map()
 	_reveal_around(data.spawn, int(App.bal.fog_radius) + 2)
 	_tick_stream(1.0)
-	var args := OS.get_cmdline_user_args()
-	if "--wdb-phase3-smoke" in args or "--wdb-phase4-smoke" in args:
-		_stream_force_all()
-	if "--wdb-phase3-smoke" in args:
-		_smoke()
-	if "--wdb-phase4-smoke" in args:
-		_smoke4()
-	if "--wdb-phase5-smoke" in args:
-		_smoke5()
-	if "--wdb-phase7-smoke" in args:
-		_smoke7()
-	if "--wdb-phase9-smoke" in args:
-		_smoke9()
+	Smoke.attach_dungeon(self)
 
 
 func _process(delta: float) -> void:
-	smoke_frames += 1
 	frame_acc += delta
 	frame_n += 1
 	if frame_acc >= 0.5:
@@ -715,56 +702,6 @@ func _stream_force_all() -> void:
 			_activate_job(job)
 
 
-func _smoke() -> void:
-	printerr("P3: res=" + ProjectSettings.globalize_path("res://"))
-	printerr("P3: ok=" + str(data.get("ok", false)))
-	printerr("P3: floor=" + str(App.floor_n))
-	printerr("P3: role=" + str(data.get("boss_title", "")))
-	printerr("P3: gate=" + str(data.get("gate_master", false)))
-	printerr("P3: rooms=" + str((data.get("rooms", []) as Array).size()))
-	printerr("P3: bases=" + str((data.get("bases", []) as Array).size()))
-	printerr("P3: door=" + str(data.get("door", Vector2i.ZERO)))
-	printerr("P3: stairs=" + str(data.get("stairs", Vector2i.ZERO)))
-	printerr("P3: boss_dead=" + str(App.boss_dead))
-	printerr("P3: stairs_locked=" + str(stairs.locked if stairs else true))
-	printerr("P3: door_open=" + str(door.open if door else false))
-	printerr("P3: enemies=" + str(get_tree().get_nodes_in_group("enemies").size()))
-	printerr("P3: bosses=" + str(get_tree().get_nodes_in_group("boss").size()))
-	_smoke_roles()
-	if App.floor_n > 1:
-		printerr("P3: descended_ok floor=" + str(App.floor_n))
-		printerr("P3: process_frames=" + str(smoke_frames))
-		get_tree().create_timer(0.35).timeout.connect(func(): get_tree().quit())
-		return
-	get_tree().create_timer(0.4).timeout.connect(_smoke_unlock)
-
-
-func _smoke_roles() -> void:
-	var roles: PackedStringArray = PackedStringArray()
-	for f in range(1, 12):
-		roles.append("%d:%s" % [f, Gen.boss_title(f)])
-	printerr("P3: loop=" + ", ".join(roles))
-	for f in [1, 5, 6]:
-		var d: Dictionary = Gen.generate(f, 42, App.bal)
-		printerr("P3: genF%d ok=%s gate=%s rooms=%d bases=%d" % [f, str(d.get("ok", false)), str(d.get("gate_master", false)), (d.get("rooms", []) as Array).size(), (d.get("bases", []) as Array).size()])
-
-
-func _smoke_unlock() -> void:
-	var bosses := get_tree().get_nodes_in_group("boss")
-	if bosses.size() > 0 and bosses[0].has_method("force_kill"):
-		bosses[0].force_kill()
-	get_tree().create_timer(0.25).timeout.connect(_smoke_after_kill)
-
-
-func _smoke_after_kill() -> void:
-	if stairs and stairs.has_method("refresh"):
-		stairs.refresh()
-	printerr("P3: after_kill_dead=" + str(App.boss_dead))
-	printerr("P3: after_kill_stairs_locked=" + str(stairs.locked if stairs else true))
-	printerr("P3: after_kill_door_open=" + str(door.open if door else false))
-	App.next_floor()
-
-
 func _spawn_room(r: Dictionary, pool: PackedStringArray) -> void:
 	_queue_room(r, pool)
 	for job in spawn_jobs:
@@ -1067,102 +1004,6 @@ func _pressure_spawn() -> int:
 	return spawned
 
 
-func _smoke4() -> void:
-	if last_named == "" or get_tree().get_nodes_in_group("named").is_empty():
-		var pool: PackedStringArray = Roster.floor_types(App.floor_n)
-		var ntype := pool[0] if not pool.is_empty() else "goblin"
-		var nname := Roster.make_name(floor_rng)
-		var room := _combat_room()
-		if not room.is_empty():
-			var gid := next_group
-			next_group += 1
-			_add_enemy(ntype, _cell_pos(_rand_cell(room)), gid, true, nname)
-			last_named = nname
-	printerr("P4: res=" + ProjectSettings.globalize_path("res://"))
-	printerr("P4: roster=" + str(Roster.IDS.size()) + " " + ", ".join(Roster.IDS))
-	for f in range(1, 6):
-		var pool: PackedStringArray = Roster.floor_types(f)
-		printerr("P4: poolF%d n=%d types=%s" % [f, pool.size(), ", ".join(pool)])
-	printerr("P4: floor=" + str(App.floor_n))
-	printerr("P4: types_on_floor n=" + str(types_present.size()) + " " + ", ".join(types_present))
-	printerr("P4: named=" + last_named)
-	printerr("P4: named_count=" + str(get_tree().get_nodes_in_group("named").size()))
-	printerr("P4: enemies=" + str(get_tree().get_nodes_in_group("enemies").size()))
-	printerr("P4: bosses=" + str(get_tree().get_nodes_in_group("boss").size()))
-	var tele_ok := false
-	for n in get_tree().get_nodes_in_group("enemies"):
-		if n.get("is_boss") == true:
-			continue
-		if n.has_method("_begin_windup"):
-			n._begin_windup()
-			var st := str(n.state_name()) if n.has_method("state_name") else ""
-			var vis := false
-			if n.get("telegraph") != null:
-				vis = (n.telegraph as Node).visible
-			printerr("P4: telegraph_state=" + st + " visible=" + str(vis) + " type=" + str(n.get("type_id")) + " role=" + str(n.get("role")))
-			tele_ok = vis or st == "windup"
-			break
-	printerr("P4: telegraph_ok=" + str(tele_ok))
-	var leash_state := ""
-	for n in get_tree().get_nodes_in_group("enemies"):
-		if n.get("is_boss") == true:
-			continue
-		if n.has_method("smoke_force_leash"):
-			leash_state = str(n.smoke_force_leash())
-			printerr("P4: leash_state=" + leash_state)
-			break
-	printerr("P4: leash_ok=" + str(leash_state == "return"))
-	var fled := _force_flee_any()
-	printerr("P4: flee_who=" + fled)
-	printerr("P4: flee_used=" + str(flee_used))
-	get_tree().create_timer(1.25).timeout.connect(_smoke4_after_flee)
-
-
-func _force_flee_any() -> String:
-	for gid in groups.keys():
-		var g: Dictionary = groups[gid]
-		if g.fled:
-			continue
-		var who := _trigger_flee(int(gid))
-		if who:
-			return str(who.get("type_id"))
-	return ""
-
-
-func _smoke4_after_flee() -> void:
-	var help := 0
-	for n in get_tree().get_nodes_in_group("enemies"):
-		if n.get("is_boss") == true:
-			continue
-		help += 1
-	printerr("P4: after_flee_enemies=" + str(help))
-	printerr("P4: flee_ok=" + str(flee_used >= 1))
-	var before := get_tree().get_nodes_in_group("enemies").size()
-	if player:
-		var room := _combat_room()
-		if not room.is_empty():
-			player.global_position = _cell_pos(_rand_cell(room))
-	var press := _pressure_spawn()
-	printerr("P4: pressure_unsafe n=" + str(press) + " before=" + str(before))
-	var safe_n := 0
-	var clerk := _find_kind_room("clerk")
-	if clerk.is_empty():
-		clerk = _find_kind_room("spawn")
-	if player and not clerk.is_empty():
-		player.global_position = _cell_pos(Vector2i(int(clerk.x) + 1, int(clerk.y) + 1))
-		safe_n = _pressure_spawn()
-	printerr("P4: pressure_safe n=" + str(safe_n))
-	printerr("P4: pressure_ok=" + str(press > 0 and safe_n == 0))
-	var pool_ok := true
-	for f in range(1, 6):
-		if Roster.floor_types(f).size() < 5:
-			pool_ok = false
-	printerr("P4: five_per_floor=" + str(pool_ok))
-	printerr("P4: twelve_types=" + str(Roster.IDS.size() >= 12))
-	printerr("P4: named_ok=" + str(last_named != "" and get_tree().get_nodes_in_group("named").size() > 0))
-	get_tree().create_timer(0.35).timeout.connect(func(): get_tree().quit())
-
-
 func _find_kind_room(kind: String) -> Dictionary:
 	for r in data.get("rooms", []):
 		if str(r.get("kind", "")) == kind:
@@ -1458,7 +1299,7 @@ func _ensure_world() -> void:
 		_place_one("campfire", prefer)
 	if int(counts.get("shrine", 0)) < 1:
 		_place_one("shrine", prefer)
-	if int(counts.get("shop", 0)) < 1 and "--wdb-phase5-smoke" in OS.get_cmdline_user_args():
+	if int(counts.get("shop", 0)) < 1 and Smoke.phase(5):
 		_place_one("shop", prefer)
 	if int(counts.get("puzzle", 0)) < 1:
 		var pr := {}
@@ -1493,274 +1334,3 @@ func _tick_plates() -> void:
 			continue
 		var d := Vector2(n.global_position.x - player.global_position.x, n.global_position.z - player.global_position.z).length()
 		n.plate_held(d < 0.7)
-
-
-func _smoke5() -> void:
-	printerr("P5: res=" + ProjectSettings.globalize_path("res://"))
-	printerr("P5: mine_time=" + str(App.bal.mine_time) + " wood_time=" + str(App.bal.wood_time))
-	printerr("P5: mine_hits=" + str(App.bal.mine_hits) + " wood_hits=" + str(App.bal.wood_hits))
-	printerr("P5: mine_chance=" + str(App.bal.mine_chance) + " wood_chance=" + str(App.bal.wood_chance))
-	printerr("P5: counts=" + str(counts))
-	var kinds: PackedStringArray = PackedStringArray()
-	for n in get_tree().get_nodes_in_group("interact"):
-		var k := str(n.get("kind"))
-		if kinds.find(k) < 0:
-			kinds.append(k)
-	printerr("P5: interact_kinds=" + ", ".join(kinds))
-	printerr("P5: gather=" + str(get_tree().get_nodes_in_group("gather").size()))
-	printerr("P5: breakables=" + str(get_tree().get_nodes_in_group("breakables").size()))
-	printerr("P5: gates=" + str(get_tree().get_nodes_in_group("gates").size()))
-	printerr("P5: plates=" + str(get_tree().get_nodes_in_group("plates").size()))
-	App.bal.mine_chance = 1.0
-	App.bal.wood_chance = 1.0
-	var mine_n: Node = null
-	var wood_n: Node = null
-	for n in get_tree().get_nodes_in_group("gather"):
-		if str(n.get("kind")) == "mine" and mine_n == null:
-			mine_n = n
-		if str(n.get("kind")) == "wood" and wood_n == null:
-			wood_n = n
-	var ore0 := App.ore
-	var wood0 := App.wood
-	var mine_hits := 0
-	var wood_hits := 0
-	if mine_n and mine_n.has_method("strike"):
-		var r1: Dictionary = mine_n.strike()
-		mine_hits = 1
-		printerr("P5: mine_strike ok=" + str(r1.get("ok", false)) + " interval=" + str(mine_n.get("interval")))
-	if wood_n and wood_n.has_method("strike"):
-		var r2: Dictionary = wood_n.strike()
-		wood_hits = 1
-		printerr("P5: wood_strike ok=" + str(r2.get("ok", false)) + " interval=" + str(wood_n.get("interval")))
-	printerr("P5: ore_delta=" + str(App.ore - ore0) + " wood_delta=" + str(App.wood - wood0))
-	printerr("P5: nodes_ok=" + str(mine_hits == 1 and wood_hits == 1 and is_equal_approx(float(mine_n.get("interval")), 2.4) and is_equal_approx(float(wood_n.get("interval")), 1.2)))
-	var smashed := 0
-	for b in get_tree().get_nodes_in_group("breakables"):
-		if str(b.get("kind")) == "crack":
-			continue
-		if b.has_method("take_hit"):
-			b.take_hit(99.0, Vector2.DOWN, false)
-			smashed += 1
-			break
-	printerr("P5: smash=" + str(smashed) + " gold=" + str(App.gold))
-	var shrine: Node = null
-	var fire: Node = null
-	var clerk: Node = null
-	var shop: Node = null
-	var lever: Node = null
-	var chest: Node = null
-	var crack: Node = null
-	for n in get_tree().get_nodes_in_group("interact"):
-		var k := str(n.get("kind"))
-		if k == "shrine" and shrine == null:
-			shrine = n
-		if k == "campfire" and fire == null:
-			fire = n
-		if k.begins_with("clerk") and clerk == null:
-			clerk = n
-		if k == "shop" and shop == null:
-			shop = n
-		if k == "lever" and lever == null:
-			lever = n
-		if k.ends_with("chest") and chest == null:
-			chest = n
-	for b in get_tree().get_nodes_in_group("breakables"):
-		if str(b.get("kind")) == "crack":
-			crack = b
-			break
-	if shrine:
-		shrine.interact(player)
-	printerr("P5: shrine_t=" + str(App.shrine_t) + " shrine_ok=" + str(App.shrine_t > 0.0))
-	var hp0 := float(player.get("hp")) if player else 0.0
-	if player:
-		player.set("hp", hp0 * 0.4)
-	if fire:
-		fire.interact(player)
-	var hp1 := float(player.get("hp")) if player else 0.0
-	printerr("P5: campfire hp " + str(hp0) + "->" + str(hp1) + " ok=" + str(hp1 > hp0 * 0.4))
-	App.ore = 4
-	App.wood = 3
-	App.gold = 30
-	if clerk:
-		clerk.interact(player)
-	if ui:
-		ui._extract_all()
-		ui.close_ui()
-	printerr("P5: extract bank_g=" + str(App.bank_gold) + " bank_o=" + str(App.bank_ore) + " bank_w=" + str(App.bank_wood) + " extracted=" + str(App.extracted))
-	App.gold = 80
-	if shop:
-		shop.interact(player)
-	if ui:
-		ui._buy_snack()
-		if shop and shop.stock.size() > 0:
-			var a: Dictionary = shop.stock[0]
-			ui._buy_art(str(a.id), str(a.name))
-		ui.close_ui()
-	printerr("P5: shop artifacts=" + str(App.run_artifacts.size()) + " snack_buys=" + str(App.shop_buys))
-	var gate_open0 := false
-	for g in get_tree().get_nodes_in_group("gates"):
-		gate_open0 = bool(g.get("open"))
-	if lever:
-		lever.interact(player)
-	var gate_open1 := false
-	for g in get_tree().get_nodes_in_group("gates"):
-		gate_open1 = bool(g.get("open"))
-	printerr("P5: lever_gate " + str(gate_open0) + "->" + str(gate_open1))
-	if crack and crack.has_method("take_hit"):
-		for i in 10:
-			if is_instance_valid(crack):
-				crack.take_hit(40.0, Vector2.DOWN, false)
-	printerr("P5: crack_dead=" + str(crack == null or not is_instance_valid(crack) or bool(crack.get("dead"))))
-	if chest:
-		chest.interact(player)
-	printerr("P5: chest_arts=" + str(App.run_artifacts.size()))
-	var present := (
-		int(counts.get("mine", 0)) > 0
-		and int(counts.get("wood", 0)) > 0
-		and int(counts.get("break", 0)) > 0
-		and int(counts.get("clerk", 0)) > 0
-		and int(counts.get("shrine", 0)) > 0
-		and int(counts.get("campfire", 0)) > 0
-		and int(counts.get("lever", 0)) > 0
-		and int(counts.get("gate", 0)) > 0
-		and int(counts.get("plate", 0)) > 0
-		and int(counts.get("crack", 0)) > 0
-		and int(counts.get("shop", 0)) > 0
-	)
-	printerr("P5: present_ok=" + str(present))
-	printerr("P5: extract_ok=" + str(App.extracted and App.bank_ore >= 4))
-	get_tree().create_timer(0.35).timeout.connect(func(): get_tree().quit())
-
-
-func _smoke7() -> void:
-	printerr("P7: res=" + ProjectSettings.globalize_path("res://"))
-	printerr("P7: hud=" + str(hud != null))
-	var bits := PackedStringArray()
-	if hud:
-		for n in ["portrait", "hp_lab", "pot_lab", "dash_fill", "spec_fill", "lvl", "res", "floor_lab", "food_lab", "shrine_lab", "boss_lab"]:
-			bits.append("%s=%s" % [n, str(hud.get(n) != null)])
-	printerr("P7: hud_bits=" + ", ".join(bits))
-	App.pause_menu.show_menu()
-	printerr("P7: pause_open=" + str(App.pause_menu.open) + " focus=" + str(App.pause_menu.focus_btn != null) + " tab=" + str(App.pause_menu.tab))
-	App.pause_menu.tab = 1
-	App.pause_menu._rebuild()
-	printerr("P7: pause_skills=" + str(App.pause_menu.tab == 1))
-	App.pause_menu.tab = 2
-	App.pause_menu._rebuild()
-	printerr("P7: pause_system=" + str(App.pause_menu.tab == 2))
-	var sys := false
-	for c in App.pause_menu.box.get_children():
-		if c is Button and str((c as Button).text).find("Dispel") >= 0:
-			sys = true
-		if c is Button and str((c as Button).text).find("Aim-line") >= 0:
-			sys = sys or true
-	printerr("P7: system_dispel_aim=" + str(sys))
-	App.pause_menu.close_ui()
-	App.debug.show_menu()
-	printerr("P7: debug_open=" + str(App.debug.open))
-	App.debug.page = "anim"
-	App.debug._rebuild()
-	printerr("P7: anim_stub=" + str(App.debug.page == "anim") + " anim_btn=" + str(App.debug.anim_btn != null))
-	App.debug.page = "playtest"
-	App.debug._rebuild()
-	var sum: String = App.debug.play.run_medium()
-	printerr("P7: playtest=" + sum.replace("\n", " | "))
-	printerr("P7: recs_fresh=" + str((App.debug.play.recs["fresh"] as Array).size()) + " recs_prog=" + str((App.debug.play.recs["progressed"] as Array).size()))
-	printerr("P7: history=" + str(App.debug.play.history.size()))
-	var row0: Dictionary = {}
-	if App.debug.play.history.size() > 0:
-		row0 = App.debug.play.history[0]
-	printerr("P7: tel_end=" + str(row0.get("end_cond", "")) + " wpn=" + str(row0.get("start_weapon", "")) + " save=" + str(row0.get("save_type", "")) + " playtest=" + str(row0.get("playtest", false)))
-	App.debug.play.apply_rec("fresh", 0)
-	printerr("P7: applied_fresh_ideal")
-	App.debug.hide_menu()
-	App.prog.bag.clear()
-	App.gold = 0
-	App.ore = 0
-	App.wood = 0
-	App.floor_n = 1
-	App.prog.add_run_xp("axe", 80.0)
-	App.recap.play("death")
-	printerr("P7: recap_title=" + App.recap.last_title)
-	App.recap.skip_drain()
-	printerr("P7: recap_drain=" + str(App.tel.recap_drain) + " waste=" + str(App.recap.last_title.find("waste") >= 0))
-	App.recap._finish()
-	printerr("P7: pause_themed=" + str(true))
-	printerr("P7: hud_ok=" + str(hud != null and hud.get("hp_lab") != null and hud.get("food_lab") != null))
-	printerr("P7: playtest_ok=" + str((App.debug.play.recs["fresh"] as Array).size() == 3 and (App.debug.play.recs["progressed"] as Array).size() == 3 and App.debug.play.history.size() >= 6))
-	printerr("P7: anim_ok=" + str(App.debug.anim_btn != null))
-	get_tree().create_timer(0.4, true, false, true).timeout.connect(func(): get_tree().quit())
-
-
-func _smoke9() -> void:
-	const AnimS := preload("res://scripts/debug/anim_browser.gd")
-	printerr("P9: res=" + ProjectSettings.globalize_path("res://"))
-	printerr("P9: bitter_loop=" + str(App.bal.bitter_loop_offset))
-	printerr("P9: bitter_yt=" + str(T.BITTER_YT != ""))
-	printerr("P9: bitter_spotify=" + str(T.BITTER_SPOTIFY != ""))
-	var mus := false
-	if App.music:
-		mus = str(App.music.get("kind")) == "dungeon"
-	printerr("P9: dungeon_music=" + str(mus))
-	var sfx_need := ["p9_potion.wav", "p9_food.wav", "p9_wood.wav", "p9_thud.wav", "p9_enter.wav", "p9_wake.wav", "p9_hurt_male.wav", "p9_hurt_female.wav", "p9_warcry_male.wav", "p9_warcry_female.wav", "p9_hurk_male.wav", "p9_hurk_female.wav"]
-	var sfx_ok := true
-	for n in sfx_need:
-		if not ResourceLoader.exists("res://assets/audio/" + n) and not FileAccess.file_exists("res://assets/audio/" + n):
-			sfx_ok = false
-	printerr("P9: sfx_ok=" + str(sfx_ok))
-	var models: Array = AnimS.catalog_models()
-	printerr("P9: anim_models=" + str(models.size()))
-	var need_ids := ["player_male", "player_female", "slime", "guardian", "gate_master"]
-	var model_ok := true
-	for id in need_ids:
-		var found := false
-		for m in models:
-			if str(m.id) == id:
-				found = true
-		if not found:
-			model_ok = false
-	printerr("P9: anim_browser_ok=" + str(models.size() >= 16 and model_ok))
-	if App.anim_browser and App.anim_browser.has_method("open_browser"):
-		App.anim_browser.open_browser()
-		printerr("P9: anim_open=" + str(App.anim_browser.open) + " focus=" + str(App.anim_browser.back_btn != null))
-		App.anim_browser.close_browser()
-	if App.archives_ui and App.archives_ui.has_method("show_browser"):
-		App.archives_ui.show_browser()
-		printerr("P9: archives_ui=" + str(App.archives_ui.open) + " entries=" + str(App.archives_ui.entries.size()))
-		App.archives_ui.hide_browser()
-	var root := ProjectSettings.globalize_path("res://").trim_suffix("/")
-	var arch := root.path_join("archives")
-	printerr("P9: arch_full=" + str(DirAccess.dir_exists_absolute(arch.path_join("full_3d_pass"))))
-	printerr("P9: arch_classic=" + str(DirAccess.dir_exists_absolute(arch.path_join("classic_2d"))))
-	printerr("P9: arch_art=" + str(DirAccess.dir_exists_absolute(arch.path_join("art_experiment"))))
-	var sum: String = App.debug.play.run_medium()
-	printerr("P9: playtest=" + sum.replace("\n", " | "))
-	var extra := 0
-	if player:
-		for i in 24:
-			var e := EnemyS.new()
-			e.position = player.position + Vector3(float(i % 6) * 0.7, 0.0, float(int(i) / 6) * 0.7)
-			add_child(e)
-			e.setup(Roster.IDS[i % Roster.IDS.size()], App.floor_n)
-			extra += 1
-	printerr("P9: load_extra=" + str(extra))
-	if App.playtest and App.playtest.has_method("begin_smoke"):
-		App.playtest.begin_smoke()
-	var skills := App.prog.SKILLS.size()
-	printerr("P9: skills=" + str(skills) + " sets=" + str(App.prog.SETS.size()))
-	printerr("P9: splash=" + str(ResourceLoader.exists("res://scenes/splash.tscn")))
-	get_tree().create_timer(1.2, true, false, true).timeout.connect(func():
-		var fps := Engine.get_frames_per_second()
-		printerr("P9: fps=" + str(fps))
-		printerr("P9: fps_ok=" + str(fps >= 55.0 or fps <= 5.0 or fps > 200.0))
-		printerr("P9: bitter_ok=" + str(App.bal.bitter_loop_offset > 15.0 and App.bal.bitter_loop_offset < 16.0))
-		printerr("P9: checklist_skills=" + str(skills == 11))
-		printerr("P9: checklist_sets=" + str(App.prog.SETS.size() == 8))
-		printerr("P9: archives_ok=" + str(DirAccess.dir_exists_absolute(arch.path_join("full_3d_pass"))))
-		if App.playtest:
-			printerr("P9: playtest_live=" + str(App.playtest.live_running))
-			printerr("P9: playtest_moved=" + str(App.playtest.moved))
-			printerr("P9: playtest_sim=" + str(snapped(App.playtest.sim_t, 0.01)))
-			printerr("P9: playtest_live_ok=" + str(App.playtest.moved or App.playtest.sim_t > 0.2))
-		get_tree().quit()
-	)

@@ -4,13 +4,13 @@ const T := preload("res://scripts/data/tunables.gd")
 const Depth := preload("res://scripts/world/depth.gd")
 const PlayerS := preload("res://scripts/world/player.gd")
 const DummyS := preload("res://scripts/combat/dummy.gd")
+const Smoke := preload("res://scripts/debug/smoke.gd")
 
 var player: CharacterBody3D
 var hint: Label
 var fps_lab: Label
 var frame_acc := 0.0
 var frame_n := 0
-var smoke_frames := 0
 
 
 func _ready() -> void:
@@ -23,13 +23,10 @@ func _ready() -> void:
 	add_child(player)
 	_dummies()
 	_hud()
-	var args := OS.get_cmdline_user_args()
-	if "--wdb-phase1-smoke" in args or "--wdb-phase2-smoke" in args:
-		_smoke()
+	Smoke.attach_foundation(self)
 
 
 func _process(delta: float) -> void:
-	smoke_frames += 1
 	frame_acc += delta
 	frame_n += 1
 	if frame_acc >= 0.5 and fps_lab:
@@ -235,62 +232,3 @@ func _refresh_hint() -> void:
 	if player and player.get("lock_armed"):
 		lock = "  ·  LOCK"
 	hint.text = "Phase 2  ·  %s  ·  %s%s\nRT attack  ·  LT special  ·  B dash  ·  R3 lock  ·  1/2/3 weapons\nLB/RB character  ·  Start title" % [App.character_type, w, lock]
-
-
-func _smoke() -> void:
-	var cam: Camera3D = get_viewport().get_camera_3d()
-	printerr("P1: res=" + ProjectSettings.globalize_path("res://"))
-	printerr("P1: app=" + str(get_node_or_null("/root/App") != null))
-	printerr("P1: game_autoload_absent=" + str(get_node_or_null("/root/Game") == null))
-	printerr("P1: player=" + str(player != null))
-	printerr("P1: character=" + App.character_type)
-	if cam:
-		printerr("P1: cam_ortho=" + str(cam.projection == Camera3D.PROJECTION_ORTHOGONAL))
-		printerr("P1: cam_pitch=" + str(snappedf(cam.rotation_degrees.x, 0.1)))
-		printerr("P1: cam_size=" + str(snappedf(cam.size, 0.01)))
-	var spr = player.get("body") if player else null
-	if spr:
-		printerr("P1: billboard=" + str(spr.billboard == BaseMaterial3D.BILLBOARD_FIXED_Y))
-	if player:
-		printerr("P1: facing=" + str(player.get("facing_key")))
-	printerr("P2: weapon=" + App.weapon)
-	printerr("P2: dummy=" + str(get_tree().get_nodes_in_group("enemies").size()))
-	printerr("P2: aim_line=" + str(player.get("aim_line") != null))
-	printerr("P2: telegraph=" + str(player.get("telegraph") != null))
-	printerr("P2: debug=" + str(App.debug != null))
-	get_tree().create_timer(0.35).timeout.connect(_smoke_fire)
-
-
-func _smoke_fire() -> void:
-	if player and player.has_method("set_weapon"):
-		player.aim_dir = Vector2.DOWN
-		player.set_weapon("great_axe")
-		player.atk_state = 1
-		player.atk_t = 0.0
-		player.hit_done = false
-		player._draw_basic_tele(false)
-	get_tree().create_timer(0.4).timeout.connect(func():
-		if player:
-			player._apply_basic()
-			player._draw_basic_tele(true)
-			printerr("P2: axe_tele_visible=" + str(player.telegraph.visible if player.telegraph else false))
-			player.set_weapon("staff")
-			player.spec_point = player.global_position + Vector3(0, 0, 2.2)
-			player._apply_special()
-			player.set_weapon("longbow")
-			player._apply_basic()
-			player._try_dash(Vector2.DOWN)
-		printerr("P2: process_frames=" + str(smoke_frames))
-		printerr("P2: fps_est=" + str(smoke_frames))
-		printerr("P2: projectiles=" + str(_count_proj()))
-		printerr("P2: schema=" + str(App.bal.schema().size()))
-		get_tree().quit()
-	)
-
-
-func _count_proj() -> int:
-	var n := 0
-	for c in get_children():
-		if c.get_script() and str(c.get_script().resource_path).ends_with("projectile.gd"):
-			n += 1
-	return n
