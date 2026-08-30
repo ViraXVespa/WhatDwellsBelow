@@ -16,6 +16,8 @@ const ArchS := preload("res://scripts/ui/archives_ui.gd")
 const PlayS := preload("res://scripts/debug/playtest.gd")
 const LoaderS := preload("res://scripts/ui/loader.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
+const Binds := preload("res://scripts/input/binds.gd")
+const Pad := preload("res://scripts/input/pad.gd")
 
 var character_type := "male"
 var character_chosen := false
@@ -88,23 +90,6 @@ var _seq := 0
 var _seq_timer := 0.0
 var _seq_down := false
 
-const PAD := {
-	"interact": JOY_BUTTON_A,
-	"dash": JOY_BUTTON_B,
-	"target_lock": JOY_BUTTON_RIGHT_STICK,
-	"pause": JOY_BUTTON_START,
-	"map_view": JOY_BUTTON_BACK,
-	"potion": JOY_BUTTON_DPAD_UP,
-	"food": JOY_BUTTON_DPAD_LEFT,
-	"tab_left": JOY_BUTTON_LEFT_SHOULDER,
-	"tab_right": JOY_BUTTON_RIGHT_SHOULDER,
-}
-
-var _pad_was: Dictionary = {}
-var _pad_edge: Dictionary = {}
-var _eat_pause := false
-var pad_mode := false
-
 const TITLE_SCENE := "res://scenes/title.tscn"
 const FOUNDATION_SCENE := "res://scenes/foundation.tscn"
 const DUNGEON_SCENE := "res://scenes/dungeon.tscn"
@@ -115,7 +100,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	bal = BalanceS.new()
 	prog = ProgressS.new()
-	_register_input()
+	Binds.register()
 	sfx_node = SfxS.new()
 	add_child(sfx_node)
 	tel = TelS.new()
@@ -301,9 +286,9 @@ func _preload_hub() -> void:
 		var guard := 0
 		while guard < 240:
 			guard += 1
-			var prog: Array = []
-			var st := ResourceLoader.load_threaded_get_status(path, prog)
-			var local := float(prog[0]) if prog.size() > 0 else 0.0
+			var load_prog: Array = []
+			var st := ResourceLoader.load_threaded_get_status(path, load_prog)
+			var local := float(load_prog[0]) if load_prog.size() > 0 else 0.0
 			if loader:
 				loader.set_progress((float(i) + clampf(local, 0.0, 1.0)) / float(n) * 0.92)
 			if st == ResourceLoader.THREAD_LOAD_LOADED:
@@ -559,7 +544,7 @@ func note_clerk() -> void:
 
 
 func _process(delta: float) -> void:
-	_pad_tick()
+	Pad.tick()
 	if pad_just("interact"):
 		var f := get_viewport().gui_get_focus_owner()
 		if f is BaseButton and not (f as BaseButton).disabled:
@@ -588,21 +573,11 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventJoypadButton and event.pressed:
-		pad_mode = true
-		return
-	if event is InputEventJoypadMotion and absf((event as InputEventJoypadMotion).axis_value) >= 0.24:
-		pad_mode = true
-		return
-	if event is InputEventMouseButton and event.pressed:
-		pad_mode = false
-		return
-	if event is InputEventMouseMotion and (event as InputEventMouseMotion).relative.length() > 2.0:
-		pad_mode = false
+	Pad.note_event(event)
 
 
 func using_pad() -> bool:
-	return pad_mode
+	return Pad.mode
 
 
 func _debug_sequence(delta: float) -> void:
@@ -713,401 +688,53 @@ func _launch_archive_async(id: String) -> void:
 	_menu_loading = false
 
 
-const BIND_ACTIONS: PackedStringArray = [
-	"move_left", "move_right", "move_up", "move_down",
-	"aim_left", "aim_right", "aim_up", "aim_down",
-	"attack", "special", "dash", "target_lock", "interact", "pause",
-	"tab_left", "tab_right",
-	"map_view", "potion", "food",
-	"anim_model_prev", "anim_model_next", "anim_idle", "anim_play",
-	"anim_list_up", "anim_list_down", "anim_back",
-]
-
-
 func collect_binds() -> Array:
-	var out: Array = []
-	for a in BIND_ACTIONS:
-		if not InputMap.has_action(a):
-			continue
-		for e in InputMap.action_get_events(a):
-			var row := {"action": a}
-			if e is InputEventKey:
-				var k := e as InputEventKey
-				row["type"] = "key"
-				row["code"] = k.physical_keycode if k.physical_keycode != 0 else k.keycode
-			elif e is InputEventJoypadButton:
-				row["type"] = "joy"
-				row["code"] = (e as InputEventJoypadButton).button_index
-			elif e is InputEventJoypadMotion:
-				var m := e as InputEventJoypadMotion
-				row["type"] = "axis"
-				row["code"] = m.axis
-				row["value"] = m.axis_value
-			elif e is InputEventMouseButton:
-				row["type"] = "mouse"
-				row["code"] = (e as InputEventMouseButton).button_index
-			else:
-				continue
-			out.append(row)
-	return out
+	return Binds.collect()
 
 
 func apply_binds(rows: Array) -> void:
-	if rows.is_empty():
-		return
-	var seen := {}
-	for row in rows:
-		if not (row is Dictionary):
-			continue
-		var a := str(row.get("action", ""))
-		if a == "" or BIND_ACTIONS.find(a) < 0:
-			continue
-		if not InputMap.has_action(a):
-			InputMap.add_action(a, 0.25)
-		if not seen.has(a):
-			InputMap.action_erase_events(a)
-			seen[a] = true
-		var ev := _bind_event(row)
-		if ev:
-			InputMap.action_add_event(a, ev)
-	_apply_pc_control_defaults()
-
-
-func _bind_event(row: Dictionary) -> InputEvent:
-	var t := str(row.get("type", ""))
-	if t == "key":
-		var e := InputEventKey.new()
-		e.physical_keycode = int(row.get("code", 0))
-		return e
-	if t == "joy":
-		var jb := InputEventJoypadButton.new()
-		jb.button_index = int(row.get("code", 0))
-		return jb
-	if t == "axis":
-		var jm := InputEventJoypadMotion.new()
-		jm.axis = int(row.get("code", 0))
-		jm.axis_value = float(row.get("value", 1.0))
-		return jm
-	if t == "mouse":
-		var mb := InputEventMouseButton.new()
-		mb.button_index = int(row.get("code", 1))
-		return mb
-	return null
+	Binds.apply(rows)
 
 
 func reset_binds() -> void:
-	for a in BIND_ACTIONS:
-		if InputMap.has_action(a):
-			InputMap.action_erase_events(a)
-	_register_input()
-
-
-func _register_input() -> void:
-	for extra in ["weapon_1", "weapon_2", "weapon_3"]:
-		if InputMap.has_action(extra):
-			InputMap.erase_action(extra)
-	for a in BIND_ACTIONS:
-		if InputMap.has_action(a):
-			InputMap.action_erase_events(a)
-	_act("move_left", [KEY_A, KEY_LEFT], -1, JOY_AXIS_LEFT_X, -1.0)
-	_act("move_right", [KEY_D, KEY_RIGHT], -1, JOY_AXIS_LEFT_X, 1.0)
-	_act("move_up", [KEY_W, KEY_UP], -1, JOY_AXIS_LEFT_Y, -1.0)
-	_act("move_down", [KEY_S, KEY_DOWN], -1, JOY_AXIS_LEFT_Y, 1.0)
-	_act("aim_left", [], -1, JOY_AXIS_RIGHT_X, -1.0)
-	_act("aim_right", [], -1, JOY_AXIS_RIGHT_X, 1.0)
-	_act("aim_up", [], -1, JOY_AXIS_RIGHT_Y, -1.0)
-	_act("aim_down", [], -1, JOY_AXIS_RIGHT_Y, 1.0)
-	_act("attack", [], -1, JOY_AXIS_TRIGGER_RIGHT, 1.0)
-	_mouse("attack", MOUSE_BUTTON_LEFT)
-	_act("special", [], -1, JOY_AXIS_TRIGGER_LEFT, 1.0)
-	_mouse("special", MOUSE_BUTTON_RIGHT)
-	_act("dash", [KEY_SPACE], JOY_BUTTON_B)
-	_act("target_lock", [KEY_Q], JOY_BUTTON_RIGHT_STICK)
-	_act("interact", [KEY_E, KEY_ENTER, KEY_KP_ENTER], JOY_BUTTON_A)
-	_act("pause", [KEY_ESCAPE], JOY_BUTTON_START)
-	_act("tab_left", [KEY_BRACKETLEFT], JOY_BUTTON_LEFT_SHOULDER)
-	_act("tab_right", [KEY_BRACKETRIGHT], JOY_BUTTON_RIGHT_SHOULDER)
-	_act("map_view", [KEY_M], JOY_BUTTON_BACK)
-	_act("potion", [KEY_F], JOY_BUTTON_DPAD_UP)
-	_act("food", [KEY_C], JOY_BUTTON_DPAD_LEFT)
-	_act("anim_model_prev", [KEY_COMMA], JOY_BUTTON_LEFT_SHOULDER)
-	_act("anim_model_next", [KEY_PERIOD], JOY_BUTTON_RIGHT_SHOULDER)
-	_act("anim_idle", [KEY_I], JOY_BUTTON_RIGHT_STICK)
-	_act("anim_play", [KEY_P])
-	_act("anim_list_up", [KEY_PAGEUP], -1, JOY_AXIS_TRIGGER_LEFT, 1.0)
-	_act("anim_list_down", [KEY_PAGEDOWN], -1, JOY_AXIS_TRIGGER_RIGHT, 1.0)
-	_act("anim_back", [KEY_BACKSPACE, KEY_ESCAPE], JOY_BUTTON_B)
-	_ensure("ui_accept")
-	_ensure("ui_cancel")
-	_ensure("ui_left")
-	_ensure("ui_right")
-	_ensure("ui_up")
-	_ensure("ui_down")
-	_joy("ui_accept", JOY_BUTTON_A)
-	_joy("ui_cancel", JOY_BUTTON_B)
-	_key("ui_accept", KEY_ENTER)
-	_key("ui_accept", KEY_KP_ENTER)
-	_key("ui_cancel", KEY_ESCAPE)
-	_joy("ui_left", JOY_BUTTON_DPAD_LEFT)
-	_joy("ui_right", JOY_BUTTON_DPAD_RIGHT)
-	_joy("ui_up", JOY_BUTTON_DPAD_UP)
-	_joy("ui_down", JOY_BUTTON_DPAD_DOWN)
-	_key("ui_left", KEY_LEFT)
-	_key("ui_left", KEY_A)
-	_key("ui_right", KEY_RIGHT)
-	_key("ui_right", KEY_D)
-	_key("ui_up", KEY_UP)
-	_key("ui_up", KEY_W)
-	_key("ui_down", KEY_DOWN)
-	_key("ui_down", KEY_S)
-	if OS.has_feature("web"):
-		var rt := InputEventJoypadButton.new()
-		rt.button_index = 7
-		InputMap.action_add_event("attack", rt)
-		var lt := InputEventJoypadButton.new()
-		lt.button_index = 6
-		InputMap.action_add_event("special", lt)
-	_apply_pc_control_defaults()
-
-
-func _apply_pc_control_defaults() -> void:
-	_ensure_key("move_left", KEY_A)
-	_ensure_key("move_left", KEY_LEFT)
-	_ensure_key("move_right", KEY_D)
-	_ensure_key("move_right", KEY_RIGHT)
-	_ensure_key("move_up", KEY_W)
-	_ensure_key("move_up", KEY_UP)
-	_ensure_key("move_down", KEY_S)
-	_ensure_key("move_down", KEY_DOWN)
-	_ensure_key("interact", KEY_E)
-	_ensure_key("interact", KEY_ENTER)
-	_ensure_key("interact", KEY_KP_ENTER)
-	_strip_key("special", KEY_R)
-	_ensure_mouse("special", MOUSE_BUTTON_RIGHT)
-	_ensure_key("pause", KEY_ESCAPE)
-	_ensure_key("anim_back", KEY_ESCAPE)
-	_ensure_key("anim_back", KEY_BACKSPACE)
-	_ensure_key("ui_accept", KEY_ENTER)
-	_ensure_key("ui_accept", KEY_KP_ENTER)
-	_ensure_key("ui_cancel", KEY_ESCAPE)
-	_ensure_key("ui_left", KEY_LEFT)
-	_ensure_key("ui_left", KEY_A)
-	_ensure_key("ui_right", KEY_RIGHT)
-	_ensure_key("ui_right", KEY_D)
-	_ensure_key("ui_up", KEY_UP)
-	_ensure_key("ui_up", KEY_W)
-	_ensure_key("ui_down", KEY_DOWN)
-	_ensure_key("ui_down", KEY_S)
-
-
-func _ensure_key(name: String, keycode: int) -> void:
-	if not InputMap.has_action(name):
-		InputMap.add_action(name, 0.25)
-	for e in InputMap.action_get_events(name):
-		if e is InputEventKey:
-			var k := e as InputEventKey
-			var code := k.physical_keycode if k.physical_keycode != 0 else k.keycode
-			if int(code) == keycode:
-				return
-	_key(name, keycode)
-
-
-func _ensure_mouse(name: String, btn: int) -> void:
-	if not InputMap.has_action(name):
-		InputMap.add_action(name, 0.25)
-	for e in InputMap.action_get_events(name):
-		if e is InputEventMouseButton and (e as InputEventMouseButton).button_index == btn:
-			return
-	_mouse(name, btn)
-
-
-func _strip_key(name: String, keycode: int) -> void:
-	if not InputMap.has_action(name):
-		return
-	for e in InputMap.action_get_events(name):
-		if e is InputEventKey:
-			var k := e as InputEventKey
-			var code := k.physical_keycode if k.physical_keycode != 0 else k.keycode
-			if int(code) == keycode:
-				InputMap.action_erase_event(name, e)
-
-
-func _act(name: String, keys: Array, button: int = -1, axis: int = -1, axis_value: float = 0.0) -> void:
-	if not InputMap.has_action(name):
-		InputMap.add_action(name, 0.25)
-	for k in keys:
-		var e := InputEventKey.new()
-		e.physical_keycode = k
-		InputMap.action_add_event(name, e)
-	if button >= 0:
-		var jb := InputEventJoypadButton.new()
-		jb.button_index = button
-		InputMap.action_add_event(name, jb)
-	if axis >= 0:
-		var jm := InputEventJoypadMotion.new()
-		jm.axis = axis
-		jm.axis_value = axis_value
-		InputMap.action_add_event(name, jm)
-
-
-func _mouse(name: String, btn: int) -> void:
-	var e := InputEventMouseButton.new()
-	e.button_index = btn
-	InputMap.action_add_event(name, e)
-
-
-func _ensure(name: String) -> void:
-	if not InputMap.has_action(name):
-		InputMap.add_action(name, 0.5)
-
-
-func _joy(name: String, button: int) -> void:
-	var jb := InputEventJoypadButton.new()
-	jb.button_index = button
-	InputMap.action_add_event(name, jb)
-
-
-func _key(name: String, keycode: int) -> void:
-	var e := InputEventKey.new()
-	e.physical_keycode = keycode
-	InputMap.action_add_event(name, e)
+	Binds.reset()
 
 
 func wake_web_pad() -> void:
-	get_viewport().gui_release_focus()
-	if not OS.has_feature("web"):
-		return
-	JavaScriptBridge.eval("""
-		(function () {
-			var c = document.getElementById('canvas');
-			if (!c) return;
-			c.tabIndex = 0;
-			c.focus();
-		})();
-	""", true)
+	Pad.wake_web()
 
 
 func pad_id() -> int:
-	var pads := Input.get_connected_joypads()
-	return pads[0] if not pads.is_empty() else -1
+	return Pad.id()
 
 
 func pad_stick(lx: int, ly: int, dead := 0.24) -> Vector2:
-	var id := pad_id()
-	if id < 0:
-		return Vector2.ZERO
-	var v := Vector2(Input.get_joy_axis(id, lx), Input.get_joy_axis(id, ly))
-	return v if v.length() >= dead else Vector2.ZERO
+	return Pad.stick(lx, ly, dead)
 
 
 func pad_move() -> Vector2:
-	var v := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	if v.length() > 0.01:
-		return v
-	return pad_stick(JOY_AXIS_LEFT_X, JOY_AXIS_LEFT_Y)
+	return Pad.move()
 
 
 func pad_aim() -> Vector2:
-	var v := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
-	if v.length() > 0.01:
-		return v
-	return pad_stick(JOY_AXIS_RIGHT_X, JOY_AXIS_RIGHT_Y)
+	return Pad.aim()
 
 
 func pad_held(action: String) -> bool:
-	if Input.is_action_pressed(action):
-		return true
-	var id := pad_id()
-	if id >= 0:
-		if action == "attack" and Input.get_joy_axis(id, JOY_AXIS_TRIGGER_RIGHT) > 0.45:
-			return true
-		if action == "special" and Input.get_joy_axis(id, JOY_AXIS_TRIGGER_LEFT) > 0.45:
-			return true
-		if PAD.has(action) and Input.is_joy_button_pressed(id, int(PAD[action])):
-			return true
-	return false
+	return Pad.held(action)
 
 
 func pad_just(action: String) -> bool:
-	return bool(_pad_edge.get(action, false))
+	return Pad.just(action)
 
 
 func pause_just() -> bool:
-	if _eat_pause:
-		return false
-	return Input.is_action_just_pressed("pause") or pad_just("pause")
+	return Pad.pause_just()
 
 
 func swallow_close_pad() -> void:
-	# B closes windows and is also dash. Eat the press and the held-through
-	# release so closing a window never starts a dash (or other combat input).
-	# Escape is both Back and Pause — eat it until released so a menu back
-	# cannot reopen pause on the same hold.
-	for action in ["dash", "attack", "special", "interact", "potion", "food", "target_lock", "pause"]:
-		_pad_edge[action] = false
-		_pad_was[action] = true
-	_eat_pause = true
-
-
-func _pad_blocked(action: String) -> bool:
-	if not ui_open:
-		return false
-	return action in ["dash", "attack", "special", "interact", "potion", "food", "target_lock"]
-
-
-func _pad_tick() -> void:
-	if pad_stick(JOY_AXIS_LEFT_X, JOY_AXIS_LEFT_Y).length() >= 0.24:
-		pad_mode = true
-	elif pad_stick(JOY_AXIS_RIGHT_X, JOY_AXIS_RIGHT_Y).length() >= 0.24:
-		pad_mode = true
-	_pad_edge.clear()
-	var names: Array = PAD.keys()
-	names.append_array(["attack", "special"])
-	for action in names:
-		var key := str(action)
-		var now := pad_held(key)
-		if now and pad_id() >= 0:
-			var id := pad_id()
-			var from_pad := false
-			if key == "attack" and Input.get_joy_axis(id, JOY_AXIS_TRIGGER_RIGHT) > 0.45:
-				from_pad = true
-			elif key == "special" and Input.get_joy_axis(id, JOY_AXIS_TRIGGER_LEFT) > 0.45:
-				from_pad = true
-			elif PAD.has(key) and Input.is_joy_button_pressed(id, int(PAD[key])):
-				from_pad = true
-			if from_pad:
-				pad_mode = true
-		if _pad_blocked(key):
-			_pad_edge[key] = false
-		else:
-			_pad_edge[key] = now and not bool(_pad_was.get(key, false))
-		_pad_was[key] = now
-	if _eat_pause:
-		var held := Input.is_action_pressed("pause") or Input.is_action_pressed("ui_cancel")
-		if not held:
-			var id := pad_id()
-			if id >= 0:
-				held = Input.is_joy_button_pressed(id, JOY_BUTTON_START) or Input.is_joy_button_pressed(id, JOY_BUTTON_B)
-		if not held:
-			_eat_pause = false
+	Pad.swallow_close()
 
 
 func web_buttons() -> PackedFloat32Array:
-	if not OS.has_feature("web"):
-		return PackedFloat32Array()
-	var raw := str(JavaScriptBridge.eval("""
-		(function () {
-			var pads = navigator.getGamepads ? navigator.getGamepads() : [];
-			for (var i = 0; i < pads.length; i++) {
-				if (!pads[i] || !pads[i].buttons) continue;
-				return JSON.stringify(pads[i].buttons.map(function (b) { return b.value; }));
-			}
-			return "[]";
-		})();
-	""", true))
-	var parsed: Variant = JSON.parse_string(raw)
-	var out := PackedFloat32Array()
-	if parsed is Array:
-		for v in parsed:
-			out.append(float(v))
-	return out
+	return Pad.web_buttons()

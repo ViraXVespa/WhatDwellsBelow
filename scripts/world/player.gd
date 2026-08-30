@@ -7,8 +7,9 @@ const CamRig := preload("res://scripts/world/camera_rig.gd")
 const Combat := preload("res://scripts/combat/combat.gd")
 const TelegraphS := preload("res://scripts/combat/telegraph.gd")
 const AimLineS := preload("res://scripts/combat/aim_line.gd")
-const ProjS := preload("res://scripts/combat/projectile.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
+const PlayerAnim := preload("res://scripts/world/player_anim.gd")
+const PlayerHit := preload("res://scripts/combat/player_hit.gd")
 
 const ATK_NONE := 0
 const ATK_BASIC := 1
@@ -116,66 +117,7 @@ func _add_body_shape() -> void:
 
 
 func _load_sprites() -> void:
-	idle.clear()
-	walk.clear()
-	equip.clear()
-	attack.clear()
-	special.clear()
-	gather.clear()
-	death.clear()
-	dispel.clear()
-	var kind: String = App.character_type
-	var base := "res://assets/sprites/player/%s/" % kind
-	var wpn: String = App.weapon
-	for k in Facing.KEYS:
-		var ip := base + "idle_%s.png" % k
-		if ResourceLoader.exists(ip):
-			idle[k] = load(ip)
-		var ep := base + "equip_%s_%s.png" % [wpn, k]
-		if ResourceLoader.exists(ep):
-			equip[k] = load(ep)
-		var frames: Array = []
-		var i := 0
-		while ResourceLoader.exists(base + "walk_%s_%d.png" % [k, i]):
-			frames.append(load(base + "walk_%s_%d.png" % [k, i]))
-			i += 1
-		if not frames.is_empty():
-			walk[k] = frames
-		var atk: Array = []
-		i = 0
-		while ResourceLoader.exists(base + "atk_%s_%s_%d.png" % [wpn, k, i]):
-			atk.append(load(base + "atk_%s_%s_%d.png" % [wpn, k, i]))
-			i += 1
-		if not atk.is_empty():
-			attack[k] = atk
-		var spc: Array = []
-		i = 0
-		while ResourceLoader.exists(base + "spc_%s_%s_%d.png" % [wpn, k, i]):
-			spc.append(load(base + "spc_%s_%s_%d.png" % [wpn, k, i]))
-			i += 1
-		if not spc.is_empty():
-			special[k] = spc
-		var gth: Array = []
-		i = 0
-		while ResourceLoader.exists(base + "gather_%s_%d.png" % [k, i]):
-			gth.append(load(base + "gather_%s_%d.png" % [k, i]))
-			i += 1
-		if not gth.is_empty():
-			gather[k] = gth
-		var dth: Array = []
-		i = 0
-		while ResourceLoader.exists(base + "death_%s_%d.png" % [k, i]):
-			dth.append(load(base + "death_%s_%d.png" % [k, i]))
-			i += 1
-		if not dth.is_empty():
-			death[k] = dth
-		var dsp: Array = []
-		i = 0
-		while ResourceLoader.exists(base + "dispel_%s_%d.png" % [k, i]):
-			dsp.append(load(base + "dispel_%s_%d.png" % [k, i]))
-			i += 1
-		if not dsp.is_empty():
-			dispel[k] = dsp
+	PlayerAnim.load_sprites(self)
 
 
 func reload_character() -> void:
@@ -681,245 +623,27 @@ func _hit_norm() -> float:
 
 
 func _draw_basic_tele(active: bool) -> void:
-	if telegraph == null:
-		return
-	var col := Color(1.0, 0.25, 0.18, 0.55) if active else Color(1.0, 0.82, 0.28, 0.4)
-	if App.weapon == "longbow":
-		telegraph.show_arc(global_position, aim_dir, App.bal.bow_range, 12.0, col)
-		return
-	if App.weapon == "staff":
-		telegraph.show_arc(global_position, aim_dir, App.bal.staff_range, App.bal.staff_arc_deg, col)
-		return
-	telegraph.show_arc(global_position, aim_dir, App.bal.axe_range, App.bal.axe_arc_deg, col)
+	PlayerHit.draw_basic_tele(self, active)
 
 
 func _draw_special_tele(active: bool) -> void:
-	if telegraph == null:
-		return
-	var col := Color(0.45, 0.85, 1.0, 0.55) if active else Color(1.0, 0.82, 0.28, 0.42)
-	if App.weapon == "great_axe":
-		telegraph.show_circle(global_position, App.bal.slam_radius, col)
-	elif App.weapon == "staff":
-		telegraph.show_circle(spec_point, App.bal.staff_special_radius, col)
-	else:
-		telegraph.show_cone(global_position, aim_dir, App.bal.bow_special_range, App.bal.bow_special_cone, col)
+	PlayerHit.draw_special_tele(self, active)
 
 
 func _special_point() -> Vector3:
-	if _valid_lock(lock_target):
-		return (lock_target as Node3D).global_position
-	var reach: float = App.bal.staff_special_radius + 1.5
-	return global_position + Vector3(aim_dir.x, 0.0, aim_dir.y) * reach
+	return PlayerHit.special_point(self)
 
 
 func _apply_basic() -> void:
-	if App.weapon == "longbow":
-		_spawn_arrow(aim_dir, _scaled_dmg(App.bal.bow_damage, false), App.bal.bow_range, App.bal.bow_proj_speed, App.bal.bow_los)
-		App.sfx("bow")
-		return
-	var rng: float = App.bal.axe_range
-	var arc: float = App.bal.axe_arc_deg
-	var dmg: float = App.bal.axe_damage
-	var need_los: bool = App.bal.axe_los
-	if App.weapon == "staff":
-		rng = App.bal.staff_range
-		arc = App.bal.staff_arc_deg
-		dmg = App.bal.staff_damage
-		need_los = App.bal.staff_los
-		App.sfx("hit")
-	else:
-		App.sfx("hit")
-	_hit_arc(rng, arc, dmg, need_los, false)
+	PlayerHit.apply_basic(self)
 
 
 func _apply_special() -> void:
-	if App.weapon == "great_axe":
-		App.sfx("slam")
-		_hit_circle(global_position, App.bal.slam_radius, App.bal.axe_damage * App.bal.axe_slam_mult, false, true, "auto", true)
-		_fx("res://assets/fx/crack.png", global_position, 2.4, false)
-		return
-	if App.weapon == "staff":
-		App.sfx("bolt")
-		_hit_circle(spec_point, App.bal.staff_special_radius, App.bal.staff_special_damage, false, false, "magic", true)
-		_fx("res://assets/fx/lightning.png", spec_point, 2.6, true)
-		return
-	App.sfx("bow")
-	var n := int(App.bal.bow_special_count)
-	var cone := deg_to_rad(App.bal.bow_special_cone)
-	var base := atan2(aim_dir.y, aim_dir.x)
-	for i in n:
-		var t := 0.0 if n <= 1 else (float(i) / float(n - 1)) - 0.5
-		var a := base + t * cone
-		var d := Vector2(cos(a), sin(a))
-		_spawn_arrow(d, _scaled_dmg(App.bal.bow_special_damage, true), App.bal.bow_special_range, App.bal.bow_proj_speed, App.bal.bow_los)
-
-
-func _hit_arc(rng: float, arc: float, dmg: float, need_los: bool, stagger: bool) -> void:
-	for e in Combat.enemies():
-		if e == null or not is_instance_valid(e):
-			continue
-		if e.has_method("is_alive") and not e.is_alive():
-			continue
-		var p: Vector3 = (e as Node3D).global_position
-		if not Combat.in_arc(global_position, aim_dir, rng, arc, p):
-			continue
-		if need_los and not Combat.los(global_position, p, get_world_3d()):
-			continue
-		_damage_enemy(e, dmg, stagger, "auto", false)
-	_hit_breakables_arc(rng, arc, dmg, need_los)
-
-
-func _hit_circle(origin: Vector3, radius: float, dmg: float, need_los: bool, stagger: bool, xp := "auto", is_special := false) -> void:
-	for e in Combat.enemies():
-		if e == null or not is_instance_valid(e):
-			continue
-		if e.has_method("is_alive") and not e.is_alive():
-			continue
-		var p: Vector3 = (e as Node3D).global_position
-		if not Combat.in_circle(origin, radius, p):
-			continue
-		if need_los and not Combat.los(origin, p, get_world_3d()):
-			continue
-		_damage_enemy(e, dmg, stagger, xp, is_special)
-	_hit_breakables_circle(origin, radius, dmg, need_los)
-
-
-func _scaled_dmg(base: float, is_special: bool) -> float:
-	var d: float = base * App.prog.skill_dmg_mult(is_special) + App.prog.gear_dmg()
-	if App.shrine_t > 0.0:
-		d *= 1.0 + App.bal.shrine_dmg
-	return d
-
-
-func _damage_enemy(e: Node, dmg: float, stagger: bool, xp := "auto", is_special := false) -> void:
-	if xp == "magic":
-		is_special = true
-	dmg = dmg * App.prog.skill_dmg_mult(is_special) + App.prog.gear_dmg()
-	if App.shrine_t > 0.0:
-		dmg *= 1.0 + App.bal.shrine_dmg
-	_grant_hit_xp(xp)
-	var crit := Combat.roll_crit(App.bal.crit_chance + float(App.prog.set_stats().crit))
-	if e.has_method("take_hit"):
-		e.take_hit(dmg, aim_dir, crit)
-	if App.tel:
-		App.tel.note_damage_dealt(dmg if not crit else dmg * App.bal.crit_mult, crit)
-		if atk_state == ATK_ACT or atk_state == ATK_WIND:
-			App.tel.spec_hit += 1
-			var key := App.weapon
-			if App.tel.wpn.has(key):
-				App.tel.wpn[key].spec_hit = int(App.tel.wpn[key].spec_hit) + 1
-	if stagger and e.has_method("apply_stagger"):
-		e.apply_stagger(App.bal.slam_stagger)
-
-
-func _grant_hit_xp(xp: String) -> void:
-	var mode := xp
-	if mode == "none":
-		return
-	if mode == "auto":
-		if App.weapon == "staff":
-			mode = "melee_staff"
-		elif App.weapon == "longbow":
-			mode = "ranged"
-		else:
-			mode = "melee_axe"
-	if mode == "magic":
-		App.prog.skill_grant_hit(true)
-	elif mode == "ranged":
-		App.prog.skill_grant_hit(false)
-	elif mode == "melee_staff":
-		App.prog.skill_grant_hit(false)
-	else:
-		App.prog.skill_grant_hit(false)
-
-
-func _hit_breakables_arc(rng: float, arc: float, dmg: float, need_los: bool) -> void:
-	for b in get_tree().get_nodes_in_group("breakables"):
-		if b == null or not is_instance_valid(b):
-			continue
-		var p: Vector3 = (b as Node3D).global_position
-		if not Combat.in_arc(global_position, aim_dir, rng + 0.35, arc, p):
-			continue
-		if need_los and not Combat.los(global_position, p, get_world_3d()):
-			continue
-		if b.has_method("take_hit"):
-			b.take_hit(dmg, aim_dir, false)
-
-
-func _hit_breakables_circle(origin: Vector3, radius: float, dmg: float, need_los: bool) -> void:
-	for b in get_tree().get_nodes_in_group("breakables"):
-		if b == null or not is_instance_valid(b):
-			continue
-		var p: Vector3 = (b as Node3D).global_position
-		if not Combat.in_circle(origin, radius + 0.25, p):
-			continue
-		if need_los and not Combat.los(origin, p, get_world_3d()):
-			continue
-		if b.has_method("take_hit"):
-			b.take_hit(dmg, aim_dir, false)
-
-
-func _spawn_arrow(dir: Vector2, dmg: float, rng: float, spd: float, need_los: bool) -> void:
-	var p: Node3D = ProjS.new()
-	var host := get_parent()
-	if host:
-		host.add_child(p)
-	else:
-		add_child(p)
-	var crit := Combat.roll_crit(App.bal.crit_chance + float(App.prog.set_stats().crit))
-	p.setup(global_position, dir, spd, rng, dmg, need_los, crit, false, "", true)
-
-
-func _fx(path: String, pos: Vector3, h: float, ybill: bool) -> void:
-	if not ResourceLoader.exists(path):
-		return
-	var s := Sprite3D.new()
-	s.texture = load(path)
-	s.centered = true
-	s.shaded = false
-	s.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	s.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	s.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y if ybill else BaseMaterial3D.BILLBOARD_DISABLED
-	s.pixel_size = h / float(maxi(1, s.texture.get_height()))
-	s.position = pos + Vector3(0.0, 0.02 if not ybill else h * 0.45, 0.0)
-	if not ybill:
-		s.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
-	var host := get_parent()
-	if host:
-		host.add_child(s)
-	var tw := s.create_tween()
-	tw.tween_property(s, "modulate:a", 0.0, 0.45)
-	tw.finished.connect(s.queue_free)
+	PlayerHit.apply_special(self)
 
 
 func _trail(delta: float) -> void:
-	if not is_inside_tree():
-		return
-	if body == null or not is_instance_valid(body) or not body.is_inside_tree():
-		return
-	if body.texture == null:
-		return
-	trail_acc += delta
-	if trail_acc < App.bal.trail_gap:
-		return
-	trail_acc = 0.0
-	var host := get_parent()
-	if host == null or not is_instance_valid(host) or not host.is_inside_tree():
-		return
-	var g := Sprite3D.new()
-	g.texture = body.texture
-	g.centered = true
-	g.shaded = false
-	g.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	g.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	g.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	g.pixel_size = body.pixel_size
-	g.modulate = Color(0.45, 0.85, 1.0, 0.55)
-	host.add_child(g)
-	g.global_position = body.global_position
-	var tw := g.create_tween()
-	tw.tween_property(g, "modulate:a", 0.0, App.bal.trail_life)
-	tw.finished.connect(g.queue_free)
+	PlayerHit.trail(self, delta)
 
 
 func _update_aim_line() -> void:
@@ -955,84 +679,12 @@ func _update_aura(delta: float) -> void:
 
 
 func _pose_tex(key: String) -> Texture2D:
-	if equip.has(key):
-		return equip[key]
-	if idle.has(key):
-		return idle[key]
-	if idle.has("down"):
-		return idle["down"]
-	return null
-
-
-func _clip(store: Dictionary, key: String) -> Array:
-	if store.has(key):
-		return store[key]
-	var card := key
-	if key.begins_with("up"):
-		card = "up"
-	elif key.begins_with("down"):
-		card = "down"
-	elif key.find("left") >= 0:
-		card = "left"
-	elif key.find("right") >= 0:
-		card = "right"
-	if store.has(card):
-		return store[card]
-	if store.has("down"):
-		return store["down"]
-	return []
+	return PlayerAnim.pose_tex(self, key)
 
 
 func _apply_tex(tex: Texture2D) -> void:
-	if body == null or tex == null:
-		return
-	body.texture = tex
-	var th := float(maxi(1, tex.get_height()))
-	body.pixel_size = T.PLAYER_H / th
-	body.position.y = T.PLAYER_H * 0.5 + T.FEET_LIFT
+	PlayerAnim.apply_tex(self, tex)
 
 
 func _apply_facing(delta: float) -> void:
-	var key := Facing.from_aim(aim_dir)
-	facing_key = key
-	var tex: Texture2D = null
-	if exiting:
-		var frames := _clip(death if exit_cond == "death" else dispel, key)
-		if not frames.is_empty():
-			tex = frames[mini(frames.size() - 1, int(exit_t * 8.0))]
-		elif idle.has(key):
-			tex = idle[key]
-		if tex:
-			_apply_tex(tex)
-		return
-	if atk_state == ATK_WIND or atk_state == ATK_ACT or atk_state == ATK_REC:
-		var frames := _clip(special, key)
-		if frames.is_empty():
-			frames = _clip(attack, key)
-		if not frames.is_empty():
-			var idx := mini(frames.size() - 1, int(atk_t * App.bal.atk_fps))
-			tex = frames[idx]
-	elif gathering != null:
-		var frames := _clip(gather, key)
-		if frames.is_empty():
-			frames = _clip(attack, key)
-		if not frames.is_empty():
-			var idx := mini(frames.size() - 1, int(gather_t * 6.0) % frames.size())
-			tex = frames[idx]
-	elif atk_state == ATK_BASIC:
-		var frames := _clip(attack, key)
-		if not frames.is_empty():
-			var idx := mini(frames.size() - 1, int(atk_t * App.bal.atk_fps))
-			tex = frames[idx]
-			atk_i = idx
-	var planar := Vector2(velocity.x, velocity.z)
-	var moving := planar.length() > T.MOVE_EPS and dash_t <= 0.0 and atk_state == ATK_NONE
-	if tex == null and moving and walk.has(key):
-		var frames: Array = walk[key]
-		walk_t += delta
-		tex = frames[int(walk_t * T.WALK_FPS) % frames.size()]
-	if tex == null:
-		walk_t = 0.0
-		tex = _pose_tex(key)
-	if tex:
-		_apply_tex(tex)
+	PlayerAnim.apply_facing(self, delta)

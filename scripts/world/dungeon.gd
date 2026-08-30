@@ -8,11 +8,11 @@ const EnemyS := preload("res://scripts/combat/enemy.gd")
 const Roster := preload("res://scripts/combat/roster.gd")
 const DoorS := preload("res://scripts/world/boss_door.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
-const GatherS := preload("res://scripts/world/gather_node.gd")
-const BreakS := preload("res://scripts/world/breakable.gd")
 const UiS := preload("res://scripts/ui/progress_ui.gd")
 const HudS := preload("res://scripts/ui/hud.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
+const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
+const DungeonProps := preload("res://scripts/world/dungeon_props.gd")
 
 var data: Dictionary = {}
 var player: CharacterBody3D
@@ -49,8 +49,6 @@ var shrine_lab: Label
 var counts: Dictionary = {}
 var occupied: Dictionary = {}
 const PROP_GAP := 2
-const STREAM_IN := 28
-const STREAM_OUT := 42
 const SPAWN_CLEAR := 16
 var spawn_jobs: Array = []
 var stream_t := 0.0
@@ -74,7 +72,7 @@ func _ready() -> void:
 	_hud()
 	_map()
 	_reveal_around(data.spawn, int(App.bal.fog_radius) + 2)
-	_tick_stream(1.0)
+	DungeonStream.tick(self, 1.0)
 	Smoke.attach_dungeon(self)
 
 
@@ -88,7 +86,7 @@ func _process(delta: float) -> void:
 		var t := Vector2i(int(player.global_position.x), int(player.global_position.z))
 		var grew := _reveal_around(t, int(App.bal.fog_radius))
 		_tick_pressure(delta, grew)
-		_tick_stream(delta)
+		DungeonStream.tick(self, delta)
 		if grew:
 			fog_dirty = true
 	_note_verge()
@@ -271,10 +269,7 @@ func _spawns() -> void:
 	crystal.setup("crystal", Vector3(float(cr.x) + 0.5, 0.0, float(cr.y) + 0.5), not App.boss_dead)
 	add_child(crystal)
 	var pool: PackedStringArray = Roster.floor_types(App.floor_n)
-	for r in data.get("rooms", []):
-		_queue_room(r, pool)
-	_queue_pool(pool)
-	_queue_named(pool)
+	DungeonStream.queue_initial(self, pool)
 	var boss = EnemyS.new()
 	var bp: Vector2i = data.boss
 	boss.position = Vector3(float(bp.x) + 0.5, 0.0, float(bp.y) + 0.5)
@@ -284,8 +279,8 @@ func _spawns() -> void:
 	next_group += 1
 	if App.boss_dead:
 		_on_boss_dead()
-	_spawn_world()
-	_queue_ambushes(pool)
+	DungeonProps.spawn_world(self)
+	DungeonStream.queue_ambushes(self, pool)
 	ui = UiS.new()
 	add_child(ui)
 
@@ -485,232 +480,16 @@ func _away_room() -> Dictionary:
 	return {}
 
 
-func _new_job(kind: String, cell: Vector2i, room: Dictionary, ids: PackedStringArray, named: bool, nname: String) -> Dictionary:
-	var gid := next_group
-	next_group += 1
-	return {
-		"kind": kind,
-		"cell": cell,
-		"room": room,
-		"ids": ids,
-		"named": named,
-		"nname": nname,
-		"gid": gid,
-		"live": [],
-		"state": "pending",
-	}
-
-
-func _queue_room(r: Dictionary, pool: PackedStringArray) -> void:
-	var kind := str(r.get("kind", "normal"))
-	if kind == "spawn" or kind == "boss" or Gen.is_safe_kind(kind):
-		return
-	if _near_spawn(_center_room(r)):
-		return
-	if pool.is_empty():
-		return
-	var n := mini(2, maxi(1, int(App.bal.room_pack)))
-	if kind == "base":
-		n = mini(3, maxi(2, int(App.bal.base_guards)))
-		var chest = SpotS.new()
-		var c := Vector2i(int(r.x) + int(r.w) / 2, int(r.y) + int(r.h) / 2)
-		chest.setup("base_chest", Vector3(float(c.x) + 0.5, 0.0, float(c.y) + 0.5), false)
-		add_child(chest)
-	var ids := PackedStringArray()
-	for i in n:
-		ids.append(pool[floor_rng.randi() % pool.size()])
-	spawn_jobs.append(_new_job("room", _center_room(r), r, ids, false, ""))
-
-
-func _queue_pool(pool: PackedStringArray) -> void:
-	var room := _combat_room()
-	if room.is_empty() or pool.is_empty():
-		return
-	if _near_spawn(_center_room(room)):
-		return
-	var ids := PackedStringArray()
-	for id in pool:
-		var have := types_present.find(id) >= 0
-		if not have:
-			for job in spawn_jobs:
-				if (job.ids as PackedStringArray).find(id) >= 0:
-					have = true
-					break
-		if have:
-			continue
-		ids.append(id)
-	if ids.is_empty():
-		return
-	spawn_jobs.append(_new_job("fill", _center_room(room), room, ids, false, ""))
-
-
-func _queue_named(pool: PackedStringArray) -> void:
-	var ntype := ""
-	var nname := ""
-	if App.quest_named_type != "":
-		ntype = App.quest_named_type
-		nname = App.quest_named_name
-	else:
-		var due := App.floors_since_named + 1 >= int(App.bal.named_every)
-		var roll := floor_rng.randf() < (1.0 / maxf(1.0, App.bal.named_every))
-		if not due and not roll:
-			App.floors_since_named += 1
-			return
-		ntype = pool[floor_rng.randi() % pool.size()] if not pool.is_empty() else "goblin"
-		nname = Roster.make_name(floor_rng)
-	App.floors_since_named = 0
-	var room := _combat_room()
-	if room.is_empty():
-		return
-	last_named = nname
-	var ids := PackedStringArray()
-	ids.append(ntype)
-	spawn_jobs.append(_new_job("named", _center_room(room), room, ids, true, nname))
-
-
-func _queue_ambushes(pool: PackedStringArray) -> void:
-	if pool.is_empty():
-		return
-	var spots: Array = data.get("ambushes", [])
-	var max_spots := mini(12, spots.size())
-	var placed := 0
-	for si in spots.size():
-		if placed >= max_spots:
-			break
-		var center := Vector2i(spots[si])
-		if not _is_floor_cell(center):
-			continue
-		if _near_spawn(center):
-			continue
-		var n := floor_rng.randi_range(1, 2)
-		var ids := PackedStringArray()
-		for i in n:
-			ids.append(pool[floor_rng.randi() % pool.size()])
-		spawn_jobs.append(_new_job("ambush", center, {}, ids, false, ""))
-		placed += 1
-
-
-func _job_anchor(job: Dictionary) -> Vector2i:
-	return Vector2i(job.cell)
-
-
-func _activate_job(job: Dictionary) -> void:
-	if str(job.state) != "pending":
-		return
-	if _near_spawn(_job_anchor(job), 8):
-		job.state = "cleared"
-		return
-	var ids: PackedStringArray = job.ids
-	if ids.is_empty():
-		job.state = "cleared"
-		return
-	var live: Array = []
-	var room: Dictionary = job.get("room", {})
-	for i in ids.size():
-		var cell := _job_anchor(job)
-		if not room.is_empty():
-			cell = _rand_cell(room)
-		elif i > 0:
-			var near := _walkable_near(_job_anchor(job), 2, false)
-			if near != Vector2i(-1, -1):
-				cell = near
-		if _near_spawn(cell, 8):
-			continue
-		var e := _add_enemy(ids[i], _cell_pos(cell), int(job.gid), bool(job.named), str(job.nname))
-		if e and bool(job.named):
-			e.add_to_group("named")
-		live.append(e)
-	job.live = live
-	job.state = "live" if not live.is_empty() else "cleared"
-
-
-func _sleep_job(job: Dictionary) -> void:
-	if str(job.state) != "live":
-		return
-	var remain := PackedStringArray()
-	var live: Array = job.get("live", [])
-	for raw in live:
-		if raw == null or not is_instance_valid(raw):
-			continue
-		var e := raw as Node
-		if e == null:
-			continue
-		var alive := true
-		if e.has_method("is_alive"):
-			alive = e.is_alive()
-		if alive:
-			remain.append(str(e.get("type_id")))
-		e.queue_free()
-	job.live = []
-	if groups.has(int(job.gid)):
-		groups.erase(int(job.gid))
-	if remain.is_empty():
-		job.state = "cleared"
-		job.ids = PackedStringArray()
-		return
-	job.ids = remain
-	job.gid = next_group
-	next_group += 1
-	job.state = "pending"
-
-
-func _job_in_combat(job: Dictionary) -> bool:
-	if player == null:
-		return false
-	var live: Array = job.get("live", [])
-	var kept: Array = []
-	var close := false
-	for raw in live:
-		if raw == null or not is_instance_valid(raw):
-			continue
-		var e := raw as Node
-		if e == null:
-			continue
-		kept.append(e)
-		if e.has_method("is_alive") and not e.is_alive():
-			continue
-		var d := Vector2(e.global_position.x - player.global_position.x, e.global_position.z - player.global_position.z).length()
-		if d < 8.0:
-			close = true
-	job.live = kept
-	return close
-
-
-func _tick_stream(delta: float) -> void:
-	stream_t += delta
-	if stream_t < 0.2 and delta < 0.9:
-		return
-	stream_t = 0.0
-	if player == null:
-		return
-	var pc := _player_cell()
-	for job in spawn_jobs:
-		var st := str(job.state)
-		if st == "cleared":
-			continue
-		var d := _cell_manhattan(pc, _job_anchor(job))
-		if st == "pending" and (stream_all or d <= STREAM_IN):
-			_activate_job(job)
-		elif st == "live" and not stream_all and d >= STREAM_OUT and not _job_in_combat(job):
-			_sleep_job(job)
-
-
 func _stream_force_all() -> void:
-	stream_all = true
-	for job in spawn_jobs:
-		if str(job.state) == "pending":
-			_activate_job(job)
+	DungeonStream.force_all(self)
 
 
 func _spawn_room(r: Dictionary, pool: PackedStringArray) -> void:
-	_queue_room(r, pool)
-	for job in spawn_jobs:
-		if str(job.state) == "pending" and job.get("room", {}) == r:
-			_activate_job(job)
+	DungeonStream.activate_room(self, r, pool)
 
 
 func _maybe_named(pool: PackedStringArray) -> void:
-	_queue_named(pool)
+	DungeonStream.queue_named(self, pool)
 
 
 func _combat_room() -> Dictionary:
@@ -740,7 +519,7 @@ func _add_enemy(id: String, pos: Vector3, gid: int, named: bool, nname: String) 
 
 
 func _ensure_pool(pool: PackedStringArray) -> void:
-	_queue_pool(pool)
+	DungeonStream.queue_pool(self, pool)
 
 
 func _rand_cell(r: Dictionary) -> Vector2i:
@@ -1019,311 +798,8 @@ func _note(k: String) -> void:
 	counts[k] = int(counts.get(k, 0)) + 1
 
 
-func _spawn_world() -> void:
-	counts.clear()
-	_seed_occupied()
-	var clerk_i := 0
-	for r in data.get("rooms", []):
-		var kind := str(r.get("kind", "normal"))
-		if _near_spawn(_center_room(r)) and kind != "spawn":
-			if kind == "clerk" or kind == "vein" or kind == "shop":
-				continue
-		if kind == "clerk":
-			var role := str(r.get("role", ""))
-			if role == "":
-				role = "gather" if clerk_i == 0 else ("misc" if clerk_i == 1 else "patty")
-			clerk_i += 1
-			var cc := _free_cell(r)
-			var c := SpotS.new()
-			c.setup_clerk(role, _cell_pos(cc))
-			add_child(c)
-			_mark_cell(cc)
-			_note("clerk")
-		elif kind == "shop":
-			var sc := _free_cell(r)
-			if not _cell_clear(sc, 1):
-				sc = _center_room(r)
-			var s := SpotS.new()
-			s.setup_shop(_cell_pos(sc), floor_rng)
-			add_child(s)
-			_mark_cell(sc)
-			_note("shop")
-		elif kind == "stash":
-			var st := _center_room(r)
-			var chest := SpotS.new()
-			chest.setup("base_chest", _cell_pos(st), false)
-			add_child(chest)
-			_mark_cell(st)
-			_note("chest")
-		elif kind == "vein":
-			_spawn_vein(r)
-		elif kind == "puzzle":
-			_spawn_puzzle(r)
-	_scatter_counts()
-	_ensure_world()
-	if str(App.prog.quest_active.get("kind", "")) == "fetch" and int(App.prog.quest_active.get("floor", 1)) == App.floor_n:
-		var spawn_r := _find_kind_room("normal")
-		if spawn_r.is_empty():
-			spawn_r = _away_room()
-		if not spawn_r.is_empty():
-			var qc := _free_cell_world(spawn_r)
-			var q := SpotS.new()
-			q.setup("quest_item", _cell_pos(qc))
-			add_child(q)
-			_mark_cell(qc)
-
-
-func _spawn_vein(r: Dictionary) -> void:
-	if _near_spawn(_center_room(r)):
-		return
-	var what := str(r.get("vein", ""))
-	if what != "mine" and what != "wood" and what != "break":
-		var roll := floor_rng.randf()
-		if roll < 0.4:
-			what = "wood"
-		elif roll < 0.8:
-			what = "mine"
-		else:
-			what = "break"
-	var n := 7
-	if what == "wood" or what == "break":
-		n = 8
-	_place_n([r], n, what)
-	_note("vein")
-
-
 func _center_room(r: Dictionary) -> Vector2i:
 	return Vector2i(int(r.x) + int(r.w) / 2, int(r.y) + int(r.h) / 2)
-
-
-func _scatter_rooms() -> Array:
-	var out: Array = []
-	for r in data.get("rooms", []):
-		var k := str(r.get("kind", "normal"))
-		if k == "spawn" or k == "boss" or k == "clerk" or k == "shop" or k == "puzzle":
-			continue
-		if _near_spawn(_center_room(r)):
-			continue
-		if k == "normal" or k == "base":
-			out.append(r)
-	if out.is_empty():
-		var fallback := _away_room()
-		if not fallback.is_empty():
-			out.append(fallback)
-	return out
-
-
-func _shuffle_rooms(rooms: Array) -> Array:
-	var pool: Array = rooms.duplicate()
-	for i in pool.size():
-		var j := floor_rng.randi_range(i, pool.size() - 1)
-		var tmp: Variant = pool[i]
-		pool[i] = pool[j]
-		pool[j] = tmp
-	return pool
-
-
-func _scatter_counts() -> void:
-	var rooms: Array = _scatter_rooms()
-	_place_n(rooms, int(App.bal.mine_nodes), "mine")
-	_place_n(rooms, int(App.bal.wood_nodes), "wood")
-	_place_n(rooms, int(App.bal.break_count), "break")
-	_place_n(rooms, int(App.bal.campfire_count), "campfire")
-	_place_n(rooms, int(App.bal.shrine_count), "shrine")
-
-
-func _place_n(rooms: Array, n: int, what: String) -> void:
-	if n <= 0 or rooms.is_empty():
-		return
-	var pool: Array = _shuffle_rooms(rooms)
-	var placed := 0
-	var attempts := 0
-	var ri := 0
-	var budget := n * maxi(8, pool.size() * 3)
-	while placed < n and attempts < budget:
-		attempts += 1
-		var r: Dictionary = pool[ri % pool.size()]
-		ri += 1
-		var cell := _free_cell(r)
-		if not _cell_clear(cell, 1) or _near_spawn(cell):
-			continue
-		var pos := _cell_pos(cell)
-		if what == "mine":
-			var node := GatherS.new()
-			node.setup("mine", pos)
-			add_child(node)
-			_note("mine")
-		elif what == "wood":
-			var wood := GatherS.new()
-			wood.setup("wood", pos)
-			add_child(wood)
-			_note("wood")
-		elif what == "break":
-			var br := BreakS.new()
-			br.setup("pot" if floor_rng.randf() < 0.6 else "barrel", pos)
-			add_child(br)
-			_note("break")
-		elif what == "campfire":
-			var fire := SpotS.new()
-			fire.setup("campfire", pos)
-			add_child(fire)
-			_note("campfire")
-		elif what == "shrine":
-			var sh := SpotS.new()
-			sh.setup("shrine", pos)
-			add_child(sh)
-			_note("shrine")
-		else:
-			continue
-		_mark_cell(cell)
-		placed += 1
-
-
-func _puzzle_cells(c: Vector2i) -> Array[Vector2i]:
-	return [
-		c,
-		Vector2i(c.x + 2, c.y),
-		Vector2i(c.x, c.y - 2),
-		Vector2i(c.x, c.y - 3),
-		Vector2i(c.x - 2, c.y),
-		Vector2i(c.x - 1, c.y),
-	]
-
-
-func _spawn_puzzle(r: Dictionary) -> void:
-	_note("puzzle")
-	var c := _center_room(r)
-	var plate := SpotS.new()
-	plate.setup("plate", _cell_pos(c))
-	plate.pair = "puzzle"
-	add_child(plate)
-	_note("plate")
-	var lever := SpotS.new()
-	lever.setup("lever", _cell_pos(Vector2i(c.x + 2, c.y)))
-	lever.pair = "puzzle"
-	add_child(lever)
-	_note("lever")
-	var gate := SpotS.new()
-	gate.setup("gate", _cell_pos(Vector2i(c.x, c.y - 2)))
-	gate.pair = "puzzle"
-	add_child(gate)
-	_note("gate")
-	var chest := SpotS.new()
-	chest.setup("puzzle_chest", _cell_pos(Vector2i(c.x, c.y - 3)))
-	add_child(chest)
-	_note("chest")
-	var hidden := SpotS.new()
-	hidden.setup("puzzle_chest", _cell_pos(Vector2i(c.x - 2, c.y)))
-	hidden.hide_as_secret()
-	add_child(hidden)
-	var crack := BreakS.new()
-	crack.setup("crack", _cell_pos(Vector2i(c.x - 1, c.y)))
-	crack.reveal = hidden
-	add_child(crack)
-	_note("crack")
-	for cell in _puzzle_cells(c):
-		_mark_cell(cell)
-
-
-func _place_one(kind: String, prefer: Dictionary) -> Vector2i:
-	var cell := _free_cell_world(prefer)
-	if _near_spawn(cell):
-		var away := _away_room()
-		if not away.is_empty():
-			cell = _free_cell(away)
-	var pos := _cell_pos(cell)
-	if kind == "mine":
-		var n := GatherS.new()
-		n.setup("mine", pos)
-		add_child(n)
-		_note("mine")
-	elif kind == "wood":
-		var w := GatherS.new()
-		w.setup("wood", pos)
-		add_child(w)
-		_note("wood")
-	elif kind == "break":
-		var b := BreakS.new()
-		b.setup("pot", pos)
-		add_child(b)
-		_note("break")
-	elif kind == "clerk_gather":
-		var c := SpotS.new()
-		c.setup_clerk("gather", pos)
-		add_child(c)
-		_note("clerk")
-	elif kind == "clerk_misc":
-		var m := SpotS.new()
-		m.setup_clerk("misc", pos)
-		add_child(m)
-		_note("clerk")
-	elif kind == "campfire":
-		var f := SpotS.new()
-		f.setup("campfire", pos)
-		add_child(f)
-		_note("campfire")
-	elif kind == "shrine":
-		var s := SpotS.new()
-		s.setup("shrine", pos)
-		add_child(s)
-		_note("shrine")
-	elif kind == "shop":
-		var sh := SpotS.new()
-		sh.setup_shop(pos, floor_rng)
-		add_child(sh)
-		_note("shop")
-	_mark_cell(cell)
-	return cell
-
-
-func _ensure_world() -> void:
-	var prefer := _away_room()
-	if prefer.is_empty():
-		return
-	if int(counts.get("mine", 0)) < 1:
-		_place_one("mine", prefer)
-	if int(counts.get("wood", 0)) < 1:
-		_place_one("wood", prefer)
-	if int(counts.get("break", 0)) < 1:
-		_place_one("break", prefer)
-	if int(counts.get("clerk", 0)) < 1:
-		_place_one("clerk_gather", prefer)
-	var has_misc := false
-	for n in get_tree().get_nodes_in_group("interact"):
-		if str(n.get("kind")) == "clerk_misc":
-			has_misc = true
-			break
-	if not has_misc:
-		_place_one("clerk_misc", prefer)
-	if int(counts.get("campfire", 0)) < 1:
-		_place_one("campfire", prefer)
-	if int(counts.get("shrine", 0)) < 1:
-		_place_one("shrine", prefer)
-	if int(counts.get("shop", 0)) < 1 and Smoke.phase(5):
-		_place_one("shop", prefer)
-	if int(counts.get("puzzle", 0)) < 1:
-		var pr := {}
-		for r in data.get("rooms", []):
-			var k := str(r.get("kind", ""))
-			if k == "spawn" or k == "boss" or k == "clerk" or k == "shop" or k == "puzzle" or k == "stash" or k == "vein":
-				continue
-			if _near_spawn(_center_room(r)):
-				continue
-			var center := _center_room(r)
-			var blocked := false
-			for cell in _puzzle_cells(center):
-				if occupied.has(cell):
-					blocked = true
-					break
-			if not blocked:
-				pr = r
-				break
-		if pr.is_empty():
-			pr = _find_kind_room("normal")
-		if pr.is_empty():
-			pr = _find_kind_room("base")
-		if not pr.is_empty() and str(pr.get("kind", "")) != "spawn" and str(pr.get("kind", "")) != "boss":
-			_spawn_puzzle(pr)
 
 
 func _tick_plates() -> void:

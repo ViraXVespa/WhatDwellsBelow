@@ -24,3 +24,4 @@ Thumbs.db
 *.tmp
 godot-*.log
 godot-*.err
+.vscode/settings.json
