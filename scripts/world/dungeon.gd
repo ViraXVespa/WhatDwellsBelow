@@ -13,6 +13,7 @@ const HudS := preload("res://scripts/ui/hud.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const DungeonProps := preload("res://scripts/world/dungeon_props.gd")
+const Threat := preload("res://scripts/combat/threat.gd")
 
 var data: Dictionary = {}
 var player: CharacterBody3D
@@ -53,6 +54,8 @@ const SPAWN_CLEAR := 16
 var spawn_jobs: Array = []
 var stream_t := 0.0
 var stream_all := false
+var travel_dist: PackedInt32Array = PackedInt32Array()
+var travel_cap := 1
 
 
 func _ready() -> void:
@@ -65,6 +68,7 @@ func _ready() -> void:
 	visited = PackedByteArray()
 	visited.resize(int(data.w) * int(data.h))
 	visited.fill(0)
+	_build_travel()
 	_world()
 	_collision_walls()
 	_build_visuals()
@@ -250,6 +254,26 @@ func _mm_boxes(positions: Array, tex_path: String, fallback: Color) -> MultiMesh
 		mat.albedo_texture = load(tex_path)
 	inst.material_override = mat
 	return inst
+
+
+func _build_travel() -> void:
+	var sp: Vector2i = data.get("spawn", Vector2i.ZERO)
+	travel_dist = Gen._bfs(data.grid, int(data.w), int(data.h), sp)
+	var vals: Array[int] = []
+	for i in travel_dist.size():
+		if travel_dist[i] >= 0:
+			vals.append(travel_dist[i])
+	if vals.is_empty():
+		travel_cap = 1
+		return
+	vals.sort()
+	var pct := clampf(float(App.bal.enemy_cl_end_pct), 0.72, 0.96)
+	var idx := clampi(int(round(float(vals.size() - 1) * pct)), 0, vals.size() - 1)
+	travel_cap = maxi(1, vals[idx])
+
+
+func enemy_combat_lv(pos: Vector3) -> int:
+	return Threat.level_at(App.floor_n, _world_cell(pos), travel_dist, int(data.w), travel_cap)
 
 
 func _spawns() -> void:

@@ -2,7 +2,7 @@ extends RefCounted
 
 ## All Phase 2 combat numbers. Mutated by the secret debug menu.
 ## Bump BAL_REV when shipping new defaults that old saves should receive.
-const BAL_REV := 3
+const BAL_REV := 4
 
 var move_speed := 4.5
 var dash_speed_mult := 2.8
@@ -108,6 +108,15 @@ var enemy_sep := 0.55
 var enemy_hp_mult := 1.0
 var enemy_dmg_mult := 1.0
 var enemy_speed_mult := 1.0
+var enemy_cl_per_floor := 20.0
+var enemy_cl_end_pct := 0.86
+var enemy_cl_jitter := 2.0
+var enemy_cl_dmg := 0.018
+var enemy_cl_gear_dmg := 0.012
+var enemy_cl_hp := 0.010
+var enemy_cl_gear_hp := 0.016
+var enemy_cl_def := 0.4
+var enemy_cl_gear_def := 0.3
 var windup_melee := 0.42
 var windup_ranged := 0.38
 var windup_mage := 0.55
@@ -344,6 +353,15 @@ func schema() -> Array:
 		["enemy_hp_mult", 0.2, 4.0, 0.05],
 		["enemy_dmg_mult", 0.2, 4.0, 0.05],
 		["enemy_speed_mult", 0.2, 3.0, 0.05],
+		["enemy_cl_per_floor", 5.0, 40.0, 1.0],
+		["enemy_cl_end_pct", 0.7, 0.96, 0.01],
+		["enemy_cl_jitter", 0.0, 6.0, 1.0],
+		["enemy_cl_dmg", 0.0, 0.08, 0.001],
+		["enemy_cl_gear_dmg", 0.0, 0.08, 0.001],
+		["enemy_cl_hp", 0.0, 0.08, 0.001],
+		["enemy_cl_gear_hp", 0.0, 0.08, 0.001],
+		["enemy_cl_def", 0.0, 4.0, 0.05],
+		["enemy_cl_gear_def", 0.0, 4.0, 0.05],
 		["windup_melee", 0.1, 1.5, 0.01],
 		["windup_ranged", 0.1, 1.5, 0.01],
 		["windup_mage", 0.1, 2.0, 0.01],
@@ -543,6 +561,16 @@ func migrate_from(old_rev: int) -> bool:
 	if old_rev < 3:
 		xp_double_every = 14.0
 		xp_level = 100.0
+	if old_rev < 4:
+		enemy_cl_per_floor = 20.0
+		enemy_cl_end_pct = 0.86
+		enemy_cl_jitter = 2.0
+		enemy_cl_dmg = 0.018
+		enemy_cl_gear_dmg = 0.012
+		enemy_cl_hp = 0.010
+		enemy_cl_gear_hp = 0.016
+		enemy_cl_def = 0.4
+		enemy_cl_gear_def = 0.3
 	return true
 
 

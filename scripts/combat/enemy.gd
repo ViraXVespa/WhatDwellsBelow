@@ -7,6 +7,7 @@ const Roster := preload("res://scripts/combat/roster.gd")
 const Facing := preload("res://scripts/world/facing.gd")
 const TelegraphS := preload("res://scripts/combat/telegraph.gd")
 const ProjS := preload("res://scripts/combat/projectile.gd")
+const Threat := preload("res://scripts/combat/threat.gd")
 
 const ST_IDLE := 0
 const ST_CHASE := 1
@@ -18,6 +19,7 @@ const ST_REC := 6
 const ST_FLEE := 7
 
 var type_id := "goblin"
+var combat_lv := 1
 var role := "melee"
 var move_kind := "walk"
 var hp := 32.0
@@ -117,19 +119,20 @@ func setup(id: String, floor_n: int, named := false, given_name := "") -> void:
 	role = str(d.role)
 	move_kind = str(d.move)
 	var cycle := int((maxi(1, floor_n) - 1) / 5)
-	var hp_m: float = App.bal.enemy_hp_mult * (1.0 + App.bal.cycle_hp * float(cycle))
-	var dmg_m: float = App.bal.enemy_dmg_mult * (1.0 + App.bal.cycle_hp * 0.5 * float(cycle))
-	hp = float(d.hp) * hp_m
-	damage = float(d.dmg) * dmg_m
+	combat_lv = _resolve_cl(floor_n, false)
+	var scaled: Dictionary = Threat.apply(float(d.hp) * App.bal.enemy_hp_mult, float(d.dmg) * App.bal.enemy_dmg_mult, float(d.def), combat_lv)
+	hp = float(scaled.hp)
+	damage = float(scaled.dmg)
+	defense = float(scaled.def)
 	move_spd = float(d.spd) * App.bal.enemy_speed_mult
 	atk_range = float(d.range)
-	defense = float(d.def) + float(cycle) * 2.0
 	arc_deg = float(d.arc)
 	size_u = float(d.size)
 	base_mod = Roster.cycle_tint(cycle)
 	if named:
 		_make_named(given_name, floor_n)
 	max_hp = hp
+	_paint_rank()
 	_load_tex()
 	call_deferred("_mark_post")
 
@@ -137,7 +140,6 @@ func setup(id: String, floor_n: int, named := false, given_name := "") -> void:
 func setup_boss(title: String, floor_n: int) -> void:
 	is_boss = true
 	add_to_group("boss")
-	var cycle := int((maxi(1, floor_n) - 1) / 5)
 	var id := "orc"
 	role = "melee"
 	move_kind = "walk"
@@ -147,24 +149,48 @@ func setup_boss(title: String, floor_n: int) -> void:
 		move_kind = "walk"
 	type_id = id
 	var d: Dictionary = Roster.def(id)
-	var mult: float = App.bal.boss_hp_mult * (1.0 + App.bal.cycle_hp * float(cycle))
+	combat_lv = _resolve_cl(floor_n, true)
+	var scaled: Dictionary = Threat.apply(float(d.hp) * App.bal.enemy_hp_mult, float(d.dmg) * App.bal.enemy_dmg_mult * 1.8, float(d.def) + 10.0, combat_lv)
+	var mult: float = App.bal.boss_hp_mult
 	if title == "Gate Master":
 		mult *= 1.35
-	hp = float(d.hp) * mult
+	hp = float(scaled.hp) * mult
 	max_hp = hp
-	damage = float(d.dmg) * 1.8 * App.bal.enemy_dmg_mult
+	damage = float(scaled.dmg)
+	defense = float(scaled.def)
 	move_spd = float(d.spd) * 0.85 * App.bal.enemy_speed_mult
 	atk_range = 2.4 if title != "Gate Master" else 4.6
-	defense = float(d.def) + 10.0 + float(cycle) * 4.0
 	arc_deg = 140.0 if title != "Gate Master" else 360.0
 	size_u = float(d.size) * 1.55
 	base_mod = Color(1.15, 0.72, 0.55) if title != "Gate Master" else Color(0.72, 0.58, 1.18)
-	tag.text = title
+	tag.text = "%s  ·  Lv %d" % [title, combat_lv]
 	tag.visible = true
 	tag.modulate = Color(1.0, 0.82, 0.35)
 	tag.outline_modulate = Color(0, 0, 0)
 	_load_tex(title)
 	call_deferred("_mark_post")
+
+
+func _resolve_cl(floor_n: int, at_end: bool) -> int:
+	if at_end:
+		return Threat.floor_hi(floor_n)
+	var host := get_parent()
+	if host and host.has_method("enemy_combat_lv"):
+		return int(host.enemy_combat_lv(global_position))
+	return Threat.floor_lo(floor_n)
+
+
+func _paint_rank() -> void:
+	if tag == null:
+		return
+	if is_boss or is_named:
+		return
+	tag.text = "Lv %d" % combat_lv
+	tag.visible = true
+	tag.font_size = 26
+	tag.modulate = Color(0.86, 0.8, 0.68)
+	tag.outline_modulate = Color(0, 0, 0)
+	tag.position = Vector3(0.0, 1.42, 0.0)
 
 
 func setup_guard(id: String, floor_n: int) -> void:
@@ -179,7 +205,7 @@ func _make_named(given: String, _floor_n: int) -> void:
 	damage *= App.bal.named_dmg
 	size_u *= App.bal.named_scale
 	atk_range *= 1.12
-	tag.text = named_name
+	tag.text = "%s  ·  Lv %d" % [named_name, combat_lv]
 	tag.visible = true
 	tag.position = Vector3(0.0, 0.08, 0.0)
 	tag.modulate = Color(1.0, 0.92, 0.18)
