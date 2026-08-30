@@ -664,20 +664,24 @@ func keep_fragments() -> void:
 		skills_run[id] = 0.0
 
 
+func _survive_lv() -> int:
+	return skill_lv("def") + skill_lv("hp")
+
+
 func melee_lv() -> int:
-	return skill_lv("axe") + skill_lv("str")
+	return skill_lv("axe") + skill_lv("str") + _survive_lv()
 
 
 func magic_lv() -> int:
-	return skill_lv("staff") + skill_lv("mag")
+	return skill_lv("staff") + skill_lv("mag") + _survive_lv()
 
 
 func ranged_lv() -> int:
-	return skill_lv("bow") + skill_lv("rng")
+	return skill_lv("bow") + skill_lv("rng") + _survive_lv()
 
 
 func combat_lv() -> int:
-	return maxi(melee_lv(), maxi(magic_lv(), ranged_lv())) + skill_lv("def") + skill_lv("hp")
+	return maxi(melee_lv(), maxi(magic_lv(), ranged_lv()))
 
 
 func style_lv() -> int:
