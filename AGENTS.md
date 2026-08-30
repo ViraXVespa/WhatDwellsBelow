@@ -78,18 +78,37 @@ You are operating in this interface. You cannot write the User’s working copy.
 Whenever you suggest a code or document edit, output the **entire revised text** of each touched source file.
 Do not send a series of individual sections, hunks, or “replace lines 80–94” patches. That is slower for the User than one copy/paste of the whole file.
 
-Web / chat delivery rules:
+### Live files before you emit
 
-- One file at a time when files are long. Label the path clearly above the body (`## \`scripts/app.gd\``).
+Web pulls of GitHub raw files and long tool summaries often truncate. Do not invent the missing tail.
+
+- If a source file is truncated, incomplete, or you are not sure it matches the User’s working copy, **stop and ask the User to paste the live file**.
+- Prefer the User’s pasted live file over a GitHub fetch whenever they have already provided it, or whenever the fetch looks short, cut off, or older than the conversation.
+- Do not emit a “revised” file assembled from a truncated pull. Wait for the live body.
+- You may still emit a short file you fully retrieved, then ask for the remaining live files one at a time.
+
+### Delivery shape
+
+- One file at a time when files are long. Label the path clearly above the body (`## \`scripts/app.gd\``) except for markdown documents (see below).
 - Emit the complete file contents, including unchanged lines.
 - Indent GDScript with **tab** characters.
-- If several files change, emit every changed file in full. Do not omit a file because “only a small part changed.”
+- If several files change, emit every changed file in full, still one file per message unless the User asks otherwise. Do not omit a file because “only a small part changed.”
 - New files: emit the full intended contents.
 - Deleted files: say so in the report; do not emit a body.
-- After the files, stop and report: what changed, why, and what the User should paste where.
+- After the files, stop and report: what changed, why, and what the User should paste where — unless the just-emitted file is a markdown document that must be copy-clean (see below). In that case put the report in a **following** message, not around the markdown body.
 - Do not claim you wrote the repo. The User pastes.
 
 This full-file rule applies to `design/` notes and `AGENTS.md` the same way it applies to `.gd` / `.tscn` files.
+
+### Markdown copy format (Path 2 only)
+
+`.md` files (`AGENTS.md`, `design/*.md`, and any other markdown the User will paste) MUST be emitted as raw copy-ready text:
+
+- Do **not** wrap the file in a markdown fence (` ``` `, ` ```markdown `, or similar).
+- Do **not** put a leading or trailing chat message in the same reply as the file body. No “here is the file,” no recap, no next-file note on that same turn.
+- The reply that carries a markdown file should be **only** the file contents, so a select-all / copy lands a valid document.
+- Path labels, “next file,” and change reports for markdown work go in a separate message before or after that clean emit.
+- Code files (`.gd`, `.tscn`, and other non-markdown sources) may still use a fenced block plus a path heading so syntax highlighting stays usable.
 
 ---
 

@@ -111,16 +111,17 @@ If you change a live default, update this table in the same slice.
 | `windup_melee` / `windup_ranged` / `windup_mage` | 0.42 / 0.38 / 0.55 |
 | `enemy_recover` | 0.35 |
 | `enemy_proj_speed` | 9 |
-| `enemy_cl_per_floor` | 20 |
+| `enemy_cl_per_floor` | 5 |
 | `enemy_cl_end_pct` | 0.86 |
-| `enemy_cl_jitter` | 2 |
-| `enemy_cl_dmg` / `enemy_cl_gear_dmg` | 0.018 / 0.012 |
-| `enemy_cl_hp` / `enemy_cl_gear_hp` | 0.010 / 0.016 |
-| `enemy_cl_def` / `enemy_cl_gear_def` | 0.4 / 0.3 |
-| `cl_dealt_up` / `cl_dealt_down` | 1.15 / 0.85 |
-| `cl_received_up` / `cl_received_down` | 0.85 / 1.15 |
+| `enemy_cl_jitter` | 1 |
+| `enemy_cl_dmg` / `enemy_cl_gear_dmg` | 0.072 / 0.048 |
+| `enemy_cl_hp` / `enemy_cl_gear_hp` | 0.040 / 0.064 |
+| `enemy_cl_def` / `enemy_cl_gear_def` | 1.6 / 1.2 |
+| `cl_dealt_up` / `cl_dealt_down` | 1.075 / 0.925 |
+| `cl_received_up` / `cl_received_down` | 0.925 / 1.075 |
 | `cl_xp_up` / `cl_xp_down` | 1.1 / 0.9 |
 | `cl_style_weight` | 0.5 |
+| `xp_kill_hp` / `xp_kill_def` | 3.0 / 3.0 |
 
 ## Progression and economy
 
@@ -129,6 +130,7 @@ If you change a live default, update this table in the same slice.
 | Bag capacity | 28 | 28 | |
 | Food bring max | 20 | 20 | |
 | Permanent XP keep rate on death | 15–25 % | **0.20** | Must feel meaningful after a good run |
+| Kill HP XP / kill Defense XP | — | **3.0 / 3.0** | On top of hit/heal XP; ~1/3 of a combat skill’s typical per-kill XP |
 | Shrine damage buff | +20 % / 45 s | 0.2 / 45 | |
 | Campfire heal | 40 % max HP | 0.4 | |
 | Food HoT total (X) | 40 HP | 40 | Delivered over Y seconds |

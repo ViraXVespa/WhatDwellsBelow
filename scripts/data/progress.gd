@@ -664,32 +664,60 @@ func keep_fragments() -> void:
 		skills_run[id] = 0.0
 
 
-func _survive_lv() -> int:
-	return skill_lv("def") + skill_lv("hp")
+func _survive_pair() -> float:
+	return float(skill_lv("def") + skill_lv("hp"))
+
+
+func _combat_score(wpn: String, sty: String) -> float:
+	return (float(skill_lv(wpn) + skill_lv(sty)) + _survive_pair()) / 4.0
+
+
+func _combat_iv(wpn: String, sty: String) -> int:
+	return maxi(1, int(round(_combat_score(wpn, sty))))
+
+
+func melee_lv_f() -> float:
+	return _combat_score("axe", "str")
+
+
+func magic_lv_f() -> float:
+	return _combat_score("staff", "mag")
+
+
+func ranged_lv_f() -> float:
+	return _combat_score("bow", "rng")
+
+
+func combat_lv_f() -> float:
+	return maxf(melee_lv_f(), maxf(magic_lv_f(), ranged_lv_f()))
+
+
+func style_lv_f() -> float:
+	if App.weapon == "staff":
+		return magic_lv_f()
+	if App.weapon == "longbow":
+		return ranged_lv_f()
+	return melee_lv_f()
 
 
 func melee_lv() -> int:
-	return skill_lv("axe") + skill_lv("str") + _survive_lv()
+	return _combat_iv("axe", "str")
 
 
 func magic_lv() -> int:
-	return skill_lv("staff") + skill_lv("mag") + _survive_lv()
+	return _combat_iv("staff", "mag")
 
 
 func ranged_lv() -> int:
-	return skill_lv("bow") + skill_lv("rng") + _survive_lv()
+	return _combat_iv("bow", "rng")
 
 
 func combat_lv() -> int:
-	return maxi(melee_lv(), maxi(magic_lv(), ranged_lv()))
+	return maxi(1, int(round(combat_lv_f())))
 
 
 func style_lv() -> int:
-	if App.weapon == "staff":
-		return magic_lv()
-	if App.weapon == "longbow":
-		return ranged_lv()
-	return melee_lv()
+	return maxi(1, int(round(style_lv_f())))
 
 
 func gear_dmg() -> float:

@@ -2,18 +2,23 @@ extends Object
 
 ## Enemy combat level from walk-distance to the floor entrance.
 ## End-of-floor uses a high percentile of all floor cells so the
-## guardian room is not the unique "level 20 / 40 / ..." landmark.
+## guardian room is not the unique floor-cap landmark.
 ##
 ## Rank multipliers compare enemy combat_lv to the player's combat
 ## level (max style). Off-style play shifts the player level toward
 ## style_lv by cl_style_weight, then the same geometric table is used.
 ## Each full level of difference compounds the per-step factors with
 ## no cap.
+##
+## Player CL is the average of four skills (weapon + partner + HP +
+## Defense), so one player CL is four skill-levels of old sum-CL.
+## Floor span and per-CL enemy stats are scaled to that unit.
+
 
 static func per_floor() -> int:
 	if App.bal:
 		return maxi(1, int(App.bal.enemy_cl_per_floor))
-	return 20
+	return 5
 
 
 static func floor_lo(floor_n: int) -> int:
@@ -48,9 +53,9 @@ static func level_at(floor_n: int, cell: Vector2i, dist: PackedInt32Array, w: in
 
 static func apply(base_hp: float, base_dmg: float, base_def: float, cl: int) -> Dictionary:
 	var ranks := maxi(0, cl - 1)
-	var dmg_r := 0.018 + 0.012
-	var hp_r := 0.010 + 0.016
-	var def_r := 0.4 + 0.3
+	var dmg_r := 0.072 + 0.048
+	var hp_r := 0.040 + 0.064
+	var def_r := 1.6 + 1.2
 	if App.bal:
 		dmg_r = float(App.bal.enemy_cl_dmg) + float(App.bal.enemy_cl_gear_dmg)
 		hp_r = float(App.bal.enemy_cl_hp) + float(App.bal.enemy_cl_gear_hp)
@@ -76,8 +81,12 @@ static func rank_diff(enemy_lv: int) -> float:
 	var max_style := 1.0
 	var cur_style := 1.0
 	if App.prog:
-		max_style = float(App.prog.combat_lv())
-		cur_style = float(App.prog.style_lv())
+		if App.prog.has_method("combat_lv_f"):
+			max_style = float(App.prog.combat_lv_f())
+			cur_style = float(App.prog.style_lv_f())
+		else:
+			max_style = float(App.prog.combat_lv())
+			cur_style = float(App.prog.style_lv())
 	var weight := clampf(_bal_f("cl_style_weight", 0.5), 0.0, 1.0)
 	var player_lv := lerpf(max_style, cur_style, weight)
 	return float(enemy_lv) - player_lv
@@ -93,12 +102,12 @@ static func _geom(step_up: float, step_down: float, diff: float) -> float:
 
 ## Enemy damage dealt to the player.
 static func dealt_mult(enemy_lv: int) -> float:
-	return _geom(_bal_f("cl_dealt_up", 1.15), _bal_f("cl_dealt_down", 0.85), rank_diff(enemy_lv))
+	return _geom(_bal_f("cl_dealt_up", 1.075), _bal_f("cl_dealt_down", 0.925), rank_diff(enemy_lv))
 
 
 ## Damage the enemy receives from the player.
 static func received_mult(enemy_lv: int) -> float:
-	return _geom(_bal_f("cl_received_up", 0.85), _bal_f("cl_received_down", 1.15), rank_diff(enemy_lv))
+	return _geom(_bal_f("cl_received_up", 0.925), _bal_f("cl_received_down", 1.075), rank_diff(enemy_lv))
 
 
 ## Kill XP multiplier.

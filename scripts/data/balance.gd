@@ -2,7 +2,7 @@ extends RefCounted
 
 ## All Phase 2 combat numbers. Mutated by the secret debug menu.
 ## Bump BAL_REV when shipping new defaults that old saves should receive.
-const BAL_REV := 5
+const BAL_REV := 6
 
 var move_speed := 4.5
 var dash_speed_mult := 2.8
@@ -108,19 +108,19 @@ var enemy_sep := 0.55
 var enemy_hp_mult := 1.0
 var enemy_dmg_mult := 1.0
 var enemy_speed_mult := 1.0
-var enemy_cl_per_floor := 20.0
+var enemy_cl_per_floor := 5.0
 var enemy_cl_end_pct := 0.86
-var enemy_cl_jitter := 2.0
-var enemy_cl_dmg := 0.018
-var enemy_cl_gear_dmg := 0.012
-var enemy_cl_hp := 0.010
-var enemy_cl_gear_hp := 0.016
-var enemy_cl_def := 0.4
-var enemy_cl_gear_def := 0.3
-var cl_dealt_up := 1.15
-var cl_dealt_down := 0.85
-var cl_received_up := 0.85
-var cl_received_down := 1.15
+var enemy_cl_jitter := 1.0
+var enemy_cl_dmg := 0.072
+var enemy_cl_gear_dmg := 0.048
+var enemy_cl_hp := 0.040
+var enemy_cl_gear_hp := 0.064
+var enemy_cl_def := 1.6
+var enemy_cl_gear_def := 1.2
+var cl_dealt_up := 1.075
+var cl_dealt_down := 0.925
+var cl_received_up := 0.925
+var cl_received_down := 1.075
 var cl_xp_up := 1.1
 var cl_xp_down := 0.9
 var cl_style_weight := 0.5
@@ -188,6 +188,8 @@ var xp_gather := 6.0
 var xp_smith := 12.0
 var xp_def_hit := 0.4
 var xp_hp_heal := 0.15
+var xp_kill_hp := 3.0
+var xp_kill_def := 3.0
 var skill_dmg_weapon := 0.04
 var skill_dmg_style := 0.03
 var skill_special_bonus := 0.02
@@ -363,10 +365,10 @@ func schema() -> Array:
 		["enemy_cl_per_floor", 5.0, 40.0, 1.0],
 		["enemy_cl_end_pct", 0.7, 0.96, 0.01],
 		["enemy_cl_jitter", 0.0, 6.0, 1.0],
-		["enemy_cl_dmg", 0.0, 0.08, 0.001],
-		["enemy_cl_gear_dmg", 0.0, 0.08, 0.001],
-		["enemy_cl_hp", 0.0, 0.08, 0.001],
-		["enemy_cl_gear_hp", 0.0, 0.08, 0.001],
+		["enemy_cl_dmg", 0.0, 0.2, 0.001],
+		["enemy_cl_gear_dmg", 0.0, 0.2, 0.001],
+		["enemy_cl_hp", 0.0, 0.2, 0.001],
+		["enemy_cl_gear_hp", 0.0, 0.2, 0.001],
 		["enemy_cl_def", 0.0, 4.0, 0.05],
 		["enemy_cl_gear_def", 0.0, 4.0, 0.05],
 		["cl_dealt_up", 1.0, 2.0, 0.01],
@@ -438,6 +440,8 @@ func schema() -> Array:
 		["xp_smith", 0.0, 40.0, 0.5],
 		["xp_def_hit", 0.0, 8.0, 0.05],
 		["xp_hp_heal", 0.0, 8.0, 0.05],
+		["xp_kill_hp", 0.0, 40.0, 0.1],
+		["xp_kill_def", 0.0, 40.0, 0.1],
 		["skill_dmg_weapon", 0.0, 0.2, 0.005],
 		["skill_dmg_style", 0.0, 0.2, 0.005],
 		["skill_special_bonus", 0.0, 0.2, 0.005],
@@ -585,6 +589,21 @@ func migrate_from(old_rev: int) -> bool:
 		enemy_cl_gear_hp = 0.016
 		enemy_cl_def = 0.4
 		enemy_cl_gear_def = 0.3
+	if old_rev < 6:
+		enemy_cl_per_floor = 5.0
+		enemy_cl_jitter = 1.0
+		enemy_cl_dmg = 0.072
+		enemy_cl_gear_dmg = 0.048
+		enemy_cl_hp = 0.040
+		enemy_cl_gear_hp = 0.064
+		enemy_cl_def = 1.6
+		enemy_cl_gear_def = 1.2
+		cl_dealt_up = 1.075
+		cl_dealt_down = 0.925
+		cl_received_up = 0.925
+		cl_received_down = 1.075
+		xp_kill_hp = 3.0
+		xp_kill_def = 3.0
 	return true
 
 

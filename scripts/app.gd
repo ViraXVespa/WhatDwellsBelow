@@ -496,6 +496,8 @@ func on_kill() -> void:
 		else:
 			prog.add_run_xp("axe", half)
 			prog.add_run_xp("str", half)
+		prog.add_run_xp("hp", bal.xp_kill_hp * mult)
+		prog.add_run_xp("def", bal.xp_kill_def * mult)
 	if tel:
 		tel.note_kill()
 
