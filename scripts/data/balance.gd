@@ -2,7 +2,7 @@ extends RefCounted
 
 ## All Phase 2 combat numbers. Mutated by the secret debug menu.
 ## Bump BAL_REV when shipping new defaults that old saves should receive.
-const BAL_REV := 4
+const BAL_REV := 5
 
 var move_speed := 4.5
 var dash_speed_mult := 2.8
@@ -117,6 +117,13 @@ var enemy_cl_hp := 0.010
 var enemy_cl_gear_hp := 0.016
 var enemy_cl_def := 0.4
 var enemy_cl_gear_def := 0.3
+var cl_dealt_up := 1.15
+var cl_dealt_down := 0.85
+var cl_received_up := 0.85
+var cl_received_down := 1.15
+var cl_xp_up := 1.1
+var cl_xp_down := 0.9
+var cl_style_weight := 0.5
 var windup_melee := 0.42
 var windup_ranged := 0.38
 var windup_mage := 0.55
@@ -362,6 +369,13 @@ func schema() -> Array:
 		["enemy_cl_gear_hp", 0.0, 0.08, 0.001],
 		["enemy_cl_def", 0.0, 4.0, 0.05],
 		["enemy_cl_gear_def", 0.0, 4.0, 0.05],
+		["cl_dealt_up", 1.0, 2.0, 0.01],
+		["cl_dealt_down", 0.4, 1.0, 0.01],
+		["cl_received_up", 0.4, 1.0, 0.01],
+		["cl_received_down", 1.0, 2.0, 0.01],
+		["cl_xp_up", 1.0, 2.0, 0.01],
+		["cl_xp_down", 0.4, 1.0, 0.01],
+		["cl_style_weight", 0.0, 1.0, 0.05],
 		["windup_melee", 0.1, 1.5, 0.01],
 		["windup_ranged", 0.1, 1.5, 0.01],
 		["windup_mage", 0.1, 2.0, 0.01],

@@ -3,6 +3,12 @@ extends Object
 ## Enemy combat level from walk-distance to the floor entrance.
 ## End-of-floor uses a high percentile of all floor cells so the
 ## guardian room is not the unique "level 20 / 40 / ..." landmark.
+##
+## Rank multipliers compare enemy combat_lv to the player's combat
+## level (max style). Off-style play shifts the player level toward
+## style_lv by cl_style_weight, then the same geometric table is used.
+## Each full level of difference compounds the per-step factors with
+## no cap.
 
 static func per_floor() -> int:
 	if App.bal:
@@ -55,3 +61,46 @@ static func apply(base_hp: float, base_dmg: float, base_def: float, cl: int) -> 
 		"dmg": base_dmg * (1.0 + dmg_r * rf),
 		"def": base_def + def_r * rf,
 	}
+
+
+static func _bal_f(name: String, fallback: float) -> float:
+	if App.bal == null:
+		return fallback
+	return float(App.bal.get(name)) if App.bal.get(name) != null else fallback
+
+
+## difference = enemy_lv - effective player lv
+static func rank_diff(enemy_lv: int) -> float:
+	if enemy_lv <= 0:
+		return 0.0
+	var max_style := 1.0
+	var cur_style := 1.0
+	if App.prog:
+		max_style = float(App.prog.combat_lv())
+		cur_style = float(App.prog.style_lv())
+	var weight := clampf(_bal_f("cl_style_weight", 0.5), 0.0, 1.0)
+	var player_lv := lerpf(max_style, cur_style, weight)
+	return float(enemy_lv) - player_lv
+
+
+static func _geom(step_up: float, step_down: float, diff: float) -> float:
+	if is_zero_approx(diff):
+		return 1.0
+	if diff > 0.0:
+		return pow(step_up, diff)
+	return pow(step_down, -diff)
+
+
+## Enemy damage dealt to the player.
+static func dealt_mult(enemy_lv: int) -> float:
+	return _geom(_bal_f("cl_dealt_up", 1.15), _bal_f("cl_dealt_down", 0.85), rank_diff(enemy_lv))
+
+
+## Damage the enemy receives from the player.
+static func received_mult(enemy_lv: int) -> float:
+	return _geom(_bal_f("cl_received_up", 0.85), _bal_f("cl_received_down", 1.15), rank_diff(enemy_lv))
+
+
+## Kill XP multiplier.
+static func xp_mult(enemy_lv: int) -> float:
+	return _geom(_bal_f("cl_xp_up", 1.1), _bal_f("cl_xp_down", 0.9), rank_diff(enemy_lv))
