@@ -185,12 +185,7 @@ func _paint_rank() -> void:
 		return
 	if is_boss or is_named:
 		return
-	tag.text = "Lv %d" % combat_lv
-	tag.visible = true
-	tag.font_size = 26
-	tag.modulate = Color(0.86, 0.8, 0.68)
-	tag.outline_modulate = Color(0, 0, 0)
-	tag.position = Vector3(0.0, 1.42, 0.0)
+	tag.visible = false
 
 
 func setup_guard(id: String, floor_n: int) -> void:
@@ -664,7 +659,7 @@ func _stuck(delta: float) -> void:
 		if stuck_t > 0.35:
 			var side := Vector2(-aim.y, aim.x)
 			if randf() < 0.5:
-				side = -side
+				side = - side
 			velocity += Vector3(side.x, 0.0, side.y) * move_spd * 1.2
 			stuck_t = 0.0
 	else:
