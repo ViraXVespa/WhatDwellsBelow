@@ -115,8 +115,8 @@ static func risk_mark(it: Dictionary, loadout: bool) -> String:
 
 static func hint_line(ui: CanvasLayer) -> String:
 	if bool(ui.get("gear_sub")):
-		return "A equip   B close list   X drop   hold X destroy   Y tip detail"
-	return "A re-equip   X drop   hold X destroy   Y tip detail"
+		return "A equip / unequip   B close list   X drop   hold X destroy   Y tip off/on/forge"
+	return "A re-equip   X drop   hold X destroy   Y tip off/on/forge"
 
 
 static func selected_slot(ui: CanvasLayer) -> String:
@@ -253,14 +253,17 @@ static func mark_seen(slot: String) -> void:
 
 static func tooltip(ui: CanvasLayer) -> String:
 	if str(ui.inv_sel) == "stats":
-		return "LT / Q previous page. RT / E next page."
+		return ""
+	var mode := int(ui.get("gear_tip_mode"))
+	if mode <= 0:
+		return ""
 	var it := selected(ui)
 	var slot := selected_slot(ui)
 	if it.is_empty():
 		if slot != "":
 			return "%s — empty\nA opens anything that can go here." % str(NAMES.get(slot, slot))
 		return "Empty bag slot."
-	if int(ui.get("gear_tip_mode")) == 1:
+	if mode >= 2:
 		return forged_block(it)
 	return current_block(it)
 

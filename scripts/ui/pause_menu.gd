@@ -60,12 +60,13 @@ var inv_btn_unequip: Button
 var inv_btn_drop: Button
 var gear_mode: String = "inv"
 var gear_stat_page: int = 0
-var gear_tip_mode: int = 0
+var gear_tip_mode: int = 1
 var gear_sub: bool = false
 var gear_sub_slot: String = ""
 var gear_x_hold: float = 0.0
 var gear_x_fired: bool = false
 var gear_tip: Label
+var gear_tip_host: PanelContainer
 var gear_stats: Control
 var gear_stats_title: Label
 var gear_hint: Label
@@ -163,6 +164,8 @@ func close_ui() -> void:
 	var old: Node = get_node_or_null("gear_sub_panel")
 	if old:
 		old.queue_free()
+	if gear_tip_host:
+		gear_tip_host.visible = false
 	_hide_tip()
 	App.ui_open = false
 	get_tree().paused = false
@@ -347,21 +350,26 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if not open or rebind_action == "":
+	if not open:
 		return
-	if event is InputEventKey and event.pressed and not event.echo:
-		if App.has_method("rebind"):
-			App.rebind(rebind_action, event)
-		rebind_action = ""
-		App.save_now()
-		_rebuild()
-		get_viewport().set_input_as_handled()
-	elif event is InputEventJoypadButton and event.pressed:
-		if App.has_method("rebind"):
-			App.rebind(rebind_action, event)
-		rebind_action = ""
-		App.save_now()
-		_rebuild()
+	if rebind_action != "":
+		if event is InputEventKey and event.pressed and not event.echo:
+			if App.has_method("rebind"):
+				App.rebind(rebind_action, event)
+			rebind_action = ""
+			App.save_now()
+			_rebuild()
+			get_viewport().set_input_as_handled()
+			return
+		if event is InputEventJoypadButton and event.pressed:
+			if App.has_method("rebind"):
+				App.rebind(rebind_action, event)
+			rebind_action = ""
+			App.save_now()
+			_rebuild()
+			get_viewport().set_input_as_handled()
+			return
+	if tab == 0 and GearAct.handle_event(self, event):
 		get_viewport().set_input_as_handled()
 
 
@@ -385,6 +393,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		_rebuild()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
+		if GearAct.swallowing():
+			get_viewport().set_input_as_handled()
+			return
 		if pending:
 			pending = false
 			pending_id = ""

@@ -20,6 +20,8 @@ static func ensure_host(ui: CanvasLayer) -> void:
 		ui.set("gear_x_hold", 0.0)
 	if ui.get("gear_x_fired") == null:
 		ui.set("gear_x_fired", false)
+	if ui.get("gear_sub_guard") == null:
+		ui.set("gear_sub_guard", 0.0)
 	if ui.get("inv_sel") == null:
 		ui.set("inv_sel", "slot:weapon")
 	if str(ui.inv_sel) == "":
@@ -28,6 +30,18 @@ static func ensure_host(ui: CanvasLayer) -> void:
 
 static func is_loadout(ui: CanvasLayer) -> bool:
 	return str(ui.get("gear_mode")) == "loadout"
+
+
+static func _plain_lab(t: String, size: int, col: Color) -> Label:
+	var l := Label.new()
+	l.text = t
+	l.autowrap_mode = TextServer.AUTOWRAP_OFF
+	l.clip_text = false
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", col)
+	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
+	l.add_theme_constant_override("outline_size", 6)
+	return l
 
 
 static func build(ui: CanvasLayer, mode: String) -> void:
@@ -67,10 +81,7 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 		var hit := find_sel(ui)
 		if hit:
 			ui.focus_btn = hit
-	ui.gear_tip = ThemeS.lab("", 18, Color(0.93, 0.86, 0.72))
-	ui.gear_tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	ui.gear_tip.custom_minimum_size = Vector2(900, 96)
-	ui.box.add_child(ui.gear_tip)
+	ensure_tip(ui)
 	if mode == "loadout":
 		loadout_footer(ui)
 	else:
@@ -133,13 +144,17 @@ static func stats_card(ui: CanvasLayer) -> PanelContainer:
 	vb.add_theme_constant_override("separation", 8)
 	panel.add_child(vb)
 	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 8)
-	var left := ThemeS.lab("Q  ·  LT", 16, Color(0.72, 0.66, 0.52))
+	head.add_theme_constant_override("separation", 12)
+	head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var left := _plain_lab("Q  ·  LT", 16, Color(0.72, 0.66, 0.52))
+	left.custom_minimum_size = Vector2(84, 24)
 	left.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	var mid := ThemeS.lab("", 20, Color(1, 0.92, 0.55))
+	var mid := _plain_lab("", 20, Color(1, 0.92, 0.55))
 	mid.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	mid.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var right := ThemeS.lab("RT  ·  E", 16, Color(0.72, 0.66, 0.52))
+	var right := _plain_lab("RT  ·  E", 16, Color(0.72, 0.66, 0.52))
+	right.custom_minimum_size = Vector2(84, 24)
 	right.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	right.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	head.add_child(left)
@@ -168,6 +183,70 @@ static func stats_card(ui: CanvasLayer) -> PanelContainer:
 			panel.accept_event()
 	)
 	return panel
+
+
+static func ensure_tip(ui: CanvasLayer) -> void:
+	var host: Node = ui.get_node_or_null("gear_tip_host")
+	if host:
+		ui.gear_tip_host = host
+		ui.gear_tip = host.get_node_or_null("pad/lab")
+		return
+	var panel := PanelContainer.new()
+	panel.name = "gear_tip_host"
+	panel.visible = false
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.z_index = 40
+	panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.09, 0.07, 0.05, 0.97), Color(0.85, 0.68, 0.32)))
+	var pad := MarginContainer.new()
+	pad.name = "pad"
+	pad.add_theme_constant_override("margin_left", 10)
+	pad.add_theme_constant_override("margin_right", 10)
+	pad.add_theme_constant_override("margin_top", 8)
+	pad.add_theme_constant_override("margin_bottom", 8)
+	panel.add_child(pad)
+	var lab := _plain_lab("", 18, Color(0.93, 0.86, 0.72))
+	lab.name = "lab"
+	lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lab.custom_minimum_size = Vector2(360, 0)
+	pad.add_child(lab)
+	ui.add_child(panel)
+	ui.gear_tip_host = panel
+	ui.gear_tip = lab
+
+
+static func place_tip(ui: CanvasLayer) -> void:
+	ensure_tip(ui)
+	var host: Control = ui.get("gear_tip_host")
+	var lab: Label = ui.get("gear_tip")
+	if host == null or lab == null:
+		return
+	if str(ui.inv_sel) == "stats":
+		host.visible = false
+		return
+	var txt := Text.tooltip(ui)
+	if txt == "":
+		host.visible = false
+		return
+	lab.text = txt
+	host.visible = true
+	host.reset_size()
+	var anchor: Control = find_sel(ui)
+	if anchor == null:
+		var f: Control = ui.get_viewport().gui_get_focus_owner()
+		if f:
+			anchor = f
+	var pos := Vector2(80, 160)
+	if anchor:
+		pos = anchor.get_global_position() + Vector2(anchor.size.x + 12, 0)
+	var view := ui.get_viewport().get_visible_rect().size
+	var sz: Vector2 = host.get_combined_minimum_size()
+	if pos.x + sz.x > view.x - 16.0:
+		if anchor:
+			pos.x = anchor.get_global_position().x - sz.x - 12.0
+		else:
+			pos.x = view.x - sz.x - 16.0
+	pos.y = clampf(pos.y, 16.0, view.y - sz.y - 16.0)
+	host.global_position = pos
 
 
 static func loadout_footer(ui: CanvasLayer) -> void:
@@ -230,25 +309,28 @@ static func refresh(ui: CanvasLayer) -> void:
 		ui.gear_stats_title.text = Text.stats_title(ui)
 	if ui.get("gear_stats") != null and ui.gear_stats:
 		ui.gear_stats.text = Text.stats_body(ui)
-	if ui.get("gear_tip") != null and ui.gear_tip:
-		ui.gear_tip.text = Text.tooltip(ui)
 	if ui.get("gear_hint") != null and ui.gear_hint:
 		ui.gear_hint.text = Text.hint_line(ui)
 	if is_loadout(ui) and ui.status:
 		ui.status.text = "Weapon %s   Tool %s   Floor %d / deepest %d" % [str(ui.loadout_wpn), str(ui.loadout_tool), int(ui.loadout_floor), App.prog.deepest]
+	place_tip(ui)
 
 
 static func find_sel(ui: CanvasLayer) -> Control:
 	if str(ui.inv_sel) == "":
 		return null
-	for n: Node in ui.box.find_children("*", "Control", true, false):
-		if str(n.get_meta("inv_key", "")) == ui.inv_sel:
-			return n as Control
 	var sub: Node = ui.get_node_or_null("gear_sub_panel")
 	if sub:
 		for n2: Node in sub.find_children("*", "Button", true, false):
+			if n2.is_queued_for_deletion():
+				continue
 			if str(n2.get_meta("inv_key", "")) == ui.inv_sel:
 				return n2 as Control
+	for n: Node in ui.box.find_children("*", "Control", true, false):
+		if n.is_queued_for_deletion():
+			continue
+		if str(n.get_meta("inv_key", "")) == ui.inv_sel:
+			return n as Control
 	return null
 
 
@@ -264,6 +346,12 @@ static func clear_sub(ui: CanvasLayer) -> void:
 	var old: Node = ui.get_node_or_null("gear_sub_panel")
 	if old:
 		old.queue_free()
+
+
+static func hide_tip(ui: CanvasLayer) -> void:
+	var host: Node = ui.get_node_or_null("gear_tip_host")
+	if host:
+		host.visible = false
 
 
 static func apply_pending() -> void:
