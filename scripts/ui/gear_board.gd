@@ -3,6 +3,8 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Text := preload("res://scripts/ui/gear_board_text.gd")
 const Act := preload("res://scripts/ui/gear_board_act.gd")
+const Floor := preload("res://scripts/ui/gear_board_floor.gd")
+const Tip := preload("res://scripts/ui/gear_board_tip.gd")
 
 static var pending_kit: Dictionary = {}
 
@@ -37,9 +39,7 @@ static func is_loadout(ui: CanvasLayer) -> bool:
 
 
 static func _on(ui: CanvasLayer, key: String) -> bool:
-	if ui.has_meta(key):
-		return ui.get_meta(key) == true
-	return ui.get(key) == true
+	return Tip.on(ui, key)
 
 
 static func _flag(ui: CanvasLayer, key: String, v: bool) -> void:
@@ -58,141 +58,6 @@ static func _plain_lab(t: String, size: int, col: Color) -> Label:
 	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
 	l.add_theme_constant_override("outline_size", 6)
 	return l
-
-
-static func _row_lab(t: String, size: int, col: Color) -> Label:
-	var l := _plain_lab(t, size, col)
-	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	l.custom_minimum_size = Vector2(0, 44)
-	return l
-
-
-static func _meta_ctrl(ui: CanvasLayer, key: String) -> Control:
-	if not ui.has_meta(key):
-		return null
-	var n: Variant = ui.get_meta(key)
-	return n if n is Control else null
-
-
-static func _slot_ctrl(ui: CanvasLayer, slot: String) -> Control:
-	if ui.box == null:
-		return null
-	var want := "slot:" + slot
-	for n: Node in ui.box.find_children("*", "Control", true, false):
-		if n.is_queued_for_deletion():
-			continue
-		if str(n.get_meta("inv_key", "")) == want:
-			return n as Control
-	return null
-
-
-static func _nb(from: Control, dir: String, to: Control) -> void:
-	if from == null:
-		return
-	var p := NodePath()
-	if to != null and is_instance_valid(to) and to.focus_mode != Control.FOCUS_NONE:
-		p = from.get_path_to(to)
-	match dir:
-		"l":
-			from.focus_neighbor_left = p
-		"r":
-			from.focus_neighbor_right = p
-		"u":
-			from.focus_neighbor_top = p
-		"d":
-			from.focus_neighbor_bottom = p
-
-
-static func _live_step(minus: Control, plus: Control, prefer_plus: bool) -> Control:
-	if prefer_plus:
-		if plus != null and plus.focus_mode != Control.FOCUS_NONE:
-			return plus
-		if minus != null and minus.focus_mode != Control.FOCUS_NONE:
-			return minus
-	else:
-		if minus != null and minus.focus_mode != Control.FOCUS_NONE:
-			return minus
-		if plus != null and plus.focus_mode != Control.FOCUS_NONE:
-			return plus
-	return null
-
-
-static func _wire_floor_focus(ui: CanvasLayer) -> void:
-	if not is_loadout(ui):
-		return
-	var minus := _meta_ctrl(ui, "loadout_floor_minus")
-	var plus := _meta_ctrl(ui, "loadout_floor_plus")
-	var enter := _meta_ctrl(ui, "loadout_enter")
-	var potion := _slot_ctrl(ui, "potion")
-	var legs := _slot_ctrl(ui, "legs")
-	var food := _slot_ctrl(ui, "food")
-	var left_step := _live_step(minus, plus, false)
-	var right_step := _live_step(minus, plus, true)
-	var any_step := right_step if right_step else left_step
-	_nb(potion, "d", left_step if left_step else enter)
-	_nb(legs, "d", right_step if right_step else enter)
-	_nb(food, "d", right_step if right_step else enter)
-	if minus:
-		_nb(minus, "u", potion if potion else legs)
-		_nb(minus, "d", enter)
-		_nb(minus, "r", plus if plus and plus.focus_mode != Control.FOCUS_NONE else enter)
-		_nb(minus, "l", potion)
-	if plus:
-		_nb(plus, "u", legs if legs else food)
-		_nb(plus, "d", enter)
-		_nb(plus, "l", minus if minus and minus.focus_mode != Control.FOCUS_NONE else (legs if legs else potion))
-		_nb(plus, "r", enter)
-	if enter:
-		_nb(enter, "u", any_step if any_step else legs)
-
-
-static func _arm_floor_btn(b: Control, off: bool) -> void:
-	if b == null:
-		return
-	if b is Button:
-		(b as Button).disabled = off
-	b.focus_mode = Control.FOCUS_NONE if off else Control.FOCUS_ALL
-
-
-static func _restore_floor_focus(ui: CanvasLayer, was: Control) -> void:
-	var minus := _meta_ctrl(ui, "loadout_floor_minus")
-	var plus := _meta_ctrl(ui, "loadout_floor_plus")
-	var enter := _meta_ctrl(ui, "loadout_enter")
-	if was != minus and was != plus:
-		return
-	var pick: Control = null
-	if was == plus:
-		pick = minus if minus and minus.focus_mode != Control.FOCUS_NONE else enter
-	else:
-		pick = plus if plus and plus.focus_mode != Control.FOCUS_NONE else enter
-	if pick and is_instance_valid(pick):
-		pick.grab_focus()
-
-
-static func _sync_floor_row(ui: CanvasLayer) -> void:
-	if not is_loadout(ui):
-		return
-	var f := int(ui.loadout_floor)
-	var deep := int(App.prog.deepest)
-	if ui.has_meta("loadout_floor_lab"):
-		var nlab: Variant = ui.get_meta("loadout_floor_lab")
-		if nlab is Label:
-			nlab.text = str(f)
-	if ui.has_meta("loadout_deep_lab"):
-		var dlab: Variant = ui.get_meta("loadout_deep_lab")
-		if dlab is Label:
-			dlab.text = "(Deepest floor: %d)" % deep
-	var minus := _meta_ctrl(ui, "loadout_floor_minus")
-	var plus := _meta_ctrl(ui, "loadout_floor_plus")
-	var vp := ui.get_viewport()
-	var was: Control = vp.gui_get_focus_owner() if vp else null
-	_arm_floor_btn(minus, f <= 1)
-	_arm_floor_btn(plus, f >= deep)
-	_wire_floor_focus(ui)
-	_restore_floor_focus(ui, was)
 
 
 static func _arm_tip(ui: CanvasLayer) -> void:
@@ -244,10 +109,15 @@ static func _watch_hover(ui: CanvasLayer, b: Control, key: String) -> void:
 
 
 static func hide_tip(ui: CanvasLayer) -> void:
-	ensure_tip(ui)
-	var host: Control = ui.get("gear_tip_host")
-	if host:
-		host.visible = false
+	Tip.hide_tip(ui)
+
+
+static func ensure_tip(ui: CanvasLayer) -> void:
+	Tip.ensure_tip(ui)
+
+
+static func place_tip(ui: CanvasLayer) -> void:
+	Tip.place_tip(ui)
 
 
 static func build(ui: CanvasLayer, mode: String) -> void:
@@ -290,10 +160,9 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 		var hit := find_sel(ui)
 		if hit:
 			ui.focus_btn = hit
-	ensure_tip(ui)
 	hide_tip(ui)
 	if mode == "loadout":
-		loadout_footer(ui)
+		Floor.footer(ui)
 	else:
 		bag_grid(ui)
 	ui.box.add_child(ThemeS.btn("Close  (B)", ui.close_ui))
@@ -401,35 +270,6 @@ static func stats_card(ui: CanvasLayer) -> PanelContainer:
 	return panel
 
 
-static func loadout_footer(ui: CanvasLayer) -> void:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	var flab := _row_lab("Floor:", 20, Color(0.92, 0.84, 0.62))
-	flab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	row.add_child(flab)
-	var minus := ThemeS.btn("−", func(): Act.floor_step(ui, -1))
-	row.add_child(minus)
-	var nlab := _row_lab(str(int(ui.loadout_floor)), 22, Color(0.95, 0.82, 0.5))
-	nlab.custom_minimum_size = Vector2(48, 44)
-	row.add_child(nlab)
-	var plus := ThemeS.btn("+", func(): Act.floor_step(ui, 1))
-	row.add_child(plus)
-	var dlab := _row_lab("(Deepest floor: %d)" % int(App.prog.deepest), 20, Color(0.82, 0.76, 0.66))
-	dlab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	row.add_child(dlab)
-	var enter := ThemeS.btn("Enter dungeon", func(): Act.enter(ui))
-	ui.set_meta("loadout_floor_lab", nlab)
-	ui.set_meta("loadout_deep_lab", dlab)
-	ui.set_meta("loadout_floor_minus", minus)
-	ui.set_meta("loadout_floor_plus", plus)
-	ui.set_meta("loadout_enter", enter)
-	ui.box.add_child(row)
-	ui.box.add_child(enter)
-	_sync_floor_row(ui)
-
-
 static func bag_grid(ui: CanvasLayer) -> void:
 	ui.box.add_child(ThemeS.lab("Bag", 20, Color(0.88, 0.82, 0.7)))
 	var grid := GridContainer.new()
@@ -484,111 +324,6 @@ static func bag_cell(ui: CanvasLayer, it: Dictionary) -> Button:
 	return b
 
 
-static func ensure_tip(ui: CanvasLayer) -> void:
-	var host: Node = ui.get_node_or_null("gear_tip_host")
-	if host:
-		ui.gear_tip_host = host
-		var existing: Node = host.get_node_or_null("pad/lab")
-		if existing is Label:
-			ui.gear_tip = existing
-		host.z_index = 80
-		return
-	var panel := PanelContainer.new()
-	panel.name = "gear_tip_host"
-	panel.visible = false
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.z_index = 80
-	panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.09, 0.07, 0.05, 0.97), Color(0.85, 0.68, 0.32)))
-	var pad := MarginContainer.new()
-	pad.name = "pad"
-	pad.add_theme_constant_override("margin_left", 10)
-	pad.add_theme_constant_override("margin_right", 10)
-	pad.add_theme_constant_override("margin_top", 8)
-	pad.add_theme_constant_override("margin_bottom", 8)
-	panel.add_child(pad)
-	var lab := _plain_lab("", 18, Color(0.93, 0.86, 0.72))
-	lab.name = "lab"
-	lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lab.custom_minimum_size = Vector2(360, 0)
-	pad.add_child(lab)
-	ui.add_child(panel)
-	ui.gear_tip_host = panel
-	ui.gear_tip = lab
-
-
-static func place_tip(ui: CanvasLayer) -> void:
-	if not _on(ui, "gear_tip_ready") and not _on(ui, "gear_hover"):
-		hide_tip(ui)
-		return
-	ensure_tip(ui)
-	var host: Control = ui.get("gear_tip_host")
-	var lab: Label = ui.get("gear_tip")
-	if host == null or lab == null:
-		return
-	if str(ui.inv_sel) == "stats":
-		host.visible = false
-		return
-	var txt := Text.tooltip(ui)
-	if txt == "":
-		host.visible = false
-		return
-	lab.text = txt
-	host.visible = true
-	host.reset_size()
-	var anchor: Control = find_sel(ui)
-	if anchor == null or anchor.is_queued_for_deletion():
-		var f: Control = ui.get_viewport().gui_get_focus_owner()
-		if f and not f.is_queued_for_deletion():
-			anchor = f
-	var r := Rect2()
-	if anchor:
-		r = anchor.get_global_rect()
-	if r.size.x < 8.0 or r.size.y < 8.0:
-		var tree := ui.get_tree()
-		if tree:
-			tree.process_frame.connect(func():
-				if is_instance_valid(ui):
-					_place_tip_now(ui)
-			, CONNECT_ONE_SHOT)
-		return
-	_place_tip_now(ui)
-
-
-static func _place_tip_now(ui: CanvasLayer) -> void:
-	if not _on(ui, "gear_tip_ready") and not _on(ui, "gear_hover"):
-		hide_tip(ui)
-		return
-	var host: Control = ui.get("gear_tip_host")
-	var lab: Label = ui.get("gear_tip")
-	if host == null or lab == null:
-		return
-	var txt := Text.tooltip(ui)
-	if txt == "" or str(ui.inv_sel) == "stats":
-		host.visible = false
-		return
-	lab.text = txt
-	host.visible = true
-	host.reset_size()
-	var anchor: Control = find_sel(ui)
-	if anchor == null or anchor.is_queued_for_deletion():
-		var f: Control = ui.get_viewport().gui_get_focus_owner()
-		if f and not f.is_queued_for_deletion():
-			anchor = f
-	var pos := Vector2(80, 160)
-	if anchor:
-		var rr: Rect2 = anchor.get_global_rect()
-		pos = Vector2(rr.position.x + maxf(rr.size.x, 1.0) + 12.0, rr.position.y)
-	var view := ui.get_viewport().get_visible_rect().size
-	var sz: Vector2 = host.get_combined_minimum_size()
-	if sz.x < 360.0:
-		sz.x = 360.0
-	if pos.x + sz.x > view.x - 16.0 and anchor:
-		pos.x = anchor.get_global_rect().position.x - sz.x - 12.0
-	pos.x = clampf(pos.x, 16.0, view.x - sz.x - 16.0)
-	pos.y = clampf(pos.y, 16.0, view.y - maxf(sz.y, 80.0) - 16.0)
-	host.global_position = pos
-
-
 static func find_sel(ui: CanvasLayer) -> Control:
 	if str(ui.inv_sel) == "":
 		return null
@@ -615,7 +350,7 @@ static func refresh(ui: CanvasLayer) -> void:
 		ui.gear_stats.text = Text.stats_body(ui)
 	if ui.get("gear_hint") != null and ui.gear_hint:
 		ui.gear_hint.text = Text.hint_line(ui)
-	_sync_floor_row(ui)
+	Floor.sync(ui)
 	if _on(ui, "gear_tip_ready") or _on(ui, "gear_hover"):
 		place_tip(ui)
 	else:

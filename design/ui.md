@@ -1,9 +1,9 @@
 # Player UI, HUD, menus, recap
 
-Status: binding design + live snapshot  
-Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, or loading  
-Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `gear_board.gd`, `gear_board_text.gd`, `gear_board_act.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`  
-See also: `design/gear-ui.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/hub.md`
+Status: binding design + live snapshot
+Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, or loading
+Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`
+See also: `design/gear-ui.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/hud.md`
 
 ## UI theme (playable surfaces)
 
@@ -84,10 +84,12 @@ Placeholdia inventory (same board, opened outside a run) MUST use Loadout option
 ## Loadout UI
 
 - Opens only by interacting with the Floor Crystal in Placeholdia. There is no separate loadout station.
-- Uses the shared gear board in `design/gear-ui.md`. Holds / starters / bank populate each slot list. Character, floor −/+, and confirm-enter sit under the doll.
-- Choose starting weapon, choose tool type (pickaxe or hatchet — locked for the run), choose starting floor (deeper previously reached floors only; never backward), confirm enter.
+- Uses the shared gear board in `design/gear-ui.md`. Holds / starters / bank populate each slot list.
+- Footer is `Floor: [−] [selected] [+] (Deepest floor: n)` then **Enter dungeon**. No character button and no top weapon / tool / deepest summary.
+- Choose starting weapon and tool type (pickaxe or hatchet — locked for the run) from the doll slots. Starting floor is only a previously reached floor. Never backward.
+- First focus is **Enter dungeon**. One press enters. B / Esc / Close cancels without entering.
 - Visual presentation MUST meet the same clean, dungeon-themed, TV-readable standard as the other interaction UIs.
-- Confirmation MUST be cancellable. Esc / B on the re-equip list MUST NOT confirm enter or close the crystal UI.
+- Esc / B on the re-equip list MUST NOT confirm enter or close the crystal UI.
 
 ## Gear tooltips
 
@@ -130,7 +132,7 @@ Triggered on every death or “Dispel”.
 
 `hud.gd`: strip top-left, minimap top-right, boss bar when near, toast. Level string uses combat level and parenthetical style level.
 Pause Skills also shows run XP earned this descent.
-Inventory and loadout share `gear_board.gd`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout).
+Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Loadout opens focused on **Enter dungeon**.
 
 ## Live snapshot — loading bar (`loader.gd`)
 

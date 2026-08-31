@@ -3,7 +3,7 @@
 Status: binding design
 Read when: changing camp layout, loadout, or hub interactables
 Code: `scripts/world/camp.gd`, `scripts/world/interact.gd`, `scenes/camp.tscn`
-See also: `design/inventory.md`, `design/ui.md`
+See also: `design/inventory.md`, `design/ui.md`, `design/gear-ui.md`
 
 ## Required interactables (complete and final list)
 
@@ -22,11 +22,13 @@ All buildings MUST have actual depth and realistic 3D dimensions (not flat 2D sp
 ## Floor Crystal
 
 - The Floor Crystal is the only enter-dungeon interactable in Placeholdia.
-- Interacting with it opens the Loadout UI.
-- That UI includes: select holds per slot (fallback to starter Great Axe + pickaxe or hatchet + potion if no holds exist), choose starting weapon, choose tool type (pickaxe or hatchet — locked for the entire run), choose starting floor, confirm enter.
-- Floor list allows travel only to deeper floors the player has previously reached. It never permits travel backward.
-- Interaction and confirmation MUST be clear and cancellable (no single-press accidental enter).
-- On confirmed enter, play a **consciousness-transfer VFX** before the dungeon loads. This is a short presentation beat, not a story cutscene.
+- Interacting with it opens the Loadout UI (`design/gear-ui.md`).
+- That UI includes: select holds per slot (fallback to starter Great Axe + pickaxe or hatchet + potion if no holds exist), choose starting weapon, choose tool type (pickaxe or hatchet — locked for the entire run), choose starting floor, **Enter dungeon**.
+- Character type is Pause → System, not this UI.
+- There is no top-of-menu weapon / tool / deepest-floor summary.
+- Floor row reads `Floor: [−] [selected] [+] (Deepest floor: n)`. Only floors the player has reached. Never backward. `−` dies at 1; `+` dies at deepest.
+- First focus is **Enter dungeon**. One press enters. B / Esc / Close leaves Placeholdia without entering. B on a re-equip list only closes that list.
+- On enter, play a **consciousness-transfer VFX** before the dungeon loads. This is a short presentation beat, not a story cutscene.
 - Visual presentation MUST be clean, TV-readable, dungeon-themed, and consistent with the other hub / dungeon UIs.
 
 ## Return / wake-up

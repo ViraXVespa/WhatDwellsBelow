@@ -2,8 +2,7 @@ extends Object
 
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Text := preload("res://scripts/ui/gear_board_text.gd")
-const ThemeS := preload("res://scripts/ui/theme.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
+const Sub := preload("res://scripts/ui/gear_board_sub.gd")
 
 const HOLD_DESTROY := 0.55
 
@@ -27,7 +26,7 @@ static func town_kit(ui: CanvasLayer) -> bool:
 
 
 static func rebuild(ui: CanvasLayer) -> void:
-	_unlock_bg(ui)
+	Sub.unlock_bg(ui)
 	if str(ui.get("gear_mode")) == "loadout" and ui.has_method("_rebuild_loadout"):
 		ui._rebuild_loadout()
 		ui._show()
@@ -47,204 +46,16 @@ static func st(ui: CanvasLayer, msg: String) -> void:
 	App.sfx("ui")
 
 
-static func _lock_bg(ui: CanvasLayer) -> void:
-	if ui.box == null:
-		return
-	for n: Node in ui.box.find_children("*", "Control", true, false):
-		var c := n as Control
-		if c == null:
-			continue
-		c.set_meta("gear_old_focus", c.focus_mode)
-		c.focus_mode = Control.FOCUS_NONE
-
-
-static func _unlock_bg(ui: CanvasLayer) -> void:
-	if ui.box == null:
-		return
-	for n: Node in ui.box.find_children("*", "Control", true, false):
-		var c := n as Control
-		if c == null or not c.has_meta("gear_old_focus"):
-			continue
-		c.focus_mode = int(c.get_meta("gear_old_focus"))
-		c.remove_meta("gear_old_focus")
-
-
 static func open_sub(ui: CanvasLayer, slot: String) -> void:
-	if bool(ui.get("gear_sub")):
-		Board.clear_sub(ui)
-	ui.gear_sub = true
-	ui.gear_sub_slot = slot
-	Text.mark_seen(slot)
-	_lock_bg(ui)
-	var panel := PanelContainer.new()
-	panel.name = "gear_sub_panel"
-	panel.z_index = 40
-	panel.position = Vector2(80, 160)
-	panel.custom_minimum_size = Vector2(720, 520)
-	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	panel.focus_mode = Control.FOCUS_NONE
-	panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.08, 0.06, 0.05, 0.98), Color(0.9, 0.72, 0.32)))
-	ui.add_child(panel)
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
-	panel.add_child(box)
-	box.add_child(ThemeS.lab("Re-equip  " + str(Text.NAMES.get(slot, slot)), 22, Color(0.95, 0.82, 0.5)))
-	box.add_child(ThemeS.lab("A picks it. B closes. AT RISK gear is lost on death or Dispel.", 16, Color(0.8, 0.74, 0.64)))
-	var first: Button = null
-	var rows: Array = Text.options_for(slot)
-	if rows.is_empty():
-		box.add_child(ThemeS.lab("Nothing else for this slot.", 18, Color(0.78, 0.74, 0.66)))
-	for row: Dictionary in rows:
-		var it: Dictionary = row.it
-		var lab := "%s  ·  %s" % [str(row.src), Text.item_short(it)]
-		var mark := Text.risk_mark(it, town_kit(ui) or str(row.src) == "bank")
-		if mark != "":
-			lab += "  [" + mark + "]"
-		var key := "opt:%s:%s:%d" % [str(row.src), slot, int(row.uid)]
-		var pick_row: Dictionary = row.duplicate(true)
-		pick_row.it = it.duplicate(true)
-		var b := Button.new()
-		b.text = lab
-		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		b.custom_minimum_size = Vector2(0, 40)
-		b.focus_mode = Control.FOCUS_ALL
-		b.disabled = false
-		b.add_theme_font_size_override("font_size", 18)
-		b.add_theme_color_override("font_color", Text.item_color(it))
-		b.set_meta("inv_key", key)
-		Board._watch_hover(ui, b, key)
-		b.pressed.connect(func(): pick(ui, slot, pick_row))
-		b.focus_entered.connect(func():
-			ui.inv_sel = key
-			Board.refresh(ui)
-		)
-		box.add_child(b)
-		if first == null:
-			first = b
-	var back := Button.new()
-	back.text = "Back  (B)"
-	back.custom_minimum_size = Vector2(0, 40)
-	back.focus_mode = Control.FOCUS_ALL
-	back.add_theme_font_size_override("font_size", 18)
-	back.pressed.connect(func(): close_sub(ui))
-	box.add_child(back)
-	if first == null:
-		first = back
-	ui.inv_sel = str(first.get_meta("inv_key", "slot:" + slot))
-	ui.focus_btn = first
-	first.grab_focus()
-	Board.refresh(ui)
-	var tree := ui.get_tree()
-	if tree:
-		tree.process_frame.connect(func():
-			if is_instance_valid(ui):
-				Board.place_tip(ui)
-		, CONNECT_ONE_SHOT)
+	Sub.open_sub(ui, slot)
 
 
 static func close_sub(ui: CanvasLayer) -> void:
-	var keep := str(ui.gear_sub_slot)
-	ui.gear_sub = false
-	ui.gear_sub_slot = ""
-	_unlock_bg(ui)
-	swallow_cancel()
-	App.sfx("ui_cancel")
-	_after_sub(ui, "slot:" + (keep if keep != "" else "weapon"), false)
+	Sub.close_sub(ui)
 
 
 static func pick(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
-	if not bool(ui.get("gear_sub")):
-		return
-	var it: Dictionary = {}
-	if row.get("it") is Dictionary:
-		it = (row.it as Dictionary).duplicate(true)
-	var src := str(row.get("src", ""))
-	if src == "equipped":
-		_unequip_or_keep(ui, slot, it)
-	elif town_kit(ui):
-		_apply_loadout(ui, slot, it, src)
-	else:
-		_apply_inv(ui, slot, it, src)
-	ui.gear_sub = false
-	ui.gear_sub_slot = ""
-	_unlock_bg(ui)
-	swallow_cancel()
-	_after_sub(ui, "slot:" + slot, true)
-
-
-static func _after_sub(ui: CanvasLayer, sel: String, do_rebuild: bool) -> void:
-	ui.inv_sel = sel
-	var tree := ui.get_tree()
-	if tree == null:
-		Board.clear_sub(ui)
-		if do_rebuild:
-			rebuild(ui)
-		else:
-			Board.refresh(ui)
-		return
-	tree.process_frame.connect(func():
-		if not is_instance_valid(ui):
-			return
-		Board.clear_sub(ui)
-		if do_rebuild:
-			rebuild(ui)
-		else:
-			ui.call_deferred("_focus")
-			Board.refresh(ui)
-	, CONNECT_ONE_SHOT)
-
-
-static func _unequip_or_keep(ui: CanvasLayer, slot: String, it: Dictionary) -> void:
-	if locked_slot(slot):
-		st(ui, "Weapon and tool stay equipped.")
-		return
-	if Rules.is_starter(App.prog, it) or str(it.get("kit_src", "")) == "starter":
-		st(ui, "Starters stay on the slot.")
-		return
-	if town_kit(ui):
-		App.prog.slots[slot] = {}
-		App.prog.hold_pick[slot] = -1
-		st(ui, "Unequipped.")
-		App.save_now()
-		return
-	st(ui, App.prog.unequip_slot(slot))
-
-
-static func _apply_loadout(ui: CanvasLayer, slot: String, it: Dictionary, src: String) -> void:
-	if it.is_empty():
-		st(ui, "Nothing to equip.")
-		return
-	it["kit_src"] = src
-	App.prog.slots[slot] = it
-	if src == "hold":
-		var h: Array = App.prog.holds[slot]
-		var found := -1
-		for i: int in h.size():
-			if int(h[i].uid) == int(it.uid):
-				found = i
-				break
-		App.prog.hold_pick[slot] = found
-	else:
-		App.prog.hold_pick[slot] = -1
-	if slot == "weapon":
-		if ui.get("loadout_wpn") != null:
-			ui.loadout_wpn = str(it.get("weapon", ui.loadout_wpn))
-		App.prog.pick_weapon = str(it.get("weapon", App.prog.pick_weapon))
-		App.weapon = App.prog.pick_weapon
-	if slot == "tool":
-		if ui.get("loadout_tool") != null:
-			ui.loadout_tool = str(it.get("tool", ui.loadout_tool))
-		App.prog.tool_type = str(it.get("tool", App.prog.tool_type))
-	st(ui, "Ready: " + str(it.get("name", slot)))
-	App.save_now()
-
-
-static func _apply_inv(ui: CanvasLayer, slot: String, it: Dictionary, src: String) -> void:
-	if src == "bag":
-		st(ui, App.prog.equip_uid(int(it.get("uid", 0))))
-		ui.inv_sel = "slot:" + slot
-		return
-	st(ui, "Can't use that here.")
+	Sub.pick(ui, slot, row)
 
 
 static func bag_primary(ui: CanvasLayer) -> void:
