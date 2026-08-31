@@ -78,7 +78,7 @@ If you change a live default, update this table in the same slice.
 
 | Parameter | Suggested start | Live default | Notes |
 |-----------|-----------------|--------------|-------|
-| Floor grid size | 48×48 – 64×64 | **216×216** | Live rebalance; must still feel expansive |
+| Floor grid size | 48×48 – 64×64 | **432×432** | 2× live rebalance; geo streams like enemies |
 | Rooms | — | 36 | |
 | Room min / max | — | 5 / 9 | |
 | Extra loops | — | 8 | MST + extra loops |
@@ -89,7 +89,9 @@ If you change a live default, update this table in the same slice.
 | Flee events per full clear | Average 2 | 2 | Small speed boost on fleeing enemy |
 | Idle / no-reveal timers | 20–30 s | 24 / 22 | Outside safe rooms |
 | Pressure count / radius / cd | — | 3 / 5 / 18 | |
-| Stream in / out (cells) | — | **28 / 42** | `dungeon_stream.gd` |
+| Stream in / out (cells) | — | **28 / 42** | enemies + geometry |
+| Geo chunk (cells) | — | **16** | `dungeon_geo_stream.gd` |
+| Geo jobs per tick | — | **8** | 24 on first floor tick |
 
 ## Enemies and combat level
 

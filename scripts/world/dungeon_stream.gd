@@ -3,6 +3,7 @@ extends RefCounted
 const Gen := preload("res://scripts/dungeon/gen.gd")
 const Roster := preload("res://scripts/combat/roster.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
+const GeoStream := preload("res://scripts/world/dungeon_geo_stream.gd")
 
 const STREAM_IN := 28
 const STREAM_OUT := 42
@@ -223,6 +224,7 @@ static func tick(host: Node, delta: float) -> void:
 			activate_job(host, job)
 		elif st == "live" and not host.stream_all and d >= STREAM_OUT and not job_in_combat(host, job):
 			sleep_job(host, job)
+	GeoStream.tick(host, delta)
 
 
 static func force_all(host: Node) -> void:

@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot
 Read when: changing gen, floor flow, streaming, boss doors, or fog
-Code: `scripts/dungeon/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_stream.gd`, `dungeon_props.gd`, `boss_door.gd`
+Code: `scripts/dungeon/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_stream.gd`, `dungeon_geo_stream.gd`, `dungeon_props.gd`, `boss_door.gd`
 See also: `design/enemies.md`, `design/interactables.md`, `design/tunables.md`
 
 ## Overall structure
@@ -58,11 +58,11 @@ Safe rooms (clerk, ghost shop, puzzle) MUST remain enemy-free.
 
 ## Live snapshot — size rebalance
 
-Suggested appendix start was 48×48–64×64. Live `balance.gd` after Dungeon Size Rebalance:
+Suggested appendix start was 48×48–64×64. Live `balance.gd` after geometry streaming:
 
 | Key | Live |
 |-----|------|
-| `gen_w` / `gen_h` | 216 / 216 |
+| `gen_w` / `gen_h` | 432 / 432 |
 | `gen_rooms` | 36 |
 | `gen_room_min` / `gen_room_max` | 5 / 9 |
 | `gen_extra_loops` | 8 |
@@ -76,17 +76,21 @@ cycle_of(n)     = (n - 1) / 5
 loop_index(n)   = ((n - 1) % 5) + 1
 is_gate_master  = loop_index == 5
 
-
 ## Live snapshot — streaming
 
-`dungeon_stream.gd` keeps large floors inside the 60 FPS budget.
+`dungeon_stream.gd` streams enemy jobs. `dungeon_geo_stream.gd` streams floor/wall MultiMeshes and wall collision the same way so 432×432 stays inside the 60 FPS budget.
 
 | Constant | Cells | Meaning |
 |----------|-------|---------|
 | `STREAM_IN` | 28 | Pending job becomes live |
-| `STREAM_OUT` | 42 | Live job despawns if not in combat |
+| `STREAM_OUT` | 42 | Live job despawns if not in combat (enemies) / not near player (geo) |
+| `CHUNK` | 16 | Geometry job size |
+| `PER_TICK` | 8 | Max geo chunks built per stream tick (24 on boot tick) |
 
 Job states: `pending`, `live`, `cleared`. Do not stream out an enemy the player is fighting.
+Geometry jobs never go `cleared`; they sleep back to `pending`.
+Only chunks that contain a floor cell, or a wall adjacent to a floor, are queued.
+`stream_all` / `force_all` still force enemy jobs; geometry stays proximity-streamed so smoke does not bake the whole floor.
 
 ## Live snapshot — boss doors
 

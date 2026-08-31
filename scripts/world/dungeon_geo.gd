@@ -30,32 +30,6 @@ static func collision_walls(host: Node) -> void:
 	host.walls.collision_layer = 1
 	host.walls.collision_mask = 0
 	host.add_child(host.walls)
-	var w: int = host.data.w
-	var h: int = host.data.h
-	var grid: PackedByteArray = host.data.grid
-	var used := {}
-	for y in h:
-		for x in w:
-			if grid[Gen.idx(x, y, w)] != Gen.WALL or used.has(Vector2i(x, y)):
-				continue
-			var x1 := x
-			while x1 + 1 < w and grid[Gen.idx(x1 + 1, y, w)] == Gen.WALL and not used.has(Vector2i(x1 + 1, y)):
-				x1 += 1
-			var y1 := y
-			var row_ok := true
-			while row_ok:
-				for xx in range(x, x1 + 1):
-					if y1 + 1 >= h or grid[Gen.idx(xx, y1 + 1, w)] != Gen.WALL or used.has(Vector2i(xx, y1 + 1)):
-						row_ok = false
-						break
-				if row_ok:
-					y1 += 1
-			for yy in range(y, y1 + 1):
-				for xx in range(x, x1 + 1):
-					used[Vector2i(xx, yy)] = true
-			var sx := float(x1 - x + 1)
-			var sz := float(y1 - y + 1)
-			box(host.walls, Vector3(sx, T.WALL_H, sz), Vector3(float(x) + sx * 0.5, T.WALL_H * 0.5, float(y) + sz * 0.5))
 
 
 static func box(body: StaticBody3D, size: Vector3, offset: Vector3) -> void:
@@ -68,29 +42,22 @@ static func box(body: StaticBody3D, size: Vector3, offset: Vector3) -> void:
 
 
 static func build_visuals(host: Node) -> void:
-	var w: int = host.data.w
-	var h: int = host.data.h
-	var grid: PackedByteArray = host.data.grid
-	var floors: Array = []
-	var wallp: Array = []
-	for y in h:
-		for x in w:
-			if grid[Gen.idx(x, y, w)] == Gen.FLOOR:
-				floors.append(Vector3(float(x) + 0.5, T.FLOOR_Y, float(y) + 0.5))
-			else:
-				var near := false
-				for n in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-					var nx: int = x + n.x
-					var ny: int = y + n.y
-					if nx < 0 or ny < 0 or nx >= w or ny >= h:
-						continue
-					if grid[Gen.idx(nx, ny, w)] == Gen.FLOOR:
-						near = true
-				if near:
-					wallp.append(Vector3(float(x) + 0.5, T.WALL_H * 0.5, float(y) + 0.5))
-	host.floor_mm = mm_planes(floors, "res://assets/tiles/foundation_floor.png", Color(0.18, 0.2, 0.24))
-	host.add_child(host.floor_mm)
-	host.add_child(mm_boxes(wallp, "res://assets/tiles/foundation_wall.png", Color(0.22, 0.22, 0.26)))
+	host.floor_mat = make_mat("res://assets/tiles/foundation_floor.png", Color(0.18, 0.2, 0.24), true)
+	host.wall_mat = make_mat("res://assets/tiles/foundation_wall.png", Color(0.22, 0.22, 0.26), false)
+	var StreamGeo = load("res://scripts/world/dungeon_geo_stream.gd")
+	StreamGeo.setup(host)
+
+
+static func make_mat(tex_path: String, fallback: Color, unshaded: bool) -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED if unshaded else BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	if ResourceLoader.exists(tex_path):
+		mat.albedo_texture = load(tex_path)
+		mat.albedo_color = Color(0.75, 0.82, 0.9) if unshaded else fallback
+	else:
+		mat.albedo_color = fallback
+	return mat
 
 
 static func mm_planes(positions: Array, tex_path: String, fallback: Color) -> MultiMeshInstance3D:
@@ -106,15 +73,7 @@ static func mm_planes(positions: Array, tex_path: String, fallback: Color) -> Mu
 		mm.set_instance_transform(i, xf)
 	var inst := MultiMeshInstance3D.new()
 	inst.multimesh = mm
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	if ResourceLoader.exists(tex_path):
-		mat.albedo_texture = load(tex_path)
-		mat.albedo_color = Color(0.75, 0.82, 0.9)
-	else:
-		mat.albedo_color = fallback
-	inst.material_override = mat
+	inst.material_override = make_mat(tex_path, fallback, true)
 	return inst
 
 
@@ -131,13 +90,7 @@ static func mm_boxes(positions: Array, tex_path: String, fallback: Color) -> Mul
 		mm.set_instance_transform(i, xf)
 	var inst := MultiMeshInstance3D.new()
 	inst.multimesh = mm
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	mat.albedo_color = fallback
-	if ResourceLoader.exists(tex_path):
-		mat.albedo_texture = load(tex_path)
-	inst.material_override = mat
+	inst.material_override = make_mat(tex_path, fallback, false)
 	return inst
 
 

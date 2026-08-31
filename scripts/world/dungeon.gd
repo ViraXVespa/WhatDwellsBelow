@@ -50,6 +50,10 @@ var stream_t := 0.0
 var stream_all := false
 var travel_dist: PackedInt32Array = PackedInt32Array()
 var travel_cap := 1
+var geo_jobs: Array = []
+var geo_root: Node3D
+var floor_mat: Material
+var wall_mat: Material
 
 
 func _ready() -> void:

@@ -54,7 +54,7 @@ Rebuild with `powershell -File tools/export_web.ps1` into `docs/`.
 - Consistent 60 FPS minimum on target hardware at all times. Higher frame rates are allowed and desirable.
 - Frame time and memory usage MUST remain stable even on the deepest floors with full enemy and particle load.
 
-Streaming in `design/dungeon.md` exists to keep 216×216 floors inside that budget.
+Streaming in `design/dungeon.md` exists to keep 432×432 floors inside that budget: enemies via `dungeon_stream.gd`, floor/wall meshes and wall collision via `dungeon_geo_stream.gd`.
 
 ## Renderer
 

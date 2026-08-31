@@ -3,7 +3,7 @@ extends RefCounted
 ## All Phase 2 combat numbers. Mutated by the secret debug menu.
 ## Bump BAL_REV when shipping new defaults that old saves should receive.
 const Schema := preload("res://scripts/data/balance_schema.gd")
-const BAL_REV := 6
+const BAL_REV := 7
 
 var move_speed := 4.5
 var dash_speed_mult := 2.8
@@ -72,8 +72,8 @@ var atk_fps := 10.0
 var trail_gap := 0.045
 var trail_life := 0.22
 
-var gen_w := 216
-var gen_h := 216
+var gen_w := 432
+var gen_h := 432
 var gen_rooms := 36
 var gen_room_min := 5
 var gen_room_max := 9
@@ -368,6 +368,9 @@ func migrate_from(old_rev: int) -> bool:
 		cl_received_down = 1.075
 		xp_kill_hp = 3.0
 		xp_kill_def = 3.0
+	if old_rev < 7:
+		gen_w = 432
+		gen_h = 432
 	return true
 
 
