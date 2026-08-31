@@ -1,25 +1,7 @@
 extends CanvasLayer
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-
-const SKILL_NAMES := {
-	"axe": "Great Axe",
-	"staff": "Staff",
-	"bow": "Longbow",
-	"str": "Strength",
-	"mag": "Magic",
-	"rng": "Ranged",
-	"def": "Defense",
-	"hp": "Hitpoints",
-	"mine": "Mining",
-	"wood": "Woodcutting",
-	"smith": "Smithing",
-}
-
-const COL_PERM := Color(0.72, 0.56, 0.28)
-const COL_GAIN := Color(0.46, 0.78, 0.42)
-const COL_DUNGEON := Color(0.86, 0.74, 0.32)
-const COL_TRACK := Color(0.18, 0.14, 0.1)
+const RecapBars := preload("res://scripts/ui/recap_bars.gd")
 
 var open := false
 var box: VBoxContainer
@@ -166,8 +148,8 @@ func _rebuild(cond: String) -> void:
 	var heads := HBoxContainer.new()
 	heads.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heads.add_theme_constant_override("separation", 24)
-	heads.add_child(_skill_lab("Permanent XP", 18, Color(0.95, 0.8, 0.45)))
-	head_right = _skill_lab("Dungeon XP", 18, Color(0.95, 0.8, 0.45))
+	heads.add_child(RecapBars.skill_lab("Permanent XP", 18, Color(0.95, 0.8, 0.45)))
+	head_right = RecapBars.skill_lab("Dungeon XP", 18, Color(0.95, 0.8, 0.45))
 	heads.add_child(head_right)
 	box.add_child(heads)
 	skill_labs.clear()
@@ -177,8 +159,8 @@ func _rebuild(cond: String) -> void:
 		var row := HBoxContainer.new()
 		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_theme_constant_override("separation", 24)
-		var perm_block := _make_block(id, "perm")
-		var run_block := _make_block(id, "run")
+		var perm_block := RecapBars.make_block(self, id, "perm")
+		var run_block := RecapBars.make_block(self, id, "run")
 		row.add_child(perm_block.wrap)
 		row.add_child(run_block.wrap)
 		box.add_child(row)
@@ -202,172 +184,17 @@ func _rebuild(cond: String) -> void:
 	call_deferred("_focus")
 
 
-func _make_block(id: String, kind: String) -> Dictionary:
-	var wrap := ThemeS.skill_row()
-	var inner := VBoxContainer.new()
-	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	inner.add_theme_constant_override("separation", 4)
-	var lab := _skill_lab("", 16, Color(0.9, 0.84, 0.7))
-	inner.add_child(lab)
-	var track := ColorRect.new()
-	track.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	track.custom_minimum_size = Vector2(0, 16)
-	track.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	track.color = COL_TRACK
-	track.clip_contents = true
-	inner.add_child(track)
-	var base := ColorRect.new()
-	base.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	base.color = COL_PERM
-	base.set_anchors_preset(Control.PRESET_FULL_RECT)
-	base.anchor_right = 0.0
-	base.offset_left = 0.0
-	base.offset_top = 0.0
-	base.offset_right = 0.0
-	base.offset_bottom = 0.0
-	track.add_child(base)
-	var gain := ColorRect.new()
-	gain.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	gain.color = COL_GAIN
-	gain.set_anchors_preset(Control.PRESET_FULL_RECT)
-	gain.anchor_left = 0.0
-	gain.anchor_right = 0.0
-	gain.offset_left = 0.0
-	gain.offset_top = 0.0
-	gain.offset_right = 0.0
-	gain.offset_bottom = 0.0
-	track.add_child(gain)
-	wrap.add_child(inner)
-	wrap.set_meta("skill_id", id)
-	wrap.set_meta("skill_kind", kind)
-	wrap.focus_entered.connect(_on_skill_focus.bind(id, kind, wrap))
-	wrap.mouse_entered.connect(_on_skill_focus.bind(id, kind, wrap))
-	wrap.focus_exited.connect(_on_skill_blur.bind(wrap))
-	wrap.mouse_exited.connect(_on_skill_blur.bind(wrap))
-	return {"wrap": wrap, "lab": lab, "base": base, "gain": gain}
-
-
-func _on_skill_focus(id: String, kind: String, from: Control) -> void:
-	if from is PanelContainer:
-		(from as PanelContainer).add_theme_stylebox_override("panel", ThemeS.skill_row_sb(true))
-	tip_id = id
-	tip_kind = kind
-	tip_from = from
-	_paint_tip()
-
-
-func _on_skill_blur(from: Control) -> void:
-	if from is PanelContainer and not from.has_focus():
-		(from as PanelContainer).add_theme_stylebox_override("panel", ThemeS.skill_row_sb(false))
-	call_deferred("_blur_tip")
-
-
-func _skill_lab(text: String, size := 16, col := Color(0.9, 0.84, 0.7)) -> Label:
-	var l := Label.new()
-	l.text = text
-	l.autowrap_mode = TextServer.AUTOWRAP_OFF
-	l.clip_text = false
-	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	l.custom_minimum_size = Vector2(0, 22)
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", col)
-	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	l.add_theme_constant_override("outline_size", 6)
-	return l
-
-
 func _blur_tip() -> void:
-	var f := get_viewport().gui_get_focus_owner()
-	if f != null and f.has_meta("skill_id"):
-		return
-	_hide_tip()
+	RecapBars.blur_tip(self)
 
 
 func _hide_tip() -> void:
-	tip_id = ""
-	tip_kind = ""
-	tip_from = null
-	if tip_host:
-		tip_host.visible = false
-
-
-func _tip_lv(id: String, kind: String) -> int:
-	var start := float(perm0.get(id, 0.0))
-	if kind == "run":
-		if applied:
-			return _xp_lv(start)
-		return _xp_lv(start + float(shown.get(id, 0.0)))
-	return _xp_lv(start + float(gain_now.get(id, 0.0)))
-
-
-func _paint_tip() -> void:
-	if tip_id == "" or tip_from == null or not is_instance_valid(tip_from):
-		if tip_host:
-			tip_host.visible = false
-		return
-	tip_lab.text = ThemeS.skill_tip(tip_id, _tip_lv(tip_id, tip_kind))
-	var w := 404.0
-	tip_lab.custom_minimum_size = Vector2(w - 24.0, 0.0)
-	var h := maxf(80.0, tip_lab.get_minimum_size().y + 20.0)
-	tip_host.size = Vector2(w, h)
-	var r := tip_from.get_global_rect()
-	var pos := Vector2(r.position.x, r.position.y + r.size.y + 8.0)
-	if pos.y + h > 1060.0:
-		pos.y = r.position.y - h - 8.0
-	if pos.x + w > 1900.0:
-		pos.x = 1900.0 - w
-	if pos.x < 20.0:
-		pos.x = 20.0
-	tip_host.position = pos
-	tip_host.visible = true
+	RecapBars.hide_tip(self)
 
 
 func _focus() -> void:
 	if focus_btn:
 		focus_btn.grab_focus()
-
-
-func _xp_lv(total: float) -> int:
-	return App.prog.level_from_xp(total)
-
-
-func _xp_to_next(total: float) -> int:
-	return int(round(App.prog.xp_to_next(total)))
-
-
-func _skill_title(id: String) -> String:
-	return str(SKILL_NAMES.get(id, id))
-
-
-func _set_span(fill: ColorRect, left_r: float, right_r: float) -> void:
-	fill.anchor_left = clampf(left_r, 0.0, 1.0)
-	fill.anchor_right = clampf(right_r, 0.0, 1.0)
-	fill.offset_left = 0.0
-	fill.offset_right = 0.0
-
-
-func _perm_ratios(start_xp: float, gain: float) -> Vector2:
-	var total := start_xp + gain
-	var start_lv := _xp_lv(start_xp)
-	var now_lv := _xp_lv(total)
-	var into := App.prog.xp_ratio(total)
-	if now_lv > start_lv:
-		return Vector2(0.0, into)
-	var base_r := App.prog.xp_ratio(start_xp)
-	return Vector2(base_r, clampf(into - base_r, 0.0, 1.0))
-
-
-func _xfer_speed(id: String, rem: float) -> float:
-	var start := float(run0.get(id, 0.0))
-	var peak := maxf(8.0, start * 1.8)
-	if start <= 0.0001:
-		return peak
-	var p := clampf(1.0 - rem / start, 0.0, 1.0)
-	return 8.0 + (peak - 8.0) * sin(PI * p)
 
 
 func _mark_starting() -> void:
@@ -383,7 +210,7 @@ func _process(delta: float) -> void:
 		var cur := float(shown.get(id, 0.0))
 		var start := float(run0.get(id, 0.0))
 		if cur > 0.2:
-			shown[id] = move_toward(cur, 0.0, _xfer_speed(id, cur) * delta)
+			shown[id] = move_toward(cur, 0.0, RecapBars.xfer_speed(self, id, cur) * delta)
 			left = true
 		else:
 			shown[id] = 0.0
@@ -429,43 +256,7 @@ func _lock_totals() -> void:
 
 
 func _refresh_skills() -> void:
-	for id in rows.keys():
-		var rec: Dictionary = rows[id]
-		var start := float(perm0.get(id, 0.0))
-		var run_left := float(shown.get(id, 0.0))
-		var gain := float(gain_now.get(id, 0.0))
-		var perm_total := start + gain
-		var run_total := start + run_left
-		(rec.perm_lab as Label).text = "%s Lv %d | Next Level: %dXP | Total XP: %dXP" % [
-			_skill_title(id),
-			_xp_lv(perm_total),
-			_xp_to_next(perm_total),
-			int(round(perm_total)),
-		]
-		if applied:
-			(rec.run_lab as Label).text = "%s Lv %d | Next Level: %dXP | Total XP: %dXP" % [
-				_skill_title(id),
-				_xp_lv(start),
-				_xp_to_next(start),
-				int(round(start)),
-			]
-		else:
-			(rec.run_lab as Label).text = "%s Lv %d | This Run: %dXP | Next Level: %dXP" % [
-				_skill_title(id),
-				_xp_lv(run_total),
-				int(round(run_left)),
-				_xp_to_next(run_total),
-			]
-		var pr := _perm_ratios(start, gain)
-		_set_span(rec.perm_base, 0.0, pr.x)
-		_set_span(rec.perm_gain, pr.x, pr.x + pr.y)
-		(rec.perm_base as ColorRect).color = COL_PERM
-		(rec.perm_gain as ColorRect).color = COL_GAIN
-		var run_r := App.prog.xp_ratio(run_total)
-		_set_span(rec.run_fill, 0.0, run_r)
-		(rec.run_fill as ColorRect).color = COL_DUNGEON
-	if tip_id != "":
-		_paint_tip()
+	RecapBars.refresh(self)
 
 
 func _mailed_line() -> String:

@@ -1,15 +1,14 @@
 extends CharacterBody3D
 
 const T := preload("res://scripts/data/tunables.gd")
-const Facing := preload("res://scripts/world/facing.gd")
 const Depth := preload("res://scripts/world/depth.gd")
 const CamRig := preload("res://scripts/world/camera_rig.gd")
-const Combat := preload("res://scripts/combat/combat.gd")
 const TelegraphS := preload("res://scripts/combat/telegraph.gd")
 const AimLineS := preload("res://scripts/combat/aim_line.gd")
-const Smoke := preload("res://scripts/debug/smoke.gd")
 const PlayerAnim := preload("res://scripts/world/player_anim.gd")
 const PlayerHit := preload("res://scripts/combat/player_hit.gd")
+const PlayerLock := preload("res://scripts/world/player_lock.gd")
+const PlayerAct := preload("res://scripts/world/player_act.gd")
 
 const ATK_NONE := 0
 const ATK_BASIC := 1
@@ -223,294 +222,63 @@ func is_alive() -> bool:
 
 
 func take_hit(raw: float, from_dir: Vector2, crit: bool, src := "") -> void:
-	if hp <= 0.0 or exiting:
-		return
-	if iframe > 0.0:
-		return
-	if src != "":
-		last_hit = src
-	var dmg: float = App.bal.apply_defense(raw, App.prog.gear_def() + App.prog.skill_def())
-	if crit:
-		dmg *= App.bal.crit_mult
-	hp = maxf(0.0, hp - dmg)
-	iframe = App.bal.player_hurt_iframe
-	hurt_flash = 0.12
-	velocity += Vector3(from_dir.x, 0.0, from_dir.y) * App.bal.knockback * 0.45
-	App.sfx("hurt")
-	stop_gather()
-	if App.tel:
-		App.tel.note_damage_taken(dmg, hp, max_hp)
-	App.prog.add_run_xp("def", App.bal.xp_def_hit)
-	if hp <= 0.0:
-		_player_die()
-
-
-func _player_die() -> void:
-	if Smoke.hold_player():
-		hp = max_hp
-		return
-	play_exit("death", last_hit)
+	PlayerAct.take_hit(self, raw, from_dir, crit, src)
 
 
 func heal(amount: float) -> void:
-	if amount > 0.0 and hp < max_hp:
-		App.prog.add_run_xp("hp", App.bal.xp_hp_heal)
-	hp = minf(max_hp, hp + amount)
+	PlayerAct.heal(self, amount)
 
 
 func play_exit(cond: String, killer := "") -> void:
-	if exiting:
-		return
-	exiting = true
-	exit_t = 0.0
-	exit_cond = cond
-	exit_killer = killer
-	stop_gather()
-	dash_t = 0.0
-	atk_state = ATK_NONE
-	iframe = 99.0
-	lock_target = null
-	lock_armed = false
-	if cond == "death":
-		hp = 0.0
-
-
-func _tick_exit(delta: float) -> void:
-	exit_t += delta
-	velocity = Vector3.ZERO
-	move_and_slide()
-	global_position.y = 0.0
-	_apply_facing(delta)
-	if body:
-		Depth.apply(body, global_position)
-		body.modulate.a = clampf(1.0 - exit_t / 0.9, 0.12, 1.0)
-	if rig and rig.has_method("follow"):
-		rig.follow(global_position)
-	if exit_t >= 0.9:
-		exiting = false
-		App.finish_end(exit_cond, exit_killer)
+	PlayerAct.play_exit(self, cond, killer)
 
 
 func start_gather(node: Node) -> void:
-	if exiting:
-		return
-	if node == null or not is_instance_valid(node):
-		return
-	gathering = node
-	gather_t = 0.0
-	atk_state = ATK_NONE
-	var p: Vector3 = (node as Node3D).global_position
-	var d := Vector2(p.x - global_position.x, p.z - global_position.z)
-	if d.length() > 0.001:
-		aim_dir = d.normalized()
+	PlayerAct.start_gather(self, node)
 
 
 func stop_gather() -> void:
-	gathering = null
-	gather_t = 0.0
+	PlayerAct.stop_gather(self)
+
+
+func _tick_exit(delta: float) -> void:
+	PlayerAct.tick_exit(self, delta)
 
 
 func _tick_gather(delta: float, move: Vector2) -> void:
-	if gathering == null or not is_instance_valid(gathering):
-		stop_gather()
-		return
-	if move.length() > 0.22 or Input.is_action_just_pressed("dash") or Input.is_action_pressed("attack") or Input.is_action_just_pressed("special"):
-		stop_gather()
-		return
-	gather_t += delta
-	if App.tel:
-		App.tel.gather_t += delta
-	var wait := 2.4
-	if gathering.get("interval") != null:
-		wait = float(gathering.interval)
-	if gather_t >= wait:
-		gather_t = 0.0
-		if gathering.has_method("strike"):
-			var r: Dictionary = gathering.strike()
-			if r.get("done", false):
-				stop_gather()
+	PlayerAct.tick_gather(self, delta, move)
 
 
 func _refresh_prompt() -> void:
-	if App.ui_open:
-		return
-	var best: Node = null
-	var best_d := 1.35
-	for n in get_tree().get_nodes_in_group("interact"):
-		if n is Node3D:
-			var d := Vector2((n as Node3D).global_position.x - global_position.x, (n as Node3D).global_position.z - global_position.z).length()
-			if d < best_d:
-				best_d = d
-				best = n
-	if best and best.get("prompt") != null:
-		App.interact_prompt = str(best.prompt)
-	elif gathering:
-		App.interact_prompt = "Gathering…"
-	else:
-		App.interact_prompt = ""
+	PlayerAct.refresh_prompt(self)
 
 
 func _try_interact() -> void:
-	if App.ui_open or interact_lock > 0.0:
-		return
-	var best: Node = null
-	var best_d := 1.25
-	for n in get_tree().get_nodes_in_group("interact"):
-		if n is Node3D:
-			var d := Vector2((n as Node3D).global_position.x - global_position.x, (n as Node3D).global_position.z - global_position.z).length()
-			if d < best_d:
-				best_d = d
-				best = n
-	if best and best.has_method("interact"):
-		var msg: String = str(best.interact(self))
-		App.interact_prompt = msg
-	else:
-		App.interact_prompt = ""
+	PlayerAct.try_interact(self)
 
 
 func _cooldowns(delta: float) -> void:
-	dash_cd = maxf(0.0, dash_cd - delta)
-	iframe = maxf(0.0, iframe - delta)
-	interact_lock = maxf(0.0, interact_lock - delta)
-	if dash_t > 0.0:
-		dash_t = maxf(0.0, dash_t - delta)
-		iframe = maxf(iframe, dash_t)
+	PlayerAct.cooldowns(self, delta)
 
 
 func _ai_on() -> bool:
-	return App.playtest != null and bool(App.playtest.get("ai_on"))
+	return PlayerLock.ai_on()
 
 
 func _ai_or_vec(which: String) -> Vector2:
-	if _ai_on():
-		var raw: Variant = App.playtest.aim if which == "aim" else App.playtest.move
-		if raw is Vector2:
-			var v: Vector2 = raw
-			if which != "aim" or v.length() > 0.1:
-				return v
-	if which == "aim":
-		return App.pad_aim()
-	return App.pad_move()
+	return PlayerLock.ai_or_vec(self, which)
 
 
 func _ai_just(action: String) -> bool:
-	if not _ai_on():
-		return false
-	var raw: Variant = App.playtest.just
-	if raw is Dictionary:
-		return bool((raw as Dictionary).get(action, false))
-	return false
+	return PlayerLock.ai_just(self, action)
 
 
 func _ai_held(action: String) -> bool:
-	if not _ai_on():
-		return false
-	if action == "attack":
-		return bool(App.playtest.attack)
-	if action == "special":
-		return bool(App.playtest.special)
-	return false
+	return PlayerLock.ai_held(self, action)
 
 
 func _lock_and_aim(move: Vector2, delta: float) -> void:
-	if Input.is_action_just_pressed("target_lock") or App.pad_just("target_lock"):
-		if lock_armed:
-			lock_armed = false
-			lock_target = null
-		else:
-			lock_armed = true
-			_acquire_lock()
-	if lock_armed:
-		if not _valid_lock(lock_target):
-			_acquire_lock()
-		if _valid_lock(lock_target):
-			var tp: Vector3 = (lock_target as Node3D).global_position
-			var d := Vector2(tp.x - global_position.x, tp.z - global_position.z)
-			if d.length() > 0.001:
-				aim_dir = d.normalized()
-		var stick := _ai_or_vec("aim")
-		if stick.length() > App.bal.lock_stick_deadzone:
-			stick_hold += delta
-			if stick_hold >= App.bal.lock_stick_delay:
-				_cycle_lock(stick.normalized())
-				stick_hold = 0.0
-		else:
-			stick_hold = 0.0
-		return
-	_update_aim(move)
-
-
-func _valid_lock(n: Node) -> bool:
-	if n == null or not is_instance_valid(n):
-		return false
-	if n.has_method("is_alive") and not n.is_alive():
-		return false
-	var cam: Camera3D = get_viewport().get_camera_3d()
-	if not Combat.on_screen(n as Node3D, cam):
-		return false
-	return Combat.los(global_position, (n as Node3D).global_position, get_world_3d())
-
-
-func _acquire_lock() -> void:
-	lock_target = _nearest(null, Vector2.ZERO)
-	if lock_target == null:
-		lock_armed = true
-
-
-func _cycle_lock(dir: Vector2) -> void:
-	var n := _nearest(lock_target, dir)
-	if n:
-		lock_target = n
-
-
-func _nearest(exclude: Node, dir: Vector2) -> Node:
-	var best: Node = null
-	var best_s := 1.0e9
-	for e in Combat.enemies():
-		if e == exclude or not _valid_lock(e):
-			continue
-		var d := Combat.xz(e) - Vector2(global_position.x, global_position.z)
-		var score := d.length()
-		if dir.length_squared() > 0.0001:
-			score = 2.5 - d.normalized().dot(dir) + d.length() * 0.05
-		if score < best_s:
-			best_s = score
-			best = e
-	return best
-
-
-func _mouse_aim_dir() -> Vector2:
-	var cam := get_viewport().get_camera_3d()
-	if cam == null:
-		return Vector2.ZERO
-	var mouse := get_viewport().get_mouse_position()
-	var from := cam.project_ray_origin(mouse)
-	var dir := cam.project_ray_normal(mouse)
-	var hit: Variant = Plane(Vector3.UP, 0.0).intersects_ray(from, dir)
-	if hit == null:
-		return Vector2.ZERO
-	var p: Vector3 = hit
-	var d := Vector2(p.x - global_position.x, p.z - global_position.z)
-	if d.length_squared() < 0.0004:
-		return Vector2.ZERO
-	return d.normalized()
-
-
-func _update_aim(move: Vector2) -> void:
-	var stick := _ai_or_vec("aim")
-	if stick.length() >= 0.24:
-		aim_dir = stick.normalized()
-		return
-	if App.using_pad():
-		if move.length() >= 0.12:
-			aim_dir = move.normalized()
-		return
-	var mouse_dir := _mouse_aim_dir()
-	if mouse_dir.length_squared() > 0.0001:
-		aim_dir = mouse_dir
-		return
-	if move.length() >= 0.12:
-		aim_dir = move.normalized()
+	PlayerLock.lock_and_aim(self, move, delta)
 
 
 func _try_dash(move: Vector2) -> void:

@@ -1,8 +1,8 @@
 extends Node3D
 
 const T := preload("res://scripts/data/tunables.gd")
-const Depth := preload("res://scripts/world/depth.gd")
 const Catalog := preload("res://scripts/data/catalog.gd")
+const InteractFx := preload("res://scripts/world/interact_fx.gd")
 
 var kind := "crystal"
 var locked := false
@@ -32,8 +32,8 @@ func setup(k: String, pos: Vector3, lock := false) -> void:
 		add_to_group("gates")
 	if kind == "plate":
 		add_to_group("plates")
-	_visual()
-	_label()
+	InteractFx.build(self)
+	InteractFx.add_label(self)
 	refresh()
 
 
@@ -371,131 +371,3 @@ func plate_held(on: bool) -> void:
 				n.set_open(true)
 			elif not bool(n.get("latched")):
 				n.set_open(false)
-
-
-func _visual() -> void:
-	if kind == "crystal" or kind == "loadout_crystal":
-		mesh = MeshInstance3D.new()
-		var pr := PrismMesh.new()
-		pr.size = Vector3(0.55, 1.2, 0.55)
-		mesh.mesh = pr
-		mesh.position.y = 0.7
-		var m := StandardMaterial3D.new()
-		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.albedo_color = Color(0.35, 0.9, 1.0)
-		mesh.material_override = m
-		add_child(mesh)
-		return
-	if kind == "stairs":
-		_sprite("res://assets/sprites/props/stairs.png", 1.1, 0.45)
-		if spr == null:
-			mesh = MeshInstance3D.new()
-			var box := BoxMesh.new()
-			box.size = Vector3(1.1, 0.55, 1.1)
-			mesh.mesh = box
-			mesh.position.y = 0.28
-			var m := StandardMaterial3D.new()
-			m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-			m.albedo_color = Color(0.55, 0.45, 0.28)
-			mesh.material_override = m
-			add_child(mesh)
-		return
-	if kind == "gate":
-		_sprite("res://assets/sprites/props/gate.png", 1.6, 0.85)
-		body = StaticBody3D.new()
-		body.collision_layer = 1
-		body.collision_mask = 0
-		add_child(body)
-		var cs := CollisionShape3D.new()
-		var sh := BoxShape3D.new()
-		sh.size = Vector3(1.2, 1.6, 0.4)
-		cs.shape = sh
-		cs.position.y = 0.8
-		body.add_child(cs)
-		return
-	if kind == "plate":
-		_sprite("res://assets/sprites/props/plate.png", 0.7, 0.08)
-		return
-	var path := _tex_path()
-	_sprite(path, _spr_h(), _spr_y())
-
-
-func _tex_path() -> String:
-	match kind:
-		"anvil":
-			return "res://assets/sprites/props/anvil.png"
-		"quest_board":
-			return "res://assets/sprites/props/notice_board.png"
-		"receptionist":
-			return "res://assets/sprites/npcs/receptionist.png"
-		"vendor":
-			return "res://assets/sprites/npcs/vendor.png"
-		"dumpster":
-			return "res://assets/sprites/props/dumpster.png"
-		"billboard":
-			return "res://assets/sprites/props/sign.png"
-		"quest_item":
-			return "res://assets/sprites/props/chest.png"
-		"shrine":
-			return "res://assets/sprites/props/shrine.png"
-		"campfire":
-			return "res://assets/sprites/props/campfire.png"
-		"shop":
-			return "res://assets/sprites/npcs/shopkeep.png"
-		"clerk_gather":
-			return "res://assets/sprites/npcs/miner.png"
-		"clerk_misc":
-			return "res://assets/sprites/npcs/vendor.png"
-		"clerk_patty":
-			return "res://assets/sprites/npcs/patty.png"
-		"lever":
-			return "res://assets/sprites/props/lever.png"
-		"chest", "base_chest", "puzzle_chest":
-			return "res://assets/sprites/props/chest.png"
-	return "res://assets/props/sort_crate.png"
-
-
-func _spr_h() -> float:
-	if kind.begins_with("clerk") or kind == "shop" or kind == "receptionist" or kind == "vendor":
-		return 1.55
-	if kind == "campfire":
-		return 0.9
-	if kind == "shrine":
-		return 1.2
-	return 0.85
-
-
-func _spr_y() -> float:
-	if kind.begins_with("clerk") or kind == "shop" or kind == "receptionist" or kind == "vendor":
-		return 0.78
-	if kind == "plate":
-		return 0.06
-	return 0.48
-
-
-func _sprite(path: String, h: float, y: float) -> void:
-	spr = Sprite3D.new()
-	spr.centered = true
-	spr.shaded = false
-	spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	if ResourceLoader.exists(path):
-		spr.texture = load(path)
-		spr.pixel_size = h / float(maxi(1, spr.texture.get_height()))
-	spr.position.y = y
-	add_child(spr)
-	Depth.apply(spr, position)
-
-
-func _label() -> void:
-	label = Label3D.new()
-	label.position = Vector3(0.0, 1.55, 0.0)
-	if kind == "plate":
-		label.position.y = 0.7
-	label.font_size = 36
-	label.outline_size = 8
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.no_depth_test = true
-	label.pixel_size = 0.011
-	add_child(label)

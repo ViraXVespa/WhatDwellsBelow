@@ -3,9 +3,9 @@ extends CanvasLayer
 ## Full Animation Browser. Secret debug page, gamepad-first.
 
 const Facing := preload("res://scripts/world/facing.gd")
-const Roster := preload("res://scripts/combat/roster.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const T := preload("res://scripts/data/tunables.gd")
+const AnimScan := preload("res://scripts/debug/anim_scan.gd")
 
 const DIR_ORDER := ["idle_none", "up", "up_right", "right", "down_right", "down", "down_left", "left", "up_left"]
 const DIR_LABEL := {
@@ -51,18 +51,11 @@ func _ready() -> void:
 
 
 static func catalog_models() -> Array:
-	var out: Array = []
-	out.append({"id": "player_male", "label": "Player — Male", "dir": "res://assets/sprites/player/male/"})
-	out.append({"id": "player_female", "label": "Player — Female", "dir": "res://assets/sprites/player/female/"})
-	for id in Roster.IDS:
-		out.append({"id": id, "label": id.capitalize(), "dir": "res://assets/sprites/enemies/%s/" % id})
-	out.append({"id": "guardian", "label": "Floor Guardian", "dir": "res://assets/sprites/enemies/guardian/"})
-	out.append({"id": "gate_master", "label": "Gate Master", "dir": "res://assets/sprites/enemies/gate_master/"})
-	return out
+	return AnimScan.catalog_models()
 
 
 static func model_count() -> int:
-	return catalog_models().size()
+	return AnimScan.model_count()
 
 
 func _build() -> void:
@@ -170,7 +163,7 @@ func _shift_model(d: int) -> void:
 func _load_model() -> void:
 	var m: Dictionary = models[model_i]
 	name_lab.text = str(m.label)
-	clips = _scan(str(m.dir))
+	clips = AnimScan.scan(str(m.dir))
 	if not clips.has(facing) or (clips[facing] as Dictionary).is_empty():
 		if clips.has("down") and not (clips["down"] as Dictionary).is_empty():
 			facing = "down"
@@ -179,41 +172,6 @@ func _load_model() -> void:
 	_rebuild_dirs()
 	_rebuild_anims()
 	_show_clip()
-
-
-func _scan(base: String) -> Dictionary:
-	var out := {}
-	out["idle_none"] = {}
-	for k in Facing.KEYS:
-		out[k] = {}
-		_put_single(out[k], "idle", base + "idle_%s.png" % k)
-		_put_seq(out[k], "walk", base + "walk_%s_" % k)
-		for w in ["great_axe", "staff", "longbow"]:
-			_put_seq(out[k], "attack_%s" % w, base + "atk_%s_%s_" % [w, k])
-			_put_seq(out[k], "special_%s" % w, base + "spc_%s_%s_" % [w, k])
-		_put_single(out[k], "strike", base + "strike_%s.png" % k)
-		_put_single(out[k], "windup", base + "windup_%s.png" % k)
-		_put_seq(out[k], "gather", base + "gather_%s_" % k)
-		_put_seq(out[k], "death", base + "death_%s_" % k)
-		_put_seq(out[k], "dispel", base + "dispel_%s_" % k)
-		if (out[k] as Dictionary).has("idle"):
-			(out["idle_none"] as Dictionary)["idle_%s" % k] = (out[k] as Dictionary)["idle"]
-	return out
-
-
-func _put_single(into: Dictionary, name: String, path: String) -> void:
-	if ResourceLoader.exists(path):
-		into[name] = [load(path)]
-
-
-func _put_seq(into: Dictionary, name: String, prefix: String) -> void:
-	var frames: Array = []
-	var i := 0
-	while ResourceLoader.exists("%s%d.png" % [prefix, i]):
-		frames.append(load("%s%d.png" % [prefix, i]))
-		i += 1
-	if not frames.is_empty():
-		into[name] = frames
 
 
 func _rebuild_dirs() -> void:
