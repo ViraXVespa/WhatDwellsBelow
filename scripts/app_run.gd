@@ -155,11 +155,6 @@ static func spawn_floor_item(host: Node, it: Dictionary, pos := Vector3.INF) -> 
 
 
 static func tick(host: Node, delta: float) -> void:
-	host.Pad.tick()
-	if host.pad_just("interact"):
-		var f := host.get_viewport().gui_get_focus_owner()
-		if f is BaseButton and not (f as BaseButton).disabled:
-			(f as BaseButton).pressed.emit()
 	host.clock += delta
 	if host.shrine_t > 0.0:
 		host.shrine_t = maxf(0.0, host.shrine_t - delta)

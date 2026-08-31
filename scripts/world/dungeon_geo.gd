@@ -2,6 +2,7 @@ extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 const Gen := preload("res://scripts/dungeon/gen.gd")
+const Rooms := preload("res://scripts/dungeon/gen_rooms.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
 
 
@@ -142,11 +143,7 @@ static func mm_boxes(positions: Array, tex_path: String, fallback: Color) -> Mul
 
 static func build_travel(host: Node) -> void:
 	var sp: Vector2i = host.data.get("spawn", Vector2i.ZERO)
-	if Gen.has_method("_bfs"):
-		host.travel_dist = Gen._bfs(host.data.grid, int(host.data.w), int(host.data.h), sp)
-	else:
-		var Rooms := load("res://scripts/dungeon/gen_rooms.gd")
-		host.travel_dist = Rooms.bfs(host.data.grid, int(host.data.w), int(host.data.h), sp)
+	host.travel_dist = Rooms.bfs(host.data.grid, int(host.data.w), int(host.data.h), sp)
 	var vals: Array[int] = []
 	for i in host.travel_dist.size():
 		if host.travel_dist[i] >= 0:

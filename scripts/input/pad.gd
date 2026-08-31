@@ -92,7 +92,11 @@ static func held(action: String) -> bool:
 
 
 static func just(action: String) -> bool:
-	return bool(edge.get(action, false))
+	if bool(edge.get(action, false)):
+		return true
+	if blocked(action):
+		return false
+	return Input.is_action_just_pressed(action)
 
 
 static func pause_just() -> bool:

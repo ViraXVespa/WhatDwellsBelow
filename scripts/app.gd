@@ -286,9 +286,17 @@ func note_clerk() -> void:
 		tel.clerk_t = tel.duration
 
 
+func _in_world() -> bool:
+	return get_tree().get_first_node_in_group("player") != null
+
+
 func _process(delta: float) -> void:
 	Pad.tick()
-	if pad_just("interact"):
+	if _in_world() and not ui_open:
+		var vp := get_viewport()
+		if vp and vp.gui_get_focus_owner() != null:
+			vp.gui_release_focus()
+	elif (ui_open or not _in_world()) and pad_just("interact"):
 		var f := get_viewport().gui_get_focus_owner()
 		if f is BaseButton and not (f as BaseButton).disabled:
 			(f as BaseButton).pressed.emit()

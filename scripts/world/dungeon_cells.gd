@@ -68,8 +68,8 @@ static func rand_cell(host: Node, r: Dictionary) -> Vector2i:
 	var rw := int(r.w)
 	var rh := int(r.h)
 	for _i in 16:
-		var x := host.floor_rng.randi_range(rx + 1, rx + maxi(2, rw) - 2)
-		var y := host.floor_rng.randi_range(ry + 1, ry + maxi(2, rh) - 2)
+		var x: int = host.floor_rng.randi_range(rx + 1, rx + maxi(2, rw) - 2)
+		var y: int = host.floor_rng.randi_range(ry + 1, ry + maxi(2, rh) - 2)
 		var c := Vector2i(x, y)
 		if is_floor_cell(host, c):
 			return c

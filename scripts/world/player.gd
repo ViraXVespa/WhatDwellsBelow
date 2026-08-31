@@ -210,7 +210,7 @@ func _physics_process(delta: float) -> void:
 		rig.follow(global_position)
 	_refresh_prompt()
 	if not close_block:
-		if _ai_just("interact") or App.pad_just("interact"):
+		if _ai_just("interact") or App.pad_just("interact") or Input.is_action_just_pressed("interact"):
 			_try_interact()
 		if _ai_just("potion") or App.pad_just("potion"):
 			App.prog.use_potion()

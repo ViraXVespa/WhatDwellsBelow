@@ -2,6 +2,7 @@ extends RefCounted
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const ProjS := preload("res://scripts/combat/projectile.gd")
+const PlayerLock := preload("res://scripts/world/player_lock.gd")
 
 
 static func draw_basic_tele(host: Node, active: bool) -> void:
@@ -30,7 +31,7 @@ static func draw_special_tele(host: Node, active: bool) -> void:
 
 
 static func special_point(host: Node) -> Vector3:
-	if host._valid_lock(host.lock_target):
+	if PlayerLock.valid_lock(host, host.lock_target):
 		return (host.lock_target as Node3D).global_position
 	var reach: float = App.bal.staff_special_radius + 1.5
 	return host.global_position + Vector3(host.aim_dir.x, 0.0, host.aim_dir.y) * reach
