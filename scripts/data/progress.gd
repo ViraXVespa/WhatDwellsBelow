@@ -38,6 +38,7 @@ var mailed_ore := 0
 var mailed_wood := 0
 var mailed_root := 0
 var mailed_names: PackedStringArray = PackedStringArray()
+var analyzed: Array = []
 
 
 func _init() -> void:
@@ -58,6 +59,7 @@ func reset_meta() -> void:
 		skills_perm[id] = 0.0
 	bag.clear()
 	bank_items.clear()
+	analyzed.clear()
 	tool_type = "pickaxe"
 	deepest = 1
 	start_floor = 1
@@ -413,9 +415,13 @@ func pay(c: Dictionary) -> void:
 
 
 func forge_item(it: Dictionary) -> String:
+	if bool(it.get("hold", false)) or str(it.get("anvil_src", "")) == "hold":
+		return Town.forge_item(self, it)
+	if str(it.get("anvil_src", "")) == "analyzed" or Town.has_analyzed(self, int(it.get("uid", 0))):
+		return Town.forge_item(self, it)
 	if not Rules.can_forge(self, it):
 		return "Starters cannot be forged."
-	return Town.forge_item(self, it)
+	return "Analyze the piece first."
 
 
 func roll_quests(keep_active: bool) -> void:
@@ -450,11 +456,15 @@ func _player() -> Node:
 
 
 func to_meta() -> Dictionary:
-	return Town.to_meta(self)
+	var m := Town.to_meta(self)
+	m["analyzed"] = analyzed.duplicate(true)
+	return m
 
 
 func from_meta(d: Dictionary) -> void:
 	Town.from_meta(self, d)
+	var raw: Variant = d.get("analyzed", [])
+	analyzed = raw.duplicate(true) if raw is Array else []
 
 
 func restock() -> String:

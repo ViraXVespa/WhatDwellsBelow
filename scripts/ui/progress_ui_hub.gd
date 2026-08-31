@@ -11,6 +11,12 @@ static func rebuild_loadout(ui) -> void:
 	Board.build(ui, "loadout")
 
 
+static func rebuild_anvil(ui) -> void:
+	ui._clear()
+	ui.gear_mode = "anvil"
+	Board.build(ui, "anvil")
+
+
 static func toggle_char(ui) -> void:
 	GearAct.toggle_char(ui)
 

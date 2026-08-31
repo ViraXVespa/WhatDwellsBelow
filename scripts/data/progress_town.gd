@@ -2,6 +2,7 @@ extends Object
 
 const Extract := preload("res://scripts/data/progress_extract.gd")
 const Quest := preload("res://scripts/data/progress_quest.gd")
+const Rules := preload("res://scripts/data/gear_rules.gd")
 
 
 static func extractable(p: Object, role: String = "") -> Array:
@@ -59,18 +60,82 @@ static func pay(p: Object, c: Dictionary) -> void:
 	App.bank_root = maxi(0, App.bank_root - rpay)
 
 
+static func has_analyzed(p: Object, uid: int) -> bool:
+	if uid == 0:
+		return false
+	for raw: Variant in p.analyzed:
+		if raw is Dictionary and int(raw.get("uid", 0)) == uid:
+			return true
+	return false
+
+
+static func take_analyzed(p: Object, uid: int) -> Dictionary:
+	for i: int in p.analyzed.size():
+		var raw: Variant = p.analyzed[i]
+		if raw is Dictionary and int(raw.get("uid", 0)) == uid:
+			var got: Dictionary = raw
+			p.analyzed.remove_at(i)
+			return got
+	return {}
+
+
+static func analyze_destroy(p: Object, row: Dictionary) -> Dictionary:
+	var it: Dictionary = row.it.duplicate(true) if row.get("it") is Dictionary else {}
+	if it.is_empty():
+		return {}
+	if Rules.is_starter(p, it) or str(row.get("src", "")) == "starter":
+		return {}
+	if not Rules.can_forge(p, it):
+		return {}
+	var src := str(row.get("src", ""))
+	var uid := int(row.get("uid", it.get("uid", 0)))
+	if src == "hold" or src == "analyzed":
+		return {}
+	if src == "bag":
+		return p.remove_uid(uid)
+	if src == "bank":
+		for i: int in p.bank_items.size():
+			if int(p.bank_items[i].uid) == uid:
+				var got: Dictionary = p.bank_items[i]
+				p.bank_items.remove_at(i)
+				return got
+		return {}
+	if src == "equipped":
+		var slot := str(it.get("slot", ""))
+		var cur: Dictionary = p.slots.get(slot, {})
+		if cur.is_empty() or int(cur.get("uid", 0)) != uid:
+			return {}
+		var copy: Dictionary = cur.duplicate(true)
+		if slot == "weapon":
+			p.slots["weapon"] = p.make_weapon(p.pick_weapon, "white")
+			App.weapon = str(p.slots.weapon.get("weapon", p.pick_weapon))
+		elif slot == "tool":
+			p.slots["tool"] = p.make_tool(p.tool_type)
+		else:
+			p.slots[slot] = {}
+		if p.has_method("_refresh_player_hp"):
+			p._refresh_player_hp()
+		return copy
+	return {}
+
+
 static func forge_item(p: Object, it: Dictionary) -> String:
 	var slot: String = str(it.get("slot", ""))
 	if p.SLOTS.find(slot) < 0 or slot == "potion" or slot == "food":
 		return "The anvil won't take that."
+	var src := str(it.get("anvil_src", ""))
+	var is_hold := bool(it.get("hold", false)) or src == "hold"
+	if not is_hold:
+		if not has_analyzed(p, int(it.get("uid", 0))):
+			return "Analyze the piece first."
 	var h: Array = p.holds[slot]
-	var first: bool = h.size() < 3
-	var cost: Dictionary = forge_cost(p, first and not bool(it.get("hold", false)))
+	var first: bool = not is_hold
+	var cost: Dictionary = forge_cost(p, first)
 	if not can_pay(p, cost):
 		App.toast("Not enough gold / ore / root.")
 		return "Need %dg, %d ore, %d root." % [cost.gold, cost.ore, cost.root]
 	pay(p, cost)
-	if bool(it.get("hold", false)):
+	if is_hold:
 		for i: int in h.size():
 			if int(h[i].uid) == int(it.uid):
 				var up: Dictionary = (h[i] as Dictionary).duplicate(true)
@@ -86,10 +151,14 @@ static func forge_item(p: Object, it: Dictionary) -> String:
 				App.toast("Hold re-forged.")
 				App.save_now()
 				return "Re-forged hold (%d/3)." % h.size()
-	var copy: Dictionary = it.duplicate(true)
+		return "That hold is gone."
+	var remains: Dictionary = take_analyzed(p, int(it.get("uid", 0)))
+	if remains.is_empty():
+		remains = it.duplicate(true)
+	var copy: Dictionary = remains.duplicate(true)
 	copy.hold = true
 	copy.extract = false
-	copy.rarity = "green" if copy.rarity == "white" else copy.rarity
+	copy.rarity = "green" if str(copy.rarity) == "white" else copy.rarity
 	copy.dmg = int(copy.dmg) + 1 + int(p.skill_lv("smith") / 4)
 	copy.def = int(copy.def) + 1
 	if not str(copy.name).begins_with("Forged "):
@@ -99,7 +168,6 @@ static func forge_item(p: Object, it: Dictionary) -> String:
 	h.append(copy)
 	p.holds[slot] = h
 	p.forge_count += 1
-	consume_forge_source(p, it)
 	p.add_perm_xp("smith", App.bal.xp_smith)
 	App.sfx("slam")
 	App.toast("Hold forged.")

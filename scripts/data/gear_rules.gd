@@ -15,9 +15,9 @@ static func book(p: Object) -> Dictionary:
 static func tmpl_key(it: Dictionary) -> String:
 	var slot := str(it.get("slot", ""))
 	if slot == "weapon":
-		return "weapon:" + str(it.get("weapon", it.get("name", "")))
+		return "weapon:" + _weapon_id(it)
 	if slot == "tool":
-		return "tool:" + str(it.get("tool", ""))
+		return "tool:" + _tool_id(it)
 	if slot == "potion":
 		return "potion:" + str(it.get("name", "Potion"))
 	if slot == "food":
@@ -25,14 +25,40 @@ static func tmpl_key(it: Dictionary) -> String:
 	return "%s:%s" % [slot, str(it.get("name", ""))]
 
 
+static func _weapon_id(it: Dictionary) -> String:
+	var w := str(it.get("weapon", ""))
+	if w != "":
+		return w
+	var nm := str(it.get("name", "")).to_lower()
+	if nm.find("great axe") >= 0 or nm.find("greataxe") >= 0:
+		return "great_axe"
+	if nm.find("staff") >= 0:
+		return "staff"
+	if nm.find("longbow") >= 0:
+		return "longbow"
+	return nm
+
+
+static func _tool_id(it: Dictionary) -> String:
+	var t := str(it.get("tool", ""))
+	if t != "":
+		return t
+	var nm := str(it.get("name", "")).to_lower()
+	if nm.find("hatchet") >= 0:
+		return "hatchet"
+	if nm.find("pick") >= 0:
+		return "pickaxe"
+	return nm
+
+
 static func is_builtin_starter(it: Dictionary) -> bool:
 	if it.is_empty():
 		return false
 	var slot := str(it.get("slot", ""))
 	if slot == "weapon" and str(it.get("rarity", "white")) == "white":
-		return BUILTIN_WEAPONS.find(str(it.get("weapon", ""))) >= 0
+		return BUILTIN_WEAPONS.find(_weapon_id(it)) >= 0
 	if slot == "tool" and str(it.get("rarity", "white")) == "white":
-		return BUILTIN_TOOLS.find(str(it.get("tool", ""))) >= 0
+		return BUILTIN_TOOLS.find(_tool_id(it)) >= 0
 	if slot == "potion" and str(it.get("name", "Potion")) == "Potion" and str(it.get("rarity", "white")) == "white":
 		return true
 	return false
@@ -60,8 +86,6 @@ static func can_forge(p: Object, it: Dictionary) -> bool:
 	if str(it.get("slot", "")) == "potion" or str(it.get("slot", "")) == "food":
 		return false
 	if is_starter(p, it):
-		return false
-	if str(it.get("rarity", "white")) == "white" and is_builtin_starter(it):
 		return false
 	return true
 

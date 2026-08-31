@@ -136,9 +136,16 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 	if mode == "loadout":
 		title = "Floor Crystal — Loadout"
 		title_col = Color(0.6, 0.9, 1.0)
+	elif mode == "anvil":
+		title = "Anvil"
+		title_col = Color(0.95, 0.78, 0.42)
 	ui.box.add_child(ThemeS.lab(title, 28, title_col))
 	if mode == "loadout":
 		ui.box.add_child(ThemeS.lab("Choose holds or stash gear. Only floors you have reached.", 16, Color(0.82, 0.76, 0.66)))
+		ui.status = ThemeS.lab("", 16, Color(0.78, 0.74, 0.66))
+		ui.box.add_child(ui.status)
+	elif mode == "anvil":
+		ui.box.add_child(ThemeS.lab("Analyze DESTROYS a piece. Forge those remains on the Forge tab. Starters stay off the list.", 16, Color(0.82, 0.76, 0.66)))
 		ui.status = ThemeS.lab("", 16, Color(0.78, 0.74, 0.66))
 		ui.box.add_child(ui.status)
 	else:
@@ -163,6 +170,8 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 	hide_tip(ui)
 	if mode == "loadout":
 		Floor.footer(ui)
+	elif mode == "anvil":
+		load("res://scripts/ui/gear_board_anvil.gd").footer(ui)
 	else:
 		bag_grid(ui)
 	ui.box.add_child(ThemeS.btn("Close  (B)", ui.close_ui))
@@ -349,7 +358,10 @@ static func refresh(ui: CanvasLayer) -> void:
 	if ui.get("gear_stats") != null and ui.gear_stats:
 		ui.gear_stats.text = Text.stats_body(ui)
 	if ui.get("gear_hint") != null and ui.gear_hint:
-		ui.gear_hint.text = Text.hint_line(ui)
+		if str(ui.get("gear_mode")) == "anvil":
+			ui.gear_hint.text = load("res://scripts/ui/gear_board_anvil.gd").hint_line(ui)
+		else:
+			ui.gear_hint.text = Text.hint_line(ui)
 	Floor.sync(ui)
 	if _on(ui, "gear_tip_ready") or _on(ui, "gear_hover"):
 		place_tip(ui)

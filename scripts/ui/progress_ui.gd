@@ -7,6 +7,7 @@ const Shop := preload("res://scripts/ui/progress_ui_shop.gd")
 const Hub := preload("res://scripts/ui/progress_ui_hub.gd")
 const GearAct := preload("res://scripts/ui/gear_board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
+const Anvil := preload("res://scripts/ui/gear_board_anvil.gd")
 
 var open := false
 var mode := ""
@@ -22,6 +23,8 @@ var loadout_floor := 1
 var loadout_tool := "pickaxe"
 var loadout_wpn := "great_axe"
 var anvil_item: Dictionary = {}
+var anvil_src := ""
+var anvil_tab := "analyze"
 var forge_t := 0.0
 var forge_it: Dictionary = {}
 var inv_sel := "slot:weapon"
@@ -70,12 +73,15 @@ func _ready() -> void:
 
 
 func close_ui() -> void:
+	if forge_t > 0.0:
+		forge_t = 0.0
+		forge_it = {}
 	open = false
 	visible = false
 	pending = false
 	pending_id = ""
-	forge_t = 0.0
-	forge_it = {}
+	anvil_item = {}
+	anvil_src = ""
 	gear_sub = false
 	gear_sub_slot = ""
 	gear_hover = false
@@ -102,7 +108,7 @@ func _show() -> void:
 
 
 func _focus() -> void:
-	if mode == "loadout" or mode == "inv":
+	if mode == "loadout" or mode == "inv" or mode == "anvil":
 		var hit: Control = Board.find_sel(self)
 		if hit and not hit.is_queued_for_deletion():
 			hit.grab_focus()
@@ -115,7 +121,7 @@ func _wipe(n: Node) -> void:
 	while n.get_child_count() > 0:
 		var c: Node = n.get_child(0)
 		n.remove_child(c)
-		c.free()
+		c.call_deferred("free")
 
 
 func _clear() -> void:
@@ -164,6 +170,10 @@ func open_anvil() -> void:
 	mode = "anvil"
 	pending = false
 	anvil_item = {}
+	anvil_src = ""
+	anvil_tab = "analyze"
+	inv_sel = "slot:weapon"
+	gear_sub = false
 	_rebuild_anvil()
 	_show()
 
@@ -243,7 +253,7 @@ func _rebuild_shop() -> void:
 
 
 func _rebuild_anvil() -> void:
-	Shop.rebuild_anvil(self)
+	Hub.rebuild_anvil(self)
 
 
 func _rebuild_loadout() -> void:
@@ -279,7 +289,7 @@ func _extract_all() -> void:
 
 
 func _process(delta: float) -> void:
-	if open and (mode == "loadout" or mode == "inv"):
+	if open and _gear_busy():
 		GearAct.tick_x(self, delta)
 	if forge_t <= 0.0:
 		return
@@ -294,15 +304,16 @@ func _process(delta: float) -> void:
 		return
 	var msg := App.prog.forge_item(it)
 	_st(msg)
-	if msg.begins_with("Forged"):
+	if msg.begins_with("Forged") or msg.begins_with("Re-forged"):
 		anvil_item = {}
+		anvil_src = ""
 	if open and mode == "anvil":
 		_rebuild_anvil()
 		_show()
 
 
 func _gear_busy() -> bool:
-	return mode == "loadout" or mode == "inv"
+	return mode == "loadout" or mode == "inv" or mode == "anvil"
 
 
 func _input(event: InputEvent) -> void:
@@ -335,7 +346,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			forge_t = 0.0
 			forge_it = {}
 			App.sfx("ui_cancel")
-			_st("Forge cancelled.")
+			_st("Forge cancelled. Remains stay on the Forge tab.")
 		else:
 			App.sfx("ui_cancel")
 			close_ui()

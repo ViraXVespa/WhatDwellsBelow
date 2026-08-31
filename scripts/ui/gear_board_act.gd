@@ -22,12 +22,17 @@ static func swallowing() -> bool:
 
 
 static func town_kit(ui: CanvasLayer) -> bool:
+	if str(ui.get("gear_mode")) == "anvil":
+		return false
 	return Board.is_loadout(ui) or not App.in_dungeon
 
 
 static func rebuild(ui: CanvasLayer) -> void:
 	Sub.unlock_bg(ui)
-	if str(ui.get("gear_mode")) == "loadout" and ui.has_method("_rebuild_loadout"):
+	if str(ui.get("gear_mode")) == "anvil" and ui.has_method("_rebuild_anvil"):
+		ui._rebuild_anvil()
+		ui._show()
+	elif str(ui.get("gear_mode")) == "loadout" and ui.has_method("_rebuild_loadout"):
 		ui._rebuild_loadout()
 		ui._show()
 	elif ui.has_method("_rebuild"):
@@ -76,6 +81,9 @@ static func bag_primary(ui: CanvasLayer) -> void:
 
 
 static func drop(ui: CanvasLayer) -> void:
+	if str(ui.get("gear_mode")) == "anvil":
+		st(ui, "Use Analyze to destroy a piece.")
+		return
 	if not App.in_dungeon:
 		st(ui, "Drop on the dungeon floor only.")
 		return
@@ -102,6 +110,9 @@ static func drop(ui: CanvasLayer) -> void:
 
 
 static func destroy(ui: CanvasLayer) -> void:
+	if str(ui.get("gear_mode")) == "anvil":
+		st(ui, "Use Analyze to destroy a piece.")
+		return
 	var sel := str(ui.inv_sel)
 	var it := Text.selected(ui)
 	var slot := Text.selected_slot(ui)
@@ -186,6 +197,10 @@ static func enter(ui: CanvasLayer) -> void:
 
 
 static func tick_x(ui: CanvasLayer, delta: float) -> void:
+	if str(ui.get("gear_mode")) == "anvil":
+		ui.gear_x_hold = 0.0
+		ui.gear_x_fired = false
+		return
 	if not bool(ui.get("open")):
 		ui.gear_x_hold = 0.0
 		ui.gear_x_fired = false

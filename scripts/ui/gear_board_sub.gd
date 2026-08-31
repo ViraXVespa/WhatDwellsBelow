@@ -10,6 +10,14 @@ static func _act():
 	return load("res://scripts/ui/gear_board_act.gd")
 
 
+static func _anvil():
+	return load("res://scripts/ui/gear_board_anvil.gd")
+
+
+static func _is_anvil(ui: CanvasLayer) -> bool:
+	return str(ui.get("gear_mode")) == "anvil"
+
+
 static func lock_bg(ui: CanvasLayer) -> void:
 	if ui.box == null:
 		return
@@ -52,12 +60,30 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 6)
 	panel.add_child(box)
-	box.add_child(ThemeS.lab("Re-equip  " + str(Text.NAMES.get(slot, slot)), 22, Color(0.95, 0.82, 0.5)))
-	box.add_child(ThemeS.lab("A picks it. B closes. AT RISK gear is lost on death or Dispel.", 16, Color(0.8, 0.74, 0.64)))
+	var head := "Re-equip  " + str(Text.NAMES.get(slot, slot))
+	var blurb := "A picks it. B closes. AT RISK gear is lost on death or Dispel."
+	if _is_anvil(ui):
+		if str(ui.get("anvil_tab")) == "forge":
+			head = "Forge  " + str(Text.NAMES.get(slot, slot))
+			blurb = "A selects analyzed remains or a hold. B closes."
+		else:
+			head = "Analyze  " + str(Text.NAMES.get(slot, slot))
+			blurb = "A DESTROYS the piece. Remains wait on the Forge tab. B closes."
+	box.add_child(ThemeS.lab(head, 22, Color(0.95, 0.82, 0.5)))
+	box.add_child(ThemeS.lab(blurb, 16, Color(0.8, 0.74, 0.64)))
 	var first: Button = null
-	var rows: Array = Text.options_for(slot)
+	var rows: Array
+	if _is_anvil(ui):
+		rows = _anvil().options_for(slot, ui)
+	else:
+		rows = Text.options_for(slot)
 	if rows.is_empty():
-		box.add_child(ThemeS.lab("Nothing else for this slot.", 18, Color(0.78, 0.74, 0.66)))
+		if _is_anvil(ui) and str(ui.get("anvil_tab")) == "forge":
+			box.add_child(ThemeS.lab("No remains or holds for this slot.", 18, Color(0.78, 0.74, 0.66)))
+		elif _is_anvil(ui):
+			box.add_child(ThemeS.lab("Nothing forgeable here. Starters stay off this list.", 18, Color(0.78, 0.74, 0.66)))
+		else:
+			box.add_child(ThemeS.lab("Nothing else for this slot.", 18, Color(0.78, 0.74, 0.66)))
 	for row: Dictionary in rows:
 		var it: Dictionary = row.it
 		var lab := "%s  ·  %s" % [str(row.src), Text.item_short(it)]
@@ -120,6 +146,14 @@ static func close_sub(ui: CanvasLayer) -> void:
 static func pick(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 	var Act = _act()
 	if not bool(ui.get("gear_sub")):
+		return
+	if _is_anvil(ui):
+		_anvil().analyze(ui, slot, row)
+		ui.gear_sub = false
+		ui.gear_sub_slot = ""
+		unlock_bg(ui)
+		Act.swallow_cancel()
+		_after_sub(ui, "slot:" + slot, true)
 		return
 	var it: Dictionary = {}
 	if row.get("it") is Dictionary:

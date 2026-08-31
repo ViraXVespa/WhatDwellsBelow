@@ -38,10 +38,18 @@ All buildings MUST have actual depth and realistic 3D dimensions (not flat 2D sp
 
 ## Anvil
 
-- Full forge flow: analyze item → first forge (consumes gold + ore + root) → subsequent re-forges at reduced cost.
-- Maximum three holds per equipment slot.
+- Two tabs on one shared gear board: **Analyze** and **Forge**. They are separate systems.
+- Analyze: pick a forgeable piece from bag, bank, or an equipped slot. Confirming DESTROYS that piece. Starters cannot be analyzed and MUST NOT appear in the list. Weapon and tool slots refill with the starter so they stay equipped.
+- Destroyed remains persist on `App.prog.analyzed` (saved) until forged. Closing the anvil does not return the piece.
+- Forge: only analyzed remains and existing holds. Raw bag / bank / equipped gear cannot be forged. First forge of remains costs gold + ore + root and writes a hold (permanent access). Re-forge a hold at reduced cost. Max three holds per equipment slot.
 - Smithing skill influences time, cost, and quality of output.
+- UI MUST reuse the shared gear board doll, flyout, stats card, and slot list from `design/gear-ui.md`. Footer is the workbench plus the Analyze / Forge tabs.
 - UI MUST be clean, TV-readable, dungeon-themed, and consistent with the other interaction UIs.
+
+How to use it
+1. Anvil → Analyze tab → A on a slot → pick a non-starter → A again. Piece is gone. Remains show on the tab.
+2. Forge tab → A on that slot → pick remains → confirm cost. Hold appears.
+3. Holds re-forge from the Forge tab only. Raw gear never appears there.
 
 ## Vendor Stall
 
@@ -85,3 +93,5 @@ All buildings MUST have actual depth and realistic 3D dimensions (not flat 2D sp
 ## Live snapshot
 
 `App.play_from_menu()` / `enter_dungeon()` show the loading overlay while hub or dungeon assets come in. See `design/ui.md`.
+
+Anvil is the shared gear board (`scripts/ui/gear_board.gd`) in `mode="anvil"` with Analyze / Forge tabs from `scripts/ui/gear_board_anvil.gd`. Remains live on `App.prog.analyzed`. Forge writes holds through `scripts/data/progress_town.gd`.
