@@ -114,6 +114,23 @@ static func enemy_combat_lv(host: Node, pos: Vector3) -> int:
 	return Threat.level_at(App.floor_n, host._world_cell(pos), host.travel_dist, int(host.data.w), host.travel_cap)
 
 
+static func cell_color(host: Node, x: int, y: int) -> Color:
+	var w: int = host.data.w
+	if host.visited[Gen.idx(x, y, w)] == 0:
+		return Color(0.02, 0.02, 0.03, 1)
+	if host.data.grid[Gen.idx(x, y, w)] == Gen.FLOOR:
+		return Color(0.22, 0.24, 0.28)
+	return Color(0.08, 0.08, 0.1)
+
+
+static func paint_cell(host: Node, x: int, y: int) -> void:
+	if host.map_img == null:
+		return
+	if x < 0 or y < 0 or x >= host.data.w or y >= host.data.h:
+		return
+	host.map_img.set_pixel(x, y, cell_color(host, x, y))
+
+
 static func reveal_around(host: Node, c: Vector2i, rad: int) -> bool:
 	var w: int = host.data.w
 	var h: int = host.data.h
@@ -128,6 +145,7 @@ static func reveal_around(host: Node, c: Vector2i, rad: int) -> bool:
 				if host.visited[i] == 0:
 					host.visited[i] = 1
 					grew = true
+					paint_cell(host, x, y)
 	return grew
 
 
@@ -141,6 +159,7 @@ static func make_map(host: Node) -> void:
 	dim.color = Color(0.02, 0.03, 0.05, 0.55)
 	host.map_layer.add_child(dim)
 	host.map_img = Image.create(int(host.data.w), int(host.data.h), false, Image.FORMAT_RGBA8)
+	host.map_img.fill(Color(0.02, 0.02, 0.03, 1))
 	host.map_tex = ImageTexture.create_from_image(host.map_img)
 	host.map_rect = TextureRect.new()
 	host.map_rect.texture = host.map_tex
@@ -149,24 +168,16 @@ static func make_map(host: Node) -> void:
 	host.map_rect.position = Vector2(560, 140)
 	host.map_rect.size = Vector2(800, 800)
 	host.map_layer.add_child(host.map_rect)
+	host.set_meta("map_pc", Vector2i(-999, -999))
 	redraw_map(host)
 
 
 static func redraw_map(host: Node) -> void:
 	if host.map_img == null:
 		return
-	var w: int = host.data.w
-	var h: int = host.data.h
-	var grid: PackedByteArray = host.data.grid
-	for y in h:
-		for x in w:
-			var col := Color(0.02, 0.02, 0.03, 1)
-			if host.visited[Gen.idx(x, y, w)] != 0:
-				if grid[Gen.idx(x, y, w)] == Gen.FLOOR:
-					col = Color(0.22, 0.24, 0.28)
-				else:
-					col = Color(0.08, 0.08, 0.1)
-			host.map_img.set_pixel(x, y, col)
+	var old: Vector2i = host.get_meta("map_pc", Vector2i(-999, -999))
+	if old.x >= 0:
+		paint_cell(host, old.x, old.y)
 	dot(host, host.data.crystal, Color(0.3, 0.9, 1.0), true)
 	dot(host, host.data.stairs, Color(0.95, 0.75, 0.25), true)
 	var marked := false
@@ -185,7 +196,9 @@ static func redraw_map(host: Node) -> void:
 			elif k == "shop":
 				dot(host, cell, Color(0.55, 0.85, 1.0), true)
 	if host.player:
-		dot(host, Vector2i(int(host.player.global_position.x), int(host.player.global_position.z)), Color(1, 1, 1), false)
+		var pc := Vector2i(int(host.player.global_position.x), int(host.player.global_position.z))
+		host.set_meta("map_pc", pc)
+		dot(host, pc, Color(1, 1, 1), false)
 	host.map_tex.update(host.map_img)
 
 

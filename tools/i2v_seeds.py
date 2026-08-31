@@ -25,36 +25,28 @@ BODY_CELLS = (
     "down_right",
 )
 
-PROMPT = """Animate this exact pixel-art character in place as a {action} cycle, facing {facing}.
+PROMPT = """2D game sprite sheet. In-place {action}, facing {facing}. The engine moves and lights this later.
 
-Keep the same overall character design, face, hair, armor, green scarf, proportions, palette, and sprite style from the first frame. Do not redesign, repaint, recolor, simplify, smooth, or invent new details.
+Same character as frame 1 on every frame: face, hair, green scarf, armor, palette, pixel size. Same body proportions, limb length, head size, and scale. No morph, stretch, squash, extra limbs, or redraw.
 
-Locked camera, no pan, no tilt, no zoom, no rotation. Character stays the same scale and stays inset from every edge. Feet stay on the same baseline.
+Locked ortho camera. No pan, zoom, tilt, or perspective change. Same footprint and foot baseline. Flat #FF00FF only. No ground or extra pixels.
 
-Solid flat pure magenta #FF00FF background only. No ground plane, no floor, no detached shadow, no particles, no debris, no outline glow, no extra pixels outside the character.
+Freeze frame-1 lighting. No new light, shade, bloom, grade, or filters.
 
-Face stays fully visible on every frame: both eyes, brows, nose, mouth, and hairline. No blacked-out face, no dark smears over the head, no missing facial features, no face blur, no censorship bars, no face restoration, no photoreal skin.
+Game-style cycle: readable, slightly exaggerated. Repeat it three times at a steady pace. Clean loop back to frame 1.
 
-LOOK LOCK (do not break):
-- Keep the exact lighting of the first frame. Flat even sprite lighting only.
-- Do not add lights, rim light, backlight, point lights, bounce light, or a new key/fill.
-- Do not add shading, ambient occlusion, bloom, glow, specular pop, or photographic rendering.
-- Do not add filters or post: no color grade, no saturation/contrast/exposure change, no LUT, no vignette, no sharpen, no blur, no depth of field, no chromatic aberration, no film grain, no compression noise, no anti-aliasing.
-- Do not smooth or upsample-redraw the pixels. Keep large visible square pixels and the first-frame colors.
-
-Limited palette including: {palette}
-
-Motion only: {motion}
+{motion}
+Palette: {palette}
 """
 
 MOTION = {
-    "idle": "tiny breathing idle; weight shifts slightly; no locomotion; loop cleanly",
-    "walk": "in-place walk cycle with a clear passing / leg-crossover pose; both legs and arms cross front and back; loop cleanly",
-    "attack": "one melee swing and recover to the start pose; keep the facing; loop is not required",
-    "special": "one special-weapon strike and recover; keep the facing",
-    "gather": "in-place gathering swings at a node in front of the feet; keep the facing",
-    "death": "short collapse, then hold the final pose",
-    "dispel": "short dissolve / vanish, then hold empty magenta",
+    "idle": "Small breath and weight shift only.",
+    "walk": "Treadmill walk: contact, down, passing, up. Opposite arm and leg. Torso stays this facing.",
+    "attack": "One swing, recover to frame 1.",
+    "special": "One special strike, recover to frame 1.",
+    "gather": "In-place gather swings, recover to frame 1.",
+    "death": "Short collapse, then hold.",
+    "dispel": "Short vanish to magenta.",
 }
 
 
@@ -90,7 +82,7 @@ def build_prompt(facing: str, action: str, colors: list[str]) -> str:
     return PROMPT.format(
         action=key,
         facing=facing_label(facing),
-        palette=", ".join(colors) if colors else "the first-frame palette",
+        palette=", ".join(colors) if colors else "frame 1",
         motion=MOTION[key],
     )
 
@@ -103,7 +95,7 @@ def write_palette(im: Image.Image, dest_dir: Path, extra: dict) -> list[str]:
     return colors
 
 
-def export_cell(src: Path, dest_dir: Path, factor: int, facing: str) -> dict:
+def export_cell(src: Path, dest_dir: Path, factor: int, facing: str, action: str) -> dict:
     dest_dir.mkdir(parents=True, exist_ok=True)
     raw = Image.open(src).convert("RGBA")
     plate = scale_nn(raw, factor)
@@ -115,7 +107,7 @@ def export_cell(src: Path, dest_dir: Path, factor: int, facing: str) -> dict:
         {"source": str(src), "scale": factor, "src_size": list(raw.size), "out_size": list(plate.size)},
     )
     (dest_dir / f"prompt_{facing}.txt").write_text(
-        build_prompt(facing, "walk", colors),
+        build_prompt(facing, action, colors),
         encoding="utf-8",
     )
     return {
@@ -123,10 +115,11 @@ def export_cell(src: Path, dest_dir: Path, factor: int, facing: str) -> dict:
         "src_size": list(raw.size),
         "out_size": list(plate.size),
         "scale": factor,
+        "action": action,
     }
 
 
-def export_bible(src: Path, dest_dir: Path, factor: int) -> dict:
+def export_bible(src: Path, dest_dir: Path, factor: int, action: str) -> dict:
     dest_dir.mkdir(parents=True, exist_ok=True)
     raw = Image.open(src).convert("RGBA")
     named = dict(zip(sp.CELL_NAMES, sp.split_equal_3x3(raw)))
@@ -135,14 +128,14 @@ def export_bible(src: Path, dest_dir: Path, factor: int) -> dict:
         dest_dir,
         {"source": str(src), "scale": factor, "bible_size": list(raw.size)},
     )
-    out: dict[str, object] = {"palette": str(dest_dir / "palette.json"), "scale": factor}
+    out: dict[str, object] = {"palette": str(dest_dir / "palette.json"), "scale": factor, "action": action}
     for name in list(BODY_CELLS) + ["face"]:
         plate = scale_nn(named[name], factor)
         path = dest_dir / f"seed_i2v_{name}_x{factor}.png"
         plate.save(path)
         out[name] = {"path": str(path), "src_size": list(named[name].size), "out_size": list(plate.size)}
     (dest_dir / "prompt_walk_down.txt").write_text(
-        build_prompt("down", "walk", colors),
+        build_prompt("down", action, colors),
         encoding="utf-8",
     )
     return out
@@ -163,9 +156,9 @@ def main() -> None:
     if args.scale < 1:
         p.error("--scale must be >= 1")
     if args.cell is not None:
-        written = export_cell(args.cell, args.dest, args.scale, args.facing)
+        written = export_cell(args.cell, args.dest, args.scale, args.facing, args.action)
     else:
-        written = export_bible(args.bible, args.dest, args.scale)
+        written = export_bible(args.bible, args.dest, args.scale, args.action)
     print(json.dumps(written, indent=2))
     print()
     colors = json.loads((args.dest / "palette.json").read_text(encoding="utf-8"))["hex"]
