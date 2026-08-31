@@ -35,7 +35,18 @@ static func make_armor(p: Object, slot: String, rarity: String) -> Dictionary:
 
 
 static func make_potion(p: Object, n: int) -> Dictionary:
-	return item(p, "potion", "Potion", {"slot": "potion", "stack": n, "desc": "Instant heal."})
+	var charges: int = n if n > 0 else 2
+	var cd: float = 8.0
+	if App.bal and App.bal.get("potion_cooldown") != null:
+		cd = float(App.bal.potion_cooldown)
+	return item(p, "potion", "Potion", {
+		"slot": "potion",
+		"stack": 1,
+		"charges": charges,
+		"charge_max": charges,
+		"cooldown": cd,
+		"desc": "Instant heal. %d charges per run." % charges,
+	})
 
 
 static func make_food(p: Object, fid: String, n: int) -> Dictionary:
@@ -69,6 +80,9 @@ static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Di
 		"hp": extra.get("hp", 0),
 		"extract": extra.get("extract", kind != "artifact"),
 		"hold": false,
+		"charges": int(extra.get("charges", 0)),
+		"charge_max": int(extra.get("charge_max", extra.get("charges", 0))),
+		"cooldown": float(extra.get("cooldown", 0.0)),
 	}
 	if extra.has("id"):
 		it.id = str(extra.id)
@@ -83,7 +97,7 @@ static func starter(p: Object, slot: String) -> Dictionary:
 		"tool":
 			return make_tool(p, p.tool_type)
 		"potion":
-			return make_potion(p, 3)
+			return make_potion(p, 2)
 		"food":
 			return make_food(p, "ration", 5)
 		_:

@@ -1,6 +1,7 @@
 extends Object
 
 const Make := preload("res://scripts/data/progress_make.gd")
+const Rules := preload("res://scripts/data/gear_rules.gd")
 
 
 static func make_weapon(p: Object, wpn: String, rarity: String) -> Dictionary:
@@ -37,13 +38,13 @@ static func starter(p: Object, slot: String) -> Dictionary:
 
 static func bag_stack_index(p: Object, it: Dictionary) -> int:
 	var k: String = str(it.get("kind", ""))
-	if k != "potion" and k != "food":
+	if k != "food":
 		return -1
 	for i: int in p.bag.size():
 		var b: Dictionary = p.bag[i]
 		if str(b.get("kind", "")) != k:
 			continue
-		if k == "food" and str(b.get("food", "")) != str(it.get("food", "")):
+		if str(b.get("food", "")) != str(it.get("food", "")):
 			continue
 		return i
 	return -1
@@ -57,21 +58,43 @@ static func bag_can_accept(p: Object, it: Dictionary) -> bool:
 	return not p.bag_full()
 
 
+static func _has_white_copy(p: Object, it: Dictionary) -> bool:
+	if str(it.get("rarity", "white")) != "white":
+		return false
+	var key := Rules.tmpl_key(it)
+	var eq: Dictionary = p.slots.get(str(it.get("slot", "")), {})
+	if not eq.is_empty() and Rules.tmpl_key(eq) == key:
+		return true
+	for raw: Variant in p.bag:
+		if raw is Dictionary and Rules.tmpl_key(raw) == key and str(raw.get("rarity", "white")) == "white":
+			return true
+	return Rules.is_starter(p, it)
+
+
 static func add_item(p: Object, it: Dictionary) -> bool:
 	if it.is_empty():
 		return false
-	if str(it.kind) == "potion" or str(it.kind) == "food":
-		var slot_it: Dictionary = p.slots.get(str(it.slot), {})
-		if not slot_it.is_empty() and str(slot_it.get("food", "")) == str(it.get("food", "")) and str(it.kind) == "food":
+	if str(it.get("rarity", "white")) == "white" and _has_white_copy(p, it):
+		Rules.grant_smith(p, it)
+		return true
+	if str(it.kind) == "food":
+		var slot_it: Dictionary = p.slots.get("food", {})
+		if not slot_it.is_empty() and str(slot_it.get("food", "")) == str(it.get("food", "")):
 			var nxt: int = int(slot_it.stack) + int(it.stack)
 			if not App.in_dungeon:
 				nxt = mini(nxt, int(App.bal.food_bring_max))
 			slot_it.stack = nxt
-			p.slots[str(it.slot)] = slot_it
+			p.slots["food"] = slot_it
 			return true
-		if not slot_it.is_empty() and str(it.kind) == "potion" and str(slot_it.kind) == "potion":
-			slot_it.stack = int(slot_it.stack) + int(it.stack)
-			p.slots["potion"] = slot_it
+	if str(it.kind) == "potion":
+		var pot: Dictionary = p.slots.get("potion", {})
+		if pot.is_empty():
+			it.stack = 1
+			if int(it.get("charge_max", 0)) <= 0:
+				it.charge_max = maxi(2, int(it.get("charges", 2)))
+			if int(it.get("charges", 0)) <= 0:
+				it.charges = int(it.charge_max)
+			p.slots["potion"] = it
 			return true
 	return add_to_bag(p, it)
 
@@ -79,6 +102,9 @@ static func add_item(p: Object, it: Dictionary) -> bool:
 static func add_to_bag(p: Object, it: Dictionary) -> bool:
 	if it.is_empty():
 		return false
+	if str(it.get("rarity", "white")) == "white" and _has_white_copy(p, it):
+		Rules.grant_smith(p, it)
+		return true
 	var idx: int = bag_stack_index(p, it)
 	if idx >= 0:
 		var b: Dictionary = p.bag[idx]
@@ -125,7 +151,11 @@ static func equip_uid(p: Object, uid: int) -> String:
 			return "Tool locked to %s this run." % p.tool_type
 	var cur: Dictionary = p.slots.get(slot, {})
 	if not cur.is_empty():
-		if not bag_can_accept(p, cur):
+		if Rules.locked_equip_slot(slot):
+			if not bag_can_accept(p, cur):
+				add_to_bag(p, it)
+				return "Bag full."
+		elif not bag_can_accept(p, cur) and not Rules.locked_equip_slot(slot):
 			add_to_bag(p, it)
 			return "Bag full."
 		p.slots[slot] = {}
@@ -158,6 +188,8 @@ static func drop_uid(p: Object, uid: int) -> String:
 static func unequip_slot(p: Object, slot: String) -> String:
 	if p.SLOTS.find(slot) < 0:
 		return "No slot."
+	if Rules.locked_equip_slot(slot):
+		return "Weapon and tool stay equipped."
 	var it: Dictionary = p.slots.get(slot, {})
 	if it.is_empty():
 		return "Empty."
@@ -168,10 +200,6 @@ static func unequip_slot(p: Object, slot: String) -> String:
 	if not add_to_bag(p, it):
 		p.slots[slot] = it
 		return "Bag full."
-	if slot == "weapon":
-		var pl: CharacterBody3D = p._player()
-		if pl and pl.has_method("set_weapon") and App.weapon != "":
-			pl.set_weapon(App.weapon)
 	p._sync_artifacts()
 	p._refresh_player_hp()
 	return "Unequipped " + str(it.name)
@@ -193,6 +221,8 @@ static func fill_slot_after_remove(p: Object, slot: String) -> void:
 static func drop_slot(p: Object, slot: String) -> String:
 	if p.SLOTS.find(slot) < 0:
 		return "No slot."
+	if Rules.locked_equip_slot(slot):
+		return "Weapon and tool stay equipped."
 	var it: Dictionary = p.slots.get(slot, {})
 	if it.is_empty():
 		return "Empty."
@@ -205,6 +235,8 @@ static func drop_slot(p: Object, slot: String) -> String:
 
 static func take_slot(p: Object, slot: String) -> Dictionary:
 	if p.SLOTS.find(slot) < 0:
+		return {}
+	if Rules.locked_equip_slot(slot):
 		return {}
 	var it: Dictionary = p.slots.get(slot, {})
 	if it.is_empty():
@@ -241,8 +273,6 @@ static func use_from_bag(p: Object, uid: int) -> String:
 			break
 	if it.is_empty():
 		return "Gone."
-	if str(it.kind) == "potion":
-		return drink(p, it, false)
 	if str(it.kind) == "food":
 		return eat(p, it, false)
 	return equip_uid(p, uid)
@@ -250,9 +280,13 @@ static func use_from_bag(p: Object, uid: int) -> String:
 
 static func use_potion(p: Object) -> String:
 	var it: Dictionary = p.slots.get("potion", {})
-	if it.is_empty() or int(it.get("stack", 0)) <= 0:
+	if it.is_empty():
 		App.toast("No potion equipped.")
 		return "No potion equipped."
+	var ch: int = int(it.get("charges", it.get("stack", 0)))
+	if ch <= 0:
+		App.toast("No charges left this run.")
+		return "Empty."
 	return drink(p, it, true)
 
 
@@ -265,18 +299,7 @@ static func use_food(p: Object) -> String:
 
 
 static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
-	if p.potion_cd > 0.0:
-		App.toast("Potion cooling down.")
-		return "Not ready."
-	var pl: CharacterBody3D = p._player()
-	if pl == null or not pl.has_method("heal"):
-		return "Not now."
-	pl.heal(App.bal.potion_heal if App.bal.potion_heal > 1.0 else App.bal.player_max_hp * App.bal.potion_heal)
-	p.potion_cd = App.bal.potion_cooldown
-	App.sfx("potion")
-	App.toast("Potion — instant.")
-	consume(p, it, from_slot)
-	return "Potion."
+	return Rules.drink(p, it, from_slot)
 
 
 static func eat(p: Object, it: Dictionary, from_slot: bool) -> String:

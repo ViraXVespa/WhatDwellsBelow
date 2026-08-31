@@ -6,6 +6,7 @@ const CatalogS := preload("res://scripts/data/catalog.gd")
 const Gear := preload("res://scripts/data/progress_gear.gd")
 const CombatP := preload("res://scripts/data/progress_combat.gd")
 const Town := preload("res://scripts/data/progress_town.gd")
+const Rules := preload("res://scripts/data/gear_rules.gd")
 
 const SKILLS: PackedStringArray = ["axe", "staff", "bow", "str", "mag", "rng", "def", "hp", "mine", "wood", "smith"]
 const SLOTS: PackedStringArray = ["weapon", "tool", "potion", "food", "head", "body", "legs"]
@@ -14,6 +15,7 @@ const SETS: PackedStringArray = ["cinder", "tide", "root", "ash", "spark", "bone
 var bag: Array = []
 var slots: Dictionary = {}
 var holds: Dictionary = {}
+var starters: Dictionary = {}
 var tool_type := "pickaxe"
 var pick_weapon := "great_axe"
 var skills_run: Dictionary = {}
@@ -44,9 +46,11 @@ func _init() -> void:
 
 func reset_meta() -> void:
 	holds.clear()
+	starters.clear()
 	for s in SLOTS:
 		holds[s] = []
 		slots[s] = {}
+		starters[s] = []
 	skills_run.clear()
 	skills_perm.clear()
 	for id in SKILLS:
@@ -82,7 +86,7 @@ func begin_run_loadout() -> void:
 		if s == "potion" or s == "food":
 			continue
 		slots[s] = _slot_for_run(s)
-	if not keep_pot.is_empty() and int(keep_pot.get("stack", 0)) > 0:
+	if not keep_pot.is_empty():
 		slots["potion"] = keep_pot
 	else:
 		slots["potion"] = _slot_for_run("potion")
@@ -90,6 +94,7 @@ func begin_run_loadout() -> void:
 		slots["food"] = keep_food
 	else:
 		slots["food"] = _slot_for_run("food")
+	Rules.refill_potion(self)
 	tool_type = str(slots.tool.get("tool", tool_type))
 	App.weapon = str(slots.weapon.get("weapon", pick_weapon))
 	App.gold = 0
@@ -408,6 +413,8 @@ func pay(c: Dictionary) -> void:
 
 
 func forge_item(it: Dictionary) -> String:
+	if not Rules.can_forge(self, it):
+		return "Starters cannot be forged."
 	return Town.forge_item(self, it)
 
 

@@ -35,6 +35,8 @@ static func item_short(it: Dictionary) -> String:
 	if it.is_empty():
 		return "empty"
 	var nm := str(it.get("name", "item"))
+	if str(it.get("kind", "")) == "potion" or str(it.get("slot", "")) == "potion":
+		return "%s  %d/%d" % [nm, _charges(it), _charge_max(it)]
 	var stack := int(it.get("stack", 1))
 	if stack > 1:
 		nm += "  x%d" % stack
@@ -43,6 +45,8 @@ static func item_short(it: Dictionary) -> String:
 
 static func item_cell(it: Dictionary) -> String:
 	var nm := str(it.get("name", "item"))
+	if str(it.get("kind", "")) == "potion" or str(it.get("slot", "")) == "potion":
+		return "%s\n%d/%d" % [nm, _charges(it), _charge_max(it)]
 	var stack := int(it.get("stack", 1))
 	if stack > 1:
 		nm += "\nx%d" % stack
@@ -51,6 +55,20 @@ static func item_cell(it: Dictionary) -> String:
 	elif str(it.get("kind", "")) == "artifact":
 		nm += "\n" + str(it.get("set", "relic"))
 	return nm
+
+
+static func _charges(it: Dictionary) -> int:
+	if it.has("charges"):
+		return int(it.charges)
+	return int(it.get("stack", 0))
+
+
+static func _charge_max(it: Dictionary) -> int:
+	if it.has("charge_max"):
+		return maxi(1, int(it.charge_max))
+	if it.has("charges"):
+		return maxi(1, int(it.charges))
+	return maxi(1, int(it.get("stack", 1)))
 
 
 static func item_color(it: Dictionary) -> Color:
@@ -76,14 +94,12 @@ static func is_risk(it: Dictionary) -> bool:
 		return false
 	if str(it.get("kit_src", "")) == "starter":
 		return false
-	if str(it.get("kit_src", "")) == "equipped" and bool(it.get("hold", false)):
+	if str(it.get("kit_src", "")) == "hold":
 		return false
 	if str(it.get("kind", "")) == "artifact":
 		return true
 	if str(it.get("kit_src", "")) == "bank":
 		return true
-	if str(it.get("kit_src", "")) == "hold":
-		return false
 	return not bool(it.get("hold", false)) and str(it.get("kit_src", "")) != ""
 
 
@@ -100,7 +116,7 @@ static func risk_mark(it: Dictionary, loadout: bool) -> String:
 static func hint_line(ui: CanvasLayer) -> String:
 	if bool(ui.get("gear_sub")):
 		return "A equip   B close list   X drop   hold X destroy   Y tip detail"
-	return "A re-equip   X drop   hold X destroy   Y tip detail   focus Stats + A/L/R to page"
+	return "A re-equip   X drop   hold X destroy   Y tip detail"
 
 
 static func selected_slot(ui: CanvasLayer) -> String:
@@ -159,14 +175,30 @@ static func options_for(slot: String) -> Array:
 			var tl: Dictionary = App.prog.make_tool(t)
 			tl["kit_src"] = "starter"
 			out.append({"it": tl, "src": "starter", "uid": int(tl.uid)})
+	elif slot == "potion":
+		var pot: Dictionary = App.prog.make_potion(2)
+		pot["kit_src"] = "starter"
+		pot["charges"] = 2
+		pot["charge_max"] = 2
+		out.append({"it": pot, "src": "starter", "uid": int(pot.uid)})
 	var holds: Array = App.prog.holds.get(slot, [])
 	for h: Variant in holds:
 		if h is Dictionary:
 			var hd: Dictionary = (h as Dictionary).duplicate(true)
 			hd["kit_src"] = "hold"
 			out.append({"it": hd, "src": "hold", "uid": int(hd.uid)})
+	var unlocked: Array = []
+	if App.prog.get("starters") is Dictionary:
+		unlocked = App.prog.starters.get(slot, [])
+	for raw_s: Variant in unlocked:
+		if raw_s is Dictionary:
+			var us: Dictionary = (raw_s as Dictionary).duplicate(true)
+			us["kit_src"] = "starter"
+			out.append({"it": us, "src": "starter", "uid": int(us.get("uid", 0))})
 	for raw2: Variant in App.prog.bank_items:
 		if raw2 is Dictionary and str(raw2.get("slot", "")) == slot:
+			if str(raw2.get("rarity", "white")) == "white":
+				continue
 			var bk: Dictionary = (raw2 as Dictionary).duplicate(true)
 			bk["kit_src"] = "bank"
 			out.append({"it": bk, "src": "bank", "uid": int(bk.uid)})
@@ -178,12 +210,25 @@ static func _dedupe(rows: Array) -> Array:
 	var out: Array = []
 	for row: Variant in rows:
 		var it: Dictionary = row.it
-		var key := "%s:%d" % [str(row.src), int(it.get("uid", 0))]
+		var key := "%s:%s:%d" % [str(row.src), _tmpl(it), int(it.get("uid", 0))]
+		if str(row.src) == "starter":
+			key = "starter:" + _tmpl(it)
 		if seen.has(key):
 			continue
 		seen[key] = true
 		out.append(row)
 	return out
+
+
+static func _tmpl(it: Dictionary) -> String:
+	var slot := str(it.get("slot", ""))
+	if slot == "weapon":
+		return "weapon:" + str(it.get("weapon", it.get("name", "")))
+	if slot == "tool":
+		return "tool:" + str(it.get("tool", ""))
+	if slot == "potion":
+		return "potion:" + str(it.get("name", "Potion"))
+	return "%s:%s:%s" % [slot, str(it.get("name", "")), str(it.get("rarity", "white"))]
 
 
 static func has_unseen(slot: String) -> bool:
@@ -208,7 +253,7 @@ static func mark_seen(slot: String) -> void:
 
 static func tooltip(ui: CanvasLayer) -> String:
 	if str(ui.inv_sel) == "stats":
-		return "L/R or A pages these numbers. Artifact page is inventory-only."
+		return "LT / Q previous page. RT / E next page."
 	var it := selected(ui)
 	var slot := selected_slot(ui)
 	if it.is_empty():
@@ -249,6 +294,8 @@ static func forged_block(it: Dictionary) -> String:
 	var slot := str(it.get("slot", ""))
 	if slot == "potion" or slot == "food" or str(it.get("kind", "")) == "artifact":
 		return current_block(it) + "\nY: no forge preview for this."
+	if str(it.get("rarity", "white")) == "white" and (slot == "weapon" or slot == "tool"):
+		return current_block(it) + "\nY: starters cannot be forged."
 	var up := forge_preview(it)
 	var lines := PackedStringArray()
 	lines.append("Forge preview — %s" % str(up.get("name", "Forged")))
@@ -278,6 +325,13 @@ static func stat_bits(it: Dictionary) -> String:
 		bits.append("%+d defense" % int(it.def))
 	if int(it.get("hp", 0)) != 0:
 		bits.append("%+d HP" % int(it.hp))
+	if str(it.get("kind", "")) == "potion" or str(it.get("slot", "")) == "potion":
+		bits.append("Charges %d/%d" % [_charges(it), _charge_max(it)])
+		var cd := float(it.get("cooldown", 0.0))
+		if cd <= 0.0 and App.bal:
+			cd = float(App.bal.get("potion_cooldown"))
+		if cd > 0.0:
+			bits.append("Cooldown %.1fs" % cd)
 	if str(it.get("tool", "")) != "":
 		bits.append("Tool: " + str(it.tool))
 	if str(it.get("weapon", "")) != "":
@@ -285,21 +339,30 @@ static func stat_bits(it: Dictionary) -> String:
 	return "   ·   ".join(bits)
 
 
-static func stats_page(ui: CanvasLayer) -> String:
+static func stats_title(ui: CanvasLayer) -> String:
 	var pages := page_ids(ui)
 	var idx := clampi(int(ui.get("gear_stat_page")), 0, pages.size() - 1)
 	ui.gear_stat_page = idx
-	var id := pages[idx]
-	var head := "Stats  %d/%d  —  %s" % [idx + 1, pages.size(), page_title(id)]
-	match id:
+	return page_title(pages[idx])
+
+
+static func stats_body(ui: CanvasLayer) -> String:
+	var pages := page_ids(ui)
+	var idx := clampi(int(ui.get("gear_stat_page")), 0, pages.size() - 1)
+	ui.gear_stat_page = idx
+	match pages[idx]:
 		"equipped":
-			return head + "\n" + equipped_only()
+			return equipped_only()
 		"combat":
-			return head + "\n" + all_block(COMBAT_KEYS)
+			return all_block(COMBAT_KEYS)
 		"utility":
-			return head + "\n" + all_block(UTIL_KEYS)
+			return all_block(UTIL_KEYS)
 		_:
-			return head + "\n" + artifact_block()
+			return artifact_block()
+
+
+static func stats_page(ui: CanvasLayer) -> String:
+	return stats_title(ui) + "\n" + stats_body(ui)
 
 
 static func page_ids(ui: CanvasLayer) -> PackedStringArray:

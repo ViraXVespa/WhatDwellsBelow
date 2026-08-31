@@ -7,13 +7,17 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const HOLD_DESTROY := 0.55
 
 
+static func locked_slot(slot: String) -> bool:
+	return slot == "weapon" or slot == "tool"
+
+
 static func rebuild(ui: CanvasLayer) -> void:
 	if str(ui.get("gear_mode")) == "loadout" and ui.has_method("_rebuild_loadout"):
 		ui._rebuild_loadout()
 		ui._show()
-		return
-	if ui.has_method("_rebuild"):
+	elif ui.has_method("_rebuild"):
 		ui._rebuild()
+	ui.call_deferred("_focus")
 
 
 static func st(ui: CanvasLayer, msg: String) -> void:
@@ -92,7 +96,10 @@ static func pick(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 		_apply_loadout(ui, slot, it, src)
 	else:
 		_apply_inv(ui, slot, it, src)
-	close_sub(ui)
+	ui.gear_sub = false
+	ui.gear_sub_slot = ""
+	Board.clear_sub(ui)
+	ui.inv_sel = "slot:" + slot
 	rebuild(ui)
 
 
@@ -120,10 +127,10 @@ static func _apply_loadout(ui: CanvasLayer, slot: String, it: Dictionary, src: S
 	App.save_now()
 
 
-static func _apply_inv(ui: CanvasLayer, _slot: String, it: Dictionary, src: String) -> void:
+static func _apply_inv(ui: CanvasLayer, slot: String, it: Dictionary, src: String) -> void:
 	if src == "bag":
 		st(ui, App.prog.equip_uid(int(it.uid)))
-		ui.inv_sel = "slot:" + str(it.get("slot", "weapon"))
+		ui.inv_sel = "slot:" + slot
 		return
 	if src == "equipped":
 		st(ui, "Already on.")
@@ -135,12 +142,13 @@ static func bag_primary(ui: CanvasLayer) -> void:
 	var it := Text.selected(ui)
 	if it.is_empty():
 		return
+	var slot := str(it.get("slot", ""))
 	var k := str(it.get("kind", ""))
-	if k == "potion" or k == "food":
+	if k == "food":
 		st(ui, App.prog.use_from_bag(int(it.uid)))
+		ui.inv_sel = "slot:food"
 		rebuild(ui)
 		return
-	var slot := str(it.get("slot", ""))
 	if App.prog.SLOTS.find(slot) >= 0:
 		st(ui, App.prog.equip_uid(int(it.uid)))
 		ui.inv_sel = "slot:" + slot
@@ -156,15 +164,19 @@ static func drop(ui: CanvasLayer) -> void:
 		st(ui, "Nothing to drop.")
 		return
 	var sel := str(ui.inv_sel)
+	var slot := Text.selected_slot(ui)
+	if sel.begins_with("slot:") and locked_slot(slot):
+		st(ui, "Weapon and tool stay equipped.")
+		return
 	var msg := ""
 	if sel.begins_with("bag:"):
 		msg = App.prog.drop_uid(int(it.uid))
 	elif sel.begins_with("slot:"):
-		msg = App.prog.drop_slot(Text.selected_slot(ui))
+		msg = App.prog.drop_slot(slot)
 	else:
 		st(ui, "Pick a slot or bag item first.")
 		return
-	ui.inv_sel = "slot:weapon"
+	ui.inv_sel = "slot:weapon" if locked_slot(slot) else "slot:" + (slot if slot != "" else "weapon")
 	st(ui, msg)
 	rebuild(ui)
 
@@ -173,6 +185,12 @@ static func destroy(ui: CanvasLayer) -> void:
 	var sel := str(ui.inv_sel)
 	var it := Text.selected(ui)
 	var slot := Text.selected_slot(ui)
+	if sel.begins_with("slot:") and locked_slot(slot):
+		st(ui, "Weapon and tool stay equipped.")
+		return
+	if sel.begins_with("opt:") and locked_slot(slot) and str(sel.split(":")[1] if sel.split(":").size() > 1 else "") == "equipped":
+		st(ui, "Weapon and tool stay equipped.")
+		return
 	if it.is_empty() and not sel.begins_with("slot:"):
 		st(ui, "Nothing to destroy.")
 		return
@@ -192,6 +210,9 @@ static func destroy(ui: CanvasLayer) -> void:
 			App.prog.holds[slot] = h
 		elif src == "bag":
 			App.prog.remove_uid(int(it.uid))
+		elif src == "starter":
+			st(ui, "Starters aren't stored.")
+			return
 		else:
 			st(ui, "Can't destroy that.")
 			return
@@ -200,6 +221,7 @@ static func destroy(ui: CanvasLayer) -> void:
 		return
 	st(ui, "Destroyed.")
 	App.save_now()
+	ui.inv_sel = "slot:" + (slot if slot != "" else "weapon")
 	rebuild(ui)
 
 
@@ -210,6 +232,8 @@ static func cycle_tip(ui: CanvasLayer) -> void:
 
 
 static func cycle_stats(ui: CanvasLayer, d: int) -> void:
+	if bool(ui.get("gear_sub")):
+		return
 	var pages := Text.page_ids(ui)
 	ui.gear_stat_page = posmod(int(ui.gear_stat_page) + d, pages.size())
 	Board.refresh(ui)
@@ -270,6 +294,12 @@ static func handle_event(ui: CanvasLayer, event: InputEvent) -> bool:
 	if _is_y(event):
 		cycle_tip(ui)
 		return true
+	if _page_prev(event):
+		cycle_stats(ui, -1)
+		return true
+	if _page_next(event):
+		cycle_stats(ui, 1)
+		return true
 	if event.is_action_pressed("ui_left") and str(ui.inv_sel) == "stats":
 		cycle_stats(ui, -1)
 		return true
@@ -280,6 +310,24 @@ static func handle_event(ui: CanvasLayer, event: InputEvent) -> bool:
 		if bool(ui.gear_sub):
 			close_sub(ui)
 			return true
+	return false
+
+
+static func _page_prev(event: InputEvent) -> bool:
+	if event.is_action_pressed("special"):
+		return true
+	if event is InputEventKey and event.pressed and not event.echo:
+		var k := event as InputEventKey
+		return k.physical_keycode == KEY_Q or k.keycode == KEY_Q
+	return false
+
+
+static func _page_next(event: InputEvent) -> bool:
+	if event.is_action_pressed("attack"):
+		return true
+	if event is InputEventKey and event.pressed and not event.echo:
+		var k := event as InputEventKey
+		return k.physical_keycode == KEY_E or k.keycode == KEY_E
 	return false
 
 

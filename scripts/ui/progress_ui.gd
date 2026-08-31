@@ -6,6 +6,7 @@ const Inv := preload("res://scripts/ui/progress_ui_inv.gd")
 const Shop := preload("res://scripts/ui/progress_ui_shop.gd")
 const Hub := preload("res://scripts/ui/progress_ui_hub.gd")
 const GearAct := preload("res://scripts/ui/gear_board_act.gd")
+const Board := preload("res://scripts/ui/gear_board.gd")
 
 var open := false
 var mode := ""
@@ -32,7 +33,8 @@ var gear_sub_slot := ""
 var gear_x_hold := 0.0
 var gear_x_fired := false
 var gear_tip: Label
-var gear_stats: Button
+var gear_stats: Control
+var gear_stats_title: Label
 var gear_hint: Label
 
 
@@ -97,21 +99,28 @@ func _show() -> void:
 
 func _focus() -> void:
 	if mode == "loadout" or mode == "inv":
-		var hit: Control = load("res://scripts/ui/gear_board.gd").find_sel(self)
-		if hit:
+		var hit: Control = Board.find_sel(self)
+		if hit and not hit.is_queued_for_deletion():
 			hit.grab_focus()
 			return
-	if focus_btn:
+	if focus_btn and not focus_btn.is_queued_for_deletion():
 		focus_btn.grab_focus()
 
 
+func _wipe(n: Node) -> void:
+	while n.get_child_count() > 0:
+		var c: Node = n.get_child(0)
+		n.remove_child(c)
+		c.free()
+
+
 func _clear() -> void:
-	for c in box.get_children():
-		c.queue_free()
+	_wipe(box)
 	focus_btn = null
 	status = null
 	gear_tip = null
 	gear_stats = null
+	gear_stats_title = null
 	gear_hint = null
 
 

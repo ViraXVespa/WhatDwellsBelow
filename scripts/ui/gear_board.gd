@@ -4,12 +4,6 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const Text := preload("res://scripts/ui/gear_board_text.gd")
 const Act := preload("res://scripts/ui/gear_board_act.gd")
 
-const LAYOUT := [
-	["weapon", "head", "tool"],
-	["potion", "body", "food"],
-	["", "legs", ""],
-]
-
 static var pending_kit: Dictionary = {}
 
 
@@ -44,7 +38,7 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 	ui.gear_x_hold = 0.0
 	ui.gear_x_fired = false
 	clear_sub(ui)
-	var title: String = "Inventory"
+	var title := "Inventory"
 	var title_col := Color(0.95, 0.82, 0.5)
 	if mode == "loadout":
 		title = "Floor Crystal — Loadout"
@@ -63,26 +57,16 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	ui.box.add_child(row)
-	var doll := GridContainer.new()
-	doll.columns = 3
-	doll.add_theme_constant_override("h_separation", 8)
-	doll.add_theme_constant_override("v_separation", 8)
-	row.add_child(doll)
-	var first: Control = null
-	for line: Array in LAYOUT:
-		for key: Variant in line:
-			var slot := str(key)
-			if slot == "":
-				var pad := Control.new()
-				pad.custom_minimum_size = Vector2(168, 78)
-				doll.add_child(pad)
-				continue
-			var b: Button = slot_btn(ui, slot)
-			doll.add_child(b)
-			if first == null:
-				first = b
+	row.add_child(_slot_col(ui, ["weapon", "potion"], true))
+	row.add_child(_slot_col(ui, ["head", "body", "legs"], false))
+	row.add_child(_slot_col(ui, ["tool", "food"], true))
 	row.add_child(stats_card(ui))
+	if ui.focus_btn == null:
+		var hit := find_sel(ui)
+		if hit:
+			ui.focus_btn = hit
 	ui.gear_tip = ThemeS.lab("", 18, Color(0.93, 0.86, 0.72))
 	ui.gear_tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ui.gear_tip.custom_minimum_size = Vector2(900, 96)
@@ -92,9 +76,20 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 	else:
 		bag_grid(ui)
 	ui.box.add_child(ThemeS.btn("Close  (B)", ui.close_ui))
-	if first:
-		ui.focus_btn = first
 	refresh(ui)
+
+
+static func _slot_col(ui: CanvasLayer, slots: Array, mid: bool) -> VBoxContainer:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER if mid else BoxContainer.ALIGNMENT_BEGIN
+	col.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	for key: Variant in slots:
+		var b: Button = slot_btn(ui, str(key))
+		col.add_child(b)
+		if ui.focus_btn == null and str(key) == "weapon":
+			ui.focus_btn = b
+	return col
 
 
 static func slot_btn(ui: CanvasLayer, slot: String) -> Button:
@@ -125,28 +120,54 @@ static func slot_btn(ui: CanvasLayer, slot: String) -> Button:
 	return b
 
 
-static func stats_card(ui: CanvasLayer) -> Button:
-	var b := Button.new()
-	b.custom_minimum_size = Vector2(420, 250)
-	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	b.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	b.add_theme_font_size_override("font_size", 16)
-	b.add_theme_color_override("font_color", Color(0.9, 0.84, 0.7))
-	b.add_theme_color_override("font_focus_color", Color(1, 0.92, 0.55))
-	b.add_theme_stylebox_override("normal", ThemeS.sb(Color(0.12, 0.1, 0.08), Color(0.45, 0.34, 0.18)))
-	b.add_theme_stylebox_override("focus", ThemeS.sb(Color(0.16, 0.13, 0.09), Color(0.95, 0.78, 0.35)))
-	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.set_meta("inv_key", "stats")
-	ui.gear_stats = b
-	b.pressed.connect(func():
+static func stats_card(ui: CanvasLayer) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(440, 250)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.focus_mode = Control.FOCUS_ALL
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.12, 0.1, 0.08), Color(0.45, 0.34, 0.18)))
+	panel.set_meta("inv_key", "stats")
+	var vb := VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 8)
+	panel.add_child(vb)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 8)
+	var left := ThemeS.lab("Q  ·  LT", 16, Color(0.72, 0.66, 0.52))
+	left.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var mid := ThemeS.lab("", 20, Color(1, 0.92, 0.55))
+	mid.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var right := ThemeS.lab("RT  ·  E", 16, Color(0.72, 0.66, 0.52))
+	right.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	right.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	head.add_child(left)
+	head.add_child(mid)
+	head.add_child(right)
+	vb.add_child(head)
+	var body := ThemeS.lab("", 16, Color(0.9, 0.84, 0.7))
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vb.add_child(body)
+	ui.gear_stats_title = mid
+	ui.gear_stats = body
+	panel.focus_entered.connect(func():
 		ui.inv_sel = "stats"
-		Act.cycle_stats(ui, 1)
-	)
-	b.focus_entered.connect(func():
-		ui.inv_sel = "stats"
+		panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.16, 0.13, 0.09), Color(0.95, 0.78, 0.35)))
 		refresh(ui)
 	)
-	return b
+	panel.focus_exited.connect(func():
+		panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.12, 0.1, 0.08), Color(0.45, 0.34, 0.18)))
+	)
+	panel.gui_input.connect(func(event: InputEvent):
+		if event.is_action_pressed("ui_accept") or event.is_action_pressed("interact"):
+			ui.inv_sel = "stats"
+			Act.cycle_stats(ui, 1)
+			panel.accept_event()
+	)
+	return panel
 
 
 static func loadout_footer(ui: CanvasLayer) -> void:
@@ -205,8 +226,10 @@ static func bag_cell(ui: CanvasLayer, it: Dictionary) -> Button:
 
 
 static func refresh(ui: CanvasLayer) -> void:
+	if ui.get("gear_stats_title") != null and ui.gear_stats_title:
+		ui.gear_stats_title.text = Text.stats_title(ui)
 	if ui.get("gear_stats") != null and ui.gear_stats:
-		ui.gear_stats.text = Text.stats_page(ui)
+		ui.gear_stats.text = Text.stats_body(ui)
 	if ui.get("gear_tip") != null and ui.gear_tip:
 		ui.gear_tip.text = Text.tooltip(ui)
 	if ui.get("gear_hint") != null and ui.gear_hint:
@@ -218,7 +241,7 @@ static func refresh(ui: CanvasLayer) -> void:
 static func find_sel(ui: CanvasLayer) -> Control:
 	if str(ui.inv_sel) == "":
 		return null
-	for n: Node in ui.box.find_children("*", "Button", true, false):
+	for n: Node in ui.box.find_children("*", "Control", true, false):
 		if str(n.get_meta("inv_key", "")) == ui.inv_sel:
 			return n as Control
 	var sub: Node = ui.get_node_or_null("gear_sub_panel")

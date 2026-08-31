@@ -1,6 +1,7 @@
 extends Object
 
 const ProgressQuest := preload("res://scripts/data/progress_quest.gd")
+const Rules := preload("res://scripts/data/gear_rules.gd")
 
 
 static func extractable(p: Object, role: String = "") -> Array:
@@ -18,9 +19,19 @@ static func extractable(p: Object, role: String = "") -> Array:
 		if App.gold > 0:
 			out.append({"kind": "gold", "name": "Gold", "n": App.gold})
 		for it: Variant in p.bag:
-			if it.get("extract", true) and str(it.kind) != "artifact" and str(it.kind) != "tool" and not bool(it.get("hold", false)):
+			if it.get("extract", true) and str(it.kind) != "artifact" and not bool(it.get("hold", false)):
 				out.append(it)
 	return out
+
+
+static func _mail_item(p: Object, it: Dictionary) -> String:
+	var special := Rules.handle_mail(p, it)
+	if special != "":
+		return special
+	p.bank_items.append(it)
+	App.extracted = true
+	p.mailed_names.append(str(it.name))
+	return "Sent " + str(it.name)
 
 
 static func extract_all(p: Object, role: String) -> String:
@@ -50,9 +61,8 @@ static func extract_all(p: Object, role: String) -> String:
 		p.mailed_gold += g
 		var keep: Array = []
 		for it: Variant in p.bag:
-			if it.get("extract", true) and str(it.kind) != "artifact" and str(it.kind) != "tool" and not bool(it.get("hold", false)):
-				p.bank_items.append(it)
-				p.mailed_names.append(str(it.name))
+			if it.get("extract", true) and str(it.kind) != "artifact" and not bool(it.get("hold", false)):
+				_mail_item(p, it)
 				items += 1
 			else:
 				keep.append(it)
@@ -111,10 +121,7 @@ static func extract_one(p: Object, it: Dictionary, role: String) -> String:
 				return "Artifacts cannot be mailed."
 			p.add_to_bag(got)
 			return "Forged holds stay with you."
-		p.bank_items.append(got)
-		App.extracted = true
-		p.mailed_names.append(str(got.name))
-		return "Sent " + str(got.name)
+		return _mail_item(p, got)
 	return "Nothing."
 
 
@@ -122,14 +129,23 @@ static func withdraw_bank_consumables(p: Object) -> void:
 	var keep: Array = []
 	for it: Variant in p.bank_items:
 		var k: String = str(it.get("kind", ""))
-		if k == "potion" or k == "food":
-			var slot: String = "potion" if k == "potion" else "food"
-			var cur: Dictionary = p.slots.get(slot, {})
+		if k == "food":
+			var cur: Dictionary = p.slots.get("food", {})
 			if cur.is_empty():
-				p.slots[slot] = it
-			elif k == "potion" or str(cur.get("food", "")) == str(it.get("food", "")):
+				p.slots["food"] = it
+			elif str(cur.get("food", "")) == str(it.get("food", "")):
 				cur.stack = int(cur.get("stack", 0)) + int(it.get("stack", 1))
-				p.slots[slot] = cur
+				p.slots["food"] = cur
+			else:
+				keep.append(it)
+		elif k == "potion":
+			if p.slots.get("potion", {}).is_empty():
+				it.stack = 1
+				if int(it.get("charge_max", 0)) <= 0:
+					it.charge_max = maxi(2, int(it.get("charges", 2)))
+				if int(it.get("charges", 0)) <= 0:
+					it.charges = int(it.charge_max)
+				p.slots["potion"] = it
 			else:
 				keep.append(it)
 		else:

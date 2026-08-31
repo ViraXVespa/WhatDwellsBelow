@@ -2,6 +2,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Inv := preload("res://scripts/ui/progress_ui_inv.gd")
+const Rules := preload("res://scripts/data/gear_rules.gd")
 
 
 static func rebuild_shop(ui) -> void:
@@ -31,6 +32,8 @@ static func rebuild_shop(ui) -> void:
 		for s in ["weapon", "tool", "head", "body", "legs"]:
 			var eq: Dictionary = App.prog.slots.get(s, {})
 			if eq.is_empty():
+				continue
+			if Rules.locked_equip_slot(str(s)):
 				continue
 			var slot := str(s)
 			ui.box.add_child(ThemeS.btn("Pawn equipped %s  (%dg)" % [eq.name, int(App.bal.pawn_gold)], func(): ui._confirm(func(): pawn_slot(ui, slot), "pawn_slot_" + slot)))
@@ -100,6 +103,9 @@ static func pawn(ui, uid: int) -> void:
 
 
 static func pawn_slot(ui, slot: String) -> void:
+	if Rules.locked_equip_slot(slot):
+		ui._st("Weapon and tool stay equipped.")
+		return
 	var it := App.prog.take_slot(slot)
 	if it.is_empty():
 		ui._st("Gone.")
@@ -145,21 +151,29 @@ static func anvil_pick(ui) -> void:
 			sources.append(hold_it)
 	var any := false
 	for it in sources:
-		if str(it.get("slot", "")) in ["weapon", "tool", "head", "body", "legs"]:
-			any = true
-			var copy: Dictionary = it.duplicate(true)
-			var h: Array = App.prog.holds[str(copy.slot)]
-			var b := ThemeS.btn("Analyze %s  (%s, holds %d/3)" % [copy.name, copy.rarity, h.size()], func(): ui.anvil_item = copy; ui.pending = false; ui._rebuild_anvil(); ui._show())
-			if ui.focus_btn == null:
-				ui.focus_btn = b
-			ui.box.add_child(b)
+		if str(it.get("slot", "")) not in ["weapon", "tool", "head", "body", "legs"]:
+			continue
+		if not Rules.can_forge(App.prog, it):
+			continue
+		any = true
+		var copy: Dictionary = it.duplicate(true)
+		var h: Array = App.prog.holds[str(copy.slot)]
+		var b := ThemeS.btn("Analyze %s  (%s, holds %d/3)" % [copy.name, copy.rarity, h.size()], func(): ui.anvil_item = copy; ui.pending = false; ui._rebuild_anvil(); ui._show())
+		if ui.focus_btn == null:
+			ui.focus_btn = b
+		ui.box.add_child(b)
 	if not any:
-		ui.box.add_child(ThemeS.lab("Bring a weapon, tool, or armor.", 20, Color(0.8, 0.7, 0.6)))
+		ui.box.add_child(ThemeS.lab("Nothing here can be forged. Starters stay starters.", 20, Color(0.8, 0.7, 0.6)))
 
 
 static func anvil_analyze(ui) -> void:
 	var it: Dictionary = ui.anvil_item
 	var slot := str(it.get("slot", ""))
+	if not Rules.can_forge(App.prog, it):
+		ui.status.text = "Starters and white loadout picks cannot be forged."
+		ui.focus_btn = ThemeS.btn("Analyze another", func(): ui.anvil_item = {}; ui.pending = false; ui._rebuild_anvil(); ui._show())
+		ui.box.add_child(ui.focus_btn)
+		return
 	var h: Array = App.prog.holds[slot] if App.prog.holds.has(slot) else []
 	var first := h.size() < 3 and not bool(it.get("hold", false))
 	var cost: Dictionary = App.prog.forge_cost(first)
@@ -180,6 +194,9 @@ static func anvil_analyze(ui) -> void:
 
 static func do_forge(ui, it: Dictionary) -> void:
 	if ui.forge_t > 0.0:
+		return
+	if not Rules.can_forge(App.prog, it):
+		ui._st("Can't forge a starter.")
 		return
 	var slot := str(it.get("slot", ""))
 	var h: Array = App.prog.holds[slot] if App.prog.holds.has(slot) else []
@@ -212,14 +229,16 @@ static func vend_potion(ui) -> void:
 	if App.bank_gold < cost:
 		ui._st("Not enough banked gold.")
 		return
+	var pot: Dictionary = App.prog.make_potion(2)
+	var cur: Dictionary = App.prog.slots.get("potion", {})
 	App.bank_gold -= cost
-	var pot: Dictionary = App.prog.slots.get("potion", {})
-	if pot.is_empty():
-		App.prog.slots["potion"] = App.prog.make_potion(1)
-	else:
-		pot.stack = int(pot.get("stack", 0)) + 1
+	if cur.is_empty():
 		App.prog.slots["potion"] = pot
-	ui._st("Potion stowed.")
+	elif not App.prog.add_to_bag(pot):
+		App.bank_gold += cost
+		ui._st("Bag full.")
+		return
+	ui._st("Potion ready.")
 	App.save_now()
 
 

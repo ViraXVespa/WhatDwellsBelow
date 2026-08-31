@@ -117,6 +117,13 @@ static func unowned_gear(p: Object) -> Dictionary:
 	return p.make_weapon(p.pick_weapon, "green")
 
 
+static func _starters_of(p: Object) -> Dictionary:
+	var s: Variant = p.get("starters")
+	if s is Dictionary:
+		return (s as Dictionary).duplicate(true)
+	return {}
+
+
 static func to_meta(p: Object) -> Dictionary:
 	var h: Dictionary = {}
 	for s: String in p.SLOTS:
@@ -139,6 +146,7 @@ static func to_meta(p: Object) -> Dictionary:
 		"quests_offered": p.quests_offered.duplicate(true),
 		"forge_count": p.forge_count,
 		"hold_pick": p.hold_pick.duplicate(),
+		"starters": _starters_of(p),
 	}
 
 
@@ -177,6 +185,11 @@ static func from_meta(p: Object, d: Dictionary) -> void:
 	var hpicks: Variant = d.get("hold_pick", {})
 	if hpicks is Dictionary:
 		p.hold_pick = (hpicks as Dictionary).duplicate(true)
+	var st: Variant = d.get("starters", {})
+	if st is Dictionary:
+		p.starters = (st as Dictionary).duplicate(true)
+	else:
+		p.starters = {}
 	if str(p.quest_active.get("kind", "")) == "named":
 		App.quest_named_type = str(p.quest_active.get("type", ""))
 		App.quest_named_name = str(p.quest_active.get("nname", ""))
@@ -194,8 +207,9 @@ static func restock(p: Object) -> String:
 		msg += "A few coins. "
 	var need_p: int = int(App.bal.restock_potion)
 	var pot: Dictionary = p.slots.get("potion", {})
-	if need_p > 0 and (pot.is_empty() or int(pot.get("stack", 0)) < need_p):
-		p.slots["potion"] = p.make_potion(need_p)
+	var charges: int = int(pot.get("charges", pot.get("stack", 0)))
+	if need_p > 0 and (pot.is_empty() or charges < need_p):
+		p.slots["potion"] = p.make_potion(maxi(2, need_p))
 		msg += "Potions. "
 	var need_f: int = int(App.bal.restock_food)
 	var fd: Dictionary = p.slots.get("food", {})

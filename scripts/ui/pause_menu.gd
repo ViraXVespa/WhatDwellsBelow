@@ -66,7 +66,8 @@ var gear_sub_slot: String = ""
 var gear_x_hold: float = 0.0
 var gear_x_fired: bool = false
 var gear_tip: Label
-var gear_stats: Button
+var gear_stats: Control
+var gear_stats_title: Label
 var gear_hint: Label
 
 
@@ -170,6 +171,13 @@ func close_ui() -> void:
 	App.wake_web_pad()
 
 
+func _wipe(n: Node) -> void:
+	while n.get_child_count() > 0:
+		var c: Node = n.get_child(0)
+		n.remove_child(c)
+		c.free()
+
+
 func _rebuild() -> void:
 	_hide_tip()
 	gear_sub = false
@@ -177,10 +185,8 @@ func _rebuild() -> void:
 	var old: Node = get_node_or_null("gear_sub_panel")
 	if old:
 		old.queue_free()
-	for c: Node in tabs.get_children():
-		c.queue_free()
-	for c2: Node in box.get_children():
-		c2.queue_free()
+	_wipe(tabs)
+	_wipe(box)
 	focus_btn = null
 	status = null
 	inv_detail = null
@@ -190,6 +196,7 @@ func _rebuild() -> void:
 	inv_btn_drop = null
 	gear_tip = null
 	gear_stats = null
+	gear_stats_title = null
 	gear_hint = null
 	var names: PackedStringArray = PackedStringArray(["Inventory", "Skills", "System"])
 	for i: int in 3:
@@ -217,13 +224,15 @@ func _rebuild() -> void:
 func _focus() -> void:
 	if tab == 0:
 		var hit: Control = _inv_find_sel()
-		if hit:
+		if hit and not hit.is_queued_for_deletion():
 			hit.grab_focus()
 			return
-	if focus_btn:
+	if focus_btn and not focus_btn.is_queued_for_deletion():
 		focus_btn.grab_focus()
 		return
 	for n: Node in find_children("*", "Button", true, false):
+		if n.is_queued_for_deletion():
+			continue
 		(n as Button).grab_focus()
 		return
 
