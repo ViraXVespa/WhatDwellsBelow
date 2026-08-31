@@ -60,6 +60,141 @@ static func _plain_lab(t: String, size: int, col: Color) -> Label:
 	return l
 
 
+static func _row_lab(t: String, size: int, col: Color) -> Label:
+	var l := _plain_lab(t, size, col)
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	l.custom_minimum_size = Vector2(0, 44)
+	return l
+
+
+static func _meta_ctrl(ui: CanvasLayer, key: String) -> Control:
+	if not ui.has_meta(key):
+		return null
+	var n: Variant = ui.get_meta(key)
+	return n if n is Control else null
+
+
+static func _slot_ctrl(ui: CanvasLayer, slot: String) -> Control:
+	if ui.box == null:
+		return null
+	var want := "slot:" + slot
+	for n: Node in ui.box.find_children("*", "Control", true, false):
+		if n.is_queued_for_deletion():
+			continue
+		if str(n.get_meta("inv_key", "")) == want:
+			return n as Control
+	return null
+
+
+static func _nb(from: Control, dir: String, to: Control) -> void:
+	if from == null:
+		return
+	var p := NodePath()
+	if to != null and is_instance_valid(to) and to.focus_mode != Control.FOCUS_NONE:
+		p = from.get_path_to(to)
+	match dir:
+		"l":
+			from.focus_neighbor_left = p
+		"r":
+			from.focus_neighbor_right = p
+		"u":
+			from.focus_neighbor_top = p
+		"d":
+			from.focus_neighbor_bottom = p
+
+
+static func _live_step(minus: Control, plus: Control, prefer_plus: bool) -> Control:
+	if prefer_plus:
+		if plus != null and plus.focus_mode != Control.FOCUS_NONE:
+			return plus
+		if minus != null and minus.focus_mode != Control.FOCUS_NONE:
+			return minus
+	else:
+		if minus != null and minus.focus_mode != Control.FOCUS_NONE:
+			return minus
+		if plus != null and plus.focus_mode != Control.FOCUS_NONE:
+			return plus
+	return null
+
+
+static func _wire_floor_focus(ui: CanvasLayer) -> void:
+	if not is_loadout(ui):
+		return
+	var minus := _meta_ctrl(ui, "loadout_floor_minus")
+	var plus := _meta_ctrl(ui, "loadout_floor_plus")
+	var enter := _meta_ctrl(ui, "loadout_enter")
+	var potion := _slot_ctrl(ui, "potion")
+	var legs := _slot_ctrl(ui, "legs")
+	var food := _slot_ctrl(ui, "food")
+	var left_step := _live_step(minus, plus, false)
+	var right_step := _live_step(minus, plus, true)
+	var any_step := right_step if right_step else left_step
+	_nb(potion, "d", left_step if left_step else enter)
+	_nb(legs, "d", right_step if right_step else enter)
+	_nb(food, "d", right_step if right_step else enter)
+	if minus:
+		_nb(minus, "u", potion if potion else legs)
+		_nb(minus, "d", enter)
+		_nb(minus, "r", plus if plus and plus.focus_mode != Control.FOCUS_NONE else enter)
+		_nb(minus, "l", potion)
+	if plus:
+		_nb(plus, "u", legs if legs else food)
+		_nb(plus, "d", enter)
+		_nb(plus, "l", minus if minus and minus.focus_mode != Control.FOCUS_NONE else (legs if legs else potion))
+		_nb(plus, "r", enter)
+	if enter:
+		_nb(enter, "u", any_step if any_step else legs)
+
+
+static func _arm_floor_btn(b: Control, off: bool) -> void:
+	if b == null:
+		return
+	if b is Button:
+		(b as Button).disabled = off
+	b.focus_mode = Control.FOCUS_NONE if off else Control.FOCUS_ALL
+
+
+static func _restore_floor_focus(ui: CanvasLayer, was: Control) -> void:
+	var minus := _meta_ctrl(ui, "loadout_floor_minus")
+	var plus := _meta_ctrl(ui, "loadout_floor_plus")
+	var enter := _meta_ctrl(ui, "loadout_enter")
+	if was != minus and was != plus:
+		return
+	var pick: Control = null
+	if was == plus:
+		pick = minus if minus and minus.focus_mode != Control.FOCUS_NONE else enter
+	else:
+		pick = plus if plus and plus.focus_mode != Control.FOCUS_NONE else enter
+	if pick and is_instance_valid(pick):
+		pick.grab_focus()
+
+
+static func _sync_floor_row(ui: CanvasLayer) -> void:
+	if not is_loadout(ui):
+		return
+	var f := int(ui.loadout_floor)
+	var deep := int(App.prog.deepest)
+	if ui.has_meta("loadout_floor_lab"):
+		var nlab: Variant = ui.get_meta("loadout_floor_lab")
+		if nlab is Label:
+			nlab.text = str(f)
+	if ui.has_meta("loadout_deep_lab"):
+		var dlab: Variant = ui.get_meta("loadout_deep_lab")
+		if dlab is Label:
+			dlab.text = "(Deepest floor: %d)" % deep
+	var minus := _meta_ctrl(ui, "loadout_floor_minus")
+	var plus := _meta_ctrl(ui, "loadout_floor_plus")
+	var vp := ui.get_viewport()
+	var was: Control = vp.gui_get_focus_owner() if vp else null
+	_arm_floor_btn(minus, f <= 1)
+	_arm_floor_btn(plus, f >= deep)
+	_wire_floor_focus(ui)
+	_restore_floor_focus(ui, was)
+
+
 static func _arm_tip(ui: CanvasLayer) -> void:
 	_flag(ui, "gear_tip_ready", true)
 
@@ -133,8 +268,8 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 		title_col = Color(0.6, 0.9, 1.0)
 	ui.box.add_child(ThemeS.lab(title, 28, title_col))
 	if mode == "loadout":
-		ui.box.add_child(ThemeS.lab("Choose holds or stash gear. Confirm enter twice. Only floors you have reached.", 16, Color(0.82, 0.76, 0.66)))
-		ui.status = ThemeS.lab("Weapon %s   Tool %s   Floor %d / deepest %d" % [str(ui.loadout_wpn), str(ui.loadout_tool), int(ui.loadout_floor), App.prog.deepest], 20, Color(0.95, 0.8, 0.45))
+		ui.box.add_child(ThemeS.lab("Choose holds or stash gear. Only floors you have reached.", 16, Color(0.82, 0.76, 0.66)))
+		ui.status = ThemeS.lab("", 16, Color(0.78, 0.74, 0.66))
 		ui.box.add_child(ui.status)
 	else:
 		ui.box.add_child(ThemeS.lab("Carried  %dg   %d ore   %d wood   bag %d/%d" % [App.gold, App.ore, App.wood, App.prog.bag_count(), int(App.bal.bag_cap)], 18, Color(0.95, 0.8, 0.45)))
@@ -226,24 +361,28 @@ static func stats_card(ui: CanvasLayer) -> PanelContainer:
 	panel.custom_minimum_size = Vector2(440, 250)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	panel.focus_mode = Control.FOCUS_ALL
-	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.focus_mode = Control.FOCUS_NONE
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.12, 0.1, 0.08), Color(0.45, 0.34, 0.18)))
-	panel.set_meta("inv_key", "stats")
 	var vb := VBoxContainer.new()
+	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vb.add_theme_constant_override("separation", 8)
 	panel.add_child(vb)
 	var head := HBoxContainer.new()
+	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	head.add_theme_constant_override("separation", 12)
 	head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var left := _plain_lab("Q  ·  LT", 16, Color(0.72, 0.66, 0.52))
+	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	left.custom_minimum_size = Vector2(84, 24)
 	left.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var mid := _plain_lab("", 20, Color(1, 0.92, 0.55))
+	mid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mid.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	mid.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var right := _plain_lab("RT  ·  E", 16, Color(0.72, 0.66, 0.52))
+	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	right.custom_minimum_size = Vector2(84, 24)
 	right.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	right.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -252,43 +391,43 @@ static func stats_card(ui: CanvasLayer) -> PanelContainer:
 	head.add_child(right)
 	vb.add_child(head)
 	var body := _plain_lab("", 16, Color(0.9, 0.84, 0.7))
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vb.add_child(body)
 	ui.gear_stats_title = mid
 	ui.gear_stats = body
-	panel.focus_entered.connect(func():
-		if _on(ui, "gear_sub"):
-			return
-		ui.inv_sel = "stats"
-		panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.16, 0.13, 0.09), Color(0.95, 0.78, 0.35)))
-		hide_tip(ui)
-	)
-	panel.focus_exited.connect(func():
-		panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.12, 0.1, 0.08), Color(0.45, 0.34, 0.18)))
-	)
-	panel.gui_input.connect(func(event: InputEvent):
-		if _on(ui, "gear_sub"):
-			return
-		if event is InputEventMouseButton:
-			return
-		if event.is_action_pressed("ui_accept") or event.is_action_pressed("interact"):
-			ui.inv_sel = "stats"
-			Act.cycle_stats(ui, 1)
-			panel.accept_event()
-	)
 	return panel
 
 
 static func loadout_footer(ui: CanvasLayer) -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
-	row.add_child(ThemeS.btn("Character: %s" % App.character_type, func(): ui._confirm(func(): Act.toggle_char(ui), "char")))
-	row.add_child(ThemeS.btn("Floor −", func(): Act.floor_step(ui, -1)))
-	row.add_child(ThemeS.btn("Floor +", func(): Act.floor_step(ui, 1)))
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	var flab := _row_lab("Floor:", 20, Color(0.92, 0.84, 0.62))
+	flab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	row.add_child(flab)
+	var minus := ThemeS.btn("−", func(): Act.floor_step(ui, -1))
+	row.add_child(minus)
+	var nlab := _row_lab(str(int(ui.loadout_floor)), 22, Color(0.95, 0.82, 0.5))
+	nlab.custom_minimum_size = Vector2(48, 44)
+	row.add_child(nlab)
+	var plus := ThemeS.btn("+", func(): Act.floor_step(ui, 1))
+	row.add_child(plus)
+	var dlab := _row_lab("(Deepest floor: %d)" % int(App.prog.deepest), 20, Color(0.82, 0.76, 0.66))
+	dlab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	row.add_child(dlab)
+	var enter := ThemeS.btn("Enter dungeon", func(): Act.enter(ui))
+	ui.set_meta("loadout_floor_lab", nlab)
+	ui.set_meta("loadout_deep_lab", dlab)
+	ui.set_meta("loadout_floor_minus", minus)
+	ui.set_meta("loadout_floor_plus", plus)
+	ui.set_meta("loadout_enter", enter)
 	ui.box.add_child(row)
-	ui.box.add_child(ThemeS.btn("Enter dungeon  (confirm)", func(): ui._confirm(func(): Act.enter(ui), "enter")))
+	ui.box.add_child(enter)
+	_sync_floor_row(ui)
 
 
 static func bag_grid(ui: CanvasLayer) -> void:
@@ -476,8 +615,7 @@ static func refresh(ui: CanvasLayer) -> void:
 		ui.gear_stats.text = Text.stats_body(ui)
 	if ui.get("gear_hint") != null and ui.gear_hint:
 		ui.gear_hint.text = Text.hint_line(ui)
-	if is_loadout(ui) and ui.status:
-		ui.status.text = "Weapon %s   Tool %s   Floor %d / deepest %d" % [str(ui.loadout_wpn), str(ui.loadout_tool), int(ui.loadout_floor), App.prog.deepest]
+	_sync_floor_row(ui)
 	if _on(ui, "gear_tip_ready") or _on(ui, "gear_hover"):
 		place_tip(ui)
 	else:
