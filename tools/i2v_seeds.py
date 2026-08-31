@@ -31,11 +31,16 @@ Keep the same overall character design, face, hair, armor, green scarf, proporti
 
 Locked camera, no pan, no tilt, no zoom, no rotation. Character stays the same scale and stays inset from every edge. Feet stay on the same baseline.
 
-Solid flat pure magenta #FF00FF background only. No ground plane, no floor, no shadow detached from the feet, no particles, no debris, no outline glow, no extra pixels outside the character.
+Solid flat pure magenta #FF00FF background only. No ground plane, no floor, no detached shadow, no particles, no debris, no outline glow, no extra pixels outside the character.
 
 Face stays fully visible on every frame: both eyes, brows, nose, mouth, and hairline. No blacked-out face, no dark smears over the head, no missing facial features, no face blur, no censorship bars, no face restoration, no photoreal skin.
 
-Crisp pixel art with large visible pixels. No film grain, no compression noise, no blur, no anti-aliasing, no photographic shading, no bloom, no new light source, no color grading, no saturation shift. Preserve the exact colors from the first frame.
+LOOK LOCK (do not break):
+- Keep the exact lighting of the first frame. Flat even sprite lighting only.
+- Do not add lights, rim light, backlight, point lights, bounce light, or a new key/fill.
+- Do not add shading, ambient occlusion, bloom, glow, specular pop, or photographic rendering.
+- Do not add filters or post: no color grade, no saturation/contrast/exposure change, no LUT, no vignette, no sharpen, no blur, no depth of field, no chromatic aberration, no film grain, no compression noise, no anti-aliasing.
+- Do not smooth or upsample-redraw the pixels. Keep large visible square pixels and the first-frame colors.
 
 Limited palette including: {palette}
 
