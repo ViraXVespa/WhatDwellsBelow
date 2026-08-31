@@ -25,26 +25,51 @@ BODY_CELLS = (
     "down_right",
 )
 
-PROMPT = """2D game sprite sheet. In-place {action}, facing {facing}. The engine moves and lights this later.
+PROMPT = """Generate a video. Image-to-video from this still. Do not output a still image. Length at least ten seconds.
 
-Same character as frame 1 on every frame: face, hair, green scarf, armor, palette, pixel size. Same body proportions, limb length, head size, and scale. No morph, stretch, squash, extra limbs, or redraw.
+2D game sprite. In-place {action}, facing {facing}. Engine moves and lights this later.
 
-Locked ortho camera. No pan, zoom, tilt, or perspective change. Same footprint and foot baseline. Flat #FF00FF only. No ground or extra pixels.
+Keep this character: face, hair, green scarf, armor, pixel look. Overall proportions stay in the same ballpark as the still. No extra limbs and no redesign.
 
-Freeze frame-1 lighting. No new light, shade, bloom, grade, or filters.
+Joints should bend. Cloth and scarf can move. Volume in the limbs. Not paper cutouts sliding on a hinge.
 
-Game-style cycle: readable, slightly exaggerated. Repeat it three times at a steady pace. Clean loop back to frame 1.
+Locked camera. No pan, zoom, or perspective change. Flat #FF00FF only.
+
+Keep the still's colors and the still's existing form shading. Do not add lights, grades, or filters. Do not flatten the figure to a short color list.
+
+Do not freeze on the still. After a short idle, move. Play the full sequence below more than once. Seamless loop. Do not aim at a frame count.
+
+Stay in the same vertical slot and on the same foot baseline so the game can slide this sprite. Small step bounce is fine. Do not drift up, down, or off-center.
+
+Readable game cycle, a little exaggeration.
 
 {motion}
-Palette: {palette}
 """
 
 MOTION = {
-    "idle": "Small breath and weight shift only.",
-    "walk": "Treadmill walk: contact, down, passing, up. Opposite arm and leg. Torso stays this facing.",
-    "attack": "One swing, recover to frame 1.",
-    "special": "One special strike, recover to frame 1.",
-    "gather": "In-place gather swings, recover to frame 1.",
+    "idle": "Easy breath and weight shift only. Stay on the still pose. Loop.",
+    "walk": (
+        "Full in-place walk sequence, then repeat it seamlessly for the whole clip. "
+        "Three passings per run. A passing is both feet crossing in the center of the body. "
+        "1) Idle: standing pose from the still, weight even, both feet planted. "
+        "2) Idle into walk: weight shifts, first foot lifts. Do not skip this. "
+        "First run leads with the left foot. Next run leads with the right foot. Alternate every run. "
+        "3) Passing 1: swinging foot goes through the center; feet cross; opposite arm comes forward. "
+        "4) Plant: that swinging foot goes down. Weight on the planted foot. Rear foot leaves. "
+        "5) Passing 2: feet cross in the center again, opposite direction from passing 1. Opposite arm and opposite leg. "
+        "6) Plant: the other foot goes down. "
+        "7) Passing 3: feet cross in the center a third time, opposite direction from passing 2. "
+        "8) Walk into idle: stride shortens, last foot plants, weight evens out. "
+        "This settle uses the opposite leading leg from the idle-into-walk that started this run. "
+        "If the run led with the left foot, stop from a right-foot lead. If it led with the right foot, stop from a left-foot lead. "
+        "Both stop-leads must appear in the clip so a game stop can use either foot. "
+        "9) Idle: back to the still pose, both feet planted. "
+        "Then repeat from idle with no pause, no freeze, and the other lead foot. "
+        "If the clip does not show all three center-crossings, both plants, and walk-to-idle on both leads, it is incomplete."
+    ),
+    "attack": "One swing with follow-through, then recover to the still.",
+    "special": "One special strike, then recover to the still.",
+    "gather": "In-place gather swings, then recover to the still.",
     "death": "Short collapse, then hold.",
     "dispel": "Short vanish to magenta.",
 }
@@ -82,7 +107,6 @@ def build_prompt(facing: str, action: str, colors: list[str]) -> str:
     return PROMPT.format(
         action=key,
         facing=facing_label(facing),
-        palette=", ".join(colors) if colors else "frame 1",
         motion=MOTION[key],
     )
 
@@ -101,13 +125,13 @@ def export_cell(src: Path, dest_dir: Path, factor: int, facing: str, action: str
     plate = scale_nn(raw, factor)
     path = dest_dir / f"seed_i2v_{facing}_x{factor}.png"
     plate.save(path)
-    colors = write_palette(
+    write_palette(
         raw,
         dest_dir,
         {"source": str(src), "scale": factor, "src_size": list(raw.size), "out_size": list(plate.size)},
     )
     (dest_dir / f"prompt_{facing}.txt").write_text(
-        build_prompt(facing, action, colors),
+        build_prompt(facing, action, []),
         encoding="utf-8",
     )
     return {
@@ -123,7 +147,7 @@ def export_bible(src: Path, dest_dir: Path, factor: int, action: str) -> dict:
     dest_dir.mkdir(parents=True, exist_ok=True)
     raw = Image.open(src).convert("RGBA")
     named = dict(zip(sp.CELL_NAMES, sp.split_equal_3x3(raw)))
-    colors = write_palette(
+    write_palette(
         raw,
         dest_dir,
         {"source": str(src), "scale": factor, "bible_size": list(raw.size)},
@@ -135,7 +159,7 @@ def export_bible(src: Path, dest_dir: Path, factor: int, action: str) -> dict:
         plate.save(path)
         out[name] = {"path": str(path), "src_size": list(named[name].size), "out_size": list(plate.size)}
     (dest_dir / "prompt_walk_down.txt").write_text(
-        build_prompt("down", action, colors),
+        build_prompt("down", action, []),
         encoding="utf-8",
     )
     return out
@@ -161,8 +185,7 @@ def main() -> None:
         written = export_bible(args.bible, args.dest, args.scale, args.action)
     print(json.dumps(written, indent=2))
     print()
-    colors = json.loads((args.dest / "palette.json").read_text(encoding="utf-8"))["hex"]
-    print(build_prompt(args.facing, args.action, colors))
+    print(build_prompt(args.facing, args.action, []))
 
 
 if __name__ == "__main__":
