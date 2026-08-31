@@ -9,6 +9,7 @@ const PlayerAnim := preload("res://scripts/world/player_anim.gd")
 const PlayerHit := preload("res://scripts/combat/player_hit.gd")
 const PlayerLock := preload("res://scripts/world/player_lock.gd")
 const PlayerAct := preload("res://scripts/world/player_act.gd")
+const PlayerCombat := preload("res://scripts/world/player_combat.gd")
 
 const ATK_NONE := 0
 const ATK_BASIC := 1
@@ -282,112 +283,27 @@ func _lock_and_aim(move: Vector2, delta: float) -> void:
 
 
 func _try_dash(move: Vector2) -> void:
-	if App.ui_open or interact_lock > 0.0:
-		return
-	if dash_t > 0.0:
-		return
-	if not (_ai_just("dash") or App.pad_just("dash")):
-		return
-	if dash_cd > 0.0:
-		return
-	if move.length() > 0.2:
-		dash_dir = move.normalized()
-	elif aim_dir.length() > 0.2:
-		dash_dir = aim_dir
-	dash_t = App.bal.dash_duration
-	dash_cd = App.bal.dash_cooldown
-	iframe = App.bal.dash_duration
-	App.sfx("dash")
-	if App.tel:
-		App.tel.note_dash()
+	PlayerCombat.try_dash(self, move)
 
 
 func _try_special() -> void:
-	if App.ui_open:
-		special_held = _ai_held("special") or App.pad_held("special")
-		return
-	var held := _ai_held("special") or App.pad_held("special")
-	var pressed := held and not special_held
-	special_held = held
-	if not pressed:
-		return
-	if atk_state != ATK_NONE or dash_t > 0.0:
-		return
-	atk_state = ATK_WIND
-	atk_t = 0.0
-	hit_done = false
-	spec_point = _special_point()
-	_draw_special_tele(false)
-	if App.tel:
-		App.tel.note_special(false)
+	PlayerCombat.try_special(self)
 
 
 func _try_basic() -> void:
-	if App.ui_open:
-		return
-	if atk_state != ATK_NONE or dash_t > 0.0:
-		return
-	if not (_ai_held("attack") or App.pad_held("attack")):
-		return
-	atk_state = ATK_BASIC
-	atk_t = 0.0
-	hit_done = false
-	_draw_basic_tele(false)
+	PlayerCombat.try_basic(self)
 
 
 func _advance_attack(delta: float) -> void:
-	if atk_state == ATK_NONE:
-		if telegraph:
-			telegraph.hide_now()
-		return
-	atk_t += delta
-	if atk_state == ATK_BASIC:
-		var dur := _basic_duration()
-		var hit_at := dur * _hit_norm()
-		if not hit_done and atk_t >= hit_at:
-			hit_done = true
-			_draw_basic_tele(true)
-			_apply_basic()
-		if atk_t >= dur:
-			atk_state = ATK_NONE
-			if telegraph:
-				telegraph.hide_now()
-		return
-	if atk_state == ATK_WIND:
-		_draw_special_tele(false)
-		if atk_t >= App.bal.special_windup:
-			atk_state = ATK_ACT
-			atk_t = 0.0
-			_draw_special_tele(true)
-			_apply_special()
-		return
-	if atk_state == ATK_ACT:
-		if atk_t >= 0.16:
-			atk_state = ATK_REC
-			atk_t = 0.0
-			if telegraph:
-				telegraph.hide_now()
-		return
-	if atk_state == ATK_REC:
-		if atk_t >= App.bal.special_recovery:
-			atk_state = ATK_NONE
+	PlayerCombat.advance_attack(self, delta)
 
 
 func _basic_duration() -> float:
-	var rate: float = App.bal.axe_rate
-	if App.weapon == "staff":
-		rate = App.bal.staff_rate
-	elif App.weapon == "longbow":
-		rate = App.bal.bow_rate
-	return 1.0 / maxf(0.2, rate)
+	return PlayerCombat.basic_duration()
 
 
 func _hit_norm() -> float:
-	if App.weapon == "staff":
-		return App.bal.staff_hit_norm
-	if App.weapon == "longbow":
-		return App.bal.bow_hit_norm
-	return App.bal.axe_hit_norm
+	return PlayerCombat.hit_norm()
 
 
 func _draw_basic_tele(active: bool) -> void:
@@ -415,35 +331,15 @@ func _trail(delta: float) -> void:
 
 
 func _update_aim_line() -> void:
-	if aim_line == null:
-		return
-	var on: bool = App.in_dungeon and App.bal.aim_line_on
-	var length: float = App.bal.aim_line_length
-	if App.bal.aim_line_use_weapon_range:
-		length = _weapon_reach()
-	aim_line.update_line(global_position, aim_dir, length, App.bal.aim_line_width, App.bal.aim_line_opacity, on)
+	PlayerCombat.update_aim_line(self)
 
 
 func _weapon_reach() -> float:
-	if App.weapon == "great_axe":
-		return maxf(App.bal.axe_range, App.bal.slam_radius)
-	if App.weapon == "staff":
-		return maxf(App.bal.staff_range, App.bal.staff_special_radius)
-	return maxf(App.bal.bow_range, App.bal.bow_special_range)
+	return PlayerCombat.weapon_reach()
 
 
 func _update_aura(delta: float) -> void:
-	if aura == null:
-		return
-	var a := 0.55 if App.adrenaline else 0.0
-	aura.modulate.a = move_toward(aura.modulate.a, a, delta * 3.0)
-	aura.visible = aura.modulate.a > 0.02
-	if aura.visible:
-		aura.rotate_y(delta * 2.4)
-		if body:
-			aura.texture = body.texture
-			aura.pixel_size = body.pixel_size * 1.15
-			aura.position.y = body.position.y
+	PlayerCombat.update_aura(self, delta)
 
 
 func _pose_tex(key: String) -> Texture2D:

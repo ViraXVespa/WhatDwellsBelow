@@ -5,6 +5,7 @@ const CatalogS := preload("res://scripts/data/catalog.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const PauseInv := preload("res://scripts/ui/pause_inv.gd")
 const PauseSkills := preload("res://scripts/ui/pause_skills.gd")
+const PauseSys := preload("res://scripts/ui/pause_system.gd")
 
 const SKILL_NAMES := {
 	"axe": "Great Axe",
@@ -282,143 +283,19 @@ func _paint_tip() -> void:
 
 
 func _system() -> void:
-	if sys_page == "rebind":
-		_rebind()
-		return
-	box.add_child(_cap("System", 24, Color(0.95, 0.8, 0.45)))
-	var char_btn: Button = ThemeS.btn("Character: %s" % App.character_type, func():
-		var nxt: String = "female" if App.character_type == "male" else "male"
-		if App.has_method("set_character"):
-			App.set_character(nxt)
-		else:
-			App.character_type = nxt
-		App.save_now()
-		_rebuild()
-	)
-	box.add_child(char_btn)
-	box.add_child(_slider_row("Master volume", App.vol_master, 0.0, 1.0, 0.01, func(v: float):
-		App.set_volume("master", v)
-	))
-	box.add_child(_slider_row("Music volume", App.vol_music, 0.0, 1.0, 0.01, func(v: float):
-		App.set_volume("music", v)
-	))
-	box.add_child(_slider_row("SFX volume", App.vol_sfx, 0.0, 1.0, 0.01, func(v: float):
-		App.set_volume("sfx", v)
-	))
-	box.add_child(_slider_row("Camera zoom", App.cam_zoom, T.ZOOM_MIN, T.ZOOM_MAX, 0.05, func(v: float):
-		App.cam_zoom = v
-	))
-	box.add_child(_slider_row("HUD scale", App.hud_scale, 0.7, 1.4, 0.05, func(v: float):
-		App.hud_scale = v
-	))
-	box.add_child(ThemeS.btn("Aim line: %s" % ("On" if App.bal.aim_line_on else "Off"), func():
-		App.bal.aim_line_on = not App.bal.aim_line_on
-		App.save_now()
-		_rebuild()
-	))
-	box.add_child(_slider_row("Aim line opacity", App.bal.aim_line_opacity, 0.05, 1.0, 0.05, func(v: float):
-		App.bal.aim_line_opacity = v
-	))
-	if App.in_dungeon:
-		box.add_child(ThemeS.btn("Dispel Avatar", func():
-			_confirm(func():
-				close_ui()
-				App.end_run("dispel")
-			, "dispel")
-		))
-	box.add_child(ThemeS.btn("Archives", func():
-		if App.archives_ui and App.archives_ui.has_method("show_browser"):
-			App.archives_ui.show_browser()
-	))
-	box.add_child(ThemeS.btn("Rebind controls", func():
-		sys_page = "rebind"
-		_rebuild()
-	))
-	if App.has_method("reset_binds"):
-		box.add_child(ThemeS.btn("Reset binds", func():
-			App.reset_binds()
-			App.save_now()
-			_st("Binds reset.")
-		))
-	box.add_child(ThemeS.btn("Patreon", func():
-		OS.shell_open("https://www.patreon.com/cw/ViraXVespa")
-	))
-	box.add_child(ThemeS.btn("Delete Save Data", func():
-		_confirm(func():
-			App.wipe_save()
-			close_ui()
-			App.go_title()
-		, "wipe")
-	))
-	status = _cap("A again to confirm a marked action. B cancels.", 16, Color(0.78, 0.74, 0.66))
-	box.add_child(status)
-	box.add_child(ThemeS.btn("Close  (B)", close_ui))
+	PauseSys.build(self)
 
 
 func _rebind() -> void:
-	box.add_child(_cap("Rebind controls", 24, Color(0.95, 0.8, 0.45)))
-	box.add_child(_cap("Highlight an action, press A, then the new key or button.", 18, Color(0.82, 0.76, 0.66)))
-	var binds: Array = []
-	if App.has_method("collect_binds"):
-		binds = App.collect_binds()
-	if binds.is_empty():
-		box.add_child(_cap("No bind list exposed.", 18, Color(0.7, 0.66, 0.6)))
-	else:
-		for raw: Variant in binds:
-			if raw is Dictionary:
-				var d: Dictionary = raw
-				var act: String = str(d.get("action", d.get("id", "")))
-				var lab: String = str(d.get("label", act))
-				var cur: String = str(d.get("bind", d.get("key", "")))
-				var a2: String = act
-				box.add_child(ThemeS.btn("%s   [%s]" % [lab, cur], func():
-					rebind_action = a2
-					_st("Press a key or button for %s." % lab)
-				))
-	if App.has_method("reset_binds"):
-		box.add_child(ThemeS.btn("Reset binds", func():
-			App.reset_binds()
-			App.save_now()
-			_rebuild()
-		))
-	box.add_child(ThemeS.btn("Back", func():
-		sys_page = "main"
-		rebind_action = ""
-		_rebuild()
-	))
-	status = _cap("", 16, Color(0.78, 0.74, 0.66))
-	box.add_child(status)
+	PauseSys.rebind(self)
 
 
 func _slider_row(title: String, value: float, lo: float, hi: float, step: float, on_change: Callable) -> VBoxContainer:
-	var wrap: VBoxContainer = VBoxContainer.new()
-	wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrap.custom_minimum_size = Vector2(720, 0)
-	wrap.add_theme_constant_override("separation", 4)
-	wrap.add_child(_cap(title, 20, Color(0.9, 0.84, 0.7)))
-	var sl: HSlider = HSlider.new()
-	sl.min_value = lo
-	sl.max_value = hi
-	sl.step = step
-	sl.value = value
-	sl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	sl.custom_minimum_size = Vector2(720, 28)
-	sl.focus_mode = Control.FOCUS_ALL
-	sl.value_changed.connect(on_change)
-	wrap.add_child(sl)
-	return wrap
+	return PauseSys.slider_row(self, title, value, lo, hi, step, on_change)
 
 
 func _confirm(fn: Callable, id: String = "anon") -> void:
-	if not pending or pending_id != id:
-		pending = true
-		pending_id = id
-		pending_fn = fn
-		_st("A again to confirm. B cancels.")
-		return
-	pending = false
-	pending_id = ""
-	fn.call()
+	PauseSys.confirm(self, fn, id)
 
 
 func _st(msg: String) -> void:

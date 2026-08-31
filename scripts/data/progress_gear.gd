@@ -1,100 +1,45 @@
 extends Object
 
-const CatalogS := preload("res://scripts/data/catalog.gd")
+const Make := preload("res://scripts/data/progress_make.gd")
 
 
-static func make_weapon(p, wpn: String, rarity: String) -> Dictionary:
-	var n := "Great Axe"
-	if wpn == "staff":
-		n = "Lightning Staff"
-	elif wpn == "longbow":
-		n = "Longbow"
-	var dmg := int(App.bal.gear_white_dmg)
-	if rarity == "green":
-		dmg = int(App.bal.gear_green_dmg)
-	elif rarity == "blue":
-		dmg = int(App.bal.gear_blue_dmg)
-	return item(p, "weapon", n, {"slot": "weapon", "weapon": wpn, "rarity": rarity, "dmg": dmg, "desc": "%s %s. +%d damage." % [rarity.capitalize(), n, dmg]})
+static func make_weapon(p: Object, wpn: String, rarity: String) -> Dictionary:
+	return Make.make_weapon(p, wpn, rarity)
 
 
-static func make_tool(p, kind: String) -> Dictionary:
-	var n := "Pickaxe" if kind == "pickaxe" else "Hatchet"
-	return item(p, "tool", n, {"slot": "tool", "tool": kind, "rarity": "white", "desc": "Run tool. Locked to %s." % kind})
+static func make_tool(p: Object, kind: String) -> Dictionary:
+	return Make.make_tool(p, kind)
 
 
-static func make_armor(p, slot: String, rarity: String) -> Dictionary:
-	var def := int(App.bal.gear_white_def)
-	var hp := int(App.bal.gear_white_hp)
-	if rarity == "green":
-		def = int(App.bal.gear_green_def)
-		hp = int(App.bal.gear_green_hp)
-	elif rarity == "blue":
-		def = int(App.bal.gear_blue_def)
-		hp = int(App.bal.gear_blue_hp)
-	return item(p, slot, "%s %s" % [rarity.capitalize(), slot.capitalize()], {"slot": slot, "rarity": rarity, "def": def, "hp": hp, "desc": "+%d def, +%d HP." % [def, hp]})
+static func make_armor(p: Object, slot: String, rarity: String) -> Dictionary:
+	return Make.make_armor(p, slot, rarity)
 
 
-static func make_potion(p, n: int) -> Dictionary:
-	return item(p, "potion", "Potion", {"slot": "potion", "stack": n, "desc": "Instant heal."})
+static func make_potion(p: Object, n: int) -> Dictionary:
+	return Make.make_potion(p, n)
 
 
-static func make_food(p, fid: String, n: int) -> Dictionary:
-	var nm := "Ration" if fid == "ration" else "Trail Bread"
-	return item(p, "food", nm, {"slot": "food", "food": fid, "stack": n, "desc": "Heal-over-time."})
+static func make_food(p: Object, fid: String, n: int) -> Dictionary:
+	return Make.make_food(p, fid, n)
 
 
-static func make_artifact(p, id: String) -> Dictionary:
-	var a: Dictionary = CatalogS.by_id(id)
-	if a.is_empty():
-		a = {"id": id, "name": id, "set": "", "desc": "A curious relic."}
-	return item(p, "artifact", str(a.name), {"id": id, "set": str(a.get("set", "")), "desc": str(a.get("desc", "A run-only relic.")), "extract": false})
+static func make_artifact(p: Object, id: String) -> Dictionary:
+	return Make.make_artifact(p, id)
 
 
-static func item(p, kind: String, name: String, extra: Dictionary) -> Dictionary:
-	var it := {
-		"uid": p.next_uid,
-		"id": kind + "_" + str(p.next_uid),
-		"name": name,
-		"kind": kind,
-		"slot": extra.get("slot", kind),
-		"weapon": extra.get("weapon", ""),
-		"tool": extra.get("tool", ""),
-		"food": extra.get("food", ""),
-		"set": extra.get("set", ""),
-		"rarity": extra.get("rarity", "white"),
-		"desc": extra.get("desc", ""),
-		"stack": extra.get("stack", 1),
-		"dmg": extra.get("dmg", 0),
-		"def": extra.get("def", 0),
-		"hp": extra.get("hp", 0),
-		"extract": extra.get("extract", kind != "artifact"),
-		"hold": false,
-	}
-	if extra.has("id"):
-		it.id = str(extra.id)
-	p.next_uid += 1
-	return it
+static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Dictionary:
+	return Make.item(p, kind, name, extra)
 
 
-static func starter(p, slot: String) -> Dictionary:
-	match slot:
-		"weapon":
-			return make_weapon(p, "great_axe", "white")
-		"tool":
-			return make_tool(p, p.tool_type)
-		"potion":
-			return make_potion(p, 3)
-		"food":
-			return make_food(p, "ration", 5)
-		_:
-			return {}
+static func starter(p: Object, slot: String) -> Dictionary:
+	return Make.starter(p, slot)
 
 
-static func bag_stack_index(p, it: Dictionary) -> int:
-	var k := str(it.get("kind", ""))
+static func bag_stack_index(p: Object, it: Dictionary) -> int:
+	var k: String = str(it.get("kind", ""))
 	if k != "potion" and k != "food":
 		return -1
-	for i in p.bag.size():
+	for i: int in p.bag.size():
 		var b: Dictionary = p.bag[i]
 		if str(b.get("kind", "")) != k:
 			continue
@@ -104,7 +49,7 @@ static func bag_stack_index(p, it: Dictionary) -> int:
 	return -1
 
 
-static func bag_can_accept(p, it: Dictionary) -> bool:
+static func bag_can_accept(p: Object, it: Dictionary) -> bool:
 	if it.is_empty():
 		return false
 	if bag_stack_index(p, it) >= 0:
@@ -112,13 +57,13 @@ static func bag_can_accept(p, it: Dictionary) -> bool:
 	return not p.bag_full()
 
 
-static func add_item(p, it: Dictionary) -> bool:
+static func add_item(p: Object, it: Dictionary) -> bool:
 	if it.is_empty():
 		return false
 	if str(it.kind) == "potion" or str(it.kind) == "food":
 		var slot_it: Dictionary = p.slots.get(str(it.slot), {})
 		if not slot_it.is_empty() and str(slot_it.get("food", "")) == str(it.get("food", "")) and str(it.kind) == "food":
-			var nxt := int(slot_it.stack) + int(it.stack)
+			var nxt: int = int(slot_it.stack) + int(it.stack)
 			if not App.in_dungeon:
 				nxt = mini(nxt, int(App.bal.food_bring_max))
 			slot_it.stack = nxt
@@ -131,13 +76,13 @@ static func add_item(p, it: Dictionary) -> bool:
 	return add_to_bag(p, it)
 
 
-static func add_to_bag(p, it: Dictionary) -> bool:
+static func add_to_bag(p: Object, it: Dictionary) -> bool:
 	if it.is_empty():
 		return false
-	var idx := bag_stack_index(p, it)
+	var idx: int = bag_stack_index(p, it)
 	if idx >= 0:
 		var b: Dictionary = p.bag[idx]
-		var nxt := int(b.get("stack", 1)) + int(it.get("stack", 1))
+		var nxt: int = int(b.get("stack", 1)) + int(it.get("stack", 1))
 		if str(it.kind) == "food" and not App.in_dungeon:
 			nxt = mini(nxt, int(App.bal.food_bring_max))
 		b.stack = nxt
@@ -153,8 +98,8 @@ static func add_to_bag(p, it: Dictionary) -> bool:
 	return true
 
 
-static func remove_uid(p, uid: int) -> Dictionary:
-	for i in p.bag.size():
+static func remove_uid(p: Object, uid: int) -> Dictionary:
+	for i: int in p.bag.size():
 		if int(p.bag[i].uid) == uid:
 			var it: Dictionary = p.bag[i]
 			p.bag.remove_at(i)
@@ -165,16 +110,16 @@ static func remove_uid(p, uid: int) -> Dictionary:
 	return {}
 
 
-static func equip_uid(p, uid: int) -> String:
-	var it := remove_uid(p, uid)
+static func equip_uid(p: Object, uid: int) -> String:
+	var it: Dictionary = remove_uid(p, uid)
 	if it.is_empty():
 		return "Gone."
-	var slot := str(it.get("slot", ""))
+	var slot: String = str(it.get("slot", ""))
 	if p.SLOTS.find(slot) < 0:
 		add_to_bag(p, it)
 		return "Can't equip that."
 	if slot == "tool":
-		var t := str(it.get("tool", ""))
+		var t: String = str(it.get("tool", ""))
 		if t != "" and t != p.tool_type:
 			add_to_bag(p, it)
 			return "Tool locked to %s this run." % p.tool_type
@@ -201,8 +146,8 @@ static func equip_uid(p, uid: int) -> String:
 	return "Equipped " + str(it.name)
 
 
-static func drop_uid(p, uid: int) -> String:
-	var it := remove_uid(p, uid)
+static func drop_uid(p: Object, uid: int) -> String:
+	var it: Dictionary = remove_uid(p, uid)
 	if it.is_empty():
 		return "Gone."
 	App.spawn_floor_item(it)
@@ -210,7 +155,7 @@ static func drop_uid(p, uid: int) -> String:
 	return "Dropped."
 
 
-static func unequip_slot(p, slot: String) -> String:
+static func unequip_slot(p: Object, slot: String) -> String:
 	if p.SLOTS.find(slot) < 0:
 		return "No slot."
 	var it: Dictionary = p.slots.get(slot, {})
@@ -232,7 +177,7 @@ static func unequip_slot(p, slot: String) -> String:
 	return "Unequipped " + str(it.name)
 
 
-static func fill_slot_after_remove(p, slot: String) -> void:
+static func fill_slot_after_remove(p: Object, slot: String) -> void:
 	if slot == "weapon":
 		p.slots["weapon"] = make_weapon(p, p.pick_weapon, "white")
 		App.weapon = str(p.slots.weapon.get("weapon", p.pick_weapon))
@@ -245,7 +190,7 @@ static func fill_slot_after_remove(p, slot: String) -> void:
 		p.slots[slot] = {}
 
 
-static func drop_slot(p, slot: String) -> String:
+static func drop_slot(p: Object, slot: String) -> String:
 	if p.SLOTS.find(slot) < 0:
 		return "No slot."
 	var it: Dictionary = p.slots.get(slot, {})
@@ -258,7 +203,7 @@ static func drop_slot(p, slot: String) -> String:
 	return "Dropped."
 
 
-static func take_slot(p, slot: String) -> Dictionary:
+static func take_slot(p: Object, slot: String) -> Dictionary:
 	if p.SLOTS.find(slot) < 0:
 		return {}
 	var it: Dictionary = p.slots.get(slot, {})
@@ -269,8 +214,8 @@ static func take_slot(p, slot: String) -> Dictionary:
 	return it
 
 
-static func drop_stash(p, uid: int) -> String:
-	for i in p.bank_items.size():
+static func drop_stash(p: Object, uid: int) -> String:
+	for i: int in p.bank_items.size():
 		if int(p.bank_items[i].uid) == uid:
 			var it: Dictionary = p.bank_items[i]
 			p.bank_items.remove_at(i)
@@ -279,7 +224,7 @@ static func drop_stash(p, uid: int) -> String:
 	return "Gone."
 
 
-static func give_or_drop(p, it: Dictionary, pos: Vector3) -> bool:
+static func give_or_drop(p: Object, it: Dictionary, pos: Vector3) -> bool:
 	if it.is_empty():
 		return false
 	if add_item(p, it):
@@ -288,9 +233,9 @@ static func give_or_drop(p, it: Dictionary, pos: Vector3) -> bool:
 	return false
 
 
-static func use_from_bag(p, uid: int) -> String:
+static func use_from_bag(p: Object, uid: int) -> String:
 	var it: Dictionary = {}
-	for b in p.bag:
+	for b: Variant in p.bag:
 		if int(b.uid) == uid:
 			it = b
 			break
@@ -303,7 +248,7 @@ static func use_from_bag(p, uid: int) -> String:
 	return equip_uid(p, uid)
 
 
-static func use_potion(p) -> String:
+static func use_potion(p: Object) -> String:
 	var it: Dictionary = p.slots.get("potion", {})
 	if it.is_empty() or int(it.get("stack", 0)) <= 0:
 		App.toast("No potion equipped.")
@@ -311,7 +256,7 @@ static func use_potion(p) -> String:
 	return drink(p, it, true)
 
 
-static func use_food(p) -> String:
+static func use_food(p: Object) -> String:
 	var it: Dictionary = p.slots.get("food", {})
 	if it.is_empty() or int(it.get("stack", 0)) <= 0:
 		App.toast("No food equipped.")
@@ -319,7 +264,7 @@ static func use_food(p) -> String:
 	return eat(p, it, true)
 
 
-static func drink(p, it: Dictionary, from_slot: bool) -> String:
+static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 	if p.potion_cd > 0.0:
 		App.toast("Potion cooling down.")
 		return "Not ready."
@@ -334,8 +279,8 @@ static func drink(p, it: Dictionary, from_slot: bool) -> String:
 	return "Potion."
 
 
-static func eat(p, it: Dictionary, from_slot: bool) -> String:
-	var fid := str(it.get("food", "ration"))
+static func eat(p: Object, it: Dictionary, from_slot: bool) -> String:
+	var fid: String = str(it.get("food", "ration"))
 	if p.food_t > 0.0 and fid == p.food_id:
 		App.toast("That food is already working.")
 		return "Already eating that."
@@ -350,7 +295,7 @@ static func eat(p, it: Dictionary, from_slot: bool) -> String:
 	return "Food."
 
 
-static func consume(p, it: Dictionary, from_slot: bool) -> void:
+static func consume(p: Object, it: Dictionary, from_slot: bool) -> void:
 	it.stack = int(it.stack) - 1
 	if from_slot:
 		if int(it.stack) <= 0:
@@ -361,13 +306,13 @@ static func consume(p, it: Dictionary, from_slot: bool) -> void:
 		if int(it.stack) <= 0:
 			remove_uid(p, int(it.uid))
 		else:
-			for i in p.bag.size():
+			for i: int in p.bag.size():
 				if int(p.bag[i].uid) == int(it.uid):
 					p.bag[i] = it
 					break
 
 
-static func tick_food(p, delta: float) -> void:
+static func tick_food(p: Object, delta: float) -> void:
 	p.potion_cd = maxf(0.0, p.potion_cd - delta)
 	if p.food_t <= 0.0:
 		return
