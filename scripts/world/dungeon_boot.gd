@@ -10,10 +10,12 @@ const UiS := preload("res://scripts/ui/progress_ui.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const DungeonProps := preload("res://scripts/world/dungeon_props.gd")
+const Board := preload("res://scripts/ui/gear_board.gd")
 
 
 static func ready_floor(host: Node) -> void:
 	App.in_dungeon = true
+	Board.apply_pending()
 	if App.present and App.present.has_method("hide_overlay"):
 		App.present.hide_overlay()
 	host.data = Gen.generate(App.floor_n, App.run_seed, App.bal)

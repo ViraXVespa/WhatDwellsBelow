@@ -2,6 +2,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const CatalogS := preload("res://scripts/data/catalog.gd")
+const Board := preload("res://scripts/ui/gear_board.gd")
 
 
 static func sets_blurb() -> String:
@@ -16,50 +17,8 @@ static func sets_blurb() -> String:
 
 static func rebuild_inv(ui) -> void:
 	ui._clear()
-	ui.box.add_child(ThemeS.lab("Inventory", 32, Color(0.95, 0.82, 0.5)))
-	ui.box.add_child(ThemeS.lab("Bag %d/%d   Gold %d   Ore %d   Wood %d   Root %d" % [App.prog.bag_count(), int(App.bal.bag_cap), App.gold, App.ore, App.wood, App.prog.root], 20, Color(0.88, 0.82, 0.7)))
-	ui.box.add_child(ThemeS.lab(sets_blurb(), 18, Color(0.85, 0.72, 0.45)))
-	ui.status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
-	ui.box.add_child(ui.status)
-	for s in App.prog.SLOTS:
-		var eq_it: Dictionary = App.prog.slots.get(s, {})
-		var slot := str(s)
-		var nm := str(eq_it.get("name", "—"))
-		var eq_row := HBoxContainer.new()
-		eq_row.add_theme_constant_override("separation", 8)
-		var eq_lab := ThemeS.btn("%s: %s" % [slot, nm], func(): ui._st(nm))
-		eq_lab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		eq_row.add_child(eq_lab)
-		if not eq_it.is_empty():
-			eq_row.add_child(ThemeS.btn("Unequip", func(): ui._st(App.prog.unequip_slot(slot)); ui._rebuild_inv(); ui._show()))
-			eq_row.add_child(ThemeS.btn("Drop", func(): ui._confirm(func(): ui._st(App.prog.drop_slot(slot)); ui._rebuild_inv(); ui._show(), "drop_slot_" + slot)))
-		ui.box.add_child(eq_row)
-		if ui.focus_btn == null:
-			ui.focus_btn = eq_lab
-	if ui.focus_btn == null:
-		ui.focus_btn = ThemeS.btn("Use potion  (D-pad Up)", func(): ui._st(App.prog.use_potion()))
-		ui.box.add_child(ui.focus_btn)
-	else:
-		ui.box.add_child(ThemeS.btn("Use potion  (D-pad Up)", func(): ui._st(App.prog.use_potion())))
-	ui.box.add_child(ThemeS.btn("Use food  (D-pad Left)", func(): ui._st(App.prog.use_food())))
-	for bag_it in App.prog.bag:
-		var uid := int(bag_it.uid)
-		var line := "%s  ·  %s" % [bag_it.name, bag_it.desc]
-		if str(bag_it.kind) == "artifact":
-			line += "\n" + App.prog.set_bonus_text(str(bag_it.set))
-		var bag_row := HBoxContainer.new()
-		bag_row.add_theme_constant_override("separation", 8)
-		var use_b := ThemeS.btn(line, func(): ui._inv_act(uid))
-		use_b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		bag_row.add_child(use_b)
-		bag_row.add_child(ThemeS.btn("Drop", func(): ui._confirm(func(): ui._st(App.prog.drop_uid(uid)); ui._rebuild_inv(); ui._show(), "drop_bag_%d" % uid)))
-		ui.box.add_child(bag_row)
-	if not App.in_dungeon and App.prog.bank_items.size() > 0:
-		ui.box.add_child(ThemeS.lab("Mailed stash — safe in Placeholdia. Forge at the anvil.", 18, Color(0.75, 0.85, 0.7)))
-		for stash_it in App.prog.bank_items:
-			var sid := int(stash_it.uid)
-			ui.box.add_child(ThemeS.btn("Stash %s" % stash_it.name, func(): ui._confirm(func(): ui._st(App.prog.drop_stash(sid)); ui._rebuild_inv(); ui._show(), "stash_%d" % sid)))
-	ui.box.add_child(ThemeS.btn("Close  (B)", func(): ui.close_ui()))
+	ui.gear_mode = "inv"
+	Board.build(ui, "inv")
 
 
 static func inv_act(ui, uid: int) -> void:

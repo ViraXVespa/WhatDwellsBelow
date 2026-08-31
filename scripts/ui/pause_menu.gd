@@ -6,6 +6,8 @@ const T := preload("res://scripts/data/tunables.gd")
 const PauseInv := preload("res://scripts/ui/pause_inv.gd")
 const PauseSkills := preload("res://scripts/ui/pause_skills.gd")
 const PauseSys := preload("res://scripts/ui/pause_system.gd")
+const GearAct := preload("res://scripts/ui/gear_board_act.gd")
+const Board := preload("res://scripts/ui/gear_board.gd")
 
 const SKILL_NAMES := {
 	"axe": "Great Axe",
@@ -56,6 +58,16 @@ var inv_btn_use: Button
 var inv_btn_equip: Button
 var inv_btn_unequip: Button
 var inv_btn_drop: Button
+var gear_mode: String = "inv"
+var gear_stat_page: int = 0
+var gear_tip_mode: int = 0
+var gear_sub: bool = false
+var gear_sub_slot: String = ""
+var gear_x_hold: float = 0.0
+var gear_x_fired: bool = false
+var gear_tip: Label
+var gear_stats: Button
+var gear_hint: Label
 
 
 func _ready() -> void:
@@ -131,6 +143,9 @@ func show_menu() -> void:
 	pending_id = ""
 	rebind_action = ""
 	inv_sel = "slot:weapon"
+	gear_mode = "inv"
+	gear_sub = false
+	gear_sub_slot = ""
 	_hide_tip()
 	_rebuild()
 
@@ -142,6 +157,11 @@ func close_ui() -> void:
 	pending_id = ""
 	rebind_action = ""
 	sys_page = "main"
+	gear_sub = false
+	gear_sub_slot = ""
+	var old: Node = get_node_or_null("gear_sub_panel")
+	if old:
+		old.queue_free()
 	_hide_tip()
 	App.ui_open = false
 	get_tree().paused = false
@@ -152,6 +172,11 @@ func close_ui() -> void:
 
 func _rebuild() -> void:
 	_hide_tip()
+	gear_sub = false
+	gear_sub_slot = ""
+	var old: Node = get_node_or_null("gear_sub_panel")
+	if old:
+		old.queue_free()
 	for c: Node in tabs.get_children():
 		c.queue_free()
 	for c2: Node in box.get_children():
@@ -163,6 +188,9 @@ func _rebuild() -> void:
 	inv_btn_equip = null
 	inv_btn_unequip = null
 	inv_btn_drop = null
+	gear_tip = null
+	gear_stats = null
+	gear_hint = null
 	var names: PackedStringArray = PackedStringArray(["Inventory", "Skills", "System"])
 	for i: int in 3:
 		var ii: int = i
@@ -304,6 +332,11 @@ func _st(msg: String) -> void:
 	App.sfx("ui")
 
 
+func _process(delta: float) -> void:
+	if open and tab == 0:
+		GearAct.tick_x(self, delta)
+
+
 func _input(event: InputEvent) -> void:
 	if not open or rebind_action == "":
 		return
@@ -328,6 +361,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if App.archives_ui and bool(App.archives_ui.get("open")):
 		return
+	if tab == 0:
+		if GearAct.handle_event(self, event):
+			get_viewport().set_input_as_handled()
+			return
 	if event.is_action_pressed("tab_right"):
 		tab = (tab + 1) % 3
 		sys_page = "main"

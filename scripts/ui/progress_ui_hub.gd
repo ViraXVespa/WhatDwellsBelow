@@ -1,53 +1,31 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const Board := preload("res://scripts/ui/gear_board.gd")
+const GearAct := preload("res://scripts/ui/gear_board_act.gd")
 
 
 static func rebuild_loadout(ui) -> void:
 	ui._clear()
-	ui.box.add_child(ThemeS.lab("Floor Crystal — Loadout", 32, Color(0.6, 0.9, 1.0)))
-	ui.box.add_child(ThemeS.lab("Holds, weapon, tool lock, starting floor. Confirm enter twice. Only floors you have reached. Stairs never go back.", 18, Color(0.82, 0.76, 0.66)))
-	ui.status = ThemeS.lab("Weapon %s   Tool %s   Floor %d / deepest %d" % [ui.loadout_wpn, ui.loadout_tool, ui.loadout_floor, App.prog.deepest], 22, Color(0.95, 0.8, 0.45))
-	ui.box.add_child(ui.status)
-	ui.focus_btn = ThemeS.btn("Character: %s  (switch, confirm)" % App.character_type, func(): ui._confirm(func(): toggle_char(ui), "char"))
-	ui.box.add_child(ui.focus_btn)
-	ui.box.add_child(ThemeS.btn("Weapon: Great Axe", func(): set_wpn(ui, "great_axe")))
-	ui.box.add_child(ThemeS.btn("Weapon: Lightning Staff", func(): set_wpn(ui, "staff")))
-	ui.box.add_child(ThemeS.btn("Weapon: Longbow", func(): set_wpn(ui, "longbow")))
-	ui.box.add_child(ThemeS.btn("Tool: Pickaxe  (mining)", func(): set_tool(ui, "pickaxe")))
-	ui.box.add_child(ThemeS.btn("Tool: Hatchet  (woodcutting)", func(): set_tool(ui, "hatchet")))
-	ui.box.add_child(ThemeS.btn("Floor +", func(): floor_step(ui, 1)))
-	ui.box.add_child(ThemeS.btn("Floor −", func(): floor_step(ui, -1)))
-	for s in App.prog.SLOTS:
-		var h: Array = App.prog.holds[s]
-		if h.size() > 0:
-			for i in h.size():
-				var nm := str(h[i].name)
-				ui.box.add_child(ThemeS.btn("Use hold %s: %s" % [s, nm], func(): use_hold(ui, s, i)))
-	ui.box.add_child(ThemeS.btn("Enter dungeon  (confirm)", func(): ui._confirm(func(): enter(ui), "enter")))
-	ui.box.add_child(ThemeS.btn("Back  (B)", func(): ui.close_ui()))
+	ui.gear_mode = "loadout"
+	Board.build(ui, "loadout")
 
 
 static func toggle_char(ui) -> void:
-	App.set_character("female" if App.character_type == "male" else "male")
-	App.save_now()
-	ui._rebuild_loadout()
-	ui._show()
+	GearAct.toggle_char(ui)
 
 
 static func set_wpn(ui, w: String) -> void:
 	ui.loadout_wpn = w
 	App.weapon = w
 	App.prog.pick_weapon = w
-	App.prog.hold_pick["weapon"] = matching_hold("weapon", "weapon", w)
-	ui.status.text = "Weapon %s   Tool %s   Floor %d" % [ui.loadout_wpn, ui.loadout_tool, ui.loadout_floor]
+	Board.refresh(ui)
 
 
 static func set_tool(ui, t: String) -> void:
 	ui.loadout_tool = t
 	App.prog.tool_type = t
-	App.prog.hold_pick["tool"] = matching_hold("tool", "tool", t)
-	ui.status.text = "Weapon %s   Tool %s   Floor %d" % [ui.loadout_wpn, ui.loadout_tool, ui.loadout_floor]
+	Board.refresh(ui)
 
 
 static func matching_hold(slot: String, key: String, want: String) -> int:
@@ -59,8 +37,7 @@ static func matching_hold(slot: String, key: String, want: String) -> int:
 
 
 static func floor_step(ui, d: int) -> void:
-	ui.loadout_floor = clampi(ui.loadout_floor + d, 1, App.prog.deepest)
-	ui.status.text = "Weapon %s   Tool %s   Floor %d" % [ui.loadout_wpn, ui.loadout_tool, ui.loadout_floor]
+	GearAct.floor_step(ui, d)
 
 
 static func use_hold(ui, slot: String, i: int) -> void:
@@ -79,12 +56,7 @@ static func use_hold(ui, slot: String, i: int) -> void:
 
 
 static func enter(ui) -> void:
-	App.prog.tool_type = ui.loadout_tool
-	App.prog.pick_weapon = ui.loadout_wpn
-	App.prog.start_floor = ui.loadout_floor
-	App.weapon = ui.loadout_wpn
-	ui.close_ui()
-	App.enter_dungeon()
+	GearAct.enter(ui)
 
 
 static func rebuild_quest(ui) -> void:

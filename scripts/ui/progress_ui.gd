@@ -5,6 +5,7 @@ const CatalogS := preload("res://scripts/data/catalog.gd")
 const Inv := preload("res://scripts/ui/progress_ui_inv.gd")
 const Shop := preload("res://scripts/ui/progress_ui_shop.gd")
 const Hub := preload("res://scripts/ui/progress_ui_hub.gd")
+const GearAct := preload("res://scripts/ui/gear_board_act.gd")
 
 var open := false
 var mode := ""
@@ -22,6 +23,17 @@ var loadout_wpn := "great_axe"
 var anvil_item: Dictionary = {}
 var forge_t := 0.0
 var forge_it: Dictionary = {}
+var inv_sel := "slot:weapon"
+var gear_mode := ""
+var gear_stat_page := 0
+var gear_tip_mode := 0
+var gear_sub := false
+var gear_sub_slot := ""
+var gear_x_hold := 0.0
+var gear_x_fired := false
+var gear_tip: Label
+var gear_stats: Button
+var gear_hint: Label
 
 
 func _ready() -> void:
@@ -60,6 +72,11 @@ func close_ui() -> void:
 	pending_id = ""
 	forge_t = 0.0
 	forge_it = {}
+	gear_sub = false
+	gear_sub_slot = ""
+	var old: Node = get_node_or_null("gear_sub_panel")
+	if old:
+		old.queue_free()
 	App.ui_open = false
 	get_tree().paused = false
 	var p := get_tree().get_first_node_in_group("player")
@@ -79,6 +96,11 @@ func _show() -> void:
 
 
 func _focus() -> void:
+	if mode == "loadout" or mode == "inv":
+		var hit: Control = load("res://scripts/ui/gear_board.gd").find_sel(self)
+		if hit:
+			hit.grab_focus()
+			return
 	if focus_btn:
 		focus_btn.grab_focus()
 
@@ -88,6 +110,9 @@ func _clear() -> void:
 		c.queue_free()
 	focus_btn = null
 	status = null
+	gear_tip = null
+	gear_stats = null
+	gear_hint = null
 
 
 func _st(msg: String) -> void:
@@ -98,6 +123,7 @@ func _st(msg: String) -> void:
 
 func open_inventory() -> void:
 	mode = "inv"
+	inv_sel = "slot:weapon"
 	_rebuild_inv()
 	_show()
 
@@ -132,6 +158,8 @@ func open_anvil() -> void:
 func open_loadout() -> void:
 	mode = "loadout"
 	pending = false
+	inv_sel = "slot:weapon"
+	gear_sub = false
 	loadout_floor = App.prog.start_floor
 	loadout_tool = App.prog.tool_type
 	loadout_wpn = str(App.prog.slots.weapon.get("weapon", "great_axe")) if not App.prog.slots.weapon.is_empty() else "great_axe"
@@ -238,6 +266,8 @@ func _extract_all() -> void:
 
 
 func _process(delta: float) -> void:
+	if open and (mode == "loadout" or mode == "inv"):
+		GearAct.tick_x(self, delta)
 	if forge_t <= 0.0:
 		return
 	forge_t = maxf(0.0, forge_t - delta)
@@ -261,6 +291,10 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not open:
 		return
+	if mode == "loadout" or mode == "inv":
+		if GearAct.handle_event(self, event):
+			get_viewport().set_input_as_handled()
+			return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
 		if pending:
 			pending = false
