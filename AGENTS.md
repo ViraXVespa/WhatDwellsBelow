@@ -56,6 +56,24 @@ After a requested slice of work, stop and report to the User.
 - When numbers are left open, MAY invent coherent starting values, then MUST expose them in the secret debug menu and record them in `design/tunables.md`.
 - If design and live code conflict, or anything is ambiguous, ask the User. Do not guess.
 
+### Script size cap (10KB)
+
+Every live file under `scripts/**/*.gd` MUST stay under **10,000 bytes**.
+This is a hard readability rule for GitHub and for this chat path. Do not leave a live script over the cap.
+
+When an edit would push a file over 10KB, or you find one already over:
+
+1. Split by responsibility into a sibling helper (`*_act.gd`, `*_view.gd`, `*_boot.gd`, `*_text.gd`, etc.).
+2. Keep the original path as a facade or host so public callers do not change (`App.playtest`, `PauseInv.build`, `Gen.generate`, `EnemyAI.tick`, `SmokeLate.p7`).
+3. Prefer `static func` helpers that take `host` / `pt` / `ui` / `p` as the first argument.
+4. Do not create circular `preload()` chains. If two helpers need each other, use `load()` on one side or put shared state on the host script.
+5. Godot 4 analyzes a parent script by itself. A base script MUST NOT call methods that exist only on a child. Call helper modules directly from the parent.
+6. Never split or rewrite anything under `archives/`.
+7. After a split, emit every new and revised file in full (web path) or apply them on disk (CLI path).
+8. If several files are over the cap, split the largest first and stop after a batch so the User can paste and compile.
+
+Do this proactively. Do not wait for the User to notice a 12KB file.
+
 ---
 
 ## Path 1 — Grok Build (CLI / desktop)

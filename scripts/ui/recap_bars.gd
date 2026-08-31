@@ -138,7 +138,7 @@ static func paint_tip(host: Node) -> void:
 	host.tip_lab.custom_minimum_size = Vector2(w - 24.0, 0.0)
 	var h := maxf(80.0, host.tip_lab.get_minimum_size().y + 20.0)
 	host.tip_host.size = Vector2(w, h)
-	var r := host.tip_from.get_global_rect()
+	var r: Rect2 = host.tip_from.get_global_rect()
 	var pos := Vector2(r.position.x, r.position.y + r.size.y + 8.0)
 	if pos.y + h > 1060.0:
 		pos.y = r.position.y - h - 8.0

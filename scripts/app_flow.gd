@@ -101,7 +101,7 @@ static func hub_preload_paths(host: Node) -> PackedStringArray:
         "res://assets/sprites/props/banner.png",
         "res://assets/audio/music_hub.wav",
     ])
-    var kind := host.character_type if host.character_type in ["male", "female"] else "male"
+    var kind: String = host.character_type if host.character_type in ["male", "female"] else "male"
     var dirs := PackedStringArray(["up", "up_right", "right", "down_right", "down", "down_left", "left", "up_left"])
     for d in dirs:
         paths.append("res://assets/sprites/player/%s/idle_%s.png" % [kind, d])

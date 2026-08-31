@@ -104,7 +104,7 @@ static func on_kill(host: Node) -> void:
 		host.adrenaline_xp += host.bal.adrenaline_xp_stack
 	elif host.kill_times.size() >= int(host.bal.adrenaline_kills):
 		start_adrenaline(host)
-	var mult := host.adrenaline_xp if host.adrenaline else 1.0
+	var mult: float = host.adrenaline_xp if host.adrenaline else 1.0
 	host.run_xp += host.bal.xp_per_kill * mult
 	if host.prog:
 		var half: float = host.bal.xp_per_kill * 0.5 * (mult if host.adrenaline else 1.0)
