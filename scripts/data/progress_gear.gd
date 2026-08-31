@@ -102,9 +102,6 @@ static func add_item(p: Object, it: Dictionary) -> bool:
 static func add_to_bag(p: Object, it: Dictionary) -> bool:
 	if it.is_empty():
 		return false
-	if str(it.get("rarity", "white")) == "white" and _has_white_copy(p, it):
-		Rules.grant_smith(p, it)
-		return true
 	var idx: int = bag_stack_index(p, it)
 	if idx >= 0:
 		var b: Dictionary = p.bag[idx]
@@ -151,11 +148,7 @@ static func equip_uid(p: Object, uid: int) -> String:
 			return "Tool locked to %s this run." % p.tool_type
 	var cur: Dictionary = p.slots.get(slot, {})
 	if not cur.is_empty():
-		if Rules.locked_equip_slot(slot):
-			if not bag_can_accept(p, cur):
-				add_to_bag(p, it)
-				return "Bag full."
-		elif not bag_can_accept(p, cur) and not Rules.locked_equip_slot(slot):
+		if not bag_can_accept(p, cur):
 			add_to_bag(p, it)
 			return "Bag full."
 		p.slots[slot] = {}

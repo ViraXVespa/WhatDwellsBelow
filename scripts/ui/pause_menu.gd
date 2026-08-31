@@ -65,6 +65,7 @@ var gear_sub: bool = false
 var gear_sub_slot: String = ""
 var gear_x_hold: float = 0.0
 var gear_x_fired: bool = false
+var gear_hover: bool = false
 var gear_tip: Label
 var gear_tip_host: PanelContainer
 var gear_stats: Control
@@ -148,6 +149,7 @@ func show_menu() -> void:
 	gear_mode = "inv"
 	gear_sub = false
 	gear_sub_slot = ""
+	gear_hover = false
 	_hide_tip()
 	_rebuild()
 
@@ -161,6 +163,7 @@ func close_ui() -> void:
 	sys_page = "main"
 	gear_sub = false
 	gear_sub_slot = ""
+	gear_hover = false
 	var old: Node = get_node_or_null("gear_sub_panel")
 	if old:
 		old.queue_free()
@@ -369,6 +372,8 @@ func _input(event: InputEvent) -> void:
 			_rebuild()
 			get_viewport().set_input_as_handled()
 			return
+	if event is InputEventMouse or event is InputEventMouseButton:
+		return
 	if tab == 0 and GearAct.handle_event(self, event):
 		get_viewport().set_input_as_handled()
 
@@ -377,6 +382,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not open:
 		return
 	if App.archives_ui and bool(App.archives_ui.get("open")):
+		return
+	if event is InputEventMouse or event is InputEventMouseButton:
 		return
 	if tab == 0:
 		if GearAct.handle_event(self, event):
@@ -393,7 +400,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_rebuild()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
-		if GearAct.swallowing():
+		if gear_sub or GearAct.swallowing():
 			get_viewport().set_input_as_handled()
 			return
 		if pending:

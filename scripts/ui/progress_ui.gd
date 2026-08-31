@@ -32,6 +32,7 @@ var gear_sub := false
 var gear_sub_slot := ""
 var gear_x_hold := 0.0
 var gear_x_fired := false
+var gear_hover := false
 var gear_tip: Label
 var gear_tip_host: PanelContainer
 var gear_stats: Control
@@ -77,6 +78,7 @@ func close_ui() -> void:
 	forge_it = {}
 	gear_sub = false
 	gear_sub_slot = ""
+	gear_hover = false
 	var old: Node = get_node_or_null("gear_sub_panel")
 	if old:
 		old.queue_free()
@@ -95,8 +97,7 @@ func _show() -> void:
 	open = true
 	visible = true
 	App.ui_open = true
-	if App.in_dungeon:
-		get_tree().paused = true
+	get_tree().paused = true
 	call_deferred("_focus")
 
 
@@ -300,10 +301,14 @@ func _process(delta: float) -> void:
 		_show()
 
 
+func _gear_busy() -> bool:
+	return mode == "loadout" or mode == "inv"
+
+
 func _input(event: InputEvent) -> void:
-	if not open:
+	if not open or not _gear_busy():
 		return
-	if mode != "loadout" and mode != "inv":
+	if event is InputEventMouse or event is InputEventMouseButton:
 		return
 	if GearAct.handle_event(self, event):
 		get_viewport().set_input_as_handled()
@@ -312,12 +317,13 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not open:
 		return
-	if mode == "loadout" or mode == "inv":
-		if GearAct.handle_event(self, event):
-			get_viewport().set_input_as_handled()
-			return
+	if event is InputEventMouse or event is InputEventMouseButton:
+		return
+	if _gear_busy() and GearAct.handle_event(self, event):
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
-		if GearAct.swallowing():
+		if gear_sub or GearAct.swallowing():
 			get_viewport().set_input_as_handled()
 			return
 		if pending:
