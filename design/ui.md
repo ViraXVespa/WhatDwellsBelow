@@ -1,9 +1,9 @@
 # Player UI, HUD, menus, recap
 
-Status: binding design + live snapshot
-Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, or loading
-Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `recap.gd`, `loader.gd`, `progress_ui.gd`, `present.gd`, `theme.gd`
-See also: `design/debug.md`, `design/inventory.md`, `design/skills.md`
+Status: binding design + live snapshot  
+Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, or loading  
+Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `gear_board.gd`, `gear_board_text.gd`, `gear_board_act.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`  
+See also: `design/gear-ui.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/hub.md`
 
 ## UI theme (playable surfaces)
 
@@ -39,7 +39,7 @@ Opened with Menu / Start / Esc. Freezes gameplay.
 Every menu (including this one) MUST open with valid initial focus so it is immediately navigable by gamepad.
 
 Exactly three tabs, navigable with LB/RB or equivalent:
-1. Inventory – full bag grid, equipment slots, ability to use/consume/drop/equip (including mid-run weapon changes). Active artifact set bonuses are shown beneath each artifact’s normal description.
+1. Inventory – shared paper-doll gear board (`design/gear-ui.md`), 7-column bag grid, flyout tooltips, paged stats. Use / consume / drop / equip as specified there, including mid-run weapon changes from the bag. Active artifact set bonuses appear on the Artifact sets stats page and in item flyouts.
 2. Skills – list of the eleven skills with current level, XP bar to next level, and permanent XP total.
 3. System – MUST contain every one of the following:
    - Master / Music / SFX volume sliders
@@ -54,6 +54,8 @@ Exactly three tabs, navigable with LB/RB or equivalent:
    - “Dispel” Avatar button with strong confirmation prompt
 
 The full debug / balance menu is **no longer** present in the Pause Menu.
+
+Placeholdia inventory (same board, opened outside a run) MUST use Loadout option sources: starters, holds, and non-white bank items. Dungeon inventory MAY only list the equipped piece plus bag items of that slot.
 
 ## Extraction / Clerk UI
 
@@ -82,9 +84,17 @@ The full debug / balance menu is **no longer** present in the Pause Menu.
 ## Loadout UI
 
 - Opens only by interacting with the Floor Crystal in Placeholdia. There is no separate loadout station.
-- Select holds per slot (fallback to starters), choose starting weapon, choose tool type (pickaxe or hatchet — locked for the run), choose starting floor (deeper previously reached floors only; never backward), confirm enter.
+- Uses the shared gear board in `design/gear-ui.md`. Holds / starters / bank populate each slot list. Character, floor −/+, and confirm-enter sit under the doll.
+- Choose starting weapon, choose tool type (pickaxe or hatchet — locked for the run), choose starting floor (deeper previously reached floors only; never backward), confirm enter.
 - Visual presentation MUST meet the same clean, dungeon-themed, TV-readable standard as the other interaction UIs.
-- Confirmation MUST be cancellable.
+- Confirmation MUST be cancellable. Esc / B on the re-equip list MUST NOT confirm enter or close the crystal UI.
+
+## Gear tooltips
+
+- Flyouts follow `design/gear-ui.md`. Hidden until hover, keyboard highlight, or activating the focused slot.
+- **Y** cycles off → current item stats → forge preview.
+- Active artifact set bonuses are shown in the flyout and on the Artifact sets stats page.
+- Smithing level influence remains visible in Anvil UI.
 
 ## Quest UI
 
@@ -120,7 +130,7 @@ Triggered on every death or “Dispel”.
 
 `hud.gd`: strip top-left, minimap top-right, boss bar when near, toast. Level string uses combat level and parenthetical style level.
 Pause Skills also shows run XP earned this descent.
-Inventory bag grid is 7 columns.
+Inventory and loadout share `gear_board.gd`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout).
 
 ## Live snapshot — loading bar (`loader.gd`)
 

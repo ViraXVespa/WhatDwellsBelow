@@ -38,6 +38,7 @@ It is not one Game Design Document.
 | Weapons, dash, crits, adrenaline | `combat.md` | §6 |
 | Eleven skills, XP, combat level | `skills.md` | §7 |
 | Bag, gear, artifacts, extract | `inventory.md` | §8 |
+| Shared inventory / loadout board | `gear-ui.md` | §8 / §13 |
 | Placeholdia | `hub.md` | §9 |
 | Gen, floors, stream, doors | `dungeon.md` | §10 |
 | Roster, AI, named, pressure | `enemies.md` | §11 |
@@ -63,12 +64,12 @@ Every live `scripts/**/*.gd` file must stay under **10KB**. Facades keep the ori
 | Scenes | `scenes/boot.tscn`, `splash.tscn`, `title.tscn`, `camp.tscn`, `dungeon.tscn`, `foundation.tscn` |
 | Player | `scripts/world/player.gd` + `player_anim.gd`, `player_act.gd`, `player_lock.gd`, `player_combat.gd`, `facing.gd`, `camera_rig.gd` |
 | Combat | `scripts/combat/combat.gd`, `enemy.gd`, `enemy_ai.gd`, `enemy_atk.gd`, `enemy_setup.gd`, `projectile.gd`, `roster.gd`, `aim_line.gd`, `telegraph.gd`, `player_hit.gd`, `threat.gd` |
-| Skills / save | `scripts/data/progress.gd` + `progress_gear.gd`, `progress_make.gd`, `progress_extract.gd`, `progress_quest.gd`, `progress_town.gd`, `progress_combat.gd`, `save_store.gd`, `catalog.gd` |
+| Skills / save | `scripts/data/progress.gd` + `progress_gear.gd`, `progress_make.gd`, `progress_extract.gd`, `progress_quest.gd`, `progress_town.gd`, `progress_combat.gd`, `gear_rules.gd`, `save_store.gd`, `catalog.gd` |
 | Numbers | `scripts/data/balance.gd`, `balance_schema.gd`, `tunables.gd` |
 | Dungeon | `scripts/dungeon/gen.gd` + `gen_carve.gd`, `gen_rooms.gd`, `gen_doors.gd`; `scripts/world/dungeon.gd` + `dungeon_boot.gd`, `dungeon_geo.gd`, `dungeon_cells.gd`, `dungeon_stream.gd`, `dungeon_props.gd`, `dungeon_pack.gd` |
 | Hub | `scripts/world/camp.gd`, `interact.gd`, `interact_fx.gd` |
 | Gather | `scripts/world/gather_node.gd`, `breakable.gd`, `pickup.gd` |
-| UI | `scripts/ui/hud.gd`, `pause_menu.gd` + `pause_inv.gd`, `pause_inv_view.gd`, `pause_inv_text.gd`, `pause_inv_act.gd`, `pause_skills.gd`, `pause_system.gd`; `recap.gd`, `recap_bars.gd`, `loader.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_shop.gd`, `present.gd`, `theme.gd` |
+| UI | `scripts/ui/hud.gd`; `pause_menu.gd` + `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`; `gear_board.gd`, `gear_board_text.gd`, `gear_board_act.gd`; `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`; `recap.gd`, `recap_bars.gd`, `loader.gd`, `present.gd`, `theme.gd` |
 | Input | `scripts/input/binds.gd`, `pad.gd`, `scripts/web_pad.gd` |
 | Debug | `scripts/combat/debug_menu.gd`; `scripts/debug/playtest.gd` extends `playtest_api.gd` + `playtest_ai.gd`, `playtest_nav.gd`, `playtest_los.gd`, `playtest_path.gd`, `playtest_goals.gd`, `playtest_sim.gd`, `playtest_recs.gd`; `smoke.gd` + `smoke_early.gd`, `smoke_late.gd`, `smoke_p5.gd`, `smoke_p6.gd`, `smoke_p7.gd`, `smoke_p8.gd`, `smoke_p9.gd`, `smoke_p79.gd`; `anim_browser.gd`, `telemetry.gd` |
 | Audio | `scripts/audio/music.gd`, `scripts/combat/sfx.gd` |

@@ -1,9 +1,9 @@
 # Inventory, gear, artifacts, extraction
 
-Status: binding design
-Read when: changing bag, equipment, food, potions, artifacts, clerks, or the anvil
-Code: `scripts/data/progress.gd`, `scripts/data/catalog.gd`, `scripts/ui/pause_menu.gd`
-See also: `design/skills.md`, `design/ui.md`, `design/hub.md`
+Status: binding design  
+Read when: changing bag, equipment, food, potions, artifacts, clerks, or the anvil  
+Code: `scripts/data/progress.gd`, `scripts/data/progress_gear.gd`, `scripts/data/progress_extract.gd`, `scripts/data/progress_make.gd`, `scripts/data/gear_rules.gd`, `scripts/data/catalog.gd`, `scripts/ui/gear_board.gd`, `scripts/ui/gear_board_text.gd`, `scripts/ui/gear_board_act.gd`  
+See also: `design/gear-ui.md`, `design/skills.md`, `design/ui.md`, `design/hub.md`
 
 ## Bag
 
@@ -12,20 +12,22 @@ See also: `design/skills.md`, `design/ui.md`, `design/hub.md`
 
 ## Equipment slots
 
-- Weapon
-- Tool (pickaxe **or** hatchet — only one kind may be selected per run at loadout and is locked for the entire run)
-- Potion (dedicated quick-use slot)
-- Food (dedicated quick-use slot; maximum 20 of one food type may be brought into a run)
+- Weapon — required; cannot be emptied, dropped, or destroyed
+- Tool (pickaxe **or** hatchet — only one kind may be selected per run at loadout and is locked for the entire run). Required; cannot be emptied, dropped, or destroyed
+- Potion — dedicated charged equipment slot (not a stack)
+- Food — dedicated quick-use slot; maximum 20 of one food type may be brought into a run
 - Head
 - Body
 - Legs
 
 Food discovered inside the dungeon MUST be equipped to be used with the quick button, but may also be consumed directly from the inventory UI. Potion and food have distinct visual and audio feedback when used.
 
+Shared pause / loadout presentation is specified in `design/gear-ui.md`.
+
 ## Food vs potion (locked distinction)
 
-- **Potion:** Instant heal of Z HP (Z tunable; may be a full heal if Z is set to max HP). Effect applies immediately on use.
-- **Food:** Heal-over-time. Restores a total of X HP smoothly over Y seconds (X and Y tunable).
+- **Potion:** Equipment, not a stack. Each potion has charges (per run), a cooldown, and other item stats. Use consumes a charge, not a stack count. Unequipping is allowed. The default starter potion has two charges; charges refill at the start of a run rather than behaving like “Potion x2” in the bag.
+- **Food:** Heal-over-time. Restores a total of X HP smoothly over Y seconds (X and Y tunable). Food remains the stacked consumable.
 - While a food effect is active, a HUD indicator MUST show that food is ticking.
 - Using the same food type again while its effect is active does NOT stack and does NOT consume another item until the current effect ends.
 - Using a different food type while an effect is active cancels the current effect, consumes the new item, and starts the new food’s effect.
@@ -40,6 +42,20 @@ Food discovered inside the dungeon MUST be equipped to be used with the quick bu
 - The player may maintain up to three forged “holds” per equipment slot.
 - Forged holds always return to Placeholdia on death or “Dispel”, even if the item was dropped on the floor.
 - All unextracted resources and any non-forged items still in the bag are lost on death or “Dispel”.
+- Weapon and tool MUST remain equipped at all times.
+
+## White items and starters
+
+- A selectable starter (Great Axe, Lightning Staff, Longbow, Pickaxe, Hatchet, default potion) MUST NOT be stored in the bank and MUST NOT be forged.
+- If a starter is extracted / sent up, convert it to smithing XP. Do not create a second copy in storage.
+- A white item that is not already a starter becomes a starter the first time it is sent up, without an anvil step. Later extracts of that template convert to smithing XP instead of entering storage.
+- Unequipping in Placeholdia MUST NOT treat the piece as a world drop and MUST NOT convert it to smithing XP.
+
+## Where options come from
+
+- **Dungeon inventory:** equipped piece (if any) plus bag items of that slot. No bank, holds, or extra starters.
+- **Placeholdia inventory and Floor Crystal loadout:** equipped piece, built-in starters, unlocked starters, holds, then non-white bank items. White bank copies are omitted so they cannot duplicate a starter.
+- Bank pieces and other unforged kit taken below are shown as **AT RISK** (lost on death or Dispel unless mailed). Holds show **HOLD**.
 
 ## Artifacts and collections
 
