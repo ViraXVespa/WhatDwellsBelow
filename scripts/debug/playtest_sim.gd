@@ -2,6 +2,7 @@ extends Object
 
 const Store := preload("res://scripts/data/save_store.gd")
 const Recs := preload("res://scripts/debug/playtest_recs.gd")
+const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 
 
 static func start_next(pt: Node) -> void:
@@ -41,6 +42,8 @@ static func start_next(pt: Node) -> void:
 		App.debug.hide_menu()
 	if App.pause_menu and bool(App.pause_menu.get("open")):
 		App.pause_menu.close_ui()
+	App.ui_open = false
+	PlaytestLog.begin(pt)
 	App.begin_run()
 
 
@@ -70,6 +73,13 @@ static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 		App.tel.note_end(cond, "")
 	if App.extracted and App.tel.end_cond == "":
 		App.tel.note_end("extraction", "")
+	var end_s: String = cond
+	if end_s == "" and App.tel:
+		end_s = str(App.tel.end_cond)
+	var fail_s: String = end_s
+	if end_s == "interrupted playtest" and not App.extracted:
+		fail_s = "time_limit"
+	PlaytestLog.finish(pt, end_s, fail_s)
 	pt.history.append(App.tel.to_dict())
 	pt._save_history()
 	pt.ai_on = false
@@ -96,6 +106,8 @@ static func stop_live(pt: Node) -> void:
 	pt._build_recs()
 	pt._save_coefs()
 	pt.last_summary = pt._format()
+	if PlaytestLog.file_name != "":
+		pt.last_summary += "\nLog: " + PlaytestLog._dir().path_join(PlaytestLog.file_name)
 
 
 static func sim_save(pt: Node, kind: String, progressed: bool) -> void:

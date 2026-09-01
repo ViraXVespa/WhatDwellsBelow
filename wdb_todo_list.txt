@@ -4,14 +4,16 @@ Swap Lightning Staff special to use Mana instead of a timer and add mana drops t
 Resource gathering needs dedicated animations.
 Need to repass assets with updated chroma key logics
 Need to regenerate animation videos to not have holes in faces.
-Placeholdia needs real art, not placeholders
+Placeholdia needs real art, not placeholders from archived builds.
 Need to add lighting decorations to dungeon
 Need assets for inventory menu
 Need assets for updated placeholdia UI.
 Need to fix automated playtest
 Need to import button prompt assets
+Chroma keying has to be re-processed on existing assets to remove pinkness around edges.
 
 ### Can Do Now
+## Sexy
 Need to create new UI for forging menu in blacksmith.
 Blacksmith UI needs to be reworked to be intuitive using LB/RB to swap between analyze and forge.
 Need to fix design of pressure plate trap things.
@@ -21,4 +23,8 @@ Welcome to Placeholdia banner needs to be bigger.
 Tinker around with in-game fog of war instead of just mini-map.
 Add mobile controls
 Add X Money donation links
+Improve dungeon tuning to ensure less gameplay with no action.
+
+## Unsexy
+Need to test chroma key logic on different images to ensure it catches all of the pink.
 Need a system to swap tooltip button prompts between KB/M and gamepad.

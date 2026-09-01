@@ -8,8 +8,8 @@ func _think(p: Node, delta: float) -> void:
 	PlaytestAI.think(self, p, delta)
 
 
-func _use_prop(p: Node, dest: Node, reach: float) -> void:
-	PlaytestAI.use_prop(self, p, dest, reach)
+func _use_prop(p: Node, dest: Node, _reach: float = 1.18) -> void:
+	PlaytestAI.use_prop(self, p, dest)
 
 
 func _wander(p: Node, delta: float) -> void:

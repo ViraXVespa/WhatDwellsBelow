@@ -187,7 +187,26 @@ static func steer_floor(pt: Node, c: Vector2i) -> bool:
 
 
 static func pos_walkable(pt: Node, pos: Vector3) -> bool:
-	return pt._steer_floor(pt._cell_of_pos(pos))
+	if not pt._steer_floor(pt._cell_of_pos(pos)):
+		return false
+	var w3: World3D = world3(pt)
+	if w3 == null:
+		return true
+	var space: PhysicsDirectSpaceState3D = w3.direct_space_state
+	if space == null:
+		return true
+	var from: Vector3 = Vector3(pos.x, pos.y + 0.85, pos.z)
+	var to: Vector3 = Vector3(pos.x, pos.y + 0.10, pos.z)
+	var q: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(from, to)
+	q.collide_with_areas = false
+	q.collide_with_bodies = true
+	var hit: Dictionary = space.intersect_ray(q)
+	if hit.is_empty():
+		return true
+	var col: Variant = hit.get("collider")
+	if col is CharacterBody3D:
+		return true
+	return false
 
 
 static func dir_open(pt: Node, p: Node, dir: Vector2) -> bool:
@@ -197,9 +216,14 @@ static func dir_open(pt: Node, p: Node, dir: Vector2) -> bool:
 	if pt._dir_hits_door(p, n):
 		return false
 	var pos: Vector3 = (p as Node3D).global_position
-	for t: float in [0.18, 0.34]:
-		var q: Vector3 = Vector3(pos.x + n.x * t, pos.y, pos.z + n.y * t)
-		if not pt._pos_walkable(q):
+	for t: float in [0.18, 0.34, 0.55]:
+		var probe: Vector3 = Vector3(pos.x + n.x * t, pos.y, pos.z + n.y * t)
+		if not pt._pos_walkable(probe):
+			return false
+	if p is CharacterBody3D:
+		var body: CharacterBody3D = p as CharacterBody3D
+		var motion: Vector3 = Vector3(n.x, 0.0, n.y) * 0.42
+		if body.test_move(body.global_transform, motion):
 			return false
 	return true
 

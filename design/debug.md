@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot
 Read when: changing the secret menu, telemetry, playtest, animation browser, or verification
-Code: `scripts/combat/debug_menu.gd`, `scripts/debug/playtest.gd`, `telemetry.gd`, `anim_browser.gd`, `smoke.gd`
+Code: `scripts/combat/debug_menu.gd`, `scripts/debug/playtest.gd`, `scripts/debug/playtest_log.gd`, `telemetry.gd`, `anim_browser.gd`, `smoke.gd`
 See also: `design/constraints.md`, `design/coverage.md`, `design/ui.md`
 
 ## Secret debug / balance menu
@@ -94,6 +94,26 @@ Per weapon (Great Axe / Lightning Staff / Longbow), while that weapon was equipp
 - Presents ideal values as fly-out information when a variable is highlighted: one ideal for the fresh-start save (tuned toward first-extraction goals) and one ideal for the progressed save (tuned toward later constraints).
 - Supports accelerated, background, and headless runs. Unlimited queued runs; any run is interruptible without loss of already-collected telemetry.
 - The entire system ships in the public demo but remains hidden behind the secret input sequence.
+
+## Playtest journal (PC / Xbox debug only)
+
+`scripts/debug/playtest_log.gd` writes one compact JSON per live Automated Playtest run.
+
+- Path: `user://playtest/runs/`
+  Windows: `%APPDATA%\Godot\app_userdata\What Dwells Below\playtest\runs`
+- Name: `run_YYYYMMDD_HHMMSS_<save>_<weapon>.json`
+- Envelope: `kind: wdb_playtest_journal`, `ver: 2`
+- Not written on web. Not part of the Medium-bar A–F telemetry set. Not an analytics product.
+
+Purpose: let an agent reconstruct why the bot chose a goal and whether grid floor, `_dir_open`, and `test_move` disagreed. MUST NOT grow into heatmaps, session replay, input recordings, per-frame combat traces, per-projectile logs, or exploration pathing maps.
+
+Events: `begin`, `wait`, `decide`, `step`, `act`, `beat`, `combat`, `end`.
+
+- `decide` — goal, `why` / `why_raw`, `near` as `[kind, d, x, y]`, `clerk_d`, `gather_d`, path flags `pc` / `pg`
+- `step` — cell, `cmd` (`e|w|n|s`), packed cards `g` / `o` / `p` (EWNS bitstrings), `mis` when they disagree. Identical cell+cmd+cards+goal rows coalesce (`n`, `t1`)
+- `beat` is sparse (skipped when gold / kills / hp / goal are unchanged)
+- `tel.cfg` is omitted; `cfg_hash` on `begin` is enough
+- Root `end_cond` / `fail` come from the `end` event, not from an empty tel stamp
 
 ## Animation Browser (secret debug page)
 

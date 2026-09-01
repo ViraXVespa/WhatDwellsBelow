@@ -6,6 +6,7 @@ const Store := preload("res://scripts/data/save_store.gd")
 const PlaytestAI := preload("res://scripts/debug/playtest_ai.gd")
 const PlaytestGoals := preload("res://scripts/debug/playtest_goals.gd")
 const PlaytestSim := preload("res://scripts/debug/playtest_sim.gd")
+const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 
 var history: Array = []
 var recs: Dictionary = {"fresh": [], "progressed": []}
@@ -42,7 +43,10 @@ var recap_taken: bool = false
 var path: Array[Vector2i] = []
 var path_i: int = 0
 var path_goal: Node = null
+var log_path: String = ""
 var strafe_sign: float = 1.0
+var last_beat_t: float = -1.0
+var last_wait_t: float = -9.0
 
 
 func _ready() -> void:
@@ -57,6 +61,7 @@ func _ready() -> void:
 func interrupt() -> void:
 	interrupted = true
 	if live_running:
+		_end_log("interrupted playtest", "interrupted")
 		PlaytestSim.finish_job(self, "interrupted playtest", true)
 
 
@@ -94,6 +99,8 @@ func begin_smoke() -> void:
 	live_running = true
 	running = true
 	sim_t = 0.0
+	last_beat_t = -1.0
+	last_wait_t = -9.0
 	path.clear()
 	path_i = 0
 	path_goal = null
@@ -101,6 +108,7 @@ func begin_smoke() -> void:
 	job = {"save": "fresh", "weapon": App.weapon, "tool": App.prog.tool_type, "limit": 8.0, "scale": 1.0, "cfg": {}}
 	App.tel.reset("fresh", true)
 	App.tel.start_weapon = App.weapon
+	PlaytestLog.begin(self)
 
 
 func run_medium() -> String:
@@ -166,13 +174,22 @@ func consume_recap() -> bool:
 		return false
 	recap_taken = true
 	App.tel.recap_drain = true
+	_end_log(str(App.tel.end_cond), str(App.tel.end_cond))
 	PlaytestSim.finish_job(self, str(App.tel.end_cond), false)
 	return true
+
+
+func _end_log(cond: String, fail: String) -> void:
+	if PlaytestLog.started:
+		PlaytestLog.finish(self, cond, fail)
 
 
 func _physics_process(delta: float) -> void:
 	if not live_running:
 		return
+	if not PlaytestLog.started:
+		PlaytestLog.begin(self)
+		last_beat_t = -1.0
 	just.clear()
 	attack = false
 	special = false
@@ -192,23 +209,39 @@ func _physics_process(delta: float) -> void:
 		return
 	if not App.in_dungeon:
 		ai_on = false
+		if sim_t - last_wait_t >= 2.0:
+			last_wait_t = sim_t
+			PlaytestLog.wait(self, "no_dungeon")
 		return
 	if PlaytestGoals.dungeon(self) == null:
 		ai_on = false
+		if sim_t - last_wait_t >= 2.0:
+			last_wait_t = sim_t
+			PlaytestLog.wait(self, "no_dungeon")
 		return
 	var p: Node = get_tree().get_first_node_in_group("player")
 	if p == null or not is_instance_valid(p):
 		ai_on = false
+		if sim_t - last_wait_t >= 2.0:
+			last_wait_t = sim_t
+			PlaytestLog.wait(self, "no_player")
 		return
 	ai_on = true
 	if smoke_mode and sim_t >= 8.0:
+		_end_log("interrupted playtest", "smoke_limit")
 		PlaytestSim.finish_job(self, "interrupted playtest", true)
 		return
 	var limit: float = float(job.get("limit", App.bal.playtest_limit))
 	if not smoke_mode and sim_t >= limit:
+		_end_log("interrupted playtest", "time_limit")
 		PlaytestSim.finish_job(self, "interrupted playtest", true)
 		return
 	PlaytestAI.think(self, p, delta)
+	PlaytestLog.act(self, p)
+	PlaytestLog.step(self, p)
+	if last_beat_t < 0.0 or sim_t - last_beat_t >= 0.5:
+		last_beat_t = sim_t
+		PlaytestLog.beat(self, p)
 
 
 func _world_ui() -> Node:

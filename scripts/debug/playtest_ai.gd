@@ -1,5 +1,8 @@
 extends Object
 
+const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
+const NEAR := 22.0
+
 
 static func weapon_range() -> float:
 	var w: String = str(App.weapon)
@@ -13,7 +16,7 @@ static func weapon_range() -> float:
 static func is_boss(n: Node) -> bool:
 	if n == null or not is_instance_valid(n):
 		return false
-	if bool(n.get("is_boss")):
+	if n.get("is_boss") == true:
 		return true
 	return n.is_in_group("boss")
 
@@ -44,26 +47,136 @@ static func try_staff_special(pt: Node, d: float, los: bool) -> void:
 	pt.spec_cd = 1.15
 
 
-static func use_prop(pt: Node, p: Node, dest: Node, reach: float) -> void:
-	if pt._dist(p, dest) < reach:
-		pt.path.clear()
-		pt.path_goal = null
+static func _meta_n(pt: Node, key: String) -> Node:
+	if not pt.has_meta(key):
+		return null
+	var v: Variant = pt.get_meta(key)
+	if v == null or not is_instance_valid(v):
+		return null
+	return v
+
+
+static func _meta_f(pt: Node, key: String, fallback: float = 0.0) -> float:
+	if not pt.has_meta(key):
+		return fallback
+	return float(pt.get_meta(key))
+
+
+static func _lock(pt: Node, n: Node, sec: float = 3.2) -> void:
+	pt.set_meta("lock_n", n)
+	pt.set_meta("lock_t", sec)
+
+
+static func _locked(pt: Node, delta: float) -> Node:
+	var t: float = _meta_f(pt, "lock_t", 0.0) - delta
+	pt.set_meta("lock_t", t)
+	if t <= 0.0:
+		if pt.has_meta("lock_n"):
+			pt.remove_meta("lock_n")
+		return null
+	return _meta_n(pt, "lock_n")
+
+
+static func _bans(pt: Node) -> Array:
+	if not pt.has_meta("skip_list"):
+		return []
+	var a: Variant = pt.get_meta("skip_list")
+	return a if a is Array else []
+
+
+static func _banned(pt: Node, n: Node) -> bool:
+	if n == null:
+		return true
+	return _bans(pt).has(n)
+
+
+static func _ban(pt: Node, n: Variant) -> void:
+	if n == null:
+		return
+	var a: Array = _bans(pt)
+	if not a.has(n):
+		a.append(n)
+	if a.size() > 16:
+		a.pop_front()
+	pt.set_meta("skip_list", a)
+
+
+static func _seen(pt: Node) -> Dictionary:
+	if not pt.has_meta("seen_map"):
+		return {}
+	var a: Variant = pt.get_meta("seen_map")
+	return a if a is Dictionary else {}
+
+
+static func _mark(pt: Node, c: Vector2i) -> void:
+	var m: Dictionary = _seen(pt)
+	m[c] = true
+	if m.size() > 120:
+		var k: Variant = m.keys()[0]
+		m.erase(k)
+	pt.set_meta("seen_map", m)
+
+
+static func _near_prop(pt: Node, p: Node, lim: float) -> Node:
+	var tree: SceneTree = pt.get_tree()
+	if tree == null:
+		return null
+	var best: Node = null
+	var best_d: float = lim
+	for n: Node in tree.get_nodes_in_group("interact"):
+		if n == null or not is_instance_valid(n) or _banned(pt, n):
+			continue
+		var k: String = str(n.get("kind"))
+		if k.find("crystal") >= 0:
+			continue
+		var d: float = pt._dist(p, n)
+		if d < best_d:
+			best_d = d
+			best = n
+	return best
+
+
+static func use_prop(pt: Node, p: Node, dest: Node, _reach: float = 1.18) -> void:
+	if dest == null:
 		pt.move = Vector2.ZERO
-		pt.aim = pt._xz_to(p, dest)
+		return
+	var d: float = pt._dist(p, dest)
+	pt.aim = pt._xz_to(p, dest)
+	pt.path_goal = dest
+	if d < 1.18:
+		pt.path.clear()
+		pt.move = Vector2.ZERO
 		pt.interact = true
 		pt.just["interact"] = true
 		return
-	pt._follow_goal(p, dest)
-	pt.aim = pt._xz_to(p, dest)
+	pt.path.clear()
+	pt.move = pt._safe_step(p, pt.aim)
 
 
-static func wander(pt: Node, p: Node, delta: float) -> void:
-	pt.wander_t -= delta
-	if pt.wander_t <= 0.0 or pt.wander_dir == Vector2.ZERO or not pt._dir_open(p, pt.wander_dir):
-		pt.wander_t = 1.2
-		pt.wander_dir = pt._any_open(p)
-	pt.move = pt._safe_step(p, pt.wander_dir)
-	pt.aim = pt.move if pt.move.length() > 0.1 else pt.wander_dir
+static func wander(pt: Node, p: Node, _delta: float) -> void:
+	var here: Vector2i = pt._cell_of_node(p)
+	_mark(pt, here)
+	var seen: Dictionary = _seen(pt)
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)]
+	var fresh: Vector2 = Vector2.ZERO
+	var open_any: Vector2 = Vector2.ZERO
+	for n: Vector2i in dirs:
+		var d: Vector2 = Vector2(float(n.x), float(n.y))
+		if not pt._dir_open(p, d):
+			continue
+		if open_any == Vector2.ZERO:
+			open_any = d
+		if not seen.has(here + n):
+			fresh = d
+			break
+	var heading: Vector2 = fresh
+	if heading == Vector2.ZERO:
+		heading = open_any
+	if heading == Vector2.ZERO:
+		heading = pt._any_open(p)
+	pt.wander_dir = heading
+	pt.aim = heading
+	pt.move = heading
 
 
 static func think(pt: Node, p: Node, delta: float) -> void:
@@ -74,22 +187,64 @@ static func think(pt: Node, p: Node, delta: float) -> void:
 	else:
 		pt.stuck_t += delta
 	pt.last_pos = pos
+	var here: Vector2i = pt._cell_of_node(p)
+	var prev_c: Vector2i = Vector2i(-999, -999)
+	if pt.has_meta("stuck_cell"):
+		prev_c = pt.get_meta("stuck_cell")
+	if here == prev_c:
+		pt.set_meta("cell_t", _meta_f(pt, "cell_t", 0.0) + delta)
+	else:
+		pt.set_meta("stuck_cell", here)
+		pt.set_meta("cell_t", 0.0)
 	if p.get("hp") != null and float(p.hp) / maxf(1.0, float(p.max_hp)) < 0.35:
 		pt.potion = true
 		pt.just["potion"] = true
+	if pt.stuck_t > 2.0 or _meta_f(pt, "cell_t", 0.0) > 1.6:
+		_ban(pt, _meta_n(pt, "lock_n"))
+		if pt.path_goal:
+			_ban(pt, pt.path_goal)
+		if pt.has_meta("lock_n"):
+			pt.remove_meta("lock_n")
+		pt.set_meta("lock_t", 0.0)
+		pt.set_meta("cell_t", 0.0)
+		pt.path.clear()
+		pt.path_goal = null
+		pt.stuck_t = 0.0
+		pt.dash = true
+		pt.just["dash"] = true
+		PlaytestLog.decide(pt, p, "unstick", "cell_stall")
+		pt._wander(p, delta)
+		return
 	var gathering: Variant = p.get("gathering")
 	if gathering != null and is_instance_valid(gathering):
+		PlaytestLog.decide(pt, p, "gathering", "busy", PlaytestLog.target(gathering))
 		pt.path.clear()
 		pt.path_goal = null
 		pt.move = Vector2.ZERO
 		pt.aim = pt._xz_to(p, gathering)
 		return
-	var seen: Node = pt._nearest_visible_threat(p)
-	if seen:
-		pt._fight(p, seen)
+	var seen_e: Node = pt._nearest_visible_threat(p)
+	if seen_e:
+		if pt.has_meta("lock_n"):
+			pt.remove_meta("lock_n")
+		PlaytestLog.decide(pt, p, "fight", "threat", PlaytestLog.target(seen_e))
+		pt._fight(p, seen_e)
+		return
+	var hold: Node = _locked(pt, delta)
+	if hold and not _banned(pt, hold):
+		var hk: String = str(hold.get("kind"))
+		PlaytestLog.decide(pt, p, "hold", "lock", PlaytestLog.target(hold))
+		if hk.find("clerk") >= 0 or hk == "mine" or hk == "wood" or hk.find("chest") >= 0 or hk.find("stairs") >= 0 or hk.find("door") >= 0:
+			use_prop(pt, p, hold)
+		elif pt._is_boss(hold):
+			pt._approach_boss(p, hold)
+		else:
+			pt._follow_goal(p, hold)
 		return
 	var hunt: Node = pt._nearest_hunt(p)
-	if hunt:
+	if hunt and pt._dist(p, hunt) <= NEAR:
+		_lock(pt, hunt, 1.6)
+		PlaytestLog.decide(pt, p, "hunt", "hunt", PlaytestLog.target(hunt))
 		if pt._is_boss(hunt):
 			pt._approach_boss(p, hunt)
 		else:
@@ -98,54 +253,65 @@ static func think(pt: Node, p: Node, delta: float) -> void:
 		return
 	if App.extracted:
 		var stairs: Node = pt._reachable_kind(p, "stairs")
-		if stairs == null:
-			var wait_boss: Node = pt._nearest_boss(p)
-			if wait_boss:
-				pt._approach_boss(p, wait_boss)
-				return
-		pt._follow_goal(p, stairs)
-		if stairs and pt._dist(p, stairs) < 1.15:
-			pt.interact = true
-			pt.just["interact"] = true
+		if stairs and not _banned(pt, stairs):
+			_lock(pt, stairs, 4.0)
+			PlaytestLog.decide(pt, p, "extract_stairs", "extracted", PlaytestLog.target(stairs))
+			use_prop(pt, p, stairs)
+			return
+		PlaytestLog.decide(pt, p, "extract_seek", "no_stairs")
+		pt._wander(p, delta)
 		return
+	var cargo: bool = int(App.gold) > 0 or pt._gather_cargo() > 0 or pt._misc_cargo() > 0
+	var local: Node = _near_prop(pt, p, 16.0)
+	if local:
+		var lk: String = str(local.get("kind"))
+		if cargo and lk.find("clerk") >= 0:
+			_lock(pt, local, 4.0)
+			PlaytestLog.decide(pt, p, "clerk", "cargo_local", PlaytestLog.target(local))
+			use_prop(pt, p, local)
+			return
+		if (not cargo) and (lk == "mine" or lk == "wood" or lk.find("chest") >= 0 or lk.find("clerk") >= 0):
+			_lock(pt, local, 3.5)
+			PlaytestLog.decide(pt, p, "gather", "local_prop", PlaytestLog.target(local))
+			use_prop(pt, p, local)
+			return
+		if lk.find("door") >= 0 or lk.find("stairs") >= 0:
+			_lock(pt, local, 2.5)
+			PlaytestLog.decide(pt, p, "door", "local_exit", PlaytestLog.target(local))
+			use_prop(pt, p, local)
+			return
 	var clerk: Node = pt._best_clerk(p)
-	if clerk:
-		pt._use_prop(p, clerk, 1.25)
+	if clerk and not _banned(pt, clerk) and cargo and pt._dist(p, clerk) <= 40.0:
+		_lock(pt, clerk, 4.0)
+		PlaytestLog.decide(pt, p, "clerk", "cargo_near", PlaytestLog.target(clerk))
+		use_prop(pt, p, clerk)
 		return
-	var node: Node = pt._best_gather(p)
-	if node:
-		pt._use_prop(p, node, 1.05)
-		return
-	var chest: Node = pt._best_chest(p)
-	if chest:
-		pt._use_prop(p, chest, 1.2)
-		return
-	var boss: Node = pt._nearest_boss(p)
-	if boss and (pt._near_closed_door(p) or pt._dist(p, boss) <= 8.5 or pt._has_los(p, boss)):
-		pt._approach_boss(p, boss)
-		return
-	var dest: Node = pt._reachable_kind(p, "stairs")
-	if dest == null:
-		dest = pt._reachable_kind(p, "crystal")
-	if dest:
-		pt._follow_goal(p, dest)
-		return
+	var why: String = "no_local_prop"
+	if cargo and clerk == null:
+		why = "no_clerk"
+	elif cargo and clerk and _banned(pt, clerk):
+		why = "banned"
+	elif cargo and clerk:
+		why = "not_path"
+	PlaytestLog.decide(pt, p, "wander", why)
 	pt._wander(p, delta)
 
 
 static func approach_boss(pt: Node, p: Node, boss: Node) -> void:
 	var gate: Node = pt._closed_door()
 	if gate != null and (pt._door_between(p, boss) or pt._near_closed_door(p) or not pt._has_path(p, boss)):
+		PlaytestLog.decide(pt, p, "door", "boss_gate", PlaytestLog.target(gate))
 		pt._go_open_door(p, gate)
 		return
 	if pt._has_los(p, boss) and pt._dist(p, boss) <= 6.5:
+		PlaytestLog.decide(pt, p, "fight", "boss_los", PlaytestLog.target(boss))
 		pt._fight(p, boss)
 		return
 	if pt._has_path(p, boss):
 		pt._follow_goal(p, boss)
 		pt.aim = pt._xz_to(p, boss)
 		return
-	pt.move = pt._steer(p, Vector2.ZERO)
+	pt.move = Vector2.ZERO
 
 
 static func fight(pt: Node, p: Node, enemy: Node) -> void:

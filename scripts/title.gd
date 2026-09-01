@@ -50,6 +50,10 @@ func _ready() -> void:
 	call_deferred("_focus_first")
 
 
+func _debug_open() -> bool:
+	return App.debug != null and bool(App.debug.get("open"))
+
+
 func _wire_focus(play_a: Button, play_b: Button, archives: Button) -> void:
 	if play_a == null or archives == null:
 		return
@@ -88,6 +92,8 @@ func _wire_focus(play_a: Button, play_b: Button, archives: Button) -> void:
 
 
 func _focus_first() -> void:
+	if _debug_open():
+		return
 	for n in find_children("*", "Button", true, false):
 		(n as Button).grab_focus()
 		return
@@ -116,6 +122,8 @@ func _btn(text: String, cb: Callable) -> Button:
 
 
 func _process(_delta: float) -> void:
+	if _debug_open():
+		return
 	if _archives_open and (App.archives_ui == null or not bool(App.archives_ui.get("open"))):
 		_archives_open = false
 		_focus_first()
@@ -124,12 +132,14 @@ func _process(_delta: float) -> void:
 func _unhandled_input(_event: InputEvent) -> void:
 	if _busy:
 		return
+	if _debug_open():
+		return
 	if App.archives_ui and bool(App.archives_ui.get("open")):
 		return
 
 
 func _play(kind: String) -> void:
-	if _busy:
+	if _busy or _debug_open():
 		return
 	_busy = true
 	App.set_character(kind)
@@ -141,7 +151,7 @@ func _play(kind: String) -> void:
 
 
 func _open_archives() -> void:
-	if _busy:
+	if _busy or _debug_open():
 		return
 	_archives_open = true
 	if App.archives_ui and App.archives_ui.has_method("show_browser"):
