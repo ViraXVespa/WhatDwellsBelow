@@ -8,7 +8,6 @@ Placeholdia needs real art, not placeholders from archived builds.
 Need to add lighting decorations to dungeon
 Need assets for inventory menu
 Need assets for updated placeholdia UI.
-Need to fix automated playtest
 Need to import button prompt assets
 Chroma keying has to be re-processed on existing assets to remove pinkness around edges.
 
@@ -24,7 +23,12 @@ Tinker around with in-game fog of war instead of just mini-map.
 Add mobile controls
 Add X Money donation links
 Improve dungeon tuning to ensure less gameplay with no action.
+Need a system to swap tooltip button prompts between KB/M and gamepad.
+Rework pause menu so that Dpad Right opens inventory and the menu button brings up a better flow for dispelling the run.
 
 ## Unsexy
+Need to fix automated playtest
 Need to test chroma key logic on different images to ensure it catches all of the pink.
-Need a system to swap tooltip button prompts between KB/M and gamepad.
+
+### Needs Investigation
+Check to see if we need a global menu input handler so menu behavior doesn't change from place to place.

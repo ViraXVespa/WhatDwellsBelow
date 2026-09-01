@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: changing pause inventory, Floor Crystal loadout, or gear tooltips
-Code: `scripts/ui/gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `scripts/ui/pause_menu.gd`, `scripts/ui/pause_inv.gd`, `scripts/ui/progress_ui.gd`, `scripts/ui/progress_ui_hub.gd`, `scripts/ui/progress_ui_inv.gd`
+Code: `scripts/ui/gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/pause_menu.gd`, `scripts/ui/pause_inv.gd`, `scripts/ui/progress_ui.gd`, `scripts/ui/progress_ui_hub.gd`, `scripts/ui/progress_ui_inv.gd`
 See also: `design/inventory.md`, `design/ui.md`, `design/hub.md`, `design/input.md`
 
 Pause Inventory and Floor Crystal Loadout MUST reuse one paper-doll board. Placeholdia inventory (opened outside the dungeon) MUST use the same option sources and apply path as Loadout. Dungeon inventory MAY only swap the current slot with matching bag items.
@@ -37,7 +37,7 @@ Pages, in order:
 
 The current page name sits in the card header. Navigation chrome is on either side of that title (`Q · LT` left, `RT · E` right), not in a separate bar at the top of the menu. Labels stay horizontal.
 
-The card is display-only. It MUST NOT take keyboard, mouse, or gamepad focus and MUST NOT sit in the focus chain. Pages change only through **Q / LT** and **E / RT**. Mouse click MUST NOT page it.
+The card is display-only. It MUST NOT take keyboard, mouse, or gamepad focus and MUST NOT sit in the focus chain. Pages change only through **Q / LT** and **E / RT**. LB / RB MUST NOT page this card; those bumpers cycle menu tabs when the host has tabs. Mouse click MUST NOT page it.
 
 ## Highlight and tooltips
 
@@ -67,8 +67,9 @@ The card is display-only. It MUST NOT take keyboard, mouse, or gamepad focus and
 | X tap | Drop (dungeon floor only) |
 | X hold | Destroy |
 | Y | Cycle tooltip off / current / forge preview |
-| Q / LB | Previous stats page |
-| E / RB | Next stats page |
+| Q / LT | Previous stats page |
+| E / RT | Next stats page |
+| LB / RB | Pause tabs only (Inventory / Skills / System). Ignored on Loadout / Anvil / Placeholdia boards that have no tabs. |
 
 Weapon and tool cannot be dropped, destroyed, or emptied. Mouse click MUST NOT advance stats pages (left click is also the attack bind).
 
@@ -80,6 +81,7 @@ Both hosts MUST pause the tree while open so Esc cannot fall through. While the 
 
 ## Live snapshot — scripts
 
+- `menu_pad.gd` — shared confirm / back / tab / stats-page classifiers
 - `gear_board.gd` — board facade: doll layout, bag grid, pending kit apply
 - `gear_board_floor.gd` — loadout floor row, stepper disable / neighbors, Enter-first focus
 - `gear_board_tip.gd` — flyout host and placement

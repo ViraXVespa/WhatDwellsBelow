@@ -2,8 +2,8 @@
 
 Status: binding design + live snapshot
 Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, or loading
-Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`
-See also: `design/gear-ui.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/hud.md`
+Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`
+See also: `design/gear-ui.md`, `design/input.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/hud.md`
 
 ## UI theme (playable surfaces)
 
@@ -38,10 +38,15 @@ All cooldowns MUST show both a visual fill/sweep and be understandable at a glan
 Opened with Menu / Start / Esc. Freezes gameplay.
 Every menu (including this one) MUST open with valid initial focus so it is immediately navigable by gamepad.
 
+Menu bindings are shared through `scripts/ui/menu_pad.gd` (`design/input.md`):
+- A / Enter confirms the focused control. A second A confirms a pending prompt.
+- B / Esc backs out of a nested layer (re-equip list, rebind page, pending prompt). At root, close the menu.
+- LB / RB (or `[` / `]`) cycle the three pause tabs. They MUST NOT page the inventory stats card.
+
 Exactly three tabs, navigable with LB/RB or equivalent:
-1. Inventory – shared paper-doll gear board (`design/gear-ui.md`), 7-column bag grid, flyout tooltips, paged stats. Use / consume / drop / equip as specified there, including mid-run weapon changes from the bag. Active artifact set bonuses appear on the Artifact sets stats page and in item flyouts.
+1. Inventory – shared paper-doll gear board (`design/gear-ui.md`), 7-column bag grid, flyout tooltips, paged stats. Stats pages use **Q / LT** and **E / RT**. Use / consume / drop / equip as specified there, including mid-run weapon changes from the bag. Active artifact set bonuses appear on the Artifact sets stats page and in item flyouts.
 2. Skills – list of the eleven skills with current level, XP bar to next level, and permanent XP total.
-3. System – MUST contain every one of the following:
+3. System – MUST open focused on the first System control, not the Inventory tab button, and MUST contain every one of the following:
    - Master / Music / SFX volume sliders
    - Camera zoom slider (1.0–1.75)
    - HUD scale slider
@@ -80,6 +85,7 @@ Placeholdia inventory (same board, opened outside a run) MUST use Loadout option
 - Analyze → First Forge → Re-forge flow with clear cost breakdown (gold, ore, root).
 - Smithing level influence visible.
 - Confirmation on every forge action.
+- No pause-style tab strip. LB / RB do nothing here. Stats paging on the shared board still uses Q / LT and E / RT.
 
 ## Loadout UI
 
@@ -88,6 +94,7 @@ Placeholdia inventory (same board, opened outside a run) MUST use Loadout option
 - Footer is `Floor: [−] [selected] [+] (Deepest floor: n)` then **Enter dungeon**. No character button and no top weapon / tool / deepest summary.
 - Choose starting weapon and tool type (pickaxe or hatchet — locked for the run) from the doll slots. Starting floor is only a previously reached floor. Never backward.
 - First focus is **Enter dungeon**. One press enters. B / Esc / Close cancels without entering.
+- No tab strip. LB / RB do nothing. Stats pages use Q / LT and E / RT.
 - Visual presentation MUST meet the same clean, dungeon-themed, TV-readable standard as the other interaction UIs.
 - Esc / B on the re-equip list MUST NOT confirm enter or close the crystal UI.
 
@@ -132,7 +139,7 @@ Triggered on every death or “Dispel”.
 
 `hud.gd`: strip top-left, minimap top-right, boss bar when near, toast. Level string uses combat level and parenthetical style level.
 Pause Skills also shows run XP earned this descent.
-Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Loadout opens focused on **Enter dungeon**.
+Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. System opens focused on Character. Loadout opens focused on **Enter dungeon**.
 
 ## Live snapshot — loading bar (`loader.gd`)
 

@@ -92,9 +92,13 @@ static func held(action: String) -> bool:
 
 
 static func just(action: String) -> bool:
+	if eat_pause and action in ["dash", "pause", "interact", "attack", "special", "potion", "food", "target_lock"]:
+		return false
 	if bool(edge.get(action, false)):
 		return true
 	if blocked(action):
+		return false
+	if bool(was.get(action, false)):
 		return false
 	return Input.is_action_just_pressed(action)
 
@@ -140,18 +144,18 @@ static func tick() -> void:
 				from_pad = true
 			if from_pad:
 				mode = true
-		if blocked(key):
+		if blocked(key) or eat_pause:
 			edge[key] = false
 		else:
 			edge[key] = now and not bool(was.get(key, false))
 		was[key] = now
 	if eat_pause:
-		var held_pause := Input.is_action_pressed("pause") or Input.is_action_pressed("ui_cancel")
-		if not held_pause:
+		var held_close := Input.is_action_pressed("pause") or Input.is_action_pressed("ui_cancel") or Input.is_action_pressed("dash")
+		if not held_close:
 			var pid := id()
 			if pid >= 0:
-				held_pause = Input.is_joy_button_pressed(pid, JOY_BUTTON_START) or Input.is_joy_button_pressed(pid, JOY_BUTTON_B)
-		if not held_pause:
+				held_close = Input.is_joy_button_pressed(pid, JOY_BUTTON_START) or Input.is_joy_button_pressed(pid, JOY_BUTTON_B)
+		if not held_close:
 			eat_pause = false
 
 

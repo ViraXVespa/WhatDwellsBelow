@@ -9,6 +9,7 @@ const PauseSys := preload("res://scripts/ui/pause_system.gd")
 const GearAct := preload("res://scripts/ui/gear_board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Util := preload("res://scripts/ui/pause_menu_util.gd")
+const Pad := preload("res://scripts/ui/menu_pad.gd")
 
 const SKILL_NAMES := {
 	"axe": "Great Axe",
@@ -216,8 +217,6 @@ func _rebuild() -> void:
 		if i == tab:
 			b.add_theme_color_override("font_color", Color(1, 0.92, 0.45))
 		tabs.add_child(b)
-		if focus_btn == null:
-			focus_btn = b
 	match tab:
 		0:
 			_inv()
@@ -228,11 +227,34 @@ func _rebuild() -> void:
 	call_deferred("_focus")
 
 
+func _cycle_tab(dir: int) -> void:
+	tab = posmod(tab + dir, 3)
+	sys_page = "main"
+	pending = false
+	pending_id = ""
+	rebind_action = ""
+	_rebuild()
+
+
 func _focus() -> void:
 	if tab == 0:
 		var hit: Control = _inv_find_sel()
 		if hit and not hit.is_queued_for_deletion():
 			hit.grab_focus()
+			return
+	if focus_btn and not focus_btn.is_queued_for_deletion() and not tabs.is_ancestor_of(focus_btn):
+		focus_btn.grab_focus()
+		return
+	for n: Node in box.find_children("*", "Control", true, false):
+		if n.is_queued_for_deletion():
+			continue
+		if n is BaseButton or n is Range:
+			var c: Control = n as Control
+			if c.focus_mode == Control.FOCUS_NONE:
+				continue
+			if n is BaseButton and (n as BaseButton).disabled:
+				continue
+			c.grab_focus()
 			return
 	if focus_btn and not focus_btn.is_queued_for_deletion():
 		focus_btn.grab_focus()
@@ -347,11 +369,32 @@ func _process(delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	if not open:
 		return
-	if pending and (event.is_action_pressed("interact") or event.is_action_pressed("ui_accept")):
+	var td := Pad.tab_delta(event)
+	if td != 0:
+		_cycle_tab(td)
+		get_viewport().set_input_as_handled()
+		return
+	if pending and Pad.is_confirm(event):
 		if pending_fn.is_valid():
 			pending_fn.call()
 		pending = false
+		pending_id = ""
 		_rebuild()
+		get_viewport().set_input_as_handled()
+		return
+	if Pad.is_back(event):
+		if gear_sub:
+			GearAct.close_sub(self)
+		elif pending:
+			pending = false
+			pending_id = ""
+			_st("Cancelled.")
+		elif sys_page != "main":
+			sys_page = "main"
+			rebind_action = ""
+			_rebuild()
+		else:
+			close_ui()
 		get_viewport().set_input_as_handled()
 		return
 
@@ -360,7 +403,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not open:
 		return
 	if tab == 0:
-		GearAct.input_tick(self, event)
-	if event.is_action_pressed("pause"):
-		close_ui()
-		get_viewport().set_input_as_handled()
+		if GearAct.input_tick(self, event):
+			get_viewport().set_input_as_handled()
+			return

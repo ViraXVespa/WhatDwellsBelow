@@ -3,6 +3,7 @@ extends Object
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Text := preload("res://scripts/ui/gear_board_text.gd")
 const Sub := preload("res://scripts/ui/gear_board_sub.gd")
+const Pad := preload("res://scripts/ui/menu_pad.gd")
 
 const HOLD_DESTROY := 0.55
 
@@ -232,26 +233,24 @@ static func input_tick(ui: CanvasLayer, event: InputEvent) -> bool:
 static func handle_event(ui: CanvasLayer, event: InputEvent) -> bool:
 	if event is InputEventMouse:
 		return false
-	if swallowing() and _is_cancel(event):
+	if swallowing() and Pad.is_back(event):
 		return true
 	if bool(ui.get("gear_sub")):
 		if _is_y(event):
 			cycle_tip(ui)
 			return true
-		if _is_cancel(event):
+		if Pad.is_back(event):
 			close_sub(ui)
 			return true
-		if _page_prev(event) or _page_next(event) or event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right") or event.is_action_pressed("tab_left") or event.is_action_pressed("tab_right"):
+		if Pad.tab_delta(event) != 0 or Pad.page_delta(event) != 0 or event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
 			return true
 		return false
 	if _is_y(event):
 		cycle_tip(ui)
 		return true
-	if _page_prev(event):
-		cycle_stats(ui, -1)
-		return true
-	if _page_next(event):
-		cycle_stats(ui, 1)
+	var pg := Pad.page_delta(event)
+	if pg != 0:
+		cycle_stats(ui, pg)
 		return true
 	if event.is_action_pressed("ui_left") and str(ui.inv_sel) == "stats":
 		cycle_stats(ui, -1)
@@ -259,40 +258,6 @@ static func handle_event(ui: CanvasLayer, event: InputEvent) -> bool:
 	if event.is_action_pressed("ui_right") and str(ui.inv_sel) == "stats":
 		cycle_stats(ui, 1)
 		return true
-	return false
-
-
-static func _is_cancel(event: InputEvent) -> bool:
-	if event is InputEventMouse:
-		return false
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
-		return true
-	if event is InputEventKey and event.pressed and not event.echo:
-		return (event as InputEventKey).keycode == KEY_ESCAPE or (event as InputEventKey).physical_keycode == KEY_ESCAPE
-	if event is InputEventJoypadButton and event.pressed:
-		return (event as InputEventJoypadButton).button_index == JOY_BUTTON_B
-	return false
-
-
-static func _page_prev(event: InputEvent) -> bool:
-	if event is InputEventMouse or event is InputEventMouseButton:
-		return false
-	if event is InputEventKey and event.pressed and not event.echo:
-		var k := event as InputEventKey
-		return k.physical_keycode == KEY_Q or k.keycode == KEY_Q
-	if event is InputEventJoypadButton and event.pressed:
-		return (event as InputEventJoypadButton).button_index == JOY_BUTTON_LEFT_SHOULDER
-	return false
-
-
-static func _page_next(event: InputEvent) -> bool:
-	if event is InputEventMouse or event is InputEventMouseButton:
-		return false
-	if event is InputEventKey and event.pressed and not event.echo:
-		var k := event as InputEventKey
-		return k.physical_keycode == KEY_E or k.keycode == KEY_E
-	if event is InputEventJoypadButton and event.pressed:
-		return (event as InputEventJoypadButton).button_index == JOY_BUTTON_RIGHT_SHOULDER
 	return false
 
 

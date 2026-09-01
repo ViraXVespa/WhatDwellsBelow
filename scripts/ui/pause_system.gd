@@ -19,6 +19,7 @@ static func build(ui: CanvasLayer) -> void:
 		ui._rebuild()
 	)
 	ui.box.add_child(char_btn)
+	ui.focus_btn = char_btn
 	ui.box.add_child(slider_row(ui, "Master volume", App.vol_master, 0.0, 1.0, 0.01, func(v: float):
 		App.set_volume("master", v)
 	))
@@ -84,6 +85,7 @@ static func rebind(ui: CanvasLayer) -> void:
 	var binds: Array = []
 	if App.has_method("collect_binds"):
 		binds = App.collect_binds()
+	var first_btn: Button = null
 	if binds.is_empty():
 		ui.box.add_child(ui._cap("No bind list exposed.", 18, Color(0.7, 0.66, 0.6)))
 	else:
@@ -94,21 +96,26 @@ static func rebind(ui: CanvasLayer) -> void:
 				var lab: String = str(d.get("label", act))
 				var cur: String = str(d.get("bind", d.get("key", "")))
 				var a2: String = act
-				ui.box.add_child(ThemeS.btn("%s   [%s]" % [lab, cur], func():
+				var row: Button = ThemeS.btn("%s   [%s]" % [lab, cur], func():
 					ui.rebind_action = a2
 					ui._st("Press a key or button for %s." % lab)
-				))
+				)
+				ui.box.add_child(row)
+				if first_btn == null:
+					first_btn = row
 	if App.has_method("reset_binds"):
 		ui.box.add_child(ThemeS.btn("Reset binds", func():
 			App.reset_binds()
 			App.save_now()
 			ui._rebuild()
 		))
-	ui.box.add_child(ThemeS.btn("Back", func():
+	var back: Button = ThemeS.btn("Back", func():
 		ui.sys_page = "main"
 		ui.rebind_action = ""
 		ui._rebuild()
-	))
+	)
+	ui.box.add_child(back)
+	ui.focus_btn = first_btn if first_btn else back
 	ui.status = ui._cap("", 16, Color(0.78, 0.74, 0.66))
 	ui.box.add_child(ui.status)
 
