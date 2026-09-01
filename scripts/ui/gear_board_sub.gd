@@ -2,6 +2,7 @@ extends Object
 
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Text := preload("res://scripts/ui/gear_board_text.gd")
+const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
 
@@ -60,14 +61,14 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 6)
 	panel.add_child(box)
-	var head := "Re-equip  " + str(Text.NAMES.get(slot, slot))
+	var head := "Re-equip  " + str(Fmt.NAMES.get(slot, slot))
 	var blurb := "A picks it. B closes. AT RISK gear is lost on death or Dispel."
 	if _is_anvil(ui):
 		if str(ui.get("anvil_tab")) == "forge":
-			head = "Forge  " + str(Text.NAMES.get(slot, slot))
+			head = "Forge  " + str(Fmt.NAMES.get(slot, slot))
 			blurb = "A selects analyzed remains or a hold. B closes."
 		else:
-			head = "Analyze  " + str(Text.NAMES.get(slot, slot))
+			head = "Analyze  " + str(Fmt.NAMES.get(slot, slot))
 			blurb = "A DESTROYS the piece. Remains wait on the Forge tab. B closes."
 	box.add_child(ThemeS.lab(head, 22, Color(0.95, 0.82, 0.5)))
 	box.add_child(ThemeS.lab(blurb, 16, Color(0.8, 0.74, 0.64)))
@@ -87,7 +88,7 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	for row: Dictionary in rows:
 		var it: Dictionary = row.it
 		var lab := "%s  ·  %s" % [str(row.src), Text.item_short(it)]
-		var mark := Text.risk_mark(it, Act.town_kit(ui) or str(row.src) == "bank")
+		var mark := Fmt.risk_mark(it, Act.town_kit(ui) or str(row.src) == "bank")
 		if mark != "":
 			lab += "  [" + mark + "]"
 		var key := "opt:%s:%s:%d" % [str(row.src), slot, int(row.uid)]
@@ -100,7 +101,7 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 		b.focus_mode = Control.FOCUS_ALL
 		b.disabled = false
 		b.add_theme_font_size_override("font_size", 18)
-		b.add_theme_color_override("font_color", Text.item_color(it))
+		b.add_theme_color_override("font_color", Fmt.item_color(it))
 		b.set_meta("inv_key", key)
 		Board._watch_hover(ui, b, key)
 		b.pressed.connect(func(): pick(ui, slot, pick_row))

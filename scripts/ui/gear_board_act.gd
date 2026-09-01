@@ -225,6 +225,10 @@ static func _joy_down(btn: int) -> bool:
 	return false
 
 
+static func input_tick(ui: CanvasLayer, event: InputEvent) -> bool:
+	return handle_event(ui, event)
+
+
 static func handle_event(ui: CanvasLayer, event: InputEvent) -> bool:
 	if event is InputEventMouse:
 		return false

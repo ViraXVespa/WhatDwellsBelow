@@ -1,28 +1,20 @@
 extends Object
 
 const Stats := preload("res://scripts/ui/gear_board_stats.gd")
+const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
 
-const NAMES := {
-	"weapon": "Weapon",
-	"tool": "Tool",
-	"potion": "Potion",
-	"food": "Food",
-	"head": "Head",
-	"body": "Body",
-	"legs": "Legs",
-}
 
 static var seen_uids: Dictionary = {}
 
 
 static func slot_face(ui: CanvasLayer, slot: String, it: Dictionary) -> String:
-	var head := str(NAMES.get(slot, slot))
+	var head := str(Fmt.NAMES.get(slot, slot))
 	if has_unseen(slot):
 		head = "▸ " + head
 	if it.is_empty():
 		return "%s\nempty" % head
 	var body := item_short(it)
-	var mark := risk_mark(it, str(ui.get("gear_mode")) == "loadout")
+	var mark := Fmt.risk_mark(it, str(ui.get("gear_mode")) == "loadout")
 	if mark != "":
 		body += "\n" + mark
 	return "%s\n%s" % [head, body]
@@ -33,7 +25,7 @@ static func item_short(it: Dictionary) -> String:
 		return "empty"
 	var nm := str(it.get("name", "item"))
 	if str(it.get("kind", "")) == "potion" or str(it.get("slot", "")) == "potion":
-		return "%s  %d/%d" % [nm, _charges(it), _charge_max(it)]
+		return "%s  %d/%d" % [nm, Fmt._charges(it), Fmt._charge_max(it)]
 	var stack := int(it.get("stack", 1))
 	if stack > 1:
 		nm += "  x%d" % stack
@@ -43,7 +35,7 @@ static func item_short(it: Dictionary) -> String:
 static func item_cell(it: Dictionary) -> String:
 	var nm := str(it.get("name", "item"))
 	if str(it.get("kind", "")) == "potion" or str(it.get("slot", "")) == "potion":
-		return "%s\n%d/%d" % [nm, _charges(it), _charge_max(it)]
+		return "%s\n%d/%d" % [nm, Fmt._charges(it), Fmt._charge_max(it)]
 	var stack := int(it.get("stack", 1))
 	if stack > 1:
 		nm += "\nx%d" % stack
@@ -52,62 +44,6 @@ static func item_cell(it: Dictionary) -> String:
 	elif str(it.get("kind", "")) == "artifact":
 		nm += "\n" + str(it.get("set", "relic"))
 	return nm
-
-
-static func _charges(it: Dictionary) -> int:
-	if it.has("charges"):
-		return int(it.charges)
-	return int(it.get("stack", 0))
-
-
-static func _charge_max(it: Dictionary) -> int:
-	if it.has("charge_max"):
-		return maxi(1, int(it.charge_max))
-	if it.has("charges"):
-		return maxi(1, int(it.charges))
-	return maxi(1, int(it.get("stack", 1)))
-
-
-static func item_color(it: Dictionary) -> Color:
-	if it.is_empty():
-		return Color(0.62, 0.58, 0.52)
-	if is_risk(it):
-		return Color(0.95, 0.55, 0.38)
-	match str(it.get("rarity", "white")):
-		"green":
-			return Color(0.55, 0.86, 0.52)
-		"blue":
-			return Color(0.52, 0.7, 1.0)
-		_:
-			if str(it.get("kind", "")) == "artifact":
-				return Color(0.92, 0.78, 0.48)
-			return Color(0.92, 0.84, 0.62)
-
-
-static func is_risk(it: Dictionary) -> bool:
-	if it.is_empty():
-		return false
-	if bool(it.get("hold", false)):
-		return false
-	if str(it.get("kit_src", "")) == "starter":
-		return false
-	if str(it.get("kit_src", "")) == "hold":
-		return false
-	if str(it.get("kind", "")) == "artifact":
-		return true
-	if str(it.get("kit_src", "")) == "bank":
-		return true
-	return not bool(it.get("hold", false)) and str(it.get("kit_src", "")) != ""
-
-
-static func risk_mark(it: Dictionary, loadout: bool) -> String:
-	if it.is_empty():
-		return ""
-	if bool(it.get("hold", false)) or str(it.get("kit_src", "")) == "hold":
-		return "HOLD"
-	if loadout and is_risk(it):
-		return "AT RISK"
-	return ""
 
 
 static func hint_line(ui: CanvasLayer) -> String:
@@ -158,7 +94,7 @@ static func options_for(slot: String) -> Array:
 			c["kit_src"] = "equipped"
 		out.append({"it": c, "src": "equipped", "uid": int(c.get("uid", 0))})
 		seen_uid[int(c.get("uid", 0))] = true
-		seen_tmpl[_tmpl(c)] = true
+		seen_tmpl[Fmt._tmpl(c)] = true
 	if App.in_dungeon:
 		for raw: Variant in App.prog.bag:
 			if raw is Dictionary and str(raw.get("slot", "")) == slot:
@@ -167,10 +103,10 @@ static func options_for(slot: String) -> Array:
 				var uid := int(raw.uid)
 				if uid != 0 and seen_uid.has(uid):
 					continue
-				if seen_tmpl.has(_tmpl(raw)):
+				if seen_tmpl.has(Fmt._tmpl(raw)):
 					continue
 				seen_uid[uid] = true
-				seen_tmpl[_tmpl(raw)] = true
+				seen_tmpl[Fmt._tmpl(raw)] = true
 				out.append({"it": raw, "src": "bag", "uid": uid})
 		return out
 	if slot == "weapon":
@@ -205,23 +141,23 @@ static func options_for(slot: String) -> Array:
 			var uid := int(h.uid)
 			if uid != 0 and seen_uid.has(uid):
 				continue
-			if seen_tmpl.has(_tmpl(h)):
+			if seen_tmpl.has(Fmt._tmpl(h)):
 				continue
 			var hd: Dictionary = (h as Dictionary).duplicate(true)
 			hd["kit_src"] = "hold"
 			seen_uid[uid] = true
-			seen_tmpl[_tmpl(hd)] = true
+			seen_tmpl[Fmt._tmpl(hd)] = true
 			out.append({"it": hd, "src": "hold", "uid": uid})
 	var unlocked: Array = []
 	if App.prog.get("starters") is Dictionary:
 		unlocked = App.prog.starters.get(slot, [])
 	for raw_s: Variant in unlocked:
 		if raw_s is Dictionary:
-			if seen_tmpl.has(_tmpl(raw_s)):
+			if seen_tmpl.has(Fmt._tmpl(raw_s)):
 				continue
 			var us: Dictionary = (raw_s as Dictionary).duplicate(true)
 			us["kit_src"] = "starter"
-			seen_tmpl[_tmpl(us)] = true
+			seen_tmpl[Fmt._tmpl(us)] = true
 			out.append({"it": us, "src": "starter", "uid": int(us.get("uid", 0))})
 	for raw2: Variant in App.prog.bank_items:
 		if raw2 is Dictionary and str(raw2.get("slot", "")) == slot:
@@ -230,25 +166,14 @@ static func options_for(slot: String) -> Array:
 			var uid2 := int(raw2.uid)
 			if uid2 != 0 and seen_uid.has(uid2):
 				continue
-			if seen_tmpl.has(_tmpl(raw2)):
+			if seen_tmpl.has(Fmt._tmpl(raw2)):
 				continue
 			var bk: Dictionary = (raw2 as Dictionary).duplicate(true)
 			bk["kit_src"] = "bank"
 			seen_uid[uid2] = true
-			seen_tmpl[_tmpl(bk)] = true
+			seen_tmpl[Fmt._tmpl(bk)] = true
 			out.append({"it": bk, "src": "bank", "uid": uid2})
 	return out
-
-
-static func _tmpl(it: Dictionary) -> String:
-	var slot := str(it.get("slot", ""))
-	if slot == "weapon":
-		return "weapon:" + str(it.get("weapon", it.get("name", "")))
-	if slot == "tool":
-		return "tool:" + str(it.get("tool", ""))
-	if slot == "potion":
-		return "potion:" + str(it.get("name", "Potion"))
-	return "%s:%s:%s" % [slot, str(it.get("name", "")), str(it.get("rarity", "white"))]
 
 
 static func has_unseen(slot: String) -> bool:
@@ -281,7 +206,7 @@ static func tooltip(ui: CanvasLayer) -> String:
 	var slot := selected_slot(ui)
 	if it.is_empty():
 		if slot != "":
-			return "%s — empty\nA opens anything that can go here." % str(NAMES.get(slot, slot))
+			return "%s — empty\nA opens anything that can go here." % str(Fmt.NAMES.get(slot, slot))
 		return "Empty bag slot."
 	if mode >= 2:
 		return forged_block(it)
@@ -296,7 +221,7 @@ static func current_block(it: Dictionary) -> String:
 		head += "  ·  " + rare.capitalize()
 	if bool(it.get("hold", false)):
 		head += "  ·  forged hold"
-	if is_risk(it):
+	if Fmt.is_risk(it):
 		head += "  ·  lost on death unless mailed"
 	lines.append(head)
 	var desc := str(it.get("desc", ""))
@@ -349,7 +274,7 @@ static func stat_bits(it: Dictionary) -> String:
 	if int(it.get("hp", 0)) != 0:
 		bits.append("%+d HP" % int(it.hp))
 	if str(it.get("kind", "")) == "potion" or str(it.get("slot", "")) == "potion":
-		bits.append("Charges %d/%d" % [_charges(it), _charge_max(it)])
+		bits.append("Charges %d/%d" % [Fmt._charges(it), Fmt._charge_max(it)])
 		var cd := float(it.get("cooldown", 0.0))
 		if cd <= 0.0 and App.bal:
 			cd = float(App.bal.get("potion_cooldown"))

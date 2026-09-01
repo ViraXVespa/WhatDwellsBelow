@@ -2,6 +2,7 @@ extends CanvasLayer
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const CrystalNet := preload("res://scripts/world/crystal_net.gd")
+const Util := preload("res://scripts/ui/crystal_ui_util.gd")
 
 const ZOOM_NEAR := 96
 
@@ -75,22 +76,8 @@ func _rebuild() -> void:
 	call_deferred("_focus")
 
 
-func _panel(pos: Vector2, size: Vector2) -> ColorRect:
-	var panel := ColorRect.new()
-	panel.color = Color(0.14, 0.11, 0.09, 0.96)
-	panel.position = pos
-	panel.size = size
-	add_child(panel)
-	var edge := ColorRect.new()
-	edge.color = Color(0.55, 0.42, 0.22, 1)
-	edge.position = pos
-	edge.size = Vector2(size.x, 8)
-	add_child(edge)
-	return panel
-
-
 func _page_root() -> void:
-	_panel(Vector2(520, 220), Vector2(880, 620))
+	Util.panel(self, Vector2(520, 220), Vector2(880, 620))
 	var box := VBoxContainer.new()
 	box.position = Vector2(552, 252)
 	box.size = Vector2(816, 556)
@@ -140,7 +127,7 @@ func _page_local() -> void:
 	if host and host.has_method("_redraw_map"):
 		host._redraw_map()
 		CrystalNet.paint(host)
-	_panel(Vector2(80, 80), Vector2(1760, 920))
+	Util.panel(self, Vector2(80, 80), Vector2(1760, 920))
 	map_clip = Control.new()
 	map_clip.position = Vector2(112, 128)
 	map_clip.size = Vector2(980, 820)
@@ -166,7 +153,7 @@ func _page_local() -> void:
 	box.add_child(ThemeS.lab("Local Transport Network", 28, Color(0.95, 0.82, 0.5)))
 	box.add_child(ThemeS.lab("Bound crystals on this floor.", 18, Color(0.78, 0.74, 0.66)))
 	box.add_child(ThemeS.lab("Y / Tab: Zoom map", 18, Color(0.88, 0.78, 0.48)))
-	status = ThemeS.lab(_zoom_tip(), 18, Color(0.7, 0.66, 0.58))
+	status = ThemeS.lab(Util.zoom_tip(self), 18, Color(0.7, 0.66, 0.58))
 	box.add_child(status)
 	var first: Button = null
 	for n: Node in CrystalNet.activated_on_floor(host):
@@ -190,44 +177,14 @@ func _page_local() -> void:
 		_aim(Vector2i(spot.get("crystal_cell")) if spot else host.data.spawn)
 
 
-func _zoom_view() -> int:
-	if host == null:
-		return ZOOM_NEAR
-	var full: int = maxi(int(host.data.w), int(host.data.h))
-	var near: int = mini(ZOOM_NEAR, full)
-	if zoom_lv == 2:
-		return full
-	if zoom_lv == 1:
-		return maxi(near, int(round((near + full) * 0.5)))
-	return near
-
-
-func _zoom_tip() -> String:
-	match zoom_lv:
-		1:
-			return "Zoom: mid  ·  Y / Tab cycles"
-		2:
-			return "Zoom: full floor  ·  Y / Tab cycles"
-		_:
-			return "Zoom: close  ·  Y / Tab cycles"
-
-
 func _cycle_zoom() -> void:
 	if page != "local":
 		return
 	zoom_lv = (zoom_lv + 1) % 3
 	if status:
-		status.text = _zoom_tip()
+		status.text = Util.zoom_tip(self)
 	_aim(aim_cell)
 	App.sfx("ui")
-
-
-func _zoom_event(event: InputEvent) -> bool:
-	if event is InputEventKey and event.pressed and not event.echo:
-		return event.keycode == KEY_TAB or event.physical_keycode == KEY_TAB
-	if event is InputEventJoypadButton and event.pressed:
-		return event.button_index == JOY_BUTTON_Y
-	return false
 
 
 func _aim(cell: Vector2i) -> void:
@@ -236,7 +193,7 @@ func _aim(cell: Vector2i) -> void:
 		return
 	var w: int = int(host.data.w)
 	var h: int = int(host.data.h)
-	var view := _zoom_view()
+	var view := Util.zoom_view(self, host)
 	view = clampi(view, 1, maxi(w, h))
 	var x := 0
 	var y := 0
@@ -251,28 +208,7 @@ func _aim(cell: Vector2i) -> void:
 	atlas.region = Rect2(x, y, rw, rh)
 	atlas.filter_clip = true
 	map_rect.texture = atlas
-	_place_mark(cell, x, y, rw, rh)
-
-
-func _place_mark(cell: Vector2i, rx: int, ry: int, rw: int, rh: int) -> void:
-	if map_mark == null or map_clip == null:
-		return
-	if rw <= 0 or rh <= 0:
-		map_mark.visible = false
-		return
-	var box: Vector2 = map_clip.size
-	var fit: float = minf(box.x / float(rw), box.y / float(rh))
-	var drawn := Vector2(float(rw) * fit, float(rh) * fit)
-	var origin := (box - drawn) * 0.5
-	var lx: float = (float(cell.x - rx) + 0.5) / float(rw)
-	var ly: float = (float(cell.y - ry) + 0.5) / float(rh)
-	var px: float = origin.x + lx * drawn.x
-	var py: float = origin.y + ly * drawn.y
-	var mark: float = clampf(fit * 2.4, 8.0, 18.0)
-	map_mark.size = Vector2(mark, mark)
-	map_mark.position = Vector2(px - mark * 0.5, py - mark * 0.5)
-	map_mark.visible = true
-	map_mark.color = Color(1.0, 0.92, 0.35, 0.95)
+	Util.place_mark(self, cell, x, y, rw, rh)
 
 
 func _pick_local(cell: Vector2i) -> void:
@@ -283,7 +219,7 @@ func _pick_local(cell: Vector2i) -> void:
 
 
 func _page_floors() -> void:
-	_panel(Vector2(520, 160), Vector2(880, 760))
+	Util.panel(self, Vector2(520, 160), Vector2(880, 760))
 	var box := VBoxContainer.new()
 	box.position = Vector2(552, 192)
 	box.size = Vector2(816, 696)
@@ -368,7 +304,7 @@ func _focus() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if page == "local" and _zoom_event(event):
+	if page == "local" and Util.zoom_event(event):
 		_cycle_zoom()
 		get_viewport().set_input_as_handled()
 		return

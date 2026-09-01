@@ -8,6 +8,7 @@ const PauseSkills := preload("res://scripts/ui/pause_skills.gd")
 const PauseSys := preload("res://scripts/ui/pause_system.gd")
 const GearAct := preload("res://scripts/ui/gear_board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
+const Util := preload("res://scripts/ui/pause_menu_util.gd")
 
 const SKILL_NAMES := {
 	"axe": "Great Axe",
@@ -150,7 +151,7 @@ func show_menu() -> void:
 	gear_sub = false
 	gear_sub_slot = ""
 	gear_hover = false
-	_hide_tip()
+	Util.hide_tip(self)
 	_rebuild()
 
 
@@ -169,7 +170,7 @@ func close_ui() -> void:
 		old.queue_free()
 	if gear_tip_host:
 		gear_tip_host.visible = false
-	_hide_tip()
+	Util.hide_tip(self)
 	App.ui_open = false
 	get_tree().paused = false
 	App.save_now()
@@ -181,11 +182,11 @@ func _wipe(n: Node) -> void:
 	while n.get_child_count() > 0:
 		var c: Node = n.get_child(0)
 		n.remove_child(c)
-		c.free()
+		c.queue_free()
 
 
 func _rebuild() -> void:
-	_hide_tip()
+	Util.hide_tip(self)
 	gear_sub = false
 	gear_sub_slot = ""
 	var old: Node = get_node_or_null("gear_sub_panel")
@@ -244,16 +245,11 @@ func _focus() -> void:
 
 
 func _cap(text: String, size: int = 18, col: Color = Color(0.9, 0.84, 0.7)) -> Label:
-	var l: Label = Label.new()
-	l.text = text
-	l.autowrap_mode = TextServer.AUTOWRAP_OFF
-	l.clip_text = false
+	var l: Label = Util.cap(self, text, size, col)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	l.custom_minimum_size = Vector2(520, 26)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", col)
 	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
 	l.add_theme_constant_override("outline_size", 6)
 	return l
@@ -297,7 +293,7 @@ func _on_skill_focus(id: String, kind: String, from: Control) -> void:
 	tip_id = id
 	tip_kind = kind
 	tip_from = from
-	_paint_tip()
+	Util.paint_tip(self)
 
 
 func _on_skill_blur(from: Control) -> void:
@@ -310,19 +306,15 @@ func _blur_tip() -> void:
 	var f: Control = get_viewport().gui_get_focus_owner()
 	if f != null and f.has_meta("skill_id"):
 		return
-	_hide_tip()
+	Util.hide_tip(self)
 
 
 func _hide_tip() -> void:
-	tip_id = ""
-	tip_kind = ""
-	tip_from = null
-	if tip_host:
-		tip_host.visible = false
+	Util.hide_tip(self)
 
 
 func _paint_tip() -> void:
-	PauseSkills.paint_tip(self)
+	Util.paint_tip(self)
 
 
 func _system() -> void:
@@ -334,11 +326,11 @@ func _rebind() -> void:
 
 
 func _slider_row(title: String, value: float, lo: float, hi: float, step: float, on_change: Callable) -> VBoxContainer:
-	return PauseSys.slider_row(self, title, value, lo, hi, step, on_change)
+	return Util.slider_row(self, title, value, lo, hi, step, on_change)
 
 
 func _confirm(fn: Callable, id: String = "anon") -> void:
-	PauseSys.confirm(self, fn, id)
+	Util.confirm(self, fn, id)
 
 
 func _st(msg: String) -> void:
@@ -355,67 +347,20 @@ func _process(delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	if not open:
 		return
-	if rebind_action != "":
-		if event is InputEventKey and event.pressed and not event.echo:
-			if App.has_method("rebind"):
-				App.rebind(rebind_action, event)
-			rebind_action = ""
-			App.save_now()
-			_rebuild()
-			get_viewport().set_input_as_handled()
-			return
-		if event is InputEventJoypadButton and event.pressed:
-			if App.has_method("rebind"):
-				App.rebind(rebind_action, event)
-			rebind_action = ""
-			App.save_now()
-			_rebuild()
-			get_viewport().set_input_as_handled()
-			return
-	if event is InputEventMouse or event is InputEventMouseButton:
-		return
-	if tab == 0 and GearAct.handle_event(self, event):
+	if pending and (event.is_action_pressed("interact") or event.is_action_pressed("ui_accept")):
+		if pending_fn.is_valid():
+			pending_fn.call()
+		pending = false
+		_rebuild()
 		get_viewport().set_input_as_handled()
+		return
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not open:
 		return
-	if App.archives_ui and bool(App.archives_ui.get("open")):
-		return
-	if event is InputEventMouse or event is InputEventMouseButton:
-		return
 	if tab == 0:
-		if GearAct.handle_event(self, event):
-			get_viewport().set_input_as_handled()
-			return
-	if event.is_action_pressed("tab_right"):
-		tab = (tab + 1) % 3
-		sys_page = "main"
-		_rebuild()
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("tab_left"):
-		tab = (tab + 2) % 3
-		sys_page = "main"
-		_rebuild()
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
-		if gear_sub or GearAct.swallowing():
-			get_viewport().set_input_as_handled()
-			return
-		if pending:
-			pending = false
-			pending_id = ""
-			App.sfx("ui_cancel")
-			_st("Cancelled.")
-		elif sys_page == "rebind":
-			sys_page = "main"
-			rebind_action = ""
-			App.sfx("ui_cancel")
-			_rebuild()
-		else:
-			App.sfx("ui_cancel")
-			close_ui()
-		if App.has_method("swallow_close_pad"):
-			App.swallow_close_pad()
+		GearAct.input_tick(self, event)
+	if event.is_action_pressed("pause"):
+		close_ui()
 		get_viewport().set_input_as_handled()
