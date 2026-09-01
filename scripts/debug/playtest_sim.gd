@@ -3,6 +3,7 @@ extends Object
 const Store := preload("res://scripts/data/save_store.gd")
 const Recs := preload("res://scripts/debug/playtest_recs.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
+const PlaytestLogBatch := preload("res://scripts/debug/playtest_log_batch.gd")
 
 
 static func reset_ai_state(pt: Node) -> void:
@@ -32,26 +33,15 @@ static func reset_ai_state(pt: Node) -> void:
 	pt.just.clear()
 	if "last_think_t" in pt:
 		pt.last_think_t = -1.0
-	if pt.has_meta("lock_n"):
-		pt.remove_meta("lock_n")
-	if pt.has_meta("lock_t"):
-		pt.remove_meta("lock_t")
-	if pt.has_meta("cell_t"):
-		pt.remove_meta("cell_t")
-	if pt.has_meta("skip_list"):
-		pt.remove_meta("skip_list")
-	if pt.has_meta("seen_map"):
-		pt.remove_meta("seen_map")
-	if pt.has_meta("decide_why"):
-		pt.remove_meta("decide_why")
-	if pt.has_meta("log_gather_d"):
-		pt.remove_meta("log_gather_d")
-	if pt.has_meta("log_clerk_d"):
-		pt.remove_meta("log_clerk_d")
-	if pt.has_meta("log_threat_d"):
-		pt.remove_meta("log_threat_d")
-	if pt.has_meta("log_gather_k"):
-		pt.remove_meta("log_gather_k")
+	App.extracted = false
+	App.ui_open = false
+	for key: String in [
+		"lock_n", "lock_t", "cell_t", "skip_list", "seen_map", "decide_why",
+		"log_gather_d", "log_clerk_d", "log_threat_d", "log_gather_k",
+		"trail", "stuck_cell", "wander_hold", "dash_cd", "flee_c",
+	]:
+		if pt.has_meta(key):
+			pt.remove_meta(key)
 
 
 static func start_next(pt: Node) -> void:
@@ -62,6 +52,7 @@ static func start_next(pt: Node) -> void:
 		pt.live_backup = Store.collect()
 		pt.bal_backup = pt._snap_bal()
 		pt.scale_backup = Engine.time_scale
+		PlaytestLogBatch.begin()
 	pt.job = pt.queue.pop_front()
 	pt.live_running = true
 	pt.running = true
@@ -121,6 +112,7 @@ static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 	if end_s == "interrupted playtest" and not App.extracted:
 		fail_s = "time_limit"
 	PlaytestLog.finish(pt, end_s, fail_s)
+	PlaytestLogBatch.note_run()
 	pt.history.append(App.tel.to_dict())
 	pt._save_history()
 	reset_ai_state(pt)
@@ -145,6 +137,9 @@ static func stop_live(pt: Node) -> void:
 	pt.last_summary = pt._format()
 	if PlaytestLog.file_name != "":
 		pt.last_summary += "\nLog: " + PlaytestLog._dir().path_join(PlaytestLog.file_name)
+	var bundle: PackedStringArray = PlaytestLogBatch.close()
+	for pth: String in bundle:
+		pt.last_summary += "\nBatch: " + pth
 
 
 static func sim_save(pt: Node, kind: String, progressed: bool) -> void:

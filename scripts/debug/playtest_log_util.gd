@@ -1,5 +1,3 @@
-# Utilities for PlaytestLog
-
 static func _t(pt: Node) -> float:
 	if pt.get("sim_t") == null:
 		return 0.0
@@ -146,7 +144,7 @@ static func _lock_fields(pt: Node, p: Node) -> Dictionary:
 	if not pt.has_meta("lock_n"):
 		return out
 	var n: Variant = pt.get_meta("lock_n")
-	if n == null or not (n is Node) or not is_instance_valid(n):
+	if n == null or not is_instance_valid(n):
 		return out
 	var node: Node = n
 	out["lock_k"] = str(node.get("kind"))
@@ -202,11 +200,11 @@ static func _tgt_cell(pt: Node, extra: Dictionary) -> Dictionary:
 		return out
 	if not pt.has_meta("lock_n"):
 		var g: Variant = pt.get("path_goal")
-		if g is Node and is_instance_valid(g):
+		if g != null and is_instance_valid(g):
 			out["tgt_c"] = _xy(pt, g)
 		return out
 	var n: Variant = pt.get_meta("lock_n")
-	if n is Node and is_instance_valid(n):
+	if n != null and is_instance_valid(n):
 		out["tgt_c"] = _xy(pt, n)
 	return out
 
@@ -216,11 +214,11 @@ static func _use_fields(pt: Node, p: Node) -> Dictionary:
 	if not pt.interact:
 		return out
 	var n: Node = null
-	if pt.get("path_goal") is Node and is_instance_valid(pt.path_goal):
+	if pt.path_goal != null and is_instance_valid(pt.path_goal):
 		n = pt.path_goal
 	elif pt.has_meta("lock_n"):
 		var v: Variant = pt.get_meta("lock_n")
-		if v is Node and is_instance_valid(v):
+		if v != null and is_instance_valid(v):
 			n = v
 	if n == null:
 		return out
@@ -248,16 +246,10 @@ static func _relabel(why: String, clerk_d: float, gather_d: float, cargo: int) -
 	if why != "not_path" and why != "no_local_prop":
 		return why
 	if cargo > 0:
-		if clerk_d < 0.0:
-			return "no_clerk"
-		if clerk_d > 40.0:
-			return "clerk_far"
-		return "clerk_gated"
+		return "no_clerk" if clerk_d < 0.0 else ("clerk_far" if clerk_d > 40.0 else "clerk_gated")
 	if gather_d < 0.0:
 		return "no_gather"
-	if gather_d > 16.0:
-		return "gather_far"
-	return why
+	return "gather_far" if gather_d > 16.0 else why
 
 
 static func _card_open(pt: Node, p: Node) -> Dictionary:
@@ -314,16 +306,9 @@ static func _coalesce_step(events: Array, ev: Dictionary) -> bool:
 	var prev: Dictionary = last
 	if prev.get("cell") != ev.get("cell"):
 		return false
-	if str(prev.get("cmd", "")) != str(ev.get("cmd", "")):
-		return false
-	if str(prev.get("g", "")) != str(ev.get("g", "")):
-		return false
-	if str(prev.get("o", "")) != str(ev.get("o", "")):
-		return false
-	if str(prev.get("p", "")) != str(ev.get("p", "")):
-		return false
-	if str(prev.get("goal", "")) != str(ev.get("goal", "")):
-		return false
+	for k: String in ["cmd", "g", "o", "p", "goal"]:
+		if str(prev.get(k, "")) != str(ev.get(k, "")):
+			return false
 	prev["n"] = int(prev.get("n", 1)) + 1
 	prev["t1"] = ev.get("t")
 	prev["d"] = ev.get("d")

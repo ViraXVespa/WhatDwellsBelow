@@ -1,6 +1,7 @@
 extends Object
 
-const SEE := 28.0
+const SEE := 36.0
+const ROOM := 11.0
 
 
 static func world_ui(pt: Node) -> Node:
@@ -51,7 +52,7 @@ static func dismiss_world_ui(pt: Node) -> bool:
 
 static func nearest_visible_threat(pt: Node, p: Node) -> Node:
 	var best: Node = null
-	var best_d: float = pt._notice_range()
+	var best_d: float = maxf(pt._notice_range(), 8.0)
 	var tree: SceneTree = pt.get_tree()
 	if tree == null:
 		return null
@@ -65,19 +66,42 @@ static func nearest_visible_threat(pt: Node, p: Node) -> Node:
 			continue
 		if pt._door_between(p, n):
 			continue
-		if pt._is_bow():
-			if not pt._has_wide_los(p, n):
-				continue
-		elif not pt._has_los(p, n):
+		if not pt._has_los(p, n):
 			continue
 		best_d = d
 		best = n
 	return best
 
 
+static func nearest_room_threat(pt: Node, p: Node, radius: float = ROOM) -> Node:
+	var best: Node = null
+	var best_d: float = radius
+	var tree: SceneTree = pt.get_tree()
+	if tree == null:
+		return null
+	for n: Node in tree.get_nodes_in_group("enemies"):
+		if not pt._alive_enemy(n):
+			continue
+		var d: float = pt._dist(p, n)
+		if d >= best_d:
+			continue
+		if pt._door_between(p, n):
+			continue
+		best_d = d
+		best = n
+	return best
+
+
+static func nearest_foe(pt: Node, p: Node) -> Node:
+	var seen: Node = nearest_visible_threat(pt, p)
+	if seen:
+		return seen
+	return nearest_room_threat(pt, p)
+
+
 static func nearest_hunt(pt: Node, p: Node) -> Node:
 	var best: Node = null
-	var best_d: float = 8.0
+	var best_d: float = 14.0
 	var tree: SceneTree = pt.get_tree()
 	if tree == null:
 		return null
@@ -86,15 +110,13 @@ static func nearest_hunt(pt: Node, p: Node) -> Node:
 			continue
 		var d: float = pt._dist(p, n)
 		if pt._is_boss(n):
-			if d > 8.5:
+			if d > 10.0:
 				continue
 		elif d > best_d:
 			continue
 		if pt._door_between(p, n):
 			continue
-		if pt._is_bow() and pt._has_wide_los(p, n):
-			continue
-		if (not pt._is_bow()) and pt._has_los(p, n):
+		if pt._has_los(p, n):
 			continue
 		var score: float = d
 		if pt._is_boss(n):
@@ -121,6 +143,40 @@ static func nearest_boss(pt: Node, p: Node) -> Node:
 			best_d = d
 			best = n
 	return best
+
+
+static func closest_kind(pt: Node, p: Node, kind: String, radius: float) -> Node:
+	var best: Node = null
+	var best_d: float = radius
+	var tree: SceneTree = p.get_tree()
+	if tree == null:
+		return null
+	for n: Node in tree.get_nodes_in_group("interact"):
+		if n == null or not is_instance_valid(n):
+			continue
+		if str(n.get("kind")) != kind:
+			continue
+		var d: float = pt._dist(p, n)
+		if d < best_d:
+			best_d = d
+			best = n
+	return best
+
+
+static func away_open(pt: Node, p: Node, node: Node) -> Vector2:
+	var away: Vector2 = -pt._xz_to(p, node)
+	if away.length() < 0.05:
+		away = Vector2.RIGHT
+	var tried: Array[Vector2] = [
+		away,
+		Vector2(-away.y, away.x),
+		Vector2(away.y, -away.x),
+	]
+	for raw: Vector2 in tried:
+		var stepped: Vector2 = pt._safe_step(p, raw)
+		if stepped.length() >= 0.35 and stepped.dot(away) >= 0.12:
+			return stepped
+	return Vector2.ZERO
 
 
 static func mail_at(pt: Node, clerk: Node) -> void:
@@ -232,7 +288,7 @@ static func best_gather(pt: Node, p: Node) -> Node:
 
 static func best_chest(pt: Node, p: Node) -> Node:
 	var best: Node = null
-	var best_d: float = 14.0
+	var best_d: float = 18.0
 	var tree: SceneTree = pt.get_tree()
 	if tree == null:
 		return null
