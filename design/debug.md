@@ -1,15 +1,16 @@
 # Secret debug, playtest, animation browser
 
-Status: binding design + live snapshot
-Read when: changing the secret menu, telemetry, playtest, animation browser, or verification
-Code: `scripts/combat/debug_menu.gd`, `scripts/debug/playtest.gd`, `scripts/debug/playtest_log.gd`, `telemetry.gd`, `anim_browser.gd`, `smoke.gd`
+Status: binding design + live snapshot  
+Read when: changing the secret menu, telemetry, playtest, animation browser, or verification  
+Code: `scripts/combat/debug_menu.gd`, `scripts/debug/playtest.gd`, `scripts/debug/playtest_log.gd`, `telemetry.gd`, `anim_browser.gd`, `smoke.gd`  
 See also: `design/constraints.md`, `design/coverage.md`, `design/ui.md`
 
 ## Secret debug / balance menu
 
-Accessed only by the following input sequence (gamepad): all four shoulder buttons (RT + RB + LT + LB) must go from pressed → released → pressed → released within a 1.5-second window. The 1.5-second timer resets after the first release so a full 1.5 seconds remains for the second press-and-release.
-The menu opening itself is the sole confirmation that the sequence succeeded.
+Accessed only by the following input sequence (gamepad): all four shoulder buttons (RT + RB + LT + LB) must go from pressed → released → pressed → released within a 1.5-second window. The 1.5-second timer resets after the first release so a full 1.5 seconds remains for the second press-and-release.  
+The menu opening itself is the sole confirmation that the sequence succeeded.  
 This menu contains:
+
 - Every previously available debug / balance page (all numeric values exposed and tunable)
 - Debug profile Save / Load / Delete / Rename system (unlimited named profiles, free naming/renaming, saved to files by default, persist across live-path sessions)
 - Automated Playtest / AI Player system
@@ -18,23 +19,46 @@ This menu contains:
 
 Live also opens with CLI `--wdb-debug`.
 
+### Live snapshot — menu chrome and Values
+
+Live path: `scripts/combat/debug_menu.gd`. This is current chrome, not a new system.
+
+**Pages.** Four pages in LB / RB order: Values → Profiles → Playtest → Animation Browser. Close (B) sits in the top row but is not a page. The top tab buttons are mouse-clickable and must not take gamepad focus. Title, tabs, and status stay pinned above the scroll so first-open focus cannot hide the tab labels. The active tab is tinted.
+
+**Values (browse / edit).** Values does not use engine SpinBox focus. Opening the page highlights the first full row (label + number field).
+
+- D-pad Up / Down or left-stick Up / Down moves the highlight and scrolls that row into view.
+- **A** on a highlighted row enters edit. The row and the number field both use a stronger highlight. Up / Down then changes the value by that row’s step. The live balance value is not committed until confirm.
+- **A** again writes the value and returns to browse.
+- **B** while editing restores the previous number and returns to browse.
+- **B** while browsing closes the secret menu (Values is the home page).
+- Fly-out ideals still update from the highlighted variable.
+
+**Other pages.** Profiles and Playtest still use normal button / LineEdit focus. Up / Down moves among those controls.
+
+**Animation Browser tab.** Navigating to that tab (LB / RB or mouse) only rebuilds a confirm prompt. It does not open the full-screen viewer. The first control is **Open Animation Browser**; **A** on that control launches `anim_browser.open_browser()`. **B** on the prompt returns to Values. While the viewer is open, debug-menu LB / RB must not steal model-cycle input. Closing the viewer returns focus to this prompt, not to a hidden tab button.
+
+The Phase 7 “gamepad-focusable Animation Browser control” is that Open button, not the top tab chrome.
+
 ## Automated Playtest / AI Player system
 
-**Why this system is in the design database**
+**Why this system is in the design database**  
 The Automated Playtest system is included so its recording, simulation, and recommendation hooks are designed into the same code the player already runs. That keeps programmatic impact low: playtest actors should drive existing input, combat, inventory, extraction, recap, and save flows rather than a second parallel simulation. MUST NOT invent a separate “AI game” with its own combat, loot, or progression implementations.
 
-**Must-ship (Medium bar)**
+**Must-ship (Medium bar)**  
 The system MUST be able to:
+
 - Run both the fresh-start save and the progressed save
 - Collect **only** the capped telemetry set below
 - Keep Great Axe, Lightning Staff, and Longbow roughly balanced
 - Calculate per-variable impact coefficients from that set
 - Offer three recommended configurations per save type (one most-ideal + two close alternatives) that the user can further edit before applying
 
-**Capped telemetry set (non-exhaustive on purpose)**
+**Capped telemetry set (non-exhaustive on purpose)**  
 Implement the following. MAY add a small number of closely related fields if a Medium-bar recommendation cannot be computed without them. MUST NOT add heatmaps, session replay, input recordings, per-frame combat traces, per-projectile logs, exploration pathing maps, quest-step traces, artifact-set timelines, or any other open-ended analytics product.
 
 *A. Run outcome (one row per run)*
+
 - End condition: extraction / death / “Dispel” / interrupted playtest
 - Run duration
 - Deepest floor reached
@@ -43,12 +67,14 @@ Implement the following. MAY add a small number of closely related fields if a M
 - Character type (male / female)
 
 *B. Success-criterion proxies*
+
 - Time to first clerk interaction
 - Time to first successful extraction (fresh-start save only)
 - Deaths / “Dispels” before first extraction (fresh-start)
 - Recap XP-drain completed (bool)
 
 *C. Combat load*
+
 - Time in combat vs out of combat
 - Near-death events (HP crossed a tunable threshold; default ~20%)
 - Damage dealt / damage taken
@@ -58,8 +84,9 @@ Implement the following. MAY add a small number of closely related fields if a M
 - Adrenaline Rush activations and uptime
 - Crits landed (count only)
 
-*D. Weapon balance (required for Medium bar)*
+*D. Weapon balance (required for Medium bar)*  
 Per weapon (Great Axe / Lightning Staff / Longbow), while that weapon was equipped:
+
 - Time equipped
 - Damage dealt
 - Kills
@@ -67,6 +94,7 @@ Per weapon (Great Axe / Lightning Staff / Longbow), while that weapon was equipp
 - Specials used / specials that hit
 
 *E. Gathering & economy (light)*
+
 - Mining hits landed / successful reward rolls
 - Woodcutting hits landed / successful reward rolls
 - Time spent gathering
@@ -76,6 +104,7 @@ Per weapon (Great Axe / Lightning Staff / Longbow), while that weapon was equipp
 - Forge actions this session (count only)
 
 *F. Playtest meta*
+
 - Save type: fresh-start vs progressed
 - Exact debug-variable configuration snapshot / hash used for that run
 - Human run vs Automated Playtest run
@@ -83,6 +112,7 @@ Per weapon (Great Axe / Lightning Staff / Longbow), while that weapon was equipp
 **Medium-bar shipping floor:** A–D + F, plus enough of E to detect whether gathering/economy is starving first-extraction. Impact coefficients and recommended configurations MUST be computed from this set.
 
 **Full target** (still required if time/compute allows; Medium bar remains the mandatory early shipping floor for the *playtest runner itself*):
+
 - Replicates natural human gameplay as closely as practical, allowing intentional sub-optimality.
 - Selects different loadouts at the start of runs; deep in-run equipment swapping is not required.
 - Uses two completely independent save files (never the player’s normal save):
@@ -99,7 +129,7 @@ Per weapon (Great Axe / Lightning Staff / Longbow), while that weapon was equipp
 
 `scripts/debug/playtest_log.gd` writes one compact JSON per live Automated Playtest run.
 
-- Path: `user://playtest/runs/`
+- Path: `user://playtest/runs/`  
   Windows: `%APPDATA%\Godot\app_userdata\What Dwells Below\playtest\runs`
 - Name: `run_YYYYMMDD_HHMMSS_<save>_<weapon>.json`
 - Envelope: `kind: wdb_playtest_journal`, `ver: 2`
@@ -120,10 +150,11 @@ Events: `begin`, `wait`, `decide`, `step`, `act`, `beat`, `combat`, `end`.
 Purpose: let the User review player and enemy animation states so art and facing can be checked without playing a full run.
 
 **Phase rule**
+
 - Phase 7: the Animation Browser control MUST exist in the secret debug menu. It MUST be labeled, gamepad-focusable, and reachable with the same tab/page navigation as other debug pages. A stub panel (“Animation Browser — implemented in Phase 9”) is acceptable.
 - Phase 9 / Demo-Complete: the full viewer MUST ship. This is a vital development tool in the final product. It is deliberately *not* part of early build logic so sprite pipelines and combat can land first.
 
-**Layout**
+**Layout**  
 The Animation Browser is a full-screen page. It MUST be TV-readable and gamepad-first, and MUST open with valid initial focus.
 
 - **Back** sits at the bottom of the screen. Activating it returns the User to the main secret debug menu. Activation methods (both required): highlight Back and press A, or press B at any time while the Animation Browser is open. B MUST work regardless of current highlight.
@@ -138,6 +169,7 @@ The Animation Browser is a full-screen page. It MUST be TV-readable and gamepad-
 - **Direction list and animation list** sit together to the right of the model widget and preview, as two sibling list widgets with the same interaction pattern. The direction list is next to the animation list.
 
 **Direction list**
+
 - Lists every available facing for the current model: the eight Character Bible directions plus **Idle / None**.
 - The User may move a highlight with the D-pad (or equivalent menu navigation) and press A to select a facing, consistent with other menu lists.
 - **Right stick** sets facing from anywhere in the Animation Browser. Deflect past a deadzone and the nearest of the eight in-game aim octants becomes the selected facing. Releasing the stick to neutral **keeps** the last facing.
@@ -146,6 +178,7 @@ The Animation Browser is a full-screen page. It MUST be TV-readable and gamepad-
 - Changing facing immediately rebuilds the animation list for that facing.
 
 **Animation list**
+
 - Lists only animations available on the current model **for the current facing**.
 - Idle / None lists only clips that belong to that bucket (idle and any other non-directional clips shipped for that model).
 - A compass facing lists only clips that exist for that facing (walk, attack, special, gather, death, “Dispel”, directional attacks, and any other shipped per-facing clips).
