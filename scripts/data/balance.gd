@@ -3,7 +3,7 @@ extends RefCounted
 ## All Phase 2 combat numbers. Mutated by the secret debug menu.
 ## Bump BAL_REV when shipping new defaults that old saves should receive.
 const Schema := preload("res://scripts/data/balance_schema.gd")
-const BAL_REV := 7
+const BAL_REV := 8
 
 var move_speed := 4.5
 var dash_speed_mult := 2.8
@@ -84,6 +84,11 @@ var ghost_shop_chance := 0.33
 var base_guards := 8
 var boss_hp_mult := 8.0
 var cycle_hp := 0.2
+var crystal_min_sep := 56
+var crystal_clear_r := 12
+var crystal_arrive_r := 8
+var crystal_extra_max := 4
+var crystal_place_chance := 0.62
 
 var player_max_hp := 100.0
 var player_hurt_iframe := 0.35
@@ -371,6 +376,12 @@ func migrate_from(old_rev: int) -> bool:
 	if old_rev < 7:
 		gen_w = 432
 		gen_h = 432
+	if old_rev < 8:
+		crystal_min_sep = 56
+		crystal_clear_r = 12
+		crystal_arrive_r = 8
+		crystal_extra_max = 4
+		crystal_place_chance = 0.62
 	return true
 
 

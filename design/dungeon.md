@@ -1,9 +1,9 @@
 # Dungeon generation and floors
 
 Status: binding design + live snapshot
-Read when: changing gen, floor flow, streaming, boss doors, or fog
-Code: `scripts/dungeon/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_stream.gd`, `dungeon_geo_stream.gd`, `dungeon_props.gd`, `boss_door.gd`
-See also: `design/enemies.md`, `design/interactables.md`, `design/tunables.md`
+Read when: changing gen, floor flow, streaming, boss doors, fog, or crystals
+Code: `scripts/dungeon/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_boot.gd`, `dungeon_stream.gd`, `dungeon_geo_stream.gd`, `dungeon_props.gd`, `boss_door.gd`, `crystal_net.gd`, `floor_crystal.gd`
+See also: `design/enemies.md`, `design/interactables.md`, `design/ui.md`, `design/tunables.md`
 
 ## Overall structure
 
@@ -51,10 +51,23 @@ Safe rooms (clerk, ghost shop, puzzle) MUST remain enemy-free.
 - Maximum one ghost shop per floor.
 - Maximum three clerks total per floor.
 
-## Stairs and crystal
+## Stairs
 
-- Both only permit travel deeper.
-- Stairs are locked behind the boss door until the guardian is killed.
+- Stairs only permit travel deeper.
+- Stairs are locked behind the boss door until the guardian / Gate Master is killed.
+- Stairs remain the only way to push `prog.deepest` to a floor the player has not yet reached.
+
+## Floor crystals
+
+- Each floor places the entrance crystal at spawn plus extra crystals in combat rooms.
+- At most one crystal per combat-level band (`Threat.level_at` from walk-distance to the entrance). A band is not required to receive a crystal.
+- Extra crystals MUST keep a tunable minimum separation from the entrance and from each other.
+- The entrance crystal is bound on arrival. Any other crystal is unbound until the player clears enemies in its area (`crystal_clear_r`) and interacts.
+- Bound crystals open the transport menu. They do not descend.
+- Local Transport Network unlocks when at least two crystals on the current floor are bound. Selecting a bound crystal teleports the player there and silences nearby spawn jobs.
+- Floor Transport Network unlocks when `prog.deepest` is greater than the current floor. It lists every reached floor. If more than ten floors are reachable, the list is grouped by decades (1–10, 11–20, …). The current floor is disabled. Unreached floors in a decade folder stay disabled.
+- Floor hops land at the destination floor’s entrance crystal. Boss-defeated state is remembered per floor for the current run.
+- Activated crystals stay enemy-free at `crystal_arrive_r` so a hop does not drop the player into a pack.
 
 ## Live snapshot — size rebalance
 
@@ -69,6 +82,11 @@ Suggested appendix start was 48×48–64×64. Live `balance.gd` after geometry s
 | `fog_radius` | 5 |
 | `max_clerks` | 3 |
 | `ghost_shop_chance` | 0.33 |
+| `crystal_min_sep` | 56 |
+| `crystal_clear_r` | 12 |
+| `crystal_arrive_r` | 8 |
+| `crystal_extra_max` | 4 |
+| `crystal_place_chance` | 0.62 |
 
 `gen.gd` clamps to minimum 24×24 and at least 6 rooms.
 Boss room is farthest from spawn that still meets `_min_boss_sep = max(16, max(w,h) * 0.5)`.
@@ -91,6 +109,7 @@ Job states: `pending`, `live`, `cleared`. Do not stream out an enemy the player 
 Geometry jobs never go `cleared`; they sleep back to `pending`.
 Only chunks that contain a floor cell, or a wall adjacent to a floor, are queued.
 `stream_all` / `force_all` still force enemy jobs; geometry stays proximity-streamed so smoke does not bake the whole floor.
+Jobs whose anchor sits inside an activated crystal’s arrive radius stay `cleared`.
 
 ## Live snapshot — boss doors
 

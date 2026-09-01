@@ -1,0 +1,24 @@
+### For Grok Build
+Enemy animations need to be generated.
+Swap Lightning Staff special to use Mana instead of a timer and add mana drops to breakable objects. - Make all specials use mana, actually.
+Resource gathering needs dedicated animations.
+Need to repass assets with updated chroma key logics
+Need to regenerate animation videos to not have holes in faces.
+Placeholdia needs real art, not placeholders
+Need to add lighting decorations to dungeon
+Need assets for inventory menu
+Need assets for updated placeholdia UI.
+Need to fix automated playtest
+Need to import button prompt assets
+
+### Can Do Now
+Need to create new UI for forging menu in blacksmith.
+Blacksmith UI needs to be reworked to be intuitive using LB/RB to swap between analyze and forge.
+Need to fix design of pressure plate trap things.
+Need to double check attack telegraphing to ensure it only appears where it actually hits.
+Add a red outline around enemies that have targeted the player.
+Welcome to Placeholdia banner needs to be bigger.
+Tinker around with in-game fog of war instead of just mini-map.
+Add mobile controls
+Add X Money donation links
+Need a system to swap tooltip button prompts between KB/M and gamepad.

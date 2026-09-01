@@ -10,12 +10,14 @@ const UiS := preload("res://scripts/ui/progress_ui.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const DungeonProps := preload("res://scripts/world/dungeon_props.gd")
+const CrystalNet := preload("res://scripts/world/crystal_net.gd")
 
 
 static func ready_floor(host: Node) -> void:
 	App.in_dungeon = true
 	if App.present and App.present.has_method("hide_overlay"):
 		App.present.hide_overlay()
+	CrystalNet.arrive()
 	host.data = Gen.generate(App.floor_n, App.run_seed, App.bal)
 	if not host.data.get("ok", false):
 		host.data = Gen.generate(App.floor_n, App.run_seed + 17, App.bal)
@@ -30,6 +32,8 @@ static func ready_floor(host: Node) -> void:
 	host._hud()
 	host._map()
 	host._reveal_around(host.data.spawn, int(App.bal.fog_radius) + 2)
+	if host.player:
+		host._reveal_around(host._world_cell(host.player.global_position), int(App.bal.fog_radius) + 2)
 	DungeonStream.tick(host, 1.0)
 	Smoke.attach_dungeon(host)
 
@@ -45,12 +49,14 @@ static func process_floor(host: Node, delta: float) -> void:
 		var grew: bool = host._reveal_around(t, int(App.bal.fog_radius))
 		host._tick_pressure(delta, grew)
 		DungeonStream.tick(host, delta)
+		CrystalNet.guard(host)
 		if grew:
 			host.fog_dirty = true
 	host._note_verge()
 	host._tick_plates()
 	if host.fog_dirty or (host.map_layer and host.map_layer.visible):
 		host._redraw_map()
+		CrystalNet.paint(host)
 		host.fog_dirty = false
 	if App.pause_just() if App.has_method("pause_just") else (Input.is_action_just_pressed("pause") or App.pad_just("pause")):
 		if App.debug and App.debug.get("open"):
@@ -68,6 +74,7 @@ static func process_floor(host: Node, delta: float) -> void:
 			host.map_layer.visible = not host.map_layer.visible
 			if host.map_layer.visible:
 				host._redraw_map()
+				CrystalNet.paint(host)
 	if host.stairs:
 		host.stairs.refresh()
 	host._refresh_hint()
@@ -77,18 +84,15 @@ static func spawns(host: Node) -> void:
 	host.floor_rng.seed = App.run_seed * 10007 + App.floor_n * 9176
 	host.spawn_jobs.clear()
 	host.player = PlayerS.new()
-	var sp: Vector2i = host.data.spawn
-	host.player.position = Vector3(float(sp.x) + 1.5, 0.0, float(sp.y) + 0.5)
+	var land: Vector2i = CrystalNet.landing_cell(host)
+	host.player.position = Vector3(float(land.x) + 1.5, 0.0, float(land.y) + 0.5)
 	host.add_child(host.player)
 	host._place_doors()
 	var st: Vector2i = host.data.stairs
 	host.stairs = SpotS.new()
 	host.stairs.setup("stairs", Vector3(float(st.x) + 0.5, 0.0, float(st.y) + 0.5), not App.boss_dead)
 	host.add_child(host.stairs)
-	var cr: Vector2i = host.data.crystal
-	var crystal: Node = SpotS.new()
-	crystal.setup("crystal", Vector3(float(cr.x) + 0.5, 0.0, float(cr.y) + 0.5), not App.boss_dead)
-	host.add_child(crystal)
+	CrystalNet.place_floor(host)
 	var pool: PackedStringArray = Roster.floor_types(App.floor_n)
 	DungeonStream.queue_initial(host, pool)
 	var boss: Node = EnemyS.new()
@@ -102,6 +106,7 @@ static func spawns(host: Node) -> void:
 		host._on_boss_dead()
 	DungeonProps.spawn_world(host)
 	DungeonStream.queue_ambushes(host, pool)
+	CrystalNet.silence_on(host)
 	host.ui = UiS.new()
 	host.add_child(host.ui)
 
@@ -132,6 +137,7 @@ static func place_doors(host: Node) -> void:
 
 static func on_boss_dead(host: Node) -> void:
 	App.boss_dead = true
+	CrystalNet.note_boss()
 	for d: Variant in host.doors:
 		if d and d.has_method("open_door"):
 			d.open_door()

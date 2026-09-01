@@ -1,7 +1,7 @@
 # Tunables
 
 Status: suggested starts + live snapshot
-Read when: changing feel, gen size, economy, or debug defaults
+Read when: changing feel, gen size, economy, crystals, or debug defaults
 Code: `scripts/data/balance.gd`, `scripts/data/tunables.gd`
 See also: the topic file for the system you are changing
 
@@ -92,6 +92,11 @@ If you change a live default, update this table in the same slice.
 | Stream in / out (cells) | — | **28 / 42** | enemies + geometry |
 | Geo chunk (cells) | — | **16** | `dungeon_geo_stream.gd` |
 | Geo jobs per tick | — | **8** | 24 on first floor tick |
+| Crystal min separation | 56 cells | **56** | Between crystals on one floor |
+| Crystal clear radius | 12 cells | **12** | Enemies that block activation |
+| Crystal arrive radius | 8 cells | **8** | No respawn after a hop |
+| Crystal extra max | 4 | **4** | Plus the entrance crystal |
+| Crystal place chance | 0.62 | **0.62** | Per extra CL band after the first extra |
 
 ## Enemies and combat level
 

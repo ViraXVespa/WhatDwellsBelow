@@ -1,9 +1,9 @@
 # Interactables and world objects
 
 Status: binding design
-Read when: changing gathering, clerks, shops, shrines, or puzzles
-Code: `scripts/world/gather_node.gd`, `breakable.gd`, `interact.gd`, `pickup.gd`, `dungeon_props.gd`
-See also: `design/inventory.md`, `design/dungeon.md`
+Read when: changing gathering, clerks, shops, shrines, puzzles, or crystals
+Code: `scripts/world/gather_node.gd`, `breakable.gd`, `interact.gd`, `floor_crystal.gd`, `crystal_net.gd`, `pickup.gd`, `dungeon_props.gd`
+See also: `design/inventory.md`, `design/dungeon.md`, `design/ui.md`
 
 ## Mining nodes
 
@@ -63,8 +63,18 @@ See also: `design/inventory.md`, `design/dungeon.md`
 - Cracked walls have higher HP than normal breakables (suggested start: 8).
 - Dead-end chests and trap-room chests may optionally contain Artifacts in addition to normal loot.
 
-## Stairs and Floor Crystal
+## Stairs
 
-- Both only allow travel deeper.
+- Stairs only allow travel deeper.
 - Stairs remain locked behind the boss door until the Floor Guardian or Gate Master is defeated.
-- Interaction prompts MUST be clear and confirmation-safe where appropriate.
+- Interaction prompt MUST be clear and confirmation-safe (A again to descend).
+
+## Floor crystals
+
+- Placeholdia’s loadout crystal is unchanged: it opens loadout / enter dungeon.
+- In-dungeon crystals are waypoints, not descend points.
+- The entrance crystal is already bound. Other crystals show “Clear the area to activate.” until nearby enemies and pending spawn jobs are gone, then “A: Activate crystal”.
+- A bound crystal opens the transport menu: Local Transport Network, Floor Transport Network, Back.
+- Local Transport Network is locked until a second crystal on this floor is bound.
+- Floor Transport Network is locked until the player has reached a floor deeper than the current one.
+- Interaction prompts MUST stay TV-readable and gamepad-first.

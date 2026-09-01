@@ -4,6 +4,7 @@ const Gen := preload("res://scripts/dungeon/gen.gd")
 const Roster := preload("res://scripts/combat/roster.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
 const GeoStream := preload("res://scripts/world/dungeon_geo_stream.gd")
+const CrystalNet := preload("res://scripts/world/crystal_net.gd")
 
 const STREAM_IN := 28
 const STREAM_OUT := 42
@@ -21,6 +22,8 @@ static func queue_room(host: Node, r: Dictionary, pool: PackedStringArray) -> vo
 	if kind == "spawn" or kind == "boss" or Gen.is_safe_kind(kind):
 		return
 	if host._near_spawn(host._center_room(r)):
+		return
+	if CrystalNet.blocks_spawn(host, host._center_room(r)):
 		return
 	if pool.is_empty():
 		return
@@ -42,6 +45,8 @@ static func queue_pool(host: Node, pool: PackedStringArray) -> void:
 	if room.is_empty() or pool.is_empty():
 		return
 	if host._near_spawn(host._center_room(room)):
+		return
+	if CrystalNet.blocks_spawn(host, host._center_room(room)):
 		return
 	var ids := PackedStringArray()
 	for id in pool:
@@ -97,6 +102,8 @@ static func queue_ambushes(host: Node, pool: PackedStringArray) -> void:
 			continue
 		if host._near_spawn(center):
 			continue
+		if CrystalNet.blocks_spawn(host, center):
+			continue
 		var n: int = host.floor_rng.randi_range(1, 2)
 		var ids := PackedStringArray()
 		for i in n:
@@ -128,7 +135,7 @@ static func job_anchor(job: Dictionary) -> Vector2i:
 static func activate_job(host: Node, job: Dictionary) -> void:
 	if str(job.state) != "pending":
 		return
-	if host._near_spawn(job_anchor(job), 8):
+	if host._near_spawn(job_anchor(job), 8) or CrystalNet.blocks_spawn(host, job_anchor(job)):
 		job.state = "cleared"
 		return
 	var ids: PackedStringArray = job.ids
@@ -145,7 +152,7 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 			var near: Vector2i = host._walkable_near(job_anchor(job), 2, false)
 			if near != Vector2i(-1, -1):
 				cell = near
-		if host._near_spawn(cell, 8):
+		if host._near_spawn(cell, 8) or CrystalNet.blocks_spawn(host, cell):
 			continue
 		var e: Node = host._add_enemy(ids[i], host._cell_pos(cell), int(job.gid), bool(job.named), str(job.nname))
 		if e and bool(job.named):
