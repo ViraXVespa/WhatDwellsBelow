@@ -175,6 +175,20 @@ static func has_path(pt: Node, p: Node, dest: Node) -> bool:
 	return Util._manh(start, mid) >= 3
 
 
+static func _cardinal_to(here: Vector2i, dest: Vector2i) -> Vector2:
+	var dx: int = dest.x - here.x
+	var dy: int = dest.y - here.y
+	if dx == 0 and dy == 0:
+		return Vector2.ZERO
+	if absi(dx) >= absi(dy):
+		if dx != 0:
+			return Vector2(float(signi(dx)), 0.0)
+		return Vector2(0.0, float(signi(dy)))
+	if dy != 0:
+		return Vector2(0.0, float(signi(dy)))
+	return Vector2(float(signi(dx)), 0.0)
+
+
 static func follow_goal(pt: Node, p: Node, dest: Node) -> void:
 	if dest == null:
 		pt.move = pt._steer(p, Vector2.ZERO)
@@ -202,7 +216,13 @@ static func follow_goal(pt: Node, p: Node, dest: Node) -> void:
 		pt.path.clear()
 		pt.path_i = 0
 		pt.path_goal = dest
-	pt.move = pt._steer(p, follow_or_direct(pt, p, dest))
+	var step: Vector2 = follow_or_direct(pt, p, dest)
+	if step != Vector2.ZERO and pt._dir_open(p, step):
+		pt.move = step
+	else:
+		pt.move = pt._safe_step(p, step)
+	if step != Vector2.ZERO:
+		pt.aim = step
 
 
 static func follow_or_direct(pt: Node, p: Node, dest: Node) -> Vector2:
@@ -217,6 +237,31 @@ static func follow_or_direct(pt: Node, p: Node, dest: Node) -> Vector2:
 			return pt._any_open(p)
 		return Vector2.ZERO
 	var here: Vector2i = pt._cell_of_pos((p as Node3D).global_position)
+	var i: int = pt.path_i
+	while i < pt.path.size():
+		if pt.path[i] == here:
+			pt.path_i = i + 1
+			break
+		i += 1
+	if pt.path_i < pt.path.size():
+		var nxt: Vector2i = pt.path[pt.path_i]
+		var md: int = absi(nxt.x - here.x) + absi(nxt.y - here.y)
+		if md > 1:
+			var on: bool = false
+			for c: Vector2i in pt.path:
+				if c == here:
+					on = true
+					break
+			if not on:
+				pt.path = Util.astar(pt, p, dest)
+				pt.path_i = 0
+	if pt.path.is_empty() or pt.path_i >= pt.path.size():
+		pt.path = Util.astar(pt, p, dest)
+		pt.path_i = 0
+	if pt.path.is_empty() or pt.path.size() <= 1:
+		if pt._dist(p, dest) > 1.7:
+			return pt._any_open(p)
+		return Vector2.ZERO
 	while pt.path_i < pt.path.size() and pt.path[pt.path_i] == here:
 		pt.path_i += 1
 	if pt.path_i >= pt.path.size():
@@ -225,17 +270,15 @@ static func follow_or_direct(pt: Node, p: Node, dest: Node) -> Vector2:
 			return pt._any_open(p)
 		return Vector2.ZERO
 	var c: Vector2i = pt.path[pt.path_i]
-	var target: Vector2 = pt._clearance_target(c)
-	var pos: Vector3 = (p as Node3D).global_position
-	var d: Vector2 = Vector2(target.x - pos.x, target.y - pos.z)
-	if d.length() < 0.28:
+	var step: Vector2 = _cardinal_to(here, c)
+	if step == Vector2.ZERO:
 		pt.path_i += 1
 		if pt.path_i >= pt.path.size():
 			return Vector2.ZERO
 		return follow_or_direct(pt, p, dest)
-	if not pt._dir_open(p, d):
-		return pt._step_dir(p, d)
-	return d.normalized()
+	if not pt._dir_open(p, step):
+		return pt._step_dir(p, step)
+	return step
 
 
 static func astar(pt: Node, p: Node, dest: Node) -> Array[Vector2i]:

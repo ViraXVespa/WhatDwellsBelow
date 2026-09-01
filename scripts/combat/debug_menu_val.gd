@@ -140,7 +140,7 @@ static func val_paint(host) -> void:
 		host.status.text = "Editing %s — Up/Down changes value. A confirms. B cancels." % str(cur.name)
 	else:
 		host.status.text = "Values. Up/Down move. A edits the highlighted row. LB/RB change pages."
-	host.call_deferred("_val_reveal")
+	val_reveal.bind(host).call_deferred()
 
 
 static func val_reveal(host) -> void:

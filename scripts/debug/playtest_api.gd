@@ -7,6 +7,7 @@ const PlaytestAI := preload("res://scripts/debug/playtest_ai.gd")
 const PlaytestGoals := preload("res://scripts/debug/playtest_goals.gd")
 const PlaytestSim := preload("res://scripts/debug/playtest_sim.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
+const THINK_DT := 0.12
 
 var history: Array = []
 var recs: Dictionary = {"fresh": [], "progressed": []}
@@ -47,6 +48,7 @@ var log_path: String = ""
 var strafe_sign: float = 1.0
 var last_beat_t: float = -1.0
 var last_wait_t: float = -9.0
+var last_think_t: float = -1.0
 
 
 func _ready() -> void:
@@ -101,6 +103,7 @@ func begin_smoke() -> void:
 	sim_t = 0.0
 	last_beat_t = -1.0
 	last_wait_t = -9.0
+	last_think_t = -1.0
 	path.clear()
 	path_i = 0
 	path_goal = null
@@ -191,12 +194,10 @@ func _physics_process(delta: float) -> void:
 		PlaytestLog.begin(self)
 		last_beat_t = -1.0
 	just.clear()
-	attack = false
 	special = false
 	interact = false
 	dash = false
 	potion = false
-	move = Vector2.ZERO
 	spec_cd = maxf(0.0, spec_cd - delta)
 	sim_t += delta
 	if App.recap and bool(App.recap.get("open")):
@@ -209,12 +210,16 @@ func _physics_process(delta: float) -> void:
 		return
 	if not App.in_dungeon:
 		ai_on = false
+		move = Vector2.ZERO
+		attack = false
 		if sim_t - last_wait_t >= 2.0:
 			last_wait_t = sim_t
 			PlaytestLog.wait(self, "no_dungeon")
 		return
 	if PlaytestGoals.dungeon(self) == null:
 		ai_on = false
+		move = Vector2.ZERO
+		attack = false
 		if sim_t - last_wait_t >= 2.0:
 			last_wait_t = sim_t
 			PlaytestLog.wait(self, "no_dungeon")
@@ -222,6 +227,8 @@ func _physics_process(delta: float) -> void:
 	var p: Node = get_tree().get_first_node_in_group("player")
 	if p == null or not is_instance_valid(p):
 		ai_on = false
+		move = Vector2.ZERO
+		attack = false
 		if sim_t - last_wait_t >= 2.0:
 			last_wait_t = sim_t
 			PlaytestLog.wait(self, "no_player")
@@ -236,9 +243,14 @@ func _physics_process(delta: float) -> void:
 		_end_log("interrupted playtest", "time_limit")
 		PlaytestSim.finish_job(self, "interrupted playtest", true)
 		return
-	PlaytestAI.think(self, p, delta)
-	PlaytestLog.act(self, p)
-	PlaytestLog.step(self, p)
+	var due: bool = last_think_t < 0.0 or sim_t - last_think_t >= THINK_DT
+	if due:
+		attack = false
+		move = Vector2.ZERO
+		last_think_t = sim_t
+		PlaytestAI.think(self, p, delta)
+		PlaytestLog.act(self, p)
+		PlaytestLog.step(self, p)
 	if last_beat_t < 0.0 or sim_t - last_beat_t >= 0.5:
 		last_beat_t = sim_t
 		PlaytestLog.beat(self, p)

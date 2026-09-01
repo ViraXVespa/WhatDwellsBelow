@@ -1,5 +1,7 @@
 extends Object
 
+const SEE := 28.0
+
 
 static func world_ui(pt: Node) -> Node:
 	var tree: SceneTree = pt.get_tree()
@@ -56,19 +58,20 @@ static func nearest_visible_threat(pt: Node, p: Node) -> Node:
 	for n: Node in tree.get_nodes_in_group("enemies"):
 		if not pt._alive_enemy(n):
 			continue
-		if pt._door_between(p, n):
+		var d: float = pt._dist(p, n)
+		if d >= best_d:
 			continue
-		if pt._is_boss(n) and pt._dist(p, n) > 6.5:
+		if pt._is_boss(n) and d > 6.5:
+			continue
+		if pt._door_between(p, n):
 			continue
 		if pt._is_bow():
 			if not pt._has_wide_los(p, n):
 				continue
 		elif not pt._has_los(p, n):
 			continue
-		var d: float = pt._dist(p, n)
-		if d < best_d:
-			best_d = d
-			best = n
+		best_d = d
+		best = n
 	return best
 
 
@@ -83,15 +86,15 @@ static func nearest_hunt(pt: Node, p: Node) -> Node:
 			continue
 		var d: float = pt._dist(p, n)
 		if pt._is_boss(n):
-			if d > 8.5 or pt._door_between(p, n):
+			if d > 8.5:
 				continue
 		elif d > best_d:
 			continue
-		if pt._is_bow() and pt._has_wide_los(p, n) and not pt._door_between(p, n):
+		if pt._door_between(p, n):
 			continue
-		if (not pt._is_bow()) and pt._has_los(p, n) and not pt._door_between(p, n):
+		if pt._is_bow() and pt._has_wide_los(p, n):
 			continue
-		if not pt._has_path(p, n):
+		if (not pt._is_bow()) and pt._has_los(p, n):
 			continue
 		var score: float = d
 		if pt._is_boss(n):
@@ -99,6 +102,8 @@ static func nearest_hunt(pt: Node, p: Node) -> Node:
 		if score < best_d:
 			best_d = score
 			best = n
+	if best and not pt._has_path(p, best):
+		return null
 	return best
 
 
@@ -154,7 +159,7 @@ static func misc_cargo() -> int:
 	if App.prog == null:
 		return n
 	for it: Variant in App.prog.bag:
-		if it is Dictionary and bool(it.get("extract", true)) and str(it.get("kind", "")) != "artifact" and str(it.get("kind", "")) != "tool" and not bool(it.get("hold", false)):
+		if it is Dictionary and it.get("extract") == true and str(it.get("kind", "")) != "artifact" and str(it.get("kind", "")) != "tool" and it.get("hold") != true:
 			n += 1
 	return n
 
@@ -172,7 +177,7 @@ static func clerk_accepts(pt: Node, n: Node) -> bool:
 
 static func best_clerk(pt: Node, p: Node) -> Node:
 	var best: Node = null
-	var best_d: float = 999.0
+	var best_d: float = SEE
 	var tree: SceneTree = pt.get_tree()
 	if tree == null:
 		return null
@@ -186,14 +191,14 @@ static func best_clerk(pt: Node, p: Node) -> Node:
 			continue
 		if not pt._clerk_accepts(n):
 			continue
-		if not pt._has_path(p, n):
-			continue
 		var d: float = pt._dist(p, n)
 		if pt._clerk_role(n) == "patty" and pt._gather_cargo() > 0 and pt._misc_cargo() > 0:
 			d *= 0.55
 		if d < best_d:
 			best_d = d
 			best = n
+	if best and not pt._has_path(p, best):
+		return null
 	return best
 
 
@@ -202,7 +207,7 @@ static func best_gather(pt: Node, p: Node) -> Node:
 		return null
 	var tool: String = str(App.prog.tool_type) if App.prog else "pickaxe"
 	var best: Node = null
-	var best_d: float = 999.0
+	var best_d: float = SEE
 	var tree: SceneTree = pt.get_tree()
 	if tree == null:
 		return null
@@ -216,12 +221,12 @@ static func best_gather(pt: Node, p: Node) -> Node:
 			continue
 		if k != "wood" and tool != "pickaxe":
 			continue
-		if not pt._has_path(p, n):
-			continue
 		var d: float = pt._dist(p, n)
 		if d < best_d:
 			best_d = d
 			best = n
+	if best and not pt._has_path(p, best):
+		return null
 	return best
 
 
@@ -234,20 +239,20 @@ static func best_chest(pt: Node, p: Node) -> Node:
 	for n: Node in tree.get_nodes_in_group("interact"):
 		if n == null or not is_instance_valid(n):
 			continue
-		if not pt._is_chest(n) or bool(n.get("used")):
-			continue
-		if not pt._has_path(p, n):
+		if not pt._is_chest(n) or n.get("used") == true:
 			continue
 		var d: float = pt._dist(p, n)
 		if d < best_d:
 			best_d = d
 			best = n
+	if best and not pt._has_path(p, best):
+		return null
 	return best
 
 
 static func reachable_kind(pt: Node, p: Node, prefix: String) -> Node:
 	var best: Node = null
-	var best_d: float = 80.0
+	var best_d: float = SEE
 	var tree: SceneTree = pt.get_tree()
 	if tree == null:
 		return null
@@ -256,41 +261,43 @@ static func reachable_kind(pt: Node, p: Node, prefix: String) -> Node:
 			continue
 		if str(n.get("kind")).find(prefix) < 0:
 			continue
-		if not pt._has_path(p, n):
-			continue
 		var d: float = pt._dist(p, n)
 		if d < best_d:
 			best_d = d
 			best = n
+	if best and not pt._has_path(p, best):
+		return null
 	return best
 
 
 static func crowd(pt: Node, p: Node) -> int:
-	var n: int = 0
+	var n_hit: int = 0
 	var tree: SceneTree = pt.get_tree()
 	if tree == null:
 		return 0
 	for e: Node in tree.get_nodes_in_group("enemies"):
-		if e and is_instance_valid(e) and not pt._is_boss(e) and pt._has_los(p, e) and pt._dist(p, e) < 2.4:
-			n += 1
-	return n
+		if not pt._alive_enemy(e) or pt._is_boss(e):
+			continue
+		if pt._dist(p, e) <= 2.4 and pt._has_los(p, e):
+			n_hit += 1
+	return n_hit
 
 
 static func dist(a: Node, b: Node) -> float:
-	if a is Node3D and b is Node3D:
-		var pa: Vector3 = (a as Node3D).global_position
-		var pb: Vector3 = (b as Node3D).global_position
-		return Vector2(pb.x - pa.x, pb.z - pa.z).length()
-	return 999.0
+	if a == null or b == null:
+		return 999.0
+	var pa: Vector3 = (a as Node3D).global_position
+	var pb: Vector3 = (b as Node3D).global_position
+	return Vector2(pa.x - pb.x, pa.z - pb.z).length()
 
 
 static func xz_to(a: Node, b: Node) -> Vector2:
 	var pa: Vector3 = (a as Node3D).global_position
 	var pb: Vector3 = (b as Node3D).global_position
-	var d: Vector2 = Vector2(pb.x - pa.x, pb.z - pa.z)
-	if d.length() < 0.001:
+	var v: Vector2 = Vector2(pb.x - pa.x, pb.z - pa.z)
+	if v.length() < 0.001:
 		return Vector2.DOWN
-	return d.normalized()
+	return v.normalized()
 
 
 static func dungeon(pt: Node) -> Node:
@@ -298,6 +305,6 @@ static func dungeon(pt: Node) -> Node:
 	if tree == null:
 		return null
 	var s: Node = tree.current_scene
-	if s and s.get("data") is Dictionary and (s.data as Dictionary).has("grid"):
+	if s and s.get("data") != null:
 		return s
 	return null

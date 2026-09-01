@@ -117,6 +117,47 @@ static func _mark(pt: Node, c: Vector2i) -> void:
 	pt.set_meta("seen_map", m)
 
 
+static func tool_type() -> String:
+	if App.prog:
+		return str(App.prog.tool_type)
+	return "pickaxe"
+
+
+static func tool_ok(n: Node) -> bool:
+	if n == null or not is_instance_valid(n):
+		return false
+	var k: String = str(n.get("kind"))
+	var tool: String = tool_type()
+	if k == "wood":
+		return tool == "hatchet"
+	if k == "mine":
+		return tool == "pickaxe"
+	return true
+
+
+static func is_clerk_kind(k: String) -> bool:
+	return k.find("clerk") >= 0 or k.find("patty") >= 0 or k.find("misc") >= 0
+
+
+static func is_loot_kind(k: String) -> bool:
+	return k == "mine" or k == "wood" or k.find("chest") >= 0
+
+
+static func is_use_kind(k: String) -> bool:
+	return is_clerk_kind(k) or is_loot_kind(k) or k.find("stairs") >= 0 or k.find("door") >= 0
+
+
+static func can_use(pt: Node, n: Node) -> bool:
+	if n == null or not is_instance_valid(n) or _banned(pt, n):
+		return false
+	if n.get("used") == true:
+		return false
+	if is_loot_kind(str(n.get("kind"))) and not tool_ok(n):
+		_ban(pt, n)
+		return false
+	return true
+
+
 static func _near_prop(pt: Node, p: Node, lim: float) -> Node:
 	var tree: SceneTree = pt.get_tree()
 	if tree == null:
@@ -127,10 +168,117 @@ static func _near_prop(pt: Node, p: Node, lim: float) -> Node:
 		if n == null or not is_instance_valid(n) or _banned(pt, n):
 			continue
 		var k: String = str(n.get("kind"))
-		if k.find("crystal") >= 0:
+		if k.find("crystal") >= 0 or k == "vendor" or k == "shop" or k == "receptionist":
+			continue
+		if n.get("used") == true:
+			continue
+		if (k == "mine" or k == "wood") and not tool_ok(n):
 			continue
 		var d: float = pt._dist(p, n)
 		if d < best_d:
 			best_d = d
 			best = n
 	return best
+
+
+static func tick_motion(pt: Node, p: Node, delta: float) -> void:
+	var pos: Vector3 = (p as Node3D).global_position
+	if pt.last_pos.distance_to(pos) > 0.08:
+		pt.moved = true
+		pt.stuck_t = 0.0
+	else:
+		pt.stuck_t += delta
+	pt.last_pos = pos
+	var here: Vector2i = pt._cell_of_node(p)
+	var prev_c: Vector2i = Vector2i(-999, -999)
+	if pt.has_meta("stuck_cell"):
+		prev_c = pt.get_meta("stuck_cell")
+	if here == prev_c:
+		pt.set_meta("cell_t", _meta_f(pt, "cell_t", 0.0) + delta)
+	else:
+		pt.set_meta("stuck_cell", here)
+		pt.set_meta("cell_t", 0.0)
+		_trail(pt, here)
+
+
+static func _trail(pt: Node, c: Vector2i) -> void:
+	var a: Array = []
+	if pt.has_meta("trail") and pt.get_meta("trail") is Array:
+		a = pt.get_meta("trail")
+	if a.is_empty() or a[a.size() - 1] != c:
+		a.append(c)
+	if a.size() > 14:
+		a.pop_front()
+	pt.set_meta("trail", a)
+
+
+static func _recent(pt: Node) -> Array:
+	if pt.has_meta("trail") and pt.get_meta("trail") is Array:
+		return pt.get_meta("trail")
+	return []
+
+
+static func at_prop(pt: Node, p: Node) -> bool:
+	var n: Node = _meta_n(pt, "lock_n")
+	if n == null or not is_instance_valid(n):
+		n = pt.path_goal if pt.get("path_goal") else null
+	if n == null or not is_instance_valid(n):
+		return false
+	return pt._dist(p, n) < 1.35
+
+
+static func should_unstick(pt: Node, p: Node) -> bool:
+	if at_prop(pt, p):
+		return pt.stuck_t > 5.0
+	return pt.stuck_t > 2.0 or _meta_f(pt, "cell_t", 0.0) > 2.2
+
+
+static func do_unstick(pt: Node) -> void:
+	_ban(pt, _meta_n(pt, "lock_n"))
+	if pt.path_goal:
+		_ban(pt, pt.path_goal)
+	if pt.has_meta("lock_n"):
+		pt.remove_meta("lock_n")
+	pt.set_meta("lock_t", 0.0)
+	pt.set_meta("cell_t", 0.0)
+	pt.path.clear()
+	pt.path_goal = null
+	pt.stuck_t = 0.0
+	pt.dash = true
+	pt.just["dash"] = true
+
+
+static func wander(pt: Node, p: Node) -> void:
+	var here: Vector2i = pt._cell_of_node(p)
+	_mark(pt, here)
+	_trail(pt, here)
+	var seen: Dictionary = _seen(pt)
+	var recent: Array = _recent(pt)
+	var last: Vector2 = pt.wander_dir if pt.get("wander_dir") != null else Vector2.ZERO
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)]
+	var best: Vector2 = Vector2.ZERO
+	var best_s: int = -999
+	for n: Vector2i in dirs:
+		var d: Vector2 = Vector2(float(n.x), float(n.y))
+		var nxt: Vector2i = here + n
+		if not pt._steer_floor(nxt):
+			continue
+		if not pt._dir_open(p, d):
+			continue
+		var s: int = 1
+		if not seen.has(nxt):
+			s += 12
+		if recent.find(nxt) < 0:
+			s += 6
+		if last != Vector2.ZERO and d.dot(last) > 0.5:
+			s += 2
+		if last != Vector2.ZERO and d.dot(last) < -0.5:
+			s -= 10
+		if s > best_s:
+			best_s = s
+			best = d
+	if best == Vector2.ZERO:
+		best = pt._any_open(p)
+	pt.wander_dir = best
+	pt.aim = best
+	pt.move = best

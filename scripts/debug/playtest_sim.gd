@@ -5,6 +5,55 @@ const Recs := preload("res://scripts/debug/playtest_recs.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 
 
+static func reset_ai_state(pt: Node) -> void:
+	pt.ai_on = false
+	pt.sim_t = 0.0
+	pt.stuck_t = 0.0
+	pt.wander_t = 0.0
+	pt.wander_dir = Vector2.ZERO
+	pt.move = Vector2.ZERO
+	pt.aim = Vector2.DOWN
+	pt.attack = false
+	pt.special = false
+	pt.interact = false
+	pt.dash = false
+	pt.potion = false
+	pt.spec_cd = 0.0
+	pt.moved = false
+	pt.hit_something = false
+	pt.recap_taken = false
+	pt.strafe_sign = 1.0
+	pt.last_pos = Vector3.ZERO
+	pt.last_beat_t = -1.0
+	pt.last_wait_t = -9.0
+	pt.path.clear()
+	pt.path_i = 0
+	pt.path_goal = null
+	pt.just.clear()
+	if "last_think_t" in pt:
+		pt.last_think_t = -1.0
+	if pt.has_meta("lock_n"):
+		pt.remove_meta("lock_n")
+	if pt.has_meta("lock_t"):
+		pt.remove_meta("lock_t")
+	if pt.has_meta("cell_t"):
+		pt.remove_meta("cell_t")
+	if pt.has_meta("skip_list"):
+		pt.remove_meta("skip_list")
+	if pt.has_meta("seen_map"):
+		pt.remove_meta("seen_map")
+	if pt.has_meta("decide_why"):
+		pt.remove_meta("decide_why")
+	if pt.has_meta("log_gather_d"):
+		pt.remove_meta("log_gather_d")
+	if pt.has_meta("log_clerk_d"):
+		pt.remove_meta("log_clerk_d")
+	if pt.has_meta("log_threat_d"):
+		pt.remove_meta("log_threat_d")
+	if pt.has_meta("log_gather_k"):
+		pt.remove_meta("log_gather_k")
+
+
 static func start_next(pt: Node) -> void:
 	if pt.interrupted or pt.queue.is_empty():
 		pt._stop_live()
@@ -16,15 +65,7 @@ static func start_next(pt: Node) -> void:
 	pt.job = pt.queue.pop_front()
 	pt.live_running = true
 	pt.running = true
-	pt.ai_on = false
-	pt.sim_t = 0.0
-	pt.stuck_t = 0.0
-	pt.wander_t = 0.0
-	pt.moved = false
-	pt.recap_taken = false
-	pt.path.clear()
-	pt.path_i = 0
-	pt.path_goal = null
+	reset_ai_state(pt)
 	pt.slot = str(pt.job.get("save", "fresh"))
 	pt._prep_slot()
 	var cfg: Dictionary = pt.job.get("cfg", {})
@@ -82,9 +123,7 @@ static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 	PlaytestLog.finish(pt, end_s, fail_s)
 	pt.history.append(App.tel.to_dict())
 	pt._save_history()
-	pt.ai_on = false
-	pt.path.clear()
-	pt.path_goal = null
+	reset_ai_state(pt)
 	if pt.queue.is_empty() or pt.interrupted:
 		pt._stop_live()
 		return
@@ -92,12 +131,10 @@ static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 
 
 static func stop_live(pt: Node) -> void:
-	pt.ai_on = false
+	reset_ai_state(pt)
 	pt.live_running = false
 	pt.running = false
 	pt.smoke_mode = false
-	pt.path.clear()
-	pt.path_goal = null
 	Engine.time_scale = pt.scale_backup if pt.scale_backup > 0.0 else 1.0
 	pt._restore_bal(pt.bal_backup)
 	if not pt.live_backup.is_empty():

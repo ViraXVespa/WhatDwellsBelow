@@ -58,6 +58,28 @@ static func _best_d(pt: Node, p: Node, n: Node) -> float:
 	return snappedf(pt._dist(p, n), 0.1)
 
 
+static func _tool_name() -> String:
+	if App.prog:
+		return str(App.prog.tool_type)
+	return "pickaxe"
+
+
+static func _kind_tool_ok(k: String) -> bool:
+	var tool: String = _tool_name()
+	if k == "wood":
+		return tool == "hatchet"
+	if k == "mine":
+		return tool == "pickaxe"
+	return true
+
+
+static func _banned_n(pt: Node, n: Node) -> bool:
+	if n == null or not pt.has_meta("skip_list"):
+		return false
+	var a: Variant = pt.get_meta("skip_list")
+	return a is Array and (a as Array).has(n)
+
+
 static func _near(pt: Node, p: Node, lim: float = 40.0) -> Array:
 	var out: Array = []
 	var tree: SceneTree = pt.get_tree()
@@ -70,10 +92,155 @@ static func _near(pt: Node, p: Node, lim: float = 40.0) -> Array:
 		if d > lim:
 			continue
 		var c: Vector2i = pt._cell_of_node(n)
-		out.append([str(n.get("kind")), snappedf(d, 0.1), c.x, c.y])
+		var k: String = str(n.get("kind"))
+		var row: Array = [k, snappedf(d, 0.1), c.x, c.y]
+		var flags: Dictionary = {}
+		if n.get("used") == true:
+			flags["used"] = 1
+		if k == "mine" or k == "wood":
+			flags["hits"] = int(n.get("hits"))
+			if not _kind_tool_ok(k):
+				flags["tool"] = 0
+		if _banned_n(pt, n):
+			flags["ban"] = 1
+		if not flags.is_empty():
+			row.append(flags)
+		out.append(row)
 	out.sort_custom(func(a: Array, b: Array) -> bool: return float(a[1]) < float(b[1]))
 	if out.size() > 6:
 		out.resize(6)
+	return out
+
+
+static func _skip_hint(pt: Node, p: Node) -> String:
+	if p == null or pt.get_tree() == null:
+		return ""
+	var best: Node = null
+	var best_d: float = 8.0
+	for n: Node in pt.get_tree().get_nodes_in_group("interact"):
+		if n == null or not is_instance_valid(n):
+			continue
+		var k: String = str(n.get("kind"))
+		if k.find("crystal") >= 0:
+			continue
+		var d: float = pt._dist(p, n)
+		if d < best_d:
+			best_d = d
+			best = n
+	if best == null:
+		return ""
+	var k: String = str(best.get("kind"))
+	if _banned_n(pt, best):
+		return "banned:" + k
+	if best.get("used") == true:
+		return "used:" + k
+	if (k == "mine" or k == "wood") and not _kind_tool_ok(k):
+		return "wrong_tool:" + k
+	if (k == "mine" or k == "wood") and int(best.get("hits")) <= 0:
+		return "hits0:" + k
+	return ""
+
+
+static func _lock_fields(pt: Node, p: Node) -> Dictionary:
+	var out: Dictionary = {}
+	if not pt.has_meta("lock_n"):
+		return out
+	var n: Variant = pt.get_meta("lock_n")
+	if n == null or not (n is Node) or not is_instance_valid(n):
+		return out
+	var node: Node = n
+	out["lock_k"] = str(node.get("kind"))
+	out["lock_c"] = _xy(pt, node)
+	if p:
+		out["lock_d"] = snappedf(pt._dist(p, node), 0.1)
+	if pt.has_meta("lock_t"):
+		out["lock_t"] = snappedf(float(pt.get_meta("lock_t")), 0.1)
+	return out
+
+
+static func _path_fields(pt: Node) -> Dictionary:
+	var out: Dictionary = {}
+	var path: Variant = pt.get("path")
+	if path == null or not (path is Array) or (path as Array).is_empty():
+		return out
+	var arr: Array = path
+	var i: int = 0
+	if pt.get("path_i") != null:
+		i = clampi(int(pt.path_i), 0, arr.size() - 1)
+	var a: Variant = arr[i]
+	var b: Variant = arr[arr.size() - 1]
+	if a is Vector2i:
+		out["p0"] = [(a as Vector2i).x, (a as Vector2i).y]
+	elif a is Vector2:
+		out["p0"] = [int(round((a as Vector2).x)), int(round((a as Vector2).y))]
+	if b is Vector2i:
+		out["pe"] = [(b as Vector2i).x, (b as Vector2i).y]
+	elif b is Vector2:
+		out["pe"] = [int(round((b as Vector2).x)), int(round((b as Vector2).y))]
+	out["pn"] = arr.size()
+	return out
+
+
+static func _wd(pt: Node) -> String:
+	if pt.get("wander_dir") == null:
+		return ""
+	return _cmd(pt.wander_dir)
+
+
+static func _seen_n(pt: Node) -> int:
+	if not pt.has_meta("seen_map"):
+		return 0
+	var m: Variant = pt.get_meta("seen_map")
+	if m is Dictionary:
+		return (m as Dictionary).size()
+	return 0
+
+
+static func _tgt_cell(pt: Node, extra: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	if extra.has("tgt_c"):
+		return out
+	if not pt.has_meta("lock_n"):
+		var g: Variant = pt.get("path_goal")
+		if g is Node and is_instance_valid(g):
+			out["tgt_c"] = _xy(pt, g)
+		return out
+	var n: Variant = pt.get_meta("lock_n")
+	if n is Node and is_instance_valid(n):
+		out["tgt_c"] = _xy(pt, n)
+	return out
+
+
+static func _use_fields(pt: Node, p: Node) -> Dictionary:
+	var out: Dictionary = {}
+	if not pt.interact:
+		return out
+	var n: Node = null
+	if pt.get("path_goal") is Node and is_instance_valid(pt.path_goal):
+		n = pt.path_goal
+	elif pt.has_meta("lock_n"):
+		var v: Variant = pt.get_meta("lock_n")
+		if v is Node and is_instance_valid(v):
+			n = v
+	if n == null:
+		return out
+	var k: String = str(n.get("kind"))
+	out["use_k"] = k
+	if n.get("used") == true:
+		out["used"] = 1
+	if k == "mine" or k == "wood":
+		out["hits"] = int(n.get("hits"))
+		out["use_ok"] = 1 if _kind_tool_ok(k) else 0
+	else:
+		out["use_ok"] = 0 if n.get("used") == true else 1
+	return out
+
+
+static func _beat_perf() -> Dictionary:
+	var out: Dictionary = {}
+	var fps: float = Engine.get_frames_per_second()
+	if fps > 0.0 and fps < 50.0:
+		out["fps"] = snappedf(fps, 0.1)
 	return out
 
 

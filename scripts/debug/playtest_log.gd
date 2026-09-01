@@ -5,6 +5,7 @@ extends Object
 
 const PlaytestLogUtil := preload("res://scripts/debug/playtest_log_util.gd")
 
+
 static func _dir() -> String:
 	return PlaytestLogUtil._dir()
 
@@ -124,6 +125,7 @@ static func act(pt: Node, p: Node) -> void:
 		ev["pot"] = 1
 	if pt.interact:
 		ev["use"] = 1
+		ev.merge(PlaytestLogUtil._use_fields(pt, p))
 	events.append(ev)
 
 
@@ -160,6 +162,7 @@ static func beat(pt: Node, p: Node) -> void:
 		ev["ore"] = int(App.ore)
 	if App.get("wood") != null and int(App.wood) != 0:
 		ev["wood"] = int(App.wood)
+	ev.merge(PlaytestLogUtil._beat_perf())
 	events.append(ev)
 	_check_combat(pt)
 	flush_n += 1
@@ -191,6 +194,23 @@ static func target(n: Node) -> Dictionary:
 	return out
 
 
+static func _scan_dists(near: Array) -> Dictionary:
+	var gather_d: float = -1.0
+	var gather_k: String = ""
+	var clerk_d: float = -1.0
+	for row: Variant in near:
+		if not (row is Array) or (row as Array).size() < 2:
+			continue
+		var k: String = str(row[0])
+		var d: float = float(row[1])
+		if gather_d < 0.0 and (k == "mine" or k == "wood"):
+			gather_d = d
+			gather_k = k
+		if clerk_d < 0.0 and (k.find("clerk") >= 0 or k == "patty" or k == "receptionist"):
+			clerk_d = d
+	return {"gather_d": gather_d, "gather_k": gather_k, "clerk_d": clerk_d}
+
+
 static func decide(pt: Node, p: Node, name: String, why: String, extra: Dictionary = {}) -> void:
 	var t: float = PlaytestLogUtil._t(pt)
 	if name == last_goal and why == str(pt.get_meta("decide_why", "")) and t - last_decide_t < 2.0:
@@ -198,19 +218,24 @@ static func decide(pt: Node, p: Node, name: String, why: String, extra: Dictiona
 	last_goal = name
 	last_decide_t = t
 	pt.set_meta("decide_why", why)
-	var clerk: Node = pt._best_clerk(p) if pt.has_method("_best_clerk") else null
-	var gather: Node = pt._best_gather(p) if pt.has_method("_best_gather") else null
-	var clerk_d: float = PlaytestLogUtil._best_d(pt, p, clerk)
-	var gather_d: float = PlaytestLogUtil._best_d(pt, p, gather)
 	var cargo: int = int(App.gold)
 	if App.get("ore") != null:
 		cargo += int(App.ore)
 	if App.get("wood") != null:
 		cargo += int(App.wood)
+	var near: Array = PlaytestLogUtil._near(pt, p)
+	var scanned: Dictionary = _scan_dists(near)
+	var clerk_d: float = float(scanned.clerk_d)
+	var gather_d: float = float(scanned.gather_d)
+	if pt.has_meta("log_clerk_d"):
+		clerk_d = float(pt.get_meta("log_clerk_d"))
+	if pt.has_meta("log_gather_d"):
+		gather_d = float(pt.get_meta("log_gather_d"))
 	var threat_d: float = 99.0
-	var threat: Node = pt._nearest_visible_threat(p) if pt.has_method("_nearest_visible_threat") else null
-	if threat:
-		threat_d = snappedf(pt._dist(p, threat), 0.1)
+	if pt.has_meta("log_threat_d"):
+		threat_d = float(pt.get_meta("log_threat_d"))
+	elif extra.has("threat_d"):
+		threat_d = float(extra.threat_d)
 	var bans: int = 0
 	if pt.has_meta("skip_list") and pt.get_meta("skip_list") is Array:
 		bans = (pt.get_meta("skip_list") as Array).size()
@@ -225,21 +250,33 @@ static func decide(pt: Node, p: Node, name: String, why: String, extra: Dictiona
 		"cell": PlaytestLogUtil._xy(pt, p),
 		"gold": int(App.gold),
 		"cargo": cargo,
-		"near": PlaytestLogUtil._near(pt, p),
+		"near": near,
 		"threat_d": threat_d,
 		"clerk_d": clerk_d,
 		"gather_d": gather_d,
 	}
 	if why != ev["why"]:
 		ev["why_raw"] = why
-	if gather:
-		ev["gather_k"] = str(gather.get("kind"))
-	if clerk != null and pt._has_path(p, clerk):
-		ev["pc"] = 1
-	if gather != null and pt._has_path(p, gather):
-		ev["pg"] = 1
+	var gk: String = str(scanned.gather_k)
+	if pt.has_meta("log_gather_k"):
+		gk = str(pt.get_meta("log_gather_k"))
+	if gk != "":
+		ev["gather_k"] = gk
 	if bans > 0:
 		ev["bans"] = bans
+	if App.extracted:
+		ev["ex"] = 1
+	ev.merge(PlaytestLogUtil._lock_fields(pt, p))
+	if name == "wander" or why == "explore":
+		var skip: String = PlaytestLogUtil._skip_hint(pt, p)
+		if skip != "":
+			ev["skip"] = skip
+		var wd: String = PlaytestLogUtil._wd(pt)
+		if wd != "":
+			ev["wd"] = wd
+		var seen_n: int = PlaytestLogUtil._seen_n(pt)
+		if seen_n > 0:
+			ev["seen"] = seen_n
 	if extra.size() > 0:
 		ev.merge(extra)
 	events.append(ev)
@@ -283,8 +320,12 @@ static func step(pt: Node, p: Node) -> void:
 	}
 	if mismatch:
 		ev["mis"] = 1
-	if pt.get("path") != null and pt.path.size() > 0:
-		ev["pn"] = pt.path.size()
+	ev.merge(PlaytestLogUtil._path_fields(pt))
+	ev.merge(PlaytestLogUtil._tgt_cell(pt, ev))
+	if last_goal == "wander":
+		var wd: String = PlaytestLogUtil._wd(pt)
+		if wd != "":
+			ev["wd"] = wd
 	if PlaytestLogUtil._coalesce_step(events, ev):
 		return
 	events.append(ev)
