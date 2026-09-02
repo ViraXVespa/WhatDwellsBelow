@@ -1,6 +1,5 @@
 extends Object
 
-const NEAR := 22.0
 const CRYSTAL_IN := 2.4
 const CRYSTAL_OUT := 5.5
 
@@ -21,9 +20,7 @@ static func is_boss(n: Node) -> bool:
 static func alive_enemy(n: Node) -> bool:
 	if n == null or not is_instance_valid(n):
 		return false
-	if n.has_method("is_alive") and not n.is_alive():
-		return false
-	return true
+	return not (n.has_method("is_alive") and not n.is_alive())
 
 
 static func notice_range(pt: Node) -> float:
@@ -34,37 +31,28 @@ static func notice_range(pt: Node) -> float:
 	return maxf(4.4, pt._weapon_range() + 1.6)
 
 
-static func try_staff_special(pt: Node, d: float, los: bool) -> void:
-	if not los or pt.spec_cd > 0.0:
-		return
-	if d < 1.45 or d > pt._staff_hold() + 1.8:
-		return
+static func _spec(pt: Node, cd: float) -> void:
 	pt.special = true
 	pt.just["special"] = true
-	pt.spec_cd = 1.15
+	pt.spec_cd = cd
+
+
+static func try_staff_special(pt: Node, d: float, los: bool) -> void:
+	if los and pt.spec_cd <= 0.0 and d >= 1.45 and d <= pt._staff_hold() + 1.8:
+		_spec(pt, 1.15)
 
 
 static func try_bow_special(pt: Node, d: float, los: bool) -> void:
-	if not pt._is_bow() or not los or pt.spec_cd > 0.0:
-		return
-	if d > pt._weapon_range() + 0.2:
-		return
-	pt.special = true
-	pt.just["special"] = true
-	pt.spec_cd = 1.2
+	if pt._is_bow() and los and pt.spec_cd <= 0.0 and d <= pt._weapon_range() + 0.2:
+		_spec(pt, 1.2)
 
 
 static func try_axe_special(pt: Node, d: float, los: bool, enemy: Node) -> void:
 	if not pt._is_axe() or not los or pt.spec_cd > 0.0:
 		return
 	var slam: float = float(App.bal.slam_radius) + 0.12
-	if d > slam:
-		return
-	if not is_boss(enemy) and d > slam * 0.72:
-		return
-	pt.special = true
-	pt.just["special"] = true
-	pt.spec_cd = 1.1
+	if d <= slam and (is_boss(enemy) or d <= slam * 0.72):
+		_spec(pt, 1.1)
 
 
 static func _meta_n(pt: Node, key: String) -> Node:
@@ -156,10 +144,6 @@ static func is_loot_kind(k: String) -> bool:
 	return k == "mine" or k == "wood" or k.find("chest") >= 0
 
 
-static func is_use_kind(k: String) -> bool:
-	return is_clerk_kind(k) or is_loot_kind(k) or k.find("stairs") >= 0 or k.find("door") >= 0
-
-
 static func is_foe_lock(n: Node) -> bool:
 	if n == null or not is_instance_valid(n):
 		return false
@@ -190,7 +174,7 @@ static func _near_prop(pt: Node, p: Node, lim: float) -> Node:
 		if n == null or not is_instance_valid(n) or _banned(pt, n):
 			continue
 		var k: String = str(n.get("kind"))
-		if k.find("crystal") >= 0 or k == "vendor" or k == "shop" or k == "receptionist":
+		if k.find("crystal") >= 0 or k == "vendor" or k == "shop":
 			continue
 		if n.get("used") == true:
 			continue
@@ -253,11 +237,9 @@ static func spinning(pt: Node) -> bool:
 
 static func at_prop(pt: Node, p: Node) -> bool:
 	var n: Node = _meta_n(pt, "lock_n")
-	if n == null or not is_instance_valid(n):
+	if n == null:
 		n = pt.path_goal if pt.get("path_goal") else null
-	if n == null or not is_instance_valid(n):
-		return false
-	return pt._dist(p, n) < 1.35
+	return n != null and is_instance_valid(n) and pt._dist(p, n) < 1.35
 
 
 static func should_unstick(pt: Node, p: Node) -> bool:
@@ -286,6 +268,8 @@ static func do_unstick(pt: Node) -> void:
 	pt.set_meta("lock_t", 0.0)
 	pt.set_meta("cell_t", 0.0)
 	pt.set_meta("wander_hold", 0.0)
+	if pt.has_meta("wander_cell"):
+		pt.remove_meta("wander_cell")
 	pt.path.clear()
 	pt.path_goal = null
 	pt.stuck_t = 0.0
@@ -297,86 +281,88 @@ static func stop_gather(p: Node) -> void:
 		return
 	if p.get("gathering") != null:
 		p.set("gathering", null)
-	if p.has_method("stop_gather"):
-		p.call("stop_gather")
 
 
 static func note_threat(pt: Node, p: Node, enemy: Node) -> void:
-	var d: float = 99.0
-	if enemy != null and is_instance_valid(enemy) and p != null:
-		d = pt._dist(p, enemy)
-	pt.set_meta("log_threat_d", d)
+	pt.set_meta("log_threat_d", pt._dist(p, enemy) if enemy != null and is_instance_valid(enemy) and p != null else 99.0)
 
 
 static func really_extracted() -> bool:
-	if not App.extracted:
-		return false
-	if App.tel != null and float(App.tel.clerk_t) >= 0.0:
-		return true
-	return false
+	return App.extracted and App.tel != null and float(App.tel.clerk_t) >= 0.0
 
 
-static func _front(seen: Dictionary, here: Vector2i, step: Vector2i) -> int:
-	var s: int = 0
-	var side: Vector2i = Vector2i(-step.y, step.x)
-	for i: int in range(1, 4):
-		var c: Vector2i = here + step * i
-		if int(seen.get(c, 0)) == 0:
-			s += 3
-		else:
-			s -= int(seen.get(c, 0))
-		if int(seen.get(c + side, 0)) == 0:
-			s += 1
-		if int(seen.get(c - side, 0)) == 0:
-			s += 1
-	return s
+static func _openness(pt: Node, c: Vector2i) -> int:
+	var n: int = 0
+	for s: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		if pt._steer_floor(c + s):
+			n += 1
+	return n
+
+
+static func _pick_front(pt: Node, here: Vector2i, last: Vector2) -> Vector2i:
+	var seen: Dictionary = _seen(pt)
+	var recent: Array = _recent(pt)
+	var best: Vector2i = here
+	var best_s: float = -9999.0
+	for dy: int in range(-7, 8):
+		for dx: int in range(-7, 8):
+			if dx == 0 and dy == 0:
+				continue
+			var c: Vector2i = here + Vector2i(dx, dy)
+			if not pt._steer_floor(c):
+				continue
+			var md: int = absi(dx) + absi(dy)
+			if md < 3:
+				continue
+			var visits: int = int(seen.get(c, 0))
+			if recent.has(c):
+				continue
+			var open_n: int = _openness(pt, c)
+			if open_n <= 1:
+				continue
+			var s: float = float(open_n) * 5.0 - float(visits) * 6.0 + float(md) * 0.35
+			if visits == 0:
+				s += 16.0
+			if last != Vector2.ZERO:
+				var v: Vector2 = Vector2(float(dx), float(dy))
+				s += v.normalized().dot(last) * 4.0
+			if s > best_s:
+				best_s = s
+				best = c
+	return best
 
 
 static func wander(pt: Node, p: Node, _delta: float = 0.0) -> void:
 	var here: Vector2i = pt._cell_of_node(p)
 	_mark(pt, here)
 	_trail(pt, here)
-	var seen: Dictionary = _seen(pt)
-	var recent: Array = _recent(pt)
 	var last: Vector2 = pt.wander_dir if pt.get("wander_dir") != null else Vector2.ZERO
-	var spin: bool = spinning(pt)
-	if (not spin) and _meta_f(pt, "wander_hold", 0.0) > 0.0 and last != Vector2.ZERO and pt._dir_open(p, last):
-		var nxt_h: Vector2i = here + Vector2i(int(signf(last.x)), int(signf(last.y)))
-		if recent.find(nxt_h) < 0 or int(seen.get(nxt_h, 0)) < 2:
-			pt.aim = last
-			pt.move = last
-			return
-	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)]
-	var best: Vector2 = Vector2.ZERO
-	var best_s: int = -9999
-	for n: Vector2i in dirs:
-		var d: Vector2 = Vector2(float(n.x), float(n.y))
-		var nxt: Vector2i = here + n
-		if pt.has_method("_steer_floor") and not pt._steer_floor(nxt):
-			continue
-		if not pt._dir_open(p, d):
-			continue
-		var visits: int = int(seen.get(nxt, 0))
-		var s: int = _front(seen, here, n) - visits * 6
-		var ri: int = recent.find(nxt)
-		if ri >= 0 and ri >= recent.size() - 8:
-			s -= 24
-		elif visits == 0:
-			s += 14
-		if last != Vector2.ZERO and d.dot(last) > 0.5:
-			s += 8
-		if last != Vector2.ZERO and d.dot(last) < -0.5:
-			s -= 30
-		if spin and d.dot(last) > 0.1:
-			s -= 12
-		if s > best_s:
-			best_s = s
-			best = d
-	if best == Vector2.ZERO:
-		best = pt._any_open(p)
-	pt.wander_dir = best
-	pt.aim = best
-	pt.move = best
-	pt.set_meta("wander_hold", 1.6 if spin else 2.2)
+	var dest: Vector2i = here
+	if pt.has_meta("wander_cell"):
+		dest = pt.get_meta("wander_cell")
+	var need: bool = spinning(pt) or _meta_f(pt, "wander_hold", 0.0) <= 0.0
+	if dest == here or absi(dest.x - here.x) + absi(dest.y - here.y) <= 1:
+		need = true
+	if need:
+		dest = _pick_front(pt, here, last)
+		pt.set_meta("wander_cell", dest)
+		pt.set_meta("wander_hold", 2.8)
+	var pos: Vector3 = (p as Node3D).global_position
+	var tgt: Vector2 = Vector2(float(dest.x) + 0.5, float(dest.y) + 0.5)
+	var heading: Vector2 = Vector2(tgt.x - pos.x, tgt.y - pos.z)
+	if heading.length() < 0.12:
+		pt.remove_meta("wander_cell")
+		heading = last if last != Vector2.ZERO else pt._any_open(p)
+	heading = heading.normalized()
+	var drift: float = sin(pos.x * 1.7 + pos.z * 1.1) * 0.18
+	var perp: Vector2 = Vector2(-heading.y, heading.x)
+	var desired: Vector2 = (heading + perp * drift).normalized()
+	if not pt._dir_open(p, desired):
+		desired = heading
+	if not pt._dir_open(p, desired):
+		desired = pt._any_open(p)
+	pt.wander_dir = heading
+	pt.aim = heading
+	pt.move = pt._steer(p, desired)
 	pt.path.clear()
 	pt.path_goal = null

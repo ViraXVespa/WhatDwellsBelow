@@ -1,8 +1,8 @@
 # Audio, visual, splash
 
-Status: binding design + live snapshot
-Read when: changing music, SFX, splash/title, or art rules
-Code: `scripts/audio/music.gd`, `scripts/combat/sfx.gd`, `scripts/ui/splash.gd`, `scripts/title.gd`
+Status: binding design + live snapshot  
+Read when: changing music, SFX, splash/title, or art rules  
+Code: `scripts/audio/music.gd`, `scripts/combat/sfx.gd`, `scripts/ui/splash.gd`, `scripts/title.gd`  
 See also: `design/art-pipeline.md`, `design/constraints.md`
 
 ## Music
@@ -53,9 +53,11 @@ Live files under `assets/audio/` include `sfx_dash`, `sfx_hit`, `sfx_hurt`, `sfx
 - Base resolution for characters and most props: 64×64 pixels.
 - Nearest-neighbor filtering only (no linear filtering on sprites).
 - All characters use Y-billboard so they remain upright under the orthographic camera.
-- Character art (player and enemies) is generated and assembled according to the mandatory pipeline defined in `design/art-pipeline.md`.
-- Required player states at minimum: idle, walk, attack (per weapon), special (per weapon), gathering (mining/woodcutting), death, “Dispel”.
-- Each weapon requires its own paper-doll equip appearance and associated animations.
+- Character art (player and enemies) is generated and assembled according to the mandatory pipeline in `design/art-pipeline.md`.
+- Every I2V call (player, enemy, future) is seeded from a still that still has an opaque chroma plate. Plate-remap off-magenta backgrounds to `#FF00FF` with `tools/plate_remap.py` before lock / I2V. Never seed I2V from keyed transparent frames.
+- Required player body states at minimum: `idle` (directional key still), `idle_to_walk`, `walk`, `walk_to_idle`, attack body clip per weapon class, special body clip per weapon class, gathering (mining/woodcutting) body clip per tool class, death, “Dispel”.
+- Start / cycle / stop locomotion clips are cut from one walk I2V per facing. Idle is not an I2V breath loop.
+- Weapons and tools are paper-doll overlay layers composited onto unarmed body frames. Do not bake a full character animation set per weapon.
 - Male and female player characters MUST maintain full animation parity.
 - Male and female characters each require a complete, dedicated voice-over set of equal scope.
 - Player and enemy animations use exactly 8 directions matching the Character Bible layout.
@@ -75,6 +77,7 @@ Live `splash.gd`: fade in 0.7 s, hold until t = 4.0 s, fade out 0.7 s. Skip with
 ## Placeholder policy
 
 The only assets considered final are:
+
 - The designer’s profile picture
 - Official Grok / xAI logos and related assets
 

@@ -3,7 +3,7 @@
 Status: binding design  
 Read when: changing bag, equipment, food, potions, artifacts, clerks, or the anvil  
 Code: `scripts/data/progress.gd`, `scripts/data/progress_gear.gd`, `scripts/data/progress_extract.gd`, `scripts/data/progress_make.gd`, `scripts/data/gear_rules.gd`, `scripts/data/catalog.gd`, `scripts/ui/gear_board.gd`, `scripts/ui/gear_board_text.gd`, `scripts/ui/gear_board_act.gd`  
-See also: `design/gear-ui.md`, `design/skills.md`, `design/ui.md`, `design/hub.md`
+See also: `design/gear-ui.md`, `design/skills.md`, `design/ui.md`, `design/hub.md`, `design/art-pipeline.md`
 
 ## Bag
 
@@ -38,7 +38,7 @@ Shared pause / loadout presentation is specified in `design/gear-ui.md`.
 - White, green, and blue rarity appear in the demo.
 - Blue items have improved stats over green items and are obtainable only from bosses (Floor Guardians and Gate Master).
 - Stats take effect immediately.
-- Weapons require paper-doll visual layers and associated animations. Armor and other gear may remain stats-only.
+- Weapons and tools require paper-doll **overlay layers** composited onto shared unarmed body animations. Do not require a full baked character animation set per weapon. Armor and other gear may remain stats-only.
 - The player may maintain up to three forged “holds” per equipment slot.
 - Forged holds always return to Placeholdia on death or “Dispel”, even if the item was dropped on the floor.
 - All unextracted resources and any non-forged items still in the bag are lost on death or “Dispel”.

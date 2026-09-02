@@ -1,10 +1,6 @@
 extends Object
 
-## Local streamed-neighborhood pathing. Far goals are reachable only if
-## the window can actually advance; otherwise the AI must pick another job.
-
 const REACH := 36
-const ASTAR_GUARD := 720
 const Util := preload("res://scripts/debug/playtest_path_util.gd")
 
 
@@ -99,7 +95,7 @@ static func clearance_target(pt: Node, c: Vector2i) -> Vector2:
 		if not pt._steer_floor(c + n):
 			push -= Vector2(float(n.x), float(n.y))
 	if push.length() > 0.001:
-		t += push.normalized() * 0.20
+		t += push.normalized() * 0.28
 	return t
 
 
@@ -113,7 +109,7 @@ static func wall_sep(pt: Node, p: Node) -> Vector2:
 		if pt._steer_floor(here + n):
 			continue
 		var axis: Vector2 = Vector2(float(n.x), float(n.y))
-		if off.dot(axis) > 0.08:
+		if off.dot(axis) > 0.04:
 			sep -= axis
 		else:
 			var probe: Vector3 = Vector3(pos.x + axis.x * 0.34, pos.y, pos.z + axis.y * 0.34)
@@ -124,18 +120,37 @@ static func wall_sep(pt: Node, p: Node) -> Vector2:
 	return sep.normalized()
 
 
+static func hall_center(pt: Node, p: Node) -> Vector2:
+	var here: Vector2i = pt._cell_of_pos((p as Node3D).global_position)
+	var pos: Vector3 = (p as Node3D).global_position
+	var pull: Vector2 = Vector2.ZERO
+	var open_x: bool = pt._steer_floor(here + Vector2i(1, 0)) and pt._steer_floor(here + Vector2i(-1, 0))
+	var open_y: bool = pt._steer_floor(here + Vector2i(0, 1)) and pt._steer_floor(here + Vector2i(0, -1))
+	var cx: float = float(here.x) + 0.5
+	var cy: float = float(here.y) + 0.5
+	if not open_x:
+		pull.x += (cx - pos.x)
+	if not open_y:
+		pull.y += (cy - pos.z)
+	if pull.length() < 0.04:
+		return Vector2.ZERO
+	return pull.normalized()
+
+
 static func steer(pt: Node, p: Node, desired: Vector2) -> Vector2:
+	var heading: Vector2 = desired
+	if heading.length() > 0.001:
+		heading = heading.normalized()
+		if not pt._dir_open(p, heading):
+			heading = Vector2.ZERO
+	var mid: Vector2 = hall_center(pt, p)
 	var sep: Vector2 = pt._wall_sep(p)
-	var out: Vector2 = desired
-	if desired != Vector2.ZERO and not pt._dir_open(p, desired):
-		out = Vector2.ZERO
-	if out == Vector2.ZERO:
-		out = sep
-	elif sep != Vector2.ZERO:
-		out = (out * 0.40 + sep * 1.15).normalized()
+	var out: Vector2 = heading * 1.0 + mid * 0.55 + sep * 0.28
+	if out.length() < 0.001:
+		out = mid if mid != Vector2.ZERO else sep
 	if out == Vector2.ZERO or not pt._dir_open(p, out):
 		out = pt._any_open(p)
-	return out
+	return out.normalized() if out.length() > 0.001 else out
 
 
 static func step_dir(pt: Node, p: Node, desired: Vector2) -> Vector2:
@@ -145,14 +160,17 @@ static func step_dir(pt: Node, p: Node, desired: Vector2) -> Vector2:
 	var here: Vector2i = pt._cell_of_pos((p as Node3D).global_position)
 	var best: Vector2 = Vector2.ZERO
 	var best_score: float = -999.0
-	for n: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
+	for n: Vector2i in dirs:
 		var nxt: Vector2i = here + n
 		if not pt._steer_floor(nxt):
 			continue
-		var dir: Vector2 = Vector2(float(n.x), float(n.y))
+		var dir: Vector2 = Vector2(float(n.x), float(n.y)).normalized()
 		if not pt._dir_open(p, dir):
 			continue
 		var score: float = dir.dot(desired)
+		if n.x != 0 and n.y != 0:
+			score += 0.08
 		if score > best_score:
 			best_score = score
 			best = dir
@@ -173,20 +191,6 @@ static func has_path(pt: Node, p: Node, dest: Node) -> bool:
 		return not Util.astar(pt, p, dest).is_empty()
 	var mid: Vector2i = Util._toward(pt, start, goal)
 	return Util._manh(start, mid) >= 3
-
-
-static func _cardinal_to(here: Vector2i, dest: Vector2i) -> Vector2:
-	var dx: int = dest.x - here.x
-	var dy: int = dest.y - here.y
-	if dx == 0 and dy == 0:
-		return Vector2.ZERO
-	if absi(dx) >= absi(dy):
-		if dx != 0:
-			return Vector2(float(signi(dx)), 0.0)
-		return Vector2(0.0, float(signi(dy)))
-	if dy != 0:
-		return Vector2(0.0, float(signi(dy)))
-	return Vector2(float(signi(dx)), 0.0)
 
 
 static func follow_goal(pt: Node, p: Node, dest: Node) -> void:
@@ -218,7 +222,7 @@ static func follow_goal(pt: Node, p: Node, dest: Node) -> void:
 		pt.path_goal = dest
 	var step: Vector2 = follow_or_direct(pt, p, dest)
 	if step != Vector2.ZERO and pt._dir_open(p, step):
-		pt.move = step
+		pt.move = pt._steer(p, step)
 	else:
 		pt.move = pt._safe_step(p, step)
 	if step != Vector2.ZERO:
@@ -233,9 +237,7 @@ static func follow_or_direct(pt: Node, p: Node, dest: Node) -> Vector2:
 		pt.path = Util.astar(pt, p, dest)
 		pt.path_i = 0
 	if pt.path.is_empty() or pt.path.size() <= 1:
-		if pt._dist(p, dest) > 1.7:
-			return pt._any_open(p)
-		return Vector2.ZERO
+		return _cut(pt, p, dest)
 	var here: Vector2i = pt._cell_of_pos((p as Node3D).global_position)
 	var i: int = pt.path_i
 	while i < pt.path.size():
@@ -243,42 +245,47 @@ static func follow_or_direct(pt: Node, p: Node, dest: Node) -> Vector2:
 			pt.path_i = i + 1
 			break
 		i += 1
-	if pt.path_i < pt.path.size():
-		var nxt: Vector2i = pt.path[pt.path_i]
-		var md: int = absi(nxt.x - here.x) + absi(nxt.y - here.y)
-		if md > 1:
-			var on: bool = false
-			for c: Vector2i in pt.path:
-				if c == here:
-					on = true
-					break
-			if not on:
-				pt.path = Util.astar(pt, p, dest)
-				pt.path_i = 0
 	if pt.path.is_empty() or pt.path_i >= pt.path.size():
 		pt.path = Util.astar(pt, p, dest)
 		pt.path_i = 0
 	if pt.path.is_empty() or pt.path.size() <= 1:
-		if pt._dist(p, dest) > 1.7:
-			return pt._any_open(p)
-		return Vector2.ZERO
+		return _cut(pt, p, dest)
 	while pt.path_i < pt.path.size() and pt.path[pt.path_i] == here:
 		pt.path_i += 1
 	if pt.path_i >= pt.path.size():
 		pt.path.clear()
-		if pt._dist(p, dest) > 1.7:
-			return pt._any_open(p)
-		return Vector2.ZERO
-	var c: Vector2i = pt.path[pt.path_i]
-	var step: Vector2 = _cardinal_to(here, c)
-	if step == Vector2.ZERO:
-		pt.path_i += 1
-		if pt.path_i >= pt.path.size():
-			return Vector2.ZERO
+		return _cut(pt, p, dest)
+	var aim_i: int = pt.path_i
+	var last_ok: int = aim_i
+	var cap: int = mini(pt.path.size() - 1, pt.path_i + 5)
+	while aim_i <= cap:
+		var ac: Vector2i = pt.path[aim_i]
+		var av: Vector2 = Vector2(float(ac.x) + 0.5, float(ac.y) + 0.5)
+		var pos: Vector3 = (p as Node3D).global_position
+		var dir: Vector2 = Vector2(av.x - pos.x, av.y - pos.z)
+		if dir.length() < 0.08 or not pt._dir_open(p, dir):
+			break
+		last_ok = aim_i
+		aim_i += 1
+	var c: Vector2i = pt.path[last_ok]
+	var t: Vector2 = pt._clearance_target(c)
+	var pos2: Vector3 = (p as Node3D).global_position
+	var step: Vector2 = Vector2(t.x - pos2.x, t.y - pos2.z)
+	if step.length() < 0.08:
+		pt.path_i = last_ok + 1
 		return follow_or_direct(pt, p, dest)
 	if not pt._dir_open(p, step):
 		return pt._step_dir(p, step)
-	return step
+	return step.normalized()
+
+
+static func _cut(pt: Node, p: Node, dest: Node) -> Vector2:
+	var cut: Vector2 = pt._xz_to(p, dest)
+	if cut != Vector2.ZERO and pt._dir_open(p, cut):
+		return cut
+	if pt._dist(p, dest) > 1.7:
+		return pt._any_open(p)
+	return Vector2.ZERO
 
 
 static func astar(pt: Node, p: Node, dest: Node) -> Array[Vector2i]:

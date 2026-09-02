@@ -25,7 +25,7 @@ BODY_CELLS = (
     "down_right",
 )
 
-PROMPT = """Generate a video. Image-to-video from this still. Do not output a still image. Length at least ten seconds.
+PROMPT = """Generate a video. Image-to-video from this still. Do not output a still image. Make the clip as long as it needs to be to finish the motion below. No fixed duration.
 
 2D game sprite. In-place {action}, facing {facing}. Engine moves and lights this later.
 

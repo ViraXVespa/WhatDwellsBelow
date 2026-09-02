@@ -1,16 +1,16 @@
 # Combat
 
-Status: binding design
-Read when: changing weapons, hit detection, dash, lock, or juice
-Code: `scripts/combat/combat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `scripts/world/player.gd`
-See also: `design/skills.md`, `design/tunables.md`
+Status: binding design  
+Read when: changing weapons, hit detection, dash, lock, or juice  
+Code: `scripts/combat/combat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `scripts/world/player.gd`  
+See also: `design/skills.md`, `design/tunables.md`, `design/art-pipeline.md`
 
 ## Weapon system
 
-The player may equip one of three weapons: Great Axe, Lightning Staff, or Longbow.
-Starting weapon is selected in the loadout. Mid-run weapon changes are performed by equipping from the pause-menu inventory.
-Each weapon has its own paper-doll appearance and full set of animations.
-Specials for all weapons are activated with LT.
+The player may equip one of three weapons: Great Axe, Lightning Staff, or Longbow.  
+Starting weapon is selected in the loadout. Mid-run weapon changes are performed by equipping from the pause-menu inventory.  
+Each weapon has its own paper-doll **overlay** (carry / rest plus attack and special layers). Body locomotion is shared and unarmed. Attack and special use a body clip per weapon class with the weapon layered on top — not a baked full-character animation set per weapon.  
+Specials for all weapons are activated with LT.  
 All player attacks (basic and special) MUST clearly telegraph their range and provide a visible indication that the attack is currently active.
 
 ## Great Axe

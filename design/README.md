@@ -17,6 +17,8 @@ It is not one Game Design Document.
 4. Use the code map below for live scripts.  
 5. After a behavior change, update the matching topic file in the same slice.
 
+Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live in `tools/i2v_seeds.py`. Off-magenta plates go through `tools/plate_remap.py` before I2V.
+
 ## Document kinds
 
 | Marker | Meaning |
@@ -74,8 +76,11 @@ Every live `scripts/**/*.gd` file must stay under **10KB**. Facades keep the ori
 | Debug | `scripts/combat/debug_menu.gd`; `scripts/debug/playtest.gd` extends `playtest_api.gd` + `playtest_ai.gd`, `playtest_nav.gd`, `playtest_los.gd`, `playtest_path.gd`, `playtest_goals.gd`, `playtest_sim.gd`, `playtest_recs.gd`; `smoke.gd` + `smoke_early.gd`, `smoke_late.gd`, `smoke_p5.gd`, `smoke_p6.gd`, `smoke_p7.gd`, `smoke_p8.gd`, `smoke_p9.gd`, `smoke_p79.gd`; `anim_browser.gd`, `telemetry.gd` |
 | Audio | `scripts/audio/music.gd`, `scripts/combat/sfx.gd` |
 | Archives UI | `scripts/ui/archives_ui.gd`, `scripts/ui/present.gd` |
+| Sprite tools | `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/process_*.py`, `tools/pack_*.py` |
 
 Public entry points that must not change when a helper is split: `App.playtest`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.
+
+Live `player_anim.gd` still plays baked per-weapon sheets and has no `idle_to_walk` / `walk_to_idle` clips. Binding is `design/player.md` + `design/art-pipeline.md`.
 
 ## House rules for editing these files
 

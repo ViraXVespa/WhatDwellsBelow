@@ -1,9 +1,9 @@
 # Enemies
 
-Status: binding design + live snapshot
-Read when: changing roster, AI, bosses, or combat-level scaling
-Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`
-See also: `design/skills.md`, `design/dungeon.md`
+Status: binding design + live snapshot  
+Read when: changing roster, AI, bosses, or combat-level scaling  
+Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`  
+See also: `design/skills.md`, `design/dungeon.md`, `design/art-pipeline.md`
 
 ## Enemy variety
 
@@ -14,10 +14,21 @@ See also: `design/skills.md`, `design/dungeon.md`
 - Enemies should use a variety of classic fantasy representations (slimes, goblins, orcs, etc.).
 - All enemies MUST feel distinct from one another and remain visually consistent with the dungeon style and tone of the game.
 
+## Art and I2V
+
+Enemy frames follow `design/art-pipeline.md`. There is not a second enemy pipeline.
+
+- Player and enemy animations use exactly 8 directions matching the Character Bible layout.
+- Every I2V call (including future enemy cycles) is seeded from a still that still has an opaque chroma plate.
+- If Grok paints a near-magenta plate (`#F50487` and similar), run `tools/plate_remap.py` before lock / I2V so the plate and edge bleed become `#FF00FF`. Keep the plate opaque.
+- Never seed I2V from `sprite_pipeline.py` key-to-alpha / transparent / fitted engine frames.
+- One I2V clip, then User review. No fixed duration. No automatic fill-in passes.
+
 ## Roles present in demo
 
-The following are suggested starting roles, not a closed or mandatory roster. Grok Build MAY invent additional or different roles so long as combat stays readable and the floor-variety rules in this section are met.
+The following are suggested starting roles, not a closed or mandatory roster. Grok Build MAY invent additional or different roles so long as combat stays readable and the floor-variety rules in this section are met.  
 Suggested starting roles:
+
 - Bruiser (melee)
 - Ranged
 - Tank
@@ -44,16 +55,17 @@ Floor Guardians (floors 1–4) and the Gate Master (floor 5) MUST have high heal
 
 ## AI behavior
 
-Enemies require line-of-sight to begin attacking or chasing.
-When LOS is lost they may briefly hunt the last-seen position, then return to idle.
-Enemies MUST also drop pursuit if the distance to the player exceeds a tunable leash range, even if they still have LOS. After dropping pursuit they return to idle / their post. This exists so a player who is overwhelmed can flee combat instead of being chased indefinitely.
-Exact leash distance, hunt duration after lost LOS, and re-aggro rules are tunable via the secret debug menu.
-Implement clean steering, separation, and stuck-handling appropriate for the orthographic Camera3D live path.
+Enemies require line-of-sight to begin attacking or chasing.  
+When LOS is lost they may briefly hunt the last-seen position, then return to idle.  
+Enemies MUST also drop pursuit if the distance to the player exceeds a tunable leash range, even if they still have LOS. After dropping pursuit they return to idle / their post. This exists so a player who is overwhelmed can flee combat instead of being chased indefinitely.  
+Exact leash distance, hunt duration after lost LOS, and re-aggro rules are tunable via the secret debug menu.  
+Implement clean steering, separation, and stuck-handling appropriate for the orthographic Camera3D live path.  
 Flee event occurs an average of 2 times per floor on a full clear: after the group has taken sufficient damage, the fastest enemy in the encounter flashes a clear “!” overhead, receives a small but noticeable speed boost, and flees to spawn reinforcements. No other telegraph is required beyond the “!”.
 
 ## Idle / pressure spawns
 
 If the player remains idle too long outside a safe room, or stops revealing new map area for a tunable duration, additional enemies MUST spawn around the player.
+
 - MUST NOT spawn inside safe rooms (clerk, ghost shop, puzzle).
 - Idle timer, no-reveal timer, spawn count, and spawn radius are tunable via the secret debug menu.
 - Purpose: the dungeon stays reactive if the player camps or stalls exploration.
