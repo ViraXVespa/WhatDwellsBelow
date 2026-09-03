@@ -34,9 +34,12 @@ func refresh() -> void:
 		label.text = _title()
 		label.visible = not hidden
 		label.modulate = Color(0.45, 0.95, 1.0) if crystal_on else Color(0.72, 0.82, 0.88)
+	var tint := Color(0.45, 0.95, 1.0) if crystal_on else Color(0.28, 0.55, 0.7)
+	if spr:
+		spr.modulate = tint
 	if mesh and mesh.material_override is StandardMaterial3D:
 		var mat: StandardMaterial3D = mesh.material_override
-		mat.albedo_color = Color(0.45, 0.95, 1.0) if crystal_on else Color(0.28, 0.55, 0.7)
+		mat.albedo_color = tint
 
 
 func _title() -> String:

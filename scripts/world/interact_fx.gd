@@ -6,17 +6,7 @@ const Depth := preload("res://scripts/world/depth.gd")
 static func build(host: Node3D) -> void:
 	var kind: String = host.kind
 	if kind == "crystal" or kind == "loadout_crystal":
-		var mesh := MeshInstance3D.new()
-		var pr := PrismMesh.new()
-		pr.size = Vector3(0.55, 1.2, 0.55)
-		mesh.mesh = pr
-		mesh.position.y = 0.7
-		var m := StandardMaterial3D.new()
-		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.albedo_color = Color(0.35, 0.9, 1.0)
-		mesh.material_override = m
-		host.mesh = mesh
-		host.add_child(mesh)
+		sprite(host, "res://assets/sprites/props/crystal.png", 1.2, 0.6)
 		return
 	if kind == "stairs":
 		sprite(host, "res://assets/sprites/props/stairs.png", 1.1, 0.45)
@@ -55,6 +45,8 @@ static func build(host: Node3D) -> void:
 
 static func tex_path(kind: String) -> String:
 	match kind:
+		"crystal", "loadout_crystal":
+			return "res://assets/sprites/props/crystal.png"
 		"anvil":
 			return "res://assets/sprites/props/anvil.png"
 		"quest_board":
@@ -91,7 +83,7 @@ static func spr_h(kind: String) -> float:
 		return 1.55
 	if kind == "campfire":
 		return 0.9
-	if kind == "shrine":
+	if kind == "shrine" or kind == "crystal" or kind == "loadout_crystal":
 		return 1.2
 	return 0.85
 
@@ -101,6 +93,8 @@ static func spr_y(kind: String) -> float:
 		return 0.95
 	if kind.begins_with("clerk") or kind == "shop" or kind == "receptionist" or kind == "vendor":
 		return 0.78
+	if kind == "crystal" or kind == "loadout_crystal":
+		return 0.6
 	if kind == "plate":
 		return 0.06
 	return 0.48
