@@ -11,27 +11,28 @@ Need assets for updated placeholdia UI.
 Need to import button prompt assets
 Add lighting/torch decorations to the walls.
 Animation handling to correct idle depending on active front foot.
+Need to fix design of pressure plate trap things.
 
 ### Can Do Now
 ## Sexy
-Adjust hallway size from 2, to a varying width from 2 to 4.9
-Need to create new UI for forging menu in blacksmith.
+Hide hallways behind walls
 Blacksmith UI needs to be reworked to be intuitive using LB/RB to swap between analyze and forge.
-Need to fix design of pressure plate trap things.
+Need to create new UI for forging menu in blacksmith.
 Need to double check attack telegraphing to ensure it only appears where it actually hits.
 Add a red outline around enemies that have targeted the player.
 Welcome to Placeholdia banner needs to be bigger.
-Tinker around with in-game fog of war instead of just mini-map.
 Add mobile controls
 Add X Money donation links
 Improve dungeon tuning to ensure less gameplay with no action.
 Need a system to swap tooltip button prompts between KB/M and gamepad.
 Rework pause menu so that Dpad Right opens inventory and the menu button brings up a better flow for dispelling the run.
+Make archives close original instance when opening an archived build.
 
 ## Unsexy
 Update AGENTS logics to include Copilot instructions to reduce token use. Needs helper script to find large files automatically to not require auth and optimize detection. We also need an optimized workflow for refactoring.
 Need to fix automated playtest
 Need to test chroma key logic on different images to ensure it catches all of the pink.
 Add a space after the 3rd sentence in i2v_seeds.py script.
+Add 36fb882c9db3b6cd8a83f072d2dfec51d4acedca as Grok Build Week 2
 
 ### Needs Investigation

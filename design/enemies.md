@@ -2,8 +2,8 @@
 
 Status: binding design + live snapshot  
 Read when: changing roster, AI, bosses, or combat-level scaling  
-Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`  
-See also: `design/skills.md`, `design/dungeon.md`, `design/art-pipeline.md`
+Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/threat.gd`, `scripts/data/balance_enemies.gd`  
+See also: `design/skills.md`, `design/dungeon.md`, `design/art-pipeline.md`, `design/combat.md`
 
 ## Enemy variety
 
@@ -53,6 +53,14 @@ Floor Guardians (floors 1–4) and the Gate Master (floor 5) MUST have high heal
 - Mage / other non-melee styles: visible charge / cast pose → readable area or projectile. Direction or target locks at the start of the telegraph.
 - All telegraphs respect line-of-sight.
 
+## Combat level and durability
+
+- Each floor spans 20 combat levels (`enemy_cl_per_floor`). Floor 1 is CL 1–20, floor 2 is 21–40, and so on.
+- Enemy CL is walked from spawn travel distance (`Threat.level_at`).
+- Rank multipliers stay shallow so a few levels of advantage do not delete a pack, and a few levels of deficit still hurt.
+- Base HP lives in `balance_enemies.gd` and is about double the pre-retune table. Packs MUST take more than one swing.
+- Clearing every budgeted enemy on floor 1 of a fresh run SHOULD land the player near combat level 17. That budget is room packs + capped ambushes + capped pressure waves.
+
 ## AI behavior
 
 Enemies require line-of-sight to begin attacking or chasing.  
@@ -62,13 +70,17 @@ Exact leash distance, hunt duration after lost LOS, and re-aggro rules are tunab
 Implement clean steering, separation, and stuck-handling appropriate for the orthographic Camera3D live path.  
 Flee event occurs an average of 2 times per floor on a full clear: after the group has taken sufficient damage, the fastest enemy in the encounter flashes a clear “!” overhead, receives a small but noticeable speed boost, and flees to spawn reinforcements. No other telegraph is required beyond the “!”.
 
+Reinforcements, ambushes, and pressure spawns use BFS on the floor graph. They MUST appear in the connected hallway the player is standing in, not in an adjacent hall cut off by a wall.
+
 ## Idle / pressure spawns
 
 If the player remains idle too long outside a safe room, or stops revealing new map area for a tunable duration, additional enemies MUST spawn around the player.
 
 - MUST NOT spawn inside safe rooms (Extraction Gate, ghost shop, puzzle).
 - Idle timer, no-reveal timer, spawn count, and spawn radius are tunable via the secret debug menu.
-- Purpose: the dungeon stays reactive if the player camps or stalls exploration.
+- Wave count is capped per floor (`pressure_waves`, default 3) so the CL 17 XP budget stays static.
+- Ambush and pressure kills grant XP. That is why the cap exists.
+- Purpose: the dungeon stays reactive if the player camps or stalls exploration, without becoming an infinite XP farm.
 
 ## Death presentation
 
@@ -94,6 +106,10 @@ No lingering corpses required.
 
 12 normal types. Named names use PRE / MID / SUF syllable arrays.
 
-Live AI defaults: leash 9, hunt 1.8, reaggro 0.6, aggro 7.5, flee speed ×1.45, idle 24 s, no-reveal 22 s, pressure count 3 / radius 5 / cd 18. Wind-ups: melee 0.42, ranged 0.38, mage 0.55, recover 0.35.
+Default HP (live): slime 48, goblin 64, orc 116, skeleton 72, bat 40, spider 56, archer 52, shaman 60, imp 44, wolf 68, beetle 104, wisp 36.
+
+Live AI defaults: leash 9, hunt 1.8, reaggro 0.6, aggro 7.5, flee speed ×1.45, idle 24 s, no-reveal 22 s, pressure count 3 / radius 5 / cd 18, pressure waves 3. Wind-ups: melee 0.42, ranged 0.38, mage 0.55, recover 0.35.
+
+Room pack 3. Base guards 5. Ambush cap 40, spacing 10, pack 1–2.
 
 Enemy combat level keys: `design/skills.md` and `design/tunables.md`.

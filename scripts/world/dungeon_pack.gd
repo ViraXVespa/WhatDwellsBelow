@@ -69,6 +69,22 @@ static func spawn_reinforcement(host: Node, id: String, from: Vector3, gid: int)
 	return host._add_enemy(id, host._cell_pos(cell), gid, false, "")
 
 
+static func _pressure_cap(host: Node) -> bool:
+	if not host.has_meta("pressure_floor") or int(host.get_meta("pressure_floor")) != App.floor_n:
+		host.set_meta("pressure_floor", App.floor_n)
+		host.set_meta("pressure_waves_used", 0)
+	var used := int(host.get_meta("pressure_waves_used"))
+	var cap := 3
+	if App.bal:
+		cap = maxi(0, int(App.bal.get("pressure_waves")))
+	return used < cap
+
+
+static func _note_pressure_wave(host: Node) -> void:
+	var used := int(host.get_meta("pressure_waves_used"))
+	host.set_meta("pressure_waves_used", used + 1)
+
+
 static func tick_pressure(host: Node, delta: float, grew: bool) -> void:
 	if host.player == null:
 		return
@@ -86,6 +102,8 @@ static func tick_pressure(host: Node, delta: float, grew: bool) -> void:
 		return
 	if host.is_safe_world(host.player.global_position):
 		return
+	if not _pressure_cap(host):
+		return
 	if host.idle_t >= App.bal.idle_timer or host.noreveal_t >= App.bal.noreveal_timer:
 		pressure_spawn(host)
 		host.idle_t = 0.0
@@ -95,6 +113,8 @@ static func tick_pressure(host: Node, delta: float, grew: bool) -> void:
 
 static func pressure_spawn(host: Node) -> int:
 	if host.player and host.is_safe_world(host.player.global_position):
+		return 0
+	if not _pressure_cap(host):
 		return 0
 	var pool: PackedStringArray = Roster.floor_types(App.floor_n)
 	if pool.is_empty():
@@ -111,4 +131,6 @@ static func pressure_spawn(host: Node) -> int:
 		var id := pool[host.floor_rng.randi() % pool.size()]
 		host._add_enemy(id, host._cell_pos(cell), gid, false, "")
 		spawned += 1
+	if spawned > 0:
+		_note_pressure_wave(host)
 	return spawned

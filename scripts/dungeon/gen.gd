@@ -54,13 +54,13 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 	grid.resize(w * h)
 	grid.fill(WALL)
 	var rooms: Array = []
-	var pack: int = clampi(want, 28, 42)
+	var pack: int = want
 	Carve.place_spread_rooms(rng, grid, w, h, rooms, pack, rmin, rmax)
 	if rooms.size() < 6:
 		return {"ok": false, "rooms": rooms}
 	Carve.connect_winding_tree(rng, grid, w, h, rooms)
-	Carve.extra_winding_loops(rng, grid, w, h, rooms, mini(2, loops))
-	Carve.carve_deadend_spurs(rng, grid, w, h, rooms, mini(6, maxi(3, pack / 10)))
+	Carve.extra_winding_loops(rng, grid, w, h, rooms, loops)
+	Carve.carve_deadend_spurs(rng, grid, w, h, rooms, mini(12, maxi(4, pack / 8)))
 	Rooms.assign_kinds(rng, grid, w, h, rooms, bal)
 	var spawn_r: Dictionary = Rooms.find_kind(rooms, "spawn")
 	var boss_r: Dictionary = Rooms.find_kind(rooms, "boss")
@@ -68,7 +68,8 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 		return {"ok": false, "rooms": rooms}
 	if Carve.dist(spawn_r, boss_r) < Rooms.min_boss_sep(w, h):
 		return {"ok": false, "rooms": rooms}
-	var ambushes: Array = Rooms.mark_ambushes(grid, w, h, rooms)
+	var ambushes: Array = Rooms.mark_ambushes(grid, w, h, rooms, bal)
+	var deadends: Array = Rooms.mark_deadends(grid, w, h, rooms)
 	var spawn: Vector2i = Carve.center(spawn_r)
 	var openings: Array = Doors.boss_openings(grid, w, h, boss_r)
 	var door: Vector2i = Doors.boss_door_cell(grid, w, h, boss_r, spawn)
@@ -91,6 +92,7 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 		"openings": openings,
 		"boss": Carve.center(boss_r),
 		"ambushes": ambushes,
+		"deadends": deadends,
 		"bases": Rooms.kind_centers(rooms, "base"),
 		"safe": Rooms.kind_centers(rooms, "extract_gate") + Rooms.kind_centers(rooms, "shop") + Rooms.kind_centers(rooms, "puzzle") + Rooms.kind_centers(rooms, "stash") + Rooms.kind_centers(rooms, "vein"),
 	}
@@ -172,6 +174,7 @@ static func _fallback(floor_n: int, w: int, h: int) -> Dictionary:
 		"openings": openings,
 		"boss": Carve.center(boss_r),
 		"ambushes": [],
+		"deadends": [],
 		"bases": [Carve.center(rooms[1])],
 		"safe": [Carve.center(rooms[2])],
 		"floor": floor_n,

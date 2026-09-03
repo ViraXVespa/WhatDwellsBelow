@@ -1,8 +1,9 @@
 extends Object
 
 ## Enemy combat level from walk-distance to the floor entrance.
-## End-of-floor uses a high percentile of all floor cells so the
-## guardian room is not the unique floor-cap landmark.
+## Each floor spans 20 combat levels: floor 1 is 1–20, floor 2 is 21–40,
+## and so on. End-of-floor uses a high percentile of all floor cells so
+## the guardian room is not the unique floor-cap landmark.
 ##
 ## Rank multipliers compare enemy combat_lv to the player's combat
 ## level (max style). Off-style play shifts the player level toward
@@ -18,14 +19,12 @@ extends Object
 static func per_floor() -> int:
 	if App.bal:
 		return maxi(1, int(App.bal.enemy_cl_per_floor))
-	return 5
+	return 20
 
 
 static func floor_lo(floor_n: int) -> int:
 	var n := maxi(1, floor_n)
-	if n <= 1:
-		return 1
-	return per_floor() * (n - 1)
+	return per_floor() * (n - 1) + 1
 
 
 static func floor_hi(floor_n: int) -> int:
@@ -102,14 +101,14 @@ static func _geom(step_up: float, step_down: float, diff: float) -> float:
 
 ## Enemy damage dealt to the player.
 static func dealt_mult(enemy_lv: int) -> float:
-	return _geom(_bal_f("cl_dealt_up", 1.075), _bal_f("cl_dealt_down", 0.925), rank_diff(enemy_lv))
+	return _geom(_bal_f("cl_dealt_up", 1.03), _bal_f("cl_dealt_down", 0.97), rank_diff(enemy_lv))
 
 
 ## Damage the enemy receives from the player.
 static func received_mult(enemy_lv: int) -> float:
-	return _geom(_bal_f("cl_received_up", 0.925), _bal_f("cl_received_down", 1.075), rank_diff(enemy_lv))
+	return _geom(_bal_f("cl_received_up", 0.97), _bal_f("cl_received_down", 1.03), rank_diff(enemy_lv))
 
 
 ## Kill XP multiplier.
 static func xp_mult(enemy_lv: int) -> float:
-	return _geom(_bal_f("cl_xp_up", 1.1), _bal_f("cl_xp_down", 0.9), rank_diff(enemy_lv))
+	return _geom(_bal_f("cl_xp_up", 1.04), _bal_f("cl_xp_down", 0.97), rank_diff(enemy_lv))

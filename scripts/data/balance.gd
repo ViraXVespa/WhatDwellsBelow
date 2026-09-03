@@ -3,7 +3,9 @@ extends RefCounted
 ## All Phase 2 combat numbers. Mutated by the secret debug menu.
 ## Bump BAL_REV when shipping new defaults that old saves should receive.
 const Schema := preload("res://scripts/data/balance_schema.gd")
-const BAL_REV := 8
+const Enemies := preload("res://scripts/data/balance_enemies.gd")
+const Migrate := preload("res://scripts/data/balance_migrate.gd")
+const BAL_REV := 9
 
 var move_speed := 4.5
 var dash_speed_mult := 2.8
@@ -13,7 +15,7 @@ var special_windup := 0.22
 var special_recovery := 0.35
 var attack_move_mult := 0.45
 
-var axe_damage := 18.0
+var axe_damage := 16.0
 var axe_range := 1.85
 var axe_arc_deg := 110.0
 var axe_rate := 1.7
@@ -51,7 +53,7 @@ var hitstop := 0.055
 var dummy_hp := 80.0
 var dummy_defense := 0.0
 var defense_k := 100.0
-var xp_per_kill := 12.0
+var xp_per_kill := 22.0
 
 var adrenaline_window := 4.5
 var adrenaline_kills := 4
@@ -74,14 +76,26 @@ var trail_life := 0.22
 
 var gen_w := 432
 var gen_h := 432
-var gen_rooms := 36
+var gen_rooms := 64
 var gen_room_min := 5
 var gen_room_max := 9
 var gen_extra_loops := 8
+var hall_w_min := 2
+var hall_w_mode := 3
+var hall_w_max := 4
+var hall_w_interval := 10
+var hall_w_min_pct := 0.15
+var hall_w_mode_pct := 0.60
 var fog_radius := 5
 var max_clerks := 3
 var ghost_shop_chance := 0.33
-var base_guards := 8
+var base_guards := 5
+var room_pack := 3.0
+var ambush_cap := 40
+var ambush_spacing := 10
+var ambush_pack_min := 1
+var ambush_pack_max := 2
+var pressure_waves := 3
 var boss_hp_mult := 8.0
 var cycle_hp := 0.2
 var crystal_min_sep := 56
@@ -89,6 +103,7 @@ var crystal_clear_r := 12
 var crystal_arrive_r := 8
 var crystal_extra_max := 4
 var crystal_place_chance := 0.62
+var crystal_deadend_sep := 18
 
 var player_max_hp := 100.0
 var player_hurt_iframe := 0.35
@@ -114,7 +129,7 @@ var enemy_sep := 0.55
 var enemy_hp_mult := 1.0
 var enemy_dmg_mult := 1.0
 var enemy_speed_mult := 1.0
-var enemy_cl_per_floor := 5.0
+var enemy_cl_per_floor := 20.0
 var enemy_cl_end_pct := 0.86
 var enemy_cl_jitter := 1.0
 var enemy_cl_dmg := 0.072
@@ -123,12 +138,12 @@ var enemy_cl_hp := 0.040
 var enemy_cl_gear_hp := 0.064
 var enemy_cl_def := 1.6
 var enemy_cl_gear_def := 1.2
-var cl_dealt_up := 1.075
-var cl_dealt_down := 0.925
-var cl_received_up := 0.925
-var cl_received_down := 1.075
-var cl_xp_up := 1.1
-var cl_xp_down := 0.9
+var cl_dealt_up := 1.03
+var cl_dealt_down := 0.97
+var cl_received_up := 0.97
+var cl_received_down := 1.03
+var cl_xp_up := 1.04
+var cl_xp_down := 0.97
 var cl_style_weight := 0.5
 var windup_melee := 0.42
 var windup_ranged := 0.38
@@ -137,7 +152,6 @@ var enemy_recover := 0.35
 var enemy_proj_speed := 9.0
 var hop_height := 0.28
 var fly_height := 0.45
-var room_pack := 3.0
 
 var mine_hits := 4
 var mine_time := 2.4
@@ -194,8 +208,8 @@ var xp_gather := 6.0
 var xp_smith := 12.0
 var xp_def_hit := 0.4
 var xp_hp_heal := 0.15
-var xp_kill_hp := 3.0
-var xp_kill_def := 3.0
+var xp_kill_hp := 11.0
+var xp_kill_def := 11.0
 var skill_dmg_weapon := 0.04
 var skill_dmg_style := 0.03
 var skill_special_bonus := 0.02
@@ -265,22 +279,13 @@ var set_iron_3 := 5.0
 var set_iron_4 := 6.0
 var set_iron_5 := 10.0
 
-const ENEMY_IDS: PackedStringArray = [
-	"slime", "goblin", "orc", "skeleton", "bat", "spider",
-	"archer", "shaman", "imp", "wolf", "beetle", "wisp",
-]
 var enemy_stats: Dictionary = {}
 
 
 func schema() -> Array:
 	var rows: Array = Schema.rows()
 	_ensure_enemies()
-	for id in ENEMY_IDS:
-		rows.append(["e_%s_hp" % id, 5.0, 200.0, 1.0])
-		rows.append(["e_%s_dmg" % id, 1.0, 80.0, 1.0])
-		rows.append(["e_%s_spd" % id, 0.4, 8.0, 0.05])
-		rows.append(["e_%s_range" % id, 0.4, 12.0, 0.05])
-		rows.append(["e_%s_def" % id, 0.0, 40.0, 1.0])
+	Enemies.append_schema(rows)
 	return rows
 
 
@@ -289,43 +294,13 @@ func _init() -> void:
 
 
 func _ensure_enemies() -> void:
-	if not enemy_stats.is_empty():
-		return
-	enemy_stats = {
-		"slime": {"hp": 24.0, "dmg": 6.0, "spd": 2.2, "range": 0.95, "def": 2.0},
-		"goblin": {"hp": 32.0, "dmg": 8.0, "spd": 3.15, "range": 1.15, "def": 1.0},
-		"orc": {"hp": 58.0, "dmg": 12.0, "spd": 2.05, "range": 1.35, "def": 8.0},
-		"skeleton": {"hp": 36.0, "dmg": 9.0, "spd": 2.7, "range": 1.2, "def": 3.0},
-		"bat": {"hp": 20.0, "dmg": 7.0, "spd": 4.05, "range": 0.9, "def": 0.0},
-		"spider": {"hp": 28.0, "dmg": 8.0, "spd": 3.25, "range": 1.05, "def": 2.0},
-		"archer": {"hp": 26.0, "dmg": 7.0, "spd": 2.85, "range": 6.2, "def": 1.0},
-		"shaman": {"hp": 30.0, "dmg": 11.0, "spd": 2.35, "range": 3.4, "def": 2.0},
-		"imp": {"hp": 22.0, "dmg": 10.0, "spd": 3.55, "range": 4.2, "def": 0.0},
-		"wolf": {"hp": 34.0, "dmg": 10.0, "spd": 3.85, "range": 1.1, "def": 2.0},
-		"beetle": {"hp": 52.0, "dmg": 9.0, "spd": 1.85, "range": 1.05, "def": 10.0},
-		"wisp": {"hp": 18.0, "dmg": 8.0, "spd": 2.95, "range": 5.4, "def": 0.0},
-	}
-
-
-func _enemy_key(name: String) -> Array:
-	if not name.begins_with("e_"):
-		return []
-	var cut := name.substr(2)
-	var us := cut.rfind("_")
-	if us <= 0:
-		return []
-	return [cut.substr(0, us), cut.substr(us + 1)]
+	Enemies.fill(enemy_stats)
 
 
 func getv(name: String) -> float:
-	var ek := _enemy_key(name)
-	if ek.size() == 2:
-		_ensure_enemies()
-		var id := str(ek[0])
-		var key := str(ek[1])
-		if enemy_stats.has(id) and (enemy_stats[id] as Dictionary).has(key):
-			return float((enemy_stats[id] as Dictionary)[key])
-		return 0.0
+	_ensure_enemies()
+	if name.begins_with("e_"):
+		return Enemies.read_stat(enemy_stats, name)
 	var v: Variant = get(name)
 	if v is bool:
 		return 1.0 if v else 0.0
@@ -335,65 +310,12 @@ func getv(name: String) -> float:
 
 
 func migrate_from(old_rev: int) -> bool:
-	if old_rev >= BAL_REV:
-		return false
-	if old_rev < 2:
-		gen_w = 216
-		gen_h = 216
-		gen_rooms = 36
-		gen_extra_loops = 8
-		mine_nodes = 18
-		wood_nodes = 14
-		break_count = 24
-	if old_rev < 3:
-		xp_double_every = 14.0
-		xp_level = 100.0
-	if old_rev < 4:
-		enemy_cl_per_floor = 20.0
-		enemy_cl_end_pct = 0.86
-		enemy_cl_jitter = 2.0
-		enemy_cl_dmg = 0.018
-		enemy_cl_gear_dmg = 0.012
-		enemy_cl_hp = 0.010
-		enemy_cl_gear_hp = 0.016
-		enemy_cl_def = 0.4
-		enemy_cl_gear_def = 0.3
-	if old_rev < 6:
-		enemy_cl_per_floor = 5.0
-		enemy_cl_jitter = 1.0
-		enemy_cl_dmg = 0.072
-		enemy_cl_gear_dmg = 0.048
-		enemy_cl_hp = 0.040
-		enemy_cl_gear_hp = 0.064
-		enemy_cl_def = 1.6
-		enemy_cl_gear_def = 1.2
-		cl_dealt_up = 1.075
-		cl_dealt_down = 0.925
-		cl_received_up = 0.925
-		cl_received_down = 1.075
-		xp_kill_hp = 3.0
-		xp_kill_def = 3.0
-	if old_rev < 7:
-		gen_w = 432
-		gen_h = 432
-	if old_rev < 8:
-		crystal_min_sep = 56
-		crystal_clear_r = 12
-		crystal_arrive_r = 8
-		crystal_extra_max = 4
-		crystal_place_chance = 0.62
-	return true
+	return Migrate.run(self, old_rev, BAL_REV)
 
 
 func setv(name: String, value: float) -> void:
-	var ek := _enemy_key(name)
-	if ek.size() == 2:
-		_ensure_enemies()
-		var id := str(ek[0])
-		var key := str(ek[1])
-		if not enemy_stats.has(id):
-			enemy_stats[id] = {}
-		(enemy_stats[id] as Dictionary)[key] = value
+	_ensure_enemies()
+	if Enemies.write_stat(enemy_stats, name, value):
 		return
 	var cur: Variant = get(name)
 	if cur is bool:

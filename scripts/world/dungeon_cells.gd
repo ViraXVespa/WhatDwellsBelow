@@ -220,17 +220,34 @@ static func seed_occupied(host: Node) -> void:
 
 
 static func walkable_near(host: Node, center: Vector2i, radius: int, allow_safe: bool) -> Vector2i:
+	var rad := maxi(1, radius)
+	if not is_floor_cell(host, center):
+		return Vector2i(-1, -1)
+	var nbs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	var seen := {}
+	var q: Array[Vector2i] = [center]
+	seen[center] = 0
+	var qi := 0
 	var opts: Array[Vector2i] = []
-	for y in range(center.y - radius, center.y + radius + 1):
-		for x in range(center.x - radius, center.x + radius + 1):
-			var c := Vector2i(x, y)
-			if not is_floor_cell(host, c):
+	while qi < q.size():
+		var c: Vector2i = q[qi]
+		qi += 1
+		var dist: int = int(seen[c])
+		if dist >= rad:
+			continue
+		for d in nbs:
+			var n := Vector2i(c.x + d.x, c.y + d.y)
+			if seen.has(n):
 				continue
-			if not allow_safe and is_safe_cell(host, c):
+			if not is_floor_cell(host, n):
 				continue
-			if absi(x - center.x) + absi(y - center.y) < 2:
+			seen[n] = dist + 1
+			q.append(n)
+			if dist + 1 < 2:
 				continue
-			opts.append(c)
+			if not allow_safe and is_safe_cell(host, n):
+				continue
+			opts.append(n)
 	if opts.is_empty():
 		return Vector2i(-1, -1)
 	return opts[host.floor_rng.randi() % opts.size()]

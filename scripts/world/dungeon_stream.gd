@@ -27,9 +27,9 @@ static func queue_room(host: Node, r: Dictionary, pool: PackedStringArray) -> vo
 		return
 	if pool.is_empty():
 		return
-	var n := mini(2, maxi(1, int(App.bal.room_pack)))
+	var n := maxi(1, int(App.bal.room_pack))
 	if kind == "base":
-		n = mini(3, maxi(2, int(App.bal.base_guards)))
+		n = maxi(2, int(App.bal.base_guards))
 		var chest = SpotS.new()
 		var c := Vector2i(int(r.x) + int(r.w) / 2, int(r.y) + int(r.h) / 2)
 		chest.setup("base_chest", Vector3(float(c.x) + 0.5, 0.0, float(c.y) + 0.5), false)
@@ -92,7 +92,15 @@ static func queue_ambushes(host: Node, pool: PackedStringArray) -> void:
 	if pool.is_empty():
 		return
 	var spots: Array = host.data.get("ambushes", [])
-	var max_spots := mini(12, spots.size())
+	var cap := 40
+	if App.bal:
+		cap = maxi(1, int(App.bal.get("ambush_cap")))
+	var max_spots := mini(cap, spots.size())
+	var lo := 1
+	var hi := 2
+	if App.bal:
+		lo = maxi(1, int(App.bal.get("ambush_pack_min")))
+		hi = maxi(lo, int(App.bal.get("ambush_pack_max")))
 	var placed := 0
 	for si in spots.size():
 		if placed >= max_spots:
@@ -104,7 +112,7 @@ static func queue_ambushes(host: Node, pool: PackedStringArray) -> void:
 			continue
 		if CrystalNet.blocks_spawn(host, center):
 			continue
-		var n: int = host.floor_rng.randi_range(1, 2)
+		var n: int = host.floor_rng.randi_range(lo, hi)
 		var ids := PackedStringArray()
 		for i in n:
 			ids.append(pool[host.floor_rng.randi() % pool.size()])

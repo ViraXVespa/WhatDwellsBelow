@@ -1,9 +1,9 @@
 # Combat
 
 Status: binding design  
-Read when: changing weapons, hit detection, dash, lock, or juice  
-Code: `scripts/combat/combat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `scripts/world/player.gd`  
-See also: `design/skills.md`, `design/tunables.md`, `design/art-pipeline.md`
+Read when: changing weapons, hit detection, dash, lock, juice, or combat-level scaling  
+Code: `scripts/combat/combat.gd`, `threat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `scripts/world/player.gd`  
+See also: `design/skills.md`, `design/tunables.md`, `design/art-pipeline.md`, `design/enemies.md`
 
 ## Weapon system
 
@@ -57,6 +57,16 @@ All player attacks (basic and special) MUST clearly telegraph their range and pr
 
 - Uses a diminishing-returns formula (exact formula tunable).
 - Armor pieces contribute defense and may carry minor secondary stats.
+
+## Combat level and threat
+
+- Each floor spans 20 combat levels: floor 1 is CL 1–20, floor 2 is 21–40, and so on (`enemy_cl_per_floor`).
+- Enemy CL is walked from spawn travel distance across that band (`Threat.level_at`).
+- Rank multipliers are shallow (`cl_dealt_up` 1.03, `cl_dealt_down` 0.97 and the matching received pair). A player a few levels above an enemy MUST NOT one-shot it. A player a few levels below MUST still take real hits.
+- Base enemy HP is about double the pre-retune table so a pack fight lasts more than one swing.
+- Axe basic damage is 16 so the player does not outpace that HP table on floor 1.
+- Clearing every budgeted enemy on floor 1 of a fresh run SHOULD land the player near combat level 17. That budget is rooms + capped ambushes + capped pressure waves. Level-ups MUST feel like they prepared the player for the next stretch of the same floor, not like they deleted it.
+- Ambush and pressure kills grant XP. Wave count is capped per floor (`pressure_waves`, `ambush_cap`) so the CL 17 target stays measurable.
 
 ## Target-lock
 

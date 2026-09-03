@@ -35,10 +35,59 @@ static func dig(grid: PackedByteArray, w: int, h: int, x: int, y: int) -> void:
 	grid[idx(x, y, w)] = FLOOR
 
 
+static func _hall_w_min() -> int:
+	if App.bal:
+		return clampi(int(App.bal.get("hall_w_min")), 1, 4)
+	return 2
+
+
+static func _hall_w_mode() -> int:
+	if App.bal:
+		return clampi(int(App.bal.get("hall_w_mode")), 2, 4)
+	return 3
+
+
+static func _hall_w_max() -> int:
+	if App.bal:
+		return clampi(int(App.bal.get("hall_w_max")), 2, 6)
+	return 4
+
+
+static func _hall_interval() -> int:
+	if App.bal:
+		return maxi(4, int(App.bal.get("hall_w_interval")))
+	return 10
+
+
+static func roll_hall_width(rng: RandomNumberGenerator) -> int:
+	var lo := _hall_w_min()
+	var mid := clampi(_hall_w_mode(), lo, _hall_w_max())
+	var hi := maxi(mid, _hall_w_max())
+	var min_pct := 0.15
+	var mode_pct := 0.60
+	if App.bal:
+		min_pct = clampf(float(App.bal.get("hall_w_min_pct")), 0.0, 1.0)
+		mode_pct = clampf(float(App.bal.get("hall_w_mode_pct")), 0.0, 1.0)
+	var roll := rng.randf()
+	if roll < min_pct:
+		return lo
+	if roll < min_pct + mode_pct:
+		return mid
+	return hi
+
+
+static func dig_span(grid: PackedByteArray, w: int, h: int, x: int, y: int, heading: Vector2i, width: int) -> void:
+	var n := maxi(1, width)
+	if heading.y == 0:
+		for i in n:
+			dig(grid, w, h, x, y + i)
+	else:
+		for i in n:
+			dig(grid, w, h, x + i, y)
+
+
 static func dig_wide(grid: PackedByteArray, w: int, h: int, x: int, y: int) -> void:
-	dig(grid, w, h, x, y)
-	dig(grid, w, h, x + 1, y)
-	dig(grid, w, h, x, y + 1)
+	dig_span(grid, w, h, x, y, Vector2i(1, 0), _hall_w_mode())
 
 
 static func carve_room(grid: PackedByteArray, w: int, h: int, r: Dictionary) -> void:
@@ -131,6 +180,7 @@ static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArra
 	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 	var added := 0
 	var guard := 0
+	var interval := _hall_interval()
 	while added < count and guard < count * 8:
 		guard += 1
 		if rooms.is_empty():
@@ -142,6 +192,8 @@ static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArra
 		var y := start.y
 		var length := rng.randi_range(10, 16)
 		var last := start
+		var width := roll_hall_width(rng)
+		var steps := 0
 		for _s in length:
 			if rng.randf() < 0.18:
 				heading = dirs[rng.randi() % dirs.size()]
@@ -151,7 +203,10 @@ static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArra
 				continue
 			x = nx
 			y = ny
-			dig_wide(grid, w, h, x, y)
+			steps += 1
+			if steps % interval == 0:
+				width = roll_hall_width(rng)
+			dig_span(grid, w, h, x, y, heading, width)
 			last = Vector2i(x, y)
 		if can_place(rooms, last.x, last.y, 3, 3):
 			var kind := "normal"
@@ -170,7 +225,15 @@ static func carve_winding(rng: RandomNumberGenerator, grid: PackedByteArray, w: 
 	var y := a.y
 	var guard := 0
 	var limit := absi(a.x - b.x) + absi(a.y - b.y) + 36
-	dig_wide(grid, w, h, x, y)
+	var heading := Vector2i(1, 0)
+	if absi(b.x - a.x) < absi(b.y - a.y):
+		heading = Vector2i(0, 1 if b.y > a.y else -1)
+	elif b.x != a.x:
+		heading = Vector2i(1 if b.x > a.x else -1, 0)
+	var width := roll_hall_width(rng)
+	var interval := _hall_interval()
+	var steps := 0
+	dig_span(grid, w, h, x, y, heading, width)
 	while (x != b.x or y != b.y) and guard < limit:
 		guard += 1
 		var choices: Array[Vector2i] = []
@@ -182,7 +245,11 @@ static func carve_winding(rng: RandomNumberGenerator, grid: PackedByteArray, w: 
 			var perp: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 			choices.append(perp[rng.randi() % perp.size()])
 		var d: Vector2i = choices[rng.randi() % choices.size()]
+		heading = d
 		x = clampi(x + d.x, 1, w - 3)
 		y = clampi(y + d.y, 1, h - 3)
-		dig_wide(grid, w, h, x, y)
-	dig_wide(grid, w, h, b.x, b.y)
+		steps += 1
+		if steps % interval == 0:
+			width = roll_hall_width(rng)
+		dig_span(grid, w, h, x, y, heading, width)
+	dig_span(grid, w, h, b.x, b.y, heading, width)
