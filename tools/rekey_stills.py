@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 from PIL import Image
@@ -30,33 +31,24 @@ DIRS = (
     "up_right",
 )
 LEFT = {"left", "up_left", "down_left"}
-WORK_MAX = 512
 SMALL = 256
 WALK_PICKS = (8, 12, 16, 20)
 ATK_PICKS = (8, 18, 28, 38)
 
 
 def prep(im: Image.Image) -> Image.Image:
-    """Bible-style 4x NN if the still is small; cap wand cost at 512."""
+    """Bible-style 4x NN if the still is small. Do not shrink before remap/key."""
     im = im.convert("RGBA")
     w, h = im.size
     if min(w, h) < SMALL:
         im = i2v_seeds.scale_nn(im, i2v_seeds.SCALE)
-        w, h = im.size
-    mx = max(w, h)
-    if mx > WORK_MAX:
-        s = WORK_MAX / mx
-        im = im.resize(
-            (max(1, int(round(w * s))), max(1, int(round(h * s)))),
-            Image.Resampling.NEAREST,
-        )
     return im
 
 
 def key_still(src: Path) -> Image.Image:
     raw = prep(Image.open(src))
     remapped, _vis, _info = pr.remap(raw)
-    return sp.key_to_alpha(remapped, spill_flood=True)
+    return sp.key_to_alpha(remapped, spill_flood=False)
 
 
 def fit_square(keyed: Image.Image, canvas: int) -> Image.Image:
@@ -116,6 +108,28 @@ def pack_cycle(folder: str, dest_dir: Path, prefix: str, picks: tuple[int, ...],
         rekey(src, dest_dir / f"{prefix}_{i}.png", canvas)
 
 
+def _rekey_job(src: str, dest: str, canvas: int, wide: bool) -> str:
+    rekey(Path(src), Path(dest), canvas, wide)
+    return dest
+
+
+def _enemy_job(name: str, typ: str) -> str:
+    dest_dir = SPR / "enemies" / typ
+    im = rekey(P4 / name, dest_dir / "idle_down.png", 128)
+    if im is not None:
+        fill_dirs(im, dest_dir, "idle")
+    return typ
+
+
+def _run_pool(jobs: list) -> None:
+    if not jobs:
+        return
+    with ProcessPoolExecutor() as pool:
+        futs = [pool.submit(fn, *args) for fn, args in jobs]
+        for fut in as_completed(futs):
+            fut.result()
+
+
 def main() -> None:
     p4_enemies = {
         "21.jpg": "orc",
@@ -133,11 +147,7 @@ def main() -> None:
         "33.jpg": "beetle",
         "34.jpg": "guardian",
     }
-    for name, typ in p4_enemies.items():
-        dest_dir = SPR / "enemies" / typ
-        im = rekey(P4 / name, dest_dir / "idle_down.png", 128)
-        if im is not None:
-            fill_dirs(im, dest_dir, "idle")
+    _run_pool([(_enemy_job, (name, typ)) for name, typ in p4_enemies.items()])
 
     squares: list[tuple[Path, Path, int]] = [
         (P4 / "15.jpg", SPR / "player" / "male" / "equip_great_axe_down.png", 128),
@@ -191,20 +201,25 @@ def main() -> None:
         (LIVE / "188.jpg", SPR / "player" / "up_left.png", 128),
         (LIVE / "127.jpg", SPR / "player" / "up_right.png", 128),
     ]
-    for src, dest, canvas in squares:
-        rekey(src, dest, canvas)
+    _run_pool([
+        (_rekey_job, (str(src), str(dest), canvas, False))
+        for src, dest, canvas in squares
+    ])
 
     banner = SPR / "props" / "banner.png"
     if banner.exists():
         Image.open(banner).save(SPR / "props" / "welcome_banner.png")
         print("copied welcome_banner", flush=True)
 
-    for name, dest, width in (
+    wides = (
         ("111.jpg", SPR / "buildings" / "guild.png", 320),
         ("119.jpg", SPR / "buildings" / "stall.png", 320),
         ("112.jpg", SPR / "buildings" / "guild_reception.png", 360),
-    ):
-        rekey(LIVE / name, dest, width, wide=True)
+    )
+    _run_pool([
+        (_rekey_job, (str(LIVE / name), str(dest), width, True))
+        for name, dest, width in wides
+    ])
 
     axe_right = SPR / "player" / "male" / "equip_great_axe_right.png"
     if axe_right.exists():
@@ -239,19 +254,40 @@ def main() -> None:
             "strike": {"down": "148.jpg", "left": "183.jpg", "right": "182.jpg", "up": "186.jpg"},
         },
     }
+    combat_jobs = []
     for role, poses in combat.items():
         folder = SPR / "enemies" / role
         for pose, facings in poses.items():
             for facing, jpg in facings.items():
-                rekey(LIVE / jpg, folder / f"{pose}_{facing}.png", 128)
+                combat_jobs.append((
+                    _rekey_job,
+                    (str(LIVE / jpg), str(folder / f"{pose}_{facing}.png"), 128, False),
+                ))
+    _run_pool(combat_jobs)
+    for role, poses in combat.items():
+        folder = SPR / "enemies" / role
+        for pose in poses:
             fill_diags(folder, pose)
+        cycle_jobs = []
         for facing in ("down", "left", "right", "up"):
-            pack_cycle(f"{role}_walk_{facing}", folder, f"walk_{facing}", WALK_PICKS, 128)
+            for i, fi in enumerate(WALK_PICKS):
+                src = FRAMES / f"{role}_walk_{facing}" / f"f{fi:03d}.png"
+                dest = folder / f"walk_{facing}_{i}.png"
+                cycle_jobs.append((_rekey_job, (str(src), str(dest), 128, False)))
+        _run_pool(cycle_jobs)
 
     player = SPR / "player"
+    player_jobs = []
     for facing in DIRS:
-        pack_cycle(f"player_walk_{facing}", player, f"walk_{facing}", WALK_PICKS, 128)
-        pack_cycle(f"player_attack_{facing}", player, f"attack_{facing}", ATK_PICKS, 128)
+        for i, fi in enumerate(WALK_PICKS):
+            src = FRAMES / f"player_walk_{facing}" / f"f{fi:03d}.png"
+            dest = player / f"walk_{facing}_{i}.png"
+            player_jobs.append((_rekey_job, (str(src), str(dest), 128, False)))
+        for i, fi in enumerate(ATK_PICKS):
+            src = FRAMES / f"player_attack_{facing}" / f"f{fi:03d}.png"
+            dest = player / f"attack_{facing}_{i}.png"
+            player_jobs.append((_rekey_job, (str(src), str(dest), 128, False)))
+    _run_pool(player_jobs)
 
     print("rekey stills done", flush=True)
 

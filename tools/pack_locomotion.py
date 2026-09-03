@@ -1,10 +1,12 @@
 """Pack idle stills + idle_to_walk / walk / walk_to_idle from I2V clips."""
 from __future__ import annotations
 
+import subprocess
 import sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
-import cv2
+import imageio_ffmpeg
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -13,6 +15,7 @@ import i2v_seeds  # noqa: E402
 import plate_remap as pr  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
 
+FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 FINAL = ROOT / "_src" / "walk_final"
 OUT = ROOT / "assets" / "sprites" / "player"
 RAW = ROOT / "_src" / "walk_harvest"
@@ -26,41 +29,42 @@ STOP_N = 3
 KEYS = list(i2v_seeds.BODY_CELLS)
 COMPARE_SIZE = (48, 72)
 IDLE_FRAC = 0.18
-KEY_MAX = 320
+KEYED_CAP = 512
 
 
 def extract(video: Path, dest: Path, fps: int = 8) -> list[Path]:
+    """Full-size RGB PNGs. Nearest chroma upsample; no pre-key shrink."""
     dest.mkdir(parents=True, exist_ok=True)
-    existing = sorted(dest.glob("f*.png"))
-    if existing:
-        return existing
-    cap = cv2.VideoCapture(str(video))
-    src_fps = cap.get(cv2.CAP_PROP_FPS) or 24.0
-    step = max(1, int(round(src_fps / fps)))
-    i = saved = 0
-    paths: list[Path] = []
-    while True:
-        ok, frame = cap.read()
-        if not ok:
-            break
-        if i % step == 0:
-            h, w = frame.shape[:2]
-            m = max(w, h)
-            if m > KEY_MAX:
-                s = KEY_MAX / m
-                frame = cv2.resize(
-                    frame,
-                    (max(1, int(w * s)), max(1, int(h * s))),
-                    interpolation=cv2.INTER_NEAREST,
-                )
-            p = dest / f"f{saved:03d}.png"
-            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            Image.fromarray(rgb).save(p)
-            paths.append(p)
-            saved += 1
-        i += 1
-    cap.release()
-    return paths
+    for old in dest.glob("f*.png"):
+        old.unlink()
+    cmd = [
+        FFMPEG,
+        "-y",
+        "-an",
+        "-sws_flags",
+        "neighbor+accurate_rnd+full_chroma_int",
+        "-i",
+        str(video),
+        "-vf",
+        f"fps={fps},format=rgb24",
+        "-compression_level",
+        "1",
+        str(dest / "f%03d.png"),
+    ]
+    subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return sorted(dest.glob("f*.png"))
+
+
+def _shrink_keyed(im: Image.Image, cap: int = KEYED_CAP) -> Image.Image:
+    w, h = im.size
+    m = max(w, h)
+    if m <= cap:
+        return im
+    s = cap / m
+    return im.resize(
+        (max(1, int(w * s)), max(1, int(h * s))),
+        Image.Resampling.NEAREST,
+    )
 
 
 def bible_cell(gender: str, facing: str) -> Image.Image:
@@ -71,7 +75,7 @@ def bible_cell(gender: str, facing: str) -> Image.Image:
 
 def _stamp(im: Image.Image, size: tuple[int, int] = COMPARE_SIZE) -> Image.Image:
     """Plate-ignored figure stamp for idle compare. Not a shipping matte."""
-    im = im.convert("RGBA")
+    im = im.convert("RGBA").resize(size, Image.Resampling.NEAREST)
     px = im.load()
     w, h = im.size
     out = Image.new("RGBA", (w, h), (0, 0, 0, 0))
@@ -92,7 +96,7 @@ def _stamp(im: Image.Image, size: tuple[int, int] = COMPARE_SIZE) -> Image.Image
     scale = min(size[0] / cw, size[1] / ch)
     nw = max(1, int(cw * scale))
     nh = max(1, int(ch * scale))
-    rsz = crop.resize((nw, nh), Image.Resampling.BILINEAR)
+    rsz = crop.resize((nw, nh), Image.Resampling.NEAREST)
     canvas = Image.new("RGB", size, (0, 0, 0))
     canvas.paste(rsz, ((size[0] - nw) // 2, size[1] - nh))
     return canvas
@@ -106,8 +110,8 @@ def _mad(a: Image.Image, b: Image.Image) -> float:
 
 def _smooth(vals: list[float], radius: int = 2) -> list[float]:
     out: list[float] = []
-    for i in range(len(vals)):
-        w = vals[max(0, i - radius) : i + radius + 1]
+    for y in range(len(vals)):
+        w = vals[max(0, y - radius) : y + radius + 1]
         out.append(sum(w) / len(w))
     return out
 
@@ -140,6 +144,15 @@ def _best_period(stamps: list[Image.Image], lo: int = 6, hi: int = 20) -> int:
             best_c = cost
             best_p = per
     return best_p
+
+
+def _split_time(paths: list[Path]) -> tuple[list[Path], list[Path], list[Path]]:
+    n = len(paths)
+    if n < START_N + CYCLE_N + STOP_N:
+        return _pad(paths[:START_N], START_N), pick(paths, CYCLE_N), _pad(paths[-STOP_N:], STOP_N)
+    a = START_N
+    b = n - STOP_N
+    return _pad(paths[:a], START_N), pick(paths[a:b], CYCLE_N), _pad(paths[b:], STOP_N)
 
 
 def split_phases(paths: list[Path], ref: Image.Image) -> tuple[list[Path], list[Path], list[Path]]:
@@ -197,32 +210,23 @@ def split_phases(paths: list[Path], ref: Image.Image) -> tuple[list[Path], list[
     return start, mid, stop
 
 
-def _split_time(paths: list[Path]) -> tuple[list[Path], list[Path], list[Path]]:
-    n = len(paths)
-    if n < START_N + CYCLE_N + STOP_N:
-        return _pad(paths[:START_N], START_N), pick(paths, CYCLE_N), _pad(paths[-STOP_N:], STOP_N)
-    a = START_N
-    b = n - STOP_N
-    return _pad(paths[:a], START_N), pick(paths[a:b], CYCLE_N), _pad(paths[b:], STOP_N)
-
-
-def key_fit(im: Image.Image) -> Image.Image:
-    remapped, _vis, _info = pr.remap(im.convert("RGBA"))
-    keyed = sp.key_to_alpha(remapped, spill_flood=False)
-    return sp.fit_canvas(keyed, key=False)
-
-
-def clean(src: Path) -> Image.Image:
-    # I2V chroma pad (PAD_FRAC) is plate; keyed bbox is the figure, then 128-fit.
-    return key_fit(Image.open(src))
-
-
 def pick(paths: list[Path], n: int) -> list[Path]:
     if not paths:
         return []
     if len(paths) <= n:
         return list(paths)
     return [paths[int(round(i * (len(paths) - 1) / (n - 1)))] for i in range(n)]
+
+
+def key_fit(im: Image.Image) -> Image.Image:
+    remapped, _vis, _info = pr.remap(im.convert("RGBA"))
+    keyed = sp.key_to_alpha(remapped, spill_flood=False)
+    return sp.fit_canvas(_shrink_keyed(keyed), key=False)
+
+
+def clean(src: Path) -> Image.Image:
+    # I2V chroma pad (PAD_FRAC) is plate; keyed bbox is the figure, then 128-fit.
+    return key_fit(Image.open(src))
 
 
 def write_seq(frames: list[Image.Image], dest: Path, prefix: str) -> None:
@@ -245,18 +249,20 @@ def pack_idle(gender: str) -> None:
         print("idle", gender, k)
 
 
-def pack_clip(gender: str, facing: str, video: Path) -> None:
+def pack_clip(gender: str, facing: str, video: str) -> str:
+    vid = Path(video)
     raw_dir = RAW / f"{gender}_{facing}"
-    paths = extract(video, raw_dir)
+    paths = extract(vid, raw_dir)
     start_p, mid_p, stop_p = split_phases(paths, bible_cell(gender, facing))
     dest = OUT / gender
     write_seq([clean(p) for p in start_p], dest, f"idle_to_walk_{facing}")
     write_seq([clean(p) for p in mid_p], dest, f"walk_{facing}")
     write_seq([clean(p) for p in stop_p], dest, f"walk_to_idle_{facing}")
-    print("packed", gender, facing, "frames", len(paths))
+    return f"packed {gender} {facing} frames {len(paths)}"
 
 
 def main() -> None:
+    jobs: list[tuple[str, str, str]] = []
     for gender in ("male", "female"):
         pack_idle(gender)
         for facing in KEYS:
@@ -264,7 +270,13 @@ def main() -> None:
             if not vid.exists():
                 print("missing", vid)
                 continue
-            pack_clip(gender, facing, vid)
+            jobs.append((gender, facing, str(vid)))
+    if not jobs:
+        return
+    with ProcessPoolExecutor() as pool:
+        futs = [pool.submit(pack_clip, g, f, v) for g, f, v in jobs]
+        for fut in as_completed(futs):
+            print(fut.result())
 
 
 if __name__ == "__main__":

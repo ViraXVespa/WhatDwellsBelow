@@ -19,18 +19,18 @@ from collections import deque
 from math import sqrt
 from pathlib import Path
 
+import numpy as np
 from PIL import Image
 
 KEY = (255, 0, 255)
 KEY_HEX = "#FF00FF"
 TIGHT_DIST = 18.0
 POCKET_FRAC = 0.07
+_KEY_V = np.array(KEY, dtype=np.float32)
 
 
 def _dist(a: tuple[int, int, int], b: tuple[int, int, int]) -> float:
-    return sqrt(
-        (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2
-    )
+    return sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2)
 
 
 def _hex(rgb: tuple[int, int, int]) -> str:
@@ -49,6 +49,12 @@ def _neighbors8(x: int, y: int, w: int, h: int):
             nx, ny = x + dx, y + dy
             if 0 <= nx < w and 0 <= ny < h:
                 yield nx, ny
+
+
+def _rgb_dist32(rgb: np.ndarray, chroma: tuple[int, int, int] | np.ndarray) -> np.ndarray:
+    # int16 overflows on 255^2; square in int32.
+    d = rgb.astype(np.int32, copy=False) - np.asarray(chroma, dtype=np.int32)
+    return np.sqrt((d * d).sum(axis=-1).astype(np.float32))
 
 
 def _fg_alpha(p: tuple[int, int, int], key: tuple[int, int, int]) -> float:
@@ -77,6 +83,28 @@ def plate_amount(p: tuple[int, int, int], chroma: tuple[int, int, int]) -> float
     if a > 1.0:
         return 1.0
     return a
+
+
+def _fg_alpha_np(rgb: np.ndarray, key: tuple[int, int, int]) -> np.ndarray:
+    p = rgb.astype(np.float32) / 255.0
+    k = np.array(key, dtype=np.float32) / 255.0
+    alpha = np.zeros(rgb.shape[:2], dtype=np.float32)
+    for i in range(3):
+        pv = p[..., i]
+        kv = float(k[i])
+        ch = np.zeros_like(pv)
+        if kv < 0.999:
+            hi = pv > kv
+            ch[hi] = (pv[hi] - kv) / (1.0 - kv)
+        if kv > 0.001:
+            lo = pv < kv
+            ch[lo] = (kv - pv[lo]) / kv
+        alpha = np.maximum(alpha, ch)
+    return alpha
+
+
+def _plate_amount_np(rgb: np.ndarray, chroma: tuple[int, int, int]) -> np.ndarray:
+    return np.clip(1.0 - _fg_alpha_np(rgb, chroma), 0.0, 1.0)
 
 
 def sample_start_chroma(im: Image.Image) -> tuple[int, int, int]:
@@ -123,19 +151,10 @@ def sample_start_chroma(im: Image.Image) -> tuple[int, int, int]:
 
 
 def chroma_distances(im: Image.Image, chroma: tuple[int, int, int]) -> list[float]:
-    im = im.convert("RGBA")
-    w, h = im.size
-    px = im.load()
-    out = [0.0] * (w * h)
-    for y in range(h):
-        row = y * w
-        for x in range(w):
-            r, g, b, a = px[x, y]
-            if a < 8:
-                out[row + x] = 0.0
-            else:
-                out[row + x] = _dist((r, g, b), chroma)
-    return out
+    arr = np.asarray(im.convert("RGBA"))
+    d = _rgb_dist32(arr[:, :, :3], chroma)
+    d[arr[:, :, 3] < 8] = 0.0
+    return d.ravel().tolist()
 
 
 def wand_plate(
@@ -145,45 +164,46 @@ def wand_plate(
     min_amount: float,
 ) -> list[int]:
     """8-connected wand from the border. 1 = plate, 0 = figure."""
-    im = im.convert("RGBA")
-    w, h = im.size
-    px = im.load()
-    n = w * h
-    seen = [False] * n
-    mask = [0] * n
-    q: deque[int] = deque()
+    arr = np.asarray(im.convert("RGBA"))
+    h, w = arr.shape[:2]
+    rgb = arr[:, :, :3]
+    a = arr[:, :, 3]
+    d = _rgb_dist32(rgb, chroma)
+    amt = _plate_amount_np(rgb, chroma)
+    accept = (a < 8) | (d <= wand_dist) | (amt >= min_amount)
+    mask = np.zeros((h, w), dtype=np.uint8)
+    seen = np.zeros((h, w), dtype=np.uint8)
+    q: deque[tuple[int, int]] = deque()
 
-    def accept(i: int) -> bool:
-        x = i % w
-        y = i // w
-        r, g, b, a = px[x, y]
-        if a < 8:
-            return True
-        rgb = (r, g, b)
-        if _dist(rgb, chroma) <= wand_dist:
-            return True
-        return plate_amount(rgb, chroma) >= min_amount
+    def seed(x: int, y: int) -> None:
+        if seen[y, x]:
+            return
+        seen[y, x] = 1
+        if accept[y, x]:
+            q.append((x, y))
 
     for x in range(w):
-        for y in (0, h - 1):
-            q.append(y * w + x)
+        seed(x, 0)
+        seed(x, h - 1)
     for y in range(h):
-        for x in (0, w - 1):
-            q.append(y * w + x)
+        seed(0, y)
+        seed(w - 1, y)
 
     while q:
-        i = q.popleft()
-        if seen[i]:
-            continue
-        seen[i] = True
-        if not accept(i):
-            continue
-        mask[i] = 1
-        x = i % w
-        y = i // w
-        for nx, ny in _neighbors8(x, y, w, h):
-            q.append(ny * w + nx)
-    return mask
+        x, y = q.popleft()
+        mask[y, x] = 1
+        x0 = 0 if x == 0 else x - 1
+        x1 = w if x + 2 > w else x + 2
+        y0 = 0 if y == 0 else y - 1
+        y1 = h if y + 2 > h else y + 2
+        for ny in range(y0, y1):
+            for nx in range(x0, x1):
+                if seen[ny, nx]:
+                    continue
+                seen[ny, nx] = 1
+                if accept[ny, nx]:
+                    q.append((nx, ny))
+    return mask.ravel().tolist()
 
 
 def fill_pockets(
@@ -235,29 +255,21 @@ def fill_pockets(
 
 def edge_band(mask: list[int], w: int, h: int, radius: int) -> list[int]:
     """Pixels within radius of the plate that are not themselves plate."""
-    band = [0] * (w * h)
     if radius <= 0:
-        return band
-    plate = [i for i, v in enumerate(mask) if v]
-    r2 = radius * radius
-    for i in plate:
-        x = i % w
-        y = i // w
-        x0 = 0 if x < radius else x - radius
-        x1 = w if x + radius + 1 > w else x + radius + 1
-        y0 = 0 if y < radius else y - radius
-        y1 = h if y + radius + 1 > h else y + radius + 1
-        for yy in range(y0, y1):
-            dy = yy - y
-            row = yy * w
-            for xx in range(x0, x1):
-                dx = xx - x
-                j = row + xx
-                if mask[j]:
+        return [0] * (w * h)
+    plate = np.asarray(mask, dtype=np.uint8).reshape(h, w) == 1
+    dil = plate
+    for _ in range(radius):
+        pad = np.pad(dil, 1, mode="constant", constant_values=False)
+        nxt = dil.copy()
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                if dx == 0 and dy == 0:
                     continue
-                if dx * dx + dy * dy <= r2:
-                    band[j] = 1
-    return band
+                nxt |= pad[1 + dy : 1 + dy + h, 1 + dx : 1 + dx + w]
+        dil = nxt
+    band = dil & ~plate
+    return band.astype(np.uint8).ravel().tolist()
 
 
 def remap_pixel(
@@ -280,6 +292,14 @@ def remap_pixel(
     )
 
 
+def _remap_np(rgb: np.ndarray, chroma: tuple[int, int, int], amount: np.ndarray) -> np.ndarray:
+    out = rgb.astype(np.float32)
+    delta = _KEY_V - np.array(chroma, dtype=np.float32)
+    amt = amount[..., None]
+    out = out + amt * delta
+    return np.clip(np.rint(out), 0, 255).astype(np.uint8)
+
+
 def remap(
     im: Image.Image,
     wand_dist: float = 48.0,
@@ -289,57 +309,47 @@ def remap(
     pocket_frac: float = POCKET_FRAC,
 ) -> tuple[Image.Image, Image.Image, dict]:
     src = im.convert("RGBA")
-    w, h = src.size
-    px = src.load()
+    arr = np.array(src, dtype=np.uint8, copy=True)
+    h, w = arr.shape[:2]
     chroma = sample_start_chroma(src)
     mask = wand_plate(src, chroma, wand_dist, min_amount)
     distances = chroma_distances(src, chroma)
-    for i, d in enumerate(distances):
-        if not mask[i] and d <= TIGHT_DIST:
-            mask[i] = 1
+    dist_a = np.asarray(distances, dtype=np.float32)
+    mask_a = np.asarray(mask, dtype=np.uint8)
+    mask_a[(mask_a == 0) & (dist_a <= TIGHT_DIST)] = 1
+    mask = mask_a.tolist()
     pockets = fill_pockets(mask, distances, w, h, wand_dist, pocket_frac)
     band = edge_band(mask, w, h, edge)
 
-    out = src.copy()
-    opx = out.load()
-    vis = Image.new("RGBA", (w, h), (0, 0, 0, 255))
-    vpx = vis.load()
+    mask2 = np.asarray(mask, dtype=np.uint8).reshape(h, w) == 1
+    band2 = np.asarray(band, dtype=np.uint8).reshape(h, w) == 1
+    rgb = arr[:, :, :3]
+    amt = _plate_amount_np(rgb, chroma)
+    plate_amt = amt.copy()
+    plate_amt[amt < 0.35] = 1.0
+    plate_amt = np.maximum(plate_amt, 0.85)
+    arr[mask2, :3] = _remap_np(rgb, chroma, plate_amt)[mask2]
 
-    plate_n = 0
-    band_n = 0
-    for y in range(h):
-        row = y * w
-        for x in range(w):
-            r, g, b, a = px[x, y]
-            i = row + x
-            rgb = (r, g, b)
-            if mask[i]:
-                amt = plate_amount(rgb, chroma)
-                if amt < 0.35:
-                    amt = 1.0
-                opx[x, y] = (*remap_pixel(rgb, chroma, max(amt, 0.85)), a)
-                vpx[x, y] = (255, 0, 255, 255)
-                plate_n += 1
-                continue
-            if band[i]:
-                amt = plate_amount(rgb, chroma)
-                if amt >= edge_min:
-                    opx[x, y] = (*remap_pixel(rgb, chroma, amt), a)
-                    t = _clamp(40 + amt * 215)
-                    vpx[x, y] = (255, t, 0, 255)
-                    band_n += 1
-                else:
-                    vpx[x, y] = (0, 0, 0, 255)
-                continue
-            vpx[x, y] = (0, 0, 0, 255)
+    band_hit = band2 & (amt >= edge_min)
+    arr[band_hit, :3] = _remap_np(rgb, chroma, amt)[band_hit]
+
+    vis = np.zeros((h, w, 4), dtype=np.uint8)
+    vis[:, :, 3] = 255
+    vis[mask2] = (255, 0, 255, 255)
+    if band_hit.any():
+        t = np.clip(np.rint(40.0 + amt * 215.0), 0, 255).astype(np.uint8)
+        vis[band_hit, 0] = 255
+        vis[band_hit, 1] = t[band_hit]
+        vis[band_hit, 2] = 0
+        vis[band_hit, 3] = 255
 
     info = {
         "start_chroma": _hex(chroma),
         "start_rgb": list(chroma),
         "target": KEY_HEX,
         "size": [w, h],
-        "plate_pixels": plate_n,
-        "bleed_pixels": band_n,
+        "plate_pixels": int(mask2.sum()),
+        "bleed_pixels": int(band_hit.sum()),
         "pocket_pixels": pockets,
         "wand_dist": wand_dist,
         "min_amount": min_amount,
@@ -348,7 +358,7 @@ def remap(
         "pocket_frac": pocket_frac,
         "tight_dist": TIGHT_DIST,
     }
-    return out, vis, info
+    return Image.fromarray(arr, "RGBA"), Image.fromarray(vis, "RGBA"), info
 
 
 def main() -> None:

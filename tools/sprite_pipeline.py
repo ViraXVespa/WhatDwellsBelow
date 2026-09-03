@@ -6,6 +6,7 @@ import math
 from collections import deque
 from pathlib import Path
 
+import numpy as np
 from PIL import Image
 
 MAGENTA = (255, 0, 255, 255)
@@ -27,6 +28,8 @@ SPILL_HUE_WIDTH = 26.0
 SPILL_SAT_MIN = 0.20
 ALPHA_SNAP_LOW = 10
 ALPHA_SNAP_HIGH = 242
+MATTE_CUT = 128
+_KEY_V = np.array(KEY_RGB, dtype=np.int16)
 
 
 def _dist(a: tuple[int, int, int], b: tuple[int, int, int]) -> float:
@@ -65,25 +68,13 @@ def _neighbors8(x: int, y: int, w: int, h: int):
                 yield nx, ny
 
 
-def sample_chroma(im: Image.Image) -> tuple[int, int, int]:
-    """Border-sampled key colour. Prefers samples near #FF00FF."""
-    px = im.load()
-    w, h = im.size
-    pts: list[tuple[int, int, int]] = []
-    step_x = max(1, w // 16)
-    step_y = max(1, h // 16)
-    for x in range(0, w, step_x):
-        pts.append(px[x, 0][:3])
-        pts.append(px[x, h - 1][:3])
-    for y in range(0, h, step_y):
-        pts.append(px[0, y][:3])
-        pts.append(px[w - 1, y][:3])
-    if not pts:
-        return KEY_RGB
-    scored = sorted((_dist(p, KEY_RGB), p) for p in pts)
-    take = scored[: max(4, len(scored) // 3)]
-    n = len(take)
-    return tuple(int(sum(s[1][i] for s in take) / n) for i in range(3))
+def _as_rgba(im: Image.Image) -> np.ndarray:
+    return np.array(im.convert("RGBA"), dtype=np.uint8, copy=True)
+
+
+def _rgb_dist(rgb: np.ndarray, key: np.ndarray) -> np.ndarray:
+    d = rgb.astype(np.int16, copy=False) - key
+    return np.sqrt((d.astype(np.float32) ** 2).sum(axis=-1))
 
 
 def pixel_key_dist(rgb: tuple[int, int, int], bg: tuple[int, int, int]) -> float:
@@ -118,19 +109,68 @@ def _is_spill(r: int, g: int, b: int, bg: tuple[int, int, int]) -> bool:
     return False
 
 
-def _distances(im: Image.Image, bg: tuple[int, int, int]) -> list[float]:
+def sample_chroma(im: Image.Image) -> tuple[int, int, int]:
+    """Border-sampled key colour. Prefers samples near #FF00FF."""
     px = im.load()
     w, h = im.size
-    out = [WAND_DIST + 1.0] * (w * h)
-    for y in range(h):
-        row = y * w
-        for x in range(w):
-            r, g, b, a = px[x, y]
-            if a == 0:
-                out[row + x] = 0.0
-            else:
-                out[row + x] = pixel_key_dist((r, g, b), bg)
-    return out
+    pts: list[tuple[int, int, int]] = []
+    step_x = max(1, w // 16)
+    step_y = max(1, h // 16)
+    for x in range(0, w, step_x):
+        pts.append(px[x, 0][:3])
+        pts.append(px[x, h - 1][:3])
+    for y in range(0, h, step_y):
+        pts.append(px[0, y][:3])
+        pts.append(px[w - 1, y][:3])
+    if not pts:
+        return KEY_RGB
+    scored = sorted((_dist(p, KEY_RGB), p) for p in pts)
+    take = scored[: max(4, len(scored) // 3)]
+    n = len(take)
+    return tuple(int(sum(s[1][i] for s in take) / n) for i in range(3))
+
+
+def _distance_map(arr: np.ndarray, bg: tuple[int, int, int]) -> np.ndarray:
+    rgb = arr[:, :, :3]
+    d = np.minimum(_rgb_dist(rgb, _KEY_V), _rgb_dist(rgb, np.array(bg, dtype=np.int16)))
+    d[arr[:, :, 3] == 0] = 0.0
+    return d
+
+
+def _distances(im: Image.Image, bg: tuple[int, int, int]) -> list[float]:
+    return _distance_map(_as_rgba(im), bg).ravel().tolist()
+
+
+def _hsv_np(rgb: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    p = rgb.astype(np.float32) / 255.0
+    mx = p.max(axis=-1)
+    mn = p.min(axis=-1)
+    d = mx - mn
+    h = np.zeros_like(mx)
+    r, g, b = p[..., 0], p[..., 1], p[..., 2]
+    mask = d > 0
+    rmax = mask & (mx == r)
+    gmax = mask & (mx == g)
+    bmax = mask & (mx == b)
+    h[rmax] = (60.0 * ((g[rmax] - b[rmax]) / d[rmax]) + 360.0) % 360.0
+    h[gmax] = (60.0 * ((b[gmax] - r[gmax]) / d[gmax]) + 120.0) % 360.0
+    h[bmax] = (60.0 * ((r[bmax] - g[bmax]) / d[bmax]) + 240.0) % 360.0
+    s = np.zeros_like(mx)
+    nz = mx > 0
+    s[nz] = d[nz] / mx[nz]
+    return h, s, mx
+
+
+def _spill_map(arr: np.ndarray, bg: tuple[int, int, int]) -> np.ndarray:
+    rgb = arr[:, :, :3]
+    d = np.minimum(_rgb_dist(rgb, _KEY_V), _rgb_dist(rgb, np.array(bg, dtype=np.int16)))
+    inv = 255 - rgb.astype(np.int16)
+    excess = inv[:, :, 1] - np.maximum(inv[:, :, 0], inv[:, :, 2])
+    h, s, v = _hsv_np(rgb)
+    hd = np.abs(h - SPILL_HUE) % 360.0
+    hd = np.minimum(hd, 360.0 - hd)
+    hue_hit = (s >= SPILL_SAT_MIN) & (v >= 0.06) & (hd <= SPILL_HUE_WIDTH)
+    return (d <= WAND_DIST) | (excess >= SPILL_GREEN_EXCESS) | hue_hit
 
 
 def _fill_pockets(mask: bytearray, distances: list[float], w: int, h: int) -> bytearray:
@@ -172,29 +212,22 @@ def wand_mask(
     spill_flood: bool = True,
 ) -> bytearray:
     """8-connected wand from the border, including dark magenta spill."""
-    px = im.load()
-    w, h = im.size
-    mask = bytearray(w * h)
-    seen = bytearray(w * h)
+    arr = _as_rgba(im)
+    h, w = arr.shape[:2]
+    dist2d = np.asarray(distances, dtype=np.float32).reshape(h, w)
+    accept = dist2d <= WAND_DIST
+    accept |= arr[:, :, 3] == 0
+    if spill_flood:
+        accept |= _spill_map(arr, bg)
+    mask2d = np.zeros((h, w), dtype=np.uint8)
+    seen = np.zeros((h, w), dtype=np.uint8)
     q: deque[tuple[int, int]] = deque()
 
-    def accept(x: int, y: int) -> bool:
-        i = y * w + x
-        if distances[i] <= WAND_DIST:
-            return True
-        r, g, b, a = px[x, y]
-        if a == 0:
-            return True
-        if spill_flood:
-            return _is_spill(r, g, b, bg)
-        return False
-
     def seed(x: int, y: int) -> None:
-        i = y * w + x
-        if seen[i]:
+        if seen[y, x]:
             return
-        seen[i] = 1
-        if accept(x, y):
+        seen[y, x] = 1
+        if accept[y, x]:
             q.append((x, y))
 
     for x in range(w):
@@ -206,19 +239,21 @@ def wand_mask(
 
     while q:
         x, y = q.popleft()
-        i = y * w + x
-        mask[i] = 1
-        for nx, ny in _neighbors8(x, y, w, h):
-            ni = ny * w + nx
-            if seen[ni]:
-                continue
-            seen[ni] = 1
-            if accept(nx, ny):
-                q.append((nx, ny))
+        mask2d[y, x] = 1
+        x0 = 0 if x == 0 else x - 1
+        x1 = w if x + 2 > w else x + 2
+        y0 = 0 if y == 0 else y - 1
+        y1 = h if y + 2 > h else y + 2
+        for ny in range(y0, y1):
+            for nx in range(x0, x1):
+                if seen[ny, nx]:
+                    continue
+                seen[ny, nx] = 1
+                if accept[ny, nx]:
+                    q.append((nx, ny))
 
-    for i, d in enumerate(distances):
-        if not mask[i] and d <= TIGHT_DIST:
-            mask[i] = 1
+    mask2d[dist2d <= TIGHT_DIST] = 1
+    mask = bytearray(mask2d.ravel().tolist())
     return _fill_pockets(mask, distances, w, h)
 
 
@@ -265,41 +300,91 @@ def color_to_alpha_via_green(r: int, g: int, b: int, a: int) -> tuple[int, int, 
     return (255 - out[0], 255 - out[1], 255 - out[2], out[3])
 
 
+def _c2a_np(rgb: np.ndarray, a: np.ndarray, key: tuple[int, int, int]) -> tuple[np.ndarray, np.ndarray]:
+    p = rgb.astype(np.float32) / 255.0
+    k = np.array(key, dtype=np.float32) / 255.0
+    alpha = np.zeros(a.shape, dtype=np.float32)
+    for i in range(3):
+        pv = p[..., i]
+        kv = float(k[i])
+        ch = np.zeros_like(pv)
+        if kv < 0.999:
+            hi = pv > kv
+            ch[hi] = (pv[hi] - kv) / (1.0 - kv)
+        if kv > 0.001:
+            lo = pv < kv
+            ch[lo] = (kv - pv[lo]) / kv
+        alpha = np.maximum(alpha, ch)
+    empty = alpha < 0.01
+    safe = np.maximum(alpha, 1e-6)[..., None]
+    recon = (p - k) / safe + k
+    recon = np.clip(np.rint(recon * 255.0), 0, 255).astype(np.uint8)
+    new_a = np.rint(a.astype(np.float32) * alpha).astype(np.int32)
+    kill = empty | (new_a < ALPHA_SNAP_LOW)
+    new_a = np.where(new_a > ALPHA_SNAP_HIGH, 255, new_a).astype(np.uint8)
+    recon[kill] = 0
+    new_a[kill] = 0
+    return recon, new_a
+
+
 def _spill_steps(w: int, h: int) -> int:
     return max(3, min(10, min(w, h) // 80))
 
 
-def _eat_magenta_spill(im: Image.Image, bg: tuple[int, int, int]) -> Image.Image:
-    """Walk inward from clear pixels through dark magenta / inverted-green spill."""
-    px = im.load()
-    w, h = im.size
-    for _ in range(_spill_steps(w, h)):
-        hits: list[tuple[int, int]] = []
-        for y in range(h):
-            for x in range(w):
-                r, g, b, a = px[x, y]
-                if a == 0 or not _is_spill(r, g, b, bg):
-                    continue
-                for nx, ny in _neighbors8(x, y, w, h):
-                    if px[nx, ny][3] == 0:
-                        hits.append((x, y))
-                        break
-        if not hits:
-            break
-        for x, y in hits:
-            r, g, b, a = px[x, y]
-            if (
-                pixel_key_dist((r, g, b), bg) <= TIGHT_DIST
-                or _inverted_green_excess(r, g, b) >= SPILL_GREEN_EXCESS + 12
-            ):
-                px[x, y] = (0, 0, 0, 0)
+def _neighbor8_true(flag: np.ndarray) -> np.ndarray:
+    h, w = flag.shape
+    pad = np.pad(flag, 1, mode="constant", constant_values=False)
+    out = np.zeros_like(flag, dtype=bool)
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            if dx == 0 and dy == 0:
                 continue
-            out = color_to_alpha_via_green(r, g, b, a)
-            if out[3] == 0 or _is_spill(out[0], out[1], out[2], bg):
-                px[x, y] = (0, 0, 0, 0)
-            else:
-                px[x, y] = out
-    return im
+            out |= pad[1 + dy : 1 + dy + h, 1 + dx : 1 + dx + w]
+    return out
+
+
+def _eat_magenta_spill(im: Image.Image, bg: tuple[int, int, int]) -> Image.Image:
+    return Image.fromarray(_eat_magenta_spill_arr(_as_rgba(im), bg), "RGBA")
+
+
+def _eat_magenta_spill_arr(arr: np.ndarray, bg: tuple[int, int, int]) -> np.ndarray:
+    """Walk inward from clear pixels through dark magenta / inverted-green spill."""
+    h, w = arr.shape[:2]
+    bg_v = np.array(bg, dtype=np.int16)
+    for _ in range(_spill_steps(w, h)):
+        rgb = arr[:, :, :3]
+        a = arr[:, :, 3]
+        clear = a == 0
+        spill = _spill_map(arr, bg) & ~clear
+        hits = spill & _neighbor8_true(clear)
+        if not hits.any():
+            break
+        d = np.minimum(_rgb_dist(rgb, _KEY_V), _rgb_dist(rgb, bg_v))
+        inv = 255 - rgb.astype(np.int16)
+        excess = inv[:, :, 1] - np.maximum(inv[:, :, 0], inv[:, :, 2])
+        hard = hits & ((d <= TIGHT_DIST) | (excess >= SPILL_GREEN_EXCESS + 12))
+        soft = hits & ~hard
+        arr[hard] = 0
+        if soft.any():
+            irgb = 255 - rgb
+            recon, na = _c2a_np(irgb, a, (0, 255, 0))
+            recon = 255 - recon
+            still = _spill_map(np.dstack((recon, na)), bg)
+            drop = soft & ((na == 0) | still)
+            keep = soft & ~drop
+            arr[drop] = 0
+            arr[keep, :3] = recon[keep]
+            arr[keep, 3] = na[keep]
+    return arr
+
+
+def snap_matte(im: Image.Image, cut: int = MATTE_CUT) -> Image.Image:
+    """Binary alpha so C2A cannot leave a magenta lip on dark backdrops."""
+    arr = _as_rgba(im)
+    keep = arr[:, :, 3] >= cut
+    arr[~keep] = 0
+    arr[keep, 3] = 255
+    return Image.fromarray(arr, "RGBA")
 
 
 def key_to_alpha(im: Image.Image, spill_flood: bool = True) -> Image.Image:
@@ -310,30 +395,24 @@ def key_to_alpha(im: Image.Image, spill_flood: bool = True) -> Image.Image:
     not treated as plate.
     """
     im = im.convert("RGBA")
-    px = im.load()
-    w, h = im.size
+    arr = _as_rgba(im)
     bg = sample_chroma(im)
-    distances = _distances(im, bg)
-    mask = wand_mask(im, distances, bg, spill_flood=spill_flood)
-    for y in range(h):
-        row = y * w
-        for x in range(w):
-            if mask[row + x]:
-                px[x, y] = (0, 0, 0, 0)
-    return _eat_magenta_spill(im, bg)
+    dist2d = _distance_map(arr, bg)
+    mask = wand_mask(im, dist2d.ravel().tolist(), bg, spill_flood=spill_flood)
+    arr.reshape(-1, 4)[np.frombuffer(mask, dtype=np.uint8) == 1] = 0
+    arr = _eat_magenta_spill_arr(arr, bg)
+    keep = arr[:, :, 3] >= MATTE_CUT
+    arr[~keep] = 0
+    arr[keep, 3] = 255
+    return Image.fromarray(arr, "RGBA")
 
 
 def range_key(im: Image.Image) -> Image.Image:
     """Bible / seed path: wand the outside, flatten that region to exact #FF00FF."""
     keyed = key_to_alpha(im)
-    px = keyed.load()
-    w, h = keyed.size
-    for y in range(h):
-        for x in range(w):
-            r, g, b, a = px[x, y]
-            if a == 0:
-                px[x, y] = MAGENTA
-    return keyed
+    arr = _as_rgba(keyed)
+    arr[arr[:, :, 3] == 0] = np.array(MAGENTA, dtype=np.uint8)
+    return Image.fromarray(arr, "RGBA")
 
 
 def flatten_magenta_to_alpha(im: Image.Image, spill_flood: bool = True) -> Image.Image:
@@ -396,13 +475,12 @@ def fit_canvas(
 
 
 def foot_baseline(im: Image.Image) -> int:
-    px = im.load()
-    w, h = im.size
-    for y in range(h - 1, -1, -1):
-        for x in range(w):
-            if px[x, y][3] > 8:
-                return y + 1
-    return h
+    arr = np.asarray(im.convert("RGBA"))
+    rows = np.any(arr[:, :, 3] > 8, axis=1)
+    idx = np.flatnonzero(rows)
+    if idx.size == 0:
+        return arr.shape[0]
+    return int(idx[-1] + 1)
 
 
 def lock_baselines(frames: list[Image.Image]) -> list[Image.Image]:
@@ -428,18 +506,10 @@ def quantize_palette(im: Image.Image, colors: int = 24) -> Image.Image:
     pal = pal.convert("RGB")
     out = pal.convert("RGBA")
     out.putalpha(alpha)
-    px = out.load()
-    ap = alpha.load()
-    w, h = out.size
-    for y in range(h):
-        for x in range(w):
-            a = ap[x, y]
-            if a < 16:
-                px[x, y] = (0, 0, 0, 0)
-            else:
-                r, g, b, _ = px[x, y]
-                px[x, y] = (r, g, b, a)
-    return out
+    arr = np.array(out, dtype=np.uint8, copy=True)
+    a = np.array(alpha)
+    arr[a < 16] = 0
+    return Image.fromarray(arr, "RGBA")
 
 
 def extract_seeds(src: Path, dest_dir: Path) -> dict:
@@ -470,18 +540,23 @@ def composite_bible(cell_paths: dict[str, Path], dest: Path, cell: int = 256) ->
 
 
 def write_palette(im: Image.Image, dest: Path) -> None:
-    rgba = im.convert("RGBA")
-    colors: dict[tuple[int, int, int], int] = {}
-    px = rgba.load()
-    w, h = rgba.size
-    for y in range(h):
-        for x in range(w):
-            r, g, b, a = px[x, y]
-            if a < 16 or is_key(r, g, b):
-                continue
-            colors[(r, g, b)] = colors.get((r, g, b), 0) + 1
-    ranked = sorted(colors.items(), key=lambda kv: -kv[1])[:32]
-    dest.write_text(json.dumps({"colors": [list(c) for c, _n in ranked]}, indent=2))
+    arr = np.asarray(im.convert("RGBA"))
+    rgb = arr[:, :, :3]
+    a = arr[:, :, 3]
+    key_d = _rgb_dist(rgb, _KEY_V)
+    keep = (a >= 16) & (key_d > WAND_DIST)
+    if not keep.any():
+        dest.write_text(json.dumps({"colors": []}, indent=2))
+        return
+    pix = rgb[keep]
+    # packed RGB as int for a cheap unique count
+    pack = pix[:, 0].astype(np.int32) << 16 | pix[:, 1].astype(np.int32) << 8 | pix[:, 2]
+    vals, counts = np.unique(pack, return_counts=True)
+    order = np.argsort(-counts)[:32]
+    colors = []
+    for v in vals[order]:
+        colors.append([int((v >> 16) & 255), int((v >> 8) & 255), int(v & 255)])
+    dest.write_text(json.dumps({"colors": colors}, indent=2))
 
 
 if __name__ == "__main__":

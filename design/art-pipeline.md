@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: generating or replacing player / enemy / weapon frames  
-Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/process_*.py`, `tools/pack_*.py`, `assets/sprites/player/`, `assets/live/`  
+Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `assets/sprites/player/`, `assets/live/`  
 See also: `design/player.md`, `design/audio-visual.md`, `design/combat.md`, `design/enemies.md`
 
 This section is mandatory for any Grok Build instance. It exists because pure image-generation models (including Grok Imagine) have consistent limitations with multi-frame consistency, identity drift, spatial layout in grids, and pixel-perfect output.
@@ -280,14 +280,24 @@ If the User accepts imperfect frames, note the defect, continue with what was ac
 
 All AI-generated frames (including those extracted from video) MUST pass through cleanup before use in the game. Cleanup of a unit starts only after the User accepts that unit, unless the User asks for a preview matte.
 
-Recommended tools: `tools/plate_remap.py`, `tools/sprite_pipeline.py`, Aseprite + DeAI PixelKit / Pixel Refiner / Alpha Remover, or equivalent.
+Recommended tools: `tools/plate_remap.py`, `tools/sprite_pipeline.py`, `tools/pack_locomotion.py`, `tools/rekey_stills.py`, Aseprite + DeAI PixelKit / Pixel Refiner / Alpha Remover, or equivalent.
+
+**Video extract** (walk / attack clips, `_src/walk_final/` → `_src/walk_harvest/`):
+
+- Dump **full-size RGB** PNGs. ffmpeg: `-sws_flags neighbor+accurate_rnd+full_chroma_int`, `fps=…,format=rgb24`.
+- Do not decode through OpenCV’s default 4:2:0 bilinear chroma upsample.
+- Do not shrink (`KEY_MAX` or any other cap) before remap or key. A 4:2:0 mp4 already mixed magenta into the lip; shrinking first makes that lip thicker in 128-canvas pixels.
+- Always re-extract. Do not reuse older harvest 320s.
+- Remap + key only the frames that will be packed. Idle-compare stamps may use a tiny nearest copy; that stamp is not a shipping matte.
+
+H.264 4:2:0 cannot be un-smeared. Prefer a PNG sequence from I2V when the tool can dump one. Nearest-chroma extract + remap is the recovery path for an existing mp4.
 
 Required cleanup tasks (in order):
 
-1. If the extract’s plate is not exact `#FF00FF`, run `tools/plate_remap.py` (sample start chroma, wand, pocket fill, bleed remap). Keep the plate opaque until the next step.
-2. Range-key / wand the `#FF00FF` plate. Despill fringe. `sprite_pipeline.py` key-to-alpha punches the plate.
+1. If the extract’s plate is not exact `#FF00FF`, run `tools/plate_remap.py` (sample start chroma, wand, pocket fill, bleed remap). Keep the plate opaque until the next step. Remap **once**. Do not remap in extract and again in `key_fit`.
+2. Range-key / wand the `#FF00FF` plate. Despill fringe. `sprite_pipeline.py` `key_to_alpha` punches the plate. Video extracts and session stills pass `spill_flood=False` after remap so compressed maroon / hair / purple cloth is not treated as plate. Then **snap alpha hard** (figure `255`, plate `0`) before any fit so Color-to-Alpha cannot leave a magenta-ish lip on dark backdrops.
 3. Crop to content bounding box + fixed transparent padding.
-4. Nearest-neighbor scale/fit to exact target canvas (128×128 recommended).
+4. Nearest-neighbor scale/fit to exact target canvas (128×128 recommended). Never nearest-shrink the still-opaque plate and then key.
 5. Center horizontally.
 6. Lock feet to a common baseline Y across all frames of a cycle.
 7. Quantize / lock to the Bible palette.
@@ -371,6 +381,10 @@ All eight full-body figures must have identical proportions and silhouette heigh
 | Extra pad or 1024-fit that shrinks the figure | Low | Avoid |
 | Key / despill on the I2V seed | Low | Avoid |
 | Magenta key-to-alpha | High | After accept only (§19.6) |
+| Full-size RGB extract + nearest chroma | High | Mandatory for mp4 harvest |
+| Shrink-then-key (`KEY_MAX` / 512 cap before wand) | Low | Avoid |
+| Binary matte snap after key | High | Mandatory before 128 fit |
+| `spill_flood=False` on video / jpg stills after remap | High | Avoid eating hair / maroon / purple cloth |
 | Foot baseline locking in post | High | Mandatory |
 | Equal frame counts per direction | High | Mandatory |
 | Hard frame-count or 10s duration demands | Low | Avoid |
