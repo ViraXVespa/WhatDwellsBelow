@@ -9,14 +9,11 @@ Need to add lighting decorations to dungeon
 Need assets for inventory menu
 Need assets for updated placeholdia UI.
 Need to import button prompt assets
-Chroma keying has to be re-processed on existing assets to remove pinkness around edges.
-Replace clerks with a deposit box style wall unit.
 Add lighting/torch decorations to the walls.
 Animation handling to correct idle depending on active front foot.
 
 ### Can Do Now
 ## Sexy
-Add "Shamelessly" graffiti to start splash and remove it from the start menu.
 Adjust hallway size from 2, to a varying width from 2 to 4.9
 Need to create new UI for forging menu in blacksmith.
 Blacksmith UI needs to be reworked to be intuitive using LB/RB to swap between analyze and forge.
@@ -30,11 +27,9 @@ Add X Money donation links
 Improve dungeon tuning to ensure less gameplay with no action.
 Need a system to swap tooltip button prompts between KB/M and gamepad.
 Rework pause menu so that Dpad Right opens inventory and the menu button brings up a better flow for dispelling the run.
-Hud scale and Camera Zoom need to update dynamically instead of on reboot.
 
 ## Unsexy
 Update AGENTS logics to include Copilot instructions to reduce token use. Needs helper script to find large files automatically to not require auth and optimize detection. We also need an optimized workflow for refactoring.
-Update AGENTS logics to let web agent expand files beyond 10kb during the current session and suggest the size and documentation sweeps when giving files.
 Need to fix automated playtest
 Need to test chroma key logic on different images to ensure it catches all of the pink.
 Add a space after the 3rd sentence in i2v_seeds.py script.

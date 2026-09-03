@@ -52,8 +52,8 @@ func _ready() -> void:
 	card = VBoxContainer.new()
 	card.anchor_left = 0.50
 	card.anchor_right = 0.96
-	card.anchor_top = 0.22
-	card.anchor_bottom = 0.82
+	card.anchor_top = 0.18
+	card.anchor_bottom = 0.84
 	card.offset_left = 0.0
 	card.offset_right = 0.0
 	card.offset_top = 0.0
@@ -120,15 +120,19 @@ func _mark(path: String, caption: String) -> VBoxContainer:
 
 func _credit() -> Control:
 	var wrap := Control.new()
-	wrap.custom_minimum_size = Vector2(0, 92)
+	wrap.custom_minimum_size = Vector2(0, 216)
+	wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var line := _lab("Proudly Vibecoded with Grok", 40, Color(0.98, 0.86, 0.38))
-	line.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	line.offset_top = 34.0
+	line.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	line.offset_top = -58.0
+	line.offset_bottom = 0.0
+	line.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	wrap.add_child(line)
 	var strike := StrikeBar.new()
 	strike.line = line
-	strike.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	strike.offset_top = 34.0
+	strike.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	strike.offset_top = -58.0
+	strike.offset_bottom = 0.0
 	strike.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	wrap.add_child(strike)
 	if ResourceLoader.exists(TAG):
@@ -138,16 +142,19 @@ func _credit() -> Control:
 		tag.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		tag.set_anchors_preset(Control.PRESET_TOP_WIDE)
-		tag.anchor_right = 0.52
-		tag.offset_left = 4.0
-		tag.offset_top = 2.0
-		tag.offset_bottom = 48.0
-		tag.rotation_degrees = -6.0
+		tag.anchor_left = 0.0
+		tag.anchor_right = 0.58
+		tag.offset_left = -93.0
+		tag.offset_right = -19.0
+		tag.offset_top = 103.0
+		tag.offset_bottom = 223.0
+		tag.pivot_offset = Vector2(48, 40)
+		tag.rotation_degrees = -7.0
 		wrap.add_child(tag)
 	else:
-		var tag := _lab("Shamelessly", 28, Color(1.0, 0.32, 0.62))
+		var tag := _lab("Shamelessly", 52, Color(1.0, 0.32, 0.62))
 		tag.rotation_degrees = -8.0
-		tag.position = Vector2(8, 6)
+		tag.position = Vector2(-79, 87)
 		wrap.add_child(tag)
 	return wrap
 
@@ -155,10 +162,21 @@ func _credit() -> Control:
 class StrikeBar extends Control:
 	var line: Label
 
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		set_notify_transform(true)
+		call_deferred("queue_redraw")
+
+	func _notification(what: int) -> void:
+		if what == NOTIFICATION_RESIZED or what == NOTIFICATION_TRANSFORM_CHANGED:
+			queue_redraw()
+
 	func _draw() -> void:
-		if line == null:
+		if line == null or not is_instance_valid(line):
 			return
 		var font: Font = line.get_theme_font("font")
+		if font == null:
+			font = ThemeDB.fallback_font
 		if font == null:
 			font = get_theme_default_font()
 		if font == null:
@@ -168,9 +186,17 @@ class StrikeBar extends Control:
 			fs = 40
 		var proud: Vector2 = font.get_string_size("Proudly", HORIZONTAL_ALIGNMENT_LEFT, -1, fs)
 		var full: Vector2 = font.get_string_size(line.text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs)
-		var x0: float = (size.x - full.x) * 0.5
+		if full.x <= 1.0 or proud.x <= 1.0:
+			return
+		var origin := line.global_position - global_position
+		var text_top := 0.0
+		if line.vertical_alignment == VERTICAL_ALIGNMENT_CENTER:
+			text_top = (line.size.y - full.y) * 0.5
+		elif line.vertical_alignment == VERTICAL_ALIGNMENT_BOTTOM:
+			text_top = line.size.y - full.y
+		var x0: float = origin.x + (line.size.x - full.x) * 0.5
 		var x1: float = x0 + proud.x
-		var y: float = fs * 0.52
+		var y: float = origin.y + text_top + font.get_ascent(fs) * 0.62 + 5.0
 		var col := Color(0.92, 0.16, 0.46, 0.95)
 		draw_line(Vector2(x0 - 4.0, y - 2.0), Vector2(x1 + 4.0, y + 1.0), col, 5.0, true)
 		draw_line(Vector2(x0 - 2.0, y + 3.0), Vector2(x1 + 2.0, y + 2.0), Color(0.12, 0.03, 0.08, 0.9), 2.8, true)

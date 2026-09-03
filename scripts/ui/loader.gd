@@ -5,66 +5,44 @@ extends CanvasLayer
 var open := false
 var _target := 0.0
 var _shown := 0.0
+var _dim: ColorRect
 var _title: Label
 var _status: Label
 var _pct: Label
+var _edge: ColorRect
 var _track: ColorRect
 var _fill: ColorRect
 var _bar_w := 720.0
+var _bar_h := 20.0
 
 
 func _ready() -> void:
 	layer = 110
 	visible = false
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.04, 0.03, 0.025, 0.88)
-	dim.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(dim)
+	_dim = ColorRect.new()
+	_dim.color = Color(0.04, 0.03, 0.025, 0.88)
+	_dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_dim)
 	_title = _lab("Loading", 36, Color(0.95, 0.86, 0.55))
-	_title.set_anchors_preset(Control.PRESET_CENTER)
-	_title.offset_left = -480
-	_title.offset_right = 480
-	_title.offset_top = -90
-	_title.offset_bottom = -40
 	add_child(_title)
 	_status = _lab("", 20, Color(0.82, 0.76, 0.64))
-	_status.set_anchors_preset(Control.PRESET_CENTER)
-	_status.offset_left = -480
-	_status.offset_right = 480
-	_status.offset_top = -28
-	_status.offset_bottom = 8
 	add_child(_status)
+	_edge = ColorRect.new()
+	_edge.color = Color(0.55, 0.42, 0.22, 1)
+	_edge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_edge)
 	_track = ColorRect.new()
 	_track.color = Color(0.16, 0.12, 0.09, 1)
-	_track.set_anchors_preset(Control.PRESET_CENTER)
-	_track.offset_left = -_bar_w * 0.5
-	_track.offset_right = _bar_w * 0.5
-	_track.offset_top = 24
-	_track.offset_bottom = 44
+	_track.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_track)
-	var edge := ColorRect.new()
-	edge.color = Color(0.55, 0.42, 0.22, 1)
-	edge.set_anchors_preset(Control.PRESET_CENTER)
-	edge.offset_left = -_bar_w * 0.5 - 2
-	edge.offset_right = _bar_w * 0.5 + 2
-	edge.offset_top = 22
-	edge.offset_bottom = 46
-	add_child(edge)
-	move_child(edge, _track.get_index())
 	_fill = ColorRect.new()
 	_fill.color = Color(0.92, 0.74, 0.32, 1)
-	_fill.position = Vector2.ZERO
-	_fill.size = Vector2(0, 20)
+	_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_track.add_child(_fill)
 	_pct = _lab("0%", 18, Color(0.95, 0.88, 0.62))
-	_pct.set_anchors_preset(Control.PRESET_CENTER)
-	_pct.offset_left = -80
-	_pct.offset_right = 80
-	_pct.offset_top = 56
-	_pct.offset_bottom = 88
 	add_child(_pct)
+	_layout_bar()
 
 
 func begin(heading: String, status: String = "") -> void:
@@ -75,8 +53,11 @@ func begin(heading: String, status: String = "") -> void:
 	_title.text = heading
 	_status.text = status
 	_pct.text = "0%"
-	_fill.size = Vector2(0, _track.size.y if _track.size.y > 0.0 else 20.0)
-	App.ui_open = true
+	_layout_bar()
+	_fill.position = Vector2.ZERO
+	_fill.size = Vector2(0, _bar_h)
+	if App:
+		App.ui_open = true
 
 
 func set_status(text: String) -> void:
@@ -111,10 +92,44 @@ func _process(delta: float) -> void:
 	_sync_bar()
 
 
+func _vp() -> Vector2:
+	var vp := get_viewport()
+	if vp:
+		var r := vp.get_visible_rect().size
+		if r.x > 1.0 and r.y > 1.0:
+			return r
+	return Vector2(1920, 1080)
+
+
+func _layout_bar() -> void:
+	var s := _vp()
+	var cx := s.x * 0.5
+	var cy := s.y * 0.5
+	if _dim:
+		_dim.position = Vector2.ZERO
+		_dim.size = s
+	if _title:
+		_title.position = Vector2(cx - 480.0, cy - 90.0)
+		_title.size = Vector2(960.0, 50.0)
+	if _status:
+		_status.position = Vector2(cx - 480.0, cy - 28.0)
+		_status.size = Vector2(960.0, 36.0)
+	if _edge:
+		_edge.position = Vector2(cx - _bar_w * 0.5 - 2.0, cy + 22.0)
+		_edge.size = Vector2(_bar_w + 4.0, _bar_h + 4.0)
+	if _track:
+		_track.position = Vector2(cx - _bar_w * 0.5, cy + 24.0)
+		_track.size = Vector2(_bar_w, _bar_h)
+	if _fill:
+		_fill.position = Vector2.ZERO
+		_fill.size = Vector2(_bar_w * clampf(_shown, 0.0, 1.0), _bar_h)
+	if _pct:
+		_pct.position = Vector2(cx - 80.0, cy + 56.0)
+		_pct.size = Vector2(160.0, 32.0)
+
+
 func _sync_bar() -> void:
-	var w := _track.size.x if _track.size.x > 1.0 else _bar_w
-	var h := _track.size.y if _track.size.y > 1.0 else 20.0
-	_fill.size = Vector2(w * clampf(_shown, 0.0, 1.0), h)
+	_layout_bar()
 	if _pct:
 		_pct.text = "%d%%" % int(round(clampf(_shown, 0.0, 1.0) * 100.0))
 

@@ -44,8 +44,7 @@ func _ready() -> void:
 		row.add_child(play_b)
 	archives = _btn("Archives", _open_archives)
 	card.add_child(archives)
-	card.add_child(_lab("Bitter — ViraXVespa", 16, Color(0.62, 0.66, 0.7)))
-	card.add_child(_lab("Shamelessly Vibecoded with Grok.", 14, Color(0.45, 0.82, 0.5)))
+	card.add_child(_lab("Dungeon Music: Bitter - by Vira X Vespa", 16, Color(0.62, 0.66, 0.7)))
 	_wire_focus(play_a, play_b, archives)
 	call_deferred("_focus_first")
 
