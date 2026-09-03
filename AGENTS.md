@@ -7,22 +7,29 @@ Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 | Path | Recognize | Deliver |
 |------|-----------|---------|
 | **Grok Build (CLI)** | You can write the checkout | Edit live files. Do not dump whole files unless asked. |
-| **Web / chat** | You cannot write the repo | Emit each touched source file in **full**. Never assume a disk write landed. |
+| **Web / chat** | You cannot write the repo | Follow `design/web-session.md`. Never assume a disk write landed. |
 
 If unsure: ask once, then use **web / chat**. A missed full-file emit is worse than an extra one.
+
+`design/sessions.md` is the **Grok Build** hand-off (leave-off + log). CLI instances read it after a Grok Build gap. Web / chat may read it for context only. It is not the web-session hand-off. Do not resume unfinished Grok Build work from it unless the User names that work.
 
 ## Shared
 
 Design lives in `design/`. There is no single GDD. `Demo_GDD.md` is only an index.
 
-Fresh instance: read `design/protocol.md` and `design/constraints.md`, then only the topic files for the requested work. After a gap, read `design/sessions.md` and inspect git / the live tree (the User works between Grok Build weeks). Do not start by archiving or rewriting.
+Fresh instance: read `design/protocol.md` and `design/constraints.md`, then only the topic files for the requested work. Inspect the live tree. Do not start by archiving or rewriting.
+
+Grok Build after a gap: also read `design/sessions.md` and inspect git / the live tree (the User works between Grok Build weeks).
+
+Web / chat after the repo-review message: follow `design/web-session.md`. Do not start Phase 4 emits during Phase 1–3.
 
 | Need | File |
 |------|------|
 | Workflow | `design/protocol.md` |
+| Web / chat session flow | `design/web-session.md` |
 | Must / must-not | `design/constraints.md` |
 | Topic + code map | `design/README.md` |
-| Session leave-off + log | `design/sessions.md` |
+| Grok Build leave-off + log | `design/sessions.md` |
 | Numbers | `design/tunables.md` |
 
 **Binding design** is required behavior. **Live snapshot** is current code. If they disagree, patch live toward binding or ask. Do not invent a third system.
@@ -39,9 +46,13 @@ GDScript indent: **tabs**.
 
 ## Script cap (10KB)
 
-Every live `scripts/**/*.gd` must stay under **10,000 bytes**.
+Every live `scripts/**/*.gd` that ships must stay under **10,000 bytes**.
 
-If a file is over, or an edit would push it over:
+**Grok Build (CLI)** enforces the cap while editing. If a file is over, or an edit would push it over, split in that same slice (steps below).
+
+**Web / chat** does **not** apply the cap while drafting or emitting a file in Phase 4. Do not split, refuse, or rewrite for size until Phase 6. See `design/web-session.md`.
+
+If a file must be split:
 
 1. Split into a sibling helper (`*_act.gd`, `*_view.gd`, `*_boot.gd`, `*_text.gd`, …).
 2. Keep the original path as the facade (`App.playtest`, `PauseInv.build`, `Gen.generate`, `EnemyAI.tick`, `SmokeLate.p7`).
@@ -53,14 +64,14 @@ If a file is over, or an edit would push it over:
 
 ## Web / chat
 
+Full conversation flow, emit rules, and Phase 6 sizing: `design/web-session.md`.
+
 Do not emit a revision assembled from a truncated fetch. If a pull looks short, cut off, or older than the conversation, ask the User to paste the live file.
-
-Label each code file (`## scripts/app.gd`) and emit the entire body, including unchanged lines. One long file per message unless the User says otherwise. New file: full body. Deleted file: say so; no body.
-
-`.md` files (`AGENTS.md`, `design/*.md`): emit raw text only — no fence, no chat wrapping that same reply.
 
 Do not claim you wrote the repo. The User pastes.
 
 ## CLI
 
 Small diffs. Match surrounding style. After the slice, report files changed, how you verified, and what is still open. Full-file paste only when asked, or when the file does not exist on disk yet.
+
+End of a Grok Build session: update `design/sessions.md` (leave-off + log). That file is for the next Grok Build instance, not for web / chat.

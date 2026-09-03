@@ -2,7 +2,7 @@
 
 Status: index  
 Read when: starting any session, or when you do not know which file to open  
-See also: `AGENTS.md`, `design/protocol.md`
+See also: `AGENTS.md`, `design/protocol.md`, `design/web-session.md`
 
 This folder is the documentation database for humans and agents.  
 It is not one Game Design Document.
@@ -13,10 +13,11 @@ It is not one Game Design Document.
 
 1. Agents read `design/protocol.md` and `design/constraints.md` first.  
 2. On a fresh Grok Build instance after a gap, also read `design/sessions.md` (leave-off + log), then inspect git / the live tree — the User works between sessions.  
-3. Open only the topic files that match the requested work.  
-4. Use `design/tunables.md` for numbers.  
-5. Use the code map below for live scripts.  
-6. After a behavior change, update the matching topic file in the same slice. End of a Grok Build session: update `design/sessions.md`.
+3. Web / chat: after the repo-review message, follow `design/web-session.md`. `design/sessions.md` is context only.  
+4. Open only the topic files that match the requested work.  
+5. Use `design/tunables.md` for numbers.  
+6. Use the code map below for live scripts.  
+7. After a behavior change, update the matching topic file in the same slice. End of a Grok Build session: update `design/sessions.md`. End of a web / chat goal: finish Phase 7 in `design/web-session.md`.
 
 Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live in `tools/i2v_seeds.py`. Off-magenta plates go through `tools/plate_remap.py` before I2V. I2V and complex animation packing stay in Grok Build sessions unless the User says otherwise.
 
@@ -33,6 +34,7 @@ Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live 
 | When the work is about… | File | Old GDD home |
 |-------------------------|------|----------------|
 | Agent workflow | `protocol.md` | Front matter |
+| Web / chat session flow | `web-session.md` | — |
 | Grok Build session leave-off + log | `sessions.md` | — |
 | Must / must-not, checklist | `constraints.md` | Hard constraints, success, App. B |
 | Vision, scope, lore | `overview.md` | §§1–3 |
@@ -60,7 +62,7 @@ Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live 
 
 ## Code map (live path)
 
-Every live `scripts/**/*.gd` file must stay under **10KB**. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`. See `AGENTS.md` → Script size cap.
+Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`. See `AGENTS.md` → Script size cap. Web / chat applies that cap in Phase 6 of `design/web-session.md`, not while drafting.
 
 | System | Live files |
 |--------|------------|
