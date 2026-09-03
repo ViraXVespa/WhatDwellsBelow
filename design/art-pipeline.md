@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: generating or replacing player / enemy / weapon frames  
-Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `assets/sprites/player/`, `assets/live/`  
+Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `assets/sprites/player/`  
 See also: `design/player.md`, `design/audio-visual.md`, `design/combat.md`, `design/enemies.md`
 
 This section is mandatory for any Grok Build instance. It exists because pure image-generation models (including Grok Imagine) have consistent limitations with multi-frame consistency, identity drift, spatial layout in grids, and pixel-perfect output.
