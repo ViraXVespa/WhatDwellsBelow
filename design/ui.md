@@ -144,11 +144,18 @@ Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: k
 
 ## Live snapshot — loading bar (`loader.gd`)
 
-`CanvasLayer` that survives scene changes. Used on title → Placeholdia (`App.play_from_menu`) and similar heavy transitions.
+`CanvasLayer` layer 110 on `App`. Survives scene changes. Title → Placeholdia uses `App.play_from_menu` → `AppFlow.play_from_menu_async`.
 
-- `begin(heading, status)`
+- `begin(heading, status)` shows the overlay and seeds a small fill so the bar is never stuck at 0%.
 - `set_status(text)`
-- `set_progress(0..1)`
-- `finish()` snaps to 100%, hides, calls `App.wake_web_pad()`
+- `set_progress(0..1)` only raises the target.
+- `_process` eases `_shown` toward the target.
+- `finish()` snaps to 100%, hides, calls `App.wake_web_pad()`.
 
-Visual: dim overlay, heading, status, percent, 720 px track with smoothed fill.
+Visual: full-viewport dim, heading, status, percent, 720×20 gold fill on a dark track. Positions are computed from `get_viewport().get_visible_rect()` so the overlay stays centered on desktop and the no-threads web export.
+
+Play → camp pacing in `scripts/app_flow.gd`:
+- Preload listed hub assets up to about 70%, with status lines for camp / tiles / buildings / delver / music.
+- Ease toward 90% while still on the title scene.
+- `go_camp()` (scene instantiate may hitch; the bar is already near the end).
+- After camp is ready, ease 92% → 100% with “The square holds.”, then hide.

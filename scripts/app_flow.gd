@@ -66,50 +66,46 @@ static func play_from_menu_async(host: Node) -> void:
 		host.loader.set_progress(0.08)
 	await host.get_tree().process_frame
 	await host.get_tree().process_frame
-	var t0 := Time.get_ticks_msec()
-	await preload_hub(host, t0)
+	await preload_hub(host)
 	if host.loader:
 		host.loader.set_status("Raising Placeholdia…")
-		host.loader.set_progress(maxf(_loader_p(host), 0.88))
+	await _ease_progress(host, 0.72, 0.90, 0.45)
 	host.go_camp()
 	host.ui_open = true
 	var guard := 0
-	while guard < 180:
+	while guard < 240:
 		guard += 1
 		var s := host.get_tree().current_scene
 		if s and str(s.scene_file_path).find("camp") >= 0 and s.is_node_ready():
 			break
-		_pulse_progress(host, t0, 0.88, 0.96)
-		await host.get_tree().process_frame
-	var min_ms := 700 if OS.has_feature("web") else 550
-	while Time.get_ticks_msec() - t0 < min_ms:
-		_pulse_progress(host, t0, 0.88, 0.97)
+		if host.loader:
+			host.loader.set_progress(0.91)
 		await host.get_tree().process_frame
 	if host.loader:
-		host.loader.set_progress(1.0)
 		host.loader.set_status("The square holds.")
-		var wait := 0
-		while wait < 90:
-			wait += 1
-			if float(host.loader.get("_shown")) >= 0.985:
-				break
-			await host.get_tree().process_frame
-		await host.get_tree().create_timer(0.12, true, false, true).timeout
+	await _ease_progress(host, 0.92, 1.0, 0.40)
+	await host.get_tree().create_timer(0.12, true, false, true).timeout
+	if host.loader:
 		host.loader.finish()
 	host._menu_loading = false
+
+
+static func _ease_progress(host: Node, lo: float, hi: float, sec: float) -> void:
+	var t0 := Time.get_ticks_msec()
+	var span := maxf(sec, 0.05)
+	while true:
+		var u := clampf(float(Time.get_ticks_msec() - t0) / (span * 1000.0), 0.0, 1.0)
+		if host.loader:
+			host.loader.set_progress(lerpf(lo, hi, u))
+		if u >= 1.0:
+			break
+		await host.get_tree().process_frame
 
 
 static func _loader_p(host: Node) -> float:
 	if host.loader == null:
 		return 0.0
 	return clampf(float(host.loader.get("_target")), 0.0, 1.0)
-
-
-static func _pulse_progress(host: Node, t0: int, lo: float, hi: float) -> void:
-	if host.loader == null:
-		return
-	var u := clampf(float(Time.get_ticks_msec() - t0) / 700.0, 0.0, 1.0)
-	host.loader.set_progress(lerpf(lo, hi, u))
 
 
 static func hub_preload_paths(host: Node) -> PackedStringArray:
@@ -146,48 +142,52 @@ static func hub_preload_paths(host: Node) -> PackedStringArray:
 	return out
 
 
-static func preload_hub(host: Node, t0: int = 0) -> void:
+static func preload_hub(host: Node, _t0: int = 0) -> void:
 	var paths := hub_preload_paths(host)
 	var n := paths.size()
 	if n <= 0:
 		if host.loader:
-			host.loader.set_progress(0.86)
+			host.loader.set_progress(0.70)
 		return
 	var sub := not OS.has_feature("web")
-	if t0 <= 0:
-		t0 = Time.get_ticks_msec()
-	for i in n:
+	var i := 0
+	while i < n:
 		var path := paths[i]
 		if host.loader:
 			host.loader.set_status(hub_status_for(path))
-		var file_p := float(i) / float(n) * 0.82
-		var time_p := clampf(float(Time.get_ticks_msec() - t0) / 700.0, 0.0, 1.0) * 0.82
+		var file_p := 0.08 + float(i) / float(n) * 0.62
 		if host.loader:
-			host.loader.set_progress(maxf(0.08, maxf(file_p, time_p)))
+			host.loader.set_progress(file_p)
 		var err := ResourceLoader.load_threaded_request(path, "", sub)
 		if err != OK:
 			if host.loader:
-				host.loader.set_progress(maxf(_loader_p(host), float(i + 1) / float(n) * 0.82))
+				host.loader.set_progress(0.08 + float(i + 1) / float(n) * 0.62)
+			i += 1
 			await host.get_tree().process_frame
 			continue
 		var guard := 0
-		while guard < 240:
+		var done := false
+		while guard < 240 and not done:
 			guard += 1
 			var load_prog: Array = []
 			var st := ResourceLoader.load_threaded_get_status(path, load_prog)
-			var local := float(load_prog[0]) if load_prog.size() > 0 else 0.0
-			file_p = (float(i) + clampf(local, 0.0, 1.0)) / float(n) * 0.82
-			time_p = clampf(float(Time.get_ticks_msec() - t0) / 700.0, 0.0, 1.0) * 0.82
+			var local := 0.0
+			if load_prog.size() > 0:
+				local = float(load_prog[0])
 			if host.loader:
-				host.loader.set_progress(maxf(0.08, maxf(file_p, time_p)))
+				host.loader.set_progress(0.08 + (float(i) + clampf(local, 0.0, 1.0)) / float(n) * 0.62)
 			if st == ResourceLoader.THREAD_LOAD_LOADED:
 				ResourceLoader.load_threaded_get(path)
-				break
-			if st == ResourceLoader.THREAD_LOAD_FAILED or st == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
-				break
-			await host.get_tree().process_frame
+				done = true
+			elif st == ResourceLoader.THREAD_LOAD_FAILED:
+				done = true
+			elif st == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+				done = true
+			else:
+				await host.get_tree().process_frame
 		if host.loader:
-			host.loader.set_progress(maxf(_loader_p(host), float(i + 1) / float(n) * 0.82))
+			host.loader.set_progress(0.08 + float(i + 1) / float(n) * 0.62)
+		i += 1
 		await host.get_tree().process_frame
 
 
