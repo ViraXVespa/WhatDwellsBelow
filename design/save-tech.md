@@ -1,9 +1,9 @@
 # Save, export, performance
 
-Status: binding design
-Read when: changing persistence, web export, autoloads, or perf
-Code: `scripts/data/save_store.gd`, `scripts/app.gd`, `tools/export_web.ps1`, `project.godot`
-See also: `design/debug.md`, `design/archives.md`
+Status: binding design  
+Read when: changing persistence, web export, autoloads, or perf  
+Code: `scripts/data/save_store.gd`, `scripts/app.gd`, `tools/export_web.ps1`, `project.godot`  
+See also: `design/debug.md`, `design/archives.md`, `design/camera.md`
 
 ## Save system
 
@@ -17,11 +17,14 @@ See also: `design/debug.md`, `design/archives.md`
   - The three forged holds for every equipment slot
   - Unlocked deepest floor
   - Selected character type (male / female)
-  - Camera zoom and HUD scale settings
+  - Camera zoom (range 1.0–2.5, fresh default 1.75) and HUD scale settings
+  - Sprite filter id, mip-blend sharp flag, and mip bias
   - Aim-line on/off state and opacity
   - Any other player settings and debug overrides that should persist
 
 Live player slot name: `"live"`. `App.save_now()` / `App.wipe_save()`.
+
+Missing `cam_zoom` on an old save applies 1.75. A save that already stored `1.0` keeps 1.0 until the player moves the slider.
 
 ## Restock-on-return
 

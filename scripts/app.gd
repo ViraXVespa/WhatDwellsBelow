@@ -20,15 +20,19 @@ const Binds := preload("res://scripts/input/binds.gd")
 const Pad := preload("res://scripts/input/pad.gd")
 const AppFlow := preload("res://scripts/app_flow.gd")
 const AppRun := preload("res://scripts/app_run.gd")
+const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 
 var character_type := "male"
 var character_chosen := false
 var weapon := "great_axe"
-var cam_zoom := 1.0
+var cam_zoom := 1.75
 var hud_scale := 1.0
 var vol_master := 1.0
 var vol_music := 0.7
 var vol_sfx := 0.85
+var sprite_filter := 2
+var sprite_mip_sharp := false
+var sprite_mip_bias := 0.0
 var in_dungeon := false
 var floor_n := 1
 var run_seed := 1
@@ -126,10 +130,19 @@ func _ready() -> void:
 	add_child(archives_ui)
 	loader = LoaderS.new()
 	add_child(loader)
+	get_tree().node_added.connect(_on_node_added)
 	if not Smoke.active():
 		Store.load_slot("live")
+	set_zoom(cam_zoom)
+	set_hud_scale(hud_scale)
+	set_sprite_filter(sprite_filter, true)
 	if "--wdb-debug" in OS.get_cmdline_user_args():
 		call_deferred("_open_debug")
+
+
+func _on_node_added(n: Node) -> void:
+	if n is Sprite3D:
+		SpriteFilt.apply_sprite(n as Sprite3D)
 
 
 func _open_debug() -> void:
@@ -260,12 +273,31 @@ func set_volume(which: String, v: float) -> void:
 
 
 func set_zoom(z: float) -> void:
-	cam_zoom = clampf(z, 1.0, 1.75)
+	cam_zoom = clampf(z, T.ZOOM_MIN, T.ZOOM_MAX)
 	var p := get_tree().get_first_node_in_group("player")
 	if p:
 		var rig = p.get("rig")
 		if rig and rig.has_method("apply_zoom"):
 			rig.apply_zoom(cam_zoom)
+
+
+func set_hud_scale(v: float) -> void:
+	hud_scale = clampf(v, 0.7, 1.4)
+
+
+func set_sprite_filter(id: int, allow_linear := false) -> void:
+	sprite_filter = SpriteFilt.clamp_id(id, allow_linear)
+	SpriteFilt.apply_tree()
+
+
+func set_sprite_mip_sharp(on: bool) -> void:
+	sprite_mip_sharp = on
+	SpriteFilt.apply_tree()
+
+
+func set_sprite_mip_bias(v: float) -> void:
+	sprite_mip_bias = clampf(v, -2.0, 2.0)
+	SpriteFilt.apply_tree()
 
 
 func on_kill() -> void:

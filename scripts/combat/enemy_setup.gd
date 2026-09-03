@@ -3,6 +3,7 @@ extends Object
 const Roster := preload("res://scripts/combat/roster.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
 const HpBarS := preload("res://scripts/combat/hp_bar.gd")
+const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 
 
 static func setup(host: Node, id: String, floor_n: int, named := false, given_name := "") -> void:
@@ -117,6 +118,7 @@ static func load_tex(host: Node, boss_title := "") -> void:
 		host.spr.texture = load(path)
 		var th := float(maxi(1, host.spr.texture.get_height()))
 		host.spr.pixel_size = host.size_u / th
+	SpriteFilt.apply_sprite(host.spr)
 	host.spr.position.y = host.size_u * 0.48
 	host.spr.modulate = host.base_mod
 	if host.is_named:

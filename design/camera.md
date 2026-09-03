@@ -1,16 +1,18 @@
 # Camera and presentation
 
-Status: binding design + live snapshot
-Read when: touching Camera3D, zoom, HUD scale, renderer, or depth sorting
-Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `project.godot`
-See also: `design/player.md`, `design/archives.md`
+Status: binding design + live snapshot  
+Read when: touching Camera3D, zoom, HUD scale, renderer, or depth sorting  
+Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/app.gd`, `project.godot`  
+See also: `design/player.md`, `design/archives.md`, `design/audio-visual.md`
 
 ## Camera (live 3D path)
 
 - Orthographic Camera3D
 - Fixed pitch approximately –58°
 - Camera height and ortho size calculated so that 64×64 sprites remain clearly readable
-- Player-adjustable zoom range 1.0–1.75 (persisted in save)
+- Player-adjustable zoom range 1.0–2.5 (persisted in save)
+- Default zoom 1.75 (old max; midpoint of the current slider)
+- Zoom applies live from the System slider (`App.set_zoom` + `camera_rig.follow`)
 - Separate independent HUD scale setting
 - Look-at point offset slightly above the player origin
 - Depth sorting SHOULD respect implied real-world positions of the player, enemies, walls, and props. Arbitrary front/back popping MUST be avoided wherever possible, but perfect freedom from popping is not required.
@@ -23,6 +25,8 @@ The demo MUST ship with the Archives browser. This is required for the Patreon d
 
 Prefer the Compatibility renderer for the final shippable build if it does not compromise the web export. Mobile renderer is acceptable only if required for web stability.
 
+Sprite3D filter is not the project canvas default. Live default is nearest + mips + anisotropic. System may cycle nearest / nearest+mips / nearest+mips+aniso. Linear modes live only on the secret debug Settings tab. See `design/audio-visual.md` and `design/debug.md`.
+
 ## Live snapshot
 
 | Key | Value |
@@ -30,7 +34,8 @@ Prefer the Compatibility renderer for the final shippable build if it does not c
 | `CAM_PITCH` | -58 |
 | `CAM_HEIGHT` | 14 |
 | `LOOK_LIFT` | 0.42 |
-| `ZOOM_MIN` / `ZOOM_MAX` | 1.0 / 1.75 |
+| `ZOOM_MIN` / `ZOOM_MAX` | 1.0 / 2.5 |
+| Default `cam_zoom` | 1.75 |
 | `TILE` / `PX` | 1.0 / 64 |
 
-`project.godot`: viewport 1920×1080, `canvas_items` stretch, aspect `expand`, `default_texture_filter = 0` (nearest), renderer `gl_compatibility`.
+`project.godot`: viewport 1920×1080, `canvas_items` stretch, aspect `expand`, `default_texture_filter = 0` (nearest, canvas/HUD only), renderer `gl_compatibility`.

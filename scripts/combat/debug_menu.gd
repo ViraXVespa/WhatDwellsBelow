@@ -5,7 +5,8 @@ extends CanvasLayer
 const Pad := preload("res://scripts/input/pad.gd")
 const DebugMenuVal := preload("res://scripts/combat/debug_menu_val.gd")
 const DebugMenuPages := preload("res://scripts/combat/debug_menu_pages.gd")
-const PAGES: PackedStringArray = ["values", "profiles", "playtest", "anim"]
+const DebugMenuSettings := preload("res://scripts/combat/debug_menu_settings.gd")
+const PAGES: PackedStringArray = ["values", "settings", "profiles", "playtest", "anim"]
 
 var open := false
 var page := "values"
@@ -87,6 +88,7 @@ func _rebuild() -> void:
 	var nav := HBoxContainer.new()
 	nav.add_theme_constant_override("separation", 10)
 	nav.add_child(_tab_btn("Values", "values"))
+	nav.add_child(_tab_btn("Settings", "settings"))
 	nav.add_child(_tab_btn("Profiles", "profiles"))
 	nav.add_child(_tab_btn("Playtest", "playtest"))
 	anim_btn = _tab_btn("Animation Browser", "anim")
@@ -100,6 +102,8 @@ func _rebuild() -> void:
 	match page:
 		"values":
 			DebugMenuVal.page_values(self)
+		"settings":
+			DebugMenuSettings.page_settings(self)
 		"profiles":
 			DebugMenuVal.page_profiles(self)
 		"playtest":
@@ -127,7 +131,7 @@ func _focusables() -> Array[Control]:
 	for n: Node in root_box.find_children("*", "Control", true, false):
 		if n.is_queued_for_deletion():
 			continue
-		if not (n is Button or n is SpinBox or n is LineEdit):
+		if not (n is Button or n is SpinBox or n is LineEdit or n is HSlider):
 			continue
 		var c := n as Control
 		if c.focus_mode == Control.FOCUS_NONE:

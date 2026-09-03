@@ -10,6 +10,7 @@ const PlayerHit := preload("res://scripts/combat/player_hit.gd")
 const PlayerLock := preload("res://scripts/world/player_lock.gd")
 const PlayerAct := preload("res://scripts/world/player_act.gd")
 const PlayerCombat := preload("res://scripts/world/player_combat.gd")
+const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 
 const ATK_NONE := 0
 const ATK_BASIC := 1
@@ -108,10 +109,9 @@ func _make_sprite(prio: int) -> Sprite3D:
 	s.double_sided = true
 	s.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	s.alpha_scissor_threshold = 0.4
-	s.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	s.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	s.render_priority = prio
-	return s
+	return SpriteFilt.decorate(s)
 
 
 func _add_body_shape() -> void:

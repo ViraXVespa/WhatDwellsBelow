@@ -2,6 +2,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const T := preload("res://scripts/data/tunables.gd")
+const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 
 
 static func build(ui: CanvasLayer) -> void:
@@ -30,10 +31,21 @@ static func build(ui: CanvasLayer) -> void:
 		App.set_volume("sfx", v)
 	))
 	ui.box.add_child(slider_row(ui, "Camera zoom", App.cam_zoom, T.ZOOM_MIN, T.ZOOM_MAX, 0.05, func(v: float):
-		App.cam_zoom = v
+		if App.has_method("set_zoom"):
+			App.set_zoom(v)
+		else:
+			App.cam_zoom = v
 	))
 	ui.box.add_child(slider_row(ui, "HUD scale", App.hud_scale, 0.7, 1.4, 0.05, func(v: float):
-		App.hud_scale = v
+		if App.has_method("set_hud_scale"):
+			App.set_hud_scale(v)
+		else:
+			App.hud_scale = v
+	))
+	ui.box.add_child(ThemeS.btn("Sprite filter: %s" % SpriteFilt.label(SpriteFilt.clamp_id(int(App.sprite_filter), false)), func():
+		App.set_sprite_filter(SpriteFilt.cycle_sys(int(App.sprite_filter), 1), false)
+		App.save_now()
+		ui._rebuild()
 	))
 	ui.box.add_child(ThemeS.btn("Aim line: %s" % ("On" if App.bal.aim_line_on else "Off"), func():
 		App.bal.aim_line_on = not App.bal.aim_line_on

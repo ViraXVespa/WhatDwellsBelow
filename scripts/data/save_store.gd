@@ -63,6 +63,9 @@ static func collect() -> Dictionary:
 		"vol_master": App.vol_master,
 		"vol_music": App.vol_music,
 		"vol_sfx": App.vol_sfx,
+		"sprite_filter": App.sprite_filter,
+		"sprite_mip_sharp": App.sprite_mip_sharp,
+		"sprite_mip_bias": App.sprite_mip_bias,
 		"aim_line_on": App.bal.aim_line_on,
 		"aim_line_opacity": App.bal.aim_line_opacity,
 		"bank_gold": App.bank_gold,
@@ -79,11 +82,14 @@ static func apply(data: Dictionary) -> void:
 	_migrated = false
 	App.character_type = str(data.get("character_type", "male"))
 	App.character_chosen = bool(data.get("character_chosen", false))
-	App.cam_zoom = float(data.get("cam_zoom", 1.0))
+	App.cam_zoom = float(data.get("cam_zoom", 1.75))
 	App.hud_scale = float(data.get("hud_scale", 1.0))
 	App.vol_master = float(data.get("vol_master", 1.0))
 	App.vol_music = float(data.get("vol_music", 0.7))
 	App.vol_sfx = float(data.get("vol_sfx", 0.85))
+	App.sprite_filter = int(data.get("sprite_filter", 2))
+	App.sprite_mip_sharp = bool(data.get("sprite_mip_sharp", false))
+	App.sprite_mip_bias = float(data.get("sprite_mip_bias", 0.0))
 	App.bal.aim_line_on = bool(data.get("aim_line_on", true))
 	App.bal.aim_line_opacity = float(data.get("aim_line_opacity", 0.85))
 	App.bank_gold = int(data.get("bank_gold", 0))
@@ -108,6 +114,16 @@ static func apply(data: Dictionary) -> void:
 	App.set_volume("master", App.vol_master)
 	App.set_volume("music", App.vol_music)
 	App.set_volume("sfx", App.vol_sfx)
+	if App.has_method("set_zoom"):
+		App.set_zoom(App.cam_zoom)
+	if App.has_method("set_hud_scale"):
+		App.set_hud_scale(App.hud_scale)
+	if App.has_method("set_sprite_filter"):
+		App.set_sprite_filter(App.sprite_filter, true)
+	if App.has_method("set_sprite_mip_sharp"):
+		App.set_sprite_mip_sharp(App.sprite_mip_sharp)
+	if App.has_method("set_sprite_mip_bias"):
+		App.set_sprite_mip_bias(App.sprite_mip_bias)
 
 
 static func _persist_if_migrated(slot: String) -> void:
@@ -160,17 +176,26 @@ static func fresh_delver() -> void:
 	App.bal = (load("res://scripts/data/balance.gd") as GDScript).new()
 	App.character_type = "male"
 	App.character_chosen = false
-	App.cam_zoom = 1.0
+	App.cam_zoom = 1.75
 	App.hud_scale = 1.0
 	App.vol_master = 1.0
 	App.vol_music = 0.7
 	App.vol_sfx = 0.85
+	App.sprite_filter = 2
+	App.sprite_mip_sharp = false
+	App.sprite_mip_bias = 0.0
 	App.bal.aim_line_on = true
 	App.bal.aim_line_opacity = 0.85
 	App.reset_binds()
 	App.set_volume("master", App.vol_master)
 	App.set_volume("music", App.vol_music)
 	App.set_volume("sfx", App.vol_sfx)
+	if App.has_method("set_zoom"):
+		App.set_zoom(App.cam_zoom)
+	if App.has_method("set_hud_scale"):
+		App.set_hud_scale(App.hud_scale)
+	if App.has_method("set_sprite_filter"):
+		App.set_sprite_filter(App.sprite_filter, true)
 
 
 static func wipe_slot(slot: String) -> void:

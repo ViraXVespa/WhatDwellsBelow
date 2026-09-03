@@ -59,4 +59,5 @@ func apply_zoom(z: float) -> void:
 func follow(target: Vector3) -> void:
 	global_position = target
 	_place_local()
+	apply_zoom(App.cam_zoom)
 	_look()

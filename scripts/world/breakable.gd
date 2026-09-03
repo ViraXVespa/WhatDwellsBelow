@@ -2,6 +2,7 @@ extends Node3D
 
 const Depth := preload("res://scripts/world/depth.gd")
 const PickupS := preload("res://scripts/world/pickup.gd")
+const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 
 var kind := "pot"
 var hp := 1.0
@@ -91,12 +92,12 @@ func _spr() -> void:
 	spr.shaded = false
 	spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	var path := "res://assets/sprites/props/barrel.png" if kind == "barrel" else "res://assets/sprites/props/pot.png"
 	if ResourceLoader.exists(path):
 		spr.texture = load(path)
 		spr.pixel_size = 0.85 / float(maxi(1, spr.texture.get_height()))
 	spr.position.y = 0.4
+	spr = SpriteFilt.decorate(spr)
 	add_child(spr)
 	Depth.apply(spr, position)
 

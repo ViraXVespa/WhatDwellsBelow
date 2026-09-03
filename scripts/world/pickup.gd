@@ -1,6 +1,7 @@
 extends Node3D
 
 const Depth := preload("res://scripts/world/depth.gd")
+const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 
 var kind := "hp"
 var amount := 0
@@ -43,7 +44,6 @@ func _visual() -> void:
 	spr.shaded = false
 	spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	var path := "res://assets/sprites/props/hp_orb.png"
 	if ResourceLoader.exists(path):
 		spr.texture = load(path)
@@ -69,6 +69,7 @@ func _visual() -> void:
 		label.position = Vector3(0, 0.7, 0)
 		add_child(label)
 	spr.position.y = 0.35
+	spr = SpriteFilt.decorate(spr)
 	add_child(spr)
 	Depth.apply(spr, position)
 

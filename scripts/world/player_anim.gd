@@ -2,6 +2,7 @@ extends RefCounted
 
 const T := preload("res://scripts/data/tunables.gd")
 const Facing := preload("res://scripts/world/facing.gd")
+const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const LOC_IDLE := 0
 const LOC_START := 1
 const LOC_LOOP := 2
@@ -12,7 +13,7 @@ static func _seq(base: String, prefix: String) -> Array:
 	var frames: Array = []
 	var i := 0
 	while ResourceLoader.exists(base + "%s_%d.png" % [prefix, i]):
-		frames.append(load(base + "%s_%d.png" % [prefix, i]))
+		frames.append(SpriteFilt.ensure_mips(load(base + "%s_%d.png" % [prefix, i])))
 		i += 1
 	return frames
 
@@ -40,10 +41,10 @@ static func load_sprites(host: Node) -> void:
 	for k in Facing.KEYS:
 		var ip := base + "idle_%s.png" % k
 		if ResourceLoader.exists(ip):
-			host.idle[k] = load(ip)
+			host.idle[k] = SpriteFilt.ensure_mips(load(ip))
 		var ep := base + "equip_%s_%s.png" % [wpn, k]
 		if ResourceLoader.exists(ep):
-			host.equip[k] = load(ep)
+			host.equip[k] = SpriteFilt.ensure_mips(load(ep))
 		var frames := _seq(base, "walk_%s" % k)
 		if not frames.is_empty():
 			host.walk[k] = frames
@@ -103,6 +104,7 @@ static func apply_tex(host: Node, tex: Texture2D) -> void:
 	if host.body == null or tex == null:
 		return
 	host.body.texture = tex
+	SpriteFilt.apply_sprite(host.body)
 	var th := float(maxi(1, tex.get_height()))
 	host.body.pixel_size = T.PLAYER_H / th
 	host.body.position.y = T.PLAYER_H * 0.5 + T.FEET_LIFT

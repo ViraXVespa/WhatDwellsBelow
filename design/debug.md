@@ -2,8 +2,8 @@
 
 Status: binding design + live snapshot  
 Read when: changing the secret menu, telemetry, playtest, animation browser, or verification  
-Code: `scripts/combat/debug_menu.gd`, `scripts/debug/playtest.gd`, `scripts/debug/playtest_log.gd`, `telemetry.gd`, `anim_browser.gd`, `smoke.gd`  
-See also: `design/constraints.md`, `design/coverage.md`, `design/ui.md`
+Code: `scripts/combat/debug_menu.gd`, `scripts/combat/debug_menu_settings.gd`, `scripts/world/sprite_filter.gd`, `scripts/debug/playtest.gd`, `scripts/debug/playtest_log.gd`, `telemetry.gd`, `anim_browser.gd`, `smoke.gd`  
+See also: `design/constraints.md`, `design/coverage.md`, `design/ui.md`, `design/camera.md`
 
 ## Secret debug / balance menu
 
@@ -15,6 +15,7 @@ This menu contains:
 - Debug profile Save / Load / Delete / Rename system (unlimited named profiles, free naming/renaming, saved to files by default, persist across live-path sessions)
 - Automated Playtest / AI Player system
 - Animation Browser page (entry MUST exist when this menu is first implemented; full viewer MAY be a stub until Phase 9, and MUST be complete for Demo-Complete)
+- Settings page for in-test system and game options that are not yet approved for general players
 - All other content that was formerly under Pause → System that is not listed in the player System tab
 
 Live also opens with CLI `--wdb-debug`.
@@ -23,7 +24,7 @@ Live also opens with CLI `--wdb-debug`.
 
 Live path: `scripts/combat/debug_menu.gd`. This is current chrome, not a new system.
 
-**Pages.** Four pages in LB / RB order: Values → Profiles → Playtest → Animation Browser. Close (B) sits in the top row but is not a page. The top tab buttons are mouse-clickable and must not take gamepad focus. Title, tabs, and status stay pinned above the scroll so first-open focus cannot hide the tab labels. The active tab is tinted.
+**Pages.** Five pages in LB / RB order: Values → Settings → Profiles → Playtest → Animation Browser. Close (B) sits in the top row but is not a page. The top tab buttons are mouse-clickable and must not take gamepad focus. Title, tabs, and status stay pinned above the scroll so first-open focus cannot hide the tab labels. The active tab is tinted.
 
 **Values (browse / edit).** Values does not use engine SpinBox focus. Opening the page highlights the first full row (label + number field).
 
@@ -34,7 +35,18 @@ Live path: `scripts/combat/debug_menu.gd`. This is current chrome, not a new sys
 - **B** while browsing closes the secret menu (Values is the home page).
 - Fly-out ideals still update from the highlighted variable.
 
-**Other pages.** Profiles and Playtest still use normal button / LineEdit focus. Up / Down moves among those controls.
+**Settings.** Catch-all for in-test display and camera options. Built by `debug_menu_settings.gd`. Changes apply live and persist through `App.save_now()`.
+
+- Camera zoom slider (1.0–2.5)
+- HUD scale slider
+- Sprite filter cycle over all five Godot Sprite3D modes (nearest, nearest+mips, nearest+mips+aniso, linear+mips, linear+mips+aniso)
+- Mip blend Sharp / Smooth (`rendering/textures/default_filters/use_nearest_mipmap_filter`)
+- Mip bias slider (−2..2). Stored and persisted; Sprite3D has no lod-bias hook yet so the picture does not change
+- Save settings button
+
+Linear filters MUST stay on this tab. The player System tab only cycles the three nearest modes.
+
+**Other pages.** Settings, Profiles, and Playtest still use normal button / LineEdit / slider focus. Up / Down moves among those controls.
 
 **Animation Browser tab.** Navigating to that tab (LB / RB or mouse) only rebuilds a confirm prompt. It does not open the full-screen viewer. The first control is **Open Animation Browser**; **A** on that control launches `anim_browser.open_browser()`. **B** on the prompt returns to Values. While the viewer is open, debug-menu LB / RB must not steal model-cycle input. Closing the viewer returns focus to this prompt, not to a hidden tab button.
 

@@ -1,14 +1,14 @@
 # Tunables
 
-Status: suggested starts + live snapshot
-Read when: changing feel, gen size, economy, crystals, or debug defaults
-Code: `scripts/data/balance.gd`, `scripts/data/tunables.gd`
+Status: suggested starts + live snapshot  
+Read when: changing feel, gen size, economy, crystals, or debug defaults  
+Code: `scripts/data/balance.gd`, `scripts/data/tunables.gd`  
 See also: the topic file for the system you are changing
 
-These are recommended starting points for the current live implementation.
-Every value **MUST** be exposed in the debug menu and treated as non-final.
-Suggested starts came from the old GDD Appendix A.
-Live defaults are what `balance.gd` / `tunables.gd` ship today.
+These are recommended starting points for the current live implementation.  
+Every value **MUST** be exposed in the debug menu and treated as non-final.  
+Suggested starts came from the old GDD Appendix A.  
+Live defaults are what `balance.gd` / `tunables.gd` ship today.  
 If you change a live default, update this table in the same slice.
 
 ## Camera / presentation (`tunables.gd`)
@@ -18,8 +18,12 @@ If you change a live default, update this table in the same slice.
 | `CAM_PITCH` | -58 |
 | `CAM_HEIGHT` | 14 |
 | `LOOK_LIFT` | 0.42 |
-| `ZOOM_MIN` / `ZOOM_MAX` | 1.0 / 1.75 |
+| `ZOOM_MIN` / `ZOOM_MAX` | 1.0 / 2.5 |
+| Default `cam_zoom` | 1.75 |
 | `TILE` / `PX` | 1.0 / 64 |
+| Default `sprite_filter` | 2 (nearest + mips + aniso) |
+| `sprite_mip_sharp` | false (smooth mip blend) |
+| `sprite_mip_bias` | 0.0 (stored; Sprite3D has no lod-bias hook yet) |
 | `BITTER_LOOP_DEFAULT` | 15.52 |
 | `PATREON_URL` | https://www.patreon.com/cw/ViraXVespa |
 | `ARCHIVE_ID_FULL_3D` | full_3d_pass |
@@ -153,7 +157,7 @@ If you change a live default, update this table in the same slice.
 
 | Parameter | Suggested start | Notes |
 |-----------|-----------------|-------|
-| Camera zoom range | 1.0 – 1.75 | Persisted in save |
+| Camera zoom range | 1.0 – 2.5 | Persisted in save. Default 1.75 (slider midpoint). |
 | Target first-extraction time | 5–10 min | New player on gamepad |
 | Target floor-6 clear time | 5–10 hours | Competent player; feel target |
 | FPS | 60 minimum | Higher allowed |

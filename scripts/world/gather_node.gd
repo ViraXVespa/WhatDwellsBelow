@@ -1,6 +1,7 @@
 extends Node3D
 
 const Depth := preload("res://scripts/world/depth.gd")
+const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 
 var kind := "mine"
 var hits := 4
@@ -131,12 +132,12 @@ func _visual() -> void:
 	spr.shaded = false
 	spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	var path := "res://assets/sprites/props/tree.png" if kind == "wood" else "res://assets/sprites/props/ore.png"
 	if ResourceLoader.exists(path):
 		spr.texture = load(path)
 		spr.pixel_size = (1.55 if kind == "wood" else 1.05) / float(maxi(1, spr.texture.get_height()))
 	spr.position.y = 0.72 if kind == "wood" else 0.42
+	spr = SpriteFilt.decorate(spr)
 	add_child(spr)
 	Depth.apply(spr, position)
 

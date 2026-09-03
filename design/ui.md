@@ -1,15 +1,15 @@
 # Player UI, HUD, menus, recap
 
-Status: binding design + live snapshot
-Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, or loading
-Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`
-See also: `design/gear-ui.md`, `design/input.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/hud.md`
+Status: binding design + live snapshot  
+Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, or loading  
+Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`  
+See also: `design/gear-ui.md`, `design/input.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/camera.md`
 
 ## UI theme (playable surfaces)
 
 Every player-facing UI and HUD element in the live path MUST be designed with dungeon theming and MUST NOT ship as a default, unskinned, or engine-debug control. This includes the gauntlet strip, pause menu, Extraction Gate UI, Ghost Shop, anvil, Floor Crystal loadout UI, quest UI, Controls Billboard, recap, maps, toasts, title / credit flow, confirmation prompts, and any other surface a normal player can open.
 
-The secret debug menu (including Automated Playtest, profiles, Animation Browser chrome, and raw value editors) MAY use default or lightly skinned engine controls. Appearance there is not a Demo-Complete art requirement.
+The secret debug menu (including Automated Playtest, profiles, Animation Browser chrome, Settings tab, and raw value editors) MAY use default or lightly skinned engine controls. Appearance there is not a Demo-Complete art requirement.
 
 ## HUD – gauntlet strip (mandatory elements and behavior)
 
@@ -30,12 +30,12 @@ The HUD is a persistent horizontal strip that MUST remain visible at all times d
 | Food heal-over-time icon + remaining time | Appears only while a food effect is active |
 | Boss / Floor Guardian / Gate Master HP bar | Appears only while the boss is alive and in range / engaged |
 
-Bag-fullness indicator is explicitly removed and MUST NOT appear.
+Bag-fullness indicator is explicitly removed and MUST NOT appear.  
 All cooldowns MUST show both a visual fill/sweep and be understandable at a glance. Exact pixel positions, colors, and sizes are left to implementation so long as the information hierarchy is preserved and the strip does not obscure critical gameplay.
 
 ## Pause menu
 
-Opened with Menu / Start / Esc. Freezes gameplay.
+Opened with Menu / Start / Esc. Freezes gameplay.  
 Every menu (including this one) MUST open with valid initial focus so it is immediately navigable by gamepad.
 
 Menu bindings are shared through `scripts/ui/menu_pad.gd` (`design/input.md`):
@@ -48,8 +48,9 @@ Exactly three tabs, navigable with LB/RB or equivalent:
 2. Skills – list of the eleven skills with current level, XP bar to next level, and permanent XP total.
 3. System – MUST open focused on the first System control, not the Inventory tab button, and MUST contain every one of the following:
    - Master / Music / SFX volume sliders
-   - Camera zoom slider (1.0–1.75)
-   - HUD scale slider
+   - Camera zoom slider (1.0–2.5, default 1.75). MUST apply live; no restart.
+   - HUD scale slider. MUST apply live.
+   - Sprite filter cycle (on-spec only): Nearest / Nearest + mips / Nearest + mips + aniso. Default is nearest + mips + aniso. Linear modes MUST NOT appear here.
    - Aim-line toggle and opacity slider
    - Presentation mode switcher + Archives browser
    - Control rebinding screen
@@ -58,7 +59,7 @@ Exactly three tabs, navigable with LB/RB or equivalent:
    - “Delete Save Data” with confirmation
    - “Dispel” Avatar button with strong confirmation prompt
 
-The full debug / balance menu is **no longer** present in the Pause Menu.
+The full debug / balance menu is **no longer** present in the Pause Menu. In-test display options that are not approved for players live on the secret debug **Settings** tab (`design/debug.md`).
 
 Placeholdia inventory (same board, opened outside a run) MUST use Loadout option sources: starters, holds, and non-white bank items. Dungeon inventory MAY only list the equipped piece plus bag items of that slot.
 
@@ -137,9 +138,9 @@ Triggered on every death or “Dispel”.
 
 ## Live snapshot — HUD / pause
 
-`hud.gd`: strip top-left, minimap top-right, boss bar when near, toast. Level string uses combat level and parenthetical style level.
-Pause Skills also shows run XP earned this descent.
-Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. System opens focused on Character. Loadout opens focused on **Enter dungeon**.
+`hud.gd`: strip top-left, minimap top-right, boss bar when near, toast. Level string uses combat level and parenthetical style level.  
+Pause Skills also shows run XP earned this descent.  
+Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. System opens focused on Character. Camera zoom and HUD scale write `App.set_zoom` / `App.set_hud_scale` and apply without a restart. Sprite filter cycles `App.set_sprite_filter` over the three nearest modes. Loadout opens focused on **Enter dungeon**.
 
 ## Live snapshot — loading bar (`loader.gd`)
 

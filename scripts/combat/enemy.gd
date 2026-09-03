@@ -9,6 +9,7 @@ const Threat := preload("res://scripts/combat/threat.gd")
 const HpBarS := preload("res://scripts/combat/hp_bar.gd")
 const EnemySetup := preload("res://scripts/combat/enemy_setup.gd")
 const EnemyAI := preload("res://scripts/combat/enemy_ai.gd")
+const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 
 const ST_IDLE := 0
 const ST_CHASE := 1
@@ -83,9 +84,9 @@ func _ready() -> void:
 	spr.shaded = false
 	spr.double_sided = true
 	spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	spr.render_priority = 1
+	spr = SpriteFilt.decorate(spr)
 	add_child(spr)
 	tag = Label3D.new()
 	tag.position = Vector3(0.0, 1.55, 0.0)
