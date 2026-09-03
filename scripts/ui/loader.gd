@@ -48,14 +48,14 @@ func _ready() -> void:
 func begin(heading: String, status: String = "") -> void:
 	open = true
 	visible = true
-	_target = 0.0
-	_shown = 0.0
+	_target = 0.08
+	_shown = 0.04
 	_title.text = heading
 	_status.text = status
-	_pct.text = "0%"
+	_pct.text = "4%"
 	_layout_bar()
 	_fill.position = Vector2.ZERO
-	_fill.size = Vector2(0, _bar_h)
+	_fill.size = Vector2(_bar_w * _shown, _bar_h)
 	if App:
 		App.ui_open = true
 
@@ -66,7 +66,7 @@ func set_status(text: String) -> void:
 
 
 func set_progress(v: float) -> void:
-	_target = clampf(v, 0.0, 1.0)
+	_target = maxf(_target, clampf(v, 0.0, 1.0))
 
 
 func finish() -> void:
@@ -86,9 +86,11 @@ func finish() -> void:
 func _process(delta: float) -> void:
 	if not visible:
 		return
-	_shown = move_toward(_shown, maxf(_shown, _target), maxf(0.35 * delta, absf(_target - _shown) * 8.0 * delta))
+	var gap := maxf(0.0, _target - _shown)
+	var step := maxf(0.85 * delta, gap * 2.4 * delta)
 	if _target >= 0.999:
-		_shown = move_toward(_shown, 1.0, 2.4 * delta)
+		step = maxf(step, 1.6 * delta)
+	_shown = move_toward(_shown, _target, step)
 	_sync_bar()
 
 
