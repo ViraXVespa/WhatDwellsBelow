@@ -1,7 +1,7 @@
 # Edge cases and failure modes
 
 Status: binding design
-Read when: changing death, bag, save, clerks, tools, artifacts, or confirmations
+Read when: changing death, bag, save, Extraction Gates, tools, artifacts, or confirmations
 See also: `design/ui.md`, `design/inventory.md`, `design/save-tech.md`, `design/debug.md`
 
 ## “Dispel” or death on floor 1 with empty bag
@@ -21,10 +21,10 @@ See also: `design/ui.md`, `design/inventory.md`, `design/save-tech.md`, `design/
 - All actions are immediately interrupted.
 - The appropriate death or “Dispel” animation sequence begins with no residual movement, gathering hits, or i-frames carrying over.
 
-## Multiple clerks / shops
+## Multiple Extraction Gates / shops
 
 - Hard limit: maximum one Ghost Shop per floor.
-- Hard limit: maximum three clerks total per floor.
+- Hard limit: three Extraction Gates per floor, each in its own safe room, not near one another.
 - Generation MUST respect these caps.
 
 ## Save corruption or missing save

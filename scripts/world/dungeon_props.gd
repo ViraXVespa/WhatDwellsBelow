@@ -3,29 +3,20 @@ extends RefCounted
 const GatherS := preload("res://scripts/world/gather_node.gd")
 const BreakS := preload("res://scripts/world/breakable.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
+const Gate := preload("res://scripts/world/dungeon_gate.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
 
 
 static func spawn_world(host: Node) -> void:
 	host.counts.clear()
 	host._seed_occupied()
-	var clerk_i := 0
 	for r in host.data.get("rooms", []):
 		var kind := str(r.get("kind", "normal"))
 		if host._near_spawn(host._center_room(r)) and kind != "spawn":
-			if kind == "clerk" or kind == "vein" or kind == "shop":
+			if kind == "vein" or kind == "shop":
 				continue
-		if kind == "clerk":
-			var role := str(r.get("role", ""))
-			if role == "":
-				role = "gather" if clerk_i == 0 else ("misc" if clerk_i == 1 else "patty")
-			clerk_i += 1
-			var cc: Vector2i = host._free_cell(r)
-			var c := SpotS.new()
-			c.setup_clerk(role, host._cell_pos(cc))
-			host.add_child(c)
-			host._mark_cell(cc)
-			host._note("clerk")
+		if kind == "extract_gate":
+			Gate.place(host, r)
 		elif kind == "shop":
 			var sc: Vector2i = host._free_cell(r)
 			if not host._cell_clear(sc, 1):
@@ -83,7 +74,7 @@ static func scatter_rooms(host: Node) -> Array:
 	var out: Array = []
 	for r in host.data.get("rooms", []):
 		var k := str(r.get("kind", "normal"))
-		if k == "spawn" or k == "boss" or k == "clerk" or k == "shop" or k == "puzzle":
+		if k == "spawn" or k == "boss" or k == "extract_gate" or k == "shop" or k == "puzzle":
 			continue
 		if host._near_spawn(host._center_room(r)):
 			continue
@@ -230,16 +221,6 @@ static func place_one(host: Node, kind: String, prefer: Dictionary) -> Vector2i:
 		b.setup("pot", pos)
 		host.add_child(b)
 		host._note("break")
-	elif kind == "clerk_gather":
-		var c := SpotS.new()
-		c.setup_clerk("gather", pos)
-		host.add_child(c)
-		host._note("clerk")
-	elif kind == "clerk_misc":
-		var m := SpotS.new()
-		m.setup_clerk("misc", pos)
-		host.add_child(m)
-		host._note("clerk")
 	elif kind == "campfire":
 		var f := SpotS.new()
 		f.setup("campfire", pos)
@@ -269,15 +250,17 @@ static func ensure_world(host: Node) -> void:
 		place_one(host, "wood", prefer)
 	if int(host.counts.get("break", 0)) < 1:
 		place_one(host, "break", prefer)
-	if int(host.counts.get("clerk", 0)) < 1:
-		place_one(host, "clerk_gather", prefer)
-	var has_misc := false
-	for n in host.get_tree().get_nodes_in_group("interact"):
-		if str(n.get("kind")) == "clerk_misc":
-			has_misc = true
-			break
-	if not has_misc:
-		place_one(host, "clerk_misc", prefer)
+	if int(host.counts.get("extract_gate", 0)) < 3:
+		for r in host.data.get("rooms", []):
+			if int(host.counts.get("extract_gate", 0)) >= 3:
+				break
+			if str(r.get("kind", "")) != "normal":
+				continue
+			if host._near_spawn(host._center_room(r)):
+				continue
+			if int(r.w) < 5 or int(r.y) < 1:
+				continue
+			Gate.place(host, r)
 	if int(host.counts.get("campfire", 0)) < 1:
 		place_one(host, "campfire", prefer)
 	if int(host.counts.get("shrine", 0)) < 1:
@@ -288,7 +271,7 @@ static func ensure_world(host: Node) -> void:
 		var pr := {}
 		for r in host.data.get("rooms", []):
 			var k := str(r.get("kind", ""))
-			if k == "spawn" or k == "boss" or k == "clerk" or k == "shop" or k == "puzzle" or k == "stash" or k == "vein":
+			if k == "spawn" or k == "boss" or k == "extract_gate" or k == "shop" or k == "puzzle" or k == "stash" or k == "vein":
 				continue
 			if host._near_spawn(host._center_room(r)):
 				continue

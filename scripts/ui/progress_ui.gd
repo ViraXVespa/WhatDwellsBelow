@@ -12,6 +12,8 @@ const Anvil := preload("res://scripts/ui/gear_board_anvil.gd")
 var open := false
 var mode := ""
 var shop_spot: Node = null
+var extract_spot: Node = null
+var extract_mailed := false
 var extract_role := "gather"
 var pending := false
 var pending_id := ""
@@ -73,6 +75,10 @@ func _ready() -> void:
 
 
 func close_ui() -> void:
+	if mode == "extract" and extract_mailed and extract_spot and is_instance_valid(extract_spot) and extract_spot.has_method("mark_spent"):
+		extract_spot.mark_spent()
+	extract_spot = null
+	extract_mailed = false
 	if forge_t > 0.0:
 		forge_t = 0.0
 		forge_it = {}
@@ -147,9 +153,11 @@ func open_inventory() -> void:
 	_show()
 
 
-func open_extract(role: String) -> void:
+func open_extract(role: String, spot: Node = null) -> void:
 	mode = "extract"
 	extract_role = role
+	extract_spot = spot
+	extract_mailed = false
 	pending = false
 	_rebuild_extract()
 	_show()
@@ -238,12 +246,16 @@ func _rebuild_extract() -> void:
 
 func _do_send_all() -> void:
 	_st(App.prog.extract_all(extract_role))
+	if App.extracted:
+		extract_mailed = true
 	_rebuild_extract()
 	_show()
 
 
 func _do_send_one(it: Dictionary) -> void:
 	_st(App.prog.extract_one(it, extract_role))
+	if App.extracted:
+		extract_mailed = true
 	_rebuild_extract()
 	_show()
 
@@ -285,7 +297,8 @@ func _confirm(fn: Callable, id := "anon") -> void:
 
 
 func _extract_all() -> void:
-	App.prog.extract_all("patty")
+	_st(App.prog.extract_all("gate"))
+	extract_mailed = true
 
 
 func _process(delta: float) -> void:

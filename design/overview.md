@@ -27,7 +27,7 @@ A complete, production-ready vertical slice that can ship as a free demo. Every 
 2. Loadout selection at the Floor Crystal (including character type, starting weapon, and tool type)
 3. Confirm enter → consciousness-transfer VFX → dungeon at chosen floor
 4. Explore, fight, gather, interact
-5. Extract via clerk or die / voluntarily “Dispel”
+5. Extract via Extraction Gate or die / voluntarily “Dispel”
 6. Recap screen
 7. Return to Placeholdia with wake-up sequence and permanent gains (or losses)
 
@@ -42,7 +42,7 @@ A complete, production-ready vertical slice that can ship as a free demo. Every 
 - Aim-line indicator (tunable, dungeon-only, System-tab toggle + opacity, persisted)
 - Hit-based gathering system for both mining (pickaxe) and woodcutting (hatchet)
 - Eleven skills (Great Axe, Staff, Longbow, Strength, Magic, Ranged, Defense, Hitpoints, Mining, Woodcutting, Smithing) with permanent XP fragments
-- Inventory, equipment slots (including single Tool slot locked to one type per run), forged holds (max 3 per slot), extraction via clerks
+- Inventory, equipment slots (including single Tool slot locked to one type per run), forged holds (max 3 per slot), extraction via Extraction Gates
 - Artifact collections / sets (exactly eight sets, run-only, bonuses displayed under descriptions)
 - Male and female player characters (selectable on first load, switchable later from pause menu) with full animation parity, each with its own complete voice-over set, and exactly 8 directional animations
 - Ghost shop, shrine, campfire, breakables, puzzle elements, stairs, floor crystal
@@ -53,7 +53,7 @@ A complete, production-ready vertical slice that can ship as a free demo. Every 
 - Consciousness-transfer VFX on dungeon enter and wake-up sequence on return to Placeholdia
 - Full HUD, pause menu (with System tab containing aim-line controls), all interaction UIs, recap screen — all dungeon-themed; no default / unskinned player-facing UI
 - Secret debug / balance menu (shoulder-button sequence) containing all tunable values, profile Save/Load, the Automated Playtest / AI Player system, and the Animation Browser
-- Save / load with backup, presentation switcher + Archives (including `full_3d_pass`), 60 FPS minimum
+- Save / load with backup, Archives browser (pinned commits including Full 3D Pass), 60 FPS minimum
 - Debug menu that exposes every balance and generation value
 - Gamepad-first design for all controls, gameplay, and interfaces (every menu opens with valid initial focus)
 
@@ -92,7 +92,7 @@ The player character is a dungeon delver working for a known and trusted guild t
 **Information the Player Receives**
 No mandatory intro cutscene or long exposition is required. The player learns the fantasy through:
 - Short environmental flavor text on signs and the notice board.
-- Receptionist and clerk lines (kept minimal).
+- Receptionist lines (kept minimal). Extraction Gates have no NPC dialogue.
 - Recap screen titles, subtitles, and special case lines (including verge and empty-run variants).
 - The mechanical consequences of death versus successful extraction.
 - Consciousness-transfer VFX when leaving Placeholdia and a wake-up sequence when returning.

@@ -76,6 +76,8 @@ var archives_ui
 var playtest
 var loader
 var _menu_loading := false
+var archive_cancel := false
+var archive_job_pid := -1
 var tel: TelS
 var wake_pending := false
 var saw_stairs := false
@@ -305,6 +307,9 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	Pad.note_event(event)
+	if _menu_loading and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("anim_back")):
+		archive_cancel = true
+		get_viewport().set_input_as_handled()
 
 
 func using_pad() -> bool:

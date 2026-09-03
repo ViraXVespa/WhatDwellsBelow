@@ -206,7 +206,7 @@ static func _scan_dists(near: Array) -> Dictionary:
 		if gather_d < 0.0 and (k == "mine" or k == "wood"):
 			gather_d = d
 			gather_k = k
-		if clerk_d < 0.0 and (k.find("clerk") >= 0 or k == "patty" or k == "receptionist"):
+		if clerk_d < 0.0 and (k == "extract_gate" or k.find("clerk") >= 0 or k == "patty" or k == "receptionist"):
 			clerk_d = d
 	return {"gather_d": gather_d, "gather_k": gather_k, "clerk_d": clerk_d}
 

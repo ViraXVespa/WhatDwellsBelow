@@ -30,7 +30,9 @@ See also: `design/input.md`, `design/combat.md`, `design/art-pipeline.md`
 - Character art is generated and assembled according to the mandatory pipeline in `design/art-pipeline.md`.
 - In-game idle is the directional key still for the facing the player is aiming. It is not an I2V breath loop.
 - Required player **body** states at minimum: `idle` (key still), `idle_to_walk`, `walk`, `walk_to_idle`, attack body clip per weapon class, special body clip per weapon class, gathering body clip per tool class, death, “Dispel”.
-- `idle_to_walk` and `walk_to_idle` MUST exist for every facing. Playback MUST play the start transition when leaving idle into walk and the stop transition when coming to rest, rather than popping between the key still and a mid-stride walk frame.
+- `idle_to_walk` and `walk_to_idle` MUST exist for every facing. Playback MUST play the start transition when leaving idle into walk and a stop transition when coming to rest, rather than popping between the key still and a mid-stride walk frame.
+- Start and stop are a few frames each, not a third of the clip. Walk is one looping stride cycle (both lead feet).
+- The engine tracks which foot is leading in the walk loop. Stopping on the same lead foot that started the step plays `idle_to_walk` reversed; stopping on the opposite lead foot plays `walk_to_idle`.
 - Those start / cycle / stop clips are cut from one walk I2V per facing (`tools/i2v_seeds.py` `--action walk`). They are not separate I2V units unless the User rejects that clip and asks for another pass.
 - Body clips are unarmed. Each weapon and tool is a paper-doll overlay composited onto those clips (`design/art-pipeline.md` §19.4). Do not ship a full baked character animation set per weapon.
 - Male and female player characters MUST maintain full animation parity.
@@ -40,4 +42,4 @@ See also: `design/input.md`, `design/combat.md`, `design/art-pipeline.md`
 
 `PLAYER_BODY = Vector3(0.42, 0.78, 0.32)`, `PLAYER_H = 1.55`, `MOVE_EPS = 0.12`, `WALK_FPS = 8`.  
 `App.character_type` is `"male"` or `"female"`.  
-Live `player_anim.gd` still loads per-weapon baked sheets and a static `equip_*` overlay, and it does not yet play `idle_to_walk` / `walk_to_idle`. That is behind this binding and is not a third system — patch live toward layers + transition states when the User orders that engine slice.
+Live `player_anim.gd` plays unarmed `idle` stills, a short `idle_to_walk`, looping `walk`, and a short stop (`walk_to_idle` or reversed `idle_to_walk` from `loc_foot`) from the locked Bible I2V harvest (`assets/sprites/player/{male,female}/`). Packer (`tools/pack_locomotion.py`) cuts start/stop as the last/first few frames around one self-similar stride loop. Attack / special / gather / death / Dispel still use the older per-weapon baked sheets until those body clips are replaced. Equip overlays remain stats-adjacent carry art and no longer replace the idle still.

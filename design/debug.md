@@ -68,7 +68,7 @@ Implement the following. MAY add a small number of closely related fields if a M
 
 *B. Success-criterion proxies*
 
-- Time to first clerk interaction
+- Time to first Extraction Gate interaction (`clerk_t`)
 - Time to first successful extraction (fresh-start save only)
 - Deaths / “Dispels” before first extraction (fresh-start)
 - Recap XP-drain completed (bool)
@@ -217,5 +217,5 @@ Coverage runner, not a particle system. CLI: `--wdb-phaseN-smoke` for N = 1..9. 
 | p5 | Gather nodes, extract UI, puzzle props |
 | p6 | Artifacts, food/potion, forge, quests |
 | p7 | HUD, pause, debug, recap |
-| p8 | Hub spots, building depth, save backup |
-| p9 | Audio, archives, anim models, playtest hook |
+| p8 | Hub spots, building depth, save backup, archive catalog |
+| p9 | Audio, archive catalog, anim models, playtest hook |

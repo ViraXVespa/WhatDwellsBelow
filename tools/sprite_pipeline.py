@@ -165,7 +165,12 @@ def _fill_pockets(mask: bytearray, distances: list[float], w: int, h: int) -> by
     return mask
 
 
-def wand_mask(im: Image.Image, distances: list[float], bg: tuple[int, int, int]) -> bytearray:
+def wand_mask(
+    im: Image.Image,
+    distances: list[float],
+    bg: tuple[int, int, int],
+    spill_flood: bool = True,
+) -> bytearray:
     """8-connected wand from the border, including dark magenta spill."""
     px = im.load()
     w, h = im.size
@@ -178,7 +183,11 @@ def wand_mask(im: Image.Image, distances: list[float], bg: tuple[int, int, int])
         if distances[i] <= WAND_DIST:
             return True
         r, g, b, a = px[x, y]
-        return a == 0 or _is_spill(r, g, b, bg)
+        if a == 0:
+            return True
+        if spill_flood:
+            return _is_spill(r, g, b, bg)
+        return False
 
     def seed(x: int, y: int) -> None:
         i = y * w + x
@@ -293,14 +302,19 @@ def _eat_magenta_spill(im: Image.Image, bg: tuple[int, int, int]) -> Image.Image
     return im
 
 
-def key_to_alpha(im: Image.Image) -> Image.Image:
-    """Outside wand deletes the plate; spill walk + invert-C2A eat the pink lip."""
+def key_to_alpha(im: Image.Image, spill_flood: bool = True) -> Image.Image:
+    """Outside wand deletes the plate; spill walk + invert-C2A eat the pink lip.
+
+    Stills with an exact #FF00FF plate keep spill_flood on. Video extracts should
+    plate-remap first, then pass spill_flood=False so compressed maroon / hair is
+    not treated as plate.
+    """
     im = im.convert("RGBA")
     px = im.load()
     w, h = im.size
     bg = sample_chroma(im)
     distances = _distances(im, bg)
-    mask = wand_mask(im, distances, bg)
+    mask = wand_mask(im, distances, bg, spill_flood=spill_flood)
     for y in range(h):
         row = y * w
         for x in range(w):
@@ -322,8 +336,8 @@ def range_key(im: Image.Image) -> Image.Image:
     return keyed
 
 
-def flatten_magenta_to_alpha(im: Image.Image) -> Image.Image:
-    return key_to_alpha(im)
+def flatten_magenta_to_alpha(im: Image.Image, spill_flood: bool = True) -> Image.Image:
+    return key_to_alpha(im, spill_flood=spill_flood)
 
 
 def split_equal_3x3(im: Image.Image) -> list[Image.Image]:
@@ -350,8 +364,15 @@ CELL_NAMES = [
 ]
 
 
-def fit_canvas(im: Image.Image, canvas: int = CANVAS, baseline: int | None = None) -> Image.Image:
-    im = flatten_magenta_to_alpha(im)
+def fit_canvas(
+    im: Image.Image,
+    canvas: int = CANVAS,
+    baseline: int | None = None,
+    key: bool = True,
+    spill_flood: bool = True,
+) -> Image.Image:
+    if key:
+        im = flatten_magenta_to_alpha(im, spill_flood=spill_flood)
     bbox = im.getbbox()
     if bbox is None:
         return Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))

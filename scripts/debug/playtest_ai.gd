@@ -118,8 +118,10 @@ static func _usable_local(pt: Node, p: Node, lim: float) -> Node:
 static func _wants_clerk(pt: Node, n: Node) -> bool:
 	if n == null or not is_instance_valid(n) or Util._banned(pt, n):
 		return false
+	if bool(n.get("used")):
+		return false
 	var k: String = str(n.get("kind"))
-	if k.find("clerk") < 0 and k != "patty" and k != "receptionist":
+	if k != "extract_gate" and k.find("clerk") < 0 and k != "patty" and k != "receptionist":
 		return false
 	if k.find("gather") >= 0:
 		return int(pt._gather_cargo()) > 0
@@ -214,7 +216,7 @@ static func think(pt: Node, p: Node, delta: float) -> void:
 			hold = null
 		elif _mail_if_close(pt, p, hold):
 			return
-		elif str(hold.get("kind")).find("clerk") >= 0 and not _wants_clerk(pt, hold):
+		elif (str(hold.get("kind")) == "extract_gate" or str(hold.get("kind")).find("clerk") >= 0) and not _wants_clerk(pt, hold):
 			_done_with_clerk(pt, hold)
 			hold = null
 		elif _is_junk(pt, hold) or not Util.can_use(pt, hold):

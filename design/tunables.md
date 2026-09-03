@@ -24,6 +24,7 @@ If you change a live default, update this table in the same slice.
 | `PATREON_URL` | https://www.patreon.com/cw/ViraXVespa |
 | `ARCHIVE_ID_FULL_3D` | full_3d_pass |
 | `ARCHIVE_LABEL_FULL_3D` | Full 3D Pass |
+| Archive catalog | `scripts/data/archive_catalog.json` |
 
 ## Movement and combat
 
@@ -83,7 +84,7 @@ If you change a live default, update this table in the same slice.
 | Room min / max | — | 5 / 9 | |
 | Extra loops | — | 8 | MST + extra loops |
 | Fog of war reveal radius | 5 tiles | 5 | Visited tiles stay revealed |
-| Max clerks per floor | 3 | 3 | |
+| Max Extraction Gates per floor (`max_clerks`) | 3 | 3 | |
 | Ghost shop chance | ~33 % | 0.33 | Always in safe room |
 | Named monster rate | ~1 every 3 floors | 3 | |
 | Flee events per full clear | Average 2 | 2 | Small speed boost on fleeing enemy |

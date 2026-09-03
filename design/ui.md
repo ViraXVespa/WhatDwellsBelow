@@ -7,7 +7,7 @@ See also: `design/gear-ui.md`, `design/input.md`, `design/debug.md`, `design/inv
 
 ## UI theme (playable surfaces)
 
-Every player-facing UI and HUD element in the live path MUST be designed with dungeon theming and MUST NOT ship as a default, unskinned, or engine-debug control. This includes the gauntlet strip, pause menu, clerk / extraction UI, Ghost Shop, anvil, Floor Crystal loadout UI, quest UI, Controls Billboard, recap, maps, toasts, title / credit flow, confirmation prompts, and any other surface a normal player can open.
+Every player-facing UI and HUD element in the live path MUST be designed with dungeon theming and MUST NOT ship as a default, unskinned, or engine-debug control. This includes the gauntlet strip, pause menu, Extraction Gate UI, Ghost Shop, anvil, Floor Crystal loadout UI, quest UI, Controls Billboard, recap, maps, toasts, title / credit flow, confirmation prompts, and any other surface a normal player can open.
 
 The secret debug menu (including Automated Playtest, profiles, Animation Browser chrome, and raw value editors) MAY use default or lightly skinned engine controls. Appearance there is not a Demo-Complete art requirement.
 
@@ -62,9 +62,9 @@ The full debug / balance menu is **no longer** present in the Pause Menu.
 
 Placeholdia inventory (same board, opened outside a run) MUST use Loadout option sources: starters, holds, and non-white bank items. Dungeon inventory MAY only list the equipped piece plus bag items of that slot.
 
-## Extraction / Clerk UI
+## Extraction Gate UI
 
-- Opens on interact with any clerk.
+- Opens on interact with an active Extraction Gate.
 - Shows a clear, scrollable list of every item currently in the player’s bag and equipped slots that can be extracted.
 - Player can select individual items or use a “Send All” option.
 - Confirmation step required before items are removed from the run and marked as banked.
@@ -125,7 +125,7 @@ Triggered on every death or “Dispel”.
 
 ## Minimap and large map
 
-- Small minimap on HUD shows only visited tiles + important markers (stairs, crystal, clerks, shop, player).
+- Small minimap on HUD shows only visited tiles + important markers (stairs, crystal, Extraction Gates, shop, player).
 - View / Back button opens a large full-screen map overlay. Gameplay continues underneath.
 - Fog of war and visited tracking follow the rules in `design/dungeon.md`.
 

@@ -66,7 +66,7 @@ Flee event occurs an average of 2 times per floor on a full clear: after the gro
 
 If the player remains idle too long outside a safe room, or stops revealing new map area for a tunable duration, additional enemies MUST spawn around the player.
 
-- MUST NOT spawn inside safe rooms (clerk, ghost shop, puzzle).
+- MUST NOT spawn inside safe rooms (Extraction Gate, ghost shop, puzzle).
 - Idle timer, no-reveal timer, spawn count, and spawn radius are tunable via the secret debug menu.
 - Purpose: the dungeon stays reactive if the player camps or stalls exploration.
 

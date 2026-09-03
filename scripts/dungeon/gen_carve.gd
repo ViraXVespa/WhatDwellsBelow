@@ -158,10 +158,8 @@ static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArra
 			if rng.randf() < 0.3:
 				kind = "stash"
 			elif rng.randf() < 0.18:
-				kind = "clerk"
+				kind = "stash"
 			var spur := {"x": last.x, "y": last.y, "w": 3, "h": 3, "kind": kind}
-			if kind == "clerk":
-				spur["role"] = "patty"
 			rooms.append(spur)
 			carve_room(grid, w, h, spur)
 		added += 1

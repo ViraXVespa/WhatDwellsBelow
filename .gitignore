@@ -5,6 +5,11 @@
 export_credentials.cfg
 export_credentials.cfg.uid
 
+# Commit-linked archive checkouts and Pages preview dumps
+.archive_worktrees/
+_pages/
+docs/archives/
+
 
 # Local scratch from asset processing
 _src/

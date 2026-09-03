@@ -54,7 +54,7 @@ static func prop_cell(pt: Node, c: Vector2i) -> bool:
 		if n == null or not is_instance_valid(n):
 			continue
 		var k: String = str(n.get("kind"))
-		if k.ends_with("chest") or k.begins_with("clerk") or k.find("patty") >= 0 or k.find("misc") >= 0:
+		if k.ends_with("chest") or k == "extract_gate" or k.begins_with("clerk") or k.find("patty") >= 0 or k.find("misc") >= 0:
 			if pt._cell_of_node(n) == c:
 				return true
 	for n2: Node in tree.get_nodes_in_group("gather"):

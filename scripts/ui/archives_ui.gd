@@ -3,6 +3,8 @@ extends CanvasLayer
 ## Pause / title Archives browser. Section 20 layout.
 
 const T := preload("res://scripts/data/tunables.gd")
+const Cat := preload("res://scripts/data/archives_catalog.gd")
+const Docs := preload("res://scripts/data/archives_docs.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 
 var open := false
@@ -14,6 +16,10 @@ var info_box: VBoxContainer
 var status: Label
 var focus_btn: Button
 var entries: Array = []
+var doc_cache := {}
+var http: HTTPRequest
+var http_key := ""
+var http_busy := false
 
 
 func _ready() -> void:
@@ -59,6 +65,10 @@ func _ready() -> void:
 	status.position = Vector2(192, 920)
 	status.size = Vector2(1520, 40)
 	add_child(status)
+	http = HTTPRequest.new()
+	http.timeout = 12.0
+	http.request_completed.connect(_http_done)
+	add_child(http)
 
 
 func show_browser() -> void:
@@ -145,7 +155,7 @@ func _docs_panel() -> void:
 	for i in docs.size():
 		var name := str(docs[i])
 		var ii := i
-		var b := ThemeS.btn(name, func(): doc_i = ii; mode = "read"; _rebuild())
+		var b := ThemeS.btn(Docs.display_name(name), func(): doc_i = ii; mode = "read"; _rebuild())
 		if focus_btn == null:
 			focus_btn = b
 		info_box.add_child(b)
@@ -156,8 +166,8 @@ func _read_panel() -> void:
 	var e := _cur()
 	var docs := _docs_of(e)
 	var name := str(docs[doc_i]) if doc_i >= 0 and doc_i < docs.size() else ""
-	info_box.add_child(ThemeS.lab(name, 24, Color(0.95, 0.86, 0.55)))
-	info_box.add_child(ThemeS.lab(_read_doc(str(e.id), name), 16, Color(0.86, 0.82, 0.74)))
+	info_box.add_child(ThemeS.lab(Docs.display_name(name), 24, Color(0.95, 0.86, 0.55)))
+	info_box.add_child(ThemeS.lab(_read_doc(str(e.get("id", "")), name), 16, Color(0.86, 0.82, 0.74)))
 	if focus_btn == null:
 		focus_btn = ThemeS.btn("Back to documents  (B)", func(): mode = "docs"; _rebuild())
 		info_box.add_child(focus_btn)
@@ -184,27 +194,41 @@ func _play() -> void:
 
 
 func _docs_of(e: Dictionary) -> PackedStringArray:
-	var raw: Variant = e.get("docs", PackedStringArray())
-	var docs := PackedStringArray()
-	if raw is PackedStringArray:
-		return raw
-	if raw is Array:
-		for x in raw:
-			docs.append(str(x))
-	return docs
+	return Docs.names(e)
 
 
 func _read_doc(id: String, name: String) -> String:
 	if name == "":
 		return ""
-	var root := ProjectSettings.globalize_path("res://").trim_suffix("/")
-	var path := root.path_join("archives").path_join(id).path_join(name)
-	if not FileAccess.file_exists(path):
-		return "(missing)"
-	var t := FileAccess.get_file_as_string(path)
-	if t.length() > 4000:
-		return t.substr(0, 4000) + "\n…"
-	return t
+	var key := "%s:%s" % [id, name]
+	if doc_cache.has(key):
+		return str(doc_cache[key])
+	var e := _cur()
+	var t := Docs.read_now(e, name)
+	if t != "":
+		doc_cache[key] = t
+		return t
+	if OS.has_feature("web") and http and not http_busy:
+		var url := Cat.raw_doc_url(e, name)
+		if url != "":
+			http_key = key
+			http_busy = true
+			http.request(url)
+			return "Loading…"
+	return "(missing)"
+
+
+func _http_done(_result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	http_busy = false
+	var key := http_key
+	http_key = ""
+	var text := "(missing)"
+	if code == 200 and not body.is_empty():
+		text = Docs.clip(body.get_string_from_utf8())
+	if key != "":
+		doc_cache[key] = text
+	if open and mode == "read":
+		_rebuild()
 
 
 func _st(msg: String) -> void:

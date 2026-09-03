@@ -12,12 +12,13 @@ It is not one Game Design Document.
 ## How to use
 
 1. Agents read `design/protocol.md` and `design/constraints.md` first.  
-2. Open only the topic files that match the requested work.  
-3. Use `design/tunables.md` for numbers.  
-4. Use the code map below for live scripts.  
-5. After a behavior change, update the matching topic file in the same slice.
+2. On a fresh Grok Build instance after a gap, also read `design/sessions.md` (leave-off + log), then inspect git / the live tree — the User works between sessions.  
+3. Open only the topic files that match the requested work.  
+4. Use `design/tunables.md` for numbers.  
+5. Use the code map below for live scripts.  
+6. After a behavior change, update the matching topic file in the same slice. End of a Grok Build session: update `design/sessions.md`.
 
-Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live in `tools/i2v_seeds.py`. Off-magenta plates go through `tools/plate_remap.py` before I2V.
+Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live in `tools/i2v_seeds.py`. Off-magenta plates go through `tools/plate_remap.py` before I2V. I2V and complex animation packing stay in Grok Build sessions unless the User says otherwise.
 
 ## Document kinds
 
@@ -32,6 +33,7 @@ Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live 
 | When the work is about… | File | Old GDD home |
 |-------------------------|------|----------------|
 | Agent workflow | `protocol.md` | Front matter |
+| Grok Build session leave-off + log | `sessions.md` | — |
 | Must / must-not, checklist | `constraints.md` | Hard constraints, success, App. B |
 | Vision, scope, lore | `overview.md` | §§1–3 |
 | Gamepad, KB/M, web pad, menu binds | `input.md` | §4 input |
@@ -53,7 +55,7 @@ Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live 
 | Failure modes | `edge-cases.md` | §17 |
 | Phase 1–9 checklist | `coverage.md` | §18 |
 | Sprite / paper-doll pipeline | `art-pipeline.md` | §19, App. C–D |
-| Frozen archives | `archives.md` | §20 |
+| Pinned archive commits | `archives.md` | §20 |
 | Suggested starts + live defaults | `tunables.md` | App. A + live `balance.gd` |
 
 ## Code map (live path)
@@ -75,7 +77,7 @@ Every live `scripts/**/*.gd` file must stay under **10KB**. Facades keep the ori
 | Input | `scripts/input/binds.gd`, `pad.gd`, `scripts/web_pad.gd`, `scripts/ui/menu_pad.gd` |
 | Debug | `scripts/combat/debug_menu.gd`; `scripts/debug/playtest.gd` extends `playtest_api.gd` + `playtest_ai.gd`, `playtest_nav.gd`, `playtest_los.gd`, `playtest_path.gd`, `playtest_goals.gd`, `playtest_sim.gd`, `playtest_recs.gd`; `smoke.gd` + `smoke_early.gd`, `smoke_late.gd`, `smoke_p5.gd`, `smoke_p6.gd`, `smoke_p7.gd`, `smoke_p8.gd`, `smoke_p9.gd`, `smoke_p79.gd`; `anim_browser.gd`, `telemetry.gd` |
 | Audio | `scripts/audio/music.gd`, `scripts/combat/sfx.gd` |
-| Archives UI | `scripts/ui/archives_ui.gd`, `scripts/ui/present.gd` |
+| Archives UI | `scripts/ui/archives_ui.gd`, `scripts/data/archives_catalog.gd`, `scripts/data/archives_launch.gd`, `scripts/data/archives_docs.gd`, `scripts/data/archive_catalog.json` |
 | Sprite tools | `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/process_*.py`, `tools/pack_*.py` |
 
 Public entry points that must not change when a helper is split: `App.playtest`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.

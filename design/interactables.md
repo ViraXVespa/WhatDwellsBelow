@@ -1,7 +1,7 @@
 # Interactables and world objects
 
 Status: binding design
-Read when: changing gathering, clerks, shops, shrines, puzzles, or crystals
+Read when: changing gathering, Extraction Gates, shops, shrines, puzzles, or crystals
 Code: `scripts/world/gather_node.gd`, `breakable.gd`, `interact.gd`, `floor_crystal.gd`, `crystal_net.gd`, `pickup.gd`, `dungeon_props.gd`
 See also: `design/inventory.md`, `design/dungeon.md`, `design/ui.md`
 
@@ -30,11 +30,15 @@ See also: `design/inventory.md`, `design/dungeon.md`, `design/ui.md`
 - Chance to drop gold and/or an HP orb (walk-over pickup).
 - Clear smash VFX and SFX required.
 
-## Clerks
+## Extraction Gates
 
-- Provide the extraction / mailing interface.
-- Dialogue is minimal; the main interaction is a clean, TV-readable list of items the player can send back to the surface.
-- Maximum three clerks per floor.
+- Provide the extraction / mailing interface. There are no in-dungeon clerks.
+- Each gate is a mechanical wall fixture (microwave-like housing with a portal viewport) built into a **north wall**, three wall tiles wide. Only that facing ships.
+- Three gates per floor. Each sits in its own enemy-free safe room. Rooms spawn in different areas of the floor and MUST NOT be near one another.
+- The player may extract any mail-legal goods at any gate (ore, wood, root, gold, and bag items). Artifacts and forged holds still cannot be mailed.
+- Dialogue is minimal; the main interaction is a clean, TV-readable list.
+- A gate becomes inactive after the extract menu closes **if anything was mailed** that visit. Cancel with nothing sent: the gate stays active.
+- Inactive: lamps off, viewport sealed by dungeon wall, banner reads INACTIVE. Active and inactive share the same metal shading so later world lighting can apply to both.
 
 ## Ghost Shop
 

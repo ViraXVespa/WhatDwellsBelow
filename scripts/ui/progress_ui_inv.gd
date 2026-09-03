@@ -40,11 +40,11 @@ static func inv_act(ui, uid: int) -> void:
 
 static func rebuild_extract(ui) -> void:
 	ui._clear()
-	var title := "Gather Clerk"
+	var title := "Extraction Gate"
 	if ui.extract_role == "misc":
-		title = "Misc Clerk"
-	elif ui.extract_role == "patty":
-		title = "Packmule Patty"
+		title = "Extraction Gate"
+	elif ui.extract_role == "gather":
+		title = "Extraction Gate"
 	ui.box.add_child(ThemeS.lab(title, 32, Color(0.95, 0.82, 0.5)))
 	ui.box.add_child(ThemeS.lab("Mail goods to the surface. Artifacts stay with you (run-only).", 18, Color(0.82, 0.76, 0.66)))
 	ui.status = ThemeS.lab("A to select. Confirm with A again. B leaves.", 20, Color(0.95, 0.8, 0.45))

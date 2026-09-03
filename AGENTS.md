@@ -15,20 +15,21 @@ If unsure: ask once, then use **web / chat**. A missed full-file emit is worse t
 
 Design lives in `design/`. There is no single GDD. `Demo_GDD.md` is only an index.
 
-Fresh instance: read `design/protocol.md` and `design/constraints.md`, then only the topic files for the requested work. Inspect the live tree. Do not start by archiving or rewriting.
+Fresh instance: read `design/protocol.md` and `design/constraints.md`, then only the topic files for the requested work. After a gap, read `design/sessions.md` and inspect git / the live tree (the User works between Grok Build weeks). Do not start by archiving or rewriting.
 
 | Need | File |
 |------|------|
 | Workflow | `design/protocol.md` |
 | Must / must-not | `design/constraints.md` |
 | Topic + code map | `design/README.md` |
+| Session leave-off + log | `design/sessions.md` |
 | Numbers | `design/tunables.md` |
 
 **Binding design** is required behavior. **Live snapshot** is current code. If they disagree, patch live toward binding or ask. Do not invent a third system.
 
 Shipping code is the repo root (`project.godot`, `scenes/`, `scripts/`, `assets/`). Patch it in place.
 
-`archives/classic_2d/`, `archives/art_experiment/`, and `archives/full_3d_pass/` are frozen. Do not overwrite them, copy them over live, or create a new archive unless the User asks.
+Archived builds are pinned commits in `scripts/data/archive_catalog.json`. Do not copy snapshot project trees into `archives/`, onto live, or create a new archive unless the User asks.
 
 Implement only what design and the User require. Do not invent skills, rarities, hub upgrades, meta-progression, or co-op. Open numbers: invent coherent starts, expose them in the secret debug menu, record in `design/tunables.md`. Ambiguity: ask.
 
@@ -47,7 +48,7 @@ If a file is over, or an edit would push it over:
 3. Helpers are `static func` with `host` / `pt` / `ui` / `p` first.
 4. No circular `preload()`. Use `load()` on one side or put shared state on the host.
 5. Godot 4 analyzes a parent script alone. Do not call methods that exist only on a child; call the helper module from the parent.
-6. Never split `archives/`.
+6. Never split files under a pinned archive commit. Slim `archives/docs/` copies are live-tree museum text only.
 7. Split the largest first; stop after a batch so the User can paste and compile.
 
 ## Web / chat

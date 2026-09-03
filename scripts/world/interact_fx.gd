@@ -75,12 +75,8 @@ static func tex_path(kind: String) -> String:
 			return "res://assets/sprites/props/campfire.png"
 		"shop":
 			return "res://assets/sprites/npcs/shopkeep.png"
-		"clerk_gather":
-			return "res://assets/sprites/npcs/miner.png"
-		"clerk_misc":
-			return "res://assets/sprites/npcs/vendor.png"
-		"clerk_patty":
-			return "res://assets/sprites/npcs/patty.png"
+		"extract_gate":
+			return "res://assets/sprites/props/extract_gate_on.png"
 		"lever":
 			return "res://assets/sprites/props/lever.png"
 		"chest", "base_chest", "puzzle_chest":
@@ -89,6 +85,8 @@ static func tex_path(kind: String) -> String:
 
 
 static func spr_h(kind: String) -> float:
+	if kind == "extract_gate":
+		return 1.7
 	if kind.begins_with("clerk") or kind == "shop" or kind == "receptionist" or kind == "vendor":
 		return 1.55
 	if kind == "campfire":
@@ -99,6 +97,8 @@ static func spr_h(kind: String) -> float:
 
 
 static func spr_y(kind: String) -> float:
+	if kind == "extract_gate":
+		return 0.95
 	if kind.begins_with("clerk") or kind == "shop" or kind == "receptionist" or kind == "vendor":
 		return 0.78
 	if kind == "plate":
@@ -115,11 +115,23 @@ static func sprite(host: Node3D, path: String, h: float, y: float) -> void:
 	spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	if ResourceLoader.exists(path):
 		spr.texture = load(path)
-		spr.pixel_size = h / float(maxi(1, spr.texture.get_height()))
+		if host.kind == "extract_gate":
+			spr.pixel_size = 3.0 / float(maxi(1, spr.texture.get_width()))
+		else:
+			spr.pixel_size = h / float(maxi(1, spr.texture.get_height()))
 	spr.position.y = y
 	host.spr = spr
 	host.add_child(spr)
 	Depth.apply(spr, host.position)
+
+
+static func set_extract_tex(host: Node3D, on: bool) -> void:
+	if host.spr == null:
+		return
+	var path := "res://assets/sprites/props/extract_gate_on.png" if on else "res://assets/sprites/props/extract_gate_off.png"
+	if ResourceLoader.exists(path):
+		host.spr.texture = load(path)
+		host.spr.pixel_size = 3.0 / float(maxi(1, host.spr.texture.get_width()))
 
 
 static func add_label(host: Node3D) -> void:
@@ -127,6 +139,8 @@ static func add_label(host: Node3D) -> void:
 	label.position = Vector3(0.0, 1.55, 0.0)
 	if host.kind == "plate":
 		label.position.y = 0.7
+	elif host.kind == "extract_gate":
+		label.position.y = 2.05
 	label.font_size = 36
 	label.outline_size = 8
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED

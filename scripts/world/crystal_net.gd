@@ -101,7 +101,7 @@ static func place_floor(host: Node) -> void:
 	var by_cl: Dictionary = {}
 	for r: Variant in host.data.get("rooms", []):
 		var kind := str(r.get("kind", "normal"))
-		if kind == "spawn" or kind == "boss" or kind == "clerk" or kind == "shop" or kind == "puzzle" or kind == "stash" or kind == "vein":
+		if kind == "spawn" or kind == "boss" or kind == "extract_gate" or kind == "shop" or kind == "puzzle" or kind == "stash" or kind == "vein":
 			continue
 		var c: Vector2i = host._center_room(r)
 		if not host._is_floor_cell(c):

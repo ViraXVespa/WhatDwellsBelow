@@ -1,6 +1,7 @@
 extends Object
 
 const StoreS := preload("res://scripts/data/save_store.gd")
+const CatS := preload("res://scripts/data/archives_catalog.gd")
 
 static var enter_flag: bool = false
 
@@ -69,11 +70,10 @@ static func p8(host: Node) -> void:
 	var fr_str: float = float(App.prog.skills_perm.get("str", 0))
 	printerr("P8: playtest_isolated=" + str(pt_str >= 400.0 and fr_str < 50.0 and StoreS.dir_for("fresh") != StoreS.dir_for("live")))
 	printerr("P8: live_dir=" + StoreS.dir_for("live") + " fresh_dir=" + StoreS.dir_for("fresh") + " prog_dir=" + StoreS.dir_for("progressed"))
-	var root: String = ProjectSettings.globalize_path("res://").trim_suffix("/")
-	var arch: String = root.path_join("archives")
-	printerr("P8: arch_full=" + str(DirAccess.dir_exists_absolute(arch.path_join("full_3d_pass"))))
-	printerr("P8: arch_classic=" + str(DirAccess.dir_exists_absolute(arch.path_join("classic_2d"))))
-	printerr("P8: arch_art=" + str(DirAccess.dir_exists_absolute(arch.path_join("art_experiment"))))
+	printerr("P8: arch_n=" + str(CatS.all().size()))
+	printerr("P8: arch_classic=" + str(not CatS.by_id("classic_2d").is_empty()))
+	printerr("P8: arch_art=" + str(not CatS.by_id("art_experiment").is_empty()))
+	printerr("P8: arch_full=" + str(not CatS.by_id("full_3d_pass").is_empty()))
 	App.wake_pending = true
 	if App.present and App.present.has_method("play_wake"):
 		App.present.play_wake()
@@ -90,7 +90,7 @@ static func p8(host: Node) -> void:
 	printerr("P8: dumpster=" + dump_txt)
 	printerr("P8: dumpster_ok=" + str(dump_txt.find("Career upgrade pending") >= 0))
 	printerr("P8: save_ok=" + str(how == "backup"))
-	printerr("P8: archives_ok=" + str(DirAccess.dir_exists_absolute(arch.path_join("full_3d_pass"))))
+	printerr("P8: archives_ok=" + str(CatS.ok()))
 	tree(host).create_timer(1.6, true, false, true).timeout.connect(func():
 		printerr("P8: enter_cb=" + str(enter_flag))
 		StoreS.wipe_slot("live")

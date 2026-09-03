@@ -4,10 +4,14 @@ const ProgressQuest := preload("res://scripts/data/progress_quest.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
 
 
+static func _full_mail(role: String) -> bool:
+	return role == "" or role == "patty" or role == "gate"
+
+
 static func extractable(p: Object, role: String = "") -> Array:
 	var out: Array = []
-	var gather: bool = role == "" or role == "gather" or role == "patty"
-	var misc: bool = role == "" or role == "misc" or role == "patty"
+	var gather: bool = _full_mail(role) or role == "gather"
+	var misc: bool = _full_mail(role) or role == "misc"
 	if gather:
 		if App.ore > 0:
 			out.append({"kind": "ore", "name": "Ore", "n": App.ore})
@@ -40,7 +44,7 @@ static func extract_all(p: Object, role: String) -> String:
 	var w: int = 0
 	var r: int = 0
 	var items: int = 0
-	if role == "gather" or role == "patty":
+	if _full_mail(role) or role == "gather":
 		o = App.ore
 		w = App.wood
 		r = p.root
@@ -54,7 +58,7 @@ static func extract_all(p: Object, role: String) -> String:
 		p.mailed_ore += o
 		p.mailed_wood += w
 		p.mailed_root += r
-	if role == "misc" or role == "patty":
+	if _full_mail(role) or role == "misc":
 		g = App.gold
 		App.bank_gold += App.gold
 		App.gold = 0
@@ -78,14 +82,14 @@ static func extract_all(p: Object, role: String) -> String:
 
 static func extract_one(p: Object, it: Dictionary, role: String) -> String:
 	var k: String = str(it.get("kind", ""))
-	if k == "gold" and (role == "misc" or role == "patty"):
+	if k == "gold" and (_full_mail(role) or role == "misc"):
 		App.bank_gold += App.gold
 		var ng: int = App.gold
 		App.gold = 0
 		App.extracted = true
 		p.mailed_gold += ng
 		return "Sent %dg." % ng
-	if k == "ore" and (role == "gather" or role == "patty"):
+	if k == "ore" and (_full_mail(role) or role == "gather"):
 		ProgressQuest.quest_extract_ore(p, App.ore)
 		App.bank_ore += App.ore
 		var no: int = App.ore
@@ -93,14 +97,14 @@ static func extract_one(p: Object, it: Dictionary, role: String) -> String:
 		App.extracted = true
 		p.mailed_ore += no
 		return "Sent %d ore." % no
-	if k == "wood" and (role == "gather" or role == "patty"):
+	if k == "wood" and (_full_mail(role) or role == "gather"):
 		App.bank_wood += App.wood
 		var nw: int = App.wood
 		App.wood = 0
 		App.extracted = true
 		p.mailed_wood += nw
 		return "Sent %d wood." % nw
-	if k == "root" and (role == "gather" or role == "patty"):
+	if k == "root" and (_full_mail(role) or role == "gather"):
 		var nr: int = p.root
 		App.bank_root += p.root
 		p.root = 0
@@ -108,7 +112,7 @@ static func extract_one(p: Object, it: Dictionary, role: String) -> String:
 		p.mailed_root += nr
 		return "Sent %d root." % nr
 	if role == "gather":
-		return "This clerk takes ore, wood, and root."
+		return "This gate takes ore, wood, and root."
 	if it.has("from_slot"):
 		return "Unequip that first."
 	if it.has("uid"):

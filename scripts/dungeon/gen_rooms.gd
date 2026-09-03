@@ -120,6 +120,57 @@ static func shuffle_i(rng: RandomNumberGenerator, arr: Array) -> void:
 		arr[j] = tmp
 
 
+static func assign_extract_gates(rooms: Array, rng: RandomNumberGenerator, bal: Object) -> void:
+	var want := maxi(1, mini(3, int(bal.get("max_clerks"))))
+	var spawn: Vector2i = Vector2i.ZERO
+	var sr: Dictionary = find_kind(rooms, "spawn")
+	if not sr.is_empty():
+		spawn = Carve.center(sr)
+	var cands: Array = []
+	for i in rooms.size():
+		if str(rooms[i].kind) != "normal":
+			continue
+		if int(rooms[i].w) < 5 or int(rooms[i].h) < 4 or int(rooms[i].y) < 1:
+			continue
+		cands.append(i)
+	shuffle_i(rng, cands)
+	var picked: Array = []
+	var min_sep := 28
+	for _n in want:
+		var best := -1
+		var best_s := -1.0
+		for i in cands:
+			if picked.has(i):
+				continue
+			var c: Vector2i = Carve.center(rooms[i])
+			var s := float(absi(c.x - spawn.x) + absi(c.y - spawn.y))
+			var ok := true
+			for j in picked:
+				var d: Vector2i = Carve.center(rooms[j])
+				var sep := absi(c.x - d.x) + absi(c.y - d.y)
+				if sep < min_sep:
+					ok = false
+					break
+				s = minf(s, float(sep))
+			if ok and s > best_s:
+				best_s = s
+				best = i
+		if best < 0:
+			for i in cands:
+				if not picked.has(i):
+					best = i
+					break
+		if best < 0:
+			break
+		picked.append(best)
+		rooms[best].kind = "extract_gate"
+	if picked.is_empty():
+		for r in rooms:
+			if str(r.kind) == "normal" and int(r.w) >= 5 and int(r.y) >= 1:
+				r.kind = "extract_gate"
+				break
+
+
 static func assign_kinds(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, bal: Object) -> void:
 	var spawn_i := 0
 	var best_s := 1 << 30
@@ -179,39 +230,7 @@ static func assign_kinds(rng: RandomNumberGenerator, grid: PackedByteArray, w: i
 		rooms[i].kind = "vein"
 		rooms[i].vein = str(vein_types[veins % vein_types.size()])
 		veins += 1
-	var clerks := 0
-	var max_clerks := maxi(1, mini(3, int(bal.get("max_clerks"))))
-	for r in rooms:
-		if str(r.get("kind", "")) == "clerk":
-			clerks += 1
-	var by_area: Array = []
-	for i in rooms.size():
-		if str(rooms[i].kind) == "normal":
-			by_area.append(i)
-	by_area.sort_custom(func(a, b): return int(rooms[a].w) * int(rooms[a].h) < int(rooms[b].w) * int(rooms[b].h))
-	for i in by_area:
-		if clerks >= max_clerks:
-			break
-		if int(rooms[i].w) * int(rooms[i].h) > 16:
-			continue
-		if clerks == 0:
-			rooms[i].kind = "clerk"
-			rooms[i].role = "gather"
-			clerks += 1
-		elif clerks == 1:
-			rooms[i].kind = "clerk"
-			rooms[i].role = "misc"
-			clerks += 1
-		elif rng.randf() < 0.4:
-			rooms[i].kind = "clerk"
-			rooms[i].role = "patty"
-			clerks += 1
-	if clerks == 0:
-		for r in rooms:
-			if str(r.kind) == "normal":
-				r.kind = "clerk"
-				r.role = "gather"
-				break
+	assign_extract_gates(rooms, rng, bal)
 	if find_kind(rooms, "shop").is_empty() and rng.randf() < float(bal.get("ghost_shop_chance")):
 		for r in rooms:
 			if str(r.kind) == "normal":
@@ -233,7 +252,7 @@ static func fallback(floor_n: int, w: int, h: int, cycle_of: Callable, boss_titl
 	var rooms: Array = [
 		{"x": 3, "y": 3, "w": 8, "h": 8, "kind": "spawn"},
 		{"x": mini(w - 12, maxi(12, int(w * 0.35))), "y": 4, "w": 7, "h": 7, "kind": "base"},
-		{"x": 4, "y": mini(h - 12, maxi(12, int(h * 0.35))), "w": 7, "h": 7, "kind": "clerk", "role": "gather"},
+		{"x": 4, "y": mini(h - 12, maxi(12, int(h * 0.35))), "w": 7, "h": 7, "kind": "extract_gate"},
 		{"x": maxi(12, w - 11), "y": maxi(12, h - 11), "w": 8, "h": 8, "kind": "boss"},
 	]
 	for r in rooms:

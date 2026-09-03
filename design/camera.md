@@ -17,7 +17,7 @@ See also: `design/player.md`, `design/archives.md`
 
 ## Presentation switcher
 
-The demo MUST ship with the existing presentation switcher (live / classic_2d / art_experiment) plus the Archives system. This is required for the Patreon development narrative. Selecting “Play” always launches the live path. The Archives browser also includes **`full_3d_pass`** (on-screen label **Full 3D Pass**), the isolated snapshot of the previous live path already stored under `archives/full_3d_pass/`. classic_2d, art_experiment, and full_3d_pass remain standalone archives per `design/archives.md`.
+The demo MUST ship with the Archives browser. This is required for the Patreon development narrative. Selecting title “Play” always launches the live path. Catalog rows include Classic 2D, Art experiment, Full 3D Pass, Grok Build Results (Week 1), and Grok Web Results (Week 1). Each row is a pinned commit per `design/archives.md`.
 
 ## Renderer
 

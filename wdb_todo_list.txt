@@ -12,6 +12,7 @@ Need to import button prompt assets
 Chroma keying has to be re-processed on existing assets to remove pinkness around edges.
 Replace clerks with a deposit box style wall unit.
 Add lighting/torch decorations to the walls.
+Animation handling to correct idle depending on active front foot.
 
 ### Can Do Now
 ## Sexy
@@ -32,8 +33,10 @@ Rework pause menu so that Dpad Right opens inventory and the menu button brings 
 Hud scale and Camera Zoom need to update dynamically instead of on reboot.
 
 ## Unsexy
+Update AGENTS logics to include Copilot instructions to reduce token use. Needs helper script to find large files automatically to not require auth and optimize detection. We also need an optimized workflow for refactoring.
+Update AGENTS logics to let web agent expand files beyond 10kb during the current session and suggest the size and documentation sweeps when giving files.
 Need to fix automated playtest
 Need to test chroma key logic on different images to ensure it catches all of the pink.
+Add a space after the 3rd sentence in i2v_seeds.py script.
 
 ### Needs Investigation
-Check to see if we need a global menu input handler so menu behavior doesn't change from place to place.

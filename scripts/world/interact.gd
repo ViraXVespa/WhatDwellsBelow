@@ -37,14 +37,13 @@ func setup(k: String, pos: Vector3, lock := false) -> void:
 	refresh()
 
 
+func setup_extract_gate(pos: Vector3) -> void:
+	role = "gate"
+	setup("extract_gate", pos)
+
+
 func setup_clerk(role_id: String, pos: Vector3) -> void:
-	role = role_id
-	if role == "patty":
-		setup("clerk_patty", pos)
-	elif role == "misc":
-		setup("clerk_misc", pos)
-	else:
-		setup("clerk_gather", pos)
+	setup_extract_gate(pos)
 
 
 func setup_shop(pos: Vector3, rng: RandomNumberGenerator) -> void:
@@ -85,8 +84,8 @@ func refresh() -> void:
 		prompt = "Already used." if used else "A: Pray  (+%d%% dmg)" % int(App.bal.shrine_dmg * 100.0)
 	elif kind == "campfire":
 		prompt = "The fire is spent." if used else "A: Sit  (heal)"
-	elif kind.begins_with("clerk"):
-		prompt = "A: Extract with %s" % _title()
+	elif kind == "extract_gate":
+		prompt = "Spent. The portal is dark." if used else "A: Extraction Gate"
 	elif kind == "shop":
 		prompt = "A: Ghost Shop"
 	elif kind == "lever":
@@ -143,12 +142,8 @@ func _title() -> String:
 			return "SHRINE"
 		"campfire":
 			return "CAMPFIRE"
-		"clerk_gather":
-			return "GATHER CLERK"
-		"clerk_misc":
-			return "MISC CLERK"
-		"clerk_patty":
-			return "PACKMULE PATTY"
+		"extract_gate":
+			return "EXTRACTION GATE" if not used else "DEAD GATE"
 		"shop":
 			return "GHOST SHOP"
 		"lever":
@@ -218,8 +213,8 @@ func interact(who: Node) -> String:
 		return _shrine()
 	if kind == "campfire":
 		return _campfire(who)
-	if kind.begins_with("clerk"):
-		return _open_clerk()
+	if kind == "extract_gate":
+		return _open_extract_gate()
 	if kind == "shop":
 		return _open_shop()
 	if kind == "lever":
@@ -318,14 +313,20 @@ func _open_chest() -> String:
 	return msg
 
 
-func _open_clerk() -> String:
+func _open_extract_gate() -> String:
+	if used:
+		return prompt
 	App.note_clerk()
 	var ui := _ui()
 	if ui and ui.has_method("open_extract"):
-		ui.open_extract(role)
-	elif ui and ui.has_method("open_clerk"):
-		ui.open_clerk(role)
-	return "Extract what you carried."
+		ui.open_extract("gate", self)
+	return "Feed the gate."
+
+
+func mark_spent() -> void:
+	used = true
+	InteractFx.set_extract_tex(self, false)
+	refresh()
 
 
 func _open_shop() -> String:

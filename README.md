@@ -14,13 +14,19 @@ Click the game once so the canvas can take keyboard / gamepad input. Xbox pad wo
 
 Keyboard: WASD move, mouse aim, LMB hold-attack, R special, Space dash, E interact, F potion, C food, Esc pause (inventory / skills / system), M bigger map, Q target-lock. Wipe save is Pause → System → Delete Save Data. Voluntary exit is **“Dispel”**.
 
-This is a no-threads Web export so it runs on GitHub Pages without special COOP/COEP headers. Rebuild with:
+This is a no-threads Web export so it runs on GitHub Pages without special COOP/COEP headers. Rebuild live locally with:
 
 ```powershell
 powershell -File tools/export_web.ps1
 ```
 
-That writes into `docs/`, which Pages serves from `main`.
+That writes into `docs/`. Combined live + archived builds (preview):
+
+```powershell
+powershell -File tools/export_web.ps1 -Archives
+```
+
+That writes into `_pages/` (gitignored). GitHub Actions exports HEAD plus each pin in `scripts/data/archive_catalog.json` and deploys Pages. After the workflow exists, set **Settings → Pages → Source = GitHub Actions**. Archived builds are those commits, served at `/archives/<id>/`. Title Play always launches live.
 
 ## Open in Godot
 

@@ -20,8 +20,8 @@ Target: floors MUST feel expansive enough to support a 5–10 minute first succe
 
 ## Key object placement
 
-Placement rules and probabilities for crystal, stairs, clerks, mining nodes, wood nodes, breakables, shrine, campfire, ghost shop, puzzle elements, chests, and enemy bases are fully tunable.
-Safe rooms (clerk, ghost shop, puzzle) MUST remain enemy-free.
+Placement rules and probabilities for crystal, stairs, Extraction Gates, mining nodes, wood nodes, breakables, shrine, campfire, ghost shop, puzzle elements, chests, and enemy bases are fully tunable.
+Safe rooms (Extraction Gate, ghost shop, puzzle) MUST remain enemy-free.
 
 ## Enemy bases
 
@@ -31,7 +31,7 @@ Safe rooms (clerk, ghost shop, puzzle) MUST remain enemy-free.
 
 ## Safe rooms
 
-- Clerk rooms, ghost shop rooms, and puzzle rooms are always enemy-free.
+- Extraction Gate rooms, ghost shop rooms, and puzzle rooms are always enemy-free.
 - Idle / pressure spawns MUST NOT occur inside safe rooms.
 
 ## Boss / guardian rules
@@ -46,10 +46,11 @@ Safe rooms (clerk, ghost shop, puzzle) MUST remain enemy-free.
 - Visited tiles remain revealed for the duration of the run.
 - Large map overlay (View button) shows discovered tiles and important markers while the game continues running.
 
-## Clerk limits
+## Extraction Gate limits
 
 - Maximum one ghost shop per floor.
-- Maximum three clerks total per floor.
+- Exactly three Extraction Gates per floor (tunable cap `max_clerks`, default 3).
+- Gate rooms MUST be spread across the floor (minimum separation 28 cells).
 
 ## Stairs
 
@@ -80,7 +81,7 @@ Suggested appendix start was 48×48–64×64. Live `balance.gd` after geometry s
 | `gen_room_min` / `gen_room_max` | 5 / 9 |
 | `gen_extra_loops` | 8 |
 | `fog_radius` | 5 |
-| `max_clerks` | 3 |
+| `max_clerks` (Extraction Gates per floor) | 3 |
 | `ghost_shop_chance` | 0.33 |
 | `crystal_min_sep` | 56 |
 | `crystal_clear_r` | 12 |

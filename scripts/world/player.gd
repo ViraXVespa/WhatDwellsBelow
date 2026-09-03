@@ -20,10 +20,17 @@ const ATK_REC := 4
 var aim_dir := Vector2.DOWN
 var facing_key := "down"
 var walk_t := 0.0
+var loc_state := 0
+var loc_t := 0.0
+var loc_foot := 0
+var loc_rev := false
+var loc_from := 0
 var atk_i := 0
 var body: Sprite3D
 var idle := {}
 var walk := {}
+var idle_to_walk := {}
+var walk_to_idle := {}
 var equip := {}
 var attack := {}
 var special := {}

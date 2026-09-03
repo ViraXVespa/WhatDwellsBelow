@@ -27,26 +27,4 @@ const BITTER_LOOP_DEFAULT := 15.52
 
 
 static func archive_catalog() -> Array:
-	return [
-		{
-			"id": "classic_2d",
-			"label": "Classic 2D",
-			"desc": "Early slice. Flat 2D camera. Frozen as a standalone snapshot.",
-			"video": "",
-			"docs": PackedStringArray(),
-		},
-		{
-			"id": "art_experiment",
-			"label": "Art experiment",
-			"desc": "A 3D look-test snapshot, isolated from the live path.",
-			"video": "",
-			"docs": PackedStringArray(),
-		},
-		{
-			"id": ARCHIVE_ID_FULL_3D,
-			"label": ARCHIVE_LABEL_FULL_3D,
-			"desc": "The previous live path at GDD handover, frozen before the clean rewrite.",
-			"video": "",
-			"docs": PackedStringArray(["README.md", "Demo_GDD.md", "Project_Overview.txt"]),
-		},
-	]
+	return load("res://scripts/data/archives_catalog.gd").all()

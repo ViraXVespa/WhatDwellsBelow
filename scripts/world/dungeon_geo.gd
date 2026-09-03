@@ -191,7 +191,7 @@ static func redraw_map(host: Node) -> void:
 		if n is Node3D:
 			var k := str(n.get("kind"))
 			var cell := Vector2i(int((n as Node3D).global_position.x), int((n as Node3D).global_position.z))
-			if k.begins_with("clerk"):
+			if k == "extract_gate" or k.begins_with("clerk"):
 				dot(host, cell, Color(0.95, 0.82, 0.35), true)
 			elif k == "shop":
 				dot(host, cell, Color(0.55, 0.85, 1.0), true)

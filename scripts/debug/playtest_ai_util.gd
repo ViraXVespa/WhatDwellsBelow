@@ -137,7 +137,7 @@ static func tool_ok(n: Node) -> bool:
 
 
 static func is_clerk_kind(k: String) -> bool:
-	return k.find("clerk") >= 0 or k.find("patty") >= 0 or k.find("misc") >= 0
+	return k == "extract_gate" or k.find("clerk") >= 0 or k.find("patty") >= 0 or k.find("misc") >= 0
 
 
 static func is_loot_kind(k: String) -> bool:

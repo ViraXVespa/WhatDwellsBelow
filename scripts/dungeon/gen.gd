@@ -92,7 +92,7 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 		"boss": Carve.center(boss_r),
 		"ambushes": ambushes,
 		"bases": Rooms.kind_centers(rooms, "base"),
-		"safe": Rooms.kind_centers(rooms, "clerk") + Rooms.kind_centers(rooms, "shop") + Rooms.kind_centers(rooms, "puzzle") + Rooms.kind_centers(rooms, "stash") + Rooms.kind_centers(rooms, "vein"),
+		"safe": Rooms.kind_centers(rooms, "extract_gate") + Rooms.kind_centers(rooms, "shop") + Rooms.kind_centers(rooms, "puzzle") + Rooms.kind_centers(rooms, "stash") + Rooms.kind_centers(rooms, "vein"),
 	}
 
 
@@ -129,7 +129,7 @@ static func _far_cell(room: Dictionary, from: Vector2i) -> Vector2i:
 
 
 static func is_safe_kind(kind: String) -> bool:
-	return kind == "clerk" or kind == "shop" or kind == "puzzle" or kind == "spawn" or kind == "stash" or kind == "vein"
+	return kind == "extract_gate" or kind == "shop" or kind == "puzzle" or kind == "spawn" or kind == "stash" or kind == "vein"
 
 
 static func _fallback(floor_n: int, w: int, h: int) -> Dictionary:
@@ -141,7 +141,7 @@ static func _fallback(floor_n: int, w: int, h: int) -> Dictionary:
 	var rooms: Array = [
 		{"x": 3, "y": 3, "w": 8, "h": 8, "kind": "spawn"},
 		{"x": mini(w - 12, maxi(12, int(w * 0.35))), "y": 4, "w": 7, "h": 7, "kind": "base"},
-		{"x": 4, "y": mini(h - 12, maxi(12, int(h * 0.35))), "w": 7, "h": 7, "kind": "clerk", "role": "gather"},
+		{"x": 4, "y": mini(h - 12, maxi(12, int(h * 0.35))), "w": 7, "h": 7, "kind": "extract_gate"},
 		{"x": maxi(12, w - 11), "y": maxi(12, h - 11), "w": 8, "h": 8, "kind": "boss"},
 	]
 	for r: Variant in rooms:

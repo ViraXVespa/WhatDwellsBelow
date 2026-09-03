@@ -35,7 +35,7 @@ A first-time player on a couch with a gamepad can reach a successful extraction 
 
 A build meets the contract only when **all** of the following are true:
 - The Success Criterion above is achieved on the current live path.
-- Live path at repo root is the playable shipping build. Archives remain frozen snapshots.
+- Live path at repo root is the playable shipping build. Archives remain pinned commit snapshots.
 - Live path shares no runtime code, scenes, scripts, or global state with any archived build.
 - Exactly the eleven skills listed in `design/skills.md`.
 - Exactly eight artifact sets (run-only).

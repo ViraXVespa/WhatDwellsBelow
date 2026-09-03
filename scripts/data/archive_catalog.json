@@ -1,0 +1,81 @@
+{
+	"pages_origin": "https://viraxvespa.github.io/WhatDwellsBelow",
+	"github_repo": "ViraXVespa/WhatDwellsBelow",
+	"archives": [
+		{
+			"id": "classic_2d",
+			"label": "Classic 2D",
+			"desc": "Early slice. Flat 2D camera. Frozen as a standalone snapshot.",
+			"commit": "e26b7e26296b21e4eabedd8f3a077fff1a78bab4",
+			"pages_slug": "archives/classic_2d",
+			"video": "",
+			"docs": []
+		},
+		{
+			"id": "art_experiment",
+			"label": "Art experiment",
+			"desc": "A 3D look-test snapshot, isolated from the live path.",
+			"commit": "6139229acc681f2a3045f128dead7564e5af153f",
+			"pages_slug": "archives/art_experiment",
+			"video": "",
+			"docs": []
+		},
+		{
+			"id": "full_3d_pass",
+			"label": "Full 3D Pass",
+			"desc": "The previous live path at GDD handover, frozen before the clean rewrite.",
+			"commit": "71ea80a42cb4fd09cafd7b5a0327709541aa309c",
+			"pages_slug": "archives/full_3d_pass",
+			"video": "",
+			"docs": ["README.md", "Project_Overview.txt", "Demo_GDD.md"]
+		},
+		{
+			"id": "grok_build_w1",
+			"label": "Grok Build Results (Week 1)",
+			"desc": "First Grok Build week on the live path after the Full 3D Pass handover.",
+			"commit": "49a3018247628545df8690a8d52ff334cda342a2",
+			"pages_slug": "archives/grok_build_w1",
+			"video": "",
+			"docs": [
+				"archives/development_documents/GDD_Additions.md",
+				"archives/development_documents/GDD_Questions.md",
+				"Initial_Demo_GDD.md"
+			]
+		},
+		{
+			"id": "grok_web_w1",
+			"label": "Grok Web Results (Week 1)",
+			"desc": "Design database split and live path at the end of the first Grok Web week.",
+			"commit": "205c5c3e6397ba08c21eede1ba19eb2c94d02487",
+			"pages_slug": "archives/grok_web_w1",
+			"video": "",
+			"docs": [
+				"design/README.md",
+				"design/protocol.md",
+				"design/constraints.md",
+				"design/overview.md",
+				"design/input.md",
+				"design/camera.md",
+				"design/player.md",
+				"design/combat.md",
+				"design/skills.md",
+				"design/inventory.md",
+				"design/gear-ui.md",
+				"design/hub.md",
+				"design/dungeon.md",
+				"design/enemies.md",
+				"design/interactables.md",
+				"design/ui.md",
+				"design/debug.md",
+				"design/audio-visual.md",
+				"design/save-tech.md",
+				"design/feel.md",
+				"design/edge-cases.md",
+				"design/coverage.md",
+				"design/art-pipeline.md",
+				"design/archives.md",
+				"design/tunables.md"
+			]
+		}
+	]
+}

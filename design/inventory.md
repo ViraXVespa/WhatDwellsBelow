@@ -1,7 +1,7 @@
 # Inventory, gear, artifacts, extraction
 
 Status: binding design  
-Read when: changing bag, equipment, food, potions, artifacts, clerks, or the anvil  
+Read when: changing bag, equipment, food, potions, artifacts, Extraction Gates, or the anvil  
 Code: `scripts/data/progress.gd`, `scripts/data/progress_gear.gd`, `scripts/data/progress_extract.gd`, `scripts/data/progress_make.gd`, `scripts/data/gear_rules.gd`, `scripts/data/catalog.gd`, `scripts/ui/gear_board.gd`, `scripts/ui/gear_board_text.gd`, `scripts/ui/gear_board_act.gd`  
 See also: `design/gear-ui.md`, `design/skills.md`, `design/ui.md`, `design/hub.md`, `design/art-pipeline.md`
 
@@ -60,7 +60,7 @@ Shared pause / loadout presentation is specified in `design/gear-ui.md`.
 ## Artifacts and collections
 
 - Artifacts are obtained from the Ghost Shop, boss chests, and (optionally) dead-end or trap-room chests.
-- Artifacts cannot be extracted via clerks; they function as run-only items and are lost on death or “Dispel”.
+- Artifacts cannot be extracted via Extraction Gates; they function as run-only items and are lost on death or “Dispel”.
 - Artifacts with similar effects are grouped into collections (sets). The demo contains exactly eight distinct sets.
 - Typical set size is 2–3 artifacts; one or two sets may contain 4–5 artifacts.
 - Collecting multiple artifacts from the same set grants additional set bonuses. Bonuses begin at 2 pieces and may require higher thresholds depending on set size.
@@ -73,10 +73,10 @@ Shared pause / loadout presentation is specified in `design/gear-ui.md`.
 
 ## Extraction / mailing
 
-- Performed exclusively through clerks.
+- Performed exclusively through Extraction Gates.
 - The interface MUST present a clear list of items that can be sent back to the surface.
 - Once extracted, items and gold are safe.
-- Clerk types: one gather specialist and one misc specialist per floor, with a chance of Packmule Patty as an additional clerk. Maximum three clerks total on any floor.
+- Three Extraction Gates per floor. Any gate can mail any extractable goods. Each gate is one-use after a visit that mailed something.
 
 ## Vendor restock
 

@@ -10,6 +10,45 @@ const START := 24.0
 const ROOM := 11.0
 
 
+static func _drop_lock(pt: Node) -> void:
+	if pt.has_meta("lock_n"):
+		pt.remove_meta("lock_n")
+	pt.set_meta("lock_t", 0.0)
+
+
+static func _mark_pad(pt: Node, n: Node, w: int = 1) -> void:
+	if n == null or not is_instance_valid(n):
+		return
+	var c: Vector2i = pt._cell_of_node(n)
+	var m: Dictionary = Util._seen(pt)
+	for x: int in range(-2, 3):
+		for y: int in range(-2, 3):
+			var k: Vector2i = c + Vector2i(x, y)
+			m[k] = int(m.get(k, 0)) + w
+	pt.set_meta("seen_map", m)
+
+
+static func _is_junk(pt: Node, n: Node) -> bool:
+	if n == null or not is_instance_valid(n):
+		return true
+	var k: String = str(n.get("kind"))
+	if k.find("crystal") >= 0:
+		return false
+	if Util._banned(pt, n):
+		return true
+	if n.get("used") == true:
+		return true
+	if (k == "mine" or k == "wood") and not Util.tool_ok(n):
+		return true
+	if (k == "mine" or k == "wood") and int(n.get("hits")) <= 0:
+		return true
+	return false
+
+
+static func _is_use_kind(k: String) -> bool:
+	return k == "shrine" or k == "campfire" or k == "lever" or k == "extract_gate"
+
+
 static func use_prop(pt: Node, p: Node, dest: Node, _reach: float = 1.18) -> void:
 	if dest == null or not is_instance_valid(dest):
 		pt.move = Vector2.ZERO
@@ -40,9 +79,9 @@ static func _usable_local(pt: Node, p: Node, lim: float) -> Node:
 		var n: Node = Util._near_prop(pt, p, lim)
 		if n == null or not is_instance_valid(n):
 			return null
-		if Util.is_junk(pt, n) or not Util.can_use(pt, n):
+		if _is_junk(pt, n) or not Util.can_use(pt, n):
 			Util._ban(pt, n)
-			Util.mark_pad(pt, n)
+			_mark_pad(pt, n)
 			continue
 		return n
 	return null
@@ -51,8 +90,10 @@ static func _usable_local(pt: Node, p: Node, lim: float) -> Node:
 static func _wants_clerk(pt: Node, n: Node) -> bool:
 	if n == null or not is_instance_valid(n) or Util._banned(pt, n):
 		return false
+	if bool(n.get("used")):
+		return false
 	var k: String = str(n.get("kind"))
-	if k.find("clerk") < 0 and k != "patty" and k != "receptionist":
+	if k != "extract_gate" and k.find("clerk") < 0 and k != "patty" and k != "receptionist":
 		return false
 	if k.find("gather") >= 0:
 		return int(pt._gather_cargo()) > 0
@@ -63,8 +104,8 @@ static func _done_with_clerk(pt: Node, n: Node) -> void:
 	if n == null or not is_instance_valid(n):
 		return
 	Util._ban(pt, n)
-	Util.mark_pad(pt, n)
-	Util.drop_lock(pt)
+	_mark_pad(pt, n)
+	_drop_lock(pt)
 
 
 static func _stop_gather(p: Node) -> void:
@@ -80,11 +121,11 @@ static func _foe(pt: Node, p: Node) -> Node:
 
 
 static func wander(pt: Node, p: Node, _delta: float) -> void:
-	Util.wander_step(pt, p)
+	Util.wander(pt, p)
 
 
 static func _engage(pt: Node, p: Node, foe: Node, why: String) -> void:
-	Util.drop_lock(pt)
+	_drop_lock(pt)
 	PlaytestLog.decide(pt, p, "fight", why, PlaytestLog.target(foe))
 	if pt._is_boss(foe):
 		pt._approach_boss(p, foe)
@@ -125,30 +166,30 @@ static func think(pt: Node, p: Node, delta: float) -> void:
 		var stall: Node = Util._meta_n(pt, "lock_n")
 		if stall and (not stall.is_in_group("enemies") or pt._dist(p, stall) > CLOSE):
 			Util._ban(pt, stall)
-		Util.drop_lock(pt)
+		_drop_lock(pt)
 		pt.set_meta("cell_t", 0.0)
 	var hold: Node = Util._locked(pt, delta)
 	if hold and is_instance_valid(hold):
 		if hold.is_in_group("enemies"):
 			if not Util.alive_enemy(hold) or Util._banned(pt, hold):
-				Util.drop_lock(pt)
+				_drop_lock(pt)
 				hold = null
 			else:
 				_engage(pt, p, hold, "lock")
 				return
 		var hk: String = str(hold.get("kind"))
-		if hk.find("clerk") >= 0 and not _wants_clerk(pt, hold):
+		if (hk == "extract_gate" or hk.find("clerk") >= 0) and not _wants_clerk(pt, hold):
 			_done_with_clerk(pt, hold)
 			hold = null
-		elif Util.is_junk(pt, hold) or not Util.can_use(pt, hold):
-			Util.drop_lock(pt)
+		elif _is_junk(pt, hold) or not Util.can_use(pt, hold):
+			_drop_lock(pt)
 			hold = null
 	if hold and is_instance_valid(hold):
 		PlaytestLog.decide(pt, p, "hold", "lock", PlaytestLog.target(hold))
 		var hk2: String = str(hold.get("kind"))
-		if Util.is_use_kind(hk2) or Util.is_clerk_kind(hk2) or Util.is_loot_kind(hk2) or hk2.find("door") >= 0 or hk2.find("stairs") >= 0:
+		if _is_use_kind(hk2) or Util.is_clerk_kind(hk2) or Util.is_loot_kind(hk2) or hk2.find("door") >= 0 or hk2.find("stairs") >= 0:
 			use_prop(pt, p, hold)
-			if hk2.find("clerk") >= 0 and not _wants_clerk(pt, hold):
+			if (hk2 == "extract_gate" or hk2.find("clerk") >= 0) and not _wants_clerk(pt, hold):
 				_done_with_clerk(pt, hold)
 		elif pt._is_boss(hold):
 			pt._approach_boss(p, hold)
@@ -156,12 +197,12 @@ static func think(pt: Node, p: Node, delta: float) -> void:
 			pt._follow_goal(p, hold)
 		return
 	if hold:
-		Util.drop_lock(pt)
+		_drop_lock(pt)
 	var hunt: Node = pt._nearest_hunt(p)
 	if hunt and is_instance_valid(hunt) and pt._dist(p, hunt) <= NEAR:
 		if Util.spinning(pt):
 			Util._ban(pt, hunt)
-			Util.drop_lock(pt)
+			_drop_lock(pt)
 		else:
 			Util._lock(pt, hunt, 1.6)
 			PlaytestLog.decide(pt, p, "hunt", "hunt", PlaytestLog.target(hunt))
@@ -178,13 +219,13 @@ static func think(pt: Node, p: Node, delta: float) -> void:
 			use_prop(pt, p, stairs)
 			return
 	var chest: Node = pt._best_chest(p)
-	if chest and is_instance_valid(chest) and Util.can_use(pt, chest) and not Util.is_junk(pt, chest) and pt._dist(p, chest) <= START:
+	if chest and is_instance_valid(chest) and Util.can_use(pt, chest) and not _is_junk(pt, chest) and pt._dist(p, chest) <= START:
 		Util._lock(pt, chest, 4.0)
 		PlaytestLog.decide(pt, p, "gather", "chest", PlaytestLog.target(chest))
 		use_prop(pt, p, chest)
 		return
 	var node: Node = pt._best_gather(p)
-	if node and is_instance_valid(node) and Util.can_use(pt, node) and not Util.is_junk(pt, node) and pt._dist(p, node) <= START:
+	if node and is_instance_valid(node) and Util.can_use(pt, node) and not _is_junk(pt, node) and pt._dist(p, node) <= START:
 		Util._lock(pt, node, 6.0)
 		PlaytestLog.decide(pt, p, "gather", "path_prop", PlaytestLog.target(node))
 		use_prop(pt, p, node)

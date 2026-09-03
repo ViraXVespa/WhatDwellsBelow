@@ -73,7 +73,7 @@ static func p5(host: Node) -> void:
 			shrine = n3
 		if k3 == "campfire" and fire == null:
 			fire = n3
-		if k3.begins_with("clerk") and clerk == null:
+		if (k3 == "extract_gate" or k3.begins_with("clerk")) and clerk == null:
 			clerk = n3
 		if k3 == "shop" and shop == null:
 			shop = n3
@@ -135,7 +135,7 @@ static func p5(host: Node) -> void:
 		int(counts.get("mine", 0)) > 0
 		and int(counts.get("wood", 0)) > 0
 		and int(counts.get("break", 0)) > 0
-		and int(counts.get("clerk", 0)) > 0
+		and int(counts.get("extract_gate", 0)) > 0
 		and int(counts.get("shrine", 0)) > 0
 		and int(counts.get("campfire", 0)) > 0
 		and int(counts.get("lever", 0)) > 0

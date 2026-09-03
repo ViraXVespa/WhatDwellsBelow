@@ -182,44 +182,4 @@ static func archive_label(id: String) -> String:
 
 
 static func launch_archive_async(host: Node, id: String) -> void:
-    var heading := archive_label(id)
-    if host.loader:
-        host.loader.begin(heading, "Opening snapshot…")
-        host.loader.set_progress(0.12)
-    var root := ProjectSettings.globalize_path("res://").trim_suffix("/")
-    var arch := root.path_join("archives").path_join("full_3d_pass")
-    if not DirAccess.dir_exists_absolute(arch):
-        push_warning("Archive missing: " + arch)
-        host.toast("Archive missing.")
-        if host.loader:
-            host.loader.set_status("Archive missing.")
-            host.loader.set_progress(1.0)
-            await host.get_tree().create_timer(0.35, true, false, true).timeout
-            host.loader.finish()
-        host._menu_loading = false
-        return
-    if host.loader:
-        host.loader.set_status("Handing off the snapshot…")
-        host.loader.set_progress(0.62)
-    await host.get_tree().process_frame
-    var pres := "live"
-    if id == "classic_2d" or id == "art_experiment":
-        pres = id
-    var exe := OS.get_executable_path()
-    var code := OS.create_process(exe, ["--path", arch, "--", "--wdb-pres=%s" % pres])
-    if code == -1:
-        push_warning("Could not spawn archive process (web builds cannot).")
-        host.toast("Could not launch archive.")
-        if host.loader:
-            host.loader.set_status("Could not launch archive.")
-            host.loader.set_progress(1.0)
-            await host.get_tree().create_timer(0.45, true, false, true).timeout
-            host.loader.finish()
-        host._menu_loading = false
-        return
-    if host.loader:
-        host.loader.set_status("Snapshot running.")
-        host.loader.set_progress(1.0)
-        await host.get_tree().create_timer(0.28, true, false, true).timeout
-        host.loader.finish()
-    host._menu_loading = false
+    await load("res://scripts/data/archives_launch.gd").run(host, id)

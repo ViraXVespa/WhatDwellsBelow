@@ -158,7 +158,7 @@ static func extract_note(it: Dictionary) -> String:
 	if bool(it.get("hold", false)):
 		return "Hold returns to Placeholdia."
 	if App.in_dungeon:
-		return "Mail through a clerk to keep it."
+		return "Mail through an Extraction Gate to keep it."
 	return ""
 
 

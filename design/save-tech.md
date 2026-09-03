@@ -40,14 +40,14 @@ Both are stored under isolated paths and follow the same primary + backup safety
 
 ## Presentation switcher
 
-The live / classic_2d / art_experiment switcher and the Archives browser MUST ship in the final demo. Selecting “Play” always launches the live presentation path. The Archives list also includes **`full_3d_pass`** (on-screen label **Full 3D Pass**). This system exists to support the Patreon development narrative and MUST not be removed.
+The Archives browser MUST ship in the final demo. Selecting title “Play” always launches the live path. Catalog rows are pinned commits (Classic 2D, Art experiment, Full 3D Pass, Grok Build Week 1, Grok Web Week 1) per `design/archives.md`. This system exists to support the Patreon development narrative and MUST not be removed.
 
 ## Web export requirements
 
 - MUST run in modern browsers.
 - MUST NOT require special COOP/COEP headers or other non-standard server configuration to function on GitHub Pages or equivalent static hosting.
 
-Rebuild with `powershell -File tools/export_web.ps1` into `docs/`.
+Rebuild live locally with `powershell -File tools/export_web.ps1` into `docs/`. Combined live + archive preview: `powershell -File tools/export_web.ps1 -Archives` into `_pages/`. GitHub Actions deploys Pages from HEAD plus each catalog SHA; do not commit archive wasm/pck to `main`.
 
 ## Performance
 

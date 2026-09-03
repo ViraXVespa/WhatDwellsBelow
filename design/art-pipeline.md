@@ -100,18 +100,32 @@ Never hard-code exact frame counts. Never generate full multi-direction strips i
 
 ### Prompts
 
-I2V prompts come from `tools/i2v_seeds.py` (`build_prompt()` + `MOTION[action]`). Do not invent a second walk prompt in this file.
+I2V prompts come from `tools/i2v_seeds.py` (`build_prompt()` + `MOTION[action]` + `IDENTITY_LOCK[gender]`). Do not invent a second walk prompt in this file.
 
-`--action walk` is the locomotion method. That motion block already asks for idle → walk, the walk cycle, and walk → idle. It is not a breath / idle performance. `MOTION["idle"]` is not a player path.
+Identity lock is per player gender. Male outfit language (brown leather, short neck scarf, no cape) MUST NOT be applied to the female character. Pass `--gender male` or `--gender female`, or infer it from `bible_locked_male.png` / `bible_locked_female.png`. Copy the still's garments; do not add extra scarf or cloth.
 
-No fixed clip length. Completeness is the motion list (for walk: three center passings, both plants, walk-to-idle on both leads), not a clock.
+Grok Build I2V uses that body as-is. The web-browser preamble (image-to-video / do not output a still / no fixed duration) is **only** added when `tools/i2v_seeds.py --test` is passed.
+
+`--action walk` is the locomotion method. It is not a breath / idle performance. `MOTION["idle"]` is not a player path.
+
+Walk loop (one clip, starts and ends on the idle still so it can loop):
+
+1. Idle (the start still)
+2. Idle into walk
+3. At least three clear in-place strides
+4. Walk into idle, last plant on the **opposite** foot from the foot that started
+5. Idle still again
+
+Game facing is a locked view copied from the still (`FACING_LOCK` in `tools/i2v_seeds.py`), from the first frame. Down is marching in place toward the camera (both shoulders visible). Walk is a treadmill on the still's center line. Do not name a travel heading. Start/stop feet are “one foot” then “the other foot.”
+
+No fixed clip length. Completeness is that walk loop, not a clock.
 
 ### Generation methods
 
 1. **Image-to-video** (default for locomotion)
    - Use whenever available.
    - Default seed: one full-body Bible cell for that facing, plate still in the pixels, 400% nearest-neighbor (`tools/i2v_seeds.py --cell`).
-   - Produce **one** clip. Extract candidate frames. Then stop.
+   - Produce **one** clip. Show that clip to the User immediately. Do not extract frames, harvest, or cleanup until the User accepts.
 2. **Individual classic key poses**
    - Contact → Down → Passing → Up (and any needed extremes).
    - One pose at a time against the locked Bible.
@@ -131,10 +145,10 @@ No fixed clip length. Completeness is the motion list (for walk: three center pa
 
 After each I2V clip (or after a stills batch the User requested for that same unit):
 
-1. Extract frames without claiming they are final.
-2. Show the User the clip and/or extracted frames.
-3. Report: facing, action, gender, seed used, whether start / passings / plants / stop are visible, what is missing.
-4. **Stop.** Do not clean-and-pack as shipping frames and do not start the next unit until the User answers.
+1. Show the User the clip immediately. Do not extract frames, harvest contact sheets, or run cleanup first.
+2. Report only the unit: facing, action, gender, seed used.
+3. **Stop.** Wait. Do not analyze gait, pack shipping frames, or start the next unit until the User answers.
+4. Extract candidate frames only after **Accept** (or if the User asks to see frames).
 
 The User decides one of:
 
@@ -167,8 +181,9 @@ Extraction / I2V seed order:
 - Split the locked **plate-remapped** Bible into nine equal cells.
 - Do not range-key, despill, bbox-crop, or flatten chroma to alpha on the cell before I2V. The `#FF00FF` that sits in the cell stays.
 - Take the one full-body cell that matches the facing being generated.
-- Upscale that cell by exactly 400% with nearest-neighbor only (`tools/i2v_seeds.py --cell`, or `--bible` to batch plates the User asked for). Every source pixel becomes a 4×4 block. No bilinear / Lanczos / AI upscale. No non-integer fit. No 1024 canvas pad. No extra margin beyond the cell’s own plate.
-- Send that 400% plate as the I2V first frame. Framing is the Bible cell: character large, plate around it. Do not crop to the silhouette.
+- Upscale that cell by exactly 400% with nearest-neighbor only (`tools/i2v_seeds.py --cell`, or `--bible` to batch plates the User asked for). Every source pixel becomes a 4×4 block. No bilinear / Lanczos / AI upscale. No non-integer fit. No 1024 canvas pad.
+- Then pad extra `#FF00FF` around the scaled cell (`PAD_FRAC` of figure height on any short side) so lifted feet and swinging arms stay on-plate. Do not scale the figure down to fake padding. Bible Down cells sit flush with the top/bottom of the cell; walk I2V without this pad clips.
+- Send that padded 400% plate as the I2V first frame. Do not crop to the silhouette.
 - If a later clean directional still exists for that facing, uses the same cell framing, **and still has an opaque plate**, 400% that still instead of re-splitting the Bible.
 - After video extract, every frame the User accepted still goes through §19.6 cleanup. Key-to-alpha belongs there, not on the I2V seed.
 
@@ -178,7 +193,7 @@ Extraction / I2V seed order:
 - Do not start with the full 3×3 sheet.
 - Do not send the center face close-up as the first frame.
 - Do not add a second reference image if that switches the generator from first-frame I2V into reference-to-video.
-- For walk / start / stop, keep the cell framing. If a later motion needs more room (a long attack arc, a fall), pad after the 400% scale with extra `#FF00FF`. Do not scale the figure down to fake padding.
+- For walk / start / stop, keep the cell framing. Walk, attack, and other limb-extend motions use the same pad-after-scale rule. Do not scale the figure down to fake padding.
 
 **Fallback to the full Bible (only if the User asks)**
 
@@ -241,6 +256,8 @@ Paper-doll means **composite layers**, not a new character animation per item.
 Do not create `walk` / `idle` / transition sheets that already have a Great Axe, staff, or bow painted into the character.
 
 ## 19.5 What the User reviews (no automatic fill-in)
+
+The User judges the I2V clip itself first (facing lock, travel, identity). Do not pre-harvest a rejected clip.
 
 After the User accepts a unit’s frames, the agent MUST check — and report, not silently regenerate:
 
@@ -341,7 +358,8 @@ All eight full-body figures must have identical proportions and silhouette heigh
 | Soft identity language after Bible lock | High | Use always after lock |
 | Single-pass 3×3 for the Bible | Highest for identity | Preferred for Bible |
 | 400% NN I2V plate (cell chroma kept) | High | Default I2V first frame |
-| `i2v_seeds.py` walk prompt (start + cycle + stop) | High | Only locomotion I2V method |
+| `i2v_seeds.py` walk prompt (idle → ≥3 strides → opposite-foot stop) | High | Only locomotion I2V method |
+| `i2v_seeds.py --test` web preamble | Browser tests only | Do not send in Grok Build I2V |
 | One I2V + User review gate | High | Mandatory; replaces auto-retry |
 | No fixed I2V duration | High | Length follows the motion goal |
 | Idle = directional key still | High | Do not I2V a breath loop |
@@ -349,7 +367,8 @@ All eight full-body figures must have identical proportions and silhouette heigh
 | Full-Bible I2V seed | Fallback only | Only if the User asks |
 | Individual classic key poses | High | User-requested fallback |
 | Lattice square-crop before 3×3 split | High | Mandatory before splices |
-| Extra pad or 1024-fit I2V seed | Low | Avoid |
+| `#FF00FF` pad after 400% NN (`PAD_FRAC`) | High | Required so walk/attack limbs stay on-plate |
+| Extra pad or 1024-fit that shrinks the figure | Low | Avoid |
 | Key / despill on the I2V seed | Low | Avoid |
 | Magenta key-to-alpha | High | After accept only (§19.6) |
 | Foot baseline locking in post | High | Mandatory |

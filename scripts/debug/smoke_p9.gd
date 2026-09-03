@@ -4,6 +4,7 @@ const Roster := preload("res://scripts/combat/roster.gd")
 const EnemyS := preload("res://scripts/combat/enemy.gd")
 const AnimS := preload("res://scripts/debug/anim_browser.gd")
 const T := preload("res://scripts/data/tunables.gd")
+const CatS := preload("res://scripts/data/archives_catalog.gd")
 
 
 static func tree(host: Node) -> SceneTree:
@@ -46,11 +47,10 @@ static func p9(host: Node) -> void:
 		App.archives_ui.show_browser()
 		printerr("P9: archives_ui=" + str(App.archives_ui.open) + " entries=" + str(App.archives_ui.entries.size()))
 		App.archives_ui.hide_browser()
-	var root: String = ProjectSettings.globalize_path("res://").trim_suffix("/")
-	var arch: String = root.path_join("archives")
-	printerr("P9: arch_full=" + str(DirAccess.dir_exists_absolute(arch.path_join("full_3d_pass"))))
-	printerr("P9: arch_classic=" + str(DirAccess.dir_exists_absolute(arch.path_join("classic_2d"))))
-	printerr("P9: arch_art=" + str(DirAccess.dir_exists_absolute(arch.path_join("art_experiment"))))
+	printerr("P9: arch_n=" + str(CatS.all().size()))
+	printerr("P9: arch_full=" + str(not CatS.by_id("full_3d_pass").is_empty()))
+	printerr("P9: arch_classic=" + str(not CatS.by_id("classic_2d").is_empty()))
+	printerr("P9: arch_art=" + str(not CatS.by_id("art_experiment").is_empty()))
 	var sum: String = App.debug.play.run_medium()
 	printerr("P9: playtest=" + sum.replace("\n", " | "))
 	var extra: int = 0
@@ -74,7 +74,7 @@ static func p9(host: Node) -> void:
 		printerr("P9: bitter_ok=" + str(App.bal.bitter_loop_offset > 15.0 and App.bal.bitter_loop_offset < 16.0))
 		printerr("P9: checklist_skills=" + str(skills == 11))
 		printerr("P9: checklist_sets=" + str(App.prog.SETS.size() == 8))
-		printerr("P9: archives_ok=" + str(DirAccess.dir_exists_absolute(arch.path_join("full_3d_pass"))))
+		printerr("P9: archives_ok=" + str(CatS.ok()))
 		if App.playtest:
 			printerr("P9: playtest_live=" + str(App.playtest.live_running))
 			printerr("P9: playtest_moved=" + str(App.playtest.moved))

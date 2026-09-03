@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3]
-
-[ext_resource type="Script" path="res://archives/classic_2d/scripts/dungeon/floor.gd" id="1_floor"]
-
-[node name="DungeonFloor" type="Node2D"]
-script = ExtResource("1_floor")

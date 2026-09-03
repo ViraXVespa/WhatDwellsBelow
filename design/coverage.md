@@ -61,7 +61,7 @@ Hit-based mining and woodcutting, breakables, and all interactables (including e
 Smoke: `--wdb-phase5-smoke`
 
 **Phase 6 – Progression Systems**
-Inventory, equipment (including tool type lock), food vs potion rules, forged holds, extraction/clerks, anvil, Floor Crystal loadout, quest system, artifact collections/sets (exactly eight).
+Inventory, equipment (including tool type lock), food vs potion rules, forged holds, extraction/Extraction Gates, anvil, Floor Crystal loadout, quest system, artifact collections/sets (exactly eight).
 *Exit criteria*: Full inventory/extraction/forge/quest/artifact loop works; loadout opens from the Floor Crystal; eight sets with progressive bonuses; food HoT and potion instant heal behave as specified. Report to User.
 Smoke: `--wdb-phase6-smoke`
 
@@ -72,7 +72,7 @@ Smoke: `--wdb-phase7-smoke`
 
 **Phase 8 – Persistence & Hub**
 Save / load with backup + isolated save paths for archives and for the two autoplay saves. Placeholdia hub layout (buildings with real depth) including Controls Billboard, Floor Crystal loadout, consciousness-transfer enter VFX, and wake-up return sequence.
-*Exit criteria*: Save/load + backup works; hub complete with all listed interactables and depth; enter/wake presentation beats play; Archives switcher functional including `full_3d_pass`. Report to User.
+*Exit criteria*: Save/load + backup works; hub complete with all listed interactables and depth; enter/wake presentation beats play; Archives browser lists every catalog pin including Full 3D Pass. Report to User.
 Smoke: `--wdb-phase8-smoke`
 
 **Phase 9 – Final Polish & Verification**

@@ -210,7 +210,7 @@ static func p4_after_flee(host: Node) -> void:
 	var press: int = host.call("_pressure_spawn")
 	printerr("P4: pressure_unsafe n=" + str(press) + " before=" + str(before))
 	var safe_n: int = 0
-	var clerk: Dictionary = host.call("_find_kind_room", "clerk")
+	var clerk: Dictionary = host.call("_find_kind_room", "extract_gate")
 	if clerk.is_empty():
 		clerk = host.call("_find_kind_room", "spawn")
 	if player and not clerk.is_empty():

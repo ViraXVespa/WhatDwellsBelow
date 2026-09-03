@@ -19,7 +19,7 @@ static func role_has_cargo(pt: Node, role: String) -> bool:
 		return pt._gather_cargo() > 0
 	if role == "misc":
 		return pt._misc_cargo() > 0
-	if role == "patty":
+	if role == "patty" or role == "gate":
 		return (pt._gather_cargo() + pt._misc_cargo()) > 0
 	return false
 
@@ -194,6 +194,8 @@ static func mail_at(pt: Node, clerk: Node) -> void:
 
 static func clerk_role(n: Node) -> String:
 	var k: String = str(n.get("kind"))
+	if k == "extract_gate":
+		return "gate"
 	if k.find("patty") >= 0:
 		return "patty"
 	if k.find("misc") >= 0:
@@ -226,7 +228,7 @@ static func clerk_accepts(pt: Node, n: Node) -> bool:
 		return pt._gather_cargo() > 0
 	if role == "misc":
 		return pt._misc_cargo() > 0
-	if role == "patty":
+	if role == "patty" or role == "gate":
 		return (pt._gather_cargo() + pt._misc_cargo()) > 0
 	return false
 
