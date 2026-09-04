@@ -2,6 +2,7 @@ extends Object
 
 const Make := preload("res://scripts/data/progress_make.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
+const Req := preload("res://scripts/data/progress_gear_req.gd")
 
 
 static func make_weapon(p: Object, wpn: String, rarity: String) -> Dictionary:
@@ -34,6 +35,18 @@ static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Di
 
 static func starter(p: Object, slot: String) -> Dictionary:
 	return Make.starter(p, slot)
+
+
+static func required_ok(slot: String, it: Dictionary) -> bool:
+	return Req.required_ok(slot, it)
+
+
+static func required_piece(p: Object, slot: String) -> Dictionary:
+	return Req.required_piece(p, slot)
+
+
+static func ensure_required_slots(p: Object) -> void:
+	Req.ensure_required_slots(p)
 
 
 static func bag_stack_index(p: Object, it: Dictionary) -> int:

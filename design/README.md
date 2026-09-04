@@ -81,7 +81,7 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Scenes | `scenes/boot.tscn`, `splash.tscn`, `title.tscn`, `camp.tscn`, `dungeon.tscn`, `foundation.tscn` |
 | Player | `scripts/world/player.gd` + `player_anim.gd`, `player_act.gd`, `player_lock.gd`, `player_combat.gd`, `facing.gd`, `camera_rig.gd`, `sprite_filter.gd` |
 | Combat | `scripts/combat/combat.gd`, `enemy.gd`, `enemy_ai.gd`, `enemy_atk.gd`, `enemy_setup.gd`, `projectile.gd`, `roster.gd`, `aim_line.gd`, `telegraph.gd`, `player_hit.gd`, `threat.gd` |
-| Skills / save | `scripts/data/progress.gd` + `progress_gear.gd`, `progress_make.gd`, `progress_extract.gd`, `progress_quest.gd`, `progress_town.gd`, `progress_combat.gd`, `gear_rules.gd`, `save_store.gd`, `catalog.gd` |
+| Skills / save | `scripts/data/progress.gd` + `progress_gear.gd`, `progress_gear_req.gd`, `progress_make.gd`, `progress_extract.gd`, `progress_quest.gd`, `progress_town.gd`, `progress_combat.gd`, `gear_rules.gd`, `save_store.gd`, `catalog.gd` |
 | Numbers | `scripts/data/balance.gd`, `balance_schema.gd`, `tunables.gd` |
 | Version / changelog | `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`; `tools/build_changelog.py` |
 | Dungeon | `scripts/dungeon/gen.gd` + `gen_carve.gd`, `gen_rooms.gd`, `gen_doors.gd`; `scripts/world/dungeon.gd` + `dungeon_boot.gd`, `dungeon_geo.gd`, `dungeon_geo_stream.gd`, `dungeon_cells.gd`, `dungeon_stream.gd`, `dungeon_props.gd`, `dungeon_pack.gd`, `crystal_net.gd`, `floor_crystal.gd` |

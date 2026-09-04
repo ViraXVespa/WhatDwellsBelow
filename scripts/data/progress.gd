@@ -71,6 +71,7 @@ func reset_meta() -> void:
 	hold_pick.clear()
 	_clear_mailed()
 	clear_food()
+	Gear.ensure_required_slots(self)
 
 
 func begin_run_loadout() -> void:
@@ -111,15 +112,13 @@ func begin_run_loadout() -> void:
 
 
 func _slot_for_run(s: String) -> Dictionary:
+	if s == "weapon" or s == "tool":
+		return Gear.required_piece(self, s)
 	var h: Array = holds[s]
 	var fallback := 0 if h.size() > 0 else -1
 	var pi := int(hold_pick.get(s, fallback))
 	if pi >= 0 and pi < h.size():
 		return (h[pi] as Dictionary).duplicate(true)
-	if s == "weapon":
-		return make_weapon(pick_weapon, "white")
-	if s == "tool":
-		return make_tool(tool_type)
 	return Gear.starter(self, s)
 
 
@@ -134,6 +133,7 @@ func lose_unextracted() -> void:
 	for s in SLOTS:
 		slots[s] = {}
 	_sync_artifacts()
+	Gear.ensure_required_slots(self)
 
 
 func _clear_mailed() -> void:
@@ -465,6 +465,7 @@ func from_meta(d: Dictionary) -> void:
 	Town.from_meta(self, d)
 	var raw: Variant = d.get("analyzed", [])
 	analyzed = raw.duplicate(true) if raw is Array else []
+	Gear.ensure_required_slots(self)
 
 
 func restock() -> String:
