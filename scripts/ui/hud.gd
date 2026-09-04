@@ -3,6 +3,7 @@ extends CanvasLayer
 ## Dungeon gauntlet cluster (top-left) + minimap (top-right).
 ## Custom ColorRects, no default ProgressBar.
 
+const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 const STRIP_W := 540.0
@@ -246,7 +247,7 @@ func refresh(player: Node, dungeon: Node) -> void:
 
 func _paint_prompt() -> void:
 	var text := str(App.interact_prompt)
-	var scheme := Prompts.scheme() if false else ""
+	var scheme: String = Prompts.scheme() if false else ""
 	var Prompts = load("res://scripts/input/prompts.gd")
 	scheme = Prompts.scheme()
 	if text == _prompt_shown and scheme == _prompt_scheme:
