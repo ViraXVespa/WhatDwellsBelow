@@ -3,6 +3,30 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.12",
+			"points": [
+				{
+					"text": "Title card shows `Version: {label}` and an Updates button that opens What\u2019s new"
+				},
+				{
+					"text": "What\u2019s new lists every current-series changelog row",
+					"subs": [
+						"Unseen builds render bold / gold",
+						"Mouse wheel and right stick scroll the body",
+						"Text sits on a solid panel; Play / Updates / Archives cannot steal focus"
+					]
+				},
+				{
+					"text": "Archives browser is two columns",
+					"subs": [
+						"Highlight previews the snapshot; A moves to the first enabled right button",
+						"B on the right returns to the list; B on the list closes"
+					]
+				}
+			],
+			"summary": "Title and Archives menus now read as overlay and submenu instead of fighting the buttons behind them."
+		},
+		{
 			"label": "0.2.11",
 			"points": [
 				{
@@ -147,8 +171,15 @@
 		},
 		{
 			"label": "0.2.0",
-			"points": [],
-			"summary": ""
+			"points": [
+				{
+					"text": "Opened development week 2 on the live path",
+					"subs": [
+						"Grok Build Week 2 completion commit"
+					]
+				}
+			],
+			"summary": "Week 2 Grok Build snapshot. This is the series-open build (0.2.0)."
 		}
 	]
 }
