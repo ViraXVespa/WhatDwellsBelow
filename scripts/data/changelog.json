@@ -3,6 +3,25 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.15",
+			"points": [
+				{
+					"text": "Web / chat Phase 4 now loads a revise file from the page-fetch artifact plus a GitHub `size` check",
+					"subs": [
+						"The tool card is a summary, not the file",
+						"One fetch per path; do not retry or invent a second pipeline"
+					]
+				},
+				{
+					"text": "Asking the User to paste a live file is last resort only"
+				},
+				{
+					"text": "Phase 3 lists emit paths (`new` / `revise` / `delete`) and does not request pastes"
+				}
+			],
+			"summary": "Agent protocol for web sessions: read the saved fetch artifact and verify bytes before emitting; paste only if that check fails."
+		},
+		{
 			"label": "0.2.12",
 			"points": [
 				{
