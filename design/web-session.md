@@ -32,7 +32,9 @@ This phase ends when the User says to move to the next phase.
 
 Identify gaps that block implementation of the Phase 2 plan. Ask questions that cannot be inferred easily.
 
-This phase ends when every pending question is answered. If there are no questions, skip this phase and go to Phase 4 with no confirmation message required.
+List every path this goal will emit. Mark each `new`, `revise`, or `delete`. Do not ask the User to paste those files.
+
+This phase ends when every pending question is answered. If there are no questions, send only the emit list and go to Phase 4.
 
 ### Phase 4 — File emitting
 
@@ -52,7 +54,17 @@ If the User replies with observations or changes for the file just emitted, revi
 
 New file: full body. Deleted file: one line naming the path and that it is deleted; no body.
 
-Do not assemble a revision from a truncated fetch. If a pull looks short, cut off, or older than the conversation, ask the User to paste the live file.
+Live body for a `revise` file:
+
+1. One page fetch of the raw GitHub file. The tool card is a summary, not the file. Open the saved artifact path printed by the fetch (`/home/workdir/artifacts/browsed_files/<id>.text` or `.json`) with the code / REPL tool. Compare UTF-8 byte length to the GitHub contents API `size` for that path. Use that artifact when the path exists, the size matches, and the tail is a complete line.
+2. If a User paste of that path is already in this conversation, that paste wins (local edits).
+3. Ask the User to paste that live file only when step 1 failed and no paste is already in the thread. Stop. Do not emit it yet.
+
+Do not request a paste as the normal path. Fetch plus the artifact byte check is the normal path.
+
+Fetch budget: one pull per path. After a failed check, do not fetch again and do not describe another strategy (raw URL retry, “workspace copy”, “I’ll pull the full live file next”).
+
+Do not assemble a revision from a tool-card summary, a truncated artifact, or a file older than the conversation.
 
 ### Phase 5 — Review
 
@@ -97,3 +109,7 @@ When documentation is done, this session goal is finished. The User should start
 - Do not split for the 10KB cap before Phase 6.
 - Do not claim a write landed. The User pastes.
 - Do not load `design/changelog/` during Phase 1–3.
+- Do not treat a page-tool summary as the live file.
+- Do not retry a fetch after the byte / tail check fails.
+- Do not claim an artifact is the live file unless it is open and the size matches.
+- Do not ask the User to paste a live file unless the fetch plus byte / tail check failed and no paste is already in the thread.

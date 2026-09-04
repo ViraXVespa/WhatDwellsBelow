@@ -65,11 +65,13 @@ If a file must be split:
 
 ## Web / chat
 
-Full conversation flow, emit rules, and Phase 6 sizing: `design/web-session.md`.
+Full conversation flow, emit rules, fetch rules, and Phase 6 sizing: `design/web-session.md`.
+
+The tool card from a page fetch is a summary. The live body is the saved artifact plus a byte check against the GitHub `size`. One fetch per path. Ask the User to paste only when that check failed and no paste is already in the thread.
 
 Phase 7 of a goal that shipped player-visible or agent-visible change also writes one `design/changelog/{label}.md` (see `design/versioning.md`). Do not emit `scripts/data/changelog.json` as the ledger. Do not read prior changelog files to write the new one.
 
-Do not emit a revision assembled from a truncated fetch. If a pull looks short, cut off, or older than the conversation, ask the User to paste the live file.
+Do not emit a revision assembled from a tool-card summary or a truncated artifact.
 
 Do not claim you wrote the repo. The User pastes.
 
