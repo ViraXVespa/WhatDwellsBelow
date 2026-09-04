@@ -1,9 +1,12 @@
 extends Control
 
 const T := preload("res://scripts/data/tunables.gd")
+const GameVer := preload("res://scripts/data/game_ver.gd")
 
 var _busy := false
 var _archives_open := false
+var _news_open := false
+var _news_layer: Control = null
 
 
 func _ready() -> void:
@@ -24,6 +27,7 @@ func _ready() -> void:
 	add_child(card)
 	card.add_child(_lab("WHAT DWELLS BELOW", 48, Color(0.92, 0.78, 0.48)))
 	card.add_child(_lab(T.ONE_LINER, 18, Color(0.78, 0.72, 0.62)))
+	card.add_child(_lab(GameVer.label(), 16, Color(0.7, 0.62, 0.48)))
 	var play_a: Button = null
 	var play_b: Button = null
 	var archives: Button = null
@@ -47,6 +51,7 @@ func _ready() -> void:
 	card.add_child(_lab("Dungeon Music: Bitter - by Vira X Vespa", 16, Color(0.62, 0.66, 0.7)))
 	_wire_focus(play_a, play_b, archives)
 	call_deferred("_focus_first")
+	call_deferred("_maybe_news")
 
 
 func _debug_open() -> bool:
@@ -91,9 +96,11 @@ func _wire_focus(play_a: Button, play_b: Button, archives: Button) -> void:
 
 
 func _focus_first() -> void:
-	if _debug_open():
+	if _debug_open() or _news_open:
 		return
 	for n in find_children("*", "Button", true, false):
+		if _news_layer != null and _news_layer.is_ancestor_of(n):
+			continue
 		(n as Button).grab_focus()
 		return
 
@@ -120,6 +127,83 @@ func _btn(text: String, cb: Callable) -> Button:
 	return b
 
 
+func _maybe_news() -> void:
+	if _debug_open():
+		return
+	var info: Dictionary = GameVer.unseen(str(App.last_seen_game_ver))
+	var rows: Array = info.get("entries", [])
+	if rows.is_empty() and not bool(info.get("older_series", false)):
+		return
+	_show_news(rows, bool(info.get("older_series", false)))
+
+
+func _show_news(rows: Array, older: bool) -> void:
+	_news_open = true
+	_news_layer = Control.new()
+	_news_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_news_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_news_layer)
+	var dim := ColorRect.new()
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.color = Color(0.02, 0.015, 0.01, 0.72)
+	_news_layer.add_child(dim)
+	var box := VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.offset_left = -380
+	box.offset_right = 380
+	box.offset_top = -280
+	box.offset_bottom = 280
+	box.add_theme_constant_override("separation", 12)
+	_news_layer.add_child(box)
+	box.add_child(_lab("What's new", 32, Color(0.92, 0.78, 0.48)))
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.custom_minimum_size = Vector2(720, 320)
+	box.add_child(scroll)
+	var body := Label.new()
+	body.text = _news_text(rows)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_theme_font_size_override("font_size", 18)
+	body.add_theme_color_override("font_color", Color(0.86, 0.8, 0.7))
+	body.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
+	body.add_theme_constant_override("outline_size", 4)
+	scroll.add_child(body)
+	var close_btn := _btn("Close", _dismiss_news)
+	box.add_child(close_btn)
+	if older:
+		var older_btn := _btn("Earlier weeks", _open_older)
+		box.add_child(older_btn)
+		close_btn.focus_neighbor_bottom = older_btn.get_path()
+		older_btn.focus_neighbor_top = close_btn.get_path()
+		older_btn.focus_neighbor_bottom = close_btn.get_path()
+	close_btn.grab_focus()
+
+
+func _news_text(rows: Array) -> String:
+	if rows.is_empty():
+		return "Updates from earlier weeks are on the public changelog."
+	var parts: PackedStringArray = []
+	for e in rows:
+		if typeof(e) == TYPE_DICTIONARY:
+			parts.append(GameVer.format_entry(e))
+	return "\n\n".join(parts)
+
+
+func _dismiss_news() -> void:
+	if App.has_method("ack_game_ver"):
+		App.ack_game_ver()
+	if _news_layer:
+		_news_layer.queue_free()
+	_news_layer = null
+	_news_open = false
+	_focus_first()
+
+
+func _open_older() -> void:
+	OS.shell_open(GameVer.PAGES_CHANGELOG)
+
+
 func _process(_delta: float) -> void:
 	if _debug_open():
 		return
@@ -128,17 +212,21 @@ func _process(_delta: float) -> void:
 		_focus_first()
 
 
-func _unhandled_input(_event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if _busy:
 		return
 	if _debug_open():
+		return
+	if _news_open and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("anim_back")):
+		_dismiss_news()
+		get_viewport().set_input_as_handled()
 		return
 	if App.archives_ui and bool(App.archives_ui.get("open")):
 		return
 
 
 func _play(kind: String) -> void:
-	if _busy or _debug_open():
+	if _busy or _debug_open() or _news_open:
 		return
 	_busy = true
 	App.set_character(kind)
@@ -150,7 +238,7 @@ func _play(kind: String) -> void:
 
 
 func _open_archives() -> void:
-	if _busy or _debug_open():
+	if _busy or _debug_open() or _news_open:
 		return
 	_archives_open = true
 	if App.archives_ui and App.archives_ui.has_method("show_browser"):

@@ -24,6 +24,7 @@ const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 
 var character_type := "male"
 var character_chosen := false
+var last_seen_game_ver := ""
 var weapon := "great_axe"
 var cam_zoom := 1.75
 var hud_scale := 1.0
@@ -160,6 +161,12 @@ func save_now() -> void:
 func wipe_save() -> void:
 	Store.wipe_slot("live")
 	Store.fresh_delver()
+	save_now()
+
+
+func ack_game_ver() -> void:
+	var GameVer := load("res://scripts/data/game_ver.gd")
+	last_seen_game_ver = str(GameVer.label())
 	save_now()
 
 

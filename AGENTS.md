@@ -17,9 +17,9 @@ If unsure: ask once, then use **web / chat**. A missed full-file emit is worse t
 
 Design lives in `design/`. There is no single GDD. `Demo_GDD.md` is only an index.
 
-Fresh instance: read `design/protocol.md` and `design/constraints.md`, then only the topic files for the requested work. Inspect the live tree. Do not start by archiving or rewriting.
+Fresh instance: read `design/protocol.md` and `design/constraints.md`, then only the topic files for the requested work. Inspect the live tree. Do not start by archiving or rewriting. Do not read `design/changelog/` unless the requested work is versioning, a named past build, or a revert.
 
-Grok Build after a gap: also read `design/sessions.md` and inspect git / the live tree (the User works between Grok Build weeks).
+Grok Build after a gap: also read `design/sessions.md`, then every `design/changelog/{current epoch}.{current series}.*.md` (see `design/versioning.md`). Inspect git / the live tree (the User works between Grok Build weeks). Do not open other series or treat `scripts/data/version.json` as the version ledger.
 
 Web / chat after the repo-review message: follow `design/web-session.md`. Do not start Phase 4 emits during Phase 1–3.
 
@@ -30,13 +30,14 @@ Web / chat after the repo-review message: follow `design/web-session.md`. Do not
 | Must / must-not | `design/constraints.md` |
 | Topic + code map | `design/README.md` |
 | Grok Build leave-off + log | `design/sessions.md` |
+| Version scheme, changelog, week pins | `design/versioning.md` |
 | Numbers | `design/tunables.md` |
 
 **Binding design** is required behavior. **Live snapshot** is current code. If they disagree, patch live toward binding or ask. Do not invent a third system.
 
 Shipping code is the repo root (`project.godot`, `scenes/`, `scripts/`, `assets/`). Patch it in place.
 
-Archived builds are pinned commits in `scripts/data/archive_catalog.json`. Do not copy snapshot project trees into `archives/`, onto live, or create a new archive unless the User asks.
+Archived builds are pinned commits in `scripts/data/archive_catalog.json`. Do not copy snapshot project trees into `archives/` or onto live. Do not create a new archive unless the User asks, except the standing Grok Build week pins in `design/versioning.md`.
 
 Implement only what design and the User require. Do not invent skills, rarities, hub upgrades, meta-progression, or co-op. Open numbers: invent coherent starts, expose them in the secret debug menu, record in `design/tunables.md`. Ambiguity: ask.
 
@@ -66,6 +67,8 @@ If a file must be split:
 
 Full conversation flow, emit rules, and Phase 6 sizing: `design/web-session.md`.
 
+Phase 7 of a goal that shipped player-visible or agent-visible change also writes one `design/changelog/{label}.md` (see `design/versioning.md`). Do not emit `scripts/data/changelog.json` as the ledger. Do not read prior changelog files to write the new one.
+
 Do not emit a revision assembled from a truncated fetch. If a pull looks short, cut off, or older than the conversation, ask the User to paste the live file.
 
 Do not claim you wrote the repo. The User pastes.
@@ -74,4 +77,4 @@ Do not claim you wrote the repo. The User pastes.
 
 Small diffs. Match surrounding style. After the slice, report files changed, how you verified, and what is still open. Full-file paste only when asked, or when the file does not exist on disk yet.
 
-End of a Grok Build session: update `design/sessions.md` (leave-off + log). That file is for the next Grok Build instance, not for web / chat.
+End of a Grok Build session: update `design/sessions.md` (leave-off + log) and write `design/changelog/{label}.md` for the completion commit when that commit is `0.N.0`. That sessions file is for the next Grok Build instance, not for web / chat.

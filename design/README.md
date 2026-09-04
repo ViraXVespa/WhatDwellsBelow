@@ -2,22 +2,22 @@
 
 Status: index  
 Read when: starting any session, or when you do not know which file to open  
-See also: `AGENTS.md`, `design/protocol.md`, `design/web-session.md`
+See also: `AGENTS.md`, `design/protocol.md`, `design/web-session.md`, `design/versioning.md`
 
 This folder is the documentation database for humans and agents.  
 It is not one Game Design Document.
 
-`docs/` is the GitHub Pages web export. Never store design notes there.
+`docs/` is the GitHub Pages web export. Never store design notes there. Player-facing changelog pages are built in CI to `/changelog/` on Pages from `design/changelog/*.md`, not stored in `docs/` on `main`.
 
 ## How to use
 
 1. Agents read `design/protocol.md` and `design/constraints.md` first.  
-2. On a fresh Grok Build instance after a gap, also read `design/sessions.md` (leave-off + log), then inspect git / the live tree — the User works between sessions.  
-3. Web / chat: after the repo-review message, follow `design/web-session.md`. `design/sessions.md` is context only.  
+2. On a fresh Grok Build instance after a gap, also read `design/sessions.md` (leave-off + log), then every `design/changelog/{current epoch}.{current series}.*.md`, then inspect git / the live tree — the User works between sessions.  
+3. Web / chat: after the repo-review message, follow `design/web-session.md`. `design/sessions.md` is context only. Do not read `design/changelog/` in Phase 1–3 unless the named work is versioning, a named past build, or a revert.  
 4. Open only the topic files that match the requested work.  
 5. Use `design/tunables.md` for numbers.  
 6. Use the code map below for live scripts.  
-7. After a behavior change, update the matching topic file in the same slice. End of a Grok Build session: update `design/sessions.md`. End of a web / chat goal: finish Phase 7 in `design/web-session.md`.
+7. After a behavior change, update the matching topic file in the same slice. End of a Grok Build session: update `design/sessions.md` and write the series-open changelog file when the User commits `0.N.0`. End of a web / chat goal: finish Phase 7 in `design/web-session.md`, including one `design/changelog/{label}.md` when the goal shipped a visible change.
 
 Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live in `tools/i2v_seeds.py`. Off-magenta plates go through `tools/plate_remap.py` before I2V. I2V and complex animation packing stay in Grok Build sessions unless the User says otherwise.
 
@@ -36,6 +36,7 @@ Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live 
 | Agent workflow | `protocol.md` | Front matter |
 | Web / chat session flow | `web-session.md` | — |
 | Grok Build session leave-off + log | `sessions.md` | — |
+| Version scheme, changelog, week pins | `versioning.md` | — |
 | Must / must-not, checklist | `constraints.md` | Hard constraints, success, App. B |
 | Vision, scope, lore | `overview.md` | §§1–3 |
 | Gamepad, KB/M, web pad, menu binds | `input.md` | §4 input |
@@ -60,6 +61,16 @@ Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live 
 | Pinned archive commits | `archives.md` | §20 |
 | Suggested starts + live defaults | `tunables.md` | App. A + live `balance.gd` |
 
+Per-build player notes are `design/changelog/{label}.md`. They are not topic files. Do not open them unless `versioning.md` says to.
+
+## House rules for editing these files
+
+- Keep one concern per file.  
+- Put numbers in `tunables.md`, not buried in paragraphs.  
+- Mark live-only behavior under **Live snapshot**.  
+- Do not reintroduce a single 100KB GDD.  
+- When live scripts are split under the 10KB cap, update this code map in the same slice.
+
 ## Code map (live path)
 
 Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`. See `AGENTS.md` → Script size cap. Web / chat applies that cap in Phase 6 of `design/web-session.md`, not while drafting.
@@ -72,6 +83,7 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Combat | `scripts/combat/combat.gd`, `enemy.gd`, `enemy_ai.gd`, `enemy_atk.gd`, `enemy_setup.gd`, `projectile.gd`, `roster.gd`, `aim_line.gd`, `telegraph.gd`, `player_hit.gd`, `threat.gd` |
 | Skills / save | `scripts/data/progress.gd` + `progress_gear.gd`, `progress_make.gd`, `progress_extract.gd`, `progress_quest.gd`, `progress_town.gd`, `progress_combat.gd`, `gear_rules.gd`, `save_store.gd`, `catalog.gd` |
 | Numbers | `scripts/data/balance.gd`, `balance_schema.gd`, `tunables.gd` |
+| Version / changelog | `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`; `tools/build_changelog.py` |
 | Dungeon | `scripts/dungeon/gen.gd` + `gen_carve.gd`, `gen_rooms.gd`, `gen_doors.gd`; `scripts/world/dungeon.gd` + `dungeon_boot.gd`, `dungeon_geo.gd`, `dungeon_geo_stream.gd`, `dungeon_cells.gd`, `dungeon_stream.gd`, `dungeon_props.gd`, `dungeon_pack.gd`, `crystal_net.gd`, `floor_crystal.gd` |
 | Hub | `scripts/world/camp.gd`, `interact.gd`, `interact_fx.gd` |
 | Gather | `scripts/world/gather_node.gd`, `breakable.gd`, `pickup.gd` |

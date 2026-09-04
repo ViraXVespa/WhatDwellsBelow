@@ -1,0 +1,96 @@
+name: Version
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: version
+  cancel-in-progress: false
+
+jobs:
+  stamp:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Stamp version.json and changelog.json
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, pathlib, subprocess
+
+          root = pathlib.Path(".")
+          ver_path = root / "scripts/data/version.json"
+          default_open = "36fb882c9db3b6cd8a83f072d2dfec51d4acedca"
+          ver = {
+              "epoch": 0,
+              "series": 2,
+              "patch": 0,
+              "label": "0.2.0",
+              "open_commit": default_open,
+          }
+          if ver_path.is_file():
+              ver.update(json.loads(ver_path.read_text(encoding="utf-8")))
+          epoch = int(ver.get("epoch", 0))
+          series = int(ver.get("series", 2))
+          open_sha = str(ver.get("open_commit") or default_open).strip()
+
+          def git(*args) -> str:
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          # Prefer an existing series-open tag (v0.2.0 / v1.0.0). Fall back to documented SHA.
+          tag = f"v{epoch}.{series}.0"
+          tags = git("tag", "--list", tag)
+          open_ref = tag if tags else open_sha
+          try:
+              git("rev-parse", "--verify", open_ref)
+          except subprocess.CalledProcessError:
+              open_ref = open_sha
+          patch = int(git("rev-list", "--count", f"{open_ref}..HEAD") or "0")
+          label = f"{epoch}.{series}.{patch}"
+          payload = {
+              "epoch": epoch,
+              "series": series,
+              "patch": patch,
+              "label": label,
+              "open_commit": open_sha,
+          }
+          ver_path.parent.mkdir(parents=True, exist_ok=True)
+          new_text = json.dumps(payload, indent="\t") + "\n"
+          old_text = ver_path.read_text(encoding="utf-8") if ver_path.is_file() else ""
+          changed = new_text != old_text
+          ver_path.write_text(new_text, encoding="utf-8")
+          print(f"stamped {label} (open {open_ref})")
+          pathlib.Path("/tmp/wdb_label").write_text(label)
+          pathlib.Path("/tmp/wdb_ver_changed").write_text("1" if changed else "0")
+          PY
+          python3 tools/build_changelog.py
+
+      - name: Commit baked copy and tag
+        run: |
+          set -euo pipefail
+          LABEL="$(cat /tmp/wdb_label)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/data/version.json scripts/data/changelog.json
+          if git diff --cached --quiet; then
+            echo "no baked-file changes"
+          else
+            git commit -m "chore: stamp ${LABEL} [skip ci]"
+            git push
+          fi
+          if git rev-parse "v${LABEL}" >/dev/null 2>&1; then
+            echo "tag v${LABEL} exists"
+          else
+            git tag -a "v${LABEL}" -m "What Dwells Below ${LABEL}"
+            git push origin "v${LABEL}"
+          fi

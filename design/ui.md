@@ -1,15 +1,29 @@
 # Player UI, HUD, menus, recap
 
 Status: binding design + live snapshot  
-Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, or loading  
-Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`  
-See also: `design/gear-ui.md`, `design/input.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/camera.md`
+Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, title, or loading  
+Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`, `scripts/title.gd`, `scripts/data/game_ver.gd`  
+See also: `design/gear-ui.md`, `design/input.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/camera.md`, `design/versioning.md`, `design/save-tech.md`
 
 ## UI theme (playable surfaces)
 
-Every player-facing UI and HUD element in the live path MUST be designed with dungeon theming and MUST NOT ship as a default, unskinned, or engine-debug control. This includes the gauntlet strip, pause menu, Extraction Gate UI, Ghost Shop, anvil, Floor Crystal loadout UI, quest UI, Controls Billboard, recap, maps, toasts, title / credit flow, confirmation prompts, and any other surface a normal player can open.
+Every player-facing UI and HUD element in the live path MUST be designed with dungeon theming and MUST NOT ship as a default, unskinned, or engine-debug control. This includes the gauntlet strip, pause menu, Extraction Gate UI, Ghost Shop, anvil, Floor Crystal loadout UI, quest UI, Controls Billboard, recap, maps, toasts, title / credit flow, confirmation prompts, the title “what’s new” overlay, and any other surface a normal player can open.
 
 The secret debug menu (including Automated Playtest, profiles, Animation Browser chrome, Settings tab, and raw value editors) MAY use default or lightly skinned engine controls. Appearance there is not a Demo-Complete art requirement.
+
+## Title / play menu
+
+`scripts/title.gd` is the play menu. It MUST show the current `version.json` `label` on the card at all times.
+
+When the current label is newer than saved `last_seen_game_ver`, a “what’s new” overlay MUST appear on this menu before Play is used.
+
+- Gamepad-first. A / Start or B / Esc dismisses, writes `last_seen_game_ver` to the current label, saves, and focuses Play.
+- Lists `changelog.json` entries with `label` greater than `last_seen_game_ver`, newest first.
+- First launch or wiped save: show **only the current build**.
+- Same series, older patch: show the in-between entries from JSON (current series only).
+- Older series: show this series’ new entries, plus one control that opens `https://viraxvespa.github.io/WhatDwellsBelow/changelog/`.
+- Body shape on screen: build label as heading, key points, optional subpoints, then the Summary line.
+- Long lists scroll. Theme matches the title card.
 
 ## HUD – gauntlet strip (mandatory elements and behavior)
 

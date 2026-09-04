@@ -1,0 +1,154 @@
+{
+	"series": "0.2",
+	"generated_from": "design/changelog",
+	"entries": [
+		{
+			"label": "0.2.11",
+			"points": [
+				{
+					"text": "Game version numbers (`0.week.patch`, later `1.major.patch`)"
+				},
+				{
+					"text": "Per-build changelog files for agents and a generated in-game list for the current week only"
+				},
+				{
+					"text": "Title card shows the current build and a What's new overlay since last launch",
+					"subs": [
+						"First launch or wiped save shows only this build",
+						"Older weeks open the public changelog on Pages"
+					]
+				},
+				{
+					"text": "Grok Build reads this week's notes after the session handoff, not the full history"
+				},
+				{
+					"text": "Week pins: Web Results at session start, Build Results on the User's `0.N.0` commit"
+				}
+			],
+			"summary": "Added version stamps, a current-week What's new popup, and agent changelog rules without loading old notes every session."
+		},
+		{
+			"label": "0.2.10",
+			"points": [
+				{
+					"text": "Animation rework",
+					"subs": [
+						"Player animation playback and packing revisited"
+					]
+				}
+			],
+			"summary": "Another animation pass on the live path before versioning landed."
+		},
+		{
+			"label": "0.2.9",
+			"points": [
+				{
+					"text": "Balance update",
+					"subs": [
+						"Combat and tuning values adjusted on the live path"
+					]
+				}
+			],
+			"summary": "A balance pass landed after the crystal art update."
+		},
+		{
+			"label": "0.2.8",
+			"points": [
+				{
+					"text": "Updated crystal art",
+					"subs": [
+						"Floor Crystal visuals refreshed"
+					]
+				}
+			],
+			"summary": "Crystal art on the live path was replaced with a new pass."
+		},
+		{
+			"label": "0.2.7",
+			"points": [
+				{
+					"text": "Animation smoothing"
+				},
+				{
+					"text": "Repo cleanup"
+				}
+			],
+			"summary": "Player animation playback was smoothed and leftover repo clutter was cleared."
+		},
+		{
+			"label": "0.2.6",
+			"points": [
+				{
+					"text": "Loading update",
+					"subs": [
+						"Further loading overlay and boot timing work"
+					]
+				}
+			],
+			"summary": "Follow-up loading pass after the first loading-bar change."
+		},
+		{
+			"label": "0.2.5",
+			"points": [
+				{
+					"text": "Loading bar changes",
+					"subs": [
+						"Progress overlay pacing and copy updated"
+					]
+				}
+			],
+			"summary": "Loading bar behavior on the title-to-camp transition was adjusted."
+		},
+		{
+			"label": "0.2.4",
+			"points": [
+				{
+					"text": "Startup flow improvements",
+					"subs": [
+						"Title-to-hub boot path made smoother"
+					]
+				}
+			],
+			"summary": "Startup flow into Placeholdia was tightened after the week 2 open."
+		},
+		{
+			"label": "0.2.3",
+			"points": [
+				{
+					"text": "Zoom and filtering updates",
+					"subs": [
+						"Camera zoom and sprite filter settings refined on the live path"
+					]
+				}
+			],
+			"summary": "Zoom and sprite-filter pass for readability and couch play."
+		},
+		{
+			"label": "0.2.2",
+			"points": [
+				{
+					"text": "Art fix",
+					"subs": [
+						"Updated sprites across effects, buildings, enemies, NPCs, player, and props",
+						"Art pipeline tools and notes adjusted to match"
+					]
+				}
+			],
+			"summary": "Sprite and pipeline art fix pass after week 2 opened."
+		},
+		{
+			"label": "0.2.1",
+			"points": [
+				{
+					"text": "Agent behavior update"
+				}
+			],
+			"summary": "Agent workflow and behavior rules were updated on the live path."
+		},
+		{
+			"label": "0.2.0",
+			"points": [],
+			"summary": ""
+		}
+	]
+}

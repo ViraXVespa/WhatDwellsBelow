@@ -83,6 +83,42 @@ jobs:
               subprocess.call(["git", "worktree", "remove", "--force", wt])
           PY
 
+      - name: Publish changelog pages
+        run: |
+          python3 - <<'PY'
+          import html, pathlib, re
+          root = pathlib.Path(".")
+          src = root / "design" / "changelog"
+          dest = root / "site" / "changelog"
+          dest.mkdir(parents=True, exist_ok=True)
+          files = sorted(src.glob("*.md"), key=lambda p: p.stem, reverse=True) if src.is_dir() else []
+          blocks = []
+          for path in files:
+              raw = path.read_text(encoding="utf-8")
+              player, _, _ = raw.partition("\n## Agent")
+              body = html.escape(player.strip())
+              blocks.append(f"<section><pre>{body}</pre></section>")
+              (dest / f"{path.stem}.html").write_text(
+                  "<!doctype html><meta charset=utf-8><title>%s</title><pre>%s</pre>"
+                  % (html.escape(path.stem), body),
+                  encoding="utf-8",
+              )
+          index = """<!doctype html>
+          <meta charset=utf-8>
+          <title>What Dwells Below — changelog</title>
+          <style>
+          body{background:#111;color:#ddd;font:16px/1.4 sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem}
+          h1{color:#e6c36a}
+          pre{white-space:pre-wrap;background:#1a1612;padding:1rem;border:1px solid #3a3024}
+          section{margin:0 0 1.5rem}
+          </style>
+          <h1>What Dwells Below — changelog</h1>
+          %s
+          """ % ("\n".join(blocks) if blocks else "<p>No notes yet.</p>")
+          (dest / "index.html").write_text(index, encoding="utf-8")
+          print("wrote", dest)
+          PY
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
