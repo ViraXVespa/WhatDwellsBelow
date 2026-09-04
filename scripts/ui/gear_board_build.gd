@@ -1,9 +1,12 @@
-# UI building helpers for GearBoard
+extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Text := preload("res://scripts/ui/gear_board_text.gd")
 const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
 const Floor := preload("res://scripts/ui/gear_board_floor.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
+const PromptView := preload("res://scripts/ui/prompt_view.gd")
+
 
 static func build_title(ui: CanvasLayer, mode: String, title_col: Color) -> String:
 	var title := "Inventory"
@@ -42,6 +45,13 @@ static func plain_lab(t: String, size: int, col: Color) -> Label:
 	return l
 
 
+static func sync_chrome(ui: CanvasLayer) -> void:
+	if ui.get("gear_page_left") is Control:
+		PromptView.fill(ui.gear_page_left, [{"action": Prompts.page_prev()}], 16, Color(0.72, 0.66, 0.52))
+	if ui.get("gear_page_right") is Control:
+		PromptView.fill(ui.gear_page_right, [{"action": Prompts.page_next()}], 16, Color(0.72, 0.66, 0.52))
+
+
 static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(440, 250)
@@ -58,20 +68,20 @@ static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	head.add_theme_constant_override("separation", 12)
 	head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var left := plain_lab("Q  ·  LT", 16, Color(0.72, 0.66, 0.52))
+	var left := HBoxContainer.new()
 	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	left.custom_minimum_size = Vector2(84, 24)
-	left.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	left.custom_minimum_size = Vector2(84, 28)
+	left.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	var mid := plain_lab("", 20, Color(1, 0.92, 0.55))
 	mid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mid.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	mid.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	var right := plain_lab("RT  ·  E", 16, Color(0.72, 0.66, 0.52))
+	var right := HBoxContainer.new()
 	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	right.custom_minimum_size = Vector2(84, 24)
-	right.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	right.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	right.custom_minimum_size = Vector2(84, 28)
+	right.size_flags_horizontal = Control.SIZE_SHRINK_END
+	right.alignment = BoxContainer.ALIGNMENT_END
 	head.add_child(left)
 	head.add_child(mid)
 	head.add_child(right)
@@ -84,6 +94,9 @@ static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	vb.add_child(body)
 	ui.gear_stats_title = mid
 	ui.gear_stats = body
+	ui.gear_page_left = left
+	ui.gear_page_right = right
+	sync_chrome(ui)
 	return panel
 
 

@@ -3,6 +3,9 @@ extends CanvasLayer
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const CrystalNet := preload("res://scripts/world/crystal_net.gd")
 const Util := preload("res://scripts/ui/crystal_ui_util.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
+const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 
 const ZOOM_NEAR := 96
 
@@ -55,6 +58,8 @@ func close_ui() -> void:
 
 func _rebuild() -> void:
 	for c in get_children():
+		if str(c.name) == PromptView.BAR_NAME:
+			continue
 		remove_child(c)
 		c.queue_free()
 	focus_btn = null
@@ -73,7 +78,71 @@ func _rebuild() -> void:
 		_page_floors()
 	else:
 		_page_root()
+	_paint_hint()
 	call_deferred("_focus")
+
+
+func _paint_hint() -> void:
+	var extra: Array = []
+	if page == "local":
+		extra.append({"action": "crystal_zoom", "verb": "zoom map", "gap": true})
+	extra.append({"action": "ui_cancel", "verb": "back"})
+	PromptView.footer(self, extra)
+
+
+func _net_tabs(box: VBoxContainer) -> void:
+	var wrap := HBoxContainer.new()
+	wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	wrap.add_theme_constant_override("separation", 10)
+	var left := HBoxContainer.new()
+	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	left.custom_minimum_size = Vector2(36, 28)
+	var right := HBoxContainer.new()
+	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	right.custom_minimum_size = Vector2(36, 28)
+	var sc := ScrollContainer.new()
+	sc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc.custom_minimum_size = Vector2(200, 52)
+	sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 10)
+	var local_ok := CrystalNet.local_unlocked(host)
+	var floor_ok := CrystalNet.floor_unlocked()
+	var on_local := page == "local"
+	var b1 := ThemeS.btn("Local", func(): _go_local(), local_ok)
+	var b2 := ThemeS.btn("Floors", func(): _go_floors(), floor_ok)
+	b1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b1.custom_minimum_size = Vector2(160, 44)
+	b2.custom_minimum_size = Vector2(160, 44)
+	if on_local:
+		b1.disabled = true
+		b1.focus_mode = Control.FOCUS_NONE
+	else:
+		b2.disabled = true
+		b2.focus_mode = Control.FOCUS_NONE
+	row.add_child(b1)
+	row.add_child(b2)
+	sc.add_child(row)
+	wrap.add_child(left)
+	wrap.add_child(sc)
+	wrap.add_child(right)
+	PromptView.fill(left, [{"action": "tab_left"}], 16, Color(0.72, 0.66, 0.52))
+	PromptView.fill(right, [{"action": "tab_right"}], 16, Color(0.72, 0.66, 0.52))
+	box.add_child(wrap)
+
+
+func _cycle_net(dir: int) -> void:
+	if dir == 0:
+		return
+	var local_ok := CrystalNet.local_unlocked(host)
+	var floor_ok := CrystalNet.floor_unlocked()
+	if page == "local" and floor_ok:
+		_go_floors()
+	elif (page == "floors" or page == "band") and local_ok:
+		_go_local()
 
 
 func _page_root() -> void:
@@ -101,11 +170,11 @@ func _page_root() -> void:
 	box.add_child(b2)
 	if focus_btn == null and floor_ok:
 		focus_btn = b2
-	var back := ThemeS.btn("Back  (B)", func(): close_ui())
+	var back := ThemeS.btn("Back", func(): close_ui())
 	box.add_child(back)
 	if focus_btn == null:
 		focus_btn = back
-	status = ThemeS.lab("A selects.  B back.", 18, Color(0.7, 0.66, 0.58))
+	status = ThemeS.lab("", 18, Color(0.7, 0.66, 0.58))
 	box.add_child(status)
 
 
@@ -150,9 +219,9 @@ func _page_local() -> void:
 	box.size = Vector2(680, 820)
 	box.add_theme_constant_override("separation", 8)
 	add_child(box)
+	_net_tabs(box)
 	box.add_child(ThemeS.lab("Local Transport Network", 28, Color(0.95, 0.82, 0.5)))
 	box.add_child(ThemeS.lab("Bound crystals on this floor.", 18, Color(0.78, 0.74, 0.66)))
-	box.add_child(ThemeS.lab("Y / Tab: Zoom map", 18, Color(0.88, 0.78, 0.48)))
 	status = ThemeS.lab(Util.zoom_tip(self), 18, Color(0.7, 0.66, 0.58))
 	box.add_child(status)
 	var first: Button = null
@@ -170,7 +239,7 @@ func _page_local() -> void:
 		if first == null and not here:
 			first = b
 			_aim(cell)
-	var back := ThemeS.btn("Back  (B)", func(): _back())
+	var back := ThemeS.btn("Back", func(): _back())
 	box.add_child(back)
 	focus_btn = first if first else back
 	if first == null:
@@ -225,6 +294,7 @@ func _page_floors() -> void:
 	box.size = Vector2(816, 696)
 	box.add_theme_constant_override("separation", 8)
 	add_child(box)
+	_net_tabs(box)
 	box.add_child(ThemeS.lab("Floor Transport Network", 28, Color(0.95, 0.82, 0.5)))
 	var deepest := maxi(1, int(App.prog.deepest))
 	if page == "band":
@@ -248,7 +318,7 @@ func _page_floors() -> void:
 	else:
 		box.add_child(ThemeS.lab("Deepest floor: %d" % deepest, 20, Color(0.78, 0.86, 0.9)))
 		_list_floors(box, 1, deepest, deepest)
-	var back := ThemeS.btn("Back  (B)", func(): _back())
+	var back := ThemeS.btn("Back", func(): _back())
 	box.add_child(back)
 	if focus_btn == null:
 		focus_btn = back
@@ -308,6 +378,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_cycle_zoom()
 		get_viewport().set_input_as_handled()
 		return
+	if page == "local" or page == "floors" or page == "band":
+		var td := MenuPad.tab_delta(event)
+		if td != 0:
+			_cycle_net(td)
+			get_viewport().set_input_as_handled()
+			return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
 		App.sfx("ui_cancel")
 		_back()

@@ -3,6 +3,8 @@ extends CanvasLayer
 ## Dungeon gauntlet cluster (top-left) + minimap (top-right).
 ## Custom ColorRects, no default ProgressBar.
 
+const PromptView := preload("res://scripts/ui/prompt_view.gd")
+
 const STRIP_W := 540.0
 const STRIP_H := 196.0
 const MINI_W := 350.0
@@ -28,12 +30,14 @@ var food_lab: Label
 var boss_wrap: Control
 var boss_fill: ColorRect
 var boss_lab: Label
-var prompt: Label
+var prompt_row: HBoxContainer
 var toast: Label
 var mini_wrap: Control
 var mini: TextureRect
 var fps_lab: Label
 var portrait_path := ""
+var _prompt_shown := ""
+var _prompt_scheme := ""
 
 
 func _ready() -> void:
@@ -71,7 +75,7 @@ func _ready() -> void:
 	dash_fill = _meter(strip, Vector2(280, 48), Vector2(112, 16), Color(0.3, 0.7, 0.85))
 	spec_fill = _meter(strip, Vector2(400, 48), Vector2(112, 16), Color(0.9, 0.55, 0.2))
 	_lab(strip, Vector2(280, 64), Vector2(112, 18), 13).text = "Dash"
-	_lab(strip, Vector2(400, 64), Vector2(112, 18), 13).text = "LT"
+	_lab(strip, Vector2(400, 64), Vector2(112, 18), 13).text = "Special"
 	lvl = _lab(strip, Vector2(112, 86), Vector2(280, 28), 22)
 	floor_lab = _lab(strip, Vector2(400, 86), Vector2(120, 28), 28)
 	res = _lab(strip, Vector2(112, 114), Vector2(410, 24), 18)
@@ -99,8 +103,12 @@ func _ready() -> void:
 	strip.add_child(food_icon)
 	food_lab = _lab(strip, Vector2(302, 142), Vector2(220, 28), 18)
 	food_lab.add_theme_color_override("font_color", Color(0.7, 0.92, 0.5))
-	prompt = _lab(strip, Vector2(10, 168), Vector2(520, 24), 18)
-	prompt.add_theme_color_override("font_color", Color(0.95, 0.82, 0.4))
+	prompt_row = HBoxContainer.new()
+	prompt_row.position = Vector2(10, 168)
+	prompt_row.size = Vector2(520, 24)
+	prompt_row.add_theme_constant_override("separation", 8)
+	prompt_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	strip.add_child(prompt_row)
 	toast = _lab(self, Vector2(24, 16 + STRIP_H + 8), Vector2(540, 28), 20)
 	toast.add_theme_color_override("font_color", Color(1.0, 0.88, 0.45))
 	boss_wrap = Control.new()
@@ -229,11 +237,30 @@ func refresh(player: Node, dungeon: Node) -> void:
 	else:
 		food_icon.visible = false
 		food_lab.visible = false
-	prompt.text = App.interact_prompt
+	_paint_prompt()
 	toast.text = App.toast_msg if App.toast_t > 0.0 else ""
 	_boss(dungeon, player)
 	if fps_lab:
 		fps_lab.text = ""
+
+
+func _paint_prompt() -> void:
+	var text := str(App.interact_prompt)
+	var scheme := Prompts.scheme() if false else ""
+	var Prompts = load("res://scripts/input/prompts.gd")
+	scheme = Prompts.scheme()
+	if text == _prompt_shown and scheme == _prompt_scheme:
+		return
+	_prompt_shown = text
+	_prompt_scheme = scheme
+	if text == "":
+		PromptView.fill(prompt_row, [])
+		return
+	var locked := text.begins_with("Locked") or text.begins_with("Already") or text.begins_with("The fire") or text.begins_with("Spent") or text.begins_with("Empty")
+	if locked:
+		PromptView.fill(prompt_row, [{"text": text}], 16, Color(0.95, 0.82, 0.4))
+	else:
+		PromptView.fill(prompt_row, [{"action": "interact", "verb": text}], 16, Color(0.95, 0.82, 0.4))
 
 
 func _style_name() -> String:

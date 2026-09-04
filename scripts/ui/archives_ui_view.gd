@@ -2,6 +2,7 @@ extends Object
 
 const Docs := preload("res://scripts/data/archives_docs.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 const COL_LIVE := Color(1, 1, 1, 1)
 const COL_DIM := Color(0.55, 0.52, 0.48, 1)
@@ -72,7 +73,7 @@ static func setup(host: Node) -> void:
 	host.info_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.info_box.add_theme_constant_override("separation", 10)
 	scroll.add_child(host.info_box)
-	host._chevron = ThemeS.lab("▶", 28, GOLD)
+	host._chevron = ThemeS.lab(">", 28, GOLD)
 	host._chevron.position = Vector2(716, 190)
 	host._chevron.size = Vector2(24, 36)
 	host._chevron.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -104,7 +105,7 @@ static func rebuild_list(host: Node) -> void:
 		b.mouse_entered.connect(func(): host._on_list_hover(ii))
 		host.list_box.add_child(b)
 		host.list_btns.append(b)
-	host.back_btn = ThemeS.btn("Back  (B)", host.hide_browser)
+	host.back_btn = ThemeS.btn("Back", host.hide_browser)
 	host.list_box.add_child(host.back_btn)
 	paint_list(host)
 	var chain: Array = []
@@ -243,18 +244,22 @@ static func add_info_btn(host: Node, b: Button) -> void:
 
 
 static func hint(host: Node) -> void:
-	if host.status == null:
-		return
-	var col: String = str(host.col)
-	var mode: String = str(host.mode)
-	if col == "list":
-		host.status.text = "A inspect snapshot    B close"
-	elif mode == "docs":
-		host.status.text = "A open    B back"
-	elif mode == "read":
-		host.status.text = "B back"
-	else:
-		host.status.text = "A use button    B back to snapshots"
+	if host is CanvasLayer:
+		var extra: Array = []
+		var col: String = str(host.col)
+		var mode: String = str(host.mode)
+		if col == "list":
+			extra.append({"action": "ui_accept", "verb": "inspect snapshot", "gap": true})
+			extra.append({"action": "ui_cancel", "verb": "close"})
+		elif mode == "docs":
+			extra.append({"action": "ui_accept", "verb": "open", "gap": true})
+			extra.append({"action": "ui_cancel", "verb": "back"})
+		elif mode == "read":
+			extra.append({"action": "ui_cancel", "verb": "back"})
+		else:
+			extra.append({"action": "ui_accept", "verb": "use", "gap": true})
+			extra.append({"action": "ui_cancel", "verb": "back"})
+		PromptView.footer(host as CanvasLayer, extra)
 
 
 static func path_text(host: Node) -> void:
@@ -301,7 +306,7 @@ static func docs_panel(host: Node) -> void:
 	for i in n:
 		var ii: int = i
 		add_info_btn(host, ThemeS.btn(Docs.display_name(str(docs[i])), func(): host._open_read(ii)))
-	add_info_btn(host, ThemeS.btn("Back to info  (B)", host._back))
+	add_info_btn(host, ThemeS.btn("Back to info", host._back))
 
 
 static func read_panel(host: Node) -> void:
@@ -311,4 +316,4 @@ static func read_panel(host: Node) -> void:
 	var name: String = str(docs[doc_i]) if doc_i >= 0 and doc_i < docs.size() else ""
 	host.info_box.add_child(ThemeS.lab(Docs.display_name(name), 24, Color(0.95, 0.86, 0.55)))
 	host.info_box.add_child(ThemeS.lab(host._read_doc(str(e.get("id", "")), name), 16, Color(0.86, 0.82, 0.74)))
-	add_info_btn(host, ThemeS.btn("Back to documents  (B)", host._back))
+	add_info_btn(host, ThemeS.btn("Back to documents", host._back))

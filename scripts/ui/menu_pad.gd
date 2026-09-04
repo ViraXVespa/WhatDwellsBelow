@@ -1,15 +1,14 @@
 extends Object
 
-## Shared menu bindings.
-## LB / RB  — cycle tabs when the open menu has tabs
-## A / Enter — confirm focused control (Godot GUI) or a pending prompt
-## B / Esc  — back one layer, or close at root
-## Q / LT   — previous stats page on a gear board
-## E / RT   — next stats page on a gear board
-## Debug Animation Browser keeps its own LB/RB and LT/RT meaning.
+const InputPad := preload("res://scripts/input/pad.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
+const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 
 static func pressed(event: InputEvent) -> bool:
+	InputPad.note_event(event)
+	if Prompts.dirty():
+		PromptView.pulse()
 	if event is InputEventMouse or event is InputEventMouseButton:
 		return false
 	if event is InputEventKey:

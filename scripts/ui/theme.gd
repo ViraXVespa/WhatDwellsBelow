@@ -1,5 +1,7 @@
 extends Object
 
+const Prompts := preload("res://scripts/input/prompts.gd")
+
 
 static func lab(t: String, size: int, col: Color) -> Label:
 	var l := Label.new()
@@ -167,31 +169,7 @@ static func skill_tip(id: String, lv: int) -> String:
 
 
 static func bind_text(action: String) -> String:
-	if not InputMap.has_action(action):
-		return "(unbound)"
-	var joy := ""
-	var key := ""
-	for e in InputMap.action_get_events(action):
-		if e is InputEventJoypadButton:
-			joy = _joy_btn((e as InputEventJoypadButton).button_index)
-		elif e is InputEventJoypadMotion:
-			joy = _joy_axis((e as InputEventJoypadMotion).axis, (e as InputEventJoypadMotion).axis_value)
-		elif e is InputEventKey:
-			var k := e as InputEventKey
-			key = OS.get_keycode_string(k.physical_keycode) if k.physical_keycode != 0 else OS.get_keycode_string(k.keycode)
-		elif e is InputEventMouseButton:
-			var mb := (e as InputEventMouseButton).button_index
-			if mb == MOUSE_BUTTON_LEFT:
-				key = "LMB"
-			elif mb == MOUSE_BUTTON_RIGHT:
-				key = "RMB"
-			else:
-				key = "Mouse " + str(mb)
-	if joy == "" and key == "":
-		return "(unbound)"
-	if joy != "" and key != "":
-		return joy + "  /  " + key
-	return joy if joy != "" else key
+	return Prompts.chip_for(action)
 
 
 static func _joy_btn(i: int) -> String:

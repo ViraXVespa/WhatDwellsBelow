@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot
 Read when: changing controls, menus, web export, or aim
-Code: `scripts/input/binds.gd`, `scripts/input/pad.gd`, `scripts/web_pad.gd`, `scripts/ui/menu_pad.gd`
+Code: `scripts/input/binds.gd`, `scripts/input/pad.gd`, `scripts/input/prompts.gd`, `scripts/web_pad.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/prompt_view.gd`
 See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui.md`
 
 ## Target platforms
@@ -42,6 +42,25 @@ Shared classifiers live in `scripts/ui/menu_pad.gd`. Any menu with tabs MUST cal
 
 Exception: the secret Animation Browser keeps LB / RB = previous / next model and LT / RT = animation list, per `design/debug.md`.
 
+## On-screen prompts
+
+Prompts follow **last used** input. One scheme at a time. `Pad.note_event` sets `Pad.mode` from a joy event (pad) or a key / mouse event (kb). `Prompts.scheme()` reads that flag. `menu_pad.gd` notes the event on menu traffic and calls `PromptView.pulse()` so open footers redraw.
+
+Do not bake `A`, `B`, `ENTER`, `ESC`, `LMB`, or `RMB` into button captions or status lines. Verbs stay on the control; glyphs come from the bind.
+
+| Surface | Where the glyph lives |
+|---------|------------------------|
+| Menus | Footer strip at the bottom-right of the menu panel. Always Select + Back. Extra actions (drop, tip, zoom) join that strip. |
+| Tab headers | LB / RB (or `[` / `]`) on the left and right of the tab row. The row stretches; it scrolls horizontally when tabs overflow. |
+| Gear stats card | Q / E on keyboard, LT / RT on pad. Not in the footer. |
+| World HUD | `interact` glyph + the verb from `scripts/world/interact.gd`. Locked / spent lines are text only. |
+
+Glyph PNGs: `assets/ui/prompts/kb/`, `assets/ui/prompts/pad/`, `assets/ui/prompts/mouse/`. Regenerate with `python tools/gen_prompt_glyphs.py`.
+
+Helpers: `Prompts.texture_for(action)`, `PromptView.fill`, `PromptView.footer(ui, extra_parts)`.
+
+Extra bindable actions used by prompts: `tab_left`, `tab_right`, `gear_tip`, `gear_drop`, `crystal_zoom`.
+
 ## Aim-line indicator
 
 - Simple opaque visual indicator that extends outward from the player in the direction they are facing/aiming.
@@ -74,6 +93,9 @@ These are implementation defaults, not a replacement for rebinding.
 | Potion | F |
 | Food | C |
 | Menu tabs | `[` / `]` |
+| Gear tip | Y |
+| Gear drop | X |
+| Crystal zoom | Tab |
 
 `binds.apply_pc_defaults()` strips `KEY_R` from special. README text that still says “R special” is stale relative to live binds.
 

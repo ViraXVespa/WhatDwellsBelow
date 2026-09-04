@@ -62,14 +62,14 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	box.add_theme_constant_override("separation", 6)
 	panel.add_child(box)
 	var head := "Re-equip  " + str(Fmt.NAMES.get(slot, slot))
-	var blurb := "A picks it. B closes. AT RISK gear is lost on death or Dispel."
+	var blurb := "AT RISK gear is lost on death or Dispel."
 	if _is_anvil(ui):
 		if str(ui.get("anvil_tab")) == "forge":
 			head = "Forge  " + str(Fmt.NAMES.get(slot, slot))
-			blurb = "A selects analyzed remains or a hold. B closes."
+			blurb = "Pick analyzed remains or a hold."
 		else:
 			head = "Analyze  " + str(Fmt.NAMES.get(slot, slot))
-			blurb = "A DESTROYS the piece. Remains wait on the Forge tab. B closes."
+			blurb = "Analyze DESTROYS the piece. Remains wait on the Forge tab."
 	box.add_child(ThemeS.lab(head, 22, Color(0.95, 0.82, 0.5)))
 	box.add_child(ThemeS.lab(blurb, 16, Color(0.8, 0.74, 0.64)))
 	var first: Button = null
@@ -113,7 +113,7 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 		if first == null:
 			first = b
 	var back := Button.new()
-	back.text = "Back  (B)"
+	back.text = "Back"
 	back.custom_minimum_size = Vector2(0, 40)
 	back.focus_mode = Control.FOCUS_ALL
 	back.add_theme_font_size_override("font_size", 18)

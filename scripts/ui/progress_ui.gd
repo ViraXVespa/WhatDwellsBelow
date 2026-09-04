@@ -8,6 +8,9 @@ const Hub := preload("res://scripts/ui/progress_ui_hub.gd")
 const GearAct := preload("res://scripts/ui/gear_board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Anvil := preload("res://scripts/ui/gear_board_anvil.gd")
+const MenuPad := preload("res://scripts/ui/menu_pad.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
+const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 var open := false
 var mode := ""
@@ -42,7 +45,9 @@ var gear_tip: Label
 var gear_tip_host: PanelContainer
 var gear_stats: Control
 var gear_stats_title: Label
-var gear_hint: Label
+var gear_hint: Control
+var gear_page_left: Control
+var gear_page_right: Control
 
 
 func _ready() -> void:
@@ -66,7 +71,7 @@ func _ready() -> void:
 	add_child(edge)
 	var scroll := ScrollContainer.new()
 	scroll.position = Vector2(384, 104)
-	scroll.size = Vector2(1152, 872)
+	scroll.size = Vector2(1152, 832)
 	add_child(scroll)
 	box = VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -110,7 +115,14 @@ func _show() -> void:
 	visible = true
 	App.ui_open = true
 	get_tree().paused = true
+	_paint_menu_hint()
 	call_deferred("_focus")
+
+
+func _paint_menu_hint() -> void:
+	if _gear_busy():
+		return
+	PromptView.footer(self, [{"action": "ui_cancel", "verb": "leave"}])
 
 
 func _focus() -> void:
@@ -137,7 +149,8 @@ func _clear() -> void:
 	gear_tip = null
 	gear_stats = null
 	gear_stats_title = null
-	gear_hint = null
+	gear_page_left = null
+	gear_page_right = null
 
 
 func _st(msg: String) -> void:
@@ -215,7 +228,7 @@ func open_flavor(title: String, body: String) -> void:
 	_clear()
 	box.add_child(ThemeS.lab(title, 28, Color(0.95, 0.82, 0.5)))
 	box.add_child(ThemeS.lab(body, 22, Color(0.88, 0.82, 0.7)))
-	focus_btn = ThemeS.btn("Leave  (B)", func(): close_ui())
+	focus_btn = ThemeS.btn("Leave", func(): close_ui())
 	box.add_child(focus_btn)
 	_show()
 
@@ -289,7 +302,7 @@ func _confirm(fn: Callable, id := "anon") -> void:
 		pending = true
 		pending_id = id
 		pending_fn = fn
-		_st("A again to confirm. B cancels.")
+		_st("Confirm again to proceed.")
 		return
 	pending = false
 	pending_id = ""
@@ -308,7 +321,7 @@ func _process(delta: float) -> void:
 		return
 	forge_t = maxf(0.0, forge_t - delta)
 	if status:
-		status.text = "Forging… %.1fs. B cancels." % forge_t
+		status.text = "Forging… %.1fs." % forge_t
 	if forge_t > 0.0:
 		return
 	var it: Dictionary = forge_it
@@ -334,6 +347,12 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouse or event is InputEventMouseButton:
 		return
+	if mode == "anvil":
+		var td := MenuPad.tab_delta(event)
+		if td != 0:
+			Anvil.cycle_tab(self, td)
+			get_viewport().set_input_as_handled()
+			return
 	if GearAct.handle_event(self, event):
 		get_viewport().set_input_as_handled()
 
@@ -343,6 +362,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouse or event is InputEventMouseButton:
 		return
+	if mode == "anvil":
+		var td := MenuPad.tab_delta(event)
+		if td != 0:
+			Anvil.cycle_tab(self, td)
+			get_viewport().set_input_as_handled()
+			return
 	if _gear_busy() and GearAct.handle_event(self, event):
 		get_viewport().set_input_as_handled()
 		return

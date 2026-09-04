@@ -47,7 +47,7 @@ static func rebuild_extract(ui) -> void:
 		title = "Extraction Gate"
 	ui.box.add_child(ThemeS.lab(title, 32, Color(0.95, 0.82, 0.5)))
 	ui.box.add_child(ThemeS.lab("Mail goods to the surface. Artifacts stay with you (run-only).", 18, Color(0.82, 0.76, 0.66)))
-	ui.status = ThemeS.lab("A to select. Confirm with A again. B leaves.", 20, Color(0.95, 0.8, 0.45))
+	ui.status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
 	ui.box.add_child(ui.status)
 	ui.focus_btn = ThemeS.btn("Send All  (confirm)", func(): ui._confirm(func(): ui._do_send_all(), "send_all"))
 	ui.box.add_child(ui.focus_btn)
@@ -57,4 +57,4 @@ static func rebuild_extract(ui) -> void:
 			cap += "  x%d" % int(it.n)
 		var copy: Dictionary = it.duplicate(true)
 		ui.box.add_child(ThemeS.btn("Send  " + cap, func(): ui._confirm(func(): ui._do_send_one(copy), "send_" + cap)))
-	ui.box.add_child(ThemeS.btn("Leave  (B)", func(): ui.close_ui()))
+	ui.box.add_child(ThemeS.btn("Leave", func(): ui.close_ui()))

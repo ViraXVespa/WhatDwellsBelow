@@ -6,6 +6,7 @@ const BIND_ACTIONS: PackedStringArray = [
 	"attack", "special", "dash", "target_lock", "interact", "pause",
 	"tab_left", "tab_right",
 	"map_view", "potion", "food",
+	"gear_tip", "gear_drop", "crystal_zoom",
 	"anim_model_prev", "anim_model_next", "anim_idle", "anim_play",
 	"anim_list_up", "anim_list_down", "anim_back",
 ]
@@ -117,6 +118,9 @@ static func register() -> void:
 	act("map_view", [KEY_M], JOY_BUTTON_BACK)
 	act("potion", [KEY_F], JOY_BUTTON_DPAD_UP)
 	act("food", [KEY_C], JOY_BUTTON_DPAD_LEFT)
+	act("gear_tip", [KEY_Y], JOY_BUTTON_Y)
+	act("gear_drop", [KEY_X], JOY_BUTTON_X)
+	act("crystal_zoom", [KEY_TAB], JOY_BUTTON_Y)
 	act("anim_model_prev", [KEY_COMMA], JOY_BUTTON_LEFT_SHOULDER)
 	act("anim_model_next", [KEY_PERIOD], JOY_BUTTON_RIGHT_SHOULDER)
 	act("anim_idle", [KEY_I], JOY_BUTTON_RIGHT_STICK)
@@ -172,6 +176,9 @@ static func apply_pc_defaults() -> void:
 	strip_key("special", KEY_R)
 	ensure_mouse("special", MOUSE_BUTTON_RIGHT)
 	ensure_key("pause", KEY_ESCAPE)
+	ensure_key("gear_tip", KEY_Y)
+	ensure_key("gear_drop", KEY_X)
+	ensure_key("crystal_zoom", KEY_TAB)
 	ensure_key("anim_back", KEY_ESCAPE)
 	ensure_key("anim_back", KEY_BACKSPACE)
 	ensure_key("ui_accept", KEY_ENTER)

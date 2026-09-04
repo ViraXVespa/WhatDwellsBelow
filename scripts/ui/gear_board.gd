@@ -6,6 +6,8 @@ const Act := preload("res://scripts/ui/gear_board_act.gd")
 const Floor := preload("res://scripts/ui/gear_board_floor.gd")
 const Tip := preload("res://scripts/ui/gear_board_tip.gd")
 const Build := preload("res://scripts/ui/gear_board_build.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
+const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 static var pending_kit: Dictionary = {}
 
@@ -33,6 +35,7 @@ static func ensure_host(ui: CanvasLayer) -> void:
 		ui.set_meta("gear_tip_ready", false)
 	if not ui.has_meta("gear_booting"):
 		ui.set_meta("gear_booting", false)
+	PromptView.ensure_bar(ui)
 
 
 static func is_loadout(ui: CanvasLayer) -> bool:
@@ -109,6 +112,15 @@ static func place_tip(ui: CanvasLayer) -> void:
 	Tip.place_tip(ui)
 
 
+static func _paint_hint(ui: CanvasLayer) -> void:
+	var extra: Array = []
+	if str(ui.get("gear_mode")) == "anvil":
+		extra = load("res://scripts/ui/gear_board_anvil.gd").hint_parts(ui)
+	else:
+		extra = Text.hint_parts(ui)
+	PromptView.footer(ui, extra)
+
+
 static func build(ui: CanvasLayer, mode: String) -> void:
 	ensure_host(ui)
 	ui.gear_mode = mode
@@ -120,14 +132,12 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 	_flag(ui, "gear_tip_ready", false)
 	_flag(ui, "gear_booting", true)
 	clear_sub(ui)
-	var title_col := Color.WHITE
-	var title := Build.build_title(ui, mode, title_col)
+	var title_col := Color(0.95, 0.82, 0.5)
 	if mode == "loadout":
 		title_col = Color(0.6, 0.9, 1.0)
 	elif mode == "anvil":
 		title_col = Color(0.95, 0.78, 0.42)
-	else:
-		title_col = Color(0.95, 0.82, 0.5)
+	var title := Build.build_title(ui, mode, title_col)
 	ui.box.add_child(ThemeS.lab(title, 28, title_col))
 	var subtitle := Build.build_subtitle(ui, mode)
 	if subtitle != "":
@@ -138,8 +148,6 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 	else:
 		ui.status = ThemeS.lab("", 16, Color(0.78, 0.74, 0.66))
 	ui.box.add_child(ui.status)
-	ui.gear_hint = ThemeS.lab(Text.hint_line(ui), 16, Color(0.72, 0.68, 0.6))
-	ui.box.add_child(ui.gear_hint)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -160,7 +168,8 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 		load("res://scripts/ui/gear_board_anvil.gd").footer(ui)
 	else:
 		bag_grid(ui)
-	ui.box.add_child(ThemeS.btn("Close  (B)", ui.close_ui))
+	ui.box.add_child(ThemeS.btn("Close", ui.close_ui))
+	_paint_hint(ui)
 	refresh(ui)
 	var tree := ui.get_tree()
 	if tree:
@@ -272,11 +281,11 @@ static func refresh(ui: CanvasLayer) -> void:
 		ui.gear_stats_title.text = Text.stats_title(ui)
 	if ui.get("gear_stats") != null and ui.gear_stats:
 		ui.gear_stats.text = Text.stats_body(ui)
-	if ui.get("gear_hint") != null and ui.gear_hint:
-		if str(ui.get("gear_mode")) == "anvil":
-			ui.gear_hint.text = load("res://scripts/ui/gear_board_anvil.gd").hint_line(ui)
-		else:
-			ui.gear_hint.text = Text.hint_line(ui)
+	_paint_hint(ui)
+	if ui.get("gear_page_left") != null and ui.gear_page_left:
+		PromptView.fill(ui.gear_page_left, [{"action": Prompts.page_prev()}], 16, Color(0.72, 0.66, 0.52))
+	if ui.get("gear_page_right") != null and ui.gear_page_right:
+		PromptView.fill(ui.gear_page_right, [{"action": Prompts.page_next()}], 16, Color(0.72, 0.66, 0.52))
 	Floor.sync(ui)
 	if _on(ui, "gear_tip_ready") or _on(ui, "gear_hover"):
 		place_tip(ui)

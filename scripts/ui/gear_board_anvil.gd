@@ -4,6 +4,8 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const Text := preload("res://scripts/ui/gear_board_text.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
 const Town := preload("res://scripts/data/progress_town.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
+const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 
 static func is_anvil(ui: CanvasLayer) -> bool:
@@ -15,14 +17,34 @@ static func tab(ui: CanvasLayer) -> String:
 	return t if t == "forge" else "analyze"
 
 
-static func hint_line(ui: CanvasLayer) -> String:
+static func hint_parts(ui: CanvasLayer) -> Array:
+	var parts: Array = []
 	if bool(ui.get("gear_sub")):
 		if tab(ui) == "forge":
-			return "A select remains / hold   B close list   Y tip / forge preview"
-		return "A analyze — this DESTROYS the piece   B close list   Y tip"
-	if tab(ui) == "forge":
-		return "Forge tab — A a slot to pick analyzed remains or a hold   Q E stats"
-	return "Analyze tab — A a slot, confirm to destroy the piece into remains"
+			parts.append({"action": "ui_accept", "verb": "select remains / hold", "gap": true})
+		else:
+			parts.append({"action": "ui_accept", "verb": "analyze — destroys the piece", "gap": true})
+		parts.append({"action": "ui_cancel", "verb": "close list", "gap": true})
+		parts.append({"action": "gear_tip", "verb": "tip / forge preview"})
+	elif tab(ui) == "forge":
+		parts.append({"action": "ui_accept", "verb": "pick remains or a hold", "gap": true})
+		parts.append({"action": "ui_cancel", "verb": "back"})
+	else:
+		parts.append({"action": "ui_accept", "verb": "select a slot", "gap": true})
+		parts.append({"action": "ui_cancel", "verb": "back"})
+	return parts
+
+
+static func hint_line(ui: CanvasLayer) -> String:
+	var bits: PackedStringArray = PackedStringArray()
+	for row: Variant in hint_parts(ui):
+		if not (row is Dictionary):
+			continue
+		var action := str(row.get("action", ""))
+		if action == "":
+			continue
+		bits.append(Prompts.verb_line(action, str(row.get("verb", ""))))
+	return "   ".join(bits)
 
 
 static func options_for(slot: String, ui: CanvasLayer) -> Array:
@@ -92,11 +114,33 @@ static func footer(ui: CanvasLayer) -> void:
 
 
 static func _tabs(ui: CanvasLayer) -> void:
+	var wrap := HBoxContainer.new()
+	wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	wrap.add_theme_constant_override("separation", 10)
+	var left := HBoxContainer.new()
+	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	left.custom_minimum_size = Vector2(36, 28)
+	left.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	var right := HBoxContainer.new()
+	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	right.custom_minimum_size = Vector2(36, 28)
+	right.size_flags_horizontal = Control.SIZE_SHRINK_END
+	var sc := ScrollContainer.new()
+	sc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc.custom_minimum_size = Vector2(200, 52)
+	sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	sc.follow_focus = true
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 10)
 	var on_a := tab(ui) == "analyze"
 	var a := ThemeS.btn("Analyze", func(): _set_tab(ui, "analyze"), true)
 	var f := ThemeS.btn("Forge", func(): _set_tab(ui, "forge"), true)
+	a.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	f.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	a.custom_minimum_size = Vector2(160, 44)
+	f.custom_minimum_size = Vector2(160, 44)
 	if on_a:
 		a.disabled = true
 		a.focus_mode = Control.FOCUS_NONE
@@ -105,7 +149,13 @@ static func _tabs(ui: CanvasLayer) -> void:
 		f.focus_mode = Control.FOCUS_NONE
 	row.add_child(a)
 	row.add_child(f)
-	ui.box.add_child(row)
+	sc.add_child(row)
+	wrap.add_child(left)
+	wrap.add_child(sc)
+	wrap.add_child(right)
+	PromptView.fill(left, [{"action": "tab_left"}], 16, Color(0.72, 0.66, 0.52))
+	PromptView.fill(right, [{"action": "tab_right"}], 16, Color(0.72, 0.66, 0.52))
+	ui.box.add_child(wrap)
 
 
 static func _set_tab(ui: CanvasLayer, t: String) -> void:
@@ -114,6 +164,12 @@ static func _set_tab(ui: CanvasLayer, t: String) -> void:
 	ui.pending = false
 	ui.call_deferred("_rebuild_anvil")
 	ui.call_deferred("_show")
+
+
+static func cycle_tab(ui: CanvasLayer, dir: int) -> void:
+	if dir == 0:
+		return
+	_set_tab(ui, "forge" if tab(ui) == "analyze" else "analyze")
 
 
 static func _analyze_body(ui: CanvasLayer, smith: int) -> void:
@@ -133,7 +189,7 @@ static func _forge_body(ui: CanvasLayer, smith: int) -> void:
 		ui.status.text = "Smithing %d. Nothing to forge. Analyze a piece first." % smith
 		return
 	if ui.anvil_item.is_empty():
-		ui.status.text = "Smithing %d. A a slot — pick analyzed remains or a hold to re-forge." % smith
+		ui.status.text = "Smithing %d. Pick a slot — analyzed remains or a hold." % smith
 		_hold_lines(ui)
 		return
 	var it: Dictionary = ui.anvil_item
@@ -146,10 +202,10 @@ static func _forge_body(ui: CanvasLayer, smith: int) -> void:
 	ui.box.add_child(ThemeS.lab("Slot %s   %s   +%d dmg   +%d def   +%d HP" % [slot, str(it.get("rarity", "white")), int(it.get("dmg", 0)), int(it.get("def", 0)), int(it.get("hp", 0))], 16, Color(0.88, 0.82, 0.7)))
 	ui.box.add_child(ThemeS.lab("Smithing %d. Holds %d/3. Wait %.1fs." % [smith, h.size(), wait], 16, Color(0.8, 0.85, 0.7)))
 	if first:
-		ui.status.text = "First forge from remains: %dg  %d ore  %d root. A again to confirm." % [cost.gold, cost.ore, cost.root]
+		ui.status.text = "First forge from remains: %dg  %d ore  %d root." % [cost.gold, cost.ore, cost.root]
 		ui.focus_btn = ThemeS.btn("Forge remains  (confirm)", func(): ui._confirm(func(): start_forge(ui), "forge"))
 	else:
-		ui.status.text = "Re-forge hold: %dg  %d ore  %d root. A again to confirm." % [cost.gold, cost.ore, cost.root]
+		ui.status.text = "Re-forge hold: %dg  %d ore  %d root." % [cost.gold, cost.ore, cost.root]
 		ui.focus_btn = ThemeS.btn("Re-forge  (confirm)", func(): ui._confirm(func(): start_forge(ui), "forge"))
 	ui.box.add_child(ui.focus_btn)
 	_hold_lines(ui)
@@ -245,4 +301,4 @@ static func start_forge(ui: CanvasLayer) -> void:
 	ui.forge_it = it.duplicate(true)
 	ui.forge_it["anvil_src"] = src
 	ui.forge_t = App.prog.forge_duration()
-	ui._st("Forging… %.1fs. B cancels the wait." % ui.forge_t)
+	ui._st("Forging… %.1fs." % ui.forge_t)

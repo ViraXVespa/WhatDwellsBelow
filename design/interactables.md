@@ -2,8 +2,8 @@
 
 Status: binding design
 Read when: changing gathering, Extraction Gates, shops, shrines, puzzles, or crystals
-Code: `scripts/world/gather_node.gd`, `breakable.gd`, `interact.gd`, `floor_crystal.gd`, `crystal_net.gd`, `pickup.gd`, `dungeon_props.gd`
-See also: `design/inventory.md`, `design/dungeon.md`, `design/ui.md`
+Code: `scripts/world/gather_node.gd`, `breakable.gd`, `interact.gd`, `floor_crystal.gd`, `crystal_net.gd`, `pickup.gd`, `dungeon_props.gd`, `scripts/ui/hud.gd`, `scripts/input/prompts.gd`
+See also: `design/inventory.md`, `design/dungeon.md`, `design/ui.md`, `design/input.md`
 
 ## Mining nodes
 
@@ -71,14 +71,19 @@ See also: `design/inventory.md`, `design/dungeon.md`, `design/ui.md`
 
 - Stairs only allow travel deeper.
 - Stairs remain locked behind the boss door until the Floor Guardian or Gate Master is defeated.
-- Interaction prompt MUST be clear and confirmation-safe (A again to descend).
+- Interaction prompt is a last-used `interact` glyph plus the verb “Descend”. First use arms confirm; second use descends. Locked copy is text only (“Locked. Defeat the guardian.”).
 
 ## Floor crystals
 
 - Placeholdia’s loadout crystal is unchanged: it opens loadout / enter dungeon.
 - In-dungeon crystals are waypoints, not descend points.
-- The entrance crystal is already bound. Other crystals show “Clear the area to activate.” until nearby enemies and pending spawn jobs are gone, then “A: Activate crystal”.
+- The entrance crystal is already bound. Other crystals show “Clear the area to activate.” until nearby enemies and pending spawn jobs are gone, then the verb “Activate crystal” with the `interact` glyph.
 - A bound crystal opens the transport menu: Local Transport Network, Floor Transport Network, Back.
 - Local Transport Network is locked until a second crystal on this floor is bound.
 - Floor Transport Network is locked until the player has reached a floor deeper than the current one.
-- Interaction prompts MUST stay TV-readable and gamepad-first.
+- Crystal map zoom is `crystal_zoom` (Tab / Y). That bind appears in the menu footer, not in the zoom status line.
+- Interaction prompts MUST stay TV-readable and gamepad-first. Do not prefix world verbs with `A:`.
+
+## HUD prompt
+
+`App.interact_prompt` is the verb only. `hud.gd` attaches the current-scheme `interact` glyph. Scheme flips with last-used input (`design/input.md`).

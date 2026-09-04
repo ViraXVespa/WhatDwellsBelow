@@ -1,4 +1,4 @@
-# Page building and utility functions for CrystalUI
+extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const CrystalNet := preload("res://scripts/world/crystal_net.gd")
@@ -21,19 +21,15 @@ static func zoom_view(ui: CanvasLayer, host: Node) -> int:
 static func zoom_tip(ui: CanvasLayer) -> String:
 	match ui.zoom_lv:
 		1:
-			return "Zoom: mid  ·  Y / Tab cycles"
+			return "Zoom: mid"
 		2:
-			return "Zoom: full floor  ·  Y / Tab cycles"
+			return "Zoom: full floor"
 		_:
-			return "Zoom: close  ·  Y / Tab cycles"
+			return "Zoom: close"
 
 
 static func zoom_event(event: InputEvent) -> bool:
-	if event is InputEventKey and event.pressed and not event.echo:
-		return event.keycode == KEY_TAB or event.physical_keycode == KEY_TAB
-	if event is InputEventJoypadButton and event.pressed:
-		return event.button_index == JOY_BUTTON_Y
-	return false
+	return event.is_action_pressed("crystal_zoom")
 
 
 static func place_mark(ui: CanvasLayer, cell: Vector2i, rx: int, ry: int, rw: int, rh: int) -> void:

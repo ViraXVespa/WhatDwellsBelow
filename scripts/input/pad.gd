@@ -25,6 +25,9 @@ static func note_event(event: InputEvent) -> void:
 	if event is InputEventJoypadMotion and absf((event as InputEventJoypadMotion).axis_value) >= 0.24:
 		mode = true
 		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		mode = false
+		return
 	if event is InputEventMouseButton and event.pressed:
 		mode = false
 		return

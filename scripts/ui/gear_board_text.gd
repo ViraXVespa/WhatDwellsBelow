@@ -2,7 +2,7 @@ extends Object
 
 const Stats := preload("res://scripts/ui/gear_board_stats.gd")
 const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
-
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 static var seen_uids: Dictionary = {}
 
@@ -46,10 +46,29 @@ static func item_cell(it: Dictionary) -> String:
 	return nm
 
 
-static func hint_line(ui: CanvasLayer) -> String:
+static func hint_parts(ui: CanvasLayer) -> Array:
+	var parts: Array = []
 	if bool(ui.get("gear_sub")):
-		return "A equip / unequip   B close list   X drop   hold X destroy   Y tip off/on/forge"
-	return "A re-equip   X drop   hold X destroy   Y tip off/on/forge"
+		parts.append({"action": "ui_accept", "verb": "equip / unequip", "gap": true})
+		parts.append({"action": "ui_cancel", "verb": "close list", "gap": true})
+	else:
+		parts.append({"action": "ui_accept", "verb": "select", "gap": true})
+		parts.append({"action": "ui_cancel", "verb": "back", "gap": true})
+	parts.append({"action": "gear_drop", "verb": "drop", "gap": true})
+	parts.append({"action": "gear_tip", "verb": "tip off/on/forge"})
+	return parts
+
+
+static func hint_line(ui: CanvasLayer) -> String:
+	var bits: PackedStringArray = PackedStringArray()
+	for row: Variant in hint_parts(ui):
+		if not (row is Dictionary):
+			continue
+		var action := str(row.get("action", ""))
+		if action == "":
+			continue
+		bits.append(Prompts.verb_line(action, str(row.get("verb", ""))))
+	return "   ".join(bits)
 
 
 static func selected_slot(ui: CanvasLayer) -> String:
@@ -206,7 +225,7 @@ static func tooltip(ui: CanvasLayer) -> String:
 	var slot := selected_slot(ui)
 	if it.is_empty():
 		if slot != "":
-			return "%s — empty\nA opens anything that can go here." % str(Fmt.NAMES.get(slot, slot))
+			return "%s — empty\nOpens anything that can go here." % str(Fmt.NAMES.get(slot, slot))
 		return "Empty bag slot."
 	if mode >= 2:
 		return forged_block(it)
@@ -241,9 +260,9 @@ static func forged_block(it: Dictionary) -> String:
 		return "Nothing to preview."
 	var slot := str(it.get("slot", ""))
 	if slot == "potion" or slot == "food" or str(it.get("kind", "")) == "artifact":
-		return current_block(it) + "\nY: no forge preview for this."
+		return current_block(it) + "\nNo forge preview for this."
 	if str(it.get("rarity", "white")) == "white" and (slot == "weapon" or slot == "tool"):
-		return current_block(it) + "\nY: starters cannot be forged."
+		return current_block(it) + "\nStarters cannot be forged."
 	var up := forge_preview(it)
 	var lines := PackedStringArray()
 	lines.append("Forge preview — %s" % str(up.get("name", "Forged")))

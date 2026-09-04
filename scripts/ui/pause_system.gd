@@ -86,14 +86,14 @@ static func build(ui: CanvasLayer) -> void:
 			App.go_title()
 		, "wipe")
 	))
-	ui.status = ui._cap("A again to confirm a marked action. B cancels.", 16, Color(0.78, 0.74, 0.66))
+	ui.status = ui._cap("Marked actions need a second confirm.", 16, Color(0.78, 0.74, 0.66))
 	ui.box.add_child(ui.status)
-	ui.box.add_child(ThemeS.btn("Close  (B)", ui.close_ui))
+	ui.box.add_child(ThemeS.btn("Close", ui.close_ui))
 
 
 static func rebind(ui: CanvasLayer) -> void:
 	ui.box.add_child(ui._cap("Rebind controls", 24, Color(0.95, 0.8, 0.45)))
-	ui.box.add_child(ui._cap("Highlight an action, press A, then the new key or button.", 18, Color(0.82, 0.76, 0.66)))
+	ui.box.add_child(ui._cap("Highlight an action, confirm, then press the new key or button.", 18, Color(0.82, 0.76, 0.66)))
 	var binds: Array = []
 	if App.has_method("collect_binds"):
 		binds = App.collect_binds()
@@ -156,7 +156,7 @@ static func confirm(ui: CanvasLayer, fn: Callable, id: String = "anon") -> void:
 		ui.pending = true
 		ui.pending_id = id
 		ui.pending_fn = fn
-		ui._st("A again to confirm. B cancels.")
+		ui._st("Confirm again to proceed.")
 		return
 	ui.pending = false
 	ui.pending_id = ""

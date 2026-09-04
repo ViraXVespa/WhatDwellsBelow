@@ -1,8 +1,8 @@
 # Player UI, HUD, menus, recap
 
-Status: binding design + live snapshot  
-Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, title, or loading  
-Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`, `scripts/title.gd`, `scripts/title_news.gd`, `scripts/data/game_ver.gd`  
+Status: binding design + live snapshot
+Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, title, or loading
+Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `prompt_view.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`, `scripts/title.gd`, `scripts/title_news.gd`, `scripts/data/game_ver.gd`
 See also: `design/gear-ui.md`, `design/input.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/camera.md`, `design/versioning.md`, `design/save-tech.md`
 
 ## UI theme (playable surfaces)
@@ -37,7 +37,7 @@ The HUD is a persistent horizontal strip that MUST remain visible at all times d
 | HP bar with numeric value | |
 | Potion quick-slot icon + cooldown sweep / numeric cooldown | |
 | Dash cooldown indicator | |
-| Special (LT) cooldown indicator | |
+| Special cooldown indicator | Caption is “Special”, not a baked LT / RMB string |
 | Level | Highest global Combat Level; if the equipped weapon’s style level is lower it appears in parentheses (e.g. `Level 14 (Magic 11)`) |
 | Current gold | |
 | Current ore / wood | |
@@ -45,19 +45,22 @@ The HUD is a persistent horizontal strip that MUST remain visible at all times d
 | Shrine buff icon + remaining time | Appears only while active |
 | Food heal-over-time icon + remaining time | Appears only while a food effect is active |
 | Boss / Floor Guardian / Gate Master HP bar | Appears only while the boss is alive and in range / engaged |
+| Interact prompt | Last-used `interact` glyph plus the verb from the focused interactable. Locked / spent lines are text only |
 
-Bag-fullness indicator is explicitly removed and MUST NOT appear.  
+Bag-fullness indicator is explicitly removed and MUST NOT appear.
 All cooldowns MUST show both a visual fill/sweep and be understandable at a glance. Exact pixel positions, colors, and sizes are left to implementation so long as the information hierarchy is preserved and the strip does not obscure critical gameplay.
 
 ## Pause menu
 
-Opened with Menu / Start / Esc. Freezes gameplay.  
+Opened with Menu / Start / Esc. Freezes gameplay.
 Every menu (including this one) MUST open with valid initial focus so it is immediately navigable by gamepad.
 
 Menu bindings are shared through `scripts/ui/menu_pad.gd` (`design/input.md`):
 - A / Enter confirms the focused control. A second A confirms a pending prompt.
 - B / Esc backs out of a nested layer (re-equip list, rebind page, pending prompt). At root, close the menu.
 - LB / RB (or `[` / `]`) cycle the three pause tabs. They MUST NOT page the inventory stats card.
+
+Select / Back (and extra actions such as drop / tip) render in a footer strip at the bottom-right of the menu panel via `PromptView.footer`. Button captions stay verbs only.
 
 Exactly three tabs, navigable with LB/RB or equivalent:
 1. Inventory – shared paper-doll gear board (`design/gear-ui.md`), 7-column bag grid, flyout tooltips, paged stats. Stats pages use **Q / LT** and **E / RT**. Use / consume / drop / equip as specified there, including mid-run weapon changes from the bag. Active artifact set bonuses appear on the Artifact sets stats page and in item flyouts.
@@ -86,6 +89,7 @@ Placeholdia inventory (same board, opened outside a run) MUST use Loadout option
 - Player can select individual items or use a “Send All” option.
 - Confirmation step required before items are removed from the run and marked as banked.
 - MUST be fully usable with gamepad only and readable from couch distance.
+- Select / Back live in the shared footer, not on the Leave / Send buttons.
 
 ## Ghost Shop UI
 
@@ -98,11 +102,11 @@ Placeholdia inventory (same board, opened outside a run) MUST use Loadout option
 
 ## Anvil UI
 
-- Shows the three holds for the selected slot.
+- Analyze / Forge tabs. LB / RB cycle those tabs. The tab row uses the shared header chrome (bumper glyphs, stretch, horizontal scroll).
 - Analyze → First Forge → Re-forge flow with clear cost breakdown (gold, ore, root).
 - Smithing level influence visible.
 - Confirmation on every forge action.
-- No pause-style tab strip. LB / RB do nothing here. Stats paging on the shared board still uses Q / LT and E / RT.
+- Stats paging on the shared board still uses Q / LT and E / RT.
 
 ## Loadout UI
 
@@ -139,6 +143,7 @@ Triggered on every death or “Dispel”.
 5. Title / subtitle variants according to performance, including verge states.
 6. Special case: death or “Dispel” on floor 1 with an empty bag MUST include the exact flavor line “They lived just to die. What a waste.”
 7. After the player dismisses recap, play the Placeholdia wake-up sequence.
+8. Continue lives in the shared footer (`ui_accept`), not as a baked A / Enter caption.
 
 ## Minimap and large map
 
@@ -154,13 +159,13 @@ Triggered on every death or “Dispel”.
 
 ## Live snapshot — title
 
-`title.gd` builds the card and focus graph. `title_news.gd` builds the overlay.  
+`title.gd` builds the card and focus graph. `title_news.gd` builds the overlay.
 Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close is the focused control. Right stick and mouse wheel move `ScrollContainer.scroll_vertical`. Overlay body is a `RichTextLabel` on an opaque panel.
 
 ## Live snapshot — HUD / pause
 
-`hud.gd`: strip top-left, minimap top-right, boss bar when near, toast. Level string uses combat level and parenthetical style level.  
-Pause Skills also shows run XP earned this descent.  
+`hud.gd`: strip top-left, minimap top-right, boss bar when near, toast, interact glyph row. Level string uses combat level and parenthetical style level.
+Pause Skills also shows run XP earned this descent.
 Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. System opens focused on Character. Camera zoom and HUD scale write `App.set_zoom` / `App.set_hud_scale` and apply without a restart. Sprite filter cycles `App.set_sprite_filter` over the three nearest modes. Loadout opens focused on **Enter dungeon**.
 
 ## Live snapshot — loading bar (`loader.gd`)

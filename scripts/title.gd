@@ -36,11 +36,11 @@ func _ready() -> void:
 	var updates: Button = null
 	var archives: Button = null
 	if App.character_chosen:
-		card.add_child(_lab("A / Start  —  Play launches the live path.", 18, Color(0.95, 0.86, 0.4)))
+		card.add_child(_lab("Play launches the live path.", 18, Color(0.95, 0.86, 0.4)))
 		play_a = _btn("Play", func(): _play(App.character_type))
 		card.add_child(play_a)
 	else:
-		card.add_child(_lab("A / Start  ·  choose a delver  ·  switch later from pause.", 18, Color(0.95, 0.86, 0.4)))
+		card.add_child(_lab("Choose a delver  ·  switch later from pause.", 18, Color(0.95, 0.86, 0.4)))
 		var row := HBoxContainer.new()
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		row.add_theme_constant_override("separation", 16)

@@ -206,7 +206,7 @@ static func tick_x(ui: CanvasLayer, delta: float) -> void:
 		ui.gear_x_hold = 0.0
 		ui.gear_x_fired = false
 		return
-	var down := Input.is_physical_key_pressed(KEY_X) or _joy_down(JOY_BUTTON_X)
+	var down := Input.is_action_pressed("gear_drop") or Input.is_physical_key_pressed(KEY_X) or _joy_down(JOY_BUTTON_X)
 	if down:
 		ui.gear_x_hold = float(ui.gear_x_hold) + delta
 		if float(ui.gear_x_hold) >= HOLD_DESTROY and not bool(ui.gear_x_fired):
@@ -236,7 +236,7 @@ static func handle_event(ui: CanvasLayer, event: InputEvent) -> bool:
 	if swallowing() and Pad.is_back(event):
 		return true
 	if bool(ui.get("gear_sub")):
-		if _is_y(event):
+		if _is_tip(event):
 			cycle_tip(ui)
 			return true
 		if Pad.is_back(event):
@@ -245,7 +245,7 @@ static func handle_event(ui: CanvasLayer, event: InputEvent) -> bool:
 		if Pad.tab_delta(event) != 0 or Pad.page_delta(event) != 0 or event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
 			return true
 		return false
-	if _is_y(event):
+	if _is_tip(event):
 		cycle_tip(ui)
 		return true
 	var pg := Pad.page_delta(event)
@@ -261,9 +261,11 @@ static func handle_event(ui: CanvasLayer, event: InputEvent) -> bool:
 	return false
 
 
-static func _is_y(event: InputEvent) -> bool:
+static func _is_tip(event: InputEvent) -> bool:
 	if event is InputEventMouse:
 		return false
+	if event.is_action_pressed("gear_tip") and not event.is_echo():
+		return true
 	if event is InputEventKey and event.pressed and not event.echo:
 		var k := event as InputEventKey
 		return k.physical_keycode == KEY_Y or k.keycode == KEY_Y

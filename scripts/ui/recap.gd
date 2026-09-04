@@ -2,6 +2,8 @@ extends CanvasLayer
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const RecapBars := preload("res://scripts/ui/recap_bars.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
+const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 var open := false
 var box: VBoxContainer
@@ -106,6 +108,7 @@ func play(cond: String) -> void:
 		targets[id] = 0.0
 		gain_now[id] = 0.0
 	_rebuild(cond)
+	PromptView.footer(self, [{"action": "ui_accept", "verb": "continue"}])
 	set_process(true)
 
 
@@ -176,7 +179,8 @@ func _rebuild(cond: String) -> void:
 			first = perm_block.wrap
 	mailed_lab = ThemeS.lab("", 18, Color(0.78, 0.86, 0.7))
 	box.add_child(mailed_lab)
-	var cont := ThemeS.btn("Continue  (A)", func(): _finish())
+	var cont := ThemeS.btn("Continue", func(): _finish())
+	cont.set_meta("recap_continue", true)
 	cont.disabled = true
 	box.add_child(cont)
 	focus_btn = first if first else cont
@@ -237,7 +241,7 @@ func _process(delta: float) -> void:
 
 func _continue_btn() -> Button:
 	for n in box.get_children():
-		if n is Button and (n as Button).text.begins_with("Continue"):
+		if n is Button and bool(n.get_meta("recap_continue", false)):
 			return n
 	return null
 

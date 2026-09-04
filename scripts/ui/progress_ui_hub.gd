@@ -3,6 +3,7 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
 const GearAct := preload("res://scripts/ui/gear_board_act.gd")
+const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 
 static func rebuild_loadout(ui) -> void:
@@ -84,9 +85,10 @@ static func rebuild_quest(ui) -> void:
 		else:
 			ui.box.add_child(ThemeS.btn("%s\nReward: %s" % [q.title, q.reward], func(): ui._st(App.prog.accept_quest(idx)); ui._rebuild_quest(); ui._show()))
 		i += 1
+	var close := ThemeS.btn("Close", func(): ui.close_ui())
 	if ui.focus_btn == null:
-		ui.focus_btn = ThemeS.btn("Close  (B)", func(): ui.close_ui())
-	ui.box.add_child(ThemeS.btn("Close  (B)", func(): ui.close_ui()))
+		ui.focus_btn = close
+	ui.box.add_child(close)
 
 
 static func rebuild_controls(ui) -> void:
@@ -98,19 +100,20 @@ static func rebuild_controls(ui) -> void:
 		["move_right", "Move right"],
 		["move_up", "Move up"],
 		["move_down", "Move down"],
-		["attack", "Attack (RT / LMB)"],
-		["special", "Special (LT)"],
-		["dash", "Dash (B)"],
-		["interact", "Interact (A)"],
-		["pause", "Pause (Start)"],
-		["potion", "Potion (D-pad Up)"],
-		["food", "Food (D-pad Left)"],
-		["map_view", "Map (View)"],
-		["target_lock", "Target-lock (R3)"],
+		["attack", "Attack"],
+		["special", "Special"],
+		["dash", "Dash"],
+		["interact", "Interact"],
+		["pause", "Pause"],
+		["potion", "Potion"],
+		["food", "Food"],
+		["map_view", "Map"],
+		["target_lock", "Target-lock"],
 	]
 	for pair in acts:
-		var name: String = str(pair[0])
-		var lab: String = str(pair[1])
-		ui.box.add_child(ThemeS.lab("%s  —  %s" % [lab, ThemeS.bind_text(name)], 18, Color(0.9, 0.86, 0.74)))
-	ui.focus_btn = ThemeS.btn("Leave  (B)", func(): ui.close_ui())
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		PromptView.fill(row, [{"action": str(pair[0]), "verb": str(pair[1])}], 18, Color(0.9, 0.86, 0.74))
+		ui.box.add_child(row)
+	ui.focus_btn = ThemeS.btn("Leave", func(): ui.close_ui())
 	ui.box.add_child(ui.focus_btn)

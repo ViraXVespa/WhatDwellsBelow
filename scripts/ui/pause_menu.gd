@@ -10,6 +10,8 @@ const GearAct := preload("res://scripts/ui/gear_board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Util := preload("res://scripts/ui/pause_menu_util.gd")
 const Pad := preload("res://scripts/ui/menu_pad.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
+const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 const SKILL_NAMES := {
 	"axe": "Great Axe",
@@ -41,6 +43,10 @@ var open: bool = false
 var tab: int = 0
 var box: VBoxContainer
 var tabs: HBoxContainer
+var tab_wrap: HBoxContainer
+var tab_scroll: ScrollContainer
+var tab_left: Control
+var tab_right: Control
 var scroll: ScrollContainer
 var status: Label
 var focus_btn: Control
@@ -72,7 +78,9 @@ var gear_tip: Label
 var gear_tip_host: PanelContainer
 var gear_stats: Control
 var gear_stats_title: Label
-var gear_hint: Label
+var gear_hint: Control
+var gear_page_left: Control
+var gear_page_right: Control
 
 
 func _ready() -> void:
@@ -93,14 +101,32 @@ func _ready() -> void:
 	edge.position = Vector2(220, 40)
 	edge.size = Vector2(1480, 8)
 	add_child(edge)
+	tab_wrap = HBoxContainer.new()
+	tab_wrap.position = Vector2(244, 60)
+	tab_wrap.size = Vector2(1432, 56)
+	tab_wrap.add_theme_constant_override("separation", 10)
+	add_child(tab_wrap)
+	tab_left = HBoxContainer.new()
+	tab_left.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tab_left.custom_minimum_size = Vector2(36, 28)
+	tab_right = HBoxContainer.new()
+	tab_right.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tab_right.custom_minimum_size = Vector2(36, 28)
+	tab_scroll = ScrollContainer.new()
+	tab_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tab_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	tab_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	tab_scroll.follow_focus = true
 	tabs = HBoxContainer.new()
-	tabs.position = Vector2(244, 60)
-	tabs.size = Vector2(1432, 56)
+	tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tabs.add_theme_constant_override("separation", 12)
-	add_child(tabs)
+	tab_scroll.add_child(tabs)
+	tab_wrap.add_child(tab_left)
+	tab_wrap.add_child(tab_scroll)
+	tab_wrap.add_child(tab_right)
 	scroll = ScrollContainer.new()
 	scroll.position = Vector2(244, 128)
-	scroll.size = Vector2(1432, 880)
+	scroll.size = Vector2(1432, 840)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.focus_mode = Control.FOCUS_NONE
 	scroll.follow_focus = true
@@ -205,7 +231,8 @@ func _rebuild() -> void:
 	gear_tip = null
 	gear_stats = null
 	gear_stats_title = null
-	gear_hint = null
+	gear_page_left = null
+	gear_page_right = null
 	var names: PackedStringArray = PackedStringArray(["Inventory", "Skills", "System"])
 	for i: int in 3:
 		var ii: int = i
@@ -214,9 +241,13 @@ func _rebuild() -> void:
 			sys_page = "main"
 			_rebuild()
 		)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.custom_minimum_size = Vector2(160, 44)
 		if i == tab:
 			b.add_theme_color_override("font_color", Color(1, 0.92, 0.45))
 		tabs.add_child(b)
+	PromptView.fill(tab_left, [{"action": "tab_left"}], 16, Color(0.72, 0.66, 0.52))
+	PromptView.fill(tab_right, [{"action": "tab_right"}], 16, Color(0.72, 0.66, 0.52))
 	match tab:
 		0:
 			_inv()
@@ -224,7 +255,16 @@ func _rebuild() -> void:
 			_skills()
 		_:
 			_system()
+	_paint_menu_hint()
 	call_deferred("_focus")
+	if tab_scroll and tabs.get_child_count() > tab:
+		tab_scroll.ensure_control_visible(tabs.get_child(tab) as Control)
+
+
+func _paint_menu_hint() -> void:
+	if tab == 0:
+		return
+	PromptView.footer(self)
 
 
 func _cycle_tab(dir: int) -> void:

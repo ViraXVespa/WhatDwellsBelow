@@ -158,4 +158,4 @@ static func build(ui: CanvasLayer) -> void:
 				first = row2
 	if first:
 		ui.focus_btn = first
-	ui.box.add_child(ThemeS.btn("Close  (B)", ui.close_ui))
+	ui.box.add_child(ThemeS.btn("Close", ui.close_ui))

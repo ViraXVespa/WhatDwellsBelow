@@ -37,7 +37,7 @@ static func rebuild_shop(ui) -> void:
 				continue
 			var slot := str(s)
 			ui.box.add_child(ThemeS.btn("Pawn equipped %s  (%dg)" % [eq.name, int(App.bal.pawn_gold)], func(): ui._confirm(func(): pawn_slot(ui, slot), "pawn_slot_" + slot)))
-	ui.box.add_child(ThemeS.btn("Leave  (B)", func(): ui.close_ui()))
+	ui.box.add_child(ThemeS.btn("Leave", func(): ui.close_ui()))
 
 
 static func buy_snack(ui) -> void:
@@ -126,7 +126,7 @@ static func rebuild_vendor(ui) -> void:
 	ui.box.add_child(ui.focus_btn)
 	ui.box.add_child(ThemeS.btn("Buy ration  (%dg, food slot)" % int(App.bal.vendor_food_cost), func(): vend_food(ui)))
 	ui.box.add_child(ThemeS.btn("Sell 1 ore  (%dg)" % int(App.bal.vendor_ore_gold), func(): vend_sell(ui)))
-	ui.box.add_child(ThemeS.btn("Leave  (B)", func(): ui.close_ui()))
+	ui.box.add_child(ThemeS.btn("Leave", func(): ui.close_ui()))
 
 
 static func vend_potion(ui) -> void:

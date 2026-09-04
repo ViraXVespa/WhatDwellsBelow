@@ -59,37 +59,37 @@ func setup_shop(pos: Vector3, rng: RandomNumberGenerator) -> void:
 func refresh() -> void:
 	if kind == "stairs":
 		locked = not App.boss_dead
-		prompt = "Locked. Defeat the guardian." if locked else "A: Descend  (again to confirm)"
+		prompt = "Locked. Defeat the guardian." if locked else "Descend"
 	elif kind == "crystal":
 		locked = not App.boss_dead
-		prompt = "Locked until the floor is cleared." if locked else "A: Descend  (again to confirm)"
+		prompt = "Locked until the floor is cleared." if locked else "Descend"
 	elif kind == "loadout_crystal":
 		locked = false
-		prompt = "A: Loadout / enter dungeon"
+		prompt = "Loadout / enter dungeon"
 	elif kind == "anvil":
-		prompt = "A: Anvil"
+		prompt = "Anvil"
 	elif kind == "quest_board":
-		prompt = "A: Guild tasks"
+		prompt = "Guild tasks"
 	elif kind == "receptionist":
-		prompt = "A: Talk — guild work"
+		prompt = "Talk — guild work"
 	elif kind == "vendor":
-		prompt = "A: Vendor stall"
+		prompt = "Vendor stall"
 	elif kind == "dumpster":
-		prompt = "A: Read the dumpster"
+		prompt = "Read the dumpster"
 	elif kind == "billboard":
-		prompt = "A: Controls Billboard"
+		prompt = "Controls Billboard"
 	elif kind == "quest_item":
-		prompt = "A: Take the guild cache"
+		prompt = "Take the guild cache"
 	elif kind == "shrine":
-		prompt = "Already used." if used else "A: Pray  (+%d%% dmg)" % int(App.bal.shrine_dmg * 100.0)
+		prompt = "Already used." if used else "Pray  (+%d%% dmg)" % int(App.bal.shrine_dmg * 100.0)
 	elif kind == "campfire":
-		prompt = "The fire is spent." if used else "A: Sit  (heal)"
+		prompt = "The fire is spent." if used else "Sit  (heal)"
 	elif kind == "extract_gate":
-		prompt = "Spent. The portal is dark." if used else "A: Extraction Gate"
+		prompt = "Spent. The portal is dark." if used else "Extraction Gate"
 	elif kind == "shop":
-		prompt = "A: Ghost Shop"
+		prompt = "Ghost Shop"
 	elif kind == "lever":
-		prompt = "A: Pull lever"
+		prompt = "Pull lever"
 	elif kind == "plate":
 		prompt = "Stand to hold the gate"
 	elif kind == "gate":
@@ -100,9 +100,9 @@ func refresh() -> void:
 		elif hidden:
 			prompt = ""
 		else:
-			prompt = "A: Open chest"
+			prompt = "Open chest"
 	else:
-		prompt = "A: Interact"
+		prompt = "Interact"
 	if label:
 		label.text = _title()
 		if hidden:
@@ -205,7 +205,7 @@ func interact(who: Node) -> String:
 	if kind == "stairs" or kind == "crystal":
 		if not pending:
 			pending = true
-			return "A again to descend to F%d" % (App.floor_n + 1)
+			return "Confirm descend to F%d" % (App.floor_n + 1)
 		pending = false
 		App.next_floor()
 		return ""
