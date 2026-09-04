@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: touching Archives UI, Pages exports, or catalog pins
-Code: `scripts/ui/archives_ui.gd`, `scripts/data/archives_catalog.gd`, `scripts/data/archives_launch.gd`, `scripts/data/archive_catalog.json`, `scripts/ui/loader.gd`
+Code: `scripts/ui/archives_ui.gd`, `scripts/ui/archives_ui_view.gd`, `scripts/ui/archives_ui_act.gd`, `scripts/data/archives_catalog.gd`, `scripts/data/archives_launch.gd`, `scripts/data/archive_catalog.json`, `scripts/ui/loader.gd`
 See also: `design/protocol.md`, `design/versioning.md`, `design/save-tech.md`
 
 ## Core rule
@@ -74,10 +74,23 @@ Standing Grok Build week pins (no extra prompt):
 
 ## Archives browser UI
 
-Opened from Pause → System.
+Opened from title Archives or Pause → System. Same `archives_ui` instance.
 
-- Left: vertical list of catalog rows.
+Two columns. Only one column is active.
+
+- Left: vertical list of catalog rows plus Back.
 - Right: info panel — description, Video (disabled if missing), Documents, Play.
-- Documents: `archives/docs/<id>/` first, else `git show <sha>:<path>` locally, else GitHub raw on web. Truncate long files.
+- Highlight / hover a left row updates the right pane immediately. Focus stays on the list.
+- A / click a left row moves focus to the first enabled right button (skip disabled Video).
+- B / Esc on the right column returns focus to the current left row. Menu stays open.
+- B / Esc on the left column closes the browser.
+- Inactive column is dimmed. A gold rail marks the active column. A chevron tracks the selected row. Path text reads `Snapshots › {label}` and deeper for Documents / reader.
+- Mouse: hover previews; click a left row enters the right column; click the grayed left list while detail is active returns to that row.
+
+Documents: `archives/docs/<id>/` first, else `git show <sha>:<path>` locally, else GitHub raw on web. Truncate long files. Documents and reader stay a right-column mode stack; B steps read → docs → info → list.
 
 List MUST include every catalog row, including Classic 2D, Art experiment, Full 3D Pass, Grok Build Results (Week 1), Grok Web Results (Week 1), and any week pins added by the ritual above. Videos do not exist yet; the Video button stays disabled until they do.
+
+## Live snapshot
+
+`archives_ui.gd` is the facade. `archives_ui_view.gd` builds chrome and panels. `archives_ui_act.gd` handles highlight, select, back, Play, and docs fetch.

@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot  
 Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, title, or loading  
-Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`, `scripts/title.gd`, `scripts/data/game_ver.gd`  
+Code: `scripts/ui/hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`, `scripts/title.gd`, `scripts/title_news.gd`, `scripts/data/game_ver.gd`  
 See also: `design/gear-ui.md`, `design/input.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/camera.md`, `design/versioning.md`, `design/save-tech.md`
 
 ## UI theme (playable surfaces)
@@ -13,17 +13,19 @@ The secret debug menu (including Automated Playtest, profiles, Animation Browser
 
 ## Title / play menu
 
-`scripts/title.gd` is the play menu. It MUST show the current `version.json` `label` on the card at all times.
+`scripts/title.gd` is the play menu. Overlay body lives in `scripts/title_news.gd`. The card MUST show `Version: {label}` from `version.json` at all times.
 
-When the current label is newer than saved `last_seen_game_ver`, a “what’s new” overlay MUST appear on this menu before Play is used.
+Buttons, top to bottom: Play (or Play — Male / Play — Female), Updates, Archives.
+
+When the current label is newer than saved `last_seen_game_ver`, a “what’s new” overlay MUST appear on this menu before Play is used. Updates opens the same overlay on demand.
 
 - Gamepad-first. A / Start or B / Esc dismisses, writes `last_seen_game_ver` to the current label, saves, and focuses Play.
-- Lists `changelog.json` entries with `label` greater than `last_seen_game_ver`, newest first.
-- First launch or wiped save: show **only the current build**.
-- Same series, older patch: show the in-between entries from JSON (current series only).
-- Older series: show this series’ new entries, plus one control that opens `https://viraxvespa.github.io/WhatDwellsBelow/changelog/`.
-- Body shape on screen: build label as heading, key points, optional subpoints, then the Summary line.
-- Long lists scroll. Theme matches the title card.
+- Overlay always lists every `changelog.json` entry, newest first (current series baked into JSON).
+- Entries with `label` greater than `last_seen_game_ver` render bold / gold. First launch or wiped save: only the current build is marked new; older JSON rows still list.
+- Older series: keep the in-series list, plus one control that opens `https://viraxvespa.github.io/WhatDwellsBelow/changelog/`.
+- Body shape on screen: build label as a heading, key points, optional subpoints, then the Summary line. Markdown (`**bold**`, `` `code` ``) renders.
+- Long lists scroll with mouse wheel and right stick. D-pad only moves Close / Earlier weeks.
+- Text sits on a solid title-card panel. Play / Updates / Archives MUST NOT take focus while the overlay is open.
 
 ## HUD – gauntlet strip (mandatory elements and behavior)
 
@@ -149,6 +151,11 @@ Triggered on every death or “Dispel”.
 - Floating damage / heal numbers: integers only, rise and fade quickly.
 - Critical hits use yellow + magenta colored damage numbers (no extra “CRIT!” text).
 - Toasts appear for bag-full, level-up, extraction success, and other system events. Short, readable, non-stacking or lightly stacking.
+
+## Live snapshot — title
+
+`title.gd` builds the card and focus graph. `title_news.gd` builds the overlay.  
+Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close is the focused control. Right stick and mouse wheel move `ScrollContainer.scroll_vertical`. Overlay body is a `RichTextLabel` on an opaque panel.
 
 ## Live snapshot — HUD / pause
 

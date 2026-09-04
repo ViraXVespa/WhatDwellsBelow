@@ -77,7 +77,7 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 
 | System | Live files |
 |--------|------------|
-| Autoload / flow | `scripts/app.gd`, `app_flow.gd`, `app_run.gd`, `boot.gd`, `title.gd`, `web_pad.gd` |
+| Autoload / flow | `scripts/app.gd`, `app_flow.gd`, `app_run.gd`, `boot.gd`, `title.gd` + `title_news.gd`, `web_pad.gd` |
 | Scenes | `scenes/boot.tscn`, `splash.tscn`, `title.tscn`, `camp.tscn`, `dungeon.tscn`, `foundation.tscn` |
 | Player | `scripts/world/player.gd` + `player_anim.gd`, `player_act.gd`, `player_lock.gd`, `player_combat.gd`, `facing.gd`, `camera_rig.gd`, `sprite_filter.gd` |
 | Combat | `scripts/combat/combat.gd`, `enemy.gd`, `enemy_ai.gd`, `enemy_atk.gd`, `enemy_setup.gd`, `projectile.gd`, `roster.gd`, `aim_line.gd`, `telegraph.gd`, `player_hit.gd`, `threat.gd` |
@@ -91,7 +91,7 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Input | `scripts/input/binds.gd`, `pad.gd`, `scripts/web_pad.gd`, `scripts/ui/menu_pad.gd` |
 | Debug | `scripts/combat/debug_menu.gd` + `debug_menu_settings.gd`, `debug_menu_val.gd`, `debug_menu_pages.gd`; `scripts/debug/playtest.gd` extends `playtest_api.gd` + `playtest_ai.gd`, `playtest_nav.gd`, `playtest_los.gd`, `playtest_path.gd`, `playtest_goals.gd`, `playtest_sim.gd`, `playtest_recs.gd`; `smoke.gd` + `smoke_early.gd`, `smoke_late.gd`, `smoke_p5.gd`, `smoke_p6.gd`, `smoke_p7.gd`, `smoke_p8.gd`, `smoke_p9.gd`, `smoke_p79.gd`; `anim_browser.gd`, `telemetry.gd` |
 | Audio | `scripts/audio/music.gd`, `scripts/combat/sfx.gd` |
-| Archives UI | `scripts/ui/archives_ui.gd`, `scripts/data/archives_catalog.gd`, `scripts/data/archives_launch.gd`, `scripts/data/archives_docs.gd`, `scripts/data/archive_catalog.json` |
+| Archives UI | `scripts/ui/archives_ui.gd` + `archives_ui_view.gd`, `archives_ui_act.gd`; `scripts/data/archives_catalog.gd`, `archives_launch.gd`, `archives_docs.gd`, `archive_catalog.json` |
 | Sprite tools | `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/process_*.py`, `tools/pack_*.py` |
 
 Public entry points that must not change when a helper is split: `App.playtest`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.
