@@ -95,9 +95,10 @@ static func rebuild_list(host: Node) -> void:
 		c.queue_free()
 	host.list_btns.clear()
 	host.back_btn = null
-	for i in host.entries.size():
+	var n: int = host.entries.size()
+	for i in n:
 		var e: Dictionary = host.entries[i]
-		var ii := i
+		var ii: int = i
 		var b := ThemeS.btn(str(e.label), func(): host._on_list_pressed(ii))
 		b.focus_entered.connect(func(): host._on_list_focus(ii))
 		b.mouse_entered.connect(func(): host._on_list_hover(ii))
@@ -117,9 +118,10 @@ static func rebuild_info(host: Node) -> void:
 	for c in host.info_box.get_children():
 		c.queue_free()
 	host.info_btns.clear()
-	if host.mode == "docs":
+	var mode: String = str(host.mode)
+	if mode == "docs":
 		docs_panel(host)
-	elif host.mode == "read":
+	elif mode == "read":
 		read_panel(host)
 	else:
 		info_panel(host)
@@ -128,11 +130,12 @@ static func rebuild_info(host: Node) -> void:
 
 
 static func paint_list(host: Node) -> void:
+	var selected: int = int(host.selected)
 	for i in host.list_btns.size():
 		var b: Button = host.list_btns[i]
 		if not is_instance_valid(b):
 			continue
-		if i == host.selected:
+		if i == selected:
 			b.add_theme_color_override("font_color", GOLD)
 		else:
 			b.remove_theme_color_override("font_color")
@@ -142,24 +145,26 @@ static func paint_list(host: Node) -> void:
 static func place_chevron(host: Node) -> void:
 	if host._chevron == null:
 		return
-	var y := 190.0
-	if host.selected >= 0 and host.selected < host.list_btns.size() and is_instance_valid(host.list_btns[host.selected]):
-		var b: Button = host.list_btns[host.selected]
+	var y: float = 190.0
+	var selected: int = int(host.selected)
+	if selected >= 0 and selected < host.list_btns.size() and is_instance_valid(host.list_btns[selected]):
+		var b: Button = host.list_btns[selected]
 		y = host._list_root.position.y + b.position.y + maxf(b.size.y, 44.0) * 0.5 - 16.0
 	host._chevron.position = Vector2(716, y)
 
 
 static func apply_col(host: Node) -> void:
+	var col: String = str(host.col)
 	if host._list_root:
-		host._list_root.modulate = COL_LIVE if host.col == "list" else COL_DIM
+		host._list_root.modulate = COL_LIVE if col == "list" else COL_DIM
 	if host._info_root:
-		host._info_root.modulate = COL_LIVE if host.col == "detail" else COL_DIM
+		host._info_root.modulate = COL_LIVE if col == "detail" else COL_DIM
 	if host._list_rule:
-		host._list_rule.color = RULE_ON if host.col == "list" else RULE_OFF
+		host._list_rule.color = RULE_ON if col == "list" else RULE_OFF
 	if host._info_rule:
-		host._info_rule.color = RULE_ON if host.col == "detail" else RULE_OFF
+		host._info_rule.color = RULE_ON if col == "detail" else RULE_OFF
 	if host._chevron:
-		host._chevron.modulate = GOLD if host.col == "detail" else Color(0.45, 0.4, 0.3, 1)
+		host._chevron.modulate = GOLD if col == "detail" else Color(0.45, 0.4, 0.3, 1)
 	set_col_focus(host)
 	hint(host)
 	path_text(host)
@@ -167,13 +172,13 @@ static func apply_col(host: Node) -> void:
 
 
 static func set_col_focus(host: Node) -> void:
-	var list_on := host.col == "list"
+	var list_on: bool = str(host.col) == "list"
 	for b in host.list_btns:
 		if is_instance_valid(b):
 			(b as Button).focus_mode = Control.FOCUS_ALL if list_on else Control.FOCUS_NONE
 	if host.back_btn and is_instance_valid(host.back_btn):
 		host.back_btn.focus_mode = Control.FOCUS_ALL if list_on else Control.FOCUS_NONE
-	var detail_on := host.col == "detail"
+	var detail_on: bool = str(host.col) == "detail"
 	for b in host.info_btns:
 		if not is_instance_valid(b):
 			continue
@@ -187,9 +192,11 @@ static func set_col_focus(host: Node) -> void:
 static func focus_col(host: Node) -> void:
 	if not host.open:
 		return
-	if host.col == "list":
-		if host.selected >= 0 and host.selected < host.list_btns.size() and is_instance_valid(host.list_btns[host.selected]):
-			(host.list_btns[host.selected] as Button).grab_focus()
+	var col: String = str(host.col)
+	var selected: int = int(host.selected)
+	if col == "list":
+		if selected >= 0 and selected < host.list_btns.size() and is_instance_valid(host.list_btns[selected]):
+			(host.list_btns[selected] as Button).grab_focus()
 		elif host.back_btn and is_instance_valid(host.back_btn):
 			host.back_btn.grab_focus()
 	else:
@@ -215,7 +222,7 @@ static func wire_vert(btns: Array) -> void:
 	for b in btns:
 		if b != null and is_instance_valid(b) and not (b as Button).disabled:
 			live.append(b)
-	var n := live.size()
+	var n: int = live.size()
 	if n == 0:
 		return
 	for i in n:
@@ -238,11 +245,13 @@ static func add_info_btn(host: Node, b: Button) -> void:
 static func hint(host: Node) -> void:
 	if host.status == null:
 		return
-	if host.col == "list":
+	var col: String = str(host.col)
+	var mode: String = str(host.mode)
+	if col == "list":
 		host.status.text = "A inspect snapshot    B close"
-	elif host.mode == "docs":
+	elif mode == "docs":
 		host.status.text = "A open    B back"
-	elif host.mode == "read":
+	elif mode == "read":
 		host.status.text = "B back"
 	else:
 		host.status.text = "A use button    B back to snapshots"
@@ -252,14 +261,17 @@ static func path_text(host: Node) -> void:
 	if host._path == null:
 		return
 	var e: Dictionary = host._cur()
-	var lab := str(e.get("label", "Snapshot"))
-	if host.col == "list":
+	var lab: String = str(e.get("label", "Snapshot"))
+	var col: String = str(host.col)
+	var mode: String = str(host.mode)
+	if col == "list":
 		host._path.text = "Snapshots"
-	elif host.mode == "docs":
+	elif mode == "docs":
 		host._path.text = "Snapshots  ›  %s  ›  Documents" % lab
-	elif host.mode == "read":
+	elif mode == "read":
 		var docs: PackedStringArray = host._docs_of(e)
-		var name := str(docs[host.doc_i]) if host.doc_i >= 0 and host.doc_i < docs.size() else ""
+		var doc_i: int = int(host.doc_i)
+		var name: String = str(docs[doc_i]) if doc_i >= 0 and doc_i < docs.size() else ""
 		host._path.text = "Snapshots  ›  %s  ›  %s" % [lab, Docs.display_name(name)]
 	else:
 		host._path.text = "Snapshots  ›  %s" % lab
@@ -273,7 +285,7 @@ static func info_panel(host: Node) -> void:
 	host.info_box.add_child(ThemeS.lab(str(e.label), 28, Color(0.95, 0.86, 0.55)))
 	host.info_box.add_child(ThemeS.lab(str(e.desc), 20, Color(0.88, 0.82, 0.72)))
 	var docs: PackedStringArray = host._docs_of(e)
-	var has_video := str(e.get("video", "")) != ""
+	var has_video: bool = str(e.get("video", "")) != ""
 	add_info_btn(host, ThemeS.btn("Video", host._on_video, has_video))
 	add_info_btn(host, ThemeS.btn("Documents", host._on_docs, docs.size() > 0))
 	add_info_btn(host, ThemeS.btn("Play", host._on_play))
@@ -285,8 +297,9 @@ static func docs_panel(host: Node) -> void:
 	var docs: PackedStringArray = host._docs_of(e)
 	if docs.is_empty():
 		host.info_box.add_child(ThemeS.lab("No documents for this build.", 20, Color(0.8, 0.74, 0.64)))
-	for i in docs.size():
-		var ii := i
+	var n: int = docs.size()
+	for i in n:
+		var ii: int = i
 		add_info_btn(host, ThemeS.btn(Docs.display_name(str(docs[i])), func(): host._open_read(ii)))
 	add_info_btn(host, ThemeS.btn("Back to info  (B)", host._back))
 
@@ -294,7 +307,8 @@ static func docs_panel(host: Node) -> void:
 static func read_panel(host: Node) -> void:
 	var e: Dictionary = host._cur()
 	var docs: PackedStringArray = host._docs_of(e)
-	var name := str(docs[host.doc_i]) if host.doc_i >= 0 and host.doc_i < docs.size() else ""
+	var doc_i: int = int(host.doc_i)
+	var name: String = str(docs[doc_i]) if doc_i >= 0 and doc_i < docs.size() else ""
 	host.info_box.add_child(ThemeS.lab(Docs.display_name(name), 24, Color(0.95, 0.86, 0.55)))
 	host.info_box.add_child(ThemeS.lab(host._read_doc(str(e.get("id", "")), name), 16, Color(0.86, 0.82, 0.74)))
 	add_info_btn(host, ThemeS.btn("Back to documents  (B)", host._back))
