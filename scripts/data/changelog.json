@@ -3,6 +3,30 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.22",
+			"points": [
+				{
+					"text": "On-screen prompts follow last-used input. One scheme at a time: pad glyphs after a gamepad event, keyboard and mouse glyphs after a key or click."
+				},
+				{
+					"text": "Menus draw Select / Back (and extra actions) in a footer strip at the bottom-right of the panel. Button captions are verbs only."
+				},
+				{
+					"text": "Tab headers show LB / RB (or `[` / `]`). The row stretches across the menu and scrolls when tabs overflow."
+				},
+				{
+					"text": "Gear-board stats paging stays on the card: Q / E on keyboard, LT / RT on pad."
+				},
+				{
+					"text": "World interact prompts are a verb plus the current `interact` glyph on the HUD."
+				},
+				{
+					"text": "Glyphs are chunky pixel assets under `assets/ui/prompts/`. Rebuild with `python tools/gen_prompt_glyphs.py`."
+				}
+			],
+			"summary": "Prompts swap with the last device you touched and use real key / mouse / pad art instead of baked A / ENTER text."
+		},
+		{
 			"label": "0.2.19",
 			"points": [
 				{
