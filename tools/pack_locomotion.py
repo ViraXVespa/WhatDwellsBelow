@@ -28,6 +28,9 @@ BIBLES = {
 START_N = 3
 CYCLE_N = 8
 STOP_N = 3
+P_LO = 8
+P_HI = 16
+LOOP_MAD_OK = 8.0
 KEYS = list(i2v_seeds.BODY_CELLS)
 COMPARE_SIZE = (48, 72)
 IDLE_FRAC = 0.18
@@ -36,6 +39,8 @@ RIM_HUE = 300.0
 RIM_SAT_MIN = 0.12
 RIM_KEY_DIST = 110.0
 PINK_EXCESS = 10
+LEG_TOP = 0.45
+EXTENT_SIZE = (64, 96)
 _BIBLE_CELLS: dict[str, dict[str, Image.Image]] = {}
 
 
@@ -139,35 +144,171 @@ def _pad(items: list, n: int) -> list:
     return out[:n]
 
 
-def _best_period(stamps: list[Image.Image], lo: int = 6, hi: int = 20) -> int:
-    n = len(stamps)
-    if n < lo * 2:
-        return max(lo, min(n, CYCLE_N))
+def _figure_keep(im: Image.Image, size: tuple[int, int] = EXTENT_SIZE) -> np.ndarray:
+    im = im.convert("RGBA").resize(size, Image.Resampling.NEAREST)
+    arr = np.asarray(im)
+    rgb = arr[:, :, :3].astype(np.int16)
+    alpha = arr[:, :, 3]
+    key = np.array(sp.KEY_RGB, dtype=np.int16)
+    dist = np.sqrt(((rgb - key).astype(np.float32) ** 2).sum(axis=-1))
+    return (alpha >= 16) & (dist > 40.0)
+
+
+def _leg_wh(im: Image.Image) -> tuple[float, float]:
+    """Lower-body bbox. Arms above the cut do not drive stride width."""
+    keep = _figure_keep(im)
+    if not keep.any():
+        return 0.0, 0.0
+    ys, xs = np.where(keep)
+    y0, y1 = int(ys.min()), int(ys.max())
+    cut = y0 + int((y1 - y0 + 1) * LEG_TOP)
+    band = keep[cut : y1 + 1]
+    if not band.any():
+        band = keep
+    ys, xs = np.where(band)
+    return float(xs.max() - xs.min() + 1), float(ys.max() - ys.min() + 1)
+
+
+def _amp(vals: list[float]) -> float:
+    if not vals:
+        return 0.0
+    mid = sum(vals) / len(vals)
+    return (max(vals) - min(vals)) / max(1.0, mid)
+
+
+def _extent_series(images: list[Image.Image], facing: str) -> tuple[list[float], str]:
+    """Width on side/diagonal. Height on front/back so up/down still have a stride."""
+    pairs = [_leg_wh(im) for im in images]
+    widths = [p[0] for p in pairs]
+    heights = [p[1] for p in pairs]
+    if facing in ("up", "down"):
+        return _smooth(heights), "h"
+    return _smooth(widths), "w"
+
+
+def _motion_onset(exts: list[float]) -> int:
+    n = len(exts)
+    if n < 3:
+        return 0
+    cap = max(CYCLE_N, n // 3)
+    sl = exts[: cap + 1]
+    lo, hi = min(exts), max(exts)
+    if hi - lo < 1e-3:
+        return 0
+    thr = lo + 0.35 * (hi - lo)
+    i = 0
+    if sl[0] >= thr:
+        while i < len(sl) - 1 and sl[i] >= thr:
+            i += 1
+        while i < len(sl) and sl[i] < thr:
+            i += 1
+        return min(i, cap)
+    while i < len(sl) and sl[i] < thr:
+        i += 1
+    return min(i, cap)
+
+
+def _one_cycle(
+    stamps: list[Image.Image],
+    exts: list[float],
+    onset: int,
+    close: int,
+) -> tuple[int, int, float]:
+    """Best single wrap of period 8–16 on the first two cycles after onset."""
+    n = min(len(stamps), len(exts))
+    close = min(close, n - 1, n - 12)
+    onset = max(0, min(onset, max(0, close - P_LO)))
+    sl_all = exts[onset : close + 1] or [0.0]
+    span = max(sl_all) - min(sl_all)
+    min_amp = 0.12 * max(1.0, span)
+    search_hi = min(close, onset + P_HI * 2)
+    best_i = onset
     best_p = CYCLE_N
-    best_c = 1e9
-    cap = min(hi, n // 2)
-    for per in range(lo, cap + 1):
-        costs = [_mad(stamps[i], stamps[i + per]) for i in range(n - per)]
-        cost = sum(costs) / max(1, len(costs))
-        if cost < best_c:
-            best_c = cost
-            best_p = per
-    return best_p
+    best = 1e9
+    found = False
+    for p in range(P_LO, P_HI + 1):
+        last = search_hi - p
+        if last < onset:
+            continue
+        for i in range(onset, last + 1):
+            sl = exts[i : i + p]
+            if max(sl) - min(sl) < min_amp:
+                continue
+            cost = _mad(stamps[i], stamps[i + p])
+            cost += (i - onset) * 0.04
+            cost += abs(p - CYCLE_N) * 0.8
+            if cost < best:
+                best = cost
+                best_i = i
+                best_p = p
+                found = True
+    if not found:
+        for p in range(P_LO, P_HI + 1):
+            if onset + p <= close:
+                return onset, p, -1.0
+        return onset, CYCLE_N, -1.0
+    return best_i, best_p, best
+
+
+def _to_eight(
+    frames: list[Image.Image],
+    sl: list[float],
+    src_off: int,
+) -> tuple[list[Image.Image], list[int], int]:
+    """Rotate plant to slot 0. Sequential if period is 8, else even sample."""
+    if not frames:
+        return frames, [], 0
+    k = int(sl.index(max(sl))) if sl else 0
+    p = len(frames)
+    if p == CYCLE_N:
+        order = [(k + i) % p for i in range(CYCLE_N)]
+    else:
+        order = [(k + int(round(i * p / CYCLE_N))) % p for i in range(CYCLE_N)]
+    mid = [frames[j] for j in order]
+    src = [src_off + j for j in order]
+    return mid, src, k
+
+
+def _mass_x(im: Image.Image) -> float:
+    arr = np.asarray(im.convert("RGBA"))
+    alpha = arr[:, :, 3] > 8
+    if not alpha.any():
+        return arr.shape[1] * 0.5
+    top = alpha[: max(1, arr.shape[0] // 2)]
+    ys, xs = np.where(top if top.any() else alpha)
+    return float(xs.mean())
+
+
+def lock_x(frames: list[Image.Image], ref: Image.Image) -> list[Image.Image]:
+    """Keep the torso on the idle still's X so clip switches do not slide."""
+    target = _mass_x(ref)
+    out: list[Image.Image] = []
+    for im in frames:
+        dx = int(round(target - _mass_x(im)))
+        if dx == 0:
+            out.append(im)
+            continue
+        canvas = Image.new("RGBA", im.size, (0, 0, 0, 0))
+        canvas.paste(im, (dx, 0), im)
+        out.append(canvas)
+    return out
 
 
 def _split_time(images: list[Image.Image]) -> tuple[list[Image.Image], list[Image.Image], list[Image.Image]]:
     n = len(images)
     if n < START_N + CYCLE_N + STOP_N:
-        return _pad(images[:START_N], START_N), pick(images, CYCLE_N), _pad(images[-STOP_N:], STOP_N)
+        return _pad(images[:START_N], START_N), images[:CYCLE_N] if n >= CYCLE_N else pick(images, CYCLE_N), _pad(images[-STOP_N:], STOP_N)
     a = START_N
     b = n - STOP_N
     return _pad(images[:a], START_N), pick(images[a:b], CYCLE_N), _pad(images[b:], STOP_N)
 
 
 def split_phases(
-    images: list[Image.Image], ref: Image.Image
+    images: list[Image.Image],
+    ref: Image.Image,
+    facing: str = "down",
 ) -> tuple[list[Image.Image], list[Image.Image], list[Image.Image]]:
-    """Idle-compare for in/out, then one self-similar stride loop for walk."""
+    """One early cycle, plant at walk[0], start/stop glued to that plant."""
     n = len(images)
     if n < START_N + CYCLE_N + STOP_N:
         return _split_time(images)
@@ -193,30 +334,31 @@ def split_phases(
             break
     if prefix >= suffix:
         return _split_time(images)
-    walk0 = min(suffix - CYCLE_N, prefix + START_N)
-    walk1 = max(walk0 + CYCLE_N, suffix)
-    walk_stamps = stamps[walk0:walk1]
-    period = _best_period(walk_stamps)
-    off = 0
-    best = 1e9
-    room = max(1, len(walk_stamps) - period)
-    span = max(1, int(room * 0.55))
-    target = int(room * 0.28)
-    for i in range(span):
-        cost = _mad(walk_stamps[i], walk_stamps[min(len(walk_stamps) - 1, i + period)])
-        cost += abs(i - target) * 0.08
-        if cost < best:
-            best = cost
-            off = i
-    loop0 = walk0 + off
-    loop1 = min(suffix, loop0 + period)
-    start = _pad(images[max(prefix, loop0 - START_N) : loop0], START_N)
-    mid = pick(images[loop0:loop1], CYCLE_N)
-    stop = _pad(images[max(loop1, suffix - STOP_N) : suffix], STOP_N)
+    exts, kind = _extent_series(images, facing)
+    onset = max(prefix + 1, _motion_onset(exts))
+    close = min(suffix, n - 1)
+    off, period, loop_mad = _one_cycle(stamps, exts, onset, close)
+    raw = images[off : off + period]
+    sl = exts[off : off + period]
+    if len(raw) < CYCLE_N:
+        return _split_time(images)
+    mid, src, rot = _to_eight(raw, sl, off)
+    plant = src[0] if src else off
+    leave_from = max(src) + 1 if src else off + period
+    approach = images[max(prefix, plant - (START_N - 1)) : plant]
+    leave = images[leave_from : min(suffix + 1, leave_from + (STOP_N - 1))]
+    start = _pad(approach, START_N - 1)
+    stop = _pad(leave, STOP_N - 1)
+    peak = 0
+    trough = sl.index(min(sl)) if sl else 0
+    warn = "" if 0.0 <= loop_mad <= LOOP_MAD_OK else " WEAK_LOOP"
     print(
-        f"  loop n={n} prefix={prefix} suffix={suffix} period={period} "
-        f"start={max(prefix, loop0 - START_N)}:{loop0} walk={loop0}:{loop1} "
-        f"stop={max(loop1, suffix - STOP_N)}:{suffix} score {lo:.1f}-{hi:.1f}"
+        f"  {facing} n={n} prefix={prefix} suffix={suffix} onset={onset} "
+        f"cycle={off}:{off + period} period={period} rot={rot} plant={plant} "
+        f"start={max(prefix, plant - (START_N - 1))}:{plant} "
+        f"stop={leave_from}:{min(suffix + 1, leave_from + (STOP_N - 1))} "
+        f"score {lo:.1f}-{hi:.1f} extent={kind} "
+        f"loop_mad={loop_mad:.2f}{warn}"
     )
     return start, mid, stop
 
@@ -327,8 +469,7 @@ def _seq_frame(name: str, prefix: str) -> bool:
     return stem[len(head) :].isdigit()
 
 
-def write_seq(frames: list[Image.Image], dest: Path, prefix: str, rim: int, rim_hue: float) -> None:
-    frames = [finish_matte(im, rim, rim_hue) for im in sp.lock_baselines(frames)]
+def write_seq(frames: list[Image.Image], dest: Path, prefix: str) -> None:
     dest.mkdir(parents=True, exist_ok=True)
     for old in dest.glob(f"{prefix}_*.png"):
         if _seq_frame(old.name, prefix):
@@ -360,11 +501,26 @@ def pack_clip(
     raw_dir = RAW / f"{gender}_{facing}"
     paths = extract(vid, raw_dir, reuse=reuse)
     images = [Image.open(p).convert("RGBA") for p in paths]
-    start_p, mid_p, stop_p = split_phases(images, bible_cell(gender, facing))
+    start_p, mid_p, stop_p = split_phases(images, bible_cell(gender, facing), facing)
+    idle = key_fit(bible_cell(gender, facing), rim=0, rim_hue=26.0)
+    start_c = [clean(im, rim, rim_hue) for im in start_p]
+    mid_c = [clean(im, rim, rim_hue) for im in mid_p]
+    stop_c = [clean(im, rim, rim_hue) for im in stop_p]
+    start_c = start_c[: START_N - 1] + [mid_c[0]] if start_c or mid_c else start_c
+    if len(start_c) < START_N:
+        start_c = _pad(([idle] if idle else []) + start_c, START_N)
+    stop_c = (stop_c[: STOP_N - 1] + [idle]) if stop_c else [idle]
+    if len(stop_c) < STOP_N:
+        stop_c = _pad(stop_c, STOP_N)
+    chained = start_c[:START_N] + mid_c + stop_c[:STOP_N]
+    chained = lock_x(sp.lock_baselines(chained), idle)
+    start_c = chained[:START_N]
+    mid_c = chained[START_N : START_N + CYCLE_N]
+    stop_c = chained[START_N + CYCLE_N :]
     dest = OUT / gender
-    write_seq([clean(im, rim, rim_hue) for im in start_p], dest, f"idle_to_walk_{facing}", rim, rim_hue)
-    write_seq([clean(im, rim, rim_hue) for im in mid_p], dest, f"walk_{facing}", rim, rim_hue)
-    write_seq([clean(im, rim, rim_hue) for im in stop_p], dest, f"walk_to_idle_{facing}", rim, rim_hue)
+    write_seq(start_c, dest, f"idle_to_walk_{facing}")
+    write_seq(mid_c, dest, f"walk_{facing}")
+    write_seq(stop_c, dest, f"walk_to_idle_{facing}")
     return f"packed {gender} {facing} frames {len(images)}"
 
 

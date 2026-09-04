@@ -218,9 +218,9 @@ One accepted **walk** I2V is the pool for start, cycle, and stop. Cut three engi
 | Engine clip | Source |
 |-------------|--------|
 | `idle` | The key still for that facing. Not harvested from the video. |
-| `idle_to_walk` | From the key pose into the first readable walk passing. One-shot. |
-| `walk` | Only repeating passings / plants. Tight loop while moving. |
-| `walk_to_idle` | From walk back to the key pose. One-shot, then hold idle. |
+| `idle_to_walk` | Few frames from the key pose into the plant that starts `walk`. One-shot. |
+| `walk` | One looping two-step (both lead feet), plant on frame 0. Eight engine frames. |
+| `walk_to_idle` | Few frames from the walk cycle back to the key pose. One-shot, then hold idle. |
 
 `idle_to_walk` and `walk_to_idle` MUST exist for every facing and both genders. They are first-class engine states. They are **not** separate I2V units unless the User rejects the walk clip and asks for a dedicated pass.
 
@@ -302,7 +302,7 @@ Required cleanup tasks (in order):
 6. Lock feet to a common baseline Y across all frames of a cycle.
 7. Quantize / lock to the Bible palette.
 8. Eliminate anti-aliasing, sub-pixel noise, and ghosting.
-9. For video/strip sources: even frame selection; skip held idle frames that are not part of start / cycle / stop; validate the walk loop.
+9. For walk I2V sources: `tools/pack_locomotion.py` finds one early self-similar stride cycle (period 8–16 harvest frames), rotates the plant to `walk[0]`, and cuts `idle_to_walk` / `walk_to_idle` from the frames touching that plant. Do not even-sample the whole clip. Skip held idle. Front/back use leg height; side views use leg width. Lock a shared foot baseline and torso X to the idle still.
 10. Trim to the exact frame count needed by the engine (ensuring directional parity).
 11. Output individual frames or engine-ready sheets + simple manifest (frame size, count, fps, pivot/anchor, layer: `body` or `weapon`/`tool`).
 

@@ -151,6 +151,21 @@ static func apply_facing(host: Node, delta: float) -> void:
 		apply_tex(host, tex)
 
 
+static func _stop_from(li: int, loop_n: int, stop_n: int) -> int:
+	# 8 sequential walk frames: 0–3 first foot, 4–7 opposite foot.
+	# Opposite foot uses walk_to_idle forward. Early in that half → full clip.
+	# Late (past the second-half crossover) → tail only.
+	if loop_n <= 0 or stop_n <= 0:
+		return 0
+	var half := loop_n / 2
+	if li < half:
+		return 0
+	var cross_b := half + half / 2
+	if li <= cross_b:
+		return 0
+	return stop_n - 1
+
+
 static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> Texture2D:
 	var start_f := clip(host.idle_to_walk, key)
 	var loop_f := clip(host.walk, key)
@@ -170,23 +185,38 @@ static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> 
 				host.loc_state = LOC_LOOP
 				host.walk_t = 0.0
 				host.loc_foot = 0
+				host.loc_from = 0
 			else:
 				host.loc_from = idx
 				return start_f[idx]
 		if host.loc_state == LOC_LOOP and not loop_f.is_empty():
 			host.walk_t += delta
 			var li := int(host.walk_t * T.WALK_FPS) % loop_f.size()
+			host.loc_from = li
 			host.loc_foot = 0 if li * 2 < loop_f.size() else 1
 			return loop_f[li]
 	else:
 		if host.loc_state == LOC_START:
+			# Same foot as the start clip. Play the already-shown idle_to_walk segment backward.
 			host.loc_rev = true
 			host.loc_state = LOC_STOP
 			host.loc_t = 0.0
 		elif host.loc_state == LOC_LOOP:
+			# First foot → idle_to_walk backward. Opposite foot → walk_to_idle forward.
+			# If that clip is missing, use the other clip in the direction that ends on idle.
 			host.loc_rev = host.loc_foot == 0
 			if host.loc_rev:
-				host.loc_from = maxi(0, start_f.size() - 1)
+				if start_f.is_empty() and not stop_f.is_empty():
+					host.loc_rev = false
+					host.loc_from = _stop_from(host.loc_from, loop_f.size(), stop_f.size())
+				else:
+					host.loc_from = maxi(0, start_f.size() - 1)
+			else:
+				if stop_f.is_empty() and not start_f.is_empty():
+					host.loc_rev = true
+					host.loc_from = maxi(0, start_f.size() - 1)
+				else:
+					host.loc_from = _stop_from(host.loc_from, loop_f.size(), stop_f.size())
 			host.loc_state = LOC_STOP
 			host.loc_t = 0.0
 			host.walk_t = 0.0
@@ -200,10 +230,11 @@ static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> 
 				else:
 					return start_f[mini(start_f.size() - 1, span - 1 - idx2)]
 			elif not stop_f.is_empty():
-				if idx2 >= stop_f.size():
+				var si := clampi(host.loc_from, 0, stop_f.size() - 1)
+				if idx2 >= stop_f.size() - si:
 					host.loc_state = LOC_IDLE
 				else:
-					return stop_f[idx2]
+					return stop_f[si + idx2]
 			else:
 				host.loc_state = LOC_IDLE
 		host.walk_t = 0.0

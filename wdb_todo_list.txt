@@ -27,6 +27,7 @@ Improve dungeon tuning to ensure less gameplay with no action.
 Need a system to swap tooltip button prompts between KB/M and gamepad.
 Rework pause menu so that Dpad Right opens inventory and the menu button brings up a better flow for dispelling the run.
 Make archives close original instance when opening an archived build.
+Cleanup leftover hitching in pack_locomotion.py and/or player_anim.gd.
 
 ## Unsexy
 Update AGENTS logics to include Copilot instructions to reduce token use. Needs helper script to find large files automatically to not require auth and optimize detection. We also need an optimized workflow for refactoring.
