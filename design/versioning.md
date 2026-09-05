@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: stamping a build, writing a changelog entry, Grok Build init, title “what’s new”, or adding an archive pin  
-See also: `AGENTS.md`, `design/web-session.md`, `design/protocol.md`, `design/sessions.md`, `design/archives.md`, `design/save-tech.md`, `design/ui.md`
+See also: `AGENTS.md`, `design/web-session.md`, `design/grok-build.md`, `design/copilot-session.md`, `design/protocol.md`, `design/sessions.md`, `design/archives.md`, `design/save-tech.md`, `design/ui.md`
 
 ## Scheme
 
@@ -72,6 +72,7 @@ Do **not** keep a concatenated week file on `main`. Do **not** hand-edit `script
 | Fresh web / chat, Phases 1–3 | Nothing under `design/changelog/`. Nothing in `version.json` unless the work is this topic. |
 | Web Phase 7 | Writes **one** new `design/changelog/{label}.md` for the version this goal already is. Does not emit `changelog.json`. |
 | Grok Build init | `design/sessions.md`, then every `design/changelog/{current epoch}.{current series}.*.md`. No index. No other series. |
+| Copilot | Nothing under `design/changelog/`. Nothing in `version.json`. Sweep notes go in `_logs/` only. |
 | Named revert / “what was 0.1.4?” | That one file. |
 | Game | `version.json` + `changelog.json`. |
 

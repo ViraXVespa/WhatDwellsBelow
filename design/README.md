@@ -2,22 +2,25 @@
 
 Status: index  
 Read when: starting any session, or when you do not know which file to open  
-See also: `AGENTS.md`, `design/protocol.md`, `design/web-session.md`, `design/versioning.md`
+See also: `AGENTS.md`, `design/protocol.md`, `design/web-session.md`, `design/grok-build.md`, `design/copilot-session.md`, `design/refactor.md`, `design/versioning.md`
 
 This folder is the documentation database for humans and agents.  
 It is not one Game Design Document.
 
 `docs/` is the GitHub Pages web export. Never store design notes there. Player-facing changelog pages are built in CI to `/changelog/` on Pages from `design/changelog/*.md`, not stored in `docs/` on `main`.
 
+`_logs/` is local Copilot sweep notes. It is gitignored. Do not store design there and do not commit it.
+
 ## How to use
 
-1. Agents read `design/protocol.md` and `design/constraints.md` first.  
-2. On a fresh Grok Build instance after a gap, also read `design/sessions.md` (leave-off + log), then every `design/changelog/{current epoch}.{current series}.*.md`, then inspect git / the live tree — the User works between sessions.  
+1. Grok agents read `design/protocol.md` and `design/constraints.md` first. Copilot does not — after `AGENTS.md` it follows `design/copilot-session.md` only.  
+2. On a fresh Grok Build instance after a gap, follow `design/grok-build.md`: read `design/sessions.md` (leave-off + log), then every `design/changelog/{current epoch}.{current series}.*.md`, then inspect git / the live tree — the User works between sessions.  
 3. Web / chat: after the repo-review message, follow `design/web-session.md`. `design/sessions.md` is context only. Do not read `design/changelog/` in Phase 1–3 unless the named work is versioning, a named past build, or a revert.  
-4. Open only the topic files that match the requested work.  
-5. Use `design/tunables.md` for numbers.  
-6. Use the code map below for live scripts.  
-7. After a behavior change, update the matching topic file in the same slice. End of a Grok Build session: update `design/sessions.md` and write the series-open changelog file when the User commits `0.N.0`. End of a web / chat goal: finish Phase 7 in `design/web-session.md`, including one `design/changelog/{label}.md` when the goal shipped a visible change.
+4. Copilot: follow `design/copilot-session.md` and `design/refactor.md`. Do not read topic files, `design/sessions.md`, or `design/changelog/`.  
+5. Open only the topic files that match the requested work.  
+6. Use `design/tunables.md` for numbers.  
+7. Use the code map below for live scripts.  
+8. After a behavior change, update the matching topic file in the same slice. End of a Grok Build session: update `design/sessions.md` and write the series-open changelog file when the User commits `0.N.0`. End of a web / chat goal: finish Phase 7 in `design/web-session.md`, including one `design/changelog/{label}.md` when the goal shipped a visible change. Copilot does not write those files; it writes `_logs/copilot-sweep.md` only.
 
 Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live in `tools/i2v_seeds.py`. Off-magenta plates go through `tools/plate_remap.py` before I2V. I2V and complex animation packing stay in Grok Build sessions unless the User says otherwise.
 
@@ -35,6 +38,9 @@ Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live 
 |-------------------------|------|----------------|
 | Agent workflow | `protocol.md` | Front matter |
 | Web / chat session flow | `web-session.md` | — |
+| Grok Build session flow | `grok-build.md` | — |
+| Copilot session flow | `copilot-session.md` | — |
+| Refactor recipe | `refactor.md` | — |
 | Grok Build session leave-off + log | `sessions.md` | — |
 | Version scheme, changelog, week pins | `versioning.md` | — |
 | Must / must-not, checklist | `constraints.md` | Hard constraints, success, App. B |
@@ -73,7 +79,7 @@ Per-build player notes are `design/changelog/{label}.md`. They are not topic fil
 
 ## Code map (live path)
 
-Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`. See `AGENTS.md` → Script size cap. Web / chat applies that cap in Phase 6 of `design/web-session.md`, not while drafting.
+Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`. Split mechanics: `design/refactor.md`. Web / chat applies the 10KB cap in Phase 6 of `design/web-session.md`, not while drafting. Copilot’s under-5KB sweep target is only in `design/copilot-session.md`.
 
 | System | Live files |
 |--------|------------|
@@ -97,11 +103,3 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 Public entry points that must not change when a helper is split: `App.playtest`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.
 
 Live `player_anim.gd` still plays baked per-weapon sheets and has no `idle_to_walk` / `walk_to_idle` clips. Binding is `design/player.md` + `design/art-pipeline.md`.
-
-## House rules for editing these files
-
-- Keep one concern per file.  
-- Put numbers in `tunables.md`, not buried in paragraphs.  
-- Mark live-only behavior under **Live snapshot**.  
-- Do not reintroduce a single 100KB GDD.  
-- When live scripts are split under the 10KB cap, update this code map in the same slice.

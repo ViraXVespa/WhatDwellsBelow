@@ -2,9 +2,9 @@
 
 Status: protocol  
 Read when: web / chat path; every web session after the repo-review message  
-See also: `AGENTS.md`, `design/protocol.md`, `design/versioning.md`
+See also: `AGENTS.md`, `design/protocol.md`, `design/versioning.md`, `design/refactor.md`
 
-This file is binding for **web / chat** only. Grok Build (CLI) ignores it.
+This file is binding for **web / chat** only. Grok Build (CLI) and Copilot ignore it.
 
 The User cannot be written to by this agent. The User pastes every emit. The User finishes each task before the next web task starts.
 
@@ -48,7 +48,7 @@ Each emit response is only:
 
 Markdown (`AGENTS.md`, `design/*.md`, `design/changelog/*.md`, other `.md`): plain text. No markdown code fence. The User copies the text directly.
 
-Any other source (`.gd`, `.tscn`, `.json`, `.py`, …): wrap the entire body in one code fence for that language. Nothing else in the response except the path line, the blank line, and that fence.
+Any other source (`.gd`, `.tscn`, `.json`, `.py`, …): wrap the entire body in one code fence for that language. Nothing else in the response except the path line, the blank line, and that fence. GDScript follows `AGENTS.md` → GDScript types.
 
 If the User replies with observations or changes for the file just emitted, revise that file and emit it again. Do not emit a different file until they say `Next`.
 
@@ -74,7 +74,7 @@ The User will say something like “Looks good.” That means no more behavior c
 
 ### Phase 6 — Sizing
 
-Check emitted live `scripts/**/*.gd` against the **10,000 byte** cap in `AGENTS.md`.
+Check emitted live `scripts/**/*.gd` against the **10,000 byte** cap in `AGENTS.md`. Use `design/refactor.md` for the split recipe. Do not aim at Copilot’s 5KB sweep target.
 
 Web / chat does **not** apply that cap during Phase 2–5. Over-cap files may be emitted and revised until this phase.
 
@@ -95,6 +95,8 @@ Check the change against `design/` (and `AGENTS.md` when agent rules changed). U
 
 If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md` for the version this goal assumed at Phase 2 (see `design/versioning.md`). Body shape is in that file. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or treat `scripts/data/version.json` as a ledger to hand-edit.
 
+Do not emit `design/sessions.md`. Do not emit `_logs/` (Copilot only, gitignored).
+
 If nothing in the docs is wrong and no changelog entry is required, tell the User no documentation changes are required.
 
 If docs need updates: same verify-then-emit flow as Phase 6. List the files, wait for confirmation, then emit with Phase 4 rules.
@@ -107,6 +109,7 @@ When documentation is done, this session goal is finished. The User should start
 - Do not include `design/sessions.md` as a file that may require updating during phase 7.
 - Do not chain a second goal after Phase 7 in the same web session.
 - Do not split for the 10KB cap before Phase 6.
+- Do not keep splitting toward 5KB. That target is Copilot only.
 - Do not claim a write landed. The User pastes.
 - Do not load `design/changelog/` during Phase 1–3.
 - Do not treat a page-tool summary as the live file.
