@@ -21,6 +21,9 @@ _rng*.jpg
 _gen_*.jpg
 _rngw_*.jpg
 
+# Animation Browser review pipeline (local only)
+tools/anim_review/
+
 # Python
 tools/__pycache__/
 *.pyc

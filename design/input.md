@@ -21,6 +21,8 @@ See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui
 - LT: Special attack of the currently equipped weapon. While a gear board is open, LT pages the stats card back.
 - A: Interact. In menus, confirm the focused control or a pending prompt.
 - B: Dash. In menus, back one layer, or close the menu at root.
+- Y: Gear tip on a gear board. In the secret Animation Browser, Y cycles the current clip’s review state (Good / Repack / Regenerate). World play does not consume Y for combat.
+- X: Gear drop on a gear board.
 - D-pad Up: Use equipped potion
 - D-pad Left: Use equipped food
 - Menu / Start: Pause. In an open menu, also acts as back / close.
@@ -41,7 +43,7 @@ Shared classifiers live in `scripts/ui/menu_pad.gd`. Any menu with tabs MUST cal
 | Q / LT | Previous gear-board stats page |
 | E / RT | Next gear-board stats page |
 
-Exception: the secret Animation Browser keeps LB / RB = previous / next model and LT / RT = animation list, per `design/debug.md`.
+Exception: the secret Animation Browser keeps LB / RB = previous / next model, LT / RT = animation list, and Y / `gear_tip` = review-state cycle, per `design/debug.md`. While that viewer is open those chords MUST NOT fire world or gear-board actions. Keyboard Y types into the notes field when that field has focus; gamepad Y still cycles.
 
 Touch overlay MUST hide while any menu is open (`App.ui_open`). Menu navigation on a phone is finger-tap on the control, not virtual A / B.
 
@@ -134,6 +136,8 @@ These are implementation defaults, not a replacement for rebinding.
 `binds.apply_pc_defaults()` strips `KEY_R` from special. README text that still says “R special” is stale relative to live binds.
 
 Q pages stats only while a gear board is open; during gameplay it remains target-lock. E pages stats only while a gear board is open; during gameplay it remains interact. LMB / RMB never page the stats card.
+
+Y is `gear_tip` in the live map. The Animation Browser reuses that action for review-state cycle while the viewer is open.
 
 ## Live snapshot — web gamepad (`web_pad.gd`)
 

@@ -2,8 +2,8 @@
 
 Status: binding design + live snapshot  
 Read when: changing the secret menu, telemetry, playtest, animation browser, or verification  
-Code: `scripts/combat/debug_menu.gd`, `scripts/combat/debug_menu_settings.gd`, `scripts/world/sprite_filter.gd`, `scripts/debug/playtest.gd`, `scripts/debug/playtest_log.gd`, `telemetry.gd`, `anim_browser.gd`, `smoke.gd`  
-See also: `design/constraints.md`, `design/coverage.md`, `design/ui.md`, `design/camera.md`
+Code: `scripts/combat/debug_menu.gd`, `scripts/combat/debug_menu_settings.gd`, `scripts/world/sprite_filter.gd`, `scripts/debug/playtest.gd`, `scripts/debug/playtest_log.gd`, `telemetry.gd`, `anim_browser.gd`, `anim_browser_review.gd`, `anim_review.gd`, `smoke.gd`  
+See also: `design/constraints.md`, `design/coverage.md`, `design/ui.md`, `design/camera.md`, `design/art-pipeline.md`, `design/input.md`
 
 ## Secret debug / balance menu
 
@@ -179,6 +179,8 @@ The Animation Browser is a full-screen page. It MUST be TV-readable and gamepad-
 - **Preview viewport** directly beneath the model selection widget. Shows a zoomed-in view of the current model playing the current animation. Updates immediately when model, facing, or animation changes.
 - **Play / Pause** sits under the preview. Default: the selected clip loops. Highlight the control and press A to toggle play/pause. Playing vs paused MUST be obvious from the couch.
 - **Direction list and animation list** sit together to the right of the model widget and preview, as two sibling list widgets with the same interaction pattern. The direction list is next to the animation list.
+- **Review status** sits under the lists. Shows Good / Repack / Regenerate for the current clip, or Still — no review when the clip is a single frame.
+- **Notes field** sits above Back. Visible only while the current clip is Repack or Regenerate. Keyboard types into it.
 
 **Direction list**
 
@@ -201,6 +203,15 @@ The Animation Browser is a full-screen page. It MUST be TV-readable and gamepad-
 - The User may also highlight an entry with normal menu navigation and confirm with A.
 - The selected animation is the one currently playing in the preview.
 
+**Review ledger**
+
+- **Y** (live bind: `gear_tip`) cycles Good → Repack → Regenerate → Good on the current clip.
+- Stills (one frame or fewer) MUST NOT accept a cycle. Idle bible stills stay unflagged.
+- Session memory keeps the note text while the User toggles states. Disk write drops Good rows and drops notes on Good.
+- Store: `tools/anim_review/review.json` in the live checkout. Editor-only. MUST NOT use `SaveStore` / `user://live`. Not written on web. The `tools/anim_review/` directory is gitignored.
+- Key: `model_id/facing/anim` (same catalog ids as `AnimScan`).
+- Offline tools that read this file are listed in `design/art-pipeline.md`.
+
 **Always-available gamepad chords (Animation Browser only)**
 
 | Input | Action |
@@ -209,12 +220,19 @@ The Animation Browser is a full-screen page. It MUST be TV-readable and gamepad-
 | LT / RT | Scroll animation list up / down |
 | Right stick | Set facing to that octant |
 | R3 | Facing = Idle / None |
-| A | Activate highlight (direction entry, animation entry, Play/Pause, Back, on-screen model buttons) |
+| Y | Cycle review state (multi-frame clips only) |
+| A | Activate highlight (direction entry, animation entry, Play/Pause, Back, review button, on-screen model buttons) |
 | B | Back to main secret debug menu |
 
-Keyboard / mouse MUST have equivalents for every action (suggested start: arrow keys or WASD for facing, a dedicated Idle / None key, Q/E or equivalent for model, list scroll on mouse wheel / keys). Exact bindings MAY be invented at implementation time and MUST appear in the rebinding screen.
+Keyboard / mouse MUST have equivalents for every action (suggested start: arrow keys or WASD for facing, a dedicated Idle / None key, Q/E or equivalent for model, list scroll on mouse wheel / keys, Y for review cycle). Exact bindings MAY be invented at implementation time and MUST appear in the rebinding screen. Notes require a keyboard; there is no on-screen keyboard.
 
 Exact compare-two, frame-scrubber, and bible-overlay extras MAY be invented at implementation time so long as the requirements above are met.
+
+### Live snapshot — review chrome
+
+- Facade: `scripts/debug/anim_browser.gd`
+- Review helper: `scripts/debug/anim_browser_review.gd`
+- Ledger: `scripts/debug/anim_review.gd`
 
 ## Live snapshot — smoke tests (`smoke.gd`)
 

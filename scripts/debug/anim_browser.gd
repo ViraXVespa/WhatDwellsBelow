@@ -6,6 +6,7 @@ const Facing := preload("res://scripts/world/facing.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const AnimScan := preload("res://scripts/debug/anim_scan.gd")
+const Review := preload("res://scripts/debug/anim_browser_review.gd")
 
 const DIR_ORDER := ["idle_none", "up", "up_right", "right", "down_right", "down", "down_left", "left", "up_left"]
 const DIR_LABEL := {
@@ -29,8 +30,6 @@ var playing := true
 var frame_i := 0
 var frame_t := 0.0
 var clips: Dictionary = {}
-var dir_btns: Dictionary = {}
-var anim_btns: Array = []
 var anim_scroll := 0
 var name_lab: Label
 var play_btn: Button
@@ -39,7 +38,9 @@ var empty_lab: Label
 var back_btn: Button
 var dir_box: VBoxContainer
 var anim_box: VBoxContainer
-var focus_kind := "back"
+var review_btn: Button
+var note_edit: LineEdit
+var note_lock := false
 
 
 func _ready() -> void:
@@ -63,7 +64,7 @@ func _build() -> void:
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.color = Color(0.03, 0.03, 0.04, 0.94)
 	add_child(dim)
-	var prev := ThemeS.btn("◀  Previous  (LB)", func(): _shift_model(-1))
+	var prev := ThemeS.btn("Previous (LB)", func(): _shift_model(-1))
 	prev.position = Vector2(48, 28)
 	prev.size = Vector2(360, 56)
 	add_child(prev)
@@ -72,7 +73,7 @@ func _build() -> void:
 	name_lab.size = Vector2(720, 52)
 	name_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(name_lab)
-	var nxt := ThemeS.btn("Next  (RB)  ▶", func(): _shift_model(1))
+	var nxt := ThemeS.btn("Next (RB)", func(): _shift_model(1))
 	nxt.position = Vector2(1510, 28)
 	nxt.size = Vector2(360, 56)
 	add_child(nxt)
@@ -99,7 +100,7 @@ func _build() -> void:
 	empty_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	empty_lab.visible = false
 	add_child(empty_lab)
-	play_btn = ThemeS.btn("Playing — A to pause", func(): _toggle_play())
+	play_btn = ThemeS.btn("Playing - A to pause", func(): _toggle_play())
 	play_btn.position = Vector2(48, 850)
 	play_btn.size = Vector2(900, 56)
 	add_child(play_btn)
@@ -112,7 +113,7 @@ func _build() -> void:
 	dir_box.size = Vector2(420, 700)
 	dir_box.add_theme_constant_override("separation", 4)
 	add_child(dir_box)
-	var alab := ThemeS.lab("Animation  (LT / RT)", 22, Color(0.92, 0.82, 0.5))
+	var alab := ThemeS.lab("Animation (LT / RT)", 22, Color(0.92, 0.82, 0.5))
 	alab.position = Vector2(1420, 110)
 	alab.size = Vector2(460, 36)
 	add_child(alab)
@@ -121,7 +122,8 @@ func _build() -> void:
 	anim_box.size = Vector2(460, 700)
 	anim_box.add_theme_constant_override("separation", 4)
 	add_child(anim_box)
-	back_btn = ThemeS.btn("Back  (B)", func(): close_browser())
+	Review.build(self)
+	back_btn = ThemeS.btn("Back (B)", func(): close_browser())
 	back_btn.position = Vector2(48, 980)
 	back_btn.size = Vector2(1824, 60)
 	add_child(back_btn)
@@ -133,11 +135,13 @@ func open_browser() -> void:
 	App.ui_open = true
 	if models.is_empty():
 		models = catalog_models()
+	Review.open(self)
 	_load_model()
 	call_deferred("_focus_back")
 
 
 func close_browser() -> void:
+	Review.close(self)
 	open = false
 	visible = false
 	if App.debug and bool(App.debug.get("open")):
@@ -177,7 +181,6 @@ func _load_model() -> void:
 func _rebuild_dirs() -> void:
 	for c in dir_box.get_children():
 		c.queue_free()
-	dir_btns.clear()
 	for k in DIR_ORDER:
 		var key: String = str(k)
 		var n: int = 0
@@ -189,13 +192,11 @@ func _rebuild_dirs() -> void:
 		if k == facing:
 			b.add_theme_color_override("font_color", Color(1, 0.92, 0.45))
 		dir_box.add_child(b)
-		dir_btns[k] = b
 
 
 func _rebuild_anims() -> void:
 	for c in anim_box.get_children():
 		c.queue_free()
-	anim_btns.clear()
 	var names := _anim_names()
 	if anim_name == "" or names.find(anim_name) < 0:
 		anim_name = names[0] if names.size() > 0 else ""
@@ -211,7 +212,6 @@ func _rebuild_anims() -> void:
 		if nm == anim_name:
 			b.add_theme_color_override("font_color", Color(1, 0.92, 0.45))
 		anim_box.add_child(b)
-		anim_btns.append(b)
 
 
 func _anim_names() -> PackedStringArray:
@@ -247,10 +247,10 @@ func _toggle_play() -> void:
 
 func _refresh_play() -> void:
 	if playing:
-		play_btn.text = "Playing — A to pause"
+		play_btn.text = "Playing - A to pause"
 		play_btn.add_theme_color_override("font_color", Color(0.85, 1.0, 0.7))
 	else:
-		play_btn.text = "Paused — A to play"
+		play_btn.text = "Paused - A to play"
 		play_btn.add_theme_color_override("font_color", Color(1.0, 0.82, 0.45))
 
 
@@ -269,11 +269,13 @@ func _show_clip() -> void:
 	preview.visible = not fr.is_empty()
 	if fr.is_empty():
 		preview.texture = null
+		Review.refresh(self)
 		return
 	frame_i = clampi(frame_i, 0, fr.size() - 1)
 	if preview:
 		preview.texture = fr[frame_i]
 	_refresh_play()
+	Review.refresh(self)
 
 
 func _process(delta: float) -> void:
@@ -312,6 +314,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("anim_back"):
 		close_browser()
+		get_viewport().set_input_as_handled()
+		return
+	if Review.handle_tip(self, event):
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("tab_left") or event.is_action_pressed("anim_model_prev"):

@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: generating or replacing player / enemy / weapon frames  
-Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `assets/sprites/player/`  
+Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `assets/sprites/player/`  
 See also: `design/player.md`, `design/audio-visual.md`, `design/combat.md`, `design/enemies.md`
 
 This section is mandatory for any Grok Build instance. It exists because pure image-generation models (including Grok Imagine) have consistent limitations with multi-frame consistency, identity drift, spatial layout in grids, and pixel-perfect output.
@@ -333,6 +333,20 @@ A generation is acceptable only if it meets all of the following after cleanup:
 - Log the failure mode.
 
 Follow this pipeline exactly. Deviations require explicit justification and re-validation under the orthographic camera + Y-billboard + nearest-neighbor filtering.
+
+## 19.8 Animation Browser review tools
+
+The Animation Browser writes a local ledger at `tools/anim_review/review.json` (editor-only, gitignored). That file is not a game setting and is not part of `SaveStore`.
+
+Three CLI tools read it from the live checkout:
+
+- `python tools/anim_review_pack.py` — pack brief (`tools/anim_review/pack_brief.md` + `.json`). Repack notes are failure cases. Good on-disk locomotion clips (`walk`, `idle_to_walk`, `walk_to_idle`) are keep-behavior. Ignore Regenerate rows here.
+- `python tools/anim_review_regen.py` — regen brief (`tools/anim_review/regen_brief.md` + `.json`). Regenerate notes plus the current `i2v_seeds.build_prompt` text for player clips. Use this when editing MOTION / IDENTITY_LOCK / FACING_LOCK.
+- `python tools/anim_review_tree.py` — wiped test tree at `tools/anim_review/regen_tree/<model>/<facing>/<anim>/`. Each player folder gets `source.png` (locked Bible cell, same scale/pad as `i2v_seeds.py --cell`), `prompt.txt`, and `notes.txt` when the User typed a note. The dest tree is deleted and rebuilt every run.
+
+Enemy clips may be flagged in the browser. Until an enemy I2V / pack pipeline exists, the regen brief and regen tree write a warning instead of a seed and prompt.
+
+Stills (idle / single-frame clips) cannot be flagged. Do not invent a still-regeneration path here.
 
 ## Appendix C – Full Character Bible Prompt Template
 
