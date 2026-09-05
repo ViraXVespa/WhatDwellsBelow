@@ -3,6 +3,23 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.26",
+			"points": [
+				{
+					"text": "Web touch overlay on phones and tablets",
+					"subs": [
+						"Dual stick: dynamic move, fixed aim",
+						"Hold-to-attack; double-tap latches until tap again",
+						"Hides when a keyboard or gamepad is present, and while menus are open"
+					]
+				},
+				{
+					"text": "Overlay uses existing pad glyphs and dungeon-themed wells"
+				}
+			],
+			"summary": "Phone browsers can now play Placeholdia and the dungeon with on-screen sticks and buttons when no physical keyboard or gamepad is connected."
+		},
+		{
 			"label": "0.2.22",
 			"points": [
 				{
