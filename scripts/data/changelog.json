@@ -3,6 +3,36 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.27",
+			"points": [
+				{
+					"text": "Split agent paths into separate session files",
+					"subs": [
+						"Grok Build flow now lives in `design/grok-build.md`",
+						"Web / chat still uses `design/web-session.md`",
+						"New Copilot path: `design/copilot-session.md` plus shared `design/refactor.md`"
+					]
+				},
+				{
+					"text": "Copilot is a periodic live-script sweep only",
+					"subs": [
+						"One cluster at a time, then report and wait",
+						"Size target under 5KB when existing code can move; ship floor stays 10KB",
+						"Reuse goes into existing owners such as `menu_pad.gd` and `prompt_view.gd`, not a new util tree",
+						"No new behavior, helper APIs, or shared modules",
+						"Sweep notes go in gitignored `_logs/`"
+					]
+				},
+				{
+					"text": "GDScript emits must type locals Godot cannot infer",
+					"subs": [
+						"`:=` only for literals and typed built-ins; otherwise `var name: Type =`"
+					]
+				}
+			],
+			"summary": "Agent workflow is now three paths with a shared refactor recipe, and Copilot exists only to shrink and tidy live scripts so Grok does less split work."
+		},
+		{
 			"label": "0.2.26",
 			"points": [
 				{
