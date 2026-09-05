@@ -2,6 +2,7 @@ extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
+const Touch := preload("res://scripts/input/touch_pad.gd")
 
 
 static func page_settings(host) -> void:
@@ -26,6 +27,16 @@ static func page_settings(host) -> void:
 	))
 	host.root_box.add_child(_slider(host, "Mip bias", App.sprite_mip_bias, -2.0, 2.0, 0.05, func(v: float):
 		App.set_sprite_mip_bias(v)
+	))
+	host.root_box.add_child(_slider(host, "Touch attack tap window", Touch.tap_window, 0.12, 0.6, 0.01, func(v: float):
+		Touch.tap_window = v
+	))
+	host.root_box.add_child(_slider(host, "Touch stick deadzone", Touch.dead, 0.08, 0.4, 0.01, func(v: float):
+		Touch.dead = v
+	))
+	host.root_box.add_child(host._btn("Reset touch defaults", func():
+		Touch.reset_defaults()
+		host._rebuild()
 	))
 	host.root_box.add_child(host._btn("Save settings", func():
 		App.save_now()

@@ -39,7 +39,7 @@ Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live 
 | Version scheme, changelog, week pins | `versioning.md` | — |
 | Must / must-not, checklist | `constraints.md` | Hard constraints, success, App. B |
 | Vision, scope, lore | `overview.md` | §§1–3 |
-| Gamepad, KB/M, web pad, menu binds | `input.md` | §4 input |
+| Gamepad, KB/M, web pad, web touch, menu binds | `input.md` | §4 input |
 | Camera, renderer | `camera.md` | §4 camera / renderer |
 | Avatar, move, facing | `player.md` | §5 |
 | Weapons, dash, crits, adrenaline | `combat.md` | §6 |
@@ -87,8 +87,8 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Dungeon | `scripts/dungeon/gen.gd` + `gen_carve.gd`, `gen_rooms.gd`, `gen_doors.gd`; `scripts/world/dungeon.gd` + `dungeon_boot.gd`, `dungeon_geo.gd`, `dungeon_geo_stream.gd`, `dungeon_cells.gd`, `dungeon_stream.gd`, `dungeon_props.gd`, `dungeon_pack.gd`, `crystal_net.gd`, `floor_crystal.gd` |
 | Hub | `scripts/world/camp.gd`, `interact.gd`, `interact_fx.gd` |
 | Gather | `scripts/world/gather_node.gd`, `breakable.gd`, `pickup.gd` |
-| UI | `scripts/ui/hud.gd`; `menu_pad.gd`; `pause_menu.gd` + `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`; `gear_board.gd` + `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `gear_board_anvil.gd`; `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `crystal_ui.gd`; `recap.gd`, `recap_bars.gd`, `loader.gd`, `present.gd`, `theme.gd` |
-| Input | `scripts/input/binds.gd`, `pad.gd`, `scripts/web_pad.gd`, `scripts/ui/menu_pad.gd` |
+| UI | `scripts/ui/hud.gd`; `touch_hud.gd`; `menu_pad.gd`; `pause_menu.gd` + `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`; `gear_board.gd` + `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `gear_board_anvil.gd`; `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `crystal_ui.gd`; `recap.gd`, `recap_bars.gd`, `loader.gd`, `present.gd`, `theme.gd` |
+| Input | `scripts/input/binds.gd`, `pad.gd`, `touch_pad.gd`, `scripts/web_pad.gd`, `scripts/ui/menu_pad.gd` |
 | Debug | `scripts/combat/debug_menu.gd` + `debug_menu_settings.gd`, `debug_menu_val.gd`, `debug_menu_pages.gd`; `scripts/debug/playtest.gd` extends `playtest_api.gd` + `playtest_ai.gd`, `playtest_nav.gd`, `playtest_los.gd`, `playtest_path.gd`, `playtest_goals.gd`, `playtest_sim.gd`, `playtest_recs.gd`; `smoke.gd` + `smoke_early.gd`, `smoke_late.gd`, `smoke_p5.gd`, `smoke_p6.gd`, `smoke_p7.gd`, `smoke_p8.gd`, `smoke_p9.gd`, `smoke_p79.gd`; `anim_browser.gd`, `telemetry.gd` |
 | Audio | `scripts/audio/music.gd`, `scripts/combat/sfx.gd` |
 | Archives UI | `scripts/ui/archives_ui.gd` + `archives_ui_view.gd`, `archives_ui_act.gd`; `scripts/data/archives_catalog.gd`, `archives_launch.gd`, `archives_docs.gd`, `archive_catalog.json` |

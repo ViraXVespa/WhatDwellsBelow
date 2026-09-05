@@ -24,6 +24,8 @@ const ONE_LINER := "A gamepad-first dungeon crawler where you pilot disposable s
 const BITTER_YT := "https://youtu.be/b3Cq_-ymFVU?si=YHZRCFmxf88BXmHW"
 const BITTER_SPOTIFY := "https://open.spotify.com/track/5ronKOeupSInit9Y21z80f?si=WB-zeKUGQO6V31dPEITdRA&utm_source=copy-link&context=spotify%3Atrack%3A5ronKOeupSInit9Y21z80f"
 const BITTER_LOOP_DEFAULT := 15.52
+const TOUCH_TAP_WINDOW := 0.28
+const TOUCH_DEAD := 0.24
 
 
 static func archive_catalog() -> Array:

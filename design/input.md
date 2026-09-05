@@ -2,13 +2,14 @@
 
 Status: binding design + live snapshot
 Read when: changing controls, menus, web export, or aim
-Code: `scripts/input/binds.gd`, `scripts/input/pad.gd`, `scripts/input/prompts.gd`, `scripts/web_pad.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/prompt_view.gd`
+Code: `scripts/input/binds.gd`, `scripts/input/pad.gd`, `scripts/input/touch_pad.gd`, `scripts/input/prompts.gd`, `scripts/web_pad.gd`, `scripts/ui/touch_hud.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/prompt_view.gd`
 See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui.md`
 
 ## Target platforms
 
 - PC (primary)
 - Web export that runs in modern browsers without requiring special COOP/COEP headers
+- Web touch on a mobile user-agent when no physical keyboard or gamepad is present (virtual dual-stick overlay)
 - Design MUST remain fully readable and playable from couch distance on a television (future Xbox / console consideration)
 
 ## Input – Gamepad (primary, Xbox layout)
@@ -24,7 +25,7 @@ See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui
 - D-pad Left: Use equipped food
 - Menu / Start: Pause. In an open menu, also acts as back / close.
 - View / Back: Toggle large map overlay (game continues running underneath)
-- LB / RB: Cycle tabs inside any menu that has tabs. Do nothing in menus that have no tabs.
+- LB / RB: Cycle tabs inside any menu that has tabs. Do not invent a second bumper path.
 
 All controls, gameplay, and interfaces MUST be designed with a gamepad-first intent. Every menu MUST open with a valid initial focus already set so the player can immediately navigate and select using only the gamepad (no requirement to first highlight an element with the mouse).
 
@@ -42,9 +43,13 @@ Shared classifiers live in `scripts/ui/menu_pad.gd`. Any menu with tabs MUST cal
 
 Exception: the secret Animation Browser keeps LB / RB = previous / next model and LT / RT = animation list, per `design/debug.md`.
 
+Touch overlay MUST hide while any menu is open (`App.ui_open`). Menu navigation on a phone is finger-tap on the control, not virtual A / B.
+
 ## On-screen prompts
 
 Prompts follow **last used** input. One scheme at a time. `Pad.note_event` sets `Pad.mode` from a joy event (pad) or a key / mouse event (kb). `Prompts.scheme()` reads that flag. `menu_pad.gd` notes the event on menu traffic and calls `PromptView.pulse()` so open footers redraw.
+
+While the web touch overlay is active, `Pad.mode` stays pad so world prompts keep pad glyphs. This slice does not add a `touch/` glyph pack.
 
 Do not bake `A`, `B`, `ENTER`, `ESC`, `LMB`, or `RMB` into button captions or status lines. Verbs stay on the control; glyphs come from the bind.
 
@@ -54,6 +59,7 @@ Do not bake `A`, `B`, `ENTER`, `ESC`, `LMB`, or `RMB` into button captions or st
 | Tab headers | LB / RB (or `[` / `]`) on the left and right of the tab row. The row stretches; it scrolls horizontally when tabs overflow. |
 | Gear stats card | Q / E on keyboard, LT / RT on pad. Not in the footer. |
 | World HUD | `interact` glyph + the verb from `scripts/world/interact.gd`. Locked / spent lines are text only. |
+| Touch overlay | Pad glyphs on the virtual buttons (`rt`, `lt`, `a`, `b`, `rs`, `menu`, `view`, `dpad_up`, `dpad_left`). |
 
 Glyph PNGs: `assets/ui/prompts/kb/`, `assets/ui/prompts/pad/`, `assets/ui/prompts/mouse/`. Regenerate with `python tools/gen_prompt_glyphs.py`.
 
@@ -69,11 +75,39 @@ Extra bindable actions used by prompts: `tab_left`, `tab_right`, `gear_tip`, `ge
 - Always draws the full configured distance (does not respect line-of-sight or stop at walls).
 - Toggleable on/off and with an independent opacity slider in the System tab of the pause menu.
 - On/off state and opacity are persisted with the player profile.
-- Fully functional with both gamepad and keyboard/mouse aiming (parity required).
+- Fully functional with gamepad, keyboard/mouse, and web-touch aiming (parity required).
 
 ## Input – Keyboard / mouse (fully featured fallback)
 
 All gamepad actions MUST have keyboard/mouse equivalents. Mouse aim + hold-LMB for attack is the default mouse scheme. Rebinding of all actions is required.
+
+## Input – Web touch (`touch_pad.gd`, `touch_hud.gd`)
+
+Web-only. Not a native Android / iOS export requirement.
+
+Show the overlay when all of these are true:
+
+- `OS.has_feature("web")`
+- Mobile user-agent (`navigator.userAgentData.mobile` or a mobile UA string)
+- No connected browser gamepad (`navigator.getGamepads()` / Godot joypads)
+- No physical keyboard key this session
+- Current scene is `camp.tscn` or `dungeon.tscn`
+- `App.ui_open` is false
+
+Hide immediately if a gamepad connects or a keyboard key arrives. Overlay chrome is dungeon-themed discs drawn in code (no extra PNG pack).
+
+| Control | Behavior |
+|---------|----------|
+| Left half, below the HUD | Dynamic move stick (appears under the finger) |
+| Lower-right well | Fixed aim stick |
+| RT glyph | Hold-to-attack. Double-tap latches attack until the button is tapped again |
+| LT / B / A / R3 glyphs | Special, dash, interact, target-lock |
+| Menu / View glyphs | Pause, map |
+| D-pad Up / Left glyphs | Potion, food |
+
+Attack latch clears on UI open, scene change, death / dispel, or pad / keyboard takeover. Touch vectors and button state feed `Pad.move()`, `Pad.aim()`, `Pad.held()`, and `Pad.just()` so combat, gather, and interact stay on one path.
+
+Numbers: `TOUCH_TAP_WINDOW` (0.28 s) and `TOUCH_DEAD` (0.24) in `design/tunables.md`. Secret debug Settings page can live-edit the runtime copies on `TouchPad`.
 
 ## Live snapshot — PC defaults (`binds.gd`)
 
@@ -111,3 +145,4 @@ Web builds on GitHub Pages do not get a reliable Godot joypad. When `OS.has_feat
 - Player must click the canvas once so the page can receive keyboard / gamepad input.
 - Xbox pads work in Chromium-based browsers.
 - After scene changes, `App.wake_web_pad()` refreshes the bridge.
+- A connected browser pad hides the web touch overlay. `WebPad.browser_pad_connected()` is the shared probe.

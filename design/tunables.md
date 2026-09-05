@@ -2,7 +2,7 @@
 
 Status: suggested starts + live snapshot  
 Read when: changing feel, gen size, economy, crystals, or debug defaults  
-Code: `scripts/data/balance.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`  
+Code: `scripts/data/balance.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`, `scripts/input/touch_pad.gd`  
 See also: the topic file for the system you are changing
 
 These are recommended starting points for the current live implementation.  
@@ -31,6 +31,8 @@ If you change a live default, update this table in the same slice.
 | `ARCHIVE_ID_FULL_3D` | full_3d_pass |
 | `ARCHIVE_LABEL_FULL_3D` | Full 3D Pass |
 | Archive catalog | `scripts/data/archive_catalog.json` |
+| `TOUCH_TAP_WINDOW` | 0.28 |
+| `TOUCH_DEAD` | 0.24 |
 
 ## Movement and combat
 
@@ -171,6 +173,8 @@ Roster HP lives in `balance_enemies.gd` (about 2× the pre-retune table). Floor-
 | Parameter | Suggested start | Notes |
 |-----------|-----------------|-------|
 | Camera zoom range | 1.0 – 2.5 | Persisted in save. Default 1.75 (slider midpoint). |
+| Touch attack tap window | 0.28 s | Double-tap latches hold-to-attack. Debug Settings slider. |
+| Touch stick deadzone | 0.24 | Same magnitude idea as pad sticks. Debug Settings slider. |
 | Target first-extraction time | 5–10 min | New player on gamepad |
 | Target floor-5 clear time | 5–10 hours | Competent player; feel target |
 | FPS | 60 minimum | Higher allowed |

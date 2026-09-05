@@ -19,6 +19,7 @@ var _was_y := false
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
+
 func _process(_delta: float) -> void:
 	if not OS.has_feature("web"):
 		return
@@ -73,21 +74,45 @@ func _process(_delta: float) -> void:
 		_emit_joy(JOY_BUTTON_Y, y)
 		_was_y = y
 
+
+static func browser_pad_connected() -> bool:
+	if not OS.has_feature("web"):
+		return not Input.get_connected_joypads().is_empty()
+	var raw := str(JavaScriptBridge.eval("""
+		(function () {
+			var pads = navigator.getGamepads ? navigator.getGamepads() : [];
+			for (var i = 0; i < pads.length; i++) {
+				if (pads[i]) return "1";
+			}
+			return "0";
+		})();
+	""", true))
+	return raw == "1"
+
+
+func connected() -> bool:
+	return device_ok or browser_pad_connected()
+
+
 func _emit_joy(button: int, pressed: bool) -> void:
 	var ev := InputEventJoypadButton.new()
 	ev.button_index = button
 	ev.pressed = pressed
 	Input.parse_input_event(ev)
 
+
 func _stick(ax: Array, x_i: int, y_i: int) -> Vector2:
 	var v := Vector2(_axis_at(ax, x_i), _axis_at(ax, y_i))
 	return v if v.length() >= 0.24 else Vector2.ZERO
 
+
 func _axis_at(ax: Array, i: int) -> float:
 	return float(ax[i]) if i < ax.size() else 0.0
 
+
 func _held(bt: Array, i: int) -> bool:
 	return i < bt.size() and float(bt[i]) >= 0.45
+
 
 func _axis(ax: Array, i: int) -> bool:
 	return _axis_at(ax, i) >= 0.45

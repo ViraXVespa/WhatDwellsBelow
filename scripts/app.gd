@@ -18,6 +18,9 @@ const LoaderS := preload("res://scripts/ui/loader.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
 const Binds := preload("res://scripts/input/binds.gd")
 const Pad := preload("res://scripts/input/pad.gd")
+const Touch := preload("res://scripts/input/touch_pad.gd")
+const TouchHudS := preload("res://scripts/ui/touch_hud.gd")
+const WebPadS := preload("res://scripts/web_pad.gd")
 const AppFlow := preload("res://scripts/app_flow.gd")
 const AppRun := preload("res://scripts/app_run.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
@@ -80,6 +83,8 @@ var anim_browser
 var archives_ui
 var playtest
 var loader
+var touch_hud
+var web_pad
 var _menu_loading := false
 var archive_cancel := false
 var archive_job_pid := -1
@@ -131,6 +136,10 @@ func _ready() -> void:
 	add_child(archives_ui)
 	loader = LoaderS.new()
 	add_child(loader)
+	web_pad = WebPadS.new()
+	add_child(web_pad)
+	touch_hud = TouchHudS.new()
+	add_child(touch_hud)
 	get_tree().node_added.connect(_on_node_added)
 	if not Smoke.active():
 		Store.load_slot("live")
@@ -176,18 +185,22 @@ func enter_dungeon() -> void:
 
 func _after_enter() -> void:
 	ui_open = false
+	Touch.clear_world()
 	begin_run()
 
 
 func go_title() -> void:
+	Touch.clear_world()
 	AppFlow.go_title(self)
 
 
 func go_foundation() -> void:
+	Touch.clear_world()
 	AppFlow.go_foundation(self)
 
 
 func go_camp() -> void:
+	Touch.clear_world()
 	AppFlow.go_camp(self)
 
 
@@ -248,10 +261,12 @@ func hitstop(sec: float) -> void:
 
 
 func end_run(cond: String, killer := "") -> void:
+	Touch.clear_world()
 	AppRun.end_run(self, cond, killer)
 
 
 func finish_end(cond: String, killer := "") -> void:
+	Touch.clear_world()
 	AppRun.finish_end(self, cond, killer)
 
 
