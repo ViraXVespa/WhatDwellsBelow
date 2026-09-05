@@ -3,6 +3,32 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.29",
+			"points": [
+				{
+					"text": "Animation Browser review states: Y cycles Good / Repack / Regenerate on multi-frame clips",
+					"subs": [
+						"Stills stay unflagged",
+						"Keyboard notes on Repack / Regenerate; memory keeps text while toggling, disk drops Good rows"
+					]
+				},
+				{
+					"text": "Review ledger is `tools/anim_review/review.json` in the live checkout, not SaveStore",
+					"subs": [
+						"Editor-only write; `tools/anim_review/` is gitignored"
+					]
+				},
+				{
+					"text": "Offline tools: `anim_review_pack.py`, `anim_review_regen.py`, `anim_review_tree.py`",
+					"subs": [
+						"Regen tree wipes dest each run; player folders get source.png, prompt.txt, and notes.txt when present",
+						"Enemy clips warn until that I2V pipeline exists"
+					]
+				}
+			],
+			"summary": "Debug Animation Browser can mark pack and regen issues, and three local tools turn those marks into briefs and a wiped I2V test tree."
+		},
+		{
 			"label": "0.2.27",
 			"points": [
 				{
