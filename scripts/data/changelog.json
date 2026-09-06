@@ -3,6 +3,35 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.34",
+			"points": [
+				{
+					"text": "Player I2V prompts cover every Animation Browser Regenerate flag",
+					"subs": [
+						"Per-class beat sheets: `attack_great_axe`, `attack_staff`, `attack_longbow`, matching `special_*`, `gather_pickaxe`, `gather_hatchet`, `death`, `dispel`",
+						"Loop wrapper for walk; one-shot wrapper for the rest; unknown actions no longer become walk",
+						"`gather` writes both tool prompts"
+					]
+				},
+				{
+					"text": "\u201cDispel\u201d I2V is seppuku with a small knife; death and Dispel do not paint blood"
+				},
+				{
+					"text": "`tools/pack_oneshot.py` packs accepted one-shot clips into engine names",
+					"subs": [
+						"Attack / special / gather default to 6 frames; death and Dispel keep clip length"
+					]
+				},
+				{
+					"text": "Animation Browser lists `gather_pickaxe` / `gather_hatchet` and falls back to `gather_*`"
+				},
+				{
+					"text": "`idle_to_walk` / `walk_to_idle` stay pack-only"
+				}
+			],
+			"summary": "Regen flags now emit the matching player I2V prompt, and accepted one-shot clips can be packed for the Animation Browser."
+		},
+		{
 			"label": "0.2.32",
 			"points": [
 				{
