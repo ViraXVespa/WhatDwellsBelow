@@ -1,21 +1,21 @@
 # Input
 
-Status: binding design + live snapshot
-Read when: changing controls, menus, web export, or aim
-Code: `scripts/input/binds.gd`, `scripts/input/pad.gd`, `scripts/input/touch_pad.gd`, `scripts/input/prompts.gd`, `scripts/web_pad.gd`, `scripts/ui/touch_hud.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/prompt_view.gd`
+Status: binding design + live snapshot  
+Read when: changing controls, menus, web export, or aim  
+Code: `scripts/input/binds.gd`, `scripts/input/pad.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`, `scripts/input/prompts.gd`, `scripts/web_pad.gd`, `scripts/ui/touch_hud.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/prompt_view.gd`, `scripts/world/player_lock.gd`, `scripts/world/dungeon_map_act.gd`  
 See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui.md`
 
 ## Target platforms
 
 - PC (primary)
 - Web export that runs in modern browsers without requiring special COOP/COEP headers
-- Web touch on a mobile user-agent when no physical keyboard or gamepad is present (virtual dual-stick overlay)
+- Web touch on a mobile user-agent when no physical keyboard or gamepad is present (virtual move stick + right-hand button strip)
 - Design MUST remain fully readable and playable from couch distance on a television (future Xbox / console consideration)
 
 ## Input – Gamepad (primary, Xbox layout)
 
 - Left Stick: Movement
-- Right Stick: Aim
+- Right Stick: Aim, except while look-mode is on or the large map is open (see Look mode)
 - R3: Toggle target-lock (default off). On activation or when current target dies, lock nearest valid enemy in LOS and on-screen. Right-stick deflection cycles to the nearest enemy in that direction after a short delay. Lock breaks when no valid targets remain but stays armed for auto-reacquisition. Second R3 press disengages.
 - RT: Hold-to-attack (basic attack of the currently equipped weapon). While a gear board is open, RT pages the stats card forward.
 - LT: Special attack of the currently equipped weapon. While a gear board is open, LT pages the stats card back.
@@ -25,11 +25,34 @@ See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui
 - X: Gear drop on a gear board.
 - D-pad Up: Use equipped potion
 - D-pad Left: Use equipped food
+- D-pad Down: Toggle look mode. World-only and large-map-only. MUST NOT fire as look-mode while pause, debug, recap, title, or any `App.ui_open` menu is up (`ui_down` stays menu navigation). Opening those menus clears look mode.
 - Menu / Start: Pause. In an open menu, also acts as back / close.
 - View / Back: Toggle large map overlay (game continues running underneath)
 - LB / RB: Cycle tabs inside any menu that has tabs. Do not invent a second bumper path.
 
 All controls, gameplay, and interfaces MUST be designed with a gamepad-first intent. Every menu MUST open with a valid initial focus already set so the player can immediately navigate and select using only the gamepad (no requirement to first highlight an element with the mouse).
+
+## Look mode
+
+Action `look_mode` (default: D-pad Down). Session flag only; not saved.
+
+World, map closed:
+
+- Off: right stick aims
+- On: right stick X = HUD scale, Y = world camera zoom (`App.set_hud_scale` / `App.set_zoom`)
+
+Large map open:
+
+- Off: right stick pans the map when zoomed in past fit
+- On: right stick zooms the map toward the player marker
+
+Keyboard / mouse: wheel up zooms in, wheel down zooms out. World camera when the map is closed; map zoom toward the cursor when the map is open. Wheel does not run while look-mode is blocked (menus / debug / recap).
+
+Touch: pinch zooms the same two contexts toward the pinch midpoint, only while the walk stick is not claimed.
+
+Map pan also: mouse drag and one-finger swipe when zoomed in, if the walk stick is not claimed.
+
+`Pad.aim()` returns zero while look mode eats the right stick (`LookCtrl.eats_aim()`).
 
 ## Menus (universal)
 
@@ -45,7 +68,7 @@ Shared classifiers live in `scripts/ui/menu_pad.gd`. Any menu with tabs MUST cal
 
 Exception: the secret Animation Browser keeps LB / RB = previous / next model, LT / RT = animation list, and Y / `gear_tip` = review-state cycle, per `design/debug.md`. While that viewer is open those chords MUST NOT fire world or gear-board actions. Keyboard Y types into the notes field when that field has focus; gamepad Y still cycles.
 
-Touch overlay MUST hide while any menu is open (`App.ui_open`). Menu navigation on a phone is finger-tap on the control, not virtual A / B.
+Touch overlay MUST hide while any menu is open (`App.ui_open`). Menu navigation on a phone is finger-tap on the control, not virtual A / B. D-pad Down in a menu is only `ui_down`.
 
 ## On-screen prompts
 
@@ -60,14 +83,14 @@ Do not bake `A`, `B`, `ENTER`, `ESC`, `LMB`, or `RMB` into button captions or st
 | Menus | Footer strip at the bottom-right of the menu panel. Always Select + Back. Extra actions (drop, tip, zoom) join that strip. |
 | Tab headers | LB / RB (or `[` / `]`) on the left and right of the tab row. The row stretches; it scrolls horizontally when tabs overflow. |
 | Gear stats card | Q / E on keyboard, LT / RT on pad. Not in the footer. |
-| World HUD | `interact` glyph + the verb from `scripts/world/interact.gd`. Locked / spent lines are text only. |
-| Touch overlay | Pad glyphs on the virtual buttons (`rt`, `lt`, `a`, `b`, `rs`, `menu`, `view`, `dpad_up`, `dpad_left`). |
+| World HUD | `interact` glyph + the verb from `scripts/world/interact.gd`. Locked / spent lines are text only. Look-mode cue under the minimap while look mode or the large map is active. |
+| Touch overlay | Pad glyphs on the virtual buttons (`rt`, `lt`, `a`, `b`, `menu`, `view`, `dpad_up`, `dpad_left`). No lock / R3 well. |
 
 Glyph PNGs: `assets/ui/prompts/kb/`, `assets/ui/prompts/pad/`, `assets/ui/prompts/mouse/`. Regenerate with `python tools/gen_prompt_glyphs.py`.
 
 Helpers: `Prompts.texture_for(action)`, `PromptView.fill`, `PromptView.footer(ui, extra_parts)`.
 
-Extra bindable actions used by prompts: `tab_left`, `tab_right`, `gear_tip`, `gear_drop`, `crystal_zoom`.
+Extra bindable actions used by prompts: `tab_left`, `tab_right`, `gear_tip`, `gear_drop`, `crystal_zoom`, `look_mode`.
 
 ## Aim-line indicator
 
@@ -77,11 +100,13 @@ Extra bindable actions used by prompts: `tab_left`, `tab_right`, `gear_tip`, `ge
 - Always draws the full configured distance (does not respect line-of-sight or stop at walls).
 - Toggleable on/off and with an independent opacity slider in the System tab of the pause menu.
 - On/off state and opacity are persisted with the player profile.
-- Fully functional with gamepad, keyboard/mouse, and web-touch aiming (parity required).
+- Fully functional with gamepad, keyboard/mouse, and web-touch aiming (parity required). Touch aim is lock-on while the overlay is active.
 
 ## Input – Keyboard / mouse (fully featured fallback)
 
 All gamepad actions MUST have keyboard/mouse equivalents. Mouse aim + hold-LMB for attack is the default mouse scheme. Rebinding of all actions is required.
+
+Mouse wheel zooms world camera or the large map as described under Look mode. It is not a rebindable InputMap combat action.
 
 ## Input – Web touch (`touch_pad.gd`, `touch_hud.gd`)
 
@@ -98,18 +123,22 @@ Show the overlay when all of these are true:
 
 Hide immediately if a gamepad connects or a keyboard key arrives. Overlay chrome is dungeon-themed discs drawn in code (no extra PNG pack).
 
+No right aim well. Auto-aim / target-lock stays armed for the whole touch session (`Touch.active()` forces `lock_armed`). Facing follows the lock target when one exists, otherwise walk / last facing.
+
 | Control | Behavior |
 |---------|----------|
 | Left half, below the HUD | Dynamic move stick (appears under the finger) |
-| Lower-right well | Fixed aim stick |
+| Right-hand strip | Two columns from the bottom safe edge up to just under the minimap. Edge padding and extra gap between wells. Bottom → top: food / potion, interact / attack (attack larger), dash / special, map / pause |
 | RT glyph | Hold-to-attack. Double-tap latches attack until the button is tapped again |
-| LT / B / A / R3 glyphs | Special, dash, interact, target-lock |
-| Menu / View glyphs | Pause, map |
+| LT / B / A glyphs | Special, dash, interact |
+| Menu / View glyphs | Pause, map. Map well stays visible in Placeholdia but is disabled (no tap) |
 | D-pad Up / Left glyphs | Potion, food |
+| Pinch | World or map zoom if the walk stick is not claimed |
+| Swipe | Pans the large map when zoomed in, if the walk stick is not claimed and the finger did not start on a strip button |
 
-Attack latch clears on UI open, scene change, death / dispel, or pad / keyboard takeover. Touch vectors and button state feed `Pad.move()`, `Pad.aim()`, `Pad.held()`, and `Pad.just()` so combat, gather, and interact stay on one path.
+Attack latch clears on UI open, scene change, death / dispel, or pad / keyboard takeover. Touch vectors and button state feed `Pad.move()`, `Pad.held()`, and `Pad.just()` so combat, gather, and interact stay on one path.
 
-Numbers: `TOUCH_TAP_WINDOW` (0.28 s) and `TOUCH_DEAD` (0.24) in `design/tunables.md`. Secret debug Settings page can live-edit the runtime copies on `TouchPad`.
+Numbers: `TOUCH_TAP_WINDOW` (0.28 s) and `TOUCH_DEAD` (0.24) in `design/tunables.md`. Look/pinch/wheel rates live there and on `LookCtrl` runtime copies. Secret debug Settings page can live-edit touch and look copies.
 
 ## Live snapshot — PC defaults (`binds.gd`)
 
@@ -128,6 +157,8 @@ These are implementation defaults, not a replacement for rebinding.
 | Map | M |
 | Potion | F |
 | Food | C |
+| Look mode | D-pad Down (pad only) |
+| Zoom | Mouse wheel |
 | Menu tabs | `[` / `]` |
 | Gear tip | Y |
 | Gear drop | X |

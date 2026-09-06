@@ -2,7 +2,7 @@
 
 Status: suggested starts + live snapshot  
 Read when: changing feel, gen size, economy, crystals, or debug defaults  
-Code: `scripts/data/balance.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`  
+Code: `scripts/data/balance.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
 See also: the topic file for the system you are changing
 
 These are recommended starting points for the current live implementation.  
@@ -22,6 +22,13 @@ If you change a live default, update this table in the same slice.
 | `LOOK_LIFT` | 0.42 |
 | `ZOOM_MIN` / `ZOOM_MAX` | 1.0 / 2.5 |
 | Default `cam_zoom` | 1.75 |
+| `HUD_SCALE_MIN` / `HUD_SCALE_MAX` | 0.7 / 1.4 |
+| `LOOK_WHEEL_STEP` | 0.08 |
+| `LOOK_PINCH_GAIN` | 1.15 |
+| `LOOK_STICK_ZOOM` | 0.9 |
+| `LOOK_STICK_HUD` | 0.35 |
+| `LOOK_STICK_PAN` | 520 |
+| `MAP_ZOOM_MIN` / `MAP_ZOOM_MAX` | 1.0 / 10.0 |
 | `TILE` / `PX` | 1.0 / 64 |
 | Default `sprite_filter` | 2 (nearest + mips + aniso) |
 | `sprite_mip_sharp` | false (smooth mip blend) |
@@ -177,7 +184,12 @@ Roster HP lives in `balance_enemies.gd` (about 2× the pre-retune table). Floor-
 
 | Parameter | Suggested start | Notes |
 |-----------|-----------------|-------|
-| Camera zoom range | 1.0 – 2.5 | Persisted in save. Default 1.75 (slider midpoint). |
+| Camera zoom range | 1.0 – 2.5 | Persisted in save. Default 1.75 (slider midpoint). Wheel / pinch / look-mode RS also write `App.set_zoom`. |
+| HUD scale range | 0.7 – 1.4 | System slider and look-mode RS X. |
+| Look wheel step | 0.08 | Per notch. Debug Settings slider. |
+| Look pinch gain | 1.15 | Debug Settings slider. |
+| Look stick zoom / HUD / pan | 0.9 / 0.35 / 520 | Debug Settings sliders. |
+| Map zoom range | 1.0 – 10.0 | Fit to 10×. Independent of world camera. |
 | Touch attack tap window | 0.28 s | Double-tap latches hold-to-attack. Debug Settings slider. |
 | Touch stick deadzone | 0.24 | Same magnitude idea as pad sticks. Debug Settings slider. |
 | Target first-extraction time | 5–10 min | New player on gamepad |

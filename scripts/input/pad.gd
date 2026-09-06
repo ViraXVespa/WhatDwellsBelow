@@ -1,6 +1,7 @@
 extends RefCounted
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
+const Look := preload("res://scripts/input/look_ctrl.gd")
 
 const PAD := {
 	"interact": JOY_BUTTON_A,
@@ -10,6 +11,7 @@ const PAD := {
 	"map_view": JOY_BUTTON_BACK,
 	"potion": JOY_BUTTON_DPAD_UP,
 	"food": JOY_BUTTON_DPAD_LEFT,
+	"look_mode": JOY_BUTTON_DPAD_DOWN,
 	"tab_left": JOY_BUTTON_LEFT_SHOULDER,
 	"tab_right": JOY_BUTTON_RIGHT_SHOULDER,
 }
@@ -22,6 +24,7 @@ static var mode := false
 
 static func note_event(event: InputEvent) -> void:
 	Touch.note_event(event)
+	Look.note_event(event)
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
 		if Touch.wants_device():
 			mode = true
@@ -85,6 +88,8 @@ static func move() -> Vector2:
 
 
 static func aim() -> Vector2:
+	if Look.eats_aim():
+		return Vector2.ZERO
 	if Touch.active() and Touch.aim.length() > 0.01:
 		return Touch.aim
 	var v := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
@@ -132,6 +137,7 @@ static func swallow_close() -> void:
 		edge[action] = false
 		was[action] = true
 	eat_pause = true
+	Look.clear()
 
 
 static func blocked(action: String) -> bool:
@@ -142,6 +148,7 @@ static func blocked(action: String) -> bool:
 
 static func tick() -> void:
 	Touch.tick()
+	Look.tick(_dt())
 	if Touch.active():
 		mode = true
 	if stick(JOY_AXIS_LEFT_X, JOY_AXIS_LEFT_Y).length() >= 0.24:
@@ -180,6 +187,13 @@ static func tick() -> void:
 			held_close = true
 		if not held_close:
 			eat_pause = false
+
+
+static func _dt() -> float:
+	var loop := Engine.get_main_loop()
+	if loop is SceneTree:
+		return (loop as SceneTree).root.get_process_delta_time()
+	return 0.016666
 
 
 static func web_buttons() -> PackedFloat32Array:

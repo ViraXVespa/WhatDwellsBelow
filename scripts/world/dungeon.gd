@@ -8,6 +8,7 @@ const DungeonGeo := preload("res://scripts/world/dungeon_geo.gd")
 const DungeonCells := preload("res://scripts/world/dungeon_cells.gd")
 const DungeonPack := preload("res://scripts/world/dungeon_pack.gd")
 const DungeonBoot := preload("res://scripts/world/dungeon_boot.gd")
+const MapAct := preload("res://scripts/world/dungeon_map_act.gd")
 
 var data: Dictionary = {}
 var player: CharacterBody3D
@@ -124,6 +125,8 @@ func _map() -> void:
 
 func _redraw_map() -> void:
 	DungeonGeo.redraw_map(self)
+	if map_layer and map_layer.visible:
+		MapAct.apply(self)
 
 
 func _note_verge() -> void:

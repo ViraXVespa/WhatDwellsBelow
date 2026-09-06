@@ -2,8 +2,8 @@
 
 Status: binding design + live snapshot  
 Read when: touching Camera3D, zoom, HUD scale, renderer, or depth sorting  
-Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/app.gd`, `project.godot`  
-See also: `design/player.md`, `design/archives.md`, `design/audio-visual.md`
+Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/input/look_ctrl.gd`, `scripts/app.gd`, `project.godot`  
+See also: `design/player.md`, `design/input.md`, `design/archives.md`, `design/audio-visual.md`
 
 ## Camera (live 3D path)
 
@@ -13,7 +13,9 @@ See also: `design/player.md`, `design/archives.md`, `design/audio-visual.md`
 - Player-adjustable zoom range 1.0–2.5 (persisted in save)
 - Default zoom 1.75 (old max; midpoint of the current slider)
 - Zoom applies live from the System slider (`App.set_zoom` + `camera_rig.follow`)
-- Separate independent HUD scale setting
+- World zoom also applies live from mouse wheel, touch pinch (walk stick not claimed), and look-mode right-stick Y
+- Separate independent HUD scale setting (System slider and look-mode right-stick X)
+- Large-map zoom/pan is a separate view; it MUST NOT change `App.cam_zoom`
 - Look-at point offset slightly above the player origin
 - Depth sorting SHOULD respect implied real-world positions of the player, enemies, walls, and props. Arbitrary front/back popping MUST be avoided wherever possible, but perfect freedom from popping is not required.
 
@@ -36,6 +38,11 @@ Sprite3D filter is not the project canvas default. Live default is nearest + mip
 | `LOOK_LIFT` | 0.42 |
 | `ZOOM_MIN` / `ZOOM_MAX` | 1.0 / 2.5 |
 | Default `cam_zoom` | 1.75 |
+| `HUD_SCALE_MIN` / `HUD_SCALE_MAX` | 0.7 / 1.4 |
+| `LOOK_WHEEL_STEP` | 0.08 |
+| `LOOK_PINCH_GAIN` | 1.15 |
+| `LOOK_STICK_ZOOM` / `LOOK_STICK_HUD` / `LOOK_STICK_PAN` | 0.9 / 0.35 / 520 |
+| `MAP_ZOOM_MIN` / `MAP_ZOOM_MAX` | 1.0 / 10.0 |
 | `TILE` / `PX` | 1.0 / 64 |
 
 `project.godot`: viewport 1920×1080, `canvas_items` stretch, aspect `expand`, `default_texture_filter = 0` (nearest, canvas/HUD only), renderer `gl_compatibility`.

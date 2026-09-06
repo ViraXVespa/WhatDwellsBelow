@@ -3,6 +3,7 @@ extends Object
 const T := preload("res://scripts/data/tunables.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const Touch := preload("res://scripts/input/touch_pad.gd")
+const Look := preload("res://scripts/input/look_ctrl.gd")
 
 
 static func page_settings(host) -> void:
@@ -12,7 +13,7 @@ static func page_settings(host) -> void:
 	host.root_box.add_child(_slider(host, "Camera zoom", App.cam_zoom, T.ZOOM_MIN, T.ZOOM_MAX, 0.05, func(v: float):
 		App.set_zoom(v)
 	))
-	host.root_box.add_child(_slider(host, "HUD scale", App.hud_scale, 0.7, 1.4, 0.05, func(v: float):
+	host.root_box.add_child(_slider(host, "HUD scale", App.hud_scale, T.HUD_SCALE_MIN, T.HUD_SCALE_MAX, 0.05, func(v: float):
 		App.set_hud_scale(v)
 	))
 	host.root_box.add_child(host._btn("Sprite filter: %s" % SpriteFilt.label(int(App.sprite_filter)), func():
@@ -36,6 +37,25 @@ static func page_settings(host) -> void:
 	))
 	host.root_box.add_child(host._btn("Reset touch defaults", func():
 		Touch.reset_defaults()
+		host._rebuild()
+	))
+	host.root_box.add_child(_slider(host, "Look wheel step", Look.wheel_step, 0.02, 0.25, 0.01, func(v: float):
+		Look.wheel_step = v
+	))
+	host.root_box.add_child(_slider(host, "Look pinch gain", Look.pinch_gain, 0.4, 2.4, 0.05, func(v: float):
+		Look.pinch_gain = v
+	))
+	host.root_box.add_child(_slider(host, "Look stick zoom rate", Look.stick_zoom, 0.2, 2.4, 0.05, func(v: float):
+		Look.stick_zoom = v
+	))
+	host.root_box.add_child(_slider(host, "Look stick HUD rate", Look.stick_hud, 0.1, 1.2, 0.05, func(v: float):
+		Look.stick_hud = v
+	))
+	host.root_box.add_child(_slider(host, "Look stick pan rate", Look.stick_pan, 120.0, 1200.0, 10.0, func(v: float):
+		Look.stick_pan = v
+	))
+	host.root_box.add_child(host._btn("Reset look defaults", func():
+		Look.reset_defaults()
 		host._rebuild()
 	))
 	host.root_box.add_child(host._btn("Save settings", func():

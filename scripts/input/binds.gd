@@ -5,7 +5,7 @@ const BIND_ACTIONS: PackedStringArray = [
 	"aim_left", "aim_right", "aim_up", "aim_down",
 	"attack", "special", "dash", "target_lock", "interact", "pause",
 	"tab_left", "tab_right",
-	"map_view", "potion", "food",
+	"map_view", "potion", "food", "look_mode",
 	"gear_tip", "gear_drop", "crystal_zoom",
 	"anim_model_prev", "anim_model_next", "anim_idle", "anim_play",
 	"anim_list_up", "anim_list_down", "anim_back",
@@ -118,6 +118,7 @@ static func register() -> void:
 	act("map_view", [KEY_M], JOY_BUTTON_BACK)
 	act("potion", [KEY_F], JOY_BUTTON_DPAD_UP)
 	act("food", [KEY_C], JOY_BUTTON_DPAD_LEFT)
+	act("look_mode", [], JOY_BUTTON_DPAD_DOWN)
 	act("gear_tip", [KEY_Y], JOY_BUTTON_Y)
 	act("gear_drop", [KEY_X], JOY_BUTTON_X)
 	act("crystal_zoom", [KEY_TAB], JOY_BUTTON_Y)

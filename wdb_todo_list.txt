@@ -14,19 +14,16 @@ Need to fix design of pressure plate trap things.
 ### Can Do Now
 ## Sexy
 Hide hallways behind walls
-Blacksmith UI needs to be reworked to be intuitive using LB/RB to swap between analyze and forge.
 Need to create new UI for forging menu in blacksmith.
 Add a red outline around enemies that have targeted the player.
 Add X Money donation links
 Rework pause menu so that Dpad Right opens inventory and the menu button brings up a better flow for dispelling the run.
 Make archives close original instance when opening an archived build.
 Cleanup leftover hitching in pack_locomotion.py and/or player_anim.gd.
-Need to add view on web logic to archive docs. Could use custom html to open browser and load GitHub render of docs in a clean UI. 
-Make mouse wheel and LB/RB adjust zoom. Maybe use a dpad toggle and rstick. 
+Need to add view on web logic to archive docs. Could use custom html to open browser and load GitHub render of docs in a clean UI.
 
 ## Unsexy
 Need to fix automated playtest
-Add a space after the 3rd sentence in i2v_seeds.py script.	
 
 ### Needs Investigation
 

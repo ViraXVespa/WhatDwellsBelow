@@ -1,6 +1,7 @@
 extends Object
 
 const Combat := preload("res://scripts/combat/combat.gd")
+const Touch := preload("res://scripts/input/touch_pad.gd")
 
 
 static func ai_on() -> bool:
@@ -39,7 +40,9 @@ static func ai_held(host: Node, action: String) -> bool:
 
 
 static func lock_and_aim(host: Node, move: Vector2, delta: float) -> void:
-	if Input.is_action_just_pressed("target_lock") or App.pad_just("target_lock"):
+	if Touch.active():
+		host.lock_armed = true
+	elif Input.is_action_just_pressed("target_lock") or App.pad_just("target_lock"):
 		if host.lock_armed:
 			host.lock_armed = false
 			host.lock_target = null
@@ -54,6 +57,8 @@ static func lock_and_aim(host: Node, move: Vector2, delta: float) -> void:
 			var d := Vector2(tp.x - host.global_position.x, tp.z - host.global_position.z)
 			if d.length() > 0.001:
 				host.aim_dir = d.normalized()
+		else:
+			update_aim(host, move)
 		var stick := ai_or_vec(host, "aim")
 		if stick.length() > App.bal.lock_stick_deadzone:
 			host.stick_hold += delta

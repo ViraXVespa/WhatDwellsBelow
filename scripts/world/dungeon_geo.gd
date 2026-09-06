@@ -4,6 +4,8 @@ const T := preload("res://scripts/data/tunables.gd")
 const Gen := preload("res://scripts/dungeon/gen.gd")
 const Rooms := preload("res://scripts/dungeon/gen_rooms.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
+const MapAct := preload("res://scripts/world/dungeon_map_act.gd")
+const Look := preload("res://scripts/input/look_ctrl.gd")
 
 
 static func world(host: Node) -> void:
@@ -157,19 +159,26 @@ static func make_map(host: Node) -> void:
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.color = Color(0.02, 0.03, 0.05, 0.55)
+	dim.gui_input.connect(func(ev: InputEvent) -> void: _map_input(host, ev))
 	host.map_layer.add_child(dim)
 	host.map_img = Image.create(int(host.data.w), int(host.data.h), false, Image.FORMAT_RGBA8)
 	host.map_img.fill(Color(0.02, 0.02, 0.03, 1))
 	host.map_tex = ImageTexture.create_from_image(host.map_img)
 	host.map_rect = TextureRect.new()
 	host.map_rect.texture = host.map_tex
-	host.map_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	host.map_rect.stretch_mode = TextureRect.STRETCH_SCALE
 	host.map_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	host.map_rect.position = Vector2(560, 140)
-	host.map_rect.size = Vector2(800, 800)
+	host.map_rect.gui_input.connect(func(ev: InputEvent) -> void: _map_input(host, ev))
 	host.map_layer.add_child(host.map_rect)
 	host.set_meta("map_pc", Vector2i(-999, -999))
 	redraw_map(host)
+	MapAct.reset(host)
+
+
+static func _map_input(host: Node, event: InputEvent) -> void:
+	Look.note_event(event)
+	if MapAct.handle_mouse(host, event):
+		host.get_viewport().set_input_as_handled()
 
 
 static func redraw_map(host: Node) -> void:

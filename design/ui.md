@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot
 Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, title, or loading
-Code: `scripts/ui/hud.gd`, `touch_hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `prompt_view.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`, `scripts/title.gd`, `scripts/title_news.gd`, `scripts/data/game_ver.gd`
+Code: `scripts/ui/hud.gd`, `hud_view.gd`, `hud_act.gd`, `touch_hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `prompt_view.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`, `scripts/title.gd`, `scripts/title_news.gd`, `scripts/data/game_ver.gd`
 See also: `design/gear-ui.md`, `design/input.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/camera.md`, `design/versioning.md`, `design/save-tech.md`
 
 ## UI theme (playable surfaces)
@@ -50,15 +50,17 @@ The HUD is a persistent horizontal strip that MUST remain visible at all times d
 Bag-fullness indicator is explicitly removed and MUST NOT appear.
 All cooldowns MUST show both a visual fill/sweep and be understandable at a glance. Exact pixel positions, colors, and sizes are left to implementation so long as the information hierarchy is preserved and the strip does not obscure critical gameplay.
 
-The web touch overlay sits on `CanvasLayer` 28 (HUD is 20, pause is 55). Sticks and face buttons live in the lower half and must not cover the gauntlet strip or the top-right minimap. Potion / food sit on the bottom edge. Pause / map sit top-left, clear of the strip.
+The web touch overlay sits on `CanvasLayer` 28 (HUD is 20, pause is 55). The move stick lives in the left half below the HUD. All virtual buttons sit in a two-column strip on the right, from the bottom safe edge up to just under the minimap, and must not cover the gauntlet strip or the minimap. A look-mode cue may appear under the minimap.
 
 ## Web touch overlay
 
 Binding rules live in `design/input.md`. UI rules for this slice:
 
 - Drawn in-theme (dark well, gold ring, pad glyphs). No default engine buttons.
+- No right aim well. No lock button. Auto-aim stays on while the overlay is active.
 - Hidden while `App.ui_open` so pause, gear, recap, title, and debug stay tappable.
 - Hidden on title / foundation. Shown only in Placeholdia and the dungeon when the device check passes.
+- Map well stays visible in Placeholdia but is disabled.
 - Menus are finger-tap. Do not draw virtual A / B over an open menu.
 
 ## Pause menu
@@ -160,6 +162,9 @@ Triggered on every death or “Dispel”.
 
 - Small minimap on HUD shows only visited tiles + important markers (stairs, crystal, Extraction Gates, shop, player).
 - View / Back button opens a large full-screen map overlay. Gameplay continues underneath.
+- The large map starts at fit-to-frame. Zoom in with wheel, pinch, or look-mode right stick. Zoom focus: cursor / pinch midpoint on pointer and touch; player marker on gamepad.
+- When zoomed in past fit, pan with mouse drag, one-finger swipe (walk stick not claimed), or look-mode-off right stick. Clamp so the image cannot leave the frame. Zoom-out to fit recenters and disables pan.
+- Large-map zoom does not change world `App.cam_zoom`.
 - Fog of war and visited tracking follow the rules in `design/dungeon.md`.
 
 ## Toasts and floating combat text
@@ -175,13 +180,13 @@ Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close 
 
 ## Live snapshot — HUD / pause
 
-`hud.gd`: strip top-left, minimap top-right, boss bar when near, toast, interact glyph row. Level string uses combat level and parenthetical style level.
+`hud.gd` facade plus `hud_view.gd` / `hud_act.gd`: strip top-left, minimap top-right, boss bar when near, toast, interact glyph row, look-mode cue under the minimap. Level string uses combat level and parenthetical style level.
 Pause Skills also shows run XP earned this descent.
 Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. System opens focused on Character. Camera zoom and HUD scale write `App.set_zoom` / `App.set_hud_scale` and apply without a restart. Sprite filter cycles `App.set_sprite_filter` over the three nearest modes. Loadout opens focused on **Enter dungeon**.
 
 ## Live snapshot — web touch
 
-`App` instances `scripts/ui/touch_hud.gd` and `scripts/web_pad.gd`. `touch_hud.gd` draws wells and pad glyphs; `touch_pad.gd` owns detection, stick vectors, and the attack latch. Overlay layer 28. Visibility is `TouchPad.wants_show()`.
+`App` instances `scripts/ui/touch_hud.gd` and `scripts/web_pad.gd`. `touch_hud.gd` draws the move stick, the right-hand two-column strip, pinch, and map swipe; `touch_pad.gd` owns detection, move vector, and the attack latch. Overlay layer 28. Visibility is `TouchPad.wants_show()`. Large-map transform lives in `dungeon_map_act.gd`.
 
 ## Live snapshot — loading bar (`loader.gd`)
 

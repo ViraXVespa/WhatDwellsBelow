@@ -11,6 +11,7 @@ const Smoke := preload("res://scripts/debug/smoke.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const DungeonProps := preload("res://scripts/world/dungeon_props.gd")
 const CrystalNet := preload("res://scripts/world/crystal_net.gd")
+const MapAct := preload("res://scripts/world/dungeon_map_act.gd")
 
 
 static func ready_floor(host: Node) -> void:
@@ -73,6 +74,7 @@ static func process_floor(host: Node, delta: float) -> void:
 		if host.map_layer:
 			host.map_layer.visible = not host.map_layer.visible
 			if host.map_layer.visible:
+				MapAct.reset(host)
 				host._redraw_map()
 				CrystalNet.paint(host)
 	if host.stairs:
