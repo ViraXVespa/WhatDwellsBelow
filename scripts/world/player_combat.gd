@@ -115,10 +115,13 @@ static func hit_norm() -> float:
 static func update_aim_line(p: CharacterBody3D) -> void:
 	if p.aim_line == null:
 		return
-	var on: bool = App.in_dungeon and App.bal.aim_line_on
+	var bow_spec: bool = App.weapon == "longbow" and (p.atk_state == p.ATK_WIND or p.atk_state == p.ATK_ACT)
+	var on: bool = bool(App.bal.aim_line_on) and not bow_spec
 	var length: float = App.bal.aim_line_length
 	if App.bal.aim_line_use_weapon_range:
 		length = p._weapon_reach()
+	if App.weapon == "longbow":
+		length = App.bal.bow_range
 	p.aim_line.update_line(p.global_position, p.aim_dir, length, App.bal.aim_line_width, App.bal.aim_line_opacity, on)
 
 

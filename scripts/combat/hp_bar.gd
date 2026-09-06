@@ -53,6 +53,11 @@ static func _lv_of(host: Node3D, combat_lv: int) -> int:
 	return int(raw) if raw != null else 0
 
 
+static func _flag(host: Node, key: String) -> bool:
+	var v: Variant = host.get(key)
+	return v is bool and bool(v)
+
+
 func _ready() -> void:
 	_spr = Sprite3D.new()
 	_spr.centered = true
@@ -147,9 +152,7 @@ func _name_owns_lv() -> bool:
 	var host := get_parent()
 	if host == null:
 		return false
-	if bool(host.get("is_boss")) or bool(host.get("is_named")):
-		return true
-	return false
+	return _flag(host, "is_boss") or _flag(host, "is_named")
 
 
 func _lv_color() -> Color:
@@ -170,7 +173,7 @@ func _lv_color() -> Color:
 
 func _lift() -> float:
 	var host := get_parent()
-	if host != null and bool(host.get("is_boss")):
+	if host != null and _flag(host, "is_boss"):
 		return 2.15
 	var size_u := 1.5
 	if host != null and host.get("size_u") != null:

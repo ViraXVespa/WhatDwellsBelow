@@ -5,7 +5,7 @@ extends RefCounted
 const Schema := preload("res://scripts/data/balance_schema.gd")
 const Enemies := preload("res://scripts/data/balance_enemies.gd")
 const Migrate := preload("res://scripts/data/balance_migrate.gd")
-const BAL_REV := 9
+const BAL_REV := 10
 
 var move_speed := 4.5
 var dash_speed_mult := 2.8
@@ -45,6 +45,19 @@ var bow_special_count := 5
 var bow_special_cone := 50.0
 var bow_special_range := 6.5
 var bow_special_damage := 10.0
+var bow_path_width := 0.12
+var arrow_tip_radius := 0.28
+
+var cover_cols := 24.0
+var cover_rings := 8.0
+var cover_arcs := 14.0
+var cover_alpha := 0.4
+var cover_min_half := 0.08
+var cover_edge_mult := 0.35
+var cover_full := 0.18
+var crit_cover := 0.16
+var pierce_stop := 0.14
+var glance_float_a := 0.45
 
 var crit_chance := 0.12
 var crit_mult := 2.0

@@ -1,33 +1,37 @@
 extends RefCounted
 
 const Combat := preload("res://scripts/combat/combat.gd")
+const Cover := preload("res://scripts/combat/cover.gd")
 const ProjS := preload("res://scripts/combat/projectile.gd")
 const PlayerLock := preload("res://scripts/world/player_lock.gd")
 
 
-static func draw_basic_tele(host: Node, active: bool) -> void:
+static func draw_basic_tele(host: Node, _active: bool) -> void:
 	if host.telegraph == null:
 		return
-	var col := Color(1.0, 0.25, 0.18, 0.55) if active else Color(1.0, 0.82, 0.28, 0.4)
 	if App.weapon == "longbow":
-		host.telegraph.show_arc(host.global_position, host.aim_dir, App.bal.bow_range, 12.0, col)
+		host.telegraph.hide_now()
 		return
+	var col := Color(1.0, 0.82, 0.28, 0.4)
 	if App.weapon == "staff":
 		host.telegraph.show_arc(host.global_position, host.aim_dir, App.bal.staff_range, App.bal.staff_arc_deg, col)
 		return
 	host.telegraph.show_arc(host.global_position, host.aim_dir, App.bal.axe_range, App.bal.axe_arc_deg, col)
 
 
-static func draw_special_tele(host: Node, active: bool) -> void:
+static func draw_special_tele(host: Node, _active: bool) -> void:
 	if host.telegraph == null:
 		return
-	var col := Color(0.45, 0.85, 1.0, 0.55) if active else Color(1.0, 0.82, 0.28, 0.42)
+	var yel := Color(1.0, 0.92, 0.35, 0.42)
 	if App.weapon == "great_axe":
-		host.telegraph.show_circle(host.global_position, App.bal.slam_radius, col)
+		host.telegraph.show_circle(host.global_position, App.bal.slam_radius, yel)
 	elif App.weapon == "staff":
-		host.telegraph.show_circle(host.spec_point, App.bal.staff_special_radius, col)
+		host.telegraph.show_circle(host.spec_point, App.bal.staff_special_radius, yel)
 	else:
-		host.telegraph.show_cone(host.global_position, host.aim_dir, App.bal.bow_special_range, App.bal.bow_special_cone, col)
+		var w := 0.08
+		if App.bal:
+			w = float(App.bal.bow_path_width)
+		host.telegraph.show_spread(host.global_position, host.aim_dir, App.bal.bow_special_range, App.bal.bow_special_cone, int(App.bal.bow_special_count), w, yel)
 
 
 static func special_point(host: Node) -> Vector3:
@@ -51,9 +55,7 @@ static func apply_basic(host: Node) -> void:
 		arc = App.bal.staff_arc_deg
 		dmg = App.bal.staff_damage
 		need_los = App.bal.staff_los
-		App.sfx("hit")
-	else:
-		App.sfx("hit")
+	App.sfx("hit")
 	hit_arc(host, rng, arc, dmg, need_los, false)
 
 
@@ -75,8 +77,7 @@ static func apply_special(host: Node) -> void:
 	for i in n:
 		var t := 0.0 if n <= 1 else (float(i) / float(n - 1)) - 0.5
 		var a := base + t * cone
-		var d := Vector2(cos(a), sin(a))
-		spawn_arrow(host, d, scaled_dmg(App.bal.bow_special_damage, true), App.bal.bow_special_range, App.bal.bow_proj_speed, App.bal.bow_los)
+		spawn_arrow(host, Vector2(cos(a), sin(a)), scaled_dmg(App.bal.bow_special_damage, true), App.bal.bow_special_range, App.bal.bow_proj_speed, App.bal.bow_los)
 
 
 static func hit_arc(host: Node, rng: float, arc: float, dmg: float, need_los: bool, stagger: bool) -> void:
@@ -85,12 +86,12 @@ static func hit_arc(host: Node, rng: float, arc: float, dmg: float, need_los: bo
 			continue
 		if e.has_method("is_alive") and not e.is_alive():
 			continue
-		var p: Vector3 = (e as Node3D).global_position
-		if not Combat.in_arc(host.global_position, host.aim_dir, rng, arc, p):
+		var cov := Cover.hit_arc(host.global_position, host.aim_dir, rng, arc, e as Node3D)
+		if not Cover.connected(cov):
 			continue
-		if need_los and not Combat.los(host.global_position, p, host.get_world_3d()):
+		if need_los and not Combat.los(host.global_position, (e as Node3D).global_position, host.get_world_3d()):
 			continue
-		damage_enemy(host, e, dmg, stagger, "auto", false)
+		damage_enemy(host, e, dmg * Cover.dmg_mult(cov), stagger, "auto", false, not Cover.crit_ok(cov), Cover.crit_ok(cov))
 	hit_breakables_arc(host, rng, arc, dmg, need_los)
 
 
@@ -100,12 +101,12 @@ static func hit_circle(host: Node, origin: Vector3, radius: float, dmg: float, n
 			continue
 		if e.has_method("is_alive") and not e.is_alive():
 			continue
-		var p: Vector3 = (e as Node3D).global_position
-		if not Combat.in_circle(origin, radius, p):
+		var cov := Cover.hit_circle(origin, radius, e as Node3D)
+		if not Cover.connected(cov):
 			continue
-		if need_los and not Combat.los(origin, p, host.get_world_3d()):
+		if need_los and not Combat.los(origin, (e as Node3D).global_position, host.get_world_3d()):
 			continue
-		damage_enemy(host, e, dmg, stagger, xp, is_special)
+		damage_enemy(host, e, dmg * Cover.dmg_mult(cov), stagger, xp, is_special, not Cover.crit_ok(cov), Cover.crit_ok(cov))
 	hit_breakables_circle(host, origin, radius, dmg, need_los)
 
 
@@ -116,14 +117,13 @@ static func scaled_dmg(base: float, is_special: bool) -> float:
 	return d
 
 
-static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "auto", is_special := false) -> void:
+static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "auto", is_special := false, glance := false, can_crit := true) -> void:
 	if xp == "magic":
 		is_special = true
-	dmg = dmg * App.prog.skill_dmg_mult(is_special) + App.prog.gear_dmg()
-	if App.shrine_t > 0.0:
-		dmg *= 1.0 + App.bal.shrine_dmg
 	grant_hit_xp(xp)
-	var crit := Combat.roll_crit(App.bal.crit_chance + float(App.prog.set_stats().crit))
+	var crit := can_crit and Combat.roll_crit(App.bal.crit_chance + float(App.prog.set_stats().crit))
+	if e.has("last_glance"):
+		e.last_glance = glance and not crit
 	if e.has_method("take_hit"):
 		e.take_hit(dmg, host.aim_dir, crit)
 	if App.tel:
@@ -138,34 +138,18 @@ static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "
 
 
 static func grant_hit_xp(xp: String) -> void:
-	var mode := xp
-	if mode == "none":
+	if xp == "none":
 		return
-	if mode == "auto":
-		if App.weapon == "staff":
-			mode = "melee_staff"
-		elif App.weapon == "longbow":
-			mode = "ranged"
-		else:
-			mode = "melee_axe"
-	if mode == "magic":
-		App.prog.skill_grant_hit(true)
-	elif mode == "ranged":
-		App.prog.skill_grant_hit(false)
-	elif mode == "melee_staff":
-		App.prog.skill_grant_hit(false)
-	else:
-		App.prog.skill_grant_hit(false)
+	App.prog.skill_grant_hit(xp == "magic")
 
 
 static func hit_breakables_arc(host: Node, rng: float, arc: float, dmg: float, need_los: bool) -> void:
 	for b in host.get_tree().get_nodes_in_group("breakables"):
-		if b == null or not is_instance_valid(b):
+		if b == null or not is_instance_valid(b) or not (b is Node3D):
 			continue
-		var p: Vector3 = (b as Node3D).global_position
-		if not Combat.in_arc(host.global_position, host.aim_dir, rng + 0.35, arc, p):
+		if not Cover.connected(Cover.hit_arc(host.global_position, host.aim_dir, rng, arc, b as Node3D)):
 			continue
-		if need_los and not Combat.los(host.global_position, p, host.get_world_3d()):
+		if need_los and not Combat.los(host.global_position, (b as Node3D).global_position, host.get_world_3d()):
 			continue
 		if b.has_method("take_hit"):
 			b.take_hit(dmg, host.aim_dir, false)
@@ -173,12 +157,11 @@ static func hit_breakables_arc(host: Node, rng: float, arc: float, dmg: float, n
 
 static func hit_breakables_circle(host: Node, origin: Vector3, radius: float, dmg: float, need_los: bool) -> void:
 	for b in host.get_tree().get_nodes_in_group("breakables"):
-		if b == null or not is_instance_valid(b):
+		if b == null or not is_instance_valid(b) or not (b is Node3D):
 			continue
-		var p: Vector3 = (b as Node3D).global_position
-		if not Combat.in_circle(origin, radius + 0.25, p):
+		if not Cover.connected(Cover.hit_circle(origin, radius, b as Node3D)):
 			continue
-		if need_los and not Combat.los(origin, p, host.get_world_3d()):
+		if need_los and not Combat.los(origin, (b as Node3D).global_position, host.get_world_3d()):
 			continue
 		if b.has_method("take_hit"):
 			b.take_hit(dmg, host.aim_dir, false)

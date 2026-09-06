@@ -2,8 +2,8 @@
 
 Status: binding design  
 Read when: changing weapons, hit detection, dash, lock, juice, or combat-level scaling  
-Code: `scripts/combat/combat.gd`, `threat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `scripts/world/player.gd`  
-See also: `design/skills.md`, `design/tunables.md`, `design/art-pipeline.md`, `design/enemies.md`
+Code: `scripts/combat/combat.gd`, `cover.gd`, `player_hit.gd`, `threat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `float_num.gd`, `dummy.gd`, `scripts/world/player.gd`, `player_combat.gd`  
+See also: `design/skills.md`, `design/tunables.md`, `design/art-pipeline.md`, `design/enemies.md`, `design/hub.md`
 
 ## Weapon system
 
@@ -13,27 +13,42 @@ Each weapon has its own paper-doll **overlay** (carry / rest plus attack and spe
 Specials for all weapons are activated with LT.  
 All player attacks (basic and special) MUST clearly telegraph their range and provide a visible indication that the attack is currently active.
 
+## Hit coverage
+
+Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occupancy against the attack volume (`Cover` in `scripts/combat/cover.gd`).
+
+- Occupancy is the opaque texels of the target `Sprite3D` (player, enemy, dummy, or breakable). Transparent pixels MUST NOT register.
+- Axe and staff basics: the ground fan must overlap those opaque samples on screen. Any opaque overlap is a hit.
+- Damage scale is how *planted* the contact is, not how much of the body was covered. Center / start of the fan is full damage. Falloff exists only toward the far tip of the telegraph (`cover_full`, `cover_edge_mult`).
+- Crits MAY roll only on a planted contact (coverage at the full-damage band). Glancing contacts MUST NOT crit.
+- Floating numbers: integer damage, hold briefly, then fade. Glance numbers are smaller and dimmer. The number and its dark outline MUST sort in front of the target sprite and its health bar.
+- Breakables use the same occupancy test. Any connected hit breaks them.
+- The Placeholdia dummy uses the same occupancy test. It MUST NOT take knockback. At 0 HP it refills instead of despawning.
+
 ## Great Axe
 
-- Basic attack: Hold-to-attack (RT / LMB). Continues automatically while held. Arc and range are tunable. A single swing can hit multiple enemies inside the arc. Line-of-sight requirement is tunable. Damage application MUST be synchronized to the correct animation frame.
-- Special (Slam): Short wind-up and recovery. Higher damage multiplier than a basic attack (exact value tunable). Applies a readable stagger (shorter duration against Floor Guardians and the Gate Master). Produces dedicated ground-crack VFX.
+- Basic attack: Hold-to-attack (RT / LMB). Continues automatically while held. Arc and range are tunable. A single swing can hit multiple enemies inside the fan. Line-of-sight requirement is tunable. Damage application MUST be synchronized to the correct animation frame.
+- Special (Slam): Short wind-up and recovery. Higher damage multiplier than a basic attack (exact value tunable). Applies a readable stagger (shorter duration against Floor Guardians and the Gate Master). Produces dedicated ground-crack VFX. Uses circular occupancy around the player.
 
 ## Lightning Staff
 
-- Basic attack: Hold-to-attack (RT / LMB). Weak melee strikes that continue automatically while held. Range and arc are shorter and lower-damage than the Great Axe (exact values tunable). A single strike can hit multiple enemies inside its arc. Line-of-sight requirement is tunable. Damage application MUST be synchronized to the correct animation frame.
-- Special: AoE lightning bolt that strikes a targeted area. Possesses a distinct short wind-up. Damage, radius, and any secondary effects are tunable. MUST clearly telegraph the affected area and show when the bolt is active.
+- Basic attack: Hold-to-attack (RT / LMB). Weak melee strikes that continue automatically while held. Range and arc are shorter and lower-damage than the Great Axe (exact values tunable). A single strike can hit multiple enemies inside its fan. Line-of-sight requirement is tunable. Damage application MUST be synchronized to the correct animation frame.
+- Special: AoE lightning bolt that strikes a targeted area. Possesses a distinct short wind-up. Damage, radius, and any secondary effects are tunable. MUST clearly telegraph the affected area and show when the bolt is active. Uses circular occupancy at the strike point.
 
 ## Longbow
 
-- Basic attack: Hold-to-attack (RT / LMB) fires long-range single-target projectiles that continue automatically while held. Range, projectile speed, and fire rate are tunable. Line-of-sight requirement is tunable. Damage application MUST be synchronized to the correct animation / projectile frame.
-- Special: Fires 5 arrows in a cone in front of the player (functions as an AoE attack). Possesses a distinct short wind-up. Cone angle, range, arrow count behaviour, and damage are tunable. MUST clearly telegraph the cone area and show when the arrows are active.
+- Idle aim: a single straight translucent yellow line at shoulder height, weapon range. Axe and staff keep the ground aim line. Do not stack a second bow telegraph on the idle line. Do not flash the bow path red.
+- Basic attack: Hold-to-attack (RT / LMB) fires one arrow that travels along that path. The projectile MUST face travel, sit on the line, and test occupancy on the arrow **head** as it moves (`Cover.hit_shot`). Damage application MUST be synchronized to the projectile, not a ground cone.
+- Planted bow hits (high coverage) stop the arrow and deal full scaled damage. A glancing hit MAY continue, MAY strike one more enemy, and MUST reduce remaining damage from the first contact’s coverage. After that second body the arrow despawns.
+- Breakables do not stop the arrow and do not reduce its damage.
+- Special: fires several arrows in a spread (`bow_special_count`, cone, range tunable). Telegraph is one yellow line per shot, not a filled cone. Each arrow is its own occupancy test and may glance independently.
 
 ## Critical hits
 
 - Deal double damage.
 - Target receives a white flash.
 - Floating damage number is shown in yellow + magenta (no additional “CRIT!” text).
-- This is the minimum required implementation; additional juice may be added later.
+- Crits require a planted coverage contact. This is required behavior, not extra juice.
 
 ## Dash
 
@@ -72,6 +87,6 @@ All player attacks (basic and special) MUST clearly telegraph their range and pr
 
 See `design/input.md` for full behavior.
 
-Floating damage numbers show integer values only, appear briefly, then disappear.
+Floating damage numbers show integer values only, hold, then fade.
 
 Live numeric defaults are in `design/tunables.md`.

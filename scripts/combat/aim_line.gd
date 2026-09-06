@@ -1,6 +1,8 @@
 extends MeshInstance3D
 
 const T := preload("res://scripts/data/tunables.gd")
+const BOW_Y := 1.08
+const GROUND_Y := 0.06
 
 var mat: StandardMaterial3D
 
@@ -28,7 +30,8 @@ func update_line(origin: Vector3, dir: Vector2, length: float, width: float, opa
 		d = Vector2.DOWN
 	d = d.normalized()
 	var mid := origin + Vector3(d.x, 0.0, d.y) * (length * 0.5)
-	global_position = Vector3(mid.x, 0.06, mid.z)
+	var y := BOW_Y if App.weapon == "longbow" else GROUND_Y
+	global_position = Vector3(mid.x, y, mid.z)
 	rotation = Vector3(0.0, -atan2(d.y, d.x), 0.0)
 	scale = Vector3(length, 1.0, width)
 	if mat:

@@ -1,9 +1,9 @@
 # Placeholdia hub
 
-Status: binding design
-Read when: changing camp layout, loadout, or hub interactables
-Code: `scripts/world/camp.gd`, `scripts/world/interact.gd`, `scenes/camp.tscn`
-See also: `design/inventory.md`, `design/ui.md`, `design/gear-ui.md`
+Status: binding design  
+Read when: changing camp layout, loadout, or hub interactables  
+Code: `scripts/world/camp.gd`, `scripts/world/interact.gd`, `scripts/combat/dummy.gd`, `scenes/camp.tscn`  
+See also: `design/inventory.md`, `design/ui.md`, `design/gear-ui.md`, `design/combat.md`
 
 ## Required interactables (complete and final list)
 
@@ -15,8 +15,9 @@ See also: `design/inventory.md`, `design/ui.md`, `design/gear-ui.md`
 - Receptionist area / Guild (quest access)
 - Controls Billboard
 - “Welcome to Placeholdia!” banner
+- Test dummy (coverage / weapon sandbox)
 
-There is no separate Loadout Station. Layout may be adjusted freely for aesthetics and usability. Existing flavor text may be lightly revised if any line feels awkward or forced.
+There is no separate Loadout Station. Layout may be adjusted freely for aesthetics and usability. Existing flavor text may be lightly revised if any line feels awkward or forced.  
 All buildings MUST have actual depth and realistic 3D dimensions (not flat 2D sprites) so they feel solid under the orthographic Camera3D and avoid sorting / z-axis issues. Reference feel: the city area of *Heroes of Hammerwatch 2*.
 
 ## Floor Crystal
@@ -85,6 +86,16 @@ How to use it
 
 - The text MUST be printed and clearly visible directly on the banner itself.
 - It MUST NOT be implemented as an interactable object or as floating text above a blank banner.
+- Live size is double the original banner scale so the print stays readable from the crystal.
+
+## Test dummy
+
+- Placeholdia MUST include a striking dummy (`DummyS` / `scripts/combat/dummy.gd`) so coverage and weapons can be tested without a delve.
+- It uses the same opaque-sprite occupancy as dungeon enemies (`design/combat.md`).
+- It MUST NOT take knockback.
+- At 0 HP it refills instead of despawning.
+- A dark ground pad under the dummy is allowed so telegraph overlap is readable against the tile pattern.
+- It is a sandbox object, not an interactable in the Floor Crystal / Anvil sense.
 
 ## Hub audio / atmosphere
 

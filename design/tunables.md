@@ -2,7 +2,7 @@
 
 Status: suggested starts + live snapshot  
 Read when: changing feel, gen size, economy, crystals, or debug defaults  
-Code: `scripts/data/balance.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`, `scripts/input/touch_pad.gd`  
+Code: `scripts/data/balance.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`  
 See also: the topic file for the system you are changing
 
 These are recommended starting points for the current live implementation.  
@@ -54,18 +54,23 @@ If you change a live default, update this table in the same slice.
 | Staff special damage / radius | — | 24 / 2.15 | |
 | Bow damage / range / proj speed / rate | — | 14 / 8 / 14 / 1.9 | |
 | Bow LOS | tunable | true | |
-| Bow special count / cone / range / dmg | 5 arrows | 5 / 50° / 6.5 / 10 | |
-| Crit chance | 12 % | 0.12 | Double damage + yellow/magenta numbers |
+| Bow special count / cone / range / dmg | 5 arrows | 5 / 50° / 6.5 / 10 | Yellow spread lines, not a filled cone |
+| Crit chance | 12 % | 0.12 | Planted coverage only; double damage + yellow/magenta numbers |
 | Crit mult | 2× | 2.0 | |
 | Adrenaline kill window | 4.5 s | 4.5 | |
 | Adrenaline kill threshold | 4 | 4 | |
 | Adrenaline speed / XP stack / timeout | — | 1.35 / 0.15 / 4.5 | |
-| Knockback / hitstop | — | 3.4 / 0.055 | |
+| Knockback / hitstop | — | 3.4 / 0.055 | Dummy ignores knockback |
 | Player max HP | — | 100 | |
 | Hurt i-frame | — | 0.35 | |
 | Defense k | — | 100 | diminishing returns |
-| Aim-line on / opacity / width | on | true / 0.85 / 0.08 | |
+| Aim-line on / opacity / width | on | true / 0.85 / 0.08 | Bow line is shoulder height |
 | Aim-line use weapon range / length | — | true / 4.0 | |
+| Cover full-band / edge mult | — | 0.18 / 0.35 | Full damage until the last 18% of fan radius |
+| Cover columns / alpha | — | 28 / 0.4 | Opaque mask grid |
+| Pierce stop | — | 0.85 | Arrow despawns at this coverage |
+| Arrow tip radius | — | 0.16 | Head disk |
+| Bow path width | — | 0.08 | Special spread line width |
 
 ## Gathering (hit-based)
 

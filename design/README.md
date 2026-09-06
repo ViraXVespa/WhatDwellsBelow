@@ -48,7 +48,7 @@ Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live 
 | Gamepad, KB/M, web pad, web touch, menu binds | `input.md` | §4 input |
 | Camera, renderer | `camera.md` | §4 camera / renderer |
 | Avatar, move, facing | `player.md` | §5 |
-| Weapons, dash, crits, adrenaline | `combat.md` | §6 |
+| Weapons, dash, crits, adrenaline, hit coverage | `combat.md` | §6 |
 | Eleven skills, XP, combat level | `skills.md` | §7 |
 | Bag, gear, artifacts, extract | `inventory.md` | §8 |
 | Shared inventory / loadout board | `gear-ui.md` | §8 / §13 |
@@ -86,12 +86,12 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Autoload / flow | `scripts/app.gd`, `app_flow.gd`, `app_run.gd`, `boot.gd`, `title.gd` + `title_news.gd`, `web_pad.gd` |
 | Scenes | `scenes/boot.tscn`, `splash.tscn`, `title.tscn`, `camp.tscn`, `dungeon.tscn`, `foundation.tscn` |
 | Player | `scripts/world/player.gd` + `player_anim.gd`, `player_act.gd`, `player_lock.gd`, `player_combat.gd`, `facing.gd`, `camera_rig.gd`, `sprite_filter.gd` |
-| Combat | `scripts/combat/combat.gd`, `enemy.gd`, `enemy_ai.gd`, `enemy_atk.gd`, `enemy_setup.gd`, `projectile.gd`, `roster.gd`, `aim_line.gd`, `telegraph.gd`, `player_hit.gd`, `threat.gd` |
+| Combat | `scripts/combat/combat.gd`, `cover.gd`, `player_hit.gd`, `enemy.gd`, `enemy_ai.gd`, `enemy_atk.gd`, `enemy_setup.gd`, `projectile.gd`, `roster.gd`, `aim_line.gd`, `telegraph.gd`, `float_num.gd`, `hp_bar.gd`, `dummy.gd`, `threat.gd` |
 | Skills / save | `scripts/data/progress.gd` + `progress_gear.gd`, `progress_gear_req.gd`, `progress_make.gd`, `progress_extract.gd`, `progress_quest.gd`, `progress_town.gd`, `progress_combat.gd`, `gear_rules.gd`, `save_store.gd`, `catalog.gd` |
 | Numbers | `scripts/data/balance.gd`, `balance_schema.gd`, `tunables.gd` |
 | Version / changelog | `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`; `tools/build_changelog.py` |
 | Dungeon | `scripts/dungeon/gen.gd` + `gen_carve.gd`, `gen_rooms.gd`, `gen_doors.gd`; `scripts/world/dungeon.gd` + `dungeon_boot.gd`, `dungeon_geo.gd`, `dungeon_geo_stream.gd`, `dungeon_cells.gd`, `dungeon_stream.gd`, `dungeon_props.gd`, `dungeon_pack.gd`, `crystal_net.gd`, `floor_crystal.gd` |
-| Hub | `scripts/world/camp.gd`, `interact.gd`, `interact_fx.gd` |
+| Hub | `scripts/world/camp.gd`, `interact.gd`, `interact_fx.gd`, `scripts/combat/dummy.gd` |
 | Gather | `scripts/world/gather_node.gd`, `breakable.gd`, `pickup.gd` |
 | UI | `scripts/ui/hud.gd`; `touch_hud.gd`; `menu_pad.gd`; `pause_menu.gd` + `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`; `gear_board.gd` + `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `gear_board_anvil.gd`; `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `crystal_ui.gd`; `recap.gd`, `recap_bars.gd`, `loader.gd`, `present.gd`, `theme.gd` |
 | Input | `scripts/input/binds.gd`, `pad.gd`, `touch_pad.gd`, `scripts/web_pad.gd`, `scripts/ui/menu_pad.gd` |

@@ -1,6 +1,7 @@
 extends Object
 
 const Combat := preload("res://scripts/combat/combat.gd")
+const Cover := preload("res://scripts/combat/cover.gd")
 const ProjS := preload("res://scripts/combat/projectile.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
 
@@ -71,7 +72,7 @@ static func draw_tele(host: Node, active: bool) -> void:
 		return
 	if host.role == "ranged":
 		col = Color(0.95, 0.55, 0.2, 0.5) if active else Color(1.0, 0.82, 0.28, 0.4)
-		host.telegraph.show_arc(host.global_position, host.locked_aim, host.atk_range, maxf(12.0, host.arc_deg), col)
+		host.telegraph.show_line(host.global_position, host.locked_aim, host.atk_range, col)
 		return
 	if host.is_boss and host.role == "melee":
 		host.telegraph.show_circle(host.global_position, host.atk_range, col)
@@ -96,9 +97,10 @@ static func strike(host: Node) -> void:
 		var rad: float = 1.85 if not host.is_named else 2.35
 		if host.is_boss:
 			rad = host.atk_range
-		if player and Combat.in_circle(host.spec_point, rad, player.global_position):
-			if Combat.los(host.spec_point, player.global_position, host.get_world_3d()):
-				hit_player(host, player)
+		if player:
+			var cov: float = Cover.hit_circle(host.spec_point, rad, player)
+			if Cover.connected(cov) and Combat.los(host.spec_point, player.global_position, host.get_world_3d()):
+				hit_player(host, player, 1.0, cov)
 		if host.is_named or host.is_boss:
 			spawn_shot(host, host.locked_aim)
 			if host.is_boss:
@@ -109,18 +111,29 @@ static func strike(host: Node) -> void:
 	if player == null:
 		return
 	if host.is_boss:
-		if Combat.in_circle(host.global_position, host.atk_range, player.global_position):
-			hit_player(host, player)
+		var bc: float = Cover.hit_circle(host.global_position, host.atk_range, player)
+		if Cover.connected(bc):
+			hit_player(host, player, 1.0, bc)
 		return
-	if Combat.in_arc(host.global_position, host.locked_aim, host.atk_range, host.arc_deg, player.global_position):
-		hit_player(host, player)
-	if host.is_named and Combat.in_arc(host.global_position, host.locked_aim, host.atk_range * 1.1, host.arc_deg + 20.0, player.global_position):
-		hit_player(host, player, 0.45)
+	var ac: float = Cover.hit_arc(host.global_position, host.locked_aim, host.atk_range, host.arc_deg, player)
+	if Cover.connected(ac):
+		hit_player(host, player, 1.0, ac)
+	if host.is_named:
+		var nc: float = Cover.hit_arc(host.global_position, host.locked_aim, host.atk_range * 1.1, host.arc_deg + 20.0, player)
+		if Cover.connected(nc):
+			hit_player(host, player, 0.45, nc)
 
 
-static func hit_player(host: Node, player: Node, mult: float = 1.0) -> void:
-	if player and player.has_method("take_hit"):
-		player.take_hit(host.damage * mult * Threat.dealt_mult(host.combat_lv), host.locked_aim, false, host.kill_tag())
+static func hit_player(host: Node, player: Node, mult: float = 1.0, coverage: float = 1.0) -> void:
+	if player == null or not player.has_method("take_hit"):
+		return
+	var dmg: float = host.damage * mult * Threat.dealt_mult(host.combat_lv) * Cover.dmg_mult(coverage)
+	var glance := not Cover.crit_ok(coverage)
+	var crit := false
+	if not glance:
+		crit = Combat.roll_crit(App.bal.crit_chance)
+	player.set("last_glance", glance)
+	player.take_hit(dmg, host.locked_aim, crit, host.kill_tag())
 
 
 static func spawn_shot(host: Node, dir: Vector2) -> void:

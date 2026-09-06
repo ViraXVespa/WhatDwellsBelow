@@ -5,6 +5,7 @@ const PlayerS := preload("res://scripts/world/player.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
 const UiS := preload("res://scripts/ui/progress_ui.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
+const DummyS := preload("res://scripts/combat/dummy.gd")
 
 const GROUND_W := 36
 const GROUND_D := 32
@@ -26,6 +27,7 @@ func _ready() -> void:
 	player.position = Vector3(16.0, 0.0, 16.0)
 	add_child(player)
 	_spots()
+	_dummy()
 	ui = UiS.new()
 	add_child(ui)
 	_hud()
@@ -185,11 +187,11 @@ func _solid(pos: Vector3, size: Vector3, col: Color, tex: String) -> void:
 func _banner() -> void:
 	var pole := StaticBody3D.new()
 	pole.collision_layer = 1
-	pole.position = Vector3(16.0, 1.1, 22.0)
+	pole.position = Vector3(16.0, 2.2, 22.0)
 	add_child(pole)
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = Vector3(4.2, 2.2, 0.45)
+	sh.size = Vector3(8.4, 4.4, 0.45)
 	cs.shape = sh
 	pole.add_child(cs)
 	var spr := Sprite3D.new()
@@ -204,9 +206,15 @@ func _banner() -> void:
 	spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	if spr.texture:
-		spr.pixel_size = 2.2 / float(maxi(1, spr.texture.get_height()))
+		spr.pixel_size = 4.4 / float(maxi(1, spr.texture.get_height()))
 	spr.position.y = 0.2
 	pole.add_child(spr)
+
+
+func _dummy() -> void:
+	var n: Node3D = DummyS.new()
+	n.position = Vector3(20.0, 0.0, 12.5)
+	add_child(n)
 
 
 func _spots() -> void:

@@ -65,6 +65,7 @@ var flee_t := 0.0
 var spawned_help := false
 var spec_point := Vector3.ZERO
 var wind_dur := 0.42
+var last_glance := false
 
 
 func _ready() -> void:
@@ -166,7 +167,8 @@ func apply_stagger(sec: float) -> void:
 
 func _float(amount: int, crit: bool) -> void:
 	var n: Label3D = FloatS.new()
-	n.setup(amount, crit)
+	n.setup(amount, crit, last_glance and not crit)
+	last_glance = false
 	n.position = global_position + Vector3(0.0, size_u * 0.7, 0.0)
 	var host := get_parent()
 	if host:

@@ -2,6 +2,7 @@ extends Object
 
 const Depth := preload("res://scripts/world/depth.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
+const FloatS := preload("res://scripts/combat/float_num.gd")
 
 
 static func take_hit(host: Node, raw: float, from_dir: Vector2, crit: bool, src := "") -> void:
@@ -20,11 +21,27 @@ static func take_hit(host: Node, raw: float, from_dir: Vector2, crit: bool, src 
 	host.velocity += Vector3(from_dir.x, 0.0, from_dir.y) * App.bal.knockback * 0.45
 	App.sfx("hurt")
 	stop_gather(host)
+	var glance := false
+	if host.get("last_glance") != null:
+		glance = bool(host.get("last_glance"))
+		host.set("last_glance", false)
+	_float(host, int(round(dmg)), crit, glance and not crit)
 	if App.tel:
 		App.tel.note_damage_taken(dmg, host.hp, host.max_hp)
 	App.prog.add_run_xp("def", App.bal.xp_def_hit)
 	if host.hp <= 0.0:
 		player_die(host)
+
+
+static func _float(host: Node, amount: int, crit: bool, glance: bool) -> void:
+	var n: Label3D = FloatS.new()
+	n.setup(amount, crit, glance)
+	n.position = host.global_position + Vector3(0.0, 1.35, 0.0)
+	var world := host.get_parent()
+	if world:
+		world.add_child(n)
+	else:
+		host.add_child(n)
 
 
 static func player_die(host: Node) -> void:

@@ -65,6 +65,7 @@ var exit_t := 0.0
 var exit_cond := ""
 var exit_killer := ""
 var last_hit := ""
+var last_glance := false
 var interact_lock := 0.0
 var ui_latch := false
 

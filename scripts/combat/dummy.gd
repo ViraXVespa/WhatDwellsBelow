@@ -18,6 +18,7 @@ var dead := false
 var spr: Sprite3D
 var is_boss := false
 var tag := Label3D.new()
+var last_glance := false
 
 
 func _ready() -> void:
@@ -111,13 +112,15 @@ func take_hit(raw: float, from_dir: Vector2, crit: bool) -> void:
 		flash = 0.08
 	hp = maxf(0.0, hp - dmg)
 	HpBarS.pulse(self, hp, max_hp, combat_lv)
-	knock = Vector3(from_dir.x, 0.0, from_dir.y) * App.bal.knockback
-	knock_t = 0.12
 	_float(int(round(dmg)), crit)
 	App.hitstop(App.bal.hitstop)
 	App.sfx("hit" if not crit else "crit")
 	if hp <= 0.0:
-		_die()
+		if is_boss:
+			_die()
+		else:
+			hp = max_hp
+			HpBarS.pulse(self, hp, max_hp, combat_lv)
 
 
 func apply_stagger(sec: float) -> void:
@@ -133,7 +136,8 @@ func _pin_bar() -> void:
 
 func _float(amount: int, crit: bool) -> void:
 	var n: Label3D = FloatS.new()
-	n.setup(amount, crit)
+	n.setup(amount, crit, last_glance and not crit)
+	last_glance = false
 	n.position = global_position + Vector3(0.0, 1.35, 0.0)
 	var host := get_parent()
 	if host:
@@ -162,9 +166,6 @@ func _physics_process(delta: float) -> void:
 	if stagger > 0.0:
 		stagger -= delta
 		velocity = Vector3.ZERO
-	elif knock_t > 0.0:
-		knock_t -= delta
-		velocity = knock
 	else:
 		velocity = Vector3.ZERO
 	move_and_slide()
