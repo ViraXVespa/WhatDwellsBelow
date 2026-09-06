@@ -10,6 +10,7 @@ const ACTIONS: PackedStringArray = [
 static var mobile_ua := false
 static var ua_ready := false
 static var phys_kb := false
+static var force_show := false
 static var move := Vector2.ZERO
 static var aim := Vector2.ZERO
 static var move_live := false
@@ -18,14 +19,12 @@ static var attack_latch := false
 static var tap_window := 0.28
 static var dead := 0.24
 static var _attack_finger := false
-static var _attack_cancel := false
-static var _attack_armed := false
-static var _attack_tap_at := -999.0
 
 
 static func reset_defaults() -> void:
 	tap_window = 0.28
 	dead = 0.24
+	attack_latch = false
 
 
 static func tick() -> void:
@@ -40,10 +39,13 @@ static func tick() -> void:
 static func note_event(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		phys_kb = true
-		clear_world()
+		if not force_show:
+			clear_world()
 
 
 static func wants_device() -> bool:
+	if force_show:
+		return true
 	if not OS.has_feature("web"):
 		return false
 	_probe_ua()
@@ -53,7 +55,9 @@ static func wants_device() -> bool:
 
 
 static func wants_show() -> bool:
-	if not wants_device() or App.ui_open:
+	if App.ui_open:
+		return false
+	if not wants_device():
 		return false
 	return _play_surface()
 
@@ -86,37 +90,21 @@ static func set_held(action: String, on: bool) -> void:
 	down[action] = on
 
 
-static func attack_press(now: float) -> void:
-	if attack_latch:
-		attack_latch = false
-		_attack_finger = false
-		_attack_cancel = true
-		_attack_armed = false
-		return
+static func attack_press(_now: float) -> void:
+	attack_latch = false
 	_attack_finger = true
-	_attack_cancel = false
-	if _attack_armed and now - _attack_tap_at <= tap_window:
-		attack_latch = true
-		_attack_armed = false
 
 
-static func attack_release(now: float) -> void:
+static func attack_release(_now: float) -> void:
+	attack_latch = false
 	_attack_finger = false
-	if _attack_cancel:
-		_attack_cancel = false
-		_attack_armed = false
-		return
-	if attack_latch:
-		return
-	_attack_armed = true
-	_attack_tap_at = now
 
 
 static func held(action: String) -> bool:
 	if not active():
 		return false
 	if action == "attack":
-		return _attack_finger or attack_latch
+		return _attack_finger
 	return bool(down.get(action, false))
 
 
@@ -127,8 +115,6 @@ static func clear_world() -> void:
 	down.clear()
 	attack_latch = false
 	_attack_finger = false
-	_attack_cancel = false
-	_attack_armed = false
 
 
 static func _idle_sticks() -> void:
@@ -138,8 +124,6 @@ static func _idle_sticks() -> void:
 	down.clear()
 	attack_latch = false
 	_attack_finger = false
-	_attack_cancel = false
-	_attack_armed = false
 
 
 static func _play_surface() -> bool:

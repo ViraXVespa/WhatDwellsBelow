@@ -3,6 +3,7 @@ extends Control
 const T := preload("res://scripts/data/tunables.gd")
 const GameVer := preload("res://scripts/data/game_ver.gd")
 const News := preload("res://scripts/title_news.gd")
+const ThemeS := preload("res://scripts/ui/theme.gd")
 
 var _busy := false
 var _archives_open := false
@@ -36,7 +37,6 @@ func _ready() -> void:
 	var updates: Button = null
 	var archives: Button = null
 	if App.character_chosen:
-		card.add_child(_lab("Play launches the live path.", 18, Color(0.95, 0.86, 0.4)))
 		play_a = _btn("Play", func(): _play(App.character_type))
 		card.add_child(play_a)
 	else:
@@ -138,7 +138,7 @@ func _lab(text: String, size: int, col: Color) -> Label:
 	l.text = text
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", ThemeS.font_px(size))
 	l.add_theme_color_override("font_color", col)
 	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
 	l.add_theme_constant_override("outline_size", 6)
@@ -148,9 +148,9 @@ func _lab(text: String, size: int, col: Color) -> Label:
 
 
 func _btn(text: String, cb: Callable) -> Button:
-	var ThemeS := load("res://scripts/ui/theme.gd")
 	var b: Button = ThemeS.btn(text, cb)
-	b.custom_minimum_size = Vector2(280, 56)
+	var sc: float = ThemeS.text_scale()
+	b.custom_minimum_size = Vector2(280.0 * sc, 56.0 * sc)
 	b.focus_mode = Control.FOCUS_ALL
 	return b
 

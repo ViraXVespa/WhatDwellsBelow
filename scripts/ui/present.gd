@@ -2,6 +2,8 @@ extends CanvasLayer
 
 ## Enter (consciousness-transfer) and wake-up presentation beats.
 
+const ThemeS := preload("res://scripts/ui/theme.gd")
+
 var overlay: ColorRect
 var caption: Label
 var playing := false
@@ -27,7 +29,7 @@ func _ready() -> void:
 	caption.offset_top = -40
 	caption.offset_bottom = 40
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	caption.add_theme_font_size_override("font_size", 32)
+	caption.add_theme_font_size_override("font_size", ThemeS.font_px(32))
 	caption.add_theme_color_override("font_color", Color(0.75, 0.92, 1.0))
 	caption.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.06))
 	caption.add_theme_constant_override("outline_size", 8)

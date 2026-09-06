@@ -16,6 +16,13 @@ static func page_settings(host) -> void:
 	host.root_box.add_child(_slider(host, "HUD scale", App.hud_scale, T.HUD_SCALE_MIN, T.HUD_SCALE_MAX, 0.05, func(v: float):
 		App.set_hud_scale(v)
 	))
+	host.root_box.add_child(_slider(host, "UI text floor", App.ui_text_floor, T.UI_TEXT_FLOOR_MIN, T.UI_TEXT_FLOOR_MAX, 1.0, func(v: float):
+		App.set_ui_text_floor(v)
+	))
+	host.root_box.add_child(host._btn("Force touch overlay: %s" % ("On" if Touch.force_show else "Off"), func():
+		Touch.force_show = not Touch.force_show
+		host._rebuild()
+	))
 	host.root_box.add_child(host._btn("Sprite filter: %s" % SpriteFilt.label(int(App.sprite_filter)), func():
 		App.set_sprite_filter(SpriteFilt.cycle_all(int(App.sprite_filter), 1), true)
 		App.save_now()
@@ -28,9 +35,6 @@ static func page_settings(host) -> void:
 	))
 	host.root_box.add_child(_slider(host, "Mip bias", App.sprite_mip_bias, -2.0, 2.0, 0.05, func(v: float):
 		App.set_sprite_mip_bias(v)
-	))
-	host.root_box.add_child(_slider(host, "Touch attack tap window", Touch.tap_window, 0.12, 0.6, 0.01, func(v: float):
-		Touch.tap_window = v
 	))
 	host.root_box.add_child(_slider(host, "Touch stick deadzone", Touch.dead, 0.08, 0.4, 0.01, func(v: float):
 		Touch.dead = v

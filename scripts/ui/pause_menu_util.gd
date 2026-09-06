@@ -8,7 +8,7 @@ static func cap(ui: CanvasLayer, text: String, size: int = 18, col: Color = Colo
 	l.text = text
 	l.autowrap_mode = TextServer.AUTOWRAP_OFF
 	l.clip_text = false
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", ThemeS.font_px(size))
 	l.add_theme_color_override("font_color", col)
 	return l
 
@@ -26,7 +26,7 @@ static func slider_row(ui: CanvasLayer, title: String, value: float, lo: float, 
 	slider.max_value = hi
 	slider.step = step
 	slider.value = value
-	slider.custom_minimum_size = Vector2(300, 32)
+	slider.custom_minimum_size = Vector2(300, 32.0 * ThemeS.text_scale())
 	slider.value_changed.connect(on_change)
 	row.add_child(slider)
 	return row

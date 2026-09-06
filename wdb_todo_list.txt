@@ -13,6 +13,7 @@ Need to fix design of pressure plate trap things.
 
 ### Can Do Now
 ## Sexy
+UI needs to scale to look correct in different resolutions.
 Hide hallways behind walls
 Need to create new UI for forging menu in blacksmith.
 Add a red outline around enemies that have targeted the player.

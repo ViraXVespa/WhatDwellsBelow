@@ -60,6 +60,7 @@ static func collect() -> Dictionary:
 		"character_chosen": App.character_chosen,
 		"cam_zoom": App.cam_zoom,
 		"hud_scale": App.hud_scale,
+		"ui_text_floor": App.ui_text_floor,
 		"vol_master": App.vol_master,
 		"vol_music": App.vol_music,
 		"vol_sfx": App.vol_sfx,
@@ -85,6 +86,7 @@ static func apply(data: Dictionary) -> void:
 	App.character_chosen = bool(data.get("character_chosen", false))
 	App.cam_zoom = float(data.get("cam_zoom", 1.75))
 	App.hud_scale = float(data.get("hud_scale", 1.0))
+	App.ui_text_floor = float(data.get("ui_text_floor", 14.0))
 	App.vol_master = float(data.get("vol_master", 1.0))
 	App.vol_music = float(data.get("vol_music", 0.7))
 	App.vol_sfx = float(data.get("vol_sfx", 0.85))
@@ -120,6 +122,8 @@ static func apply(data: Dictionary) -> void:
 		App.set_zoom(App.cam_zoom)
 	if App.has_method("set_hud_scale"):
 		App.set_hud_scale(App.hud_scale)
+	if App.has_method("set_ui_text_floor"):
+		App.set_ui_text_floor(App.ui_text_floor)
 	if App.has_method("set_sprite_filter"):
 		App.set_sprite_filter(App.sprite_filter, true)
 	if App.has_method("set_sprite_mip_sharp"):
@@ -181,6 +185,7 @@ static func fresh_delver() -> void:
 	App.last_seen_game_ver = ""
 	App.cam_zoom = 1.75
 	App.hud_scale = 1.0
+	App.ui_text_floor = 14.0
 	App.vol_master = 1.0
 	App.vol_music = 0.7
 	App.vol_sfx = 0.85
@@ -197,6 +202,8 @@ static func fresh_delver() -> void:
 		App.set_zoom(App.cam_zoom)
 	if App.has_method("set_hud_scale"):
 		App.set_hud_scale(App.hud_scale)
+	if App.has_method("set_ui_text_floor"):
+		App.set_ui_text_floor(App.ui_text_floor)
 	if App.has_method("set_sprite_filter"):
 		App.set_sprite_filter(App.sprite_filter, true)
 

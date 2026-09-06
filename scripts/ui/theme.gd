@@ -1,13 +1,22 @@
 extends Object
 
 const Prompts := preload("res://scripts/input/prompts.gd")
+const UiText := preload("res://scripts/ui/ui_text.gd")
+
+
+static func text_scale() -> float:
+	return UiText.applied()
+
+
+static func font_px(size: int) -> int:
+	return UiText.font_px(size)
 
 
 static func lab(t: String, size: int, col: Color) -> Label:
 	var l := Label.new()
 	l.text = t
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", font_px(size))
 	l.add_theme_color_override("font_color", col)
 	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
 	l.add_theme_constant_override("outline_size", 6)
@@ -17,8 +26,8 @@ static func lab(t: String, size: int, col: Color) -> Label:
 static func btn(t: String, cb: Callable, enabled := true) -> Button:
 	var b := Button.new()
 	b.text = t
-	b.custom_minimum_size = Vector2(0, 44)
-	b.add_theme_font_size_override("font_size", 20)
+	b.custom_minimum_size = UiText.min_size(0.0, 44.0)
+	b.add_theme_font_size_override("font_size", font_px(20))
 	b.add_theme_color_override("font_color", Color(0.92, 0.84, 0.62))
 	b.add_theme_color_override("font_hover_color", Color(1, 0.95, 0.75))
 	b.add_theme_color_override("font_focus_color", Color(1, 0.92, 0.55))
@@ -55,7 +64,7 @@ static func skill_row() -> PanelContainer:
 	p.focus_mode = Control.FOCUS_ALL
 	p.mouse_filter = Control.MOUSE_FILTER_STOP
 	p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	p.custom_minimum_size = Vector2(0, 52)
+	p.custom_minimum_size = UiText.min_size(0.0, 52.0)
 	p.add_theme_stylebox_override("panel", skill_row_sb(false))
 	return p
 

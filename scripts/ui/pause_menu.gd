@@ -9,9 +9,11 @@ const PauseSys := preload("res://scripts/ui/pause_system.gd")
 const GearAct := preload("res://scripts/ui/gear_board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Util := preload("res://scripts/ui/pause_menu_util.gd")
+const View := preload("res://scripts/ui/pause_menu_view.gd")
 const Pad := preload("res://scripts/ui/menu_pad.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const UiText := preload("res://scripts/ui/ui_text.gd")
 
 const SKILL_NAMES := {
 	"axe": "Great Axe",
@@ -84,76 +86,7 @@ var gear_page_right: Control
 
 
 func _ready() -> void:
-	layer = 55
-	visible = false
-	process_mode = Node.PROCESS_MODE_ALWAYS
-	var dim: ColorRect = ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.03, 0.02, 0.02, 0.78)
-	add_child(dim)
-	var panel: ColorRect = ColorRect.new()
-	panel.color = Color(0.13, 0.1, 0.08, 0.96)
-	panel.position = Vector2(220, 40)
-	panel.size = Vector2(1480, 1000)
-	add_child(panel)
-	var edge: ColorRect = ColorRect.new()
-	edge.color = Color(0.55, 0.42, 0.22, 1)
-	edge.position = Vector2(220, 40)
-	edge.size = Vector2(1480, 8)
-	add_child(edge)
-	tab_wrap = HBoxContainer.new()
-	tab_wrap.position = Vector2(244, 60)
-	tab_wrap.size = Vector2(1432, 56)
-	tab_wrap.add_theme_constant_override("separation", 10)
-	add_child(tab_wrap)
-	tab_left = HBoxContainer.new()
-	tab_left.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tab_left.custom_minimum_size = Vector2(36, 28)
-	tab_right = HBoxContainer.new()
-	tab_right.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tab_right.custom_minimum_size = Vector2(36, 28)
-	tab_scroll = ScrollContainer.new()
-	tab_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	tab_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	tab_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
-	tab_scroll.follow_focus = true
-	tabs = HBoxContainer.new()
-	tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	tabs.add_theme_constant_override("separation", 12)
-	tab_scroll.add_child(tabs)
-	tab_wrap.add_child(tab_left)
-	tab_wrap.add_child(tab_scroll)
-	tab_wrap.add_child(tab_right)
-	scroll = ScrollContainer.new()
-	scroll.position = Vector2(244, 128)
-	scroll.size = Vector2(1432, 840)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.focus_mode = Control.FOCUS_NONE
-	scroll.follow_focus = true
-	add_child(scroll)
-	box = VBoxContainer.new()
-	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.custom_minimum_size = Vector2(1400, 0)
-	box.add_theme_constant_override("separation", 8)
-	scroll.add_child(box)
-	_make_tip()
-
-
-func _make_tip() -> void:
-	tip_host = PanelContainer.new()
-	tip_host.visible = false
-	tip_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tip_host.z_index = 20
-	tip_host.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.09, 0.07, 0.05, 0.97), Color(0.85, 0.68, 0.32)))
-	tip_lab = Label.new()
-	tip_lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	tip_lab.custom_minimum_size = Vector2(380, 0)
-	tip_lab.add_theme_font_size_override("font_size", 18)
-	tip_lab.add_theme_color_override("font_color", Color(0.93, 0.86, 0.72))
-	tip_lab.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	tip_lab.add_theme_constant_override("outline_size", 6)
-	tip_host.add_child(tip_lab)
-	add_child(tip_host)
+	View.build(self)
 
 
 func toggle() -> void:
@@ -242,7 +175,7 @@ func _rebuild() -> void:
 			_rebuild()
 		)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		b.custom_minimum_size = Vector2(160, 44)
+		b.custom_minimum_size = UiText.min_size(160.0, 44.0)
 		if i == tab:
 			b.add_theme_color_override("font_color", Color(1, 0.92, 0.45))
 		tabs.add_child(b)
@@ -309,7 +242,7 @@ func _focus() -> void:
 func _cap(text: String, size: int = 18, col: Color = Color(0.9, 0.84, 0.7)) -> Label:
 	var l: Label = Util.cap(self, text, size, col)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	l.custom_minimum_size = Vector2(520, 26)
+	l.custom_minimum_size = UiText.min_size(520.0, 26.0)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))

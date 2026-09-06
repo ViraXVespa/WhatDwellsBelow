@@ -1,7 +1,5 @@
 extends RefCounted
 
-## Run + meta progression for Phase 6.
-
 const CatalogS := preload("res://scripts/data/catalog.gd")
 const Gear := preload("res://scripts/data/progress_gear.gd")
 const CombatP := preload("res://scripts/data/progress_combat.gd")

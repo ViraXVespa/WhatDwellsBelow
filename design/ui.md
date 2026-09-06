@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot
 Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, title, or loading
-Code: `scripts/ui/hud.gd`, `hud_view.gd`, `hud_act.gd`, `touch_hud.gd`, `pause_menu.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `prompt_view.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`, `scripts/title.gd`, `scripts/title_news.gd`, `scripts/data/game_ver.gd`
+Code: `scripts/ui/hud.gd`, `hud_view.gd`, `hud_act.gd`, `touch_hud.gd`, `ui_text.gd`, `pause_menu.gd`, `pause_menu_view.gd`, `pause_menu_util.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `prompt_view.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`, `scripts/title.gd`, `scripts/title_news.gd`, `scripts/data/game_ver.gd`
 See also: `design/gear-ui.md`, `design/input.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/camera.md`, `design/versioning.md`, `design/save-tech.md`
 
 ## UI theme (playable surfaces)
@@ -50,7 +50,7 @@ The HUD is a persistent horizontal strip that MUST remain visible at all times d
 Bag-fullness indicator is explicitly removed and MUST NOT appear.
 All cooldowns MUST show both a visual fill/sweep and be understandable at a glance. Exact pixel positions, colors, and sizes are left to implementation so long as the information hierarchy is preserved and the strip does not obscure critical gameplay.
 
-The web touch overlay sits on `CanvasLayer` 28 (HUD is 20, pause is 55). The move stick lives in the left half below the HUD. All virtual buttons sit in a two-column strip on the right, from the bottom safe edge up to just under the minimap, and must not cover the gauntlet strip or the minimap. A look-mode cue may appear under the minimap.
+The web touch overlay sits on `CanvasLayer` 28 (HUD is 20, pause is 55). The move stick lives in the left half below the HUD. The right cluster is a 2×2 of large wells (attack / special / interact / dash) with a row of four small wells above it (map, food, potion, pause). Live anchor is about 86% across and 78% down the viewport, clamped off the bezel. The right cluster is 25% larger than the pre-tune wells and grows toward the top-left so dash / special stay put. It must not cover the gauntlet strip or the minimap. A look-mode cue may appear under the minimap.
 
 ## Web touch overlay
 
@@ -59,9 +59,10 @@ Binding rules live in `design/input.md`. UI rules for this slice:
 - Drawn in-theme (dark well, gold ring, pad glyphs). No default engine buttons.
 - No right aim well. No lock button. Auto-aim stays on while the overlay is active.
 - Hidden while `App.ui_open` so pause, gear, recap, title, and debug stay tappable.
-- Hidden on title / foundation. Shown only in Placeholdia and the dungeon when the device check passes.
+- Hidden on title / foundation. Shown only in Placeholdia and the dungeon when the device check passes, or when Debug Settings **Force touch overlay** is on (session-only; still hidden while `App.ui_open`).
 - Map well stays visible in Placeholdia but is disabled.
 - Menus are finger-tap. Do not draw virtual A / B over an open menu.
+- Touch RT is press-and-hold only. There is no double-tap latch.
 
 ## Pause menu
 
@@ -91,7 +92,7 @@ Exactly three tabs, navigable with LB/RB or equivalent:
    - “Delete Save Data” with confirmation
    - “Dispel” Avatar button with strong confirmation prompt
 
-The full debug / balance menu is **no longer** present in the Pause Menu. In-test display options that are not approved for players live on the secret debug **Settings** tab (`design/debug.md`). Touch tap-window and stick deadzone sliders live there too.
+The full debug / balance menu is **no longer** present in the Pause Menu. In-test display options that are not approved for players live on the secret debug **Settings** tab (`design/debug.md`). The touch stick deadzone slider lives there too.
 
 Placeholdia inventory (same board, opened outside a run) MUST use Loadout option sources: starters, holds, and non-white bank items. Dungeon inventory MAY only list the equipped piece plus bag items of that slot.
 
@@ -182,17 +183,17 @@ Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close 
 
 `hud.gd` facade plus `hud_view.gd` / `hud_act.gd`: strip top-left, minimap top-right, boss bar when near, toast, interact glyph row, look-mode cue under the minimap. Level string uses combat level and parenthetical style level.
 Pause Skills also shows run XP earned this descent.
-Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. System opens focused on Character. Camera zoom and HUD scale write `App.set_zoom` / `App.set_hud_scale` and apply without a restart. Sprite filter cycles `App.set_sprite_filter` over the three nearest modes. Loadout opens focused on **Enter dungeon**.
+Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. System opens focused on Character. Camera zoom and HUD scale write `App.set_zoom` / `App.set_hud_scale` and apply without a restart. Small windows multiply HUD chrome and Theme fonts by `UiText.applied()` from a saved text floor (debug slider, default 14). Sprite filter cycles `App.set_sprite_filter` over the three nearest modes. Loadout opens focused on **Enter dungeon**.
 
 ## Live snapshot — web touch
 
-`App` instances `scripts/ui/touch_hud.gd` and `scripts/web_pad.gd`. `touch_hud.gd` draws the move stick, the right-hand two-column strip, pinch, and map swipe; `touch_pad.gd` owns detection, move vector, and the attack latch. Overlay layer 28. Visibility is `TouchPad.wants_show()`. Large-map transform lives in `dungeon_map_act.gd`.
+`App` instances `scripts/ui/touch_hud.gd` and `scripts/web_pad.gd`. `touch_hud.gd` draws the move stick, the right-hand cluster, pinch, and map swipe; `touch_pad.gd` owns detection, move vector, and `force_show`. Overlay layer 28. Visibility is `Touch.wants_show()`. Large-map transform lives in `dungeon_map_act.gd`.
 
 ## Live snapshot — loading bar (`loader.gd`)
 
 `CanvasLayer` layer 110 on `App`. Survives scene changes. Title → Placeholdia uses `App.play_from_menu` → `AppFlow.play_from_menu_async`.
 
-- `begin(heading, status)` shows the overlay and seeds a small fill so the bar is never stuck at 0%.
+- `begin(heading, status)` shows the overlay and seeds the bar so it is never stuck at 0%.
 - `set_status(text)`
 - `set_progress(0..1)` only raises the target.
 - `_process` eases `_shown` toward the target.

@@ -23,6 +23,10 @@ If you change a live default, update this table in the same slice.
 | `ZOOM_MIN` / `ZOOM_MAX` | 1.0 / 4.0 |
 | Default `cam_zoom` | 1.75 |
 | `HUD_SCALE_MIN` / `HUD_SCALE_MAX` | 0.7 / 1.4 |
+| `UI_TEXT_FLOOR` | 14 |
+| `UI_TEXT_FLOOR_MIN` / `UI_TEXT_FLOOR_MAX` | 8 / 24 |
+| `UI_TEXT_REF` | 18 |
+| `UI_TEXT_SCALE_MIN` / `UI_TEXT_SCALE_MAX` | 1.0 / 2.5 |
 | `LOOK_WHEEL_STEP` | 0.08 |
 | `LOOK_PINCH_GAIN` | 1.15 |
 | `LOOK_STICK_ZOOM` | 0.9 |
@@ -38,7 +42,6 @@ If you change a live default, update this table in the same slice.
 | `ARCHIVE_ID_FULL_3D` | full_3d_pass |
 | `ARCHIVE_LABEL_FULL_3D` | Full 3D Pass |
 | Archive catalog | `scripts/data/archive_catalog.json` |
-| `TOUCH_TAP_WINDOW` | 0.28 |
 | `TOUCH_DEAD` | 0.24 |
 
 ## Movement and combat
@@ -186,11 +189,11 @@ Roster HP lives in `balance_enemies.gd` (about 2× the pre-retune table). Floor-
 |-----------|-----------------|-------|
 | Camera zoom range | 1.0 – 4.0 | Persisted in save. Default 1.75. Wheel / pinch / look-mode RS also write `App.set_zoom`. |
 | HUD scale range | 0.7 – 1.4 | System slider and look-mode RS X. |
+| UI text floor | 14 | Debug Settings slider (8–24). Applied scale is `clamp(floor / (UI_TEXT_REF × screen_per_design), 1.0, 2.5)`. Floor is saved; applied scale is recomputed on resize. |
 | Look wheel step | 0.08 | Per notch. Debug Settings slider. |
 | Look pinch gain | 1.15 | Debug Settings slider. |
 | Look stick zoom / HUD / pan | 0.9 / 0.35 / 520 | Debug Settings sliders. |
 | Map zoom range | 1.0 – 10.0 | Fit to 10×. Independent of world camera. |
-| Touch attack tap window | 0.28 s | Double-tap latches hold-to-attack. Debug Settings slider. |
 | Touch stick deadzone | 0.24 | Same magnitude idea as pad sticks. Debug Settings slider. |
 | Target first-extraction time | 5–10 min | New player on gamepad |
 | Target floor-5 clear time | 5–10 hours | Competent player; feel target |

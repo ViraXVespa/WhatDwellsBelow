@@ -95,7 +95,10 @@ static func build(host: CanvasLayer) -> void:
 
 
 static func layout(host: CanvasLayer) -> void:
-	var sc: float = App.hud_scale
+	var text_sc: float = 1.0
+	if App.has_method("ui_text_applied"):
+		text_sc = App.ui_text_applied()
+	var sc: float = App.hud_scale * text_sc
 	var vp := host.get_viewport().get_visible_rect().size
 	host.strip.scale = Vector2(sc, sc)
 	host.strip.position = Vector2(host.MARGIN, 16)
@@ -105,6 +108,7 @@ static func layout(host: CanvasLayer) -> void:
 	host.toast.position = Vector2(host.MARGIN, 16 + host.STRIP_H * sc + 8)
 	host.boss_wrap.scale = Vector2(sc, sc)
 	host.boss_wrap.position = Vector2(host.MARGIN, host.toast.position.y + 32 * sc)
+	host.fps_lab.scale = Vector2(sc, sc)
 	host.fps_lab.position = Vector2(host.mini_wrap.position.x, host.mini_wrap.position.y + host.MINI_H * sc + 4)
 	host.look_lab.scale = Vector2(sc, sc)
 	host.look_lab.position = Vector2(host.mini_wrap.position.x, host.mini_wrap.position.y + host.MINI_H * sc + 28 * sc)

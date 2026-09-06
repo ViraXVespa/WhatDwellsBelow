@@ -24,6 +24,7 @@ const WebPadS := preload("res://scripts/web_pad.gd")
 const AppFlow := preload("res://scripts/app_flow.gd")
 const AppRun := preload("res://scripts/app_run.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
+const UiText := preload("res://scripts/ui/ui_text.gd")
 
 var character_type := "male"
 var character_chosen := false
@@ -31,6 +32,8 @@ var last_seen_game_ver := ""
 var weapon := "great_axe"
 var cam_zoom := 1.75
 var hud_scale := 1.0
+var ui_text_floor := 14.0
+var ui_text_scale := 1.0
 var vol_master := 1.0
 var vol_music := 0.7
 var vol_sfx := 0.85
@@ -141,10 +144,12 @@ func _ready() -> void:
 	touch_hud = TouchHudS.new()
 	add_child(touch_hud)
 	get_tree().node_added.connect(_on_node_added)
+	get_tree().root.size_changed.connect(refresh_ui_text_scale)
 	if not Smoke.active():
 		Store.load_slot("live")
 	set_zoom(cam_zoom)
 	set_hud_scale(hud_scale)
+	refresh_ui_text_scale()
 	set_sprite_filter(sprite_filter, true)
 	if "--wdb-debug" in OS.get_cmdline_user_args():
 		call_deferred("_open_debug")
@@ -305,6 +310,19 @@ func set_zoom(z: float) -> void:
 
 func set_hud_scale(v: float) -> void:
 	hud_scale = clampf(v, 0.7, 1.4)
+
+
+func set_ui_text_floor(v: float) -> void:
+	ui_text_floor = UiText.clamp_floor(v)
+	refresh_ui_text_scale()
+
+
+func ui_text_applied() -> float:
+	return ui_text_scale
+
+
+func refresh_ui_text_scale() -> void:
+	UiText.refresh()
 
 
 func set_sprite_filter(id: int, allow_linear := false) -> void:

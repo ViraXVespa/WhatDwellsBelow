@@ -102,7 +102,7 @@ Never hard-code exact frame counts. Never generate full multi-direction strips i
 
 I2V prompts come from `tools/i2v_seeds.py` (`build_prompt()` + `MOTION[action]` + `IDENTITY_LOCK[gender]`). Do not invent a second walk prompt in this file.
 
-Identity lock is per player gender. Male outfit language (brown leather, short neck scarf, no cape) MUST NOT be applied to the female character. Pass `--gender male` or `--gender female`, or infer it from `bible_locked_male.png` / `bible_locked_female.png`. Copy the still's garments; do not add extra scarf or cloth.
+Identity lock is per player gender. Male and female each have their own `IDENTITY_LOCK` in `tools/i2v_seeds.py`. Do not copy male outfit language onto the female character. Pass `--gender male` or `--gender female`, or infer it from `bible_locked_male.png` / `bible_locked_female.png`. Copy the still: one short green cloth wrapped close at the neck only. No hanging end. No tail. No loose strip.
 
 Grok Build I2V uses that body as-is. The web-browser preamble (image-to-video / do not output a still / no fixed duration) is **only** added when `tools/i2v_seeds.py --test` is passed.
 
@@ -216,11 +216,11 @@ Switch to the full locked Bible only if the User saw the single-still I2V fail, 
 
 **Soft identity language** (mandatory in every prompt after Bible lock):
 
-Keep the same overall character design, face, hair, armor, green scarf, proportions, palette, and sprite style from the Bible. Do not redesign, repaint, recolor, simplify, smooth, or invent new details. Hands are empty. Do not draw a weapon or tool.
+Keep the same overall character design, face, hair, armor, close green neck wrap, proportions, palette, and sprite style from the Bible. Do not redesign, repaint, recolor, simplify, smooth, or invent new details. No hanging end, tail, or loose strip. Hands are empty. Do not draw a weapon or tool.
 
 That language means the locked Bible, not the reference JPG. Dispel is the exception for the small ritual knife only (`MOTION["dispel"]` / `DISPEL_IDENTITY_TAIL` in `tools/i2v_seeds.py`).
 
-Generate one full cardinal direction (Down + Left + Right + Up) completely before deriving diagonals, unless the User orders a different facing next. Horizontal flip is acceptable for opposite sides when the design is mostly symmetric; asymmetric details (green scarf, etc.) MUST be corrected or regenerated.
+Generate one full cardinal direction (Down + Left + Right + Up) completely before deriving diagonals, unless the User orders a different facing next. Horizontal flip is acceptable for opposite sides when the design is mostly symmetric; asymmetric details (neck wrap bulk, hair) MUST be corrected or regenerated.
 
 Suggested first proof (do not run ahead of review): one gender, facing Down, one walk I2V.
 
@@ -392,7 +392,7 @@ Bottom-left: Down-Left full-body, complete head-to-feet, character facing Down-L
 Bottom-center: Down full-body, complete head-to-feet, character facing Down (front view), neutral standing  
 Bottom-right: Down-Right full-body, complete head-to-feet, character facing Down-Right, neutral standing
 
-All eight full-body figures must have identical proportions and silhouette height, feet on the same baseline. Character locked across every cell: rugged human dungeon delver, practical layered leather and metal armor, [short messy dark hair / appropriate female hairstyle], determined expression, bright green scarf around neck, limited muted palette (grays, browns, dark greens, skin tones, metal). Crisp true pixel-art style, integer pixel edges, no anti-aliasing, no smoothing. Hands empty. No weapons, no tools. Do not swap any cells. Do not place the face close-up anywhere except the exact center. No cropping of limbs, no props, no weapons, no text, no numbers, no borders, no grid lines. Perfect even 3×3 grid.
+All eight full-body figures must have identical proportions and silhouette height, feet on the same baseline. Character locked across every cell: rugged human dungeon delver, practical layered leather and metal armor, [short messy dark hair / appropriate female hairstyle], determined expression, one short bright green cloth wrapped close at the neck with no hanging end, limited muted palette (grays, browns, dark greens, skin tones, metal). Crisp true pixel-art style, integer pixel edges, no anti-aliasing, no smoothing. Hands empty. No weapons, no tools. Do not swap any cells. Do not place the face close-up anywhere except the exact center. No cropping of limbs, no props, no weapons, no text, no numbers, no borders, no grid lines. Perfect even 3×3 grid.
 
 ## Appendix D – Summary Reliability Table
 

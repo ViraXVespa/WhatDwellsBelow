@@ -118,17 +118,20 @@ FACING_LOCK = {
 IDENTITY_LOCK = {
     "male": (
         "Male player character copied from this still. Short messy brown hair. Brown leather armor with metal shoulder plates. "
-        "One short green scarf wrapped at the neck only, same small size as the still. "
-        "Do not add extra scarf. Do not lengthen it down the chest or back. Do not drape more cloth on the shoulders. "
-        "No cape. No cloak. No second scarf. "
+        "One short green cloth wrapped close at the neck only, same bulk as the still. "
+        "No hanging end. No tail. No loose strip behind either shoulder or down the back. "
+        "Do not add extra wrap. Do not lengthen it. Do not drape more cloth on the shoulders. "
+        "No cape. No cloak. No second wrap. "
         "Overall proportions stay in the same ballpark as the still. No extra limbs and no redesign. Hands stay empty. No weapon. No tool."
     ),
     "female": (
         "Female player character copied from this still. Long dark wavy hair with a braid across the crown. "
         "Burgundy fitted armor with metal trim. Dark trousers and brown boots. "
-        "One green scarf wrapped at the neck, same bulk as the still. "
-        "Do not add extra scarf. Do not lengthen it into a cape. Do not restyle her as the male delver. "
-        "No short messy hair. No brown leather chest. No extra hanging cloth. "
+        "One short green cloth wrapped close at the neck only, same bulk as the still. "
+        "No hanging end. No tail. No loose strip behind either shoulder or down the back. "
+        "Hair covers any wrap end. Never show a hanging strip through or beside the hair. "
+        "Do not add extra wrap. Do not lengthen it. Do not restyle her as the male delver. "
+        "No short messy hair. No brown leather chest. No cape. No cloak. "
         "Overall proportions stay in the same ballpark as the still. No extra limbs and no redesign. Hands stay empty. No weapon. No tool."
     ),
 }

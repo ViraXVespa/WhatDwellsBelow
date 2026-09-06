@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot
 Read when: changing gen, floor flow, streaming, boss doors, fog, or crystals
-Code: `scripts/dungeon/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_boot.gd`, `dungeon_stream.gd`, `dungeon_geo_stream.gd`, `dungeon_props.gd`, `boss_door.gd`, `crystal_net.gd`, `crystal_place.gd`, `floor_crystal.gd`
+Code: `scripts/dungeon/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_boot.gd`, `dungeon_stream.gd`, `dungeon_geo_stream.gd`, `dungeon_map_act.gd`, `dungeon_props.gd`, `boss_door.gd`, `crystal_net.gd`, `crystal_place.gd`, `floor_crystal.gd`
 See also: `design/enemies.md`, `design/interactables.md`, `design/ui.md`, `design/tunables.md`
 
 ## Overall structure
@@ -54,6 +54,7 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 - Reveal radius starts at a 5-tile baseline disk. Visited tiles stay revealed for the run.
 - 3D floor, wall, and prop meshes are not gated on fog. Streaming draws complete nearby chunks.
 - Large map overlay (View button) shows discovered tiles and important markers while the game continues running. Markers on unseen tiles stay hidden (`need_seen`).
+- Large map starts at fit-to-frame. Zoom and pan live in `dungeon_map_act.gd` (wheel / pinch / look-mode RS). World camera zoom is unchanged. Bindings: `design/input.md` and `design/ui.md`.
 
 ## Extraction Gate limits
 
