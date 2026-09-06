@@ -3,6 +3,28 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.39",
+			"points": [
+				{
+					"text": "Touch controls sit lower on the right and read larger",
+					"subs": [
+						"The action cluster is 25% bigger and stays off the middle of the play area",
+						"Attack is hold-to-fire only; double-tap no longer locks RT down"
+					]
+				},
+				{
+					"text": "Small windows keep HUD and menu text readable",
+					"subs": [
+						"Debug Settings has a UI text floor slider if the auto scale is still too small"
+					]
+				},
+				{
+					"text": "Debug Settings can force the touch overlay on desktop so the layout can be checked without a phone"
+				}
+			],
+			"summary": "Mobile layout and text scale are easier to use, and touch attack no longer latches from a double tap."
+		},
+		{
 			"label": "0.2.38",
 			"points": [
 				{
