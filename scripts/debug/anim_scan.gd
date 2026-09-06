@@ -31,6 +31,14 @@ static func scan(base: String) -> Dictionary:
 			put_seq(out[k], "special_%s" % w, base + "spc_%s_%s_" % [w, k])
 		put_single(out[k], "strike", base + "strike_%s.png" % k)
 		put_single(out[k], "windup", base + "windup_%s.png" % k)
+		put_seq_or(out[k], "gather_pickaxe", [
+			base + "gather_pickaxe_%s_" % k,
+			base + "gather_%s_" % k,
+		])
+		put_seq_or(out[k], "gather_hatchet", [
+			base + "gather_hatchet_%s_" % k,
+			base + "gather_%s_" % k,
+		])
 		put_seq(out[k], "gather", base + "gather_%s_" % k)
 		put_seq(out[k], "death", base + "death_%s_" % k)
 		put_seq(out[k], "dispel", base + "dispel_%s_" % k)
@@ -52,3 +60,10 @@ static func put_seq(into: Dictionary, name: String, prefix: String) -> void:
 		i += 1
 	if not frames.is_empty():
 		into[name] = frames
+
+
+static func put_seq_or(into: Dictionary, name: String, prefixes: Array) -> void:
+	for prefix in prefixes:
+		put_seq(into, name, str(prefix))
+		if into.has(name):
+			return

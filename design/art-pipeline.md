@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: generating or replacing player / enemy / weapon frames  
-Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `assets/sprites/player/`  
+Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `assets/sprites/player/`  
 See also: `design/player.md`, `design/audio-visual.md`, `design/combat.md`, `design/enemies.md`
 
 This section is mandatory for any Grok Build instance. It exists because pure image-generation models (including Grok Imagine) have consistent limitations with multi-frame consistency, identity drift, spatial layout in grids, and pixel-perfect output.
@@ -108,6 +108,8 @@ Grok Build I2V uses that body as-is. The web-browser preamble (image-to-video / 
 
 `--action walk` is the locomotion method. It is not a breath / idle performance. `MOTION["idle"]` is not a player path.
 
+Walk uses the loop wrapper in `tools/i2v_seeds.py` (starts and ends on the idle still). One-shot actions use the one-shot wrapper (start on the still, finish the motion, recover or hold; do not claim a walk loop).
+
 Walk loop (one clip, starts and ends on the idle still so it can loop):
 
 1. Idle (the start still)
@@ -116,9 +118,22 @@ Walk loop (one clip, starts and ends on the idle still so it can loop):
 4. Walk into idle, last plant on the **opposite** foot from the foot that started
 5. Idle still again
 
+One-shot `MOTION` keys (full beat sheets, not a shared `attack` / `special` line):
+
+- `attack_great_axe`, `attack_staff`, `attack_longbow`
+- `special_great_axe`, `special_staff`, `special_longbow`
+- `gather_pickaxe`, `gather_hatchet`
+- `death`, `dispel`
+
+`--action gather` (Animation Browser name with no tool suffix) writes **both** gather sheets. Unknown actions MUST NOT fall back to `walk`. `idle_to_walk` / `walk_to_idle` alias to `walk`; they are not I2V units.
+
+Attack / special / gather I2V is unarmed body. Hands stay empty. Do not spawn the item. Paper-doll overlays are I2I / stills, not this prompt set.
+
+`death` is a hit collapse to a downed hold. `dispel` is ritual seppuku: draw one small knife, kneel, one abdominal cut, collapse, hold. That knife is the only legal prop on the Dispel clip. Neither clip paints blood, spray, puddles, or gore — the engine draws a blood pool under the downed body.
+
 Game facing is a locked view copied from the still (`FACING_LOCK` in `tools/i2v_seeds.py`), from the first frame. Down is marching in place toward the camera (both shoulders visible). Walk is a treadmill on the still's center line. Do not name a travel heading. Start/stop feet are “one foot” then “the other foot.”
 
-No fixed clip length. Completeness is that walk loop, not a clock.
+No fixed clip length. Completeness is the motion goal, not a clock. Dispel may run long enough to read as ritual.
 
 ### Generation methods
 
@@ -203,7 +218,7 @@ Switch to the full locked Bible only if the User saw the single-still I2V fail, 
 
 Keep the same overall character design, face, hair, armor, green scarf, proportions, palette, and sprite style from the Bible. Do not redesign, repaint, recolor, simplify, smooth, or invent new details. Hands are empty. Do not draw a weapon or tool.
 
-That language means the locked Bible, not the reference JPG.
+That language means the locked Bible, not the reference JPG. Dispel is the exception for the small ritual knife only (`MOTION["dispel"]` / `DISPEL_IDENTITY_TAIL` in `tools/i2v_seeds.py`).
 
 Generate one full cardinal direction (Down + Left + Right + Up) completely before deriving diagonals, unless the User orders a different facing next. Horizontal flip is acceptable for opposite sides when the design is mostly symmetric; asymmetric details (green scarf, etc.) MUST be corrected or regenerated.
 
@@ -226,19 +241,21 @@ One accepted **walk** I2V is the pool for start, cycle, and stop. Cut three engi
 
 Playback MUST play the start transition when leaving idle into walk and the stop transition when coming to rest, rather than popping between the key still and a mid-stride walk frame.
 
-Other required **body** states (unarmed):
+Other required **body** states:
 
-- `attack` body clip per weapon class (Great Axe swing, Lightning Staff strike/cast, Longbow draw/loose)
-- `special` body clip per weapon class
-- `gather` body clip per tool class (pickaxe, hatchet)
-- `death`
-- `Dispel`
+- `attack_great_axe`, `attack_staff`, `attack_longbow` (unarmed swing / poke / draw-loose)
+- `special_great_axe`, `special_staff`, `special_longbow` (unarmed slam / cast / fan loose)
+- `gather_pickaxe`, `gather_hatchet` (unarmed mine / woodcut)
+- `death` (unarmed collapse, then hold)
+- `Dispel` (seppuku: small knife in this clip only, then hold)
 
 Full parity between male and female is required for every state.  
-The same frame-count rule applies to every animation state: all eight facings of that state share one frame count.  
+The same frame-count rule applies to every animation state: all eight facings of that state share one frame count. Attack / special / gather pack to 6 frames per facing. Death and Dispel keep the accepted clip length (Dispel may be long); those two states still share one count across the eight facings.  
 Animation playback speeds remain tunable.
 
 Attack / special / gather body clips exist because those actions change the skeleton. They are still unarmed silhouettes. The weapon or tool is a paper-doll layer (§19.4).
+
+Pack one-shots with `tools/pack_oneshot.py` from `_src/oneshot/{gender}_{action}_{facing}.mp4`. Walk harvest stays `tools/pack_locomotion.py`.
 
 ## 19.4 Paper-doll / equipment layers
 
@@ -267,7 +284,8 @@ After the User accepts a unit’s frames, the agent MUST check — and report, n
 - Whether `walk_to_idle` settles to the key pose without a pop.
 - Whether both legs and arms cross as needed for that action.
 - Whether all accepted directional variants of the same state share one frame count.
-- Whether any accepted body frame baked in a weapon or extra prop.
+- Whether any accepted body frame baked in a weapon or extra prop (Dispel knife excepted).
+- Whether death / Dispel I2V painted blood. That is a defect; the engine draws the pool.
 - Whether the I2V seed still had an opaque plate.
 
 If anything is missing or wrong, **tell the User** and wait. The User chooses whether to spend another I2V, supply or request a new seed still, drop to key poses, or ship the available frames.
@@ -280,9 +298,9 @@ If the User accepts imperfect frames, note the defect, continue with what was ac
 
 All AI-generated frames (including those extracted from video) MUST pass through cleanup before use in the game. Cleanup of a unit starts only after the User accepts that unit, unless the User asks for a preview matte.
 
-Recommended tools: `tools/plate_remap.py`, `tools/sprite_pipeline.py`, `tools/pack_locomotion.py`, `tools/rekey_stills.py`, Aseprite + DeAI PixelKit / Pixel Refiner / Alpha Remover, or equivalent.
+Recommended tools: `tools/plate_remap.py`, `tools/sprite_pipeline.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_stills.py`, Aseprite + DeAI PixelKit / Pixel Refiner / Alpha Remover, or equivalent.
 
-**Video extract** (walk / attack clips, `_src/walk_final/` → `_src/walk_harvest/`):
+**Video extract** (walk clips, `_src/walk_final/` → `_src/walk_harvest/`; one-shots, `_src/oneshot/` → `_src/oneshot_harvest/`):
 
 - Dump **full-size RGB** PNGs. ffmpeg: `-sws_flags neighbor+accurate_rnd+full_chroma_int`, `fps=…,format=rgb24`.
 - Do not decode through OpenCV’s default 4:2:0 bilinear chroma upsample.
@@ -303,6 +321,7 @@ Required cleanup tasks (in order):
 7. Quantize / lock to the Bible palette.
 8. Eliminate anti-aliasing, sub-pixel noise, and ghosting.
 9. For walk I2V sources: `tools/pack_locomotion.py` finds one early self-similar stride cycle (period 8–16 harvest frames), rotates the plant to `walk[0]`, and cuts `idle_to_walk` / `walk_to_idle` from the frames touching that plant. Do not even-sample the whole clip. Skip held idle. Front/back use leg height; side views use leg width. Lock a shared foot baseline and torso X to the idle still.
+9b. For one-shot I2V sources: `tools/pack_oneshot.py` remaps, keys, fits, and even-samples attack / special / gather to 6 frames. Death and Dispel keep the clip length. Output names match `AnimScan` (`atk_*`, `spc_*`, `gather_pickaxe_*`, `gather_hatchet_*`, `death_*`, `dispel_*`).
 10. Trim to the exact frame count needed by the engine (ensuring directional parity).
 11. Output individual frames or engine-ready sheets + simple manifest (frame size, count, fps, pivot/anchor, layer: `body` or `weapon`/`tool`).
 
@@ -315,7 +334,8 @@ A generation is acceptable only if it meets all of the following after cleanup:
 - Readable silhouette at target size.
 - Correct facing and pose intent.
 - No extra limbs, props, or invented details.
-- No weapon or tool baked into a body frame.
+- No weapon or tool baked into a body frame, except the small ritual knife on `Dispel`.
+- No blood, spray, puddle, or gore in death / Dispel I2V. Engine draws the pool.
 - No palette drift from the locked Bible.
 - No background remnants, start-chroma rims, or magenta spill.
 - Consistent scale and foot baseline with the Bible and sibling frames.
@@ -338,11 +358,14 @@ Follow this pipeline exactly. Deviations require explicit justification and re-v
 
 The Animation Browser writes a local ledger at `tools/anim_review/review.json` (editor-only, gitignored). That file is not a game setting and is not part of `SaveStore`.
 
-Three CLI tools read it from the live checkout:
+CLI tools read it from the live checkout:
 
 - `python tools/anim_review_pack.py` — pack brief (`tools/anim_review/pack_brief.md` + `.json`). Repack notes are failure cases. Good on-disk locomotion clips (`walk`, `idle_to_walk`, `walk_to_idle`) are keep-behavior. Ignore Regenerate rows here.
-- `python tools/anim_review_regen.py` — regen brief (`tools/anim_review/regen_brief.md` + `.json`). Regenerate notes plus the current `i2v_seeds.build_prompt` text for player clips. Use this when editing MOTION / IDENTITY_LOCK / FACING_LOCK.
+- `python tools/anim_review_regen.py` — regen brief (`tools/anim_review/regen_brief.md` + `.json`). Regenerate notes plus the current `i2v_seeds.build_prompt` text for player clips. `i2v_action` keeps class keys (`attack_great_axe`, not `attack`). `gather` writes both tool prompts. Use this when editing MOTION / IDENTITY_LOCK / FACING_LOCK.
 - `python tools/anim_review_tree.py` — wiped test tree at `tools/anim_review/regen_tree/<model>/<facing>/<anim>/`. Each player folder gets `source.png` (locked Bible cell, same scale/pad as `i2v_seeds.py --cell`), `prompt.txt`, and `notes.txt` when the User typed a note. The dest tree is deleted and rebuilt every run.
+- `python tools/pack_oneshot.py` — pack an accepted one-shot mp4 from `_src/oneshot/` into engine frames. Not driven by `review.json`.
+
+`AnimScan` lists `gather_pickaxe` and `gather_hatchet` when those sequences exist, and falls back to `gather_{facing}_*` if a tool set is missing. `idle_to_walk` / `walk_to_idle` stay out of the browser list (repack-only).
 
 Enemy clips may be flagged in the browser. Until an enemy I2V / pack pipeline exists, the regen brief and regen tree write a warning instead of a seed and prompt.
 
@@ -383,6 +406,8 @@ All eight full-body figures must have identical proportions and silhouette heigh
 | Single-pass 3×3 for the Bible | Highest for identity | Preferred for Bible |
 | 400% NN I2V plate (cell chroma kept) | High | Default I2V first frame |
 | `i2v_seeds.py` walk prompt (idle → ≥3 strides → opposite-foot stop) | High | Only locomotion I2V method |
+| `i2v_seeds.py` one-shot MOTION keys (per weapon / tool, death, Dispel) | High | Required for Regenerate flags |
+| `pack_oneshot.py` for accepted one-shot mp4s | High | Attack/special/gather to 6; death/Dispel keep length |
 | `i2v_seeds.py --test` web preamble | Browser tests only | Do not send in Grok Build I2V |
 | One I2V + User review gate | High | Mandatory; replaces auto-retry |
 | No fixed I2V duration | High | Length follows the motion goal |

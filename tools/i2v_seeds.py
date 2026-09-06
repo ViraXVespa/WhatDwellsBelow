@@ -34,7 +34,8 @@ TEST_PREFIX = (
     "Make the clip as long as it needs to be to finish the motion below. No fixed duration.\n\n"
 )
 
-PROMPT = """2D game sprite on a treadmill. {action} in place. Engine slides this sprite later. The figure never travels.
+# Shared camera / plate / identity. Loop vs one-shot only changes the cycle lines.
+_PROMPT_HEAD = """2D game sprite on a treadmill. {action} in place. Engine slides this sprite later. The figure never travels.
 
 {facing_lock}
 
@@ -49,11 +50,25 @@ Locked camera. No pan, zoom, or perspective change. Flat #FF00FF only.
 Keep the still's colors and the still's existing form shading. Do not add lights, grades, or filters. Do not flatten the figure to a short color list.
 
 The hip belt buckle stays glued to the still's vertical center line. Feet stay on the same baseline. Small step bounce is fine. The whole figure stays in this still's slot, including lifted feet and swinging hands. Keep every limb inside the magenta plate.
+"""
 
+LOOP_PROMPT = (
+    _PROMPT_HEAD
+    + """
 Readable compact game cycle. The clip starts and ends on this idle still so it loops.
 
 {motion}
 """
+)
+
+ONESHOT_PROMPT = (
+    _PROMPT_HEAD
+    + """
+This is not a walk and not a march. One readable game action. The clip starts on this idle still. Finish the motion below, then recover or hold as that motion says. Do not loop the action. Do not start a second strike.
+
+{motion}
+"""
+)
 
 # Game facing is a locked view copied from the still, never a travel heading.
 FACING_LOCK = {
@@ -118,6 +133,28 @@ IDENTITY_LOCK = {
     ),
 }
 
+DISPEL_IDENTITY_TAIL = (
+    "Hands start empty. The only prop this clip may grow is one small ritual knife. "
+    "No axe, staff, bow, pick, or hatchet. No extra limbs and no redesign."
+)
+
+# idle_to_walk / walk_to_idle are pack cuts from the walk I2V, not their own clips.
+ACTION_ALIAS = {
+    "idle_to_walk": "walk",
+    "walk_to_idle": "walk",
+    "atk_great_axe": "attack_great_axe",
+    "atk_staff": "attack_staff",
+    "atk_longbow": "attack_longbow",
+    "spc_great_axe": "special_great_axe",
+    "spc_staff": "special_staff",
+    "spc_longbow": "special_longbow",
+}
+
+# Browser name `gather` has no tool suffix. Regen writes both tool sheets.
+GATHER_KEYS = ("gather_pickaxe", "gather_hatchet")
+
+LOOP_ACTIONS = frozenset({"idle", "walk"})
+
 MOTION = {
     "idle": "Easy breath and weight shift only. Stay on the still pose and the still facing. Loop.",
     "walk": (
@@ -132,11 +169,109 @@ MOTION = {
         "Weight evens out and the pose returns to this still. Keep the settle. Do not freeze mid-stride. "
         "5) Idle: this still again, both feet planted, so looping the clip is seamless."
     ),
-    "attack": "One swing with follow-through, then recover to the still. Keep the still's facing. Do not travel.",
-    "special": "One special strike, then recover to the still. Keep the still's facing. Do not travel.",
-    "gather": "In-place gather swings, then recover to the still. Keep the still's facing. Do not travel.",
-    "death": "Short collapse, then hold. Keep the still's facing until the fall.",
-    "dispel": "Short vanish to magenta. Keep the still's facing.",
+    "attack_great_axe": (
+        "Unarmed body acting a two-handed great-axe swing. Hands stay empty. Do not spawn an axe. "
+        "Feet stay under the hips. Do not step toward the camera or slide off the still's center line. "
+        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
+        "2) Gather: both hands rise and close as if on a long haft. Torso coils. Keep this facing. "
+        "3) Swing: a single heavy two-handed arc through the front of the silhouette. Knees bend. "
+        "Shoulders rotate. The empty grip travels through a wide readable contact. One beat only. "
+        "4) Follow-through: the arc finishes past contact. Torso unwinds. Do not spin or travel. "
+        "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
+    ),
+    "attack_staff": (
+        "Unarmed body acting a short lightning-staff melee poke. Hands stay empty. Do not spawn a staff. "
+        "Compact. Range is a step shorter than an axe arc. Feet stay under the hips. Do not travel. "
+        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
+        "2) Ready: one or both hands close as if on a shaft held across the body. A small coil. Keep this facing. "
+        "3) Strike: one short thrust or tap along the facing. Elbows stay close. No windmill. One beat only. "
+        "4) Recoil: the empty grip springs back a little after contact. "
+        "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
+    ),
+    "attack_longbow": (
+        "Unarmed body acting a longbow draw and loose. Hands stay empty. Do not spawn a bow or arrow. "
+        "Feet stay planted under the hips. Do not travel. The draw is in place. "
+        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
+        "2) Nock: the string-side hand rises to the chest or cheek as if drawing. The bow-side arm extends "
+        "along the facing. Torso turns only as far as this still's view already allows. Keep this facing. "
+        "3) Full draw: a short hold at the cheek or chest. Shoulders stay level. No lean off the center line. "
+        "4) Loose: the string-side hand releases forward a little. The bow-side arm stays extended. One shot only. "
+        "5) Recover: both arms drop back to this still. Hold the still so a cut on the last frame is clean."
+    ),
+    "special_great_axe": (
+        "Unarmed body acting a great-axe slam. Hands stay empty. Do not spawn an axe. "
+        "Circular plant in place. Feet stay under the hips. Do not travel. "
+        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
+        "2) Wind-up: both hands rise high as if on a long haft. Knees bend. Torso coils. A readable pause. "
+        "Keep this facing. Do not hop. "
+        "3) Slam: the empty grip drives straight down onto the baseline in front of the toes. "
+        "Weight drops into the plant. One beat only. "
+        "4) Shock: a short hold on the planted pose so the hit reads. No second slam. "
+        "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
+    ),
+    "special_staff": (
+        "Unarmed body acting a lightning-staff bolt cast. Hands stay empty. Do not spawn a staff or lightning. "
+        "The bolt is later VFX. This clip is only the body. Feet stay under the hips. Do not travel. "
+        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
+        "2) Wind-up: both hands rise as if on a shaft. The lead hand lifts toward the facing. "
+        "A short charge pose. Keep this facing. "
+        "3) Release: the lead hand snaps forward along the facing as if the bolt leaves. One beat only. "
+        "4) Follow-through: arms settle a little after the snap. No second cast. "
+        "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
+    ),
+    "special_longbow": (
+        "Unarmed body acting a longbow fan loose. Hands stay empty. Do not spawn a bow or arrows. "
+        "Feet stay planted under the hips. Do not travel. Several looses, one stance. "
+        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
+        "2) First draw: string-side hand to the cheek or chest, bow-side arm along the facing. Keep this facing. "
+        "3) Fan: two or three quick draw-and-loose pulses from that same stance. Each loose is a small "
+        "string-side release. The body does not step or spin between pulses. "
+        "4) Last loose: one final release, then the arms stop. "
+        "5) Recover: both arms drop back to this still. Hold the still so a cut on the last frame is clean."
+    ),
+    "gather_pickaxe": (
+        "Unarmed body acting a pickaxe mine strike. Hands stay empty. Do not spawn a pickaxe. "
+        "In-place gather. Feet stay under the hips. Do not travel. "
+        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
+        "2) Lift: both hands rise over the shoulder as if on a pick haft. Torso coils. Keep this facing. "
+        "3) Strike: a downward pick beat onto a point just in front of the toes. Knees bend on impact. "
+        "One clear hit. Then a second hit with the same motion so the cycle of gathering reads. "
+        "4) After the second hit, do not start a third. "
+        "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
+    ),
+    "gather_hatchet": (
+        "Unarmed body acting a hatchet woodcut. Hands stay empty. Do not spawn a hatchet. "
+        "In-place gather. Feet stay under the hips. Do not travel. "
+        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
+        "2) Lift: the striking hands rise to the side as if on a short hatchet haft. Torso coils. Keep this facing. "
+        "3) Chop: a side or diagonal chop onto a point just in front of the toes. Knees bend on impact. "
+        "One clear hit. Then a second hit with the same motion so the cycle of gathering reads. "
+        "4) After the second hit, do not start a third. "
+        "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
+    ),
+    "death": (
+        "Unarmed body dying in place. Hands stay empty. Do not spawn a weapon, a grave, or blood. "
+        "No red spray. No puddle. No gore. The engine draws a blood pool later. This clip is only the body. "
+        "Keep this still's facing until the figure is down. Do not travel off the slot. "
+        "1) Idle: this still. Weight even. Both feet planted. "
+        "2) Break: knees buckle. Torso folds. Arms go slack. The facing of the head and chest stays the still's facing "
+        "as long as the figure is upright. "
+        "3) Fall: a short collapse onto the baseline inside this still's slot. No spin off camera. "
+        "4) Down: the figure is on the plate, collapsed. Hold that down pose. Do not get up. Do not loop. "
+        "5) Hold the final down frame so a cut there is clean."
+    ),
+    "dispel": (
+        "Ritual seppuku in place. This is a chosen end, not a hit reaction and not a vanish. "
+        "The only prop is one small knife. Do not spawn an axe, staff, bow, pick, hatchet, cape, or altar. "
+        "No blood. No spray. No puddle. No gore. The engine draws a blood pool later. This clip is only the body and the knife. "
+        "Keep this still's facing the whole time. Feet stay in this still's slot. Do not travel. Take the time the ritual needs. "
+        "1) Idle: this still. Weight even. Both feet planted. Hands empty. "
+        "2) Draw: one hand brings out a small knife. A short pause so the knife reads. Keep this facing. "
+        "3) Kneel: the figure drops to a kneel or seated fold on the baseline, still centered. The knife stays in hand. "
+        "4) Cut: a single abdominal cut with that knife. One beat. No second stab. No decapitation. "
+        "5) Collapse: the figure folds forward onto the plate and goes still. Hold the down pose. "
+        "Do not get up. Do not fade the figure into magenta. Do not loop. Hold the final down frame so a cut there is clean."
+    ),
 }
 
 
@@ -246,6 +381,41 @@ def identity_lock(gender: str) -> str:
     return IDENTITY_LOCK[gender_key(gender)]
 
 
+def normalize_action(action: str) -> str:
+    key = action.lower().strip().replace("-", "_").replace(" ", "_")
+    return ACTION_ALIAS.get(key, key)
+
+
+def motion_keys(action: str) -> list[str]:
+    key = normalize_action(action)
+    if key == "gather":
+        return list(GATHER_KEYS)
+    if key in MOTION:
+        return [key]
+    known = ", ".join(sorted(MOTION) + ["gather"])
+    raise ValueError(f"unknown I2V action {action!r}; expected one of: {known}")
+
+
+def _identity_for(key: str, gender: str) -> str:
+    text = identity_lock(gender)
+    if key != "dispel":
+        return text
+    return text.replace(
+        "Hands stay empty. No weapon. No tool.",
+        DISPEL_IDENTITY_TAIL,
+    )
+
+
+def _format_one(facing: str, key: str, gender: str) -> str:
+    template = LOOP_PROMPT if key in LOOP_ACTIONS else ONESHOT_PROMPT
+    return template.format(
+        action=key.replace("_", " "),
+        facing_lock=facing_lock(facing),
+        identity_lock=_identity_for(key, gender),
+        motion=MOTION[key],
+    )
+
+
 def build_prompt(
     facing: str,
     action: str,
@@ -253,15 +423,14 @@ def build_prompt(
     test: bool = False,
     gender: str = "male",
 ) -> str:
-    key = action.lower().strip()
-    if key not in MOTION:
-        key = "walk"
-    body = PROMPT.format(
-        action=key,
-        facing_lock=facing_lock(facing),
-        identity_lock=identity_lock(gender),
-        motion=MOTION[key],
-    )
+    keys = motion_keys(action)
+    chunks: list[str] = []
+    for key in keys:
+        chunk = _format_one(facing, key, gender)
+        if len(keys) > 1:
+            chunk = f"# {key}\n\n{chunk}"
+        chunks.append(chunk)
+    body = "\n\n---\n\n".join(chunks)
     if test:
         return TEST_PREFIX + body
     return body
@@ -355,7 +524,15 @@ def main() -> None:
     p.add_argument("--dest", required=True, type=Path)
     p.add_argument("--scale", type=int, default=SCALE)
     p.add_argument("--facing", default="down")
-    p.add_argument("--action", default="walk")
+    p.add_argument(
+        "--action",
+        default="walk",
+        help=(
+            "I2V motion key: walk, idle, attack_great_axe, attack_staff, attack_longbow, "
+            "special_great_axe, special_staff, special_longbow, gather (writes pickaxe and hatchet), "
+            "gather_pickaxe, gather_hatchet, death, dispel."
+        ),
+    )
     p.add_argument(
         "--gender",
         default="",
