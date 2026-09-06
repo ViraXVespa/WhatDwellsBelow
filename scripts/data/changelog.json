@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.38",
+			"points": [
+				{
+					"text": "Great Axe slam and staff special hit the occupancy disk at slam / bolt radius again (no more 8-pixel screen slop)"
+				},
+				{
+					"text": "Dummy / enemy glance flag uses a property check, so slam on the Placeholdia dummy no longer errors"
+				},
+				{
+					"text": "Touch walk stick stays hidden until a directional drag; a parked left finger does not cancel pinch-zoom"
+				},
+				{
+					"text": "Touch cluster sits in the right half: small map / food / potion / pause row over a large attack / special / interact / dash pad"
+				},
+				{
+					"text": "World camera zoom max is 4.0 (default still 1.75)"
+				}
+			],
+			"summary": "Circle specials connect again, phone pinch-zoom survives a resting left thumb, and the touch pad is larger and more see-through."
+		},
+		{
 			"label": "0.2.36",
 			"points": [
 				{
