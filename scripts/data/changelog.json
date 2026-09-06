@@ -3,6 +3,35 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.36",
+			"points": [
+				{
+					"text": "Phone overlay dropped the right aim stick",
+					"subs": [
+						"Buttons sit in a two-column strip on the right, from the bottom up to the minimap",
+						"Attack is the large well; lock is gone; auto-aim stays on",
+						"Map stays visible in Placeholdia but does nothing there"
+					]
+				},
+				{
+					"text": "Camera zoom without opening pause",
+					"subs": [
+						"Mouse wheel zooms the world, or the large map toward the cursor",
+						"Pinch does the same toward the fingers, unless the walk stick is already down",
+						"D-pad Down toggles look mode on a pad. Right stick then zooms and scales the HUD. Menus keep D-pad Down for navigation"
+					]
+				},
+				{
+					"text": "Large map can zoom and pan",
+					"subs": [
+						"Fit is the default. Zoomed-in maps drag, swipe, or use the right stick",
+						"Look mode on the map switches that stick from pan to zoom toward you"
+					]
+				}
+			],
+			"summary": "Phone controls move to a right-hand strip with lock-on always on, and every platform can zoom the camera or the floor map without opening a menu."
+		},
+		{
 			"label": "0.2.34",
 			"points": [
 				{
