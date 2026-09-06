@@ -3,6 +3,41 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.32",
+			"points": [
+				{
+					"text": "Hits use opaque sprite occupancy against the telegraph, not a cylinder at the target origin",
+					"subs": [
+						"Transparent pixels do not register",
+						"Axe / staff: full damage in the center and start of the fan; falloff only at the far tip",
+						"Crits only on planted coverage"
+					]
+				},
+				{
+					"text": "Longbow idle aim is one yellow shoulder-height line; no second tele and no red flash",
+					"subs": [
+						"Arrows face travel, sit on that line, and test the head as they move",
+						"Planted hits stop the arrow; a glance may pierce one more body at reduced damage",
+						"Breakables never eat arrow damage",
+						"Special is yellow spread lines, not a filled cone"
+					]
+				},
+				{
+					"text": "Placeholdia dummy uses the same occupancy test, ignores knockback, and refills at 0 HP",
+					"subs": [
+						"Dark pad under the dummy; Welcome banner is double size"
+					]
+				},
+				{
+					"text": "Floating damage numbers hold, then fade; glance numbers are smaller and dimmer",
+					"subs": [
+						"Number and outline sort in front of the target and its health bar"
+					]
+				}
+			],
+			"summary": "Combat reads what you see on the sprite. Melee tapers at the fan tip, the bow is a real projectile on a yellow path, and Placeholdia has a dummy to test it."
+		},
+		{
 			"label": "0.2.29",
 			"points": [
 				{
