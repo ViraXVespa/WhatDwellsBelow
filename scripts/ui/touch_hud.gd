@@ -15,15 +15,15 @@ const GLYPH := {
 	"food": "res://assets/ui/prompts/pad/dpad_left.png",
 }
 
-const INK := Color(0.92, 0.84, 0.62, 0.95)
-const INK_DIM := Color(0.92, 0.84, 0.62, 0.32)
-const WELL := Color(0.22, 0.16, 0.12, 0.58)
-const WELL_DIM := Color(0.16, 0.12, 0.10, 0.38)
-const RING := Color(0.5, 0.38, 0.2, 0.92)
-const RING_DIM := Color(0.4, 0.3, 0.16, 0.4)
-const KNOB := Color(0.9, 0.7, 0.3, 0.95)
-const PRESS := Color(0.16, 0.12, 0.08, 0.82)
-const LATCH := Color(0.95, 0.78, 0.35, 0.95)
+const INK := Color(0.92, 0.84, 0.62, 0.78)
+const INK_DIM := Color(0.92, 0.84, 0.62, 0.28)
+const WELL := Color(0.22, 0.16, 0.12, 0.32)
+const WELL_DIM := Color(0.16, 0.12, 0.10, 0.20)
+const RING := Color(0.5, 0.38, 0.2, 0.52)
+const RING_DIM := Color(0.4, 0.3, 0.16, 0.26)
+const KNOB := Color(0.9, 0.7, 0.3, 0.82)
+const PRESS := Color(0.16, 0.12, 0.08, 0.48)
+const LATCH := Color(0.95, 0.78, 0.35, 0.78)
 
 var root: Control
 var _tex: Dictionary = {}
@@ -41,6 +41,7 @@ var _pinch_mid := Vector2.ZERO
 var _pan_i := -1
 var _pan_at := Vector2.ZERO
 var _free: Dictionary = {}
+var _park: Dictionary = {}
 
 
 func _ready() -> void:
@@ -88,28 +89,35 @@ func _layout() -> void:
 	var vp := get_viewport().get_visible_rect().size
 	var sc: float = clampf(minf(vp.x, vp.y) / 1080.0, 0.7, 1.35)
 	_move_r = 98.0 * sc
-	var pad := 26.0 * sc
-	var gap := 22.0 * sc
-	var br := 36.0 * sc
-	var ar := 46.0 * sc
-	var mini_h := 250.0 * App.hud_scale
-	var top := 16.0 + mini_h + pad + br
-	var bot := vp.y - pad - br
-	if bot < top + 8.0:
-		top = maxf(16.0 + mini_h + 8.0, vp.y * 0.28)
-		bot = vp.y - pad - br
-	var step := (bot - top) / 3.0
-	var rx := vp.x - pad - ar
-	var lx := rx - ar - br - gap
+	var gap := 6.0 * sc
+	var sr := 28.0 * sc
+	var br := sr * 2.0
+	var cx := vp.x * 0.75
+	var cy := vp.y * 0.56
+	var span := br * 2.0 + gap
+	var pad := 18.0 * sc
+	var half_w := span * 0.5 + br
+	var half_h := span * 0.5 + br
+	var row_h := sr * 2.0 + gap
+	cx = clampf(cx, vp.x * 0.52 + half_w, vp.x - pad - half_w)
+	cy = clampf(cy, pad + row_h + half_h, vp.y - pad - half_h)
+	var lx := cx - span * 0.5
+	var rx := cx + span * 0.5
+	var ty := cy - span * 0.5
+	var by := cy + span * 0.5
+	var small_span := sr * 2.0 + gap
+	var row_y := ty - br - gap - sr
+	var row_w := small_span * 3.0
+	var s0 := cx - row_w * 0.5
 	_btns = [
-		{"action": "food", "pos": Vector2(lx, bot), "r": br},
-		{"action": "potion", "pos": Vector2(rx, bot), "r": br},
-		{"action": "interact", "pos": Vector2(lx, bot - step), "r": br},
-		{"action": "attack", "pos": Vector2(rx, bot - step), "r": ar},
-		{"action": "dash", "pos": Vector2(lx, bot - step * 2.0), "r": br},
-		{"action": "special", "pos": Vector2(rx, bot - step * 2.0), "r": br},
-		{"action": "map_view", "pos": Vector2(lx, top), "r": br},
-		{"action": "pause", "pos": Vector2(rx, top), "r": br},
+		{"action": "map_view", "pos": Vector2(s0, row_y), "r": sr},
+		{"action": "food", "pos": Vector2(s0 + small_span, row_y), "r": sr},
+		{"action": "potion", "pos": Vector2(s0 + small_span * 2.0, row_y), "r": sr},
+		{"action": "pause", "pos": Vector2(s0 + small_span * 3.0, row_y), "r": sr},
+		{"action": "attack", "pos": Vector2(lx, ty), "r": br},
+		{"action": "special", "pos": Vector2(rx, ty), "r": br},
+		{"action": "interact", "pos": Vector2(lx, by), "r": br},
+		{"action": "dash", "pos": Vector2(rx, by), "r": br},
 	]
 
 
@@ -165,22 +173,9 @@ func _down(idx: int, pos: Vector2) -> void:
 	if _move_live:
 		return
 	_free[idx] = pos
+	_park[idx] = pos
 	if _free.size() >= 2 and _pinch_a < 0:
 		_begin_pinch()
-		return
-	if _can_pan() and _pan_i < 0:
-		_free.erase(idx)
-		_pan_i = idx
-		_pan_at = pos
-		return
-	if _in_move_zone(pos) and _move_i < 0 and _pinch_a < 0:
-		_free.erase(idx)
-		_move_i = idx
-		_move_origin = pos
-		_move_knob = pos
-		_move_live = true
-		Touch.move_live = true
-		Touch.set_move(Vector2.ZERO)
 
 
 func _drag(idx: int, pos: Vector2) -> void:
@@ -197,12 +192,29 @@ func _drag(idx: int, pos: Vector2) -> void:
 		return
 	if _free.has(idx):
 		_free[idx] = pos
-	if _pinch_a >= 0 and (idx == _pinch_a or idx == _pinch_b):
-		_tick_pinch()
+	if _pinch_a >= 0:
+		if idx == _pinch_a or idx == _pinch_b:
+			_tick_pinch()
+		return
+	if not _park.has(idx):
+		return
+	var origin: Vector2 = _park[idx]
+	var slop := maxf(12.0, Touch.dead * _move_r)
+	if pos.distance_to(origin) < slop:
+		return
+	if _can_pan() and _pan_i < 0:
+		_free.erase(idx)
+		_park.erase(idx)
+		_pan_i = idx
+		_pan_at = pos
+		return
+	if _in_move_zone(origin) and _move_i < 0:
+		_claim_move(idx, origin, pos)
 
 
 func _up(idx: int) -> void:
 	_free.erase(idx)
+	_park.erase(idx)
 	if _btn_i.has(idx):
 		var action := str(_btn_i[idx])
 		_btn_i.erase(idx)
@@ -224,6 +236,20 @@ func _up(idx: int) -> void:
 		_pinch_a = -1
 		_pinch_b = -1
 		_pinch_dist = 0.0
+
+
+func _claim_move(idx: int, origin: Vector2, pos: Vector2) -> void:
+	_free.erase(idx)
+	_park.erase(idx)
+	_move_i = idx
+	_move_origin = origin
+	var d := pos - origin
+	if d.length() > _move_r:
+		d = d.normalized() * _move_r
+	_move_knob = origin + d
+	_move_live = true
+	Touch.move_live = true
+	Touch.set_move(d / _move_r)
 
 
 func _begin_pinch() -> void:
@@ -284,6 +310,7 @@ func _release_all() -> void:
 	_pinch_dist = 0.0
 	_pan_i = -1
 	_free.clear()
+	_park.clear()
 	Touch.move_live = false
 	Touch.set_move(Vector2.ZERO)
 	Touch.set_aim(Vector2.ZERO)

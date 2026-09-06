@@ -122,7 +122,7 @@ static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "
 		is_special = true
 	grant_hit_xp(xp)
 	var crit := can_crit and Combat.roll_crit(App.bal.crit_chance + float(App.prog.set_stats().crit))
-	if e.has("last_glance"):
+	if "last_glance" in e:
 		e.last_glance = glance and not crit
 	if e.has_method("take_hit"):
 		e.take_hit(dmg, host.aim_dir, crit)

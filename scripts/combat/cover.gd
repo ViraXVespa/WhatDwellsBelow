@@ -159,10 +159,13 @@ static func _disk_hits_sprite(origin: Vector3, radius: float, host: Node3D) -> b
 			if Vector2(p.x, p.z).distance_to(o) <= radius:
 				return true
 		return false
-	var s0 := cam.unproject_position(origin)
-	var pr := 8.0
+	var poly := PackedVector2Array()
+	var segs := 16
+	for i in segs:
+		var a := TAU * float(i) / float(segs)
+		poly.append(cam.unproject_position(origin + Vector3(cos(a) * radius, 0.0, sin(a) * radius)))
 	for p in pts:
-		if s0.distance_to(cam.unproject_position(p)) <= pr:
+		if _in_poly(cam.unproject_position(p), poly):
 			return true
 	return false
 

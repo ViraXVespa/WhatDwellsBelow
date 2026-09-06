@@ -9,7 +9,7 @@ See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui
 
 - PC (primary)
 - Web export that runs in modern browsers without requiring special COOP/COEP headers
-- Web touch on a mobile user-agent when no physical keyboard or gamepad is present (virtual move stick + right-hand button strip)
+- Web touch on a mobile user-agent when no physical keyboard or gamepad is present (virtual move stick + right-hand button cluster)
 - Design MUST remain fully readable and playable from couch distance on a television (future Xbox / console consideration)
 
 ## Input – Gamepad (primary, Xbox layout)
@@ -121,20 +121,20 @@ Show the overlay when all of these are true:
 - Current scene is `camp.tscn` or `dungeon.tscn`
 - `App.ui_open` is false
 
-Hide immediately if a gamepad connects or a keyboard key arrives. Overlay chrome is dungeon-themed discs drawn in code (no extra PNG pack).
+Hide immediately if a gamepad connects or a keyboard key arrives. Overlay chrome is dungeon-themed discs drawn in code (no extra PNG pack). Wells stay translucent so the world remains readable under the larger cluster.
 
 No right aim well. Auto-aim / target-lock stays armed for the whole touch session (`Touch.active()` forces `lock_armed`). Facing follows the lock target when one exists, otherwise walk / last facing.
 
 | Control | Behavior |
 |---------|----------|
-| Left half, below the HUD | Dynamic move stick (appears under the finger) |
-| Right-hand strip | Two columns from the bottom safe edge up to just under the minimap. Edge padding and extra gap between wells. Bottom → top: food / potion, interact / attack (attack larger), dash / special, map / pause |
+| Left half, below the HUD | Dynamic move stick. Finger-down parks with no chrome. The well appears under that finger only after a directional drag past `TOUCH_DEAD`, and only if pinch is not already active |
+| Right-hand cluster | Centered in the right half. Small top row: map / food / potion / pause. Large 2×2 under it (radius 2× the small wells, almost touching): attack / special on top, interact / dash on the bottom |
 | RT glyph | Hold-to-attack. Double-tap latches attack until the button is tapped again |
 | LT / B / A glyphs | Special, dash, interact |
 | Menu / View glyphs | Pause, map. Map well stays visible in Placeholdia but is disabled (no tap) |
 | D-pad Up / Left glyphs | Potion, food |
-| Pinch | World or map zoom if the walk stick is not claimed |
-| Swipe | Pans the large map when zoomed in, if the walk stick is not claimed and the finger did not start on a strip button |
+| Pinch | World or map zoom if the walk stick is not claimed. A parked left finger does not count as claimed |
+| Swipe | Pans the large map when zoomed in, if the walk stick is not claimed and the finger did not start on a cluster button |
 
 Attack latch clears on UI open, scene change, death / dispel, or pad / keyboard takeover. Touch vectors and button state feed `Pad.move()`, `Pad.held()`, and `Pad.just()` so combat, gather, and interact stay on one path.
 

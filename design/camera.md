@@ -10,8 +10,8 @@ See also: `design/player.md`, `design/input.md`, `design/archives.md`, `design/a
 - Orthographic Camera3D
 - Fixed pitch approximately –58°
 - Camera height and ortho size calculated so that 64×64 sprites remain clearly readable
-- Player-adjustable zoom range 1.0–2.5 (persisted in save)
-- Default zoom 1.75 (old max; midpoint of the current slider)
+- Player-adjustable zoom range 1.0–4.0 (persisted in save)
+- Default zoom 1.75
 - Zoom applies live from the System slider (`App.set_zoom` + `camera_rig.follow`)
 - World zoom also applies live from mouse wheel, touch pinch (walk stick not claimed), and look-mode right-stick Y
 - Separate independent HUD scale setting (System slider and look-mode right-stick X)
@@ -36,7 +36,7 @@ Sprite3D filter is not the project canvas default. Live default is nearest + mip
 | `CAM_PITCH` | -58 |
 | `CAM_HEIGHT` | 14 |
 | `LOOK_LIFT` | 0.42 |
-| `ZOOM_MIN` / `ZOOM_MAX` | 1.0 / 2.5 |
+| `ZOOM_MIN` / `ZOOM_MAX` | 1.0 / 4.0 |
 | Default `cam_zoom` | 1.75 |
 | `HUD_SCALE_MIN` / `HUD_SCALE_MAX` | 0.7 / 1.4 |
 | `LOOK_WHEEL_STEP` | 0.08 |

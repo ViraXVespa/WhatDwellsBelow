@@ -20,7 +20,7 @@ If you change a live default, update this table in the same slice.
 | `CAM_PITCH` | -58 |
 | `CAM_HEIGHT` | 14 |
 | `LOOK_LIFT` | 0.42 |
-| `ZOOM_MIN` / `ZOOM_MAX` | 1.0 / 2.5 |
+| `ZOOM_MIN` / `ZOOM_MAX` | 1.0 / 4.0 |
 | Default `cam_zoom` | 1.75 |
 | `HUD_SCALE_MIN` / `HUD_SCALE_MAX` | 0.7 / 1.4 |
 | `LOOK_WHEEL_STEP` | 0.08 |
@@ -184,7 +184,7 @@ Roster HP lives in `balance_enemies.gd` (about 2× the pre-retune table). Floor-
 
 | Parameter | Suggested start | Notes |
 |-----------|-----------------|-------|
-| Camera zoom range | 1.0 – 2.5 | Persisted in save. Default 1.75 (slider midpoint). Wheel / pinch / look-mode RS also write `App.set_zoom`. |
+| Camera zoom range | 1.0 – 4.0 | Persisted in save. Default 1.75. Wheel / pinch / look-mode RS also write `App.set_zoom`. |
 | HUD scale range | 0.7 – 1.4 | System slider and look-mode RS X. |
 | Look wheel step | 0.08 | Per notch. Debug Settings slider. |
 | Look pinch gain | 1.15 | Debug Settings slider. |

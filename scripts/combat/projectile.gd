@@ -218,7 +218,7 @@ func _hit(e: Node, cov: float) -> void:
 		e.last_glance = not Cover.stops_arrow(cov)
 	if grant_xp:
 		App.prog.skill_grant_hit(false)
-	var dealt := live_dmg * Cover.dmg_mult(cov)
+	var dealt: float = live_dmg * Cover.dmg_mult(cov)
 	if e.has_method("take_hit"):
 		e.take_hit(dealt, dir, crit and Cover.crit_ok(cov))
 	if grant_xp and App.tel:
