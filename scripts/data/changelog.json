@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.47",
+			"points": [
+				{
+					"text": "Fullscreen prompt now works with a gamepad or keyboard, and closes on its own once the game is actually fullscreen"
+				},
+				{
+					"text": "Escape opens the pause menu on the web instead of leaving fullscreen"
+				},
+				{
+					"text": "Alt+Enter toggles fullscreen in the browser the same way Pause \u2192 System does"
+				},
+				{
+					"text": "New web builds should load without clearing the cache or using a private window"
+				},
+				{
+					"text": "Version numbers now go up once per update, matching the notes on this screen"
+				}
+			],
+			"summary": "Boot, web display, and update delivery so a couch player can get past the first screen and actually receive the build they just got."
+		},
+		{
 			"label": "0.2.45",
 			"points": [
 				{
