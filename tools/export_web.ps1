@@ -38,7 +38,7 @@ function Invoke-Godot([string[]]$GodotArgs, [string]$LogName) {
 
 function Stamp-ArchiveName([string]$ProjectFile, [string]$Label) {
     if (-not (Test-Path $ProjectFile)) { throw "Missing $ProjectFile" }
-    $named = "What Dwells Below — $Label"
+    $named = "What Dwells Below - $Label"
     $t = Get-Content -Raw -Path $ProjectFile
     $t = [regex]::Replace($t, 'config/name="[^"]*"', "config/name=`"$named`"")
     Set-Content -Path $ProjectFile -Value $t -NoNewline

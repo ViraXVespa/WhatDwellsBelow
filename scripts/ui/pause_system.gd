@@ -3,6 +3,7 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
+const Disp := preload("res://scripts/display_mode.gd")
 
 
 static func build(ui: CanvasLayer) -> void:
@@ -42,6 +43,16 @@ static func build(ui: CanvasLayer) -> void:
 		else:
 			App.hud_scale = v
 	))
+	if Disp.uses_desktop_modes():
+		ui.box.add_child(ThemeS.btn(Disp.desktop_label(), func():
+			Disp.cycle_desktop()
+			ui._rebuild()
+		))
+	elif Disp.uses_web_fs_toggle():
+		ui.box.add_child(ThemeS.btn(Disp.web_label(), func():
+			Disp.toggle_web_fullscreen()
+			ui._rebuild()
+		))
 	ui.box.add_child(ThemeS.btn("Sprite filter: %s" % SpriteFilt.label(SpriteFilt.clamp_id(int(App.sprite_filter), false)), func():
 		App.set_sprite_filter(SpriteFilt.cycle_sys(int(App.sprite_filter), 1), false)
 		App.save_now()

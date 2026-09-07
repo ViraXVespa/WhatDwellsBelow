@@ -2,7 +2,7 @@
 
 Status: suggested starts + live snapshot  
 Read when: changing feel, gen size, economy, crystals, or debug defaults  
-Code: `scripts/data/balance.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
+Code: `scripts/data/balance.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
 See also: the topic file for the system you are changing
 
 These are recommended starting points for the current live implementation.  
@@ -37,6 +37,9 @@ If you change a live default, update this table in the same slice.
 | Default `sprite_filter` | 2 (nearest + mips + aniso) |
 | `sprite_mip_sharp` | false (smooth mip blend) |
 | `sprite_mip_bias` | 0.0 (stored; Sprite3D has no lod-bias hook yet) |
+| Default `display_mode` | `borderless` |
+| Default `display_fs_kind` | `borderless` |
+| Default `web_fullscreen` | false |
 | `BITTER_LOOP_DEFAULT` | 15.52 |
 | `PATREON_URL` | https://www.patreon.com/cw/ViraXVespa |
 | `ARCHIVE_ID_FULL_3D` | full_3d_pass |
@@ -195,6 +198,7 @@ Roster HP lives in `balance_enemies.gd` (about 2× the pre-retune table). Floor-
 | Look stick zoom / HUD / pan | 0.9 / 0.35 / 520 | Debug Settings sliders. |
 | Map zoom range | 1.0 – 10.0 | Fit to 10×. Independent of world camera. |
 | Touch stick deadzone | 0.24 | Same magnitude idea as pad sticks. Debug Settings slider. |
+| Display mode | borderless | Desktop: windowed / borderless / exclusive. Web: `web_fullscreen` off until a gesture. |
 | Target first-extraction time | 5–10 min | New player on gamepad |
 | Target floor-5 clear time | 5–10 hours | Competent player; feel target |
 | FPS | 60 minimum | Higher allowed |

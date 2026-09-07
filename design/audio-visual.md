@@ -2,8 +2,8 @@
 
 Status: binding design + live snapshot  
 Read when: changing music, SFX, splash/title, or art rules  
-Code: `scripts/audio/music.gd`, `scripts/combat/sfx.gd`, `scripts/ui/splash.gd`, `scripts/title.gd`, `scripts/world/sprite_filter.gd`  
-See also: `design/art-pipeline.md`, `design/constraints.md`, `design/camera.md`, `design/debug.md`
+Code: `scripts/audio/music.gd`, `scripts/combat/sfx.gd`, `scripts/ui/splash.gd`, `scripts/ui/fs_gate.gd`, `scripts/boot.gd`, `scripts/title.gd`, `scripts/world/sprite_filter.gd`  
+See also: `design/art-pipeline.md`, `design/constraints.md`, `design/camera.md`, `design/debug.md`, `design/ui.md`
 
 ## Music
 
@@ -74,10 +74,13 @@ Live files under `assets/audio/` include `sfx_dash`, `sfx_hit`, `sfx_hurt`, `sfx
 
 ## Credit splash → title sequence
 
-- Existing timing may be used as a baseline.
+- Web export: `boot.tscn` → `fs_gate.tscn` (once per browser session when the gate still wants to show) → `splash.tscn` → title. Desktop and Xbox feature-tag builds skip the gate.
+- Existing splash timing may be used as a baseline.
 - The credit line MUST be modified so that the word “Proudly” is crossed out and the word “Shamelessly” is written above it in a graffiti style. The final readable phrase is “Shamelessly Vibecoded with Grok.” The graffiti treatment MUST look intentional and vandalized.
 
 Live `splash.gd`: fade in 0.7 s, hold until t = 4.0 s, fade out 0.7 s. Skip with interact / pause / accept / click, then `App.go_title()`.
+
+Live `fs_gate.gd`: title-card layout, platform copy, action + Continue. See `design/ui.md`.
 
 ## Placeholder policy
 

@@ -2,8 +2,8 @@
 
 Status: binding design + live snapshot  
 Read when: changing controls, menus, web export, or aim  
-Code: `scripts/input/binds.gd`, `scripts/input/pad.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`, `scripts/input/prompts.gd`, `scripts/web_pad.gd`, `scripts/ui/touch_hud.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/prompt_view.gd`, `scripts/world/player_lock.gd`, `scripts/world/dungeon_map_act.gd`  
-See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui.md`
+Code: `scripts/input/binds.gd`, `scripts/input/pad.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`, `scripts/input/prompts.gd`, `scripts/web_pad.gd`, `scripts/ui/touch_hud.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/prompt_view.gd`, `scripts/world/player_lock.gd`, `scripts/world/dungeon_map_act.gd`, `scripts/display_mode.gd`  
+See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui.md`, `design/save-tech.md`
 
 ## Target platforms
 
@@ -31,6 +31,8 @@ See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui
 - LB / RB: Cycle tabs inside any menu that has tabs. Do not invent a second bumper path.
 
 All controls, gameplay, and interfaces MUST be designed with a gamepad-first intent. Every menu MUST open with a valid initial focus already set so the player can immediately navigate and select using only the gamepad (no requirement to first highlight an element with the mouse).
+
+There is no gamepad chord for display mode. Couch players change it on Pause → System (`design/ui.md`).
 
 ## Look mode
 
@@ -108,6 +110,13 @@ All gamepad actions MUST have keyboard/mouse equivalents. Mouse aim + hold-LMB f
 
 Mouse wheel zooms world camera or the large map as described under Look mode. It is not a rebindable InputMap combat action.
 
+**Alt+Enter** is a fixed desktop display toggle. It is not an InputMap action and MUST NOT appear on the rebind page. Enter alone stays Interact / confirm.
+
+- Desktop only (`DisplayMode.uses_desktop_modes()`). No-op on web, native mobile, and `xbox`.
+- If the window is windowed, apply the last saved fullscreen kind (`display_fs_kind`: borderless or true fullscreen). Fresh default is borderless.
+- If the window is already borderless or true fullscreen, return to windowed and leave `display_fs_kind` alone.
+- Handled in `App._input` → `DisplayMode.handle_input` so it works while a menu is open.
+
 ## Input – Web touch (`touch_pad.gd`, `touch_hud.gd`)
 
 Web-only. Not a native Android / iOS export requirement.
@@ -165,6 +174,7 @@ These are implementation defaults, not a replacement for rebinding.
 | Gear tip | Y |
 | Gear drop | X |
 | Crystal zoom | Tab |
+| Display toggle | Alt+Enter (desktop only, not rebindable) |
 
 `binds.apply_pc_defaults()` strips `KEY_R` from special. README text that still says “R special” is stale relative to live binds.
 

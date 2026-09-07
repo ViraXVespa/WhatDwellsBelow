@@ -2,12 +2,12 @@
 
 Status: binding design + live snapshot
 Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, title, or loading
-Code: `scripts/ui/hud.gd`, `hud_view.gd`, `hud_act.gd`, `touch_hud.gd`, `ui_text.gd`, `pause_menu.gd`, `pause_menu_view.gd`, `pause_menu_util.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `prompt_view.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`, `scripts/title.gd`, `scripts/title_news.gd`, `scripts/data/game_ver.gd`
-See also: `design/gear-ui.md`, `design/input.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/camera.md`, `design/versioning.md`, `design/save-tech.md`
+Code: `scripts/ui/hud.gd`, `hud_view.gd`, `hud_act.gd`, `touch_hud.gd`, `ui_text.gd`, `pause_menu.gd`, `pause_menu_view.gd`, `pause_menu_util.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_system.gd`, `menu_pad.gd`, `prompt_view.gd`, `gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `recap.gd`, `loader.gd`, `present.gd`, `theme.gd`, `scripts/ui/splash.gd`, `scripts/ui/fs_gate.gd`, `scripts/display_mode.gd`, `scripts/title.gd`, `scripts/title_news.gd`, `scripts/data/game_ver.gd`
+See also: `design/gear-ui.md`, `design/input.md`, `design/debug.md`, `design/inventory.md`, `design/skills.md`, `design/camera.md`, `design/versioning.md`, `design/save-tech.md`, `design/audio-visual.md`
 
 ## UI theme (playable surfaces)
 
-Every player-facing UI and HUD element in the live path MUST be designed with dungeon theming and MUST NOT ship as a default, unskinned, or engine-debug control. This includes the gauntlet strip, pause menu, Extraction Gate UI, Ghost Shop, anvil, Floor Crystal loadout UI, quest UI, Controls Billboard, recap, maps, toasts, title / credit flow, confirmation prompts, the title “what’s new” overlay, the web touch overlay, and any other surface a normal player can open.
+Every player-facing UI and HUD element in the live path MUST be designed with dungeon theming and MUST NOT ship as a default, unskinned, or engine-debug control. This includes the gauntlet strip, pause menu, Extraction Gate UI, Ghost Shop, anvil, Floor Crystal loadout UI, quest UI, Controls Billboard, recap, maps, toasts, title / credit flow, the web fullscreen gate, confirmation prompts, the title “what’s new” overlay, the web touch overlay, and any other surface a normal player can open.
 
 The secret debug menu (including Automated Playtest, profiles, Animation Browser chrome, Settings tab, and raw value editors) MAY use default or lightly skinned engine controls. Appearance there is not a Demo-Complete art requirement.
 
@@ -26,6 +26,22 @@ When the current label is newer than saved `last_seen_game_ver`, a “what’s n
 - Body shape on screen: build label as a heading, key points, optional subpoints, then the Summary line. Markdown (`**bold**`, `` `code` ``) renders.
 - Long lists scroll with mouse wheel and right stick. D-pad only moves Close / Earlier weeks.
 - Text sits on a solid title-card panel. Play / Updates / Archives MUST NOT take focus while the overlay is open.
+
+## Web fullscreen gate
+
+On the web export only, `scripts/boot.gd` MUST open `scenes/fs_gate.tscn` before the credit splash when `DisplayMode.wants_gate()` is true. Desktop and Xbox feature-tag boots stay boot → splash.
+
+Show the gate once per browser tab session (`sessionStorage`). Skip it when the page is already fullscreen, or when the PWA is already standalone (`display-mode: standalone` / `navigator.standalone`). Smoke boot routes MUST still skip splash and the gate.
+
+Copy and the action button MUST follow the UA bucket:
+
+- Desktop web — Fullscreen requests canvas fullscreen from the tap. Chromium may also fire the stashed PWA install prompt.
+- Android web — same tap; label may read Fullscreen / Install.
+- iOS web — Safari cannot open Add to Home Screen from script. Action is Try fullscreen (requestFullscreen, usually a no-op on iPhone). Body tells the player Share → Add to Home Screen → Add, with Open as Web App on.
+
+Gamepad-first: first focus is the action button. A confirms the focused control. B / Esc / Continue marks the session seen and goes to splash. A successful fullscreen request on non-iOS also advances. iOS stays on the card after Try until Continue.
+
+If the viewport is taller than wide, the card MUST say to rotate to landscape. Landscape lock is attempted from the same gesture (`design/save-tech.md`).
 
 ## HUD – gauntlet strip (mandatory elements and behavior)
 
@@ -83,6 +99,7 @@ Exactly three tabs, navigable with LB/RB or equivalent:
    - Master / Music / SFX volume sliders
    - Camera zoom slider (1.0–2.5, default 1.75). MUST apply live; no restart.
    - HUD scale slider. MUST apply live.
+   - Display mode. Desktop: cycle Windowed / Borderless fullscreen / True fullscreen. Fresh default is borderless. Web and native mobile: Fullscreen on/off. Hidden when `OS.has_feature("xbox")`. MUST apply live from the tap.
    - Sprite filter cycle (on-spec only): Nearest / Nearest + mips / Nearest + mips + aniso. Default is nearest + mips + aniso. Linear modes MUST NOT appear here.
    - Aim-line toggle and opacity slider
    - Presentation mode switcher + Archives browser
@@ -92,7 +109,7 @@ Exactly three tabs, navigable with LB/RB or equivalent:
    - “Delete Save Data” with confirmation
    - “Dispel” Avatar button with strong confirmation prompt
 
-The full debug / balance menu is **no longer** present in the Pause Menu. In-test display options that are not approved for players live on the secret debug **Settings** tab (`design/debug.md`). The touch stick deadzone slider lives there too.
+The full debug / balance menu is **no longer** present in the Pause Menu. In-test display options that are not approved for players live on the secret debug **Settings** tab (`design/debug.md`). The touch stick deadzone slider lives there too. The player display-mode control is mirrored on that Settings tab.
 
 Placeholdia inventory (same board, opened outside a run) MUST use Loadout option sources: starters, holds, and non-white bank items. Dungeon inventory MAY only list the equipped piece plus bag items of that slot.
 
@@ -183,11 +200,15 @@ Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close 
 
 `hud.gd` facade plus `hud_view.gd` / `hud_act.gd`: strip top-left, minimap top-right, boss bar when near, toast, interact glyph row, look-mode cue under the minimap. Level string uses combat level and parenthetical style level.
 Pause Skills also shows run XP earned this descent.
-Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. System opens focused on Character. Camera zoom and HUD scale write `App.set_zoom` / `App.set_hud_scale` and apply without a restart. Small windows multiply HUD chrome and Theme fonts by `UiText.applied()` from a saved text floor (debug slider, default 14). Sprite filter cycles `App.set_sprite_filter` over the three nearest modes. Loadout opens focused on **Enter dungeon**.
+Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. System opens focused on Character. Camera zoom and HUD scale write `App.set_zoom` / `App.set_hud_scale` and apply without a restart. Display mode writes `DisplayMode.cycle_desktop` or `DisplayMode.toggle_web_fullscreen` from `pause_system.gd`. Small windows multiply HUD chrome and Theme fonts by `UiText.applied()` from a saved text floor (debug slider, default 14). Sprite filter cycles `App.set_sprite_filter` over the three nearest modes. Loadout opens focused on **Enter dungeon**.
 
 ## Live snapshot — web touch
 
 `App` instances `scripts/ui/touch_hud.gd` and `scripts/web_pad.gd`. `touch_hud.gd` draws the move stick, the right-hand cluster, pinch, and map swipe; `touch_pad.gd` owns detection, move vector, and `force_show`. Overlay layer 28. Visibility is `Touch.wants_show()`. Large-map transform lives in `dungeon_map_act.gd`.
+
+## Live snapshot — web fullscreen gate
+
+`scripts/ui/fs_gate.gd` on `scenes/fs_gate.tscn`. `scripts/display_mode.gd` owns platform buckets, window modes, sessionStorage, landscape lock, and the PWA install prompt. `scripts/boot.gd` routes web → gate when the session still needs it.
 
 ## Live snapshot — loading bar (`loader.gd`)
 

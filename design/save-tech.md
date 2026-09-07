@@ -2,8 +2,8 @@
 
 Status: binding design  
 Read when: changing persistence, web export, autoloads, or perf  
-Code: `scripts/data/save_store.gd`, `scripts/app.gd`, `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`, `tools/export_web.ps1`, `tools/build_changelog.py`, `project.godot`  
-See also: `design/debug.md`, `design/archives.md`, `design/versioning.md`, `design/camera.md`, `design/ui.md`
+Code: `scripts/data/save_store.gd`, `scripts/app.gd`, `scripts/app_set.gd`, `scripts/display_mode.gd`, `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`, `tools/export_web.ps1`, `tools/build_changelog.py`, `project.godot`, `export_presets.cfg`  
+See also: `design/debug.md`, `design/archives.md`, `design/versioning.md`, `design/camera.md`, `design/ui.md`, `design/input.md`
 
 ## Save system
 
@@ -19,6 +19,7 @@ See also: `design/debug.md`, `design/archives.md`, `design/versioning.md`, `desi
   - Selected character type (male / female)
   - Camera zoom (range 1.0–2.5, fresh default 1.75) and HUD scale settings
   - Sprite filter id, mip-blend sharp flag, and mip bias
+  - Display mode (`display_mode`: `windowed` / `borderless` / `exclusive`), last fullscreen kind (`display_fs_kind`: `borderless` / `exclusive`), and web fullscreen preference (`web_fullscreen`)
   - Aim-line on/off state and opacity
   - Last acknowledged game version (`last_seen_game_ver`) for the title “what’s new” overlay
   - Any other player settings and debug overrides that should persist
@@ -27,7 +28,11 @@ Live player slot name: `"live"`. `App.save_now()` / `App.wipe_save()`.
 
 Missing `cam_zoom` on an old save applies 1.75. A save that already stored `1.0` keeps 1.0 until the player moves the slider.
 
+Missing `display_mode` / `display_fs_kind` on an old save applies `borderless`. Missing `web_fullscreen` applies off. A save that already stored `windowed` keeps windowed.
+
 Missing `last_seen_game_ver` means first launch or a wiped save: show only the current build’s changelog entry, then write the current `version.json` label. Do not reuse save-schema `"v"` for this. `"v"` stays the save-file format version.
+
+The web fullscreen gate’s “seen this tab” flag is `sessionStorage` (`wdb_fs_gate_seen`). It is not a save key.
 
 ## Game version
 
@@ -58,8 +63,18 @@ The Archives browser MUST ship in the final demo. Selecting title “Play” alw
 
 - MUST run in modern browsers.
 - MUST NOT require special COOP/COEP headers or other non-standard server configuration to function on GitHub Pages or equivalent static hosting.
+- Web preset is a PWA: enabled, display Standalone, orientation Landscape, `ensure_cross_origin_isolation_headers` off, `variant/thread_support` off.
+- `html/head_include` stashes `beforeinstallprompt` on `window.__wdbInstallPrompt` so a later tap can call `prompt()`.
+- After changing `export_presets.cfg`, rebuild with `powershell -File tools/export_web.ps1`. Do not hand-edit generated `docs/index.html`.
 
 Rebuild live locally with `powershell -File tools/export_web.ps1` into `docs/`. Combined live + archive preview: `powershell -File tools/export_web.ps1 -Archives` into `_pages/`. GitHub Actions deploys Pages from HEAD plus each catalog SHA, and publishes `/changelog/` from `design/changelog/*.md`. Do not commit archive wasm/pck to `main`. Do not store changelog notes inside the Godot `docs/` tree on `main`.
+
+## Display apply
+
+- Desktop applies saved `display_mode` at boot via `DisplayMode.apply_saved()`.
+- Web cannot enter fullscreen except from a user gesture. `web_fullscreen` is the preference; the pre-splash gate and System toggle are the gestures.
+- `screen.orientation.lock("landscape")` is attempted from those same gestures. iPhone Safari tabs may ignore it; Home Screen / PWA launches use the manifest orientation.
+- Custom feature tag `xbox` hides the System row and skips apply / Alt+Enter / the gate.
 
 ## Performance
 

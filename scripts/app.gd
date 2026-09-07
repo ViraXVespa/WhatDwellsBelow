@@ -1,6 +1,5 @@
 extends Node
 
-const T := preload("res://scripts/data/tunables.gd")
 const BalanceS := preload("res://scripts/data/balance.gd")
 const DebugS := preload("res://scripts/combat/debug_menu.gd")
 const SfxS := preload("res://scripts/combat/sfx.gd")
@@ -24,7 +23,8 @@ const WebPadS := preload("res://scripts/web_pad.gd")
 const AppFlow := preload("res://scripts/app_flow.gd")
 const AppRun := preload("res://scripts/app_run.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
-const UiText := preload("res://scripts/ui/ui_text.gd")
+const Disp := preload("res://scripts/display_mode.gd")
+const AppSet := preload("res://scripts/app_set.gd")
 
 var character_type := "male"
 var character_chosen := false
@@ -40,6 +40,9 @@ var vol_sfx := 0.85
 var sprite_filter := 2
 var sprite_mip_sharp := false
 var sprite_mip_bias := 0.0
+var display_mode := "borderless"
+var display_fs_kind := "borderless"
+var web_fullscreen := false
 var in_dungeon := false
 var floor_n := 1
 var run_seed := 1
@@ -151,6 +154,7 @@ func _ready() -> void:
 	set_hud_scale(hud_scale)
 	refresh_ui_text_scale()
 	set_sprite_filter(sprite_filter, true)
+	Disp.apply_saved()
 	if "--wdb-debug" in OS.get_cmdline_user_args():
 		call_deferred("_open_debug")
 
@@ -276,68 +280,47 @@ func finish_end(cond: String, killer := "") -> void:
 
 
 func set_volume(which: String, v: float) -> void:
-	v = clampf(v, 0.0, 1.0)
-	if which == "master":
-		vol_master = v
-		AudioServer.set_bus_volume_db(0, linear_to_db(maxf(0.001, v)))
-	elif which == "music":
-		vol_music = v
-		if music and music.has_method("_apply_vol"):
-			music._apply_vol()
-	else:
-		vol_sfx = v
-		if sfx_node and sfx_node.has_method("_apply_vol"):
-			sfx_node._apply_vol()
-		elif sfx_node:
-			for c in sfx_node.get_children():
-				if c is AudioStreamPlayer:
-					(c as AudioStreamPlayer).volume_db = linear_to_db(maxf(0.001, vol_sfx * vol_master))
-	if which == "master":
-		if music and music.has_method("_apply_vol"):
-			music._apply_vol()
-		if sfx_node and sfx_node.has_method("_apply_vol"):
-			sfx_node._apply_vol()
+	AppSet.set_volume(self, which, v)
 
 
 func set_zoom(z: float) -> void:
-	cam_zoom = clampf(z, T.ZOOM_MIN, T.ZOOM_MAX)
-	var p := get_tree().get_first_node_in_group("player")
-	if p:
-		var rig = p.get("rig")
-		if rig and rig.has_method("apply_zoom"):
-			rig.apply_zoom(cam_zoom)
+	AppSet.set_zoom(self, z)
 
 
 func set_hud_scale(v: float) -> void:
-	hud_scale = clampf(v, 0.7, 1.4)
+	AppSet.set_hud_scale(self, v)
 
 
 func set_ui_text_floor(v: float) -> void:
-	ui_text_floor = UiText.clamp_floor(v)
-	refresh_ui_text_scale()
+	AppSet.set_ui_text_floor(self, v)
 
 
 func ui_text_applied() -> float:
-	return ui_text_scale
+	return AppSet.ui_text_applied(self)
 
 
 func refresh_ui_text_scale() -> void:
-	UiText.refresh()
+	AppSet.refresh_ui_text_scale(self)
 
 
 func set_sprite_filter(id: int, allow_linear := false) -> void:
-	sprite_filter = SpriteFilt.clamp_id(id, allow_linear)
-	SpriteFilt.apply_tree()
+	AppSet.set_sprite_filter(self, id, allow_linear)
 
 
 func set_sprite_mip_sharp(on: bool) -> void:
-	sprite_mip_sharp = on
-	SpriteFilt.apply_tree()
+	AppSet.set_sprite_mip_sharp(self, on)
 
 
 func set_sprite_mip_bias(v: float) -> void:
-	sprite_mip_bias = clampf(v, -2.0, 2.0)
-	SpriteFilt.apply_tree()
+	AppSet.set_sprite_mip_bias(self, v)
+
+
+func set_display_mode(mode: String) -> void:
+	AppSet.set_display_mode(self, mode)
+
+
+func set_web_fullscreen(on: bool) -> void:
+	AppSet.set_web_fullscreen(self, on)
 
 
 func on_kill() -> void:
@@ -375,6 +358,11 @@ func _process(delta: float) -> void:
 		if f is BaseButton and not (f as BaseButton).disabled:
 			(f as BaseButton).pressed.emit()
 	AppRun.tick(self, delta)
+
+
+func _input(event: InputEvent) -> void:
+	if Disp.handle_input(event):
+		get_viewport().set_input_as_handled()
 
 
 func _unhandled_input(event: InputEvent) -> void:

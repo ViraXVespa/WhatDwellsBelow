@@ -4,6 +4,7 @@ const T := preload("res://scripts/data/tunables.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
+const Disp := preload("res://scripts/display_mode.gd")
 
 
 static func page_settings(host) -> void:
@@ -16,6 +17,16 @@ static func page_settings(host) -> void:
 	host.root_box.add_child(_slider(host, "HUD scale", App.hud_scale, T.HUD_SCALE_MIN, T.HUD_SCALE_MAX, 0.05, func(v: float):
 		App.set_hud_scale(v)
 	))
+	if Disp.uses_desktop_modes():
+		host.root_box.add_child(host._btn(Disp.desktop_label(), func():
+			Disp.cycle_desktop()
+			host._rebuild()
+		))
+	elif Disp.uses_web_fs_toggle():
+		host.root_box.add_child(host._btn(Disp.web_label(), func():
+			Disp.toggle_web_fullscreen()
+			host._rebuild()
+		))
 	host.root_box.add_child(_slider(host, "UI text floor", App.ui_text_floor, T.UI_TEXT_FLOOR_MIN, T.UI_TEXT_FLOOR_MAX, 1.0, func(v: float):
 		App.set_ui_text_floor(v)
 	))

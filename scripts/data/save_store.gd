@@ -67,6 +67,9 @@ static func collect() -> Dictionary:
 		"sprite_filter": App.sprite_filter,
 		"sprite_mip_sharp": App.sprite_mip_sharp,
 		"sprite_mip_bias": App.sprite_mip_bias,
+		"display_mode": App.display_mode,
+		"display_fs_kind": App.display_fs_kind,
+		"web_fullscreen": App.web_fullscreen,
 		"aim_line_on": App.bal.aim_line_on,
 		"aim_line_opacity": App.bal.aim_line_opacity,
 		"bank_gold": App.bank_gold,
@@ -93,6 +96,9 @@ static func apply(data: Dictionary) -> void:
 	App.sprite_filter = int(data.get("sprite_filter", 2))
 	App.sprite_mip_sharp = bool(data.get("sprite_mip_sharp", false))
 	App.sprite_mip_bias = float(data.get("sprite_mip_bias", 0.0))
+	App.display_mode = _display_mode(str(data.get("display_mode", "borderless")))
+	App.display_fs_kind = _fs_kind(str(data.get("display_fs_kind", "borderless")))
+	App.web_fullscreen = bool(data.get("web_fullscreen", false))
 	App.bal.aim_line_on = bool(data.get("aim_line_on", true))
 	App.bal.aim_line_opacity = float(data.get("aim_line_opacity", 0.85))
 	App.bank_gold = int(data.get("bank_gold", 0))
@@ -130,6 +136,18 @@ static func apply(data: Dictionary) -> void:
 		App.set_sprite_mip_sharp(App.sprite_mip_sharp)
 	if App.has_method("set_sprite_mip_bias"):
 		App.set_sprite_mip_bias(App.sprite_mip_bias)
+
+
+static func _display_mode(raw: String) -> String:
+	if raw == "windowed" or raw == "exclusive":
+		return raw
+	return "borderless"
+
+
+static func _fs_kind(raw: String) -> String:
+	if raw == "exclusive":
+		return raw
+	return "borderless"
 
 
 static func _persist_if_migrated(slot: String) -> void:
@@ -192,6 +210,9 @@ static func fresh_delver() -> void:
 	App.sprite_filter = 2
 	App.sprite_mip_sharp = false
 	App.sprite_mip_bias = 0.0
+	App.display_mode = "borderless"
+	App.display_fs_kind = "borderless"
+	App.web_fullscreen = false
 	App.bal.aim_line_on = true
 	App.bal.aim_line_opacity = 0.85
 	App.reset_binds()
