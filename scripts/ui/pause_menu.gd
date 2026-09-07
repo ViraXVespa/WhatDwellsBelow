@@ -111,7 +111,11 @@ func show_menu() -> void:
 	gear_sub = false
 	gear_sub_slot = ""
 	gear_hover = false
+	set_meta("gear_tip_restore", false)
 	Util.hide_tip(self)
+	Board.hide_tip(self)
+	Board._flag(self, "gear_hover", false)
+	Board._flag(self, "gear_tip_ready", false)
 	_rebuild()
 
 
@@ -125,12 +129,16 @@ func close_ui() -> void:
 	gear_sub = false
 	gear_sub_slot = ""
 	gear_hover = false
+	set_meta("gear_tip_restore", false)
 	var old: Node = get_node_or_null("gear_sub_panel")
 	if old:
 		old.queue_free()
 	if gear_tip_host:
 		gear_tip_host.visible = false
 	Util.hide_tip(self)
+	Board.hide_tip(self)
+	Board._flag(self, "gear_hover", false)
+	Board._flag(self, "gear_tip_ready", false)
 	App.ui_open = false
 	get_tree().paused = false
 	App.save_now()
@@ -145,8 +153,16 @@ func _wipe(n: Node) -> void:
 		c.queue_free()
 
 
+func _store_tip_restore() -> void:
+	var host: Control = gear_tip_host
+	set_meta("gear_tip_restore", host != null and host.visible)
+
+
 func _rebuild() -> void:
 	Util.hide_tip(self)
+	Board.hide_tip(self)
+	Board._flag(self, "gear_hover", false)
+	Board._flag(self, "gear_tip_ready", false)
 	gear_sub = false
 	gear_sub_slot = ""
 	var old: Node = get_node_or_null("gear_sub_panel")
@@ -170,6 +186,8 @@ func _rebuild() -> void:
 	for i: int in 3:
 		var ii: int = i
 		var b: Button = ThemeS.btn(names[i], func():
+			if tab == 0 and ii != 0:
+				_store_tip_restore()
 			tab = ii
 			sys_page = "main"
 			_rebuild()
@@ -201,6 +219,8 @@ func _paint_menu_hint() -> void:
 
 
 func _cycle_tab(dir: int) -> void:
+	if tab == 0:
+		_store_tip_restore()
 	tab = posmod(tab + dir, 3)
 	sys_page = "main"
 	pending = false
@@ -214,6 +234,13 @@ func _focus() -> void:
 		var hit: Control = _inv_find_sel()
 		if hit and not hit.is_queued_for_deletion():
 			hit.grab_focus()
+			Board._flag(self, "gear_booting", false)
+			if bool(get_meta("gear_tip_restore", false)):
+				Board._arm_tip(self)
+			else:
+				Board.hide_tip(self)
+				Board._flag(self, "gear_tip_ready", false)
+			Board.refresh(self)
 			return
 	if focus_btn and not focus_btn.is_queued_for_deletion() and not tabs.is_ancestor_of(focus_btn):
 		focus_btn.grab_focus()

@@ -143,6 +143,9 @@ func _wipe(n: Node) -> void:
 
 
 func _clear() -> void:
+	Board.hide_tip(self)
+	Board._flag(self, "gear_hover", false)
+	Board._flag(self, "gear_tip_ready", false)
 	_wipe(box)
 	focus_btn = null
 	status = null

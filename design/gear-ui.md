@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: changing pause inventory, Floor Crystal loadout, or gear tooltips
-Code: `scripts/ui/gear_board.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/pause_menu.gd`, `scripts/ui/pause_inv.gd`, `scripts/ui/progress_ui.gd`, `scripts/ui/progress_ui_hub.gd`, `scripts/ui/progress_ui_inv.gd`
+Code: `scripts/ui/gear_board.gd`, `gear_board_build.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_opts.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `gear_board_anvil.gd`, `gear_board_anvil_view.gd`, `gear_icons.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/pause_menu.gd`, `scripts/ui/pause_inv.gd`, `scripts/ui/progress_ui.gd`, `scripts/ui/progress_ui_hub.gd`, `scripts/ui/progress_ui_inv.gd`
 See also: `design/inventory.md`, `design/ui.md`, `design/hub.md`, `design/input.md`
 
 Pause Inventory and Floor Crystal Loadout MUST reuse one paper-doll board. Placeholdia inventory (opened outside the dungeon) MUST use the same option sources and apply path as Loadout. Dungeon inventory MAY only swap the current slot with matching bag items.
@@ -18,13 +18,23 @@ Equipment is not a stack of full-width bars.
 - Loadout footer under the doll, centered: `Floor: [−] [selected] [+] (Deepest floor: n)` then **Enter dungeon**
 - Dungeon inventory: 7-column bag grid under the doll
 
-Two-item columns (weapon/potion and tool/food) MUST be vertically centered against the three-piece armor column.
+Two-item columns (weapon/potion and tool/food) MUST be vertically centered against the three-piece armor column. Slot cells SIZE_EXPAND_FILL across the row so the doll is not packed to one side.
 
 Loadout MUST NOT show a top summary line of weapon / tool / deepest floor. Character switching lives on Pause → System, not on this board.
 
 Floor labels stay on one horizontal line (`AUTOWRAP_OFF`). `−` disables at floor 1. `+` disables at `App.prog.deepest`. Disabled steppers use `FOCUS_NONE` and drop out of the keyboard / gamepad chain. Navigating onto a now-disabled stepper moves focus to the other live stepper, or to **Enter dungeon** if both are dead. From Legs / Food, down lands on `+` when it is live, else `−`. From Potion, down lands on `−` when it is live, else `+`.
 
 Opening the Floor Crystal focuses **Enter dungeon**. Up from there reaches the live floor stepper, then the equipment slots.
+
+## Slot plates
+
+Plates are icon-first. Names and stats live in the flyout, not on the cell.
+
+- Empty head / body / legs / potion / food show a dark imprint of that slot type (`assets/gear/slot_*.png`).
+- A filled slot or bag cell shows the item icon (`assets/gear/` keyed from `_src/gear/` through `tools/process_gear_icons.py`).
+- Rarity wash is in-engine (white / green / blue). Do not bake rarity into the PNG.
+- AT RISK pieces (bank, artifacts, unforged kit that is not a hold or starter) take a red plate border on the board and in the re-equip list. HOLD / starter pieces do not.
+- An unseen non-starter option MAY add a `▸` on the parent slot.
 
 ## Stats card
 
@@ -42,20 +52,25 @@ The card is display-only. It MUST NOT take keyboard, mouse, or gamepad focus and
 ## Highlight and tooltips
 
 - Opening the menu MUST leave the flyout hidden until the player hovers a slot, moves highlight with keyboard/gamepad, or activates the already-focused slot. Loadout first focus is **Enter dungeon**, so the flyout stays hidden until a slot is highlighted.
-- Highlight (focus or mouse hover) shows a flyout next to that control, not a label under the slot.
+- Highlight (focus or mouse hover) shows a flyout next to that control, not a label under the slot. On the main board the flyout sits to the right of the plate (flips left if it would clip). On the re-equip list the flyout sits under the icon: top-left a few pixels below the center of the icon’s bottom edge.
+- The flyout MUST only anchor to a control that has an item key. Back, Close, tab buttons, and empty bag cells hide it.
 - Leaving every slot with the mouse hides the flyout. Keyboard / d-pad highlight MUST show it again without requiring a mouse pass first.
-- The re-equip list uses the same flyout, anchored to the highlighted row. First-open layout MUST wait a frame so the flyout sits beside the row, not against the screen edge.
+- Changing pause tabs hides the flyout. Returning to Inventory restores it only if it was visible when the player left. Paging the stats card hides it.
+- First-open layout MUST wait until the plate has a real on-screen rect so the flyout does not land on the bottom edge.
 - **Y** cycles tooltip detail: off → current item stats → forge preview (then back to off). Artifacts, food, and potions have no forge preview.
+- White starters on a slot or in the re-equip list MUST resolve to the implied weapon/tool (or the item stored on the button). They MUST NOT read as empty when an icon is showing.
 
 ## Re-equip list
 
 **A** / confirm on a slot opens a modal list for that slot.
 
 - Chevron (`▸`) on the parent slot if a new non-starter option appeared since that list was last opened.
+- Options are icon plates in a horizontal row, not text rows.
 - Dungeon list: currently equipped item (if any) plus bag items for that slot. Tool bag rows MUST match the run’s tool type.
-- Placeholdia / Loadout list: equipped, starters, unlocked starters, holds, then non-white bank items. No white duplicates. Bank / unforged kit pieces are marked **AT RISK**. Holds are marked **HOLD**.
+- Placeholdia / Loadout list: equipped, starters, unlocked starters, holds, then non-white bank items. No white duplicates. Bank / unforged kit pieces are marked **AT RISK** in the flyout and with a red border. Holds are marked **HOLD**.
+- Left / Right stay on the option row. Down (or Right off the last option) reaches Back. Up from Back returns to the last option that had focus, not always the first.
 - Selecting the equipped row unequips it when the slot allows. Weapon, tool, and starter pieces stay on the slot.
-- **B** / Esc / Back closes only the list. The parent menu stays open.
+- **B** / Esc / Back closes only the list. The parent menu stays open. Focusing Back hides the flyout.
 - Opening another slot replaces the open list.
 
 ## Slot actions
@@ -83,10 +98,13 @@ Both hosts MUST pause the tree while open so Esc cannot fall through. While the 
 
 - `menu_pad.gd` — shared confirm / back / tab / stats-page classifiers
 - `gear_board.gd` — board facade: doll layout, bag grid, pending kit apply
+- `gear_board_build.gd` — title, stats card, slot / bag cell widgets
+- `gear_icons.gd` — icon paths, rarity fill, risk border
 - `gear_board_floor.gd` — loadout floor row, stepper disable / neighbors, Enter-first focus
 - `gear_board_tip.gd` — flyout host and placement
-- `gear_board_text.gd` — slot / item labels, option lists, tooltip copy
+- `gear_board_text.gd` — slot / item labels, tooltip copy; option lists via `gear_board_opts.gd`
 - `gear_board_stats.gd` — paged stats card copy
 - `gear_board_act.gd` — drop / destroy / paging / enter / input
 - `gear_board_sub.gd` — re-equip list open/close and apply / unequip
+- `gear_board_anvil.gd` — analyze / forge apply; footer via `gear_board_anvil_view.gd`
 - Pause tab 0 and `progress_ui` loadout/inv both call `Board.build`

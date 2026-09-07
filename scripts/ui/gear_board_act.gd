@@ -168,6 +168,10 @@ static func cycle_stats(ui: CanvasLayer, d: int) -> void:
 		return
 	var pages := Text.page_ids(ui)
 	ui.gear_stat_page = posmod(int(ui.gear_stat_page) + d, pages.size())
+	ui.inv_sel = "stats"
+	Board._flag(ui, "gear_tip_ready", false)
+	Board._flag(ui, "gear_hover", false)
+	Board.hide_tip(ui)
 	Board.refresh(ui)
 	App.sfx("ui")
 

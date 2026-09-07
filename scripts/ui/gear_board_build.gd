@@ -3,6 +3,7 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Text := preload("res://scripts/ui/gear_board_text.gd")
 const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
+const Icons := preload("res://scripts/ui/gear_icons.gd")
 const Floor := preload("res://scripts/ui/gear_board_floor.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
@@ -101,41 +102,60 @@ static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 
 
 static func build_slot_btn(ui: CanvasLayer, slot: String) -> Button:
-	var it: Dictionary = App.prog.slots.get(slot, {})
+	var it: Dictionary = Text.slot_item(slot)
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(168, 78)
+	b.custom_minimum_size = Vector2(168, 96)
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b.focus_mode = Control.FOCUS_ALL
 	b.disabled = false
-	b.add_theme_font_size_override("font_size", 16)
-	b.add_theme_color_override("font_color", Fmt.item_color(it))
-	b.add_theme_color_override("font_hover_color", Color(1, 0.95, 0.75))
-	b.add_theme_color_override("font_focus_color", Color(1, 0.92, 0.55))
-	b.add_theme_stylebox_override("normal", ThemeS.sb(Color(0.18, 0.14, 0.1), Color(0.4, 0.3, 0.18)))
-	b.add_theme_stylebox_override("hover", ThemeS.sb(Color(0.26, 0.2, 0.13), Color(0.75, 0.58, 0.28)))
-	b.add_theme_stylebox_override("pressed", ThemeS.sb(Color(0.14, 0.11, 0.08), Color(0.9, 0.7, 0.3)))
-	b.add_theme_stylebox_override("focus", ThemeS.sb(Color(0.28, 0.2, 0.12), Color(0.95, 0.78, 0.35)))
-	b.text = Text.slot_face(ui, slot, it)
-	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.text = ""
+	b.icon = Icons.tex_for_slot(slot, it)
+	b.expand_icon = true
+	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	b.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+	_paint_item_btn(b, it)
+	if Text.has_unseen(slot):
+		b.text = "▸"
+		b.alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		b.add_theme_font_size_override("font_size", 18)
+		b.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
 	return b
 
 
 static func build_bag_cell(ui: CanvasLayer, it: Dictionary) -> Button:
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(188, 64)
+	b.custom_minimum_size = Vector2(72, 72)
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	b.add_theme_font_size_override("font_size", 16)
-	b.add_theme_stylebox_override("normal", ThemeS.sb(Color(0.18, 0.14, 0.1), Color(0.4, 0.3, 0.18)))
-	b.add_theme_stylebox_override("hover", ThemeS.sb(Color(0.26, 0.2, 0.13), Color(0.75, 0.58, 0.28)))
-	b.add_theme_stylebox_override("focus", ThemeS.sb(Color(0.28, 0.2, 0.12), Color(0.95, 0.78, 0.35)))
 	b.add_theme_stylebox_override("disabled", ThemeS.sb(Color(0.11, 0.09, 0.08), Color(0.22, 0.18, 0.14)))
 	if it.is_empty():
-		b.text = "—"
+		b.text = ""
 		b.disabled = true
 		b.focus_mode = Control.FOCUS_NONE
+		_paint_item_btn(b, {})
 		return b
-	b.text = Text.item_cell(it)
+	b.text = ""
 	b.focus_mode = Control.FOCUS_ALL
 	b.disabled = false
-	b.add_theme_color_override("font_color", Fmt.item_color(it))
+	if Icons.has_item_icon(it):
+		b.icon = Icons.tex_for_item(it)
+		b.expand_icon = true
+		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		b.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+	else:
+		b.text = Text.item_cell(it)
+		b.add_theme_font_size_override("font_size", 14)
+		b.add_theme_color_override("font_color", Fmt.item_color(it))
+	_paint_item_btn(b, it)
 	return b
+
+
+static func _paint_item_btn(b: Button, it: Dictionary) -> void:
+	var fill: Color = Icons.rarity_fill(it)
+	var border: Color = Icons.rarity_border(it)
+	var hover: Color = fill.lightened(0.12)
+	var press: Color = fill.darkened(0.12)
+	b.add_theme_stylebox_override("normal", ThemeS.sb(fill, border))
+	b.add_theme_stylebox_override("hover", ThemeS.sb(hover, border))
+	b.add_theme_stylebox_override("pressed", ThemeS.sb(press, border))
+	b.add_theme_stylebox_override("focus", ThemeS.sb(hover, border))
+	b.add_theme_stylebox_override("disabled", ThemeS.sb(Color(0.11, 0.09, 0.08), Color(0.22, 0.18, 0.14)))

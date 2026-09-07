@@ -2,22 +2,15 @@ extends Object
 
 const Stats := preload("res://scripts/ui/gear_board_stats.gd")
 const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
+const Opts := preload("res://scripts/ui/gear_board_opts.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
-
-static var seen_uids: Dictionary = {}
 
 
 static func slot_face(ui: CanvasLayer, slot: String, it: Dictionary) -> String:
 	var head := str(Fmt.NAMES.get(slot, slot))
 	if has_unseen(slot):
 		head = "▸ " + head
-	if it.is_empty():
-		return "%s\nempty" % head
-	var body := item_short(it)
-	var mark := Fmt.risk_mark(it, str(ui.get("gear_mode")) == "loadout")
-	if mark != "":
-		body += "\n" + mark
-	return "%s\n%s" % [head, body]
+	return head
 
 
 static func item_short(it: Dictionary) -> String:
@@ -83,11 +76,14 @@ static func selected_slot(ui: CanvasLayer) -> String:
 	return ""
 
 
+static func slot_item(slot: String) -> Dictionary:
+	return Opts.slot_item(slot)
+
+
 static func selected(ui: CanvasLayer) -> Dictionary:
 	var sel := str(ui.inv_sel)
 	if sel.begins_with("slot:"):
-		var it: Dictionary = App.prog.slots.get(sel.substr(5), {})
-		return it if it is Dictionary else {}
+		return slot_item(sel.substr(5))
 	if sel.begins_with("bag:"):
 		var uid := int(sel.substr(4))
 		for raw: Variant in App.prog.bag:
@@ -96,123 +92,31 @@ static func selected(ui: CanvasLayer) -> Dictionary:
 	if sel.begins_with("opt:"):
 		var parts := sel.split(":")
 		if parts.size() >= 4:
-			for row: Dictionary in options_for(parts[2]):
-				if str(row.src) == parts[1] and int(row.uid) == int(parts[3]):
-					return row.it
+			var src := parts[1]
+			var slot := parts[2]
+			var uid := int(parts[3])
+			for row: Dictionary in options_for(slot):
+				if str(row.src) == src and int(row.uid) == uid:
+					return row.it if row.it is Dictionary else {}
+		var Board = load("res://scripts/ui/gear_board.gd")
+		var n: Node = Board.find_sel(ui)
+		if n != null and n.has_meta("inv_it"):
+			var stored: Variant = n.get_meta("inv_it")
+			if stored is Dictionary:
+				return stored
 	return {}
 
 
 static func options_for(slot: String) -> Array:
-	var out: Array = []
-	var seen_uid := {}
-	var seen_tmpl := {}
-	var cur: Dictionary = App.prog.slots.get(slot, {})
-	if not cur.is_empty():
-		var c: Dictionary = cur.duplicate(true)
-		if str(c.get("kit_src", "")) == "":
-			c["kit_src"] = "equipped"
-		out.append({"it": c, "src": "equipped", "uid": int(c.get("uid", 0))})
-		seen_uid[int(c.get("uid", 0))] = true
-		seen_tmpl[Fmt._tmpl(c)] = true
-	if App.in_dungeon:
-		for raw: Variant in App.prog.bag:
-			if raw is Dictionary and str(raw.get("slot", "")) == slot:
-				if slot == "tool" and str(raw.get("tool", "")) != "" and str(raw.tool) != App.prog.tool_type:
-					continue
-				var uid := int(raw.uid)
-				if uid != 0 and seen_uid.has(uid):
-					continue
-				if seen_tmpl.has(Fmt._tmpl(raw)):
-					continue
-				seen_uid[uid] = true
-				seen_tmpl[Fmt._tmpl(raw)] = true
-				out.append({"it": raw, "src": "bag", "uid": uid})
-		return out
-	if slot == "weapon":
-		for w: String in ["great_axe", "staff", "longbow"]:
-			var tmpl := "weapon:" + w
-			if seen_tmpl.has(tmpl):
-				continue
-			var st: Dictionary = App.prog.make_weapon(w, "white")
-			st["kit_src"] = "starter"
-			seen_tmpl[tmpl] = true
-			out.append({"it": st, "src": "starter", "uid": int(st.uid)})
-	elif slot == "tool":
-		for t: String in ["pickaxe", "hatchet"]:
-			var tmpl := "tool:" + t
-			if seen_tmpl.has(tmpl):
-				continue
-			var tl: Dictionary = App.prog.make_tool(t)
-			tl["kit_src"] = "starter"
-			seen_tmpl[tmpl] = true
-			out.append({"it": tl, "src": "starter", "uid": int(tl.uid)})
-	elif slot == "potion":
-		if not seen_tmpl.has("potion:Potion"):
-			var pot: Dictionary = App.prog.make_potion(2)
-			pot["kit_src"] = "starter"
-			pot["charges"] = 2
-			pot["charge_max"] = 2
-			seen_tmpl["potion:Potion"] = true
-			out.append({"it": pot, "src": "starter", "uid": int(pot.uid)})
-	var holds: Array = App.prog.holds.get(slot, [])
-	for h: Variant in holds:
-		if h is Dictionary:
-			var uid := int(h.uid)
-			if uid != 0 and seen_uid.has(uid):
-				continue
-			if seen_tmpl.has(Fmt._tmpl(h)):
-				continue
-			var hd: Dictionary = (h as Dictionary).duplicate(true)
-			hd["kit_src"] = "hold"
-			seen_uid[uid] = true
-			seen_tmpl[Fmt._tmpl(hd)] = true
-			out.append({"it": hd, "src": "hold", "uid": uid})
-	var unlocked: Array = []
-	if App.prog.get("starters") is Dictionary:
-		unlocked = App.prog.starters.get(slot, [])
-	for raw_s: Variant in unlocked:
-		if raw_s is Dictionary:
-			if seen_tmpl.has(Fmt._tmpl(raw_s)):
-				continue
-			var us: Dictionary = (raw_s as Dictionary).duplicate(true)
-			us["kit_src"] = "starter"
-			seen_tmpl[Fmt._tmpl(us)] = true
-			out.append({"it": us, "src": "starter", "uid": int(us.get("uid", 0))})
-	for raw2: Variant in App.prog.bank_items:
-		if raw2 is Dictionary and str(raw2.get("slot", "")) == slot:
-			if str(raw2.get("rarity", "white")) == "white":
-				continue
-			var uid2 := int(raw2.uid)
-			if uid2 != 0 and seen_uid.has(uid2):
-				continue
-			if seen_tmpl.has(Fmt._tmpl(raw2)):
-				continue
-			var bk: Dictionary = (raw2 as Dictionary).duplicate(true)
-			bk["kit_src"] = "bank"
-			seen_uid[uid2] = true
-			seen_tmpl[Fmt._tmpl(bk)] = true
-			out.append({"it": bk, "src": "bank", "uid": uid2})
-	return out
+	return Opts.options_for(slot)
 
 
 static func has_unseen(slot: String) -> bool:
-	var seen: Array = seen_uids.get(slot, [])
-	for row: Dictionary in options_for(slot):
-		if str(row.src) == "equipped" or str(row.src) == "starter":
-			continue
-		var uid := int(row.uid)
-		if uid == 0:
-			continue
-		if seen.find(uid) < 0:
-			return true
-	return false
+	return Opts.has_unseen(slot)
 
 
 static func mark_seen(slot: String) -> void:
-	var ids: Array = []
-	for row: Dictionary in options_for(slot):
-		ids.append(int(row.uid))
-	seen_uids[slot] = ids
+	Opts.mark_seen(slot)
 
 
 static func tooltip(ui: CanvasLayer) -> String:
@@ -223,13 +127,23 @@ static func tooltip(ui: CanvasLayer) -> String:
 		return ""
 	var it := selected(ui)
 	var slot := selected_slot(ui)
+	var sel := str(ui.inv_sel)
 	if it.is_empty():
 		if slot != "":
 			return "%s — empty\nOpens anything that can go here." % str(Fmt.NAMES.get(slot, slot))
 		return "Empty bag slot."
+	var src := ""
+	if sel.begins_with("opt:") and sel.split(":").size() >= 2:
+		src = sel.split(":")[1]
+	var block := current_block(it)
 	if mode >= 2:
-		return forged_block(it)
-	return current_block(it)
+		block = forged_block(it)
+	if slot != "":
+		var head := str(Fmt.NAMES.get(slot, slot))
+		if src != "":
+			head += "  ·  " + src
+		return "%s\n%s" % [head, block]
+	return block
 
 
 static func current_block(it: Dictionary) -> String:

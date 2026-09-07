@@ -5,7 +5,6 @@ Resource gathering needs dedicated animations.
 Need to regenerate animation videos to not have holes in faces.
 Placeholdia needs real art, not placeholders from archived builds.
 Need to add lighting decorations to dungeon
-Need assets for inventory menu
 Need assets for updated placeholdia UI.
 Add lighting/torch decorations to the walls.
 Animation handling to correct idle depending on active front foot.

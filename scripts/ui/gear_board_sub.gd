@@ -5,6 +5,7 @@ const Text := preload("res://scripts/ui/gear_board_text.gd")
 const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
+const Icons := preload("res://scripts/ui/gear_icons.gd")
 
 
 static func _act():
@@ -85,31 +86,31 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 			box.add_child(ThemeS.lab("Nothing forgeable here. Starters stay off this list.", 18, Color(0.78, 0.74, 0.66)))
 		else:
 			box.add_child(ThemeS.lab("Nothing else for this slot.", 18, Color(0.78, 0.74, 0.66)))
+	var grid := HBoxContainer.new()
+	grid.add_theme_constant_override("separation", 8)
+	box.add_child(grid)
+	var opts: Array[Button] = []
 	for row: Dictionary in rows:
 		var it: Dictionary = row.it
-		var lab := "%s  ·  %s" % [str(row.src), Text.item_short(it)]
-		var mark := Fmt.risk_mark(it, Act.town_kit(ui) or str(row.src) == "bank")
-		if mark != "":
-			lab += "  [" + mark + "]"
 		var key := "opt:%s:%s:%d" % [str(row.src), slot, int(row.uid)]
 		var pick_row: Dictionary = row.duplicate(true)
 		pick_row.it = it.duplicate(true)
 		var b := Button.new()
-		b.text = lab
-		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		b.custom_minimum_size = Vector2(0, 40)
+		b.text = ""
+		b.custom_minimum_size = Vector2(72, 72)
 		b.focus_mode = Control.FOCUS_ALL
 		b.disabled = false
-		b.add_theme_font_size_override("font_size", 18)
-		b.add_theme_color_override("font_color", Fmt.item_color(it))
+		b.icon = Icons.tex_for_item(it)
+		b.expand_icon = true
+		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		b.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+		_paint_opt(b, it)
 		b.set_meta("inv_key", key)
+		b.set_meta("inv_it", it.duplicate(true))
 		Board._watch_hover(ui, b, key)
 		b.pressed.connect(func(): pick(ui, slot, pick_row))
-		b.focus_entered.connect(func():
-			ui.inv_sel = key
-			Board.refresh(ui)
-		)
-		box.add_child(b)
+		grid.add_child(b)
+		opts.append(b)
 		if first == null:
 			first = b
 	var back := Button.new()
@@ -118,9 +119,26 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	back.focus_mode = Control.FOCUS_ALL
 	back.add_theme_font_size_override("font_size", 18)
 	back.pressed.connect(func(): close_sub(ui))
+	back.focus_entered.connect(func():
+		ui.inv_sel = "back"
+		Board._flag(ui, "gear_tip_ready", false)
+		Board._flag(ui, "gear_hover", false)
+		Board.hide_tip(ui)
+	)
+	for b: Button in opts:
+		var key := str(b.get_meta("inv_key", ""))
+		b.focus_entered.connect(func():
+			ui.inv_sel = key
+			back.focus_neighbor_top = b.get_path()
+			Board._arm_tip(ui)
+			Board.refresh(ui)
+		)
 	box.add_child(back)
+	_wire_opt_focus(opts, back)
 	if first == null:
 		first = back
+	else:
+		back.focus_neighbor_top = first.get_path()
 	ui.inv_sel = str(first.get_meta("inv_key", "slot:" + slot))
 	ui.focus_btn = first
 	first.grab_focus()
@@ -131,6 +149,35 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 			if is_instance_valid(ui):
 				Board.place_tip(ui)
 		, CONNECT_ONE_SHOT)
+
+
+static func _wire_opt_focus(opts: Array[Button], back: Button) -> void:
+	var n: int = opts.size()
+	for i: int in n:
+		var b: Button = opts[i]
+		if i + 1 < n:
+			b.focus_neighbor_right = opts[i + 1].get_path()
+			opts[i + 1].focus_neighbor_left = b.get_path()
+			b.focus_next = opts[i + 1].get_path()
+		else:
+			b.focus_neighbor_right = back.get_path()
+			b.focus_next = back.get_path()
+		if i > 0:
+			b.focus_previous = opts[i - 1].get_path()
+		b.focus_neighbor_bottom = back.get_path()
+	if n > 0:
+		back.focus_neighbor_top = opts[0].get_path()
+		back.focus_neighbor_left = opts[n - 1].get_path()
+		back.focus_previous = opts[n - 1].get_path()
+
+
+static func _paint_opt(b: Button, it: Dictionary) -> void:
+	var fill: Color = Icons.rarity_fill(it)
+	var border: Color = Icons.rarity_border(it)
+	b.add_theme_stylebox_override("normal", ThemeS.sb(fill, border))
+	b.add_theme_stylebox_override("hover", ThemeS.sb(fill.lightened(0.12), border))
+	b.add_theme_stylebox_override("pressed", ThemeS.sb(fill.darkened(0.1), border))
+	b.add_theme_stylebox_override("focus", ThemeS.sb(fill.lightened(0.14), border))
 
 
 static func close_sub(ui: CanvasLayer) -> void:
