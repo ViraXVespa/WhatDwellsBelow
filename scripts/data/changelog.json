@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.48",
+			"points": [
+				{
+					"text": "Escape in browser fullscreen opens the pause menu instead of leaving fullscreen",
+					"subs": [
+						"Chromium / Edge. Hold Escape to leave fullscreen if the browser requires it"
+					]
+				},
+				{
+					"text": "F1 also opens pause on the web, including Safari and Firefox, without leaving fullscreen"
+				},
+				{
+					"text": "Pause \u2192 System and Alt+Enter still toggle fullscreen"
+				}
+			],
+			"summary": "Capture Escape where the browser allows it, and add F1 as a pause bind that every browser can keep inside fullscreen."
+		},
+		{
 			"label": "0.2.47",
 			"points": [
 				{
