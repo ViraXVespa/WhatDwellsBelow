@@ -259,17 +259,37 @@ static func ensure_web_hooks() -> void:
 		return
 	JavaScriptBridge.eval("""
 		(function () {
-			if (window.__wdbFsHooks) return;
-			window.__wdbFsHooks = 1;
+			if (window.__wdbFsHooks2) return;
+			window.__wdbFsHooks2 = 1;
 			window.__wdbEsc = 0;
 			document.addEventListener('keydown', function (e) {
 				var k = e.key || e.code;
+				if (k === 'F1' || k === 'Help') {
+					e.preventDefault();
+					if (e.stopPropagation) e.stopPropagation();
+					window.__wdbEsc = 1;
+					return;
+				}
 				if (k !== 'Escape' && k !== 'Esc') return;
 				if (!document.fullscreenElement) return;
 				e.preventDefault();
 				if (e.stopPropagation) e.stopPropagation();
 				window.__wdbEsc = 1;
 			}, true);
+			document.addEventListener('fullscreenchange', function () {
+				try {
+					if (document.fullscreenElement && navigator.keyboard && navigator.keyboard.lock) {
+						navigator.keyboard.lock(['Escape']);
+					} else if (navigator.keyboard && navigator.keyboard.unlock) {
+						navigator.keyboard.unlock();
+					}
+				} catch (err) {}
+			});
+			try {
+				if (document.fullscreenElement && navigator.keyboard && navigator.keyboard.lock) {
+					navigator.keyboard.lock(['Escape']);
+				}
+			} catch (err) {}
 		})();
 	""", true)
 
@@ -318,7 +338,9 @@ static func _js_request_fs() -> void:
 			try {
 				var c = document.getElementById('canvas') || document.documentElement;
 				var fn = c.requestFullscreen || c.webkitRequestFullscreen || c.msRequestFullscreen;
-				if (fn) fn.call(c);
+				if (!fn) return;
+				try { fn.call(c, { keyboardLock: 'browser' }); }
+				catch (e1) { fn.call(c); }
 			} catch (e) {}
 		})();
 	""", true)
@@ -327,6 +349,9 @@ static func _js_request_fs() -> void:
 static func _js_exit_fs() -> void:
 	JavaScriptBridge.eval("""
 		(function () {
+			try {
+				if (navigator.keyboard && navigator.keyboard.unlock) navigator.keyboard.unlock();
+			} catch (e) {}
 			try {
 				var fn = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
 				if (fn && document.fullscreenElement) fn.call(document);
