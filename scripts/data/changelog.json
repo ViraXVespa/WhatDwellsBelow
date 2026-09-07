@@ -3,6 +3,51 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.51",
+			"points": [
+				{
+					"text": "Pause opens on Settings instead of Inventory",
+					"subs": [
+						"Tabs are Settings, Inventory, Skills",
+						"I / D-pad Right jumps to Inventory"
+					]
+				},
+				{
+					"text": "Settings is a two-column split shared with Archives",
+					"subs": [
+						"Gameplay, Audio, Graphics, Controls pages",
+						"Patreon, Dispel / Main Menu, and Quit are leaves with short copy",
+						"Confirm popups for wipe, Dispel, and Main Menu",
+						"Wipe returns to a fresh title boot"
+					]
+				},
+				{
+					"text": "Graphics uses Mipmaps / Anisotropic checkboxes",
+					"subs": [
+						"Camera zoom slider is 1.0\u20134.0"
+					]
+				},
+				{
+					"text": "Controls rebinding works",
+					"subs": [
+						"Separate keyboard and gamepad pools, two slots, swap on conflict",
+						"Gameplay actions only; sticks stay locked; physical-key defaults"
+					]
+				},
+				{
+					"text": "Archives is title-only",
+					"subs": [
+						"Desktop keeps the live window and restores title when the snapshot closes",
+						"Web redirects in the same tab"
+					]
+				},
+				{
+					"text": "Presentation mode is gone"
+				}
+			],
+			"summary": "Pause Settings replaces the old System list, rebinding actually works, and Archives no longer lives inside pause."
+		},
+		{
 			"label": "0.2.50",
 			"points": [
 				{
