@@ -1,6 +1,7 @@
-# UI helper functions for PauseMenu
+﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const PauseSkills := preload("res://scripts/ui/pause_skills.gd")
 
 
 static func cap(ui: CanvasLayer, text: String, size: int = 18, col: Color = Color(0.9, 0.84, 0.7)) -> Label:
@@ -45,26 +46,14 @@ static func hide_tip(ui: CanvasLayer) -> void:
 
 
 static func paint_tip(ui: CanvasLayer) -> void:
+	var kind: String = str(ui.tip_kind)
+	if kind == "skill" or kind == "perm" or kind == "run":
+		PauseSkills.paint_tip(ui)
+		return
 	if ui.tip_lab == null:
 		return
-	var id: String = ui.tip_id
-	var kind: String = ui.tip_kind
-	var txt := ""
-	if kind == "skill":
-		txt = load("res://scripts/ui/pause_skills.gd").tip_for(id)
-	elif kind == "sys":
-		txt = load("res://scripts/ui/pause_system.gd").tip_for(id)
-	if txt == "":
+	if ui.tip_host:
 		ui.tip_host.visible = false
-		return
-	ui.tip_lab.text = txt
-	var from: Control = ui.tip_from
-	if from and ui.tip_host:
-		ui.tip_host.visible = true
-		var pos: Vector2 = from.global_position
-		var sz: Vector2 = from.size
-		var offset: Vector2 = Vector2(sz.x + 20, (sz.y - ui.tip_host.size.y) * 0.5)
-		ui.tip_host.global_position = pos + offset
 
 
 static func confirm(ui: CanvasLayer, fn: Callable, id: String = "anon") -> void:

@@ -1,8 +1,8 @@
 ﻿# Input
 
-Status: binding design + live snapshot  
-Read when: changing controls, menus, web export, or aim  
-Code: `scripts/input/binds.gd`, `scripts/input/pad.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`, `scripts/input/prompts.gd`, `scripts/web_pad.gd`, `scripts/ui/touch_hud.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/prompt_view.gd`, `scripts/ui/fs_gate.gd`, `scripts/world/player_lock.gd`, `scripts/world/dungeon_map_act.gd`, `scripts/display_mode.gd`  
+Status: binding design + live snapshot
+Read when: changing controls, menus, web export, or aim
+Code: `scripts/input/binds.gd`, `scripts/input/binds_pool.gd`, `scripts/ui/binds_page.gd`, `scripts/input/pad.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`, `scripts/input/prompts.gd`, `scripts/web_pad.gd`, `scripts/ui/touch_hud.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/prompt_view.gd`, `scripts/ui/fs_gate.gd`, `scripts/world/player_lock.gd`, `scripts/world/dungeon_map_act.gd`, `scripts/display_mode.gd`
 See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui.md`, `design/save-tech.md`
 
 ## Target platforms
@@ -25,6 +25,7 @@ See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui
 - X: Gear drop on a gear board.
 - D-pad Up: Use equipped potion
 - D-pad Left: Use equipped food
+- D-pad Right: Open pause on the Inventory tab (or jump to Inventory if pause is already open). No extra mobile well.
 - D-pad Down: Toggle look mode. World-only and large-map-only. MUST NOT fire as look-mode while pause, debug, recap, title, or any `App.ui_open` menu is up (`ui_down` stays menu navigation). Opening those menus clears look mode.
 - Menu / Start: Pause. In an open menu, also acts as back / close.
 - View / Back: Toggle large map overlay (game continues running underneath)
@@ -32,11 +33,11 @@ See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui
 
 All controls, gameplay, and interfaces MUST be designed with a gamepad-first intent. Every menu MUST open with a valid initial focus already set so the player can immediately navigate and select using only the gamepad (no requirement to first highlight an element with the mouse).
 
-There is no gamepad chord for display mode. Couch players change it on Pause → System (`design/ui.md`). Keyboard / mouse uses Alt+Enter (below).
+There is no gamepad chord for display mode. Couch players change it on Pause → Settings → Graphics (`design/ui.md`). Keyboard / mouse uses Alt+Enter (below).
 
 ## Look mode
 
-Action `look_mode` (default: D-pad Down). Session flag only; not saved.
+Action `look_mode` (default: D-pad Down). Session flag only; not saved. Pad-only in the rebind list.
 
 World, map closed:
 
@@ -63,14 +64,31 @@ Shared classifiers live in `scripts/ui/menu_pad.gd`. Any menu with tabs MUST cal
 | Input | Menu effect |
 |-------|-------------|
 | A / Enter / `ui_accept` | Confirm focused control. Second A confirms a pending prompt. |
-| B / Esc / `ui_cancel` | Close a nested layer (re-equip list, rebind page, pending prompt). At root, close the menu. |
+| B / Esc / `ui_cancel` | Close a nested layer (re-equip list, Settings detail column, pending prompt). At root, close the menu. |
 | LB / RB / `[` / `]` | Cycle tabs when the open menu has a tab strip. |
 | Q / LT | Previous gear-board stats page |
 | E / RT | Next gear-board stats page |
+| I / D-pad Right | Jump to the pause Inventory tab |
 
 Exception: the secret Animation Browser keeps LB / RB = previous / next model, LT / RT = animation list, and Y / `gear_tip` = review-state cycle, per `design/debug.md`. While that viewer is open those chords MUST NOT fire world or gear-board actions. Keyboard Y types into the notes field when that field has focus; gamepad Y still cycles.
 
+Menu actions (`ui_*`, pause, tab bumpers, gear tip / drop, crystal zoom) are **not** on the player rebind page.
+
 Touch overlay MUST hide while any menu is open (`App.ui_open`). Menu navigation on a phone is finger-tap on the control, not virtual A / B. D-pad Down in a menu is only `ui_down`.
+
+## Rebinding
+
+Pause → Settings → Controls.
+
+- Two pools: Keyboard / mouse and Gamepad. A selector at the top of the page switches the list. Switching rebuilds the rows for that pool.
+- First row after the selector is Reset Controls (that pool only).
+- Exposed actions are gameplay only: move (keyboard), attack, special, dash, target lock, interact, map, inventory, potion, food, look mode (pad). Item tip and drop are not listed.
+- Two slots per action. A new bind that collides inside the same pool swaps with the other action’s slot. Cross-pool events are ignored.
+- Gamepad left / right sticks cannot be rebound. Move and aim stay on those axes.
+- First boot and Reset bind keyboard actions to **physical** key positions (`physical_keycode`), so QWERTY W stays the same cap as Dvorak `,`. Glyphs follow the player’s layout.
+- Bind name left-aligned. Assigned glyph(s) right-aligned. Empty slot is an em dash. D-pad chips read UP / DOWN / LEFT / RIGHT, not “DPAD UP”.
+
+`binds.gd` is the facade (`collect` / `apply` / `register`). Slot math lives in `binds_pool.gd`. The Controls page is `binds_page.gd`.
 
 ## On-screen prompts
 
@@ -88,11 +106,9 @@ Do not bake `A`, `B`, `ENTER`, `ESC`, `LMB`, or `RMB` into button captions or st
 | World HUD | `interact` glyph + the verb from `scripts/world/interact.gd`. Locked / spent lines are text only. Look-mode cue under the minimap while look mode or the large map is active. |
 | Touch overlay | Pad glyphs on the virtual buttons (`rt`, `lt`, `a`, `b`, `menu`, `view`, `dpad_up`, `dpad_left`). No lock / R3 well. |
 
-Glyph PNGs: `assets/ui/prompts/kb/`, `assets/ui/prompts/pad/`, `assets/ui/prompts/mouse/`. Regenerate with `python tools/gen_prompt_glyphs.py`.
+Glyph PNGs: `assets/ui/prompts/kb/`, `assets/ui/prompts/pad/`, `assets/ui/prompts/mouse/`. Regenerate with `python tools/gen_prompt_glyphs.py`. Keyboard arrows are stemmed arrows on the key cap, not `UP` / `DN` / empty `<` `>` stamps.
 
-Helpers: `Prompts.texture_for(action)`, `PromptView.fill`, `PromptView.footer(ui, extra_parts)`.
-
-Extra bindable actions used by prompts: `tab_left`, `tab_right`, `gear_tip`, `gear_drop`, `crystal_zoom`, `look_mode`.
+Helpers: `Prompts.texture_for(action)`, `Prompts.texture_for_event`, `PromptView.fill`, `PromptView.footer(ui, extra_parts)`.
 
 ## Aim-line indicator
 
@@ -100,23 +116,25 @@ Extra bindable actions used by prompts: `tab_left`, `tab_right`, `gear_tip`, `ge
 - Appearance and length are fully tunable (default style inspired by Heroes of Hammerwatch and similar games; length may optionally scale toward the farthest point the currently equipped weapon can hit).
 - Always visible while the player is inside the dungeon; never visible in Placeholdia.
 - Always draws the full configured distance (does not respect line-of-sight or stop at walls).
-- Toggleable on/off and with an independent opacity slider in the System tab of the pause menu.
+- Toggleable on/off and with an independent opacity slider in Pause → Settings → Graphics.
 - On/off state and opacity are persisted with the player profile.
 - Fully functional with gamepad, keyboard/mouse, and web-touch aiming (parity required). Touch aim is lock-on while the overlay is active.
 
 ## Input – Keyboard / mouse (fully featured fallback)
 
-All gamepad actions MUST have keyboard/mouse equivalents. Mouse aim + hold-LMB for attack is the default mouse scheme. Rebinding of all actions is required.
+All gamepad actions MUST have keyboard/mouse equivalents. Mouse aim + hold-LMB for attack is the default mouse scheme. Player rebinding covers gameplay actions only (see Rebinding).
 
 Mouse wheel zooms world camera or the large map as described under Look mode. It is not a rebindable InputMap combat action.
 
 **Alt+Enter** is a fixed display toggle. It is not an InputMap action and MUST NOT appear on the rebind page. Enter alone stays Interact / confirm. Handled in `App._input` → `DisplayMode.handle_input` so it works while a menu is open.
 
 - Desktop (`DisplayMode.uses_desktop_modes()`): if the window is windowed, apply the last saved fullscreen kind (`display_fs_kind`: borderless or true fullscreen; fresh default is borderless). If the window is already borderless or true fullscreen, return to windowed and leave `display_fs_kind` alone.
-- Web / native Android / iOS (`DisplayMode.uses_web_fs_toggle()`): toggle the current fullscreen state through the same path as Pause → System (`DisplayMode.set_web_fullscreen`). A keydown is a valid gesture for `requestFullscreen`.
+- Web / native Android / iOS (`DisplayMode.uses_web_fs_toggle()`): toggle the current fullscreen state through the same path as Pause → Settings → Graphics (`DisplayMode.set_web_fullscreen`). A keydown is a valid gesture for `requestFullscreen`.
 - No-op on `xbox`.
 
-**Esc** opens pause (and backs out of menus). On web it MUST NOT exit browser fullscreen. Only Pause → System and Alt+Enter leave web fullscreen. `DisplayMode.ensure_web_hooks()` installs a capturing `keydown` listener that `preventDefault`s Escape while `document.fullscreenElement` is set and stashes `window.__wdbEsc`. `DisplayMode.consume_web_esc()` / `Pad.pause_just()` turn that flag into pause so camp and dungeon still call `App.pause_menu.toggle()`.
+**Esc** opens pause (and backs out of menus). On web it MUST NOT exit browser fullscreen. Only Pause → Settings → Graphics and Alt+Enter leave web fullscreen. `DisplayMode.ensure_web_hooks()` installs a capturing `keydown` listener that `preventDefault`s Escape while `document.fullscreenElement` is set and stashes `window.__wdbEsc`. `DisplayMode.consume_web_esc()` / `Pad.pause_just()` turn that flag into pause so camp and dungeon still call `App.pause_menu.toggle()`.
+
+**I** opens pause on Inventory (or jumps to that tab). Same action as D-pad Right.
 
 ## Input – Web touch (`touch_pad.gd`, `touch_hud.gd`)
 
@@ -158,13 +176,14 @@ These are implementation defaults, not a replacement for rebinding.
 
 | Action | Keys |
 |--------|------|
-| Move | WASD / arrows |
+| Move | WASD / arrows (physical positions) |
 | Aim | Mouse |
 | Attack | LMB hold |
 | Special | RMB |
 | Dash | Space |
 | Target-lock | Q |
 | Interact | E / Enter |
+| Inventory | I |
 | Pause | Esc |
 | Map | M |
 | Potion | F |

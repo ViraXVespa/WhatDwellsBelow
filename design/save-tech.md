@@ -1,8 +1,8 @@
 ﻿# Save, export, performance
 
-Status: binding design  
-Read when: changing persistence, web export, autoloads, or perf  
-Code: `scripts/data/save_store.gd`, `scripts/app.gd`, `scripts/app_set.gd`, `scripts/display_mode.gd`, `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`, `tools/export_web.ps1`, `tools/web_postexport.py`, `tools/build_changelog.py`, `.github/workflows/version.yml`, `.github/workflows/pages.yml`, `project.godot`, `export_presets.cfg`  
+Status: binding design
+Read when: changing persistence, web export, autoloads, or perf
+Code: `scripts/data/save_store.gd`, `scripts/app.gd`, `scripts/app_set.gd`, `scripts/display_mode.gd`, `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`, `tools/export_web.ps1`, `tools/web_postexport.py`, `tools/build_changelog.py`, `.github/workflows/version.yml`, `.github/workflows/pages.yml`, `project.godot`, `export_presets.cfg`
 See also: `design/debug.md`, `design/archives.md`, `design/versioning.md`, `design/camera.md`, `design/ui.md`, `design/input.md`
 
 ## Save system
@@ -17,14 +17,18 @@ See also: `design/debug.md`, `design/archives.md`, `design/versioning.md`, `desi
   - The three forged holds for every equipment slot
   - Unlocked deepest floor
   - Selected character type (male / female)
-  - Camera zoom (range 1.0–2.5, fresh default 1.75) and HUD scale settings
+  - Camera zoom (range 1.0–4.0, fresh default 1.75) and HUD scale settings
   - Sprite filter id, mip-blend sharp flag, and mip bias
   - Display mode (`display_mode`: `windowed` / `borderless` / `exclusive`), last fullscreen kind (`display_fs_kind`: `borderless` / `exclusive`), and web fullscreen preference (`web_fullscreen`)
   - Aim-line on/off state and opacity
+  - Target-lock preference (`target_lock_pref`)
+  - Rebound gameplay actions (`binds.collect` / `binds.apply`)
   - Last acknowledged game version (`last_seen_game_ver`) for the title “what’s new” overlay
   - Any other player settings and debug overrides that should persist
 
 Live player slot name: `"live"`. `App.save_now()` / `App.wipe_save()`.
+
+Pause → Settings → Gameplay → Delete Save Data uses `confirm_dlg.gd`. Confirm calls `App.wipe_save()` then `App.go_title()` so the next screen is a clean title boot.
 
 Missing `cam_zoom` on an old save applies 1.75. A save that already stored `1.0` keeps 1.0 until the player moves the slider.
 
@@ -57,9 +61,11 @@ The Automated Playtest / AI Player system maintains two completely independent s
 2. Progressed save – contains full skill progression and can be reset to a fixed default progressed state.
 Both are stored under isolated paths and follow the same primary + backup safety rules.
 
-## Presentation switcher
+## Archives
 
-The Archives browser MUST ship in the final demo. Selecting title “Play” always launches the live path. Catalog rows are pinned commits per `design/archives.md` and `design/versioning.md`. This system exists to support the Patreon development narrative and MUST not be removed.
+The Archives browser MUST ship in the final demo and opens from the title card only. Selecting title “Play” always launches the live path. Catalog rows are pinned commits per `design/archives.md` and `design/versioning.md`. This system exists to support the Patreon development narrative and MUST not be removed.
+
+There is no in-game presentation-mode switcher. Desktop Play on a catalog row keeps the live instance alive (minimized) and restores it to title when the child process exits. Web Play is a same-tab redirect.
 
 ## Web export requirements
 
@@ -85,10 +91,10 @@ Players MUST receive a new build without an incognito window or a manual cache c
 ## Display apply
 
 - Desktop applies saved `display_mode` at boot via `DisplayMode.apply_saved()`.
-- Web cannot enter fullscreen except from a user gesture. `web_fullscreen` is the preference; the pre-splash gate, System toggle, and Alt+Enter are the gestures.
-- Esc on web MUST NOT exit fullscreen. Pause → System and Alt+Enter do.
+- Web cannot enter fullscreen except from a user gesture. `web_fullscreen` is the preference; the pre-splash gate, Settings → Graphics toggle, and Alt+Enter are the gestures.
+- Esc on web MUST NOT exit fullscreen. Pause → Settings → Graphics and Alt+Enter do.
 - `screen.orientation.lock("landscape")` is attempted from those same enter gestures. iPhone Safari tabs may ignore it; Home Screen / PWA launches use the manifest orientation.
-- Custom feature tag `xbox` hides the System row and skips apply / Alt+Enter / the gate.
+- Custom feature tag `xbox` hides the Settings Quit / display rows and skips apply / Alt+Enter / the gate.
 
 ## Performance
 

@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const Touch := preload("res://scripts/input/touch_pad.gd")
@@ -39,7 +39,25 @@ static func ai_held(host: Node, action: String) -> bool:
 	return false
 
 
+static func pref_on() -> bool:
+	return bool(App.get("target_lock_pref"))
+
+
+static func apply_pref(host: Node) -> void:
+	if Touch.active():
+		host.lock_armed = true
+		return
+	host.lock_armed = pref_on()
+	if host.lock_armed:
+		acquire_lock(host)
+	else:
+		host.lock_target = null
+
+
 static func lock_and_aim(host: Node, move: Vector2, delta: float) -> void:
+	if not bool(host.get_meta("lock_pref_applied", false)):
+		apply_pref(host)
+		host.set_meta("lock_pref_applied", true)
 	if Touch.active():
 		host.lock_armed = true
 	elif Input.is_action_just_pressed("target_lock") or App.pad_just("target_lock"):

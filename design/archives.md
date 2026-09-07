@@ -1,9 +1,9 @@
-# Archived builds
+﻿# Archived builds
 
 Status: binding design
 Read when: touching Archives UI, Pages exports, or catalog pins
-Code: `scripts/ui/archives_ui.gd`, `scripts/ui/archives_ui_view.gd`, `scripts/ui/archives_ui_act.gd`, `scripts/data/archives_catalog.gd`, `scripts/data/archives_launch.gd`, `scripts/data/archive_catalog.json`, `scripts/ui/loader.gd`
-See also: `design/protocol.md`, `design/versioning.md`, `design/save-tech.md`
+Code: `scripts/ui/archives_ui.gd`, `scripts/ui/archives_ui_view.gd`, `scripts/ui/archives_ui_act.gd`, `scripts/ui/split_menu.gd`, `scripts/ui/split_menu_view.gd`, `scripts/ui/split_menu_chrome.gd`, `scripts/data/archives_catalog.gd`, `scripts/data/archives_launch.gd`, `scripts/data/archive_catalog.json`, `scripts/ui/loader.gd`
+See also: `design/protocol.md`, `design/versioning.md`, `design/save-tech.md`, `design/ui.md`
 
 ## Core rule
 
@@ -38,11 +38,11 @@ Tags: `archive/classic-2d`, `archive/art-experiment`, `archive/full-3d-pass`, `a
 
 ## Play
 
-**Web:** loader overlay, then `OS.shell_open` the catalog `pages_url`. The archive is a pre-exported Godot Web build under GitHub Pages. Never spawn Godot or checkout in the browser.
+**Web:** loader overlay, then same-tab redirect to the catalog `pages_url` (`JavaScriptBridge` `location` assign). Do not `OS.shell_open` a new tab. The browser Back button returns to the live title. The archive is a pre-exported Godot Web build under GitHub Pages. Never spawn Godot or checkout in the browser.
 
-**Editor / desktop with git:** reuse `scripts/ui/loader.gd`. Checkout `.archive_worktrees/<id>` (gitignored) if needed, stamp the project name, headless `--import` if `.godot/` is missing, then spawn Godot `--path` that worktree. Keep frames pumping. B / Esc cancels before spawn.
+**Editor / desktop with git:** reuse `scripts/ui/loader.gd`. Checkout `.archive_worktrees/<id>` (gitignored) if needed, stamp the project name, headless `--import` if `.godot/` is missing, then `OS.create_process` Godot `--path` that worktree. Keep the live instance running: minimize the parent window, watch the child PID, restore the parent and `App.go_title()` when the child exits. Keep frames pumping until spawn. B / Esc cancels before spawn.
 
-**No git / packaged exe:** same as web (Pages URL).
+**No git / packaged exe:** same as web (Pages URL, same tab on web).
 
 Cached worktree + existing import: short “Opening snapshot…” beat, no re-import.
 
@@ -74,18 +74,20 @@ Standing Grok Build week pins (no extra prompt):
 
 ## Archives browser UI
 
-Opened from title Archives or Pause → System. Same `archives_ui` instance.
+Opened from title **Archives** only. Pause Settings MUST NOT open this browser.
+
+Shared two-column chrome: `split_menu.gd` + `split_menu_view.gd` (same helper as Pause Settings). Archive-specific Play / Documents / Video stay in `archives_ui_act.gd`.
 
 Two columns. Only one column is active.
 
 - Left: vertical list of catalog rows plus Back.
 - Right: info panel — description, Video (disabled if missing), Documents, Play.
-- Highlight / hover a left row updates the right pane immediately. Focus stays on the list.
+- While the list column is active, highlight / hover a left row updates the right pane immediately. Focus stays on the list.
+- While the detail column is active, hover MUST NOT change the right pane. Click a different left row opens that row’s page. Click the already-open row returns focus to the list.
 - A / click a left row moves focus to the first enabled right button (skip disabled Video).
 - B / Esc on the right column returns focus to the current left row. Menu stays open.
 - B / Esc on the left column closes the browser.
 - Inactive column is dimmed. A gold rail marks the active column. A chevron tracks the selected row. Path text reads `Snapshots › {label}` and deeper for Documents / reader.
-- Mouse: hover previews; click a left row enters the right column; click the grayed left list while detail is active returns to that row.
 
 Documents: `archives/docs/<id>/` first, else `git show <sha>:<path>` locally, else GitHub raw on web. Truncate long files. Documents and reader stay a right-column mode stack; B steps read → docs → info → list.
 
@@ -93,4 +95,4 @@ List MUST include every catalog row, including Classic 2D, Art experiment, Full 
 
 ## Live snapshot
 
-`archives_ui.gd` is the facade. `archives_ui_view.gd` builds chrome and panels. `archives_ui_act.gd` handles highlight, select, back, Play, and docs fetch.
+`archives_ui.gd` is the facade and split host. `archives_ui_view.gd` still owns archive-only panels. `archives_ui_act.gd` handles Play, docs fetch, and video. Column focus / dim / chevron come from `split_menu_view.gd`.

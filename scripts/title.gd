@@ -1,4 +1,4 @@
-extends Control
+﻿extends Control
 
 const T := preload("res://scripts/data/tunables.gd")
 const GameVer := preload("res://scripts/data/game_ver.gd")

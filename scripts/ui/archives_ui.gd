@@ -1,16 +1,19 @@
-extends CanvasLayer
+﻿extends CanvasLayer
 
-## Pause / title Archives browser. Section 20 layout.
+## Title Archives browser. Shared two-column shell.
 
 const T := preload("res://scripts/data/tunables.gd")
 const Docs := preload("res://scripts/data/archives_docs.gd")
-const View := preload("res://scripts/ui/archives_ui_view.gd")
+const ArchView := preload("res://scripts/ui/archives_ui_view.gd")
 const Act := preload("res://scripts/ui/archives_ui_act.gd")
+const Split := preload("res://scripts/ui/split_menu.gd")
+const SplitView := preload("res://scripts/ui/split_menu_view.gd")
 
 var open := false
 var selected := 0
 var mode := "info"
 var col := "list"
+var split_page := ""
 var doc_i := 0
 var list_box: VBoxContainer
 var info_box: VBoxContainer
@@ -32,8 +35,9 @@ var _path: Label
 
 
 func _ready() -> void:
-	View.setup(self)
-	_info_root.gui_input.connect(_on_info_gui)
+	SplitView.setup_overlay(self, "Archives", "Standalone snapshots. Title Play always launches the live path.")
+	if _info_root:
+		_info_root.gui_input.connect(_on_info_gui)
 	http = HTTPRequest.new()
 	http.timeout = 12.0
 	http.request_completed.connect(_http_done)
@@ -48,7 +52,8 @@ func show_browser() -> void:
 	col = "list"
 	entries = T.archive_catalog()
 	selected = clampi(selected, 0, maxi(0, entries.size() - 1))
-	View.rebuild(self)
+	split_page = str(_cur().get("id", ""))
+	Split.rebuild(self)
 
 
 func hide_browser() -> void:
@@ -64,10 +69,56 @@ func hide_browser() -> void:
 		App.pause_menu._focus()
 
 
+func split_rows() -> Array:
+	var out: Array = []
+	for raw: Variant in entries:
+		if not (raw is Dictionary):
+			continue
+		var e: Dictionary = raw
+		out.append({
+			"id": str(e.get("id", "")),
+			"label": str(e.get("label", e.get("id", ""))),
+			"kind": "page",
+		})
+	return out
+
+
+func split_back_label() -> String:
+	return "Back"
+
+
+func split_close() -> void:
+	hide_browser()
+
+
+func split_path_text() -> String:
+	var e: Dictionary = _cur()
+	var lab: String = str(e.get("label", "Snapshot"))
+	if col == "list":
+		return "Snapshots"
+	if mode == "docs":
+		return "Snapshots  ›  %s  ›  Documents" % lab
+	if mode == "read":
+		var docs: PackedStringArray = _docs_of(e)
+		var name: String = str(docs[doc_i]) if doc_i >= 0 and doc_i < docs.size() else ""
+		return "Snapshots  ›  %s  ›  %s" % [lab, Docs.display_name(name)]
+	return "Snapshots  ›  %s" % lab
+
+
+func split_build_page(id: String) -> void:
+	if id == "":
+		SplitView.clear_page(self)
+		return
+	ArchView.rebuild_info(self)
+
+
 func _cur() -> Dictionary:
 	if selected < 0 or selected >= entries.size():
 		return {}
-	return entries[selected]
+	var raw: Variant = entries[selected]
+	if raw is Dictionary:
+		return raw
+	return {}
 
 
 func _docs_of(e: Dictionary) -> PackedStringArray:
@@ -81,27 +132,27 @@ func _st(msg: String) -> void:
 
 
 func _rebuild() -> void:
-	View.rebuild(self)
+	Split.rebuild(self)
 
 
 func _place_chevron() -> void:
-	View.place_chevron(self)
+	SplitView.place_chevron(self)
 
 
 func _focus_col() -> void:
-	View.focus_col(self)
+	SplitView.focus_col(self)
 
 
 func _on_list_hover(i: int) -> void:
-	Act.preview(self, i)
+	Split.preview(self, i)
 
 
 func _on_list_focus(i: int) -> void:
-	Act.preview(self, i)
+	Split.preview(self, i)
 
 
 func _on_list_pressed(i: int) -> void:
-	Act.list_pressed(self, i)
+	Split.list_pressed(self, i)
 
 
 func _on_info_gui(event: InputEvent) -> void:

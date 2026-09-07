@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Pad := preload("res://scripts/input/pad.gd")
 
@@ -95,18 +95,30 @@ static func id_for_event(e: InputEvent) -> String:
 
 
 static func path_for(action: String) -> String:
-	var id := id_for_event(event_for(action))
+	return path_for_event(event_for(action), scheme())
+
+
+static func path_for_event(e: InputEvent, pool: String = "") -> String:
+	var id: String = id_for_event(e)
 	if id == "":
 		return ""
+	var use_pad: bool = (pool == "pad") if pool != "" else scheme() == "pad"
 	if id.begins_with("mouse/"):
 		return DIR + id + ".png"
-	if scheme() == "pad":
+	if use_pad:
 		return DIR + "pad/" + id + ".png"
 	return DIR + "kb/" + id + ".png"
 
 
 static func texture_for(action: String) -> Texture2D:
 	var p := path_for(action)
+	if p != "" and ResourceLoader.exists(p):
+		return load(p)
+	return null
+
+
+static func texture_for_event(e: InputEvent, pool: String = "") -> Texture2D:
+	var p: String = path_for_event(e, pool)
 	if p != "" and ResourceLoader.exists(p):
 		return load(p)
 	return null
@@ -177,10 +189,23 @@ static func _mouse(i: int) -> String:
 	return "mouse/mmb"
 
 
+static func _layout_code(e: InputEventKey) -> int:
+	var phys: int = int(e.physical_keycode)
+	if phys != 0:
+		var mapped: int = int(DisplayServer.keyboard_get_keycode_from_physical(phys as Key))
+		if mapped != 0:
+			return mapped
+		return phys
+	return int(e.keycode)
+
+
 static func _key(e: InputEventKey) -> String:
-	var code := int(e.keycode)
-	if code == 0:
-		code = int(e.physical_keycode)
+	var code: int = _layout_code(e)
+	var phys: int = int(e.physical_keycode)
+	if phys == KEY_BRACKETLEFT or code == KEY_BRACKETLEFT:
+		return "lbracket"
+	if phys == KEY_BRACKETRIGHT or code == KEY_BRACKETRIGHT:
+		return "rbracket"
 	match code:
 		KEY_ESCAPE:
 			return "esc"
@@ -224,11 +249,11 @@ static func _key(e: InputEventKey) -> String:
 			return "up"
 		KEY_DOWN:
 			return "down"
-	var s := OS.get_keycode_string(code).to_lower()
+	var s: String = OS.get_keycode_string(code).to_lower()
 	s = s.replace(" ", "")
-	if s == "bracketleft":
+	if s == "bracketleft" or s == "braceleft":
 		return "lbracket"
-	if s == "bracketright":
+	if s == "bracketright" or s == "braceright":
 		return "rbracket"
 	if s == "escape":
 		return "esc"

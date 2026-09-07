@@ -1,12 +1,11 @@
-# Placeholdia hub
+﻿# Placeholdia Hub Summary
 
-Status: binding design  
-Read when: changing camp layout, loadout, or hub interactables  
-Code: `scripts/world/camp.gd`, `scripts/world/interact.gd`, `scripts/combat/dummy.gd`, `scenes/camp.tscn`  
-See also: `design/inventory.md`, `design/ui.md`, `design/gear-ui.md`, `design/combat.md`
+**Status:** Binding design
+**Read when:** Changing camp layout, loadout, or hub interactables
+**Code:** `scripts/world/camp.gd`, `scripts/world/interact.gd`, `scripts/combat/dummy.gd`, `scenes/camp.tscn`
+**See also:** `design/inventory.md`, `design/ui.md`, `design/gear-ui.md`, `design/combat.md`
 
-## Required interactables (complete and final list)
-
+## Required Interactables
 - Floor Crystal (opens loadout / enter-dungeon UI)
 - Anvil
 - Vendor Stall
@@ -17,92 +16,70 @@ See also: `design/inventory.md`, `design/ui.md`, `design/gear-ui.md`, `design/co
 - “Welcome to Placeholdia!” banner
 - Test dummy (coverage / weapon sandbox)
 
-There is no separate Loadout Station. Layout may be adjusted freely for aesthetics and usability. Existing flavor text may be lightly revised if any line feels awkward or forced.  
-All buildings MUST have actual depth and realistic 3D dimensions (not flat 2D sprites) so they feel solid under the orthographic Camera3D and avoid sorting / z-axis issues. Reference feel: the city area of *Heroes of Hammerwatch 2*.
+All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidity under the orthographic Camera3D.
 
-## Floor Crystal
+### Floor Crystal
+- Only enter-dungeon interactable.
+- Opens Loadout UI: select holds per slot (fallback to starter Great Axe + pickaxe or hatchet + potion), choose starting weapon, tool type (pickaxe or hatchet — locked for run), starting floor, **Enter dungeon**.
+- Character type set in Pause → Settings → Gameplay.
+- Floor row: `Floor: [−] [selected] [+] (Deepest floor: n)`. Only reached floors; `−` dies at 1; `+` dies at deepest.
+- First focus: **Enter dungeon**. B / Esc / Close leaves Placeholdia.
+- On enter: play **consciousness-transfer VFX** before dungeon loads.
+- UI must be clean, TV-readable, dungeon-themed, consistent with other UIs.
 
-- The Floor Crystal is the only enter-dungeon interactable in Placeholdia.
-- Interacting with it opens the Loadout UI (`design/gear-ui.md`).
-- That UI includes: select holds per slot (fallback to starter Great Axe + pickaxe or hatchet + potion if no holds exist), choose starting weapon, choose tool type (pickaxe or hatchet — locked for the entire run), choose starting floor, **Enter dungeon**.
-- Character type is Pause → System, not this UI.
-- There is no top-of-menu weapon / tool / deepest-floor summary.
-- Floor row reads `Floor: [−] [selected] [+] (Deepest floor: n)`. Only floors the player has reached. Never backward. `−` dies at 1; `+` dies at deepest.
-- First focus is **Enter dungeon**. One press enters. B / Esc / Close leaves Placeholdia without entering. B on a re-equip list only closes that list.
-- On enter, play a **consciousness-transfer VFX** before the dungeon loads. This is a short presentation beat, not a story cutscene.
-- Visual presentation MUST be clean, TV-readable, dungeon-themed, and consistent with the other hub / dungeon UIs.
+### Return / Wake-up
+- After death or “Dispel”, play short **wake-up sequence** (animation + VFX/SFX).
 
-## Return / wake-up
+### Anvil
+- Shared gear board with **Analyze** and **Forge** tabs.
+- **Analyze:** Pick forgeable piece (bag, bank, equipped). Confirming destroys it. Starters excluded. Remains persist on `App.prog.analyzed` until forged.
+- **Forge:** Use analyzed remains + holds. First forge costs gold + ore + root, writes hold (permanent). Re-forge at reduced cost. Max 3 holds per slot.
+- Smithing skill affects time, cost, quality.
+- UI reuses gear board doll, flyout, stats card, slot list. Footer: workbench + tabs.
+- UI: clean, TV-readable, dungeon-themed, consistent.
 
-- After recap from death or “Dispel”, arriving back in Placeholdia MUST play a short **wake-up sequence**.
-- This is a presentation beat (animation + VFX/SFX), not a mandatory dialogue tree or cutscene.
+**Usage:**
+1. Analyze tab → A on slot → pick non-starter → confirm. Piece gone; remains shown.
+2. Forge tab → A on slot → pick remains → confirm cost. Hold appears.
+3. Holds re-forged from Forge tab only.
 
-## Anvil
-
-- Two tabs on one shared gear board: **Analyze** and **Forge**. They are separate systems.
-- Analyze: pick a forgeable piece from bag, bank, or an equipped slot. Confirming DESTROYS that piece. Starters cannot be analyzed and MUST NOT appear in the list. Weapon and tool slots refill with the starter so they stay equipped.
-- Destroyed remains persist on `App.prog.analyzed` (saved) until forged. Closing the anvil does not return the piece.
-- Forge: only analyzed remains and existing holds. Raw bag / bank / equipped gear cannot be forged. First forge of remains costs gold + ore + root and writes a hold (permanent access). Re-forge a hold at reduced cost. Max three holds per equipment slot.
-- Smithing skill influences time, cost, and quality of output.
-- UI MUST reuse the shared gear board doll, flyout, stats card, and slot list from `design/gear-ui.md`. Footer is the workbench plus the Analyze / Forge tabs.
-- UI MUST be clean, TV-readable, dungeon-themed, and consistent with the other interaction UIs.
-
-How to use it
-1. Anvil → Analyze tab → A on a slot → pick a non-starter → A again. Piece is gone. Remains show on the tab.
-2. Forge tab → A on that slot → pick remains → confirm cost. Hold appears.
-3. Holds re-forge from the Forge tab only. Raw gear never appears there.
-
-## Vendor Stall
-
-- Purchases ore for gold.
+### Vendor Stall
+- Buys ore for gold.
 - Sells basic food and potions.
 
-## Dumpster
+### Dumpster
+- Flavor object only. No interaction or gameplay effect.
 
-- Pure flavor object only.
-- Retains its current text. No inventory interaction, dialogue tree, or gameplay effect.
+### Guild / Quest Access
+- Via Receptionist area or Notice Board.
+- Offers 3 random quests; one active at a time.
+- Quests re-generated after each delve (active unfinished quest preserved).
+- Quest types: defeat enemies, extract ore, retrieve item, vanquish named enemy (locks enemy spawn).
+- Rewards: XP, unowned gear, gold, items.
 
-## Guild / quest access
+### Controls Billboard
+- Shows TV-readable list of current controls (gamepad primary; keyboard/mouse equivalents).
+- Reflects player bindings from Pause → Settings → Controls. Flavor text allowed; list must be accurate.
+- Close with Back / B.
+- Dungeon-themed / hub-themed UI.
 
-- Accessible via the guild (Receptionist area or Notice Board).
-- Presents three different random quests for the player to choose from.
-- Only one quest may be active at a time.
-- After each delve the available quests are randomly re-generated (the currently active unfinished quest is preserved).
-- Example quest types include: defeat X of enemy type Y, extract X ore in a single run, retrieve an item from floor X (quest item spawns only while active), or vanquish a specific named enemy (locks that named enemy as the only one that can appear until completed).
-- Rewards include XP in random skills, unowned equipment pieces, gold, and other desirable items.
+### “Welcome to Placeholdia!” Banner
+- Text printed directly on banner, clearly visible.
+- Double live size for readability from crystal.
+- Not interactable or floating text.
 
-## Controls Billboard
+### Test Dummy
+- Striking dummy (`DummyS` / `scripts/combat/dummy.gd`) for testing.
+- Opaque-sprite occupancy like dungeon enemies.
+- No knockback. Refills at 0 HP.
+- Dark ground pad allowed for telegraph readability.
+- Sandbox object, not interactable like Floor Crystal / Anvil.
 
-- Interactable object in Placeholdia, distinct from the guild notice board and the Welcome banner.
-- On interact, shows a TV-readable list of the current game controls.
-- The list MUST reflect the player’s active bindings (including any rebinds from the System tab).
-- Gamepad bindings are the primary listing; keyboard / mouse equivalents are shown as well.
-- Flavor text around the list is allowed; the control list itself MUST stay accurate.
-- Close with the normal menu Back / B pattern.
-- Dungeon-themed / hub-themed player-facing UI. No default unskinned panel.
-- In-world label copy MAY be invented at implementation time.
+### Hub Audio / Atmosphere
+- Warm, hopeful, lightly comedic music and ambience (stand-in until final assets).
+- Lighting/mood contrasts with darker dungeon.
 
-## “Welcome to Placeholdia!” Banner
+### Live Snapshot
+- `App.play_from_menu()` / `enter_dungeon()` use loading overlay for hub/dungeon assets (`design/ui.md`).
 
-- The text MUST be printed and clearly visible directly on the banner itself.
-- It MUST NOT be implemented as an interactable object or as floating text above a blank banner.
-- Live size is double the original banner scale so the print stays readable from the crystal.
-
-## Test dummy
-
-- Placeholdia MUST include a striking dummy (`DummyS` / `scripts/combat/dummy.gd`) so coverage and weapons can be tested without a delve.
-- It uses the same opaque-sprite occupancy as dungeon enemies (`design/combat.md`).
-- It MUST NOT take knockback.
-- At 0 HP it refills instead of despawning.
-- A dark ground pad under the dummy is allowed so telegraph overlap is readable against the tile pattern.
-- It is a sandbox object, not an interactable in the Floor Crystal / Anvil sense.
-
-## Hub audio / atmosphere
-
-- Warm, slightly hopeful and lightly comedic stand-in music and ambient sound are acceptable until final assets. Lighting and mood MUST contrast with the darker dungeon.
-
-## Live snapshot
-
-`App.play_from_menu()` / `enter_dungeon()` show the loading overlay while hub or dungeon assets come in. See `design/ui.md`.
-
-Anvil is the shared gear board (`scripts/ui/gear_board.gd`) in `mode="anvil"` with Analyze / Forge tabs from `scripts/ui/gear_board_anvil.gd`. Remains live on `App.prog.analyzed`. Forge writes holds through `scripts/data/progress_town.gd`.
+**Anvil Details:** Shared gear board (`scripts/ui/gear_board.gd`) in `mode="anvil"` with tabs from `scripts/ui/gear_board_anvil.gd`. Remains on `App.prog.analyzed`. Forge writes holds via `scripts/data/progress_town.gd`.

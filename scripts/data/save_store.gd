@@ -1,4 +1,4 @@
-extends RefCounted
+﻿extends RefCounted
 
 ## Primary + backup saves. Isolated live vs playtest slots.
 
@@ -72,6 +72,7 @@ static func collect() -> Dictionary:
 		"web_fullscreen": App.web_fullscreen,
 		"aim_line_on": App.bal.aim_line_on,
 		"aim_line_opacity": App.bal.aim_line_opacity,
+		"target_lock_pref": bool(App.get("target_lock_pref")),
 		"bank_gold": App.bank_gold,
 		"bank_ore": App.bank_ore,
 		"bank_wood": App.bank_wood,
@@ -101,6 +102,7 @@ static func apply(data: Dictionary) -> void:
 	App.web_fullscreen = bool(data.get("web_fullscreen", false))
 	App.bal.aim_line_on = bool(data.get("aim_line_on", true))
 	App.bal.aim_line_opacity = float(data.get("aim_line_opacity", 0.85))
+	App.target_lock_pref = bool(data.get("target_lock_pref", false))
 	App.bank_gold = int(data.get("bank_gold", 0))
 	App.bank_ore = int(data.get("bank_ore", 0))
 	App.bank_wood = int(data.get("bank_wood", 0))
@@ -213,6 +215,7 @@ static func fresh_delver() -> void:
 	App.display_mode = "borderless"
 	App.display_fs_kind = "borderless"
 	App.web_fullscreen = false
+	App.target_lock_pref = false
 	App.bal.aim_line_on = true
 	App.bal.aim_line_opacity = 0.85
 	App.reset_binds()

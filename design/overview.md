@@ -1,4 +1,4 @@
-# Overview, scope, and lore
+﻿# Overview, scope, and lore
 
 Status: binding design
 Read when: scoping a feature, writing player-facing copy, deciding whether something is in the demo
@@ -11,9 +11,6 @@ See also: `design/constraints.md`, `design/hub.md`
 What Dwells Below
 
 **One-line Public Description**
-(Use the exact wording currently on the public GitHub Pages / title screen; treat it as locked unless later changed.)
-
-Live locked line in `tunables.gd`:
 A gamepad-first dungeon crawler where you pilot disposable spirit avatars, mail loot home, and slowly remember the skills you earned in the dark.
 
 **Core Fantasy**
@@ -39,21 +36,21 @@ A complete, production-ready vertical slice that can ship as a free demo. Every 
 - Procedural dungeon floors in a repeating 5-floor structure that continues indefinitely until death
 - Floor Guardians (floors 1–4) and Gate Master (floor 5) with boss doors and locked stairs
 - Complete combat system (Great Axe, Lightning Staff, Longbow, weapon-specific specials on LT, Dash, target-lock, critical hits, Adrenaline Rush) with clear range telegraphs and active-attack indicators on every attack
-- Aim-line indicator (tunable, dungeon-only, System-tab toggle + opacity, persisted)
+- Aim-line indicator (tunable, dungeon-only, Settings → Graphics toggle + opacity, persisted)
 - Hit-based gathering system for both mining (pickaxe) and woodcutting (hatchet)
 - Eleven skills (Great Axe, Staff, Longbow, Strength, Magic, Ranged, Defense, Hitpoints, Mining, Woodcutting, Smithing) with permanent XP fragments
 - Inventory, equipment slots (including single Tool slot locked to one type per run), forged holds (max 3 per slot), extraction via Extraction Gates
 - Artifact collections / sets (exactly eight sets, run-only, bonuses displayed under descriptions)
-- Male and female player characters (selectable on first load, switchable later from pause menu) with full animation parity, each with its own complete voice-over set, and exactly 8 directional animations
+- Male and female player characters (selectable on first load, switchable later from Pause → Settings → Gameplay) with full animation parity, each with its own complete voice-over set, and exactly 8 directional animations
 - Ghost shop, shrine, campfire, breakables, puzzle elements, stairs, floor crystal
 - Named monsters, enemy bases, and expanded enemy variety (≥12 normal types, ≥5 types per floor)
 - Idle / pressure enemy spawns outside safe rooms
 - Quest system (3 random choices, 1 active at a time)
 - Distinct food (heal-over-time) and potion (instant heal) rules
 - Consciousness-transfer VFX on dungeon enter and wake-up sequence on return to Placeholdia
-- Full HUD, pause menu (with System tab containing aim-line controls), all interaction UIs, recap screen — all dungeon-themed; no default / unskinned player-facing UI
+- Full HUD, pause menu (Settings / Inventory / Skills; aim-line lives on Settings → Graphics), all interaction UIs, recap screen — all dungeon-themed; no default / unskinned player-facing UI
 - Secret debug / balance menu (shoulder-button sequence) containing all tunable values, profile Save/Load, the Automated Playtest / AI Player system, and the Animation Browser
-- Save / load with backup, Archives browser (pinned commits including Full 3D Pass), 60 FPS minimum
+- Save / load with backup, Archives browser on the title card (pinned commits including Full 3D Pass), 60 FPS minimum
 - Debug menu that exposes every balance and generation value
 - Gamepad-first design for all controls, gameplay, and interfaces (every menu opens with valid initial focus)
 

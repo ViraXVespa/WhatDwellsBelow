@@ -1,4 +1,4 @@
-extends Node
+﻿extends Node
 
 const BalanceS := preload("res://scripts/data/balance.gd")
 const DebugS := preload("res://scripts/combat/debug_menu.gd")
@@ -43,6 +43,7 @@ var sprite_mip_bias := 0.0
 var display_mode := "borderless"
 var display_fs_kind := "borderless"
 var web_fullscreen := false
+var target_lock_pref := false
 var in_dungeon := false
 var floor_n := 1
 var run_seed := 1
@@ -369,6 +370,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	Pad.note_event(event)
 	if _menu_loading and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("anim_back")):
 		archive_cancel = true
+		get_viewport().set_input_as_handled()
+		return
+	if _in_world() and event.is_action_pressed("inventory"):
+		if pause_menu and pause_menu.has_method("show_inventory"):
+			pause_menu.show_inventory()
 		get_viewport().set_input_as_handled()
 
 

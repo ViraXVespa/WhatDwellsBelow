@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
@@ -14,17 +14,17 @@ static func build(host: CanvasLayer) -> void:
 	host.add_child(dim)
 	var panel: ColorRect = ColorRect.new()
 	panel.color = Color(0.13, 0.1, 0.08, 0.96)
-	panel.position = Vector2(220, 40)
-	panel.size = Vector2(1480, 1000)
+	panel.position = Vector2(220, 36)
+	panel.size = Vector2(1480, 980)
 	host.add_child(panel)
 	var edge: ColorRect = ColorRect.new()
 	edge.color = Color(0.55, 0.42, 0.22, 1)
-	edge.position = Vector2(220, 40)
+	edge.position = Vector2(220, 36)
 	edge.size = Vector2(1480, 8)
 	host.add_child(edge)
 	host.tab_wrap = HBoxContainer.new()
-	host.tab_wrap.position = Vector2(244, 60)
-	host.tab_wrap.size = Vector2(1432, 56)
+	host.tab_wrap.position = Vector2(244, 56)
+	host.tab_wrap.size = Vector2(1432, 52)
 	host.tab_wrap.add_theme_constant_override("separation", 10)
 	host.add_child(host.tab_wrap)
 	host.tab_left = HBoxContainer.new()
@@ -46,8 +46,8 @@ static func build(host: CanvasLayer) -> void:
 	host.tab_wrap.add_child(host.tab_scroll)
 	host.tab_wrap.add_child(host.tab_right)
 	host.scroll = ScrollContainer.new()
-	host.scroll.position = Vector2(244, 128)
-	host.scroll.size = Vector2(1432, 840)
+	host.scroll.position = Vector2(244, 112)
+	host.scroll.size = Vector2(1432, 868)
 	host.scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	host.scroll.focus_mode = Control.FOCUS_NONE
 	host.scroll.follow_focus = true
@@ -55,7 +55,7 @@ static func build(host: CanvasLayer) -> void:
 	host.box = VBoxContainer.new()
 	host.box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.box.custom_minimum_size = Vector2(1400, 0)
-	host.box.add_theme_constant_override("separation", 8)
+	host.box.add_theme_constant_override("separation", 4)
 	host.scroll.add_child(host.box)
 	make_tip(host)
 

@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 
@@ -101,26 +101,42 @@ static func tip_lv(ui: CanvasLayer, id: String, kind: String) -> int:
 	return xp_lv(perm)
 
 
+static func _footer_top(ui: CanvasLayer) -> float:
+	var view: Rect2 = ui.get_viewport().get_visible_rect()
+	var cut: float = view.position.y + view.size.y - 120.0
+	var bar: Node = ui.get_node_or_null("gear_hint_bar")
+	if bar is Control:
+		var br: Rect2 = (bar as Control).get_global_rect()
+		if br.size.y > 1.0:
+			cut = minf(cut, br.position.y)
+	return cut
+
+
 static func paint_tip(ui: CanvasLayer) -> void:
 	if ui.tip_id == "" or ui.tip_from == null or not is_instance_valid(ui.tip_from):
 		if ui.tip_host:
 			ui.tip_host.visible = false
 		return
 	ui.tip_lab.text = ThemeS.skill_tip(ui.tip_id, tip_lv(ui, ui.tip_id, ui.tip_kind))
+	ui.tip_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	var w: float = 404.0
 	ui.tip_lab.custom_minimum_size = Vector2(w - 24.0, 0.0)
 	var h: float = maxf(80.0, ui.tip_lab.get_minimum_size().y + 20.0)
 	ui.tip_host.size = Vector2(w, h)
 	var r: Rect2 = ui.tip_from.get_global_rect()
-	var pos: Vector2 = Vector2(r.position.x, r.position.y + r.size.y + 8.0)
-	if pos.y + h > 1060.0:
-		pos.y = r.position.y - h - 8.0
+	var cut: float = _footer_top(ui) - 8.0
+	var below: float = r.position.y + r.size.y + 8.0
+	var above: float = r.position.y - h - 8.0
+	var pos := Vector2(r.position.x + r.size.x - w, below)
+	if below + h > cut:
+		pos.y = above
 	if pos.x + w > 1900.0:
 		pos.x = 1900.0 - w
 	if pos.x < 20.0:
 		pos.x = 20.0
 	ui.tip_host.position = pos
 	ui.tip_host.visible = true
+	ui.tip_host.z_index = 90
 
 
 static func build(ui: CanvasLayer) -> void:
@@ -158,4 +174,3 @@ static func build(ui: CanvasLayer) -> void:
 				first = row2
 	if first:
 		ui.focus_btn = first
-	ui.box.add_child(ThemeS.btn("Close", ui.close_ui))

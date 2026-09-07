@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Cat := preload("res://scripts/data/archives_catalog.gd")
 
@@ -62,6 +62,23 @@ static func run(host: Node, id: String) -> void:
 	if host.loader:
 		host.loader.finish()
 	host._menu_loading = false
+	await watch_child(host, pid)
+
+
+static func watch_child(host: Node, pid: int) -> void:
+	host.archive_job_pid = pid
+	var prev_mode: int = DisplayServer.window_get_mode()
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MINIMIZED)
+	while OS.is_process_running(pid):
+		if bool(host.archive_cancel):
+			OS.kill(pid)
+			break
+		await host.get_tree().process_frame
+	host.archive_job_pid = -1
+	DisplayServer.window_set_mode(prev_mode)
+	DisplayServer.window_move_to_foreground()
+	if App.has_method("go_title"):
+		App.go_title()
 
 
 static func can_spawn_local() -> bool:
@@ -155,12 +172,15 @@ static func open_pages(host: Node, e: Dictionary) -> void:
 	if url == "":
 		await fail(host, "Could not launch archive.")
 		return
-	set_status(host, "Opening archived build in a new tab…", 0.55)
+	set_status(host, "Opening archived build…", 0.55)
 	await beat(host, 0.35)
 	if host.archive_cancel:
 		await cancel(host)
 		return
-	OS.shell_open(url)
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("window.location.assign(%s)" % JSON.stringify(url))
+	else:
+		OS.shell_open(url)
 	set_status(host, "Launching…", 1.0)
 	await beat(host, 0.2)
 	if host.loader:

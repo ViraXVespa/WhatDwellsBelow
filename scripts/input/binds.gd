@@ -1,4 +1,6 @@
-extends RefCounted
+﻿extends RefCounted
+
+const Pool := preload("res://scripts/input/binds_pool.gd")
 
 const BIND_ACTIONS: PackedStringArray = [
 	"move_left", "move_right", "move_up", "move_down",
@@ -6,10 +8,13 @@ const BIND_ACTIONS: PackedStringArray = [
 	"attack", "special", "dash", "target_lock", "interact", "pause",
 	"tab_left", "tab_right",
 	"map_view", "potion", "food", "look_mode",
+	"inventory",
 	"gear_tip", "gear_drop", "crystal_zoom",
 	"anim_model_prev", "anim_model_next", "anim_idle", "anim_play",
 	"anim_list_up", "anim_list_down", "anim_back",
 ]
+
+const GAMEPLAY_ACTIONS: PackedStringArray = Pool.GAMEPLAY_ACTIONS
 
 
 static func collect() -> Array:
@@ -18,22 +23,26 @@ static func collect() -> Array:
 		if not InputMap.has_action(a):
 			continue
 		for e in InputMap.action_get_events(a):
-			var row := {"action": a}
+			var row: Dictionary = {"action": a}
 			if e is InputEventKey:
-				var k := e as InputEventKey
+				var k: InputEventKey = e as InputEventKey
 				row["type"] = "key"
 				row["code"] = k.physical_keycode if k.physical_keycode != 0 else k.keycode
+				row["pool"] = "kb"
 			elif e is InputEventJoypadButton:
 				row["type"] = "joy"
 				row["code"] = (e as InputEventJoypadButton).button_index
+				row["pool"] = "pad"
 			elif e is InputEventJoypadMotion:
-				var m := e as InputEventJoypadMotion
+				var m: InputEventJoypadMotion = e as InputEventJoypadMotion
 				row["type"] = "axis"
 				row["code"] = m.axis
 				row["value"] = m.axis_value
+				row["pool"] = "pad"
 			elif e is InputEventMouseButton:
 				row["type"] = "mouse"
 				row["code"] = (e as InputEventMouseButton).button_index
+				row["pool"] = "kb"
 			else:
 				continue
 			out.append(row)
@@ -43,11 +52,11 @@ static func collect() -> Array:
 static func apply(rows: Array) -> void:
 	if rows.is_empty():
 		return
-	var seen := {}
+	var seen: Dictionary = {}
 	for row in rows:
 		if not (row is Dictionary):
 			continue
-		var a := str(row.get("action", ""))
+		var a: String = str(row.get("action", ""))
 		if a == "" or BIND_ACTIONS.find(a) < 0:
 			continue
 		if not InputMap.has_action(a):
@@ -55,14 +64,15 @@ static func apply(rows: Array) -> void:
 		if not seen.has(a):
 			InputMap.action_erase_events(a)
 			seen[a] = true
-		var ev := bind_event(row)
+		var ev: InputEvent = bind_event(row)
 		if ev:
 			InputMap.action_add_event(a, ev)
-	apply_pc_defaults()
+	ensure_key("inventory", KEY_I)
+	ensure_joy("inventory", JOY_BUTTON_DPAD_RIGHT)
 
 
 static func bind_event(row: Dictionary) -> InputEvent:
-	var t := str(row.get("type", ""))
+	var t: String = str(row.get("type", ""))
 	if t == "key":
 		var e := InputEventKey.new()
 		e.physical_keycode = int(row.get("code", 0))
@@ -83,6 +93,30 @@ static func bind_event(row: Dictionary) -> InputEvent:
 	return null
 
 
+static func event_in_pool(e: InputEvent, pool: String) -> bool:
+	return Pool.event_in_pool(e, pool)
+
+
+static func events_equal(a: InputEvent, b: InputEvent) -> bool:
+	return Pool.events_equal(a, b)
+
+
+static func pool_events(action: String, pool: String) -> Array:
+	return Pool.pool_events(action, pool)
+
+
+static func slot_event(action: String, pool: String, slot: int) -> InputEvent:
+	return Pool.slot_event(action, pool, slot)
+
+
+static func bind_slot(action: String, pool: String, slot: int, ev: InputEvent) -> void:
+	Pool.bind_slot(action, pool, slot, ev)
+
+
+static func reset_pool(pool: String) -> void:
+	Pool.reset_pool(pool)
+
+
 static func reset() -> void:
 	for a in BIND_ACTIONS:
 		if InputMap.has_action(a):
@@ -97,6 +131,8 @@ static func register() -> void:
 	for a in BIND_ACTIONS:
 		if InputMap.has_action(a):
 			InputMap.action_erase_events(a)
+		else:
+			InputMap.add_action(a, 0.25)
 	act("move_left", [KEY_A, KEY_LEFT], -1, JOY_AXIS_LEFT_X, -1.0)
 	act("move_right", [KEY_D, KEY_RIGHT], -1, JOY_AXIS_LEFT_X, 1.0)
 	act("move_up", [KEY_W, KEY_UP], -1, JOY_AXIS_LEFT_Y, -1.0)
@@ -119,6 +155,7 @@ static func register() -> void:
 	act("potion", [KEY_F], JOY_BUTTON_DPAD_UP)
 	act("food", [KEY_C], JOY_BUTTON_DPAD_LEFT)
 	act("look_mode", [], JOY_BUTTON_DPAD_DOWN)
+	act("inventory", [KEY_I], JOY_BUTTON_DPAD_RIGHT)
 	act("gear_tip", [KEY_Y], JOY_BUTTON_Y)
 	act("gear_drop", [KEY_X], JOY_BUTTON_X)
 	act("crystal_zoom", [KEY_TAB], JOY_BUTTON_Y)
@@ -174,6 +211,7 @@ static func apply_pc_defaults() -> void:
 	ensure_key("interact", KEY_E)
 	ensure_key("interact", KEY_ENTER)
 	ensure_key("interact", KEY_KP_ENTER)
+	ensure_key("inventory", KEY_I)
 	strip_key("special", KEY_R)
 	ensure_mouse("special", MOUSE_BUTTON_RIGHT)
 	ensure_key("pause", KEY_ESCAPE)
@@ -200,8 +238,8 @@ static func ensure_key(name: String, keycode: int) -> void:
 		InputMap.add_action(name, 0.25)
 	for e in InputMap.action_get_events(name):
 		if e is InputEventKey:
-			var k := e as InputEventKey
-			var code := k.physical_keycode if k.physical_keycode != 0 else k.keycode
+			var k: InputEventKey = e as InputEventKey
+			var code: int = k.physical_keycode if k.physical_keycode != 0 else k.keycode
 			if int(code) == keycode:
 				return
 	key(name, keycode)
@@ -216,13 +254,36 @@ static func ensure_mouse(name: String, btn: int) -> void:
 	mouse(name, btn)
 
 
+static func ensure_joy(name: String, button: int) -> void:
+	if not InputMap.has_action(name):
+		InputMap.add_action(name, 0.25)
+	for e in InputMap.action_get_events(name):
+		if e is InputEventJoypadButton and (e as InputEventJoypadButton).button_index == button:
+			return
+	joy(name, button)
+
+
+static func ensure_axis(name: String, axis: int, axis_value: float) -> void:
+	if not InputMap.has_action(name):
+		InputMap.add_action(name, 0.25)
+	for e in InputMap.action_get_events(name):
+		if e is InputEventJoypadMotion:
+			var m: InputEventJoypadMotion = e as InputEventJoypadMotion
+			if m.axis == axis and signf(m.axis_value) == signf(axis_value):
+				return
+	var jm := InputEventJoypadMotion.new()
+	jm.axis = axis
+	jm.axis_value = axis_value
+	InputMap.action_add_event(name, jm)
+
+
 static func strip_key(name: String, keycode: int) -> void:
 	if not InputMap.has_action(name):
 		return
 	for e in InputMap.action_get_events(name):
 		if e is InputEventKey:
-			var k := e as InputEventKey
-			var code := k.physical_keycode if k.physical_keycode != 0 else k.keycode
+			var k: InputEventKey = e as InputEventKey
+			var code: int = k.physical_keycode if k.physical_keycode != 0 else k.keycode
 			if int(code) == keycode:
 				InputMap.action_erase_event(name, e)
 

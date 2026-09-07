@@ -20,9 +20,16 @@ Rework pause menu so that Dpad Right opens inventory and the menu button brings 
 Make archives close original instance when opening an archived build.
 Cleanup leftover hitching in pack_locomotion.py and/or player_anim.gd.
 Need to add view on web logic to archive docs. Could use custom html to open browser and load GitHub render of docs in a clean UI.
+Need to create a sub-menu flow for weapon type in the inventory.
+Analyze and forge need tooltips.
+Analyze and forge aren't working correctly.
+Keybindings don't work.
+Rework System menu into a streamlined Pause menu.
 
 ## Unsexy
 Need to fix automated playtest
+Need to organize debug vars menu.
+Need to fix animation browser controls.
 
 ### Needs Investigation
 

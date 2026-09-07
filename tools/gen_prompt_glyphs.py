@@ -139,6 +139,24 @@ def letter_key(label: str) -> Image.Image:
     return wide_key(label, 28, 28)
 
 
+def arrow_key(direction: str) -> Image.Image:
+    img = key_body(28, 28)
+    d = ImageDraw.Draw(img)
+    if direction == "up":
+        d.polygon([(14, 5), (20, 12), (8, 12)], fill=INK)
+        fill_rect(img, 12, 12, 4, 9, INK)
+    elif direction == "down":
+        d.polygon([(14, 22), (20, 15), (8, 15)], fill=INK)
+        fill_rect(img, 12, 6, 4, 9, INK)
+    elif direction == "left":
+        d.polygon([(5, 13), (12, 7), (12, 19)], fill=INK)
+        fill_rect(img, 12, 11, 9, 4, INK)
+    else:
+        d.polygon([(23, 13), (16, 7), (16, 19)], fill=INK)
+        fill_rect(img, 7, 11, 9, 4, INK)
+    return img
+
+
 def space_key() -> Image.Image:
     img = wide_key("", 72, 24)
     fill_rect(img, 14, 11, 44, 3, INK)
@@ -233,17 +251,17 @@ def stick(label: str) -> Image.Image:
 
 def _chevron(img: Image.Image, lit: str) -> None:
     if lit == "up":
-        pts_o = [(22, 6), (26, 12), (18, 12)]
-        pts_y = [(22, 7), (25, 11), (19, 11)]
+        pts_o = [(22, 5), (28, 13), (16, 13)]
+        pts_y = [(22, 7), (26, 12), (18, 12)]
     elif lit == "down":
-        pts_o = [(22, 38), (26, 32), (18, 32)]
-        pts_y = [(22, 37), (25, 33), (19, 33)]
+        pts_o = [(22, 39), (28, 31), (16, 31)]
+        pts_y = [(22, 37), (26, 32), (18, 32)]
     elif lit == "left":
-        pts_o = [(6, 22), (12, 18), (12, 26)]
-        pts_y = [(7, 22), (11, 19), (11, 25)]
+        pts_o = [(5, 22), (13, 16), (13, 28)]
+        pts_y = [(7, 22), (12, 18), (12, 26)]
     else:
-        pts_o = [(38, 22), (32, 18), (32, 26)]
-        pts_y = [(37, 22), (33, 19), (33, 25)]
+        pts_o = [(39, 22), (31, 16), (31, 28)]
+        pts_y = [(37, 22), (32, 18), (32, 26)]
     d = ImageDraw.Draw(img)
     d.polygon(pts_o, fill=CHEV_O)
     d.polygon(pts_y, fill=CHEV_Y)
@@ -325,10 +343,10 @@ def main() -> None:
     save(wide_key(".", 28, 28), "kb", "period")
     save_aliases(wide_key("[", 28, 28), "kb", ["lbracket", "bracketleft"])
     save_aliases(wide_key("]", 28, 28), "kb", ["rbracket", "bracketright"])
-    save(letter_key("<"), "kb", "left")
-    save(letter_key(">"), "kb", "right")
-    save(wide_key("UP", 28, 28), "kb", "up")
-    save(wide_key("DN", 28, 28), "kb", "down")
+    save(arrow_key("left"), "kb", "left")
+    save(arrow_key("right"), "kb", "right")
+    save(arrow_key("up"), "kb", "up")
+    save(arrow_key("down"), "kb", "down")
     save(mouse("l"), "mouse", "lmb")
     save(mouse("r"), "mouse", "rmb")
     save(mouse("m"), "mouse", "mmb")

@@ -1,14 +1,14 @@
-# Secret debug, playtest, animation browser
+﻿# Secret debug, playtest, animation browser
 
-Status: binding design + live snapshot  
-Read when: changing the secret menu, telemetry, playtest, animation browser, or verification  
-Code: `scripts/combat/debug_menu.gd`, `scripts/combat/debug_menu_settings.gd`, `scripts/world/sprite_filter.gd`, `scripts/debug/playtest.gd`, `scripts/debug/playtest_log.gd`, `telemetry.gd`, `anim_browser.gd`, `anim_browser_review.gd`, `anim_review.gd`, `anim_scan.gd`, `smoke.gd`  
+Status: binding design + live snapshot
+Read when: changing the secret menu, telemetry, playtest, animation browser, or verification
+Code: `scripts/combat/debug_menu.gd`, `scripts/combat/debug_menu_settings.gd`, `scripts/world/sprite_filter.gd`, `scripts/debug/playtest.gd`, `scripts/debug/playtest_log.gd`, `telemetry.gd`, `anim_browser.gd`, `anim_browser_review.gd`, `anim_review.gd`, `anim_scan.gd`, `smoke.gd`
 See also: `design/constraints.md`, `design/coverage.md`, `design/ui.md`, `design/camera.md`, `design/art-pipeline.md`, `design/input.md`
 
 ## Secret debug / balance menu
 
-Accessed only by the following input sequence (gamepad): all four shoulder buttons (RT + RB + LT + LB) must go from pressed → released → pressed → released within a 1.5-second window. The 1.5-second timer resets after the first release so a full 1.5 seconds remains for the second press-and-release.  
-The menu opening itself is the sole confirmation that the sequence succeeded.  
+Accessed only by the following input sequence (gamepad): all four shoulder buttons (RT + RB + LT + LB) must go from pressed → released → pressed → released within a 1.5-second window. The 1.5-second timer resets after the first release so a full 1.5 seconds remains for the second press-and-release.
+The menu opening itself is the sole confirmation that the sequence succeeded.
 This menu contains:
 
 - Every previously available debug / balance page (all numeric values exposed and tunable)
@@ -16,7 +16,7 @@ This menu contains:
 - Automated Playtest / AI Player system
 - Animation Browser page (entry MUST exist when this menu is first implemented; full viewer MAY be a stub until Phase 9, and MUST be complete for Demo-Complete)
 - Settings page for in-test system and game options that are not yet approved for general players
-- All other content that was formerly under Pause → System that is not listed in the player System tab
+- All other content that was formerly under Pause → System that is not listed in the player Settings tab
 
 Live also opens with CLI `--wdb-debug`.
 
@@ -48,7 +48,7 @@ Live path: `scripts/combat/debug_menu.gd`. This is current chrome, not a new sys
 - Look wheel / pinch / stick sliders, plus reset
 - Save settings button
 
-Linear filters MUST stay on this tab. The player System tab only cycles the three nearest modes.
+Linear filters MUST stay on this tab. Player Settings → Graphics uses Mipmaps / Anisotropic checkboxes (nearest implied). Linear stays here.
 
 **Other pages.** Settings, Profiles, and Playtest still use normal button / LineEdit / slider focus. Up / Down moves among those controls.
 
@@ -58,10 +58,10 @@ The Phase 7 “gamepad-focusable Animation Browser control” is that Open butto
 
 ## Automated Playtest / AI Player system
 
-**Why this system is in the design database**  
+**Why this system is in the design database**
 The Automated Playtest system is included so its recording, simulation, and recommendation hooks are designed into the same code the player already runs. That keeps programmatic impact low: playtest actors should drive existing input, combat, inventory, extraction, recap, and save flows rather than a second parallel simulation. MUST NOT invent a separate “AI game” with its own combat, loot, or progression implementations.
 
-**Must-ship (Medium bar)**  
+**Must-ship (Medium bar)**
 The system MUST be able to:
 
 - Run both the fresh-start save and the progressed save
@@ -70,7 +70,7 @@ The system MUST be able to:
 - Calculate per-variable impact coefficients from that set
 - Offer three recommended configurations per save type (one most-ideal + two close alternatives) that the user can further edit before applying
 
-**Capped telemetry set (non-exhaustive on purpose)**  
+**Capped telemetry set (non-exhaustive on purpose)**
 Implement the following. MAY add a small number of closely related fields if a Medium-bar recommendation cannot be computed without them. MUST NOT add heatmaps, session replay, input recordings, per-frame combat traces, per-projectile logs, exploration pathing maps, quest-step traces, artifact-set timelines, or any other open-ended analytics product.
 
 *A. Run outcome (one row per run)*
@@ -100,7 +100,7 @@ Implement the following. MAY add a small number of closely related fields if a M
 - Adrenaline Rush activations and uptime
 - Crits landed (count only)
 
-*D. Weapon balance (required for Medium bar)*  
+*D. Weapon balance (required for Medium bar)*
 Per weapon (Great Axe / Lightning Staff / Longbow), while that weapon was equipped:
 
 - Time equipped
@@ -145,7 +145,7 @@ Per weapon (Great Axe / Lightning Staff / Longbow), while that weapon was equipp
 
 `scripts/debug/playtest_log.gd` writes one compact JSON per live Automated Playtest run.
 
-- Path: `user://playtest/runs/`  
+- Path: `user://playtest/runs/`
   Windows: `%APPDATA%\Godot\app_userdata\What Dwells Below\playtest\runs`
 - Name: `run_YYYYMMDD_HHMMSS_<save>_<weapon>.json`
 - Envelope: `kind: wdb_playtest_journal`, `ver: 2`
@@ -170,7 +170,7 @@ Purpose: let the User review player and enemy animation states so art and facing
 - Phase 7: the Animation Browser control MUST exist in the secret debug menu. It MUST be labeled, gamepad-focusable, and reachable with the same tab/page navigation as other debug pages. A stub panel (“Animation Browser — implemented in Phase 9”) is acceptable.
 - Phase 9 / Demo-Complete: the full viewer MUST ship. This is a vital development tool in the final product. It is deliberately *not* part of early build logic so sprite pipelines and combat can land first.
 
-**Layout**  
+**Layout**
 The Animation Browser is a full-screen page. It MUST be TV-readable and gamepad-first, and MUST open with valid initial focus.
 
 - **Back** sits at the bottom of the screen. Activating it returns the User to the main secret debug menu. Activation methods (both required): highlight Back and press A, or press B at any time while the Animation Browser is open. B MUST work regardless of current highlight.

@@ -1,11 +1,11 @@
-extends CanvasLayer
+﻿extends CanvasLayer
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const CatalogS := preload("res://scripts/data/catalog.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const PauseInv := preload("res://scripts/ui/pause_inv.gd")
 const PauseSkills := preload("res://scripts/ui/pause_skills.gd")
-const PauseSys := preload("res://scripts/ui/pause_system.gd")
+const PauseSettings := preload("res://scripts/ui/pause_settings.gd")
 const GearAct := preload("res://scripts/ui/gear_board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Util := preload("res://scripts/ui/pause_menu_util.gd")
@@ -15,6 +15,12 @@ const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 const Disp := preload("res://scripts/display_mode.gd")
+const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
+const Split := preload("res://scripts/ui/split_menu.gd")
+
+const TAB_SETTINGS := 0
+const TAB_INV := 1
+const TAB_SKILLS := 2
 
 const SKILL_NAMES := {
 	"axe": "Great Axe",
@@ -102,7 +108,7 @@ func show_menu() -> void:
 	visible = true
 	App.ui_open = true
 	get_tree().paused = true
-	tab = 0
+	tab = TAB_SETTINGS
 	sys_page = "main"
 	pending = false
 	pending_id = ""
@@ -120,6 +126,15 @@ func show_menu() -> void:
 	_rebuild()
 
 
+func show_inventory() -> void:
+	if not open:
+		show_menu()
+	if tab != TAB_INV:
+		tab = TAB_INV
+		sys_page = "main"
+		_rebuild()
+
+
 func close_ui() -> void:
 	open = false
 	visible = false
@@ -131,6 +146,7 @@ func close_ui() -> void:
 	gear_sub_slot = ""
 	gear_hover = false
 	set_meta("gear_tip_restore", false)
+	Confirm.close(self)
 	var old: Node = get_node_or_null("gear_sub_panel")
 	if old:
 		old.queue_free()
@@ -184,11 +200,11 @@ func _rebuild() -> void:
 	gear_stats_title = null
 	gear_page_left = null
 	gear_page_right = null
-	var names: PackedStringArray = PackedStringArray(["Inventory", "Skills", "System"])
+	var names: PackedStringArray = PackedStringArray(["Settings", "Inventory", "Skills"])
 	for i: int in 3:
 		var ii: int = i
 		var b: Button = ThemeS.btn(names[i], func():
-			if tab == 0 and ii != 0:
+			if tab == TAB_INV and ii != TAB_INV:
 				_store_tip_restore()
 			tab = ii
 			sys_page = "main"
@@ -202,12 +218,12 @@ func _rebuild() -> void:
 	PromptView.fill(tab_left, [{"action": "tab_left"}], 16, Color(0.72, 0.66, 0.52))
 	PromptView.fill(tab_right, [{"action": "tab_right"}], 16, Color(0.72, 0.66, 0.52))
 	match tab:
-		0:
-			_inv()
-		1:
-			_skills()
-		_:
+		TAB_SETTINGS:
 			_system()
+		TAB_INV:
+			_inv()
+		_:
+			_skills()
 	_paint_menu_hint()
 	call_deferred("_focus")
 	if tab_scroll and tabs.get_child_count() > tab:
@@ -215,13 +231,13 @@ func _rebuild() -> void:
 
 
 func _paint_menu_hint() -> void:
-	if tab == 0:
+	if tab == TAB_INV:
 		return
 	PromptView.footer(self)
 
 
 func _cycle_tab(dir: int) -> void:
-	if tab == 0:
+	if tab == TAB_INV:
 		_store_tip_restore()
 	tab = posmod(tab + dir, 3)
 	sys_page = "main"
@@ -232,7 +248,7 @@ func _cycle_tab(dir: int) -> void:
 
 
 func _focus() -> void:
-	if tab == 0:
+	if tab == TAB_INV:
 		var hit: Control = _inv_find_sel()
 		if hit and not hit.is_queued_for_deletion():
 			hit.grab_focus()
@@ -342,11 +358,7 @@ func _paint_tip() -> void:
 
 
 func _system() -> void:
-	PauseSys.build(self)
-
-
-func _rebind() -> void:
-	PauseSys.rebind(self)
+	PauseSettings.build(self)
 
 
 func _slider_row(title: String, value: float, lo: float, hi: float, step: float, on_change: Callable) -> VBoxContainer:
@@ -363,42 +375,43 @@ func _st(msg: String) -> void:
 	App.sfx("ui")
 
 
+func _settings_host() -> Node:
+	return box.get_node_or_null("settings_host") if box else null
+
+
 func _back() -> void:
+	if Confirm.is_open(self):
+		Confirm.close(self)
+		return
 	if gear_sub:
 		GearAct.close_sub(self)
-	elif pending:
-		pending = false
-		pending_id = ""
-		_st("Cancelled.")
-	elif sys_page != "main":
-		sys_page = "main"
-		rebind_action = ""
-		_rebuild()
-	else:
-		close_ui()
+		return
+	if tab == TAB_SETTINGS:
+		var host: Node = _settings_host()
+		if host and Split.back(host):
+			return
+	close_ui()
 
 
 func _process(delta: float) -> void:
 	if open and Disp.consume_web_esc():
 		_back()
-	if open and tab == 0:
+	if open and tab == TAB_INV:
 		GearAct.tick_x(self, delta)
 
 
 func _input(event: InputEvent) -> void:
 	if not open:
 		return
+	if Confirm.is_open(self):
+		return
+	if event.is_action_pressed("inventory"):
+		show_inventory()
+		get_viewport().set_input_as_handled()
+		return
 	var td := Pad.tab_delta(event)
 	if td != 0:
 		_cycle_tab(td)
-		get_viewport().set_input_as_handled()
-		return
-	if pending and Pad.is_confirm(event):
-		if pending_fn.is_valid():
-			pending_fn.call()
-		pending = false
-		pending_id = ""
-		_rebuild()
 		get_viewport().set_input_as_handled()
 		return
 	if Pad.is_back(event):
@@ -410,7 +423,7 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not open:
 		return
-	if tab == 0:
+	if tab == TAB_INV:
 		if GearAct.input_tick(self, event):
 			get_viewport().set_input_as_handled()
 			return

@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Text := preload("res://scripts/ui/gear_board_text.gd")
@@ -54,7 +54,10 @@ static func ensure_tip(ui: CanvasLayer) -> void:
 
 
 static func _tip_anchor(ui: CanvasLayer) -> Control:
-	if str(ui.get("tab")) != "" and int(ui.get("tab")) != 0:
+	var inv_tab: int = 1
+	if ui.get("TAB_INV") != null:
+		inv_tab = int(ui.TAB_INV)
+	if int(ui.get("tab")) != inv_tab:
 		return null
 	if str(ui.inv_sel) == "stats" or str(ui.inv_sel) == "" or str(ui.inv_sel) == "back":
 		return null

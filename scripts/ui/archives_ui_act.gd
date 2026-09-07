@@ -1,52 +1,29 @@
-extends Object
+﻿extends Object
 
 const Cat := preload("res://scripts/data/archives_catalog.gd")
 const Docs := preload("res://scripts/data/archives_docs.gd")
 const View := preload("res://scripts/ui/archives_ui_view.gd")
+const Split := preload("res://scripts/ui/split_menu.gd")
 
 
 static func preview(host: Node, i: int) -> void:
-	if not host.open or host.col != "list":
-		return
-	if i < 0 or i >= host.entries.size():
-		return
-	if host.selected == i:
-		View.paint_list(host)
-		return
-	host.selected = i
 	host.mode = "info"
-	View.paint_list(host)
-	View.rebuild_info(host)
-	View.apply_col(host)
+	Split.preview(host, i)
 
 
 static func list_pressed(host: Node, i: int) -> void:
-	if i < 0 or i >= host.entries.size():
-		return
-	host.selected = i
-	View.paint_list(host)
-	if host.col == "detail":
-		host.mode = "info"
-		View.rebuild_info(host)
-		enter_list(host)
-		return
 	host.mode = "info"
-	View.rebuild_info(host)
-	enter_detail(host)
+	Split.list_pressed(host, i)
 
 
 static func enter_detail(host: Node) -> void:
-	host.col = "detail"
-	View.apply_col(host)
-	host.call_deferred("_focus_col")
+	Split.enter_detail(host)
 
 
 static func enter_list(host: Node) -> void:
-	host.col = "list"
 	host.mode = "info"
 	View.rebuild_info(host)
-	View.apply_col(host)
-	host.call_deferred("_focus_col")
+	Split.enter_list(host)
 
 
 static func info_gui(host: Node, event: InputEvent) -> void:
@@ -107,16 +84,16 @@ static func play(host: Node) -> void:
 static func read_doc(host: Node, id: String, name: String) -> String:
 	if name == "":
 		return ""
-	var key := "%s:%s" % [id, name]
+	var key: String = "%s:%s" % [id, name]
 	if host.doc_cache.has(key):
 		return str(host.doc_cache[key])
 	var e: Dictionary = host._cur()
-	var t := Docs.read_now(e, name)
+	var t: String = Docs.read_now(e, name)
 	if t != "":
 		host.doc_cache[key] = t
 		return t
 	if OS.has_feature("web") and host.http and not host.http_busy:
-		var url := Cat.raw_doc_url(e, name)
+		var url: String = Cat.raw_doc_url(e, name)
 		if url != "":
 			host.http_key = key
 			host.http_busy = true
@@ -127,9 +104,9 @@ static func read_doc(host: Node, id: String, name: String) -> String:
 
 static func http_done(host: Node, code: int, body: PackedByteArray) -> void:
 	host.http_busy = false
-	var key := str(host.http_key)
+	var key: String = str(host.http_key)
 	host.http_key = ""
-	var text := "(missing)"
+	var text: String = "(missing)"
 	if code == 200 and not body.is_empty():
 		text = Docs.clip(body.get_string_from_utf8())
 	if key != "":
@@ -156,7 +133,7 @@ static func back(host: Node) -> void:
 	elif host.col == "detail":
 		enter_list(host)
 	else:
-		host.hide_browser()
+		Split.back(host)
 
 
 static func unhandled(host: Node, event: InputEvent) -> void:

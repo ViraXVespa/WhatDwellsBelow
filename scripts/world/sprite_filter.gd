@@ -1,6 +1,6 @@
-extends Object
+﻿extends Object
 
-## Live Sprite3D filter. System cycles 0–2; debug Settings can use 3–4.
+## Live Sprite3D filter. System uses nearest + optional mips/aniso; debug can use 3–4.
 
 const FILT_NEAREST := 0
 const FILT_NEAR_MIP := 1
@@ -26,6 +26,23 @@ static func clamp_id(id: int, allow_linear := false) -> int:
 static func label(id: int) -> String:
 	id = clampi(id, 0, FILT_MAX)
 	return LABELS[id]
+
+
+static func mips_on(id: int) -> bool:
+	id = clamp_id(id, true)
+	return id == FILT_NEAR_MIP or id == FILT_NEAR_ANISO or id == FILT_LIN_MIP
+
+
+static func aniso_on(id: int) -> bool:
+	return clamp_id(id, false) == FILT_NEAR_ANISO
+
+
+static func from_flags(mips: bool, aniso: bool) -> int:
+	if mips and aniso:
+		return FILT_NEAR_ANISO
+	if mips:
+		return FILT_NEAR_MIP
+	return FILT_NEAREST
 
 
 static func godot_filter(id: int) -> BaseMaterial3D.TextureFilter:
