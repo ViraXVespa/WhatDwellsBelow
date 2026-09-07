@@ -3,6 +3,36 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.45",
+			"points": [
+				{
+					"text": "Inventory and re-equip plates use item icons instead of blank cells",
+					"subs": [
+						"Empty head / body / legs / potion / food slots show a dark imprint of the slot type",
+						"Equipped pieces use the keyed `assets/gear/` icons; rarity wash stays in-engine (white / green / blue)"
+					]
+				},
+				{
+					"text": "AT RISK pieces take a red plate border on the equip board and in the re-equip list"
+				},
+				{
+					"text": "Flyouts follow the focused or hovered plate",
+					"subs": [
+						"Keyboard tips close when leaving Inventory and only return if one was open",
+						"Re-equip flyout sits under the icon; Back and Close do not keep a stale tip",
+						"Up from Back returns to the last option you had selected"
+					]
+				},
+				{
+					"text": "Starter weapons and tools resolve in the flyout instead of reading as empty"
+				},
+				{
+					"text": "Chroma pipeline: `_src/gear/*.jpg` keys to `assets/gear/*.png` through `tools/process_gear_icons.py`"
+				}
+			],
+			"summary": "The gear page is icon-first with rarity and risk on the plate, and the flyouts stay attached to the plate you are actually looking at."
+		},
+		{
 			"label": "0.2.43",
 			"points": [
 				{
