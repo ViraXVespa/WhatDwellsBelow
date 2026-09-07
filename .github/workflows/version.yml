@@ -42,12 +42,12 @@ jobs:
               ver.update(json.loads(ver_path.read_text(encoding="utf-8")))
           epoch = int(ver.get("epoch", 0))
           series = int(ver.get("series", 2))
+          baked_patch = int(ver.get("patch", 0))
           open_sha = str(ver.get("open_commit") or default_open).strip()
 
           def git(*args) -> str:
               return subprocess.check_output(["git", *args], text=True).strip()
 
-          # Prefer an existing series-open tag (v0.2.0 / v1.0.0). Fall back to documented SHA.
           tag = f"v{epoch}.{series}.0"
           tags = git("tag", "--list", tag)
           open_ref = tag if tags else open_sha
@@ -55,7 +55,30 @@ jobs:
               git("rev-parse", "--verify", open_ref)
           except subprocess.CalledProcessError:
               open_ref = open_sha
-          patch = int(git("rev-list", "--count", f"{open_ref}..HEAD") or "0")
+
+          last_ver = ""
+          try:
+              last_ver = git("log", "-1", "--format=%H", "--", "scripts/data/version.json")
+          except subprocess.CalledProcessError:
+              last_ver = ""
+          since = last_ver if last_ver else open_ref
+          try:
+              subjects = git("log", "--format=%s", f"{since}..HEAD")
+          except subprocess.CalledProcessError:
+              subjects = ""
+          user_after = 0
+          for line in subjects.splitlines():
+              msg = line.strip()
+              if not msg:
+                  continue
+              if "[skip ci]" in msg:
+                  continue
+              if msg.startswith("chore: stamp "):
+                  continue
+              user_after += 1
+          patch = baked_patch + user_after
+          if patch < baked_patch:
+              patch = baked_patch
           label = f"{epoch}.{series}.{patch}"
           payload = {
               "epoch": epoch,
@@ -69,7 +92,7 @@ jobs:
           old_text = ver_path.read_text(encoding="utf-8") if ver_path.is_file() else ""
           changed = new_text != old_text
           ver_path.write_text(new_text, encoding="utf-8")
-          print(f"stamped {label} (open {open_ref})")
+          print(f"stamped {label} (open {open_ref}, +{user_after} user commits since version.json)")
           pathlib.Path("/tmp/wdb_label").write_text(label)
           pathlib.Path("/tmp/wdb_ver_changed").write_text("1" if changed else "0")
           PY

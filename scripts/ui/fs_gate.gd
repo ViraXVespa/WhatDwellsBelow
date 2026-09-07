@@ -10,6 +10,10 @@ var _action: Button
 var _continue: Button
 var _hint: Label
 var _leaving := false
+var _was_a := false
+var _was_b := false
+var _was_start := false
+var _was_back := false
 
 
 func _ready() -> void:
@@ -55,38 +59,92 @@ func _ready() -> void:
 	_continue.focus_neighbor_bottom = _action.get_path()
 	_action.grab_focus()
 
-	if App and App.has_method("wake_web_pad"):
-		call_deferred("_wake")
+	call_deferred("_wake")
 
 
 func _wake() -> void:
-	App.wake_web_pad()
+	if App and App.has_method("wake_web_pad"):
+		App.wake_web_pad()
+	call_deferred("_refocus")
+
+
+func _refocus() -> void:
+	if _leaving or _action == null:
+		return
+	_action.grab_focus()
 
 
 func _process(_dt: float) -> void:
-	if _hint == null:
+	if _leaving:
 		return
-	_hint.text = _rotate_line()
+	if _hint:
+		_hint.text = _rotate_line()
+	_keep_focus()
+	if Disp.is_fullscreen_now() or Disp.is_standalone():
+		_leave()
+		return
+	_poll_web_pad()
+
+
+func _keep_focus() -> void:
+	if _action == null:
+		return
+	var owner: Control = get_viewport().gui_get_focus_owner() as Control
+	if owner == _action or owner == _continue:
+		return
+	_action.grab_focus()
+
+
+func _poll_web_pad() -> void:
+	var wp: Node = App.web_pad if App else null
+	var a_now := false
+	var b_now := false
+	var start_now := false
+	var back_now := false
+	if wp:
+		a_now = bool(wp.get("a"))
+		b_now = bool(wp.get("b"))
+		start_now = bool(wp.get("start"))
+		back_now = bool(wp.get("back"))
+	if (a_now and not _was_a) or (start_now and not _was_start):
+		_activate_focused()
+	elif (b_now and not _was_b) or (back_now and not _was_back):
+		_on_continue()
+	_was_a = a_now
+	_was_b = b_now
+	_was_start = start_now
+	_was_back = back_now
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _leaving:
+		return
+	if event.is_action_pressed("ui_accept") or event.is_action_pressed("interact"):
+		_activate_focused()
+		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		_on_continue()
 		get_viewport().set_input_as_handled()
 
 
+func _activate_focused() -> void:
+	var owner: Control = get_viewport().gui_get_focus_owner() as Control
+	if owner == _continue:
+		_on_continue()
+		return
+	_on_action()
+
+
 func _on_action() -> void:
 	if _leaving:
 		return
-	var ok: bool = Disp.try_fullscreen_gesture()
-	if _kind == "ios":
-		if _hint:
-			_hint.text = "Safari cannot open Add to Home Screen for you. Use Share → Add to Home Screen, then Continue."
-		return
-	if ok:
+	Disp.try_fullscreen_gesture()
+	if Disp.is_fullscreen_now() or Disp.is_standalone():
 		_leave()
+		return
+	if _kind == "ios" and _hint:
+		_hint.text = "Safari cannot open Add to Home Screen for you. Use Share → Add to Home Screen, then Continue."
 
 
 func _on_continue() -> void:
@@ -113,8 +171,8 @@ func _body() -> String:
 	if _kind == "ios":
 		return "iPhone Safari cannot hide the browser chrome from a button. Add the game to your Home Screen for a chrome-less launch: tap Share (square with arrow) → Add to Home Screen → Add. Leave Open as Web App on. Then open the icon. You can Continue in this tab without that."
 	if _kind == "android":
-		return "Tap Fullscreen to hide the browser bars. If the tap also offers Install, accept it for a Home Screen icon that launches landscape and chrome-less. Pause → System can toggle fullscreen later. Rotate the phone sideways."
-	return "Click Fullscreen to hide browser chrome. Chromium may also offer an Install prompt — that adds a standalone window. Pause → System toggles fullscreen later. Alt+Enter is desktop-only and does not apply in the browser."
+		return "Tap Fullscreen to hide the browser bars. If the tap also offers Install, accept it for a Home Screen icon that launches landscape and chrome-less. Pause → System or Alt+Enter toggles fullscreen later. Rotate the phone sideways."
+	return "Click Fullscreen to hide browser chrome. Chromium may also offer an Install prompt — that adds a standalone window. Pause → System or Alt+Enter toggles fullscreen later."
 
 
 func _action_label() -> String:

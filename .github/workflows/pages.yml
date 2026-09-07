@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   export:
+    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     environment:
@@ -26,6 +27,68 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Stamp version.json in workspace
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, pathlib, subprocess
+
+          root = pathlib.Path(".")
+          ver_path = root / "scripts/data/version.json"
+          default_open = "36fb882c9db3b6cd8a83f072d2dfec51d4acedca"
+          ver = {
+              "epoch": 0,
+              "series": 2,
+              "patch": 0,
+              "label": "0.2.0",
+              "open_commit": default_open,
+          }
+          if ver_path.is_file():
+              ver.update(json.loads(ver_path.read_text(encoding="utf-8")))
+          epoch = int(ver.get("epoch", 0))
+          series = int(ver.get("series", 2))
+          baked_patch = int(ver.get("patch", 0))
+          open_sha = str(ver.get("open_commit") or default_open).strip()
+
+          def git(*args) -> str:
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          last_ver = ""
+          try:
+              last_ver = git("log", "-1", "--format=%H", "--", "scripts/data/version.json")
+          except subprocess.CalledProcessError:
+              last_ver = ""
+          since = last_ver if last_ver else open_sha
+          try:
+              subjects = git("log", "--format=%s", f"{since}..HEAD")
+          except subprocess.CalledProcessError:
+              subjects = ""
+          user_after = 0
+          for line in subjects.splitlines():
+              msg = line.strip()
+              if not msg:
+                  continue
+              if "[skip ci]" in msg:
+                  continue
+              if msg.startswith("chore: stamp "):
+                  continue
+              user_after += 1
+          patch = baked_patch + user_after
+          if patch < baked_patch:
+              patch = baked_patch
+          payload = {
+              "epoch": epoch,
+              "series": series,
+              "patch": patch,
+              "label": f"{epoch}.{series}.{patch}",
+              "open_commit": open_sha,
+          }
+          ver_path.parent.mkdir(parents=True, exist_ok=True)
+          ver_path.write_text(json.dumps(payload, indent="\t") + "\n", encoding="utf-8")
+          print("workspace stamp", payload["label"])
+          PY
+          python3 tools/build_changelog.py
 
       - name: Download Godot 4.7.2
         run: |
@@ -51,6 +114,7 @@ jobs:
           mkdir -p "$SITE"
           "$GODOT_BIN" --headless --path "$PWD" --import
           "$GODOT_BIN" --headless --path "$PWD" --export-release Web "$SITE/index.html"
+          python3 tools/web_postexport.py "$SITE"
           touch "$SITE/.nojekyll"
           python3 - <<'PY'
           import json, os, re, subprocess, sys

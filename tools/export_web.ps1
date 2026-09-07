@@ -44,11 +44,18 @@ function Stamp-ArchiveName([string]$ProjectFile, [string]$Label) {
     Set-Content -Path $ProjectFile -Value $t -NoNewline
 }
 
+function Invoke-WebPostexport([string]$Dir) {
+    $script = Join-Path $Root "tools\web_postexport.py"
+    Write-Host "Stamping Web export -> $Dir"
+    python $script $Dir
+}
+
 Write-Host "Importing live project..."
 Invoke-Godot @("--headless", "--path", $Root, "--import") "godot-import.log"
 
 Write-Host "Exporting live Web (nothreads) -> $OutHtml"
 Invoke-Godot @("--headless", "--path", $Root, "--export-release", "Web", $OutHtml) "godot-export.log"
+Invoke-WebPostexport $OutDir
 
 $nojekyll = Join-Path $OutDir ".nojekyll"
 if (-not (Test-Path $nojekyll)) {

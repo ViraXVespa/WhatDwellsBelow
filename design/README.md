@@ -1,4 +1,4 @@
-# Design database
+﻿# Design database
 
 Status: index  
 Read when: starting any session, or when you do not know which file to open  
@@ -91,6 +91,7 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Skills / save | `scripts/data/progress.gd` + `progress_gear.gd`, `progress_gear_req.gd`, `progress_make.gd`, `progress_extract.gd`, `progress_quest.gd`, `progress_town.gd`, `progress_combat.gd`, `gear_rules.gd`, `save_store.gd`, `catalog.gd` |
 | Numbers | `scripts/data/balance.gd`, `balance_schema.gd`, `tunables.gd` |
 | Version / changelog | `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`; `tools/build_changelog.py` |
+| Web export | `tools/export_web.ps1`, `tools/web_postexport.py`; `.github/workflows/version.yml`, `.github/workflows/pages.yml` |
 | Dungeon | `scripts/dungeon/gen.gd` + `gen_carve.gd`, `gen_rooms.gd`, `gen_doors.gd`; `scripts/world/dungeon.gd` + `dungeon_boot.gd`, `dungeon_geo.gd`, `dungeon_geo_stream.gd`, `dungeon_map_act.gd`, `dungeon_cells.gd`, `dungeon_stream.gd`, `dungeon_props.gd`, `dungeon_pack.gd`, `crystal_net.gd`, `floor_crystal.gd` |
 | Hub | `scripts/world/camp.gd`, `interact.gd`, `interact_fx.gd`, `scripts/combat/dummy.gd` |
 | Gather | `scripts/world/gather_node.gd`, `breakable.gd`, `pickup.gd` |

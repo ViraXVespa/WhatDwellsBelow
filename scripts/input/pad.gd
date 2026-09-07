@@ -2,6 +2,7 @@ extends RefCounted
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
+const Disp := preload("res://scripts/display_mode.gd")
 
 const PAD := {
 	"interact": JOY_BUTTON_A,
@@ -47,14 +48,15 @@ static func note_event(event: InputEvent) -> void:
 		mode = false
 
 
-static func wake_web() -> void:
+static func wake_web(release_gui: bool = true) -> void:
 	if Engine.get_main_loop() == null:
 		return
 	var tree := Engine.get_main_loop() as SceneTree
-	if tree:
+	if tree and release_gui:
 		tree.root.get_viewport().gui_release_focus()
 	if not OS.has_feature("web"):
 		return
+	Disp.ensure_web_hooks()
 	JavaScriptBridge.eval("""
 		(function () {
 			var c = document.getElementById('canvas');
@@ -129,6 +131,12 @@ static func just(action: String) -> bool:
 static func pause_just() -> bool:
 	if eat_pause:
 		return false
+	if Disp.consume_web_esc():
+		var ev := InputEventAction.new()
+		ev.action = "pause"
+		ev.pressed = true
+		Input.parse_input_event(ev)
+		return true
 	return Input.is_action_just_pressed("pause") or just("pause")
 
 

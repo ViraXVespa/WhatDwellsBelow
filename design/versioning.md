@@ -1,4 +1,4 @@
-# Versioning and changelog
+﻿# Versioning and changelog
 
 Status: binding design  
 Read when: stamping a build, writing a changelog entry, Grok Build init, title “what’s new”, or adding an archive pin  
@@ -12,38 +12,38 @@ See also: `AGENTS.md`, `design/web-session.md`, `design/grok-build.md`, `design/
 | --- | --- | --- |
 | **epoch** | `0` = in-dev demo | `1` = first release and later. Flip only when the User declares the release build. |
 | **series** | Development week | Major update index. Restarts at `0` on `1.0.0`. Later majors (`1.1.0`, …) only when the User names them. |
-| **patch** | Commit index on `main` in that series | Same: commit index on `main` in that major |
+| **patch** | User-commit index on `main` in that series | Same: user-commit index on `main` in that major |
 
 Week 2 open (also `0.2.0`): `36fb882c9db3b6cd8a83f072d2dfec51d4acedca` (`Grok Build Week 2`).  
-This web goal is the next commit on that series: **`0.2.11`**.
+This web goal is the next user commit on that series: **`0.2.47`**. Live baked copy before that push is `0.2.46`.
 
 Do not invent other version fields. Save-schema key `"v"` in `save_store.gd` is unrelated.
 
 ## Source of truth
 
 **Git history on `main` assigns the number.**  
-`patch` is the number of commits on `main` after that series’ open commit (`0.2.0`, later `1.0.0`, …). The User’s push *is* the bump.
+The User’s push *is* the bump. `patch` counts only user commits after the last baked `scripts/data/version.json` change, then adds that count to the baked patch. Automated stamp commits (`chore: stamp … [skip ci]`, any `[skip ci]` subject, `github-actions[bot]` bookkeeping) MUST NOT increment `patch`. The public label MUST never rewind.
 
 **`scripts/data/version.json` is the baked copy** the game, title, and changelog script read. Godot and the web export must not call `git`. CI overwrites this file from `main`; agents do not treat it as the ledger and do not hand-edit it in a web Phase 7 unless the User is seeding the file for the first time.
 
-CI on each push to `main`:
+CI on each user push to `main` (not on `[skip ci]` stamp pushes):
 
 1. Resolve series from the latest series-open tag (`v0.2.0`, `v1.0.0`, …) or the documented open SHA.
-2. Set `patch` from commits on `main` after that open.
+2. Set `patch` = baked patch + user commits since `version.json` last changed. Ignore stamp / `[skip ci]` subjects. Never go below the baked patch.
 3. Write `scripts/data/version.json` (`epoch`, `series`, `patch`, `label`).
 4. Create annotated tag `v{label}` if missing.
 5. Run `tools/build_changelog.py`.
 6. If generated outputs changed, commit them with `[skip ci]`.
-7. Deploy Pages, including `/changelog/`.
+7. Deploy Pages from the user push. Pages stamps the same number in the export workspace before Godot runs (`design/save-tech.md`), because a `GITHUB_TOKEN` stamp push does not start a new workflow. Include `/changelog/`.
 
-Never auto-bump `epoch` or `series`. Extra pushes with no new `design/changelog/{label}.md` still get a patch number and an empty player note.
+Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/changelog/{label}.md` still get a patch number and an empty player note.
 
 ## Changelog files
 
 Authoring unit is **one markdown file per build**:
 
 `design/changelog/{label}.md`  
-Example: `design/changelog/0.2.11.md`
+Example: `design/changelog/0.2.47.md`
 
 Plain text, no code fence when emitted. Body shape:
 
@@ -68,7 +68,7 @@ Do **not** keep a concatenated week file on `main`. Do **not** hand-edit `script
 ## Who reads what
 
 | Reader | Reads |
-| --- | --- |
+|--------|-------|
 | Fresh web / chat, Phases 1–3 | Nothing under `design/changelog/`. Nothing in `version.json` unless the work is this topic. |
 | Web Phase 7 | Writes **one** new `design/changelog/{label}.md` for the version this goal already is. Does not emit `changelog.json`. |
 | Grok Build init | `design/sessions.md`, then every `design/changelog/{current epoch}.{current series}.*.md`. No index. No other series. |
@@ -116,8 +116,8 @@ Also attach the `design/` file tree as it exists **on the pinned commit** (`docs
 
 After the User is satisfied with the goal’s behavior:
 
-1. Author `design/changelog/{label}.md` for the version this goal assumed at the start (here `0.2.11`).
-2. Update topic files this slice made wrong (`design/versioning.md` only if the scheme changed).
+1. Update topic files this slice made wrong (`design/versioning.md` only if the scheme changed).
+2. Author `design/changelog/{label}.md` for the version this goal assumed at the start (here `0.2.47`).
 3. Do not emit `changelog.json` or `version.json` as the ledger. Seed those files only when they do not exist yet on live.
 
 The User pastes. CI stamps the number when the files land on `main`.

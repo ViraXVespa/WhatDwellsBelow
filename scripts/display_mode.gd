@@ -110,6 +110,7 @@ static func wants_gate() -> bool:
 static func apply_saved() -> void:
 	if is_xbox():
 		return
+	ensure_web_hooks()
 	if uses_desktop_modes():
 		set_desktop_mode(str(App.display_mode), false)
 		return
@@ -174,16 +175,22 @@ static func set_web_fullscreen(on: bool, persist: bool = true) -> void:
 
 
 static func toggle_web_fullscreen() -> void:
-	set_web_fullscreen(not bool(App.web_fullscreen))
+	var on: bool = not bool(App.web_fullscreen)
+	if is_web():
+		on = not is_fullscreen_now()
+	set_web_fullscreen(on)
 
 
 static func web_label() -> String:
+	if is_web() and is_fullscreen_now():
+		return "Fullscreen: On"
 	if bool(App.web_fullscreen):
 		return "Fullscreen: On"
 	return "Fullscreen: Off"
 
 
 static func try_fullscreen_gesture() -> bool:
+	ensure_web_hooks()
 	App.web_fullscreen = true
 	if App.has_method("save_now"):
 		App.save_now()
@@ -214,19 +221,25 @@ static func try_install_prompt() -> bool:
 
 
 static func toggle_alt_enter() -> void:
-	if not uses_desktop_modes():
+	if is_xbox():
 		return
-	if is_fullscreen_now():
-		set_desktop_mode("windowed")
+	if uses_desktop_modes():
+		if is_fullscreen_now():
+			set_desktop_mode("windowed")
+			return
+		var kind: String = str(App.display_fs_kind)
+		if kind != "exclusive":
+			kind = "borderless"
+		set_desktop_mode(kind)
 		return
-	var kind: String = str(App.display_fs_kind)
-	if kind != "exclusive":
-		kind = "borderless"
-	set_desktop_mode(kind)
+	if uses_web_fs_toggle():
+		set_web_fullscreen(not is_fullscreen_now())
 
 
 static func handle_input(event: InputEvent) -> bool:
-	if not uses_desktop_modes():
+	if is_xbox():
+		return false
+	if not uses_desktop_modes() and not uses_web_fs_toggle():
 		return false
 	if not (event is InputEventKey):
 		return false
@@ -239,6 +252,44 @@ static func handle_input(event: InputEvent) -> bool:
 		return false
 	toggle_alt_enter()
 	return true
+
+
+static func ensure_web_hooks() -> void:
+	if not is_web():
+		return
+	JavaScriptBridge.eval("""
+		(function () {
+			if (window.__wdbFsHooks) return;
+			window.__wdbFsHooks = 1;
+			window.__wdbEsc = 0;
+			document.addEventListener('keydown', function (e) {
+				var k = e.key || e.code;
+				if (k !== 'Escape' && k !== 'Esc') return;
+				if (!document.fullscreenElement) return;
+				e.preventDefault();
+				if (e.stopPropagation) e.stopPropagation();
+				window.__wdbEsc = 1;
+			}, true);
+		})();
+	""", true)
+
+
+static func consume_web_esc() -> bool:
+	if not is_web():
+		return false
+	ensure_web_hooks()
+	var raw: String = str(JavaScriptBridge.eval("""
+		(function () {
+			try {
+				if (window.__wdbEsc) {
+					window.__wdbEsc = 0;
+					return '1';
+				}
+			} catch (e) {}
+			return '0';
+		})();
+	""", true))
+	return raw == "1"
 
 
 static func lock_landscape() -> void:
@@ -261,6 +312,7 @@ static func viewport_portrait() -> bool:
 
 
 static func _js_request_fs() -> void:
+	ensure_web_hooks()
 	JavaScriptBridge.eval("""
 		(function () {
 			try {

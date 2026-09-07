@@ -1,4 +1,4 @@
-# Player UI, HUD, menus, recap
+﻿# Player UI, HUD, menus, recap
 
 Status: binding design + live snapshot
 Read when: changing HUD, pause tabs, recap, maps, toasts, interaction UIs, title, or loading
@@ -39,7 +39,9 @@ Copy and the action button MUST follow the UA bucket:
 - Android web — same tap; label may read Fullscreen / Install.
 - iOS web — Safari cannot open Add to Home Screen from script. Action is Try fullscreen (requestFullscreen, usually a no-op on iPhone). Body tells the player Share → Add to Home Screen → Add, with Open as Web App on.
 
-Gamepad-first: first focus is the action button. A confirms the focused control. B / Esc / Continue marks the session seen and goes to splash. A successful fullscreen request on non-iOS also advances. iOS stays on the card after Try until Continue.
+Gamepad-first: first focus is the action button and MUST stay on a gate button for the whole card. `Pad.wake_web()` may focus the canvas and drop GUI focus; the gate MUST grab the action button again afterward. A / Start / `ui_accept` confirms the focused control. B / Esc / Continue marks the session seen and goes to splash. Because `web_pad.gd` does not inject A / B as Godot joy events, the gate MUST also poll `App.web_pad` A / B / Start / Back.
+
+`requestFullscreen` is asynchronous. The gate MUST watch `DisplayMode.is_fullscreen_now()` / standalone and advance to splash as soon as fullscreen actually lands (Fullscreen button, A, or Alt+Enter). Do not leave the card up after a successful enter. iOS stays on the card after Try only when fullscreen did not actually happen.
 
 If the viewport is taller than wide, the card MUST say to rotate to landscape. Landscape lock is attempted from the same gesture (`design/save-tech.md`).
 
@@ -85,6 +87,8 @@ Binding rules live in `design/input.md`. UI rules for this slice:
 Opened with Menu / Start / Esc. Freezes gameplay.
 Every menu (including this one) MUST open with valid initial focus so it is immediately navigable by gamepad.
 
+On web, Esc MUST still open this menu while the page is fullscreen. Esc MUST NOT call `document.exitFullscreen`. Leaving web fullscreen is Pause → System or Alt+Enter only (`design/input.md`).
+
 Menu bindings are shared through `scripts/ui/menu_pad.gd` (`design/input.md`):
 - A / Enter confirms the focused control. A second A confirms a pending prompt.
 - B / Esc backs out of a nested layer (re-equip list, rebind page, pending prompt). At root, close the menu.
@@ -99,7 +103,7 @@ Exactly three tabs, navigable with LB/RB or equivalent:
    - Master / Music / SFX volume sliders
    - Camera zoom slider (1.0–2.5, default 1.75). MUST apply live; no restart.
    - HUD scale slider. MUST apply live.
-   - Display mode. Desktop: cycle Windowed / Borderless fullscreen / True fullscreen. Fresh default is borderless. Web and native mobile: Fullscreen on/off. Hidden when `OS.has_feature("xbox")`. MUST apply live from the tap.
+   - Display mode. Desktop: cycle Windowed / Borderless fullscreen / True fullscreen. Fresh default is borderless. Web and native mobile: Fullscreen on/off. Hidden when `OS.has_feature("xbox")`. MUST apply live from the tap. Alt+Enter is the keyboard equivalent (`design/input.md`).
    - Sprite filter cycle (on-spec only): Nearest / Nearest + mips / Nearest + mips + aniso. Default is nearest + mips + aniso. Linear modes MUST NOT appear here.
    - Aim-line toggle and opacity slider
    - Presentation mode switcher + Archives browser
@@ -200,7 +204,7 @@ Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close 
 
 `hud.gd` facade plus `hud_view.gd` / `hud_act.gd`: strip top-left, minimap top-right, boss bar when near, toast, interact glyph row, look-mode cue under the minimap. Level string uses combat level and parenthetical style level.
 Pause Skills also shows run XP earned this descent.
-Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. System opens focused on Character. Camera zoom and HUD scale write `App.set_zoom` / `App.set_hud_scale` and apply without a restart. Display mode writes `DisplayMode.cycle_desktop` or `DisplayMode.toggle_web_fullscreen` from `pause_system.gd`. Small windows multiply HUD chrome and Theme fonts by `UiText.applied()` from a saved text floor (debug slider, default 14). Sprite filter cycles `App.set_sprite_filter` over the three nearest modes. Loadout opens focused on **Enter dungeon**.
+Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. System opens focused on Character. Camera zoom and HUD scale write `App.set_zoom` / `App.set_hud_scale` and apply without a restart. Display mode writes `DisplayMode.cycle_desktop` or `DisplayMode.toggle_web_fullscreen` from `pause_system.gd`. Alt+Enter also toggles display through `DisplayMode.handle_input`. Small windows multiply HUD chrome and Theme fonts by `UiText.applied()` from a saved text floor (debug slider, default 14). Sprite filter cycles `App.set_sprite_filter` over the three nearest modes. Loadout opens focused on **Enter dungeon**.
 
 ## Live snapshot — web touch
 
@@ -208,7 +212,7 @@ Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: k
 
 ## Live snapshot — web fullscreen gate
 
-`scripts/ui/fs_gate.gd` on `scenes/fs_gate.tscn`. `scripts/display_mode.gd` owns platform buckets, window modes, sessionStorage, landscape lock, and the PWA install prompt. `scripts/boot.gd` routes web → gate when the session still needs it.
+`scripts/ui/fs_gate.gd` on `scenes/fs_gate.tscn`. `scripts/display_mode.gd` owns platform buckets, window modes, sessionStorage, landscape lock, Esc hooks, and the PWA install prompt. `scripts/boot.gd` routes web → gate when the session still needs it. The gate rebuilds two themed buttons, keeps focus after `wake_web`, polls `App.web_pad` for A / B / Start / Back, and leaves to splash when fullscreen or standalone becomes true.
 
 ## Live snapshot — loading bar (`loader.gd`)
 

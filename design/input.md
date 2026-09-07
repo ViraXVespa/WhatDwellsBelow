@@ -1,8 +1,8 @@
-# Input
+﻿# Input
 
 Status: binding design + live snapshot  
 Read when: changing controls, menus, web export, or aim  
-Code: `scripts/input/binds.gd`, `scripts/input/pad.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`, `scripts/input/prompts.gd`, `scripts/web_pad.gd`, `scripts/ui/touch_hud.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/prompt_view.gd`, `scripts/world/player_lock.gd`, `scripts/world/dungeon_map_act.gd`, `scripts/display_mode.gd`  
+Code: `scripts/input/binds.gd`, `scripts/input/pad.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`, `scripts/input/prompts.gd`, `scripts/web_pad.gd`, `scripts/ui/touch_hud.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/prompt_view.gd`, `scripts/ui/fs_gate.gd`, `scripts/world/player_lock.gd`, `scripts/world/dungeon_map_act.gd`, `scripts/display_mode.gd`  
 See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui.md`, `design/save-tech.md`
 
 ## Target platforms
@@ -32,7 +32,7 @@ See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui
 
 All controls, gameplay, and interfaces MUST be designed with a gamepad-first intent. Every menu MUST open with a valid initial focus already set so the player can immediately navigate and select using only the gamepad (no requirement to first highlight an element with the mouse).
 
-There is no gamepad chord for display mode. Couch players change it on Pause → System (`design/ui.md`).
+There is no gamepad chord for display mode. Couch players change it on Pause → System (`design/ui.md`). Keyboard / mouse uses Alt+Enter (below).
 
 ## Look mode
 
@@ -110,12 +110,13 @@ All gamepad actions MUST have keyboard/mouse equivalents. Mouse aim + hold-LMB f
 
 Mouse wheel zooms world camera or the large map as described under Look mode. It is not a rebindable InputMap combat action.
 
-**Alt+Enter** is a fixed desktop display toggle. It is not an InputMap action and MUST NOT appear on the rebind page. Enter alone stays Interact / confirm.
+**Alt+Enter** is a fixed display toggle. It is not an InputMap action and MUST NOT appear on the rebind page. Enter alone stays Interact / confirm. Handled in `App._input` → `DisplayMode.handle_input` so it works while a menu is open.
 
-- Desktop only (`DisplayMode.uses_desktop_modes()`). No-op on web, native mobile, and `xbox`.
-- If the window is windowed, apply the last saved fullscreen kind (`display_fs_kind`: borderless or true fullscreen). Fresh default is borderless.
-- If the window is already borderless or true fullscreen, return to windowed and leave `display_fs_kind` alone.
-- Handled in `App._input` → `DisplayMode.handle_input` so it works while a menu is open.
+- Desktop (`DisplayMode.uses_desktop_modes()`): if the window is windowed, apply the last saved fullscreen kind (`display_fs_kind`: borderless or true fullscreen; fresh default is borderless). If the window is already borderless or true fullscreen, return to windowed and leave `display_fs_kind` alone.
+- Web / native Android / iOS (`DisplayMode.uses_web_fs_toggle()`): toggle the current fullscreen state through the same path as Pause → System (`DisplayMode.set_web_fullscreen`). A keydown is a valid gesture for `requestFullscreen`.
+- No-op on `xbox`.
+
+**Esc** opens pause (and backs out of menus). On web it MUST NOT exit browser fullscreen. Only Pause → System and Alt+Enter leave web fullscreen. `DisplayMode.ensure_web_hooks()` installs a capturing `keydown` listener that `preventDefault`s Escape while `document.fullscreenElement` is set and stashes `window.__wdbEsc`. `DisplayMode.consume_web_esc()` / `Pad.pause_just()` turn that flag into pause so camp and dungeon still call `App.pause_menu.toggle()`.
 
 ## Input – Web touch (`touch_pad.gd`, `touch_hud.gd`)
 
@@ -174,7 +175,7 @@ These are implementation defaults, not a replacement for rebinding.
 | Gear tip | Y |
 | Gear drop | X |
 | Crystal zoom | Tab |
-| Display toggle | Alt+Enter (desktop only, not rebindable) |
+| Display toggle | Alt+Enter (desktop and web, not rebindable) |
 
 `binds.apply_pc_defaults()` strips `KEY_R` from special. README text that still says “R special” is stale relative to live binds.
 
@@ -189,7 +190,8 @@ Web builds on GitHub Pages do not get a reliable Godot joypad. When `OS.has_feat
 - Polls the first connected pad each frame.
 - Standard mapping: axes 0–1 move, 2–3 aim; button 0 A, 1 B; RT/LT attack/special; Start/Back; stick clicks.
 - Stick deadzone ≈ 0.24. Button threshold ≈ 0.45.
-- Player must click the canvas once so the page can receive keyboard / gamepad input.
+- Only X / Y are injected as `InputEventJoypadButton`. A / B / Start / Back are flags on `App.web_pad`. The fullscreen gate and any other pre-canvas menu MUST poll those flags and MUST keep a focused `Button` after `Pad.wake_web()` (that helper may `gui_release_focus()` unless `release_gui` is false).
+- Player must click the canvas once so the page can receive keyboard / gamepad input. The fullscreen gate focuses `#canvas` itself and then re-grabs the action button.
 - Xbox pads work in Chromium-based browsers.
 - After scene changes, `App.wake_web_pad()` refreshes the bridge.
 - A connected browser pad hides the web touch overlay. `WebPad.browser_pad_connected()` is the shared probe.
