@@ -95,6 +95,8 @@ Check the change against `design/` (and `AGENTS.md` when agent rules changed). U
 
 If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md` for the version this goal assumed at Phase 2 (see `design/versioning.md`). Body shape is in that file. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or treat `scripts/data/version.json` as a ledger to hand-edit.
 
+Always emit the `design/changelog/{label}.md` file, if one is needed, as the final file in this phase.
+
 Do not emit `design/sessions.md`. Do not emit `_logs/` (Copilot only, gitignored).
 
 If nothing in the docs is wrong and no changelog entry is required, tell the User no documentation changes are required.

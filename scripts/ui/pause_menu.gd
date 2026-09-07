@@ -14,6 +14,7 @@ const Pad := preload("res://scripts/ui/menu_pad.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
+const Disp := preload("res://scripts/display_mode.gd")
 
 const SKILL_NAMES := {
 	"axe": "Great Axe",
@@ -144,6 +145,7 @@ func close_ui() -> void:
 	App.save_now()
 	App.swallow_close_pad()
 	App.wake_web_pad()
+	Disp.consume_web_esc()
 
 
 func _wipe(n: Node) -> void:
@@ -361,7 +363,24 @@ func _st(msg: String) -> void:
 	App.sfx("ui")
 
 
+func _back() -> void:
+	if gear_sub:
+		GearAct.close_sub(self)
+	elif pending:
+		pending = false
+		pending_id = ""
+		_st("Cancelled.")
+	elif sys_page != "main":
+		sys_page = "main"
+		rebind_action = ""
+		_rebuild()
+	else:
+		close_ui()
+
+
 func _process(delta: float) -> void:
+	if open and Disp.consume_web_esc():
+		_back()
 	if open and tab == 0:
 		GearAct.tick_x(self, delta)
 
@@ -383,18 +402,7 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if Pad.is_back(event):
-		if gear_sub:
-			GearAct.close_sub(self)
-		elif pending:
-			pending = false
-			pending_id = ""
-			_st("Cancelled.")
-		elif sys_page != "main":
-			sys_page = "main"
-			rebind_action = ""
-			_rebuild()
-		else:
-			close_ui()
+		_back()
 		get_viewport().set_input_as_handled()
 		return
 

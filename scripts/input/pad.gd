@@ -129,12 +129,17 @@ static func just(action: String) -> bool:
 
 
 static func pause_just() -> bool:
-	if eat_pause:
-		return false
+	var menu_open := App != null and App.pause_menu != null and bool(App.pause_menu.get("open"))
 	if Disp.consume_web_esc():
 		if Input.is_action_pressed("pause"):
 			Input.action_release("pause")
+		if menu_open:
+			return false
+		if eat_pause:
+			return false
 		return true
+	if menu_open or eat_pause:
+		return false
 	return Input.is_action_just_pressed("pause") or just("pause")
 
 
