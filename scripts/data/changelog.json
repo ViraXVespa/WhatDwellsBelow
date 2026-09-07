@@ -3,6 +3,35 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.43",
+			"points": [
+				{
+					"text": "Display settings in Pause \u2192 System",
+					"subs": [
+						"Desktop: Windowed, Borderless fullscreen, True fullscreen. Fresh default is borderless. Alt+Enter toggles windowed and the last fullscreen kind. Not on the rebind page.",
+						"Web and mobile: Fullscreen on/off. Hidden on Xbox feature-tag builds."
+					]
+				},
+				{
+					"text": "Web pre-splash gate before the credit splash, once per browser session",
+					"subs": [
+						"Copy and the action button change for desktop web, Android, and iOS. iOS cannot open Add to Home Screen from a button; the card tells the player to use Share \u2192 Add to Home Screen.",
+						"A / confirm uses the focused button. B / Esc continues without fullscreen."
+					]
+				},
+				{
+					"text": "Web export is a PWA",
+					"subs": [
+						"Standalone display, landscape orientation. Threads stay off. Isolation headers stay off."
+					]
+				},
+				{
+					"text": "Secret debug Settings page mirrors the same display control."
+				}
+			],
+			"summary": "Couch and phone players can pick a display mode, web sessions get a one-time fullscreen gate, and Home Screen installs launch landscape without browser chrome."
+		},
+		{
 			"label": "0.2.39",
 			"points": [
 				{
