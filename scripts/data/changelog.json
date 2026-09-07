@@ -3,6 +3,15 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.50",
+			"points": [
+				{
+					"text": "Escape and F1 close the pause menu instead of opening another copy on top of it"
+				}
+			],
+			"summary": "Web pause keys now back out of an open menu instead of stacking a second one."
+		},
+		{
 			"label": "0.2.49",
 			"points": [
 				{
