@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.49",
+			"points": [
+				{
+					"text": "F1 and Escape no longer open and immediately close the pause menu on the web"
+				},
+				{
+					"text": "Those keys keep working after the first press instead of locking until a refresh"
+				},
+				{
+					"text": "Pause \u2192 System now has Quit"
+				},
+				{
+					"text": "Alt+F4, Ctrl+W, and Ctrl+Q leave fullscreen and close the game window when the browser allows it"
+				}
+			],
+			"summary": "Fix the web pause keys, and give players a way out of fullscreen instead of trapping them in the tab."
+		},
+		{
 			"label": "0.2.48",
 			"points": [
 				{
