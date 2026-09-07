@@ -97,6 +97,10 @@ static func build(ui: CanvasLayer) -> void:
 			App.go_title()
 		, "wipe")
 	))
+	if not Disp.is_xbox():
+		ui.box.add_child(ThemeS.btn("Quit", func():
+			Disp.request_quit()
+		))
 	ui.status = ui._cap("Marked actions need a second confirm.", 16, Color(0.78, 0.74, 0.66))
 	ui.box.add_child(ui.status)
 	ui.box.add_child(ThemeS.btn("Close", ui.close_ui))

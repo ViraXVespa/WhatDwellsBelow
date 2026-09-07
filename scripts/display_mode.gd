@@ -2,8 +2,6 @@ extends Object
 
 ## Desktop window modes, web fullscreen / PWA, session gate, landscape lock.
 
-const GATE_KEY := "wdb_fs_gate_seen"
-
 
 static func is_web() -> bool:
 	return OS.has_feature("web")
@@ -45,7 +43,7 @@ static func web_kind() -> String:
 static func is_standalone() -> bool:
 	if not is_web():
 		return false
-	var raw: String = str(JavaScriptBridge.eval("""
+	return _js_flag("""
 		(function () {
 			try {
 				if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return '1';
@@ -53,13 +51,12 @@ static func is_standalone() -> bool:
 			} catch (e) {}
 			return '0';
 		})();
-	""", true))
-	return raw == "1"
+	""")
 
 
 static func is_fullscreen_now() -> bool:
 	if is_web():
-		var raw: String = str(JavaScriptBridge.eval("""
+		return _js_flag("""
 			(function () {
 				try {
 					if (document.fullscreenElement) return '1';
@@ -68,8 +65,7 @@ static func is_fullscreen_now() -> bool:
 				} catch (e) {}
 				return '0';
 			})();
-		""", true))
-		return raw == "1"
+		""")
 	var mode: int = DisplayServer.window_get_mode()
 	return mode == DisplayServer.WINDOW_MODE_FULLSCREEN or mode == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN
 
@@ -77,32 +73,24 @@ static func is_fullscreen_now() -> bool:
 static func gate_seen() -> bool:
 	if not is_web():
 		return false
-	var raw: String = str(JavaScriptBridge.eval("""
+	return _js_flag("""
 		(function () {
-			try {
-				return sessionStorage.getItem('wdb_fs_gate_seen') === '1' ? '1' : '0';
-			} catch (e) { return '0'; }
+			try { return sessionStorage.getItem('wdb_fs_gate_seen') === '1' ? '1' : '0'; }
+			catch (e) { return '0'; }
 		})();
-	""", true))
-	return raw == "1"
+	""")
 
 
 static func mark_gate_seen() -> void:
 	if not is_web():
 		return
-	JavaScriptBridge.eval("""
-		(function () {
-			try { sessionStorage.setItem('wdb_fs_gate_seen', '1'); } catch (e) {}
-		})();
-	""", true)
+	JavaScriptBridge.eval("try{sessionStorage.setItem('wdb_fs_gate_seen','1')}catch(e){}", true)
 
 
 static func wants_gate() -> bool:
 	if not is_web() or is_xbox():
 		return false
-	if is_standalone() or is_fullscreen_now():
-		return false
-	if gate_seen():
+	if is_standalone() or is_fullscreen_now() or gate_seen():
 		return false
 	return true
 
@@ -206,7 +194,7 @@ static func try_fullscreen_gesture() -> bool:
 static func try_install_prompt() -> bool:
 	if not is_web():
 		return false
-	var raw: String = str(JavaScriptBridge.eval("""
+	return _js_flag("""
 		(function () {
 			try {
 				var p = window.__wdbInstallPrompt;
@@ -216,8 +204,7 @@ static func try_install_prompt() -> bool:
 				return '1';
 			} catch (e) { return '0'; }
 		})();
-	""", true))
-	return raw == "1"
+	""")
 
 
 static func toggle_alt_enter() -> void:
@@ -246,6 +233,12 @@ static func handle_input(event: InputEvent) -> bool:
 	var k: InputEventKey = event
 	if not k.pressed or k.echo:
 		return false
+	if (k.keycode == KEY_W or k.keycode == KEY_Q) and (k.ctrl_pressed or k.meta_pressed):
+		request_quit()
+		return true
+	if k.keycode == KEY_F4 and k.alt_pressed:
+		request_quit()
+		return true
 	if k.keycode != KEY_ENTER and k.keycode != KEY_KP_ENTER:
 		return false
 	if not k.alt_pressed:
@@ -254,16 +247,40 @@ static func handle_input(event: InputEvent) -> bool:
 	return true
 
 
+static func request_quit() -> void:
+	if is_xbox():
+		return
+	if is_web():
+		_js_close()
+		return
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree:
+		tree.quit()
+
+
 static func ensure_web_hooks() -> void:
 	if not is_web():
 		return
 	JavaScriptBridge.eval("""
 		(function () {
-			if (window.__wdbFsHooks2) return;
-			window.__wdbFsHooks2 = 1;
+			if (window.__wdbFsHooks3) return;
+			window.__wdbFsHooks3 = 1;
 			window.__wdbEsc = 0;
+			function unlockFs() {
+				try { if (navigator.keyboard && navigator.keyboard.unlock) navigator.keyboard.unlock(); } catch (e) {}
+				try {
+					var fn = document.exitFullscreen || document.webkitExitFullscreen;
+					if (fn && document.fullscreenElement) fn.call(document);
+				} catch (e) {}
+			}
 			document.addEventListener('keydown', function (e) {
 				var k = e.key || e.code;
+				var closeChord = ((e.ctrlKey || e.metaKey) && (k === 'w' || k === 'W' || k === 'KeyW' || k === 'q' || k === 'Q' || k === 'KeyQ')) || (e.altKey && (k === 'F4' || k === 'F4'));
+				if (closeChord) {
+					unlockFs();
+					try { window.close(); } catch (err) {}
+					return;
+				}
 				if (k === 'F1' || k === 'Help') {
 					e.preventDefault();
 					if (e.stopPropagation) e.stopPropagation();
@@ -285,11 +302,6 @@ static func ensure_web_hooks() -> void:
 					}
 				} catch (err) {}
 			});
-			try {
-				if (document.fullscreenElement && navigator.keyboard && navigator.keyboard.lock) {
-					navigator.keyboard.lock(['Escape']);
-				}
-			} catch (err) {}
 		})();
 	""", true)
 
@@ -298,32 +310,20 @@ static func consume_web_esc() -> bool:
 	if not is_web():
 		return false
 	ensure_web_hooks()
-	var raw: String = str(JavaScriptBridge.eval("""
+	return _js_flag("""
 		(function () {
 			try {
-				if (window.__wdbEsc) {
-					window.__wdbEsc = 0;
-					return '1';
-				}
+				if (window.__wdbEsc) { window.__wdbEsc = 0; return '1'; }
 			} catch (e) {}
 			return '0';
 		})();
-	""", true))
-	return raw == "1"
+	""")
 
 
 static func lock_landscape() -> void:
 	if not is_web():
 		return
-	JavaScriptBridge.eval("""
-		(function () {
-			try {
-				if (screen.orientation && screen.orientation.lock) {
-					screen.orientation.lock('landscape').catch(function () {});
-				}
-			} catch (e) {}
-		})();
-	""", true)
+	JavaScriptBridge.eval("try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(function(){})}catch(e){}", true)
 
 
 static func viewport_portrait() -> bool:
@@ -337,7 +337,7 @@ static func _js_request_fs() -> void:
 		(function () {
 			try {
 				var c = document.getElementById('canvas') || document.documentElement;
-				var fn = c.requestFullscreen || c.webkitRequestFullscreen || c.msRequestFullscreen;
+				var fn = c.requestFullscreen || c.webkitRequestFullscreen;
 				if (!fn) return;
 				try { fn.call(c, { keyboardLock: 'browser' }); }
 				catch (e1) { fn.call(c); }
@@ -349,22 +349,31 @@ static func _js_request_fs() -> void:
 static func _js_exit_fs() -> void:
 	JavaScriptBridge.eval("""
 		(function () {
+			try { if (navigator.keyboard && navigator.keyboard.unlock) navigator.keyboard.unlock(); } catch (e) {}
 			try {
-				if (navigator.keyboard && navigator.keyboard.unlock) navigator.keyboard.unlock();
-			} catch (e) {}
-			try {
-				var fn = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+				var fn = document.exitFullscreen || document.webkitExitFullscreen;
 				if (fn && document.fullscreenElement) fn.call(document);
 			} catch (e) {}
 		})();
 	""", true)
 
 
-static func _probe_ua() -> String:
-	var raw: String = str(JavaScriptBridge.eval("""
+static func _js_close() -> void:
+	JavaScriptBridge.eval("""
 		(function () {
-			try { return String(navigator.userAgent || '').toLowerCase(); }
-			catch (e) { return ''; }
+			try { if (navigator.keyboard && navigator.keyboard.unlock) navigator.keyboard.unlock(); } catch (e) {}
+			try {
+				var fn = document.exitFullscreen || document.webkitExitFullscreen;
+				if (fn && document.fullscreenElement) fn.call(document);
+			} catch (e) {}
+			try { window.close(); } catch (e) {}
 		})();
-	""", true))
-	return raw.to_lower()
+	""", true)
+
+
+static func _js_flag(src: String) -> bool:
+	return str(JavaScriptBridge.eval(src, true)) == "1"
+
+
+static func _probe_ua() -> String:
+	return str(JavaScriptBridge.eval("(function(){try{return String(navigator.userAgent||'').toLowerCase()}catch(e){return ''}})();", true)).to_lower()

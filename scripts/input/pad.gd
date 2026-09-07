@@ -132,10 +132,8 @@ static func pause_just() -> bool:
 	if eat_pause:
 		return false
 	if Disp.consume_web_esc():
-		var ev := InputEventAction.new()
-		ev.action = "pause"
-		ev.pressed = true
-		Input.parse_input_event(ev)
+		if Input.is_action_pressed("pause"):
+			Input.action_release("pause")
 		return true
 	return Input.is_action_just_pressed("pause") or just("pause")
 
