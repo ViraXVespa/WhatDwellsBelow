@@ -3,6 +3,15 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.52",
+			"points": [
+				{
+					"text": "Art pipeline: player I2V prompts now use a short green neckband and a facing-aware female Up lock."
+				}
+			],
+			"summary": "Regen-tree cell lookup no longer crashes, and player I2V prompts dropped wrap and buckle language that was inventing extra cloth."
+		},
+		{
 			"label": "0.2.51",
 			"points": [
 				{
