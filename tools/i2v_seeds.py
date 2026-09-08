@@ -34,28 +34,42 @@ TEST_PREFIX = (
     "Make the clip as long as it needs to be to finish the motion below. No fixed duration.\n\n"
 )
 
-# Shared camera / plate / identity. Loop vs one-shot only changes the cycle lines.
-_PROMPT_HEAD = """2D game sprite on a treadmill. {action} in place. Engine slides this sprite later. The figure never travels.
+# Shared camera / plate / identity. Keep this short so later lines still land.
+_PROMPT_HEAD = """2D pixel-art sprite. {action} in place, as if on an invisible treadmill. No machine. Stay in this still's slot.
 
 {facing_lock}
 
-The first frame already matches this still. Do not rotate into the pose. Do not find the facing later in the clip.
+First frame is this still. Keep this still's costume, hair, and colors.
 
 {identity_lock}
 
-Joints should bend. Only cloth already on this still may shift. Do not spawn new cloth. Volume in the limbs. Not paper cutouts sliding on a hinge.
+Smooth even motion. Locked camera. Flat #FF00FF. No new shadows.
+"""
 
-Locked camera. No pan, zoom, or perspective change. Flat #FF00FF only.
+_PROMPT_HEAD_FEMALE_UP = """2D pixel-art sprite. {action} in place, as if on an invisible treadmill. No machine. Stay in this still's slot.
 
-Keep the still's colors and the still's existing form shading. Do not add lights, grades, or filters. Do not flatten the figure to a short color list.
+{facing_lock}
 
-The hip belt buckle stays glued to the still's vertical center line. Feet stay on the same baseline. Small step bounce is fine. The whole figure stays in this still's slot, including lifted feet and swinging hands. Keep every limb inside the magenta plate.
+First frame is this still. Keep this still's costume, hair, and colors. Do not add garments.
+
+{identity_lock}
+
+Smooth even motion. Locked camera. Flat #FF00FF. No new shadows.
 """
 
 LOOP_PROMPT = (
     _PROMPT_HEAD
     + """
-Readable compact game cycle. The clip starts and ends on this idle still so it loops.
+Loop. Start and end on this still.
+
+{motion}
+"""
+)
+
+LOOP_PROMPT_FEMALE_UP = (
+    _PROMPT_HEAD_FEMALE_UP
+    + """
+Loop. Start and end on this still.
 
 {motion}
 """
@@ -64,7 +78,16 @@ Readable compact game cycle. The clip starts and ends on this idle still so it l
 ONESHOT_PROMPT = (
     _PROMPT_HEAD
     + """
-This is not a walk and not a march. One readable game action. The clip starts on this idle still. Finish the motion below, then recover or hold as that motion says. Do not loop the action. Do not start a second strike.
+One action. Start on this still. Finish, then hold. Do not loop.
+
+{motion}
+"""
+)
+
+ONESHOT_PROMPT_FEMALE_UP = (
+    _PROMPT_HEAD_FEMALE_UP
+    + """
+One action. Start on this still. Finish, then hold. Do not loop.
 
 {motion}
 """
@@ -80,6 +103,7 @@ FACING_LOCK = {
     "up": (
         "Square back view the entire clip, copied from this still. Back of the head, rear of the armor, and heels face the camera. "
         "Both shoulders the same width. Head on the center line. No tilt. "
+        "Rear silhouette matches this still. "
         "This is marching in place away from the camera. Face-on front view is the wrong shot."
     ),
     "left": (
@@ -105,40 +129,43 @@ FACING_LOCK = {
     "up_left": (
         "Three-quarter back toward Up-Left the entire clip, copied from this still. More back than face. "
         "Keep this same three-quarter. Head on the center line. No tilt off the still. "
+        "Rear silhouette matches this still. "
         "This is marching in place in that three-quarter. Full back, full front, or full profile is the wrong shot."
     ),
     "up_right": (
         "Three-quarter back toward Up-Right the entire clip, copied from this still. More back than face. "
         "Keep this same three-quarter. Head on the center line. No tilt off the still. "
+        "Rear silhouette matches this still. "
         "This is marching in place in that three-quarter. Full back, full front, or full profile is the wrong shot."
     ),
 }
 
 # Player-character identity. Male and female have different styling; do not share outfit lines.
+# female_up omits neckband language: the locked Up still has no visible neckband.
 IDENTITY_LOCK = {
     "male": (
         "Male player character copied from this still. Short messy brown hair. Brown leather armor with metal shoulder plates. "
-        "One short green cloth wrapped close at the neck only, same bulk as the still. "
-        "No hanging end. No tail. No loose strip behind either shoulder or down the back. "
-        "Do not add extra wrap. Do not lengthen it. Do not drape more cloth on the shoulders. "
-        "No cape. No cloak. No second wrap. "
-        "Overall proportions stay in the same ballpark as the still. No extra limbs and no redesign. Hands stay empty. No weapon. No tool."
+        "A short green neckband worn only around the neck, same bulk as this still. Hands empty. No weapon. No tool."
     ),
     "female": (
-        "Female player character copied from this still. Long dark wavy hair with a braid across the crown. "
-        "Burgundy fitted armor with metal trim. Dark trousers and brown boots. "
-        "One short green cloth wrapped close at the neck only, same bulk as the still. "
-        "No hanging end. No tail. No loose strip behind either shoulder or down the back. "
-        "Hair covers any wrap end. Never show a hanging strip through or beside the hair. "
-        "Do not add extra wrap. Do not lengthen it. Do not restyle her as the male delver. "
-        "No short messy hair. No brown leather chest. No cape. No cloak. "
-        "Overall proportions stay in the same ballpark as the still. No extra limbs and no redesign. Hands stay empty. No weapon. No tool."
+        "Female player character copied from this still. "
+        "Long dark wavy hair hangs loose from the scalp down the back in one sheet, same hang as this still. "
+        "A little bounce with the step. Hair stays together. "
+        "A small braid lies along the crown of the scalp only. That is hair on the top of the head, not a worn circlet. "
+        "Hair is not tied. Ends hang free. "
+        "Burgundy fitted armor, dark trousers, brown boots. "
+        "A short green neckband worn only around the neck, same bulk as this still. Hands empty. No weapon. No tool."
+    ),
+    "female_up": (
+        "Female player character copied from this still. "
+        "Loose dark hair, same shape as this still. Light bounce only. "
+        "Burgundy armor, dark trousers, brown boots. Hands empty."
     ),
 }
 
 DISPEL_IDENTITY_TAIL = (
     "Hands start empty. The only prop this clip may grow is one small ritual knife. "
-    "No axe, staff, bow, pick, or hatchet. No extra limbs and no redesign."
+    "No axe, staff, bow, pick, or hatchet."
 )
 
 # idle_to_walk / walk_to_idle are pack cuts from the walk I2V, not their own clips.
@@ -161,16 +188,9 @@ LOOP_ACTIONS = frozenset({"idle", "walk"})
 MOTION = {
     "idle": "Easy breath and weight shift only. Stay on the still pose and the still facing. Loop.",
     "walk": (
-        "One loop that starts and ends on this idle still. "
-        "March in place. The body stays in this still's facing and on this still's center line. "
-        "A stride is a plant of one foot then the other, knees bent, both feet under the hips. "
-        "Arms hang by the ribs and swing a short way, opposite the legs. Hands stay near the hips. Compact arm motion, not a windmill. "
-        "1) Idle: this still. Weight even. Both feet planted. "
-        "2) Idle into walk: weight shifts and one foot lifts first. Keep that same facing. "
-        "3) Walk: at least three clear strides in place. Each stride shows a passing (swinging foot crosses under the torso) and a plant. Stay centered. "
-        "4) Walk into idle: stride shortens and stops. The last plant is the other foot from the one that started. "
-        "Weight evens out and the pose returns to this still. Keep the settle. Do not freeze mid-stride. "
-        "5) Idle: this still again, both feet planted, so looping the clip is seamless."
+        "Walk in place. Small steps. Knees bend. "
+        "Arms stay close to the ribs and move only a little, opposite the feet. "
+        "Return to this still so the clip loops."
     ),
     "attack_great_axe": (
         "Unarmed body acting a two-handed great-axe swing. Hands stay empty. Do not spawn an axe. "
@@ -362,14 +382,14 @@ def facing_lock(name: str) -> str:
 
 def gender_key(name: str) -> str:
     g = name.strip().lower()
-    if g in IDENTITY_LOCK:
+    if g in ("male", "female"):
         return g
     return "male"
 
 
 def infer_gender(src: Path | None, explicit: str) -> str:
     g = explicit.strip().lower()
-    if g in IDENTITY_LOCK:
+    if g in ("male", "female"):
         return g
     if src is not None:
         n = src.name.lower()
@@ -380,7 +400,13 @@ def infer_gender(src: Path | None, explicit: str) -> str:
     return "male"
 
 
-def identity_lock(gender: str) -> str:
+def is_female_up(gender: str, facing: str) -> bool:
+    return gender_key(gender) == "female" and facing_key(facing) == "up"
+
+
+def identity_lock(gender: str, facing: str = "down") -> str:
+    if is_female_up(gender, facing):
+        return IDENTITY_LOCK["female_up"]
     return IDENTITY_LOCK[gender_key(gender)]
 
 
@@ -399,24 +425,51 @@ def motion_keys(action: str) -> list[str]:
     raise ValueError(f"unknown I2V action {action!r}; expected one of: {known}")
 
 
-def _identity_for(key: str, gender: str) -> str:
-    text = identity_lock(gender)
+def _identity_for(key: str, gender: str, facing: str) -> str:
+    text = identity_lock(gender, facing)
     if key != "dispel":
         return text
     return text.replace(
-        "Hands stay empty. No weapon. No tool.",
+        "Hands empty. No weapon. No tool.",
+        DISPEL_IDENTITY_TAIL,
+    ).replace(
+        "Hands empty.",
         DISPEL_IDENTITY_TAIL,
     )
 
 
+def _strip_wrap_language(text: str) -> str:
+    cuts = (
+        "One short green cloth wrapped all the way around the neck as a close collar. ",
+        "A short green neckband worn only around the neck, same bulk as this still. ",
+        "It stays on the neck. It does not hang down onto the armor. Same bulk as this still. ",
+        "From behind the hair covers that collar. ",
+        "From behind, that same collar only. ",
+        "The green collar stays on the neck and does not hang onto the armor. ",
+        "Only cloth already on this still may shift. Do not spawn new cloth. ",
+        "The hip belt buckle stays glued to the still's vertical center line. ",
+    )
+    out = text
+    for cut in cuts:
+        out = out.replace(cut, "")
+    return out
+
+
 def _format_one(facing: str, key: str, gender: str) -> str:
-    template = LOOP_PROMPT if key in LOOP_ACTIONS else ONESHOT_PROMPT
-    return template.format(
+    female_up = is_female_up(gender, facing)
+    if key in LOOP_ACTIONS:
+        template = LOOP_PROMPT_FEMALE_UP if female_up else LOOP_PROMPT
+    else:
+        template = ONESHOT_PROMPT_FEMALE_UP if female_up else ONESHOT_PROMPT
+    text = template.format(
         action=key.replace("_", " "),
         facing_lock=facing_lock(facing),
-        identity_lock=_identity_for(key, gender),
+        identity_lock=_identity_for(key, gender, facing),
         motion=MOTION[key],
     )
+    if female_up:
+        return _strip_wrap_language(text)
+    return text
 
 
 def build_prompt(

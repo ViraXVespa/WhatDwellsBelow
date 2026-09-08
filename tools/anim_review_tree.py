@@ -25,7 +25,7 @@ def _cell_for(gender: str, facing: str) -> Image.Image | None:
     if bible is None or not bible.is_file():
         return None
     raw = Image.open(bible).convert("RGBA")
-    cells = sp.split_equal_3x3(raw)
+    cells = dict(zip(sp.CELL_NAMES, sp.split_equal_3x3(raw)))
     key = facing if facing in cells else "down"
     im = cells.get(key)
     if im is None:

@@ -1,4 +1,4 @@
-# Player sprite and paper-doll generation pipeline
+﻿# Player sprite and paper-doll generation pipeline
 
 Status: binding design  
 Read when: generating or replacing player / enemy / weapon frames  
@@ -88,21 +88,17 @@ Instead, recover the intended grid and crop to that:
 - The crop square is 3 × cell size, centered on the lattice origin (the center cell).
 - That square MUST include the plate padding around the outer figures. It MUST NOT include random extra canvas beyond one grid-cell of margin.
 - Do not stretch or linearly scale to force a square. Crop only.
-- If centers do not form a readable 3×3 (skewed rows, missing figure, overlapping cells), discard and regenerate the Bible. Do not guess.
+- If centers do not form a readable 3×3 (skewed rows, missing figure, overlapping cells), discard and regenerate the Bible rather than guess a crop.
 
-After that square exists, split into nine equal cells.
+Save the squared, remapped sheet as the locked Bible.
 
-## 19.2 One I2V, then User review
+## 19.2 Animation method (one I2V unit, then stop)
 
 Always work **one unit** at a time. A unit is exactly one **character type** + one **facing** + one **action**.
 
-Never hard-code exact frame counts. Never generate full multi-direction strips in one pass. Never generate a second I2V for the same unit, a different unit, or a fill-in pass unless the User asked for that next clip.
+I2V prompts come from `tools/i2v_seeds.py` (`build_prompt()` + `MOTION[action]` + facing lock + identity lock). Identity is per gender and facing: `IDENTITY_LOCK["female_up"]` is used for the female Up cell and omits neckband language because that still has no visible band. Do not invent a second walk prompt in this file.
 
-### Prompts
-
-I2V prompts come from `tools/i2v_seeds.py` (`build_prompt()` + `MOTION[action]` + `IDENTITY_LOCK[gender]`). Do not invent a second walk prompt in this file.
-
-Identity lock is per player gender. Male and female each have their own `IDENTITY_LOCK` in `tools/i2v_seeds.py`. Do not copy male outfit language onto the female character. Pass `--gender male` or `--gender female`, or infer it from `bible_locked_male.png` / `bible_locked_female.png`. Copy the still: one short green cloth wrapped close at the neck only. No hanging end. No tail. No loose strip.
+Identity lock is per player gender and facing. Male and female each have their own `IDENTITY_LOCK` in `tools/i2v_seeds.py`. Do not copy male outfit language onto the female character. Pass `--gender male` or `--gender female`, or infer it from `bible_locked_male.png` / `bible_locked_female.png`. Where the still shows it, copy a short green neckband worn only around the neck, same bulk as the still. A little more of that same band may show at the nape when hair moves. Do not grow extra length or hanging cloth. Female Up uses `IDENTITY_LOCK["female_up"]` and MUST NOT mention a neckband, wrap, scarf, collar, or green cloth.
 
 Grok Build I2V uses that body as-is. The web-browser preamble (image-to-video / do not output a still / no fixed duration) is **only** added when `tools/i2v_seeds.py --test` is passed.
 
@@ -110,270 +106,156 @@ Grok Build I2V uses that body as-is. The web-browser preamble (image-to-video / 
 
 Walk uses the loop wrapper in `tools/i2v_seeds.py` (starts and ends on the idle still). One-shot actions use the one-shot wrapper (start on the still, finish the motion, recover or hold; do not claim a walk loop).
 
-Walk loop (one clip, starts and ends on the idle still so it can loop):
+`--action gather` (Animation Browser name with no tool suffix) writes **both** gather sheets. Unknown actions MUST NOT fall back to `walk`.
 
-1. Idle (the start still)
-2. Idle into walk
-3. At least three clear in-place strides
-4. Walk into idle, last plant on the **opposite** foot from the foot that started
-5. Idle still again
+Legal I2V `--action` values:
 
-One-shot `MOTION` keys (full beat sheets, not a shared `attack` / `special` line):
+| `--action` | Use |
+|------------|-----|
+| `walk` | Locomotion I2V. Pack cuts idle-to-walk / walk / walk-to-idle. |
+| `idle` | Not a player path. Debug / still hold only. |
+| `attack_great_axe` | Unarmed two-hand swing acting an axe. |
+| `attack_staff` | Unarmed short melee poke acting the lightning staff. |
+| `attack_longbow` | Unarmed draw and loose. |
+| `special_great_axe` | Unarmed slam. |
+| `special_staff` | Unarmed bolt-cast body (bolt is later VFX). |
+| `special_longbow` | Unarmed fan loose. |
+| `gather` | Writes pickaxe + hatchet sheets. |
+| `gather_pickaxe` | One mine sheet. |
+| `gather_hatchet` | One woodcut sheet. |
+| `death` | Hit collapse to a downed hold. |
+| `dispel` | Ritual seppuku: draw one small knife, kneel, one abdominal cut, collapse, hold. |
 
-- `attack_great_axe`, `attack_staff`, `attack_longbow`
-- `special_great_axe`, `special_staff`, `special_longbow`
-- `gather_pickaxe`, `gather_hatchet`
-- `death`, `dispel`
+`idle_to_walk` / `walk_to_idle` alias to `walk`; they are not I2V units. Attack / special aliases (`atk_*`, `spc_*`) exist for browser class names.
 
-`--action gather` (Animation Browser name with no tool suffix) writes **both** gather sheets. Unknown actions MUST NOT fall back to `walk`. `idle_to_walk` / `walk_to_idle` alias to `walk`; they are not I2V units.
+Game facing is a locked view copied from the still (`FACING_LOCK` in `tools/i2v_seeds.py`), from the first frame. Down is marching in place toward the camera (both shoulders visible). Walk is in place as if on an invisible treadmill; do not draw a treadmill machine. Do not name a travel heading. Start/stop feet are “one foot” then “the other foot.”
 
-Attack / special / gather I2V is unarmed body. Hands stay empty. Do not spawn the item. Paper-doll overlays are I2I / stills, not this prompt set.
+After the User accepts the clip, harvest and pack. Then stop again if the next unit is not already named.
 
-`death` is a hit collapse to a downed hold. `dispel` is ritual seppuku: draw one small knife, kneel, one abdominal cut, collapse, hold. That knife is the only legal prop on the Dispel clip. Neither clip paints blood, spray, puddles, or gore — the engine draws a blood pool under the downed body.
+### 19.2.1 Seed still
 
-Game facing is a locked view copied from the still (`FACING_LOCK` in `tools/i2v_seeds.py`), from the first frame. Down is marching in place toward the camera (both shoulders visible). Walk is a treadmill on the still's center line. Do not name a travel heading. Start/stop feet are “one foot” then “the other foot.”
+Priority:
 
-No fixed clip length. Completeness is the motion goal, not a clock. Dispel may run long enough to read as ritual.
+1. **Locked Bible cell (default).**
+   - Split the locked, plate-remapped Bible into nine equal cells.
+   - Take the one full-body cell that matches the facing being generated.
+   - Upscale that cell by exactly 400% with nearest-neighbor only (`tools/i2v_seeds.py --cell`, or `--bible` to batch plates the User asked for). Every source pixel becomes a 4×4 block. No bilinear / Lanczos / AI upscale. No non-integer fit. No 1024 canvas pad.
+   - After that integer scale, pad extra `#FF00FF` around the figure (`PAD_FRAC` of figure height on every short side) so lifted feet and swinging arms stay on-plate. Never shrink the figure to make padding.
+   - If a later clean directional still exists for that facing, uses the same cell framing, **and still has an opaque plate**, 400% that still instead of re-splitting the Bible.
 
-### Generation methods
+2. **Full locked Bible, only if the User asks.**
+   - Same 400% nearest-neighbor rule on the whole sheet.
+   - Default for every I2V attempt: one 400% spliced still of the needed facing, plate intact.
 
-1. **Image-to-video** (default for locomotion)
-   - Use whenever available.
-   - Default seed: one full-body Bible cell for that facing, plate still in the pixels, 400% nearest-neighbor (`tools/i2v_seeds.py --cell`).
-   - Produce **one** clip. Show that clip to the User immediately. Do not extract frames, harvest, or cleanup until the User accepts.
-2. **Individual classic key poses**
-   - Contact → Down → Passing → Up (and any needed extremes).
-   - One pose at a time against the locked Bible.
-   - Only when the User rejects I2V for that unit or asks for stills.
-3. **Short in-place horizontal strip**
+3. **Video-fill / last accepted clip, only if the User asks.**
    - Last resort for a single facing + action.
 
-**Forbidden**
-
-- Full multi-direction strips, hard frame-count demands, or multi-action sheets in one generation.
-- Automatic retries, automatic viability fill-in, or batched I2V.
-- A fixed duration such as “at least ten seconds.”
-- Baked “character holding weapon X” body sheets as the source of truth.
-- Seeding I2V from `key_to_alpha` / transparent / 128-fit engine frames.
-
-### Review gate (mandatory)
-
-After each I2V clip (or after a stills batch the User requested for that same unit):
-
-1. Show the User the clip immediately. Do not extract frames, harvest contact sheets, or run cleanup first.
-2. Report only the unit: facing, action, gender, seed used.
-3. **Stop.** Wait. Do not analyze gait, pack shipping frames, or start the next unit until the User answers.
-4. Extract candidate frames only after **Accept** (or if the User asks to see frames).
-
-The User decides one of:
-
-| User call | Agent does next |
-|-----------|-----------------|
-| **Accept** | Run §19.6 cleanup on the chosen frames, pack that unit, wait for the next unit order |
-| **Another I2V pass** | One new clip for the same unit (new seed still if the User asked for one). Then review again |
-| **Need a new seed still** | Generate or splice one still only. Plate-remap if the plate is not `#FF00FF`. Stop for review before any I2V |
-| **Reject / skip this method** | Drop one level in the generation methods list, still one unit only |
-| **Next unit** | Start the next facing or action the User named |
-
-### How to extract a splice from the locked Bible
-
-The locked Bible is a perfect 3×3 grid after the square-crop above. Treat it as nine equal cells. Do not use the center cell as an animation seed (that cell is the face close-up only).
-
-| Cell | Contents |
-|------|----------|
-| Top-left | Up-Left full-body |
-| Top-center | Up full-body |
-| Top-right | Up-Right full-body |
-| Middle-left | Left full-body |
-| Center | Face close-up — not an animation seed |
-| Middle-right | Right full-body |
-| Bottom-left | Down-Left full-body |
-| Bottom-center | Down full-body |
-| Bottom-right | Down-Right full-body |
-
-Extraction / I2V seed order:
-
-- Split the locked **plate-remapped** Bible into nine equal cells.
-- Do not range-key, despill, bbox-crop, or flatten chroma to alpha on the cell before I2V. The `#FF00FF` that sits in the cell stays.
-- Take the one full-body cell that matches the facing being generated.
-- Upscale that cell by exactly 400% with nearest-neighbor only (`tools/i2v_seeds.py --cell`, or `--bible` to batch plates the User asked for). Every source pixel becomes a 4×4 block. No bilinear / Lanczos / AI upscale. No non-integer fit. No 1024 canvas pad.
-- Then pad extra `#FF00FF` around the scaled cell (`PAD_FRAC` of figure height on any short side) so lifted feet and swinging arms stay on-plate. Do not scale the figure down to fake padding. Bible Down cells sit flush with the top/bottom of the cell; walk I2V without this pad clips.
-- Send that padded 400% plate as the I2V first frame. Do not crop to the silhouette.
-- If a later clean directional still exists for that facing, uses the same cell framing, **and still has an opaque plate**, 400% that still instead of re-splitting the Bible.
-- After video extract, every frame the User accepted still goes through §19.6 cleanup. Key-to-alpha belongs there, not on the I2V seed.
-
-**When to use the seed**
-
-- Default for every I2V attempt: one 400% spliced still of the needed facing, plate intact.
-- Do not start with the full 3×3 sheet.
-- Do not send the center face close-up as the first frame.
-- Do not add a second reference image if that switches the generator from first-frame I2V into reference-to-video.
-- For walk / start / stop, keep the cell framing. Walk, attack, and other limb-extend motions use the same pad-after-scale rule. Do not scale the figure down to fake padding.
-
-**Fallback to the full Bible (only if the User asks)**
+Do **not** seed I2V from a keyed transparent PNG. Overlay stills that go to I2V keep an opaque `#FF00FF` plate.
 
 Switch to the full locked Bible only if the User saw the single-still I2V fail, or the clip needs more than one facing **and** the User approved that seed. Prompts MUST still name the primary facing.
 
 **Soft identity language** (mandatory in every prompt after Bible lock):
 
-Keep the same overall character design, face, hair, armor, close green neck wrap, proportions, palette, and sprite style from the Bible. Do not redesign, repaint, recolor, simplify, smooth, or invent new details. No hanging end, tail, or loose strip. Hands are empty. Do not draw a weapon or tool.
+Keep the same overall character design, face, hair, armor, green neckband (when that still shows one), proportions, palette, and sprite style from the Bible. Do not redesign, repaint, recolor, simplify, smooth, or invent new details. Hands are empty. Do not draw a weapon or tool. Do not mention a neckband on the female Up cell.
 
 That language means the locked Bible, not the reference JPG. Dispel is the exception for the small ritual knife only (`MOTION["dispel"]` / `DISPEL_IDENTITY_TAIL` in `tools/i2v_seeds.py`).
 
-Generate one full cardinal direction (Down + Left + Right + Up) completely before deriving diagonals, unless the User orders a different facing next. Horizontal flip is acceptable for opposite sides when the design is mostly symmetric; asymmetric details (neck wrap bulk, hair) MUST be corrected or regenerated.
+Generate one full cardinal direction (Down + Left + Right + Up) completely before deriving diagonals, unless the User orders a different facing next. Horizontal flip is acceptable for opposite sides when the design is mostly symmetric; asymmetric details (neckband bulk, hair) MUST be corrected or regenerated.
 
 Suggested first proof (do not run ahead of review): one gender, facing Down, one walk I2V.
 
-## 19.3 Locomotion harvest (idle is a still)
+### 19.2.2 What the walk I2V is for
 
 In-game **idle is not an I2V product**. Idle is the directional key still for the facing the player is aiming — the same Bible cell / approved splice used as the I2V seed. One texture per facing. No breath cycle. Do not pack held “standing on the still” frames as idle.
 
-One accepted **walk** I2V is the pool for start, cycle, and stop. Cut three engine clips and throw held idle frames away:
-
-| Engine clip | Source |
-|-------------|--------|
+| Packed state | Source |
+|--------------|--------|
 | `idle` | The key still for that facing. Not harvested from the video. |
-| `idle_to_walk` | Few frames from the key pose into the plant that starts `walk`. One-shot. |
-| `walk` | One looping two-step (both lead feet), plant on frame 0. Eight engine frames. |
-| `walk_to_idle` | Few frames from the walk cycle back to the key pose. One-shot, then hold idle. |
+| `idle_to_walk` | Opening of the walk I2V: still → first passing step. |
+| `walk` | Cyclic strides from the same clip. |
+| `walk_to_idle` | End of the same clip: last plant of the other foot, settle on the still. |
 
 `idle_to_walk` and `walk_to_idle` MUST exist for every facing and both genders. They are first-class engine states. They are **not** separate I2V units unless the User rejects the walk clip and asks for a dedicated pass.
 
-Playback MUST play the start transition when leaving idle into walk and the stop transition when coming to rest, rather than popping between the key still and a mid-stride walk frame.
+If the walk I2V fails the start/stop plant, reject the clip and regenerate that unit. Do not invent a second method in this file.
 
-Other required **body** states:
+### 19.2.3 Frame counts after harvest
 
-- `attack_great_axe`, `attack_staff`, `attack_longbow` (unarmed swing / poke / draw-loose)
-- `special_great_axe`, `special_staff`, `special_longbow` (unarmed slam / cast / fan loose)
-- `gather_pickaxe`, `gather_hatchet` (unarmed mine / woodcut)
-- `death` (unarmed collapse, then hold)
-- `Dispel` (seppuku: small knife in this clip only, then hold)
+Walk harvest targets **8 frames** for `walk` when the clip supports it. `idle_to_walk` / `walk_to_idle` may be shorter (often 3–4) so long as both genders and all eight facings of that *state* share one count.
 
-Full parity between male and female is required for every state.  
-The same frame-count rule applies to every animation state: all eight facings of that state share one frame count. Attack / special / gather pack to 6 frames per facing. Death and Dispel keep the accepted clip length (Dispel may be long); those two states still share one count across the eight facings.  
-Animation playback speeds remain tunable.
-
-Attack / special / gather body clips exist because those actions change the skeleton. They are still unarmed silhouettes. The weapon or tool is a paper-doll layer (§19.4).
+The same frame-count rule applies to every animation state: all eight facings of that state share one frame count. Attack / special / gather pack to 6 frames per facing. Death and Dispel keep the accepted clip length (Dispel may be long); those two states still share one count across the eight facings.
 
 Pack one-shots with `tools/pack_oneshot.py` from `_src/oneshot/{gender}_{action}_{facing}.mp4`. Walk harvest stays `tools/pack_locomotion.py`.
 
-## 19.4 Paper-doll / equipment layers
+### 19.2.4 Paper-doll overlays (weapons and tools)
 
-Paper-doll means **composite layers**, not a new character animation per item.
+Body clips stay unarmed. Weapons and gathering tools are **overlay layers**.
 
-- Body frames never include a weapon or tool.
-- Each equippable weapon (Great Axe, Lightning Staff, Longbow) and each tool (pickaxe, hatchet) is its own overlay art on the same 128×128 canvas as the body frame it sits on.
 - Overlay pixels are registered to the empty-hand / grip position of that body frame and facing. Alignment MUST be identical for male and female aside from the body art itself. No per-gender weapon redraws.
 - Locomotion and idle (`idle`, `idle_to_walk`, `walk`, `walk_to_idle`, `death`, `Dispel`): use a **carry / rest** overlay per facing. One rest frame per facing is enough unless the User asks for a matching overlay on every body frame.
-- Attack, special, and gather: generate weapon/tool overlay frames that follow the hands through that body clip. Still overlays — not a second full-body character sheet.
-- Armor, head, and other gear remain stats-only unless the User later asks for those layers.
+- Attack / special / gather: one overlay frame per packed body frame for that action.
 - Generate each overlay against **one** clean unarmed body frame (or accepted body clip) of the correct facing, not against the full Bible and not as a standalone character. Overlay stills that go to I2V keep an opaque `#FF00FF` plate.
 - Engine draw order is body, then tool/weapon (weapon behind the body only when a facing requires it for a back grip; document that facing if used).
 
-Do not create `walk` / `idle` / transition sheets that already have a Great Axe, staff, or bow painted into the character.
+Do not bake a held axe, staff, bow, pick, or hatchet into a body frame. The Dispel knife is the only baked prop, and only on the Dispel clip.
 
-## 19.5 What the User reviews (no automatic fill-in)
+## 19.3 Review gate (mandatory)
 
 The User judges the I2V clip itself first (facing lock, travel, identity). Do not pre-harvest a rejected clip.
 
-After the User accepts a unit’s frames, the agent MUST check — and report, not silently regenerate:
+After accept, harvest, pack, and cleanup. Then the User judges the packed strip.
 
-- Whether idle is the key still (not a harvested breath loop).
-- Whether `idle_to_walk` leaves idle and enters walk without a pop.
-- Whether `walk` has a readable passing / leg-crossover stage.
-- Whether `walk_to_idle` settles to the key pose without a pop.
-- Whether both legs and arms cross as needed for that action.
-- Whether all accepted directional variants of the same state share one frame count.
-- Whether any accepted body frame baked in a weapon or extra prop (Dispel knife excepted).
-- Whether death / Dispel I2V painted blood. That is a defect; the engine draws the pool.
-- Whether the I2V seed still had an opaque plate.
+Do not start the next unit until the User says so.
 
-If anything is missing or wrong, **tell the User** and wait. The User chooses whether to spend another I2V, supply or request a new seed still, drop to key poses, or ship the available frames.
+## 19.4 Cleanup after accept
 
-Do not run an automatic video-fill loop. Do not spend hidden retries.
+After the User accepts a clip and harvest exists:
 
-If the User accepts imperfect frames, note the defect, continue with what was accepted, and list open cleanup at the end of the slice.
-
-## 19.6 Mandatory cleanup and normalization pipeline
-
-All AI-generated frames (including those extracted from video) MUST pass through cleanup before use in the game. Cleanup of a unit starts only after the User accepts that unit, unless the User asks for a preview matte.
-
-Recommended tools: `tools/plate_remap.py`, `tools/sprite_pipeline.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_stills.py`, Aseprite + DeAI PixelKit / Pixel Refiner / Alpha Remover, or equivalent.
-
-**Video extract** (walk clips, `_src/walk_final/` → `_src/walk_harvest/`; one-shots, `_src/oneshot/` → `_src/oneshot_harvest/`):
-
-- Dump **full-size RGB** PNGs. ffmpeg: `-sws_flags neighbor+accurate_rnd+full_chroma_int`, `fps=…,format=rgb24`.
-- Do not decode through OpenCV’s default 4:2:0 bilinear chroma upsample.
-- Do not shrink (`KEY_MAX` or any other cap) before remap or key. A 4:2:0 mp4 already mixed magenta into the lip; shrinking first makes that lip thicker in 128-canvas pixels.
-- Always re-extract. Do not reuse older harvest 320s.
-- Remap + key only the frames that will be packed. Idle-compare stamps may use a tiny nearest copy; that stamp is not a shipping matte.
-
-H.264 4:2:0 cannot be un-smeared. Prefer a PNG sequence from I2V when the tool can dump one. Nearest-chroma extract + remap is the recovery path for an existing mp4.
-
-Required cleanup tasks (in order):
-
-1. If the extract’s plate is not exact `#FF00FF`, run `tools/plate_remap.py` (sample start chroma, wand, pocket fill, bleed remap). Keep the plate opaque until the next step. Remap **once**. Do not remap in extract and again in `key_fit`.
+1. If the plate is not `#FF00FF`, run `tools/plate_remap.py` first.
 2. Range-key / wand the `#FF00FF` plate. Despill fringe. `sprite_pipeline.py` `key_to_alpha` punches the plate. Video extracts and session stills pass `spill_flood=False` after remap so compressed maroon / hair / purple cloth is not treated as plate. Then **snap alpha hard** (figure `255`, plate `0`) before any fit so Color-to-Alpha cannot leave a magenta-ish lip on dark backdrops.
-3. Crop to content bounding box + fixed transparent padding.
-4. Nearest-neighbor scale/fit to exact target canvas (128×128 recommended). Never nearest-shrink the still-opaque plate and then key.
-5. Center horizontally.
-6. Lock feet to a common baseline Y across all frames of a cycle.
-7. Quantize / lock to the Bible palette.
-8. Eliminate anti-aliasing, sub-pixel noise, and ghosting.
-9. For walk I2V sources: `tools/pack_locomotion.py` finds one early self-similar stride cycle (period 8–16 harvest frames), rotates the plant to `walk[0]`, and cuts `idle_to_walk` / `walk_to_idle` from the frames touching that plant. Do not even-sample the whole clip. Skip held idle. Front/back use leg height; side views use leg width. Lock a shared foot baseline and torso X to the idle still.
-9b. For one-shot I2V sources: `tools/pack_oneshot.py` remaps, keys, fits, and even-samples attack / special / gather to 6 frames. Death and Dispel keep the clip length. Output names match `AnimScan` (`atk_*`, `spc_*`, `gather_pickaxe_*`, `gather_hatchet_*`, `death_*`, `dispel_*`).
-10. Trim to the exact frame count needed by the engine (ensuring directional parity).
-11. Output individual frames or engine-ready sheets + simple manifest (frame size, count, fps, pivot/anchor, layer: `body` or `weapon`/`tool`).
+3. Fit each frame to the 128×128 canvas with nearest-neighbor only. Integer scale. No bilinear.
+4. Snap to the locked palette.
+5. Remove anti-aliased edge pixels.
+6. Align the foot baseline across the strip.
+7. Confirm 8-direction parity and matching frame counts per state.
 
-Never take the output of steps 2–11 and send it back into I2V.
+Do not ship a frame that still has start-chroma rims or a soft magenta halo.
 
-## 19.7 Success criteria and failure recovery
+## 19.5 Quality bar
 
-A generation is acceptable only if it meets all of the following after cleanup:
+A unit is acceptable only when all of the following hold:
 
-- Readable silhouette at target size.
 - Correct facing and pose intent.
-- No extra limbs, props, or invented details.
-- No weapon or tool baked into a body frame, except the small ritual knife on `Dispel`.
-- No blood, spray, puddle, or gore in death / Dispel I2V. Engine draws the pool.
-- No palette drift from the locked Bible.
-- No background remnants, start-chroma rims, or magenta spill.
-- Consistent scale and foot baseline with the Bible and sibling frames.
-- Integer pixel edges, no anti-aliasing.
-- Correct limb crossing and sufficient passing-stage frames on accepted walk cycles.
+- Identity matches the locked Bible.
+- No extra limbs, props, or invented costume.
+- Feet plant on a stable baseline.
+- Packed walk loops; start/stop cuts are readable.
 - Readable `idle_to_walk` and `walk_to_idle` on every facing that has shipped those states.
-- Identical frame counts across all directions of the same animation state.
-- Weapon/tool overlays register to the matching body frame.
+- Pixel-grid edges after cleanup. No anti-aliasing. No magenta lip.
 
-**Recovery decision tree**
+Failures:
 
-- User rejects the clip → one change only (new I2V, new seed still, or drop one generation method), then review again.
 - Persistent identity or scale failure → return to Bible and re-lock only with User approval if style would change.
-- User accepts a short set → pack what they accepted and list gaps. Do not auto-fill.
-- Log the failure mode.
+- One bad facing → regenerate that unit only.
+- Harvest cuts fail but the clip is good → adjust pack points; do not silently invent a new I2V method.
 
-Follow this pipeline exactly. Deviations require explicit justification and re-validation under the orthographic camera + Y-billboard + nearest-neighbor filtering.
-
-## 19.8 Animation Browser review tools
+## 19.6 Animation Browser review briefs
 
 The Animation Browser writes a local ledger at `tools/anim_review/review.json` (editor-only, gitignored). That file is not a game setting and is not part of `SaveStore`.
 
-CLI tools read it from the live checkout:
+CLI:
 
 - `python tools/anim_review_pack.py` — pack brief (`tools/anim_review/pack_brief.md` + `.json`). Repack notes are failure cases. Good on-disk locomotion clips (`walk`, `idle_to_walk`, `walk_to_idle`) are keep-behavior. Ignore Regenerate rows here.
 - `python tools/anim_review_regen.py` — regen brief (`tools/anim_review/regen_brief.md` + `.json`). Regenerate notes plus the current `i2v_seeds.build_prompt` text for player clips. `i2v_action` keeps class keys (`attack_great_axe`, not `attack`). `gather` writes both tool prompts. Use this when editing MOTION / IDENTITY_LOCK / FACING_LOCK.
-- `python tools/anim_review_tree.py` — wiped test tree at `tools/anim_review/regen_tree/<model>/<facing>/<anim>/`. Each player folder gets `source.png` (locked Bible cell, same scale/pad as `i2v_seeds.py --cell`), `prompt.txt`, and `notes.txt` when the User typed a note. The dest tree is deleted and rebuilt every run.
-- `python tools/pack_oneshot.py` — pack an accepted one-shot mp4 from `_src/oneshot/` into engine frames. Not driven by `review.json`.
+- `python tools/anim_review_tree.py` — wiped test tree at `tools/anim_review/regen_tree/<model>/<facing>/<anim>/`. Each player folder gets `source.png` (locked Bible cell, same scale/pad as `i2v_seeds.py --cell`), `prompt.txt`, and `notes.txt` when the User typed a note. The dest tree is deleted and rebuilt every run. Split the locked Bible with `dict(zip(CELL_NAMES, split_equal_3x3(...)))`; `split_equal_3x3` returns a list, not a name map.
 
 `AnimScan` lists `gather_pickaxe` and `gather_hatchet` when those sequences exist, and falls back to `gather_{facing}_*` if a tool set is missing. `idle_to_walk` / `walk_to_idle` stay out of the browser list (repack-only).
 
-Enemy clips may be flagged in the browser. Until an enemy I2V / pack pipeline exists, the regen brief and regen tree write a warning instead of a seed and prompt.
+Enemy clips in the regen brief / tree get a warning until that pipeline exists. Do not invent an enemy I2V path here.
 
-Stills (idle / single-frame clips) cannot be flagged. Do not invent a still-regeneration path here.
+## Appendix C — Character Bible prompt template
 
-## Appendix C – Full Character Bible Prompt Template
-
-Create a single clean image that is a perfect 3×3 Character Bible grid on solid pure magenta #FF00FF background for the [male/female] player character of "What Dwells Below".
+Create a single clean image that is a perfect 3×3 Character Bible grid on solid pure magenta `#FF00FF` background for the [male/female] player character of "What Dwells Below".
 
 Strict cell layout (do not swap, reverse rows, reverse columns, or move any figure):
 
@@ -392,44 +274,23 @@ Bottom-left: Down-Left full-body, complete head-to-feet, character facing Down-L
 Bottom-center: Down full-body, complete head-to-feet, character facing Down (front view), neutral standing  
 Bottom-right: Down-Right full-body, complete head-to-feet, character facing Down-Right, neutral standing
 
-All eight full-body figures must have identical proportions and silhouette height, feet on the same baseline. Character locked across every cell: rugged human dungeon delver, practical layered leather and metal armor, [short messy dark hair / appropriate female hairstyle], determined expression, one short bright green cloth wrapped close at the neck with no hanging end, limited muted palette (grays, browns, dark greens, skin tones, metal). Crisp true pixel-art style, integer pixel edges, no anti-aliasing, no smoothing. Hands empty. No weapons, no tools. Do not swap any cells. Do not place the face close-up anywhere except the exact center. No cropping of limbs, no props, no weapons, no text, no numbers, no borders, no grid lines. Perfect even 3×3 grid.
+All eight full-body figures must have identical proportions and silhouette height, feet on the same baseline. Character locked across every cell: rugged human dungeon delver, practical layered leather and metal armor, [short messy dark hair / appropriate female hairstyle], determined expression, a short green neckband worn only around the neck, limited muted palette (grays, browns, dark greens, skin tones, metal). Crisp true pixel-art style, integer pixel edges, no anti-aliasing, no smoothing. Hands empty. No weapons, no tools. Do not swap any cells. Do not place the face close-up anywhere except the exact center. No cropping of limbs, no props, no weapons, no text, no numbers, no borders, no grid lines. Perfect even 3×3 grid.
 
-## Appendix D – Summary Reliability Table
+## Appendix D — Method reliability
 
-| Technique | Reliability | Recommendation |
-|-----------|-------------|----------------|
-| Locked 3×3 Character Bible + palette | High | Mandatory |
-| `plate_remap.py` start-chroma → `#FF00FF` + bleed + pockets | High | Mandatory before lock / I2V if plate is not `#FF00FF` |
-| Opaque plate on every I2V seed | High | Mandatory; never seed from keyed frames |
-| Game-centric direction names (8-dir) | High | Use always |
+| Method | Reliability | Notes |
+|--------|-------------|-------|
 | Soft identity language after Bible lock | High | Use always after lock |
 | Single-pass 3×3 for the Bible | Highest for identity | Preferred for Bible |
-| 400% NN I2V plate (cell chroma kept) | High | Default I2V first frame |
-| `i2v_seeds.py` walk prompt (idle → ≥3 strides → opposite-foot stop) | High | Only locomotion I2V method |
+| Chained image-edits for Bible cells | Low | Drift; avoid for Bible |
+| `i2v_seeds.py` walk prompt (in-place steps, short arm swing, loop to still) | High | Only locomotion I2V method |
 | `i2v_seeds.py` one-shot MOTION keys (per weapon / tool, death, Dispel) | High | Required for Regenerate flags |
-| `pack_oneshot.py` for accepted one-shot mp4s | High | Attack/special/gather to 6; death/Dispel keep length |
+| One 400% NN spliced still as the I2V seed | High | Default seed |
 | `i2v_seeds.py --test` web preamble | Browser tests only | Do not send in Grok Build I2V |
-| One I2V + User review gate | High | Mandatory; replaces auto-retry |
-| No fixed I2V duration | High | Length follows the motion goal |
-| Idle = directional key still | High | Do not I2V a breath loop |
-| Engine clips cut from one walk I2V | High | `idle_to_walk` / `walk` / `walk_to_idle` |
-| Full-Bible I2V seed | Fallback only | Only if the User asks |
-| Individual classic key poses | High | User-requested fallback |
-| Lattice square-crop before 3×3 split | High | Mandatory before splices |
-| `#FF00FF` pad after 400% NN (`PAD_FRAC`) | High | Required so walk/attack limbs stay on-plate |
-| Extra pad or 1024-fit that shrinks the figure | Low | Avoid |
-| Key / despill on the I2V seed | Low | Avoid |
-| Magenta key-to-alpha | High | After accept only (§19.6) |
-| Full-size RGB extract + nearest chroma | High | Mandatory for mp4 harvest |
-| Shrink-then-key (`KEY_MAX` / 512 cap before wand) | Low | Avoid |
-| Binary matte snap after key | High | Mandatory before 128 fit |
+| Full-Bible seed | Medium | Only if the User asks after a still-seed miss |
+| Video-fill from last accepted clip | Medium | Last resort, User-asked |
+| `plate_remap.py` before key-to-alpha | High | Required when plate ≠ `#FF00FF` |
 | `spill_flood=False` on video / jpg stills after remap | High | Avoid eating hair / maroon / purple cloth |
-| Foot baseline locking in post | High | Mandatory |
-| Equal frame counts per direction | High | Mandatory |
-| Hard frame-count or 10s duration demands | Low | Avoid |
-| Full multi-direction strips | Very Low | Forbidden |
-| Automatic multi-pass video fill-in | Low (token-expensive) | Forbidden unless User orders one clip |
-| Chained image-edits for Bible directions | Medium-Low | Avoid |
-| Baked per-weapon full-body sheets | Wrong model | Forbidden as source of truth |
-| Paper-doll weapon/tool overlays | High | Mandatory for gear visuals |
-| Aseprite / scripted pixel-grid cleanup | Mandatory | Always perform after accept |
+| Automatic multi-pass fill-in | Forbidden | One unit, then User review |
+| Overlay I2V / stills for weapons and tools | High | Layers, not baked body props |
+| Nearest-neighbor / scripted pixel-grid cleanup | Mandatory | Always perform after accept |
