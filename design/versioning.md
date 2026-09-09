@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: stamping a build, writing a changelog entry, Grok Build init, title “what’s new”, or adding an archive pin  
-See also: `AGENTS.md`, `design/web-session.md`, `design/grok-build.md`, `design/copilot-session.md`, `design/protocol.md`, `design/sessions.md`, `design/archives.md`, `design/save-tech.md`, `design/ui.md`
+See also: `AGENTS.md`, `design/web-session.md`, `design/grok-build.md`, `design/copilot-session.md`, `design/protocol.md`, `design/sessions.md`, `design/session-log.md`, `design/archives.md`, `design/save-tech.md`, `design/ui.md`
 
 ## Scheme
 
@@ -14,10 +14,9 @@ See also: `AGENTS.md`, `design/web-session.md`, `design/grok-build.md`, `design/
 | **series** | Development week | Major update index. Restarts at `0` on `1.0.0`. Later majors (`1.1.0`, …) only when the User names them. |
 | **patch** | User-commit index on `main` in that series | Same: user-commit index on `main` in that major |
 
-Week 2 open (also `0.2.0`): `36fb882c9db3b6cd8a83f072d2dfec51d4acedca` (`Grok Build Week 2`).  
-This web goal is the next user commit on that series: **`0.2.47`**. Live baked copy before that push is `0.2.46`.
+Week 2 open (also `0.2.0`): `36fb882c9db3b6cd8a83f072d2dfec51d4acedca` (`Grok Build Week 2`).
 
-Do not invent other version fields. Save-schema key `"v"` in `save_store.gd` is unrelated.
+Do not store a moving “this web goal is …” patch in this file. Do not invent other version fields. Save-schema key `"v"` in `save_store.gd` is unrelated.
 
 ## Source of truth
 
@@ -43,7 +42,7 @@ Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/chang
 Authoring unit is **one markdown file per build**:
 
 `design/changelog/{label}.md`  
-Example: `design/changelog/0.2.47.md`
+Example: `design/changelog/0.2.53.md`
 
 Plain text, no code fence when emitted. Body shape:
 
@@ -70,8 +69,8 @@ Do **not** keep a concatenated week file on `main`. Do **not** hand-edit `script
 | Reader | Reads |
 |--------|-------|
 | Fresh web / chat, Phases 1–3 | Nothing under `design/changelog/`. Nothing in `version.json` unless the work is this topic. |
-| Web Phase 7 | Writes **one** new `design/changelog/{label}.md` for the version this goal already is. Does not emit `changelog.json`. |
-| Grok Build init | `design/sessions.md`, then every `design/changelog/{current epoch}.{current series}.*.md`. No index. No other series. |
+| Web Phase 7 | Writes **one** new `design/changelog/{label}.md`. `{label}` is baked `version.json` `label` with patch + 1 (ignore stamp commits). Do not write that number back into this file. Do not emit `changelog.json`. |
+| Grok Build after a gap | `design/sessions.md`, then every `design/changelog/{current epoch}.{current series}.*.md`. No index. No other series. Do not follow git commit links into web-session conversations. |
 | Copilot | Nothing under `design/changelog/`. Nothing in `version.json`. Sweep notes go in `_logs/` only. |
 | Named revert / “what was 0.1.4?” | That one file. |
 | Game | `version.json` + `changelog.json`. |
@@ -91,14 +90,16 @@ Do **not** keep a concatenated week file on `main`. Do **not** hand-edit `script
 
 ## Grok Build week ritual
 
-One Grok Build session per week. The User’s single completion commit is `0.N.0` (later `1.M.0` when they name a major) and is tagged as that series open.
+One Grok Build session family per week. The User’s single completion commit is `0.N.0` (later `1.M.0` when they name a major) and is tagged as that series open.
 
-**Init (week N), or resume after a corrupted session:**
+Run the **init pin** only when the User opens the CLI session by saying **new week**. Token refresh counts only if they say that. A mid-week new CLI chat is a catch-up: no pin. Resume after corruption does not move the web pin and does not create a second Grok Build pin for that week.
+
+**Init (week N), only after the User said new week:**
 
 1. Read `design/sessions.md`.
 2. Read `design/changelog/0.N.*.md` (current series only).
-3. Inspect git / live tree.
-4. Pin **current `main`** as `grok_web_w{N-1}` — label `Grok Web Results (Week {N-1})`. Do not move this pin on resume.
+3. Inspect git / live tree from the code map.
+4. Pin **current `main`** as `grok_web_w{N-1}` — label `Grok Web Results (Week {N-1})`.
 5. Do **not** pin Grok Build Results yet (`0.N.0` does not exist at init).
 
 **User completion commit (`0.N.0`):**
@@ -110,14 +111,14 @@ Archive `docs` follow `design/archives.md`. Changelog museum copies for those ro
 - Web Results Week N-1 → that week’s per-build markdown (copy under `archives/docs/grok_web_w{N-1}/` so the pin can show files that were not on the old SHA).
 - Build Results Week N → previous week’s per-build markdown, if any, under `archives/docs/grok_build_wN/`.
 
-Also attach the `design/` file tree as it exists **on the pinned commit** (`docs[]` paths that `git show` can resolve). Standing order: this ritual may create those two pins without a fresh “please archive” prompt. No other new archives unless the User asks.
+Also attach the `design/` file tree as it exists **on the pinned commit** (`docs[]` paths that `git show` can resolve). Standing order: when the User has said **new week**, this ritual may create those two pins without a fresh “please archive” prompt. No other new archives unless the User asks.
 
 ## Web / chat Phase 7
 
 After the User is satisfied with the goal’s behavior:
 
-1. Update topic files this slice made wrong (`design/versioning.md` only if the scheme changed).
-2. Author `design/changelog/{label}.md` for the version this goal assumed at the start (here `0.2.47`).
+1. Update topic files this slice made wrong (`design/versioning.md` only if the scheme or ritual changed).
+2. Author `design/changelog/{label}.md` using baked `scripts/data/version.json` `label` with patch + 1. Do not record that label in this file.
 3. Do not emit `changelog.json` or `version.json` as the ledger. Seed those files only when they do not exist yet on live.
 
 The User pastes. CI stamps the number when the files land on `main`.

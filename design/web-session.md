@@ -1,4 +1,4 @@
-# Web / chat session flow
+﻿# Web / chat session flow
 
 Status: protocol  
 Read when: web / chat path; every web session after the repo-review message  
@@ -8,6 +8,8 @@ This file is binding for **web / chat** only. Grok Build (CLI) and Copilot ignor
 
 The User cannot be written to by this agent. The User pastes every emit. The User finishes each task before the next web task starts.
 
+This path does not run the Grok Build week pin ritual. I2V and complex animation packing stay in Grok Build unless the User says otherwise.
+
 ## Phases
 
 Move to the next phase only when this file says to. Do not emit source during Phase 1–3.
@@ -16,7 +18,7 @@ Move to the next phase only when this file says to. Do not emit source during Ph
 
 The User tells the agent to review the repo. That sets up the session.
 
-Read `AGENTS.md`, `design/protocol.md`, `design/constraints.md`, then only the topic files for later work if already named. Inspect the live tree. `design/sessions.md` is context only, not this session’s hand-off. Do not read `design/changelog/` unless the named work is versioning, a named past build, or a revert.
+Read `AGENTS.md`, `design/protocol.md`, `design/constraints.md`, then only the topic files for later work if already named. Inspect the live tree from the code map in `design/README.md`. `design/sessions.md` is context only, not this session’s hand-off. Do not read `design/session-log.md`. Do not read `design/changelog/` unless the named work is versioning, a named past build, or a revert.
 
 Respond by confirming the review is done and that the session is ready for Phase 2. Do not start implementation.
 
@@ -93,11 +95,11 @@ This phase ends when every needed size split has been emitted, or after reportin
 
 Check the change against `design/` (and `AGENTS.md` when agent rules changed). Update topic files, code maps, and tunables that the slice made wrong.
 
-If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md` for the version this goal assumed at Phase 2 (see `design/versioning.md`). Body shape is in that file. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or treat `scripts/data/version.json` as a ledger to hand-edit.
+If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md`. `{label}` is baked `scripts/data/version.json` `label` with patch + 1 (see `design/versioning.md`). Body shape is in that file. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or treat `scripts/data/version.json` as a ledger to hand-edit. Do not write the label into `design/versioning.md`.
 
 Always emit the `design/changelog/{label}.md` file, if one is needed, as the final file in this phase.
 
-Do not emit `design/sessions.md`. Do not emit `_logs/` (Copilot only, gitignored).
+Do not emit `design/sessions.md` or `design/session-log.md`. Do not emit `_logs/` (Copilot only, gitignored).
 
 If nothing in the docs is wrong and no changelog entry is required, tell the User no documentation changes are required.
 
@@ -107,8 +109,9 @@ When documentation is done, this session goal is finished. The User should start
 
 ## Do not
 
-- Do not treat `design/sessions.md` as the web hand-off.
-- Do not include `design/sessions.md` as a file that may require updating during phase 7.
+- Do not treat `design/sessions.md` or `design/session-log.md` as the web hand-off.
+- Do not include those files as files that may require updating during Phase 7.
+- Do not run a Grok Build week pin from this path.
 - Do not chain a second goal after Phase 7 in the same web session.
 - Do not split for the 10KB cap before Phase 6.
 - Do not keep splitting toward 5KB. That target is Copilot only.

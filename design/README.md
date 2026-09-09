@@ -13,16 +13,16 @@ It is not one Game Design Document.
 
 ## How to use
 
-1. Grok agents read `design/protocol.md` and `design/constraints.md` first. Copilot does not — after `AGENTS.md` it follows `design/copilot-session.md` only.  
-2. On a fresh Grok Build instance after a gap, follow `design/grok-build.md`: read `design/sessions.md` (leave-off + log), then every `design/changelog/{current epoch}.{current series}.*.md`, then inspect git / the live tree — the User works between sessions.  
-3. Web / chat: after the repo-review message, follow `design/web-session.md`. `design/sessions.md` is context only. Do not read `design/changelog/` in Phase 1–3 unless the named work is versioning, a named past build, or a revert.  
-4. Copilot: follow `design/copilot-session.md` and `design/refactor.md`. Do not read topic files, `design/sessions.md`, or `design/changelog/`.  
-5. Open only the topic files that match the requested work.  
-6. Use `design/tunables.md` for numbers.  
-7. Use the code map below for live scripts.  
-8. After a behavior change, update the matching topic file in the same slice. End of a Grok Build session: update `design/sessions.md` and write the series-open changelog file when the User commits `0.N.0`. End of a web / chat goal: finish Phase 7 in `design/web-session.md`, including one `design/changelog/{label}.md` when the goal shipped a visible change. Copilot does not write those files; it writes `_logs/copilot-sweep.md` only.
+1. Grok agents read `design/protocol.md` and `design/constraints.md` first. Copilot does not — after `AGENTS.md` it follows `design/copilot-session.md` only.
+2. On a fresh Grok Build instance after a gap, follow `design/grok-build.md`: read `design/sessions.md` (leave-off), then every `design/changelog/{current epoch}.{current series}.*.md`, then inspect git / the live tree from the code map below. Do not pin unless the User said **new week**. Do not follow git commit links into web-session conversations. The User works between sessions.
+3. Web / chat: after the repo-review message, follow `design/web-session.md`. `design/sessions.md` is context only. Do not read `design/session-log.md`. Do not read `design/changelog/` in Phase 1–3 unless the named work is versioning, a named past build, or a revert.
+4. Copilot: follow `design/copilot-session.md` and `design/refactor.md`. Do not read topic files, `design/sessions.md`, `design/session-log.md`, or `design/changelog/`.
+5. Open only the topic files that match the requested work.
+6. Use `design/tunables.md` for numbers.
+7. Use the code map below for live scripts. Do not walk `assets/` unless the task names sprites or audio.
+8. After a behavior change, update the matching topic file in the same slice. End of a Grok Build session: update `design/sessions.md`, prepend `design/session-log.md`, and write the series-open changelog file when the User commits `0.N.0`. End of a web / chat goal: finish Phase 7 in `design/web-session.md`, including one `design/changelog/{label}.md` when the goal shipped a visible change. Copilot does not write those files; it writes `_logs/copilot-sweep.md` only.
 
-Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live in `tools/i2v_seeds.py`. Off-magenta plates go through `tools/plate_remap.py` before I2V. Walk packing is `tools/pack_locomotion.py`. One-shot packing is `tools/pack_oneshot.py`. I2V and complex animation packing stay in Grok Build sessions unless the User says otherwise. Animation Browser review briefs and the regen tree are `tools/anim_review_*.py`; output under `tools/anim_review/` is gitignored.
+Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Open only the sibling that file names for the job (`art-i2v.md`, `art-pack.md`, `art-review.md`). Prompts live in `tools/i2v_seeds.py`. Off-magenta plates go through `tools/plate_remap.py` before I2V. Walk packing is `tools/pack_locomotion.py`. One-shot packing is `tools/pack_oneshot.py`. I2V and complex animation packing stay in Grok Build sessions unless the User says otherwise. Animation Browser review briefs and the regen tree are `tools/anim_review_*.py`; output under `tools/anim_review/` is gitignored.
 
 ## Document kinds
 
@@ -41,7 +41,8 @@ Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live 
 | Grok Build session flow | `grok-build.md` | — |
 | Copilot session flow | `copilot-session.md` | — |
 | Refactor recipe | `refactor.md` | — |
-| Grok Build session leave-off + log | `sessions.md` | — |
+| Grok Build leave-off | `sessions.md` | — |
+| Grok Build session log | `session-log.md` | — |
 | Version scheme, changelog, week pins | `versioning.md` | — |
 | Must / must-not, checklist | `constraints.md` | Hard constraints, success, App. B |
 | Vision, scope, lore | `overview.md` | §§1–3 |
@@ -63,7 +64,10 @@ Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Prompts live 
 | Time targets, polish, a11y | `feel.md` | §16 |
 | Failure modes | `edge-cases.md` | §17 |
 | Phase 1–9 checklist | `coverage.md` | §18 |
-| Sprite / paper-doll pipeline | `art-pipeline.md` | §19, App. C–D |
+| Sprite / paper-doll door | `art-pipeline.md` | §19, App. C–D |
+| I2V unit + seed + prompt | `art-i2v.md` | §19.2 |
+| Harvest, pack, cleanup | `art-pack.md` | §19.4 |
+| Animation Browser briefs | `art-review.md` | §19.6 |
 | Pinned archive commits | `archives.md` | §20 |
 | Suggested starts + live defaults | `tunables.md` | App. A + live `balance.gd` |
 
@@ -71,10 +75,10 @@ Per-build player notes are `design/changelog/{label}.md`. They are not topic fil
 
 ## House rules for editing these files
 
-- Keep one concern per file.  
-- Put numbers in `tunables.md`, not buried in paragraphs.  
-- Mark live-only behavior under **Live snapshot**.  
-- Do not reintroduce a single 100KB GDD.  
+- Keep one concern per file.
+- Put numbers in `tunables.md`, not buried in paragraphs.
+- Mark live-only behavior under **Live snapshot**.
+- Do not reintroduce a single 100KB GDD.
 - When live scripts are split under the 10KB cap, update this code map in the same slice.
 
 ## Code map (live path)

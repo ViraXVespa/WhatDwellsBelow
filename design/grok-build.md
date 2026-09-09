@@ -1,8 +1,8 @@
-# Grok Build session flow
+﻿# Grok Build session flow
 
 Status: protocol  
 Read when: Grok Build (CLI) path; every CLI instance after a gap  
-See also: `AGENTS.md`, `design/protocol.md`, `design/versioning.md`, `design/sessions.md`, `design/refactor.md`
+See also: `AGENTS.md`, `design/protocol.md`, `design/versioning.md`, `design/sessions.md`, `design/session-log.md`, `design/refactor.md`, `design/art-pipeline.md`
 
 This file is binding for **Grok Build (CLI)** only. Web / chat and Copilot ignore it.
 
@@ -12,22 +12,36 @@ The agent can write the checkout. Prefer small diffs on disk. Full-file paste on
 
 You can write the live tree. If you cannot, you are not on this path — use `design/web-session.md`.
 
-One session per development week. If the User says the session is a resume after corruption, keep the first `grok_web_w{N-1}` pin and do not create a second Grok Build pin for that week.
+One session family per development week. A **slice** (including one I2V clip) stays in that thread. A mid-week new CLI chat is a catch-up, not a new week.
+
+## New week vs catch-up vs slice
+
+| User / situation | What it is | Pin ritual |
+|------------------|------------|------------|
+| Opens CLI by saying **new week** (token refresh counts only if they say that) | Week N init | Yes. Follow **Week ritual** below and `design/versioning.md`. |
+| Resume after corruption | Same week, sick thread | Do **not** move the web pin. Do not create a second Grok Build pin for that week. |
+| Mid-week new CLI chat (fat thread, compaction, job change) | Catch-up | No pin. |
+| Next slice or next I2V unit in the same thread | Slice | No pin. |
+
+Do not pin because time passed, because the last slice ended, or because a new CLI instance started. The trigger is the User saying **new week**.
 
 ## Read order
 
 1. `AGENTS.md`, `design/protocol.md`, `design/constraints.md`.
-2. After a gap: `design/sessions.md` (leave-off + log).
-3. After a gap: every `design/changelog/{current epoch}.{current series}.*.md` per `design/versioning.md`. Do not open other series. Do not treat `scripts/data/version.json` as the version ledger.
-4. Only the topic files that match the requested work (`design/README.md`).
-5. Inspect git and the live tree (`project.godot`, `scenes/`, `scripts/`, `assets/`). The User works between Grok Build weeks.
-6. Apply the standing week ritual in `design/versioning.md`.
+2. `design/sessions.md` (leave-off only).
+3. After a gap or a **new week**: every `design/changelog/{current epoch}.{current series}.*.md` per `design/versioning.md`. Do not open other series. Do not treat `scripts/data/version.json` as the version ledger. Do not follow GitHub commit links into web-session conversations.
+4. Only the topic files that match the requested work (`design/README.md`). Sprite / I2V / pack / review: start at `design/art-pipeline.md` and open only the door it names for that job.
+5. Inspect git and the live tree from the **code map row** for this task (`project.godot`, then the listed scenes/scripts). Do not walk `assets/` unless the task names sprites or audio. The User works between Grok Build weeks.
+
+`design/session-log.md` is not part of every boot. Read it when rewriting it at session close, when the User asks what shipped, or when leave-off is not enough to name the next unit.
 
 Do not start by archiving or rewriting the live path. Do not read `design/changelog/` except the current-series files above, or when the named work is versioning, a named past build, or a revert.
 
-`design/sessions.md` is this path’s hand-off. It is not the web / chat or Copilot hand-off. Do not resume unfinished Grok Build work from it unless the User names that work.
+`design/sessions.md` is this path’s leave-off. It is not the web / chat or Copilot hand-off. Do not resume unfinished Grok Build work from it unless the User names that work. Do not treat a listed “next work” line as a license to start that work unasked.
 
 ## Week ritual
+
+Run this block **only** when the User said **new week**. Otherwise skip it.
 
 Follow `design/versioning.md`. In short:
 
@@ -49,7 +63,16 @@ Implement the requested work by patching the live path in place.
 - Match surrounding style. GDScript indent is tab characters. Types follow `AGENTS.md` → GDScript types.
 - Implement only what design and the User require. Do not invent skills, rarities, hub upgrades, meta-progression, or co-op.
 - Open numbers: invent coherent starts, expose them in the secret debug menu, record in `design/tunables.md`. Ambiguity: ask.
-- Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Start at `design/art-pipeline.md`.
+
+## I2V week
+
+Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Door: `design/art-pipeline.md`.
+
+- One CLI week session. One I2V unit (gender × facing × action) per review gate.
+- Prepare seed + prompt from `tools/i2v_seeds.py`, then stop and wait.
+- Harvest and pack only after the User accepts the clip. Next unit only after the User says so.
+- Mid-week: keep the thread across clips. Open a new CLI chat only when the window is dirty or the job leaves art. That new chat is a catch-up: no pin.
+- Do not regenerate an accepted unit unless the User rejects it.
 
 ## Script cap
 
@@ -68,7 +91,7 @@ Catalog rows (each a pinned commit, isolated per `design/archives.md`):
 - **full_3d_pass** — Full 3D Pass
 - **grok_build_w1** — Grok Build Results (Week 1)
 - **grok_web_w1** — Grok Web Results (Week 1)
-- Plus `grok_web_w{N-1}` and `grok_build_wN` rows required by `design/versioning.md` after each Grok Build week ritual.
+- Plus `grok_web_w{N-1}` and `grok_build_wN` rows required by `design/versioning.md` after each **new week** ritual / completion commit.
 
 ## After a slice
 
@@ -76,11 +99,13 @@ Stop and report: files changed, how you verified, what is still open. Do not cha
 
 ## End of session
 
-Update `design/sessions.md` (leave-off + log).
+Update `design/sessions.md` (leave-off only).
+
+Prepend a factual entry to `design/session-log.md`.
 
 Write `design/changelog/{label}.md` for the completion commit when that commit is `0.N.0` (see `design/versioning.md`). Do not emit `scripts/data/changelog.json` as the ledger. Do not read prior changelog files to write the new one.
 
-That sessions file is for the next Grok Build instance, not for web / chat or Copilot.
+Those two session files are for the next Grok Build instance, not for web / chat or Copilot.
 
 ## Do not
 
@@ -89,4 +114,6 @@ That sessions file is for the next Grok Build instance, not for web / chat or Co
 - Do not use `design/web-session.md` phases.
 - Do not run a Copilot full-repo sweep. If house-wide size/reuse cleanup is the job, that is Copilot.
 - Do not write `_logs/` (Copilot only).
+- Do not follow git commit links into web-session conversations. Current-series `design/changelog/*.md` is the brief.
 - Do not invent a third system when binding design and live code disagree — patch live toward binding or ask.
+- Do not run the week pin ritual unless the User said **new week**.
