@@ -3,6 +3,28 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.55",
+			"points": [
+				{
+					"text": "Secret debug Values is two columns of categories. A opens the tunables under that category; B backs out a layer."
+				},
+				{
+					"text": "Animation Browser keeps pad and keyboard while it is open.",
+					"subs": [
+						"X plays and pauses. Left stick changes speed while playing and steps frames while paused.",
+						"D-pad moves in Facing or Animation and switches columns. No Idle/None facing row."
+					]
+				},
+				{
+					"text": "Settings can grant an Anvil test kit (bag gear plus gold, ore, and root)."
+				},
+				{
+					"text": "Anvil Analyze / Forge lists take Left / Right between items and remember the last item when you leave Back."
+				}
+			],
+			"summary": "Debug Values and the Animation Browser are gamepad-first again, and Anvil test gear plus its slot lists work without dropping focus."
+		},
+		{
 			"label": "0.2.53",
 			"points": [
 				{
