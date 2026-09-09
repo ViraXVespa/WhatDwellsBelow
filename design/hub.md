@@ -81,5 +81,8 @@ All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidi
 
 ### Live Snapshot
 - `App.play_from_menu()` / `enter_dungeon()` use loading overlay for hub/dungeon assets (`design/ui.md`).
+- Hub ground: grass outside the yard, one packed-dirt fill, cobble-tinted path (`plaza_grass` / `plaza_ground` / `plaza_path`). No scattered dark dirt patches.
+- Buildings are 3D boxes with `plaza_wall` sides, a `plaza_roof` top plane (eaves), and a south-face facade sprite fitted to the box (`min` of width/height pixel size).
+- Welcome banner text is pixel letters on the cloth, two lines: `WELCOME TO` / `PLACEHOLDIA!`.
 
 **Anvil Details:** Shared gear board (`scripts/ui/gear_board.gd`) in `mode="anvil"` with tabs from `scripts/ui/gear_board_anvil.gd`. Remains on `App.prog.analyzed`. Forge writes holds via `scripts/data/progress_town.gd`.

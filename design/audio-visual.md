@@ -72,6 +72,8 @@ Live files under `assets/audio/` include `sfx_dash`, `sfx_hit`, `sfx_hurt`, `sfx
 - Lighting, fog color/density, and void plane MUST create a clear visual contrast between the warmer Placeholdia hub and the colder, darker dungeon floors.
 - Consciousness-transfer VFX on dungeon enter and wake-up VFX on return to Placeholdia are required presentation beats.
 
+Live world art (2026-09-09 pass): Placeholdia and dungeon tiles, building facades, hub/dungeon props, hub NPCs, ghost shopkeep, dummy, boss door, and cracked wall were replaced to match the locked player Bibles. Installer `tools/process_world_pass.py`. Key native-resolution stills, then nearest-neighbor fit; do not downscale before chroma key. Player I2V, enemy stills, and UI icons were not in that pass. Placeholder policy below still applies.
+
 ## Credit splash → title sequence
 
 - Web export: `boot.tscn` → `fs_gate.tscn` (once per browser session when the gate still wants to show) → `splash.tscn` → title. Desktop and Xbox feature-tag builds skip the gate.

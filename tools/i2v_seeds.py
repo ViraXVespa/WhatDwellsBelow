@@ -57,6 +57,29 @@ First frame is this still. Keep this still's costume, hair, and colors. Do not a
 Smooth even motion. Locked camera. Flat #FF00FF. No new shadows.
 """
 
+# One-shots are planted. Treadmill / marching language makes the figure walk or run.
+_PROMPT_HEAD_ONESHOT = """2D pixel-art sprite. {action} in place. Feet planted. Do not walk. Do not run. Stay in this still's slot.
+
+{facing_lock}
+
+First frame is this still. Keep this still's costume, hair, and colors.
+
+{identity_lock}
+
+Smooth even motion. Locked camera. Flat #FF00FF. No new shadows.
+"""
+
+_PROMPT_HEAD_ONESHOT_FEMALE_UP = """2D pixel-art sprite. {action} in place. Feet planted. Do not walk. Do not run. Stay in this still's slot.
+
+{facing_lock}
+
+First frame is this still. Keep this still's costume, hair, and colors. Do not add garments.
+
+{identity_lock}
+
+Smooth even motion. Locked camera. Flat #FF00FF. No new shadows.
+"""
+
 LOOP_PROMPT = (
     _PROMPT_HEAD
     + """
@@ -75,8 +98,28 @@ Loop. Start and end on this still.
 """
 )
 
-ONESHOT_PROMPT = (
+# Walk is not a looping gait for the whole clip. Pack cuts idle_to_walk / walk /
+# walk_to_idle from a held idle start, the middle strides, and a held idle end.
+WALK_PROMPT = (
     _PROMPT_HEAD
+    + """
+Hold this still first. Do not take a step on the first frames. Then walk in place, then stop. Settle back onto this still and hold it. The first frames and the last frames are idle.
+
+{motion}
+"""
+)
+
+WALK_PROMPT_FEMALE_UP = (
+    _PROMPT_HEAD_FEMALE_UP
+    + """
+Hold this still first. Do not take a step on the first frames. Then walk in place, then stop. Settle back onto this still and hold it. The first frames and the last frames are idle.
+
+{motion}
+"""
+)
+
+ONESHOT_PROMPT = (
+    _PROMPT_HEAD_ONESHOT
     + """
 One action. Start on this still. Finish, then hold. Do not loop.
 
@@ -85,7 +128,7 @@ One action. Start on this still. Finish, then hold. Do not loop.
 )
 
 ONESHOT_PROMPT_FEMALE_UP = (
-    _PROMPT_HEAD_FEMALE_UP
+    _PROMPT_HEAD_ONESHOT_FEMALE_UP
     + """
 One action. Start on this still. Finish, then hold. Do not loop.
 
@@ -140,6 +183,53 @@ FACING_LOCK = {
     ),
 }
 
+# One-shots keep the same view as the still, with planted feet. No marching.
+FACING_LOCK_PLANTED = {
+    "down": (
+        "Square front view the entire clip, copied from this still. Eyes, nose, chest, and belt buckle face the camera. "
+        "Toes point at the viewer. Both shoulders the same width. Head on the center line. No tilt. "
+        "Feet stay planted. Do not walk or run. Both ears visible. Three-quarter or a lean is the wrong shot."
+    ),
+    "up": (
+        "Square back view the entire clip, copied from this still. Back of the head, rear of the armor, and heels face the camera. "
+        "Both shoulders the same width. Head on the center line. No tilt. "
+        "Rear silhouette matches this still. "
+        "Feet stay planted. Do not walk or run. Face-on front view is the wrong shot."
+    ),
+    "left": (
+        "Strict left profile the entire clip, copied from this still. Nose, chest, and toes point at the left edge. "
+        "One ear, one shoulder silhouette. Head on the center line. No tilt toward the camera. "
+        "Feet stay planted. Do not walk or run. Front view or a three-quarter is the wrong shot."
+    ),
+    "right": (
+        "Strict right profile the entire clip, copied from this still. Nose, chest, and toes point at the right edge. "
+        "One ear, one shoulder silhouette. Head on the center line. No tilt toward the camera. "
+        "Feet stay planted. Do not walk or run. Front view or a three-quarter is the wrong shot."
+    ),
+    "down_left": (
+        "Three-quarter front toward Down-Left the entire clip, copied from this still. More face than back. "
+        "Keep this same three-quarter. Head on the center line. No tilt off the still. "
+        "Feet stay planted. Do not walk or run. Full front, full profile, or back view is the wrong shot."
+    ),
+    "down_right": (
+        "Three-quarter front toward Down-Right the entire clip, copied from this still. More face than back. "
+        "Keep this same three-quarter. Head on the center line. No tilt off the still. "
+        "Feet stay planted. Do not walk or run. Full front, full profile, or back view is the wrong shot."
+    ),
+    "up_left": (
+        "Three-quarter back toward Up-Left the entire clip, copied from this still. More back than face. "
+        "Keep this same three-quarter. Head on the center line. No tilt off the still. "
+        "Rear silhouette matches this still. "
+        "Feet stay planted. Do not walk or run. Full back, full front, or full profile is the wrong shot."
+    ),
+    "up_right": (
+        "Three-quarter back toward Up-Right the entire clip, copied from this still. More back than face. "
+        "Keep this same three-quarter. Head on the center line. No tilt off the still. "
+        "Rear silhouette matches this still. "
+        "Feet stay planted. Do not walk or run. Full back, full front, or full profile is the wrong shot."
+    ),
+}
+
 # Player-character identity. Male and female have different styling; do not share outfit lines.
 # female_up omits neckband language: the locked Up still has no visible neckband.
 IDENTITY_LOCK = {
@@ -190,30 +280,40 @@ MOTION = {
     "walk": (
         "Walk in place. Small steps. Knees bend. "
         "Arms stay close to the ribs and move only a little, opposite the feet. "
-        "Return to this still so the clip loops."
+        "1) Idle hold: this still. Both feet planted. Weight even. A brief pause. Do not lift a foot yet. "
+        "2) Idle into walk: after that pause, one foot lifts first. Keep this facing. "
+        "3) Walk: a few clear in-place strides. Passing step then plant. Stay in this slot. "
+        "4) Walk into idle: strides shorten and stop. The last plant is the other foot from the one that started. "
+        "Weight evens. The pose returns to this still. Do not freeze mid-stride. "
+        "5) Hold this still until the clip ends. Last frame is this idle still, both feet planted."
     ),
     "attack_great_axe": (
-        "Unarmed body acting a two-handed great-axe swing. Hands stay empty. Do not spawn an axe. "
+        "Unarmed body acting a two-handed great-axe swing as an objectless mime. "
+        "No new props at any point. Hands stay empty the whole clip. "
         "Feet stay under the hips. Do not step toward the camera or slide off the still's center line. "
         "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
-        "2) Gather: both hands rise and close as if on a long haft. Torso coils. Keep this facing. "
+        "2) Gather: both hands rise and close as if on a long haft. That is mime only; no object appears. Torso coils. Keep this facing. "
         "3) Swing: a single heavy two-handed arc through the front of the silhouette. Knees bend. "
-        "Shoulders rotate. The empty grip travels through a wide readable contact. One beat only. "
+        "Shoulders rotate. The empty grip travels through a wide readable contact. One swing only. Do not swing again. "
         "4) Follow-through: the arc finishes past contact. Torso unwinds. Do not spin or travel. "
         "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
     ),
     "attack_staff": (
-        "Unarmed body acting a short lightning-staff melee poke. Hands stay empty. Do not spawn a staff. "
-        "Compact. Range is a step shorter than an axe arc. Feet stay under the hips. Do not travel. "
+        "Unarmed body acting a short lightning-staff melee poke as an objectless mime. "
+        "No new props at any point. Hands stay empty the whole clip. "
+        "Compact. Short reach. Feet stay planted under the hips. Do not walk. Do not run. Do not punch. "
         "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
-        "2) Ready: one or both hands close as if on a shaft held across the body. A small coil. Keep this facing. "
-        "3) Strike: one short thrust or tap along the facing. Elbows stay close. No windmill. One beat only. "
-        "4) Recoil: the empty grip springs back a little after contact. "
+        "2) Ready: both hands close together as if on a short shaft; that is mime only; no object appears. A small coil. Keep this facing. "
+        "3) Strike: one short two-handed poke along this still's facing. Elbows stay close. Not a fist punch. One beat only. "
+        "4) Recoil: the empty hands spring back a little after contact. "
         "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
     ),
     "attack_longbow": (
-        "Unarmed body acting a longbow draw and loose. Hands stay empty. Do not spawn a bow or arrow. "
-        "Feet stay planted under the hips. Do not travel. The draw is in place. "
+        "Unarmed body acting a longbow draw and loose as an objectless mime. "
+        "No new props at any point. Hands stay empty the whole clip. "
+        "Feet stay planted under the hips. Do not walk. Do not run. The draw is in place. "
+        "The draw aims along this still's facing. If this still is square front, the bow-arm points at the camera; "
+        "a side-on archer toward the left or right edge is the wrong shot. "
         "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
         "2) Nock: the string-side hand rises to the chest or cheek as if drawing. The bow-side arm extends "
         "along the facing. Torso turns only as far as this still's view already allows. Keep this facing. "
@@ -373,11 +473,12 @@ def facing_label(name: str) -> str:
     return facing_key(name).replace("_", "-").title()
 
 
-def facing_lock(name: str) -> str:
+def facing_lock(name: str, planted: bool = False) -> str:
     key = facing_key(name)
-    if key not in FACING_LOCK:
+    table = FACING_LOCK_PLANTED if planted else FACING_LOCK
+    if key not in table:
         key = "down"
-    return FACING_LOCK[key]
+    return table[key]
 
 
 def gender_key(name: str) -> str:
@@ -457,13 +558,16 @@ def _strip_wrap_language(text: str) -> str:
 
 def _format_one(facing: str, key: str, gender: str) -> str:
     female_up = is_female_up(gender, facing)
-    if key in LOOP_ACTIONS:
+    if key == "walk":
+        template = WALK_PROMPT_FEMALE_UP if female_up else WALK_PROMPT
+    elif key in LOOP_ACTIONS:
         template = LOOP_PROMPT_FEMALE_UP if female_up else LOOP_PROMPT
     else:
         template = ONESHOT_PROMPT_FEMALE_UP if female_up else ONESHOT_PROMPT
+    planted = key not in LOOP_ACTIONS and key != "walk"
     text = template.format(
         action=key.replace("_", " "),
-        facing_lock=facing_lock(facing),
+        facing_lock=facing_lock(facing, planted=planted),
         identity_lock=_identity_for(key, gender, facing),
         motion=MOTION[key],
     )

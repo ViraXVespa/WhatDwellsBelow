@@ -33,6 +33,7 @@ Player and enemy animations use exactly 8 directions matching the Character Bibl
 - Use game-centric direction names exclusively: Up, Down, Left, Right, Up-Left, Up-Right, Down-Left, Down-Right.
 - All directional variants of the same animation state for a given character MUST contain exactly the same number of frames.
 - **One I2V clip per review gate.** After each clip, stop and wait for the User. Do not queue the next facing, action, gender, retry, or fill-in pass until the User says so.
+- **Do not seed I2V from a mid-action video extract** or name pack-slot indices in the prompt. Seed is the idle Bible cell. Packer chooses frames after accept.
 - **No fixed I2V duration.** The clip is as long as it needs to be to finish the motion in `tools/i2v_seeds.py`. Do not demand ten seconds or any other clock.
 - **Paper-doll means layers, not baked weapon characters.** Body animations ship unarmed. Equipped weapon and tool are separate overlay frames composited onto those body frames.
 - **Every I2V first frame keeps an opaque chroma plate.** Never seed I2V from a processed transparent frame. This applies to player, enemy, and any future I2V call.
@@ -173,7 +174,7 @@ Load this appendix only when choosing a generation method.
 | Soft identity language after Bible lock | High | Use always after lock |
 | Single-pass 3×3 for the Bible | Highest for identity | Preferred for Bible |
 | Chained image-edits for Bible cells | Low | Drift; avoid for Bible |
-| `i2v_seeds.py` walk prompt (in-place steps, short arm swing, loop to still) | High | Only locomotion I2V method |
+| `i2v_seeds.py` walk prompt (in-place steps, short arm swing, settle and hold the still) | High | Only locomotion I2V method |
 | `i2v_seeds.py` one-shot MOTION keys (per weapon / tool, death, Dispel) | High | Required for Regenerate flags |
 | One 400% NN spliced still as the I2V seed | High | Default seed |
 | `i2v_seeds.py --test` web preamble | Browser tests only | Do not send in Grok Build I2V |

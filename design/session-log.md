@@ -10,6 +10,71 @@ Do not narrate I2V clips. Name units: gender, facing, action, seed/path.
 
 ---
 
+### 2026-09-09 — 0.3.0 week-3 close
+
+**Why we stopped:** User asked for `0.3.0` and to move to the next development week. They will commit, then send the SHA to pin as week-3 Grok Build Results.
+
+**Wrote:** `design/changelog/0.3.0.md` (series-open / Grok Build Week 3). Previous-week museum copies: `archives/docs/grok_build_w3/` from `design/changelog/0.2.*.md`.
+
+**Pins:** Do **not** write `grok_build_w3` into `archive_catalog.json` until the User sends the commit hash. `grok_web_w2` stays `bb70f556108d0e09e070cfaa42260f642af3737a` (`0.2.55`). Next CLI opened by saying **new week** is week 4 init: pin then-current `main` as `grok_web_w3`.
+
+**Do not:** invent a SHA. Do not hand-edit `scripts/data/version.json` (CI stamps `0.3.0` on the User’s push). Do not emit `changelog.json`.
+
+---
+
+### 2026-09-09 — Placeholdia / dungeon world art pass
+
+**Why we stopped:** User ended the weekly Grok Build session. Mid-week catch-up (same week, no pin). World-art slice shipped and patched after in-game review.
+
+**No I2V this session.** Player attack placeholders and walk packing were not resumed.
+
+**Shipped:**
+
+- Style lock: locked player Bibles / Down idle stills. Hub + dungeon tiles, building facades, props, hub NPCs, ghost shopkeep, dummy, boss door, cracked wall. Installer: `tools/process_world_pass.py`. Stills in this session’s `images/` (`1.jpg`–`43.jpg`).
+- Hub tiles: `plaza_grass`, `plaza_ground`, `plaza_path` (dirt/cobble blend), `plaza_wall`, `plaza_roof`. Dungeon: `foundation_floor`, `foundation_wall`.
+- `camp.gd`: south-face sprites fit the box (`min` of width/height); roof plane with eaves + `uv1_scale`; one yard dirt (no `% 7` dark scatter); path uses `plaza_path`.
+- `dungeon_geo.gd`: textured floor/wall albedo `Color.WHITE` (old cold tint removed).
+- `boss_door.gd` / `breakable.gd`: `boss_door.png`, `crack_wall.png`.
+- Welcome banner: two-line pixel letters inset on the cloth (`WELCOME TO` / `PLACEHOLDIA!`). No TTF.
+- Review fixes: dropped 50% quadrant crops (they cut single subjects in half); keyed at native 1024 then nearest-neighbor fit. Do not downscale before chroma key.
+
+**Not done:** enemy stills / I2V; HUD and gear icons; player attack / special / gather / death / Dispel; remaining attack facings; walk pack from `_src/walk_final/`. Dungeon floor still has a 4-stone cluster that can read as a grid.
+
+**Do not:** pin a week archive (User said no pin). Do not resume attack I2V from this leave-off. Do not downscale world stills before key. Do not 50%-crop single-subject stills. Do not put Consolas on the banner.
+
+---
+
+### 2026-09-09 — Week 3 animation handoff
+
+**Why we stopped:** User closed the I2V slice. Next CLI chat this week is a different task (catch-up, no pin). User will rewrite the attack I2V pipeline during the week. **Next week’s first Grok Build session: replace every live attack placeholder.**
+
+**Week pins (init, not the User’s 0.3.0):** `grok_web_w2` = `bb70f556108d0e09e070cfaa42260f642af3737a` (`0.2.55`). Missed `grok_build_w2` = `36fb882c9db3b6cd8a83f072d2dfec51d4acedca` (`0.2.0`). Local tags `archive/grok-web-w2`, `archive/grok-build-w2`. Catalog + `archives/docs/grok_web_w2/` uncommitted until User pushes.
+
+**Walk I2V (User packs):** only male Down-Right was packed this session. Accepted clips in `_src/walk_final/`: male `down_right`, `left`, `up_left`, `up`, `up_right`, `right`; female `left`, `up_left`, `up`. Walk MOTION: start-hold then end-hold. Seeds: male `_src/i2v_male_walk_*`, female `_src/i2v_female_walk/` + per-unit folders.
+
+**Attack I2V — ALL PLACEHOLDERS.** Live Down strips exist so baked per-weapon sheets are gone. They are **not** final. Replace at next week’s initial session with the User’s new pipeline. Other facings of `atk_great_axe` / `atk_staff` / `atk_longbow` were deleted; `player_anim.clip()` falls back to Down. Pack: `python tools/pack_oneshot.py --gender male --gender female --action attack_great_axe --action attack_staff --action attack_longbow --facing down`. `pack_oneshot.py` picks 6 harvest indices then cleans those only.
+
+| Unit | Live source (placeholder) | Notes |
+|------|---------------------------|--------|
+| male Down `attack_great_axe` | `_src/oneshot/male_attack_great_axe_down.mp4` | User accepted motion. |
+| female Down `attack_great_axe` | `_src/oneshot/female_attack_great_axe_down.mp4` (pass 10 / video 20) | Gather can be empty; handle/axe still appears as arms extend into the swing. |
+| male Down `attack_staff` | `_src/oneshot/male_attack_staff_down.mp4` (pass 2 / video 27) | Retry after stick-then-punch. |
+| female Down `attack_staff` | `_src/oneshot/female_attack_staff_down.mp4` (pass 2 / video 28) | Retry after run-cycle + punch. |
+| male Down `attack_longbow` | `_src/oneshot/male_attack_longbow_down.mp4` (video 24) | Not retried; side-on draw on a Down still. |
+| female Down `attack_longbow` | `_src/oneshot/female_attack_longbow_down.mp4` (pass 2 / video 29) | Retry after rightward draw on Down body. |
+
+**Prompt lessons (for the new pipeline):** Original male-axe MOTION (two-handed great-axe swing, “as if on a long haft”, five beats) produced good **motion**. Over-correcting (geometry-only fists, no haft, belly clash, hands below shoulders, magenta gap between hands, mid-action continuation seed) destroyed motion. One-shot head used to share walk **treadmill / marching in place** — that made staff clips run; live code now uses planted `_PROMPT_HEAD_ONESHOT` + `FACING_LOCK_PLANTED`. Staff “shaft held across the body” spawned a stick; “thrust or tap” became a punch. Longbow “along the facing” on a Down still became a side-on archer. Do not seed I2V from a harvested mid-pose. Do not name pack-slot frame indices in I2V prompts. Seed = idle Bible cell, opaque plate.
+
+**Engine:** `player_anim.gd` basic attack indexes by `atk_t / duration` (attack-speed ready). `atk_fps` is not that clock. Specials still use `atk_fps` for playback speed but now use the same Down placeholder strips as attack (`spc_*_down_*` copies of `atk_*`; other special facings deleted).
+
+**Pack fix:** first oneshot pack `lock_x`'d against the raw Bible cell (wider than 128), which shoved figures off the canvas (half-body in game). `pack_oneshot.py` now `key_fit`s the idle still and `lock_baselines` like locomotion. Re-packed all six Down attacks.
+
+**Not done:** special / gather / death / Dispel I2V; weapon overlays; remaining 7 attack facings; walk pack of this week’s accepted clips (User).
+
+**Do not:** resume this I2V list from a mid-week catch-up unless the User names it.
+
+---
+
 ### 2026-09-02 — Walk pack, Extraction Gates, splash, keyer holes
 
 **Why we stopped:** Usage limit. Walk clip re-pack completed after the User signed off for the week.

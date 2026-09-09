@@ -29,12 +29,15 @@ The Archives browser lists every catalog row. Play on a row launches **that comm
 | full_3d_pass | Full 3D Pass | `71ea80a42cb4fd09cafd7b5a0327709541aa309c` |
 | grok_build_w1 | Grok Build Results (Week 1) | `49a3018247628545df8690a8d52ff334cda342a2` |
 | grok_web_w1 | Grok Web Results (Week 1) | `205c5c3e6397ba08c21eede1ba19eb2c94d02487` |
+| grok_build_w2 | Grok Build Results (Week 2) | `36fb882c9db3b6cd8a83f072d2dfec51d4acedca` |
+| grok_web_w2 | Grok Web Results (Week 2) | `bb70f556108d0e09e070cfaa42260f642af3737a` |
+| grok_build_w3 | Grok Build Results (Week 3) | pending User `0.3.0` SHA |
 
 After each Grok Build week ritual, also list `grok_web_w{N-1}` and `grok_build_wN` as specified in `design/versioning.md`. Those rows use the same isolation rules as the five above.
 
 No hybrid mode. No shared runtime state, scenes, scripts, or saves. Local Play stamps `application/config/name` on the worktree only (`What Dwells Below — <label>`). Pages exports do the same for IndexedDB isolation.
 
-Tags: `archive/classic-2d`, `archive/art-experiment`, `archive/full-3d-pass`, `archive/grok-build-w1`, `archive/grok-web-w1`, plus `archive/grok-web-w{N-1}` and `archive/grok-build-wN` when those pins exist.
+Tags: `archive/classic-2d`, `archive/art-experiment`, `archive/full-3d-pass`, `archive/grok-build-w1`, `archive/grok-web-w1`, `archive/grok-build-w2`, `archive/grok-web-w2`, `archive/grok-build-w3` (after the User’s `0.3.0` SHA), plus `archive/grok-web-w{N-1}` and `archive/grok-build-wN` when later pins exist.
 
 ## Play
 
@@ -91,7 +94,7 @@ Two columns. Only one column is active.
 
 Documents: `archives/docs/<id>/` first, else `git show <sha>:<path>` locally, else GitHub raw on web. Truncate long files. Documents and reader stay a right-column mode stack; B steps read → docs → info → list.
 
-List MUST include every catalog row, including Classic 2D, Art experiment, Full 3D Pass, Grok Build Results (Week 1), Grok Web Results (Week 1), and any week pins added by the ritual above. Videos do not exist yet; the Video button stays disabled until they do.
+List MUST include every catalog row, including Classic 2D, Art experiment, Full 3D Pass, Grok Build Results (Week 1–2), Grok Web Results (Week 1–2), and any week pins added by the ritual above. Videos do not exist yet; the Video button stays disabled until they do.
 
 ## Live snapshot
 

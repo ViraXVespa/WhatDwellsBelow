@@ -14,7 +14,8 @@ See also: `AGENTS.md`, `design/web-session.md`, `design/grok-build.md`, `design/
 | **series** | Development week | Major update index. Restarts at `0` on `1.0.0`. Later majors (`1.1.0`, …) only when the User names them. |
 | **patch** | User-commit index on `main` in that series | Same: user-commit index on `main` in that major |
 
-Week 2 open (also `0.2.0`): `36fb882c9db3b6cd8a83f072d2dfec51d4acedca` (`Grok Build Week 2`).
+Week 2 open (also `0.2.0`): `36fb882c9db3b6cd8a83f072d2dfec51d4acedca` (`Grok Build Week 2`).  
+Week 3 open (also `0.3.0`): pending the User’s completion commit. Pin that SHA as `grok_build_w3` when they send it. Do not invent a SHA.
 
 Do not store a moving “this web goal is …” patch in this file. Do not invent other version fields. Save-schema key `"v"` in `save_store.gd` is unrelated.
 

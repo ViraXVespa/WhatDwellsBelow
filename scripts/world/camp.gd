@@ -95,8 +95,7 @@ func _ground() -> void:
 	cs.position = Vector3(16.0, -0.2, 14.0)
 	body.add_child(cs)
 	var grass: Array = []
-	var packed_a: Array = []
-	var packed_b: Array = []
+	var packed: Array = []
 	var path: Array = []
 	for z in GROUND_D:
 		for x in GROUND_W:
@@ -109,14 +108,11 @@ func _ground() -> void:
 				grass.append(pos)
 			elif on_path:
 				path.append(pos)
-			elif (gx * 3 + gz) % 7 == 0:
-				packed_b.append(pos)
 			else:
-				packed_a.append(pos)
+				packed.append(pos)
 	_tile_layer("res://assets/tiles/plaza_grass.png", grass, Color(0.34, 0.46, 0.24))
-	_tile_layer("res://assets/tiles/plaza_ground.png", packed_a, Color(0.46, 0.42, 0.30))
-	_tile_layer("res://assets/tiles/plaza_ground_b.png", packed_b, Color(0.40, 0.36, 0.26))
-	_tile_layer("res://assets/tiles/plaza_ground_b.png", path, Color(0.38, 0.34, 0.24))
+	_tile_layer("res://assets/tiles/plaza_ground.png", packed, Color(0.46, 0.42, 0.30))
+	_tile_layer("res://assets/tiles/plaza_path.png", path, Color(0.44, 0.38, 0.28))
 
 
 func _tile_layer(tex_path: String, points: Array, fallback: Color) -> void:
@@ -170,8 +166,12 @@ func _solid(pos: Vector3, size: Vector3, col: Color, tex: String) -> void:
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
 	mat.albedo_color = col
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	if ResourceLoader.exists("res://assets/tiles/plaza_wall.png"):
+		mat.albedo_texture = load("res://assets/tiles/plaza_wall.png")
+		mat.albedo_color = Color.WHITE
 	vis.material_override = mat
 	body.add_child(vis)
+	_roof(body, size)
 	if ResourceLoader.exists(tex):
 		var face := Sprite3D.new()
 		face.texture = load(tex)
@@ -179,9 +179,29 @@ func _solid(pos: Vector3, size: Vector3, col: Color, tex: String) -> void:
 		face.shaded = false
 		face.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 		face.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-		face.pixel_size = size.y / float(maxi(1, face.texture.get_height()))
-		face.position = Vector3(0.0, 0.05, size.z * 0.5 + 0.04)
+		var tw := float(maxi(1, face.texture.get_width()))
+		var th := float(maxi(1, face.texture.get_height()))
+		face.pixel_size = minf(size.x / tw, size.y / th)
+		face.position = Vector3(0.0, 0.0, size.z * 0.5 + 0.04)
 		body.add_child(face)
+
+
+func _roof(body: Node3D, size: Vector3) -> void:
+	var roof: MeshInstance3D = MeshInstance3D.new()
+	var plane: PlaneMesh = PlaneMesh.new()
+	plane.size = Vector2(size.x + 0.7, size.z + 0.7)
+	roof.mesh = plane
+	roof.position.y = size.y * 0.5 + 0.03
+	var mat: StandardMaterial3D = StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	mat.albedo_color = Color(0.42, 0.28, 0.22)
+	mat.uv1_scale = Vector3(size.x + 0.7, size.z + 0.7, 1.0)
+	if ResourceLoader.exists("res://assets/tiles/plaza_roof.png"):
+		mat.albedo_texture = load("res://assets/tiles/plaza_roof.png")
+		mat.albedo_color = Color.WHITE
+	roof.material_override = mat
+	body.add_child(roof)
 
 
 func _banner() -> void:

@@ -56,7 +56,7 @@ static func make_mat(tex_path: String, fallback: Color, unshaded: bool) -> Stand
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	if ResourceLoader.exists(tex_path):
 		mat.albedo_texture = load(tex_path)
-		mat.albedo_color = Color(0.75, 0.82, 0.9) if unshaded else fallback
+		mat.albedo_color = Color.WHITE
 	else:
 		mat.albedo_color = fallback
 	return mat

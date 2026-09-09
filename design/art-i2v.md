@@ -13,13 +13,15 @@ Always work **one unit** at a time. A unit is exactly one **character type** + o
 
 I2V prompts come from `tools/i2v_seeds.py` (`build_prompt()` + `MOTION[action]` + facing lock + identity lock). Identity is per gender and facing: `IDENTITY_LOCK["female_up"]` is used for the female Up cell and omits neckband language because that still has no visible band. Do not invent a second walk prompt in this file.
 
+Do not seed I2V from a mid-action video extract, and do not name pack-slot indices in the prompt. Seed is the idle Bible cell (opaque plate). Packer cuts frames after the User accepts the clip.
+
 Identity lock is per player gender and facing. Male and female each have their own `IDENTITY_LOCK` in `tools/i2v_seeds.py`. Do not copy male outfit language onto the female character. Pass `--gender male` or `--gender female`, or infer it from `bible_locked_male.png` / `bible_locked_female.png`. Where the still shows it, copy a short green neckband worn only around the neck, same bulk as the still. A little more of that same band may show at the nape when hair moves. Do not grow extra length or hanging cloth. Female Up uses `IDENTITY_LOCK["female_up"]` and MUST NOT mention a neckband, wrap, scarf, collar, or green cloth.
 
 Grok Build I2V uses that body as-is. The web-browser preamble (image-to-video / do not output a still / no fixed duration) is **only** added when `tools/i2v_seeds.py --test` is passed.
 
 `--action walk` is the locomotion method. It is not a breath / idle performance. `MOTION["idle"]` is not a player path.
 
-Walk uses the loop wrapper in `tools/i2v_seeds.py` (starts and ends on the idle still). One-shot actions use the one-shot wrapper (start on the still, finish the motion, recover or hold; do not claim a walk loop).
+Walk uses the walk wrapper in `tools/i2v_seeds.py`: **hold** the idle still, walk in place, then settle and **hold** that still so the clip start is idle-to-walk and the clip end is walk-to-idle. Do not treat the whole clip as a looping gait. One-shot actions use the one-shot wrapper (start on the still, finish the motion, recover or hold; do not claim a walk loop). One-shot heads are **planted** (no treadmill, no marching). Attack / special / gather keep the live MOTION beat sheet, worded as an objectless mime: no new props at any point. Dispel is the knife exception.
 
 `--action gather` (Animation Browser name with no tool suffix) writes **both** gather sheets. Unknown actions MUST NOT fall back to `walk`.
 

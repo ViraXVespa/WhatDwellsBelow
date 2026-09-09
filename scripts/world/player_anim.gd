@@ -140,7 +140,11 @@ static func apply_facing(host: Node, delta: float) -> void:
 	elif host.atk_state == host.ATK_BASIC:
 		var frames := clip(host.attack, key)
 		if not frames.is_empty():
-			var idx := mini(frames.size() - 1, int(host.atk_t * App.bal.atk_fps))
+			var n: int = frames.size()
+			var dur: float = host._basic_duration()
+			var idx: int = 0
+			if n > 1 and dur > 0.0:
+				idx = clampi(int(host.atk_t / dur * float(n - 1)), 0, n - 1)
 			tex = frames[idx]
 			host.atk_i = idx
 	var planar := Vector2(host.velocity.x, host.velocity.z)

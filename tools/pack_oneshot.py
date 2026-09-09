@@ -17,6 +17,9 @@ import argparse
 import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
+from typing import TypeVar
+
+T = TypeVar("T")
 
 from PIL import Image
 
@@ -25,6 +28,7 @@ sys.path.insert(0, str(TOOLS))
 
 import i2v_seeds  # noqa: E402
 import pack_locomotion as loc  # noqa: E402
+import sprite_pipeline as sp  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "_src" / "oneshot"
@@ -56,14 +60,14 @@ FIXED_N = {
 }
 
 
-def even_pick(frames: list[Image.Image], count: int) -> list[Image.Image]:
+def even_pick(frames: list[T], count: int) -> list[T]:
     if count <= 0 or len(frames) <= count:
         return list(frames)
     if count == 1:
         return [frames[0]]
     last = len(frames) - 1
     idxs = [int(round(i * last / (count - 1))) for i in range(count)]
-    out: list[Image.Image] = []
+    out: list[T] = []
     seen: set[int] = set()
     for i in idxs:
         if i in seen:
@@ -88,18 +92,20 @@ def pack_one(
     paths = loc.extract(vid, raw_dir, reuse=reuse)
     if not paths:
         return f"empty {vid}"
-    raw = [Image.open(p).convert("RGBA") for p in paths]
-    cleaned = [loc.clean(im, rim, rim_hue) for im in raw]
-    ref = loc.bible_cell(gender, facing)
-    locked = loc.lock_x(cleaned, ref) if ref is not None else cleaned
     n = frames_n
     if n is None:
         n = FIXED_N.get(action)
-    picked = even_pick(locked, n) if n else locked
+    if n:
+        paths = even_pick(paths, n)
+    raw = [Image.open(p).convert("RGBA") for p in paths]
+    cleaned = [loc.clean(im, rim, rim_hue) for im in raw]
+    ref = loc.bible_cell(gender, facing)
+    idle = loc.key_fit(ref, rim=0, rim_hue=rim_hue) if ref is not None else None
+    locked = loc.lock_x(sp.lock_baselines(cleaned), idle) if idle is not None else cleaned
     dest = OUT / gender
     prefix = f"{PREFIX[action]}_{facing}"
-    loc.write_seq(picked, dest, prefix)
-    return f"{gender} {action} {facing} {len(picked)} -> {dest / (prefix + '_0.png')}"
+    loc.write_seq(locked, dest, prefix)
+    return f"{gender} {action} {facing} {len(locked)} -> {dest / (prefix + '_0.png')}"
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -120,7 +120,11 @@ func _wall() -> void:
 	mesh.position.y = 0.72
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	m.albedo_color = Color(0.38, 0.32, 0.28)
+	if ResourceLoader.exists("res://assets/sprites/props/crack_wall.png"):
+		m.albedo_texture = load("res://assets/sprites/props/crack_wall.png")
+		m.albedo_color = Color.WHITE
 	mesh.material_override = m
 	add_child(mesh)
 	var lab := Label3D.new()

@@ -55,7 +55,11 @@ func setup_opening(opening: Dictionary) -> void:
 	vis.position.y = tall * 0.5
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	m.albedo_color = Color(0.55, 0.12, 0.1)
+	if ResourceLoader.exists("res://assets/sprites/props/boss_door.png"):
+		m.albedo_texture = load("res://assets/sprites/props/boss_door.png")
+		m.albedo_color = Color.WHITE
 	vis.material_override = m
 	add_child(vis)
 	label = Label3D.new()
