@@ -3,6 +3,36 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.2.53",
+			"points": [
+				{
+					"text": "Agent docs are a router plus path files, not a second protocol in `AGENTS.md`"
+				},
+				{
+					"text": "Grok Build pins only when the User opens CLI by saying new week",
+					"subs": [
+						"Mid-week catch-up and per-slice chats do not pin"
+					]
+				},
+				{
+					"text": "Leave-off and session log are separate (`design/sessions.md`, `design/session-log.md`)"
+				},
+				{
+					"text": "Art pipeline is a door; I2V, pack, and review briefs are sibling files"
+				},
+				{
+					"text": "Current-series changelog files stay the between-week brief",
+					"subs": [
+						"Do not follow git commit links into web-session conversations"
+					]
+				},
+				{
+					"text": "`versioning.md` no longer stores a moving web-goal patch number"
+				}
+			],
+			"summary": "Agent boot is smaller, week pins are explicit, and I2V work has a short door instead of one 23 KB pipeline file."
+		},
+		{
 			"label": "0.2.52",
 			"points": [
 				{
