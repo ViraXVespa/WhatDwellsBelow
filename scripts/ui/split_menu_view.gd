@@ -11,15 +11,25 @@ const RULE_OFF := Color(0.35, 0.28, 0.18, 1)
 const GOLD := Color(1, 0.92, 0.45, 1)
 
 
+static func _live(host: Node) -> bool:
+	return host != null and is_instance_valid(host)
+
+
 static func setup_overlay(host: Node, title_text: String, hint_text: String) -> void:
+	if not _live(host):
+		return
 	Chrome.setup_overlay(host, title_text, hint_text)
 
 
 static func setup_embed(host: Node, parent: Control) -> void:
+	if not _live(host):
+		return
 	Chrome.setup_embed(host, parent)
 
 
 static func _col_scroll(host: Node, key: String) -> ScrollContainer:
+	if not _live(host):
+		return null
 	if host.has_meta(key):
 		var n: Variant = host.get_meta(key)
 		if n is ScrollContainer:
@@ -39,12 +49,14 @@ static func tune_scroll(sc: ScrollContainer) -> void:
 
 
 static func tune_host(host: Node) -> void:
+	if not _live(host):
+		return
 	tune_scroll(_col_scroll(host, "_list_scroll"))
 	tune_scroll(_col_scroll(host, "_info_scroll"))
 
 
 static func rebuild_list(host: Node) -> void:
-	if host.list_box == null:
+	if not _live(host) or host.list_box == null:
 		return
 	for c: Node in host.list_box.get_children():
 		c.queue_free()
@@ -74,7 +86,10 @@ static func rebuild_list(host: Node) -> void:
 		chain.append(host.back_btn)
 	wire_vert(chain)
 	if host.get_tree():
-		host.get_tree().process_frame.connect(func() -> void: tune_host(host), CONNECT_ONE_SHOT)
+		host.get_tree().process_frame.connect(func() -> void:
+			if _live(host):
+				tune_host(host)
+		, CONNECT_ONE_SHOT)
 
 
 static func rebuild_page(host: Node) -> void:
@@ -82,24 +97,29 @@ static func rebuild_page(host: Node) -> void:
 
 
 static func clear_page(host: Node) -> void:
-	if host.info_box == null:
+	if not _live(host) or host.info_box == null:
 		return
 	for c: Node in host.info_box.get_children():
 		c.queue_free()
 	host.info_btns.clear()
 	path_text(host)
 	if host.get_tree():
-		host.get_tree().process_frame.connect(func() -> void: tune_host(host), CONNECT_ONE_SHOT)
+		host.get_tree().process_frame.connect(func() -> void:
+			if _live(host):
+				tune_host(host)
+		, CONNECT_ONE_SHOT)
 
 
 static func add_page_btn(host: Node, b: Button) -> void:
-	if host.info_box == null:
+	if not _live(host) or host.info_box == null:
 		return
 	host.info_box.add_child(b)
 	host.info_btns.append(b)
 
 
 static func paint_list(host: Node) -> void:
+	if not _live(host):
+		return
 	var selected: int = int(host.get("selected"))
 	for i: int in host.list_btns.size():
 		var b: Button = host.list_btns[i]
@@ -116,7 +136,7 @@ static func paint_list(host: Node) -> void:
 
 
 static func place_chevron(host: Node) -> void:
-	if host._chevron == null or host._list_root == null:
+	if not _live(host) or host._chevron == null or host._list_root == null:
 		return
 	var y: float = host._list_root.position.y
 	var selected: int = int(host.get("selected"))
@@ -127,6 +147,8 @@ static func place_chevron(host: Node) -> void:
 
 
 static func apply_col(host: Node) -> void:
+	if not _live(host):
+		return
 	var col: String = str(host.get("col"))
 	var leaf: bool = Split.is_leaf(Split.current(host))
 	if host._list_root:
@@ -156,6 +178,8 @@ static func _focusable(n: Variant) -> bool:
 
 
 static func set_col_focus(host: Node) -> void:
+	if not _live(host):
+		return
 	var list_on: bool = str(host.get("col")) == "list"
 	for b: Variant in host.list_btns:
 		if is_instance_valid(b) and b is Control:
@@ -172,7 +196,7 @@ static func set_col_focus(host: Node) -> void:
 
 
 static func focus_col(host: Node) -> void:
-	if not bool(host.get("open")):
+	if not _live(host) or not bool(host.get("open")):
 		return
 	var col: String = str(host.get("col"))
 	var selected: int = int(host.get("selected"))
@@ -189,6 +213,8 @@ static func focus_col(host: Node) -> void:
 
 
 static func first_enabled_info(host: Node) -> Control:
+	if not _live(host):
+		return null
 	for b: Variant in host.info_btns:
 		if not _focusable(b):
 			continue
@@ -217,7 +243,7 @@ static func wire_vert(btns: Array) -> void:
 
 
 static func path_text(host: Node) -> void:
-	if host.get("_path") == null:
+	if not _live(host) or host.get("_path") == null:
 		return
 	if host.has_method("split_path_text"):
 		host._path.text = str(host.split_path_text())

@@ -3,6 +3,7 @@
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Text := preload("res://scripts/ui/gear_board_text.gd")
 
+
 static func on(ui: CanvasLayer, key: String) -> bool:
 	if ui.has_meta(key):
 		return ui.get_meta(key) == true
@@ -53,12 +54,24 @@ static func ensure_tip(ui: CanvasLayer) -> void:
 	ui.gear_tip = lab
 
 
+static func _as_int(v: Variant, fallback: int) -> int:
+	if v is int:
+		return v
+	if v is float:
+		return int(v)
+	if v is String and str(v).is_valid_int():
+		return int(str(v))
+	return fallback
+
+
 static func _tip_anchor(ui: CanvasLayer) -> Control:
 	var inv_tab: int = 1
 	if ui.get("TAB_INV") != null:
-		inv_tab = int(ui.TAB_INV)
-	if int(ui.get("tab")) != inv_tab:
-		return null
+		inv_tab = _as_int(ui.TAB_INV, 1)
+	var tab_v: Variant = ui.get("tab")
+	if tab_v is int or tab_v is float or (tab_v is String and str(tab_v).is_valid_int()):
+		if _as_int(tab_v, inv_tab) != inv_tab:
+			return null
 	if str(ui.inv_sel) == "stats" or str(ui.inv_sel) == "" or str(ui.inv_sel) == "back":
 		return null
 	if on(ui, "gear_hover"):

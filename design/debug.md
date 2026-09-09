@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot
 Read when: changing the secret menu, telemetry, playtest, animation browser, or verification
-Code: `scripts/combat/debug_menu.gd`, `scripts/combat/debug_menu_settings.gd`, `scripts/world/sprite_filter.gd`, `scripts/debug/playtest.gd`, `scripts/debug/playtest_log.gd`, `telemetry.gd`, `anim_browser.gd`, `anim_browser_review.gd`, `anim_review.gd`, `anim_scan.gd`, `smoke.gd`
+Code: `scripts/combat/debug_menu.gd`, `scripts/combat/debug_menu_val.gd`, `scripts/combat/debug_menu_val_grid.gd`, `scripts/combat/debug_menu_settings.gd`, `scripts/world/sprite_filter.gd`, `scripts/debug/playtest.gd`, `scripts/debug/playtest_log.gd`, `telemetry.gd`, `anim_browser.gd`, `anim_browser_nav.gd`, `anim_browser_review.gd`, `anim_review.gd`, `anim_scan.gd`, `smoke.gd`
 See also: `design/constraints.md`, `design/coverage.md`, `design/ui.md`, `design/camera.md`, `design/art-pipeline.md`, `design/input.md`
 
 ## Secret debug / balance menu
@@ -26,13 +26,16 @@ Live path: `scripts/combat/debug_menu.gd`. This is current chrome, not a new sys
 
 **Pages.** Five pages in LB / RB order: Values → Settings → Profiles → Playtest → Animation Browser. Close (B) sits in the top row but is not a page. The top tab buttons are mouse-clickable and must not take gamepad focus. Title, tabs, and status stay pinned above the scroll so first-open focus cannot hide the tab labels. The active tab is tinted.
 
-**Values (browse / edit).** Values does not use engine SpinBox focus. Opening the page highlights the first full row (label + number field).
+**Values (browse / edit).** Values does not use engine SpinBox focus. Tunables are grouped by category in two columns (`debug_menu_val_grid.gd`). Opening the page highlights the top-left category.
 
-- D-pad Up / Down or left-stick Up / Down moves the highlight and scrolls that row into view.
-- **A** on a highlighted row enters edit. The row and the number field both use a stronger highlight. Up / Down then changes the value by that row’s step. The live balance value is not committed until confirm.
-- **A** again writes the value and returns to browse.
-- **B** while editing restores the previous number and returns to browse.
-- **B** while browsing closes the secret menu (Values is the home page).
+- D-pad / left-stick Up / Down move within the current category column and wrap in that column.
+- D-pad / left-stick Left / Right move between the two category columns.
+- **A** on a category expands that category’s variables in a single column under that category cell. Focus moves to the first variable. Navigation locks to that list (Up / Down). Left / Right do nothing in the var list.
+- **A** on a variable enters edit. Up / Down then changes the value by that row’s step. The live balance value is not committed until confirm.
+- **A** again writes the value and returns to the var list.
+- **B** while editing restores the previous number and returns to the var list.
+- **B** on the var list collapses it and returns focus to the two-column category grid.
+- **B** on the category grid closes the secret menu (Values is the home page).
 - Fly-out ideals still update from the highlighted variable.
 
 **Settings.** Catch-all for in-test display and camera options. Built by `debug_menu_settings.gd`. Changes apply live and persist through `App.save_now()`.
@@ -46,13 +49,14 @@ Live path: `scripts/combat/debug_menu.gd`. This is current chrome, not a new sys
 - Mip bias slider (−2..2). Stored and persisted; Sprite3D has no lod-bias hook yet so the picture does not change
 - Touch stick deadzone slider, plus reset. RT is press-and-hold only; there is no double-tap latch
 - Look wheel / pinch / stick sliders, plus reset
+- Grant anvil test kit (bag gear + gold / ore / root). Debug-only
 - Save settings button
 
 Linear filters MUST stay on this tab. Player Settings → Graphics uses Mipmaps / Anisotropic checkboxes (nearest implied). Linear stays here.
 
 **Other pages.** Settings, Profiles, and Playtest still use normal button / LineEdit / slider focus. Up / Down moves among those controls.
 
-**Animation Browser tab.** Navigating to that tab (LB / RB or mouse) only rebuilds a confirm prompt. It does not open the full-screen viewer. The first control is **Open Animation Browser**; **A** on that control launches `anim_browser.open_browser()`. **B** on the prompt returns to Values. While the viewer is open, debug-menu LB / RB must not steal model-cycle input. Closing the viewer returns focus to this prompt, not to a hidden tab button.
+**Animation Browser tab.** Navigating to that tab (LB / RB or mouse) only rebuilds a confirm prompt. It does not open the full-screen viewer. The first control is **Open Animation Browser**; **A** on that control launches `anim_browser.open_browser()`. **B** on the prompt returns to Values. While the viewer is open, the debug menu MUST release GUI focus and stop processing input so the viewer can take D-pad / keyboard. Debug-menu LB / RB must not steal model-cycle input. Closing the viewer restores debug-menu input and returns focus to this prompt, not to a hidden tab button.
 
 The Phase 7 “gamepad-focusable Animation Browser control” is that Open button, not the top tab chrome.
 
@@ -181,29 +185,29 @@ The Animation Browser is a full-screen page. It MUST be TV-readable and gamepad-
   - Wrapping at the ends of the model list is allowed.
   - Model list MUST include player male, player female, and every shipped enemy type including Floor Guardians and the Gate Master.
 - **Preview viewport** directly beneath the model selection widget. Shows a zoomed-in view of the current model playing the current animation. Updates immediately when model, facing, or animation changes.
-- **Play / Pause** sits under the preview. Default: the selected clip loops. Highlight the control and press A to toggle play/pause. Playing vs paused MUST be obvious from the couch.
+- **Play / Pause** sits under the preview. Default: the selected clip loops. **X** (`gear_drop` / `anim_play`) toggles play/pause from anywhere in the viewer. Highlight + A still works. Playing vs paused MUST be obvious from the couch.
 - **Direction list and animation list** sit together to the right of the model widget and preview, as two sibling list widgets with the same interaction pattern. The direction list is next to the animation list.
 - **Review status** sits under the lists. Shows Good / Repack / Regenerate for the current clip, or Still — no review when the clip is a single frame.
 - **Notes field** sits above Back. Visible only while the current clip is Repack or Regenerate. Keyboard types into it.
 
 **Direction list**
 
-- Lists every available facing for the current model: the eight Character Bible directions plus **Idle / None**.
-- The User may move a highlight with the D-pad (or equivalent menu navigation) and press A to select a facing, consistent with other menu lists.
-- **Right stick** sets facing from anywhere in the Animation Browser. Deflect past a deadzone and the nearest of the eight in-game aim octants becomes the selected facing. Releasing the stick to neutral **keeps** the last facing.
-- **R3** sets facing to **Idle / None** from anywhere.
-- Manual highlight + A, right stick, and R3 all write the same current facing. The list highlight MUST match the active facing after any of those inputs.
+- Lists the eight Character Bible facings in this order: Down, Down-Left, Left, Up-Left, Up, Up-Right, Right, Down-Right. There is no Idle / None facing row. Idle clips live on each facing.
+- Open focus is the current facing (Down on first open). Unselected labels are white. The selected facing is gold.
+- D-pad Up / Down moves the facing highlight and writes that facing. D-pad Right moves focus to the Animation list (last highlighted clip). D-pad Left on the facing list stays there.
+- **Right stick** sets facing from anywhere in the Animation Browser. Deflect past a deadzone and the nearest of the eight in-game aim octants becomes the selected facing. Releasing the stick to neutral **keeps** the last facing. Right-stick facing MUST NOT steal D-pad / keyboard focus or rebuild the facing buttons.
 - Changing facing immediately rebuilds the animation list for that facing.
 
 **Animation list**
 
-- Lists only animations available on the current model **for the current facing**.
-- Idle / None lists only clips that belong to that bucket (idle and any other non-directional clips shipped for that model).
-- A compass facing lists only clips that exist for that facing (`walk`, `attack_*` / `special_*` per weapon class, `gather_pickaxe` / `gather_hatchet` falling back to `gather_*` files, `death`, “Dispel”, directional attacks, and any other shipped per-facing clips). `idle_to_walk` / `walk_to_idle` are pack-only and MUST NOT appear in this list.
+- Lists only animations available on the current model **for the current facing**. Labels are title-cased.
+- A facing lists only clips that exist for that facing (`walk`, `attack_*` / `special_*` per weapon class, `gather_pickaxe` / `gather_hatchet` falling back to `gather_*` files, `death`, “Dispel”, directional attacks, idle, and any other shipped per-facing clips). `idle_to_walk` / `walk_to_idle` are pack-only and MUST NOT appear in this list.
 - If the newly selected facing or model does not have the previously selected animation, select the first available animation for that facing.
 - If a facing has no clips, show an empty list and a clear empty state in the preview; do not keep a clip from the old facing.
 - The list MUST refresh when the selected model or facing changes.
-- LT scrolls the animation list up and RT scrolls it down from any focus position.
+- LT / RT scroll the animation list up / down from any focus position. Mouse wheel does the same. Left click activates the hovered button. Right click does nothing.
+- D-pad Up / Down moves the animation highlight when that list has focus. D-pad Left returns to the Facing list (last facing). D-pad Right on the animation list stays there.
+- Left stick, while playing, steps playback speed (0.25 / 0.5 / 1.0 / 1.5 / 2.0). While paused, left stick steps individual frames.
 - The User may also highlight an entry with normal menu navigation and confirm with A.
 - The selected animation is the one currently playing in the preview.
 
@@ -222,13 +226,16 @@ The Animation Browser is a full-screen page. It MUST be TV-readable and gamepad-
 |---|---|
 | LB / RB | Previous / next model |
 | LT / RT | Scroll animation list up / down |
+| D-pad Up / Down | Move highlight in the focused list (Facing or Animation) |
+| D-pad Left / Right | Animation list ↔ Facing list |
+| Left stick | Playback speed while playing; frame step while paused |
 | Right stick | Set facing to that octant |
-| R3 | Facing = Idle / None |
+| X | Play / Pause |
 | Y | Cycle review state (multi-frame clips only) |
 | A | Activate highlight (direction entry, animation entry, Play/Pause, Back, review button, on-screen model buttons) |
 | B | Back to main secret debug menu |
 
-Keyboard / mouse MUST have equivalents for every action (suggested start: arrow keys or WASD for facing, a dedicated Idle / None key, Q/E or equivalent for model, list scroll on mouse wheel / keys, Y for review cycle). Exact bindings MAY be invented at implementation time and MUST appear in the rebinding screen. Notes require a keyboard; there is no on-screen keyboard.
+Keyboard / mouse MUST have equivalents for every action (arrow keys for list columns, Q/E or LB/RB for model, mouse wheel for the animation list, Y for review cycle, X for play/pause). Exact bindings MAY be invented at implementation time and MUST appear in the rebinding screen. Notes require a keyboard; there is no on-screen keyboard.
 
 Exact compare-two, frame-scrubber, and bible-overlay extras MAY be invented at implementation time so long as the requirements above are met.
 

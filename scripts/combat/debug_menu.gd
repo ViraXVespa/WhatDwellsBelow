@@ -1,4 +1,4 @@
-extends CanvasLayer
+﻿extends CanvasLayer
 
 ## Secret debug. Default engine controls allowed.
 
@@ -25,6 +25,9 @@ var val_rows: Array = []
 var val_i := 0
 var val_edit := false
 var val_backup := 0.0
+var val_cats: Array = []
+var val_cat_i := 0
+var val_mode := "cats"
 
 
 func _ready() -> void:
@@ -77,7 +80,10 @@ func _rebuild() -> void:
 		c.queue_free()
 	spins.clear()
 	val_rows.clear()
+	val_cats.clear()
 	val_edit = false
+	val_mode = "cats"
+	val_cat_i = 0
 	anim_btn = null
 	fly = null
 	var title := Label.new()
@@ -266,6 +272,20 @@ func toggle() -> void:
 		show_menu()
 
 
+func release_for_anim() -> void:
+	var owner: Control = get_viewport().gui_get_focus_owner() if get_viewport() else null
+	if owner and is_ancestor_of(owner):
+		owner.release_focus()
+	set_process_input(false)
+
+
+func restore_from_anim() -> void:
+	if not open:
+		return
+	set_process_input(true)
+	call_deferred("_focus")
+
+
 func _start_play(msg: String) -> void:
 	status.text = msg
 	hide_menu()
@@ -291,6 +311,9 @@ func _process(delta: float) -> void:
 		stick_cool = 0.18
 		return
 	if page == "values":
+		if absf(s.x) >= 0.55:
+			DebugMenuVal.val_nudge_col(self, 1 if s.x > 0.0 else -1)
+			stick_cool = 0.18
 		return
 	var owner: Control = get_viewport().gui_get_focus_owner() if get_viewport() else null
 	if owner == null or not is_ancestor_of(owner):
@@ -335,6 +358,14 @@ func _input(event: InputEvent) -> void:
 			return
 		if event.is_action_pressed("ui_up"):
 			DebugMenuVal.val_nudge(self, -1)
+			get_viewport().set_input_as_handled()
+			return
+		if event.is_action_pressed("ui_left"):
+			DebugMenuVal.val_nudge_col(self, -1)
+			get_viewport().set_input_as_handled()
+			return
+		if event.is_action_pressed("ui_right"):
+			DebugMenuVal.val_nudge_col(self, 1)
 			get_viewport().set_input_as_handled()
 			return
 		if _accept_pressed(event):

@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
@@ -11,6 +11,7 @@ static func page_settings(host) -> void:
 	host.status.text = "Settings. In-test options. LB/RB change pages."
 	host.root_box.add_child(_cap("Settings", 24, Color(0.95, 0.8, 0.45)))
 	host.root_box.add_child(_cap("Not yet approved for the System tab. Changes apply live.", 18, Color(0.82, 0.76, 0.66)))
+	host.root_box.add_child(host._btn("Grant anvil test kit", func(): grant_anvil_kit(host)))
 	host.root_box.add_child(_slider(host, "Camera zoom", App.cam_zoom, T.ZOOM_MIN, T.ZOOM_MAX, 0.05, func(v: float):
 		App.set_zoom(v)
 	))
@@ -77,6 +78,32 @@ static func page_settings(host) -> void:
 		App.save_now()
 		host.status.text = "Settings saved."
 	))
+
+
+static func grant_anvil_kit(host) -> void:
+	var p: Object = App.prog
+	if p == null or not p.has_method("add_item"):
+		host.status.text = "No live progress to grant into."
+		return
+	var added: int = 0
+	var skipped: int = 0
+	var kit: Array[Dictionary] = []
+	for wpn in ["great_axe", "staff", "longbow"]:
+		kit.append(p.make_weapon(wpn, "green"))
+		kit.append(p.make_weapon(wpn, "blue"))
+	for slot in ["head", "body", "legs"]:
+		kit.append(p.make_armor(slot, "green"))
+		kit.append(p.make_armor(slot, "blue"))
+	for it in kit:
+		if p.add_item(it):
+			added += 1
+		else:
+			skipped += 1
+	App.gold += 200
+	App.ore += 60
+	p.root += 20
+	App.save_now()
+	host.status.text = "Anvil kit: %d bag, %d skipped, +200g +60 ore +20 root." % [added, skipped]
 
 
 static func _cap(t: String, size: int, col: Color) -> Label:

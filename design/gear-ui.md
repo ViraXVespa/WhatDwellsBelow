@@ -1,4 +1,4 @@
-# Shared gear board (inventory + loadout)
+﻿# Shared gear board (inventory + loadout)
 
 Status: binding design
 Read when: changing pause inventory, Floor Crystal loadout, or gear tooltips
@@ -68,7 +68,7 @@ The card is display-only. It MUST NOT take keyboard, mouse, or gamepad focus and
 - Options are icon plates in a horizontal row, not text rows.
 - Dungeon list: currently equipped item (if any) plus bag items for that slot. Tool bag rows MUST match the run’s tool type.
 - Placeholdia / Loadout list: equipped, starters, unlocked starters, holds, then non-white bank items. No white duplicates. Bank / unforged kit pieces are marked **AT RISK** in the flyout and with a red border. Holds are marked **HOLD**.
-- Left / Right stay on the option row. Down (or Right off the last option) reaches Back. Up from Back returns to the last option that had focus, not always the first.
+- Left / Right stay on the option row (re-equip and Anvil Analyze / Forge lists). Down (or Right off the last option) reaches Back. Up from Back returns to the last option that had focus, not always the first. The host MUST NOT swallow Left / Right while that list is open.
 - Selecting the equipped row unequips it when the slot allows. Weapon, tool, and starter pieces stay on the slot.
 - **B** / Esc / Back closes only the list. The parent menu stays open. Focusing Back hides the flyout.
 - Opening another slot replaces the open list.
@@ -92,7 +92,7 @@ Weapon and tool cannot be dropped, destroyed, or emptied. Mouse click MUST NOT a
 
 ## Focus and pause
 
-Both hosts MUST pause the tree while open so Esc cannot fall through. While the list is open, background controls lose focus. Clicks and confirm on list rows MUST reach those buttons; the host MUST NOT mark every event handled just because the list is open. Teardown of the list is deferred so a row is not freed mid-`pressed`.
+Both hosts MUST pause the tree while open so Esc cannot fall through. While the list is open, background controls lose focus. Clicks and confirm on list rows MUST reach those buttons; the host MUST NOT mark every event handled just because the list is open. Anvil Analyze / Forge lists use the same wrap (items Left/Right, Back below, Up from Back to the last item). Teardown of the list is deferred so a row is not freed mid-`pressed`.
 
 ## Live snapshot — scripts
 
@@ -101,10 +101,10 @@ Both hosts MUST pause the tree while open so Esc cannot fall through. While the 
 - `gear_board_build.gd` — title, stats card, slot / bag cell widgets
 - `gear_icons.gd` — icon paths, rarity fill, risk border
 - `gear_board_floor.gd` — loadout floor row, stepper disable / neighbors, Enter-first focus
-- `gear_board_tip.gd` — flyout host and placement
+- `gear_board_tip.gd` — flyout host and placement. `ui.tab` may be a string (`analyze` / `forge`) on Anvil; placement MUST NOT `int()` that field
 - `gear_board_text.gd` — slot / item labels, tooltip copy; option lists via `gear_board_opts.gd`
 - `gear_board_stats.gd` — paged stats card copy
 - `gear_board_act.gd` — drop / destroy / paging / enter / input
 - `gear_board_sub.gd` — re-equip list open/close and apply / unequip
 - `gear_board_anvil.gd` — analyze / forge apply; footer via `gear_board_anvil_view.gd`
-- Pause tab 0 and `progress_ui` loadout/inv both call `Board.build`
+- Pause tab 1 (Inventory) and `progress_ui` loadout/inv both call `Board.build`

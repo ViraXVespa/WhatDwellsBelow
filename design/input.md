@@ -22,7 +22,7 @@ See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui
 - A: Interact. In menus, confirm the focused control or a pending prompt.
 - B: Dash. In menus, back one layer, or close the menu at root.
 - Y: Gear tip on a gear board. In the secret Animation Browser, Y cycles the current clip’s review state (Good / Repack / Regenerate). World play does not consume Y for combat.
-- X: Gear drop on a gear board.
+- X: Gear drop on a gear board. In the secret Animation Browser, X toggles play/pause and MUST NOT drop gear.
 - D-pad Up: Use equipped potion
 - D-pad Left: Use equipped food
 - D-pad Right: Open pause on the Inventory tab (or jump to Inventory if pause is already open). No extra mobile well.
@@ -70,7 +70,7 @@ Shared classifiers live in `scripts/ui/menu_pad.gd`. Any menu with tabs MUST cal
 | E / RT | Next gear-board stats page |
 | I / D-pad Right | Jump to the pause Inventory tab |
 
-Exception: the secret Animation Browser keeps LB / RB = previous / next model, LT / RT = animation list, and Y / `gear_tip` = review-state cycle, per `design/debug.md`. While that viewer is open those chords MUST NOT fire world or gear-board actions. Keyboard Y types into the notes field when that field has focus; gamepad Y still cycles.
+Exception: the secret Animation Browser keeps LB / RB = previous / next model, LT / RT = animation list, Y / `gear_tip` = review-state cycle, X / `gear_drop` = play/pause, D-pad = Facing/Animation columns, left stick = speed or frame step, and right stick = facing, per `design/debug.md`. While that viewer is open those chords MUST NOT fire world or gear-board actions (X must not drop gear). Keyboard Y types into the notes field when that field has focus; gamepad Y still cycles.
 
 Menu actions (`ui_*`, pause, tab bumpers, gear tip / drop, crystal zoom) are **not** on the player rebind page.
 
@@ -201,6 +201,7 @@ These are implementation defaults, not a replacement for rebinding.
 Q pages stats only while a gear board is open; during gameplay it remains target-lock. E pages stats only while a gear board is open; during gameplay it remains interact. LMB / RMB never page the stats card.
 
 Y is `gear_tip` in the live map. The Animation Browser reuses that action for review-state cycle while the viewer is open.
+X is `gear_drop` in the live map. The Animation Browser reuses that action for play/pause while the viewer is open.
 
 ## Live snapshot — web gamepad (`web_pad.gd`)
 

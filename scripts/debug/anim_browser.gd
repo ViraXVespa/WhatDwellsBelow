@@ -1,25 +1,14 @@
-extends CanvasLayer
+﻿extends CanvasLayer
 
 ## Full Animation Browser. Secret debug page, gamepad-first.
 
-const Facing := preload("res://scripts/world/facing.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const AnimScan := preload("res://scripts/debug/anim_scan.gd")
 const Review := preload("res://scripts/debug/anim_browser_review.gd")
+const Nav := preload("res://scripts/debug/anim_browser_nav.gd")
 
-const DIR_ORDER := ["idle_none", "up", "up_right", "right", "down_right", "down", "down_left", "left", "up_left"]
-const DIR_LABEL := {
-	"idle_none": "Idle / None",
-	"up": "Up",
-	"up_right": "Up-Right",
-	"right": "Right",
-	"down_right": "Down-Right",
-	"down": "Down",
-	"down_left": "Down-Left",
-	"left": "Left",
-	"up_left": "Up-Left",
-}
+const SPEEDS: Array[float] = [0.25, 0.5, 1.0, 1.5, 2.0]
 
 var open := false
 var models: Array = []
@@ -29,8 +18,11 @@ var anim_name := ""
 var playing := true
 var frame_i := 0
 var frame_t := 0.0
+var play_speed: float = 1.0
+var stick_cool: float = 0.0
 var clips: Dictionary = {}
 var anim_scroll := 0
+var nav_col: String = "dir"
 var name_lab: Label
 var play_btn: Button
 var preview: TextureRect
@@ -100,7 +92,7 @@ func _build() -> void:
 	empty_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	empty_lab.visible = false
 	add_child(empty_lab)
-	play_btn = ThemeS.btn("Playing - A to pause", func(): _toggle_play())
+	play_btn = ThemeS.btn("Playing 1.0x - X to pause", func(): _toggle_play())
 	play_btn.position = Vector2(48, 850)
 	play_btn.size = Vector2(900, 56)
 	add_child(play_btn)
@@ -133,11 +125,14 @@ func open_browser() -> void:
 	open = true
 	visible = true
 	App.ui_open = true
+	nav_col = "dir"
+	if App.debug and App.debug.has_method("release_for_anim"):
+		App.debug.release_for_anim()
 	if models.is_empty():
 		models = catalog_models()
 	Review.open(self)
 	_load_model()
-	call_deferred("_focus_back")
+	call_deferred("_focus_dir")
 
 
 func close_browser() -> void:
@@ -146,15 +141,20 @@ func close_browser() -> void:
 	visible = false
 	if App.debug and bool(App.debug.get("open")):
 		App.ui_open = true
-		if App.debug.has_method("_focus"):
+		if App.debug.has_method("restore_from_anim"):
+			App.debug.restore_from_anim()
+		elif App.debug.has_method("_focus"):
 			App.debug._focus()
 	else:
 		App.ui_open = false
 
 
-func _focus_back() -> void:
-	if back_btn:
-		back_btn.grab_focus()
+func _focus_dir() -> void:
+	Nav.focus_dir(self)
+
+
+func _focus_anim() -> void:
+	Nav.focus_anim(self)
 
 
 func _shift_model(d: int) -> void:
@@ -162,82 +162,28 @@ func _shift_model(d: int) -> void:
 		return
 	model_i = (model_i + d + models.size()) % models.size()
 	_load_model()
+	if nav_col == "anim":
+		call_deferred("_focus_anim")
+	else:
+		call_deferred("_focus_dir")
 
 
 func _load_model() -> void:
 	var m: Dictionary = models[model_i]
 	name_lab.text = str(m.label)
 	clips = AnimScan.scan(str(m.dir))
-	if not clips.has(facing) or (clips[facing] as Dictionary).is_empty():
-		if clips.has("down") and not (clips["down"] as Dictionary).is_empty():
-			facing = "down"
-		elif clips.has("idle_none") and not (clips["idle_none"] as Dictionary).is_empty():
-			facing = "idle_none"
-	_rebuild_dirs()
-	_rebuild_anims()
+	Nav.pick_facing(self)
+	Nav.rebuild_dirs(self)
+	Nav.rebuild_anims(self)
 	_show_clip()
-
-
-func _rebuild_dirs() -> void:
-	for c in dir_box.get_children():
-		c.queue_free()
-	for k in DIR_ORDER:
-		var key: String = str(k)
-		var n: int = 0
-		if clips.has(key):
-			n = (clips[key] as Dictionary).size()
-		var cap := "%s%s" % [str(DIR_LABEL.get(key, key)), "" if n > 0 else "  (empty)"]
-		var kk: String = key
-		var b := ThemeS.btn(cap, func(): _set_facing(kk))
-		if k == facing:
-			b.add_theme_color_override("font_color", Color(1, 0.92, 0.45))
-		dir_box.add_child(b)
-
-
-func _rebuild_anims() -> void:
-	for c in anim_box.get_children():
-		c.queue_free()
-	var names := _anim_names()
-	if anim_name == "" or names.find(anim_name) < 0:
-		anim_name = names[0] if names.size() > 0 else ""
-	if names.is_empty():
-		anim_box.add_child(ThemeS.lab("No animations for this facing.", 18, Color(0.8, 0.7, 0.6)))
-		return
-	anim_scroll = clampi(anim_scroll, 0, maxi(0, names.size() - 1))
-	var shown := 12
-	var start := clampi(anim_scroll, 0, maxi(0, names.size() - shown))
-	for i in range(start, mini(names.size(), start + shown)):
-		var nm: String = names[i]
-		var b := ThemeS.btn(nm.replace("_", " "), func(): _set_anim(nm))
-		if nm == anim_name:
-			b.add_theme_color_override("font_color", Color(1, 0.92, 0.45))
-		anim_box.add_child(b)
-
-
-func _anim_names() -> PackedStringArray:
-	var out := PackedStringArray()
-	if not clips.has(facing):
-		return out
-	var d: Dictionary = clips[facing]
-	for k in d.keys():
-		out.append(str(k))
-	out.sort()
-	return out
 
 
 func _set_facing(k: String) -> void:
-	facing = k
-	_rebuild_dirs()
-	_rebuild_anims()
-	_show_clip()
+	Nav.set_facing(self, k)
 
 
 func _set_anim(n: String) -> void:
-	anim_name = n
-	frame_i = 0
-	frame_t = 0.0
-	_rebuild_anims()
-	_show_clip()
+	Nav.set_anim(self, n)
 
 
 func _toggle_play() -> void:
@@ -247,10 +193,10 @@ func _toggle_play() -> void:
 
 func _refresh_play() -> void:
 	if playing:
-		play_btn.text = "Playing - A to pause"
+		play_btn.text = "Playing %.2fx - X to pause" % play_speed
 		play_btn.add_theme_color_override("font_color", Color(0.85, 1.0, 0.7))
 	else:
-		play_btn.text = "Paused - A to play"
+		play_btn.text = "Paused %.2fx - X to play" % play_speed
 		play_btn.add_theme_color_override("font_color", Color(1.0, 0.82, 0.45))
 
 
@@ -278,16 +224,58 @@ func _show_clip() -> void:
 	Review.refresh(self)
 
 
+func _nudge_speed(delta_i: int) -> void:
+	var idx: int = 2
+	var best: float = absf(play_speed - SPEEDS[2])
+	for i in SPEEDS.size():
+		var dist: float = absf(play_speed - SPEEDS[i])
+		if dist < best:
+			best = dist
+			idx = i
+	idx = clampi(idx + delta_i, 0, SPEEDS.size() - 1)
+	play_speed = SPEEDS[idx]
+	_refresh_play()
+
+
+func _step_frame(delta_i: int) -> void:
+	var fr: Array = _frames()
+	if fr.size() <= 1:
+		return
+	frame_i = (frame_i + delta_i + fr.size()) % fr.size()
+	frame_t = 0.0
+	if preview:
+		preview.texture = fr[frame_i]
+
+
+func _stick_play() -> void:
+	var v := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if v.length() < 0.55:
+		return
+	var delta_i: int = 0
+	if absf(v.y) >= absf(v.x):
+		delta_i = -1 if v.y < 0.0 else 1
+	else:
+		delta_i = -1 if v.x < 0.0 else 1
+	if playing:
+		_nudge_speed(delta_i)
+	else:
+		_step_frame(delta_i)
+	stick_cool = 0.18
+
+
 func _process(delta: float) -> void:
 	if not open:
 		return
-	_stick_facing()
+	Nav.stick_facing(self)
+	stick_cool = maxf(0.0, stick_cool - delta)
+	if stick_cool <= 0.0:
+		_stick_play()
 	if not playing:
 		return
 	var fr := _frames()
 	if fr.size() <= 1:
 		return
-	frame_t += delta
+	frame_t += delta * play_speed
 	var fps := T.WALK_FPS
 	if anim_name.begins_with("attack") or anim_name.begins_with("special"):
 		fps = App.bal.atk_fps
@@ -298,22 +286,37 @@ func _process(delta: float) -> void:
 			preview.texture = fr[frame_i]
 
 
-func _stick_facing() -> void:
-	var v := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
-	if v.length() < 0.55:
-		v = Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	if v.length() < 0.55:
-		return
-	var k := Facing.from_aim(v)
-	if k != facing:
-		_set_facing(k)
+func _pad_list_event(event: InputEvent) -> bool:
+	if event is InputEventMouse:
+		return false
+	return event is InputEventJoypadButton or event is InputEventJoypadMotion
 
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if not open:
 		return
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_RIGHT:
+			get_viewport().set_input_as_handled()
+			return
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_WHEEL_UP:
+			Nav.scroll_anim(self, -1)
+			get_viewport().set_input_as_handled()
+		elif mb.pressed and mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			Nav.scroll_anim(self, 1)
+			get_viewport().set_input_as_handled()
+		return
+	if event is InputEventJoypadMotion:
+		var axis: int = (event as InputEventJoypadMotion).axis
+		if axis == JOY_AXIS_LEFT_X or axis == JOY_AXIS_LEFT_Y or axis == JOY_AXIS_RIGHT_X or axis == JOY_AXIS_RIGHT_Y:
+			get_viewport().set_input_as_handled()
+			return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("anim_back"):
 		close_browser()
+		get_viewport().set_input_as_handled()
+		return
+	if Nav.ui_nav(self, event):
 		get_viewport().set_input_as_handled()
 		return
 	if Review.handle_tip(self, event):
@@ -326,34 +329,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		_shift_model(1)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("target_lock") or event.is_action_pressed("anim_idle"):
-		_set_facing("idle_none")
+		Nav.set_facing(self, "down")
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("special") or event.is_action_pressed("anim_list_up"):
-		_scroll_anim(-1)
+	elif _pad_list_event(event) and (event.is_action_pressed("special") or event.is_action_pressed("anim_list_up")):
+		Nav.scroll_anim(self, -1)
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("attack") or event.is_action_pressed("anim_list_down"):
-		_scroll_anim(1)
+	elif _pad_list_event(event) and (event.is_action_pressed("attack") or event.is_action_pressed("anim_list_down")):
+		Nav.scroll_anim(self, 1)
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("anim_play"):
+	elif event.is_action_pressed("anim_play") or event.is_action_pressed("gear_drop"):
 		_toggle_play()
 		get_viewport().set_input_as_handled()
-	elif event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
-		var mb := event as InputEventMouseButton
-		if mb.button_index == MOUSE_BUTTON_WHEEL_UP:
-			_scroll_anim(-1)
-			get_viewport().set_input_as_handled()
-		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			_scroll_anim(1)
-			get_viewport().set_input_as_handled()
-
-
-func _scroll_anim(d: int) -> void:
-	var names := _anim_names()
-	if names.is_empty():
-		return
-	var i := names.find(anim_name)
-	if i < 0:
-		i = 0
-	i = (i + d + names.size()) % names.size()
-	anim_scroll = i
-	_set_anim(names[i])

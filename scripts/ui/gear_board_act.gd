@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Text := preload("res://scripts/ui/gear_board_text.gd")
@@ -246,7 +246,7 @@ static func handle_event(ui: CanvasLayer, event: InputEvent) -> bool:
 		if Pad.is_back(event):
 			close_sub(ui)
 			return true
-		if Pad.tab_delta(event) != 0 or Pad.page_delta(event) != 0 or event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
+		if Pad.tab_delta(event) != 0 or Pad.page_delta(event) != 0:
 			return true
 		return false
 	if _is_tip(event):
