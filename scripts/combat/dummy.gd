@@ -1,4 +1,4 @@
-extends CharacterBody3D
+﻿extends CharacterBody3D
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const Depth := preload("res://scripts/world/depth.gd")
@@ -9,7 +9,7 @@ const HpBarS := preload("res://scripts/combat/hp_bar.gd")
 var hp := 80.0
 var max_hp := 80.0
 var defense := 0.0
-var combat_lv := 1
+var combat_lv := 0
 var flash := 0.0
 var stagger := 0.0
 var knock := Vector3.ZERO
@@ -56,6 +56,9 @@ func _ready() -> void:
 	tag.outline_size = 8
 	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	tag.no_depth_test = true
+	tag.render_priority = 8
+	tag.outline_render_priority = 8
+	tag.sorting_offset = 128.0
 	tag.pixel_size = 0.011
 	tag.visible = false
 	add_child(tag)

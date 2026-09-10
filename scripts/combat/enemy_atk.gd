@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const Cover := preload("res://scripts/combat/cover.gd")
@@ -72,7 +72,7 @@ static func draw_tele(host: Node, active: bool) -> void:
 		return
 	if host.role == "ranged":
 		col = Color(0.95, 0.55, 0.2, 0.5) if active else Color(1.0, 0.82, 0.28, 0.4)
-		host.telegraph.show_line(host.global_position, host.locked_aim, host.atk_range, col)
+		host.telegraph.show_line(host.global_position, host.locked_aim, host.atk_range, 0.16, col)
 		return
 	if host.is_boss and host.role == "melee":
 		host.telegraph.show_circle(host.global_position, host.atk_range, col)

@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://lj1cso2ol003"]
 
-[ext_resource type="Script" path="res://scripts/world/camp.gd" id="1_camp"]
+[ext_resource type="Script" uid="uid://w3pohofchrl0" path="res://scripts/world/camp.gd" id="1_camp"]
 
-[node name="Camp" type="Node3D"]
+[node name="Camp" type="Node3D" unique_id=431250205]
 script = ExtResource("1_camp")

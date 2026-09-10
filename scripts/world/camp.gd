@@ -1,16 +1,13 @@
-extends Node3D
+﻿extends Node3D
 
 const T := preload("res://scripts/data/tunables.gd")
+const Build := preload("res://scripts/world/camp_build.gd")
+const View := preload("res://scripts/world/camp_view.gd")
 const PlayerS := preload("res://scripts/world/player.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
 const UiS := preload("res://scripts/ui/progress_ui.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
 const DummyS := preload("res://scripts/combat/dummy.gd")
-
-const GROUND_W := 36
-const GROUND_D := 32
-const GROUND_OX := -2
-const GROUND_OZ := -2
 
 var player: CharacterBody3D
 var ui: CanvasLayer
@@ -20,12 +17,15 @@ var prompt: Label
 
 func _ready() -> void:
 	App.in_dungeon = false
-	_world()
-	_ground()
-	_buildings()
+	Build.world(self)
+	Build.ground(self)
+	Build.buildings(self)
+	View.fence(self)
 	player = PlayerS.new()
-	player.position = Vector3(16.0, 0.0, 16.0)
+	player.position = Vector3(Build.PATH_X, 0.0, 16.0)
 	add_child(player)
+	if player.body:
+		player.body.render_priority = 18
 	_spots()
 	_dummy()
 	ui = UiS.new()
@@ -66,154 +66,12 @@ func _process(_delta: float) -> void:
 		prompt.text = App.interact_prompt
 
 
-func _world() -> void:
-	var env := WorldEnvironment.new()
-	var e := Environment.new()
-	e.background_mode = Environment.BG_COLOR
-	e.background_color = Color(0.45, 0.58, 0.62)
-	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color(0.95, 0.86, 0.7)
-	e.ambient_light_energy = 1.15
-	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.environment = e
-	add_child(env)
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-50.0, 30.0, 0.0)
-	sun.light_energy = 0.9
-	add_child(sun)
-
-
-func _ground() -> void:
-	var body := StaticBody3D.new()
-	body.name = "Ground"
-	body.collision_layer = 1
-	add_child(body)
-	var cs := CollisionShape3D.new()
-	var sh := BoxShape3D.new()
-	sh.size = Vector3(float(GROUND_W), 0.4, float(GROUND_D))
-	cs.shape = sh
-	cs.position = Vector3(16.0, -0.2, 14.0)
-	body.add_child(cs)
-	var grass: Array = []
-	var packed: Array = []
-	var path: Array = []
-	for z in GROUND_D:
-		for x in GROUND_W:
-			var gx := GROUND_OX + x
-			var gz := GROUND_OZ + z
-			var pos := Vector3(float(gx) + 0.5, T.FLOOR_Y, float(gz) + 0.5)
-			var in_yard := gx >= 2 and gx <= 30 and gz >= 4 and gz <= 24
-			var on_path := (gz >= 13 and gz <= 16 and gx >= 6 and gx <= 26) or (gx >= 15 and gx <= 17 and gz >= 8 and gz <= 22)
-			if not in_yard:
-				grass.append(pos)
-			elif on_path:
-				path.append(pos)
-			else:
-				packed.append(pos)
-	_tile_layer("res://assets/tiles/plaza_grass.png", grass, Color(0.34, 0.46, 0.24))
-	_tile_layer("res://assets/tiles/plaza_ground.png", packed, Color(0.46, 0.42, 0.30))
-	_tile_layer("res://assets/tiles/plaza_path.png", path, Color(0.44, 0.38, 0.28))
-
-
-func _tile_layer(tex_path: String, points: Array, fallback: Color) -> void:
-	if points.is_empty():
-		return
-	var mesh := PlaneMesh.new()
-	mesh.size = Vector2(T.TILE, T.TILE)
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = mesh
-	mm.instance_count = points.size()
-	for i in points.size():
-		var xf := Transform3D.IDENTITY
-		xf.origin = points[i]
-		mm.set_instance_transform(i, xf)
-	var inst := MultiMeshInstance3D.new()
-	inst.multimesh = mm
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	mat.albedo_color = Color.WHITE
-	if ResourceLoader.exists(tex_path):
-		mat.albedo_texture = load(tex_path)
-	else:
-		mat.albedo_color = fallback
-	inst.material_override = mat
-	add_child(inst)
-
-
-func _buildings() -> void:
-	_solid(Vector3(8.0, 1.7, 6.0), Vector3(5.2, 3.4, 4.2), Color(0.45, 0.32, 0.22), "res://assets/sprites/buildings/guild.png")
-	_solid(Vector3(14.2, 1.5, 5.4), Vector3(4.0, 3.0, 3.6), Color(0.5, 0.38, 0.28), "res://assets/sprites/buildings/guild_reception.png")
-	_solid(Vector3(25.0, 1.2, 8.0), Vector3(4.6, 2.4, 3.4), Color(0.55, 0.35, 0.2), "res://assets/sprites/buildings/stall.png")
-
-
-func _solid(pos: Vector3, size: Vector3, col: Color, tex: String) -> void:
-	var body := StaticBody3D.new()
-	body.collision_layer = 1
-	body.position = pos
-	add_child(body)
-	var cs := CollisionShape3D.new()
-	var sh := BoxShape3D.new()
-	sh.size = size
-	cs.shape = sh
-	body.add_child(cs)
-	var vis := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = size
-	vis.mesh = box
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-	mat.albedo_color = col
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	if ResourceLoader.exists("res://assets/tiles/plaza_wall.png"):
-		mat.albedo_texture = load("res://assets/tiles/plaza_wall.png")
-		mat.albedo_color = Color.WHITE
-	vis.material_override = mat
-	body.add_child(vis)
-	_roof(body, size)
-	if ResourceLoader.exists(tex):
-		var face := Sprite3D.new()
-		face.texture = load(tex)
-		face.centered = true
-		face.shaded = false
-		face.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-		face.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-		var tw := float(maxi(1, face.texture.get_width()))
-		var th := float(maxi(1, face.texture.get_height()))
-		face.pixel_size = minf(size.x / tw, size.y / th)
-		face.position = Vector3(0.0, 0.0, size.z * 0.5 + 0.04)
-		body.add_child(face)
-
-
-func _roof(body: Node3D, size: Vector3) -> void:
-	var roof: MeshInstance3D = MeshInstance3D.new()
-	var plane: PlaneMesh = PlaneMesh.new()
-	plane.size = Vector2(size.x + 0.7, size.z + 0.7)
-	roof.mesh = plane
-	roof.position.y = size.y * 0.5 + 0.03
-	var mat: StandardMaterial3D = StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	mat.albedo_color = Color(0.42, 0.28, 0.22)
-	mat.uv1_scale = Vector3(size.x + 0.7, size.z + 0.7, 1.0)
-	if ResourceLoader.exists("res://assets/tiles/plaza_roof.png"):
-		mat.albedo_texture = load("res://assets/tiles/plaza_roof.png")
-		mat.albedo_color = Color.WHITE
-	roof.material_override = mat
-	body.add_child(roof)
-
-
 func _banner() -> void:
-	var pole := StaticBody3D.new()
-	pole.collision_layer = 1
-	pole.position = Vector3(16.0, 2.2, 22.0)
-	add_child(pole)
-	var cs := CollisionShape3D.new()
-	var sh := BoxShape3D.new()
-	sh.size = Vector3(8.4, 4.4, 0.45)
-	cs.shape = sh
-	pole.add_child(cs)
+	var root := Node3D.new()
+	root.position = Vector3(Build.PATH_X, 0.0, 22.0)
+	add_child(root)
+	_banner_pole(root, Vector3(-1.45, 1.1, 0.0))
+	_banner_pole(root, Vector3(1.45, 1.1, 0.0))
 	var spr := Sprite3D.new()
 	var path := "res://assets/sprites/props/welcome_banner.png"
 	if ResourceLoader.exists(path):
@@ -227,39 +85,101 @@ func _banner() -> void:
 	spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	if spr.texture:
 		spr.pixel_size = 4.4 / float(maxi(1, spr.texture.get_height()))
-	spr.position.y = 0.2
-	pole.add_child(spr)
+	spr.position = Vector3(0.0, 2.2, 0.0)
+	root.add_child(spr)
+
+
+func _banner_pole(root: Node3D, pos: Vector3) -> void:
+	var pole := StaticBody3D.new()
+	pole.collision_layer = 1
+	pole.position = pos
+	root.add_child(pole)
+	var cs := CollisionShape3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = Vector3(0.28, 2.2, 0.28)
+	cs.shape = sh
+	pole.add_child(cs)
 
 
 func _dummy() -> void:
 	var n: Node3D = DummyS.new()
-	n.position = Vector3(20.0, 0.0, 12.5)
+	n.position = Vector3(8.5, 0.0, Build.PATH_Z + 0.5)
 	add_child(n)
+
+
+func _tune_label(host: Node3D) -> void:
+	if host == null or not ("label" in host) or host.label == null:
+		return
+	host.label.no_depth_test = true
+	host.label.render_priority = 8
+	host.label.outline_render_priority = 7
+	host.label.sorting_offset = 0.0
 
 
 func _spots() -> void:
 	_banner()
 	var c := SpotS.new()
-	c.setup("loadout_crystal", Vector3(16.0, 0.0, 14.0))
+	c.setup("loadout_crystal", Vector3(16.475, 0.0, 10.2))
 	add_child(c)
+	_tune_label(c)
 	var a := SpotS.new()
-	a.setup("anvil", Vector3(12.0, 0.0, 13.2))
+	a.setup("anvil", Vector3(21.2, 0.0, 11.4))
 	add_child(a)
+	_tune_label(a)
 	var q := SpotS.new()
-	q.setup("quest_board", Vector3(11.5, 0.0, 8.2))
+	q.setup("quest_board", Vector3(16.1, 0.0, 6.2))
 	add_child(q)
+	_tune_label(q)
+	var wp: Vector3 = Build.wing_pos()
+	var face_z: float = wp.z + Build.WING_SIZE.z * 0.5
 	var rec := SpotS.new()
-	rec.setup("receptionist", Vector3(14.2, 0.0, 8.0))
+	rec.setup("receptionist", Vector3(wp.x + 0.027, 0.785, face_z + 0.07))
 	add_child(rec)
+	if rec.spr:
+		if rec.spr.texture:
+			rec.spr.pixel_size = 1.22 / float(maxi(1, rec.spr.texture.get_height()))
+			rec.spr.material_override = _bust_mat(rec.spr.texture)
+		rec.spr.position = Vector3(0.0, 0.0, 0.0)
+		rec.spr.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+		rec.spr.render_priority = 1
+	if rec.label:
+		rec.label.position.y = 0.85
+	_tune_label(rec)
 	var v := SpotS.new()
-	v.setup("vendor", Vector3(25.0, 0.0, 10.4))
+	v.setup("vendor", Vector3(25.0, 0.0, 10.2))
 	add_child(v)
+	if v.label:
+		v.label.position.y = 2.25
+	_tune_label(v)
 	var d := SpotS.new()
-	d.setup("dumpster", Vector3(5.5, 0.0, 9.2))
+	d.setup("dumpster", Vector3(5.2, 0.0, 9.4))
 	add_child(d)
+	_tune_label(d)
 	var b := SpotS.new()
 	b.setup("billboard", Vector3(20.5, 0.0, 16.5))
 	add_child(b)
+	_tune_label(b)
+
+
+func _bust_mat(tex: Texture2D) -> ShaderMaterial:
+	var sh := Shader.new()
+	sh.code = """
+shader_type spatial;
+render_mode unshaded, cull_disabled, depth_draw_always;
+uniform sampler2D albedo_tex : source_color, filter_nearest;
+void fragment() {
+	vec4 c = texture(albedo_tex, UV);
+	if (UV.y > 0.50 || c.a < 0.1) {
+		discard;
+	}
+	ALBEDO = c.rgb;
+	ALPHA = 1.0;
+}
+"""
+	var mat := ShaderMaterial.new()
+	mat.shader = sh
+	mat.set_shader_parameter("albedo_tex", tex)
+	return mat
 
 
 func _music() -> void:

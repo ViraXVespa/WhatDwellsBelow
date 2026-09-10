@@ -31,13 +31,13 @@ The Archives browser lists every catalog row. Play on a row launches **that comm
 | grok_web_w1 | Grok Web Results (Week 1) | `205c5c3e6397ba08c21eede1ba19eb2c94d02487` |
 | grok_build_w2 | Grok Build Results (Week 2) | `36fb882c9db3b6cd8a83f072d2dfec51d4acedca` |
 | grok_web_w2 | Grok Web Results (Week 2) | `bb70f556108d0e09e070cfaa42260f642af3737a` |
-| grok_build_w3 | Grok Build Results (Week 3) | pending User `0.3.0` SHA |
+| grok_build_w3 | Grok Build Results (Week 3) | `e7a9d2cf56965b711dc5b22eb7735a1875d96407` |
 
 After each Grok Build week ritual, also list `grok_web_w{N-1}` and `grok_build_wN` as specified in `design/versioning.md`. Those rows use the same isolation rules as the five above.
 
 No hybrid mode. No shared runtime state, scenes, scripts, or saves. Local Play stamps `application/config/name` on the worktree only (`What Dwells Below — <label>`). Pages exports do the same for IndexedDB isolation.
 
-Tags: `archive/classic-2d`, `archive/art-experiment`, `archive/full-3d-pass`, `archive/grok-build-w1`, `archive/grok-web-w1`, `archive/grok-build-w2`, `archive/grok-web-w2`, `archive/grok-build-w3` (after the User’s `0.3.0` SHA), plus `archive/grok-web-w{N-1}` and `archive/grok-build-wN` when later pins exist.
+Tags: `archive/classic-2d`, `archive/art-experiment`, `archive/full-3d-pass`, `archive/grok-build-w1`, `archive/grok-web-w1`, `archive/grok-build-w2`, `archive/grok-web-w2`, `archive/grok-build-w3`, plus `archive/grok-web-w{N-1}` and `archive/grok-build-wN` when later pins exist.
 
 ## Play
 

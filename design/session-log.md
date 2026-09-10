@@ -10,6 +10,16 @@ Do not narrate I2V clips. Name units: gender, facing, action, seed/path.
 
 ---
 
+### 2026-09-09 — grok_build_w3 pin
+
+**Pin:** `grok_build_w3` = `e7a9d2cf56965b711dc5b22eb7735a1875d96407` (`Grok Build Week 3`). Tag `archive/grok-build-w3`. That is the User completion commit, not the CI stamp.
+
+**Stamp (do not pin):** `6bd72757e606168e0c2d3edb593f5ef275ca5f41` is `chore: stamp 0.2.56 [skip ci]`. CI does not auto-bump series, so it labeled the push 0.2.56. `scripts/data/version.json` is seeded to series 3 / `0.3.0` / `open_commit` = the Grok Build SHA so the next user push stamps `0.3.x`.
+
+**Do not:** pin the stamp. Next **new week** CLI is week 4 init (`grok_web_w3` = then-current `main`).
+
+---
+
 ### 2026-09-09 — 0.3.0 week-3 close
 
 **Why we stopped:** User asked for `0.3.0` and to move to the next development week. They will commit, then send the SHA to pin as week-3 Grok Build Results.

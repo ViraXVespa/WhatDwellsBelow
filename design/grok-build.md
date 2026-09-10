@@ -93,7 +93,7 @@ Catalog rows (each a pinned commit, isolated per `design/archives.md`):
 - **grok_web_w1** — Grok Web Results (Week 1)
 - **grok_build_w2** — Grok Build Results (Week 2)
 - **grok_web_w2** — Grok Web Results (Week 2)
-- **grok_build_w3** — Grok Build Results (Week 3) after the User’s `0.3.0` SHA is pinned
+- **grok_build_w3** — Grok Build Results (Week 3)
 - Plus `grok_web_w{N-1}` and `grok_build_wN` rows required by `design/versioning.md` after each **new week** ritual / completion commit.
 
 ## After a slice

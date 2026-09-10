@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Depth := preload("res://scripts/world/depth.gd")
 
@@ -135,10 +135,15 @@ static func add_label(host: Node3D) -> void:
 		label.position.y = 0.7
 	elif host.kind == "extract_gate":
 		label.position.y = 2.05
+	elif host.kind == "vendor":
+		label.position.y = 2.25
 	label.font_size = 36
 	label.outline_size = 8
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
+	label.render_priority = 8
+	label.outline_render_priority = 7
+	label.sorting_offset = 0.0
 	label.pixel_size = 0.011
 	host.label = label
 	host.add_child(label)

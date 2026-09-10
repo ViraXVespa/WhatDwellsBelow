@@ -195,6 +195,52 @@
 				"design/versioning.md",
 				"design/web-session.md"
 			]
+		},
+		{
+			"id": "grok_build_w3",
+			"label": "Grok Build Results (Week 3)",
+			"desc": "Grok Build week 3 completion on the live path (0.3.0).",
+			"commit": "e7a9d2cf56965b711dc5b22eb7735a1875d96407",
+			"pages_slug": "archives/grok_build_w3",
+			"video": "",
+			"docs": [
+				"design/README.md",
+				"design/archives.md",
+				"design/art-i2v.md",
+				"design/art-pack.md",
+				"design/art-pipeline.md",
+				"design/art-review.md",
+				"design/audio-visual.md",
+				"design/camera.md",
+				"design/changelog/0.3.0.md",
+				"design/combat.md",
+				"design/constraints.md",
+				"design/copilot-session.md",
+				"design/coverage.md",
+				"design/debug.md",
+				"design/dungeon.md",
+				"design/edge-cases.md",
+				"design/enemies.md",
+				"design/feel.md",
+				"design/gear-ui.md",
+				"design/grok-build.md",
+				"design/hub.md",
+				"design/input.md",
+				"design/interactables.md",
+				"design/inventory.md",
+				"design/overview.md",
+				"design/player.md",
+				"design/protocol.md",
+				"design/refactor.md",
+				"design/save-tech.md",
+				"design/session-log.md",
+				"design/sessions.md",
+				"design/skills.md",
+				"design/tunables.md",
+				"design/ui.md",
+				"design/versioning.md",
+				"design/web-session.md"
+			]
 		}
 	]
 }

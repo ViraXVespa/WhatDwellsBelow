@@ -15,7 +15,7 @@ Do not resume unfinished work from this file unless the User names that work. A 
 ## Leave-off
 
 **Last closed session:** 2026-09-09  
-**Closed because:** User asked for the `0.3.0` changelog and week-3 close. Grok Build Week 3 is complete pending the User’s git commit. `grok_build_w3` is **not** pinned until they send that SHA.
+**Closed because:** User sent the Week 3 Grok Build SHA. `grok_build_w3` is pinned. Next CLI opened by saying **new week** is week 4 init.
 
 ### Pickup checklist
 
@@ -28,10 +28,9 @@ Do not resume unfinished work from this file unless the User names that work. A 
 
 ### Likely next (only if the User names it)
 
-1. User commits this tree, then sends the SHA. Write that SHA into `design/versioning.md` (Week 3 open), `design/archives.md`, and `scripts/data/archive_catalog.json` as `grok_build_w3`. Tag `archive/grok-build-w3` if not already tagged.
-2. **Next CLI that the User opens by saying new week is week 4 init.** Pin then-current `main` as `grok_web_w3`. Do not pin `grok_build_w4` until `0.4.0`.
-3. **First named Grok Build work next week: replace all live attack I2V.** Every Down `atk_great_axe` / `atk_staff` / `atk_longbow` on male and female is a **placeholder**. User will bring a new I2V pipeline. Detail: `design/session-log.md` (2026-09-09 animation handoff).
-4. User packs walks from `_src/walk_final/` when they choose. Special / gather / death / Dispel / overlays / remaining attack facings still later.
+1. **Next CLI that the User opens by saying new week is week 4 init.** Pin then-current `main` as `grok_web_w3`. Do not pin `grok_build_w4` until `0.4.0`.
+2. **First named Grok Build work next week: replace all live attack I2V.** Every Down `atk_great_axe` / `atk_staff` / `atk_longbow` on male and female is a **placeholder**. User will bring a new I2V pipeline. Detail: `design/session-log.md` (2026-09-09 animation handoff).
+3. User packs walks from `_src/walk_final/` when they choose. Special / gather / death / Dispel / overlays / remaining attack facings still later.
 
 ### Do not redo unless asked
 
@@ -45,7 +44,7 @@ Do not resume unfinished work from this file unless the User names that work. A 
 - Downscaling world stills before chroma key (hurts plate detection). Key at native size, then nearest-neighbor fit.
 - 50% quadrant crops of single-subject world stills.
 - Consolas / TTF on the Welcome banner.
-- Inventing a `grok_build_w3` SHA before the User sends one.
+- Inventing a `grok_build_w3` SHA. The pin is `e7a9d2cf56965b711dc5b22eb7735a1875d96407`.
 
 ## How to maintain
 
