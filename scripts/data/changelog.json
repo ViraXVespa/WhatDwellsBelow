@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.2",
+			"points": [
+				{
+					"text": "Clean Godot 4.7 output log: unused params prefixed, shadowed names renamed (`wrap` \u2192 `shell`, `mini` \u2192 `mini_map`, `name` \u2192 `doc_name`, `size` \u2192 `font_px`), integer division and narrowing made explicit, joy/key enums cast, helper-owned facade fields kept with `@warning_ignore`.",
+					"subs": [
+						"Restored `player_anim.warmup` and `loader.set_solid` after a stale emit. HUD minimap stays `mini_map` on both `hud.gd` and `hud_view.gd`."
+					]
+				},
+				{
+					"text": "Size splits under the 10KB cap, facades kept at the old paths: `crystal_ui_pages.gd`, `debug_menu_input.gd`, `debug_menu_profile.gd`, `binds_defaults.gd`, `gen_rooms_place.gd`, `playtest_log_fmt.gd`."
+				},
+				{
+					"text": "Agent rules: Phase 4 fetch may pass when GitHub `size` is artifact bytes + 3 (UTF-8 BOM). Warning hygiene lives in `AGENTS.md`. Folder moves for debug menu / `sfx.gd` / cluster subdirs are parked in `design/refactor.md`."
+				}
+			],
+			"summary": "Warning-clean GDScript plus the Phase 6 splits those files needed, with protocol notes so the next session does not reintroduce the log noise or the three-byte fetch false fail."
+		},
+		{
 			"label": "0.3.1",
 			"points": [
 				{

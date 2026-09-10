@@ -1,7 +1,7 @@
 {
 	"epoch": 0,
 	"series": 3,
-	"patch": 0,
-	"label": "0.3.0",
+	"patch": 2,
+	"label": "0.3.2",
 	"open_commit": "e7a9d2cf56965b711dc5b22eb7735a1875d96407"
 }
