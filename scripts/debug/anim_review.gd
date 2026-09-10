@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 ## Animation Browser review ledger. Not part of SaveStore / live settings.
 ## Disk file is editor-only under the live checkout and is gitignored.
@@ -46,15 +46,15 @@ static func ensure_loaded() -> void:
 	if not (clips is Dictionary):
 		return
 	for k in (clips as Dictionary).keys():
-		var row: Variant = (clips as Dictionary)[k]
-		if not (row is Dictionary):
+		var entry: Variant = (clips as Dictionary)[k]
+		if not (entry is Dictionary):
 			continue
-		var st := str((row as Dictionary).get("state", GOOD))
+		var st := str((entry as Dictionary).get("state", GOOD))
 		if st != REPACK and st != REGEN:
 			continue
 		mem[str(k)] = {
 			"state": st,
-			"note": str((row as Dictionary).get("note", "")),
+			"note": str((entry as Dictionary).get("note", "")),
 		}
 
 

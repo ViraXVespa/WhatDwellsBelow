@@ -116,11 +116,11 @@ static func _cap(t: String, size: int, col: Color) -> Label:
 	return lab
 
 
-static func _slider(host, title: String, value: float, lo: float, hi: float, step: float, on_change: Callable) -> VBoxContainer:
-	var wrap := VBoxContainer.new()
-	wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrap.add_theme_constant_override("separation", 4)
-	wrap.add_child(_cap(title, 20, Color(0.9, 0.84, 0.7)))
+static func _slider(_host, title: String, value: float, lo: float, hi: float, step: float, on_change: Callable) -> VBoxContainer:
+	var shell := VBoxContainer.new()
+	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	shell.add_theme_constant_override("separation", 4)
+	shell.add_child(_cap(title, 20, Color(0.9, 0.84, 0.7)))
 	var sl := HSlider.new()
 	sl.min_value = lo
 	sl.max_value = hi
@@ -130,5 +130,5 @@ static func _slider(host, title: String, value: float, lo: float, hi: float, ste
 	sl.custom_minimum_size = Vector2(640, 28)
 	sl.focus_mode = Control.FOCUS_ALL
 	sl.value_changed.connect(on_change)
-	wrap.add_child(sl)
-	return wrap
+	shell.add_child(sl)
+	return shell

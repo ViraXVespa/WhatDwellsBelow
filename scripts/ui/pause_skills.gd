@@ -76,24 +76,24 @@ static func xp_bar(ratio: float, fill_col: Color) -> ColorRect:
 
 
 static func skill_block(ui: CanvasLayer, id: String, kind: String, text: String, ratio: float, fill_col: Color) -> PanelContainer:
-	var wrap: PanelContainer = ThemeS.skill_row()
+	var shell: PanelContainer = ThemeS.skill_row()
 	var inner: VBoxContainer = VBoxContainer.new()
 	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	inner.add_theme_constant_override("separation", 4)
 	inner.add_child(skill_lab(text))
 	inner.add_child(xp_bar(ratio, fill_col))
-	wrap.add_child(inner)
-	wrap.set_meta("skill_id", id)
-	wrap.set_meta("skill_kind", kind)
-	wrap.focus_entered.connect(ui._on_skill_focus.bind(id, kind, wrap))
-	wrap.mouse_entered.connect(ui._on_skill_focus.bind(id, kind, wrap))
-	wrap.focus_exited.connect(ui._on_skill_blur.bind(wrap))
-	wrap.mouse_exited.connect(ui._on_skill_blur.bind(wrap))
-	return wrap
+	shell.add_child(inner)
+	shell.set_meta("skill_id", id)
+	shell.set_meta("skill_kind", kind)
+	shell.focus_entered.connect(ui._on_skill_focus.bind(id, kind, shell))
+	shell.mouse_entered.connect(ui._on_skill_focus.bind(id, kind, shell))
+	shell.focus_exited.connect(ui._on_skill_blur.bind(shell))
+	shell.mouse_exited.connect(ui._on_skill_blur.bind(shell))
+	return shell
 
 
-static func tip_lv(ui: CanvasLayer, id: String, kind: String) -> int:
+static func tip_lv(_ui: CanvasLayer, id: String, kind: String) -> int:
 	var perm: float = float(App.prog.skills_perm.get(id, 0.0))
 	var runx: float = float(App.prog.skills_run.get(id, 0.0))
 	if kind == "run":

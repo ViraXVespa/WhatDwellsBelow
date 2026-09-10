@@ -1,4 +1,4 @@
-extends CanvasLayer
+﻿extends CanvasLayer
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
@@ -59,10 +59,10 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	var show := Touch.wants_show()
-	visible = show
-	root.mouse_filter = Control.MOUSE_FILTER_STOP if show else Control.MOUSE_FILTER_IGNORE
-	if not show:
+	var pad_on := Touch.wants_show()
+	visible = pad_on
+	root.mouse_filter = Control.MOUSE_FILTER_STOP if pad_on else Control.MOUSE_FILTER_IGNORE
+	if not pad_on:
 		_release_all()
 		return
 	_layout()

@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Gen := preload("res://scripts/dungeon/gen.gd")
 
@@ -20,7 +20,7 @@ static func near_spawn(host: Node, c: Vector2i, rad: int = -1) -> bool:
 
 
 static func center_room(r: Dictionary) -> Vector2i:
-	return Vector2i(int(r.x) + int(r.w) / 2, int(r.y) + int(r.h) / 2)
+	return Vector2i(int(r.x) + int(int(r.w) / 2.0), int(r.y) + int(int(r.h) / 2.0))
 
 
 static func find_kind_room(host: Node, kind: String) -> Dictionary:
@@ -73,7 +73,7 @@ static func rand_cell(host: Node, r: Dictionary) -> Vector2i:
 		var c := Vector2i(x, y)
 		if is_floor_cell(host, c):
 			return c
-	return Vector2i(rx + rw / 2, ry + rh / 2)
+	return Vector2i(rx + int(rw / 2.0), ry + int(rh / 2.0))
 
 
 static func cell_pos(c: Vector2i) -> Vector3:

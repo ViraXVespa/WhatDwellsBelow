@@ -1,4 +1,4 @@
-# Refactor recipe
+﻿# Refactor recipe
 
 Status: protocol  
 Read when: splitting a live script for size; Copilot every task; Grok Build when an edit is over 10KB; web / chat Phase 6  
@@ -65,6 +65,7 @@ Reuse is call-site edits plus using a function that already exists. It is not a 
 - `:=` only for literals / typed built-ins Godot 4.7 infers (`0`, `1.5`, `true`, `"male"`, `Vector2.DOWN`, …).
 - Otherwise `var name: Type = ...`.
 - Typed `func` / `static func` args and `->` return.
+- Also follow `AGENTS.md` → GDScript warnings (no `wrap` / `mini` / `name` / `size` locals, explicit `int()` on integer division and narrowing, enum `as` casts, `_` unused params).
 
 Do not retype a whole file for style.
 
@@ -82,3 +83,11 @@ Do not retype a whole file for style.
 Update the `design/README.md` code map when a new sibling must be listed. Do not update topic design files unless behavior changed (a legal sweep does not change behavior).
 
 Copilot sweep notes: `_logs/copilot-sweep.md` per `design/copilot-session.md`. Not `design/sessions.md`. Not `design/changelog/`.
+
+## Parked folder moves
+
+Do **not** do these during a size split. They need their own session: every `preload` / `load` path plus `design/README.md` code-map rows.
+
+- Move `scripts/combat/debug_menu*.gd` (and the input / profile / val helpers added beside them) to `scripts/debug/`. The secret debug menu is not combat.
+- Move `scripts/combat/sfx.gd` out of combat to a sound-facing folder (`scripts/audio/` or `scripts/debug/` only if it is debug-only; live SFX belong with audio).
+- When a facade already has several sibling helpers, put that cluster in a dedicated subdir named for the facade (`scripts/ui/gear_board/`, `scripts/debug/debug_menu/`, …) so the scripts tree does not stay a flat dump. Update every preload after the move. Facade path can stay as a one-line wrapper at the old location if call sites are wide.

@@ -1,4 +1,4 @@
-extends RefCounted
+﻿extends RefCounted
 
 const T := preload("res://scripts/data/tunables.gd")
 const Gen := preload("res://scripts/dungeon/gen.gd")
@@ -38,15 +38,15 @@ static func chunk_origin(c: Vector2i) -> Vector2i:
 		x -= CHUNK - 1
 	if y < 0:
 		y -= CHUNK - 1
-	return Vector2i((x / CHUNK) * CHUNK, (y / CHUNK) * CHUNK)
+	return Vector2i(int(x / float(CHUNK)) * CHUNK, int(y / float(CHUNK)) * CHUNK)
 
 
 static func chunk_center(origin: Vector2i, w: int, h: int) -> Vector2i:
-	return Vector2i(origin.x + mini(CHUNK, w - origin.x) / 2, origin.y + mini(CHUNK, h - origin.y) / 2)
+	return Vector2i(origin.x + int(mini(CHUNK, w - origin.x) / 2.0), origin.y + int(mini(CHUNK, h - origin.y) / 2.0))
 
 
 static func chunk_ring(a: Vector2i, b: Vector2i) -> int:
-	return maxi(absi(a.x - b.x) / CHUNK, absi(a.y - b.y) / CHUNK)
+	return maxi(int(absi(a.x - b.x) / float(CHUNK)), int(absi(a.y - b.y) / float(CHUNK)))
 
 
 static func job_at(host: Node, origin: Vector2i) -> Dictionary:

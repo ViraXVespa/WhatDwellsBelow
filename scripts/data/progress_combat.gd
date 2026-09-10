@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const CatalogS := preload("res://scripts/data/catalog.gd")
 
@@ -29,7 +29,7 @@ static func xp_to_reach(level: int) -> float:
 	return unit * (pow(r, float(lv - 1)) - 1.0) / (r - 1.0)
 
 
-static func level_from_xp(p, total: float) -> int:
+static func level_from_xp(_p, total: float) -> int:
 	var t := maxf(0.0, total)
 	var period := xp_period()
 	var unit := xp_unit()

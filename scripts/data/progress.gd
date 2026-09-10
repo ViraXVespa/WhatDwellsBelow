@@ -1,4 +1,4 @@
-extends RefCounted
+﻿extends RefCounted
 
 const CatalogS := preload("res://scripts/data/catalog.gd")
 const Gear := preload("res://scripts/data/progress_gear.gd")

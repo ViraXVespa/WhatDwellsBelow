@@ -26,11 +26,16 @@ var http_busy := false
 var list_btns: Array = []
 var info_btns: Array = []
 var back_btn: Button
+@warning_ignore("unused_private_class_variable")
 var _list_root: Control
 var _info_root: Control
+@warning_ignore("unused_private_class_variable")
 var _list_rule: ColorRect
+@warning_ignore("unused_private_class_variable")
 var _info_rule: ColorRect
+@warning_ignore("unused_private_class_variable")
 var _chevron: Label
+@warning_ignore("unused_private_class_variable")
 var _path: Label
 
 
@@ -100,8 +105,8 @@ func split_path_text() -> String:
 		return "Snapshots  ›  %s  ›  Documents" % lab
 	if mode == "read":
 		var docs: PackedStringArray = _docs_of(e)
-		var name: String = str(docs[doc_i]) if doc_i >= 0 and doc_i < docs.size() else ""
-		return "Snapshots  ›  %s  ›  %s" % [lab, Docs.display_name(name)]
+		var doc_name: String = str(docs[doc_i]) if doc_i >= 0 and doc_i < docs.size() else ""
+		return "Snapshots  ›  %s  ›  %s" % [lab, Docs.display_name(doc_name)]
 	return "Snapshots  ›  %s" % lab
 
 
@@ -183,8 +188,8 @@ func _play() -> void:
 	Act.play(self)
 
 
-func _read_doc(id: String, name: String) -> String:
-	return Act.read_doc(self, id, name)
+func _read_doc(id: String, doc_name: String) -> String:
+	return Act.read_doc(self, id, doc_name)
 
 
 func _http_done(_result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:

@@ -58,7 +58,9 @@ New file: full body. Deleted file: one line naming the path and that it is delet
 
 Live body for a `revise` file:
 
-1. One page fetch of the raw GitHub file. The tool card is a summary, not the file. Open the saved artifact path printed by the fetch (`/home/workdir/artifacts/browsed_files/<id>.text` or `.json`) with the code / REPL tool. Compare UTF-8 byte length to the GitHub contents API `size` for that path. Use that artifact when the path exists, the size matches, and the tail is a complete line.
+1. One page fetch of the raw GitHub file. The tool card is a summary, not the file. Open the saved artifact path printed by the fetch (`/home/workdir/artifacts/browsed_files/<id>.text` or `.json`) with the code / REPL tool. Compare UTF-8 byte length to the GitHub contents API `size` for that path. Use that artifact when the path exists, the tail is a complete line, and either:
+   - API `size` == artifact UTF-8 byte length, or
+   - API `size` == artifact UTF-8 byte length + 3 (UTF-8 BOM on the GitHub blob; the artifact is still the live body).
 2. If a User paste of that path is already in this conversation, that paste wins (local edits).
 3. Ask the User to paste that live file only when step 1 failed and no paste is already in the thread. Stop. Do not emit it yet.
 
@@ -119,5 +121,5 @@ When documentation is done, this session goal is finished. The User should start
 - Do not load `design/changelog/` during Phase 1–3.
 - Do not treat a page-tool summary as the live file.
 - Do not retry a fetch after the byte / tail check fails.
-- Do not claim an artifact is the live file unless it is open and the size matches.
+- Do not claim an artifact is the live file unless it is open and the size matches, or the size is artifact + 3 with a complete tail (UTF-8 BOM).
 - Do not ask the User to paste a live file unless the fetch plus byte / tail check failed and no paste is already in the thread.

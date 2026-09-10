@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 ## HUD chrome. Host is the CanvasLayer at scripts/ui/hud.gd.
 
@@ -80,13 +80,13 @@ static func build(host: CanvasLayer) -> void:
 	host.boss_lab = lab(host.boss_wrap, Vector2(0, 0), Vector2(360, 20), 16)
 	host.mini_wrap = Control.new()
 	host.add_child(host.mini_wrap)
-	host.mini = TextureRect.new()
-	host.mini.position = Vector2.ZERO
-	host.mini.size = Vector2(host.MINI_W, host.MINI_H)
-	host.mini.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	host.mini.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	host.mini.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	host.mini_wrap.add_child(host.mini)
+	host.mini_map = TextureRect.new()
+	host.mini_map.position = Vector2.ZERO
+	host.mini_map.size = Vector2(host.MINI_W, host.MINI_H)
+	host.mini_map.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	host.mini_map.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	host.mini_map.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	host.mini_wrap.add_child(host.mini_map)
 	host.fps_lab = lab(host, Vector2.ZERO, Vector2(140, 28), 16)
 	host.look_lab = lab(host, Vector2.ZERO, Vector2(420, 28), 16)
 	host.look_lab.add_theme_color_override("font_color", Color(0.95, 0.82, 0.45))

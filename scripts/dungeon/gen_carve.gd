@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const WALL := 0
 const FLOOR := 1
@@ -9,7 +9,7 @@ static func idx(x: int, y: int, w: int) -> int:
 
 
 static func center(r: Dictionary) -> Vector2i:
-	return Vector2i(r.x + int(r.w / 2), r.y + int(r.h / 2))
+	return Vector2i(r.x + int(r.w / 2.0), r.y + int(r.h / 2.0))
 
 
 static func dist(a: Dictionary, b: Dictionary) -> int:
@@ -101,8 +101,8 @@ static func carve_room(grid: PackedByteArray, w: int, h: int, r: Dictionary) -> 
 static func place_spread_rooms(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, want: int, rmin: int, rmax: int) -> void:
 	var cols := maxi(3, int(ceil(sqrt(float(want)))))
 	var rows := cols
-	var cell_w := maxi(6, int((w - 6) / cols))
-	var cell_h := maxi(6, int((h - 6) / rows))
+	var cell_w := maxi(6, int((w - 6) / float(cols)))
+	var cell_h := maxi(6, int((h - 6) / float(rows)))
 	for gy in rows:
 		for gx in cols:
 			if rooms.size() >= want:

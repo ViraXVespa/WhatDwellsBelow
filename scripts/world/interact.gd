@@ -1,4 +1,4 @@
-extends Node3D
+﻿extends Node3D
 
 const T := preload("res://scripts/data/tunables.gd")
 const Catalog := preload("res://scripts/data/catalog.gd")
@@ -42,7 +42,7 @@ func setup_extract_gate(pos: Vector3) -> void:
 	setup("extract_gate", pos)
 
 
-func setup_clerk(role_id: String, pos: Vector3) -> void:
+func setup_clerk(_role_id: String, pos: Vector3) -> void:
 	setup_extract_gate(pos)
 
 

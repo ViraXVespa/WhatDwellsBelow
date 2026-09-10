@@ -1,4 +1,4 @@
-extends RefCounted
+﻿extends RefCounted
 
 const Gen := preload("res://scripts/dungeon/gen.gd")
 const Roster := preload("res://scripts/combat/roster.gd")
@@ -31,7 +31,7 @@ static func queue_room(host: Node, r: Dictionary, pool: PackedStringArray) -> vo
 	if kind == "base":
 		n = maxi(2, int(App.bal.base_guards))
 		var chest = SpotS.new()
-		var c := Vector2i(int(r.x) + int(r.w) / 2, int(r.y) + int(r.h) / 2)
+		var c := Vector2i(int(r.x) + int(int(r.w) / 2.0), int(r.y) + int(int(r.h) / 2.0))
 		chest.setup("base_chest", Vector3(float(c.x) + 0.5, 0.0, float(c.y) + 0.5), false)
 		host.add_child(chest)
 	var ids := PackedStringArray()

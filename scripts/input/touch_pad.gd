@@ -1,4 +1,4 @@
-extends RefCounted
+﻿extends RefCounted
 
 ## Web-only virtual pad state. TouchHud writes sticks/buttons; Pad reads them.
 
@@ -80,7 +80,7 @@ static func set_move(v: Vector2) -> void:
 	move = v if v.length() >= dead else Vector2.ZERO
 
 
-static func set_aim(v: Vector2) -> void:
+static func set_aim(_v: Vector2) -> void:
 	aim = Vector2.ZERO
 
 

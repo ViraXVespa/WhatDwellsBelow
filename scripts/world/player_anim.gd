@@ -196,10 +196,10 @@ static func _stop_from(li: int, loop_n: int, stop_n: int) -> int:
 	# Late (past the second-half crossover) → tail only.
 	if loop_n <= 0 or stop_n <= 0:
 		return 0
-	var half := loop_n / 2
+	var half := int(loop_n / 2.0)
 	if li < half:
 		return 0
-	var cross_b := half + half / 2
+	var cross_b := half + int(half / 2.0)
 	if li <= cross_b:
 		return 0
 	return stop_n - 1

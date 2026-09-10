@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const WALL := 0
 const FLOOR := 1
@@ -8,7 +8,7 @@ const Doors := preload("res://scripts/dungeon/gen_doors.gd")
 
 
 static func cycle_of(floor_n: int) -> int:
-	return int((maxi(1, floor_n) - 1) / 5)
+	return int((maxi(1, floor_n) - 1) / 5.0)
 
 
 static func loop_index(floor_n: int) -> int:
@@ -29,9 +29,9 @@ static func idx(x: int, y: int, w: int) -> int:
 	return Doors.idx(x, y, w)
 
 
-static func generate(floor_n: int, seed: int, bal: Object) -> Dictionary:
+static func generate(floor_n: int, run_seed: int, bal: Object) -> Dictionary:
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-	rng.seed = int(seed) * 10007 + floor_n * 9176
+	rng.seed = int(run_seed) * 10007 + floor_n * 9176
 	var w: int = maxi(24, int(bal.get("gen_w")))
 	var h: int = maxi(24, int(bal.get("gen_h")))
 	var want: int = maxi(6, int(bal.get("gen_rooms")))
@@ -60,7 +60,7 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 		return {"ok": false, "rooms": rooms}
 	Carve.connect_winding_tree(rng, grid, w, h, rooms)
 	Carve.extra_winding_loops(rng, grid, w, h, rooms, loops)
-	Carve.carve_deadend_spurs(rng, grid, w, h, rooms, mini(12, maxi(4, pack / 8)))
+	Carve.carve_deadend_spurs(rng, grid, w, h, rooms, mini(12, maxi(4, int(pack / 8.0))))
 	Rooms.assign_kinds(rng, grid, w, h, rooms, bal)
 	var spawn_r: Dictionary = Rooms.find_kind(rooms, "spawn")
 	var boss_r: Dictionary = Rooms.find_kind(rooms, "boss")

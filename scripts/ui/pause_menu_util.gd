@@ -4,7 +4,7 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const PauseSkills := preload("res://scripts/ui/pause_skills.gd")
 
 
-static func cap(ui: CanvasLayer, text: String, size: int = 18, col: Color = Color(0.9, 0.84, 0.7)) -> Label:
+static func cap(_ui: CanvasLayer, text: String, size: int = 18, col: Color = Color(0.9, 0.84, 0.7)) -> Label:
 	var l: Label = Label.new()
 	l.text = text
 	l.autowrap_mode = TextServer.AUTOWRAP_OFF

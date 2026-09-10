@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Roster := preload("res://scripts/combat/roster.gd")
 const EnemyS := preload("res://scripts/combat/enemy.gd")
@@ -57,7 +57,7 @@ static func p9(host: Node) -> void:
 	if player:
 		for i: int in 24:
 			var e: Node = EnemyS.new()
-			e.position = player.position + Vector3(float(i % 6) * 0.7, 0.0, float(int(i) / 6) * 0.7)
+			e.position = player.position + Vector3(float(i % 6) * 0.7, 0.0, (float(i) / 6.0) * 0.7)
 			host.add_child(e)
 			e.setup(Roster.IDS[i % Roster.IDS.size()], App.floor_n)
 			extra += 1

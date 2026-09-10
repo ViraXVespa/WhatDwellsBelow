@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const GameVer := preload("res://scripts/data/game_ver.gd")
 const Pad := preload("res://scripts/input/pad.gd")
@@ -14,7 +14,7 @@ static func all_entries() -> Array:
 	return rows
 
 
-static func new_labels(host: Node) -> Dictionary:
+static func new_labels(_host: Node) -> Dictionary:
 	var out := {}
 	var info: Dictionary = GameVer.unseen(str(App.last_seen_game_ver))
 	for e in info.get("entries", []):
@@ -63,22 +63,22 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	box.add_theme_constant_override("separation", 12)
 	host._news_layer.add_child(box)
 	box.add_child(host._lab("What's new", 32, Color(0.92, 0.78, 0.48)))
-	var text_wrap := Control.new()
-	text_wrap.custom_minimum_size = Vector2(720, 320)
-	text_wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	text_wrap.mouse_filter = Control.MOUSE_FILTER_STOP
-	box.add_child(text_wrap)
+	var text_shell := Control.new()
+	text_shell.custom_minimum_size = Vector2(720, 320)
+	text_shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	text_shell.mouse_filter = Control.MOUSE_FILTER_STOP
+	box.add_child(text_shell)
 	var text_bg := ColorRect.new()
 	text_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	text_bg.color = Color(0.11, 0.09, 0.07, 1)
 	text_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	text_wrap.add_child(text_bg)
+	text_shell.add_child(text_bg)
 	var text_edge := ColorRect.new()
 	text_edge.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	text_edge.offset_bottom = 6
 	text_edge.color = Color(0.55, 0.42, 0.22, 1)
 	text_edge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	text_wrap.add_child(text_edge)
+	text_shell.add_child(text_edge)
 	var scroll := ScrollContainer.new()
 	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
 	scroll.offset_left = 16
@@ -87,7 +87,7 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	scroll.offset_bottom = -16
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
-	text_wrap.add_child(scroll)
+	text_shell.add_child(scroll)
 	host._news_scroll = scroll
 	var body := RichTextLabel.new()
 	body.bbcode_enabled = true
@@ -181,7 +181,7 @@ static func entry_bbcode(e: Dictionary, is_new: bool) -> String:
 					for sub in subs:
 						var st := str(sub).strip_edges()
 						if st != "":
-							lines.append("    ◦ %s" % md_inline(st))
+							lines.append("	◦ %s" % md_inline(st))
 			else:
 				var pt := str(p).strip_edges()
 				if pt != "":

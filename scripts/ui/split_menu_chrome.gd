@@ -54,10 +54,10 @@ static func setup_overlay(host: Node, title_text: String, hint_text: String) -> 
 static func setup_embed(host: Node, parent: Control) -> void:
 	host.process_mode = Node.PROCESS_MODE_ALWAYS
 	if host is Control:
-		var wrap: Control = host as Control
-		wrap.set_anchors_preset(Control.PRESET_FULL_RECT)
-		wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		var shell: Control = host as Control
+		shell.set_anchors_preset(Control.PRESET_FULL_RECT)
+		shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	host._path = ThemeS.lab("", 18, Color(0.95, 0.86, 0.55))
 	host._path.visible = false
 	parent.add_child(host._path)

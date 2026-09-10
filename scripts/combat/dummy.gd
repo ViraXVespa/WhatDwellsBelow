@@ -68,7 +68,7 @@ func _ready() -> void:
 func setup_boss(title: String, floor_n: int) -> void:
 	is_boss = true
 	add_to_group("boss")
-	var cycle := int((maxi(1, floor_n) - 1) / 5)
+	var cycle := int((maxi(1, floor_n) - 1) / 5.0)
 	var mult: float = App.bal.boss_hp_mult * (1.0 + App.bal.cycle_hp * float(cycle))
 	if title == "Gate Master":
 		mult *= 1.35
@@ -104,7 +104,7 @@ func is_alive() -> bool:
 	return not dead and hp > 0.0
 
 
-func take_hit(raw: float, from_dir: Vector2, crit: bool) -> void:
+func take_hit(raw: float, _from_dir: Vector2, crit: bool) -> void:
 	if dead:
 		return
 	var dmg: float = App.bal.apply_defense(raw, defense)

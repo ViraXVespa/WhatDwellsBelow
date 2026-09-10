@@ -1,4 +1,4 @@
-extends Node
+﻿extends Node
 
 ## State, public API, and live driver. playtest.gd extends this.
 
@@ -147,14 +147,14 @@ func apply_rec(save_kind: String, i: int) -> String:
 	return "Applied %s rec %d." % [save_kind, i + 1]
 
 
-func ideal_for(name: String, save_kind: String) -> float:
+func ideal_for(bal_key: String, save_kind: String) -> float:
 	var arr: Array = recs.get(save_kind, [])
 	if arr.is_empty():
-		return App.bal.getv(name)
+		return App.bal.getv(bal_key)
 	var cfg: Dictionary = arr[0].cfg
-	if cfg.has(name):
-		return float(cfg[name])
-	return App.bal.getv(name)
+	if cfg.has(bal_key):
+		return float(cfg[bal_key])
+	return App.bal.getv(bal_key)
 
 
 func reset_progressed_template() -> String:

@@ -1,4 +1,4 @@
-extends RefCounted
+﻿extends RefCounted
 
 ## Capped Section 13 telemetry. One row per run.
 
@@ -128,7 +128,7 @@ func tick(delta: float, fighting: bool) -> void:
 	if App.adrenaline:
 		adrenaline_t += delta
 	deepest = maxi(deepest, App.floor_n)
-	cycle = int((maxi(1, App.floor_n) - 1) / 5)
+	cycle = int((maxi(1, App.floor_n) - 1) / 5.0)
 
 
 func note_damage_dealt(n: float, crit: bool) -> void:

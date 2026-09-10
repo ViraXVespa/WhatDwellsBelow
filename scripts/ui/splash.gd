@@ -1,4 +1,4 @@
-extends Control
+﻿extends Control
 
 ## Credit splash. Portrait + Grok / xAI marks. Locked line lives in the card.
 
@@ -119,22 +119,22 @@ func _mark(path: String, caption: String) -> VBoxContainer:
 
 
 func _credit() -> Control:
-	var wrap := Control.new()
-	wrap.custom_minimum_size = Vector2(0, 216)
-	wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var shell := Control.new()
+	shell.custom_minimum_size = Vector2(0, 216)
+	shell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var line := _lab("Proudly Vibecoded with Grok", 40, Color(0.98, 0.86, 0.38))
 	line.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	line.offset_top = -58.0
 	line.offset_bottom = 0.0
 	line.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	wrap.add_child(line)
+	shell.add_child(line)
 	var strike := StrikeBar.new()
 	strike.line = line
 	strike.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	strike.offset_top = -58.0
 	strike.offset_bottom = 0.0
 	strike.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	wrap.add_child(strike)
+	shell.add_child(strike)
 	if ResourceLoader.exists(TAG):
 		var tag := TextureRect.new()
 		tag.texture = load(TAG)
@@ -150,13 +150,13 @@ func _credit() -> Control:
 		tag.offset_bottom = 223.0
 		tag.pivot_offset = Vector2(48, 40)
 		tag.rotation_degrees = -7.0
-		wrap.add_child(tag)
+		shell.add_child(tag)
 	else:
 		var tag := _lab("Shamelessly", 52, Color(1.0, 0.32, 0.62))
 		tag.rotation_degrees = -8.0
 		tag.position = Vector2(-79, 87)
-		wrap.add_child(tag)
-	return wrap
+		shell.add_child(tag)
+	return shell
 
 
 class StrikeBar extends Control:
@@ -202,14 +202,14 @@ class StrikeBar extends Control:
 		draw_line(Vector2(x0 - 2.0, y + 3.0), Vector2(x1 + 2.0, y + 2.0), Color(0.12, 0.03, 0.08, 0.9), 2.8, true)
 
 
-func _lab(text: String, size: int, col: Color) -> Label:
+func _lab(text: String, font_px: int, col: Color) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", font_px)
 	l.add_theme_color_override("font_color", col)
 	l.add_theme_color_override("font_outline_color", Color(0.04, 0.02, 0.06))
-	l.add_theme_constant_override("outline_size", 8 if size >= 28 else 5)
+	l.add_theme_constant_override("outline_size", 8 if font_px >= 28 else 5)
 	return l
 
 

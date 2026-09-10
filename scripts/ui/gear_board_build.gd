@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Text := preload("res://scripts/ui/gear_board_text.gd")
@@ -9,18 +9,18 @@ const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 
-static func build_title(ui: CanvasLayer, mode: String, title_col: Color) -> String:
+static func build_title(_ui: CanvasLayer, mode: String, _title_col: Color) -> String:
 	var title := "Inventory"
 	if mode == "loadout":
 		title = "Floor Crystal — Loadout"
-		title_col = Color(0.6, 0.9, 1.0)
+		_title_col = Color(0.6, 0.9, 1.0)
 	elif mode == "anvil":
 		title = "Anvil"
-		title_col = Color(0.95, 0.78, 0.42)
+		_title_col = Color(0.95, 0.78, 0.42)
 	return title
 
 
-static func build_subtitle(ui: CanvasLayer, mode: String) -> String:
+static func build_subtitle(_ui: CanvasLayer, mode: String) -> String:
 	if mode == "loadout":
 		return "Choose holds or stash gear. Only floors you have reached."
 	elif mode == "anvil":
@@ -101,7 +101,7 @@ static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	return panel
 
 
-static func build_slot_btn(ui: CanvasLayer, slot: String) -> Button:
+static func build_slot_btn(_ui: CanvasLayer, slot: String) -> Button:
 	var it: Dictionary = Text.slot_item(slot)
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(168, 96)
@@ -122,7 +122,7 @@ static func build_slot_btn(ui: CanvasLayer, slot: String) -> Button:
 	return b
 
 
-static func build_bag_cell(ui: CanvasLayer, it: Dictionary) -> Button:
+static func build_bag_cell(_ui: CanvasLayer, it: Dictionary) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(72, 72)
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL

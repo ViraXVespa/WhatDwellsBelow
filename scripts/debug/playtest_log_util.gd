@@ -1,3 +1,10 @@
+﻿extends Object
+
+## Playtest journal helpers. Format bodies live in playtest_log_fmt.gd.
+
+const Fmt := preload("res://scripts/debug/playtest_log_fmt.gd")
+
+
 static func _t(pt: Node) -> float:
 	if pt.get("sim_t") == null:
 		return 0.0
@@ -37,8 +44,8 @@ static func _cfg_hash() -> String:
 
 static func _bits(d: Dictionary) -> String:
 	var s: String = ""
-	for k: String in ["e", "w", "n", "s"]:
-		s += "1" if d.get(k) == true else "0"
+	for card: String in ["e", "w", "n", "s"]:
+		s += "1" if d.get(card) == true else "0"
 	return s
 
 
@@ -79,104 +86,19 @@ static func _banned_n(pt: Node, n: Node) -> bool:
 
 
 static func _near(pt: Node, p: Node, lim: float = 40.0) -> Array:
-	var out: Array = []
-	var tree: SceneTree = pt.get_tree()
-	if tree == null or p == null:
-		return out
-	for n: Node in tree.get_nodes_in_group("interact"):
-		if n == null or not is_instance_valid(n):
-			continue
-		var d: float = pt._dist(p, n)
-		if d > lim:
-			continue
-		var c: Vector2i = pt._cell_of_node(n)
-		var k: String = str(n.get("kind"))
-		var row: Array = [k, snappedf(d, 0.1), c.x, c.y]
-		var flags: Dictionary = {}
-		if n.get("used") == true:
-			flags["used"] = 1
-		if k == "mine" or k == "wood":
-			flags["hits"] = int(n.get("hits"))
-			if not _kind_tool_ok(k):
-				flags["tool"] = 0
-		if _banned_n(pt, n):
-			flags["ban"] = 1
-		if not flags.is_empty():
-			row.append(flags)
-		out.append(row)
-	out.sort_custom(func(a: Array, b: Array) -> bool: return float(a[1]) < float(b[1]))
-	if out.size() > 6:
-		out.resize(6)
-	return out
+	return Fmt.near(pt, p, lim)
 
 
 static func _skip_hint(pt: Node, p: Node) -> String:
-	if p == null or pt.get_tree() == null:
-		return ""
-	var best: Node = null
-	var best_d: float = 8.0
-	for n: Node in pt.get_tree().get_nodes_in_group("interact"):
-		if n == null or not is_instance_valid(n):
-			continue
-		var k: String = str(n.get("kind"))
-		if k.find("crystal") >= 0:
-			continue
-		var d: float = pt._dist(p, n)
-		if d < best_d:
-			best_d = d
-			best = n
-	if best == null:
-		return ""
-	var k: String = str(best.get("kind"))
-	if _banned_n(pt, best):
-		return "banned:" + k
-	if best.get("used") == true:
-		return "used:" + k
-	if (k == "mine" or k == "wood") and not _kind_tool_ok(k):
-		return "wrong_tool:" + k
-	if (k == "mine" or k == "wood") and int(best.get("hits")) <= 0:
-		return "hits0:" + k
-	return ""
+	return Fmt.skip_hint(pt, p)
 
 
 static func _lock_fields(pt: Node, p: Node) -> Dictionary:
-	var out: Dictionary = {}
-	if not pt.has_meta("lock_n"):
-		return out
-	var n: Variant = pt.get_meta("lock_n")
-	if n == null or not is_instance_valid(n):
-		return out
-	var node: Node = n
-	out["lock_k"] = str(node.get("kind"))
-	out["lock_c"] = _xy(pt, node)
-	if p:
-		out["lock_d"] = snappedf(pt._dist(p, node), 0.1)
-	if pt.has_meta("lock_t"):
-		out["lock_t"] = snappedf(float(pt.get_meta("lock_t")), 0.1)
-	return out
+	return Fmt.lock_fields(pt, p)
 
 
 static func _path_fields(pt: Node) -> Dictionary:
-	var out: Dictionary = {}
-	var path: Variant = pt.get("path")
-	if path == null or not (path is Array) or (path as Array).is_empty():
-		return out
-	var arr: Array = path
-	var i: int = 0
-	if pt.get("path_i") != null:
-		i = clampi(int(pt.path_i), 0, arr.size() - 1)
-	var a: Variant = arr[i]
-	var b: Variant = arr[arr.size() - 1]
-	if a is Vector2i:
-		out["p0"] = [(a as Vector2i).x, (a as Vector2i).y]
-	elif a is Vector2:
-		out["p0"] = [int(round((a as Vector2).x)), int(round((a as Vector2).y))]
-	if b is Vector2i:
-		out["pe"] = [(b as Vector2i).x, (b as Vector2i).y]
-	elif b is Vector2:
-		out["pe"] = [int(round((b as Vector2).x)), int(round((b as Vector2).y))]
-	out["pn"] = arr.size()
-	return out
+	return Fmt.path_fields(pt)
 
 
 static func _wd(pt: Node) -> String:
@@ -209,7 +131,7 @@ static func _tgt_cell(pt: Node, extra: Dictionary) -> Dictionary:
 	return out
 
 
-static func _use_fields(pt: Node, p: Node) -> Dictionary:
+static func _use_fields(pt: Node, _p: Node) -> Dictionary:
 	var out: Dictionary = {}
 	if not pt.interact:
 		return out
@@ -261,15 +183,15 @@ static func _card_open(pt: Node, p: Node) -> Dictionary:
 	var here: Vector2i = pt._cell_of_node(p)
 	var body: CharacterBody3D = p as CharacterBody3D
 	for i: int in range(4):
-		var k: String = keys[i]
+		var card: String = keys[i]
 		var v: Vector2 = vecs[i]
 		var nb: Vector2i = here + Vector2i(int(round(v.x)), int(round(v.y)))
-		grid[k] = pt._steer_floor(nb)
-		open[k] = pt._dir_open(p, v)
+		grid[card] = pt._steer_floor(nb)
+		open[card] = pt._dir_open(p, v)
 		var blocked: bool = false
 		if body:
 			blocked = body.test_move(body.global_transform, Vector3(v.x, 0.0, v.y) * 0.42)
-		test[k] = not blocked
+		test[card] = not blocked
 	return {"grid": grid, "open": open, "test": test}
 
 
@@ -306,8 +228,8 @@ static func _coalesce_step(events: Array, ev: Dictionary) -> bool:
 	var prev: Dictionary = last
 	if prev.get("cell") != ev.get("cell"):
 		return false
-	for k: String in ["cmd", "g", "o", "p", "goal"]:
-		if str(prev.get(k, "")) != str(ev.get(k, "")):
+	for key: String in ["cmd", "g", "o", "p", "goal"]:
+		if str(prev.get(key, "")) != str(ev.get(key, "")):
 			return false
 	prev["n"] = int(prev.get("n", 1)) + 1
 	prev["t1"] = ev.get("t")

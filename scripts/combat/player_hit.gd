@@ -1,4 +1,4 @@
-extends RefCounted
+﻿extends RefCounted
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const Cover := preload("res://scripts/combat/cover.gd")
@@ -117,9 +117,9 @@ static func scaled_dmg(base: float, is_special: bool) -> float:
 	return d
 
 
-static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "auto", is_special := false, glance := false, can_crit := true) -> void:
+static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "auto", _is_special := false, glance := false, can_crit := true) -> void:
 	if xp == "magic":
-		is_special = true
+		_is_special = true
 	grant_hit_xp(xp)
 	var crit := can_crit and Combat.roll_crit(App.bal.crit_chance + float(App.prog.set_stats().crit))
 	if "last_glance" in e:

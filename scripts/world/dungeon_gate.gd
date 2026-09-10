@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const SpotS := preload("res://scripts/world/interact.gd")
 const Gen := preload("res://scripts/dungeon/gen.gd")
@@ -21,7 +21,7 @@ static func north_mid(host: Node, r: Dictionary) -> Vector2i:
 	var wy := ry - 1
 	var best := -1
 	var best_d := 1 << 30
-	var cx := rx + rw / 2
+	var cx := rx + int(rw / 2.0)
 	for x in range(rx, rx + rw - 2):
 		var ok := true
 		for dx in 3:

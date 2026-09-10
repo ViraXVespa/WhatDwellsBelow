@@ -88,16 +88,16 @@ func _cycle_pool(_dir: int) -> void:
 
 
 func _bind_row(action: String, label: String) -> void:
-	var wrap := HBoxContainer.new()
-	wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrap.add_theme_constant_override("separation", 8)
+	var shell := HBoxContainer.new()
+	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	shell.add_theme_constant_override("separation", 8)
 	var name_lab: Label = ThemeS.lab(label, 20, Color(0.92, 0.86, 0.72))
 	name_lab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	wrap.add_child(name_lab)
-	wrap.add_child(_slot_btn(action, 0))
-	wrap.add_child(_slot_btn(action, 1))
-	host.info_box.add_child(wrap)
+	shell.add_child(name_lab)
+	shell.add_child(_slot_btn(action, 0))
+	shell.add_child(_slot_btn(action, 1))
+	host.info_box.add_child(shell)
 
 
 func _slot_btn(action: String, slot: int) -> Button:

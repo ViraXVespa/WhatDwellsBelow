@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const CrystalNet := preload("res://scripts/world/crystal_net.gd")
@@ -54,14 +54,14 @@ static func place_mark(ui: CanvasLayer, cell: Vector2i, rx: int, ry: int, rw: in
 
 
 static func panel(ui: CanvasLayer, pos: Vector2, size: Vector2) -> ColorRect:
-	var panel := ColorRect.new()
-	panel.color = Color(0.14, 0.11, 0.09, 0.96)
-	panel.position = pos
-	panel.size = size
-	ui.add_child(panel)
+	var plate := ColorRect.new()
+	plate.color = Color(0.14, 0.11, 0.09, 0.96)
+	plate.position = pos
+	plate.size = size
+	ui.add_child(plate)
 	var edge := ColorRect.new()
 	edge.color = Color(0.55, 0.42, 0.22, 1)
 	edge.position = pos
 	edge.size = Vector2(size.x, 8)
 	ui.add_child(edge)
-	return panel
+	return plate

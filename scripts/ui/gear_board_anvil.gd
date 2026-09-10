@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Text := preload("res://scripts/ui/gear_board_text.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
@@ -172,8 +172,6 @@ static func start_forge(ui: CanvasLayer) -> void:
 	if src != "hold" and not bool(it.get("hold", false)) and not Town.has_analyzed(App.prog, int(it.get("uid", 0))):
 		ui._st("Those remains are gone.")
 		return
-	var slot := str(it.get("slot", ""))
-	var h: Array = App.prog.holds.get(slot, [])
 	var first := src != "hold" and not bool(it.get("hold", false))
 	var cost: Dictionary = App.prog.forge_cost(first)
 	if not App.prog.can_pay(cost):

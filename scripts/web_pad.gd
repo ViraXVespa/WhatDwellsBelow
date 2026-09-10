@@ -1,4 +1,4 @@
-extends Node
+﻿extends Node
 
 var move := Vector2.ZERO
 var aim := Vector2.ZERO
@@ -94,7 +94,7 @@ func connected() -> bool:
 	return device_ok or browser_pad_connected()
 
 
-func _emit_joy(button: int, pressed: bool) -> void:
+func _emit_joy(button: JoyButton, pressed: bool) -> void:
 	var ev := InputEventJoypadButton.new()
 	ev.button_index = button
 	ev.pressed = pressed

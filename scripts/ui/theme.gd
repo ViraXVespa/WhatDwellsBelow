@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Prompts := preload("res://scripts/input/prompts.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
@@ -168,7 +168,7 @@ static func skill_tip(id: String, lv: int) -> String:
 			per = "Each level: +%s woodcutting success chance." % _pct(float(App.bal.skill_gather))
 		"smith":
 			var speed := 1.0 + float(ranks) * 0.12
-			var extra := int(lv / 4)
+			var extra := int(lv / 4.0)
 			now = "Now: forge cost −%dg −%d ore.\n	  Forge time ÷ %.2f.\n	  Forged weapons +%d extra damage." % [lv * 2, lv, speed, extra]
 			per = "Each level: −2g −1 ore on forge cost.\nEach level after 1: 12% faster forging.\nEvery 4 levels: +1 extra forged weapon damage."
 		_:

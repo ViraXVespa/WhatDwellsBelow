@@ -9,6 +9,7 @@ var _busy := false
 var _archives_open := false
 var _news_open := false
 var _news_layer: Control = null
+@warning_ignore("unused_private_class_variable")
 var _news_scroll: ScrollContainer = null
 var _title_btns: Array = []
 
@@ -133,12 +134,12 @@ func _focus_first() -> void:
 		return
 
 
-func _lab(text: String, size: int, col: Color) -> Label:
+func _lab(text: String, font_px: int, col: Color) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.add_theme_font_size_override("font_size", ThemeS.font_px(size))
+	l.add_theme_font_size_override("font_size", ThemeS.font_px(font_px))
 	l.add_theme_color_override("font_color", col)
 	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
 	l.add_theme_constant_override("outline_size", 6)

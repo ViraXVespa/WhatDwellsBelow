@@ -107,8 +107,11 @@ var clock := 0.0
 var last_kill := -999.0
 var last_style := "str"
 var kill_times: Array[float] = []
+@warning_ignore("unused_private_class_variable")
 var _seq := 0
+@warning_ignore("unused_private_class_variable")
 var _seq_timer := 0.0
+@warning_ignore("unused_private_class_variable")
 var _seq_down := false
 
 const TITLE_SCENE := "res://scenes/title.tscn"
@@ -254,9 +257,9 @@ func gain_gold(n: int) -> void:
 		tel.gold_gained += n
 
 
-func sfx(name: String) -> void:
+func sfx(sfx_id: String) -> void:
 	if sfx_node and sfx_node.has_method("play"):
-		sfx_node.play(name)
+		sfx_node.play(sfx_id)
 
 
 func hitstop(sec: float) -> void:
@@ -410,7 +413,7 @@ func pad_id() -> int:
 	return Pad.id()
 
 
-func pad_stick(lx: int, ly: int, dead := 0.24) -> Vector2:
+func pad_stick(lx: JoyAxis, ly: JoyAxis, dead := 0.24) -> Vector2:
 	return Pad.stick(lx, ly, dead)
 
 

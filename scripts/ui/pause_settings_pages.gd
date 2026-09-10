@@ -117,10 +117,10 @@ static func _set_filter(host: Node, mips_on: bool, aniso_on: bool) -> void:
 
 
 static func _slider(host: Node, title: String, value: float, lo: float, hi: float, step: float, on_change: Callable) -> void:
-	var wrap := VBoxContainer.new()
-	wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrap.add_theme_constant_override("separation", 4)
-	wrap.add_child(ThemeS.lab(title, 20, Color(0.9, 0.84, 0.7)))
+	var shell := VBoxContainer.new()
+	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	shell.add_theme_constant_override("separation", 4)
+	shell.add_child(ThemeS.lab(title, 20, Color(0.9, 0.84, 0.7)))
 	var sl := HSlider.new()
 	sl.min_value = lo
 	sl.max_value = hi
@@ -130,8 +130,8 @@ static func _slider(host: Node, title: String, value: float, lo: float, hi: floa
 	sl.custom_minimum_size = Vector2(640, 28)
 	sl.focus_mode = Control.FOCUS_ALL
 	sl.value_changed.connect(on_change)
-	wrap.add_child(sl)
-	host.info_box.add_child(wrap)
+	shell.add_child(sl)
+	host.info_box.add_child(shell)
 	host.info_btns.append(sl)
 
 

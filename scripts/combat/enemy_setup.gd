@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Roster := preload("res://scripts/combat/roster.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
@@ -11,7 +11,7 @@ static func setup(host: Node, id: String, floor_n: int, named := false, given_na
 	var d: Dictionary = Roster.def(id)
 	host.role = str(d.role)
 	host.move_kind = str(d.move)
-	var cycle := int((maxi(1, floor_n) - 1) / 5)
+	var cycle := int((maxi(1, floor_n) - 1) / 5.0)
 	host.combat_lv = resolve_cl(host, floor_n, false)
 	var scaled: Dictionary = Threat.apply(float(d.hp) * App.bal.enemy_hp_mult, float(d.dmg) * App.bal.enemy_dmg_mult, float(d.def), host.combat_lv)
 	host.hp = float(scaled.hp)

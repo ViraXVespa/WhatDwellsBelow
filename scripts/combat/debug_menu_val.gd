@@ -27,11 +27,11 @@ static func page_values(host) -> void:
 
 
 static func add_row(host, parent: Control, name: String, lo: float, hi: float, step: float) -> void:
-	var wrap := PanelContainer.new()
-	wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrap.mouse_filter = Control.MOUSE_FILTER_STOP
+	var shell := PanelContainer.new()
+	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	shell.mouse_filter = Control.MOUSE_FILTER_STOP
 	var idx: int = host.val_rows.size()
-	wrap.gui_input.connect(func(ev: InputEvent):
+	shell.gui_input.connect(func(ev: InputEvent):
 		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
 			if host.val_edit and host.val_i != idx:
 				val_cancel(host)
@@ -65,11 +65,11 @@ static func add_row(host, parent: Control, name: String, lo: float, hi: float, s
 			fly(host, nm)
 	)
 	h.add_child(sp)
-	wrap.add_child(h)
-	parent.add_child(wrap)
+	shell.add_child(h)
+	parent.add_child(shell)
 	host.spins[name] = sp
 	host.val_rows.append({
-		"wrap": wrap,
+		"wrap": shell,
 		"lab": lab,
 		"sp": sp,
 		"name": name,
@@ -133,12 +133,12 @@ static func val_paint(host) -> void:
 	host.val_i = clampi(host.val_i, 0, n - 1)
 	for i in n:
 		var row: Dictionary = host.val_rows[i]
-		var wrap: PanelContainer = row.wrap
+		var shell: PanelContainer = row.wrap
 		var sp: SpinBox = row.sp
 		var lab: Label = row.lab
 		var sel: bool = i == host.val_i and str(host.val_mode) != "cats"
 		var edit: bool = sel and host.val_edit
-		wrap.add_theme_stylebox_override("panel", val_sb(host, sel, edit))
+		shell.add_theme_stylebox_override("panel", val_sb(host, sel, edit))
 		sp.add_theme_stylebox_override("normal", val_spin_sb(host, sel, edit))
 		sp.add_theme_stylebox_override("focus", val_spin_sb(host, sel, edit))
 		sp.add_theme_stylebox_override("read_only", val_spin_sb(host, sel, edit))
@@ -162,13 +162,13 @@ static func val_paint(host) -> void:
 static func val_reveal(host) -> void:
 	if host.scroll == null:
 		return
-	var wrap: Control = null
+	var shell: Control = null
 	if str(host.val_mode) == "cats":
-		wrap = Grid.cat_wrap(host)
+		shell = Grid.cat_wrap(host)
 	elif host.val_i >= 0 and host.val_i < host.val_rows.size():
-		wrap = host.val_rows[host.val_i].wrap
-	if wrap and not wrap.is_queued_for_deletion() and host.scroll.has_method("ensure_control_visible"):
-		host.scroll.ensure_control_visible(wrap)
+		shell = host.val_rows[host.val_i].wrap
+	if shell and not shell.is_queued_for_deletion() and host.scroll.has_method("ensure_control_visible"):
+		host.scroll.ensure_control_visible(shell)
 
 
 static func val_nudge(host, delta_i: int) -> void:

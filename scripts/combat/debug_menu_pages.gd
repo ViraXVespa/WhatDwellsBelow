@@ -1,4 +1,4 @@
-# Playtest and animation browser pages for DebugMenu
+﻿# Playtest and animation browser pages for DebugMenu
 
 static func page_playtest(host) -> void:
 	host.status.text = "Live AI. Queue closes this menu so the avatar can move. Logs go to user://playtest/runs/"
@@ -37,6 +37,6 @@ static func page_anim(host) -> void:
 	host.root_box.add_child(host._btn("Open Animation Browser", func(): open_anim(host)))
 
 
-static func open_anim(host) -> void:
+static func open_anim(_host) -> void:
 	if App.anim_browser and App.anim_browser.has_method("open_browser"):
 		App.anim_browser.open_browser()

@@ -1,4 +1,4 @@
-extends CanvasLayer
+﻿extends CanvasLayer
 
 ## Dungeon gauntlet cluster (top-left) + minimap (top-right).
 ## Custom ColorRects, no default ProgressBar.
@@ -34,11 +34,14 @@ var boss_lab: Label
 var prompt_row: HBoxContainer
 var toast: Label
 var mini_wrap: Control
-var mini: TextureRect
+var mini_map: TextureRect
 var fps_lab: Label
 var look_lab: Label
 var portrait_path := ""
+
+@warning_ignore("unused_private_class_variable")
 var _prompt_shown := ""
+@warning_ignore("unused_private_class_variable")
 var _prompt_scheme := ""
 
 
@@ -48,7 +51,8 @@ func _ready() -> void:
 
 
 func bind_map(tex: Texture2D) -> void:
-	mini.texture = tex
+	if mini_map:
+		mini_map.texture = tex
 
 
 func refresh(player: Node, dungeon: Node) -> void:

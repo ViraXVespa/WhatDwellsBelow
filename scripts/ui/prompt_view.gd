@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
@@ -17,7 +17,7 @@ static func fill(host: Control, parts: Array, font_size: int = 16, color: Color 
 		if not (row is Dictionary):
 			continue
 		var action := str(row.get("action", ""))
-		var verb := _cap_verb(str(row.get("verb", "")))
+		var verb_text := _cap_verb(str(row.get("verb", "")))
 		var text := str(row.get("text", ""))
 		if action != "":
 			var tex: Texture2D = Prompts.texture_for(action)
@@ -25,8 +25,8 @@ static func fill(host: Control, parts: Array, font_size: int = 16, color: Color 
 				host.add_child(_glyph(tex, font_size))
 			else:
 				host.add_child(_lab(Prompts.chip_for(action), font_size, color))
-			if verb != "":
-				host.add_child(_lab(verb, font_size, color))
+			if verb_text != "":
+				host.add_child(_lab(verb_text, font_size, color))
 		elif text != "":
 			host.add_child(_lab(text, font_size, color))
 		if bool(row.get("gap", false)):
@@ -141,28 +141,28 @@ static func merge_parts(extra: Array) -> Array:
 	return out
 
 
-static func _cap_verb(verb: String) -> String:
-	if verb == "":
+static func _cap_verb(verb_text: String) -> String:
+	if verb_text == "":
 		return ""
-	return verb.substr(0, 1).to_upper() + verb.substr(1)
+	return verb_text.substr(0, 1).to_upper() + verb_text.substr(1)
 
 
-static func hint_line(host: Control, action: String, verb: String, font_size: int = 16, color: Color = Color(0.86, 0.80, 0.66)) -> void:
-	fill(host, [{"action": action, "verb": verb}], font_size, color)
+static func hint_line(host: Control, action: String, verb_text: String, font_size: int = 16, color: Color = Color(0.86, 0.80, 0.66)) -> void:
+	fill(host, [{"action": action, "verb": verb_text}], font_size, color)
 
 
-static func verb(host: Control, action: String, verb: String, font_size: int = 16, color: Color = Color(0.86, 0.80, 0.66)) -> void:
-	hint_line(host, action, verb, font_size, color)
+static func verb(host: Control, action: String, verb_text: String, font_size: int = 16, color: Color = Color(0.86, 0.80, 0.66)) -> void:
+	hint_line(host, action, verb_text, font_size, color)
 
 
 static func bind_icon(host: Control, action: String, font_size: int = 16) -> void:
 	fill(host, [{"action": action}], font_size)
 
 
-static func apply_label(lab: Label, action: String, verb: String = "") -> void:
+static func apply_label(lab: Label, action: String, verb_text: String = "") -> void:
 	if lab == null:
 		return
-	lab.text = Prompts.verb_line(action, _cap_verb(verb))
+	lab.text = Prompts.verb_line(action, _cap_verb(verb_text))
 
 
 static func _wipe(n: Node) -> void:

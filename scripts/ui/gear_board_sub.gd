@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Text := preload("res://scripts/ui/gear_board_text.gd")
@@ -38,12 +38,11 @@ static func unlock_bg(ui: CanvasLayer) -> void:
 		var c := n as Control
 		if c == null or not c.has_meta("gear_old_focus"):
 			continue
-		c.focus_mode = int(c.get_meta("gear_old_focus"))
+		c.focus_mode = int(c.get_meta("gear_old_focus")) as Control.FocusMode
 		c.remove_meta("gear_old_focus")
 
 
 static func open_sub(ui: CanvasLayer, slot: String) -> void:
-	var Act = _act()
 	if bool(ui.get("gear_sub")):
 		Board.clear_sub(ui)
 	ui.gear_sub = true

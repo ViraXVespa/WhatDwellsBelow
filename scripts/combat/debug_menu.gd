@@ -2,10 +2,10 @@
 
 ## Secret debug. Default engine controls allowed.
 
-const Pad := preload("res://scripts/input/pad.gd")
 const DebugMenuVal := preload("res://scripts/combat/debug_menu_val.gd")
 const DebugMenuPages := preload("res://scripts/combat/debug_menu_pages.gd")
 const DebugMenuSettings := preload("res://scripts/combat/debug_menu_settings.gd")
+const DebugMenuInput := preload("res://scripts/combat/debug_menu_input.gd")
 const PAGES: PackedStringArray = ["values", "settings", "profiles", "playtest", "anim"]
 
 var open := false
@@ -203,10 +203,10 @@ func _nudge_focus(delta_i: int) -> void:
 	var n := items.size()
 	if n == 0:
 		return
-	var owner: Control = get_viewport().gui_get_focus_owner() if get_viewport() else null
+	var focus_ctrl: Control = get_viewport().gui_get_focus_owner() if get_viewport() else null
 	var idx := 0
-	if owner and is_ancestor_of(owner):
-		var page_owner := _page_owner(owner)
+	if focus_ctrl and is_ancestor_of(focus_ctrl):
+		var page_owner := _page_owner(focus_ctrl)
 		var found := items.find(page_owner)
 		if found >= 0:
 			idx = found
@@ -273,9 +273,9 @@ func toggle() -> void:
 
 
 func release_for_anim() -> void:
-	var owner: Control = get_viewport().gui_get_focus_owner() if get_viewport() else null
-	if owner and is_ancestor_of(owner):
-		owner.release_focus()
+	var focus_ctrl: Control = get_viewport().gui_get_focus_owner() if get_viewport() else null
+	if focus_ctrl and is_ancestor_of(focus_ctrl):
+		focus_ctrl.release_focus()
 	set_process_input(false)
 
 
@@ -296,100 +296,8 @@ func _busy_anim() -> bool:
 
 
 func _process(delta: float) -> void:
-	if not open or _busy_anim():
-		return
-	stick_cool = maxf(0.0, stick_cool - delta)
-	if stick_cool > 0.0:
-		return
-	var s: Vector2 = Pad.stick(JOY_AXIS_LEFT_X, JOY_AXIS_LEFT_Y)
-	if s.y <= -0.55:
-		_nudge_focus(-1)
-		stick_cool = 0.18
-		return
-	if s.y >= 0.55:
-		_nudge_focus(1)
-		stick_cool = 0.18
-		return
-	if page == "values":
-		if absf(s.x) >= 0.55:
-			DebugMenuVal.val_nudge_col(self, 1 if s.x > 0.0 else -1)
-			stick_cool = 0.18
-		return
-	var owner: Control = get_viewport().gui_get_focus_owner() if get_viewport() else null
-	if owner == null or not is_ancestor_of(owner):
-		var items := _focusables()
-		if not items.is_empty():
-			items[0].grab_focus()
-
-
-func _shift_page(delta_i: int) -> void:
-	if val_edit:
-		DebugMenuVal.val_cancel(self)
-	var i := PAGES.find(page)
-	if i < 0:
-		i = 0
-	page = PAGES[(i + delta_i + PAGES.size()) % PAGES.size()]
-	_rebuild()
-
-
-func _accept_pressed(event: InputEvent) -> bool:
-	if event.is_action_pressed("ui_accept") or event.is_action_pressed("interact"):
-		return true
-	if event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_A:
-		return true
-	return false
+	DebugMenuInput.tick(self, delta)
 
 
 func _input(event: InputEvent) -> void:
-	if not open or _busy_anim():
-		return
-	if event.is_action_pressed("tab_right"):
-		_shift_page(1)
-		get_viewport().set_input_as_handled()
-		return
-	if event.is_action_pressed("tab_left"):
-		_shift_page(-1)
-		get_viewport().set_input_as_handled()
-		return
-	if page == "values":
-		if event.is_action_pressed("ui_down"):
-			DebugMenuVal.val_nudge(self, 1)
-			get_viewport().set_input_as_handled()
-			return
-		if event.is_action_pressed("ui_up"):
-			DebugMenuVal.val_nudge(self, -1)
-			get_viewport().set_input_as_handled()
-			return
-		if event.is_action_pressed("ui_left"):
-			DebugMenuVal.val_nudge_col(self, -1)
-			get_viewport().set_input_as_handled()
-			return
-		if event.is_action_pressed("ui_right"):
-			DebugMenuVal.val_nudge_col(self, 1)
-			get_viewport().set_input_as_handled()
-			return
-		if _accept_pressed(event):
-			DebugMenuVal.val_accept(self)
-			get_viewport().set_input_as_handled()
-			return
-		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
-			if DebugMenuVal.val_cancel(self):
-				get_viewport().set_input_as_handled()
-				return
-	elif event.is_action_pressed("ui_down"):
-		_nudge_focus(1)
-		get_viewport().set_input_as_handled()
-		return
-	elif event.is_action_pressed("ui_up"):
-		_nudge_focus(-1)
-		get_viewport().set_input_as_handled()
-		return
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
-		if page != "values":
-			page = "values"
-			_rebuild()
-		else:
-			hide_menu()
-		if App.has_method("swallow_close_pad"):
-			App.swallow_close_pad()
-		get_viewport().set_input_as_handled()
+	DebugMenuInput.handle_input(self, event)

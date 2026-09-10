@@ -1,4 +1,4 @@
-extends RefCounted
+﻿extends RefCounted
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
@@ -72,7 +72,7 @@ static func id() -> int:
 	return pads[0] if not pads.is_empty() else -1
 
 
-static func stick(lx: int, ly: int, dead := 0.24) -> Vector2:
+static func stick(lx: JoyAxis, ly: JoyAxis, dead := 0.24) -> Vector2:
 	var pid := id()
 	if pid < 0:
 		return Vector2.ZERO
@@ -111,7 +111,7 @@ static func held(action: String) -> bool:
 			return true
 		if action == "special" and Input.get_joy_axis(pid, JOY_AXIS_TRIGGER_LEFT) > 0.45:
 			return true
-		if PAD.has(action) and Input.is_joy_button_pressed(pid, int(PAD[action])):
+		if PAD.has(action) and Input.is_joy_button_pressed(pid, PAD[action] as JoyButton):
 			return true
 	return false
 
@@ -179,7 +179,7 @@ static func tick() -> void:
 				from_pad = true
 			elif key == "special" and Input.get_joy_axis(pid, JOY_AXIS_TRIGGER_LEFT) > 0.45:
 				from_pad = true
-			elif PAD.has(key) and Input.is_joy_button_pressed(pid, int(PAD[key])):
+			elif PAD.has(key) and Input.is_joy_button_pressed(pid, PAD[key] as JoyButton):
 				from_pad = true
 			if from_pad:
 				mode = true

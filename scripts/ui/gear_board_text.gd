@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Stats := preload("res://scripts/ui/gear_board_stats.gd")
 const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
@@ -6,7 +6,7 @@ const Opts := preload("res://scripts/ui/gear_board_opts.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 
 
-static func slot_face(ui: CanvasLayer, slot: String, it: Dictionary) -> String:
+static func slot_face(_ui: CanvasLayer, slot: String, _it: Dictionary) -> String:
 	var head := str(Fmt.NAMES.get(slot, slot))
 	if has_unseen(slot):
 		head = "▸ " + head
@@ -188,7 +188,7 @@ static func forged_block(it: Dictionary) -> String:
 
 static func forge_preview(it: Dictionary) -> Dictionary:
 	var up: Dictionary = it.duplicate(true)
-	up.dmg = int(up.get("dmg", 0)) + 1 + int(App.prog.skill_lv("smith") / 4)
+	up.dmg = int(up.get("dmg", 0)) + 1 + int(App.prog.skill_lv("smith") / 4.0)
 	up.def = int(up.get("def", 0)) + 1
 	if str(up.get("rarity", "white")) == "white":
 		up.rarity = "green"

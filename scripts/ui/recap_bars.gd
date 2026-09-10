@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 
@@ -44,7 +44,7 @@ static func skill_lab(text: String, size := 16, col := Color(0.9, 0.84, 0.7)) ->
 
 
 static func make_block(host: Node, id: String, kind: String) -> Dictionary:
-	var wrap := ThemeS.skill_row()
+	var shell := ThemeS.skill_row()
 	var inner := VBoxContainer.new()
 	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -79,14 +79,14 @@ static func make_block(host: Node, id: String, kind: String) -> Dictionary:
 	gain.offset_right = 0.0
 	gain.offset_bottom = 0.0
 	track.add_child(gain)
-	wrap.add_child(inner)
-	wrap.set_meta("skill_id", id)
-	wrap.set_meta("skill_kind", kind)
-	wrap.focus_entered.connect(func(): on_skill_focus(host, id, kind, wrap))
-	wrap.mouse_entered.connect(func(): on_skill_focus(host, id, kind, wrap))
-	wrap.focus_exited.connect(func(): on_skill_blur(host, wrap))
-	wrap.mouse_exited.connect(func(): on_skill_blur(host, wrap))
-	return {"wrap": wrap, "lab": lab, "base": base, "gain": gain}
+	shell.add_child(inner)
+	shell.set_meta("skill_id", id)
+	shell.set_meta("skill_kind", kind)
+	shell.focus_entered.connect(func(): on_skill_focus(host, id, kind, shell))
+	shell.mouse_entered.connect(func(): on_skill_focus(host, id, kind, shell))
+	shell.focus_exited.connect(func(): on_skill_blur(host, shell))
+	shell.mouse_exited.connect(func(): on_skill_blur(host, shell))
+	return {"wrap": shell, "lab": lab, "base": base, "gain": gain}
 
 
 static func on_skill_focus(host: Node, id: String, kind: String, from: Control) -> void:

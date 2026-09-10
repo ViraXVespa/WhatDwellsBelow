@@ -92,9 +92,9 @@ static func build(host) -> void:
 
 
 static func _add_cat(host, parent: Control, title: String, idx: int) -> void:
-	var wrap := VBoxContainer.new()
-	wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrap.add_theme_constant_override("separation", 4)
+	var shell := VBoxContainer.new()
+	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	shell.add_theme_constant_override("separation", 4)
 	var btn := Button.new()
 	btn.text = title
 	btn.focus_mode = Control.FOCUS_ALL
@@ -115,12 +115,12 @@ static func _add_cat(host, parent: Control, title: String, idx: int) -> void:
 	var body := VBoxContainer.new()
 	body.visible = false
 	body.add_theme_constant_override("separation", 4)
-	wrap.add_child(btn)
-	wrap.add_child(body)
-	parent.add_child(wrap)
+	shell.add_child(btn)
+	shell.add_child(body)
+	parent.add_child(shell)
 	host.val_cats.append({
 		"name": title,
-		"wrap": wrap,
+		"wrap": shell,
 		"btn": btn,
 		"body": body,
 	})

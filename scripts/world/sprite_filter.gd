@@ -72,7 +72,7 @@ static func cycle_all(cur: int, dir := 1) -> int:
 static func apply_sprite(s: Sprite3D) -> void:
 	if s == null:
 		return
-	s.texture_filter = godot_filter(int(App.get("sprite_filter")))
+	s.texture_filter = godot_filter(int(App.get("sprite_filter"))) as BaseMaterial3D.TextureFilter
 	if s.texture:
 		s.texture = ensure_mips(s.texture)
 

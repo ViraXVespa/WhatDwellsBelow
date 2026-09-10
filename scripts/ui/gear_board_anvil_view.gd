@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
@@ -16,7 +16,7 @@ static func tab(ui: CanvasLayer) -> String:
 
 static func footer(ui: CanvasLayer) -> void:
 	_tabs(ui)
-	ui.box.add_child(ThemeS.lab("Bank %dg  %d ore  %d root    Carried %dg  %d ore  %d root" % [App.bank_gold, App.bank_ore, App.bank_root, App.gold, App.ore, App.prog.root], 16, Color(0.8, 0.85, 0.7)))
+	ui.box.add_child(ThemeS.lab("Bank %dg  %d ore  %d root	Carried %dg  %d ore  %d root" % [App.bank_gold, App.bank_ore, App.bank_root, App.gold, App.ore, App.prog.root], 16, Color(0.8, 0.85, 0.7)))
 	var smith := App.prog.skill_lv("smith")
 	if tab(ui) == "forge":
 		_forge_body(ui, smith)
@@ -25,9 +25,9 @@ static func footer(ui: CanvasLayer) -> void:
 
 
 static func _tabs(ui: CanvasLayer) -> void:
-	var wrap := HBoxContainer.new()
-	wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrap.add_theme_constant_override("separation", 10)
+	var shell := HBoxContainer.new()
+	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	shell.add_theme_constant_override("separation", 10)
 	var left := HBoxContainer.new()
 	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	left.custom_minimum_size = Vector2(36, 28)
@@ -61,12 +61,12 @@ static func _tabs(ui: CanvasLayer) -> void:
 	row.add_child(a)
 	row.add_child(f)
 	sc.add_child(row)
-	wrap.add_child(left)
-	wrap.add_child(sc)
-	wrap.add_child(right)
+	shell.add_child(left)
+	shell.add_child(sc)
+	shell.add_child(right)
 	PromptView.fill(left, [{"action": "tab_left"}], 16, Color(0.72, 0.66, 0.52))
 	PromptView.fill(right, [{"action": "tab_right"}], 16, Color(0.72, 0.66, 0.52))
-	ui.box.add_child(wrap)
+	ui.box.add_child(shell)
 
 
 static func set_tab(ui: CanvasLayer, t: String) -> void:

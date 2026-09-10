@@ -8,7 +8,7 @@ static func ai_on() -> bool:
 	return App.playtest != null and bool(App.playtest.get("ai_on"))
 
 
-static func ai_or_vec(host: Node, which: String) -> Vector2:
+static func ai_or_vec(_host: Node, which: String) -> Vector2:
 	if ai_on():
 		var raw: Variant = App.playtest.aim if which == "aim" else App.playtest.move
 		if raw is Vector2:
@@ -20,7 +20,7 @@ static func ai_or_vec(host: Node, which: String) -> Vector2:
 	return App.pad_move()
 
 
-static func ai_just(host: Node, action: String) -> bool:
+static func ai_just(_host: Node, action: String) -> bool:
 	if not ai_on():
 		return false
 	var raw: Variant = App.playtest.just
@@ -29,7 +29,7 @@ static func ai_just(host: Node, action: String) -> bool:
 	return false
 
 
-static func ai_held(host: Node, action: String) -> bool:
+static func ai_held(_host: Node, action: String) -> bool:
 	if not ai_on():
 		return false
 	if action == "attack":

@@ -1,4 +1,4 @@
-extends Node
+﻿extends Node
 
 ## Appendix E SFX. Gendered VO uses the active character type.
 
@@ -45,26 +45,26 @@ func _ready() -> void:
 	_apply_vol()
 
 
-func _load(name: String, path: String) -> void:
+func _load(sfx_id: String, path: String) -> void:
 	var p := AudioStreamPlayer.new()
 	if ResourceLoader.exists(path):
 		p.stream = load(path)
 	add_child(p)
-	players[name] = p
+	players[sfx_id] = p
 
 
-func play(name: String) -> void:
-	var key := name
-	if name == "hurt" or name == "warcry" or name == "hurk":
-		key = "%s_%s" % [name, App.character_type]
-	elif name == "wood" and (not players.has("wood") or players["wood"].stream == null):
+func play(sfx_id: String) -> void:
+	var key := sfx_id
+	if sfx_id == "hurt" or sfx_id == "warcry" or sfx_id == "hurk":
+		key = "%s_%s" % [sfx_id, App.character_type]
+	elif sfx_id == "wood" and (not players.has("wood") or players["wood"].stream == null):
 		key = "mine"
 	if players.has(key) and players[key].stream:
 		_apply_one(players[key])
 		players[key].play()
-	elif players.has(name) and players[name].stream:
-		_apply_one(players[name])
-		players[name].play()
+	elif players.has(sfx_id) and players[sfx_id].stream:
+		_apply_one(players[sfx_id])
+		players[sfx_id].play()
 
 
 func set_adrenaline(on: bool) -> void:
