@@ -11,6 +11,7 @@ var col: Color = Color(1.0, 0.92, 0.55, 0.85)
 
 
 func _ready() -> void:
+	visible = false
 	mesh_i = MeshInstance3D.new()
 	var box := BoxMesh.new()
 	box.size = Vector3(1.0, 0.02, 1.0)
@@ -22,6 +23,7 @@ func _ready() -> void:
 	mesh_i.material_override = mat
 	mesh_i.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mesh_i.sorting_offset = 256.0
+	mesh_i.visible = false
 	add_child(mesh_i)
 
 
@@ -48,6 +50,8 @@ void fragment() {
 func update_line(origin: Vector3, dir: Vector2, length: float, width: float, opacity: float, on: bool) -> void:
 	var usable: float = length - CLIP
 	visible = on and usable > 0.05
+	if mesh_i:
+		mesh_i.visible = visible
 	if not visible:
 		return
 	var d: Vector2 = dir

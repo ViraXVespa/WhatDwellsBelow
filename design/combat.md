@@ -1,8 +1,8 @@
-# Combat
+﻿# Combat
 
 Status: binding design  
 Read when: changing weapons, hit detection, dash, lock, juice, or combat-level scaling  
-Code: `scripts/combat/combat.gd`, `cover.gd`, `player_hit.gd`, `threat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `float_num.gd`, `dummy.gd`, `scripts/world/player.gd`, `player_combat.gd`  
+Code: `scripts/combat/combat.gd`, `cover.gd`, `player_hit.gd`, `threat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `float_num.gd`, `dummy.gd`, `enemy_ai.gd`, `scripts/world/player.gd`, `player_combat.gd`  
 See also: `design/skills.md`, `design/tunables.md`, `design/art-pipeline.md`, `design/enemies.md`, `design/hub.md`
 
 ## Weapon system
@@ -42,6 +42,7 @@ Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occu
 - Planted bow hits (high coverage) stop the arrow and deal full scaled damage. A glancing hit MAY continue, MAY strike one more enemy, and MUST reduce remaining damage from the first contact’s coverage. After that second body the arrow despawns.
 - Breakables do not stop the arrow and do not reduce its damage.
 - Special: fires several arrows in a spread (`bow_special_count`, cone, range tunable). Telegraph is one yellow line per shot, not a filled cone. Each arrow is its own occupancy test and may glance independently.
+- Live occupancy tests only hosts near the arrow tip (tip radius plus sprite span). Far enemies and breakables are skipped. Sprite sample points are reused for the current process frame; the texel mask is packed once per sprite.
 
 ## Critical hits
 
@@ -67,6 +68,7 @@ Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occu
 - Starts with a warcry.
 - No cooldown, but the effect times out if the player stops killing.
 - MUST keep killing to maintain the state.
+- The aura `Sprite3D` stays hidden until adrenaline raises its alpha. It MUST NOT spawn as a default opaque quad.
 
 ## Defense
 
@@ -88,5 +90,12 @@ Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occu
 See `design/input.md` for full behavior.
 
 Floating damage numbers show integer values only, hold, then fade.
+
+## Live snapshot (performance)
+
+- `Combat.enemies()` is reused for the current process frame.
+- Enemy line-of-sight uses the existing layer-1 ray. It is not recast every physics tick: `los_period` (default 0.12s), staggered by instance id, skipped farther than `atk_range + 4`, always refreshed inside strike range. Result cached on `los_ok` / `los_t`.
+- Pack separation stops after `sep_max` neighbors (default 6).
+- The idle aim-line mesh stays hidden until `update_line` turns it on so the default 1×1 cream box does not flash under the Placeholdia loader.
 
 Live numeric defaults are in `design/tunables.md`.

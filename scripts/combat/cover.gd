@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Combat := preload("res://scripts/combat/combat.gd")
 
@@ -29,6 +29,8 @@ static func hit_disk(origin: Vector3, radius: float, host: Node3D) -> float:
 
 static func hit_shot(origin: Vector3, dir: Vector2, radius: float, host: Node3D) -> float:
 	if host == null or not is_instance_valid(host) or radius <= 0.001:
+		return 0.0
+	if not _near_host(origin, radius, host):
 		return 0.0
 	var pts := _sprite_pts(host)
 	if pts.is_empty():
@@ -86,6 +88,15 @@ static func crit_ok(cover: float) -> bool:
 
 static func stops_arrow(cover: float) -> bool:
 	return cover >= 0.85
+
+
+static func _near_host(origin: Vector3, radius: float, host: Node3D) -> bool:
+	var spr := _spr_of(host)
+	var span := 1.35
+	if spr:
+		span = maxf(_world_w(spr), _world_h(spr)) * 0.6 + 0.35
+	var lim: float = radius + span + maxf(radius * 3.2, 0.45)
+	return Combat.xz(host).distance_to(Vector2(origin.x, origin.z)) <= lim
 
 
 static func _seg_dist(p: Vector2, a: Vector2, b: Vector2) -> float:
@@ -174,14 +185,11 @@ static func _sprite_pts(host: Node3D) -> Array[Vector3]:
 	var spr := _spr_of(host)
 	if spr == null or spr.texture == null:
 		return [host.global_position + Vector3(0.0, 0.5, 0.0)]
+	var frame: int = Engine.get_process_frames()
+	if spr.has_meta("cover_pts_f") and int(spr.get_meta("cover_pts_f")) == frame:
+		return spr.get_meta("cover_pts")
 	var pack := _mask_pack(spr)
-	var cells: PackedByteArray = pack["cells"]
-	var cols: int = pack["cols"]
-	var rows: int = pack["rows"]
-	if cells.is_empty() or cols <= 0 or rows <= 0:
-		return []
-	var w: float = pack["width"]
-	var h: float = pack["height"]
+	var locals: PackedVector3Array = pack.get("locals", PackedVector3Array())
 	var c := spr.global_position
 	var rx := spr.global_transform.basis.x
 	if rx.length_squared() <= 0.0001:
@@ -193,6 +201,28 @@ static func _sprite_pts(host: Node3D) -> Array[Vector3]:
 		up = Vector3.UP
 	else:
 		up = up.normalized()
+	var pts: Array[Vector3] = []
+	if not locals.is_empty():
+		for off in locals:
+			var along: float = off.x
+			if spr.flip_h:
+				along = -along
+			pts.append(c + rx * along + up * off.y)
+	else:
+		pts = _sprite_pts_cells(spr, pack, c, rx, up)
+	spr.set_meta("cover_pts_f", frame)
+	spr.set_meta("cover_pts", pts)
+	return pts
+
+
+static func _sprite_pts_cells(spr: Sprite3D, pack: Dictionary, c: Vector3, rx: Vector3, up: Vector3) -> Array[Vector3]:
+	var cells: PackedByteArray = pack["cells"]
+	var cols: int = pack["cols"]
+	var rows: int = pack["rows"]
+	if cells.is_empty() or cols <= 0 or rows <= 0:
+		return []
+	var w: float = pack["width"]
+	var h: float = pack["height"]
 	var pts: Array[Vector3] = []
 	for i in cols:
 		var u := (float(i) + 0.5) / float(cols)
@@ -254,7 +284,7 @@ static func _world_h(spr: Sprite3D) -> float:
 static func _mask_pack(spr: Sprite3D) -> Dictionary:
 	if spr.has_meta("cover_pack"):
 		return spr.get_meta("cover_pack")
-	var empty := {"cells": PackedByteArray(), "cols": 0, "rows": 0, "width": 0.0, "height": 0.0}
+	var empty := {"cells": PackedByteArray(), "cols": 0, "rows": 0, "width": 0.0, "height": 0.0, "locals": PackedVector3Array()}
 	if spr.texture == null:
 		return empty
 	var img := spr.texture.get_image()
@@ -273,9 +303,14 @@ static func _mask_pack(spr: Sprite3D) -> Dictionary:
 	var th := img.get_height()
 	var cells := PackedByteArray()
 	cells.resize(cols * rows)
+	var locals := PackedVector3Array()
+	var w: float = _world_w(spr)
+	var h: float = _world_h(spr)
 	for r in rows:
 		var y0 := int(float(r) / float(rows) * float(th))
 		var y1 := int(float(r + 1) / float(rows) * float(th))
+		var v := (float(r) + 0.5) / float(rows)
+		var lift := (0.5 - v) * h
 		for col in cols:
 			var x0 := int(float(col) / float(cols) * float(tw))
 			var x1 := int(float(col + 1) / float(cols) * float(tw))
@@ -288,12 +323,16 @@ static func _mask_pack(spr: Sprite3D) -> Dictionary:
 				if hit == 1:
 					break
 			cells[r * cols + col] = hit
+			if hit == 1:
+				var u := (float(col) + 0.5) / float(cols)
+				locals.append(Vector3((u - 0.5) * w, lift, 0.0))
 	var pack := {
 		"cells": cells,
 		"cols": cols,
 		"rows": rows,
-		"width": _world_w(spr),
-		"height": _world_h(spr)
+		"width": w,
+		"height": h,
+		"locals": locals
 	}
 	spr.set_meta("cover_pack", pack)
 	return pack

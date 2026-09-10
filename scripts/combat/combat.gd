@@ -1,4 +1,7 @@
-extends Object
+﻿extends Object
+
+static var _enemy_frame: int = -1
+static var _enemy_cache: Array = []
 
 
 static func xz(n: Node3D) -> Vector2:
@@ -28,10 +31,17 @@ static func on_screen(n: Node3D, cam: Camera3D) -> bool:
 
 
 static func enemies() -> Array:
+	var frame: int = Engine.get_process_frames()
+	if frame == _enemy_frame:
+		return _enemy_cache
 	var tree := Engine.get_main_loop()
 	if tree == null:
-		return []
-	return (tree as SceneTree).get_nodes_in_group("enemies")
+		_enemy_cache = []
+		_enemy_frame = frame
+		return _enemy_cache
+	_enemy_cache = (tree as SceneTree).get_nodes_in_group("enemies")
+	_enemy_frame = frame
+	return _enemy_cache
 
 
 static func in_arc(origin: Vector3, dir: Vector2, dist: float, arc_deg: float, pos: Vector3) -> bool:

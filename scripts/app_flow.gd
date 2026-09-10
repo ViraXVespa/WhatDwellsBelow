@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 
@@ -81,13 +81,29 @@ static func play_from_menu_async(host: Node) -> void:
 		if host.loader:
 			host.loader.set_progress(0.91)
 		await host.get_tree().process_frame
-	if host.loader:
-		host.loader.set_status("The square holds.")
-	await _ease_progress(host, 0.92, 1.0, 0.40)
-	await host.get_tree().create_timer(0.12, true, false, true).timeout
+	await _warmup_hub(host)
 	if host.loader:
 		host.loader.finish()
 	host._menu_loading = false
+
+
+static func _warmup_hub(host: Node) -> void:
+	if host.loader:
+		host.loader.set_status("Warming things up for you...")
+		if host.loader.has_method("set_solid"):
+			host.loader.set_solid(true)
+		host.loader.set_progress(0.94)
+	var scene: Node = host.get_tree().current_scene
+	if scene and scene.has_method("warmup"):
+		scene.warmup()
+	else:
+		var p: Node = host.get_tree().get_first_node_in_group("player")
+		if p and p.has_method("warmup"):
+			p.warmup()
+	if host.loader:
+		host.loader.set_progress(0.98)
+	await host.get_tree().process_frame
+	await host.get_tree().process_frame
 
 
 static func _ease_progress(host: Node, lo: float, hi: float, sec: float) -> void:

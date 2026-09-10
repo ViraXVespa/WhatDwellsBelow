@@ -1,4 +1,4 @@
-# Tunables
+﻿# Tunables
 
 Status: suggested starts + live snapshot  
 Read when: changing feel, gen size, economy, crystals, or debug defaults  
@@ -77,12 +77,12 @@ If you change a live default, update this table in the same slice.
 | Player max HP | — | 100 | |
 | Hurt i-frame | — | 0.35 | |
 | Defense k | — | 100 | diminishing returns |
-| Aim-line on / opacity / width | on | true / 0.85 / 0.08 | Bow line is shoulder height |
+| Aim-line on / opacity / width | on | true / 0.85 / 0.08 | Bow line is shoulder height. Mesh hidden until `update_line`. |
 | Aim-line use weapon range / length | — | true / 4.0 | |
 | Cover full-band / edge mult | — | 0.18 / 0.35 | Full damage until the last 18% of fan radius |
 | Cover columns / alpha | — | 28 / 0.4 | Opaque mask grid |
 | Pierce stop | — | 0.85 | Arrow despawns at this coverage |
-| Arrow tip radius | — | 0.16 | Head disk |
+| Arrow tip radius | — | 0.16 | Head disk. Far hosts skip `hit_shot`. |
 | Bow path width | — | 0.08 | Special spread line width |
 
 ## Gathering (hit-based)
@@ -153,6 +153,8 @@ If you change a live default, update this table in the same slice.
 | `windup_melee` / `windup_ranged` / `windup_mage` | 0.42 / 0.38 / 0.55 |
 | `enemy_recover` | 0.35 |
 | `enemy_proj_speed` | 9 |
+| `los_period` | **0.12** | Seconds between enemy LOS rays. Staggered. Always fresh inside strike range. |
+| `sep_max` | **6** | Max neighbors each enemy tests for separation. |
 | `enemy_cl_per_floor` | **20** |
 | `enemy_cl_end_pct` | 0.86 |
 | `enemy_cl_jitter` | 1 |

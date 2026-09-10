@@ -1,4 +1,4 @@
-extends CharacterBody3D
+﻿extends CharacterBody3D
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const Depth := preload("res://scripts/world/depth.gd")
@@ -66,6 +66,8 @@ var spawned_help := false
 var spec_point := Vector3.ZERO
 var wind_dur := 0.42
 var last_glance := false
+var los_ok := false
+var los_t := 0.0
 
 
 func _ready() -> void:

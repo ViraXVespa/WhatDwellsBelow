@@ -49,6 +49,11 @@ func world_ui() -> Node:
 	return ui
 
 
+func warmup() -> void:
+	if player and player.has_method("warmup"):
+		player.warmup()
+
+
 func _process(_delta: float) -> void:
 	if App.pause_just() if App.has_method("pause_just") else (Input.is_action_just_pressed("pause") or App.pad_just("pause")):
 		if App.ui_open and ui and ui.visible:

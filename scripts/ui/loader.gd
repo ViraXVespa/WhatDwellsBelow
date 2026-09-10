@@ -1,4 +1,4 @@
-extends CanvasLayer
+﻿extends CanvasLayer
 
 ## Menu load overlay. Lives on App so it survives the title → camp swap.
 
@@ -53,11 +53,21 @@ func begin(heading: String, status: String = "") -> void:
 	_title.text = heading
 	_status.text = status
 	_pct.text = "4%"
+	set_solid(false)
 	_layout_bar()
 	_fill.position = Vector2.ZERO
 	_fill.size = Vector2(_bar_w * _shown, _bar_h)
 	if App:
 		App.ui_open = true
+
+
+func set_solid(on: bool) -> void:
+	if _dim == null:
+		return
+	if on:
+		_dim.color = Color(0.04, 0.03, 0.025, 1.0)
+	else:
+		_dim.color = Color(0.04, 0.03, 0.025, 0.88)
 
 
 func set_status(text: String) -> void:
@@ -73,6 +83,7 @@ func finish() -> void:
 	_target = 1.0
 	_shown = 1.0
 	_sync_bar()
+	set_solid(false)
 	open = false
 	visible = false
 	_title.text = ""
@@ -145,6 +156,7 @@ func _lab(text: String, size: int, col: Color) -> Label:
 	l.add_theme_color_override("font_color", col)
 	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
 	l.add_theme_constant_override("outline_size", 6)
+	l.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.focus_mode = Control.FOCUS_NONE
 	return l

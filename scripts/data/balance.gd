@@ -1,4 +1,4 @@
-extends RefCounted
+﻿extends RefCounted
 
 ## All Phase 2 combat numbers. Mutated by the secret debug menu.
 ## Bump BAL_REV when shipping new defaults that old saves should receive.
@@ -139,6 +139,8 @@ var named_scale := 1.28
 var named_hp := 1.8
 var named_dmg := 1.35
 var enemy_sep := 0.55
+var los_period := 0.12
+var sep_max := 6.0
 var enemy_hp_mult := 1.0
 var enemy_dmg_mult := 1.0
 var enemy_speed_mult := 1.0

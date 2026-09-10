@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const Atk := preload("res://scripts/combat/enemy_atk.gd")
@@ -13,7 +13,7 @@ static func tick(host: Node, delta: float) -> void:
 	var to_p: Vector2 = Vector2(ppos.x - host.global_position.x, ppos.z - host.global_position.z)
 	var dist: float = to_p.length()
 	var from_post: float = Vector2(host.global_position.x - host.post.x, host.global_position.z - host.post.z).length()
-	var has_los: bool = Combat.los(host.global_position, ppos, host.get_world_3d())
+	var has_los: bool = _los(host, ppos, dist, delta)
 	if has_los:
 		host.last_seen = ppos
 		if to_p.length_squared() > 0.0001:
@@ -60,6 +60,34 @@ static func tick(host: Node, delta: float) -> void:
 			host.state = host.ST_RETURN
 		return
 	idle(host, delta)
+
+
+static func _los(host: Node, ppos: Vector3, dist: float, delta: float) -> bool:
+	var period: float = maxf(0.02, float(App.bal.los_period))
+	host.los_t -= delta
+	var busy: bool = (
+		host.state == host.ST_CHASE
+		or host.state == host.ST_HUNT
+		or host.state == host.ST_WIND
+		or host.state == host.ST_STRIKE
+		or host.state == host.ST_REC
+		or host.state == host.ST_FLEE
+		or host.state == host.ST_RETURN
+	)
+	if dist > App.bal.aggro_range + 1.25 and not busy:
+		host.los_ok = false
+		return false
+	var strike_now: bool = dist <= host.atk_range + 0.15
+	if not strike_now and host.los_t > 0.0:
+		return host.los_ok
+	if not strike_now and busy:
+		var slot: int = absi(host.get_instance_id()) % 8
+		var frame: int = Engine.get_process_frames()
+		if frame % 8 != slot:
+			return host.los_ok
+	host.los_t = period
+	host.los_ok = Combat.los(host.global_position, ppos, host.get_world_3d())
+	return host.los_ok
 
 
 static func begin_windup(host: Node) -> void:
@@ -155,6 +183,8 @@ static func stuck(host: Node, delta: float) -> void:
 static func sep(host: Node) -> Vector3:
 	var push: Vector3 = Vector3.ZERO
 	var lim: float = App.bal.enemy_sep
+	var cap: int = maxi(1, int(App.bal.sep_max))
+	var n: int = 0
 	for e: Variant in Combat.enemies():
 		if e == host or e == null or not is_instance_valid(e):
 			continue
@@ -163,6 +193,9 @@ static func sep(host: Node) -> Vector3:
 		var L: float = d.length()
 		if L < lim and L > 0.01:
 			push += d / L * (lim - L) * 2.4
+			n += 1
+			if n >= cap:
+				break
 	return push
 
 

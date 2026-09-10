@@ -1,4 +1,4 @@
-extends CharacterBody3D
+﻿extends CharacterBody3D
 
 const T := preload("res://scripts/data/tunables.gd")
 const Depth := preload("res://scripts/world/depth.gd")
@@ -79,8 +79,10 @@ func _ready() -> void:
 	_add_body_shape()
 	_load_sprites()
 	body = _make_sprite(2)
+	body.visible = false
 	add_child(body)
 	aura = _make_sprite(3)
+	aura.visible = false
 	aura.modulate = Color(1.0, 0.45, 0.12, 0.0)
 	aura.pixel_size = 0.018
 	add_child(aura)
@@ -101,6 +103,12 @@ func _ready() -> void:
 		hp = max_hp
 	_apply_tex(_pose_tex("down"))
 	_apply_facing(0.016)
+	if body:
+		body.visible = true
+
+
+func warmup() -> void:
+	PlayerAnim.warmup(self)
 
 
 func _make_sprite(prio: int) -> Sprite3D:

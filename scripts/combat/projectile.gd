@@ -1,4 +1,4 @@
-extends Node3D
+﻿extends Node3D
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const Cover := preload("res://scripts/combat/cover.gd")
@@ -94,6 +94,11 @@ func _tip_r() -> float:
 	return maxf(0.08, r)
 
 
+func _near_tip(host: Node3D, tip: Vector3, rad: float) -> bool:
+	var d: float = Vector2(host.global_position.x - tip.x, host.global_position.z - tip.z).length()
+	return d <= rad + 1.6
+
+
 func _physics_process(delta: float) -> void:
 	var step := speed * delta
 	var from := global_position
@@ -143,6 +148,8 @@ func _strike(delta: float) -> bool:
 		if e.has_method("is_alive") and not e.is_alive():
 			continue
 		if body_hits.has(e.get_instance_id()):
+			continue
+		if not _near_tip(e as Node3D, tip, rad):
 			continue
 		var cov := _cov_at(e as Node3D)
 		if Cover.connected(cov) and cov >= best_cov:
@@ -204,6 +211,8 @@ func _smash_breakables(tip: Vector3, rad: float) -> void:
 			continue
 		var id := b.get_instance_id()
 		if seen.has(id):
+			continue
+		if not _near_tip(b as Node3D, tip, rad):
 			continue
 		var cov := Cover.hit_shot(tip, dir, rad, b as Node3D)
 		if not Cover.connected(cov):

@@ -2,7 +2,7 @@
 
 **Status:** Binding design
 **Read when:** Changing camp layout, loadout, or hub interactables
-**Code:** `scripts/world/camp.gd` (facade), `scripts/world/camp_build.gd` (ground, guild, roofs), `scripts/world/camp_view.gd` (fence), `scripts/world/interact.gd`, `scripts/world/interact_fx.gd`, `scripts/combat/dummy.gd`, `scenes/camp.tscn`
+**Code:** `scripts/world/camp.gd` (facade), `scripts/world/camp_build.gd` (ground, guild, roofs), `scripts/world/camp_view.gd` (fence), `scripts/world/interact.gd`, `scripts/world/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`
 **See also:** `design/inventory.md`, `design/ui.md`, `design/gear-ui.md`, `design/combat.md`
 
 ## Required Interactables
@@ -92,6 +92,7 @@ All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidi
 ### Aim line (hub and dungeon)
 - Draws over buildings and props.
 - Does not draw on top of the player sprite. Clip + short fade off the player origin (`scripts/combat/aim_line.gd`).
+- The mesh stays hidden until `update_line` turns it on. The default 1×1 cream box MUST NOT flash under the loader.
 
 ### Fence / play area
 - Post-and-rail fence on all four edges of the current ground slab (`camp_view.gd`).
@@ -104,6 +105,8 @@ All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidi
 
 ### Live Snapshot
 - `App.play_from_menu()` / `enter_dungeon()` use loading overlay for hub/dungeon assets (`design/ui.md`).
+- After camp is ready, the overlay status is `Warming things up for you...`. That beat runs player walk/idle frames and a dummy `move_and_slide` so the first stick in the yard does not hitch. The dim goes fully opaque for that beat. There is no empty “The square holds.” hold.
+- Player body and adrenaline aura stay hidden until they have a real texture / non-zero alpha.
 - Hub ground: grass outside the yard, one packed-dirt fill, cobble-tinted path (`plaza_grass` / `plaza_ground` / `plaza_path`). No scattered dark dirt patches.
 - Buildings are 3D boxes with `plaza_wall` sides, a `plaza_roof` top plane, and a south-face facade sprite fitted to the box (`min` of width/height pixel size).
 - Roof planes use world-space UVs. The tile samples `plaza_roof.png` from y=10 to height−5 so the baked cap and footer do not repeat.
