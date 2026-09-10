@@ -7,6 +7,7 @@ export_credentials.cfg.uid
 
 # Commit-linked archive checkouts and Pages preview dumps
 .archive_worktrees/
+.archive_export_cache/
 _pages/
 docs/archives/
 

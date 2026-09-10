@@ -107,7 +107,7 @@ jobs:
             mv /tmp/godot-tpl/* "$HOME/.local/share/godot/export_templates/4.7.2.stable/"
           fi
 
-      - name: Export live + archives
+      - name: Export live Web
         run: |
           set -euo pipefail
           SITE="$PWD/site"
@@ -116,36 +116,31 @@ jobs:
           "$GODOT_BIN" --headless --path "$PWD" --export-release Web "$SITE/index.html"
           python3 tools/web_postexport.py "$SITE"
           touch "$SITE/.nojekyll"
-          python3 - <<'PY'
-          import json, os, re, subprocess, sys
-          root = os.getcwd()
-          site = os.path.join(root, "site")
-          godot = os.environ["GODOT_BIN"]
-          cat = json.load(open("scripts/data/archive_catalog.json", encoding="utf-8"))
-          def run(cmd):
-              print("+", " ".join(cmd), flush=True)
-              subprocess.check_call(cmd)
-          def stamp(path, label):
-              text = open(path, encoding="utf-8").read()
-              named = f'What Dwells Below — {label}'
-              text, n = re.subn(r'config/name="[^"]*"', f'config/name="{named}"', text, count=1)
-              if n != 1:
-                  raise SystemExit(f"could not stamp name in {path}")
-              open(path, "w", encoding="utf-8", newline="\n").write(text)
-          for e in cat["archives"]:
-              aid, sha, label, slug = e["id"], e["commit"], e["label"], e["pages_slug"]
-              wt = os.path.join("/tmp", f"wdb-arch-{aid}")
-              if os.path.exists(wt):
-                  subprocess.call(["git", "worktree", "remove", "--force", wt])
-              run(["git", "worktree", "add", "--detach", wt, sha])
-              stamp(os.path.join(wt, "project.godot"), label)
-              dest = os.path.join(site, *slug.split("/"))
-              os.makedirs(dest, exist_ok=True)
-              html = os.path.join(dest, "index.html")
-              run([godot, "--headless", "--path", wt, "--import"])
-              run([godot, "--headless", "--path", wt, "--export-release", "Web", html])
-              subprocess.call(["git", "worktree", "remove", "--force", wt])
-          PY
+
+      - name: Restore archive export cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .archive_export_cache
+          key: wdb-pages-archives-${{ hashFiles('scripts/data/archive_catalog.json') }}
+          restore-keys: |
+            wdb-pages-archives-
+
+      - name: Export archives
+        run: |
+          set -euo pipefail
+          python3 tools/export_archives.py \
+            --root "$PWD" \
+            --site "$PWD/site" \
+            --godot "$GODOT_BIN" \
+            --cache "$PWD/.archive_export_cache" \
+            --worktrees "$PWD/.archive_worktrees"
+
+      - name: Save archive export cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .archive_export_cache
+          key: wdb-pages-archives-${{ hashFiles('scripts/data/archive_catalog.json') }}
 
       - name: Publish changelog pages
         run: |

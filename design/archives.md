@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: touching Archives UI, Pages exports, or catalog pins
-Code: `scripts/ui/archives_ui.gd`, `scripts/ui/archives_ui_view.gd`, `scripts/ui/archives_ui_act.gd`, `scripts/ui/split_menu.gd`, `scripts/ui/split_menu_view.gd`, `scripts/ui/split_menu_chrome.gd`, `scripts/data/archives_catalog.gd`, `scripts/data/archives_launch.gd`, `scripts/data/archive_catalog.json`, `scripts/ui/loader.gd`
+Code: `scripts/ui/archives_ui.gd`, `scripts/ui/archives_ui_view.gd`, `scripts/ui/archives_ui_act.gd`, `scripts/ui/split_menu.gd`, `scripts/ui/split_menu_view.gd`, `scripts/ui/split_menu_chrome.gd`, `scripts/data/archives_catalog.gd`, `scripts/data/archives_launch.gd`, `scripts/data/archive_catalog.json`, `scripts/ui/loader.gd`, `tools/export_archives.py`, `.github/workflows/pages.yml`
 See also: `design/protocol.md`, `design/versioning.md`, `design/save-tech.md`, `design/ui.md`
 
 ## Core rule
@@ -55,7 +55,11 @@ Live site root is the current HEAD export. Each archive is `https://viraxvespa.g
 
 Player-facing changelogs for skipped weeks live at `https://viraxvespa.github.io/WhatDwellsBelow/changelog/`. That route is built from `design/changelog/*.md` in CI. Do not store those notes inside the Godot `docs/` export tree on `main`.
 
-GitHub Actions (`.github/workflows/pages.yml`) exports HEAD plus every catalog SHA. Binaries are not stored on `main`. Local preview: `powershell -File tools/export_web.ps1 -Archives` → `_pages/`.
+GitHub Actions (`.github/workflows/pages.yml`) always exports HEAD. That live export is fatal: if it fails, Pages does not deploy.
+
+Catalog pins are exported by `tools/export_archives.py` as best-effort. A pin that fails `git worktree add`, `project.godot` stamp, `--import`, or `--export-release Web` is logged (Godot stdout/stderr included) and skipped. It MUST NOT fail the live deploy. Each pin uses its own `XDG_CACHE_HOME` and a wiped worktree `.godot/`. Do not change `HOME` during archive export; export templates stay in the runner user dir.
+
+Archive wasm/pck is not stored on `main`. CI restores `.archive_export_cache/` with key `wdb-pages-archives-` plus `hashFiles('scripts/data/archive_catalog.json')`, and `restore-keys` of `wdb-pages-archives-`. A cache hit for `{id}/{commit}/index.html` is copied into `site/<pages_slug>/`. A miss exports that pin once, then stores it under `{id}/{commit}/`. A later catalog-hash key miss still restores the previous cache so unchanged pins are not rebuilt. Local preview: `powershell -File tools/export_web.ps1 -Archives` → `_pages/`, same helper and gitignored `.archive_export_cache/`.
 
 Repo setting: Pages source = GitHub Actions.
 
@@ -99,3 +103,5 @@ List MUST include every catalog row, including Classic 2D, Art experiment, Full 
 ## Live snapshot
 
 `archives_ui.gd` is the facade and split host. `archives_ui_view.gd` still owns archive-only panels. `archives_ui_act.gd` handles Play, docs fetch, and video. Column focus / dim / chevron come from `split_menu_view.gd`.
+
+Pages CI exports live HEAD first, then runs `tools/export_archives.py` against the catalog. Failed pins stay in the catalog and in the Archives browser; their Pages URL may 404 until that SHA imports cleanly under the CI Godot and lands in `.archive_export_cache/`.

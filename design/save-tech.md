@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: changing persistence, web export, autoloads, or perf
-Code: `scripts/data/save_store.gd`, `scripts/app.gd`, `scripts/app_set.gd`, `scripts/display_mode.gd`, `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`, `tools/export_web.ps1`, `tools/web_postexport.py`, `tools/build_changelog.py`, `.github/workflows/version.yml`, `.github/workflows/pages.yml`, `project.godot`, `export_presets.cfg`
+Code: `scripts/data/save_store.gd`, `scripts/app.gd`, `scripts/app_set.gd`, `scripts/display_mode.gd`, `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`, `tools/export_web.ps1`, `tools/export_archives.py`, `tools/web_postexport.py`, `tools/build_changelog.py`, `.github/workflows/version.yml`, `.github/workflows/pages.yml`, `project.godot`, `export_presets.cfg`
 See also: `design/debug.md`, `design/archives.md`, `design/versioning.md`, `design/camera.md`, `design/ui.md`, `design/input.md`
 
 ## Save system
@@ -67,6 +67,8 @@ The Archives browser MUST ship in the final demo and opens from the title card o
 
 There is no in-game presentation-mode switcher. Desktop Play on a catalog row keeps the live instance alive (minimized) and restores it to title when the child process exits. Web Play is a same-tab redirect.
 
+Pages live export of HEAD is required. Catalog pin exports are best-effort via `tools/export_archives.py` and MUST NOT fail the live Pages deploy. Frozen pins are cached by `{id}/{commit}` under `.archive_export_cache/` (gitignored). CI restores that cache across runs so unchanged pins are copied into `site/<pages_slug>/` instead of rebuilt. `tools/web_postexport.py` stays live-only.
+
 ## Web export requirements
 
 - MUST run in modern browsers.
@@ -75,7 +77,7 @@ There is no in-game presentation-mode switcher. Desktop Play on a catalog row ke
 - `html/head_include` stashes `beforeinstallprompt` on `window.__wdbInstallPrompt` so a later tap can call `prompt()`, and installs a capturing Escape listener so Esc does not leave browser fullscreen (`design/input.md`).
 - After changing `export_presets.cfg`, rebuild with `powershell -File tools/export_web.ps1`. Do not hand-edit generated `docs/index.html`.
 
-Rebuild live locally with `powershell -File tools/export_web.ps1` into `docs/`. Combined live + archive preview: `powershell -File tools/export_web.ps1 -Archives` into `_pages/`. Both MUST run `tools/web_postexport.py` on the live export directory after Godot writes `index.html`. GitHub Actions deploys Pages from the user push (workspace-stamped `version.json`) plus each catalog SHA, and publishes `/changelog/` from `design/changelog/*.md`. Do not commit archive wasm/pck to `main`. Do not store changelog notes inside the Godot `docs/` tree on `main`.
+Rebuild live locally with `powershell -File tools/export_web.ps1` into `docs/`. Combined live + archive preview: `powershell -File tools/export_web.ps1 -Archives` into `_pages/`. Both MUST run `tools/web_postexport.py` on the live export directory after Godot writes `index.html`. GitHub Actions deploys Pages from the user push (workspace-stamped `version.json`), then best-effort cached catalog pins via `tools/export_archives.py`, and publishes `/changelog/` from `design/changelog/*.md`. Do not commit archive wasm/pck to `main`. Do not store changelog notes inside the Godot `docs/` tree on `main`.
 
 ## Web cache
 

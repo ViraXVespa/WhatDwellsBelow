@@ -3,6 +3,7 @@
 #   powershell -File tools/export_web.ps1
 #   powershell -File tools/export_web.ps1 -Archives
 # Live-only writes docs/. -Archives writes a combined site to _pages/ (gitignored).
+# Archive pins are best-effort and cached under .archive_export_cache/.
 
 param(
     [switch]$Archives
@@ -11,7 +12,6 @@ param(
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 $Godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe"
-$CatalogPath = Join-Path $Root "scripts\data\archive_catalog.json"
 $OutDir = if ($Archives) { Join-Path $Root "_pages" } else { Join-Path $Root "docs" }
 $OutHtml = Join-Path $OutDir "index.html"
 
@@ -36,14 +36,6 @@ function Invoke-Godot([string[]]$GodotArgs, [string]$LogName) {
     Remove-Item $log, $err -ErrorAction SilentlyContinue
 }
 
-function Stamp-ArchiveName([string]$ProjectFile, [string]$Label) {
-    if (-not (Test-Path $ProjectFile)) { throw "Missing $ProjectFile" }
-    $named = "What Dwells Below - $Label"
-    $t = Get-Content -Raw -Path $ProjectFile
-    $t = [regex]::Replace($t, 'config/name="[^"]*"', "config/name=`"$named`"")
-    Set-Content -Path $ProjectFile -Value $t -NoNewline
-}
-
 function Invoke-WebPostexport([string]$Dir) {
     $script = Join-Path $Root "tools\web_postexport.py"
     Write-Host "Stamping Web export -> $Dir"
@@ -63,30 +55,16 @@ if (-not (Test-Path $nojekyll)) {
 }
 
 if ($Archives) {
-    if (-not (Test-Path $CatalogPath)) {
-        throw "Catalog missing: $CatalogPath"
+    $exporter = Join-Path $Root "tools\export_archives.py"
+    if (-not (Test-Path $exporter)) {
+        throw "Missing $exporter"
     }
-    $cat = Get-Content -Raw -Path $CatalogPath | ConvertFrom-Json
+    $cache = Join-Path $Root ".archive_export_cache"
     $wtRoot = Join-Path $Root ".archive_worktrees"
-    New-Item -ItemType Directory -Force -Path $wtRoot | Out-Null
-    foreach ($e in $cat.archives) {
-        $id = [string]$e.id
-        $sha = [string]$e.commit
-        $label = [string]$e.label
-        $slug = [string]$e.pages_slug
-        Write-Host "Archive $id @ $sha -> $slug"
-        $wt = Join-Path $wtRoot $id
-        if (Test-Path $wt) {
-            git -C $Root worktree remove --force $wt 2>$null
-            if (Test-Path $wt) { Remove-Item -Recurse -Force $wt }
-        }
-        git -C $Root worktree add --detach $wt $sha
-        Stamp-ArchiveName (Join-Path $wt "project.godot") $label
-        $destDir = Join-Path $OutDir ($slug -replace "/", [IO.Path]::DirectorySeparatorChar)
-        New-Item -ItemType Directory -Force -Path $destDir | Out-Null
-        $destHtml = Join-Path $destDir "index.html"
-        Invoke-Godot @("--headless", "--path", $wt, "--import") "godot-arch-$id-import.log"
-        Invoke-Godot @("--headless", "--path", $wt, "--export-release", "Web", $destHtml) "godot-arch-$id-export.log"
+    Write-Host "Exporting catalog archives (cached, best-effort) -> $OutDir"
+    python $exporter --root $Root --site $OutDir --godot $Godot --cache $cache --worktrees $wtRoot
+    if ($LASTEXITCODE -ne 0) {
+        throw "export_archives.py failed (exit $LASTEXITCODE)"
     }
 }
 
