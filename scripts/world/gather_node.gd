@@ -1,4 +1,4 @@
-extends Node3D
+﻿extends Node3D
 
 const Depth := preload("res://scripts/world/depth.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
@@ -23,6 +23,7 @@ func setup(k: String, pos: Vector3) -> void:
 		kind = "mine"
 		hits = clampi(int(App.bal.mine_hits), 3, 5)
 		interval = App.bal.mine_time
+	_sync_interval()
 	_visual()
 	_label()
 	refresh()
@@ -43,6 +44,7 @@ func interact(who: Node) -> String:
 	if kind == "wood" and App.prog.tool_type != "hatchet":
 		App.toast("Need a hatchet this run.")
 		return "Tool locked to pickaxe."
+	_sync_interval()
 	if who and who.has_method("start_gather"):
 		who.start_gather(self)
 		return "Gathering…  (move to stop)"
@@ -54,13 +56,14 @@ func strike() -> Dictionary:
 		return {"ok": false, "done": true}
 	hits -= 1
 	var chance := App.bal.wood_chance if kind == "wood" else App.bal.mine_chance
+	var tap: float = App.prog.tool_quality() * App.bal.tool_gather + float(App.prog.set_stats().gather) + App.prog.gear_stat("yield_chance")
 	if kind == "wood":
-		chance += float(App.prog.skill_lv("wood")) * App.bal.skill_gather + App.prog.tool_quality() * App.bal.tool_gather + float(App.prog.set_stats().gather)
+		chance += float(App.prog.skill_lv("wood")) * App.bal.skill_gather + tap
 		App.wood_hits_landed += 1
 		if App.tel:
 			App.tel.wood_hits += 1
 	else:
-		chance += float(App.prog.skill_lv("mine")) * App.bal.skill_gather + App.prog.tool_quality() * App.bal.tool_gather + float(App.prog.set_stats().gather)
+		chance += float(App.prog.skill_lv("mine")) * App.bal.skill_gather + tap
 		App.mine_hits_landed += 1
 		if App.tel:
 			App.tel.mine_hits += 1
@@ -107,6 +110,14 @@ func strike() -> Dictionary:
 		if label:
 			label.text = ("%s  %d" % [label.text, hits])
 	return {"ok": ok, "done": done, "ore": ore, "wood": wood, "gold": gold}
+
+
+func _sync_interval() -> void:
+	var base: float = App.bal.wood_time if kind == "wood" else App.bal.mine_time
+	var spd: float = 0.0
+	if App.prog != null:
+		spd = App.prog.gear_stat("gather_spd")
+	interval = maxf(0.2, base / (1.0 + spd))
 
 
 func _flash() -> void:

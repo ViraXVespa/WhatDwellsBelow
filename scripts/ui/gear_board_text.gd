@@ -4,6 +4,7 @@ const Stats := preload("res://scripts/ui/gear_board_stats.gd")
 const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
 const Opts := preload("res://scripts/ui/gear_board_opts.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
+const Affix := preload("res://scripts/data/affixes.gd")
 
 
 static func slot_face(_ui: CanvasLayer, slot: String, _it: Dictionary) -> String:
@@ -152,6 +153,8 @@ static func current_block(it: Dictionary) -> String:
 	var rare := str(it.get("rarity", "white"))
 	if rare != "":
 		head += "  ·  " + rare.capitalize()
+	if int(it.get("ilvl", 0)) > 0:
+		head += "  ·  Lv%d" % int(it.get("ilvl", 1))
 	if bool(it.get("hold", false)):
 		head += "  ·  forged hold"
 	if Fmt.is_risk(it):
@@ -175,37 +178,34 @@ static func forged_block(it: Dictionary) -> String:
 	var slot := str(it.get("slot", ""))
 	if slot == "potion" or slot == "food" or str(it.get("kind", "")) == "artifact":
 		return current_block(it) + "\nNo forge preview for this."
-	if str(it.get("rarity", "white")) == "white" and (slot == "weapon" or slot == "tool"):
-		return current_block(it) + "\nStarters cannot be forged."
-	var up := forge_preview(it)
-	var lines := PackedStringArray()
-	lines.append("Forge preview — %s" % str(up.get("name", "Forged")))
-	lines.append("Now:  +%d dmg   +%d def   +%d HP   %s" % [int(it.get("dmg", 0)), int(it.get("def", 0)), int(it.get("hp", 0)), str(it.get("rarity", "white"))])
-	lines.append("After anvil:  +%d dmg   +%d def   +%d HP   %s  (hold)" % [int(up.get("dmg", 0)), int(up.get("def", 0)), int(up.get("hp", 0)), str(up.get("rarity", "green"))])
-	lines.append("Holds return to Placeholdia. Unforged gear taken below does not.")
-	return "\n".join(lines)
+	if str(it.get("rarity", "white")) == "white":
+		return current_block(it) + "\nWhite gear is starter-only. Analyze greens and blues."
+	return current_block(it) + "\nForge tab rolls a new hold from unlocked traits."
 
 
 static func forge_preview(it: Dictionary) -> Dictionary:
-	var up: Dictionary = it.duplicate(true)
-	up.dmg = int(up.get("dmg", 0)) + 1 + int(App.prog.skill_lv("smith") / 4.0)
-	up.def = int(up.get("def", 0)) + 1
-	if str(up.get("rarity", "white")) == "white":
-		up.rarity = "green"
-	if not str(up.get("name", "")).begins_with("Forged "):
-		up.name = "Forged " + str(up.get("name", "item"))
-	up.hold = true
-	return up
+	return it.duplicate(true)
 
 
 static func stat_bits(it: Dictionary) -> String:
 	var bits := PackedStringArray()
-	if int(it.get("dmg", 0)) != 0:
-		bits.append("%+d damage" % int(it.dmg))
-	if int(it.get("def", 0)) != 0:
-		bits.append("%+d defense" % int(it.def))
-	if int(it.get("hp", 0)) != 0:
-		bits.append("%+d HP" % int(it.hp))
+	var listed: Dictionary = {}
+	var raw_aff: Variant = it.get("affixes", [])
+	if raw_aff is Array:
+		for row: Variant in raw_aff:
+			if not (row is Dictionary):
+				continue
+			var id := str(row.get("id", ""))
+			if id == "":
+				continue
+			listed[id] = true
+			bits.append("%s %s" % [Affix.label_of(id), Affix.format_value(id, float(row.get("value", 0.0)))])
+	for id: String in [Affix.ID_DMG, Affix.ID_DEF, Affix.ID_HP]:
+		if listed.has(id):
+			continue
+		var n: float = float(it.get(id, 0))
+		if n != 0.0:
+			bits.append("%s %s" % [Affix.label_of(id), Affix.format_value(id, n)])
 	if str(it.get("kind", "")) == "potion" or str(it.get("slot", "")) == "potion":
 		bits.append("Charges %d/%d" % [Fmt._charges(it), Fmt._charge_max(it)])
 		var cd := float(it.get("cooldown", 0.0))

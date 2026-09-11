@@ -1,4 +1,4 @@
-extends CanvasLayer
+﻿extends CanvasLayer
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const CatalogS := preload("res://scripts/data/catalog.gd")
@@ -8,6 +8,7 @@ const Hub := preload("res://scripts/ui/progress_ui_hub.gd")
 const GearAct := preload("res://scripts/ui/gear_board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Anvil := preload("res://scripts/ui/gear_board_anvil.gd")
+const ForgeUI := preload("res://scripts/ui/gear_board_anvil_forge.gd")
 const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
@@ -32,6 +33,11 @@ var anvil_src := ""
 var anvil_tab := "analyze"
 var forge_t := 0.0
 var forge_it: Dictionary = {}
+var forge_type := ""
+var forge_rarity := "green"
+var forge_ilvl := 1
+var forge_locks: PackedStringArray = PackedStringArray()
+var forge_new: Dictionary = {}
 var inv_sel := "slot:weapon"
 var gear_mode := ""
 var gear_stat_page := 0
@@ -198,6 +204,13 @@ func open_anvil() -> void:
 	anvil_tab = "analyze"
 	inv_sel = "slot:weapon"
 	gear_sub = false
+	forge_type = ""
+	forge_rarity = "green"
+	forge_ilvl = 1
+	forge_locks = PackedStringArray()
+	forge_new = {}
+	forge_it = {}
+	forge_t = 0.0
 	_rebuild_anvil()
 	_show()
 
@@ -327,18 +340,7 @@ func _process(delta: float) -> void:
 		status.text = "Forging… %.1fs." % forge_t
 	if forge_t > 0.0:
 		return
-	var it: Dictionary = forge_it
-	forge_it = {}
-	if it.is_empty():
-		return
-	var msg := App.prog.forge_item(it)
-	_st(msg)
-	if msg.begins_with("Forged") or msg.begins_with("Re-forged"):
-		anvil_item = {}
-		anvil_src = ""
-	if open and mode == "anvil":
-		_rebuild_anvil()
-		_show()
+	ForgeUI.finish(self)
 
 
 func _gear_busy() -> bool:
@@ -387,7 +389,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			forge_t = 0.0
 			forge_it = {}
 			App.sfx("ui_cancel")
-			_st("Forge cancelled. Remains stay on the Forge tab.")
+			_st("Forge cancelled. Materials stay spent.")
 		else:
 			App.sfx("ui_cancel")
 			close_ui()

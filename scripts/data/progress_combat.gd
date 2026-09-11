@@ -101,15 +101,12 @@ static func tool_quality(p) -> float:
 	var it: Dictionary = p.slots.get("tool", {})
 	if it.is_empty():
 		return 1.0
-	var q := 1.0
-	var r := str(it.get("rarity", "white"))
-	if r == "green":
-		q = 2.0
-	elif r == "blue":
-		q = 3.0
+	var q: float = 1.0 + float(it.get("gather_spd", 0.0))
+	q += float(it.get("gather_pow", 0.0)) * 0.08
+	q += float(it.get("yield_chance", 0.0))
 	if bool(it.get("hold", false)):
-		q += 1.0
-	return q
+		q += 0.15
+	return maxf(0.2, q)
 
 
 static func skill_grant_hit(p, is_special := false) -> void:
@@ -251,7 +248,12 @@ static func gear_stat(p, key: String) -> float:
 		var it: Dictionary = p.slots.get(s, {})
 		if not it.is_empty():
 			n += float(it.get(key, 0))
-	n += float(set_stats(p).get(key, 0.0))
+	var sets: Dictionary = set_stats(p)
+	n += float(sets.get(key, 0.0))
+	if key == "crit_chance":
+		n += float(sets.get("crit", 0.0))
+	if key == "gather_spd" or key == "yield_chance":
+		n += float(sets.get("gather", 0.0))
 	return n
 
 

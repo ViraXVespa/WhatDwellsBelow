@@ -82,28 +82,26 @@ static func page_settings(host) -> void:
 
 static func grant_anvil_kit(host) -> void:
 	var p: Object = App.prog
-	if p == null or not p.has_method("add_item"):
+	if p == null:
 		host.status.text = "No live progress to grant into."
 		return
 	var added: int = 0
-	var skipped: int = 0
 	var kit: Array[Dictionary] = []
 	for wpn in ["great_axe", "staff", "longbow"]:
-		kit.append(p.make_weapon(wpn, "green"))
-		kit.append(p.make_weapon(wpn, "blue"))
+		kit.append(p.make_weapon(wpn, "green", 4))
+		kit.append(p.make_weapon(wpn, "blue", 6))
 	for slot in ["head", "body", "legs"]:
-		kit.append(p.make_armor(slot, "green"))
-		kit.append(p.make_armor(slot, "blue"))
+		kit.append(p.make_armor(slot, "green", 4))
+		kit.append(p.make_armor(slot, "blue", 6))
 	for it in kit:
-		if p.add_item(it):
-			added += 1
-		else:
-			skipped += 1
-	App.gold += 200
-	App.ore += 60
-	p.root += 20
+		it["kit_src"] = "bank"
+		p.bank_items.append(it)
+		added += 1
+	App.bank_gold += 200
+	App.bank_ore += 60
+	App.bank_wood += 40
 	App.save_now()
-	host.status.text = "Anvil kit: %d bag, %d skipped, +200g +60 ore +20 root." % [added, skipped]
+	host.status.text = "Anvil kit: %d banked, +200g +60 ore +40 wood." % added
 
 
 static func _cap(t: String, size: int, col: Color) -> Label:

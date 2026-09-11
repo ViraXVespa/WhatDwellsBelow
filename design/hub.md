@@ -1,9 +1,9 @@
 ﻿# Placeholdia Hub Summary
 
-**Status:** Binding design
-**Read when:** Changing camp layout, loadout, or hub interactables
-**Code:** `scripts/world/camp.gd` (facade), `scripts/world/camp_build.gd` (ground, guild, roofs), `scripts/world/camp_view.gd` (fence), `scripts/world/interact.gd`, `scripts/world/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`
-**See also:** `design/inventory.md`, `design/ui.md`, `design/gear-ui.md`, `design/combat.md`
+**Status:** Binding design  
+**Read when:** Changing camp layout, loadout, or hub interactables  
+**Code:** `scripts/world/camp.gd` (facade), `scripts/world/camp_build.gd` (ground, guild, roofs), `scripts/world/camp_view.gd` (fence), `scripts/world/interact.gd`, `scripts/world/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`  
+**See also:** `design/inventory.md`, `design/ui.md`, `design/gear-ui.md`, `design/combat.md`, `design/handoff-anvil.md`
 
 ## Required Interactables
 - Floor Crystal (opens loadout / enter-dungeon UI)
@@ -32,18 +32,31 @@ All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidi
 - After death or “Dispel”, play short **wake-up sequence** (animation + VFX/SFX).
 
 ### Anvil
-- Shared gear board with **Analyze** and **Forge** tabs.
-- **Analyze:** Pick forgeable piece (bag, bank, equipped). Confirming destroys it. Starters excluded. Remains persist on `App.prog.analyzed` until forged.
-- **Forge:** Use analyzed remains + holds. First forge costs gold + ore + root, writes hold (permanent). Re-forge at reduced cost. Max 3 holds per slot.
-- Smithing skill affects time, cost, quality.
-- UI reuses gear board doll, flyout, stats card, slot list. Footer: workbench + tabs.
-- UI: clean, TV-readable, dungeon-themed, consistent.
-- Live camp position: down and left of the vendor stall’s southwest corner (`21.2, 0, 11.4`).
+- Shared gear board with **Analyze** and **Forge** tabs. Current tab is highlighted like Pause tabs, not disabled.
+- Potion and Food slots are disabled on this board.
+- Footer is short: bank + carried gold / ore / wood, plus one status line. Analyze does not list holds. Forge does not list every remnant.
+- Submenus keep the parent control strip and draw their own strip. No Back button. Binding UI is in `design/gear-ui.md`. Binding item / roll rules are in `design/inventory.md`.
+
+**Analyze**
+- AT RISK green/blue only. No holds, starters, whites, artifacts, potions, or food.
+- One confirm destroys the piece and writes `App.prog.forge_book` for that type+rarity (max item level, trait ids, peak luck).
+- Warning copy: analyzing permanently destroys the item in exchange for the ability to forge equipment with its traits.
+
+**Forge**
+- Player configures type (weapon/tool), rarity, item level, and optional trait locks in one submenu.
+- Cost is gold + ore; weapons and tools also spend wood. No root. Locks multiply cost. Smithing discounts slightly and changes wait + quality.
+- Output luck is gated by analyzed peak luck. Quality is `Random(0.5, 1.0)` then nudged by smithing vs item level.
+- Holds cap is 3 per type per slot. Open cap → new hold. Full cap → keep old holds; player replaces one or discards the new roll (no refund).
+- Whites never appear as forge remnants. Stale-save whites are filtered out.
 
 **Usage:**
-1. Analyze tab → A on slot → pick non-starter → confirm. Piece gone; remains shown.
-2. Forge tab → A on slot → pick remains → confirm cost. Hold appears.
-3. Holds re-forged from Forge tab only.
+1. Analyze tab → A on a live slot → pick an AT RISK piece → confirm once. Piece gone; book updated.
+2. Forge tab → A on a live slot → set type / rarity / level / locks → confirm cost. Wait the short craft beat. Hold appears, or the replace/discard prompt if that type is full.
+3. Re-forge from the Forge tab only. Compare the new roll to existing holds before replacing.
+
+Live camp position: down and left of the vendor stall’s southwest corner (`21.2, 0, 11.4`).
+
+Live scripts: board `scripts/ui/gear_board.gd` in `gear_mode="anvil"`; tabs `gear_board_anvil.gd` + `gear_board_anvil_view.gd`; forge body `gear_board_anvil_forge.gd`; ledger `scripts/data/progress_forge.gd` + `affixes.gd` + `gear_roll.gd`. `progress_town.gd` still owns extract / quests / analyze-destroy wrapper.
 
 ### Vendor Stall
 - Buys ore for gold.
@@ -112,5 +125,3 @@ All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidi
 - Roof planes use world-space UVs. The tile samples `plaza_roof.png` from y=10 to height−5 so the baked cap and footer do not repeat.
 - South eave is `ROOF_EAVE` (0.42). Guild hall and wing are separate roof planes (L-shape, wing raised 0.01 to avoid z-fight).
 - Welcome banner text is pixel letters on the cloth, two lines: `WELCOME TO` / `PLACEHOLDIA!`.
-
-**Anvil Details:** Shared gear board (`scripts/ui/gear_board.gd`) in `mode="anvil"` with tabs from `scripts/ui/gear_board_anvil.gd`. Remains on `App.prog.analyzed`. Forge writes holds via `scripts/data/progress_town.gd`.

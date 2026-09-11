@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 
 static func run(b: Object, old_rev: int, bal_rev: int) -> bool:
@@ -89,4 +89,29 @@ static func run(b: Object, old_rev: int, bal_rev: int) -> bool:
 		for id in hp.keys():
 			if b.enemy_stats.has(id):
 				(b.enemy_stats[id] as Dictionary)["hp"] = hp[id]
+	if old_rev < 11:
+		b.forge_gold_per_lv = 3.0
+		b.forge_ore_per_lv = 1.0
+		b.forge_wood = 4.0
+		b.forge_wood_per_lv = 1.0
+		b.forge_blue_mult = 1.45
+		b.forge_lock_mult = 2.0
+		b.forge_smith_disc = 0.03
+		b.forge_time_min = 0.35
+		b.forge_time_max = 8.0
+		b.forge_time_step = 1.15
+		b.forge_quality_per_lv = 0.03
+		b.forge_luck_window = 0.25
+		b.affix_flat_base = 2.0
+		b.affix_flat_per_lv = 0.35
+		b.affix_pct_base = 0.02
+		b.affix_pct_per_lv = 0.004
+		b.affix_rarity_green = 1.15
+		b.affix_rarity_blue = 1.35
+		b.affix_quality_min = 0.5
+		b.affix_quality_max = 1.0
+		b.affix_luck_min = 0.75
+		b.affix_luck_max = 1.25
+		b.affix_white_quality = 0.5
+		b.affix_white_luck = 0.75
 	return true

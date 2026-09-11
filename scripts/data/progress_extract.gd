@@ -1,7 +1,8 @@
-extends Object
+﻿extends Object
 
 const ProgressQuest := preload("res://scripts/data/progress_quest.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
+const ForgeP := preload("res://scripts/data/progress_forge.gd")
 
 
 static func _full_mail(role: String) -> bool:
@@ -29,6 +30,8 @@ static func extractable(p: Object, role: String = "") -> Array:
 
 
 static func _mail_item(p: Object, it: Dictionary) -> String:
+	if ForgeP.is_duplicate(p, it):
+		return Rules.grant_smith(p, it)
 	var special := Rules.handle_mail(p, it)
 	if special != "":
 		return special

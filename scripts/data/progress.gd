@@ -1,10 +1,12 @@
-﻿extends RefCounted
+﻿
+extends RefCounted
 
 const CatalogS := preload("res://scripts/data/catalog.gd")
 const Gear := preload("res://scripts/data/progress_gear.gd")
 const CombatP := preload("res://scripts/data/progress_combat.gd")
 const Town := preload("res://scripts/data/progress_town.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
+const ForgeP := preload("res://scripts/data/progress_forge.gd")
 
 const SKILLS: PackedStringArray = ["axe", "staff", "bow", "str", "mag", "rng", "def", "hp", "mine", "wood", "smith"]
 const SLOTS: PackedStringArray = ["weapon", "tool", "potion", "food", "head", "body", "legs"]
@@ -37,10 +39,12 @@ var mailed_wood := 0
 var mailed_root := 0
 var mailed_names: PackedStringArray = PackedStringArray()
 var analyzed: Array = []
+var forge_book: Dictionary = {}
 
 
 func _init() -> void:
 	reset_meta()
+	ForgeP.migrate(self)
 
 
 func reset_meta() -> void:
@@ -58,6 +62,7 @@ func reset_meta() -> void:
 	bag.clear()
 	bank_items.clear()
 	analyzed.clear()
+	forge_book.clear()
 	tool_type = "pickaxe"
 	deepest = 1
 	start_floor = 1
@@ -154,16 +159,16 @@ func _clamp_food_slot() -> void:
 		slots["food"] = fd
 
 
-func make_weapon(wpn: String, rarity: String) -> Dictionary:
-	return Gear.make_weapon(self, wpn, rarity)
+func make_weapon(wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:
+	return Gear.make_weapon(self, wpn, rarity, ilvl)
 
 
-func make_tool(kind: String) -> Dictionary:
-	return Gear.make_tool(self, kind)
+func make_tool(kind: String, rarity := "white", ilvl: int = 0) -> Dictionary:
+	return Gear.make_tool(self, kind, rarity, ilvl)
 
 
-func make_armor(slot: String, rarity: String) -> Dictionary:
-	return Gear.make_armor(self, slot, rarity)
+func make_armor(slot: String, rarity: String, ilvl: int = 0) -> Dictionary:
+	return Gear.make_armor(self, slot, rarity, ilvl)
 
 
 func make_potion(n: int) -> Dictionary:
@@ -368,6 +373,10 @@ func gear_hp() -> float:
 	return CombatP.gear_stat(self, "hp")
 
 
+func gear_stat(key: String) -> float:
+	return CombatP.gear_stat(self, key)
+
+
 func set_counts() -> Dictionary:
 	return CombatP.set_counts(self)
 
@@ -396,30 +405,36 @@ func extract_one(it: Dictionary, role: String) -> String:
 	return Town.extract_one(self, it, role)
 
 
-func forge_cost(first: bool) -> Dictionary:
-	return Town.forge_cost(self, first)
+func analyze_destroy(row: Dictionary) -> Dictionary:
+	return Town.analyze_destroy(self, row)
 
 
-func forge_duration() -> float:
-	return Town.forge_duration(self)
+func forge_cost(slot: String, rarity: String, ilvl: int, lock_n: int) -> Dictionary:
+	return ForgeP.forge_cost(self, slot, rarity, ilvl, lock_n)
+
+
+func forge_duration(slot: String, rarity: String, ilvl: int) -> float:
+	return ForgeP.forge_duration(self, slot, rarity, ilvl)
 
 
 func can_pay(c: Dictionary) -> bool:
-	return Town.can_pay(self, c)
+	return ForgeP.can_pay(self, c)
+
+
+func can_pay_forge(c: Dictionary) -> bool:
+	return ForgeP.can_pay(self, c)
 
 
 func pay(c: Dictionary) -> void:
-	Town.pay(self, c)
+	ForgeP.pay(self, c)
+
+
+func pay_forge(c: Dictionary) -> bool:
+	return ForgeP.pay(self, c)
 
 
 func forge_item(it: Dictionary) -> String:
-	if bool(it.get("hold", false)) or str(it.get("anvil_src", "")) == "hold":
-		return Town.forge_item(self, it)
-	if str(it.get("anvil_src", "")) == "analyzed" or Town.has_analyzed(self, int(it.get("uid", 0))):
-		return Town.forge_item(self, it)
-	if not Rules.can_forge(self, it):
-		return "Starters cannot be forged."
-	return "Analyze the piece first."
+	return "Use the Forge tab."
 
 
 func roll_quests(keep_active: bool) -> void:
@@ -456,6 +471,7 @@ func _player() -> Node:
 func to_meta() -> Dictionary:
 	var m := Town.to_meta(self)
 	m["analyzed"] = analyzed.duplicate(true)
+	m["forge_book"] = forge_book.duplicate(true)
 	return m
 
 
@@ -463,6 +479,9 @@ func from_meta(d: Dictionary) -> void:
 	Town.from_meta(self, d)
 	var raw: Variant = d.get("analyzed", [])
 	analyzed = raw.duplicate(true) if raw is Array else []
+	var book: Variant = d.get("forge_book", {})
+	forge_book = book.duplicate(true) if book is Dictionary else {}
+	ForgeP.migrate(self)
 	Gear.ensure_required_slots(self)
 
 

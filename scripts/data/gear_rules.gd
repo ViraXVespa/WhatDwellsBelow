@@ -1,4 +1,6 @@
-extends Object
+﻿extends Object
+
+const Roll := preload("res://scripts/data/gear_roll.gd")
 
 const BUILTIN_WEAPONS := ["great_axe", "staff", "longbow"]
 const BUILTIN_TOOLS := ["pickaxe", "hatchet"]
@@ -85,6 +87,10 @@ static func can_forge(p: Object, it: Dictionary) -> bool:
 		return false
 	if str(it.get("slot", "")) == "potion" or str(it.get("slot", "")) == "food":
 		return false
+	if bool(it.get("hold", false)) or str(it.get("kit_src", "")) == "hold":
+		return false
+	if str(it.get("rarity", "white")) == "white":
+		return false
 	if is_starter(p, it):
 		return false
 	return true
@@ -136,6 +142,9 @@ static func unlock_starter(p: Object, it: Dictionary) -> void:
 	var key := tmpl_key(it)
 	for raw: Variant in arr:
 		if raw is Dictionary and tmpl_key(raw) == key:
+			_write_starter_ilvl(raw, int(it.get("ilvl", 1)))
+			b[slot] = arr
+			p.starters = b
 			return
 	var copy: Dictionary = it.duplicate(true)
 	copy["hold"] = false
@@ -146,20 +155,81 @@ static func unlock_starter(p: Object, it: Dictionary) -> void:
 	p.starters = b
 
 
+static func starter_ilvl(p: Object, it: Dictionary) -> int:
+	var key := tmpl_key(it)
+	var slot := str(it.get("slot", ""))
+	var best: int = 1
+	for raw: Variant in book(p).get(slot, []):
+		if raw is Dictionary and tmpl_key(raw) == key:
+			best = maxi(best, int(raw.get("ilvl", 1)))
+	return best
+
+
 static func handle_mail(p: Object, it: Dictionary) -> String:
 	if it.is_empty():
 		return "Nothing."
 	if str(it.get("kind", "")) == "artifact" or bool(it.get("hold", false)):
 		return ""
-	if is_starter(p, it):
-		return grant_smith(p, it)
 	if str(it.get("rarity", "white")) == "white":
+		if is_starter(p, it):
+			return _mail_white(p, it)
 		unlock_starter(p, it)
 		App.extracted = true
 		p.mailed_names.append(str(it.get("name", "item")))
 		App.toast("Unlocked as a starter.")
 		return "Unlocked starter: " + str(it.get("name", "item"))
+	if is_starter(p, it):
+		return grant_smith(p, it)
 	return ""
+
+
+static func _mail_white(p: Object, it: Dictionary) -> String:
+	var have: int = starter_ilvl(p, it)
+	var incoming: int = maxi(1, int(it.get("ilvl", 1)))
+	if incoming <= have:
+		return grant_smith(p, it)
+	unlock_starter(p, it)
+	_apply_starter_level(p, it, incoming)
+	App.extracted = true
+	p.mailed_names.append(str(it.get("name", "item")))
+	App.toast("Starter leveled to %d." % incoming)
+	return "Starter leveled to %d." % incoming
+
+
+static func _apply_starter_level(p: Object, it: Dictionary, ilvl: int) -> void:
+	var slot := str(it.get("slot", ""))
+	var key := tmpl_key(it)
+	var b := book(p)
+	var arr: Array = b.get(slot, [])
+	for i: int in arr.size():
+		if arr[i] is Dictionary and tmpl_key(arr[i]) == key:
+			arr[i] = _restat_white(arr[i], ilvl)
+	b[slot] = arr
+	p.starters = b
+	var eq: Dictionary = p.slots.get(slot, {})
+	if not eq.is_empty() and str(eq.get("rarity", "white")) == "white" and tmpl_key(eq) == key:
+		p.slots[slot] = _restat_white(eq, ilvl)
+		if p.has_method("_refresh_player_hp"):
+			p._refresh_player_hp()
+
+
+static func _restat_white(it: Dictionary, ilvl: int) -> Dictionary:
+	var copy: Dictionary = it.duplicate(true)
+	var slot := str(copy.get("slot", ""))
+	var type_id := str(copy.get("weapon", copy.get("tool", slot)))
+	if slot == "weapon":
+		type_id = _weapon_id(copy)
+	elif slot == "tool":
+		type_id = _tool_id(copy)
+	Roll.stamp(copy, Roll.roll_dungeon(slot, type_id, "white", ilvl))
+	copy["rarity"] = "white"
+	copy["hold"] = false
+	copy["kit_src"] = "starter"
+	return copy
+
+
+static func _write_starter_ilvl(it: Dictionary, ilvl: int) -> void:
+	it["ilvl"] = maxi(int(it.get("ilvl", 1)), ilvl)
 
 
 static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:

@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
@@ -6,13 +6,13 @@ const GearAct := preload("res://scripts/ui/gear_board_act.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 
-static func rebuild_loadout(ui) -> void:
+static func rebuild_loadout(ui: CanvasLayer) -> void:
 	ui._clear()
 	ui.gear_mode = "loadout"
 	Board.build(ui, "loadout")
 
 
-static func rebuild_anvil(ui) -> void:
+static func rebuild_anvil(ui: CanvasLayer) -> void:
 	ui._clear()
 	ui.gear_mode = "anvil"
 	Board.build(ui, "anvil")

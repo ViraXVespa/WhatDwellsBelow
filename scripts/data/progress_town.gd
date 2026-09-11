@@ -1,8 +1,8 @@
-extends Object
+﻿extends Object
 
 const Extract := preload("res://scripts/data/progress_extract.gd")
 const Quest := preload("res://scripts/data/progress_quest.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
+const ForgeP := preload("res://scripts/data/progress_forge.gd")
 
 
 static func extractable(p: Object, role: String = "") -> Array:
@@ -21,167 +21,55 @@ static func withdraw_bank_consumables(p: Object) -> void:
 	Extract.withdraw_bank_consumables(p)
 
 
-static func forge_cost(p: Object, first: bool) -> Dictionary:
-	var sm: int = p.skill_lv("smith")
-	var g: int = int(App.bal.forge_gold) - sm * 2
-	var o: int = int(App.bal.forge_ore) - sm
-	var r: int = int(App.bal.forge_root)
-	if not first:
-		g = maxi(4, int(g * 0.55))
-		o = maxi(1, int(o * 0.55))
-		r = maxi(0, int(r * 0.4))
-	return {"gold": maxi(4, g), "ore": maxi(1, o), "root": maxi(0, r)}
-
-
-static func forge_duration(p: Object) -> float:
-	var sm: int = p.skill_lv("smith")
-	return maxf(0.2, App.bal.forge_time / (1.0 + float(maxi(0, sm - 1)) * 0.12))
-
-
-static func can_pay(p: Object, c: Dictionary) -> bool:
-	return App.bank_gold + App.gold >= int(c.gold) and App.bank_ore + App.ore >= int(c.ore) and App.bank_root + p.root >= int(c.root)
-
-
-static func pay(p: Object, c: Dictionary) -> void:
-	var g: int = int(c.gold)
-	var use: int = mini(App.gold, g)
-	App.gold -= use
-	g -= use
-	App.bank_gold = maxi(0, App.bank_gold - g)
-	var o: int = int(c.ore)
-	use = mini(App.ore, o)
-	App.ore -= use
-	o -= use
-	App.bank_ore = maxi(0, App.bank_ore - o)
-	var rpay: int = int(c.root)
-	use = mini(p.root, rpay)
-	p.root -= use
-	rpay -= use
-	App.bank_root = maxi(0, App.bank_root - rpay)
-
-
-static func has_analyzed(p: Object, uid: int) -> bool:
-	if uid == 0:
-		return false
-	for raw: Variant in p.analyzed:
-		if raw is Dictionary and int(raw.get("uid", 0)) == uid:
-			return true
-	return false
-
-
-static func take_analyzed(p: Object, uid: int) -> Dictionary:
-	for i: int in p.analyzed.size():
-		var raw: Variant = p.analyzed[i]
-		if raw is Dictionary and int(raw.get("uid", 0)) == uid:
-			var got: Dictionary = raw
-			p.analyzed.remove_at(i)
-			return got
-	return {}
-
-
 static func analyze_destroy(p: Object, row: Dictionary) -> Dictionary:
 	var it: Dictionary = row.it.duplicate(true) if row.get("it") is Dictionary else {}
 	if it.is_empty():
 		return {}
-	if Rules.is_starter(p, it) or str(row.get("src", "")) == "starter":
-		return {}
-	if not Rules.can_forge(p, it):
+	if not ForgeP.can_analyze(p, it):
 		return {}
 	var src := str(row.get("src", ""))
 	var uid := int(row.get("uid", it.get("uid", 0)))
-	if src == "hold" or src == "analyzed":
+	if src == "hold" or src == "analyzed" or src == "starter":
 		return {}
+	var got: Dictionary = {}
 	if src == "bag":
-		return p.remove_uid(uid)
-	if src == "bank":
-		for i: int in p.bank_items.size():
-			if int(p.bank_items[i].uid) == uid:
-				var got: Dictionary = p.bank_items[i]
-				p.bank_items.remove_at(i)
-				return got
+		got = p.remove_uid(uid)
+	elif src == "bank":
+		got = _take_bank(p, uid)
+	elif src == "equipped":
+		got = _take_equipped(p, it, uid)
+	if got.is_empty():
 		return {}
-	if src == "equipped":
-		var slot := str(it.get("slot", ""))
-		var cur: Dictionary = p.slots.get(slot, {})
-		if cur.is_empty() or int(cur.get("uid", 0)) != uid:
-			return {}
-		var copy: Dictionary = cur.duplicate(true)
-		if slot == "weapon":
-			p.slots["weapon"] = p.make_weapon(p.pick_weapon, "white")
-			App.weapon = str(p.slots.weapon.get("weapon", p.pick_weapon))
-		elif slot == "tool":
-			p.slots["tool"] = p.make_tool(p.tool_type)
-		else:
-			p.slots[slot] = {}
-		if p.has_method("_refresh_player_hp"):
-			p._refresh_player_hp()
-		return copy
+	ForgeP.grant(p, got)
+	App.save_now()
+	return got
+
+
+static func _take_bank(p: Object, uid: int) -> Dictionary:
+	for i: int in p.bank_items.size():
+		if int(p.bank_items[i].uid) == uid:
+			var got: Dictionary = p.bank_items[i]
+			p.bank_items.remove_at(i)
+			return got
 	return {}
 
 
-static func forge_item(p: Object, it: Dictionary) -> String:
-	var slot: String = str(it.get("slot", ""))
-	if p.SLOTS.find(slot) < 0 or slot == "potion" or slot == "food":
-		return "The anvil won't take that."
-	var src := str(it.get("anvil_src", ""))
-	var is_hold := bool(it.get("hold", false)) or src == "hold"
-	if not is_hold:
-		if not has_analyzed(p, int(it.get("uid", 0))):
-			return "Analyze the piece first."
-	var h: Array = p.holds[slot]
-	var first: bool = not is_hold
-	var cost: Dictionary = forge_cost(p, first)
-	if not can_pay(p, cost):
-		App.toast("Not enough gold / ore / root.")
-		return "Need %dg, %d ore, %d root." % [cost.gold, cost.ore, cost.root]
-	pay(p, cost)
-	if is_hold:
-		for i: int in h.size():
-			if int(h[i].uid) == int(it.uid):
-				var up: Dictionary = (h[i] as Dictionary).duplicate(true)
-				up.dmg = int(up.dmg) + 1 + int(p.skill_lv("smith") / 4)
-				up.def = int(up.def) + 1
-				if str(up.rarity) == "white":
-					up.rarity = "green"
-				h[i] = up
-				p.holds[slot] = h
-				p.forge_count += 1
-				p.add_perm_xp("smith", App.bal.xp_smith)
-				App.sfx("slam")
-				App.toast("Hold re-forged.")
-				App.save_now()
-				return "Re-forged hold (%d/3)." % h.size()
-		return "That hold is gone."
-	var remains: Dictionary = take_analyzed(p, int(it.get("uid", 0)))
-	if remains.is_empty():
-		remains = it.duplicate(true)
-	var copy: Dictionary = remains.duplicate(true)
-	copy.hold = true
-	copy.extract = false
-	copy.rarity = "green" if str(copy.rarity) == "white" else copy.rarity
-	copy.dmg = int(copy.dmg) + 1 + int(p.skill_lv("smith") / 4)
-	copy.def = int(copy.def) + 1
-	if not str(copy.name).begins_with("Forged "):
-		copy.name = "Forged " + str(copy.name)
-	if h.size() >= 3:
-		h.remove_at(0)
-	h.append(copy)
-	p.holds[slot] = h
-	p.forge_count += 1
-	p.add_perm_xp("smith", App.bal.xp_smith)
-	App.sfx("slam")
-	App.toast("Hold forged.")
-	App.save_now()
-	return "Forged into a hold (%d/3)." % h.size()
-
-
-static func consume_forge_source(p: Object, it: Dictionary) -> void:
-	if it.has("uid"):
-		p.remove_uid(int(it.uid))
-		for i: int in p.bank_items.size():
-			if int(p.bank_items[i].uid) == int(it.uid):
-				p.bank_items.remove_at(i)
-				break
+static func _take_equipped(p: Object, it: Dictionary, uid: int) -> Dictionary:
+	var slot := str(it.get("slot", ""))
+	var cur: Dictionary = p.slots.get(slot, {})
+	if cur.is_empty() or int(cur.get("uid", 0)) != uid:
+		return {}
+	var copy: Dictionary = cur.duplicate(true)
+	if slot == "weapon":
+		p.slots["weapon"] = p.make_weapon(p.pick_weapon, "white")
+		App.weapon = str(p.slots.weapon.get("weapon", p.pick_weapon))
+	elif slot == "tool":
+		p.slots["tool"] = p.make_tool(p.tool_type)
+	else:
+		p.slots[slot] = {}
+	if p.has_method("_refresh_player_hp"):
+		p._refresh_player_hp()
+	return copy
 
 
 static func roll_quests(p: Object, keep_active: bool) -> void:

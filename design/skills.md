@@ -1,9 +1,9 @@
-# Skills, XP, and combat level
+﻿# Skills, XP, and combat level
 
-Status: binding design + live snapshot
-Read when: changing XP, HUD level text, forging, or enemy scaling vs the player
-Code: `scripts/data/progress.gd`, `scripts/app.gd`, `scripts/ui/hud.gd`, `scripts/ui/pause_menu.gd`, `scripts/data/balance.gd`, `scripts/combat/threat.gd`
-See also: `design/combat.md`, `design/enemies.md`, `design/ui.md`, `design/tunables.md`
+Status: binding design + live snapshot  
+Read when: changing XP, HUD level text, forging, or enemy scaling vs the player  
+Code: `scripts/data/progress.gd`, `scripts/data/progress_combat.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/app.gd`, `scripts/ui/hud.gd`, `scripts/ui/pause_menu.gd`, `scripts/data/balance.gd`, `scripts/combat/threat.gd`  
+See also: `design/combat.md`, `design/enemies.md`, `design/ui.md`, `design/tunables.md`, `design/inventory.md`, `design/handoff-anvil.md`
 
 ## Skills included in the demo
 
@@ -28,6 +28,7 @@ Live ids: `axe`, `staff`, `bow`, `str`, `mag`, `rng`, `def`, `hp`, `mine`, `wood
 - During a run the player accumulates “run XP” in each skill.
 - On death or voluntary “Dispel”, only a small fragment of that run XP is kept permanently.
 - The recap screen MUST contain a clear visual sequence that shows the run XP values draining down to the permanent fragment amounts, after which the new permanent XP totals and resulting levels are displayed.
+- Duplicate extracted greens/blues and extra starter-template whites convert to **permanent smithing XP**, not a second stored copy.
 
 ## Weapon-specific XP rules
 
@@ -53,6 +54,7 @@ Live ids: `axe`, `staff`, `bow`, `str`, `mag`, `rng`, `def`, `hp`, `mine`, `wood
 - Global Combat Level is the highest of the three style scores.
 - The HUD displays the player’s highest (global) Combat Level as a rounded integer.
 - If the currently equipped weapon’s style Combat Level is lower than the highest, that style level is shown in parentheses next to it (e.g. Level 14 (Magic 11)).
+- Dungeon item level uses enemy / area combat level. That item level is what Analyze stores and what Forge can configure up to.
 
 ## Skill effects (high-level)
 
@@ -60,7 +62,11 @@ Live ids: `axe`, `staff`, `bow`, `str`, `mag`, `rng`, `def`, `hp`, `mine`, `wood
 - Defense & Hitpoints: increase survivability.
 - Mining: improves reward chance and effectiveness with the hit-based mining system.
 - Woodcutting: improves reward chance and effectiveness with the hit-based woodcutting system.
-- Smithing: reduces forge cost/time and improves output at the anvil.
+- Smithing: anvil only.
+  - Shortens the forge craft beat when smithing is at or above the configured item level; lengthens it when below.
+  - Nudges forge Quality up when smithing ≥ item level, down when smithing is below.
+  - Applies a small cost discount (`forge_smith_disc` per smith level above 1).
+  - Does not change dungeon drop rolls.
 
 ## Visible power gain after one good run
 
@@ -72,17 +78,15 @@ This is a required feel target. Concrete proxy: after one successful run the per
 
 ## Live snapshot — player CL formulas (`progress.gd`)
 
-```
-score(wpn, sty) = (lv(wpn) + lv(sty) + lv(def) + lv(hp)) / 4
-melee_f  = score(axe, str)
-magic_f  = score(staff, mag)
-ranged_f = score(bow, rng)
-combat_f = max(melee_f, magic_f, ranged_f)
-style_f  = melee_f | magic_f | ranged_f from the equipped weapon
+score(wpn, sty) = (lv(wpn) + lv(sty) + lv(def) + lv(hp)) / 4  
+melee_f  = score(axe, str)  
+magic_f  = score(staff, mag)  
+ranged_f = score(bow, rng)  
+combat_f = max(melee_f, magic_f, ranged_f)  
+style_f  = melee_f | magic_f | ranged_f from the equipped weapon  
 HUD ints = max(1, round(those scores))
-```
 
-Example: lv 11 / 11 / 11 / 11 → combat 11.
+Example: lv 11 / 11 / 11 / 11 → combat 11.  
 Fragment rate is `App.bal.xp_keep` (live 0.20). Adrenaline multiplies run XP in `add_run_xp`.
 
 ## Live snapshot — enemy combat level

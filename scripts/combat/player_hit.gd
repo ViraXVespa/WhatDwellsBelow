@@ -13,45 +13,48 @@ static func draw_basic_tele(host: Node, _active: bool) -> void:
 		host.telegraph.hide_now()
 		return
 	var col := Color(1.0, 0.82, 0.28, 0.4)
+	var extra: float = _gear("atk_range")
 	if App.weapon == "staff":
-		host.telegraph.show_arc(host.global_position, host.aim_dir, App.bal.staff_range, App.bal.staff_arc_deg, col)
+		host.telegraph.show_arc(host.global_position, host.aim_dir, App.bal.staff_range + extra, App.bal.staff_arc_deg, col)
 		return
-	host.telegraph.show_arc(host.global_position, host.aim_dir, App.bal.axe_range, App.bal.axe_arc_deg, col)
+	host.telegraph.show_arc(host.global_position, host.aim_dir, App.bal.axe_range + extra, App.bal.axe_arc_deg, col)
 
 
 static func draw_special_tele(host: Node, _active: bool) -> void:
 	if host.telegraph == null:
 		return
 	var yel := Color(1.0, 0.92, 0.35, 0.42)
+	var extra: float = _gear("atk_range")
 	if App.weapon == "great_axe":
-		host.telegraph.show_circle(host.global_position, App.bal.slam_radius, yel)
+		host.telegraph.show_circle(host.global_position, App.bal.slam_radius + extra, yel)
 	elif App.weapon == "staff":
-		host.telegraph.show_circle(host.spec_point, App.bal.staff_special_radius, yel)
+		host.telegraph.show_circle(host.spec_point, App.bal.staff_special_radius + extra, yel)
 	else:
 		var w := 0.08
 		if App.bal:
 			w = float(App.bal.bow_path_width)
-		host.telegraph.show_spread(host.global_position, host.aim_dir, App.bal.bow_special_range, App.bal.bow_special_cone, int(App.bal.bow_special_count), w, yel)
+		host.telegraph.show_spread(host.global_position, host.aim_dir, App.bal.bow_special_range + extra, App.bal.bow_special_cone, int(App.bal.bow_special_count), w, yel)
 
 
 static func special_point(host: Node) -> Vector3:
 	if PlayerLock.valid_lock(host, host.lock_target):
 		return (host.lock_target as Node3D).global_position
-	var reach: float = App.bal.staff_special_radius + 1.5
+	var reach: float = App.bal.staff_special_radius + 1.5 + _gear("atk_range")
 	return host.global_position + Vector3(host.aim_dir.x, 0.0, host.aim_dir.y) * reach
 
 
 static func apply_basic(host: Node) -> void:
+	var extra: float = _gear("atk_range")
 	if App.weapon == "longbow":
-		spawn_arrow(host, host.aim_dir, scaled_dmg(App.bal.bow_damage, false), App.bal.bow_range, App.bal.bow_proj_speed, App.bal.bow_los)
+		spawn_arrow(host, host.aim_dir, scaled_dmg(App.bal.bow_damage, false), App.bal.bow_range + extra, App.bal.bow_proj_speed, App.bal.bow_los)
 		App.sfx("bow")
 		return
-	var rng: float = App.bal.axe_range
+	var rng: float = App.bal.axe_range + extra
 	var arc: float = App.bal.axe_arc_deg
 	var dmg: float = App.bal.axe_damage
 	var need_los: bool = App.bal.axe_los
 	if App.weapon == "staff":
-		rng = App.bal.staff_range
+		rng = App.bal.staff_range + extra
 		arc = App.bal.staff_arc_deg
 		dmg = App.bal.staff_damage
 		need_los = App.bal.staff_los
@@ -60,14 +63,15 @@ static func apply_basic(host: Node) -> void:
 
 
 static func apply_special(host: Node) -> void:
+	var extra: float = _gear("atk_range")
 	if App.weapon == "great_axe":
 		App.sfx("slam")
-		hit_circle(host, host.global_position, App.bal.slam_radius, App.bal.axe_damage * App.bal.axe_slam_mult, false, true, "auto", true)
+		hit_circle(host, host.global_position, App.bal.slam_radius + extra, App.bal.axe_damage * App.bal.axe_slam_mult, false, true, "auto", true)
 		fx(host, "res://assets/fx/crack.png", host.global_position, 2.4, false)
 		return
 	if App.weapon == "staff":
 		App.sfx("bolt")
-		hit_circle(host, host.spec_point, App.bal.staff_special_radius, App.bal.staff_special_damage, false, false, "magic", true)
+		hit_circle(host, host.spec_point, App.bal.staff_special_radius + extra, App.bal.staff_special_damage, false, false, "magic", true)
 		fx(host, "res://assets/fx/lightning.png", host.spec_point, 2.6, true)
 		return
 	App.sfx("bow")
@@ -77,7 +81,7 @@ static func apply_special(host: Node) -> void:
 	for i in n:
 		var t := 0.0 if n <= 1 else (float(i) / float(n - 1)) - 0.5
 		var a := base + t * cone
-		spawn_arrow(host, Vector2(cos(a), sin(a)), scaled_dmg(App.bal.bow_special_damage, true), App.bal.bow_special_range, App.bal.bow_proj_speed, App.bal.bow_los)
+		spawn_arrow(host, Vector2(cos(a), sin(a)), scaled_dmg(App.bal.bow_special_damage, true), App.bal.bow_special_range + extra, App.bal.bow_proj_speed, App.bal.bow_los)
 
 
 static func hit_arc(host: Node, rng: float, arc: float, dmg: float, need_los: bool, stagger: bool) -> void:
@@ -121,13 +125,16 @@ static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "
 	if xp == "magic":
 		_is_special = true
 	grant_hit_xp(xp)
-	var crit := can_crit and Combat.roll_crit(App.bal.crit_chance + float(App.prog.set_stats().crit))
+	var chance: float = App.bal.crit_chance + _gear("crit_chance")
+	var crit := can_crit and Combat.roll_crit(chance)
 	if "last_glance" in e:
 		e.last_glance = glance and not crit
 	if e.has_method("take_hit"):
 		e.take_hit(dmg, host.aim_dir, crit)
+	_life_tap(host, e)
 	if App.tel:
-		App.tel.note_damage_dealt(dmg if not crit else dmg * App.bal.crit_mult, crit)
+		var shown: float = dmg if not crit else dmg * (App.bal.crit_mult + _gear("crit_dmg"))
+		App.tel.note_damage_dealt(shown, crit)
 		if host.atk_state == host.ATK_ACT or host.atk_state == host.ATK_WIND:
 			App.tel.spec_hit += 1
 			var key := App.weapon
@@ -135,6 +142,16 @@ static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "
 				App.tel.wpn[key].spec_hit = int(App.tel.wpn[key].spec_hit) + 1
 	if stagger and e.has_method("apply_stagger"):
 		e.apply_stagger(App.bal.slam_stagger)
+
+
+static func _life_tap(host: Node, e: Node) -> void:
+	var hit_heal: float = _gear("hp_on_hit")
+	if hit_heal > 0.0 and host.has_method("heal"):
+		host.heal(hit_heal)
+	if e != null and is_instance_valid(e) and e.has_method("is_alive") and not e.is_alive():
+		var kill_heal: float = _gear("hp_on_kill")
+		if kill_heal > 0.0 and host.has_method("heal"):
+			host.heal(kill_heal)
 
 
 static func grant_hit_xp(xp: String) -> void:
@@ -174,7 +191,7 @@ static func spawn_arrow(host: Node, dir: Vector2, dmg: float, rng: float, spd: f
 		world.add_child(p)
 	else:
 		host.add_child(p)
-	var crit := Combat.roll_crit(App.bal.crit_chance + float(App.prog.set_stats().crit))
+	var crit := Combat.roll_crit(App.bal.crit_chance + _gear("crit_chance"))
 	p.setup(host.global_position, dir, spd, rng, dmg, need_los, crit, false, "", true)
 
 
@@ -228,3 +245,9 @@ static func trail(host: Node, delta: float) -> void:
 	var tw := g.create_tween()
 	tw.tween_property(g, "modulate:a", 0.0, App.bal.trail_life)
 	tw.finished.connect(g.queue_free)
+
+
+static func _gear(key: String) -> float:
+	if App.prog == null:
+		return 0.0
+	return App.prog.gear_stat(key)

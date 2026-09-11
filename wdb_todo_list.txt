@@ -16,15 +16,15 @@ Hide hallways behind walls
 Need to create new UI for forging menu in blacksmith.
 Add a red outline around enemies that have targeted the player.
 Add X Money donation links
-Rework pause menu so that Dpad Right opens inventory and the menu button brings up a better flow for dispelling the run.
-Make archives close original instance when opening an archived build.
 Cleanup leftover hitching in pack_locomotion.py and/or player_anim.gd.
 Need to add view on web logic to archive docs. Could use custom html to open browser and load GitHub render of docs in a clean UI.
 Need to create a sub-menu flow for weapon type in the inventory.
-Analyze and forge need tooltips.
 Analyze and forge aren't working correctly.
-Keybindings don't work.
-Rework System menu into a streamlined Pause menu.
+Chest needs Open state.
+Ore label needs to be raised (or removed)
+Fix the chroma keying so no pink shows up on sprites.
+Smooth out the corners in the dungeon so it doesn't look so blocky.
+Need to sort out level scaling. First crystal should always be CL1 and enemies should gradually increase in level based on minimum walk distance from start.
 
 ## Unsexy
 Need to fix automated playtest

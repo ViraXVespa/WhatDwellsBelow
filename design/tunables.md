@@ -2,8 +2,8 @@
 
 Status: suggested starts + live snapshot  
 Read when: changing feel, gen size, economy, crystals, or debug defaults  
-Code: `scripts/data/balance.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
-See also: the topic file for the system you are changing
+Code: `scripts/data/balance.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
+See also: the topic file for the system you are changing; anvil numbers also live in `design/inventory.md` and `design/handoff-anvil.md`
 
 These are recommended starting points for the current live implementation.  
 Every value **MUST** be exposed in the debug menu and treated as non-final.  
@@ -12,6 +12,8 @@ Live defaults are what `balance.gd` / `tunables.gd` ship today.
 If you change a live default, update this table in the same slice.
 
 `BAL_REV` is 9. Old saves pick up the dungeon/combat retune through `balance_migrate.gd`.
+
+Forge keys that are not yet on `balance.gd` fall back inside `progress_forge.gd` / `gear_roll.gd`. Add them to balance + the debug menu when that slice lands.
 
 ## Camera / presentation (`tunables.gd`)
 
@@ -68,8 +70,8 @@ If you change a live default, update this table in the same slice.
 | Bow damage / range / proj speed / rate | — | 14 / 8 / 14 / 1.9 | |
 | Bow LOS | tunable | true | |
 | Bow special count / cone / range / dmg | 5 arrows | 5 / 50° / 6.5 / 10 | Yellow spread lines, not a filled cone |
-| Crit chance | 12 % | 0.12 | Planted coverage only; double damage + yellow/magenta numbers |
-| Crit mult | 2× | 2.0 | |
+| Crit chance | 12 % | 0.12 | Planted coverage only; gear adds `crit_chance` |
+| Crit mult | 2× | 2.0 | Gear adds `crit_dmg` on top |
 | Adrenaline kill window | 4.5 s | 4.5 | |
 | Adrenaline kill threshold | 4 | 4 | |
 | Adrenaline speed / XP stack / timeout | — | 1.35 / 0.15 / 4.5 | |
@@ -78,7 +80,7 @@ If you change a live default, update this table in the same slice.
 | Hurt i-frame | — | 0.35 | |
 | Defense k | — | 100 | diminishing returns |
 | Aim-line on / opacity / width | on | true / 0.85 / 0.08 | Bow line is shoulder height. Mesh hidden until `update_line`. |
-| Aim-line use weapon range / length | — | true / 4.0 | |
+| Aim-line use weapon range / length | — | true / 4.0 | Gear `atk_range` extends reach |
 | Cover full-band / edge mult | — | 0.18 / 0.35 | Full damage until the last 18% of fan radius |
 | Cover columns / alpha | — | 28 / 0.4 | Opaque mask grid |
 | Pierce stop | — | 0.85 | Arrow despawns at this coverage |
@@ -90,8 +92,8 @@ If you change a live default, update this table in the same slice.
 | Parameter | Suggested start | Live default | Notes |
 |-----------|-----------------|--------------|-------|
 | Mining hits per node | 4 | 4 | Range 3–5 |
-| Mining time between hits | 2.4 s | 2.4 | |
-| Mining base reward chance | 65 % | 0.65 | Scaled by Mining skill + pickaxe |
+| Mining time between hits | 2.4 s | 2.4 | Tool `gather_spd` shortens interval |
+| Mining base reward chance | 65 % | 0.65 | Scaled by Mining skill + pickaxe + `yield_chance` |
 | Woodcutting hits per node | 8 | 8 | Range 6–10 |
 | Woodcutting time between hits | 1.2 s | 1.2 | |
 | Woodcutting base reward chance | ~32 % | 0.32 | Approximately 50 % lower than mining |
@@ -153,8 +155,8 @@ If you change a live default, update this table in the same slice.
 | `windup_melee` / `windup_ranged` / `windup_mage` | 0.42 / 0.38 / 0.55 |
 | `enemy_recover` | 0.35 |
 | `enemy_proj_speed` | 9 |
-| `los_period` | **0.12** | Seconds between enemy LOS rays. Staggered. Always fresh inside strike range. |
-| `sep_max` | **6** | Max neighbors each enemy tests for separation. |
+| `los_period` | **0.12** |
+| `sep_max` | **6** |
 | `enemy_cl_per_floor` | **20** |
 | `enemy_cl_end_pct` | 0.86 |
 | `enemy_cl_jitter` | 1 |
@@ -168,7 +170,7 @@ If you change a live default, update this table in the same slice.
 | `xp_per_kill` | **22** |
 | `xp_kill_hp` / `xp_kill_def` | **11.0 / 11.0** |
 
-Roster HP lives in `balance_enemies.gd` (about 2× the pre-retune table). Floor-1 full clear of the budgeted spawn list targets combat level ~17.
+Roster HP lives in `balance_enemies.gd` (about 2× the pre-retune table). Floor-1 full clear of the budgeted spawn list targets combat level ~17. Enemy / area CL is also the dungeon drop item level.
 
 ## Progression and economy
 
@@ -183,10 +185,34 @@ Roster HP lives in `balance_enemies.gd` (about 2× the pre-retune table). Floor-
 | Food HoT total (X) | 40 HP | 40 | Delivered over Y seconds |
 | Food HoT duration (Y) | 8 s | 8 | Same food does not restack |
 | Potion instant heal (Z) | 100 % max HP | 100 | Instant; distinct from food |
-| Forge gold / ore / root / time | — | 18 / 6 / 2 / 2 | |
 | Snack cost / heal | 25 g | 25 / 22 | |
 | Artifact cost | — | 40 | |
 | Pawn gold | — | 8 | |
+
+## Anvil / affixes
+
+Fallbacks in `progress_forge.gd` / `gear_roll.gd` until these keys exist on `App.bal`. Root is not a forge material.
+
+| Key | Fallback | Role |
+|-----|----------|------|
+| `forge_gold` | 18 | Base gold |
+| `forge_gold_per_lv` | 3 | Extra gold per item level above 1 |
+| `forge_ore` | 6 | Base ore |
+| `forge_ore_per_lv` | 1 | Extra ore per item level |
+| `forge_wood` | 4 | Base wood (weapon + tool only) |
+| `forge_wood_per_lv` | 1 | Extra wood per item level |
+| `forge_blue_mult` | 1.45 | Blue rarity multiplier |
+| `forge_lock_mult` | 2.0 | Per-lock multiplier (`pow` by lock count) |
+| `forge_smith_disc` | 0.03 | Cost discount per smith level above 1 |
+| `forge_time` | 2.0 | Craft-beat base seconds |
+| `forge_time_min` / `forge_time_max` | 0.35 / 8.0 | Clamp |
+| `forge_time_step` | 1.15 | `base * step^(ilvl - smith)` |
+| `xp_smith` | 12 | Permanent smith XP on a successful hold write |
+| `affix_flat_base` | 2.0 | Flat affix base before level |
+| `affix_flat_per_lv` | 0.65 | Flat per item level |
+| `affix_pct_per_lv` | 0.004 | Percent affix per item level (plus 0.02 floor) |
+
+Roll rules (not keys): dungeon Quality `Random(0.5, 1.0)`, dungeon Luck `Random(0.75, 1.25)`, white Quality 0.5 and Luck 0.75, forge Luck `[max(0.75, peak-0.25), peak]`, forge Quality nudged by smith vs item level. Holds cap 3 per type.
 
 ## UI / feel targets
 

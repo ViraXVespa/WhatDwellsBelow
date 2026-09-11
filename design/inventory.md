@@ -2,8 +2,8 @@
 
 Status: binding design  
 Read when: changing bag, equipment, food, potions, artifacts, Extraction Gates, or the anvil  
-Code: `scripts/data/progress.gd`, `scripts/data/progress_gear.gd`, `scripts/data/progress_gear_req.gd`, `scripts/data/progress_extract.gd`, `scripts/data/progress_make.gd`, `scripts/data/gear_rules.gd`, `scripts/data/catalog.gd`, `scripts/ui/gear_board.gd`, `scripts/ui/gear_board_text.gd`, `scripts/ui/gear_board_act.gd`  
-See also: `design/gear-ui.md`, `design/skills.md`, `design/ui.md`, `design/hub.md`, `design/art-pipeline.md`
+Code: `scripts/data/progress.gd`, `scripts/data/progress_gear.gd`, `scripts/data/progress_gear_req.gd`, `scripts/data/progress_extract.gd`, `scripts/data/progress_make.gd`, `scripts/data/progress_forge.gd`, `scripts/data/affixes.gd`, `scripts/data/gear_roll.gd`, `scripts/data/gear_rules.gd`, `scripts/data/catalog.gd`, `scripts/ui/gear_board.gd`, `scripts/ui/gear_board_text.gd`, `scripts/ui/gear_board_act.gd`, `scripts/ui/gear_board_anvil.gd`, `scripts/ui/gear_board_anvil_view.gd`, `scripts/ui/gear_board_anvil_forge.gd`, `scripts/ui/gear_board_sub.gd`  
+See also: `design/gear-ui.md`, `design/skills.md`, `design/ui.md`, `design/hub.md`, `design/tunables.md`, `design/art-pipeline.md`, `design/handoff-anvil.md`
 
 ## Bag
 
@@ -12,17 +12,19 @@ See also: `design/gear-ui.md`, `design/skills.md`, `design/ui.md`, `design/hub.m
 
 ## Equipment slots
 
-- Weapon — required; cannot be emptied, dropped, or destroyed
-- Tool (pickaxe **or** hatchet — only one kind may be selected per run at loadout and is locked for the entire run). Required; cannot be emptied, dropped, or destroyed
+- Weapon — required; cannot be emptied, dropped, or destroyed. Types in this slot: Great Axe, Staff, Longbow.
+- Tool (pickaxe **or** hatchet — only one kind may be selected per run at loadout and is locked for the entire run). Required; cannot be emptied, dropped, or destroyed.
 - Potion — dedicated charged equipment slot (not a stack)
 - Food — dedicated quick-use slot; maximum 20 of one food type may be brought into a run
 - Head
 - Body
 - Legs
 
+Item level applies to every equipment slot. Potion and food item-level details are deferred.
+
 Food discovered inside the dungeon MUST be equipped to be used with the quick button, but may also be consumed directly from the inventory UI. Potion and food have distinct visual and audio feedback when used.
 
-Shared pause / loadout presentation is specified in `design/gear-ui.md`.
+Shared pause / loadout / anvil presentation is specified in `design/gear-ui.md`.
 
 ## Food vs potion (locked distinction)
 
@@ -39,23 +41,100 @@ Shared pause / loadout presentation is specified in `design/gear-ui.md`.
 - Blue items have improved stats over green items and are obtainable only from bosses (Floor Guardians and Gate Master).
 - Stats take effect immediately.
 - Weapons and tools require paper-doll **overlay layers** composited onto shared unarmed body animations. Do not require a full baked character animation set per weapon. Armor and other gear may remain stats-only.
-- The player may maintain up to three forged “holds” per equipment slot.
+- The player may maintain up to three forged **holds per type per slot**. Great Axe holds do not share a cap with Staff holds. Pickaxe and hatchet are separate.
 - Forged holds always return to Placeholdia on death or “Dispel”, even if the item was dropped on the floor.
 - All unextracted resources and any non-forged items still in the bag are lost on death or “Dispel”.
 - Weapon and tool MUST remain equipped at all times.
 
+## Item level
+
+- Every piece of equipment has an item level that scales its stats.
+- Dungeon drops: item level equals the combat level of the enemy that dropped it, or the area combat level if there is no specific enemy.
+- Forged pieces: item level is a player-configured option. It changes potential stats and forge cost. The stepper is clamped to the highest item level already analyzed for that type.
+- Higher rarity (white → green → blue) raises the base value of each affix before quality and luck.
+
+## Affixes
+
+Affixes live in `scripts/data/affixes.gd` as a data table so new ids can be added later without rewriting roll code.
+
+**Primary (implicit, always present)**
+
+| Slot | Primary |
+|------|---------|
+| Weapon | Damage |
+| Head / body / legs | Defense |
+| Tool | Gather Speed |
+
+**Combat bonus pool** (weapons and armor): Defense, Damage, Health, Crit Chance, Crit Damage, Movement Speed, Attack Speed, Attack Range, Health on Hit, Health on Kill.
+
+**Tool bonus pool** (non-combat): Gather Power, Yield Chance. Expand this list in `affixes.gd` when new gather traits are invented.
+
+Rules:
+
+- No duplicate affix id on the same item.
+- Damage or Defense MAY roll as a bonus affix even when it is already the primary. That is not a duplicate.
+- White: primary only. No bonus rolls. Quality is fixed at 0.5. Luck is fixed at 0.75. Whites are not part of Analyze / Forge.
+- Green: primary plus 1 bonus from the slot family pool.
+- Blue: primary plus 2 bonuses from the slot family pool.
+- Values are rolled, not stamped as identical set stats. Two greens of the same template MUST be allowed to differ.
+- Dungeon roll: `{base(level, rarity)} * Quality * Luck` where Quality is `Random(0.5, 1.0)` and Luck is `Random(0.75, 1.25)`.
+- Percent affixes keep fractional values. Flat affixes may show as ints when they land on a whole number.
+- Combat reads `dmg`, `def`, `hp`, `crit_chance`, `crit_dmg`, `move_spd`, `atk_spd`, `atk_range`, `hp_on_hit`, `hp_on_kill`. Tools read `gather_spd`, `gather_pow`, `yield_chance`.
+
+## Analyze
+
+- The only analyzable pieces are **AT RISK** green or blue items (bank or unforged kit that would be lost on death / Dispel).
+- Holds MUST NOT appear in the Analyze list and MUST NOT be analyzable.
+- Starters, whites, artifacts, potions, and food MUST NOT be analyzable.
+- Artifacts are dungeon-only. They are not AT RISK and need no AT RISK tag.
+- Analyze is one confirm: open slot → pick piece → confirm → piece is destroyed and the book updates. A second open-and-pick pass is a bug.
+- Analyzing permanently unlocks, for that **type and rarity**:
+  - the piece’s item level (book keeps the max)
+  - each stat-modifier category on the piece
+  - the maximum luck seen on those modifiers
+- Whites are never manually analyzed. If a white with a higher item level than the current starter of that template is extracted, raise the starter’s item level and matching stats.
+
+## Duplicates (auto-analyze on extract)
+
+A mailed green/blue piece is a **duplicate** only when all of the following are true:
+
+- Its item level is **not greater than** the highest analyzed item level of that type (any rarity).
+- Every affix on it already exists in the book for that type **and rarity**.
+- None of its per-affix luck rolls **beat** the book luck for that affix (incoming luck is not greater than stored luck). Use `>=` on the book side: if the book already has luck greater than or equal to this piece, that affix is not new.
+
+Duplicates convert to smithing XP. They do not enter the bank as a second copy.
+
+## Forge
+
+- The player picks rarity (green or blue). A rarity is available only after at least one piece of that type+rarity has been analyzed.
+- Weapon and tool slots show a **type selector** in the same submenu (Great Axe / Staff / Longbow, Pickaxe / Hatchet). Armor slots have one type and skip the row.
+- Item level is a stepper from 1 to the max analyzed level for that type.
+- Output luck uses the analyzed peak for that type+rarity: `min = max(0.75, peak - 0.25)`, `max = peak`.
+- Quality still starts as `Random(0.5, 1.0)`, then is nudged up if smithing level is at or above the configured item level, and down if smithing is below it.
+- By default the bonus pool is every affix already analyzed for that type+rarity (plus Damage / Defense as allowed extras). The player may **lock** analyzed traits only. Green: 1 lock. Blue: 2 locks. A lock consumes one bonus slot and multiplies cost.
+- Cost: armor is gold + ore. Weapons and tools are gold + ore + wood. No root. Locks raise the bill sharply. Smithing level applies a small discount.
+- Duration is a short craft beat scaled by smithing level vs the item level being forged.
+- Materials spend from carried gold/ore/wood first, then the bank.
+- If the hold cap for that type has a free slot, the new piece becomes a hold.
+- If the cap is full, **keep the old holds**. The player picks which hold to replace, or discards the new roll. Discard does not refund materials.
+- Re-forge always produces a new roll so the player can keep whichever piece has the better stats.
+
 ## White items and starters
 
+- White is starter-only. It has no role in the Analyze / Forge flow and MUST NOT appear as a forge remnant or white chest in the Forge UI.
 - A selectable starter (Great Axe, Lightning Staff, Longbow, Pickaxe, Hatchet, default potion) MUST NOT be stored in the bank and MUST NOT be forged.
 - If a starter is extracted / sent up, convert it to smithing XP. Do not create a second copy in storage.
-- A white item that is not already a starter becomes a starter the first time it is sent up, without an anvil step. Later extracts of that template convert to smithing XP instead of entering storage.
+- A white item that is not already a starter becomes a starter the first time it is sent up, without an anvil step. Later extracts of that template convert to smithing XP, unless the new white has a higher item level — then the starter’s level is raised.
 - Unequipping in Placeholdia MUST NOT treat the piece as a world drop and MUST NOT convert it to smithing XP.
+- Stale saves that still contain white remnants in anvil lists MUST be ignored by Analyze / Forge filters.
 
 ## Where options come from
 
 - **Dungeon inventory:** equipped piece (if any) plus bag items of that slot. No bank, holds, or extra starters.
 - **Placeholdia inventory and Floor Crystal loadout:** equipped piece, built-in starters, unlocked starters, holds, then non-white bank items. White bank copies are omitted so they cannot duplicate a starter.
 - Bank pieces and other unforged kit taken below are shown as **AT RISK** (lost on death or Dispel unless mailed). Holds show **HOLD**.
+- **Anvil Analyze:** AT RISK green/blue for that slot only. Footer does not list holds.
+- **Anvil Forge:** configurator for types already in `forge_book`. Footer does not list every remnant the player has ever analyzed.
 
 ## Artifacts and collections
 
@@ -77,6 +156,7 @@ Shared pause / loadout presentation is specified in `design/gear-ui.md`.
 - The interface MUST present a clear list of items that can be sent back to the surface.
 - Once extracted, items and gold are safe.
 - Three Extraction Gates per floor. Any gate can mail any extractable goods. Each gate is one-use after a visit that mailed something.
+- Duplicate green/blue extracts grant smithing XP instead of another bank copy.
 
 ## Vendor restock
 
@@ -102,3 +182,5 @@ Pause inventory uses a 7-column bag grid and shows gold / ore / wood / cap.
 ## Live snapshot — required slots
 
 `Gear.ensure_required_slots` runs after new-progress `reset_meta`, save `from_meta`, and recap `lose_unextracted`. An empty or invalid weapon or tool slot takes the selected hold when `hold_pick` is in range for that slot; otherwise it takes the current starter (`pick_weapon` / `tool_type`). Head, body, legs, potion, and food are not filled by this path. `begin_run_loadout` uses the same weapon/tool rule so hub and dungeon match.
+
+Forge ledger lives on `App.prog.forge_book`, keyed `slot:type:rarity`. Legacy `analyzed` remnants migrate into that book once and then clear.

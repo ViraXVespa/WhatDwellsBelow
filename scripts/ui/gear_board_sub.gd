@@ -6,6 +6,8 @@ const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
+const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const ForgeUI := preload("res://scripts/ui/gear_board_anvil_forge.gd")
 
 
 static func _act():
@@ -66,12 +68,15 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	if _is_anvil(ui):
 		if str(ui.get("anvil_tab")) == "forge":
 			head = "Forge  " + str(Fmt.NAMES.get(slot, slot))
-			blurb = "Pick analyzed remains or a hold."
+			blurb = "Set type, rarity, level, and locks."
 		else:
 			head = "Analyze  " + str(Fmt.NAMES.get(slot, slot))
-			blurb = "Analyze DESTROYS the piece. Remains wait on the Forge tab."
+			blurb = "Analyze DESTROYS the piece and unlocks it for forging."
 	box.add_child(ThemeS.lab(head, 22, Color(0.95, 0.82, 0.5)))
 	box.add_child(ThemeS.lab(blurb, 16, Color(0.8, 0.74, 0.64)))
+	if _is_anvil(ui) and str(ui.get("anvil_tab")) == "forge":
+		_open_forge(ui, box, slot)
+		return
 	var first: Button = null
 	var rows: Array
 	if _is_anvil(ui):
@@ -79,10 +84,8 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	else:
 		rows = Text.options_for(slot)
 	if rows.is_empty():
-		if _is_anvil(ui) and str(ui.get("anvil_tab")) == "forge":
-			box.add_child(ThemeS.lab("No remains or holds for this slot.", 18, Color(0.78, 0.74, 0.66)))
-		elif _is_anvil(ui):
-			box.add_child(ThemeS.lab("Nothing forgeable here. Starters stay off this list.", 18, Color(0.78, 0.74, 0.66)))
+		if _is_anvil(ui):
+			box.add_child(ThemeS.lab("No AT RISK pieces for this slot.", 18, Color(0.78, 0.74, 0.66)))
 		else:
 			box.add_child(ThemeS.lab("Nothing else for this slot.", 18, Color(0.78, 0.74, 0.66)))
 	var grid := HBoxContainer.new()
@@ -98,7 +101,6 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 		b.text = ""
 		b.custom_minimum_size = Vector2(72, 72)
 		b.focus_mode = Control.FOCUS_ALL
-		b.disabled = false
 		b.icon = Icons.tex_for_item(it)
 		b.expand_icon = true
 		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -112,6 +114,19 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 		opts.append(b)
 		if first == null:
 			first = b
+	if _is_anvil(ui):
+		_add_strip(box, [
+			{"action": "ui_accept", "verb": "analyze", "gap": true},
+			{"action": "ui_cancel", "verb": "close", "gap": true},
+		])
+		if first == null:
+			ui.focus_btn = null
+			return
+		ui.inv_sel = str(first.get_meta("inv_key", "slot:" + slot))
+		ui.focus_btn = first
+		first.grab_focus()
+		Board.refresh(ui)
+		return
 	var back := Button.new()
 	back.text = "Back"
 	back.custom_minimum_size = Vector2(0, 40)
@@ -125,9 +140,8 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 		Board.hide_tip(ui)
 	)
 	for b: Button in opts:
-		var key := str(b.get_meta("inv_key", ""))
 		b.focus_entered.connect(func():
-			ui.inv_sel = key
+			ui.inv_sel = str(b.get_meta("inv_key", ""))
 			back.focus_neighbor_top = b.get_path()
 			Board._arm_tip(ui)
 			Board.refresh(ui)
@@ -148,6 +162,22 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 			if is_instance_valid(ui):
 				Board.place_tip(ui)
 		, CONNECT_ONE_SHOT)
+
+
+static func _open_forge(ui: CanvasLayer, box: Control, slot: String) -> void:
+	var first: Control = ForgeUI.fill(ui, box, slot)
+	_add_strip(box, ForgeUI.hint_parts(ui))
+	if first:
+		ui.focus_btn = first if first is Button else null
+		first.grab_focus()
+	Board.refresh(ui)
+
+
+static func _add_strip(box: Control, parts: Array) -> void:
+	var strip := HBoxContainer.new()
+	strip.add_theme_constant_override("separation", 16)
+	PromptView.fill(strip, parts)
+	box.add_child(strip)
 
 
 static func _wire_opt_focus(opts: Array[Button], back: Button) -> void:

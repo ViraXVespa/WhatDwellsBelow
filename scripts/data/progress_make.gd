@@ -1,37 +1,42 @@
-extends Object
+﻿extends Object
 
 const CatalogS := preload("res://scripts/data/catalog.gd")
+const Roll := preload("res://scripts/data/gear_roll.gd")
 
 
-static func make_weapon(p: Object, wpn: String, rarity: String) -> Dictionary:
+static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:
 	var n: String = "Great Axe"
 	if wpn == "staff":
 		n = "Lightning Staff"
 	elif wpn == "longbow":
 		n = "Longbow"
-	var dmg: int = int(App.bal.gear_white_dmg)
-	if rarity == "green":
-		dmg = int(App.bal.gear_green_dmg)
-	elif rarity == "blue":
-		dmg = int(App.bal.gear_blue_dmg)
-	return item(p, "weapon", n, {"slot": "weapon", "weapon": wpn, "rarity": rarity, "dmg": dmg, "desc": "%s %s. +%d damage." % [rarity.capitalize(), n, dmg]})
+	var it: Dictionary = item(p, "weapon", n, {
+		"slot": "weapon",
+		"weapon": wpn,
+		"rarity": rarity,
+		"desc": "%s %s." % [rarity.capitalize(), n],
+	})
+	return _roll_onto(it, "weapon", wpn, rarity, ilvl)
 
 
-static func make_tool(p: Object, kind: String) -> Dictionary:
+static func make_tool(p: Object, kind: String, rarity: String = "white", ilvl: int = 0) -> Dictionary:
 	var n: String = "Pickaxe" if kind == "pickaxe" else "Hatchet"
-	return item(p, "tool", n, {"slot": "tool", "tool": kind, "rarity": "white", "desc": "Run tool. Locked to %s." % kind})
+	var it: Dictionary = item(p, "tool", n, {
+		"slot": "tool",
+		"tool": kind,
+		"rarity": rarity,
+		"desc": "Run tool. Locked to %s." % kind,
+	})
+	return _roll_onto(it, "tool", kind, rarity, ilvl)
 
 
-static func make_armor(p: Object, slot: String, rarity: String) -> Dictionary:
-	var def: int = int(App.bal.gear_white_def)
-	var hp: int = int(App.bal.gear_white_hp)
-	if rarity == "green":
-		def = int(App.bal.gear_green_def)
-		hp = int(App.bal.gear_green_hp)
-	elif rarity == "blue":
-		def = int(App.bal.gear_blue_def)
-		hp = int(App.bal.gear_blue_hp)
-	return item(p, slot, "%s %s" % [rarity.capitalize(), slot.capitalize()], {"slot": slot, "rarity": rarity, "def": def, "hp": hp, "desc": "+%d def, +%d HP." % [def, hp]})
+static func make_armor(p: Object, slot: String, rarity: String, ilvl: int = 0) -> Dictionary:
+	var it: Dictionary = item(p, slot, "%s %s" % [rarity.capitalize(), slot.capitalize()], {
+		"slot": slot,
+		"rarity": rarity,
+		"desc": "%s %s." % [rarity.capitalize(), slot.capitalize()],
+	})
+	return _roll_onto(it, slot, slot, rarity, ilvl)
 
 
 static func make_potion(p: Object, n: int) -> Dictionary:
@@ -78,6 +83,9 @@ static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Di
 		"dmg": extra.get("dmg", 0),
 		"def": extra.get("def", 0),
 		"hp": extra.get("hp", 0),
+		"ilvl": int(extra.get("ilvl", 1)),
+		"quality": float(extra.get("quality", 1.0)),
+		"affixes": extra.get("affixes", []),
 		"extract": extra.get("extract", kind != "artifact"),
 		"hold": false,
 		"charges": int(extra.get("charges", 0)),
@@ -93,12 +101,31 @@ static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Di
 static func starter(p: Object, slot: String) -> Dictionary:
 	match slot:
 		"weapon":
-			return make_weapon(p, "great_axe", "white")
+			return make_weapon(p, "great_axe", "white", 1)
 		"tool":
-			return make_tool(p, p.tool_type)
+			return make_tool(p, p.tool_type, "white", 1)
 		"potion":
 			return make_potion(p, 2)
 		"food":
 			return make_food(p, "ration", 5)
 		_:
 			return {}
+
+
+static func _roll_onto(it: Dictionary, slot: String, type_id: String, rarity: String, ilvl: int) -> Dictionary:
+	var lv: int = ilvl if ilvl > 0 else _area_ilvl()
+	return Roll.stamp(it, Roll.roll_dungeon(slot, type_id, rarity, lv))
+
+
+static func _area_ilvl() -> int:
+	var floor_n: int = 1
+	if App.get("floor_n") != null:
+		floor_n = maxi(1, int(App.floor_n))
+	var per: float = 5.0
+	var pct: float = 0.86
+	if App.bal != null:
+		if App.bal.get("enemy_cl_per_floor") != null:
+			per = float(App.bal.enemy_cl_per_floor)
+		if App.bal.get("enemy_cl_end_pct") != null:
+			pct = float(App.bal.enemy_cl_end_pct)
+	return maxi(1, int(round(float(floor_n) * per * pct)))

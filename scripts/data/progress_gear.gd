@@ -1,20 +1,20 @@
-extends Object
+﻿extends Object
 
 const Make := preload("res://scripts/data/progress_make.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
 const Req := preload("res://scripts/data/progress_gear_req.gd")
 
 
-static func make_weapon(p: Object, wpn: String, rarity: String) -> Dictionary:
-	return Make.make_weapon(p, wpn, rarity)
+static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:
+	return Make.make_weapon(p, wpn, rarity, ilvl)
 
 
-static func make_tool(p: Object, kind: String) -> Dictionary:
-	return Make.make_tool(p, kind)
+static func make_tool(p: Object, kind: String, rarity := "white", ilvl: int = 0) -> Dictionary:
+	return Make.make_tool(p, kind, rarity, ilvl)
 
 
-static func make_armor(p: Object, slot: String, rarity: String) -> Dictionary:
-	return Make.make_armor(p, slot, rarity)
+static func make_armor(p: Object, slot: String, rarity: String, ilvl: int = 0) -> Dictionary:
+	return Make.make_armor(p, slot, rarity, ilvl)
 
 
 static func make_potion(p: Object, n: int) -> Dictionary:
@@ -354,3 +354,61 @@ static func tick_food(p: Object, delta: float) -> void:
 		pl.heal(step)
 	if p.food_t <= 0.0 or p.food_left <= 0.0:
 		p.clear_food()
+
+
+static func dmg(p: Object) -> int:
+	return int(stat(p, "dmg"))
+
+
+static func def(p: Object) -> int:
+	return int(stat(p, "def"))
+
+
+static func hp(p: Object) -> int:
+	return int(stat(p, "hp"))
+
+
+static func stat(p: Object, key: String) -> float:
+	var n := 0.0
+	for s: String in ["weapon", "tool", "head", "body", "legs"]:
+		var it: Dictionary = p.slots.get(s, {})
+		if it.is_empty():
+			continue
+		n += float(it.get(key, 0.0))
+		if key == "crit_chance":
+			n += float(it.get("crit", 0.0))
+		var raw: Variant = it.get("affixes", [])
+		if raw is Array:
+			for row: Variant in raw:
+				if row is Dictionary and str(row.get("id", "")) == key:
+					n += float(row.get("value", 0.0))
+	var sets: Dictionary = set_stats(p)
+	if key == "crit_chance":
+		n += float(sets.get("crit", 0.0))
+	elif key == "move_spd":
+		n += float(sets.get("spd", 0.0))
+	elif key == "gather_spd" or key == "yield_chance":
+		n += float(sets.get("gather", 0.0))
+	elif sets.has(key):
+		n += float(sets.get(key, 0.0))
+	return n
+
+
+static func tool_quality(p: Object) -> float:
+	return load("res://scripts/data/progress_combat.gd").tool_quality(p)
+
+
+static func set_counts(p: Object) -> Dictionary:
+	return load("res://scripts/data/progress_combat.gd").set_counts(p)
+
+
+static func set_stats(p: Object) -> Dictionary:
+	return load("res://scripts/data/progress_combat.gd").set_stats(p)
+
+
+static func set_bonus_text(p: Object, sid: String) -> String:
+	return load("res://scripts/data/progress_combat.gd").set_bonus_text(p, sid)
+
+
+static func sync_artifacts(p: Object) -> void:
+	load("res://scripts/data/progress_combat.gd").sync_artifacts(p)

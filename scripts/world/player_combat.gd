@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 const PlayerHit := preload("res://scripts/combat/player_hit.gd")
 
@@ -101,6 +101,7 @@ static func basic_duration() -> float:
 		rate = App.bal.staff_rate
 	elif App.weapon == "longbow":
 		rate = App.bal.bow_rate
+	rate *= 1.0 + _gear("atk_spd")
 	return 1.0 / maxf(0.2, rate)
 
 
@@ -121,16 +122,17 @@ static func update_aim_line(p: CharacterBody3D) -> void:
 	if App.bal.aim_line_use_weapon_range:
 		length = p._weapon_reach()
 	if App.weapon == "longbow":
-		length = App.bal.bow_range
+		length = App.bal.bow_range + _gear("atk_range")
 	p.aim_line.update_line(p.global_position, p.aim_dir, length, App.bal.aim_line_width, App.bal.aim_line_opacity, on)
 
 
 static func weapon_reach() -> float:
+	var extra: float = _gear("atk_range")
 	if App.weapon == "great_axe":
-		return maxf(App.bal.axe_range, App.bal.slam_radius)
+		return maxf(App.bal.axe_range, App.bal.slam_radius) + extra
 	if App.weapon == "staff":
-		return maxf(App.bal.staff_range, App.bal.staff_special_radius)
-	return maxf(App.bal.bow_range, App.bal.bow_special_range)
+		return maxf(App.bal.staff_range, App.bal.staff_special_radius) + extra
+	return maxf(App.bal.bow_range, App.bal.bow_special_range) + extra
 
 
 static func update_aura(p: CharacterBody3D, delta: float) -> void:
@@ -145,3 +147,9 @@ static func update_aura(p: CharacterBody3D, delta: float) -> void:
 			p.aura.texture = p.body.texture
 			p.aura.pixel_size = p.body.pixel_size * 1.15
 			p.aura.position.y = p.body.position.y
+
+
+static func _gear(key: String) -> float:
+	if App.prog == null:
+		return 0.0
+	return App.prog.gear_stat(key)

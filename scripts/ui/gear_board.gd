@@ -28,6 +28,16 @@ static func ensure_host(ui: CanvasLayer) -> void:
 		ui.set("inv_sel", "slot:weapon")
 	if str(ui.inv_sel) == "":
 		ui.inv_sel = "slot:weapon"
+	if ui.get("forge_type") == null:
+		ui.set("forge_type", "")
+	if ui.get("forge_rarity") == null:
+		ui.set("forge_rarity", "green")
+	if ui.get("forge_ilvl") == null:
+		ui.set("forge_ilvl", 1)
+	if ui.get("forge_locks") == null:
+		ui.set("forge_locks", PackedStringArray())
+	if ui.get("forge_new") == null:
+		ui.set("forge_new", {})
 	if not ui.has_meta("gear_hover"):
 		ui.set_meta("gear_hover", false)
 	if not ui.has_meta("gear_tip_ready"):
@@ -195,11 +205,16 @@ static func slot_btn(ui: CanvasLayer, slot: String) -> Button:
 	var key := "slot:" + slot
 	b.set_meta("inv_key", key)
 	_watch_hover(ui, b, key)
-	b.pressed.connect(func():
-		ui.inv_sel = key
-		_arm_tip(ui)
-		Act.open_sub(ui, slot)
-	)
+	var blocked := str(ui.get("gear_mode")) == "anvil" and (slot == "potion" or slot == "food")
+	if blocked:
+		b.disabled = true
+		b.focus_mode = Control.FOCUS_NONE
+	else:
+		b.pressed.connect(func():
+			ui.inv_sel = key
+			_arm_tip(ui)
+			Act.open_sub(ui, slot)
+		)
 	b.focus_entered.connect(func():
 		if _on(ui, "gear_sub"):
 			return

@@ -1,4 +1,4 @@
-# Formatting helpers for gear items
+﻿# Formatting helpers for gear items
 
 const NAMES := {
 	"weapon": "Weapon",
@@ -30,17 +30,17 @@ static func item_color(it: Dictionary) -> Color:
 static func is_risk(it: Dictionary) -> bool:
 	if it.is_empty():
 		return false
-	if bool(it.get("hold", false)):
+	if bool(it.get("hold", false)) or str(it.get("kit_src", "")) == "hold":
 		return false
 	if str(it.get("kit_src", "")) == "starter":
 		return false
-	if str(it.get("kit_src", "")) == "hold":
-		return false
 	if str(it.get("kind", "")) == "artifact":
-		return true
-	if str(it.get("kit_src", "")) == "bank":
-		return true
-	return not bool(it.get("hold", false)) and str(it.get("kit_src", "")) != ""
+		return false
+	if str(it.get("slot", "")) == "potion" or str(it.get("slot", "")) == "food":
+		return false
+	if str(it.get("rarity", "white")) == "white":
+		return false
+	return true
 
 
 static func risk_mark(it: Dictionary, loadout: bool) -> String:
