@@ -3,6 +3,39 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.7",
+			"points": [
+				{
+					"text": "Anvil Analyze only accepts AT RISK green and blue pieces and destroys them in one confirm"
+				},
+				{
+					"text": "Analyze writes a forge book per type and rarity: item level, traits, and peak luck"
+				},
+				{
+					"text": "Forge is a configurator: type, rarity, item level, and optional trait locks"
+				},
+				{
+					"text": "Holds cap is three per type per slot; full cap keeps the old holds so you can replace or discard"
+				},
+				{
+					"text": "Whites stay starter-only; they do not appear on Analyze or Forge"
+				},
+				{
+					"text": "Duplicate extracts convert to smithing XP"
+				},
+				{
+					"text": "Forge spends gold and ore, plus wood on weapons and tools"
+				},
+				{
+					"text": "Gear can roll affixes (crit split, attack speed / range, health on hit / kill, gather traits)"
+				},
+				{
+					"text": "Anvil tabs highlight like Pause tabs; potion and food slots are disabled there"
+				}
+			],
+			"summary": "The Placeholdia anvil now analyzes AT RISK gear into a unlock book and forges new holds from that book instead of listing every remnant."
+		},
+		{
 			"label": "0.3.5",
 			"points": [
 				{
