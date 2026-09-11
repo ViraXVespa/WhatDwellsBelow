@@ -4,6 +4,7 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const View := preload("res://scripts/ui/split_menu_view.gd")
 const Binds := preload("res://scripts/input/binds.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
+const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 
 const ROWS: Array = [
 	{"id": "move_up", "label": "Move up", "kb_only": true},
@@ -26,6 +27,7 @@ var host: Node
 var pool := "kb"
 var capture_action := ""
 var capture_slot := -1
+var _pool_stick_armed := true
 
 
 static func build(settings: Node) -> void:
@@ -50,11 +52,17 @@ func rebuild() -> void:
 	View.clear_page(host)
 	_sel_row()
 	var reset: Button = ThemeS.btn("Reset Controls", func() -> void:
-		Binds.reset_pool(pool)
-		App.save_now()
-		rebuild()
-		View.apply_col(host)
-		View.focus_col(host)
+		var ui: Node = host.get("pause") as Node if host else null
+		if ui == null:
+			ui = host
+		var which: String = "Keyboard" if pool == "kb" else "Gamepad"
+		Confirm.open(ui, "Reset Controls", "Restore default " + which + " controls?", func() -> void:
+			Binds.reset_pool(pool)
+			App.save_now()
+			rebuild()
+			View.apply_col(host)
+			View.focus_col(host)
+		)
 	)
 	View.add_page_btn(host, reset)
 	for raw: Variant in ROWS:
@@ -72,12 +80,34 @@ func rebuild() -> void:
 func _sel_row() -> void:
 	var lab: String = "<  Keyboard  >" if pool == "kb" else "<  Gamepad  >"
 	var b: Button = ThemeS.btn(lab, func() -> void: _cycle_pool(1))
-	b.gui_input.connect(func(event: InputEvent) -> void:
-		if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
-			_cycle_pool(1)
-			b.get_viewport().set_input_as_handled()
-	)
+	b.gui_input.connect(_on_sel_input)
 	View.add_page_btn(host, b)
+
+
+func _on_sel_input(event: InputEvent) -> void:
+	if event is InputEventJoypadMotion:
+		_sel_stick(event as InputEventJoypadMotion)
+		return
+	if event.is_echo() or not event.is_pressed():
+		return
+	if not (event is InputEventKey or event is InputEventJoypadButton):
+		return
+	if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
+		_cycle_pool(1)
+		get_viewport().set_input_as_handled()
+
+
+func _sel_stick(motion: InputEventJoypadMotion) -> void:
+	if motion.axis != JOY_AXIS_LEFT_X:
+		return
+	if absf(motion.axis_value) < 0.6:
+		_pool_stick_armed = true
+		return
+	if not _pool_stick_armed:
+		return
+	_pool_stick_armed = false
+	_cycle_pool(1)
+	get_viewport().set_input_as_handled()
 
 
 func _cycle_pool(_dir: int) -> void:

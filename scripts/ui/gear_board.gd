@@ -6,10 +6,10 @@ const Act := preload("res://scripts/ui/gear_board_act.gd")
 const Floor := preload("res://scripts/ui/gear_board_floor.gd")
 const Tip := preload("res://scripts/ui/gear_board_tip.gd")
 const Build := preload("res://scripts/ui/gear_board_build.gd")
-const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 static var pending_kit: Dictionary = {}
+
 
 static func ensure_host(ui: CanvasLayer) -> void:
 	if ui.get("gear_stat_page") == null:
@@ -36,24 +36,30 @@ static func ensure_host(ui: CanvasLayer) -> void:
 		ui.set_meta("gear_booting", false)
 	PromptView.ensure_bar(ui)
 
+
 static func is_loadout(ui: CanvasLayer) -> bool:
 	return str(ui.get("gear_mode")) == "loadout"
 
+
 static func _on(ui: CanvasLayer, key: String) -> bool:
 	return Tip.on(ui, key)
+
 
 static func _flag(ui: CanvasLayer, key: String, v: bool) -> void:
 	ui.set_meta(key, v)
 	if ui.get(key) != null:
 		ui.set(key, v)
 
+
 static func _arm_tip(ui: CanvasLayer) -> void:
 	_flag(ui, "gear_tip_ready", true)
+
 
 static func _slot_key(n: Node) -> String:
 	if n == null or not n.has_meta("inv_key"):
 		return ""
 	return str(n.get_meta("inv_key"))
+
 
 static func tip_from_focus(ui: CanvasLayer) -> void:
 	var tree := ui.get_tree()
@@ -69,6 +75,7 @@ static func tip_from_focus(ui: CanvasLayer) -> void:
 			_arm_tip(ui)
 			place_tip(ui)
 	, CONNECT_ONE_SHOT)
+
 
 static func _watch_hover(ui: CanvasLayer, b: Control, key: String) -> void:
 	b.mouse_entered.connect(func():
@@ -91,14 +98,18 @@ static func _watch_hover(ui: CanvasLayer, b: Control, key: String) -> void:
 		, CONNECT_ONE_SHOT)
 	)
 
+
 static func hide_tip(ui: CanvasLayer) -> void:
 	Tip.hide_tip(ui)
+
 
 static func ensure_tip(ui: CanvasLayer) -> void:
 	Tip.ensure_tip(ui)
 
+
 static func place_tip(ui: CanvasLayer) -> void:
 	Tip.place_tip(ui)
+
 
 static func _paint_hint(ui: CanvasLayer) -> void:
 	var extra: Array = []
@@ -107,6 +118,7 @@ static func _paint_hint(ui: CanvasLayer) -> void:
 	else:
 		extra = Text.hint_parts(ui)
 	PromptView.footer(ui, extra)
+
 
 static func build(ui: CanvasLayer, mode: String) -> void:
 	ensure_host(ui)
@@ -164,6 +176,7 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 				_flag(ui, "gear_booting", false)
 		, CONNECT_ONE_SHOT)
 
+
 static func _slot_col(ui: CanvasLayer, slots: Array, mid: bool) -> VBoxContainer:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 8)
@@ -175,6 +188,7 @@ static func _slot_col(ui: CanvasLayer, slots: Array, mid: bool) -> VBoxContainer
 		if ui.focus_btn == null and str(key) == "weapon":
 			ui.focus_btn = b
 	return col
+
 
 static func slot_btn(ui: CanvasLayer, slot: String) -> Button:
 	var b := Build.build_slot_btn(ui, slot)
@@ -197,8 +211,10 @@ static func slot_btn(ui: CanvasLayer, slot: String) -> Button:
 	)
 	return b
 
+
 static func stats_card(ui: CanvasLayer) -> PanelContainer:
 	return Build.build_stats_card(ui)
+
 
 static func bag_grid(ui: CanvasLayer) -> void:
 	ui.box.add_child(ThemeS.lab("Bag", 20, Color(0.88, 0.82, 0.7)))
@@ -213,6 +229,7 @@ static func bag_grid(ui: CanvasLayer) -> void:
 			it = App.prog.bag[i]
 		grid.add_child(bag_cell(ui, it))
 	ui.box.add_child(grid)
+
 
 static func bag_cell(ui: CanvasLayer, it: Dictionary) -> Button:
 	var b := Build.build_bag_cell(ui, it)
@@ -237,6 +254,7 @@ static func bag_cell(ui: CanvasLayer, it: Dictionary) -> Button:
 		)
 	return b
 
+
 static func find_sel(ui: CanvasLayer) -> Control:
 	if str(ui.inv_sel) == "":
 		return null
@@ -255,6 +273,7 @@ static func find_sel(ui: CanvasLayer) -> Control:
 				return n as Control
 	return null
 
+
 static func refresh(ui: CanvasLayer) -> void:
 	if ui.get("gear_stats_title") != null and ui.gear_stats_title:
 		ui.gear_stats_title.text = Text.stats_title(ui)
@@ -262,25 +281,29 @@ static func refresh(ui: CanvasLayer) -> void:
 		ui.gear_stats.text = Text.stats_body(ui)
 	_paint_hint(ui)
 	if ui.get("gear_page_left") != null and ui.gear_page_left:
-		PromptView.fill(ui.gear_page_left, [{"action": Prompts.page_prev()}], 16, Color(0.72, 0.66, 0.52))
+		PromptView.fill(ui.gear_page_left, [{"page_prev": true}], 16, Color(0.72, 0.66, 0.52))
 	if ui.get("gear_page_right") != null and ui.gear_page_right:
-		PromptView.fill(ui.gear_page_right, [{"action": Prompts.page_next()}], 16, Color(0.72, 0.66, 0.52))
+		PromptView.fill(ui.gear_page_right, [{"page_next": true}], 16, Color(0.72, 0.66, 0.52))
 	Floor.sync(ui)
 	if _on(ui, "gear_tip_ready") or _on(ui, "gear_hover"):
 		place_tip(ui)
 	else:
 		hide_tip(ui)
 
+
 static func selected(ui: CanvasLayer) -> Dictionary:
 	return Text.selected(ui)
 
+
 static func selected_slot(ui: CanvasLayer) -> String:
 	return Text.selected_slot(ui)
+
 
 static func clear_sub(ui: CanvasLayer) -> void:
 	var old: Node = ui.get_node_or_null("gear_sub_panel")
 	if old:
 		old.queue_free()
+
 
 static func apply_pending() -> void:
 	if pending_kit.is_empty():

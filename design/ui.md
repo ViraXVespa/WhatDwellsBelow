@@ -95,13 +95,15 @@ Menu bindings are shared through `scripts/ui/menu_pad.gd` (`design/input.md`):
 - A / Enter confirms the focused control. A second A confirms a pending prompt.
 - B / Esc backs out of a nested layer (re-equip list, Settings detail column, pending prompt). At root, close the menu.
 - LB / RB (or `[` / `]`) cycle the three pause tabs. They MUST NOT page the inventory stats card.
-- **I** / D-pad Right jumps to the Inventory tab. No extra mobile well.
+- **I** / D-pad Right open pause on Inventory from gameplay only. They MUST NOT jump tabs while pause or any other menu is already open. In menus D-pad Right stays `ui_right`.
 
-Select / Back render in a footer strip at the bottom-right of the menu panel via `PromptView.footer`. Button captions stay verbs only.
+Select / Back render in a footer strip at the bottom-right of the menu panel via `PromptView.footer`. Button captions stay verbs only. Tab chips and gear page glyphs MUST follow the last-used scheme as soon as the scheme changes; do not wait for a tab change or a new focus owner.
+
+The current pause tab MUST read as selected at a glance: same lighter fill and brighter border as a hovered tab, but keep the darker tan label. Mouse over the already-selected tab uses a second, brighter hover so hover is still visible.
 
 Exactly three tabs, in this order, navigable with LB/RB or equivalent:
 1. Settings – default tab when pause opens. Shared two-column split (`split_menu.gd` + `split_menu_view.gd`). Left list, right page or leaf copy. Pages: Gameplay, Audio, Graphics, Controls. Leaves: Patreon, Dispel (dungeon) or Main Menu (Placeholdia / hub), Quit (hidden on Xbox). Leaf rows have no chevron; the right pane shows a short description and stays undimmed. Hover does not change an open submenu. Click a different page while detail is open switches to that page. Click the already-open page returns focus to the left list.
-2. Inventory – shared paper-doll gear board (`design/gear-ui.md`), 7-column bag grid, flyout tooltips, paged stats. Stats pages use **Q / LT** and **E / RT**. Use / consume / drop / equip as specified there, including mid-run weapon changes from the bag. Active artifact set bonuses appear on the Artifact sets stats page and in item flyouts. No extra Close row; B / Esc closes pause.
+2. Inventory – shared paper-doll gear board (`design/gear-ui.md`), 7-column bag grid, flyout tooltips, paged stats. Stats pages use **Q / LT** and **E / RT**. LMB / RMB never page the stats card. Use / consume / drop / equip as specified there, including mid-run weapon changes from the bag. Active artifact set bonuses appear on the Artifact sets stats page and in item flyouts. No extra Close row; B / Esc closes pause.
 3. Skills – list of the eleven skills with current level, XP bar to next level, and permanent XP total. Flyouts are right-aligned and MUST sit above the prompt footer when they would overlap it. No extra Close row.
 
 Settings pages MUST contain:
@@ -122,14 +124,15 @@ Graphics
 - Aim-line toggle and opacity slider
 
 Controls
-- Pool selector at the top (Keyboard / Gamepad). Changing it rebuilds the list for that pool.
-- Reset Controls, then gameplay binds only. Menu actions are not rebindable.
+- Pool selector at the top (Keyboard / Gamepad). It wraps both ways. D-pad / arrows are discrete; left-stick X switches once per push. Changing it rebuilds the list for that pool.
+- Reset Controls asks `confirm_dlg.gd` first, then restocks that pool only. Menu actions are not rebindable.
 - Two slots per action. Conflict inside the same pool swaps. Move / aim sticks are locked on gamepad. Look mode is pad-only. Move directions are keyboard-only.
 - Bind name left, glyphs right. Player-facing labels, not action ids.
 
 Leaves
 - Patreon opens the campaign URL in the system browser.
-- Dispel / Main Menu / Delete Save Data use `confirm_dlg.gd`. Quit does not.
+- Dispel / Main Menu / Delete Save Data / Reset Controls use `confirm_dlg.gd`. Quit does not.
+- Confirm dialogs carry their own Select + Back strip. B / Esc / Cancel closes the prompt and restores the control that opened it.
 
 There is no presentation-mode switcher. Archives is title-only (`design/archives.md`).
 
@@ -224,7 +227,8 @@ Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close 
 
 `hud.gd` facade plus `hud_view.gd` / `hud_act.gd`: strip top-left, minimap top-right, boss bar when near, toast, interact glyph row, look-mode cue under the minimap. Level string uses combat level and parenthetical style level.
 Pause Skills also shows run XP earned this descent.
-Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. Default tab is Settings (`pause_settings.gd`). Camera zoom and HUD scale write `App.set_zoom` / `App.set_hud_scale` and apply without a restart. Display mode writes `DisplayMode.cycle_desktop` or `DisplayMode.toggle_web_fullscreen` from Settings → Graphics. Alt+Enter also toggles display through `DisplayMode.handle_input`. Small windows multiply HUD chrome and Theme fonts by `UiText.applied()` from a saved text floor (debug slider, default 14). Sprite filter is Mipmaps / Anisotropic checkboxes through `App.set_sprite_filter`. Loadout opens focused on **Enter dungeon**.
+Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. Default tab is Settings (`pause_settings.gd`). The current tab uses hover-panel chrome and darker tan text. Camera zoom and HUD scale write `App.set_zoom` / `App.set_hud_scale` and apply without a restart. Display mode writes `DisplayMode.cycle_desktop` or `DisplayMode.toggle_web_fullscreen` from Settings → Graphics. Alt+Enter also toggles display through `DisplayMode.handle_input`. Small windows multiply HUD chrome and Theme fonts by `UiText.applied()` from a saved text floor (debug slider, default 14). Sprite filter is Mipmaps / Anisotropic checkboxes through `App.set_sprite_filter`. Loadout opens focused on **Enter dungeon**.
+`confirm_dlg.gd` restores prior focus on cancel and draws Select / Back on the dialog itself. `PromptView.pulse()` refreshes tab chips, gear page glyphs, and footers when `Pad.mode` flips.
 
 ## Live snapshot — web touch
 

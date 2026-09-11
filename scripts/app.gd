@@ -365,6 +365,7 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	Pad.note_event(event)
 	if Disp.handle_input(event):
 		get_viewport().set_input_as_handled()
 
@@ -375,7 +376,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		archive_cancel = true
 		get_viewport().set_input_as_handled()
 		return
-	if _in_world() and event.is_action_pressed("inventory"):
+	if _in_world() and not ui_open and event.is_action_pressed("inventory"):
 		if pause_menu and pause_menu.has_method("show_inventory"):
 			pause_menu.show_inventory()
 		get_viewport().set_input_as_handled()

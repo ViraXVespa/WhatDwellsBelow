@@ -28,24 +28,38 @@ static func note_event(event: InputEvent) -> void:
 	Look.note_event(event)
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
 		if Touch.wants_device():
-			mode = true
+			_set_mode(true)
 		return
 	if Touch.wants_device() and (event is InputEventMouseButton or event is InputEventMouseMotion):
 		return
 	if event is InputEventJoypadButton and event.pressed:
-		mode = true
+		_set_mode(true)
 		return
 	if event is InputEventJoypadMotion and absf((event as InputEventJoypadMotion).axis_value) >= 0.24:
-		mode = true
+		_set_mode(true)
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
-		mode = false
+		_set_mode(false)
 		return
 	if event is InputEventMouseButton and event.pressed:
-		mode = false
+		_set_mode(false)
 		return
 	if event is InputEventMouseMotion and (event as InputEventMouseMotion).relative.length() > 2.0:
-		mode = false
+		_set_mode(false)
+
+
+static func _set_mode(pad_on: bool) -> void:
+	if mode == pad_on:
+		return
+	mode = pad_on
+	_refresh_prompts()
+
+
+static func _refresh_prompts() -> void:
+	var Prompts = load("res://scripts/input/prompts.gd")
+	var PView = load("res://scripts/ui/prompt_view.gd")
+	if Prompts.dirty():
+		PView.pulse()
 
 
 static func wake_web(release_gui: bool = true) -> void:
@@ -161,11 +175,11 @@ static func tick() -> void:
 	Touch.tick()
 	Look.tick(_dt())
 	if Touch.active():
-		mode = true
+		_set_mode(true)
 	if stick(JOY_AXIS_LEFT_X, JOY_AXIS_LEFT_Y).length() >= 0.24:
-		mode = true
+		_set_mode(true)
 	elif stick(JOY_AXIS_RIGHT_X, JOY_AXIS_RIGHT_Y).length() >= 0.24:
-		mode = true
+		_set_mode(true)
 	edge.clear()
 	var names: Array = PAD.keys()
 	names.append_array(["attack", "special"])
@@ -182,7 +196,7 @@ static func tick() -> void:
 			elif PAD.has(key) and Input.is_joy_button_pressed(pid, PAD[key] as JoyButton):
 				from_pad = true
 			if from_pad:
-				mode = true
+				_set_mode(true)
 		if blocked(key) or eat_pause:
 			edge[key] = false
 		else:

@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot
 Read when: changing controls, menus, web export, or aim
-Code: `scripts/input/binds.gd`, `scripts/input/binds_pool.gd`, `scripts/ui/binds_page.gd`, `scripts/input/pad.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`, `scripts/input/prompts.gd`, `scripts/web_pad.gd`, `scripts/ui/touch_hud.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/prompt_view.gd`, `scripts/ui/fs_gate.gd`, `scripts/world/player_lock.gd`, `scripts/world/dungeon_map_act.gd`, `scripts/display_mode.gd`
+Code: `scripts/input/binds.gd`, `scripts/input/binds_pool.gd`, `scripts/ui/binds_page.gd`, `scripts/input/pad.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`, `scripts/input/prompts.gd`, `scripts/web_pad.gd`, `scripts/ui/touch_hud.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/prompt_view.gd`, `scripts/ui/confirm_dlg.gd`, `scripts/ui/fs_gate.gd`, `scripts/world/player_lock.gd`, `scripts/world/dungeon_map_act.gd`, `scripts/display_mode.gd`
 See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui.md`, `design/save-tech.md`
 
 ## Target platforms
@@ -25,7 +25,7 @@ See also: `design/camera.md`, `design/ui.md`, `design/debug.md`, `design/gear-ui
 - X: Gear drop on a gear board. In the secret Animation Browser, X toggles play/pause and MUST NOT drop gear.
 - D-pad Up: Use equipped potion
 - D-pad Left: Use equipped food
-- D-pad Right: Open pause on the Inventory tab (or jump to Inventory if pause is already open). No extra mobile well.
+- D-pad Right: From gameplay only, open pause on the Inventory tab. MUST NOT jump tabs or fire inventory while any menu is already open (`App.ui_open`). In menus D-pad Right stays `ui_right`.
 - D-pad Down: Toggle look mode. World-only and large-map-only. MUST NOT fire as look-mode while pause, debug, recap, title, or any `App.ui_open` menu is up (`ui_down` stays menu navigation). Opening those menus clears look mode.
 - Menu / Start: Pause. In an open menu, also acts as back / close.
 - View / Back: Toggle large map overlay (game continues running underneath)
@@ -68,7 +68,7 @@ Shared classifiers live in `scripts/ui/menu_pad.gd`. Any menu with tabs MUST cal
 | LB / RB / `[` / `]` | Cycle tabs when the open menu has a tab strip. |
 | Q / LT | Previous gear-board stats page |
 | E / RT | Next gear-board stats page |
-| I / D-pad Right | Jump to the pause Inventory tab |
+| I / D-pad Right | Gameplay only: open pause on Inventory. MUST NOT change tabs while a menu is already open. |
 
 Exception: the secret Animation Browser keeps LB / RB = previous / next model, LT / RT = animation list, Y / `gear_tip` = review-state cycle, X / `gear_drop` = play/pause, D-pad = Facing/Animation columns, left stick = speed or frame step, and right stick = facing, per `design/debug.md`. While that viewer is open those chords MUST NOT fire world or gear-board actions (X must not drop gear). Keyboard Y types into the notes field when that field has focus; gamepad Y still cycles.
 
@@ -81,18 +81,22 @@ Touch overlay MUST hide while any menu is open (`App.ui_open`). Menu navigation 
 Pause → Settings → Controls.
 
 - Two pools: Keyboard / mouse and Gamepad. A selector at the top of the page switches the list. Switching rebuilds the rows for that pool.
-- First row after the selector is Reset Controls (that pool only).
+- The selector wraps both ways (Keyboard ↔ Gamepad). D-pad and arrow keys are discrete. Left-stick X switches once per push past a deadzone and must return to center before another switch. Left-stick Y stays vertical menu navigation.
+- First row after the selector is Reset Controls (that pool only). Confirm via `confirm_dlg.gd` before restocking defaults. Cancel / B / Esc backs out and returns focus to Reset.
+- `binds.gd` facades `ensure_mouse` and `ensure_axis` into `binds_defaults.gd`. Pad reset MUST restock left-stick move axes as well as buttons.
 - Exposed actions are gameplay only: move (keyboard), attack, special, dash, target lock, interact, map, inventory, potion, food, look mode (pad). Item tip and drop are not listed.
 - Two slots per action. A new bind that collides inside the same pool swaps with the other action’s slot. Cross-pool events are ignored.
 - Gamepad left / right sticks cannot be rebound. Move and aim stay on those axes.
 - First boot and Reset bind keyboard actions to **physical** key positions (`physical_keycode`), so QWERTY W stays the same cap as Dvorak `,`. Glyphs follow the player’s layout.
 - Bind name left-aligned. Assigned glyph(s) right-aligned. Empty slot is an em dash. D-pad chips read UP / DOWN / LEFT / RIGHT, not “DPAD UP”.
 
-`binds.gd` is the facade (`collect` / `apply` / `register`). Slot math lives in `binds_pool.gd`. The Controls page is `binds_page.gd`.
+`binds.gd` is the facade (`collect` / `apply` / `register` / `ensure_mouse` / `ensure_axis`). Slot math lives in `binds_pool.gd`. The Controls page is `binds_page.gd`.
 
 ## On-screen prompts
 
-Prompts follow **last used** input. One scheme at a time. `Pad.note_event` sets `Pad.mode` from a joy event (pad) or a key / mouse event (kb). `Prompts.scheme()` reads that flag. `menu_pad.gd` notes the event on menu traffic and calls `PromptView.pulse()` so open footers redraw.
+Prompts follow **last used** input. One scheme at a time. `Pad.note_event` sets `Pad.mode` from a joy event (pad) or a key / mouse event (kb). `Prompts.scheme()` reads that flag. `App._input` notes every event so GUI-consumed mouse / key traffic still flips the scheme. `Pad` pulses `PromptView` when the scheme changes.
+
+`PromptView.pulse()` redraws every registered glyph host, not only the footer: tab chips, gear stats paging, confirm strips, and `PromptView.footer` bars. Gear paging rows store `page_prev` / `page_next` flags so pulse resolves Q / E on keyboard and LT / RT on pad. LMB / RMB never page the stats card.
 
 While the web touch overlay is active, `Pad.mode` stays pad so world prompts keep pad glyphs. This slice does not add a `touch/` glyph pack.
 
@@ -101,14 +105,15 @@ Do not bake `A`, `B`, `ENTER`, `ESC`, `LMB`, or `RMB` into button captions or st
 | Surface | Where the glyph lives |
 |---------|------------------------|
 | Menus | Footer strip at the bottom-right of the menu panel. Always Select + Back. Extra actions (drop, tip, zoom) join that strip. |
-| Tab headers | LB / RB (or `[` / `]`) on the left and right of the tab row. The row stretches; it scrolls horizontally when tabs overflow. |
-| Gear stats card | Q / E on keyboard, LT / RT on pad. Not in the footer. |
+| Confirm dialog | Own Select + Back strip on the dialog (above the dimmed pause footer). B / Esc / Cancel closes it and restores prior focus. |
+| Tab headers | LB / RB (or `[` / `]`) on the left and right of the tab row. The row stretches; it scrolls horizontally when tabs overflow. Glyphs MUST follow the current scheme without waiting for a tab change. |
+| Gear stats card | Q / E on keyboard, LT / RT on pad. Not in the footer. Glyphs MUST follow the current scheme without waiting for a focus change. |
 | World HUD | `interact` glyph + the verb from `scripts/world/interact.gd`. Locked / spent lines are text only. Look-mode cue under the minimap while look mode or the large map is active. |
 | Touch overlay | Pad glyphs on the virtual buttons (`rt`, `lt`, `a`, `b`, `menu`, `view`, `dpad_up`, `dpad_left`). No lock / R3 well. |
 
 Glyph PNGs: `assets/ui/prompts/kb/`, `assets/ui/prompts/pad/`, `assets/ui/prompts/mouse/`. Regenerate with `python tools/gen_prompt_glyphs.py`. Keyboard arrows are stemmed arrows on the key cap, not `UP` / `DN` / empty `<` `>` stamps.
 
-Helpers: `Prompts.texture_for(action)`, `Prompts.texture_for_event`, `PromptView.fill`, `PromptView.footer(ui, extra_parts)`.
+Helpers: `Prompts.texture_for(action)`, `Prompts.texture_for_event`, `PromptView.fill`, `PromptView.footer(ui, extra_parts)`, `PromptView.pulse`.
 
 ## Aim-line indicator
 
@@ -134,7 +139,7 @@ Mouse wheel zooms world camera or the large map as described under Look mode. It
 
 **Esc** opens pause (and backs out of menus). On web it MUST NOT exit browser fullscreen. Only Pause → Settings → Graphics and Alt+Enter leave web fullscreen. `DisplayMode.ensure_web_hooks()` installs a capturing `keydown` listener that `preventDefault`s Escape while `document.fullscreenElement` is set and stashes `window.__wdbEsc`. `DisplayMode.consume_web_esc()` / `Pad.pause_just()` turn that flag into pause so camp and dungeon still call `App.pause_menu.toggle()`.
 
-**I** opens pause on Inventory (or jumps to that tab). Same action as D-pad Right.
+**I** opens pause on Inventory from gameplay only. Same action as D-pad Right. MUST NOT jump tabs while pause or any other `App.ui_open` menu is already up.
 
 ## Input – Web touch (`touch_pad.gd`, `touch_hud.gd`)
 

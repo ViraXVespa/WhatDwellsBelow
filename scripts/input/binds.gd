@@ -139,3 +139,11 @@ static func ensure_key(action: String, keycode: int) -> void:
 
 static func ensure_joy(action: String, button: int) -> void:
 	Defaults.ensure_joy(action, button)
+
+
+static func ensure_mouse(action: String, btn: int) -> void:
+	Defaults.ensure_mouse(action, btn)
+
+
+static func ensure_axis(action: String, axis: int, axis_value: float) -> void:
+	Defaults.ensure_axis(action, axis, axis_value)

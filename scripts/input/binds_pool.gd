@@ -139,6 +139,10 @@ static func _stock_pool(pool: String) -> void:
 		Binds.ensure_key("potion", KEY_F)
 		Binds.ensure_key("food", KEY_C)
 	else:
+		Binds.ensure_axis("move_left", JOY_AXIS_LEFT_X, -1.0)
+		Binds.ensure_axis("move_right", JOY_AXIS_LEFT_X, 1.0)
+		Binds.ensure_axis("move_up", JOY_AXIS_LEFT_Y, -1.0)
+		Binds.ensure_axis("move_down", JOY_AXIS_LEFT_Y, 1.0)
 		Binds.ensure_axis("attack", JOY_AXIS_TRIGGER_RIGHT, 1.0)
 		Binds.ensure_axis("special", JOY_AXIS_TRIGGER_LEFT, 1.0)
 		Binds.ensure_joy("dash", JOY_BUTTON_B)
@@ -149,3 +153,6 @@ static func _stock_pool(pool: String) -> void:
 		Binds.ensure_joy("potion", JOY_BUTTON_DPAD_UP)
 		Binds.ensure_joy("food", JOY_BUTTON_DPAD_LEFT)
 		Binds.ensure_joy("look_mode", JOY_BUTTON_DPAD_DOWN)
+		if OS.has_feature("web"):
+			Binds.ensure_joy("attack", 7)
+			Binds.ensure_joy("special", 6)

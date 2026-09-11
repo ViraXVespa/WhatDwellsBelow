@@ -1,9 +1,9 @@
 ﻿extends Object
 
-const ThemeS := preload("res://scripts/ui/theme.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 
 const BAR_NAME := "gear_hint_bar"
+const HOST_GROUP := "wdb_prompt_host"
 const BAR_W := 620.0
 const BAR_H := 40.0
 const BAR_INSET := Vector2(28.0, 20.0)
@@ -12,28 +12,12 @@ const BAR_INSET := Vector2(28.0, 20.0)
 static func fill(host: Control, parts: Array, font_size: int = 16, color: Color = Color(0.86, 0.80, 0.66)) -> void:
 	if host == null:
 		return
-	_wipe(host)
-	for row: Variant in parts:
-		if not (row is Dictionary):
-			continue
-		var action := str(row.get("action", ""))
-		var verb_text := _cap_verb(str(row.get("verb", "")))
-		var text := str(row.get("text", ""))
-		if action != "":
-			var tex: Texture2D = Prompts.texture_for(action)
-			if tex:
-				host.add_child(_glyph(tex, font_size))
-			else:
-				host.add_child(_lab(Prompts.chip_for(action), font_size, color))
-			if verb_text != "":
-				host.add_child(_lab(verb_text, font_size, color))
-		elif text != "":
-			host.add_child(_lab(text, font_size, color))
-		if bool(row.get("gap", false)):
-			var gap := Control.new()
-			gap.custom_minimum_size = Vector2(16, 1)
-			gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			host.add_child(gap)
+	if not host.is_in_group(HOST_GROUP):
+		host.add_to_group(HOST_GROUP)
+	host.set_meta("prompt_parts", parts)
+	host.set_meta("prompt_font", font_size)
+	host.set_meta("prompt_color", color)
+	_paint(host, parts, font_size, color)
 
 
 static func footer(ui: CanvasLayer, extra: Array = [], font_size: int = 16, color: Color = Color(0.86, 0.80, 0.66)) -> Control:
@@ -50,16 +34,21 @@ static func pulse() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null:
 		return
+	for n: Node in tree.get_nodes_in_group(HOST_GROUP):
+		if not (n is Control) or not is_instance_valid(n):
+			continue
+		if not n.has_meta("prompt_parts"):
+			continue
+		var parts: Array = n.get_meta("prompt_parts", [])
+		var font_px: int = int(n.get_meta("prompt_font", 16))
+		var col: Color = n.get_meta("prompt_color", Color(0.86, 0.80, 0.66))
+		_paint(n as Control, parts, font_px, col)
 	for n: Node in tree.root.find_children(BAR_NAME, "", true, false):
 		if not (n is Control):
 			continue
 		var host := n.get_parent()
-		if not (host is CanvasLayer):
-			continue
-		var extra: Array = n.get_meta("prompt_extra", [])
-		var font_size := int(n.get_meta("prompt_font", 16))
-		var color: Color = n.get_meta("prompt_color", Color(0.86, 0.80, 0.66))
-		footer(host as CanvasLayer, extra, font_size, color)
+		if host is CanvasLayer:
+			place_bar(host as CanvasLayer, n as Control)
 
 
 static func ensure_bar(ui: CanvasLayer) -> Control:
@@ -123,7 +112,7 @@ static func merge_parts(extra: Array) -> Array:
 		if not (row is Dictionary):
 			continue
 		var action := str(row.get("action", ""))
-		if action == "" and str(row.get("text", "")) == "":
+		if action == "" and str(row.get("text", "")) == "" and not bool(row.get("page_prev", false)) and not bool(row.get("page_next", false)):
 			continue
 		if action == Prompts.page_prev() or action == Prompts.page_next():
 			continue
@@ -163,6 +152,40 @@ static func apply_label(lab: Label, action: String, verb_text: String = "") -> v
 	if lab == null:
 		return
 	lab.text = Prompts.verb_line(action, _cap_verb(verb_text))
+
+
+static func _row_action(row: Dictionary) -> String:
+	if bool(row.get("page_prev", false)) or str(row.get("kind", "")) == "page_prev":
+		return Prompts.page_prev()
+	if bool(row.get("page_next", false)) or str(row.get("kind", "")) == "page_next":
+		return Prompts.page_next()
+	return str(row.get("action", ""))
+
+
+static func _paint(host: Control, parts: Array, font_size: int, color: Color) -> void:
+	_wipe(host)
+	for row: Variant in parts:
+		if not (row is Dictionary):
+			continue
+		var rec: Dictionary = row
+		var action: String = _row_action(rec)
+		var verb_text := _cap_verb(str(rec.get("verb", "")))
+		var text := str(rec.get("text", ""))
+		if action != "":
+			var tex: Texture2D = Prompts.texture_for(action)
+			if tex:
+				host.add_child(_glyph(tex, font_size))
+			else:
+				host.add_child(_lab(Prompts.chip_for(action), font_size, color))
+			if verb_text != "":
+				host.add_child(_lab(verb_text, font_size, color))
+		elif text != "":
+			host.add_child(_lab(text, font_size, color))
+		if bool(rec.get("gap", false)):
+			var gap := Control.new()
+			gap.custom_minimum_size = Vector2(16, 1)
+			gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			host.add_child(gap)
 
 
 static func _wipe(n: Node) -> void:
