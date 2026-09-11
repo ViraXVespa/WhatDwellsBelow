@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.5",
+			"points": [
+				{
+					"text": "Inventory (I / D-pad Right) only opens from gameplay. It no longer steals D-pad Right inside menus."
+				},
+				{
+					"text": "Controls pool selector wraps Keyboard \u2194 Gamepad. Stick X switches once per push; stick Y still moves the list."
+				},
+				{
+					"text": "Reset Controls asks for confirmation, then restores that pool\u2019s defaults instead of clearing binds."
+				},
+				{
+					"text": "Pause tabs show a selected state. Confirm prompts show Select / Back and keep menu focus after cancel."
+				},
+				{
+					"text": "Prompt glyphs follow the last used device immediately, including tab chips and gear stats paging (Q / E, not mouse)."
+				}
+			],
+			"summary": "Pause Controls and inventory shortcuts behave in menus, and on-screen glyphs stay in sync with the current input device."
+		},
+		{
 			"label": "0.3.4",
 			"points": [
 				{
