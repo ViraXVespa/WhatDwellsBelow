@@ -24,7 +24,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -118,7 +118,8 @@ jobs:
           touch "$SITE/.nojekyll"
 
       - name: Restore archive export cache
-        uses: actions/cache/restore@v4
+        id: archive-cache
+        uses: actions/cache/restore@v6
         with:
           path: .archive_export_cache
           key: wdb-pages-archives-${{ hashFiles('scripts/data/archive_catalog.json') }}
@@ -136,8 +137,8 @@ jobs:
             --worktrees "$PWD/.archive_worktrees"
 
       - name: Save archive export cache
-        uses: actions/cache/save@v4
-        if: always()
+        if: steps.archive-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
         with:
           path: .archive_export_cache
           key: wdb-pages-archives-${{ hashFiles('scripts/data/archive_catalog.json') }}
@@ -179,10 +180,11 @@ jobs:
           PY
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: site
+          include-hidden-files: true
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
