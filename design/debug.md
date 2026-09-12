@@ -251,7 +251,7 @@ Coverage runner, not a particle system. User args: `--wdb-phaseN-smoke` for N = 
 
 ### How to run (Steam Godot / redirected IO)
 
-Preferred (agent-friendly): from repo root, `powershell -File tools/run_smokes.ps1` (optional `-Phases 1,2,6`, `-TimeoutSec 180`, `-VerboseGodot`). Writes `_logs/smokes/summary.txt` with phase status plus `P*:` / `SCRIPT ERROR` highlights only.
+Preferred (agent-friendly): from repo root, prefer `& .\tools\run_smokes.ps1 -Phases @(1,2,6)` (optional `-TimeoutSec 180`, `-VerboseGodot`). Avoid `powershell -File tools/run_smokes.ps1 -Phases 1,2,6` - PowerShell can bind that as phase 45. Writes `_logs/smokes/summary.txt` with phase status plus `P*:` / `SCRIPT ERROR` highlights only. Full PC-offload catalog: `design/pc-offload.md`.
 
 Binary (Steam tools build): `C:/Program Files (x86)/Steam/steamapps/common/Godot Engine/godot.windows.opt.tools.64.exe` (also in `tools/export_web.ps1`).
 

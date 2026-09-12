@@ -99,7 +99,11 @@ When the User has authorized a local checkout on their machine:
 
 ## Size measurement
 
+Shared PC-offload catalog (Bot + Build): `design/pc-offload.md`. Prefer those runners; read only their `_logs/*/summary.txt` outputs.
+
 Preferred (agent-friendly): from repo root, `powershell -File tools/list_oversize_scripts.ps1` (optional `-OverKb 5`, `-OverKb 10`). Writes `_logs/oversize/summary.txt` with path + filesystem `Length` only - do not open bodies just to measure.
+
+Func / split planning (no body dump): `powershell -File tools/summarize_scripts.ps1` (optional `-OverKb 5`, `-TopFuncs 8`, `-Path scripts/...`) -> `_logs/script-summary/summary.txt`. Facade siblings by size: `powershell -File tools/list_facade_cluster.ps1 -Facade scripts/.../foo.gd` -> `_logs/facade-cluster/summary.txt`. Cap check: `powershell -File tools/check_script_cap.ps1` (optional `-OverKb 5` or `10`) -> `_logs/script-cap/summary.txt`.
 
 Inventory and before/after sizes use **filesystem byte length** of each `.gd` file (`Get-Item Length`, `dir`, or equivalent). Do **not** `ReadAllText` + `Encoding.UTF8.GetByteCount` just to measure — that burns tokens and can disagree with on-disk size if line endings differ.
 
