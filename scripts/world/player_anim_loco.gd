@@ -10,9 +10,9 @@ const LOC_STOP := 3
 
 static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> Texture2D:
 	var _fac = load("res://scripts/world/player_anim.gd")
-	var start_f := _fac.clip(host.idle_to_walk, key)
-	var loop_f := _fac.clip(host.walk, key)
-	var stop_f := _fac.clip(host.walk_to_idle, key)
+	var start_f: Array = _fac.clip(host.idle_to_walk, key)
+	var loop_f: Array = _fac.clip(host.walk, key)
+	var stop_f: Array = _fac.clip(host.walk_to_idle, key)
 	if moving:
 		if host.loc_state == LOC_IDLE or host.loc_state == LOC_STOP:
 			host.loc_state = LOC_START if not start_f.is_empty() else LOC_LOOP
@@ -34,7 +34,7 @@ static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> 
 				return start_f[idx]
 		if host.loc_state == LOC_LOOP and not loop_f.is_empty():
 			host.walk_t += delta
-			var li := int(host.walk_t * T.WALK_FPS) % loop_f.size()
+			var li: int = int(host.walk_t * T.WALK_FPS) % loop_f.size()
 			host.loc_from = li
 			host.loc_foot = 0 if li * 2 < loop_f.size() else 1
 			return loop_f[li]
@@ -89,7 +89,7 @@ static func apply_facing(host: Node, delta: float) -> void:
 	host.facing_key = key
 	var tex: Texture2D = null
 	if host.exiting:
-		var frames := _fac.clip(host.death if host.exit_cond == "death" else host.dispel, key)
+		var frames: Array = _fac.clip(host.death if host.exit_cond == "death" else host.dispel, key)
 		if not frames.is_empty():
 			tex = frames[mini(frames.size() - 1, int(host.exit_t * 8.0))]
 		elif host.idle.has(key):
@@ -98,21 +98,21 @@ static func apply_facing(host: Node, delta: float) -> void:
 			_fac.apply_tex(host, tex)
 		return
 	if host.atk_state == host.ATK_WIND or host.atk_state == host.ATK_ACT or host.atk_state == host.ATK_REC:
-		var frames := _fac.clip(host.special, key)
+		var frames: Array = _fac.clip(host.special, key)
 		if frames.is_empty():
 			frames = _fac.clip(host.attack, key)
 		if not frames.is_empty():
 			var idx := mini(frames.size() - 1, int(host.atk_t * App.bal.atk_fps))
 			tex = frames[idx]
 	elif host.gathering != null:
-		var frames := _fac.clip(host.gather, key)
+		var frames: Array = _fac.clip(host.gather, key)
 		if frames.is_empty():
 			frames = _fac.clip(host.attack, key)
 		if not frames.is_empty():
 			var idx := mini(frames.size() - 1, int(host.gather_t * 6.0) % frames.size())
 			tex = frames[idx]
 	elif host.atk_state == host.ATK_BASIC:
-		var frames := _fac.clip(host.attack, key)
+		var frames: Array = _fac.clip(host.attack, key)
 		if not frames.is_empty():
 			var n: int = frames.size()
 			var dur: float = host._basic_duration()

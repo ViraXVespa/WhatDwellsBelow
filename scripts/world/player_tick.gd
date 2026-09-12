@@ -68,7 +68,7 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 	if host.atk_state == host.ATK_WIND or host.atk_state == host.ATK_ACT or host.atk_state == host.ATK_REC:
 		spd *= 0.2
 	if host.dash_t > 0.0:
-		var d := host.dash_dir if host.dash_dir.length_squared() > 0.0001 else (host.aim_dir if host.aim_dir.length_squared() > 0.0001 else Vector2.DOWN)
+		var d: Vector2 = host.dash_dir if host.dash_dir.length_squared() > 0.0001 else (host.aim_dir if host.aim_dir.length_squared() > 0.0001 else Vector2.DOWN)
 		host.velocity = Vector3(d.x, 0.0, d.y) * App.bal.move_speed * App.bal.dash_speed_mult
 		if host.is_inside_tree():
 			PlayerHit.trail(host, delta)

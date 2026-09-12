@@ -36,7 +36,7 @@ static func load_sprites(host: Node) -> void:
 		var ep := base + "equip_%s_%s.png" % [wpn, k]
 		if ResourceLoader.exists(ep):
 			host.equip[k] = SpriteFilt.ensure_mips(load(ep))
-		var frames := _fac._seq(base, "walk_%s" % k)
+		var frames: Array = _fac._seq(base, "walk_%s" % k)
 		if not frames.is_empty():
 			host.walk[k] = frames
 		frames = _fac._seq(base, "idle_to_walk_%s" % k)
@@ -45,18 +45,18 @@ static func load_sprites(host: Node) -> void:
 		frames = _fac._seq(base, "walk_to_idle_%s" % k)
 		if not frames.is_empty():
 			host.walk_to_idle[k] = frames
-		var atk := _fac._seq(base, "atk_%s_%s" % [wpn, k])
+		var atk: Array = _fac._seq(base, "atk_%s_%s" % [wpn, k])
 		if not atk.is_empty():
 			host.attack[k] = atk
-		var spc := _fac._seq(base, "spc_%s_%s" % [wpn, k])
+		var spc: Array = _fac._seq(base, "spc_%s_%s" % [wpn, k])
 		if not spc.is_empty():
 			host.special[k] = spc
-		var gth := _fac._seq(base, "gather_%s" % k)
+		var gth: Array = _fac._seq(base, "gather_%s" % k)
 		if not gth.is_empty():
 			host.gather[k] = gth
-		var dth := _fac._seq(base, "death_%s" % k)
+		var dth: Array = _fac._seq(base, "death_%s" % k)
 		if not dth.is_empty():
 			host.death[k] = dth
-		var dsp := _fac._seq(base, "dispel_%s" % k)
+		var dsp: Array = _fac._seq(base, "dispel_%s" % k)
 		if not dsp.is_empty():
 			host.dispel[k] = dsp

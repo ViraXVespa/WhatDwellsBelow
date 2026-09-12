@@ -95,7 +95,7 @@ ame can corrupt identifiers (ar nm := name → ar nm: String = str(n)ame). Pre
 7. **Broken call commas** — hostify passes must not leave 	ick_pinch(host, ) or dropped args.
 8. **Cross-helper renames** — if a static was renamed (Present.present → present, Hit.mark_post), update every call site in the cluster in the same batch.
 
-After a hostify batch, run the headless compile check in design/grok-bot-session.md.
+After a hostify batch, run the **editor import** compile check in design/grok-bot-session.md (--headless --editor --import --path <WDB_ROOT> --quit). Plain --quit alone is not sufficient — it can miss := inference errors the editor surfaces on reload.
 
 ## Token rules
 

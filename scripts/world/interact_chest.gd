@@ -16,7 +16,7 @@ static func open_chest(host: Node3D) -> String:
 	App.gain_gold(gold)
 	var art := ""
 	var msg_gear := ""
-	var give_art := host.kind == "chest" or host.kind == "puzzle_chest" or (host.kind == "base_chest" and randf() < App.bal.chest_art)
+	var give_art: bool = host.kind == "chest" or host.kind == "puzzle_chest" or (host.kind == "base_chest" and randf() < App.bal.chest_art)
 	if host.kind == "chest":
 		give_art = true
 	if give_art:
