@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.9",
+			"points": [
+				{
+					"text": "Retire the Copilot agent path. Grok Bot is the refactor path now."
+				},
+				{
+					"text": "Add `design/grok-bot-session.md`: size splits to facade/helpers, extract near-identical behavior into new shared modules, write via branch + PR."
+				},
+				{
+					"text": "Scrub Copilot from agent docs (`AGENTS.md`, protocol, README, refactor, web-session, grok-build, versioning, session-log)."
+				},
+				{
+					"text": "Delete `design/copilot-session.md`."
+				}
+			],
+			"summary": "Agent workflow docs now route refactor work through Grok Bot instead of Copilot, including size management and shared-module extracts."
+		},
+		{
 			"label": "0.3.8",
 			"points": [
 				{
