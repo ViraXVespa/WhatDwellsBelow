@@ -99,6 +99,8 @@ When the User has authorized a local checkout on their machine:
 
 ## Size measurement
 
+Preferred (agent-friendly): from repo root, `powershell -File tools/list_oversize_scripts.ps1` (optional `-OverKb 5`, `-OverKb 10`). Writes `_logs/oversize/summary.txt` with path + filesystem `Length` only - do not open bodies just to measure.
+
 Inventory and before/after sizes use **filesystem byte length** of each `.gd` file (`Get-Item Length`, `dir`, or equivalent). Do **not** `ReadAllText` + `Encoding.UTF8.GetByteCount` just to measure — that burns tokens and can disagree with on-disk size if line endings differ.
 
 Report path + bytes from Length. The 10KB / 5KB caps are on-disk UTF-8 file sizes.
