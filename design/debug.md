@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot
 Read when: changing the secret menu, telemetry, playtest, animation browser, or verification
-Code: `scripts/combat/debug_menu.gd`, `scripts/combat/debug_menu_val.gd`, `scripts/combat/debug_menu_val_grid.gd`, `scripts/combat/debug_menu_settings.gd`, `scripts/world/sprite_filter.gd`, `scripts/debug/playtest.gd`, `scripts/debug/playtest_log.gd`, `telemetry.gd`, `anim_browser.gd`, `anim_browser_nav.gd`, `anim_browser_review.gd`, `anim_review.gd`, `anim_scan.gd`, `smoke.gd`
+Code: `scripts/debug/debug_menu/debug_menu.gd`, `scripts/debug/debug_menu/debug_menu_val.gd`, `scripts/debug/debug_menu/debug_menu_val_grid.gd`, `scripts/debug/debug_menu/debug_menu_settings.gd`, `scripts/world/sprite_filter.gd`, `scripts/debug/playtest.gd`, `scripts/debug/playtest_log.gd`, `telemetry.gd`, `anim_browser.gd`, `anim_browser_nav.gd`, `anim_browser_review.gd`, `anim_review.gd`, `anim_scan.gd`, `smoke.gd`
 See also: `design/constraints.md`, `design/coverage.md`, `design/ui.md`, `design/camera.md`, `design/art-pipeline.md`, `design/input.md`
 
 ## Secret debug / balance menu
@@ -22,7 +22,7 @@ Live also opens with CLI `--wdb-debug`.
 
 ### Live snapshot — menu chrome and Values
 
-Live path: `scripts/combat/debug_menu.gd`. This is current chrome, not a new system.
+Live path: `scripts/debug/debug_menu/debug_menu.gd`. This is current chrome, not a new system.
 
 **Pages.** Five pages in LB / RB order: Values → Settings → Profiles → Playtest → Animation Browser. Close (B) sits in the top row but is not a page. The top tab buttons are mouse-clickable and must not take gamepad focus. Title, tabs, and status stay pinned above the scroll so first-open focus cannot hide the tab labels. The active tab is tinted.
 

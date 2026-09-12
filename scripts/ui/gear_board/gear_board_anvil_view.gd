@@ -71,14 +71,14 @@ static func _tabs(ui: CanvasLayer) -> void:
 static func drop_sub(ui: CanvasLayer) -> void:
 	ui.gear_sub = false
 	ui.gear_sub_slot = ""
-	var Sub = load("res://scripts/ui/gear_board_sub.gd")
+	var Sub = load("res://scripts/ui/gear_board/gear_board_sub.gd")
 	Sub.unlock_bg(ui)
 	var old: Node = ui.get_node_or_null("gear_sub_panel")
 	while old:
 		old.name = "gear_sub_dead"
 		old.queue_free()
 		old = ui.get_node_or_null("gear_sub_panel")
-	var Board = load("res://scripts/ui/gear_board.gd")
+	var Board = load("res://scripts/ui/gear_board/gear_board.gd")
 	Board.hide_tip(ui)
 
 

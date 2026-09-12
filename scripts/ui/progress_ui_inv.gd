@@ -2,7 +2,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const CatalogS := preload("res://scripts/data/catalog.gd")
-const Board := preload("res://scripts/ui/gear_board.gd")
+const Board := preload("res://scripts/ui/gear_board/gear_board.gd")
 
 
 static func sets_blurb() -> String:

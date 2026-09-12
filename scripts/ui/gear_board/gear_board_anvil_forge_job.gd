@@ -35,7 +35,7 @@ static func start(ui: CanvasLayer) -> void:
 	ui.forge_phase = "work"
 	_spin_next(ui, slot, type_id, rarity, ilvl)
 	ui._st("Forging 1 of %d…" % qty)
-	load("res://scripts/ui/gear_board_anvil_forge.gd")._reload(ui, slot)
+	load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")._reload(ui, slot)
 
 static func finish(ui: CanvasLayer) -> void:
 	if str(ui.get("forge_phase")) != "work":
@@ -54,7 +54,7 @@ static func finish(ui: CanvasLayer) -> void:
 	_grant_smith()
 	if int(ui.forge_left) > 0:
 		_spin_next(ui, str(it.get("slot", ui.gear_sub_slot)), str(ui.forge_type), str(ui.forge_rarity), int(ui.forge_ilvl))
-		load("res://scripts/ui/gear_board_anvil_forge.gd")._reload(ui, str(ui.gear_sub_slot))
+		load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")._reload(ui, str(ui.gear_sub_slot))
 		return
 	_open_pick(ui)
 
@@ -72,7 +72,7 @@ static func cancel_job(ui: CanvasLayer) -> void:
 		return
 	ui.forge_phase = ""
 	ui._st("Forge cancelled. Materials stay spent.")
-	load("res://scripts/ui/gear_board_anvil_forge.gd")._reload(ui, str(ui.gear_sub_slot))
+	load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")._reload(ui, str(ui.gear_sub_slot))
 
 static func refresh_bar(ui: CanvasLayer) -> void:
 	var panel: Node = ui.get_node_or_null("gear_sub_panel")
@@ -117,11 +117,11 @@ static func _open_pick(ui: CanvasLayer) -> void:
 	ui.forge_it = {}
 	ui.forge_picks = []
 	var slot := str(ui.gear_sub_slot)
-	var Pick = load("res://scripts/ui/gear_board_anvil_forge_pick.gd")
+	var Pick = load("res://scripts/ui/gear_board/gear_board_anvil_forge_pick.gd")
 	for row: Dictionary in Pick._pick_rows(ui, slot):
 		if bool(row.get("pre", false)) and Pick._picked_n(ui) < HOLD_CAP:
 			ui.forge_picks.append(str(row.key))
-	load("res://scripts/ui/gear_board_anvil_forge.gd")._reload(ui, slot)
+	load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")._reload(ui, slot)
 
 static func _grant_smith() -> void:
 	var amt := 12.0

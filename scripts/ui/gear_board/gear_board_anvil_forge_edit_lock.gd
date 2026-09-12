@@ -7,7 +7,7 @@ const StepRow := preload("res://scripts/ui/step_row.gd")
 const QTY_MAX := 9
 
 static func _lock_row(ui: CanvasLayer, box: Control, slot: String, book: Dictionary) -> void:
-	var _fac = load("res://scripts/ui/gear_board_anvil_forge_edit.gd")
+	var _fac = load("res://scripts/ui/gear_board/gear_board_anvil_forge_edit.gd")
 	var cap: int = 2 if str(ui.forge_rarity) == "blue" else 1
 	var known := PackedStringArray()
 	var raw: Variant = book.get("traits", book.get("ids", []))

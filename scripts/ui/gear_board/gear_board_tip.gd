@@ -1,7 +1,7 @@
 ﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Text := preload("res://scripts/ui/gear_board_text.gd")
+const Text := preload("res://scripts/ui/gear_board/gear_board_text.gd")
 
 
 static func on(ui: CanvasLayer, key: String) -> bool:
@@ -75,7 +75,7 @@ static func _tip_anchor(ui: CanvasLayer) -> Control:
 	if str(ui.inv_sel) == "stats" or str(ui.inv_sel) == "" or str(ui.inv_sel) == "back":
 		return null
 	if on(ui, "gear_hover"):
-		var Board = load("res://scripts/ui/gear_board.gd")
+		var Board = load("res://scripts/ui/gear_board/gear_board.gd")
 		var hovered: Control = Board.find_sel(ui)
 		if hovered and not hovered.is_queued_for_deletion() and str(hovered.get_meta("inv_key", "")) != "":
 			return hovered

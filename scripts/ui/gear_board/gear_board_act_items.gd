@@ -2,7 +2,7 @@ extends Object
 
 ## Gear board bag primary / drop / destroy.
 
-const Text := preload("res://scripts/ui/gear_board_text.gd")
+const Text := preload("res://scripts/ui/gear_board/gear_board_text.gd")
 
 
 static func locked_slot(slot: String) -> bool:
@@ -18,7 +18,7 @@ static func st(ui: CanvasLayer, msg: String) -> void:
 
 
 static func rebuild(ui: CanvasLayer) -> void:
-	var Sub := load("res://scripts/ui/gear_board_sub.gd")
+	var Sub := load("res://scripts/ui/gear_board/gear_board_sub.gd")
 	Sub.unlock_bg(ui)
 	if str(ui.get("gear_mode")) == "anvil" and ui.has_method("_rebuild_anvil"):
 		ui._rebuild_anvil()

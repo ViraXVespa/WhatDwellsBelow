@@ -1,20 +1,20 @@
 extends Object
 
-const Board := preload("res://scripts/ui/gear_board.gd")
-const Text := preload("res://scripts/ui/gear_board_text.gd")
-const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
+const Board := preload("res://scripts/ui/gear_board/gear_board.gd")
+const Text := preload("res://scripts/ui/gear_board/gear_board_text.gd")
+const Fmt := preload("res://scripts/ui/gear_board/gear_board_text_fmt.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
-const ForgeUI := preload("res://scripts/ui/gear_board_anvil_forge.gd")
+const ForgeUI := preload("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")
 
 static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	Board.clear_sub(ui)
 	ui.gear_sub = true
 	ui.gear_sub_slot = slot
 	Text.mark_seen(slot)
-	load("res://scripts/ui/gear_board_sub.gd").lock_bg(ui)
+	load("res://scripts/ui/gear_board/gear_board_sub.gd").lock_bg(ui)
 	var panel := PanelContainer.new()
 	panel.name = "gear_sub_panel"
 	panel.z_index = 40
@@ -30,7 +30,7 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	var head := "Re-equip  " + str(Fmt.NAMES.get(slot, slot))
 	var blurb := "AT RISK gear is lost on death or Dispel."
 	var blurb_col := Color(0.8, 0.74, 0.64)
-	if load("res://scripts/ui/gear_board_sub.gd")._is_anvil(ui):
+	if load("res://scripts/ui/gear_board/gear_board_sub.gd")._is_anvil(ui):
 		if str(ui.get("anvil_tab")) == "forge":
 			head = "Forge  " + str(Fmt.NAMES.get(slot, slot))
 			blurb = "Set type, rarity, level, and locks."
@@ -40,17 +40,17 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 			blurb_col = Color(0.95, 0.42, 0.28)
 	box.add_child(ThemeS.lab(head, 22, Color(0.95, 0.82, 0.5)))
 	box.add_child(ThemeS.lab(blurb, 16, blurb_col))
-	if load("res://scripts/ui/gear_board_sub.gd")._is_anvil(ui) and str(ui.get("anvil_tab")) == "forge":
-		load("res://scripts/ui/gear_board_sub.gd")._open_forge(ui, box, slot)
+	if load("res://scripts/ui/gear_board/gear_board_sub.gd")._is_anvil(ui) and str(ui.get("anvil_tab")) == "forge":
+		load("res://scripts/ui/gear_board/gear_board_sub.gd")._open_forge(ui, box, slot)
 		return
 	var first: Button = null
 	var rows: Array
-	if load("res://scripts/ui/gear_board_sub.gd")._is_anvil(ui):
-		rows = load("res://scripts/ui/gear_board_sub.gd")._anvil().options_for(slot, ui)
+	if load("res://scripts/ui/gear_board/gear_board_sub.gd")._is_anvil(ui):
+		rows = load("res://scripts/ui/gear_board/gear_board_sub.gd")._anvil().options_for(slot, ui)
 	else:
 		rows = Text.options_for(slot)
 	if rows.is_empty():
-		if load("res://scripts/ui/gear_board_sub.gd")._is_anvil(ui):
+		if load("res://scripts/ui/gear_board/gear_board_sub.gd")._is_anvil(ui):
 			box.add_child(ThemeS.lab("No AT RISK pieces for this slot.", 18, Color(0.78, 0.74, 0.66)))
 		else:
 			box.add_child(ThemeS.lab("Nothing else for this slot.", 18, Color(0.78, 0.74, 0.66)))
@@ -71,7 +71,7 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 		b.expand_icon = true
 		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		b.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
-		load("res://scripts/ui/gear_board_sub.gd")._paint_opt(b, it)
+		load("res://scripts/ui/gear_board/gear_board_sub.gd")._paint_opt(b, it)
 		b.set_meta("inv_key", key)
 		b.set_meta("inv_it", it.duplicate(true))
 		Board._watch_hover(ui, b, key)
@@ -80,8 +80,8 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 		opts.append(b)
 		if first == null:
 			first = b
-	if load("res://scripts/ui/gear_board_sub.gd")._is_anvil(ui):
-		load("res://scripts/ui/gear_board_sub.gd")._add_strip(box, [
+	if load("res://scripts/ui/gear_board/gear_board_sub.gd")._is_anvil(ui):
+		load("res://scripts/ui/gear_board/gear_board_sub.gd")._add_strip(box, [
 			{"action": "ui_accept", "verb": "analyze", "gap": true},
 			{"action": "ui_cancel", "verb": "close", "gap": true},
 		])
@@ -98,7 +98,7 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	back.custom_minimum_size = Vector2(0, 40)
 	back.focus_mode = Control.FOCUS_ALL
 	back.add_theme_font_size_override("font_size", 18)
-	back.pressed.connect(func(): load("res://scripts/ui/gear_board_sub.gd").close_sub(ui))
+	back.pressed.connect(func(): load("res://scripts/ui/gear_board/gear_board_sub.gd").close_sub(ui))
 	back.focus_entered.connect(func():
 		ui.inv_sel = "back"
 		Board._flag(ui, "gear_tip_ready", false)
@@ -150,34 +150,34 @@ static func _wire_opt_focus(opts: Array[Button], back: Button) -> void:
 
 
 static func pick(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
-	var Act = load("res://scripts/ui/gear_board_sub.gd")._act()
+	var Act = load("res://scripts/ui/gear_board/gear_board_sub.gd")._act()
 	if not bool(ui.get("gear_sub")):
 		return
-	if load("res://scripts/ui/gear_board_sub.gd")._is_anvil(ui):
-		load("res://scripts/ui/gear_board_sub.gd")._anvil().analyze(ui, slot, row)
-		load("res://scripts/ui/gear_board_sub.gd").close_sub(ui)
+	if load("res://scripts/ui/gear_board/gear_board_sub.gd")._is_anvil(ui):
+		load("res://scripts/ui/gear_board/gear_board_sub.gd")._anvil().analyze(ui, slot, row)
+		load("res://scripts/ui/gear_board/gear_board_sub.gd").close_sub(ui)
 		return
 	var it: Dictionary = {}
 	if row.get("it") is Dictionary:
 		it = (row.it as Dictionary).duplicate(true)
 	var src := str(row.get("src", ""))
 	if src == "equipped":
-		load("res://scripts/ui/gear_board_sub.gd")._unequip_or_keep(ui, slot, it)
+		load("res://scripts/ui/gear_board/gear_board_sub.gd")._unequip_or_keep(ui, slot, it)
 	elif Act.town_kit(ui):
 		_apply_loadout(ui, slot, it, src)
 	else:
-		load("res://scripts/ui/gear_board_sub.gd")._apply_inv(ui, slot, it, src)
+		load("res://scripts/ui/gear_board/gear_board_sub.gd")._apply_inv(ui, slot, it, src)
 	ui.gear_sub = false
 	ui.gear_sub_slot = ""
-	load("res://scripts/ui/gear_board_sub.gd").unlock_bg(ui)
+	load("res://scripts/ui/gear_board/gear_board_sub.gd").unlock_bg(ui)
 	Board.clear_sub(ui)
 	Act.swallow_cancel()
-	load("res://scripts/ui/gear_board_sub.gd")._after_sub(ui, "slot:" + slot, true)
+	load("res://scripts/ui/gear_board/gear_board_sub.gd")._after_sub(ui, "slot:" + slot, true)
 
 
 
 static func _apply_loadout(ui: CanvasLayer, slot: String, it: Dictionary, src: String) -> void:
-	var Act = load("res://scripts/ui/gear_board_sub.gd")._act()
+	var Act = load("res://scripts/ui/gear_board/gear_board_sub.gd")._act()
 	if it.is_empty():
 		Act.st(ui, "Nothing to equip.")
 		return

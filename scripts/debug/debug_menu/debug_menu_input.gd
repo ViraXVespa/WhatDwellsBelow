@@ -1,9 +1,9 @@
 ﻿extends Object
 
-## Debug menu stick + page input. Host is scripts/combat/debug_menu.gd.
+## Debug menu stick + page input. Host is scripts/debug/debug_menu/debug_menu.gd.
 
 const Pad := preload("res://scripts/input/pad.gd")
-const DebugMenuVal := preload("res://scripts/combat/debug_menu_val.gd")
+const DebugMenuVal := preload("res://scripts/debug/debug_menu/debug_menu_val.gd")
 
 
 static func tick(host, delta: float) -> void:

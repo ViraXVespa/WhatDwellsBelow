@@ -2,12 +2,12 @@ extends Object
 
 ## Gear board X-hold and pad event handling.
 
-const Board := preload("res://scripts/ui/gear_board.gd")
-const Text := preload("res://scripts/ui/gear_board_text.gd")
+const Board := preload("res://scripts/ui/gear_board/gear_board.gd")
+const Text := preload("res://scripts/ui/gear_board/gear_board_text.gd")
 const Pad := preload("res://scripts/ui/menu_pad.gd")
-const ForgeUI := preload("res://scripts/ui/gear_board_anvil_forge.gd")
-const Sub := preload("res://scripts/ui/gear_board_sub.gd")
-const Items := preload("res://scripts/ui/gear_board_act_items.gd")
+const ForgeUI := preload("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")
+const Sub := preload("res://scripts/ui/gear_board/gear_board_sub.gd")
+const Items := preload("res://scripts/ui/gear_board/gear_board_act_items.gd")
 
 const HOLD_DESTROY := 0.55
 

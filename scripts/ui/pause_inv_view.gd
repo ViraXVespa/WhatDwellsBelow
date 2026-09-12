@@ -1,6 +1,6 @@
 extends Object
 
-const Board := preload("res://scripts/ui/gear_board.gd")
+const Board := preload("res://scripts/ui/gear_board/gear_board.gd")
 const Text := preload("res://scripts/ui/pause_inv_text.gd")
 
 

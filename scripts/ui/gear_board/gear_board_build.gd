@@ -1,10 +1,10 @@
 ﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Text := preload("res://scripts/ui/gear_board_text.gd")
-const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
+const Text := preload("res://scripts/ui/gear_board/gear_board_text.gd")
+const Fmt := preload("res://scripts/ui/gear_board/gear_board_text_fmt.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
-const Floor := preload("res://scripts/ui/gear_board_floor.gd")
+const Floor := preload("res://scripts/ui/gear_board/gear_board_floor.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 

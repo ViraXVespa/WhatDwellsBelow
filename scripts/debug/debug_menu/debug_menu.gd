@@ -2,10 +2,10 @@
 
 ## Secret debug. Default engine controls allowed.
 
-const DebugMenuVal := preload("res://scripts/combat/debug_menu_val.gd")
-const DebugMenuPages := preload("res://scripts/combat/debug_menu_pages.gd")
-const DebugMenuSettings := preload("res://scripts/combat/debug_menu_settings.gd")
-const DebugMenuInput := preload("res://scripts/combat/debug_menu_input.gd")
+const DebugMenuVal := preload("res://scripts/debug/debug_menu/debug_menu_val.gd")
+const DebugMenuPages := preload("res://scripts/debug/debug_menu/debug_menu_pages.gd")
+const DebugMenuSettings := preload("res://scripts/debug/debug_menu/debug_menu_settings.gd")
+const DebugMenuInput := preload("res://scripts/debug/debug_menu/debug_menu_input.gd")
 const PAGES: PackedStringArray = ["values", "settings", "profiles", "playtest", "anim"]
 
 var open := false

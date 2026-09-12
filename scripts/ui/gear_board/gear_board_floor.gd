@@ -1,7 +1,7 @@
 ﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Act := preload("res://scripts/ui/gear_board_act.gd")
+const Act := preload("res://scripts/ui/gear_board/gear_board_act.gd")
 const StepRow := preload("res://scripts/ui/step_row.gd")
 
 

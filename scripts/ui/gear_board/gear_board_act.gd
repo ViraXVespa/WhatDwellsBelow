@@ -1,10 +1,10 @@
 extends Object
 
-const Board := preload("res://scripts/ui/gear_board.gd")
-const Text := preload("res://scripts/ui/gear_board_text.gd")
-const Sub := preload("res://scripts/ui/gear_board_sub.gd")
-const Items := preload("res://scripts/ui/gear_board_act_items.gd")
-const Inp := preload("res://scripts/ui/gear_board_act_input.gd")
+const Board := preload("res://scripts/ui/gear_board/gear_board.gd")
+const Text := preload("res://scripts/ui/gear_board/gear_board_text.gd")
+const Sub := preload("res://scripts/ui/gear_board/gear_board_sub.gd")
+const Items := preload("res://scripts/ui/gear_board/gear_board_act_items.gd")
+const Inp := preload("res://scripts/ui/gear_board/gear_board_act_input.gd")
 
 
 static func locked_slot(slot: String) -> bool:

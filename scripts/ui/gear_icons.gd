@@ -1,7 +1,7 @@
 # Inventory / loadout icon lookup. Rarity wash is color only; plates stay chroma-keyed art.
 extends Object
 
-const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
+const Fmt := preload("res://scripts/ui/gear_board/gear_board_text_fmt.gd")
 
 const DIR := "res://assets/ui/gear/"
 const RISK := Color(0.86, 0.22, 0.18)

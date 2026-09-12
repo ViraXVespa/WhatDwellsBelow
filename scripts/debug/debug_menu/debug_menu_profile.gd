@@ -1,6 +1,6 @@
 ﻿extends Object
 
-## Named balance profiles. Host is scripts/combat/debug_menu.gd.
+## Named balance profiles. Host is scripts/debug/debug_menu/debug_menu.gd.
 
 
 static func page_profiles(host) -> void:

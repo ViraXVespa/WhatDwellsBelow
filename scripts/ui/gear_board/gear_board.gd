@@ -1,13 +1,13 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Text := preload("res://scripts/ui/gear_board_text.gd")
-const Act := preload("res://scripts/ui/gear_board_act.gd")
-const Floor := preload("res://scripts/ui/gear_board_floor.gd")
-const Tip := preload("res://scripts/ui/gear_board_tip.gd")
-const Build := preload("res://scripts/ui/gear_board_build.gd")
+const Text := preload("res://scripts/ui/gear_board/gear_board_text.gd")
+const Act := preload("res://scripts/ui/gear_board/gear_board_act.gd")
+const Floor := preload("res://scripts/ui/gear_board/gear_board_floor.gd")
+const Tip := preload("res://scripts/ui/gear_board/gear_board_tip.gd")
+const Build := preload("res://scripts/ui/gear_board/gear_board_build.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
-const Host := preload("res://scripts/ui/gear_board_host.gd")
+const Host := preload("res://scripts/ui/gear_board/gear_board_host.gd")
 
 static var pending_kit: Dictionary = {}
 
@@ -84,7 +84,7 @@ static func place_tip(ui: CanvasLayer) -> void:
 static func _paint_hint(ui: CanvasLayer) -> void:
 	var extra: Array = []
 	if str(ui.get("gear_mode")) == "anvil":
-		extra = load("res://scripts/ui/gear_board_anvil.gd").hint_parts(ui)
+		extra = load("res://scripts/ui/gear_board/gear_board_anvil.gd").hint_parts(ui)
 	else:
 		extra = Text.hint_parts(ui)
 	PromptView.footer(ui, extra)

@@ -1,12 +1,12 @@
 ﻿extends Object
 
-const Text := preload("res://scripts/ui/gear_board_text.gd")
+const Text := preload("res://scripts/ui/gear_board/gear_board_text.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
 const Town := preload("res://scripts/data/progress_town.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
-const View := preload("res://scripts/ui/gear_board_anvil_view.gd")
-const ForgeUI := preload("res://scripts/ui/gear_board_anvil_forge.gd")
+const View := preload("res://scripts/ui/gear_board/gear_board_anvil_view.gd")
+const ForgeUI := preload("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")
 
 
 static func is_anvil(ui: CanvasLayer) -> bool:
@@ -101,7 +101,7 @@ static func analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 		return
 	var it: Dictionary = row.it.duplicate(true) if row.get("it") is Dictionary else {}
 	if it.is_empty() or not ForgeP.can_analyze(App.prog, it):
-		var Act = load("res://scripts/ui/gear_board_act.gd")
+		var Act = load("res://scripts/ui/gear_board/gear_board_act.gd")
 		Act.st(ui, "Can't analyze that.")
 		return
 	ui.anvil_item = it
@@ -112,17 +112,17 @@ static func analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 static func _commit_analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 	var taken: Dictionary = Town.analyze_destroy(App.prog, row)
 	if taken.is_empty():
-		var Act = load("res://scripts/ui/gear_board_act.gd")
+		var Act = load("res://scripts/ui/gear_board/gear_board_act.gd")
 		Act.st(ui, "Can't analyze that.")
 		ui.anvil_item = {}
 		ui.anvil_src = ""
 		return
 	ui.anvil_item = {}
 	ui.anvil_src = ""
-	var Act2 = load("res://scripts/ui/gear_board_act.gd")
+	var Act2 = load("res://scripts/ui/gear_board/gear_board_act.gd")
 	Act2.st(ui, "Analyzed. Unlocks ready on the Forge tab.")
 	App.toast("Analyzed — " + str(taken.get("name", "item")))
-	var Sub = load("res://scripts/ui/gear_board_sub.gd")
+	var Sub = load("res://scripts/ui/gear_board/gear_board_sub.gd")
 	if bool(ui.get("gear_sub")):
 		Sub.open_sub(ui, slot)
 

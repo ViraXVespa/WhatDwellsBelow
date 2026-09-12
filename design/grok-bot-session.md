@@ -43,7 +43,7 @@ Sweep the whole live script tree. Not a feature slice. Not â€œonly these filesâ€
 - Prefer **NEW shared modules** when near-identical behavior spans places (example: tooltip placement / behavior across Anvil / Analyze / Forge / Inventory). Prefer a new shared module over growing an existing owner.
 - Point at an existing owner only if it already **is** that concern **and** the addition will not blow the size cap. Never grow an owner just to avoid a new file.
 - Near-identical = same control flow (renamed locals OK), not vaguely similar features
-- Parked folder moves from `design/refactor.md` plus User-named deeper relocates are their own batches; no behavior change
+- Parked folder moves from `design/refactor.md` plus User-named deeper relocates are their own batches; no behavior change Prefer `tools/move_script_cluster.ps1` / `.py` for the mechanical `git mv` + path rewrite; read `_logs/move-cluster/summary.txt`.
 - May add `: Type` on lines already moved so Godot compiles
 
 ## Inventory

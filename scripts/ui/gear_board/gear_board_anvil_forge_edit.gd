@@ -6,8 +6,8 @@ const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const StepRow := preload("res://scripts/ui/step_row.gd")
 
 const QTY_MAX := 9
-const Fill := preload("res://scripts/ui/gear_board_anvil_forge_edit_fill.gd")
-const Lock := preload("res://scripts/ui/gear_board_anvil_forge_edit_lock.gd")
+const Fill := preload("res://scripts/ui/gear_board/gear_board_anvil_forge_edit_fill.gd")
+const Lock := preload("res://scripts/ui/gear_board/gear_board_anvil_forge_edit_lock.gd")
 
 static func _fill_edit(ui: CanvasLayer, box: Control, slot: String) -> Control:
 	return Fill._fill_edit(ui, box, slot)
@@ -31,24 +31,24 @@ static func _set_type(ui: CanvasLayer, slot: String, type_id: String, key: Strin
 	ui.set_meta("forge_focus", key)
 	ui.forge_type = type_id
 	ui.forge_locks = PackedStringArray()
-	load("res://scripts/ui/gear_board_anvil_forge.gd")._reload(ui, slot)
+	load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")._reload(ui, slot)
 
 static func _set_rare(ui: CanvasLayer, slot: String, rarity: String, key: String) -> void:
 	ui.set_meta("forge_focus", key)
 	ui.forge_rarity = rarity
 	ui.forge_locks = PackedStringArray()
-	load("res://scripts/ui/gear_board_anvil_forge.gd")._reload(ui, slot)
+	load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")._reload(ui, slot)
 
 static func _nudge_lv(ui: CanvasLayer, slot: String, d: int, key: String) -> void:
 	ui.set_meta("forge_focus", key)
 	var max_lv: int = maxi(1, ForgeP.max_ilvl(App.prog, slot, str(ui.forge_type)))
 	ui.forge_ilvl = clampi(int(ui.forge_ilvl) + d, 1, max_lv)
-	load("res://scripts/ui/gear_board_anvil_forge.gd")._reload(ui, slot)
+	load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")._reload(ui, slot)
 
 static func _nudge_qty(ui: CanvasLayer, slot: String, d: int, key: String) -> void:
 	ui.set_meta("forge_focus", key)
 	ui.forge_qty = clampi(int(ui.get("forge_qty")) + d, 1, QTY_MAX)
-	load("res://scripts/ui/gear_board_anvil_forge.gd")._reload(ui, slot)
+	load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")._reload(ui, slot)
 
 static func _lock_row(ui: CanvasLayer, box: Control, slot: String, book: Dictionary) -> void:
 	Lock._lock_row(ui, box, slot, book)
@@ -65,7 +65,7 @@ static func _toggle_lock(ui: CanvasLayer, slot: String, id: String, cap: int, ke
 	if not had and next.size() < cap:
 		next.append(id)
 	ui.forge_locks = next
-	load("res://scripts/ui/gear_board_anvil_forge.gd")._reload(ui, slot)
+	load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")._reload(ui, slot)
 
 static func _tag(row: HBoxContainer, minus_key: String, plus_key: String, _want: String) -> void:
 	var minus: Button = StepRow.minus_of(row)

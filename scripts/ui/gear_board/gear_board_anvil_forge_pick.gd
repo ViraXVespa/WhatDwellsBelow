@@ -2,7 +2,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
-const Board := preload("res://scripts/ui/gear_board.gd")
+const Board := preload("res://scripts/ui/gear_board/gear_board.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 
 const HOLD_CAP := 3
@@ -54,7 +54,7 @@ static func _fill_pick(ui: CanvasLayer, box: Control, slot: String) -> Control:
 	box.add_child(go)
 	if want == "keep" and not go.disabled:
 		hit = go
-	var dump: Button = ThemeS.btn("Keep old holds", func(): load("res://scripts/ui/gear_board_anvil_forge.gd").keep_old(ui))
+	var dump: Button = ThemeS.btn("Keep old holds", func(): load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd").keep_old(ui))
 	dump.set_meta("forge_key", "dump")
 	box.add_child(dump)
 	if want == "dump":
@@ -63,7 +63,7 @@ static func _fill_pick(ui: CanvasLayer, box: Control, slot: String) -> Control:
 	if use and str(use.get_meta("inv_key", "")) != "":
 		ui.inv_sel = str(use.get_meta("inv_key"))
 		Board._arm_tip(ui)
-	return load("res://scripts/ui/gear_board_anvil_forge.gd")._keep(ui, use)
+	return load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")._keep(ui, use)
 
 static func _paint_opt(b: Button, it: Dictionary, on: bool) -> void:
 	var fill_c: Color = Icons.rarity_fill(it)
@@ -125,7 +125,7 @@ static func _toggle_pick(ui: CanvasLayer, slot: String, key: String) -> void:
 	if not had and next.size() < HOLD_CAP:
 		next.append(key)
 	ui.forge_picks = next
-	load("res://scripts/ui/gear_board_anvil_forge.gd")._reload(ui, slot)
+	load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")._reload(ui, slot)
 
 static func _commit_picks(ui: CanvasLayer, slot: String) -> void:
 	var type_id := str(ui.forge_type)
@@ -139,7 +139,7 @@ static func _commit_picks(ui: CanvasLayer, slot: String) -> void:
 	ui.forge_phase = ""
 	ui.set_meta("forge_focus", "rare:" + str(ui.forge_rarity))
 	ui._st(msg)
-	load("res://scripts/ui/gear_board_anvil_forge.gd")._reload(ui, slot)
+	load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")._reload(ui, slot)
 
 static func _cmp_line(it: Dictionary) -> String:
 	return "%s  lv %d  finish %.2f  fortune %.2f" % [
