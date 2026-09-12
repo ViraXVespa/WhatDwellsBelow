@@ -92,7 +92,7 @@ static func paint_prompt(host: CanvasLayer) -> void:
 	if text == "":
 		PromptView.fill(host.prompt_row, [])
 		return
-	var locked := text.begins_with("Locked") or text.begins_with("Already") or text.begins_with("The fire") or text.begins_with("Spent") or text.begins_with("Empty")
+	var locked := text.begins_with("Locked") or text.begins_with("Already") or text.begins_with("The fire") or text.begins_with("Spent") or text.begins_with("Empty") or text.begins_with("Clear the area")
 	if locked:
 		PromptView.fill(host.prompt_row, [{"text": text}], 16, Color(0.95, 0.82, 0.4))
 	else:

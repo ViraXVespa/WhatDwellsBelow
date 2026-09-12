@@ -7,6 +7,7 @@ const GatherRules := preload("res://scripts/world/gather_rules.gd")
 var kind := "mine"
 var hits := 4
 var interval := 2.4
+var prompt := "Gather"
 var spr: Sprite3D
 var label: Label3D
 var busy := false
@@ -31,6 +32,7 @@ func setup(k: String, pos: Vector3) -> void:
 
 
 func refresh() -> void:
+	prompt = "Gather"
 	if label:
 		label.text = "ORE" if kind == "mine" else "WOOD"
 		label.modulate = Color(0.75, 0.9, 1.0) if kind == "mine" else Color(0.7, 0.9, 0.55)
@@ -49,7 +51,7 @@ func interact(who: Node) -> String:
 	if who and who.has_method("start_gather"):
 		who.start_gather(self)
 		return "Gathering…  (move to stop)"
-	return "A: Gather"
+	return "Gather"
 
 
 func strike() -> Dictionary:

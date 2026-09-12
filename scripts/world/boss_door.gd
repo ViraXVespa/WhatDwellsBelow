@@ -6,7 +6,7 @@ var vis: MeshInstance3D
 var shape: CollisionShape3D
 var open := false
 var label: Label3D
-var prompt := "A: Open the guardian door"
+var prompt := "Open the guardian door"
 var kind := "boss_door"
 var reach := 1.85
 var cells: Array = []
@@ -104,7 +104,7 @@ func refresh() -> void:
 	if open:
 		prompt = "The way is open."
 	else:
-		prompt = "A: Open the guardian door"
+		prompt = "Open the guardian door"
 	if label:
 		label.text = "OPEN" if open else "PREPARE"
 		label.modulate = Color(0.6, 0.95, 0.55) if open else Color(1.0, 0.45, 0.35)
@@ -146,7 +146,7 @@ func occupies_cell(c: Vector2i) -> bool:
 
 class Hotspot extends Node3D:
 	var host: Node
-	var prompt := "A: Open the guardian door"
+	var prompt := "Open the guardian door"
 	var kind := "boss_door"
 
 	func _ready() -> void:

@@ -323,6 +323,8 @@ func spawn_floor_item(it: Dictionary, pos := Vector3.INF) -> void:
 
 
 func toast(msg: String) -> void:
+	if msg == toast_msg and toast_t > 0.35:
+		return
 	toast_msg = msg
 	toast_t = 2.2
 

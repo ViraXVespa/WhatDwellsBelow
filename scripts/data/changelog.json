@@ -19,9 +19,15 @@
 				},
 				{
 					"text": "Windows agent shell: `tools/write_utf8_file.py` + `tools/run_agent_py.ps1` (ephemeral scripts under `_logs/agent-py/` auto-deleted after run); forbid `python -c` / PS-expanded doc bodies (`design/pc-offload.md`)."
+				},
+				{
+					"text": "Bag-full floor loot shows one toast that can expire. Standing on the pile no longer pins that message or blocks later alerts."
+				},
+				{
+					"text": "HP orbs stay on the ground when you are already at full health, so a later wound can still take them."
 				}
 			],
-			"summary": "Documentation facades join script facades in the Bot mandate; four largest topics now route through job tables."
+			"summary": "Documentation facades join script facades in the Bot mandate; four largest topics now route through job tables, and item toast/orb behavior stays readable and queued correctly."
 		},
 		{
 			"label": "0.3.11",

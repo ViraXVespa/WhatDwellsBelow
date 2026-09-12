@@ -27,6 +27,14 @@ static func p5(host: Node) -> void:
 			kinds.append(k)
 	printerr("P5: interact_kinds=" + ", ".join(kinds))
 	printerr("P5: gather=" + str(tree(host).get_nodes_in_group("gather").size()))
+	var a_baked: int = 0
+	for n4: Node in tree(host).get_nodes_in_group("interact"):
+		if n4.has_method("refresh"):
+			n4.call("refresh")
+		var pr: String = str(n4.get("prompt"))
+		if pr.begins_with("A:") or pr.begins_with("A :"):
+			a_baked += 1
+	printerr("P5: prompt_a_prefix=" + str(a_baked) + " prompt_no_a=" + str(a_baked == 0))
 	printerr("P5: breakables=" + str(tree(host).get_nodes_in_group("breakables").size()))
 	printerr("P5: gates=" + str(tree(host).get_nodes_in_group("gates").size()))
 	printerr("P5: plates=" + str(tree(host).get_nodes_in_group("plates").size()))
@@ -150,4 +158,23 @@ static func p5(host: Node) -> void:
 	)
 	printerr("P5: present_ok=" + str(present))
 	printerr("P5: extract_ok=" + str(App.extracted and App.bank_ore >= 4))
+	var PickupS: Variant = load("res://scripts/world/pickup.gd")
+	var hp_keep: float = float(player.get("hp"))
+	var full_hp: float = float(player.get("max_hp"))
+	player.set("hp", full_hp)
+	var orb: Node3D = PickupS.new()
+	host.add_child(orb)
+	orb.call("setup", "hp", Vector3.ZERO)
+	orb.call("_take", player)
+	var kept: bool = float(orb.get("_block_t")) > 0.0 and is_equal_approx(float(player.get("hp")), full_hp)
+	printerr("P5: orb_full_kept=" + str(kept) + " hp=" + str(player.get("hp")))
+	orb.queue_free()
+	player.set("hp", 10.0)
+	var orb2: Node3D = PickupS.new()
+	host.add_child(orb2)
+	orb2.call("setup", "hp", Vector3.ZERO)
+	orb2.call("_take", player)
+	var ate: bool = float(player.get("hp")) > 10.0
+	printerr("P5: orb_hurt_ate=" + str(ate) + " hp=" + str(player.get("hp")) + " orb_ok=" + str(kept and ate))
+	player.set("hp", hp_keep)
 	quit_in(host, 0.35)

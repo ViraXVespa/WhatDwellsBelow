@@ -27,9 +27,9 @@ func refresh() -> void:
 		return
 	locked = false
 	if not crystal_on:
-		prompt = "Clear the area to activate." if CrystalNet.area_hostile(self) else "A: Activate crystal"
+		prompt = "Clear the area to activate." if CrystalNet.area_hostile(self) else "Activate crystal"
 	else:
-		prompt = "A: Transport network"
+		prompt = "Transport network"
 	if label:
 		label.text = _title()
 		label.visible = not hidden
