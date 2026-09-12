@@ -72,35 +72,42 @@ Files already under 5KB are not size targets. Do not split them “for cleanline
 
 `.github/workflows/version.yml` sets `patch` = baked patch + **count of user commits** on `main` since `scripts/data/version.json` last changed (ignores `chore: stamp …` and any `[skip ci]` subject). One push that lands **N** non-stamp commits bumps patch by **N**.
 
+**Size sweeps (over-10KB then over-5KB) ship as one PR** for the whole size worklist — not one PR per file or per cluster. Keep working on the same branch; open or update that one PR (squash-merge once when the User says the size sweep is complete). One changelog and one code-map pass at end. Extract / new-module clusters remain User-gated and can be separate PRs later.
+
 Therefore every Grok Bot PR MUST:
 
-1. Prefer **one commit** on the PR branch for the whole cluster (amend or squash locally before opening / updating the PR when tools allow).
+1. Prefer **one commit** on the PR branch when tools allow; for a long size sweep, multiple commits on the branch are OK as long as the User **squash-merges** once.
 2. Tell the User to **squash-merge** into `main` (not “Create a merge commit” or “Rebase and merge”) so `main` gains exactly one user commit for that PR.
-3. Include **one** new `design/changelog/{label}.md` in that same PR. `{label}` is baked `scripts/data/version.json` `label` with patch + 1 (same rule as web Phase 7). Body shape is in `design/versioning.md`. Do not hand-edit `scripts/data/changelog.json` or `version.json`.
+3. Include **one** new `design/changelog/{label}.md` in that same PR (authored when the sweep is ready to land). `{label}` is baked `scripts/data/version.json` `label` with patch + 1 (same rule as web Phase 7). Body shape is in `design/versioning.md`. Do not hand-edit `scripts/data/changelog.json` or `version.json`.
 4. Agent-visible protocol/doc changes also get a changelog entry (player note can say agent workflow changed).
 
 Do not claim a write landed until the PR exists.
+
 
 ## Flow
 
 1. Orient (Recognize + Read set).
 2. Inventory (UTF-8 sizes; rank; show; don’t edit yet).
-3. **Size** clusters may auto-chain while anything over 10KB remains (User can override). **Extract** / new-module / parked-move / deeper-relocate clusters always wait for User go.
-4. One cluster per PR via branch + PR (single commit preferred; squash-merge required). Never paste-emit.
-5. Include `design/changelog/{label}.md` for that PR.
-6. Report after each cluster.
-7. Update `design/README.md` code map when siblings / shared modules appear. Pure refactor: no `design/sessions.md`, no `design/session-log.md`.
+3. **Size** clusters may auto-chain on one branch / one PR while anything over 10KB remains, then over 5KB (User can override). **Extract** / new-module / parked-move / deeper-relocate clusters always wait for User go and may use later separate PRs.
+4. Size sweep: one branch + one PR for the whole size worklist (squash-merge once at the end). Never paste-emit. Do not open a new PR per file.
+5. Include `design/changelog/{label}.md` once for that PR when the size sweep is ready to land (WIP notes OK until then).
+6. Report after each cluster / push batch.
+7. Code-map pass once at end of the size sweep (brief sibling-name notes OK while sweeping). Pure refactor: no `design/sessions.md`, no `design/session-log.md`.
 8. End when the User stops or the worklist is empty.
+
 
 ## Batch
 
-One **cluster** per batch (and per PR). A cluster is one facade plus the siblings involved in that split, one new shared module plus the call sites that start using it, one existing owner plus fitting call sites, or one parked / named relocate set.
+For **size** work: keep going on the same branch / same PR across facades until the over-10KB list is clear, then the over-5KB list — do not open a new PR per file. A **cluster** is still one facade plus its siblings for editing focus; push often enough not to lose work.
 
-1. Open only that cluster.
+Extract / new-module / parked-move clusters remain one cluster per batch and stay User-gated (separate PR later if needed).
+
+1. Open only that cluster’s bodies.
 2. Apply `design/refactor.md` (including the Grok Bot shared-module rules).
 3. Size goal for this path: each resulting live `.gd` in the cluster should be under **5KB** when existing functions can move to do that. If a single existing function is itself over 5KB, leave that function whole and report it.
 4. 10KB remains the ship floor. Never leave a touched file over 10KB if a legal split can fix it.
-5. Ship the cluster as a branch + PR (with changelog). Stop. Do not start the next cluster until the flow rules say so.
+5. Size clusters: push to the shared size-sweep branch and update the one PR; continue while over-10KB remains (then over-5KB). Extract / relocate: stop for User go.
+
 
 ## Report
 
