@@ -5,7 +5,9 @@ extends CanvasLayer
 const AnimScan := preload("res://scripts/debug/anim_scan.gd")
 const Review := preload("res://scripts/debug/anim_browser_review.gd")
 const Nav := preload("res://scripts/debug/anim_browser_nav.gd")
+const Ui := preload("res://scripts/debug/anim_browser_ui.gd")
 const Play := preload("res://scripts/debug/anim_browser_play.gd")
+const Inp := preload("res://scripts/debug/anim_browser_input.gd")
 
 var open := false
 var models: Array = []
@@ -49,7 +51,7 @@ static func model_count() -> int:
 
 
 func _build() -> void:
-	Play.build(self)
+	Ui.build(self)
 
 
 func open_browser() -> void:
@@ -150,8 +152,8 @@ func _process(delta: float) -> void:
 
 
 func _pad_list_event(event: InputEvent) -> bool:
-	return Play.pad_list_event(event)
+	return Inp.pad_list_event(event)
 
 
 func _input(event: InputEvent) -> void:
-	Play.handle_input(self, event)
+	Inp.handle_input(self, event)

@@ -1,84 +1,12 @@
 extends Object
 
-## Clip playback, UI build, process tick, and input for Animation Browser.
+## Clip playback tick / frame control for Animation Browser.
 
-const ThemeS := preload("res://scripts/ui/theme.gd")
 const T := preload("res://scripts/data/tunables.gd")
-const AnimScan := preload("res://scripts/debug/anim_scan.gd")
 const Review := preload("res://scripts/debug/anim_browser_review.gd")
 const Nav := preload("res://scripts/debug/anim_browser_nav.gd")
 
 const SPEEDS: Array[float] = [0.25, 0.5, 1.0, 1.5, 2.0]
-
-
-static func build(host: CanvasLayer) -> void:
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.03, 0.03, 0.04, 0.94)
-	host.add_child(dim)
-	var prev := ThemeS.btn("Previous (LB)", func(): host._shift_model(-1))
-	prev.position = Vector2(48, 28)
-	prev.size = Vector2(360, 56)
-	host.add_child(prev)
-	host.name_lab = ThemeS.lab("Model", 32, Color(0.95, 0.86, 0.55))
-	host.name_lab.position = Vector2(440, 32)
-	host.name_lab.size = Vector2(720, 52)
-	host.name_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	host.add_child(host.name_lab)
-	var nxt := ThemeS.btn("Next (RB)", func(): host._shift_model(1))
-	nxt.position = Vector2(1510, 28)
-	nxt.size = Vector2(360, 56)
-	host.add_child(nxt)
-	var well := ColorRect.new()
-	well.color = Color(0.08, 0.07, 0.06, 1)
-	well.position = Vector2(48, 110)
-	well.size = Vector2(900, 720)
-	host.add_child(well)
-	var edge := ColorRect.new()
-	edge.color = Color(0.55, 0.42, 0.22, 1)
-	edge.position = Vector2(48, 110)
-	edge.size = Vector2(900, 6)
-	host.add_child(edge)
-	host.preview = TextureRect.new()
-	host.preview.position = Vector2(98, 150)
-	host.preview.size = Vector2(800, 620)
-	host.preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	host.preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	host.preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	host.add_child(host.preview)
-	host.empty_lab = ThemeS.lab("No clips for this facing.", 24, Color(0.85, 0.7, 0.55))
-	host.empty_lab.position = Vector2(120, 430)
-	host.empty_lab.size = Vector2(760, 80)
-	host.empty_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	host.empty_lab.visible = false
-	host.add_child(host.empty_lab)
-	host.play_btn = ThemeS.btn("Playing 1.0x - X to pause", func(): host._toggle_play())
-	host.play_btn.position = Vector2(48, 850)
-	host.play_btn.size = Vector2(900, 56)
-	host.add_child(host.play_btn)
-	var dlab := ThemeS.lab("Facing", 22, Color(0.92, 0.82, 0.5))
-	dlab.position = Vector2(980, 110)
-	dlab.size = Vector2(420, 36)
-	host.add_child(dlab)
-	host.dir_box = VBoxContainer.new()
-	host.dir_box.position = Vector2(980, 150)
-	host.dir_box.size = Vector2(420, 700)
-	host.dir_box.add_theme_constant_override("separation", 4)
-	host.add_child(host.dir_box)
-	var alab := ThemeS.lab("Animation (LT / RT)", 22, Color(0.92, 0.82, 0.5))
-	alab.position = Vector2(1420, 110)
-	alab.size = Vector2(460, 36)
-	host.add_child(alab)
-	host.anim_box = VBoxContainer.new()
-	host.anim_box.position = Vector2(1420, 150)
-	host.anim_box.size = Vector2(460, 700)
-	host.anim_box.add_theme_constant_override("separation", 4)
-	host.add_child(host.anim_box)
-	Review.build(host)
-	host.back_btn = ThemeS.btn("Back (B)", func(): host.close_browser())
-	host.back_btn.position = Vector2(48, 980)
-	host.back_btn.size = Vector2(1824, 60)
-	host.add_child(host.back_btn)
 
 
 static func toggle_play(host: CanvasLayer) -> void:
@@ -179,59 +107,3 @@ static func tick(host: CanvasLayer, delta: float) -> void:
 		host.frame_i = (host.frame_i + 1) % fr.size()
 		if host.preview:
 			host.preview.texture = fr[host.frame_i]
-
-
-static func pad_list_event(event: InputEvent) -> bool:
-	if event is InputEventMouse:
-		return false
-	return event is InputEventJoypadButton or event is InputEventJoypadMotion
-
-
-static func handle_input(host: CanvasLayer, event: InputEvent) -> void:
-	if not host.open:
-		return
-	if event is InputEventMouseButton:
-		var mb := event as InputEventMouseButton
-		if mb.button_index == MOUSE_BUTTON_RIGHT:
-			host.get_viewport().set_input_as_handled()
-			return
-		if mb.pressed and mb.button_index == MOUSE_BUTTON_WHEEL_UP:
-			Nav.scroll_anim(host, -1)
-			host.get_viewport().set_input_as_handled()
-		elif mb.pressed and mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			Nav.scroll_anim(host, 1)
-			host.get_viewport().set_input_as_handled()
-		return
-	if event is InputEventJoypadMotion:
-		var axis: int = (event as InputEventJoypadMotion).axis
-		if axis == JOY_AXIS_LEFT_X or axis == JOY_AXIS_LEFT_Y or axis == JOY_AXIS_RIGHT_X or axis == JOY_AXIS_RIGHT_Y:
-			host.get_viewport().set_input_as_handled()
-			return
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("anim_back"):
-		host.close_browser()
-		host.get_viewport().set_input_as_handled()
-		return
-	if Nav.ui_nav(host, event):
-		host.get_viewport().set_input_as_handled()
-		return
-	if Review.handle_tip(host, event):
-		host.get_viewport().set_input_as_handled()
-		return
-	if event.is_action_pressed("tab_left") or event.is_action_pressed("anim_model_prev"):
-		host._shift_model(-1)
-		host.get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("tab_right") or event.is_action_pressed("anim_model_next"):
-		host._shift_model(1)
-		host.get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("target_lock") or event.is_action_pressed("anim_idle"):
-		Nav.set_facing(host, "down")
-		host.get_viewport().set_input_as_handled()
-	elif pad_list_event(event) and (event.is_action_pressed("special") or event.is_action_pressed("anim_list_up")):
-		Nav.scroll_anim(host, -1)
-		host.get_viewport().set_input_as_handled()
-	elif pad_list_event(event) and (event.is_action_pressed("attack") or event.is_action_pressed("anim_list_down")):
-		Nav.scroll_anim(host, 1)
-		host.get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("anim_play") or event.is_action_pressed("gear_drop"):
-		toggle_play(host)
-		host.get_viewport().set_input_as_handled()
