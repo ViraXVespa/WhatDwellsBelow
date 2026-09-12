@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.12",
+			"points": [
+				{
+					"text": "Grok Bot may refactor topic design docs into art-pipeline-style **doors + siblings** (`design/doc-refactor.md`) to cut routing tokens without changing binding meaning."
+				},
+				{
+					"text": "Pilot splits: `ui.md`, `debug.md`, `input.md`, `inventory.md` are doors; heavy sections live in siblings (`ui-*.md`, `debug-*.md`, `input-*.md`, `inventory-*.md`)."
+				},
+				{
+					"text": "`tools/list_oversize_docs.ps1` inventories fat topic markdown (read `_logs/oversize-docs/summary.txt` only)."
+				},
+				{
+					"text": "Clarify that post-merge `chore: stamp` commits are CI (`version.yml`) only; Bot must not offer or create them (`design/grok-bot-session.md`)."
+				},
+				{
+					"text": "Windows agent shell: `tools/write_utf8_file.py` + `tools/run_agent_py.ps1` (ephemeral scripts under `_logs/agent-py/` auto-deleted after run); forbid `python -c` / PS-expanded doc bodies (`design/pc-offload.md`)."
+				}
+			],
+			"summary": "Documentation facades join script facades in the Bot mandate; four largest topics now route through job tables."
+		},
+		{
 			"label": "0.3.11",
 			"points": [
 				{
