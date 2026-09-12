@@ -2,7 +2,7 @@
 
 Status: protocol  
 Read when: splitting a live script for size; Grok Bot every task; Grok Build when an edit is over 10KB; web / chat Phase 6  
-See also: `AGENTS.md`, `design/grok-bot-session.md`, `design/README.md`
+See also: `design/doc-refactor.md`, `AGENTS.md`, `design/grok-bot-session.md`, `design/README.md`
 
 This file is the mechanical recipe. Session flow lives in the path files. Grok Bot uses this file on every task. Other paths use it only when they must split.
 
@@ -141,3 +141,7 @@ Done (0.3.11 relocate batch):
 - Sample facade folder: `scripts/ui/gear_board*.gd` -> `scripts/ui/gear_board/`
 
 Still open for later User go: other fat facade clusters (same tool). Prefer updating call sites over wrappers when external refs are few.
+
+## Documentation facades
+
+Script splits stay in this file. Topic markdown door + sibling splits are `design/doc-refactor.md` (Grok Bot may run those sweeps too).

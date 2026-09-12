@@ -16,12 +16,17 @@ Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. A
 4. Steam Godot under redirected IO often leaves Process `ExitCode` null - runners treat null as 0. Headless smokes need `--display-driver headless --audio-driver Dummy`. Compile check needs `--headless --editor --import --path <WDB_ROOT> --quit`.
 5. ASCII hyphens only inside PowerShell `.ps1` double-quoted strings (no em dashes).
 6. Housekeeping: summaries overwrite in place each run. Raw Godot `*.log` under `_logs/` are disposable - run `tools/clean_agent_logs.ps1` (or let smoke runner drop orphan phase logs). `_logs/` stays gitignored; do not commit it.
+7. **Windows / PowerShell bodies:** never put markdown or multi-line Python through PowerShell double-quoted strings or `python -c`. Backticks and `\x` escapes get mangled. Write the body with a single-quoted here-string piped into `tools/write_utf8_file.py` (or `--b64` in a single-quoted string), then run the file.
+8. **Ephemeral agent Python:** put throwaway scripts under `_logs/agent-py/` and run them with `powershell -File tools/run_agent_py.ps1 -Script _logs/agent-py/....`. That runner deletes the script after exit by default. Do not `-Cleanup` paths outside `_logs/agent-py/`. Permanent edits (design docs, checked-in tools) write straight to their real paths - they are not cleaned up.
 
 ## Catalog
 
 | Job | Command (from repo root) | Summary (read only this) |
 |-----|--------------------------|--------------------------|
 | Housekeep `_logs/` | `powershell -File tools/clean_agent_logs.ps1` (optional `-KeepRaw`, `-MaxAgeHours 24`) | `_logs/clean/summary.txt` |
+| Design doc sizes | `powershell -File tools/list_oversize_docs.ps1` (optional `-OverKb 8`) | `_logs/oversize-docs/summary.txt` |
+| Write UTF-8 body (no PS expansion) | pipe single-quoted here-string to `python tools/write_utf8_file.py --path ...` (optional `--bom`, `--b64`) | (writes the path; no summary) |
+| Run ephemeral agent Python | `powershell -File tools/run_agent_py.ps1 -Script _logs/agent-py/foo.py` (optional `-KeepScript`) | `_logs/agent-py/summary.txt` |
 | Oversize inventory | `powershell -File tools/list_oversize_scripts.ps1` (optional `-OverKb 5` or `10`) | `_logs/oversize/summary.txt` |
 | Func-level inventory | `powershell -File tools/summarize_scripts.ps1` (optional `-OverKb 5`, `-TopFuncs 8`, `-Path scripts/...`) | `_logs/script-summary/summary.txt` |
 | Facade + siblings by size | `powershell -File tools/list_facade_cluster.ps1 -Facade scripts/combat/enemy.gd` | `_logs/facade-cluster/summary.txt` |
@@ -37,6 +42,7 @@ Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. A
 ### Grok Bot
 
 - Inventory / sweep planning: oversize list, then `summarize_scripts` / `list_facade_cluster` before opening bodies.
+- Doc / multi-line script edits on Windows: `write_utf8_file.py` + `run_agent_py.ps1` for ephemeral runners (auto-clean under `_logs/agent-py/`).
 - After each size cluster: import check or `run_post_split_gate.ps1`; hostify lint advisory; smokes when behavior risk warrants.
 - Cap target: ship floor 10KB; sweep target 5KB when whole functions can move (`check_script_cap.ps1 -OverKb 5` optional).
 
