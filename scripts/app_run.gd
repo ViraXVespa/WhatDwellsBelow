@@ -164,11 +164,13 @@ static func tick(host: Node, delta: float) -> void:
 		var fighting := false
 		var p := host.get_tree().get_first_node_in_group("player")
 		if p:
-			fighting = int(p.get("atk_state", 0)) != 0 or p.get("lock_target") != null
+			var atk_state: Variant = p.get("atk_state")
+			fighting = (atk_state != null and int(atk_state) != 0) or p.get("lock_target") != null
 			if not fighting:
 				for e in host.get_tree().get_nodes_in_group("enemies"):
 					if e != null and is_instance_valid(e):
-						var st: int = int(e.get("state", 0))
+						var st_v: Variant = e.get("state")
+						var st: int = int(st_v) if st_v != null else 0
 						if st >= 1 and st <= 6:
 							fighting = true
 							break
