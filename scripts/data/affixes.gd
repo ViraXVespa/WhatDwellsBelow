@@ -74,7 +74,7 @@ static func stat_key(id: String) -> String:
 
 
 static func type_of(it: Dictionary) -> String:
-	var slot := str(it.get("slot", ""))
+	var slot: String = str(it.get("slot", ""))
 	if slot == "weapon":
 		return str(it.get("weapon", ""))
 	if slot == "tool":
@@ -99,7 +99,7 @@ static func bonus_pool(slot: String) -> PackedStringArray:
 	for row: Dictionary in defs():
 		if str(row.get("group", "")) != group:
 			continue
-		var id := str(row.get("id", ""))
+		var id: String = str(row.get("id", ""))
 		if id == prim:
 			continue
 		out.append(id)

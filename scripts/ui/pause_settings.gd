@@ -23,16 +23,11 @@ var list_btns: Array = []
 var info_btns: Array = []
 var back_btn: Button
 var status: Label
-@warning_ignore("unused_private_class_variable")
 var _list_root: Control
-@warning_ignore("unused_private_class_variable")
 var _info_root: Control
-@warning_ignore("unused_private_class_variable")
 var _list_rule: ColorRect
-@warning_ignore("unused_private_class_variable")
 var _info_rule: ColorRect
 var _chevron: Label
-@warning_ignore("unused_private_class_variable")
 var _path: Label
 
 

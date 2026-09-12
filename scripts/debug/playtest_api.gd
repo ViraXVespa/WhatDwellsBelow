@@ -114,6 +114,16 @@ func begin_smoke() -> void:
 	PlaytestLog.begin(self)
 
 
+func advance_smoke(sec: float, step: float = 0.05) -> void:
+	# Drive live ticks without waiting on a starved headless physics budget.
+	var left: float = maxf(0.0, sec)
+	var dt: float = maxf(0.01, step)
+	while left > 0.0:
+		var d: float = minf(dt, left)
+		_physics_process(d)
+		left -= d
+
+
 func run_medium() -> String:
 	running = true
 	interrupted = false

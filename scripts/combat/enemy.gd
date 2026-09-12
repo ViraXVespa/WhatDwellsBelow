@@ -1,15 +1,10 @@
 ﻿extends CharacterBody3D
 
-const Combat := preload("res://scripts/combat/combat.gd")
-const Depth := preload("res://scripts/world/depth.gd")
-const FloatS := preload("res://scripts/combat/float_num.gd")
-const Facing := preload("res://scripts/world/facing.gd")
-const TelegraphS := preload("res://scripts/combat/telegraph.gd")
-const Threat := preload("res://scripts/combat/threat.gd")
-const HpBarS := preload("res://scripts/combat/hp_bar.gd")
 const EnemySetup := preload("res://scripts/combat/enemy_setup.gd")
 const EnemyAI := preload("res://scripts/combat/enemy_ai.gd")
-const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
+const Ready := preload("res://scripts/combat/enemy_ready.gd")
+const Hit := preload("res://scripts/combat/enemy_hit.gd")
+const Present := preload("res://scripts/combat/enemy_present.gd")
 
 const ST_IDLE := 0
 const ST_CHASE := 1
@@ -70,52 +65,9 @@ var los_ok := false
 var los_t := 0.0
 
 
+
 func _ready() -> void:
-	add_to_group("enemies")
-	collision_layer = 4
-	collision_mask = 1
-	motion_mode = MOTION_MODE_FLOATING
-	axis_lock_linear_y = true
-	var cs := CollisionShape3D.new()
-	var sh := BoxShape3D.new()
-	sh.size = Vector3(0.48, 1.05, 0.38)
-	cs.shape = sh
-	cs.position = Vector3(0.0, 0.52, 0.0)
-	add_child(cs)
-	spr = Sprite3D.new()
-	spr.centered = true
-	spr.shaded = false
-	spr.double_sided = true
-	spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	spr.render_priority = 1
-	spr = SpriteFilt.decorate(spr)
-	add_child(spr)
-	tag = Label3D.new()
-	tag.position = Vector3(0.0, 1.55, 0.0)
-	tag.font_size = 34
-	tag.outline_size = 10
-	tag.outline_modulate = Color(0, 0, 0)
-	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	tag.no_depth_test = true
-	tag.pixel_size = 0.011
-	tag.visible = false
-	add_child(tag)
-	bang = Label3D.new()
-	bang.text = "!"
-	bang.position = Vector3(0.0, 1.85, 0.0)
-	bang.font_size = 64
-	bang.outline_size = 12
-	bang.modulate = Color(1.0, 0.92, 0.2)
-	bang.outline_modulate = Color(0.05, 0.04, 0.02)
-	bang.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	bang.no_depth_test = true
-	bang.pixel_size = 0.014
-	bang.visible = false
-	add_child(bang)
-	telegraph = TelegraphS.new()
-	add_child(telegraph)
-	telegraph.hide_now()
+	Ready.ready(self)
 
 
 func setup(id: String, floor_n: int, named := false, given_name := "") -> void:
@@ -131,73 +83,23 @@ func setup_guard(id: String, floor_n: int) -> void:
 
 
 func _mark_post() -> void:
-	post = global_position
-	last_seen = global_position
-	last_pos = global_position
+	Hit.mark_post(self)
 
 
 func take_hit(raw: float, from_dir: Vector2, crit: bool) -> void:
-	if dead:
-		return
-	var dmg: float = App.bal.apply_defense(raw, defense)
-	dmg *= Threat.received_mult(combat_lv)
-	if crit:
-		dmg *= App.bal.crit_mult
-		flash = 0.16
-	else:
-		flash = 0.08
-	hp = maxf(0.0, hp - dmg)
-	HpBarS.pulse(self, hp, max_hp, combat_lv)
-	knock = Vector3(from_dir.x, 0.0, from_dir.y) * App.bal.knockback
-	knock_t = 0.12
-	_float(int(round(dmg)), crit)
-	App.hitstop(App.bal.hitstop)
-	App.sfx("hit" if not crit else "crit")
-	var host := get_parent()
-	if host and host.has_method("note_enemy_hit"):
-		host.note_enemy_hit(self, dmg)
-	if hp <= 0.0:
-		_die()
+	Hit.take_hit(self, raw, from_dir, crit)
 
 
 func apply_stagger(sec: float) -> void:
-	if is_boss:
-		stagger = maxf(stagger, App.bal.slam_stagger_boss)
-	else:
-		stagger = maxf(stagger, sec)
+	Hit.apply_stagger(self, sec)
 
 
 func _float(amount: int, crit: bool) -> void:
-	var n: Label3D = FloatS.new()
-	n.setup(amount, crit, last_glance and not crit)
-	last_glance = false
-	n.position = global_position + Vector3(0.0, size_u * 0.7, 0.0)
-	var host := get_parent()
-	if host:
-		host.add_child(n)
-	else:
-		add_child(n)
+	Hit.float_num(self, amount, crit)
 
 
 func _die() -> void:
-	if dead:
-		return
-	dead = true
-	App.on_kill()
-	App.prog.note_kill(type_id, named_name)
-	collision_layer = 0
-	HpBarS.pulse(self, 0.0, max_hp, combat_lv)
-	if telegraph:
-		telegraph.hide_now()
-	if is_boss:
-		App.notify_boss_dead()
-	_drop_loot()
-	state = ST_REC
-	var tw := create_tween()
-	tw.tween_property(spr, "modulate:a", 0.0, 0.42)
-	if spr:
-		tw.parallel().tween_property(spr, "pixel_size", spr.pixel_size * 0.86, 0.42)
-	tw.finished.connect(queue_free)
+	Hit.die(self)
 
 
 func force_kill() -> void:
@@ -214,52 +116,11 @@ func start_flee() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if dead:
-		return
-	if post == Vector3.ZERO:
-		_mark_post()
-	bob_t += delta
-	reaggro_t = maxf(0.0, reaggro_t - delta)
-	if stagger > 0.0:
-		stagger -= delta
-		velocity = Vector3.ZERO
-		move_and_slide()
-		_present(delta)
-		return
-	if knock_t > 0.0:
-		knock_t -= delta
-		velocity = knock
-		move_and_slide()
-		_present(delta)
-		return
-	EnemyAI.tick(self, delta)
-	move_and_slide()
-	global_position.y = 0.0
-	EnemyAI.stuck(self, delta)
-	_present(delta)
+	Present.physics(self, delta)
 
 
 func _present(delta: float) -> void:
-	if spr == null:
-		return
-	var lift := 0.0
-	if move_kind == "fly":
-		lift = App.bal.fly_height + sin(bob_t * 5.0) * 0.08
-	elif move_kind == "hop" and hop_t > 0.18:
-		lift = App.bal.hop_height * (hop_t / 0.42)
-	spr.position.y = size_u * 0.48 + lift
-	var fk := Facing.from_aim(aim)
-	spr.flip_h = fk == "left" or fk == "up_left" or fk == "down_left"
-	Depth.apply(spr, global_position)
-	if flash > 0.0:
-		flash -= delta
-		spr.modulate = Color(1.7, 1.7, 1.7)
-	elif state == ST_WIND:
-		spr.modulate = base_mod * Color(1.15, 0.85, 0.55)
-	else:
-		spr.modulate = base_mod
-	if bang.visible and state != ST_FLEE:
-		bang.visible = false
+	Present.present(self, delta)
 
 
 func kill_tag() -> String:
@@ -270,28 +131,7 @@ func kill_tag() -> String:
 
 
 func _drop_loot() -> void:
-	var host := get_parent()
-	if host == null:
-		return
-	var gold_n := int(App.bal.enemy_gold_base) + randi() % maxi(1, int(App.bal.enemy_gold_span) + mini(4, App.floor_n))
-	if is_boss:
-		gold_n += int(App.bal.boss_gold_extra)
-	var PickupS := load("res://scripts/world/pickup.gd")
-	var g: Node3D = PickupS.new()
-	host.add_child(g)
-	g.setup("gold", global_position + Vector3(randf_range(-0.2, 0.2), 0.0, randf_range(-0.2, 0.2)), gold_n)
-	if is_boss:
-		return
-	if randf() < App.bal.enemy_gear_chance + App.bal.enemy_gear_floor * float(App.floor_n):
-		var rarity := "white"
-		if randf() < App.bal.enemy_gear_green:
-			rarity = "green"
-		var item := App.prog.make_armor(["head", "body", "legs"][randi() % 3], rarity)
-		if not App.prog.add_item(item):
-			App.spawn_floor_item(item, global_position)
-		else:
-			App.toast(str(item.name))
-			App.sfx("pickup")
+	Hit.drop_loot(self)
 
 
 func _player() -> Node3D:
@@ -302,6 +142,18 @@ func _player() -> Node3D:
 	if n is Node3D:
 		return n
 	return null
+
+
+func _begin_windup() -> void:
+	EnemyAI.begin_windup(self)
+
+
+func smoke_force_leash() -> String:
+	post = global_position
+	global_position = post + Vector3(App.bal.leash_range + 2.5, 0.0, 0.0)
+	state = ST_CHASE
+	EnemyAI.tick(self, 0.016)
+	return state_name()
 
 
 func state_name() -> String:

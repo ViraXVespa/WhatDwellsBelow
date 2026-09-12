@@ -72,35 +72,81 @@ Files already under 5KB are not size targets. Do not split them “for cleanline
 
 `.github/workflows/version.yml` sets `patch` = baked patch + **count of user commits** on `main` since `scripts/data/version.json` last changed (ignores `chore: stamp …` and any `[skip ci]` subject). One push that lands **N** non-stamp commits bumps patch by **N**.
 
+**Size sweeps (over-10KB then over-5KB) ship as one PR** for the whole size worklist — not one PR per file or per cluster. Keep working on the same branch; open or update that one PR (squash-merge once when the User says the size sweep is complete). One changelog and one code-map pass at end. Extract / new-module clusters remain User-gated and can be separate PRs later.
+
 Therefore every Grok Bot PR MUST:
 
-1. Prefer **one commit** on the PR branch for the whole cluster (amend or squash locally before opening / updating the PR when tools allow).
+1. Prefer **one commit** on the PR branch when tools allow; for a long size sweep, multiple commits on the branch are OK as long as the User **squash-merges** once.
 2. Tell the User to **squash-merge** into `main` (not “Create a merge commit” or “Rebase and merge”) so `main` gains exactly one user commit for that PR.
-3. Include **one** new `design/changelog/{label}.md` in that same PR. `{label}` is baked `scripts/data/version.json` `label` with patch + 1 (same rule as web Phase 7). Body shape is in `design/versioning.md`. Do not hand-edit `scripts/data/changelog.json` or `version.json`.
+3. Include **one** new `design/changelog/{label}.md` in that same PR (authored when the sweep is ready to land). `{label}` is baked `scripts/data/version.json` `label` with patch + 1 (same rule as web Phase 7). Body shape is in `design/versioning.md`. Do not hand-edit `scripts/data/changelog.json` or `version.json`.
 4. Agent-visible protocol/doc changes also get a changelog entry (player note can say agent workflow changed).
 
 Do not claim a write landed until the PR exists.
 
+
+
+
+## Local checkout (preferred for size sweeps)
+
+When the User has authorized a local checkout on their machine:
+
+- Prefer editing that checkout over per-file GitHub API patches.
+- Root path: user env var `WDB_ROOT` (example: `C:\Users\Vira\source\repos\WhatDwellsBelow` on the laptop). Document any change to that path here.
+- Commit locally on the size-sweep branch as you go. **Push to the PR branch only after a phase's updates are finished** (not after each file), unless the User says otherwise.
+- Use the GitHub connector mainly for PR remote sync / status, not for rewriting bodies file-by-file.
+- Cloud Agents remain optional; if the plan blocks them, local checkout + Steam Godot headless is the compile path.
+
+
+## Size measurement
+
+Preferred (agent-friendly): from repo root, `powershell -File tools/list_oversize_scripts.ps1` (optional `-OverKb 5`, `-OverKb 10`). Writes `_logs/oversize/summary.txt` with path + filesystem `Length` only - do not open bodies just to measure.
+
+Inventory and before/after sizes use **filesystem byte length** of each `.gd` file (`Get-Item Length`, `dir`, or equivalent). Do **not** `ReadAllText` + `Encoding.UTF8.GetByteCount` just to measure — that burns tokens and can disagree with on-disk size if line endings differ.
+
+Report path + bytes from Length. The 10KB / 5KB caps are on-disk UTF-8 file sizes.
+
+
+## Headless compile check
+
+After facade / helper splits (or when the User asks), run Godot against the local checkout **the way the editor reloads scripts** before claiming the cluster compiles. Plain game boot is not enough.
+
+- Binary (Steam tools build): `C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe` (also referenced from `tools/export_web.ps1`).
+- **Required check:** `--headless --editor --import --path <WDB_ROOT> --quit` — this runs `first_scan_filesystem`, regenerates/reloads scripts like opening the project in the editor, and catches GDScript parse errors (including `:=` inference) that plain `--path ... --quit` can miss.
+- Preferred (agent-friendly): from repo root, `powershell -File tools/run_godot_import_check.ps1` (optional `-TimeoutSec 180`). Writes `_logs/godot-import-check/summary.txt` with pass/fail plus error/warning highlights only.
+- Phase smokes (coverage): after import is clean, run `--headless --display-driver headless --audio-driver Dummy --path <WDB_ROOT> -- --wdb-phaseN-smoke` per `design/debug.md`. Plain `--headless` without those drivers can hang under redirected IO. Do not treat smoke stderr as the editor-clean bar, or a plain `--quit` boot as a smoke pass.
+- Preferred (agent-friendly smokes): from repo root, `powershell -File tools/run_smokes.ps1` (optional `-Phases 1,2,6`, `-TimeoutSec 120`). Writes `_logs/smokes/summary.txt` with phase status plus `P*:` / `SCRIPT ERROR` highlights only - read that file, not the raw Godot logs.
+- Preferred (post-split gate): from repo root, `powershell -File tools/run_post_split_gate.ps1` (optional `-WithSmokes`, `-Phases 1,2,6`, `-Force`). Runs import check then optional smokes; writes `_logs/post-split-gate/summary.txt`. Refuses if Godot is already running unless `-Force`.
+- Advisory hostify lint: from repo root, `powershell -File tools/lint_hostify.ps1` (or `python tools/lint_hostify.py`). Writes `_logs/hostify-lint/summary.txt`. Always exits 0; read `RESULT hits=` / kinds. Catches common Hostify pitfalls (`SHADOW_HOST`, `INFER_LOAD`/`INFER_FAC`/`INFER_GET`, unqualified `MOTION_MODE_*` on non-CharacterBody helpers, corrupt `str(n)ame`, trailing `host, )`). Not a compile substitute.
+- Capture stdout and stderr (GUI-subsystem exe: use `Start-Process -RedirectStandardOutput/-RedirectStandardError`). Clean bar: import check exit 0 **and** empty stderr.
+- Cascade tip: `Could not resolve class "res://.../foo.gd"` often means **foo** (or a preload it owns) failed to parse. A load-probe script that `load()`s each dependency in order surfaces the real member/type error first.
+- Autoload `App` may look "missing" when loading scripts via `--script` outside a full project boot; prefer the editor import check above.
+
+Document new split-induced failure modes under `design/refactor.md` (Hostify pitfalls) when they are not already listed. When an error/warning was introduced by a split, stop to record **why** and **how to prevent it** (see Hostify pitfalls / Types) before continuing the sweep.
+
 ## Flow
 
 1. Orient (Recognize + Read set).
-2. Inventory (UTF-8 sizes; rank; show; don’t edit yet).
-3. **Size** clusters may auto-chain while anything over 10KB remains (User can override). **Extract** / new-module / parked-move / deeper-relocate clusters always wait for User go.
-4. One cluster per PR via branch + PR (single commit preferred; squash-merge required). Never paste-emit.
-5. Include `design/changelog/{label}.md` for that PR.
-6. Report after each cluster.
-7. Update `design/README.md` code map when siblings / shared modules appear. Pure refactor: no `design/sessions.md`, no `design/session-log.md`.
-8. End when the User stops or the worklist is empty.
+2. Inventory (on-disk Length sizes; rank; show; don’t edit yet).
+3. **Size** clusters may auto-chain on one branch / one PR while anything over 10KB remains, then over 5KB (User can override). **Extract** / new-module / parked-move / deeper-relocate clusters always wait for User go and may use later separate PRs.
+4. Size sweep: one branch + one PR for the whole size worklist (squash-merge once at the end). Never paste-emit. Do not open a new PR per file.
+5. After each size cluster (and before claiming compile-clean): run the editor import check (`tools/run_godot_import_check.ps1` / post-split gate when practical). **Error-handling phase:** if the split introduced any SCRIPT ERROR, parse error, or new actionable warning, stop — analyze why it happened, fix it, and record how to prevent it next time under `design/refactor.md` (Hostify pitfalls / Types / Shared calculations). Do not continue the sweep past a red import check.
+6. Include `design/changelog/{label}.md` once for that PR when the size sweep is ready to land (WIP notes OK until then).
+7. Report after each cluster / push batch.
+8. Code-map pass once at end of the size sweep (brief sibling-name notes OK while sweeping). Pure refactor: no `design/sessions.md`, no `design/session-log.md`.
+9. End when the User stops or the worklist is empty.
 
 ## Batch
 
-One **cluster** per batch (and per PR). A cluster is one facade plus the siblings involved in that split, one new shared module plus the call sites that start using it, one existing owner plus fitting call sites, or one parked / named relocate set.
+For **size** work: keep going on the same branch / same PR across facades until the over-10KB list is clear, then the over-5KB list — do not open a new PR per file. A **cluster** is still one facade plus its siblings for editing focus; push often enough not to lose work.
 
-1. Open only that cluster.
+Extract / new-module / parked-move clusters remain one cluster per batch and stay User-gated (separate PR later if needed).
+
+1. Open only that cluster’s bodies.
 2. Apply `design/refactor.md` (including the Grok Bot shared-module rules).
 3. Size goal for this path: each resulting live `.gd` in the cluster should be under **5KB** when existing functions can move to do that. If a single existing function is itself over 5KB, leave that function whole and report it.
 4. 10KB remains the ship floor. Never leave a touched file over 10KB if a legal split can fix it.
-5. Ship the cluster as a branch + PR (with changelog). Stop. Do not start the next cluster until the flow rules say so.
+5. Size clusters: push to the shared size-sweep branch and update the one PR; continue while over-10KB remains (then over-5KB). Extract / relocate: stop for User go.
+
 
 ## Report
 

@@ -10,7 +10,12 @@ static var enter_flag: bool = false
 
 
 static func args() -> PackedStringArray:
-	return OS.get_cmdline_user_args()
+	# Prefer user args (after --). Fall back to full cmdline so Steam/redirected
+	# launches still see --wdb-phaseN-smoke when user-args arrive empty.
+	var user: PackedStringArray = OS.get_cmdline_user_args()
+	if user.size() > 0:
+		return user
+	return OS.get_cmdline_args()
 
 
 static func active() -> bool:

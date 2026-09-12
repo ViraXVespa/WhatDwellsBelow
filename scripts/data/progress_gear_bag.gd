@@ -1,0 +1,271 @@
+extends Object
+
+const Make := preload("res://scripts/data/progress_make.gd")
+const Rules := preload("res://scripts/data/gear_rules.gd")
+const Req := preload("res://scripts/data/progress_gear_req.gd")
+
+static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:
+	return Make.make_weapon(p, wpn, rarity, ilvl)
+
+
+static func make_tool(p: Object, kind: String, rarity := "white", ilvl: int = 0) -> Dictionary:
+	return Make.make_tool(p, kind, rarity, ilvl)
+
+
+static func make_armor(p: Object, slot: String, rarity: String, ilvl: int = 0) -> Dictionary:
+	return Make.make_armor(p, slot, rarity, ilvl)
+
+
+static func make_potion(p: Object, n: int) -> Dictionary:
+	return Make.make_potion(p, n)
+
+
+static func make_food(p: Object, fid: String, n: int) -> Dictionary:
+	return Make.make_food(p, fid, n)
+
+
+static func make_artifact(p: Object, id: String) -> Dictionary:
+	return Make.make_artifact(p, id)
+
+
+static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Dictionary:
+	return Make.item(p, kind, name, extra)
+
+
+static func starter(p: Object, slot: String) -> Dictionary:
+	return Make.starter(p, slot)
+
+
+static func required_ok(slot: String, it: Dictionary) -> bool:
+	return Req.required_ok(slot, it)
+
+
+static func required_piece(p: Object, slot: String) -> Dictionary:
+	return Req.required_piece(p, slot)
+
+
+static func ensure_required_slots(p: Object) -> void:
+	Req.ensure_required_slots(p)
+
+
+static func bag_stack_index(p: Object, it: Dictionary) -> int:
+	var k: String = str(it.get("kind", ""))
+	if k != "food":
+		return -1
+	for i: int in p.bag.size():
+		var b: Dictionary = p.bag[i]
+		if str(b.get("kind", "")) != k:
+			continue
+		if str(b.get("food", "")) != str(it.get("food", "")):
+			continue
+		return i
+	return -1
+
+
+static func bag_can_accept(p: Object, it: Dictionary) -> bool:
+	if it.is_empty():
+		return false
+	if bag_stack_index(p, it) >= 0:
+		return true
+	return not p.bag_full()
+
+
+static func _has_white_copy(p: Object, it: Dictionary) -> bool:
+	if str(it.get("rarity", "white")) != "white":
+		return false
+	var key := Rules.tmpl_key(it)
+	var eq: Dictionary = p.slots.get(str(it.get("slot", "")), {})
+	if not eq.is_empty() and Rules.tmpl_key(eq) == key:
+		return true
+	for raw: Variant in p.bag:
+		if raw is Dictionary and Rules.tmpl_key(raw) == key and str(raw.get("rarity", "white")) == "white":
+			return true
+	return Rules.is_starter(p, it)
+
+
+static func add_item(p: Object, it: Dictionary) -> bool:
+	if it.is_empty():
+		return false
+	if str(it.get("rarity", "white")) == "white" and _has_white_copy(p, it):
+		Rules.grant_smith(p, it)
+		return true
+	if str(it.kind) == "food":
+		var slot_it: Dictionary = p.slots.get("food", {})
+		if not slot_it.is_empty() and str(slot_it.get("food", "")) == str(it.get("food", "")):
+			var nxt: int = int(slot_it.stack) + int(it.stack)
+			if not App.in_dungeon:
+				nxt = mini(nxt, int(App.bal.food_bring_max))
+			slot_it.stack = nxt
+			p.slots["food"] = slot_it
+			return true
+	if str(it.kind) == "potion":
+		var pot: Dictionary = p.slots.get("potion", {})
+		if pot.is_empty():
+			it.stack = 1
+			if int(it.get("charge_max", 0)) <= 0:
+				it.charge_max = maxi(2, int(it.get("charges", 2)))
+			if int(it.get("charges", 0)) <= 0:
+				it.charges = int(it.charge_max)
+			p.slots["potion"] = it
+			return true
+	return add_to_bag(p, it)
+
+
+static func add_to_bag(p: Object, it: Dictionary) -> bool:
+	if it.is_empty():
+		return false
+	var idx: int = bag_stack_index(p, it)
+	if idx >= 0:
+		var b: Dictionary = p.bag[idx]
+		var nxt: int = int(b.get("stack", 1)) + int(it.get("stack", 1))
+		if str(it.kind) == "food" and not App.in_dungeon:
+			nxt = mini(nxt, int(App.bal.food_bring_max))
+		b.stack = nxt
+		p.bag[idx] = b
+		return true
+	if p.bag_full():
+		App.toast("Bag full.")
+		return false
+	p.bag.append(it)
+	if str(it.kind) == "artifact":
+		p._sync_artifacts()
+		p._refresh_player_hp()
+	return true
+
+
+static func remove_uid(p: Object, uid: int) -> Dictionary:
+	for i: int in p.bag.size():
+		if int(p.bag[i].uid) == uid:
+			var it: Dictionary = p.bag[i]
+			p.bag.remove_at(i)
+			p._sync_artifacts()
+			if str(it.kind) == "artifact":
+				p._refresh_player_hp()
+			return it
+	return {}
+
+
+static func equip_uid(p: Object, uid: int) -> String:
+	var it: Dictionary = remove_uid(p, uid)
+	if it.is_empty():
+		return "Gone."
+	var slot: String = str(it.get("slot", ""))
+	if p.SLOTS.find(slot) < 0:
+		add_to_bag(p, it)
+		return "Can't equip that."
+	if slot == "tool":
+		var t: String = str(it.get("tool", ""))
+		if t != "" and t != p.tool_type:
+			add_to_bag(p, it)
+			return "Tool locked to %s this run." % p.tool_type
+	var cur: Dictionary = p.slots.get(slot, {})
+	if not cur.is_empty():
+		if not bag_can_accept(p, cur):
+			add_to_bag(p, it)
+			return "Bag full."
+		p.slots[slot] = {}
+		if not add_to_bag(p, cur):
+			p.slots[slot] = cur
+			add_to_bag(p, it)
+			return "Bag full."
+	p.slots[slot] = it
+	if slot == "food":
+		p._clamp_food_slot()
+	if slot == "weapon":
+		App.weapon = str(it.get("weapon", "great_axe"))
+		var pl: CharacterBody3D = p._player()
+		if pl and pl.has_method("set_weapon"):
+			pl.set_weapon(App.weapon)
+	p._sync_artifacts()
+	p._refresh_player_hp()
+	return "Equipped " + str(it.name)
+
+
+static func drop_uid(p: Object, uid: int) -> String:
+	var it: Dictionary = remove_uid(p, uid)
+	if it.is_empty():
+		return "Gone."
+	App.spawn_floor_item(it)
+	App.toast("Dropped " + str(it.name))
+	return "Dropped."
+
+
+static func unequip_slot(p: Object, slot: String) -> String:
+	if p.SLOTS.find(slot) < 0:
+		return "No slot."
+	if Rules.locked_equip_slot(slot):
+		return "Weapon and tool stay equipped."
+	var it: Dictionary = p.slots.get(slot, {})
+	if it.is_empty():
+		return "Empty."
+	if not bag_can_accept(p, it):
+		App.toast("Bag full.")
+		return "Bag full."
+	p.slots[slot] = {}
+	if not add_to_bag(p, it):
+		p.slots[slot] = it
+		return "Bag full."
+	p._sync_artifacts()
+	p._refresh_player_hp()
+	return "Unequipped " + str(it.name)
+
+
+static func fill_slot_after_remove(p: Object, slot: String) -> void:
+	if slot == "weapon":
+		p.slots["weapon"] = make_weapon(p, p.pick_weapon, "white")
+		App.weapon = str(p.slots.weapon.get("weapon", p.pick_weapon))
+		var pl: CharacterBody3D = p._player()
+		if pl and pl.has_method("set_weapon"):
+			pl.set_weapon(App.weapon)
+	elif slot == "tool":
+		p.slots["tool"] = make_tool(p, p.tool_type)
+	else:
+		p.slots[slot] = {}
+
+
+static func drop_slot(p: Object, slot: String) -> String:
+	if p.SLOTS.find(slot) < 0:
+		return "No slot."
+	if Rules.locked_equip_slot(slot):
+		return "Weapon and tool stay equipped."
+	var it: Dictionary = p.slots.get(slot, {})
+	if it.is_empty():
+		return "Empty."
+	fill_slot_after_remove(p, slot)
+	p._refresh_player_hp()
+	App.spawn_floor_item(it)
+	App.toast("Dropped " + str(it.name))
+	return "Dropped."
+
+
+static func take_slot(p: Object, slot: String) -> Dictionary:
+	if p.SLOTS.find(slot) < 0:
+		return {}
+	if Rules.locked_equip_slot(slot):
+		return {}
+	var it: Dictionary = p.slots.get(slot, {})
+	if it.is_empty():
+		return {}
+	fill_slot_after_remove(p, slot)
+	p._refresh_player_hp()
+	return it
+
+
+static func drop_stash(p: Object, uid: int) -> String:
+	for i: int in p.bank_items.size():
+		if int(p.bank_items[i].uid) == uid:
+			var it: Dictionary = p.bank_items[i]
+			p.bank_items.remove_at(i)
+			App.toast("Discarded " + str(it.name))
+			return "Discarded."
+	return "Gone."
+
+
+static func give_or_drop(p: Object, it: Dictionary, pos: Vector3) -> bool:
+	if it.is_empty():
+		return false
+	if add_item(p, it):
+		return true
+	App.spawn_floor_item(it, pos)
+	return false
+

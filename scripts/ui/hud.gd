@@ -39,9 +39,7 @@ var fps_lab: Label
 var look_lab: Label
 var portrait_path := ""
 
-@warning_ignore("unused_private_class_variable")
 var _prompt_shown := ""
-@warning_ignore("unused_private_class_variable")
 var _prompt_scheme := ""
 
 

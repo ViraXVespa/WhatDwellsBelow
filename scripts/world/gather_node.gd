@@ -2,6 +2,7 @@
 
 const Depth := preload("res://scripts/world/depth.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
+const GatherRules := preload("res://scripts/world/gather_rules.gd")
 
 var kind := "mine"
 var hits := 4
@@ -113,11 +114,7 @@ func strike() -> Dictionary:
 
 
 func _sync_interval() -> void:
-	var base: float = App.bal.wood_time if kind == "wood" else App.bal.mine_time
-	var spd: float = 0.0
-	if App.prog != null:
-		spd = App.prog.gear_stat("gather_spd")
-	interval = maxf(0.2, base / (1.0 + spd))
+	interval = GatherRules.interval_for(kind)
 
 
 func _flash() -> void:

@@ -1,6 +1,7 @@
 extends Object
 
 const Cat := preload("res://scripts/data/catalog.gd")
+const ForgeP := preload("res://scripts/data/progress_forge.gd")
 
 
 static func tree(host: Node) -> SceneTree:
@@ -48,10 +49,12 @@ static func p6(host: Node) -> void:
 	App.gold = 80
 	App.ore = 12
 	App.prog.root = 6
-	App.prog.add_item(App.prog.make_weapon("great_axe", "white"))
-	var axe: Dictionary = App.prog.bag[App.prog.bag.size() - 1]
-	var forge: String = App.prog.forge_item(axe)
-	printerr("P6: forge=" + forge + " holds=" + str((App.prog.holds["weapon"] as Array).size()) + " forge_ok=" + str((App.prog.holds["weapon"] as Array).size() > 0))
+	var axe: Dictionary = App.prog.make_weapon("great_axe", "white")
+	App.prog.add_item(axe)
+	# Shared forge->hold route (anvil grant path). Never trust bag[-1] after mixed add_item calls.
+	var forge: String = ForgeP.forge_hold(App.prog, "weapon", "great_axe", "white", int(axe.get("ilvl", 1)))
+	var hold_n: int = ForgeP.holds_of(App.prog, "weapon", "great_axe").size()
+	printerr("P6: forge=" + forge + " holds=" + str(hold_n) + " type=great_axe forge_ok=" + str(hold_n > 0))
 	App.gold = 10
 	App.ore = 8
 	App.wood = 5
@@ -86,5 +89,5 @@ static func p6(host: Node) -> void:
 	printerr("P6: quest_open=" + str(ui.open) + " focus=" + str(ui.focus_btn != null))
 	ui.close_ui()
 	printerr("P6: food_hot_left=" + str(App.prog.food_left))
-	printerr("P6: loop_ok=" + str(App.extracted and (App.prog.holds["weapon"] as Array).size() > 0 and App.prog.SETS.size() == 8))
+	printerr("P6: loop_ok=" + str(App.extracted and ForgeP.holds_of(App.prog, "weapon", "great_axe").size() > 0 and App.prog.SETS.size() == 8))
 	quit_in(host, 0.4)

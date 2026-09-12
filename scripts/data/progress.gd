@@ -7,6 +7,7 @@ const CombatP := preload("res://scripts/data/progress_combat.gd")
 const Town := preload("res://scripts/data/progress_town.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
+const Boot := preload("res://scripts/data/progress_boot.gd")
 
 const SKILLS: PackedStringArray = ["axe", "staff", "bow", "str", "mag", "rng", "def", "hp", "mine", "wood", "smith"]
 const SLOTS: PackedStringArray = ["weapon", "tool", "potion", "food", "head", "body", "legs"]
@@ -47,117 +48,24 @@ func _init() -> void:
 	ForgeP.migrate(self)
 
 
-func reset_meta() -> void:
-	holds.clear()
-	starters.clear()
-	for s in SLOTS:
-		holds[s] = []
-		slots[s] = {}
-		starters[s] = []
-	skills_run.clear()
-	skills_perm.clear()
-	for id in SKILLS:
-		skills_run[id] = 0.0
-		skills_perm[id] = 0.0
-	bag.clear()
-	bank_items.clear()
-	analyzed.clear()
-	forge_book.clear()
-	tool_type = "pickaxe"
-	deepest = 1
-	start_floor = 1
-	root = 0
-	next_uid = 1
-	quests_offered = []
-	quest_active = {}
-	forge_count = 0
-	hold_pick.clear()
-	_clear_mailed()
-	clear_food()
-	Gear.ensure_required_slots(self)
 
+func reset_meta() -> void:
+	Boot.reset_meta(self)
 
 func begin_run_loadout() -> void:
-	for it in bag:
-		if str(it.get("kind", "")) != "artifact":
-			bank_items.append(it)
-	bag.clear()
-	clear_food()
-	potion_cd = 0.0
-	for id in SKILLS:
-		skills_run[id] = 0.0
-	var keep_pot: Dictionary = (slots.get("potion", {}) as Dictionary).duplicate(true)
-	var keep_food: Dictionary = (slots.get("food", {}) as Dictionary).duplicate(true)
-	for s in SLOTS:
-		if s == "potion" or s == "food":
-			continue
-		slots[s] = _slot_for_run(s)
-	if not keep_pot.is_empty():
-		slots["potion"] = keep_pot
-	else:
-		slots["potion"] = _slot_for_run("potion")
-	if not keep_food.is_empty() and int(keep_food.get("stack", 0)) > 0:
-		slots["food"] = keep_food
-	else:
-		slots["food"] = _slot_for_run("food")
-	Rules.refill_potion(self)
-	tool_type = str(slots.tool.get("tool", tool_type))
-	App.weapon = str(slots.weapon.get("weapon", pick_weapon))
-	App.gold = 0
-	App.ore = 0
-	App.wood = 0
-	App.run_artifacts.clear()
-	_sync_artifacts()
-	_clamp_food_slot()
-	_clear_mailed()
-	if str(quest_active.get("kind", "")) == "ore":
-		quest_active.have = 0
-
+	Boot.begin_run_loadout(self)
 
 func _slot_for_run(s: String) -> Dictionary:
-	if s == "weapon" or s == "tool":
-		return Gear.required_piece(self, s)
-	var h: Array = holds[s]
-	var fallback := 0 if h.size() > 0 else -1
-	var pi := int(hold_pick.get(s, fallback))
-	if pi >= 0 and pi < h.size():
-		return (h[pi] as Dictionary).duplicate(true)
-	return Gear.starter(self, s)
-
+	return Boot._slot_for_run(self, s)
 
 func lose_unextracted() -> void:
-	bag.clear()
-	App.gold = 0
-	App.ore = 0
-	App.wood = 0
-	root = 0
-	App.run_artifacts.clear()
-	clear_food()
-	for s in SLOTS:
-		slots[s] = {}
-	_sync_artifacts()
-	Gear.ensure_required_slots(self)
-
+	Boot.lose_unextracted(self)
 
 func _clear_mailed() -> void:
-	mailed_gold = 0
-	mailed_ore = 0
-	mailed_wood = 0
-	mailed_root = 0
-	mailed_names = PackedStringArray()
-
+	Boot._clear_mailed(self)
 
 func _clamp_food_slot() -> void:
-	if App.in_dungeon:
-		return
-	var cap := int(App.bal.food_bring_max)
-	var fd: Dictionary = slots.get("food", {})
-	if fd.is_empty():
-		return
-	if int(fd.get("stack", 0)) > cap:
-		fd.stack = cap
-		slots["food"] = fd
-
+	Boot._clamp_food_slot(self)
 
 func make_weapon(wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:
 	return Gear.make_weapon(self, wpn, rarity, ilvl)
@@ -252,10 +160,7 @@ func tick_food(delta: float) -> void:
 
 
 func clear_food() -> void:
-	food_id = ""
-	food_t = 0.0
-	food_left = 0.0
-
+	Boot.clear_food(self)
 
 func skill_xp(id: String) -> float:
 	return CombatP.skill_xp(self, id)
@@ -433,8 +338,19 @@ func pay_forge(c: Dictionary) -> bool:
 	return ForgeP.pay(self, c)
 
 
-func forge_item(_it: Dictionary) -> String:
-	return "Use the Forge tab."
+func forge_item(it: Dictionary) -> String:
+	# Player UX still points at the Forge tab when the piece is not forge-shaped.
+	var slot := str(it.get("slot", ""))
+	var type_id := ForgeP.type_of(it)
+	if type_id == "":
+		type_id = str(it.get("type_id", it.get("id", "")))
+	var rarity := str(it.get("rarity", "white"))
+	var ilvl := int(it.get("ilvl", 1))
+	if slot == "" or type_id == "":
+		return "Use the Forge tab."
+	if slot not in ForgeP.FORGE_SLOTS:
+		return "Use the Forge tab."
+	return ForgeP.forge_hold(self, slot, type_id, rarity, ilvl)
 
 
 func roll_quests(keep_active: bool) -> void:
@@ -469,21 +385,10 @@ func _player() -> Node:
 
 
 func to_meta() -> Dictionary:
-	var m := Town.to_meta(self)
-	m["analyzed"] = analyzed.duplicate(true)
-	m["forge_book"] = forge_book.duplicate(true)
-	return m
-
+	return Boot.to_meta(self)
 
 func from_meta(d: Dictionary) -> void:
-	Town.from_meta(self, d)
-	var raw: Variant = d.get("analyzed", [])
-	analyzed = raw.duplicate(true) if raw is Array else []
-	var book: Variant = d.get("forge_book", {})
-	forge_book = book.duplicate(true) if book is Dictionary else {}
-	ForgeP.migrate(self)
-	Gear.ensure_required_slots(self)
-
+	Boot.from_meta(self, d)
 
 func restock() -> String:
 	return Town.restock(self)

@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 ## Primary + backup saves. Isolated live vs playtest slots.
 
@@ -7,157 +7,49 @@ static var _migrated := false
 const LIVE := "user://live"
 const FRESH := "user://playtest/fresh"
 const PROG := "user://playtest/progressed"
-const Rules := preload("res://scripts/data/gear_rules.gd")
+const Io := preload("res://scripts/data/save_store_io.gd")
+const Data := preload("res://scripts/data/save_store_data.gd")
+const Collect := preload("res://scripts/data/save_store_collect.gd")
 
 
 static func dir_for(slot: String) -> String:
-	if slot == "fresh":
-		return FRESH
-	if slot == "progressed":
-		return PROG
-	return LIVE
+	return Io.dir_for(slot)
 
 
 static func primary_path(slot: String) -> String:
-	return dir_for(slot).path_join("save.json")
+	return Io.primary_path(slot)
 
 
 static func backup_path(slot: String) -> String:
-	return dir_for(slot).path_join("save.bak.json")
+	return Io.backup_path(slot)
 
 
 static func ensure_dir(slot: String) -> void:
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir_for(slot)))
+	Io.ensure_dir(slot)
 
 
 static func write_payload(path: String, data: Dictionary) -> bool:
-	var f := FileAccess.open(path, FileAccess.WRITE)
-	if f == null:
-		return false
-	f.store_string(JSON.stringify(data))
-	return true
+	return Io.write_payload(path, data)
 
 
 static func read_payload(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		return {}
-	var f := FileAccess.open(path, FileAccess.READ)
-	if f == null:
-		return {}
-	var j := JSON.new()
-	if j.parse(f.get_as_text()) != OK:
-		return {}
-	var parsed: Variant = j.data
-	if parsed is Dictionary:
-		return parsed
-	return {}
+	return Io.read_payload(path)
 
 
 static func collect() -> Dictionary:
-	return {
-		"v": 1,
-		"bal_rev": App.bal.BAL_REV,
-		"character_type": App.character_type,
-		"character_chosen": App.character_chosen,
-		"cam_zoom": App.cam_zoom,
-		"hud_scale": App.hud_scale,
-		"ui_text_floor": App.ui_text_floor,
-		"vol_master": App.vol_master,
-		"vol_music": App.vol_music,
-		"vol_sfx": App.vol_sfx,
-		"sprite_filter": App.sprite_filter,
-		"sprite_mip_sharp": App.sprite_mip_sharp,
-		"sprite_mip_bias": App.sprite_mip_bias,
-		"display_mode": App.display_mode,
-		"display_fs_kind": App.display_fs_kind,
-		"web_fullscreen": App.web_fullscreen,
-		"aim_line_on": App.bal.aim_line_on,
-		"aim_line_opacity": App.bal.aim_line_opacity,
-		"target_lock_pref": bool(App.get("target_lock_pref")),
-		"salvage_dupes": bool(App.get("salvage_dupes")),
-		"salvage_finish": float(App.get("salvage_finish")),
-		"salvage_fortune": float(App.get("salvage_fortune")),
-		"bank_gold": App.bank_gold,
-		"bank_ore": App.bank_ore,
-		"bank_wood": App.bank_wood,
-		"bank_root": App.bank_root,
-		"last_seen_game_ver": App.last_seen_game_ver,
-		"binds": App.collect_binds(),
-		"debug_bal": App.bal.snapshot(),
-		"prog": App.prog.to_meta(),
-	}
+	return Collect.collect()
 
 
 static func apply(data: Dictionary) -> void:
-	_migrated = false
-	App.character_type = str(data.get("character_type", "male"))
-	App.character_chosen = bool(data.get("character_chosen", false))
-	App.cam_zoom = float(data.get("cam_zoom", 1.75))
-	App.hud_scale = float(data.get("hud_scale", 1.0))
-	App.ui_text_floor = float(data.get("ui_text_floor", 14.0))
-	App.vol_master = float(data.get("vol_master", 1.0))
-	App.vol_music = float(data.get("vol_music", 0.7))
-	App.vol_sfx = float(data.get("vol_sfx", 0.85))
-	App.sprite_filter = int(data.get("sprite_filter", 2))
-	App.sprite_mip_sharp = bool(data.get("sprite_mip_sharp", false))
-	App.sprite_mip_bias = float(data.get("sprite_mip_bias", 0.0))
-	App.display_mode = _display_mode(str(data.get("display_mode", "borderless")))
-	App.display_fs_kind = _fs_kind(str(data.get("display_fs_kind", "borderless")))
-	App.web_fullscreen = bool(data.get("web_fullscreen", false))
-	App.bal.aim_line_on = bool(data.get("aim_line_on", true))
-	App.bal.aim_line_opacity = float(data.get("aim_line_opacity", 0.85))
-	App.target_lock_pref = bool(data.get("target_lock_pref", false))
-	App.salvage_dupes = bool(data.get("salvage_dupes", false))
-	App.salvage_finish = clampf(float(data.get("salvage_finish", 0.8)), 0.5, 1.0)
-	App.salvage_fortune = clampf(float(data.get("salvage_fortune", 1.0)), 0.75, 1.25)
-	App.bank_gold = int(data.get("bank_gold", 0))
-	App.bank_ore = int(data.get("bank_ore", 0))
-	App.bank_wood = int(data.get("bank_wood", 0))
-	App.bank_root = int(data.get("bank_root", 0))
-	App.last_seen_game_ver = str(data.get("last_seen_game_ver", ""))
-	var db: Variant = data.get("debug_bal", {})
-	if db is Dictionary:
-		for k in (db as Dictionary).keys():
-			App.bal.setv(str(k), float((db as Dictionary)[k]))
-	var old_rev := int(data.get("bal_rev", 0))
-	if App.bal.has_method("migrate_from") and App.bal.migrate_from(old_rev):
-		_migrated = true
-	var p: Variant = data.get("prog", {})
-	if p is Dictionary:
-		App.prog.from_meta(p)
-	Rules.normalize_prog(App.prog)
-	if not App.character_chosen and (App.bank_gold > 0 or App.bank_ore > 0 or App.prog.deepest > 1):
-		App.character_chosen = true
-	var binds: Variant = data.get("binds", [])
-	if binds is Array and (binds as Array).size() > 0:
-		App.apply_binds(binds)
-	App.set_volume("master", App.vol_master)
-	App.set_volume("music", App.vol_music)
-	App.set_volume("sfx", App.vol_sfx)
-	if App.has_method("set_zoom"):
-		App.set_zoom(App.cam_zoom)
-	if App.has_method("set_hud_scale"):
-		App.set_hud_scale(App.hud_scale)
-	if App.has_method("set_ui_text_floor"):
-		App.set_ui_text_floor(App.ui_text_floor)
-	if App.has_method("set_sprite_filter"):
-		App.set_sprite_filter(App.sprite_filter, true)
-	if App.has_method("set_sprite_mip_sharp"):
-		App.set_sprite_mip_sharp(App.sprite_mip_sharp)
-	if App.has_method("set_sprite_mip_bias"):
-		App.set_sprite_mip_bias(App.sprite_mip_bias)
+	_migrated = Data.apply(data)
 
 
 static func _display_mode(raw: String) -> String:
-	if raw == "windowed" or raw == "exclusive":
-		return raw
-	return "borderless"
+	return Data.display_mode(raw)
 
 
 static func _fs_kind(raw: String) -> String:
-	if raw == "exclusive":
-		return raw
-	return "borderless"
+	return Data.fs_kind(raw)
 
 
 static func _persist_if_migrated(slot: String) -> void:
@@ -169,11 +61,11 @@ static func _persist_if_migrated(slot: String) -> void:
 
 static func save_slot(slot := "live") -> bool:
 	ensure_dir(slot)
-	var data := collect()
+	var data: Dictionary = collect()
 	var pri := primary_path(slot)
 	var bak := backup_path(slot)
 	if FileAccess.file_exists(pri):
-		var old := read_payload(pri)
+		var old: Dictionary = read_payload(pri)
 		if not old.is_empty():
 			write_payload(bak, old)
 	if not write_payload(pri, data):
@@ -185,13 +77,13 @@ static func save_slot(slot := "live") -> bool:
 
 static func load_slot(slot := "live") -> String:
 	ensure_dir(slot)
-	var pri := read_payload(primary_path(slot))
+	var pri: Dictionary = read_payload(primary_path(slot))
 	if not pri.is_empty() and int(pri.get("v", 0)) >= 1:
 		apply(pri)
 		write_payload(backup_path(slot), pri)
 		_persist_if_migrated(slot)
 		return "primary"
-	var bak := read_payload(backup_path(slot))
+	var bak: Dictionary = read_payload(backup_path(slot))
 	if not bak.is_empty() and int(bak.get("v", 0)) >= 1:
 		apply(bak)
 		write_payload(primary_path(slot), bak)
@@ -202,46 +94,7 @@ static func load_slot(slot := "live") -> String:
 
 
 static func fresh_delver() -> void:
-	App.prog.reset_meta()
-	Rules.normalize_prog(App.prog)
-	App.bank_gold = 0
-	App.bank_ore = 0
-	App.bank_wood = 0
-	App.bank_root = 0
-	App.bal = (load("res://scripts/data/balance.gd") as GDScript).new()
-	App.character_type = "male"
-	App.character_chosen = false
-	App.last_seen_game_ver = ""
-	App.cam_zoom = 1.75
-	App.hud_scale = 1.0
-	App.ui_text_floor = 14.0
-	App.vol_master = 1.0
-	App.vol_music = 0.7
-	App.vol_sfx = 0.85
-	App.sprite_filter = 2
-	App.sprite_mip_sharp = false
-	App.sprite_mip_bias = 0.0
-	App.display_mode = "borderless"
-	App.display_fs_kind = "borderless"
-	App.web_fullscreen = false
-	App.target_lock_pref = false
-	App.salvage_dupes = false
-	App.salvage_finish = 0.8
-	App.salvage_fortune = 1.0
-	App.bal.aim_line_on = true
-	App.bal.aim_line_opacity = 0.85
-	App.reset_binds()
-	App.set_volume("master", App.vol_master)
-	App.set_volume("music", App.vol_music)
-	App.set_volume("sfx", App.vol_sfx)
-	if App.has_method("set_zoom"):
-		App.set_zoom(App.cam_zoom)
-	if App.has_method("set_hud_scale"):
-		App.set_hud_scale(App.hud_scale)
-	if App.has_method("set_ui_text_floor"):
-		App.set_ui_text_floor(App.ui_text_floor)
-	if App.has_method("set_sprite_filter"):
-		App.set_sprite_filter(App.sprite_filter, true)
+	Data.fresh_delver()
 
 
 static func wipe_slot(slot: String) -> void:

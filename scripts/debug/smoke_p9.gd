@@ -64,6 +64,8 @@ static func p9(host: Node) -> void:
 	printerr("P9: load_extra=" + str(extra))
 	if App.playtest and App.playtest.has_method("begin_smoke"):
 		App.playtest.begin_smoke()
+		if App.playtest.has_method("advance_smoke"):
+			App.playtest.advance_smoke(1.0)
 	var skills: int = App.prog.SKILLS.size()
 	printerr("P9: skills=" + str(skills) + " sets=" + str(App.prog.SETS.size()))
 	printerr("P9: splash=" + str(ResourceLoader.exists("res://scenes/splash.tscn")))
