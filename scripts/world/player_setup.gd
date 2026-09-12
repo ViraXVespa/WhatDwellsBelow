@@ -14,7 +14,7 @@ static func ready(host: CharacterBody3D) -> void:
 	host.add_to_group("player")
 	host.collision_layer = 2
 	host.collision_mask = 1
-	host.motion_mode = MOTION_MODE_FLOATING
+	host.motion_mode = CharacterBody3D.MOTION_MODE_FLOATING
 	host.axis_lock_linear_y = true
 	add_body_shape(host)
 	PlayerAnim.load_sprites(host)

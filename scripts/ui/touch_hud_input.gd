@@ -43,7 +43,7 @@ static func down(host: CanvasLayer, idx: int, pos: Vector2) -> void:
 
 static func drag(host: CanvasLayer, idx: int, pos: Vector2) -> void:
 	if idx == host._move_i:
-		var d := pos - host._move_origin
+		var d: Vector2 = pos - host._move_origin
 		if d.length() > host._move_r:
 			d = d.normalized() * host._move_r
 		host._move_knob = host._move_origin + d
@@ -57,7 +57,7 @@ static func drag(host: CanvasLayer, idx: int, pos: Vector2) -> void:
 		host._free[idx] = pos
 	if host._pinch_a >= 0:
 		if idx == host._pinch_a or idx == host._pinch_b:
-			tick_pinch(host, )
+			tick_pinch(host)
 		return
 	if not host._park.has(idx):
 		return
@@ -104,7 +104,7 @@ static func claim_move(host: CanvasLayer, idx: int, origin: Vector2, pos: Vector
 	host._park.erase(idx)
 	host._move_i = idx
 	host._move_origin = origin
-	var d := pos - origin
+	var d: Vector2 = pos - origin
 	if d.length() > host._move_r:
 		d = d.normalized() * host._move_r
 	host._move_knob = origin + d
@@ -113,7 +113,7 @@ static func claim_move(host: CanvasLayer, idx: int, origin: Vector2, pos: Vector
 	Touch.set_move(d / host._move_r)
 
 static func begin_pinch(host: CanvasLayer) -> void:
-	var keys := host._free.keys()
+	var keys: Array = host._free.keys()
 	if keys.size() < 2:
 		return
 	host._pinch_a = int(keys[0])
@@ -135,8 +135,8 @@ static func tick_pinch(host: CanvasLayer, apply := true) -> void:
 static func can_pan(host: CanvasLayer) -> bool:
 	if host._move_live or host._pinch_a >= 0:
 		return false
-	var host := dungeon()
-	return MapAct.is_open(host) and float(host.get_meta("map_zoom", 1.0)) > 1.001
+	var map_host := dungeon()
+	return MapAct.is_open(map_host) and float(map_host.get_meta("map_zoom", 1.0)) > 1.001
 
 static func in_move_zone(host: CanvasLayer, pos: Vector2) -> bool:
 	var vp := host.get_viewport().get_visible_rect().size

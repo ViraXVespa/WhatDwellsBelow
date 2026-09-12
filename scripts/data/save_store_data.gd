@@ -6,7 +6,7 @@ const Rules := preload("res://scripts/data/gear_rules.gd")
 
 
 static func apply(data: Dictionary) -> bool:
-	var migrated := false
+	var migrated: bool = false
 	App.character_type = str(data.get("character_type", "male"))
 	App.character_chosen = bool(data.get("character_chosen", false))
 	App.cam_zoom = float(data.get("cam_zoom", 1.75))
@@ -36,7 +36,7 @@ static func apply(data: Dictionary) -> bool:
 	if db is Dictionary:
 		for k in (db as Dictionary).keys():
 			App.bal.setv(str(k), float((db as Dictionary)[k]))
-	var old_rev := int(data.get("bal_rev", 0))
+	var old_rev: int = int(data.get("bal_rev", 0))
 	if App.bal.has_method("migrate_from") and App.bal.migrate_from(old_rev):
 		migrated = true
 	var p: Variant = data.get("prog", {})

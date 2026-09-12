@@ -79,10 +79,28 @@ Reuse against an existing owner is call-site edits plus using a function that al
 
 Do not retype a whole file for style.
 
+
+
+## Hostify pitfalls
+
+Facade + static func(host, ...) splits must keep Godot 4.7 compiling. Watch for:
+
+1. **Bare Node props / methods on helpers** — after moving a method off a Node script, layer, isible, process_mode, queue_free, get_tree(), etc. are not in scope. Use host.layer, host.queue_free(), host.get_tree().
+2. **Param shadowing** — never ar host := host.get_parent() (or any ar host := that hides the parameter). Rename the local (parent, map_host, …).
+3. **Enum / const on Object helpers** — MOTION_MODE_FLOATING and similar are not free names on extends Object helpers. Qualify: CharacterBody3D.MOTION_MODE_FLOATING.
+4. **Facade state aliases** — if callers used PlaytestLog.started / .file_name / .events on the old script, the facade must still expose those names (forward to the core helper’s static vars). Moving state without aliases yields Cannot find member "started" in base "..." and a cascade Could not resolve class on the next preload.
+5. **:= after load() / untyped _fac** — const _fac = load(...) returns untyped. Do not ar x := _fac.foo(). Write ar x: Type = ... (see Types above and AGENTS.md).
+6. **Blind substring rewrites** — replacing := n / bare 
+ame can corrupt identifiers (ar nm := name → ar nm: String = str(n)ame). Prefer AST-aware or line-scoped edits; re-read touched lines.
+7. **Broken call commas** — hostify passes must not leave 	ick_pinch(host, ) or dropped args.
+8. **Cross-helper renames** — if a static was renamed (Present.present → present, Hit.mark_post), update every call site in the cluster in the same batch.
+
+After a hostify batch, run the headless compile check in design/grok-bot-session.md.
+
 ## Token rules
 
 - Do not load the design corpus for a split. Code map row + the cluster is enough.
-- Measure UTF-8 bytes on the target files. Do not guess.
+- Measure on-disk byte length (Get-Item Length / dir). Do not guess. Do not ReadAllText + GetByteCount just to size-check.
 - Do not dump whole files on Grok Build or Grok Bot when a diff / PR is enough.
 - Do not restyle, do not rewrite comments, do not rename for taste.
 - Do not combine a refactor with a feature.

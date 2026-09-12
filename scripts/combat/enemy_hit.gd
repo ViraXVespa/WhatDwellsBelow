@@ -24,9 +24,9 @@ static func take_hit(host: CharacterBody3D, raw: float, from_dir: Vector2, crit:
 	float_num(host, int(round(dmg)), crit)
 	App.hitstop(App.bal.hitstop)
 	App.sfx("hit" if not crit else "crit")
-	var host := host.get_parent()
-	if host and host.has_method("note_enemy_hit"):
-		host.note_enemy_hit(host, dmg)
+	var parent := host.get_parent()
+	if parent and parent.has_method("note_enemy_hit"):
+		parent.note_enemy_hit(host, dmg)
 	if host.hp <= 0.0:
 		die(host)
 
@@ -41,9 +41,9 @@ static func float_num(host: CharacterBody3D, amount: int, crit: bool) -> void:
 	n.setup(amount, crit, host.last_glance and not crit)
 	host.last_glance = false
 	n.position = host.global_position + Vector3(0.0, host.size_u * 0.7, 0.0)
-	var host := host.get_parent()
-	if host:
-		host.add_child(n)
+	var parent := host.get_parent()
+	if parent:
+		parent.add_child(n)
 	else:
 		host.add_child(n)
 
@@ -65,18 +65,18 @@ static func die(host: CharacterBody3D) -> void:
 	tw.tween_property(host.spr, "modulate:a", 0.0, 0.42)
 	if host.spr:
 		tw.parallel().tween_property(host.spr, "pixel_size", host.spr.pixel_size * 0.86, 0.42)
-	tw.finished.connect(queue_free)
+	tw.finished.connect(host.queue_free)
 
 static func drop_loot(host: CharacterBody3D) -> void:
-	var host := host.get_parent()
-	if host == null:
+	var parent := host.get_parent()
+	if parent == null:
 		return
 	var gold_n := int(App.bal.enemy_gold_base) + randi() % maxi(1, int(App.bal.enemy_gold_span) + mini(4, App.floor_n))
 	if host.is_boss:
 		gold_n += int(App.bal.boss_gold_extra)
 	var PickupS := load("res://scripts/world/pickup.gd")
 	var g: Node3D = PickupS.new()
-	host.add_child(g)
+	parent.add_child(g)
 	g.setup("gold", host.global_position + Vector3(randf_range(-0.2, 0.2), 0.0, randf_range(-0.2, 0.2)), gold_n)
 	if host.is_boss:
 		return

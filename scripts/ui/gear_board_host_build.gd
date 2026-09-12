@@ -47,7 +47,7 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 	row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, ["tool", "food"], true))
 	row.add_child(Build.build_stats_card(ui))
 	if ui.focus_btn == null:
-		var hit := _fac.find_sel(ui)
+		var hit: Control = _fac.find_sel(ui)
 		if hit:
 			ui.focus_btn = hit
 	load("res://scripts/ui/gear_board.gd").hide_tip(ui)

@@ -25,7 +25,7 @@ static func page_values(host) -> void:
 
 
 static func add_row(host, parent: Control, name: String, lo: float, hi: float, step: float) -> void:
-	var shell := PanelContainer.new()
+	var shell: PanelContainer = PanelContainer.new()
 	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	shell.mouse_filter = Control.MOUSE_FILTER_STOP
 	var idx: int = host.val_rows.size()
@@ -37,15 +37,15 @@ static func add_row(host, parent: Control, name: String, lo: float, hi: float, s
 			host.val_mode = "vars"
 			val_paint(host)
 	)
-	var h := HBoxContainer.new()
+	var h: HBoxContainer = HBoxContainer.new()
 	h.add_theme_constant_override("separation", 12)
-	var lab := Label.new()
+	var lab: Label = Label.new()
 	lab.text = name
 	lab.custom_minimum_size = Vector2(280, 0)
 	lab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lab.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	h.add_child(lab)
-	var sp := SpinBox.new()
+	var sp: SpinBox = SpinBox.new()
 	sp.min_value = lo
 	sp.max_value = hi
 	sp.step = step
@@ -57,7 +57,7 @@ static func add_row(host, parent: Control, name: String, lo: float, hi: float, s
 		if not host.val_edit:
 			App.bal.setv(name, v)
 	)
-	var nm := name
+	var nm: String = name
 	sp.mouse_entered.connect(func():
 		if not host.val_edit:
 			load("res://scripts/combat/debug_menu_val.gd").fly(host, nm)
@@ -136,7 +136,7 @@ static func val_nudge(host, delta_i: int) -> void:
 
 static func page_profiles(host) -> void:
 	host.status.text = "Unlimited named profiles. Saved under user://wdb_profiles/"
-	var le := LineEdit.new()
+	var le: LineEdit = LineEdit.new()
 	le.text = host.profile_name
 	le.custom_minimum_size = Vector2(360, 36)
 	le.focus_mode = Control.FOCUS_ALL
@@ -148,7 +148,7 @@ static func page_profiles(host) -> void:
 	host.root_box.add_child(host._btn("Rename current to field", func(): load("res://scripts/combat/debug_menu_val.gd").rename_profile(host); host.status.text = "Renamed"))
 	host.root_box.add_child(Label.new())
 	for n in load("res://scripts/combat/debug_menu_val.gd").list_profiles():
-		var nm := n
+		var nm: String = str(n)
 		host.root_box.add_child(host._btn("Load " + nm, func(): host.profile_name = nm; load("res://scripts/combat/debug_menu_val.gd").load_profile(host); host.status.text = "Loaded " + nm))
 
 

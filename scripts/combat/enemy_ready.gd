@@ -10,7 +10,7 @@ static func ready(host: CharacterBody3D) -> void:
 	host.add_to_group("enemies")
 	host.collision_layer = 4
 	host.collision_mask = 1
-	host.motion_mode = MOTION_MODE_FLOATING
+	host.motion_mode = CharacterBody3D.MOTION_MODE_FLOATING
 	host.axis_lock_linear_y = true
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()

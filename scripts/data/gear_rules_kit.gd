@@ -15,7 +15,7 @@ static func book(p: Object) -> Dictionary:
 
 
 static func tmpl_key(it: Dictionary) -> String:
-	var slot := str(it.get("slot", ""))
+	var slot: String = str(it.get("slot", ""))
 	if slot == "weapon":
 		return "weapon:" + _weapon_id(it)
 	if slot == "tool":
@@ -28,10 +28,10 @@ static func tmpl_key(it: Dictionary) -> String:
 
 
 static func _weapon_id(it: Dictionary) -> String:
-	var w := str(it.get("weapon", ""))
+	var w: String = str(it.get("weapon", ""))
 	if w != "":
 		return w
-	var nm := str(it.get("name", "")).to_lower()
+	var nm: String = str(it.get("name", "")).to_lower()
 	if nm.find("great axe") >= 0 or nm.find("greataxe") >= 0:
 		return "great_axe"
 	if nm.find("staff") >= 0:
@@ -42,10 +42,10 @@ static func _weapon_id(it: Dictionary) -> String:
 
 
 static func _tool_id(it: Dictionary) -> String:
-	var t := str(it.get("tool", ""))
+	var t: String = str(it.get("tool", ""))
 	if t != "":
 		return t
-	var nm := str(it.get("name", "")).to_lower()
+	var nm: String = str(it.get("name", "")).to_lower()
 	if nm.find("hatchet") >= 0:
 		return "hatchet"
 	if nm.find("pick") >= 0:
@@ -56,7 +56,7 @@ static func _tool_id(it: Dictionary) -> String:
 static func is_builtin_starter(it: Dictionary) -> bool:
 	if it.is_empty():
 		return false
-	var slot := str(it.get("slot", ""))
+	var slot: String = str(it.get("slot", ""))
 	if slot == "weapon" and str(it.get("rarity", "white")) == "white":
 		return BUILTIN_WEAPONS.find(_weapon_id(it)) >= 0
 	if slot == "tool" and str(it.get("rarity", "white")) == "white":
@@ -71,7 +71,7 @@ static func is_starter(p: Object, it: Dictionary) -> bool:
 		return true
 	if str(it.get("kit_src", "")) == "starter":
 		return true
-	var slot := str(it.get("slot", ""))
+	var slot: String = str(it.get("slot", ""))
 	var key := tmpl_key(it)
 	var arr: Array = book(p).get(slot, [])
 	for raw: Variant in arr:
@@ -134,7 +134,7 @@ static func grant_smith(p: Object, it: Dictionary) -> String:
 
 
 static func unlock_starter(p: Object, it: Dictionary) -> void:
-	var slot := str(it.get("slot", ""))
+	var slot: String = str(it.get("slot", ""))
 	if slot == "":
 		return
 	var b := book(p)
@@ -157,7 +157,7 @@ static func unlock_starter(p: Object, it: Dictionary) -> void:
 
 static func starter_ilvl(p: Object, it: Dictionary) -> int:
 	var key := tmpl_key(it)
-	var slot := str(it.get("slot", ""))
+	var slot: String = str(it.get("slot", ""))
 	var best: int = 1
 	for raw: Variant in book(p).get(slot, []):
 		if raw is Dictionary and tmpl_key(raw) == key:
@@ -197,7 +197,7 @@ static func _mail_white(p: Object, it: Dictionary) -> String:
 
 
 static func _apply_starter_level(p: Object, it: Dictionary, ilvl: int) -> void:
-	var slot := str(it.get("slot", ""))
+	var slot: String = str(it.get("slot", ""))
 	var key := tmpl_key(it)
 	var b := book(p)
 	var arr: Array = b.get(slot, [])
@@ -215,8 +215,8 @@ static func _apply_starter_level(p: Object, it: Dictionary, ilvl: int) -> void:
 
 static func _restat_white(it: Dictionary, ilvl: int) -> Dictionary:
 	var copy: Dictionary = it.duplicate(true)
-	var slot := str(copy.get("slot", ""))
-	var type_id := str(copy.get("weapon", copy.get("tool", slot)))
+	var slot: String = str(copy.get("slot", ""))
+	var type_id: String = str(copy.get("weapon", copy.get("tool", slot)))
 	if slot == "weapon":
 		type_id = _weapon_id(copy)
 	elif slot == "tool":

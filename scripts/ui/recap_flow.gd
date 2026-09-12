@@ -9,7 +9,7 @@ const Rebuild := preload("res://scripts/ui/recap_rebuild.gd")
 
 static func play(host: CanvasLayer, cond: String) -> void:
 	host.open = true
-	visible = true
+	host.visible = true
 	host.draining = true
 	host.applied = false
 	App.ui_open = true
@@ -130,7 +130,7 @@ static func finish(host: CanvasLayer) -> void:
 		return
 	RecapBars.hide_tip(host)
 	host.open = false
-	visible = false
+	host.visible = false
 	App.ui_open = false
 	host.get_tree().paused = false
 	host.set_process(false)

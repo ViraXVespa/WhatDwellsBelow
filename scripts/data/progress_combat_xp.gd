@@ -60,7 +60,7 @@ static func add_run_xp(p, id: String, amt: float) -> void:
 	var _fac = load("res://scripts/data/progress_combat.gd")
 	if App.adrenaline:
 		amt *= App.adrenaline_xp
-	var before := _fac.skill_lv(p, id)
+	var before: int = int(_fac.skill_lv(p, id))
 	p.skills_run[id] = float(p.skills_run.get(id, 0.0)) + amt
 	if _fac.skill_lv(p, id) > before:
 		App.sfx("level")

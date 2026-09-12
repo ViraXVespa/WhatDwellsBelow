@@ -12,26 +12,26 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 	if host.dead:
 		return
 	if host.post == Vector3.ZERO:
-		mark_post(host)
+		Hit.mark_post(host)
 	host.bob_t += delta
 	host.reaggro_t = maxf(0.0, host.reaggro_t - delta)
 	if host.stagger > 0.0:
 		host.stagger -= delta
 		host.velocity = Vector3.ZERO
 		host.move_and_slide()
-		Present.present(host, delta)
+		present(host, delta)
 		return
 	if host.knock_t > 0.0:
 		host.knock_t -= delta
 		host.velocity = host.knock
 		host.move_and_slide()
-		Present.present(host, delta)
+		present(host, delta)
 		return
 	EnemyAI.tick(host, delta)
 	host.move_and_slide()
 	host.global_position.y = 0.0
 	EnemyAI.stuck(host, delta)
-	Present.present(host, delta)
+	present(host, delta)
 
 static func present(host: CharacterBody3D, delta: float) -> void:
 	if host.spr == null:

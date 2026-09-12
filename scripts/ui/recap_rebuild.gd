@@ -73,7 +73,7 @@ static func rebuild(host: CanvasLayer, cond: String) -> void:
 			first = perm_block.wrap
 	host.mailed_lab = ThemeS.lab("", 18, Color(0.78, 0.86, 0.7))
 	host.box.add_child(host.mailed_lab)
-	var cont := ThemeS.btn("Continue", func(): _finish())
+	var cont := ThemeS.btn("Continue", func(): host._finish())
 	cont.set_meta("recap_continue", true)
 	cont.disabled = true
 	host.box.add_child(cont)

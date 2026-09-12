@@ -67,7 +67,7 @@ static func hit_shot(origin: Vector3, dir: Vector2, radius: float, host: Node3D)
 	var pts := _sprite_pts(host)
 	if pts.is_empty():
 		return 0.0
-	var cam := _fac._cam(host)
+	var cam: Camera3D = _fac._cam(host)
 	var aim := dir.normalized() if dir.length_squared() > 0.0001 else Vector2.ZERO
 	var depth := maxf(radius * 3.2, 0.45)
 	if cam == null:
@@ -82,8 +82,8 @@ static func hit_shot(origin: Vector3, dir: Vector2, radius: float, host: Node3D)
 	var screens: Array[Vector2] = []
 	for p in pts:
 		screens.append(cam.unproject_position(p))
-	var a := cam.unproject_position(origin)
-	var b := cam.unproject_position(origin + Vector3(aim.x, 0.0, aim.y) * depth)
+	var a: Vector2 = cam.unproject_position(origin)
+	var b: Vector2 = cam.unproject_position(origin + Vector3(aim.x, 0.0, aim.y) * depth)
 	var slop := 7.0
 	var near := false
 	var c := Vector2.ZERO
@@ -97,7 +97,7 @@ static func hit_shot(origin: Vector3, dir: Vector2, radius: float, host: Node3D)
 	var span := 1.0
 	for s in screens:
 		span = maxf(span, s.distance_to(c))
-	var d := _fac._seg_dist(c, a, b)
+	var d: float = _fac._seg_dist(c, a, b)
 	var inner := span * 0.28
 	if d <= inner:
 		return 1.0
@@ -107,7 +107,7 @@ static func hit_shot(origin: Vector3, dir: Vector2, radius: float, host: Node3D)
 
 static func _sprite_pts(host: Node3D) -> Array[Vector3]:
 	var _fac = load("res://scripts/combat/cover.gd")
-	var spr := _fac._spr_of(host)
+	var spr: Sprite3D = _fac._spr_of(host)
 	if spr == null or spr.texture == null:
 		return [host.global_position + Vector3(0.0, 0.5, 0.0)]
 	var frame: int = Engine.get_process_frames()
@@ -115,13 +115,13 @@ static func _sprite_pts(host: Node3D) -> Array[Vector3]:
 		return spr.get_meta("cover_pts")
 	var pack := _mask_pack(spr)
 	var locals: PackedVector3Array = pack.get("locals", PackedVector3Array())
-	var c := spr.global_position
-	var rx := spr.global_transform.basis.x
+	var c: Vector3 = spr.global_position
+	var rx: Vector3 = spr.global_transform.basis.x
 	if rx.length_squared() <= 0.0001:
 		rx = Vector3.RIGHT
 	else:
 		rx = rx.normalized()
-	var up := spr.global_transform.basis.y
+	var up: Vector3 = spr.global_transform.basis.y
 	if up.length_squared() <= 0.0001:
 		up = Vector3.UP
 	else:

@@ -6,9 +6,9 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 
 
 static func build(host: CanvasLayer) -> void:
-	layer = 70
-	visible = false
-	process_mode = Node.PROCESS_MODE_ALWAYS
+	host.layer = 70
+	host.visible = false
+	host.process_mode = Node.PROCESS_MODE_ALWAYS
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.color = Color(0.04, 0.03, 0.03, 0.92)

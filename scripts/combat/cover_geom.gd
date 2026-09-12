@@ -5,7 +5,7 @@ const Hit := preload("res://scripts/combat/cover_hit.gd")
 
 static func _fan_hits_sprite(origin: Vector3, aim: Vector2, rng: float, half: float, host: Node3D) -> bool:
 	var _fac = load("res://scripts/combat/cover.gd")
-	var cam := _fac._cam(host)
+	var cam: Camera3D = _fac._cam(host)
 	var pts := Hit._sprite_pts(host)
 	if pts.is_empty():
 		return false
@@ -55,7 +55,7 @@ static func _sprite_pts_cells(spr: Sprite3D, pack: Dictionary, c: Vector3, rx: V
 
 static func _disk_hits_sprite(origin: Vector3, radius: float, host: Node3D) -> bool:
 	var _fac = load("res://scripts/combat/cover.gd")
-	var cam := _fac._cam(host)
+	var cam: Camera3D = _fac._cam(host)
 	var pts := Hit._sprite_pts(host)
 	if pts.is_empty():
 		return false

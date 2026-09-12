@@ -34,8 +34,8 @@ static func _norm_list(arr: Array) -> void:
 static func normalize_item(it: Dictionary) -> Dictionary:
 	if it.is_empty():
 		return it
-	var kind := str(it.get("kind", ""))
-	var slot := str(it.get("slot", ""))
+	var kind: String = str(it.get("kind", ""))
+	var slot: String = str(it.get("slot", ""))
 	if kind == "artifact" or slot == "potion" or slot == "food" or kind == "food":
 		return it
 	if slot != "weapon" and slot != "tool" and slot != "head" and slot != "body" and slot != "legs":
@@ -58,7 +58,7 @@ static func normalize_item(it: Dictionary) -> Dictionary:
 			var id := _map_id(str(row.get("id", "")))
 			if id == "":
 				continue
-			var val := float(row.get("value", it.get(id, 0.0)))
+			var val: float = float(row.get("value", it.get(id, 0.0)))
 			val = _clamp_stat(id, val, cap_flat, cap_pct)
 			rows.append({"id": id, "value": val, "luck": float(it.get("luck", 0.75))})
 			it[id] = val
@@ -69,7 +69,7 @@ static func normalize_item(it: Dictionary) -> Dictionary:
 			Affix.ID_ATK_SPD, Affix.ID_ATK_RANGE, Affix.ID_HP_HIT, Affix.ID_HP_KILL,
 			Affix.ID_GATHER_SPD, Affix.ID_GATHER_POW, Affix.ID_YIELD,
 		]:
-			var n := float(it.get(id2, 0.0))
+			var n: float = float(it.get(id2, 0.0))
 			if absf(n) < 0.001:
 				continue
 			n = _clamp_stat(id2, n, cap_flat, cap_pct)
@@ -121,7 +121,7 @@ static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 	if p.potion_cd > 0.0:
 		App.toast("Potion cooling down.")
 		return "Not ready."
-	var ch := int(it.get("charges", it.get("stack", 0)))
+	var ch: int = int(it.get("charges", it.get("stack", 0)))
 	if ch <= 0:
 		App.toast("No charges left this run.")
 		return "Empty."
@@ -134,7 +134,7 @@ static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 		if heal <= 1.0:
 			heal = float(App.bal.player_max_hp) * heal
 	pl.heal(heal)
-	var cd := float(it.get("cooldown", 0.0))
+	var cd: float = float(it.get("cooldown", 0.0))
 	if cd <= 0.0 and App.bal:
 		cd = float(App.bal.get("potion_cooldown"))
 	p.potion_cd = cd
@@ -151,7 +151,7 @@ static func refill_potion(p: Object) -> void:
 	var it: Dictionary = p.slots.get("potion", {})
 	if it.is_empty():
 		return
-	var mx := int(it.get("charge_max", 0))
+	var mx: int = int(it.get("charge_max", 0))
 	if mx <= 0:
 		mx = int(it.get("charges", 2))
 		if mx <= 0:

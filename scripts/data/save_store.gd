@@ -61,11 +61,11 @@ static func _persist_if_migrated(slot: String) -> void:
 
 static func save_slot(slot := "live") -> bool:
 	ensure_dir(slot)
-	var data := collect()
+	var data: Dictionary = collect()
 	var pri := primary_path(slot)
 	var bak := backup_path(slot)
 	if FileAccess.file_exists(pri):
-		var old := read_payload(pri)
+		var old: Dictionary = read_payload(pri)
 		if not old.is_empty():
 			write_payload(bak, old)
 	if not write_payload(pri, data):
@@ -77,13 +77,13 @@ static func save_slot(slot := "live") -> bool:
 
 static func load_slot(slot := "live") -> String:
 	ensure_dir(slot)
-	var pri := read_payload(primary_path(slot))
+	var pri: Dictionary = read_payload(primary_path(slot))
 	if not pri.is_empty() and int(pri.get("v", 0)) >= 1:
 		apply(pri)
 		write_payload(backup_path(slot), pri)
 		_persist_if_migrated(slot)
 		return "primary"
-	var bak := read_payload(backup_path(slot))
+	var bak: Dictionary = read_payload(backup_path(slot))
 	if not bak.is_empty() and int(bak.get("v", 0)) >= 1:
 		apply(bak)
 		write_payload(primary_path(slot), bak)

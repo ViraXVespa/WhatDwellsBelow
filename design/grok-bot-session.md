@@ -84,10 +84,42 @@ Therefore every Grok Bot PR MUST:
 Do not claim a write landed until the PR exists.
 
 
+
+
+## Local checkout (preferred for size sweeps)
+
+When the User has authorized a local checkout on their machine:
+
+- Prefer editing that checkout over per-file GitHub API patches.
+- Root path: user env var WDB_ROOT (example: C:\\Users\\Vira\\source\\repos\\WhatDwellsBelow on the laptop). Document any change to that path here.
+- Commit locally on the size-sweep branch as you go. **Push to the PR branch only after a phase's updates are finished** (not after each file), unless the User says otherwise.
+- Use the GitHub connector mainly for PR remote sync / status, not for rewriting bodies file-by-file.
+- Cloud Agents remain optional; if the plan blocks them, local checkout + Steam Godot headless is the compile path.
+
+
+## Size measurement
+
+Inventory and before/after sizes use **filesystem byte length** of each .gd file (Get-Item Length, dir, or equivalent). Do **not** ReadAllText + Encoding.UTF8.GetByteCount just to measure — that burns tokens and can disagree with on-disk size if line endings differ.
+
+Report path + bytes from Length. The 10KB / 5KB caps are on-disk UTF-8 file sizes.
+
+
+## Headless compile check
+
+After facade / helper splits (or when the User asks), run Godot headless against the local checkout before claiming the cluster compiles:
+
+- Binary (Steam tools build): C:\\Program Files (x86)\\Steam\\steamapps\\common\\Godot Engine\\godot.windows.opt.tools.64.exe (also referenced from 	ools/export_web.ps1).
+- Args: --headless --path <WDB_ROOT> --quit
+- Capture stdout and stderr (GUI-subsystem exe: use Start-Process -RedirectStandardOutput/-RedirectStandardError). Exit code 0 with empty stderr is the clean bar for script parse/compile.
+- Cascade tip: Could not resolve class "res://.../foo.gd" often means **foo** (or a preload it owns) failed to parse. A load-probe script that load()s each dependency in order surfaces the real member/type error first.
+- Autoload App may look "missing" when loading scripts via --script outside a full project boot; prefer --path ... --quit for the real check.
+
+Document new split-induced failure modes under design/refactor.md (Hostify pitfalls) when they are not already listed.
+
 ## Flow
 
 1. Orient (Recognize + Read set).
-2. Inventory (UTF-8 sizes; rank; show; don’t edit yet).
+2. Inventory (on-disk Length sizes; rank; show; don’t edit yet).
 3. **Size** clusters may auto-chain on one branch / one PR while anything over 10KB remains, then over 5KB (User can override). **Extract** / new-module / parked-move / deeper-relocate clusters always wait for User go and may use later separate PRs.
 4. Size sweep: one branch + one PR for the whole size worklist (squash-merge once at the end). Never paste-emit. Do not open a new PR per file.
 5. Include `design/changelog/{label}.md` once for that PR when the size sweep is ready to land (WIP notes OK until then).

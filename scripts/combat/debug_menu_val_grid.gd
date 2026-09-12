@@ -21,7 +21,7 @@ static func _val():
 
 
 static func cat_of(name: String) -> String:
-	var n := name.to_lower()
+	var n: String = name.to_lower()
 	if n.begins_with("axe") or n.begins_with("ga_") or n.contains("greataxe") or n.contains("great_axe"):
 		return "Great Axe"
 	if n.begins_with("enemy") or n.begins_with("mob") or n.begins_with("ai_") or n.begins_with("aggro"):
@@ -167,7 +167,7 @@ static func open_cat(host) -> void:
 	var title: String = str(cat.name)
 	var Val = _val()
 	for row in App.bal.schema():
-		var nm := str(row[0])
+		var nm: String = str(row[0])
 		if cat_of(nm) != title:
 			continue
 		Val.add_row(host, body, nm, float(row[1]), float(row[2]), float(row[3]))

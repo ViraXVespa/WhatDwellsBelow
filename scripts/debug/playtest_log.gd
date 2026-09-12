@@ -1,10 +1,37 @@
-extends Object
+﻿extends Object
 
 ## ver 2 journal: compact JSON, no tel.cfg, packed cards, sparse beats, coalesced steps.
 ## cards bit order is EWNS as a 4-char "01" string.
 
 const PlaytestLogUtil := preload("res://scripts/debug/playtest_log_util.gd")
 const Core := preload("res://scripts/debug/playtest_log_core.gd")
+
+# Facade aliases — callers still use PlaytestLog.started / .file_name / etc.
+static var events: Array:
+	get:
+		return Core.events
+	set(v):
+		Core.events = v
+static var file_name: String:
+	get:
+		return Core.file_name
+	set(v):
+		Core.file_name = v
+static var started: bool:
+	get:
+		return Core.started
+	set(v):
+		Core.started = v
+static var end_cond: String:
+	get:
+		return Core.end_cond
+	set(v):
+		Core.end_cond = v
+static var end_fail: String:
+	get:
+		return Core.end_fail
+	set(v):
+		Core.end_fail = v
 
 
 static func _dir() -> String:
