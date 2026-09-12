@@ -110,6 +110,7 @@ When the User has authorized a local checkout on their machine:
 ## Size measurement
 
 Shared PC-offload catalog (Bot + Build): `design/pc-offload.md`. Prefer those runners; read only their `_logs/*/summary.txt` outputs.
+Windows body writes: `tools/write_utf8_file.py` + ephemeral `tools/run_agent_py.ps1` (auto-deletes under `_logs/agent-py/`). Never `python -c` for multi-line patches.
 
 Preferred (agent-friendly): from repo root, `powershell -File tools/list_oversize_scripts.ps1` (optional `-OverKb 5`, `-OverKb 10`). Writes `_logs/oversize/summary.txt` with path + filesystem `Length` only - do not open bodies just to measure.
 
