@@ -1,4 +1,4 @@
-﻿# Secret debug, playtest, animation browser
+# Secret debug, playtest, animation browser
 
 Status: binding design + live snapshot
 Read when: changing the secret menu, telemetry, playtest, animation browser, or verification
@@ -245,9 +245,25 @@ Exact compare-two, frame-scrubber, and bible-overlay extras MAY be invented at i
 - Review helper: `scripts/debug/anim_browser_review.gd`
 - Ledger: `scripts/debug/anim_review.gd`
 
-## Live snapshot — smoke tests (`smoke.gd`)
+## Live snapshot — smoke tests (smoke.gd)
 
-Coverage runner, not a particle system. CLI: `--wdb-phaseN-smoke` for N = 1..9. Prints on `printerr`, then quits.
+Coverage runner, not a particle system. User args: --wdb-phaseN-smoke for N = 1..9 (after --). Prints on printerr, then quits. There are no live smoke_*.tscn scenes — phases attach from oot / foundation / dungeon / camp via scripts/debug/smoke.gd.
+
+### How to run (Steam Godot / redirected IO)
+
+Binary (Steam tools build): C:/Program Files (x86)/Steam/steamapps/common/Godot Engine/godot.windows.opt.tools.64.exe (also in 	ools/export_web.ps1).
+
+**Required flags** when stdout/stderr are redirected (CI, Start-Process -Redirect*, agent shells):
+
+`
+--headless --display-driver headless --audio-driver Dummy --path <WDB_ROOT> -- --wdb-phaseN-smoke
+`
+
+- Plain --headless alone can **hang forever** with only the engine banner and empty stderr under redirected IO. Always pass --display-driver headless --audio-driver Dummy for automated smoke.
+- Put the phase flag in **user** args (after --) so OS.get_cmdline_user_args() sees it.
+- Capture stderr for P1:…P9: lines and SCRIPT ERROR. Exit is self-quit from the phase (or kill after a timeout if hung).
+- Optional: --verbose for load traces (huge logs). Not required once drivers are set.
+- Compile/reload check is separate: see design/grok-bot-session.md (--editor --import). Do not treat a smoke pass as proof scripts are editor-clean, or vice versa.
 
 | Fn | Checks |
 |----|--------|
