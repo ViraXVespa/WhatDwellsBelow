@@ -89,33 +89,15 @@ When `scripts/data/version.json` `series` (or `epoch`) advances - new week seed,
 - Writes `scripts/data/changelog.json` - **current series only**, newest patch first, bullets + summary only.
 - Does not write a week rollup into the repo. Pages week views are built in the Action from flat current files **plus** `design/changelog/archive/*/*.md`.
 
-## {label}
-- Key point
--- Subpoint (optional)
-- Key point
-
-Summary: one- or two-sentence session summary
-
-No other sections in the player-facing body. Agent-only revert hints (paths, SHA) may follow a `## Agent` heading; the game and Pages player view ignore that heading.
-
-Do **not** keep a concatenated week file on `main`. Do **not** hand-edit `scripts/data/changelog.json`.
-
-`tools/build_changelog.py` (also run by CI):
-
-- Reads `version.json` for the current `epoch.series`.
-- Reads `design/changelog/{epoch}.{series}.*.md`.
-- Writes `scripts/data/changelog.json` — **current series only**, newest patch first, bullets + summary only.
-- Does not write a week rollup into the repo. Pages week views are built in the Action from the same per-build files.
-
 ## Who reads what
 
 | Reader | Reads |
 |--------|-------|
 | Fresh web / chat, Phases 1–3 | Nothing under `design/changelog/`. Nothing in `version.json` unless the work is this topic. |
 | Web Phase 7 | Writes **one** new `design/changelog/{label}.md`. `{label}` is baked `version.json` `label` with patch + 1 (ignore stamp commits). Do not write that number back into this file. Do not emit `changelog.json`. |
-| Grok Build after a gap | `design/sessions.md`, then every `design/changelog/{current epoch}.{current series}.*.md`. No index. No other series. Do not follow git commit links into web-session conversations. |
+| Grok Build after a gap | `design/sessions.md`, then every flat `design/changelog/{current epoch}.{current series}.*.md` (not `archive/`). No index. No other series. Do not follow git commit links into web-session conversations. |
 | Grok Bot | Reads baked `version.json` only to name `{label}` (patch + 1). Writes **one** new `design/changelog/{label}.md` per shipping PR. Does not hand-edit `changelog.json`. Optional sweep notes go in `_logs/` only. |
-| Named revert / “what was 0.1.4?” | That one file. |
+| Named revert / what was 0.1.4? | That one file (flat or under `design/changelog/archive/{epoch}.{series}/`). |
 | Game | `version.json` + `changelog.json`. |
 
 `design/changelog.md` is not required. Pages `/changelog/` is the public index.
