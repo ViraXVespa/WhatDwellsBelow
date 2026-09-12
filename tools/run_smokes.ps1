@@ -63,8 +63,11 @@ foreach ($n in $Phases) {
         $status = "TIMEOUT"
         $fail += 1
     } else {
-        $status = "EXIT=$($p.ExitCode)"
-        if ($p.ExitCode -ne 0) { $fail += 1 }
+        # Godot GUI-subsystem + redirected IO often leaves ExitCode $null even on a clean quit.
+        $code = $p.ExitCode
+        if ($null -eq $code) { $code = 0 }
+        $status = "EXIT=$code"
+        if ($code -ne 0) { $fail += 1 }
     }
 
     $ms = $sw.ElapsedMilliseconds

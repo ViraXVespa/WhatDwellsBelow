@@ -96,6 +96,8 @@ Facade + `static func(host, ...)` splits must keep Godot 4.7 compiling. Watch fo
 
 After a hostify batch, run the **editor import** compile check in `design/grok-bot-session.md` (`--headless --editor --import --path <WDB_ROOT> --quit`). Plain `--quit` alone is not sufficient — it can miss `:=` inference errors the editor surfaces on reload.
 
+Optional advisory scan: `powershell -File tools/lint_hostify.ps1` → `_logs/hostify-lint/summary.txt` (always exit 0). Use it to spot Hostify pitfalls before or after the import check; it is not a compile substitute. After a size-split batch, prefer `powershell -File tools/run_post_split_gate.ps1` (add `-WithSmokes` when coverage matters).
+
 ## Token rules
 
 - Do not load the design corpus for a split. Code map row + the cluster is enough.

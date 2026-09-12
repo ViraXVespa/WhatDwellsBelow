@@ -45,7 +45,10 @@ if (-not $ok) {
     Get-Process -Name "godot*" -ErrorAction SilentlyContinue | Stop-Process -Force
     $status = "TIMEOUT"
 } else {
-    $status = "EXIT=$($p.ExitCode)"
+    # Godot GUI-subsystem + redirected IO often leaves ExitCode $null even on a clean quit.
+    $code = $p.ExitCode
+    if ($null -eq $code) { $code = 0 }
+    $status = "EXIT=$code"
 }
 
 Get-Process -Name "godot*" -ErrorAction SilentlyContinue | Stop-Process -Force
