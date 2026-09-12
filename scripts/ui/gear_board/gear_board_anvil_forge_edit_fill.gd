@@ -5,10 +5,10 @@ const Affix := preload("res://scripts/data/affixes.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const StepRow := preload("res://scripts/ui/step_row.gd")
 const QTY_MAX := 9
-const Lock := preload("res://scripts/ui/gear_board_anvil_forge_edit_lock.gd")
+const Lock := preload("res://scripts/ui/gear_board/gear_board_anvil_forge_edit_lock.gd")
 
 static func _fill_edit(ui: CanvasLayer, box: Control, slot: String) -> Control:
-	var _fac = load("res://scripts/ui/gear_board_anvil_forge_edit.gd")
+	var _fac = load("res://scripts/ui/gear_board/gear_board_anvil_forge_edit.gd")
 	var types: PackedStringArray = ForgeP.types_for(App.prog, slot)
 	if types.is_empty():
 		box.add_child(ThemeS.lab("Analyze this slot before you can forge it.", 18, Color(0.78, 0.74, 0.66)))
@@ -88,7 +88,7 @@ static func _fill_edit(ui: CanvasLayer, box: Control, slot: String) -> Control:
 		16,
 		Color(0.8, 0.85, 0.7) if pay_ok else Color(0.95, 0.55, 0.4),
 	))
-	var go: Button = ThemeS.btn("Forge x%d" % qty, func(): load("res://scripts/ui/gear_board_anvil_forge.gd").start(ui))
+	var go: Button = ThemeS.btn("Forge x%d" % qty, func(): load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd").start(ui))
 	go.set_meta("forge_key", "go")
 	go.disabled = not pay_ok
 	go.focus_mode = Control.FOCUS_NONE if go.disabled else Control.FOCUS_ALL
@@ -97,4 +97,4 @@ static func _fill_edit(ui: CanvasLayer, box: Control, slot: String) -> Control:
 		hit = go
 	if first == null and not go.disabled:
 		first = go
-	return load("res://scripts/ui/gear_board_anvil_forge.gd")._keep(ui, hit if hit else first)
+	return load("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")._keep(ui, hit if hit else first)

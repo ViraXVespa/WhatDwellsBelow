@@ -2,8 +2,8 @@ extends Object
 
 ## Values and profile page handlers for DebugMenu.
 
-const Grid := preload("res://scripts/combat/debug_menu_val_grid.gd")
-const Page := preload("res://scripts/combat/debug_menu_val_page.gd")
+const Grid := preload("res://scripts/debug/debug_menu/debug_menu_val_grid.gd")
+const Page := preload("res://scripts/debug/debug_menu/debug_menu_val_page.gd")
 
 
 static func page_values(host) -> void:

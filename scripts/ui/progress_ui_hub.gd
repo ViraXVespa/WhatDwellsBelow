@@ -1,8 +1,8 @@
 ﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Board := preload("res://scripts/ui/gear_board.gd")
-const GearAct := preload("res://scripts/ui/gear_board_act.gd")
+const Board := preload("res://scripts/ui/gear_board/gear_board.gd")
+const GearAct := preload("res://scripts/ui/gear_board/gear_board_act.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 

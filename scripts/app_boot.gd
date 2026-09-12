@@ -1,8 +1,8 @@
 extends Object
 
 const BalanceS := preload("res://scripts/data/balance.gd")
-const DebugS := preload("res://scripts/combat/debug_menu.gd")
-const SfxS := preload("res://scripts/combat/sfx.gd")
+const DebugS := preload("res://scripts/debug/debug_menu/debug_menu.gd")
+const SfxS := preload("res://scripts/audio/sfx.gd")
 const ProgressS := preload("res://scripts/data/progress.gd")
 const TelS := preload("res://scripts/debug/telemetry.gd")
 const PauseS := preload("res://scripts/ui/pause_menu.gd")

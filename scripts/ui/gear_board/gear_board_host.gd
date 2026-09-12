@@ -1,14 +1,14 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Text := preload("res://scripts/ui/gear_board_text.gd")
-const Act := preload("res://scripts/ui/gear_board_act.gd")
-const Floor := preload("res://scripts/ui/gear_board_floor.gd")
-const Tip := preload("res://scripts/ui/gear_board_tip.gd")
-const Build := preload("res://scripts/ui/gear_board_build.gd")
+const Text := preload("res://scripts/ui/gear_board/gear_board_text.gd")
+const Act := preload("res://scripts/ui/gear_board/gear_board_act.gd")
+const Floor := preload("res://scripts/ui/gear_board/gear_board_floor.gd")
+const Tip := preload("res://scripts/ui/gear_board/gear_board_tip.gd")
+const Build := preload("res://scripts/ui/gear_board/gear_board_build.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
-const HostBuild := preload("res://scripts/ui/gear_board_host_build.gd")
-const Sync := preload("res://scripts/ui/gear_board_host_sync.gd")
+const HostBuild := preload("res://scripts/ui/gear_board/gear_board_host_build.gd")
+const Sync := preload("res://scripts/ui/gear_board/gear_board_host_sync.gd")
 
 static func ensure_host(ui: CanvasLayer) -> void:
 	HostBuild.ensure_host(ui)
@@ -17,15 +17,15 @@ static func _watch_hover(ui: CanvasLayer, b: Control, key: String) -> void:
 	b.mouse_entered.connect(func():
 		if bool(ui.get("gear_sub")):
 			return
-		load("res://scripts/ui/gear_board.gd")._flag(ui, "gear_hover", true)
-		load("res://scripts/ui/gear_board.gd")._arm_tip(ui)
+		load("res://scripts/ui/gear_board/gear_board.gd")._flag(ui, "gear_hover", true)
+		load("res://scripts/ui/gear_board/gear_board.gd")._arm_tip(ui)
 		ui.inv_sel = key
 		Sync.refresh(ui)
 	)
 	b.mouse_exited.connect(func():
 		if bool(ui.get("gear_sub")):
 			return
-		load("res://scripts/ui/gear_board.gd")._flag(ui, "gear_hover", false)
+		load("res://scripts/ui/gear_board/gear_board.gd")._flag(ui, "gear_hover", false)
 		var tree := ui.get_tree()
 		if tree == null:
 			return
@@ -34,9 +34,9 @@ static func _watch_hover(ui: CanvasLayer, b: Control, key: String) -> void:
 				return
 			if bool(ui.get("gear_sub")):
 				return
-			if load("res://scripts/ui/gear_board.gd")._on(ui, "gear_hover"):
+			if load("res://scripts/ui/gear_board/gear_board.gd")._on(ui, "gear_hover"):
 				return
-			load("res://scripts/ui/gear_board.gd").hide_tip(ui)
+			load("res://scripts/ui/gear_board/gear_board.gd").hide_tip(ui)
 		, CONNECT_ONE_SHOT)
 	)
 
@@ -70,17 +70,17 @@ static func bag_cell(ui: CanvasLayer, it: Dictionary) -> Button:
 			if bool(ui.get("gear_sub")):
 				return
 			ui.inv_sel = key
-			load("res://scripts/ui/gear_board.gd")._arm_tip(ui)
+			load("res://scripts/ui/gear_board/gear_board.gd")._arm_tip(ui)
 			Sync.refresh(ui)
 			Act.bag_primary(ui)
 		)
 		b.focus_entered.connect(func():
-			if load("res://scripts/ui/gear_board.gd")._on(ui, "gear_sub"):
+			if load("res://scripts/ui/gear_board/gear_board.gd")._on(ui, "gear_sub"):
 				return
 			ui.inv_sel = key
-			if load("res://scripts/ui/gear_board.gd")._on(ui, "gear_booting"):
+			if load("res://scripts/ui/gear_board/gear_board.gd")._on(ui, "gear_booting"):
 				return
-			load("res://scripts/ui/gear_board.gd")._arm_tip(ui)
+			load("res://scripts/ui/gear_board/gear_board.gd")._arm_tip(ui)
 			Sync.refresh(ui)
 		)
 	return b

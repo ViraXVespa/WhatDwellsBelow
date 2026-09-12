@@ -17,7 +17,7 @@ const CATS: Array[String] = [
 
 
 static func _val():
-	return load("res://scripts/combat/debug_menu_val.gd")
+	return load("res://scripts/debug/debug_menu/debug_menu_val.gd")
 
 
 static func cat_of(name: String) -> String:

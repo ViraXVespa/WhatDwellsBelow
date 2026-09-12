@@ -1,8 +1,8 @@
 ﻿extends Object
 
-const Stats := preload("res://scripts/ui/gear_board_stats.gd")
-const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
-const Opts := preload("res://scripts/ui/gear_board_opts.gd")
+const Stats := preload("res://scripts/ui/gear_board/gear_board_stats.gd")
+const Fmt := preload("res://scripts/ui/gear_board/gear_board_text_fmt.gd")
+const Opts := preload("res://scripts/ui/gear_board/gear_board_opts.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
 
@@ -99,7 +99,7 @@ static func selected(ui: CanvasLayer) -> Dictionary:
 			for row: Dictionary in options_for(slot):
 				if str(row.src) == src and int(row.uid) == uid:
 					return row.it if row.it is Dictionary else {}
-		var Board = load("res://scripts/ui/gear_board.gd")
+		var Board = load("res://scripts/ui/gear_board/gear_board.gd")
 		var n: Node = Board.find_sel(ui)
 		if n != null and n.has_meta("inv_it"):
 			var stored: Variant = n.get_meta("inv_it")

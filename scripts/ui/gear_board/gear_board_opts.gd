@@ -1,6 +1,6 @@
 extends Object
 
-const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
+const Fmt := preload("res://scripts/ui/gear_board/gear_board_text_fmt.gd")
 
 static var seen_uids: Dictionary = {}
 

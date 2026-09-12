@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot  
 Read when: changing music, SFX, splash/title, or art rules  
-Code: `scripts/audio/music.gd`, `scripts/combat/sfx.gd`, `scripts/ui/splash.gd`, `scripts/ui/fs_gate.gd`, `scripts/boot.gd`, `scripts/title.gd`, `scripts/world/sprite_filter.gd`  
+Code: `scripts/audio/music.gd`, `scripts/audio/sfx.gd`, `scripts/ui/splash.gd`, `scripts/ui/fs_gate.gd`, `scripts/boot.gd`, `scripts/title.gd`, `scripts/world/sprite_filter.gd`  
 See also: `design/art-pipeline.md`, `design/constraints.md`, `design/camera.md`, `design/debug.md`, `design/ui.md`
 
 ## Music

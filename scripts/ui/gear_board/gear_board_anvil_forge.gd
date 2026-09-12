@@ -1,8 +1,8 @@
 extends Object
 
-const Edit := preload("res://scripts/ui/gear_board_anvil_forge_edit.gd")
-const Pick := preload("res://scripts/ui/gear_board_anvil_forge_pick.gd")
-const Job := preload("res://scripts/ui/gear_board_anvil_forge_job.gd")
+const Edit := preload("res://scripts/ui/gear_board/gear_board_anvil_forge_edit.gd")
+const Pick := preload("res://scripts/ui/gear_board/gear_board_anvil_forge_pick.gd")
+const Job := preload("res://scripts/ui/gear_board/gear_board_anvil_forge_job.gd")
 
 const QTY_MAX := 9
 const HOLD_CAP := 3
@@ -72,7 +72,7 @@ static func hint_parts(ui: CanvasLayer) -> Array:
 static func _reload(ui: CanvasLayer, slot: String) -> void:
 	ui.gear_sub = true
 	ui.gear_sub_slot = slot
-	var Sub = load("res://scripts/ui/gear_board_sub.gd")
+	var Sub = load("res://scripts/ui/gear_board/gear_board_sub.gd")
 	Sub.open_sub(ui, slot)
 
 static func _keep(ui: CanvasLayer, ctl: Control) -> Control:

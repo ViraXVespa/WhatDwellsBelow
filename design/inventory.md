@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: changing bag, equipment, food, potions, artifacts, Extraction Gates, or the anvil  
-Code: `scripts/data/progress.gd`, `scripts/data/progress_gear.gd`, `scripts/data/progress_gear_req.gd`, `scripts/data/progress_extract.gd`, `scripts/data/progress_make.gd`, `scripts/data/progress_forge.gd`, `scripts/data/affixes.gd`, `scripts/data/gear_roll.gd`, `scripts/data/gear_rules.gd`, `scripts/data/catalog.gd`, `scripts/ui/gear_board.gd`, `scripts/ui/gear_board_text.gd`, `scripts/ui/gear_board_act.gd`, `scripts/ui/gear_board_anvil.gd`, `scripts/ui/gear_board_anvil_view.gd`, `scripts/ui/gear_board_anvil_forge.gd`, `scripts/ui/gear_board_sub.gd`, `scripts/ui/step_row.gd`  
+Code: `scripts/data/progress.gd`, `scripts/data/progress_gear.gd`, `scripts/data/progress_gear_req.gd`, `scripts/data/progress_extract.gd`, `scripts/data/progress_make.gd`, `scripts/data/progress_forge.gd`, `scripts/data/affixes.gd`, `scripts/data/gear_roll.gd`, `scripts/data/gear_rules.gd`, `scripts/data/catalog.gd`, `scripts/ui/gear_board/gear_board.gd`, `scripts/ui/gear_board/gear_board_text.gd`, `scripts/ui/gear_board/gear_board_act.gd`, `scripts/ui/gear_board/gear_board_anvil.gd`, `scripts/ui/gear_board/gear_board_anvil_view.gd`, `scripts/ui/gear_board/gear_board_anvil_forge.gd`, `scripts/ui/gear_board/gear_board_sub.gd`, `scripts/ui/step_row.gd`  
 See also: `design/gear-ui.md`, `design/skills.md`, `design/ui.md`, `design/hub.md`, `design/tunables.md`, `design/art-pipeline.md`, `design/handoff-anvil.md`
 
 ## Bag

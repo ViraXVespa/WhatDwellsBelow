@@ -1,26 +1,26 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Text := preload("res://scripts/ui/gear_board_text.gd")
-const Act := preload("res://scripts/ui/gear_board_act.gd")
-const Floor := preload("res://scripts/ui/gear_board_floor.gd")
-const Tip := preload("res://scripts/ui/gear_board_tip.gd")
-const Build := preload("res://scripts/ui/gear_board_build.gd")
+const Text := preload("res://scripts/ui/gear_board/gear_board_text.gd")
+const Act := preload("res://scripts/ui/gear_board/gear_board_act.gd")
+const Floor := preload("res://scripts/ui/gear_board/gear_board_floor.gd")
+const Tip := preload("res://scripts/ui/gear_board/gear_board_tip.gd")
+const Build := preload("res://scripts/ui/gear_board/gear_board_build.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
-const Sync := preload("res://scripts/ui/gear_board_host_sync.gd")
+const Sync := preload("res://scripts/ui/gear_board/gear_board_host_sync.gd")
 
 static func build(ui: CanvasLayer, mode: String) -> void:
-	var _fac = load("res://scripts/ui/gear_board_host.gd")
+	var _fac = load("res://scripts/ui/gear_board/gear_board_host.gd")
 	ensure_host(ui)
 	ui.gear_mode = mode
 	ui.gear_sub = false
 	ui.gear_sub_slot = ""
 	ui.gear_x_hold = 0.0
 	ui.gear_x_fired = false
-	load("res://scripts/ui/gear_board.gd")._flag(ui, "gear_hover", false)
-	load("res://scripts/ui/gear_board.gd")._flag(ui, "gear_tip_ready", false)
-	load("res://scripts/ui/gear_board.gd")._flag(ui, "gear_booting", true)
-	load("res://scripts/ui/gear_board.gd").clear_sub(ui)
+	load("res://scripts/ui/gear_board/gear_board.gd")._flag(ui, "gear_hover", false)
+	load("res://scripts/ui/gear_board/gear_board.gd")._flag(ui, "gear_tip_ready", false)
+	load("res://scripts/ui/gear_board/gear_board.gd")._flag(ui, "gear_booting", true)
+	load("res://scripts/ui/gear_board/gear_board.gd").clear_sub(ui)
 	var title_col := Color(0.95, 0.82, 0.5)
 	if mode == "loadout":
 		title_col = Color(0.6, 0.9, 1.0)
@@ -42,28 +42,28 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	ui.box.add_child(row)
-	row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, ["weapon", "potion"], true))
-	row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, ["head", "body", "legs"], false))
-	row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, ["tool", "food"], true))
+	row.add_child(load("res://scripts/ui/gear_board/gear_board.gd")._slot_col(ui, ["weapon", "potion"], true))
+	row.add_child(load("res://scripts/ui/gear_board/gear_board.gd")._slot_col(ui, ["head", "body", "legs"], false))
+	row.add_child(load("res://scripts/ui/gear_board/gear_board.gd")._slot_col(ui, ["tool", "food"], true))
 	row.add_child(Build.build_stats_card(ui))
 	if ui.focus_btn == null:
 		var hit: Control = _fac.find_sel(ui)
 		if hit:
 			ui.focus_btn = hit
-	load("res://scripts/ui/gear_board.gd").hide_tip(ui)
+	load("res://scripts/ui/gear_board/gear_board.gd").hide_tip(ui)
 	if mode == "loadout":
 		Floor.footer(ui)
 	elif mode == "anvil":
-		load("res://scripts/ui/gear_board_anvil.gd").footer(ui)
+		load("res://scripts/ui/gear_board/gear_board_anvil.gd").footer(ui)
 	else:
 		_fac.bag_grid(ui)
-	load("res://scripts/ui/gear_board.gd")._paint_hint(ui)
+	load("res://scripts/ui/gear_board/gear_board.gd")._paint_hint(ui)
 	Sync.refresh(ui)
 	var tree := ui.get_tree()
 	if tree:
 		tree.process_frame.connect(func():
 			if is_instance_valid(ui):
-				load("res://scripts/ui/gear_board.gd")._flag(ui, "gear_booting", false)
+				load("res://scripts/ui/gear_board/gear_board.gd")._flag(ui, "gear_booting", false)
 		, CONNECT_ONE_SHOT)
 
 static func ensure_host(ui: CanvasLayer) -> void:

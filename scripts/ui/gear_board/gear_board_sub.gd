@@ -1,23 +1,23 @@
 extends Object
 
-const Board := preload("res://scripts/ui/gear_board.gd")
-const Text := preload("res://scripts/ui/gear_board_text.gd")
-const Fmt := preload("res://scripts/ui/gear_board_text_fmt.gd")
+const Board := preload("res://scripts/ui/gear_board/gear_board.gd")
+const Text := preload("res://scripts/ui/gear_board/gear_board_text.gd")
+const Fmt := preload("res://scripts/ui/gear_board/gear_board_text_fmt.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
-const ForgeUI := preload("res://scripts/ui/gear_board_anvil_forge.gd")
-const Open := preload("res://scripts/ui/gear_board_sub_open.gd")
+const ForgeUI := preload("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")
+const Open := preload("res://scripts/ui/gear_board/gear_board_sub_open.gd")
 
 
 static func _act():
-	return load("res://scripts/ui/gear_board_act.gd")
+	return load("res://scripts/ui/gear_board/gear_board_act.gd")
 
 
 
 static func _anvil():
-	return load("res://scripts/ui/gear_board_anvil.gd")
+	return load("res://scripts/ui/gear_board/gear_board_anvil.gd")
 
 
 

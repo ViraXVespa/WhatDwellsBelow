@@ -56,7 +56,7 @@ All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidi
 
 Live camp position: down and left of the vendor stall’s southwest corner (`21.2, 0, 11.4`).
 
-Live scripts: board `scripts/ui/gear_board.gd` in `gear_mode="anvil"`; tabs `gear_board_anvil.gd` + `gear_board_anvil_view.gd`; forge body `gear_board_anvil_forge.gd`; ledger `scripts/data/progress_forge.gd` + `affixes.gd` + `gear_roll.gd`. `progress_town.gd` still owns extract / quests / analyze-destroy wrapper.
+Live scripts: board `scripts/ui/gear_board/gear_board.gd` in `gear_mode="anvil"`; tabs `gear_board_anvil.gd` + `gear_board_anvil_view.gd`; forge body `gear_board_anvil_forge.gd`; ledger `scripts/data/progress_forge.gd` + `affixes.gd` + `gear_roll.gd`. `progress_town.gd` still owns extract / quests / analyze-destroy wrapper.
 
 ### Vendor Stall
 - Buys ore for gold.
