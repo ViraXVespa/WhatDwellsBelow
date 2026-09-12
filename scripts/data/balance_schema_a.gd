@@ -54,7 +54,7 @@ static func rows() -> Array:
 		["crit_mult", 1.0, 5.0, 0.05],
 		["knockback", 0.0, 12.0, 0.1],
 		["hitstop", 0.0, 0.25, 0.005],
-		["dummy_hp", 10.0, 500.0, 1.0],
+		["dummy_hp", 10.0, 500.0, 5.0],
 		["dummy_defense", 0.0, 200.0, 1.0],
 		["defense_k", 10.0, 400.0, 5.0],
 		["xp_per_kill", 0.0, 100.0, 1.0],
