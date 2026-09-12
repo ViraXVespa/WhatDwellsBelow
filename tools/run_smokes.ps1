@@ -83,16 +83,16 @@ foreach ($n in $Phases) {
             ForEach-Object { [void]$hits.Add($_) }
     }
     if ($hits.Count -eq 0) {
-        $lines.Add("(no P*/SCRIPT ERROR highlights — check logs if TIMEOUT)")
-        if ($status -eq "TIMEOUT") { $fail += 0 }
+        $lines.Add("(no P*/SCRIPT ERROR highlights - check logs if TIMEOUT)")
     } else {
         foreach ($h in ($hits | Select-Object -Unique | Select-Object -First 80)) {
             $lines.Add($h)
             Write-Host ("  " + $h)
         }
-        $errHits = @($hits | Where-Object { $_ -match 'SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed to' })
-        if ($errHits.Count -gt 0 -and $status -ne "TIMEOUT") {
-            $fail += 1
+        foreach ($h in $hits) {
+            if ($h -match 'SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed to') {
+                if ($status -ne "TIMEOUT") { $fail += 1; break }
+            }
         }
     }
     $lines.Add("")

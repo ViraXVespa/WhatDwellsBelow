@@ -110,6 +110,7 @@ After facade / helper splits (or when the User asks), run Godot against the loca
 
 - Binary (Steam tools build): `C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe` (also referenced from `tools/export_web.ps1`).
 - **Required check:** `--headless --editor --import --path <WDB_ROOT> --quit` — this runs `first_scan_filesystem`, regenerates/reloads scripts like opening the project in the editor, and catches GDScript parse errors (including `:=` inference) that plain `--path ... --quit` can miss.
+- Preferred (agent-friendly): from repo root, `powershell -File tools/run_godot_import_check.ps1` (optional `-TimeoutSec 180`). Writes `_logs/godot-import-check/summary.txt` with pass/fail plus error/warning highlights only.
 - Phase smokes (coverage): after import is clean, run `--headless --display-driver headless --audio-driver Dummy --path <WDB_ROOT> -- --wdb-phaseN-smoke` per `design/debug.md`. Plain `--headless` without those drivers can hang under redirected IO. Do not treat smoke stderr as the editor-clean bar, or a plain `--quit` boot as a smoke pass.
 - Capture stdout and stderr (GUI-subsystem exe: use `Start-Process -RedirectStandardOutput/-RedirectStandardError`). Clean bar: import check exit 0 **and** empty stderr.
 - Cascade tip: `Could not resolve class "res://.../foo.gd"` often means **foo** (or a preload it owns) failed to parse. A load-probe script that `load()`s each dependency in order surfaces the real member/type error first.
