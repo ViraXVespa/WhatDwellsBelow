@@ -91,7 +91,7 @@ Do not claim a write landed until the PR exists.
 When the User has authorized a local checkout on their machine:
 
 - Prefer editing that checkout over per-file GitHub API patches.
-- Root path: user env var WDB_ROOT (example: C:\\Users\\Vira\\source\\repos\\WhatDwellsBelow on the laptop). Document any change to that path here.
+- Root path: user env var `WDB_ROOT` (example: `C:\Users\Vira\source\repos\WhatDwellsBelow` on the laptop). Document any change to that path here.
 - Commit locally on the size-sweep branch as you go. **Push to the PR branch only after a phase's updates are finished** (not after each file), unless the User says otherwise.
 - Use the GitHub connector mainly for PR remote sync / status, not for rewriting bodies file-by-file.
 - Cloud Agents remain optional; if the plan blocks them, local checkout + Steam Godot headless is the compile path.
@@ -99,7 +99,7 @@ When the User has authorized a local checkout on their machine:
 
 ## Size measurement
 
-Inventory and before/after sizes use **filesystem byte length** of each .gd file (Get-Item Length, dir, or equivalent). Do **not** ReadAllText + Encoding.UTF8.GetByteCount just to measure — that burns tokens and can disagree with on-disk size if line endings differ.
+Inventory and before/after sizes use **filesystem byte length** of each `.gd` file (`Get-Item Length`, `dir`, or equivalent). Do **not** `ReadAllText` + `Encoding.UTF8.GetByteCount` just to measure — that burns tokens and can disagree with on-disk size if line endings differ.
 
 Report path + bytes from Length. The 10KB / 5KB caps are on-disk UTF-8 file sizes.
 
