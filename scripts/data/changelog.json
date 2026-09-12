@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.11",
+			"points": [
+				{
+					"text": "Park prior-series changelogs under `design/changelog/archive/{epoch}.{series}/` (moved all `0.2.*` notes into `archive/0.2/`)."
+				},
+				{
+					"text": "`tools/archive_prior_changelogs.py` / `.ps1` cleans the flat folder when series advances; CI stamp + Pages run it before `build_changelog.py`."
+				},
+				{
+					"text": "Pages `/changelog/` includes flat current files and `archive/*/*.md`."
+				}
+			],
+			"summary": "Changelog layout keeps only the current week flat; older weeks archive automatically on series bump."
+		},
+		{
 			"label": "0.3.10",
 			"points": [
 				{

@@ -41,7 +41,7 @@ Do not start by archiving or rewriting the live path. Do not read `design/change
 
 ## Week ritual
 
-Run this block **only** when the User said **new week**. Otherwise skip it.
+Run this block **only** when the User said **new week**. Otherwise skip it. After the series seed / `0.N.0` lands, run `python tools/archive_prior_changelogs.py` so prior-series markdown leaves the flat `design/changelog/` folder (CI also runs it on stamp).
 
 Follow `design/versioning.md`. In short:
 
