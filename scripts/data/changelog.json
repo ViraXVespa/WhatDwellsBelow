@@ -3,6 +3,37 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.8",
+			"points": [
+				{
+					"text": "Analyze no longer asks twice. Opening the list and picking a piece destroys it and writes the forge book."
+				},
+				{
+					"text": "Salvage spare gear sits on Gameplay settings, off by default.",
+					"subs": [
+						"When it is on, Finish at least and Fortune at least decide which duplicate greens and blues stay in the bank. Miss both bars and the copy becomes smithing XP. New traits, a higher item level, or a luck roll that beats the book are never salvaged.",
+						"Whites still follow the starter path on extract."
+					]
+				},
+				{
+					"text": "Forge can run 1\u20139 pieces in one job. Cost and wait scale with quantity. A bar shows the current piece.",
+					"subs": [
+						"Back stops the queue. Finished pieces go to a results screen. The unfinished piece is dropped. Materials already spent stay spent."
+					]
+				},
+				{
+					"text": "Results use inventory icon cells. Held pieces start selected. Pick up to three. Confirm replaces only that type\u2019s holds."
+				},
+				{
+					"text": "Item level and quantity use the same horizontal stepper as the Floor Crystal floor picker."
+				},
+				{
+					"text": "The kit card and live combat read affix rows only, so leftover range / crit / on-hit keys on old saves no longer apply."
+				}
+			],
+			"summary": "The anvil now treats Analyze as a single pick, lets you batch-forge and choose holds on a results screen, and stops old gear keys from inflating combat or the stats card."
+		},
+		{
 			"label": "0.3.7",
 			"points": [
 				{
