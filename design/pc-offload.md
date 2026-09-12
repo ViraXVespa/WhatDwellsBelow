@@ -15,11 +15,13 @@ Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. A
 3. Do not dump whole `.gd` files into chat unless editing them or the User asked.
 4. Steam Godot under redirected IO often leaves Process `ExitCode` null - runners treat null as 0. Headless smokes need `--display-driver headless --audio-driver Dummy`. Compile check needs `--headless --editor --import --path <WDB_ROOT> --quit`.
 5. ASCII hyphens only inside PowerShell `.ps1` double-quoted strings (no em dashes).
+6. Housekeeping: summaries overwrite in place each run. Raw Godot `*.log` under `_logs/` are disposable - run `tools/clean_agent_logs.ps1` (or let smoke runner drop orphan phase logs). `_logs/` stays gitignored; do not commit it.
 
 ## Catalog
 
 | Job | Command (from repo root) | Summary (read only this) |
 |-----|--------------------------|--------------------------|
+| Housekeep `_logs/` | `powershell -File tools/clean_agent_logs.ps1` (optional `-KeepRaw`, `-MaxAgeHours 24`) | `_logs/clean/summary.txt` |
 | Oversize inventory | `powershell -File tools/list_oversize_scripts.ps1` (optional `-OverKb 5` or `10`) | `_logs/oversize/summary.txt` |
 | Func-level inventory | `powershell -File tools/summarize_scripts.ps1` (optional `-OverKb 5`, `-TopFuncs 8`, `-Path scripts/...`) | `_logs/script-summary/summary.txt` |
 | Facade + siblings by size | `powershell -File tools/list_facade_cluster.ps1 -Facade scripts/combat/enemy.gd` | `_logs/facade-cluster/summary.txt` |

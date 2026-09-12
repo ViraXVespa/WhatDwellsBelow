@@ -24,6 +24,18 @@ if (-not (Test-Path $Godot)) {
 }
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+
+# Drop orphan phase logs (e.g. p45 from bad -Phases binding) so _logs/smokes does not grow.
+Get-ChildItem -Path $OutDir -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -match "^p\d+-(err|out)\.log$" } |
+    ForEach-Object {
+        $m = [regex]::Match($_.Name, "^p(\d+)-")
+        if ($m.Success) {
+            $n = [int]$m.Groups[1].Value
+            if ($Phases -notcontains $n) { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue }
+        }
+    }
+
 Get-Process -Name "godot*" -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Milliseconds 400
 
