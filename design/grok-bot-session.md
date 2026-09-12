@@ -129,11 +129,11 @@ Document new split-induced failure modes under `design/refactor.md` (Hostify pit
 2. Inventory (on-disk Length sizes; rank; show; don’t edit yet).
 3. **Size** clusters may auto-chain on one branch / one PR while anything over 10KB remains, then over 5KB (User can override). **Extract** / new-module / parked-move / deeper-relocate clusters always wait for User go and may use later separate PRs.
 4. Size sweep: one branch + one PR for the whole size worklist (squash-merge once at the end). Never paste-emit. Do not open a new PR per file.
-5. Include `design/changelog/{label}.md` once for that PR when the size sweep is ready to land (WIP notes OK until then).
-6. Report after each cluster / push batch.
-7. Code-map pass once at end of the size sweep (brief sibling-name notes OK while sweeping). Pure refactor: no `design/sessions.md`, no `design/session-log.md`.
-8. End when the User stops or the worklist is empty.
-
+5. After each size cluster (and before claiming compile-clean): run the editor import check (`tools/run_godot_import_check.ps1` / post-split gate when practical). **Error-handling phase:** if the split introduced any SCRIPT ERROR, parse error, or new actionable warning, stop — analyze why it happened, fix it, and record how to prevent it next time under `design/refactor.md` (Hostify pitfalls / Types / Shared calculations). Do not continue the sweep past a red import check.
+6. Include `design/changelog/{label}.md` once for that PR when the size sweep is ready to land (WIP notes OK until then).
+7. Report after each cluster / push batch.
+8. Code-map pass once at end of the size sweep (brief sibling-name notes OK while sweeping). Pure refactor: no `design/sessions.md`, no `design/session-log.md`.
+9. End when the User stops or the worklist is empty.
 
 ## Batch
 
