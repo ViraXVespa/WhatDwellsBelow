@@ -86,4 +86,3 @@ static func _keep(ui: CanvasLayer, ctl: Control) -> Control:
 				keep.grab_focus()
 		, CONNECT_ONE_SHOT)
 	return ctl
-

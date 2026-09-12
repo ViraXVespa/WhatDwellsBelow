@@ -196,4 +196,3 @@ static func rename_profile(host) -> void:
 	if prev != "" and prev != host.profile_name:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path("%s/%s.json" % [dir(), prev]))
 	host.loaded_profile = host.profile_name
-

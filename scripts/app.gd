@@ -430,4 +430,3 @@ func swallow_close_pad() -> void:
 
 func web_buttons() -> PackedFloat32Array:
 	return Pad.web_buttons()
-

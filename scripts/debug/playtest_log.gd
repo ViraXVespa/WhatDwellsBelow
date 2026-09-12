@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 ## ver 2 journal: compact JSON, no tel.cfg, packed cards, sparse beats, coalesced steps.
 ## cards bit order is EWNS as a 4-char "01" string.
@@ -176,4 +176,3 @@ static func _flush(pt: Node) -> void:
 		Core.file_name = PlaytestLogUtil._stamp(pt)
 	PlaytestLogUtil._flush(Core.file_name, Core.events, Core.end_cond, Core.end_fail)
 	Core.flush_n = 0
-

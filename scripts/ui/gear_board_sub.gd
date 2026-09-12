@@ -155,4 +155,3 @@ static func _apply_inv(ui: CanvasLayer, slot: String, it: Dictionary, src: Strin
 		ui.inv_sel = "slot:" + slot
 		return
 	Act.st(ui, "Can't use that here.")
-

@@ -156,4 +156,3 @@ static func clear_sub(ui: CanvasLayer) -> void:
 static func apply_pending() -> void:
 
 	Host.apply_pending()
-

@@ -381,4 +381,3 @@ func from_meta(d: Dictionary) -> void:
 
 func restock() -> String:
 	return Town.restock(self)
-
