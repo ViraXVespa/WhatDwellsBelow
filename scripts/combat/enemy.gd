@@ -144,6 +144,18 @@ func _player() -> Node3D:
 	return null
 
 
+func _begin_windup() -> void:
+	EnemyAI.begin_windup(self)
+
+
+func smoke_force_leash() -> String:
+	post = global_position
+	global_position = post + Vector3(App.bal.leash_range + 2.5, 0.0, 0.0)
+	state = ST_CHASE
+	EnemyAI.tick(self, 0.016)
+	return state_name()
+
+
 func state_name() -> String:
 	match state:
 		ST_IDLE:

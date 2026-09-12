@@ -91,6 +91,12 @@ static func add_hold(p: Object, it: Dictionary) -> String:
 	return Act.add_hold(p, it)
 
 
+## Programmatic forge→hold (UI finish + smokes). Prefer this over hardcoding hold writes.
+static func forge_hold(p: Object, slot: String, type_id: String, rarity: String, ilvl: int = 1, locked: PackedStringArray = PackedStringArray()) -> String:
+	var it: Dictionary = make_forged(p, slot, type_id, rarity, ilvl, locked)
+	return add_hold(p, it)
+
+
 static func place_hold(p: Object, it: Dictionary) -> void:
 	Act.place_hold(p, it)
 

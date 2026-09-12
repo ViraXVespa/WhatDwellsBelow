@@ -338,8 +338,19 @@ func pay_forge(c: Dictionary) -> bool:
 	return ForgeP.pay(self, c)
 
 
-func forge_item(_it: Dictionary) -> String:
-	return "Use the Forge tab."
+func forge_item(it: Dictionary) -> String:
+	# Player UX still points at the Forge tab when the piece is not forge-shaped.
+	var slot := str(it.get("slot", ""))
+	var type_id := ForgeP.type_of(it)
+	if type_id == "":
+		type_id = str(it.get("type_id", it.get("id", "")))
+	var rarity := str(it.get("rarity", "white"))
+	var ilvl := int(it.get("ilvl", 1))
+	if slot == "" or type_id == "":
+		return "Use the Forge tab."
+	if slot not in ForgeP.FORGE_SLOTS:
+		return "Use the Forge tab."
+	return ForgeP.forge_hold(self, slot, type_id, rarity, ilvl)
 
 
 func roll_quests(keep_active: bool) -> void:

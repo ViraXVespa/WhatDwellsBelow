@@ -1,5 +1,7 @@
 extends Object
 
+const GatherRules := preload("res://scripts/world/gather_rules.gd")
+
 
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
@@ -50,7 +52,9 @@ static func p5(host: Node) -> void:
 		wood_hits = 1
 		printerr("P5: wood_strike ok=" + str(r2.get("ok", false)) + " interval=" + str(wood_n.get("interval")))
 	printerr("P5: ore_delta=" + str(App.ore - ore0) + " wood_delta=" + str(App.wood - wood0))
-	printerr("P5: nodes_ok=" + str(mine_hits == 1 and wood_hits == 1 and is_equal_approx(float(mine_n.get("interval")), 2.4) and is_equal_approx(float(wood_n.get("interval")), 1.2)))
+	var want_mine: float = GatherRules.interval_for("mine")
+	var want_wood: float = GatherRules.interval_for("wood")
+	printerr("P5: nodes_ok=" + str(mine_hits == 1 and wood_hits == 1 and mine_n != null and wood_n != null and is_equal_approx(float(mine_n.get("interval")), want_mine) and is_equal_approx(float(wood_n.get("interval")), want_wood)))
 	var smashed: int = 0
 	for b: Node in tree(host).get_nodes_in_group("breakables"):
 		if str(b.get("kind")) == "crack":

@@ -99,6 +99,19 @@ After a hostify batch, run the **editor import** compile check in `design/grok-b
 
 Optional advisory scan: `powershell -File tools/lint_hostify.ps1` → `_logs/hostify-lint/summary.txt` (always exit 0). Use it to spot Hostify pitfalls before or after the import check; it is not a compile substitute. After a size-split batch, prefer `powershell -File tools/run_post_split_gate.ps1` (add `-WithSmokes` when coverage matters).
 
+
+
+## Shared calculations (gameplay + smoke)
+
+When gameplay uses a formula (gather interval, forge→hold, damage, etc.), put it in **one** static helper and call that helper from every consumer — live systems, UI, **and** phase smokes. Do not re-derive or hardcode the same numbers in `scripts/debug/smoke_*.gd`.
+
+Rules:
+
+1. Prefer a small `extends Object` helper next to the owner (example: `scripts/world/gather_rules.gd` for gather timing; `ForgeP.forge_hold` for programmatic forge→hold).
+2. Before asserting in a smoke, search for an existing helper (`interval_for`, `forge_hold`, …). If none exists, **extract** it from the live code first, then assert against the helper’s result.
+3. When hostifying, keep smoke-reachable facades (see Hostify pitfall 9) **and** keep smokes on the shared calc route — updating only the smoke’s hardcoded constants is a regression waiting to happen.
+4. Search for duplicated literals of the same feature (example: `2.4` / `mine_time`) during size sweeps; fold them into the helper in the same batch when safe.
+
 ## Token rules
 
 - Do not load the design corpus for a split. Code map row + the cluster is enough.
