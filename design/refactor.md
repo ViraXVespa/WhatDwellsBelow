@@ -93,6 +93,7 @@ Facade + `static func(host, ...)` splits must keep Godot 4.7 compiling. Watch fo
 6. **Blind substring rewrites** — replacing `:= n` / bare `name` can corrupt identifiers (`var nm := name` → `var nm: String = str(n)ame`). Prefer AST-aware or line-scoped edits; re-read touched lines.
 7. **Broken call commas** — hostify passes must not leave `tick_pinch(host, )` or dropped args.
 8. **Cross-helper renames** — if a static was renamed (`Present.present` → `present`, `Hit.mark_post`), update every call site in the cluster in the same batch.
+9. **Keep facade wrappers smoke / `call` can reach** — phase smokes still hit private names like `_pressure_spawn` / `_buy_snack` via `host.call` or `ui._…`. After moving the body to a helper, leave a one-line facade (`func _pressure_spawn() -> int: return DungeonPack.pressure_spawn(self)`) or update the smoke in the same batch.
 
 After a hostify batch, run the **editor import** compile check in `design/grok-bot-session.md` (`--headless --editor --import --path <WDB_ROOT> --quit`). Plain `--quit` alone is not sufficient — it can miss `:=` inference errors the editor surfaces on reload.
 

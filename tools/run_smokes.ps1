@@ -3,6 +3,8 @@
 #   powershell -File tools/run_smokes.ps1
 #   powershell -File tools/run_smokes.ps1 -Phases 1,2,3
 #   powershell -File tools/run_smokes.ps1 -Phases 6 -TimeoutSec 180
+# Prefer from a PowerShell session: & .\tools\run_smokes.ps1 -Phases @(4,5)
+# (powershell -File ... -Phases 4,5 can bind as a single int 45.)
 # See design/debug.md (Live snapshot - smoke tests).
 
 param(

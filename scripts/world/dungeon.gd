@@ -252,6 +252,10 @@ func _tick_pressure(delta: float, grew: bool) -> void:
 	DungeonPack.tick_pressure(self, delta, grew)
 
 
+func _pressure_spawn() -> int:
+	return DungeonPack.pressure_spawn(self)
+
+
 func _find_kind_room(kind: String) -> Dictionary:
 	return DungeonCells.find_kind_room(self, kind)
 

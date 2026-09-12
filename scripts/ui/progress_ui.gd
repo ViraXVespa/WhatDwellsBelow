@@ -291,6 +291,14 @@ func _confirm(fn: Callable, id := "anon") -> void:
 
 
 
+func _buy_snack() -> void:
+	Shop.buy_snack(self)
+
+
+func _buy_art(id: String, nm: String) -> void:
+	Shop.buy_art(self, id, nm)
+
+
 func _extract_all() -> void:
 	_st(App.prog.extract_all("gate"))
 	extract_mailed = true
