@@ -52,12 +52,42 @@ Grok Bot PRs MUST squash-merge (see `design/grok-bot-session.md`). A multi-commi
 
 ## Changelog files
 
-Authoring unit is **one markdown file per build**:
+Authoring unit is **one markdown file per build** for the **current series only**, flat under:
 
 `design/changelog/{label}.md`  
-Example: `design/changelog/0.2.53.md`
+Example: `design/changelog/0.3.10.md`
+
+Prior series are parked under:
+
+`design/changelog/archive/{epoch}.{series}/{label}.md`  
+Example: `design/changelog/archive/0.2/0.2.53.md`
 
 Plain text, no code fence when emitted. Body shape:
+
+## {label}
+- Key point
+-- Subpoint (optional)
+- Key point
+
+Summary: one- or two-sentence session summary
+
+No other sections in the player-facing body. Agent-only revert hints (paths, SHA) may follow a `## Agent` heading; the game and Pages player view ignore that heading.
+
+Do **not** keep a concatenated week file on `main`. Do **not** hand-edit `scripts/data/changelog.json`.
+
+### Series cleanup (week / series bump)
+
+When `scripts/data/version.json` `series` (or `epoch`) advances - new week seed, `0.N.0` / `1.M.0` open - prior-series markdown must leave the live flat folder:
+
+1. Run `python tools/archive_prior_changelogs.py` (or `powershell -File tools/archive_prior_changelogs.ps1`). Idempotent. Writes `_logs/changelog-archive/summary.txt`.
+2. CI (`version.yml` / `pages.yml`) runs the same tool before `build_changelog.py` and may commit moved files with the stamp.
+
+`tools/build_changelog.py` (also run by CI):
+
+- Reads `version.json` for the current `epoch.series`.
+- Reads only flat `design/changelog/{epoch}.{series}.*.md` (not `archive/`).
+- Writes `scripts/data/changelog.json` - **current series only**, newest patch first, bullets + summary only.
+- Does not write a week rollup into the repo. Pages week views are built in the Action from flat current files **plus** `design/changelog/archive/*/*.md`.
 
 ## {label}
 - Key point
@@ -121,7 +151,7 @@ Run the **init pin** only when the User opens the CLI session by saying **new we
 
 Archive `docs` follow `design/archives.md`. Changelog museum copies for those rows:
 
-- Web Results Week N-1 → that week’s per-build markdown (copy under `archives/docs/grok_web_w{N-1}/` so the pin can show files that were not on the old SHA).
+- Web Results Week N-1 → that week’s per-build markdown from `design/changelog/` or `design/changelog/archive/0.{N-1}/` (copy under `archives/docs/grok_web_w{N-1}/` so the pin can show files that were not on the old SHA).
 - Build Results Week N → previous week’s per-build markdown, if any, under `archives/docs/grok_build_wN/`.
 
 Also attach the `design/` file tree as it exists **on the pinned commit** (`docs[]` paths that `git show` can resolve). Standing order: when the User has said **new week**, this ritual may create those two pins without a fresh “please archive” prompt. No other new archives unless the User asks.

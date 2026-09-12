@@ -53,7 +53,7 @@ Cached worktree + existing import: short “Opening snapshot…” beat, no re-i
 
 Live site root is the current HEAD export. Each archive is `https://viraxvespa.github.io/WhatDwellsBelow/<pages_slug>/`.
 
-Player-facing changelogs for skipped weeks live at `https://viraxvespa.github.io/WhatDwellsBelow/changelog/`. That route is built from `design/changelog/*.md` in CI. Do not store those notes inside the Godot `docs/` export tree on `main`.
+Player-facing changelogs for skipped weeks live at `https://viraxvespa.github.io/WhatDwellsBelow/changelog/`. That route is built in CI from flat `design/changelog/*.md` plus `design/changelog/archive/*/*.md`. Do not store those notes inside the Godot `docs/` export tree on `main`.
 
 GitHub Actions (`.github/workflows/pages.yml`) always exports HEAD. That live export is fatal: if it fails, Pages does not deploy.
 
@@ -74,8 +74,8 @@ User-ordered archives:
 
 Standing Grok Build week pins (no extra prompt):
 
-1. At init of week N (not a corruption resume): pin current `main` as `grok_web_w{N-1}` — Grok Web Results (Week N-1). Copy that week’s `design/changelog/0.{N-1}.*.md` into `archives/docs/grok_web_w{N-1}/`. Attach the `design/` tree that exists **on that commit** in `docs[]`.
-2. On the User’s completion commit `0.N.0`: pin it as `grok_build_wN` — Grok Build Results (Week N). Copy the **previous** week’s changelog files into `archives/docs/grok_build_wN/` if they exist. Attach the `design/` tree on that commit in `docs[]`.
+1. At init of week N (not a corruption resume): pin current `main` as `grok_web_w{N-1}` — Grok Web Results (Week N-1). Copy that week’s notes from `design/changelog/0.{N-1}.*.md` or `design/changelog/archive/0.{N-1}/` into `archives/docs/grok_web_w{N-1}/`. Prefer running `tools/archive_prior_changelogs.py` when series advances so the live folder stays current-series only. Attach the `design/` tree that exists **on that commit** in `docs[]`.
+2. On the User’s completion commit `0.N.0`: pin it as `grok_build_wN` — Grok Build Results (Week N). Copy the **previous** week’s changelog files (flat or under `design/changelog/archive/`) into `archives/docs/grok_build_wN/` if they exist. Run `tools/archive_prior_changelogs.py` after the series seed so prior flat files are parked. Attach the `design/` tree on that commit in `docs[]`.
 3. Do not move the web pin if the User later says this is a resume after corruption.
 4. Do not copy the project tree into `archives/`.
 

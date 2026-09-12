@@ -7,7 +7,7 @@ See also: `AGENTS.md`, `design/protocol.md`, `design/web-session.md`, `design/gr
 This folder is the documentation database for humans and agents.  
 It is not one Game Design Document.
 
-`docs/` is the GitHub Pages web export. Never store design notes there. Player-facing changelog pages are built in CI to `/changelog/` on Pages from `design/changelog/*.md`, not stored in `docs/` on `main`.
+`docs/` is the GitHub Pages web export. Never store design notes there. Player-facing changelog pages are built in CI to `/changelog/` on Pages from flat `design/changelog/*.md` plus `design/changelog/archive/*/*.md`, not stored in `docs/` on `main`. Prior series are parked under `design/changelog/archive/{epoch}.{series}/` via `tools/archive_prior_changelogs.py`.
 
 `_logs/` is local Grok Bot sweep notes. It is gitignored. Do not store design there and do not commit it.
 
@@ -72,7 +72,7 @@ Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Open only the
 | Suggested starts + live defaults | `tunables.md` | App. A + live `balance.gd` |
 | Anvil leftovers for the next session | `handoff-anvil.md` | — |
 
-Per-build player notes are `design/changelog/{label}.md`. They are not topic files. Do not open them unless `versioning.md` says to.
+Per-build player notes for the **current series** are flat `design/changelog/{label}.md`. Prior series live under `design/changelog/archive/{epoch}.{series}/`. They are not topic files. Do not open them unless `versioning.md` says to.
 
 ## House rules for editing these files
 
