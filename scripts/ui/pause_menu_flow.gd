@@ -90,7 +90,7 @@ static func close_ui(host: CanvasLayer) -> void:
 
 
 
-static func _wipe(host: CanvasLayer, n: Node) -> void:
+static func _wipe(_host: CanvasLayer, n: Node) -> void:
 	while n.get_child_count() > 0:
 		var c: Node = n.get_child(0)
 		n.remove_child(c)

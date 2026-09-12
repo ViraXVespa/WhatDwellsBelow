@@ -96,6 +96,7 @@ var playtest
 var loader
 var touch_hud
 var web_pad
+@warning_ignore("unused_private_class_variable")
 var _menu_loading := false
 var archive_cancel := false
 var archive_job_pid := -1

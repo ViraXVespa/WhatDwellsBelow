@@ -88,11 +88,11 @@ static func lock_totals(host: CanvasLayer) -> void:
 	if App.tel:
 		App.tel.recap_drain = true
 
-static func mailed_line(host: CanvasLayer) -> String:
-	var g := int(App.prog.mailed_gold)
-	var o := int(App.prog.mailed_ore)
-	var w := int(App.prog.mailed_wood)
-	var r := int(App.prog.mailed_root)
+static func mailed_line(_host: CanvasLayer) -> String:
+	var g: int = int(App.prog.mailed_gold)
+	var o: int = int(App.prog.mailed_ore)
+	var w: int = int(App.prog.mailed_wood)
+	var r: int = int(App.prog.mailed_root)
 	var names: PackedStringArray = App.prog.mailed_names
 	if g + o + w + r + names.size() <= 0:
 		return "Nothing reached the surface."

@@ -46,7 +46,7 @@ static func ready(host: CharacterBody3D) -> void:
 	if host.body:
 		host.body.visible = true
 
-static func make_sprite(host: CharacterBody3D, prio: int) -> Sprite3D:
+static func make_sprite(_host: CharacterBody3D, prio: int) -> Sprite3D:
 	var s := Sprite3D.new()
 	s.centered = true
 	s.shaded = false
