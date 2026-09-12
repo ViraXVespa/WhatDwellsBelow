@@ -96,6 +96,7 @@ jobs:
           pathlib.Path("/tmp/wdb_label").write_text(label)
           pathlib.Path("/tmp/wdb_ver_changed").write_text("1" if changed else "0")
           PY
+          python3 tools/archive_prior_changelogs.py
           python3 tools/build_changelog.py
 
       - name: Commit baked copy and tag
@@ -104,7 +105,7 @@ jobs:
           LABEL="$(cat /tmp/wdb_label)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/data/version.json scripts/data/changelog.json
+          git add scripts/data/version.json scripts/data/changelog.json design/changelog
           if git diff --cached --quiet; then
             echo "no baked-file changes"
           else

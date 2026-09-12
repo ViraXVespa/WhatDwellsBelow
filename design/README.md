@@ -7,9 +7,9 @@ See also: `AGENTS.md`, `design/protocol.md`, `design/web-session.md`, `design/gr
 This folder is the documentation database for humans and agents.  
 It is not one Game Design Document.
 
-`docs/` is the GitHub Pages web export. Never store design notes there. Player-facing changelog pages are built in CI to `/changelog/` on Pages from `design/changelog/*.md`, not stored in `docs/` on `main`.
+`docs/` is the GitHub Pages web export. Never store design notes there. Player-facing changelog pages are built in CI to `/changelog/` on Pages from flat `design/changelog/*.md` plus `design/changelog/archive/*/*.md`, not stored in `docs/` on `main`. Prior series are parked under `design/changelog/archive/{epoch}.{series}/` via `tools/archive_prior_changelogs.py`.
 
-`_logs/` is local Grok Bot sweep notes. It is gitignored. Do not store design there and do not commit it.
+`_logs/` holds local agent tool summaries (and optional Bot sweep notes). It is gitignored. Do not store design there and do not commit it. Catalog: `design/pc-offload.md`.
 
 ## How to use
 
@@ -72,7 +72,7 @@ Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Open only the
 | Suggested starts + live defaults | `tunables.md` | App. A + live `balance.gd` |
 | Anvil leftovers for the next session | `handoff-anvil.md` | — |
 
-Per-build player notes are `design/changelog/{label}.md`. They are not topic files. Do not open them unless `versioning.md` says to.
+Per-build player notes for the **current series** are flat `design/changelog/{label}.md`. Prior series live under `design/changelog/archive/{epoch}.{series}/`. They are not topic files. Do not open them unless `versioning.md` says to.
 
 ## House rules for editing these files
 
@@ -100,11 +100,13 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Dungeon | `scripts/dungeon/gen.gd` + `gen_carve.gd`, `gen_rooms.gd`, `gen_doors.gd`; `scripts/world/dungeon.gd` + `dungeon_boot.gd`, `dungeon_geo.gd`, `dungeon_geo_stream.gd`, `dungeon_map_act.gd`, `dungeon_cells.gd`, `dungeon_stream.gd`, `dungeon_props.gd`, `dungeon_pack.gd`, `crystal_net.gd`, `floor_crystal.gd` |
 | Hub | `scripts/world/camp.gd` + `camp_build.gd`, `camp_view.gd`; `interact.gd`, `interact_fx.gd`; `scripts/combat/dummy.gd` |
 | Gather | `scripts/world/gather_node.gd`, `gather_rules.gd`, `breakable.gd`, `pickup.gd` |
-| UI | `scripts/ui/hud.gd` + `hud_view.gd`, `hud_act.gd`; `touch_hud.gd`; `ui_text.gd`; `menu_pad.gd`; `step_row.gd`; `prompt_view.gd`; `confirm_dlg.gd`; `pause_menu.gd` + `pause_menu_view.gd`, `pause_menu_util.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_settings.gd`, `pause_settings_pages.gd`, `pause_system.gd`; `split_menu.gd` + `split_menu_view.gd`, `split_menu_chrome.gd`; `binds_page.gd`; `gear_board.gd` + `gear_board_build.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_opts.gd`, `gear_board_text_fmt.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `gear_board_anvil.gd`, `gear_board_anvil_view.gd`, `gear_board_anvil_forge.gd` + `gear_board_anvil_forge_edit.gd`, `gear_board_anvil_forge_pick.gd`, `gear_board_anvil_forge_job.gd`, `gear_icons.gd`; `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `crystal_ui.gd`; `recap.gd`, `recap_bars.gd`, `loader.gd`, `present.gd`, `theme.gd`, `splash.gd`, `fs_gate.gd` |
+| UI | `scripts/ui/hud.gd` + `hud_view.gd`, `hud_act.gd`; `touch_hud.gd`; `ui_text.gd`; `menu_pad.gd`; `step_row.gd`; `prompt_view.gd`; `confirm_dlg.gd`; `pause_menu.gd` + `pause_menu_view.gd`, `pause_menu_util.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_settings.gd`, `pause_settings_pages.gd`, `pause_system.gd`; `split_menu.gd` + `split_menu_view.gd`, `split_menu_chrome.gd`; `binds_page.gd`; `scripts/ui/gear_board/gear_board.gd` + helpers in `scripts/ui/gear_board/` (`gear_board_build.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_opts.gd`, `gear_board_text_fmt.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `gear_board_host.gd`, `gear_board_anvil.gd`, `gear_board_anvil_view.gd`, `gear_board_anvil_forge.gd` + forge helpers), `gear_icons.gd`; `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `crystal_ui.gd`; `recap.gd`, `recap_bars.gd`, `loader.gd`, `present.gd`, `theme.gd`, `splash.gd`, `fs_gate.gd` |
 | Input | `scripts/input/binds.gd` + `binds_pool.gd`, `binds_defaults.gd`, `prompts.gd`; `pad.gd`, `touch_pad.gd`, `look_ctrl.gd`; `scripts/ui/binds_page.gd`, `prompt_view.gd`, `menu_pad.gd`; `scripts/web_pad.gd`; `scripts/display_mode.gd` |
-| Debug | `scripts/combat/debug_menu.gd` + `debug_menu_settings.gd`, `debug_menu_val.gd`, `debug_menu_val_grid.gd`, `debug_menu_pages.gd`; `scripts/debug/playtest.gd` extends `playtest_api.gd` + `playtest_ai.gd`, `playtest_nav.gd`, `playtest_los.gd`, `playtest_path.gd`, `playtest_goals.gd`, `playtest_sim.gd`, `playtest_recs.gd`; `smoke.gd` + `smoke_early.gd`, `smoke_late.gd`, `smoke_p5.gd`, `smoke_p6.gd`, `smoke_p7.gd`, `smoke_p8.gd`, `smoke_p9.gd`, `smoke_p79.gd`; `anim_browser.gd` + `anim_browser_nav.gd`, `anim_browser_review.gd`, `anim_review.gd`, `anim_scan.gd`, `telemetry.gd` |
-| Audio | `scripts/audio/music.gd`, `scripts/combat/sfx.gd` |
+| Debug | `scripts/debug/debug_menu/debug_menu.gd` + folder helpers (`debug_menu_input.gd`, `debug_menu_pages.gd`, `debug_menu_profile.gd`, `debug_menu_settings.gd`, `debug_menu_val.gd`, `debug_menu_val_grid.gd`, `debug_menu_val_page.gd`); `scripts/debug/playtest.gd` extends `playtest_api.gd` + `playtest_ai.gd`, `playtest_nav.gd`, `playtest_los.gd`, `playtest_path.gd`, `playtest_goals.gd`, `playtest_sim.gd`, `playtest_recs.gd`; `smoke.gd` + `smoke_early.gd`, `smoke_late.gd`, `smoke_p5.gd`, `smoke_p6.gd`, `smoke_p7.gd`, `smoke_p8.gd`, `smoke_p9.gd`, `smoke_p79.gd`; `anim_browser.gd` + `anim_browser_nav.gd`, `anim_browser_review.gd`, `anim_review.gd`, `anim_scan.gd`, `telemetry.gd` |
+| Audio | `scripts/audio/music.gd`, `scripts/audio/sfx.gd` |
 | Archives UI | `scripts/ui/archives_ui.gd` + `archives_ui_view.gd`, `archives_ui_act.gd`; `scripts/data/archives_catalog.gd`, `archives_launch.gd`, `archives_docs.gd`, `archive_catalog.json` |
+| PC offload (Bot + Build) | `design/pc-offload.md`; `tools/list_oversize_scripts.ps1`, `summarize_scripts.ps1` / `.py`, `list_facade_cluster.ps1`, `check_script_cap.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1`, `run_build_gate.ps1`, `clean_agent_logs.ps1` |
+| Folder relocate | `tools/move_script_cluster.ps1` / `.py` (see `design/refactor.md` Parked folder moves) |
 | Grok Bot PC tools | `tools/list_oversize_scripts.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1` |
 | Sprite tools | `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/process_*.py`, `tools/process_world_pass.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py` |
 

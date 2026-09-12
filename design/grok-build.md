@@ -41,7 +41,7 @@ Do not start by archiving or rewriting the live path. Do not read `design/change
 
 ## Week ritual
 
-Run this block **only** when the User said **new week**. Otherwise skip it.
+Run this block **only** when the User said **new week**. Otherwise skip it. After the series seed / `0.N.0` lands, run `python tools/archive_prior_changelogs.py` so prior-series markdown leaves the flat `design/changelog/` folder (CI also runs it on stamp).
 
 Follow `design/versioning.md`. In short:
 
@@ -78,7 +78,9 @@ Sprite / I2V / paper-doll work stays on this path unless the User says otherwise
 
 Every live `scripts/**/*.gd` that ships must stay under **10,000 bytes**.
 
-Enforce the cap while editing. If a file is over, or an edit would push it over, split in that same slice using `design/refactor.md`. Stop once the file is under 10KB. Do not keep splitting toward Grok Bot’s 5KB sweep target.
+Enforce the cap while editing. If a file is over, or an edit would push it over, split in that same slice using `design/refactor.md`. Stop once the file is under 10KB. Do not keep splitting toward Grok Bot's 5KB sweep target.
+
+Preferred (agent-friendly): `powershell -File tools/check_script_cap.ps1` (optional `-OverKb 10`, `-GitChanged`, `-Path ...`). Writes `_logs/script-cap/summary.txt` - read that file only. Shared catalog: `design/pc-offload.md`.
 
 ## Archives
 
@@ -98,6 +100,8 @@ Catalog rows (each a pinned commit, isolated per `design/archives.md`):
 
 ## After a slice
 
+Preferred verify when `.gd` changed: from repo root, `powershell -File tools/run_build_gate.ps1` (optional `-SkipImport`, `-Force`). Runs script-cap on git-changed scripts plus editor import check; writes `_logs/build-gate/summary.txt` - read that file only.
+
 Stop and report: files changed, how you verified, what is still open. Do not chain an unrelated goal.
 
 ## End of session
@@ -116,7 +120,7 @@ Those two session files are for the next Grok Build instance, not for web / chat
 - Do not claim a paste-emit workflow. This path writes the checkout.
 - Do not use `design/web-session.md` phases.
 - Do not run a Grok Bot full-repo sweep. If house-wide size/extract/reuse cleanup is the job, that is Grok Bot.
-- Do not write `_logs/` (Grok Bot optional sweep notes only).
+- Do not commit `_logs/`. Writing tool summaries there via `design/pc-offload.md` runners is allowed and preferred; read only those summaries. Optional Bot-only notes (_logs/grok-bot-sweep.md) remain Bots concern.
 - Do not follow git commit links into web-session conversations. Current-series `design/changelog/*.md` is the brief.
 - Do not invent a third system when binding design and live code disagree — patch live toward binding or ask.
 - Do not run the week pin ritual unless the User said **new week**.

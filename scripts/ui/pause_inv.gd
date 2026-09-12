@@ -2,7 +2,7 @@ extends Object
 
 const View := preload("res://scripts/ui/pause_inv_view.gd")
 const Act := preload("res://scripts/ui/pause_inv_act.gd")
-const GearAct := preload("res://scripts/ui/gear_board_act.gd")
+const GearAct := preload("res://scripts/ui/gear_board/gear_board_act.gd")
 
 
 static func build(ui: CanvasLayer) -> void:

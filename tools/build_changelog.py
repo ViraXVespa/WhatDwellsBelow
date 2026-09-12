@@ -2,7 +2,10 @@
 """Build scripts/data/changelog.json from design/changelog/{epoch}.{series}.*.md.
 
 Git assigns the version number. This script only packs the current series'
-player-facing notes for the game. Do not treat changelog.json as the ledger.
+player-facing notes for the game (flat files under design/changelog/). Prior
+series live under design/changelog/archive/{epoch}.{series}/ and are ignored
+here — run tools/archive_prior_changelogs.py on series bump. Do not treat
+changelog.json as the ledger.
 """
 
 from __future__ import annotations

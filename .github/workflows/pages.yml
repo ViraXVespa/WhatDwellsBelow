@@ -88,6 +88,7 @@ jobs:
           ver_path.write_text(json.dumps(payload, indent="\t") + "\n", encoding="utf-8")
           print("workspace stamp", payload["label"])
           PY
+          python3 tools/archive_prior_changelogs.py
           python3 tools/build_changelog.py
 
       - name: Download Godot 4.7.2
@@ -151,7 +152,11 @@ jobs:
           src = root / "design" / "changelog"
           dest = root / "site" / "changelog"
           dest.mkdir(parents=True, exist_ok=True)
-          files = sorted(src.glob("*.md"), key=lambda p: p.stem, reverse=True) if src.is_dir() else []
+          files = []
+          if src.is_dir():
+              files.extend(src.glob("*.md"))
+              files.extend(src.glob("archive/*/*.md"))
+          files = sorted(files, key=lambda p: p.stem, reverse=True)
           blocks = []
           for path in files:
               raw = path.read_text(encoding="utf-8")

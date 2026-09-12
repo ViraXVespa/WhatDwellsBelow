@@ -130,8 +130,14 @@ Grok Bot sweep notes: optional `_logs/grok-bot-sweep.md` per `design/grok-bot-se
 
 ## Parked folder moves
 
-Do **not** do these during a size split. They need their own session / batch: every `preload` / `load` path plus `design/README.md` code-map rows. Grok Bot treats these (and User-named deeper relocates) as their own clusters; no behavior change.
+Do **not** fold these into a size split. They need their own session / batch (or the local mover below): every `preload` / `load` / ExtResource path plus `design/README.md` code-map rows. Grok Bot treats User-named deeper relocates as their own clusters; no behavior change.
 
-- Move `scripts/combat/debug_menu*.gd` (and the input / profile / val helpers added beside them) to `scripts/debug/`. The secret debug menu is not combat.
-- Move `scripts/combat/sfx.gd` out of combat to a sound-facing folder (`scripts/audio/` or `scripts/debug/` only if it is debug-only; live SFX belong with audio).
-- When a facade already has several sibling helpers, put that cluster in a dedicated subdir named for the facade (`scripts/ui/gear_board/`, `scripts/debug/debug_menu/`, …) so the scripts tree does not stay a flat dump. Update every preload after the move. Facade path can stay as a one-line wrapper at the old location if call sites are wide.
+Preferred (agent-friendly): from repo root, `powershell -File tools/move_script_cluster.ps1` (or `python tools/move_script_cluster.py`). It `git mv`s the facade + stem siblings (+ `.uid`), rewrites `res://` and bare paths under `scripts/`, `design/`, scenes, and `project.godot`, and writes `_logs/move-cluster/summary.txt`. Optional `-DryRun`, `-Wrapper` (leave `extends "res://..."` stubs at old paths). Then run the editor import check.
+
+Done (0.3.11 relocate batch):
+
+- `scripts/combat/debug_menu*.gd` -> `scripts/debug/debug_menu/`
+- `scripts/combat/sfx.gd` -> `scripts/audio/sfx.gd`
+- Sample facade folder: `scripts/ui/gear_board*.gd` -> `scripts/ui/gear_board/`
+
+Still open for later User go: other fat facade clusters (same tool). Prefer updating call sites over wrappers when external refs are few.

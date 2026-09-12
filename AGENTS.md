@@ -80,6 +80,6 @@ Keep the Godot output log clean. New or rewritten lines must not introduce these
 
 Every live `scripts/**/*.gd` that ships must stay under **10,000 bytes**.
 
-- **Grok Build (CLI)** enforces the cap while editing. Split in that same slice with `design/refactor.md`. Stop once the file is under 10KB. Do not keep splitting toward Grok Bot’s 5KB sweep target.
+- **Grok Build (CLI)** enforces the cap while editing. Split in that same slice with `design/refactor.md`. Stop once the file is under 10KB. Do not keep splitting toward Grok Bot's 5KB sweep target. Preferred runners: `design/pc-offload.md` (`check_script_cap.ps1`, `run_build_gate.ps1`).
 - **Web / chat** does not apply the cap until Phase 6. See `design/web-session.md`.
-- **Grok Bot** uses `design/refactor.md` on every task. 10KB is the ship floor. The under-5KB sweep target is only in `design/grok-bot-session.md`.
+- **Grok Bot** uses `design/refactor.md` on every task. 10KB is the ship floor. The under-5KB sweep target is only in `design/grok-bot-session.md`. Shared PC offload: `design/pc-offload.md`.
