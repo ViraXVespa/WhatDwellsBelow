@@ -22,6 +22,7 @@ Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. A
 | Job | Command (from repo root) | Summary (read only this) |
 |-----|--------------------------|--------------------------|
 | Housekeep `_logs/` | `powershell -File tools/clean_agent_logs.ps1` (optional `-KeepRaw`, `-MaxAgeHours 24`) | `_logs/clean/summary.txt` |
+| Design doc sizes | `powershell -File tools/list_oversize_docs.ps1` (optional `-OverKb 8`) | `_logs/oversize-docs/summary.txt` |
 | Oversize inventory | `powershell -File tools/list_oversize_scripts.ps1` (optional `-OverKb 5` or `10`) | `_logs/oversize/summary.txt` |
 | Func-level inventory | `powershell -File tools/summarize_scripts.ps1` (optional `-OverKb 5`, `-TopFuncs 8`, `-Path scripts/...`) | `_logs/script-summary/summary.txt` |
 | Facade + siblings by size | `powershell -File tools/list_facade_cluster.ps1 -Facade scripts/combat/enemy.gd` | `_logs/facade-cluster/summary.txt` |

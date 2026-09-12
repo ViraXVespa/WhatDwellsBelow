@@ -16,13 +16,16 @@ It is not one Game Design Document.
 1. Grok agents read `design/protocol.md` and `design/constraints.md` first. Grok Bot does not — after `AGENTS.md` it follows `design/grok-bot-session.md` only.
 2. On a fresh Grok Build instance after a gap, follow `design/grok-build.md`: read `design/sessions.md` (leave-off), then every `design/changelog/{current epoch}.{current series}.*.md`, then inspect git / the live tree from the code map below. Do not pin unless the User said **new week**. Do not follow git commit links into web-session conversations. The User works between sessions.
 3. Web / chat: after the repo-review message, follow `design/web-session.md`. `design/sessions.md` is context only. Do not read `design/session-log.md`. Do not read `design/changelog/` in Phase 1–3 unless the named work is versioning, a named past build, or a revert.
-4. Grok Bot: follow `design/grok-bot-session.md` and `design/refactor.md`. Do not read topic files, `design/sessions.md`, `design/session-log.md`, or `design/changelog/`.
+4. Grok Bot: follow `design/grok-bot-session.md`, `design/refactor.md`, and `design/doc-refactor.md`. For scripts, do not read unrelated topic files. For doc facades, open the topic door then only the named sibling. Do not read `design/sessions.md`, `design/session-log.md`, or older `design/changelog/` entries.
 5. Open only the topic files that match the requested work.
 6. Use `design/tunables.md` for numbers.
 7. Use the code map below for live scripts. Do not walk `assets/` unless the task names sprites or audio.
 8. After a behavior change, update the matching topic file in the same slice. End of a Grok Build session: update `design/sessions.md`, prepend `design/session-log.md`, and write the series-open changelog file when the User commits `0.N.0`. End of a web / chat goal: finish Phase 7 in `design/web-session.md`, including one `design/changelog/{label}.md` when the goal shipped a visible change. Grok Bot does not write those files; optional notes go in `_logs/grok-bot-sweep.md` only.
 
-Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Open only the sibling that file names for the job (`art-i2v.md`, `art-pack.md`, `art-review.md`). Prompts live in `tools/i2v_seeds.py`. Off-magenta plates go through `tools/plate_remap.py` before I2V. Walk packing is `tools/pack_locomotion.py`. One-shot packing is `tools/pack_oneshot.py`. I2V and complex animation packing stay in Grok Build sessions unless the User says otherwise. Animation Browser review briefs and the regen tree are `tools/anim_review_*.py`; output under `tools/anim_review/` is gitignored.
+Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`.
+
+Design doors (open sibling only when the job matches): `design/art-pipeline.md`, `design/ui.md`, `design/debug.md`, `design/input.md`, `design/inventory.md`. Rules: `design/doc-refactor.md`. Inventory fat docs: `tools/list_oversize_docs.ps1`.
+ Open only the sibling that file names for the job (`art-i2v.md`, `art-pack.md`, `art-review.md`). Prompts live in `tools/i2v_seeds.py`. Off-magenta plates go through `tools/plate_remap.py` before I2V. Walk packing is `tools/pack_locomotion.py`. One-shot packing is `tools/pack_oneshot.py`. I2V and complex animation packing stay in Grok Build sessions unless the User says otherwise. Animation Browser review briefs and the regen tree are `tools/anim_review_*.py`; output under `tools/anim_review/` is gitignored.
 
 ## Document kinds
 

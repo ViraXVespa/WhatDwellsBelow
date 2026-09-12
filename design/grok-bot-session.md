@@ -2,11 +2,11 @@
 
 Status: protocol  
 Read when: Grok Bot path; every Grok Bot / refactor-sweep session  
-See also: `AGENTS.md`, `design/refactor.md`, `design/README.md`, `design/versioning.md`
+See also: `AGENTS.md`, `design/refactor.md`, `design/doc-refactor.md`, `design/README.md`, `design/versioning.md`, `design/pc-offload.md`
 
 This file is binding for **Grok Bot** only. Grok Build and web / chat ignore it, except that they may open `design/refactor.md` when they split for the 10KB cap.
 
-Grok Bot writes via **GitHub PR** (cloud agent when available, or GitHub connector). Grok Bot’s primary job is refactor sweeps of live `scripts/**/*.gd`. Grok Build writes behavior features.
+Grok Bot writes via **GitHub PR** (cloud agent when available, or GitHub connector). Grok Bot’s primary job is refactor sweeps of live `scripts/**/*.gd` **and** topic design markdown facades (`design/doc-refactor.md`). Grok Build writes behavior features.
 
 ## Recognize
 
@@ -18,12 +18,14 @@ Load only:
 
 1. `AGENTS.md`
 2. This file
-3. `design/refactor.md`
-4. The `design/README.md` **code map** row for the cluster about to be edited
-5. After the inventory: the live `.gd` files in that one cluster
-6. When authoring the PR changelog: baked `scripts/data/version.json` (for `{label}` = patch + 1) and `design/versioning.md` changelog body shape — not the whole `design/changelog/` tree
+3. `design/refactor.md` (script splits) and/or `design/doc-refactor.md` (documentation facades) for the active sweep kind
+4. The `design/README.md` **code map** or topic index row for the cluster about to be edited
+5. After the inventory: only the live `.gd` files **or** design siblings in that one cluster (never the whole topic tree)
+6. When authoring the PR changelog: baked `scripts/data/version.json` (for {label} = patch + 1) and `design/versioning.md` changelog body shape - not the whole `design/changelog/` tree
 
-Do not read topic design files, `design/sessions.md`, `design/session-log.md`, or older changelog entries for a pure refactor sweep. Do not read `design/protocol.md` beyond a pointer, `design/constraints.md`, `Demo_GDD.md`, `design/web-session.md`, or `design/grok-build.md`.
+For a **script** refactor sweep: do not read unrelated topic design files, `design/sessions.md`, `design/session-log.md`, or older changelog entries. For a **doc** facade sweep: open the topic **door** plus only the sibling named by its job table - not every sibling.
+
+Do not read `design/protocol.md` beyond a pointer, `design/constraints.md`, `Demo_GDD.md`, `design/web-session.md`, or `design/grok-build.md` unless the User named that work.
 
 If a move would change player-visible behavior or fight binding design, stop and ask. Do not load the corpus to invent a reason to continue.
 
@@ -31,14 +33,18 @@ If a move would change player-visible behavior or fight binding design, stop and
 
 Sweep the whole live script tree. Not a feature slice. Not “only these files” unless the User overrides the worklist.
 
-**In scope:** `scripts/**/*.gd` that ship.  
-**Out of scope:** `scenes/`, `assets/`, `tools/` (unless a preload path update is required by a legal move), `archives/`, pinned commits, `project.godot` (unless required to register a moved script), and any file under a pinned archive. `design/` updates are limited to the code map row, this protocol family, and the one new `design/changelog/{label}.md` per PR.
+**In scope:**
+- `scripts/**/*.gd` that ship (size / extract / folder moves per `design/refactor.md`)
+- Topic `design/*.md` facade splits per `design/doc-refactor.md` (door + siblings; no binding-meaning change)
+
+**Out of scope:** `scenes/`, `assets/`, `tools/` (unless a preload path update or a listed PC-offload/doc inventory runner is required), `archives/`, pinned commits, `project.godot` (unless required to register a moved script), and any file under a pinned archive. Other `design/` edits stay limited to the code map / topic index row, this protocol family, `doc-refactor.md`, and the one new `design/changelog/{label}.md` per PR.
 
 **Refactor only:**
 
 - No features, tunables, new game systems, skills, rarities, hub, co-op, art / I2V
 - Rearrange existing code only
 - Auto-manage live `scripts/**/*.gd` sizes via facade / helper splits per `design/refactor.md`
+- Auto-manage fat topic docs via door + sibling splits per `design/doc-refactor.md` (facade prefer under 4KB; siblings prefer under 8KB)
 - **10KB** is the ship floor; under-**5KB** is the sweep target when whole existing functions can move
 - Prefer **NEW shared modules** when near-identical behavior spans places (example: tooltip placement / behavior across Anvil / Analyze / Forge / Inventory). Prefer a new shared module over growing an existing owner.
 - Point at an existing owner only if it already **is** that concern **and** the addition will not blow the size cap. Never grow an owner just to avoid a new file.
@@ -48,18 +54,19 @@ Sweep the whole live script tree. Not a feature slice. Not “only these files�
 
 ## Inventory
 
-Before opening bodies:
+Before opening bodies (script sweep and/or doc sweep):
 
-1. List every live `scripts/**/*.gd` with UTF-8 byte size only.
+1. Scripts: list every live `scripts/**/*.gd` with filesystem Length only (preferred: `tools/list_oversize_scripts.ps1`). Docs: list `design/*.md` topic files with Length (preferred: `tools/list_oversize_docs.ps1`); skip `design/changelog/`.
 2. Rank:
    - over 10KB
    - over 5KB
    - extract candidates (near-identical control flow spanning places → new shared module)
    - existing-owner reuse that fits without blowing the owner’s size cap
    - parked folder moves / User-named deeper relocates
+   - docs over ~12KB / ~8KB facade candidates per `design/doc-refactor.md`
 3. Show the ranked worklist. Do not edit yet.
 
-Files already under 5KB are not size targets. Do not split them “for cleanliness.”
+Script files already under 5KB are not size targets. Doc doors/siblings already under the soft caps are not split “for cleanliness.”
 
 ## Pass order
 
@@ -67,6 +74,7 @@ Files already under 5KB are not size targets. Do not split them “for cleanline
 2. Extract to **new shared modules** (near-identical spanning places)
 3. Existing owners only when they already own the concern and still fit under the cap
 4. Parked folder moves / User-named deeper relocates
+5. Documentation facades / sibling splits (`design/doc-refactor.md`)
 
 ## Commits and versioning
 
