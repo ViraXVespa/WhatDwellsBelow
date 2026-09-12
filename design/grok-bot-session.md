@@ -204,6 +204,8 @@ Then ask whether to take the next cluster when the flow requires a User go. Do n
 - Claiming a write landed before the PR exists
 - Hand-editing `scripts/data/version.json` or `scripts/data/changelog.json` as the ledger
 - Creating, amending, or offering a post-merge `chore: stamp ...` / version commit (CI owns that via `version.yml`)
+- Editing design markdown or multi-line Python via PowerShell double-quoted strings or `python -c` (use `tools/write_utf8_file.py` / `tools/run_agent_py.ps1`; see `design/pc-offload.md`)
+- Leaving ephemeral agent scripts outside `_logs/agent-py/` or skipping cleanup for files under that folder
 - Declaring the whole sweep done and then starting a second kind of task
 
 ## End
