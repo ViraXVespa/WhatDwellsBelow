@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.10",
+			"points": [
+				{
+					"text": "Size-split more live scripts under the 10KB ship floor (facade + helper hostify): player / anim / camp, enemy ready/hit/present, gear-board act + anvil forge UI, save_store, touch_hud, anim_browser, recap, interact, progress quests, and related siblings."
+				},
+				{
+					"text": "Grok Bot PC offload tools: `tools/list_oversize_scripts.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1`, `run_post_split_gate.ps1` (agents read `_logs/*/summary.txt` only)."
+				},
+				{
+					"text": "Post-hostify compile and smoke hardening: editor `--import` check required; shared gather/forge/playtest calc helpers for smokes; restore smoke-reachable facades; project-wide ignore for `unused_private_class_variable`."
+				},
+				{
+					"text": "Docs: Hostify pitfalls, Shared calculations (gameplay + smoke), Grok Bot error-handling phase after splits, AGENTS unused_private guidance."
+				}
+			],
+			"summary": "Refactor-only Grok Bot size/tooling pass with no intentional gameplay change. Over-5KB size sweep remains incomplete for a later PR."
+		},
+		{
 			"label": "0.3.9",
 			"points": [
 				{
