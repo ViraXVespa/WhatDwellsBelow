@@ -1,9 +1,11 @@
-﻿extends RefCounted
+extends RefCounted
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const Cover := preload("res://scripts/combat/cover.gd")
 const ProjS := preload("res://scripts/combat/projectile.gd")
 const PlayerLock := preload("res://scripts/world/player_lock.gd")
+const Atk := preload("res://scripts/combat/player_hit_atk.gd")
+const Fx := preload("res://scripts/combat/player_hit_fx.gd")
 
 
 static func draw_basic_tele(host: Node, _active: bool) -> void:
@@ -19,22 +21,8 @@ static func draw_basic_tele(host: Node, _active: bool) -> void:
 		return
 	host.telegraph.show_arc(host.global_position, host.aim_dir, App.bal.axe_range + extra, App.bal.axe_arc_deg, col)
 
-
 static func draw_special_tele(host: Node, _active: bool) -> void:
-	if host.telegraph == null:
-		return
-	var yel := Color(1.0, 0.92, 0.35, 0.42)
-	var extra: float = _gear("atk_range")
-	if App.weapon == "great_axe":
-		host.telegraph.show_circle(host.global_position, App.bal.slam_radius + extra, yel)
-	elif App.weapon == "staff":
-		host.telegraph.show_circle(host.spec_point, App.bal.staff_special_radius + extra, yel)
-	else:
-		var w := 0.08
-		if App.bal:
-			w = float(App.bal.bow_path_width)
-		host.telegraph.show_spread(host.global_position, host.aim_dir, App.bal.bow_special_range + extra, App.bal.bow_special_cone, int(App.bal.bow_special_count), w, yel)
-
+	Fx.draw_special_tele(host, _active)
 
 static func special_point(host: Node) -> Vector3:
 	if PlayerLock.valid_lock(host, host.lock_target):
@@ -42,77 +30,17 @@ static func special_point(host: Node) -> Vector3:
 	var reach: float = App.bal.staff_special_radius + 1.5 + _gear("atk_range")
 	return host.global_position + Vector3(host.aim_dir.x, 0.0, host.aim_dir.y) * reach
 
-
 static func apply_basic(host: Node) -> void:
-	var extra: float = _gear("atk_range")
-	if App.weapon == "longbow":
-		spawn_arrow(host, host.aim_dir, scaled_dmg(App.bal.bow_damage, false), App.bal.bow_range + extra, App.bal.bow_proj_speed, App.bal.bow_los)
-		App.sfx("bow")
-		return
-	var rng: float = App.bal.axe_range + extra
-	var arc: float = App.bal.axe_arc_deg
-	var dmg: float = App.bal.axe_damage
-	var need_los: bool = App.bal.axe_los
-	if App.weapon == "staff":
-		rng = App.bal.staff_range + extra
-		arc = App.bal.staff_arc_deg
-		dmg = App.bal.staff_damage
-		need_los = App.bal.staff_los
-	App.sfx("hit")
-	hit_arc(host, rng, arc, dmg, need_los, false)
-
+	Fx.apply_basic(host)
 
 static func apply_special(host: Node) -> void:
-	var extra: float = _gear("atk_range")
-	if App.weapon == "great_axe":
-		App.sfx("slam")
-		hit_circle(host, host.global_position, App.bal.slam_radius + extra, App.bal.axe_damage * App.bal.axe_slam_mult, false, true, "auto", true)
-		fx(host, "res://assets/fx/crack.png", host.global_position, 2.4, false)
-		return
-	if App.weapon == "staff":
-		App.sfx("bolt")
-		hit_circle(host, host.spec_point, App.bal.staff_special_radius + extra, App.bal.staff_special_damage, false, false, "magic", true)
-		fx(host, "res://assets/fx/lightning.png", host.spec_point, 2.6, true)
-		return
-	App.sfx("bow")
-	var n := int(App.bal.bow_special_count)
-	var cone := deg_to_rad(App.bal.bow_special_cone)
-	var base := atan2(host.aim_dir.y, host.aim_dir.x)
-	for i in n:
-		var t := 0.0 if n <= 1 else (float(i) / float(n - 1)) - 0.5
-		var a := base + t * cone
-		spawn_arrow(host, Vector2(cos(a), sin(a)), scaled_dmg(App.bal.bow_special_damage, true), App.bal.bow_special_range + extra, App.bal.bow_proj_speed, App.bal.bow_los)
-
+	Atk.apply_special(host)
 
 static func hit_arc(host: Node, rng: float, arc: float, dmg: float, need_los: bool, stagger: bool) -> void:
-	for e in Combat.enemies():
-		if e == null or not is_instance_valid(e):
-			continue
-		if e.has_method("is_alive") and not e.is_alive():
-			continue
-		var cov := Cover.hit_arc(host.global_position, host.aim_dir, rng, arc, e as Node3D)
-		if not Cover.connected(cov):
-			continue
-		if need_los and not Combat.los(host.global_position, (e as Node3D).global_position, host.get_world_3d()):
-			continue
-		damage_enemy(host, e, dmg * Cover.dmg_mult(cov), stagger, "auto", false, not Cover.crit_ok(cov), Cover.crit_ok(cov))
-	hit_breakables_arc(host, rng, arc, dmg, need_los)
-
+	Fx.hit_arc(host, rng, arc, dmg, need_los, stagger)
 
 static func hit_circle(host: Node, origin: Vector3, radius: float, dmg: float, need_los: bool, stagger: bool, xp := "auto", is_special := false) -> void:
-	for e in Combat.enemies():
-		if e == null or not is_instance_valid(e):
-			continue
-		if e.has_method("is_alive") and not e.is_alive():
-			continue
-		var cov := Cover.hit_circle(origin, radius, e as Node3D)
-		if not Cover.connected(cov):
-			continue
-		if need_los and not Combat.los(origin, (e as Node3D).global_position, host.get_world_3d()):
-			continue
-		damage_enemy(host, e, dmg * Cover.dmg_mult(cov), stagger, xp, is_special, not Cover.crit_ok(cov), Cover.crit_ok(cov))
-	hit_breakables_circle(host, origin, radius, dmg, need_los)
-
+	Fx.hit_circle(host, origin, radius, dmg, need_los, stagger, xp, is_special)
 
 static func scaled_dmg(base: float, is_special: bool) -> float:
 	var d: float = base * App.prog.skill_dmg_mult(is_special) + App.prog.gear_dmg()
@@ -120,29 +48,8 @@ static func scaled_dmg(base: float, is_special: bool) -> float:
 		d *= 1.0 + App.bal.shrine_dmg
 	return d
 
-
 static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "auto", _is_special := false, glance := false, can_crit := true) -> void:
-	if xp == "magic":
-		_is_special = true
-	grant_hit_xp(xp)
-	var chance: float = App.bal.crit_chance + _gear("crit_chance")
-	var crit := can_crit and Combat.roll_crit(chance)
-	if "last_glance" in e:
-		e.last_glance = glance and not crit
-	if e.has_method("take_hit"):
-		e.take_hit(dmg, host.aim_dir, crit)
-	_life_tap(host, e)
-	if App.tel:
-		var shown: float = dmg if not crit else dmg * (App.bal.crit_mult + _gear("crit_dmg"))
-		App.tel.note_damage_dealt(shown, crit)
-		if host.atk_state == host.ATK_ACT or host.atk_state == host.ATK_WIND:
-			App.tel.spec_hit += 1
-			var key := App.weapon
-			if App.tel.wpn.has(key):
-				App.tel.wpn[key].spec_hit = int(App.tel.wpn[key].spec_hit) + 1
-	if stagger and e.has_method("apply_stagger"):
-		e.apply_stagger(App.bal.slam_stagger)
-
+	Atk.damage_enemy(host, e, dmg, stagger, xp, _is_special, glance, can_crit)
 
 static func _life_tap(host: Node, e: Node) -> void:
 	var hit_heal: float = _gear("hp_on_hit")
@@ -153,12 +60,10 @@ static func _life_tap(host: Node, e: Node) -> void:
 		if kill_heal > 0.0 and host.has_method("heal"):
 			host.heal(kill_heal)
 
-
 static func grant_hit_xp(xp: String) -> void:
 	if xp == "none":
 		return
 	App.prog.skill_grant_hit(xp == "magic")
-
 
 static func hit_breakables_arc(host: Node, rng: float, arc: float, dmg: float, need_los: bool) -> void:
 	for b in host.get_tree().get_nodes_in_group("breakables"):
@@ -171,7 +76,6 @@ static func hit_breakables_arc(host: Node, rng: float, arc: float, dmg: float, n
 		if b.has_method("take_hit"):
 			b.take_hit(dmg, host.aim_dir, false)
 
-
 static func hit_breakables_circle(host: Node, origin: Vector3, radius: float, dmg: float, need_los: bool) -> void:
 	for b in host.get_tree().get_nodes_in_group("breakables"):
 		if b == null or not is_instance_valid(b) or not (b is Node3D):
@@ -183,7 +87,6 @@ static func hit_breakables_circle(host: Node, origin: Vector3, radius: float, dm
 		if b.has_method("take_hit"):
 			b.take_hit(dmg, host.aim_dir, false)
 
-
 static func spawn_arrow(host: Node, dir: Vector2, dmg: float, rng: float, spd: float, need_los: bool) -> void:
 	var p: Node3D = ProjS.new()
 	var world := host.get_parent()
@@ -194,58 +97,11 @@ static func spawn_arrow(host: Node, dir: Vector2, dmg: float, rng: float, spd: f
 	var crit := Combat.roll_crit(App.bal.crit_chance + _gear("crit_chance"))
 	p.setup(host.global_position, dir, spd, rng, dmg, need_los, crit, false, "", true)
 
-
 static func fx(host: Node, path: String, pos: Vector3, h: float, ybill: bool) -> void:
-	if not ResourceLoader.exists(path):
-		return
-	var s := Sprite3D.new()
-	s.texture = load(path)
-	s.centered = true
-	s.shaded = false
-	s.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	s.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	s.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y if ybill else BaseMaterial3D.BILLBOARD_DISABLED
-	s.pixel_size = h / float(maxi(1, s.texture.get_height()))
-	s.position = pos + Vector3(0.0, 0.02 if not ybill else h * 0.45, 0.0)
-	if not ybill:
-		s.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
-	var world := host.get_parent()
-	if world:
-		world.add_child(s)
-	var tw := s.create_tween()
-	tw.tween_property(s, "modulate:a", 0.0, 0.45)
-	tw.finished.connect(s.queue_free)
-
+	Atk.fx(host, path, pos, h, ybill)
 
 static func trail(host: Node, delta: float) -> void:
-	if not host.is_inside_tree():
-		return
-	if host.body == null or not is_instance_valid(host.body) or not host.body.is_inside_tree():
-		return
-	if host.body.texture == null:
-		return
-	host.trail_acc += delta
-	if host.trail_acc < App.bal.trail_gap:
-		return
-	host.trail_acc = 0.0
-	var world := host.get_parent()
-	if world == null or not is_instance_valid(world) or not world.is_inside_tree():
-		return
-	var g := Sprite3D.new()
-	g.texture = host.body.texture
-	g.centered = true
-	g.shaded = false
-	g.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	g.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	g.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	g.pixel_size = host.body.pixel_size
-	g.modulate = Color(0.45, 0.85, 1.0, 0.55)
-	world.add_child(g)
-	g.global_position = host.body.global_position
-	var tw := g.create_tween()
-	tw.tween_property(g, "modulate:a", 0.0, App.bal.trail_life)
-	tw.finished.connect(g.queue_free)
-
+	Atk.trail(host, delta)
 
 static func _gear(key: String) -> float:
 	if App.prog == null:
