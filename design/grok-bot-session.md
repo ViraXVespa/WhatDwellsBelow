@@ -1,12 +1,12 @@
-﻿# Grok Bot session flow
+# Grok Bot session flow
 
 Status: protocol  
 Read when: Grok Bot path; every Grok Bot / refactor-sweep session  
-See also: `AGENTS.md`, `design/refactor.md`, `design/README.md`
+See also: `AGENTS.md`, `design/refactor.md`, `design/README.md`, `design/versioning.md`
 
 This file is binding for **Grok Bot** only. Grok Build and web / chat ignore it, except that they may open `design/refactor.md` when they split for the 10KB cap.
 
-Grok Bot writes via **GitHub PR** (cloud agent when available, or GitHub connector). Grok Bot’s only job is a periodic full-repo refactor sweep of live `scripts/**/*.gd`. Grok writes behavior.
+Grok Bot writes via **GitHub PR** (cloud agent when available, or GitHub connector). Grok Bot’s primary job is refactor sweeps of live `scripts/**/*.gd`. Grok Build writes behavior features.
 
 ## Recognize
 
@@ -21,8 +21,9 @@ Load only:
 3. `design/refactor.md`
 4. The `design/README.md` **code map** row for the cluster about to be edited
 5. After the inventory: the live `.gd` files in that one cluster
+6. When authoring the PR changelog: baked `scripts/data/version.json` (for `{label}` = patch + 1) and `design/versioning.md` changelog body shape — not the whole `design/changelog/` tree
 
-Do not read topic design files, `design/sessions.md`, `design/session-log.md`, `design/changelog/`, or other path session files for a pure refactor sweep. Do not read `design/protocol.md` beyond a pointer, `design/constraints.md`, `Demo_GDD.md`, `design/web-session.md`, or `design/grok-build.md`.
+Do not read topic design files, `design/sessions.md`, `design/session-log.md`, or older changelog entries for a pure refactor sweep. Do not read `design/protocol.md` beyond a pointer, `design/constraints.md`, `Demo_GDD.md`, `design/web-session.md`, or `design/grok-build.md`.
 
 If a move would change player-visible behavior or fight binding design, stop and ask. Do not load the corpus to invent a reason to continue.
 
@@ -31,7 +32,7 @@ If a move would change player-visible behavior or fight binding design, stop and
 Sweep the whole live script tree. Not a feature slice. Not “only these files” unless the User overrides the worklist.
 
 **In scope:** `scripts/**/*.gd` that ship.  
-**Out of scope:** `scenes/`, `assets/`, `tools/` (unless a preload path update is required by a legal move), `design/` (except the code map row when siblings/shared modules appear), `archives/`, pinned commits, `project.godot`, and any file under a pinned archive.
+**Out of scope:** `scenes/`, `assets/`, `tools/` (unless a preload path update is required by a legal move), `archives/`, pinned commits, `project.godot` (unless required to register a moved script), and any file under a pinned archive. `design/` updates are limited to the code map row, this protocol family, and the one new `design/changelog/{label}.md` per PR.
 
 **Refactor only:**
 
@@ -67,15 +68,29 @@ Files already under 5KB are not size targets. Do not split them “for cleanline
 3. Existing owners only when they already own the concern and still fit under the cap
 4. Parked folder moves / User-named deeper relocates
 
+## Commits and versioning
+
+`.github/workflows/version.yml` sets `patch` = baked patch + **count of user commits** on `main` since `scripts/data/version.json` last changed (ignores `chore: stamp …` and any `[skip ci]` subject). One push that lands **N** non-stamp commits bumps patch by **N**.
+
+Therefore every Grok Bot PR MUST:
+
+1. Prefer **one commit** on the PR branch for the whole cluster (amend or squash locally before opening / updating the PR when tools allow).
+2. Tell the User to **squash-merge** into `main` (not “Create a merge commit” or “Rebase and merge”) so `main` gains exactly one user commit for that PR.
+3. Include **one** new `design/changelog/{label}.md` in that same PR. `{label}` is baked `scripts/data/version.json` `label` with patch + 1 (same rule as web Phase 7). Body shape is in `design/versioning.md`. Do not hand-edit `scripts/data/changelog.json` or `version.json`.
+4. Agent-visible protocol/doc changes also get a changelog entry (player note can say agent workflow changed).
+
+Do not claim a write landed until the PR exists.
+
 ## Flow
 
 1. Orient (Recognize + Read set).
 2. Inventory (UTF-8 sizes; rank; show; don’t edit yet).
 3. **Size** clusters may auto-chain while anything over 10KB remains (User can override). **Extract** / new-module / parked-move / deeper-relocate clusters always wait for User go.
-4. One cluster per PR via branch + PR. Never paste-emit. Never claim a write landed until the PR exists.
-5. Report after each cluster.
-6. Update `design/README.md` code map when siblings / shared modules appear. Pure refactor: no `design/sessions.md`, no `design/session-log.md`, no `design/changelog/`.
-7. End when the User stops or the worklist is empty.
+4. One cluster per PR via branch + PR (single commit preferred; squash-merge required). Never paste-emit.
+5. Include `design/changelog/{label}.md` for that PR.
+6. Report after each cluster.
+7. Update `design/README.md` code map when siblings / shared modules appear. Pure refactor: no `design/sessions.md`, no `design/session-log.md`.
+8. End when the User stops or the worklist is empty.
 
 ## Batch
 
@@ -85,20 +100,22 @@ One **cluster** per batch (and per PR). A cluster is one facade plus the sibling
 2. Apply `design/refactor.md` (including the Grok Bot shared-module rules).
 3. Size goal for this path: each resulting live `.gd` in the cluster should be under **5KB** when existing functions can move to do that. If a single existing function is itself over 5KB, leave that function whole and report it.
 4. 10KB remains the ship floor. Never leave a touched file over 10KB if a legal split can fix it.
-5. Ship the cluster as a branch + PR. Stop. Do not start the next cluster until the flow rules say so.
+5. Ship the cluster as a branch + PR (with changelog). Stop. Do not start the next cluster until the flow rules say so.
 
 ## Report
 
 After each cluster, tell the User:
 
 - PR URL (required before claiming the write landed)
+- Reminder to **squash-merge**
 - files changed (path + bytes before / after)
+- changelog path (`design/changelog/{label}.md`)
 - new sibling helpers or new shared modules created (moved code only)
 - reuse call sites now pointing at an existing owner (only when that owner fit)
 - what is still over 10KB, still over 5KB, extract candidates still open, or still duplicated with no fit
 - the next cluster on the ranked list
 
-Optional: write the same notes to `_logs/grok-bot-sweep.md` (repo root). That folder is gitignored and must not be committed. Overwrite or append in that one file. Do not write `design/sessions.md`, `design/session-log.md`, or `design/changelog/`.
+Optional: write the same notes to `_logs/grok-bot-sweep.md` (repo root). That folder is gitignored and must not be committed. Overwrite or append in that one file. Do not write `design/sessions.md` or `design/session-log.md`.
 
 Then ask whether to take the next cluster when the flow requires a User go. Do not continue extract / relocate clusters until the User says yes.
 
@@ -111,6 +128,7 @@ Then ask whether to take the next cluster when the flow requires a User go. Do n
 - Add `: Type` on a line already being moved so Godot can compile (`AGENTS.md` → GDScript types)
 - Update the `design/README.md` code map row when a split adds a sibling or shared module the map must list
 - Parked folder moves and User-named deeper relocates as their own batches (preload updates as required)
+- Author one `design/changelog/{label}.md` per shipping PR
 
 ## Forbidden
 
@@ -118,10 +136,13 @@ Then ask whether to take the next cluster when the flow requires a User go. Do n
 - Growing an existing owner just to avoid a new file
 - Treating vaguely similar features as near-identical
 - Behavior changes, drive-by renames, comment rewrites, wholesale retypes, reformats
-- Reading or updating `design/sessions.md`, `design/session-log.md`, or `design/changelog/` on a pure refactor sweep
+- Reading or updating `design/sessions.md` or `design/session-log.md` on a pure refactor sweep
+- Shipping a PR without `design/changelog/{label}.md` when the goal lands on `main`
+- Landing multiple user commits on `main` for one PR (no merge-commit / rebase-merge of a multi-commit branch)
 - Archives pins
 - Paste-emitting bodies instead of branch + PR
 - Claiming a write landed before the PR exists
+- Hand-editing `scripts/data/version.json` or `scripts/data/changelog.json` as the ledger
 - Declaring the whole sweep done and then starting a second kind of task
 
 ## End
