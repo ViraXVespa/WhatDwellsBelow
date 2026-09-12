@@ -1,8 +1,8 @@
-﻿# Versioning and changelog
+# Versioning and changelog
 
 Status: binding design  
 Read when: stamping a build, writing a changelog entry, Grok Build init, title “what’s new”, or adding an archive pin  
-See also: `AGENTS.md`, `design/web-session.md`, `design/grok-build.md`, `design/copilot-session.md`, `design/protocol.md`, `design/sessions.md`, `design/session-log.md`, `design/archives.md`, `design/save-tech.md`, `design/ui.md`
+See also: `AGENTS.md`, `design/web-session.md`, `design/grok-build.md`, `design/grok-bot-session.md`, `design/protocol.md`, `design/sessions.md`, `design/session-log.md`, `design/archives.md`, `design/save-tech.md`, `design/ui.md`
 
 ## Scheme
 
@@ -38,6 +38,18 @@ CI on each user push to `main` (not on `[skip ci]` stamp pushes):
 
 Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/changelog/{label}.md` still get a patch number and an empty player note.
 
+### Merge shape (Grok Bot and multi-commit PRs)
+
+`version.yml` counts **every** non-stamp commit reachable on `main` since `version.json` last changed, in **one** stamp run for that push. So:
+
+| How the PR lands on `main` | Patch effect |
+| --- | --- |
+| **Squash and merge** (one squash commit) | `+1` — preferred |
+| **Rebase and merge** (N commits) | `+N` |
+| **Create a merge commit** (merge commit + N branch commits) | `+N` or `+N+1` depending on whether the merge commit’s subject is counted |
+
+Grok Bot PRs MUST squash-merge (see `design/grok-bot-session.md`). A multi-commit branch is fine on the PR; it must become **one** user commit on `main`.
+
 ## Changelog files
 
 Authoring unit is **one markdown file per build**:
@@ -72,7 +84,7 @@ Do **not** keep a concatenated week file on `main`. Do **not** hand-edit `script
 | Fresh web / chat, Phases 1–3 | Nothing under `design/changelog/`. Nothing in `version.json` unless the work is this topic. |
 | Web Phase 7 | Writes **one** new `design/changelog/{label}.md`. `{label}` is baked `version.json` `label` with patch + 1 (ignore stamp commits). Do not write that number back into this file. Do not emit `changelog.json`. |
 | Grok Build after a gap | `design/sessions.md`, then every `design/changelog/{current epoch}.{current series}.*.md`. No index. No other series. Do not follow git commit links into web-session conversations. |
-| Copilot | Nothing under `design/changelog/`. Nothing in `version.json`. Sweep notes go in `_logs/` only. |
+| Grok Bot | Reads baked `version.json` only to name `{label}` (patch + 1). Writes **one** new `design/changelog/{label}.md` per shipping PR. Does not hand-edit `changelog.json`. Optional sweep notes go in `_logs/` only. |
 | Named revert / “what was 0.1.4?” | That one file. |
 | Game | `version.json` + `changelog.json`. |
 
@@ -123,3 +135,11 @@ After the User is satisfied with the goal’s behavior:
 3. Do not emit `changelog.json` or `version.json` as the ledger. Seed those files only when they do not exist yet on live.
 
 The User pastes. CI stamps the number when the files land on `main`.
+
+## Grok Bot PR close-out
+
+When a Grok Bot PR is ready to merge:
+
+1. Ensure the PR includes `design/changelog/{label}.md` with `{label}` = baked patch + 1.
+2. Squash-merge into `main` so exactly one user commit lands.
+3. CI stamps `version.json` / `changelog.json` and tags `v{label}`.

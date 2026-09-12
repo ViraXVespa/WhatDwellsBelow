@@ -4,7 +4,7 @@ Status: working notes
 Read when: closing a Grok Build session, or when `design/sessions.md` is not enough to name the next unit  
 See also: `design/sessions.md`, `design/grok-build.md`
 
-Append-only facts. Newest first. Not binding game design. Not part of every Grok Build boot. Web / chat and Copilot do not write this file.
+Append-only facts. Newest first. Not binding game design. Not part of every Grok Build boot. Web / chat and Grok Bot do not write this file.
 
 Do not narrate I2V clips. Name units: gender, facing, action, seed/path.
 

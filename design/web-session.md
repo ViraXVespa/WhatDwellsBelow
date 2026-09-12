@@ -4,7 +4,7 @@ Status: protocol
 Read when: web / chat path; every web session after the repo-review message  
 See also: `AGENTS.md`, `design/protocol.md`, `design/versioning.md`, `design/refactor.md`
 
-This file is binding for **web / chat** only. Grok Build (CLI) and Copilot ignore it.
+This file is binding for **web / chat** only. Grok Build (CLI) and Grok Bot ignore it.
 
 The User cannot be written to by this agent. The User pastes every emit. The User finishes each task before the next web task starts.
 
@@ -78,7 +78,7 @@ The User will say something like “Looks good.” That means no more behavior c
 
 ### Phase 6 — Sizing
 
-Check emitted live `scripts/**/*.gd` against the **10,000 byte** cap in `AGENTS.md`. Use `design/refactor.md` for the split recipe. Do not aim at Copilot’s 5KB sweep target.
+Check emitted live `scripts/**/*.gd` against the **10,000 byte** cap in `AGENTS.md`. Use `design/refactor.md` for the split recipe. Do not aim at Grok Bot’s 5KB sweep target.
 
 Web / chat does **not** apply that cap during Phase 2–5. Over-cap files may be emitted and revised until this phase.
 
@@ -101,7 +101,7 @@ If the goal shipped player-visible or agent-visible change, also emit one new fi
 
 Always emit the `design/changelog/{label}.md` file, if one is needed, as the final file in this phase.
 
-Do not emit `design/sessions.md` or `design/session-log.md`. Do not emit `_logs/` (Copilot only, gitignored).
+Do not emit `design/sessions.md` or `design/session-log.md`. Do not emit `_logs/` (Grok Bot optional sweep notes only, gitignored).
 
 If nothing in the docs is wrong and no changelog entry is required, tell the User no documentation changes are required.
 
@@ -116,7 +116,7 @@ When documentation is done, this session goal is finished. The User should start
 - Do not run a Grok Build week pin from this path.
 - Do not chain a second goal after Phase 7 in the same web session.
 - Do not split for the 10KB cap before Phase 6.
-- Do not keep splitting toward 5KB. That target is Copilot only.
+- Do not keep splitting toward 5KB. That target is Grok Bot only.
 - Do not claim a write landed. The User pastes.
 - Do not load `design/changelog/` during Phase 1–3.
 - Do not treat a page-tool summary as the live file.
