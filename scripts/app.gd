@@ -1,4 +1,4 @@
-﻿extends Node
+extends Node
 
 const BalanceS := preload("res://scripts/data/balance.gd")
 const DebugS := preload("res://scripts/combat/debug_menu.gd")
@@ -25,6 +25,7 @@ const AppRun := preload("res://scripts/app_run.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const AppSet := preload("res://scripts/app_set.gd")
+const Boot := preload("res://scripts/app_boot.gd")
 
 var character_type := "male"
 var character_chosen := false
@@ -124,56 +125,18 @@ const CAMP_SCENE := "res://scenes/camp.tscn"
 
 
 func _ready() -> void:
-	process_mode = Node.PROCESS_MODE_ALWAYS
-	bal = BalanceS.new()
-	prog = ProgressS.new()
-	Binds.register()
-	sfx_node = SfxS.new()
-	add_child(sfx_node)
-	tel = TelS.new()
-	playtest = PlayS.new()
-	add_child(playtest)
-	debug = DebugS.new()
-	add_child(debug)
-	pause_menu = PauseS.new()
-	add_child(pause_menu)
-	recap = RecapS.new()
-	add_child(recap)
-	present = PresentS.new()
-	add_child(present)
-	music = MusicS.new()
-	add_child(music)
-	anim_browser = AnimS.new()
-	add_child(anim_browser)
-	archives_ui = ArchS.new()
-	add_child(archives_ui)
-	loader = LoaderS.new()
-	add_child(loader)
-	web_pad = WebPadS.new()
-	add_child(web_pad)
-	touch_hud = TouchHudS.new()
-	add_child(touch_hud)
-	get_tree().node_added.connect(_on_node_added)
-	get_tree().root.size_changed.connect(refresh_ui_text_scale)
-	if not Smoke.active():
-		Store.load_slot("live")
-	set_zoom(cam_zoom)
-	set_hud_scale(hud_scale)
-	refresh_ui_text_scale()
-	set_sprite_filter(sprite_filter, true)
-	Disp.apply_saved()
-	if "--wdb-debug" in OS.get_cmdline_user_args():
-		call_deferred("_open_debug")
-
+	Boot._ready(self)
 
 func _on_node_added(n: Node) -> void:
 	if n is Sprite3D:
 		SpriteFilt.apply_sprite(n as Sprite3D)
 
 
+
 func _open_debug() -> void:
 	if debug and debug.has_method("show_menu"):
 		debug.show_menu()
+
 
 
 func save_now() -> void:
@@ -183,10 +146,12 @@ func save_now() -> void:
 	Store.save_slot("live")
 
 
+
 func wipe_save() -> void:
 	Store.wipe_slot("live")
 	Store.fresh_delver()
 	save_now()
+
 
 
 func ack_game_ver() -> void:
@@ -195,8 +160,10 @@ func ack_game_ver() -> void:
 	save_now()
 
 
+
 func enter_dungeon() -> void:
 	AppFlow.enter_dungeon(self)
+
 
 
 func _after_enter() -> void:
@@ -205,9 +172,11 @@ func _after_enter() -> void:
 	begin_run()
 
 
+
 func go_title() -> void:
 	Touch.clear_world()
 	AppFlow.go_title(self)
+
 
 
 func go_foundation() -> void:
@@ -215,33 +184,41 @@ func go_foundation() -> void:
 	AppFlow.go_foundation(self)
 
 
+
 func go_camp() -> void:
 	Touch.clear_world()
 	AppFlow.go_camp(self)
+
 
 
 func play_from_menu() -> void:
 	AppFlow.play_from_menu(self)
 
 
+
 func _play_from_menu_async() -> void:
 	await AppFlow.play_from_menu_async(self)
+
 
 
 func begin_run() -> void:
 	AppRun.begin_run(self)
 
 
+
 func go_dungeon() -> void:
 	AppRun.go_dungeon(self)
+
 
 
 func next_floor() -> void:
 	AppRun.next_floor(self)
 
 
+
 func notify_boss_dead() -> void:
 	AppRun.notify_boss_dead(self)
+
 
 
 func set_character(kind: String) -> void:
@@ -249,6 +226,7 @@ func set_character(kind: String) -> void:
 		kind = "male"
 	character_type = kind
 	character_chosen = true
+
 
 
 func gain_gold(n: int) -> void:
@@ -260,25 +238,20 @@ func gain_gold(n: int) -> void:
 		tel.gold_gained += n
 
 
+
 func sfx(sfx_id: String) -> void:
 	if sfx_node and sfx_node.has_method("play"):
 		sfx_node.play(sfx_id)
 
 
-func hitstop(sec: float) -> void:
-	if playtest and bool(playtest.get("live_running")):
-		return
-	if sec <= 0.0:
-		return
-	if Engine.time_scale < 0.5:
-		return
-	Engine.time_scale = 0.07
-	get_tree().create_timer(sec, true, false, true).timeout.connect(func(): Engine.time_scale = 1.0)
 
+func hitstop(sec: float) -> void:
+	Boot.hitstop(self, sec)
 
 func end_run(cond: String, killer := "") -> void:
 	Touch.clear_world()
 	AppRun.end_run(self, cond, killer)
+
 
 
 func finish_end(cond: String, killer := "") -> void:
@@ -286,61 +259,76 @@ func finish_end(cond: String, killer := "") -> void:
 	AppRun.finish_end(self, cond, killer)
 
 
+
 func set_volume(which: String, v: float) -> void:
 	AppSet.set_volume(self, which, v)
+
 
 
 func set_zoom(z: float) -> void:
 	AppSet.set_zoom(self, z)
 
 
+
 func set_hud_scale(v: float) -> void:
 	AppSet.set_hud_scale(self, v)
+
 
 
 func set_ui_text_floor(v: float) -> void:
 	AppSet.set_ui_text_floor(self, v)
 
 
+
 func ui_text_applied() -> float:
 	return AppSet.ui_text_applied(self)
+
 
 
 func refresh_ui_text_scale() -> void:
 	AppSet.refresh_ui_text_scale(self)
 
 
+
 func set_sprite_filter(id: int, allow_linear := false) -> void:
 	AppSet.set_sprite_filter(self, id, allow_linear)
+
 
 
 func set_sprite_mip_sharp(on: bool) -> void:
 	AppSet.set_sprite_mip_sharp(self, on)
 
 
+
 func set_sprite_mip_bias(v: float) -> void:
 	AppSet.set_sprite_mip_bias(self, v)
+
 
 
 func set_display_mode(mode: String) -> void:
 	AppSet.set_display_mode(self, mode)
 
 
+
 func set_web_fullscreen(on: bool) -> void:
 	AppSet.set_web_fullscreen(self, on)
+
 
 
 func on_kill() -> void:
 	AppRun.on_kill(self)
 
 
+
 func spawn_floor_item(it: Dictionary, pos := Vector3.INF) -> void:
 	AppRun.spawn_floor_item(self, it, pos)
+
 
 
 func toast(msg: String) -> void:
 	toast_msg = msg
 	toast_t = 2.2
+
 
 
 func note_clerk() -> void:
@@ -350,100 +338,96 @@ func note_clerk() -> void:
 		tel.clerk_t = tel.duration
 
 
+
 func _in_world() -> bool:
 	return get_tree().get_first_node_in_group("player") != null
 
 
-func _process(delta: float) -> void:
-	Pad.tick()
-	if _in_world() and not ui_open:
-		var vp := get_viewport()
-		if vp and vp.gui_get_focus_owner() != null:
-			vp.gui_release_focus()
-	elif (ui_open or not _in_world()) and pad_just("interact"):
-		var f := get_viewport().gui_get_focus_owner()
-		if f is BaseButton and not (f as BaseButton).disabled:
-			(f as BaseButton).pressed.emit()
-	AppRun.tick(self, delta)
 
+func _process(delta: float) -> void:
+	Boot._process(self, delta)
 
 func _input(event: InputEvent) -> void:
-	Pad.note_event(event)
-	if Disp.handle_input(event):
-		get_viewport().set_input_as_handled()
-
+	Boot._input(self, event)
 
 func _unhandled_input(event: InputEvent) -> void:
-	Pad.note_event(event)
-	if _menu_loading and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("anim_back")):
-		archive_cancel = true
-		get_viewport().set_input_as_handled()
-		return
-	if _in_world() and not ui_open and event.is_action_pressed("inventory"):
-		if pause_menu and pause_menu.has_method("show_inventory"):
-			pause_menu.show_inventory()
-		get_viewport().set_input_as_handled()
-
+	Boot._unhandled_input(self, event)
 
 func using_pad() -> bool:
 	return Pad.mode
+
 
 
 func launch_archive(id: String) -> void:
 	AppFlow.launch_archive(self, id)
 
 
+
 func _launch_archive_async(id: String) -> void:
 	await AppFlow.launch_archive_async(self, id)
+
 
 
 func collect_binds() -> Array:
 	return Binds.collect()
 
 
+
 func apply_binds(rows: Array) -> void:
 	Binds.apply(rows)
+
 
 
 func reset_binds() -> void:
 	Binds.reset()
 
 
+
 func wake_web_pad() -> void:
 	Pad.wake_web()
+
 
 
 func pad_id() -> int:
 	return Pad.id()
 
 
+
 func pad_stick(lx: JoyAxis, ly: JoyAxis, dead := 0.24) -> Vector2:
 	return Pad.stick(lx, ly, dead)
+
 
 
 func pad_move() -> Vector2:
 	return Pad.move()
 
 
+
 func pad_aim() -> Vector2:
 	return Pad.aim()
+
 
 
 func pad_held(action: String) -> bool:
 	return Pad.held(action)
 
 
+
 func pad_just(action: String) -> bool:
 	return Pad.just(action)
+
 
 
 func pause_just() -> bool:
 	return Pad.pause_just()
 
 
+
 func swallow_close_pad() -> void:
 	Pad.swallow_close()
 
 
+
 func web_buttons() -> PackedFloat32Array:
 	return Pad.web_buttons()
+
