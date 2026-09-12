@@ -83,19 +83,18 @@ Do not retype a whole file for style.
 
 ## Hostify pitfalls
 
-Facade + static func(host, ...) splits must keep Godot 4.7 compiling. Watch for:
+Facade + `static func(host, ...)` splits must keep Godot 4.7 compiling. Watch for:
 
-1. **Bare Node props / methods on helpers** — after moving a method off a Node script, layer, isible, process_mode, queue_free, get_tree(), etc. are not in scope. Use host.layer, host.queue_free(), host.get_tree().
-2. **Param shadowing** — never ar host := host.get_parent() (or any ar host := that hides the parameter). Rename the local (parent, map_host, …).
-3. **Enum / const on Object helpers** — MOTION_MODE_FLOATING and similar are not free names on extends Object helpers. Qualify: CharacterBody3D.MOTION_MODE_FLOATING.
-4. **Facade state aliases** — if callers used PlaytestLog.started / .file_name / .events on the old script, the facade must still expose those names (forward to the core helper’s static vars). Moving state without aliases yields Cannot find member "started" in base "..." and a cascade Could not resolve class on the next preload.
-5. **:= after load() / untyped _fac** — const _fac = load(...) returns untyped. Do not ar x := _fac.foo(). Write ar x: Type = ... (see Types above and AGENTS.md).
-6. **Blind substring rewrites** — replacing := n / bare 
-ame can corrupt identifiers (ar nm := name → ar nm: String = str(n)ame). Prefer AST-aware or line-scoped edits; re-read touched lines.
-7. **Broken call commas** — hostify passes must not leave 	ick_pinch(host, ) or dropped args.
-8. **Cross-helper renames** — if a static was renamed (Present.present → present, Hit.mark_post), update every call site in the cluster in the same batch.
+1. **Bare Node props / methods on helpers** — after moving a method off a Node script, `layer`, `visible`, `process_mode`, `queue_free`, `get_tree()`, etc. are not in scope. Use `host.layer`, `host.queue_free()`, `host.get_tree()`.
+2. **Param shadowing** — never `var host := host.get_parent()` (or any `var host :=` that hides the parameter). Rename the local (`parent`, `map_host`, …).
+3. **Enum / const on Object helpers** — `MOTION_MODE_FLOATING` and similar are not free names on `extends Object` helpers. Qualify: `CharacterBody3D.MOTION_MODE_FLOATING`.
+4. **Facade state aliases** — if callers used `PlaytestLog.started` / `.file_name` / `.events` on the old script, the facade must still expose those names (forward to the core helper’s `static var`s). Moving state without aliases yields `Cannot find member "started" in base "..."` and a cascade `Could not resolve class` on the next preload.
+5. **`:=` after `load()` / untyped `_fac`** — `const _fac = load(...)` returns untyped. Do not `var x := _fac.foo()`. Write `var x: Type = ...` (see Types above and `AGENTS.md`).
+6. **Blind substring rewrites** — replacing `:= n` / bare `name` can corrupt identifiers (`var nm := name` → `var nm: String = str(n)ame`). Prefer AST-aware or line-scoped edits; re-read touched lines.
+7. **Broken call commas** — hostify passes must not leave `tick_pinch(host, )` or dropped args.
+8. **Cross-helper renames** — if a static was renamed (`Present.present` → `present`, `Hit.mark_post`), update every call site in the cluster in the same batch.
 
-After a hostify batch, run the **editor import** compile check in design/grok-bot-session.md (--headless --editor --import --path <WDB_ROOT> --quit). Plain --quit alone is not sufficient — it can miss := inference errors the editor surfaces on reload.
+After a hostify batch, run the **editor import** compile check in `design/grok-bot-session.md` (`--headless --editor --import --path <WDB_ROOT> --quit`). Plain `--quit` alone is not sufficient — it can miss `:=` inference errors the editor surfaces on reload.
 
 ## Token rules
 
