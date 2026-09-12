@@ -89,6 +89,8 @@ Therefore every Grok Bot PR MUST:
 3. Include **one** new `design/changelog/{label}.md` in that same PR (authored when the sweep is ready to land). `{label}` is baked `scripts/data/version.json` `label` with patch + 1 (same rule as web Phase 7). Body shape is in `design/versioning.md`. Do not hand-edit `scripts/data/changelog.json` or `version.json`.
 4. Agent-visible protocol/doc changes also get a changelog entry (player note can say agent workflow changed).
 
+After the User squash-merges, **stop**. `.github/workflows/version.yml` stamps `scripts/data/version.json` / `scripts/data/changelog.json`, may push `chore: stamp {label} [skip ci]`, and tags `v{label}`. Those stamp commits are **CI output**, not a Grok Bot follow-up. Do not create, amend, or offer a post-merge stamp / version commit. Wait for the User to confirm the squash-merge only before opening another PR (one open Bot PR at a time).
+
 Do not claim a write landed until the PR exists.
 
 
@@ -165,7 +167,7 @@ Extract / new-module / parked-move clusters remain one cluster per batch and sta
 After each cluster, tell the User:
 
 - PR URL (required before claiming the write landed)
-- Reminder to **squash-merge**
+- Reminder to **squash-merge** (CI stamps afterward; Bot does not)
 - files changed (path + bytes before / after)
 - changelog path (`design/changelog/{label}.md`)
 - new sibling helpers or new shared modules created (moved code only)
@@ -201,6 +203,7 @@ Then ask whether to take the next cluster when the flow requires a User go. Do n
 - Paste-emitting bodies instead of branch + PR
 - Claiming a write landed before the PR exists
 - Hand-editing `scripts/data/version.json` or `scripts/data/changelog.json` as the ledger
+- Creating, amending, or offering a post-merge `chore: stamp ...` / version commit (CI owns that via `version.yml`)
 - Declaring the whole sweep done and then starting a second kind of task
 
 ## End
