@@ -108,14 +108,14 @@ Report path + bytes from Length. The 10KB / 5KB caps are on-disk UTF-8 file size
 
 After facade / helper splits (or when the User asks), run Godot against the local checkout **the way the editor reloads scripts** before claiming the cluster compiles. Plain game boot is not enough.
 
-- Binary (Steam tools build): C:\\Program Files (x86)\\Steam\\steamapps\\common\\Godot Engine\\godot.windows.opt.tools.64.exe (also referenced from 	ools/export_web.ps1).
-- **Required check:** --headless --editor --import --path <WDB_ROOT> --quit — this runs irst_scan_filesystem, regenerates/reloads scripts like opening the project in the editor, and catches GDScript parse errors (including := inference) that plain --path ... --quit can miss.
-- Phase smokes (coverage): after import is clean, run --headless --display-driver headless --audio-driver Dummy --path <WDB_ROOT> -- --wdb-phaseN-smoke per design/debug.md. Plain --headless without those drivers can hang under redirected IO. Do not treat smoke stderr as the editor-clean bar, or a plain --quit boot as a smoke pass.
-- Capture stdout and stderr (GUI-subsystem exe: use Start-Process -RedirectStandardOutput/-RedirectStandardError). Clean bar: import check exit 0 **and** empty stderr.
-- Cascade tip: Could not resolve class "res://.../foo.gd" often means **foo** (or a preload it owns) failed to parse. A load-probe script that load()s each dependency in order surfaces the real member/type error first.
-- Autoload App may look "missing" when loading scripts via --script outside a full project boot; prefer the editor import check above.
+- Binary (Steam tools build): `C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe` (also referenced from `tools/export_web.ps1`).
+- **Required check:** `--headless --editor --import --path <WDB_ROOT> --quit` — this runs `first_scan_filesystem`, regenerates/reloads scripts like opening the project in the editor, and catches GDScript parse errors (including `:=` inference) that plain `--path ... --quit` can miss.
+- Phase smokes (coverage): after import is clean, run `--headless --display-driver headless --audio-driver Dummy --path <WDB_ROOT> -- --wdb-phaseN-smoke` per `design/debug.md`. Plain `--headless` without those drivers can hang under redirected IO. Do not treat smoke stderr as the editor-clean bar, or a plain `--quit` boot as a smoke pass.
+- Capture stdout and stderr (GUI-subsystem exe: use `Start-Process -RedirectStandardOutput/-RedirectStandardError`). Clean bar: import check exit 0 **and** empty stderr.
+- Cascade tip: `Could not resolve class "res://.../foo.gd"` often means **foo** (or a preload it owns) failed to parse. A load-probe script that `load()`s each dependency in order surfaces the real member/type error first.
+- Autoload `App` may look "missing" when loading scripts via `--script` outside a full project boot; prefer the editor import check above.
 
-Document new split-induced failure modes under design/refactor.md (Hostify pitfalls) when they are not already listed. When an error/warning was introduced by a split, stop to record **why** and **how to prevent it** (see Hostify pitfalls / Types) before continuing the sweep.
+Document new split-induced failure modes under `design/refactor.md` (Hostify pitfalls) when they are not already listed. When an error/warning was introduced by a split, stop to record **why** and **how to prevent it** (see Hostify pitfalls / Types) before continuing the sweep.
 
 ## Flow
 
