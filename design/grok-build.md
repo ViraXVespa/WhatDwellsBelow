@@ -4,7 +4,7 @@ Status: protocol
 Read when: Grok Build (CLI) path; every CLI instance after a gap  
 See also: `AGENTS.md`, `design/protocol.md`, `design/versioning.md`, `design/sessions.md`, `design/session-log.md`, `design/refactor.md`, `design/art-pipeline.md`
 
-This file is binding for **Grok Build (CLI)** only. Web / chat and Copilot ignore it.
+This file is binding for **Grok Build (CLI)** only. Web / chat and Grok Bot ignore it.
 
 The agent can write the checkout. Prefer small diffs on disk. Full-file paste only when the User asks, or when the file does not exist on disk yet.
 
@@ -37,7 +37,7 @@ Do not pin because time passed, because the last slice ended, or because a new C
 
 Do not start by archiving or rewriting the live path. Do not read `design/changelog/` except the current-series files above, or when the named work is versioning, a named past build, or a revert.
 
-`design/sessions.md` is this path’s leave-off. It is not the web / chat or Copilot hand-off. Do not resume unfinished Grok Build work from it unless the User names that work. Do not treat a listed “next work” line as a license to start that work unasked.
+`design/sessions.md` is this path’s leave-off. It is not the web / chat or Grok Bot hand-off. Do not resume unfinished Grok Build work from it unless the User names that work. Do not treat a listed “next work” line as a license to start that work unasked.
 
 ## Week ritual
 
@@ -78,7 +78,7 @@ Sprite / I2V / paper-doll work stays on this path unless the User says otherwise
 
 Every live `scripts/**/*.gd` that ships must stay under **10,000 bytes**.
 
-Enforce the cap while editing. If a file is over, or an edit would push it over, split in that same slice using `design/refactor.md`. Stop once the file is under 10KB. Do not keep splitting toward Copilot’s 5KB sweep target.
+Enforce the cap while editing. If a file is over, or an edit would push it over, split in that same slice using `design/refactor.md`. Stop once the file is under 10KB. Do not keep splitting toward Grok Bot’s 5KB sweep target.
 
 ## Archives
 
@@ -108,15 +108,15 @@ Prepend a factual entry to `design/session-log.md`.
 
 Write `design/changelog/{label}.md` for the completion commit when that commit is `0.N.0` (see `design/versioning.md`). Do not emit `scripts/data/changelog.json` as the ledger. Do not read prior changelog files to write the new one.
 
-Those two session files are for the next Grok Build instance, not for web / chat or Copilot.
+Those two session files are for the next Grok Build instance, not for web / chat or Grok Bot.
 
 ## Do not
 
 - Do not dump whole files unless asked, or the file does not exist on disk yet.
 - Do not claim a paste-emit workflow. This path writes the checkout.
 - Do not use `design/web-session.md` phases.
-- Do not run a Copilot full-repo sweep. If house-wide size/reuse cleanup is the job, that is Copilot.
-- Do not write `_logs/` (Copilot only).
+- Do not run a Grok Bot full-repo sweep. If house-wide size/extract/reuse cleanup is the job, that is Grok Bot.
+- Do not write `_logs/` (Grok Bot optional sweep notes only).
 - Do not follow git commit links into web-session conversations. Current-series `design/changelog/*.md` is the brief.
 - Do not invent a third system when binding design and live code disagree — patch live toward binding or ask.
 - Do not run the week pin ritual unless the User said **new week**.
