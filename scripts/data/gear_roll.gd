@@ -30,9 +30,22 @@ static func roll_forge(
 
 
 static func stamp(it: Dictionary, rolled: Dictionary) -> Dictionary:
+	_wipe_stats(it)
 	for k: Variant in rolled.keys():
-		it[k] = rolled[k]
+		it[str(k)] = rolled[k]
 	return it
+
+
+static func _wipe_stats(it: Dictionary) -> void:
+	for row: Dictionary in Affix.defs():
+		it.erase(str(row.get("id", "")))
+	it.erase("crit")
+	it.erase("spd")
+	it.erase("gather")
+	it["affixes"] = []
+	it["dmg"] = 0
+	it["def"] = 0
+	it["hp"] = 0
 
 
 static func _build(
@@ -55,6 +68,9 @@ static func _build(
 		"hold": from_forge,
 		"kit_src": "hold" if from_forge else "",
 		"affixes": [],
+		"dmg": 0,
+		"def": 0,
+		"hp": 0,
 	}
 	if slot == "weapon":
 		it["weapon"] = type_id
@@ -69,14 +85,22 @@ static func _build(
 	var ids: PackedStringArray = _pick_ids(slot, rarity, locked, unlocks, from_forge)
 	var rows: Array = []
 	for id: String in ids:
-		var val: float = _roll_value(id, ilvl, quality, luck)
-		rows.append({"id": id, "value": val})
+		var use_luck: float = _peak_luck(id, luck, unlocks)
+		var val: float = _roll_value(id, ilvl, quality, use_luck)
+		rows.append({"id": id, "value": val, "luck": use_luck})
 		it[id] = val
 	it["affixes"] = rows
 	it["dmg"] = int(round(float(it.get(Affix.ID_DMG, 0.0))))
 	it["def"] = int(round(float(it.get(Affix.ID_DEF, 0.0))))
 	it["hp"] = int(round(float(it.get(Affix.ID_HP, 0.0))))
 	return it
+
+
+static func _peak_luck(id: String, fallback: float, unlocks: Dictionary) -> float:
+	var by: Variant = unlocks.get("luck_by_id", {})
+	if by is Dictionary and by.has(id):
+		return float(by[id])
+	return fallback
 
 
 static func _pick_ids(
@@ -105,7 +129,13 @@ static func _pick_ids(
 				known.append(str(x))
 		var trimmed: Array = []
 		for id: String in pool:
-			if id in known or id == Affix.ID_DMG or id == Affix.ID_DEF:
+			var keep := id == Affix.ID_DMG or id == Affix.ID_DEF
+			if not keep:
+				for k: String in known:
+					if k == id:
+						keep = true
+						break
+			if keep:
 				trimmed.append(id)
 		if not trimmed.is_empty():
 			pool = trimmed

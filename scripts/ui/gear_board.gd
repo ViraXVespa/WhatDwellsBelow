@@ -89,18 +89,24 @@ static func tip_from_focus(ui: CanvasLayer) -> void:
 
 static func _watch_hover(ui: CanvasLayer, b: Control, key: String) -> void:
 	b.mouse_entered.connect(func():
+		if bool(ui.get("gear_sub")):
+			return
 		_flag(ui, "gear_hover", true)
 		_arm_tip(ui)
 		ui.inv_sel = key
 		refresh(ui)
 	)
 	b.mouse_exited.connect(func():
+		if bool(ui.get("gear_sub")):
+			return
 		_flag(ui, "gear_hover", false)
 		var tree := ui.get_tree()
 		if tree == null:
 			return
 		tree.process_frame.connect(func():
 			if not is_instance_valid(ui):
+				return
+			if bool(ui.get("gear_sub")):
 				return
 			if _on(ui, "gear_hover"):
 				return
@@ -211,6 +217,8 @@ static func slot_btn(ui: CanvasLayer, slot: String) -> Button:
 		b.focus_mode = Control.FOCUS_NONE
 	else:
 		b.pressed.connect(func():
+			if bool(ui.get("gear_sub")):
+				return
 			ui.inv_sel = key
 			_arm_tip(ui)
 			Act.open_sub(ui, slot)
@@ -253,6 +261,8 @@ static func bag_cell(ui: CanvasLayer, it: Dictionary) -> Button:
 		b.set_meta("inv_key", key)
 		_watch_hover(ui, b, key)
 		b.pressed.connect(func():
+			if bool(ui.get("gear_sub")):
+				return
 			ui.inv_sel = key
 			_arm_tip(ui)
 			refresh(ui)
@@ -316,8 +326,10 @@ static func selected_slot(ui: CanvasLayer) -> String:
 
 static func clear_sub(ui: CanvasLayer) -> void:
 	var old: Node = ui.get_node_or_null("gear_sub_panel")
-	if old:
+	while old:
+		old.name = "gear_sub_dead"
 		old.queue_free()
+		old = ui.get_node_or_null("gear_sub_panel")
 
 
 static func apply_pending() -> void:

@@ -1,4 +1,4 @@
-﻿
+
 extends RefCounted
 
 const CatalogS := preload("res://scripts/data/catalog.gd")
@@ -433,7 +433,7 @@ func pay_forge(c: Dictionary) -> bool:
 	return ForgeP.pay(self, c)
 
 
-func forge_item(it: Dictionary) -> String:
+func forge_item(_it: Dictionary) -> String:
 	return "Use the Forge tab."
 
 

@@ -28,6 +28,37 @@ static func page_gameplay(host: Node) -> void:
 			App.save_now()
 	)
 	_add_check_centered(host, lock)
+	var salvage_on: bool = bool(App.get("salvage_dupes"))
+	var salvage: CheckBox = _check("Salvage spare gear", salvage_on, func(on: bool) -> void:
+		App.salvage_dupes = on
+		if App.has_method("save_now"):
+			App.save_now()
+		host.split_build_page("gameplay")
+		View.apply_col(host)
+		_focus_named(host, "Salvage spare gear")
+	)
+	_add_check_centered(host, salvage)
+	if salvage_on:
+		var hint: Label = ThemeS.lab("Break down mailed copies you already know, unless they beat the bars below.", 16, Color(0.82, 0.76, 0.66))
+		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		host.info_box.add_child(hint)
+		var keep: Label = ThemeS.lab("Keep a copy when", 20, Color(0.9, 0.84, 0.7))
+		keep.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		keep.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		host.info_box.add_child(keep)
+		var finish_v: float = clampf(float(App.get("salvage_finish")), 0.5, 1.0)
+		_slider(host, "Finish  %.2f" % finish_v, finish_v, 0.5, 1.0, 0.05, func(v: float) -> void:
+			App.salvage_finish = v
+			if App.has_method("save_now"):
+				App.save_now()
+		)
+		var fortune_v: float = clampf(float(App.get("salvage_fortune")), 0.75, 1.25)
+		_slider(host, "Fortune  %.2f" % fortune_v, fortune_v, 0.75, 1.25, 0.05, func(v: float) -> void:
+			App.salvage_fortune = v
+			if App.has_method("save_now"):
+				App.save_now()
+		)
 	var wipe: Button = ThemeS.btn("Delete Save Data", func() -> void:
 		Confirm.open(host.pause, "Delete Save Data", "Wipe all save data and return to the title screen?", func() -> void:
 			App.wipe_save()
@@ -113,6 +144,20 @@ static func _set_filter(host: Node, mips_on: bool, aniso_on: bool) -> void:
 	App.save_now()
 	host.split_build_page("graphics")
 	View.apply_col(host)
+	View.focus_col(host)
+
+
+static func _focus_named(host: Node, title: String) -> void:
+	var btns: Variant = host.get("info_btns")
+	if not (btns is Array):
+		View.focus_col(host)
+		return
+	for raw: Variant in btns:
+		if raw is BaseButton and str((raw as BaseButton).text) == title:
+			var b: BaseButton = raw
+			if is_instance_valid(b) and b.is_inside_tree() and b.focus_mode != Control.FOCUS_NONE:
+				b.grab_focus()
+				return
 	View.focus_col(host)
 
 

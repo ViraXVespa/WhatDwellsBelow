@@ -37,7 +37,13 @@ static func unlocks_for(p: Object, slot: String, type_id: String, rarity: String
 	var peak := 0.75
 	for v: Variant in lucks.values():
 		peak = maxf(peak, float(v))
-	return {"ids": ids, "traits": ids, "luck": peak, "luck_by_id": lucks}
+	return {
+		"ids": ids,
+		"traits": ids,
+		"luck": peak,
+		"luck_by_id": lucks,
+		"ilvl": int(ent.get("ilvl", 0)),
+	}
 
 
 static func max_ilvl_rarity(p: Object, slot: String, type_id: String, rarity: String) -> int:
@@ -237,6 +243,28 @@ static func holds_of(p: Object, slot: String, type_id: String) -> Array:
 
 static func hold_open(p: Object, slot: String, type_id: String) -> int:
 	return HOLD_CAP - holds_of(p, slot, type_id).size()
+
+
+static func set_holds_for_type(p: Object, slot: String, type_id: String, keep: Array) -> String:
+	var rest: Array = []
+	for raw: Variant in p.holds.get(slot, []):
+		if raw is Dictionary and type_of(raw) != type_id:
+			rest.append(raw)
+	var n := 0
+	for raw2: Variant in keep:
+		if n >= HOLD_CAP:
+			break
+		if not (raw2 is Dictionary):
+			continue
+		var it: Dictionary = (raw2 as Dictionary).duplicate(true)
+		it["hold"] = true
+		it["kit_src"] = "hold"
+		it["extract"] = false
+		rest.append(it)
+		n += 1
+	p.holds[slot] = rest
+	App.save_now()
+	return "Kept %d hold%s." % [n, "" if n == 1 else "s"]
 
 
 static func make_forged(p: Object, slot: String, type_id: String, rarity: String, ilvl: int, locked: PackedStringArray) -> Dictionary:

@@ -68,23 +68,39 @@ static func _tabs(ui: CanvasLayer) -> void:
 	ui.box.add_child(shell)
 
 
+static func drop_sub(ui: CanvasLayer) -> void:
+	ui.gear_sub = false
+	ui.gear_sub_slot = ""
+	var Sub = load("res://scripts/ui/gear_board_sub.gd")
+	Sub.unlock_bg(ui)
+	var old: Node = ui.get_node_or_null("gear_sub_panel")
+	while old:
+		old.name = "gear_sub_dead"
+		old.queue_free()
+		old = ui.get_node_or_null("gear_sub_panel")
+	var Board = load("res://scripts/ui/gear_board.gd")
+	Board.hide_tip(ui)
+
+
 static func set_tab(ui: CanvasLayer, t: String) -> void:
 	ui.anvil_tab = t
 	ui.anvil_item = {}
+	ui.anvil_src = ""
 	ui.pending = false
-	ui.gear_sub = false
 	ui.forge_type = ""
 	ui.forge_rarity = "green"
 	ui.forge_ilvl = 1
 	ui.forge_locks = PackedStringArray()
 	ui.forge_new = {}
 	ui.forge_it = {}
+	ui.forge_t = 0.0
+	drop_sub(ui)
 	ui.call_deferred("_rebuild_anvil")
 	ui.call_deferred("_show")
 
 
 static func _analyze_body(ui: CanvasLayer, smith: int) -> void:
-	ui.status.text = "Smithing %d. Analyze AT RISK pieces only. That destroys them and unlocks their type." % smith
+	ui.status.text = "Smithing %d. Open a slot to analyze an AT RISK piece." % smith
 
 
 static func _forge_body(ui: CanvasLayer, smith: int) -> void:

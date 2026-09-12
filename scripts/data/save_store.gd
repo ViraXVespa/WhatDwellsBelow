@@ -7,6 +7,7 @@ static var _migrated := false
 const LIVE := "user://live"
 const FRESH := "user://playtest/fresh"
 const PROG := "user://playtest/progressed"
+const Rules := preload("res://scripts/data/gear_rules.gd")
 
 
 static func dir_for(slot: String) -> String:
@@ -73,6 +74,9 @@ static func collect() -> Dictionary:
 		"aim_line_on": App.bal.aim_line_on,
 		"aim_line_opacity": App.bal.aim_line_opacity,
 		"target_lock_pref": bool(App.get("target_lock_pref")),
+		"salvage_dupes": bool(App.get("salvage_dupes")),
+		"salvage_finish": float(App.get("salvage_finish")),
+		"salvage_fortune": float(App.get("salvage_fortune")),
 		"bank_gold": App.bank_gold,
 		"bank_ore": App.bank_ore,
 		"bank_wood": App.bank_wood,
@@ -103,6 +107,9 @@ static func apply(data: Dictionary) -> void:
 	App.bal.aim_line_on = bool(data.get("aim_line_on", true))
 	App.bal.aim_line_opacity = float(data.get("aim_line_opacity", 0.85))
 	App.target_lock_pref = bool(data.get("target_lock_pref", false))
+	App.salvage_dupes = bool(data.get("salvage_dupes", false))
+	App.salvage_finish = clampf(float(data.get("salvage_finish", 0.8)), 0.5, 1.0)
+	App.salvage_fortune = clampf(float(data.get("salvage_fortune", 1.0)), 0.75, 1.25)
 	App.bank_gold = int(data.get("bank_gold", 0))
 	App.bank_ore = int(data.get("bank_ore", 0))
 	App.bank_wood = int(data.get("bank_wood", 0))
@@ -118,6 +125,7 @@ static func apply(data: Dictionary) -> void:
 	var p: Variant = data.get("prog", {})
 	if p is Dictionary:
 		App.prog.from_meta(p)
+	Rules.normalize_prog(App.prog)
 	if not App.character_chosen and (App.bank_gold > 0 or App.bank_ore > 0 or App.prog.deepest > 1):
 		App.character_chosen = true
 	var binds: Variant = data.get("binds", [])
@@ -195,6 +203,7 @@ static func load_slot(slot := "live") -> String:
 
 static func fresh_delver() -> void:
 	App.prog.reset_meta()
+	Rules.normalize_prog(App.prog)
 	App.bank_gold = 0
 	App.bank_ore = 0
 	App.bank_wood = 0
@@ -216,6 +225,9 @@ static func fresh_delver() -> void:
 	App.display_fs_kind = "borderless"
 	App.web_fullscreen = false
 	App.target_lock_pref = false
+	App.salvage_dupes = false
+	App.salvage_finish = 0.8
+	App.salvage_fortune = 1.0
 	App.bal.aim_line_on = true
 	App.bal.aim_line_opacity = 0.85
 	App.reset_binds()

@@ -29,12 +29,28 @@ static func extractable(p: Object, role: String = "") -> Array:
 	return out
 
 
+static func _beats_keep(it: Dictionary) -> bool:
+	var finish := float(it.get("quality", 0.5))
+	var fortune := float(it.get("luck", 0.75))
+	var need_f := clampf(float(App.get("salvage_finish")), 0.5, 1.0)
+	var need_l := clampf(float(App.get("salvage_fortune")), 0.75, 1.25)
+	return finish >= need_f or fortune >= need_l
+
+
+static func _salvage_spare(p: Object, it: Dictionary) -> bool:
+	if not bool(App.get("salvage_dupes")):
+		return false
+	if not ForgeP.is_duplicate(p, it):
+		return false
+	return not _beats_keep(it)
+
+
 static func _mail_item(p: Object, it: Dictionary) -> String:
-	if ForgeP.is_duplicate(p, it):
-		return Rules.grant_smith(p, it)
 	var special := Rules.handle_mail(p, it)
 	if special != "":
 		return special
+	if _salvage_spare(p, it):
+		return Rules.grant_smith(p, it)
 	p.bank_items.append(it)
 	App.extracted = true
 	p.mailed_names.append(str(it.name))

@@ -4,6 +4,7 @@ const Board := preload("res://scripts/ui/gear_board.gd")
 const Text := preload("res://scripts/ui/gear_board_text.gd")
 const Sub := preload("res://scripts/ui/gear_board_sub.gd")
 const Pad := preload("res://scripts/ui/menu_pad.gd")
+const ForgeUI := preload("res://scripts/ui/gear_board_anvil_forge.gd")
 
 const HOLD_DESTROY := 0.55
 
@@ -164,11 +165,12 @@ static func cycle_tip(ui: CanvasLayer) -> void:
 
 
 static func cycle_stats(ui: CanvasLayer, d: int) -> void:
-	if bool(ui.get("gear_sub")):
+	if bool(ui.get("gear_sub")) and str(ui.get("forge_phase")) != "pick":
 		return
 	var pages := Text.page_ids(ui)
 	ui.gear_stat_page = posmod(int(ui.gear_stat_page) + d, pages.size())
-	ui.inv_sel = "stats"
+	if str(ui.get("forge_phase")) != "pick":
+		ui.inv_sel = "stats"
 	Board._flag(ui, "gear_tip_ready", false)
 	Board._flag(ui, "gear_hover", false)
 	Board.hide_tip(ui)
@@ -244,9 +246,13 @@ static func handle_event(ui: CanvasLayer, event: InputEvent) -> bool:
 			cycle_tip(ui)
 			return true
 		if Pad.is_back(event):
-			close_sub(ui)
+			_back_sub(ui)
 			return true
-		if Pad.tab_delta(event) != 0 or Pad.page_delta(event) != 0:
+		if Pad.tab_delta(event) != 0:
+			return true
+		if Pad.page_delta(event) != 0:
+			if str(ui.get("forge_phase")) == "pick":
+				cycle_stats(ui, Pad.page_delta(event))
 			return true
 		return false
 	if _is_tip(event):
@@ -263,6 +269,17 @@ static func handle_event(ui: CanvasLayer, event: InputEvent) -> bool:
 		cycle_stats(ui, 1)
 		return true
 	return false
+
+
+static func _back_sub(ui: CanvasLayer) -> void:
+	var phase := str(ui.get("forge_phase"))
+	if phase == "work":
+		ForgeUI.cancel_job(ui)
+		return
+	if phase == "pick":
+		ForgeUI.keep_old(ui)
+		return
+	close_sub(ui)
 
 
 static func _is_tip(event: InputEvent) -> bool:

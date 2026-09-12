@@ -106,7 +106,7 @@ static func analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 		return
 	ui.anvil_item = it
 	ui.anvil_src = str(row.get("src", ""))
-	ui._confirm(func(): _commit_analyze(ui, slot, row), "analyze_%d" % int(row.get("uid", 0)))
+	_commit_analyze(ui, slot, row)
 
 
 static func _commit_analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> void:

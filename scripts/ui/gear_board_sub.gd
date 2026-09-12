@@ -29,7 +29,8 @@ static func lock_bg(ui: CanvasLayer) -> void:
 		var c := n as Control
 		if c == null:
 			continue
-		c.set_meta("gear_old_focus", c.focus_mode)
+		if not c.has_meta("gear_old_focus"):
+			c.set_meta("gear_old_focus", c.focus_mode)
 		c.focus_mode = Control.FOCUS_NONE
 
 
@@ -45,8 +46,7 @@ static func unlock_bg(ui: CanvasLayer) -> void:
 
 
 static func open_sub(ui: CanvasLayer, slot: String) -> void:
-	if bool(ui.get("gear_sub")):
-		Board.clear_sub(ui)
+	Board.clear_sub(ui)
 	ui.gear_sub = true
 	ui.gear_sub_slot = slot
 	Text.mark_seen(slot)
@@ -65,15 +65,17 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	panel.add_child(box)
 	var head := "Re-equip  " + str(Fmt.NAMES.get(slot, slot))
 	var blurb := "AT RISK gear is lost on death or Dispel."
+	var blurb_col := Color(0.8, 0.74, 0.64)
 	if _is_anvil(ui):
 		if str(ui.get("anvil_tab")) == "forge":
 			head = "Forge  " + str(Fmt.NAMES.get(slot, slot))
 			blurb = "Set type, rarity, level, and locks."
 		else:
 			head = "Analyze  " + str(Fmt.NAMES.get(slot, slot))
-			blurb = "Analyze DESTROYS the piece and unlocks it for forging."
+			blurb = "WARNING: Analyzing DESTROYS the selected item. This cannot be undone."
+			blurb_col = Color(0.95, 0.42, 0.28)
 	box.add_child(ThemeS.lab(head, 22, Color(0.95, 0.82, 0.5)))
-	box.add_child(ThemeS.lab(blurb, 16, Color(0.8, 0.74, 0.64)))
+	box.add_child(ThemeS.lab(blurb, 16, blurb_col))
 	if _is_anvil(ui) and str(ui.get("anvil_tab")) == "forge":
 		_open_forge(ui, box, slot)
 		return
@@ -142,7 +144,6 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	for b: Button in opts:
 		b.focus_entered.connect(func():
 			ui.inv_sel = str(b.get_meta("inv_key", ""))
-			back.focus_neighbor_top = b.get_path()
 			Board._arm_tip(ui)
 			Board.refresh(ui)
 		)
@@ -150,8 +151,6 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	_wire_opt_focus(opts, back)
 	if first == null:
 		first = back
-	else:
-		back.focus_neighbor_top = first.get_path()
 	ui.inv_sel = str(first.get_meta("inv_key", "slot:" + slot))
 	ui.focus_btn = first
 	first.grab_focus()
@@ -165,9 +164,11 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 
 
 static func _open_forge(ui: CanvasLayer, box: Control, slot: String) -> void:
+	ui.gear_sub = true
+	ui.gear_sub_slot = slot
 	var first: Control = ForgeUI.fill(ui, box, slot)
 	_add_strip(box, ForgeUI.hint_parts(ui))
-	if first:
+	if first and first.focus_mode != Control.FOCUS_NONE:
 		ui.focus_btn = first if first is Button else null
 		first.grab_focus()
 	Board.refresh(ui)
@@ -215,6 +216,7 @@ static func close_sub(ui: CanvasLayer) -> void:
 	ui.gear_sub = false
 	ui.gear_sub_slot = ""
 	unlock_bg(ui)
+	Board.clear_sub(ui)
 	Act.swallow_cancel()
 	App.sfx("ui_cancel")
 	_after_sub(ui, "slot:" + (keep if keep != "" else "weapon"), false)
@@ -226,11 +228,7 @@ static func pick(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 		return
 	if _is_anvil(ui):
 		_anvil().analyze(ui, slot, row)
-		ui.gear_sub = false
-		ui.gear_sub_slot = ""
-		unlock_bg(ui)
-		Act.swallow_cancel()
-		_after_sub(ui, "slot:" + slot, true)
+		close_sub(ui)
 		return
 	var it: Dictionary = {}
 	if row.get("it") is Dictionary:
@@ -245,6 +243,7 @@ static func pick(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 	ui.gear_sub = false
 	ui.gear_sub_slot = ""
 	unlock_bg(ui)
+	Board.clear_sub(ui)
 	Act.swallow_cancel()
 	_after_sub(ui, "slot:" + slot, true)
 

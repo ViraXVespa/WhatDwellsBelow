@@ -32,12 +32,19 @@ var anvil_item: Dictionary = {}
 var anvil_src := ""
 var anvil_tab := "analyze"
 var forge_t := 0.0
+var forge_wait := 0.0
 var forge_it: Dictionary = {}
 var forge_type := ""
 var forge_rarity := "green"
 var forge_ilvl := 1
+var forge_qty := 1
+var forge_left := 0
+var forge_need := 0
 var forge_locks: PackedStringArray = PackedStringArray()
 var forge_new: Dictionary = {}
+var forge_batch: Array = []
+var forge_picks: Array = []
+var forge_phase := ""
 var inv_sel := "slot:weapon"
 var gear_mode := ""
 var gear_stat_page := 0
@@ -85,26 +92,37 @@ func _ready() -> void:
 	scroll.add_child(box)
 
 
+func _drop_sub() -> void:
+	gear_sub = false
+	gear_sub_slot = ""
+	var old: Node = get_node_or_null("gear_sub_panel")
+	while old:
+		old.name = "gear_sub_dead"
+		old.queue_free()
+		old = get_node_or_null("gear_sub_panel")
+	ForgeUI.reset_job(self)
+
+
+func _sub_up() -> bool:
+	if gear_sub:
+		return true
+	var old: Node = get_node_or_null("gear_sub_panel")
+	return old != null and not old.is_queued_for_deletion()
+
+
 func close_ui() -> void:
 	if mode == "extract" and extract_mailed and extract_spot and is_instance_valid(extract_spot) and extract_spot.has_method("mark_spent"):
 		extract_spot.mark_spent()
 	extract_spot = null
 	extract_mailed = false
-	if forge_t > 0.0:
-		forge_t = 0.0
-		forge_it = {}
+	_drop_sub()
 	open = false
 	visible = false
 	pending = false
 	pending_id = ""
 	anvil_item = {}
 	anvil_src = ""
-	gear_sub = false
-	gear_sub_slot = ""
 	gear_hover = false
-	var old: Node = get_node_or_null("gear_sub_panel")
-	if old:
-		old.queue_free()
 	if gear_tip_host:
 		gear_tip_host.visible = false
 	App.ui_open = false
@@ -132,13 +150,17 @@ func _paint_menu_hint() -> void:
 
 
 func _focus() -> void:
+	if _sub_up():
+		return
 	if mode == "loadout" or mode == "inv" or mode == "anvil":
 		var hit: Control = Board.find_sel(self)
-		if hit and not hit.is_queued_for_deletion():
-			hit.grab_focus()
-			return
-	if focus_btn and not focus_btn.is_queued_for_deletion():
-		focus_btn.grab_focus()
+		if hit and is_instance_valid(hit) and hit.is_inside_tree() and not hit.is_queued_for_deletion():
+			if hit.focus_mode != Control.FOCUS_NONE:
+				hit.grab_focus()
+				return
+	if focus_btn and is_instance_valid(focus_btn) and focus_btn.is_inside_tree() and not focus_btn.is_queued_for_deletion():
+		if focus_btn.focus_mode != Control.FOCUS_NONE:
+			focus_btn.grab_focus()
 
 
 func _wipe(n: Node) -> void:
@@ -171,6 +193,7 @@ func _st(msg: String) -> void:
 func open_inventory() -> void:
 	mode = "inv"
 	inv_sel = "slot:weapon"
+	_drop_sub()
 	_rebuild_inv()
 	_show()
 
@@ -181,6 +204,7 @@ func open_extract(role: String, spot: Node = null) -> void:
 	extract_spot = spot
 	extract_mailed = false
 	pending = false
+	_drop_sub()
 	_rebuild_extract()
 	_show()
 
@@ -192,6 +216,7 @@ func open_clerk(role: String) -> void:
 func open_shop(spot: Node) -> void:
 	mode = "shop"
 	shop_spot = spot
+	_drop_sub()
 	_rebuild_shop()
 	_show()
 
@@ -203,14 +228,12 @@ func open_anvil() -> void:
 	anvil_src = ""
 	anvil_tab = "analyze"
 	inv_sel = "slot:weapon"
-	gear_sub = false
+	_drop_sub()
 	forge_type = ""
 	forge_rarity = "green"
 	forge_ilvl = 1
+	forge_qty = 1
 	forge_locks = PackedStringArray()
-	forge_new = {}
-	forge_it = {}
-	forge_t = 0.0
 	_rebuild_anvil()
 	_show()
 
@@ -219,7 +242,7 @@ func open_loadout() -> void:
 	mode = "loadout"
 	pending = false
 	inv_sel = "slot:weapon"
-	gear_sub = false
+	_drop_sub()
 	loadout_floor = App.prog.start_floor
 	loadout_tool = App.prog.tool_type
 	loadout_wpn = str(App.prog.slots.weapon.get("weapon", "great_axe")) if not App.prog.slots.weapon.is_empty() else "great_axe"
@@ -229,18 +252,21 @@ func open_loadout() -> void:
 
 func open_vendor() -> void:
 	mode = "vendor"
+	_drop_sub()
 	_rebuild_vendor()
 	_show()
 
 
 func open_controls() -> void:
 	mode = "controls"
+	_drop_sub()
 	_rebuild_controls()
 	_show()
 
 
 func open_flavor(title: String, body: String) -> void:
 	mode = "flavor"
+	_drop_sub()
 	_clear()
 	box.add_child(ThemeS.lab(title, 28, Color(0.95, 0.82, 0.5)))
 	box.add_child(ThemeS.lab(body, 22, Color(0.88, 0.82, 0.7)))
@@ -251,6 +277,7 @@ func open_flavor(title: String, body: String) -> void:
 
 func open_quest() -> void:
 	mode = "quest"
+	_drop_sub()
 	if App.prog.quests_offered.is_empty():
 		App.prog.roll_quests(true)
 	_rebuild_quest()
@@ -337,8 +364,11 @@ func _process(delta: float) -> void:
 		return
 	forge_t = maxf(0.0, forge_t - delta)
 	if status:
-		status.text = "Forging… %.1fs." % forge_t
+		var done: int = maxi(0, forge_need - forge_left) + 1
+		status.text = "Forging %d of %d… %.1fs." % [mini(done, maxi(1, forge_need)), maxi(1, forge_need), forge_t]
 	if forge_t > 0.0:
+		if gear_sub:
+			ForgeUI.refresh_bar(self)
 		return
 	ForgeUI.finish(self)
 
@@ -377,7 +407,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
-		if gear_sub or GearAct.swallowing():
+		if _sub_up() or GearAct.swallowing():
+			if _sub_up() and not GearAct.swallowing():
+				if forge_phase == "work":
+					ForgeUI.cancel_job(self)
+				elif forge_phase == "pick":
+					ForgeUI.keep_old(self)
+				else:
+					GearAct.close_sub(self)
 			get_viewport().set_input_as_handled()
 			return
 		if pending:
@@ -386,8 +423,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			App.sfx("ui_cancel")
 			_st("Cancelled.")
 		elif forge_t > 0.0:
-			forge_t = 0.0
-			forge_it = {}
+			ForgeUI.cancel_job(self)
 			App.sfx("ui_cancel")
 			_st("Forge cancelled. Materials stay spent.")
 		else:

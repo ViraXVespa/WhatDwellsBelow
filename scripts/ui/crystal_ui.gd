@@ -46,6 +46,7 @@ func begin(from: Node) -> void:
 
 
 func close_ui() -> void:
+	focus_btn = null
 	App.ui_open = false
 	get_tree().paused = false
 	var p := get_tree().get_first_node_in_group("player")
@@ -151,8 +152,15 @@ func _back() -> void:
 
 
 func _focus() -> void:
-	if focus_btn and not focus_btn.is_queued_for_deletion():
-		focus_btn.grab_focus()
+	if not is_inside_tree():
+		return
+	if focus_btn == null or not is_instance_valid(focus_btn):
+		return
+	if focus_btn.is_queued_for_deletion() or not focus_btn.is_inside_tree():
+		return
+	if focus_btn.focus_mode == Control.FOCUS_NONE:
+		return
+	focus_btn.grab_focus()
 
 
 func _unhandled_input(event: InputEvent) -> void:

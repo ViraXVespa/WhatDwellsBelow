@@ -1,33 +1,19 @@
-extends Object
+﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Act := preload("res://scripts/ui/gear_board_act.gd")
+const StepRow := preload("res://scripts/ui/step_row.gd")
 
 
 static func footer(ui: CanvasLayer) -> void:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	var flab := _row_lab("Floor:", 20, Color(0.92, 0.84, 0.62))
-	flab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	row.add_child(flab)
-	var minus := ThemeS.btn("−", func(): Act.floor_step(ui, -1))
-	row.add_child(minus)
-	var nlab := _row_lab(str(int(ui.loadout_floor)), 22, Color(0.95, 0.82, 0.5))
-	nlab.custom_minimum_size = Vector2(48, 44)
-	row.add_child(nlab)
-	var plus := ThemeS.btn("+", func(): Act.floor_step(ui, 1))
-	row.add_child(plus)
-	var dlab := _row_lab("(Deepest floor: %d)" % int(App.prog.deepest), 20, Color(0.82, 0.76, 0.66))
-	dlab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	row.add_child(dlab)
-	var enter := ThemeS.btn("Enter dungeon", func(): Act.enter(ui))
+	var row: HBoxContainer = StepRow.make("Floor:", func(): Act.floor_step(ui, -1), func(): Act.floor_step(ui, 1))
+	var enter: Button = ThemeS.btn("Enter dungeon", func(): Act.enter(ui))
 	enter.set_meta("inv_key", "enter")
-	ui.set_meta("loadout_floor_lab", nlab)
-	ui.set_meta("loadout_deep_lab", dlab)
-	ui.set_meta("loadout_floor_minus", minus)
-	ui.set_meta("loadout_floor_plus", plus)
+	ui.set_meta("loadout_floor_row", row)
+	ui.set_meta("loadout_floor_lab", StepRow.value_of(row))
+	ui.set_meta("loadout_deep_lab", StepRow.suffix_of(row))
+	ui.set_meta("loadout_floor_minus", StepRow.minus_of(row))
+	ui.set_meta("loadout_floor_plus", StepRow.plus_of(row))
 	ui.set_meta("loadout_enter", enter)
 	ui.box.add_child(row)
 	ui.box.add_child(enter)
@@ -41,37 +27,19 @@ static func sync(ui: CanvasLayer) -> void:
 		return
 	var f := int(ui.loadout_floor)
 	var deep := int(App.prog.deepest)
-	var nlab := _meta(ui, "loadout_floor_lab")
-	if nlab is Label:
-		nlab.text = str(f)
-	var dlab := _meta(ui, "loadout_deep_lab")
-	if dlab is Label:
-		dlab.text = "(Deepest floor: %d)" % deep
-	var minus := _meta(ui, "loadout_floor_minus")
-	var plus := _meta(ui, "loadout_floor_plus")
-	var vp := ui.get_viewport()
-	var was: Control = vp.gui_get_focus_owner() if vp else null
-	_arm(minus, f <= 1)
-	_arm(plus, f >= deep)
+	var row: HBoxContainer = null
+	if ui.has_meta("loadout_floor_row"):
+		var raw: Variant = ui.get_meta("loadout_floor_row")
+		if raw is HBoxContainer:
+			row = raw
+	if row:
+		var vp := ui.get_viewport()
+		var was: Control = vp.gui_get_focus_owner() if vp else null
+		StepRow.paint(row, str(f), "(Deepest floor: %d)" % deep, f <= 1, f >= deep)
+		_wire(ui)
+		_restore(ui, was)
+		return
 	_wire(ui)
-	_restore(ui, was)
-
-
-static func _row_lab(t: String, size: int, col: Color) -> Label:
-	var l := Label.new()
-	l.text = t
-	l.autowrap_mode = TextServer.AUTOWRAP_OFF
-	l.clip_text = false
-	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", col)
-	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	l.add_theme_constant_override("outline_size", 6)
-	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	l.custom_minimum_size = Vector2(0, 44)
-	return l
 
 
 static func _meta(ui: CanvasLayer, key: String) -> Control:
@@ -122,14 +90,6 @@ static func _live(minus: Control, plus: Control, prefer_plus: bool) -> Control:
 		if plus != null and plus.focus_mode != Control.FOCUS_NONE:
 			return plus
 	return null
-
-
-static func _arm(b: Control, off: bool) -> void:
-	if b == null:
-		return
-	if b is Button:
-		(b as Button).disabled = off
-	b.focus_mode = Control.FOCUS_NONE if off else Control.FOCUS_ALL
 
 
 static func _wire(ui: CanvasLayer) -> void:

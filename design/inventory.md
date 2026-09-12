@@ -1,8 +1,8 @@
-# Inventory, gear, artifacts, extraction
+﻿# Inventory, gear, artifacts, extraction
 
 Status: binding design  
 Read when: changing bag, equipment, food, potions, artifacts, Extraction Gates, or the anvil  
-Code: `scripts/data/progress.gd`, `scripts/data/progress_gear.gd`, `scripts/data/progress_gear_req.gd`, `scripts/data/progress_extract.gd`, `scripts/data/progress_make.gd`, `scripts/data/progress_forge.gd`, `scripts/data/affixes.gd`, `scripts/data/gear_roll.gd`, `scripts/data/gear_rules.gd`, `scripts/data/catalog.gd`, `scripts/ui/gear_board.gd`, `scripts/ui/gear_board_text.gd`, `scripts/ui/gear_board_act.gd`, `scripts/ui/gear_board_anvil.gd`, `scripts/ui/gear_board_anvil_view.gd`, `scripts/ui/gear_board_anvil_forge.gd`, `scripts/ui/gear_board_sub.gd`  
+Code: `scripts/data/progress.gd`, `scripts/data/progress_gear.gd`, `scripts/data/progress_gear_req.gd`, `scripts/data/progress_extract.gd`, `scripts/data/progress_make.gd`, `scripts/data/progress_forge.gd`, `scripts/data/affixes.gd`, `scripts/data/gear_roll.gd`, `scripts/data/gear_rules.gd`, `scripts/data/catalog.gd`, `scripts/ui/gear_board.gd`, `scripts/ui/gear_board_text.gd`, `scripts/ui/gear_board_act.gd`, `scripts/ui/gear_board_anvil.gd`, `scripts/ui/gear_board_anvil_view.gd`, `scripts/ui/gear_board_anvil_forge.gd`, `scripts/ui/gear_board_sub.gd`, `scripts/ui/step_row.gd`  
 See also: `design/gear-ui.md`, `design/skills.md`, `design/ui.md`, `design/hub.md`, `design/tunables.md`, `design/art-pipeline.md`, `design/handoff-anvil.md`
 
 ## Bag
@@ -50,7 +50,7 @@ Shared pause / loadout / anvil presentation is specified in `design/gear-ui.md`.
 
 - Every piece of equipment has an item level that scales its stats.
 - Dungeon drops: item level equals the combat level of the enemy that dropped it, or the area combat level if there is no specific enemy.
-- Forged pieces: item level is a player-configured option. It changes potential stats and forge cost. The stepper is clamped to the highest item level already analyzed for that type.
+- Forged pieces: item level is a player-configured option. It changes potential stats and forge cost. The stepper is the shared horizontal control in `scripts/ui/step_row.gd` (same layout as the Floor Crystal dungeon-level picker): minus, value, plus, disable at the ends. It is clamped to the highest item level already analyzed for that type.
 - Higher rarity (white → green → blue) raises the base value of each affix before quality and luck.
 
 ## Affixes
@@ -79,7 +79,8 @@ Rules:
 - Values are rolled, not stamped as identical set stats. Two greens of the same template MUST be allowed to differ.
 - Dungeon roll: `{base(level, rarity)} * Quality * Luck` where Quality is `Random(0.5, 1.0)` and Luck is `Random(0.75, 1.25)`.
 - Percent affixes keep fractional values. Flat affixes may show as ints when they land on a whole number.
-- Combat reads `dmg`, `def`, `hp`, `crit_chance`, `crit_dmg`, `move_spd`, `atk_spd`, `atk_range`, `hp_on_hit`, `hp_on_kill`. Tools read `gather_spd`, `gather_pow`, `yield_chance`.
+- Combat and the kit card read only the `affixes` rows when that list is present. Leftover flat keys on old saves (`atk_range`, `crit_chance`, `hp_on_hit`, and the old `crit` / `spd` / `gather` aliases) MUST NOT apply and MUST NOT appear on the card. `Roll.stamp` wipes those keys before writing a new roll.
+- Combat keys: `dmg`, `def`, `hp`, `crit_chance`, `crit_dmg`, `move_spd`, `atk_spd`, `atk_range`, `hp_on_hit`, `hp_on_kill`. Tools: `gather_spd`, `gather_pow`, `yield_chance`.
 
 ## Analyze
 
@@ -87,14 +88,16 @@ Rules:
 - Holds MUST NOT appear in the Analyze list and MUST NOT be analyzable.
 - Starters, whites, artifacts, potions, and food MUST NOT be analyzable.
 - Artifacts are dungeon-only. They are not AT RISK and need no AT RISK tag.
-- Analyze is one confirm: open slot → pick piece → confirm → piece is destroyed and the book updates. A second open-and-pick pass is a bug.
+- Opening the Analyze submenu and picking a piece **is** the confirm. There is no second confirm dialog. The piece is destroyed immediately and the book updates.
 - Analyzing permanently unlocks, for that **type and rarity**:
   - the piece’s item level (book keeps the max)
   - each stat-modifier category on the piece
   - the maximum luck seen on those modifiers
 - Whites are never manually analyzed. If a white with a higher item level than the current starter of that template is extracted, raise the starter’s item level and matching stats.
 
-## Duplicates (auto-analyze on extract)
+## Duplicates (salvage on extract)
+
+Whites on extract still follow the starter path in White items and starters. They are not this toggle.
 
 A mailed green/blue piece is a **duplicate** only when all of the following are true:
 
@@ -102,22 +105,29 @@ A mailed green/blue piece is a **duplicate** only when all of the following are 
 - Every affix on it already exists in the book for that type **and rarity**.
 - None of its per-affix luck rolls **beat** the book luck for that affix (incoming luck is not greater than stored luck). Use `>=` on the book side: if the book already has luck greater than or equal to this piece, that affix is not new.
 
-Duplicates convert to smithing XP. They do not enter the bank as a second copy.
+**Salvage spare gear** lives on the Gameplay settings page. Default **off**. When off, duplicates stay in the bank as a second copy.
+
+When on, a **Keep bars** block appears with two sliders:
+
+- **Finish at least** — minimum Quality to keep a duplicate (range 0.50–1.00).
+- **Fortune at least** — minimum Luck to keep a duplicate (range 0.75–1.25).
+
+A duplicate that meets **either** bar (Finish **or** Fortune) is kept. A duplicate that misses both is broken down for smithing XP. A new trait, a higher item level, or a luck roll that beats the book is never a duplicate and is never salvaged by this toggle.
 
 ## Forge
 
-- The player picks rarity (green or blue). A rarity is available only after at least one piece of that type+rarity has been analyzed.
+- The player picks rarity (green or blue). A rarity is available only after at least one piece of that type+rarity has been analyzed. White chests MUST NOT appear.
 - Weapon and tool slots show a **type selector** in the same submenu (Great Axe / Staff / Longbow, Pickaxe / Hatchet). Armor slots have one type and skip the row.
-- Item level is a stepper from 1 to the max analyzed level for that type.
-- Output luck uses the analyzed peak for that type+rarity: `min = max(0.75, peak - 0.25)`, `max = peak`.
+- Item level uses the shared `step_row` stepper from 1 to the max analyzed level for that type.
+- **Quantity** uses the same stepper, 1–9. Cost and wait scale with quantity. Each finished piece grants smithing XP even if the player later discards the roll.
+- Output luck uses the analyzed peak for that type+rarity: `min = max(0.75, peak - 0.25)`, `max = peak`. Per-affix book luck is used when present.
 - Quality still starts as `Random(0.5, 1.0)`, then is nudged up if smithing level is at or above the configured item level, and down if smithing is below it.
 - By default the bonus pool is every affix already analyzed for that type+rarity (plus Damage / Defense as allowed extras). The player may **lock** analyzed traits only. Green: 1 lock. Blue: 2 locks. A lock consumes one bonus slot and multiplies cost.
 - Cost: armor is gold + ore. Weapons and tools are gold + ore + wood. No root. Locks raise the bill sharply. Smithing level applies a small discount.
-- Duration is a short craft beat scaled by smithing level vs the item level being forged.
+- Duration is a short craft beat per piece, scaled by smithing level vs the item level being forged. A progress bar shows the current piece. Back during the bar **stops the queue**. Pieces already finished go to the results screen. The unfinished piece is dropped. Materials already spent are not refunded.
 - Materials spend from carried gold/ore/wood first, then the bank.
-- If the hold cap for that type has a free slot, the new piece becomes a hold.
-- If the cap is full, **keep the old holds**. The player picks which hold to replace, or discards the new roll. Discard does not refund materials.
-- Re-forge always produces a new roll so the player can keep whichever piece has the better stats.
+- New rolls do **not** auto-enter holds. After the batch (or after a mid-queue cancel that finished at least one piece) the player sees a **results screen**.
+- Results use inventory icon cells and the same flyout / Y stats as the bag. Current holds for that type start selected. The player may pick up to three pieces from the combined hold + new list. Confirm writes only that type’s holds and leaves other types in the same slot alone. “Keep old holds” dumps the new rolls.
 
 ## White items and starters
 
@@ -156,7 +166,7 @@ Duplicates convert to smithing XP. They do not enter the bank as a second copy.
 - The interface MUST present a clear list of items that can be sent back to the surface.
 - Once extracted, items and gold are safe.
 - Three Extraction Gates per floor. Any gate can mail any extractable goods. Each gate is one-use after a visit that mailed something.
-- Duplicate green/blue extracts grant smithing XP instead of another bank copy.
+- Duplicate green/blue extracts follow **Salvage spare gear**. Whites follow the starter path.
 
 ## Vendor restock
 
@@ -183,4 +193,4 @@ Pause inventory uses a 7-column bag grid and shows gold / ore / wood / cap.
 
 `Gear.ensure_required_slots` runs after new-progress `reset_meta`, save `from_meta`, and recap `lose_unextracted`. An empty or invalid weapon or tool slot takes the selected hold when `hold_pick` is in range for that slot; otherwise it takes the current starter (`pick_weapon` / `tool_type`). Head, body, legs, potion, and food are not filled by this path. `begin_run_loadout` uses the same weapon/tool rule so hub and dungeon match.
 
-Forge ledger lives on `App.prog.forge_book`, keyed `slot:type:rarity`. Legacy `analyzed` remnants migrate into that book once and then clear.
+Forge ledger lives on `App.prog.forge_book`, keyed `slot:type:rarity`. Legacy `analyzed` remnants migrate into that book once and then clear. Load also runs `Rules.normalize_prog` so pre-affix saves pick up item level, Finish, Fortune, and capped affix rows.

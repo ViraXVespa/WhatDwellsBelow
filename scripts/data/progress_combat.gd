@@ -1,6 +1,7 @@
 ﻿extends Object
 
 const CatalogS := preload("res://scripts/data/catalog.gd")
+const Affix := preload("res://scripts/data/affixes.gd")
 
 
 static func skill_xp(p, id: String) -> float:
@@ -101,9 +102,9 @@ static func tool_quality(p) -> float:
 	var it: Dictionary = p.slots.get("tool", {})
 	if it.is_empty():
 		return 1.0
-	var q: float = 1.0 + float(it.get("gather_spd", 0.0))
-	q += float(it.get("gather_pow", 0.0)) * 0.08
-	q += float(it.get("yield_chance", 0.0))
+	var q: float = 1.0 + item_stat(it, Affix.ID_GATHER_SPD)
+	q += item_stat(it, Affix.ID_GATHER_POW) * 0.08
+	q += item_stat(it, Affix.ID_YIELD)
 	if bool(it.get("hold", false)):
 		q += 0.15
 	return maxf(0.2, q)
@@ -242,17 +243,59 @@ static func set_stats(p) -> Dictionary:
 	return {"dmg": dmg, "def": def, "hp": hp, "crit": crit, "gather": gather, "spd": spd}
 
 
+static func item_stat(it: Dictionary, key: String) -> float:
+	if it.is_empty():
+		return 0.0
+	var want := key
+	if key == "crit":
+		want = Affix.ID_CRIT_CHANCE
+	elif key == "spd":
+		want = Affix.ID_MOVE
+	elif key == "gather":
+		want = Affix.ID_GATHER_SPD
+	var n := 0.0
+	var raw: Variant = it.get("affixes", [])
+	var has_affix := raw is Array and not (raw as Array).is_empty()
+	if has_affix:
+		for row: Variant in raw:
+			if not (row is Dictionary):
+				continue
+			var id := str(row.get("id", ""))
+			if id == "crit":
+				id = Affix.ID_CRIT_CHANCE
+			elif id == "spd":
+				id = Affix.ID_MOVE
+			elif id == "gather":
+				id = Affix.ID_GATHER_SPD
+			if id == want:
+				n += float(row.get("value", 0.0))
+	else:
+		n += float(it.get(want, 0.0))
+		if want == Affix.ID_CRIT_CHANCE:
+			n += float(it.get("crit", 0.0))
+		elif want == Affix.ID_MOVE:
+			n += float(it.get("spd", 0.0))
+		elif want == Affix.ID_GATHER_SPD:
+			n += float(it.get("gather", 0.0))
+	var lv: int = maxi(1, int(it.get("ilvl", 1)))
+	if Affix.kind_of(want) == Affix.KIND_PCT:
+		return clampf(n, 0.0, (0.02 + 0.004 * float(lv)) * 1.25 * 1.25)
+	return clampf(n, 0.0, (2.0 + 0.65 * float(lv)) * 1.25 * 1.25)
+
+
 static func gear_stat(p, key: String) -> float:
 	var n := 0.0
 	for s in p.SLOTS:
 		var it: Dictionary = p.slots.get(s, {})
 		if not it.is_empty():
-			n += float(it.get(key, 0))
+			n += item_stat(it, key)
 	var sets: Dictionary = set_stats(p)
 	n += float(sets.get(key, 0.0))
-	if key == "crit_chance":
+	if key == Affix.ID_CRIT_CHANCE:
 		n += float(sets.get("crit", 0.0))
-	if key == "gather_spd" or key == "yield_chance":
+	if key == Affix.ID_MOVE:
+		n += float(sets.get("spd", 0.0))
+	if key == Affix.ID_GATHER_SPD or key == Affix.ID_YIELD:
 		n += float(sets.get("gather", 0.0))
 	return n
 
