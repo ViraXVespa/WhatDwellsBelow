@@ -1,12 +1,10 @@
 extends Object
 
-const GameVer := preload("res://scripts/data/game_ver.gd")
-const Pad := preload("res://scripts/input/pad.gd")
-const ThemeS := preload("res://scripts/ui/theme.gd")
 const Fmt := preload("res://scripts/title_news_fmt.gd")
 
+
 static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
-	var _fac = load("res://scripts/title_news.gd")
+	var Fac = load("res://scripts/title_news.gd")
 	host._news_open = true
 	host._set_title_focus(false)
 	host._news_layer = Control.new()
@@ -66,7 +64,7 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	body.add_theme_constant_override("outline_size", 4)
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.focus_mode = Control.FOCUS_NONE
-	body.text = _fac.news_text(_fac.all_entries(), new_labs)
+	body.text = Fmt.news_text(Fac.all_entries(), new_labs)
 	scroll.add_child(body)
 	var close_btn: Button = host._btn("Close", host._dismiss_news)
 	box.add_child(close_btn)
@@ -76,35 +74,3 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 		box.add_child(older_btn)
 	Fmt.lock_news_focus(close_btn, older_btn)
 	close_btn.grab_focus()
-
-static func entry_bbcode(e: Dictionary, is_new: bool) -> String:
-	var _fac = load("res://scripts/title_news.gd")
-	var lab := str(e.get("label", "")).strip_edges()
-	if lab == "":
-		lab = "Build"
-	var head := "[font_size=24][b]%s[/b][/font_size]" % _fac.esc_bb(lab)
-	if is_new:
-		head = "[color=#f0d878]%s[/color]" % head
-	var lines: PackedStringArray = [head]
-	var points: Variant = e.get("points", [])
-	if points is Array:
-		for p in points:
-			if typeof(p) == TYPE_DICTIONARY:
-				var text := str((p as Dictionary).get("text", "")).strip_edges()
-				if text != "":
-					lines.append("\u2022 %s" % _fac.md_inline(text))
-				var subs: Variant = (p as Dictionary).get("subs", [])
-				if subs is Array:
-					for sub in subs:
-						var st := str(sub).strip_edges()
-						if st != "":
-							lines.append("\t\u25e6 %s" % _fac.md_inline(st))
-			else:
-				var pt := str(p).strip_edges()
-				if pt != "":
-					lines.append("\u2022 %s" % _fac.md_inline(pt))
-	var summary := str(e.get("summary", "")).strip_edges()
-	if summary != "":
-		lines.append("")
-		lines.append("[i]Summary:[/i] %s" % _fac.md_inline(summary))
-	return "\n".join(lines)
