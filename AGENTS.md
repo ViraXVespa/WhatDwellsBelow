@@ -73,7 +73,7 @@ Keep the Godot output log clean. New or rewritten lines must not introduce these
 - Integer division: write `int(a / float(b))` when the discarded remainder is intended. Do not leave bare `int / int`.
 - Enum fields (`JoyAxis`, `JoyButton`, `Key`, `MouseButton`): assign with `as ThatEnum`, not a raw int.
 - Narrowing float → int / `Vector2i`: wrap the float in `int(...)` at the write site.
-- Private facade fields used only by a sibling helper (`host._news_scroll`, `host._list_root`, HUD prompt slots): keep the var on the host. Do not delete the field. Project-wide, `unused_private_class_variable` is ignored in `project.godot` (`[debug] gdscript/warnings/unused_private_class_variable=0`) because hostify helpers read those fields via `host._...` — do not re-enable it without a new plan, and do not sprinkle per-var `@warning_ignore` for this warning.
+- Private facade fields used only by a sibling helper (`host._news_scroll`, `host._list_root`, HUD prompt slots): keep the var on the host. Do not delete the field. Project-wide, `unused_private_class_variable` is ignored in `project.godot` (`[debug] gdscript/warnings/unused_private_class_variable=0`) because hostify helpers read those fields via `host._...` - do not re-enable it without a new plan, and do not sprinkle per-var `@warning_ignore` for this warning.
 - Do not use `@warning_ignore` to hide a real unused value or a live shadow.
 
 ## Script cap (10KB)

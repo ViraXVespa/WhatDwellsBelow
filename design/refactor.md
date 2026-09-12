@@ -76,6 +76,7 @@ Reuse against an existing owner is call-site edits plus using a function that al
 - Otherwise `var name: Type = ...`.
 - Typed `func` / `static func` args and `->` return.
 - Also follow `AGENTS.md` → GDScript warnings (no `wrap` / `mini` / `name` / `size` locals, explicit `int()` on integer division and narrowing, enum `as` casts, `_` unused params).
+- `unused_private_class_variable` is project-ignored (hostify `host._` fields). Do not add per-var `@warning_ignore` for it; see `AGENTS.md` -> GDScript warnings.
 
 Do not retype a whole file for style.
 
