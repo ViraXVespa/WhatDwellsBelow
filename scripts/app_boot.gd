@@ -112,7 +112,7 @@ static func _unhandled_input(host: Node, event: InputEvent) -> void:
 	if host._in_world() and not host.ui_open and event.is_action_pressed("inventory"):
 		if host.pause_menu and host.pause_menu.has_method("show_inventory"):
 			host.pause_menu.show_inventory()
-		host.get_viewport().set_input.as_handled()
+		host.get_viewport().set_input_as_handled()
 
 
 
