@@ -3,6 +3,18 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.12",
+			"points": [
+				{
+					"text": "Bag-full floor loot shows one toast that can expire. Standing on the pile no longer pins that message or blocks later alerts."
+				},
+				{
+					"text": "HP orbs stay on the ground when you are already at full health, so a later wound can still take them."
+				}
+			],
+			"summary": "Couch-readable toasts and HP orbs that wait until you actually need them."
+		},
+		{
 			"label": "0.3.11",
 			"points": [
 				{
