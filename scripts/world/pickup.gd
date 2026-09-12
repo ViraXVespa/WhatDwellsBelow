@@ -9,6 +9,7 @@ var item: Dictionary = {}
 var spr: Sprite3D
 var label: Label3D
 var life := 18.0
+var _block_t := 0.0
 
 
 static func drop_item(it: Dictionary, pos: Vector3) -> void:
@@ -75,6 +76,8 @@ func _visual() -> void:
 
 
 func _process(delta: float) -> void:
+	if _block_t > 0.0:
+		_block_t = maxf(0.0, _block_t - delta)
 	if life > 0.0:
 		life -= delta
 		if life <= 0.0:
@@ -89,12 +92,17 @@ func _process(delta: float) -> void:
 	var p := tree.get_first_node_in_group("player")
 	if p is Node3D:
 		var d := Vector2((p as Node3D).global_position.x - global_position.x, (p as Node3D).global_position.z - global_position.z).length()
-		if d < 0.55:
+		if d < 0.55 and _block_t <= 0.0:
 			_take(p)
 
 
 func _take(p: Node) -> void:
 	if kind == "hp" and p.has_method("heal"):
+		var hp_now: float = float(p.get("hp"))
+		var hp_max: float = float(p.get("max_hp"))
+		if hp_now >= hp_max:
+			_block_t = 0.45
+			return
 		p.heal(App.bal.orb_heal)
 		App.toast("+HP")
 	elif kind == "gold":
@@ -102,6 +110,7 @@ func _take(p: Node) -> void:
 		App.toast("+%dg" % maxi(1, amount))
 	elif kind == "item":
 		if not App.prog.add_item(item):
+			_block_t = 1.2
 			return
 		App.toast(str(item.get("name", "Item")))
 	App.sfx("pickup")

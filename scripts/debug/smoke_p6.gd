@@ -90,4 +90,18 @@ static func p6(host: Node) -> void:
 	ui.close_ui()
 	printerr("P6: food_hot_left=" + str(App.prog.food_left))
 	printerr("P6: loop_ok=" + str(App.extracted and ForgeP.holds_of(App.prog, "weapon", "great_axe").size() > 0 and App.prog.SETS.size() == 8))
+	var cap: int = int(App.bal.bag_cap)
+	App.prog.bag.clear()
+	for i: int in cap:
+		App.prog.bag.append({"kind": "armor", "slot": "head", "name": "Pad", "uid": 8000 + i})
+	App.toast_msg = ""
+	App.toast_t = 0.0
+	var extra: Dictionary = {"kind": "loot", "name": "Spare", "uid": 9001}
+	var blocked: bool = not App.prog.add_to_bag(extra)
+	printerr("P6: bag_full=" + str(App.prog.bag_full()) + " add_blocked=" + str(blocked) + " toast=" + App.toast_msg)
+	App.toast_t = 1.5
+	var hold: float = App.toast_t
+	var extra2: Dictionary = {"kind": "loot", "name": "Spare", "uid": 9002}
+	var blocked2: bool = not App.prog.add_to_bag(extra2)
+	printerr("P6: toast_hold=" + str(App.toast_t) + " hold_ok=" + str(is_equal_approx(App.toast_t, hold) and blocked2 and App.toast_msg == "Bag full."))
 	quit_in(host, 0.4)

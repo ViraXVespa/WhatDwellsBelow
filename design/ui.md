@@ -217,6 +217,7 @@ Triggered on every death or “Dispel”.
 - Floating damage / heal numbers: integers only, rise and fade quickly.
 - Critical hits use yellow + magenta colored damage numbers (no extra “CRIT!” text).
 - Toasts appear for bag-full, level-up, extraction success, and other system events. Short, readable, non-stacking or lightly stacking.
+- Repeating the same toast while it is still on screen MUST NOT reset its timer. Floor loot retries bag-full at a short interval instead of every frame.
 
 ## Live snapshot — title
 

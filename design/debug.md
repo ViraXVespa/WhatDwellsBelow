@@ -273,8 +273,8 @@ Binary (Steam tools build): `C:/Program Files (x86)/Steam/steamapps/common/Godot
 | p2 | Weapon swap, telegraphs, projectiles, FPS estimate |
 | p3 | Floor data, doors, stairs, boss flow |
 | p4 | Roster, named, flee, pressure safety |
-| p5 | Gather nodes, extract UI, puzzle props |
-| p6 | Artifacts, food/potion, forge, quests |
+| p5 | Gather nodes, extract UI, puzzle props, full-HP orb keep |
+| p6 | Artifacts, food/potion, forge, quests, bag-full toast hold |
 | p7 | HUD, pause, debug, recap |
 | p8 | Hub spots, building depth, save backup, archive catalog |
 | p9 | Audio, archive catalog, anim models, playtest hook |

@@ -54,7 +54,7 @@ static func interact(host: Node3D, who: Node) -> String:
 		App.toast("Cache recovered.")
 		host.queue_free()
 		return "The guild cache is yours."
-	if host.kind == "stairs" or host.kind == "crystal":
+	if host.kind == "stairs":
 		if not host.pending:
 			host.pending = true
 			return "Confirm descend to F%d" % (App.floor_n + 1)

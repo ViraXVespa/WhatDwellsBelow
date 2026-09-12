@@ -14,6 +14,7 @@ See also: `design/ui.md`, `design/inventory.md`, `design/save-tech.md`, `design/
 
 - When the player walks over any loot while the bag is at capacity, the item is not picked up.
 - A clear toast is displayed.
+- Standing on the pile MUST NOT keep restarting that toast, so it can expire and later events (level-up, extraction) can still speak.
 - The item remains on the ground and can be picked up later if space is made.
 
 ## Death or “Dispel” during gathering / dash / special

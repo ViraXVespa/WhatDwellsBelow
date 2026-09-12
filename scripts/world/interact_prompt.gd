@@ -7,9 +7,6 @@ static func refresh(host: Node3D) -> void:
 	if host.kind == "stairs":
 		host.locked = not App.boss_dead
 		host.prompt = "Locked. Defeat the guardian." if host.locked else "Descend"
-	elif host.kind == "crystal":
-		host.locked = not App.boss_dead
-		host.prompt = "Locked until the floor is cleared." if host.locked else "Descend"
 	elif host.kind == "loadout_crystal":
 		host.locked = false
 		host.prompt = "Loadout / enter dungeon"

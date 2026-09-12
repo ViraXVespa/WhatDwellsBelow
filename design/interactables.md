@@ -30,6 +30,10 @@ See also: `design/inventory.md`, `design/dungeon.md`, `design/ui.md`, `design/in
 - Chance to drop gold and/or an HP orb (walk-over pickup).
 - Clear smash VFX and SFX required.
 
+## Live snapshot — HP orbs
+
+Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at full HP, the orb stays on the ground and retries after a short wait.
+
 ## Extraction Gates
 
 - Provide the extraction / mailing interface. There are no in-dungeon clerks.
@@ -83,6 +87,10 @@ See also: `design/inventory.md`, `design/dungeon.md`, `design/ui.md`, `design/in
 - Floor Transport Network is locked until the player has reached a floor deeper than the current one.
 - Crystal map zoom is `crystal_zoom` (Tab / Y). That bind appears in the menu footer, not in the zoom status line.
 - Interaction prompts MUST stay TV-readable and gamepad-first. Do not prefix world verbs with `A:`.
+
+## Live snapshot — interact prompts
+
+World `prompt` strings are verbs only (`Descend`, `Gather`, `Activate crystal`, `Open the guardian door`). `hud.gd` attaches the current-scheme `interact` glyph. Hostile crystals use text-only “Clear the area to activate.” Stairs confirm is a second press; crystals never call `next_floor`.
 
 ## HUD prompt
 
