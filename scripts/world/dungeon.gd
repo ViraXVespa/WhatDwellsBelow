@@ -29,7 +29,6 @@ var map_rect: TextureRect
 var frame_acc := 0.0
 var frame_n := 0
 var walls: StaticBody3D
-@warning_ignore("unused_private_class_variable")
 var _cleared := false
 var groups: Dictionary = {}
 var next_group := 1

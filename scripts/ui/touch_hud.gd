@@ -4,37 +4,21 @@ const Draw := preload("res://scripts/ui/touch_hud_draw.gd")
 const PadInput := preload("res://scripts/ui/touch_hud_input.gd")
 
 var root: Control
-@warning_ignore("unused_private_class_variable")
 var _tex: Dictionary = {}
-@warning_ignore("unused_private_class_variable")
 var _move_i := -1
-@warning_ignore("unused_private_class_variable")
 var _btn_i: Dictionary = {}
-@warning_ignore("unused_private_class_variable")
 var _move_origin := Vector2.ZERO
-@warning_ignore("unused_private_class_variable")
 var _move_knob := Vector2.ZERO
-@warning_ignore("unused_private_class_variable")
 var _move_live := false
-@warning_ignore("unused_private_class_variable")
 var _move_r := 96.0
-@warning_ignore("unused_private_class_variable")
 var _btns: Array = []
-@warning_ignore("unused_private_class_variable")
 var _pinch_a := -1
-@warning_ignore("unused_private_class_variable")
 var _pinch_b := -1
-@warning_ignore("unused_private_class_variable")
 var _pinch_dist := 0.0
-@warning_ignore("unused_private_class_variable")
 var _pinch_mid := Vector2.ZERO
-@warning_ignore("unused_private_class_variable")
 var _pan_i := -1
-@warning_ignore("unused_private_class_variable")
 var _pan_at := Vector2.ZERO
-@warning_ignore("unused_private_class_variable")
 var _free: Dictionary = {}
-@warning_ignore("unused_private_class_variable")
 var _park: Dictionary = {}
 
 

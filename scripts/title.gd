@@ -9,7 +9,6 @@ var _busy := false
 var _archives_open := false
 var _news_open := false
 var _news_layer: Control = null
-@warning_ignore("unused_private_class_variable")
 var _news_scroll: ScrollContainer = null
 var _title_btns: Array = []
 

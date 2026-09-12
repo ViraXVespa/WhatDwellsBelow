@@ -96,7 +96,6 @@ var playtest
 var loader
 var touch_hud
 var web_pad
-@warning_ignore("unused_private_class_variable")
 var _menu_loading := false
 var archive_cancel := false
 var archive_job_pid := -1
@@ -112,11 +111,8 @@ var clock := 0.0
 var last_kill := -999.0
 var last_style := "str"
 var kill_times: Array[float] = []
-@warning_ignore("unused_private_class_variable")
 var _seq := 0
-@warning_ignore("unused_private_class_variable")
 var _seq_timer := 0.0
-@warning_ignore("unused_private_class_variable")
 var _seq_down := false
 
 const TITLE_SCENE := "res://scenes/title.tscn"
