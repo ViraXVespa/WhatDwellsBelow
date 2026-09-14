@@ -3,6 +3,18 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.17",
+			"points": [
+				{
+					"text": "Title \u2192 Play holds the loader sheet while Placeholdia\u2019s full yard (including the grass pad and the food stall) is drawn, then puts the camera back to the zoom you set"
+				},
+				{
+					"text": "Web export bakes world-texture mipmaps during the Pages build so first walks hitch less on a new build"
+				}
+			],
+			"summary": "First load into the hub should hitch less, especially zoomed in and walking toward the vendor, without changing your saved camera zoom."
+		},
+		{
 			"label": "0.3.16",
 			"points": [
 				{
