@@ -2,7 +2,7 @@
 
 **Status:** Binding design  
 **Read when:** Changing camp layout, loadout, or hub interactables  
-**Code:** `scripts/world/camp.gd` (facade), `scripts/world/camp_build.gd` (ground, guild, roofs), `scripts/world/camp_view.gd` (fence), `scripts/world/interact.gd`, `scripts/world/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`  
+**Code:** `scripts/world/camp.gd` (facade), `scripts/world/camp_warm.gd` (Title → Play GPU frame), `scripts/world/camp_build.gd` (ground, guild, roofs), `scripts/world/camp_view.gd` (fence), `scripts/world/camera_rig.gd`, `scripts/world/interact.gd`, `scripts/world/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`  
 **See also:** `design/inventory.md`, `design/ui.md`, `design/gear-ui.md`, `design/combat.md`, `design/handoff-anvil.md`
 
 ## Required Interactables
@@ -121,6 +121,8 @@ Live scripts: board `scripts/ui/gear_board/gear_board.gd` in `gear_mode="anvil"`
 - `App.play_from_menu()` / `enter_dungeon()` use loading overlay for hub/dungeon assets (`design/ui.md`).
 - Title → Play: `loader.begin()` puts a near-opaque black sheet (`#000000` at alpha `0xFE`) over the viewport for the whole load. The 3D world still draws under it so WebGL can compile and upload. The player must not see the square pop or flicker.
 - After camp is ready, the overlay status is `Warming things up for you...`. That beat applies every loaded idle / `idle_to_walk` / walk / `walk_to_idle` frame for all eight facings (batched across frames), one dummy `move_and_slide`, and a short hold on the down idle. The player body stays visible under the sheet. The player position is pinned so the warmup nudge does not walk them across the yard. There is no empty “The square holds.” hold.
+- During that same beat, `camp_warm.gd` moves the camera to the yard center and sets `cam.size` wide enough to frame the full slab plus `GRASS_PAD` (stall, guild, banner, outer grass). `ZOOM_MIN` is not wide enough. `App.cam_zoom` is not written. `camera_rig.warm_hold` ignores player `follow` so the physics tick cannot snap zoom back mid-warm.
+- Before `loader.finish()`, warmup restores the user’s zoom and follow target, then waits two frames so the reveal uses the saved camera. The player must not see the pulled-back view.
 - Extract-wake / `go_camp()` after a run does not call that warmup overlay.
 - Player body and adrenaline aura stay hidden until they have a real texture / non-zero alpha on first spawn. Warmup then keeps the body visible under the sheet.
 - Hub ground: grass outside the yard, one packed-dirt fill, cobble-tinted path (`plaza_grass` / `plaza_ground` / `plaza_path`). No scattered dark dirt patches.

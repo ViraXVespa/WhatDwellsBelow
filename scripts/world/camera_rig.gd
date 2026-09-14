@@ -1,8 +1,9 @@
-extends Node3D
+﻿extends Node3D
 
 const T := preload("res://scripts/data/tunables.gd")
 
 var cam: Camera3D
+var warm_hold := false
 
 
 func _ready() -> void:
@@ -54,9 +55,35 @@ func apply_zoom(z: float) -> void:
 		return
 	var zoom := clampf(z, T.ZOOM_MIN, T.ZOOM_MAX)
 	cam.size = 1080.0 / T.PX / zoom
+	cam.far = 140.0
+
+
+func apply_size(s: float) -> void:
+	if cam == null:
+		return
+	var size: float = maxf(s, 0.01)
+	cam.size = size
+	cam.far = maxf(140.0, size * 3.0)
+
+
+func frame_hub(center: Vector3, size: float) -> void:
+	warm_hold = true
+	global_position = center
+	_place_local()
+	apply_size(size)
+	_look()
+
+
+func restore_user() -> void:
+	warm_hold = false
+	apply_zoom(App.cam_zoom)
 
 
 func follow(target: Vector3) -> void:
+	if warm_hold:
+		_place_local()
+		_look()
+		return
 	global_position = target
 	_place_local()
 	apply_zoom(App.cam_zoom)

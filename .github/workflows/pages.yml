@@ -113,6 +113,7 @@ jobs:
           set -euo pipefail
           SITE="$PWD/site"
           mkdir -p "$SITE"
+          python3 tools/enable_texture_mips.py --root "$PWD"
           "$GODOT_BIN" --headless --path "$PWD" --import
           "$GODOT_BIN" --headless --path "$PWD" --export-release Web "$SITE/index.html"
           python3 tools/web_postexport.py "$SITE"

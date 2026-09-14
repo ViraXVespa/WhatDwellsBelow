@@ -8,6 +8,7 @@ const SpotS := preload("res://scripts/world/interact.gd")
 const UiS := preload("res://scripts/ui/progress_ui.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
 const DummyS := preload("res://scripts/combat/dummy.gd")
+const Warm := preload("res://scripts/world/camp_warm.gd")
 
 var player: CharacterBody3D
 var dummy: CharacterBody3D
@@ -51,6 +52,7 @@ func world_ui() -> Node:
 
 
 func warmup() -> void:
+	Warm.frame(self)
 	if player and player.has_method("warmup"):
 		player.warmup()
 	if dummy:
@@ -59,6 +61,10 @@ func warmup() -> void:
 		dummy.move_and_slide()
 		dummy.velocity = stored
 		dummy.global_position.y = 0.0
+
+
+func warmup_restore() -> void:
+	Warm.restore(self)
 
 
 func _process(_delta: float) -> void:

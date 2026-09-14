@@ -127,6 +127,12 @@ static func _warmup_hub(host: Node) -> void:
 			Anim.warmup_physics(p)
 		await host.get_tree().process_frame
 		extra += 1
+	if scene and scene.has_method("warmup_restore"):
+		scene.warmup_restore()
+	var rest: int = 0
+	while rest < 2:
+		await host.get_tree().process_frame
+		rest += 1
 	if host.loader:
 		host.loader.set_progress(0.98)
 
@@ -158,12 +164,19 @@ static func hub_preload_paths(host: Node) -> PackedStringArray:
 		"res://scripts/ui/progress_ui.gd",
 		"res://assets/tiles/plaza_grass.png",
 		"res://assets/tiles/plaza_ground.png",
-		"res://assets/tiles/plaza_ground_b.png",
+		"res://assets/tiles/plaza_path.png",
+		"res://assets/tiles/plaza_roof.png",
+		"res://assets/tiles/plaza_wall.png",
 		"res://assets/sprites/buildings/guild.png",
 		"res://assets/sprites/buildings/guild_reception.png",
 		"res://assets/sprites/buildings/stall.png",
 		"res://assets/props/banner.png",
 		"res://assets/sprites/props/banner.png",
+		"res://assets/sprites/props/welcome_banner.png",
+		"res://assets/sprites/npcs/vendor.png",
+		"res://assets/sprites/npcs/receptionist.png",
+		"res://assets/sprites/npcs/shopkeep.png",
+		"res://assets/fx/dummy.png",
 		"res://assets/audio/music_hub.wav",
 	])
 	var kind: String = host.character_type if host.character_type in ["male", "female"] else "male"
