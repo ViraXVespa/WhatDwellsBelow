@@ -3,6 +3,23 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.16",
+			"points": [
+				{
+					"text": "Web boot uses a custom shell instead of the stock Godot loader",
+					"subs": [
+						"Wordmark, amber bar, and live percent while wasm and pck download",
+						"New-build cache wipe is a labeled phase before the engine starts",
+						"Small Made with Godot credit stays in the corner"
+					]
+				},
+				{
+					"text": "Title \u2192 Play loader is unchanged"
+				}
+			],
+			"summary": "Browser loads and updates now show themed progress on the web export; the in-game Placeholdia hitch sheet is the same as before."
+		},
+		{
 			"label": "0.3.15",
 			"points": [
 				{
