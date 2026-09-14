@@ -3,6 +3,31 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.18",
+			"points": [
+				{
+					"text": "Crystal combat level is walk distance from the entrance only",
+					"subs": [
+						"Entrance crystal is always the floor\u2019s first CL (CL 1 on floor 1)",
+						"Enemy packs still use \u00b11 CL jitter"
+					]
+				},
+				{
+					"text": "Extra crystals sit on 2-CL walk bands with a 56-cell gap",
+					"subs": [
+						"First extra is a find if a band fits; later extras roll a 50% chance, cap 6"
+					]
+				},
+				{
+					"text": "Long dead-end spurs still get a warp; short stubs do not",
+					"subs": [
+						"Spur must walk 28 cells to a multi-exit room and stay 32 cells from spawn"
+					]
+				}
+			],
+			"summary": "Floor crystals no longer inherit enemy CL jitter or cluster on short spurs; entrance is CL 1 and extras spread across the floor."
+		},
+		{
 			"label": "0.3.17",
 			"points": [
 				{
