@@ -5,7 +5,7 @@
 const Schema := preload("res://scripts/data/balance_schema.gd")
 const Enemies := preload("res://scripts/data/balance_enemies.gd")
 const Migrate := preload("res://scripts/data/balance_migrate.gd")
-const BAL_REV := 11
+const BAL_REV := 12
 
 var move_speed := 4.5
 var dash_speed_mult := 2.8
@@ -114,9 +114,11 @@ var cycle_hp := 0.2
 var crystal_min_sep := 56
 var crystal_clear_r := 12
 var crystal_arrive_r := 8
-var crystal_extra_max := 4
-var crystal_place_chance := 0.62
-var crystal_deadend_sep := 18
+var crystal_extra_max := 6
+var crystal_place_chance := 0.50
+var crystal_deadend_sep := 32
+var crystal_cl_band := 2
+var crystal_deadend_len := 28
 
 var player_max_hp := 100.0
 var player_hurt_iframe := 0.35

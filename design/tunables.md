@@ -11,7 +11,7 @@ Suggested starts came from the old GDD Appendix A.
 Live defaults are what `balance.gd` / `tunables.gd` ship today.  
 If you change a live default, update this table in the same slice.
 
-`BAL_REV` is 9. Old saves pick up the dungeon/combat retune through `balance_migrate.gd`.
+`BAL_REV` is 12. Old saves pick up shipped default retunes through `balance_migrate.gd`.
 
 Forge keys that are not yet on `balance.gd` fall back inside `progress_forge.gd` / `gear_roll.gd`. Add them to balance + the debug menu when that slice lands.
 
@@ -128,12 +128,14 @@ Forge keys that are not yet on `balance.gd` fall back inside `progress_forge.gd`
 | Geo chunk (cells) | — | **32** | `dungeon_geo_stream.gd` |
 | Geo ring in / out | — | **1 / 2** | Chunks around the player |
 | Geo jobs per follow | — | **3** | 9 on a long tick |
-| Crystal min separation | 56 cells | **56** | Between band crystals |
+| Crystal min separation | 56 cells | **56** | Between every crystal, including dead-ends |
 | Crystal clear radius | 12 cells | **12** | Enemies that block activation |
 | Crystal arrive radius | 8 cells | **8** | No respawn after a hop |
-| Crystal extra max | 4 | **4** | Plus the entrance crystal |
-| Crystal place chance | 0.62 | **0.62** | Per extra CL band after the first extra |
-| Crystal dead-end sep | 18 | **18** | Dead-end crystals ignore the band cap |
+| Crystal extra max | 6 | **6** | Plus the entrance crystal |
+| Crystal place chance | 0.50 | **0.50** | Per extra CL band after the first extra |
+| Crystal CL band | 2 | **2** | Walk-level CL per placement band |
+| Crystal dead-end sep | 32 | **32** | Minimum Manhattan from spawn |
+| Crystal dead-end length | 28 | **28** | Spur walk to the nearest multi-exit room |
 
 ## Enemies and combat level
 
@@ -170,7 +172,7 @@ Forge keys that are not yet on `balance.gd` fall back inside `progress_forge.gd`
 | `xp_per_kill` | **22** |
 | `xp_kill_hp` / `xp_kill_def` | **11.0 / 11.0** |
 
-Roster HP lives in `balance_enemies.gd` (about 2× the pre-retune table). Floor-1 full clear of the budgeted spawn list targets combat level ~17. Enemy / area CL is also the dungeon drop item level.
+Roster HP lives in `balance_enemies.gd` (about 2× the pre-retune table). Floor-1 full clear of the budgeted spawn list targets combat level ~17. Enemy / area CL is also the dungeon drop item level. Crystal labels use `Threat.walk_level` (no jitter). Enemies keep `Threat.level_at` (walk + jitter).
 
 ## Progression and economy
 

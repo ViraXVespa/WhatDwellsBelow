@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 
 static func rows() -> Array:
@@ -88,8 +88,10 @@ static func rows() -> Array:
 		["crystal_min_sep", 16.0, 160.0, 1.0],
 		["crystal_clear_r", 4.0, 32.0, 1.0],
 		["crystal_arrive_r", 4.0, 24.0, 1.0],
-		["crystal_extra_max", 0.0, 8.0, 1.0],
+		["crystal_extra_max", 0.0, 12.0, 1.0],
 		["crystal_place_chance", 0.15, 1.0, 0.01],
+		["crystal_cl_band", 1.0, 8.0, 1.0],
+		["crystal_deadend_len", 8.0, 80.0, 1.0],
 		["player_max_hp", 20.0, 400.0, 5.0],
 		["player_hurt_iframe", 0.05, 1.5, 0.05],
 		["leash_range", 3.0, 24.0, 0.5],

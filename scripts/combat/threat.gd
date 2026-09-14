@@ -1,9 +1,12 @@
-extends Object
+﻿extends Object
 
 ## Enemy combat level from walk-distance to the floor entrance.
 ## Each floor spans 20 combat levels: floor 1 is 1–20, floor 2 is 21–40,
 ## and so on. End-of-floor uses a high percentile of all floor cells so
 ## the guardian room is not the unique floor-cap landmark.
+##
+## walk_level is the raw walk-distance CL (crystals / bands).
+## level_at adds enemy_cl_jitter on top of that (enemies only).
 ##
 ## Rank multipliers compare enemy combat_lv to the player's combat
 ## level (max style). Off-style play shifts the player level toward
@@ -31,21 +34,28 @@ static func floor_hi(floor_n: int) -> int:
 	return per_floor() * maxi(1, floor_n)
 
 
-static func level_at(floor_n: int, cell: Vector2i, dist: PackedInt32Array, w: int, cap: int) -> int:
-	var lo := floor_lo(floor_n)
-	var hi := floor_hi(floor_n)
-	var walk := 0
+static func walk_level(floor_n: int, cell: Vector2i, dist: PackedInt32Array, w: int, cap: int) -> int:
+	var lo: int = floor_lo(floor_n)
+	var hi: int = floor_hi(floor_n)
+	var walk: int = 0
 	if w > 0:
-		var i := cell.y * w + cell.x
+		var i: int = cell.y * w + cell.x
 		if i >= 0 and i < dist.size() and dist[i] >= 0:
 			walk = dist[i]
-	var t := clampf(float(walk) / float(maxi(1, cap)), 0.0, 1.0)
-	var lv := int(round(lerpf(float(lo), float(hi), t)))
-	var jmax := 0
+	var t: float = clampf(float(walk) / float(maxi(1, cap)), 0.0, 1.0)
+	var lv: int = int(round(lerpf(float(lo), float(hi), t)))
+	return clampi(lv, lo, hi)
+
+
+static func level_at(floor_n: int, cell: Vector2i, dist: PackedInt32Array, w: int, cap: int) -> int:
+	var lo: int = floor_lo(floor_n)
+	var hi: int = floor_hi(floor_n)
+	var lv: int = walk_level(floor_n, cell, dist, w, cap)
+	var jmax: int = 0
 	if App.bal:
 		jmax = maxi(0, int(App.bal.enemy_cl_jitter))
 	if jmax > 0:
-		var h := absi((cell.x * 73856093) ^ (cell.y * 19349663) ^ (floor_n * 83492791))
+		var h: int = absi((cell.x * 73856093) ^ (cell.y * 19349663) ^ (floor_n * 83492791))
 		lv += (h % (jmax * 2 + 1)) - jmax
 	return clampi(lv, lo, hi)
 

@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 
 static func rows() -> Array:
@@ -6,7 +6,7 @@ static func rows() -> Array:
 		["ambush_pack_min", 1.0, 6.0, 1.0],
 		["ambush_pack_max", 1.0, 8.0, 1.0],
 		["pressure_waves", 0.0, 12.0, 1.0],
-		["crystal_deadend_sep", 4.0, 48.0, 1.0],
+		["crystal_deadend_sep", 4.0, 80.0, 1.0],
 		["mine_hits", 3.0, 5.0, 1.0],
 		["mine_time", 0.4, 6.0, 0.1],
 		["mine_chance", 0.05, 1.0, 0.01],

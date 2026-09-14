@@ -1,4 +1,4 @@
-# Dungeon generation and floors
+﻿# Dungeon generation and floors
 
 Status: binding design + live snapshot
 Read when: changing gen, floor flow, streaming, boss doors, fog, or crystals
@@ -28,7 +28,7 @@ Halls are carved 2–4 tiles wide. Width 3 is the mode. Width changes at `hall_w
 Placement rules and probabilities for crystal, stairs, Extraction Gates, mining nodes, wood nodes, breakables, shrine, campfire, ghost shop, puzzle elements, chests, and enemy bases are fully tunable.
 Safe rooms (Extraction Gate, ghost shop, puzzle) MUST remain enemy-free.
 
-Dead-end termini (leaf rooms with one exit, plus 1-neighbor hall cells) are recorded in `data.deadends`. Each terminus that clears `crystal_deadend_sep` gets a floor crystal so the player can leave the spur without walking the whole branch back.
+Dead-end termini (leaf rooms with one exit, plus 1-neighbor hall cells) are recorded in `data.deadends`. A terminus gets a convenience crystal only when the spur walk to the nearest multi-exit room is at least `crystal_deadend_len`, it clears `crystal_deadend_sep` from spawn, and it clears `crystal_min_sep` from every already-placed crystal.
 
 ## Enemy bases
 
@@ -71,9 +71,11 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 ## Floor crystals
 
 - Each floor places the entrance crystal at spawn plus extra crystals in combat rooms.
-- At most one crystal per combat-level band (`Threat.level_at` from walk-distance to the entrance). A band is not required to receive a crystal.
-- Extra crystals MUST keep a tunable minimum separation from the entrance and from each other.
-- Dead-end crystals ignore the per-band cap. They still honor `crystal_deadend_sep`.
+- Crystal labels and placement bands use walk-distance CL only (`Threat.walk_level`). `enemy_cl_jitter` applies to enemies, not crystals.
+- The entrance crystal is always `floor_lo` (CL 1 on floor 1).
+- A placement band is `crystal_cl_band` combat levels wide (live default 2). At most one non-dead-end crystal per band. A band is not required to receive a crystal.
+- Extra crystals MUST keep `crystal_min_sep` from the entrance and from each other. Separation is checked on the final cell after the room snap.
+- Dead-end crystals ignore the per-band cap. They still need a long spur (`crystal_deadend_len`), `crystal_deadend_sep` from spawn, and `crystal_min_sep` from every other crystal.
 - Layout lives in `crystal_place.gd`. Bind, warp, silence, and menus live in `crystal_net.gd`.
 - The entrance crystal is bound on arrival. Any other crystal is unbound until the player clears enemies in its area (`crystal_clear_r`) and interacts.
 - Bound crystals open the transport menu. They do not descend.
@@ -111,9 +113,11 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 | `crystal_min_sep` | 56 |
 | `crystal_clear_r` | 12 |
 | `crystal_arrive_r` | 8 |
-| `crystal_extra_max` | 4 |
-| `crystal_place_chance` | 0.62 |
-| `crystal_deadend_sep` | 18 |
+| `crystal_extra_max` | 6 |
+| `crystal_place_chance` | 0.50 |
+| `crystal_deadend_sep` | 32 |
+| `crystal_cl_band` | 2 |
+| `crystal_deadend_len` | 28 |
 
 `gen.gd` clamps to minimum 24×24 and at least 6 rooms.
 Boss room is farthest from spawn that still meets `_min_boss_sep = max(16, max(w,h) * 0.5)`.
