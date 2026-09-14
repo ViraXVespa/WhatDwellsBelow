@@ -1,4 +1,4 @@
-# PC offload (Bot + Build)
+﻿# PC offload (Bot + Build)
 
 Status: binding for agents on a local checkout  
 Read when: measuring scripts, planning splits, verifying after edits, or cutting token use  
@@ -27,6 +27,7 @@ Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. A
 | Design doc sizes | `powershell -File tools/list_oversize_docs.ps1` (optional `-OverKb 8`) | `_logs/oversize-docs/summary.txt` |
 | Write UTF-8 body (no PS expansion) | pipe single-quoted here-string to `python tools/write_utf8_file.py --path ...` (optional `--bom`, `--b64`) | (writes the path; no summary) |
 | Run ephemeral agent Python | `powershell -File tools/run_agent_py.ps1 -Script _logs/agent-py/foo.py` (optional `-KeepScript`) | `_logs/agent-py/summary.txt` |
+| Bake 3D texture mipmaps | `python tools/enable_texture_mips.py` (optional `--root`, `--dry-run`) | (stdout counts; rewrites `.import` under `assets/sprites|tiles|props|fx`) |
 | Oversize inventory | `powershell -File tools/list_oversize_scripts.ps1` (optional `-OverKb 5` or `10`) | `_logs/oversize/summary.txt` |
 | Func-level inventory | `powershell -File tools/summarize_scripts.ps1` (optional `-OverKb 5`, `-TopFuncs 8`, `-Path scripts/...`) | `_logs/script-summary/summary.txt` |
 | Facade + siblings by size | `powershell -File tools/list_facade_cluster.ps1 -Facade scripts/combat/enemy.gd` | `_logs/facade-cluster/summary.txt` |
@@ -36,6 +37,8 @@ Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. A
 | Hostify lint (advisory) | `powershell -File tools/lint_hostify.ps1` | `_logs/hostify-lint/summary.txt` |
 | Post-split gate (Bot) | `powershell -File tools/run_post_split_gate.ps1` (optional `-WithSmokes`, `-Force`) | `_logs/post-split-gate/summary.txt` |
 | Build gate (Build) | `powershell -File tools/run_build_gate.ps1` (optional `-SkipImport`, `-OverKb 10`, `-Force`) | `_logs/build-gate/summary.txt` |
+
+`tools/export_web.ps1` runs `enable_texture_mips.py` before Godot `--import`. Do not invent a second bake step after the PCK is packed.
 
 ## Who uses what
 
@@ -56,3 +59,4 @@ Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. A
 ### Web / chat
 
 - No requirement to run these. Cap still applies in Phase 6 per `design/web-session.md`.
+- Mip bake is export-side (`enable_texture_mips.py`); the User runs `export_web.ps1` when shipping Pages.

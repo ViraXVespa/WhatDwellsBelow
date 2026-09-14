@@ -2,8 +2,8 @@
 
 Status: binding design  
 Read when: changing movement, collision, facing, or character select  
-Code: `scripts/world/player.gd`, `player_anim.gd`, `facing.gd`  
-See also: `design/input.md`, `design/combat.md`, `design/art-pipeline.md`, `design/art-i2v.md`, `design/art-pack.md`
+Code: `scripts/world/player.gd`, `player_anim.gd`, `player_anim_load.gd`, `player_anim_loco.gd`, `facing.gd`  
+See also: `design/input.md`, `design/combat.md`, `design/art-pipeline.md`, `design/art-i2v.md`, `design/art-pack.md`, `design/hub.md`
 
 ## Character selection
 
@@ -43,3 +43,5 @@ See also: `design/input.md`, `design/combat.md`, `design/art-pipeline.md`, `desi
 `PLAYER_BODY = Vector3(0.42, 0.78, 0.32)`, `PLAYER_H = 1.55`, `MOVE_EPS = 0.12`, `WALK_FPS = 8`.  
 `App.character_type` is `"male"` or `"female"`.  
 Live `player_anim.gd` plays unarmed `idle` stills, a short `idle_to_walk`, looping `walk`, and a short stop (`walk_to_idle` or reversed `idle_to_walk` from `loc_foot`) from the locked Bible I2V harvest (`assets/sprites/player/{male,female}/`). Packer (`tools/pack_locomotion.py`) cuts start/stop as the last/first few frames around one self-similar stride loop. Basic attacks and specials are unarmed Down oneshot harvest (`tools/pack_oneshot.py`) for great-axe / staff / longbow on both genders (specials currently copy the attack Down strip); missing facings fall back to Down. **Those Down attack/special strips are placeholders.** Replace them at the next week’s first Grok Build session (User bringing a new I2V pipeline). `pack_oneshot.py` lock_x uses the 128 idle still, not the raw Bible cell. Basic attack frames play by `atk_t / duration`, not `atk_fps`. Gather / death / Dispel still use older baked sheets. Equip overlays remain stats-adjacent carry art and no longer replace the idle still. Engine blood pools for death / “Dispel” are not shipped yet.
+
+Title → Play hub warmup (`PlayerAnim.warmup` / `warmup_texs`, driven from `AppFlow._warmup_hub`) applies every loaded idle / start / walk / stop frame for all eight facings while the body stays visible under the solid loader sheet. It does not hide the sprite. A tiny `move_and_slide` is restored to the spawn point so the first real stick is not the first physics or GPU use. Extract-wake does not run that pass.

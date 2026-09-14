@@ -1,6 +1,7 @@
 ﻿extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
+const Anim := preload("res://scripts/world/player_anim.gd")
 
 
 static func enter_dungeon(host: Node) -> void:
@@ -87,6 +88,12 @@ static func play_from_menu_async(host: Node) -> void:
 	host._menu_loading = false
 
 
+static func _hub_player(host: Node, scene: Node) -> Node:
+	if scene and ("player" in scene) and scene.player:
+		return scene.player
+	return host.get_tree().get_first_node_in_group("player")
+
+
 static func _warmup_hub(host: Node) -> void:
 	if host.loader:
 		host.loader.set_status("Warming things up for you...")
@@ -96,14 +103,32 @@ static func _warmup_hub(host: Node) -> void:
 	var scene: Node = host.get_tree().current_scene
 	if scene and scene.has_method("warmup"):
 		scene.warmup()
-	else:
-		var p: Node = host.get_tree().get_first_node_in_group("player")
-		if p and p.has_method("warmup"):
-			p.warmup()
+	var p: Node = _hub_player(host, scene)
+	if p and p.has_method("warmup") and (scene == null or not scene.has_method("warmup")):
+		p.warmup()
+	if p:
+		var texs: Array = Anim.warmup_texs(p)
+		var n: int = texs.size()
+		var i: int = 0
+		while i < n:
+			Anim.apply_tex(p, texs[i])
+			if i % 2 == 0:
+				Anim.warmup_physics(p)
+			if host.loader and n > 0:
+				host.loader.set_progress(0.94 + 0.04 * float(i + 1) / float(n))
+			await host.get_tree().process_frame
+			i += 1
+		var down: Texture2D = Anim.pose_tex(p, "down")
+		if down:
+			Anim.apply_tex(p, down)
+	var extra: int = 0
+	while extra < 4:
+		if p:
+			Anim.warmup_physics(p)
+		await host.get_tree().process_frame
+		extra += 1
 	if host.loader:
 		host.loader.set_progress(0.98)
-	await host.get_tree().process_frame
-	await host.get_tree().process_frame
 
 
 static func _ease_progress(host: Node, lo: float, hi: float, sec: float) -> void:
@@ -145,8 +170,12 @@ static func hub_preload_paths(host: Node) -> PackedStringArray:
 	var dirs := PackedStringArray(["up", "up_right", "right", "down_right", "down", "down_left", "left", "up_left"])
 	for d in dirs:
 		paths.append("res://assets/sprites/player/%s/idle_%s.png" % [kind, d])
-		for i in 4:
+		var i: int = 0
+		while i < 8:
 			paths.append("res://assets/sprites/player/%s/walk_%s_%d.png" % [kind, d, i])
+			paths.append("res://assets/sprites/player/%s/idle_to_walk_%s_%d.png" % [kind, d, i])
+			paths.append("res://assets/sprites/player/%s/walk_to_idle_%s_%d.png" % [kind, d, i])
+			i += 1
 	var out := PackedStringArray()
 	var seen := {}
 	for p in paths:

@@ -1,4 +1,4 @@
-extends RefCounted
+﻿extends RefCounted
 
 const T := preload("res://scripts/data/tunables.gd")
 const Facing := preload("res://scripts/world/facing.gd")
@@ -24,39 +24,57 @@ static func load_sprites(host: Node) -> void:
 	Load.load_sprites(host)
 
 
+static func warmup_texs(host: Node) -> Array:
+	var out: Array = []
+	if host == null:
+		return out
+	var seen: Dictionary = {}
+	for k in Facing.KEYS:
+		_add_tex(out, seen, pose_tex(host, k))
+		for tex in clip(host.idle_to_walk, k):
+			_add_tex(out, seen, tex)
+		for tex in clip(host.walk, k):
+			_add_tex(out, seen, tex)
+		for tex in clip(host.walk_to_idle, k):
+			_add_tex(out, seen, tex)
+	return out
+
+
+static func _add_tex(out: Array, seen: Dictionary, tex: Texture2D) -> void:
+	if tex == null:
+		return
+	var id: int = tex.get_instance_id()
+	if seen.has(id):
+		return
+	seen[id] = true
+	out.append(tex)
+
+
+static func warmup_physics(host: Node) -> void:
+	if host == null or not (host is CharacterBody3D):
+		return
+	var body: CharacterBody3D = host
+	var stored: Vector3 = body.velocity
+	body.velocity = Vector3(0.12, 0.0, 0.0)
+	body.move_and_slide()
+	body.velocity = stored
+	body.global_position.y = 0.0
+
+
 static func warmup(host: Node) -> void:
 	if host == null:
 		return
 	if host.body:
-		host.body.visible = false
-	for k in Facing.KEYS:
-		var idle_tex: Texture2D = pose_tex(host, k)
-		if idle_tex:
-			apply_tex(host, idle_tex)
-		var walk_f: Array = clip(host.walk, k)
-		var n: int = mini(walk_f.size(), 4)
-		var i: int = 0
-		while i < n:
-			apply_tex(host, walk_f[i])
-			i += 1
-		var start_f: Array = clip(host.idle_to_walk, k)
-		if not start_f.is_empty():
-			apply_tex(host, start_f[0])
+		host.body.visible = true
+	for tex in warmup_texs(host):
+		apply_tex(host, tex)
+	warmup_physics(host)
 	var down: Texture2D = pose_tex(host, "down")
 	if down:
 		apply_tex(host, down)
-	if host is CharacterBody3D:
-		var body: CharacterBody3D = host
-		var stored: Vector3 = body.velocity
-		body.velocity = Vector3(0.12, 0.0, 0.0)
-		body.move_and_slide()
-		body.velocity = stored
-		body.global_position.y = 0.0
 	host.loc_state = LOC_IDLE
 	host.loc_t = 0.0
 	host.walk_t = 0.0
-	if host.body:
-		host.body.visible = true
 
 
 static func pose_tex(host: Node, key: String) -> Texture2D:

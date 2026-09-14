@@ -2,8 +2,8 @@
 
 Status: binding design
 Read when: changing persistence, web export, autoloads, or perf
-Code: `scripts/data/save_store.gd`, `scripts/app.gd`, `scripts/app_set.gd`, `scripts/display_mode.gd`, `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`, `tools/export_web.ps1`, `tools/export_archives.py`, `tools/web_postexport.py`, `tools/build_changelog.py`, `.github/workflows/version.yml`, `.github/workflows/pages.yml`, `project.godot`, `export_presets.cfg`
-See also: `design/debug.md`, `design/archives.md`, `design/versioning.md`, `design/camera.md`, `design/ui.md`, `design/input.md`
+Code: `scripts/data/save_store.gd`, `scripts/app.gd`, `scripts/app_set.gd`, `scripts/display_mode.gd`, `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`, `tools/export_web.ps1`, `tools/enable_texture_mips.py`, `tools/export_archives.py`, `tools/web_postexport.py`, `tools/build_changelog.py`, `.github/workflows/version.yml`, `.github/workflows/pages.yml`, `project.godot`, `export_presets.cfg`
+See also: `design/debug.md`, `design/archives.md`, `design/versioning.md`, `design/camera.md`, `design/ui.md`, `design/input.md`, `design/audio-visual.md`
 
 ## Save system
 
@@ -77,7 +77,7 @@ Pages live export of HEAD is required. Catalog pin exports are best-effort via `
 - `html/head_include` stashes `beforeinstallprompt` on `window.__wdbInstallPrompt` so a later tap can call `prompt()`, and installs a capturing Escape listener so Esc does not leave browser fullscreen (`design/input.md`).
 - After changing `export_presets.cfg`, rebuild with `powershell -File tools/export_web.ps1`. Do not hand-edit generated `docs/index.html`.
 
-Rebuild live locally with `powershell -File tools/export_web.ps1` into `docs/`. Combined live + archive preview: `powershell -File tools/export_web.ps1 -Archives` into `_pages/`. Both MUST run `tools/web_postexport.py` on the live export directory after Godot writes `index.html`. GitHub Actions deploys Pages from the user push (workspace-stamped `version.json`), then best-effort cached catalog pins via `tools/export_archives.py`, and publishes `/changelog/` from `design/changelog/*.md`. Do not commit archive wasm/pck to `main`. Do not store changelog notes inside the Godot `docs/` tree on `main`.
+Rebuild live locally with `powershell -File tools/export_web.ps1` into `docs/`. Combined live + archive preview: `powershell -File tools/export_web.ps1 -Archives` into `_pages/`. Both MUST run `tools/enable_texture_mips.py` before Godot `--import`, then `tools/web_postexport.py` on the live export directory after Godot writes `index.html`. That mip pass sets `mipmaps/generate=true` on 3D world texture imports (`assets/sprites/`, `assets/tiles/`, `assets/props/`, `assets/fx/`) so the PCK ships baked chains instead of generating them on the player’s machine. `assets/ui/` is left generate-off. GitHub Actions deploys Pages from the user push (workspace-stamped `version.json`), then best-effort cached catalog pins via `tools/export_archives.py`, and publishes `/changelog/` from `design/changelog/*.md`. Do not commit archive wasm/pck to `main`. Do not store changelog notes inside the Godot `docs/` tree on `main`.
 
 ## Web cache
 
@@ -102,6 +102,7 @@ Players MUST receive a new build without an incognito window or a manual cache c
 
 - Consistent 60 FPS minimum on target hardware at all times. Higher frame rates are allowed and desirable.
 - Frame time and memory usage MUST remain stable even on the deepest floors with full enemy and particle load.
+- Title → Play hub hitch work is in `design/hub.md`: bake mips at export, warm loco frames under the solid loader sheet, do not generate mipmaps on the apply hot path.
 
 Streaming in `design/dungeon.md` exists to keep 432×432 floors inside that budget: enemies via `dungeon_stream.gd`, floor/wall meshes and wall collision via `dungeon_geo_stream.gd`.
 

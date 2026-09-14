@@ -72,8 +72,9 @@ static func cycle_all(cur: int, dir := 1) -> int:
 static func apply_sprite(s: Sprite3D) -> void:
 	if s == null:
 		return
-	s.texture_filter = godot_filter(int(App.get("sprite_filter"))) as BaseMaterial3D.TextureFilter
-	if s.texture:
+	var filt: int = int(App.get("sprite_filter"))
+	s.texture_filter = godot_filter(filt) as BaseMaterial3D.TextureFilter
+	if s.texture and mips_on(filt):
 		s.texture = ensure_mips(s.texture)
 
 
@@ -111,6 +112,7 @@ static func ensure_mips(tex: Texture2D) -> Texture2D:
 	var img: Image = tex.get_image()
 	if img == null:
 		return tex
-	if not img.has_mipmaps():
-		img.generate_mipmaps()
+	if img.has_mipmaps():
+		return tex
+	img.generate_mipmaps()
 	return ImageTexture.create_from_image(img)

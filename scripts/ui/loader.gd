@@ -14,6 +14,8 @@ var _track: ColorRect
 var _fill: ColorRect
 var _bar_w := 720.0
 var _bar_h := 20.0
+const DIM_SOFT := Color(0.04, 0.03, 0.025, 0.88)
+const DIM_SOLID := Color(0.0, 0.0, 0.0, 254.0 / 255.0)
 
 
 func _ready() -> void:
@@ -21,7 +23,7 @@ func _ready() -> void:
 	visible = false
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_dim = ColorRect.new()
-	_dim.color = Color(0.04, 0.03, 0.025, 0.88)
+	_dim.color = DIM_SOLID
 	_dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_dim)
 	_title = _lab("Loading", 36, Color(0.95, 0.86, 0.55))
@@ -53,7 +55,7 @@ func begin(heading: String, status: String = "") -> void:
 	_title.text = heading
 	_status.text = status
 	_pct.text = "4%"
-	set_solid(false)
+	set_solid(true)
 	_layout_bar()
 	_fill.position = Vector2.ZERO
 	_fill.size = Vector2(_bar_w * _shown, _bar_h)
@@ -65,9 +67,9 @@ func set_solid(on: bool) -> void:
 	if _dim == null:
 		return
 	if on:
-		_dim.color = Color(0.04, 0.03, 0.025, 1.0)
+		_dim.color = DIM_SOLID
 	else:
-		_dim.color = Color(0.04, 0.03, 0.025, 0.88)
+		_dim.color = DIM_SOFT
 
 
 func set_status(text: String) -> void:

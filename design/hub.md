@@ -30,6 +30,7 @@ All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidi
 
 ### Return / Wake-up
 - After death or “Dispel”, play short **wake-up sequence** (animation + VFX/SFX).
+- Extract-wake does **not** run the title-Play hub warmup overlay. Do not add one unless the User asks.
 
 ### Anvil
 - Shared gear board with **Analyze** and **Forge** tabs. Current tab is highlighted like Pause tabs, not disabled.
@@ -118,8 +119,10 @@ Live scripts: board `scripts/ui/gear_board/gear_board.gd` in `gear_mode="anvil"`
 
 ### Live Snapshot
 - `App.play_from_menu()` / `enter_dungeon()` use loading overlay for hub/dungeon assets (`design/ui.md`).
-- After camp is ready, the overlay status is `Warming things up for you...`. That beat runs player walk/idle frames and a dummy `move_and_slide` so the first stick in the yard does not hitch. The dim goes fully opaque for that beat. There is no empty “The square holds.” hold.
-- Player body and adrenaline aura stay hidden until they have a real texture / non-zero alpha.
+- Title → Play: `loader.begin()` puts a near-opaque black sheet (`#000000` at alpha `0xFE`) over the viewport for the whole load. The 3D world still draws under it so WebGL can compile and upload. The player must not see the square pop or flicker.
+- After camp is ready, the overlay status is `Warming things up for you...`. That beat applies every loaded idle / `idle_to_walk` / walk / `walk_to_idle` frame for all eight facings (batched across frames), one dummy `move_and_slide`, and a short hold on the down idle. The player body stays visible under the sheet. The player position is pinned so the warmup nudge does not walk them across the yard. There is no empty “The square holds.” hold.
+- Extract-wake / `go_camp()` after a run does not call that warmup overlay.
+- Player body and adrenaline aura stay hidden until they have a real texture / non-zero alpha on first spawn. Warmup then keeps the body visible under the sheet.
 - Hub ground: grass outside the yard, one packed-dirt fill, cobble-tinted path (`plaza_grass` / `plaza_ground` / `plaza_path`). No scattered dark dirt patches.
 - Buildings are 3D boxes with `plaza_wall` sides, a `plaza_roof` top plane, and a south-face facade sprite fitted to the box (`min` of width/height pixel size).
 - Roof planes use world-space UVs. The tile samples `plaza_roof.png` from y=10 to height−5 so the baked cap and footer do not repeat.

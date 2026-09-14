@@ -42,6 +42,20 @@ function Invoke-WebPostexport([string]$Dir) {
     python $script $Dir
 }
 
+function Invoke-EnableTextureMips {
+    $script = Join-Path $Root "tools\enable_texture_mips.py"
+    if (-not (Test-Path $script)) {
+        throw "Missing $script"
+    }
+    Write-Host "Enabling 3D texture mipmaps on import..."
+    python $script --root $Root
+    if ($LASTEXITCODE -ne 0) {
+        throw "enable_texture_mips.py failed (exit $LASTEXITCODE)"
+    }
+}
+
+Invoke-EnableTextureMips
+
 Write-Host "Importing live project..."
 Invoke-Godot @("--headless", "--path", $Root, "--import") "godot-import.log"
 

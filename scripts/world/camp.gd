@@ -10,6 +10,7 @@ const Smoke := preload("res://scripts/debug/smoke.gd")
 const DummyS := preload("res://scripts/combat/dummy.gd")
 
 var player: CharacterBody3D
+var dummy: CharacterBody3D
 var ui: CanvasLayer
 var hint: Label
 var prompt: Label
@@ -52,6 +53,12 @@ func world_ui() -> Node:
 func warmup() -> void:
 	if player and player.has_method("warmup"):
 		player.warmup()
+	if dummy:
+		var stored: Vector3 = dummy.velocity
+		dummy.velocity = Vector3(0.12, 0.0, 0.0)
+		dummy.move_and_slide()
+		dummy.velocity = stored
+		dummy.global_position.y = 0.0
 
 
 func _process(_delta: float) -> void:
@@ -107,8 +114,9 @@ func _banner_pole(root: Node3D, pos: Vector3) -> void:
 
 
 func _dummy() -> void:
-	var n: Node3D = DummyS.new()
+	var n: CharacterBody3D = DummyS.new()
 	n.position = Vector3(8.5, 0.0, Build.PATH_Z + 0.5)
+	dummy = n
 	add_child(n)
 
 

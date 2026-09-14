@@ -34,23 +34,26 @@ This phase ends when the User says to move to the next phase.
 
 Identify gaps that block implementation of the Phase 2 plan. Ask questions that cannot be inferred easily.
 
-List every path this goal will emit. Mark each `new`, `revise`, or `delete`. Do not ask the User to paste those files.
+Split the emit list in two. Mark each path `new`, `revise`, or `delete`. Do not ask the User to paste those files.
+
+- **Phase 4 list:** shipping source only (`scripts/`, `scenes/`, `assets/`, `tools/`, `project.godot`, and other non-doc live files).
+- **Phase 7 list:** every documentation path this goal may need (`AGENTS.md`, `design/*.md`, `design/changelog/*.md`, other `.md`). Phase 5 testing can change that list. Do not treat the Phase 7 list as a Phase 4 emit queue.
 
 This phase ends when every pending question is answered. If there are no questions, send only the emit list and go to Phase 4.
 
 ### Phase 4 — File emitting
 
-Emit every fully revised file **one at a time**. Do not emit the next file until the User says to (`Next`, or the same meaning).
+Emit every fully revised **Phase 4** file **one at a time**. Do not emit the next file until the User says to (`Next`, or the same meaning).
+
+Do **not** emit documentation in this phase. That includes `AGENTS.md`, `design/**/*.md`, `design/changelog/**/*.md`, and any other `.md` the slice will update. Those wait for Phase 7 so Phase 5 testing can still change them.
 
 Each emit response is only:
 
-1. One line: the file path (`AGENTS.md`, `design/web-session.md`, `scripts/app.gd`, …).
+1. One line: the file path (`scripts/app.gd`, `tools/export_web.ps1`, …).
 2. A blank line.
 3. The entire file body. No truncations. Include unchanged lines.
 
-Markdown (`AGENTS.md`, `design/*.md`, `design/changelog/*.md`, other `.md`): plain text. No markdown code fence. The User copies the text directly.
-
-Any other source (`.gd`, `.tscn`, `.json`, `.py`, …): wrap the entire body in one code fence for that language. Nothing else in the response except the path line, the blank line, and that fence. GDScript follows `AGENTS.md` → GDScript types.
+Markdown is not a Phase 4 emit. Any Phase 4 source (`.gd`, `.tscn`, `.json`, `.py`, `.ps1`, …): wrap the entire body in one code fence for that language. Nothing else in the response except the path line, the blank line, and that fence. GDScript follows `AGENTS.md` → GDScript types.
 
 If the User replies with observations or changes for the file just emitted, revise that file and emit it again. Do not emit a different file until they say `Next`.
 
@@ -95,7 +98,9 @@ This phase ends when every needed size split has been emitted, or after reportin
 
 ### Phase 7 — Documentation
 
-Check the change against `design/` (and `AGENTS.md` when agent rules changed). Update topic files, code maps, and tunables that the slice made wrong.
+All documentation changes for this goal happen in this phase. That includes topic files, code maps, tunables, protocol files (`AGENTS.md`, `design/web-session.md`, `design/protocol.md`), and the changelog. Phase 5 testing can change what the docs must say. Do not emit those files in Phase 4.
+
+Check the change against `design/` (and `AGENTS.md` when agent rules changed). Update topic files, code maps, and tunables that the slice made wrong. Re-list the Phase 7 paths if testing changed them, wait for confirmation, then emit with Phase 4 cadence (`Next` between files). Markdown emits are plain text and use no code fence.
 
 If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md`. `{label}` is baked `scripts/data/version.json` `label` with patch + 1 (see `design/versioning.md`). Body shape is in that file. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or treat `scripts/data/version.json` as a ledger to hand-edit. Do not write the label into `design/versioning.md`.
 
@@ -105,12 +110,11 @@ Do not emit `design/sessions.md` or `design/session-log.md`. Do not emit `_logs/
 
 If nothing in the docs is wrong and no changelog entry is required, tell the User no documentation changes are required.
 
-If docs need updates: same verify-then-emit flow as Phase 6. List the files, wait for confirmation, then emit with Phase 4 rules.
-
 When documentation is done, this session goal is finished. The User should start a new session for a new goal.
 
 ## Do not
 
+- Do not emit `AGENTS.md`, `design/**/*.md`, or other documentation during Phase 4.
 - Do not treat `design/sessions.md` or `design/session-log.md` as the web hand-off.
 - Do not include those files as files that may require updating during Phase 7.
 - Do not run a Grok Build week pin from this path.

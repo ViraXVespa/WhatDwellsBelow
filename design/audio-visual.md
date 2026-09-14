@@ -1,9 +1,9 @@
-# Audio, visual, splash
+﻿# Audio, visual, splash
 
 Status: binding design + live snapshot  
 Read when: changing music, SFX, splash/title, or art rules  
-Code: `scripts/audio/music.gd`, `scripts/audio/sfx.gd`, `scripts/ui/splash.gd`, `scripts/ui/fs_gate.gd`, `scripts/boot.gd`, `scripts/title.gd`, `scripts/world/sprite_filter.gd`  
-See also: `design/art-pipeline.md`, `design/constraints.md`, `design/camera.md`, `design/debug.md`, `design/ui.md`
+Code: `scripts/audio/music.gd`, `scripts/audio/sfx.gd`, `scripts/ui/splash.gd`, `scripts/ui/fs_gate.gd`, `scripts/boot.gd`, `scripts/title.gd`, `scripts/world/sprite_filter.gd`, `tools/enable_texture_mips.py`  
+See also: `design/art-pipeline.md`, `design/constraints.md`, `design/camera.md`, `design/debug.md`, `design/ui.md`, `design/save-tech.md`
 
 ## Music
 
@@ -54,7 +54,8 @@ Live files under `assets/audio/` include `sfx_dash`, `sfx_hit`, `sfx_hurt`, `sfx
 - Player-facing Sprite3D filter is nearest-neighbor only. System cycles Nearest / Nearest + mips / Nearest + mips + aniso. Default is nearest + mips + anisotropic (`App.sprite_filter = 2`).
 - Linear Sprite3D filters exist only on the secret debug Settings tab. They are off-spec for the shipped System menu.
 - `project.godot` `default_texture_filter = 0` (nearest) is the **canvas / HUD** default. It does not set Sprite3D filter. Live Sprite3D filter is applied by `sprite_filter.gd` on `node_added` and when the setting changes.
-- Mipmaps: runtime `ensure_mips` generates a chain when the imported texture has none. VRAM-compressed web textures may fail that path; then enable Generate Mipmaps on the PNG import.
+- Mipmaps for 3D world textures (`assets/sprites/`, `assets/tiles/`, `assets/props/`, `assets/fx/`) MUST be baked at import. `tools/enable_texture_mips.py` sets `mipmaps/generate=true` on those texture `.import` files. `tools/export_web.ps1` runs that tool before headless `--import` so the web PCK ships the chains. `assets/ui/` stays generate-off (canvas nearest; not Sprite3D).
+- Runtime `ensure_mips` is a fallback only. If the texture already has mipmaps, return it. Do not `get_image()` / rebuild on the apply hot path when `has_mipmaps()` is true. `apply_sprite` only calls `ensure_mips` when the current filter uses mips.
 - Mip blend Sharp / Smooth is a debug Settings toggle (`use_nearest_mipmap_filter`). Default is Smooth.
 - Mip bias is stored for later; Sprite3D has no lod-bias hook yet.
 - All characters use Y-billboard so they remain upright under the orthographic camera.
