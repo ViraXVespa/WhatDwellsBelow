@@ -38,6 +38,10 @@ def _build_id(root: pathlib.Path) -> str:
     return f"{label}-{sha}" if sha else label
 
 
+def _assign_build_id(build_id: str) -> str:
+    return f"window.__wdbBuildId={json.dumps(build_id)};"
+
+
 def _patch_html(html: str, build_id: str) -> str:
     q = f"?v={build_id}"
 
@@ -63,37 +67,19 @@ def _patch_html(html: str, build_id: str) -> str:
         html,
         count=1,
     )
-    hook = (
-        "<script>"
-        f"window.__wdbBuildId={json.dumps(build_id)};"
-        "(function(){"
-        "function go(id){"
-        "try{var k='wdb_reload_'+id;if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');}catch(e){}"
-        "var done=function(){location.reload();};"
-        "var wipe=function(){"
-        "var p=Promise.resolve();"
-        "if(window.caches){p=caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k);}));});}"
-        "p.then(done,done);"
-        "};"
-        "if(navigator.serviceWorker){"
-        "navigator.serviceWorker.getRegistrations().then(function(rs){"
-        "return Promise.all(rs.map(function(r){return r.unregister();}));"
-        "}).then(wipe,wipe);"
-        "}else{wipe();}"
-        "}"
-        "fetch('build_id.txt?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){"
-        "t=String(t||'').trim();"
-        "if(t&&t!==window.__wdbBuildId)go(t);"
-        "}).catch(function(){});"
-        "})();"
-        "</script>"
+    assign = _assign_build_id(build_id)
+    html, n = re.subn(
+        r"window\.__wdbBuildId\s*=\s*(?:\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*')\s*;",
+        assign,
+        html,
+        count=1,
     )
-    if "window.__wdbBuildId" not in html:
-        if "</head>" in html:
-            html = html.replace("</head>", hook + "</head>", 1)
-        else:
-            html = hook + html
-    return html
+    if n:
+        return html
+    hook = "<script>" + assign + "</script>"
+    if "</head>" in html:
+        return html.replace("</head>", hook + "</head>", 1)
+    return hook + html
 
 
 def _patch_sw(text: str, build_id: str) -> str:

@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: changing persistence, web export, autoloads, or perf
-Code: `scripts/data/save_store.gd`, `scripts/app.gd`, `scripts/app_set.gd`, `scripts/display_mode.gd`, `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`, `tools/export_web.ps1`, `tools/enable_texture_mips.py`, `tools/export_archives.py`, `tools/web_postexport.py`, `tools/build_changelog.py`, `.github/workflows/version.yml`, `.github/workflows/pages.yml`, `project.godot`, `export_presets.cfg`
+Code: `scripts/data/save_store.gd`, `scripts/app.gd`, `scripts/app_set.gd`, `scripts/display_mode.gd`, `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`, `tools/web_shell.html`, `tools/export_web.ps1`, `tools/enable_texture_mips.py`, `tools/export_archives.py`, `tools/web_postexport.py`, `tools/build_changelog.py`, `.github/workflows/version.yml`, `.github/workflows/pages.yml`, `project.godot`, `export_presets.cfg`
 See also: `design/debug.md`, `design/archives.md`, `design/versioning.md`, `design/camera.md`, `design/ui.md`, `design/input.md`, `design/audio-visual.md`
 
 ## Save system
@@ -74,6 +74,7 @@ Pages live export of HEAD is required. Catalog pin exports are best-effort via `
 - MUST run in modern browsers.
 - MUST NOT require special COOP/COEP headers or other non-standard server configuration to function on GitHub Pages or equivalent static hosting.
 - Web preset is a PWA: enabled, display Standalone, orientation Landscape, `ensure_cross_origin_isolation_headers` off, `variant/thread_support` off.
+- `html/custom_html_shell` is `res://tools/web_shell.html`. That shell is the web boot overlay: game wordmark, phased status, byte-backed progress for `index.wasm` / `index.pck`, and a small Godot credit. It is not the in-engine Title → Play loader (`scripts/ui/loader.gd`).
 - `html/head_include` stashes `beforeinstallprompt` on `window.__wdbInstallPrompt` so a later tap can call `prompt()`, and installs a capturing Escape listener so Esc does not leave browser fullscreen (`design/input.md`).
 - After changing `export_presets.cfg`, rebuild with `powershell -File tools/export_web.ps1`. Do not hand-edit generated `docs/index.html`.
 
@@ -86,7 +87,7 @@ PWA service workers and GitHub Pages will otherwise keep players on an old `.pck
 - Write loose `build_id.txt` (`{label}-{short sha}`) next to `index.html`.
 - Query-bust `index.js`, icons, manifest, and the service-worker URL in `index.html`. Do not rewrite Godot `fileSizes` keys (`index.pck` / `index.wasm`).
 - Rename the generated service-worker cache to include that build id.
-- Inject a boot check that fetches `build_id.txt` with `cache: 'no-store'`. On mismatch, unregister service workers, drop Cache Storage, and reload once per new remote id (`sessionStorage`).
+- Stamp `window.__wdbBuildId` into the generated HTML. The custom shell fetches `build_id.txt` with `cache: 'no-store'` before `Engine.startGame`. On mismatch it shows “New build found — clearing the old cache…”, unregisters service workers, drops Cache Storage, and reloads once per new remote id (`sessionStorage`). Download progress after that reload uses Godot `onProgress` plus `fileSizes`.
 
 Players MUST receive a new build without an incognito window or a manual cache clear.
 

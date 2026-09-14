@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+        <title>$GODOT_PROJECT_NAME</title>
+        <style>
+html, body, #canvas {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+body {
+    color: #ebd69e;
+    background-color: #0a0a12;
+    overflow: hidden;
+    touch-action: none;
+    font-family: Palatino, "Palatino Linotype", Georgia, "Times New Roman", serif;
+}
+
+#canvas {
+    display: block;
+}
+
+#canvas:focus {
+    outline: none;
+}
+
+#wdb-boot {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(ellipse at 50% 42%, rgba(42, 28, 16, 0.45) 0%, rgba(10, 10, 18, 0) 52%),
+        #0a0a12;
+}
+
+#wdb-boot.is-gone {
+    display: none;
+}
+
+#wdb-inner {
+    width: min(960px, 92vw);
+    text-align: center;
+}
+
+#wdb-title {
+    margin: 0 0 0.35rem;
+    color: #ebe09e;
+    font-size: clamp(1.8rem, 4.2vw, 2.6rem);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-shadow:
+        0 0 1px #0d0805,
+        0 2px 0 #0d0805,
+        0 3px 10px rgba(0, 0, 0, 0.65);
+}
+
+#wdb-status {
+    margin: 0 0 1.15rem;
+    color: #c4b086;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    font-size: clamp(0.92rem, 2.1vw, 1.15rem);
+    letter-spacing: 0.04em;
+    min-height: 1.4em;
+}
+
+#wdb-edge {
+    box-sizing: border-box;
+    width: min(720px, 86vw);
+    height: 24px;
+    margin: 0 auto;
+    padding: 2px;
+    background: #2a1e14;
+    border: 2px solid #7f6033;
+    box-shadow: 0 0 0 1px #1a120c, 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+#wdb-track {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #16110d;
+}
+
+#wdb-fill {
+    width: 4%;
+    height: 100%;
+    background: linear-gradient(180deg, #f6d36a 0%, #f2c759 46%, #c48a2e 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 236, 180, 0.45);
+    transition: width 160ms linear;
+}
+
+#wdb-fill.is-wait {
+    width: 28%;
+    background: linear-gradient(90deg, #5a4220 0%, #f2c759 50%, #5a4220 100%);
+    background-size: 220% 100%;
+    animation: wdb-wait 1.15s linear infinite;
+}
+
+#wdb-pct {
+    margin-top: 0.7rem;
+    color: #d7c08a;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+}
+
+#wdb-godot {
+    position: absolute;
+    right: 1.1rem;
+    bottom: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #8a7a5c;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    opacity: 0.85;
+    pointer-events: none;
+}
+
+#wdb-godot svg {
+    width: 22px;
+    height: 22px;
+    display: block;
+}
+
+#status-notice {
+    display: none;
+    box-sizing: border-box;
+    width: min(640px, 88vw);
+    margin-top: 1.2rem;
+    padding: 0.85rem 1rem;
+    background: #3a2228;
+    border: 1px solid #9b3943;
+    color: #e0e0e0;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    text-align: center;
+}
+
+#status-notice.is-on {
+    display: block;
+}
+
+#status-splash,
+#status-progress {
+    display: none;
+}
+
+@keyframes wdb-wait {
+    from { background-position: 100% 0; }
+    to { background-position: -100% 0; }
+}
+        </style>
+        $GODOT_HEAD_INCLUDE
+    </head>
+    <body>
+        <canvas id="canvas">
+            Your browser does not support the canvas tag.
+        </canvas>
+
+        <noscript>
+            Your browser does not support JavaScript.
+        </noscript>
+
+        <img id="status-splash" class="$GODOT_SPLASH_CLASSES" src="$GODOT_SPLASH" alt="">
+        <progress id="status-progress"></progress>
+
+        <div id="wdb-boot">
+            <div id="wdb-inner">
+                <h1 id="wdb-title">What Dwells Below</h1>
+                <div id="wdb-status">Checking the descent…</div>
+                <div id="wdb-edge">
+                    <div id="wdb-track">
+                        <div id="wdb-fill" class="is-wait"></div>
+                    </div>
+                </div>
+                <div id="wdb-pct"></div>
+                <div id="status-notice"></div>
+            </div>
+            <div id="wdb-godot" aria-hidden="true">
+                <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#478cbf" d="M64 8c-19 0-36 8-47 22C7 42 0 52 0 64c0 12 7 22 17 34 11 14 28 22 47 22s36-8 47-22c10-12 17-22 17-34 0-12-7-22-17-34C100 16 83 8 64 8z"/>
+                    <path fill="#fff" d="M36 46c8 0 14 6 14 18s-6 18-14 18-14-6-14-18 6-18 14-18zm56 0c8 0 14 6 14 18s-6 18-14 18-14-6-14-18 6-18 14-18z"/>
+                    <path fill="#414042" d="M36 54c4 0 7 4 7 10s-3 10-7 10-7-4-7-10 3-10 7-10zm56 0c4 0 7 4 7 10s-3 10-7 10-7-4-7-10 3-10 7-10z"/>
+                    <path fill="#fff" d="M44 92c6 8 13 12 20 12s14-4 20-12c-6 3-13 5-20 5s-14-2-20-5z"/>
+                </svg>
+                <span>Made with Godot</span>
+            </div>
+        </div>
+
+        <script src="$GODOT_URL"></script>
+        <script>
+const GODOT_CONFIG = $GODOT_CONFIG;
+const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+    const boot = document.getElementById("wdb-boot");
+    const statusLine = document.getElementById("wdb-status");
+    const fill = document.getElementById("wdb-fill");
+    const pctLine = document.getElementById("wdb-pct");
+    const notice = document.getElementById("status-notice");
+
+    let initializing = true;
+
+    function sizeOf(kind) {
+        const sizes = GODOT_CONFIG.fileSizes || {};
+        const keys = Object.keys(sizes);
+        for (let i = 0; i < keys.length; i++) {
+            const name = keys[i];
+            if (kind === "wasm" && /\.wasm$/i.test(name)) {
+                return sizes[name];
+            }
+            if (kind === "pck" && /\.pck$/i.test(name)) {
+                return sizes[name];
+            }
+        }
+        return 0;
+    }
+
+    function setWait(on) {
+        if (on) {
+            fill.classList.add("is-wait");
+            pctLine.textContent = "";
+        } else {
+            fill.classList.remove("is-wait");
+        }
+    }
+
+    function setBar(ratio) {
+        const clamped = Math.max(0, Math.min(1, ratio));
+        fill.style.width = Math.max(clamped * 100, 2) + "%";
+        pctLine.textContent = Math.round(clamped * 100) + "%";
+    }
+
+    function setStatus(text) {
+        statusLine.textContent = text;
+    }
+
+    function hideBoot() {
+        if (!initializing) {
+            return;
+        }
+        initializing = false;
+        boot.classList.add("is-gone");
+        boot.remove();
+    }
+
+    function setNotice(text) {
+        while (notice.lastChild) {
+            notice.removeChild(notice.lastChild);
+        }
+        const lines = String(text || "").split("\n");
+        for (let i = 0; i < lines.length; i++) {
+            notice.appendChild(document.createTextNode(lines[i]));
+            notice.appendChild(document.createElement("br"));
+        }
+        notice.classList.add("is-on");
+        setWait(false);
+    }
+
+    function displayFailureNotice(err) {
+        console.error(err);
+        if (err instanceof Error) {
+            setNotice(err.message);
+        } else if (typeof err === "string") {
+            setNotice(err);
+        } else {
+            setNotice("An unknown error occurred.");
+        }
+        initializing = false;
+    }
+
+    function applyProgress(current, total) {
+        if (!(current > 0 && total > 0)) {
+            setWait(true);
+            setStatus("Raising the spirits...");
+            return;
+        }
+        setWait(false);
+        setBar(current / total);
+        const pct = Math.round((current / total) * 100);
+        if (current >= total) {
+            setStatus("Raising the spirits...");
+            return;
+        }
+        const wasmBytes = sizeOf("wasm");
+        if (wasmBytes > 0 && current <= wasmBytes) {
+            setStatus("Drawing the engine… " + pct + "%");
+            return;
+        }
+        setStatus("Unpacking the darkness... " + pct + "%");
+    }
+
+    function wipeAndReload(remoteId) {
+        setWait(true);
+        setStatus("New build found — clearing the old cache…");
+        try {
+            const key = "wdb_reload_" + remoteId;
+            if (sessionStorage.getItem(key)) {
+                return Promise.resolve();
+            }
+            sessionStorage.setItem(key, "1");
+        } catch (err) {
+        }
+        const reload = function () {
+            location.reload();
+        };
+        const wipeCaches = function () {
+            let pending = Promise.resolve();
+            if (window.caches) {
+                pending = caches.keys().then(function (keys) {
+                    return Promise.all(keys.map(function (name) {
+                        return caches.delete(name);
+                    }));
+                });
+            }
+            return pending.then(reload, reload);
+        };
+        if (navigator.serviceWorker) {
+            return navigator.serviceWorker.getRegistrations().then(function (regs) {
+                return Promise.all(regs.map(function (reg) {
+                    return reg.unregister();
+                }));
+            }).then(wipeCaches, wipeCaches);
+        }
+        return wipeCaches();
+    }
+
+    function checkRemoteBuild() {
+        setWait(true);
+        setStatus("Checking the descent…");
+        const localId = String(window.__wdbBuildId || "").trim();
+        return fetch("build_id.txt?t=" + Date.now(), { cache: "no-store" }).then(function (res) {
+            return res.ok ? res.text() : "";
+        }).then(function (text) {
+            const remoteId = String(text || "").trim();
+            if (remoteId && localId && remoteId !== localId) {
+                return wipeAndReload(remoteId).then(function () {
+                    return false;
+                });
+            }
+            return true;
+        }).catch(function () {
+            return true;
+        });
+    }
+
+    function startGame() {
+        setWait(true);
+        setStatus("Drawing the engine…");
+        return engine.startGame({
+            onProgress: function (current, total) {
+                applyProgress(current, total);
+            },
+        }).then(hideBoot, displayFailureNotice);
+    }
+
+    const missing = Engine.getMissingFeatures({
+        threads: GODOT_THREADS_ENABLED,
+    });
+
+    if (missing.length !== 0) {
+        if (GODOT_CONFIG["serviceWorker"] && GODOT_CONFIG["ensureCrossOriginIsolationHeaders"] && "serviceWorker" in navigator) {
+            let serviceWorkerRegistrationPromise;
+            try {
+                serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+            } catch (err) {
+                serviceWorkerRegistrationPromise = Promise.reject(new Error("Service worker registration failed."));
+            }
+            Promise.race([
+                serviceWorkerRegistrationPromise.then(function (registration) {
+                    if (registration != null) {
+                        return Promise.reject(new Error("Service worker already exists."));
+                    }
+                    return registration;
+                }).then(function () {
+                    return engine.installServiceWorker();
+                }),
+                new Promise(function (resolve) {
+                    setTimeout(function () {
+                        resolve();
+                    }, 2000);
+                }),
+            ]).then(function () {
+                window.location.reload();
+            }).catch(function (err) {
+                console.error("Error while registering service worker:", err);
+            });
+        } else {
+            const missingMsg = "Error\nThe following features required to run Godot projects on the Web are missing:\n";
+            displayFailureNotice(missingMsg + missing.join("\n"));
+        }
+        return;
+    }
+
+    checkRemoteBuild().then(function (ok) {
+        if (ok) {
+            return startGame();
+        }
+        return null;
+    });
+}());
+        </script>
+    </body>
+</html>

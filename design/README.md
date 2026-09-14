@@ -99,7 +99,7 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Skills / save | `scripts/data/progress.gd` + `progress_gear.gd`, `progress_gear_req.gd`, `progress_make.gd`, `progress_extract.gd`, `progress_quest.gd` + quest helpers, `progress_town.gd`, `progress_combat.gd`, `progress_forge.gd` + forge helpers, `affixes.gd`, `gear_roll.gd`, `gear_rules.gd`, `save_store.gd` + `save_store_io.gd` / collect / data, `catalog.gd` |
 | Numbers | `scripts/data/balance.gd`, `balance_schema.gd`, `tunables.gd` |
 | Version / changelog | `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`; `tools/build_changelog.py` |
-| Web export | `tools/export_web.ps1`, `tools/enable_texture_mips.py`, `tools/web_postexport.py`; `.github/workflows/version.yml`, `.github/workflows/pages.yml` |
+| Web export | `tools/web_shell.html`, `tools/export_web.ps1`, `tools/enable_texture_mips.py`, `tools/web_postexport.py`; `export_presets.cfg`; `.github/workflows/version.yml`, `.github/workflows/pages.yml` |
 | Dungeon | `scripts/dungeon/gen.gd` + `gen_carve.gd`, `gen_rooms.gd`, `gen_doors.gd`; `scripts/world/dungeon.gd` + `dungeon_boot.gd`, `dungeon_geo.gd`, `dungeon_geo_stream.gd`, `dungeon_map_act.gd`, `dungeon_cells.gd`, `dungeon_stream.gd`, `dungeon_props.gd`, `dungeon_pack.gd`, `crystal_net.gd`, `floor_crystal.gd` |
 | Hub | `scripts/world/camp.gd` + `camp_build.gd`, `camp_view.gd`; `interact.gd`, `interact_fx.gd`; `scripts/combat/dummy.gd` |
 | Gather | `scripts/world/gather_node.gd`, `gather_rules.gd`, `breakable.gd`, `pickup.gd` |
