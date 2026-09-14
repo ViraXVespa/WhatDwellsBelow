@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.19",
+			"points": [
+				{
+					"text": "Puzzle rooms keep every piece on a free cell inside the room"
+				},
+				{
+					"text": "Small rooms drop hidden chest and crack first, then the visible chest"
+				},
+				{
+					"text": "A puzzle room gets a pressure plate or a lever, never both"
+				},
+				{
+					"text": "Stepping on a plate toggles the gate and leaves it open; stepping off does not close it"
+				},
+				{
+					"text": "Opened chests fade and tint in place and read Empty"
+				}
+			],
+			"summary": "Puzzle rooms shrink to fit, plate and lever are exclusive step toggles, and opened chests stay visually spent."
+		},
+		{
 			"label": "0.3.18",
 			"points": [
 				{
