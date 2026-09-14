@@ -1,10 +1,11 @@
-extends RefCounted
+﻿extends RefCounted
 
 const GatherS := preload("res://scripts/world/gather_node.gd")
 const BreakS := preload("res://scripts/world/breakable.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
 const Gate := preload("res://scripts/world/dungeon_gate.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
+
 
 static func place_n(host: Node, rooms: Array, n: int, what: String) -> void:
 	var _fac = load("res://scripts/world/dungeon_props.gd")
@@ -53,37 +54,107 @@ static func place_n(host: Node, rooms: Array, n: int, what: String) -> void:
 		host._mark_cell(cell)
 		placed += 1
 
+
 static func spawn_puzzle(host: Node, r: Dictionary) -> void:
 	var _fac = load("res://scripts/world/dungeon_props.gd")
 	host._note("puzzle")
-	var c: Vector2i = host._center_room(r)
-	var plate := SpotS.new()
-	plate.setup("plate", host._cell_pos(c))
-	plate.pair = "puzzle"
-	host.add_child(plate)
-	host._note("plate")
-	var lever := SpotS.new()
-	lever.setup("lever", host._cell_pos(Vector2i(c.x + 2, c.y)))
-	lever.pair = "puzzle"
-	host.add_child(lever)
-	host._note("lever")
-	var gate := SpotS.new()
-	gate.setup("gate", host._cell_pos(Vector2i(c.x, c.y - 2)))
+	var spots: Array[Vector2i] = _room_spots(host, r)
+	var used: Array[Vector2i] = []
+	var gate_c: Vector2i = _take_spot(host, spots)
+	if not _valid_cell(gate_c):
+		return
+	used.append(gate_c)
+	var gate: Node3D = SpotS.new()
+	gate.setup("gate", host._cell_pos(gate_c))
 	gate.pair = "puzzle"
 	host.add_child(gate)
 	host._note("gate")
-	var chest := SpotS.new()
-	chest.setup("puzzle_chest", host._cell_pos(Vector2i(c.x, c.y - 3)))
-	host.add_child(chest)
-	host._note("chest")
-	var hidden := SpotS.new()
-	hidden.setup("puzzle_chest", host._cell_pos(Vector2i(c.x - 2, c.y)))
-	hidden.hide_as_secret()
-	host.add_child(hidden)
-	var crack := BreakS.new()
-	crack.setup("crack", host._cell_pos(Vector2i(c.x - 1, c.y)))
-	crack.reveal = hidden
-	host.add_child(crack)
-	host._note("crack")
-	for cell in _fac.puzzle_cells(c):
+	var act_c: Vector2i = _take_spot(host, spots)
+	if _valid_cell(act_c):
+		used.append(act_c)
+		var use_plate: bool = host.floor_rng.randf() < 0.5
+		var act: Node3D = SpotS.new()
+		if use_plate:
+			act.setup("plate", host._cell_pos(act_c))
+			host._note("plate")
+		else:
+			act.setup("lever", host._cell_pos(act_c))
+			host._note("lever")
+		act.pair = "puzzle"
+		host.add_child(act)
+	var chest_c: Vector2i = _take_spot(host, spots)
+	if _valid_cell(chest_c):
+		used.append(chest_c)
+		var chest: Node3D = SpotS.new()
+		chest.setup("puzzle_chest", host._cell_pos(chest_c))
+		host.add_child(chest)
+		host._note("chest")
+	var hid_c: Vector2i = _take_spot(host, spots)
+	var crack_c: Vector2i = Vector2i(-999, -999)
+	if _valid_cell(hid_c):
+		crack_c = _take_adjacent(host, spots, hid_c)
+		if not _valid_cell(crack_c):
+			spots.append(hid_c)
+		else:
+			used.append(hid_c)
+			used.append(crack_c)
+			var hidden: Node3D = SpotS.new()
+			hidden.setup("puzzle_chest", host._cell_pos(hid_c))
+			hidden.hide_as_secret()
+			host.add_child(hidden)
+			var crack: Node3D = BreakS.new()
+			crack.setup("crack", host._cell_pos(crack_c))
+			crack.reveal = hidden
+			host.add_child(crack)
+			host._note("crack")
+	for cell: Vector2i in used:
 		host._mark_cell(cell)
+	for extra: Vector2i in _fac.puzzle_cells(used):
+		host._mark_cell(extra)
+
+
+static func _room_spots(host: Node, r: Dictionary) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	var x0: int = int(r.x)
+	var y0: int = int(r.y)
+	var x1: int = x0 + int(r.w)
+	var y1: int = y0 + int(r.h)
+	for y: int in range(y0, y1):
+		for x: int in range(x0, x1):
+			var c := Vector2i(x, y)
+			if host._cell_clear(c, 1) and not host._near_spawn(c):
+				out.append(c)
+	return out
+
+
+static func _take_spot(host: Node, spots: Array[Vector2i]) -> Vector2i:
+	if spots.is_empty():
+		return Vector2i(-999, -999)
+	var i: int = host.floor_rng.randi() % spots.size()
+	var c: Vector2i = spots[i]
+	spots.remove_at(i)
+	return c
+
+
+static func _take_adjacent(host: Node, spots: Array[Vector2i], origin: Vector2i) -> Vector2i:
+	var hits: Array[Vector2i] = []
+	var dirs: Array[Vector2i] = [
+		Vector2i.RIGHT,
+		Vector2i.LEFT,
+		Vector2i.DOWN,
+		Vector2i.UP,
+	]
+	for d: Vector2i in dirs:
+		var n: Vector2i = origin + d
+		if spots.has(n):
+			hits.append(n)
+	if hits.is_empty():
+		return Vector2i(-999, -999)
+	var i: int = host.floor_rng.randi() % hits.size()
+	var c: Vector2i = hits[i]
+	spots.erase(c)
+	return c
+
+
+static func _valid_cell(c: Vector2i) -> bool:
+	return c.x > -900 and c.y > -900

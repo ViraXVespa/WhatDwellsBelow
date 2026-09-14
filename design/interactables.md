@@ -1,8 +1,8 @@
-# Interactables and world objects
+﻿# Interactables and world objects
 
 Status: binding design
 Read when: changing gathering, Extraction Gates, shops, shrines, puzzles, or crystals
-Code: `scripts/world/gather_node.gd`, `breakable.gd`, `interact.gd`, `floor_crystal.gd`, `crystal_net.gd`, `pickup.gd`, `dungeon_props.gd`, `scripts/ui/hud.gd`, `scripts/input/prompts.gd`
+Code: `scripts/world/gather_node.gd`, `breakable.gd`, `interact.gd`, `interact_act.gd`, `interact_prompt.gd`, `interact_chest.gd`, `interact_fx.gd`, `dungeon_props.gd`, `dungeon_props_place.gd`, `floor_crystal.gd`, `crystal_net.gd`, `pickup.gd`, `scripts/ui/hud.gd`, `scripts/input/prompts.gd`
 See also: `design/inventory.md`, `design/dungeon.md`, `design/ui.md`, `design/input.md`
 
 ## Mining nodes
@@ -68,8 +68,17 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 ## Artifact chests, pressure plates, levers, gates, cracked walls
 
 - Puzzle elements are never required for progression and never appear on the critical path to stairs.
-- Cracked walls have higher HP than normal breakables (suggested start: 8).
-- Dead-end chests and trap-room chests may optionally contain Artifacts in addition to normal loot.
+- Puzzle rooms are safe rooms. Every piece MUST sit on a free floor cell inside that room. Do not use fixed offsets from room center.
+- If the room cannot hold the full kit, shrink it. Order: paired gate, then plate **or** lever (never both), then a visible chest, then a hidden chest plus an adjacent cracked wall. Skip a later piece rather than placing outside the room.
+- A room gets one activator: a pressure plate **or** a lever, chosen at spawn. Both toggle the paired gate on a rising edge and latch it. Stepping off a plate does not close the gate. Stepping on again toggles it closed.
+- Plate prompt verb is “Step the plate”. Lever prompt verb is “Pull lever”.
+- Cracked walls have higher HP than normal breakables (suggested start: 8). Breaking one reveals its linked hidden chest.
+- Dead-end chests and puzzle chests may optionally contain Artifacts in addition to normal loot.
+- There is no open-chest sprite yet. A used chest (`chest`, `base_chest`, `puzzle_chest`) fades and tints in place and keeps the “Empty.” prompt for the rest of the floor.
+
+## Live snapshot — puzzle rooms
+
+`dungeon_props_place.spawn_puzzle` walks clear cells inside the room rectangle and takes what fits. `interact_act.plate_held` stores `pressed` on the plate and only calls `toggle_gates` when the player first enters the 0.7 radius. `interact_fx.paint_used_chest` sets sprite modulate to a faded brown after open.
 
 ## Stairs
 
@@ -90,7 +99,7 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 
 ## Live snapshot — interact prompts
 
-World `prompt` strings are verbs only (`Descend`, `Gather`, `Activate crystal`, `Open the guardian door`). `hud.gd` attaches the current-scheme `interact` glyph. Hostile crystals use text-only “Clear the area to activate.” Stairs confirm is a second press; crystals never call `next_floor`.
+World `prompt` strings are verbs only (`Descend`, `Gather`, `Activate crystal`, `Open the guardian door`, `Step the plate`, `Pull lever`, `Open chest`). `hud.gd` attaches the current-scheme `interact` glyph. Hostile crystals use text-only “Clear the area to activate.” Used chests use text-only “Empty.” Stairs confirm is a second press; crystals never call `next_floor`.
 
 ## HUD prompt
 

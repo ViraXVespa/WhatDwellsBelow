@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 ## Prompt / title refresh for world interactables.
 
@@ -35,7 +35,7 @@ static func refresh(host: Node3D) -> void:
 	elif host.kind == "lever":
 		host.prompt = "Pull lever"
 	elif host.kind == "plate":
-		host.prompt = "Stand to hold the gate"
+		host.prompt = "Step the plate"
 	elif host.kind == "gate":
 		host.prompt = ""
 	elif host.kind.ends_with("chest"):

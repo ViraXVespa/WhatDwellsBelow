@@ -1,4 +1,4 @@
-extends RefCounted
+﻿extends RefCounted
 
 const GatherS := preload("res://scripts/world/gather_node.gd")
 const BreakS := preload("res://scripts/world/breakable.gd")
@@ -66,15 +66,15 @@ static func scatter_counts(host: Node) -> void:
 static func place_n(host: Node, rooms: Array, n: int, what: String) -> void:
 	Place.place_n(host, rooms, n, what)
 
-static func puzzle_cells(c: Vector2i) -> Array[Vector2i]:
-	return [
-		c,
-		Vector2i(c.x + 2, c.y),
-		Vector2i(c.x, c.y - 2),
-		Vector2i(c.x, c.y - 3),
-		Vector2i(c.x - 2, c.y),
-		Vector2i(c.x - 1, c.y),
-	]
+static func puzzle_cells(src: Variant) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if src is Array:
+		for raw: Variant in src:
+			out.append(Vector2i(raw))
+		return out
+	if src is Vector2i:
+		out.append(src)
+	return out
 
 static func spawn_puzzle(host: Node, r: Dictionary) -> void:
 	Place.spawn_puzzle(host, r)

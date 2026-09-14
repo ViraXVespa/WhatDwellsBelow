@@ -117,6 +117,8 @@ static func sprite(host: Node3D, path: String, h: float, y: float) -> void:
 	host.spr = spr
 	host.add_child(spr)
 	Depth.apply(spr, host.position)
+	if bool(host.get("used")):
+		paint_used_chest(host)
 
 
 static func set_extract_tex(host: Node3D, on: bool) -> void:
@@ -126,6 +128,19 @@ static func set_extract_tex(host: Node3D, on: bool) -> void:
 	if ResourceLoader.exists(path):
 		host.spr.texture = load(path)
 		host.spr.pixel_size = 3.0 / float(maxi(1, host.spr.texture.get_width()))
+
+
+static func paint_used_chest(host: Node3D) -> void:
+	if host.spr == null:
+		return
+	if not str(host.kind).ends_with("chest"):
+		return
+	var faded := Color(0.45, 0.42, 0.38, 0.55)
+	if not host.is_inside_tree():
+		host.spr.modulate = faded
+		return
+	var tw: Tween = host.create_tween()
+	tw.tween_property(host.spr, "modulate", faded, 0.22)
 
 
 static func add_label(host: Node3D) -> void:

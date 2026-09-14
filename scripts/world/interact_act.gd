@@ -1,4 +1,4 @@
-extends Object
+﻿extends Object
 
 ## Interaction handlers for world interactables.
 
@@ -173,12 +173,12 @@ static func set_open(host: Node3D, v: bool) -> void:
 static func plate_held(host: Node3D, on: bool) -> void:
 	if host.kind != "plate":
 		return
-	for n in host.get_tree().get_nodes_in_group("gates"):
-		if n.get("pair") == host.pair and n.has_method("set_open"):
-			if on:
-				n.set_open(true)
-			elif not bool(n.get("latched")):
-				n.set_open(false)
+	var was: bool = bool(host.get("pressed"))
+	host.pressed = on
+	if on and not was:
+		toggle_gates(host)
+		App.sfx("ui")
+		App.toast("The gate shifts.")
 
 
 static func open_chest(host: Node3D) -> String:

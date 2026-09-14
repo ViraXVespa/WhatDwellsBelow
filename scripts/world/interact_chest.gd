@@ -1,9 +1,10 @@
-extends Object
+﻿extends Object
 
 ## Chest loot open for world interactables.
 
 const Catalog := preload("res://scripts/data/catalog.gd")
 const Prompt := preload("res://scripts/world/interact_prompt.gd")
+const InteractFx := preload("res://scripts/world/interact_fx.gd")
 
 
 static func open_chest(host: Node3D) -> String:
@@ -42,6 +43,7 @@ static func open_chest(host: Node3D) -> String:
 			App.spawn_floor_item(gear, host.global_position)
 	App.sfx("pickup")
 	Prompt.refresh(host)
+	InteractFx.paint_used_chest(host)
 	var msg := "+%dg" % gold
 	if art != "":
 		msg += "  ·  Artifact: " + art

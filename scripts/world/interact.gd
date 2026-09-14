@@ -1,4 +1,4 @@
-extends Node3D
+﻿extends Node3D
 
 const Catalog := preload("res://scripts/data/catalog.gd")
 const InteractFx := preload("res://scripts/world/interact_fx.gd")
@@ -21,6 +21,7 @@ var stock: Array = []
 var bought := 0
 var open := false
 var latched := false
+var pressed := false
 
 
 func setup(k: String, pos: Vector3, lock := false) -> void:
