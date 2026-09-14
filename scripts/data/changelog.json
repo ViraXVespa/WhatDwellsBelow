@@ -3,6 +3,28 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.15",
+			"points": [
+				{
+					"text": "Title \u2192 Play no longer hangs for seconds on the first stick in Placeholdia",
+					"subs": [
+						"The loader stays a near-black sheet (`#000000` at alpha `0xFE`) while the square draws underneath",
+						"Walk, start, and stop frames for the selected body are preloaded and drawn under that sheet before control returns"
+					]
+				},
+				{
+					"text": "Web export bakes mipmaps for world sprites, tiles, props, and FX before packing",
+					"subs": [
+						"Runtime filter apply skips rebuilding a chain that already exists"
+					]
+				},
+				{
+					"text": "Extract-wake is unchanged"
+				}
+			],
+			"summary": "Hub movement after Play stays smooth on GitHub Pages. First-use shader and texture work happens behind the loader, and mip chains ship in the PCK instead of generating on the player\u2019s machine."
+		},
+		{
 			"label": "0.3.12",
 			"points": [
 				{
