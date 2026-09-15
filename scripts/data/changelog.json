@@ -3,6 +3,30 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.23",
+			"points": [
+				{
+					"text": "`See also:` is an index, not a read list. Protocol files this slice touches say so in the header."
+				},
+				{
+					"text": "`design/reuse-map.md` is a staging brief web / chat writes in Phase 7. It is not an owners table or a standing BOT list. An empty **Brief** means Bot stops."
+				},
+				{
+					"text": "Grok Bot treats a non-empty reuse-map file as one PR. Flow: `design/grok-bot-reuse.md`. Bot does not mark the brief done."
+				},
+				{
+					"text": "`design/grok-bot-session.md` is a door. Flows: `design/grok-bot-size.md`, `design/grok-bot-extract.md`, `design/grok-bot-reuse.md`, `design/grok-bot-relocate.md`, `design/grok-bot-docs.md`. One Job-table sibling per session."
+				},
+				{
+					"text": "Docs-only web sessions skip Phase 4\u20136 after Phase 3."
+				},
+				{
+					"text": "Durable do-not-merge rows live in `design/grok-bot-extract.md`. Refactor recipe no longer points at reuse-map for owners or kits."
+				}
+			],
+			"summary": "Agent routing now opens fewer files by default; reuse work is a web-written brief Bot runs as a single PR."
+		},
+		{
 			"label": "0.3.22",
 			"points": [
 				{
