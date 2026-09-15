@@ -31,15 +31,11 @@ Design lives in `design/`. There is no single GDD. `Demo_GDD.md` is only an inde
 | Player / I2V art door | `design/art-pipeline.md` |
 | Numbers | `design/tunables.md` |
 
-Fresh **Grok** instance: read `design/protocol.md` and `design/constraints.md`, then only the topic files for the requested work. Use the code map in `design/README.md` before walking the live tree. Do not start by archiving or rewriting. Do not read `design/changelog/` unless the requested work is versioning, a named past build, or a revert.
+Fresh **Grok** instance: read `design/protocol.md` and `design/constraints.md`, then only the topic files for the requested work. Use the code map in `design/README.md` before walking the live tree. Do not start by archiving or rewriting. Do not read `design/changelog/` unless the work is versioning, a named past build, or a revert.
 
-**Grok Bot** does not follow that read list. After this file, follow `design/grok-bot-session.md` only.
+**Grok Bot** skips that read list. After this file, follow `design/grok-bot-session.md` only.
 
-**Grok Build** after a gap: follow `design/grok-build.md`. Read `design/sessions.md` and current-series changelog files. Do not pin an archive unless the User opens the session by saying it is a **new week**. `design/session-log.md` is not part of every boot.
-
-**Web / chat** after the repo-review message: follow `design/web-session.md`. Do not start Phase 4 emits during Phase 1–3.
-
-`design/sessions.md` is the Grok Build leave-off. Web / chat may read it for context only. Grok Bot does not read it. It is not the web-session or Grok Bot hand-off. Do not resume unfinished Grok Build work from it unless the User names that work.
+Path procedures (Build week pin, web phases, Bot sweep) live in that path’s session file. `design/sessions.md` is the Grok Build leave-off only — not a web or Bot hand-off.
 
 **Binding design** is required behavior. **Live snapshot** is current code. If they disagree, patch live toward binding or ask. Do not invent a third system.
 
@@ -73,7 +69,7 @@ Keep the Godot output log clean. New or rewritten lines must not introduce these
 - Integer division: write `int(a / float(b))` when the discarded remainder is intended. Do not leave bare `int / int`.
 - Enum fields (`JoyAxis`, `JoyButton`, `Key`, `MouseButton`): assign with `as ThatEnum`, not a raw int.
 - Narrowing float → int / `Vector2i`: wrap the float in `int(...)` at the write site.
-- Private facade fields used only by a sibling helper (`host._news_scroll`, `host._list_root`, HUD prompt slots): keep the var on the host. Do not delete the field. Project-wide, `unused_private_class_variable` is ignored in `project.godot` (`[debug] gdscript/warnings/unused_private_class_variable=0`) because hostify helpers read those fields via `host._...` - do not re-enable it without a new plan, and do not sprinkle per-var `@warning_ignore` for this warning.
+- Private facade fields used only by a sibling helper (`host._news_scroll`, `host._list_root`, HUD prompt slots): keep the var on the host. Do not delete the field. Project-wide, `unused_private_class_variable` is ignored in `project.godot` (`[debug] gdscript/warnings/unused_private_class_variable=0`) because hostify helpers read those fields via `host._...` — do not re-enable it without a new plan, and do not sprinkle per-var `@warning_ignore` for this warning.
 - Do not use `@warning_ignore` to hide a real unused value or a live shadow.
 
 ## Script cap (10KB)

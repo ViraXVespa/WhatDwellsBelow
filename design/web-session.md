@@ -102,7 +102,7 @@ All documentation changes for this goal happen in this phase. That includes topi
 
 Check the change against `design/` (and `AGENTS.md` when agent rules changed). Update topic files, code maps, and tunables that the slice made wrong. Re-list the Phase 7 paths if testing changed them, wait for confirmation, then emit with Phase 4 cadence (`Next` between files). Markdown emits are plain text and use no code fence.
 
-If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md`. `{label}` is baked `scripts/data/version.json` `label` with patch + 1 (see `design/versioning.md`). Body shape is in that file. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or treat `scripts/data/version.json` as a ledger to hand-edit. Do not write the label into `design/versioning.md`.
+If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md`. `{label}` is baked `scripts/data/version.json` `label` with patch + 1 (see `design/versioning.md`). Body shape is in that file. The first player-facing heading MUST be `## {label}`. MUST NOT emit `# {label}`. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or treat `scripts/data/version.json` as a ledger to hand-edit. Do not write the label into `design/versioning.md`.
 
 Always emit the `design/changelog/{label}.md` file, if one is needed, as the final file in this phase.
 
@@ -114,15 +114,14 @@ When documentation is done, this session goal is finished. The User should start
 
 ## Do not
 
-- Do not emit `AGENTS.md`, `design/**/*.md`, or other documentation during Phase 4.
-- Do not treat `design/sessions.md` or `design/session-log.md` as the web hand-off.
-- Do not include those files as files that may require updating during Phase 7.
+- Do not emit documentation during Phase 4.
+- Do not treat `design/sessions.md` or `design/session-log.md` as the web hand-off, and do not emit them in Phase 7.
 - Do not run a Grok Build week pin from this path.
 - Do not chain a second goal after Phase 7 in the same web session.
-- Do not split for the 10KB cap before Phase 6.
-- Do not keep splitting toward 5KB. That target is Grok Bot only.
+- Do not split for the 10KB cap before Phase 6, and do not keep splitting toward 5KB (Grok Bot only).
 - Do not claim a write landed. The User pastes.
 - Do not load `design/changelog/` during Phase 1–3.
+- Do not start a changelog file with `# {label}`. Use `## {label}` as specified in `design/versioning.md`.
 - Do not treat a page-tool summary as the live file.
 - Do not retry a fetch after the byte / tail check fails.
 - Do not claim an artifact is the live file unless it is open and the size matches, or the size is artifact + 3 with a complete tail (UTF-8 BOM).

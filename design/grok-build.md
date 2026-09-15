@@ -30,7 +30,7 @@ Do not pin because time passed, because the last slice ended, or because a new C
 1. `AGENTS.md`, `design/protocol.md`, `design/constraints.md`.
 2. `design/sessions.md` (leave-off only).
 3. After a gap or a **new week**: every `design/changelog/{current epoch}.{current series}.*.md` per `design/versioning.md`. Do not open other series. Do not treat `scripts/data/version.json` as the version ledger. Do not follow GitHub commit links into web-session conversations.
-4. Only the topic files that match the requested work (`design/README.md`). Sprite / I2V / pack / review: start at `design/art-pipeline.md` and open only the door it names for that job.
+4. Only the topic files that match the requested work (`design/README.md`). Sprite / I2V / pack / review: start at `design/art-pipeline.md` and open only the sibling it names for that job.
 5. Inspect git and the live tree from the **code map row** for this task (`project.godot`, then the listed scenes/scripts). Do not walk `assets/` unless the task names sprites or audio. The User works between Grok Build weeks.
 
 `design/session-log.md` is not part of every boot. Read it when rewriting it at session close, when the User asks what shipped, or when leave-off is not enough to name the next unit.
@@ -61,8 +61,7 @@ Implement the requested work by patching the live path in place.
 - MUST NOT copy archive scripts or scenes over live files as a default strategy.
 - The live path remains the orthographic Camera3D system in `design/camera.md`.
 - Match surrounding style. GDScript indent is tab characters. Types follow `AGENTS.md` → GDScript types.
-- Implement only what design and the User require. Do not invent skills, rarities, hub upgrades, meta-progression, or co-op.
-- Open numbers: invent coherent starts, expose them in the secret debug menu, record in `design/tunables.md`. Ambiguity: ask.
+- Shared must / must-not and open-number rules: `design/protocol.md` and `AGENTS.md`. Ambiguity: ask.
 
 ## I2V week
 
@@ -80,7 +79,7 @@ Every live `scripts/**/*.gd` that ships must stay under **10,000 bytes**.
 
 Enforce the cap while editing. If a file is over, or an edit would push it over, split in that same slice using `design/refactor.md`. Stop once the file is under 10KB. Do not keep splitting toward Grok Bot's 5KB sweep target.
 
-Preferred (agent-friendly): `powershell -File tools/check_script_cap.ps1` (optional `-OverKb 10`, `-GitChanged`, `-Path ...`). Writes `_logs/script-cap/summary.txt` - read that file only. Shared catalog: `design/pc-offload.md`.
+Preferred (agent-friendly): `powershell -File tools/check_script_cap.ps1` (optional `-OverKb 10`, `-GitChanged`, `-Path ...`). Writes `_logs/script-cap/summary.txt` — read that file only. Shared catalog: `design/pc-offload.md`.
 
 ## Archives
 
@@ -100,7 +99,7 @@ Catalog rows (each a pinned commit, isolated per `design/archives.md`):
 
 ## After a slice
 
-Preferred verify when `.gd` changed: from repo root, `powershell -File tools/run_build_gate.ps1` (optional `-SkipImport`, `-Force`). Runs script-cap on git-changed scripts plus editor import check; writes `_logs/build-gate/summary.txt` - read that file only.
+Preferred verify when `.gd` changed: from repo root, `powershell -File tools/run_build_gate.ps1` (optional `-SkipImport`, `-Force`). Runs script-cap on git-changed scripts plus editor import check; writes `_logs/build-gate/summary.txt` — read that file only.
 
 Stop and report: files changed, how you verified, what is still open. Do not chain an unrelated goal.
 
@@ -110,7 +109,7 @@ Update `design/sessions.md` (leave-off only).
 
 Prepend a factual entry to `design/session-log.md`.
 
-Write `design/changelog/{label}.md` for the completion commit when that commit is `0.N.0` (see `design/versioning.md`). Do not emit `scripts/data/changelog.json` as the ledger. Do not read prior changelog files to write the new one.
+Write `design/changelog/{label}.md` for the completion commit when that commit is `0.N.0` (see `design/versioning.md`). First player-facing heading MUST be `## {label}`. MUST NOT use `# {label}`. Do not emit `scripts/data/changelog.json` as the ledger. Do not read prior changelog files to write the new one.
 
 Those two session files are for the next Grok Build instance, not for web / chat or Grok Bot.
 
@@ -120,7 +119,8 @@ Those two session files are for the next Grok Build instance, not for web / chat
 - Do not claim a paste-emit workflow. This path writes the checkout.
 - Do not use `design/web-session.md` phases.
 - Do not run a Grok Bot full-repo sweep. If house-wide size/extract/reuse cleanup is the job, that is Grok Bot.
-- Do not commit `_logs/`. Writing tool summaries there via `design/pc-offload.md` runners is allowed and preferred; read only those summaries. Optional Bot-only notes (_logs/grok-bot-sweep.md) remain Bots concern.
+- Do not commit `_logs/`. Writing tool summaries there via `design/pc-offload.md` runners is allowed and preferred; read only those summaries. Optional Bot-only notes (`_logs/grok-bot-sweep.md`) remain Bot’s concern.
 - Do not follow git commit links into web-session conversations. Current-series `design/changelog/*.md` is the brief.
 - Do not invent a third system when binding design and live code disagree — patch live toward binding or ask.
 - Do not run the week pin ritual unless the User said **new week**.
+- Do not start a changelog file with `# {label}`. Use `## {label}`.

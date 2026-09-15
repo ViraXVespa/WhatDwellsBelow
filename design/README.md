@@ -13,19 +13,14 @@ It is not one Game Design Document.
 
 ## How to use
 
-1. Grok agents read `design/protocol.md` and `design/constraints.md` first. Grok Bot does not — after `AGENTS.md` it follows `design/grok-bot-session.md` only.
-2. On a fresh Grok Build instance after a gap, follow `design/grok-build.md`: read `design/sessions.md` (leave-off), then every `design/changelog/{current epoch}.{current series}.*.md`, then inspect git / the live tree from the code map below. Do not pin unless the User said **new week**. Do not follow git commit links into web-session conversations. The User works between sessions.
-3. Web / chat: after the repo-review message, follow `design/web-session.md`. `design/sessions.md` is context only. Do not read `design/session-log.md`. Do not read `design/changelog/` in Phase 1–3 unless the named work is versioning, a named past build, or a revert. Phase 4 emits shipping source only. All `design/*.md` / `AGENTS.md` updates wait for Phase 7.
-4. Grok Bot: follow `design/grok-bot-session.md`, `design/refactor.md`, and `design/doc-refactor.md`. For scripts, do not read unrelated topic files. For doc facades, open the topic door then only the named sibling. Do not read `design/sessions.md`, `design/session-log.md`, or older `design/changelog/` entries.
-5. Open only the topic files that match the requested work.
-6. Use `design/tunables.md` for numbers.
-7. Use the code map below for live scripts. Do not walk `assets/` unless the task names sprites or audio.
-8. After a behavior change, update the matching topic file in the same slice. End of a Grok Build session: update `design/sessions.md`, prepend `design/session-log.md`, and write the series-open changelog file when the User commits `0.N.0`. End of a web / chat goal: finish Phase 7 in `design/web-session.md`, including one `design/changelog/{label}.md` when the goal shipped a visible change. Grok Bot does not write those files; optional notes go in `_logs/grok-bot-sweep.md` only.
+1. Recognize the path from `AGENTS.md`. Fresh Grok: `design/protocol.md` + `design/constraints.md`, then only matching topic files. Grok Bot: `design/grok-bot-session.md` only after `AGENTS.md`.
+2. Session procedure, leave-off, and close-out live in that path’s session file (`design/web-session.md`, `design/grok-build.md`, `design/grok-bot-session.md`) plus `design/versioning.md`.
+3. Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Live scripts: the code map below. Do not walk `assets/` unless the task names sprites or audio.
+4. After a behavior change, update the matching topic file in the same slice.
 
 Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`.
 
-Design doors (open sibling only when the job matches): `design/art-pipeline.md`, `design/ui.md`, `design/debug.md`, `design/input.md`, `design/inventory.md`. Rules: `design/doc-refactor.md`. Inventory fat docs: `tools/list_oversize_docs.ps1`.
- Open only the sibling that file names for the job (`art-i2v.md`, `art-pack.md`, `art-review.md`). Prompts live in `tools/i2v_seeds.py`. Off-magenta plates go through `tools/plate_remap.py` before I2V. Walk packing is `tools/pack_locomotion.py`. One-shot packing is `tools/pack_oneshot.py`. I2V and complex animation packing stay in Grok Build sessions unless the User says otherwise. Animation Browser review briefs and the regen tree are `tools/anim_review_*.py`; output under `tools/anim_review/` is gitignored.
+Design doors (open the Job-table sibling only): `design/art-pipeline.md`, `design/ui.md`, `design/debug.md`, `design/input.md`, `design/inventory.md`. Rules: `design/doc-refactor.md`. Oversize check: `tools/list_oversize_docs.ps1`.
 
 ## Document kinds
 
@@ -73,7 +68,6 @@ Design doors (open sibling only when the job matches): `design/art-pipeline.md`,
 | Animation Browser briefs | `art-review.md` | §19.6 |
 | Pinned archive commits | `archives.md` | §20 |
 | Suggested starts + live defaults | `tunables.md` | App. A + live `balance.gd` |
-| Anvil leftovers for the next session | `handoff-anvil.md` | — |
 
 Per-build player notes for the **current series** are flat `design/changelog/{label}.md`. Prior series live under `design/changelog/archive/{epoch}.{series}/`. They are not topic files. Do not open them unless `versioning.md` says to.
 
@@ -87,7 +81,7 @@ Per-build player notes for the **current series** are flat `design/changelog/{la
 
 ## Code map (live path)
 
-Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`. Split mechanics: `design/refactor.md`. Web / chat applies the 10KB cap in Phase 6 of `design/web-session.md`, not while drafting. Grok Bot’s under-5KB sweep target is only in `design/grok-bot-session.md`.
+Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`. Split mechanics: `design/refactor.md`. Cap timing by path: `AGENTS.md`.
 
 | System | Live files |
 |--------|------------|
