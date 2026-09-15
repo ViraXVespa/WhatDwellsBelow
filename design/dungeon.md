@@ -1,9 +1,11 @@
 ﻿# Dungeon generation and floors
 
-Status: binding design + live snapshot
-Read when: changing gen, floor flow, streaming, boss doors, fog, or crystals
-Code: `scripts/dungeon/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_boot.gd`, `dungeon_stream.gd`, `dungeon_geo_stream.gd`, `dungeon_map_act.gd`, `dungeon_props.gd`, `boss_door.gd`, `crystal_net.gd`, `crystal_place.gd`, `floor_crystal.gd`
-See also: `design/enemies.md`, `design/interactables.md`, `design/ui.md`, `design/tunables.md`
+Status: binding design + live snapshot  
+Read when: changing gen, floor flow, streaming, boss doors, fog, or crystals  
+Code: `scripts/dungeon/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_boot.gd`, `dungeon_stream.gd`, `dungeon_geo_stream.gd`, `dungeon_map_act.gd`, `dungeon_props.gd`, `boss_door.gd`, `crystal_net.gd`, `crystal_place.gd`, `floor_crystal.gd`  
+See also: `design/tunables.md`
+
+`See also:` is not a read list. Open tunables only when a number is the named work. Enemies, interactables, and UI stay on their own doors.
 
 ## Overall structure
 

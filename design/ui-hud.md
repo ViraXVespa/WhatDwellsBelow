@@ -1,8 +1,10 @@
 ﻿# HUD and web touch overlay
 
-Status: binding design
-Read when: gauntlet HUD strip or web touch overlay
-See also: `design/ui.md`
+Status: binding design  
+Read when: gauntlet HUD strip or web touch overlay  
+See also:
+
+The UI door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen ui, theme, title-web, pause, run-flow, gear-entry, gear-ui, hub, input, or doc-refactor from this file.
 
 ## HUD – gauntlet strip (mandatory elements and behavior)
 

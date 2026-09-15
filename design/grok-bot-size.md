@@ -2,9 +2,9 @@
 
 Status: protocol  
 Read when: Grok Bot Job table → size sweep  
-See also: `design/grok-bot-session.md`
+See also:
 
-Binding for **Grok Bot** size sweeps only. Ship rules stay on `design/grok-bot-session.md`. Recipes stay in `design/refactor.md`.
+Binding for **Grok Bot** size sweeps only. Ship rules stay on `design/grok-bot-session.md` (already open). Recipes stay in `design/refactor.md`. Do not reopen the door. `See also:` is not a read list.
 
 ## Mandate
 
@@ -19,15 +19,13 @@ Out of scope: `scenes/`, `assets/`, `tools/` (unless a preload path or PC-offloa
 
 ## Read set
 
-1. `AGENTS.md`
-2. `design/grok-bot-session.md`
-3. This file
-4. `design/refactor.md`
-5. The `design/README.md` **code map** row for the cluster about to be edited
-6. After inventory: only the live `.gd` files in that one cluster
-7. At ship: baked `scripts/data/version.json` and `design/versioning.md` body shape — not the changelog tree
+1. This file
+2. `design/refactor.md` (recipe only)
+3. One `design/code-map.md` **system row** for the cluster about to be edited
+4. After inventory: only the live `.gd` files in that one cluster
+5. At ship: baked `scripts/data/version.json` and `design/versioning.md` body shape — not the changelog tree
 
-Do not open `design/reuse-map.md`, `design/doc-refactor.md`, or the other Bot flow siblings.
+Do not reopen `AGENTS.md` unless types, warnings, tabs, or the 10KB cap left context. Do not open `design/reuse-map.md`, `design/doc-refactor.md`, or the other Bot flow siblings.
 
 ## Inventory
 

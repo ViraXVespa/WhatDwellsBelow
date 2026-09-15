@@ -1,8 +1,10 @@
 ﻿# Gear rules and crafting
 
-Status: binding design
-Read when: gear rules, item level, affixes, analyze, duplicates, forge, whites, options source
-See also: `design/inventory.md`
+Status: binding design  
+Read when: gear rules, item level, affixes, analyze, duplicates, forge, whites, options source  
+See also:
+
+The inventory door is already open when this sibling is loaded. `See also:` is not a read list. Do not bounce back to `design/inventory.md` from this file. Board chrome stays on `design/gear-ui.md` when that is the named work.
 
 ## Gear rules
 

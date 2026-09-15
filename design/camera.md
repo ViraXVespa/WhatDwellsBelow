@@ -1,9 +1,11 @@
 ﻿# Camera and presentation
 
-Status: binding design + live snapshot
-Read when: touching Camera3D, zoom, HUD scale, renderer, or depth sorting
-Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/camp_warm.gd`, `scripts/input/look_ctrl.gd`, `scripts/app.gd`, `project.godot`
-See also: `design/player.md`, `design/input.md`, `design/archives.md`, `design/audio-visual.md`, `design/ui.md`, `design/hub.md`
+Status: binding design + live snapshot  
+Read when: touching Camera3D, zoom, HUD scale, renderer, or depth sorting  
+Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/camp_warm.gd`, `scripts/input/look_ctrl.gd`, `scripts/app.gd`, `project.godot`  
+See also: `design/tunables.md`
+
+`See also:` is not a read list. Open tunables only when a number is the named work. Player, input, archives, audio-visual, UI, and hub stay on their own doors.
 
 ## Camera (live 3D path)
 

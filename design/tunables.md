@@ -3,7 +3,9 @@
 Status: suggested starts + live snapshot  
 Read when: changing feel, gen size, economy, crystals, or debug defaults  
 Code: `scripts/data/balance.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
-See also: the topic file for the system you are changing; anvil numbers also live in `design/inventory.md` and `design/handoff-anvil.md`
+See also:
+
+`See also:` is not a read list. The topic door for the system you are changing is already open when this file is in play. Anvil numbers that are not keys yet still live in `design/inventory.md`. Do not open a path that does not exist.
 
 These are recommended starting points for the current live implementation.  
 Every value **MUST** be exposed in the debug menu and treated as non-final.  

@@ -2,9 +2,9 @@
 
 Status: protocol  
 Read when: splitting topic `design/*.md` into a door + siblings; Grok Bot doc facade flow  
-See also: `design/grok-bot-session.md`
+See also:
 
-This file is the mechanical recipe. Bot session flow is `design/grok-bot-docs.md`.
+This file is the mechanical recipe. Bot session flow is the docs Job-table sibling. Do not open the Bot door from this recipe. `See also:` is not a read list. Load cap: `AGENTS.md` Shared (soft).
 
 ## Goal
 
@@ -28,7 +28,7 @@ Cut routing tokens without losing binding comprehension. Do not change binding m
 ## In scope
 
 - Topic files under `design/*.md` (and later `design/<area>/` if a cluster earns a folder).
-- Protocol family updates required by the split (`design/grok-bot-session.md` Job table, this file, `design/README.md` index rows).
+- Protocol family updates required by the split (Bot door Job table, this file, `design/README.md` index rows, `design/code-map.md` only if a script path must stay accurate).
 - One `design/changelog/{label}.md` per shipping PR.
 
 ## Out of scope
@@ -52,7 +52,7 @@ Cut routing tokens without losing binding comprehension. Do not change binding m
 - [ ] Job table covers every former top-level `##` cluster (or explicitly routes to an existing sibling topic such as `gear-ui.md`).
 - [ ] Preamble non-negotiables that apply to every job stay on the facade.
 - [ ] Live snapshots travel with the matching job sibling (not the door).
-- [ ] Sibling `See also` is the door only. Peers stay in the door Job table.
+- [ ] Sibling `See also` may name boundary **topic doors** only. It must not name the parent already open, siblings of the current door, path/session files, or a path that does not exist.
 - [ ] No behavior / binding change.
 
 ## Token rules
@@ -60,7 +60,7 @@ Cut routing tokens without losing binding comprehension. Do not change binding m
 - After inventory, open **one** facade and **only** the sibling for the active job.
 - Do not concatenate all siblings into chat "for context."
 - Prefer Length summaries / headings lists over pasting whole markdown bodies.
-- `See also:` is not a read list. Open a listed path only when `Read when` matches, the Job table names it, or the User names that work.
+- `See also:` is not a read list and does not increment the load count. Open a listed path only when `Read when` matches, the Job table names it, or the User names that work.
 
 ## Door + siblings layout
 

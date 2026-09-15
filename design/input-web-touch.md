@@ -1,8 +1,10 @@
 ﻿# Web touch input
 
-Status: binding design
-Read when: web touch pad / touch HUD input
-See also: `design/input.md`
+Status: binding design  
+Read when: web touch pad / touch HUD input  
+See also:
+
+The input door is already open when this sibling is loaded. `See also:` is not a read list. Do not bounce back to `design/input.md` from this file.
 
 ## Input – Web touch (`touch_pad.gd`, `touch_hud.gd`)
 

@@ -2,10 +2,10 @@
 
 Status: binding design  
 Read when: the User has accepted an I2V clip and it is time to harvest or pack  
-See also: `design/art-pipeline.md`  
+See also:  
 Code: `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/plate_remap.py`, `tools/sprite_pipeline.py`
 
-Open this file from the door. Do not harvest a rejected clip.
+The art door is already open when this sibling is loaded. Do not reopen `design/art-pipeline.md`. `See also:` is not a read list. I2V seed / prompt stays on `design/art-i2v.md` when that job is named. Do not harvest a rejected clip.
 
 ## Frame counts after harvest
 

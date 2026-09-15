@@ -2,9 +2,11 @@
 
 Status: protocol  
 Read when: Grok Bot Job table → parked or named folder relocate  
-See also: `design/grok-bot-session.md`
+See also:
 
 Binding for **Grok Bot** when the User names a folder move / relocate cluster. Do not fold this into a size sweep, extract, reuse-map brief, or doc facade PR.
+
+Ship rules stay on `design/grok-bot-session.md` (already open). Do not reopen the door. `See also:` is not a read list.
 
 ## Mandate
 
@@ -14,14 +16,12 @@ Out of scope: inventing a new cluster to move, archives, art, features.
 
 ## Read set
 
-1. `AGENTS.md`
-2. `design/grok-bot-session.md`
-3. This file
-4. `design/refactor.md` (Parked folder moves)
-5. The `design/README.md` **code map** rows that name the cluster
-6. At ship: `scripts/data/version.json` + `design/versioning.md` body shape
+1. This file
+2. `design/refactor.md` (Parked folder moves; recipe only)
+3. The `design/code-map.md` **system rows** that name the cluster
+4. At ship: `scripts/data/version.json` + `design/versioning.md` body shape — not the changelog tree
 
-Do not open `design/reuse-map.md`. Do not read every caller first — run the mover, then open only paths the summary says changed.
+Do not reopen `AGENTS.md` unless types, warnings, tabs, or the 10KB cap left context. Do not open `design/reuse-map.md`. Do not read every caller first — run the mover, then open only paths the summary says changed.
 
 ## Pass
 
@@ -29,5 +29,5 @@ Do not open `design/reuse-map.md`. Do not read every caller first — run the mo
 2. From repo root: `powershell -File tools/move_script_cluster.ps1` (or `python tools/move_script_cluster.py`). Optional `-DryRun`, `-Wrapper` (leave `extends "res://..."` stubs at old paths).
 3. The tool `git mv`s the facade + stem siblings (+ `.uid`), rewrites `res://` and bare paths under `scripts/`, `design/`, scenes, and `project.godot`, and writes `_logs/move-cluster/summary.txt`.
 4. Prefer updating call sites over wrappers when external refs are few.
-5. Update `design/README.md` code map rows in the same PR.
+5. Update `design/code-map.md` rows in the same PR.
 6. Run the editor import check (`design/pc-offload.md`). Ship per the door.

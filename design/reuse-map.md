@@ -2,9 +2,9 @@
 
 Status: protocol  
 Read when: web / chat Phase 7 is writing this brief, or Grok Bot Job table → `design/grok-bot-reuse.md` and this body is not the empty template  
-See also: `design/web-session.md`, `design/grok-bot-reuse.md`
+See also:
 
-`See also:` is an index, not a read list. Do not open those files unless this file’s `Read when`, a Job table, or the User names that work.
+`See also:` is not a read list. Web-session and grok-bot-reuse stay on their own path doors. Do not treat this file as an owners encyclopedia or a standing BOT list.
 
 This file is a User-authored staging brief for the **next** Grok Bot reuse PR. It is not an owners encyclopedia, not a standing BOT list, and not default Bot context.
 

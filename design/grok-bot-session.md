@@ -2,17 +2,19 @@
 
 Status: protocol  
 Read when: Grok Bot path; every Grok Bot session  
-See also: `AGENTS.md`
+See also:
 
 This file is binding for **Grok Bot** only. Grok Build and web / chat ignore it, except they may open `design/refactor.md` when they split for the 10KB cap.
 
-Grok Build / web splitting one file that *its own edit* pushed over 10KB is not this path — use `design/refactor.md` inside that session.
+Grok Build / web splitting one file that *its own edit* pushed over 10KB is not this path — use `design/refactor.md` inside that session (recipe only; do not open this door from the recipe).
+
+`See also:` is not a read list. Load cap: `AGENTS.md` Shared (soft). Do not reopen `AGENTS.md` from this file unless the GDScript types, warnings, tabs, or 10KB cap sections left context. Do not reopen protocol, constraints, or another Bot flow.
 
 ## Recognize
 
 Use this path when the User names Grok Bot / a refactor sweep / a Bot flow below, or when a Grok Bot / Cursor desktop assistant writes via GitHub PR.
 
-After `AGENTS.md`, load **this door**, then **one** Job-table sibling. Do not load the other flow files. Do not load `design/protocol.md`, `design/constraints.md`, `Demo_GDD.md`, `design/web-session.md`, `design/grok-build.md`, `design/sessions.md`, `design/session-log.md`, or `design/changelog/` except the one new `{label}` file at ship time.
+After `AGENTS.md`, load **this door**, then **one** Job-table sibling. The sibling starts at itself + the named recipe + one `design/code-map.md` row. Do not load the other flow files. Do not load `design/protocol.md`, `design/constraints.md`, `Demo_GDD.md`, `design/web-session.md`, `design/grok-build.md`, `design/sessions.md`, `design/session-log.md`, or `design/changelog/` except the one new `{label}` file at ship time.
 
 ## Job → Open
 
@@ -30,8 +32,8 @@ If the User names more than one job, ask which flow this session is. One flow, o
 
 - One open Bot PR at a time. Do not claim a write landed until the PR exists.
 - Prefer one commit on the PR branch. Tell the User to **squash-merge** into `main` (not merge-commit or rebase-merge). After squash-merge: stop. CI stamps. Do not offer a post-merge stamp commit.
-- One new `design/changelog/{label}.md` when the sweep is ready to land. Label math and body shape: `design/versioning.md`. Do not hand-edit `scripts/data/version.json` or `scripts/data/changelog.json`.
-- Touched live `scripts/**/*.gd` must ship under 10KB. Split with `design/refactor.md`. The under-5KB target is only `design/grok-bot-size.md`.
+- One new `design/changelog/{label}.md` when the sweep is ready to land. Label math and body shape: `design/versioning.md`. Do not read older changelog files. Do not hand-edit `scripts/data/version.json` or `scripts/data/changelog.json`.
+- Touched live `scripts/**/*.gd` must ship under 10KB. Split with `design/refactor.md` (recipe only). The under-5KB target is only `design/grok-bot-size.md`.
 - Caps are on-disk UTF-8 file sizes (`Get-Item Length` / `dir`). Do not measure with `ReadAllText` + `Encoding.UTF8.GetByteCount`.
 - PC offload catalog: `design/pc-offload.md`. Prefer Length summaries over opening untouched siblings.
 - Local size sweeps: prefer checkout at `WDB_ROOT` (example: `C:\Users\Vira\source\repos\WhatDwellsBelow`). Document a `WDB_ROOT` change here only if that path itself changed. Commit locally per cluster; push the PR branch when the cluster is done.

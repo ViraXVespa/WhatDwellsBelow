@@ -1,11 +1,11 @@
 ﻿# Design database
 
 Status: index  
-Read when: you need a topic file or a live code path  
-See also: `AGENTS.md`
+Read when: you need a topic file  
+See also: `design/code-map.md`
 
 This folder is the documentation database for humans and agents.  
-It is not one Game Design Document.
+It is not one Game Design Document. It is not a boot file.
 
 `docs/` is the GitHub Pages web export. Never store design notes there. Player-facing changelog pages are built in CI to `/changelog/` on Pages from flat `design/changelog/*.md` plus `design/changelog/archive/*/*.md`, not stored in `docs/` on `main`. Prior series are parked under `design/changelog/archive/{epoch}.{series}/` via `tools/archive_prior_changelogs.py`.
 
@@ -13,9 +13,13 @@ It is not one Game Design Document.
 
 ## How to use
 
-Boot and path procedure live in `AGENTS.md` and that path’s session file. This file is the topic index and live code map — not a boot file.
+Boot and path procedure live in `AGENTS.md` and that path’s session file.
 
-Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Live scripts: the code map below. Do not walk `assets/` unless the task names sprites or audio. After a behavior change, update the matching topic file in the same slice.
+This file is the **topic index** only. Live scripts, scenes, and tools: `design/code-map.md` (one system row). Do not open `design/code-map.md` unless you need a live path. Do not open this file’s topic table “for context.”
+
+Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Do not walk `assets/` unless the task names sprites or audio. After a behavior change, update the matching topic file in the same slice. After a live script split, update `design/code-map.md` in the same slice.
+
+`See also:` lines and index rows are not a read list. Open a listed path only when that file’s `Read when` matches, a Job table names it, or the User names that work.
 
 Design doors (open the Job-table sibling only): `design/art-pipeline.md`, `design/isolated-media.md`, `design/ui.md`, `design/debug.md`, `design/input.md`, `design/inventory.md`, `design/grok-bot-session.md`. Rules: `design/doc-refactor.md`. Oversize check: `tools/list_oversize_docs.ps1`.
 
@@ -73,6 +77,7 @@ Do not open `design/art-attack-keyframes.md` unless the User is resuming the att
 | Harvest, pack, cleanup | `art-pack.md` | §19.4 |
 | Animation Browser briefs | `art-review.md` | §19.6 |
 | Attack body stills / coil keys (parked; User must resume) | `art-attack-keyframes.md` | §19.2 |
+| Live code map | `code-map.md` | — |
 | Pinned archive commits | `archives.md` | §20 |
 | Suggested starts + live defaults | `tunables.md` | App. A + live `balance.gd` |
 
@@ -84,42 +89,5 @@ Per-build player notes for the **current series** are flat `design/changelog/{la
 - Put numbers in `tunables.md`, not buried in paragraphs.
 - Mark live-only behavior under **Live snapshot**.
 - Do not reintroduce a single 100KB GDD.
-- When live scripts are split under the 10KB cap, update this code map in the same slice.
+- When live scripts are split under the 10KB cap, update `design/code-map.md` in the same slice.
 - Do not treat `design/reuse-map.md` as an owners encyclopedia. Web Phase 7 writes that brief; Bot does not log extracts there.
-
-## Code map (live path)
-
-Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`. Split mechanics: `design/refactor.md`. Cap timing by path: `AGENTS.md`.
-
-| System | Live files |
-|--------|------------|
-| Autoload / flow | `scripts/app.gd` + `app_set.gd`, `app_flow.gd`, `app_run.gd`, `boot.gd`, `title.gd` + `title_news.gd`, `web_pad.gd` |
-| Display | `scripts/display_mode.gd`, `scripts/ui/fs_gate.gd` |
-| Scenes | `scenes/boot.tscn`, `fs_gate.tscn`, `splash.tscn`, `title.tscn`, `camp.tscn`, `dungeon.tscn`, `foundation.tscn` |
-| Player | `scripts/world/player.gd` + `player_anim.gd`, `player_anim_load.gd`, `player_anim_loco.gd`, `player_setup.gd`, `player_tick.gd`, `player_act.gd`, `player_lock.gd`, `player_combat.gd`, `facing.gd`, `camera_rig.gd`, `sprite_filter.gd` |
-| Combat | `scripts/combat/combat.gd`, `cover.gd`, `player_hit.gd`, `enemy.gd` + `enemy_ready.gd`, `enemy_hit.gd`, `enemy_present.gd`, `enemy_ai.gd`, `enemy_atk.gd`, `enemy_setup.gd`, `projectile.gd`, `roster.gd`, `aim_line.gd`, `telegraph.gd`, `float_num.gd`, `hp_bar.gd`, `dummy.gd`, `threat.gd` |
-| Skills / save | `scripts/data/progress.gd` + `progress_gear.gd`, `progress_gear_req.gd`, `progress_make.gd`, `progress_extract.gd`, `progress_quest.gd` + quest helpers, `progress_town.gd`, `progress_combat.gd`, `progress_forge.gd` + forge helpers, `affixes.gd`, `gear_roll.gd`, `gear_rules.gd`, `save_store.gd` + `save_store_io.gd` / collect / data, `catalog.gd` |
-| Numbers | `scripts/data/balance.gd`, `balance_schema.gd`, `tunables.gd` |
-| Version / changelog | `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`; `tools/build_changelog.py` |
-| Web export | `tools/web_shell.html`, `tools/export_web.ps1`, `tools/enable_texture_mips.py`, `tools/web_postexport.py`; `export_presets.cfg`; `.github/workflows/version.yml`, `.github/workflows/pages.yml` |
-| Dungeon | `scripts/dungeon/gen.gd` + `gen_carve.gd`, `gen_rooms.gd`, `gen_doors.gd`; `scripts/world/dungeon.gd` + `dungeon_boot.gd`, `dungeon_geo.gd`, `dungeon_geo_stream.gd`, `dungeon_map_act.gd`, `dungeon_cells.gd`, `dungeon_stream.gd`, `dungeon_props.gd`, `dungeon_pack.gd`, `crystal_net.gd`, `floor_crystal.gd` |
-| Hub | `scripts/world/camp.gd` + `camp_warm.gd`, `camp_build.gd`, `camp_view.gd`; `interact.gd`, `interact_fx.gd`; `scripts/combat/dummy.gd` |
-| Gather | `scripts/world/gather_node.gd`, `gather_rules.gd`, `breakable.gd`, `pickup.gd` |
-| UI | `scripts/ui/hud.gd` + `hud_view.gd`, `hud_act.gd`; `touch_hud.gd`; `ui_text.gd`; `menu_pad.gd`; `step_row.gd`; `prompt_view.gd`; `confirm_dlg.gd`; `pause_menu.gd` + `pause_menu_view.gd`, `pause_menu_util.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_settings.gd`, `pause_settings_pages.gd`, `pause_system.gd`; `split_menu.gd` + `split_menu_view.gd`, `split_menu_chrome.gd`; `binds_page.gd`; `scripts/ui/gear_board/gear_board.gd` + helpers in `scripts/ui/gear_board/` (`gear_board_build.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_opts.gd`, `gear_board_text_fmt.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `gear_board_host.gd`, `gear_board_anvil.gd`, `gear_board_anvil_view.gd`, `gear_board_anvil_forge.gd` + forge helpers), `gear_icons.gd`; `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`; `crystal_ui.gd`; `recap.gd`, `recap_bars.gd`, `loader.gd`, `present.gd`, `theme.gd`, `splash.gd`, `fs_gate.gd` |
-| Input | `scripts/input/binds.gd` + `binds_pool.gd`, `binds_defaults.gd`, `prompts.gd`; `pad.gd`, `touch_pad.gd`, `look_ctrl.gd`; `scripts/ui/binds_page.gd`, `prompt_view.gd`, `menu_pad.gd`; `scripts/web_pad.gd`; `scripts/display_mode.gd` |
-| Debug | `scripts/debug/debug_menu/debug_menu.gd` + folder helpers (`debug_menu_input.gd`, `debug_menu_pages.gd`, `debug_menu_profile.gd`, `debug_menu_settings.gd`, `debug_menu_val.gd`, `debug_menu_val_grid.gd`, `debug_menu_val_page.gd`); `scripts/debug/playtest.gd` extends `playtest_api.gd` + `playtest_ai.gd`, `playtest_nav.gd`, `playtest_los.gd`, `playtest_path.gd`, `playtest_goals.gd`, `playtest_sim.gd`, `playtest_recs.gd`; `smoke.gd` + `smoke_early.gd`, `smoke_late.gd`, `smoke_p5.gd`, `smoke_p6.gd`, `smoke_p7.gd`, `smoke_p8.gd`, `smoke_p9.gd`, `smoke_p79.gd`; `anim_browser.gd` + `anim_browser_nav.gd`, `anim_browser_review.gd`, `anim_review.gd`, `anim_scan.gd`, `telemetry.gd` |
-| Audio | `scripts/audio/music.gd`, `scripts/audio/sfx.gd` |
-| Archives UI | `scripts/ui/archives_ui.gd` + `archives_ui_view.gd`, `archives_ui_act.gd`; `scripts/data/archives_catalog.gd`, `archives_launch.gd`, `archives_docs.gd`, `archive_catalog.json` |
-| Plate chrome tokens | `scripts/ui/plate_chrome.gd` |
-| Tip place geometry | `scripts/ui/tip_place.gd` |
-| Y-billboard Sprite3D | `scripts/world/billboard_spr.gd` |
-| Staged Bot reuse brief | `design/reuse-map.md` |
-| Isolated media (CLI) | `design/isolated-media.md`; `tools/run_isolated_grok.py`; `.grok/skills/imagine-isolated/SKILL.md`, `.grok/skills/i2v-isolated/SKILL.md` |
-| PC offload (Bot + Build) | `design/pc-offload.md`; `tools/list_oversize_scripts.ps1`, `summarize_scripts.ps1` / `.py`, `list_facade_cluster.ps1`, `check_script_cap.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1`, `run_build_gate.ps1`, `clean_agent_logs.ps1` |
-| Folder relocate | `tools/move_script_cluster.ps1` / `.py` (see `design/refactor.md` Parked folder moves; Bot flow `design/grok-bot-relocate.md`) |
-| Grok Bot PC tools | `tools/list_oversize_scripts.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1` |
-| Sprite tools | `tools/enable_texture_mips.py`, `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/run_isolated_grok.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/process_*.py`, `tools/process_world_pass.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py` |
-
-Public entry points that must not change when a helper is split: `App.playtest`, `App.set_zoom` / `App.set_hud_scale` / `App.set_volume`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.
-
-Live `player_anim.gd` plays unarmed idle stills plus `idle_to_walk` / looping `walk` / `walk_to_idle` from the locked Bible harvest. Binding is `design/player.md` + `design/art-pipeline.md`. Title → Play warms those loco frames and frames the full yard under the solid loader (`design/hub.md`).

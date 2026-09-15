@@ -2,13 +2,15 @@
 
 Status: protocol  
 Read when: Grok Build (CLI) path; every CLI instance after a gap  
-See also: `AGENTS.md`, `design/protocol.md`, `design/versioning.md`, `design/sessions.md`
+See also:
 
 ## Recognize
 
 You can write the live tree. If you cannot, you are not on this path — use `design/web-session.md`.
 
 One session family per development week. A **slice** (including one I2V clip) stays in that thread. A mid-week new CLI chat is a catch-up, not a new week.
+
+`See also:` is not a read list. Load cap: `AGENTS.md` Shared (soft). Do not reopen `AGENTS.md` from this file.
 
 ## New week vs catch-up vs slice
 
@@ -23,11 +25,12 @@ Do not pin because time passed, because the last slice ended, or because a new C
 
 ## Read order
 
-1. `AGENTS.md`, `design/protocol.md`, `design/constraints.md`.
-2. `design/sessions.md` (leave-off only).
-3. After a gap or a **new week**: every current-series `design/changelog/{epoch}.{series}.*.md` per `design/versioning.md`. Do not open other series. Do not treat `scripts/data/version.json` as the version ledger. Do not follow GitHub commit links into web-session conversations.
-4. Only the topic files that match the requested work (`design/README.md`). Sprite / I2V / pack / review: `design/art-pipeline.md`, then only the sibling it names. Imagine / isolated generate: `design/isolated-media.md`.
-5. Inspect git and the live tree from the **code map row** for this task (`project.godot`, then the listed scenes/scripts). Do not walk `assets/` unless the task names sprites or audio.
+1. `AGENTS.md`, then this file. Do not re-read `AGENTS.md` after that.
+2. `design/protocol.md` and `design/constraints.md` only when they are not already in this session.
+3. `design/sessions.md` (leave-off only). It is not a boot list and must not send you back through this Read order.
+4. Changelog: skip on a mid-week slice or catch-up. Open `design/versioning.md` (body shape only) for **new week**, a revert, or when the User asks what shipped. Do not ingest every `design/changelog/{epoch}.{series}.*.md`. Do not treat `scripts/data/version.json` as the version ledger. Do not follow GitHub commit links into web-session conversations.
+5. Only the topic door that matches the requested work (one row in `design/README.md`). Sprite / I2V / pack / review: `design/art-pipeline.md`, then only the sibling it names. Imagine / isolated generate: `design/isolated-media.md`.
+6. Inspect git and the live tree from **one system row** in `design/code-map.md` (`project.godot`, then the listed scenes/scripts). Do not walk `assets/` unless the task names sprites or audio.
 
 `design/session-log.md` is not part of every boot. Read it when rewriting it at session close, when the User asks what shipped, or when leave-off is not enough to name the next unit.
 
@@ -73,7 +76,7 @@ Path-only: mid-week new CLI chat is a catch-up (no pin). A thin isolated child i
 
 ## Script cap
 
-Ship floor is the **10,000 byte** cap in `AGENTS.md`. Enforce it while editing. Split in that same slice with `design/refactor.md`. Stop once under 10KB. Do not chase Grok Bot’s 5KB target.
+Ship floor is the **10,000 byte** cap in `AGENTS.md`. Enforce it while editing. Split in that same slice with `design/refactor.md` (recipe only; do not open the Bot door from it). Stop once under 10KB. Do not chase Grok Bot’s 5KB target.
 
 A size split MAY introduce a new same-system helper API. A new cross-system owner during a split is **Stop and propose first**.
 
@@ -101,7 +104,7 @@ Stop and report: files changed, how you verified, what is still open. Do not cha
 
 ## End of session
 
-Update `design/sessions.md` (leave-off only). Prepend a factual entry to `design/session-log.md`. Write `design/changelog/{label}.md` for the `0.N.0` completion commit per `design/versioning.md`.
+Update `design/sessions.md` (leave-off only). Prepend a factual entry to `design/session-log.md`. Write `design/changelog/{label}.md` for the `0.N.0` completion commit per `design/versioning.md` (body shape only; do not read older changelog files).
 
 Those two session files are for the next Grok Build instance, not for web / chat or Grok Bot.
 

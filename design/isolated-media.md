@@ -2,11 +2,13 @@
 
 Status: binding design  
 Read when: Grok Build is about to call Imagine (`image_gen`, `image_edit`, `image_to_video`) or stage a tile / character still / UI still / I2V unit  
-See also: `design/art-pipeline.md`  
+See also:  
 Code: `tools/run_isolated_grok.py`  
 Skills: `.grok/skills/imagine-isolated/SKILL.md`, `.grok/skills/i2v-isolated/SKILL.md`
 
 CLI-only. Web / chat and Grok Bot do not run Imagine and do not spawn this runner.
+
+The art door is already open when this Job-table sibling is loaded. Do not reopen `design/art-pipeline.md`. `See also:` is not a read list.
 
 ## Default
 

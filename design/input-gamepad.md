@@ -1,8 +1,10 @@
 ﻿# Gamepad and shared menu input
 
-Status: binding design
-Read when: gamepad layout, look mode, or universal menus
-See also: `design/input.md`
+Status: binding design  
+Read when: gamepad layout, look mode, or universal menus  
+See also:
+
+The input door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen input siblings, ui, hud, doc-refactor, or the topic index from this file.
 
 ## Target platforms
 

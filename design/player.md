@@ -3,7 +3,9 @@
 Status: binding design  
 Read when: changing movement, collision, facing, or character select  
 Code: `scripts/world/player.gd`, `player_anim.gd`, `player_anim_load.gd`, `player_anim_loco.gd`, `facing.gd`  
-See also: `design/input.md`, `design/combat.md`, `design/art-pipeline.md`, `design/art-i2v.md`, `design/art-pack.md`, `design/hub.md`
+See also: `design/art-pipeline.md`
+
+`See also:` is not a read list. Open the art door only when generating or replacing frames. Combat dash rules and input routing stay on their own doors.
 
 ## Character selection
 

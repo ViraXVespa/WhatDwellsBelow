@@ -1,9 +1,11 @@
 ﻿# Archived builds
 
-Status: binding design
-Read when: touching Archives UI, Pages exports, or catalog pins
-Code: `scripts/ui/archives_ui.gd`, `scripts/ui/archives_ui_view.gd`, `scripts/ui/archives_ui_act.gd`, `scripts/ui/split_menu.gd`, `scripts/ui/split_menu_view.gd`, `scripts/ui/split_menu_chrome.gd`, `scripts/data/archives_catalog.gd`, `scripts/data/archives_launch.gd`, `scripts/data/archive_catalog.json`, `scripts/ui/loader.gd`, `tools/export_archives.py`, `.github/workflows/pages.yml`
-See also: `design/protocol.md`, `design/versioning.md`, `design/save-tech.md`, `design/ui.md`
+Status: binding design  
+Read when: touching Archives UI, Pages exports, or catalog pins  
+Code: `scripts/ui/archives_ui.gd`, `scripts/ui/archives_ui_view.gd`, `scripts/ui/archives_ui_act.gd`, `scripts/ui/split_menu.gd`, `scripts/ui/split_menu_view.gd`, `scripts/ui/split_menu_chrome.gd`, `scripts/data/archives_catalog.gd`, `scripts/data/archives_launch.gd`, `scripts/data/archive_catalog.json`, `scripts/ui/loader.gd`, `tools/export_archives.py`, `.github/workflows/pages.yml`  
+See also: `design/versioning.md`
+
+`See also:` is not a read list. Open versioning only when the week-pin ritual is the named work. Protocol, save isolation, and UI chrome stay on their own doors.
 
 ## Core rule
 

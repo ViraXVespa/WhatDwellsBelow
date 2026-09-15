@@ -16,34 +16,27 @@ If unsure: ask once, then use **web / chat** if still uncertain. A missed full-f
 
 Design lives in `design/`. There is no single GDD. `Demo_GDD.md` is only an index.
 
-`See also:` lines and index rows are not a read list. Do not open those files unless this file’s Path / Need table, that file’s `Read when`, a Job table, or the User names that work.
+`See also:` lines and index rows are not a read list. They do not increment the load count. Open a listed path only when this file’s Path table, that file’s `Read when`, a Job table, or the User names that work. See also may name boundary **topic doors**. It must not name the parent already open, siblings of the current door, this file, path/session files, or a path that does not exist.
 
 | Need | File |
 |------|------|
-| Shared workflow | `design/protocol.md` |
-| Web / chat session flow | `design/web-session.md` |
-| Grok Build session flow | `design/grok-build.md` |
-| Grok Bot session door | `design/grok-bot-session.md` |
-| Refactor recipe | `design/refactor.md` |
-| Staged Bot reuse brief | `design/reuse-map.md` |
-| Must / must-not | `design/constraints.md` |
-| Topic + code map | `design/README.md` |
-| Grok Build leave-off | `design/sessions.md` |
-| Grok Build session log | `design/session-log.md` |
-| Version scheme, changelog, week pins | `design/versioning.md` |
-| Player / I2V art door | `design/art-pipeline.md` |
-| Isolated Imagine / I2V (CLI) | `design/isolated-media.md` |
-| Numbers | `design/tunables.md` |
+| Must / must-not (web / Build only) | `design/constraints.md` |
+| Live code map (one system row) | `design/code-map.md` |
+| Numbers (when the work changes them) | `design/tunables.md` |
 
-Fresh **Grok** instance: read `design/protocol.md` and `design/constraints.md`, then only the topic files for the requested work. Use the code map in `design/README.md` before walking the live tree. Do not start by archiving or rewriting. Do not read `design/changelog/` unless the work is versioning, a named past build, or a revert. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief or the User named the staged reuse PR.
+Path session files are in the Path table, not here. Topic index: `design/README.md` (one topic row; the table is not a read list). Versioning, art, isolated-media, reuse-map, sessions, session-log, protocol, and refactor: open only when `Read when` matches, a Job table names it, or the User names that work.
+
+**Load cap (soft):** default is this file + the path session file + (web / Build only) `design/protocol.md` and `design/constraints.md` + one topic door + one Job-table sibling. `design/tunables.md` when numbers change. `design/versioning.md` at ship only. `design/code-map.md` is one system row, not the whole table. A second topic door is allowed when that file’s `Read when` matches or the User names the boundary. Ask before a third topic door. Protocol / constraints / tunables / versioning-at-ship / one code-map row are not topic doors.
+
+Fresh **Grok** (web / Build): read `design/protocol.md` and `design/constraints.md`, then only the topic door for the requested work. Use one row in `design/code-map.md` before walking the live tree. Do not start by archiving or rewriting. Do not read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief or the User named the staged reuse PR.
 
 Do not open `design/art-attack-keyframes.md` or `tools/attack_keyframes.py` unless the User is resuming the attack animation keyframe pipeline (coil stills, two-hand body stills, beat-by-beat attack frames). When they are, run `python tools/attack_keyframes.py --resume` and paste the printed block.
 
 **Grok Build (CLI):** Imagine (`image_gen`, `image_edit`, `image_to_video`) defaults to `design/isolated-media.md` and `tools/run_isolated_grok.py`. Repo skills `.grok/skills/imagine-isolated/` and `.grok/skills/i2v-isolated/` are doors into that file. Web / chat and Grok Bot do not run Imagine.
 
-**Grok Bot** skips that read list. After this file, follow `design/grok-bot-session.md` only. Open `design/reuse-map.md` only from `design/grok-bot-reuse.md` when that brief is not the empty template.
+**Grok Bot** skips the web / Build read list. After this file, follow `design/grok-bot-session.md` only. Do not reopen this file for protocol or constraints. Types, warnings, tabs, and the 10KB cap in the sections below still bind; the Bot door may point at those sections if they left context. Open `design/reuse-map.md` only from `design/grok-bot-reuse.md` when that brief is not the empty template.
 
-Path procedures (Build week pin, web phases, Bot flows) live in that path’s session file. `design/sessions.md` is the Grok Build leave-off only — not a web or Bot hand-off.
+Path procedures (Build week pin, web phases, Bot flows) live in that path’s session file. `design/sessions.md` is the Grok Build leave-off only — not a web or Bot hand-off. Fresh Build instance: this file, then `design/grok-build.md`. Leave-off is not a boot list.
 
 **Binding design** is required **player-facing** behavior. **Live snapshot** is current code. If they disagree, patch live toward binding or ask. Do not invent a third **game** system. A new code API is not a third game system. Grok Build implementation rules: `design/grok-build.md`.
 

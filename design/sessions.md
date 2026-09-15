@@ -2,15 +2,19 @@
 
 Status: working notes  
 Read when: starting a fresh Grok Build instance after a gap  
-See also: `design/grok-build.md`, `design/session-log.md`
+See also:
 
 This is the Grok Build leave-off. It is **not** binding game design. Binding behavior stays in the topic files. The live tree is still the source of truth for shipping code.
+
+Fresh instance starts at `AGENTS.md`, then `design/grok-build.md`. This file is leave-off, not a boot list. Do not paste that path’s required-read list back in here.
 
 Keep this file short. History goes in `design/session-log.md`.
 
 The User does other work between weeks (git commits, stills, systems). **Image-to-video and complex animation packing stay in Grok Build** unless the User says otherwise.
 
 Do not resume unfinished work from this file unless the User names that work. A listed next-work line is a hint, not a start order.
+
+`See also:` is not a read list. Read `design/session-log.md` only if this leave-off is not enough to name the next unit, or when writing it at close.
 
 ## Leave-off
 
@@ -19,11 +23,10 @@ Do not resume unfinished work from this file unless the User names that work. A 
 
 ### Pickup checklist
 
-Boot per `design/grok-build.md` Read order. Then:
-
 1. Read this leave-off.
-2. Inspect git / `git status` and the code-map row for the named work. Do not assume this file matches disk.
-3. Read `design/session-log.md` only if this leave-off is not enough to name the next unit, or when writing it at close.
+2. Inspect git / `git status` and one `design/code-map.md` row for the named work. Do not assume this file matches disk.
+3. Do not read `design/changelog/` on a mid-week slice. **new week**, a revert, or “what shipped” uses `design/versioning.md` body shape + this leave-off.
+4. Read `design/session-log.md` only if this leave-off is not enough to name the next unit, or when writing it at close.
 
 ### Likely next (only if the User names it)
 

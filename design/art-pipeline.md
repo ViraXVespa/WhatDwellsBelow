@@ -3,9 +3,11 @@
 Status: binding design  
 Read when: generating or replacing player / enemy / weapon frames  
 Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/bible_prompt.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `tools/run_isolated_grok.py`, `assets/sprites/player/`  
-See also: `design/player.md`, `design/audio-visual.md`
+See also: `design/player.md`
 
 This file is the door. Do not run `tools/bible_prompt.py` unless you are writing or locking a Bible. Do not load Appendix D unless you are choosing a generation method. Do not load the siblings until the job matches the table. Do not load `design/art-attack-keyframes.md` unless the User is resuming the attack animation keyframe pipeline.
+
+`See also:` is not a read list. Isolated generate is the Job-table row, not a default open.
 
 | Job | Open |
 |-----|------|

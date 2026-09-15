@@ -3,11 +3,13 @@
 Status: protocol / checklist  
 Read when: deciding whether a system is missing, or when running smoke  
 Code: `scripts/debug/smoke.gd`  
-See also: `design/protocol.md`, `design/constraints.md`, `design/debug.md`
+See also:
 
 The live path already exists. Phases below are a hard coverage list, not a license to delete and rebuild.
 
 Hard constraints and the Demo-Complete Checklist live in `design/constraints.md`. Use this file to find gaps, confirm which phases the live path already satisfies, and fill only the requested slice.
+
+`See also:` is not a read list. Do not reopen protocol, constraints, or debug from this file unless the User named that work. Path boot stays on `AGENTS.md` + the path session file.
 
 ## Core construction rules
 

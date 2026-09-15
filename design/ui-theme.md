@@ -1,8 +1,10 @@
 ﻿# UI theme
 
-Status: binding design
-Read when: playable surface theme tokens
-See also: `design/ui.md`
+Status: binding design  
+Read when: playable surface theme tokens  
+See also:
+
+The UI door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen ui, gear-ui, hub, input, or doc-refactor from this file.
 
 ## UI theme (playable surfaces)
 

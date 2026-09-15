@@ -1,14 +1,15 @@
 ﻿# Attack body keyframes (posed stills)
 
-Status: parked experiment. Not live I2V law.
-
+Status: parked experiment. Not live I2V law.  
 Read when: the User resumes the attack animation keyframe pipeline, two-hand body stills, coil stills, or names this file.  
-See also: `design/art-pipeline.md`
-
-Do not read when: the job is walk or idle I2V, pack, overlay, Godot, combat numbers, or a general art-pipeline session. `design/art-i2v.md` and `tools/i2v_seeds.py` stay the I2V path.
-
+See also:  
 Code: `tools/attack_keyframes.py`
-Log: `tools/attack_keyframes_log.json`
+
+This sibling is parked. Do not open it from a general art-pipeline session. `See also:` is not a read list. `design/art-i2v.md` and `tools/i2v_seeds.py` stay the I2V path.
+
+Do not read when: the job is walk or idle I2V, pack, overlay, Godot, combat numbers, or a general art-pipeline session.
+
+Log: `tools/attack_keyframes_log.json`  
 Seed: locked Bible Down cell, 4× NN, `#FF00FF`. User file name used in testing: `seed_i2v_down_x4.png`. Session image ids from 2026-09-15 are dead. Do not ask for them.
 
 ## Resume commands (run these; paste the printed block)
@@ -131,7 +132,7 @@ Shoulder-twist and ribcage lines are banned. Hair-unlock + small coil is the onl
 
 ## Leave-off (2026-09-15)
 
-Beat: female Down `attack_great_axe` / coil.
-Sheet: `coil_v22`. Next id: `coil_v30`.
-Grip: `authored_left_high`. Other handedness is runtime flip.
+Beat: female Down `attack_great_axe` / coil.  
+Sheet: `coil_v22`. Next id: `coil_v30`.  
+Grip: `authored_left_high`. Other handedness is runtime flip.  
 Imagine cap hit ~10:12 UTC. Do not chain edits.

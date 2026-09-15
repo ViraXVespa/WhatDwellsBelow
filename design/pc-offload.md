@@ -2,7 +2,9 @@
 
 Status: binding for agents on a local checkout  
 Read when: measuring scripts, planning splits, verifying after edits, or cutting token use  
-See also: `design/grok-bot-session.md`, `design/grok-build.md`, `design/debug.md`, `design/refactor.md`
+See also:
+
+This file is a runner catalog. Path procedure stays in the path session file. Do not open session files or `design/debug.md` from here. `See also:` is not a read list.
 
 Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. Agents should **read only the `_logs/*/summary.txt` files** those tools write - not raw Godot logs, not whole script bodies just to measure or inventory.
 

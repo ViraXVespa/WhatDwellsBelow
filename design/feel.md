@@ -1,8 +1,10 @@
-# Balancing, feel, and polish targets
+﻿# Balancing, feel, and polish targets
 
-Status: binding design
-Read when: tuning difficulty, time-to-extract, weapon parity, or polish bar
-See also: `design/constraints.md`, `design/tunables.md`, `design/debug.md`
+Status: binding design  
+Read when: tuning difficulty, time-to-extract, weapon parity, or polish bar  
+See also: `design/tunables.md`
+
+`See also:` is not a read list. Open tunables only when a number is the named work. Constraints and debug stay on their own doors.
 
 ## Time targets
 

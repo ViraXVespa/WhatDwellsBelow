@@ -1,8 +1,10 @@
-# Edge cases and failure modes
+﻿# Edge cases and failure modes
 
-Status: binding design
-Read when: changing death, bag, save, Extraction Gates, tools, artifacts, or confirmations
-See also: `design/ui.md`, `design/inventory.md`, `design/save-tech.md`, `design/debug.md`
+Status: binding design  
+Read when: changing death, bag, save, Extraction Gates, tools, artifacts, or confirmations  
+See also:
+
+`See also:` is not a read list. Gate caps live in `design/dungeon.md`. Bag / artifact / extract rules live in `design/inventory.md`. Save fallback lives in `design/save-tech.md`. Open those doors only when that file’s `Read when` matches or the User names that work.
 
 ## “Dispel” or death on floor 1 with empty bag
 

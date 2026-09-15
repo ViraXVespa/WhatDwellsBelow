@@ -1,9 +1,11 @@
 ﻿# Secret debug / balance menu
 
-Status: binding design
-Read when: secret debug menu / balance page
-Code: scripts/debug/, scripts/combat/debug_menu paths may be under scripts/debug/debug_menu/
-See also: `design/debug.md`
+Status: binding design  
+Read when: secret debug menu / balance page  
+Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/debug/debug_menu/`  
+See also:
+
+The debug door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen debug, playtest, anim-browser, smokes, pc-offload, refactor, or the topic index from this file.
 
 ## Secret debug / balance menu
 

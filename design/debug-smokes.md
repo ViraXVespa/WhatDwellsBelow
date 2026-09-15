@@ -1,9 +1,11 @@
 ﻿# Smoke tests (live snapshot)
 
-Status: binding design
-Read when: smoke phase coverage / how to run smokes
-Code: scripts/debug/, scripts/combat/debug_menu paths may be under scripts/debug/debug_menu/
-See also: `design/debug.md`
+Status: binding design  
+Read when: smoke phase coverage / how to run smokes  
+Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/debug/debug_menu/`  
+See also:
+
+The debug door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen debug-menu, playtest, anim-browser, pc-offload, refactor, or the topic index from this file.
 
 ## Live snapshot — smoke tests (`smoke.gd`)
 

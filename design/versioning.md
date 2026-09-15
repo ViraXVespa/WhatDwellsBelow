@@ -2,7 +2,9 @@
 
 Status: binding design  
 Read when: stamping a build, writing a changelog entry, Grok Build init, title “what’s new”, or adding an archive pin  
-See also: `AGENTS.md`
+See also:
+
+`See also:` is not a read list. Do not reopen `AGENTS.md` from this file. Mid-week slices do not read `design/changelog/`.
 
 ## Scheme
 
@@ -96,8 +98,9 @@ When `scripts/data/version.json` `series` (or `epoch`) advances — new week see
 | Reader | Reads |
 |--------|-------|
 | Fresh web / chat, Phases 1–3 | Nothing under `design/changelog/`. Nothing in `version.json` unless the work is this topic. |
-| Web Phase 7 | Writes **one** new `design/changelog/{label}.md`. `{label}` is baked `version.json` `label` with patch + 1 (ignore stamp commits). Do not write that number back into this file. Do not emit `changelog.json`. First heading `## {label}`, never `# {label}`. |
-| Grok Build after a gap | `design/sessions.md`, then every flat `design/changelog/{current epoch}.{current series}.*.md` (not `archive/`). No index. No other series. Do not follow git commit links into web-session conversations. |
+| Web Phase 7 | This file’s **body shape** only. Writes **one** new `design/changelog/{label}.md`. `{label}` is baked `version.json` `label` with patch + 1 (ignore stamp commits). Do not read older changelog files. Do not write that number back into this file. Do not emit `changelog.json`. First heading `## {label}`, never `# {label}`. |
+| Grok Build mid-week slice / catch-up | Nothing under `design/changelog/`. Leave-off + User-named work. |
+| Grok Build **new week**, revert, or User asks what shipped | This file’s body shape + `design/sessions.md`. Still not every `0.N.*` file. |
 | Grok Bot | Reads baked `version.json` only to name `{label}` (patch + 1). Writes **one** new `design/changelog/{label}.md` per shipping PR. First heading `## {label}`, never `# {label}`. Does not hand-edit `changelog.json`. Optional sweep notes go in `_logs/` only. |
 | Named revert / what was 0.1.4? | That one file (flat or under `design/changelog/archive/{epoch}.{series}/`). |
 | Game | `version.json` + `changelog.json`. |
@@ -123,9 +126,9 @@ Run the **init pin** only when the User opens the CLI session by saying **new we
 
 **Init (week N), only after the User said new week:**
 
-1. Read `design/sessions.md`.
-2. Read `design/changelog/0.N.*.md` (current series only).
-3. Inspect git / live tree from the code map.
+1. Read `design/sessions.md` (leave-off only; not a boot list).
+2. This file’s body shape. Do not ingest every `design/changelog/0.N.*.md`.
+3. Inspect git / live tree from one `design/code-map.md` row.
 4. Pin **current `main`** as `grok_web_w{N-1}` — label `Grok Web Results (Week {N-1})`.
 5. Do **not** pin Grok Build Results yet (`0.N.0` does not exist at init).
 
@@ -145,7 +148,7 @@ Also attach the `design/` file tree as it exists **on the pinned commit** (`docs
 After the User is satisfied with the goal’s behavior:
 
 1. Update topic files this slice made wrong (`design/versioning.md` only if the scheme or ritual changed).
-2. Author `design/changelog/{label}.md` using baked `scripts/data/version.json` `label` with patch + 1. First heading `## {label}`, never `# {label}`. Do not record that label in this file.
+2. Author `design/changelog/{label}.md` using baked `scripts/data/version.json` `label` with patch + 1. First heading `## {label}`, never `# {label}`. Do not record that label in this file. Do not read older changelog files.
 3. Do not emit `changelog.json` or `version.json` as the ledger. Seed those files only when they do not exist yet on live.
 
 The User pastes. CI stamps the number when the files land on `main`.

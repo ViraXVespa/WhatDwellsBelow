@@ -1,8 +1,10 @@
 ﻿# Title, web fullscreen gate, loading
 
-Status: binding design
-Read when: title / play menu, web fullscreen gate, loader
-See also: `design/ui.md`
+Status: binding design  
+Read when: title / play menu, web fullscreen gate, loader  
+See also:
+
+The UI door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen ui, theme, hud, pause, run-flow, gear-entry, gear-ui, hub, input, or doc-refactor from this file.
 
 ## Title / play menu
 

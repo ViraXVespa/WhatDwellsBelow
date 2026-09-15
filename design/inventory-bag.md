@@ -1,8 +1,10 @@
 ﻿# Bag and equipment
 
-Status: binding design
-Read when: bag, equipment slots, food vs potion
-See also: `design/inventory.md`
+Status: binding design  
+Read when: bag, equipment slots, food vs potion  
+See also:
+
+The inventory door is already open when this sibling is loaded. `See also:` is not a read list. Do not bounce back to `design/inventory.md` from this file.
 
 ## Bag
 

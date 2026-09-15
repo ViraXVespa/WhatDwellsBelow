@@ -3,7 +3,9 @@
 Status: binding design + live snapshot  
 Read when: changing music, SFX, splash/title, or art rules  
 Code: `scripts/audio/music.gd`, `scripts/audio/sfx.gd`, `scripts/ui/splash.gd`, `scripts/ui/fs_gate.gd`, `scripts/boot.gd`, `scripts/title.gd`, `scripts/world/sprite_filter.gd`, `tools/enable_texture_mips.py`, `.github/workflows/pages.yml`  
-See also: `design/art-pipeline.md`, `design/constraints.md`, `design/camera.md`, `design/debug.md`, `design/ui.md`, `design/save-tech.md`
+See also: `design/art-pipeline.md`
+
+`See also:` is not a read list. Open the art door only when generating or replacing frames. Camera, debug, UI chrome, and constraints stay on their own doors.
 
 ## Music
 

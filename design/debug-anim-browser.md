@@ -1,9 +1,11 @@
 ﻿# Animation Browser
 
-Status: binding design
-Read when: animation browser debug page
-Code: scripts/debug/, scripts/combat/debug_menu paths may be under scripts/debug/debug_menu/
-See also: `design/debug.md`
+Status: binding design  
+Read when: animation browser debug page  
+Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/debug/debug_menu/`  
+See also:
+
+The debug door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen debug, debug-menu, playtest, smokes, pc-offload, refactor, or the topic index from this file. Review CLI lives on `design/art-review.md` when that job is named.
 
 ## Animation Browser (secret debug page)
 
