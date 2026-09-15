@@ -1,4 +1,8 @@
-"""I2V plates: splice or single cell, exact integer nearest-neighbor scale, leave chroma."""
+"""I2V plates: splice or single cell, exact integer nearest-neighbor scale, leave chroma.
+
+Attack body stills (parked keyframe pipeline): tools/attack_keyframes.py
+when the User resumes that job. This file stays I2V + overlay prompts.
+"""
 from __future__ import annotations
 
 import argparse
@@ -270,10 +274,133 @@ ACTION_ALIAS = {
     "spc_longbow": "special_longbow",
 }
 
+# Prompt-head label. Do not put a weapon or tool name in the I2V first line.
+ACTION_LABEL = {
+    "idle": "idle",
+    "walk": "walk",
+    "attack_great_axe": "two-hand arc",
+    "attack_staff": "short poke",
+    "attack_longbow": "aim and loose",
+    "special_great_axe": "two-hand plant",
+    "special_staff": "hand snap",
+    "special_longbow": "aim and pulse",
+    "gather_pickaxe": "two-hand arc",
+    "gather_hatchet": "side chop",
+    "death": "death",
+    "dispel": "ritual end",
+}
+
 # Browser name `gather` has no tool suffix. Regen writes both tool sheets.
 GATHER_KEYS = ("gather_pickaxe", "gather_hatchet")
 
 LOOP_ACTIONS = frozenset({"idle", "walk"})
+
+# Body I2V is kinematics only. Overlay stills add the gear later.
+# Do not name axe, staff, bow, pick, hatchet, haft, shaft, string, or arrow here.
+# Two-hand classes keep the palms apart so the model does not fill the gap with a blob.
+_HANDS_APART = (
+    "Palms stay open and empty. The two hands stay apart. "
+    "Flat #FF00FF plate must stay visible between the palms the whole clip. "
+    "The palms do not touch. The palms do not cup, clap, or close on a shape. "
+    "Do not grow a disc, swirl, orb, bar, or any other object between the hands."
+)
+
+_MOTION_TWO_HAND_ARC = (
+    "Unarmed body. Hands empty the whole clip. No new props at any point. "
+    f"{_HANDS_APART} "
+    "Feet stay under the hips. Do not step toward the camera or slide off the still's center line. "
+    "1) Idle: this still. Weight even. Both feet planted. Hands empty and apart at the rest pose. "
+    "2) Coil: both arms rise as a pair. The hands stay separated with plate between them. Torso coils. Keep this facing. "
+    "3) Swing: a single heavy two-arm swing through the front of the silhouette. Knees bend. "
+    "Shoulders rotate. The hands travel as a pair and keep the gap. One swing only. "
+    "4) Follow-through: the swing finishes past the front. Torso unwinds. Do not spin or travel. The gap stays open. "
+    "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
+)
+
+_MOTION_TWO_HAND_ARC_DOUBLE = (
+    "Unarmed body. Hands empty the whole clip. No new props at any point. "
+    f"{_HANDS_APART} "
+    "In-place gather. Feet stay under the hips. Do not travel. "
+    "1) Idle: this still. Weight even. Both feet planted. Hands empty and apart at the rest pose. "
+    "2) Coil: both arms rise as a pair over the shoulder. The hands stay separated with plate between them. "
+    "Torso coils. Keep this facing. "
+    "3) Beat: a downward two-arm beat onto a point just in front of the toes. Knees bend on impact. "
+    "One clear hit. Then a second hit with the same motion so the gather cycle reads. The gap stays open on both hits. "
+    "4) After the second hit, do not start a third. "
+    "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
+)
+
+_MOTION_TWO_HAND_PLANT = (
+    "Unarmed body. Hands empty the whole clip. No new props at any point. "
+    f"{_HANDS_APART} "
+    "Plant in place. Feet stay under the hips. Do not travel. "
+    "1) Idle: this still. Weight even. Both feet planted. Hands empty and apart at the rest pose. "
+    "2) Wind-up: both arms rise high as a pair. The hands stay separated with plate between them. "
+    "Knees bend. Torso coils. A readable pause. Keep this facing. Do not hop. "
+    "3) Plant: both empty hands drive straight down onto the baseline in front of the toes and stay apart. "
+    "Weight drops into the plant. One beat only. "
+    "4) Shock: a short hold on the planted pose so the hit reads. No second plant. The gap stays open. "
+    "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
+)
+
+_MOTION_SHORT_POKE = (
+    "Unarmed body. Hands empty the whole clip. No new props at any point. "
+    "Palms stay empty. Hands stay close but not touching. Plate must stay visible between the palms. "
+    "Do not grow a disc, swirl, orb, bar, or any other object between the hands. "
+    "Compact. Short reach. Feet stay planted under the hips. Do not walk. Do not run. Do not punch. "
+    "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
+    "2) Ready: both hands rise near the ribs and stay slightly apart. A small coil. Keep this facing. "
+    "3) Strike: one short two-arm poke along this still's facing. Elbows stay close. Not a fist punch. One beat only. "
+    "4) Recoil: the empty hands spring back a little after the poke. The gap stays open. "
+    "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
+)
+
+_MOTION_HAND_SNAP = (
+    "Unarmed body. Hands empty the whole clip. No new props at any point. "
+    "The flash is later VFX. This clip is only the body. Feet stay under the hips. Do not travel. "
+    "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
+    "2) Wind-up: both hands rise. The lead hand lifts toward the facing. A short charge pose. Keep this facing. "
+    "3) Release: the lead hand snaps forward along the facing. One beat only. "
+    "4) Follow-through: arms settle a little after the snap. No second snap. "
+    "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
+)
+
+_MOTION_AIM_LOOSE = (
+    "Unarmed body. Hands empty the whole clip. No new props at any point. "
+    "Feet stay planted under the hips. Do not walk. Do not run. The motion is in place. "
+    "The lead arm aims along this still's facing. If this still is square front, that arm points at the camera; "
+    "a side-on stance toward the left or right edge is the wrong shot. "
+    "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
+    "2) Raise: the rear hand rises to the chest or cheek. The lead arm extends along the facing. "
+    "Torso turns only as far as this still's view already allows. Keep this facing. "
+    "3) Hold: a short hold at the cheek or chest. Shoulders stay level. No lean off the center line. "
+    "4) Pulse: the rear hand eases forward a little. The lead arm stays extended. One pulse only. "
+    "5) Recover: both arms drop back to this still. Hold the still so a cut on the last frame is clean."
+)
+
+_MOTION_AIM_PULSE = (
+    "Unarmed body. Hands empty the whole clip. No new props at any point. "
+    "Feet stay planted under the hips. Do not travel. Several pulses, one stance. "
+    "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
+    "2) First raise: rear hand to the cheek or chest, lead arm along the facing. Keep this facing. "
+    "3) Fan: two or three quick raise-and-pulse beats from that same stance. Each pulse is a small "
+    "rear-hand release. The body does not step or spin between pulses. "
+    "4) Last pulse: one final release, then the arms stop. "
+    "5) Recover: both arms drop back to this still. Hold the still so a cut on the last frame is clean."
+)
+
+_MOTION_SIDE_CHOP = (
+    "Unarmed body. Hands empty the whole clip. No new props at any point. "
+    "Palms stay empty. If both hands rise, they stay apart with plate visible between them. "
+    "Do not grow a disc, swirl, orb, bar, or any other object in the hands. "
+    "In-place gather. Feet stay under the hips. Do not travel. "
+    "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
+    "2) Lift: the striking hands rise to the side. Torso coils. Keep this facing. "
+    "3) Chop: a side or diagonal chop onto a point just in front of the toes. Knees bend on impact. "
+    "One clear hit. Then a second hit with the same motion so the gather cycle reads. "
+    "4) After the second hit, do not start a third. "
+    "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
+)
 
 MOTION = {
     "idle": "Easy breath and weight shift only. Stay on the still pose and the still facing. Loop.",
@@ -287,93 +414,16 @@ MOTION = {
         "Weight evens. The pose returns to this still. Do not freeze mid-stride. "
         "5) Hold this still until the clip ends. Last frame is this idle still, both feet planted."
     ),
-    "attack_great_axe": (
-        "Unarmed body acting a two-handed great-axe swing as an objectless mime. "
-        "No new props at any point. Hands stay empty the whole clip. "
-        "Feet stay under the hips. Do not step toward the camera or slide off the still's center line. "
-        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
-        "2) Gather: both hands rise and close as if on a long haft. That is mime only; no object appears. Torso coils. Keep this facing. "
-        "3) Swing: a single heavy two-handed arc through the front of the silhouette. Knees bend. "
-        "Shoulders rotate. The empty grip travels through a wide readable contact. One swing only. Do not swing again. "
-        "4) Follow-through: the arc finishes past contact. Torso unwinds. Do not spin or travel. "
-        "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
-    ),
-    "attack_staff": (
-        "Unarmed body acting a short lightning-staff melee poke as an objectless mime. "
-        "No new props at any point. Hands stay empty the whole clip. "
-        "Compact. Short reach. Feet stay planted under the hips. Do not walk. Do not run. Do not punch. "
-        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
-        "2) Ready: both hands close together as if on a short shaft; that is mime only; no object appears. A small coil. Keep this facing. "
-        "3) Strike: one short two-handed poke along this still's facing. Elbows stay close. Not a fist punch. One beat only. "
-        "4) Recoil: the empty hands spring back a little after contact. "
-        "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
-    ),
-    "attack_longbow": (
-        "Unarmed body acting a longbow draw and loose as an objectless mime. "
-        "No new props at any point. Hands stay empty the whole clip. "
-        "Feet stay planted under the hips. Do not walk. Do not run. The draw is in place. "
-        "The draw aims along this still's facing. If this still is square front, the bow-arm points at the camera; "
-        "a side-on archer toward the left or right edge is the wrong shot. "
-        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
-        "2) Nock: the string-side hand rises to the chest or cheek as if drawing. The bow-side arm extends "
-        "along the facing. Torso turns only as far as this still's view already allows. Keep this facing. "
-        "3) Full draw: a short hold at the cheek or chest. Shoulders stay level. No lean off the center line. "
-        "4) Loose: the string-side hand releases forward a little. The bow-side arm stays extended. One shot only. "
-        "5) Recover: both arms drop back to this still. Hold the still so a cut on the last frame is clean."
-    ),
-    "special_great_axe": (
-        "Unarmed body acting a great-axe slam. Hands stay empty. Do not spawn an axe. "
-        "Circular plant in place. Feet stay under the hips. Do not travel. "
-        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
-        "2) Wind-up: both hands rise high as if on a long haft. Knees bend. Torso coils. A readable pause. "
-        "Keep this facing. Do not hop. "
-        "3) Slam: the empty grip drives straight down onto the baseline in front of the toes. "
-        "Weight drops into the plant. One beat only. "
-        "4) Shock: a short hold on the planted pose so the hit reads. No second slam. "
-        "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
-    ),
-    "special_staff": (
-        "Unarmed body acting a lightning-staff bolt cast. Hands stay empty. Do not spawn a staff or lightning. "
-        "The bolt is later VFX. This clip is only the body. Feet stay under the hips. Do not travel. "
-        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
-        "2) Wind-up: both hands rise as if on a shaft. The lead hand lifts toward the facing. "
-        "A short charge pose. Keep this facing. "
-        "3) Release: the lead hand snaps forward along the facing as if the bolt leaves. One beat only. "
-        "4) Follow-through: arms settle a little after the snap. No second cast. "
-        "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
-    ),
-    "special_longbow": (
-        "Unarmed body acting a longbow fan loose. Hands stay empty. Do not spawn a bow or arrows. "
-        "Feet stay planted under the hips. Do not travel. Several looses, one stance. "
-        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
-        "2) First draw: string-side hand to the cheek or chest, bow-side arm along the facing. Keep this facing. "
-        "3) Fan: two or three quick draw-and-loose pulses from that same stance. Each loose is a small "
-        "string-side release. The body does not step or spin between pulses. "
-        "4) Last loose: one final release, then the arms stop. "
-        "5) Recover: both arms drop back to this still. Hold the still so a cut on the last frame is clean."
-    ),
-    "gather_pickaxe": (
-        "Unarmed body acting a pickaxe mine strike. Hands stay empty. Do not spawn a pickaxe. "
-        "In-place gather. Feet stay under the hips. Do not travel. "
-        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
-        "2) Lift: both hands rise over the shoulder as if on a pick haft. Torso coils. Keep this facing. "
-        "3) Strike: a downward pick beat onto a point just in front of the toes. Knees bend on impact. "
-        "One clear hit. Then a second hit with the same motion so the cycle of gathering reads. "
-        "4) After the second hit, do not start a third. "
-        "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
-    ),
-    "gather_hatchet": (
-        "Unarmed body acting a hatchet woodcut. Hands stay empty. Do not spawn a hatchet. "
-        "In-place gather. Feet stay under the hips. Do not travel. "
-        "1) Idle: this still. Weight even. Both feet planted. Hands empty at the rest pose. "
-        "2) Lift: the striking hands rise to the side as if on a short hatchet haft. Torso coils. Keep this facing. "
-        "3) Chop: a side or diagonal chop onto a point just in front of the toes. Knees bend on impact. "
-        "One clear hit. Then a second hit with the same motion so the cycle of gathering reads. "
-        "4) After the second hit, do not start a third. "
-        "5) Recover: hands and weight return to this still. Hold the still so a cut on the last frame is clean."
-    ),
+    "attack_great_axe": _MOTION_TWO_HAND_ARC,
+    "attack_staff": _MOTION_SHORT_POKE,
+    "attack_longbow": _MOTION_AIM_LOOSE,
+    "special_great_axe": _MOTION_TWO_HAND_PLANT,
+    "special_staff": _MOTION_HAND_SNAP,
+    "special_longbow": _MOTION_AIM_PULSE,
+    "gather_pickaxe": _MOTION_TWO_HAND_ARC_DOUBLE,
+    "gather_hatchet": _MOTION_SIDE_CHOP,
     "death": (
-        "Unarmed body dying in place. Hands stay empty. Do not spawn a weapon, a grave, or blood. "
+        "Unarmed body dying in place. Hands stay empty. Do not spawn a prop, a grave, or blood. "
         "No red spray. No puddle. No gore. The engine draws a blood pool later. This clip is only the body. "
         "Keep this still's facing until the figure is down. Do not travel off the slot. "
         "1) Idle: this still. Weight even. Both feet planted. "
@@ -385,7 +435,7 @@ MOTION = {
     ),
     "dispel": (
         "Ritual seppuku in place. This is a chosen end, not a hit reaction and not a vanish. "
-        "The only prop is one small knife. Do not spawn an axe, staff, bow, pick, hatchet, cape, or altar. "
+        "The only prop is one small knife. Do not spawn any other prop, cape, or altar. "
         "No blood. No spray. No puddle. No gore. The engine draws a blood pool later. This clip is only the body and the knife. "
         "Keep this still's facing the whole time. Feet stay in this still's slot. Do not travel. Take the time the ritual needs. "
         "1) Idle: this still. Weight even. Both feet planted. Hands empty. "
@@ -396,6 +446,83 @@ MOTION = {
         "Do not get up. Do not fade the figure into magenta. Do not loop. Hold the final down frame so a cut there is clean."
     ),
 }
+
+# Overlay stills: Grok image-edit ONTO an accepted unarmed body frame.
+# Mask the grip corridor. Do not ask the editor to delete a baked prop.
+OVERLAY_ALIAS = {
+    "axe": "great_axe",
+    "great-axe": "great_axe",
+    "atk_great_axe": "great_axe",
+    "attack_great_axe": "great_axe",
+    "spc_great_axe": "great_axe",
+    "special_great_axe": "great_axe",
+    "lightning_staff": "staff",
+    "atk_staff": "staff",
+    "attack_staff": "staff",
+    "spc_staff": "staff",
+    "special_staff": "staff",
+    "bow": "longbow",
+    "atk_longbow": "longbow",
+    "attack_longbow": "longbow",
+    "spc_longbow": "longbow",
+    "special_longbow": "longbow",
+    "pick": "pickaxe",
+    "gather_pickaxe": "pickaxe",
+    "axe_tool": "hatchet",
+    "gather_hatchet": "hatchet",
+    "carry": "rest",
+    "idle": "rest",
+}
+
+OVERLAY_TOOL = {
+    "great_axe": (
+        "one two-handed great axe, long wood haft, single wide metal head, "
+        "same chunky pixel style and palette as this still"
+    ),
+    "staff": (
+        "one short two-handed lightning staff, wood shaft, small metal cap, "
+        "same chunky pixel style and palette as this still"
+    ),
+    "longbow": (
+        "one longbow, simple wood curve, string drawn to the grip, "
+        "same chunky pixel style and palette as this still"
+    ),
+    "pickaxe": (
+        "one two-handed pickaxe, wood haft, pointed metal head, "
+        "same chunky pixel style and palette as this still"
+    ),
+    "hatchet": (
+        "one short hatchet, wood haft, flat chopping head, "
+        "same chunky pixel style and palette as this still"
+    ),
+    "rest": (
+        "one carried tool in a rest / shoulder or hip carry that matches this still's idle grip, "
+        "same chunky pixel style and palette as this still"
+    ),
+}
+
+
+def normalize_overlay(tool: str) -> str:
+    key = tool.lower().strip().replace("-", "_").replace(" ", "_")
+    key = OVERLAY_ALIAS.get(key, key)
+    if key not in OVERLAY_TOOL:
+        known = ", ".join(sorted(OVERLAY_TOOL))
+        raise ValueError(f"unknown overlay tool {tool!r}; expected one of: {known}")
+    return key
+
+
+def build_overlay_prompt(facing: str, tool: str) -> str:
+    key = normalize_overlay(tool)
+    face = facing_label(facing)
+    return (
+        "2D pixel-art image edit of this still. Keep this still's body, face, hair, armor, "
+        "pose, facing, and colors exactly. Do not redraw the figure. Do not change the pose.\n\n"
+        f"Facing stays {face}, copied from this still.\n\n"
+        "Paint only inside the empty hands and the open corridor those hands could hold. "
+        "Do not edit pixels outside that grip corridor. Do not add garments, limbs, or shadows.\n\n"
+        f"Add {OVERLAY_TOOL[key]}, registered to this still's empty-hand grip.\n\n"
+        "Leave the flat #FF00FF plate opaque. No anti-aliasing. No new background."
+    )
 
 
 def scale_nn(im: Image.Image, factor: int) -> Image.Image:
@@ -546,7 +673,7 @@ def _strip_wrap_language(text: str) -> str:
         "It stays on the neck. It does not hang down onto the armor. Same bulk as this still. ",
         "From behind the hair covers that collar. ",
         "From behind, that same collar only. ",
-        "The green collar stays on the neck and does not hang onto the armor. ",
+        "The green collar stays on the neck and does not hang onto the armor. "
         "Only cloth already on this still may shift. Do not spawn new cloth. ",
         "The hip belt buckle stays glued to the still's vertical center line. ",
     )
@@ -566,7 +693,7 @@ def _format_one(facing: str, key: str, gender: str) -> str:
         template = ONESHOT_PROMPT_FEMALE_UP if female_up else ONESHOT_PROMPT
     planted = key not in LOOP_ACTIONS and key != "walk"
     text = template.format(
-        action=key.replace("_", " "),
+        action=ACTION_LABEL.get(key, key.replace("_", " ")),
         facing_lock=facing_lock(facing, planted=planted),
         identity_lock=_identity_for(key, gender, facing),
         motion=MOTION[key],
@@ -612,6 +739,7 @@ def export_cell(
     action: str,
     test: bool = False,
     gender: str = "male",
+    overlay: str = "",
 ) -> dict:
     dest_dir.mkdir(parents=True, exist_ok=True)
     raw = Image.open(src).convert("RGBA")
@@ -633,13 +761,20 @@ def export_cell(
         build_prompt(facing, action, [], test=test, gender=gender),
         encoding="utf-8",
     )
-    return {
+    out: dict = {
         "path": str(path),
         "src_size": list(raw.size),
         "out_size": list(plate.size),
         "scale": factor,
         "action": action,
     }
+    if overlay:
+        overlay_key = normalize_overlay(overlay)
+        overlay_path = dest_dir / f"overlay_{overlay_key}_{facing}.txt"
+        overlay_path.write_text(build_overlay_prompt(facing, overlay_key), encoding="utf-8")
+        out["overlay"] = overlay_key
+        out["overlay_prompt"] = str(overlay_path)
+    return out
 
 
 def export_bible(
@@ -649,6 +784,7 @@ def export_bible(
     action: str,
     test: bool = False,
     gender: str = "male",
+    overlay: str = "",
 ) -> dict:
     dest_dir.mkdir(parents=True, exist_ok=True)
     raw = Image.open(src).convert("RGBA")
@@ -671,6 +807,12 @@ def export_bible(
             build_prompt(name, action, [], test=test, gender=gender),
             encoding="utf-8",
         )
+    if overlay:
+        overlay_key = normalize_overlay(overlay)
+        out["overlay"] = overlay_key
+        for name in BODY_CELLS:
+            overlay_path = dest_dir / f"overlay_{overlay_key}_{name}.txt"
+            overlay_path.write_text(build_overlay_prompt(name, overlay_key), encoding="utf-8")
     return out
 
 
@@ -690,7 +832,16 @@ def main() -> None:
         help=(
             "I2V motion key: walk, idle, attack_great_axe, attack_staff, attack_longbow, "
             "special_great_axe, special_staff, special_longbow, gather (writes pickaxe and hatchet), "
-            "gather_pickaxe, gather_hatchet, death, dispel."
+            "gather_pickaxe, gather_hatchet, death, dispel. Attack / special / gather prompts "
+            "are unarmed body classes; they do not name the gear."
+        ),
+    )
+    p.add_argument(
+        "--overlay",
+        default="",
+        help=(
+            "Also write an image-edit overlay prompt for this tool: great_axe, staff, longbow, "
+            "pickaxe, hatchet, rest. Paint-on only. Do not use this as an I2V action."
         ),
     )
     p.add_argument(
@@ -710,13 +861,33 @@ def main() -> None:
     gender = infer_gender(src_path, args.gender)
     if args.cell is not None:
         written = export_cell(
-            args.cell, args.dest, args.scale, args.facing, args.action, test=args.test, gender=gender
+            args.cell,
+            args.dest,
+            args.scale,
+            args.facing,
+            args.action,
+            test=args.test,
+            gender=gender,
+            overlay=args.overlay,
         )
     else:
-        written = export_bible(args.bible, args.dest, args.scale, args.action, test=args.test, gender=gender)
+        written = export_bible(
+            args.bible,
+            args.dest,
+            args.scale,
+            args.action,
+            test=args.test,
+            gender=gender,
+            overlay=args.overlay,
+        )
     print(json.dumps(written, indent=2))
     print()
     print(build_prompt(args.facing, args.action, [], test=args.test, gender=gender))
+    if args.overlay:
+        print()
+        print("# overlay")
+        print()
+        print(build_overlay_prompt(args.facing, args.overlay))
 
 
 if __name__ == "__main__":

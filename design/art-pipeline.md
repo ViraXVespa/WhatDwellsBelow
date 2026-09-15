@@ -2,16 +2,17 @@
 
 Status: binding design  
 Read when: generating or replacing player / enemy / weapon frames  
-Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `assets/sprites/player/`  
+Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `assets/sprites/player/`  
 See also: `design/art-i2v.md`, `design/art-pack.md`, `design/art-review.md`, `design/player.md`, `design/audio-visual.md`, `design/combat.md`, `design/enemies.md`, `design/grok-build.md`
 
-This file is the door. Do not load Appendix C or D unless you are writing or locking a Bible. Do not load the siblings until the job matches the table.
+This file is the door. Do not load Appendix C or D unless you are writing or locking a Bible. Do not load the siblings until the job matches the table. Do not load `design/art-attack-keyframes.md` unless the User is resuming the attack animation keyframe pipeline.
 
 | Job | Open |
 |-----|------|
 | Seed, prompt, one I2V unit | `design/art-i2v.md` |
 | Harvest, pack, cleanup | `design/art-pack.md` |
 | Animation Browser briefs / regen tree | `design/art-review.md` |
+| Attack body stills / coil keys (parked) | `design/art-attack-keyframes.md` |
 | Bible lock, plate remap, overlays, quality bar | this file |
 
 I2V stays in Grok Build unless the User says otherwise. One CLI week session. One unit per review gate. Mid-week new CLI chat is a catch-up: no week pin.
@@ -111,6 +112,7 @@ Body clips stay unarmed. Weapons and gathering tools are **overlay layers**.
 - Attack / special / gather: one overlay frame per packed body frame for that action.
 - Generate each overlay against **one** clean unarmed body frame (or accepted body clip) of the correct facing, not against the full Bible and not as a standalone character. Overlay stills that go to I2V keep an opaque `#FF00FF` plate.
 - Engine draw order is body, then tool/weapon (weapon behind the body only when a facing requires it for a back grip; document that facing if used).
+- Other handedness is a runtime flip of the authored body (character-left-hand high) plus Left/Right remap. Flip the overlay with that body. Do not author a second grip sheet.
 
 Do not bake a held axe, staff, bow, pick, or hatchet into a body frame. The Dispel knife is the only baked prop, and only on the Dispel clip.
 
@@ -175,7 +177,8 @@ Load this appendix only when choosing a generation method.
 | Single-pass 3×3 for the Bible | Highest for identity | Preferred for Bible |
 | Chained image-edits for Bible cells | Low | Drift; avoid for Bible |
 | `i2v_seeds.py` walk prompt (in-place steps, short arm swing, settle and hold the still) | High | Only locomotion I2V method |
-| `i2v_seeds.py` one-shot MOTION keys (per weapon / tool, death, Dispel) | High | Required for Regenerate flags |
+| `i2v_seeds.py` one-shot MOTION keys (per weapon / tool, death, Dispel) | Mixed | Walk-class I2V is high; unarmed two-hand attack I2V invents props |
+| `attack_keyframes.py` Bible-cell stills | Parked | Coil sheet only; open `design/art-attack-keyframes.md` when the User resumes that pipeline |
 | One 400% NN spliced still as the I2V seed | High | Default seed |
 | `i2v_seeds.py --test` web preamble | Browser tests only | Do not send in Grok Build I2V |
 | Full-Bible seed | Medium | Only if the User asks after a still-seed miss |

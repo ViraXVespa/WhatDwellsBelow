@@ -36,6 +36,8 @@ Design lives in `design/`. There is no single GDD. `Demo_GDD.md` is only an inde
 
 Fresh **Grok** instance: read `design/protocol.md` and `design/constraints.md`, then only the topic files for the requested work. Use the code map in `design/README.md` before walking the live tree. Do not start by archiving or rewriting. Do not read `design/changelog/` unless the work is versioning, a named past build, or a revert. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief or the User named the staged reuse PR.
 
+Do not open `design/art-attack-keyframes.md` or `tools/attack_keyframes.py` unless the User is resuming the attack animation keyframe pipeline (coil stills, two-hand body stills, beat-by-beat attack frames). When they are, run `python tools/attack_keyframes.py --resume` and paste the printed block.
+
 **Grok Bot** skips that read list. After this file, follow `design/grok-bot-session.md` only. Open `design/reuse-map.md` only from `design/grok-bot-reuse.md` when that brief is not the empty template.
 
 Path procedures (Build week pin, web phases, Bot flows) live in that path’s session file. `design/sessions.md` is the Grok Build leave-off only — not a web or Bot hand-off.

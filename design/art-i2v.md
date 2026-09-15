@@ -5,7 +5,7 @@ Read when: preparing or retrying one player I2V clip
 See also: `design/art-pipeline.md`, `design/art-pack.md`, `design/player.md`  
 Code: `tools/i2v_seeds.py`, `tools/plate_remap.py`
 
-Open this file from the door. Do not load Appendix C/D. Pack/cleanup is `design/art-pack.md`.
+Open this file from the door. Do not load Appendix C/D. Pack/cleanup is `design/art-pack.md`. Do not load `design/art-attack-keyframes.md` unless the User is resuming the attack animation keyframe pipeline.
 
 Always work **one unit** at a time. A unit is exactly one **character type** + one **facing** + one **action**. After the seed and prompt exist, stop and wait for the User.
 
@@ -22,6 +22,8 @@ Grok Build I2V uses that body as-is. The web-browser preamble (image-to-video / 
 `--action walk` is the locomotion method. It is not a breath / idle performance. `MOTION["idle"]` is not a player path.
 
 Walk uses the walk wrapper in `tools/i2v_seeds.py`: **hold** the idle still, walk in place, then settle and **hold** that still so the clip start is idle-to-walk and the clip end is walk-to-idle. Do not treat the whole clip as a looping gait. One-shot actions use the one-shot wrapper (start on the still, finish the motion, recover or hold; do not claim a walk loop). One-shot heads are **planted** (no treadmill, no marching). Attack / special / gather keep the live MOTION beat sheet, worded as an objectless mime: no new props at any point. Dispel is the knife exception.
+
+Parked: posed attack *stills* are not this file. Open `design/art-attack-keyframes.md` and run `python tools/attack_keyframes.py --resume` only when the User resumes that pipeline. Do not substitute those still prompts for I2V `MOTION`.
 
 `--action gather` (Animation Browser name with no tool suffix) writes **both** gather sheets. Unknown actions MUST NOT fall back to `walk`.
 

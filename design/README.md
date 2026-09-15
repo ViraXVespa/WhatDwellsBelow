@@ -20,7 +20,7 @@ It is not one Game Design Document.
 3. Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Live scripts: the code map below. Do not walk `assets/` unless the task names sprites or audio.
 4. After a behavior change, update the matching topic file in the same slice.
 
-Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`.
+Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Do not open `design/art-attack-keyframes.md` unless the User is resuming the attack animation keyframe pipeline.
 
 Design doors (open the Job-table sibling only): `design/art-pipeline.md`, `design/ui.md`, `design/debug.md`, `design/input.md`, `design/inventory.md`, `design/grok-bot-session.md`. Rules: `design/doc-refactor.md`. Oversize check: `tools/list_oversize_docs.ps1`.
 
@@ -76,6 +76,7 @@ Web / chat writes the staged Bot reuse brief (`design/reuse-map.md`) in Phase 7 
 | I2V unit + seed + prompt | `art-i2v.md` | §19.2 |
 | Harvest, pack, cleanup | `art-pack.md` | §19.4 |
 | Animation Browser briefs | `art-review.md` | §19.6 |
+| Attack body stills / coil keys (parked; User must resume) | `art-attack-keyframes.md` | §19.2 |
 | Pinned archive commits | `archives.md` | §20 |
 | Suggested starts + live defaults | `tunables.md` | App. A + live `balance.gd` |
 
@@ -108,7 +109,7 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Dungeon | `scripts/dungeon/gen.gd` + `gen_carve.gd`, `gen_rooms.gd`, `gen_doors.gd`; `scripts/world/dungeon.gd` + `dungeon_boot.gd`, `dungeon_geo.gd`, `dungeon_geo_stream.gd`, `dungeon_map_act.gd`, `dungeon_cells.gd`, `dungeon_stream.gd`, `dungeon_props.gd`, `dungeon_pack.gd`, `crystal_net.gd`, `floor_crystal.gd` |
 | Hub | `scripts/world/camp.gd` + `camp_warm.gd`, `camp_build.gd`, `camp_view.gd`; `interact.gd`, `interact_fx.gd`; `scripts/combat/dummy.gd` |
 | Gather | `scripts/world/gather_node.gd`, `gather_rules.gd`, `breakable.gd`, `pickup.gd` |
-| UI | `scripts/ui/hud.gd` + `hud_view.gd`, `hud_act.gd`; `touch_hud.gd`; `ui_text.gd`; `menu_pad.gd`; `step_row.gd`; `prompt_view.gd`; `confirm_dlg.gd`; `pause_menu.gd` + `pause_menu_view.gd`, `pause_menu_util.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_settings.gd`, `pause_settings_pages.gd`, `pause_system.gd`; `split_menu.gd` + `split_menu_view.gd`, `split_menu_chrome.gd`; `binds_page.gd`; `scripts/ui/gear_board/gear_board.gd` + helpers in `scripts/ui/gear_board/` (`gear_board_build.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_opts.gd`, `gear_board_text_fmt.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `gear_board_host.gd`, `gear_board_anvil.gd`, `gear_board_anvil_view.gd`, `gear_board_anvil_forge.gd` + forge helpers), `gear_icons.gd`; `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`, `crystal_ui.gd`; `recap.gd`, `recap_bars.gd`, `loader.gd`, `present.gd`, `theme.gd`, `splash.gd`, `fs_gate.gd` |
+| UI | `scripts/ui/hud.gd` + `hud_view.gd`, `hud_act.gd`; `touch_hud.gd`; `ui_text.gd`; `menu_pad.gd`; `step_row.gd`; `prompt_view.gd`; `confirm_dlg.gd`; `pause_menu.gd` + `pause_menu_view.gd`, `pause_menu_util.gd`, `pause_inv.gd`, `pause_skills.gd`, `pause_settings.gd`, `pause_settings_pages.gd`, `pause_system.gd`; `split_menu.gd` + `split_menu_view.gd`, `split_menu_chrome.gd`; `binds_page.gd`; `scripts/ui/gear_board/gear_board.gd` + helpers in `scripts/ui/gear_board/` (`gear_board_build.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_opts.gd`, `gear_board_text_fmt.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `gear_board_host.gd`, `gear_board_anvil.gd`, `gear_board_anvil_view.gd`, `gear_board_anvil_forge.gd` + forge helpers), `gear_icons.gd`; `progress_ui.gd`, `progress_ui_hub.gd`, `progress_ui_inv.gd`, `progress_ui_shop.gd`; `crystal_ui.gd`; `recap.gd`, `recap_bars.gd`, `loader.gd`, `present.gd`, `theme.gd`, `splash.gd`, `fs_gate.gd` |
 | Input | `scripts/input/binds.gd` + `binds_pool.gd`, `binds_defaults.gd`, `prompts.gd`; `pad.gd`, `touch_pad.gd`, `look_ctrl.gd`; `scripts/ui/binds_page.gd`, `prompt_view.gd`, `menu_pad.gd`; `scripts/web_pad.gd`; `scripts/display_mode.gd` |
 | Debug | `scripts/debug/debug_menu/debug_menu.gd` + folder helpers (`debug_menu_input.gd`, `debug_menu_pages.gd`, `debug_menu_profile.gd`, `debug_menu_settings.gd`, `debug_menu_val.gd`, `debug_menu_val_grid.gd`, `debug_menu_val_page.gd`); `scripts/debug/playtest.gd` extends `playtest_api.gd` + `playtest_ai.gd`, `playtest_nav.gd`, `playtest_los.gd`, `playtest_path.gd`, `playtest_goals.gd`, `playtest_sim.gd`, `playtest_recs.gd`; `smoke.gd` + `smoke_early.gd`, `smoke_late.gd`, `smoke_p5.gd`, `smoke_p6.gd`, `smoke_p7.gd`, `smoke_p8.gd`, `smoke_p9.gd`, `smoke_p79.gd`; `anim_browser.gd` + `anim_browser_nav.gd`, `anim_browser_review.gd`, `anim_review.gd`, `anim_scan.gd`, `telemetry.gd` |
 | Audio | `scripts/audio/music.gd`, `scripts/audio/sfx.gd` |
@@ -120,7 +121,7 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | PC offload (Bot + Build) | `design/pc-offload.md`; `tools/list_oversize_scripts.ps1`, `summarize_scripts.ps1` / `.py`, `list_facade_cluster.ps1`, `check_script_cap.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1`, `run_build_gate.ps1`, `clean_agent_logs.ps1` |
 | Folder relocate | `tools/move_script_cluster.ps1` / `.py` (see `design/refactor.md` Parked folder moves; Bot flow `design/grok-bot-relocate.md`) |
 | Grok Bot PC tools | `tools/list_oversize_scripts.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1` |
-| Sprite tools | `tools/enable_texture_mips.py`, `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/process_*.py`, `tools/process_world_pass.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py` |
+| Sprite tools | `tools/enable_texture_mips.py`, `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/process_*.py`, `tools/process_world_pass.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py` |
 
 Public entry points that must not change when a helper is split: `App.playtest`, `App.set_zoom` / `App.set_hud_scale` / `App.set_volume`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.
 

@@ -35,4 +35,6 @@ Thumbs.db
 *.tmp
 godot-*.log
 godot-*.err
+_godot_*.log
+_godot_*.err
 .vscode/settings.json

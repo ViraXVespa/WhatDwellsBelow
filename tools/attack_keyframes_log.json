@@ -1,0 +1,24 @@
+{
+  "status": "parked",
+  "resume": {
+    "gender": "female",
+    "facing": "down",
+    "action": "attack_great_axe",
+    "beat": "coil",
+    "next_id": "coil_v30",
+    "seed": "seed_i2v_down_x4.png",
+    "sheet": "coil_v22",
+    "grip": "authored_left_high"
+  },
+  "rolls": [
+    {
+      "utc": "2026-09-15T10:12:00Z",
+      "gender": "female",
+      "facing": "down",
+      "action": "attack_great_axe",
+      "beat": "coil",
+      "verdict": "parked",
+      "note": "v22-v25 sheet consistent. v30 not generated (Imagine cap). Grip is authored_left_high; other handedness is runtime flip. Bible-cell only."
+    }
+  ]
+}
