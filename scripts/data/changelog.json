@@ -3,6 +3,23 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.20",
+			"points": [
+				{
+					"text": "Tightened agent design docs so path rules live in one place",
+					"subs": [
+						"`AGENTS.md` keeps the Path table; session files keep only their own procedure",
+						"Dropped repeated constraint text from the coverage checklist",
+						"Removed a stale topic-map row that pointed at a missing file"
+					]
+				},
+				{
+					"text": "Changelog entries must start with `## {label}`, never `# {label}`"
+				}
+			],
+			"summary": "Agent documentation is leaner for the next Grok Build session, and changelog headings are locked to H2."
+		},
+		{
 			"label": "0.3.19",
 			"points": [
 				{
