@@ -2,7 +2,7 @@
 
 Status: protocol  
 Read when: splitting a live script for size; Grok Bot every task; Grok Build when an edit is over 10KB; web / chat Phase 6  
-See also: `design/doc-refactor.md`, `AGENTS.md`, `design/grok-bot-session.md`, `design/README.md`
+See also: `design/doc-refactor.md`, `AGENTS.md`, `design/grok-bot-session.md`, `design/reuse-map.md`, `design/README.md`
 
 This file is the mechanical recipe. Session flow lives in the path files. Grok Bot uses this file on every task. Other paths use it only when they must split.
 
@@ -29,6 +29,8 @@ Grok writes behavior. A refactor only rearranges what already exists.
 
 Adding `: Type` on a line already being moved, a `load()` / `preload()`, a one-line facade delegate, or `host` / `pt` / `ui` / `p` on a moved `static func` is wiring, not new behavior.
 
+Named reuse work may use the kits listed in `design/reuse-map.md` (token sheet, overlay shell, item view) at the surface that file states. That is not a license to invent a widget framework.
+
 ## Size split
 
 If a file must be split:
@@ -54,19 +56,20 @@ Grok Bot **MAY** create shared owners when near-identical behavior spans places.
 - Point at an existing owner only if it already **is** that concern **and** the addition will not blow the size cap.
 - Never grow an owner just to avoid a new file.
 - Grok Build / web / chat size-splits still do not invent new shared modules unless following this Grok Bot path.
+- On named reuse / extract / DRY / shared-helper work, start from `design/reuse-map.md` instead of hunting the tree again.
 
 ## Reuse (existing owners)
 
-Hunt for copied logic only after size work on the current cluster, or when the cluster *is* a reuse / extract item.
+Hunt for copied logic only after size work on the current cluster, or when the cluster *is* a reuse / extract item. Named reuse work: open `design/reuse-map.md` first. Do not rediscover that owner table or BOT list.
 
 1. If the copy only lives inside one system, it belongs in a sibling of that facade — the size-split shape above. Not a new global owner.
-2. If the copy is the same concern as an **existing** shared script **and** routing call sites there keeps that owner under the size cap, change the copies to call that script. Live owners include:
+2. If the copy is the same concern as an **existing** shared script **and** routing call sites there keeps that owner under the size cap, change the copies to call that script. Live owners are listed in `design/reuse-map.md`. Short reminders:
    - menu tab / confirm / back / page: `scripts/ui/menu_pad.gd`
    - bottom prompt / hint strip: `scripts/ui/prompt_view.gd`
    - other existing shared scripts already in the tree (`theme.gd`, `pause_menu_util.gd`, `gear_board_tip.gd`, …) when they already expose the function
 3. If nothing existing owns it, or the owner would blow the size cap: **Grok Bot** prefers a new shared module for near-identical spanning copies; otherwise leave the copies and report them. Do not add a new method on an existing owner just so the copies can fit.
 
-Reuse against an existing owner is call-site edits plus using a function that already exists. Grok Bot extract to a new shared module is moved bodies into a new file, not invented logic.
+Reuse against an existing owner is call-site edits plus using a function that already exists. Grok Bot extract to a new shared module is moved bodies into a new file, not invented logic. Do not merge pairs listed under **Do not merge** in `design/reuse-map.md`.
 
 ## Types
 
@@ -115,7 +118,7 @@ Rules:
 
 ## Token rules
 
-- Do not load the design corpus for a split. Code map row + the cluster is enough.
+- Do not load the design corpus for a split. Code map row + the cluster is enough. Named reuse work also loads `design/reuse-map.md`.
 - Measure on-disk byte length (Get-Item Length / dir). Do not guess. Do not ReadAllText + GetByteCount just to size-check.
 - Do not dump whole files on Grok Build or Grok Bot when a diff / PR is enough.
 - Do not restyle, do not rewrite comments, do not rename for taste.
@@ -124,7 +127,7 @@ Rules:
 
 ## After a split
 
-Update the `design/README.md` code map when a new sibling or shared module must be listed. Do not update topic design files unless behavior changed (a legal sweep does not change behavior).
+Update the `design/README.md` code map when a new sibling or shared module must be listed. Do not update topic design files unless behavior changed (a legal sweep does not change behavior). When an extract lands or an owner changes, update `design/reuse-map.md` in the same slice.
 
 Grok Bot sweep notes: optional `_logs/grok-bot-sweep.md` per `design/grok-bot-session.md`. Not `design/sessions.md`. Not `design/changelog/`.
 

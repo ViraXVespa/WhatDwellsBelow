@@ -2,7 +2,7 @@
 
 Status: index  
 Read when: starting any session, or when you do not know which file to open  
-See also: `AGENTS.md`, `design/protocol.md`, `design/web-session.md`, `design/grok-build.md`, `design/grok-bot-session.md`, `design/refactor.md`, `design/versioning.md`
+See also: `AGENTS.md`, `design/protocol.md`, `design/web-session.md`, `design/grok-build.md`, `design/grok-bot-session.md`, `design/refactor.md`, `design/reuse-map.md`, `design/versioning.md`
 
 This folder is the documentation database for humans and agents.  
 It is not one Game Design Document.
@@ -13,7 +13,7 @@ It is not one Game Design Document.
 
 ## How to use
 
-1. Recognize the path from `AGENTS.md`. Fresh Grok: `design/protocol.md` + `design/constraints.md`, then only matching topic files. Grok Bot: `design/grok-bot-session.md` only after `AGENTS.md`.
+1. Recognize the path from `AGENTS.md`. Fresh Grok: `design/protocol.md` + `design/constraints.md`, then only matching topic files. Grok Bot: `design/grok-bot-session.md` only after `AGENTS.md`. When the User names reuse, extract, DRY, or shared helpers, also open `design/reuse-map.md` instead of walking the live tree to rediscover copies.
 2. Session procedure, leave-off, and close-out live in that path’s session file (`design/web-session.md`, `design/grok-build.md`, `design/grok-bot-session.md`) plus `design/versioning.md`.
 3. Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Live scripts: the code map below. Do not walk `assets/` unless the task names sprites or audio.
 4. After a behavior change, update the matching topic file in the same slice.
@@ -39,6 +39,7 @@ Design doors (open the Job-table sibling only): `design/art-pipeline.md`, `desig
 | Grok Build session flow | `grok-build.md` | — |
 | Grok Bot session flow | `grok-bot-session.md` | — |
 | Refactor recipe | `refactor.md` | — |
+| Reuse / extract / shared helpers | `reuse-map.md` | — |
 | Grok Build leave-off | `sessions.md` | — |
 | Grok Build session log | `session-log.md` | — |
 | Version scheme, changelog, week pins | `versioning.md` | — |
@@ -78,6 +79,7 @@ Per-build player notes for the **current series** are flat `design/changelog/{la
 - Mark live-only behavior under **Live snapshot**.
 - Do not reintroduce a single 100KB GDD.
 - When live scripts are split under the 10KB cap, update this code map in the same slice.
+- When a reuse extract lands, update `design/reuse-map.md` owners and worklist in the same slice.
 
 ## Code map (live path)
 

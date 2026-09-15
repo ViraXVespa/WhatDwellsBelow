@@ -2,7 +2,7 @@
 
 Status: protocol  
 Read when: Grok Bot path; every Grok Bot / refactor-sweep session  
-See also: `AGENTS.md`, `design/refactor.md`, `design/doc-refactor.md`, `design/README.md`, `design/versioning.md`, `design/pc-offload.md`
+See also: `AGENTS.md`, `design/refactor.md`, `design/doc-refactor.md`, `design/reuse-map.md`, `design/README.md`, `design/versioning.md`, `design/pc-offload.md`
 
 This file is binding for **Grok Bot** only. Grok Build and web / chat ignore it, except that they may open `design/refactor.md` when they split for the 10KB cap.
 
@@ -23,6 +23,8 @@ Load only:
 5. After the inventory: only the live `.gd` files **or** design siblings in that one cluster (never the whole topic tree)
 6. When authoring the PR changelog: baked `scripts/data/version.json` (for `{label}` = patch + 1) and `design/versioning.md` body shape — not the whole `design/changelog/` tree
 
+When the User names reuse, extract, DRY, or shared helpers, also load `design/reuse-map.md` and follow its worklist. Do not walk the live tree to rediscover copies.
+
 Script sweep: do not read unrelated topic files, `design/sessions.md`, `design/session-log.md`, or older changelog entries. Doc facade sweep: open the topic **door** plus only the sibling named by its job table.
 
 Do not read `design/protocol.md` beyond a pointer, `design/constraints.md`, `Demo_GDD.md`, `design/web-session.md`, or `design/grok-build.md` unless the User named that work.
@@ -33,15 +35,15 @@ If a move would change player-visible behavior or fight binding design, stop and
 
 Sweep the whole live script tree. Not a feature slice. Not “only these files” unless the User overrides the worklist.
 
-**In scope:** shipping `scripts/**/*.gd` (size / extract / folder moves per `design/refactor.md`); topic `design/*.md` facade splits per `design/doc-refactor.md` (no binding-meaning change).
+**In scope:** shipping `scripts/**/*.gd` (size / extract / folder moves per `design/refactor.md`); topic `design/*.md` facade splits per `design/doc-refactor.md` (no binding-meaning change). Named reuse work uses `design/reuse-map.md` instead of a fresh copy hunt.
 
-**Out of scope:** `scenes/`, `assets/`, `tools/` (unless a preload path update or a listed PC-offload/doc inventory runner is required), `archives/`, pinned commits, `project.godot` (unless required to register a moved script), and any file under a pinned archive. Other `design/` edits stay limited to the code map / topic index row, this protocol family, `doc-refactor.md`, and the one new `design/changelog/{label}.md` per PR.
+**Out of scope:** `scenes/`, `assets/`, `tools/` (unless a preload path update or a listed PC-offload/doc inventory runner is required), `archives/`, pinned commits, `project.godot` (unless required to register a moved script), and any file under a pinned archive. Other `design/` edits stay limited to the code map / topic index row, this protocol family, `doc-refactor.md`, `reuse-map.md` when an extract changes owners or worklist items, and the one new `design/changelog/{label}.md` per PR.
 
-**Refactor only.** No features, tunables, new game systems, skills, rarities, hub, co-op, or art / I2V. Rearrange existing code only. May add `: Type` on lines already moved so Godot compiles.
+**Refactor only.** No features, tunables, new game systems, skills, rarities, hub, co-op, or art / I2V. Rearrange existing code only. May add `: Type` on lines already moved so Godot compiles. Reuse-map kits (token sheet, overlay shell, item view) are allowed only on named reuse work and only at the surface that file states.
 
 Size: **10KB** ship floor; under-**5KB** sweep target when whole existing functions can move. Doc soft caps: `design/doc-refactor.md`.
 
-Prefer **NEW shared modules** when near-identical control flow spans places (renamed locals OK; not vaguely similar features). Example: tooltip placement across Anvil / Analyze / Forge / Inventory. Point at an existing owner only if it already **is** that concern **and** the addition will not blow the size cap. Never grow an owner just to avoid a new file.
+Prefer **NEW shared modules** when near-identical control flow spans places (renamed locals OK; not vaguely similar features). Example: tooltip placement across Anvil / Analyze / Forge / Inventory. Point at an existing owner only if it already **is** that concern **and** the addition will not blow the size cap. Never grow an owner just to avoid a new file. On named reuse work, start from the owners and BOT items in `design/reuse-map.md`.
 
 Parked folder moves from `design/refactor.md` plus User-named deeper relocates are their own batches; no behavior change. Prefer `tools/move_script_cluster.ps1` / `.py`; read `_logs/move-cluster/summary.txt`.
 
@@ -50,7 +52,7 @@ Parked folder moves from `design/refactor.md` plus User-named deeper relocates a
 Before opening bodies:
 
 1. Scripts: `tools/list_oversize_scripts.ps1` (filesystem Length). Docs: `tools/list_oversize_docs.ps1`; skip `design/changelog/`.
-2. Rank: over 10KB; over 5KB; extract candidates (near-identical spanning places → new shared module); existing-owner reuse that still fits; parked / User-named relocates; docs over ~12KB / ~8KB facade candidates.
+2. Rank: over 10KB; over 5KB; extract candidates (near-identical spanning places → new shared module); existing-owner reuse that still fits; parked / User-named relocates; docs over ~12KB / ~8KB facade candidates. Named reuse work: rank from `design/reuse-map.md` first; do not rediscover that list.
 3. Show the ranked worklist. Do not edit yet.
 
 Files already under the relevant cap are not split “for cleanliness.”
@@ -62,6 +64,8 @@ Files already under the relevant cap are not split “for cleanliness.”
 3. Existing owners only when they already own the concern and still fit
 4. Parked folder moves / User-named deeper relocates
 5. Documentation facades / sibling splits
+
+Named reuse work: follow `design/reuse-map.md` PR order after any over-10KB size fix in the touched cluster.
 
 ## Commits and versioning
 
@@ -116,12 +120,12 @@ Document new split-induced failure modes under `design/refactor.md` (Hostify pit
 ## Flow
 
 1. Orient (Recognize + Read set).
-2. Inventory (Length sizes; rank; show; don’t edit yet).
+2. Inventory (Length sizes; rank; show; don’t edit yet). Named reuse work: show the `design/reuse-map.md` worklist, not a fresh tree hunt.
 3. **Size** clusters may auto-chain on one branch / one PR while anything over 10KB remains, then over 5KB. **Extract** / new-module / parked-move / deeper-relocate clusters always wait for User go.
 4. After each size cluster: run the editor import check. If the split introduced any SCRIPT ERROR, parse error, or new actionable warning, stop — fix it and record the prevention under `design/refactor.md`. Do not continue past a red import check.
 5. Include `design/changelog/{label}.md` once when the size sweep is ready to land.
 6. Report after each cluster / push batch.
-7. Code-map pass once at end of the size sweep. Pure refactor: no `design/sessions.md`, no `design/session-log.md`.
+7. Code-map pass once at end of the size sweep. Pure refactor: no `design/sessions.md`, no `design/session-log.md`. Named reuse work also updates `design/reuse-map.md` when owners or BOT items change.
 8. End when the User stops or the worklist is empty.
 
 ## Batch
@@ -131,7 +135,7 @@ Document new split-induced failure modes under `design/refactor.md` (Hostify pit
 **Extract / relocate:** one cluster per batch, User-gated.
 
 1. Open only that cluster’s bodies.
-2. Apply `design/refactor.md` (including shared-module rules).
+2. Apply `design/refactor.md` (including shared-module rules). Named reuse: apply `design/reuse-map.md` for that BOT / kit item.
 3. Push to the shared size-sweep branch and update the one PR, or stop for User go on extract / relocate.
 
 ## Report
@@ -145,7 +149,7 @@ After each cluster, tell the User:
 - new sibling helpers or new shared modules (moved code only)
 - reuse call sites now pointing at an existing owner (only when that owner fit)
 - what is still over 10KB, still over 5KB, extract candidates still open, or still duplicated with no fit
-- the next cluster on the ranked list
+- the next cluster on the ranked list (`design/reuse-map.md` PR order when this is named reuse work)
 
 Optional: `_logs/grok-bot-sweep.md` (gitignored). Do not write `design/sessions.md` or `design/session-log.md`.
 
@@ -159,6 +163,7 @@ Ask before extract / relocate clusters.
 - Change call sites to an existing shared function **only** when that owner already is the concern and stays under the cap
 - Add `: Type` on a line already being moved (`AGENTS.md` → GDScript types)
 - Update the `design/README.md` code map row when a split adds a sibling or shared module
+- Update `design/reuse-map.md` when an extract lands or an owner changes
 - Parked folder moves and User-named deeper relocates as their own batches
 - Author one `design/changelog/{label}.md` per shipping PR
 
@@ -176,6 +181,8 @@ Ask before extract / relocate clusters.
 - Editing design markdown or multi-line Python via PowerShell double-quoted strings or `python -c` (use `tools/write_utf8_file.py` / `tools/run_agent_py.ps1`)
 - Leaving ephemeral agent scripts outside `_logs/agent-py/` or skipping cleanup for files under that folder
 - Declaring the whole sweep done and then starting a second kind of task
+- Opening `design/reuse-map.md` on a size-only sweep the User did not name as reuse / extract / DRY / shared helpers
+- Ignoring a `design/reuse-map.md` do-not-merge row
 
 ## End
 
