@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.22",
+			"points": [
+				{
+					"text": "Shared UI plate tokens and helpers for dungeon overlays",
+					"subs": [
+						"Dim / plate / gold edge route through one chrome module"
+					]
+				},
+				{
+					"text": "Pause / board item lines and XP math share one owner each"
+				},
+				{
+					"text": "Tip placement, room AABB, and Y-billboard sprites reuse shared helpers"
+				}
+			],
+			"summary": "Agent reuse-map extract work. Play should look and feel the same."
+		},
+		{
 			"label": "0.3.21",
 			"points": [
 				{
