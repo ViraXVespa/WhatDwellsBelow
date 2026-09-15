@@ -2,11 +2,7 @@
 
 Status: protocol  
 Read when: Grok Build (CLI) path; every CLI instance after a gap  
-See also: `AGENTS.md`, `design/protocol.md`, `design/versioning.md`, `design/sessions.md`, `design/session-log.md`, `design/refactor.md`, `design/art-pipeline.md`
-
-This file is binding for **Grok Build (CLI)** only. Web / chat and Grok Bot ignore it.
-
-The agent can write the checkout. Prefer small diffs on disk. Full-file paste only when the User asks, or when the file does not exist on disk yet.
+See also: `AGENTS.md`, `design/protocol.md`, `design/versioning.md`, `design/sessions.md`, `design/session-log.md`, `design/refactor.md`, `design/art-pipeline.md`, `design/isolated-media.md`
 
 ## Recognize
 
@@ -30,7 +26,7 @@ Do not pin because time passed, because the last slice ended, or because a new C
 1. `AGENTS.md`, `design/protocol.md`, `design/constraints.md`.
 2. `design/sessions.md` (leave-off only).
 3. After a gap or a **new week**: every `design/changelog/{current epoch}.{current series}.*.md` per `design/versioning.md`. Do not open other series. Do not treat `scripts/data/version.json` as the version ledger. Do not follow GitHub commit links into web-session conversations.
-4. Only the topic files that match the requested work (`design/README.md`). Sprite / I2V / pack / review: start at `design/art-pipeline.md` and open only the sibling it names for that job.
+4. Only the topic files that match the requested work (`design/README.md`). Sprite / I2V / pack / review: start at `design/art-pipeline.md` and open only the sibling it names for that job. Imagine / isolated generate: `design/isolated-media.md`.
 5. Inspect git and the live tree from the **code map row** for this task (`project.godot`, then the listed scenes/scripts). Do not walk `assets/` unless the task names sprites or audio. The User works between Grok Build weeks.
 
 `design/session-log.md` is not part of every boot. Read it when rewriting it at session close, when the User asks what shipped, or when leave-off is not enough to name the next unit.
@@ -65,12 +61,14 @@ Implement the requested work by patching the live path in place.
 
 ## I2V week
 
-Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Door: `design/art-pipeline.md`.
+Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Door: `design/art-pipeline.md`. Isolated generate: `design/isolated-media.md`.
 
 - One CLI week session. One I2V unit (gender × facing × action) per review gate.
 - Prepare seed + prompt from `tools/i2v_seeds.py`, then stop and wait.
+- Generate the clip (and Imagine stills / tiles / UI) with `tools/run_isolated_grok.py` unless `design/isolated-media.md` lists an in-session exception. A thin child is not a new week and not a catch-up chat.
 - Harvest and pack only after the User accepts the clip. Next unit only after the User says so.
 - Mid-week: keep the thread across clips. Open a new CLI chat only when the window is dirty or the job leaves art. That new chat is a catch-up: no pin.
+- Do not `/resume` a fat art thread to “just do one more” media turn.
 - Do not regenerate an accepted unit unless the User rejects it.
 
 ## Script cap
@@ -124,3 +122,4 @@ Those two session files are for the next Grok Build instance, not for web / chat
 - Do not invent a third system when binding design and live code disagree — patch live toward binding or ask.
 - Do not run the week pin ritual unless the User said **new week**.
 - Do not start a changelog file with `# {label}`. Use `## {label}`.
+- Do not call Imagine in the game-repo cwd when `design/isolated-media.md` says to isolate.

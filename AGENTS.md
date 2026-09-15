@@ -32,11 +32,14 @@ Design lives in `design/`. There is no single GDD. `Demo_GDD.md` is only an inde
 | Grok Build session log | `design/session-log.md` |
 | Version scheme, changelog, week pins | `design/versioning.md` |
 | Player / I2V art door | `design/art-pipeline.md` |
+| Isolated Imagine / I2V (CLI) | `design/isolated-media.md` |
 | Numbers | `design/tunables.md` |
 
 Fresh **Grok** instance: read `design/protocol.md` and `design/constraints.md`, then only the topic files for the requested work. Use the code map in `design/README.md` before walking the live tree. Do not start by archiving or rewriting. Do not read `design/changelog/` unless the work is versioning, a named past build, or a revert. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief or the User named the staged reuse PR.
 
 Do not open `design/art-attack-keyframes.md` or `tools/attack_keyframes.py` unless the User is resuming the attack animation keyframe pipeline (coil stills, two-hand body stills, beat-by-beat attack frames). When they are, run `python tools/attack_keyframes.py --resume` and paste the printed block.
+
+**Grok Build (CLI):** Imagine (`image_gen`, `image_edit`, `image_to_video`) defaults to `design/isolated-media.md` and `tools/run_isolated_grok.py`. Repo skills `.grok/skills/imagine-isolated/` and `.grok/skills/i2v-isolated/` are doors into that file. Web / chat and Grok Bot do not run Imagine.
 
 **Grok Bot** skips that read list. After this file, follow `design/grok-bot-session.md` only. Open `design/reuse-map.md` only from `design/grok-bot-reuse.md` when that brief is not the empty template.
 

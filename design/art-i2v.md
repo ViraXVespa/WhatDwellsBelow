@@ -2,12 +2,14 @@
 
 Status: binding design  
 Read when: preparing or retrying one player I2V clip  
-See also: `design/art-pipeline.md`, `design/art-pack.md`, `design/player.md`  
-Code: `tools/i2v_seeds.py`, `tools/plate_remap.py`
+See also: `design/art-pipeline.md`, `design/isolated-media.md`, `design/art-pack.md`, `design/player.md`  
+Code: `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/run_isolated_grok.py`
 
 Open this file from the door. Do not load Appendix C/D. Pack/cleanup is `design/art-pack.md`. Do not load `design/art-attack-keyframes.md` unless the User is resuming the attack animation keyframe pipeline.
 
 Always work **one unit** at a time. A unit is exactly one **character type** + one **facing** + one **action**. After the seed and prompt exist, stop and wait for the User.
+
+Generate the clip with `tools/run_isolated_grok.py --kind i2v --seed <png> --prompt-file <txt>` (`design/isolated-media.md`). Do not call `image_to_video` in the game-repo session unless that file’s exception table matches. The child does not harvest or pack.
 
 ## Prompts
 
@@ -17,7 +19,7 @@ Do not seed I2V from a mid-action video extract, and do not name pack-slot indic
 
 Identity lock is per player gender and facing. Male and female each have their own `IDENTITY_LOCK` in `tools/i2v_seeds.py`. Do not copy male outfit language onto the female character. Pass `--gender male` or `--gender female`, or infer it from `bible_locked_male.png` / `bible_locked_female.png`. Where the still shows it, copy a short green neckband worn only around the neck, same bulk as the still. A little more of that same band may show at the nape when hair moves. Do not grow extra length or hanging cloth. Female Up uses `IDENTITY_LOCK["female_up"]` and MUST NOT mention a neckband, wrap, scarf, collar, or green cloth.
 
-Grok Build I2V uses that body as-is. The web-browser preamble (image-to-video / do not output a still / no fixed duration) is **only** added when `tools/i2v_seeds.py --test` is passed.
+Grok Build I2V uses that body as-is. The web-browser preamble (image-to-video / do not output a still / no fixed duration) is **only** added when `tools/i2v_seeds.py --test` is passed. Bundled `game-animation-frames` 6s/10s cinema notes do not override this file.
 
 `--action walk` is the locomotion method. It is not a breath / idle performance. `MOTION["idle"]` is not a player path.
 
