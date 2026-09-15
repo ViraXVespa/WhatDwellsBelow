@@ -30,33 +30,11 @@ A complete, production-ready vertical slice that can ship as a free demo. Every 
 
 ## 2. Scope, pillars, non-goals, and acceptance
 
-**In-Scope for Demo (MUST be fully implemented and polished)**
-- Solo play only
-- Placeholdia hub with all listed interactables (including quest access via the guild, a Controls Billboard, buildings with actual depth, and the Floor Crystal as the sole loadout / enter-dungeon interactable)
-- Procedural dungeon floors in a repeating 5-floor structure that continues indefinitely until death
-- Floor Guardians (floors 1–4) and Gate Master (floor 5) with boss doors and locked stairs
-- Complete combat system (Great Axe, Lightning Staff, Longbow, weapon-specific specials on LT, Dash, target-lock, critical hits, Adrenaline Rush) with clear range telegraphs and active-attack indicators on every attack
-- Aim-line indicator (tunable, dungeon-only, Settings → Graphics toggle + opacity, persisted)
-- Hit-based gathering system for both mining (pickaxe) and woodcutting (hatchet)
-- Eleven skills (Great Axe, Staff, Longbow, Strength, Magic, Ranged, Defense, Hitpoints, Mining, Woodcutting, Smithing) with permanent XP fragments
-- Inventory, equipment slots (including single Tool slot locked to one type per run), forged holds (max 3 per slot), extraction via Extraction Gates
-- Artifact collections / sets (exactly eight sets, run-only, bonuses displayed under descriptions)
-- Male and female player characters (selectable on first load, switchable later from Pause → Settings → Gameplay) with full animation parity, each with its own complete voice-over set, and exactly 8 directional animations
-- Ghost shop, shrine, campfire, breakables, puzzle elements, stairs, floor crystal
-- Named monsters, enemy bases, and expanded enemy variety (≥12 normal types, ≥5 types per floor)
-- Idle / pressure enemy spawns outside safe rooms
-- Quest system (3 random choices, 1 active at a time)
-- Distinct food (heal-over-time) and potion (instant heal) rules
-- Consciousness-transfer VFX on dungeon enter and wake-up sequence on return to Placeholdia
-- Full HUD, pause menu (Settings / Inventory / Skills; aim-line lives on Settings → Graphics), all interaction UIs, recap screen — all dungeon-themed; no default / unskinned player-facing UI
-- Secret debug / balance menu (shoulder-button sequence) containing all tunable values, profile Save/Load, the Automated Playtest / AI Player system, and the Animation Browser
-- Save / load with backup, Archives browser on the title card (pinned commits including Full 3D Pass), 60 FPS minimum
-- Debug menu that exposes every balance and generation value
-- Gamepad-first design for all controls, gameplay, and interfaces (every menu opens with valid initial focus)
+Hard constraints, demo-complete bar, and the full in-scope contract: `design/constraints.md`. Topic doors for the systems that contract names: `design/README.md`.
 
 **Explicit Non-Goals (MUST NOT appear)**
 - Co-op / multiplayer / split-screen
-- Any skill beyond the eleven listed
+- Any skill beyond the eleven listed in `design/skills.md`
 - Rarity higher than blue
 - Hub upgrades, currency sinks beyond vendor/anvil, or meta progression systems
 - Stealth, mounts, fishing, or other side systems
@@ -97,7 +75,5 @@ No mandatory intro cutscene or long exposition is required. The player learns th
 **Specific Locked Flavor**
 - Empty floor-1 death/“Dispel” recap MUST include the line: “They lived just to die. What a waste.”
 - Credit splash MUST show the word “Proudly” crossed out and the word “Shamelessly” written above it in graffiti style so the phrase reads as vandalized: “Shamelessly Vibecoded with Grok.”
-- The dungeon music track is titled “Bitter”. Authoritative links:
-  - YouTube: https://youtu.be/b3Cq_-ymFVU?si=YHZRCFmxf88BXmHW
-  - Spotify: https://open.spotify.com/track/5ronKOeupSInit9Y21z80f?si=WB-zeKUGQO6V31dPEITdRA&utm_source=copy-link&context=spotify%3Atrack%3A5ronKOeupSInit9Y21z80f
+- The dungeon music track is titled “Bitter”. Links and loop rule: `design/audio-visual.md`.
 - Player-facing UI, pause menu, recap, and prompts MUST write the voluntary exit action as **“Dispel”** (quotation marks included) for the locked humorous tone. Internal code identifiers MAY omit the quotes.

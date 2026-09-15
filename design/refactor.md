@@ -8,7 +8,7 @@ See also: `design/grok-bot-session.md`, `design/doc-refactor.md`
 
 This file is the mechanical recipe. Session flow lives in the path files. Grok Bot uses this file on every task. Other paths use it only when they must split. Grok Bot flow routing is `design/grok-bot-session.md` (one Job-table sibling). Relocate steps that Bot must follow as a session are `design/grok-bot-relocate.md`.
 
-Grok Build feature work is **not** a refactor. Implementation freedom (new same-system APIs, helpers, local module shape) lives in `design/grok-build.md`. This file’s **No new code** rules do not bind that work. When Build only needs the 10KB cap, use the size-split mechanics here; do not import Bot’s “do not invent a better API” leash.
+Grok Build feature work is **not** a refactor. Implementation freedom lives in `design/grok-build.md`. This file’s **No new code** rules do not bind that work. When Build only needs the 10KB cap, use the size-split mechanics here; do not import Bot’s “do not invent a better API” leash. Same-system APIs: just do. Cross-system owners: propose first. Web / chat size-splits MUST NOT invent new shared modules unless following the Grok Bot path.
 
 ## Caps
 
@@ -23,17 +23,16 @@ Do not split a file that is already under the cap that applies to the current pa
 
 ## No new code
 
-This section binds **Grok Bot** and **web / chat Phase 6 size-splits** only. It does not bind Grok Build feature work.
+This section binds **Grok Bot** and **web / chat Phase 6 size-splits** only.
 
 A refactor only rearranges what already exists.
 
 - Do not add features, tunables, comments, docs-of-taste, renames, reformats, or “while I’m here” cleanups.
 - Do not invent a better API. Do not generalize two vaguely similar features into a new one.
 - Do not add a helper function that was not already in the tree, except Grok Bot’s shared-module extract of **near-identical** existing bodies (same control flow; renamed locals OK).
-- Web / chat size-splits MUST NOT invent new shared modules unless following the Grok Bot path.
 - Edits are the minimum needed to relocate existing lines and keep the project compiling.
 
-Grok Build size-splits MAY introduce a new **same-system** helper API when that is cleaner than a dumb line-move. A new **cross-system** owner during a Build split is `design/grok-build.md` → **Stop and propose first**. Do not create it in the split.
+Grok Build size-splits MAY introduce a new **same-system** helper API when that is cleaner than a dumb line-move. Cross-system owners during a Build split stay propose-first.
 
 Adding `: Type` on a line already being moved, a `load()` / `preload()`, a one-line facade delegate, or `host` / `pt` / `ui` / `p` on a moved `static func` is wiring, not new behavior.
 
@@ -63,8 +62,6 @@ Grok Bot **MAY** create shared owners when near-identical behavior spans places.
 - Near-identical = same control flow (renamed locals OK), not vaguely similar features.
 - Point at an existing owner only if it already **is** that concern **and** the addition will not blow the size cap.
 - Never grow an owner just to avoid a new file.
-- Web / chat size-splits still do not invent new shared modules unless following this Grok Bot path.
-- Grok Build does not use this Bot extract leash. Same-system APIs: just do. Cross-system owners: `design/grok-build.md` → **Stop and propose first**.
 - Do not hunt the live tree to rediscover copies when the User already named the cluster. Do not treat `design/reuse-map.md` as an owners encyclopedia.
 
 ## Reuse (existing owners)
@@ -72,7 +69,7 @@ Grok Bot **MAY** create shared owners when near-identical behavior spans places.
 Hunt for copied logic only after size work on the current cluster, or when the active Bot flow is extract / staged reuse.
 
 1. If the copy only lives inside one system, it belongs in a sibling of that facade — the size-split shape above. Not a new global owner.
-2. If the copy is the same concern as an **existing** shared script **and** routing call sites there keeps that owner under the size cap, change the copies to call that script. Discover owners from the live tree + `design/README.md` code map, not from a standing reuse-map table. Short reminders that already ship:
+2. If the copy is the same concern as an **existing** shared script **and** routing call sites there keeps that owner under the size cap, change the copies to call that script. Discover owners from the live tree + `design/README.md` code map. Short reminders that already ship:
    - menu tab / confirm / back / page: `scripts/ui/menu_pad.gd`
    - bottom prompt / hint strip: `scripts/ui/prompt_view.gd`
    - other existing shared scripts already in the tree (`theme.gd`, `pause_menu_util.gd`, `gear_board_tip.gd`, `plate_chrome.gd`, `tip_place.gd`, …) when they already expose the function
@@ -82,15 +79,7 @@ Reuse against an existing owner is call-site edits plus using a function that al
 
 ## Types
 
-`AGENTS.md` → GDScript types. On lines already being moved or rewritten:
-
-- `:=` only for literals / typed built-ins Godot 4.7 infers (`0`, `1.5`, `true`, `"male"`, `Vector2.DOWN`, …).
-- Otherwise `var name: Type = ...`.
-- Typed `func` / `static func` args and `->` return.
-- Also follow `AGENTS.md` → GDScript warnings (no `wrap` / `mini` / `name` / `size` locals, explicit `int()` on integer division and narrowing, enum `as` casts, `_` unused params).
-- `unused_private_class_variable` is project-ignored (hostify `host._` fields). Do not add per-var `@warning_ignore` for it; see `AGENTS.md` -> GDScript warnings.
-
-Do not retype a whole file for style.
+`AGENTS.md` → GDScript types and GDScript warnings. On lines already being moved or rewritten, follow that file. Do not retype a whole file for style. `unused_private_class_variable` is project-ignored (hostify `host._` fields). Do not add per-var `@warning_ignore` for it.
 
 ## Hostify pitfalls
 
@@ -100,7 +89,7 @@ Facade + `static func(host, ...)` splits must keep Godot 4.7 compiling. Watch fo
 2. **Param shadowing** — never `var host := host.get_parent()` (or any `var host :=` that hides the parameter). Rename the local (`parent`, `map_host`, …).
 3. **Enum / const on Object helpers** — `MOTION_MODE_FLOATING` and similar are not free names on `extends Object` helpers. Qualify: `CharacterBody3D.MOTION_MODE_FLOATING`.
 4. **Facade state aliases** — if callers used `PlaytestLog.started` / `.file_name` / `.events` on the old script, the facade must still expose those names (forward to the core helper’s `static var`s). Moving state without aliases yields `Cannot find member "started" in base "..."` and a cascade `Could not resolve class` on the next preload.
-5. **`:=` after `load()` / untyped `_fac`** — `const _fac = load(...)` returns untyped. Do not `var x := _fac.foo()`. Write `var x: Type = ...` (see Types above and `AGENTS.md`).
+5. **`:=` after `load()` / untyped `_fac`** — `const _fac = load(...)` returns untyped. Do not `var x := _fac.foo()`. Write `var x: Type = ...`.
 6. **Blind substring rewrites** — replacing `:= n` / bare `name` can corrupt identifiers (`var nm := name` → `var nm: String = str(n)ame`). Prefer AST-aware or line-scoped edits; re-read touched lines.
 7. **Broken call commas** — hostify passes must not leave `tick_pinch(host, )` or dropped args.
 8. **Cross-helper renames** — if a static was renamed (`Present.present` → `present`, `Hit.mark_post`), update every call site in the cluster in the same batch.
@@ -108,7 +97,7 @@ Facade + `static func(host, ...)` splits must keep Godot 4.7 compiling. Watch fo
 
 After a hostify batch, run the **editor import** compile check via `design/pc-offload.md` / the active Bot size flow (`--headless --editor --import --path <WDB_ROOT> --quit`). Plain `--quit` alone is not sufficient — it can miss `:=` inference errors the editor surfaces on reload.
 
-Optional advisory scan: `powershell -File tools/lint_hostify.ps1` → `_logs/hostify-lint/summary.txt` (always exit 0). Use it to spot Hostify pitfalls before or after the import check; it is not a compile substitute. After a size-split batch, prefer `powershell -File tools/run_post_split_gate.ps1` (add `-WithSmokes` when coverage matters).
+Optional advisory scan: `powershell -File tools/lint_hostify.ps1` → `_logs/hostify-lint/summary.txt` (always exit 0). After a size-split batch, prefer `powershell -File tools/run_post_split_gate.ps1` (add `-WithSmokes` when coverage matters).
 
 ## Shared calculations (gameplay + smoke)
 

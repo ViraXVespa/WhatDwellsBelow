@@ -40,6 +40,8 @@ Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. A
 
 `tools/export_web.ps1` runs `enable_texture_mips.py` before Godot `--import`. Do not invent a second bake step after the PCK is packed.
 
+Ship floor vs Bot 5KB sweep: `design/refactor.md`. Do not restate those caps here.
+
 ## Who uses what
 
 ### Grok Bot
@@ -47,13 +49,12 @@ Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. A
 - Inventory / sweep planning: oversize list, then `summarize_scripts` / `list_facade_cluster` before opening bodies.
 - Doc / multi-line script edits on Windows: `write_utf8_file.py` + `run_agent_py.ps1` for ephemeral runners (auto-clean under `_logs/agent-py/`).
 - After each size cluster: import check or `run_post_split_gate.ps1`; hostify lint advisory; smokes when behavior risk warrants.
-- Cap target: ship floor 10KB; sweep target 5KB when whole functions can move (`check_script_cap.ps1 -OverKb 5` optional).
 
 ### Grok Build
 
-- While editing: enforce 10KB with `check_script_cap.ps1` (full tree or `-Path` / `-GitChanged`). Prefer Length summaries over reading untouched siblings.
-- After a slice that touched `.gd`: `run_build_gate.ps1` (cap on changed scripts + import check) unless the User says skip.
-- Do **not** run a full-repo Bot size sweep. Do **not** keep splitting toward 5KB.
+- While editing: `check_script_cap.ps1` (full tree or `-Path` / `-GitChanged`). Prefer Length summaries over reading untouched siblings.
+- After a slice that touched `.gd`: `run_build_gate.ps1` unless the User says skip.
+- Do **not** run a full-repo Bot size sweep.
 - Writing tool summaries under `_logs/` is allowed and preferred. Do not commit that folder. Optional Bot-only notes file remains Bot's concern.
 
 ### Web / chat

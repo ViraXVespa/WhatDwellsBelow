@@ -59,15 +59,7 @@ Live files under `assets/audio/` include `sfx_dash`, `sfx_hit`, `sfx_hurt`, `sfx
 - Mip blend Sharp / Smooth is a debug Settings toggle (`use_nearest_mipmap_filter`). Default is Smooth.
 - Mip bias is stored for later; Sprite3D has no lod-bias hook yet.
 - All characters use Y-billboard so they remain upright under the orthographic camera.
-- Character art (player and enemies) is generated and assembled according to the mandatory pipeline in `design/art-pipeline.md`.
-- Every I2V call (player, enemy, future) is seeded from a still that still has an opaque chroma plate. Plate-remap off-magenta backgrounds to `#FF00FF` with `tools/plate_remap.py` before lock / I2V. Never seed I2V from keyed transparent frames.
-- Required player body states at minimum: `idle` (directional key still), `idle_to_walk`, `walk`, `walk_to_idle`, attack body clip per weapon class, special body clip per weapon class, gathering (mining/woodcutting) body clip per tool class, death, “Dispel”.
-- Start / cycle / stop locomotion clips are cut from one walk I2V per facing. Idle is not an I2V breath loop.
-- Weapons and tools are paper-doll overlay layers composited onto unarmed body frames. Do not bake a full character animation set per weapon.
-- Male and female player characters MUST maintain full animation parity.
-- Male and female characters each require a complete, dedicated voice-over set of equal scope.
-- Player and enemy animations use exactly 8 directions matching the Character Bible layout.
-- All directional variants of the same animation state MUST contain exactly the same number of frames.
+- Character art, 8-dir Bible layout, male/female parity, paper-doll overlays, required body states, and I2V plate law: `design/art-pipeline.md`. Body-state list and idle-still rule: `design/player.md`. Voice-over sets: `design/player.md` and the SFX table above.
 - Wall height, tile size (1 unit = 64 px), and depth-sorting SHOULD produce correct layering. Arbitrary popping MUST be avoided wherever possible, but it is not a hard failure if a small amount remains after best-effort sorting.
 - Buildings in Placeholdia MUST have actual depth and realistic dimensions.
 - Lighting, fog color/density, and void plane MUST create a clear visual contrast between the warmer Placeholdia hub and the colder, darker dungeon floors.

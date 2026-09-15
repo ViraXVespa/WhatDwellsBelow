@@ -9,8 +9,7 @@ See also: `design/protocol.md`, `design/versioning.md`, `design/save-tech.md`, `
 
 Archived builds are **pinned git commits**, not folders copied into the live tree.
 
-- Do not copy snapshot projects into `archives/`.
-- Do not copy them onto the live path.
+- Do not copy snapshot projects into `archives/` or onto the live path.
 - Do not back-port live changes into a pinned commit.
 - Do not create a new archive unless the User explicitly asks, except the standing Grok Build week pins in `design/versioning.md`.
 
@@ -33,7 +32,7 @@ The Archives browser lists every catalog row. Play on a row launches **that comm
 | grok_web_w2 | Grok Web Results (Week 2) | `bb70f556108d0e09e070cfaa42260f642af3737a` |
 | grok_build_w3 | Grok Build Results (Week 3) | `e7a9d2cf56965b711dc5b22eb7735a1875d96407` |
 
-After each Grok Build week ritual, also list `grok_web_w{N-1}` and `grok_build_wN` as specified in `design/versioning.md`. Those rows use the same isolation rules as the five above.
+After each Grok Build week ritual, also list `grok_web_w{N-1}` and `grok_build_wN` as specified in `design/versioning.md`. Those rows use the same isolation rules as the rows above.
 
 No hybrid mode. No shared runtime state, scenes, scripts, or saves. Local Play stamps `application/config/name` on the worktree only (`What Dwells Below — <label>`). Pages exports do the same for IndexedDB isolation.
 
@@ -65,19 +64,19 @@ Repo setting: Pages source = GitHub Actions.
 
 ## Creating a new archive
 
+Core rule above still applies (no project-tree copies into `archives/`).
+
 User-ordered archives:
 
 1. Pick the commit to freeze. Tag it `archive/<id>`.
 2. Add a catalog row (id, label, desc, commit, pages_slug, docs).
-3. Do not copy the project tree into `archives/`.
-4. After Pages deploy, Play that row and confirm it is that SHA with zero live-path state. Report to the User.
+3. After Pages deploy, Play that row and confirm it is that SHA with zero live-path state. Report to the User.
 
-Standing Grok Build week pins (no extra prompt):
+Standing Grok Build week pins (no extra prompt). Week-label math: `design/versioning.md`.
 
 1. At init of week N (not a corruption resume): pin current `main` as `grok_web_w{N-1}` — Grok Web Results (Week N-1). Copy that week’s notes from `design/changelog/0.{N-1}.*.md` or `design/changelog/archive/0.{N-1}/` into `archives/docs/grok_web_w{N-1}/`. Prefer running `tools/archive_prior_changelogs.py` when series advances so the live folder stays current-series only. Attach the `design/` tree that exists **on that commit** in `docs[]`.
 2. On the User’s completion commit `0.N.0`: pin it as `grok_build_wN` — Grok Build Results (Week N). Copy the **previous** week’s changelog files (flat or under `design/changelog/archive/`) into `archives/docs/grok_build_wN/` if they exist. Run `tools/archive_prior_changelogs.py` after the series seed so prior flat files are parked. Attach the `design/` tree on that commit in `docs[]`.
 3. Do not move the web pin if the User later says this is a resume after corruption.
-4. Do not copy the project tree into `archives/`.
 
 ## Archives browser UI
 

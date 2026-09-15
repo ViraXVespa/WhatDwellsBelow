@@ -1,4 +1,4 @@
-# Enemies
+﻿# Enemies
 
 Status: binding design + live snapshot  
 Read when: changing roster, AI, bosses, or combat-level scaling  
@@ -16,13 +16,7 @@ See also: `design/skills.md`, `design/dungeon.md`, `design/art-pipeline.md`, `de
 
 ## Art and I2V
 
-Enemy frames follow `design/art-pipeline.md`. There is not a second enemy pipeline.
-
-- Player and enemy animations use exactly 8 directions matching the Character Bible layout.
-- Every I2V call (including future enemy cycles) is seeded from a still that still has an opaque chroma plate.
-- If Grok paints a near-magenta plate (`#F50487` and similar), run `tools/plate_remap.py` before lock / I2V so the plate and edge bleed become `#FF00FF`. Keep the plate opaque.
-- Never seed I2V from `sprite_pipeline.py` key-to-alpha / transparent / fitted engine frames.
-- One I2V clip, then User review. No fixed duration. No automatic fill-in passes.
+Enemy frames follow `design/art-pipeline.md`. There is not a second enemy pipeline. 8-dir Bible layout, plate seed, remap, and review-gate law live there.
 
 ## Roles present in demo
 
@@ -55,11 +49,10 @@ Floor Guardians (floors 1–4) and the Gate Master (floor 5) MUST have high heal
 
 ## Combat level and durability
 
-- Each floor spans 20 combat levels (`enemy_cl_per_floor`). Floor 1 is CL 1–20, floor 2 is 21–40, and so on.
+Floor band, rank-multiplier feel, and the floor-1 CL 17 budget: `design/combat.md`. Live keys: `design/tunables.md`.
+
 - Enemy CL is walked from spawn travel distance (`Threat.level_at`).
-- Rank multipliers stay shallow so a few levels of advantage do not delete a pack, and a few levels of deficit still hurt.
 - Base HP lives in `balance_enemies.gd` and is about double the pre-retune table. Packs MUST take more than one swing.
-- Clearing every budgeted enemy on floor 1 of a fresh run SHOULD land the player near combat level 17. That budget is room packs + capped ambushes + capped pressure waves.
 
 ## AI behavior
 
@@ -70,7 +63,7 @@ Exact leash distance, hunt duration after lost LOS, and re-aggro rules are tunab
 Implement clean steering, separation, and stuck-handling appropriate for the orthographic Camera3D live path.  
 Flee event occurs an average of 2 times per floor on a full clear: after the group has taken sufficient damage, the fastest enemy in the encounter flashes a clear “!” overhead, receives a small but noticeable speed boost, and flees to spawn reinforcements. No other telegraph is required beyond the “!”.
 
-Reinforcements, ambushes, and pressure spawns use BFS on the floor graph. They MUST appear in the connected hallway the player is standing in, not in an adjacent hall cut off by a wall.
+Reinforcements, ambushes, and pressure spawns use BFS on the floor graph. They MUST appear in the connected hallway the player is standing in, not in an adjacent hall cut off by a wall. Placement caps: `design/dungeon.md`.
 
 ## Idle / pressure spawns
 
@@ -78,7 +71,7 @@ If the player remains idle too long outside a safe room, or stops revealing new 
 
 - MUST NOT spawn inside safe rooms (Extraction Gate, ghost shop, puzzle).
 - Idle timer, no-reveal timer, spawn count, and spawn radius are tunable via the secret debug menu.
-- Wave count is capped per floor (`pressure_waves`, default 3) so the CL 17 XP budget stays static.
+- Wave count is capped per floor (`pressure_waves`) so the CL 17 XP budget in `design/combat.md` stays static.
 - Ambush and pressure kills grant XP. That is why the cap exists.
 - Purpose: the dungeon stays reactive if the player camps or stalls exploration, without becoming an infinite XP farm.
 
@@ -112,4 +105,4 @@ Live AI defaults: leash 9, hunt 1.8, reaggro 0.6, aggro 7.5, flee speed ×1.45, 
 
 Room pack 3. Base guards 5. Ambush cap 40, spacing 10, pack 1–2.
 
-Enemy combat level keys: `design/skills.md` and `design/tunables.md`.
+Enemy combat level keys: `design/tunables.md`. Player-facing CL feel: `design/combat.md`.

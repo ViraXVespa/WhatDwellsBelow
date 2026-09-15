@@ -38,8 +38,7 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 
 - Provide the extraction / mailing interface. There are no in-dungeon clerks.
 - Each gate is a mechanical wall fixture (microwave-like housing with a portal viewport) built into a **north wall**, three wall tiles wide. Only that facing ships.
-- Three gates per floor. Each sits in its own enemy-free safe room. Rooms spawn in different areas of the floor and MUST NOT be near one another.
-- The player may extract any mail-legal goods at any gate (ore, wood, root, gold, and bag items). Artifacts and forged holds still cannot be mailed.
+- Count, safe rooms, and separation: `design/dungeon.md`. Mail-legal goods: `design/inventory-meta.md`.
 - Dialogue is minimal; the main interaction is a clean, TV-readable list.
 - A gate becomes inactive after the extract menu closes **if anything was mailed** that visit. Cancel with nothing sent: the gate stays active.
 - Inactive: lamps off, viewport sealed by dungeon wall, banner reads INACTIVE. Active and inactive share the same metal shading so later world lighting can apply to both.
@@ -82,18 +81,17 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 
 ## Stairs
 
-- Stairs only allow travel deeper.
-- Stairs remain locked behind the boss door until the Floor Guardian or Gate Master is defeated.
+Lock and “deeper only”: `design/dungeon.md`.
+
 - Interaction prompt is a last-used `interact` glyph plus the verb “Descend”. First use arms confirm; second use descends. Locked copy is text only (“Locked. Defeat the guardian.”).
 
 ## Floor crystals
 
 - Placeholdia’s loadout crystal is unchanged: it opens loadout / enter dungeon.
 - In-dungeon crystals are waypoints, not descend points.
-- The entrance crystal is already bound. Other crystals show “Clear the area to activate.” until nearby enemies and pending spawn jobs are gone, then the verb “Activate crystal” with the `interact` glyph.
+- Placement, bind, and network unlocks: `design/dungeon.md`.
+- Other crystals show “Clear the area to activate.” until nearby enemies and pending spawn jobs are gone, then the verb “Activate crystal” with the `interact` glyph.
 - A bound crystal opens the transport menu: Local Transport Network, Floor Transport Network, Back.
-- Local Transport Network is locked until a second crystal on this floor is bound.
-- Floor Transport Network is locked until the player has reached a floor deeper than the current one.
 - Crystal map zoom is `crystal_zoom` (Tab / Y). That bind appears in the menu footer, not in the zoom status line.
 - Interaction prompts MUST stay TV-readable and gamepad-first. Do not prefix world verbs with `A:`.
 

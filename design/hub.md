@@ -36,24 +36,7 @@ All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidi
 - Shared gear board with **Analyze** and **Forge** tabs. Current tab is highlighted like Pause tabs, not disabled.
 - Potion and Food slots are disabled on this board.
 - Footer is short: bank + carried gold / ore / wood, plus one status line. Analyze does not list holds. Forge does not list every remnant.
-- Submenus keep the parent control strip and draw their own strip. No Back button. Binding UI is in `design/gear-ui.md`. Binding item / roll rules are in `design/inventory.md`.
-
-**Analyze**
-- AT RISK green/blue only. No holds, starters, whites, artifacts, potions, or food.
-- One confirm destroys the piece and writes `App.prog.forge_book` for that type+rarity (max item level, trait ids, peak luck).
-- Warning copy: analyzing permanently destroys the item in exchange for the ability to forge equipment with its traits.
-
-**Forge**
-- Player configures type (weapon/tool), rarity, item level, and optional trait locks in one submenu.
-- Cost is gold + ore; weapons and tools also spend wood. No root. Locks multiply cost. Smithing discounts slightly and changes wait + quality.
-- Output luck is gated by analyzed peak luck. Quality is `Random(0.5, 1.0)` then nudged by smithing vs item level.
-- Holds cap is 3 per type per slot. Open cap → new hold. Full cap → keep old holds; player replaces one or discards the new roll (no refund).
-- Whites never appear as forge remnants. Stale-save whites are filtered out.
-
-**Usage:**
-1. Analyze tab → A on a live slot → pick an AT RISK piece → confirm once. Piece gone; book updated.
-2. Forge tab → A on a live slot → set type / rarity / level / locks → confirm cost. Wait the short craft beat. Hold appears, or the replace/discard prompt if that type is full.
-3. Re-forge from the Forge tab only. Compare the new roll to existing holds before replacing.
+- Submenus keep the parent control strip and draw their own strip. No Back button. Binding UI: `design/gear-ui.md`. Binding item / roll rules: `design/inventory.md` → `design/inventory-gear.md`.
 
 Live camp position: down and left of the vendor stall’s southwest corner (`21.2, 0, 11.4`).
 
@@ -91,8 +74,7 @@ Live scripts: board `scripts/ui/gear_board/gear_board.gd` in `gear_mode="anvil"`
 
 ### Test Dummy
 - Striking dummy (`DummyS` / `scripts/combat/dummy.gd`) for testing.
-- Opaque-sprite occupancy like dungeon enemies.
-- No knockback. Refills at 0 HP.
+- Occupancy, no knockback, refill at 0 HP: `design/combat.md`.
 - No combat level / `Lv` tag (`combat_lv := 0`).
 - Dark ground pad allowed for telegraph readability.
 - Sandbox object, not interactable like Floor Crystal / Anvil.
@@ -106,7 +88,7 @@ Live scripts: board `scripts/ui/gear_board/gear_board.gd` in `gear_mode="anvil"`
 ### Aim line (hub and dungeon)
 - Draws over buildings and props.
 - Does not draw on top of the player sprite. Clip + short fade off the player origin (`scripts/combat/aim_line.gd`).
-- The mesh stays hidden until `update_line` turns it on. The default 1×1 cream box MUST NOT flash under the loader.
+- Hidden-until-`update_line` / no cream-box flash: `design/combat.md`.
 
 ### Fence / play area
 - Post-and-rail fence on all four edges of the current ground slab (`camp_view.gd`).

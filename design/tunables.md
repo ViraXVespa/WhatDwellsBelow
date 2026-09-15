@@ -172,7 +172,7 @@ Forge keys that are not yet on `balance.gd` fall back inside `progress_forge.gd`
 | `xp_per_kill` | **22** |
 | `xp_kill_hp` / `xp_kill_def` | **11.0 / 11.0** |
 
-Roster HP lives in `balance_enemies.gd` (about 2× the pre-retune table). Floor-1 full clear of the budgeted spawn list targets combat level ~17. Enemy / area CL is also the dungeon drop item level. Crystal labels use `Threat.walk_level` (no jitter). Enemies keep `Threat.level_at` (walk + jitter).
+Roster HP: `balance_enemies.gd`. CL 17 budget and rank-multiplier feel: `design/combat.md`. Enemy walk vs crystal labels: `design/enemies.md` / `design/dungeon.md`.
 
 ## Progression and economy
 
@@ -214,7 +214,7 @@ Fallbacks in `progress_forge.gd` / `gear_roll.gd` until these keys exist on `App
 | `affix_flat_per_lv` | 0.65 | Flat per item level |
 | `affix_pct_per_lv` | 0.004 | Percent affix per item level (plus 0.02 floor) |
 
-Roll rules (not keys): dungeon Quality `Random(0.5, 1.0)`, dungeon Luck `Random(0.75, 1.25)`, white Quality 0.5 and Luck 0.75, forge Luck `[max(0.75, peak-0.25), peak]`, forge Quality nudged by smith vs item level. Holds cap 3 per type.
+Roll rules and holds cap: `design/inventory-gear.md`.
 
 ## UI / feel targets
 

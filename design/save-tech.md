@@ -11,7 +11,7 @@ See also: `design/debug.md`, `design/archives.md`, `design/versioning.md`, `desi
 - A primary save file and a backup of the last successfully loaded save MUST both be maintained.
 - If the primary save is missing, corrupted, or fails to parse, the game automatically falls back to the backup. If both fail, a fresh dungeon delver is created.
 - Save data MUST persist across sessions and include at minimum:
-  - Permanent XP and levels for all eleven skills
+  - Permanent XP and levels for the eleven skills in `design/skills.md`
   - Banked gold
   - Banked resources (ore, wood, etc.)
   - The three forged holds for every equipment slot
@@ -48,7 +48,7 @@ CI stamps `version.json` on each user push to `main`, then Pages exports that sa
 
 ## Restock-on-return
 
-If the player returns to Placeholdia with gold or consumables below configurable thresholds, a limited free restock of basic food and potions is granted.
+Player-facing restock rule: `design/inventory-meta.md`. Thresholds stay tunable and persist with the other debug overrides.
 
 ## Debug profiles
 
@@ -63,7 +63,7 @@ Both are stored under isolated paths and follow the same primary + backup safety
 
 ## Archives
 
-The Archives browser MUST ship in the final demo and opens from the title card only. Selecting title “Play” always launches the live path. Catalog rows are pinned commits per `design/archives.md` and `design/versioning.md`. This system exists to support the Patreon development narrative and MUST not be removed.
+The Archives browser MUST ship in the final demo and opens from the title card only. Selecting title “Play” always launches the live path. Catalog rows, isolation, and pin ritual: `design/archives.md` and `design/versioning.md`. This system exists to support the Patreon development narrative and MUST not be removed.
 
 There is no in-game presentation-mode switcher. Desktop Play on a catalog row keeps the live instance alive (minimized) and restores it to title when the child process exits. Web Play is a same-tab redirect.
 
@@ -101,11 +101,7 @@ Players MUST receive a new build without an incognito window or a manual cache c
 
 ## Performance
 
-- Consistent 60 FPS minimum on target hardware at all times. Higher frame rates are allowed and desirable.
-- Frame time and memory usage MUST remain stable even on the deepest floors with full enemy and particle load.
-- Title → Play hub hitch work is in `design/hub.md`: bake mips at export (workspace only), warm loco frames and the full yard (including `GRASS_PAD`) under the solid loader sheet, restore the user’s zoom before reveal, do not generate mipmaps on the apply hot path.
-
-Streaming in `design/dungeon.md` exists to keep 432×432 floors inside that budget: enemies via `dungeon_stream.gd`, floor/wall meshes and wall collision via `dungeon_geo_stream.gd`.
+60 FPS bar: `design/constraints.md`. Title → Play hitch work: `design/hub.md`. Floor streaming budget: `design/dungeon.md`.
 
 ## Renderer
 

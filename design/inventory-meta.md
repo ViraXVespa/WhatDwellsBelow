@@ -20,10 +20,11 @@ See also: `design/inventory.md`
 
 ## Extraction / mailing
 
-- Performed exclusively through Extraction Gates.
+- Performed exclusively through Extraction Gates. Gate count, rooms, and fixture UX: `design/dungeon.md` and `design/interactables.md`.
+- Mail-legal: ore, wood, root, gold, and bag items. Artifacts and forged holds cannot be mailed.
 - The interface MUST present a clear list of items that can be sent back to the surface.
 - Once extracted, items and gold are safe.
-- Three Extraction Gates per floor. Any gate can mail any extractable goods. Each gate is one-use after a visit that mailed something.
+- Any gate can mail any mail-legal goods. One-use-after-mail visit: `design/interactables.md`.
 - Duplicate green/blue extracts follow **Salvage spare gear**. Whites follow the starter path.
 
 ## Vendor restock

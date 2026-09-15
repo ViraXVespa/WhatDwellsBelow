@@ -12,7 +12,7 @@ See also: `design/enemies.md`, `design/interactables.md`, `design/ui.md`, `desig
 - Floor 5 contains the Gate Master.
 - After floor 5 the sequence repeats with escalated difficulty.
 - There is no hard maximum depth; death is the only cap.
-- Combat-level bands are 20 levels per floor: floor 1 is CL 1–20, floor 2 is 21–40, and so on (`enemy_cl_per_floor`).
+- Combat-level bands and the floor-1 CL 17 budget: `design/combat.md`.
 
 ## Map generation
 
@@ -41,7 +41,7 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 ## Safe rooms
 
 - Extraction Gate rooms, ghost shop rooms, and puzzle rooms are always enemy-free.
-- Idle / pressure spawns MUST NOT occur inside safe rooms.
+- Idle / pressure spawn rules: `design/enemies.md`.
 
 ## Boss / guardian rules
 
@@ -62,11 +62,15 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 - Exactly three Extraction Gates per floor (tunable cap `max_clerks`, default 3).
 - Gate rooms MUST be spread across the floor (minimum separation 28 cells).
 
+Mail-legal goods and one-use visit rules: `design/inventory-meta.md` and `design/interactables.md`.
+
 ## Stairs
 
 - Stairs only permit travel deeper.
 - Stairs are locked behind the boss door until the guardian / Gate Master is killed.
 - Stairs remain the only way to push `prog.deepest` to a floor the player has not yet reached.
+
+Prompt / confirm copy: `design/interactables.md`.
 
 ## Floor crystals
 
@@ -84,12 +88,13 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 - Floor hops land at the destination floor’s entrance crystal. Boss-defeated state is remembered per floor for the current run.
 - Activated crystals stay enemy-free at `crystal_arrive_r` so a hop does not drop the player into a pack.
 
+Verbs and Placeholdia loadout crystal: `design/interactables.md`.
+
 ## Ambushes and pressure
 
 - Ambush anchors are hallway cells outside rooms, spaced by `ambush_spacing`, capped at `ambush_cap` per floor.
 - Each ambush job packs `ambush_pack_min`–`ambush_pack_max` enemies.
-- Pressure / idle / no-reveal waves are capped at `pressure_waves` per floor so the CL 17 XP budget stays static.
-- Ambush, reinforcement, and pressure spawns use BFS on the floor graph (`walkable_near`). They MUST appear in the connected hallway the player is standing in, not in an adjacent hall cut off by a wall.
+- Pressure / idle / no-reveal wave cap: `pressure_waves` per floor. CL 17 budget: `design/combat.md`. BFS hallway spawn: `design/enemies.md`.
 
 ## Live snapshot — size rebalance
 

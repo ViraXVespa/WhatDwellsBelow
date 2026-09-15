@@ -87,24 +87,18 @@ Inventory / loadout list:
 - Left / Right stay on the option row. The host MUST NOT swallow Left / Right while that list is open.
 - Selecting the equipped row unequips it when the slot allows. Weapon, tool, and starter pieces stay on the slot.
 
-Anvil Analyze submenu:
+Anvil Analyze / Forge item law (who can appear, destroy-on-pick, locks, cost, holds cap, results pick-three): `design/inventory-gear.md`.
 
-- Only AT RISK green/blue pieces for that slot. No holds, starters, whites, artifacts, potions, or food.
-- Picking a piece **is** the confirm. There is no second confirm dialog. The piece is destroyed immediately and the book updates. Do not close, reopen, and require a second select.
+Anvil Analyze chrome:
+
+- Picking a piece **is** the confirm. Do not close, reopen, and require a second select.
 - Warning copy uses warning colorization: `WARNING: Analyzing an item permanently destroys the item in exchange for the ability to Forge new equipment with its equipment traits.`
 - Strip verbs: analyze / close.
 
-Anvil Forge submenu:
+Anvil Forge chrome:
 
-- Type row when the slot has more than one type (weapon, tool). Armor skips it.
-- Rarity buttons: Green / Blue. A rarity is disabled until that type+rarity has been analyzed. The selected rarity is highlighted like a Pause tab, not disabled. After a batch the rarity MUST stay where the player left it (Blue stays Blue).
-- Item-level stepper (`step_row.gd`), clamped to the max analyzed level for that type.
-- Quantity stepper, 1–9. Cost and wait scale with quantity.
-- Lock-trait toggles for analyzed affixes only. Green: 1 lock. Blue: 2. A lock consumes a bonus slot and multiplies cost.
-- Cost + wait preview. Forge confirm spends materials and starts the craft beat.
-- Work phase: a progress bar for the current piece. Back stops the queue. Finished pieces go to results. The unfinished piece is dropped. No refund.
-- Results phase: inventory icon cells for current holds (pre-selected) plus the new rolls. Highlight a cell for the flyout / Y stats. Pick up to three. Confirm writes that type’s holds only. “Keep old holds” dumps the new rolls.
-- Whites and duplicate remnants MUST NOT appear here.
+- The selected rarity is highlighted like a Pause tab, not disabled. After a batch the rarity MUST stay where the player left it (Blue stays Blue).
+- Work phase: a progress bar for the current piece. Results phase: inventory icon cells and the same flyout / Y stats as the bag.
 - Strip verbs: set / forge on the configurator; stop queue while forging; toggle / stats / keep old holds on results.
 
 ## Anvil tabs

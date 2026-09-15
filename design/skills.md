@@ -41,7 +41,7 @@ Live ids: `axe`, `staff`, `bow`, `str`, `mag`, `rng`, `def`, `hp`, `mine`, `wood
 
 - Defeating an enemy grants weapon + partner-style XP (existing split of `xp_per_kill`).
 - The same kill ALSO grants Hitpoints XP and Defense XP. This stacks on top of Defense-from-being-hit and Hitpoints-from-heal.
-- Live starting kill grants: `xp_kill_hp` = 3.0 and `xp_kill_def` = 3.0 (adrenaline applies). That is about one-third of a primary weapon / partner skill’s typical per-kill XP (half of `xp_per_kill` plus hit XP).
+- Live `xp_kill_hp` / `xp_kill_def` and `xp_per_kill`: `design/tunables.md` (adrenaline applies).
 
 ## Combat level
 
@@ -55,6 +55,8 @@ Live ids: `axe`, `staff`, `bow`, `str`, `mag`, `rng`, `def`, `hp`, `mine`, `wood
 - The HUD displays the player’s highest (global) Combat Level as a rounded integer.
 - If the currently equipped weapon’s style Combat Level is lower than the highest, that style level is shown in parentheses next to it (e.g. Level 14 (Magic 11)).
 - Dungeon item level uses enemy / area combat level. That item level is what Analyze stores and what Forge can configure up to.
+
+Enemy floor band and CL 17 budget: `design/combat.md`. Enemy walk / pack HP: `design/enemies.md`. Live keys: `design/tunables.md`.
 
 ## Skill effects (high-level)
 
@@ -89,22 +91,4 @@ HUD ints = max(1, round(those scores))
 Example: lv 11 / 11 / 11 / 11 → combat 11.  
 Fragment rate is `App.bal.xp_keep` (live 0.20). Adrenaline multiplies run XP in `add_run_xp`.
 
-## Live snapshot — enemy combat level
-
-Enemies carry a combat level used to scale fights against the player. Keys live in `balance.gd` and MUST stay in the secret debug menu.
-
-Player CL is now ~1/4 of the old sum-of-four-skills value, so floor span and per-CL enemy stat rates were retuned to keep same-floor raw stats in the same ballpark. Per-level damage factors are softer because one new CL is four old skill-levels.
-
-| Key | Live default | Role |
-|-----|--------------|------|
-| `enemy_cl_per_floor` | 5 | Expected enemy CL gained per floor |
-| `enemy_cl_end_pct` | 0.86 | How close a typical enemy sits to the floor target |
-| `enemy_cl_jitter` | 1 | Random CL noise |
-| `enemy_cl_dmg` / `enemy_cl_gear_dmg` | 0.072 / 0.048 | Per-CL damage |
-| `enemy_cl_hp` / `enemy_cl_gear_hp` | 0.040 / 0.064 | Per-CL HP |
-| `enemy_cl_def` / `enemy_cl_gear_def` | 1.6 / 1.2 | Per-CL defense |
-| `cl_dealt_up` / `cl_dealt_down` | 1.075 / 0.925 | Outgoing damage vs CL delta |
-| `cl_received_up` / `cl_received_down` | 0.925 / 1.075 | Incoming damage vs CL delta |
-| `cl_xp_up` / `cl_xp_down` | 1.1 / 0.9 | XP vs CL delta |
-| `cl_style_weight` | 0.5 | Style-mismatch weight |
-| `xp_kill_hp` / `xp_kill_def` | 3.0 / 3.0 | Extra HP / Defense XP per kill |
+Player CL is ~1/4 of the old sum-of-four-skills value. Floor span and per-CL enemy rates live in `design/tunables.md` so same-floor raw stats stay in the same ballpark.

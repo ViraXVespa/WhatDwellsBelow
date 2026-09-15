@@ -9,7 +9,7 @@ See also: `design/skills.md`, `design/tunables.md`, `design/art-pipeline.md`, `d
 
 The player may equip one of three weapons: Great Axe, Lightning Staff, or Longbow.  
 Starting weapon is selected in the loadout. Mid-run weapon changes are performed by equipping from the pause-menu inventory.  
-Each weapon has its own paper-doll **overlay** (carry / rest plus attack and special layers). Body locomotion is shared and unarmed. Attack and special use a body clip per weapon class with the weapon layered on top — not a baked full-character animation set per weapon.  
+Paper-doll overlays on unarmed body clips: `design/art-pipeline.md` §19.2.4. Attack and special still use a body clip per weapon class with the weapon layered on top.  
 Specials for all weapons are activated with LT.  
 All player attacks (basic and special) MUST clearly telegraph their range and provide a visible indication that the attack is currently active.
 
@@ -78,10 +78,9 @@ Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occu
 ## Combat level and threat
 
 - Each floor spans 20 combat levels: floor 1 is CL 1–20, floor 2 is 21–40, and so on (`enemy_cl_per_floor`).
-- Enemy CL is walked from spawn travel distance across that band (`Threat.level_at`).
+- Enemy CL walk and pack HP: `design/enemies.md` (`Threat.level_at`).
 - Rank multipliers are shallow (`cl_dealt_up` 1.03, `cl_dealt_down` 0.97 and the matching received pair). A player a few levels above an enemy MUST NOT one-shot it. A player a few levels below MUST still take real hits.
-- Base enemy HP is about double the pre-retune table so a pack fight lasts more than one swing.
-- Axe basic damage is 16 so the player does not outpace that HP table on floor 1.
+- Axe basic damage is 16 so the player does not outpace the floor-1 HP table.
 - Clearing every budgeted enemy on floor 1 of a fresh run SHOULD land the player near combat level 17. That budget is rooms + capped ambushes + capped pressure waves. Level-ups MUST feel like they prepared the player for the next stretch of the same floor, not like they deleted it.
 - Ambush and pressure kills grant XP. Wave count is capped per floor (`pressure_waves`, `ambush_cap`) so the CL 17 target stays measurable.
 

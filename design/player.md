@@ -9,12 +9,12 @@ See also: `design/input.md`, `design/combat.md`, `design/art-pipeline.md`, `desi
 
 - On first load the player chooses a male or female character.
 - The character type may be switched later from the pause menu.
-- Both character types MUST be fully animated and kept in parity so that weapon and tool paper-doll **layers** composite correctly on either body without special per-gender tweaks.
+- 8-dir Bible layout, male/female animation parity, and paper-doll overlay law: `design/art-pipeline.md`.
 - Male and female characters each require a complete, dedicated voice-over set of equal scope. Neither set is optional or derivative of the other.
 
 ## Movement
 
-- Dash grants complete invulnerability frames for its entire duration and leaves a clear trail VFX.
+- Dash i-frames and trail VFX: `design/combat.md`.
 - Movement MUST feel responsive and weighty on both gamepad and keyboard.
 
 ## Collision and body
@@ -24,7 +24,7 @@ See also: `design/input.md`, `design/combat.md`, `design/art-pipeline.md`, `desi
 
 ## Facing and animation system
 
-- 8-directional facing derived from aim direction using smooth radial detection (not movement direction). Directions exactly match the Character Bible layout: Up, Down, Left, Right, Up-Left, Up-Right, Down-Left, Down-Right.
+- 8-directional facing derived from aim direction using smooth radial detection (not movement direction). Direction names match the Character Bible: Up, Down, Left, Right, Up-Left, Up-Right, Down-Left, Down-Right.
 - Character art is generated and assembled according to the mandatory pipeline in `design/art-pipeline.md`. I2V units: `design/art-i2v.md`. Pack/cleanup: `design/art-pack.md`.
 - In-game idle is the directional key still for the facing the player is aiming. It is not an I2V breath loop.
 - Required player **body** states at minimum: `idle` (key still), `idle_to_walk`, `walk`, `walk_to_idle`, `attack_great_axe` / `attack_staff` / `attack_longbow`, `special_great_axe` / `special_staff` / `special_longbow`, `gather_pickaxe` / `gather_hatchet`, death, “Dispel”.
@@ -32,11 +32,9 @@ See also: `design/input.md`, `design/combat.md`, `design/art-pipeline.md`, `desi
 - Start and stop are a few frames each, not a third of the clip. Walk is one looping stride cycle (both lead feet).
 - The engine tracks which foot is leading in the walk loop. Stopping on the same lead foot that started the step plays `idle_to_walk` reversed; stopping on the opposite lead foot plays `walk_to_idle`.
 - Those start / cycle / stop clips are cut from one walk I2V per facing (`tools/i2v_seeds.py` `--action walk`). They are not separate I2V units unless the User rejects that clip and asks for another pass.
-- Attack, special, and gather I2V / body clips are unarmed. Each weapon and tool is a paper-doll overlay composited onto those clips (`design/art-pipeline.md` §19.2.4). Do not ship a full baked character animation set per weapon.
+- Attack, special, and gather I2V / body clips are unarmed. Overlay composite: `design/art-pipeline.md` §19.2.4.
 - “Dispel” is ritual seppuku: the avatar draws a small knife, kneels, makes one abdominal cut, and collapses. That knife belongs to this clip. It is not an equipped overlay.
 - Death is a hit collapse to a downed hold. Death and “Dispel” both end on a downed body. Neither I2V paints blood. The engine draws a blood pool under that pose.
-- Male and female player characters MUST maintain full animation parity.
-- All directional variants of the same animation state MUST contain exactly the same number of frames.
 
 ## Live snapshot
 

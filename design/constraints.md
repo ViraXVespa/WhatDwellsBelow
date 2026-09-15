@@ -12,7 +12,7 @@ See also: `design/overview.md`, `design/coverage.md`, `design/feel.md`
 - Repeating 5-floor structure with Floor Guardians (1–4) and Gate Master (5).
 - Hit-based gathering system for both mining and woodcutting.
 - Artifact collections / sets required (exactly eight, run-only; see `design/inventory.md`).
-- Player animations use exactly 8 directions (matching the Character Bible layout) with full male/female parity. Each character type has its own complete voice-over set.
+- Player animations: 8-dir Bible layout and male/female parity in `design/art-pipeline.md`. Each character type has its own complete voice-over set (`design/player.md`).
 - All numeric values exposed and tunable in the secret debug menu.
 - Production / Gold quality on every system that ships.
 - Consistent 60 FPS minimum on target hardware.
