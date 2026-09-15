@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const Prompts := preload("res://scripts/input/prompts.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
@@ -12,14 +12,24 @@ static func font_px(size: int) -> int:
 	return UiText.font_px(size)
 
 
-static func lab(t: String, size: int, col: Color) -> Label:
+static func lab(
+	t: String,
+	size: int,
+	col: Color,
+	align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT,
+	wrap: bool = true,
+	outline: bool = true,
+) -> Label:
 	var l := Label.new()
 	l.text = t
-	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.horizontal_alignment = align
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if wrap else TextServer.AUTOWRAP_OFF
+	l.clip_text = false
 	l.add_theme_font_size_override("font_size", font_px(size))
 	l.add_theme_color_override("font_color", col)
-	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	l.add_theme_constant_override("outline_size", 6)
+	if outline:
+		l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
+		l.add_theme_constant_override("outline_size", 6)
 	return l
 
 

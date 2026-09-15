@@ -1,45 +1,17 @@
 extends Object
+const Fmt := preload("res://scripts/ui/gear_board/gear_board_text_fmt.gd")
 
 
 static func item_short(it: Dictionary) -> String:
-	if it.is_empty():
-		return "empty"
-	var nm: String = str(it.get("name", "item"))
-	var stack: int = int(it.get("stack", 1))
-	if stack > 1:
-		nm += "  x%d" % stack
-	var rare: String = str(it.get("rarity", "white"))
-	if rare != "" and rare != "white" and str(it.get("kind", "")) != "artifact":
-		nm += "  [%s]" % rare
-	if bool(it.get("hold", false)):
-		nm += "  (hold)"
-	return nm
+	return Fmt.item_short(it)
 
 
 static func item_cell(it: Dictionary) -> String:
-	var nm: String = str(it.get("name", "item"))
-	var stack: int = int(it.get("stack", 1))
-	if stack > 1:
-		nm += "\nx%d" % stack
-	elif bool(it.get("hold", false)):
-		nm += "\nhold"
-	elif str(it.get("kind", "")) == "artifact":
-		nm += "\n" + str(it.get("set", "relic"))
-	return nm
+	return Fmt.item_cell(it)
 
 
 static func item_color(it: Dictionary) -> Color:
-	if it.is_empty():
-		return Color(0.62, 0.58, 0.52)
-	match str(it.get("rarity", "white")):
-		"green":
-			return Color(0.55, 0.86, 0.52)
-		"blue":
-			return Color(0.52, 0.7, 1.0)
-		_:
-			if str(it.get("kind", "")) == "artifact":
-				return Color(0.92, 0.78, 0.48)
-			return Color(0.92, 0.84, 0.62)
+	return Fmt.item_color(it)
 
 
 static func selected(ui: CanvasLayer) -> Dictionary:

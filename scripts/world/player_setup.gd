@@ -1,4 +1,5 @@
 extends Object
+const BillSpr := preload("res://scripts/world/billboard_spr.gd")
 
 ## Player spawn / sprite / collision setup.
 
@@ -47,14 +48,9 @@ static func ready(host: CharacterBody3D) -> void:
 		host.body.visible = true
 
 static func make_sprite(_host: CharacterBody3D, prio: int) -> Sprite3D:
-	var s := Sprite3D.new()
-	s.centered = true
-	s.shaded = false
+	var s: Sprite3D = BillSpr.bare(prio)
 	s.double_sided = true
-	s.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	s.alpha_scissor_threshold = 0.4
-	s.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	s.render_priority = prio
 	return SpriteFilt.decorate(s)
 
 static func add_body_shape(host: CharacterBody3D) -> void:

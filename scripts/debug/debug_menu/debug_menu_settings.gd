@@ -1,4 +1,5 @@
-﻿extends Object
+extends Object
+const MenuUtil := preload("res://scripts/ui/pause_menu_util.gd")
 
 const T := preload("res://scripts/data/tunables.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
@@ -114,19 +115,7 @@ static func _cap(t: String, size: int, col: Color) -> Label:
 	return lab
 
 
-static func _slider(_host, title: String, value: float, lo: float, hi: float, step: float, on_change: Callable) -> VBoxContainer:
-	var shell := VBoxContainer.new()
+static func _slider(host, title: String, value: float, lo: float, hi: float, step: float, on_change: Callable) -> VBoxContainer:
+	var shell: VBoxContainer = MenuUtil.slider_row(host, title, value, lo, hi, step, on_change, false, 640.0)
 	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	shell.add_theme_constant_override("separation", 4)
-	shell.add_child(_cap(title, 20, Color(0.9, 0.84, 0.7)))
-	var sl := HSlider.new()
-	sl.min_value = lo
-	sl.max_value = hi
-	sl.step = step
-	sl.value = value
-	sl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	sl.custom_minimum_size = Vector2(640, 28)
-	sl.focus_mode = Control.FOCUS_ALL
-	sl.value_changed.connect(on_change)
-	shell.add_child(sl)
 	return shell

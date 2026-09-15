@@ -1,6 +1,7 @@
-﻿extends Object
+extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const Plate := preload("res://scripts/ui/plate_chrome.gd")
 
 const COL_LIVE := Color(1, 1, 1, 1)
 const COL_DIM := Color(0.55, 0.52, 0.48, 1)
@@ -13,20 +14,9 @@ static func setup_overlay(host: Node, title_text: String, hint_text: String) -> 
 	host.layer = 62
 	host.visible = false
 	host.process_mode = Node.PROCESS_MODE_ALWAYS
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.03, 0.02, 0.02, 0.82)
-	host.add_child(dim)
-	var panel := ColorRect.new()
-	panel.color = Color(0.13, 0.1, 0.08, 0.97)
-	panel.position = Vector2(160, 70)
-	panel.size = Vector2(1600, 940)
-	host.add_child(panel)
-	var edge := ColorRect.new()
-	edge.color = Color(0.55, 0.42, 0.22, 1)
-	edge.position = Vector2(160, 70)
-	edge.size = Vector2(1600, 8)
-	host.add_child(edge)
+	Plate.dim(host)
+	Plate.plate(host, Vector2(160, 70), Vector2(1600, 940))
+	Plate.edge(host, Vector2(160, 70), 1600.0)
 	var title: Label = ThemeS.lab(title_text, 32, Color(0.95, 0.86, 0.55))
 	title.position = Vector2(192, 92)
 	title.size = Vector2(700, 48)

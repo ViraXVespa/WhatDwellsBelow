@@ -1,4 +1,5 @@
-﻿extends Object
+extends Object
+const CombatP := preload("res://scripts/data/progress_combat.gd")
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 
@@ -27,19 +28,11 @@ static func skill_title(id: String) -> String:
 
 
 static func skill_lab(text: String, size := 16, col := Color(0.9, 0.84, 0.7)) -> Label:
-	var l := Label.new()
-	l.text = text
-	l.autowrap_mode = TextServer.AUTOWRAP_OFF
-	l.clip_text = false
+	var l: Label = ThemeS.lab(text, size, col, HORIZONTAL_ALIGNMENT_LEFT, false, true)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	l.custom_minimum_size = Vector2(0, 22)
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", col)
-	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	l.add_theme_constant_override("outline_size", 6)
 	return l
 
 
@@ -123,9 +116,9 @@ static func tip_lv(host: Node, id: String, kind: String) -> int:
 	var start := float(host.perm0.get(id, 0.0))
 	if kind == "run":
 		if host.applied:
-			return xp_lv(start)
-		return xp_lv(start + float(host.shown.get(id, 0.0)))
-	return xp_lv(start + float(host.gain_now.get(id, 0.0)))
+			return CombatP.level_from_xp(App.prog, start)
+		return CombatP.level_from_xp(App.prog, start + float(host.shown.get(id, 0.0)))
+	return CombatP.level_from_xp(App.prog, start + float(host.gain_now.get(id, 0.0)))
 
 
 static func paint_tip(host: Node) -> void:
@@ -150,14 +143,6 @@ static func paint_tip(host: Node) -> void:
 	host.tip_host.visible = true
 
 
-static func xp_lv(total: float) -> int:
-	return App.prog.level_from_xp(total)
-
-
-static func xp_to_next(total: float) -> int:
-	return int(round(App.prog.xp_to_next(total)))
-
-
 static func set_span(fill: ColorRect, left_r: float, right_r: float) -> void:
 	fill.anchor_left = clampf(left_r, 0.0, 1.0)
 	fill.anchor_right = clampf(right_r, 0.0, 1.0)
@@ -167,12 +152,12 @@ static func set_span(fill: ColorRect, left_r: float, right_r: float) -> void:
 
 static func perm_ratios(start_xp: float, gain: float) -> Vector2:
 	var total := start_xp + gain
-	var start_lv := xp_lv(start_xp)
-	var now_lv := xp_lv(total)
-	var into := App.prog.xp_ratio(total)
+	var start_lv := CombatP.level_from_xp(App.prog, start_xp)
+	var now_lv := CombatP.level_from_xp(App.prog, total)
+	var into := CombatP.xp_ratio(App.prog, total)
 	if now_lv > start_lv:
 		return Vector2(0.0, into)
-	var base_r := App.prog.xp_ratio(start_xp)
+	var base_r := CombatP.xp_ratio(App.prog, start_xp)
 	return Vector2(base_r, clampf(into - base_r, 0.0, 1.0))
 
 
@@ -195,30 +180,30 @@ static func refresh(host: Node) -> void:
 		var run_total := start + run_left
 		(rec.perm_lab as Label).text = "%s Lv %d | Next Level: %dXP | Total XP: %dXP" % [
 			skill_title(id),
-			xp_lv(perm_total),
-			xp_to_next(perm_total),
+			CombatP.level_from_xp(App.prog, perm_total),
+			int(round(CombatP.xp_to_next(App.prog, perm_total))),
 			int(round(perm_total)),
 		]
 		if host.applied:
 			(rec.run_lab as Label).text = "%s Lv %d | Next Level: %dXP | Total XP: %dXP" % [
 				skill_title(id),
-				xp_lv(start),
-				xp_to_next(start),
+				CombatP.level_from_xp(App.prog, start),
+				int(round(CombatP.xp_to_next(App.prog, start))),
 				int(round(start)),
 			]
 		else:
 			(rec.run_lab as Label).text = "%s Lv %d | This Run: %dXP | Next Level: %dXP" % [
 				skill_title(id),
-				xp_lv(run_total),
+				CombatP.level_from_xp(App.prog, run_total),
 				int(round(run_left)),
-				xp_to_next(run_total),
+				int(round(CombatP.xp_to_next(App.prog, run_total))),
 			]
 		var pr := perm_ratios(start, gain)
 		set_span(rec.perm_base, 0.0, pr.x)
 		set_span(rec.perm_gain, pr.x, pr.x + pr.y)
 		(rec.perm_base as ColorRect).color = COL_PERM
 		(rec.perm_gain as ColorRect).color = COL_GAIN
-		var run_r := App.prog.xp_ratio(run_total)
+		var run_r := CombatP.xp_ratio(App.prog, run_total)
 		set_span(rec.run_fill, 0.0, run_r)
 		(rec.run_fill as ColorRect).color = COL_DUNGEON
 	if host.tip_id != "":

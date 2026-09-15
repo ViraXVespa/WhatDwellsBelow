@@ -1,4 +1,5 @@
-﻿extends Node3D
+extends Node3D
+const BillSpr := preload("res://scripts/world/billboard_spr.gd")
 
 const Depth := preload("res://scripts/world/depth.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
@@ -137,17 +138,10 @@ func _break() -> void:
 
 
 func _visual() -> void:
-	spr = Sprite3D.new()
-	spr.centered = true
-	spr.shaded = false
-	spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	var path := "res://assets/sprites/props/tree.png" if kind == "wood" else "res://assets/sprites/props/ore.png"
-	if ResourceLoader.exists(path):
-		spr.texture = load(path)
-		spr.pixel_size = (1.55 if kind == "wood" else 1.05) / float(maxi(1, spr.texture.get_height()))
-	spr.position.y = 0.72 if kind == "wood" else 0.42
-	spr = SpriteFilt.decorate(spr)
+	var wh: float = 1.55 if kind == "wood" else 1.05
+	var yy: float = 0.72 if kind == "wood" else 0.42
+	spr = BillSpr.make(path, wh, yy)
 	add_child(spr)
 	Depth.apply(spr, position)
 

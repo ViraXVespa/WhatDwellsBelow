@@ -1,6 +1,7 @@
-﻿extends Object
+extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const CrystalNet := preload("res://scripts/world/crystal_net.gd")
 
 const ZOOM_NEAR := 96
@@ -54,14 +55,6 @@ static func place_mark(ui: CanvasLayer, cell: Vector2i, rx: int, ry: int, rw: in
 
 
 static func panel(ui: CanvasLayer, pos: Vector2, size: Vector2) -> ColorRect:
-	var plate := ColorRect.new()
-	plate.color = Color(0.14, 0.11, 0.09, 0.96)
-	plate.position = pos
-	plate.size = size
-	ui.add_child(plate)
-	var edge := ColorRect.new()
-	edge.color = Color(0.55, 0.42, 0.22, 1)
-	edge.position = pos
-	edge.size = Vector2(size.x, 8)
-	ui.add_child(edge)
+	var plate: ColorRect = Plate.plate(ui, pos, size)
+	Plate.edge(ui, pos, size.x)
 	return plate

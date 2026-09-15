@@ -3,14 +3,12 @@ extends Object
 ## Animation Browser chrome / layout build.
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const Review := preload("res://scripts/debug/anim_browser_review.gd")
 
 
 static func build(host: CanvasLayer) -> void:
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.03, 0.03, 0.04, 0.94)
-	host.add_child(dim)
+	Plate.dim(host)
 	var prev := ThemeS.btn("Previous (LB)", func(): host._shift_model(-1))
 	prev.position = Vector2(48, 28)
 	prev.size = Vector2(360, 56)
@@ -24,16 +22,8 @@ static func build(host: CanvasLayer) -> void:
 	nxt.position = Vector2(1510, 28)
 	nxt.size = Vector2(360, 56)
 	host.add_child(nxt)
-	var well := ColorRect.new()
-	well.color = Color(0.08, 0.07, 0.06, 1)
-	well.position = Vector2(48, 110)
-	well.size = Vector2(900, 720)
-	host.add_child(well)
-	var edge := ColorRect.new()
-	edge.color = Color(0.55, 0.42, 0.22, 1)
-	edge.position = Vector2(48, 110)
-	edge.size = Vector2(900, 6)
-	host.add_child(edge)
+	Plate.plate(host, Vector2(48, 110), Vector2(900, 720))
+	Plate.edge(host, Vector2(48, 110), 900.0)
 	host.preview = TextureRect.new()
 	host.preview.position = Vector2(98, 150)
 	host.preview.size = Vector2(800, 620)

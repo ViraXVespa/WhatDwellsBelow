@@ -4,6 +4,7 @@ extends Control
 
 const Disp := preload("res://scripts/display_mode.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const SplitView := preload("res://scripts/ui/split_menu_view.gd")
 
 var _kind: String = "web"
 var _action: Button
@@ -53,10 +54,7 @@ func _ready() -> void:
 	_size_btn(_continue)
 	card.add_child(_continue)
 
-	_action.focus_neighbor_bottom = _continue.get_path()
-	_action.focus_neighbor_top = _continue.get_path()
-	_continue.focus_neighbor_top = _action.get_path()
-	_continue.focus_neighbor_bottom = _action.get_path()
+	SplitView.wire_vert([_action, _continue])
 	_action.grab_focus()
 
 	call_deferred("_wake")
