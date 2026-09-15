@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const Stats := preload("res://scripts/ui/gear_board/gear_board_stats.gd")
 const Fmt := preload("res://scripts/ui/gear_board/gear_board_text_fmt.gd")
@@ -15,29 +15,11 @@ static func slot_face(_ui: CanvasLayer, slot: String, _it: Dictionary) -> String
 
 
 static func item_short(it: Dictionary) -> String:
-	if it.is_empty():
-		return "empty"
-	var nm := str(it.get("name", "item"))
-	if str(it.get("kind", "")) == "potion" or str(it.get("slot", "")) == "potion":
-		return "%s  %d/%d" % [nm, Fmt._charges(it), Fmt._charge_max(it)]
-	var stack := int(it.get("stack", 1))
-	if stack > 1:
-		nm += "  x%d" % stack
-	return nm
+	return Fmt.item_short(it)
 
 
 static func item_cell(it: Dictionary) -> String:
-	var nm := str(it.get("name", "item"))
-	if str(it.get("kind", "")) == "potion" or str(it.get("slot", "")) == "potion":
-		return "%s\n%d/%d" % [nm, Fmt._charges(it), Fmt._charge_max(it)]
-	var stack := int(it.get("stack", 1))
-	if stack > 1:
-		nm += "\nx%d" % stack
-	elif bool(it.get("hold", false)):
-		nm += "\nhold"
-	elif str(it.get("kind", "")) == "artifact":
-		nm += "\n" + str(it.get("set", "relic"))
-	return nm
+	return Fmt.item_cell(it)
 
 
 static func hint_parts(ui: CanvasLayer) -> Array:

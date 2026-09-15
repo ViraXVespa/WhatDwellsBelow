@@ -1,4 +1,5 @@
-﻿extends Object
+extends Object
+const RoomsPlace := preload("res://scripts/dungeon/gen_rooms_place.gd")
 
 const Threat := preload("res://scripts/combat/threat.gd")
 const FloorCrystal := preload("res://scripts/world/floor_crystal.gd")
@@ -72,9 +73,7 @@ static func _far_enough(host: Node, cell: Vector2i, spots: Array, sep: int) -> b
 
 
 static func _in_room(r: Dictionary, cell: Vector2i) -> bool:
-	var rx: int = int(r.x)
-	var ry: int = int(r.y)
-	return cell.x >= rx and cell.y >= ry and cell.x < rx + int(r.w) and cell.y < ry + int(r.h)
+	return RoomsPlace.in_room(r, cell)
 
 
 static func _room_exits(host: Node, r: Dictionary) -> int:

@@ -1,4 +1,5 @@
-﻿extends CharacterBody3D
+extends CharacterBody3D
+const BillSpr := preload("res://scripts/world/billboard_spr.gd")
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const Depth := preload("res://scripts/world/depth.gd")
@@ -36,20 +37,8 @@ func _ready() -> void:
 	hp = App.bal.dummy_hp
 	max_hp = hp
 	defense = App.bal.dummy_defense
-	spr = Sprite3D.new()
-	spr.centered = true
-	spr.shaded = false
+	spr = BillSpr.make("res://assets/fx/dummy.png", 1.7, 0.85, 1, false)
 	spr.double_sided = true
-	spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	spr.render_priority = 1
-	var path := "res://assets/fx/dummy.png"
-	if ResourceLoader.exists(path):
-		spr.texture = load(path)
-		var th := float(maxi(1, spr.texture.get_height()))
-		spr.pixel_size = 1.7 / th
-	spr.position.y = 0.85
 	add_child(spr)
 	tag.position = Vector3(0.0, 1.7, 0.0)
 	tag.font_size = 36

@@ -1,6 +1,7 @@
 extends Object
 
 const Fmt := preload("res://scripts/title_news_fmt.gd")
+const Plate := preload("res://scripts/ui/plate_chrome.gd")
 
 
 static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
@@ -11,11 +12,7 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	host._news_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	host._news_layer.mouse_filter = Control.MOUSE_FILTER_STOP
 	host.add_child(host._news_layer)
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.02, 0.015, 0.01, 0.72)
-	dim.mouse_filter = Control.MOUSE_FILTER_STOP
-	host._news_layer.add_child(dim)
+	Plate.dim(host._news_layer)
 	var box := VBoxContainer.new()
 	box.set_anchors_preset(Control.PRESET_CENTER)
 	box.offset_left = -380
@@ -32,13 +29,13 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	box.add_child(text_shell)
 	var text_bg := ColorRect.new()
 	text_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	text_bg.color = Color(0.11, 0.09, 0.07, 1)
+	text_bg.color = Plate.PLATE
 	text_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	text_shell.add_child(text_bg)
 	var text_edge := ColorRect.new()
 	text_edge.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	text_edge.offset_bottom = 6
-	text_edge.color = Color(0.55, 0.42, 0.22, 1)
+	text_edge.offset_bottom = float(Plate.EDGE_H)
+	text_edge.color = Plate.EDGE
 	text_edge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	text_shell.add_child(text_edge)
 	var scroll := ScrollContainer.new()

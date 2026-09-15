@@ -1,4 +1,5 @@
-﻿extends Object
+extends Object
+const TipPlace := preload("res://scripts/ui/tip_place.gd")
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Text := preload("res://scripts/ui/gear_board/gear_board_text.gd")
@@ -108,12 +109,10 @@ static func place_tip(ui: CanvasLayer) -> void:
 	lab.text = txt
 	var r: Rect2 = anchor.get_global_rect()
 	if not _rect_ready(ui, r):
-		var tree := ui.get_tree()
-		if tree:
-			tree.process_frame.connect(func():
-				if is_instance_valid(ui):
-					_place_now(ui)
-			, CONNECT_ONE_SHOT)
+		TipPlace.defer_next_frame(ui.get_tree(), func():
+			if is_instance_valid(ui):
+				_place_now(ui)
+		)
 		return
 	_place_now(ui)
 
@@ -165,8 +164,6 @@ static func _place_now(ui: CanvasLayer) -> void:
 		pos = Vector2(rr.position.x + maxf(rr.size.x, 1.0) + 12.0, rr.position.y)
 		if pos.x + sz.x > view.x - 16.0:
 			pos.x = rr.position.x - sz.x - 12.0
-	pos.x = clampf(pos.x, 16.0, view.x - sz.x - 16.0)
 	if pos.y + sz.y > view.y - 16.0:
 		pos.y = rr.position.y - sz.y - 8.0
-	pos.y = clampf(pos.y, 16.0, view.y - maxf(sz.y, 80.0) - 16.0)
-	host.global_position = pos
+	host.global_position = TipPlace.clamp_pos(pos, sz, view)

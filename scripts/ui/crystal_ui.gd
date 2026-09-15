@@ -1,6 +1,7 @@
-﻿extends CanvasLayer
+extends CanvasLayer
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const CrystalNet := preload("res://scripts/world/crystal_net.gd")
 const Util := preload("res://scripts/ui/crystal_ui_util.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
@@ -68,11 +69,7 @@ func _rebuild() -> void:
 	map_rect = null
 	map_clip = null
 	map_mark = null
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.mouse_filter = Control.MOUSE_FILTER_STOP
-	dim.color = Color(0.04, 0.03, 0.02, 0.78)
-	add_child(dim)
+	Plate.dim(self)
 	if page == "local":
 		Pages.page_local(self)
 	elif page == "floors" or page == "band":

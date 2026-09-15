@@ -1,6 +1,7 @@
-﻿extends Object
+extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const View := preload("res://scripts/ui/split_menu_view.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
@@ -48,21 +49,9 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable) ->
 		root.set_meta("prev_focus", prev)
 	root.set_meta("prev_footer", prev_footer)
 	parent.add_child(root)
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.03, 0.02, 0.02, 0.72)
-	dim.mouse_filter = Control.MOUSE_FILTER_STOP
-	root.add_child(dim)
-	var panel := ColorRect.new()
-	panel.color = Color(0.13, 0.1, 0.08, 0.98)
-	panel.position = Vector2(560, 280)
-	panel.size = Vector2(800, 360)
-	root.add_child(panel)
-	var edge := ColorRect.new()
-	edge.color = Color(0.55, 0.42, 0.22, 1)
-	edge.position = Vector2(560, 280)
-	edge.size = Vector2(800, 8)
-	root.add_child(edge)
+	Plate.dim(root)
+	Plate.plate(root, Vector2(560, 280), Vector2(800, 360))
+	Plate.edge(root, Vector2(560, 280), 800.0)
 	var cap: Label = ThemeS.lab(title, 28, Color(0.95, 0.86, 0.55))
 	cap.position = Vector2(592, 308)
 	cap.size = Vector2(736, 40)

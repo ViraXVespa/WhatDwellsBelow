@@ -1,4 +1,5 @@
 extends Node3D
+const BillSpr := preload("res://scripts/world/billboard_spr.gd")
 
 const Depth := preload("res://scripts/world/depth.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
@@ -40,15 +41,8 @@ func setup_item(it: Dictionary, pos: Vector3) -> void:
 
 
 func _visual() -> void:
-	spr = Sprite3D.new()
-	spr.centered = true
-	spr.shaded = false
-	spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	var path := "res://assets/sprites/props/hp_orb.png"
-	if ResourceLoader.exists(path):
-		spr.texture = load(path)
-		spr.pixel_size = 0.45 / float(maxi(1, spr.texture.get_height()))
+	spr = BillSpr.make(path, 0.45, 0.0, 0, false)
 	if kind == "gold":
 		spr.modulate = Color(1.0, 0.85, 0.25)
 	elif kind == "item":

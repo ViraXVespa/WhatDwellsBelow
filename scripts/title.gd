@@ -1,4 +1,4 @@
-﻿extends Control
+extends Control
 
 const T := preload("res://scripts/data/tunables.gd")
 const GameVer := preload("res://scripts/data/game_ver.gd")
@@ -134,14 +134,7 @@ func _focus_first() -> void:
 
 
 func _lab(text: String, font_px: int, col: Color) -> Label:
-	var l := Label.new()
-	l.text = text
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.add_theme_font_size_override("font_size", ThemeS.font_px(font_px))
-	l.add_theme_color_override("font_color", col)
-	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	l.add_theme_constant_override("outline_size", 6)
+	var l: Label = ThemeS.lab(text, font_px, col, HORIZONTAL_ALIGNMENT_CENTER, true, true)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.focus_mode = Control.FOCUS_NONE
 	return l

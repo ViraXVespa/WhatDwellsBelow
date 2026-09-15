@@ -1,4 +1,5 @@
-﻿extends CanvasLayer
+extends CanvasLayer
+const Plate := preload("res://scripts/ui/plate_chrome.gd")
 
 ## Menu load overlay. Lives on App so it survives the title → camp swap.
 
@@ -31,7 +32,7 @@ func _ready() -> void:
 	_status = _lab("", 20, Color(0.82, 0.76, 0.64))
 	add_child(_status)
 	_edge = ColorRect.new()
-	_edge.color = Color(0.55, 0.42, 0.22, 1)
+	_edge.color = Plate.EDGE
 	_edge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_edge)
 	_track = ColorRect.new()

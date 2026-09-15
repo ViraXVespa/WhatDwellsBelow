@@ -1,4 +1,5 @@
 extends Node3D
+const BillSpr := preload("res://scripts/world/billboard_spr.gd")
 
 const Depth := preload("res://scripts/world/depth.gd")
 const PickupS := preload("res://scripts/world/pickup.gd")
@@ -87,17 +88,8 @@ func _spawn_pick(what: String, n: int) -> void:
 
 
 func _spr() -> void:
-	spr = Sprite3D.new()
-	spr.centered = true
-	spr.shaded = false
-	spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	var path := "res://assets/sprites/props/barrel.png" if kind == "barrel" else "res://assets/sprites/props/pot.png"
-	if ResourceLoader.exists(path):
-		spr.texture = load(path)
-		spr.pixel_size = 0.85 / float(maxi(1, spr.texture.get_height()))
-	spr.position.y = 0.4
-	spr = SpriteFilt.decorate(spr)
+	spr = BillSpr.make(path, 0.85, 0.4)
 	add_child(spr)
 	Depth.apply(spr, position)
 

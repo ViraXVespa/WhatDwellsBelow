@@ -1,4 +1,5 @@
-﻿extends Object
+extends Object
+const BillSpr := preload("res://scripts/world/billboard_spr.gd")
 
 const Depth := preload("res://scripts/world/depth.gd")
 
@@ -101,19 +102,9 @@ static func spr_y(kind: String) -> float:
 
 
 static func sprite(host: Node3D, path: String, h: float, y: float) -> void:
-	var spr := Sprite3D.new()
-	spr.centered = true
-	spr.shaded = false
-	spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	if ResourceLoader.exists(path):
-		spr.texture = load(path)
-		if host.kind == "extract_gate":
-			spr.pixel_size = 3.0 / float(maxi(1, spr.texture.get_width()))
-		else:
-			spr.pixel_size = h / float(maxi(1, spr.texture.get_height()))
-	spr.position.y = y
+	var spr: Sprite3D = BillSpr.make(path, h, y, 0, false)
+	if spr.texture != null and host.kind == "extract_gate":
+		spr.pixel_size = 3.0 / float(maxi(1, spr.texture.get_width()))
 	host.spr = spr
 	host.add_child(spr)
 	Depth.apply(spr, host.position)

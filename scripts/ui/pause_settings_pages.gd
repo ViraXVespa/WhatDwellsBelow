@@ -1,6 +1,7 @@
-﻿extends Object
+extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const MenuUtil := preload("res://scripts/ui/pause_menu_util.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const View := preload("res://scripts/ui/split_menu_view.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
@@ -162,22 +163,12 @@ static func _focus_named(host: Node, title: String) -> void:
 
 
 static func _slider(host: Node, title: String, value: float, lo: float, hi: float, step: float, on_change: Callable) -> void:
-	var shell := VBoxContainer.new()
+	var shell: VBoxContainer = MenuUtil.slider_row(host, title, value, lo, hi, step, on_change, false, 640.0)
 	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	shell.add_theme_constant_override("separation", 4)
-	shell.add_child(ThemeS.lab(title, 20, Color(0.9, 0.84, 0.7)))
-	var sl := HSlider.new()
-	sl.min_value = lo
-	sl.max_value = hi
-	sl.step = step
-	sl.value = value
-	sl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	sl.custom_minimum_size = Vector2(640, 28)
-	sl.focus_mode = Control.FOCUS_ALL
-	sl.value_changed.connect(on_change)
-	shell.add_child(sl)
 	host.info_box.add_child(shell)
-	host.info_btns.append(sl)
+	var sl: HSlider = shell.get_child(shell.get_child_count() - 1) as HSlider
+	if sl:
+		host.info_btns.append(sl)
 
 
 static func _check(title: String, on: bool, on_change: Callable) -> CheckBox:
