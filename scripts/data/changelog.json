@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.21",
+			"points": [
+				{
+					"text": "Agent reuse map so extract / DRY / shared-helper work has one index",
+					"subs": [
+						"No player-facing gameplay change in this slice"
+					]
+				},
+				{
+					"text": "Grok Bot opens that map only when asked for reuse work"
+				}
+			],
+			"summary": "This build documents where copied live code should land. Play is unchanged."
+		},
+		{
 			"label": "0.3.20",
 			"points": [
 				{
