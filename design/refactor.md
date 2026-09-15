@@ -8,6 +8,8 @@ See also: `design/grok-bot-session.md`, `design/doc-refactor.md`
 
 This file is the mechanical recipe. Session flow lives in the path files. Grok Bot uses this file on every task. Other paths use it only when they must split. Grok Bot flow routing is `design/grok-bot-session.md` (one Job-table sibling). Relocate steps that Bot must follow as a session are `design/grok-bot-relocate.md`.
 
+Grok Build feature work is **not** a refactor. Implementation freedom (new same-system APIs, helpers, local module shape) lives in `design/grok-build.md`. This file’s **No new code** rules do not bind that work. When Build only needs the 10KB cap, use the size-split mechanics here; do not import Bot’s “do not invent a better API” leash.
+
 ## Caps
 
 | Rule | Who |
@@ -21,13 +23,17 @@ Do not split a file that is already under the cap that applies to the current pa
 
 ## No new code
 
-Grok writes behavior. A refactor only rearranges what already exists.
+This section binds **Grok Bot** and **web / chat Phase 6 size-splits** only. It does not bind Grok Build feature work.
+
+A refactor only rearranges what already exists.
 
 - Do not add features, tunables, comments, docs-of-taste, renames, reformats, or “while I’m here” cleanups.
 - Do not invent a better API. Do not generalize two vaguely similar features into a new one.
 - Do not add a helper function that was not already in the tree, except Grok Bot’s shared-module extract of **near-identical** existing bodies (same control flow; renamed locals OK).
-- Grok Build / web / chat size-splits MUST NOT invent new shared modules unless following the Grok Bot path.
+- Web / chat size-splits MUST NOT invent new shared modules unless following the Grok Bot path.
 - Edits are the minimum needed to relocate existing lines and keep the project compiling.
+
+Grok Build size-splits MAY introduce a new **same-system** helper API when that is cleaner than a dumb line-move. A new **cross-system** owner during a Build split is `design/grok-build.md` → **Stop and propose first**. Do not create it in the split.
 
 Adding `: Type` on a line already being moved, a `load()` / `preload()`, a one-line facade delegate, or `host` / `pt` / `ui` / `p` on a moved `static func` is wiring, not new behavior.
 
@@ -45,7 +51,7 @@ If a file must be split:
 6. Never split files under a pinned archive commit. Slim `archives/docs/` copies are live-tree museum text only.
 7. Split the largest first. One cluster per batch. Stop so the User can compile (web / chat: so the User can paste; Grok Bot: ship the PR, report, and follow `design/grok-bot-session.md` before the next cluster).
 
-The only new path a **size** split may create is that sibling helper. Its body is **moved code**, not newly written logic.
+The default new path a **size** split may create is that sibling helper. On Grok Bot and web / chat, its body is **moved code**, not newly written logic. On Grok Build, the sibling MAY be a cleaner same-system API, not only a line-move.
 
 Grok Bot size sweep: after the split, each resulting live `.gd` should be under 5KB when whole existing functions can move (`design/grok-bot-size.md`). If one existing function is itself over 5KB, leave it whole and report it. Never leave a touched file over 10KB if a legal split can fix it.
 
@@ -57,7 +63,8 @@ Grok Bot **MAY** create shared owners when near-identical behavior spans places.
 - Near-identical = same control flow (renamed locals OK), not vaguely similar features.
 - Point at an existing owner only if it already **is** that concern **and** the addition will not blow the size cap.
 - Never grow an owner just to avoid a new file.
-- Grok Build / web / chat size-splits still do not invent new shared modules unless following this Grok Bot path.
+- Web / chat size-splits still do not invent new shared modules unless following this Grok Bot path.
+- Grok Build does not use this Bot extract leash. Same-system APIs: just do. Cross-system owners: `design/grok-build.md` → **Stop and propose first**.
 - Do not hunt the live tree to rediscover copies when the User already named the cluster. Do not treat `design/reuse-map.md` as an owners encyclopedia.
 
 ## Reuse (existing owners)
@@ -69,7 +76,7 @@ Hunt for copied logic only after size work on the current cluster, or when the a
    - menu tab / confirm / back / page: `scripts/ui/menu_pad.gd`
    - bottom prompt / hint strip: `scripts/ui/prompt_view.gd`
    - other existing shared scripts already in the tree (`theme.gd`, `pause_menu_util.gd`, `gear_board_tip.gd`, `plate_chrome.gd`, `tip_place.gd`, …) when they already expose the function
-3. If nothing existing owns it, or the owner would blow the size cap: **Grok Bot** prefers a new shared module for near-identical spanning copies; otherwise leave the copies and report them. Do not add a new method on an existing owner just so the copies can fit.
+3. If nothing existing owns it, or the owner would blow the size cap: **Grok Bot** prefers a new shared module for near-identical spanning copies; otherwise leave the copies and report them. Do not add a new method on an existing owner just so the copies can fit. **Grok Build** may add a same-system method or helper; a new cross-system owner is propose-first.
 
 Reuse against an existing owner is call-site edits plus using a function that already exists. Grok Bot extract to a new shared module is moved bodies into a new file, not invented logic. Do not merge pairs listed under **Do not merge** in `design/grok-bot-extract.md`.
 
@@ -85,13 +92,11 @@ Reuse against an existing owner is call-site edits plus using a function that al
 
 Do not retype a whole file for style.
 
-
-
 ## Hostify pitfalls
 
 Facade + `static func(host, ...)` splits must keep Godot 4.7 compiling. Watch for:
 
-1. **Bare Node props / methods on helpers** — after moving a method off a Node script, `layer`, `visible`, `process_mode`, `queue_free`, `get_tree()`, etc. are not in scope. Use `host.layer`, `host.queue_free()`, `host.get_tree()`.
+1. **Bare Node props / methods on helpers** — after moving a method off a Node script, `layer`, `visible`, `process_mode`, `queue_free()`, `get_tree()`, etc. are not in scope. Use `host.layer`, `host.queue_free()`, `host.get_tree()`.
 2. **Param shadowing** — never `var host := host.get_parent()` (or any `var host :=` that hides the parameter). Rename the local (`parent`, `map_host`, …).
 3. **Enum / const on Object helpers** — `MOTION_MODE_FLOATING` and similar are not free names on `extends Object` helpers. Qualify: `CharacterBody3D.MOTION_MODE_FLOATING`.
 4. **Facade state aliases** — if callers used `PlaytestLog.started` / `.file_name` / `.events` on the old script, the facade must still expose those names (forward to the core helper’s `static var`s). Moving state without aliases yields `Cannot find member "started" in base "..."` and a cascade `Could not resolve class` on the next preload.
@@ -105,8 +110,6 @@ After a hostify batch, run the **editor import** compile check via `design/pc-of
 
 Optional advisory scan: `powershell -File tools/lint_hostify.ps1` → `_logs/hostify-lint/summary.txt` (always exit 0). Use it to spot Hostify pitfalls before or after the import check; it is not a compile substitute. After a size-split batch, prefer `powershell -File tools/run_post_split_gate.ps1` (add `-WithSmokes` when coverage matters).
 
-
-
 ## Shared calculations (gameplay + smoke)
 
 When gameplay uses a formula (gather interval, forge→hold, damage, etc.), put it in **one** static helper and call that helper from every consumer — live systems, UI, **and** phase smokes. Do not re-derive or hardcode the same numbers in `scripts/debug/smoke_*.gd`.
@@ -114,7 +117,7 @@ When gameplay uses a formula (gather interval, forge→hold, damage, etc.), put 
 Rules:
 
 1. Prefer a small `extends Object` helper next to the owner (example: `scripts/world/gather_rules.gd` for gather timing; `ForgeP.forge_hold` for programmatic forge→hold).
-2. Before asserting in a smoke, search for an existing helper (`interval_for`, `forge_hold`, …). If none exists, **extract** it from the live code first, then assert against the helper’s result.
+2. Before asserting in a smoke, search for an existing helper (`interval_for`, `forge_hold`, …). If none exists, **extract** it from the live code first, then assert against the helper’s result. Grok Build may write that helper as a same-system API.
 3. When hostifying, keep smoke-reachable facades (see Hostify pitfall 9) **and** keep smokes on the shared calc route — updating only the smoke’s hardcoded constants is a regression waiting to happen.
 4. Search for duplicated literals of the same feature (example: `2.4` / `mine_time`) during size sweeps; fold them into the helper in the same batch when safe.
 
@@ -123,8 +126,8 @@ Rules:
 - Do not load the design corpus for a split. Code map row + the cluster is enough. Open `design/reuse-map.md` only from `design/grok-bot-reuse.md` when that brief is not the empty template.
 - Measure on-disk byte length (Get-Item Length / dir). Do not guess. Do not ReadAllText + GetByteCount just to size-check.
 - Do not dump whole files on Grok Build or Grok Bot when a diff / PR is enough.
-- Do not restyle, do not rewrite comments, do not rename for taste.
-- Do not combine a refactor with a feature.
+- Do not restyle, do not rewrite comments, do not rename for taste — on Grok Bot and web / chat size-splits. Grok Build feature work may rename or reshape inside one system per `design/grok-build.md`.
+- Do not combine a refactor with a feature — on Grok Bot and web / chat. Grok Build may split for the cap in the same slice as the feature.
 - Web / chat still emits full files in Phase 4 / Phase 6 as `design/web-session.md` requires. This recipe does not change emit shape.
 
 ## After a split

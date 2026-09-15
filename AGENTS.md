@@ -6,7 +6,7 @@ Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 
 | Path | Recognize | Deliver |
 |------|-----------|---------|
-| **Grok Build (CLI)** | You can write the checkout | Follow `design/grok-build.md`. Edit live files. Do not dump whole files unless asked. |
+| **Grok Build (CLI)** | You can write the checkout | Follow `design/grok-build.md`. Edit live files. Implementation is unconstrained there (same-system APIs just do; cross-system / named-architecture replace is propose-first). Do not dump whole files unless asked. Do not apply web / Bot leashes to this path. |
 | **Web / chat** | You cannot write the repo | Follow `design/web-session.md`. Never assume a disk write landed. |
 | **Grok Bot** | Grok Bot / Cursor desktop assistant writing via GitHub PR (cloud agent when available, or GitHub connector), or the User named a Grok Bot path / Grok Bot refactor sweep | Follow `design/grok-bot-session.md` only (door). That Job table names the one flow sibling. Recipes: `design/refactor.md` / `design/doc-refactor.md`. Ship via branch + PR. Refactor only. |
 
@@ -45,13 +45,13 @@ Do not open `design/art-attack-keyframes.md` or `tools/attack_keyframes.py` unle
 
 Path procedures (Build week pin, web phases, Bot flows) live in that path’s session file. `design/sessions.md` is the Grok Build leave-off only — not a web or Bot hand-off.
 
-**Binding design** is required behavior. **Live snapshot** is current code. If they disagree, patch live toward binding or ask. Do not invent a third system.
+**Binding design** is required **player-facing** behavior. **Live snapshot** is current code. If they disagree, patch live toward binding or ask. Do not invent a third **game** system. A new code API is not a third game system. Grok Build implementation rules: `design/grok-build.md`.
 
 Shipping code is the repo root (`project.godot`, `scenes/`, `scripts/`, `assets/`). Patch it in place.
 
 Archived builds are pinned commits in `scripts/data/archive_catalog.json`. Do not copy snapshot project trees into `archives/` or onto live. Do not create a new archive unless the User asks, except the standing Grok Build week pins in `design/versioning.md` when the User has said **new week**.
 
-Implement only what design and the User require. Do not invent skills, rarities, hub upgrades, meta-progression, or co-op. Open numbers: invent coherent starts, expose them in the secret debug menu, record in `design/tunables.md`. Ambiguity: ask.
+Implement only the game systems design and the User require. Do not invent skills, rarities, hub upgrades, meta-progression, or co-op. Grok Build MAY invent code shape inside those systems. Open numbers: invent coherent starts, expose them in the secret debug menu, record in `design/tunables.md`. Ambiguity about player-facing design: ask. Grok Build code structure inside one system: decide.
 
 After a slice: stop and report.
 
@@ -84,7 +84,7 @@ Keep the Godot output log clean. New or rewritten lines must not introduce these
 
 Every live `scripts/**/*.gd` that ships must stay under **10,000 bytes**.
 
-- **Grok Build (CLI)** enforces the cap while editing. Split in that same slice with `design/refactor.md`. Stop once the file is under 10KB. Do not keep splitting toward Grok Bot's 5KB sweep target. Preferred runners: `design/pc-offload.md` (`check_script_cap.ps1`, `run_build_gate.ps1`).
+- **Grok Build (CLI)** enforces the cap while editing. Split in that same slice with `design/refactor.md`. Stop once the file is under 10KB. Do not keep splitting toward Grok Bot's 5KB sweep target. A Build split MAY add a same-system helper API; a new cross-system owner is propose-first (`design/grok-build.md`). Preferred runners: `design/pc-offload.md` (`check_script_cap.ps1`, `run_build_gate.ps1`).
 - **Web / chat** does not apply the cap until Phase 6. See `design/web-session.md`.
 - **Grok Bot** uses `design/refactor.md` on every task. 10KB is the ship floor. The under-5KB sweep target is only in `design/grok-bot-size.md`. Shared PC offload: `design/pc-offload.md`.
 
