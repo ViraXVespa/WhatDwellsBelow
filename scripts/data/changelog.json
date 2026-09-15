@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.26",
+			"points": [
+				{
+					"text": "Grok Build is unconstrained on implementation: same-system helpers and APIs are in scope while shipping requested work"
+				},
+				{
+					"text": "Cross-system owners and named live-architecture reworks stay propose-first"
+				},
+				{
+					"text": "Web / chat and Grok Bot leashes no longer apply to Grok Build feature work"
+				},
+				{
+					"text": "Product scope is unchanged (skills, rarities, hub upgrades, meta, co-op)"
+				}
+			],
+			"summary": "Protocol docs now keep Bot and web tight while Grok Build can reshape code inside a system without treating \u201cdo not invent an API\u201d as law."
+		},
+		{
 			"label": "0.3.25",
 			"points": [
 				{
