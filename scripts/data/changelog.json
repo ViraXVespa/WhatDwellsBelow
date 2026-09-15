@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.27",
+			"points": [
+				{
+					"text": "Slimmed agent protocol so each path has one boot file and one door"
+				},
+				{
+					"text": "Cut recursive `See also` lists on design doors and siblings"
+				},
+				{
+					"text": "Folded duplicate hard-constraint / demo-complete lists into `design/constraints.md`"
+				}
+			],
+			"summary": "Documentation-only pass. No live game behavior change."
+		},
+		{
 			"label": "0.3.26",
 			"points": [
 				{
