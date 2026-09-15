@@ -2,10 +2,10 @@
 
 Status: binding design  
 Read when: generating or replacing player / enemy / weapon frames  
-Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `tools/run_isolated_grok.py`, `assets/sprites/player/`  
+Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/bible_prompt.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `tools/run_isolated_grok.py`, `assets/sprites/player/`  
 See also: `design/player.md`, `design/audio-visual.md`
 
-This file is the door. Do not load Appendix C or D unless you are writing or locking a Bible. Do not load the siblings until the job matches the table. Do not load `design/art-attack-keyframes.md` unless the User is resuming the attack animation keyframe pipeline.
+This file is the door. Do not run `tools/bible_prompt.py` unless you are writing or locking a Bible. Do not load Appendix D unless you are choosing a generation method. Do not load the siblings until the job matches the table. Do not load `design/art-attack-keyframes.md` unless the User is resuming the attack animation keyframe pipeline.
 
 | Job | Open |
 |-----|------|
@@ -46,7 +46,7 @@ Player and enemy animations use exactly 8 directions matching the Character Bibl
 
 Create and lock one primary 3×3 Character Bible on a solid chroma plate for each character type (male and female).
 
-Strict cell layout (do not swap, reverse rows, reverse columns, or move any figure). See Appendix C for the prompt template.
+Strict cell layout (do not swap, reverse rows, reverse columns, or move any figure). Print the locked Imagine text with `python tools/bible_prompt.py --gender male` (or `female`). Copy the printed block. Do not invent a second Bible template.
 
 **Requirements:**
 
@@ -147,28 +147,7 @@ Failures:
 
 ## Appendix C — Character Bible prompt template
 
-Load this appendix only when writing or locking a Bible.
-
-Create a single clean image that is a perfect 3×3 Character Bible grid on solid pure magenta `#FF00FF` background for the [male/female] player character of "What Dwells Below".
-
-Strict cell layout (do not swap, reverse rows, reverse columns, or move any figure):
-
-Top row:  
-Top-left: Up-Left full-body, complete head-to-feet, character facing Up-Left, neutral standing  
-Top-center: Up full-body, complete head-to-feet, character facing Up (full back view), neutral standing  
-Top-right: Up-Right full-body, complete head-to-feet, character facing Up-Right, neutral standing
-
-Middle row:  
-Middle-left: Left full-body, complete head-to-feet, character facing Left (left profile), neutral standing  
-Exact center: clear head-and-shoulders face close-up of the same character  
-Middle-right: Right full-body, complete head-to-feet, character facing Right (right profile), neutral standing
-
-Bottom row:  
-Bottom-left: Down-Left full-body, complete head-to-feet, character facing Down-Left, neutral standing  
-Bottom-center: Down full-body, complete head-to-feet, character facing Down (front view), neutral standing  
-Bottom-right: Down-Right full-body, complete head-to-feet, character facing Down-Right, neutral standing
-
-All eight full-body figures must have identical proportions and silhouette height, feet on the same baseline. Character locked across every cell: rugged human dungeon delver, practical layered leather and metal armor, [short messy dark hair / appropriate female hairstyle], determined expression, a short green neckband worn only around the neck, limited muted palette (grays, browns, dark greens, skin tones, metal). Crisp true pixel-art style, integer pixel edges, no anti-aliasing, no smoothing. Hands empty. No weapons, no tools. Do not swap any cells. Do not place the face close-up anywhere except the exact center. No cropping of limbs, no props, no weapons, no text, no numbers, no borders, no grid lines. Perfect even 3×3 grid.
+Print the locked 3×3 Imagine text with `python tools/bible_prompt.py --gender male` (or `female`). Copy the printed block. Do not invent a second Bible template. Magenta plate `#FF00FF`. Printer only — do not send Imagine from that path unless the User says to.
 
 ## Appendix D — Method reliability
 
