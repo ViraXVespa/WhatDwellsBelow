@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.25",
+			"points": [
+				{
+					"text": "Isolated Imagine / I2V jobs default to a scratch Grok Build session outside the repo so media turns do not reload `AGENTS.md`"
+				},
+				{
+					"text": "Shared runner `tools/run_isolated_grok.py` stages style sheets, writes a kind-specific job, inspects the cwd, then runs `grok -p`"
+				},
+				{
+					"text": "Kind routing: tile, character, i2v, ui, still \u2014 one bundled game-asset specialist each"
+				},
+				{
+					"text": "Repo skills `imagine-isolated` and `i2v-isolated` tell the parent session to spawn that runner instead of generating in-place"
+				},
+				{
+					"text": "In-session Imagine stays allowed only for a short exception list (User said so, already in scratch, edit of an attached image, runner cannot start)"
+				}
+			],
+			"summary": "CLI media generation can run in a thin temp directory so stills and clips do not pay the full game-repo context on every turn."
+		},
+		{
 			"label": "0.3.24",
 			"points": [
 				{
