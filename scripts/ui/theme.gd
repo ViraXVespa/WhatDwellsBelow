@@ -17,13 +17,13 @@ static func lab(
 	size: int,
 	col: Color,
 	align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT,
-	wrap: bool = true,
+	autowrap: bool = true,
 	outline: bool = true,
 ) -> Label:
 	var l := Label.new()
 	l.text = t
 	l.horizontal_alignment = align
-	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if wrap else TextServer.AUTOWRAP_OFF
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if autowrap else TextServer.AUTOWRAP_OFF
 	l.clip_text = false
 	l.add_theme_font_size_override("font_size", font_px(size))
 	l.add_theme_color_override("font_color", col)
