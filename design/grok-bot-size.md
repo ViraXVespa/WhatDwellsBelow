@@ -2,18 +2,16 @@
 
 Status: protocol  
 Read when: Grok Bot Job table → size sweep  
-See also: `design/grok-bot-session.md`, `design/refactor.md`, `design/pc-offload.md`
+See also: `design/grok-bot-session.md`
 
-`See also:` is an index, not a read list. Open the door first. Then this file. Recipes stay in `design/refactor.md`.
-
-Binding for **Grok Bot** size sweeps only. Ship rules stay on `design/grok-bot-session.md`.
+Binding for **Grok Bot** size sweeps only. Ship rules stay on `design/grok-bot-session.md`. Recipes stay in `design/refactor.md`.
 
 ## Mandate
 
 Sweep live `scripts/**/*.gd` for size. Not a feature slice. Not the staged reuse-map brief.
 
 - Ship floor: every touched live script under **10KB**.
-- Sweep target: under **5KB** when whole existing functions can move. If a single function is over 5KB, leave it whole and report it.
+- Sweep target: under **5KB** when whole functions can move. If a single function is over 5KB, leave it whole and report it.
 - Files already under the relevant cap are not split “for cleanliness.”
 - No behavior change.
 
@@ -39,6 +37,8 @@ Do not edit yet. Show the ranked list first.
 2. Rank: over 10KB first, then over 5KB where whole functions can move
 3. Optional func inventory: `tools/summarize_scripts.ps1` / facade cluster: `tools/list_facade_cluster.ps1` (see `design/pc-offload.md`)
 
+Inventory and before/after sizes use filesystem Length. Do not `ReadAllText` + `Encoding.UTF8.GetByteCount` just to measure.
+
 ## Pass
 
 1. Split every over-10KB live script with `design/refactor.md`. Facade keeps the public path. Stop each file at under 10KB.
@@ -49,4 +49,10 @@ Prefer a local checkout (`WDB_ROOT`) for large sweeps. Commit locally per cluste
 
 ## Verify
 
-After each cluster: `design/pc-offload.md` runners (`run_post_split_gate.ps1`, `check_script_cap.ps1`, import check). Smokes when behavior risk warrants. Then ship per the door.
+After each cluster: `design/pc-offload.md` runners (`run_post_split_gate.ps1`, `check_script_cap.ps1`, import check). Then ship per the door.
+
+- Godot binary (Steam tools): `C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe`
+- Required import check: `--headless --editor --import --path <WDB_ROOT> --quit` (or `tools/run_godot_import_check.ps1`). Clean bar: exit 0 and empty stderr.
+- Smokes when behavior risk warrants: `--headless --display-driver headless --audio-driver Dummy --path <WDB_ROOT> -- --wdb-phaseN-smoke` (or `tools/run_smokes.ps1`). Plain `--headless` without those drivers can hang.
+- Advisory hostify lint: `tools/lint_hostify.ps1` / `python tools/lint_hostify.py` → `_logs/hostify-lint/summary.txt`. Always exits 0; read `RESULT hits=`. Not a compile substitute.
+- If a split introduced a SCRIPT ERROR, parse error, or new actionable warning, stop. Fix it and record the prevention under `design/refactor.md`. Do not continue past a red import check.

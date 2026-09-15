@@ -3,7 +3,7 @@
 Status: binding design  
 Read when: generating or replacing player / enemy / weapon frames  
 Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `tools/run_isolated_grok.py`, `assets/sprites/player/`  
-See also: `design/isolated-media.md`, `design/art-i2v.md`, `design/art-pack.md`, `design/art-review.md`, `design/player.md`, `design/audio-visual.md`, `design/combat.md`, `design/enemies.md`, `design/grok-build.md`
+See also: `design/player.md`, `design/audio-visual.md`
 
 This file is the door. Do not load Appendix C or D unless you are writing or locking a Bible. Do not load the siblings until the job matches the table. Do not load `design/art-attack-keyframes.md` unless the User is resuming the attack animation keyframe pipeline.
 

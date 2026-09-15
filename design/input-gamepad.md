@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: gamepad layout, look mode, or universal menus
-See also: `design/input.md`, `design/input-rebind-prompts.md`, `design/input-kb-mouse.md`, `design/input-web-touch.md`, `design/input-live.md`, `design/ui.md`, `design/ui-hud.md`, `design/doc-refactor.md`, `design/README.md`
+See also: `design/input.md`
 
 ## Target platforms
 
@@ -74,4 +74,3 @@ Exception: the secret Animation Browser keeps LB / RB = previous / next model, L
 Menu actions (`ui_*`, pause, tab bumpers, gear tip / drop, crystal zoom) are **not** on the player rebind page.
 
 Touch overlay MUST hide while any menu is open (`App.ui_open`). Menu navigation on a phone is finger-tap on the control, not virtual A / B. D-pad Down in a menu is only `ui_down`.
-

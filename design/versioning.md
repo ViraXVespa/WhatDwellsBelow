@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: stamping a build, writing a changelog entry, Grok Build init, title “what’s new”, or adding an archive pin  
-See also: `AGENTS.md`, `design/web-session.md`, `design/grok-build.md`, `design/grok-bot-session.md`, `design/protocol.md`, `design/sessions.md`, `design/session-log.md`, `design/archives.md`, `design/save-tech.md`, `design/ui.md`
+See also: `AGENTS.md`
 
 ## Scheme
 

@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: live snapshot for binds or web_pad
-See also: `design/input.md`, `design/input-gamepad.md`, `design/input-rebind-prompts.md`, `design/input-kb-mouse.md`, `design/input-web-touch.md`, `design/ui.md`, `design/ui-hud.md`, `design/doc-refactor.md`, `design/README.md`
+See also: `design/input.md`
 
 ## Live snapshot — PC defaults (`binds.gd`)
 

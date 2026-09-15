@@ -2,7 +2,7 @@
 
 Status: protocol  
 Read when: Grok Build (CLI) path; every CLI instance after a gap  
-See also: `AGENTS.md`, `design/protocol.md`, `design/versioning.md`, `design/sessions.md`, `design/session-log.md`, `design/refactor.md`, `design/art-pipeline.md`, `design/isolated-media.md`
+See also: `AGENTS.md`, `design/protocol.md`, `design/versioning.md`, `design/sessions.md`
 
 ## Recognize
 
@@ -25,15 +25,13 @@ Do not pin because time passed, because the last slice ended, or because a new C
 
 1. `AGENTS.md`, `design/protocol.md`, `design/constraints.md`.
 2. `design/sessions.md` (leave-off only).
-3. After a gap or a **new week**: every `design/changelog/{current epoch}.{current series}.*.md` per `design/versioning.md`. Do not open other series. Do not treat `scripts/data/version.json` as the version ledger. Do not follow GitHub commit links into web-session conversations.
-4. Only the topic files that match the requested work (`design/README.md`). Sprite / I2V / pack / review: start at `design/art-pipeline.md` and open only the sibling it names for that job. Imagine / isolated generate: `design/isolated-media.md`.
-5. Inspect git and the live tree from the **code map row** for this task (`project.godot`, then the listed scenes/scripts). Do not walk `assets/` unless the task names sprites or audio. The User works between Grok Build weeks.
+3. After a gap or a **new week**: every current-series `design/changelog/{epoch}.{series}.*.md` per `design/versioning.md`. Do not open other series. Do not treat `scripts/data/version.json` as the version ledger. Do not follow GitHub commit links into web-session conversations.
+4. Only the topic files that match the requested work (`design/README.md`). Sprite / I2V / pack / review: `design/art-pipeline.md`, then only the sibling it names. Imagine / isolated generate: `design/isolated-media.md`.
+5. Inspect git and the live tree from the **code map row** for this task (`project.godot`, then the listed scenes/scripts). Do not walk `assets/` unless the task names sprites or audio.
 
 `design/session-log.md` is not part of every boot. Read it when rewriting it at session close, when the User asks what shipped, or when leave-off is not enough to name the next unit.
 
-Do not start by archiving or rewriting the live path. Do not read `design/changelog/` except the current-series files above, or when the named work is versioning, a named past build, or a revert.
-
-`design/sessions.md` is this path’s leave-off. It is not the web / chat or Grok Bot hand-off. Do not resume unfinished Grok Build work from it unless the User names that work. Do not treat a listed “next work” line as a license to start that work unasked.
+Do not start by archiving or rewriting the live path. Do not resume unfinished Grok Build work from `design/sessions.md` unless the User names that work.
 
 ## Week ritual
 
@@ -46,90 +44,64 @@ Follow `design/versioning.md`. In short:
 - Resume-after-corruption does not move the web pin.
 - Do not create any other archive unless the User asks.
 
-Archived builds are pinned commits in `scripts/data/archive_catalog.json`, not project trees under `archives/`. Do not copy a snapshot into `archives/` or onto live.
+Archived builds are pinned commits in `scripts/data/archive_catalog.json`, not project trees under `archives/`.
 
 ## Work
 
-Implement the requested work by editing the live path. This path is unconstrained on **implementation**. New helpers, same-system APIs, module shape, and local reworks are in scope when they ship the asked work more cleanly.
+Implement the requested work by patching the live path in place.
 
-Product scope stays locked (`design/constraints.md`, `design/protocol.md`). Do not invent skills, rarities, hub upgrades, meta-progression, or co-op. Binding design is required player-facing behavior. Live snapshot is current code. If they disagree, patch live toward binding or ask. “Do not invent a third system” means a **game** system, not a code API.
+This path is unconstrained on **implementation** inside one system: new helpers, same-system APIs, and local module shape are in scope when they ship the asked work more cleanly. Product scope stays locked (`design/constraints.md`, `design/protocol.md`).
 
-Web / chat and Grok Bot leashes do not apply here. Do not treat “refactor only”, “do not invent a better API”, “do not add a helper that was not already in the tree”, or “do not invent a new shared module” as this path’s law.
+**Just do:** add, rename, or replace helpers and APIs inside the same system; decide code structure inside one system without asking.
 
-### Just do
+**Stop and propose first:** a new **cross-system** owner; replacing a **named live architecture** that design already pins (camera, dungeon gen, gear board, debug menu, save format, input router); a greenfield rewrite; copying archive scripts/scenes over live.
 
-- Add, rename, or replace helpers, facades, and APIs **inside the same system** when that is the clean way to implement the request or stay under the 10KB ship floor.
-- Reshape module boundaries inside that system. `design/refactor.md` size-split mechanics are a tool for the cap, not a ban on new same-system APIs.
-- Decide code structure inside one system without stopping to ask.
+Still required:
 
-### Stop and propose first
-
-Stop and propose before doing any of:
-
-- A new **cross-system** owner (a module that two or more systems would call).
-- Replacing a **named live architecture** that design already pins: camera (`design/camera.md`), dungeon gen, gear board, debug menu, save format, input router, or any other system `design/` names as the live shape.
-- A greenfield rewrite of the live tree, or copying archive scripts/scenes over live as the strategy.
-
-Do not implement those in the same slice unless the User already said yes.
-
-### Still required
-
-- MUST NOT copy archive scripts or scenes over live files as a default strategy.
+- MUST extend and reuse live scenes, scripts, and architecture unless they contradict binding design or the User’s request.
 - The live path remains the orthographic Camera3D system in `design/camera.md` until the User accepts a camera rework.
-- Match surrounding style unless a just-do change or an accepted rework replaces that style. GDScript indent is tab characters. Types follow `AGENTS.md` → GDScript types.
-- Open numbers: invent coherent starts, expose them in the secret debug menu, record in `design/tunables.md`. Ambiguity about *player-facing design*: ask. Ambiguity about *how to structure the code* inside one system: decide.
+- Match surrounding style unless a just-do change or an accepted rework replaces it. Tabs. Types: `AGENTS.md`.
+- Open numbers and player-facing ambiguity: `design/protocol.md`.
+
+Web / chat and Grok Bot leashes do not apply here.
 
 ## I2V week
 
-Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Door: `design/art-pipeline.md`. Isolated generate: `design/isolated-media.md`.
+Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Cadence and quality bar: `design/art-pipeline.md`. Isolated generate: `design/isolated-media.md`.
 
-- One CLI week session. One I2V unit (gender × facing × action) per review gate.
-- Prepare seed + prompt from `tools/i2v_seeds.py`, then stop and wait.
-- Generate the clip (and Imagine stills / tiles / UI) with `tools/run_isolated_grok.py` unless `design/isolated-media.md` lists an in-session exception. A thin child is not a new week and not a catch-up chat.
-- Harvest and pack only after the User accepts the clip. Next unit only after the User says so.
-- Mid-week: keep the thread across clips. Open a new CLI chat only when the window is dirty or the job leaves art. That new chat is a catch-up: no pin.
-- Do not `/resume` a fat art thread to “just do one more” media turn.
-- Do not regenerate an accepted unit unless the User rejects it.
+Path-only: mid-week new CLI chat is a catch-up (no pin). A thin isolated child is not a new week. Do not `/resume` a fat art thread to “just do one more” media turn.
 
 ## Script cap
 
-Every live `scripts/**/*.gd` that ships must stay under **10,000 bytes**.
+Ship floor is the **10,000 byte** cap in `AGENTS.md`. Enforce it while editing. Split in that same slice with `design/refactor.md`. Stop once under 10KB. Do not chase Grok Bot’s 5KB target.
 
-Enforce the cap while editing. If a file is over, or an edit would push it over, split in that same slice using `design/refactor.md`. Stop once the file is under 10KB. Do not keep splitting toward Grok Bot's 5KB sweep target.
+A size split MAY introduce a new same-system helper API. A new cross-system owner during a split is **Stop and propose first**.
 
-A size split on this path MAY introduce a new same-system helper API when that is cleaner than a dumb line-move. Do not create a new cross-system owner during a split — that is **Stop and propose first**.
-
-Preferred (agent-friendly): `powershell -File tools/check_script_cap.ps1` (optional `-OverKb 10`, `-GitChanged`, `-Path ...`). Writes `_logs/script-cap/summary.txt` — read that file only. Shared catalog: `design/pc-offload.md`.
+Preferred: `powershell -File tools/check_script_cap.ps1`. Read `_logs/script-cap/summary.txt` only. Catalog: `design/pc-offload.md`.
 
 ## Archives
 
-The Archives browser MUST ship. Selecting title “Play” always launches the current live path.
+The Archives browser MUST ship. Title “Play” always launches the current live path.
 
 Catalog rows (each a pinned commit, isolated per `design/archives.md`):
 
 - **classic_2d** — Classic 2D
 - **art_experiment** — Art experiment
 - **full_3d_pass** — Full 3D Pass
-- **grok_build_w1** — Grok Build Results (Week 1)
-- **grok_web_w1** — Grok Web Results (Week 1)
-- **grok_build_w2** — Grok Build Results (Week 2)
-- **grok_web_w2** — Grok Web Results (Week 2)
-- **grok_build_w3** — Grok Build Results (Week 3)
+- **grok_build_w1** / **grok_web_w1**
+- **grok_build_w2** / **grok_web_w2**
+- **grok_build_w3**
 - Plus `grok_web_w{N-1}` and `grok_build_wN` rows required by `design/versioning.md` after each **new week** ritual / completion commit.
 
 ## After a slice
 
-Preferred verify when `.gd` changed: from repo root, `powershell -File tools/run_build_gate.ps1` (optional `-SkipImport`, `-Force`). Runs script-cap on git-changed scripts plus editor import check; writes `_logs/build-gate/summary.txt` — read that file only.
+Preferred verify when `.gd` changed: `powershell -File tools/run_build_gate.ps1`. Read `_logs/build-gate/summary.txt` only.
 
 Stop and report: files changed, how you verified, what is still open. Do not chain an unrelated goal.
 
 ## End of session
 
-Update `design/sessions.md` (leave-off only).
-
-Prepend a factual entry to `design/session-log.md`.
-
-Write `design/changelog/{label}.md` for the completion commit when that commit is `0.N.0` (see `design/versioning.md`). First player-facing heading MUST be `## {label}`. MUST NOT use `# {label}`. Do not emit `scripts/data/changelog.json` as the ledger. Do not read prior changelog files to write the new one.
+Update `design/sessions.md` (leave-off only). Prepend a factual entry to `design/session-log.md`. Write `design/changelog/{label}.md` for the `0.N.0` completion commit per `design/versioning.md`.
 
 Those two session files are for the next Grok Build instance, not for web / chat or Grok Bot.
 
@@ -138,12 +110,8 @@ Those two session files are for the next Grok Build instance, not for web / chat
 - Do not dump whole files unless asked, or the file does not exist on disk yet.
 - Do not claim a paste-emit workflow. This path writes the checkout.
 - Do not use `design/web-session.md` phases.
-- Do not run a Grok Bot full-repo sweep. If house-wide size/extract/reuse cleanup is the job, that is Grok Bot.
-- Do not commit `_logs/`. Writing tool summaries there via `design/pc-offload.md` runners is allowed and preferred; read only those summaries. Optional Bot-only notes (`_logs/grok-bot-sweep.md`) remain Bot’s concern.
-- Do not follow git commit links into web-session conversations. Current-series `design/changelog/*.md` is the brief.
-- Do not invent a third **game** system when binding design and live code disagree — patch live toward binding or ask. A new code API is not a third game system.
-- Do not apply Grok Bot or web / chat “no new API / no new helper” rules to this path.
-- Do not silently execute a **Stop and propose first** change.
+- Do not run a Grok Bot full-repo sweep.
+- Do not commit `_logs/`. Writing tool summaries there via `design/pc-offload.md` is allowed; read only those summaries.
+- Do not follow git commit links into web-session conversations.
 - Do not run the week pin ritual unless the User said **new week**.
-- Do not start a changelog file with `# {label}`. Use `## {label}`.
 - Do not call Imagine in the game-repo cwd when `design/isolated-media.md` says to isolate.

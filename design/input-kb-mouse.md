@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: keyboard / mouse fallback
-See also: `design/input.md`, `design/input-gamepad.md`, `design/input-rebind-prompts.md`, `design/input-web-touch.md`, `design/input-live.md`, `design/ui.md`, `design/ui-hud.md`, `design/doc-refactor.md`, `design/README.md`
+See also: `design/input.md`
 
 ## Input – Keyboard / mouse (fully featured fallback)
 
@@ -19,4 +19,3 @@ Mouse wheel zooms world camera or the large map as described under Look mode. It
 **Esc** opens pause (and backs out of menus). On web it MUST NOT exit browser fullscreen. Only Pause → Settings → Graphics and Alt+Enter leave web fullscreen. `DisplayMode.ensure_web_hooks()` installs a capturing `keydown` listener that `preventDefault`s Escape while `document.fullscreenElement` is set and stashes `window.__wdbEsc`. `DisplayMode.consume_web_esc()` / `Pad.pause_just()` turn that flag into pause so camp and dungeon still call `App.pause_menu.toggle()`.
 
 **I** opens pause on Inventory from gameplay only. Same action as D-pad Right. MUST NOT jump tabs while pause or any other `App.ui_open` menu is already up.
-

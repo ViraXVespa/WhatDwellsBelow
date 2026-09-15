@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: extraction gate, ghost shop, quest, recap, minimap, toasts
-See also: `design/ui.md`, `design/ui-theme.md`, `design/ui-title-web.md`, `design/ui-hud.md`, `design/ui-pause.md`, `design/ui-gear-entry.md`, `design/gear-ui.md`, `design/hub.md`, `design/input.md`, `design/doc-refactor.md`
+See also: `design/ui.md`
 
 ## Extraction Gate UI
 
@@ -55,4 +55,3 @@ Triggered on every death or “Dispel”.
 - Floating damage / heal numbers: integers only, rise and fade quickly.
 - Critical hits use yellow + magenta colored damage numbers (no extra “CRIT!” text).
 - Toasts appear for bag-full, level-up, extraction success, and other system events. Short, readable, non-stacking or lightly stacking.
-

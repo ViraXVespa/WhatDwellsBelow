@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: catalog sets or required slots live snapshot
-See also: `design/inventory.md`, `design/inventory-bag.md`, `design/inventory-gear.md`, `design/inventory-meta.md`, `design/gear-ui.md`, `design/hub.md`, `design/skills.md`, `design/doc-refactor.md`, `design/README.md`
+See also: `design/inventory.md`
 
 ## Live snapshot — catalog sets
 

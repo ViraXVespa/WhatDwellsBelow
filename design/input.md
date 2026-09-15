@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: gamepad, keyboard/mouse, web touch, rebinding, prompts, aim-line
-See also: `design/ui.md`, `design/ui-hud.md`, `design/doc-refactor.md`, `design/README.md`, `design/input-gamepad.md`, `design/input-rebind-prompts.md`, `design/input-kb-mouse.md`, `design/input-web-touch.md`, `design/input-live.md`
+See also: `design/ui.md`
 This file is the door. Open only the sibling that matches the job.
 
 | Job | Open |
@@ -12,4 +12,3 @@ This file is the door. Open only the sibling that matches the job.
 | Keyboard / mouse | `design/input-kb-mouse.md` |
 | Web touch | `design/input-web-touch.md` |
 | Live snapshots (PC binds / web gamepad) | `design/input-live.md` |
-

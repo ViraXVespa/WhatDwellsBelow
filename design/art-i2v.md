@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: preparing or retrying one player I2V clip  
-See also: `design/art-pipeline.md`, `design/isolated-media.md`, `design/art-pack.md`, `design/player.md`  
+See also: `design/art-pipeline.md`  
 Code: `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/run_isolated_grok.py`
 
 Open this file from the door. Do not load Appendix C/D. Pack/cleanup is `design/art-pack.md`. Do not load `design/art-attack-keyframes.md` unless the User is resuming the attack animation keyframe pipeline.

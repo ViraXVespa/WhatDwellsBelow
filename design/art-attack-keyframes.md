@@ -2,7 +2,8 @@
 
 Status: parked experiment. Not live I2V law.
 
-Read when: the User resumes the attack animation keyframe pipeline, two-hand body stills, coil stills, or names this file.
+Read when: the User resumes the attack animation keyframe pipeline, two-hand body stills, coil stills, or names this file.  
+See also: `design/art-pipeline.md`
 
 Do not read when: the job is walk or idle I2V, pack, overlay, Godot, combat numbers, or a general art-pipeline session. `design/art-i2v.md` and `tools/i2v_seeds.py` stay the I2V path.
 

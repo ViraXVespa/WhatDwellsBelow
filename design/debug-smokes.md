@@ -3,7 +3,7 @@
 Status: binding design
 Read when: smoke phase coverage / how to run smokes
 Code: scripts/debug/, scripts/combat/debug_menu paths may be under scripts/debug/debug_menu/
-See also: `design/debug.md`, `design/debug-menu.md`, `design/debug-playtest.md`, `design/debug-anim-browser.md`, `design/pc-offload.md`, `design/refactor.md`, `design/doc-refactor.md`, `design/README.md`
+See also: `design/debug.md`
 
 ## Live snapshot — smoke tests (`smoke.gd`)
 

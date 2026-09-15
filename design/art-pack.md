@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: the User has accepted an I2V clip and it is time to harvest or pack  
-See also: `design/art-pipeline.md`, `design/art-i2v.md`, `design/player.md`  
+See also: `design/art-pipeline.md`  
 Code: `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/plate_remap.py`, `tools/sprite_pipeline.py`
 
 Open this file from the door. Do not harvest a rejected clip.

@@ -3,7 +3,7 @@
 Status: binding design
 Read when: automated playtest or playtest journal
 Code: scripts/debug/, scripts/combat/debug_menu paths may be under scripts/debug/debug_menu/
-See also: `design/debug.md`, `design/debug-menu.md`, `design/debug-anim-browser.md`, `design/debug-smokes.md`, `design/pc-offload.md`, `design/refactor.md`, `design/doc-refactor.md`, `design/README.md`
+See also: `design/debug.md`
 
 ## Automated Playtest / AI Player system
 
@@ -109,4 +109,3 @@ Events: `begin`, `wait`, `decide`, `step`, `act`, `beat`, `combat`, `end`.
 - `beat` is sparse (skipped when gold / kills / hp / goal are unchanged)
 - `tel.cfg` is omitted; `cfg_hash` on `begin` is enough
 - Root `end_cond` / `fail` come from the `end` event, not from an empty tel stamp
-

@@ -2,9 +2,7 @@
 
 Status: protocol  
 Read when: Grok Bot Job table → ad-hoc extract or existing-owner routing  
-See also: `design/grok-bot-session.md`, `design/refactor.md`
-
-`See also:` is an index, not a read list. Open the door first. Then this file.
+See also: `design/grok-bot-session.md`
 
 Binding for **Grok Bot** extract sessions only. This is not the staged reuse-map PR (`design/grok-bot-reuse.md`). This is not a size sweep. User-gated: do not start this flow unless the User named extract / DRY / shared helpers / an owner route *and* did not hand a non-empty `design/reuse-map.md` brief.
 

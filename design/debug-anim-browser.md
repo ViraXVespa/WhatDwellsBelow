@@ -3,7 +3,7 @@
 Status: binding design
 Read when: animation browser debug page
 Code: scripts/debug/, scripts/combat/debug_menu paths may be under scripts/debug/debug_menu/
-See also: `design/debug.md`, `design/debug-menu.md`, `design/debug-playtest.md`, `design/debug-smokes.md`, `design/pc-offload.md`, `design/refactor.md`, `design/doc-refactor.md`, `design/README.md`
+See also: `design/debug.md`
 
 ## Animation Browser (secret debug page)
 
@@ -84,4 +84,3 @@ Exact compare-two, frame-scrubber, and bible-overlay extras MAY be invented at i
 - Facade: `scripts/debug/anim_browser.gd`
 - Review helper: `scripts/debug/anim_browser_review.gd`
 - Ledger: `scripts/debug/anim_review.gd`
-

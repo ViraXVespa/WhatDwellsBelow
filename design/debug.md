@@ -3,7 +3,7 @@
 Status: binding design
 Read when: secret debug menu, playtest / journal, animation browser, smoke coverage notes
 Code: scripts/debug/, scripts/combat/debug_menu paths may be under scripts/debug/debug_menu/
-See also: `design/pc-offload.md`, `design/refactor.md`, `design/doc-refactor.md`, `design/README.md`, `design/debug-menu.md`, `design/debug-playtest.md`, `design/debug-anim-browser.md`, `design/debug-smokes.md`
+See also: `design/pc-offload.md`, `design/refactor.md`
 This file is the door. Open only the sibling that matches the job.
 
 | Job | Open |

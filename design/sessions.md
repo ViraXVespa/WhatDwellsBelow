@@ -2,7 +2,7 @@
 
 Status: working notes  
 Read when: starting a fresh Grok Build instance after a gap  
-See also: `design/session-log.md`, `design/protocol.md`, `design/grok-build.md`, `design/art-pipeline.md`, `design/player.md`
+See also: `design/grok-build.md`, `design/session-log.md`
 
 This is the Grok Build leave-off. It is **not** binding game design. Binding behavior stays in the topic files. The live tree is still the source of truth for shipping code.
 
@@ -19,12 +19,11 @@ Do not resume unfinished work from this file unless the User names that work. A 
 
 ### Pickup checklist
 
+Boot per `design/grok-build.md` Read order. Then:
+
 1. Read this leave-off.
 2. Inspect git / `git status` and the code-map row for the named work. Do not assume this file matches disk.
-3. After a gap: read current-series `design/changelog/*.md`. After `0.3.0` lands, current series is `0.3.*`. Do not follow git commit links into web-session conversations.
-4. Read `design/protocol.md`, `design/constraints.md`, then only the topic files for the requested work.
-5. For sprite / I2V / walk work: `design/art-pipeline.md` first, then only `design/art-i2v.md` or `design/art-pack.md` as that door says, plus `tools/i2v_seeds.py`.
-6. Read `design/session-log.md` only if this leave-off is not enough to name the next unit, or when writing it at close.
+3. Read `design/session-log.md` only if this leave-off is not enough to name the next unit, or when writing it at close.
 
 ### Likely next (only if the User names it)
 

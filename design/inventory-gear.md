@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: gear rules, item level, affixes, analyze, duplicates, forge, whites, options source
-See also: `design/inventory.md`, `design/inventory-bag.md`, `design/inventory-meta.md`, `design/inventory-live.md`, `design/gear-ui.md`, `design/hub.md`, `design/skills.md`, `design/doc-refactor.md`, `design/README.md`
+See also: `design/inventory.md`
 
 ## Gear rules
 
@@ -74,9 +74,7 @@ A mailed green/blue piece is a **duplicate** only when all of the following are 
 - Every affix on it already exists in the book for that type **and rarity**.
 - None of its per-affix luck rolls **beat** the book luck for that affix (incoming luck is not greater than stored luck). Use `>=` on the book side: if the book already has luck greater than or equal to this piece, that affix is not new.
 
-**Salvage spare gear** lives on the Gameplay settings page. Default **off**. When off, duplicates stay in the bank as a second copy.
-
-When on, a **Keep bars** block appears with two sliders:
+**Salvage spare gear** lives on the Gameplay settings page. Default **off**. When on, a **Keep bars** block appears with two sliders:
 
 - **Finish at least** — minimum Quality to keep a duplicate (range 0.50–1.00).
 - **Fortune at least** — minimum Luck to keep a duplicate (range 0.75–1.25).
@@ -114,4 +112,3 @@ A duplicate that meets **either** bar (Finish **or** Fortune) is kept. A duplica
 - Bank pieces and other unforged kit taken below are shown as **AT RISK** (lost on death or Dispel unless mailed). Holds show **HOLD**.
 - **Anvil Analyze:** AT RISK green/blue for that slot only. Footer does not list holds.
 - **Anvil Forge:** configurator for types already in `forge_book`. Footer does not list every remnant the player has ever analyzed.
-

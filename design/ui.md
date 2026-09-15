@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: title, HUD, pause, hub UI chrome, web gate / touch chrome — not gear-board internals
-See also: `design/gear-ui.md`, `design/hub.md`, `design/input.md`, `design/doc-refactor.md`, `design/README.md`, `design/ui-theme.md`, `design/ui-title-web.md`, `design/ui-hud.md`, `design/ui-pause.md`, `design/ui-run-flow.md`, `design/ui-gear-entry.md`
+See also: `design/gear-ui.md`, `design/hub.md`, `design/input.md`
 This file is the door. Open only the sibling that matches the job.
 
 | Job | Open |

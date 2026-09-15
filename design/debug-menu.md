@@ -3,7 +3,7 @@
 Status: binding design
 Read when: secret debug menu / balance page
 Code: scripts/debug/, scripts/combat/debug_menu paths may be under scripts/debug/debug_menu/
-See also: `design/debug.md`, `design/debug-playtest.md`, `design/debug-anim-browser.md`, `design/debug-smokes.md`, `design/pc-offload.md`, `design/refactor.md`, `design/doc-refactor.md`, `design/README.md`
+See also: `design/debug.md`
 
 ## Secret debug / balance menu
 
@@ -59,4 +59,3 @@ Linear filters MUST stay on this tab. Player Settings → Graphics uses Mipmaps 
 **Animation Browser tab.** Navigating to that tab (LB / RB or mouse) only rebuilds a confirm prompt. It does not open the full-screen viewer. The first control is **Open Animation Browser**; **A** on that control launches `anim_browser.open_browser()`. **B** on the prompt returns to Values. While the viewer is open, the debug menu MUST release GUI focus and stop processing input so the viewer can take D-pad / keyboard. Debug-menu LB / RB must not steal model-cycle input. Closing the viewer restores debug-menu input and returns focus to this prompt, not to a hidden tab button.
 
 The Phase 7 “gamepad-focusable Animation Browser control” is that Open button, not the top tab chrome.
-

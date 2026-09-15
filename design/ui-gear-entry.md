@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: Anvil UI, Loadout UI, or gear tooltips from the UI topic
-See also: `design/ui.md`, `design/ui-theme.md`, `design/ui-title-web.md`, `design/ui-hud.md`, `design/ui-pause.md`, `design/ui-run-flow.md`, `design/gear-ui.md`, `design/hub.md`, `design/input.md`, `design/doc-refactor.md`
+See also: `design/ui.md`
 
 ## Anvil UI
 
@@ -29,4 +29,3 @@ See also: `design/ui.md`, `design/ui-theme.md`, `design/ui-title-web.md`, `desig
 - **Y** cycles off → current item stats → forge preview.
 - Active artifact set bonuses are shown in the flyout and on the Artifact sets stats page.
 - Smithing level influence remains visible in Anvil UI.
-

@@ -4,8 +4,6 @@ Status: protocol
 Read when: web / chat path; every web session after the repo-review message  
 See also: `AGENTS.md`, `design/protocol.md`
 
-`See also:` is an index, not a read list. Do not open those files unless this file’s `Read when`, a Job table, or the User names that work.
-
 This file is binding for **web / chat** only. Grok Build (CLI) and Grok Bot ignore it.
 
 The User cannot be written to by this agent. The User pastes every emit. The User finishes each task before the next web task starts.
@@ -87,7 +85,7 @@ The User will say something like “Looks good.” That means no more behavior c
 
 ### Phase 6 — Sizing
 
-Check emitted live `scripts/**/*.gd` against the **10,000 byte** cap in `AGENTS.md`. Use `design/refactor.md` for the split recipe. Do not aim at Grok Bot's 5KB sweep target (`design/grok-bot-size.md`).
+Check emitted live `scripts/**/*.gd` against the **10,000 byte** cap in `AGENTS.md`. Use `design/refactor.md` for the split recipe. Do not aim at Grok Bot's 5KB sweep target.
 
 Web / chat does **not** apply that cap during Phase 2–5. Over-cap files may be emitted and revised until this phase.
 
@@ -104,15 +102,13 @@ This phase ends when every needed size split has been emitted, or after reportin
 
 ### Phase 7 — Documentation
 
-All documentation changes for this goal happen in this phase. That includes topic files, code maps, tunables, protocol files (`AGENTS.md`, `design/web-session.md`, `design/protocol.md`), the staged Bot brief `design/reuse-map.md` when this goal writes it, and the changelog. Phase 5 testing can change what the docs must say. Do not emit those files in Phase 4.
+All documentation changes for this goal happen in this phase. Phase 5 testing can change what the docs must say. Do not emit those files in Phase 4.
 
 Check the change against `design/` (and `AGENTS.md` when agent rules changed). Update topic files, code maps, and tunables that the slice made wrong. Re-list the Phase 7 paths if testing changed them, wait for confirmation, then emit with Phase 4 cadence (`Next` between files). Markdown emits are plain text and use no code fence.
 
-If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md`. `{label}` is baked `scripts/data/version.json` `label` with patch + 1 (see `design/versioning.md`). Body shape is in that file. The first player-facing heading MUST be `## {label}`. MUST NOT emit `# {label}`. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or treat `scripts/data/version.json` as a ledger to hand-edit. Do not write the label into `design/versioning.md`.
+If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md` as the **final** file in this phase. Label math and body shape: `design/versioning.md`. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or hand-edit `scripts/data/version.json`. Do not write the label into `design/versioning.md`.
 
-Always emit the `design/changelog/{label}.md` file, if one is needed, as the final file in this phase.
-
-Do not emit `design/sessions.md` or `design/session-log.md`. Do not emit `_logs/` (Grok Bot optional sweep notes only, gitignored).
+Do not emit `design/sessions.md` or `design/session-log.md` unless the User explicitly overrides that for this session. Do not emit `_logs/`.
 
 If nothing in the docs is wrong and no changelog entry is required, tell the User no documentation changes are required.
 
@@ -121,16 +117,11 @@ When documentation is done, this session goal is finished. The User should start
 ## Do not
 
 - Do not emit documentation during Phase 4.
-- Do not treat `design/sessions.md` or `design/session-log.md` as the web hand-off, and do not emit them in Phase 7.
+- Do not treat `design/sessions.md` or `design/session-log.md` as the web hand-off.
 - Do not run a Grok Build week pin from this path.
 - Do not chain a second goal after Phase 7 in the same web session.
-- Do not split for the 10KB cap before Phase 6, and do not keep splitting toward 5KB (Grok Bot only).
+- Do not split for the 10KB cap before Phase 6, and do not keep splitting toward 5KB.
 - Do not claim a write landed. The User pastes.
-- Do not load `design/changelog/` during Phase 1–3.
-- Do not start a changelog file with `# {label}`. Use `## {label}` as specified in `design/versioning.md`.
 - Do not treat a page-tool summary as the live file.
 - Do not retry a fetch after the byte / tail check fails.
-- Do not claim an artifact is the live file unless it is open and the size matches, or the size is artifact + 3 with a complete tail (UTF-8 BOM).
-- Do not ask the User to paste a live file unless the fetch plus byte / tail check failed and no paste is already in the thread.
 - Do not open `See also:` files as a default read set.
-- Do not open `design/reuse-map.md` on a Phase 1 review unless this goal writes that brief.

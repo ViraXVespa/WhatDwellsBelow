@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: rebinding, on-screen prompts, or aim-line
-See also: `design/input.md`, `design/input-gamepad.md`, `design/input-kb-mouse.md`, `design/input-web-touch.md`, `design/input-live.md`, `design/ui.md`, `design/ui-hud.md`, `design/doc-refactor.md`, `design/README.md`
+See also: `design/input.md`
 
 ## Rebinding
 
@@ -52,4 +52,3 @@ Helpers: `Prompts.texture_for(action)`, `Prompts.texture_for_event`, `PromptView
 - Toggleable on/off and with an independent opacity slider in Pause → Settings → Graphics.
 - On/off state and opacity are persisted with the player profile.
 - Fully functional with gamepad, keyboard/mouse, and web-touch aiming (parity required). Touch aim is lock-on while the overlay is active.
-

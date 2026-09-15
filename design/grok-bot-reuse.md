@@ -2,9 +2,7 @@
 
 Status: protocol  
 Read when: Grok Bot Job table → staged reuse-map brief  
-See also: `design/grok-bot-session.md`, `design/reuse-map.md`, `design/refactor.md`
-
-`See also:` is an index, not a read list. Open the door first. Then this file. Then `design/reuse-map.md` only if that brief is not the empty template.
+See also: `design/grok-bot-session.md`
 
 Binding for **Grok Bot** when the User names the staged reuse PR / reuse-map / quota reset with a brief ready.
 

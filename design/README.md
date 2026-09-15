@@ -1,10 +1,8 @@
 ﻿# Design database
 
 Status: index  
-Read when: starting any session, or when you do not know which file to open  
-See also: `AGENTS.md`, `design/protocol.md`
-
-`See also:` is an index, not a read list. Do not open those files unless this file’s `Read when`, a Job table, or the User names that work.
+Read when: you need a topic file or a live code path  
+See also: `AGENTS.md`
 
 This folder is the documentation database for humans and agents.  
 It is not one Game Design Document.
@@ -15,16 +13,13 @@ It is not one Game Design Document.
 
 ## How to use
 
-1. Recognize the path from `AGENTS.md`. Fresh Grok: `design/protocol.md` + `design/constraints.md`, then only matching topic files. Grok Bot: `design/grok-bot-session.md` only after `AGENTS.md`, then **one** Job-table sibling. Do not open `design/reuse-map.md` unless the active Bot flow is `design/grok-bot-reuse.md` and that brief is not the empty template.
-2. Session procedure, leave-off, and close-out live in that path’s session file (`design/web-session.md`, `design/grok-build.md`, `design/grok-bot-session.md`) plus `design/versioning.md`.
-3. Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Live scripts: the code map below. Do not walk `assets/` unless the task names sprites or audio.
-4. After a behavior change, update the matching topic file in the same slice.
+Boot and path procedure live in `AGENTS.md` and that path’s session file. This file is the topic index and live code map — not a boot file.
 
-Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`. Isolated Imagine / I2V generate starts at `design/isolated-media.md`. Do not open `design/art-attack-keyframes.md` unless the User is resuming the attack animation keyframe pipeline.
+Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Live scripts: the code map below. Do not walk `assets/` unless the task names sprites or audio. After a behavior change, update the matching topic file in the same slice.
 
 Design doors (open the Job-table sibling only): `design/art-pipeline.md`, `design/isolated-media.md`, `design/ui.md`, `design/debug.md`, `design/input.md`, `design/inventory.md`, `design/grok-bot-session.md`. Rules: `design/doc-refactor.md`. Oversize check: `tools/list_oversize_docs.ps1`.
 
-Web / chat writes the staged Bot reuse brief (`design/reuse-map.md`) in Phase 7 when that is the goal. Bot does not maintain owners or Ready/Done in that file.
+Do not open `design/art-attack-keyframes.md` unless the User is resuming the attack animation keyframe pipeline. Web / chat writes `design/reuse-map.md` in Phase 7 when that is the goal.
 
 ## Document kinds
 

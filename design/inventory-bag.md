@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: bag, equipment slots, food vs potion
-See also: `design/inventory.md`, `design/inventory-gear.md`, `design/inventory-meta.md`, `design/inventory-live.md`, `design/gear-ui.md`, `design/hub.md`, `design/skills.md`, `design/doc-refactor.md`, `design/README.md`
+See also: `design/inventory.md`
 
 ## Bag
 
@@ -33,4 +33,3 @@ Shared pause / loadout / anvil presentation is specified in `design/gear-ui.md`.
 - Using the same food type again while its effect is active does NOT stack and does NOT consume another item until the current effect ends.
 - Using a different food type while an effect is active cancels the current effect, consumes the new item, and starts the new food’s effect.
 - Potion and food MUST remain audibly and visually distinct.
-

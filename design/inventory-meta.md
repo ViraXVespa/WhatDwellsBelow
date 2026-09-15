@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: artifacts/collections, extraction mailing, vendor restock
-See also: `design/inventory.md`, `design/inventory-bag.md`, `design/inventory-gear.md`, `design/inventory-live.md`, `design/gear-ui.md`, `design/hub.md`, `design/skills.md`, `design/doc-refactor.md`, `design/README.md`
+See also: `design/inventory.md`
 
 ## Artifacts and collections
 
@@ -29,4 +29,3 @@ See also: `design/inventory.md`, `design/inventory-bag.md`, `design/inventory-ge
 ## Vendor restock
 
 If the player returns to Placeholdia with insufficient resources, a limited free restock of basic food and potions is granted.
-

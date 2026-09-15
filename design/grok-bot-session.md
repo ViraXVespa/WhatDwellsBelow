@@ -2,9 +2,7 @@
 
 Status: protocol  
 Read when: Grok Bot path; every Grok Bot session  
-See also: `AGENTS.md`, `design/refactor.md`, `design/doc-refactor.md`
-
-`See also:` is an index, not a read list. Do not open those files unless this file’s Job table, that file’s `Read when`, or the User names that work.
+See also: `AGENTS.md`
 
 This file is binding for **Grok Bot** only. Grok Build and web / chat ignore it, except they may open `design/refactor.md` when they split for the 10KB cap.
 
@@ -31,12 +29,14 @@ If the User names more than one job, ask which flow this session is. One flow, o
 ## Shared ship
 
 - One open Bot PR at a time. Do not claim a write landed until the PR exists.
-- Prefer one commit on the PR branch. Tell the User to **squash-merge** into `main` (not merge-commit or rebase-merge).
-- One new `design/changelog/{label}.md` when the sweep is ready to land. `{label}` = baked `scripts/data/version.json` `label` with patch + 1. First heading MUST be `## {label}` (never `# {label}`). Body shape: `design/versioning.md`. Do not hand-edit `scripts/data/version.json` or `scripts/data/changelog.json`.
-- Agent-visible protocol/doc changes get a changelog entry.
-- After squash-merge: stop. CI stamps and tags. Do not create, amend, or offer a post-merge stamp commit.
+- Prefer one commit on the PR branch. Tell the User to **squash-merge** into `main` (not merge-commit or rebase-merge). After squash-merge: stop. CI stamps. Do not offer a post-merge stamp commit.
+- One new `design/changelog/{label}.md` when the sweep is ready to land. Label math and body shape: `design/versioning.md`. Do not hand-edit `scripts/data/version.json` or `scripts/data/changelog.json`.
 - Touched live `scripts/**/*.gd` must ship under 10KB. Split with `design/refactor.md`. The under-5KB target is only `design/grok-bot-size.md`.
+- Caps are on-disk UTF-8 file sizes (`Get-Item Length` / `dir`). Do not measure with `ReadAllText` + `Encoding.UTF8.GetByteCount`.
 - PC offload catalog: `design/pc-offload.md`. Prefer Length summaries over opening untouched siblings.
+- Local size sweeps: prefer checkout at `WDB_ROOT` (example: `C:\Users\Vira\source\repos\WhatDwellsBelow`). Document a `WDB_ROOT` change here only if that path itself changed. Commit locally per cluster; push the PR branch when the cluster is done.
+- Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
+- After each cluster report: PR URL, squash-merge reminder, path + bytes before/after, changelog path if shipping, what is still over cap, next cluster.
 
 ## Shared do not
 
@@ -46,7 +46,7 @@ If the User names more than one job, ask which flow this session is. One flow, o
 - `Entity.gd`, a UI framework, ECS, or flattening hostify clusters back into one oversized script.
 - Growing an existing owner just to avoid a new file. Treating vaguely similar features as near-identical.
 - Archives pins. Copying a pinned commit into `archives/` as a project tree.
-- Opening `design/reuse-map.md` except from `design/grok-bot-reuse.md` when that brief is not the empty template.
+- Opening `design/reuse-map.md` except from `design/grok-bot-reuse.md` when that brief is not the empty template. Do not ignore a `design/reuse-map.md` do-not-merge row.
 - Declaring the whole sweep done and then starting a second flow.
 - Editing design markdown or multi-line Python via PowerShell double-quoted strings or `python -c` (use `tools/write_utf8_file.py` / `tools/run_agent_py.ps1`).
 - Leaving ephemeral agent scripts outside `_logs/agent-py/` or skipping cleanup.

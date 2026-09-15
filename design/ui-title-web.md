@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: title / play menu, web fullscreen gate, loader
-See also: `design/ui.md`, `design/ui-theme.md`, `design/ui-hud.md`, `design/ui-pause.md`, `design/ui-run-flow.md`, `design/ui-gear-entry.md`, `design/gear-ui.md`, `design/hub.md`, `design/input.md`, `design/doc-refactor.md`
+See also: `design/ui.md`
 
 ## Title / play menu
 

@@ -2,7 +2,7 @@
 
 Status: binding design
 Read when: pause menu layout / tabs / behavior
-See also: `design/ui.md`, `design/ui-theme.md`, `design/ui-title-web.md`, `design/ui-hud.md`, `design/ui-run-flow.md`, `design/ui-gear-entry.md`, `design/gear-ui.md`, `design/hub.md`, `design/input.md`, `design/doc-refactor.md`
+See also: `design/ui.md`
 
 ## Pause menu
 
@@ -59,4 +59,3 @@ There is no presentation-mode switcher. Archives is title-only (`design/archives
 The full debug / balance menu is **no longer** present in the Pause Menu. In-test display options that are not approved for players live on the secret debug **Settings** tab (`design/debug.md`). The touch stick deadzone slider lives there too. The player display-mode control is mirrored on that Settings tab.
 
 Placeholdia inventory (same board, opened outside a run) MUST use Loadout option sources: starters, holds, and non-white bank items. Dungeon inventory MAY only list the equipped piece plus bag items of that slot.
-

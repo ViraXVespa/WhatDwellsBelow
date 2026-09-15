@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: Grok Build is about to call Imagine (`image_gen`, `image_edit`, `image_to_video`) or stage a tile / character still / UI still / I2V unit  
-See also: `design/art-pipeline.md`, `design/art-i2v.md`, `design/grok-build.md`, `AGENTS.md`  
+See also: `design/art-pipeline.md`  
 Code: `tools/run_isolated_grok.py`  
 Skills: `.grok/skills/imagine-isolated/SKILL.md`, `.grok/skills/i2v-isolated/SKILL.md`
 

@@ -2,9 +2,7 @@
 
 Status: protocol  
 Read when: splitting topic `design/*.md` into a door + siblings; Grok Bot doc facade flow  
-See also: `design/grok-bot-session.md`, `design/grok-bot-docs.md`
-
-`See also:` is an index, not a read list. Do not open those files unless this file’s `Read when`, a Job table, or the User names that work.
+See also: `design/grok-bot-session.md`
 
 This file is the mechanical recipe. Bot session flow is `design/grok-bot-docs.md`.
 
@@ -54,7 +52,7 @@ Cut routing tokens without losing binding comprehension. Do not change binding m
 - [ ] Job table covers every former top-level `##` cluster (or explicitly routes to an existing sibling topic such as `gear-ui.md`).
 - [ ] Preamble non-negotiables that apply to every job stay on the facade.
 - [ ] Live snapshots travel with the matching job sibling (not the door).
-- [ ] See also on siblings points back to the facade + peers as an **index**, not a read list.
+- [ ] Sibling `See also` is the door only. Peers stay in the door Job table.
 - [ ] No behavior / binding change.
 
 ## Token rules
