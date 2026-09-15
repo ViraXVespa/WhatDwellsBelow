@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.28",
+			"points": [
+				{
+					"text": "Cut leftover topic-prose echoes: 8-dir / male-female parity / Bible / paper-doll / I2V plate now live on `design/art-pipeline.md` with short pointers"
+				},
+				{
+					"text": "Folded same-fact restates across combat, enemies, dungeon, interactables, inventory, hub, gear UI, and skills"
+				},
+				{
+					"text": "Slimmed fat topic prose on gear UI, refactor, PC offload, archives, save-tech, audio-visual, overview, and tunables"
+				},
+				{
+					"text": "Dropped the stale enemy-CL key table from `design/skills.md` (live numbers stay in `design/tunables.md`)"
+				}
+			],
+			"summary": "Documentation-only pass. No live game behavior change."
+		},
+		{
 			"label": "0.3.27",
 			"points": [
 				{
