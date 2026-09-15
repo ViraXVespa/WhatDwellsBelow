@@ -2,20 +2,22 @@
 
 Status: protocol  
 Read when: splitting a live script for size; Grok Bot every task; Grok Build when an edit is over 10KB; web / chat Phase 6  
-See also: `design/doc-refactor.md`, `AGENTS.md`, `design/grok-bot-session.md`, `design/reuse-map.md`, `design/README.md`
+See also: `design/grok-bot-session.md`, `design/doc-refactor.md`
 
-This file is the mechanical recipe. Session flow lives in the path files. Grok Bot uses this file on every task. Other paths use it only when they must split.
+`See also:` is an index, not a read list. Do not open those files unless this file’s `Read when`, a Job table, or the User names that work.
+
+This file is the mechanical recipe. Session flow lives in the path files. Grok Bot uses this file on every task. Other paths use it only when they must split. Grok Bot flow routing is `design/grok-bot-session.md` (one Job-table sibling). Relocate steps that Bot must follow as a session are `design/grok-bot-relocate.md`.
 
 ## Caps
 
 | Rule | Who |
 |------|-----|
 | Ship floor: every live `scripts/**/*.gd` under **10,000 bytes** | Every path that ships a `.gd` |
-| Sweep target: each resulting file under **5,000 bytes** when existing code can move | Grok Bot only (`design/grok-bot-session.md`) |
+| Sweep target: each resulting file under **5,000 bytes** when existing code can move | Grok Bot size sweep only (`design/grok-bot-size.md`) |
 
 Grok Build and web / chat stop once the file is under 10KB. They do not keep splitting toward 5KB.
 
-Do not split a file that is already under the cap that applies to the current path, except Grok Bot extract / reuse work (new shared module or fitting existing owner).
+Do not split a file that is already under the cap that applies to the current path, except Grok Bot extract work (new shared module or fitting existing owner) when that flow is the active Job-table sibling.
 
 ## No new code
 
@@ -29,7 +31,7 @@ Grok writes behavior. A refactor only rearranges what already exists.
 
 Adding `: Type` on a line already being moved, a `load()` / `preload()`, a one-line facade delegate, or `host` / `pt` / `ui` / `p` on a moved `static func` is wiring, not new behavior.
 
-Named reuse work may use the kits listed in `design/reuse-map.md` (token sheet, overlay shell, item view) at the surface that file states. That is not a license to invent a widget framework.
+A non-empty `design/reuse-map.md` brief may name small kits at the surface that brief states. That is not a license to invent a widget framework. An empty template is not a kit list.
 
 ## Size split
 
@@ -45,31 +47,31 @@ If a file must be split:
 
 The only new path a **size** split may create is that sibling helper. Its body is **moved code**, not newly written logic.
 
-Grok Bot: after the split, each resulting live `.gd` should be under 5KB when whole existing functions can move. If one existing function is itself over 5KB, leave it whole and report it. Never leave a touched file over 10KB if a legal split can fix it.
+Grok Bot size sweep: after the split, each resulting live `.gd` should be under 5KB when whole existing functions can move (`design/grok-bot-size.md`). If one existing function is itself over 5KB, leave it whole and report it. Never leave a touched file over 10KB if a legal split can fix it.
 
 ## Grok Bot — new shared modules
 
-Grok Bot **MAY** create shared owners when near-identical behavior spans places.
+Grok Bot **MAY** create shared owners when near-identical behavior spans places. Session flow: `design/grok-bot-extract.md` (ad-hoc) or `design/grok-bot-reuse.md` (staged brief).
 
 - Prefer a **NEW shared module** over growing an existing owner (example: tooltip placement / behavior across Anvil / Analyze / Forge / Inventory).
 - Near-identical = same control flow (renamed locals OK), not vaguely similar features.
 - Point at an existing owner only if it already **is** that concern **and** the addition will not blow the size cap.
 - Never grow an owner just to avoid a new file.
 - Grok Build / web / chat size-splits still do not invent new shared modules unless following this Grok Bot path.
-- On named reuse / extract / DRY / shared-helper work, start from `design/reuse-map.md` instead of hunting the tree again.
+- Do not hunt the live tree to rediscover copies when the User already named the cluster. Do not treat `design/reuse-map.md` as an owners encyclopedia.
 
 ## Reuse (existing owners)
 
-Hunt for copied logic only after size work on the current cluster, or when the cluster *is* a reuse / extract item. Named reuse work: open `design/reuse-map.md` first. Do not rediscover that owner table or BOT list.
+Hunt for copied logic only after size work on the current cluster, or when the active Bot flow is extract / staged reuse.
 
 1. If the copy only lives inside one system, it belongs in a sibling of that facade — the size-split shape above. Not a new global owner.
-2. If the copy is the same concern as an **existing** shared script **and** routing call sites there keeps that owner under the size cap, change the copies to call that script. Live owners are listed in `design/reuse-map.md`. Short reminders:
+2. If the copy is the same concern as an **existing** shared script **and** routing call sites there keeps that owner under the size cap, change the copies to call that script. Discover owners from the live tree + `design/README.md` code map, not from a standing reuse-map table. Short reminders that already ship:
    - menu tab / confirm / back / page: `scripts/ui/menu_pad.gd`
    - bottom prompt / hint strip: `scripts/ui/prompt_view.gd`
-   - other existing shared scripts already in the tree (`theme.gd`, `pause_menu_util.gd`, `gear_board_tip.gd`, …) when they already expose the function
+   - other existing shared scripts already in the tree (`theme.gd`, `pause_menu_util.gd`, `gear_board_tip.gd`, `plate_chrome.gd`, `tip_place.gd`, …) when they already expose the function
 3. If nothing existing owns it, or the owner would blow the size cap: **Grok Bot** prefers a new shared module for near-identical spanning copies; otherwise leave the copies and report them. Do not add a new method on an existing owner just so the copies can fit.
 
-Reuse against an existing owner is call-site edits plus using a function that already exists. Grok Bot extract to a new shared module is moved bodies into a new file, not invented logic. Do not merge pairs listed under **Do not merge** in `design/reuse-map.md`.
+Reuse against an existing owner is call-site edits plus using a function that already exists. Grok Bot extract to a new shared module is moved bodies into a new file, not invented logic. Do not merge pairs listed under **Do not merge** in `design/grok-bot-extract.md`.
 
 ## Types
 
@@ -99,7 +101,7 @@ Facade + `static func(host, ...)` splits must keep Godot 4.7 compiling. Watch fo
 8. **Cross-helper renames** — if a static was renamed (`Present.present` → `present`, `Hit.mark_post`), update every call site in the cluster in the same batch.
 9. **Keep facade wrappers smoke / `call` can reach** — phase smokes still hit private names like `_pressure_spawn` / `_buy_snack` via `host.call` or `ui._…`. After moving the body to a helper, leave a one-line facade (`func _pressure_spawn() -> int: return DungeonPack.pressure_spawn(self)`) or update the smoke in the same batch.
 
-After a hostify batch, run the **editor import** compile check in `design/grok-bot-session.md` (`--headless --editor --import --path <WDB_ROOT> --quit`). Plain `--quit` alone is not sufficient — it can miss `:=` inference errors the editor surfaces on reload.
+After a hostify batch, run the **editor import** compile check via `design/pc-offload.md` / the active Bot size flow (`--headless --editor --import --path <WDB_ROOT> --quit`). Plain `--quit` alone is not sufficient — it can miss `:=` inference errors the editor surfaces on reload.
 
 Optional advisory scan: `powershell -File tools/lint_hostify.ps1` → `_logs/hostify-lint/summary.txt` (always exit 0). Use it to spot Hostify pitfalls before or after the import check; it is not a compile substitute. After a size-split batch, prefer `powershell -File tools/run_post_split_gate.ps1` (add `-WithSmokes` when coverage matters).
 
@@ -118,7 +120,7 @@ Rules:
 
 ## Token rules
 
-- Do not load the design corpus for a split. Code map row + the cluster is enough. Named reuse work also loads `design/reuse-map.md`.
+- Do not load the design corpus for a split. Code map row + the cluster is enough. Open `design/reuse-map.md` only from `design/grok-bot-reuse.md` when that brief is not the empty template.
 - Measure on-disk byte length (Get-Item Length / dir). Do not guess. Do not ReadAllText + GetByteCount just to size-check.
 - Do not dump whole files on Grok Build or Grok Bot when a diff / PR is enough.
 - Do not restyle, do not rewrite comments, do not rename for taste.
@@ -127,13 +129,13 @@ Rules:
 
 ## After a split
 
-Update the `design/README.md` code map when a new sibling or shared module must be listed. Do not update topic design files unless behavior changed (a legal sweep does not change behavior). When an extract lands or an owner changes, update `design/reuse-map.md` in the same slice.
+Update the `design/README.md` code map when a new sibling or shared module must be listed. Do not update topic design files unless behavior changed (a legal sweep does not change behavior). Do not write extract results into `design/reuse-map.md` from Bot; web / chat Phase 7 owns that staging brief.
 
 Grok Bot sweep notes: optional `_logs/grok-bot-sweep.md` per `design/grok-bot-session.md`. Not `design/sessions.md`. Not `design/changelog/`.
 
 ## Parked folder moves
 
-Do **not** fold these into a size split. They need their own session / batch (or the local mover below): every `preload` / `load` / ExtResource path plus `design/README.md` code-map rows. Grok Bot treats User-named deeper relocates as their own clusters; no behavior change.
+Do **not** fold these into a size split. Bot session flow: `design/grok-bot-relocate.md`. Every `preload` / `load` / ExtResource path plus `design/README.md` code-map rows must stay correct. No behavior change.
 
 Preferred (agent-friendly): from repo root, `powershell -File tools/move_script_cluster.ps1` (or `python tools/move_script_cluster.py`). It `git mv`s the facade + stem siblings (+ `.uid`), rewrites `res://` and bare paths under `scripts/`, `design/`, scenes, and `project.godot`, and writes `_logs/move-cluster/summary.txt`. Optional `-DryRun`, `-Wrapper` (leave `extends "res://..."` stubs at old paths). Then run the editor import check.
 
@@ -147,4 +149,4 @@ Still open for later User go: other fat facade clusters (same tool). Prefer upda
 
 ## Documentation facades
 
-Script splits stay in this file. Topic markdown door + sibling splits are `design/doc-refactor.md` (Grok Bot may run those sweeps too).
+Script splits stay in this file. Topic markdown door + sibling splits are `design/doc-refactor.md`. Bot session flow: `design/grok-bot-docs.md`.

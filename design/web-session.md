@@ -2,13 +2,19 @@
 
 Status: protocol  
 Read when: web / chat path; every web session after the repo-review message  
-See also: `AGENTS.md`, `design/protocol.md`, `design/versioning.md`, `design/refactor.md`
+See also: `AGENTS.md`, `design/protocol.md`
+
+`See also:` is an index, not a read list. Do not open those files unless this file’s `Read when`, a Job table, or the User names that work.
 
 This file is binding for **web / chat** only. Grok Build (CLI) and Grok Bot ignore it.
 
 The User cannot be written to by this agent. The User pastes every emit. The User finishes each task before the next web task starts.
 
 This path does not run the Grok Build week pin ritual. I2V and complex animation packing stay in Grok Build unless the User says otherwise.
+
+Docs-only goal (no Phase 4 source): after Phase 3, skip Phase 4–6 and emit Phase 7 when the User says to. Phase 6 is a no-op when no live `scripts/**/*.gd` were emitted.
+
+`design/reuse-map.md` is a User-authored staging brief for the next Grok Bot reuse PR. This path writes or replaces that whole file in Phase 7 when the User named that staging work or parked leftover extract work. Do not crawl the live tree for new Bot items unless the User named that sweep. An empty template is valid. Do not invent queue rows.
 
 ## Phases
 
@@ -18,7 +24,7 @@ Move to the next phase only when this file says to. Do not emit source during Ph
 
 The User tells the agent to review the repo. That sets up the session.
 
-Read `AGENTS.md`, `design/protocol.md`, `design/constraints.md`, then only the topic files for later work if already named. Inspect the live tree from the code map in `design/README.md`. `design/sessions.md` is context only, not this session’s hand-off. Do not read `design/session-log.md`. Do not read `design/changelog/` unless the named work is versioning, a named past build, or a revert.
+Read `AGENTS.md`, `design/protocol.md`, `design/constraints.md`, then only the topic files for later work if already named. Inspect the live tree from the code map in `design/README.md`. `design/sessions.md` is context only, not this session’s hand-off. Do not read `design/session-log.md`. Do not read `design/changelog/` unless the named work is versioning, a named past build, or a revert. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief.
 
 Respond by confirming the review is done and that the session is ready for Phase 2. Do not start implementation.
 
@@ -39,7 +45,7 @@ Split the emit list in two. Mark each path `new`, `revise`, or `delete`. Do not 
 - **Phase 4 list:** shipping source only (`scripts/`, `scenes/`, `assets/`, `tools/`, `project.godot`, and other non-doc live files).
 - **Phase 7 list:** every documentation path this goal may need (`AGENTS.md`, `design/*.md`, `design/changelog/*.md`, other `.md`). Phase 5 testing can change that list. Do not treat the Phase 7 list as a Phase 4 emit queue.
 
-This phase ends when every pending question is answered. If there are no questions, send only the emit list and go to Phase 4.
+This phase ends when every pending question is answered. If there are no questions, send only the emit list and go to Phase 4. If the Phase 4 list is empty, say so and wait for the User to start Phase 7.
 
 ### Phase 4 — File emitting
 
@@ -81,7 +87,7 @@ The User will say something like “Looks good.” That means no more behavior c
 
 ### Phase 6 — Sizing
 
-Check emitted live `scripts/**/*.gd` against the **10,000 byte** cap in `AGENTS.md`. Use `design/refactor.md` for the split recipe. Do not aim at Grok Bot’s 5KB sweep target.
+Check emitted live `scripts/**/*.gd` against the **10,000 byte** cap in `AGENTS.md`. Use `design/refactor.md` for the split recipe. Do not aim at Grok Bot's 5KB sweep target (`design/grok-bot-size.md`).
 
 Web / chat does **not** apply that cap during Phase 2–5. Over-cap files may be emitted and revised until this phase.
 
@@ -98,7 +104,7 @@ This phase ends when every needed size split has been emitted, or after reportin
 
 ### Phase 7 — Documentation
 
-All documentation changes for this goal happen in this phase. That includes topic files, code maps, tunables, protocol files (`AGENTS.md`, `design/web-session.md`, `design/protocol.md`), and the changelog. Phase 5 testing can change what the docs must say. Do not emit those files in Phase 4.
+All documentation changes for this goal happen in this phase. That includes topic files, code maps, tunables, protocol files (`AGENTS.md`, `design/web-session.md`, `design/protocol.md`), the staged Bot brief `design/reuse-map.md` when this goal writes it, and the changelog. Phase 5 testing can change what the docs must say. Do not emit those files in Phase 4.
 
 Check the change against `design/` (and `AGENTS.md` when agent rules changed). Update topic files, code maps, and tunables that the slice made wrong. Re-list the Phase 7 paths if testing changed them, wait for confirmation, then emit with Phase 4 cadence (`Next` between files). Markdown emits are plain text and use no code fence.
 
@@ -126,3 +132,5 @@ When documentation is done, this session goal is finished. The User should start
 - Do not retry a fetch after the byte / tail check fails.
 - Do not claim an artifact is the live file unless it is open and the size matches, or the size is artifact + 3 with a complete tail (UTF-8 BOM).
 - Do not ask the User to paste a live file unless the fetch plus byte / tail check failed and no paste is already in the thread.
+- Do not open `See also:` files as a default read set.
+- Do not open `design/reuse-map.md` on a Phase 1 review unless this goal writes that brief.

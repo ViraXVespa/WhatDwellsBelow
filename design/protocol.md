@@ -2,7 +2,9 @@
 
 Status: protocol  
 Read when: every fresh Grok instance, before writing code  
-See also: `AGENTS.md`, `design/constraints.md`, `design/web-session.md`, `design/grok-build.md`, `design/grok-bot-session.md`, `design/refactor.md`, `design/versioning.md`, `design/art-pipeline.md`
+See also: `AGENTS.md`, `design/constraints.md`
+
+`See also:` is an index, not a read list. Do not open those files unless this file’s `Read when`, a Job table, or the User names that work.
 
 Treat the design requirements in this database as binding. Treat the live codebase at the repository root as the project to maintain.
 
@@ -10,8 +12,8 @@ Recognize the path from the Path table in `AGENTS.md`. Follow that path’s sess
 
 ## Core rules
 
-- MUST begin every fresh **Grok** instance by reading this file, `design/constraints.md`, and the topic files that match the requested work. Inspect the live path from the code map in `design/README.md` (`project.godot`, then the listed scenes/scripts). MUST NOT walk `assets/` unless the task names sprites or audio. MUST NOT begin by archiving the project or rewriting the live path. MUST NOT read `design/changelog/` unless the work is versioning, a named past build, or a revert.
-- **Grok Bot** MUST NOT follow that read list. After `AGENTS.md`, follow `design/grok-bot-session.md` only.
+- MUST begin every fresh **Grok** instance by reading this file, `design/constraints.md`, and the topic files that match the requested work. Inspect the live path from the code map in `design/README.md` (`project.godot`, then the listed scenes/scripts). MUST NOT walk `assets/` unless the task names sprites or audio. MUST NOT begin by archiving the project or rewriting the live path. MUST NOT read `design/changelog/` unless the work is versioning, a named past build, or a revert. MUST NOT open `design/reuse-map.md` unless this session’s goal is to write that brief or the User named the staged reuse PR.
+- **Grok Bot** MUST NOT follow that read list. After `AGENTS.md`, follow `design/grok-bot-session.md` only. That door’s Job table names the one flow sibling. Open `design/reuse-map.md` only from `design/grok-bot-reuse.md` when that brief is not the empty template.
 - Path procedures live in `design/grok-build.md`, `design/web-session.md`, and `design/grok-bot-session.md`. `design/sessions.md` and `design/session-log.md` are Grok Build leave-off / log only — not a web or Bot hand-off.
 - MUST implement only what this database explicitly requires. MUST NOT invent systems, skills, rarities, hub upgrades, meta-progression, or co-op scaffolding.
 - When numbers, formulas, enemy details, or artifact-set bonuses are left open, MAY invent coherent starting values freely, then MUST expose every value in the secret debug menu and record them in `design/tunables.md`. Grok Bot MUST NOT invent numbers.
@@ -27,7 +29,7 @@ Recognize the path from the Path table in `AGENTS.md`. Follow that path’s sess
 
 On multi-session or compacted runs, re-affirm the Hard Constraints and the current requested work before resuming. Never allow live-path code to share state with any archive. Do not “recover” a stale session by archiving or rewriting the live path.
 
-One goal per web / chat session (stop after Phase 7). One Grok Build session family per development week (week pins only when the User says **new week**). One Grok Bot sweep session.
+One goal per web / chat session (stop after Phase 7). One Grok Build session family per development week (week pins only when the User says **new week**). One Grok Bot flow per session (one Job-table sibling; one PR).
 
 ## How to use this database
 
@@ -36,6 +38,7 @@ One goal per web / chat session (stop after Phase 7). One Grok Build session fam
 - `design/archives.md` governs Archives isolation. Pins are frozen commits. Do not copy a pinned commit into `archives/` as a project tree. Grok Bot MUST NOT create or rewrite archives.
 - Hard constraints, secret debug, Automated Playtest, and Animation Browser shipping rules live in `design/constraints.md`. Telemetry cap: `design/debug.md`.
 - All previously open design questions are closed. Do not invent additional systems or reopen settled decisions.
+- `design/reuse-map.md` is a User-authored staging brief for the next Grok Bot reuse PR. Web / chat Phase 7 writes it. It is not an owners encyclopedia and not default Bot context.
 
 ## Variation philosophy
 

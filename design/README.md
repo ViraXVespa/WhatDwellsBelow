@@ -2,7 +2,9 @@
 
 Status: index  
 Read when: starting any session, or when you do not know which file to open  
-See also: `AGENTS.md`, `design/protocol.md`, `design/web-session.md`, `design/grok-build.md`, `design/grok-bot-session.md`, `design/refactor.md`, `design/reuse-map.md`, `design/versioning.md`
+See also: `AGENTS.md`, `design/protocol.md`
+
+`See also:` is an index, not a read list. Do not open those files unless this file’s `Read when`, a Job table, or the User names that work.
 
 This folder is the documentation database for humans and agents.  
 It is not one Game Design Document.
@@ -13,14 +15,16 @@ It is not one Game Design Document.
 
 ## How to use
 
-1. Recognize the path from `AGENTS.md`. Fresh Grok: `design/protocol.md` + `design/constraints.md`, then only matching topic files. Grok Bot: `design/grok-bot-session.md` only after `AGENTS.md`. When the User names reuse, extract, DRY, or shared helpers, also open `design/reuse-map.md` instead of walking the live tree to rediscover copies.
+1. Recognize the path from `AGENTS.md`. Fresh Grok: `design/protocol.md` + `design/constraints.md`, then only matching topic files. Grok Bot: `design/grok-bot-session.md` only after `AGENTS.md`, then **one** Job-table sibling. Do not open `design/reuse-map.md` unless the active Bot flow is `design/grok-bot-reuse.md` and that brief is not the empty template.
 2. Session procedure, leave-off, and close-out live in that path’s session file (`design/web-session.md`, `design/grok-build.md`, `design/grok-bot-session.md`) plus `design/versioning.md`.
 3. Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Live scripts: the code map below. Do not walk `assets/` unless the task names sprites or audio.
 4. After a behavior change, update the matching topic file in the same slice.
 
 Sprite / I2V / paper-doll work starts at `design/art-pipeline.md`.
 
-Design doors (open the Job-table sibling only): `design/art-pipeline.md`, `design/ui.md`, `design/debug.md`, `design/input.md`, `design/inventory.md`. Rules: `design/doc-refactor.md`. Oversize check: `tools/list_oversize_docs.ps1`.
+Design doors (open the Job-table sibling only): `design/art-pipeline.md`, `design/ui.md`, `design/debug.md`, `design/input.md`, `design/inventory.md`, `design/grok-bot-session.md`. Rules: `design/doc-refactor.md`. Oversize check: `tools/list_oversize_docs.ps1`.
+
+Web / chat writes the staged Bot reuse brief (`design/reuse-map.md`) in Phase 7 when that is the goal. Bot does not maintain owners or Ready/Done in that file.
 
 ## Document kinds
 
@@ -37,9 +41,14 @@ Design doors (open the Job-table sibling only): `design/art-pipeline.md`, `desig
 | Agent workflow | `protocol.md` | Front matter |
 | Web / chat session flow | `web-session.md` | — |
 | Grok Build session flow | `grok-build.md` | — |
-| Grok Bot session flow | `grok-bot-session.md` | — |
+| Grok Bot session door | `grok-bot-session.md` | — |
+| Grok Bot size sweep | `grok-bot-size.md` | — |
+| Grok Bot extract / owner routing | `grok-bot-extract.md` | — |
+| Grok Bot staged reuse-map PR | `grok-bot-reuse.md` | — |
+| Grok Bot folder relocate | `grok-bot-relocate.md` | — |
+| Grok Bot doc facades | `grok-bot-docs.md` | — |
 | Refactor recipe | `refactor.md` | — |
-| Reuse / extract / shared helpers | `reuse-map.md` | — |
+| Staged Bot reuse brief | `reuse-map.md` | — |
 | Grok Build leave-off | `sessions.md` | — |
 | Grok Build session log | `session-log.md` | — |
 | Version scheme, changelog, week pins | `versioning.md` | — |
@@ -79,7 +88,7 @@ Per-build player notes for the **current series** are flat `design/changelog/{la
 - Mark live-only behavior under **Live snapshot**.
 - Do not reintroduce a single 100KB GDD.
 - When live scripts are split under the 10KB cap, update this code map in the same slice.
-- When a reuse extract lands, update `design/reuse-map.md` owners and worklist in the same slice.
+- Do not treat `design/reuse-map.md` as an owners encyclopedia. Web Phase 7 writes that brief; Bot does not log extracts there.
 
 ## Code map (live path)
 
@@ -107,9 +116,9 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Plate chrome tokens | `scripts/ui/plate_chrome.gd` |
 | Tip place geometry | `scripts/ui/tip_place.gd` |
 | Y-billboard Sprite3D | `scripts/world/billboard_spr.gd` |
-| Reuse / extract index | `design/reuse-map.md` |
+| Staged Bot reuse brief | `design/reuse-map.md` |
 | PC offload (Bot + Build) | `design/pc-offload.md`; `tools/list_oversize_scripts.ps1`, `summarize_scripts.ps1` / `.py`, `list_facade_cluster.ps1`, `check_script_cap.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1`, `run_build_gate.ps1`, `clean_agent_logs.ps1` |
-| Folder relocate | `tools/move_script_cluster.ps1` / `.py` (see `design/refactor.md` Parked folder moves) |
+| Folder relocate | `tools/move_script_cluster.ps1` / `.py` (see `design/refactor.md` Parked folder moves; Bot flow `design/grok-bot-relocate.md`) |
 | Grok Bot PC tools | `tools/list_oversize_scripts.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1` |
 | Sprite tools | `tools/enable_texture_mips.py`, `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/process_*.py`, `tools/process_world_pass.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py` |
 

@@ -8,7 +8,7 @@ Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 |------|-----------|---------|
 | **Grok Build (CLI)** | You can write the checkout | Follow `design/grok-build.md`. Edit live files. Do not dump whole files unless asked. |
 | **Web / chat** | You cannot write the repo | Follow `design/web-session.md`. Never assume a disk write landed. |
-| **Grok Bot** | Grok Bot / Cursor desktop assistant writing via GitHub PR (cloud agent when available, or GitHub connector), or the User named a Grok Bot path / Grok Bot refactor sweep | Follow `design/grok-bot-session.md` / `design/doc-refactor.md` and `design/refactor.md`. Ship via branch + PR. Refactor only. |
+| **Grok Bot** | Grok Bot / Cursor desktop assistant writing via GitHub PR (cloud agent when available, or GitHub connector), or the User named a Grok Bot path / Grok Bot refactor sweep | Follow `design/grok-bot-session.md` only (door). That Job table names the one flow sibling. Recipes: `design/refactor.md` / `design/doc-refactor.md`. Ship via branch + PR. Refactor only. |
 
 If unsure: ask once, then use **web / chat** if still uncertain. A missed full-file emit is worse than an extra one.
 
@@ -16,14 +16,16 @@ If unsure: ask once, then use **web / chat** if still uncertain. A missed full-f
 
 Design lives in `design/`. There is no single GDD. `Demo_GDD.md` is only an index.
 
+`See also:` lines and index rows are not a read list. Do not open those files unless this file’s Path / Need table, that file’s `Read when`, a Job table, or the User names that work.
+
 | Need | File |
 |------|------|
 | Shared workflow | `design/protocol.md` |
 | Web / chat session flow | `design/web-session.md` |
 | Grok Build session flow | `design/grok-build.md` |
-| Grok Bot session flow | `design/grok-bot-session.md` |
+| Grok Bot session door | `design/grok-bot-session.md` |
 | Refactor recipe | `design/refactor.md` |
-| Reuse / extract / shared helpers | `design/reuse-map.md` |
+| Staged Bot reuse brief | `design/reuse-map.md` |
 | Must / must-not | `design/constraints.md` |
 | Topic + code map | `design/README.md` |
 | Grok Build leave-off | `design/sessions.md` |
@@ -32,11 +34,11 @@ Design lives in `design/`. There is no single GDD. `Demo_GDD.md` is only an inde
 | Player / I2V art door | `design/art-pipeline.md` |
 | Numbers | `design/tunables.md` |
 
-Fresh **Grok** instance: read `design/protocol.md` and `design/constraints.md`, then only the topic files for the requested work. Use the code map in `design/README.md` before walking the live tree. When the User names reuse, extract, DRY, or shared helpers, open `design/reuse-map.md` instead of rediscovering copies. Do not start by archiving or rewriting. Do not read `design/changelog/` unless the work is versioning, a named past build, or a revert.
+Fresh **Grok** instance: read `design/protocol.md` and `design/constraints.md`, then only the topic files for the requested work. Use the code map in `design/README.md` before walking the live tree. Do not start by archiving or rewriting. Do not read `design/changelog/` unless the work is versioning, a named past build, or a revert. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief or the User named the staged reuse PR.
 
-**Grok Bot** skips that read list. After this file, follow `design/grok-bot-session.md` only. That session file tells Bot when to open `design/reuse-map.md`.
+**Grok Bot** skips that read list. After this file, follow `design/grok-bot-session.md` only. Open `design/reuse-map.md` only from `design/grok-bot-reuse.md` when that brief is not the empty template.
 
-Path procedures (Build week pin, web phases, Bot sweep) live in that path’s session file. `design/sessions.md` is the Grok Build leave-off only — not a web or Bot hand-off.
+Path procedures (Build week pin, web phases, Bot flows) live in that path’s session file. `design/sessions.md` is the Grok Build leave-off only — not a web or Bot hand-off.
 
 **Binding design** is required behavior. **Live snapshot** is current code. If they disagree, patch live toward binding or ask. Do not invent a third system.
 
@@ -79,7 +81,7 @@ Every live `scripts/**/*.gd` that ships must stay under **10,000 bytes**.
 
 - **Grok Build (CLI)** enforces the cap while editing. Split in that same slice with `design/refactor.md`. Stop once the file is under 10KB. Do not keep splitting toward Grok Bot's 5KB sweep target. Preferred runners: `design/pc-offload.md` (`check_script_cap.ps1`, `run_build_gate.ps1`).
 - **Web / chat** does not apply the cap until Phase 6. See `design/web-session.md`.
-- **Grok Bot** uses `design/refactor.md` on every task. 10KB is the ship floor. The under-5KB sweep target is only in `design/grok-bot-session.md`. Shared PC offload: `design/pc-offload.md`.
+- **Grok Bot** uses `design/refactor.md` on every task. 10KB is the ship floor. The under-5KB sweep target is only in `design/grok-bot-size.md`. Shared PC offload: `design/pc-offload.md`.
 
 ## Design doc facades
 
