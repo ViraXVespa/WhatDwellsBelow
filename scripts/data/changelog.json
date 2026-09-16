@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.30",
+			"points": [
+				{
+					"text": "Split the live code map out of `design/README.md` into `design/code-map.md`. The topic index is one row; agents open one system row before walking scripts."
+				},
+				{
+					"text": "Tightened agent load rules: `See also` is not a read list. Path files no longer reboot `AGENTS.md`. Mid-week slices skip `design/changelog/`."
+				},
+				{
+					"text": "Grok Bot flows start at the already-open door plus one recipe plus one code-map row. They do not reopen protocol or constraints."
+				},
+				{
+					"text": "Topic doors keep one boundary `See also` or none. Job-table siblings do not bounce back to the parent door."
+				},
+				{
+					"text": "Binding game rules did not change. Numbers, forge law, Bible printer, and archive pins stay on their owner files."
+				}
+			],
+			"summary": "Agent documentation routing was compacted so a session loads fewer design files without changing player-facing behavior."
+		},
+		{
 			"label": "0.3.29",
 			"points": [
 				{
