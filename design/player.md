@@ -27,7 +27,7 @@ See also:
 ## Facing and animation system
 
 - 8-directional facing derived from aim direction using smooth radial detection (not movement direction). Direction names match the Character Bible: Up, Down, Left, Right, Up-Left, Up-Right, Down-Left, Down-Right.
-- Character art is generated and assembled according to the mandatory pipeline in `design/art-pipeline.md`. I2V units: `design/art-i2v.md`. Pack/cleanup: `design/art-pack.md`.
+- Character art is generated and assembled according to the mandatory pipeline in `design/art-pipeline.md`. I2V unit and pack jobs stay on that door's Job table.
 - In-game idle is the directional key still for the facing the player is aiming. It is not an I2V breath loop.
 - Required player **body** states at minimum: `idle` (key still), `idle_to_walk`, `walk`, `walk_to_idle`, `attack_great_axe` / `attack_staff` / `attack_longbow`, `special_great_axe` / `special_staff` / `special_longbow`, `gather_pickaxe` / `gather_hatchet`, death, “Dispel”.
 - `idle_to_walk` and `walk_to_idle` MUST exist for every facing. Playback MUST play the start transition when leaving idle into walk and a stop transition when coming to rest, rather than popping between the key still and a mid-stride walk frame.

@@ -5,7 +5,7 @@ Read when: the User has accepted an I2V clip and it is time to harvest or pack
 See also:  
 Code: `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/plate_remap.py`, `tools/sprite_pipeline.py`
 
-The art door is already open when this sibling is loaded. Do not reopen `design/art-pipeline.md`. `See also:` is not a read list. I2V seed / prompt stays on `design/art-i2v.md` when that job is named. Do not harvest a rejected clip.
+The art door is already open when this sibling is loaded. Do not reopen `design/art-pipeline.md`. `See also:` is not a read list. Do not prepare a new I2V unit from this file. Do not harvest a rejected clip.
 
 ## Frame counts after harvest
 
@@ -15,7 +15,7 @@ The same frame-count rule applies to every animation state: all eight facings of
 
 Pack one-shots with `tools/pack_oneshot.py` from `_src/oneshot/{gender}_{action}_{facing}.mp4`. Walk harvest stays `tools/pack_locomotion.py`.
 
-Idle is not harvested from the video. See `design/art-i2v.md` for which packed states come from a walk clip.
+Idle is not harvested from the video. Walk-clip state cuts stay with the I2V-unit job on the art door.
 
 If harvest cuts fail but the clip is good, adjust pack points. Do not invent a new I2V method.
 

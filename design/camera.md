@@ -3,7 +3,7 @@
 Status: binding design + live snapshot  
 Read when: touching Camera3D, zoom, HUD scale, renderer, or depth sorting  
 Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/camp_warm.gd`, `scripts/input/look_ctrl.gd`, `scripts/app.gd`, `project.godot`  
-See also: `design/tunables.md`
+See also:
 
 `See also:` is not a read list. Open tunables only when a number is the named work. Player, input, archives, audio-visual, UI, and hub stay on their own doors.
 

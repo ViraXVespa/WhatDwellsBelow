@@ -5,7 +5,7 @@ Read when: preparing or retrying one player I2V clip
 See also:  
 Code: `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/run_isolated_grok.py`
 
-The art door is already open when this sibling is loaded. Do not reopen `design/art-pipeline.md`. `See also:` is not a read list. Pack/cleanup is `design/art-pack.md` when that job is named. Do not load Appendix C/D. Do not load `design/art-attack-keyframes.md` unless the User is resuming the attack animation keyframe pipeline.
+The art door is already open when this sibling is loaded. Do not reopen `design/art-pipeline.md`. `See also:` is not a read list. Do not pack or harvest from this file. Do not load Appendix C/D. Do not load `design/art-attack-keyframes.md` unless the User is resuming the attack animation keyframe pipeline.
 
 Always work **one unit** at a time. A unit is exactly one **character type** + one **facing** + one **action**. After the seed and prompt exist, stop and wait for the User.
 

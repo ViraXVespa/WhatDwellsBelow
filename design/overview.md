@@ -3,7 +3,7 @@
 Status: binding design  
 Read when: scoping a feature, writing player-facing copy, deciding whether something is in the demo  
 Code: `README.md`, `scripts/data/tunables.gd` (`ONE_LINER`), `scripts/app.gd`  
-See also: `design/hub.md`
+See also:
 
 `See also:` is not a read list. Open hub only when the work is Placeholdia / Floor Crystal / enter-wake. Do not open constraints from this file; that file is already on the Shared boot when this topic is in play.
 

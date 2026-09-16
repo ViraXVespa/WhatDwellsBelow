@@ -27,7 +27,7 @@ Plain text, no code fence when emitted. Body shape:
 | Fresh web / chat, Phases 1–3 | Nothing under `design/changelog/`. Nothing in `version.json` unless the work is this topic. |
 | Web Phase 7 | This file’s **body shape** only. Writes **one** new `design/changelog/{label}.md`. `{label}` is baked `version.json` `label` with patch + 1 (ignore stamp commits). Do not read older changelog files. Do not write that number back into this file. Do not emit `changelog.json`. First heading `## {label}`, never `# {label}`. |
 | Grok Build mid-week slice / catch-up | Nothing under `design/changelog/`. Leave-off + User-named work. |
-| Grok Build **new week**, revert, or User asks what shipped | This file’s body shape + `design/sessions.md`. Still not every `0.N.*` file. |
+| Grok Build **new week**, revert, or User asks what shipped | This file’s body shape. Leave-off only if the User asked what is next. Still not every `0.N.*` file. |
 | Grok Bot | Reads baked `version.json` only to name `{label}` (patch + 1). Writes **one** new `design/changelog/{label}.md` per shipping PR. First heading `## {label}`, never `# {label}`. Does not hand-edit `changelog.json`. Optional sweep notes go in `_logs/` only. |
 | Named revert / what was 0.1.4? | That one file (flat or under `design/changelog/archive/{epoch}.{series}/`). |
 | Game | `version.json` + `changelog.json`. |

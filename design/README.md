@@ -15,9 +15,9 @@ It is not one Game Design Document. It is not a boot file.
 
 Boot and path procedure live in `AGENTS.md` and that path’s session file.
 
-This file is the **topic index** only. Live scripts, scenes, and tools: `design/code-map.md` (one system row). Do not open `design/code-map.md` unless you need a live path. Do not open this file’s topic table “for context.” Routing edges (not a boot file): `design/load-graph.md`.
+This file is the **topic index** only. Do not open this file’s topic table “for context.” Live-path rows stay on the code map when a live file is needed. Routing edges: `design/load-graph.md` when the User names routing work.
 
-Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Do not walk `assets/` unless the task names sprites or audio. After a behavior change, update the matching topic file in the same slice. After a live script split, update `design/code-map.md` in the same slice.
+Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Do not walk `assets/` unless the task names sprites or audio. After a behavior change, update the matching topic file in the same slice. After a live script split, update the live code map in the same slice.
 
 `See also:` lines and index rows are not a read list. Open a listed path only when that file’s `Read when` matches, a Job table names it, or the User names that work.
 

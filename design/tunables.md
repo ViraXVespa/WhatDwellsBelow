@@ -1,7 +1,7 @@
 ﻿# Tunables
 
 Status: suggested starts + live snapshot  
-Read when: changing feel, gen size, economy, crystals, or debug defaults  
+Read when: the work changes a number, formula, or debug default  
 Code: `scripts/data/balance.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
 See also:
 

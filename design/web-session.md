@@ -24,7 +24,7 @@ Move to the next phase only when this file says to. Do not emit source during Ph
 
 The User tells the agent to review the repo. That sets up the session.
 
-If `AGENTS.md` already routed this session here, do not re-read `AGENTS.md`. Read `design/protocol.md` and `design/constraints.md` only when they are not already in this session. Then only the topic door for work already named. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open `design/grok-build.md`, `design/grok-bot-session.md`, or `design/README.md` for context. `design/sessions.md` is context only, not this session’s hand-off. Do not read `design/session-log.md`. Do not read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief.
+If `AGENTS.md` already routed this session here, do not re-read `AGENTS.md`. Read `design/protocol.md` and `design/constraints.md` only when they are not already in this session. Then only the topic door for work already named. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open `design/grok-build.md`, `design/grok-bot-session.md`, or `design/README.md` for context. Do not open `design/sessions.md` or `design/session-log.md` from this path. Do not read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief.
 
 Respond by confirming the review is done and that the session is ready for Phase 2. Do not start implementation.
 

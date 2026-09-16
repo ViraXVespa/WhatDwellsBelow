@@ -6,9 +6,9 @@ See also:
 
 This file is the live-path map. It is not a boot file and not a topic index.
 
-Open **only the matching system row**. Do not read the rest of the table “for context.” Do not open `design/README.md` from here unless you need a topic-index row. Do not walk `assets/` unless the task names sprites or audio.
+Open **only the matching system row**. Do not read the rest of the table “for context.” Do not walk `assets/` unless the task names sprites or audio.
 
-Topic index: `design/README.md`. Split recipe: `design/refactor.md`. Cap timing: `AGENTS.md`. Numbers: `design/tunables.md`.
+Split recipe: `design/refactor.md`. Cap timing: `AGENTS.md`. Numbers: `design/tunables.md`.
 
 When live scripts are split under the 10KB cap, update **this** file in the same slice. Do not treat `design/reuse-map.md` as an owners encyclopedia.
 
@@ -36,11 +36,9 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Plate chrome tokens | `scripts/ui/plate_chrome.gd` |
 | Tip place geometry | `scripts/ui/tip_place.gd` |
 | Y-billboard Sprite3D | `scripts/world/billboard_spr.gd` |
-| Staged Bot reuse brief | `design/reuse-map.md` |
-| Isolated media (CLI) | `design/isolated-media.md`; `tools/run_isolated_grok.py`; `.grok/skills/imagine-isolated/SKILL.md`, `.grok/skills/i2v-isolated/SKILL.md` |
-| PC offload (Bot + Build) | `design/pc-offload.md`; `tools/list_oversize_scripts.ps1`, `summarize_scripts.ps1` / `.py`, `list_facade_cluster.ps1`, `check_script_cap.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1`, `run_build_gate.ps1`, `clean_agent_logs.ps1` |
+| PC offload (Bot + Build) | `design/pc-offload.md`; `tools/check_load_graph.py`, `tools/list_oversize_scripts.ps1`, `summarize_scripts.ps1` / `.py`, `list_facade_cluster.ps1`, `check_script_cap.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1`, `run_build_gate.ps1`, `clean_agent_logs.ps1` |
 | Folder relocate | `tools/move_script_cluster.ps1` / `.py` (see `design/refactor.md` Parked folder moves; Bot flow `design/grok-bot-relocate.md`) |
-| Grok Bot PC tools | `tools/list_oversize_scripts.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1` |
+| Grok Bot PC tools | `tools/check_load_graph.py`, `tools/list_oversize_scripts.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1` |
 | Sprite tools | `tools/enable_texture_mips.py`, `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/run_isolated_grok.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/process_*.py`, `tools/process_world_pass.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py` |
 
 Public entry points that must not change when a helper is split: `App.playtest`, `App.set_zoom` / `App.set_hud_scale` / `App.set_volume`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.

@@ -3,7 +3,7 @@
 Status: binding design  
 Read when: changing gathering, Extraction Gates, shops, shrines, or puzzles  
 Code: `scripts/world/gather_node.gd`, `breakable.gd`, `interact.gd`, `interact_act.gd`, `interact_prompt.gd`, `interact_chest.gd`, `interact_fx.gd`, `dungeon_props.gd`, `dungeon_props_place.gd`, `floor_crystal.gd`, `crystal_net.gd`, `pickup.gd`, `scripts/ui/hud.gd`, `scripts/input/prompts.gd`  
-See also: `design/inventory.md`
+See also:
 
 `See also:` is not a read list. Open inventory only when mail-legal / extract rules are the named work. Dungeon placement, UI chrome, and input glyphs stay on their own doors.
 

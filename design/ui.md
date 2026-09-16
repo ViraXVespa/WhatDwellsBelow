@@ -1,7 +1,7 @@
 # UI (door)
 
 Status: binding design  
-Read when: title, HUD, pause chrome, hub UI chrome, web gate / touch chrome — not gear-board internals  
+Read when: title, HUD, pause chrome, hub UI chrome, web fullscreen gate — not gear-board internals  
 See also:
 
 This file is the door. Open only the sibling that matches the job. `See also:` is not a read list. Open gear-ui only when the job is board / anvil / slot plates. Hub layout and input routing stay on their own doors.

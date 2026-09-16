@@ -14,4 +14,4 @@ This file is the door. Open only the sibling that matches the job. `See also:` i
 | Animation Browser | `design/debug-anim-browser.md` |
 | Smoke tests live snapshot | `design/debug-smokes.md` |
 
-Preferred runners for agents: `design/pc-offload.md` / `tools/run_smokes.ps1` (read `_logs/smokes/summary.txt` only).
+When running smokes, use the listed runner and read only that runner's `_logs` summary.

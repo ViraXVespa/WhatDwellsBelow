@@ -1,7 +1,7 @@
 # Implementation phases (coverage checklist)
 
 Status: protocol / checklist  
-Read when: deciding whether a system is missing  
+Read when: the User asked whether a live system is missing, or a Demo-Complete gap check  
 Code: `scripts/debug/smoke.gd`  
 See also:
 

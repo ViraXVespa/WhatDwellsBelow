@@ -1,7 +1,7 @@
 ﻿# Grok Build leave-off
 
 Status: working notes  
-Read when: starting a fresh Grok Build instance after a gap  
+Read when: rewriting this leave-off, or the User asked what the next Build unit is  
 See also:
 
 This is the Grok Build leave-off. It is **not** binding game design. Binding behavior stays in the topic files. The live tree is still the source of truth for shipping code.

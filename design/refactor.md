@@ -2,7 +2,7 @@
 
 Status: protocol  
 Read when: splitting a live script for size; Grok Bot every task; Grok Build when an edit is over 10KB; web / chat Phase 6  
-See also: `design/doc-refactor.md`
+See also:
 
 This file is the mechanical recipe only. Do not open the Bot door from this recipe. `See also:` is not a read list.
 

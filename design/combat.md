@@ -3,7 +3,7 @@
 Status: binding design  
 Read when: changing weapons, hit detection, dash, lock, or juice  
 Code: `scripts/combat/combat.gd`, `cover.gd`, `player_hit.gd`, `threat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `float_num.gd`, `dummy.gd`, `enemy_ai.gd`, `scripts/world/player.gd`, `player_combat.gd`  
-See also: `design/tunables.md`
+See also:
 
 `See also:` is not a read list. Open tunables only when a number is the named work. Skills, enemies, art, and hub stay on their own doors.
 

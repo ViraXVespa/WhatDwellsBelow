@@ -3,7 +3,7 @@
 Status: binding design + live snapshot  
 Read when: changing roster, AI, bosses, or combat-level scaling  
 Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/threat.gd`, `scripts/data/balance_enemies.gd`  
-See also: `design/tunables.md`
+See also:
 
 `See also:` is not a read list. Open tunables only when a number is the named work. Combat feel, dungeon placement, skills, and art stay on their own doors.
 

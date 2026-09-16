@@ -61,5 +61,5 @@ Ship floor vs Bot 5KB sweep: `design/refactor.md`. Do not restate those caps her
 
 ### Web / chat
 
-- No requirement to run these. Cap still applies in Phase 6 per `design/web-session.md`.
+- No requirement to run these. Cap timing lives in `AGENTS.md` and the path session file.
 - Mip bake is export-side (`enable_texture_mips.py`); the User runs `export_web.ps1` when shipping Pages.

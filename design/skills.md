@@ -3,7 +3,7 @@
 Status: binding design + live snapshot  
 Read when: changing XP, HUD level text, forging, or enemy scaling vs the player  
 Code: `scripts/data/progress.gd`, `scripts/data/progress_combat.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/app.gd`, `scripts/ui/hud.gd`, `scripts/ui/pause_menu.gd`, `scripts/data/balance.gd`, `scripts/combat/threat.gd`  
-See also: `design/tunables.md`
+See also:
 
 `See also:` is not a read list. Open tunables only when a number is the named work. Combat, enemies, UI, and inventory stay on their own doors.
 
