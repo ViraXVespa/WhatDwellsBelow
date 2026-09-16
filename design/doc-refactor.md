@@ -50,7 +50,7 @@ Cut routing tokens without losing binding comprehension. Do not change binding m
 - [ ] Job table covers every former top-level `##` cluster (or explicitly routes to an existing sibling topic such as `gear-ui.md`).
 - [ ] Preamble non-negotiables that apply to every job stay on the facade.
 - [ ] Live snapshots travel with the matching job sibling (not the door).
-- [ ] Sibling `See also` may name boundary **topic doors** only. It must not name the parent already open, siblings of the current door, path/session files, or a path that does not exist.
+- [ ] Sibling bodies name no `design/*.md` paths. Job targets stay on the door Job table and in `design/routes.yaml`.
 - [ ] No behavior / binding change.
 
 ## Token rules

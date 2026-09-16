@@ -45,7 +45,7 @@ See also is never a read list.
 6. Path files never appear on topic See also.
 7. Versioning / changelog body is ship-only.
 8. Opening this file happens only when the User names routing work.
-9. Sibling See also is empty.
+9. Topic job siblings name no other `design/*.md` paths.
 10. Opening the topic table is not a boot step.
 
 Machine-readable edges: `design/routes.yaml`. This file is the human sketch only.

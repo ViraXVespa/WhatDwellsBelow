@@ -40,7 +40,7 @@ These paths are names, not a read list. Open only when `Read when` matches, a Jo
 - Archives isolation: `design/archives.md`
 - Hard constraints / demo-complete checklist: `design/constraints.md`
 - Telemetry cap: `design/debug.md`
-- Changelog body / week pins: `design/versioning.md`
+- Changelog body: `design/versioning-log.md`. Week pins: `design/versioning.md`
 - Staged Bot reuse brief: `design/reuse-map.md` (Web / chat Phase 7 writes it; not default Bot context)
 
 All previously open **design** questions are closed. Do not invent additional game systems or reopen settled design decisions. Grok Build may still invent code shape inside a required system.

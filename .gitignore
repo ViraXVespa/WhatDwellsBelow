@@ -38,4 +38,6 @@ godot-*.err
 _godot_*.log
 _godot_*.err
 .vscode/settings.json
-tools/p1.py
+
+# Scratch Runners
+tools/_scratch.py

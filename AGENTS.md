@@ -16,7 +16,7 @@ If unsure: ask once, then use **web / chat** if still uncertain. A missed full-f
 
 Design lives in `design/`. There is no single GDD. `Demo_GDD.md` is only an index.
 
-`See also:` lines and index rows are not a read list. They do not increment the load count. Open a listed path only when this file’s Path table, that file’s `Read when`, a Job table, or the User names that work. Sibling `See also` is empty. A door `See also` may name at most one other topic door, and only if that door’s `Read when` does not overlap this door. It must not name the parent already open, siblings of the current door, this file, path/session files, or a path that does not exist.
+Navigation is only `design/routes.yaml`. Do not treat `See also:` as a load list; that field is forbidden. Open a file when this Path table, a routes.yaml door / job / gate, or the User names that work.
 
 | Need | File |
 |------|------|

@@ -30,7 +30,7 @@ If the User names more than one job, ask which flow this session is. One flow, o
 
 - One open Bot PR at a time. Do not claim a write landed until the PR exists.
 - Prefer one commit on the PR branch. Tell the User to **squash-merge** into `main` (not merge-commit or rebase-merge). After squash-merge: stop. CI stamps. Do not offer a post-merge stamp commit.
-- One new `design/changelog/{label}.md` when the sweep is ready to land. Label math and body shape: `design/versioning.md`. Do not read older changelog files. Do not hand-edit `scripts/data/version.json` or `scripts/data/changelog.json`.
+- One new `design/changelog/{label}.md` when the sweep is ready to land. Label math and body shape: `design/versioning-log.md`. Do not read older changelog files. Do not hand-edit `scripts/data/version.json` or `scripts/data/changelog.json`.
 - Touched live `scripts/**/*.gd` must ship under 10KB. Split with `design/refactor.md` (recipe only). The under-5KB target is only `design/grok-bot-size.md`.
 - Caps are on-disk UTF-8 file sizes (`Get-Item Length` / `dir`). Do not measure with `ReadAllText` + `Encoding.UTF8.GetByteCount`.
 - PC offload catalog: `design/pc-offload.md`. Prefer Length summaries over opening untouched siblings.

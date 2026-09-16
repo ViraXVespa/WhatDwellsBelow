@@ -18,7 +18,7 @@ This file is the **topic index** only. Do not open this file’s topic table “
 
 Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Do not walk `assets/` unless the task names sprites or audio. After a behavior change, update the matching topic file in the same slice. After a live script split, update the live code map in the same slice.
 
-`See also:` lines and index rows are not a read list. Open a listed path only when that file’s `Read when` matches, a Job table names it, or the User names that work.
+Do not open this table as a boot list. Open a topic when `design/routes.yaml` names that door / job or the User names that work.
 
 Design doors (open the Job-table sibling only): `design/art-pipeline.md`, `design/isolated-media.md`, `design/ui.md`, `design/debug.md`, `design/input.md`, `design/inventory.md`, `design/grok-bot-session.md`. Rules: `design/doc-refactor.md`. Oversize check: `tools/list_oversize_docs.ps1`.
 
