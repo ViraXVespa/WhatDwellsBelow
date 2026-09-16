@@ -3,6 +3,30 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.31",
+			"points": [
+				{
+					"text": "Cut mutual See also loops on the topic index, code map, player/art,"
+				},
+				{
+					"text": "Slim the topic map: path and Bot flows stay on AGENTS / the Bot door."
+				},
+				{
+					"text": "Add design/load-graph.md as an optional edges page, not a boot file."
+				},
+				{
+					"text": "Give overlapping Read when phrases a single owner door."
+				},
+				{
+					"text": "Split art-pipeline.md and versioning.md so doors stay thin;"
+				},
+				{
+					"text": "Web / Build / Bot ship text points at versioning-log.md."
+				}
+			],
+			"summary": "Agent routing docs load less and bounce less, with no"
+		},
+		{
 			"label": "0.3.30",
 			"points": [
 				{
