@@ -74,6 +74,27 @@
 			"summary": "Documentation-plus-printer pass. No live game behavior change."
 		},
 		{
+			"label": "0.3.29",
+			"points": [
+				{
+					"text": "Tightened agent load routing so topic `See also` fields no longer form read cycles."
+				},
+				{
+					"text": "`design/sessions.md` is leave-off only; it no longer boots a fresh Grok Build instance."
+				},
+				{
+					"text": "`design/load-graph.md` is User-named routing work only."
+				},
+				{
+					"text": "Live code map no longer lists design-doc rows (reuse-map / isolated-media)."
+				},
+				{
+					"text": "Added `tools/check_load_graph.py` to verify the routing rules."
+				}
+			],
+			"summary": "Agent design-doc routing no longer loops back on itself."
+		},
+		{
 			"label": "0.3.28",
 			"points": [
 				{
