@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.39",
+			"points": [
+				{
+					"text": "Checker increments 5 and 6: stemmed read_when overlap, topic skip-door phrases, index topic-path ban, fetch-ban phrases, topic-body cycles, job_read_when / job_parked / conflicts_with / boot_max / fetch_ban."
+				},
+				{
+					"text": "Constrained YAML keys may include dot, slash, and hyphen so increment-6 maps parse."
+				},
+				{
+					"text": "Topic bodies use door keys instead of the X topic; parked attack-keyframes is not a live Open path."
+				},
+				{
+					"text": "Protocol names a loaded set. Grok Build mid-week slice does not rerun the week ritual. Those remain human rules the checker cannot prove."
+				}
+			],
+			"summary": "Load-graph increments 5-6 are now enforced by the checker, topic bodies use door keys, and leftover session prose names the loaded set and skips the Build week ritual on mid-week slices."
+		},
+		{
 			"label": "0.3.38",
 			"points": [
 				{
