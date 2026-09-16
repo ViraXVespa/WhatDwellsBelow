@@ -1,7 +1,7 @@
 ﻿# Input (door)
 
 Status: binding design  
-Read when: gamepad, keyboard/mouse, web touch, rebinding, prompts, aim-line
+Read when: gamepad, keyboard, mouse, touch overlay, rebinding, prompts, aim-line
 
 | Job | Open |
 |-----|------|

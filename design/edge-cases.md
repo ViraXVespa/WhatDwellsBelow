@@ -1,7 +1,7 @@
 ﻿# Edge cases and failure modes
 
 Status: binding design  
-Read when: a named edge case (floor-1 empty death, bag-full toast, save fallback, gate caps, accidental confirm)  
+Read when: empty-death toast, full-pack toast, save fallback, confirm accidents
 
 
 ## “Dispel” or death on floor 1 with empty bag

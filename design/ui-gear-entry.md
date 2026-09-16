@@ -3,7 +3,7 @@
 Status: binding design  
 Read when: Anvil / Loadout / tooltip entry chrome from the UI topic — not shared board internals  
 
-The UI door is already open when this sibling is loaded. Open gear-ui only when board / anvil chrome is the named work. Do not reopen theme, title-web, hud, pause, run-flow, hub, input, or doc-refactor from this file.
+The UI topic is already open when this sibling is loaded. Open gear-ui only when board / anvil chrome is the named work. Do not reopen theme, title-web, hud, pause, run-flow, hub, input, or doc-refactor from this file.
 
 ## Anvil UI
 
@@ -26,7 +26,7 @@ The UI door is already open when this sibling is loaded. Open gear-ui only when 
 
 ## Gear tooltips
 
-- Flyouts follow the gear ui door. Hidden until hover, keyboard highlight, or activating the focused slot.
+- Flyouts follow the gear ui topic. Hidden until hover, keyboard highlight, or activating the focused slot.
 - **Y** cycles off → current item stats → forge preview.
 - Active artifact set bonuses are shown in the flyout and on the Artifact sets stats page.
 - Smithing level influence remains visible in Anvil UI.

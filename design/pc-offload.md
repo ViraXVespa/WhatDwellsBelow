@@ -42,7 +42,7 @@ Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. A
 
 `tools/export_web.ps1` runs `enable_texture_mips.py` before Godot `--import`. Do not invent a second bake step after the PCK is packed.
 
-Ship floor vs Bot 5KB sweep: `design/refactor.md`. Do not restate those caps here.
+Ship floor vs Bot 5KB sweep: the script-split recipe. Do not restate those caps here.
 
 ## Who uses what
 
@@ -61,6 +61,6 @@ Ship floor vs Bot 5KB sweep: `design/refactor.md`. Do not restate those caps her
 
 ### Web / chat
 
-- No requirement to run the Godot / smoke runners. Cap timing lives in `AGENTS.md` and the path session file.
+- No requirement to run the Godot / smoke runners. Cap timing lives in the agents file and the path session file.
 - Phase 7 documentation slices emit `tools/_scratch.py`. The User runs it locally; it must import `tools/doc_patch.py` and may call `python tools/check_load_graph.py`.
 - Mip bake is export-side (`enable_texture_mips.py`); the User runs `export_web.ps1` when shipping Pages.

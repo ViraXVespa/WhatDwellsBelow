@@ -49,7 +49,7 @@ the changelog directory is not required. Pages `/changelog/` is the public index
 After the User is satisfied with the goal’s behavior:
 
 1. Update topic files this slice made wrong (`design/versioning.md` only if the scheme or ritual changed).
-2. Author `design/changelog/{label}.md` using baked `scripts/data/version.json` `label` with patch + 1. First heading `## {label}`, never `# {label}`. Do not record that label in this file. Do not read older changelog files.
+2. Author `design/changelog/{label}.md` using baked `scripts/data/version.json` `label` with patch + 1. First heading `## {label}`, never `# {label}`. After the bullets, one `Summary:` line for the in-game overlay. Do not write a `## Agent` section. Do not record that label in this file. Do not read older changelog files.
 3. Do not emit `changelog.json` or `version.json` as the ledger. Seed those files only when they do not exist yet on live.
 
 The User pastes. CI stamps the number when the files land on `main`.

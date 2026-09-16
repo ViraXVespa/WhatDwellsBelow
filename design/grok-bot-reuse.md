@@ -25,7 +25,7 @@ Still refactor-shaped unless a row the User wrote is explicit and legal. No inve
 5. After that: only the live `.gd` files in the active cluster
 6. At ship: `scripts/data/version.json` + `design/versioning-log.md` body shape — not the changelog tree
 
-Do not reopen `AGENTS.md` unless types, warnings, tabs, or the 10KB cap left context. Do not walk the live tree to rediscover copies the brief does not name.
+Do not reopen the agents file unless types, warnings, tabs, or the 10KB cap left context. Do not walk the live tree to rediscover copies the brief does not name.
 
 ## Pass
 

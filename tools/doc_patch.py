@@ -163,13 +163,25 @@ def drop_table_column(path: Path, header: str) -> None:
 
 
 def next_label(root: Path | None = None) -> str:
-    """Open working label. Unreleased slices append here; do not invent patch+1."""
+    """Baked version.json label with patch + 1. Ignore stamp commits."""
     root = repo_root(root)
     raw = json.loads((root / "scripts/data/version.json").read_text(encoding="utf-8"))
-    return str(raw["label"])
+    epoch = int(raw["epoch"])
+    series = int(raw["series"])
+    patch = int(raw["patch"])
+    return f"{epoch}.{series}.{patch + 1}"
 
 
-def write_changelog(root: Path, bullets: list[str], label: str | None = None) -> Path:
+def _ensure_summary(text: str, summary: str) -> tuple[str, bool]:
+    line = f"Summary: {summary.strip()}"
+    if re.search(r"^Summary:", text, re.I | re.M):
+        return text, False
+    if not text.endswith("\n"):
+        text += "\n"
+    return text + "\n" + line + "\n", True
+
+
+def write_changelog(root: Path, bullets: list[str], label: str | None = None, summary: str | None = None) -> Path:
     root = repo_root(root)
     label = label or next_label(root)
     path = root / "design/changelog" / f"{label}.md"
@@ -185,12 +197,17 @@ def write_changelog(root: Path, bullets: list[str], label: str | None = None) ->
                 text += "\n"
             text += line + "\n"
             added = True
+        if summary:
+            text, sum_added = _ensure_summary(text, summary)
+            added = added or sum_added
         if added:
             write_text(path, text)
         else:
             print(f"  skip {path.as_posix()} (bullets already present)")
         return path
     body = f"## {label}\n\n" + "".join(f"- {b}\n" for b in incoming)
+    if summary:
+        body += f"\nSummary: {summary}\n"
     write_text(path, body)
     return path
 

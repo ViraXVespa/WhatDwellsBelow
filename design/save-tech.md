@@ -1,7 +1,7 @@
 ﻿# Save, export, performance
 
 Status: binding design  
-Read when: changing persistence, web export, autoloads, or perf  
+Read when: persistence, export headers, autoloads, perf
 Code: `scripts/data/save_store.gd`, `scripts/app.gd`, `scripts/app_set.gd`, `scripts/display_mode.gd`, `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`, `tools/web_shell.html`, `tools/export_web.ps1`, `tools/enable_texture_mips.py`, `tools/export_archives.py`, `tools/web_postexport.py`, `tools/build_changelog.py`, `.github/workflows/version.yml`, `.github/workflows/pages.yml`, `project.godot`, `export_presets.cfg`  
 
 
@@ -63,7 +63,7 @@ Both are stored under isolated paths and follow the same primary + backup safety
 
 ## Archives
 
-The Archives browser MUST ship in the final demo and opens from the title card only. Selecting title “Play” always launches the live path. Catalog rows, isolation, and pin ritual: the archives door and the versioning gate. This system exists to support the Patreon development narrative and MUST not be removed.
+The Archives browser MUST ship in the final demo and opens from the title card only. Selecting title “Play” always launches the live path. Catalog rows, isolation, and pin ritual: the archives topic and the versioning gate. This system exists to support the Patreon development narrative and MUST not be removed.
 
 There is no in-game presentation-mode switcher. Desktop Play on a catalog row keeps the live instance alive (minimized) and restores it to title when the child process exits. Web Play is a same-tab redirect.
 
@@ -75,7 +75,7 @@ Pages live export of HEAD is required. Catalog pin exports are best-effort via `
 - MUST NOT require special COOP/COEP headers or other non-standard server configuration to function on GitHub Pages or equivalent static hosting.
 - Web preset is a PWA: enabled, display Standalone, orientation Landscape, `ensure_cross_origin_isolation_headers` off, `variant/thread_support` off.
 - `html/custom_html_shell` is `res://tools/web_shell.html`. That shell is the web boot overlay: game wordmark, phased status, byte-backed progress for `index.wasm` / `index.pck`, and a small Godot credit. It is not the in-engine Title → Play loader (`scripts/ui/loader.gd`).
-- `html/head_include` stashes `beforeinstallprompt` on `window.__wdbInstallPrompt` so a later tap can call `prompt()`, and installs a capturing Escape listener so Esc does not leave browser fullscreen (the input door).
+- `html/head_include` stashes `beforeinstallprompt` on `window.__wdbInstallPrompt` so a later tap can call `prompt()`, and installs a capturing Escape listener so Esc does not leave browser fullscreen (the input topic).
 - After changing `export_presets.cfg`, rebuild with `powershell -File tools/export_web.ps1`. Do not hand-edit generated `docs/index.html`.
 
 Rebuild live locally with `powershell -File tools/export_web.ps1` into `docs/`. Combined live + archive preview: `powershell -File tools/export_web.ps1 -Archives` into `_pages/`. Both MUST run `tools/enable_texture_mips.py` before Godot `--import`, then `tools/web_postexport.py` on the live export directory after Godot writes `index.html`. Pages live export (`.github/workflows/pages.yml`) MUST run the same mip script immediately before `--import`. That pass sets `mipmaps/generate=true` on 3D world texture imports (`assets/sprites/`, `assets/tiles/`, `assets/props/`, `assets/fx/`) in the **export workspace** so the PCK ships baked chains instead of generating them on the player’s machine. `assets/ui/` is left generate-off. Tracked `.import` files on `main` stay `mipmaps/generate=false`. Do not commit the workspace flip. The script is idempotent (`true` / `1` is left alone). Local `export_web.ps1` may dirty those files in the working tree until they are reverted; that is expected and MUST NOT be committed as a flag-flip PR. GitHub Actions deploys Pages from the user push (workspace-stamped `version.json`), then best-effort cached catalog pins via `tools/export_archives.py`, and publishes `/changelog/` from `design/changelog/*.md`. Do not commit archive wasm/pck to `main`. Do not store changelog notes inside the Godot `docs/` tree on `main`.
@@ -101,7 +101,7 @@ Players MUST receive a new build without an incognito window or a manual cache c
 
 ## Performance
 
-60 FPS bar: the constraints file. Title → Play hitch work: the hub door. Floor streaming budget: the dungeon door.
+60 FPS bar: the constraints file. Title → Play hitch work: the hub topic. Floor streaming budget: the dungeon topic.
 
 ## Renderer
 

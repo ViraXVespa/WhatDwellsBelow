@@ -1,7 +1,7 @@
 # Combat
 
 Status: binding design  
-Read when: changing weapons, hit detection, dash, lock, or juice  
+Read when: hit detection, dash, lock, juice, crits
 Code: `scripts/combat/combat.gd`, `cover.gd`, `player_hit.gd`, `threat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `float_num.gd`, `dummy.gd`, `enemy_ai.gd`, `scripts/world/player.gd`, `player_combat.gd`  
 
 
@@ -9,7 +9,7 @@ Code: `scripts/combat/combat.gd`, `cover.gd`, `player_hit.gd`, `threat.gd`, `aim
 
 The player may equip one of three weapons: Great Axe, Lightning Staff, or Longbow.  
 Starting weapon is selected in the loadout. Mid-run weapon changes are performed by equipping from the pause-menu inventory.  
-Paper-doll overlays on unarmed body clips: the art pipeline door §19.2.4. Attack and special still use a body clip per weapon class with the weapon layered on top.  
+Paper-doll overlays on unarmed body clips: the art pipeline topic §19.2.4. Attack and special still use a body clip per weapon class with the weapon layered on top.  
 Specials for all weapons are activated with LT.  
 All player attacks (basic and special) MUST clearly telegraph their range and provide a visible indication that the attack is currently active.
 
@@ -78,7 +78,7 @@ Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occu
 ## Combat level and threat
 
 - Each floor spans 20 combat levels: floor 1 is CL 1–20, floor 2 is 21–40, and so on (`enemy_cl_per_floor`).
-- Enemy CL walk and pack HP: the enemies door (`Threat.level_at`).
+- Enemy CL walk and pack HP: the enemies topic (`Threat.level_at`).
 - Rank multipliers are shallow (`cl_dealt_up` 1.03, `cl_dealt_down` 0.97 and the matching received pair). A player a few levels above an enemy MUST NOT one-shot it. A player a few levels below MUST still take real hits.
 - Axe basic damage is 16 so the player does not outpace the floor-1 HP table.
 - Clearing every budgeted enemy on floor 1 of a fresh run SHOULD land the player near combat level 17. That budget is rooms + capped ambushes + capped pressure waves. Level-ups MUST feel like they prepared the player for the next stretch of the same floor, not like they deleted it.
@@ -86,7 +86,7 @@ Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occu
 
 ## Target-lock
 
-See the input door for full behavior.
+See the input topic for full behavior.
 
 Floating damage numbers show integer values only, hold, then fade.
 

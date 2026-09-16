@@ -1,7 +1,7 @@
 ﻿# Overview, scope, and lore
 
 Status: binding design  
-Read when: scoping a feature, writing player-facing copy, deciding whether something is in the demo  
+Read when: scoping inclusion, pillar prose, vision copy
 Code: `README.md`, `scripts/data/tunables.gd` (`ONE_LINER`), `scripts/app.gd`  
 
 
@@ -75,5 +75,5 @@ No mandatory intro cutscene or long exposition is required. The player learns th
 **Specific Locked Flavor**
 - Empty floor-1 death/“Dispel” recap MUST include the line: “They lived just to die. What a waste.”
 - Credit splash MUST show the word “Proudly” crossed out and the word “Shamelessly” written above it in graffiti style so the phrase reads as vandalized: “Shamelessly Vibecoded with Grok.”
-- The dungeon music track is titled “Bitter”. Links and loop rule: the audio visual door.
+- The dungeon music track is titled “Bitter”. Links and loop rule: the audio visual topic.
 - Player-facing UI, pause menu, recap, and prompts MUST write the voluntary exit action as **“Dispel”** (quotation marks included) for the locked humorous tone. Internal code identifiers MAY omit the quotes.

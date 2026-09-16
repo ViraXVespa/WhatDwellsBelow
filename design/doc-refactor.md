@@ -10,11 +10,11 @@ Cut routing tokens without losing binding comprehension. Do not change binding m
 
 ## Model (match art-pipeline)
 
-- `design/art-pipeline.md` is the template.
-- Facade keeps: Status, Read when, See also, Code (if any).
+- the art-pipeline door is the template.
+- Facade keeps: Status, Read when, Code (if any).
 - Facade states it is the door and has a **Job → Open** table.
 - Sibling files hold the heavy sections.
-- Callers keep linking the **facade path** (`design/ui.md`) unless they need one sibling.
+- Callers keep linking the **facade path** (the UI door) unless they need one sibling.
 
 ## Caps (soft)
 
@@ -35,7 +35,7 @@ Cut routing tokens without losing binding comprehension. Do not change binding m
 - Rewriting `design/changelog/**` history (archiving prior series is separate: `design/versioning.md`).
 - `docs/` Pages export tree.
 - Mixing a doc sweep into a live script size sweep without User go.
-- Treating `See also:` as a file the agent must open.
+- Treating a sibling list as a file the agent must open.
 
 ## Pass order
 

@@ -1,7 +1,7 @@
 ﻿# Balancing, feel, and polish targets
 
 Status: binding design  
-Read when: tuning difficulty, time-to-extract, weapon parity, or polish bar  
+Read when: difficulty, raid-timer, parity, polish
 
 
 ## Time targets

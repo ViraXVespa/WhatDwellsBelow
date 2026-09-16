@@ -23,7 +23,7 @@ Move to the next phase only when this file says to. Do not emit source during Ph
 
 The User tells the agent to review the repo. That sets up the session.
 
-If `AGENTS.md` already routed this session here, do not re-read `AGENTS.md`. Read `design/protocol.md` and `design/constraints.md` only when they are not already in this session. Then only the topic door for work already named. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open `design/grok-build.md`, `design/grok-bot-session.md`, or `design/README.md` for context. Do not open `design/sessions.md` or `design/session-log.md` from this path. Do not read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief.
+If the agents file already routed this session here, do not re-read the agents file. Read `design/protocol.md` and `design/constraints.md` only when they are not already in this session. Then only the topic door for work already named. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open the Build path file, the Bot path file, or `design/README.md` for context. Do not open `design/sessions.md` or `design/session-log.md` from this path. Do not read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief.
 
 Respond by confirming the review is done and that the session is ready for Phase 2. Do not start implementation.
 
@@ -50,7 +50,7 @@ This phase ends when every pending question is answered. If there are no questio
 
 Emit every fully revised **Phase 4** file **one at a time**. Do not emit the next file until the User says to (`Next`, or the same meaning).
 
-Do **not** emit documentation in this phase. That includes `AGENTS.md`, `design/**/*.md`, `design/changelog/**/*.md`, and any other `.md` the slice will update. Those wait for Phase 7 so Phase 5 testing can still change them.
+Do **not** emit documentation in this phase. That includes the agents file, `design/**/*.md`, `design/changelog/**/*.md`, and any other `.md` the slice will update. Those wait for Phase 7 so Phase 5 testing can still change them.
 
 Each emit response is only:
 
@@ -58,7 +58,7 @@ Each emit response is only:
 2. A blank line.
 3. The entire file body. No truncations. Include unchanged lines.
 
-Markdown is not a Phase 4 emit. Any Phase 4 source (`.gd`, `.tscn`, `.json`, `.py`, `.ps1`, …): wrap the entire body in one code fence for that language. Nothing else in the response except the path line, the blank line, and that fence. GDScript follows `AGENTS.md` → GDScript types.
+Markdown is not a Phase 4 emit. Any Phase 4 source (`.gd`, `.tscn`, `.json`, `.py`, `.ps1`, …): wrap the entire body in one code fence for that language. Nothing else in the response except the path line, the blank line, and that fence. GDScript follows the agents file → GDScript types.
 
 If the User replies with observations or changes for the file just emitted, revise that file and emit it again. Do not emit a different file until they say `Next`.
 
@@ -86,7 +86,7 @@ The User will say something like “Looks good.” That means no more behavior c
 
 ### Phase 6 — Sizing
 
-Check emitted live `scripts/**/*.gd` against the **10,000 byte** cap in `AGENTS.md`. Use `design/refactor.md` for the split recipe only. Do not open `design/grok-bot-session.md` from that recipe. Do not aim at Grok Bot's 5KB sweep target.
+Check emitted live `scripts/**/*.gd` against the **10,000 byte** cap in the agents file. Use `design/refactor.md` for the split recipe only. Do not open the Bot path file from that recipe. Do not aim at Grok Bot's 5KB sweep target.
 
 Web / chat does **not** apply that cap during Phase 2–5. Over-cap files may be emitted and revised until this phase.
 
@@ -105,7 +105,7 @@ This phase ends when every needed size split has been emitted, or after reportin
 
 All documentation changes for this goal happen in this phase. Phase 5 testing can change what the docs must say. Do not emit those files in Phase 4.
 
-Check the change against `design/` (and `AGENTS.md` when agent rules changed). Update topic files, the live code map, and tunables that the slice made wrong. Re-list the Phase 7 paths if testing changed them and wait for confirmation.
+Check the change against `design/` (and the agents file when agent rules changed). Update topic files, the live code map, and tunables that the slice made wrong. Re-list the Phase 7 paths if testing changed them and wait for confirmation.
 
 Then emit **one** runner: `tools/_scratch.py` (gitignored). The User pastes it and runs `python tools/_scratch.py` from the repo root. That script writes every documentation path on the Phase 7 list (including `design/changelog/{label}.md` when the goal shipped player-visible or agent-visible change), updates `design/routes.yaml` when routing changed, and runs `python tools/check_load_graph.py --root .`. Print the write manifest and the checker PASS/FAIL. Do not claim those writes landed until the User ran the script.
 
@@ -113,7 +113,7 @@ The runner must import `tools/doc_patch.py` (`sys.path` insert `tools/`, then `i
 
 Do not emit markdown files one at a time in this phase. Do not use Phase 4 cadence or `Next` between documentation paths.
 
-If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md` as the **final** file in this phase. Label math and body shape: `design/versioning-log.md`. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or hand-edit `scripts/data/version.json`. Do not write the label into `design/versioning.md`.
+If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md` as the **final** file in this phase. Label math and body shape: `design/versioning-log.md`. Body is `## {label}`, bullets, then one `Summary:` line. Do not write a `## Agent` section. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or hand-edit `scripts/data/version.json`. Do not write the label into `design/versioning.md`.
 
 Do not emit `design/sessions.md` or `design/session-log.md` unless the User explicitly overrides that for this session. Do not emit `_logs/`.
 

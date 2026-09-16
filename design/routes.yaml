@@ -10,10 +10,7 @@ boot:
     bot: design/grok-bot-session.md
 
 requires:
-  web:
-    - design/protocol.md
-    - design/constraints.md
-  build:
+  web_build:
     - design/protocol.md
     - design/constraints.md
   bot: []
@@ -27,6 +24,9 @@ notes_exempt:
   - design/sessions.md
   - design/session-log.md
   - design/reuse-map.md
+
+parked_jobs:
+  - design/art-attack-keyframes.md
 
 recipes:
   refactor: design/refactor.md
@@ -53,80 +53,68 @@ gates:
   isolated_media:
     file: design/isolated-media.md
     when: imagine
-  sessions:
-    file: design/sessions.md
-    when: build_leaveoff
-  session_log:
-    file: design/session-log.md
-    when: build_close
-  reuse_map:
-    file: design/reuse-map.md
-    when: named_reuse_brief
-  code_map:
-    file: design/code-map.md
-    when: live_files_one_row
 
 doors:
   overview:
     file: design/overview.md
-    read_when: "scoping a feature, writing player-facing copy, deciding whether something is in the demo"
+    read_when: "scoping inclusion, pillar prose, vision copy"
     jobs: {}
   input:
     file: design/input.md
-    read_when: "gamepad, keyboard/mouse, web touch, rebinding, prompts, aim-line"
+    read_when: "gamepad, keyboard, mouse, touch overlay, rebinding, prompts, aim-line"
     jobs:
       platforms_gamepad: design/input-gamepad.md
       rebind_prompts: design/input-rebind-prompts.md
       kb_mouse: design/input-kb-mouse.md
       web_touch: design/input-web-touch.md
-      live_snapshots: design/input-live.md
+      input_live: design/input-live.md
   camera:
     file: design/camera.md
-    read_when: "touching Camera3D, zoom, HUD scale, renderer, or depth sorting"
+    read_when: "Camera3D, zoom, renderer, depth sorting"
     jobs: {}
   player:
     file: design/player.md
-    read_when: "changing movement, collision, facing, or character select"
+    read_when: "movement, collision, character select, eight-dir body"
     jobs: {}
   combat:
     file: design/combat.md
-    read_when: "changing weapons, hit detection, dash, lock, or juice"
+    read_when: "hit detection, dash, lock, juice, crits"
     jobs: {}
   skills:
     file: design/skills.md
-    read_when: "changing XP, HUD level text, forging, or enemy scaling vs the player"
+    read_when: "XP, forging, formula"
     jobs: {}
   inventory:
     file: design/inventory.md
-    read_when: "bag rules, equipment stats, forge/analyze rules, affixes, artifacts, extraction mailing"
+    read_when: "equipment affixes, artifacts, analyze, mailing home"
     jobs:
       bag: design/inventory-bag.md
       gear: design/inventory-gear.md
       meta: design/inventory-meta.md
-      live_snapshots: design/inventory-live.md
+      inventory_live: design/inventory-live.md
   gear_ui:
     file: design/gear-ui.md
-    read_when: "shared gear-board layout, doll slots, flyouts, stats card, Anvil/loadout chrome internals"
+    read_when: "gear-board, doll slots, flyouts, Anvil card"
     jobs: {}
   hub:
     file: design/hub.md
-    read_when: "changing camp layout, loadout, or hub interactables"
+    read_when: "camp benches, Placeholdia interactables"
     jobs: {}
   dungeon:
     file: design/dungeon.md
-    read_when: "changing gen, floor flow, streaming, boss doors, fog, or floor crystals"
+    read_when: "gen, streaming, boss doors, fog, crystals"
     jobs: {}
   enemies:
     file: design/enemies.md
-    read_when: "changing roster, AI, bosses, or combat-level scaling"
+    read_when: "roster, AI, bosses, pressure"
     jobs: {}
   interactables:
     file: design/interactables.md
-    read_when: "changing gathering, Extraction Gates, shops, shrines, or puzzles"
+    read_when: "gathering hits, shops, shrines, puzzles, extract-wells"
     jobs: {}
   ui:
     file: design/ui.md
-    read_when: "title, HUD, pause chrome, hub UI chrome, web fullscreen gate"
+    read_when: "pause panels, fullscreen drape, play-menu"
     jobs:
       theme: design/ui-theme.md
       title_web: design/ui-title-web.md
@@ -136,7 +124,7 @@ doors:
       gear_entry: design/ui-gear-entry.md
   debug:
     file: design/debug.md
-    read_when: "secret debug menu, playtest / journal, animation browser, smoke coverage notes"
+    read_when: "secret console, playtest, journal, animation browser, smoke"
     jobs:
       menu: design/debug-menu.md
       playtest: design/debug-playtest.md
@@ -144,27 +132,27 @@ doors:
       smokes: design/debug-smokes.md
   audio_visual:
     file: design/audio-visual.md
-    read_when: "changing music, SFX, splash/title, or art rules"
+    read_when: "music, SFX, splash stills, presentation rules"
     jobs: {}
   save_tech:
     file: design/save-tech.md
-    read_when: "changing persistence, web export, autoloads, or perf"
+    read_when: "persistence, export headers, autoloads, perf"
     jobs: {}
   feel:
     file: design/feel.md
-    read_when: "tuning difficulty, time-to-extract, weapon parity, or polish bar"
+    read_when: "difficulty, raid-timer, parity, polish"
     jobs: {}
   edge_cases:
     file: design/edge-cases.md
-    read_when: "floor-1 empty death, bag-full toast, save fallback, gate caps, accidental confirm"
+    read_when: "empty-death toast, full-pack toast, save fallback, confirm accidents"
     jobs: {}
   coverage:
     file: design/coverage.md
-    read_when: "the User asked whether a live system is missing, or a Demo-Complete gap check"
+    read_when: "complete-checklist audit, absent-system survey"
     jobs: {}
   art_pipeline:
     file: design/art-pipeline.md
-    read_when: "generating or replacing player / enemy / weapon frames"
+    read_when: "sprite frames, paper plates, sheet harvest"
     jobs:
       i2v: design/art-i2v.md
       pack: design/art-pack.md
@@ -173,5 +161,5 @@ doors:
       bible: design/art-bible.md
   archives:
     file: design/archives.md
-    read_when: "touching Archives UI, Pages exports, or catalog pins"
+    read_when: "Pages exports, catalog pins"
     jobs: {}

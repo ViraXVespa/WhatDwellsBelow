@@ -3,7 +3,7 @@
 Status: protocol  
 Read when: Grok Bot Job table → ad-hoc extract or existing-owner routing  
 
-Binding for **Grok Bot** extract sessions only. This is not the staged reuse-map PR (`design/grok-bot-reuse.md`). This is not a size sweep. User-gated: do not start this flow unless the User named extract / DRY / shared helpers / an owner route *and* did not hand a non-empty `design/reuse-map.md` brief.
+Binding for **Grok Bot** extract sessions only. This is not the staged reuse-map PR (the reuse Bot job). This is not a size sweep. User-gated: do not start this flow unless the User named extract / DRY / shared helpers / an owner route *and* did not hand a non-empty the staged reuse brief brief.
 
 
 ## Mandate
@@ -24,7 +24,7 @@ Move near-identical control flow (renamed locals OK) to one owner. No behavior c
 4. After the User names the cluster: only those live `.gd` bodies
 5. At ship: `scripts/data/version.json` + `design/versioning-log.md` body shape — not the changelog tree
 
-Do not reopen `AGENTS.md` unless types, warnings, tabs, or the 10KB cap left context. Do not open `design/reuse-map.md` (empty template is not a worklist). Do not walk the whole live tree to rediscover copies. Ask if the pair is not actually the same flow.
+Do not reopen the agents file unless types, warnings, tabs, or the 10KB cap left context. Do not open the staged reuse brief (empty template is not a worklist). Do not walk the whole live tree to rediscover copies. Ask if the pair is not actually the same flow.
 
 ## Do not merge
 

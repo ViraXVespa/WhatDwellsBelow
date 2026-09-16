@@ -1,7 +1,7 @@
 # Player avatar, movement, and facing
 
 Status: binding design  
-Read when: changing movement, collision, facing, or character select  
+Read when: movement, collision, character select, eight-dir body
 Code: `scripts/world/player.gd`, `player_anim.gd`, `player_anim_load.gd`, `player_anim_loco.gd`, `facing.gd`  
 
 
@@ -9,12 +9,12 @@ Code: `scripts/world/player.gd`, `player_anim.gd`, `player_anim_load.gd`, `playe
 
 - On first load the player chooses a male or female character.
 - The character type may be switched later from the pause menu.
-- 8-dir Bible layout, male/female animation parity, and paper-doll overlay law: the art pipeline door.
+- 8-dir Bible layout, male/female animation parity, and paper-doll overlay law: the art pipeline topic.
 - Male and female characters each require a complete, dedicated voice-over set of equal scope. Neither set is optional or derivative of the other.
 
 ## Movement
 
-- Dash i-frames and trail VFX: the combat door.
+- Dash i-frames and trail VFX: the combat topic.
 - Movement MUST feel responsive and weighty on both gamepad and keyboard.
 
 ## Collision and body
@@ -32,7 +32,7 @@ Code: `scripts/world/player.gd`, `player_anim.gd`, `player_anim_load.gd`, `playe
 - Start and stop are a few frames each, not a third of the clip. Walk is one looping stride cycle (both lead feet).
 - The engine tracks which foot is leading in the walk loop. Stopping on the same lead foot that started the step plays `idle_to_walk` reversed; stopping on the opposite lead foot plays `walk_to_idle`.
 - Those start / cycle / stop clips are cut from one walk I2V per facing (`tools/i2v_seeds.py` `--action walk`). They are not separate I2V units unless the User rejects that clip and asks for another pass.
-- Attack, special, and gather I2V / body clips are unarmed. Overlay composite: the art pipeline door §19.2.4.
+- Attack, special, and gather I2V / body clips are unarmed. Overlay composite: the art pipeline topic §19.2.4.
 - “Dispel” is ritual seppuku: the avatar draws a small knife, kneels, makes one abdominal cut, and collapses. That knife belongs to this clip. It is not an equipped overlay.
 - Death is a hit collapse to a downed hold. Death and “Dispel” both end on a downed body. Neither I2V paints blood. The engine draws a blood pool under that pose.
 

@@ -9,7 +9,7 @@ Read when: gear rules, item level, affixes, analyze, duplicates, forge, whites, 
 - White, green, and blue rarity appear in the demo.
 - Blue items have improved stats over green items and are obtainable only from bosses (Floor Guardians and Gate Master).
 - Stats take effect immediately.
-- Weapon and tool paper-doll overlays: the art pipeline door §19.2.4. Armor and other gear may remain stats-only.
+- Weapon and tool paper-doll overlays: the art pipeline topic §19.2.4. Armor and other gear may remain stats-only.
 - The player may maintain up to three forged **holds per type per slot**. Great Axe holds do not share a cap with Staff holds. Pickaxe and hatchet are separate.
 - Forged holds always return to Placeholdia on death or “Dispel”, even if the item was dropped on the floor.
 - All unextracted resources and any non-forged items still in the bag are lost on death or “Dispel”.

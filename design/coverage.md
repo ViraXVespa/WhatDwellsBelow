@@ -1,7 +1,7 @@
 # Implementation phases (coverage checklist)
 
 Status: protocol / checklist  
-Read when: the User asked whether a live system is missing, or a Demo-Complete gap check  
+Read when: complete-checklist audit, absent-system survey
 Code: `scripts/debug/smoke.gd`  
 
 The live path already exists. Phases below are a hard coverage list, not a license to delete and rebuild.
@@ -12,7 +12,7 @@ Hard constraints and the Demo-Complete Checklist live in the constraints file. U
 ## Core construction rules
 
 - Work in the live path. MUST NOT archive-then-rewrite on a fresh instance. MUST NOT discard live scenes, scripts, autoloads, or architectural patterns to start over.
-- Keep the live path designed around the orthographic Camera3D system (the camera door).
+- Keep the live path designed around the orthographic Camera3D system (the camera topic).
 - Prefer simple, readable, production-quality implementations that match surrounding live code.
 - All player and enemy character art MUST follow the mandatory pipeline in the art pipeline door.
 - These systems are mandatory in addition to the constraints file: named monsters, enemy bases, quest system, aim-line indicator, Controls Billboard, Floor Crystal loadout, idle/pressure spawns, food vs potion distinction, enter/wake VFX, and gamepad-first UI with initial focus.
@@ -24,7 +24,7 @@ Hard constraints and the Demo-Complete Checklist live in the constraints file. U
 Use these to find gaps. Advance a requested slice only after its exit criteria are met, self-verified, and progress is reported to the User. Do not self-start an unrequested full-phase rebuild.
 
 **Phase 1 – Foundation**  
-Camera3D + input + basic player movement/animation states (the art pipeline door sprites, 8 directions) for both male and female characters on the existing live path.  
+Camera3D + input + basic player movement/animation states (the art pipeline topic sprites, 8 directions) for both male and female characters on the existing live path.  
 *Exit criteria*: Player can move, face 8 directions, and idle/walk with Y-billboard at 60 FPS. Depth sorting SHOULD be correct under implied real-world positions, with popping avoided wherever possible. Report to User.  
 Smoke: `--wdb-phase1-smoke`
 

@@ -1,7 +1,7 @@
 # UI (door)
 
 Status: binding design  
-Read when: title, HUD, pause chrome, hub UI chrome, web fullscreen gate — not gear-board internals
+Read when: pause panels, fullscreen drape, play-menu
 
 | Job | Open |
 |-----|------|
@@ -12,4 +12,4 @@ Read when: title, HUD, pause chrome, hub UI chrome, web fullscreen gate — not 
 | Extraction / Ghost Shop / Quest / Recap / map / toasts | `design/ui-run-flow.md` |
 | Anvil / Loadout / tooltip entry chrome (not board internals) | `design/ui-gear-entry.md` |
 
-Gear board layout / anvil tabs / slot plates live in the gear ui door. the ui / gear entry job only keeps the short UI-topic entry sections.
+Gear board layout / anvil tabs / slot plates live in the gear ui topic. the ui / gear entry job only keeps the short UI-topic entry sections.

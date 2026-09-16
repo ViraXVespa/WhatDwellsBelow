@@ -1,7 +1,7 @@
 ﻿# Debug tools (door)
 
 Status: binding design  
-Read when: secret debug menu, playtest / journal, animation browser, smoke coverage notes  
+Read when: secret console, playtest, journal, animation browser, smoke
 Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/debug/debug_menu/`
 
 | Job | Open |

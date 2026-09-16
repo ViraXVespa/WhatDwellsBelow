@@ -80,13 +80,13 @@ Reuse against an existing owner is call-site edits plus using a function that al
 
 ## Types
 
-`AGENTS.md` → GDScript types. On lines already being moved or rewritten:
+the agents file → GDScript types. On lines already being moved or rewritten:
 
 - `:=` only for literals / typed built-ins Godot 4.7 infers (`0`, `1.5`, `true`, `"male"`, `Vector2.DOWN`, …).
 - Otherwise `var name: Type = ...`.
 - Typed `func` / `static func` args and `->` return.
-- Also follow `AGENTS.md` → GDScript warnings (no `wrap` / `mini` / `name` / `size` locals, explicit `int()` on integer division and narrowing, enum `as` casts, `_` unused params).
-- `unused_private_class_variable` is project-ignored (hostify `host._` fields). Do not add per-var `@warning_ignore` for it; see `AGENTS.md` -> GDScript warnings.
+- Also follow the agents file → GDScript warnings (no `wrap` / `mini` / `name` / `size` locals, explicit `int()` on integer division and narrowing, enum `as` casts, `_` unused params).
+- `unused_private_class_variable` is project-ignored (hostify `host._` fields). Do not add per-var `@warning_ignore` for it; see the agents file -> GDScript warnings.
 
 Do not retype a whole file for style.
 
@@ -98,7 +98,7 @@ Facade + `static func(host, ...)` splits must keep Godot 4.7 compiling. Watch fo
 2. **Param shadowing** — never `var host := host.get_parent()` (or any `var host :=` that hides the parameter). Rename the local (`parent`, `map_host`, …).
 3. **Enum / const on Object helpers** — `MOTION_MODE_FLOATING` and similar are not free names on `extends Object` helpers. Qualify: `CharacterBody3D.MOTION_MODE_FLOATING`.
 4. **Facade state aliases** — if callers used `PlaytestLog.started` / `.file_name` / `.events` on the old script, the facade must still expose those names (forward to the core helper’s `static var`s). Moving state without aliases yields `Cannot find member "started" in base "..."` and a cascade `Could not resolve class` on the next preload.
-5. **`:=` after `load()` / untyped `_fac`** — `const _fac = load(...)` returns untyped. Do not `var x := _fac.foo()`. Write `var x: Type = ...` (see Types above and `AGENTS.md`).
+5. **`:=` after `load()` / untyped `_fac`** — `const _fac = load(...)` returns untyped. Do not `var x := _fac.foo()`. Write `var x: Type = ...` (see Types above and the agents file).
 6. **Blind substring rewrites** — replacing `:= n` / bare `name` can corrupt identifiers (`var nm := name` → `var nm: String = str(n)ame`). Prefer AST-aware or line-scoped edits; re-read touched lines.
 7. **Broken call commas** — hostify passes must not leave `tick_pinch(host, )` or dropped args.
 8. **Cross-helper renames** — if a static was renamed (`Present.present` → `present`, `Hit.mark_post`), update every call site in the cluster in the same batch.
@@ -150,4 +150,4 @@ Still open for later User go: other fat facade clusters (same tool). Prefer upda
 
 ## Documentation facades
 
-Script splits stay in this file. Topic markdown door + sibling splits are `design/doc-refactor.md`.
+Script splits stay in this file. Topic markdown door + sibling splits are the doc-split recipe.

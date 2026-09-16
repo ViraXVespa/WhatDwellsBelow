@@ -12,6 +12,10 @@ ROUTES_REL = "design/routes.yaml"
 _KEY = re.compile(r"^([A-Za-z0-9_]+):\s*(.*)$")
 _ITEM = re.compile(r"^- \s*(.*)$")
 
+CYCLE_ROLES = frozenset(
+    {"agents", "path", "requires", "recipe", "bot_job", "gate"}
+)
+
 
 class RoutesError(ValueError):
     pass
@@ -161,6 +165,10 @@ def all_route_files(data: dict[str, Any]) -> set[str]:
     bot_jobs = data.get("bot_jobs") or {}
     files.update(str(v) for v in bot_jobs.values())
     files.update(str(v) for v in (data.get("notes_exempt") or []))
+    files.update(str(v) for v in (data.get("parked_jobs") or []))
+    skills = data.get("skills") or {}
+    if isinstance(skills, dict):
+        files.update(str(v) for v in skills.values())
     return files
 
 
@@ -183,6 +191,9 @@ def role_of(data: dict[str, Any], posix: str) -> str:
         return "bot_job"
     if posix in {str(v) for v in (data.get("notes_exempt") or [])}:
         return "notes"
+    skills = data.get("skills") or {}
+    if isinstance(skills, dict) and posix in {str(v) for v in skills.values()}:
+        return "skill"
     for door in (data.get("doors") or {}).values():
         if posix == str(door["file"]):
             return "door"
@@ -194,6 +205,13 @@ def role_of(data: dict[str, Any], posix: str) -> str:
     return "unknown"
 
 
+def role_sets(data: dict[str, Any]) -> dict[str, set[str]]:
+    grouped: dict[str, set[str]] = {}
+    for posix in all_route_files(data):
+        grouped.setdefault(role_of(data, posix), set()).add(posix)
+    return grouped
+
+
 def door_job_targets(data: dict[str, Any], door_file: str) -> set[str]:
     for door in (data.get("doors") or {}).values():
         if str(door["file"]) == door_file:
@@ -201,14 +219,69 @@ def door_job_targets(data: dict[str, Any], door_file: str) -> set[str]:
     return set()
 
 
+def parked_job_files(data: dict[str, Any]) -> set[str]:
+    return {str(v) for v in (data.get("parked_jobs") or [])}
+
+
+def skill_files(data: dict[str, Any]) -> set[str]:
+    skills = data.get("skills") or {}
+    if not isinstance(skills, dict):
+        return set()
+    return {str(v) for v in skills.values()}
+
+
 def allowed_citations(data: dict[str, Any], posix: str) -> set[str]:
     """Paths this file may name. Topic job/door bodies are handled separately."""
-    known = all_route_files(data)
     role = role_of(data, posix)
-    if role in {"agents", "path", "requires", "index", "recipe", "bot_job", "gate"}:
-        return known
-    if role == "notes":
-        return known
+    grouped = role_sets(data)
+    agents = grouped.get("agents", set())
+    requires = grouped.get("requires", set())
+    indexes = grouped.get("index", set())
+    recipes = grouped.get("recipe", set())
+    bot_jobs = grouped.get("bot_job", set())
+    gates = grouped.get("gate", set())
+    notes = grouped.get("notes", set())
+    skills = grouped.get("skill", set())
+    recipes_map = data.get("recipes") or {}
+    pc_offload = (
+        {str(recipes_map["pc_offload"])} if recipes_map.get("pc_offload") else set()
+    )
+    bot_path = str(((data.get("boot") or {}).get("paths") or {}).get("bot") or "")
+    reuse_job = str((data.get("bot_jobs") or {}).get("reuse") or "")
+    reuse_map = {n for n in notes if n.endswith("reuse-map.md")}
+
+    if role == "agents":
+        return (
+            agents
+            | grouped.get("path", set())
+            | requires
+            | indexes
+            | recipes
+            | bot_jobs
+            | gates
+            | notes
+            | skills
+        )
+    if role == "path":
+        allowed = {posix} | requires | indexes | recipes | gates | notes | skills
+        if posix == bot_path:
+            allowed |= bot_jobs
+        return allowed
+    if role == "requires":
+        return {posix} | requires | indexes | recipes | gates | notes
+    if role == "recipe":
+        return {posix} | indexes | gates | notes | pc_offload
+    if role == "bot_job":
+        allowed = {posix} | recipes | indexes | gates
+        if posix == reuse_job:
+            allowed |= reuse_map
+        return allowed
+    if role == "gate":
+        return {posix} | gates | indexes | notes
+    if role == "skill":
+        return {posix} | gates | indexes | notes | skills
+    if role in {"index", "notes"}:
+        return all_route_files(data)
     if role == "door":
         return {posix} | door_job_targets(data, posix)
     if role == "job":

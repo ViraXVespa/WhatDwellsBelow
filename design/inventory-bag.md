@@ -23,7 +23,7 @@ Item level applies to every equipment slot. Potion and food item-level details a
 
 Food discovered inside the dungeon MUST be equipped to be used with the quick button, but may also be consumed directly from the inventory UI. Potion and food have distinct visual and audio feedback when used.
 
-Shared pause / loadout / anvil presentation is specified in the gear ui door.
+Shared pause / loadout / anvil presentation is specified in the gear ui topic.
 
 ## Food vs potion (locked distinction)
 

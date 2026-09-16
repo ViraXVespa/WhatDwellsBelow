@@ -5,7 +5,7 @@ Read when: every fresh Grok instance (Build / web), before writing code
 
 Treat the design requirements in this database as binding. Treat the live codebase at the repository root as the project to maintain.
 
-Recognize the path from the Path table in `AGENTS.md`. Follow that path’s session file. MUST NOT treat another path’s deliverable rules as a license to skip your own. Web / chat and Grok Bot leashes MUST NOT bind Grok Build implementation — that freedom lives in `design/grok-build.md`.
+Recognize the path from the Path table in the agents file. Follow that path’s session file. MUST NOT treat another path’s deliverable rules as a license to skip your own. Web / chat and Grok Bot leashes MUST NOT bind Grok Build implementation — that freedom lives in the Build path file.
 
 **Binding design** is required player-facing behavior. **Live snapshot** is current code. If they disagree, patch live toward binding or ask. Do not invent a third **game** system. A new code API is not a third game system.
 
@@ -13,16 +13,16 @@ Recognize the path from the Path table in `AGENTS.md`. Follow that path’s sess
 ## Core rules
 
 - Fresh **Grok** (Build / web): this file, `design/constraints.md`, then only the topic door that matches the requested work. Inspect the live path from **one system row** in `design/code-map.md` (`project.godot`, then the listed scenes/scripts). MUST NOT walk `assets/` unless the task names sprites or audio. MUST NOT begin by archiving or rewriting the live path. MUST NOT read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. MUST NOT open `design/reuse-map.md` unless this session’s goal is to write that brief or the User named the staged reuse PR.
-- **Grok Bot** does not follow that read list (`AGENTS.md` → `design/grok-bot-session.md` only). Types, warnings, tabs, and the 10KB cap in `AGENTS.md` still bind.
+- **Grok Bot** does not follow that read list (the agents file → the Bot path file only). Types, warnings, tabs, and the 10KB cap in the agents file still bind.
 - Path procedures live in that path’s session file. `design/sessions.md` and `design/session-log.md` are Grok Build leave-off / log only. Leave-off is not a boot list.
-- MUST implement only the **game** systems this database explicitly requires. MUST NOT invent skills, rarities, hub upgrades, meta-progression, or co-op scaffolding. Grok Build MAY add helpers and same-system APIs per `design/grok-build.md`. A new cross-system owner or a named-architecture replace is Build **Stop and propose first**.
+- MUST implement only the **game** systems this database explicitly requires. MUST NOT invent skills, rarities, hub upgrades, meta-progression, or co-op scaffolding. Grok Build MAY add helpers and same-system APIs per the Build path file. A new cross-system owner or a named-architecture replace is Build **Stop and propose first**.
 - Open numbers, formulas, enemy details, and artifact-set bonuses: MAY invent coherent starts, then MUST expose every value in the secret debug menu and record them in `design/tunables.md`. Grok Bot MUST NOT invent numbers.
-- `design/coverage.md` is a checklist against the existing live build. Fill gaps. MUST NOT use the phases as a license to delete and rebuild. Grok Bot MUST NOT treat coverage as a feature list. Open coverage only when its `Read when` matches.
+- the coverage door is a checklist against the existing live build. Fill gaps. MUST NOT use the phases as a license to delete and rebuild. Grok Bot MUST NOT treat coverage as a feature list. Open coverage only when its `Read when` matches.
 - After a requested slice: pause and report progress, verification, and issues before continuing.
 - Ambiguity about **player-facing design**: ask. Grok Build MUST decide code structure inside one system without asking, and MUST stop and propose before a new cross-system owner or a named live-architecture replace.
 - This database is the source of design intent across compaction. The live tree is the source of truth for shipping code. Git history on `main` is the source of truth for the game version number; `scripts/data/version.json` is the baked copy.
-- Prefer simple, readable, production-quality code. Match existing live patterns unless Grok Build is doing a just-do same-system reshape or an accepted rework. Sprite / I2V work starts at `design/art-pipeline.md` when that door’s `Read when` matches.
-- GDScript indent is tab characters. Types: `AGENTS.md`. Size splits: `design/refactor.md` (recipe only; pick a Bot flow from the Bot door). Deliver as that path’s session file specifies.
+- Prefer simple, readable, production-quality code. Match existing live patterns unless Grok Build is doing a just-do same-system reshape or an accepted rework. Sprite / I2V work starts at the art-pipeline door when that door’s `Read when` matches.
+- GDScript indent is tab characters. Types: the agents file. Size splits: `design/refactor.md` (recipe only; pick a Bot flow from the Bot door). Deliver as that path’s session file specifies.
 - Self-verify against the Demo-Complete Checklist in `design/constraints.md` before calling the build complete.
 
 ## Long-running behavior

@@ -3,7 +3,7 @@
 Status: binding design
 Read when: locking a Character Bible, plate remap, overlays, or the quality bar
 
-The art door is already open when this sibling is loaded. Do not reopen the art pipeline door from this file.
+The art door is already open when this sibling is loaded. Do not reopen the art pipeline topic from this file.
 
 ## 19.0 Goals and non-negotiables
 
@@ -12,7 +12,7 @@ The art door is already open when this sibling is loaded. Do not reopen the art 
 - All final frames MUST be true pixel art on an integer grid after cleanup (nearest-neighbor only).
 - Prefer fewer high-quality, readable frames over many mediocre ones. The engine can hold or simple-tween if needed.
 - Generate and clean one facing’s locomotion set as a proof before scaling to all directions and states.
-- Final engine resolution target: 128×128 canvases (recommended). Nearest-neighbor downscale to 64×64 is permitted only if required by import settings; document the choice. Base resolution in the audio visual door remains 64×64 for world units; sprite assets ship at 128×128 unless otherwise specified.
+- Final engine resolution target: 128×128 canvases (recommended). Nearest-neighbor downscale to 64×64 is permitted only if required by import settings; document the choice. Base resolution in the audio visual topic remains 64×64 for world units; sprite assets ship at 128×128 unless otherwise specified.
 - Use game-centric direction names exclusively: Up, Down, Left, Right, Up-Left, Up-Right, Down-Left, Down-Right.
 - All directional variants of the same animation state for a given character MUST contain exactly the same number of frames.
 - **One I2V clip per review gate.** After each clip, stop and wait for the User. Do not queue the next facing, action, gender, retry, or fill-in pass until the User says so.

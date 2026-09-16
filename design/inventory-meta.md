@@ -20,11 +20,11 @@ Read when: artifacts/collections, extraction mailing, vendor restock
 
 ## Extraction / mailing
 
-- Performed exclusively through Extraction Gates. Gate count, rooms, and fixture UX: the dungeon door and the interactables door.
+- Performed exclusively through Extraction Gates. Gate count, rooms, and fixture UX: the dungeon topic and the interactables topic.
 - Mail-legal: ore, wood, root, gold, and bag items. Artifacts and forged holds cannot be mailed.
 - The interface MUST present a clear list of items that can be sent back to the surface.
 - Once extracted, items and gold are safe.
-- Any gate can mail any mail-legal goods. One-use-after-mail visit: the interactables door.
+- Any gate can mail any mail-legal goods. One-use-after-mail visit: the interactables topic.
 - Duplicate green/blue extracts follow **Salvage spare gear**. Whites follow the starter path.
 
 ## Vendor restock

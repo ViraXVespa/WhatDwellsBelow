@@ -1,7 +1,7 @@
 # Dungeon generation and floors
 
 Status: binding design + live snapshot  
-Read when: changing gen, floor flow, streaming, boss doors, fog, or floor crystals  
+Read when: gen, streaming, boss doors, fog, crystals
 Code: `scripts/dungeon/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_boot.gd`, `dungeon_stream.gd`, `dungeon_geo_stream.gd`, `dungeon_map_act.gd`, `dungeon_props.gd`, `boss_door.gd`, `crystal_net.gd`, `crystal_place.gd`, `floor_crystal.gd`  
 
 
@@ -12,7 +12,7 @@ Code: `scripts/dungeon/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_boot.gd`, `
 - Floor 5 contains the Gate Master.
 - After floor 5 the sequence repeats with escalated difficulty.
 - There is no hard maximum depth; death is the only cap.
-- Combat-level bands and the floor-1 CL 17 budget: the combat door.
+- Combat-level bands and the floor-1 CL 17 budget: the combat topic.
 
 ## Map generation
 
@@ -41,7 +41,7 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 ## Safe rooms
 
 - Extraction Gate rooms, ghost shop rooms, and puzzle rooms are always enemy-free.
-- Idle / pressure spawn rules: the enemies door.
+- Idle / pressure spawn rules: the enemies topic.
 
 ## Boss / guardian rules
 
@@ -54,7 +54,7 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 - Reveal radius starts at a 5-tile baseline disk. Visited tiles stay revealed for the run.
 - 3D floor, wall, and prop meshes are not gated on fog. Streaming draws complete nearby chunks.
 - Large map overlay (View button) shows discovered tiles and important markers while the game continues running. Markers on unseen tiles stay hidden (`need_seen`).
-- Large map starts at fit-to-frame. Zoom and pan live in `dungeon_map_act.gd` (wheel / pinch / look-mode RS). World camera zoom is unchanged. Bindings: the input door and the ui door.
+- Large map starts at fit-to-frame. Zoom and pan live in `dungeon_map_act.gd` (wheel / pinch / look-mode RS). World camera zoom is unchanged. Bindings: the input topic and the ui topic.
 
 ## Extraction Gate limits
 
@@ -62,7 +62,7 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 - Exactly three Extraction Gates per floor (tunable cap `max_clerks`, default 3).
 - Gate rooms MUST be spread across the floor (minimum separation 28 cells).
 
-Mail-legal goods and one-use visit rules: the inventory / meta job and the interactables door.
+Mail-legal goods and one-use visit rules: the inventory / meta job and the interactables topic.
 
 ## Stairs
 
@@ -70,7 +70,7 @@ Mail-legal goods and one-use visit rules: the inventory / meta job and the inter
 - Stairs are locked behind the boss door until the guardian / Gate Master is killed.
 - Stairs remain the only way to push `prog.deepest` to a floor the player has not yet reached.
 
-Prompt / confirm copy: the interactables door.
+Prompt / confirm copy: the interactables topic.
 
 ## Floor crystals
 
@@ -88,13 +88,13 @@ Prompt / confirm copy: the interactables door.
 - Floor hops land at the destination floor’s entrance crystal. Boss-defeated state is remembered per floor for the current run.
 - Activated crystals stay enemy-free at `crystal_arrive_r` so a hop does not drop the player into a pack.
 
-Verbs and Placeholdia loadout crystal: the interactables door.
+Verbs and Placeholdia loadout crystal: the interactables topic.
 
 ## Ambushes and pressure
 
 - Ambush anchors are hallway cells outside rooms, spaced by `ambush_spacing`, capped at `ambush_cap` per floor.
 - Each ambush job packs `ambush_pack_min`–`ambush_pack_max` enemies.
-- Pressure / idle / no-reveal wave cap: `pressure_waves` per floor. CL 17 budget: the combat door. BFS hallway spawn: the enemies door.
+- Pressure / idle / no-reveal wave cap: `pressure_waves` per floor. CL 17 budget: the combat topic. BFS hallway spawn: the enemies topic.
 
 ## Live snapshot — size rebalance
 

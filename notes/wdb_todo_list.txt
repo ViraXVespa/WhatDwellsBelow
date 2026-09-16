@@ -34,5 +34,4 @@ Need to fix animation browser controls.
 ### Needs Investigation
 pc-offload logics for grok build
 generate code map from code tags and scripts instead of grok
-create documentation walk tree test script to find recursive loads
 xp scaling at higher levels
