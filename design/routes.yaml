@@ -40,6 +40,10 @@ bot_jobs:
   relocate: design/grok-bot-relocate.md
   docs: design/grok-bot-docs.md
 
+skills:
+  imagine_isolated: .grok/skills/imagine-isolated/SKILL.md
+  i2v_isolated: .grok/skills/i2v-isolated/SKILL.md
+
 gates:
   tunables:
     file: design/tunables.md

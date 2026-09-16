@@ -70,7 +70,7 @@ Second topic door: ask the User to name the owner first. If `conflicts_with` lis
 
 ## I2V week
 
-Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Cadence and quality bar: art_pipeline. Do not call Imagine until `design/isolated-media.md` is already in context.
+Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Before Imagine, load `design/isolated-media.md` only. Open art_pipeline only after the User names pack, review, or bible work.
 
 Path-only: mid-week new CLI chat is a catch-up (no pin). A thin isolated child is not a new week. Do not `/resume` a fat art thread to “just do one more” media turn.
 

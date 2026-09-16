@@ -25,6 +25,7 @@ Then, only if the User named work:
     and design/gdscript-law.md iff editing GDScript
 
 Imagine tool calls use the isolated-media **gate** only. Do not also open art_pipeline to generate.
+Repo skills live at `.grok/skills/` and cite that gate only.
 Types / warnings / tabs / 10KB live in `design/gdscript-law.md`, not the agents file.
 Art Bible / pack / review / I2V unit prompt use design/art-pipeline.md then one sibling.
 
