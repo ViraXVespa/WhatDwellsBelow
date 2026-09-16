@@ -173,7 +173,7 @@ doors:
 
 job_read_when:
   input.platforms_gamepad: "face buttons, rumble pulses"
-  input.rebind_prompts: "remap grid, icon textures, beam draw"
+  input.rebind_prompts: "rebind prompts, remap grid"
   input.kb_mouse: "WASD walk, click point"
   input.web_touch: "canvas thumbs, virtual nubs"
   input.input_live: "desktop defaults, chromium-pad capture"

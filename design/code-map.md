@@ -1,7 +1,7 @@
 # Live code map
 
 Status: index  
-Read when: you need a live script, scene, or tool path for a named system  
+Read when: you need a live script or scene for a named system
 
 This file is the live-path map. It is not a boot file and not a topic index.
 
@@ -36,4 +36,4 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 
 Public entry points that must not change when a helper is split: `App.playtest`, `App.set_zoom` / `App.set_hud_scale` / `App.set_volume`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.
 
-Live `player_anim.gd` plays unarmed idle stills plus `idle_to_walk` / looping `walk` / `walk_to_idle` from the locked Bible harvest. Binding is player + art_pipeline. Title → Play warms those loco frames and frames the full yard under the solid loader (hub).
+Live `player_anim.gd` plays unarmed idle stills plus `idle_to_walk` / looping `walk` / `walk_to_idle` from the locked Bible harvest. Title → Play warms those loco frames and frames the full yard under the solid loader (hub).
