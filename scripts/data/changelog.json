@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.33",
+			"points": [
+				{
+					"text": "Agent navigation now lives in `design/routes.yaml`, not in `See also:` fields."
+				},
+				{
+					"text": "Topic bodies may not name other `design/*.md` files; doors keep those paths only in the Job table."
+				},
+				{
+					"text": "`tools/check_load_graph.py` reads the yaml table and fails on leftover See also / stray cites."
+				},
+				{
+					"text": "`tools/apply_doc_routes.py` stripped See also lines and rewrote topic cites to job phrases."
+				},
+				{
+					"text": "Load-graph check is a PC-offload catalog runner."
+				}
+			],
+			"summary": "Agent doc routing is a declared yaml graph. No player-facing game change."
+		},
+		{
 			"label": "0.3.31",
 			"points": [
 				{
