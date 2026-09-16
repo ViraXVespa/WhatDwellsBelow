@@ -3,6 +3,51 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.38",
+			"points": [
+				{
+					"text": "Load-graph role allowlists and a citation-cycle walk stop protocol-family A->B->A loops."
+				},
+				{
+					"text": "Topic bodies cannot point at another facade with \"the X door\"; doc-refactor no longer keeps See also."
+				},
+				{
+					"text": "Each routed file has one routes.yaml role. Attack-keyframes is a parked job. Live-snapshot job keys are unique."
+				},
+				{
+					"text": "Door read_when phrases are disjoint so one task matches one facade."
+				},
+				{
+					"text": "Isolated Imagine skills stay off the topic graph until a skills: block lists them."
+				},
+				{
+					"text": "Phase 7 changelog writes use baked version.json patch + 1, not the live stamp."
+				}
+			],
+			"summary": "Load-graph checker now enforces role allowlists, citation cycles, skip-door stems, parked jobs, unique job keys, and disjoint read_when phrases. No player-facing game change."
+		},
+		{
+			"label": "0.3.37",
+			"points": [
+				{
+					"text": "Strip cross-role design-doc path cites so the load-graph role allowlist and cycle walk pass."
+				},
+				{
+					"text": "Give each routed file one routes.yaml role; stop topic skip-door phrases; drop See also from the doc-split recipe."
+				},
+				{
+					"text": "Keep sessions, session-log, and reuse-map as notes_exempt only so leave-off / log / staging briefs stay outside the gate cycle walk."
+				},
+				{
+					"text": "Mark attack-keyframes as a parked job and give input/inventory live-snapshot jobs unique routes.yaml keys."
+				},
+				{
+					"text": "Give each topic door a disjoint read_when phrase so one task matches one facade."
+				}
+			],
+			"summary": "Load-graph checker now enforces role allowlists, citation cycles, skip-door stems, parked jobs, unique job keys, and disjoint read_when phrases. No player-facing game change."
+		},
+		{
 			"label": "0.3.36",
 			"points": [
 				{
@@ -25,9 +70,24 @@
 				},
 				{
 					"text": "Web Phase 7 changelog writes stay on the open `version.json` label until that label ships."
+				},
+				{
+					"text": "Strip cross-role design-doc path cites so the load-graph role allowlist and cycle walk pass."
+				},
+				{
+					"text": "Give each routed file one routes.yaml role; stop topic skip-door phrases; drop See also from the doc-split recipe."
+				},
+				{
+					"text": "Keep sessions, session-log, and reuse-map as notes_exempt only so leave-off / log / staging briefs stay outside the gate cycle walk."
+				},
+				{
+					"text": "Mark attack-keyframes as a parked job and give input/inventory live-snapshot jobs unique routes.yaml keys."
+				},
+				{
+					"text": "Give each topic door a disjoint read_when phrase so one task matches one facade."
 				}
 			],
-			"summary": ""
+			"summary": "Routing and Phase 7 runner docs. No player-facing game change."
 		},
 		{
 			"label": "0.3.35",
