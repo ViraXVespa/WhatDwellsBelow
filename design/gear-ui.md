@@ -3,9 +3,7 @@
 Status: binding design  
 Read when: changing pause inventory, Floor Crystal loadout, Anvil menus, or gear tooltips  
 Code: `scripts/ui/gear_board/gear_board.gd`, `gear_board_build.gd`, `gear_board_floor.gd`, `gear_board_tip.gd`, `gear_board_text.gd`, `gear_board_opts.gd`, `gear_board_stats.gd`, `gear_board_act.gd`, `gear_board_sub.gd`, `gear_board_anvil.gd`, `gear_board_anvil_view.gd`, `gear_board_anvil_forge.gd`, `gear_icons.gd`, `step_row.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/pause_menu.gd`, `scripts/ui/pause_inv.gd`, `scripts/ui/progress_ui.gd`, `scripts/ui/progress_ui_hub.gd`, `scripts/ui/progress_ui_inv.gd`  
-See also:
 
-`See also:` is not a read list. Open inventory only when bag / affix / artifact rules are the named work. Do not open hub, input, ui, or a path that does not exist.
 
 Pause Inventory and Floor Crystal Loadout MUST reuse one paper-doll board. Placeholdia inventory (opened outside the dungeon) MUST use the same option sources and apply path as Loadout. Dungeon inventory MAY only swap the current slot with matching bag items. The Anvil reuses the same doll, flyout, stats card, and slot plates.
 
@@ -89,7 +87,7 @@ Inventory / loadout list:
 - Left / Right stay on the option row. The host MUST NOT swallow Left / Right while that list is open.
 - Selecting the equipped row unequips it when the slot allows. Weapon, tool, and starter pieces stay on the slot.
 
-Anvil Analyze / Forge item law (who can appear, destroy-on-pick, locks, cost, holds cap, results pick-three): `design/inventory-gear.md`.
+Anvil Analyze / Forge item law (who can appear, destroy-on-pick, locks, cost, holds cap, results pick-three): the inventory / gear job.
 
 Anvil Analyze chrome:
 

@@ -2,9 +2,7 @@
 
 Status: binding design  
 Read when: tuning difficulty, time-to-extract, weapon parity, or polish bar  
-See also:
 
-`See also:` is not a read list. Open tunables only when a number is the named work. Constraints and debug stay on their own doors.
 
 ## Time targets
 
@@ -43,7 +41,7 @@ The three weapons (Great Axe, Lightning Staff, Longbow) MUST remain balanced wit
 
 ## Polish bar
 
-Every system that appears in the demo is considered production / Gold. No “temp” or “programmer art will do” exceptions are allowed for systems that ship. Placeholder assets are permitted only under the explicit policy in `design/audio-visual.md` and MUST be replaced before release.
+Every system that appears in the demo is considered production / Gold. No “temp” or “programmer art will do” exceptions are allowed for systems that ship. Placeholder assets are permitted only under the explicit policy in the audio visual door and MUST be replaced before release.
 Player-facing UI and HUD MUST be dungeon-themed. Default / unskinned engine controls MUST NOT appear on the playable path. The secret debug menu is exempt.
 
-The Automated Playtest / AI Player system (secret debug menu) exists to generate telemetry and recommended configurations from the capped set in `design/debug.md` so the demo can meet the targets above without a parallel simulation stack or an unbounded metrics product.
+The Automated Playtest / AI Player system (secret debug menu) exists to generate telemetry and recommended configurations from the capped set in the debug door so the demo can meet the targets above without a parallel simulation stack or an unbounded metrics product.

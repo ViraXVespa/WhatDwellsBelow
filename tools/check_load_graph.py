@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""Check design-doc load-graph rules. Run from the repo root.
+"""Check design-doc routing against design/routes.yaml.
 
     python tools/check_load_graph.py
     python tools/check_load_graph.py --root .
 
 Exit 0 if every check passes. Exit 1 and print FAIL lines otherwise.
+Exit 2 if the tree is not a WDB root or routes.yaml cannot be parsed.
 
-See also edges are only the rest of the `See also:` header line, and only
-when that line is a path list. A sentence on that line (or below it) that
-names a `.md` file is prose, not an edge.
+Navigation lives only in design/routes.yaml. Topic bodies (doors and job
+siblings) may not name design/*.md, AGENTS.md, or Demo_GDD.md except:
+  - the file's own path
+  - a door Job-table Open cell that matches that door's jobs in routes.yaml
+  - design/changelog/ paths (ship labels, not topic routing)
+
+`See also:` is forbidden on every scanned markdown file.
 """
 from __future__ import annotations
 
@@ -17,143 +22,96 @@ import re
 import sys
 from pathlib import Path
 
-PATH_FILES = {
-    "AGENTS.md",
-    "design/web-session.md",
-    "design/grok-build.md",
-    "design/grok-bot-session.md",
-}
+TOOLS_DIR = Path(__file__).resolve().parent
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
 
-INDEX_FILES = {
-    "design/README.md",
-    "design/code-map.md",
-    "design/load-graph.md",
-    "Demo_GDD.md",
-}
-
-PROSE_ON_SEE_ALSO = re.compile(
-    r"\b(the|this|do not|don't|binding|recipe|ship|load cap|already open)\b",
-    re.I,
+from load_routes import (  # noqa: E402
+    RoutesError,
+    allowed_citations,
+    all_route_files,
+    door_job_targets,
+    load_routes,
+    role_of,
 )
+
+CHANGELOG_PREFIX = "design/changelog/"
+CITE_RE = re.compile(
+    r"(?:`)?((?:design/[\w./-]+\.md)|AGENTS\.md|Demo_GDD\.md)(?:`)?"
+)
+SEE_ALSO_RE = re.compile(r"^See also\s*:", re.I | re.M)
+JOB_HEAD_RE = re.compile(r"^\|\s*Job\s*\|", re.I)
+JOB_DIV_RE = re.compile(r"^\|\s*-+")
 
 
 def rel(path: Path, root: Path) -> str:
     return path.relative_to(root).as_posix()
 
 
-def design_md_files(root: Path) -> list[Path]:
+def scanned_md_files(root: Path) -> list[Path]:
     out: list[Path] = []
     design = root / "design"
-    if not design.is_dir():
-        return out
     for path in sorted(design.rglob("*.md")):
         posix = rel(path, root)
-        if posix.startswith("design/changelog/"):
+        if posix.startswith(CHANGELOG_PREFIX):
             continue
         out.append(path)
-    extra = root / "AGENTS.md"
-    if extra.is_file():
-        out.append(extra)
-    demo = root / "Demo_GDD.md"
-    if demo.is_file():
-        out.append(demo)
+    for extra in ("AGENTS.md", "Demo_GDD.md"):
+        p = root / extra
+        if p.is_file():
+            out.append(p)
     return out
 
 
-def header_block(text: str) -> str:
-    lines = text.splitlines()
-    chunk: list[str] = []
-    started = False
-    for line in lines[1:]:
-        if line.startswith("## "):
-            break
-        if line.startswith("| Job |") or line.startswith("| Job|"):
-            break
-        if line.startswith("# "):
-            break
-        if not started and not line.strip():
+def citations(text: str) -> list[str]:
+    found: list[str] = []
+    for match in CITE_RE.finditer(text):
+        item = match.group(1)
+        if item.startswith(CHANGELOG_PREFIX):
             continue
-        started = True
-        chunk.append(line)
-        if len(chunk) > 40:
-            break
-    return "\n".join(chunk)
+        found.append(item)
+    return found
 
 
-def field(block: str, name: str) -> str:
-    """Only the rest of the matching header line. Following lines are not edges."""
-    pat = re.compile(
-        rf"^{re.escape(name)}:\s*(.*)$",
-        re.IGNORECASE | re.MULTILINE,
-    )
-    m = pat.search(block)
-    if not m:
-        return ""
-    return m.group(1).strip()
+def job_table_paths(text: str) -> list[str]:
+    paths: list[str] = []
+    in_job = False
+    for line in text.splitlines():
+        if JOB_HEAD_RE.match(line):
+            in_job = True
+            continue
+        if not in_job:
+            continue
+        if not line.startswith("|"):
+            in_job = False
+            continue
+        if JOB_DIV_RE.match(line):
+            continue
+        paths.extend(citations(line))
+    return paths
 
 
-def cited_paths(blob: str) -> list[str]:
-    found = re.findall(r"`([^`]+)`", blob)
-    out: list[str] = []
-    for item in found:
-        item = item.strip()
-        if item.endswith(".md") or item == "AGENTS.md" or item.startswith("design/"):
-            if (
-                not item.startswith("design/")
-                and item.endswith(".md")
-                and item != "AGENTS.md"
-                and item != "Demo_GDD.md"
-            ):
-                item = "design/" + item
-            out.append(item)
-    return out
-
-
-def see_also_paths(raw: str) -> list[str]:
-    raw = raw.strip()
-    if not raw:
-        return []
-    if PROSE_ON_SEE_ALSO.search(raw):
-        return []
-    return cited_paths(raw)
-
-
-def parse_file(path: Path, root: Path) -> dict:
-    text = path.read_text(encoding="utf-8")
-    block = header_block(text)
-    see = field(block, "See also")
-    read_when = field(block, "Read when")
-    has_job = bool(re.search(r"^\| Job \|", text, re.M))
-    posix = rel(path, root)
-    return {
-        "path": posix,
-        "text": text,
-        "see": see,
-        "see_paths": see_also_paths(see),
-        "read_when": read_when,
-        "has_job": has_job,
-    }
-
-
-def is_sibling(posix: str) -> bool:
-    name = Path(posix).name
-    if posix.startswith("design/grok-bot-") and name != "grok-bot-session.md":
-        return True
-    if posix.startswith("design/art-") and name != "art-pipeline.md":
-        return True
-    if posix.startswith("design/ui-"):
-        return True
-    if posix.startswith("design/debug-"):
-        return True
-    if posix.startswith("design/input-"):
-        return True
-    if posix.startswith("design/inventory-"):
-        return True
-    return False
+def body_citations(text: str) -> list[str]:
+    """Citations outside a Job table."""
+    keep: list[str] = []
+    in_job = False
+    for line in text.splitlines():
+        if JOB_HEAD_RE.match(line):
+            in_job = True
+            continue
+        if in_job:
+            if not line.startswith("|"):
+                in_job = False
+            else:
+                continue
+        keep.extend(citations(line))
+    return keep
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Check design-doc load-graph rules.")
+    ap = argparse.ArgumentParser(
+        description="Check design-doc routing against design/routes.yaml."
+    )
     ap.add_argument("--root", default=".", help="Repo root (default: cwd)")
     args = ap.parse_args()
     root = Path(args.root).resolve()
@@ -161,138 +119,150 @@ def main() -> int:
         print(f"FAIL  not a WDB root: {root}", file=sys.stderr)
         return 2
 
-    parsed = [parse_file(p, root) for p in design_md_files(root)]
-    by_path = {row["path"]: row for row in parsed}
+    try:
+        routes = load_routes(root)
+    except RoutesError as exc:
+        print(f"FAIL  routes.yaml: {exc}", file=sys.stderr)
+        return 2
+
     fails: list[str] = []
+    known = all_route_files(routes)
+    on_disk = {rel(p, root) for p in scanned_md_files(root)}
+    extra_on_disk = sorted(
+        p for p in on_disk if p not in known and p != "design/routes.yaml"
+    )
+    missing = sorted(p for p in known if p not in on_disk)
+    if extra_on_disk:
+        for posix in extra_on_disk:
+            fails.append(f"unclassified markdown: {posix}")
+    if missing:
+        for posix in missing:
+            fails.append(f"routes.yaml names missing file: {posix}")
 
-    see_map = {row["path"]: set(row["see_paths"]) for row in parsed}
-    seen_pairs: set[tuple[str, str]] = set()
-    for src, dests in see_map.items():
-        for dest in dests:
-            if dest not in see_map:
-                continue
-            if src in see_map[dest]:
-                pair = tuple(sorted((src, dest)))
-                if pair in seen_pairs:
-                    continue
-                seen_pairs.add(pair)
-                fails.append(f"mutual See also: {pair[0]} <-> {pair[1]}")
+    door_files: dict[str, str] = {}
+    job_owner: dict[str, str] = {}
+    for name, door in (routes.get("doors") or {}).items():
+        f = str(door["file"])
+        if f in door_files:
+            fails.append(f"duplicate door file: {f} ({door_files[f]}, {name})")
+        door_files[f] = name
+        for job_name, target in (door.get("jobs") or {}).items():
+            t = str(target)
+            if t in job_owner:
+                fails.append(
+                    f"job target {t} owned by {job_owner[t]} and {name}.{job_name}"
+                )
+            job_owner[t] = f"{name}.{job_name}"
 
-    for row in parsed:
-        if is_sibling(row["path"]) and row["see_paths"]:
-            fails.append(
-                f"sibling See also not empty: {row['path']} -> {row['see_paths']}"
-            )
+    path_files = {
+        str(v) for v in ((routes.get("boot") or {}).get("paths") or {}).values()
+    }
+    recipe_files = {str(v) for v in (routes.get("recipes") or {}).values()}
+    for src in recipe_files:
+        if src in path_files:
+            fails.append(f"recipe is a path file: {src}")
 
-    for row in parsed:
-        if not row["has_job"]:
+    bot_targets = {str(v) for v in (routes.get("bot_jobs") or {}).values()}
+    if set(bot_targets) & set(door_files):
+        fails.append("bot job reuses a topic door file")
+
+    files = scanned_md_files(root)
+    for path in files:
+        posix = rel(path, root)
+        text = path.read_text(encoding="utf-8")
+        if SEE_ALSO_RE.search(text):
+            fails.append(f"See also field present: {posix}")
+
+        role = role_of(routes, posix)
+        if role == "unknown":
             continue
-        topic = [
-            p
-            for p in row["see_paths"]
-            if p not in PATH_FILES and p not in INDEX_FILES
-        ]
-        if len(topic) > 1:
-            fails.append(f"door See also >1 topic: {row['path']} -> {topic}")
 
-    for row in parsed:
-        if row["path"] in PATH_FILES or row["path"] in INDEX_FILES:
+        table_paths = job_table_paths(text)
+        body_paths = body_citations(text)
+        allowed = allowed_citations(routes, posix)
+
+        if role == "door":
+            expected = door_job_targets(routes, posix)
+            if expected and not table_paths:
+                fails.append(f"door missing Job table: {posix}")
+            unexpected = [p for p in table_paths if p not in expected and p != posix]
+            if unexpected:
+                fails.append(
+                    f"Job table not in routes.yaml: {posix} -> {unexpected}"
+                )
+            missing_jobs = sorted(expected - set(table_paths))
+            if missing_jobs:
+                fails.append(
+                    f"Job table missing routes.yaml jobs: {posix} -> {missing_jobs}"
+                )
+            stray = [p for p in body_paths if p != posix]
+            if stray:
+                fails.append(f"topic body names design doc: {posix} -> {stray}")
             continue
-        leaked = [p for p in row["see_paths"] if p in PATH_FILES]
-        if leaked:
-            fails.append(f"path file on topic See also: {row['path']} -> {leaked}")
 
-    readme = by_path.get("design/README.md", {})
-    code_map = by_path.get("design/code-map.md", {})
-    if readme:
-        if re.search(
-            r"Live scripts, scenes, and tools:\s*`design/code-map\.md`",
-            readme["text"],
-        ):
-            fails.append("README.md points at code-map.md as the live-path fetch")
-    if code_map:
-        if "Topic index: `design/README.md`" in code_map["text"]:
-            fails.append("code-map.md points at README.md as the topic-index fetch")
-        if "| Staged Bot reuse brief |" in code_map["text"]:
-            fails.append("code-map.md still has a design-doc system row: reuse-map")
-        if "| Isolated media (CLI) |" in code_map["text"]:
-            fails.append("code-map.md still has a design-doc system row: isolated-media")
-
-    sessions = by_path.get("design/sessions.md")
-    if sessions:
-        rw = sessions["read_when"].lower()
-        if "fresh" in rw and "instance" in rw:
-            fails.append(
-                "sessions.md Read when still boots a fresh Grok Build instance"
-            )
-
-    lg = by_path.get("design/load-graph.md")
-    if lg and "not enough to pick the next file" in lg["text"]:
-        fails.append("load-graph.md Read when still licenses a routing crawl")
-
-    player = by_path.get("design/player.md")
-    if player and "design/art-i2v.md" in player["text"]:
-        fails.append("player.md still names art-i2v.md (skip-door)")
-    if player and "design/art-pack.md" in player["text"]:
-        fails.append("player.md still names art-pack.md (skip-door)")
-
-    for recipe in (
-        "design/refactor.md",
-        "design/doc-refactor.md",
-        "design/pc-offload.md",
-    ):
-        row = by_path.get(recipe)
-        if not row:
+        if role == "job":
+            stray = [p for p in body_paths + table_paths if p != posix]
+            if stray:
+                fails.append(f"topic body names design doc: {posix} -> {stray}")
             continue
-        if recipe == "design/refactor.md" and row["see_paths"]:
-            fails.append(f"{recipe} See also must be empty")
-        if (
-            "design/web-session.md" in row["text"]
-            and "Cap still applies in Phase 6 per" in row["text"]
-        ):
-            fails.append(f"{recipe} still loads web-session.md")
 
-    build = by_path.get("design/grok-build.md")
-    if build and "one row in `design/README.md`" in build["text"]:
-        fails.append("grok-build.md Read order still fetches README.md")
+        named = [p for p in body_paths + table_paths if p != posix]
+        illegal = [p for p in named if p not in allowed]
+        if illegal:
+            fails.append(f"citation not in routes.yaml: {posix} -> {illegal}")
 
-    web = by_path.get("design/web-session.md")
-    if web and "sessions.md` is context only" in web["text"]:
-        fails.append("web-session.md still treats sessions.md as context")
+        if role == "recipe":
+            leaked = [p for p in named if p in path_files]
+            if leaked:
+                fails.append(f"recipe names path file: {posix} -> {leaked}")
 
-    overview = by_path.get("design/overview.md")
-    if overview and overview["see_paths"]:
-        fails.append(f"overview.md See also not empty: {overview['see_paths']}")
-    coverage = by_path.get("design/coverage.md")
-    if coverage and coverage["read_when"].lower() == "deciding whether a system is missing":
-        fails.append("coverage.md Read when is still the broad missing-system trigger")
-    tunables = by_path.get("design/tunables.md")
-    if tunables and "changing feel, gen size" in tunables["read_when"]:
-        fails.append("tunables.md Read when still pretends to be a topic door")
+        if role == "index" and posix == "design/README.md":
+            if "design/code-map.md" in named and re.search(
+                r"Live scripts, scenes, and tools:\s*`design/code-map\.md`",
+                text,
+            ):
+                fails.append("README.md points at code-map.md as the live-path fetch")
+        if role == "index" and posix == "design/code-map.md":
+            if "Topic index: `design/README.md`" in text:
+                fails.append("code-map.md points at README.md as the topic-index fetch")
+            if "| Staged Bot reuse brief |" in text:
+                fails.append("code-map.md still has a design-doc system row: reuse-map")
+            if "| Isolated media (CLI) |" in text:
+                fails.append(
+                    "code-map.md still has a design-doc system row: isolated-media"
+                )
 
-    for name in (
-        "design/dungeon.md",
-        "design/enemies.md",
-        "design/combat.md",
-        "design/skills.md",
-        "design/camera.md",
-        "design/feel.md",
-        "design/interactables.md",
-        "design/hub.md",
-        "design/save-tech.md",
-        "design/audio-visual.md",
-    ):
-        row = by_path.get(name)
-        if row and row["see_paths"]:
-            fails.append(f"{name} See also not empty: {row['see_paths']}")
+        if posix == "design/sessions.md":
+            m = re.search(r"^Read when:\s*(.*)$", text, re.I | re.M)
+            rw = (m.group(1) if m else "").lower()
+            if "fresh" in rw and "instance" in rw:
+                fails.append(
+                    "sessions.md Read when still boots a fresh Grok Build instance"
+                )
+        if posix == "design/load-graph.md":
+            if "not enough to pick the next file" in text:
+                fails.append(
+                    "load-graph.md Read when still licenses a routing crawl"
+                )
+        if posix == "design/player.md":
+            if "design/art-i2v.md" in text:
+                fails.append("player.md still names art-i2v.md (skip-door)")
+            if "design/art-pack.md" in text:
+                fails.append("player.md still names art-pack.md (skip-door)")
+        if posix == "design/grok-build.md":
+            if "one row in `design/README.md`" in text:
+                fails.append("grok-build.md Read order still fetches README.md")
+        if posix == "design/web-session.md":
+            if "sessions.md` is context only" in text:
+                fails.append("web-session.md still treats sessions.md as context")
 
-    n = len(parsed)
+    n = len(files)
     if fails:
         print(f"FAIL  {len(fails)} load-graph issue(s) across {n} files")
         for line in fails:
             print(f"  - {line}")
         return 1
-    print(f"PASS  {n} files, no load-graph rule breaks")
+    print(f"PASS  {n} files, routes.yaml ok")
     return 0
 
 

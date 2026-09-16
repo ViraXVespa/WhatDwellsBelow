@@ -2,13 +2,11 @@
 
 Status: protocol  
 Read when: Grok Bot path; every Grok Bot session  
-See also:
 
 This file is binding for **Grok Bot** only. Grok Build and web / chat ignore it, except they may open `design/refactor.md` when they split for the 10KB cap.
 
 Grok Build / web splitting one file that *its own edit* pushed over 10KB is not this path — use `design/refactor.md` inside that session (recipe only; do not open this door from the recipe).
 
-`See also:` is not a read list. Load cap: `AGENTS.md` Shared (soft). Do not reopen `AGENTS.md` from this file unless the GDScript types, warnings, tabs, or 10KB cap sections left context. Do not reopen protocol, constraints, or another Bot flow.
 
 ## Recognize
 

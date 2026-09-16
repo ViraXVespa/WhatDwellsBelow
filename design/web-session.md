@@ -2,7 +2,6 @@
 
 Status: protocol 
 Read when: web / chat path; every web session after the repo-review message 
-See also:
 
 This file is binding for **web / chat** only. Grok Build (CLI) and Grok Bot ignore it.
 
@@ -14,7 +13,6 @@ Docs-only goal (no Phase 4 source): after Phase 3, skip Phase 4–6 and emit Pha
 
 `design/reuse-map.md` is a User-authored staging brief for the next Grok Bot reuse PR. This path writes or replaces that whole file in Phase 7 when the User named that staging work or parked leftover extract work. Do not crawl the live tree for new Bot items unless the User named that sweep. An empty template is valid. Do not invent queue rows.
 
-`See also:` is not a read list. Load cap: `AGENTS.md` Shared (soft). Do not reopen `AGENTS.md` from this file.
 
 ## Phases
 

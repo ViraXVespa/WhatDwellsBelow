@@ -2,7 +2,6 @@
 
 Status: protocol  
 Read when: every fresh Grok instance (Build / web), before writing code  
-See also:
 
 Treat the design requirements in this database as binding. Treat the live codebase at the repository root as the project to maintain.
 
@@ -10,7 +9,6 @@ Recognize the path from the Path table in `AGENTS.md`. Follow that path’s sess
 
 **Binding design** is required player-facing behavior. **Live snapshot** is current code. If they disagree, patch live toward binding or ask. Do not invent a third **game** system. A new code API is not a third game system.
 
-`See also:` is not a read list. Load cap: `AGENTS.md` Shared (soft). Do not reopen `AGENTS.md` from this file.
 
 ## Core rules
 

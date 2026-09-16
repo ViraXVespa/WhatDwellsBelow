@@ -2,7 +2,6 @@
 
 Status: index  
 Read when: you need a topic file  
-See also:
 
 This folder is the documentation database for humans and agents.  
 It is not one Game Design Document. It is not a boot file.

@@ -2,7 +2,6 @@
 
 Status: working notes  
 Read when: closing a Grok Build session, or when `design/sessions.md` is not enough to name the next unit  
-See also:
 
 Append-only facts. Newest first. Not binding game design. Not part of every Grok Build boot. Web / chat and Grok Bot do not write this file.
 

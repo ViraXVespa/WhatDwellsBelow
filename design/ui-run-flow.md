@@ -2,9 +2,7 @@
 
 Status: binding design  
 Read when: extraction gate, ghost shop, quest, recap, minimap, crystal map UI, toasts  
-See also:
 
-The UI door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen ui, theme, title-web, hud, pause, gear-entry, gear-ui, hub, input, or doc-refactor from this file.
 
 ## Extraction Gate UI
 
@@ -50,7 +48,7 @@ Triggered on every death or “Dispel”.
 - The large map starts at fit-to-frame. Zoom in with wheel, pinch, or look-mode right stick. Zoom focus: cursor / pinch midpoint on pointer and touch; player marker on gamepad.
 - When zoomed in past fit, pan with mouse drag, one-finger swipe (walk stick not claimed), or look-mode-off right stick. Clamp so the image cannot leave the frame. Zoom-out to fit recenters and disables pan.
 - Large-map zoom does not change world `App.cam_zoom`.
-- Fog of war and visited tracking follow the rules in `design/dungeon.md`.
+- Fog of war and visited tracking follow the rules in the dungeon door.
 
 ## Toasts and floating combat text
 

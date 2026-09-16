@@ -2,9 +2,7 @@
 
 Status: binding design  
 Read when: web touch pad / touch HUD input  
-See also:
 
-The input door is already open when this sibling is loaded. `See also:` is not a read list. Do not bounce back to `design/input.md` from this file.
 
 ## Input – Web touch (`touch_pad.gd`, `touch_hud.gd`)
 
@@ -38,4 +36,4 @@ No right aim well. Auto-aim / target-lock stays armed for the whole touch sessio
 
 Touch attack lasts only while the finger is on RT. Open UI, scene change, death / dispel, or pad / keyboard takeover clear it. Touch vectors and button state feed `Pad.move()`, `Pad.held()`, and `Pad.just()` so combat, gather, and interact stay on one path.
 
-Numbers: `TOUCH_DEAD` (0.24) in `design/tunables.md`. Look/pinch/wheel rates live there and on `LookCtrl` runtime copies. Secret debug Settings page can live-edit touch deadzone and look copies.
+Numbers: `TOUCH_DEAD` (0.24) in the tunables gate. Look/pinch/wheel rates live there and on `LookCtrl` runtime copies. Secret debug Settings page can live-edit touch deadzone and look copies.

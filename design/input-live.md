@@ -2,9 +2,7 @@
 
 Status: binding design  
 Read when: live snapshot for binds or web_pad  
-See also:
 
-The input door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen input siblings, ui, hud, doc-refactor, or the topic index from this file.
 
 ## Live snapshot — PC defaults (`binds.gd`)
 

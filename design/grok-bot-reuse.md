@@ -2,11 +2,9 @@
 
 Status: protocol  
 Read when: Grok Bot Job table → staged reuse-map brief  
-See also:
 
 Binding for **Grok Bot** when the User names the staged reuse PR / reuse-map / quota reset with a brief ready.
 
-Ship rules stay on `design/grok-bot-session.md` (already open). Do not reopen the door. `See also:` is not a read list.
 
 ## Mandate
 

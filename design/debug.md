@@ -2,10 +2,7 @@
 
 Status: binding design  
 Read when: secret debug menu, playtest / journal, animation browser, smoke coverage notes  
-Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/debug/debug_menu/`  
-See also:
-
-This file is the door. Open only the sibling that matches the job. `See also:` is not a read list. Do not reopen protocol, refactor, or the topic index from this file.
+Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/debug/debug_menu/`
 
 | Job | Open |
 |-----|------|

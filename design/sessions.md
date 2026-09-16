@@ -2,7 +2,6 @@
 
 Status: working notes  
 Read when: rewriting this leave-off, or the User asked what the next Build unit is  
-See also:
 
 This is the Grok Build leave-off. It is **not** binding game design. Binding behavior stays in the topic files. The live tree is still the source of truth for shipping code.
 
@@ -14,7 +13,6 @@ The User does other work between weeks (git commits, stills, systems). **Image-t
 
 Do not resume unfinished work from this file unless the User names that work. A listed next-work line is a hint, not a start order.
 
-`See also:` is not a read list. Read `design/session-log.md` only if this leave-off is not enough to name the next unit, or when writing it at close.
 
 ## Leave-off
 

@@ -24,7 +24,7 @@ Design lives in `design/`. There is no single GDD. `Demo_GDD.md` is only an inde
 | Live code map (one system row) | `design/code-map.md` |
 | Numbers (when the work changes them) | `design/tunables.md` |
 
-Path session files are in the Path table, not here. Topic index: `design/README.md` (one topic row; the table is not a read list). Versioning, art, isolated-media, reuse-map, sessions, session-log, protocol, and refactor: open only when `Read when` matches, a Job table names it, or the User names that work.
+Path session files are in the Path table, not here. Agent routes: `design/routes.yaml`. Topic index: `design/README.md` (one topic row; the table is not a read list). Versioning, art, isolated-media, reuse-map, sessions, session-log, protocol, and refactor: open only when `Read when` matches, a Job table names it, or the User names that work.
 
 **Load cap (soft):** default is this file + the path session file + (web / Build only) `design/protocol.md` and `design/constraints.md` + one topic door + one Job-table sibling. `design/tunables.md` when numbers change. `design/versioning.md` at ship only. `design/code-map.md` is one system row, not the whole table. A second topic door is allowed when that file’s `Read when` matches or the User names the boundary. Ask before a third topic door. Protocol / constraints / tunables / versioning-at-ship / one code-map row are not topic doors.
 

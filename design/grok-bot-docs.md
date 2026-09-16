@@ -2,11 +2,9 @@
 
 Status: protocol  
 Read when: Grok Bot Job table → doc facade / sibling split  
-See also:
 
 Binding for **Grok Bot** documentation facade sweeps only. Recipe: `design/doc-refactor.md`. No binding-meaning change. No live `.gd` size sweep in this PR unless a touched script path in a code map row must stay accurate.
 
-Ship rules stay on `design/grok-bot-session.md` (already open). Do not reopen the door. `See also:` is not a read list.
 
 ## Mandate
 

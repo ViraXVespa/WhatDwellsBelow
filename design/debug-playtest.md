@@ -3,9 +3,7 @@
 Status: binding design  
 Read when: automated playtest or playtest journal  
 Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/debug/debug_menu/`  
-See also:
 
-The debug door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen debug, debug-menu, anim-browser, smokes, pc-offload, refactor, or the topic index from this file.
 
 ## Automated Playtest / AI Player system
 

@@ -2,9 +2,7 @@
 
 Status: binding design  
 Read when: artifacts/collections, extraction mailing, vendor restock  
-See also:
 
-The inventory door is already open when this sibling is loaded. `See also:` is not a read list. Do not bounce back to `design/inventory.md` from this file.
 
 ## Artifacts and collections
 
@@ -22,11 +20,11 @@ The inventory door is already open when this sibling is loaded. `See also:` is n
 
 ## Extraction / mailing
 
-- Performed exclusively through Extraction Gates. Gate count, rooms, and fixture UX: `design/dungeon.md` and `design/interactables.md`.
+- Performed exclusively through Extraction Gates. Gate count, rooms, and fixture UX: the dungeon door and the interactables door.
 - Mail-legal: ore, wood, root, gold, and bag items. Artifacts and forged holds cannot be mailed.
 - The interface MUST present a clear list of items that can be sent back to the surface.
 - Once extracted, items and gold are safe.
-- Any gate can mail any mail-legal goods. One-use-after-mail visit: `design/interactables.md`.
+- Any gate can mail any mail-legal goods. One-use-after-mail visit: the interactables door.
 - Duplicate green/blue extracts follow **Salvage spare gear**. Whites follow the starter path.
 
 ## Vendor restock

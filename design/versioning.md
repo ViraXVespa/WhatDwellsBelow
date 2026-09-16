@@ -2,9 +2,7 @@
 
 Status: binding design  
 Read when: stamping a build, adding an archive pin, or the User said **new week**  
-See also:
 
-`See also:` is not a read list. Do not reopen `AGENTS.md` from this file. Mid-week slices do not read `design/changelog/`.
 
 ## Scheme
 

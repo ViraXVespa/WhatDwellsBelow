@@ -3,9 +3,7 @@
 Status: binding design  
 Read when: touching Archives UI, Pages exports, or catalog pins  
 Code: `scripts/ui/archives_ui.gd`, `scripts/ui/archives_ui_view.gd`, `scripts/ui/archives_ui_act.gd`, `scripts/ui/split_menu.gd`, `scripts/ui/split_menu_view.gd`, `scripts/ui/split_menu_chrome.gd`, `scripts/data/archives_catalog.gd`, `scripts/data/archives_launch.gd`, `scripts/data/archive_catalog.json`, `scripts/ui/loader.gd`, `tools/export_archives.py`, `.github/workflows/pages.yml`  
-See also:
 
-`See also:` is not a read list. Open versioning only when the week-pin ritual is the named work. Protocol, save isolation, and UI chrome stay on their own doors.
 
 ## Core rule
 
@@ -13,7 +11,7 @@ Archived builds are **pinned git commits**, not folders copied into the live tre
 
 - Do not copy snapshot projects into `archives/` or onto the live path.
 - Do not back-port live changes into a pinned commit.
-- Do not create a new archive unless the User explicitly asks, except the standing Grok Build week pins in `design/versioning.md`.
+- Do not create a new archive unless the User explicitly asks, except the standing Grok Build week pins in the versioning gate.
 
 `scripts/data/archive_catalog.json` is the catalog. Slim museum markdown that is **not** in a pin lives under `archives/docs/<id>/`.
 
@@ -34,7 +32,7 @@ The Archives browser lists every catalog row. Play on a row launches **that comm
 | grok_web_w2 | Grok Web Results (Week 2) | `bb70f556108d0e09e070cfaa42260f642af3737a` |
 | grok_build_w3 | Grok Build Results (Week 3) | `e7a9d2cf56965b711dc5b22eb7735a1875d96407` |
 
-After each Grok Build week ritual, also list `grok_web_w{N-1}` and `grok_build_wN` as specified in `design/versioning.md`. Those rows use the same isolation rules as the rows above.
+After each Grok Build week ritual, also list `grok_web_w{N-1}` and `grok_build_wN` as specified in the versioning gate. Those rows use the same isolation rules as the rows above.
 
 No hybrid mode. No shared runtime state, scenes, scripts, or saves. Local Play stamps `application/config/name` on the worktree only (`What Dwells Below — <label>`). Pages exports do the same for IndexedDB isolation.
 
@@ -74,7 +72,7 @@ User-ordered archives:
 2. Add a catalog row (id, label, desc, commit, pages_slug, docs).
 3. After Pages deploy, Play that row and confirm it is that SHA with zero live-path state. Report to the User.
 
-Standing Grok Build week pins (no extra prompt). Week-label math: `design/versioning.md`.
+Standing Grok Build week pins (no extra prompt). Week-label math: the versioning gate.
 
 1. At init of week N (not a corruption resume): pin current `main` as `grok_web_w{N-1}` — Grok Web Results (Week N-1). Copy that week’s notes from `design/changelog/0.{N-1}.*.md` or `design/changelog/archive/0.{N-1}/` into `archives/docs/grok_web_w{N-1}/`. Prefer running `tools/archive_prior_changelogs.py` when series advances so the live folder stays current-series only. Attach the `design/` tree that exists **on that commit** in `docs[]`.
 2. On the User’s completion commit `0.N.0`: pin it as `grok_build_wN` — Grok Build Results (Week N). Copy the **previous** week’s changelog files (flat or under `design/changelog/archive/`) into `archives/docs/grok_build_wN/` if they exist. Run `tools/archive_prior_changelogs.py` after the series seed so prior flat files are parked. Attach the `design/` tree on that commit in `docs[]`.

@@ -2,9 +2,7 @@
 
 Status: binding design  
 Read when: gauntlet HUD strip or web touch overlay  
-See also:
 
-The UI door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen ui, theme, title-web, pause, run-flow, gear-entry, gear-ui, hub, input, or doc-refactor from this file.
 
 ## HUD – gauntlet strip (mandatory elements and behavior)
 
@@ -33,7 +31,7 @@ The web touch overlay sits on `CanvasLayer` 28 (HUD is 20, pause is 55). The mov
 
 ## Web touch overlay
 
-Binding rules live in `design/input.md`. UI rules for this slice:
+Binding rules live in the input door. UI rules for this slice:
 
 - Drawn in-theme (dark well, gold ring, pad glyphs). No default engine buttons.
 - No right aim well. No lock button. Auto-aim stays on while the overlay is active.

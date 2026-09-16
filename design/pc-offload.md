@@ -2,9 +2,7 @@
 
 Status: binding for agents on a local checkout  
 Read when: running a listed runner, or reading that runner's _logs summary  
-See also:
 
-This file is a runner catalog. Path procedure stays in the path session file. Do not open session files or `design/debug.md` from here. `See also:` is not a read list.
 
 Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. Agents should **read only the `_logs/*/summary.txt` files** those tools write - not raw Godot logs, not whole script bodies just to measure or inventory.
 
@@ -27,6 +25,7 @@ Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. A
 |-----|--------------------------|--------------------------|
 | Housekeep `_logs/` | `powershell -File tools/clean_agent_logs.ps1` (optional `-KeepRaw`, `-MaxAgeHours 24`) | `_logs/clean/summary.txt` |
 | Design doc sizes | `powershell -File tools/list_oversize_docs.ps1` (optional `-OverKb 8`) | `_logs/oversize-docs/summary.txt` |
+| Load-graph / routes.yaml | `python tools/check_load_graph.py` (optional `--root .`) | (stdout PASS/FAIL; no summary) |
 | Write UTF-8 body (no PS expansion) | pipe single-quoted here-string to `python tools/write_utf8_file.py --path ...` (optional `--bom`, `--b64`) | (writes the path; no summary) |
 | Run ephemeral agent Python | `powershell -File tools/run_agent_py.ps1 -Script _logs/agent-py/foo.py` (optional `-KeepScript`) | `_logs/agent-py/summary.txt` |
 | Bake 3D texture mipmaps | `python tools/enable_texture_mips.py` (optional `--root`, `--dry-run`) | (stdout counts; rewrites `.import` under `assets/sprites|tiles|props|fx`) |

@@ -2,13 +2,11 @@
 
 Status: protocol  
 Read when: splitting a live script for size; Grok Bot every task; Grok Build when an edit is over 10KB; web / chat Phase 6  
-See also:
 
-This file is the mechanical recipe only. Do not open the Bot door from this recipe. `See also:` is not a read list.
 
 Grok Bot uses this file on every task. Other paths use it only when they must split.
 
-Grok Build feature work is **not** a refactor. Implementation freedom (new same-system APIs, helpers, local module shape) lives in `design/grok-build.md`. This file’s **No new code** rules do not bind that work. When Build only needs the 10KB cap, use the size-split mechanics here; do not import Bot’s “do not invent a better API” leash.
+Grok Build feature work is **not** a refactor. Implementation freedom (new same-system APIs, helpers, local module shape) lives in the build path file. This file’s **No new code** rules do not bind that work. When Build only needs the 10KB cap, use the size-split mechanics here; do not import Bot’s “do not invent a better API” leash.
 
 ## Caps
 
@@ -33,7 +31,7 @@ A refactor only rearranges what already exists.
 - Web / chat size-splits MUST NOT invent new shared modules unless following the Grok Bot path.
 - Edits are the minimum needed to relocate existing lines and keep the project compiling.
 
-Grok Build size-splits MAY introduce a new **same-system** helper API when that is cleaner than a dumb line-move. A new **cross-system** owner during a Build split is `design/grok-build.md` → **Stop and propose first**. Do not create it in the split.
+Grok Build size-splits MAY introduce a new **same-system** helper API when that is cleaner than a dumb line-move. A new **cross-system** owner during a Build split is the build path file → **Stop and propose first**. Do not create it in the split.
 
 Adding `: Type` on a line already being moved, a `load()` / `preload()`, a one-line facade delegate, or `host` / `pt` / `ui` / `p` on a moved `static func` is wiring, not new behavior.
 
@@ -64,7 +62,7 @@ Grok Bot **MAY** create shared owners when near-identical behavior spans places.
 - Point at an existing owner only if it already **is** that concern **and** the addition will not blow the size cap.
 - Never grow an owner just to avoid a new file.
 - Web / chat size-splits still do not invent new shared modules unless following this Grok Bot path.
-- Grok Build does not use this Bot extract leash. Same-system APIs: just do. Cross-system owners: `design/grok-build.md` → **Stop and propose first**.
+- Grok Build does not use this Bot extract leash. Same-system APIs: just do. Cross-system owners: the build path file → **Stop and propose first**.
 - Do not hunt the live tree to rediscover copies when the User already named the cluster. Do not treat `design/reuse-map.md` as an owners encyclopedia.
 
 ## Reuse (existing owners)
@@ -126,9 +124,9 @@ Rules:
 - Do not load the design corpus for a split. One `design/code-map.md` row + the cluster is enough. Open `design/reuse-map.md` only from `design/grok-bot-reuse.md` when that brief is not the empty template.
 - Measure on-disk byte length (Get-Item Length / dir). Do not guess. Do not ReadAllText + GetByteCount just to size-check.
 - Do not dump whole files on Grok Build or Grok Bot when a diff / PR is enough.
-- Do not restyle, do not rewrite comments, do not rename for taste — on Grok Bot and web / chat size-splits. Grok Build feature work may rename or reshape inside one system per `design/grok-build.md`.
+- Do not restyle, do not rewrite comments, do not rename for taste — on Grok Bot and web / chat size-splits. Grok Build feature work may rename or reshape inside one system per the build path file.
 - Do not combine a refactor with a feature — on Grok Bot and web / chat. Grok Build may split for the cap in the same slice as the feature.
-- Web / chat still emits full files in Phase 4 / Phase 6 as `design/web-session.md` requires. This recipe does not change emit shape.
+- Web / chat still emits full files in Phase 4 / Phase 6 as the web path file requires. This recipe does not change emit shape.
 
 ## After a split
 

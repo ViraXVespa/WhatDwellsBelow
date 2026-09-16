@@ -2,11 +2,9 @@
 
 Status: protocol  
 Read when: Grok Bot Job table → ad-hoc extract or existing-owner routing  
-See also:
 
 Binding for **Grok Bot** extract sessions only. This is not the staged reuse-map PR (`design/grok-bot-reuse.md`). This is not a size sweep. User-gated: do not start this flow unless the User named extract / DRY / shared helpers / an owner route *and* did not hand a non-empty `design/reuse-map.md` brief.
 
-Ship rules stay on `design/grok-bot-session.md` (already open). Do not reopen the door. `See also:` is not a read list.
 
 ## Mandate
 

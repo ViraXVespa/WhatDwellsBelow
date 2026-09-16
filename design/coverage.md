@@ -3,30 +3,28 @@
 Status: protocol / checklist  
 Read when: the User asked whether a live system is missing, or a Demo-Complete gap check  
 Code: `scripts/debug/smoke.gd`  
-See also:
 
 The live path already exists. Phases below are a hard coverage list, not a license to delete and rebuild.
 
-Hard constraints and the Demo-Complete Checklist live in `design/constraints.md`. Use this file to find gaps, confirm which phases the live path already satisfies, and fill only the requested slice.
+Hard constraints and the Demo-Complete Checklist live in the constraints file. Use this file to find gaps, confirm which phases the live path already satisfies, and fill only the requested slice.
 
-`See also:` is not a read list. Do not reopen protocol, constraints, or debug from this file unless the User named that work. Path boot stays on `AGENTS.md` + the path session file.
 
 ## Core construction rules
 
 - Work in the live path. MUST NOT archive-then-rewrite on a fresh instance. MUST NOT discard live scenes, scripts, autoloads, or architectural patterns to start over.
-- Keep the live path designed around the orthographic Camera3D system (`design/camera.md`).
+- Keep the live path designed around the orthographic Camera3D system (the camera door).
 - Prefer simple, readable, production-quality implementations that match surrounding live code.
-- All player and enemy character art MUST follow the mandatory pipeline in `design/art-pipeline.md`.
-- These systems are mandatory in addition to `design/constraints.md`: named monsters, enemy bases, quest system, aim-line indicator, Controls Billboard, Floor Crystal loadout, idle/pressure spawns, food vs potion distinction, enter/wake VFX, and gamepad-first UI with initial focus.
+- All player and enemy character art MUST follow the mandatory pipeline in the art pipeline door.
+- These systems are mandatory in addition to the constraints file: named monsters, enemy bases, quest system, aim-line indicator, Controls Billboard, Floor Crystal loadout, idle/pressure spawns, food vs potion distinction, enter/wake VFX, and gamepad-first UI with initial focus.
 - Player-facing UI MUST be dungeon-themed. Default / unskinned controls are allowed only in the secret debug menu.
-- Placeholders are allowed only under the explicit policy in `design/audio-visual.md`.
+- Placeholders are allowed only under the explicit policy in the audio visual door.
 
 ## Coverage phases
 
 Use these to find gaps. Advance a requested slice only after its exit criteria are met, self-verified, and progress is reported to the User. Do not self-start an unrequested full-phase rebuild.
 
 **Phase 1 – Foundation**  
-Camera3D + input + basic player movement/animation states (`design/art-pipeline.md` sprites, 8 directions) for both male and female characters on the existing live path.  
+Camera3D + input + basic player movement/animation states (the art pipeline door sprites, 8 directions) for both male and female characters on the existing live path.  
 *Exit criteria*: Player can move, face 8 directions, and idle/walk with Y-billboard at 60 FPS. Depth sorting SHOULD be correct under implied real-world positions, with popping avoided wherever possible. Report to User.  
 Smoke: `--wdb-phase1-smoke`
 

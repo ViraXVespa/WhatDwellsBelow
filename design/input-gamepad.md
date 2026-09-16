@@ -2,9 +2,7 @@
 
 Status: binding design  
 Read when: gamepad layout, look mode, or universal menus  
-See also:
 
-The input door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen input siblings, ui, hud, doc-refactor, or the topic index from this file.
 
 ## Target platforms
 
@@ -34,7 +32,7 @@ The input door is already open when this sibling is loaded. `See also:` is not a
 
 All controls, gameplay, and interfaces MUST be designed with a gamepad-first intent. Every menu MUST open with a valid initial focus already set so the player can immediately navigate and select using only the gamepad (no requirement to first highlight an element with the mouse).
 
-There is no gamepad chord for display mode. Couch players change it on Pause → Settings → Graphics (`design/ui.md`). Keyboard / mouse uses Alt+Enter (below).
+There is no gamepad chord for display mode. Couch players change it on Pause → Settings → Graphics (the ui door). Keyboard / mouse uses Alt+Enter (below).
 
 ## Look mode
 
@@ -71,7 +69,7 @@ Shared classifiers live in `scripts/ui/menu_pad.gd`. Any menu with tabs MUST cal
 | E / RT | Next gear-board stats page |
 | I / D-pad Right | Gameplay only: open pause on Inventory. MUST NOT change tabs while a menu is already open. |
 
-Exception: the secret Animation Browser keeps LB / RB = previous / next model, LT / RT = animation list, Y / `gear_tip` = review-state cycle, X / `gear_drop` = play/pause, D-pad = Facing/Animation columns, left stick = speed or frame step, and right stick = facing, per `design/debug.md`. While that viewer is open those chords MUST NOT fire world or gear-board actions (X must not drop gear). Keyboard Y types into the notes field when that field has focus; gamepad Y still cycles.
+Exception: the secret Animation Browser keeps LB / RB = previous / next model, LT / RT = animation list, Y / `gear_tip` = review-state cycle, X / `gear_drop` = play/pause, D-pad = Facing/Animation columns, left stick = speed or frame step, and right stick = facing, per the debug door. While that viewer is open those chords MUST NOT fire world or gear-board actions (X must not drop gear). Keyboard Y types into the notes field when that field has focus; gamepad Y still cycles.
 
 Menu actions (`ui_*`, pause, tab bumpers, gear tip / drop, crystal zoom) are **not** on the player rebind page.
 

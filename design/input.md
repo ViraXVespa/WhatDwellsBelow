@@ -1,10 +1,7 @@
 ﻿# Input (door)
 
 Status: binding design  
-Read when: gamepad, keyboard/mouse, web touch, rebinding, prompts, aim-line  
-See also:
-
-This file is the door. Open only the sibling that matches the job. `See also:` is not a read list. HUD chrome and title stay on `design/ui.md` when that is the named work.
+Read when: gamepad, keyboard/mouse, web touch, rebinding, prompts, aim-line
 
 | Job | Open |
 |-----|------|

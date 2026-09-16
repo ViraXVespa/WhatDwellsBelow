@@ -2,9 +2,7 @@
 
 Status: binding design  
 Read when: rebinding, on-screen prompts, or aim-line  
-See also:
 
-The input door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen input siblings, ui, hud, doc-refactor, or the topic index from this file.
 
 ## Rebinding
 

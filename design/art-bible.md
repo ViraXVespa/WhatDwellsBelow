@@ -2,9 +2,8 @@
 
 Status: binding design
 Read when: locking a Character Bible, plate remap, overlays, or the quality bar
-See also:
 
-The art door is already open when this sibling is loaded. Do not reopen `design/art-pipeline.md` from this file.
+The art door is already open when this sibling is loaded. Do not reopen the art pipeline door from this file.
 
 ## 19.0 Goals and non-negotiables
 
@@ -13,7 +12,7 @@ The art door is already open when this sibling is loaded. Do not reopen `design/
 - All final frames MUST be true pixel art on an integer grid after cleanup (nearest-neighbor only).
 - Prefer fewer high-quality, readable frames over many mediocre ones. The engine can hold or simple-tween if needed.
 - Generate and clean one facing’s locomotion set as a proof before scaling to all directions and states.
-- Final engine resolution target: 128×128 canvases (recommended). Nearest-neighbor downscale to 64×64 is permitted only if required by import settings; document the choice. Base resolution in `design/audio-visual.md` remains 64×64 for world units; sprite assets ship at 128×128 unless otherwise specified.
+- Final engine resolution target: 128×128 canvases (recommended). Nearest-neighbor downscale to 64×64 is permitted only if required by import settings; document the choice. Base resolution in the audio visual door remains 64×64 for world units; sprite assets ship at 128×128 unless otherwise specified.
 - Use game-centric direction names exclusively: Up, Down, Left, Right, Up-Left, Up-Right, Down-Left, Down-Right.
 - All directional variants of the same animation state for a given character MUST contain exactly the same number of frames.
 - **One I2V clip per review gate.** After each clip, stop and wait for the User. Do not queue the next facing, action, gender, retry, or fill-in pass until the User says so.
@@ -103,7 +102,7 @@ Do not bake a held axe, staff, bow, pick, or hatchet into a body frame. The Disp
 
 The User judges the I2V clip itself first (facing lock, travel, identity). Do not pre-harvest a rejected clip.
 
-After accept, harvest, pack, and cleanup (`design/art-pack.md`). Then the User judges the packed strip.
+After accept, harvest, pack, and cleanup (the art pipeline / pack job). Then the User judges the packed strip.
 
 Do not start the next unit until the User says so.
 
@@ -140,7 +139,7 @@ Load this appendix only when choosing a generation method.
 | Chained image-edits for Bible cells | Low | Drift; avoid for Bible |
 | `i2v_seeds.py` walk prompt (in-place steps, short arm swing, settle and hold the still) | High | Only locomotion I2V method |
 | `i2v_seeds.py` one-shot MOTION keys (per weapon / tool, death, Dispel) | Mixed | Walk-class I2V is high; unarmed two-hand attack I2V invents props |
-| `attack_keyframes.py` Bible-cell stills | Parked | Coil sheet only; open `design/art-attack-keyframes.md` when the User resumes that pipeline |
+| `attack_keyframes.py` Bible-cell stills | Parked | Coil sheet only; open the art pipeline / attack keyframes job when the User resumes that pipeline |
 | One 400% NN spliced still as the I2V seed | High | Default seed |
 | `i2v_seeds.py --test` web preamble | Browser tests only | Do not send in Grok Build I2V |
 | Full-Bible seed | Medium | Only if the User asks after a still-seed miss |
@@ -149,5 +148,5 @@ Load this appendix only when choosing a generation method.
 | `spill_flood=False` on video / jpg stills after remap | High | Avoid eating hair / maroon / purple cloth |
 | Automatic multi-pass fill-in | Forbidden | One unit, then User review |
 | Overlay I2V / stills for weapons and tools | High | Layers, not baked body props |
-| Isolated Imagine / I2V via `tools/run_isolated_grok.py` | High | Default generate path; see `design/isolated-media.md` |
+| Isolated Imagine / I2V via `tools/run_isolated_grok.py` | High | Default generate path; see the art pipeline / isolated media job |
 | Nearest-neighbor / scripted pixel-grid cleanup | Mandatory | Always perform after accept |

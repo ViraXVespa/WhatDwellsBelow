@@ -1,0 +1,179 @@
+# Agent navigation only. Topic bodies must not name design/*.md paths.
+# Human topic index stays in design/README.md and is not a boot file.
+version: 1
+
+boot:
+  agents: AGENTS.md
+  paths:
+    web: design/web-session.md
+    build: design/grok-build.md
+    bot: design/grok-bot-session.md
+
+requires:
+  web:
+    - design/protocol.md
+    - design/constraints.md
+  build:
+    - design/protocol.md
+    - design/constraints.md
+  bot: []
+
+indexes:
+  topics: design/README.md
+  live: design/code-map.md
+  graph: design/load-graph.md
+  demo: Demo_GDD.md
+
+notes_exempt:
+  - design/sessions.md
+  - design/session-log.md
+  - design/reuse-map.md
+
+recipes:
+  refactor: design/refactor.md
+  doc_refactor: design/doc-refactor.md
+  pc_offload: design/pc-offload.md
+
+bot_jobs:
+  size: design/grok-bot-size.md
+  extract: design/grok-bot-extract.md
+  reuse: design/grok-bot-reuse.md
+  relocate: design/grok-bot-relocate.md
+  docs: design/grok-bot-docs.md
+
+gates:
+  tunables:
+    file: design/tunables.md
+    when: numbers_change
+  versioning:
+    file: design/versioning.md
+    when: new_week_or_named_pin
+  versioning_log:
+    file: design/versioning-log.md
+    when: ship_label
+  isolated_media:
+    file: design/isolated-media.md
+    when: imagine
+  sessions:
+    file: design/sessions.md
+    when: build_leaveoff
+  session_log:
+    file: design/session-log.md
+    when: build_close
+  reuse_map:
+    file: design/reuse-map.md
+    when: named_reuse_brief
+  code_map:
+    file: design/code-map.md
+    when: live_files_one_row
+
+doors:
+  overview:
+    file: design/overview.md
+    read_when: "scoping a feature, writing player-facing copy, deciding whether something is in the demo"
+    jobs: {}
+  input:
+    file: design/input.md
+    read_when: "gamepad, keyboard/mouse, web touch, rebinding, prompts, aim-line"
+    jobs:
+      platforms_gamepad: design/input-gamepad.md
+      rebind_prompts: design/input-rebind-prompts.md
+      kb_mouse: design/input-kb-mouse.md
+      web_touch: design/input-web-touch.md
+      live_snapshots: design/input-live.md
+  camera:
+    file: design/camera.md
+    read_when: "touching Camera3D, zoom, HUD scale, renderer, or depth sorting"
+    jobs: {}
+  player:
+    file: design/player.md
+    read_when: "changing movement, collision, facing, or character select"
+    jobs: {}
+  combat:
+    file: design/combat.md
+    read_when: "changing weapons, hit detection, dash, lock, or juice"
+    jobs: {}
+  skills:
+    file: design/skills.md
+    read_when: "changing XP, HUD level text, forging, or enemy scaling vs the player"
+    jobs: {}
+  inventory:
+    file: design/inventory.md
+    read_when: "bag, equipment, forge/analyze, affixes, artifacts, extraction mailing"
+    jobs:
+      bag: design/inventory-bag.md
+      gear: design/inventory-gear.md
+      meta: design/inventory-meta.md
+      live_snapshots: design/inventory-live.md
+  gear_ui:
+    file: design/gear-ui.md
+    read_when: "changing pause inventory, Floor Crystal loadout, Anvil menus, or gear tooltips"
+    jobs: {}
+  hub:
+    file: design/hub.md
+    read_when: "changing camp layout, loadout, or hub interactables"
+    jobs: {}
+  dungeon:
+    file: design/dungeon.md
+    read_when: "changing gen, floor flow, streaming, boss doors, fog, or floor crystals"
+    jobs: {}
+  enemies:
+    file: design/enemies.md
+    read_when: "changing roster, AI, bosses, or combat-level scaling"
+    jobs: {}
+  interactables:
+    file: design/interactables.md
+    read_when: "changing gathering, Extraction Gates, shops, shrines, or puzzles"
+    jobs: {}
+  ui:
+    file: design/ui.md
+    read_when: "title, HUD, pause chrome, hub UI chrome, web fullscreen gate"
+    jobs:
+      theme: design/ui-theme.md
+      title_web: design/ui-title-web.md
+      hud: design/ui-hud.md
+      pause: design/ui-pause.md
+      run_flow: design/ui-run-flow.md
+      gear_entry: design/ui-gear-entry.md
+  debug:
+    file: design/debug.md
+    read_when: "secret debug menu, playtest / journal, animation browser, smoke coverage notes"
+    jobs:
+      menu: design/debug-menu.md
+      playtest: design/debug-playtest.md
+      anim_browser: design/debug-anim-browser.md
+      smokes: design/debug-smokes.md
+  audio_visual:
+    file: design/audio-visual.md
+    read_when: "changing music, SFX, splash/title, or art rules"
+    jobs: {}
+  save_tech:
+    file: design/save-tech.md
+    read_when: "changing persistence, web export, autoloads, or perf"
+    jobs: {}
+  feel:
+    file: design/feel.md
+    read_when: "tuning difficulty, time-to-extract, weapon parity, or polish bar"
+    jobs: {}
+  edge_cases:
+    file: design/edge-cases.md
+    read_when: "floor-1 empty death, bag-full toast, save fallback, gate caps, accidental confirm"
+    jobs: {}
+  coverage:
+    file: design/coverage.md
+    read_when: "the User asked whether a live system is missing, or a Demo-Complete gap check"
+    jobs: {}
+  art_pipeline:
+    file: design/art-pipeline.md
+    read_when: "generating or replacing player / enemy / weapon frames"
+    jobs:
+      isolated_media: design/isolated-media.md
+      i2v: design/art-i2v.md
+      pack: design/art-pack.md
+      review: design/art-review.md
+      attack_keyframes: design/art-attack-keyframes.md
+      bible: design/art-bible.md
+  archives:
+    file: design/archives.md
+    read_when: "touching Archives UI, Pages exports, or catalog pins"
+    jobs: {}

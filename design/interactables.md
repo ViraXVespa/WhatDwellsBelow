@@ -3,9 +3,7 @@
 Status: binding design  
 Read when: changing gathering, Extraction Gates, shops, shrines, or puzzles  
 Code: `scripts/world/gather_node.gd`, `breakable.gd`, `interact.gd`, `interact_act.gd`, `interact_prompt.gd`, `interact_chest.gd`, `interact_fx.gd`, `dungeon_props.gd`, `dungeon_props_place.gd`, `floor_crystal.gd`, `crystal_net.gd`, `pickup.gd`, `scripts/ui/hud.gd`, `scripts/input/prompts.gd`  
-See also:
 
-`See also:` is not a read list. Open inventory only when mail-legal / extract rules are the named work. Dungeon placement, UI chrome, and input glyphs stay on their own doors.
 
 ## Mining nodes
 
@@ -40,7 +38,7 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 
 - Provide the extraction / mailing interface. There are no in-dungeon clerks.
 - Each gate is a mechanical wall fixture (microwave-like housing with a portal viewport) built into a **north wall**, three wall tiles wide. Only that facing ships.
-- Count, safe rooms, and separation: `design/dungeon.md`. Mail-legal goods: `design/inventory-meta.md`.
+- Count, safe rooms, and separation: the dungeon door. Mail-legal goods: the inventory / meta job.
 - Dialogue is minimal; the main interaction is a clean, TV-readable list.
 - A gate becomes inactive after the extract menu closes **if anything was mailed** that visit. Cancel with nothing sent: the gate stays active.
 - Inactive: lamps off, viewport sealed by dungeon wall, banner reads INACTIVE. Active and inactive share the same metal shading so later world lighting can apply to both.
@@ -83,7 +81,7 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 
 ## Stairs
 
-Lock and “deeper only”: `design/dungeon.md`.
+Lock and “deeper only”: the dungeon door.
 
 - Interaction prompt is a last-used `interact` glyph plus the verb “Descend”. First use arms confirm; second use descends. Locked copy is text only (“Locked. Defeat the guardian.”).
 
@@ -91,7 +89,7 @@ Lock and “deeper only”: `design/dungeon.md`.
 
 - Placeholdia’s loadout crystal is unchanged: it opens loadout / enter dungeon.
 - In-dungeon crystals are waypoints, not descend points.
-- Placement, bind, and network unlocks: `design/dungeon.md`.
+- Placement, bind, and network unlocks: the dungeon door.
 - Other crystals show “Clear the area to activate.” until nearby enemies and pending spawn jobs are gone, then the verb “Activate crystal” with the `interact` glyph.
 - A bound crystal opens the transport menu: Local Transport Network, Floor Transport Network, Back.
 - Crystal map zoom is `crystal_zoom` (Tab / Y). That bind appears in the menu footer, not in the zoom status line.
@@ -103,4 +101,4 @@ World `prompt` strings are verbs only (`Descend`, `Gather`, `Activate crystal`, 
 
 ## HUD prompt
 
-`App.interact_prompt` is the verb only. `hud.gd` attaches the current-scheme `interact` glyph. Scheme flips with last-used input (`design/input.md`).
+`App.interact_prompt` is the verb only. `hud.gd` attaches the current-scheme `interact` glyph. Scheme flips with last-used input (the input door).

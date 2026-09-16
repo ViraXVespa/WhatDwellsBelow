@@ -3,9 +3,7 @@
 Status: binding design + live snapshot  
 Read when: changing music, SFX, splash/title, or art rules  
 Code: `scripts/audio/music.gd`, `scripts/audio/sfx.gd`, `scripts/ui/splash.gd`, `scripts/ui/fs_gate.gd`, `scripts/boot.gd`, `scripts/title.gd`, `scripts/world/sprite_filter.gd`, `tools/enable_texture_mips.py`, `.github/workflows/pages.yml`  
-See also:
 
-`See also:` is not a read list. Open the art door only when generating or replacing frames. Camera, debug, UI chrome, and constraints stay on their own doors.
 
 ## Music
 
@@ -61,7 +59,7 @@ Live files under `assets/audio/` include `sfx_dash`, `sfx_hit`, `sfx_hurt`, `sfx
 - Mip blend Sharp / Smooth is a debug Settings toggle (`use_nearest_mipmap_filter`). Default is Smooth.
 - Mip bias is stored for later; Sprite3D has no lod-bias hook yet.
 - All characters use Y-billboard so they remain upright under the orthographic camera.
-- Character art, 8-dir Bible layout, male/female parity, paper-doll overlays, required body states, and I2V plate law: `design/art-pipeline.md`. Body-state list and idle-still rule: `design/player.md`. Voice-over sets: `design/player.md` and the SFX table above.
+- Character art, 8-dir Bible layout, male/female parity, paper-doll overlays, required body states, and I2V plate law: the art pipeline door. Body-state list and idle-still rule: the player door. Voice-over sets: the player door and the SFX table above.
 - Wall height, tile size (1 unit = 64 px), and depth-sorting SHOULD produce correct layering. Arbitrary popping MUST be avoided wherever possible, but it is not a hard failure if a small amount remains after best-effort sorting.
 - Buildings in Placeholdia MUST have actual depth and realistic dimensions.
 - Lighting, fog color/density, and void plane MUST create a clear visual contrast between the warmer Placeholdia hub and the colder, darker dungeon floors.
@@ -77,7 +75,7 @@ Live world art (2026-09-09 pass): Placeholdia and dungeon tiles, building facade
 
 Live `splash.gd`: fade in 0.7 s, hold until t = 4.0 s, fade out 0.7 s. Skip with interact / pause / accept / click, then `App.go_title()`.
 
-Live `fs_gate.gd`: title-card layout, platform copy, action + Continue. See `design/ui.md`.
+Live `fs_gate.gd`: title-card layout, platform copy, action + Continue. See the ui door.
 
 ## Placeholder policy
 

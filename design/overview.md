@@ -3,9 +3,7 @@
 Status: binding design  
 Read when: scoping a feature, writing player-facing copy, deciding whether something is in the demo  
 Code: `README.md`, `scripts/data/tunables.gd` (`ONE_LINER`), `scripts/app.gd`  
-See also:
 
-`See also:` is not a read list. Open hub only when the work is Placeholdia / Floor Crystal / enter-wake. Do not open constraints from this file; that file is already on the Shared boot when this topic is in play.
 
 ## 1. Overview and vision
 
@@ -32,11 +30,11 @@ A complete, production-ready vertical slice that can ship as a free demo. Every 
 
 ## 2. Scope, pillars, non-goals, and acceptance
 
-Hard constraints, demo-complete bar, and the full in-scope contract: `design/constraints.md`. Topic doors for the systems that contract names: `design/README.md`.
+Hard constraints, demo-complete bar, and the full in-scope contract: the constraints file. Topic doors for the systems that contract names: the topics index.
 
 **Explicit Non-Goals (MUST NOT appear)**
 - Co-op / multiplayer / split-screen
-- Any skill beyond the eleven listed in `design/skills.md`
+- Any skill beyond the eleven listed in the skills door
 - Rarity higher than blue
 - Hub upgrades, currency sinks beyond vendor/anvil, or meta progression systems
 - Stealth, mounts, fishing, or other side systems
@@ -77,5 +75,5 @@ No mandatory intro cutscene or long exposition is required. The player learns th
 **Specific Locked Flavor**
 - Empty floor-1 death/“Dispel” recap MUST include the line: “They lived just to die. What a waste.”
 - Credit splash MUST show the word “Proudly” crossed out and the word “Shamelessly” written above it in graffiti style so the phrase reads as vandalized: “Shamelessly Vibecoded with Grok.”
-- The dungeon music track is titled “Bitter”. Links and loop rule: `design/audio-visual.md`.
+- The dungeon music track is titled “Bitter”. Links and loop rule: the audio visual door.
 - Player-facing UI, pause menu, recap, and prompts MUST write the voluntary exit action as **“Dispel”** (quotation marks included) for the locked humorous tone. Internal code identifiers MAY omit the quotes.

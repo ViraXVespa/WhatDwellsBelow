@@ -3,9 +3,7 @@
 Status: binding design + live snapshot  
 Read when: changing XP, HUD level text, forging, or enemy scaling vs the player  
 Code: `scripts/data/progress.gd`, `scripts/data/progress_combat.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/app.gd`, `scripts/ui/hud.gd`, `scripts/ui/pause_menu.gd`, `scripts/data/balance.gd`, `scripts/combat/threat.gd`  
-See also:
 
-`See also:` is not a read list. Open tunables only when a number is the named work. Combat, enemies, UI, and inventory stay on their own doors.
 
 ## Skills included in the demo
 
@@ -43,7 +41,7 @@ Live ids: `axe`, `staff`, `bow`, `str`, `mag`, `rng`, `def`, `hp`, `mine`, `wood
 
 - Defeating an enemy grants weapon + partner-style XP (existing split of `xp_per_kill`).
 - The same kill ALSO grants Hitpoints XP and Defense XP. This stacks on top of Defense-from-being-hit and Hitpoints-from-heal.
-- Live `xp_kill_hp` / `xp_kill_def` and `xp_per_kill`: `design/tunables.md` (adrenaline applies).
+- Live `xp_kill_hp` / `xp_kill_def` and `xp_per_kill`: the tunables gate (adrenaline applies).
 
 ## Combat level
 
@@ -58,7 +56,7 @@ Live ids: `axe`, `staff`, `bow`, `str`, `mag`, `rng`, `def`, `hp`, `mine`, `wood
 - If the currently equipped weapon’s style Combat Level is lower than the highest, that style level is shown in parentheses next to it (e.g. Level 14 (Magic 11)).
 - Dungeon item level uses enemy / area combat level. That item level is what Analyze stores and what Forge can configure up to.
 
-Enemy floor band and CL 17 budget: `design/combat.md`. Enemy walk / pack HP: `design/enemies.md`. Live keys: `design/tunables.md`.
+Enemy floor band and CL 17 budget: the combat door. Enemy walk / pack HP: the enemies door. Live keys: the tunables gate.
 
 ## Skill effects (high-level)
 
@@ -93,4 +91,4 @@ HUD ints = max(1, round(those scores))
 Example: lv 11 / 11 / 11 / 11 → combat 11.  
 Fragment rate is `App.bal.xp_keep` (live 0.20). Adrenaline multiplies run XP in `add_run_xp`.
 
-Player CL is ~1/4 of the old sum-of-four-skills value. Floor span and per-CL enemy rates live in `design/tunables.md` so same-floor raw stats stay in the same ballpark.
+Player CL is ~1/4 of the old sum-of-four-skills value. Floor span and per-CL enemy rates live in the tunables gate so same-floor raw stats stay in the same ballpark.

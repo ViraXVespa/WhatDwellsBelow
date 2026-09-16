@@ -2,9 +2,7 @@
 
 Status: protocol  
 Read when: Grok Bot Job table → size sweep  
-See also:
 
-Binding for **Grok Bot** size sweeps only. Ship rules stay on `design/grok-bot-session.md` (already open). Recipes stay in `design/refactor.md`. Do not reopen the door. `See also:` is not a read list.
 
 ## Mandate
 

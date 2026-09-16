@@ -2,18 +2,16 @@
 
 Status: binding design  
 Read when: pause menu layout / tabs / behavior  
-See also:
 
-The UI door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen ui, theme, title-web, hud, run-flow, gear-entry, gear-ui, hub, input, or doc-refactor from this file.
 
 ## Pause menu
 
 Opened with Menu / Start / Esc. Freezes gameplay.
 Every menu (including this one) MUST open with valid initial focus so it is immediately navigable by gamepad.
 
-On web, Esc MUST still open this menu while the page is fullscreen. Esc MUST NOT call `document.exitFullscreen`. Leaving web fullscreen is Pause → Settings → Graphics display toggle or Alt+Enter only (`design/input.md`).
+On web, Esc MUST still open this menu while the page is fullscreen. Esc MUST NOT call `document.exitFullscreen`. Leaving web fullscreen is Pause → Settings → Graphics display toggle or Alt+Enter only (the input door).
 
-Menu bindings are shared through `scripts/ui/menu_pad.gd` (`design/input.md`):
+Menu bindings are shared through `scripts/ui/menu_pad.gd` (the input door):
 - A / Enter confirms the focused control. A second A confirms a pending prompt.
 - B / Esc backs out of a nested layer (re-equip list, Settings detail column, pending prompt). At root, close the menu.
 - LB / RB (or `[` / `]`) cycle the three pause tabs. They MUST NOT page the inventory stats card.
@@ -25,7 +23,7 @@ The current pause tab MUST read as selected at a glance: same lighter fill and b
 
 Exactly three tabs, in this order, navigable with LB/RB or equivalent:
 1. Settings – default tab when pause opens. Shared two-column split (`split_menu.gd` + `split_menu_view.gd`). Left list, right page or leaf copy. Pages: Gameplay, Audio, Graphics, Controls. Leaves: Patreon, Dispel (dungeon) or Main Menu (Placeholdia / hub), Quit (hidden on Xbox). Leaf rows have no chevron; the right pane shows a short description and stays undimmed. Hover does not change an open submenu. Click a different page while detail is open switches to that page. Click the already-open page returns focus to the left list.
-2. Inventory – shared paper-doll gear board (`design/gear-ui.md`), 7-column bag grid, flyout tooltips, paged stats. Stats pages use **Q / LT** and **E / RT**. LMB / RMB never page the stats card. Use / consume / drop / equip as specified there, including mid-run weapon changes from the bag. Active artifact set bonuses appear on the Artifact sets stats page and in item flyouts. No extra Close row; B / Esc closes pause.
+2. Inventory – shared paper-doll gear board (the gear ui door), 7-column bag grid, flyout tooltips, paged stats. Stats pages use **Q / LT** and **E / RT**. LMB / RMB never page the stats card. Use / consume / drop / equip as specified there, including mid-run weapon changes from the bag. Active artifact set bonuses appear on the Artifact sets stats page and in item flyouts. No extra Close row; B / Esc closes pause.
 3. Skills – list of the eleven skills with current level, XP bar to next level, and permanent XP total. Flyouts are right-aligned and MUST sit above the prompt footer when they would overlap it. No extra Close row.
 
 Settings pages MUST contain:
@@ -42,7 +40,7 @@ Graphics
 - “Sprite filtering” label, then Mipmaps and Anisotropic on one centered row. Anisotropic is disabled while Mipmaps is off. Nearest is implied. Linear modes MUST NOT appear here. Default is nearest + mips + aniso.
 - Camera zoom slider (1.0–4.0, default 1.75). MUST apply live; no restart.
 - HUD scale slider. MUST apply live.
-- Display mode. Desktop: cycle Windowed / Borderless fullscreen / True fullscreen. Fresh default is borderless. Web and native mobile: Fullscreen on/off. Hidden when `OS.has_feature("xbox")`. MUST apply live from the tap. Alt+Enter is the keyboard equivalent (`design/input.md`).
+- Display mode. Desktop: cycle Windowed / Borderless fullscreen / True fullscreen. Fresh default is borderless. Web and native mobile: Fullscreen on/off. Hidden when `OS.has_feature("xbox")`. MUST apply live from the tap. Alt+Enter is the keyboard equivalent (the input door).
 - Aim-line toggle and opacity slider
 
 Controls
@@ -56,8 +54,8 @@ Leaves
 - Dispel / Main Menu / Delete Save Data / Reset Controls use `confirm_dlg.gd`. Quit does not.
 - Confirm dialogs carry their own Select + Back strip. B / Esc / Cancel closes the prompt and restores the control that opened it.
 
-There is no presentation-mode switcher. Archives is title-only (`design/archives.md`).
+There is no presentation-mode switcher. Archives is title-only (the archives door).
 
-The full debug / balance menu is **no longer** present in the Pause Menu. In-test display options that are not approved for players live on the secret debug **Settings** tab (`design/debug.md`). The touch stick deadzone slider lives there too. The player display-mode control is mirrored on that Settings tab.
+The full debug / balance menu is **no longer** present in the Pause Menu. In-test display options that are not approved for players live on the secret debug **Settings** tab (the debug door). The touch stick deadzone slider lives there too. The player display-mode control is mirrored on that Settings tab.
 
 Placeholdia inventory (same board, opened outside a run) MUST use Loadout option sources: starters, holds, and non-white bank items. Dungeon inventory MAY only list the equipped piece plus bag items of that slot.

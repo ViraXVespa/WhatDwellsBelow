@@ -3,9 +3,7 @@
 Status: binding design + live snapshot  
 Read when: touching Camera3D, zoom, HUD scale, renderer, or depth sorting  
 Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/camp_warm.gd`, `scripts/input/look_ctrl.gd`, `scripts/app.gd`, `project.godot`  
-See also:
 
-`See also:` is not a read list. Open tunables only when a number is the named work. Player, input, archives, audio-visual, UI, and hub stay on their own doors.
 
 ## Camera (live 3D path)
 
@@ -25,13 +23,13 @@ Title → Play hub warmup MAY set `cam.size` wider than `ZOOM_MIN` so the full P
 
 ## Archives
 
-The demo MUST ship with the Archives browser on the title card. This is required for the Patreon development narrative. Selecting title “Play” always launches the live path. Catalog rows include Classic 2D, Art experiment, Full 3D Pass, Grok Build Results (Week 1), and Grok Web Results (Week 1). Each row is a pinned commit per `design/archives.md`. There is no in-pause presentation-mode switcher.
+The demo MUST ship with the Archives browser on the title card. This is required for the Patreon development narrative. Selecting title “Play” always launches the live path. Catalog rows include Classic 2D, Art experiment, Full 3D Pass, Grok Build Results (Week 1), and Grok Web Results (Week 1). Each row is a pinned commit per the archives door. There is no in-pause presentation-mode switcher.
 
 ## Renderer
 
 Prefer the Compatibility renderer for the final shippable build if it does not compromise the web export. Mobile renderer is acceptable only if required for web stability.
 
-Sprite3D filter is not the project canvas default. Live default is nearest + mips + anisotropic. Settings → Graphics exposes Mipmaps and Anisotropic checkboxes (nearest implied; aniso off when mips is off). Linear modes live only on the secret debug Settings tab. See `design/audio-visual.md` and `design/debug.md`.
+Sprite3D filter is not the project canvas default. Live default is nearest + mips + anisotropic. Settings → Graphics exposes Mipmaps and Anisotropic checkboxes (nearest implied; aniso off when mips is off). Linear modes live only on the secret debug Settings tab. See the audio visual door and the debug door.
 
 ## Live snapshot
 

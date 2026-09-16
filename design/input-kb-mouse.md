@@ -2,9 +2,7 @@
 
 Status: binding design  
 Read when: keyboard / mouse fallback  
-See also:
 
-The input door is already open when this sibling is loaded. `See also:` is not a read list. Do not bounce back to `design/input.md` from this file.
 
 ## Input – Keyboard / mouse (fully featured fallback)
 

@@ -2,10 +2,8 @@
 
 Status: parked experiment. Not live I2V law.  
 Read when: the User resumes the attack animation keyframe pipeline, two-hand body stills, coil stills, or names this file.  
-See also:  
 Code: `tools/attack_keyframes.py`
 
-This sibling is parked. Do not open it from a general art-pipeline session. `See also:` is not a read list. `design/art-i2v.md` and `tools/i2v_seeds.py` stay the I2V path.
 
 Do not read when: the job is walk or idle I2V, pack, overlay, Godot, combat numbers, or a general art-pipeline session.
 
@@ -77,7 +75,7 @@ Allowed extras on top of the v22 stack+fists+feet sheet: drop “same hair”; �
 7. Asking for a stronger coil (“clearer”, “shoulder twist”, “ribcage rotate”) scaled feet and hair with the torso.
 8. Unqualified “left” / “right” is viewer-left. Use `her left hand` / `his left hand`.
 9. Editing a previous generate is not the success case. Fresh Bible only.
-10. Isolated Grok Build (no AGENTS.md tree) cost about half a protocol-loaded I2V turn. Context, not the video model, was the extra spend.
+10. Isolated Grok Build (no the repo agent-rules file tree) cost about half a protocol-loaded I2V turn. Context, not the video model, was the extra spend.
 11. Video 1.5 can pin first+last frame. That is the planned interpolator after keys exist. It is not a six-key timeline.
 
 ## Trial log (female Down coil unless noted)

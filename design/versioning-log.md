@@ -2,7 +2,6 @@
 
 Status: binding design
 Read when: writing a changelog entry, title “what’s new”, web Phase 7 ship, or Grok Bot PR close-out
-See also:
 
 Week pins and archive catalog ritual stay on `design/versioning.md`. Open that file only when the User said **new week** or named a pin.
 
@@ -32,7 +31,7 @@ Plain text, no code fence when emitted. Body shape:
 | Named revert / what was 0.1.4? | That one file (flat or under `design/changelog/archive/{epoch}.{series}/`). |
 | Game | `version.json` + `changelog.json`. |
 
-`design/changelog.md` is not required. Pages `/changelog/` is the public index.
+the changelog directory is not required. Pages `/changelog/` is the public index.
 
 ## In-game
 

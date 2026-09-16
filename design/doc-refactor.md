@@ -2,9 +2,7 @@
 
 Status: protocol  
 Read when: splitting topic `design/*.md` into a door + siblings; Grok Bot doc facade flow  
-See also:
 
-This file is the mechanical recipe. Bot session flow is the docs Job-table sibling. Do not open the Bot door from this recipe. `See also:` is not a read list. Load cap: `AGENTS.md` Shared (soft).
 
 ## Goal
 
@@ -60,7 +58,6 @@ Cut routing tokens without losing binding comprehension. Do not change binding m
 - After inventory, open **one** facade and **only** the sibling for the active job.
 - Do not concatenate all siblings into chat "for context."
 - Prefer Length summaries / headings lists over pasting whole markdown bodies.
-- `See also:` is not a read list and does not increment the load count. Open a listed path only when `Read when` matches, the Job table names it, or the User names that work.
 
 ## Door + siblings layout
 

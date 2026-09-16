@@ -2,11 +2,9 @@
 
 Status: protocol  
 Read when: Grok Bot Job table → parked or named folder relocate  
-See also:
 
 Binding for **Grok Bot** when the User names a folder move / relocate cluster. Do not fold this into a size sweep, extract, reuse-map brief, or doc facade PR.
 
-Ship rules stay on `design/grok-bot-session.md` (already open). Do not reopen the door. `See also:` is not a read list.
 
 ## Mandate
 

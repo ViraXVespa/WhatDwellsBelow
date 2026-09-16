@@ -2,7 +2,6 @@
 
 Status: protocol
 Read when: the User names routing work
-See also:
 
 Not a boot file. Not a topic index. Empty See also on purpose.
 
@@ -48,3 +47,5 @@ See also is never a read list.
 8. Opening this file happens only when the User names routing work.
 9. Sibling See also is empty.
 10. Opening the topic table is not a boot step.
+
+Machine-readable edges: `design/routes.yaml`. This file is the human sketch only.

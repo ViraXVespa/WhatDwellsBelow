@@ -2,7 +2,6 @@
 
 Status: protocol  
 Read when: Grok Build (CLI) path; every CLI instance after a gap  
-See also:
 
 ## Recognize
 
@@ -10,7 +9,6 @@ You can write the live tree. If you cannot, you are not on this path — use `de
 
 One session family per development week. A **slice** (including one I2V clip) stays in that thread. A mid-week new CLI chat is a catch-up, not a new week.
 
-`See also:` is not a read list. Load cap: `AGENTS.md` Shared (soft). Do not reopen `AGENTS.md` from this file.
 
 ## New week vs catch-up vs slice
 

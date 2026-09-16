@@ -2,9 +2,7 @@
 
 Status: binding design  
 Read when: catalog sets or required slots live snapshot  
-See also:
 
-The inventory door is already open when this sibling is loaded. `See also:` is not a read list. Do not bounce back to `design/inventory.md` from this file.
 
 ## Live snapshot — catalog sets
 

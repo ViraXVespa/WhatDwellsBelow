@@ -3,9 +3,7 @@
 Status: binding design + live snapshot  
 Read when: changing roster, AI, bosses, or combat-level scaling  
 Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/threat.gd`, `scripts/data/balance_enemies.gd`  
-See also:
 
-`See also:` is not a read list. Open tunables only when a number is the named work. Combat feel, dungeon placement, skills, and art stay on their own doors.
 
 ## Enemy variety
 
@@ -18,7 +16,7 @@ See also:
 
 ## Art and I2V
 
-Enemy frames follow `design/art-pipeline.md`. There is not a second enemy pipeline. 8-dir Bible layout, plate seed, remap, and review-gate law live there.
+Enemy frames follow the art pipeline door. There is not a second enemy pipeline. 8-dir Bible layout, plate seed, remap, and review-gate law live there.
 
 ## Roles present in demo
 
@@ -51,7 +49,7 @@ Floor Guardians (floors 1–4) and the Gate Master (floor 5) MUST have high heal
 
 ## Combat level and durability
 
-Floor band, rank-multiplier feel, and the floor-1 CL 17 budget: `design/combat.md`. Live keys: `design/tunables.md`.
+Floor band, rank-multiplier feel, and the floor-1 CL 17 budget: the combat door. Live keys: the tunables gate.
 
 - Enemy CL is walked from spawn travel distance (`Threat.level_at`).
 - Base HP lives in `balance_enemies.gd` and is about double the pre-retune table. Packs MUST take more than one swing.
@@ -65,7 +63,7 @@ Exact leash distance, hunt duration after lost LOS, and re-aggro rules are tunab
 Implement clean steering, separation, and stuck-handling appropriate for the orthographic Camera3D live path.  
 Flee event occurs an average of 2 times per floor on a full clear: after the group has taken sufficient damage, the fastest enemy in the encounter flashes a clear “!” overhead, receives a small but noticeable speed boost, and flees to spawn reinforcements. No other telegraph is required beyond the “!”.
 
-Reinforcements, ambushes, and pressure spawns use BFS on the floor graph. They MUST appear in the connected hallway the player is standing in, not in an adjacent hall cut off by a wall. Placement caps: `design/dungeon.md`.
+Reinforcements, ambushes, and pressure spawns use BFS on the floor graph. They MUST appear in the connected hallway the player is standing in, not in an adjacent hall cut off by a wall. Placement caps: the dungeon door.
 
 ## Idle / pressure spawns
 
@@ -73,7 +71,7 @@ If the player remains idle too long outside a safe room, or stops revealing new 
 
 - MUST NOT spawn inside safe rooms (Extraction Gate, ghost shop, puzzle).
 - Idle timer, no-reveal timer, spawn count, and spawn radius are tunable via the secret debug menu.
-- Wave count is capped per floor (`pressure_waves`) so the CL 17 XP budget in `design/combat.md` stays static.
+- Wave count is capped per floor (`pressure_waves`) so the CL 17 XP budget in the combat door stays static.
 - Ambush and pressure kills grant XP. That is why the cap exists.
 - Purpose: the dungeon stays reactive if the player camps or stalls exploration, without becoming an infinite XP farm.
 
@@ -107,4 +105,4 @@ Live AI defaults: leash 9, hunt 1.8, reaggro 0.6, aggro 7.5, flee speed ×1.45, 
 
 Room pack 3. Base guards 5. Ambush cap 40, spacing 10, pack 1–2.
 
-Enemy combat level keys: `design/tunables.md`. Player-facing CL feel: `design/combat.md`.
+Enemy combat level keys: the tunables gate. Player-facing CL feel: the combat door.

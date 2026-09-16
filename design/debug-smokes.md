@@ -3,9 +3,7 @@
 Status: binding design  
 Read when: smoke phase coverage / how to run smokes  
 Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/debug/debug_menu/`  
-See also:
 
-The debug door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen debug-menu, playtest, anim-browser, pc-offload, refactor, or the topic index from this file.
 
 ## Live snapshot — smoke tests (`smoke.gd`)
 
@@ -13,7 +11,7 @@ Coverage runner, not a particle system. User args: `--wdb-phaseN-smoke` for N = 
 
 ### How to run (Steam Godot / redirected IO)
 
-Preferred (agent-friendly): from repo root, prefer `& .\tools\run_smokes.ps1 -Phases @(1,2,6)` (optional `-TimeoutSec 180`, `-VerboseGodot`). Avoid `powershell -File tools/run_smokes.ps1 -Phases 1,2,6` - PowerShell can bind that as phase 45. Writes `_logs/smokes/summary.txt` with phase status plus `P*:` / `SCRIPT ERROR` highlights only. Full PC-offload catalog: `design/pc-offload.md`.
+Preferred (agent-friendly): from repo root, prefer `& .\tools\run_smokes.ps1 -Phases @(1,2,6)` (optional `-TimeoutSec 180`, `-VerboseGodot`). Avoid `powershell -File tools/run_smokes.ps1 -Phases 1,2,6` - PowerShell can bind that as phase 45. Writes `_logs/smokes/summary.txt` with phase status plus `P*:` / `SCRIPT ERROR` highlights only. Full PC-offload catalog: the pc offload recipe.
 
 Binary (Steam tools build): `C:/Program Files (x86)/Steam/steamapps/common/Godot Engine/godot.windows.opt.tools.64.exe` (also in `tools/export_web.ps1`).
 
@@ -27,7 +25,7 @@ Binary (Steam tools build): `C:/Program Files (x86)/Steam/steamapps/common/Godot
 - Put the phase flag in **user** args (after `--`) so `OS.get_cmdline_user_args()` sees it.
 - Capture stderr for `P1:`…`P9:` lines and `SCRIPT ERROR`. Exit is self-quit from the phase (or kill after a timeout if hung).
 - Optional: `--verbose` for load traces (huge logs). Not required once drivers are set.
-- Compile/reload check is separate: `tools/run_godot_import_check.ps1` (`--headless --editor --import`). Catalog: `design/pc-offload.md`. Do not treat a smoke pass as proof scripts are editor-clean, or vice versa.
+- Compile/reload check is separate: `tools/run_godot_import_check.ps1` (`--headless --editor --import`). Catalog: the pc offload recipe. Do not treat a smoke pass as proof scripts are editor-clean, or vice versa.
 
 | Fn | Checks |
 |----|--------|
