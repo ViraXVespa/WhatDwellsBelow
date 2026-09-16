@@ -28,7 +28,7 @@ Navigation is only `design/routes.yaml`. Do not treat `See also:` as a load list
 
 Path procedures live in the Path table session file. Do not open the topic index or the load-graph sketch unless the User named the index or routing work.
 
-**Load cap (soft):** this file + the path session file + (web / Build only) `design/protocol.md` and `design/constraints.md` + one topic door + one Job-table sibling. Gates whose `when` matches, including `design/gdscript-law.md` when editing GDScript. `design/tunables.md` when numbers change. `design/versioning.md` at ship only. `design/code-map.md` is one system row. Ask before a third topic door. Law / gates / one code-map row are not topic doors.
+**Load cap (soft):** this file + the path session file + (web / Build only) `design/protocol.md` and `design/constraints.md` + one topic door + one Job-table sibling. Gates whose `when` matches, including `design/gdscript-law.md` when editing GDScript. `design/tunables.md` when numbers change. `design/versioning.md` at ship only. `design/code-map.md` is one system row. A second topic door only when the User names the owner. Law / gates / one code-map row are not topic doors.
 
 Web / Build: the path file loads the law pair if they are missing, then only the topic door for named work. Bot: this file, then `design/grok-bot-session.md` only. Do not fetch this file again.
 
