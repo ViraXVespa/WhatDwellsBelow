@@ -5,6 +5,7 @@ Read when: web / chat path; every web session after the repo-review message
 
 This file is binding for **web / chat** only. Grok Build (CLI) and Grok Bot ignore it.
 Never open `notes/`.
+Second topic door: ask the User to name the owner first. If `conflicts_with` lists the pair, do not open the second door in this slice.
 
 The User cannot be written to by this agent. The User pastes every emit. The User finishes each task before the next web task starts.
 

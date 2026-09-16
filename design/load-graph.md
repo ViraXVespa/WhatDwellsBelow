@@ -16,6 +16,7 @@ AGENTS.md
 
 Then, only if the User named work:
     one topic door -> one Job sibling (if that door has a Job table)
+    (second door only when the User names the owner; conflicts_with is a load ban)
     and one design/code-map.md system row when live files are needed
     and design/tunables.md iff a number changes
     and design/versioning-log.md iff shipping a label
@@ -36,6 +37,7 @@ Path session files do not point back at AGENTS as a fetch.
 Topic siblings do not point at path files.
 topics index and design/code-map.md do not point at each other.
 Callers link a facade, never an art / UI / input / inventory / debug sibling.
+conflicts_with is a load ban: do not open the second door in the pair unless the User names the owner.
 See also is never a read list.
 The checker fails leftover relic-index names and `notes/<file>` cites.
 

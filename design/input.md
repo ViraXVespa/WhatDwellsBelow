@@ -1,12 +1,12 @@
 ﻿# Input (door)
 
 Status: binding design  
-Read when: gamepad, keyboard, mouse, touch overlay, rebinding, prompts, aim-line
+Read when: device binds, aim
 
 | Job | Open |
 |-----|------|
-| Platforms, gamepad, look mode, menus | `design/input-gamepad.md` |
-| Rebinding, on-screen prompts, aim-line | `design/input-rebind-prompts.md` |
-| Keyboard / mouse | `design/input-kb-mouse.md` |
-| Web touch | `design/input-web-touch.md` |
-| Live snapshots (PC binds / web gamepad) | `design/input-live.md` |
+| face buttons, rumble pulses | `design/input-gamepad.md` |
+| remap grid, icon textures, beam draw | `design/input-rebind-prompts.md` |
+| WASD walk, click point | `design/input-kb-mouse.md` |
+| canvas thumbs, virtual nubs | `design/input-web-touch.md` |
+| desktop defaults, chromium-pad capture | `design/input-live.md` |

@@ -51,3 +51,4 @@ Everything that is marked tunable or left for Grok to invent should be treated a
 
 After boot, do not fetch a file already in the loaded set. Name it only.
 Default set: the agents file, this path file, and (web / Build) protocol plus constraints.
+Load cap: boot files + at most one topic door + one Job sibling + gates whose when matches. Second topic door: ask the User to name the owner first. If `conflicts_with` lists the pair, do not open the second door in this slice.

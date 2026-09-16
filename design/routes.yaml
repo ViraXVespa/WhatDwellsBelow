@@ -64,7 +64,7 @@ doors:
     jobs: {}
   input:
     file: design/input.md
-    read_when: "gamepad, keyboard, mouse, touch overlay, rebinding, prompts, aim-line"
+    read_when: "device binds, aim"
     jobs:
       platforms_gamepad: design/input-gamepad.md
       rebind_prompts: design/input-rebind-prompts.md
@@ -89,7 +89,7 @@ doors:
     jobs: {}
   inventory:
     file: design/inventory.md
-    read_when: "equipment affixes, artifacts, analyze, mailing home"
+    read_when: "affixes, artifacts, mailing"
     jobs:
       bag: design/inventory-bag.md
       gear: design/inventory-gear.md
@@ -101,7 +101,7 @@ doors:
     jobs: {}
   hub:
     file: design/hub.md
-    read_when: "camp benches, Placeholdia interactables"
+    read_when: "Placeholdia, camp benches"
     jobs: {}
   dungeon:
     file: design/dungeon.md
@@ -127,7 +127,7 @@ doors:
       gear_entry: design/ui-gear-entry.md
   debug:
     file: design/debug.md
-    read_when: "secret console, playtest, journal, animation browser, smoke"
+    read_when: "secret console, playtest, journal, smoke"
     jobs:
       menu: design/debug-menu.md
       playtest: design/debug-playtest.md
@@ -190,7 +190,7 @@ job_read_when:
   art_pipeline.i2v: "seed unit, spoken cue"
   art_pipeline.pack: "cleanup pass, atlas stitch"
   art_pipeline.review: "brief packet, tree tour"
-  art_pipeline.attack_keyframes: "coil poses, slash keys"
+  art_pipeline.attack_keyframes: "resume parked, attack keyframes"
   art_pipeline.bible: "canon bible, layer law, quality floor"
 
 job_parked:
@@ -201,11 +201,20 @@ conflicts_with:
     - gear_ui
     - skills
     - ui.gear_entry
+    - ui.run_flow
+    - ui.pause
   gear_ui:
     - inventory
     - ui
   input:
     - ui
+  ui:
+    - inventory
+    - input
+  hub:
+    - interactables
+  interactables:
+    - hub
   player:
     - art_pipeline
     - combat

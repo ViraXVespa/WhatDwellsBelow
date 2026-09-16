@@ -66,6 +66,8 @@ Still required:
 
 Web / chat and Grok Bot leashes do not apply here.
 
+Second topic door: ask the User to name the owner first. If `conflicts_with` lists the pair, do not open the second door in this slice.
+
 ## I2V week
 
 Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Cadence and quality bar: art_pipeline. Do not call Imagine until `design/isolated-media.md` is already in context.
