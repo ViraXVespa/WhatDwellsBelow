@@ -3,6 +3,33 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.36",
+			"points": [
+				{
+					"text": "Retired the relic design index and the old monolith museum column. Human scratch lives in `notes/` and is off the agent graph."
+				},
+				{
+					"text": "Web / chat Phase 7 now ships as one `tools/_scratch.py` runner that writes docs, updates routes, and runs the load-graph checker."
+				},
+				{
+					"text": "Isolated Imagine is a Build gate only. Load it before any media generate; it is not an art-pipeline job."
+				},
+				{
+					"text": "Cut load loops: leave-off no longer boots the Build path; constraints/protocol/recipes no longer name extra doors or Bot jobs; gear-board Read-when no longer overlaps the inventory and UI doors."
+				},
+				{
+					"text": "Added `tools/doc_patch.py` so web Phase 7 runners import shared idempotent doc edits instead of copying replace helpers."
+				},
+				{
+					"text": "Load-graph checker now fails leftover relic-index names, `notes/<file>` cites, recipe-to-bot-job names, and door-job \u2229 gate dual-homes."
+				},
+				{
+					"text": "Web Phase 7 changelog writes stay on the open `version.json` label until that label ships."
+				}
+			],
+			"summary": ""
+		},
+		{
 			"label": "0.3.35",
 			"points": [
 				{
