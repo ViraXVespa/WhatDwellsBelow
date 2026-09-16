@@ -23,14 +23,18 @@ Then, only if the User named work:
     and design/versioning.md iff the User said **new week** or named a pin
     and design/isolated-media.md iff Grok Build is about to call Imagine
     and design/gdscript-law.md iff editing GDScript
+    and design/pc-offload.md iff inventory, verify, Windows write, or a new local runner
 
 Imagine tool calls use the isolated-media **gate** only. Do not also open art_pipeline to generate.
-Repo skills live at `.grok/skills/` and cite that gate only.
+Repo skills live at `.grok/skills/`.
+Imagine / I2V skills cite the isolated-media gate only and stay Build-only.
+The pc-offload skill cites the pc-offload catalog. Skills with `cursor-copy: true` copy into `.cursor/skills/`; Imagine skills must not.
 Types / warnings / tabs / 10KB live in `design/gdscript-law.md`, not the agents file.
 Art Bible / pack / review / I2V unit prompt use design/art-pipeline.md then one sibling.
 
-Recipes (never boot): design/refactor.md, design/doc-refactor.md, design/pc-offload.md.
+Recipes (never boot): design/refactor.md, design/doc-refactor.md.
 Path files name recipes. Recipes do not name path files.
+PC offload is a gate (`inventory_verify_or_windows_write`), not a recipe. The pc-offload skill may cite that gate.
 
 ## Do not load from here
 

@@ -80,7 +80,8 @@ Ship floor is the **10,000 byte** cap in `design/gdscript-law.md`. Enforce it wh
 
 A size split MAY introduce a new same-system helper API. A new cross-system owner during a split is **Stop and propose first**.
 
-Preferred: `powershell -File tools/check_script_cap.ps1`. Read `_logs/script-cap/summary.txt` only. Catalog: `design/pc-offload.md`.
+Before measuring size or opening many untouched files, use the pc-offload skill and `design/pc-offload.md`. Read only the listed summary.
+Preferred: `powershell -File tools/check_script_cap.ps1`. Read `_logs/script-cap/summary.txt` only.
 
 ## Archives
 

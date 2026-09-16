@@ -34,14 +34,16 @@ If the User names more than one job, ask which flow this session is. One flow, o
 - One new `design/changelog/{label}.md` when the sweep is ready to land. Label math and body shape: `design/versioning-log.md`. Do not read older changelog files. Do not hand-edit `scripts/data/version.json` or `scripts/data/changelog.json`.
 - Touched live `scripts/**/*.gd` must ship under 10KB. Split with `design/refactor.md` (recipe only). The under-5KB target is only `design/grok-bot-size.md`.
 - Caps are on-disk UTF-8 file sizes (`Get-Item Length` / `dir`). Do not measure with `ReadAllText` + `Encoding.UTF8.GetByteCount`.
-- PC offload catalog: `design/pc-offload.md`. Prefer Length summaries over opening untouched siblings.
+- PC offload: skill `.grok/skills/pc-offload/SKILL.md` then `design/pc-offload.md`. Prefer Length summaries over opening untouched siblings.
+- New `tools/` runners: propose first; implement only after the User approves that runner this session.
 - Local size sweeps: prefer checkout at `WDB_ROOT` (example: `C:\Users\Vira\source\repos\WhatDwellsBelow`). Document a `WDB_ROOT` change here only if that path itself changed. Commit locally per cluster; push the PR branch when the cluster is done.
 - Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
 - After each cluster report: PR URL, squash-merge reminder, path + bytes before/after, changelog path if shipping, what is still over cap, next cluster.
 
 ## Shared do not
 
-- Features, tunables, new game systems, skills, rarities, hub upgrades, co-op, art / I2V.
+- Features, tunables, new game systems, game skills, rarities, hub upgrades, co-op, art / I2V.
+- Copying Imagine / I2V skills into `.cursor/skills/`.
 - Invented numbers.
 - Behavior changes, drive-by renames, comment rewrites, wholesale retypes, reformats.
 - `Entity.gd`, a UI framework, ECS, or flattening hostify clusters back into one oversized script.

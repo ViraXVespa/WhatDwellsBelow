@@ -31,7 +31,6 @@ parked_jobs:
 recipes:
   refactor: design/refactor.md
   doc_refactor: design/doc-refactor.md
-  pc_offload: design/pc-offload.md
 
 bot_jobs:
   size: design/grok-bot-size.md
@@ -43,6 +42,7 @@ bot_jobs:
 skills:
   imagine_isolated: .grok/skills/imagine-isolated/SKILL.md
   i2v_isolated: .grok/skills/i2v-isolated/SKILL.md
+  pc_offload: .grok/skills/pc-offload/SKILL.md
 
 gates:
   tunables:
@@ -60,6 +60,9 @@ gates:
   gdscript_law:
     file: design/gdscript-law.md
     when: editing_gdscript
+  pc_offload:
+    file: design/pc-offload.md
+    when: inventory_verify_or_windows_write
 
 doors:
   overview:

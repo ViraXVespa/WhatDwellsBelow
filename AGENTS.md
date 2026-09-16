@@ -8,7 +8,7 @@ Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 |------|-----------|---------|
 | **Grok Build (CLI)** | You can write the checkout | Follow `design/grok-build.md`. Edit live files. Implementation is unconstrained there (same-system APIs just do; cross-system / named-architecture replace is propose-first). Do not dump whole files unless asked. Do not apply web / Bot leashes to this path. |
 | **Web / chat** | You cannot write the repo | Follow `design/web-session.md`. Never assume a disk write landed. |
-| **Grok Bot** | Grok Bot / Cursor desktop assistant writing via GitHub PR (cloud agent when available, or GitHub connector), or the User named a Grok Bot path / Grok Bot refactor sweep | Follow `design/grok-bot-session.md` only (door). That Job table names the one flow sibling. Recipes: `design/refactor.md` / `design/doc-refactor.md`. Ship via branch + PR. Refactor only. |
+| **Grok Bot** | Grok Bot / Cursor desktop assistant writing via GitHub PR (cloud agent when available, or GitHub connector), or the User named a Grok Bot path / Grok Bot refactor sweep | Follow `design/grok-bot-session.md` only (door). That Job table names the one flow sibling. Recipes: `design/refactor.md` / `design/doc-refactor.md`. Ship via branch + PR. Refactor only, except a new `tools/` runner the User approved this session. |
 
 If unsure: ask once, then use **web / chat** if still uncertain. A missed full-file emit is worse than an extra one.
 
@@ -25,10 +25,11 @@ Navigation is only `design/routes.yaml`. Do not treat `See also:` as a load list
 | GDScript types / warnings / tabs / 10KB | `design/gdscript-law.md` |
 | Live code map (one system row) | `design/code-map.md` |
 | Numbers (when the work changes them) | `design/tunables.md` |
+| Local inventory / verify / Windows write | pc-offload skill + `design/pc-offload.md` |
 
 Path procedures live in the Path table session file. Do not open the topic index or the load-graph sketch unless the User named the index or routing work.
 
-**Load cap (soft):** this file + the path session file + (web / Build only) `design/protocol.md` and `design/constraints.md` + one topic door + one Job-table sibling. Gates whose `when` matches, including `design/gdscript-law.md` when editing GDScript. `design/tunables.md` when numbers change. `design/versioning.md` at ship only. `design/code-map.md` is one system row. A second topic door only when the User names the owner. Law / gates / one code-map row are not topic doors.
+**Load cap (soft):** this file + the path session file + (web / Build only) `design/protocol.md` and `design/constraints.md` + one topic door + one Job-table sibling. Gates whose `when` matches, including `design/gdscript-law.md` when editing GDScript and `design/pc-offload.md` when measuring, inventorying, or writing on Windows. `design/tunables.md` when numbers change. `design/versioning.md` at ship only. `design/code-map.md` is one system row. A second topic door only when the User names the owner. Law / gates / one code-map row are not topic doors.
 
 Web / Build: the path file loads the law pair if they are missing, then only the topic door for named work. Bot: this file, then `design/grok-bot-session.md` only. Do not fetch this file again.
 
