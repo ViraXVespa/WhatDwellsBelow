@@ -39,8 +39,8 @@ Read when: empty-death toast, full-pack toast, save fallback, confirm accidents
 ## Locked stairs / boss door
 
 - Stairs are inaccessible while the Floor Guardian or Gate Master is alive.
-- They remain behind the visible boss door.
-- Once the boss is defeated the door opens and the stairs become usable.
+- They remain behind visible_boss.
+- Once boss_is_defeated_the opens and the stairs become usable.
 - No additional toast is required beyond the door state itself; the visual lock is sufficient.
 
 ## Tool type lock

@@ -23,13 +23,13 @@ Title → Play hub warmup MAY set `cam.size` wider than `ZOOM_MIN` so the full P
 
 ## Archives
 
-The demo MUST ship with the Archives browser on the title card. This is required for the Patreon development narrative. Selecting title “Play” always launches the live path. Catalog rows include Classic 2D, Art experiment, Full 3D Pass, Grok Build Results (Week 1), and Grok Web Results (Week 1). Each row is a pinned commit per the archives topic. There is no in-pause presentation-mode switcher.
+The demo MUST ship with the Archives browser on the title card. This is required for the Patreon development narrative. Selecting title “Play” always launches the live path. Catalog rows include Classic 2D, Art experiment, Full 3D Pass, Grok Build Results (Week 1), and Grok Web Results (Week 1). Each row is a pinned commit per archives. There is no in-pause presentation-mode switcher.
 
 ## Renderer
 
 Prefer the Compatibility renderer for the final shippable build if it does not compromise the web export. Mobile renderer is acceptable only if required for web stability.
 
-Sprite3D filter is not the project canvas default. Live default is nearest + mips + anisotropic. Settings → Graphics exposes Mipmaps and Anisotropic checkboxes (nearest implied; aniso off when mips is off). Linear modes live only on the secret debug Settings tab. See the audio visual topic and the debug topic.
+Sprite3D filter is not the project canvas default. Live default is nearest + mips + anisotropic. Settings → Graphics exposes Mipmaps and Anisotropic checkboxes (nearest implied; aniso off when mips is off). Linear modes live only on the secret debug Settings tab. See audio_visual and debug.
 
 ## Live snapshot
 

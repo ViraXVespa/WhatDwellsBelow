@@ -27,7 +27,7 @@ Do not pin because time passed, because the last slice ended, or because a new C
 2. `design/protocol.md` and `design/constraints.md` only when they are not already in this session.
 3. Leave-off only when it must name the next unit. It is not a boot list and must not send you back through this Read order.
 4. Changelog: skip on a mid-week slice or catch-up. Open `design/versioning.md` for **new week** pins. Open `design/versioning-log.md` for changelog body shape, a revert, or when the User asks what shipped. Do not ingest every `design/changelog/{epoch}.{series}.*.md`. Do not treat `scripts/data/version.json` as the version ledger. Do not follow GitHub commit links into web-session conversations.
-5. Only the topic door that matches the requested work. Do not open `design/README.md` to pick it. Sprite / pack / review: the art-pipeline door, then only the sibling it names. Before any Imagine call, load `design/isolated-media.md` (gate, not an art-pipeline job).
+5. Only topic that matches the requested work. Do not open `design/README.md` to pick it. Sprite / pack / review: art_pipeline, then only the sibling it names. Before any Imagine call, load `design/isolated-media.md` (gate, not an art-pipeline job).
 6. Inspect git and the live tree from **one system row** in `design/code-map.md` (`project.godot`, then the listed scenes/scripts). Do not walk `assets/` unless the task names sprites or audio.
 
 `design/session-log.md` is not part of every boot. Read it when rewriting it at session close, when the User asks what shipped, or when leave-off is not enough to name the next unit.
@@ -60,7 +60,7 @@ This path is unconstrained on **implementation** inside one system: new helpers,
 Still required:
 
 - MUST extend and reuse live scenes, scripts, and architecture unless they contradict binding design or the User’s request.
-- The live path remains the orthographic Camera3D system in the camera door until the User accepts a camera rework.
+- The live path remains the orthographic Camera3D system in camera until the User accepts a camera rework.
 - Match surrounding style unless a just-do change or an accepted rework replaces it. Tabs. Types: the agents file.
 - Open numbers and player-facing ambiguity: `design/protocol.md`.
 
@@ -68,7 +68,7 @@ Web / chat and Grok Bot leashes do not apply here.
 
 ## I2V week
 
-Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Cadence and quality bar: the art-pipeline door. Do not call Imagine until `design/isolated-media.md` is already in context.
+Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Cadence and quality bar: art_pipeline. Do not call Imagine until `design/isolated-media.md` is already in context.
 
 Path-only: mid-week new CLI chat is a catch-up (no pin). A thin isolated child is not a new week. Do not `/resume` a fat art thread to “just do one more” media turn.
 
@@ -84,7 +84,7 @@ Preferred: `powershell -File tools/check_script_cap.ps1`. Read `_logs/script-cap
 
 The Archives browser MUST ship. Title “Play” always launches the current live path.
 
-Catalog rows (each a pinned commit, isolated per the archives door):
+Catalog rows (each a pinned commit, isolated per archives):
 
 - **classic_2d** — Classic 2D
 - **art_experiment** — Art experiment
@@ -116,3 +116,5 @@ Those two session files are for the next Grok Build instance, not for web / chat
 - Do not follow git commit links into web-session conversations.
 - Do not run the week pin ritual unless the User said **new week**.
 - Do not call Imagine in the game-repo cwd when `design/isolated-media.md` says to isolate.
+
+Mid-week slice or catch-up: do not rerun the Week ritual section.

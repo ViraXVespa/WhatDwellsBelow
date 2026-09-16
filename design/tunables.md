@@ -172,7 +172,7 @@ Forge keys that are not yet on `balance.gd` fall back inside `progress_forge.gd`
 | `xp_per_kill` | **22** |
 | `xp_kill_hp` / `xp_kill_def` | **11.0 / 11.0** |
 
-Roster HP: `balance_enemies.gd`. CL 17 budget and rank-multiplier feel live on the combat door. Enemy walk vs crystal labels live on the enemies and dungeon doors.
+Roster HP: `balance_enemies.gd`. CL 17 budget and rank-multiplier feel live on combat. Enemy walk vs crystal labels live on the enemies and dungeon doors.
 
 ## Progression and economy
 
@@ -214,7 +214,7 @@ Fallbacks in `progress_forge.gd` / `gear_roll.gd` until these keys exist on `App
 | `affix_flat_per_lv` | 0.65 | Flat per item level |
 | `affix_pct_per_lv` | 0.004 | Percent affix per item level (plus 0.02 floor) |
 
-Roll rules and holds cap live on the inventory door (gear job).
+Roll rules and holds cap live on inventory (gear job).
 
 ## UI / feel targets
 

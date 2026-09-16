@@ -23,7 +23,7 @@ Move to the next phase only when this file says to. Do not emit source during Ph
 
 The User tells the agent to review the repo. That sets up the session.
 
-If the agents file already routed this session here, do not re-read the agents file. Read `design/protocol.md` and `design/constraints.md` only when they are not already in this session. Then only the topic door for work already named. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open the Build path file, the Bot path file, or `design/README.md` for context. Do not open `design/sessions.md` or `design/session-log.md` from this path. Do not read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief.
+If the agents file already routed this session here, do not re-read the agents file. Read `design/protocol.md` and `design/constraints.md` only when they are not already in this session. Then only topic for work already named. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open the Build path file, the Bot path file, or `design/README.md` for context. Do not open `design/sessions.md` or `design/session-log.md` from this path. Do not read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief.
 
 Respond by confirming the review is done and that the session is ready for Phase 2. Do not start implementation.
 
@@ -105,7 +105,7 @@ This phase ends when every needed size split has been emitted, or after reportin
 
 All documentation changes for this goal happen in this phase. Phase 5 testing can change what the docs must say. Do not emit those files in Phase 4.
 
-Check the change against `design/` (and the agents file when agent rules changed). Update topic files, the live code map, and tunables that the slice made wrong. Re-list the Phase 7 paths if testing changed them and wait for confirmation.
+Check the touched topic door, its Job sibling, one code-map row, and any gate whose when matches. Update topic files, the live code map, and tunables that the slice made wrong. Re-list the Phase 7 paths if testing changed them and wait for confirmation.
 
 Then emit **one** runner: `tools/_scratch.py` (gitignored). The User pastes it and runs `python tools/_scratch.py` from the repo root. That script writes every documentation path on the Phase 7 list (including `design/changelog/{label}.md` when the goal shipped player-visible or agent-visible change), updates `design/routes.yaml` when routing changed, and runs `python tools/check_load_graph.py --root .`. Print the write manifest and the checker PASS/FAIL. Do not claim those writes landed until the User ran the script.
 

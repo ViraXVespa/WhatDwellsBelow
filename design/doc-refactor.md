@@ -10,7 +10,7 @@ Cut routing tokens without losing binding comprehension. Do not change binding m
 
 ## Model (match art-pipeline)
 
-- the art-pipeline door is the template.
+- art_pipeline is the template.
 - Facade keeps: Status, Read when, Code (if any).
 - Facade states it is the door and has a **Job → Open** table.
 - Sibling files hold the heavy sections.
@@ -42,20 +42,20 @@ Cut routing tokens without losing binding comprehension. Do not change binding m
 1. Inventory topic files by Length; rank over ~12KB, then over ~8KB.
 2. Show worklist; do not edit yet.
 3. Split doors first (ui, debug, input, inventory, then other fat topics).
-4. Update README "How to use" / topic index so agents open the facade, then only the named sibling.
+4. Update README "How to use" / topic index so agents open the facade, then only named.
 5. Grep for stale "read the whole of X" wording; point at the job table.
 
 ## Facade checklist
 
 - [ ] Job table covers every former top-level `##` cluster (or explicitly routes to an existing sibling topic such as `gear-ui.md`).
 - [ ] Preamble non-negotiables that apply to every job stay on the facade.
-- [ ] Live snapshots travel with the matching job sibling (not the door).
+- [ ] Live snapshots travel with matching sibling (not the door).
 - [ ] Sibling bodies name no `design/*.md` paths. Job targets stay on the door Job table and in `design/routes.yaml`.
 - [ ] No behavior / binding change.
 
 ## Token rules
 
-- After inventory, open **one** facade and **only** the sibling for the active job.
+- After inventory, open **one** facade and **only** sibling_for_the_active.
 - Do not concatenate all siblings into chat "for context."
 - Prefer Length summaries / headings lists over pasting whole markdown bodies.
 
@@ -63,4 +63,4 @@ Cut routing tokens without losing binding comprehension. Do not change binding m
 
 - One **door** (facade) file with a **Job → Open** table.
 - Siblings contain heavy sections tied to specific jobs.
-- Callers link to the facade unless a specific sibling is required.
+- Callers link to facade_unless_a_specific is required.

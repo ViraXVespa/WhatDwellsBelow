@@ -23,7 +23,7 @@ Out of scope: `scenes/`, `assets/`, `tools/` (unless a preload path or PC-offloa
 4. After inventory: only the live `.gd` files in that one cluster
 5. At ship: baked `scripts/data/version.json` and `design/versioning-log.md` body shape — not the changelog tree
 
-Do not reopen the agents file unless types, warnings, tabs, or the 10KB cap left context. Do not open the staged reuse brief, `design/doc-refactor.md`, or the other Bot flow siblings.
+Do not reload the root agents file. Types, warnings, tabs, and the 10KB cap stay binding. Do not open the staged reuse brief, `design/doc-refactor.md`, or the other Bot flow siblings.
 
 ## Inventory
 

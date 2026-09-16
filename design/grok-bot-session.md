@@ -12,7 +12,7 @@ Grok Build / web splitting one file that *its own edit* pushed over 10KB is not 
 
 Use this path when the User names Grok Bot / a refactor sweep / a Bot flow below, or when a Grok Bot / Cursor desktop assistant writes via GitHub PR.
 
-After the agents file, load **this door**, then **one** Job-table sibling. The sibling starts at itself + the named recipe + one `design/code-map.md` row. Do not load the other flow files. Do not load `design/protocol.md`, `design/constraints.md`, the web path file, the Build path file, `design/sessions.md`, `design/session-log.md`, or `design/changelog/` except the one new `{label}` file at ship time. Never open `notes/`.
+After the agents file, load **this door**, then **one** Job-table sibling. The sibling starts at itself + the named recipe + one `design/code-map.md` row. Do not load the other flow files. Do not load the web/Build requires pair, the web/Build requires pair, the web path file, the Build path file, `design/sessions.md`, `design/session-log.md`, or `design/changelog/` except the one new `{label}` file at ship time. Never open `notes/`.
 
 ## Job → Open
 

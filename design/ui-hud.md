@@ -31,7 +31,7 @@ The web touch overlay sits on `CanvasLayer` 28 (HUD is 20, pause is 55). The mov
 
 ## Web touch overlay
 
-Binding rules live in the input topic. UI rules for this slice:
+Binding rules live in input. UI rules for this slice:
 
 - Drawn in-theme (dark well, gold ring, pad glyphs). No default engine buttons.
 - No right aim well. No lock button. Auto-aim stays on while the overlay is active.

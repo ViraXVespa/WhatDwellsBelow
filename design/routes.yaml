@@ -78,7 +78,7 @@ doors:
     jobs: {}
   combat:
     file: design/combat.md
-    read_when: "hit detection, dash, lock, juice, crits"
+    read_when: "strike detection, dash, lock, juice, crits"
     jobs: {}
   skills:
     file: design/skills.md
@@ -102,15 +102,15 @@ doors:
     jobs: {}
   dungeon:
     file: design/dungeon.md
-    read_when: "gen, streaming, boss doors, fog, crystals"
+    read_when: "gen, streaming, guardian doors, fog, crystals"
     jobs: {}
   enemies:
     file: design/enemies.md
-    read_when: "roster, AI, bosses, pressure"
+    read_when: "roster, AI, pressure"
     jobs: {}
   interactables:
     file: design/interactables.md
-    read_when: "gathering hits, shops, shrines, puzzles, extract-wells"
+    read_when: "gathering swings, shops, shrines, puzzles, extract-wells"
     jobs: {}
   ui:
     file: design/ui.md
@@ -136,7 +136,7 @@ doors:
     jobs: {}
   save_tech:
     file: design/save-tech.md
-    read_when: "persistence, export headers, autoloads, perf"
+    read_when: "persistence, wasm headers, autoloads, perf"
     jobs: {}
   feel:
     file: design/feel.md
@@ -161,5 +161,87 @@ doors:
       bible: design/art-bible.md
   archives:
     file: design/archives.md
-    read_when: "Pages exports, catalog pins"
+    read_when: "Pages builds, catalog pins"
     jobs: {}
+
+job_read_when:
+  input.platforms_gamepad: "face buttons, rumble pulses"
+  input.rebind_prompts: "remap grid, icon textures, beam draw"
+  input.kb_mouse: "WASD walk, click point"
+  input.web_touch: "canvas thumbs, virtual nubs"
+  input.input_live: "desktop defaults, chromium-pad capture"
+  inventory.bag: "pouch tiles, ration versus flask"
+  inventory.gear: "item level, duplicate rule, white baseline"
+  inventory.meta: "set bonuses, shopkeep restock"
+  inventory.inventory_live: "stat-table listing, required sockets"
+  ui.theme: "color tokens, playable surfaces"
+  ui.title_web: "title poster, loading bar, fs-gate"
+  ui.hud: "gauntlet strip, pip cluster"
+  ui.pause: "inventory tab, skills tab, system page"
+  ui.run_flow: "recap reel, ghost vendor pane, quest pane, banner"
+  ui.gear_entry: "loadout tray, tooltip shell"
+  debug.menu: "balance sliders, profile banks"
+  debug.playtest: "sim walker, recommended config"
+  debug.anim_browser: "timeline scrubber, review queue"
+  debug.smokes: "phase assertions, runner summary"
+  art_pipeline.i2v: "seed unit, spoken cue"
+  art_pipeline.pack: "cleanup pass, atlas stitch"
+  art_pipeline.review: "brief packet, tree tour"
+  art_pipeline.attack_keyframes: "coil poses, slash keys"
+  art_pipeline.bible: "canon bible, layer law, quality floor"
+
+job_parked:
+  - art_pipeline.attack_keyframes
+
+conflicts_with:
+  inventory:
+    - gear_ui
+    - skills
+    - ui.gear_entry
+  gear_ui:
+    - inventory
+    - ui
+  input:
+    - ui
+  player:
+    - art_pipeline
+    - combat
+  dungeon:
+    - enemies
+    - interactables
+  combat:
+    - enemies
+    - interactables
+
+boot_max:
+  web:
+    - AGENTS.md
+    - design/web-session.md
+    - design/protocol.md
+    - design/constraints.md
+  build:
+    - AGENTS.md
+    - design/grok-build.md
+    - design/protocol.md
+    - design/constraints.md
+  bot:
+    - AGENTS.md
+    - design/grok-bot-session.md
+
+fetch_ban:
+  design/web-session.md:
+    - check against design/
+    - check the change against design/
+    - reopen the agents file
+    - left context
+  design/grok-build.md:
+    - reopen the agents file
+    - left context
+  design/grok-bot-session.md:
+    - reopen the agents file
+    - left context
+  design/grok-bot-size.md:
+    - reopen the agents file
+    - left context
+  design/protocol.md:
+    - topic index (one row)

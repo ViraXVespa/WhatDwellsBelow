@@ -36,7 +36,7 @@ All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidi
 - Shared gear board with **Analyze** and **Forge** tabs. Current tab is highlighted like Pause tabs, not disabled.
 - Potion and Food slots are disabled on this board.
 - Footer is short: bank + carried gold / ore / wood, plus one status line. Analyze does not list holds. Forge does not list every remnant.
-- Submenus keep the parent control strip and draw their own strip. No Back button. Binding UI: the gear ui topic. Binding item / roll rules: the inventory topic → the inventory / gear job.
+- Submenus keep the parent control strip and draw their own strip. No Back button. Binding UI: gear_ui. Binding item / roll rules: inventory → inventory_/_gear.
 
 Live camp position: down and left of the vendor stall’s southwest corner (`21.2, 0, 11.4`).
 
@@ -74,7 +74,7 @@ Live scripts: board `scripts/ui/gear_board/gear_board.gd` in `gear_mode="anvil"`
 
 ### Test Dummy
 - Striking dummy (`DummyS` / `scripts/combat/dummy.gd`) for testing.
-- Occupancy, no knockback, refill at 0 HP: the combat topic.
+- Occupancy, no knockback, refill at 0 HP: combat.
 - No combat level / `Lv` tag (`combat_lv := 0`).
 - Dark ground pad allowed for telegraph readability.
 - Sandbox object, not interactable like Floor Crystal / Anvil.
@@ -88,7 +88,7 @@ Live scripts: board `scripts/ui/gear_board/gear_board.gd` in `gear_mode="anvil"`
 ### Aim line (hub and dungeon)
 - Draws over buildings and props.
 - Does not draw on top of the player sprite. Clip + short fade off the player origin (`scripts/combat/aim_line.gd`).
-- Hidden-until-`update_line` / no cream-box flash: the combat topic.
+- Hidden-until-`update_line` / no cream-box flash: combat.
 
 ### Fence / play area
 - Post-and-rail fence on all four edges of the current ground slab (`camp_view.gd`).
@@ -100,7 +100,7 @@ Live scripts: board `scripts/ui/gear_board/gear_board.gd` in `gear_mode="anvil"`
 - Lighting/mood contrasts with darker dungeon.
 
 ### Live Snapshot
-- `App.play_from_menu()` / `enter_dungeon()` use loading overlay for hub/dungeon assets (the ui topic).
+- `App.play_from_menu()` / `enter_dungeon()` use loading overlay for hub/dungeon assets (ui).
 - Title → Play: `loader.begin()` puts a near-opaque black sheet (`#000000` at alpha `0xFE`) over the viewport for the whole load. The 3D world still draws under it so WebGL can compile and upload. The player must not see the square pop or flicker.
 - After camp is ready, the overlay status is `Warming things up for you...`. That beat applies every loaded idle / `idle_to_walk` / walk / `walk_to_idle` frame for all eight facings (batched across frames), one dummy `move_and_slide`, and a short hold on the down idle. The player body stays visible under the sheet. The player position is pinned so the warmup nudge does not walk them across the yard. There is no empty “The square holds.” hold.
 - During that same beat, `camp_warm.gd` moves the camera to the yard center and sets `cam.size` wide enough to frame the full slab plus `GRASS_PAD` (stall, guild, banner, outer grass). `ZOOM_MIN` is not wide enough. `App.cam_zoom` is not written. `camera_rig.warm_hold` ignores player `follow` so the physics tick cannot snap zoom back mid-warm.

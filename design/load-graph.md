@@ -22,7 +22,7 @@ Then, only if the User named work:
     and design/versioning.md iff the User said **new week** or named a pin
     and design/isolated-media.md iff Grok Build is about to call Imagine
 
-Imagine tool calls use the isolated-media **gate** only. Do not also open the art-pipeline door to generate.
+Imagine tool calls use the isolated-media **gate** only. Do not also open art_pipeline to generate.
 Art Bible / pack / review / I2V unit prompt use design/art-pipeline.md then one sibling.
 
 Recipes (never boot): design/refactor.md, design/doc-refactor.md, design/pc-offload.md.
@@ -32,7 +32,7 @@ Path files name recipes. Recipes do not name path files.
 
 Path session files do not point back at AGENTS as a fetch.
 Topic siblings do not point at path files.
-design/README.md and design/code-map.md do not point at each other.
+topics index and design/code-map.md do not point at each other.
 Callers link a facade, never an art / UI / input / inventory / debug sibling.
 See also is never a read list.
 The checker fails leftover relic-index names and `notes/<file>` cites.
@@ -51,3 +51,12 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 10. Opening the topic table is not a boot step.
 
 Machine-readable edges: `design/routes.yaml`. This file is the human sketch only.
+
+## Increment 5 / 6
+
+Doors and jobs use door keys (`input`, `art_pipeline`), not `the X topic`.
+README and code-map do not cite topic `design/*.md` paths.
+`job_read_when`, `job_parked`, `conflicts_with`, `boot_max`, and `fetch_ban` live in routes.yaml.
+Parked jobs stay out of the live Open column.
+The checker stems read_when tokens and walks a second topic-body cycle graph.
+Compaction re-boot, duplicate constitutions, and negated English cannot be proven from markdown.

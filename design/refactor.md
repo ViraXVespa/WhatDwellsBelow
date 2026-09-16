@@ -1,7 +1,7 @@
 # Refactor recipe
 
 Status: protocol  
-Read when: splitting a live script for size; Grok Bot every task; Grok Build when an edit is over 10KB; web / chat Phase 6  
+Read when: splitting a live script for size; Bot size or extract flow; Grok Build when an edit is over 10KB; web / chat Phase 6  
 
 
 Grok Bot uses this file on every task. Other paths use it only when they must split.

@@ -58,7 +58,7 @@ The Animation Browser is a full-screen page. It MUST be TV-readable and gamepad-
 - Session memory keeps the note text while the User toggles states. Disk write drops Good rows and drops notes on Good.
 - Store: `tools/anim_review/review.json` in the live checkout. Editor-only. MUST NOT use `SaveStore` / `user://live`. Not written on web. The `tools/anim_review/` directory is gitignored.
 - Key: `model_id/facing/anim` (same catalog ids as `AnimScan`).
-- Offline tools that read this file are listed in the art pipeline topic. A Regenerate flag on a player clip resolves to a specific `i2v_seeds.py` MOTION key (`attack_great_axe`, not a generic `attack`). A `gather` flag writes both pickaxe and hatchet prompts. Pack accepted one-shot I2V with `tools/pack_oneshot.py`.
+- Offline tools that read this file are listed in art_pipeline. A Regenerate flag on a player clip resolves to a specific `i2v_seeds.py` MOTION key (`attack_great_axe`, not a generic `attack`). A `gather` flag writes both pickaxe and hatchet prompts. Pack accepted one-shot I2V with `tools/pack_oneshot.py`.
 
 **Always-available gamepad chords (Animation Browser only)**
 

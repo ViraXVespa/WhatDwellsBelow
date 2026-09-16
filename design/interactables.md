@@ -1,7 +1,7 @@
 # Interactables and world objects
 
 Status: binding design  
-Read when: gathering hits, shops, shrines, puzzles, extract-wells
+Read when: gathering swings, shops, shrines, puzzles, extract-wells
 Code: `scripts/world/gather_node.gd`, `breakable.gd`, `interact.gd`, `interact_act.gd`, `interact_prompt.gd`, `interact_chest.gd`, `interact_fx.gd`, `dungeon_props.gd`, `dungeon_props_place.gd`, `floor_crystal.gd`, `crystal_net.gd`, `pickup.gd`, `scripts/ui/hud.gd`, `scripts/input/prompts.gd`  
 
 
@@ -38,7 +38,7 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 
 - Provide the extraction / mailing interface. There are no in-dungeon clerks.
 - Each gate is a mechanical wall fixture (microwave-like housing with a portal viewport) built into a **north wall**, three wall tiles wide. Only that facing ships.
-- Count, safe rooms, and separation: the dungeon topic. Mail-legal goods: the inventory / meta job.
+- Count, safe rooms, and separation: dungeon. Mail-legal goods: inventory_/_meta.
 - Dialogue is minimal; the main interaction is a clean, TV-readable list.
 - A gate becomes inactive after the extract menu closes **if anything was mailed** that visit. Cancel with nothing sent: the gate stays active.
 - Inactive: lamps off, viewport sealed by dungeon wall, banner reads INACTIVE. Active and inactive share the same metal shading so later world lighting can apply to both.
@@ -81,7 +81,7 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 
 ## Stairs
 
-Lock and “deeper only”: the dungeon topic.
+Lock and “deeper only”: dungeon.
 
 - Interaction prompt is a last-used `interact` glyph plus the verb “Descend”. First use arms confirm; second use descends. Locked copy is text only (“Locked. Defeat the guardian.”).
 
@@ -89,7 +89,7 @@ Lock and “deeper only”: the dungeon topic.
 
 - Placeholdia’s loadout crystal is unchanged: it opens loadout / enter dungeon.
 - In-dungeon crystals are waypoints, not descend points.
-- Placement, bind, and network unlocks: the dungeon topic.
+- Placement, bind, and network unlocks: dungeon.
 - Other crystals show “Clear the area to activate.” until nearby enemies and pending spawn jobs are gone, then the verb “Activate crystal” with the `interact` glyph.
 - A bound crystal opens the transport menu: Local Transport Network, Floor Transport Network, Back.
 - Crystal map zoom is `crystal_zoom` (Tab / Y). That bind appears in the menu footer, not in the zoom status line.
@@ -97,8 +97,8 @@ Lock and “deeper only”: the dungeon topic.
 
 ## Live snapshot — interact prompts
 
-World `prompt` strings are verbs only (`Descend`, `Gather`, `Activate crystal`, `Open the guardian door`, `Step the plate`, `Pull lever`, `Open chest`). `hud.gd` attaches the current-scheme `interact` glyph. Hostile crystals use text-only “Clear the area to activate.” Used chests use text-only “Empty.” Stairs confirm is a second press; crystals never call `next_floor`.
+World `prompt` strings are verbs only (`Descend`, `Gather`, `Activate crystal`, `Open guardian`, `Step the plate`, `Pull lever`, `Open chest`). `hud.gd` attaches the current-scheme `interact` glyph. Hostile crystals use text-only “Clear the area to activate.” Used chests use text-only “Empty.” Stairs confirm is a second press; crystals never call `next_floor`.
 
 ## HUD prompt
 
-`App.interact_prompt` is the verb only. `hud.gd` attaches the current-scheme `interact` glyph. Scheme flips with last-used input (the input topic).
+`App.interact_prompt` is the verb only. `hud.gd` attaches the current-scheme `interact` glyph. Scheme flips with last-used input (input).

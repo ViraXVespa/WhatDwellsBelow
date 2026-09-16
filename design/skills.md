@@ -56,7 +56,7 @@ Live ids: `axe`, `staff`, `bow`, `str`, `mag`, `rng`, `def`, `hp`, `mine`, `wood
 - If the currently equipped weapon’s style Combat Level is lower than the highest, that style level is shown in parentheses next to it (e.g. Level 14 (Magic 11)).
 - Dungeon item level uses enemy / area combat level. That item level is what Analyze stores and what Forge can configure up to.
 
-Enemy floor band and CL 17 budget: the combat topic. Enemy walk / pack HP: the enemies topic. Live keys: the tunables gate.
+Enemy floor band and CL 17 budget: combat. Enemy walk / pack HP: enemies. Live keys: the tunables gate.
 
 ## Skill effects (high-level)
 

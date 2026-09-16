@@ -87,7 +87,7 @@ Inventory / loadout list:
 - Left / Right stay on the option row. The host MUST NOT swallow Left / Right while that list is open.
 - Selecting the equipped row unequips it when the slot allows. Weapon, tool, and starter pieces stay on the slot.
 
-Anvil Analyze / Forge item law (who can appear, destroy-on-pick, locks, cost, holds cap, results pick-three): the inventory / gear job.
+Anvil Analyze / Forge item law (who can appear, destroy-on-pick, locks, cost, holds cap, results pick-three): inventory_/_gear.
 
 Anvil Analyze chrome:
 

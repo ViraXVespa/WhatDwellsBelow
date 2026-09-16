@@ -1,9 +1,9 @@
 ﻿# Anvil / Loadout entry points
 
 Status: binding design  
-Read when: Anvil / Loadout / tooltip entry chrome from the UI topic — not shared board internals  
+Read when: Anvil / Loadout / tooltip entry chrome from ui — not shared board internals  
 
-The UI topic is already open when this sibling is loaded. Open gear-ui only when board / anvil chrome is the named work. Do not reopen theme, title-web, hud, pause, run-flow, hub, input, or doc-refactor from this file.
+ui is already open when this sibling is loaded. Open gear-ui only when board / anvil chrome is the named work. Do not reopen theme, title-web, hud, pause, run-flow, hub, input, or doc-refactor from this file.
 
 ## Anvil UI
 
@@ -16,7 +16,7 @@ The UI topic is already open when this sibling is loaded. Open gear-ui only when
 ## Loadout UI
 
 - Opens only by interacting with the Floor Crystal in Placeholdia. There is no separate loadout station.
-- Uses the shared gear board in the gear ui door. Holds / starters / bank populate each slot list.
+- Uses shared_gear_board_in_the_gear_ui. Holds / starters / bank populate each slot list.
 - Footer is `Floor: [−] [selected] [+] (Deepest floor: n)` then **Enter dungeon**. No character button and no top weapon / tool / deepest summary.
 - Choose starting weapon and tool type (pickaxe or hatchet — locked for the run) from the doll slots. Starting floor is only a previously reached floor. Never backward.
 - First focus is **Enter dungeon**. One press enters. B / Esc / Close cancels without entering.
@@ -26,7 +26,7 @@ The UI topic is already open when this sibling is loaded. Open gear-ui only when
 
 ## Gear tooltips
 
-- Flyouts follow the gear ui topic. Hidden until hover, keyboard highlight, or activating the focused slot.
+- Flyouts follow gear_ui. Hidden until hover, keyboard highlight, or activating the focused slot.
 - **Y** cycles off → current item stats → forge preview.
 - Active artifact set bonuses are shown in the flyout and on the Artifact sets stats page.
 - Smithing level influence remains visible in Anvil UI.

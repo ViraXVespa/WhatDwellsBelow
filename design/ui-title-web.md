@@ -20,7 +20,7 @@ When the current label is newer than saved `last_seen_game_ver`, a “what’s n
 - Long lists scroll with mouse wheel and right stick. D-pad only moves Close / Earlier weeks.
 - Text sits on a solid title-card panel. Play / Updates / Archives MUST NOT take focus while the overlay is open.
 
-Archives opens the shared two-column browser (the archives topic). It is title-only. Pause Settings MUST NOT list Archives.
+Archives opens the shared two-column browser (archives). It is title-only. Pause Settings MUST NOT list Archives.
 
 ## Web fullscreen gate
 
@@ -38,7 +38,7 @@ Gamepad-first: first focus is the action button and MUST stay on a gate button f
 
 `requestFullscreen` is asynchronous. The gate MUST watch `DisplayMode.is_fullscreen_now()` / standalone and advance to splash as soon as fullscreen actually lands (Fullscreen button, A, or Alt+Enter). Do not leave the card up after a successful enter. iOS stays on the card after Try only when fullscreen did not actually happen.
 
-If the viewport is taller than wide, the card MUST say to rotate to landscape. Landscape lock is attempted from the same gesture (the save tech topic).
+If the viewport is taller than wide, the card MUST say to rotate to landscape. Landscape lock is attempted from the same gesture (save_tech).
 
 ## Live snapshot — title
 

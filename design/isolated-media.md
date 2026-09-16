@@ -28,7 +28,7 @@ Cost test: thin child system prompt + one media turn versus this thread’s the 
 
 ## Kind routing
 
-Load `game-asset-core` plus **one** specialist. Do not load the other game-asset specialists on the same job.
+Load `game-asset-core` plus **one** specialist. Do not load other_game_asset_specialists_on_the_same.
 
 | `--kind` | Bundled skills | Imagine tool | WDB job |
 |---|---|---|---|
@@ -60,7 +60,7 @@ Runner: `python tools/run_isolated_grok.py --kind <kind> …`
 
 ## Parent still owns
 
-Unit pick, review gate, harvest / pack (the art pipeline / pack job), next-unit permission, week pin. The child only pays for the media turn. Do not `/resume` a fat art thread to “just do one more” clip or tile.
+Unit pick, review gate, harvest / pack (art_pipeline_/_pack), next-unit permission, week pin. The child only pays for the media turn. Do not `/resume` a fat art thread to “just do one more” clip or tile.
 
 Live roof UV crop in Placeholdia is a seam workaround on the current `plaza_roof.png`. A new seamless tile does not by itself edit `camp` UVs. That is a later slice after the User accepts the still.
 

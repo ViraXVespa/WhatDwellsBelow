@@ -15,15 +15,15 @@ Never open `notes/` from an agent path.
 
 Boot and path procedure live in `AGENTS.md` and that path’s session file.
 
-This file is the **topic index** only. Do not open this file’s topic table “for context.” Live-path rows stay on the code map when a live file is needed. Routing edges: `design/load-graph.md` when the User names routing work.
+This file is the **topic index** only. Do not open this file’s topic table “for context.” Live-path rows stay on the code map when a live file is needed. Routing edges: load-graph sketch when the User names routing work.
 
-Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Do not walk `assets/` unless the task names sprites or audio. After a behavior change, update the matching topic file in the same slice. After a live script split, update the live code map in the same slice.
+Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Do not walk `assets/` unless the task names sprites or audio. After a behavior change, update matching file in the same slice. After a live script split, update the live code map in the same slice.
 
 Do not open this table as a boot list. Open a topic when `design/routes.yaml` names that door / job or the User names that work.
 
 Design doors: open the facade, then only the Job-table sibling. Isolated Imagine is a gate, not an art-pipeline job. Rules: `design/doc-refactor.md`. Oversize check: `tools/list_oversize_docs.ps1`.
 
-Do not open `design/art-attack-keyframes.md` unless the User is resuming the attack animation keyframe pipeline. Web / chat writes `design/reuse-map.md` in Phase 7 when that is the goal.
+Do not open art_pipeline parked attack-keyframes unless the User is resuming the attack animation keyframe pipeline. Web / chat writes `design/reuse-map.md` in Phase 7 when that is the goal.
 
 ## Document kinds
 

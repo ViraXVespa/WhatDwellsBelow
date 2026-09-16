@@ -12,19 +12,19 @@ Hard constraints and the Demo-Complete Checklist live in the constraints file. U
 ## Core construction rules
 
 - Work in the live path. MUST NOT archive-then-rewrite on a fresh instance. MUST NOT discard live scenes, scripts, autoloads, or architectural patterns to start over.
-- Keep the live path designed around the orthographic Camera3D system (the camera topic).
+- Keep the live path designed around the orthographic Camera3D system (camera).
 - Prefer simple, readable, production-quality implementations that match surrounding live code.
-- All player and enemy character art MUST follow the mandatory pipeline in the art pipeline door.
+- All player and enemy character art MUST follow mandatory_pipeline_in_the_art_pipeline.
 - These systems are mandatory in addition to the constraints file: named monsters, enemy bases, quest system, aim-line indicator, Controls Billboard, Floor Crystal loadout, idle/pressure spawns, food vs potion distinction, enter/wake VFX, and gamepad-first UI with initial focus.
 - Player-facing UI MUST be dungeon-themed. Default / unskinned controls are allowed only in the secret debug menu.
-- Placeholders are allowed only under the explicit policy in the audio visual door.
+- Placeholders are allowed only under explicit_policy_in_the_audio_visual.
 
 ## Coverage phases
 
 Use these to find gaps. Advance a requested slice only after its exit criteria are met, self-verified, and progress is reported to the User. Do not self-start an unrequested full-phase rebuild.
 
 **Phase 1 – Foundation**  
-Camera3D + input + basic player movement/animation states (the art pipeline topic sprites, 8 directions) for both male and female characters on the existing live path.  
+Camera3D + input + basic player movement/animation states (art_pipeline sprites, 8 directions) for both male and female characters on the existing live path.  
 *Exit criteria*: Player can move, face 8 directions, and idle/walk with Y-billboard at 60 FPS. Depth sorting SHOULD be correct under implied real-world positions, with popping avoided wherever possible. Report to User.  
 Smoke: `--wdb-phase1-smoke`
 

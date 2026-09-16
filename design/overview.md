@@ -34,7 +34,7 @@ Hard constraints, demo-complete bar, and the full in-scope contract: the constra
 
 **Explicit Non-Goals (MUST NOT appear)**
 - Co-op / multiplayer / split-screen
-- Any skill beyond the eleven listed in the skills door
+- Any skill beyond eleven_listed_in_the_skills
 - Rarity higher than blue
 - Hub upgrades, currency sinks beyond vendor/anvil, or meta progression systems
 - Stealth, mounts, fishing, or other side systems
@@ -75,5 +75,5 @@ No mandatory intro cutscene or long exposition is required. The player learns th
 **Specific Locked Flavor**
 - Empty floor-1 death/“Dispel” recap MUST include the line: “They lived just to die. What a waste.”
 - Credit splash MUST show the word “Proudly” crossed out and the word “Shamelessly” written above it in graffiti style so the phrase reads as vandalized: “Shamelessly Vibecoded with Grok.”
-- The dungeon music track is titled “Bitter”. Links and loop rule: the audio visual topic.
+- The dungeon music track is titled “Bitter”. Links and loop rule: audio_visual.
 - Player-facing UI, pause menu, recap, and prompts MUST write the voluntary exit action as **“Dispel”** (quotation marks included) for the locked humorous tone. Internal code identifiers MAY omit the quotes.

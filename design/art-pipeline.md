@@ -4,14 +4,14 @@ Status: binding design
 Read when: sprite frames, paper plates, sheet harvest
 Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/bible_prompt.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `tools/run_isolated_grok.py`, `assets/sprites/player/`  
 
-This file is the door. Do not run `tools/bible_prompt.py` unless you are writing or locking a Bible. Do not load Appendix D unless you are choosing a generation method. Do not load the siblings until the job matches the table. Do not load the art pipeline / attack keyframes job unless the User is resuming the attack animation keyframe pipeline.
+This file is the door. Do not run `tools/bible_prompt.py` unless you are writing or locking a Bible. Do not load Appendix D unless you are choosing a generation method. Do not load siblings_until_the matches the table. Do not load art_pipeline_/_attack_keyframes unless the User is resuming the attack animation keyframe pipeline.
 
 | Job | Open |
 |-----|------|
 | Seed, prompt, one I2V unit | `design/art-i2v.md` |
 | Harvest, pack, cleanup | `design/art-pack.md` |
 | Animation Browser briefs / regen tree | `design/art-review.md` |
-| Attack body stills / coil keys (parked) | `design/art-attack-keyframes.md` |
+| Attack body stills / coil keys | parked |
 | Bible lock, plate remap, overlays, quality bar | `design/art-bible.md` |
 
 I2V stays in Grok Build unless the User says otherwise. One CLI week session. One unit per review gate. Mid-week new CLI chat is a catch-up: no week pin.

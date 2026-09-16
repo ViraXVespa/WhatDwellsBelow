@@ -9,11 +9,20 @@ from typing import Any
 
 ROUTES_REL = "design/routes.yaml"
 
-_KEY = re.compile(r"^([A-Za-z0-9_]+):\s*(.*)$")
+_KEY = re.compile(r"^([A-Za-z0-9_./-]+):\s*(.*)$")
 _ITEM = re.compile(r"^- \s*(.*)$")
 
 CYCLE_ROLES = frozenset(
     {"agents", "path", "requires", "recipe", "bot_job", "gate"}
+)
+
+TOPIC_CYCLE_ROLES = frozenset({"door", "job", "index"})
+INC6_KEYS = (
+    "job_read_when",
+    "job_parked",
+    "conflicts_with",
+    "boot_max",
+    "fetch_ban",
 )
 
 
@@ -212,6 +221,99 @@ def role_sets(data: dict[str, Any]) -> dict[str, set[str]]:
     return grouped
 
 
+def job_index(data: dict[str, Any]) -> dict[str, dict[str, str]]:
+    by_id: dict[str, str] = {}
+    by_path: dict[str, str] = {}
+    for door_name, door in (data.get("doors") or {}).items():
+        for job_name, target in (door.get("jobs") or {}).items():
+            jid = f"{door_name}.{job_name}"
+            path = str(target)
+            by_id[jid] = path
+            by_path[path] = jid
+    return {"by_id": by_id, "by_path": by_path}
+
+
+def job_read_when(data: dict[str, Any]) -> dict[str, str]:
+    raw = data.get("job_read_when") or {}
+    if not isinstance(raw, dict):
+        return {}
+    return {str(key): str(val) for key, val in raw.items()}
+
+
+def job_parked_ids(data: dict[str, Any]) -> list[str]:
+    raw = data.get("job_parked") or []
+    if not isinstance(raw, list):
+        return []
+    return [str(item) for item in raw]
+
+
+def conflicts_with(data: dict[str, Any]) -> dict[str, list[str]]:
+    raw = data.get("conflicts_with") or {}
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, list[str]] = {}
+    for key, val in raw.items():
+        items = val if isinstance(val, list) else []
+        out[str(key)] = [str(item) for item in items]
+    return out
+
+
+def boot_max(data: dict[str, Any]) -> dict[str, list[str]]:
+    raw = data.get("boot_max") or {}
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, list[str]] = {}
+    for key, val in raw.items():
+        items = val if isinstance(val, list) else []
+        out[str(key)] = [str(item) for item in items]
+    return out
+
+
+def fetch_ban(data: dict[str, Any]) -> dict[str, list[str]]:
+    raw = data.get("fetch_ban") or {}
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, list[str]] = {}
+    for key, val in raw.items():
+        items = val if isinstance(val, list) else []
+        out[str(key)] = [str(item) for item in items]
+    return out
+
+
+def resolve_route_ref(data: dict[str, Any], raw: str) -> str:
+    token = str(raw).strip()
+    if not token:
+        return ""
+    if token == "AGENTS.md" or token.endswith(".md"):
+        return token
+    doors = data.get("doors") or {}
+    if token in doors:
+        return str(doors[token]["file"])
+    idx = job_index(data)
+    if token in idx["by_id"]:
+        return idx["by_id"][token]
+    gates = data.get("gates") or {}
+    if token in gates:
+        return str((gates[token] or {}).get("file") or "")
+    paths = (data.get("boot") or {}).get("paths") or {}
+    if token in paths:
+        return str(paths[token])
+    recipes = data.get("recipes") or {}
+    if token in recipes:
+        return str(recipes[token])
+    bot_jobs = data.get("bot_jobs") or {}
+    if token in bot_jobs:
+        return str(bot_jobs[token])
+    indexes = data.get("indexes") or {}
+    if token in indexes:
+        return str(indexes[token])
+    return ""
+
+
+def increment6_missing_keys(data: dict[str, Any]) -> list[str]:
+    return [key for key in INC6_KEYS if key not in data]
+
+
 def door_job_targets(data: dict[str, Any], door_file: str) -> set[str]:
     for door in (data.get("doors") or {}).values():
         if str(door["file"]) == door_file:
@@ -220,7 +322,13 @@ def door_job_targets(data: dict[str, Any], door_file: str) -> set[str]:
 
 
 def parked_job_files(data: dict[str, Any]) -> set[str]:
-    return {str(v) for v in (data.get("parked_jobs") or [])}
+    out = {str(v) for v in (data.get("parked_jobs") or [])}
+    idx = job_index(data)
+    for jid in job_parked_ids(data):
+        path = idx["by_id"].get(jid)
+        if path:
+            out.add(path)
+    return out
 
 
 def skill_files(data: dict[str, Any]) -> set[str]:

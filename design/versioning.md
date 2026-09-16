@@ -68,7 +68,7 @@ Run the **init pin** only when the User opens the CLI session by saying **new we
 
 - Pin that commit as `grok_build_wN` — label `Grok Build Results (Week N)`.
 
-Archive `docs` follow the archives door. Changelog museum copies for those rows:
+Archive `docs` follow archives. Changelog museum copies for those rows:
 
 - Web Results Week N-1 → that week’s per-build markdown from `design/changelog/` or `design/changelog/archive/0.{N-1}/` (copy under `archives/docs/grok_web_w{N-1}/` so the pin can show files that were not on the old SHA).
 - Build Results Week N → previous week’s per-build markdown, if any, under `archives/docs/grok_build_wN/`.

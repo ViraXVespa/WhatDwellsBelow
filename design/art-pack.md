@@ -13,7 +13,7 @@ The same frame-count rule applies to every animation state: all eight facings of
 
 Pack one-shots with `tools/pack_oneshot.py` from `_src/oneshot/{gender}_{action}_{facing}.mp4`. Walk harvest stays `tools/pack_locomotion.py`.
 
-Idle is not harvested from the video. Walk-clip state cuts stay with the I2V-unit job on the art door.
+Idle is not harvested from the video. Walk-clip state cuts stay with the I2V-unit job on art.
 
 If harvest cuts fail but the clip is good, adjust pack points. Do not invent a new I2V method.
 

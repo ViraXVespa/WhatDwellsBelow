@@ -59,4 +59,4 @@ Do not resume unfinished work from this file unless the User names that work. A 
 
 - Rewrite this leave-off (date, why we stopped, pickup, likely next, do-not-redo).
 - Prepend a factual entry to `design/session-log.md`. Name I2V units: gender, facing, action, seed/path. Do not narrate clips.
-- Binding behavior changes still go in the matching topic file, not only here.
+- Binding behavior changes still go in matching file, not only here.
