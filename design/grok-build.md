@@ -61,7 +61,7 @@ Still required:
 
 - MUST extend and reuse live scenes, scripts, and architecture unless they contradict binding design or the User’s request.
 - The live path remains the orthographic Camera3D system in camera until the User accepts a camera rework.
-- Match surrounding style unless a just-do change or an accepted rework replaces it. Tabs. Types: the agents file.
+- Match surrounding style unless a just-do change or an accepted rework replaces it. Tabs. Types: `design/gdscript-law.md`.
 - Open numbers and player-facing ambiguity: `design/protocol.md`.
 
 Web / chat and Grok Bot leashes do not apply here.
@@ -74,7 +74,7 @@ Path-only: mid-week new CLI chat is a catch-up (no pin). A thin isolated child i
 
 ## Script cap
 
-Ship floor is the **10,000 byte** cap in the agents file. Enforce it while editing. Split in that same slice with `design/refactor.md` (recipe only; do not open the Bot door from it). Stop once under 10KB. Do not chase Grok Bot’s 5KB target.
+Ship floor is the **10,000 byte** cap in `design/gdscript-law.md`. Enforce it while editing. Split in that same slice with `design/refactor.md` (recipe only; do not open the Bot door from it). Stop once under 10KB. Do not chase Grok Bot’s 5KB target.
 
 A size split MAY introduce a new same-system helper API. A new cross-system owner during a split is **Stop and propose first**.
 

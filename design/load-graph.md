@@ -21,8 +21,10 @@ Then, only if the User named work:
     and design/versioning-log.md iff shipping a label
     and design/versioning.md iff the User said **new week** or named a pin
     and design/isolated-media.md iff Grok Build is about to call Imagine
+    and design/gdscript-law.md iff editing GDScript
 
 Imagine tool calls use the isolated-media **gate** only. Do not also open art_pipeline to generate.
+Types / warnings / tabs / 10KB live in `design/gdscript-law.md`, not the agents file.
 Art Bible / pack / review / I2V unit prompt use design/art-pipeline.md then one sibling.
 
 Recipes (never boot): design/refactor.md, design/doc-refactor.md, design/pc-offload.md.

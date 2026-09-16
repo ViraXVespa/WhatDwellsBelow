@@ -53,6 +53,9 @@ gates:
   isolated_media:
     file: design/isolated-media.md
     when: imagine
+  gdscript_law:
+    file: design/gdscript-law.md
+    when: editing_gdscript
 
 doors:
   overview:

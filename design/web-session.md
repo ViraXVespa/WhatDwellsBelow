@@ -58,7 +58,7 @@ Each emit response is only:
 2. A blank line.
 3. The entire file body. No truncations. Include unchanged lines.
 
-Markdown is not a Phase 4 emit. Any Phase 4 source (`.gd`, `.tscn`, `.json`, `.py`, `.ps1`, …): wrap the entire body in one code fence for that language. Nothing else in the response except the path line, the blank line, and that fence. GDScript follows the agents file → GDScript types.
+Markdown is not a Phase 4 emit. Any Phase 4 source (`.gd`, `.tscn`, `.json`, `.py`, `.ps1`, …): wrap the entire body in one code fence for that language. Nothing else in the response except the path line, the blank line, and that fence. GDScript follows `design/gdscript-law.md`.
 
 If the User replies with observations or changes for the file just emitted, revise that file and emit it again. Do not emit a different file until they say `Next`.
 
@@ -86,7 +86,7 @@ The User will say something like “Looks good.” That means no more behavior c
 
 ### Phase 6 — Sizing
 
-Check emitted live `scripts/**/*.gd` against the **10,000 byte** cap in the agents file. Use `design/refactor.md` for the split recipe only. Do not open the Bot path file from that recipe. Do not aim at Grok Bot's 5KB sweep target.
+Check emitted live `scripts/**/*.gd` against the **10,000 byte** cap in `design/gdscript-law.md`. Use `design/refactor.md` for the split recipe only. Do not open the Bot path file from that recipe. Do not aim at Grok Bot's 5KB sweep target.
 
 Web / chat does **not** apply that cap during Phase 2–5. Over-cap files may be emitted and revised until this phase.
 
