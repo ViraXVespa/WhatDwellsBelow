@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.35",
+			"points": [
+				{
+					"text": "AGENTS.md and the topic index no longer teach the old See also load rules."
+				},
+				{
+					"text": "Agent navigation is only `design/routes.yaml`. `See also:` is forbidden, not a softer list."
+				},
+				{
+					"text": "Human sketch `design/load-graph.md` and the doc-facade recipe match that rule."
+				},
+				{
+					"text": "Changelog labels from here on are meant to match the CI stamp for that push."
+				},
+				{
+					"text": "0.3.33 / 0.3.34 notes may sit one patch behind the stamp; treat those as already-baked."
+				}
+			],
+			"summary": "Routing docs agree with the yaml checker. No player-facing game change."
+		},
+		{
 			"label": "0.3.33",
 			"points": [
 				{
@@ -15,7 +36,7 @@
 					"text": "`tools/check_load_graph.py` reads the yaml table and fails on leftover See also / stray cites."
 				},
 				{
-					"text": "`tools/apply_doc_routes.py` stripped See also lines and rewrote topic cites to job phrases."
+					"text": "Stripped See also lines and rewrote topic cites to job phrases."
 				},
 				{
 					"text": "Load-graph check is a PC-offload catalog runner."
