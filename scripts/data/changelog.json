@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.42",
+			"points": [
+				{
+					"text": "PC-offload catalog gained changed-path, xref, code-map row, scene list, changelog-label, and Cursor skill-sync runners."
+				},
+				{
+					"text": "Build and Bot load a shared pc-offload skill; Imagine / I2V skills stay Build-only and are not copied to Cursor."
+				},
+				{
+					"text": "Bot may implement a new tools runner only after the User approves that runner."
+				}
+			],
+			"summary": "Local PC runners and a shared offload skill so agents stop burning tokens on inventory."
+		},
+		{
 			"label": "0.3.41",
 			"points": [
 				{
