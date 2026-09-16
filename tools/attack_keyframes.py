@@ -8,6 +8,11 @@ Authored grip is always character-left-hand high. Other handedness is
 runtime flip_h plus Left/Right (and diagonal) remap. Do not generate a
 second grip sheet.
 
+Facing Down, character-left high is camera-right high. Do not write
+"her left" / "his left" into the Imagine prompt; the editor reads that
+as camera-left. Do not write belt or buckle; naming them redraws the
+strap. Pose stack is sternum / midriff / torso centerline, not zipper.
+
 On resume (any future web session), run this first and paste the printed
 block at the top of the reply so the agent does not have to remember CLI:
 
@@ -23,18 +28,12 @@ from pathlib import Path
 TOOLS = Path(__file__).resolve().parent
 LOG = TOOLS / "attack_keyframes_log.json"
 
-# One authored stack. Gender only changes pronouns / identity lock.
+# Identity lock only. Pose left/right lives in LOCKED as camera-right/left.
 GRIP = {
     "female": {
-        "high": "her left hand",
-        "low": "her right hand",
-        "label": "character-left high",
         "pronoun_armor": "Same woman, same face",
     },
     "male": {
-        "high": "his left hand",
-        "low": "his right hand",
-        "label": "character-left high",
         "pronoun_armor": "Same man, same face",
     },
 }
@@ -54,21 +53,39 @@ LOCKED = {
         "same burgundy armor, same center zipper, same green neck cloth, "
         "dark trousers, brown boots, gold earrings. Square front view locked: "
         "eyes, chest, and belt buckle face the camera. Do not change the face.\n\n"
-        "Two-handed wind-up, {hand_label}: {high} higher on the chest, {low} "
-        "lower on the midriff, stacked one above the other in front of the "
-        "zipper. Both hands in fists. Hands empty. Hands hover off the jacket. "
-        "Elbows bent and close to the ribs. Face stays on camera. Not both "
-        "hands at the same height. Not arms out. Not a shrug. No pouch, glove, "
-        "or extra object.\n\n"
+        "Two-handed wind-up, character-left high: her left hand higher on the "
+        "chest, her right hand lower on the midriff, stacked one above the other "
+        "in front of the zipper. Both hands in fists. Hands empty. Hands hover "
+        "off the jacket. Elbows bent and close to the ribs. Face stays on camera. "
+        "Not both hands at the same height. Not arms out. Not a shrug. No pouch, "
+        "glove, or extra object.\n\n"
         "Small body coil. Hair may shift a little with that coil and must stay "
         "close to the head. Keep this still's exact narrow idle feet. Do not "
         "widen the stance.\n\n"
         "Flat hot-magenta background. Same chunky pixel style. Hands stay in frame."
     ),
+    "coil_v31": (
+        "2D pixel-art edit of this exact sprite. {pronoun_armor}, "
+        "same burgundy armor, same center zipper, same green neck cloth, "
+        "dark trousers, brown boots, gold earrings. Square front view locked: "
+        "eyes and chest face the camera. Do not change the face.\n\n"
+        "Two-handed wind-up. The higher fist is on camera-right, on the chest. "
+        "The lower fist is on camera-left, on the midriff. Both fists stacked "
+        "on the sternum. One fist directly above the other on the torso "
+        "centerline. Both hands in fists. Both fists square. Knuckles face the "
+        "camera. Wrists straight, not tilted, not cocked. Hands empty. Hands "
+        "hover off the jacket. Elbows bent and close to the ribs. Face stays "
+        "on camera. Not both hands at the same height. Not arms out. Not a "
+        "shrug. Not a punch. No pouch, glove, or extra object.\n\n"
+        "Small body coil. Hair may shift a little with that coil and must stay "
+        "close to the head. Keep this still's exact narrow idle feet. Boots "
+        "stay as close together as this seed. Do not widen the stance.\n\n"
+        "Flat hot-magenta background. Same chunky pixel style. Hands stay in frame."
+    ),
 }
 
 BEAT_SHEET = {
-    ("attack_great_axe", "coil"): "coil_v22",
+    ("attack_great_axe", "coil"): "coil_v31",
 }
 
 BANNED = (
@@ -81,7 +98,13 @@ BANNED = (
     "shoulder twist",
     "clearer coil",
     "clearer body coil",
+    "belt",
+    "buckle",
+    "middle of the chest",
+    "her left",
+    "his left",
 )
+
 
 RESUME_COMMANDS = """# Attack keyframe pipeline — run these yourself
 # 1. See parked beat + print the live Imagine-edit prompt:
@@ -89,12 +112,13 @@ python tools/attack_keyframes.py --resume
 # 2. Same prompt without reading the log:
 python tools/attack_keyframes.py --print --gender female --facing down --action attack_great_axe --beat coil
 # 3. After a roll, append the log:
-python tools/attack_keyframes.py --log --verdict keeper --note "v30 left-high held"
+python tools/attack_keyframes.py --log --verdict parked --note "short note"
 # verdict: keeper | fail | parked
 # 4. List beats for an action:
 python tools/attack_keyframes.py --beats --action attack_great_axe
 # Seed: locked Bible cell only (4x NN, #FF00FF). Never edit a previous generate.
-# Grip: always character-left high. Other handedness = flip_h + L/R remap at runtime.
+# Grip: authored character-left high = camera-right high when facing Down.
+# Do not write her/his left, belt, or buckle into the Imagine prompt.
 # Do not generate a male-right or female-right sheet.
 """
 
@@ -127,18 +151,19 @@ def build_still_prompt(
             f"# Banned cues: {', '.join(BANNED)}"
         )
     grip = _grip(gender)
-    body = LOCKED[sheet_id].format(hand_label=grip["label"], **grip)
+    body = LOCKED[sheet_id].format(**grip)
     facing_l = facing.lower().strip()
     preamble = (
         f"# still {gender} {facing_l} {action} {beat} sheet={sheet_id}\n"
         f"# seed = locked Bible cell only (4x NN, #FF00FF plate).\n"
-        f"# grip = character-left high; other handedness is runtime flip.\n"
+        f"# grip = character-left high = camera-right high (Down).\n"
         f"# banned: {', '.join(BANNED)}\n\n"
     )
     if facing_l != "down" or gender.lower() != "female":
         preamble += (
-            "# WARNING: coil_v22 was locked on female Down. Other facing/"
-            "gender is untested; keep stack + fists + feet + empty hands.\n\n"
+            "# WARNING: coil_v31 was locked on female Down. Other facing/"
+            "gender is untested; keep stack + fists + feet + empty hands. "
+            "Camera-right/left is a Down facing map.\n\n"
         )
     return preamble + body
 
@@ -152,10 +177,11 @@ def load_log() -> dict:
                 "facing": "down",
                 "action": "attack_great_axe",
                 "beat": "coil",
-                "next_id": "coil_v30",
+                "next_id": "coil_v32",
                 "seed": "seed_i2v_down_x4.png",
-                "sheet": "coil_v22",
+                "sheet": "coil_v31",
                 "grip": "authored_left_high",
+                "best_still": "GDNnn",
             },
             "rolls": [],
         }

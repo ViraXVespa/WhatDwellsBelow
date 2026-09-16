@@ -112,6 +112,8 @@ Then emit **one** runner: `tools/_scratch.py` (gitignored). The User pastes it a
 
 The runner must import `tools/doc_patch.py` (`sys.path` insert `tools/`, then `import doc_patch`). Do not reimplement replace helpers, changelog labeling, or the checker invoke.
 
+A Phase 4 emit and the Phase 7 runner are each one chat code fence. Do not put a markdown fence opener inside that emit. An inner fence splits the paste into many blocks. Build markdown bodies without raw fence markers (indent commands, or assemble a fence only at write time from `chr(96) * 3`). The runner source in chat must not contain that three-tick sequence.
+
 Do not emit markdown files one at a time in this phase. Do not use Phase 4 cadence or `Next` between documentation paths.
 
 If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md` as the **final** file in this phase. Label math and body shape: `design/versioning-log.md`. Body is `## {label}`, bullets, then one `Summary:` line. Do not write a `## Agent` section. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or hand-edit `scripts/data/version.json`. Do not write the label into `design/versioning.md`.
@@ -126,6 +128,7 @@ When documentation is done, this session goal is finished. The User should start
 
 - Do not emit documentation during Phase 4.
 - Do not emit Phase 7 documentation as one markdown file at a time; use `tools/_scratch.py`.
+- Do not put a markdown fence opener inside a fenced emit (Phase 4 body or Phase 7 runner). It splits the paste.
 - Do not reimplement `tools/doc_patch.py` inside a Phase 7 runner.
 - Do not treat `design/sessions.md` or `design/session-log.md` as the web hand-off.
 - Do not run a Grok Build week pin from this path.

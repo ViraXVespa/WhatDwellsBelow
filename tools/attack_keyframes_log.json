@@ -5,10 +5,11 @@
     "facing": "down",
     "action": "attack_great_axe",
     "beat": "coil",
-    "next_id": "coil_v30",
+    "next_id": "coil_v32",
     "seed": "seed_i2v_down_x4.png",
-    "sheet": "coil_v22",
-    "grip": "authored_left_high"
+    "sheet": "coil_v31",
+    "grip": "authored_left_high",
+    "best_still": "GDNnn"
   },
   "rolls": [
     {
@@ -19,6 +20,69 @@
       "beat": "coil",
       "verdict": "parked",
       "note": "v22-v25 sheet consistent. v30 not generated (Imagine cap). Grip is authored_left_high; other handedness is runtime flip. Bible-cell only."
+    },
+    {
+      "utc": "2026-09-16T20:07:00Z",
+      "gender": "female",
+      "facing": "down",
+      "action": "attack_great_axe",
+      "beat": "coil",
+      "verdict": "fail",
+      "note": "coil_v30 dXNdR punch/boxer; fists off zipper; elbows winged."
+    },
+    {
+      "utc": "2026-09-16T20:22:00Z",
+      "gender": "female",
+      "facing": "down",
+      "action": "attack_great_axe",
+      "beat": "coil",
+      "verdict": "fail",
+      "note": "Jtnrz zipper stack held; crooked top wrist; wide feet; extra belt straps."
+    },
+    {
+      "utc": "2026-09-16T20:23:00Z",
+      "gender": "female",
+      "facing": "down",
+      "action": "attack_great_axe",
+      "beat": "coil",
+      "verdict": "fail",
+      "note": "odaBI stack better; grip flip; wide feet; belt closer to seed."
+    },
+    {
+      "utc": "2026-09-16T20:36:00Z",
+      "gender": "female",
+      "facing": "down",
+      "action": "attack_great_axe",
+      "beat": "coil",
+      "verdict": "fail",
+      "note": "Naming belt/buckle redraws the strap. cyH6G fixed belt by omitting those words."
+    },
+    {
+      "utc": "2026-09-16T20:38:00Z",
+      "gender": "female",
+      "facing": "down",
+      "action": "attack_great_axe",
+      "beat": "coil",
+      "verdict": "fail",
+      "note": "her left reads as camera-left. camera-right high flipped grip to authored side (Vhhkr/GD3gp)."
+    },
+    {
+      "utc": "2026-09-16T20:42:00Z",
+      "gender": "female",
+      "facing": "down",
+      "action": "attack_great_axe",
+      "beat": "coil",
+      "verdict": "fail",
+      "note": "middle of the chest splits the stack (I0058)."
+    },
+    {
+      "utc": "2026-09-16T20:44:00Z",
+      "gender": "female",
+      "facing": "down",
+      "action": "attack_great_axe",
+      "beat": "coil",
+      "verdict": "parked",
+      "note": "coil_v31 GDNnn best authored-side still. Camera-right high, sternum column closer, belt quiet. Feet still open, elbows off ribs. Coil not finished."
     }
   ]
 }
