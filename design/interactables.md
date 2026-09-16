@@ -38,7 +38,7 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 
 - Provide the extraction / mailing interface. There are no in-dungeon clerks.
 - Each gate is a mechanical wall fixture (microwave-like housing with a portal viewport) built into a **north wall**, three wall tiles wide. Only that facing ships.
-- Count, safe rooms, and separation: dungeon. Mail-legal goods: inventory_/_meta.
+- Count, safe rooms, and separation: dungeon. Mail-legal goods: inventory.meta.
 - Dialogue is minimal; the main interaction is a clean, TV-readable list.
 - A gate becomes inactive after the extract menu closes **if anything was mailed** that visit. Cancel with nothing sent: the gate stays active.
 - Inactive: lamps off, viewport sealed by dungeon wall, banner reads INACTIVE. Active and inactive share the same metal shading so later world lighting can apply to both.

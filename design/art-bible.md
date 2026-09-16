@@ -102,7 +102,7 @@ Do not bake a held axe, staff, bow, pick, or hatchet into a body frame. The Disp
 
 The User judges the I2V clip itself first (facing lock, travel, identity). Do not pre-harvest a rejected clip.
 
-After accept, harvest, pack, and cleanup (art_pipeline_/_pack). Then the User judges the packed strip.
+After accept, harvest, pack, and cleanup (art_pipeline.pack). Then the User judges the packed strip.
 
 Do not start the next unit until the User says so.
 
@@ -139,7 +139,7 @@ Load this appendix only when choosing a generation method.
 | Chained image-edits for Bible cells | Low | Drift; avoid for Bible |
 | `i2v_seeds.py` walk prompt (in-place steps, short arm swing, settle and hold the still) | High | Only locomotion I2V method |
 | `i2v_seeds.py` one-shot MOTION keys (per weapon / tool, death, Dispel) | Mixed | Walk-class I2V is high; unarmed two-hand attack I2V invents props |
-| `attack_keyframes.py` Bible-cell stills | Parked | Coil sheet only; open art_pipeline_/_attack_keyframes when the User resumes that pipeline |
+| `attack_keyframes.py` Bible-cell stills | Parked | Coil sheet only; open art_pipeline.attack_keyframes when the User resumes that pipeline |
 | One 400% NN spliced still as the I2V seed | High | Default seed |
 | `i2v_seeds.py --test` web preamble | Browser tests only | Do not send in Grok Build I2V |
 | Full-Bible seed | Medium | Only if the User asks after a still-seed miss |
@@ -148,5 +148,5 @@ Load this appendix only when choosing a generation method.
 | `spill_flood=False` on video / jpg stills after remap | High | Avoid eating hair / maroon / purple cloth |
 | Automatic multi-pass fill-in | Forbidden | One unit, then User review |
 | Overlay I2V / stills for weapons and tools | High | Layers, not baked body props |
-| Isolated Imagine / I2V via `tools/run_isolated_grok.py` | High | Default generate path; see art_pipeline_/_isolated_media |
+| Isolated Imagine / I2V via `tools/run_isolated_grok.py` | High | Default generate path; see isolated_media |
 | Nearest-neighbor / scripted pixel-grid cleanup | Mandatory | Always perform after accept |

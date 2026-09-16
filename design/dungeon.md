@@ -62,7 +62,7 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 - Exactly three Extraction Gates per floor (tunable cap `max_clerks`, default 3).
 - Gate rooms MUST be spread across the floor (minimum separation 28 cells).
 
-Mail-legal goods and one-use visit rules: inventory_/_meta and interactables.
+Mail-legal goods and one-use visit rules: inventory.meta and interactables.
 
 ## Stairs
 

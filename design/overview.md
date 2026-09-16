@@ -34,7 +34,7 @@ Hard constraints, demo-complete bar, and the full in-scope contract: the constra
 
 **Explicit Non-Goals (MUST NOT appear)**
 - Co-op / multiplayer / split-screen
-- Any skill beyond eleven_listed_in_the_skills
+- Any skill beyond skills
 - Rarity higher than blue
 - Hub upgrades, currency sinks beyond vendor/anvil, or meta progression systems
 - Stealth, mounts, fishing, or other side systems

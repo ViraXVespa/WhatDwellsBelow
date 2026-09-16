@@ -11,7 +11,7 @@ Code: `scripts/data/save_store.gd`, `scripts/app.gd`, `scripts/app_set.gd`, `scr
 - A primary save file and a backup of the last successfully loaded save MUST both be maintained.
 - If the primary save is missing, corrupted, or fails to parse, the game automatically falls back to the backup. If both fail, a fresh dungeon delver is created.
 - Save data MUST persist across sessions and include at minimum:
-  - Permanent XP and levels for eleven_skills_in_the_skills
+  - Permanent XP and levels for skills
   - Banked gold
   - Banked resources (ore, wood, etc.)
   - The three forged holds for every equipment slot
@@ -48,7 +48,7 @@ CI stamps `version.json` on each user push to `main`, then Pages exports that sa
 
 ## Restock-on-return
 
-Player-facing restock rule: inventory_/_meta. Thresholds stay tunable and persist with the other debug overrides.
+Player-facing restock rule: inventory.meta. Thresholds stay tunable and persist with the other debug overrides.
 
 ## Debug profiles
 

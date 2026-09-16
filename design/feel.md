@@ -41,7 +41,7 @@ The three weapons (Great Axe, Lightning Staff, Longbow) MUST remain balanced wit
 
 ## Polish bar
 
-Every system that appears in the demo is considered production / Gold. No “temp” or “programmer art will do” exceptions are allowed for systems that ship. Placeholder assets are permitted only under explicit_policy_in_the_audio_visual and MUST be replaced before release.
+Every system that appears in the demo is considered production / Gold. No “temp” or “programmer art will do” exceptions are allowed for systems that ship. Placeholder assets are permitted only under audio_visual and MUST be replaced before release.
 Player-facing UI and HUD MUST be dungeon-themed. Default / unskinned engine controls MUST NOT appear on the playable path. The secret debug menu is exempt.
 
-The Automated Playtest / AI Player system (secret debug menu) exists to generate telemetry and recommended configurations from capped_set_in_the_debug so the demo can meet the targets above without a parallel simulation stack or an unbounded metrics product.
+The Automated Playtest / AI Player system (secret debug menu) exists to generate telemetry and recommended configurations from debug so the demo can meet the targets above without a parallel simulation stack or an unbounded metrics product.

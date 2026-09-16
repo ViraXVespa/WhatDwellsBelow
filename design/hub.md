@@ -36,7 +36,7 @@ All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidi
 - Shared gear board with **Analyze** and **Forge** tabs. Current tab is highlighted like Pause tabs, not disabled.
 - Potion and Food slots are disabled on this board.
 - Footer is short: bank + carried gold / ore / wood, plus one status line. Analyze does not list holds. Forge does not list every remnant.
-- Submenus keep the parent control strip and draw their own strip. No Back button. Binding UI: gear_ui. Binding item / roll rules: inventory → inventory_/_gear.
+- Submenus keep the parent control strip and draw their own strip. No Back button. Binding UI: gear_ui. Binding item / roll rules: inventory → inventory.gear.
 
 Live camp position: down and left of the vendor stall’s southwest corner (`21.2, 0, 11.4`).
 

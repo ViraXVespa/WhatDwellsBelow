@@ -14,10 +14,10 @@ Hard constraints and the Demo-Complete Checklist live in the constraints file. U
 - Work in the live path. MUST NOT archive-then-rewrite on a fresh instance. MUST NOT discard live scenes, scripts, autoloads, or architectural patterns to start over.
 - Keep the live path designed around the orthographic Camera3D system (camera).
 - Prefer simple, readable, production-quality implementations that match surrounding live code.
-- All player and enemy character art MUST follow mandatory_pipeline_in_the_art_pipeline.
+- All player and enemy character art MUST follow art_pipeline.
 - These systems are mandatory in addition to the constraints file: named monsters, enemy bases, quest system, aim-line indicator, Controls Billboard, Floor Crystal loadout, idle/pressure spawns, food vs potion distinction, enter/wake VFX, and gamepad-first UI with initial focus.
 - Player-facing UI MUST be dungeon-themed. Default / unskinned controls are allowed only in the secret debug menu.
-- Placeholders are allowed only under explicit_policy_in_the_audio_visual.
+- Placeholders are allowed only under audio_visual.
 
 ## Coverage phases
 

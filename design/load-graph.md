@@ -54,7 +54,7 @@ Machine-readable edges: `design/routes.yaml`. This file is the human sketch only
 
 ## Increment 5 / 6
 
-Doors and jobs use door keys (`input`, `art_pipeline`), not `the X topic`.
+Doors and jobs use door keys (`input`, `art_pipeline.pack`), not `the X topic` and not smashed door/job glue.
 README and code-map do not cite topic `design/*.md` paths.
 `job_read_when`, `job_parked`, `conflicts_with`, `boot_max`, and `fetch_ban` live in routes.yaml.
 Parked jobs stay out of the live Open column.

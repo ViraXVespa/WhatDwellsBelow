@@ -12,4 +12,4 @@ Read when: pause panels, fullscreen drape, play-menu
 | Extraction / Ghost Shop / Quest / Recap / map / toasts | `design/ui-run-flow.md` |
 | Anvil / Loadout / tooltip entry chrome (not board internals) | `design/ui-gear-entry.md` |
 
-Gear board layout / anvil tabs / slot plates live in gear_ui. ui_/_gear_entry only keeps the short UI-topic entry sections.
+Gear board layout / anvil tabs / slot plates live in gear_ui. ui.gear_entry only keeps the short UI entry sections.

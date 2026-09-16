@@ -4,7 +4,7 @@ Status: binding design
 Read when: sprite frames, paper plates, sheet harvest
 Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/bible_prompt.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `tools/run_isolated_grok.py`, `assets/sprites/player/`  
 
-This file is the door. Do not run `tools/bible_prompt.py` unless you are writing or locking a Bible. Do not load Appendix D unless you are choosing a generation method. Do not load siblings_until_the matches the table. Do not load art_pipeline_/_attack_keyframes unless the User is resuming the attack animation keyframe pipeline.
+This file is the door. Do not run `tools/bible_prompt.py` unless you are writing or locking a Bible. Do not load Appendix D unless you are choosing a generation method. Do not load Job siblings until a table row matches. Do not load art_pipeline.attack_keyframes unless the User is resuming that parked pipeline.
 
 | Job | Open |
 |-----|------|

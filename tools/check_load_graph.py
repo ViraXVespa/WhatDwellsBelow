@@ -595,6 +595,16 @@ def recipe_phrase_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     return fails
 
 
+def smash_fails(root: Path, texts: dict[str, str]) -> list[str]:
+    fails: list[str] = []
+    for posix, body in texts.items():
+        if posix.startswith("design/changelog/"):
+            continue
+        if "_/_" in body or "_in_the_" in body:
+            fails.append(f"smashed skip-door phrase: {posix}")
+    return fails
+
+
 def index_topic_cite_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     fails: list[str] = []
     topic = set()
@@ -850,6 +860,7 @@ def main() -> int:
                 fails.append("web-session.md still treats sessions.md as context")
 
     fails.extend(index_topic_cite_fails(routes, texts))
+    fails.extend(smash_fails(root, texts))
     fails.extend(fetch_ban_fails(routes, texts))
     fails.extend(recipe_phrase_fails(routes, texts))
     fails.extend(boot_instruct_fails(routes, texts))

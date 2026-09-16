@@ -16,7 +16,7 @@ ui is already open when this sibling is loaded. Open gear-ui only when board / a
 ## Loadout UI
 
 - Opens only by interacting with the Floor Crystal in Placeholdia. There is no separate loadout station.
-- Uses shared_gear_board_in_the_gear_ui. Holds / starters / bank populate each slot list.
+- Uses the shared gear board on gear_ui. Holds / starters / bank populate each slot list.
 - Footer is `Floor: [−] [selected] [+] (Deepest floor: n)` then **Enter dungeon**. No character button and no top weapon / tool / deepest summary.
 - Choose starting weapon and tool type (pickaxe or hatchet — locked for the run) from the doll slots. Starting floor is only a previously reached floor. Never backward.
 - First focus is **Enter dungeon**. One press enters. B / Esc / Close cancels without entering.

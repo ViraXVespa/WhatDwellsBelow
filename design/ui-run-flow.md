@@ -48,7 +48,7 @@ Triggered on every death or “Dispel”.
 - The large map starts at fit-to-frame. Zoom in with wheel, pinch, or look-mode right stick. Zoom focus: cursor / pinch midpoint on pointer and touch; player marker on gamepad.
 - When zoomed in past fit, pan with mouse drag, one-finger swipe (walk stick not claimed), or look-mode-off right stick. Clamp so the image cannot leave the frame. Zoom-out to fit recenters and disables pan.
 - Large-map zoom does not change world `App.cam_zoom`.
-- Fog of war and visited tracking follow rules_in_the_dungeon.
+- Fog of war and visited tracking follow dungeon.
 
 ## Toasts and floating combat text
 

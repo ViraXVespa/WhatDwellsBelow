@@ -60,7 +60,7 @@ Runner: `python tools/run_isolated_grok.py --kind <kind> …`
 
 ## Parent still owns
 
-Unit pick, review gate, harvest / pack (art_pipeline_/_pack), next-unit permission, week pin. The child only pays for the media turn. Do not `/resume` a fat art thread to “just do one more” clip or tile.
+Unit pick, review gate, harvest / pack (art_pipeline.pack), next-unit permission, week pin. The child only pays for the media turn. Do not `/resume` a fat art thread to “just do one more” clip or tile.
 
 Live roof UV crop in Placeholdia is a seam workaround on the current `plaza_roof.png`. A new seamless tile does not by itself edit `camp` UVs. That is a later slice after the User accepts the still.
 
