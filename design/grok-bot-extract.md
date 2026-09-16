@@ -1,4 +1,4 @@
-﻿# Grok Bot — extract / owner routing
+# Grok Bot — extract / owner routing
 
 Status: protocol  
 Read when: Grok Bot Job table → ad-hoc extract or existing-owner routing  
@@ -24,7 +24,7 @@ Move near-identical control flow (renamed locals OK) to one owner. No behavior c
 2. `design/refactor.md` (recipe only)
 3. One `design/code-map.md` **system row** for the named cluster
 4. After the User names the cluster: only those live `.gd` bodies
-5. At ship: `scripts/data/version.json` + `design/versioning.md` body shape — not the changelog tree
+5. At ship: `scripts/data/version.json` + `design/versioning-log.md` body shape — not the changelog tree
 
 Do not reopen `AGENTS.md` unless types, warnings, tabs, or the 10KB cap left context. Do not open `design/reuse-map.md` (empty template is not a worklist). Do not walk the whole live tree to rediscover copies. Ask if the pair is not actually the same flow.
 

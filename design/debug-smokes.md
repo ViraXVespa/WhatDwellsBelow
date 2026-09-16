@@ -1,4 +1,4 @@
-﻿# Smoke tests (live snapshot)
+# Smoke tests (live snapshot)
 
 Status: binding design  
 Read when: smoke phase coverage / how to run smokes  
@@ -27,7 +27,7 @@ Binary (Steam tools build): `C:/Program Files (x86)/Steam/steamapps/common/Godot
 - Put the phase flag in **user** args (after `--`) so `OS.get_cmdline_user_args()` sees it.
 - Capture stderr for `P1:`…`P9:` lines and `SCRIPT ERROR`. Exit is self-quit from the phase (or kill after a timeout if hung).
 - Optional: `--verbose` for load traces (huge logs). Not required once drivers are set.
-- Compile/reload check is separate: see `design/grok-bot-session.md` (`--editor --import`). Do not treat a smoke pass as proof scripts are editor-clean, or vice versa.
+- Compile/reload check is separate: `tools/run_godot_import_check.ps1` (`--headless --editor --import`). Catalog: `design/pc-offload.md`. Do not treat a smoke pass as proof scripts are editor-clean, or vice versa.
 
 | Fn | Checks |
 |----|--------|

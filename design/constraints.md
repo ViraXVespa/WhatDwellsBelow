@@ -1,4 +1,4 @@
-﻿# Hard constraints and demo-complete bar
+# Hard constraints and demo-complete bar
 
 Status: binding design  
 Read when: every fresh instance; before adding a system; before calling the demo complete  
@@ -6,7 +6,7 @@ See also:
 
 These constraints are **product scope**. They do not ban Grok Build from adding helpers, same-system APIs, or local module shape. Code-architecture rules for Build stay on the Build path file. “System” in this file means a player-facing game system, not a code module.
 
-`See also:` is not a read list. Do not open overview, coverage, or feel from this file unless the User named that work.
+`See also:` is not a read list. Do not open overview, coverage, or feel from this file unless the User named that work. Named paths in this file are not a fresh-instance read list.
 
 ## Hard constraints (non-negotiable)
 

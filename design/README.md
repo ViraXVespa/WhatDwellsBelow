@@ -1,8 +1,8 @@
-﻿# Design database
+# Design database
 
 Status: index  
 Read when: you need a topic file  
-See also: `design/code-map.md`
+See also:
 
 This folder is the documentation database for humans and agents.  
 It is not one Game Design Document. It is not a boot file.
@@ -15,7 +15,7 @@ It is not one Game Design Document. It is not a boot file.
 
 Boot and path procedure live in `AGENTS.md` and that path’s session file.
 
-This file is the **topic index** only. Live scripts, scenes, and tools: `design/code-map.md` (one system row). Do not open `design/code-map.md` unless you need a live path. Do not open this file’s topic table “for context.”
+This file is the **topic index** only. Live scripts, scenes, and tools: `design/code-map.md` (one system row). Do not open `design/code-map.md` unless you need a live path. Do not open this file’s topic table “for context.” Routing edges (not a boot file): `design/load-graph.md`.
 
 Open only the topic files that match the requested work. Numbers: `design/tunables.md`. Do not walk `assets/` unless the task names sprites or audio. After a behavior change, update the matching topic file in the same slice. After a live script split, update `design/code-map.md` in the same slice.
 
@@ -37,20 +37,8 @@ Do not open `design/art-attack-keyframes.md` unless the User is resuming the att
 
 | When the work is about… | File | Old GDD home |
 |-------------------------|------|----------------|
-| Agent workflow | `protocol.md` | Front matter |
-| Web / chat session flow | `web-session.md` | — |
-| Grok Build session flow | `grok-build.md` | — |
-| Grok Bot session door | `grok-bot-session.md` | — |
-| Grok Bot size sweep | `grok-bot-size.md` | — |
-| Grok Bot extract / owner routing | `grok-bot-extract.md` | — |
-| Grok Bot staged reuse-map PR | `grok-bot-reuse.md` | — |
-| Grok Bot folder relocate | `grok-bot-relocate.md` | — |
-| Grok Bot doc facades | `grok-bot-docs.md` | — |
-| Refactor recipe | `refactor.md` | — |
-| Staged Bot reuse brief | `reuse-map.md` | — |
-| Grok Build leave-off | `sessions.md` | — |
-| Grok Build session log | `session-log.md` | — |
-| Version scheme, changelog, week pins | `versioning.md` | — |
+| Version scheme, week pins | `versioning.md` | — |
+| Changelog body / ship label | `versioning-log.md` | — |
 | Must / must-not, checklist | `constraints.md` | Hard constraints, success, App. B |
 | Vision, scope, lore | `overview.md` | §§1–3 |
 | Gamepad, KB/M, web pad, web touch, menu binds | `input.md` | §4 input |
@@ -72,6 +60,7 @@ Do not open `design/art-attack-keyframes.md` unless the User is resuming the att
 | Failure modes | `edge-cases.md` | §17 |
 | Phase 1–9 checklist | `coverage.md` | §18 |
 | Sprite / paper-doll door | `art-pipeline.md` | §19, App. C–D |
+| Bible lock, plate remap, overlays, quality bar | `art-bible.md` | §19.0–19.1 |
 | Isolated Imagine / I2V (CLI) | `isolated-media.md` | — |
 | I2V unit + seed + prompt | `art-i2v.md` | §19.2 |
 | Harvest, pack, cleanup | `art-pack.md` | §19.4 |
@@ -80,8 +69,8 @@ Do not open `design/art-attack-keyframes.md` unless the User is resuming the att
 | Live code map | `code-map.md` | — |
 | Pinned archive commits | `archives.md` | §20 |
 | Suggested starts + live defaults | `tunables.md` | App. A + live `balance.gd` |
-
 Per-build player notes for the **current series** are flat `design/changelog/{label}.md`. Prior series live under `design/changelog/archive/{epoch}.{series}/`. They are not topic files. Do not open them unless `versioning.md` says to.
+
 
 ## House rules for editing these files
 

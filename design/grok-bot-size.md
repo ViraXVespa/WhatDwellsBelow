@@ -1,4 +1,4 @@
-﻿# Grok Bot — size sweep
+# Grok Bot — size sweep
 
 Status: protocol  
 Read when: Grok Bot Job table → size sweep  
@@ -23,7 +23,7 @@ Out of scope: `scenes/`, `assets/`, `tools/` (unless a preload path or PC-offloa
 2. `design/refactor.md` (recipe only)
 3. One `design/code-map.md` **system row** for the cluster about to be edited
 4. After inventory: only the live `.gd` files in that one cluster
-5. At ship: baked `scripts/data/version.json` and `design/versioning.md` body shape — not the changelog tree
+5. At ship: baked `scripts/data/version.json` and `design/versioning-log.md` body shape — not the changelog tree
 
 Do not reopen `AGENTS.md` unless types, warnings, tabs, or the 10KB cap left context. Do not open `design/reuse-map.md`, `design/doc-refactor.md`, or the other Bot flow siblings.
 

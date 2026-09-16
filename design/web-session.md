@@ -1,4 +1,4 @@
-﻿# Web / chat session flow
+# Web / chat session flow
 
 Status: protocol 
 Read when: web / chat path; every web session after the repo-review message 
@@ -24,7 +24,7 @@ Move to the next phase only when this file says to. Do not emit source during Ph
 
 The User tells the agent to review the repo. That sets up the session.
 
-If `AGENTS.md` already routed this session here, do not re-read `AGENTS.md`. Read `design/protocol.md` and `design/constraints.md` only when they are not already in this session. Then only the topic door for work already named. Inspect the live tree from **one system row** in `design/code-map.md`. `design/sessions.md` is context only, not this session’s hand-off. Do not read `design/session-log.md`. Do not read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief.
+If `AGENTS.md` already routed this session here, do not re-read `AGENTS.md`. Read `design/protocol.md` and `design/constraints.md` only when they are not already in this session. Then only the topic door for work already named. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open `design/grok-build.md`, `design/grok-bot-session.md`, or `design/README.md` for context. `design/sessions.md` is context only, not this session’s hand-off. Do not read `design/session-log.md`. Do not read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief.
 
 Respond by confirming the review is done and that the session is ready for Phase 2. Do not start implementation.
 
@@ -108,7 +108,7 @@ All documentation changes for this goal happen in this phase. Phase 5 testing ca
 
 Check the change against `design/` (and `AGENTS.md` when agent rules changed). Update topic files, `design/code-map.md`, and tunables that the slice made wrong. Re-list the Phase 7 paths if testing changed them, wait for confirmation, then emit with Phase 4 cadence (`Next` between files). Markdown emits are plain text and use no code fence.
 
-If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md` as the **final** file in this phase. Label math and body shape: `design/versioning.md`. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or hand-edit `scripts/data/version.json`. Do not write the label into `design/versioning.md`.
+If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md` as the **final** file in this phase. Label math and body shape: `design/versioning-log.md`. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or hand-edit `scripts/data/version.json`. Do not write the label into `design/versioning.md`.
 
 Do not emit `design/sessions.md` or `design/session-log.md` unless the User explicitly overrides that for this session. Do not emit `_logs/`.
 

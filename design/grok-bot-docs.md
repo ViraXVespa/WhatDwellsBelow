@@ -1,4 +1,4 @@
-﻿# Grok Bot — documentation facades
+# Grok Bot — documentation facades
 
 Status: protocol  
 Read when: Grok Bot Job table → doc facade / sibling split  
@@ -26,7 +26,7 @@ Out of scope: rewriting `design/changelog/**` history, `docs/` Pages export, mix
 2. `design/doc-refactor.md`
 3. The `design/README.md` topic index row for the door
 4. After inventory: that one door and only the sibling for the active job
-5. At ship: `scripts/data/version.json` + `design/versioning.md` body shape — not the changelog tree
+5. At ship: `scripts/data/version.json` + `design/versioning-log.md` body shape — not the changelog tree
 
 Do not reopen `AGENTS.md` unless types, warnings, tabs, or the 10KB cap left context. Do not concatenate all siblings into context. Do not open `design/reuse-map.md`. Prefer Length / heading lists over pasting whole markdown bodies. Oversize list: `tools/list_oversize_docs.ps1` (skip `design/changelog/`).
 

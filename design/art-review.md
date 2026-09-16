@@ -1,8 +1,8 @@
-﻿# Animation Browser review briefs
+# Animation Browser review briefs
 
 Status: binding design  
 Read when: packing an Animation Browser brief, regen tree, or review ledger  
-See also: `design/art-pipeline.md`  
+See also:  
 Code: `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `scripts/debug/anim_browser.gd`
 
 Open this file from the door. Output under `tools/anim_review/` is gitignored. `See also:` is not a read list. I2V, pack, and debug stay on their own doors unless that job is named.

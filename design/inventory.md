@@ -1,8 +1,8 @@
-﻿# Inventory / gear rules (door)
+# Inventory / gear rules (door)
 
 Status: binding design  
 Read when: bag, equipment, forge/analyze, affixes, artifacts, extraction mailing  
-See also: `design/gear-ui.md`
+See also:
 
 This file is the door. Open only the sibling that matches the job. `See also:` is not a read list. Open gear-ui only when board chrome is the named work. Do not reopen hub, skills, doc-refactor, or the topic index from this file.
 

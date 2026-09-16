@@ -1,9 +1,9 @@
-﻿# Player avatar, movement, and facing
+# Player avatar, movement, and facing
 
 Status: binding design  
 Read when: changing movement, collision, facing, or character select  
 Code: `scripts/world/player.gd`, `player_anim.gd`, `player_anim_load.gd`, `player_anim_loco.gd`, `facing.gd`  
-See also: `design/art-pipeline.md`
+See also:
 
 `See also:` is not a read list. Open the art door only when generating or replacing frames. Combat dash rules and input routing stay on their own doors.
 

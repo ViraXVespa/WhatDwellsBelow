@@ -1,4 +1,4 @@
-﻿# Grok Bot — staged reuse-map PR
+# Grok Bot — staged reuse-map PR
 
 Status: protocol  
 Read when: Grok Bot Job table → staged reuse-map brief  
@@ -25,7 +25,7 @@ Still refactor-shaped unless a row the User wrote is explicit and legal. No inve
 3. `design/refactor.md` when a touched file must split (recipe only)
 4. One `design/code-map.md` **system row** for each cluster the brief names
 5. After that: only the live `.gd` files in the active cluster
-6. At ship: `scripts/data/version.json` + `design/versioning.md` body shape — not the changelog tree
+6. At ship: `scripts/data/version.json` + `design/versioning-log.md` body shape — not the changelog tree
 
 Do not reopen `AGENTS.md` unless types, warnings, tabs, or the 10KB cap left context. Do not walk the live tree to rediscover copies the brief does not name.
 

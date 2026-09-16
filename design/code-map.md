@@ -1,8 +1,8 @@
-﻿# Live code map
+# Live code map
 
 Status: index  
 Read when: you need a live script, scene, or tool path for a named system  
-See also: `design/README.md`
+See also:
 
 This file is the live-path map. It is not a boot file and not a topic index.
 

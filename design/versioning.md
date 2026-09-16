@@ -1,7 +1,7 @@
-﻿# Versioning and changelog
+# Versioning and changelog
 
 Status: binding design  
-Read when: stamping a build, writing a changelog entry, Grok Build init, title “what’s new”, or adding an archive pin  
+Read when: stamping a build, adding an archive pin, or the User said **new week**  
 See also:
 
 `See also:` is not a read list. Do not reopen `AGENTS.md` from this file. Mid-week slices do not read `design/changelog/`.
@@ -52,72 +52,6 @@ Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/chang
 
 Grok Bot PRs MUST squash-merge (see `design/grok-bot-session.md`). A multi-commit branch is fine on the PR; it must become **one** user commit on `main`.
 
-## Changelog files
-
-Authoring unit is **one markdown file per build** for the **current series only**, flat under:
-
-`design/changelog/{label}.md`  
-Example: `design/changelog/0.3.10.md`
-
-Prior series are parked under:
-
-`design/changelog/archive/{epoch}.{series}/{label}.md`  
-Example: `design/changelog/archive/0.2/0.2.53.md`
-
-Plain text, no code fence when emitted. Body shape:
-
-## {label}
-- Key point
--- Subpoint (optional)
-- Key point
-
-Summary: one- or two-sentence session summary
-
-The first player-facing heading MUST be the H2 `## {label}` (two hashes, space, label). MUST NOT use an H1 `# {label}`. The filename `{label}.md` is not a reason to promote that heading. Optional `## Agent` is also H2.
-
-No other sections in the player-facing body. Agent-only revert hints (paths, SHA) may follow a `## Agent` heading; the game and Pages player view ignore that heading.
-
-Do **not** keep a concatenated week file on `main`. Do **not** hand-edit `scripts/data/changelog.json`.
-
-### Series cleanup (week / series bump)
-
-When `scripts/data/version.json` `series` (or `epoch`) advances — new week seed, `0.N.0` / `1.M.0` open — prior-series markdown must leave the live flat folder:
-
-1. Run `python tools/archive_prior_changelogs.py` (or `powershell -File tools/archive_prior_changelogs.ps1`). Idempotent. Writes `_logs/changelog-archive/summary.txt`.
-2. CI (`version.yml` / `pages.yml`) runs the same tool before `build_changelog.py` and may commit moved files with the stamp.
-
-`tools/build_changelog.py` (also run by CI):
-
-- Reads `version.json` for the current `epoch.series`.
-- Reads only flat `design/changelog/{epoch}.{series}.*.md` (not `archive/`).
-- Writes `scripts/data/changelog.json` — **current series only**, newest patch first, bullets + summary only.
-- Does not write a week rollup into the repo. Pages week views are built in the Action from flat current files **plus** `design/changelog/archive/*/*.md`.
-
-## Who reads what
-
-| Reader | Reads |
-|--------|-------|
-| Fresh web / chat, Phases 1–3 | Nothing under `design/changelog/`. Nothing in `version.json` unless the work is this topic. |
-| Web Phase 7 | This file’s **body shape** only. Writes **one** new `design/changelog/{label}.md`. `{label}` is baked `version.json` `label` with patch + 1 (ignore stamp commits). Do not read older changelog files. Do not write that number back into this file. Do not emit `changelog.json`. First heading `## {label}`, never `# {label}`. |
-| Grok Build mid-week slice / catch-up | Nothing under `design/changelog/`. Leave-off + User-named work. |
-| Grok Build **new week**, revert, or User asks what shipped | This file’s body shape + `design/sessions.md`. Still not every `0.N.*` file. |
-| Grok Bot | Reads baked `version.json` only to name `{label}` (patch + 1). Writes **one** new `design/changelog/{label}.md` per shipping PR. First heading `## {label}`, never `# {label}`. Does not hand-edit `changelog.json`. Optional sweep notes go in `_logs/` only. |
-| Named revert / what was 0.1.4? | That one file (flat or under `design/changelog/archive/{epoch}.{series}/`). |
-| Game | `version.json` + `changelog.json`. |
-
-`design/changelog.md` is not required. Pages `/changelog/` is the public index.
-
-## In-game
-
-- Title / play menu (`scripts/title.gd`) always shows `version.json` `label`.
-- If `label` > saved `last_seen_game_ver`, show a gamepad-first “what’s new” overlay **before** Play is used.
-- Overlay lists JSON entries with `label` > `last_seen_game_ver`.
-- First launch or wiped save: show **the current build only**, then write `last_seen_game_ver`.
-- Same series, older patch: show the in-between entries from JSON.
-- Older series: show this series’ new entries from JSON, plus a control that opens `https://viraxvespa.github.io/WhatDwellsBelow/changelog/`.
-- A / Start or B / Esc dismisses, writes `last_seen_game_ver` = current `label`, focuses Play.
-- Persist `last_seen_game_ver` through `save_store.gd` on the live slot. Do not reuse save-schema `"v"`.
-
 ## Grok Build week ritual
 
 One Grok Build session family per week. The User’s single completion commit is `0.N.0` (later `1.M.0` when they name a major) and is tagged as that series open.
@@ -142,21 +76,3 @@ Archive `docs` follow `design/archives.md`. Changelog museum copies for those ro
 - Build Results Week N → previous week’s per-build markdown, if any, under `archives/docs/grok_build_wN/`.
 
 Also attach the `design/` file tree as it exists **on the pinned commit** (`docs[]` paths that `git show` can resolve). Standing order: when the User has said **new week**, this ritual may create those two pins without a fresh “please archive” prompt. No other new archives unless the User asks.
-
-## Web / chat Phase 7
-
-After the User is satisfied with the goal’s behavior:
-
-1. Update topic files this slice made wrong (`design/versioning.md` only if the scheme or ritual changed).
-2. Author `design/changelog/{label}.md` using baked `scripts/data/version.json` `label` with patch + 1. First heading `## {label}`, never `# {label}`. Do not record that label in this file. Do not read older changelog files.
-3. Do not emit `changelog.json` or `version.json` as the ledger. Seed those files only when they do not exist yet on live.
-
-The User pastes. CI stamps the number when the files land on `main`.
-
-## Grok Bot PR close-out
-
-When a Grok Bot PR is ready to merge:
-
-1. Ensure the PR includes `design/changelog/{label}.md` with `{label}` = baked patch + 1 and first heading `## {label}`.
-2. Squash-merge into `main` so exactly one user commit lands.
-3. CI stamps `version.json` / `changelog.json` and tags `v{label}`.

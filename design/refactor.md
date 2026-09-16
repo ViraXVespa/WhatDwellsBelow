@@ -1,10 +1,10 @@
-﻿# Refactor recipe
+# Refactor recipe
 
 Status: protocol  
 Read when: splitting a live script for size; Grok Bot every task; Grok Build when an edit is over 10KB; web / chat Phase 6  
 See also: `design/doc-refactor.md`
 
-This file is the mechanical recipe only. Pick a Bot flow from `design/grok-bot-session.md`. Do not open that door from this recipe. `See also:` is not a read list.
+This file is the mechanical recipe only. Do not open the Bot door from this recipe. `See also:` is not a read list.
 
 Grok Bot uses this file on every task. Other paths use it only when they must split.
 

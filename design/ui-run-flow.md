@@ -1,7 +1,7 @@
-﻿# Run-flow UI (extract, shop, quest, recap, map, toasts)
+# Run-flow UI (extract, shop, quest, recap, map, toasts)
 
 Status: binding design  
-Read when: extraction gate, ghost shop, quest, recap, minimap, toasts  
+Read when: extraction gate, ghost shop, quest, recap, minimap, crystal map UI, toasts  
 See also:
 
 The UI door is already open when this sibling is loaded. `See also:` is not a read list. Do not reopen ui, theme, title-web, hud, pause, gear-entry, gear-ui, hub, input, or doc-refactor from this file.

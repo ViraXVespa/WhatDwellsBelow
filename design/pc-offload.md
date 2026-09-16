@@ -1,7 +1,7 @@
-﻿# PC offload (Bot + Build)
+# PC offload (Bot + Build)
 
 Status: binding for agents on a local checkout  
-Read when: measuring scripts, planning splits, verifying after edits, or cutting token use  
+Read when: running a listed runner, or reading that runner's _logs summary  
 See also:
 
 This file is a runner catalog. Path procedure stays in the path session file. Do not open session files or `design/debug.md` from here. `See also:` is not a read list.

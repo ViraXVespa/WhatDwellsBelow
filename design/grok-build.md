@@ -1,4 +1,4 @@
-﻿# Grok Build session flow
+# Grok Build session flow
 
 Status: protocol  
 Read when: Grok Build (CLI) path; every CLI instance after a gap  
@@ -27,8 +27,8 @@ Do not pin because time passed, because the last slice ended, or because a new C
 
 1. `AGENTS.md`, then this file. Do not re-read `AGENTS.md` after that.
 2. `design/protocol.md` and `design/constraints.md` only when they are not already in this session.
-3. `design/sessions.md` (leave-off only). It is not a boot list and must not send you back through this Read order.
-4. Changelog: skip on a mid-week slice or catch-up. Open `design/versioning.md` (body shape only) for **new week**, a revert, or when the User asks what shipped. Do not ingest every `design/changelog/{epoch}.{series}.*.md`. Do not treat `scripts/data/version.json` as the version ledger. Do not follow GitHub commit links into web-session conversations.
+3. `design/sessions.md` only when leave-off must name the next unit. It is not a boot list and must not send you back through this Read order.
+4. Changelog: skip on a mid-week slice or catch-up. Open `design/versioning.md` for **new week** pins. Open `design/versioning-log.md` for changelog body shape, a revert, or when the User asks what shipped. Do not ingest every `design/changelog/{epoch}.{series}.*.md`. Do not treat `scripts/data/version.json` as the version ledger. Do not follow GitHub commit links into web-session conversations.
 5. Only the topic door that matches the requested work (one row in `design/README.md`). Sprite / I2V / pack / review: `design/art-pipeline.md`, then only the sibling it names. Imagine / isolated generate: `design/isolated-media.md`.
 6. Inspect git and the live tree from **one system row** in `design/code-map.md` (`project.godot`, then the listed scenes/scripts). Do not walk `assets/` unless the task names sprites or audio.
 

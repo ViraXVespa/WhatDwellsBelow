@@ -1,4 +1,4 @@
-﻿# Grok Bot — folder relocate
+# Grok Bot — folder relocate
 
 Status: protocol  
 Read when: Grok Bot Job table → parked or named folder relocate  
@@ -19,7 +19,7 @@ Out of scope: inventing a new cluster to move, archives, art, features.
 1. This file
 2. `design/refactor.md` (Parked folder moves; recipe only)
 3. The `design/code-map.md` **system rows** that name the cluster
-4. At ship: `scripts/data/version.json` + `design/versioning.md` body shape — not the changelog tree
+4. At ship: `scripts/data/version.json` + `design/versioning-log.md` body shape — not the changelog tree
 
 Do not reopen `AGENTS.md` unless types, warnings, tabs, or the 10KB cap left context. Do not open `design/reuse-map.md`. Do not read every caller first — run the mover, then open only paths the summary says changed.
 

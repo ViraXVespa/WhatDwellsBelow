@@ -1,7 +1,7 @@
-﻿# Dungeon generation and floors
+# Dungeon generation and floors
 
 Status: binding design + live snapshot  
-Read when: changing gen, floor flow, streaming, boss doors, fog, or crystals  
+Read when: changing gen, floor flow, streaming, boss doors, fog, or floor crystals  
 Code: `scripts/dungeon/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_boot.gd`, `dungeon_stream.gd`, `dungeon_geo_stream.gd`, `dungeon_map_act.gd`, `dungeon_props.gd`, `boss_door.gd`, `crystal_net.gd`, `crystal_place.gd`, `floor_crystal.gd`  
 See also: `design/tunables.md`
 
