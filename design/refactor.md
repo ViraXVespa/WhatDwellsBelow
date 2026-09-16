@@ -13,7 +13,7 @@ Grok Build feature work is **not** a refactor. Implementation freedom (new same-
 | Rule | Who |
 |------|-----|
 | Ship floor: every live `scripts/**/*.gd` under **10,000 bytes** | Every path that ships a `.gd` |
-| Sweep target: each resulting file under **5,000 bytes** when existing code can move | Grok Bot size sweep only (`design/grok-bot-size.md`) |
+| Sweep target: each resulting file under **5,000 bytes** when existing code can move | Grok Bot size sweep only |
 
 Grok Build and web / chat stop once the file is under 10KB. They do not keep splitting toward 5KB.
 
@@ -51,7 +51,7 @@ If a file must be split:
 
 The default new path a **size** split may create is that sibling helper. On Grok Bot and web / chat, its body is **moved code**, not newly written logic. On Grok Build, the sibling MAY be a cleaner same-system API, not only a line-move.
 
-Grok Bot size sweep: after the split, each resulting live `.gd` should be under 5KB when whole existing functions can move (`design/grok-bot-size.md`). If one existing function is itself over 5KB, leave it whole and report it. Never leave a touched file over 10KB if a legal split can fix it.
+Grok Bot size sweep: after the split, each resulting live `.gd` should be under 5KB when whole existing functions can move. If one existing function is itself over 5KB, leave it whole and report it. Never leave a touched file over 10KB if a legal split can fix it.
 
 ## Grok Bot — new shared modules
 
@@ -76,7 +76,7 @@ Hunt for copied logic only after size work on the current cluster, or when the a
    - other existing shared scripts already in the tree (`theme.gd`, `pause_menu_util.gd`, `gear_board_tip.gd`, `plate_chrome.gd`, `tip_place.gd`, …) when they already expose the function
 3. If nothing existing owns it, or the owner would blow the size cap: **Grok Bot** prefers a new shared module for near-identical spanning copies; otherwise leave the copies and report them. Do not add a new method on an existing owner just so the copies can fit. **Grok Build** may add a same-system method or helper; a new cross-system owner is propose-first.
 
-Reuse against an existing owner is call-site edits plus using a function that already exists. Grok Bot extract to a new shared module is moved bodies into a new file, not invented logic. Do not merge pairs listed under **Do not merge** in `design/grok-bot-extract.md`.
+Reuse against an existing owner is call-site edits plus using a function that already exists. Grok Bot extract to a new shared module is moved bodies into a new file, not invented logic. Do not merge pairs listed under **Do not merge** on the Bot extract job.
 
 ## Types
 
@@ -121,7 +121,7 @@ Rules:
 
 ## Token rules
 
-- Do not load the design corpus for a split. One `design/code-map.md` row + the cluster is enough. Open `design/reuse-map.md` only from `design/grok-bot-reuse.md` when that brief is not the empty template.
+- Do not load the design corpus for a split. One `design/code-map.md` row + the cluster is enough. Open the reuse-map brief only from the Bot reuse job when that brief is not the empty template.
 - Measure on-disk byte length (Get-Item Length / dir). Do not guess. Do not ReadAllText + GetByteCount just to size-check.
 - Do not dump whole files on Grok Build or Grok Bot when a diff / PR is enough.
 - Do not restyle, do not rewrite comments, do not rename for taste — on Grok Bot and web / chat size-splits. Grok Build feature work may rename or reshape inside one system per the build path file.
@@ -136,7 +136,7 @@ Grok Bot sweep notes: optional `_logs/grok-bot-sweep.md`. Not `design/sessions.m
 
 ## Parked folder moves
 
-Do **not** fold these into a size split. Bot session flow is the relocate Job-table sibling. Every `preload` / `load` / ExtResource path plus `design/code-map.md` rows must stay correct. No behavior change.
+Do **not** fold these into a size split. Folder relocates use the Bot relocate job, not this recipe's size-split steps. Every `preload` / `load` / ExtResource path plus `design/code-map.md` rows must stay correct. No behavior change.
 
 Preferred (agent-friendly): from repo root, `powershell -File tools/move_script_cluster.ps1` (or `python tools/move_script_cluster.py`). It `git mv`s the facade + stem siblings (+ `.uid`), rewrites `res://` and bare paths under `scripts/`, `design/`, scenes, and `project.godot`, and writes `_logs/move-cluster/summary.txt`. Optional `-DryRun`, `-Wrapper` (leave `extends "res://..."` stubs at old paths). Then run the editor import check.
 

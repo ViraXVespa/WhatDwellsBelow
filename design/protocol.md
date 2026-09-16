@@ -35,13 +35,7 @@ One goal per web / chat session (stop after Phase 7). One Grok Build session fam
 
 Topic index (one row): `design/README.md`. Live code map (one system row): `design/code-map.md`. Open topic **doors**, then only the Job-table sibling. I2V and complex animation packing stay in Grok Build unless the User says otherwise.
 
-These paths are names, not a read list. Open only when `Read when` matches, a Job table names it, or the User names that work:
-
-- Archives isolation: `design/archives.md`
-- Hard constraints / demo-complete checklist: `design/constraints.md`
-- Telemetry cap: `design/debug.md`
-- Changelog body: `design/versioning-log.md`. Week pins: `design/versioning.md`
-- Staged Bot reuse brief: `design/reuse-map.md` (Web / chat Phase 7 writes it; not default Bot context)
+Topic doors, gates, and recipes are named in `design/routes.yaml`. Open one only when its `Read when` matches, a Job table names it, or the User names that work. Do not treat this paragraph as a read list.
 
 All previously open **design** questions are closed. Do not invent additional game systems or reopen settled design decisions. Grok Build may still invent code shape inside a required system.
 

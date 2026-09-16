@@ -22,7 +22,6 @@ indexes:
   topics: design/README.md
   live: design/code-map.md
   graph: design/load-graph.md
-  demo: Demo_GDD.md
 
 notes_exempt:
   - design/sessions.md
@@ -99,7 +98,7 @@ doors:
     jobs: {}
   inventory:
     file: design/inventory.md
-    read_when: "bag, equipment, forge/analyze, affixes, artifacts, extraction mailing"
+    read_when: "bag rules, equipment stats, forge/analyze rules, affixes, artifacts, extraction mailing"
     jobs:
       bag: design/inventory-bag.md
       gear: design/inventory-gear.md
@@ -107,7 +106,7 @@ doors:
       live_snapshots: design/inventory-live.md
   gear_ui:
     file: design/gear-ui.md
-    read_when: "changing pause inventory, Floor Crystal loadout, Anvil menus, or gear tooltips"
+    read_when: "shared gear-board layout, doll slots, flyouts, stats card, Anvil/loadout chrome internals"
     jobs: {}
   hub:
     file: design/hub.md
@@ -167,7 +166,6 @@ doors:
     file: design/art-pipeline.md
     read_when: "generating or replacing player / enemy / weapon frames"
     jobs:
-      isolated_media: design/isolated-media.md
       i2v: design/art-i2v.md
       pack: design/art-pack.md
       review: design/art-review.md

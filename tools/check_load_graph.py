@@ -8,7 +8,7 @@ Exit 0 if every check passes. Exit 1 and print FAIL lines otherwise.
 Exit 2 if the tree is not a WDB root or routes.yaml cannot be parsed.
 
 Navigation lives only in design/routes.yaml. Topic bodies (doors and job
-siblings) may not name design/*.md, AGENTS.md, or Demo_GDD.md except:
+siblings) may not name design/*.md or AGENTS.md except:
   - the file's own path
   - a door Job-table Open cell that matches that door's jobs in routes.yaml
   - design/changelog/ paths (ship labels, not topic routing)
@@ -37,7 +37,7 @@ from load_routes import (  # noqa: E402
 
 CHANGELOG_PREFIX = "design/changelog/"
 CITE_RE = re.compile(
-    r"(?:`)?((?:design/[\w./-]+\.md)|AGENTS\.md|Demo_GDD\.md)(?:`)?"
+    r"(?:`)?((?:design/[\w./-]+\.md)|AGENTS\.md)(?:`)?"
 )
 SEE_ALSO_RE = re.compile(r"^See also\s*:", re.I | re.M)
 JOB_HEAD_RE = re.compile(r"^\|\s*Job\s*\|", re.I)
@@ -56,7 +56,7 @@ def scanned_md_files(root: Path) -> list[Path]:
         if posix.startswith(CHANGELOG_PREFIX):
             continue
         out.append(path)
-    for extra in ("AGENTS.md", "Demo_GDD.md"):
+    for extra in ("AGENTS.md",):
         p = root / extra
         if p.is_file():
             out.append(p)
@@ -166,12 +166,25 @@ def main() -> int:
     if set(bot_targets) & set(door_files):
         fails.append("bot job reuses a topic door file")
 
+    gate_files = {
+        str((gate or {}).get("file"))
+        for gate in (routes.get("gates") or {}).values()
+        if (gate or {}).get("file")
+    }
+    dual = sorted(set(job_owner) & gate_files)
+    if dual:
+        fails.append(f"file is both a door job and a gate: {dual}")
+
     files = scanned_md_files(root)
     for path in files:
         posix = rel(path, root)
         text = path.read_text(encoding="utf-8")
         if SEE_ALSO_RE.search(text):
             fails.append(f"See also field present: {posix}")
+        if re.search(r"\bGDD\b|Demo_GDD\.md", text):
+            fails.append(f"leftover GDD token: {posix}")
+        if re.search(r"notes/[A-Za-z0-9]", text):
+            fails.append(f"names notes/ file: {posix}")
 
         role = role_of(routes, posix)
         if role == "unknown":
@@ -215,6 +228,9 @@ def main() -> int:
             leaked = [p for p in named if p in path_files]
             if leaked:
                 fails.append(f"recipe names path file: {posix} -> {leaked}")
+            bot_hit = [p for p in named if p in bot_targets]
+            if bot_hit:
+                fails.append(f"recipe names bot job: {posix} -> {bot_hit}")
 
         if role == "index" and posix == "design/README.md":
             if "design/code-map.md" in named and re.search(
@@ -239,6 +255,12 @@ def main() -> int:
                 fails.append(
                     "sessions.md Read when still boots a fresh Grok Build instance"
                 )
+            if "design/grok-build.md" in text:
+                fails.append("sessions.md names the Build path file")
+            if "design/web-session.md" in text:
+                fails.append("sessions.md names the web path file")
+        if posix == "notes" or posix.startswith("notes/"):
+            fails.append(f"agent-facing scan hit notes/: {posix}")
         if posix == "design/load-graph.md":
             if "not enough to pick the next file" in text:
                 fails.append(

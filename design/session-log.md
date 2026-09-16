@@ -1,7 +1,7 @@
 # Grok Build session log
 
 Status: working notes  
-Read when: closing a Grok Build session, or when `design/sessions.md` is not enough to name the next unit  
+Read when: closing a Grok Build session, or when leave-off is not enough to name the next unit  
 
 Append-only facts. Newest first. Not binding game design. Not part of every Grok Build boot. Web / chat and Grok Bot do not write this file.
 

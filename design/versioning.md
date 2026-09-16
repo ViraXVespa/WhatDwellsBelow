@@ -34,7 +34,7 @@ CI on each user push to `main` (not on `[skip ci]` stamp pushes):
 4. Create annotated tag `v{label}` if missing.
 5. Run `tools/build_changelog.py`.
 6. If generated outputs changed, commit them with `[skip ci]`.
-7. Deploy Pages from the user push. Pages stamps the same number in the export workspace before Godot runs (`design/save-tech.md`), because a `GITHUB_TOKEN` stamp push does not start a new workflow. Include `/changelog/`.
+7. Deploy Pages from the user push. Pages stamps the same number in the export workspace before Godot runs, because a `GITHUB_TOKEN` stamp push does not start a new workflow. Include `/changelog/`.
 
 Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/changelog/{label}.md` still get a patch number and an empty player note.
 
@@ -48,7 +48,7 @@ Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/chang
 | **Rebase and merge** (N commits) | `+N` |
 | **Create a merge commit** (merge commit + N branch commits) | `+N` or `+N+1` depending on whether the merge commit’s subject is counted |
 
-Grok Bot PRs MUST squash-merge (see `design/grok-bot-session.md`). A multi-commit branch is fine on the PR; it must become **one** user commit on `main`.
+Grok Bot PRs MUST squash-merge. A multi-commit branch is fine on the PR; it must become **one** user commit on `main`.
 
 ## Grok Build week ritual
 

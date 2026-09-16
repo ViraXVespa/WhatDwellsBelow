@@ -1,7 +1,7 @@
 ﻿# Anvil / Loadout entry points
 
 Status: binding design  
-Read when: Anvil UI, Loadout UI, or gear tooltips from the UI topic  
+Read when: Anvil / Loadout / tooltip entry chrome from the UI topic — not shared board internals  
 
 The UI door is already open when this sibling is loaded. Open gear-ui only when board / anvil chrome is the named work. Do not reopen theme, title-web, hud, pause, run-flow, hub, input, or doc-refactor from this file.
 

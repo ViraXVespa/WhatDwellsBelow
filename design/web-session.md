@@ -4,6 +4,7 @@ Status: protocol
 Read when: web / chat path; every web session after the repo-review message 
 
 This file is binding for **web / chat** only. Grok Build (CLI) and Grok Bot ignore it.
+Never open `notes/`.
 
 The User cannot be written to by this agent. The User pastes every emit. The User finishes each task before the next web task starts.
 
@@ -41,7 +42,7 @@ Identify gaps that block implementation of the Phase 2 plan. Ask questions that 
 Split the emit list in two. Mark each path `new`, `revise`, or `delete`. Do not ask the User to paste those files.
 
 - **Phase 4 list:** shipping source only (`scripts/`, `scenes/`, `assets/`, `tools/`, `project.godot`, and other non-doc live files).
-- **Phase 7 list:** every documentation path this goal may need (`AGENTS.md`, `design/*.md`, `design/changelog/*.md`, other `.md`). Phase 5 testing can change that list. Do not treat the Phase 7 list as a Phase 4 emit queue.
+- **Phase 7 list:** every documentation path the Phase 7 runner will write. Phase 5 testing can change that list. Do not treat the Phase 7 list as a Phase 4 emit queue.
 
 This phase ends when every pending question is answered. If there are no questions, send only the emit list and go to Phase 4. If the Phase 4 list is empty, say so and wait for the User to start Phase 7.
 
@@ -104,7 +105,13 @@ This phase ends when every needed size split has been emitted, or after reportin
 
 All documentation changes for this goal happen in this phase. Phase 5 testing can change what the docs must say. Do not emit those files in Phase 4.
 
-Check the change against `design/` (and `AGENTS.md` when agent rules changed). Update topic files, `design/code-map.md`, and tunables that the slice made wrong. Re-list the Phase 7 paths if testing changed them, wait for confirmation, then emit with Phase 4 cadence (`Next` between files). Markdown emits are plain text and use no code fence.
+Check the change against `design/` (and `AGENTS.md` when agent rules changed). Update topic files, the live code map, and tunables that the slice made wrong. Re-list the Phase 7 paths if testing changed them and wait for confirmation.
+
+Then emit **one** runner: `tools/_scratch.py` (gitignored). The User pastes it and runs `python tools/_scratch.py` from the repo root. That script writes every documentation path on the Phase 7 list (including `design/changelog/{label}.md` when the goal shipped player-visible or agent-visible change), updates `design/routes.yaml` when routing changed, and runs `python tools/check_load_graph.py --root .`. Print the write manifest and the checker PASS/FAIL. Do not claim those writes landed until the User ran the script.
+
+The runner must import `tools/doc_patch.py` (`sys.path` insert `tools/`, then `import doc_patch`). Do not reimplement replace helpers, changelog labeling, or the checker invoke.
+
+Do not emit markdown files one at a time in this phase. Do not use Phase 4 cadence or `Next` between documentation paths.
 
 If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md` as the **final** file in this phase. Label math and body shape: `design/versioning-log.md`. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or hand-edit `scripts/data/version.json`. Do not write the label into `design/versioning.md`.
 
@@ -117,6 +124,8 @@ When documentation is done, this session goal is finished. The User should start
 ## Do not
 
 - Do not emit documentation during Phase 4.
+- Do not emit Phase 7 documentation as one markdown file at a time; use `tools/_scratch.py`.
+- Do not reimplement `tools/doc_patch.py` inside a Phase 7 runner.
 - Do not treat `design/sessions.md` or `design/session-log.md` as the web hand-off.
 - Do not run a Grok Build week pin from this path.
 - Do not chain a second goal after Phase 7 in the same web session.

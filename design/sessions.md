@@ -5,7 +5,7 @@ Read when: rewriting this leave-off, or the User asked what the next Build unit 
 
 This is the Grok Build leave-off. It is **not** binding game design. Binding behavior stays in the topic files. The live tree is still the source of truth for shipping code.
 
-Fresh instance starts at `AGENTS.md`, then `design/grok-build.md`. This file is leave-off, not a boot list. Do not paste that path’s required-read list back in here.
+This file is leave-off, not a boot list. Do not paste a path required-read list back in here. Do not name path session files from this leave-off.
 
 Keep this file short. History goes in `design/session-log.md`.
 

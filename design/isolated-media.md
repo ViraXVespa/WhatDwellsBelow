@@ -5,6 +5,7 @@ Read when: Grok Build is about to call Imagine (`image_gen`, `image_edit`, `imag
 Code: `tools/run_isolated_grok.py`  
 Skills: `.grok/skills/imagine-isolated/SKILL.md`, `.grok/skills/i2v-isolated/SKILL.md`
 
+This file is the Imagine **gate**. It is not an art-pipeline job. Grok Build must load it before any `image_gen`, `image_edit`, or `image_to_video` call.
 CLI-only. Web / chat and Grok Bot do not run Imagine and do not spawn this runner.
 
 

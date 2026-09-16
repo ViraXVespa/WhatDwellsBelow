@@ -14,7 +14,8 @@ If unsure: ask once, then use **web / chat** if still uncertain. A missed full-f
 
 ## Shared
 
-Design lives in `design/`. There is no single GDD. `Demo_GDD.md` is only an index.
+Design lives in `design/`. Do not collapse `design/` into one document.
+Never open `notes/`. Files there are human scratch, not binding, not a door.
 
 Navigation is only `design/routes.yaml`. Do not treat `See also:` as a load list; that field is forbidden. Open a file when this Path table, a routes.yaml door / job / gate, or the User names that work.
 
@@ -24,15 +25,15 @@ Navigation is only `design/routes.yaml`. Do not treat `See also:` as a load list
 | Live code map (one system row) | `design/code-map.md` |
 | Numbers (when the work changes them) | `design/tunables.md` |
 
-Path session files are in the Path table, not here. Agent routes: `design/routes.yaml`. Topic index: `design/README.md` (one topic row; the table is not a read list). Versioning, art, isolated-media, reuse-map, sessions, session-log, protocol, and refactor: open only when `Read when` matches, a Job table names it, or the User names that work.
+Path session files are in the Path table, not here. Agent routes: `design/routes.yaml`. Open a topic door only when routes.yaml or the User names that work. Do not open the topic index or the load-graph sketch unless the User named the index or routing work.
 
 **Load cap (soft):** default is this file + the path session file + (web / Build only) `design/protocol.md` and `design/constraints.md` + one topic door + one Job-table sibling. `design/tunables.md` when numbers change. `design/versioning.md` at ship only. `design/code-map.md` is one system row, not the whole table. A second topic door is allowed when that file’s `Read when` matches or the User names the boundary. Ask before a third topic door. Protocol / constraints / tunables / versioning-at-ship / one code-map row are not topic doors.
 
 Fresh **Grok** (web / Build): read `design/protocol.md` and `design/constraints.md`, then only the topic door for the requested work. Use one row in `design/code-map.md` before walking the live tree. Do not start by archiving or rewriting. Do not read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief or the User named the staged reuse PR.
 
-**Grok Build (CLI):** Imagine (`image_gen`, `image_edit`, `image_to_video`) defaults to `design/isolated-media.md` and `tools/run_isolated_grok.py`. Repo skills `.grok/skills/imagine-isolated/` and `.grok/skills/i2v-isolated/` are doors into that file. Web / chat and Grok Bot do not run Imagine.
+**Grok Build (CLI):** Before any Imagine call (`image_gen`, `image_edit`, `image_to_video`), load the isolated-media gate and use `tools/run_isolated_grok.py`. Repo skills `.grok/skills/imagine-isolated/` and `.grok/skills/i2v-isolated/` are doors into that gate. Do not generate from the art-pipeline door. Web / chat and Grok Bot do not run Imagine.
 
-**Grok Bot** skips the web / Build read list. After this file, follow `design/grok-bot-session.md` only. Do not reopen this file for protocol or constraints. Types, warnings, tabs, and the 10KB cap in the sections below still bind; the Bot door may point at those sections if they left context. Open `design/reuse-map.md` only from `design/grok-bot-reuse.md` when that brief is not the empty template.
+**Grok Bot** skips the web / Build read list. After this file, follow `design/grok-bot-session.md` only. Do not fetch this file again. GDScript types, warnings, tabs, and the 10KB cap in the sections below still bind; the Bot door names those section titles. Open the reuse-map brief only from the Bot reuse job when that brief is not the empty template.
 
 Path procedures (Build week pin, web phases, Bot flows) live in that path’s session file. `design/sessions.md` is the Grok Build leave-off only — not a web or Bot hand-off. Fresh Build instance: this file, then `design/grok-build.md`. Leave-off is not a boot list.
 

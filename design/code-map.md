@@ -7,9 +7,7 @@ This file is the live-path map. It is not a boot file and not a topic index.
 
 Open **only the matching system row**. Do not read the rest of the table “for context.” Do not walk `assets/` unless the task names sprites or audio.
 
-Split recipe: `design/refactor.md`. Cap timing: `AGENTS.md`. Numbers: `design/tunables.md`.
-
-When live scripts are split under the 10KB cap, update **this** file in the same slice. Do not treat `design/reuse-map.md` as an owners encyclopedia.
+When live scripts are split under the 10KB cap, update **this** file in the same slice.
 
 Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`.
 
@@ -36,7 +34,7 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Tip place geometry | `scripts/ui/tip_place.gd` |
 | Y-billboard Sprite3D | `scripts/world/billboard_spr.gd` |
 | PC offload (Bot + Build) | `design/pc-offload.md`; `tools/check_load_graph.py`, `tools/list_oversize_scripts.ps1`, `summarize_scripts.ps1` / `.py`, `list_facade_cluster.ps1`, `check_script_cap.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1`, `run_build_gate.ps1`, `clean_agent_logs.ps1` |
-| Folder relocate | `tools/move_script_cluster.ps1` / `.py` (see `design/refactor.md` Parked folder moves; Bot flow `design/grok-bot-relocate.md`) |
+| Folder relocate | `tools/move_script_cluster.ps1` / `.py` |
 | Grok Bot PC tools | `tools/check_load_graph.py`, `tools/list_oversize_scripts.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1` |
 | Sprite tools | `tools/enable_texture_mips.py`, `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/run_isolated_grok.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/process_*.py`, `tools/process_world_pass.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py` |
 

@@ -3,7 +3,8 @@
 Status: protocol
 Read when: the User names routing work
 
-Not a boot file. Not a topic index. Empty See also on purpose.
+Not a boot file. Not a topic index. See also is forbidden.
+Never open `notes/`.
 
 ## Edges
 
@@ -21,7 +22,7 @@ Then, only if the User named work:
     and design/versioning.md iff the User said **new week** or named a pin
     and design/isolated-media.md iff Grok Build is about to call Imagine
 
-Imagine / I2V tool calls use design/isolated-media.md.
+Imagine tool calls use the isolated-media **gate** only. Do not also open the art-pipeline door to generate.
 Art Bible / pack / review / I2V unit prompt use design/art-pipeline.md then one sibling.
 
 Recipes (never boot): design/refactor.md, design/doc-refactor.md, design/pc-offload.md.
@@ -34,6 +35,7 @@ Topic siblings do not point at path files.
 design/README.md and design/code-map.md do not point at each other.
 Callers link a facade, never an art / UI / input / inventory / debug sibling.
 See also is never a read list.
+The checker fails leftover relic-index names and `notes/<file>` cites.
 
 ## 10/10 checks
 

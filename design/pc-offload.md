@@ -18,6 +18,7 @@ Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. A
 6. Housekeeping: summaries overwrite in place each run. Raw Godot `*.log` under `_logs/` are disposable - run `tools/clean_agent_logs.ps1` (or let smoke runner drop orphan phase logs). `_logs/` stays gitignored; do not commit it.
 7. **Windows / PowerShell bodies:** never put markdown or multi-line Python through PowerShell double-quoted strings or `python -c`. Backticks and `\x` escapes get mangled. Write the body with a single-quoted here-string piped into `tools/write_utf8_file.py` (or `--b64` in a single-quoted string), then run the file.
 8. **Ephemeral agent Python:** put throwaway scripts under `_logs/agent-py/` and run them with `powershell -File tools/run_agent_py.ps1 -Script _logs/agent-py/....`. That runner deletes the script after exit by default. Do not `-Cleanup` paths outside `_logs/agent-py/`. Permanent edits (design docs, checked-in tools) write straight to their real paths - they are not cleaned up.
+9. **Web / chat Phase 7 runner:** `tools/_scratch.py` is the gitignored paste target for documentation slices. The User runs `python tools/_scratch.py` from repo root. Do not put that runner under `_logs/agent-py/` (those scripts are deleted after exit). The runner must import `tools/doc_patch.py` instead of copying replace helpers.
 
 ## Catalog
 
@@ -60,5 +61,6 @@ Ship floor vs Bot 5KB sweep: `design/refactor.md`. Do not restate those caps her
 
 ### Web / chat
 
-- No requirement to run these. Cap timing lives in `AGENTS.md` and the path session file.
+- No requirement to run the Godot / smoke runners. Cap timing lives in `AGENTS.md` and the path session file.
+- Phase 7 documentation slices emit `tools/_scratch.py`. The User runs it locally; it must import `tools/doc_patch.py` and may call `python tools/check_load_graph.py`.
 - Mip bake is export-side (`enable_texture_mips.py`); the User runs `export_web.ps1` when shipping Pages.

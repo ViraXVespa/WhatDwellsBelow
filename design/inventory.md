@@ -1,7 +1,7 @@
 # Inventory / gear rules (door)
 
 Status: binding design  
-Read when: bag, equipment, forge/analyze, affixes, artifacts, extraction mailing
+Read when: bag rules, equipment stats, forge/analyze rules, affixes, artifacts, extraction mailing
 
 | Job | Open |
 |-----|------|

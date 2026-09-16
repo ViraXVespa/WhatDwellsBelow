@@ -25,9 +25,9 @@ Do not pin because time passed, because the last slice ended, or because a new C
 
 1. `AGENTS.md`, then this file. Do not re-read `AGENTS.md` after that.
 2. `design/protocol.md` and `design/constraints.md` only when they are not already in this session.
-3. `design/sessions.md` only when leave-off must name the next unit. It is not a boot list and must not send you back through this Read order.
+3. Leave-off only when it must name the next unit. It is not a boot list and must not send you back through this Read order.
 4. Changelog: skip on a mid-week slice or catch-up. Open `design/versioning.md` for **new week** pins. Open `design/versioning-log.md` for changelog body shape, a revert, or when the User asks what shipped. Do not ingest every `design/changelog/{epoch}.{series}.*.md`. Do not treat `scripts/data/version.json` as the version ledger. Do not follow GitHub commit links into web-session conversations.
-5. Only the topic door that matches the requested work. Do not open `design/README.md` to pick it. Sprite / I2V / pack / review: `design/art-pipeline.md`, then only the sibling it names. Imagine / isolated generate: `design/isolated-media.md`.
+5. Only the topic door that matches the requested work. Do not open `design/README.md` to pick it. Sprite / pack / review: `design/art-pipeline.md`, then only the sibling it names. Before any Imagine call, load `design/isolated-media.md` (gate, not an art-pipeline job).
 6. Inspect git and the live tree from **one system row** in `design/code-map.md` (`project.godot`, then the listed scenes/scripts). Do not walk `assets/` unless the task names sprites or audio.
 
 `design/session-log.md` is not part of every boot. Read it when rewriting it at session close, when the User asks what shipped, or when leave-off is not enough to name the next unit.
@@ -68,7 +68,7 @@ Web / chat and Grok Bot leashes do not apply here.
 
 ## I2V week
 
-Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Cadence and quality bar: `design/art-pipeline.md`. Isolated generate: `design/isolated-media.md`.
+Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Cadence and quality bar: `design/art-pipeline.md`. Do not call Imagine until `design/isolated-media.md` is already in context.
 
 Path-only: mid-week new CLI chat is a catch-up (no pin). A thin isolated child is not a new week. Do not `/resume` a fat art thread to “just do one more” media turn.
 
