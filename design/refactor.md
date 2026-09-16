@@ -80,13 +80,13 @@ Reuse against an existing owner is call-site edits plus using a function that al
 
 ## Types
 
-the agents file → GDScript types. On lines already being moved or rewritten:
+`design/gdscript-law.md`. On lines already being moved or rewritten:
 
 - `:=` only for literals / typed built-ins Godot 4.7 infers (`0`, `1.5`, `true`, `"male"`, `Vector2.DOWN`, …).
 - Otherwise `var name: Type = ...`.
 - Typed `func` / `static func` args and `->` return.
-- Also follow the agents file → GDScript warnings (no `wrap` / `mini` / `name` / `size` locals, explicit `int()` on integer division and narrowing, enum `as` casts, `_` unused params).
-- `unused_private_class_variable` is project-ignored (hostify `host._` fields). Do not add per-var `@warning_ignore` for it; see the agents file -> GDScript warnings.
+- Also follow `design/gdscript-law.md` warnings (no `wrap` / `mini` / `name` / `size` locals, explicit `int()` on integer division and narrowing, enum `as` casts, `_` unused params).
+- `unused_private_class_variable` is project-ignored (hostify `host._` fields). Do not add per-var `@warning_ignore` for it; see `design/gdscript-law.md`.
 
 Do not retype a whole file for style.
 

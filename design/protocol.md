@@ -5,7 +5,7 @@ Read when: every fresh Grok instance (Build / web), before writing code
 
 Treat the design requirements in this database as binding. Treat the live codebase at the repository root as the project to maintain.
 
-Recognize the path from the Path table in the agents file. Follow that path’s session file. MUST NOT treat another path’s deliverable rules as a license to skip your own. Web / chat and Grok Bot leashes MUST NOT bind Grok Build implementation — that freedom lives in the Build path file.
+If a path session file is already loaded, stay on that path. Do not re-select a path from this file. MUST NOT treat another path’s deliverable rules as a license to skip your own. Web / chat and Grok Bot leashes MUST NOT bind Grok Build implementation — that freedom lives in the Build path file.
 
 **Binding design** is required player-facing behavior. **Live snapshot** is current code. If they disagree, patch live toward binding or ask. Do not invent a third **game** system. A new code API is not a third game system.
 
@@ -13,7 +13,7 @@ Recognize the path from the Path table in the agents file. Follow that path’s 
 ## Core rules
 
 - Fresh **Grok** (Build / web): this file, `design/constraints.md`, then only topic that matches the requested work. Inspect the live path from **one system row** in `design/code-map.md` (`project.godot`, then the listed scenes/scripts). MUST NOT walk `assets/` unless the task names sprites or audio. MUST NOT begin by archiving or rewriting the live path. MUST NOT read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. MUST NOT open `design/reuse-map.md` unless this session’s goal is to write that brief or the User named the staged reuse PR.
-- **Grok Bot** does not follow that read list (the agents file → the Bot path file only). Types, warnings, tabs, and the 10KB cap in the agents file still bind.
+- **Grok Bot** does not follow that read list (Bot path file only after boot). When editing GDScript, load `design/gdscript-law.md`.
 - Path procedures live in that path’s session file. `design/sessions.md` and `design/session-log.md` are Grok Build leave-off / log only. Leave-off is not a boot list.
 - MUST implement only the **game** systems this database explicitly requires. MUST NOT invent skills, rarities, hub upgrades, meta-progression, or co-op scaffolding. Grok Build MAY add helpers and same-system APIs per the Build path file. A new cross-system owner or a named-architecture replace is Build **Stop and propose first**.
 - Open numbers, formulas, enemy details, and artifact-set bonuses: MAY invent coherent starts, then MUST expose every value in the secret debug menu and record them in `design/tunables.md`. Grok Bot MUST NOT invent numbers.
@@ -22,12 +22,12 @@ Recognize the path from the Path table in the agents file. Follow that path’s 
 - Ambiguity about **player-facing design**: ask. Grok Build MUST decide code structure inside one system without asking, and MUST stop and propose before a new cross-system owner or a named live-architecture replace.
 - This database is the source of design intent across compaction. The live tree is the source of truth for shipping code. Git history on `main` is the source of truth for the game version number; `scripts/data/version.json` is the baked copy.
 - Prefer simple, readable, production-quality code. Match existing live patterns unless Grok Build is doing a just-do same-system reshape or an accepted rework. Sprite / I2V work starts at art_pipeline when that door’s `Read when` matches.
-- GDScript indent is tab characters. Types: the agents file. Size splits: `design/refactor.md` (recipe only; pick a Bot flow from the Bot door). Deliver as that path’s session file specifies.
+- GDScript indent, types, warnings, and the 10KB cap: `design/gdscript-law.md` when editing GDScript. Size splits: `design/refactor.md` (recipe only; pick a Bot flow from the Bot door). Deliver as that path’s session file specifies.
 - Self-verify against the Demo-Complete Checklist in `design/constraints.md` before calling the build complete.
 
 ## Long-running behavior
 
-On multi-session or compacted runs, re-affirm the Hard Constraints and the current requested work before resuming. Never allow live-path code to share state with any archive. Do not “recover” a stale session by archiving or rewriting the live path.
+On multi-session or compacted runs, name Hard Constraints and the current requested work. Do not fetch a file already in the loaded set. Never allow live-path code to share state with any archive. Do not “recover” a stale session by archiving or rewriting the live path.
 
 One goal per web / chat session (stop after Phase 7). One Grok Build session family per development week (week pins only when the User says **new week**). One Grok Bot flow per session (one Job-table sibling; one PR).
 
@@ -51,3 +51,4 @@ Everything that is marked tunable or left for Grok to invent should be treated a
 
 After boot, do not fetch a file already in the loaded set. Name it only.
 Default set: the agents file, this path file, and (web / Build) protocol plus constraints.
+Load cap: boot files + at most one topic door + one Job sibling + gates whose when matches. Second topic door: ask the User to name the owner first. If `conflicts_with` lists the pair, do not open the second door in this slice.

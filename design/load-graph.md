@@ -16,13 +16,17 @@ AGENTS.md
 
 Then, only if the User named work:
     one topic door -> one Job sibling (if that door has a Job table)
+    (second door only when the User names the owner; conflicts_with is a load ban)
     and one design/code-map.md system row when live files are needed
     and design/tunables.md iff a number changes
     and design/versioning-log.md iff shipping a label
     and design/versioning.md iff the User said **new week** or named a pin
     and design/isolated-media.md iff Grok Build is about to call Imagine
+    and design/gdscript-law.md iff editing GDScript
 
 Imagine tool calls use the isolated-media **gate** only. Do not also open art_pipeline to generate.
+Repo skills live at `.grok/skills/` and cite that gate only.
+Types / warnings / tabs / 10KB live in `design/gdscript-law.md`, not the agents file.
 Art Bible / pack / review / I2V unit prompt use design/art-pipeline.md then one sibling.
 
 Recipes (never boot): design/refactor.md, design/doc-refactor.md, design/pc-offload.md.
@@ -34,6 +38,7 @@ Path session files do not point back at AGENTS as a fetch.
 Topic siblings do not point at path files.
 topics index and design/code-map.md do not point at each other.
 Callers link a facade, never an art / UI / input / inventory / debug sibling.
+conflicts_with is a load ban: do not open the second door in the pair unless the User names the owner.
 See also is never a read list.
 The checker fails leftover relic-index names and `notes/<file>` cites.
 
@@ -49,13 +54,14 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 8. Opening this file happens only when the User names routing work.
 9. Topic job siblings name no other `design/*.md` paths.
 10. Opening the topic table is not a boot step.
+11. README and code-map are human indexes, not boot files.
 
 Machine-readable edges: `design/routes.yaml`. This file is the human sketch only.
 
 ## Increment 5 / 6
 
 Doors and jobs use door keys (`input`, `art_pipeline.pack`), not `the X topic` and not smashed door/job glue.
-README and code-map do not cite topic `design/*.md` paths.
+README and code-map do not cite topic `design/*.md` paths. Tooling rows live on pc-offload, not the live code map.
 `job_read_when`, `job_parked`, `conflicts_with`, `boot_max`, and `fetch_ban` live in routes.yaml.
 Parked jobs stay out of the live Open column.
 The checker stems read_when tokens and walks a second topic-body cycle graph.

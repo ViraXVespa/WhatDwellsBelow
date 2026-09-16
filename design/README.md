@@ -37,8 +37,6 @@ Do not open art_pipeline parked attack-keyframes unless the User is resuming the
 
 | When the work is about… | File |
 |-------------------------|------|
-| Version scheme, week pins | `versioning.md` |
-| Changelog body / ship label | `versioning-log.md` |
 | Must / must-not, checklist | `constraints.md` |
 | Vision, scope, lore | `overview.md` |
 | Gamepad, KB/M, web pad, web touch, menu binds | `input.md` |
@@ -60,13 +58,6 @@ Do not open art_pipeline parked attack-keyframes unless the User is resuming the
 | Failure modes | `edge-cases.md` |
 | Phase 1–9 checklist | `coverage.md` |
 | Sprite / paper-doll door | `art-pipeline.md` |
-| Bible lock, plate remap, overlays, quality bar | `art-bible.md` |
-| Isolated Imagine / I2V (CLI) | `isolated-media.md` |
-| I2V unit + seed + prompt | `art-i2v.md` |
-| Harvest, pack, cleanup | `art-pack.md` |
-| Animation Browser briefs | `art-review.md` |
-| Attack body stills / coil keys (parked; User must resume) | `art-attack-keyframes.md` |
-| Live code map | `code-map.md` |
 | Pinned archive commits | `archives.md` |
 | Suggested starts + live defaults | `tunables.md` |
 Per-build player notes for the **current series** are flat `design/changelog/{label}.md`. Prior series live under `design/changelog/archive/{epoch}.{series}/`. They are not topic files. Do not open them unless `versioning.md` says to.

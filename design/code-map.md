@@ -1,7 +1,7 @@
 # Live code map
 
 Status: index  
-Read when: you need a live script, scene, or tool path for a named system  
+Read when: you need a live script or scene for a named system
 
 This file is the live-path map. It is not a boot file and not a topic index.
 
@@ -33,11 +33,7 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Plate chrome tokens | `scripts/ui/plate_chrome.gd` |
 | Tip place geometry | `scripts/ui/tip_place.gd` |
 | Y-billboard Sprite3D | `scripts/world/billboard_spr.gd` |
-| PC offload (Bot + Build) | `design/pc-offload.md`; `tools/check_load_graph.py`, `tools/list_oversize_scripts.ps1`, `summarize_scripts.ps1` / `.py`, `list_facade_cluster.ps1`, `check_script_cap.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1`, `run_build_gate.ps1`, `clean_agent_logs.ps1` |
-| Folder relocate | `tools/move_script_cluster.ps1` / `.py` |
-| Grok Bot PC tools | `tools/check_load_graph.py`, `tools/list_oversize_scripts.ps1`, `run_godot_import_check.ps1`, `run_smokes.ps1`, `lint_hostify.ps1` / `lint_hostify.py`, `run_post_split_gate.ps1` |
-| Sprite tools | `tools/enable_texture_mips.py`, `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/run_isolated_grok.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/process_*.py`, `tools/process_world_pass.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py` |
 
 Public entry points that must not change when a helper is split: `App.playtest`, `App.set_zoom` / `App.set_hud_scale` / `App.set_volume`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.
 
-Live `player_anim.gd` plays unarmed idle stills plus `idle_to_walk` / looping `walk` / `walk_to_idle` from the locked Bible harvest. Binding is player + art_pipeline. Title → Play warms those loco frames and frames the full yard under the solid loader (hub).
+Live `player_anim.gd` plays unarmed idle stills plus `idle_to_walk` / looping `walk` / `walk_to_idle` from the locked Bible harvest. Title → Play warms those loco frames and frames the full yard under the solid loader (hub).

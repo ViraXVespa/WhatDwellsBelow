@@ -1,7 +1,7 @@
 ﻿# Placeholdia Hub Summary
 
 Status: binding design  
-Read when: camp benches, Placeholdia interactables
+Read when: Placeholdia, camp benches
 Code: `scripts/world/camp.gd` (facade), `scripts/world/camp_warm.gd` (Title → Play GPU frame), `scripts/world/camp_build.gd` (ground, guild, roofs), `scripts/world/camp_view.gd` (fence), `scripts/world/camera_rig.gd`, `scripts/world/interact.gd`, `scripts/world/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`  
 
 

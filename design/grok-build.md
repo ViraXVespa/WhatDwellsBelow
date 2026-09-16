@@ -61,20 +61,22 @@ Still required:
 
 - MUST extend and reuse live scenes, scripts, and architecture unless they contradict binding design or the User’s request.
 - The live path remains the orthographic Camera3D system in camera until the User accepts a camera rework.
-- Match surrounding style unless a just-do change or an accepted rework replaces it. Tabs. Types: the agents file.
+- Match surrounding style unless a just-do change or an accepted rework replaces it. Tabs. Types: `design/gdscript-law.md`.
 - Open numbers and player-facing ambiguity: `design/protocol.md`.
 
 Web / chat and Grok Bot leashes do not apply here.
 
+Second topic door: ask the User to name the owner first. If `conflicts_with` lists the pair, do not open the second door in this slice.
+
 ## I2V week
 
-Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Cadence and quality bar: art_pipeline. Do not call Imagine until `design/isolated-media.md` is already in context.
+Sprite / I2V / paper-doll work stays on this path unless the User says otherwise. Before Imagine, load `design/isolated-media.md` only. Open art_pipeline only after the User names pack, review, or bible work.
 
 Path-only: mid-week new CLI chat is a catch-up (no pin). A thin isolated child is not a new week. Do not `/resume` a fat art thread to “just do one more” media turn.
 
 ## Script cap
 
-Ship floor is the **10,000 byte** cap in the agents file. Enforce it while editing. Split in that same slice with `design/refactor.md` (recipe only; do not open the Bot door from it). Stop once under 10KB. Do not chase Grok Bot’s 5KB target.
+Ship floor is the **10,000 byte** cap in `design/gdscript-law.md`. Enforce it while editing. Split in that same slice with `design/refactor.md` (recipe only; do not open the Bot door from it). Stop once under 10KB. Do not chase Grok Bot’s 5KB target.
 
 A size split MAY introduce a new same-system helper API. A new cross-system owner during a split is **Stop and propose first**.
 
