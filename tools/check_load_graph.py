@@ -16,6 +16,9 @@ built-in fetch-ban phrases; topic-body cycle graph.
 
 Increment 6: require job_read_when, job_parked, conflicts_with, boot_max,
 and fetch_ban in routes.yaml; parked jobs stay out of live Job tables.
+
+Increment 7: path files must contain the load-ban sentence; door Job-cell
+tokens must be a subset of that job's job_read_when tokens.
 """
 from __future__ import annotations
 
@@ -637,6 +640,74 @@ def citation_budget_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     return fails
 
 
+LOAD_BAN_NEEDLE = (
+    "Second topic door: ask the User to name the owner first."
+)
+
+
+def job_table_rows(text: str) -> list[tuple[str, str]]:
+    rows: list[tuple[str, str]] = []
+    in_job = False
+    for line in text.splitlines():
+        if JOB_HEAD_RE.match(line):
+            in_job = True
+            continue
+        if not in_job:
+            continue
+        if not line.startswith("|"):
+            in_job = False
+            continue
+        if JOB_DIV_RE.match(line):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 2:
+            rows.append((cells[0], cells[1]))
+    return rows
+
+
+def load_ban_fails(routes: dict, texts: dict[str, str]) -> list[str]:
+    fails: list[str] = []
+    path_map = (routes.get("boot") or {}).get("paths") or {}
+    for _name, posix in path_map.items():
+        posix = str(posix)
+        text = texts.get(posix)
+        if text is None:
+            continue
+        if LOAD_BAN_NEEDLE.lower() not in text.lower():
+            fails.append(f"load-ban sentence missing in {posix}")
+    return fails
+
+
+def job_cell_token_fails(routes: dict, texts: dict[str, str]) -> list[str]:
+    fails: list[str] = []
+    by_path = job_index(routes)["by_path"]
+    phrases = job_read_when(routes)
+    parked = parked_job_files(routes)
+    for door in (routes.get("doors") or {}).values():
+        posix = str(door["file"])
+        text = texts.get(posix)
+        if text is None:
+            continue
+        for label, raw_open in job_table_rows(text):
+            cites = citations(raw_open)
+            if not cites:
+                continue
+            target = cites[0]
+            if target in parked:
+                continue
+            jid = by_path.get(target)
+            if not jid:
+                continue
+            allowed = _phrase_tokens(phrases.get(jid, ""))
+            have = _phrase_tokens(label)
+            extra = sorted(have - allowed)
+            if extra:
+                fails.append(
+                    f"Job cell tokens not in job_read_when {posix} {jid}: {extra}"
+                )
+    return fails
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description="Check design-doc routing against design/routes.yaml."
@@ -865,6 +936,8 @@ def main() -> int:
     fails.extend(recipe_phrase_fails(routes, texts))
     fails.extend(boot_instruct_fails(routes, texts))
     fails.extend(citation_budget_fails(routes, texts))
+    fails.extend(load_ban_fails(routes, texts))
+    fails.extend(job_cell_token_fails(routes, texts))
     for cyc in citation_cycles(routes, texts):
         loop = " -> ".join(list(cyc) + [cyc[0]])
         fails.append(f"citation cycle: {loop}")

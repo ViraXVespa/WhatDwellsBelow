@@ -8,11 +8,11 @@ This file is the door. Do not run `tools/bible_prompt.py` unless you are writing
 
 | Job | Open |
 |-----|------|
-| Seed, prompt, one I2V unit | `design/art-i2v.md` |
-| Harvest, pack, cleanup | `design/art-pack.md` |
-| Animation Browser briefs / regen tree | `design/art-review.md` |
-| Attack body stills / coil keys | parked |
-| Bible lock, plate remap, overlays, quality bar | `design/art-bible.md` |
+| seed unit, spoken cue | `design/art-i2v.md` |
+| cleanup pass, atlas stitch | `design/art-pack.md` |
+| brief packet, tree tour | `design/art-review.md` |
+| parked | parked |
+| canon bible, layer law, quality floor | `design/art-bible.md` |
 
 I2V stays in Grok Build unless the User says otherwise. One CLI week session. One unit per review gate. Mid-week new CLI chat is a catch-up: no week pin.
 

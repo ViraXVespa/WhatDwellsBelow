@@ -1,7 +1,8 @@
 # PC offload (Bot + Build)
 
 Status: binding for agents on a local checkout  
-Read when: running a listed runner, or reading that runner's _logs summary  
+Read when: running a listed runner, or reading that runner's _logs summary
+Folder relocate, Bot/Build runners, and sprite tools live in this catalog, not on the live code map.
 
 
 Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. Agents should **read only the `_logs/*/summary.txt` files** those tools write - not raw Godot logs, not whole script bodies just to measure or inventory.
