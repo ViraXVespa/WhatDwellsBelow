@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.43",
+			"points": [
+				{
+					"text": "Parked female Down great-axe coil on sheet coil_v31 (best still GDNnn; not a keeper)."
+				},
+				{
+					"text": "Imagine coil prompt uses camera-right high / camera-left low; omit belt, buckle, and her/his left."
+				},
+				{
+					"text": "Pose stack is sternum / midriff / torso centerline. Mid-swing still closed."
+				},
+				{
+					"text": "Web Phase 7 runner must not contain a markdown fence opener inside the chat emit."
+				}
+			],
+			"summary": "Attack coil stills parked on a new prompt sheet. No playable change."
+		},
+		{
 			"label": "0.3.42",
 			"points": [
 				{
