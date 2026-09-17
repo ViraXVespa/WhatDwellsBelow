@@ -2,9 +2,14 @@ extends RefCounted
 
 ## Phase smoke tests. Live scenes call attach_* / route_boot / active / hold_player.
 ## CLI: --wdb-phaseN-smoke  (N = 1..9)
+## Load timing: --wdb-load-timing-smoke (Title → Placeholdia; not a numbered phase)
+## Dungeon load timing: --wdb-dungeon-load-timing-smoke (Placeholdia → Dungeon; not a numbered phase)
+## Dungeon map: --wdb-dungeon-map-smoke (floor dump; not a numbered phase)
 
 const Early := preload("res://scripts/debug/smoke_early.gd")
 const Late := preload("res://scripts/debug/smoke_late.gd")
+const LoadTiming := preload("res://scripts/debug/load_timing.gd")
+const DungeonMap := preload("res://scripts/debug/dungeon_map.gd")
 
 static var enter_flag: bool = false
 
@@ -23,6 +28,12 @@ static func active() -> bool:
 		var s: String = str(a)
 		if s.begins_with("--wdb-phase") and s.find("smoke") >= 0:
 			return true
+		if s == LoadTiming.FLAG:
+			return true
+		if s == LoadTiming.DUNGEON_FLAG:
+			return true
+		if s == DungeonMap.FLAG:
+			return true
 	return false
 
 
@@ -35,6 +46,23 @@ static func hold_player() -> bool:
 
 
 static func route_boot() -> bool:
+	if LoadTiming.hub_active():
+		App.character_type = "male"
+		App.character_chosen = true
+		App.call_deferred("play_from_menu")
+		return true
+	if LoadTiming.dungeon_active():
+		App.character_type = "male"
+		App.character_chosen = true
+		App.call_deferred("_dungeon_load_timing_async")
+		return true
+	if DungeonMap.active():
+		App.character_type = "male"
+		App.character_chosen = true
+		App.begin_run()
+		App.floor_n = DungeonMap.floor_n()
+		App.run_seed = DungeonMap.run_seed()
+		return true
 	if phase(1) or phase(2):
 		App.go_foundation()
 		return true
@@ -53,6 +81,9 @@ static func attach_foundation(host: Node) -> void:
 
 
 static func attach_dungeon(host: Node) -> void:
+	if DungeonMap.active():
+		DungeonMap.dump_floor(host)
+		return
 	if phase(3) or phase(4):
 		host.call("_stream_force_all")
 	if phase(3):

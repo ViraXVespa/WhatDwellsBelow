@@ -4,8 +4,6 @@ const T := preload("res://scripts/data/tunables.gd")
 const Gen := preload("res://scripts/dungeon/gen.gd")
 const Rooms := preload("res://scripts/dungeon/gen_rooms.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
-const MapAct := preload("res://scripts/world/dungeon_map_act.gd")
-const Look := preload("res://scripts/input/look_ctrl.gd")
 
 
 static func world(host: Node) -> void:
@@ -172,12 +170,15 @@ static func make_map(host: Node) -> void:
 	host.map_layer.add_child(host.map_rect)
 	host.set_meta("map_pc", Vector2i(-999, -999))
 	redraw_map(host)
-	MapAct.reset(host)
+	var MapActS: GDScript = load("res://scripts/world/dungeon_map_act.gd") as GDScript
+	MapActS.reset(host)
 
 
 static func _map_input(host: Node, event: InputEvent) -> void:
-	Look.note_event(event)
-	if MapAct.handle_mouse(host, event):
+	var LookS: GDScript = load("res://scripts/input/look_ctrl.gd") as GDScript
+	LookS.note_event(event)
+	var MapActS: GDScript = load("res://scripts/world/dungeon_map_act.gd") as GDScript
+	if MapActS.handle_mouse(host, event):
 		host.get_viewport().set_input_as_handled()
 
 

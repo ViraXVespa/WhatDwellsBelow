@@ -9,6 +9,20 @@ Do not narrate I2V clips. Name units: gender, facing, action, seed/path.
 
 ---
 
+### 2026-09-17 — 0.4.0 week-4 close (slice)
+
+**Why we stopped:** User asked for a `0.4.0` changelog of uncommitted work, week-3 → week-4 pinning/tidying, and Grok Build close-out (token limit). Series state change, not patch `0.3.44`. `tools/next_changelog_label.py` is current-series patch + 1 only.
+
+**Wrote:** `design/changelog/0.4.0.md` (series-open / Grok Build Week 4). Folded unpublished `0.3.44` (Build ignores 10KB cap while running; Bot owns splits) and deleted that file. Prior-series markdown: `design/changelog/archive/0.3/` (40 files). Museum copies: `archives/docs/grok_build_w4/` from week-3 notes (no `0.3.44`). Dropped `0.3.44` from `grok_web_w3` catalog `docs[]` and museum.
+
+**Pins:** Do **not** write `grok_build_w4` into `archive_catalog.json` until the User sends the commit hash. `grok_web_w3` stays `b87bd169fb4dce839753a37cb8dbb7a837d82f48` (`0.3.43`). Next CLI opened by saying **new week** is week 5 init: pin then-current `main` as `grok_web_w4`.
+
+**Uncommitted snapshot this `0.4.0` covers:** Placeholdia russet roofs / stall tarp / guild awning; enter overlay covers immediately then hitch; dungeon first-paint + streamed props / extra crystals / ambushes / Floor Guardian; lazy map; crystal spur early-out; concurrent Build roles + `bot_opt.py` + code-map / load-timing / dungeon-map runners; isolated grok runner.
+
+**Do not:** invent a SHA. Do not hand-edit `scripts/data/version.json` (CI stamps `0.4.0` on the User’s push). Do not emit `changelog.json`. Do not run `tools/archive_prior_changelogs.py` until that stamp.
+
+---
+
 ### 2026-09-09 — grok_build_w3 pin
 
 **Pin:** `grok_build_w3` = `e7a9d2cf56965b711dc5b22eb7735a1875d96407` (`Grok Build Week 3`). Tag `archive/grok-build-w3`. That is the User completion commit, not the CI stamp.

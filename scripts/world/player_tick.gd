@@ -3,14 +3,21 @@ extends Object
 ## Player physics tick.
 
 const Depth := preload("res://scripts/world/depth.gd")
-const PlayerAct := preload("res://scripts/world/player_act.gd")
-const PlayerLock := preload("res://scripts/world/player_lock.gd")
-const PlayerCombat := preload("res://scripts/world/player_combat.gd")
-const PlayerHit := preload("res://scripts/combat/player_hit.gd")
 const PlayerAnim := preload("res://scripts/world/player_anim.gd")
 
 
+static func _gd(path: String) -> GDScript:
+	return load(path) as GDScript
+
+
 static func physics(host: CharacterBody3D, delta: float) -> void:
+	if bool(App.get("_menu_loading")):
+		_loco(host, delta)
+		return
+	var PlayerAct: GDScript = _gd("res://scripts/world/player_act.gd")
+	var PlayerLock: GDScript = _gd("res://scripts/world/player_lock.gd")
+	var PlayerCombat: GDScript = _gd("res://scripts/world/player_combat.gd")
+	var PlayerHit: GDScript = _gd("res://scripts/combat/player_hit.gd")
 	if host.exiting:
 		PlayerAct.tick_exit(host, delta)
 		return
@@ -40,7 +47,7 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 		host.special_held = PlayerLock.ai_held(host, "special") or App.pad_held("special")
 		if App.has_method("swallow_close_pad"):
 			App.swallow_close_pad()
-	var move := PlayerLock.ai_or_vec(host, "move")
+	var move: Vector2 = PlayerLock.ai_or_vec(host, "move") as Vector2
 	if host.gathering != null:
 		PlayerAct.tick_gather(host, delta, move)
 		if host.gathering != null:
@@ -96,3 +103,18 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 			App.prog.use_potion()
 		if PlayerLock.ai_just(host, "food") or App.pad_just("food"):
 			App.prog.use_food()
+
+
+static func _loco(host: CharacterBody3D, delta: float) -> void:
+	var move: Vector2 = Vector2.ZERO
+	if App.has_method("pad_move"):
+		move = App.pad_move()
+	var spd: float = App.bal.move_speed
+	host.velocity = Vector3(move.x, 0.0, move.y) * spd
+	host.move_and_slide()
+	host.global_position.y = 0.0
+	if host.body:
+		Depth.apply(host.body, host.global_position)
+	PlayerAnim.apply_facing(host, delta)
+	if host.rig and host.rig.has_method("follow"):
+		host.rig.follow(host.global_position)

@@ -38,6 +38,7 @@ bot_jobs:
   reuse: design/grok-bot-reuse.md
   relocate: design/grok-bot-relocate.md
   docs: design/grok-bot-docs.md
+  opt: design/grok-bot-opt.md
 
 skills:
   imagine_isolated: .grok/skills/imagine-isolated/SKILL.md
@@ -193,7 +194,7 @@ job_read_when:
   debug.menu: "balance sliders, profile banks"
   debug.playtest: "sim walker, recommended config"
   debug.anim_browser: "timeline scrubber, review queue"
-  debug.smokes: "phase assertions, runner summary"
+  debug.smokes: "phase assertions, runner summary, dedicated CLI habits"
   art_pipeline.i2v: "seed unit, spoken cue"
   art_pipeline.pack: "cleanup pass, atlas stitch"
   art_pipeline.review: "brief packet, tree tour"

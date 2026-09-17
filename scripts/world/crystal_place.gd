@@ -109,20 +109,28 @@ static func _hub_rooms(host: Node) -> Array:
 	return out
 
 
-static func _is_hub_cell(cell: Vector2i, hubs: Array) -> bool:
+static func _hub_cells(host: Node, hubs: Array) -> Dictionary:
+	var cells: Dictionary = {}
 	for r: Variant in hubs:
-		if _in_room(r, cell):
-			return true
-	return false
+		var rx: int = int(r.x)
+		var ry: int = int(r.y)
+		var rw: int = int(r.w)
+		var rh: int = int(r.h)
+		for y: int in range(ry, ry + rh):
+			for x: int in range(rx, rx + rw):
+				var cell := Vector2i(x, y)
+				if host._is_floor_cell(cell):
+					cells[cell] = true
+	return cells
 
 
-static func _spur_len(host: Node, start: Vector2i, hubs: Array) -> int:
-	if _is_hub_cell(start, hubs):
-		return 0
+static func _spur_long_enough(host: Node, start: Vector2i, hub_cells: Dictionary, min_len: int) -> bool:
+	if hub_cells.has(start):
+		return false
 	var dist: Dictionary = {start: 0}
 	var q: Array[Vector2i] = [start]
 	var qi: int = 0
-	while qi < q.size() and qi < 4096:
+	while qi < q.size():
 		var cur: Vector2i = q[qi]
 		qi += 1
 		var steps: int = int(dist[cur])
@@ -132,11 +140,14 @@ static func _spur_len(host: Node, start: Vector2i, hubs: Array) -> int:
 				continue
 			if not host._is_floor_cell(nxt):
 				continue
-			if _is_hub_cell(nxt, hubs):
-				return steps + 1
-			dist[nxt] = steps + 1
+			if hub_cells.has(nxt):
+				return (steps + 1) >= min_len
+			var nxt_steps: int = steps + 1
+			if nxt_steps >= min_len:
+				return true
+			dist[nxt] = nxt_steps
 			q.append(nxt)
-	return 0
+	return false
 
 
 static func _snap_cell(host: Node, pick: Dictionary) -> Vector2i:
@@ -167,12 +178,28 @@ static func _try_add(host: Node, spots: Array, pick: Dictionary, sep: int) -> bo
 
 
 static func place_floor(host: Node) -> void:
+	place_entrance(host)
+	place_extras(host)
+
+
+static func place_entrance(host: Node) -> void:
 	var Net = load("res://scripts/world/crystal_net.gd")
 	Net.ensure_run()
 	Net.arrive()
 	var spots: Array = []
 	var spawn: Vector2i = host.data.spawn
 	_try_add(host, spots, {"cell": spawn, "cl": cl_at(host, spawn), "gate": true}, _sep())
+	_spawn_spots(host, spots, true)
+
+
+static func place_extras(host: Node) -> void:
+	if bool(host.get_meta("crystal_extras", false)):
+		return
+	host.set_meta("crystal_extras", true)
+	var spots: Array = []
+	var spawn: Vector2i = host.data.spawn
+	for raw: Variant in host.data.get("crystals", []):
+		spots.append({"cell": Vector2i(raw), "cl": 1, "gate": false})
 	var by_band: Dictionary = {}
 	for r: Variant in host.data.get("rooms", []):
 		var kind: String = str(r.get("kind", "normal"))
@@ -203,6 +230,7 @@ static func place_floor(host: Node) -> void:
 		if _try_add(host, spots, pick, _sep()):
 			extra += 1
 	var hubs: Array = _hub_rooms(host)
+	var hub_cells: Dictionary = _hub_cells(host, hubs)
 	var min_spur: int = _deadend_len()
 	var dsep: int = _deadend_sep()
 	var sep: int = _sep()
@@ -212,17 +240,28 @@ static func place_floor(host: Node) -> void:
 			continue
 		if host._cell_manhattan(dc, spawn) < dsep:
 			continue
-		if _spur_len(host, dc, hubs) < min_spur:
+		if not _spur_long_enough(host, dc, hub_cells, min_spur):
 			continue
 		_try_add(host, spots, {"cell": dc, "cl": cl_at(host, dc), "gate": false}, sep)
-	host.data["crystals"] = []
+	_spawn_spots(host, spots, false)
+
+
+static func _spawn_spots(host: Node, spots: Array, reset: bool) -> void:
+	if reset or not (host.data.get("crystals", []) is Array):
+		host.data["crystals"] = []
+	var have: Dictionary = {}
+	for raw: Variant in host.data.crystals:
+		have[Vector2i(raw)] = true
 	for s: Variant in spots:
 		var cell: Vector2i = Vector2i(s.cell)
+		if have.has(cell):
+			continue
 		var node: Node = FloorCrystal.new()
 		host.add_child(node)
 		node.setup_crystal(host._cell_pos(cell), cell, int(s.cl), bool(s.gate))
 		host._mark_cell(cell)
 		host.data.crystals.append(cell)
+		have[cell] = true
 		if bool(s.gate):
 			host.data.crystal = cell
 

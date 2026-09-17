@@ -30,8 +30,10 @@ Need to sort out level scaling. First crystal should always be CL1 and enemies s
 Need to fix automated playtest
 Need to organize debug vars menu.
 Need to fix animation browser controls.
+Make a thing that lets me send thoughts for later without interrupting.
 
 ### Needs Investigation
 pc-offload logics for grok build
 generate code map from code tags and scripts instead of grok
 xp scaling at higher levels
+Create pc-offload for editing scripts.

@@ -1,7 +1,6 @@
 extends "res://scripts/world/interact.gd"
 
 const CrystalNet := preload("res://scripts/world/crystal_net.gd")
-const CrystalUI := preload("res://scripts/ui/crystal_ui.gd")
 
 var crystal_cl := 1
 var crystal_cell := Vector2i.ZERO
@@ -62,5 +61,6 @@ func interact(who: Node) -> String:
 		CrystalNet.activate(self)
 		refresh()
 		App.toast("Crystal bound to this floor.")
-	CrystalUI.open(self)
+	var CrystalUIS: GDScript = load("res://scripts/ui/crystal_ui.gd") as GDScript
+	CrystalUIS.open(self)
 	return "The crystal hums."

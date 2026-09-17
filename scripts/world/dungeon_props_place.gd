@@ -7,7 +7,7 @@ const Gate := preload("res://scripts/world/dungeon_gate.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
 
 
-static func place_n(host: Node, rooms: Array, n: int, what: String) -> void:
+static func place_n(host: Node, rooms: Array, n: int, what: String, eager: bool = true) -> void:
 	var _fac = load("res://scripts/world/dungeon_props.gd")
 	if n <= 0 or rooms.is_empty():
 		return
@@ -23,36 +23,45 @@ static func place_n(host: Node, rooms: Array, n: int, what: String) -> void:
 		var cell: Vector2i = host._free_cell(r)
 		if not host._cell_clear(cell, 1) or host._near_spawn(cell):
 			continue
-		var pos: Vector3 = host._cell_pos(cell)
-		if what == "mine":
-			var node := GatherS.new()
-			node.setup("mine", pos)
-			host.add_child(node)
-			host._note("mine")
-		elif what == "wood":
-			var wood := GatherS.new()
-			wood.setup("wood", pos)
-			host.add_child(wood)
-			host._note("wood")
-		elif what == "break":
-			var br := BreakS.new()
-			br.setup("pot" if host.floor_rng.randf() < 0.6 else "barrel", pos)
-			host.add_child(br)
-			host._note("break")
-		elif what == "campfire":
-			var fire := SpotS.new()
-			fire.setup("campfire", pos)
-			host.add_child(fire)
-			host._note("campfire")
-		elif what == "shrine":
-			var sh := SpotS.new()
-			sh.setup("shrine", pos)
-			host.add_child(sh)
-			host._note("shrine")
-		else:
-			continue
 		host._mark_cell(cell)
+		if eager:
+			commit_kind(host, what, cell)
+		else:
+			host.prop_jobs.append({"kind": what, "cell": cell, "state": "pending"})
 		placed += 1
+
+
+static func commit_kind(host: Node, what: String, cell: Vector2i) -> void:
+	var pos: Vector3 = host._cell_pos(cell)
+	if what == "mine":
+		var node: Node = GatherS.new()
+		node.setup("mine", pos)
+		host.add_child(node)
+		host._note("mine")
+	elif what == "wood":
+		var wood: Node = GatherS.new()
+		wood.setup("wood", pos)
+		host.add_child(wood)
+		host._note("wood")
+	elif what == "break":
+		var br: Node = BreakS.new()
+		br.setup("pot" if host.floor_rng.randf() < 0.6 else "barrel", pos)
+		host.add_child(br)
+		host._note("break")
+	elif what == "campfire":
+		var fire: Node = SpotS.new()
+		fire.setup("campfire", pos)
+		host.add_child(fire)
+		host._note("campfire")
+	elif what == "shrine":
+		var sh: Node = SpotS.new()
+		sh.setup("shrine", pos)
+		host.add_child(sh)
+		host._note("shrine")
+	elif what == "quest_item":
+		var q: Node = SpotS.new()
+		q.setup("quest_item", pos)
+		host.add_child(q)
 
 
 static func spawn_puzzle(host: Node, r: Dictionary) -> void:

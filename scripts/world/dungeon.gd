@@ -3,12 +3,10 @@
 const T := preload("res://scripts/data/tunables.gd")
 const HudS := preload("res://scripts/ui/hud.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
-const DungeonProps := preload("res://scripts/world/dungeon_props.gd")
 const DungeonGeo := preload("res://scripts/world/dungeon_geo.gd")
 const DungeonCells := preload("res://scripts/world/dungeon_cells.gd")
 const DungeonPack := preload("res://scripts/world/dungeon_pack.gd")
 const DungeonBoot := preload("res://scripts/world/dungeon_boot.gd")
-const MapAct := preload("res://scripts/world/dungeon_map_act.gd")
 
 var data: Dictionary = {}
 var player: CharacterBody3D
@@ -47,6 +45,7 @@ var occupied: Dictionary = {}
 const PROP_GAP := 2
 const SPAWN_CLEAR := 16
 var spawn_jobs: Array = []
+var prop_jobs: Array = []
 var stream_t := 0.0
 var stream_all := false
 var travel_dist: PackedInt32Array = PackedInt32Array()
@@ -126,7 +125,8 @@ func _map() -> void:
 func _redraw_map() -> void:
 	DungeonGeo.redraw_map(self)
 	if map_layer and map_layer.visible:
-		MapAct.apply(self)
+		var MapActS: GDScript = load("res://scripts/world/dungeon_map_act.gd") as GDScript
+		MapActS.apply(self)
 
 
 func _note_verge() -> void:
@@ -260,7 +260,16 @@ func _find_kind_room(kind: String) -> Dictionary:
 
 
 func world_ui() -> Node:
+	ensure_ui()
 	return ui
+
+
+func ensure_ui() -> void:
+	if ui != null:
+		return
+	var UiS: GDScript = load("res://scripts/ui/progress_ui.gd") as GDScript
+	ui = UiS.new() as CanvasLayer
+	add_child(ui)
 
 
 func _note(k: String) -> void:

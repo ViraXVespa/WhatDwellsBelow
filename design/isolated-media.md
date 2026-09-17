@@ -32,7 +32,7 @@ Load `game-asset-core` plus **one** specialist. Do not load other_game_asset_spe
 
 | `--kind` | Bundled skills | Imagine tool | WDB job |
 |---|---|---|---|
-| `tile` | `imagine`, `game-asset-core`, `game-tilesets` | `image_gen`; `image_edit` only to iterate or as Bible **style** ref | World tile / roof / ground / wall. Seamless. Child runs the `game-tilesets` 2×2 PIL check. |
+| `tile` | `imagine`, `game-asset-core`, `game-tilesets` | `image_gen` once | World tile / roof / ground / wall. Seamless. Child does not open skill files, retry, or composite. Parent runs the `game-tilesets` 2×2 PIL check. |
 | `character` | `imagine`, `game-asset-core`, `game-character-consistency` | `image_gen` for a new Bible / style candidate; `image_edit` after lock | Character still, facing variant, overlay-on-body. After lock, edit-chain from the locked Bible or body frame. |
 | `i2v` | `imagine`, `game-asset-core`, `game-animation-frames` | `image_to_video` from the staged seed | One unit. Prompt and seed from `tools/i2v_seeds.py`. No fixed 6s/10s clock. Child does not harvest or pack. |
 | `ui` | `imagine`, `game-asset-core`, `game-ui-icons` | `image_gen` / `image_edit` | HUD / menu / icon stills. No text in the art. Input glyphs stay `tools/gen_prompt_glyphs.py`. |
@@ -48,21 +48,23 @@ Must resolve **outside** the git tree. A folder under `WhatDwellsBelow/` still w
 
 Runner: `python tools/run_isolated_grok.py --kind <kind> …`
 
-- Default scratch is `tempfile.TemporaryDirectory()` (OS temp). `--keep` uses `mkdtemp` and prints the path.
+- Default one-shot scratch is `tempfile.TemporaryDirectory()` (OS temp). `--keep` uses `mkdtemp` and prints the path. `--no-reuse` forces that path.
+- With staged reference images (Bibles, `--copy`, I2V seed) the default is a durable scratch under `%USERPROFILE%\.grok\wdb-iso\work\<ref_key>\` (or `$GROK_HOME/wdb-iso/...`). Catalog: `wdb-iso/catalog.json`. Key is SHA-256 of `--kind` plus each reference filename and file hash. Prompt text / brief is not in the key.
 - `--bible-style` copies the locked Bibles.
-- `--dry-run` still runs `grok inspect`; it does not run `grok -p`.
-- Inspect must show **Project Instructions (0)** for this repo. If inspect still names WhatDwellsBelow the repo agent-rules file, refuse to generate.
-- Child flags: `grok -p --cwd <scratch> --prompt-file job.md --verbatim --max-turns 8 --disable-web-search --no-subagents --always-approve --output-format plain`
-- There is no `--no-memory` flag. Do not invent one.
+- `--dry-run` still runs `grok inspect`; it does not run the child generate.
+- Inspect proof is one line: `inspect=ok instructions=0`. The runner does not forward the skill roster. If inspect still names WhatDwellsBelow the repo agent-rules file, or instructions ≠ 0, refuse to generate.
+- Child flags: `grok --prompt-file job.md --cwd <scratch> --verbatim --max-turns 8 --disable-web-search --no-subagents --always-approve --output-format plain`
+- Reuse: first run is ingest (`ingest.md`, `--output-format json`) then generate. Later runs with the same key `--resume <ingest_session> --fork-session` so the ingest session stays at “after the reads.” CLI has no `rewind`; fork-from-ingest is the token win. There is no `--no-memory` flag. Do not invent one.
+- `job.md` orders one media call, copy the Imagine output into scratch as the dest filename, then stop. Do not tell the child to open skill files, 2×2 composite, or retry. After a cache hit, tell it the references are already in the conversation.
 - Results copied to `--out` exclude staged inputs (`job.md`, Bibles, `--copy`, seed, prompt file).
 
 `--kind i2v` requires `--seed` and `--prompt-file` already produced in the parent by `tools/i2v_seeds.py`.
 
 ## Parent still owns
 
-Unit pick and next-unit permission stay on the parent. Pack, review, and bible are not this gate. After the User names that unit, open art_pipeline then one job. The child only pays for the media turn. Do not `/resume` a fat art thread to “just do one more” clip or tile.
+Unit pick and next-unit permission stay on the parent. Pack, review, and bible are not this gate. After the User names that unit, open art_pipeline then one job. The child only pays for the media turn (one Imagine call + copy into scratch). Ingest of the same reference set is cached and forked, not re-read. 2×2 / 4×4 seam checks and retries stay on the parent. Do not `/resume` a fat art thread to “just do one more” clip or tile. The ingest-cache `--resume` is the runner, not that ban.
 
-Live roof UV crop in Placeholdia is a seam workaround on the current `plaza_roof.png`. A new seamless tile does not by itself edit `camp` UVs. That is a later slice after the User accepts the still.
+Placeholdia roofs sample the full `plaza_roof.png` in `camp_build_mesh.gd` `roof_mat` (`fract` wrap). Do not put a V crop back unless a new tile bakes a cap/footer.
 
 ## Optional user config
 
@@ -70,4 +72,4 @@ Not repo-owned. `%USERPROFILE%\.grok\config.toml` / `~/.grok/config.toml` may `[
 
 ## Live snapshot
 
-`tools/run_isolated_grok.py` is the shipping runner. Isolated inspect in OS temp shows Project Instructions (0), no project config, bundled game-asset skills present. Repo skills under `.grok/skills/` are CLI doors into this file.
+`tools/run_isolated_grok.py` is the shipping runner. Isolated inspect prints `inspect=ok instructions=0` (no roster dump). Repo skills under `.grok/skills/` are CLI doors into this file. Reference ingest sessions are keyed in `~/.grok/wdb-iso/catalog.json`. After generate: `dest=ok|missing` and `modelCalls=` when usage.json exists.

@@ -8,6 +8,8 @@ const CrystalNet := preload("res://scripts/world/crystal_net.gd")
 
 const STREAM_IN := 28
 const STREAM_OUT := 42
+const SPAWN_PER_TICK := 2
+const SPAWN_BOOT := 6
 
 
 static func queue_initial(host: Node, pool: PackedStringArray) -> void:
@@ -143,6 +145,9 @@ static func job_anchor(job: Dictionary) -> Vector2i:
 static func activate_job(host: Node, job: Dictionary) -> void:
 	if str(job.state) != "pending":
 		return
+	if str(job.kind) == "boss":
+		_activate_boss(host, job)
+		return
 	if host._near_spawn(job_anchor(job), 8) or CrystalNet.blocks_spawn(host, job_anchor(job)):
 		job.state = "cleared"
 		return
@@ -172,6 +177,8 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 
 static func sleep_job(host: Node, job: Dictionary) -> void:
 	if str(job.state) != "live":
+		return
+	if str(job.kind) == "boss" or str(job.kind) == "prop":
 		return
 	var remain := PackedStringArray()
 	var live: Array = job.get("live", [])
@@ -229,24 +236,65 @@ static func tick(host: Node, delta: float) -> void:
 	host.stream_t = 0.0
 	if host.player == null:
 		return
+	if not bool(host.get_meta("ambush_q", false)):
+		host.set_meta("ambush_q", true)
+		var pool: PackedStringArray = Roster.floor_types(App.floor_n)
+		queue_initial(host, pool)
+		queue_ambushes(host, pool)
+		var SpawnS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
+		if host.prop_jobs.is_empty() and not bool(host.get_meta("props_scattered", false)):
+			SpawnS.spawn_world(host)
 	var pc: Vector2i = host._player_cell()
+	var budget: int = SPAWN_BOOT if delta >= 0.9 else SPAWN_PER_TICK
+	var spawned := 0
 	for job in host.spawn_jobs:
 		var st := str(job.state)
 		if st == "cleared":
 			continue
 		var d: int = host._cell_manhattan(pc, job_anchor(job))
 		if st == "pending" and (host.stream_all or d <= STREAM_IN):
+			if not host.stream_all and spawned >= budget:
+				continue
 			activate_job(host, job)
+			spawned += 1
 		elif st == "live" and not host.stream_all and d >= STREAM_OUT and not job_in_combat(host, job):
 			sleep_job(host, job)
+	var PropS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
+	PropS.tick(host, pc, budget)
+	CrystalNet.place_extras(host)
 	GeoStream.tick(host, delta)
+
+
+static func _activate_boss(host: Node, job: Dictionary) -> void:
+	var EnemyS: GDScript = load("res://scripts/combat/enemy.gd") as GDScript
+	var boss: CharacterBody3D = EnemyS.new() as CharacterBody3D
+	var bp: Vector2i = job_anchor(job)
+	boss.position = Vector3(float(bp.x) + 0.5, 0.0, float(bp.y) + 0.5)
+	host.add_child(boss)
+	boss.setup_boss(str(job.nname), App.floor_n)
+	boss.group_id = int(job.gid)
+	job.live = [boss]
+	job.state = "live"
+	if App.boss_dead:
+		host._on_boss_dead()
 
 
 static func force_all(host: Node) -> void:
 	host.stream_all = true
+	if not bool(host.get_meta("ambush_q", false)):
+		host.set_meta("ambush_q", true)
+		var pool: PackedStringArray = Roster.floor_types(App.floor_n)
+		queue_initial(host, pool)
+		queue_ambushes(host, pool)
+	if host.prop_jobs.is_empty() and not bool(host.get_meta("props_scattered", false)):
+		var SpawnS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
+		SpawnS.spawn_world(host)
 	for job in host.spawn_jobs:
 		if str(job.state) == "pending":
 			activate_job(host, job)
+	var PropS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
+	PropS.flush(host)
+	CrystalNet.place_extras(host)
 
 
 static func activate_room(host: Node, r: Dictionary, pool: PackedStringArray) -> void:

@@ -78,8 +78,13 @@ static func cl_at(host: Node, cell: Vector2i) -> int:
 
 
 static func place_floor(host: Node) -> void:
-	var Place = load("res://scripts/world/crystal_place.gd")
-	Place.place_floor(host)
+	var Place: GDScript = load("res://scripts/world/crystal_place.gd") as GDScript
+	Place.place_entrance(host)
+
+
+static func place_extras(host: Node) -> void:
+	var Place: GDScript = load("res://scripts/world/crystal_place.gd") as GDScript
+	Place.place_extras(host)
 
 
 static func _tree(n: Node) -> SceneTree:

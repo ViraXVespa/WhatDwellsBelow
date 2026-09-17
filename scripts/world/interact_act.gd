@@ -4,7 +4,6 @@
 
 const InteractFx := preload("res://scripts/world/interact_fx.gd")
 const Prompt := preload("res://scripts/world/interact_prompt.gd")
-const Chest := preload("res://scripts/world/interact_chest.gd")
 
 
 static func interact(host: Node3D, who: Node) -> String:
@@ -75,7 +74,7 @@ static func interact(host: Node3D, who: Node) -> String:
 		App.toast("The gate shifts.")
 		return "The gate answers."
 	if host.kind.ends_with("chest"):
-		return Chest.open_chest(host)
+		return open_chest(host)
 	return host.prompt
 
 
@@ -182,4 +181,5 @@ static func plate_held(host: Node3D, on: bool) -> void:
 
 
 static func open_chest(host: Node3D) -> String:
-	return Chest.open_chest(host)
+	var ChestS: GDScript = load("res://scripts/world/interact_chest.gd") as GDScript
+	return ChestS.open_chest(host)

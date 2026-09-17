@@ -36,7 +36,7 @@ CI on each user push to `main` (not on `[skip ci]` stamp pushes):
 6. If generated outputs changed, commit them with `[skip ci]`.
 7. Deploy Pages from the user push. Pages stamps the same number in the export workspace before Godot runs, because a `GITHUB_TOKEN` stamp push does not start a new workflow. Include `/changelog/`.
 
-Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/changelog/{label}.md` still get a patch number and an empty player note.
+Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/changelog/{label}.md` still get a patch number and an empty player note. `tools/next_changelog_label.py` is baked patch + 1 on the **current** series only. A series seed (`0.N.0`, later `1.M.0`) is the User’s named completion commit, not that tool.
 
 ### Merge shape (Grok Bot and multi-commit PRs)
 
@@ -52,9 +52,9 @@ Grok Bot PRs MUST squash-merge. A multi-commit branch is fine on the PR; it must
 
 ## Grok Build week ritual
 
-One Grok Build session family per week. The User’s single completion commit is `0.N.0` (later `1.M.0` when they name a major) and is tagged as that series open.
+Several concurrent Grok Build CLI sessions may share one week. The User’s single completion commit is `0.N.0` (later `1.M.0` when they name a major) and is tagged as that series open.
 
-Run the **init pin** only when the User opens the CLI session by saying **new week**. Token refresh counts only if they say that. A mid-week new CLI chat is a catch-up: no pin. Resume after corruption does not move the web pin and does not create a second Grok Build pin for that week.
+Run the **init pin** only when the User opens a CLI session by saying **new week**. Token refresh counts only if they say that. A mid-week new CLI chat (including a concurrent role) is a catch-up: no pin. Resume after corruption does not move the web pin and does not create a second Grok Build pin for that week.
 
 **Init (week N), only after the User said new week:**
 

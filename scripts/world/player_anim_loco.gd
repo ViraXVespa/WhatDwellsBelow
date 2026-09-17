@@ -3,6 +3,7 @@ extends RefCounted
 const T := preload("res://scripts/data/tunables.gd")
 const Facing := preload("res://scripts/world/facing.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
+const Load := preload("res://scripts/world/player_anim_load.gd")
 const LOC_IDLE := 0
 const LOC_START := 1
 const LOC_LOOP := 2
@@ -10,6 +11,8 @@ const LOC_STOP := 3
 
 static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> Texture2D:
 	var _fac = load("res://scripts/world/player_anim.gd")
+	if moving or host.loc_state != LOC_IDLE:
+		Load.ensure_loco(host, key)
 	var start_f: Array = _fac.clip(host.idle_to_walk, key)
 	var loop_f: Array = _fac.clip(host.walk, key)
 	var stop_f: Array = _fac.clip(host.walk_to_idle, key)
@@ -97,6 +100,14 @@ static func apply_facing(host: Node, delta: float) -> void:
 		if tex:
 			_fac.apply_tex(host, tex)
 		return
+	if (
+		host.atk_state == host.ATK_WIND
+		or host.atk_state == host.ATK_ACT
+		or host.atk_state == host.ATK_REC
+		or host.atk_state == host.ATK_BASIC
+		or host.gathering != null
+	):
+		Load.ensure_attack(host, key)
 	if host.atk_state == host.ATK_WIND or host.atk_state == host.ATK_ACT or host.atk_state == host.ATK_REC:
 		var frames: Array = _fac.clip(host.special, key)
 		if frames.is_empty():

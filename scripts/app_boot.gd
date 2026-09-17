@@ -36,8 +36,6 @@ static func _ready(host: Node) -> void:
 	host.tel = TelS.new()
 	host.playtest = PlayS.new()
 	host.add_child(host.playtest)
-	host.debug = DebugS.new()
-	host.add_child(host.debug)
 	host.pause_menu = PauseS.new()
 	host.add_child(host.pause_menu)
 	host.recap = RecapS.new()
@@ -46,8 +44,6 @@ static func _ready(host: Node) -> void:
 	host.add_child(host.present)
 	host.music = MusicS.new()
 	host.add_child(host.music)
-	host.anim_browser = AnimS.new()
-	host.add_child(host.anim_browser)
 	host.archives_ui = ArchS.new()
 	host.add_child(host.archives_ui)
 	host.loader = LoaderS.new()
@@ -65,9 +61,29 @@ static func _ready(host: Node) -> void:
 	host.refresh_ui_text_scale()
 	host.set_sprite_filter(host.sprite_filter, true)
 	Disp.apply_saved()
+	if Smoke.active() or "--wdb-debug" in OS.get_cmdline_user_args():
+		ensure_debug(host)
+		ensure_anim_browser(host)
+	else:
+		host.call_deferred("ensure_debug")
+		host.call_deferred("ensure_anim_browser")
 	if "--wdb-debug" in OS.get_cmdline_user_args():
 		host.call_deferred("_open_debug")
 
+
+
+static func ensure_debug(host: Node) -> void:
+	if host.debug != null:
+		return
+	host.debug = DebugS.new()
+	host.add_child(host.debug)
+
+
+static func ensure_anim_browser(host: Node) -> void:
+	if host.anim_browser != null:
+		return
+	host.anim_browser = AnimS.new()
+	host.add_child(host.anim_browser)
 
 
 static func hitstop(host: Node, sec: float) -> void:

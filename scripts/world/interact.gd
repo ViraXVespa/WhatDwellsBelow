@@ -1,9 +1,9 @@
 ﻿extends Node3D
 
-const Catalog := preload("res://scripts/data/catalog.gd")
 const InteractFx := preload("res://scripts/world/interact_fx.gd")
 const Prompt := preload("res://scripts/world/interact_prompt.gd")
-const Act := preload("res://scripts/world/interact_act.gd")
+
+static var _act_s: GDScript
 
 var kind := "crystal"
 var locked := false
@@ -55,6 +55,7 @@ func setup_shop(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	if hi < lo:
 		hi = lo
 	var n := rng.randi_range(lo, hi)
+	var Catalog: GDScript = load("res://scripts/data/catalog.gd") as GDScript
 	stock = Catalog.pick(rng, n)
 
 
@@ -66,53 +67,59 @@ func _title() -> String:
 	return Prompt.title(self)
 
 
+func _act() -> GDScript:
+	if _act_s == null:
+		_act_s = load("res://scripts/world/interact_act.gd") as GDScript
+	return _act_s
+
+
 func interact(who: Node) -> String:
-	return Act.interact(self, who)
+	return _act().interact(self, who)
 
 
 func unlock_hidden() -> void:
-	Act.unlock_hidden(self)
+	_act().unlock_hidden(self)
 
 
 func hide_as_secret() -> void:
-	Act.hide_as_secret(self)
+	_act().hide_as_secret(self)
 
 
 func _shrine() -> String:
-	return Act.shrine(self)
+	return _act().shrine(self)
 
 
 func _campfire(who: Node) -> String:
-	return Act.campfire(self, who)
+	return _act().campfire(self, who)
 
 
 func _open_chest() -> String:
-	return Act.open_chest(self)
+	return _act().open_chest(self)
 
 
 func _open_extract_gate() -> String:
-	return Act.open_extract_gate(self)
+	return _act().open_extract_gate(self)
 
 
 func mark_spent() -> void:
-	Act.mark_spent(self)
+	_act().mark_spent(self)
 
 
 func _open_shop() -> String:
-	return Act.open_shop(self)
+	return _act().open_shop(self)
 
 
 func _ui() -> Node:
-	return Act.ui_node(self)
+	return _act().ui_node(self)
 
 
 func _toggle_gates() -> void:
-	Act.toggle_gates(self)
+	_act().toggle_gates(self)
 
 
 func set_open(v: bool) -> void:
-	Act.set_open(self, v)
+	_act().set_open(self, v)
 
 
 func plate_held(on: bool) -> void:
-	Act.plate_held(self, on)
+	_act().plate_held(self, on)

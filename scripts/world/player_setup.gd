@@ -5,8 +5,6 @@ const BillSpr := preload("res://scripts/world/billboard_spr.gd")
 
 const T := preload("res://scripts/data/tunables.gd")
 const CamRig := preload("res://scripts/world/camera_rig.gd")
-const TelegraphS := preload("res://scripts/combat/telegraph.gd")
-const AimLineS := preload("res://scripts/combat/aim_line.gd")
 const PlayerAnim := preload("res://scripts/world/player_anim.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 
@@ -32,11 +30,6 @@ static func ready(host: CharacterBody3D) -> void:
 	host.add_child(host.rig)
 	if host.rig.has_method("follow"):
 		host.rig.follow(host.global_position)
-	host.telegraph = TelegraphS.new()
-	host.add_child(host.telegraph)
-	host.telegraph.hide_now()
-	host.aim_line = AimLineS.new()
-	host.add_child(host.aim_line)
 	host.max_hp = App.bal.player_max_hp + App.prog.gear_hp() + App.prog.skill_hp()
 	if App.run_hp >= 0.0:
 		host.hp = clampf(App.run_hp, 0.0, host.max_hp)
@@ -46,6 +39,21 @@ static func ready(host: CharacterBody3D) -> void:
 	PlayerAnim.apply_facing(host, 0.016)
 	if host.body:
 		host.body.visible = true
+	if bool(App.get("_menu_loading")):
+		host.set_physics_process(false)
+
+
+static func ensure_combat_fx(host: CharacterBody3D) -> void:
+	if host.telegraph != null:
+		return
+	var TelegraphS: GDScript = load("res://scripts/combat/telegraph.gd") as GDScript
+	host.telegraph = TelegraphS.new()
+	host.add_child(host.telegraph)
+	if host.telegraph.has_method("hide_now"):
+		host.telegraph.hide_now()
+	var AimLineS: GDScript = load("res://scripts/combat/aim_line.gd") as GDScript
+	host.aim_line = AimLineS.new()
+	host.add_child(host.aim_line)
 
 static func make_sprite(_host: CharacterBody3D, prio: int) -> Sprite3D:
 	var s: Sprite3D = BillSpr.bare(prio)

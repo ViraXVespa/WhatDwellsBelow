@@ -1,19 +1,19 @@
 extends Object
 
-const EnemyS := preload("res://scripts/combat/enemy.gd")
 const Roster := preload("res://scripts/combat/roster.gd")
 
 
 static func add_enemy(host: Node, id: String, pos: Vector3, gid: int, named: bool, nname: String) -> Node:
-	var e = EnemyS.new()
+	var EnemyS: GDScript = load("res://scripts/combat/enemy.gd") as GDScript
+	var e: CharacterBody3D = EnemyS.new() as CharacterBody3D
 	e.position = pos
 	host.add_child(e)
-	e.setup(id, App.floor_n, named, nname)
-	e.group_id = gid
+	e.call("setup", id, App.floor_n, named, nname)
+	e.set("group_id", gid)
 	if not host.groups.has(gid):
 		host.groups[gid] = {"max_hp": 0.0, "hp": 0.0, "fled": false}
-	host.groups[gid].max_hp += e.max_hp
-	host.groups[gid].hp += e.max_hp
+	host.groups[gid].max_hp += float(e.get("max_hp"))
+	host.groups[gid].hp += float(e.get("max_hp"))
 	if host.types_present.find(id) < 0:
 		host.types_present.append(id)
 	return e

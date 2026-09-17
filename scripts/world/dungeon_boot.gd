@@ -2,22 +2,18 @@ extends Object
 
 const Gen := preload("res://scripts/dungeon/gen.gd")
 const PlayerS := preload("res://scripts/world/player.gd")
-const EnemyS := preload("res://scripts/combat/enemy.gd")
 const Roster := preload("res://scripts/combat/roster.gd")
 const DoorS := preload("res://scripts/world/boss_door.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
-const UiS := preload("res://scripts/ui/progress_ui.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
-const DungeonProps := preload("res://scripts/world/dungeon_props.gd")
 const CrystalNet := preload("res://scripts/world/crystal_net.gd")
-const MapAct := preload("res://scripts/world/dungeon_map_act.gd")
+const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 
 
 static func ready_floor(host: Node) -> void:
+	LoadTiming.dmark("dungeon_enter")
 	App.in_dungeon = true
-	if App.present and App.present.has_method("hide_overlay"):
-		App.present.hide_overlay()
 	CrystalNet.arrive()
 	host.data = Gen.generate(App.floor_n, App.run_seed, App.bal)
 	if not host.data.get("ok", false):
@@ -25,17 +21,34 @@ static func ready_floor(host: Node) -> void:
 	host.visited = PackedByteArray()
 	host.visited.resize(int(host.data.w) * int(host.data.h))
 	host.visited.fill(0)
+	LoadTiming.dmark("gen")
+	LoadTiming.dnote("gen_ok", str(host.data.get("ok", false)))
+	LoadTiming.dnote("rooms", str((host.data.get("rooms", []) as Array).size()))
+	LoadTiming.dnote("w", str(int(host.data.get("w", 0))))
+	LoadTiming.dnote("h", str(int(host.data.get("h", 0))))
 	host._build_travel()
+	LoadTiming.dmark("travel")
 	host._world()
+	LoadTiming.dmark("world")
 	host._collision_walls()
+	LoadTiming.dmark("collision")
 	host._build_visuals()
+	LoadTiming.dmark("visuals")
 	host._spawns()
+	LoadTiming.dmark("spawns")
 	host._hud()
-	host._map()
+	LoadTiming.dmark("hud")
+	LoadTiming.dnote("map", "deferred")
+	LoadTiming.dmark("map")
 	host._reveal_around(host.data.spawn, int(App.bal.fog_radius) + 2)
 	if host.player:
 		host._reveal_around(host._world_cell(host.player.global_position), int(App.bal.fog_radius) + 2)
-	DungeonStream.tick(host, 1.0)
+	LoadTiming.dmark("reveal")
+	var GeoStreamS: GDScript = load("res://scripts/world/dungeon_geo_stream.gd") as GDScript
+	GeoStreamS.follow(host, 1.0)
+	LoadTiming.dmark("stream")
+	if App.present and App.present.has_method("release_enter"):
+		App.present.release_enter()
 	Smoke.attach_dungeon(host)
 
 
@@ -71,10 +84,15 @@ static func process_floor(host: Node, delta: float) -> void:
 		elif App.pause_menu and App.pause_menu.has_method("toggle"):
 			App.pause_menu.toggle()
 	if Input.is_action_just_pressed("map_view") or App.pad_just("map_view"):
+		if host.map_layer == null:
+			host._map()
+			if host.hud and host.hud.has_method("bind_map") and host.map_tex:
+				host.hud.bind_map(host.map_tex)
 		if host.map_layer:
 			host.map_layer.visible = not host.map_layer.visible
 			if host.map_layer.visible:
-				MapAct.reset(host)
+				var MapActS: GDScript = load("res://scripts/world/dungeon_map_act.gd") as GDScript
+				MapActS.reset(host)
 				host._redraw_map()
 				CrystalNet.paint(host)
 	if host.stairs:
@@ -89,28 +107,34 @@ static func spawns(host: Node) -> void:
 	var land: Vector2i = CrystalNet.landing_cell(host)
 	host.player.position = Vector3(float(land.x) + 1.5, 0.0, float(land.y) + 0.5)
 	host.add_child(host.player)
+	LoadTiming.dmark("spawn_player")
 	host._place_doors()
+	LoadTiming.dmark("spawn_doors")
 	var st: Vector2i = host.data.stairs
 	host.stairs = SpotS.new()
 	host.stairs.setup("stairs", Vector3(float(st.x) + 0.5, 0.0, float(st.y) + 0.5), not App.boss_dead)
 	host.add_child(host.stairs)
+	LoadTiming.dmark("spawn_stairs")
 	CrystalNet.place_floor(host)
-	var pool: PackedStringArray = Roster.floor_types(App.floor_n)
-	DungeonStream.queue_initial(host, pool)
-	var boss: Node = EnemyS.new()
+	LoadTiming.dmark("spawn_crystals")
+	LoadTiming.dnote("spawn_jobs", "deferred")
+	LoadTiming.dmark("spawn_jobs")
 	var bp: Vector2i = host.data.boss
-	boss.position = Vector3(float(bp.x) + 0.5, 0.0, float(bp.y) + 0.5)
-	host.add_child(boss)
-	boss.setup_boss(str(host.data.boss_title), App.floor_n)
-	boss.group_id = host.next_group
-	host.next_group += 1
-	if App.boss_dead:
-		host._on_boss_dead()
-	DungeonProps.spawn_world(host)
-	DungeonStream.queue_ambushes(host, pool)
+	var boss_job: Dictionary = DungeonStream.new_job(host, "boss", bp, {}, PackedStringArray(), false, str(host.data.boss_title))
+	host.spawn_jobs.append(boss_job)
+	LoadTiming.dmark("spawn_boss")
+	if Smoke.phase(5):
+		var SpawnS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
+		SpawnS.spawn_world(host)
+		host.set_meta("props_booted", true)
+	else:
+		LoadTiming.dnote("spawn_props", "deferred")
+	LoadTiming.dmark("spawn_props")
+	LoadTiming.dnote("spawn_ambushes", "deferred")
+	LoadTiming.dmark("spawn_ambushes")
 	CrystalNet.silence_on(host)
-	host.ui = UiS.new()
-	host.add_child(host.ui)
+	LoadTiming.dnote("spawn_ui", "deferred")
+	LoadTiming.dmark("spawn_ui")
 
 
 static func place_doors(host: Node) -> void:

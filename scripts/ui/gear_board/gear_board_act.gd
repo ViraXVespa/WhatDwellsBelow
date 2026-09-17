@@ -77,6 +77,8 @@ static func floor_step(ui: CanvasLayer, d: int) -> void:
 
 
 static func enter(ui: CanvasLayer) -> void:
+	if App.present and App.present.has_method("cover_enter"):
+		App.present.cover_enter()
 	App.prog.tool_type = str(ui.loadout_tool)
 	App.prog.pick_weapon = str(ui.loadout_wpn)
 	App.prog.start_floor = int(ui.loadout_floor)
@@ -86,7 +88,6 @@ static func enter(ui: CanvasLayer) -> void:
 		var it: Dictionary = App.prog.slots.get(s, {})
 		if it is Dictionary and not it.is_empty():
 			Board.pending_kit[s] = it.duplicate(true)
-	ui.close_ui()
 	App.enter_dungeon()
 
 

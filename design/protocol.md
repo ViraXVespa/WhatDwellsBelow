@@ -29,7 +29,7 @@ If a path session file is already loaded, stay on that path. Do not re-select a 
 
 On multi-session or compacted runs, name Hard Constraints and the current requested work. Do not fetch a file already in the loaded set. Never allow live-path code to share state with any archive. Do not “recover” a stale session by archiving or rewriting the live path.
 
-One goal per web / chat session (stop after Phase 7). One Grok Build session family per development week (week pins only when the User says **new week**). One Grok Bot flow per session (one Job-table sibling; one PR).
+One goal per web / chat session (stop after Phase 7). One development week may run several concurrent Grok Build CLI sessions (slice, plus week-scoped Bot notes, PC offload, and smoke tests); they share one week pin (pins only when the User says **new week**). One Grok Bot flow per session (one Job-table sibling; one PR).
 
 ## How to use this database
 

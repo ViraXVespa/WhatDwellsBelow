@@ -11,15 +11,6 @@ const LOC_LOOP := 2
 const LOC_STOP := 3
 
 
-static func _seq(base: String, prefix: String) -> Array:
-	var frames: Array = []
-	var i := 0
-	while ResourceLoader.exists(base + "%s_%d.png" % [prefix, i]):
-		frames.append(SpriteFilt.ensure_mips(load(base + "%s_%d.png" % [prefix, i])))
-		i += 1
-	return frames
-
-
 static func load_sprites(host: Node) -> void:
 	Load.load_sprites(host)
 

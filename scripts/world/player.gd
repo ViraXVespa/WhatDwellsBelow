@@ -1,10 +1,6 @@
 extends CharacterBody3D
 
 const PlayerAnim := preload("res://scripts/world/player_anim.gd")
-const PlayerHit := preload("res://scripts/combat/player_hit.gd")
-const PlayerLock := preload("res://scripts/world/player_lock.gd")
-const PlayerAct := preload("res://scripts/world/player_act.gd")
-const PlayerCombat := preload("res://scripts/world/player_combat.gd")
 const Setup := preload("res://scripts/world/player_setup.gd")
 const Tick := preload("res://scripts/world/player_tick.gd")
 
@@ -94,95 +90,98 @@ func _physics_process(delta: float) -> void:
 func is_alive() -> bool:
 	return hp > 0.0
 
+func _script_at(path: String) -> GDScript:
+	return load(path) as GDScript
+
 func take_hit(raw: float, from_dir: Vector2, crit: bool, src := "") -> void:
-	PlayerAct.take_hit(self, raw, from_dir, crit, src)
+	_script_at("res://scripts/world/player_act.gd").take_hit(self, raw, from_dir, crit, src)
 
 func heal(amount: float) -> void:
-	PlayerAct.heal(self, amount)
+	_script_at("res://scripts/world/player_act.gd").heal(self, amount)
 
 func play_exit(cond: String, killer := "") -> void:
-	PlayerAct.play_exit(self, cond, killer)
+	_script_at("res://scripts/world/player_act.gd").play_exit(self, cond, killer)
 
 func start_gather(node: Node) -> void:
-	PlayerAct.start_gather(self, node)
+	_script_at("res://scripts/world/player_act.gd").start_gather(self, node)
 
 func stop_gather() -> void:
-	PlayerAct.stop_gather(self)
+	_script_at("res://scripts/world/player_act.gd").stop_gather(self)
 
 func _tick_exit(delta: float) -> void:
-	PlayerAct.tick_exit(self, delta)
+	_script_at("res://scripts/world/player_act.gd").tick_exit(self, delta)
 
 func _tick_gather(delta: float, move: Vector2) -> void:
-	PlayerAct.tick_gather(self, delta, move)
+	_script_at("res://scripts/world/player_act.gd").tick_gather(self, delta, move)
 
 func _refresh_prompt() -> void:
-	PlayerAct.refresh_prompt(self)
+	_script_at("res://scripts/world/player_act.gd").refresh_prompt(self)
 
 func _try_interact() -> void:
-	PlayerAct.try_interact(self)
+	_script_at("res://scripts/world/player_act.gd").try_interact(self)
 
 func _cooldowns(delta: float) -> void:
-	PlayerAct.cooldowns(self, delta)
+	_script_at("res://scripts/world/player_act.gd").cooldowns(self, delta)
 
 func _ai_on() -> bool:
-	return PlayerLock.ai_on()
+	return _script_at("res://scripts/world/player_lock.gd").ai_on()
 
 func _ai_or_vec(which: String) -> Vector2:
-	return PlayerLock.ai_or_vec(self, which)
+	return _script_at("res://scripts/world/player_lock.gd").ai_or_vec(self, which)
 
 func _ai_just(action: String) -> bool:
-	return PlayerLock.ai_just(self, action)
+	return _script_at("res://scripts/world/player_lock.gd").ai_just(self, action)
 
 func _ai_held(action: String) -> bool:
-	return PlayerLock.ai_held(self, action)
+	return _script_at("res://scripts/world/player_lock.gd").ai_held(self, action)
 
 func _lock_and_aim(move: Vector2, delta: float) -> void:
-	PlayerLock.lock_and_aim(self, move, delta)
+	_script_at("res://scripts/world/player_lock.gd").lock_and_aim(self, move, delta)
 
 func _try_dash(move: Vector2) -> void:
-	PlayerCombat.try_dash(self, move)
+	_script_at("res://scripts/world/player_combat.gd").try_dash(self, move)
 
 func _try_special() -> void:
-	PlayerCombat.try_special(self)
+	_script_at("res://scripts/world/player_combat.gd").try_special(self)
 
 func _try_basic() -> void:
-	PlayerCombat.try_basic(self)
+	_script_at("res://scripts/world/player_combat.gd").try_basic(self)
 
 func _advance_attack(delta: float) -> void:
-	PlayerCombat.advance_attack(self, delta)
+	_script_at("res://scripts/world/player_combat.gd").advance_attack(self, delta)
 
 func _basic_duration() -> float:
-	return PlayerCombat.basic_duration()
+	return _script_at("res://scripts/world/player_combat.gd").basic_duration()
 
 func _hit_norm() -> float:
-	return PlayerCombat.hit_norm()
+	return _script_at("res://scripts/world/player_combat.gd").hit_norm()
 
 func _draw_basic_tele(active: bool) -> void:
-	PlayerHit.draw_basic_tele(self, active)
+	_script_at("res://scripts/combat/player_hit.gd").draw_basic_tele(self, active)
 
 func _draw_special_tele(active: bool) -> void:
-	PlayerHit.draw_special_tele(self, active)
+	_script_at("res://scripts/combat/player_hit.gd").draw_special_tele(self, active)
 
 func _special_point() -> Vector3:
-	return PlayerHit.special_point(self)
+	return _script_at("res://scripts/combat/player_hit.gd").special_point(self)
 
 func _apply_basic() -> void:
-	PlayerHit.apply_basic(self)
+	_script_at("res://scripts/combat/player_hit.gd").apply_basic(self)
 
 func _apply_special() -> void:
-	PlayerHit.apply_special(self)
+	_script_at("res://scripts/combat/player_hit.gd").apply_special(self)
 
 func _trail(delta: float) -> void:
-	PlayerHit.trail(self, delta)
+	_script_at("res://scripts/combat/player_hit.gd").trail(self, delta)
 
 func _update_aim_line() -> void:
-	PlayerCombat.update_aim_line(self)
+	_script_at("res://scripts/world/player_combat.gd").update_aim_line(self)
 
 func _weapon_reach() -> float:
-	return PlayerCombat.weapon_reach()
+	return _script_at("res://scripts/world/player_combat.gd").weapon_reach()
 
 func _update_aura(delta: float) -> void:
-	PlayerCombat.update_aura(self, delta)
+	_script_at("res://scripts/world/player_combat.gd").update_aura(self, delta)
 
 func _pose_tex(key: String) -> Texture2D:
 	return PlayerAnim.pose_tex(self, key)

@@ -38,8 +38,6 @@ func _ready() -> void:
 	layer = 86
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible = false
-	models = catalog_models()
-	_build()
 
 
 static func catalog_models() -> Array:
@@ -55,6 +53,10 @@ func _build() -> void:
 
 
 func open_browser() -> void:
+	if preview == null:
+		if models.is_empty():
+			models = catalog_models()
+		_build()
 	open = true
 	visible = true
 	App.ui_open = true

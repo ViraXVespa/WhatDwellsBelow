@@ -9,6 +9,8 @@ var caption: Label
 var playing := false
 var _mode := ""
 var _t := 0.0
+var _wake_hold := false
+var _enter_load := false
 var _done: Callable = Callable()
 
 
@@ -48,27 +50,77 @@ func play_enter(done: Callable) -> void:
 	get_tree().create_timer(1.05, true, false, true).timeout.connect(_finish_enter)
 
 
+func cover_enter() -> void:
+	playing = true
+	visible = true
+	_mode = "enter_hold"
+	_t = 0.0
+	_done = Callable()
+	caption.text = "Consciousness slips the body…"
+	overlay.color = Color(0.2, 0.75, 0.95, 1.0)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.queue_redraw()
+
+
+func wait_painted() -> void:
+	var tree: SceneTree = get_tree()
+	if tree:
+		await tree.create_timer(0.0, true, false, true).timeout
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+
+
+func release_enter() -> void:
+	if _mode != "enter_hold":
+		return
+	_mode = "enter_fade"
+	_t = 0.0
+
+
 func play_wake() -> void:
 	playing = true
 	visible = true
 	_mode = "wake"
 	_t = 0.0
+	_wake_hold = false
 	_done = Callable()
 	caption.text = "You wake in Placeholdia."
 	overlay.color = Color(0.95, 0.88, 0.7, 1.0)
 	App.sfx("wake")
 
 
+func cover_wake() -> void:
+	play_wake()
+	_wake_hold = true
+	_t = 0.0
+	overlay.color.a = 1.0
+
+
+func release_wake() -> void:
+	if _mode != "wake":
+		play_wake()
+		return
+	_wake_hold = false
+	_t = 0.0
+
+
 func hide_overlay() -> void:
 	playing = false
 	_mode = ""
+	_wake_hold = false
+	_enter_load = false
 	visible = false
+	if overlay:
+		overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	caption.text = ""
 	_done = Callable()
 
 
 func _physics_process(delta: float) -> void:
 	if not playing:
+		return
+	if (_mode == "wake" and _wake_hold) or _mode == "enter_hold":
+		overlay.color.a = 1.0
 		return
 	_t += delta
 	if _mode == "enter":
@@ -80,6 +132,10 @@ func _physics_process(delta: float) -> void:
 			overlay.color.a = lerpf(0.92, 1.0, clampf((_t - 0.8) / 0.2, 0.0, 1.0))
 		if _t >= 1.0:
 			_finish_enter()
+	elif _mode == "enter_fade":
+		overlay.color.a = lerpf(1.0, 0.0, clampf(_t / 1.05, 0.0, 1.0))
+		if _t >= 1.05:
+			hide_overlay()
 	elif _mode == "wake":
 		overlay.color.a = lerpf(1.0, 0.0, clampf(_t / 1.1, 0.0, 1.0))
 		if _t >= 1.1:
@@ -102,5 +158,6 @@ func _finish_wake() -> void:
 		return
 	playing = false
 	_mode = ""
+	_wake_hold = false
 	visible = false
 	caption.text = ""

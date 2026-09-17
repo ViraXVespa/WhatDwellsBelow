@@ -1,7 +1,10 @@
 ﻿extends Object
 
-const Combat := preload("res://scripts/combat/combat.gd")
 const Touch := preload("res://scripts/input/touch_pad.gd")
+
+
+static func _combat() -> GDScript:
+	return load("res://scripts/combat/combat.gd") as GDScript
 
 
 static func ai_on() -> bool:
@@ -95,9 +98,9 @@ static func valid_lock(host: Node, n: Node) -> bool:
 	if n.has_method("is_alive") and not n.is_alive():
 		return false
 	var cam: Camera3D = host.get_viewport().get_camera_3d()
-	if not Combat.on_screen(n as Node3D, cam):
+	if not _combat().on_screen(n as Node3D, cam):
 		return false
-	return Combat.los(host.global_position, (n as Node3D).global_position, host.get_world_3d())
+	return _combat().los(host.global_position, (n as Node3D).global_position, host.get_world_3d())
 
 
 static func acquire_lock(host: Node) -> void:
@@ -115,10 +118,10 @@ static func cycle_lock(host: Node, dir: Vector2) -> void:
 static func nearest(host: Node, exclude: Node, dir: Vector2) -> Node:
 	var best: Node = null
 	var best_s := 1.0e9
-	for e in Combat.enemies():
+	for e in _combat().enemies():
 		if e == exclude or not valid_lock(host, e):
 			continue
-		var d := Combat.xz(e) - Vector2(host.global_position.x, host.global_position.z)
+		var d: Vector2 = _combat().xz(e) - Vector2(host.global_position.x, host.global_position.z)
 		var score := d.length()
 		if dir.length_squared() > 0.0001:
 			score = 2.5 - d.normalized().dot(dir) + d.length() * 0.05

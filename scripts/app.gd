@@ -1,7 +1,6 @@
 extends Node
 
 const BalanceS := preload("res://scripts/data/balance.gd")
-const DebugS := preload("res://scripts/debug/debug_menu/debug_menu.gd")
 const SfxS := preload("res://scripts/audio/sfx.gd")
 const ProgressS := preload("res://scripts/data/progress.gd")
 const TelS := preload("res://scripts/debug/telemetry.gd")
@@ -10,7 +9,6 @@ const RecapS := preload("res://scripts/ui/recap.gd")
 const Store := preload("res://scripts/data/save_store.gd")
 const PresentS := preload("res://scripts/ui/present.gd")
 const MusicS := preload("res://scripts/audio/music.gd")
-const AnimS := preload("res://scripts/debug/anim_browser.gd")
 const ArchS := preload("res://scripts/ui/archives_ui.gd")
 const PlayS := preload("res://scripts/debug/playtest.gd")
 const LoaderS := preload("res://scripts/ui/loader.gd")
@@ -130,7 +128,16 @@ func _on_node_added(n: Node) -> void:
 
 
 
+func ensure_debug() -> void:
+	Boot.ensure_debug(self)
+
+
+func ensure_anim_browser() -> void:
+	Boot.ensure_anim_browser(self)
+
+
 func _open_debug() -> void:
+	Boot.ensure_debug(self)
 	if debug and debug.has_method("show_menu"):
 		debug.show_menu()
 
@@ -159,7 +166,7 @@ func ack_game_ver() -> void:
 
 
 func enter_dungeon() -> void:
-	AppFlow.enter_dungeon(self)
+	await AppFlow.enter_dungeon(self)
 
 
 
@@ -195,6 +202,11 @@ func play_from_menu() -> void:
 
 func _play_from_menu_async() -> void:
 	await AppFlow.play_from_menu_async(self)
+
+
+
+func _dungeon_load_timing_async() -> void:
+	await AppFlow.dungeon_load_timing_async(self)
 
 
 

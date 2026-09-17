@@ -12,7 +12,9 @@ param(
         "design",
         ".grok/skills",
         ".cursor/skills"
-    )
+    ),
+    [switch]$Head,
+    [int]$LogCount = 10
 )
 
 $ErrorActionPreference = "Stop"
@@ -122,6 +124,21 @@ foreach ($r in $sorted) {
 }
 $lines.Add("")
 $lines.Add(("RESULT count={0}" -f $sorted.Count))
+if ($Head) {
+    Push-Location $Root
+    try {
+        $headSha = (git rev-parse HEAD 2>$null)
+        $logLines = @(git log -n $LogCount --oneline 2>$null)
+    } finally {
+        Pop-Location
+    }
+    $lines.Add("")
+    $lines.Add(("HEAD={0}" -f $headSha))
+    $lines.Add(("logCount={0}" -f $logLines.Count))
+    foreach ($lg in $logLines) {
+        $lines.Add(("  {0}" -f $lg))
+    }
+}
 $lines | Set-Content -Path $Summary -Encoding utf8
 
 Write-Host "Changed in scope: $($sorted.Count) paths"

@@ -20,7 +20,7 @@ In this repo first:
 
 1. Build the seed and prompt with `tools/i2v_seeds.py` (opaque `#FF00FF` plate, idle Bible cell, one gender × facing × action).
 2. Stop if the User has not approved that seed / prompt yet.
-3. Run `tools/run_isolated_grok.py --kind i2v --seed <png> --prompt-file <txt>`.
+3. Run `tools/run_isolated_grok.py --kind i2v --seed <png> --prompt-file <txt>`. Same seed hash reuses the ingest session (fork); a new seed ingests again.
 
 The child follows bundled `imagine`, `game-asset-core`, and `game-animation-frames`. Motion text is the staged prompt, not cinematic 6s/10s shot language. The child does not harvest or pack.
 

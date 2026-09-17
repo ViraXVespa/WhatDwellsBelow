@@ -1,11 +1,8 @@
 extends CharacterBody3D
 const BillSpr := preload("res://scripts/world/billboard_spr.gd")
 
-const Combat := preload("res://scripts/combat/combat.gd")
 const Depth := preload("res://scripts/world/depth.gd")
-const FloatS := preload("res://scripts/combat/float_num.gd")
 const T := preload("res://scripts/data/tunables.gd")
-const HpBarS := preload("res://scripts/combat/hp_bar.gd")
 
 var hp := 80.0
 var max_hp := 80.0
@@ -51,7 +48,6 @@ func _ready() -> void:
 	tag.pixel_size = 0.011
 	tag.visible = false
 	add_child(tag)
-	call_deferred("_pin_bar")
 
 
 func setup_boss(title: String, floor_n: int) -> void:
@@ -103,6 +99,7 @@ func take_hit(raw: float, _from_dir: Vector2, crit: bool) -> void:
 	else:
 		flash = 0.08
 	hp = maxf(0.0, hp - dmg)
+	var HpBarS: GDScript = load("res://scripts/combat/hp_bar.gd") as GDScript
 	HpBarS.pulse(self, hp, max_hp, combat_lv)
 	_float(int(round(dmg)), crit)
 	App.hitstop(App.bal.hitstop)
@@ -123,17 +120,19 @@ func apply_stagger(sec: float) -> void:
 
 
 func _pin_bar() -> void:
+	var HpBarS: GDScript = load("res://scripts/combat/hp_bar.gd") as GDScript
 	HpBarS.ensure(self)
 
 
 func _float(amount: int, crit: bool) -> void:
-	var n: Label3D = FloatS.new()
+	var FloatS: GDScript = load("res://scripts/combat/float_num.gd") as GDScript
+	var n: Label3D = FloatS.new() as Label3D
 	n.setup(amount, crit, last_glance and not crit)
 	last_glance = false
 	n.position = global_position + Vector3(0.0, 1.35, 0.0)
-	var host := get_parent()
-	if host:
-		host.add_child(n)
+	var parent_node: Node = get_parent()
+	if parent_node:
+		parent_node.add_child(n)
 	else:
 		add_child(n)
 
@@ -144,6 +143,7 @@ func _die() -> void:
 	dead = true
 	App.on_kill()
 	collision_layer = 0
+	var HpBarS: GDScript = load("res://scripts/combat/hp_bar.gd") as GDScript
 	HpBarS.pulse(self, 0.0, max_hp, combat_lv)
 	if is_boss:
 		App.notify_boss_dead()

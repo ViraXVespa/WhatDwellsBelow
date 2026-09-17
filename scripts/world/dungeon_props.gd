@@ -55,13 +55,13 @@ static func shuffle_rooms(host: Node, rooms: Array) -> Array:
 		pool[j] = tmp
 	return pool
 
-static func scatter_counts(host: Node) -> void:
+static func scatter_counts(host: Node, eager: bool = true) -> void:
 	var rooms: Array = scatter_rooms(host)
-	Place.place_n(host, rooms, int(App.bal.mine_nodes), "mine")
-	Place.place_n(host, rooms, int(App.bal.wood_nodes), "wood")
-	Place.place_n(host, rooms, int(App.bal.break_count), "break")
-	Place.place_n(host, rooms, int(App.bal.campfire_count), "campfire")
-	Place.place_n(host, rooms, int(App.bal.shrine_count), "shrine")
+	Place.place_n(host, rooms, int(App.bal.mine_nodes), "mine", eager)
+	Place.place_n(host, rooms, int(App.bal.wood_nodes), "wood", eager)
+	Place.place_n(host, rooms, int(App.bal.break_count), "break", eager)
+	Place.place_n(host, rooms, int(App.bal.campfire_count), "campfire", eager)
+	Place.place_n(host, rooms, int(App.bal.shrine_count), "shrine", eager)
 
 static func place_n(host: Node, rooms: Array, n: int, what: String) -> void:
 	Place.place_n(host, rooms, n, what)

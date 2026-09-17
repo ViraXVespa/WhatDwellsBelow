@@ -4,6 +4,7 @@ const PlayerHit := preload("res://scripts/combat/player_hit.gd")
 
 
 static func try_dash(p: CharacterBody3D, move: Vector2) -> void:
+	(load("res://scripts/world/player_setup.gd") as GDScript).ensure_combat_fx(p)
 	if App.ui_open or p.interact_lock > 0.0:
 		return
 	if p.dash_t > 0.0:
@@ -25,6 +26,7 @@ static func try_dash(p: CharacterBody3D, move: Vector2) -> void:
 
 
 static func try_special(p: CharacterBody3D) -> void:
+	(load("res://scripts/world/player_setup.gd") as GDScript).ensure_combat_fx(p)
 	if App.ui_open:
 		p.special_held = p._ai_held("special") or App.pad_held("special")
 		return
@@ -45,6 +47,7 @@ static func try_special(p: CharacterBody3D) -> void:
 
 
 static func try_basic(p: CharacterBody3D) -> void:
+	(load("res://scripts/world/player_setup.gd") as GDScript).ensure_combat_fx(p)
 	if App.ui_open:
 		return
 	if p.atk_state != p.ATK_NONE or p.dash_t > 0.0:

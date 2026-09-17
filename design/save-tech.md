@@ -103,6 +103,10 @@ Players MUST receive a new build without an incognito window or a manual cache c
 
 60 FPS bar: the constraints file. Title → Play hitch work: hub. Floor streaming budget: dungeon.
 
+`SpriteFilt.ensure_mips` must not decode a `CompressedTexture2D` into `ImageTexture` at runtime. Web export bakes mip chains via `tools/enable_texture_mips.py`. Local play uses the imported texture as-is.
+
+Title → Play (`scripts/app_flow.gd`) sync-loads a short hub list (scene, tiles, props, music) and does not insert a fake progress wait. Debug menu and Animation Browser are created on the first idle frame (immediately when a smoke / `--wdb-debug` boot needs them).
+
 ## Renderer
 
 Compatibility renderer is preferred for the shippable build if it does not break the web export. Mobile renderer may be retained only if required for web stability.

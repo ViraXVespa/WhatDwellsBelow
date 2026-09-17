@@ -6,6 +6,8 @@ const GROUND_D := 32
 const GROUND_OX := -2
 const GROUND_OZ := -2
 
+static var _fence_mat: StandardMaterial3D
+
 
 static func fence(host: Node3D) -> void:
 	var y: float = 0.58
@@ -58,6 +60,8 @@ static func fence_box(host: Node3D, size: Vector3, local: Vector3, mat: Standard
 
 
 static func fence_mat() -> StandardMaterial3D:
+	if _fence_mat != null:
+		return _fence_mat
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
@@ -65,4 +69,5 @@ static func fence_mat() -> StandardMaterial3D:
 	if ResourceLoader.exists(FENCE_TEX):
 		mat.albedo_texture = load(FENCE_TEX)
 		mat.albedo_color = Color.WHITE
+	_fence_mat = mat
 	return mat

@@ -9,6 +9,6 @@ Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/de
 | balance sliders, profile banks | `design/debug-menu.md` |
 | sim walker, recommended config | `design/debug-playtest.md` |
 | timeline scrubber, review queue | `design/debug-anim-browser.md` |
-| phase assertions, runner summary | `design/debug-smokes.md` |
+| phase assertions, runner summary, dedicated CLI habits | `design/debug-smokes.md` |
 
 When running smokes, use the listed runner and read only that runner's `_logs` summary.

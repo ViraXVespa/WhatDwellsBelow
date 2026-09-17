@@ -1,7 +1,10 @@
 extends Object
 
+const LoadTiming := preload("res://scripts/debug/load_timing.gd")
+
 
 static func begin_run(host: Node) -> void:
+	LoadTiming.dmark("begin_run")
 	host.floor_n = maxi(1, host.prog.start_floor)
 	host.run_seed = randi()
 	if host.run_seed == 0:
@@ -32,6 +35,7 @@ static func begin_run(host: Node) -> void:
 
 
 static func go_dungeon(host: Node) -> void:
+	LoadTiming.dmark("go_dungeon")
 	host.in_dungeon = true
 	host.interact_prompt = ""
 	host.get_tree().paused = false
@@ -200,6 +204,8 @@ static func debug_sequence(host: Node, delta: float) -> void:
 		host._seq_timer = 1.5
 	elif host._seq == 3 and up:
 		host._seq = 0
+		if host.has_method("ensure_debug"):
+			host.ensure_debug()
 		if host.debug and host.debug.has_method("toggle"):
 			host.debug.toggle()
 

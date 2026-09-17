@@ -105,14 +105,6 @@ static func _walk(n: Node) -> void:
 
 
 static func ensure_mips(tex: Texture2D) -> Texture2D:
-	if tex == null:
-		return tex
-	if tex.has_mipmaps():
-		return tex
-	var img: Image = tex.get_image()
-	if img == null:
-		return tex
-	if img.has_mipmaps():
-		return tex
-	img.generate_mipmaps()
-	return ImageTexture.create_from_image(img)
+	# Imported texture only. Runtime decode → ImageTexture duplicates VRAM and
+	# hitch. Web export bakes mip chains via enable_texture_mips.py.
+	return tex

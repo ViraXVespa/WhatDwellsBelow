@@ -14,9 +14,9 @@ This file is the door. Do not run `tools/bible_prompt.py` unless you are writing
 | parked | parked |
 | canon bible, layer law, quality floor | `design/art-bible.md` |
 
-I2V stays in Grok Build unless the User says otherwise. One CLI week session. One unit per review gate. Mid-week new CLI chat is a catch-up: no week pin.
+I2V stays in Grok Build unless the User says otherwise. I2V stays in a slice thread (not Bot notes, PC offload, or smoke tests). One unit per review gate. Mid-week new CLI chat is a catch-up: no week pin.
 
-Imagine calls (`image_gen`, `image_edit`, `image_to_video`) use the isolated-media gate and `tools/run_isolated_grok.py`, not this door. Do not generate in the game-repo session unless that gate’s exception table matches. World tiles, UI stills, and other non-character sheets use that door plus this file’s locked-Bible style rule. Pack and review stay in the week session after accept.
+Imagine calls (`image_gen`, `image_edit`, `image_to_video`) use the isolated-media gate and `tools/run_isolated_grok.py`, not this door. Do not generate in the game-repo session unless that gate’s exception table matches. World tiles, UI stills, and other non-character sheets use that door plus this file’s locked-Bible style rule. Pack and review stay in the slice thread after accept.
 
 Reliability comes from **one Image-to-Video clip at a time**, the live prompt in `tools/i2v_seeds.py`, **User review**, and plate-correct / cleanup scripts. Do not run automatic multi-pass fill-in.
 

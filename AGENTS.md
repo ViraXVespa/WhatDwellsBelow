@@ -27,6 +27,8 @@ Navigation is only `design/routes.yaml`. Do not treat `See also:` as a load list
 | Numbers (when the work changes them) | `design/tunables.md` |
 | Local inventory / verify / Windows write | pc-offload skill + `design/pc-offload.md` |
 
+**Local lookup:** tree search under `scripts/`, `design/`, `tools/`, `scenes/` is `tools/list_xref.ps1`, not the grep tool, unless that file is already open for edit in this slice. Git inventory is `tools/list_changed.ps1` — do not paste `git status` / `git log` into the thread. Windows bodies: `tools/write_utf8_file.py` / `tools/run_agent_py.ps1`; no `python -c`. After a runner, read only its `_logs/*/summary.txt`.
+
 Path procedures live in the Path table session file. Do not open the topic index or the load-graph sketch unless the User named the index or routing work.
 
 **Load cap (soft):** this file + the path session file + (web / Build only) `design/protocol.md` and `design/constraints.md` + one topic door + one Job-table sibling. Gates whose `when` matches, including `design/gdscript-law.md` when editing GDScript and `design/pc-offload.md` when measuring, inventorying, or writing on Windows. `design/tunables.md` when numbers change. `design/versioning.md` at ship only. `design/code-map.md` is one system row. A second topic door only when the User names the owner. Law / gates / one code-map row are not topic doors.

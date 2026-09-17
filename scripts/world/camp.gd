@@ -1,13 +1,8 @@
 ﻿extends Node3D
 
-const T := preload("res://scripts/data/tunables.gd")
 const Build := preload("res://scripts/world/camp_build.gd")
 const View := preload("res://scripts/world/camp_view.gd")
-const PlayerS := preload("res://scripts/world/player.gd")
-const SpotS := preload("res://scripts/world/interact.gd")
-const UiS := preload("res://scripts/ui/progress_ui.gd")
-const Smoke := preload("res://scripts/debug/smoke.gd")
-const DummyS := preload("res://scripts/combat/dummy.gd")
+const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const Warm := preload("res://scripts/world/camp_warm.gd")
 
 var player: CharacterBody3D
@@ -19,42 +14,74 @@ var prompt: Label
 
 func _ready() -> void:
 	App.in_dungeon = false
+	LoadTiming.mark("camp_enter")
 	Build.world(self)
+	LoadTiming.mark("camp_world")
 	Build.ground(self)
+	LoadTiming.mark("camp_ground")
 	Build.buildings(self)
+	LoadTiming.mark("camp_buildings")
 	View.fence(self)
-	player = PlayerS.new()
+	LoadTiming.mark("camp_fence")
+	var PlayerS: GDScript = load("res://scripts/world/player.gd") as GDScript
+	player = PlayerS.new() as CharacterBody3D
 	player.position = Vector3(Build.PATH_X, 0.0, 16.0)
 	add_child(player)
 	if player.body:
 		player.body.render_priority = 18
+	LoadTiming.mark("camp_player")
 	_spots()
-	_dummy()
-	ui = UiS.new()
-	add_child(ui)
+	LoadTiming.mark("camp_spots")
+	if bool(App.get("_menu_loading")) or App.wake_pending:
+		LoadTiming.note("camp_dummy", "deferred")
+	else:
+		ensure_dummy()
 	_hud()
 	_music()
 	if App.wake_pending:
 		App.wake_pending = false
-		if App.present and App.present.has_method("play_wake"):
+		if App.recap:
+			App.recap.visible = false
+			App.recap.open = false
+		App.ui_open = false
+		if App.present and App.present.has_method("release_wake"):
+			App.present.release_wake()
+		elif App.present and App.present.has_method("play_wake"):
 			App.present.play_wake()
+		call_deferred("ensure_dummy")
 		App.prog.roll_quests(true)
 		var r := App.prog.restock()
 		if r != "":
 			App.toast(r)
-	if not Smoke.phase(8) and not (App.playtest and bool(App.playtest.get("live_running"))):
+	var Smoke: GDScript = load("res://scripts/debug/smoke.gd") as GDScript
+	if (
+		not Smoke.phase(8)
+		and not (App.playtest and bool(App.playtest.get("live_running")))
+		and not bool(App.get("_menu_loading"))
+	):
 		App.save_now()
+	if Smoke.phase(6):
+		ensure_ui()
 	Smoke.attach_camp(self)
 
 
 func world_ui() -> Node:
+	ensure_ui()
 	return ui
+
+
+func ensure_ui() -> void:
+	if ui != null:
+		return
+	LoadTiming.mark("camp_ui_begin")
+	var UiS: GDScript = load("res://scripts/ui/progress_ui.gd") as GDScript
+	ui = UiS.new()
+	add_child(ui)
+	LoadTiming.mark("camp_ui")
 
 
 func warmup() -> void:
 	Warm.frame(self)
-	if player and player.has_method("warmup"):
-		player.warmup()
 	if dummy:
 		var stored: Vector3 = dummy.velocity
 		dummy.velocity = Vector3(0.12, 0.0, 0.0)
@@ -119,8 +146,11 @@ func _banner_pole(root: Node3D, pos: Vector3) -> void:
 	pole.add_child(cs)
 
 
-func _dummy() -> void:
-	var n: CharacterBody3D = DummyS.new()
+func ensure_dummy() -> void:
+	if dummy != null:
+		return
+	var DummyS: GDScript = load("res://scripts/combat/dummy.gd") as GDScript
+	var n: CharacterBody3D = DummyS.new() as CharacterBody3D
 	n.position = Vector3(8.5, 0.0, Build.PATH_Z + 0.5)
 	dummy = n
 	add_child(n)
@@ -137,45 +167,49 @@ func _tune_label(host: Node3D) -> void:
 
 func _spots() -> void:
 	_banner()
-	var c := SpotS.new()
-	c.setup("loadout_crystal", Vector3(16.475, 0.0, 10.2))
+	var SpotS: GDScript = load("res://scripts/world/interact.gd") as GDScript
+	var c: Node3D = SpotS.new()
+	c.call("setup", "loadout_crystal", Vector3(16.475, 0.0, 10.2))
 	add_child(c)
 	_tune_label(c)
-	var a := SpotS.new()
-	a.setup("anvil", Vector3(21.2, 0.0, 11.4))
+	var a: Node3D = SpotS.new()
+	a.call("setup", "anvil", Vector3(21.2, 0.0, 11.4))
 	add_child(a)
 	_tune_label(a)
-	var q := SpotS.new()
-	q.setup("quest_board", Vector3(16.1, 0.0, 6.2))
+	var q: Node3D = SpotS.new()
+	q.call("setup", "quest_board", Vector3(16.1, 0.0, 6.2))
 	add_child(q)
 	_tune_label(q)
 	var wp: Vector3 = Build.wing_pos()
 	var face_z: float = wp.z + Build.WING_SIZE.z * 0.5
-	var rec := SpotS.new()
-	rec.setup("receptionist", Vector3(wp.x + 0.027, 0.785, face_z + 0.07))
+	var rec: Node3D = SpotS.new()
+	rec.call("setup", "receptionist", Vector3(wp.x + 0.027, 0.785, face_z + 0.07))
 	add_child(rec)
-	if rec.spr:
-		if rec.spr.texture:
-			rec.spr.pixel_size = 1.22 / float(maxi(1, rec.spr.texture.get_height()))
-			rec.spr.material_override = _bust_mat(rec.spr.texture)
-		rec.spr.position = Vector3(0.0, 0.0, 0.0)
-		rec.spr.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-		rec.spr.render_priority = 1
-	if rec.label:
-		rec.label.position.y = 0.85
+	var rec_spr: Sprite3D = rec.get("spr") as Sprite3D
+	if rec_spr:
+		if rec_spr.texture:
+			rec_spr.pixel_size = 1.22 / float(maxi(1, rec_spr.texture.get_height()))
+			rec_spr.material_override = _bust_mat(rec_spr.texture)
+		rec_spr.position = Vector3(0.0, 0.0, 0.0)
+		rec_spr.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+		rec_spr.render_priority = 1
+	var rec_lab: Label3D = rec.get("label") as Label3D
+	if rec_lab:
+		rec_lab.position.y = 0.85
 	_tune_label(rec)
-	var v := SpotS.new()
-	v.setup("vendor", Vector3(25.0, 0.0, 10.2))
+	var v: Node3D = SpotS.new()
+	v.call("setup", "vendor", Vector3(25.0, 0.0, 10.2))
 	add_child(v)
-	if v.label:
-		v.label.position.y = 2.25
+	var v_lab: Label3D = v.get("label") as Label3D
+	if v_lab:
+		v_lab.position.y = 2.25
 	_tune_label(v)
-	var d := SpotS.new()
-	d.setup("dumpster", Vector3(5.2, 0.0, 9.4))
+	var d: Node3D = SpotS.new()
+	d.call("setup", "dumpster", Vector3(5.2, 0.0, 9.4))
 	add_child(d)
 	_tune_label(d)
-	var b := SpotS.new()
-	b.setup("billboard", Vector3(20.5, 0.0, 16.5))
+	var b: Node3D = SpotS.new()
+	b.call("setup", "billboard", Vector3(20.5, 0.0, 16.5))
 	add_child(b)
 	_tune_label(b)
 

@@ -32,6 +32,7 @@ static func world(host: Node3D) -> void:
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-50.0, 30.0, 0.0)
 	sun.light_energy = 0.9
+	sun.shadow_enabled = false
 	host.add_child(sun)
 
 
@@ -40,18 +41,29 @@ static func ground(host: Node3D) -> void:
 
 
 static func outer_grass(host: Node3D) -> void:
-	var points: Array = []
-	var x0: int = GROUND_OX - GRASS_PAD
-	var z0: int = GROUND_OZ - GRASS_PAD
-	var x1: int = GROUND_OX + GROUND_W + GRASS_PAD
-	var z1: int = GROUND_OZ + GROUND_D + GRASS_PAD
-	for z in range(z0, z1):
-		for x in range(x0, x1):
-			var inside: bool = x >= GROUND_OX and x < GROUND_OX + GROUND_W and z >= GROUND_OZ and z < GROUND_OZ + GROUND_D
-			if inside:
-				continue
-			points.append(Vector3(float(x) + 0.5, T.FLOOR_Y, float(z) + 0.5))
-	tile_layer(host, "res://assets/tiles/plaza_grass.png", points, Color(0.34, 0.46, 0.24))
+	var x0: float = float(GROUND_OX - GRASS_PAD)
+	var z0: float = float(GROUND_OZ - GRASS_PAD)
+	var x1: float = float(GROUND_OX + GROUND_W + GRASS_PAD)
+	var z1: float = float(GROUND_OZ + GROUND_D + GRASS_PAD)
+	var ix0: float = float(GROUND_OX)
+	var iz0: float = float(GROUND_OZ)
+	var ix1: float = float(GROUND_OX + GROUND_W)
+	var iz1: float = float(GROUND_OZ + GROUND_D)
+	var y: float = T.FLOOR_Y
+	var tex := "res://assets/tiles/plaza_grass.png"
+	var fb := Color(0.34, 0.46, 0.24)
+	MeshS.grass_pad(
+		host, Vector3((x0 + x1) * 0.5, y, (z0 + iz0) * 0.5), Vector2(x1 - x0, iz0 - z0), tex, fb
+	)
+	MeshS.grass_pad(
+		host, Vector3((x0 + x1) * 0.5, y, (iz1 + z1) * 0.5), Vector2(x1 - x0, z1 - iz1), tex, fb
+	)
+	MeshS.grass_pad(
+		host, Vector3((x0 + ix0) * 0.5, y, (iz0 + iz1) * 0.5), Vector2(ix0 - x0, iz1 - iz0), tex, fb
+	)
+	MeshS.grass_pad(
+		host, Vector3((ix1 + x1) * 0.5, y, (iz0 + iz1) * 0.5), Vector2(x1 - ix1, iz1 - iz0), tex, fb
+	)
 
 
 static func tile_layer(host: Node3D, tex_path: String, points: Array, fallback: Color) -> void:
@@ -60,7 +72,14 @@ static func tile_layer(host: Node3D, tex_path: String, points: Array, fallback: 
 
 static func buildings(host: Node3D) -> void:
 	guild(host)
-	solid(host, Vector3(25.0, 1.2, 8.0), Vector3(4.6, 2.4, 3.4), Color(0.55, 0.35, 0.2), "res://assets/sprites/buildings/stall.png")
+	solid(
+		host,
+		Vector3(25.0, 1.2, 8.0),
+		Vector3(4.6, 2.4, 3.4),
+		Color(0.55, 0.35, 0.2),
+		"res://assets/sprites/buildings/stall.png",
+		true
+	)
 
 
 static func wing_pos() -> Vector3:
@@ -73,6 +92,8 @@ static func guild(host: Node3D) -> void:
 	var wing_body: StaticBody3D = box(host, wing_pos(), WING_SIZE, Color(0.5, 0.38, 0.28))
 	face(hall_body, HALL_SIZE, "res://assets/sprites/buildings/guild.png", 0.0, HALL_SIZE.x)
 	face(wing_body, WING_SIZE, "res://assets/sprites/buildings/guild_reception.png", 0.0, WING_SIZE.x)
+	awning(hall_body, HALL_SIZE)
+	awning(wing_body, WING_SIZE)
 	guild_roofs(host)
 
 
@@ -84,11 +105,19 @@ static func box(host: Node3D, pos: Vector3, size: Vector3, col: Color) -> Static
 	return Roof.box(host, pos, size, col)
 
 
-static func solid(host: Node3D, pos: Vector3, size: Vector3, col: Color, tex: String) -> void:
+static func solid(
+	host: Node3D, pos: Vector3, size: Vector3, col: Color, tex: String, tarp: bool = false
+) -> void:
 	var body: StaticBody3D = box(host, pos, size, col)
 	var x0: float = pos.x - size.x * 0.5
 	var z0: float = pos.z - size.z * 0.5
-	roof_plane(body, Vector3(0.0, size.y * 0.5 + 0.03, ROOF_EAVE * 0.5), Vector2(size.x + 0.06, size.z + ROOF_EAVE), Vector3(x0, 0.0, z0))
+	roof_plane(
+		body,
+		Vector3(0.0, size.y * 0.5 + 0.03, ROOF_EAVE * 0.5),
+		Vector2(size.x + 0.06, size.z + ROOF_EAVE),
+		Vector3(x0, 0.0, z0),
+		tarp
+	)
 	face(body, size, tex, 0.0, size.x)
 
 
@@ -112,11 +141,20 @@ static func roof_mat(dim: Vector2, world_min: Vector3) -> Material:
 	return MeshS.roof_mat(dim, world_min)
 
 
-static func roof_plane(host: Node3D, local: Vector3, dim: Vector2, world_min: Vector3) -> void:
+static func roof_plane(
+	host: Node3D, local: Vector3, dim: Vector2, world_min: Vector3, tarp: bool = false
+) -> void:
 	var roof := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = dim
 	roof.mesh = plane
 	roof.position = local
-	roof.material_override = roof_mat(dim, world_min)
+	if tarp:
+		roof.material_override = MeshS.tarp_mat(dim, world_min)
+	else:
+		roof.material_override = roof_mat(dim, world_min)
 	host.add_child(roof)
+
+
+static func awning(body: Node3D, box_size: Vector3) -> void:
+	MeshS.attach_awning(body, box_size)

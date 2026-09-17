@@ -2,21 +2,51 @@
 
 const T := preload("res://scripts/data/tunables.gd")
 const Anim := preload("res://scripts/world/player_anim.gd")
+const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 
 
 static func enter_dungeon(host: Node) -> void:
 	if host.present and str(host.present.get("_mode")) == "enter":
 		return
+	if host.present and bool(host.present.get("_enter_load")):
+		return
+	if host.present and str(host.present.get("_mode")) == "enter_hold" and bool(host.in_dungeon):
+		return
 	if host.playtest and bool(host.playtest.get("live_running")):
 		host._after_enter()
 		return
-	host.save_now()
-	host.ui_open = true
-	if host.present and host.present.has_method("play_enter"):
+	var holding: bool = host.present != null and str(host.present.get("_mode")) == "enter_hold"
+	if host.present and host.present.has_method("cover_enter"):
+		if not holding:
+			host.present.cover_enter()
+		host.present.set("_enter_load", true)
+		host.ui_open = true
+		if host.present.has_method("wait_painted"):
+			await host.present.wait_painted()
+		host.sfx("enter")
+		_close_hub_ui(host)
+		host.save_now()
+		host._after_enter()
+	elif host.present and host.present.has_method("play_enter"):
+		host.save_now()
+		host.ui_open = true
 		host.get_tree().paused = true
 		host.present.play_enter(Callable(host, "_after_enter"))
 	else:
+		host.save_now()
+		host.ui_open = true
 		host._after_enter()
+
+
+static func _close_hub_ui(host: Node) -> void:
+	var scene: Node = host.get_tree().current_scene
+	if scene == null:
+		return
+	var raw: Variant = scene.get("ui")
+	if raw is CanvasLayer:
+		var ui: CanvasLayer = raw as CanvasLayer
+		if ui.has_method("close_ui") and bool(ui.get("open")):
+			ui.close_ui()
 
 
 static func go_title(host: Node) -> void:
@@ -41,13 +71,18 @@ static func go_foundation(host: Node) -> void:
 
 static func go_camp(host: Node) -> void:
 	host.in_dungeon = false
-	host.ui_open = false
+	if host.recap == null or not bool(host.recap.visible):
+		host.ui_open = false
 	host.interact_prompt = ""
 	host.get_tree().paused = false
 	Engine.time_scale = 1.0
 	if host.music and host.music.has_method("play_hub"):
 		host.music.play_hub()
-	host.get_tree().call_deferred("change_scene_to_file", host.CAMP_SCENE)
+	var packed: Resource = ResourceLoader.load(host.CAMP_SCENE)
+	if packed is PackedScene:
+		host.get_tree().call_deferred("change_scene_to_packed", packed)
+	else:
+		host.get_tree().call_deferred("change_scene_to_file", host.CAMP_SCENE)
 	host.call_deferred("wake_web_pad")
 
 
@@ -62,30 +97,76 @@ static func play_from_menu(host: Node) -> void:
 
 
 static func play_from_menu_async(host: Node) -> void:
+	LoadTiming.mark("play_begin")
 	if host.loader:
 		host.loader.begin("Placeholdia", "Gathering the square…")
 		host.loader.set_progress(0.08)
 	await host.get_tree().process_frame
-	await host.get_tree().process_frame
+	LoadTiming.mark("loader_paint")
 	await preload_hub(host)
 	if host.loader:
 		host.loader.set_status("Raising Placeholdia…")
-	await _ease_progress(host, 0.72, 0.90, 0.45)
+		host.loader.set_progress(0.90)
+	await host.get_tree().process_frame
+	LoadTiming.mark("camp_change")
 	host.go_camp()
 	host.ui_open = true
 	var guard := 0
 	while guard < 240:
 		guard += 1
 		var s := host.get_tree().current_scene
-		if s and str(s.scene_file_path).find("camp") >= 0 and s.is_node_ready():
+		if s and s.is_node_ready() and (str(s.scene_file_path).find("camp") >= 0 or str(s.name) == "Camp"):
 			break
 		if host.loader:
 			host.loader.set_progress(0.91)
 		await host.get_tree().process_frame
+	LoadTiming.mark("camp_ready")
+	LoadTiming.note("camp_wait_frames", str(guard))
 	await _warmup_hub(host)
+	var scene: Node = host.get_tree().current_scene
 	if host.loader:
 		host.loader.finish()
 	host._menu_loading = false
+	if scene and ("player" in scene) and scene.player:
+		scene.player.set_physics_process(true)
+	LoadTiming.note("camp_ui", "deferred")
+	LoadTiming.mark("loader_finish")
+	LoadTiming.finish()
+	if scene and scene.has_method("ensure_dummy"):
+		scene.ensure_dummy()
+
+
+static func dungeon_load_timing_async(host: Node) -> void:
+	host.go_camp()
+	var hub_guard: int = 0
+	while hub_guard < 240:
+		hub_guard += 1
+		var hub: Node = host.get_tree().current_scene
+		if hub and hub.is_node_ready() and (str(hub.scene_file_path).find("camp") >= 0 or str(hub.name) == "Camp"):
+			break
+		await host.get_tree().process_frame
+	LoadTiming.dnote("hub_wait_frames", str(hub_guard))
+	LoadTiming.dmark("enter_begin")
+	host.save_now()
+	LoadTiming.dmark("save")
+	host.ui_open = false
+	if host.present and host.present.has_method("hide_overlay"):
+		host.present.hide_overlay()
+	host._after_enter()
+	host.floor_n = 1
+	host.run_seed = 42
+	LoadTiming.dnote("seed", str(host.run_seed))
+	LoadTiming.dnote("floor", str(host.floor_n))
+	var dun_guard: int = 0
+	while dun_guard < 240:
+		dun_guard += 1
+		var dun: Node = host.get_tree().current_scene
+		if dun and dun.is_node_ready() and (str(dun.scene_file_path).find("dungeon") >= 0 or str(dun.name) == "Dungeon"):
+			break
+		await host.get_tree().process_frame
+	LoadTiming.dmark("dungeon_ready")
+	LoadTiming.dnote("dungeon_wait_frames", str(dun_guard))
+	LoadTiming.finish()
 
 
 static func _hub_player(host: Node, scene: Node) -> Node:
@@ -95,6 +176,7 @@ static func _hub_player(host: Node, scene: Node) -> Node:
 
 
 static func _warmup_hub(host: Node) -> void:
+	LoadTiming.mark("warmup_begin")
 	if host.loader:
 		host.loader.set_status("Warming things up for you...")
 		if host.loader.has_method("set_solid"):
@@ -103,30 +185,28 @@ static func _warmup_hub(host: Node) -> void:
 	var scene: Node = host.get_tree().current_scene
 	if scene and scene.has_method("warmup"):
 		scene.warmup()
+	LoadTiming.mark("warmup_frame")
 	var p: Node = _hub_player(host, scene)
-	if p and p.has_method("warmup") and (scene == null or not scene.has_method("warmup")):
-		p.warmup()
+	if p and p.body:
+		p.body.visible = true
 	if p:
+		var pin: Vector3 = p.global_position
 		var texs: Array = Anim.warmup_texs(p)
-		var n: int = texs.size()
-		var i: int = 0
-		while i < n:
-			Anim.apply_tex(p, texs[i])
-			if i % 2 == 0:
-				Anim.warmup_physics(p)
-			if host.loader and n > 0:
-				host.loader.set_progress(0.94 + 0.04 * float(i + 1) / float(n))
-			await host.get_tree().process_frame
-			i += 1
+		LoadTiming.note("warmup_texs", str(texs.size()))
+		for tex in texs:
+			Anim.apply_tex(p, tex)
+		Anim.warmup_physics(p)
+		p.global_position = Vector3(pin.x, 0.0, pin.z)
 		var down: Texture2D = Anim.pose_tex(p, "down")
 		if down:
 			Anim.apply_tex(p, down)
-	var extra: int = 0
-	while extra < 4:
-		if p:
-			Anim.warmup_physics(p)
-		await host.get_tree().process_frame
-		extra += 1
+		p.loc_state = Anim.LOC_IDLE
+		p.loc_t = 0.0
+		p.walk_t = 0.0
+		RenderingServer.force_draw()
+		if host.loader:
+			host.loader.set_progress(0.97)
+	LoadTiming.mark("warmup_gpu")
 	if scene and scene.has_method("warmup_restore"):
 		scene.warmup_restore()
 	var rest: int = 0
@@ -135,118 +215,53 @@ static func _warmup_hub(host: Node) -> void:
 		rest += 1
 	if host.loader:
 		host.loader.set_progress(0.98)
-
-
-static func _ease_progress(host: Node, lo: float, hi: float, sec: float) -> void:
-	var t0 := Time.get_ticks_msec()
-	var span := maxf(sec, 0.05)
-	while true:
-		var u := clampf(float(Time.get_ticks_msec() - t0) / (span * 1000.0), 0.0, 1.0)
-		if host.loader:
-			host.loader.set_progress(lerpf(lo, hi, u))
-		if u >= 1.0:
-			break
-		await host.get_tree().process_frame
-
-
-static func _loader_p(host: Node) -> float:
-	if host.loader == null:
-		return 0.0
-	return clampf(float(host.loader.get("_target")), 0.0, 1.0)
+	LoadTiming.mark("warmup_end")
 
 
 static func hub_preload_paths(host: Node) -> PackedStringArray:
-	var paths := PackedStringArray([
-		host.CAMP_SCENE,
-		"res://scripts/world/camp.gd",
-		"res://scripts/world/player.gd",
-		"res://scripts/world/interact.gd",
-		"res://scripts/ui/progress_ui.gd",
-		"res://assets/tiles/plaza_grass.png",
-		"res://assets/tiles/plaza_ground.png",
-		"res://assets/tiles/plaza_path.png",
-		"res://assets/tiles/plaza_roof.png",
-		"res://assets/tiles/plaza_wall.png",
+	return PackedStringArray([
 		"res://assets/sprites/buildings/guild.png",
 		"res://assets/sprites/buildings/guild_reception.png",
 		"res://assets/sprites/buildings/stall.png",
-		"res://assets/props/banner.png",
-		"res://assets/sprites/props/banner.png",
 		"res://assets/sprites/props/welcome_banner.png",
+		"res://assets/sprites/props/crystal.png",
+		"res://assets/sprites/props/anvil.png",
+		"res://assets/sprites/props/notice_board.png",
+		"res://assets/sprites/props/dumpster.png",
+		"res://assets/sprites/props/sign.png",
 		"res://assets/sprites/npcs/vendor.png",
 		"res://assets/sprites/npcs/receptionist.png",
 		"res://assets/sprites/npcs/shopkeep.png",
 		"res://assets/fx/dummy.png",
 		"res://assets/audio/music_hub.wav",
 	])
-	var kind: String = host.character_type if host.character_type in ["male", "female"] else "male"
-	var dirs := PackedStringArray(["up", "up_right", "right", "down_right", "down", "down_left", "left", "up_left"])
-	for d in dirs:
-		paths.append("res://assets/sprites/player/%s/idle_%s.png" % [kind, d])
-		var i: int = 0
-		while i < 8:
-			paths.append("res://assets/sprites/player/%s/walk_%s_%d.png" % [kind, d, i])
-			paths.append("res://assets/sprites/player/%s/idle_to_walk_%s_%d.png" % [kind, d, i])
-			paths.append("res://assets/sprites/player/%s/walk_to_idle_%s_%d.png" % [kind, d, i])
-			i += 1
-	var out := PackedStringArray()
-	var seen := {}
-	for p in paths:
-		if seen.has(p):
-			continue
-		seen[p] = true
-		if ResourceLoader.exists(p):
-			out.append(p)
-	return out
 
 
 static func preload_hub(host: Node, _t0: int = 0) -> void:
 	var paths := hub_preload_paths(host)
-	var n := paths.size()
+	var n: int = paths.size()
 	if n <= 0:
 		if host.loader:
 			host.loader.set_progress(0.70)
 		return
-	var sub := not OS.has_feature("web")
-	var i := 0
+	LoadTiming.mark("preload_begin")
+	LoadTiming.note("files", str(n))
+	LoadTiming.note("batch", "sync")
+	LoadTiming.note("sub_threads", "false")
+	LoadTiming.note("web", str(OS.has_feature("web")))
+	var i: int = 0
 	while i < n:
-		var path := paths[i]
+		var path: String = paths[i]
 		if host.loader:
 			host.loader.set_status(hub_status_for(path))
-		var file_p := 0.08 + float(i) / float(n) * 0.62
-		if host.loader:
-			host.loader.set_progress(file_p)
-		var err := ResourceLoader.load_threaded_request(path, "", sub)
-		if err != OK:
-			if host.loader:
-				host.loader.set_progress(0.08 + float(i + 1) / float(n) * 0.62)
-			i += 1
-			await host.get_tree().process_frame
-			continue
-		var guard := 0
-		var done := false
-		while guard < 240 and not done:
-			guard += 1
-			var load_prog: Array = []
-			var st := ResourceLoader.load_threaded_get_status(path, load_prog)
-			var local := 0.0
-			if load_prog.size() > 0:
-				local = float(load_prog[0])
-			if host.loader:
-				host.loader.set_progress(0.08 + (float(i) + clampf(local, 0.0, 1.0)) / float(n) * 0.62)
-			if st == ResourceLoader.THREAD_LOAD_LOADED:
-				ResourceLoader.load_threaded_get(path)
-				done = true
-			elif st == ResourceLoader.THREAD_LOAD_FAILED:
-				done = true
-			elif st == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
-				done = true
-			else:
-				await host.get_tree().process_frame
+		var t_file: int = Time.get_ticks_msec()
+		ResourceLoader.load(path)
+		LoadTiming.note("file", "%s dt=%d" % [path.get_file(), Time.get_ticks_msec() - t_file])
 		if host.loader:
 			host.loader.set_progress(0.08 + float(i + 1) / float(n) * 0.62)
 		i += 1
-		await host.get_tree().process_frame
+	LoadTiming.mark("preload_end")
+	LoadTiming.note("preload_got", str(n))
 
 
 static func hub_status_for(path: String) -> String:
