@@ -3,9 +3,9 @@
 Status: protocol  
 Read when: Grok Bot path; every Grok Bot session  
 
-This file is binding for **Grok Bot** only. Grok Build and web / chat ignore it, except they may open `design/refactor.md` when they split for the 10KB cap.
+This file is binding for **Grok Bot** only. Grok Build ignores it. Web / chat ignores it, except Phase 6 may open `design/refactor.md` (recipe only) when a paste-emit file is over 10KB.
 
-Grok Build / web splitting one file that *its own edit* pushed over 10KB is not this path — use `design/refactor.md` inside that session (recipe only; do not open this door from the recipe).
+Web Phase 6 splitting one file that *its own emit* pushed over 10KB is not this path — use `design/refactor.md` inside that web session. Grok Build does not cap-split; leftover over-10KB scripts on `main` are the size Job-table sibling.
 
 
 ## Recognize

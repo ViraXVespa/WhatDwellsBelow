@@ -30,8 +30,8 @@ Keep the Godot output log clean. New or rewritten lines must not introduce these
 
 ## Script cap (10KB)
 
-Every live `scripts/**/*.gd` that ships must stay under **10,000 bytes**.
+Every live `scripts/**/*.gd` that ships must stay under **10,000 bytes**. That floor is not a Grok Build in-slice rule.
 
-- Grok Build enforces the cap while editing. Split in that same slice with the refactor recipe. Stop once the file is under 10KB. Do not keep splitting toward the Bot 5KB sweep target. A Build split MAY add a same-system helper API; a new cross-system owner is propose-first.
-- Web / chat does not apply the cap until Phase 6.
-- Grok Bot uses the refactor recipe on every task. 10KB is the ship floor. The under-5KB sweep target is only the Bot size job.
+- Grok Build does not measure size, does not split for the cap, and does not open the refactor recipe for bytes. Over-cap files MAY remain on `main` until a Grok Bot size sweep.
+- Web / chat does not apply the cap until Phase 6. Phase 6 still splits to the 10KB floor with the refactor recipe and stops there.
+- Grok Bot is the size owner. It uses the refactor recipe on every task. 10KB is the ship floor. The under-5KB sweep target is only the Bot size job.

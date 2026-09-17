@@ -89,6 +89,8 @@ The User will say something like “Looks good.” That means no more behavior c
 
 Check emitted live `scripts/**/*.gd` against the **10,000 byte** cap in `design/gdscript-law.md`. Use `design/refactor.md` for the split recipe only. Do not open the Bot path file from that recipe. Do not aim at Grok Bot's 5KB sweep target.
 
+This Phase 6 block is web / chat only. Grok Build does not run an equivalent cap split.
+
 Web / chat does **not** apply that cap during Phase 2–5. Over-cap files may be emitted and revised until this phase.
 
 If any emitted live script is over the cap:

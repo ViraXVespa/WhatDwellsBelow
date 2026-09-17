@@ -22,7 +22,7 @@ If a path session file is already loaded, stay on that path. Do not re-select a 
 - Ambiguity about **player-facing design**: ask. Grok Build MUST decide code structure inside one system without asking, and MUST stop and propose before a new cross-system owner or a named live-architecture replace.
 - This database is the source of design intent across compaction. The live tree is the source of truth for shipping code. Git history on `main` is the source of truth for the game version number; `scripts/data/version.json` is the baked copy.
 - Prefer simple, readable, production-quality code. Match existing live patterns unless Grok Build is doing a just-do same-system reshape or an accepted rework. Sprite / I2V work starts at art_pipeline when that door’s `Read when` matches.
-- GDScript indent, types, warnings, and the 10KB cap: `design/gdscript-law.md` when editing GDScript. Size splits: `design/refactor.md` (recipe only; pick a Bot flow from the Bot door). Deliver as that path’s session file specifies.
+- GDScript indent, types, and warnings: `design/gdscript-law.md` when editing GDScript. The 10KB ship floor lives in that same file; Grok Build does not enforce it while running. Size splits: `design/refactor.md` for Grok Bot and for web / chat Phase 6 only (recipe only; Bot flow from the Bot door). Deliver as that path's session file specifies.
 - Self-verify against the Demo-Complete Checklist in `design/constraints.md` before calling the build complete.
 
 ## Long-running behavior

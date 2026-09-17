@@ -1,21 +1,21 @@
 # Refactor recipe
 
 Status: protocol  
-Read when: splitting a live script for size; Bot size or extract flow; Grok Build when an edit is over 10KB; web / chat Phase 6  
+Read when: splitting a live script for size; Bot size or extract flow; web / chat Phase 6
 
 
 Grok Bot uses this file on every task. Other paths use it only when they must split.
 
-Grok Build feature work is **not** a refactor. Implementation freedom (new same-system APIs, helpers, local module shape) lives in the build path file. This file’s **No new code** rules do not bind that work. When Build only needs the 10KB cap, use the size-split mechanics here; do not import Bot’s “do not invent a better API” leash.
+Grok Build feature work is **not** a refactor. Implementation freedom (new same-system APIs, helpers, local module shape) lives in the build path file. This file’s **No new code** rules do not bind that work. **Grok Build** does not use this file for a size cap. Over-cap leftovers go to the Bot size job.
 
 ## Caps
 
 | Rule | Who |
 |------|-----|
-| Ship floor: every live `scripts/**/*.gd` under **10,000 bytes** | Every path that ships a `.gd` |
+| Ship floor: every live `scripts/**/*.gd` under **10,000 bytes** | Bot size PR; web Phase 6 emits. Not Build while running |
 | Sweep target: each resulting file under **5,000 bytes** when existing code can move | Grok Bot size sweep only |
 
-Grok Build and web / chat stop once the file is under 10KB. They do not keep splitting toward 5KB.
+**Web / chat** Phase 6 stops once the file is under **10KB**. It does not keep splitting toward **5KB**. **Grok Build** does not cap-split.
 
 Do not split a file that is already under the cap that applies to the current path, except Grok Bot extract work (new shared module or fitting existing owner) when that flow is the active Job-table sibling.
 
@@ -31,7 +31,7 @@ A refactor only rearranges what already exists.
 - Web / chat size-splits MUST NOT invent new shared modules unless following the Grok Bot path.
 - Edits are the minimum needed to relocate existing lines and keep the project compiling.
 
-Grok Build size-splits MAY introduce a new **same-system** helper API when that is cleaner than a dumb line-move. A new **cross-system** owner during a Build split is the build path file → **Stop and propose first**. Do not create it in the split.
+**Grok Build** feature helpers stay on the Build path file (**Just do** inside one system). They are not a size-split in this recipe.
 
 Adding `: Type` on a line already being moved, a `load()` / `preload()`, a one-line facade delegate, or `host` / `pt` / `ui` / `p` on a moved `static func` is wiring, not new behavior.
 
@@ -49,7 +49,7 @@ If a file must be split:
 6. Never split files under a pinned archive commit. Slim `archives/docs/` copies are live-tree museum text only.
 7. Split the largest first. One cluster per batch. Stop so the User can compile (web / chat: so the User can paste; Grok Bot: ship the PR, report, and follow the already-open Bot door before the next cluster).
 
-The default new path a **size** split may create is that sibling helper. On Grok Bot and web / chat, its body is **moved code**, not newly written logic. On Grok Build, the sibling MAY be a cleaner same-system API, not only a line-move.
+The default new path a **size** split may create is that sibling helper. On **Grok Bot** and **web / chat**, its body is **moved code**, not newly written logic.
 
 Grok Bot size sweep: after the split, each resulting live `.gd` should be under 5KB when whole existing functions can move. If one existing function is itself over 5KB, leave it whole and report it. Never leave a touched file over 10KB if a legal split can fix it.
 

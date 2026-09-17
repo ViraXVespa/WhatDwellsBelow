@@ -74,14 +74,14 @@ Sprite / I2V / paper-doll work stays on this path unless the User says otherwise
 
 Path-only: mid-week new CLI chat is a catch-up (no pin). A thin isolated child is not a new week. Do not `/resume` a fat art thread to “just do one more” media turn.
 
-## Script cap
+## Script size
 
-Ship floor is the **10,000 byte** cap in `design/gdscript-law.md`. Enforce it while editing. Split in that same slice with `design/refactor.md` (recipe only; do not open the Bot door from it). Stop once under 10KB. Do not chase Grok Bot’s 5KB target.
+Do not measure live `.gd` bytes. Do not open `design/refactor.md` because a file grew. Do not split a script to satisfy the 10KB ship floor. Do not run `tools/check_script_cap.ps1`.
 
-A size split MAY introduce a new same-system helper API. A new cross-system owner during a split is **Stop and propose first**.
+The 10KB floor and the 5KB sweep live in `design/gdscript-law.md` and the Bot size job. Over-cap files MAY land on `main`. Grok Bot size sweep is the owner.
 
-Before measuring size or opening many untouched files, use the pc-offload skill and `design/pc-offload.md`. Read only the listed summary.
-Preferred: `powershell -File tools/check_script_cap.ps1`. Read `_logs/script-cap/summary.txt` only.
+Same-system helpers and APIs for the asked feature remain **Just do**. That is feature shape, not a cap split.
+Before opening many untouched files, use the pc-offload skill and `design/pc-offload.md`. Read only the listed summary.
 
 ## Archives
 

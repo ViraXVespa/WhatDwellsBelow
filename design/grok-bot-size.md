@@ -12,6 +12,7 @@ Sweep live `scripts/**/*.gd` for size. Not a feature slice. Not the staged reuse
 - Sweep target: under **5KB** when whole functions can move. If a single function is over 5KB, leave it whole and report it.
 - Files already under the relevant cap are not split “for cleanliness.”
 - No behavior change.
+- Over-10KB live scripts left on `main` by Grok Build are expected input to this job, not a missed Build split.
 
 Out of scope: `scenes/`, `assets/`, `tools/` (unless a preload path or PC-offload runner must change), `archives/`, pinned commits, `project.godot` unless a moved script must be registered.
 
