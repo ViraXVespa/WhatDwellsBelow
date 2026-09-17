@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.3.44",
+			"points": [
+				{
+					"text": "Grok Build no longer measures or splits live scripts for the 10KB cap while running."
+				},
+				{
+					"text": "Over-cap scripts may remain on main until a Grok Bot size sweep."
+				},
+				{
+					"text": "Web / chat Phase 6 paste-emit sizing is unchanged."
+				}
+			],
+			"summary": "Build ignores script size while running; Bot owns cap splits."
+		},
+		{
 			"label": "0.3.43",
 			"points": [
 				{
