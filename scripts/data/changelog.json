@@ -1,5 +1,54 @@
 {
-	"series": "0.3",
+	"series": "0.4",
 	"generated_from": "design/changelog",
-	"entries": []
+	"entries": [
+		{
+			"label": "0.4.1",
+			"points": [
+				{
+					"text": "Catalog pack/report/read_summary/list_route runners and bind grep, git porcelain, python -c, and double-quoted PowerShell bodies as failed lookups."
+				},
+				{
+					"text": "One catalog summary read per runner per slice via read_summary.ps1; route cards from list_route.ps1 instead of load-graph crawls."
+				},
+				{
+					"text": "Session pack skips empty plan stubs; tool histogram ignores shell title junk."
+				},
+				{
+					"text": "Baked version.json to 0.4.0 after week-4 series-open was left under design/changelog/archive/0.4/0.4.0.md."
+				},
+				{
+					"text": "Pages skips a full Godot export when game paths are unchanged and reuses a live export cache."
+				},
+				{
+					"text": "In-game notes on web read window.__wdbNotes from /data/notes.js; service worker cache follows the PCK hash, not the version label."
+				}
+			],
+			"summary": "Offload intercepts plus Pages notes-only deploys so web players can get change notes without re-downloading the whole game cache."
+		},
+		{
+			"label": "0.4.0",
+			"points": [
+				{
+					"text": "Opened development week 4 on the live path",
+					"subs": [
+						"Grok Build Week 4 completion commit"
+					]
+				},
+				{
+					"text": "Placeholdia guild roofs are russet shingles; storefronts have a short striped cloth awning; the vendor stall uses a canvas tarp"
+				},
+				{
+					"text": "Enter dungeon shows \u201cConsciousness slips the body\u2026\u201d immediately, then the floor loads under that overlay"
+				},
+				{
+					"text": "Dungeon floors paint nearby space first; distant props, extra crystals, ambushes, and the Floor Guardian stream in as you explore"
+				},
+				{
+					"text": "The large dungeon map builds when you open it, not while the floor is loading"
+				}
+			],
+			"summary": "Week 4 Grok Build snapshot. Placeholdia roofs and stall cloth are in, and entering a floor covers immediately while nearby dungeon space loads first."
+		}
+	]
 }

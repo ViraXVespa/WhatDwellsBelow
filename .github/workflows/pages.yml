@@ -91,7 +91,26 @@ jobs:
           python3 tools/archive_prior_changelogs.py
           python3 tools/build_changelog.py
 
+      - name: Game export hash
+        id: gamehash
+        run: |
+          set -euo pipefail
+          python3 tools/pages_game_hash.py --out /tmp/wdb_game_hash
+          HASH="$(tr -d '[:space:]' </tmp/wdb_game_hash)"
+          echo "hash=$HASH" >> "$GITHUB_OUTPUT"
+          echo "WDB_GAME_HASH=$HASH" >> "$GITHUB_ENV"
+
+      - name: Restore live export cache
+        id: live-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: .live_export_cache
+          key: wdb-pages-live-${{ steps.gamehash.outputs.hash }}
+          restore-keys: |
+            wdb-pages-live-
+
       - name: Download Godot 4.7.2
+        if: ${{ github.event_name == 'workflow_dispatch' || steps.live-cache.outputs.cache-hit != 'true' }}
         run: |
           set -euo pipefail
           curl -fsSL -o godot.zip https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip
@@ -109,6 +128,7 @@ jobs:
           fi
 
       - name: Export live Web
+        if: ${{ github.event_name == 'workflow_dispatch' || steps.live-cache.outputs.cache-hit != 'true' }}
         run: |
           set -euo pipefail
           SITE="$PWD/site"
@@ -118,8 +138,33 @@ jobs:
           "$GODOT_BIN" --headless --path "$PWD" --export-release Web "$SITE/index.html"
           python3 tools/web_postexport.py "$SITE"
           touch "$SITE/.nojekyll"
+          rm -rf .live_export_cache
+          mkdir -p .live_export_cache
+          cp -a "$SITE"/. .live_export_cache/
+          rm -rf .live_export_cache/data .live_export_cache/changelog
+
+      - name: Reuse live Web export
+        if: ${{ github.event_name != 'workflow_dispatch' && steps.live-cache.outputs.cache-hit == 'true' }}
+        run: |
+          set -euo pipefail
+          SITE="$PWD/site"
+          mkdir -p "$SITE"
+          cp -a .live_export_cache/. "$SITE"/
+          python3 tools/web_postexport.py --notes-only "$SITE"
+          touch "$SITE/.nojekyll"
+
+      - name: Save live export cache
+        if: ${{ github.event_name == 'workflow_dispatch' || steps.live-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: .live_export_cache
+          key: wdb-pages-live-${{ steps.gamehash.outputs.hash }}
+
+      - name: Publish loose notes
+        run: python3 tools/publish_notes_site.py --root "$PWD" --site "$PWD/site"
 
       - name: Restore archive export cache
+        if: ${{ github.event_name == 'workflow_dispatch' || steps.live-cache.outputs.cache-hit != 'true' }}
         id: archive-cache
         uses: actions/cache/restore@v6
         with:
@@ -129,6 +174,7 @@ jobs:
             wdb-pages-archives-
 
       - name: Export archives
+        if: ${{ github.event_name == 'workflow_dispatch' || steps.live-cache.outputs.cache-hit != 'true' }}
         run: |
           set -euo pipefail
           python3 tools/export_archives.py \
@@ -139,7 +185,7 @@ jobs:
             --worktrees "$PWD/.archive_worktrees"
 
       - name: Save archive export cache
-        if: steps.archive-cache.outputs.cache-hit != 'true'
+        if: ${{ (github.event_name == 'workflow_dispatch' || steps.live-cache.outputs.cache-hit != 'true') && steps.archive-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6
         with:
           path: .archive_export_cache
@@ -148,7 +194,7 @@ jobs:
       - name: Publish changelog pages
         run: |
           python3 - <<'PY'
-          import html, pathlib, re
+          import html, pathlib
           root = pathlib.Path(".")
           src = root / "design" / "changelog"
           dest = root / "site" / "changelog"

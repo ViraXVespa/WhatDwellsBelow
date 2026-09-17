@@ -13,12 +13,12 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Bui
 ## Rules
 
 1. Prefer filesystem `Length` (dir / Get-Item / Get-ChildItem) over reading file contents to measure size.
-2. After a preferred runner finishes, open **only** its summary path below.
+2. After a preferred runner finishes, run `powershell -File tools/read_summary.ps1 -Job <name>` once and stop. Do not read that summary again in the slice. Do not open `tools/*.ps1` / `tools/*.py` to learn flags; the catalog row is the usage.
 3. Do not dump whole `.gd` files into chat unless editing them or the User asked.
 4. Steam Godot under redirected IO often leaves Process `ExitCode` null - runners treat null as 0. Headless smokes need `--display-driver headless --audio-driver Dummy`. Compile check needs `--headless --editor --import --path <WDB_ROOT> --quit`.
 5. ASCII hyphens only inside PowerShell `.ps1` double-quoted strings (no em dashes).
 6. Housekeeping: summaries overwrite in place each run. Raw Godot `*.log` under `_logs/` are disposable - run `tools/clean_agent_logs.ps1` (or let smoke runner drop orphan phase logs). `_logs/` stays gitignored; do not commit it.
-7. **Windows / PowerShell bodies:** never put markdown or multi-line Python through PowerShell double-quoted strings or `python -c`. Backticks and `\x` escapes get mangled. Write the body with a single-quoted here-string piped into `tools/write_utf8_file.py` (or `--b64` in a single-quoted string), then run the file.
+7. **Windows / PowerShell bodies:** never put markdown or multi-line Python through PowerShell double-quoted strings or `python -c`. Backticks and `\x` escapes get mangled. Write the body with a single-quoted here-string piped into `tools/write_utf8_file.py` (or `--b64` in a single-quoted string), then run the file. A double-quoted pipe or `python -c` is a failed lookup, not a fallback.
 8. **Ephemeral agent Python:** put throwaway scripts under `_logs/agent-py/` and run them with `powershell -File tools/run_agent_py.ps1 -Script _logs/agent-py/....`. That runner deletes the script after exit by default. Do not `-Cleanup` paths outside `_logs/agent-py/`. Permanent edits (design docs, checked-in tools) write straight to their real paths - they are not cleaned up.
 9. **Web / chat Phase 7 runner:** `tools/_scratch.py` is the gitignored paste target for documentation slices. The User runs `python tools/_scratch.py` from repo root. Do not put that runner under `_logs/agent-py/` (those scripts are deleted after exit). The runner must import `tools/doc_patch.py` instead of copying replace helpers.
 10. **New runner:** if the next step would open many untouched files, ingest a raw Godot log, grep the tree into chat, or hand-count bytes, stop. Use a catalog row when one exists. If none exists, propose a runner (name, command, summary path, what tokens it saves) and wait. Grok Build may implement an approved runner. Grok Bot may implement one only after the User approves that runner in-session.
@@ -58,6 +58,10 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Bui
 | Hostify lint (advisory) | `powershell -File tools/lint_hostify.ps1` | `_logs/hostify-lint/summary.txt` |
 | Post-split gate (Bot) | `powershell -File tools/run_post_split_gate.ps1` (optional `-WithSmokes`, `-Force`) | `_logs/post-split-gate/summary.txt` |
 | Build gate (Build) | `powershell -File tools/run_build_gate.ps1` (optional `-SkipImport`, `-OverKb 10`, `-Force`) | `_logs/build-gate/summary.txt` |
+| Read one catalog summary | `powershell -File tools/read_summary.ps1 -Job xref` | that job's `_logs/*/summary.txt` |
+| One route card | `powershell -File tools/list_route.ps1 -Door dungeon` (or `-Job debug.smokes`) | `_logs/route/summary.txt` |
+| Pack Grok sessions | `powershell -File tools/pack_grok_sessions.ps1` (optional `-Since`, `-Until`, `-Top 10`, `-IncludeEmpty`) | `_logs/grok-sessions-pack/summary.txt` |
+| Session burn report | `powershell -File tools/report_grok_sessions.ps1` | `_logs/grok-sessions-report/summary.txt` |
 
 `tools/export_web.ps1` runs `enable_texture_mips.py` before Godot `--import`. Do not invent a second bake step after the PCK is packed.
 

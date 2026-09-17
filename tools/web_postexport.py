@@ -1,23 +1,22 @@
 #!/usr/bin/env python3
-"""Stamp a Godot Web export so browsers pick up a new build without a cache wipe."""
+"""Stamp a Godot Web export. Cache id follows the binary, not the notes label."""
 
 from __future__ import annotations
 
+import hashlib
 import json
 import pathlib
 import re
-import subprocess
 import sys
 
-
-def _git_sha(root: pathlib.Path) -> str:
-    try:
-        return subprocess.check_output(
-            ["git", "-C", str(root), "rev-parse", "--short=12", "HEAD"],
-            text=True,
-        ).strip()
-    except (OSError, subprocess.CalledProcessError):
-        return ""
+NOTES_SCRIPT = '<script src="data/notes.js"></script>'
+DATA_FETCH = (
+    "self.addEventListener('fetch',event=>{"
+    "const u=event.request.url;"
+    "if(u.includes('/data/')){"
+    "event.respondWith(fetch(event.request).catch(()=>caches.match(event.request)));"
+    "}});\n"
+)
 
 
 def _label(root: pathlib.Path) -> str:
@@ -32,21 +31,39 @@ def _label(root: pathlib.Path) -> str:
     return label if label else "dev"
 
 
-def _build_id(root: pathlib.Path) -> str:
-    label = _label(root)
-    sha = _git_sha(root)
-    return f"{label}-{sha}" if sha else label
+def _binary_id(out_dir: pathlib.Path) -> str:
+    digest = hashlib.sha256()
+    found = False
+    for name in ("index.pck", "index.wasm", "index.js"):
+        path = out_dir / name
+        if not path.is_file():
+            continue
+        digest.update(name.encode("utf-8"))
+        digest.update(path.read_bytes())
+        found = True
+    if found:
+        return digest.hexdigest()[:16]
+    return _label(pathlib.Path(__file__).resolve().parents[1])
 
 
 def _assign_build_id(build_id: str) -> str:
-    return f"window.__wdbBuildId={json.dumps(build_id)};"
+    return "window.__wdbBuildId=%s;" % json.dumps(build_id)
+
+
+def _ensure_notes_script(html: str) -> str:
+    if "data/notes.js" in html:
+        return html
+    hook = NOTES_SCRIPT
+    if "</head>" in html:
+        return html.replace("</head>", hook + "</head>", 1)
+    return hook + html
 
 
 def _patch_html(html: str, build_id: str) -> str:
-    q = f"?v={build_id}"
+    q = "?v=%s" % build_id
 
     def add_q(url: str) -> str:
-        if "?" in url:
+        if "?" in url or url.startswith("data/"):
             return url
         return url + q
 
@@ -62,7 +79,7 @@ def _patch_html(html: str, build_id: str) -> str:
         html,
     )
     html = re.sub(
-        r'("serviceWorker"\s*:\s*")(index\.service\.worker\.js)(")',
+        r'(\"serviceWorker\"\s*:\s*\")(index\.service\.worker\.js)(\")',
         lambda m: m.group(1) + add_q(m.group(2)) + m.group(3),
         html,
         count=1,
@@ -74,38 +91,53 @@ def _patch_html(html: str, build_id: str) -> str:
         html,
         count=1,
     )
-    if n:
-        return html
-    hook = "<script>" + assign + "</script>"
-    if "</head>" in html:
-        return html.replace("</head>", hook + "</head>", 1)
-    return hook + html
+    if not n:
+        hook = "<script>" + assign + "</script>"
+        if "</head>" in html:
+            html = html.replace("</head>", hook + "</head>", 1)
+        else:
+            html = hook + html
+    return _ensure_notes_script(html)
 
 
 def _patch_sw(text: str, build_id: str) -> str:
-    nxt = f"WDB_{build_id}"
+    nxt = "WDB_%s" % build_id
     patched, n = re.subn(
-        r"""(const\s+CACHE_NAME\s*=\s*['"])([^'"]+)(['"])""",
-        rf"\1{nxt}\3",
+        r"(const\s+CACHE_NAME\s*=\s*['\"])([^'\"]+)(['\"])",
+        r"\1%s\3" % nxt,
         text,
         count=1,
     )
-    if n:
-        return patched
-    patched, n = re.subn(
-        r"""(['"])GODOT[^'"]*(['"])""",
-        rf"\1{nxt}\2",
-        text,
-        count=1,
-    )
-    return patched if n else text
+    if not n:
+        patched, n = re.subn(
+            r"(['\"])GODOT[^'\"]*(['\"])",
+            r"\1%s\2" % nxt,
+            text,
+            count=1,
+        )
+        if n:
+            text = patched
+    else:
+        text = patched
+    if "/data/" not in text:
+        text = DATA_FETCH + text
+    return text
 
 
-def stamp(out_dir: pathlib.Path, root: pathlib.Path) -> str:
-    build_id = _build_id(root)
+def stamp(out_dir: pathlib.Path, root: pathlib.Path, notes_only: bool = False) -> str:
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "build_id.txt").write_text(build_id + "\n", encoding="utf-8")
     html_path = out_dir / "index.html"
+    if notes_only:
+        if html_path.is_file():
+            html_path.write_text(
+                _ensure_notes_script(html_path.read_text(encoding="utf-8")),
+                encoding="utf-8",
+                newline="\n",
+            )
+        print("web_postexport notes-only %s" % out_dir)
+        return "notes"
+    build_id = _binary_id(out_dir)
+    (out_dir / "build_id.txt").write_text(build_id + "\n", encoding="utf-8")
     if html_path.is_file():
         html_path.write_text(
             _patch_html(html_path.read_text(encoding="utf-8"), build_id),
@@ -119,17 +151,22 @@ def stamp(out_dir: pathlib.Path, root: pathlib.Path) -> str:
             encoding="utf-8",
             newline="\n",
         )
-    print(f"web_postexport {out_dir} -> {build_id}")
+    print("web_postexport %s -> %s" % (out_dir, build_id))
     return build_id
 
 
 def main() -> int:
-    if len(sys.argv) < 2:
-        print("usage: web_postexport.py <export-dir>", file=sys.stderr)
+    args = [a for a in sys.argv[1:] if a]
+    notes_only = False
+    if "--notes-only" in args:
+        notes_only = True
+        args.remove("--notes-only")
+    if not args:
+        print("usage: web_postexport.py [--notes-only] <export-dir>", file=sys.stderr)
         return 2
-    out_dir = pathlib.Path(sys.argv[1]).resolve()
+    out_dir = pathlib.Path(args[0]).resolve()
     root = pathlib.Path(__file__).resolve().parents[1]
-    stamp(out_dir, root)
+    stamp(out_dir, root, notes_only=notes_only)
     return 0
 
 

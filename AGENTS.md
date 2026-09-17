@@ -27,7 +27,7 @@ Navigation is only `design/routes.yaml`. Do not treat `See also:` as a load list
 | Numbers (when the work changes them) | `design/tunables.md` |
 | Local inventory / verify / Windows write | pc-offload skill + `design/pc-offload.md` |
 
-**Local lookup:** tree search under `scripts/`, `design/`, `tools/`, `scenes/` is `tools/list_xref.ps1`, not the grep tool, unless that file is already open for edit in this slice. Git inventory is `tools/list_changed.ps1` — do not paste `git status` / `git log` into the thread. Windows bodies: `tools/write_utf8_file.py` / `tools/run_agent_py.ps1`; no `python -c`. After a runner, read only its `_logs/*/summary.txt`.
+**Local lookup:** tree search under `scripts/`, `design/`, `tools/`, `scenes/` is `tools/list_xref.ps1`, not the grep tool, unless that file is already open for edit in this slice. Git inventory is `tools/list_changed.ps1` — do not paste `git status` / `git log` into the thread. One door or job card is `tools/list_route.ps1` (`-Door` / `-Job`); do not open the topic index or load-graph for that. Windows bodies: single-quoted here-string into `tools/write_utf8_file.py`, then `tools/run_agent_py.ps1`; no `python -c` and no double-quoted PowerShell bodies. After a runner, run `powershell -File tools/read_summary.ps1 -Job <name>` once; do not read that summary again in the slice and do not open `tools/*.ps1` to learn flags.
 
 Path procedures live in the Path table session file. Do not open the topic index or the load-graph sketch unless the User named the index or routing work.
 
