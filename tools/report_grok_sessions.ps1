@@ -28,6 +28,17 @@ function Get-RepoRoot {
 }
 
 $repoRoot = Get-RepoRoot -Hint $Root
+. (Join-Path $repoRoot "tools\agent_log.ps1")
+if (-not $OutDir) {
+    $OutDir = Ensure-WdbAgentLogDir -Job "grok-sessions-report" -Root $repoRoot
+}
+if (-not $PackDir) {
+    try {
+        $PackDir = Get-WdbAgentLogDir -Job "grok-sessions-pack" -Root $repoRoot
+    } catch {
+        $PackDir = ""
+    }
+}
 $py = Join-Path $repoRoot "tools\report_grok_sessions.py"
 if (-not (Test-Path -LiteralPath $py)) {
     throw "missing $py"

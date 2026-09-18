@@ -49,7 +49,7 @@ This phase ends when every pending question is answered. If there are no questio
 
 ### Phase 4 — File emitting
 
-Emit every fully revised **Phase 4** file **one at a time**. Do not emit the next file until the User says to (`Next`, or the same meaning).
+Emit every **new** Phase 4 file **one at a time** (full body, Phase 4 emit rules). Do not emit the next new file until the User says to (`Next`, or the same meaning). Revise already-live paths in **one** `tools/_scratch.py` run (same shape as Phase 7): the User pastes that runner once and applies every revision together.
 
 Do **not** emit documentation in this phase. That includes the agents file, `design/**/*.md`, `design/changelog/**/*.md`, and any other `.md` the slice will update. Those wait for Phase 7 so Phase 5 testing can still change them.
 
@@ -81,7 +81,7 @@ Do not assemble a revision from a tool-card summary, a truncated artifact, or a 
 
 ### Phase 5 — Review
 
-The User tests. Flagged issues loop back to Phase 2, then 3–4 as needed, until the User is satisfied.
+The User tests. Emit one tools/_scratch.py that exercises every script this slice shipped or revised, then the User runs python tools/_scratch.py from the repo root and pastes the RESULT. Flagged issues loop back to Phase 2, then 3-4 as needed, until the User is satisfied.
 
 The User will say something like “Looks good.” That means no more behavior changes for this goal. Go to Phase 6.
 

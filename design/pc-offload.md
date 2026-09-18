@@ -13,7 +13,7 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Bui
 ## Rules
 
 1. Prefer filesystem `Length` (dir / Get-Item / Get-ChildItem) over reading file contents to measure size.
-2. After a preferred runner finishes, run `powershell -File tools/read_summary.ps1 -Job <name>` once and stop. Do not read that summary again in the slice. Do not open `tools/*.ps1` / `tools/*.py` to learn flags; the catalog row is the usage.
+2. After a preferred runner finishes, run `powershell -File tools/read_summary.ps1 -Job <name>` once and stop. Once per job and once per slice are the same rule: one read of that job's session summary, except a planned gather list may read it once after each distinct planned call (Job cycle). Do not open `tools/*.ps1` / `tools/*.py` to learn flags; the catalog row is the usage.
 3. Do not dump whole `.gd` files into chat unless editing them or the User asked.
 4. Steam Godot under redirected IO often leaves Process `ExitCode` null - runners treat null as 0. Headless smokes need `--display-driver headless --audio-driver Dummy`. Compile check needs `--headless --editor --import --path <WDB_ROOT> --quit`.
 5. ASCII hyphens only inside PowerShell `.ps1` double-quoted strings (no em dashes).
@@ -29,7 +29,7 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Bui
 
 | Job | Command (from repo root) | Summary (read only this) |
 |-----|--------------------------|--------------------------|
-| Housekeep `_logs/` | `powershell -File tools/clean_agent_logs.ps1` (optional `-KeepRaw`, `-MaxAgeHours 24`) | `_logs/clean/summary.txt` |
+| Housekeep `_logs/` | `powershell -File tools/clean_agent_logs.ps1` (optional `-KeepRaw`, `-MaxAgeHours 24`, `-NewWeek`, `-WhatIf`) | `_logs/sess/<session>/clean/summary.txt` |
 | Design doc sizes | `powershell -File tools/list_oversize_docs.ps1` (optional `-OverKb 8`) | `_logs/oversize-docs/summary.txt` |
 | Load-graph / routes.yaml | `python tools/check_load_graph.py` (optional `--root .`) | (stdout PASS/FAIL; no summary) |
 | Write UTF-8 body (no PS expansion) | pipe single-quoted here-string to `python tools/write_utf8_file.py --path ...` (optional `--bom`, `--b64`) | (writes the path; no summary) |
@@ -58,10 +58,13 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Bui
 | Hostify lint (advisory) | `powershell -File tools/lint_hostify.ps1` | `_logs/hostify-lint/summary.txt` |
 | Post-split gate (Bot) | `powershell -File tools/run_post_split_gate.ps1` (optional `-WithSmokes`, `-Force`) | `_logs/post-split-gate/summary.txt` |
 | Build gate (Build) | `powershell -File tools/run_build_gate.ps1` (optional `-SkipImport`, `-OverKb 10`, `-Force`) | `_logs/build-gate/summary.txt` |
-| Read one catalog summary | `powershell -File tools/read_summary.ps1 -Job xref` | that job's `_logs/*/summary.txt` |
+| Read one catalog summary | `powershell -File tools/read_summary.ps1 -Job xref` | `_logs/sess/<session>/<job>/summary.txt` (fallback `_logs/<job>/summary.txt`) |
+| Session log helpers | dot-source `tools/agent_log.ps1` or `import agent_log` | (no summary; prints session/job/dir) |
+| Stage a unified diff | `powershell -File tools/stage_patch.ps1 -Diff path.diff` | `_logs/sess/<session>/patch-stage/summary.txt` |
+| Promote a staged patch | `powershell -File tools/promote_patch.ps1 -Id <id>` | `_logs/sess/<session>/patch-promote/summary.txt` |
 | One route card | `powershell -File tools/list_route.ps1 -Door dungeon` (or `-Job debug.smokes`) | `_logs/route/summary.txt` |
-| Pack Grok sessions | `powershell -File tools/pack_grok_sessions.ps1` (optional `-Since`, `-Until`, `-Top 10`, `-IncludeEmpty`) | `_logs/grok-sessions-pack/summary.txt` |
-| Session burn report | `powershell -File tools/report_grok_sessions.ps1` | `_logs/grok-sessions-report/summary.txt` |
+| Pack Grok sessions | `powershell -File tools/pack_grok_sessions.ps1` (optional `-Since`, `-Until`, `-Top 10`, `-IncludeEmpty`) | `_logs/sess/<session>/grok-sessions-pack/summary.txt` |
+| Session burn report | `powershell -File tools/report_grok_sessions.ps1` | `_logs/sess/<session>/grok-sessions-report/summary.txt` |
 
 `tools/export_web.ps1` runs `enable_texture_mips.py` before Godot `--import`. Do not invent a second bake step after the PCK is packed.
 

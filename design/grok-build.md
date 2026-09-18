@@ -45,7 +45,7 @@ Do not start by archiving or rewriting the live path. Do not resume unfinished G
 
 ## Week ritual
 
-Run this block **only** when the User said **new week**. Otherwise skip it. After the series seed / `0.N.0` lands, run `python tools/archive_prior_changelogs.py` so prior-series markdown leaves the flat `design/changelog/` folder (CI also runs it on stamp).
+Run this block **only** when the User said **new week**. Otherwise skip it. After the series seed / `0.N.0` lands, run `python tools/archive_prior_changelogs.py` so prior-series markdown leaves the flat `design/changelog/` folder (CI also runs it on stamp). Then run `powershell -File tools/clean_agent_logs.ps1 -NewWeek` so `_logs/sess`, patch-scratch, apply.lock, and leftover singleton summaries start empty. Job cycle (gather once, change once, prove once): `design/protocol.md`.
 
 Follow `design/versioning.md`. In short:
 

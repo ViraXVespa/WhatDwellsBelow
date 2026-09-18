@@ -118,7 +118,7 @@ def _tool_title(payload: dict[str, Any]) -> str:
 def tool_name(row: dict[str, Any], payload: dict[str, Any] | None) -> str | None:
     src = payload if payload is not None else row
     kind = event_kind(row, payload)
-    if kind not in ("tool_call", "tool_call_update"):
+    if kind != "tool_call":
         return None
     meta = src.get("_meta")
     if isinstance(meta, dict):
@@ -172,6 +172,8 @@ def event_path(row: dict[str, Any], payload: dict[str, Any] | None) -> str:
             "path",
             "Path",
             "targetFile",
+            "command",
+            "cmd",
         ),
     )
     if path:
@@ -235,9 +237,10 @@ def raw_command(payload: dict[str, Any] | None) -> str:
         return ""
     raw = payload.get("rawInput")
     if isinstance(raw, dict):
-        cmd = raw.get("command")
-        if isinstance(cmd, str):
-            return cmd
+        for key in ("command", "cmd"):
+            cmd = raw.get(key)
+            if isinstance(cmd, str) and cmd.strip():
+                return cmd.strip()
     return ""
 
 
@@ -250,6 +253,48 @@ class Turn:
     usage: dict[str, int] = field(default_factory=dict)
     meta_max: int = 0
     compact: bool = False
+    tool_counts: dict[str, int] = field(default_factory=dict)
+    same_path_reads: int = 0
+    same_command_repeats: int = 0
+    loop_line: str = ""
+
+
+GATHER_TOOLS = frozenset({"list_xref", "xref", "show_func", "show-func", "summarize_scripts", "script-summary", "list_code_map_row", "code-map"})
+CHANGE_TOOLS = frozenset({"search_replace", "write", "stage_patch", "promote_patch"})
+PROVE_TOOLS = frozenset({"run_smokes", "smokes", "run_load_timing", "run_dungeon_load_timing", "dungeon-load-timing", "read_summary"})
+READ_TOOLS = frozenset({"read_file", "ReadFile"})
+
+
+def finalize_turn(turn: Turn) -> Turn:
+    path_hits: dict[str, int] = {}
+    cmd_hits: dict[str, int] = {}
+    summary_hits = 0
+    slash = chr(92)
+    for tool, target in turn.paths:
+        norm = target.replace(slash, "/").lower()
+        if tool in READ_TOOLS or norm.endswith((".gd", ".md", ".ps1", ".py", ".tscn", ".json")):
+            path_hits[norm] = path_hits.get(norm, 0) + 1
+        if "summary.txt" in norm:
+            summary_hits += 1
+        if tool == "run_terminal_command" or target.startswith("powershell") or " -File " in target or target.startswith("python"):
+            key = " ".join(target.lower().split())
+            cmd_hits[key] = cmd_hits.get(key, 0) + 1
+    turn.same_path_reads = sum(n - 1 for n in path_hits.values() if n > 1)
+    turn.same_command_repeats = sum(n - 1 for n in cmd_hits.values() if n > 1)
+    reasons: list[str] = []
+    gather_n = sum(turn.tool_counts.get(name, 0) for name in GATHER_TOOLS)
+    change_n = sum(turn.tool_counts.get(name, 0) for name in CHANGE_TOOLS)
+    prove_n = sum(turn.tool_counts.get(name, 0) for name in PROVE_TOOLS)
+    if gather_n > 1:
+        reasons.append(f"gather={gather_n}")
+    if change_n > 1:
+        reasons.append(f"change={change_n}")
+    if prove_n > 1:
+        reasons.append(f"prove={prove_n}")
+    if summary_hits > 1:
+        reasons.append(f"summary={summary_hits}")
+    turn.loop_line = ",".join(reasons)
+    return turn
 
 
 def _new_turn(index: int) -> Turn:
@@ -264,6 +309,7 @@ def iter_turns(rows: Iterable[dict[str, Any]]) -> list[Turn]:
     def bump() -> None:
         nonlocal current, started
         if started or current.tools or current.usage.get("total"):
+            finalize_turn(current)
             turns.append(current)
             current = _new_turn(len(turns) + 1)
         started = False
@@ -287,10 +333,12 @@ def iter_turns(rows: Iterable[dict[str, Any]]) -> list[Turn]:
         path = event_path(row, payload)
         cmd = raw_command(payload)
         if tool:
+            current.tool_counts[tool] = current.tool_counts.get(tool, 0) + 1
             if tool not in current.tools:
                 current.tools.append(tool)
-            if path:
-                current.paths.append((tool, path))
+            target = path or cmd
+            if target:
+                current.paths.append((tool, target))
             label = intercept_label(tool, path, cmd)
             if label and label not in current.intercepts:
                 current.intercepts.append(label)
@@ -305,6 +353,7 @@ def iter_turns(rows: Iterable[dict[str, Any]]) -> list[Turn]:
             bump()
             started = False
     if started or current.tools or current.usage.get("total"):
+        finalize_turn(current)
         turns.append(current)
     return turns
 
@@ -396,19 +445,20 @@ def accumulate_turn(
     intercept_hist: dict[str, dict[str, int]],
     turn: Turn,
 ) -> None:
-    n_tools = max(len(turn.tools), 1)
-    share_uncached = as_int(turn.usage.get("uncached")) // n_tools
-    share_cost = as_int(turn.usage.get("cost_ticks")) // n_tools
-    share_tokens = as_int(turn.usage.get("total")) // n_tools
-    for tool in turn.tools:
+    n_calls = max(sum(turn.tool_counts.values()) if turn.tool_counts else len(turn.tools), 1)
+    share_uncached = as_int(turn.usage.get("uncached")) // n_calls
+    share_cost = as_int(turn.usage.get("cost_ticks")) // n_calls
+    share_tokens = as_int(turn.usage.get("total")) // n_calls
+    counts = turn.tool_counts or {tool: 1 for tool in turn.tools}
+    for tool, n in counts.items():
         add_count(
             tool_hist,
             tool,
-            count=1,
+            count=n,
             turns=1,
-            uncached=share_uncached,
-            cost_ticks=share_cost,
-            tokens=share_tokens,
+            uncached=share_uncached * n,
+            cost_ticks=share_cost * n,
+            tokens=share_tokens * n,
         )
     for tool, path in turn.paths:
         add_count(

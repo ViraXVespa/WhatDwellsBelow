@@ -41,7 +41,7 @@ Do not reopen the agents file unless types, warnings, tabs, or the 10KB cap left
 Parked items sit between the markers. Agents must not hand-edit this section.
 
 <!-- bot-opt:begin -->
-<!-- bot-opt:next=4 -->
+<!-- bot-opt:next=5 -->
 
 ### opt-001 (pending)
 - Title: Extract reusable markdown formatting library from md-editing tools
@@ -109,5 +109,12 @@ Look for shared steps: scene change, loader overlay, preload vs `load()`, dummy/
 Keep player-facing order and timing unless a listed extract is a no-op move. Same paths after the extract. Do not fold this into opt-002 (res:// path helper) and do not rewrite wav/png catalogs.
 
 Touched live `scripts/**/*.gd` under 10KB. One PR. Mark this item done in the same PR.
+
+### opt-004 (pending)
+- Title: Migrate catalog runners onto agent_log session folders
+- Cluster: tools
+- Files: `tools/read_summary.ps1`, `design/pc-offload.md`, `tools/agent_log.ps1`
+
+Remaining JobMap singleton writers still drop _logs/<job>/summary.txt. Point each preferred runner at Ensure-WdbAgentLogDir / agent_log.ensure_agent_log_dir so concurrent sessions stop clobbering one summary. Keep read_summary fallback for old files. Do not invent extra summary keys to justify reruns.
 
 <!-- bot-opt:end -->

@@ -18,6 +18,8 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import grok_session_lib as gsl
+import agent_log
+import agent_log
 
 PACK_FILES: tuple[tuple[str, str], ...] = (
     ("summary.json", "summary"),
@@ -362,6 +364,11 @@ def _write_reports(rows: list[dict[str, Any]], out_dir: Path) -> None:
                     "uncached": turn.usage.get("uncached", 0),
                     "cost_ticks": turn.usage.get("cost_ticks", 0),
                     "tools": list(turn.tools),
+                    "tool_counts": dict(turn.tool_counts),
+                    "paths": [{"tool": t, "path_or_command": p} for t, p in turn.paths],
+                    "same_path_reads": turn.same_path_reads,
+                    "same_command_repeats": turn.same_command_repeats,
+                    "loop": turn.loop_line,
                     "intercepts": list(turn.intercepts),
                     "compact": turn.compact,
                 }
@@ -479,7 +486,8 @@ def write_summary(
     lines.append(f"summed: {summed}")
     lines.append(
         "reports: tools_histogram_Summed.txt, paths_histogram_Summed.txt, "
-        "intercepts_Summed.txt, turns_top_Summed.txt, compaction_Summed.txt"
+        "intercepts_Summed.txt, turns_top_Summed.txt, turns_detail_Summed.txt, "
+        "compaction_Summed.txt"
     )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -501,7 +509,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--out-dir",
         default="",
-        help="Output dir (default: <root>/_logs/grok-sessions-pack)",
+        help="Output dir (default: session-keyed _logs/sess/<session>/grok-sessions-pack)",
     )
     return parser.parse_args(argv)
 
@@ -518,11 +526,10 @@ def main(argv: list[str] | None = None) -> int:
     session_root = discover_session_root(
         repo_root, args.session_root or None
     ).resolve()
-    out_dir = (
-        Path(args.out_dir).expanduser().resolve()
-        if args.out_dir
-        else (repo_root / "_logs" / "grok-sessions-pack")
-    )
+    if args.out_dir:
+        out_dir = Path(args.out_dir).expanduser().resolve()
+    else:
+        out_dir = agent_log.ensure_agent_log_dir("grok-sessions-pack", repo_root)
     summary_path = out_dir / "summary.txt"
     if not session_root.is_dir():
         write_summary(

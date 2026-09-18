@@ -3,6 +3,7 @@ param(
     [string]$Since = "",
     [string]$Until = "",
     [int]$Top = 10,
+    [switch]$IncludeEmpty,
     [string]$SessionRoot = "",
     [string]$OutDir = "",
     [string]$Root = ""
@@ -27,6 +28,10 @@ function Get-RepoRoot {
 }
 
 $repoRoot = Get-RepoRoot -Hint $Root
+. (Join-Path $repoRoot "tools\agent_log.ps1")
+if (-not $OutDir) {
+    $OutDir = Ensure-WdbAgentLogDir -Job "grok-sessions-pack" -Root $repoRoot
+}
 $py = Join-Path $repoRoot "tools\pack_grok_sessions.py"
 if (-not (Test-Path -LiteralPath $py)) {
     throw "missing $py"
@@ -41,6 +46,7 @@ if ($Since) { $pyArgs += @("--since", $Since) }
 if ($Until) { $pyArgs += @("--until", $Until) }
 if ($SessionRoot) { $pyArgs += @("--session-root", $SessionRoot) }
 if ($OutDir) { $pyArgs += @("--out-dir", $OutDir) }
+if ($IncludeEmpty) { $pyArgs += "--include-empty" }
 
 $python = Get-Command python -ErrorAction SilentlyContinue
 if (-not $python) {

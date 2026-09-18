@@ -52,3 +52,20 @@ Everything that is marked tunable or left for Grok to invent should be treated a
 After boot, do not fetch a file already in the loaded set. Name it only.
 Default set: the agents file, this path file, and (web / Build) protocol plus constraints.
 Load cap: boot files + at most one topic door + one Job sibling + gates whose when matches. Second topic door: ask the User to name the owner first. If `conflicts_with` lists the pair, do not open the second door in this slice.
+
+## Job cycle
+
+A **job** is one cycle: gather once, then change once, then prove once. Pause and report after every job.
+
+Gather is `list_xref` plus `show_func` plus `summarize_scripts` plus one `list_code_map_row`. `list_route` and `list_changed` stay outside the gather set.
+
+Name a **planned gather list** (distinct xref patterns and show-func names) before the first catalog call. Those planned calls are one gather phase. Until show-func/xref can batch names into one summary, read that job's session summary once after each distinct planned call. That is not a second job. A gather call invented after a prove summary, or the same command with the same args again, or a ninth show-func not on the list, is a second job.
+
+Change is one slice or one replace batch (stage then promote counts as that one change). Prove is one measure, or one listed smoke set, or both **once**. Do not measure, then smoke, then measure.
+
+Read each job summary once via `powershell -File tools/read_summary.ps1 -Job <name>`. Preferred path is `_logs/sess/<session>/<job>/summary.txt` (session = `WDB_AGENT_SESSION` or the inferred Grok session id). Do not open the summary file directly. Catalog and protocol must agree: once per job, and once per planned gather call as above.
+
+A second job in the same Grok Build session is allowed only when a **new field** is named first. Do not wait for the User between job 1 and job 2 when that field is named. Still pause and report after every job. The field must already be a key printed by that job's summary template, or `truncated` / crash / `busy` / wrong scene. Do not invent a key the template does not print. "Add a field so I can rerun" is invalid. The only valid same-command rerun is `truncated`, crash, `busy` lock, or wrong scene, and then the same command once.
+
+Concurrent agents share catalog tools. They do not share summary files: each session writes under `_logs/sess/<session>/`. Live-tree apply uses only `_logs/patch-lock/apply.lock` (30-60s). A new week pin starts with `powershell -File tools/clean_agent_logs.ps1 -NewWeek` so the week is empty of prior sess folders, patch-scratch, apply.lock, and leftover singleton summaries.
+

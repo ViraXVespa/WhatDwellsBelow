@@ -9,6 +9,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+. (Join-Path $PSScriptRoot "agent_log.ps1")
+
 $JobMap = @{
     "clean"                = "_logs/clean/summary.txt"
     "oversize-docs"        = "_logs/oversize-docs/summary.txt"
@@ -38,6 +40,8 @@ $JobMap = @{
     "build-gate"           = "_logs/build-gate/summary.txt"
     "grok-sessions-pack"   = "_logs/grok-sessions-pack/summary.txt"
     "grok-sessions-report" = "_logs/grok-sessions-report/summary.txt"
+    "patch-stage"          = "_logs/patch-scratch/summary.txt"
+    "patch-promote"        = "_logs/patch-lock/summary.txt"
 }
 
 function Get-RepoRoot {
@@ -51,6 +55,31 @@ function Get-RepoRoot {
     return (Get-Location).Path
 }
 
+function Resolve-JobSummary {
+    param(
+        [string]$Name,
+        [string]$Repo
+    )
+    $sessionPath = $null
+    try {
+        $sessionPath = Get-WdbAgentSummaryPath -Job $Name -Root $Repo
+    } catch {
+        $sessionPath = $null
+    }
+    if ($sessionPath -and (Test-Path -LiteralPath $sessionPath -PathType Leaf)) {
+        return $sessionPath
+    }
+    if ($JobMap.ContainsKey($Name)) {
+        $rel = $JobMap[$Name]
+    } else {
+        $rel = Join-Path "_logs" (Join-Path $Name "summary.txt")
+    }
+    if ([System.IO.Path]::IsPathRooted($rel)) {
+        return $rel
+    }
+    return Join-Path $Repo $rel
+}
+
 $repoRoot = Get-RepoRoot -Hint $Root
 
 if (-not $Job -and -not $Path) {
@@ -61,17 +90,17 @@ if (-not $Job -and -not $Path) {
 }
 
 if ($Path) {
+    $full = $Path
+    if (-not [System.IO.Path]::IsPathRooted($full)) {
+        $full = Join-Path $repoRoot $Path
+    }
     $rel = $Path
-} elseif ($JobMap.ContainsKey($Job)) {
-    $rel = $JobMap[$Job]
 } else {
-    $rel = Join-Path "_logs" (Join-Path $Job "summary.txt")
-}
-
-if ([System.IO.Path]::IsPathRooted($rel)) {
-    $full = $rel
-} else {
-    $full = Join-Path $repoRoot $rel
+    $full = Resolve-JobSummary -Name $Job -Repo $repoRoot
+    $rel = $full
+    if ($full.StartsWith($repoRoot, [StringComparison]::OrdinalIgnoreCase)) {
+        $rel = $full.Substring($repoRoot.Length).TrimStart("\", "/").Replace("\", "/")
+    }
 }
 
 if (-not (Test-Path -LiteralPath $full)) {

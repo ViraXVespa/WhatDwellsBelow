@@ -15,6 +15,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import grok_session_lib as gsl
+import agent_log
 import pack_grok_sessions as packer
 
 
@@ -98,14 +99,22 @@ def build_report(rows: list[dict[str, Any]]) -> str:
     for row in rows:
         for turn in row.get("turns") or []:
             gsl.accumulate_turn(tools, paths, intercepts, turn)
+            counts = turn.tool_counts or {tool: 1 for tool in turn.tools}
+            tools_note = ",".join(f"{tool}:{n}" for tool, n in sorted(counts.items()))
+            targets = ";".join(f"{t}:{p}" for t, p in turn.paths)
             top_turns.append(
                 {
                     "title": row["title"],
+                    "session_id": row["session_id"],
                     "turn": turn.index,
                     "tokens": turn.usage.get("total", 0),
                     "uncached": turn.usage.get("uncached", 0),
                     "cost_ticks": turn.usage.get("cost_ticks", 0),
-                    "tools": ",".join(turn.tools),
+                    "tools": tools_note,
+                    "path_or_command": targets,
+                    "same_path_reads": turn.same_path_reads,
+                    "same_command_repeats": turn.same_command_repeats,
+                    "loop": turn.loop_line,
                 }
             )
     top_turns.sort(
@@ -153,7 +162,7 @@ def build_report(rows: list[dict[str, Any]]) -> str:
     lines.extend(["", "## top turns"])
     lines.extend(
         _table(
-            ["usd", "uncached", "tokens", "turn", "tools", "title"],
+            ["usd", "uncached", "tokens", "turn", "tools", "path_or_command", "same_path_reads", "same_command_repeats", "loop", "title"],
             [
                 [
                     _fmt_usd(int(item["cost_ticks"])),
@@ -161,6 +170,10 @@ def build_report(rows: list[dict[str, Any]]) -> str:
                     str(item["tokens"]),
                     str(item["turn"]),
                     item["tools"],
+                    item.get("path_or_command", ""),
+                    str(item.get("same_path_reads", 0)),
+                    str(item.get("same_command_repeats", 0)),
+                    str(item.get("loop", "")),
                     item["title"],
                 ]
                 for item in top_turns[:20]
@@ -241,16 +254,17 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     repo_root = Path(args.root).expanduser().resolve()
-    pack_dir = (
-        Path(args.pack_dir).expanduser().resolve()
-        if args.pack_dir
-        else (repo_root / "_logs" / "grok-sessions-pack")
-    )
-    out_dir = (
-        Path(args.out_dir).expanduser().resolve()
-        if args.out_dir
-        else (repo_root / "_logs" / "grok-sessions-report")
-    )
+    if args.pack_dir:
+        pack_dir = Path(args.pack_dir).expanduser().resolve()
+    else:
+        try:
+            pack_dir = agent_log.agent_log_dir("grok-sessions-pack", repo_root)
+        except (OSError, ValueError):
+            pack_dir = repo_root / "_logs" / "grok-sessions-pack"
+    if args.out_dir:
+        out_dir = Path(args.out_dir).expanduser().resolve()
+    else:
+        out_dir = agent_log.ensure_agent_log_dir("grok-sessions-report", repo_root)
     now = packer._now_local()
     until = packer._parse_when(args.until or None, now)
     since = packer._parse_when(args.since or None, until - timedelta(hours=24))
