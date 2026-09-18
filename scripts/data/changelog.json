@@ -13,6 +13,9 @@
 				},
 				{
 					"text": "Web Phase 4 emits new files one at a time; revisions and Phase 5 tests use one tools/_scratch.py."
+				},
+				{
+					"text": "Parked mandates: Build harness, Refactorer setup, Build week session guide."
 				}
 			],
 			"summary": "Session-keyed agent logs, staged patches, and a stricter Build job cycle."
