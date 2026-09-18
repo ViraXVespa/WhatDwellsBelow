@@ -24,9 +24,11 @@ Move to the next phase only when this file says to. Do not emit source during Ph
 
 The User tells the agent to review the repo. That sets up the session.
 
-If the agents file already routed this session here, do not re-read the agents file. Read `design/protocol.md` and `design/constraints.md` only when they are not already in this session. Then only topic for work already named. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open the Build path file, the Bot path file, or `design/README.md` for context. Do not open `design/sessions.md` or `design/session-log.md` from this path. Do not read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session’s goal is to write that brief.
+If the agents file already routed this session here, do not re-read the agents file. Read `design/protocol.md` and `design/constraints.md` only when they are not already in this session. Then only topic for work already named. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open the Build path file, the Bot path file, or `design/README.md` for context. Do not open `design/sessions.md` or `design/session-log.md` from this path. Do not read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session's goal is to write that brief or the named park is reuse_brief. Open `design/parked-tasks.md` only when the User names a parked task or resume parked.
 
-Respond by confirming the review is done and that the session is ready for Phase 2. Do not start implementation.
+If the first User message names a parked task (design/parked-tasks.md table: id or trigger words), load only that Open file after the law pair. Confirm the review is done and that this session is that parked task, ready to continue from its leave-off. Do not wait for a separate go-to-Phase-2 message. If that park already has a mandate, Phase 2 is optional; when the User says go, implement, or Phase 7, proceed.
+
+If no park is named, confirm the review is done and that the session is ready for Phase 2. Do not start implementation.
 
 ### Phase 2 — Discussion
 

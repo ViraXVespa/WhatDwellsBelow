@@ -67,24 +67,21 @@ Do not build a markdown engine, CommonMark parser, HTML sanitizer, or doc framew
 A new tools/ module is in scope because this item names it. Prefer one library imported by the existing runners. New catalog row only if a new command appears. One PR. Mark this item done in the same PR.
 
 ### opt-002 (pending)
-- Title: Replace scattered res:// strings with a shared path/load helper
+- Title: Centralize preload literals on Autoload/flow facades
 - Cluster: Autoload / flow
 - Files: `scripts/app.gd`, `scripts/app_boot.gd`, `scripts/app_flow.gd`, `scripts/app_run.gd`, `scripts/app_set.gd`
 
 Inventory first. Do not edit until the shape is listed.
 
-Scattered `res://` strings: 237 live `.gd` files, 1186 hits. No `class_name`. Dominant pattern is `const FooS := preload("res://scripts/...")` at file tops (app.gd, app_boot.gd, pause_menu, gear_board hosts). Other hits are scene consts (`CAMP_SCENE`) and asset path strings (sfx.gd wavs, player.gd / interact_fx.gd sprites, app_flow preload lists).
+GDScript preload() only accepts a string literal. Do not use preload(variable) or Res.script("data/balance.gd") as a preload stand-in.
 
-User ask: stop repeating `res://` in every script. Preferred directions (pick one, do not build all three):
-1. Helper library that maps paths to short calls (e.g. `Res.balance()`, `Res.CAMP`, `Res.script("data/balance.gd")`).
-2. Per-API static loader on each public facade (thin static preload owner), not a new autoload per API.
-3. Do not add a second autoload / ResourceBus / Entity.gd singleton unless the User names that in the Bot session. App is already the autoload.
+This item is option 2 only: per-API static / const preload owner on the Autoload/flow facades. The preload("res://...") literal stays on app.gd / app_boot.gd / app_flow.gd / app_run.gd / app_set.gd. Other files in that cluster use those consts (or a thin static that returns the already-preloaded resource). App remains the autoload. Do not add ResourceBus / Entity.gd / a second autoload.
 
-This PR: land the helper (or per-API statics) and convert **only** the Autoload / flow cluster (`scripts/app.gd`, `app_set.gd`, `app_boot.gd`, `app_flow.gd`, `app_run.gd`, and their existing preload aliases). Update the Autoload / flow code-map row if a new public helper path appears.
+Do not change what loads or when. Do not convert const preload to load() to hide res://.
 
-Out of this PR: wav/png catalogs (sfx, player anim paths, interact_fx), gear_board / pause_menu / playtest fan-out, tree-wide `class_name`, replacing ResourceLoader / threaded hub preload behavior.
+Out of this item: wav/png catalogs, gear_board / pause_menu / playtest, tree-wide class_name, ResourceLoader / threaded hub preload, a Res.balance() helper library.
 
-Do not change what gets loaded or when. Short calls must resolve to the same `res://` paths. Touched live scripts stay under 10KB. One PR. Mark this item done in the same PR.
+Touched live scripts stay under 10KB. Land on the current open Bot PR. Mark this item done when the cluster convert is in that PR.
 
 ### opt-003 (pending)
 - Title: Shared helper for Title/Placeholdia/Dungeon load legs

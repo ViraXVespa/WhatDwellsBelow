@@ -55,7 +55,7 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 5. Doors with a Job table stay thin.
 6. Path files never appear on topic See also.
 7. Versioning / changelog body is ship-only.
-8. Opening this file happens only when the User names routing work.
+8. Opening this file happens only when the User names routing work. Open design/parked-tasks.md only when the User names a parked task or resume parked.
 9. Topic job siblings name no other `design/*.md` paths.
 10. Opening the topic table is not a boot step.
 11. README and code-map are human indexes, not boot files.

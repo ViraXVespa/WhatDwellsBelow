@@ -62,7 +62,7 @@ Implement the requested work by patching the live path in place.
 
 This path is unconstrained on **implementation** inside one system: new helpers, same-system APIs, and local module shape are in scope when they ship the asked work more cleanly. Product scope stays locked (`design/constraints.md`, `design/protocol.md`).
 
-**Just do:** add, rename, or replace helpers and APIs inside the same system; decide code structure inside one system without asking.
+**Just do:** add, rename, or replace helpers and APIs inside the same system; decide code structure inside one system without asking. A new helper file or 10KB split is not a new player-facing system.
 
 **Stop and propose first:** a new **cross-system** owner; replacing a **named live architecture** that design already pins (camera, dungeon gen, gear board, debug menu, save format, input router); a greenfield rewrite; copying archive scripts/scenes over live.
 

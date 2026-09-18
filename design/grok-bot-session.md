@@ -30,20 +30,20 @@ If the User names more than one job, ask which flow this session is. One flow, o
 
 ## Shared ship
 
-- One open Bot PR at a time. Do not claim a write landed until the PR exists.
-- Prefer one commit on the PR branch. Tell the User to **squash-merge** into `main` (not merge-commit or rebase-merge). After squash-merge: stop. CI stamps. Do not offer a post-merge stamp commit.
+- One open Bot PR at a time. Keep committing on that branch until the User merges or quota ends. Then open a new PR for the next cycle. Do not claim a write landed until the PR exists.
+- Commit per cluster on that branch. Tell the User to **squash-merge** into `main` when they choose to land (not merge-commit or rebase-merge). After squash-merge: stop that cycle. CI stamps. Do not offer a post-merge stamp commit.
 - One new `design/changelog/{label}.md` when the sweep is ready to land. Label math and body shape: `design/versioning-log.md`. Do not read older changelog files. Do not hand-edit `scripts/data/version.json` or `scripts/data/changelog.json`.
 - Touched live `scripts/**/*.gd` must ship under 10KB. Split with `design/refactor.md` (recipe only). The under-5KB target is only `design/grok-bot-size.md`.
 - Caps are on-disk UTF-8 file sizes (`Get-Item Length` / `dir`). Do not measure with `ReadAllText` + `Encoding.UTF8.GetByteCount`.
 - PC offload: skill `.grok/skills/pc-offload/SKILL.md` then `design/pc-offload.md`. Prefer Length summaries over opening untouched siblings. Tree search is `list_xref.ps1`, not the grep tool. Git inventory is `list_changed.ps1`.
 - New `tools/` runners: propose first; implement only after the User approves that runner this session.
-- Local size sweeps: prefer checkout at `WDB_ROOT` (example: `C:\Users\Vira\source\repos\WhatDwellsBelow`). Document a `WDB_ROOT` change here only if that path itself changed. Commit locally per cluster; push the PR branch when the cluster is done.
+- Prefer the Bot cloud clone, not the User PC checkout. Commit per cluster on the open Bot PR; push that branch as you go.
 - Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
 - After each cluster report: PR URL, squash-merge reminder, path + bytes before/after, changelog path if shipping, what is still over cap, next cluster.
 
 ## Shared do not
 
-- Features, tunables, new game systems, game skills, rarities, hub upgrades, co-op, art / I2V.
+- Features, tunables, new player-facing game systems, game skills, rarities, hub upgrades, co-op, art / I2V. A new helper module or cap split is not a new game system.
 - Copying Imagine / I2V skills into `.cursor/skills/`.
 - Invented numbers.
 - Behavior changes, drive-by renames, comment rewrites, wholesale retypes, reformats. Exception: a User-named `design/grok-bot-opt.md` item may list a timing / preload / cache change.

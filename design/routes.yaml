@@ -24,6 +24,10 @@ notes_exempt:
   - design/sessions.md
   - design/session-log.md
   - design/reuse-map.md
+  - design/parked-tasks.md
+  - design/park-closeout-harness.md
+  - design/park-bot-setup.md
+  - design/park-build-week.md
 
 parked_jobs:
   - design/art-attack-keyframes.md
