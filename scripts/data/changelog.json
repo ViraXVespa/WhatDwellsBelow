@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.7",
+			"points": [
+				{
+					"text": "Grok Build slice boot: name an area, run start_build_slice, gather on live, User launches the FORK worktree argv off clean main."
+				},
+				{
+					"text": "Week start is the week_start.ps1 script, not a new-week passphrase."
+				},
+				{
+					"text": "Fork-session is the return from that gather pin after a red postcard; the guilty transcript does not keep patching."
+				},
+				{
+					"text": "Drop stage_patch / promote_patch from the loop detector and the pc-offload catalog."
+				},
+				{
+					"text": "read_summary uses the session path only; list_xref header matches agent_log."
+				}
+			],
+			"summary": "Build slice boot plus harness hygiene: week_start is the week trigger, worktrees fork from a gather pin, dead patch tools stay gone."
+		},
+		{
 			"label": "0.4.6",
 			"points": [
 				{
