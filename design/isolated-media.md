@@ -11,7 +11,7 @@ CLI-only. Web / chat and Grok Bot do not run Imagine and do not spawn this runne
 
 ## Default
 
-Isolate. Do not call Imagine in the game-repo session unless a row in **In-session exceptions** matches.
+Isolate. Do not call Imagine in the game-repo cwd unless a row in **In-session exceptions** matches. Project hook `.grok/hooks/wdb-pretool.json` denies Imagine/I2V when cwd is this repo.
 
 A skill may auto-load so the **parent** follows this file. That is not permission to generate in-repo. The parent stages a scratch directory outside the git tree and runs `tools/run_isolated_grok.py`.
 

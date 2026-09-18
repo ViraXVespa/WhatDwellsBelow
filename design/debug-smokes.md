@@ -46,9 +46,9 @@ Binary (Steam tools build): `C:/Program Files (x86)/Steam/steamapps/common/Godot
 | p9 | Audio, archive catalog, anim models, playtest hook |
 
 
-## Dedicated Grok Build session
+## Dedicated smoke session
 
-One concurrent Grok Build CLI owns smoke coverage. **Weekly:** sessions in one instance, kept thin enough to last about one quota (catalog summaries, not Godot logs in chat). Slice, Bot-notes, and PC-offload chats must not rewrite these habits.
+Smoke coverage is a Build session. **Weekly:** sessions in one instance, kept thin enough to last about one quota (catalog summaries, not Godot logs in chat). Slice, Bot-notes, and PC-offload chats must not rewrite these habits.
 
 - Purpose: write named smoke coverage. Numbered P1–P9: `smoke.gd` (`route_boot` / `attach_*`) plus `smoke_early.gd` / `smoke_late.gd` / `smoke_p*.gd`. Dedicated sweeps are extra flags, not a new N: `--wdb-load-timing-smoke` and `--wdb-dungeon-load-timing-smoke` (`load_timing.gd` mark / dmark), `--wdb-dungeon-map-smoke` (`dungeon_map.gd`)
 - Typical slice: one named add. Edit `smoke.gd` routing and that helper (live path only for marks/asserts the smoke must emit). Run that phase (`run_smokes.ps1`) or extra-flag runner. Read only `_logs/smokes/summary.txt`, or `_logs/load-timing/summary.txt` / `_logs/dungeon-load-timing/summary.txt` / `_logs/dungeon-map/summary.txt` when that flag is the job. Stop

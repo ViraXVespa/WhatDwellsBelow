@@ -86,12 +86,9 @@ if ($existing.Count -eq 0) {
         docs       = @($docs)
     }
     if (-not $WhatIf) {
-        $list = [System.Collections.Generic.List[object]]::new()
-        foreach ($b in $cat.builds) { $list.Add($b) }
-        $list.Add((New-Object psobject -Property $row))
-        $cat.builds = $list.ToArray()
-        $json = $cat | ConvertTo-Json -Depth 8
-        [IO.File]::WriteAllText($catPath, $json + "`n")
+        $desc = "Live path at the end of Grok Web week $series ($oldLabel)."
+        python (Join-Path $Root "tools\week_pin.py") --root $Root --id $pinId --label $pinLabel --desc $desc --commit $sha
+        if ($LASTEXITCODE -ne 0) { throw "week_pin.py failed" }
         $tagExists = (git tag --list $tagName)
         if (-not $tagExists) {
             git tag $tagName $sha
@@ -121,7 +118,7 @@ if ($patch -eq 0 -and [string]$ver.label -eq $newLabel) {
             label       = $newLabel
             open_commit = $sha
         }
-        $verJson = $verOut | ConvertTo-Json
+        $verJson = $verOut | ConvertTo-Json-DISABLED
         [IO.File]::WriteAllText($verPath, $verJson + "`n")
     }
 }

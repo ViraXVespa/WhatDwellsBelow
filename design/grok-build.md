@@ -45,7 +45,7 @@ Do not start by archiving or rewriting the live path. Do not resume unfinished G
 
 ## Week ritual
 
-Run this block **only** when the User said **new week**. Otherwise skip it. After the series seed / `0.N.0` lands, run `python tools/archive_prior_changelogs.py` so prior-series markdown leaves the flat `design/changelog/` folder (CI also runs it on stamp). Then run `powershell -File tools/clean_agent_logs.ps1 -NewWeek` so `_logs/sess`, patch-scratch, apply.lock, and leftover singleton summaries start empty. Job cycle (gather once, change once, prove once): `design/protocol.md`.
+Run this block **only** when the User said **new week**. Otherwise skip it. After the series seed / `0.N.0` lands, run `python tools/archive_prior_changelogs.py` so prior-series markdown leaves the flat `design/changelog/` folder (CI also runs it on stamp). Then run `powershell -File tools/week_start.ps1`. Job cycle (gather once, change once, prove once): `design/protocol.md`.
 
 Follow `design/versioning.md`. In short:
 
@@ -58,7 +58,7 @@ Archived builds are pinned commits in `scripts/data/archive_catalog.json`, not p
 
 ## Work
 
-Implement the requested work by patching the live path in place.
+Implement the requested work in a Grok worktree (`grok -w` / CLI worktree), then merge into the live checkout. Do not take the live `--path` while the User editor holds it.
 
 This path is unconstrained on **implementation** inside one system: new helpers, same-system APIs, and local module shape are in scope when they ship the asked work more cleanly. Product scope stays locked (`design/constraints.md`, `design/protocol.md`).
 
@@ -79,7 +79,7 @@ Second topic door: ask the User to name the owner first. If `conflicts_with` lis
 
 ## Weekly role sessions
 
-Bot notes, PC offload, and Smoke tests each get **one CLI per development week**, sized to last about one quota. Keep those threads thin:
+Bot notes, PC offload, and Smoke tests are **sessions in one Grok instance**, kept thin enough to last about one quota. Keep those threads thin:
 
 - Boot once (this file + law pair). Do not re-fetch a file already in the loaded set.
 - Catalog summaries only. When the User names a thing, at most one `list_xref` and/or one code-map row. Do not walk the tree into chat.
@@ -89,7 +89,7 @@ Bot notes, PC offload, and Smoke tests each get **one CLI per development week**
 
 ## Bot notes session
 
-Weekly CLI. Parks notes for Grok Bot. Does not implement those items and does not open a Bot PR.
+Session. Parks notes for Grok Bot. Does not implement those items and does not open a Bot PR.
 
 - Park with `python tools/bot_opt.py` (`--add` / `--replace` / `--list` / `--id`). Read `_logs/bot-opt/summary.txt` only.
 - Keep a general layout sense from the loaded set, one code-map row, and the named search. Expand the User’s wording enough that Bot can start (likely paths, owner, an obvious in/out). Ask once if a gap is obvious.
@@ -101,13 +101,13 @@ Weekly CLI. Parks notes for Grok Bot. Does not implement those items and does no
 
 ## PC-offload session
 
-Weekly CLI. Implement catalog / runner / skill work the User names. New runner: propose and wait (catalog rule). Do not Imagine, do not open a Bot PR, do not week-pin.
+Session. Implement catalog / runner / skill work the User names. New runner: propose and wait (catalog rule). Do not Imagine, do not open a Bot PR, do not week-pin.
 
 Habits (typical slice, just-do extras, extra do-nots) live in `design/pc-offload.md` under **Dedicated Grok Build session**. Slice, Bot-notes, and Smoke-tests chats must not rewrite them.
 
 ## Smoke-tests session
 
-Weekly CLI. Create or extend smoke coverage the User names (`scripts/debug/smoke.gd` and phase helpers). Run via the catalog; read only those summaries. New runner: propose and wait (catalog rule). Do not Imagine, do not open a Bot PR, do not week-pin. Do not invent coverage the User did not name.
+Session. Create or extend smoke coverage the User names (`scripts/debug/smoke.gd` and phase helpers). Run via the catalog; read only those summaries. New runner: propose and wait (catalog rule). Do not Imagine, do not open a Bot PR, do not week-pin. Do not invent coverage the User did not name.
 
 Habits (typical slice, just-do extras, extra do-nots) live under **Dedicated Grok Build session** on the debug smokes job. Slice, Bot-notes, and PC-offload chats must not rewrite them.
 
@@ -149,9 +149,7 @@ Stop and report: files changed, how you verified, what is still open. Do not cha
 
 ## End of session
 
-Rewrite only **this role’s** block in git status (leave-off only). Do not wipe another role’s pickup. Report files changed and how verified. Pickup is git plus `_logs/sess/`. Write `design/changelog/{label}.md` for the `0.N.0` completion commit per `design/versioning.md` (body shape only; do not read older changelog files).
-
-Those two session files are for later Grok Build instances, not for web / chat or Grok Bot.
+Stop. Report files changed and how verified. Pickup is git plus `_logs/sess/<Grok session id>/`. Write `design/changelog/{label}.md` for the `0.N.0` completion commit per `design/versioning.md` (body shape only; do not read older changelog files).
 
 ## Do not
 

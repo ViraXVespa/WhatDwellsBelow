@@ -14,7 +14,7 @@ If a path session file is already loaded, stay on that path. Do not re-select a 
 
 - Fresh **Grok** (Build / web): this file, `design/constraints.md`, then only topic that matches the requested work. Inspect the live path from **one system row** in `design/code-map.md` (`project.godot`, then the listed scenes/scripts). MUST NOT walk `assets/` unless the task names sprites or audio. MUST NOT begin by archiving or rewriting the live path. MUST NOT read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. MUST NOT open `design/reuse-map.md` unless this session’s goal is to write that brief or the User named the staged reuse PR.
 - **Grok Bot** does not follow that read list (Bot path file only after boot). When editing GDScript, load `design/gdscript-law.md`.
-- Path procedures live in that path’s session file. git and git are Grok Build leave-off / log only. Leave-off is not a boot list.
+- Path procedures live in that path file. There is no leave-off file. Pickup is git plus `_logs/sess/<Grok session id>/`.
 - MUST implement only the **game** systems this database explicitly requires. MUST NOT invent skills, rarities, hub upgrades, meta-progression, or co-op scaffolding. Grok Build MAY add helpers and same-system APIs per the Build path file. A new cross-system owner or a named-architecture replace is Build **Stop and propose first**.
 - Open numbers, formulas, enemy details, and artifact-set bonuses: MAY invent coherent starts, then MUST expose every value in the secret debug menu and record them in `design/tunables.md`. Grok Bot MUST NOT invent numbers.
 - coverage is a checklist against the existing live build. Fill gaps. MUST NOT use the phases as a license to delete and rebuild. Grok Bot MUST NOT treat coverage as a feature list. Open coverage only when its `Read when` matches.
@@ -61,7 +61,7 @@ Gather is `list_xref` plus `show_func` plus `summarize_scripts` plus one `list_c
 
 Name a **planned gather list** (distinct xref patterns and show-func names) before the first catalog call. Those planned calls are one gather phase. Until show-func/xref can batch names into one summary, read that job's session summary once after each distinct planned call. That is not a second job. A gather call invented after a prove summary, or the same command with the same args again, or a ninth show-func not on the list, is a second job.
 
-Change is one slice or one worktree edit that merges into the live checkout. Prove is one measure, or one listed smoke set, or both **once**. Do not measure, then smoke, then measure.
+Change is one slice in a Grok worktree that merges into the live checkout. Prove is one measure, or one listed smoke set, or both **once**. Do not measure, then smoke, then measure.
 
 Read each job summary once via `powershell -File tools/read_summary.ps1 -Job <name>`. Preferred path is `_logs/sess/<session>/<job>/summary.txt` (session = `WDB_AGENT_SESSION` or the inferred Grok session id). Do not open the summary file directly. Catalog and protocol must agree: once per job, and once per planned gather call as above.
 

@@ -73,7 +73,7 @@ User-ordered archives:
 2. Add a catalog row (id, label, desc, commit, pages_slug, docs).
 3. After Pages deploy, Play that row and confirm it is that SHA with zero live-path state. Report to the User.
 
-Standing Grok Build week pins (no extra prompt). Week-label math: the versioning gate.
+Standing Grok Build week pins (no extra prompt). Week-start: `tools/week_start.ps1`. Week-label math: the versioning gate.
 
 1. At init of week N (not a corruption resume): pin current `main` as `grok_web_w{N-1}` — Grok Web Results (Week N-1). Copy that week’s notes from `design/changelog/0.{N-1}.*.md` or `design/changelog/archive/0.{N-1}/` into `archives/docs/grok_web_w{N-1}/`. Prefer running `tools/archive_prior_changelogs.py` when series advances so the live folder stays current-series only. Attach the `design/` tree that exists **on that commit** in `docs[]`.
 2. On the User’s completion commit `0.N.0`: pin it as `grok_build_wN` — Grok Build Results (Week N). Copy the **previous** week’s changelog files (flat or under `design/changelog/archive/`) into `archives/docs/grok_build_wN/` if they exist. Run `tools/archive_prior_changelogs.py` after the series seed so prior flat files are parked. Attach the `design/` tree on that commit in `docs[]`.
