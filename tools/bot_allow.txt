@@ -40,3 +40,5 @@ design/pc-offload.md
 design/routes.yaml
 design/code-map.md
 design/versioning-log.md
+README.md
+GROK-BOT.md
