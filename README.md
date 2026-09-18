@@ -26,6 +26,8 @@ powershell -File tools/export_web.ps1 -Archives
 
 That writes into `_pages/` (gitignored). GitHub Actions exports HEAD plus each pin in `scripts/data/archive_catalog.json` and deploys Pages. After the workflow exists, set **Settings → Pages → Source = GitHub Actions**. Archived builds are those commits, served at `/archives/<id>/`. Title Play always launches live.
 
+Human setup for the cloud Refactorer: [GROK-BOT.md](GROK-BOT.md). The Bot reads [BOT.md](BOT.md).
+
 ## Open in Godot
 
 1. Steam **Godot Engine** 4.7.2

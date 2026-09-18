@@ -13,7 +13,7 @@ This path does not run the Grok Build week pin ritual. I2V and complex animation
 
 Docs-only goal (no Phase 4 source): after Phase 3, skip Phase 4–6 and emit Phase 7 when the User says to. Phase 6 is a no-op when no live `scripts/**/*.gd` were emitted.
 
-`design/reuse-map.md` is a User-authored staging brief for the next Grok Bot reuse PR. This path writes or replaces that whole file in Phase 7 when the User named that staging work or parked leftover extract work. Do not crawl the live tree for new Bot items unless the User named that sweep. An empty template is valid. Do not invent queue rows.
+`design/reuse-map.md` is a User-authored staging brief for the next Grok Bot reuse PR. This path writes or replaces that whole file in Phase 7 when the User named that staging work or parked leftover extract work. Do not crawl the live tree for new Bot items unless the User named that sweep. An empty template is valid. Do not invent queue rows. Parked `bot_setup` ships the parallel Bot surface (`BOT.md`, `tools/bot_status.py`) without rewriting this phase machine. Web / chat still does not write the cloud clone.
 
 
 ## Phases

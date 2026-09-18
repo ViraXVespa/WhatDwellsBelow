@@ -8,7 +8,7 @@ Binding for **Grok Bot** when the User names the staged reuse PR / reuse-map / q
 
 ## Mandate
 
-The current body of `design/reuse-map.md` is **one** PR goal. Implement that brief. Do not take a subset. Do not invent rows. Do not mark rows done. Do not start a size sweep, extract hunt, relocate, or doc facade pass in the same session.
+Confirm `reuse_brief count` from `python tools/bot_status.py`. The current body of `design/reuse-map.md` is **one** PR goal. Implement that brief. Do not take a subset. Do not invent rows. Do not mark rows done. Do not start a size sweep, extract hunt, relocate, or doc facade pass in the same session.
 
 Web / chat Phase 7 owns that file. After squash-merge, stop. Clearing or replacing the brief is the next web session, not this flow.
 

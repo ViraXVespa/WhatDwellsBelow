@@ -23,8 +23,8 @@ indexes:
 notes_exempt:
   - design/reuse-map.md
   - design/parked-tasks.md
-  - design/park-bot-setup.md
   - design/park-smoke-shots.md
+  - BOT.md
 
 parked_jobs:
   - design/art-attack-keyframes.md
@@ -248,6 +248,7 @@ boot_max:
   bot:
     - AGENTS.md
     - design/grok-bot-session.md
+    - BOT.md
 
 fetch_ban:
   design/web-session.md:

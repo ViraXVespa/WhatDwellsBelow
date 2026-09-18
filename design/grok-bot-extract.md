@@ -3,7 +3,7 @@
 Status: protocol  
 Read when: Grok Bot Job table → ad-hoc extract or existing-owner routing  
 
-Binding for **Grok Bot** extract sessions only. This is not the staged reuse-map PR (the reuse Bot job). This is not a size sweep. User-gated: do not start this flow unless the User named extract / DRY / shared helpers / an owner route *and* did not hand a non-empty the staged reuse brief brief.
+Boot `BOT.md` + `python tools/bot_status.py` first. Binding for **Grok Bot** extract sessions only. This is not the staged reuse-map PR (the reuse Bot job). This is not a size sweep. User-gated: do not start this flow unless the User named extract / DRY / shared helpers / an owner route *and* did not hand a non-empty the staged reuse brief brief.
 
 
 ## Mandate

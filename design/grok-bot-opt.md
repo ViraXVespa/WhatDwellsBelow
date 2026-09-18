@@ -15,7 +15,7 @@ Execute **one** User-named item (or the next `pending` item the User named). One
 - Touched live `scripts/**/*.gd` ship under 10KB. Split with `design/refactor.md` (recipe only). Do not keep splitting toward 5KB in this flow.
 - Do not invent items, numbers, or extra clusters.
 
-The Bot-notes Grok Build CLI is the usual parker. It may expand the User's wording from a thin layout check (one code-map row and/or one `list_xref`) and must ask once if an obvious gap is missing. Do not inventory the tree or write a pass plan into the item. Grok Bot investigates, plans, and implements. Park with `python tools/bot_opt.py` (read `_logs/bot-opt/summary.txt` only). Bot loads this mandate, then `--id opt-NNN` for the named item instead of scanning the Queue by hand.
+The Bot-notes Grok Build CLI is the usual parker. It may expand the User's wording from a thin layout check (one code-map row and/or one `list_xref`) and must ask once if an obvious gap is missing. Do not inventory the tree or write a pass plan into the item. Grok Bot investigates, plans, and implements. Park with `python tools/bot_opt.py` (read `_logs/bot-opt/summary.txt` only). Print pending ids with `python tools/bot_status.py`. Bot loads this mandate, then `--id opt-NNN` for the named item instead of scanning the Queue by hand. Do not add a JSON queue file.
 
 
 ## Read set

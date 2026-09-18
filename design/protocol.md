@@ -13,7 +13,7 @@ If a path session file is already loaded, stay on that path. Do not re-select a 
 ## Core rules
 
 - Fresh **Grok** (Build / web): this file, `design/constraints.md`, then only topic that matches the requested work. Inspect the live path from **one system row** in `design/code-map.md` (`project.godot`, then the listed scenes/scripts). MUST NOT walk `assets/` unless the task names sprites or audio. MUST NOT begin by archiving or rewriting the live path. MUST NOT read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. MUST NOT open `design/reuse-map.md` unless this session’s goal is to write that brief or the User named the staged reuse PR.
-- **Grok Bot** does not follow that read list (Bot path file only after boot). When editing GDScript, load `design/gdscript-law.md`.
+- **Grok Bot** does not follow that read list. Cloud onboard is `BOT.md` plus `python tools/bot_status.py`, then the Bot path file. When editing GDScript, load `design/gdscript-law.md`.
 - Path procedures live in that path file. There is no leave-off file. Pickup is git plus `_logs/sess/<Grok session id>/`.
 - MUST implement only the **game** systems this database explicitly requires. MUST NOT invent skills, rarities, hub upgrades, meta-progression, or co-op scaffolding. Grok Build MAY add helpers and same-system APIs per the Build path file. A new cross-system owner or a named-architecture replace is Build **Stop and propose first**.
 - Open numbers, formulas, enemy details, and artifact-set bonuses: MAY invent coherent starts, then MUST expose every value in the secret debug menu and record them in `design/tunables.md`. Grok Bot MUST NOT invent numbers.

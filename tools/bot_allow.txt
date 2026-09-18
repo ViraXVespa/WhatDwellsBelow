@@ -1,0 +1,42 @@
+# Grok Bot path allowlist. Default deny.
+# tools/bot_status.py --prove and .github/workflows/bot-gate.yml read this file.
+# Python fnmatch: * matches across slashes. Put deny lines first.
+
+!assets/*
+!archives/*
+!docs/*
+!notes/*
+!design/tunables.md
+!design/changelog/archive/*
+!scenes/*
+!site/*
+!.grok/skills/imagine-isolated/*
+!.grok/skills/i2v-isolated/*
+!.cursor/*
+
+scripts/*
+tools/bot_status.py
+tools/check_script_cap.py
+tools/bot_allow.txt
+tools/bot_opt.py
+tools/check_load_graph.py
+tools/check_code_map.py
+tools/doc_patch.py
+tools/write_utf8_file.py
+AGENTS.md
+BOT.md
+.github/workflows/bot-gate.yml
+design/changelog/*
+design/grok-bot-*
+design/park-bot-setup.md
+design/parked-tasks.md
+design/reuse-map.md
+design/refactor.md
+design/doc-refactor.md
+design/gdscript-law.md
+design/protocol.md
+design/web-session.md
+design/pc-offload.md
+design/routes.yaml
+design/code-map.md
+design/versioning-log.md
