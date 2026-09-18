@@ -11,7 +11,7 @@ Never open `notes/`.
 AGENTS.md
     web   -> design/web-session.md -> protocol.md and constraints.md
     build -> design/grok-build.md -> protocol.md and constraints.md
-            -> sessions.md only when rewriting leave-off or the User asked the next unit
+            -> no leave-off file; next unit is User-named
     bot   -> design/grok-bot-session.md -> exactly one Job sibling
 
 Then, only if the User named work:

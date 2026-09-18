@@ -22,7 +22,6 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Numbers | `scripts/data/balance.gd`, `balance_schema.gd`, `tunables.gd` |
 | Version / changelog | `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`; `tools/build_changelog.py`; Pages loose `/data/` notes |
 | Web export | `tools/web_shell.html`, `tools/export_web.ps1`, `tools/publish_notes_site.py`, `tools/pages_game_hash.py`, `tools/enable_texture_mips.py`, `tools/web_postexport.py`; `export_presets.cfg`; `.github/workflows/version.yml`, `.github/workflows/pages.yml` |
-| Agent session logs | `tools/agent_log.ps1`, `tools/agent_log.py`, `tools/stage_patch.ps1`, `tools/promote_patch.ps1`, `tools/read_summary.ps1`, `tools/clean_agent_logs.ps1`, `tools/pack_grok_sessions.py`, `tools/report_grok_sessions.py`, `tools/grok_session_lib.py` |
 | Dungeon | `scripts/dungeon/gen.gd` + `gen_carve.gd`, `gen_rooms.gd`, `gen_doors.gd`; `scripts/world/dungeon.gd` + `dungeon_boot.gd`, `dungeon_geo.gd`, `dungeon_geo_stream.gd`, `dungeon_map_act.gd`, `dungeon_cells.gd`, `dungeon_stream.gd`, `dungeon_props.gd`, `dungeon_pack.gd`, `crystal_net.gd`, `floor_crystal.gd`, `dungeon_props_spawn.gd`, `dungeon_props_place.gd`, `crystal_place.gd` |
 | Hub | `scripts/world/camp.gd` + `camp_warm.gd`, `camp_build.gd`, `camp_view.gd`; `interact.gd`, `interact_fx.gd`, `camp_build_mesh.gd`, `camp_build_roof.gd`; `scripts/combat/dummy.gd` |
 | Gather | `scripts/world/gather_node.gd`, `gather_rules.gd`, `breakable.gd`, `pickup.gd` |

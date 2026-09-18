@@ -19,7 +19,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$OutDir = Join-Path $Root "_logs\changed"
+. (Join-Path $PSScriptRoot "agent_log.ps1")
+$OutDir = Ensure-WdbAgentLogDir -Job "changed" -Root $Root
 $Summary = Join-Path $OutDir "summary.txt"
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null

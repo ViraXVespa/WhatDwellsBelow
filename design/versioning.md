@@ -58,7 +58,7 @@ Run the **init pin** only when the User opens a CLI session by saying **new week
 
 **Init (week N), only after the User said new week:**
 
-1. Read `design/sessions.md` (leave-off only; not a boot list).
+1. Read `tools/week_start.ps1` / git (leave-off only; not a boot list).
 2. This file’s body shape. Do not ingest every `design/changelog/0.N.*.md`.
 3. Inspect git / live tree from one `design/code-map.md` row.
 4. Pin **current `main`** as `grok_web_w{N-1}` — label `Grok Web Results (Week {N-1})`.

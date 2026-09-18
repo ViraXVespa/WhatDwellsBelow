@@ -12,9 +12,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot "agent_log.ps1")
 $SrcRoot = Join-Path $Root ".grok\skills"
 $DstRoot = Join-Path $Root ".cursor\skills"
-$OutDir = Join-Path $Root "_logs\skill-sync"
+$OutDir = Ensure-WdbAgentLogDir -Job "skill-sync" -Root $Root
 $Summary = Join-Path $OutDir "summary.txt"
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null

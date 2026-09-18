@@ -8,7 +8,7 @@ Not a boot file. Not a topic index. See also is forbidden.
 
 ## Trigger (web Phase 1)
 
-If the first User message names a row in the table below (id or trigger words), after the normal web review load only that Open file. Confirm: review done, this session is that parked task, ready to continue from its leave-off. Do not wait for a separate go-to-Phase-2 message.
+If the first User message names a row in the table below (id or trigger words), after the normal web review load only that Open file. Confirm: review done, this chat is that parked task. Do not wait for a separate go-to-Phase-2 message.
 
 If that park file already has the mandate, Phase 2 is optional. When the User says go, implement, or Phase 7, proceed. Do not spend a turn asking which phase this is.
 
@@ -26,13 +26,11 @@ Size / relocate / docs stay Job-table rows. They are not a third queue file.
 
 ## Table
 
-id | trigger | open | session
+id | trigger | open | path
 --- | --- | --- | ---
 attack_keyframes | resume parked, attack keyframes, coil stills | art-attack-keyframes.md (art_pipeline job) | web or isolated media
 reuse_brief | reuse-map, UI chrome brief | reuse-map.md when Brief is not empty | Grok Bot reuse job
 opt_queue | named opt-NNN | grok-bot-opt.md via bot_opt --id | Grok Bot opt job
-closeout_harness | worktrees, Godot lock, pc-offload hooks, Imagine deny | park-closeout-harness.md | web then Build / tools
 bot_setup | Refactorer profile, cloud clone, pool definitions | park-bot-setup.md | web then Bot profile
-build_week | week pins, gather/change/prove | park-build-week.md | web then Build
 
 Do not invent rows.

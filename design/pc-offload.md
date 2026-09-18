@@ -104,12 +104,12 @@ Ship floor vs Bot 5KB sweep: the script-split recipe. Do not restate those caps 
 
 ## Dedicated Grok Build session
 
-One concurrent Grok Build CLI owns catalog / runner / skill optimizations. **Weekly:** one CLI per development week, kept thin enough to last about one quota (catalog summaries, not tool bodies in chat). Slice, Bot-notes, and Smoke-tests chats must not rewrite these habits.
+One concurrent Grok Build CLI owns catalog / runner / skill optimizations. **Weekly:** sessions in one instance, kept thin enough to last about one quota (catalog summaries, not tool bodies in chat). Slice, Bot-notes, and Smoke-tests chats must not rewrite these habits.
 
 - Purpose: When the User names a catalog / runner / skill job, implement that one optimization (catalog row, `tools/` runner, skill when-to-use). Catalog summaries only. Not a game-slice CLI.
 - Typical slice: one named runner. Propose if new, wait for Go. Edit that runner / catalog row / skill when-to-use. Read that row's `_logs/*/summary.txt`. Stop after the report.
 - Just do: same-catalog shared helper; skill `when-to-use` tokens; summary shape matching sibling rows; catalog line next to the existing job.
 - Stop and propose: a new catalog runner (already binding). A generic markdown or leave-off writer; a suite of extra doc runners; putting runners on the live code map; a skill rewrite that pastes the catalog into every Build boot.
 - Do not: Imagine / I2V; Grok Bot PRs; week pin ritual; tree dumps or whole tool bodies in chat; parking Bot opt notes; folding slice work into this thread.
-- Leave-off: only the `## PC offload` / `### PC offload` block in the leave-off file
+- Stop: only the `## PC offload` / `### PC offload` block in the leave-off file
 - Overlap: Bot-notes parks queue items with `bot_opt.py`; Smoke-tests writes phase coverage; Slice CLIs consume this catalog. This CLI does not park Bot notes or add smoke assertions unless the User names that. Slice CLIs do not add runners unless named in that thread.

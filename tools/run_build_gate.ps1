@@ -15,7 +15,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$OutDir = Join-Path $Root "_logs\build-gate"
+. (Join-Path $PSScriptRoot "agent_log.ps1")
+$OutDir = Ensure-WdbAgentLogDir -Job "build-gate" -Root $Root
 $Summary = Join-Path $OutDir "summary.txt"
 $CapScript = Join-Path $Root "tools\check_script_cap.ps1"
 $ImportScript = Join-Path $Root "tools\run_godot_import_check.ps1"

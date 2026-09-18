@@ -13,6 +13,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import agent_log
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import code_map_lib as cm
 
@@ -26,7 +28,7 @@ def main() -> int:
     args = ap.parse_args()
     root = Path(args.root).resolve()
     code_map = root / "design" / "code-map.md"
-    out_dir = root / "_logs" / "code-map-row"
+    out_dir = agent_log.ensure_agent_log_dir("code-map-row", root)
     summary = out_dir / "summary.txt"
     out_dir.mkdir(parents=True, exist_ok=True)
 

@@ -20,6 +20,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+import agent_log
+
 QUEUE_REL = "design/grok-bot-opt.md"
 BEGIN = "<!-- bot-opt:begin -->"
 END = "<!-- bot-opt:end -->"
@@ -288,7 +290,7 @@ def main() -> int:
 
     root = Path(args.root).resolve()
     queue_path = root / QUEUE_REL
-    out_dir = root / "_logs" / "bot-opt"
+    out_dir = agent_log.ensure_agent_log_dir("bot-opt", root)
     summary = out_dir / "summary.txt"
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).isoformat()

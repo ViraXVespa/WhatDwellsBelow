@@ -7,6 +7,8 @@ import argparse
 import sys
 from pathlib import Path
 
+import agent_log
+
 _TOOLS = Path(__file__).resolve().parent
 if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
@@ -112,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         lines = _door_card(data, args.door.strip())
     body = "\n".join(lines) + "\n"
-    out = root / "_logs" / "route" / "summary.txt"
+    out = agent_log.ensure_agent_log_dir("route", ROOT) / "summary.txt"
     _write(out, body)
     print(body, end="")
     return 0

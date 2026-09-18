@@ -132,7 +132,7 @@ Rules:
 
 Update `design/code-map.md` when a new sibling or shared module must be listed. Do not update topic design files unless behavior changed (a legal sweep does not change behavior). Do not write extract results into `design/reuse-map.md` from Bot; web / chat Phase 7 owns that staging brief.
 
-Grok Bot sweep notes: optional `_logs/grok-bot-sweep.md`. Not `design/sessions.md`. Not `design/changelog/`.
+Grok Bot sweep notes: optional `_logs/grok-bot-sweep.md`. Not `tools/week_start.ps1` / git. Not `design/changelog/`.
 
 ## Parked folder moves
 

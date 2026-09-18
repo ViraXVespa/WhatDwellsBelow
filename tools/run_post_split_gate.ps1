@@ -16,7 +16,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$OutDir = Join-Path $Root "_logs\post-split-gate"
+. (Join-Path $PSScriptRoot "agent_log.ps1")
+$OutDir = Ensure-WdbAgentLogDir -Job "post-split-gate" -Root $Root
 $Summary = Join-Path $OutDir "summary.txt"
 $ImportScript = Join-Path $Root "tools\run_godot_import_check.ps1"
 $SmokeScript = Join-Path $Root "tools\run_smokes.ps1"

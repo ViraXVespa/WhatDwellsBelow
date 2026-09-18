@@ -15,6 +15,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+import agent_log
+
 
 def main() -> int:
     ap = argparse.ArgumentParser(
@@ -24,7 +26,7 @@ def main() -> int:
     args = ap.parse_args()
     root = Path(args.root).resolve()
     baked = root / "scripts" / "data" / "version.json"
-    out_dir = root / "_logs" / "changelog-label"
+    out_dir = agent_log.ensure_agent_log_dir("changelog-label", root)
     summary = out_dir / "summary.txt"
     out_dir.mkdir(parents=True, exist_ok=True)
 

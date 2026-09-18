@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python bin/wdb-pretool.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

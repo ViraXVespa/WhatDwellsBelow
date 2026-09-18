@@ -40,8 +40,6 @@ $JobMap = @{
     "build-gate"           = "_logs/build-gate/summary.txt"
     "grok-sessions-pack"   = "_logs/grok-sessions-pack/summary.txt"
     "grok-sessions-report" = "_logs/grok-sessions-report/summary.txt"
-    "patch-stage"          = "_logs/patch-scratch/summary.txt"
-    "patch-promote"        = "_logs/patch-lock/summary.txt"
 }
 
 function Get-RepoRoot {

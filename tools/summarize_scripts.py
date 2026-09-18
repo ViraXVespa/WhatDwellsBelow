@@ -16,9 +16,11 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+import agent_log
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
-OUT_DIR = ROOT / "_logs" / "script-summary"
+OUT_DIR = agent_log.ensure_agent_log_dir("script-summary", ROOT)
 SUMMARY = OUT_DIR / "summary.txt"
 SKIP = (".archive_worktrees", "archives")
 RE_FUNC = re.compile(r"^(static\s+)?func\s+(\w+)\s*\(")
