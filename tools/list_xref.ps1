@@ -3,7 +3,7 @@
 #   powershell -File tools/list_xref.ps1 -Pattern "pc-offload"
 #   powershell -File tools/list_xref.ps1 -Pattern "pc-offload" -Path design -Path tools
 #   powershell -File tools/list_xref.ps1 -Pattern "preload" -Path scripts -Include *.gd
-# Writes _logs/xref/summary.txt - agents should read that, not paste full search output.
+# Writes _logs/sess/<session>/xref/summary.txt via agent_log. Read that summary; do not paste full search output.
 
 param(
     [Parameter(Mandatory = $true)]

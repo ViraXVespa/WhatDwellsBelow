@@ -260,7 +260,7 @@ class Turn:
 
 
 GATHER_TOOLS = frozenset({"list_xref", "xref", "show_func", "show-func", "summarize_scripts", "script-summary", "list_code_map_row", "code-map"})
-CHANGE_TOOLS = frozenset({"search_replace", "write", "stage_patch", "promote_patch"})
+CHANGE_TOOLS = frozenset({"search_replace", "write"})
 PROVE_TOOLS = frozenset({"run_smokes", "smokes", "run_load_timing", "run_dungeon_load_timing", "dungeon-load-timing", "read_summary"})
 READ_TOOLS = frozenset({"read_file", "ReadFile"})
 

@@ -23,12 +23,12 @@ Do not fold another role’s work into this thread unless the User names that wo
 
 | User / situation | What it is | Pin ritual |
 |------------------|------------|------------|
-| Opens CLI by saying **new week** (token refresh counts only if they say that) | Week N init | Yes. Follow **Week ritual** below and `design/versioning.md`. |
+| User runs `powershell -File tools/week_start.ps1` | Week N init | Yes. Follow **Week ritual** below and `design/versioning.md`. |
 | Resume after corruption | Same week, sick thread | Do **not** move the web pin. Do not create a second Grok Build pin for that week. |
 | Mid-week new CLI chat (fat thread, compaction, job change, or another concurrent role) | Catch-up | No pin. |
 | Next slice or next I2V unit in the same slice thread | Slice | No pin. |
 
-Do not pin because time passed, because the last slice ended, or because a new CLI instance started. The trigger is the User saying **new week**.
+Do not pin because time passed, because the last slice ended, or because a new CLI instance started. The trigger is the User running `tools/week_start.ps1`. Saying **new week** is not required.
 
 ## Read order
 
@@ -45,7 +45,7 @@ Do not start by archiving or rewriting the live path. Do not resume unfinished G
 
 ## Week ritual
 
-Run this block **only** when the User said **new week**. Otherwise skip it. After the series seed / `0.N.0` lands, run `python tools/archive_prior_changelogs.py` so prior-series markdown leaves the flat `design/changelog/` folder (CI also runs it on stamp). Then run `powershell -File tools/week_start.ps1`. Job cycle (gather once, change once, prove once): `design/protocol.md`.
+Run this block **only** when the User ran `tools/week_start.ps1` or told you to run that script. Otherwise skip it. After the series seed / `0.N.0` lands, run `python tools/archive_prior_changelogs.py` so prior-series markdown leaves the flat `design/changelog/` folder (CI also runs it on stamp). Then run `powershell -File tools/week_start.ps1`. Job cycle (gather once, change once, prove once): `design/protocol.md`.
 
 Follow `design/versioning.md`. In short:
 
@@ -58,7 +58,7 @@ Archived builds are pinned commits in `scripts/data/archive_catalog.json`, not p
 
 ## Work
 
-Implement the requested work in a Grok worktree (`grok -w` / CLI worktree), then merge into the live checkout. Do not take the live `--path` while the User editor holds it.
+First message names the area (door, job, or live system). Run `powershell -File tools/start_build_slice.ps1 -Door <door>` (or `-Job` / `-Area`). Gather read-only on the live tree. Then the User launches the FORK line from that postcard (`grok --worktree=... --ref main -r <gather-id> --fork-session`). Change and prove only in that worktree. Do not take the live `--path` while the User editor holds it. CLI does not auto-resume the pin; the postcard is the return argv. Red retry is the RETRY line (`grok -r <id> --fork-session`), not another patch on the guilty transcript.
 
 This path is unconstrained on **implementation** inside one system: new helpers, same-system APIs, and local module shape are in scope when they ship the asked work more cleanly. Product scope stays locked (`design/constraints.md`, `design/protocol.md`).
 
@@ -145,7 +145,7 @@ Catalog rows (each a pinned commit, isolated per archives):
 
 Preferred verify when `.gd` changed: `powershell -File tools/run_build_gate.ps1`. Read `_logs/build-gate/summary.txt` only.
 
-Stop and report: files changed, how you verified, what is still open. If prove was red: do not take another change turn in this session. Tell the User to start a new session from the week pin (or skip). Two reds, then stop. Do not invoke --fork-session.
+Stop and report: files changed, how you verified, what is still open. If prove was red: do not take another change turn in this session. Tell the User to launch the RETRY line from the slice-boot postcard (or skip). Two reds, then stop. Fork is the return; do not keep patching the guilty transcript.
 
 ## End of session
 
@@ -162,7 +162,7 @@ Stop. Report files changed and how verified. Pickup is git plus `_logs/sess/<Gro
 - Do not run a Grok Bot full-repo sweep.
 - Do not commit `_logs/`. Writing tool summaries there via `design/pc-offload.md` is allowed; read only those summaries.
 - Do not follow git commit links into web-session conversations.
-- Do not run the week pin ritual unless the User said **new week**.
+- Do not run the week pin ritual unless the User ran or named `tools/week_start.ps1`.
 - Do not call Imagine in the game-repo cwd when `design/isolated-media.md` says to isolate.
 
 Mid-week slice or catch-up: do not rerun the Week ritual section.

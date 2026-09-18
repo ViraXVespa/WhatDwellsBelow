@@ -11,36 +11,37 @@ $ErrorActionPreference = "Stop"
 
 . (Join-Path $PSScriptRoot "agent_log.ps1")
 
-$JobMap = @{
-    "clean"                = "_logs/clean/summary.txt"
-    "oversize-docs"        = "_logs/oversize-docs/summary.txt"
-    "agent-py"             = "_logs/agent-py/summary.txt"
-    "oversize"             = "_logs/oversize/summary.txt"
-    "script-summary"       = "_logs/script-summary/summary.txt"
-    "facade-cluster"       = "_logs/facade-cluster/summary.txt"
-    "script-cap"           = "_logs/script-cap/summary.txt"
-    "changed"              = "_logs/changed/summary.txt"
-    "show-func"            = "_logs/show-func/summary.txt"
-    "xref"                 = "_logs/xref/summary.txt"
-    "route"                = "_logs/route/summary.txt"
-    "code-map-row"         = "_logs/code-map-row/summary.txt"
-    "code-map-patch"       = "_logs/code-map-patch/summary.txt"
-    "code-map-check"       = "_logs/code-map-check/summary.txt"
-    "bot-opt"              = "_logs/bot-opt/summary.txt"
-    "scenes"               = "_logs/scenes/summary.txt"
-    "changelog-label"      = "_logs/changelog-label/summary.txt"
-    "skill-sync"           = "_logs/skill-sync/summary.txt"
-    "godot-import-check"   = "_logs/godot-import-check/summary.txt"
-    "grok-sessions-pack"   = "_logs/sess/<session>/grok-sessions-pack/summary.txt"
-    "grok-sessions-report" = "_logs/sess/<session>/grok-sessions-report/summary.txt"
-    "smokes"               = "_logs/smokes/summary.txt"
-    "load-timing"          = "_logs/load-timing/summary.txt"
-    "dungeon-load-timing"  = "_logs/dungeon-load-timing/summary.txt"
-    "dungeon-map"          = "_logs/dungeon-map/summary.txt"
-    "hostify-lint"         = "_logs/hostify-lint/summary.txt"
-    "post-split-gate"      = "_logs/post-split-gate/summary.txt"
-    "build-gate"           = "_logs/build-gate/summary.txt"
-}
+$JobNames = @(
+    "agent-py",
+    "bot-opt",
+    "build-gate",
+    "changed",
+    "changelog-label",
+    "clean",
+    "code-map-check",
+    "code-map-patch",
+    "code-map-row",
+    "dungeon-load-timing",
+    "dungeon-map",
+    "facade-cluster",
+    "godot-import-check",
+    "grok-sessions-pack",
+    "grok-sessions-report",
+    "hostify-lint",
+    "load-timing",
+    "oversize",
+    "oversize-docs",
+    "post-split-gate",
+    "route",
+    "scenes",
+    "script-cap",
+    "script-summary",
+    "show-func",
+    "skill-sync",
+    "slice-boot",
+    "smokes",
+    "xref"
+)
 
 function Get-RepoRoot {
     param([string]$Hint)
@@ -58,30 +59,17 @@ function Resolve-JobSummary {
         [string]$Name,
         [string]$Repo
     )
-    $sessionPath = $null
     try {
-        $sessionPath = Get-WdbAgentSummaryPath -Job $Name -Root $Repo
+        return Get-WdbAgentSummaryPath -Job $Name -Root $Repo
     } catch {
-        $sessionPath = $null
+        throw ("read_summary: no session path for job '{0}': {1}" -f $Name, $_.Exception.Message)
     }
-    if ($sessionPath -and (Test-Path -LiteralPath $sessionPath -PathType Leaf)) {
-        return $sessionPath
-    }
-    if ($JobMap.ContainsKey($Name)) {
-        $rel = $JobMap[$Name]
-    } else {
-        $rel = Join-Path "_logs" (Join-Path $Name "summary.txt")
-    }
-    if ([System.IO.Path]::IsPathRooted($rel)) {
-        return $rel
-    }
-    return Join-Path $Repo $rel
 }
 
 $repoRoot = Get-RepoRoot -Hint $Root
 
 if (-not $Job -and -not $Path) {
-    $names = ($JobMap.Keys | Sort-Object) -join ", "
+    $names = ($JobNames | Sort-Object) -join ", "
     Write-Output "usage: powershell -File tools/read_summary.ps1 -Job <name>"
     Write-Output "jobs: $names"
     exit 2
@@ -94,7 +82,12 @@ if ($Path) {
     }
     $rel = $Path
 } else {
-    $full = Resolve-JobSummary -Name $Job -Repo $repoRoot
+    try {
+        $full = Resolve-JobSummary -Name $Job -Repo $repoRoot
+    } catch {
+        Write-Output $_.Exception.Message
+        exit 2
+    }
     $rel = $full
     if ($full.StartsWith($repoRoot, [StringComparison]::OrdinalIgnoreCase)) {
         $rel = $full.Substring($repoRoot.Length).TrimStart("\", "/").Replace("\", "/")

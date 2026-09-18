@@ -58,10 +58,9 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Bui
 | Hostify lint (advisory) | `powershell -File tools/lint_hostify.ps1` | `_logs/sess/<session>/hostify-lint/summary.txt` |
 | Post-split gate (Bot) | `powershell -File tools/run_post_split_gate.ps1` (optional `-WithSmokes`, `-Force`) | `_logs/sess/<session>/post-split-gate/summary.txt` |
 | Build gate (Build) | `powershell -File tools/run_build_gate.ps1` (optional `-SkipImport`, `-OverKb 10`, `-Force`) | `_logs/sess/<session>/build-gate/summary.txt` |
-| Read one catalog summary | `powershell -File tools/read_summary.ps1 -Job xref` | `_logs/sess/<session>/<job>/summary.txt` (fallback `_logs/<job>/summary.txt`) |
+| Read one catalog summary | `powershell -File tools/read_summary.ps1 -Job xref` | `_logs/sess/<session>/<job>/summary.txt` |
 | Session log helpers | dot-source `tools/agent_log.ps1` or `import agent_log` | (no summary; prints session/job/dir) |
-| Stage a unified diff | `powershell -File tools/stage_patch.ps1 -Diff path.diff` | `_logs/sess/<session>/patch-stage/summary.txt` |
-| Promote a staged patch | `powershell -File tools/promote_patch.ps1 -Id <id>` | `_logs/sess/<session>/patch-promote/summary.txt` |
+| Build slice boot | `powershell -File tools/start_build_slice.ps1 -Door dungeon` (or `-Job`, `-Area`, `-WhatIf`, `-Launch`) | `_logs/sess/<session>/slice-boot/summary.txt` |
 | One route card | `powershell -File tools/list_route.ps1 -Door dungeon` (or `-Job debug.smokes`) | `_logs/sess/<session>/route/summary.txt` |
 
 `tools/export_web.ps1` runs `enable_texture_mips.py` before Godot `--import`. Do not invent a second bake step after the PCK is packed.

@@ -13,7 +13,7 @@ This path never pushes `main`. Do not `git push origin main`. Do not tell the Us
 
 After Phase 3, do not give the User a command list, a multi-step bat block, or "then run this, then that." One `tools/_scratch.py` must perform the whole remaining action (file writes and checks only unless the User asked for git). The User runs only `python tools/_scratch.py` from the repo root and pastes the RESULT. If a step cannot live in that scratch, say so and wait; do not dump homework.
 
-This path does not run the Grok Build week pin ritual. I2V and complex animation packing stay in Grok Build unless the User says otherwise.
+This path does not run the Grok Build week pin ritual and does not run `tools/start_build_slice.ps1`. I2V and complex animation packing stay in Grok Build unless the User says otherwise.
 
 Docs-only goal (no Phase 4 source): after Phase 3, skip Phase 4–6 and emit Phase 7 when the User says to. Phase 6 is a no-op when no live `scripts/**/*.gd` were emitted.
 
