@@ -83,7 +83,7 @@ Do not assemble a revision from a tool-card summary, a truncated artifact, or a 
 
 ### Phase 5 — Review
 
-The User tests. Emit one tools/_scratch.py that exercises every script this slice shipped or revised, then the User runs python tools/_scratch.py from the repo root and pastes the RESULT. Flagged issues loop back to Phase 2, then 3-4 as needed, until the User is satisfied.
+The User tests. Emit one tools/_scratch.py that exercises every script this slice shipped or revised, using WhatIf / --dry-run / usage paths so nothing live is mutated. That same script must run tools/check_load_graph.py and print PASS/FAIL. Do not ask the User to run the checker as a second command. The User runs python tools/_scratch.py from the repo root and pastes the RESULT. Flagged issues loop back to Phase 2, then 3-4 as needed, until the User is satisfied.
 
 The User will say something like “Looks good.” That means no more behavior changes for this goal. Go to Phase 6.
 
@@ -122,7 +122,7 @@ Do not emit markdown files one at a time in this phase. Do not use Phase 4 caden
 
 If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md` as the **final** file in this phase. Label math and body shape: `design/versioning-log.md`. Body is `## {label}`, bullets, then one `Summary:` line. Do not write a `## Agent` section. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or hand-edit `scripts/data/version.json`. Do not write the label into `design/versioning.md`.
 
-Do not emit `tools/week_start.ps1` / git or git log unless the User explicitly overrides that for this session. Do not emit `_logs/`.
+Do not emit a leave-off or session-log file. Do not emit `_logs/`.
 
 If nothing in the docs is wrong and no changelog entry is required, tell the User no documentation changes are required.
 
