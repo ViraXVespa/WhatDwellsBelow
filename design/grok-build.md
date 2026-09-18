@@ -145,7 +145,7 @@ Catalog rows (each a pinned commit, isolated per archives):
 
 Preferred verify when `.gd` changed: `powershell -File tools/run_build_gate.ps1`. Read `_logs/build-gate/summary.txt` only.
 
-Stop and report: files changed, how you verified, what is still open. Do not chain an unrelated goal.
+Stop and report: files changed, how you verified, what is still open. If prove was red: do not take another change turn in this session. Tell the User to start a new session from the week pin (or skip). Two reds, then stop. Do not invoke --fork-session.
 
 ## End of session
 

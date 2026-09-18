@@ -61,7 +61,7 @@ Gather is `list_xref` plus `show_func` plus `summarize_scripts` plus one `list_c
 
 Name a **planned gather list** (distinct xref patterns and show-func names) before the first catalog call. Those planned calls are one gather phase. Until show-func/xref can batch names into one summary, read that job's session summary once after each distinct planned call. That is not a second job. A gather call invented after a prove summary, or the same command with the same args again, or a ninth show-func not on the list, is a second job.
 
-Change is one slice in a Grok worktree that merges into the live checkout. Prove is one measure, or one listed smoke set, or both **once**. Do not measure, then smoke, then measure.
+Change is one slice in a Grok worktree that merges into the live checkout. Prove is one measure, or one listed smoke set, or both **once**. Do not measure, then smoke, then measure. A red postcard ends this session's change work: stop, report the summary line, and tell the User to start a new session from the current pin (or say skip). Do not keep patching on the guilty transcript. Two reds on the same unit without a skip: stop. Do not pass --fork-session; the User starts the next session in chat.
 
 Read each job summary once via `powershell -File tools/read_summary.ps1 -Job <name>`. Preferred path is `_logs/sess/<session>/<job>/summary.txt` (session = `WDB_AGENT_SESSION` or the inferred Grok session id). Do not open the summary file directly. Catalog and protocol must agree: once per job, and once per planned gather call as above.
 

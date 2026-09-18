@@ -32,5 +32,6 @@ attack_keyframes | resume parked, attack keyframes, coil stills | art-attack-key
 reuse_brief | reuse-map, UI chrome brief | reuse-map.md when Brief is not empty | Grok Bot reuse job
 opt_queue | named opt-NNN | grok-bot-opt.md via bot_opt --id | Grok Bot opt job
 bot_setup | Refactorer profile, cloud clone, pool definitions | park-bot-setup.md | web then Bot profile
+smoke_shots | resume parked, smoke shots, headless screenshots, _logs/shots | park-smoke-shots.md | web then Build / tools
 
 Do not invent rows.

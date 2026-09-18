@@ -24,6 +24,7 @@ notes_exempt:
   - design/reuse-map.md
   - design/parked-tasks.md
   - design/park-bot-setup.md
+  - design/park-smoke-shots.md
 
 parked_jobs:
   - design/art-attack-keyframes.md
