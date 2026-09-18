@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.3",
+			"points": [
+				{
+					"text": "Per-path Godot lock and invoke helper; runners no longer kill godot*."
+				},
+				{
+					"text": "Week start pins grok_web_w{N} at HEAD and seeds the next series; no leave-off files."
+				},
+				{
+					"text": "Catalog summaries under _logs/sess/<Grok session id>/; stage/promote removed."
+				},
+				{
+					"text": "Project PreToolUse hook denies Imagine in the game-repo cwd."
+				}
+			],
+			"summary": "Grok Build flow: worktree-safe Godot, week_start Web pin, session-keyed logs, no handoff files."
+		},
+		{
 			"label": "0.4.2",
 			"points": [
 				{
