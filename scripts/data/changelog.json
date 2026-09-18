@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.6",
+			"points": [
+				{
+					"text": "Add the missing 0.4.5 changelog for the allowlist commit already stamped on main."
+				},
+				{
+					"text": "Web / chat must not push main and must not hand the User a command list in place of one tools/_scratch.py."
+				}
+			],
+			"summary": "Backfill 0.4.5 notes and lock web sessions to one scratch off main."
+		},
+		{
+			"label": "0.4.5",
+			"points": [
+				{
+					"text": "Allow README.md, GROK-BOT.md, and deleting design/park-bot-setup.md on bot/* PRs."
+				}
+			],
+			"summary": "Bot PR allowlist includes the human setup files."
+		},
+		{
 			"label": "0.4.4",
 			"points": [
 				{
