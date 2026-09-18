@@ -11,6 +11,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot "invoke_godot.ps1")
 $Godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe"
 $OutDir = if ($Archives) { Join-Path $Root "_pages" } else { Join-Path $Root "docs" }
 $OutHtml = Join-Path $OutDir "index.html"
@@ -25,15 +26,12 @@ New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 function Invoke-Godot([string[]]$GodotArgs, [string]$LogName) {
     $log = Join-Path $Root $LogName
     $err = Join-Path $Root ($LogName + ".err")
-    if (Test-Path $log) { Remove-Item $log }
-    if (Test-Path $err) { Remove-Item $err }
-    $p = Start-Process -FilePath $Godot -ArgumentList $GodotArgs -Wait -PassThru -NoNewWindow -RedirectStandardOutput $log -RedirectStandardError $err
+    $r = Invoke-WdbGodot -RepoRoot $Root -GodotPath $Root -GodotArgs $GodotArgs -OutLog $log -ErrLog $err -TimeoutSec 900
     if (Test-Path $log) { Get-Content $log | Write-Host }
     if (Test-Path $err) { Get-Content $err | Write-Host }
-    if ($p.ExitCode -ne 0) {
-        throw "Godot failed (exit $($p.ExitCode)): $($GodotArgs -join ' ')"
+    if ($r.TimedOut -or $r.ExitCode -ne 0) {
+        throw "Godot failed ($($r.Status)): $($GodotArgs -join ' ')"
     }
-    Remove-Item $log, $err -ErrorAction SilentlyContinue
 }
 
 function Invoke-WebPostexport([string]$Dir) {
