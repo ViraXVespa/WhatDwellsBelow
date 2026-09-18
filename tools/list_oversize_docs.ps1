@@ -6,7 +6,8 @@
 param([double]$OverKb = 8)
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$OutDir = Join-Path $Root "_logs\oversize-docs"
+. (Join-Path $PSScriptRoot "agent_log.ps1")
+$OutDir = Ensure-WdbAgentLogDir -Job "oversize-docs" -Root $Root
 $Summary = Join-Path $OutDir "summary.txt"
 $Limit = [int]([math]::Round($OverKb * 1000))
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null

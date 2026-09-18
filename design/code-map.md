@@ -22,7 +22,6 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Numbers | `scripts/data/balance.gd`, `balance_schema.gd`, `tunables.gd` |
 | Version / changelog | `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`; `tools/build_changelog.py`; Pages loose `/data/` notes |
 | Web export | `tools/web_shell.html`, `tools/export_web.ps1`, `tools/publish_notes_site.py`, `tools/pages_game_hash.py`, `tools/enable_texture_mips.py`, `tools/web_postexport.py`; `export_presets.cfg`; `.github/workflows/version.yml`, `.github/workflows/pages.yml` |
-| Agent session logs | `tools/agent_log.ps1`, `tools/agent_log.py`, `tools/stage_patch.ps1`, `tools/promote_patch.ps1`, `tools/read_summary.ps1`, `tools/clean_agent_logs.ps1`, `tools/pack_grok_sessions.py`, `tools/report_grok_sessions.py`, `tools/grok_session_lib.py` |
 | Dungeon | `scripts/dungeon/gen.gd` + `gen_carve.gd`, `gen_rooms.gd`, `gen_doors.gd`; `scripts/world/dungeon.gd` + `dungeon_boot.gd`, `dungeon_geo.gd`, `dungeon_geo_stream.gd`, `dungeon_map_act.gd`, `dungeon_cells.gd`, `dungeon_stream.gd`, `dungeon_props.gd`, `dungeon_pack.gd`, `crystal_net.gd`, `floor_crystal.gd`, `dungeon_props_spawn.gd`, `dungeon_props_place.gd`, `crystal_place.gd` |
 | Hub | `scripts/world/camp.gd` + `camp_warm.gd`, `camp_build.gd`, `camp_view.gd`; `interact.gd`, `interact_fx.gd`, `camp_build_mesh.gd`, `camp_build_roof.gd`; `scripts/combat/dummy.gd` |
 | Gather | `scripts/world/gather_node.gd`, `gather_rules.gd`, `breakable.gd`, `pickup.gd` |
@@ -38,3 +37,4 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 Public entry points that must not change when a helper is split: `App.playtest`, `App.set_zoom` / `App.set_hud_scale` / `App.set_volume`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.
 
 Live `player_anim.gd` plays unarmed idle stills plus `idle_to_walk` / looping `walk` / `walk_to_idle` from the locked Bible harvest. Title → Play warms those loco frames and frames the full yard under the solid loader (hub).
+| Catalog / Godot lock | `tools/godot_lock.ps1`, `tools/invoke_godot.ps1`, `tools/week_start.ps1`, `tools/week_pin.py`, `tools/agent_log.ps1`, `tools/agent_log.py`, `tools/read_summary.ps1`, `tools/clean_agent_logs.ps1` |

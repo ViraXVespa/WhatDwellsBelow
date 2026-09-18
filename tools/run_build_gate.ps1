@@ -15,18 +15,22 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$OutDir = Join-Path $Root "_logs\build-gate"
+. (Join-Path $PSScriptRoot "agent_log.ps1")
+$OutDir = Ensure-WdbAgentLogDir -Job "build-gate" -Root $Root
 $Summary = Join-Path $OutDir "summary.txt"
 $CapScript = Join-Path $Root "tools\check_script_cap.ps1"
 $ImportScript = Join-Path $Root "tools\run_godot_import_check.ps1"
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
-$existing = @(Get-Process -Name "godot*" -ErrorAction SilentlyContinue)
-if ($existing.Count -gt 0 -and -not $Force -and -not $SkipImport) {
-    $msg = "Godot already running (pids=$($existing.Id -join ',')). Pass -Force to continue, or -SkipImport."
-    Write-Host $msg
-    $msg | Set-Content -Path $Summary -Encoding utf8
-    exit 2
+if (-not $Force -and -not $SkipImport) {
+    . (Join-Path $PSScriptRoot "godot_lock.ps1")
+    $existing = @(Get-WdbGodotProcessesOnPath -GodotPath $Root)
+    if ($existing.Count -gt 0) {
+        $msg = "Godot already on this --path (pids=$($existing.Pid -join ',')). Pass -Force to continue, or -SkipImport."
+        Write-Host $msg
+        $msg | Set-Content -Path $Summary -Encoding utf8
+        exit 2
+    }
 }
 
 $lines = New-Object System.Collections.Generic.List[string]

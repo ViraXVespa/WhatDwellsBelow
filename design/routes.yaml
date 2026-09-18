@@ -21,13 +21,10 @@ indexes:
   graph: design/load-graph.md
 
 notes_exempt:
-  - design/sessions.md
-  - design/session-log.md
   - design/reuse-map.md
   - design/parked-tasks.md
-  - design/park-closeout-harness.md
   - design/park-bot-setup.md
-  - design/park-build-week.md
+  - design/park-smoke-shots.md
 
 parked_jobs:
   - design/art-attack-keyframes.md
@@ -198,7 +195,7 @@ job_read_when:
   debug.menu: "balance sliders, profile banks"
   debug.playtest: "sim walker, recommended config"
   debug.anim_browser: "timeline scrubber, review queue"
-  debug.smokes: "phase assertions, runner summary, dedicated CLI habits"
+  debug.smokes: "phase assertions, runner summary"
   art_pipeline.i2v: "seed unit, spoken cue"
   art_pipeline.pack: "cleanup pass, atlas stitch"
   art_pipeline.review: "brief packet, tree tour"

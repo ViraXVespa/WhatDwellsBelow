@@ -31,6 +31,8 @@ $JobMap = @{
     "changelog-label"      = "_logs/changelog-label/summary.txt"
     "skill-sync"           = "_logs/skill-sync/summary.txt"
     "godot-import-check"   = "_logs/godot-import-check/summary.txt"
+    "grok-sessions-pack"   = "_logs/sess/<session>/grok-sessions-pack/summary.txt"
+    "grok-sessions-report" = "_logs/sess/<session>/grok-sessions-report/summary.txt"
     "smokes"               = "_logs/smokes/summary.txt"
     "load-timing"          = "_logs/load-timing/summary.txt"
     "dungeon-load-timing"  = "_logs/dungeon-load-timing/summary.txt"
@@ -38,10 +40,6 @@ $JobMap = @{
     "hostify-lint"         = "_logs/hostify-lint/summary.txt"
     "post-split-gate"      = "_logs/post-split-gate/summary.txt"
     "build-gate"           = "_logs/build-gate/summary.txt"
-    "grok-sessions-pack"   = "_logs/grok-sessions-pack/summary.txt"
-    "grok-sessions-report" = "_logs/grok-sessions-report/summary.txt"
-    "patch-stage"          = "_logs/patch-scratch/summary.txt"
-    "patch-promote"        = "_logs/patch-lock/summary.txt"
 }
 
 function Get-RepoRoot {

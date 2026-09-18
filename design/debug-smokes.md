@@ -46,14 +46,14 @@ Binary (Steam tools build): `C:/Program Files (x86)/Steam/steamapps/common/Godot
 | p9 | Audio, archive catalog, anim models, playtest hook |
 
 
-## Dedicated Grok Build session
+## Dedicated smoke session
 
-One concurrent Grok Build CLI owns smoke coverage. **Weekly:** one CLI per development week, kept thin enough to last about one quota (catalog summaries, not Godot logs in chat). Slice, Bot-notes, and PC-offload chats must not rewrite these habits.
+Smoke coverage is a Build session. **Weekly:** sessions in one instance, kept thin enough to last about one quota (catalog summaries, not Godot logs in chat). Slice, Bot-notes, and PC-offload chats must not rewrite these habits.
 
 - Purpose: write named smoke coverage. Numbered P1–P9: `smoke.gd` (`route_boot` / `attach_*`) plus `smoke_early.gd` / `smoke_late.gd` / `smoke_p*.gd`. Dedicated sweeps are extra flags, not a new N: `--wdb-load-timing-smoke` and `--wdb-dungeon-load-timing-smoke` (`load_timing.gd` mark / dmark), `--wdb-dungeon-map-smoke` (`dungeon_map.gd`)
 - Typical slice: one named add. Edit `smoke.gd` routing and that helper (live path only for marks/asserts the smoke must emit). Run that phase (`run_smokes.ps1`) or extra-flag runner. Read only `_logs/smokes/summary.txt`, or `_logs/load-timing/summary.txt` / `_logs/dungeon-load-timing/summary.txt` / `_logs/dungeon-map/summary.txt` when that flag is the job. Stop
 - Just do: same-phase / same-helper assertions; `LoadTiming.mark` / `dmark` / `dnote` the smoke must call; hostify facades the phase still calls (`dungeon_boot.ready_floor`, `AppFlow` enter / `play_from_menu`). Headless skip of splash / title / enter overlay. Pin seed 42 / floor 1 on gen-dependent flags. Map dump reads `spawn_jobs`, does not `stream_all`
 - Stop and propose: a new catalog runner (already binding on the pc-offload recipe). New numbered phase; a new `--wdb-*-smoke` flag the User did not name this session; a new smoke host scene; `stream_all` / `force_all` for a map dump; splitting an over-cap smoke helper
 - Do not: Imagine / I2V; Grok Bot PRs; week pin ritual; invent coverage the User did not name; tree dumps; raw Godot logs in chat; parking Bot opt notes; folding slice or catalog-runner work in
-- Leave-off: only the Smoke tests block in the leave-off file
+- Stop: only the Smoke tests block in the leave-off file
 - Overlap: other Build CLIs **run** existing smokes via the catalog; this CLI **writes** them. PC-offload owns new runners. Bot-notes parks refactor notes. Do not fold those roles in unless the User names that work here.

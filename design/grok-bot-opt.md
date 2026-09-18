@@ -107,11 +107,4 @@ Keep player-facing order and timing unless a listed extract is a no-op move. Sam
 
 Touched live `scripts/**/*.gd` under 10KB. One PR. Mark this item done in the same PR.
 
-### opt-004 (pending)
-- Title: Migrate catalog runners onto agent_log session folders
-- Cluster: tools
-- Files: `tools/read_summary.ps1`, `design/pc-offload.md`, `tools/agent_log.ps1`
-
-Remaining JobMap singleton writers still drop _logs/<job>/summary.txt. Point each preferred runner at Ensure-WdbAgentLogDir / agent_log.ensure_agent_log_dir so concurrent sessions stop clobbering one summary. Keep read_summary fallback for old files. Do not invent extra summary keys to justify reruns.
-
 <!-- bot-opt:end -->

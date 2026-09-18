@@ -900,17 +900,6 @@ def main() -> int:
                     "code-map.md still has a design-doc system row: isolated-media"
                 )
 
-        if posix == "design/sessions.md":
-            m = re.search(r"^Read when:\s*(.*)$", text, re.I | re.M)
-            rw = (m.group(1) if m else "").lower()
-            if "fresh" in rw and "instance" in rw:
-                fails.append(
-                    "sessions.md Read when still boots a fresh Grok Build instance"
-                )
-            if "design/grok-build.md" in text:
-                fails.append("sessions.md names the Build path file")
-            if "design/web-session.md" in text:
-                fails.append("sessions.md names the web path file")
         if posix == "notes" or posix.startswith("notes/"):
             fails.append(f"agent-facing scan hit notes/: {posix}")
         if posix == "design/load-graph.md":
@@ -926,10 +915,6 @@ def main() -> int:
         if posix == "design/grok-build.md":
             if "one row in `design/README.md`" in text:
                 fails.append("grok-build.md Read order still fetches README.md")
-        if posix == "design/web-session.md":
-            if "sessions.md` is context only" in text:
-                fails.append("web-session.md still treats sessions.md as context")
-
     fails.extend(index_topic_cite_fails(routes, texts))
     fails.extend(smash_fails(root, texts))
     fails.extend(fetch_ban_fails(routes, texts))

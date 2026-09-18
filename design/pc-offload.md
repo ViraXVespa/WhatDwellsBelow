@@ -4,7 +4,7 @@ Status: binding for agents on a local checkout
 Read when: measuring size, inventorying live files, running a listed runner, reading that runner's _logs summary, or proposing a new local runner
 Folder relocate, Bot/Build runners, and sprite tools live in this catalog, not on the live code map.
 
-Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. Agents should **read only the `_logs/*/summary.txt` files** those tools write - not raw Godot logs, not whole script bodies just to measure or inventory.
+Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. Agents should **read only the session summary (`_logs/sess/<session>/<job>/summary.txt`)** those tools write - not raw Godot logs, not whole script bodies just to measure or inventory.
 
 `_logs/` is gitignored. Tools may write summaries there. Do not commit `_logs/`. Optional Bot notes may still go in `_logs/grok-bot-sweep.md`.
 
@@ -30,41 +30,39 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Bui
 | Job | Command (from repo root) | Summary (read only this) |
 |-----|--------------------------|--------------------------|
 | Housekeep `_logs/` | `powershell -File tools/clean_agent_logs.ps1` (optional `-KeepRaw`, `-MaxAgeHours 24`, `-NewWeek`, `-WhatIf`) | `_logs/sess/<session>/clean/summary.txt` |
-| Design doc sizes | `powershell -File tools/list_oversize_docs.ps1` (optional `-OverKb 8`) | `_logs/oversize-docs/summary.txt` |
+| Design doc sizes | `powershell -File tools/list_oversize_docs.ps1` (optional `-OverKb 8`) | `_logs/sess/<session>/oversize-docs/summary.txt` |
 | Load-graph / routes.yaml | `python tools/check_load_graph.py` (optional `--root .`) | (stdout PASS/FAIL; no summary) |
 | Write UTF-8 body (no PS expansion) | pipe single-quoted here-string to `python tools/write_utf8_file.py --path ...` (optional `--bom`, `--b64`) | (writes the path; no summary) |
-| Run ephemeral agent Python | `powershell -File tools/run_agent_py.ps1 -Script _logs/agent-py/foo.py` (optional `-KeepScript`) | `_logs/agent-py/summary.txt` |
+| Run ephemeral agent Python | `powershell -File tools/run_agent_py.ps1 -Script _logs/agent-py/foo.py` (optional `-KeepScript`) | `_logs/sess/<session>/agent-py/summary.txt` |
 | Bake 3D texture mipmaps | `python tools/enable_texture_mips.py` (optional `--root`, `--dry-run`) | (stdout counts; rewrites `.import` under `assets/sprites|tiles|props|fx`) |
-| Oversize inventory | `powershell -File tools/list_oversize_scripts.ps1` (optional `-OverKb 5` or `10`) | `_logs/oversize/summary.txt` |
-| Func-level inventory | `powershell -File tools/summarize_scripts.ps1` (optional `-OverKb 5`, `-TopFuncs 8`, `-Path scripts/...`) | `_logs/script-summary/summary.txt` |
-| Facade + siblings by size | `powershell -File tools/list_facade_cluster.ps1 -Facade scripts/combat/enemy.gd` | `_logs/facade-cluster/summary.txt` |
-| Script cap gate | `powershell -File tools/check_script_cap.ps1` (optional `-OverKb 10`, `-GitChanged`, `-Path ...`) | `_logs/script-cap/summary.txt` |
-| Changed-path inventory | `powershell -File tools/list_changed.ps1` (optional `-Scope scripts,tools`, `-Head`) | `_logs/changed/summary.txt` |
-| One function extract | `python tools/show_func.py --path scripts/world/camp_build.gd --name awning` | `_logs/show-func/summary.txt` |
-| Capped xref / search | `powershell -File tools/list_xref.ps1 -Pattern "needle"` (optional `-Path design`, `-Include *.gd`, `-MaxHits 30`) | `_logs/xref/summary.txt` |
-| One code-map row | `python tools/list_code_map_row.py --path scripts/app.gd` | `_logs/code-map-row/summary.txt` |
-| Patch one code-map row | `python tools/patch_code_map.py --system Hub --add scripts/world/foo.gd` (repeatable `--add` / `--remove` / `--rename old=new`) | `_logs/code-map-patch/summary.txt` |
-| Code-map vs live `.gd` | `python tools/check_code_map.py` | `_logs/code-map-check/summary.txt` |
-| Bot opt queue | `python tools/bot_opt.py --list` (or `--id opt-001`, `--add` / `--replace opt-001 --title ... --cluster ... --body-file ...`, `--status opt-001=done`, `--remove opt-001`) | `_logs/bot-opt/summary.txt` |
-| Scene node / script list | `powershell -File tools/list_scenes.ps1` (optional `-Path scenes/dungeon.tscn`) | `_logs/scenes/summary.txt` |
-| Next changelog label | `python tools/next_changelog_label.py` | `_logs/changelog-label/summary.txt` |
-| Sync Cursor skills | `powershell -File tools/sync_agent_skills.ps1` (optional `-DryRun`) | `_logs/skill-sync/summary.txt` |
+| Oversize inventory | `powershell -File tools/list_oversize_scripts.ps1` (optional `-OverKb 5` or `10`) | `_logs/sess/<session>/oversize/summary.txt` |
+| Func-level inventory | `powershell -File tools/summarize_scripts.ps1` (optional `-OverKb 5`, `-TopFuncs 8`, `-Path scripts/...`) | `_logs/sess/<session>/script-summary/summary.txt` |
+| Facade + siblings by size | `powershell -File tools/list_facade_cluster.ps1 -Facade scripts/combat/enemy.gd` | `_logs/sess/<session>/facade-cluster/summary.txt` |
+| Script cap gate | `powershell -File tools/check_script_cap.ps1` (optional `-OverKb 10`, `-GitChanged`, `-Path ...`) | `_logs/sess/<session>/script-cap/summary.txt` |
+| Changed-path inventory | `powershell -File tools/list_changed.ps1` (optional `-Scope scripts,tools`, `-Head`) | `_logs/sess/<session>/changed/summary.txt` |
+| One function extract | `python tools/show_func.py --path scripts/world/camp_build.gd --name awning` | `_logs/sess/<session>/show-func/summary.txt` |
+| Capped xref / search | `powershell -File tools/list_xref.ps1 -Pattern "needle"` (optional `-Path design`, `-Include *.gd`, `-MaxHits 30`) | `_logs/sess/<session>/xref/summary.txt` |
+| One code-map row | `python tools/list_code_map_row.py --path scripts/app.gd` | `_logs/sess/<session>/code-map-row/summary.txt` |
+| Patch one code-map row | `python tools/patch_code_map.py --system Hub --add scripts/world/foo.gd` (repeatable `--add` / `--remove` / `--rename old=new`) | `_logs/sess/<session>/code-map-patch/summary.txt` |
+| Code-map vs live `.gd` | `python tools/check_code_map.py` | `_logs/sess/<session>/code-map-check/summary.txt` |
+| Bot opt queue | `python tools/bot_opt.py --list` (or `--id opt-001`, `--add` / `--replace opt-001 --title ... --cluster ... --body-file ...`, `--status opt-001=done`, `--remove opt-001`) | `_logs/sess/<session>/bot-opt/summary.txt` |
+| Scene node / script list | `powershell -File tools/list_scenes.ps1` (optional `-Path scenes/dungeon.tscn`) | `_logs/sess/<session>/scenes/summary.txt` |
+| Next changelog label | `python tools/next_changelog_label.py` | `_logs/sess/<session>/changelog-label/summary.txt` |
+| Sync Cursor skills | `powershell -File tools/sync_agent_skills.ps1` (optional `-DryRun`) | `_logs/sess/<session>/skill-sync/summary.txt` |
 | Relocate facade cluster | `powershell -File tools/move_script_cluster.ps1` (or `python tools/move_script_cluster.py`) | (tool stdout; no summary) |
-| Editor import / compile | `powershell -File tools/run_godot_import_check.ps1` | `_logs/godot-import-check/summary.txt` |
-| Phase smokes | Prefer `& .\tools\run_smokes.ps1 -Phases @(4,5)` (avoid `-File ... -Phases 4,5` binding as phase 45) | `_logs/smokes/summary.txt` |
-| Title → Placeholdia load timing | `powershell -File tools/run_load_timing.ps1` (optional `-TimeoutSec 180`) | `_logs/load-timing/summary.txt` |
-| Placeholdia → Dungeon load timing | `powershell -File tools/run_dungeon_load_timing.ps1` (optional `-TimeoutSec 180`) | `_logs/dungeon-load-timing/summary.txt` |
-| Dungeon map dump | `powershell -File tools/run_dungeon_map.ps1` (optional `-Seed 42`, `-Floor 1`, `-Scale 8`, `-TimeoutSec 180`) | `_logs/dungeon-map/summary.txt` |
-| Hostify lint (advisory) | `powershell -File tools/lint_hostify.ps1` | `_logs/hostify-lint/summary.txt` |
-| Post-split gate (Bot) | `powershell -File tools/run_post_split_gate.ps1` (optional `-WithSmokes`, `-Force`) | `_logs/post-split-gate/summary.txt` |
-| Build gate (Build) | `powershell -File tools/run_build_gate.ps1` (optional `-SkipImport`, `-OverKb 10`, `-Force`) | `_logs/build-gate/summary.txt` |
+| Editor import / compile | `powershell -File tools/run_godot_import_check.ps1` | `_logs/sess/<session>/godot-import-check/summary.txt` |
+| Phase smokes | Prefer `& .\tools\run_smokes.ps1 -Phases @(4,5)` (avoid `-File ... -Phases 4,5` binding as phase 45) | `_logs/sess/<session>/smokes/summary.txt` |
+| Title → Placeholdia load timing | `powershell -File tools/run_load_timing.ps1` (optional `-TimeoutSec 180`) | `_logs/sess/<session>/load-timing/summary.txt` |
+| Placeholdia → Dungeon load timing | `powershell -File tools/run_dungeon_load_timing.ps1` (optional `-TimeoutSec 180`) | `_logs/sess/<session>/dungeon-load-timing/summary.txt` |
+| Dungeon map dump | `powershell -File tools/run_dungeon_map.ps1` (optional `-Seed 42`, `-Floor 1`, `-Scale 8`, `-TimeoutSec 180`) | `_logs/sess/<session>/dungeon-map/summary.txt` |
+| Hostify lint (advisory) | `powershell -File tools/lint_hostify.ps1` | `_logs/sess/<session>/hostify-lint/summary.txt` |
+| Post-split gate (Bot) | `powershell -File tools/run_post_split_gate.ps1` (optional `-WithSmokes`, `-Force`) | `_logs/sess/<session>/post-split-gate/summary.txt` |
+| Build gate (Build) | `powershell -File tools/run_build_gate.ps1` (optional `-SkipImport`, `-OverKb 10`, `-Force`) | `_logs/sess/<session>/build-gate/summary.txt` |
 | Read one catalog summary | `powershell -File tools/read_summary.ps1 -Job xref` | `_logs/sess/<session>/<job>/summary.txt` (fallback `_logs/<job>/summary.txt`) |
 | Session log helpers | dot-source `tools/agent_log.ps1` or `import agent_log` | (no summary; prints session/job/dir) |
 | Stage a unified diff | `powershell -File tools/stage_patch.ps1 -Diff path.diff` | `_logs/sess/<session>/patch-stage/summary.txt` |
 | Promote a staged patch | `powershell -File tools/promote_patch.ps1 -Id <id>` | `_logs/sess/<session>/patch-promote/summary.txt` |
-| One route card | `powershell -File tools/list_route.ps1 -Door dungeon` (or `-Job debug.smokes`) | `_logs/route/summary.txt` |
-| Pack Grok sessions | `powershell -File tools/pack_grok_sessions.ps1` (optional `-Since`, `-Until`, `-Top 10`, `-IncludeEmpty`) | `_logs/sess/<session>/grok-sessions-pack/summary.txt` |
-| Session burn report | `powershell -File tools/report_grok_sessions.ps1` | `_logs/sess/<session>/grok-sessions-report/summary.txt` |
+| One route card | `powershell -File tools/list_route.ps1 -Door dungeon` (or `-Job debug.smokes`) | `_logs/sess/<session>/route/summary.txt` |
 
 `tools/export_web.ps1` runs `enable_texture_mips.py` before Godot `--import`. Do not invent a second bake step after the PCK is packed.
 
@@ -102,14 +100,14 @@ Ship floor vs Bot 5KB sweep: the script-split recipe. Do not restate those caps 
 - Phase 7 documentation slices emit `tools/_scratch.py`. The User runs it locally; it must import `tools/doc_patch.py` and may call `python tools/check_load_graph.py`.
 - Mip bake is export-side (`enable_texture_mips.py`); the User runs `export_web.ps1` when shipping Pages.
 
-## Dedicated Grok Build session
+## Dedicated catalog session
 
-One concurrent Grok Build CLI owns catalog / runner / skill optimizations. **Weekly:** one CLI per development week, kept thin enough to last about one quota (catalog summaries, not tool bodies in chat). Slice, Bot-notes, and Smoke-tests chats must not rewrite these habits.
+One Build session owns catalog / runner / skill optimizations. Keep the session thin enough to last about one quota (catalog summaries, not tool bodies in chat). Slice, Bot-notes, and Smoke-tests chats must not rewrite these habits.
 
 - Purpose: When the User names a catalog / runner / skill job, implement that one optimization (catalog row, `tools/` runner, skill when-to-use). Catalog summaries only. Not a game-slice CLI.
-- Typical slice: one named runner. Propose if new, wait for Go. Edit that runner / catalog row / skill when-to-use. Read that row's `_logs/*/summary.txt`. Stop after the report.
+- Typical slice: one named runner. Propose if new, wait for Go. Edit that runner / catalog row / skill when-to-use. Read that row via `tools/read_summary.ps1 -Job <name>`. Stop after the report.
 - Just do: same-catalog shared helper; skill `when-to-use` tokens; summary shape matching sibling rows; catalog line next to the existing job.
 - Stop and propose: a new catalog runner (already binding). A generic markdown or leave-off writer; a suite of extra doc runners; putting runners on the live code map; a skill rewrite that pastes the catalog into every Build boot.
 - Do not: Imagine / I2V; Grok Bot PRs; week pin ritual; tree dumps or whole tool bodies in chat; parking Bot opt notes; folding slice work into this thread.
-- Leave-off: only the `## PC offload` / `### PC offload` block in the leave-off file
-- Overlap: Bot-notes parks queue items with `bot_opt.py`; Smoke-tests writes phase coverage; Slice CLIs consume this catalog. This CLI does not park Bot notes or add smoke assertions unless the User names that. Slice CLIs do not add runners unless named in that thread.
+- Stop after the report. No leave-off file.
+- Overlap: Bot-notes parks queue items with `bot_opt.py`; Smoke-tests writes phase coverage; Slice sessions consume this catalog. This session does not park Bot notes or add smoke assertions unless the User names that. Slice sessions do not add runners unless named in that thread.

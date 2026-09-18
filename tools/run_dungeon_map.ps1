@@ -6,28 +6,21 @@
 # See design/debug-smokes.md and design/pc-offload.md.
 
 param(
-    [int]$TimeoutSec = 180,
     [int]$Seed = 42,
     [int]$Floor = 1,
-    [int]$Scale = 8
+    [int]$Scale = 8,
+    [int]$TimeoutSec = 180
 )
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$Godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe"
-$OutDir = Join-Path $Root "_logs\dungeon-map"
+. (Join-Path $PSScriptRoot "invoke_godot.ps1")
+. (Join-Path $PSScriptRoot "agent_log.ps1")
+
+$OutDir = Ensure-WdbAgentLogDir -Job "dungeon-map" -Root $Root
 $Summary = Join-Path $OutDir "summary.txt"
 $ErrLog = Join-Path $OutDir "err.log"
 $OutLog = Join-Path $OutDir "out.log"
-
-if (-not (Test-Path $Godot)) {
-    throw "Steam Godot not found at: $Godot"
-}
-
-New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-Get-Process -Name "godot*" -ErrorAction SilentlyContinue | Stop-Process -Force
-Start-Sleep -Milliseconds 400
-Remove-Item $ErrLog, $OutLog, $Summary -Force -ErrorAction SilentlyContinue
 
 $godotArgs = @(
     "--headless",
@@ -42,25 +35,12 @@ $godotArgs = @(
 )
 
 Write-Host ("Running dungeon map smoke seed={0} floor={1} scale={2}..." -f $Seed, $Floor, $Scale)
-$sw = [Diagnostics.Stopwatch]::StartNew()
-$p = Start-Process -FilePath $Godot -ArgumentList $godotArgs -PassThru -NoNewWindow `
-    -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog
-$ok = $p.WaitForExit([Math]::Max(1000, $TimeoutSec * 1000))
-if (-not $ok) {
-    Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
-    Start-Sleep -Milliseconds 400
-    Get-Process -Name "godot*" -ErrorAction SilentlyContinue | Stop-Process -Force
-    $status = "TIMEOUT"
-} else {
-    $code = $p.ExitCode
-    if ($null -eq $code) { $code = 0 }
-    $status = "EXIT=$code"
-}
-
-Get-Process -Name "godot*" -ErrorAction SilentlyContinue | Stop-Process -Force
-$ms = $sw.ElapsedMilliseconds
-$errBytes = if (Test-Path $ErrLog) { (Get-Item $ErrLog).Length } else { 0 }
-$outBytes = if (Test-Path $OutLog) { (Get-Item $OutLog).Length } else { 0 }
+$r = Invoke-WdbGodot -RepoRoot $Root -GodotPath $Root -GodotArgs $godotArgs `
+    -OutLog $OutLog -ErrLog $ErrLog -TimeoutSec $TimeoutSec
+$status = $r.Status
+$ms = $r.Ms
+$errBytes = $r.ErrBytes
+$outBytes = $r.OutBytes
 
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("dungeon map $(Get-Date -Format o)")

@@ -14,7 +14,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$OutDir = Join-Path $Root "_logs\oversize"
+. (Join-Path $PSScriptRoot "agent_log.ps1")
+$OutDir = Ensure-WdbAgentLogDir -Job "oversize" -Root $Root
 $Summary = Join-Path $OutDir "summary.txt"
 $OverBytes = $OverKb * 1000
 $UnderBytes = if ($UnderKb -gt 0) { $UnderKb * 1000 } else { [int]::MaxValue }

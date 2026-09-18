@@ -45,7 +45,7 @@ Intercept (raw tool is a failed lookup, not a fallback):
 - open tools/*.ps1 or tools/*.py to learn flags -> catalog row only
 - read the same _logs/*/summary.txt again this slice -> stop;
   one read via tools/read_summary.ps1 -Job <name>
-- check_load_graph.py after every markdown edit -> only at ship, leave-off,
+- check_load_graph.py after every markdown edit -> only at ship,
   or named routing work
 - door or job routing by opening README / load-graph / memory topics ->
   tools/list_route.ps1 -Door <name> or -Job door.job
@@ -58,7 +58,7 @@ Intercept (raw tool is a failed lookup, not a fallback):
    new runner and wait. Implement it only when the User has approved that
    runner.
 
-Two compacts on the same slice: stop, write leave-off, start a new CLI.
+Two compacts on the same slice: stop and start a new session in this instance.
 Do not reload this skill or the law set because compact fired.
 
 Imagine-isolated and i2v-isolated must stay skipped. Cursor skill copies are
