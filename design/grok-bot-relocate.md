@@ -3,7 +3,7 @@
 Status: protocol  
 Read when: Grok Bot Job table → parked or named folder relocate  
 
-Binding for **Grok Bot** when the User names a folder move / relocate cluster. Do not fold this into a size sweep, extract, reuse-map brief, or doc facade PR.
+Boot `BOT.md` + `python tools/bot_status.py` first. Binding for **Grok Bot** when the User names a folder move / relocate cluster. Do not fold this into a size sweep, extract, reuse-map brief, or doc facade PR.
 
 
 ## Mandate

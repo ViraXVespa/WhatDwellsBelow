@@ -17,7 +17,7 @@ If no park is named, Phase 1 stays as it was: confirm ready for Phase 2 only.
 
 ## Pools (Bot intake, not web parks)
 
-Reuse-map: one Brief of same-shape live extracts. Bot implements the whole Brief on the current open Bot PR.
+Reuse-map: one Brief of same-shape live extracts. Bot implements the whole Brief on the current open Bot PR. Status print: `python tools/bot_status.py` (numbered Brief rows only).
 
 Opt queue: standing ids for tools, boot, timing, preload. Not UI chrome cousins unless the item says so.
 
@@ -31,7 +31,6 @@ id | trigger | open | path
 attack_keyframes | resume parked, attack keyframes, coil stills | art-attack-keyframes.md (art_pipeline job) | web or isolated media
 reuse_brief | reuse-map, UI chrome brief | reuse-map.md when Brief is not empty | Grok Bot reuse job
 opt_queue | named opt-NNN | grok-bot-opt.md via bot_opt --id | Grok Bot opt job
-bot_setup | Refactorer profile, cloud clone, pool definitions | park-bot-setup.md | web then Bot profile
 smoke_shots | resume parked, smoke shots, headless screenshots, _logs/shots | park-smoke-shots.md | web then Build / tools
 
 Do not invent rows.

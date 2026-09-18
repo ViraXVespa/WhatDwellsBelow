@@ -1,0 +1,98 @@
+name: bot-gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Changed paths vs base
+        id: changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="origin/${GITHUB_BASE_REF}"
+          git fetch origin "${GITHUB_BASE_REF}" --depth=1
+          git diff --name-only "${BASE}...HEAD" > /tmp/changed.txt || true
+          echo "count=$(wc -l < /tmp/changed.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
+          echo "Changed files:"
+          cat /tmp/changed.txt || true
+
+      - name: Script cap on changed gd
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t GD < <(grep -E '(^|/)scripts/.*\.gd$' /tmp/changed.txt || true)
+          if [ "${#GD[@]}" -eq 0 ]; then
+            echo "No changed scripts/**/*.gd"
+            exit 0
+          fi
+          args=()
+          for f in "${GD[@]}"; do
+            args+=(--path "$f")
+          done
+          python tools/check_script_cap.py --root . "${args[@]}"
+
+      - name: Load graph
+        run: python tools/check_load_graph.py --root .
+
+      - name: Allowlist on bot branches
+        if: startsWith(github.head_ref, 'bot/')
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from fnmatch import fnmatch
+          from pathlib import Path
+
+          root = Path(".")
+          allow_path = root / "tools" / "bot_allow.txt"
+          if not allow_path.is_file():
+              raise SystemExit("missing tools/bot_allow.txt")
+          globs = []
+          for line in allow_path.read_text(encoding="utf-8").splitlines():
+              raw = line.split("#", 1)[0].strip()
+              if raw:
+                  globs.append(raw)
+          changed = Path("/tmp/changed.txt").read_text(encoding="utf-8").splitlines()
+          blocked = []
+
+          def ok(rel: str) -> bool:
+              posix = rel.replace("\\", "/")
+              for pattern in globs:
+                  if pattern.startswith("!"):
+                      if fnmatch(posix, pattern[1:]):
+                          return False
+                      continue
+                  if fnmatch(posix, pattern):
+                      return True
+              return False
+
+          for rel in changed:
+              rel = rel.strip()
+              if rel and not ok(rel):
+                  blocked.append(rel)
+          if blocked:
+              print("allowlist FAIL")
+              for rel in blocked:
+                  print(f"blocked\t{rel}")
+              raise SystemExit(1)
+          print("allowlist PASS")
+          PY
+
+      - name: Bot status snapshot
+        if: startsWith(github.head_ref, 'bot/')
+        run: python tools/bot_status.py --root .

@@ -3,7 +3,7 @@
 Status: protocol  
 Read when: Grok Bot Job table → doc facade / sibling split  
 
-Binding for **Grok Bot** documentation facade sweeps only. Recipe: `design/doc-refactor.md`. No binding-meaning change. No live `.gd` size sweep in this PR unless a touched script path in a code map row must stay accurate.
+Boot `BOT.md` + `python tools/bot_status.py` first. Binding for **Grok Bot** documentation facade sweeps only. Recipe: `design/doc-refactor.md`. No binding-meaning change. No live `.gd` size sweep in this PR unless a touched script path in a code map row must stay accurate.
 
 
 ## Mandate

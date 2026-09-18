@@ -193,7 +193,7 @@ def scanned_md_files(root: Path) -> list[Path]:
     if skills_root.is_dir():
         for path in sorted(skills_root.rglob("*.md")):
             out.append(path)
-    for extra in ("AGENTS.md",):
+    for extra in ("AGENTS.md", "BOT.md"):
         p = root / extra
         if p.is_file():
             out.append(p)

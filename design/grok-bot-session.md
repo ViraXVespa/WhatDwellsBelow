@@ -12,7 +12,7 @@ Web Phase 6 splitting one file that *its own emit* pushed over 10KB is not this 
 
 Use this path when the User names Grok Bot / a refactor sweep / a Bot flow below, or when a Grok Bot / Cursor desktop assistant writes via GitHub PR.
 
-After the agents file, load **this door**, then **one** Job-table sibling. When editing GDScript, also load `design/gdscript-law.md`. The sibling starts at itself + the named recipe + one `design/code-map.md` row. Do not load the other flow files. Do not load the web/Build requires pair, the web/Build requires pair, the web path file, the Build path file, `tools/week_start.ps1` / git, git log, or `design/changelog/` except the one new `{label}` file at ship time. Never open `notes/`.
+Cloud clone: read `BOT.md` first and run `python tools/bot_status.py`. Then load **this door**, then **one** Job-table sibling. When editing GDScript, also load `design/gdscript-law.md`. The sibling starts at itself + the named recipe + one `design/code-map.md` row. Do not load the other flow files. Do not load the web/Build requires pair, the web/Build requires pair, the web path file, the Build path file, `tools/week_start.ps1` / git, git log, or `design/changelog/` except the one new `{label}` file at ship time. Never open `notes/`.
 Second topic door: ask the User to name the owner first. If `conflicts_with` lists the pair, do not open the second door in this slice.
 
 ## Job → Open
@@ -34,7 +34,7 @@ If the User names more than one job, ask which flow this session is. One flow, o
 - Commit per cluster on that branch. Tell the User to **squash-merge** into `main` when they choose to land (not merge-commit or rebase-merge). After squash-merge: stop that cycle. CI stamps. Do not offer a post-merge stamp commit.
 - One new `design/changelog/{label}.md` when the sweep is ready to land. Label math and body shape: `design/versioning-log.md`. Do not read older changelog files. Do not hand-edit `scripts/data/version.json` or `scripts/data/changelog.json`.
 - Touched live `scripts/**/*.gd` must ship under 10KB. Split with `design/refactor.md` (recipe only). The under-5KB target is only `design/grok-bot-size.md`.
-- Caps are on-disk UTF-8 file sizes (`Get-Item Length` / `dir`). Do not measure with `ReadAllText` + `Encoding.UTF8.GetByteCount`.
+- Caps are on-disk UTF-8 file sizes (`os.path.getsize` on the Bot VM; `Get-Item Length` / `dir` on Windows). Do not measure with `ReadAllText` + `Encoding.UTF8.GetByteCount`. Linux inventory is `python tools/bot_status.py` and `python tools/check_script_cap.py`. Do not port the `.ps1` catalog to bash.
 - PC offload: skill `.grok/skills/pc-offload/SKILL.md` then `design/pc-offload.md`. Prefer Length summaries over opening untouched siblings. Tree search is `list_xref.ps1`, not the grep tool. Git inventory is `list_changed.ps1`.
 - New `tools/` runners: propose first; implement only after the User approves that runner this session.
 - Prefer the Bot cloud clone, not the User PC checkout. Commit per cluster on the open Bot PR; push that branch as you go.

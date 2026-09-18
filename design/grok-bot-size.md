@@ -6,7 +6,7 @@ Read when: Grok Bot Job table → size sweep
 
 ## Mandate
 
-Sweep live `scripts/**/*.gd` for size. Not a feature slice. Not the staged reuse-map brief.
+Start with `python tools/bot_status.py`. Sweep live `scripts/**/*.gd` for size (`rglob`, includes `scripts/*.gd`). Not a feature slice. Not the staged reuse-map brief.
 
 - Ship floor: every touched live script under **10KB**.
 - Sweep target: under **5KB** when whole functions can move. If a single function is over 5KB, leave it whole and report it.

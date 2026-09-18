@@ -4,7 +4,7 @@ Status: binding for agents on a local checkout
 Read when: measuring size, inventorying live files, running a listed runner, reading that runner's _logs summary, or proposing a new local runner
 Folder relocate, Bot/Build runners, and sprite tools live in this catalog, not on the live code map.
 
-Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. Agents should **read only the session summary (`_logs/sess/<session>/<job>/summary.txt`)** those tools write - not raw Godot logs, not whole script bodies just to measure or inventory.
+The cloud Refactorer uses `python tools/bot_status.py` and `python tools/check_script_cap.py` on the shared Linux VM. Do not convert the `.ps1` catalog to bash. Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. Agents should **read only the session summary (`_logs/sess/<session>/<job>/summary.txt`)** those tools write - not raw Godot logs, not whole script bodies just to measure or inventory.
 
 `_logs/` is gitignored. Tools may write summaries there. Do not commit `_logs/`. Optional Bot notes may still go in `_logs/grok-bot-sweep.md`.
 
