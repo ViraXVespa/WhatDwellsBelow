@@ -39,7 +39,7 @@ Do not pin because time passed, because the last slice ended, or because a new C
 5. Only topic that matches the requested work. Do not open `design/README.md` to pick it. Sprite / pack / review: art_pipeline, then only the sibling it names. Before any Imagine call, load `design/isolated-media.md` (gate, not an art-pipeline job).
 6. Git inventory is `powershell -File tools/list_changed.ps1` (optional `-Head`). Live tree from **one** `python tools/list_code_map_row.py --path <one live script>`. Read those summaries only. Open a `.gd` body when you are about to patch it. Do not paste `git status` / `git log` into the thread. Do not walk `assets/` unless the task names sprites or audio. Tree search is `tools/list_xref.ps1`, not the grep tool, unless that file is already open for edit. No `python -c` (use `write_utf8_file.py` / `run_agent_py.ps1`).
 
-git is not part of every boot. Read it when rewriting it at session close, when the User asks what shipped, or when leave-off is not enough to name the next unit.
+git is not part of every boot. Read it when the User asks what shipped, or when git plus `_logs/sess/` is not enough to name the next unit.
 
 Do not start by archiving or rewriting the live path. Do not resume unfinished Grok Build work from git status unless the User names that work.
 
