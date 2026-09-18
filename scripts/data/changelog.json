@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.2",
+			"points": [
+				{
+					"text": "Agent jobs are gather once, change once, prove once, with session-keyed _logs/sess summaries."
+				},
+				{
+					"text": "New tools: agent_log helpers, stage_patch / promote_patch, NewWeek log wipe, pack/report turn detail."
+				},
+				{
+					"text": "Web Phase 4 emits new files one at a time; revisions and Phase 5 tests use one tools/_scratch.py."
+				}
+			],
+			"summary": "Session-keyed agent logs, staged patches, and a stricter Build job cycle."
+		},
+		{
 			"label": "0.4.1",
 			"points": [
 				{
