@@ -51,7 +51,11 @@ Add-Line "head=$sha"
 Add-Line "pin=$pinId (previous week Web results)"
 
 $cat = Get-Content -LiteralPath $catPath -Raw -Encoding UTF8 | ConvertFrom-Json
-$existing = @($cat.builds | Where-Object { $_.id -eq $pinId })
+$builds = @()
+if ($null -eq $cat) { $builds = @() }
+elseif ($cat -is [System.Array]) { $builds = @($cat) }
+elseif (@($cat.PSObject.Properties.Name) -contains "builds") { $builds = @($cat.builds) }
+$existing = @($builds | Where-Object { $_.id -eq $pinId })
 $pinStatus = "exists"
 $copied = 0
 $docCount = 0

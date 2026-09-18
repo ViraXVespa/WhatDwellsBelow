@@ -38,8 +38,6 @@ $JobMap = @{
     "hostify-lint"         = "_logs/hostify-lint/summary.txt"
     "post-split-gate"      = "_logs/post-split-gate/summary.txt"
     "build-gate"           = "_logs/build-gate/summary.txt"
-    "grok-sessions-pack"   = "_logs/grok-sessions-pack/summary.txt"
-    "grok-sessions-report" = "_logs/grok-sessions-report/summary.txt"
 }
 
 function Get-RepoRoot {

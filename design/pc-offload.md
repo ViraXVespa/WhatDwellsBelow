@@ -63,8 +63,6 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Bui
 | Stage a unified diff | `powershell -File tools/stage_patch.ps1 -Diff path.diff` | `_logs/sess/<session>/patch-stage/summary.txt` |
 | Promote a staged patch | `powershell -File tools/promote_patch.ps1 -Id <id>` | `_logs/sess/<session>/patch-promote/summary.txt` |
 | One route card | `powershell -File tools/list_route.ps1 -Door dungeon` (or `-Job debug.smokes`) | `_logs/sess/<session>/route/summary.txt` |
-| Pack Grok sessions | `powershell -File tools/pack_grok_sessions.ps1` (optional `-Since`, `-Until`, `-Top 10`, `-IncludeEmpty`) | `_logs/sess/<session>/grok-sessions-pack/summary.txt` |
-| Session burn report | `powershell -File tools/report_grok_sessions.ps1` | `_logs/sess/<session>/grok-sessions-report/summary.txt` |
 
 `tools/export_web.ps1` runs `enable_texture_mips.py` before Godot `--import`. Do not invent a second bake step after the PCK is packed.
 

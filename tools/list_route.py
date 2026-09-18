@@ -114,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         lines = _door_card(data, args.door.strip())
     body = "\n".join(lines) + "\n"
-    out = agent_log.ensure_agent_log_dir("route", ROOT) / "summary.txt"
+    out = agent_log.ensure_agent_log_dir("route", root) / "summary.txt"
     _write(out, body)
     print(body, end="")
     return 0

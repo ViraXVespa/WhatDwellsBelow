@@ -9,7 +9,7 @@ from pathlib import Path
 import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT_DIR = agent_log.ensure_agent_log_dir("show-func", ROOT)
+OUT_DIR = agent_log.ensure_agent_log_dir("show-func", root)
 SUMMARY = OUT_DIR / "summary.txt"
 MAX_LINES = 80
 DECL = re.compile(

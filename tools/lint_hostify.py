@@ -21,7 +21,7 @@ import agent_log
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
-OUT_DIR = agent_log.ensure_agent_log_dir("hostify-lint", ROOT)
+OUT_DIR = agent_log.ensure_agent_log_dir("hostify-lint", root)
 SUMMARY = OUT_DIR / "summary.txt"
 SKIP_PARTS = (".archive_worktrees", "archives")
 
