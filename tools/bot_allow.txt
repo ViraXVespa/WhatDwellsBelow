@@ -23,6 +23,10 @@ tools/check_load_graph.py
 tools/check_code_map.py
 tools/doc_patch.py
 tools/write_utf8_file.py
+tools/anim_review_lib.py
+tools/patch_code_map.py
+tools/code_map_lib.py
+tools/md_format_lib.py
 AGENTS.md
 BOT.md
 .github/workflows/bot-gate.yml
