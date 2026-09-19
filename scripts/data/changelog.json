@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.16",
+			"points": [
+				{
+					"text": "Extract shared markdown formatting helpers into `tools/md_format_lib.py`."
+				},
+				{
+					"text": "`bot_opt.py`, `code_map_lib.py`, `patch_code_map.py`, and `doc_patch.py` import the library for UTF-8/LF write, tick wrap, path-tick replace-once, HTML-comment marker split, and table-row rewrite."
+				},
+				{
+					"text": "`anim_review_lib.write_text` uses the shared write helper. Queue semantics and code-map patch results unchanged."
+				}
+			],
+			"summary": "Shared md formatting library for Bot/doc tools; no queue or code-map behavior change."
+		},
+		{
 			"label": "0.4.15",
 			"points": [
 				{
