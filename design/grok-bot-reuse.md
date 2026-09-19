@@ -8,6 +8,8 @@ Binding for **Grok Bot** when the User names the staged reuse PR / reuse-map / q
 
 ## Mandate
 
+Size, prove, changelog, and `version.json` rules live in `BOT.md`.
+
 Confirm `reuse_brief count` from `python tools/bot_status.py`. The current body of `design/reuse-map.md` is **one** PR goal. Implement that brief. Do not take a subset. Do not invent rows. Do not mark rows done. Do not start a size sweep, extract hunt, relocate, or doc facade pass in the same session.
 
 Web / chat Phase 7 owns that file. After squash-merge, stop. Clearing or replacing the brief is the next web session, not this flow.
@@ -23,9 +25,9 @@ Still refactor-shaped unless a row the User wrote is explicit and legal. No inve
 3. `design/refactor.md` when a touched file must split (recipe only)
 4. One `design/code-map.md` **system row** for each cluster the brief names
 5. After that: only the live `.gd` files in the active cluster
-6. At ship: `scripts/data/version.json` + `design/versioning-log.md` body shape — not the changelog tree
+6. At ship: `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
 
-Do not reopen the agents file unless types, warnings, tabs, or the 10KB cap left context. Do not walk the live tree to rediscover copies the brief does not name.
+Do not walk the live tree to rediscover copies the brief does not name.
 
 ## Pass
 
@@ -33,4 +35,4 @@ Do not reopen the agents file unless types, warnings, tabs, or the 10KB cap left
 2. Implement the brief as one branch / one PR.
 3. Update `design/code-map.md` when a new public helper path appears.
 4. Do not rewrite `design/reuse-map.md` except a compile-safe typo fix the User already named. No Ready / Done columns.
-5. Verify with `design/pc-offload.md` runners as needed. Ship per the door.
+5. 

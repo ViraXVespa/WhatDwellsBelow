@@ -171,6 +171,18 @@ RECIPE_PHRASE_BANS = (
     "open the Bot door",
     "open the Bot path",
 )
+RITUAL_PHRASES = (
+    "leave-off",
+    "session-log file",
+    "pin scripts",
+    "invent queue rows",
+    "cloud clone",
+    "paste-emit",
+    "share the week pin",
+    "ship per the door",
+    "left context",
+    "full-repo sweep",
+)
 INDEX_NO_TOPIC = (
     "design/README.md",
     "design/code-map.md",
@@ -820,6 +832,10 @@ def main() -> int:
             fails.append(f"See also field present: {posix}")
         if re.search(r"\bGDD\b|Demo_GDD\.md", text):
             fails.append(f"leftover GDD token: {posix}")
+        lowered = text.lower()
+        for phrase in RITUAL_PHRASES:
+            if phrase.lower() in lowered:
+                fails.append(f"ritual phrase in {posix}: {phrase}")
         if re.search(r"notes/[A-Za-z0-9]", text):
             fails.append(f"names notes/ file: {posix}")
         if posix == "design/doc-refactor.md" and re.search(

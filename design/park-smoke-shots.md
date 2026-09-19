@@ -10,7 +10,7 @@ Not a boot file. See also is forbidden.
 
 Headless smoke screenshots for map objects / shoot / crop. Real rendering driver, not Dummy. Write postcards under `_logs/shots` (or the session summary dir). Do not attach PNGs to a fat CLI transcript by default.
 
-Out of this park: Godot path lock, Imagine deny, week_start, leave-off files. Those already shipped.
+Out of this park: Godot path lock and Imagine deny. Those already shipped.
 
 
 ## Notes from closeout_harness

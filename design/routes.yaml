@@ -24,6 +24,7 @@ notes_exempt:
   - design/reuse-map.md
   - design/parked-tasks.md
   - design/park-smoke-shots.md
+  - design/park-agent-setup.md
 
 parked_jobs:
   - design/art-attack-keyframes.md
@@ -64,6 +65,9 @@ gates:
   pc_offload:
     file: design/pc-offload.md
     when: inventory_verify_or_windows_write
+  build_job_cycle:
+    file: design/build-job-cycle.md
+    when: build_job
 
 doors:
   overview:
@@ -229,7 +233,21 @@ conflicts_with:
   dungeon:
     - enemies
     - interactables
+  skills:
+    - inventory
+  ui.gear_entry:
+    - inventory
+  ui.run_flow:
+    - inventory
+  ui.pause:
+    - inventory
+  enemies:
+    - dungeon
+    - combat
+  art_pipeline:
+    - player
   combat:
+    - player
     - enemies
     - interactables
 

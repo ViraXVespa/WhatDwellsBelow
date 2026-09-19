@@ -12,10 +12,10 @@ Grok Build feature work is **not** a refactor. Implementation freedom (new same-
 
 | Rule | Who |
 |------|-----|
-| Ship floor: every live `scripts/**/*.gd` under **10,000 bytes** | Bot size PR; web Phase 6 emits. Not Build while running |
+| Ship floor: every live `scripts/**/*.gd` under **10,000 bytes** | Bot size PR. Not Build while running |
 | Sweep target: each resulting file under **5,000 bytes** when existing code can move | Grok Bot size sweep only |
 
-**Web / chat** Phase 6 stops once the file is under **10KB**. It does not keep splitting toward **5KB**. **Grok Build** does not cap-split.
+Web / chat does not cap-split. **Grok Bot** uses this recipe. 10KB is the ship floor. The under-5KB sweep is the Bot size job only. **Grok Build** does not cap-split.
 
 Do not split a file that is already under the cap that applies to the current path, except Grok Bot extract work (new shared module or fitting existing owner) when that flow is the active Job-table sibling.
 

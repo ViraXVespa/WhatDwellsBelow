@@ -8,6 +8,8 @@ Boot `BOT.md` + `python tools/bot_status.py` first. Binding for **Grok Bot** whe
 
 ## Mandate
 
+Size, prove, changelog, and `version.json` rules live in `BOT.md`.
+
 Move an existing facade + stem siblings to a new folder. No behavior change. No wrappers unless the User asked for `-Wrapper` or external refs are too many to retarget in the same PR.
 
 Out of scope: inventing a new cluster to move, archives, art, features.
@@ -17,9 +19,9 @@ Out of scope: inventing a new cluster to move, archives, art, features.
 1. This file
 2. `design/refactor.md` (Parked folder moves; recipe only)
 3. The `design/code-map.md` **system rows** that name the cluster
-4. At ship: `scripts/data/version.json` + `design/versioning-log.md` body shape — not the changelog tree
+4. At ship: `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
 
-Do not reopen the agents file unless types, warnings, tabs, or the 10KB cap left context. Do not open the staged reuse brief. Do not read every caller first — run the mover, then open only paths the summary says changed.
+Do not open the staged reuse brief. Do not read every caller first — run the mover, then open only paths the summary says changed.
 
 ## Pass
 
@@ -28,4 +30,4 @@ Do not reopen the agents file unless types, warnings, tabs, or the 10KB cap left
 3. The tool `git mv`s the facade + stem siblings (+ `.uid`), rewrites `res://` and bare paths under `scripts/`, `design/`, scenes, and `project.godot`, and writes `_logs/move-cluster/summary.txt`.
 4. Prefer updating call sites over wrappers when external refs are few.
 5. Update `design/code-map.md` rows in the same PR.
-6. Run the editor import check (`design/pc-offload.md`). Ship per the door.
+6. Run the editor import check (`BOT.md`). 

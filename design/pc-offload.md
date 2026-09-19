@@ -1,4 +1,4 @@
-# PC offload (Bot + Build)
+# PC offload (Windows catalog)
 
 Status: binding for agents on a local checkout
 Read when: measuring size, inventorying live files, running a listed runner, reading that runner's _logs summary, or proposing a new local runner
@@ -8,7 +8,7 @@ The cloud Refactorer uses `python tools/bot_status.py` and `python tools/check_s
 
 `_logs/` is gitignored. Tools may write summaries there. Do not commit `_logs/`. Optional Bot notes may still go in `_logs/grok-bot-sweep.md`.
 
-The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Build and Bot. Imagine / I2V skills stay Build-only. A skill is copied into `.cursor/skills/` only when its frontmatter has `cursor-copy: true`.
+The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Grok Build on the User PC. Imagine / I2V skills stay Build-only. A skill is copied into `.cursor/skills/` only when its frontmatter has `cursor-copy: true`.
 
 ## Rules
 
@@ -21,10 +21,9 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Bui
 7. **Windows / PowerShell bodies:** never put markdown or multi-line Python through PowerShell double-quoted strings or `python -c`. Backticks and `\x` escapes get mangled. Write the body with a single-quoted here-string piped into `tools/write_utf8_file.py` (or `--b64` in a single-quoted string), then run the file. A double-quoted pipe or `python -c` is a failed lookup, not a fallback.
 8. **Ephemeral agent Python:** put throwaway scripts under `_logs/agent-py/` and run them with `powershell -File tools/run_agent_py.ps1 -Script _logs/agent-py/....`. That runner deletes the script after exit by default. Do not `-Cleanup` paths outside `_logs/agent-py/`. Permanent edits (design docs, checked-in tools) write straight to their real paths - they are not cleaned up.
 9. **Web / chat Phase 7 runner:** `tools/_scratch.py` is the gitignored paste target for documentation slices. The User runs `python tools/_scratch.py` from repo root. Do not put that runner under `_logs/agent-py/` (those scripts are deleted after exit). The runner must import `tools/doc_patch.py` instead of copying replace helpers.
-10. **New runner:** if the next step would open many untouched files, ingest a raw Godot log, grep the tree into chat, or hand-count bytes, stop. Use a catalog row when one exists. If none exists, propose a runner (name, command, summary path, what tokens it saves) and wait. Grok Build may implement an approved runner. Grok Bot may implement one only after the User approves that runner in-session.
+10. **New runner:** if the next step would open many untouched files, ingest a raw Godot log, grep the tree into chat, or hand-count bytes, stop. Use a catalog row when one exists. If none exists, propose a runner (name, command, summary path, what tokens it saves) and wait. Grok Build may implement an approved runner. Grok Build may implement one only after the User approves that runner in-session.
 11. **Tree search / git / one-liners:** built-in grep is only for a file already in this slice's edit set. Repo search is `list_xref.ps1`. Git inventory is `list_changed.ps1` (optional `-Head`); do not paste porcelain or `git log` into the thread. No `python -c`.
-12. **Cursor skills:** `.cursor/skills/` is a symlink to `.grok/skills/`. Do not run `sync_agent_skills.ps1` after a skill edit.
-
+12. **Cursor skills:** `.cursor/skills/` is a symlink to `.grok/skills/`. 
 ## Catalog
 
 | Job | Command (from repo root) | Summary (read only this) |
@@ -79,7 +78,7 @@ Ship floor vs Bot 5KB sweep: the script-split recipe. Do not restate those caps 
 - Named optimization item: `bot_opt.py --id` then implement; `--status id=done` in the same PR. Do not open the queue file to scan items.
 - Next changelog label: `next_changelog_label.py`. Do not read `design/changelog/` to invent the number.
 - May **propose** a new catalog runner at any time. May **implement** it only after the User approves that runner in-session.
-- Do not copy Imagine / I2V skills into `.cursor/skills/`. Cursor skill copies are a symlink; do not run `sync_agent_skills.ps1` after a skill edit.
+- Do not copy Imagine / I2V skills into `.cursor/skills/`. Cursor skill copies are a symlink. Do not run `tools/sync_agent_skills.ps1` after a skill edit.
 
 ### Grok Build
 
@@ -106,7 +105,7 @@ One Build session owns catalog / runner / skill optimizations. Keep the session 
 - Purpose: When the User names a catalog / runner / skill job, implement that one optimization (catalog row, `tools/` runner, skill when-to-use). Catalog summaries only. Not a game-slice CLI.
 - Typical slice: one named runner. Propose if new, wait for Go. Edit that runner / catalog row / skill when-to-use. Read that row via `tools/read_summary.ps1 -Job <name>`. Stop after the report.
 - Just do: same-catalog shared helper; skill `when-to-use` tokens; summary shape matching sibling rows; catalog line next to the existing job.
-- Stop and propose: a new catalog runner (already binding). A generic markdown or leave-off writer; a suite of extra doc runners; putting runners on the live code map; a skill rewrite that pastes the catalog into every Build boot.
+- Stop and propose: a new catalog runner (already binding). A generic markdown or pickup writer; a suite of extra doc runners; putting runners on the live code map; a skill rewrite that pastes the catalog into every Build boot.
 - Do not: Imagine / I2V; Grok Bot PRs; week pin ritual; tree dumps or whole tool bodies in chat; parking Bot opt notes; folding slice work into this thread.
-- Stop after the report. No leave-off file.
+- Stop after the report. Pickup is git plus `_logs/sess/` postcards.
 - Overlap: Bot-notes parks queue items with `bot_opt.py`; Smoke-tests writes phase coverage; Slice sessions consume this catalog. This session does not park Bot notes or add smoke assertions unless the User names that. Slice sessions do not add runners unless named in that thread.

@@ -8,13 +8,15 @@ Boot `BOT.md` + `python tools/bot_status.py` first. Binding for **Grok Bot** ext
 
 ## Mandate
 
+Size, prove, changelog, and `version.json` rules live in `BOT.md`.
+
 Move near-identical control flow (renamed locals OK) to one owner. No behavior change. No new game systems.
 
 - Prefer a **new shared module** when the same flow spans systems and the current owner would blow 10KB or is the wrong concern.
 - Prefer an **existing owner** only when that script already is the concern and stays under 10KB after the calls land.
 - Never grow an owner just to avoid a new file.
 - Never treat vaguely similar features as the same flow.
-- Touched live `scripts/**/*.gd` ship under 10KB. Split with `design/refactor.md` (recipe only). Do not keep splitting toward 5KB in this flow.
+- Do not keep splitting toward 5KB in this flow.
 
 ## Read set
 
@@ -22,9 +24,9 @@ Move near-identical control flow (renamed locals OK) to one owner. No behavior c
 2. `design/refactor.md` (recipe only)
 3. One `design/code-map.md` **system row** for the named cluster
 4. After the User names the cluster: only those live `.gd` bodies
-5. At ship: `scripts/data/version.json` + `design/versioning-log.md` body shape — not the changelog tree
+5. At ship: `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
 
-Do not reopen the agents file unless types, warnings, tabs, or the 10KB cap left context. Do not open the staged reuse brief (empty template is not a worklist). Do not walk the whole live tree to rediscover copies. Ask if the pair is not actually the same flow.
+Do not open the staged reuse brief (empty template is not a worklist). Do not walk the whole live tree to rediscover copies. Ask if the pair is not actually the same flow.
 
 ## Do not merge
 
@@ -50,6 +52,6 @@ Keep these as separate concerns unless the User overrides a specific row:
 1. Name the cluster and the intended owner or new module. Wait if that is not already explicit.
 2. Verify both bodies before moving.
 3. Route call sites. Update `design/code-map.md` in the same PR when a new public helper path appears.
-4. Verify with `design/pc-offload.md` runners as needed. Ship per the door.
+4. 
 
 Public entry points that must not change when a helper is split: `App.playtest`, `App.set_zoom` / `App.set_hud_scale` / `App.set_volume`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.

@@ -11,7 +11,8 @@ Never open `notes/`.
 AGENTS.md
     web   -> design/web-session.md -> protocol.md and constraints.md
     build -> design/grok-build.md -> protocol.md and constraints.md
-            -> no leave-off file; next unit is User-named
+            -> design/build-job-cycle.md when gathering, changing, or proving
+            -> next unit is User-named
     bot   -> BOT.md -> exactly one Job sibling
 
 Then, only if the User named work:
@@ -61,12 +62,3 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 11. README and code-map are human indexes, not boot files.
 
 Machine-readable edges: `design/routes.yaml`. This file is the human sketch only.
-
-## Increment 5 / 6
-
-Doors and jobs use door keys (`input`, `art_pipeline.pack`), not `the X topic` and not smashed door/job glue.
-README and code-map do not cite topic `design/*.md` paths. Tooling rows live on pc-offload, not the live code map.
-`job_read_when`, `job_parked`, `conflicts_with`, `boot_max`, and `fetch_ban` live in routes.yaml.
-Parked jobs stay out of the live Open column.
-The checker stems read_when tokens and walks a second topic-body cycle graph.
-Compaction re-boot, duplicate constitutions, and negated English cannot be proven from markdown.
