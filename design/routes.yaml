@@ -118,7 +118,11 @@ doors:
   hub:
     file: design/hub.md
     read_when: "Placeholdia, camp benches"
-    jobs: {}
+    jobs:
+      crystal: design/hub-crystal.md
+      benches: design/hub-benches.md
+      guild: design/hub-guild.md
+      yard: design/hub-yard.md
   dungeon:
     file: design/dungeon.md
     read_when: "gen, streaming, guardian doors, fog, crystals"
@@ -212,6 +216,10 @@ job_read_when:
   gear_ui.stats: "kit deltas, combat totals, hover highlight, Y preview"
   gear_ui.reequip: "re-equip lists, submenu chrome"
   gear_ui.chrome: "Analyze Forge bumpers, verbs, deferred teardown, script map"
+  hub.crystal: "consciousness-transfer VFX, Dispel wake-up, deepest row"
+  hub.benches: "ore-for-gold stall, dumpster flavor, plaza_tarp host"
+  hub.guild: "receptionist bust, notice errands, welcome cloth"
+  hub.yard: "striking dummy, Label3D priorities, post-rail fence, hopeful ambience, warmup overlay"
 
 job_parked:
   - art_pipeline.attack_keyframes
