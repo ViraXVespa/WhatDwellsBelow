@@ -8,6 +8,8 @@ jobs:
   gate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      WDB_AGENT_SESSION: github-actions
     steps:
       - name: Checkout
         uses: actions/checkout@v4
