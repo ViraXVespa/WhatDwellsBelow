@@ -46,19 +46,19 @@ Do not open art_pipeline parked attack-keyframes unless the User is resuming the
 | Eleven skills, XP, combat level | `skills.md` |
 | Bag, gear, artifacts, extract, analyze / forge | `inventory.md` |
 | Shared inventory / loadout / anvil board | `gear-ui.md` |
-| Placeholdia | `hub.md` |
-| Gen, floors, stream, doors, crystals | `dungeon.md` |
+| Placeholdia (door) | `hub.md` |
+| Gen, floors, stream, doors, crystals (door) | `dungeon.md` |
 | Roster, AI, named, pressure | `enemies.md` |
 | Mine, wood, shrine, puzzles, crystals | `interactables.md` |
 | HUD, pause, recap, maps, UIs | `ui.md` |
 | Secret debug, playtest, anim browser | `debug.md` |
 | Music, SFX, art rules, splash | `audio-visual.md` |
-| Save, web export, perf | `save-tech.md` |
+| Save, web export, perf (door) | `save-tech.md` |
 | Time targets, polish, a11y | `feel.md` |
 | Failure modes | `edge-cases.md` |
 | Phase 1–9 checklist | `coverage.md` |
 | Sprite / paper-doll door | `art-pipeline.md` |
-| Pinned archive commits | `archives.md` |
+| Pinned archive commits (door) | `archives.md` |
 | Suggested starts + live defaults | `tunables.md` |
 Per-build player notes for the **current series** are flat `design/changelog/{label}.md`. Prior series live under `design/changelog/archive/{epoch}.{series}/`. They are not topic files. Do not open them unless `versioning.md` says to.
 

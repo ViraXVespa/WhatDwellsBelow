@@ -41,8 +41,8 @@ def _git(root: Path, *args: str) -> tuple[int, str]:
         )
     except FileNotFoundError:
         return 127, "git-not-found"
-    out = (proc.stdout or "").strip()
-    err = (proc.stderr or "").strip()
+    out = (proc.stdout or "").rstrip()
+    err = (proc.stderr or "").rstrip()
     return proc.returncode, out if out else err
 
 

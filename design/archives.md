@@ -15,93 +15,10 @@ Archived builds are **pinned git commits**, not folders copied into the live tre
 
 `scripts/data/archive_catalog.json` is the catalog. Slim museum markdown that is **not** in a pin lives under `archives/docs/<id>/`.
 
-## Selectable builds
+This file is the door. Open the Job-table sibling only when that row matches.
 
-Title **Play** always launches live.
-
-The Archives browser lists every catalog row. Play on a row launches **that commit** as its own Godot project (local worktree) or opens its Pages export (web).
-
-| Id | Label | Commit |
-|----|-------|--------|
-| classic_2d | Classic 2D | `e26b7e26296b21e4eabedd8f3a077fff1a78bab4` |
-| art_experiment | Art experiment | `6139229acc681f2a3045f128dead7564e5af153f` |
-| full_3d_pass | Full 3D Pass | `71ea80a42cb4fd09cafd7b5a0327709541aa309c` |
-| grok_build_w1 | Grok Build Results (Week 1) | `49a3018247628545df8690a8d52ff334cda342a2` |
-| grok_web_w1 | Grok Web Results (Week 1) | `205c5c3e6397ba08c21eede1ba19eb2c94d02487` |
-| grok_build_w2 | Grok Build Results (Week 2) | `36fb882c9db3b6cd8a83f072d2dfec51d4acedca` |
-| grok_web_w2 | Grok Web Results (Week 2) | `bb70f556108d0e09e070cfaa42260f642af3737a` |
-| grok_build_w3 | Grok Build Results (Week 3) | `e7a9d2cf56965b711dc5b22eb7735a1875d96407` |
-| grok_web_w3 | Grok Web Results (Week 3) | `b87bd169fb4dce839753a37cb8dbb7a837d82f48` |
-
-After each Grok Build week ritual, also list `grok_web_w{N-1}` and `grok_build_wN` as specified in the versioning gate. Those rows use the same isolation rules as the rows above.
-
-No hybrid mode. No shared runtime state, scenes, scripts, or saves. Local Play stamps `application/config/name` on the worktree only (`What Dwells Below — <label>`). Pages exports do the same for IndexedDB isolation.
-
-Tags: `archive/classic-2d`, `archive/art-experiment`, `archive/full-3d-pass`, `archive/grok-build-w1`, `archive/grok-web-w1`, `archive/grok-build-w2`, `archive/grok-web-w2`, `archive/grok-build-w3`, `archive/grok-web-w3`, plus `archive/grok-web-w{N-1}` and `archive/grok-build-wN` when later pins exist.
-
-## Play
-
-**Web:** loader overlay, then same-tab redirect to the catalog `pages_url` (`JavaScriptBridge` `location` assign). Do not `OS.shell_open` a new tab. The browser Back button returns to the live title. The archive is a pre-exported Godot Web build under GitHub Pages. Never spawn Godot or checkout in the browser.
-
-**Editor / desktop with git:** reuse `scripts/ui/loader.gd`. Checkout `.archive_worktrees/<id>` (gitignored) if needed, stamp the project name, headless `--import` if `.godot/` is missing, then `OS.create_process` Godot `--path` that worktree. Keep the live instance running: minimize the parent window, watch the child PID, restore the parent and `App.go_title()` when the child exits. Keep frames pumping until spawn. B / Esc cancels before spawn.
-
-**No git / packaged exe:** same as web (Pages URL, same tab on web).
-
-Cached worktree + existing import: short “Opening snapshot…” beat, no re-import.
-
-## Pages
-
-Live site root is the current HEAD export. Each archive is `https://viraxvespa.github.io/WhatDwellsBelow/<pages_slug>/`.
-
-Player-facing changelogs for skipped weeks live at `https://viraxvespa.github.io/WhatDwellsBelow/changelog/`. That route is built in CI from flat `design/changelog/*.md` plus `design/changelog/archive/*/*.md`. Do not store those notes inside the Godot `docs/` export tree on `main`.
-
-GitHub Actions (`.github/workflows/pages.yml`) always exports HEAD. That live export is fatal: if it fails, Pages does not deploy.
-
-Catalog pins are exported by `tools/export_archives.py` as best-effort. A pin that fails `git worktree add`, `project.godot` stamp, `--import`, or `--export-release Web` is logged (Godot stdout/stderr included) and skipped. It MUST NOT fail the live deploy. Each pin uses its own `XDG_CACHE_HOME` and a wiped worktree `.godot/`. Do not change `HOME` during archive export; export templates stay in the runner user dir.
-
-Archive wasm/pck is not stored on `main`. CI restores `.archive_export_cache/` with key `wdb-pages-archives-` plus `hashFiles('scripts/data/archive_catalog.json')`, and `restore-keys` of `wdb-pages-archives-`. A cache hit for `{id}/{commit}/index.html` is copied into `site/<pages_slug>/`. A miss exports that pin once, then stores it under `{id}/{commit}/`. A later catalog-hash key miss still restores the previous cache so unchanged pins are not rebuilt. Local preview: `powershell -File tools/export_web.ps1 -Archives` → `_pages/`, same helper and gitignored `.archive_export_cache/`.
-
-Repo setting: Pages source = GitHub Actions.
-
-## Creating a new archive
-
-Core rule above still applies (no project-tree copies into `archives/`).
-
-User-ordered archives:
-
-1. Pick the commit to freeze. Tag it `archive/<id>`.
-2. Add a catalog row (id, label, desc, commit, pages_slug, docs).
-3. After Pages deploy, Play that row and confirm it is that SHA with zero live-path state. Report to the User.
-
-Standing Grok Build week pins (no extra prompt). Week-start: `tools/week_start.ps1`. Week-label math: the versioning gate.
-
-1. At init of week N (not a corruption resume): pin current `main` as `grok_web_w{N-1}` — Grok Web Results (Week N-1). Copy that week’s notes from `design/changelog/0.{N-1}.*.md` or `design/changelog/archive/0.{N-1}/` into `archives/docs/grok_web_w{N-1}/`. Prefer running `tools/archive_prior_changelogs.py` when series advances so the live folder stays current-series only. Attach the `design/` tree that exists **on that commit** in `docs[]`.
-2. On the User’s completion commit `0.N.0`: pin it as `grok_build_wN` — Grok Build Results (Week N). Copy the **previous** week’s changelog files (flat or under `design/changelog/archive/`) into `archives/docs/grok_build_wN/` if they exist. Run `tools/archive_prior_changelogs.py` after the series seed so prior flat files are parked. Attach the `design/` tree on that commit in `docs[]`.
-3. Do not move the web pin if the User later says this is a resume after corruption.
-
-## Archives browser UI
-
-Opened from title **Archives** only. Pause Settings MUST NOT open this browser.
-
-Shared two-column chrome: `split_menu.gd` + `split_menu_view.gd` (same helper as Pause Settings). Archive-specific Play / Documents / Video stay in `archives_ui_act.gd`.
-
-Two columns. Only one column is active.
-
-- Left: vertical list of catalog rows plus Back.
-- Right: info panel — description, Video (disabled if missing), Documents, Play.
-- While the list column is active, highlight / hover a left row updates the right pane immediately. Focus stays on the list.
-- While the detail column is active, hover MUST NOT change the right pane. Click a different left row opens that row’s page. Click the already-open row returns focus to the list.
-- A / click a left row moves focus to the first enabled right button (skip disabled Video).
-- B / Esc on the right column returns focus to the current left row. Menu stays open.
-- B / Esc on the left column closes the browser.
-- Inactive column is dimmed. A gold rail marks the active column. A chevron tracks the selected row. Path text reads `Snapshots › {label}` and deeper for Documents / reader.
-
-Documents: `archives/docs/<id>/` first, else `git show <sha>:<path>` locally, else GitHub raw on web. Truncate long files. Documents and reader stay a right-column mode stack; B steps read → docs → info → list.
-
-List MUST include every catalog row, including Classic 2D, Art experiment, Full 3D Pass, Grok Build Results (Week 1–3), Grok Web Results (Week 1–3), Grok Build Results (Week 4) once that pin exists, and any week pins added by the ritual above. Videos do not exist yet; the Video button stays disabled until they do.
-
-## Live snapshot
-
-`archives_ui.gd` is the facade and split host. `archives_ui_view.gd` still owns archive-only panels. `archives_ui_act.gd` handles Play, docs fetch, and video. Column focus / dim / chevron come from `split_menu_view.gd`.
-
-Pages CI exports live HEAD first, then runs `tools/export_archives.py` against the catalog. Failed pins stay in the catalog and in the Archives browser; their Pages URL may 404 until that SHA imports cleanly under the CI Godot and lands in `.archive_export_cache/`.
+| Job | Open |
+|-----|------|
+| classic_2d entry, snapshot tags, week ritual freeze | `design/archives-catalog.md` |
+| worktree minimize, Godot child restore, slug copyhit | `design/archives-play.md` |
+| split chevron, Documents reader, dim inactive columnstack | `design/archives-ui.md` |
