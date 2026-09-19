@@ -126,7 +126,11 @@ doors:
   dungeon:
     file: design/dungeon.md
     read_when: "gen, streaming, guardian doors, fog, crystals"
-    jobs: {}
+    jobs:
+      gen: design/dungeon-gen.md
+      gates: design/dungeon-gates.md
+      crystals: design/dungeon-crystals.md
+      stream: design/dungeon-stream.md
   enemies:
     file: design/enemies.md
     read_when: "roster, AI, pressure"
@@ -160,7 +164,10 @@ doors:
   save_tech:
     file: design/save-tech.md
     read_when: "persistence, wasm headers, autoloads, perf"
-    jobs: {}
+    jobs:
+      persist: design/save-tech-persist.md
+      web: design/save-tech-web.md
+      runtime: design/save-tech-runtime.md
   feel:
     file: design/feel.md
     read_when: "difficulty, raid-timer, parity, polish"
@@ -185,7 +192,10 @@ doors:
   archives:
     file: design/archives.md
     read_when: "Pages builds, catalog pins"
-    jobs: {}
+    jobs:
+      catalog: design/archives-catalog.md
+      play: design/archives-play.md
+      ui: design/archives-ui.md
 
 job_read_when:
   input.platforms_gamepad: "face buttons, rumble pulses"
@@ -220,6 +230,16 @@ job_read_when:
   hub.benches: "ore-for-gold stall, dumpster flavor, plaza_tarp host"
   hub.guild: "receptionist bust, notice errands, welcome cloth"
   hub.yard: "striking dummy, Label3D priorities, post-rail fence, hopeful ambience, warmup overlay"
+  dungeon.gen: "MST loops, deadend termini, hall widths, size rebalance ledger"
+  dungeon.gates: "PREPARE plaque, extraction clerks, stair hold, reveal disk"
+  dungeon.crystals: "transport decades, warp silence, spur length"
+  dungeon.stream: "RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo"
+  save_tech.persist: "primary backup wipe, game_ver stamp, isolated AI profiles"
+  save_tech.web: "COOP COEP off, id.txt querybust, serviceworker rename"
+  save_tech.runtime: "borderless exclusive, mip decode ban, Compatibility preferred"
+  archives.catalog: "classic_2d entry, snapshot tags, week ritual freeze"
+  archives.play: "worktree minimize, Godot child restore, slug copyhit"
+  archives.ui: "split chevron, Documents reader, dim inactive columnstack"
 
 job_parked:
   - art_pipeline.attack_keyframes
