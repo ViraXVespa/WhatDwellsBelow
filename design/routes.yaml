@@ -110,7 +110,8 @@ doors:
   gear_ui:
     file: design/gear-ui.md
     read_when: "gear-board, doll slots, flyouts, Anvil card"
-    jobs: {}
+    jobs:
+      reequip: design/gear-ui-reequip.md
   hub:
     file: design/hub.md
     read_when: "Placeholdia, camp benches"
@@ -204,6 +205,7 @@ job_read_when:
   art_pipeline.review: "brief packet, tree tour"
   art_pipeline.attack_keyframes: "resume parked, attack keyframes"
   art_pipeline.bible: "canon bible, layer law, quality floor"
+  gear_ui.reequip: "re-equip lists, submenu chrome"
 
 job_parked:
   - art_pipeline.attack_keyframes
