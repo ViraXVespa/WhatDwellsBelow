@@ -12,7 +12,7 @@ static func tab(ui: CanvasLayer) -> String:
 static func footer(ui: CanvasLayer) -> void:
 	_tabs(ui)
 	ui.box.add_child(ThemeS.lab(
-		"Bank %dg  %d ore  %d wood\tCarried %dg  %d ore  %d wood" % [
+		"Bank %dg  %d ore  %d wood  Carried %dg  %d ore  %d wood" % [
 			App.bank_gold, App.bank_ore, App.bank_wood,
 			App.gold, App.ore, App.wood,
 		],
