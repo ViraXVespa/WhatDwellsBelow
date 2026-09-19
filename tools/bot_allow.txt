@@ -28,7 +28,6 @@ BOT.md
 .github/workflows/bot-gate.yml
 design/changelog/*
 design/grok-bot-*
-design/park-bot-setup.md
 design/parked-tasks.md
 design/reuse-map.md
 design/refactor.md

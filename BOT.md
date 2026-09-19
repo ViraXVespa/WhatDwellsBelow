@@ -31,6 +31,13 @@ User squash-merges. Never push main. Never merge the PR.
 
 If the User names more than one job, ask which flow this session is. One flow, one PR, then stop.
 
+If this session woke because main moved: run python tools/bot_status.py first.
+If over_10kb count is 0, report and stop. If over_10kb count is above 0,
+open only design/grok-bot-size.md. Do not start reuse, extract, relocate,
+docs, or opt from that wake. Commit on bot/refactorer only. Never push main.
+Never merge the PR.
+
+
 Prove a cluster with:
 
 - python tools/check_script_cap.py --git-changed

@@ -1,0 +1,76 @@
+name: bot-wake
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Punch list
+        id: status
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/bot_status.py --root . | tee /tmp/bot-status.txt
+          python tools/check_script_cap.py --root .
+          count=$(sed -n 's/^over_10kb count=//p' /tmp/bot-status.txt | head -1)
+          count=${count:-0}
+          echo "over_10kb=${count}" >> "$GITHUB_OUTPUT"
+          echo "over_10kb count=${count}"
+
+      - name: Skip when clean
+        if: steps.status.outputs.over_10kb == '0'
+        run: echo "over_10kb count=0; Bot not woken"
+
+      - name: Ping Bot webhook
+        if: steps.status.outputs.over_10kb != '0'
+        env:
+          GROK_BOT_WEBHOOK_URL: ${{ secrets.GROK_BOT_WEBHOOK_URL }}
+          OVER_10KB: ${{ steps.status.outputs.over_10kb }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${GROK_BOT_WEBHOOK_URL}" ]; then
+            echo "GROK_BOT_WEBHOOK_URL unset; Bot not woken"
+            exit 0
+          fi
+          python - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          url = os.environ["GROK_BOT_WEBHOOK_URL"]
+          body = json.dumps(
+              {
+                  "repo": os.environ.get("GITHUB_REPOSITORY", ""),
+                  "ref": os.environ.get("GITHUB_REF", ""),
+                  "sha": os.environ.get("GITHUB_SHA", ""),
+                  "over_10kb": os.environ.get("OVER_10KB", ""),
+                  "job": "size",
+              }
+          ).encode("utf-8")
+          req = urllib.request.Request(
+              url,
+              data=body,
+              method="POST",
+              headers={"Content-Type": "application/json"},
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  print(f"webhook status={resp.status}")
+          except urllib.error.HTTPError as exc:
+              raise SystemExit(f"webhook HTTP {exc.code}") from exc
+          PY

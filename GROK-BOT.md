@@ -19,7 +19,7 @@ Shared Grok Bot Linux VM. One GitHub PR on bot/refactorer.
    (desktop only; does not block the VM).
 6. Auto-review Allow: git add, git commit, git push on bot/* under
    /workspace/WhatDwellsBelow.
-7. Auto-review Ask first: push main, gh pr merge, force-push.
+7. Auto-review Ask first: push main, gh pr merge, force-push, deletes outside the cluster.
 
 ## Profile
 
@@ -52,6 +52,13 @@ Stop and report branch, whether a Bot PR is open, over_10kb count, reuse_brief
 count, pending opt ids. Do not walk the game tree.
 
 Then one job from the printed list.
+
+After a saved size skill, an optional main-changed routine may run status
+then size-only. Wake with python tools/bot_status.py. If over_10kb count is
+0, report and stop. If over_10kb count is above 0, open only
+design/grok-bot-size.md. Commit on bot/* only. Do not start reuse, extract,
+relocate, docs, or opt from that wake. Do not schedule a routine that
+commits until that skill exists.
 
 ## Where the rules live
 
