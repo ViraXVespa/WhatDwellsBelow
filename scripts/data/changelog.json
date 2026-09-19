@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.13",
+			"points": [
+				{
+					"text": "Size sweep: split `scripts/world/dungeon_stream.gd` under the 5KB sweep target."
+				},
+				{
+					"text": "Facade stays at `dungeon_stream.gd`; helpers: `dungeon_stream_queue.gd`, `dungeon_stream_act.gd`."
+				},
+				{
+					"text": "code-map Dungeon row lists the new siblings. No behavior change."
+				}
+			],
+			"summary": "Dungeon stream size split under 5KB; public path unchanged."
+		},
+		{
 			"label": "0.4.12",
 			"points": [
 				{
