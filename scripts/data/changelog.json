@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.8",
+			"points": [
+				{
+					"text": "Grok Bot is one product: BOT.md plus bot_status plus one Job file. Deleted design/grok-bot-session.md."
+				},
+				{
+					"text": "Week pins are User-only. Agent-facing docs no longer name or launch the week-start script."
+				},
+				{
+					"text": "Versioning gate is named pin or archive. Ship label stays on versioning-log."
+				}
+			],
+			"summary": "Bot boot is one file; week pins stay human."
+		},
+		{
 			"label": "0.4.7",
 			"points": [
 				{
