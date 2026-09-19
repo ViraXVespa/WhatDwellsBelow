@@ -42,6 +42,13 @@ design/gear-ui-chrome.md
 design/gear-ui-stats.md
 design/gear-ui-board.md
 design/gear-ui.md
+design/hub.md
+design/hub-crystal.md
+design/hub-benches.md
+design/hub-guild.md
+design/hub-yard.md
+design/README.md
+design/load-graph.md
 design/code-map.md
 design/versioning-log.md
 README.md

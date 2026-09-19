@@ -42,7 +42,7 @@ PC offload is a gate (`inventory_verify_or_windows_write`), not a recipe. The pc
 Path session files do not point back at AGENTS as a fetch.
 Topic siblings do not point at path files.
 topics index and design/code-map.md do not point at each other.
-Callers link a facade, never an art / UI / input / inventory / debug sibling.
+Callers link a facade, never an art / UI / input / inventory / debug / hub sibling.
 conflicts_with is a load ban: do not open the second door in the pair unless the User names the owner.
 See also is never a read list.
 The checker fails leftover relic-index names and `notes/<file>` cites.
