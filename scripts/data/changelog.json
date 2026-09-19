@@ -3,6 +3,30 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.14",
+			"points": [
+				{
+					"text": "Prompt chrome gold and 5px dark outline are ThemeS tokens shared by prompt bars and confirm hints."
+				},
+				{
+					"text": "Wipe-children for prompt paint and progress menus shares one small helper."
+				},
+				{
+					"text": "Progress extract, shop, and abandon confirms use the confirm modal instead of press-twice."
+				},
+				{
+					"text": "Pause / progress / crystal / recap open and close share a short ui_session helper for tree pause and App.ui_open."
+				},
+				{
+					"text": "Confirm dialog left/right focus uses split_menu_view.wire_horiz; Select/Back come from PromptView.merge_parts."
+				},
+				{
+					"text": "Pause skills and recap bars share skill_row_view for the skill label and single-fill XP track."
+				}
+			],
+			"summary": "Confirm modal and shared UI session / skill-row / focus helpers; menus stay the same."
+		},
+		{
 			"label": "0.4.13",
 			"points": [
 				{
