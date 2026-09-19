@@ -46,7 +46,7 @@ Prefer a local checkout (`WDB_ROOT`) for large sweeps. Commit locally per cluste
 
 ## Verify
 
-After each cluster: `design/pc-offload.md` runners (`run_post_split_gate.ps1`, `check_script_cap.ps1`, import check). Then ship per the door.
+After each cluster: `design/pc-offload.md` runners (`run_post_split_gate.ps1`, `check_script_cap.ps1`, import check). Then ship per `BOT.md`.
 
 - Godot binary (Steam tools): `C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe`
 - Required import check: `--headless --editor --import --path <WDB_ROOT> --quit` (or `tools/run_godot_import_check.ps1`). Clean bar: exit 0 and empty stderr.

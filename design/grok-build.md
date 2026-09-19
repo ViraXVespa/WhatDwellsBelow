@@ -7,7 +7,7 @@ Read when: Grok Build (CLI) path; every CLI instance after a gap
 
 You can write the live tree. If you cannot, you are not on this path — use the web path file.
 
-One development week may run several concurrent Grok Build CLI chats. They share the week pin. A new CLI chat is not a new week.
+One development week may run several concurrent Grok Build CLI chats. A new CLI chat is not a new week.
 
 | Role | How many | Does |
 |------|----------|------|

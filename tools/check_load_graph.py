@@ -178,6 +178,10 @@ RITUAL_PHRASES = (
     "invent queue rows",
     "cloud clone",
     "paste-emit",
+    "share the week pin",
+    "ship per the door",
+    "left context",
+    "full-repo sweep",
 )
 INDEX_NO_TOPIC = (
     "design/README.md",

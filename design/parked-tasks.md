@@ -10,7 +10,7 @@ Not a boot file. Not a topic index.
 
 If the first User message names a row in the table below (id or trigger words), after the normal web review load only that Open file. Confirm: review done, this chat is that parked task. Do not wait for a separate go-to-Phase-2 message.
 
-If that park file already has the mandate, Phase 2 is optional. When the User says go, implement, or Phase 7, proceed. Do not spend a turn asking which phase this is.
+If that park file already has the mandate, Phase 2 is optional. When the User says go, implement, or emit, proceed. Do not spend a turn asking which phase this is.
 
 If no park is named, Phase 1 stays as it was: confirm ready for Phase 2 only.
 

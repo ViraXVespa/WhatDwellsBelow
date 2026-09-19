@@ -12,7 +12,7 @@ If a path session file is already loaded, stay on that path. Do not re-select a 
 
 ## Core rules
 
-- Fresh **Grok** (Build / web): this file, `design/constraints.md`, then only topic that matches the requested work. Inspect the live path from **one system row** in `design/code-map.md` (`project.godot`, then the listed scenes/scripts). MUST NOT walk `assets/` unless the task names sprites or audio. MUST NOT begin by archiving or rewriting the live path. MUST NOT read `design/changelog/` on a mid-week slice. Open it only for a named pin, a revert, a named past build, or when the User asks what shipped. MUST NOT open `design/reuse-map.md` unless this session’s goal is to write that brief or the User named the staged reuse PR.
+- Fresh **Grok** (Build / web): this file, `design/constraints.md`, then only topic that matches the requested work. Inspect the live path from **one system row** in `design/code-map.md` (`project.godot`, then the listed scenes/scripts). MUST NOT walk `assets/` unless the task names sprites or audio. MUST NOT begin by archiving or rewriting the live path. MUST NOT read `design/changelog/` on a mid-week slice. Open it only for a named pin, a revert, a named past build, or when the User asks what shipped.
 - **Grok Bot** does not follow that read list. Onboard is `BOT.md` plus `python tools/bot_status.py`, then one Job file.
 
 Web / chat never pushes `main` and never replaces a scratch with a hand-run command list. When editing GDScript, load `design/gdscript-law.md`.
@@ -24,14 +24,14 @@ Web / chat never pushes `main` and never replaces a scratch with a hand-run comm
 - Ambiguity about **player-facing design**: ask. Grok Build MUST decide code structure inside one system without asking, and MUST stop and propose before a new cross-system owner or a named live-architecture replace.
 - This database is the source of design intent across compaction. The live tree is the source of truth for shipping code. Git history on `main` is the source of truth for the game version number; `scripts/data/version.json` is the baked copy.
 - Prefer simple, readable, production-quality code. Match existing live patterns unless Grok Build is doing a just-do same-system reshape or an accepted rework. Sprite / I2V work starts at art_pipeline when that door’s `Read when` matches.
-- GDScript indent, types, and warnings: `design/gdscript-law.md` when editing GDScript. The 10KB ship floor lives in that same file; Grok Build does not enforce it while running. Size splits: `design/refactor.md` for Grok Bot and for web / chat Phase 6 only (recipe only; Bot flow from `BOT.md`). Deliver as that path's session file specifies.
+- GDScript indent, types, and warnings: `design/gdscript-law.md` when editing GDScript. The 10KB ship floor lives in that same file; Grok Build does not enforce it while running. Size splits: `design/refactor.md` for Grok Bot (recipe only; Bot flow from `BOT.md`). Web / chat does not cap-split. Deliver as that path's session file specifies.
 - Self-verify against the Demo-Complete Checklist in `design/constraints.md` before calling the build complete.
 
 ## Long-running behavior
 
 On multi-session or compacted runs, name Hard Constraints and the current requested work. Do not fetch a file already in the loaded set. Never allow live-path code to share state with any archive. Do not “recover” a stale session by archiving or rewriting the live path.
 
-One emit pass per web / chat Phase 3 through Phase 7. Same session may return to Phase 2 after Phase 7. One development week may run several concurrent Grok Build CLI sessions (slice, plus week-scoped Bot notes, PC offload, and smoke tests). Pins are User-only. One Grok Bot flow per session (one Job-table sibling; one PR).
+One emit pass per web / chat Phase 3 through Phase 4. Same session returns to Phase 2 after Phase 5 unless the User changes the goal. One development week may run several concurrent Grok Build CLI sessions (slice, plus week-scoped Bot notes, PC offload, and smoke tests). Pins are User-only. One Grok Bot flow per session (one Job-table sibling; one PR).
 
 ## How to use this database
 
