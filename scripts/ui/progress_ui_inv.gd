@@ -3,6 +3,7 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const CatalogS := preload("res://scripts/data/catalog.gd")
 const Board := preload("res://scripts/ui/gear_board/gear_board.gd")
+const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 
 
 static func sets_blurb() -> String:
@@ -49,12 +50,12 @@ static func rebuild_extract(ui) -> void:
 	ui.box.add_child(ThemeS.lab("Mail goods to the surface. Artifacts stay with you (run-only).", 18, Color(0.82, 0.76, 0.66)))
 	ui.status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
 	ui.box.add_child(ui.status)
-	ui.focus_btn = ThemeS.btn("Send All  (confirm)", func(): ui._confirm(func(): ui._do_send_all(), "send_all"))
+	ui.focus_btn = ThemeS.btn("Send All", func(): Confirm.open(ui, "Send All", "Mail all extractable goods to the surface?", func(): ui._do_send_all()))
 	ui.box.add_child(ui.focus_btn)
 	for it in App.prog.extractable(ui.extract_role):
 		var cap := str(it.get("name", "?"))
 		if it.has("n"):
 			cap += "  x%d" % int(it.n)
 		var copy: Dictionary = it.duplicate(true)
-		ui.box.add_child(ThemeS.btn("Send  " + cap, func(): ui._confirm(func(): ui._do_send_one(copy), "send_" + cap)))
+		ui.box.add_child(ThemeS.btn("Send  " + cap, func(): Confirm.open(ui, "Send Item", "Mail %s to the surface?" % cap, func(): ui._do_send_one(copy))))
 	ui.box.add_child(ThemeS.btn("Leave", func(): ui.close_ui()))
