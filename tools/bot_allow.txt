@@ -38,6 +38,9 @@ design/web-session.md
 design/pc-offload.md
 design/routes.yaml
 design/gear-ui-reequip.md
+design/gear-ui-chrome.md
+design/gear-ui-stats.md
+design/gear-ui-board.md
 design/gear-ui.md
 design/code-map.md
 design/versioning-log.md
