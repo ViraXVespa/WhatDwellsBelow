@@ -89,7 +89,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable) ->
 	PromptView.fill(hint, [
 		{"action": "ui_accept", "verb": "Select", "gap": true},
 		{"action": "ui_cancel", "verb": "Back"},
-	], 16, Color(0.86, 0.80, 0.66))
+	], 16, ThemeS.PROMPT_GOLD)
 	yes.grab_focus()
 	if parent is CanvasLayer:
 		PromptView.footer(parent as CanvasLayer, [])
