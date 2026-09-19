@@ -1,6 +1,7 @@
 extends Node
 
 const BalanceS := preload("res://scripts/data/balance.gd")
+const T := preload("res://scripts/data/tunables.gd")
 const SfxS := preload("res://scripts/audio/sfx.gd")
 const ProgressS := preload("res://scripts/data/progress.gd")
 const TelS := preload("res://scripts/debug/telemetry.gd")

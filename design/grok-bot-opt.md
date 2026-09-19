@@ -69,7 +69,7 @@ Do not build a markdown engine, CommonMark parser, HTML sanitizer, or doc framew
 
 A new tools/ module is in scope because this item names it. Prefer one library imported by the existing runners. New catalog row only if a new command appears. One PR. Mark this item done in the same PR.
 
-### opt-002 (pending)
+### opt-002 (done)
 - Title: Centralize preload literals on Autoload/flow facades
 - Cluster: Autoload / flow
 - Files: `scripts/app.gd`, `scripts/app_boot.gd`, `scripts/app_flow.gd`, `scripts/app_run.gd`, `scripts/app_set.gd`

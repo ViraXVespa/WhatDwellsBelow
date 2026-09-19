@@ -2,10 +2,7 @@ extends Object
 
 ## Settings cluster split out of App. Facade path stays scripts/app.gd.
 
-const T := preload("res://scripts/data/tunables.gd")
-const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
-const Disp := preload("res://scripts/display_mode.gd")
 
 
 static func set_volume(host: Node, which: String, v: float) -> void:
@@ -33,7 +30,7 @@ static func set_volume(host: Node, which: String, v: float) -> void:
 
 
 static func set_zoom(host: Node, z: float) -> void:
-	host.cam_zoom = clampf(z, T.ZOOM_MIN, T.ZOOM_MAX)
+	host.cam_zoom = clampf(z, App.T.ZOOM_MIN, App.T.ZOOM_MAX)
 	var p: Node = host.get_tree().get_first_node_in_group("player")
 	if p:
 		var rig: Variant = p.get("rig")
@@ -59,23 +56,23 @@ static func refresh_ui_text_scale(_host: Node) -> void:
 
 
 static func set_sprite_filter(host: Node, id: int, allow_linear: bool = false) -> void:
-	host.sprite_filter = SpriteFilt.clamp_id(id, allow_linear)
-	SpriteFilt.apply_tree()
+	host.sprite_filter = App.SpriteFilt.clamp_id(id, allow_linear)
+	App.SpriteFilt.apply_tree()
 
 
 static func set_sprite_mip_sharp(host: Node, on: bool) -> void:
 	host.sprite_mip_sharp = on
-	SpriteFilt.apply_tree()
+	App.SpriteFilt.apply_tree()
 
 
 static func set_sprite_mip_bias(host: Node, v: float) -> void:
 	host.sprite_mip_bias = clampf(v, -2.0, 2.0)
-	SpriteFilt.apply_tree()
+	App.SpriteFilt.apply_tree()
 
 
 static func set_display_mode(_host: Node, mode: String) -> void:
-	Disp.set_desktop_mode(mode)
+	App.Disp.set_desktop_mode(mode)
 
 
 static func set_web_fullscreen(_host: Node, on: bool) -> void:
-	Disp.set_web_fullscreen(on)
+	App.Disp.set_web_fullscreen(on)

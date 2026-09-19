@@ -1,7 +1,6 @@
 extends Object
 
 const GameVer := preload("res://scripts/data/game_ver.gd")
-const Pad := preload("res://scripts/input/pad.gd")
 const Show := preload("res://scripts/title_news_show.gd")
 const Fmt := preload("res://scripts/title_news_fmt.gd")
 
@@ -91,7 +90,7 @@ static func scroll_news(host: Node, px: int) -> void:
 
 static func tick(host: Node, delta: float) -> void:
 	if host._news_open and host._news_scroll != null and is_instance_valid(host._news_scroll):
-		var y := Pad.stick(JOY_AXIS_RIGHT_X, JOY_AXIS_RIGHT_Y).y
+		var y := App.Pad.stick(JOY_AXIS_RIGHT_X, JOY_AXIS_RIGHT_Y).y
 		if absf(y) > 0.2:
 			scroll_news(host, int(y * 520.0 * delta))
 

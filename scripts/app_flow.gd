@@ -1,6 +1,5 @@
-﻿extends Object
+extends Object
 
-const T := preload("res://scripts/data/tunables.gd")
 const Anim := preload("res://scripts/world/player_anim.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 
@@ -286,7 +285,7 @@ static func launch_archive(host: Node, id: String) -> void:
 
 
 static func archive_label(id: String) -> String:
-	for e in T.archive_catalog():
+	for e in App.T.archive_catalog():
 		if str(e.get("id", "")) == id:
 			return str(e.get("label", id))
 	return id
