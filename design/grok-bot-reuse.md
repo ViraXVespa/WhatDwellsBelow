@@ -35,4 +35,7 @@ Do not walk the live tree to rediscover copies the brief does not name.
 2. Implement the brief as one branch / one PR.
 3. Update `design/code-map.md` when a new public helper path appears.
 4. Do not rewrite `design/reuse-map.md` except a compile-safe typo fix the User already named. No Ready / Done columns.
-5. 
+5. Prove per BOT.md.
+## Verify
+
+Prove per BOT.md.

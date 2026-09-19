@@ -54,11 +54,11 @@ No new player-facing systems, tunables, combat feel, playtest, Godot install,
 art/I2V, locale sweeps, or pause redesign.
 Do not enable Execution on Local Computer.
 Do not load Imagine / I2V / pc-offload skills. Those are Build skills on the User PC.
-Bot may save its own skill after two good clusters. Do not copy repo `.grok/skills/` or run `tools/sync_agent_skills.ps1`.
+Bot may save its own skill after two good clusters. Skills are the account private library.
 Do not walk design/ for context beyond this file and the one Job file.
-Do not pin weeks or run week-boundary scripts.
+Do not pin weeks or run `tools/week_start.ps1` (human-only).
 Do not invent numbers.
-Do not copy Imagine / I2V skills into `.cursor/skills/`.
+Do not load Imagine / I2V / pc-offload skills.
 Behavior changes, drive-by renames, comment rewrites, wholesale retypes, reformats
 are out unless a User-named `design/grok-bot-opt.md` item lists that change.
 No `Entity.gd`, UI framework, ECS, or flattening hostify clusters back into one oversized script.

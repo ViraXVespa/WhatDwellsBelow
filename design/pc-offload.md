@@ -4,11 +4,11 @@ Status: binding for agents on a local checkout
 Read when: measuring size, inventorying live files, running a listed runner, reading that runner's _logs summary, or proposing a new local runner
 Folder relocate, Bot/Build runners, and sprite tools live in this catalog, not on the live code map.
 
-The cloud Refactorer uses `python tools/bot_status.py` and `python tools/check_script_cap.py` on the shared Linux VM. Do not convert the `.ps1` catalog to bash. Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. Agents should **read only the session summary (`_logs/sess/<session>/<job>/summary.txt`)** those tools write - not raw Godot logs, not whole script bodies just to measure or inventory.
+The cloud Refactorer does not use this catalog. It proves on the VM per BOT.md. Do not convert the `.ps1` catalog to bash. Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. Agents should **read only the session summary (`_logs/sess/<session>/<job>/summary.txt`)** those tools write - not raw Godot logs, not whole script bodies just to measure or inventory.
 
-`_logs/` is gitignored. Tools may write summaries there. Do not commit `_logs/`. Optional Bot notes may still go in `_logs/grok-bot-sweep.md`.
+`_logs/` is gitignored. Tools may write summaries there. Do not commit `_logs/`. Do not treat `_logs/grok-bot-sweep.md` as a Bot door from this catalog.
 
-The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Grok Build on the User PC. Imagine / I2V skills stay Build-only. A skill is copied into `.cursor/skills/` only when its frontmatter has `cursor-copy: true`.
+The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Grok Build on the User PC. Imagine / I2V skills stay Build-only. Grok Build on the User PC may use repo skills. That is not the cloud Bot library.
 
 ## Rules
 
@@ -47,7 +47,6 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Gro
 | Bot opt queue | `python tools/bot_opt.py --list` (or `--id opt-001`, `--add` / `--replace opt-001 --title ... --cluster ... --body-file ...`, `--status opt-001=done`, `--remove opt-001`) | `_logs/sess/<session>/bot-opt/summary.txt` |
 | Scene node / script list | `powershell -File tools/list_scenes.ps1` (optional `-Path scenes/dungeon.tscn`) | `_logs/sess/<session>/scenes/summary.txt` |
 | Next changelog label | `python tools/next_changelog_label.py` | `_logs/sess/<session>/changelog-label/summary.txt` |
-| Sync Cursor skills | `powershell -File tools/sync_agent_skills.ps1` (optional `-DryRun`) | `_logs/sess/<session>/skill-sync/summary.txt` |
 | Relocate facade cluster | `powershell -File tools/move_script_cluster.ps1` (or `python tools/move_script_cluster.py`) | (tool stdout; no summary) |
 | Editor import / compile | `powershell -File tools/run_godot_import_check.ps1` | `_logs/sess/<session>/godot-import-check/summary.txt` |
 | Phase smokes | Prefer `& .\tools\run_smokes.ps1 -Phases @(4,5)` (avoid `-File ... -Phases 4,5` binding as phase 45) | `_logs/sess/<session>/smokes/summary.txt` |
@@ -70,15 +69,8 @@ Ship floor vs Bot 5KB sweep: the script-split recipe. Do not restate those caps 
 
 ### Grok Bot
 
-- Load the pc-offload skill when measuring, inventorying, searching, or verifying. Then this catalog. Read summaries only.
-- Inventory / sweep planning: changed-path and oversize list, then `summarize_scripts` / `list_facade_cluster` before opening bodies. Code-map row instead of the whole live map. Patch or check a row with `patch_code_map.py` / `check_code_map.py`; do not open the map to add a helper path. Scene list instead of raw `.tscn`.
-- Doc / multi-line script edits on Windows: `write_utf8_file.py` + `run_agent_py.ps1` for ephemeral runners (auto-clean under `_logs/agent-py/`).
-- After each size cluster: import check or `run_post_split_gate.ps1`; hostify lint advisory; smokes when behavior risk warrants.
-- Relocate: `move_script_cluster` from this catalog.
-- Named optimization item: `bot_opt.py --id` then implement; `--status id=done` in the same PR. Do not open the queue file to scan items.
-- Next changelog label: `next_changelog_label.py`. Do not read `design/changelog/` to invent the number.
-- May **propose** a new catalog runner at any time. May **implement** it only after the User approves that runner in-session.
-- Do not copy Imagine / I2V skills into `.cursor/skills/`. Cursor skill copies are a symlink. Do not run `tools/sync_agent_skills.ps1` after a skill edit.
+- Do not load this file or the pc-offload skill. Constitution is `BOT.md`. Prove per BOT.md on the VM.
+- Bot skills are the account private library. Do not load this catalog.
 
 ### Grok Build
 

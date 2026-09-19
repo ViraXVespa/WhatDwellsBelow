@@ -16,7 +16,7 @@ Start with `python tools/bot_status.py`. Sweep live `scripts/**/*.gd` for size (
 - No behavior change.
 - Over-10KB live scripts left on `main` by Grok Build are expected input to this job, not a missed Build split.
 
-Out of scope: `scenes/`, `assets/`, `tools/` (unless a preload path or PC-offload runner must change), `archives/`, pinned commits, `project.godot` unless a moved script must be registered.
+Out of scope: `scenes/`, `assets/`, `tools/` (unless a preload path must change), `archives/`, pinned commits, `project.godot` unless a moved script must be registered.
 
 ## Read set
 
@@ -48,9 +48,4 @@ Work in `/workspace/WhatDwellsBelow`. Commit per cluster on `bot/refactorer`.
 
 ## Verify
 
-
-
-- Required import check: `--headless --editor --import --path </workspace/WhatDwellsBelow> --quit` (or `tools/run_godot_import_check.ps1`). Clean bar: exit 0 and empty stderr.
-- Smokes when behavior risk warrants: `--headless --display-driver headless --audio-driver Dummy --path </workspace/WhatDwellsBelow> -- --wdb-phaseN-smoke` (or `tools/run_smokes.ps1`). Plain `--headless` without those drivers can hang.
-- Advisory hostify lint: `tools/lint_hostify.ps1` / `python tools/lint_hostify.py` → `_logs/hostify-lint/summary.txt`. Always exits 0; read `RESULT hits=`. Not a compile substitute.
-- If a split introduced a SCRIPT ERROR, parse error, or new actionable warning, stop. Fix it and record the prevention under `design/refactor.md`. Do not continue past a red import check.
+Prove per BOT.md.

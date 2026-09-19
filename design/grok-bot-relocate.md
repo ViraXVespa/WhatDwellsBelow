@@ -26,8 +26,12 @@ Do not open the staged reuse brief. Do not read every caller first — run the m
 ## Pass
 
 1. User names the source facade and destination folder. Stop and ask if either is missing.
-2. From repo root: `powershell -File tools/move_script_cluster.ps1` (or `python tools/move_script_cluster.py`). Optional `-DryRun`, `-Wrapper` (leave `extends "res://..."` stubs at old paths).
+2. From repo root: `python tools/move_script_cluster.py`. Optional `--dry-run` / `-DryRun`, `-Wrapper` (leave `extends "res://..."` stubs at old paths).
 3. The tool `git mv`s the facade + stem siblings (+ `.uid`), rewrites `res://` and bare paths under `scripts/`, `design/`, scenes, and `project.godot`, and writes `_logs/move-cluster/summary.txt`.
 4. Prefer updating call sites over wrappers when external refs are few.
 5. Update `design/code-map.md` rows in the same PR.
-6. Run the editor import check (`BOT.md`). 
+6. Prove per BOT.md.
+
+## Verify
+
+Prove per BOT.md.

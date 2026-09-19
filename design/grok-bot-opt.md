@@ -35,6 +35,7 @@ Do not open the other Bot flow siblings. Do not walk the whole live tree.
 
 1. User names an item id (or the next pending item). Inventory that cluster with VM prove commands in `BOT.md`. Do not edit yet.
 2. Implement only that item. Mark it `done` in the same PR with `python tools/bot_opt.py --status opt-NNN=done`.
+3. Prove per BOT.md.
 3. 
 
 
@@ -110,3 +111,7 @@ Keep player-facing order and timing unless a listed extract is a no-op move. Sam
 Touched live `scripts/**/*.gd` under 10KB. One PR. Mark this item done in the same PR.
 
 <!-- bot-opt:end -->
+
+## Verify
+
+Prove per BOT.md.

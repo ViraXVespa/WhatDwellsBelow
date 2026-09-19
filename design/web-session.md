@@ -23,7 +23,7 @@ The User tells the agent to review the repo.
 
 If the agents file already routed here, do not re-read it. Load `design/protocol.md` and `design/constraints.md` only when missing. Then only the named topic. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open the Build path file, `BOT.md`, `design/README.md`, or Grok Bot Job files. Do not treat git as the hand-off.
 
-Open `design/parked-tasks.md` only when the User names a parked task. If the first message matches that table, load only that Open file after the law pair and continue. If the park already has a mandate, Phase 2 is optional.
+Open `design/parked-tasks.md` only when the User names a parked task. If the first message matches that table, load only that Open file after the law pair and continue. If the park already has a mandate, Phase 2 is optional. Closing a finished park deletes the Open file and its parked-tasks row. Do not rewrite that file as closed.
 
 If no park is named, confirm ready for Phase 2. Do not start implementation.
 
@@ -45,11 +45,11 @@ One action. Prefer one `tools/_scratch.py` for every revise/delete path and the 
 
 Revise from a fetched raw body plus the artifact byte check, or from a User paste already in this conversation. Fetch budget: one pull per path. After a failed check, do not fetch again. Do not assemble a revision from a tool-card summary. Do not put a markdown fence opener inside a fenced emit. Do not reimplement `tools/doc_patch.py`.
 
-Docs in this pass: same scratch updates topic files, one code-map row, and tunables the slice made wrong, writes `design/changelog/{label}.md` via `doc_patch.write_changelog`, and runs `tools/check_load_graph.py`.
+Docs in this pass: same scratch updates topic files, one code-map row, and tunables the slice made wrong, writes `design/changelog/{label}.md` via `doc_patch.write_changelog`, and runs `tools/check_load_graph.py`. A later scratch in the same emit pass is a delta. Skip every path whose write already printed `wrote`, `deleted`, or `already applied` / `already gone`. Do not re-emit the whole Phase 3 list. Do not rewrite a file that already matches the accepted goal unless that file is why RESULT failed.
 
 ### Phase 5 — Test
 
-Review the Phase 4 RESULT. Mechanical errors (failed replace, missing required sentence, checker FAIL on a line just written): emit the corrected Phase 4 scratch in the same turn. A judgment call the agent cannot infer: one blocking question, then wait. Otherwise loop to Phase 2. The Phase 3 goal stays unless the User changes the goal or the list.
+Review the Phase 4 RESULT. Mechanical errors (failed replace, missing required sentence, checker FAIL on a line just written): emit the corrected Phase 4 scratch in the same turn. The corrected scratch owns only the failed step plus leftover cites that scan named. Already-landed files stay untouched. A judgment call the agent cannot infer: one blocking question, then wait. Otherwise loop to Phase 2. The Phase 3 goal stays unless the User changes the goal or the list.
 
 ## Fetching a live path
 

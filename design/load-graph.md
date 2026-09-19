@@ -27,9 +27,9 @@ Then, only if the User named work:
     and design/pc-offload.md iff inventory, verify, Windows write, or a new local runner
 
 Imagine tool calls use the isolated-media **gate** only. Do not also open art_pipeline to generate.
-Repo skills live at `.grok/skills/`.
+Build repo skills live at `.grok/skills/` (Imagine / I2V / pc-offload). They are not the Grok Bot skill library.
 Imagine / I2V skills cite the isolated-media gate only and stay Build-only.
-The pc-offload skill cites the pc-offload catalog. Skills with `cursor-copy: true` copy into `.cursor/skills/`; Imagine skills must not.
+The pc-offload skill cites the pc-offload catalog for Grok Build on the User PC.
 Types / warnings / tabs / 10KB live in `design/gdscript-law.md`, not the agents file.
 Art Bible / pack / review / I2V unit prompt use design/art-pipeline.md then one sibling.
 

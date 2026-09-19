@@ -14,6 +14,8 @@ If that park file already has the mandate, Phase 2 is optional. When the User sa
 
 If no park is named, Phase 1 stays as it was: confirm ready for Phase 2 only.
 
+Closing a park deletes the Open file and drops that table row. Do not rewrite the park file as closed. Only keep the file if the User says the park is unfinished.
+
 This table is not Grok Bot intake. Web / chat does not open Bot Job files to continue a park.
 
 
@@ -23,6 +25,5 @@ id | trigger | open | path
 --- | --- | --- | ---
 attack_keyframes | resume parked, attack keyframes, coil stills | art-attack-keyframes.md (art_pipeline job) | web or isolated media
 smoke_shots | resume parked, smoke shots, headless screenshots, _logs/shots | park-smoke-shots.md | web then Build / tools
-agent_setup | resume parked, agent setup, GROK-BOT.md, Bot refresh | park-agent-setup.md | web
 
 Do not invent rows.

@@ -52,6 +52,11 @@ Keep these as separate concerns unless the User overrides a specific row:
 1. Name the cluster and the intended owner or new module. Wait if that is not already explicit.
 2. Verify both bodies before moving.
 3. Route call sites. Update `design/code-map.md` in the same PR when a new public helper path appears.
+4. Prove per BOT.md.
 4. 
 
 Public entry points that must not change when a helper is split: `App.playtest`, `App.set_zoom` / `App.set_hud_scale` / `App.set_volume`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.
+
+## Verify
+
+Prove per BOT.md.

@@ -1,3 +1,5 @@
+# QUARANTINE: human-only. Agents must not run this file.
+# Week pin / changelog archive / log clean for the User on the desktop.
 # Local week start. From repo root:
 #   powershell -File tools/week_start.ps1
 #   powershell -File tools/week_start.ps1 -WhatIf

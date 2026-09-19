@@ -28,7 +28,7 @@ Out of scope: rewriting `design/changelog/**` history, `docs/` Pages export, mix
 4. After inventory: that one door and only sibling_for_the_active
 5. At ship: `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
 
-Do not concatenate all siblings into context. Do not open the staged reuse brief. Prefer Length / heading lists over pasting whole markdown bodies. Oversize list: `tools/list_oversize_docs.ps1` (skip `design/changelog/`).
+Do not concatenate all siblings into context. Do not open the staged reuse brief. Prefer Length / heading lists over pasting whole markdown bodies. Oversize list: file Length (skip `design/changelog/`).
 
 ## Pass
 
@@ -38,4 +38,8 @@ Do not concatenate all siblings into context. Do not open the staged reuse brief
 4. Live snapshots travel with matching sibling, not the door.
 5. Sibling `See also` may name boundary **topic doors** only. It must not name the parent already open, siblings of current, path/session files, or a path that does not exist. See also is never a read list.
 6. Grep for stale “read the whole of X” wording; point at the Job table.
-7.  One `design/changelog/{label}.md` for the PR.
+7. One `design/changelog/{label}.md` for the PR.
+8. Prove per BOT.md.
+## Verify
+
+Prove per BOT.md.

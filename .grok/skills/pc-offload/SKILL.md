@@ -62,4 +62,3 @@ Two compacts on the same slice: stop and start a new session in this instance.
 Do not reload this skill or the law set because compact fired.
 
 Imagine-isolated and i2v-isolated must stay skipped. Cursor skill copies are
-a symlink; do not run sync_agent_skills.ps1 after a skill edit.

@@ -24,7 +24,6 @@ notes_exempt:
   - design/reuse-map.md
   - design/parked-tasks.md
   - design/park-smoke-shots.md
-  - design/park-agent-setup.md
 
 parked_jobs:
   - design/art-attack-keyframes.md
@@ -42,6 +41,7 @@ bot_jobs:
   opt: design/grok-bot-opt.md
 
 skills:
+  # Build repo skills on disk. Not the Grok Bot private library.
   imagine_isolated: .grok/skills/imagine-isolated/SKILL.md
   i2v_isolated: .grok/skills/i2v-isolated/SKILL.md
   pc_offload: .grok/skills/pc-offload/SKILL.md
