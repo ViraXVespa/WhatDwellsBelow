@@ -24,7 +24,7 @@ Do not fold another role’s work into this thread unless the User names that wo
 | User / situation | What it is | Pin |
 |------------------|------------|-----|
 | Resume after corruption | Same week, sick thread | Do **not** move the web pin. Do not create a second Grok Build pin for that week. |
-| Mid-week new CLI chat (fat thread, compaction, job change, or another concurrent role) | Catch-up | No pin. |
+| Mid-week new CLI chat (fat thread, job change, or another concurrent role) | Catch-up | No pin. |
 | Next slice or next I2V unit in the same slice thread | Slice | No pin. |
 
 Do not pin because time passed, because the last slice ended, or because a new CLI instance started. Pins are User-only.

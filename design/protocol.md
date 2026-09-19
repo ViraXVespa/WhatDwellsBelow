@@ -1,56 +1,39 @@
-﻿# Agent protocol
+# Agent protocol
 
-Status: protocol  
-Read when: every fresh Grok instance (Build / web), before writing code  
+Status: protocol
+Read when: every fresh Grok instance (Build / web), before writing code
 
-Treat the design requirements in this database as binding. Treat the live codebase at the repository root as the project to maintain.
-
-If a path session file is already loaded, stay on that path. Do not re-select a path from this file. MUST NOT treat another path’s deliverable rules as a license to skip your own. Web / chat and Grok Bot leashes MUST NOT bind Grok Build implementation — that freedom lives in the Build path file.
-
-**Binding design** is required player-facing behavior. **Live snapshot** is current code. If they disagree, patch live toward binding or ask. Do not invent a third **game** system. A new code API is not a third game system.
-
+Design in this database is binding. The live tree at the repo root is what ships.
+If a path file is already loaded, stay on that path. Web / Bot leashes do not bind Grok Build.
 
 ## Core rules
 
-- Fresh **Grok** (Build / web): this file, `design/constraints.md`, then only topic that matches the requested work. Inspect the live path from **one system row** in `design/code-map.md` (`project.godot`, then the listed scenes/scripts). MUST NOT walk `assets/` unless the task names sprites or audio. MUST NOT begin by archiving or rewriting the live path. MUST NOT read `design/changelog/` on a mid-week slice. Open it only for a named pin, a revert, a named past build, or when the User asks what shipped.
-- **Grok Bot** does not follow that read list. Onboard is `BOT.md` plus `python tools/bot_status.py`, then one Job file.
-
-Web / chat never pushes `main` and never replaces a scratch with a hand-run command list. When editing GDScript, load `design/gdscript-law.md`.
-- Path procedures live in that path file. Pickup is git plus `_logs/sess/<Grok session id>/`.
-- MUST implement only the **game** systems this database explicitly requires. MUST NOT invent skills, rarities, hub upgrades, meta-progression, or co-op scaffolding. Grok Build MAY add helpers and same-system APIs per the Build path file. A new cross-system owner or a named-architecture replace is Build **Stop and propose first**.
-- Open numbers, formulas, enemy details, and artifact-set bonuses: MAY invent coherent starts, then MUST expose every value in the secret debug menu and record them in `design/tunables.md`. Grok Bot MUST NOT invent numbers.
-- coverage is a checklist against the existing live build. Fill gaps. MUST NOT use the phases as a license to delete and rebuild. Grok Bot MUST NOT treat coverage as a feature list. Open coverage only when its `Read when` matches.
-- After a requested slice: pause and report progress, verification, and issues before continuing.
-- Ambiguity about **player-facing design**: ask. Grok Build MUST decide code structure inside one system without asking, and MUST stop and propose before a new cross-system owner or a named live-architecture replace.
-- This database is the source of design intent across compaction. The live tree is the source of truth for shipping code. Git history on `main` is the source of truth for the game version number; `scripts/data/version.json` is the baked copy.
-- Prefer simple, readable, production-quality code. Match existing live patterns unless Grok Build is doing a just-do same-system reshape or an accepted rework. Sprite / I2V work starts at art_pipeline when that door’s `Read when` matches.
-- GDScript indent, types, and warnings: `design/gdscript-law.md` when editing GDScript. The 10KB ship floor lives in that same file; Grok Build does not enforce it while running. Size splits: `design/refactor.md` for Grok Bot (recipe only; Bot flow from `BOT.md`). Web / chat does not cap-split. Deliver as that path's session file specifies.
+- Fresh web / Build: this file, `design/constraints.md`, then only the topic that matches the work. One system row in `design/code-map.md`. Do not walk `assets/` unless the task names sprites or audio. Do not start by archiving or rewriting the live path. Open `design/changelog/` only for a named pin, a revert, a named past build, or when the User asks what shipped.
+- Grok Bot does not follow that read list. Onboard is `BOT.md` plus `python tools/bot_status.py`, then one Job file.
+- Implement only the **game** systems this database requires. Do not invent skills, rarities, hub upgrades, meta-progression, or co-op scaffolding. Grok Build MAY add helpers and same-system APIs. A new cross-system owner or named-architecture replace is Build stop-and-propose.
+- Open numbers MAY start coherent. Expose every invented value in the secret debug menu and record it in `design/tunables.md`. Grok Bot MUST NOT invent numbers.
+- Coverage fills gaps in the live build. It is not a license to delete and rebuild.
+- Player-facing ambiguity: ask. Code shape inside one system: Build decides. After a slice: pause and report.
+- Git history on `main` is the game version. `scripts/data/version.json` is the baked copy.
+- When editing GDScript, load `design/gdscript-law.md`. Size splits are `design/refactor.md` for Grok Bot only. Web / chat does not cap-split.
 - Self-verify against the Demo-Complete Checklist in `design/constraints.md` before calling the build complete.
 
-## Long-running behavior
+## Long-running
 
-On multi-session or compacted runs, name Hard Constraints and the current requested work. Do not fetch a file already in the loaded set. Never allow live-path code to share state with any archive. Do not “recover” a stale session by archiving or rewriting the live path.
+Do not fetch a file already in the loaded set. Live-path code must not share state with an archive.
+One web emit pass is Phase 3 through Phase 4. Phase 5 returns to Phase 2 unless the User changes the goal.
+Pins are User-only. One Grok Bot flow per session.
 
-One emit pass per web / chat Phase 3 through Phase 4. Same session returns to Phase 2 after Phase 5 unless the User changes the goal. One development week may run several concurrent Grok Build CLI sessions (slice, plus week-scoped Bot notes, PC offload, and smoke tests). Pins are User-only. One Grok Bot flow per session (one Job-table sibling; one PR).
+## Database
 
-## How to use this database
+Open a topic door only when its `Read when` matches, a Job table names it, or the User names that work. Do not treat this paragraph as a read list.
+All previously open design questions are closed. Do not invent additional game systems or reopen settled decisions.
 
-Topic index uses door keys only and is not a boot fetch. Live code map (one system row): `design/code-map.md`. Open topic **doors**, then only the Job-table sibling. I2V and complex animation packing stay in Grok Build unless the User says otherwise.
+## Variation
 
-Topic doors, gates, and recipes are named in `design/routes.yaml`. Open one only when its `Read when` matches, a Job table names it, or the User names that work. Do not treat this paragraph as a read list.
-
-All previously open **design** questions are closed. Do not invent additional game systems or reopen settled design decisions. Grok Build may still invent code shape inside a required system.
-
-## Variation philosophy
-
-Numbers, exact formulas, enemy specifics, and artifact-set bonuses are deliberately left open so implementations can produce a varied but coherent result. Starting values in `design/tunables.md` are only suggested seeds.
-The secret debug menu and Automated Playtest system exist to drive rapid, data-driven tuning toward the Success Criterion and Design Pillars. Variation *within* the required systems is expected and desired.
-Everything that is marked tunable or left for Grok to invent should be treated as a starting point that will be refined through the tuning tools.
-
-**Global rule**: Unless otherwise noted, all numeric values, formulas, rates, ranges, timings, and scaling are fully tunable via the secret debug menu and treated as non-final starting points. MAY invent coherent values freely within this Variation Philosophy. Grok Bot MUST NOT invent values.
+Numbers, formulas, enemy specifics, and set bonuses start in `design/tunables.md` and the debug menu. They are non-final. Grok Bot MUST NOT invent values.
 
 ## Loaded set
 
-After boot, do not fetch a file already in the loaded set. Name it only.
-Default set: the agents file, this path file, and (web / Build) protocol plus constraints.
-Load cap: boot files + at most one topic door + one Job sibling + gates whose when matches. Second topic door: ask the User to name the owner first. If `conflicts_with` lists the pair, do not open the second door in this slice.
+Default: the agents file, this path file, and (web / Build) this file plus constraints.
+Cap: boot files + one topic door + one Job sibling + matching gates.

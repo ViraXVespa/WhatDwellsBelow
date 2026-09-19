@@ -70,4 +70,4 @@ README and code-map do not cite topic `design/*.md` paths. Tooling rows live on 
 `job_read_when`, `job_parked`, `conflicts_with`, `boot_max`, and `fetch_ban` live in routes.yaml.
 Parked jobs stay out of the live Open column.
 The checker stems read_when tokens and walks a second topic-body cycle graph.
-Compaction re-boot, duplicate constitutions, and negated English cannot be proven from markdown.
+Negated English cannot be proven from markdown.

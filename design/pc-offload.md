@@ -23,8 +23,7 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Gro
 9. **Web / chat Phase 7 runner:** `tools/_scratch.py` is the gitignored paste target for documentation slices. The User runs `python tools/_scratch.py` from repo root. Do not put that runner under `_logs/agent-py/` (those scripts are deleted after exit). The runner must import `tools/doc_patch.py` instead of copying replace helpers.
 10. **New runner:** if the next step would open many untouched files, ingest a raw Godot log, grep the tree into chat, or hand-count bytes, stop. Use a catalog row when one exists. If none exists, propose a runner (name, command, summary path, what tokens it saves) and wait. Grok Build may implement an approved runner. Grok Build may implement one only after the User approves that runner in-session.
 11. **Tree search / git / one-liners:** built-in grep is only for a file already in this slice's edit set. Repo search is `list_xref.ps1`. Git inventory is `list_changed.ps1` (optional `-Head`); do not paste porcelain or `git log` into the thread. No `python -c`.
-12. **Cursor skills:** `.cursor/skills/` is a symlink to `.grok/skills/`. Do not run `sync_agent_skills.ps1` after a skill edit.
-
+12. **Cursor skills:** `.cursor/skills/` is a symlink to `.grok/skills/`. 
 ## Catalog
 
 | Job | Command (from repo root) | Summary (read only this) |
@@ -79,7 +78,7 @@ Ship floor vs Bot 5KB sweep: the script-split recipe. Do not restate those caps 
 - Named optimization item: `bot_opt.py --id` then implement; `--status id=done` in the same PR. Do not open the queue file to scan items.
 - Next changelog label: `next_changelog_label.py`. Do not read `design/changelog/` to invent the number.
 - May **propose** a new catalog runner at any time. May **implement** it only after the User approves that runner in-session.
-- Do not copy Imagine / I2V skills into `.cursor/skills/`. Cursor skill copies are a symlink; do not run `sync_agent_skills.ps1` after a skill edit.
+- Do not copy Imagine / I2V skills into `.cursor/skills/`. Cursor skill copies are a symlink. Do not run `tools/sync_agent_skills.ps1` after a skill edit.
 
 ### Grok Build
 

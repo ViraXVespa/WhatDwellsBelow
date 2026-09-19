@@ -6,6 +6,8 @@ Read when: Grok Bot Job table → size sweep
 
 ## Mandate
 
+Size, prove, changelog, and `version.json` rules live in `BOT.md`.
+
 Start with `python tools/bot_status.py`. Sweep live `scripts/**/*.gd` for size (`rglob`, includes `scripts/*.gd`). Not a feature slice. Not the staged reuse-map brief.
 
 - Ship floor: every touched live script under **10KB**.
@@ -24,7 +26,7 @@ Out of scope: `scenes/`, `assets/`, `tools/` (unless a preload path or PC-offloa
 4. After inventory: only the live `.gd` files in that one cluster
 5. At ship: `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
 
-Do not reload the root agents file. Types, warnings, tabs, and the 10KB cap stay binding. Do not open the staged reuse brief, `design/doc-refactor.md`, or the other Bot flow siblings.
+Do not open the staged reuse brief, `design/doc-refactor.md`, or the other Bot flow siblings.
 
 ## Inventory
 
@@ -46,7 +48,7 @@ Work in `/workspace/WhatDwellsBelow`. Commit per cluster on `bot/refactorer`.
 
 ## Verify
 
-Prove with `python tools/check_script_cap.py --git-changed`, `python tools/check_load_graph.py`, and `python tools/bot_status.py --prove`. Ship per `BOT.md`.
+
 
 - Required import check: `--headless --editor --import --path </workspace/WhatDwellsBelow> --quit` (or `tools/run_godot_import_check.ps1`). Clean bar: exit 0 and empty stderr.
 - Smokes when behavior risk warrants: `--headless --display-driver headless --audio-driver Dummy --path </workspace/WhatDwellsBelow> -- --wdb-phaseN-smoke` (or `tools/run_smokes.ps1`). Plain `--headless` without those drivers can hang.

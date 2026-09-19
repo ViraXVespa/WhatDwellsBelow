@@ -8,6 +8,8 @@ Boot `BOT.md` + `python tools/bot_status.py` first. Binding for **Grok Bot** doc
 
 ## Mandate
 
+Size, prove, changelog, and `version.json` rules live in `BOT.md`.
+
 Split fat topic `design/*.md` files to art_pipeline + siblings layout. Caps, pass order, and facade checklist live in `design/doc-refactor.md`.
 
 - Door: prefer under **4KB** — Job table + non-negotiables. No live-snapshot dumps.
@@ -26,7 +28,7 @@ Out of scope: rewriting `design/changelog/**` history, `docs/` Pages export, mix
 4. After inventory: that one door and only sibling_for_the_active
 5. At ship: `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
 
-Do not fetch the agents file again. Do not concatenate all siblings into context. Do not open the staged reuse brief. Prefer Length / heading lists over pasting whole markdown bodies. Oversize list: `tools/list_oversize_docs.ps1` (skip `design/changelog/`).
+Do not concatenate all siblings into context. Do not open the staged reuse brief. Prefer Length / heading lists over pasting whole markdown bodies. Oversize list: `tools/list_oversize_docs.ps1` (skip `design/changelog/`).
 
 ## Pass
 
@@ -36,4 +38,4 @@ Do not fetch the agents file again. Do not concatenate all siblings into context
 4. Live snapshots travel with matching sibling, not the door.
 5. Sibling `See also` may name boundary **topic doors** only. It must not name the parent already open, siblings of current, path/session files, or a path that does not exist. See also is never a read list.
 6. Grep for stale “read the whole of X” wording; point at the Job table.
-7. Ship per `BOT.md`. One `design/changelog/{label}.md` for the PR.
+7.  One `design/changelog/{label}.md` for the PR.

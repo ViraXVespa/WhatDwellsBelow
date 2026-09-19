@@ -8,11 +8,13 @@ Binding for **Grok Bot** optimization sessions only. Grok Build parks items with
 
 ## Mandate
 
+Size, prove, changelog, and `version.json` rules live in `BOT.md`.
+
 Execute **one** User-named item (or the next `pending` item the User named). One PR. No new game systems.
 
 - Same-system extracts, fewer loads, cache / hot-path helpers, defer work off Title→Play, drop unused preload paths — when the named item says so.
 - Timing / preload / cache listed on that item is in scope. Player-facing design is not.
-- Touched live `scripts/**/*.gd` ship under 10KB. Split with `design/refactor.md` (recipe only). Do not keep splitting toward 5KB in this flow.
+- Do not keep splitting toward 5KB in this flow.
 - Do not invent items, numbers, or extra clusters.
 
 The Bot-notes Grok Build CLI is the usual parker. It may expand the User's wording from a thin layout check (one code-map row and/or one `list_xref`) and must ask once if an obvious gap is missing. Do not inventory the tree or write a pass plan into the item. Grok Bot investigates, plans, and implements. Park with `python tools/bot_opt.py` (read `_logs/bot-opt/summary.txt` only). Print pending ids with `python tools/bot_status.py`. Bot loads this mandate, then `--id opt-NNN` for the named item instead of scanning the Queue by hand. Do not add a JSON queue file.
@@ -26,14 +28,14 @@ The Bot-notes Grok Build CLI is the usual parker. It may expand the User's wordi
 4. After the User names the item: only those live `.gd` bodies
 5. At ship: baked `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
 
-Do not fetch the agents file again. Do not open the other Bot flow siblings. Do not walk the whole live tree.
+Do not open the other Bot flow siblings. Do not walk the whole live tree.
 
 
 ## Pass
 
 1. User names an item id (or the next pending item). Inventory that cluster with VM prove commands in `BOT.md`. Do not edit yet.
 2. Implement only that item. Mark it `done` in the same PR with `python tools/bot_opt.py --status opt-NNN=done`.
-3. Prove with `python tools/check_script_cap.py --git-changed`, `python tools/check_load_graph.py`, and `python tools/bot_status.py --prove`. Ship per `BOT.md`.
+3. 
 
 
 ## Queue
