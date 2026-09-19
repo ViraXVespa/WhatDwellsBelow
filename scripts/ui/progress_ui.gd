@@ -13,6 +13,7 @@ const ForgeUI := preload("res://scripts/ui/gear_board/gear_board_anvil_forge.gd"
 const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const UiSession := preload("res://scripts/ui/ui_session.gd")
 const Flow := preload("res://scripts/ui/progress_ui_flow.gd")
 
 var open := false
@@ -21,9 +22,6 @@ var shop_spot: Node = null
 var extract_spot: Node = null
 var extract_mailed := false
 var extract_role := "gather"
-var pending := false
-var pending_id := ""
-var pending_fn: Callable
 var box: VBoxContainer
 var status: Label
 var focus_btn: Button
@@ -94,8 +92,7 @@ func close_ui() -> void:
 func _show() -> void:
 	open = true
 	visible = true
-	App.ui_open = true
-	get_tree().paused = true
+	UiSession.open(self)
 	_paint_menu_hint()
 	call_deferred("_focus")
 
@@ -147,7 +144,6 @@ func open_extract(role: String, spot: Node = null) -> void:
 	extract_role = role
 	extract_spot = spot
 	extract_mailed = false
-	pending = false
 	_drop_sub()
 	_rebuild_extract()
 	_show()
@@ -268,19 +264,6 @@ func _rebuild_vendor() -> void:
 
 func _rebuild_controls() -> void:
 	Hub.rebuild_controls(self)
-
-
-
-func _confirm(fn: Callable, id := "anon") -> void:
-	if not pending or pending_id != id:
-		pending = true
-		pending_id = id
-		pending_fn = fn
-		_st("Confirm again to proceed.")
-		return
-	pending = false
-	pending_id = ""
-	fn.call()
 
 
 

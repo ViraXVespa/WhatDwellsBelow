@@ -3,6 +3,7 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Inv := preload("res://scripts/ui/progress_ui_inv.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
+const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 
 
 static func rebuild_shop(ui) -> void:
@@ -13,7 +14,7 @@ static func rebuild_shop(ui) -> void:
 	ui.box.add_child(ThemeS.lab(Inv.sets_blurb(), 18, Color(0.85, 0.72, 0.45)))
 	ui.status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
 	ui.box.add_child(ui.status)
-	ui.focus_btn = ThemeS.btn("Snack  (%dg, +HP)" % int(App.bal.snack_cost), func(): ui._confirm(func(): buy_snack(ui), "snack"))
+	ui.focus_btn = ThemeS.btn("Snack  (%dg, +HP)" % int(App.bal.snack_cost), func(): Confirm.open(ui, "Buy Snack", "Spend %dg for a snack (+HP)?" % int(App.bal.snack_cost), func(): buy_snack(ui)))
 	ui.box.add_child(ui.focus_btn)
 	if ui.shop_spot:
 		for a in ui.shop_spot.stock:
@@ -24,11 +25,11 @@ static func rebuild_shop(ui) -> void:
 			var extra := ""
 			if set_id != "":
 				extra = "\n" + App.prog.set_bonus_text(set_id)
-			ui.box.add_child(ThemeS.btn("Buy %s  (%dg)\n%s%s" % [nm, int(App.bal.art_cost), desc, extra], func(): ui._confirm(func(): buy_art(ui, id, nm), "buy_" + id)))
+			ui.box.add_child(ThemeS.btn("Buy %s  (%dg)\n%s%s" % [nm, int(App.bal.art_cost), desc, extra], func(): Confirm.open(ui, "Buy Artifact", "Spend %dg for %s?" % [int(App.bal.art_cost), nm], func(): buy_art(ui, id, nm))))
 		for it in App.prog.bag:
 			if str(it.kind) == "artifact" or str(it.kind) == "weapon" or str(it.kind) == "head" or str(it.kind) == "body" or str(it.kind) == "legs":
 				var uid := int(it.uid)
-				ui.box.add_child(ThemeS.btn("Pawn %s  (%dg)" % [it.name, int(App.bal.pawn_gold)], func(): ui._confirm(func(): pawn(ui, uid), "pawn_%d" % uid)))
+				ui.box.add_child(ThemeS.btn("Pawn %s  (%dg)" % [it.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, "Pawn Item", "Pawn %s for %dg?" % [it.name, int(App.bal.pawn_gold)], func(): pawn(ui, uid))))
 		for s in ["weapon", "tool", "head", "body", "legs"]:
 			var eq: Dictionary = App.prog.slots.get(s, {})
 			if eq.is_empty():
@@ -36,7 +37,7 @@ static func rebuild_shop(ui) -> void:
 			if Rules.locked_equip_slot(str(s)):
 				continue
 			var slot := str(s)
-			ui.box.add_child(ThemeS.btn("Pawn equipped %s  (%dg)" % [eq.name, int(App.bal.pawn_gold)], func(): ui._confirm(func(): pawn_slot(ui, slot), "pawn_slot_" + slot)))
+			ui.box.add_child(ThemeS.btn("Pawn equipped %s  (%dg)" % [eq.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, "Pawn Equipped", "Pawn equipped %s for %dg?" % [eq.name, int(App.bal.pawn_gold)], func(): pawn_slot(ui, slot))))
 	ui.box.add_child(ThemeS.btn("Leave", func(): ui.close_ui()))
 
 
