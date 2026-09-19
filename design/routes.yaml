@@ -111,7 +111,10 @@ doors:
     file: design/gear-ui.md
     read_when: "gear-board, doll slots, flyouts, Anvil card"
     jobs:
+      board: design/gear-ui-board.md
+      stats: design/gear-ui-stats.md
       reequip: design/gear-ui-reequip.md
+      chrome: design/gear-ui-chrome.md
   hub:
     file: design/hub.md
     read_when: "Placeholdia, camp benches"
@@ -205,7 +208,10 @@ job_read_when:
   art_pipeline.review: "brief packet, tree tour"
   art_pipeline.attack_keyframes: "resume parked, attack keyframes"
   art_pipeline.bible: "canon bible, layer law, quality floor"
+  gear_ui.board: "armor columns, plate icons, rarity wash, stepper neighbors"
+  gear_ui.stats: "kit deltas, combat totals, hover highlight, Y preview"
   gear_ui.reequip: "re-equip lists, submenu chrome"
+  gear_ui.chrome: "Analyze Forge bumpers, verbs, deferred teardown, script map"
 
 job_parked:
   - art_pipeline.attack_keyframes
