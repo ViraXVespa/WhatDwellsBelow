@@ -13,6 +13,7 @@ const View := preload("res://scripts/ui/pause_menu_view.gd")
 const Pad := preload("res://scripts/ui/menu_pad.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const UiSession := preload("res://scripts/ui/ui_session.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
@@ -29,8 +30,7 @@ static func toggle(host: CanvasLayer) -> void:
 static func show_menu(host: CanvasLayer) -> void:
 	host.open = true
 	host.visible = true
-	App.ui_open = true
-	host.get_tree().paused = true
+	UiSession.open(host)
 	host.tab = host.TAB_SETTINGS
 	host.sys_page = "main"
 	host.pending = false
@@ -81,8 +81,7 @@ static func close_ui(host: CanvasLayer) -> void:
 	Board.hide_tip(host)
 	Board._flag(host, "gear_hover", false)
 	Board._flag(host, "gear_tip_ready", false)
-	App.ui_open = false
-	host.get_tree().paused = false
+	UiSession.close(host)
 	App.save_now()
 	App.swallow_close_pad()
 	App.wake_web_pad()
@@ -273,4 +272,3 @@ static func _unhandled_input(host: CanvasLayer, event: InputEvent) -> void:
 		if GearAct.input_tick(host, event):
 			host.get_viewport().set_input_as_handled()
 			return
-

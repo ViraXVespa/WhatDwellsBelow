@@ -4,6 +4,11 @@ const Prompts := preload("res://scripts/input/prompts.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 
 
+const PROMPT_GOLD := Color(0.86, 0.80, 0.66)
+const PROMPT_OUTLINE := Color(0.05, 0.03, 0.02)
+const PROMPT_OUTLINE_SIZE := 5
+
+
 static func text_scale() -> float:
 	return UiText.applied()
 
@@ -124,19 +129,19 @@ static func skill_tip(id: String, lv: int) -> String:
 			if ranks <= 0:
 				now = "Now: no damage bonus yet."
 			else:
-				now = "Now: +%s Great Axe damage.\n	  +%s Great Axe special damage." % [_pct(ranks * wpn), _pct(ranks * spec)]
+				now = "Now: +%s Great Axe damage.\n\t  +%s Great Axe special damage." % [_pct(ranks * wpn), _pct(ranks * spec)]
 			per = "Each level after 1: +%s Great Axe damage, +%s special damage." % [_pct(wpn), _pct(spec)]
 		"staff":
 			if ranks <= 0:
 				now = "Now: no damage bonus yet."
 			else:
-				now = "Now: +%s staff damage.\n	  +%s staff special damage." % [_pct(ranks * wpn), _pct(ranks * spec)]
+				now = "Now: +%s staff damage.\n\t  +%s staff special damage." % [_pct(ranks * wpn), _pct(ranks * spec)]
 			per = "Each level after 1: +%s staff damage, +%s special damage." % [_pct(wpn), _pct(spec)]
 		"bow":
 			if ranks <= 0:
 				now = "Now: no damage bonus yet."
 			else:
-				now = "Now: +%s Longbow damage.\n	  +%s Longbow special damage." % [_pct(ranks * wpn), _pct(ranks * spec)]
+				now = "Now: +%s Longbow damage.\n\t  +%s Longbow special damage." % [_pct(ranks * wpn), _pct(ranks * spec)]
 			per = "Each level after 1: +%s Longbow damage, +%s special damage." % [_pct(wpn), _pct(spec)]
 		"str":
 			if ranks <= 0:
@@ -179,7 +184,7 @@ static func skill_tip(id: String, lv: int) -> String:
 		"smith":
 			var speed := 1.0 + float(ranks) * 0.12
 			var extra := int(lv / 4.0)
-			now = "Now: forge cost −%dg −%d ore.\n	  Forge time ÷ %.2f.\n	  Forged weapons +%d extra damage." % [lv * 2, lv, speed, extra]
+			now = "Now: forge cost −%dg −%d ore.\n\t  Forge time ÷ %.2f.\n\t  Forged weapons +%d extra damage." % [lv * 2, lv, speed, extra]
 			per = "Each level: −2g −1 ore on forge cost.\nEach level after 1: 12% faster forging.\nEvery 4 levels: +1 extra forged weapon damage."
 		_:
 			now = "Now: no listed bonus."

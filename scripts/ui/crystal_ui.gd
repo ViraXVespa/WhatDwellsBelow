@@ -5,6 +5,7 @@ const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const CrystalNet := preload("res://scripts/world/crystal_net.gd")
 const Util := preload("res://scripts/ui/crystal_ui_util.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const UiSession := preload("res://scripts/ui/ui_session.gd")
 const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Pages := preload("res://scripts/ui/crystal_ui_pages.gd")
 
@@ -39,8 +40,7 @@ func begin(from: Node) -> void:
 	add_to_group("crystal_ui")
 	layer = 46
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	App.ui_open = true
-	get_tree().paused = true
+	UiSession.open(self)
 	page = "root"
 	zoom_lv = 0
 	_rebuild()
@@ -48,8 +48,7 @@ func begin(from: Node) -> void:
 
 func close_ui() -> void:
 	focus_btn = null
-	App.ui_open = false
-	get_tree().paused = false
+	UiSession.close(self)
 	var p := get_tree().get_first_node_in_group("player")
 	if p:
 		p.set("interact_lock", 0.25)

@@ -1,6 +1,8 @@
-﻿extends Object
+extends Object
 
 const Prompts := preload("res://scripts/input/prompts.gd")
+const ThemeS := preload("res://scripts/ui/theme.gd")
+const WipeChildren := preload("res://scripts/ui/wipe_children.gd")
 
 const BAR_NAME := "gear_hint_bar"
 const HOST_GROUP := "wdb_prompt_host"
@@ -9,7 +11,7 @@ const BAR_H := 40.0
 const BAR_INSET := Vector2(28.0, 20.0)
 
 
-static func fill(host: Control, parts: Array, font_size: int = 16, color: Color = Color(0.86, 0.80, 0.66)) -> void:
+static func fill(host: Control, parts: Array, font_size: int = 16, color: Color = ThemeS.PROMPT_GOLD) -> void:
 	if host == null:
 		return
 	if not host.is_in_group(HOST_GROUP):
@@ -20,7 +22,7 @@ static func fill(host: Control, parts: Array, font_size: int = 16, color: Color 
 	_paint(host, parts, font_size, color)
 
 
-static func footer(ui: CanvasLayer, extra: Array = [], font_size: int = 16, color: Color = Color(0.86, 0.80, 0.66)) -> Control:
+static func footer(ui: CanvasLayer, extra: Array = [], font_size: int = 16, color: Color = ThemeS.PROMPT_GOLD) -> Control:
 	var bar := ensure_bar(ui)
 	place_bar(ui, bar)
 	bar.set_meta("prompt_extra", extra)
@@ -41,7 +43,7 @@ static func pulse() -> void:
 			continue
 		var parts: Array = n.get_meta("prompt_parts", [])
 		var font_px: int = int(n.get_meta("prompt_font", 16))
-		var col: Color = n.get_meta("prompt_color", Color(0.86, 0.80, 0.66))
+		var col: Color = n.get_meta("prompt_color", ThemeS.PROMPT_GOLD)
 		_paint(n as Control, parts, font_px, col)
 	for n: Node in tree.root.find_children(BAR_NAME, "", true, false):
 		if not (n is Control):
@@ -136,11 +138,11 @@ static func _cap_verb(verb_text: String) -> String:
 	return verb_text.substr(0, 1).to_upper() + verb_text.substr(1)
 
 
-static func hint_line(host: Control, action: String, verb_text: String, font_size: int = 16, color: Color = Color(0.86, 0.80, 0.66)) -> void:
+static func hint_line(host: Control, action: String, verb_text: String, font_size: int = 16, color: Color = ThemeS.PROMPT_GOLD) -> void:
 	fill(host, [{"action": action, "verb": verb_text}], font_size, color)
 
 
-static func verb(host: Control, action: String, verb_text: String, font_size: int = 16, color: Color = Color(0.86, 0.80, 0.66)) -> void:
+static func verb(host: Control, action: String, verb_text: String, font_size: int = 16, color: Color = ThemeS.PROMPT_GOLD) -> void:
 	hint_line(host, action, verb_text, font_size, color)
 
 
@@ -163,7 +165,7 @@ static func _row_action(row: Dictionary) -> String:
 
 
 static func _paint(host: Control, parts: Array, font_size: int, color: Color) -> void:
-	_wipe(host)
+	WipeChildren.wipe(host)
 	for row: Variant in parts:
 		if not (row is Dictionary):
 			continue
@@ -188,13 +190,6 @@ static func _paint(host: Control, parts: Array, font_size: int, color: Color) ->
 			host.add_child(gap)
 
 
-static func _wipe(n: Node) -> void:
-	while n.get_child_count() > 0:
-		var c: Node = n.get_child(0)
-		n.remove_child(c)
-		c.queue_free()
-
-
 static func _glyph(tex: Texture2D, font_size: int) -> TextureRect:
 	var r := TextureRect.new()
 	var h := float(maxi(font_size + 14, 28))
@@ -216,8 +211,8 @@ static func _lab(text: String, font_size: int, color: Color) -> Label:
 	l.text = text
 	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", color)
-	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	l.add_theme_constant_override("outline_size", 5)
+	l.add_theme_color_override("font_outline_color", ThemeS.PROMPT_OUTLINE)
+	l.add_theme_constant_override("outline_size", ThemeS.PROMPT_OUTLINE_SIZE)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return l

@@ -4,6 +4,7 @@ extends Object
 
 const RecapBars := preload("res://scripts/ui/recap_bars.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const UiSession := preload("res://scripts/ui/ui_session.gd")
 const Rebuild := preload("res://scripts/ui/recap_rebuild.gd")
 
 
@@ -12,8 +13,7 @@ static func play(host: CanvasLayer, cond: String) -> void:
 	host.visible = true
 	host.draining = true
 	host.applied = false
-	App.ui_open = true
-	host.get_tree().paused = true
+	UiSession.open(host)
 	host.shown.clear()
 	host.targets.clear()
 	host.perm0.clear()

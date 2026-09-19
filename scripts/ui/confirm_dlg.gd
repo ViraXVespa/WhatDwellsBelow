@@ -75,10 +75,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable) ->
 	no.shortcut = _cancel_shortcut()
 	root.add_child(no)
 	View.wire_vert([yes, no])
-	yes.focus_neighbor_left = no.get_path()
-	yes.focus_neighbor_right = no.get_path()
-	no.focus_neighbor_left = yes.get_path()
-	no.focus_neighbor_right = yes.get_path()
+	View.wire_horiz([yes, no])
 	var hint := HBoxContainer.new()
 	hint.name = "confirm_hint"
 	hint.alignment = BoxContainer.ALIGNMENT_END
@@ -86,10 +83,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable) ->
 	hint.position = Vector2(592, 584)
 	hint.size = Vector2(728, 40)
 	root.add_child(hint)
-	PromptView.fill(hint, [
-		{"action": "ui_accept", "verb": "Select", "gap": true},
-		{"action": "ui_cancel", "verb": "Back"},
-	], 16, Color(0.86, 0.80, 0.66))
+	PromptView.fill(hint, PromptView.merge_parts([]), 16, ThemeS.PROMPT_GOLD)
 	yes.grab_focus()
 	if parent is CanvasLayer:
 		PromptView.footer(parent as CanvasLayer, [])

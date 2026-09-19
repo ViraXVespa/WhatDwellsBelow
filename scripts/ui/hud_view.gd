@@ -1,4 +1,6 @@
-﻿extends Object
+extends Object
+
+const ThemeS := preload("res://scripts/ui/theme.gd")
 
 ## HUD chrome. Host is the CanvasLayer at scripts/ui/hud.gd.
 
@@ -143,7 +145,7 @@ static func lab(owner: Node, pos: Vector2, sz: Vector2, fs: int) -> Label:
 	l.size = sz
 	l.add_theme_font_size_override("font_size", fs)
 	l.add_theme_color_override("font_color", Color(0.92, 0.86, 0.72))
-	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	l.add_theme_constant_override("outline_size", 5)
+	l.add_theme_color_override("font_outline_color", ThemeS.PROMPT_OUTLINE)
+	l.add_theme_constant_override("outline_size", ThemeS.PROMPT_OUTLINE_SIZE)
 	owner.add_child(l)
 	return l

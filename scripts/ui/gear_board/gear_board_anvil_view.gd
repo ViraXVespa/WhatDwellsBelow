@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
@@ -12,7 +12,7 @@ static func tab(ui: CanvasLayer) -> String:
 static func footer(ui: CanvasLayer) -> void:
 	_tabs(ui)
 	ui.box.add_child(ThemeS.lab(
-		"Bank %dg  %d ore  %d wood	Carried %dg  %d ore  %d wood" % [
+		"Bank %dg  %d ore  %d wood  Carried %dg  %d ore  %d wood" % [
 			App.bank_gold, App.bank_ore, App.bank_wood,
 			App.gold, App.ore, App.wood,
 		],
@@ -86,7 +86,6 @@ static func set_tab(ui: CanvasLayer, t: String) -> void:
 	ui.anvil_tab = t
 	ui.anvil_item = {}
 	ui.anvil_src = ""
-	ui.pending = false
 	ui.forge_type = ""
 	ui.forge_rarity = "green"
 	ui.forge_ilvl = 1
