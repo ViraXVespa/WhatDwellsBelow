@@ -16,6 +16,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import md_format_lib as md
+
 
 def repo_root(start: Path | None = None) -> Path:
     if start is None:
@@ -37,37 +39,18 @@ def read_text(path: Path) -> str:
 
 
 def write_text(path: Path, text: str) -> None:
-    if not text.endswith("\n"):
-        text += "\n"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8", newline="\n")
+    md.write_utf8(path, text, mkdir=True)
     print(f"  wrote {path.as_posix()} ({path.stat().st_size} bytes)")
 
 
 def _variants(old: str) -> list[str]:
-    out: list[str] = []
-    seen: set[str] = set()
-
-    def add(item: str) -> None:
-        if item and item not in seen:
-            seen.add(item)
-            out.append(item)
-
-    add(old)
-    add(old.replace("\r\n", "\n"))
-    if "\n" in old:
-        add(re.sub(r" +\n", "\n", old))
-        add(re.sub(r"\n", "  \n", old.replace("  \n", "\n")))
-    tickless = re.sub(r"`(design/[\w./-]+\.md)`", r"\1", old)
-    add(tickless)
-    add(re.sub(r"(design/[\w./-]+\.md)", r"`\1`", tickless))
-    return out
+    return md.path_tick_variants(old)
 
 
 def replace_once(text: str, old: str, new: str, where: str) -> str:
-    for cand in _variants(old):
-        if cand in text:
-            return text.replace(cand, new, 1)
+    hit = md.replace_once_text(text, old, new)
+    if hit is not None:
+        return hit
     if new in text:
         print(f"  skip {where} (already applied)")
         return text

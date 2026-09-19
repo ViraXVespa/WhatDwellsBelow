@@ -46,7 +46,7 @@ Parked items sit between the markers. Agents must not hand-edit this section.
 <!-- bot-opt:begin -->
 <!-- bot-opt:next=5 -->
 
-### opt-001 (pending)
+### opt-001 (done)
 - Title: Extract reusable markdown formatting library from md-editing tools
 - Cluster: Tools
 - Files: `tools/bot_opt.py`, `tools/code_map_lib.py`, `tools/patch_code_map.py`, `tools/doc_patch.py`, `tools/write_utf8_file.py`

@@ -21,13 +21,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import agent_log
+import md_format_lib as md
 
 QUEUE_REL = "design/grok-bot-opt.md"
 BEGIN = "<!-- bot-opt:begin -->"
 END = "<!-- bot-opt:end -->"
 NEXT_RE = re.compile(r"<!-- bot-opt:next=(\d+) -->")
 HEAD_RE = re.compile(r"^### (opt-\d+) \((pending|done|dropped)\)\s*$")
-TICK_RE = re.compile(r"`([^`]+)`")
 STATUSES = ("pending", "done", "dropped")
 TITLE_MAX = 120
 CLUSTER_MAX = 80
@@ -44,10 +44,7 @@ class Item:
 
 
 def posix(rel: str) -> str:
-    p = rel.replace("\\", "/").strip()
-    while p.startswith("./"):
-        p = p[2:]
-    return p.lstrip("/")
+    return md.posix(rel)
 
 
 def norm_id(raw: str) -> str | None:
@@ -60,9 +57,9 @@ def norm_id(raw: str) -> str | None:
 
 
 def parse_files(raw: str) -> list[str]:
-    ticks = [posix(t) for t in TICK_RE.findall(raw)]
+    ticks = md.tick_tokens(raw)
     if ticks:
-        return [t for t in ticks if t]
+        return ticks
     out: list[str] = []
     for part in raw.split(","):
         token = posix(part)
@@ -74,11 +71,11 @@ def parse_files(raw: str) -> list[str]:
 def format_files(files: list[str]) -> str:
     if not files:
         return ""
-    return ", ".join(f"`{posix(p)}`" for p in files)
+    return ", ".join(md.tick_wrap(p) for p in files)
 
 
 def _write(path: Path, lines: list[str]) -> None:
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    md.write_lines(path, lines)
 
 
 def render_item(item: Item) -> str:
@@ -139,13 +136,12 @@ def parse_item(block: str) -> Item | str:
 
 
 def parse_queue(text: str) -> tuple[str, int, list[Item], str] | str:
-    begin = text.find(BEGIN)
-    end = text.find(END)
-    if begin < 0 or end < 0 or end < begin:
+    parts = md.split_marker_block(text, BEGIN, END)
+    if parts is None:
         return "missing-markers"
-    prefix = text[:begin]
-    suffix = text[end + len(END) :]
-    inner = text[begin : end]
+    prefix, region, suffix = parts
+    # region is begin..end inclusive; inner historically excluded END
+    inner = region[: -len(END)]
     nm = NEXT_RE.search(inner)
     if not nm:
         return "missing-next"
@@ -331,10 +327,7 @@ def main() -> int:
 
     def save(new_next: int, new_items: list[Item]) -> None:
         block = render_block(new_next, new_items)
-        text = prefix + block + suffix
-        if not text.endswith("\n"):
-            text += "\n"
-        queue_path.write_text(text, encoding="utf-8", newline="\n")
+        md.write_utf8(queue_path, prefix + block + suffix)
 
     if action == "list":
         lines.append(f"next={next_id:03d}")

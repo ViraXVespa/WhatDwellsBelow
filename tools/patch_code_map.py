@@ -20,6 +20,7 @@ import agent_log
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import code_map_lib as cm
+import md_format_lib as md
 
 
 def _parse_rename(raw: str) -> tuple[str, str] | None:
@@ -33,7 +34,7 @@ def _parse_rename(raw: str) -> tuple[str, str] | None:
 
 
 def _write(path: Path, lines: list[str]) -> None:
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    md.write_lines(path, lines)
 
 
 def main() -> int:
@@ -128,16 +129,8 @@ def main() -> int:
     if changed:
         file_lines = raw.splitlines(keepends=True)
         new_line = cm.format_row(row.system, live)
-        old_line = file_lines[row.index]
-        nl = "\n" if old_line.endswith("\n") else ""
-        if old_line.endswith("\r\n"):
-            nl = "\r\n"
-            new_line = new_line.rstrip("\r\n")
-        file_lines[row.index] = new_line + nl
-        text = "".join(file_lines)
-        if raw.endswith("\n") and not text.endswith("\n"):
-            text += "\n"
-        code_map.write_text(text, encoding="utf-8", newline="\n")
+        md.rewrite_table_row(file_lines, row.index, new_line)
+        md.write_utf8(code_map, md.join_lines_keep_trailing(raw, file_lines))
 
     lines.append(f"live={live}")
     lines.append("measure=mutate one code-map row; do not read the rest of the map")
