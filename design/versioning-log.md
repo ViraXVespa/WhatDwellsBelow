@@ -3,7 +3,7 @@
 Status: binding design
 Read when: writing a changelog entry, title “what’s new”, web Phase 7 ship, or Grok Bot PR close-out
 
-Week pins and archive catalog ritual stay on `design/versioning.md`. Open that file only when the User said **new week** or named a pin.
+Week pins and archive catalog ids stay on `design/versioning.md`. Open that file only when the User named a pin or archive.
 
 ## Changelog files
 
@@ -26,7 +26,7 @@ Plain text, no code fence when emitted. Body shape:
 | Fresh web / chat, Phases 1–3 | Nothing under `design/changelog/`. Nothing in `version.json` unless work_is_this. |
 | Web Phase 7 | This file’s **body shape** only. Writes **one** new `design/changelog/{label}.md`. `{label}` is baked `version.json` `label` with patch + 1 (ignore stamp commits). Do not read older changelog files. Do not write that number back into this file. Do not emit `changelog.json`. First heading `## {label}`, never `# {label}`. |
 | Grok Build mid-week slice / catch-up | Nothing under `design/changelog/`. Git + User-named work. |
-| Grok Build **new week**, revert, or User asks what shipped | This file’s body shape. Name next work only if the User asked. Still not every `0.N.*` file. |
+| Grok Build named pin / revert, or User asks what shipped | This file’s body shape. Name next work only if the User asked. Still not every `0.N.*` file. |
 | Grok Bot | Reads baked `version.json` only to name `{label}` (patch + 1). Writes **one** new `design/changelog/{label}.md` per shipping PR. First heading `## {label}`, never `# {label}`. Does not hand-edit `changelog.json`. Optional sweep notes go in `_logs/` only. |
 | Named revert / what was 0.1.4? | That one file (flat or under `design/changelog/archive/{epoch}.{series}/`). |
 | Game | `version.json` + `changelog.json`. |

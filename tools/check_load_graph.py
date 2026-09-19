@@ -140,7 +140,7 @@ REQUIRED_BOOT_MAX = {
     ),
     "bot": (
         "AGENTS.md",
-        "design/grok-bot-session.md",
+        "BOT.md",
     ),
 }
 BUILTIN_FETCH_BANS = {
@@ -154,7 +154,7 @@ BUILTIN_FETCH_BANS = {
         "reopen the agents file",
         "left context",
     ),
-    "design/grok-bot-session.md": (
+    "BOT.md": (
         "reopen the agents file",
         "left context",
     ),

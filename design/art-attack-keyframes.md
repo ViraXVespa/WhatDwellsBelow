@@ -69,7 +69,7 @@ Allowed extras on top of the v31 sheet: drop "same hair"; "small body coil"; "ha
 7. Asking for a stronger coil ("clearer", "shoulder twist", "ribcage rotate") scaled feet and hair with the torso.
 8. Unqualified "left" / "right" is camera-left. `her left` / `his left` is also read as camera-left. Facing Down, write camera-right high / camera-left low for authored character-left high. Do not mix `her left` and viewer-right in one prompt.
 9. Editing a previous generate is not the success case. Fresh Bible only.
-10. Isolated Grok Build (no the repo agent-rules file tree) cost about half a protocol-loaded I2V turn. Context, not the video model, was the extra spend.
+10. Isolated Grok Build (no repo agent-rules tree) cost about half a protocol-loaded I2V turn. Context, not the video model, was the extra spend.
 11. Video 1.5 can pin first+last frame. That is the planned interpolator after keys exist. It is not a six-key timeline.
 12. Naming belt or buckle redraws the strap. Omit both from the Imagine body. The seed copies the belt if you stop asking for it.
 13. "Middle of the chest" splits the fists onto two chest spots. Keep one sternum column.
@@ -129,9 +129,9 @@ Shoulder-twist and ribcage lines stay banned. Hair-unlock + small coil is still 
 4. Generate `coil_v32` from that seed only, using the printed `coil_v31` sheet.
 5. Score against: stacked fists on the sternum, camera-right high (Down), idle feet, square Down, no prop, optional small coil, seed belt copied without naming it.
 6. Log the roll. Do not invent mid-swing until coil is accepted as finished product.
-7. If quota dies, update leave-off and stop.
+7. If quota dies, stop. Pickup is this file plus `python tools/attack_keyframes.py --resume`.
 
-## Leave-off (2026-09-16)
+## Parked pickup (2026-09-16)
 
 Beat: female Down `attack_great_axe` / coil.
 Sheet: `coil_v31`. Next id: `coil_v32`.

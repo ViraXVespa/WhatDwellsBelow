@@ -1,7 +1,7 @@
 # Versioning and changelog
 
 Status: binding design  
-Read when: stamping a build, adding an archive pin, or the User said **new week**  
+Read when: stamping a build, adding an archive pin, or the User named a pin or archive  
 
 
 ## Scheme
@@ -50,27 +50,20 @@ Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/chang
 
 Grok Bot PRs MUST squash-merge. A multi-commit branch is fine on the PR; it must become **one** user commit on `main`.
 
-## Grok Build week ritual
+## Week pins (User-only)
 
 Several concurrent Grok Build CLI sessions may share one week. The User’s single completion commit is `0.N.0` (later `1.M.0` when they name a major) and is tagged as that series open.
 
-Run the **init pin** only when the User opens a CLI session by saying **new week**. Token refresh counts only if they say that. A mid-week new CLI chat (including a concurrent role) is a catch-up: no pin. Resume after corruption does not move the web pin and does not create a second Grok Build pin for that week.
+Agents do not create week pins and do not run pin scripts. A mid-week new CLI chat is a catch-up: no pin. Resume after corruption does not move the web pin and does not create a second Grok Build pin for that week.
 
-**Init (week N), only after the User said new week:**
+Pin ids when the User already named a pin or archive:
 
-1. Run `powershell -File tools/week_start.ps1` (pins `grok_web_w{current series}` at HEAD, seeds the next series).
-2. This file’s body shape. Do not ingest every `design/changelog/0.N.*.md`.
-3. Inspect git / live tree from one `design/code-map.md` row.
-4. Pin **current `main`** as `grok_web_w{N-1}` — label `Grok Web Results (Week {N-1})`.
-5. Do **not** pin Grok Build Results yet (`0.N.0` does not exist at init).
-
-**User completion commit (`0.N.0`):**
-
-- Pin that commit as `grok_build_wN` — label `Grok Build Results (Week N)`.
+- `grok_web_w{N-1}` — label `Grok Web Results (Week {N-1})` (completed week web results).
+- `grok_build_wN` — label `Grok Build Results (Week N)` on the User’s `0.N.0` completion commit. Do not invent that SHA.
 
 Archive `docs` follow archives. Changelog museum copies for those rows:
 
 - Web Results Week N-1 → that week’s per-build markdown from `design/changelog/` or `design/changelog/archive/0.{N-1}/` (copy under `archives/docs/grok_web_w{N-1}/` so the pin can show files that were not on the old SHA).
 - Build Results Week N → previous week’s per-build markdown, if any, under `archives/docs/grok_build_wN/`.
 
-Also attach the `design/` file tree as it exists **on the pinned commit** (`docs[]` paths that `git show` can resolve). Standing order: when the User has said **new week**, this ritual may create those two pins without a fresh “please archive” prompt. No other new archives unless the User asks.
+Also attach the `design/` file tree as it exists **on the pinned commit** (`docs[]` paths that `git show` can resolve). No other new archives unless the User asks.

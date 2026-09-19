@@ -12,7 +12,7 @@ AGENTS.md
     web   -> design/web-session.md -> protocol.md and constraints.md
     build -> design/grok-build.md -> protocol.md and constraints.md
             -> no leave-off file; next unit is User-named
-    bot   -> design/grok-bot-session.md -> exactly one Job sibling
+    bot   -> BOT.md -> exactly one Job sibling
 
 Then, only if the User named work:
     one topic door -> one Job sibling (if that door has a Job table)
@@ -20,7 +20,7 @@ Then, only if the User named work:
     and one design/code-map.md system row when live files are needed
     and design/tunables.md iff a number changes
     and design/versioning-log.md iff shipping a label
-    and design/versioning.md iff the User said **new week** or named a pin
+    and design/versioning.md iff the User named a pin or archive
     and design/isolated-media.md iff Grok Build is about to call Imagine
     and design/gdscript-law.md iff editing GDScript
     and design/pc-offload.md iff inventory, verify, Windows write, or a new local runner
@@ -49,7 +49,7 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 ## 10/10 checks
 
 1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints.
-2. Bot boot is AGENTS + Bot door + one Job sibling.
+2. Bot boot is BOT.md + one Job sibling (the agents file only if Cursor already loaded it).
 3. No mutual See also.
 4. One job phrase belongs to one door.
 5. Doors with a Job table stay thin.

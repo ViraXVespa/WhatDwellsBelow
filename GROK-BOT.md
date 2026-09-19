@@ -74,5 +74,5 @@ routine that commits.
 - This file — you
 - BOT.md — the Bot
 - python tools/bot_status.py — punch list
-- design/grok-bot-session.md — Cursor/PR agents
+- BOT.md — the Bot (Cursor and cloud use the same boot)
 - design/reuse-map.md and design/grok-bot-opt.md — queues (markdown only)

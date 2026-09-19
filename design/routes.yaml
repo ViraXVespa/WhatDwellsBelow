@@ -7,7 +7,7 @@ boot:
   paths:
     web: design/web-session.md
     build: design/grok-build.md
-    bot: design/grok-bot-session.md
+    bot: BOT.md
 
 requires:
   web_build:
@@ -24,7 +24,6 @@ notes_exempt:
   - design/reuse-map.md
   - design/parked-tasks.md
   - design/park-smoke-shots.md
-  - BOT.md
 
 parked_jobs:
   - design/art-attack-keyframes.md
@@ -52,7 +51,7 @@ gates:
     when: numbers_change
   versioning:
     file: design/versioning.md
-    when: new_week_or_named_pin
+    when: named_pin_or_archive
   versioning_log:
     file: design/versioning-log.md
     when: ship_label
@@ -247,7 +246,6 @@ boot_max:
     - design/constraints.md
   bot:
     - AGENTS.md
-    - design/grok-bot-session.md
     - BOT.md
 
 fetch_ban:
@@ -259,7 +257,7 @@ fetch_ban:
   design/grok-build.md:
     - reopen the agents file
     - left context
-  design/grok-bot-session.md:
+  BOT.md:
     - reopen the agents file
     - left context
   design/grok-bot-size.md:

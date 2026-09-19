@@ -37,4 +37,4 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 Public entry points that must not change when a helper is split: `App.playtest`, `App.set_zoom` / `App.set_hud_scale` / `App.set_volume`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.
 
 Live `player_anim.gd` plays unarmed idle stills plus `idle_to_walk` / looping `walk` / `walk_to_idle` from the locked Bible harvest. Title → Play warms those loco frames and frames the full yard under the solid loader (hub).
-| Catalog / Godot lock | `tools/godot_lock.ps1`, `tools/invoke_godot.ps1`, `tools/week_start.ps1`, `tools/week_pin.py`, `tools/start_build_slice.ps1`, `tools/agent_log.ps1`, `tools/agent_log.py`, `tools/read_summary.ps1`, `tools/clean_agent_logs.ps1` |
+| Catalog / Godot lock | `tools/godot_lock.ps1`, `tools/invoke_godot.ps1`, `tools/start_build_slice.ps1`, `tools/agent_log.ps1`, `tools/agent_log.py`, `tools/read_summary.ps1`, `tools/clean_agent_logs.ps1` |

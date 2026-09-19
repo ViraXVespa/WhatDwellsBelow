@@ -13,11 +13,11 @@ This path never pushes `main`. Do not `git push origin main`. Do not tell the Us
 
 After Phase 3, do not give the User a command list, a multi-step bat block, or "then run this, then that." One `tools/_scratch.py` must perform the whole remaining action (file writes and checks only unless the User asked for git). The User runs only `python tools/_scratch.py` from the repo root and pastes the RESULT. If a step cannot live in that scratch, say so and wait; do not dump homework.
 
-This path does not run the Grok Build week pin ritual and does not run `tools/start_build_slice.ps1`. I2V and complex animation packing stay in Grok Build unless the User says otherwise.
+This path does not pin weeks. I2V and complex animation packing stay in Grok Build unless the User says otherwise.
 
 Docs-only goal (no Phase 4 source): after Phase 3, skip Phase 4–6 and emit Phase 7 when the User says to. Phase 6 is a no-op when no live `scripts/**/*.gd` were emitted.
 
-`design/reuse-map.md` is a User-authored staging brief for the next Grok Bot reuse PR. This path writes or replaces that whole file in Phase 7 when the User named that staging work or parked leftover extract work. Do not crawl the live tree for new Bot items unless the User named that sweep. An empty template is valid. Do not invent queue rows. Parked `bot_setup` ships the parallel Bot surface (`BOT.md`, `tools/bot_status.py`) without rewriting this phase machine. Web / chat still does not write the cloud clone.
+`design/reuse-map.md` is a User-authored staging brief for the next Grok Bot reuse PR. This path writes or replaces that whole file in Phase 7 when the User named that staging work or parked leftover extract work. Do not crawl the live tree for new Bot items unless the User named that sweep. An empty template is valid. Do not invent queue rows. Web / chat still does not write the cloud clone.
 
 
 ## Phases
@@ -28,7 +28,7 @@ Move to the next phase only when this file says to. Do not emit source during Ph
 
 The User tells the agent to review the repo. That sets up the session.
 
-If the agents file already routed this session here, do not re-read the agents file. Read `design/protocol.md` and `design/constraints.md` only when they are not already in this session. Then only topic for work already named. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open the Build path file, the Bot path file, or `design/README.md` for context. Do not open `tools/week_start.ps1` / git or git log from this path. Do not read `design/changelog/` on a mid-week slice. Open it only for **new week**, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session's goal is to write that brief or the named park is reuse_brief. Open `design/parked-tasks.md` only when the User names a parked task or resume parked.
+If the agents file already routed this session here, do not re-read the agents file. Read `design/protocol.md` and `design/constraints.md` only when they are not already in this session. Then only topic for work already named. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open the Build path file, `BOT.md`, or `design/README.md` for context. Do not treat git or git log as the web hand-off. Do not read `design/changelog/` on a mid-week slice. Open it only for a named pin, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session's goal is to write that brief or the named park is reuse_brief. Open `design/parked-tasks.md` only when the User names a parked task or resume parked.
 
 If the first User message names a parked task (design/parked-tasks.md table: id or trigger words), load only that Open file after the law pair. Confirm the review is done and that this session is that parked task, ready to continue from its pickup. Do not wait for a separate go-to-Phase-2 message. If that park already has a mandate, Phase 2 is optional; when the User says go, implement, or Phase 7, proceed.
 
@@ -138,8 +138,8 @@ When documentation is done, this session goal is finished. The User should start
 - Do not emit Phase 7 documentation as one markdown file at a time; use `tools/_scratch.py`.
 - Do not put a markdown fence opener inside a fenced emit (Phase 4 body or Phase 7 runner). It splits the paste.
 - Do not reimplement `tools/doc_patch.py` inside a Phase 7 runner.
-- Do not treat `tools/week_start.ps1` / git or git log as the web hand-off.
-- Do not run a Grok Build week pin from this path.
+- Do not treat git or git log as the web hand-off.
+- Do not pin weeks from this path.
 - Do not chain a second goal after Phase 7 in the same web session.
 - Do not split for the 10KB cap before Phase 6, and do not keep splitting toward 5KB.
 - Do not claim a write landed. The User pastes.

@@ -8,7 +8,7 @@ Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 |------|-----------|---------|
 | **Grok Build (CLI)** | You can write the checkout | Follow `design/grok-build.md`. Edit live files. Implementation is unconstrained there (same-system APIs just do; cross-system / named-architecture replace is propose-first). Do not dump whole files unless asked. Do not apply web / Bot leashes to this path. |
 | **Web / chat** | You cannot write the repo | Follow `design/web-session.md`. Never assume a disk write landed. |
-| **Grok Bot** | Grok Bot / Cursor desktop assistant writing via GitHub PR (cloud agent when available, or GitHub connector), or the User named a Grok Bot path / Grok Bot refactor sweep | Cloud Refactorer: `BOT.md` then `python tools/bot_status.py`. Cursor/PR agents: `design/grok-bot-session.md` (one Job sibling). Recipes: `design/refactor.md` / `design/doc-refactor.md`. Ship via branch + PR. Refactor only, except a new `tools/` runner the User approved this session. |
+| **Grok Bot** | Grok Bot / The Refactorer, or the User named a Grok Bot path / refactor sweep | One product. `BOT.md`, then `python tools/bot_status.py`, then exactly one printed Job file. Refactor only, except a new `tools/` runner the User approved this session. Ship via branch + PR. |
 
 If unsure: ask once, then use **web / chat** if still uncertain. A missed full-file emit is worse than an extra one.
 
@@ -27,15 +27,13 @@ Navigation is only `design/routes.yaml`. Do not treat `See also:` as a load list
 | Numbers (when the work changes them) | `design/tunables.md` |
 | Local inventory / verify / Windows write | pc-offload skill + `design/pc-offload.md` |
 
-**Local lookup:** tree search under `scripts/`, `design/`, `tools/`, `scenes/` is `tools/list_xref.ps1`, not the grep tool, unless that file is already open for edit in this slice. Git inventory is `tools/list_changed.ps1` — do not paste `git status` / `git log` into the thread. One door or job card is `tools/list_route.ps1` (`-Door` / `-Job`); do not open the topic index or load-graph for that. Grok Build slice boot is `tools/start_build_slice.ps1`; after it, read `powershell -File tools/read_summary.ps1 -Job slice-boot` once. Windows bodies: single-quoted here-string into `tools/write_utf8_file.py`, then `tools/run_agent_py.ps1`; no `python -c` and no double-quoted PowerShell bodies. After a runner, run `powershell -File tools/read_summary.ps1 -Job <name>` once for that job (session-keyed `_logs/sess/<session>/<job>/summary.txt` when present); do not read that summary again in the job and do not open `tools/*.ps1` to learn flags. Job-cycle and planned-gather rules: `design/protocol.md`.
-
 Path procedures live in the Path table session file. Do not open the topic index or the load-graph sketch unless the User named the index or routing work.
 
-**Load cap (soft):** this file + the path session file + (web / Build only) `design/protocol.md` and `design/constraints.md` + one topic door + one Job-table sibling. Gates whose `when` matches, including `design/gdscript-law.md` when editing GDScript and `design/pc-offload.md` when measuring, inventorying, or writing on Windows. `design/tunables.md` when numbers change. `design/versioning.md` at ship only. `design/code-map.md` is one system row. A second topic door only when the User names the owner. Law / gates / one code-map row are not topic doors.
+**Load cap (soft):** this file + the path session file + (web / Build only) `design/protocol.md` and `design/constraints.md` + one topic door + one Job-table sibling. Gates whose `when` matches, including `design/gdscript-law.md` when editing GDScript and `design/pc-offload.md` when measuring, inventorying, or writing on Windows. `design/tunables.md` when numbers change. `design/versioning.md` when the User named a pin or archive. `design/versioning-log.md` at ship label. `design/code-map.md` is one system row. A second topic door only when the User names the owner. Law / gates / one code-map row are not topic doors.
 
-Web / Build: the path file loads the law pair if they are missing, then only the topic door for named work. Bot: `BOT.md` + `python tools/bot_status.py`, then this file and `design/grok-bot-session.md` only. Do not fetch this file again.
+Web / Build: the path file loads the law pair if they are missing, then only the topic door for named work. Bot: `BOT.md` + `python tools/bot_status.py` + one Job file. Do not fetch this file again.
 
-There is no leave-off file. Git + `_logs/sess/<Grok session id>/` postcards are the pickup. Fresh Build instance: this file, then `design/grok-build.md`. A new session in the same instance is not a new week.
+There is no leave-off file. Git + `_logs/sess/<Grok session id>/` postcards are the pickup. Fresh Build instance: this file, then `design/grok-build.md`. A new session in the same instance is not a new week. Week pins are User-only; do not run pin scripts.
 
 Build Imagine: `design/isolated-media.md` before any Imagine call. Details stay on the Build path file. Web / chat and Grok Bot do not run Imagine.
 
