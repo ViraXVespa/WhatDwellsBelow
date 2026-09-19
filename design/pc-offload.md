@@ -8,7 +8,7 @@ The cloud Refactorer uses `python tools/bot_status.py` and `python tools/check_s
 
 `_logs/` is gitignored. Tools may write summaries there. Do not commit `_logs/`. Optional Bot notes may still go in `_logs/grok-bot-sweep.md`.
 
-The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Build and Bot. Imagine / I2V skills stay Build-only. A skill is copied into `.cursor/skills/` only when its frontmatter has `cursor-copy: true`.
+The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Grok Build on the User PC. Imagine / I2V skills stay Build-only. A skill is copied into `.cursor/skills/` only when its frontmatter has `cursor-copy: true`.
 
 ## Rules
 
@@ -21,7 +21,7 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Bui
 7. **Windows / PowerShell bodies:** never put markdown or multi-line Python through PowerShell double-quoted strings or `python -c`. Backticks and `\x` escapes get mangled. Write the body with a single-quoted here-string piped into `tools/write_utf8_file.py` (or `--b64` in a single-quoted string), then run the file. A double-quoted pipe or `python -c` is a failed lookup, not a fallback.
 8. **Ephemeral agent Python:** put throwaway scripts under `_logs/agent-py/` and run them with `powershell -File tools/run_agent_py.ps1 -Script _logs/agent-py/....`. That runner deletes the script after exit by default. Do not `-Cleanup` paths outside `_logs/agent-py/`. Permanent edits (design docs, checked-in tools) write straight to their real paths - they are not cleaned up.
 9. **Web / chat Phase 7 runner:** `tools/_scratch.py` is the gitignored paste target for documentation slices. The User runs `python tools/_scratch.py` from repo root. Do not put that runner under `_logs/agent-py/` (those scripts are deleted after exit). The runner must import `tools/doc_patch.py` instead of copying replace helpers.
-10. **New runner:** if the next step would open many untouched files, ingest a raw Godot log, grep the tree into chat, or hand-count bytes, stop. Use a catalog row when one exists. If none exists, propose a runner (name, command, summary path, what tokens it saves) and wait. Grok Build may implement an approved runner. Grok Bot may implement one only after the User approves that runner in-session.
+10. **New runner:** if the next step would open many untouched files, ingest a raw Godot log, grep the tree into chat, or hand-count bytes, stop. Use a catalog row when one exists. If none exists, propose a runner (name, command, summary path, what tokens it saves) and wait. Grok Build may implement an approved runner. Grok Build may implement one only after the User approves that runner in-session.
 11. **Tree search / git / one-liners:** built-in grep is only for a file already in this slice's edit set. Repo search is `list_xref.ps1`. Git inventory is `list_changed.ps1` (optional `-Head`); do not paste porcelain or `git log` into the thread. No `python -c`.
 12. **Cursor skills:** `.cursor/skills/` is a symlink to `.grok/skills/`. Do not run `sync_agent_skills.ps1` after a skill edit.
 

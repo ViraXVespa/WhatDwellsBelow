@@ -30,11 +30,11 @@ Do not reload the root agents file. Types, warnings, tabs, and the 10KB cap stay
 
 Do not edit yet. Show the ranked list first.
 
-1. `powershell -File tools/list_oversize_scripts.ps1` → `_logs/oversize/summary.txt`
+1. `python tools/check_script_cap.py` plus `python tools/bot_status.py`
 2. Rank: over 10KB first, then over 5KB where whole functions can move
-3. Optional func inventory: `tools/summarize_scripts.ps1` / facade cluster: `tools/list_facade_cluster.ps1` (see `design/pc-offload.md`)
+3. Optional func inventory: `python tools/summarize_scripts.py` if that runner exists on the VM
 
-Inventory and before/after sizes use filesystem Length. Do not `ReadAllText` + `Encoding.UTF8.GetByteCount` just to measure.
+Inventory and before/after sizes use `os.path.getsize`.
 
 ## Pass
 
@@ -42,14 +42,13 @@ Inventory and before/after sizes use filesystem Length. Do not `ReadAllText` + `
 2. Then split over-5KB files only when whole functions can move.
 3. One size PR may batch over-10KB then over-5KB clusters. Do not start extract, relocate, docs, or reuse-map work in this PR.
 
-Prefer a local checkout (`WDB_ROOT`) for large sweeps. Commit locally per cluster; push the PR branch when the cluster is done. Cloud agent is optional. Document a `WDB_ROOT` change on the door only if that path itself changed.
+Work in `/workspace/WhatDwellsBelow`. Commit per cluster on `bot/refactorer`.
 
 ## Verify
 
-After each cluster: `design/pc-offload.md` runners (`run_post_split_gate.ps1`, `check_script_cap.ps1`, import check). Then ship per `BOT.md`.
+Prove with `python tools/check_script_cap.py --git-changed`, `python tools/check_load_graph.py`, and `python tools/bot_status.py --prove`. Ship per `BOT.md`.
 
-- Godot binary (Steam tools): `C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe`
-- Required import check: `--headless --editor --import --path <WDB_ROOT> --quit` (or `tools/run_godot_import_check.ps1`). Clean bar: exit 0 and empty stderr.
-- Smokes when behavior risk warrants: `--headless --display-driver headless --audio-driver Dummy --path <WDB_ROOT> -- --wdb-phaseN-smoke` (or `tools/run_smokes.ps1`). Plain `--headless` without those drivers can hang.
+- Required import check: `--headless --editor --import --path </workspace/WhatDwellsBelow> --quit` (or `tools/run_godot_import_check.ps1`). Clean bar: exit 0 and empty stderr.
+- Smokes when behavior risk warrants: `--headless --display-driver headless --audio-driver Dummy --path </workspace/WhatDwellsBelow> -- --wdb-phaseN-smoke` (or `tools/run_smokes.ps1`). Plain `--headless` without those drivers can hang.
 - Advisory hostify lint: `tools/lint_hostify.ps1` / `python tools/lint_hostify.py` → `_logs/hostify-lint/summary.txt`. Always exits 0; read `RESULT hits=`. Not a compile substitute.
 - If a split introduced a SCRIPT ERROR, parse error, or new actionable warning, stop. Fix it and record the prevention under `design/refactor.md`. Do not continue past a red import check.

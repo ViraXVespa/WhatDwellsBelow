@@ -50,15 +50,15 @@ Do not open `design/reuse-map.md` except from `design/grok-bot-reuse.md` when th
 New `tools/` runners: propose first; implement only after the User approves that runner this session.
 Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
 
-Windows desktop checkout only: pc-offload skill then `design/pc-offload.md` when measuring. Cloud VM does not load that skill.
-Do not port the `.ps1` catalog to bash.
+Work only in `/workspace/WhatDwellsBelow` on the Bot VM. Do not open `design/pc-offload.md`. Do not load the pc-offload skill. Do not use a Windows desktop checkout, `WDB_ROOT`, or the Steam Godot path.
 
 ## Hard stops
 
 No new player-facing systems, tunables, combat feel, playtest, Godot install,
 art/I2V, locale sweeps, or pause redesign.
 Do not enable Execution on Local Computer.
-Do not load Imagine / I2V / pc-offload skills for the cloud teammate.
+Do not load Imagine / I2V / pc-offload skills. Those are Build skills on the User PC.
+Bot may save its own skill after two good clusters. Do not copy repo `.grok/skills/` or run `tools/sync_agent_skills.ps1`.
 Do not walk design/ for context beyond this file and the one Job file.
 Do not pin weeks or run week-boundary scripts.
 Do not invent numbers.

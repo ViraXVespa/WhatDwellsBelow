@@ -28,4 +28,4 @@ Do not fetch the agents file again. Do not open the staged reuse brief. Do not r
 3. The tool `git mv`s the facade + stem siblings (+ `.uid`), rewrites `res://` and bare paths under `scripts/`, `design/`, scenes, and `project.godot`, and writes `_logs/move-cluster/summary.txt`.
 4. Prefer updating call sites over wrappers when external refs are few.
 5. Update `design/code-map.md` rows in the same PR.
-6. Run the editor import check (`design/pc-offload.md`). Ship per `BOT.md`.
+6. Run the editor import check (`BOT.md`). Ship per `BOT.md`.

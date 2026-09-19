@@ -31,7 +31,7 @@ Do not fetch the agents file again. Do not open the other Bot flow siblings. Do 
 
 ## Pass
 
-1. User names an item id (or the next pending item). Inventory that cluster with `design/pc-offload.md` runners. Do not edit yet.
+1. User names an item id (or the next pending item). Inventory that cluster with VM prove commands in `BOT.md`. Do not edit yet.
 2. Implement only that item. Mark it `done` in the same PR with `python tools/bot_opt.py --status opt-NNN=done`.
 3. Prove with `python tools/check_script_cap.py --git-changed`, `python tools/check_load_graph.py`, and `python tools/bot_status.py --prove`. Ship per `BOT.md`.
 
