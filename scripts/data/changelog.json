@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.17",
+			"points": [
+				{
+					"text": "Centralize Autoload/flow `preload(\"res://...\")` literals on facade owners (`app.gd`, `app_boot.gd`, `app_flow.gd`, `app_run.gd`, `app_set.gd`)."
+				},
+				{
+					"text": "Shared scripts and tunables live on `App` (plus `T`); boot-only `DebugS`/`AnimS` stay on `app_boot`; `LoadTiming`/`Anim` on `app_flow`; `UiText` on `app_set`."
+				},
+				{
+					"text": "Cluster callers (`app_boot`, `app_run`, `app_set`, `boot`, `title`, `title_news`) use those consts \u2014 no `preload(variable)`, no load timing/path change."
+				}
+			],
+			"summary": "One preload owner per Autoload/flow API; cluster files reuse App/facade consts."
+		},
+		{
 			"label": "0.4.16",
 			"points": [
 				{
