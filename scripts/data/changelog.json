@@ -3,6 +3,30 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.9",
+			"points": [
+				{
+					"text": "Web path is five phases: boot, discuss, goal and emit list, emit, test. Phase 3 names the goal. No auto-advance. Mechanical RESULT errors return to emit; a new assumption is one blocking question."
+				},
+				{
+					"text": "Bot owns live script size. Web does not cap-split. Documentation is not a separate phase."
+				},
+				{
+					"text": "Path and law files no longer teach leave-off, pin-scripts, paste-emit, Bot intake, or compaction recovery."
+				},
+				{
+					"text": "Build gather/change/prove lives in `design/build-job-cycle.md`. The Grok Build path file is the thin remainder."
+				},
+				{
+					"text": "Grok Bot works on the cloud VM only. It does not load pc-offload or repo Imagine skills. It may save a product skill after a good method."
+				},
+				{
+					"text": "`tools/check_load_graph.py` fails leftover ritual phrases. AGENTS.md load cap is one paragraph."
+				}
+			],
+			"summary": "Agent routing compressed to path pick plus one path file; web loops instead of a seven-phase stack; Bot stays off the User PC."
+		},
+		{
 			"label": "0.4.8",
 			"points": [
 				{
