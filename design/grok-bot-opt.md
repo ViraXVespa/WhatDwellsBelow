@@ -46,7 +46,7 @@ Parked items sit between the markers. Agents must not hand-edit this section.
 <!-- bot-opt:begin -->
 <!-- bot-opt:next=5 -->
 
-### opt-001 (pending)
+### opt-001 (done)
 - Title: Extract reusable markdown formatting library from md-editing tools
 - Cluster: Tools
 - Files: `tools/bot_opt.py`, `tools/code_map_lib.py`, `tools/patch_code_map.py`, `tools/doc_patch.py`, `tools/write_utf8_file.py`
@@ -89,7 +89,7 @@ Touched live scripts stay under 10KB. Land on the current open Bot PR. Mark this
 ### opt-003 (pending)
 - Title: Shared helper for Title/Placeholdia/Dungeon load legs
 - Cluster: Autoload / flow
-- Files: `scripts/app.gd`, `scripts/app_flow.gd`, `scripts/app_run.gd`, `scripts/app_boot.gd`, `scripts/app_set.gd`
+- Files: `scripts/app.gd`, `scripts/app_flow.gd`, `scripts/app_run.gd`, `scripts/app_set.gd`, `scripts/app_boot.gd`
 
 Inventory first. Do not edit until shared enter/exit logic is listed as real duplication (not three similar-looking calls that already go through one function).
 
