@@ -3,6 +3,63 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.15",
+			"points": [
+				{
+					"text": "Docs facade: `design/gear-ui.md` is the door under 4KB."
+				},
+				{
+					"text": "Siblings: `gear-ui-board.md`, `gear-ui-stats.md`, `gear-ui-reequip.md`, `gear-ui-chrome.md` (each under 8KB)."
+				},
+				{
+					"text": "Job table covers former gear-ui `##` clusters; callers keep linking the facade."
+				},
+				{
+					"text": "`design/routes.yaml` registers `gear_ui.board|stats|reequip|chrome`. No binding change."
+				},
+				{
+					"text": "Docs facade: `design/hub.md` door under 4KB (was ~10.6KB)."
+				},
+				{
+					"text": "Siblings: `hub-crystal.md`, `hub-benches.md`, `hub-guild.md`, `hub-yard.md` (each under 8KB)."
+				},
+				{
+					"text": "`design/routes.yaml` registers `hub.crystal|benches|guild|yard` plus `job_read_when`. No binding change."
+				},
+				{
+					"text": "`tools/bot_status.py` `_git` uses `rstrip` so porcelain leading spaces survive (allowlist path parse)."
+				},
+				{
+					"text": "Docs facade: `design/dungeon.md` door under 4KB (was ~10.1KB)."
+				},
+				{
+					"text": "Siblings: `dungeon-gen.md`, `dungeon-gates.md`, `dungeon-crystals.md`, `dungeon-stream.md` (each under 8KB)."
+				},
+				{
+					"text": "`design/routes.yaml` registers `dungeon.gen|gates|crystals|stream`. No binding change."
+				},
+				{
+					"text": "Docs facade: `design/save-tech.md` door under 4KB (was ~10.0KB)."
+				},
+				{
+					"text": "Siblings: `save-tech-persist.md`, `save-tech-web.md`, `save-tech-runtime.md` (each under 8KB)."
+				},
+				{
+					"text": "`design/routes.yaml` registers `save_tech.persist|web|runtime`. No binding change."
+				},
+				{
+					"text": "Docs facade: `design/archives.md` door under 4KB (was ~8.9KB); core rule stays on the door."
+				},
+				{
+					"text": "Siblings: `archives-catalog.md`, `archives-play.md`, `archives-ui.md` (each under 8KB)."
+				},
+				{
+					"text": "`design/routes.yaml` registers `archives.catalog|play|ui`. No binding change."
+				}
+			],
+			"summary": "Gear-ui, hub, dungeon, save-tech, and archives doors + siblings; facade paths unchanged."
+		},
+		{
 			"label": "0.4.14",
 			"points": [
 				{
