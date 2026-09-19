@@ -23,5 +23,6 @@ id | trigger | open | path
 --- | --- | --- | ---
 attack_keyframes | resume parked, attack keyframes, coil stills | art-attack-keyframes.md (art_pipeline job) | web or isolated media
 smoke_shots | resume parked, smoke shots, headless screenshots, _logs/shots | park-smoke-shots.md | web then Build / tools
+agent_setup | resume parked, agent setup, GROK-BOT.md, Bot refresh | park-agent-setup.md | web
 
 Do not invent rows.
