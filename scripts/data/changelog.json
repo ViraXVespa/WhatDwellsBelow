@@ -3,6 +3,18 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.18",
+			"points": [
+				{
+					"text": "Set `WDB_AGENT_SESSION=github-actions` on the bot-gate Actions job so `check_script_cap.py` / `agent_log` can run without a Grok VM session folder."
+				},
+				{
+					"text": "PR script-cap no longer fails with `agent_log: no session key`. Allowlist and real over-10KB fails are unchanged."
+				}
+			],
+			"summary": "bot-gate CI gets a session key; cap/allowlist checks can mean what they say."
+		},
+		{
 			"label": "0.4.17",
 			"points": [
 				{
