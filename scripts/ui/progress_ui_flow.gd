@@ -12,6 +12,8 @@ const ForgeUI := preload("res://scripts/ui/gear_board/gear_board_anvil_forge.gd"
 const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
+const UiSession := preload("res://scripts/ui/ui_session.gd")
 
 static func _ready(host: CanvasLayer) -> void:
 	host.layer = 45
@@ -51,15 +53,13 @@ static func close_ui(host: CanvasLayer) -> void:
 	host._drop_sub()
 	host.open = false
 	host.visible = false
-	host.pending = false
-	host.pending_id = ""
+	Confirm.close(host)
 	host.anvil_item = {}
 	host.anvil_src = ""
 	host.gear_hover = false
 	if host.gear_tip_host:
 		host.gear_tip_host.visible = false
-	App.ui_open = false
-	host.get_tree().paused = false
+	UiSession.close(host)
 	var p := host.get_tree().get_first_node_in_group("player")
 	if p:
 		p.set("interact_lock", 0.25)
@@ -85,7 +85,6 @@ static func _focus(host: CanvasLayer) -> void:
 
 static func open_anvil(host: CanvasLayer) -> void:
 	host.mode = "anvil"
-	host.pending = false
 	host.anvil_item = {}
 	host.anvil_src = ""
 	host.anvil_tab = "analyze"
@@ -103,7 +102,6 @@ static func open_anvil(host: CanvasLayer) -> void:
 
 static func open_loadout(host: CanvasLayer) -> void:
 	host.mode = "loadout"
-	host.pending = false
 	host.inv_sel = "slot:weapon"
 	host._drop_sub()
 	host.loadout_floor = App.prog.start_floor
@@ -184,11 +182,9 @@ static func _unhandled_input(host: CanvasLayer, event: InputEvent) -> void:
 					GearAct.close_sub(host)
 			host.get_viewport().set_input_as_handled()
 			return
-		if host.pending:
-			host.pending = false
-			host.pending_id = ""
+		if Confirm.is_open(host):
+			Confirm.close(host)
 			App.sfx("ui_cancel")
-			host._st("Cancelled.")
 		elif host.forge_t > 0.0:
 			ForgeUI.cancel_job(host)
 			App.sfx("ui_cancel")
