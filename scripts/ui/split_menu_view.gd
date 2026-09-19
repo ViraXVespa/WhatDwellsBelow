@@ -1,4 +1,4 @@
-﻿extends Object
+extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Split := preload("res://scripts/ui/split_menu.gd")
@@ -241,6 +241,23 @@ static func wire_vert(btns: Array) -> void:
 		c.focus_neighbor_left = c.get_path()
 		c.focus_neighbor_right = c.get_path()
 
+
+
+
+static func wire_horiz(btns: Array) -> void:
+	var live: Array = []
+	for b: Variant in btns:
+		if _focusable(b):
+			live.append(b)
+	var n: int = live.size()
+	if n == 0:
+		return
+	for i: int in n:
+		var c: Control = live[i]
+		var prev: Control = live[n - 1 if i == 0 else i - 1]
+		var nxt: Control = live[0 if i == n - 1 else i + 1]
+		c.focus_neighbor_left = prev.get_path()
+		c.focus_neighbor_right = nxt.get_path()
 
 static func path_text(host: Node) -> void:
 	if not _live(host) or host.get("_path") == null:
