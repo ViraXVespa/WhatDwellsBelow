@@ -9,7 +9,9 @@ from __future__ import annotations
 import re
 from typing import NamedTuple
 
-TICK_RE = re.compile(r"`([^`]+)`")
+import md_format_lib as md
+
+TICK_RE = md.TICK_RE
 ROW_RE = re.compile(r"^\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*$")
 FILE_SUFFIXES = (
     ".gd",
@@ -32,10 +34,7 @@ class Row(NamedTuple):
 
 
 def posix(rel: str) -> str:
-    p = rel.replace("\\", "/")
-    while p.startswith("./"):
-        p = p[2:]
-    return p.lstrip("/")
+    return md.posix(rel)
 
 
 def row_paths(live_cell: str) -> list[str]:
@@ -163,12 +162,12 @@ def add_path(live: str, path: str) -> tuple[str, str, str]:
     if last_same is not None and parent:
         sep = " + " if same_count == 1 else ", "
         token = base
-        insert = f"{sep}`{token}`"
+        insert = f"{sep}{md.tick_wrap(token)}"
         new_live = live[: last_same.end()] + insert + live[last_same.end() :]
         return new_live, token, "added"
     token = needle
     sep = "; " if live.strip() else ""
-    new_live = live.rstrip() + f"{sep}`{token}`"
+    new_live = live.rstrip() + f"{sep}{md.tick_wrap(token)}"
     return new_live, token, "added"
 
 
@@ -221,7 +220,7 @@ def rename_path(live: str, old: str, new: str) -> tuple[str, str, str, str]:
     for m, token, resolved in ticks:
         if matches(needle, [token, resolved]):
             new_token = _rename_token(token, resolved, new_p)
-            new_live = live[: m.start()] + f"`{new_token}`" + live[m.end() :]
+            new_live = live[: m.start()] + md.tick_wrap(new_token) + live[m.end() :]
             return new_live, resolved, new_token, "renamed"
     return live, needle, new_p, "skip"
 
