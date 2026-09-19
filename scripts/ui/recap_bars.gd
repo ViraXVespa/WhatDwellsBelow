@@ -2,6 +2,7 @@ extends Object
 const CombatP := preload("res://scripts/data/progress_combat.gd")
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const SkillRow := preload("res://scripts/ui/skill_row_view.gd")
 
 const SKILL_NAMES := {
 	"axe": "Great Axe",
@@ -28,12 +29,7 @@ static func skill_title(id: String) -> String:
 
 
 static func skill_lab(text: String, size := 16, col := Color(0.9, 0.84, 0.7)) -> Label:
-	var l: Label = ThemeS.lab(text, size, col, HORIZONTAL_ALIGNMENT_LEFT, false, true)
-	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	l.custom_minimum_size = Vector2(0, 22)
-	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	return l
+	return SkillRow.skill_lab(text, size, col)
 
 
 static func make_block(host: Node, id: String, kind: String) -> Dictionary:
@@ -44,12 +40,7 @@ static func make_block(host: Node, id: String, kind: String) -> Dictionary:
 	inner.add_theme_constant_override("separation", 4)
 	var lab := skill_lab("", 16, Color(0.9, 0.84, 0.7))
 	inner.add_child(lab)
-	var track := ColorRect.new()
-	track.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	track.custom_minimum_size = Vector2(0, 16)
-	track.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	track.color = COL_TRACK
-	track.clip_contents = true
+	var track := SkillRow.make_track()
 	inner.add_child(track)
 	var base := ColorRect.new()
 	base.mouse_filter = Control.MOUSE_FILTER_IGNORE
