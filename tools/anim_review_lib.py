@@ -9,6 +9,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import md_format_lib as md
+
 ROOT = Path(__file__).resolve().parent.parent
 REVIEW_DIR = ROOT / "tools" / "anim_review"
 REVIEW_PATH = REVIEW_DIR / "review.json"
@@ -155,5 +157,4 @@ def frame_paths(model: str, facing: str, anim: str) -> list[Path]:
 
 
 def write_text(path: Path, body: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(body if body.endswith("\n") else body + "\n", encoding="utf-8")
+    md.write_utf8(path, body, mkdir=True)
