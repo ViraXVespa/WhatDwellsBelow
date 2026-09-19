@@ -1,6 +1,5 @@
 extends Control
 
-const T := preload("res://scripts/data/tunables.gd")
 const GameVer := preload("res://scripts/data/game_ver.gd")
 const News := preload("res://scripts/title_news.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
@@ -30,7 +29,7 @@ func _ready() -> void:
 	card.add_theme_constant_override("separation", 14)
 	add_child(card)
 	card.add_child(_lab("WHAT DWELLS BELOW", 48, Color(0.92, 0.78, 0.48)))
-	card.add_child(_lab(T.ONE_LINER, 18, Color(0.78, 0.72, 0.62)))
+	card.add_child(_lab(App.T.ONE_LINER, 18, Color(0.78, 0.72, 0.62)))
 	card.add_child(_lab("Version: %s" % GameVer.label(), 16, Color(0.7, 0.62, 0.48)))
 	var play_a: Button = null
 	var play_b: Button = null
