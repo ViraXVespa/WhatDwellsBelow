@@ -3,6 +3,7 @@ const CombatP := preload("res://scripts/data/progress_combat.gd")
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const TipPlace := preload("res://scripts/ui/tip_place.gd")
+const SkillRow := preload("res://scripts/ui/skill_row_view.gd")
 
 
 static func skill_title(ui: CanvasLayer, id: String) -> String:
@@ -29,43 +30,15 @@ static func run_line(ui: CanvasLayer, id: String, perm: float, runx: float) -> S
 
 
 static func skill_lab(text: String, size: int = 16, col: Color = Color(0.9, 0.84, 0.7)) -> Label:
-	var l: Label = ThemeS.lab(text, size, col, HORIZONTAL_ALIGNMENT_LEFT, false, true)
-	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	l.custom_minimum_size = Vector2(0, 22)
-	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	return l
+	return SkillRow.skill_lab(text, size, col)
 
 
 static func xp_bar(ratio: float, fill_col: Color) -> ColorRect:
-	var track: ColorRect = ColorRect.new()
-	track.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	track.custom_minimum_size = Vector2(0, 16)
-	track.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	track.color = Color(0.18, 0.14, 0.1)
-	track.clip_contents = true
-	var fill: ColorRect = ColorRect.new()
-	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	fill.color = fill_col
-	fill.set_anchors_preset(Control.PRESET_FULL_RECT)
-	fill.anchor_right = clampf(ratio, 0.0, 1.0)
-	fill.offset_left = 0.0
-	fill.offset_top = 0.0
-	fill.offset_right = 0.0
-	fill.offset_bottom = 0.0
-	track.add_child(fill)
-	return track
+	return SkillRow.single_fill(ratio, fill_col)
 
 
 static func skill_block(ui: CanvasLayer, id: String, kind: String, text: String, ratio: float, fill_col: Color) -> PanelContainer:
-	var shell: PanelContainer = ThemeS.skill_row()
-	var inner: VBoxContainer = VBoxContainer.new()
-	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	inner.add_theme_constant_override("separation", 4)
-	inner.add_child(skill_lab(text))
-	inner.add_child(xp_bar(ratio, fill_col))
-	shell.add_child(inner)
+	var shell: PanelContainer = SkillRow.row_single(text, ratio, fill_col)
 	shell.set_meta("skill_id", id)
 	shell.set_meta("skill_kind", kind)
 	shell.focus_entered.connect(ui._on_skill_focus.bind(id, kind, shell))
