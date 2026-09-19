@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.11",
+			"points": [
+				{
+					"text": "GROK-BOT.md Auto-review Allow stays git add / commit / push on bot/* under /workspace/WhatDwellsBelow."
+				},
+				{
+					"text": "Auto-review Ask first also covers deletes outside the cluster, plus push main, gh pr merge, and force-push."
+				},
+				{
+					"text": "Drop deleted design/park-bot-setup.md from the Bot allowlist."
+				},
+				{
+					"text": "Main-changed wake is status then size-only on bot/refactorer after a saved size skill."
+				},
+				{
+					"text": "bot-wake.yml runs the punch list on main; webhook fires only when over_10kb count is above 0 and GROK_BOT_WEBHOOK_URL is set."
+				}
+			],
+			"summary": "Bot branch ship on bot/* stays Allow; main-wake is size-only after a saved skill and stays quiet until over_10kb count is above 0 and a webhook secret exists."
+		},
+		{
 			"label": "0.4.10",
 			"points": [
 				{
