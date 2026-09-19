@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.12",
+			"points": [
+				{
+					"text": "Size sweep: split `scripts/debug/dungeon_map.gd` under the 10KB ship floor."
+				},
+				{
+					"text": "Facade stays at `dungeon_map.gd`; helpers: `dungeon_map_dump.gd`, `dungeon_map_util.gd`, `dungeon_map_collect.gd`, `dungeon_map_emit.gd`, `dungeon_map_spec.gd`, `dungeon_map_ascii.gd`."
+				},
+				{
+					"text": "code-map Debug row lists the new siblings. No behavior change."
+				}
+			],
+			"summary": "Dungeon map dump size split under 10KB; public path unchanged."
+		},
+		{
 			"label": "0.4.11",
 			"points": [
 				{
