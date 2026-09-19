@@ -54,7 +54,7 @@ Grok Bot PRs MUST squash-merge. A multi-commit branch is fine on the PR; it must
 
 Several concurrent Grok Build CLI sessions may share one week. The User’s single completion commit is `0.N.0` (later `1.M.0` when they name a major) and is tagged as that series open.
 
-Agents do not create week pins and do not run pin scripts. A mid-week new CLI chat is a catch-up: no pin. Resume after corruption does not move the web pin and does not create a second Grok Build pin for that week.
+Agents do not create week pins. A mid-week new CLI chat is a catch-up: no pin. Resume after corruption does not move the web pin and does not create a second Grok Build pin for that week.
 
 Pin ids when the User already named a pin or archive:
 

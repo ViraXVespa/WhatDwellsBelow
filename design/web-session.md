@@ -11,13 +11,11 @@ The User cannot be written to by this agent. The User pastes every emit. The Use
 
 This path never pushes `main`. Do not `git push origin main`. Do not tell the User to push `main`. Do not create a side branch unless the User named that branch.
 
-After Phase 3, do not give the User a command list, a multi-step bat block, or "then run this, then that." One `tools/_scratch.py` must perform the whole remaining action (file writes and checks only unless the User asked for git). The User runs only `python tools/_scratch.py` from the repo root and pastes the RESULT. If a step cannot live in that scratch, say so and wait; do not dump homework.
+After Phase 3, do not give the User a command list, a multi-step bat block, or "then run this, then that." One `tools/_scratch.py` must perform the whole remaining action (file writes and checks only unless the User asked for git). A scratch that writes `tools/check_load_graph.py` or another runnable this slice owns must invoke that tool before exit and print `RESULT checker=PASS|FAIL`. The User runs only `python tools/_scratch.py` from the repo root and pastes the RESULT. If a step cannot live in that scratch, say so and wait.
 
-This path does not pin weeks. I2V and complex animation packing stay in Grok Build unless the User says otherwise.
+I2V and complex animation packing stay in Grok Build unless the User says otherwise.
 
-Docs-only goal (no Phase 4 source): after Phase 3, skip Phase 4–6 and emit Phase 7 when the User says to. Phase 6 is a no-op when no live `scripts/**/*.gd` were emitted.
-
-`design/reuse-map.md` is a User-authored staging brief for the next Grok Bot reuse PR. This path writes or replaces that whole file in Phase 7 when the User named that staging work or parked leftover extract work. Do not crawl the live tree for new Bot items unless the User named that sweep. An empty template is valid. Do not invent queue rows. Web / chat still does not write the cloud clone.
+Docs-only pass (no Phase 4 source): after the User accepts the Phase 3 list, skip Phase 4–6 and emit Phase 7 when the User says to.
 
 
 ## Phases
@@ -28,7 +26,7 @@ Move to the next phase only when this file says to. Do not emit source during Ph
 
 The User tells the agent to review the repo. That sets up the session.
 
-If the agents file already routed this session here, do not re-read the agents file. Read `design/protocol.md` and `design/constraints.md` only when they are not already in this session. Then only topic for work already named. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open the Build path file, `BOT.md`, or `design/README.md` for context. Do not treat git or git log as the web hand-off. Do not read `design/changelog/` on a mid-week slice. Open it only for a named pin, a revert, a named past build, or when the User asks what shipped. Do not open `design/reuse-map.md` unless this session's goal is to write that brief or the named park is reuse_brief. Open `design/parked-tasks.md` only when the User names a parked task or resume parked.
+If the agents file already routed this session here, do not re-read the agents file. Read `design/protocol.md` and `design/constraints.md` only when they are not already in this session. Then only topic for work already named. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open the Build path file, `BOT.md`, or `design/README.md` for context. Do not treat git or git log as the web hand-off. Do not read `design/changelog/` on a mid-week slice. Open it only for a named pin, a revert, a named past build, or when the User asks what shipped. Open `design/parked-tasks.md` only when the User names a parked task or resume parked. Do not open Grok Bot Job files from this path.
 
 If the first User message names a parked task (design/parked-tasks.md table: id or trigger words), load only that Open file after the law pair. Confirm the review is done and that this session is that parked task, ready to continue from its pickup. Do not wait for a separate go-to-Phase-2 message. If that park already has a mandate, Phase 2 is optional; when the User says go, implement, or Phase 7, proceed.
 
@@ -40,7 +38,7 @@ The User discusses proposed changes and/or session objectives: what would change
 
 Discuss only. Do not emit files.
 
-This phase ends when the User says to move to the next phase.
+This phase ends only when the User names the next phase. Do not treat "stop asking", "fix it", or a locked concept as a phase advance.
 
 ### Phase 3 — Confirmation
 
@@ -51,7 +49,7 @@ Split the emit list in two. Mark each path `new`, `revise`, or `delete`. Do not 
 - **Phase 4 list:** shipping source only (`scripts/`, `scenes/`, `assets/`, `tools/`, `project.godot`, and other non-doc live files).
 - **Phase 7 list:** every documentation path the Phase 7 runner will write. Phase 5 testing can change that list. Do not treat the Phase 7 list as a Phase 4 emit queue.
 
-This phase ends when every pending question is answered. If there are no questions, send only the emit list and go to Phase 4. If the Phase 4 list is empty, say so and wait for the User to start Phase 7.
+This phase ends when the User accepts the emit list. Do not start Phase 4 without that. If the Phase 4 list is empty, say so and wait for the User to start Phase 7.
 
 ### Phase 4 — File emitting
 
@@ -87,28 +85,13 @@ Do not assemble a revision from a tool-card summary, a truncated artifact, or a 
 
 ### Phase 5 — Review
 
-The User tests. Emit one tools/_scratch.py that exercises every script this slice shipped or revised, using WhatIf / --dry-run / usage paths so nothing live is mutated. That same script must run tools/check_load_graph.py and print PASS/FAIL. Do not ask the User to run the checker as a second command. The User runs python tools/_scratch.py from the repo root and pastes the RESULT. Flagged issues loop back to Phase 2, then 3-4 as needed, until the User is satisfied.
+The User reviews the Phase 4 RESULT. If Phase 4 already ran the checker or the shipped tool, do not emit a second script. Emit a Phase 5 scratch only to change the test or the tool. Flagged issues loop back to Phase 2, then 3-4 as needed, until the User is satisfied.
 
 The User will say something like “Looks good.” That means no more behavior changes for this goal. Go to Phase 6.
 
 ### Phase 6 — Sizing
 
-Check emitted live `scripts/**/*.gd` against the **10,000 byte** cap in `design/gdscript-law.md`. Use `design/refactor.md` for the split recipe only. Do not open the Bot path file from that recipe. Do not aim at Grok Bot's 5KB sweep target.
-
-This Phase 6 block is web / chat only. Grok Build does not run an equivalent cap split.
-
-Web / chat does **not** apply that cap during Phase 2–5. Over-cap files may be emitted and revised until this phase.
-
-If any emitted live script is over the cap:
-
-1. Tell the User which files are too large.
-2. Tell the User which new helper / wrapper files will be created and how the facade stays at the original path.
-3. Wait for confirmation.
-4. Emit the split files with Phase 4 rules (`Next` between files).
-
-If no emitted live script is over the cap, say so. Do not emit.
-
-This phase ends when every needed size split has been emitted, or after reporting that nothing needs changing.
+Removed. Grok Bot owns live script size. Do not cap-split on this path.
 
 ### Phase 7 — Documentation
 
@@ -126,11 +109,11 @@ Do not emit markdown files one at a time in this phase. Do not use Phase 4 caden
 
 If the goal shipped player-visible or agent-visible change, also emit one new file `design/changelog/{label}.md` as the **final** file in this phase. Label math and body shape: `design/versioning-log.md`. Body is `## {label}`, bullets, then one `Summary:` line. Do not write a `## Agent` section. Do not read older changelog files to write it. Do not emit `scripts/data/changelog.json` or hand-edit `scripts/data/version.json`. Do not write the label into `design/versioning.md`.
 
-Do not emit a leave-off or session-log file. Do not emit `_logs/`.
+Do not emit a pickup file. Do not emit `_logs/`.
 
 If nothing in the docs is wrong and no changelog entry is required, tell the User no documentation changes are required.
 
-When documentation is done, this session goal is finished. The User should start a new session for a new goal.
+When documentation for this emit pass is done, stop. Same session may return to Phase 2 on the same concept unless the User ends the session.
 
 ## Do not
 
@@ -139,10 +122,7 @@ When documentation is done, this session goal is finished. The User should start
 - Do not put a markdown fence opener inside a fenced emit (Phase 4 body or Phase 7 runner). It splits the paste.
 - Do not reimplement `tools/doc_patch.py` inside a Phase 7 runner.
 - Do not treat git or git log as the web hand-off.
-- Do not pin weeks from this path.
-- Do not chain a second goal after Phase 7 in the same web session.
-- Do not split for the 10KB cap before Phase 6, and do not keep splitting toward 5KB.
+- Do not start a second emit pass until Phase 3 runs again.
 - Do not claim a write landed. The User pastes.
 - Do not treat a page-tool summary as the live file.
 - Do not retry a fetch after the byte / tail check fails.
-- Do not open `See also:` files as a default read set.

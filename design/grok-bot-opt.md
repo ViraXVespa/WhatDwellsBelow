@@ -24,16 +24,16 @@ The Bot-notes Grok Build CLI is the usual parker. It may expand the User's wordi
 2. `design/refactor.md` (recipe only) when a split is required
 3. One `design/code-map.md` **system row** for the named cluster
 4. After the User names the item: only those live `.gd` bodies
-5. At ship: baked `scripts/data/version.json` + `design/versioning-log.md` body shape — not the changelog tree
+5. At ship: baked `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
 
-Do not reopen the agents file unless types, warnings, tabs, or the 10KB cap left context. Do not open the other Bot flow siblings. Do not walk the whole live tree.
+Do not fetch the agents file again. Do not open the other Bot flow siblings. Do not walk the whole live tree.
 
 
 ## Pass
 
 1. User names an item id (or the next pending item). Inventory that cluster with `design/pc-offload.md` runners. Do not edit yet.
 2. Implement only that item. Mark it `done` in the same PR with `python tools/bot_opt.py --status opt-NNN=done`.
-3. Verify with `design/pc-offload.md` runners as needed. Ship per the door.
+3. Prove with `python tools/check_script_cap.py --git-changed`, `python tools/check_load_graph.py`, and `python tools/bot_status.py --prove`. Ship per `BOT.md`.
 
 
 ## Queue

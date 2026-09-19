@@ -16,7 +16,7 @@ If a path session file is already loaded, stay on that path. Do not re-select a 
 - **Grok Bot** does not follow that read list. Onboard is `BOT.md` plus `python tools/bot_status.py`, then one Job file.
 
 Web / chat never pushes `main` and never replaces a scratch with a hand-run command list. When editing GDScript, load `design/gdscript-law.md`.
-- Path procedures live in that path file. There is no leave-off file. Pickup is git plus `_logs/sess/<Grok session id>/`.
+- Path procedures live in that path file. Pickup is git plus `_logs/sess/<Grok session id>/`.
 - MUST implement only the **game** systems this database explicitly requires. MUST NOT invent skills, rarities, hub upgrades, meta-progression, or co-op scaffolding. Grok Build MAY add helpers and same-system APIs per the Build path file. A new cross-system owner or a named-architecture replace is Build **Stop and propose first**.
 - Open numbers, formulas, enemy details, and artifact-set bonuses: MAY invent coherent starts, then MUST expose every value in the secret debug menu and record them in `design/tunables.md`. Grok Bot MUST NOT invent numbers.
 - coverage is a checklist against the existing live build. Fill gaps. MUST NOT use the phases as a license to delete and rebuild. Grok Bot MUST NOT treat coverage as a feature list. Open coverage only when its `Read when` matches.
@@ -31,7 +31,7 @@ Web / chat never pushes `main` and never replaces a scratch with a hand-run comm
 
 On multi-session or compacted runs, name Hard Constraints and the current requested work. Do not fetch a file already in the loaded set. Never allow live-path code to share state with any archive. Do not “recover” a stale session by archiving or rewriting the live path.
 
-One goal per web / chat session (stop after Phase 7). One development week may run several concurrent Grok Build CLI sessions (slice, plus week-scoped Bot notes, PC offload, and smoke tests); they share one week pin (pins are User-only; do not run pin scripts). One Grok Bot flow per session (one Job-table sibling; one PR).
+One emit pass per web / chat Phase 3 through Phase 7. Same session may return to Phase 2 after Phase 7. One development week may run several concurrent Grok Build CLI sessions (slice, plus week-scoped Bot notes, PC offload, and smoke tests). Pins are User-only. One Grok Bot flow per session (one Job-table sibling; one PR).
 
 ## How to use this database
 
@@ -54,20 +54,3 @@ Everything that is marked tunable or left for Grok to invent should be treated a
 After boot, do not fetch a file already in the loaded set. Name it only.
 Default set: the agents file, this path file, and (web / Build) protocol plus constraints.
 Load cap: boot files + at most one topic door + one Job sibling + gates whose when matches. Second topic door: ask the User to name the owner first. If `conflicts_with` lists the pair, do not open the second door in this slice.
-
-## Job cycle (Grok Build only)
-
-A **job** is one cycle: gather once, then change once, then prove once. Pause and report after every job.
-
-Gather is `list_xref` plus `show_func` plus `summarize_scripts` plus one `list_code_map_row`. `list_route` and `list_changed` stay outside the gather set.
-
-Name a **planned gather list** (distinct xref patterns and show-func names) before the first catalog call. Those planned calls are one gather phase. Until show-func/xref can batch names into one summary, read that job's session summary once after each distinct planned call. That is not a second job. A gather call invented after a prove summary, or the same command with the same args again, or a ninth show-func not on the list, is a second job.
-
-Change is one slice in a Grok worktree that merges into the live checkout. Prove is one measure, or one listed smoke set, or both **once**. Do not measure, then smoke, then measure. A red postcard ends this session's change work: stop, report the summary line, and tell the User to launch the RETRY line from `_logs/sess/<session>/slice-boot/summary.txt` (or say skip). Do not keep patching on the guilty transcript. Two reds on the same unit without a skip: stop. `--fork-session` is the return from that gather pin; do not auto-fork mid-change.
-
-Read each job summary once via `powershell -File tools/read_summary.ps1 -Job <name>`. Preferred path is `_logs/sess/<session>/<job>/summary.txt` (session = `WDB_AGENT_SESSION` or the inferred Grok session id). Do not open the summary file directly. Catalog and protocol must agree: once per job, and once per planned gather call as above.
-
-A second job in the same Grok Build session is allowed only when a **new field** is named first. Do not wait for the User between job 1 and job 2 when that field is named. Still pause and report after every job. The field must already be a key printed by that job's summary template, or `truncated` / crash / `busy` / wrong scene. Do not invent a key the template does not print. "Add a field so I can rerun" is invalid. The only valid same-command rerun is `truncated`, crash, `busy` lock, or wrong scene, and then the same command once.
-
-Concurrent agents share catalog tools. They do not share summary files: each session writes under `_logs/sess/<session>/`. Week pins are User-only. Do not run pin scripts. A new CLI chat is not a new week.
-

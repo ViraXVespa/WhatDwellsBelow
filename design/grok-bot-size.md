@@ -22,7 +22,7 @@ Out of scope: `scenes/`, `assets/`, `tools/` (unless a preload path or PC-offloa
 2. `design/refactor.md` (recipe only)
 3. One `design/code-map.md` **system row** for the cluster about to be edited
 4. After inventory: only the live `.gd` files in that one cluster
-5. At ship: baked `scripts/data/version.json` and `design/versioning-log.md` body shape — not the changelog tree
+5. At ship: `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
 
 Do not reload the root agents file. Types, warnings, tabs, and the 10KB cap stay binding. Do not open the staged reuse brief, `design/doc-refactor.md`, or the other Bot flow siblings.
 

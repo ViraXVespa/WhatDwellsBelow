@@ -33,7 +33,7 @@ Path procedures live in the Path table session file. Do not open the topic index
 
 Web / Build: the path file loads the law pair if they are missing, then only the topic door for named work. Bot: `BOT.md` + `python tools/bot_status.py` + one Job file. Do not fetch this file again.
 
-There is no leave-off file. Git + `_logs/sess/<Grok session id>/` postcards are the pickup. Fresh Build instance: this file, then `design/grok-build.md`. A new session in the same instance is not a new week. Week pins are User-only; do not run pin scripts.
+Pickup is git plus `_logs/sess/<Grok session id>/` postcards. Fresh Build instance: this file, then `design/grok-build.md`. A new session in the same instance is not a new week. Pins are User-only.
 
 Build Imagine: `design/isolated-media.md` before any Imagine call. Details stay on the Build path file. Web / chat and Grok Bot do not run Imagine.
 

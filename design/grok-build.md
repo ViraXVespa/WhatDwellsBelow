@@ -27,7 +27,7 @@ Do not fold another role’s work into this thread unless the User names that wo
 | Mid-week new CLI chat (fat thread, compaction, job change, or another concurrent role) | Catch-up | No pin. |
 | Next slice or next I2V unit in the same slice thread | Slice | No pin. |
 
-Do not pin because time passed, because the last slice ended, or because a new CLI instance started. Week pins are User-only. Do not run pin scripts.
+Do not pin because time passed, because the last slice ended, or because a new CLI instance started. Pins are User-only.
 
 ## Read order
 
@@ -46,7 +46,7 @@ Archived builds are pinned commits in `scripts/data/archive_catalog.json`, not p
 
 ## Work
 
-First message names the area (door, job, or live system). Run `powershell -File tools/start_build_slice.ps1 -Door <door>` (or `-Job` / `-Area`). Gather read-only on the live tree. Then the User launches the FORK line from that postcard (`grok --worktree=... --ref main -r <gather-id> --fork-session`). Change and prove only in that worktree. Do not take the live `--path` while the User editor holds it. CLI does not auto-resume the pin; the postcard is the return argv. Red retry is the RETRY line (`grok -r <id> --fork-session`), not another patch on the guilty transcript.
+First message names the area (door, job, or live system). Run `powershell -File tools/start_build_slice.ps1 -Door <door>` (or `-Job` / `-Area`). Gather read-only on the live tree per `design/build-job-cycle.md`. Then the User launches the FORK line from that postcard (`grok --worktree=... --ref main -r <gather-id> --fork-session`). Change and prove only in that worktree. Do not take the live `--path` while the User editor holds it. CLI does not auto-resume the pin; the postcard is the return argv. Red retry is the RETRY line (`grok -r <id> --fork-session`), not another patch on the guilty transcript.
 
 This path is unconstrained on **implementation** inside one system: new helpers, same-system APIs, and local module shape are in scope when they ship the asked work more cleanly. Product scope stays locked (`design/constraints.md`, `design/protocol.md`).
 
@@ -145,12 +145,8 @@ Stop. Report files changed and how verified. Pickup is git plus `_logs/sess/<Gro
 - Do not grep `scripts/`, `design/`, `tools/`, or `scenes/` with the built-in grep tool; use `tools/list_xref.ps1`.
 - Do not paste `git status` / `git log` into the thread; use `tools/list_changed.ps1`.
 - Do not run `python -c` for repo work; use `tools/write_utf8_file.py` / `tools/run_agent_py.ps1`.
-- Do not claim a paste-emit workflow. This path writes the checkout.
-- Do not use the web path file phases.
-- Do not run a Grok Bot full-repo sweep.
-- Do not commit `_logs/`. Writing tool summaries there via `design/pc-offload.md` is allowed; read only those summaries.
-- Do not follow git commit links into web-session conversations.
-- Do not pin weeks or run pin scripts.
-- Do not call Imagine in the game-repo cwd when `design/isolated-media.md` says to isolate.
+- This path writes the checkout.
+- - - Do not commit `_logs/`. Writing tool summaries there via `design/pc-offload.md` is allowed; read only those summaries.
+- - - Do not call Imagine in the game-repo cwd when `design/isolated-media.md` says to isolate.
 
-Mid-week slice or catch-up: do not create week pins.
+Mid-week slice or catch-up: do not create pins.

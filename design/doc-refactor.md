@@ -26,7 +26,7 @@ Cut routing tokens without losing binding comprehension. Do not change binding m
 ## In scope
 
 - Topic files under `design/*.md` (and later `design/<area>/` if a cluster earns a folder).
-- Protocol family updates required by the split (Bot door Job table, this file, `design/README.md` index rows, `design/code-map.md` only if a script path must stay accurate).
+- Protocol family updates required by the split (the one Bot Job file, this file, `design/README.md` index rows, `design/code-map.md` only if a script path must stay accurate).
 - One `design/changelog/{label}.md` per shipping PR.
 
 ## Out of scope

@@ -23,9 +23,9 @@ Still refactor-shaped unless a row the User wrote is explicit and legal. No inve
 3. `design/refactor.md` when a touched file must split (recipe only)
 4. One `design/code-map.md` **system row** for each cluster the brief names
 5. After that: only the live `.gd` files in the active cluster
-6. At ship: `scripts/data/version.json` + `design/versioning-log.md` body shape — not the changelog tree
+6. At ship: `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
 
-Do not reopen the agents file unless types, warnings, tabs, or the 10KB cap left context. Do not walk the live tree to rediscover copies the brief does not name.
+Do not fetch the agents file again. Do not walk the live tree to rediscover copies the brief does not name.
 
 ## Pass
 
@@ -33,4 +33,4 @@ Do not reopen the agents file unless types, warnings, tabs, or the 10KB cap left
 2. Implement the brief as one branch / one PR.
 3. Update `design/code-map.md` when a new public helper path appears.
 4. Do not rewrite `design/reuse-map.md` except a compile-safe typo fix the User already named. No Ready / Done columns.
-5. Verify with `design/pc-offload.md` runners as needed. Ship per the door.
+5. Prove with `python tools/check_script_cap.py --git-changed`, `python tools/check_load_graph.py`, and `python tools/bot_status.py --prove`. Ship per `BOT.md`.

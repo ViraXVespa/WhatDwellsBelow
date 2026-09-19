@@ -55,5 +55,5 @@ Smoke coverage is a Build session. **Weekly:** sessions in one instance, kept th
 - Just do: same-phase / same-helper assertions; `LoadTiming.mark` / `dmark` / `dnote` the smoke must call; hostify facades the phase still calls (`dungeon_boot.ready_floor`, `AppFlow` enter / `play_from_menu`). Headless skip of splash / title / enter overlay. Pin seed 42 / floor 1 on gen-dependent flags. Map dump reads `spawn_jobs`, does not `stream_all`
 - Stop and propose: a new catalog runner (already binding on the pc-offload recipe). New numbered phase; a new `--wdb-*-smoke` flag the User did not name this session; a new smoke host scene; `stream_all` / `force_all` for a map dump; splitting an over-cap smoke helper
 - Do not: Imagine / I2V; Grok Bot PRs; week pin ritual; invent coverage the User did not name; tree dumps; raw Godot logs in chat; parking Bot opt notes; folding slice or catalog-runner work in
-- Stop: only the Smoke tests block in the leave-off file
+- Stop: only the Smoke tests block in the smoke-tests session block
 - Overlap: other Build CLIs **run** existing smokes via the catalog; this CLI **writes** them. PC-offload owns new runners. Bot-notes parks refactor notes. Do not fold those roles in unless the User names that work here.

@@ -3,7 +3,7 @@
 Status: protocol
 Read when: the User says resume parked, names a park id, or the first web message already names a parked job
 
-Not a boot file. Not a topic index. See also is forbidden.
+Not a boot file. Not a topic index.
 
 
 ## Trigger (web Phase 1)
@@ -14,14 +14,7 @@ If that park file already has the mandate, Phase 2 is optional. When the User sa
 
 If no park is named, Phase 1 stays as it was: confirm ready for Phase 2 only.
 
-
-## Pools (Bot intake, not web parks)
-
-Reuse-map: one Brief of same-shape live extracts. Bot implements the whole Brief on the current open Bot PR. Status print: `python tools/bot_status.py` (numbered Brief rows only).
-
-Opt queue: standing ids for tools, boot, timing, preload. Not UI chrome cousins unless the item says so.
-
-Size / relocate / docs stay Job-table rows. They are not a third queue file.
+This table is not Grok Bot intake. Web / chat does not open Bot Job files to continue a park.
 
 
 ## Table
@@ -29,8 +22,6 @@ Size / relocate / docs stay Job-table rows. They are not a third queue file.
 id | trigger | open | path
 --- | --- | --- | ---
 attack_keyframes | resume parked, attack keyframes, coil stills | art-attack-keyframes.md (art_pipeline job) | web or isolated media
-reuse_brief | reuse-map, UI chrome brief | reuse-map.md when Brief is not empty | Grok Bot reuse job
-opt_queue | named opt-NNN | grok-bot-opt.md via bot_opt --id | Grok Bot opt job
 smoke_shots | resume parked, smoke shots, headless screenshots, _logs/shots | park-smoke-shots.md | web then Build / tools
 
 Do not invent rows.
