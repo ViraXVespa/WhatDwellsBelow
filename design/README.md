@@ -46,7 +46,7 @@ Do not open art_pipeline parked attack-keyframes unless the User is resuming the
 | Eleven skills, XP, combat level | `skills.md` |
 | Bag, gear, artifacts, extract, analyze / forge | `inventory.md` |
 | Shared inventory / loadout / anvil board | `gear-ui.md` |
-| Placeholdia | `hub.md` |
+| Placeholdia (door) | `hub.md` |
 | Gen, floors, stream, doors, crystals | `dungeon.md` |
 | Roster, AI, named, pressure | `enemies.md` |
 | Mine, wood, shrine, puzzles, crystals | `interactables.md` |
