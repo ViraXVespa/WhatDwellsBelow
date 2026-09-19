@@ -1,9 +1,10 @@
-﻿extends Object
+extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Board := preload("res://scripts/ui/gear_board/gear_board.gd")
 const GearAct := preload("res://scripts/ui/gear_board/gear_board_act.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 
 
 static func rebuild_loadout(ui: CanvasLayer) -> void:
@@ -75,7 +76,7 @@ static func rebuild_quest(ui) -> void:
 	if not App.prog.quest_active.is_empty():
 		var q: Dictionary = App.prog.quest_active
 		ui.box.add_child(ThemeS.lab("Active: %s  (%d/%d)" % [q.title, int(q.get("have", 0)), int(q.get("need", 1))], 22, Color(0.75, 0.95, 0.7)))
-		ui.box.add_child(ThemeS.btn("Abandon active task  (confirm)", func(): ui._confirm(func(): ui._st(App.prog.abandon_quest()); ui._rebuild_quest(); ui._show(), "abandon")))
+		ui.box.add_child(ThemeS.btn("Abandon active task", func(): Confirm.open(ui, "Abandon Task", "Abandon the active guild task?", func(): ui._st(App.prog.abandon_quest()); ui._rebuild_quest(); ui._show())))
 	var i := 0
 	for q in App.prog.quests_offered:
 		var idx := i
