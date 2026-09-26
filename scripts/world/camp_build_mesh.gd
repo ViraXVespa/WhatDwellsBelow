@@ -1,6 +1,8 @@
 extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
+const WrapShader := preload("res://scripts/graphics/wrap_shader.gd")
+const NearestMat := preload("res://scripts/graphics/nearest_mat.gd")
 const GROUND_W := 36
 const GROUND_D := 32
 const GROUND_OX := -2
@@ -16,42 +18,6 @@ const WING_SIZE := Vector3(3.8, 2.7, 3.2)
 const HALL_POS := Vector3(8.2, 1.7, 6.0)
 const PATH_X := 16.5
 const PATH_Z := 15.0
-
-static var _wrap_sh: Shader
-
-
-static func wrap_shader() -> Shader:
-	if _wrap_sh != null:
-		return _wrap_sh
-	var sh := Shader.new()
-	sh.code = """
-shader_type spatial;
-render_mode cull_disabled, diffuse_toon, specular_disabled;
-uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_enable;
-uniform vec2 uv_scale = vec2(1.0);
-uniform vec2 uv_off = vec2(0.0);
-uniform vec3 tint = vec3(1.0);
-uniform float russet = 0.0;
-void fragment() {
-	vec2 uv = fract(UV * uv_scale + uv_off);
-	vec3 c = texture(albedo_tex, uv).rgb;
-	if (russet > 0.5) {
-		float l = dot(c, vec3(0.299, 0.587, 0.114));
-		vec3 dark = vec3(0.18, 0.07, 0.05);
-		vec3 mid = vec3(0.50, 0.16, 0.10);
-		vec3 hi = vec3(0.74, 0.32, 0.18);
-		c = mix(dark, mid, smoothstep(0.12, 0.46, l));
-		c = mix(c, hi, smoothstep(0.46, 0.80, l));
-	} else {
-		c *= tint;
-	}
-	ALBEDO = c;
-	ROUGHNESS = 1.0;
-	ALPHA = 1.0;
-}
-"""
-	_wrap_sh = sh
-	return sh
 
 
 static func roof_mat(dim: Vector2, world_min: Vector3) -> Material:
@@ -106,7 +72,7 @@ static func wrap_mat(
 		return fb
 	var src: Texture2D = load(path)
 	var mat := ShaderMaterial.new()
-	mat.shader = wrap_shader()
+	mat.shader = WrapShader.wrap_shader()
 	mat.set_shader_parameter("albedo_tex", src)
 	if single_sheet:
 		mat.set_shader_parameter("uv_scale", Vector2.ONE)
@@ -235,14 +201,7 @@ static func tile_layer(host: Node3D, tex_path: String, points: Array, fallback: 
 		mm.set_instance_transform(i, xf)
 	var inst := MultiMeshInstance3D.new()
 	inst.multimesh = mm
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	mat.albedo_color = Color.WHITE
-	if ResourceLoader.exists(tex_path):
-		mat.albedo_texture = load(tex_path)
-	else:
-		mat.albedo_color = fallback
+	var mat: StandardMaterial3D = NearestMat.make(tex_path, fallback, true)
 	inst.material_override = mat
 	host.add_child(inst)
 
@@ -257,14 +216,7 @@ static func grass_pad(
 	var inst := MeshInstance3D.new()
 	inst.mesh = mesh
 	inst.position = center
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	mat.albedo_color = Color.WHITE
-	if ResourceLoader.exists(tex_path):
-		mat.albedo_texture = load(tex_path)
-	else:
-		mat.albedo_color = fallback
+	var mat: StandardMaterial3D = NearestMat.make(tex_path, fallback, true)
 	mat.uv1_scale = Vector3(dim.x / T.TILE, dim.y / T.TILE, 1.0)
 	inst.material_override = mat
 	host.add_child(inst)

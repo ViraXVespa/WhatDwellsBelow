@@ -2,6 +2,7 @@
 
 const T := preload("res://scripts/data/tunables.gd")
 const Gen := preload("res://scripts/dungeon/gen.gd")
+const MmEmit := preload("res://scripts/graphics/mm_emit.gd")
 
 const RING_IN := 1
 const RING_OUT := 2
@@ -133,12 +134,12 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 	root.name = "Geo_%d_%d" % [ox, oy]
 	host.geo_root.add_child(root)
 	if not floors.is_empty():
-		var fm := make_mm(floors, _floor_mesh, host.floor_mat)
+		var fm: MultiMeshInstance3D = MmEmit.make_mm(floors, _floor_mesh, host.floor_mat)
 		root.add_child(fm)
 		if host.floor_mm == null:
 			host.floor_mm = fm
 	if not wallp.is_empty():
-		root.add_child(make_mm(wallp, _wall_mesh, host.wall_mat))
+		root.add_child(MmEmit.make_mm(wallp, _wall_mesh, host.wall_mat))
 	add_collision(root, wall_cells)
 	job.node = root
 	job.state = "live"
@@ -153,22 +154,6 @@ static func wall_faces_floor(grid: PackedByteArray, w: int, h: int, x: int, y: i
 		if grid[Gen.idx(nx, ny, w)] == Gen.FLOOR:
 			return true
 	return false
-
-
-static func make_mm(positions: Array, mesh: Mesh, mat: Material) -> MultiMeshInstance3D:
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = mesh
-	mm.instance_count = positions.size()
-	for i in positions.size():
-		var xf := Transform3D.IDENTITY
-		xf.origin = positions[i]
-		mm.set_instance_transform(i, xf)
-	var inst := MultiMeshInstance3D.new()
-	inst.multimesh = mm
-	if mat:
-		inst.material_override = mat
-	return inst
 
 
 static func add_collision(root: Node3D, walls: Array[Vector2i]) -> void:
