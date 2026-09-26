@@ -3,6 +3,18 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.22",
+			"points": [
+				{
+					"text": "Stage Bot reuse Brief: extract dungeon_geo_stream wall-rect merge into scripts/world/wall_rects.gd."
+				},
+				{
+					"text": "Collision body and BoxShape path stay in add_collision. No visual or lighting change."
+				}
+			],
+			"summary": "Stage wall-rect merge reuse for Grok Bot."
+		},
+		{
 			"label": "0.4.21",
 			"points": [
 				{
