@@ -145,7 +145,10 @@ static func _publish(
 		use = PackedByteArray()
 		use.resize(tw * th)
 		use.fill(0)
-	Stamp.paint(img, use, tw, th, lights)
+	var fill: Color = Color(0.0, 0.0, 0.0, 1.0)
+	if not hub_open:
+		fill = Stamp.COL_FLOOR
+	Stamp.paint(img, use, tw, th, lights, fill)
 	origin = Vector2(float(x0), float(z0))
 	span = Vector2(float(tw), float(th))
 	_img = img

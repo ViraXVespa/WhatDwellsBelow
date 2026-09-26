@@ -1,10 +1,12 @@
 extends Object
 
-## One occupancy pass, then disc stamps. WALL blocks. Floor, door, opening, and stairs pass.
+## One occupancy pass, then disc stamps. Dungeon walkable floor gets a cold fill.
+## WALL blocks. Floor, door, opening, and stairs pass. Pits stay black.
 
 const Gen := preload("res://scripts/dungeon/gen.gd")
 
 const SUB := 4
+const COL_FLOOR := Color(0.50, 0.56, 0.74)
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
 
@@ -33,7 +35,14 @@ static func occupancy(
 	return occ
 
 
-static func paint(img: Image, occ: PackedByteArray, tw: int, th: int, lights: Array) -> void:
+static func paint(
+	img: Image,
+	occ: PackedByteArray,
+	tw: int,
+	th: int,
+	lights: Array,
+	ambient: Color = Color(0, 0, 0, 1)
+) -> void:
 	var iw: int = tw * SUB
 	var ih: int = th * SUB
 	var n: int = iw * ih
@@ -49,12 +58,37 @@ static func paint(img: Image, occ: PackedByteArray, tw: int, th: int, lights: Ar
 	for src in lights:
 		_disc(rr, gg, bb, occ, tw, th, src)
 	_walls(rr, gg, bb, occ, tw, th)
+	_lift_floor(rr, gg, bb, occ, tw, th, ambient)
 	for y in ih:
 		for x in iw:
 			var i: int = y * iw + x
 			if rr[i] <= 0.0 and gg[i] <= 0.0 and bb[i] <= 0.0:
 				continue
 			img.set_pixel(x, y, Color(rr[i], gg[i], bb[i], 1.0))
+
+
+static func _lift_floor(
+	rr: PackedFloat32Array,
+	gg: PackedFloat32Array,
+	bb: PackedFloat32Array,
+	occ: PackedByteArray,
+	tw: int,
+	th: int,
+	ambient: Color
+) -> void:
+	if ambient.r <= 0.0 and ambient.g <= 0.0 and ambient.b <= 0.0:
+		return
+	var iw: int = tw * SUB
+	for y in th:
+		for x in tw:
+			if occ[y * tw + x] != 0:
+				continue
+			for sy in SUB:
+				for sx in SUB:
+					var i: int = (y * SUB + sy) * iw + x * SUB + sx
+					rr[i] = minf(rr[i] + ambient.r, 1.0)
+					gg[i] = minf(gg[i] + ambient.g, 1.0)
+					bb[i] = minf(bb[i] + ambient.b, 1.0)
 
 
 static func _pass(
