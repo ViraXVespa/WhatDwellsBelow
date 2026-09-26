@@ -148,6 +148,9 @@ static func rows() -> Array:
 		["hall_w_interval", 4.0, 24.0, 1.0],
 		["hall_w_min_pct", 0.0, 1.0, 0.05],
 		["hall_w_mode_pct", 0.0, 1.0, 0.05],
+		["outline_fine_m", 0.25, 1.0, 0.25],
+		["outline_fillet_frac", 0.0, 1.0, 0.05],
+		["outline_jag_frac", 0.0, 1.0, 0.05],
 		["ambush_spacing", 4.0, 32.0, 1.0],
 		["ambush_cap", 4.0, 80.0, 1.0],
 	]

@@ -26,7 +26,7 @@ Halls are carved 2–4 tiles wide. Width 3 is the mode. Width changes at `hall_w
 
 The 1 m FLOOR/WALL grid stays the logical map: rooms, MST, hall-width budget, doors, stairs, prop snaps, ambush anchors, fog, minimap, crystal separation, and stream chunk index.
 
-After carve, gen traces the floor/void boundary, fillets a fraction of convex corners, and jags a fraction of long abyss edges. It rasterizes that outline to `outline_fine_m` occupancy (live start 0.25). That fine solid is walk collision. Interior room cells are not eaten. Outline must not pinch a hall under the coarse width.
+After carve, gen traces the floor/void boundary, fillets a fraction of convex corners (`outline_fillet_frac`, live 0.40), and jags a fraction of long abyss edges (`outline_jag_frac`, live 0.62). It rasterizes that outline to `outline_fine_m` occupancy (live 0.25). That fine solid is walk collision. Interior room cells are not eaten. Hall cells are not cleared, so a hall stays at its carved width. Hall corners may only gain solid in the void.
 
 Do not ship a shader nibble on 1 m faces as the silhouette. Do not author arches or modular kits. One brick sheet stays a volume concern; this job does not add a second rock sheet.
 
@@ -83,6 +83,9 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 | `crystal_deadend_sep` | 32 |
 | `crystal_cl_band` | 2 |
 | `crystal_deadend_len` | 28 |
+| `outline_fine_m` | 0.25 |
+| `outline_fillet_frac` | 0.40 |
+| `outline_jag_frac` | 0.62 |
 
 `gen.gd` clamps to minimum 24×24 and at least 6 rooms.
 Boss room is farthest from spawn that still meets `_min_boss_sep = max(16, max(w,h) * 0.5)`.

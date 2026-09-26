@@ -5,6 +5,7 @@ const FLOOR := 1
 const Carve := preload("res://scripts/dungeon/gen_carve.gd")
 const Rooms := preload("res://scripts/dungeon/gen_rooms.gd")
 const Doors := preload("res://scripts/dungeon/gen_doors.gd")
+const Outline := preload("res://scripts/dungeon/gen_outline.gd")
 
 
 static func cycle_of(floor_n: int) -> int:
@@ -45,8 +46,9 @@ static func generate(floor_n: int, run_seed: int, bal: Object) -> Dictionary:
 			data["cycle"] = cycle_of(floor_n)
 			data["boss_title"] = boss_title(floor_n)
 			data["gate_master"] = is_gate_master(floor_n)
+			Outline.stamp(data, rng, bal)
 			return data
-	return _fallback(floor_n, w, h)
+	return _fallback(floor_n, w, h, bal)
 
 
 static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin: int, rmax: int, loops: int, bal: Object) -> Dictionary:
@@ -134,7 +136,7 @@ static func is_safe_kind(kind: String) -> bool:
 	return kind == "extract_gate" or kind == "shop" or kind == "puzzle" or kind == "spawn" or kind == "stash" or kind == "vein"
 
 
-static func _fallback(floor_n: int, w: int, h: int) -> Dictionary:
+static func _fallback(floor_n: int, w: int, h: int, bal: Object) -> Dictionary:
 	w = maxi(28, w)
 	h = maxi(28, h)
 	var grid: PackedByteArray = PackedByteArray()
@@ -161,7 +163,7 @@ static func _fallback(floor_n: int, w: int, h: int) -> Dictionary:
 	var openings: Array = Doors.boss_openings(grid, w, h, boss_r)
 	if openings.is_empty() and door != Vector2i(-1, -1):
 		openings = [Doors.make_opening(Doors.guess_side(boss_r, door), [door])]
-	return {
+	var data: Dictionary = {
 		"ok": true,
 		"grid": grid,
 		"w": w,
@@ -182,3 +184,5 @@ static func _fallback(floor_n: int, w: int, h: int) -> Dictionary:
 		"boss_title": boss_title(floor_n),
 		"gate_master": is_gate_master(floor_n),
 	}
+	Outline.stamp(data, rng, bal)
+	return data

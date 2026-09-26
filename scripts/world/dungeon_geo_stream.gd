@@ -1,8 +1,6 @@
 ﻿extends RefCounted
 
 const T := preload("res://scripts/data/tunables.gd")
-const Gen := preload("res://scripts/dungeon/gen.gd")
-const MmEmit := preload("res://scripts/graphics/mm_emit.gd")
 const WallRects := preload("res://scripts/world/wall_rects.gd")
 const WallMesh: GDScript = preload("res://scripts/graphics/wall_mesh.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
@@ -113,57 +111,76 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 	var oy: int = int(job.origin.y)
 	var w: int = host.data.w
 	var h: int = host.data.h
-	var grid: PackedByteArray = host.data.grid
 	var x1 := mini(w, ox + CHUNK)
 	var y1 := mini(h, oy + CHUNK)
-	var floors: Array = []
-	var wall_cells: Array[Vector2i] = []
-	var seen_wall: Dictionary = {}
-	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
-	for y in range(oy, y1):
-		for x in range(ox, x1):
-			if grid[Gen.idx(x, y, w)] != Gen.FLOOR:
-				continue
-			floors.append(Vector3(float(x) + 0.5, T.FLOOR_Y, float(y) + 0.5))
-			for n: Vector2i in dirs:
-				var nx: int = x + n.x
-				var ny: int = y + n.y
-				if nx < 0 or ny < 0 or nx >= w or ny >= h:
-					continue
-				if grid[Gen.idx(nx, ny, w)] == Gen.FLOOR:
-					continue
-				var wc: Vector2i = Vector2i(nx, ny)
-				if seen_wall.has(wc):
-					continue
-				seen_wall[wc] = true
-				wall_cells.append(wc)
-	if floors.is_empty() and wall_cells.is_empty():
+	var mask: Dictionary = _mask(host)
+	var solid: PackedByteArray = mask["solid"]
+	var sw: int = int(mask["sw"])
+	var sh: int = int(mask["sh"])
+	var n: int = int(mask["n"])
+	var fine_m: float = float(mask["fine"])
+	var grid: PackedByteArray = host.data.grid
+	var floor_cells: Array[Vector2i] = WallRects.solid_cells(solid, sw, sh, n, ox, oy, x1, y1)
+	var wall_cells: Array[Vector2i] = WallRects.volume_cells(solid, sw, sh, n, grid, w, h, ox, oy, x1, y1)
+	if floor_cells.is_empty() and wall_cells.is_empty():
 		job.state = "cleared"
 		return
 	var root := Node3D.new()
 	root.name = "Geo_%d_%d" % [ox, oy]
 	host.geo_root.add_child(root)
-	if not floors.is_empty():
-		var fm: MultiMeshInstance3D = MmEmit.make_mm(floors, _floor_mesh, host.floor_mat)
+	if not floor_cells.is_empty():
+		var fm: MultiMeshInstance3D = _emit_floors(WallRects.merge(floor_cells), fine_m, host.floor_mat)
 		root.add_child(fm)
 		if host.floor_mm == null:
 			host.floor_mm = fm
 	if not wall_cells.is_empty():
-		var runs: Array[Dictionary] = _faces_on_chunk(grid, w, h, wall_cells, ox, oy, x1, y1)
+		var runs: Array[Dictionary] = _faces_on_chunk(solid, sw, sh, wall_cells, ox * n, oy * n, x1 * n, y1 * n)
 		if not runs.is_empty():
 			var wall_inst: MeshInstance3D = MeshInstance3D.new()
 			wall_inst.mesh = WallMesh.from_faces(runs)
+			wall_inst.scale = Vector3(fine_m, 1.0, fine_m)
 			wall_inst.material_override = host.wall_mat
 			wall_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			root.add_child(wall_inst)
-	var collide: Array[Vector2i] = []
-	for wc2: Vector2i in wall_cells:
-		if wc2.x < ox or wc2.y < oy or wc2.x >= x1 or wc2.y >= y1:
-			continue
-		collide.append(wc2)
-	add_collision(root, collide)
+	add_collision(root, wall_cells, fine_m)
 	job.node = root
 	job.state = "live"
+
+
+static func _mask(host: Node) -> Dictionary:
+	var w: int = int(host.data.w)
+	var h: int = int(host.data.h)
+	if host.data.has("solid") and host.data["solid"] is PackedByteArray:
+		var fine: float = float(host.data.get("outline_fine_m", 0.25))
+		if fine < 0.2:
+			fine = 0.25
+		return {
+			"solid": host.data["solid"],
+			"sw": int(host.data["solid_w"]),
+			"sh": int(host.data["solid_h"]),
+			"n": maxi(1, int(host.data["solid_n"])),
+			"fine": fine,
+		}
+	return {"solid": host.data.grid, "sw": w, "sh": h, "n": 1, "fine": 1.0}
+
+
+static func _emit_floors(rects: Array[Rect2i], fine_m: float, mat: Material) -> MultiMeshInstance3D:
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = _floor_mesh
+	mm.instance_count = rects.size()
+	for i in rects.size():
+		var r: Rect2i = rects[i]
+		var sx: float = float(r.size.x) * fine_m
+		var sz: float = float(r.size.y) * fine_m
+		var basis := Basis(Vector3(sx, 0.0, 0.0), Vector3(0.0, 1.0, 0.0), Vector3(0.0, 0.0, sz))
+		var at := Vector3((float(r.position.x) + float(r.size.x) * 0.5) * fine_m, T.FLOOR_Y, (float(r.position.y) + float(r.size.y) * 0.5) * fine_m)
+		mm.set_instance_transform(i, Transform3D(basis, at))
+	var inst := MultiMeshInstance3D.new()
+	inst.multimesh = mm
+	if mat:
+		inst.material_override = mat
+	return inst
 
 
 static func _faces_on_chunk(
@@ -198,7 +215,7 @@ static func _run_looks_in(run: Dictionary, ox: int, oy: int, x1: int, y1: int) -
 	return false
 
 
-static func add_collision(root: Node3D, walls: Array[Vector2i]) -> void:
+static func add_collision(root: Node3D, walls: Array[Vector2i], fine_m: float) -> void:
 	if walls.is_empty():
 		return
 	var body := StaticBody3D.new()
@@ -206,14 +223,14 @@ static func add_collision(root: Node3D, walls: Array[Vector2i]) -> void:
 	body.collision_mask = 0
 	root.add_child(body)
 	var rects: Array[Rect2i] = WallRects.merge(walls)
-	for r in rects:
-		var sx := float(r.size.x)
-		var sz := float(r.size.y)
+	for r: Rect2i in rects:
+		var sx: float = float(r.size.x) * fine_m
+		var sz: float = float(r.size.y) * fine_m
 		var cs := CollisionShape3D.new()
-		var sh := BoxShape3D.new()
-		sh.size = Vector3(sx, T.WALL_H, sz)
-		cs.shape = sh
-		cs.position = Vector3(float(r.position.x) + sx * 0.5, T.WALL_H * 0.5, float(r.position.y) + sz * 0.5)
+		var box := BoxShape3D.new()
+		box.size = Vector3(sx, T.WALL_H, sz)
+		cs.shape = box
+		cs.position = Vector3((float(r.position.x) + float(r.size.x) * 0.5) * fine_m, T.WALL_H * 0.5, (float(r.position.y) + float(r.size.y) * 0.5) * fine_m)
 		body.add_child(cs)
 
 
