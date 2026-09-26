@@ -27,10 +27,9 @@ Clusters:
 
 2. Nearest-mat helper. Extract `make_mat` in `scripts/world/dungeon_geo.gd` and the StandardMaterial3D setup in `scripts/world/camp_build_mesh.gd` `tile_layer` and `grass_pad` into one helper under `scripts/graphics/`. Same nearest filter and unshaded flag. Callers keep current textures and fallback colors.
 
-3. Minimap out of `dungeon_geo.gd`. Move `make_map`, `redraw_map`, `reveal_around`, `paint_cell`, `cell_color`, `_map_input`, and `dot` (whatever that file uses for the 2D map / fog-of-war atlas) to an existing live map module or a new facade next to `dungeon_map_act.gd`. `dungeon.gd` / `dungeon_boot.gd` keep the same public calls. Do not change reveal rules.
+3. Minimap out of `dungeon_geo.gd`. Move `make_map`, `redraw_map`, `reveal_around`, `paint_cell`, `cell_color`, `_map_input`, and `dot` to a new facade next to `dungeon_map_act.gd`. `dungeon.gd` / `dungeon_boot.gd` keep the same public calls. Do not change reveal rules.
 
 4. Shared emit. Extract `make_mm` from `scripts/world/dungeon_geo_stream.gd`. If `mm_planes` and `mm_boxes` in `scripts/world/dungeon_geo.gd` have no live callers besides the stream path, delete them or point them at the helper. Do not change CHUNK / RING / PER_FRAME or collision merge.
 
 5. Wrap shader. Move `wrap_shader` (and the cached shader) out of `scripts/world/camp_build_mesh.gd` into `scripts/graphics/`. Roof / awning / tarp callers keep the same parameters.
 
-Do not start a size sweep. If a touched file goes over 10KB, leave it for the later size job. Prove per BOT.md.
