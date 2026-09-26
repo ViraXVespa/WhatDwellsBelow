@@ -5,7 +5,7 @@ Read when: hashed field albedo, shared spatial shader, turf quilts, carved plane
 
 One spatial shader on Placeholdia grass pads, packed yard, and dungeon chunk floors.
 
-Field albedo. One seamless sheet per surface, projected in world xz so moving a pad or chunk does not need new art. Hub pads are large planes; do not hash cell index. Sample the light RT in world xz. Until the buffer job lands, that sample is white / 1.0. Nearest filter.
+Field albedo. One seamless sheet per surface, projected in world xz so moving a pad or chunk does not need new art. Hub pads are large planes; do not hash cell index. Sample the light RT in world xz. Mapping stays one texel per tile. The sample may filter across texels.
 
 Stop using a framed medallion as the only dungeon albedo. Sheets: grass field, packed dirt, dungeon floor. Wall brick belongs to volume. Variants are shader-side (world-xz hash, tint, wear). Do not Imagine a second sheet per surface.
 
@@ -13,4 +13,4 @@ Stop using a framed medallion as the only dungeon albedo. Sheets: grass field, p
 
 Unshaded StandardMaterial3D on those surfaces goes away. Invented variant counts and UV scales go in tunables and debug.
 
-Live: `scripts/graphics/ground_shader.gd` samples `scripts/graphics/light_rt.gd` (white texel, world xz). Sheets: `assets/tiles/grass_field.png`, `packed_dirt.png`, `dungeon_floor.png`. The yard path keeps `plaza_path.png` on that same shader. Wall faces stay on the volume job.
+Live: `scripts/graphics/ground_shader.gd` samples `scripts/graphics/light_rt.gd` (world xz). Sheets: `assets/tiles/grass_field.png`, `packed_dirt.png`, `dungeon_floor.png`. The yard path keeps `plaza_path.png` on that same shader. Wall faces stay on the volume job.

@@ -44,7 +44,7 @@ func _process(_delta: float) -> void:
 		queue_free()
 		return
 	var body: Node = get_parent()
-	if body != null and bool(body.get("dead")):
+	if body != null and body.get("dead") == true:
 		quad.visible = false
 		return
 	var host: Node3D = body as Node3D
@@ -71,7 +71,7 @@ func _lay(host: Node3D) -> void:
 		return
 	var feet: Vector2 = Vector2(host.global_position.x, host.global_position.z)
 	var hit: Dictionary = LightRt.nearest_cast(feet)
-	if not bool(hit["ok"]):
+	if not hit.get("ok", false):
 		quad.visible = false
 		return
 	var src: Vector2 = hit["xz"]

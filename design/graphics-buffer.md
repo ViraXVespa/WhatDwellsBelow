@@ -11,9 +11,9 @@ Sources v1: wall torch, floor crystal, campfire only. No shop, gate, stair, or p
 
 Hub RT: one wide warm sun disc plus the floor crystal. Map world xz to texels at one texel per T.TILE over the camp ground AABB (yard plus grass pads). Dungeon RT: no sun. Size follows the live stream ring. Ambient comes from the env kit only so pits stay dark.
 
-Torch placement: at most one per room unless a crystal or campfire already lights it. Halls only at doorways, junctions, and dead ends. Hard cap on sources in the live ring. The bracket stays on the interior wall. Flame is code VFX on a Y-billboard (shader or particles), organic and random. No flame sheet. No flicker system. Source sits on the floor in front of the bracket, not inside the wall. Torches spawn and despawn with the geo chunk.
+Torch placement: at most one per room unless a crystal or campfire already lights it. Halls only at doorways, junctions, and dead ends. Hard cap on sources in the live ring. The bracket stays on the interior wall. Flame is generated code VFX on a Y-billboard (shader or particles): organic fire with flicker. Never a flame sheet. Source sits on the floor in front of the bracket, not inside the wall. Torches spawn and despawn with the geo chunk.
 
-Stamp discs plus occupancy. Engine DirectionalLight3D and OmniLight3D shadows stay off. Compatibility and web stay the leash. Do not use Decal3D.
+One texel per tile stays the map. Shaders may filter across texels (bilinear and disc falloff) so a stamp is not a hard square. Stamp discs plus occupancy. Engine DirectionalLight3D and OmniLight3D shadows stay off. Compatibility and web stay the leash. Do not use Decal3D.
 
 Build Imagine: unlit 4-facing torch-and-bracket bible only, isolated, wording like the character stills harvest.
 
