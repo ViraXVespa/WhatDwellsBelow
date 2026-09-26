@@ -6,22 +6,26 @@ Code: `scripts/graphics/`
 
 This file is the door. Open the Job-table sibling only when that row matches.
 
-World presentation owner. Hub and dungeon share one env kit, one ground shader contract, one small light RT, and one actor-shadow policy. Live play path and the foundation smoke arena must call the same kit.
+World presentation owner. Hub and dungeon share one env kit, one ground shader, one light RT (render target: a small texture lights are drawn into, then sampled), and one actor policy (sprite tint + floor squash).
 
-Does not own: dungeon gen, stream rings, wall collision merge, map reveal, camera zoom, Sprite3D filter modes, art sheet harvest.
+Live helpers already exist: `env_kit.gd`, `nearest_mat.gd`, `wrap_shader.gd`, `mm_emit.gd`. Minimap is `dungeon_minimap.gd`. Foundation smoke calls the env kit only.
 
-Bot reuse lands `scripts/graphics/` and extracts env kit, nearest-mat, wrap shader, shared emit, and the minimap cluster out of `dungeon_geo.gd`. Bot does not implement this door.
+Hub: warm kit, wide sun disc in the RT, floor crystal as a local source. Dungeon: cold kit, no sun in the RT, wall torches plus crystals plus campfires. Halls stay dark except junctions. Characters tint from the RT. Promo is before/after wherever it reads.
 
-Build jobs after that PR, one session each, forked from this door:
+Does not own: dungeon gen, stream rings, wall collision merge, map reveal, camera zoom, Sprite3D filter modes.
 
-1. ground — shared shader, hashed 2-4 field variants, hub pads/yard and dungeon floors
-2. volume — exposed or greedy wall visuals, world-UV bricks
-3. buffer — 256-512 XZ RT, discs, tile occupancy. No engine shadow maps
-4. actor — sprite-mask floor quads, nearest light, player plus dummy plus enemies
+Out this week: engine shadow maps, unique atlas, hex-tile, player lantern, shop/gate/stair lights, foundation pretty-pass, flicker system.
 
-Env fog and void are a short add on the kit, not a fifth owner. Field sheets are isolated Imagine plus a wire-up.
+Build Imagine makes field sheets and the unlit 4-facing torch bible plus flame VFX (same harvest style as character stills). Isolated, one unit per job.
 
-Anti-tile v1 is the shader plus field variants. Unique atlas and hex-tile are later. Promo is before/after wherever it reads.
+Jobs after the reuse PR, one session each, forked from this door:
+
+1. ground — shared shader, world-xz hash variants, RT sample (white until buffer)
+2. volume — exposed greedy wall faces, world-UV, wall samples RT
+3. buffer — 1 texel per tile on the stream ring, occupancy, sources
+4. actor — RT tint at feet, squash from nearest source
+
+Env fog and void ride the kit, not a fifth owner.
 
 | Job | Open |
 |-----|------|

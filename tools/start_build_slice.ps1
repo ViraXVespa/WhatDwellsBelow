@@ -6,7 +6,7 @@
 #
 # Resolves one routes.yaml door/job, writes a session postcard, and prints
 # the one grok argv that forks that gather pin into a clean-main worktree.
-# Does not run week_start. Does not edit the live tree. Does not kill Godot.
+# Does not edit the live tree. Does not kill Godot.
 # Does not spawn grok unless -Launch is passed.
 
 param(
@@ -134,9 +134,11 @@ if ($sessionNote) { [void]$lines.Add("session_note=$sessionNote") }
 [void]$lines.Add("session_ready=$sessionReady")
 [void]$lines.Add("route=$routeStatus")
 [void]$lines.Add("whatif=$WhatIf launch=$Launch")
-[void]$lines.Add("gather=list_route + list_xref + show_func + summarize_scripts + one list_code_map_row")
+[void]$lines.Add("boot=list_route (door resolve; not gather)")
+[void]$lines.Add("gather=planned list_xref + planned show_func + one list_code_map_row when a live script is in the slice")
+[void]$lines.Add("outside_gather=list_changed (git inventory)")
 [void]$lines.Add("change=worktree only; do not edit live checkout")
-[void]$lines.Add("prove=one run_build_gate or one listed smoke set")
+[void]$lines.Add("prove=one run_build_gate (import check) or one listed smoke set, or both once")
 [void]$lines.Add("return=you launch the fork argv; CLI does not auto-resume this pin")
 [void]$lines.Add("")
 [void]$lines.Add("FORK $forkCmd")

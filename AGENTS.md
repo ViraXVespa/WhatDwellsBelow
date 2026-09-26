@@ -6,7 +6,7 @@ Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 
 | Path | Recognize | Deliver |
 |------|-----------|---------|
-| **Grok Build (CLI)** | You can write the checkout | `design/grok-build.md`. Edit live files. Same-system APIs just do; cross-system / named-architecture replace is propose-first. Do not dump whole files unless asked. Do not apply web / Bot leashes. |
+| **Grok Build (CLI)** | You can write the checkout | `design/grok-build.md`. Edit live files. Same-system APIs just do; a new cross-system owner or named live-module replace is propose-first. |
 | **Web / chat** | You cannot write the repo | `design/web-session.md`. Never assume a disk write landed. |
 | **Grok Bot** | Grok Bot / The Refactorer, or a named Bot / refactor sweep | `BOT.md`, then `python tools/bot_status.py`, then one printed Job file. Refactor only, except a `tools/` runner the User approved this session. Ship via branch + PR. |
 
@@ -27,7 +27,6 @@ Navigation is only `design/routes.yaml`. `See also:` is forbidden.
 
 Load cap (implementation): this file + the path file + (web / Build) the law pair + one topic door + one Job sibling + gates whose `when` matches. A second topic door only when the User names the owner.
 Web / chat may read further live scripts and design files when the User named that work; the budget is turns, not tokens. That is not a license to implement two doors in one slice.
-Build gather stays thin (`list_xref`, planned `show_func`, one prove). 10KB ship floor is Bot (`design/gdscript-law.md`); Grok Build does not measure or cap-split.
 Do not fetch this file again. Do not open the topic index or `design/load-graph.md` unless the User named routing work.
 
 Pickup is git plus `_logs/sess/<Grok session id>/`. Fresh Build: this file, then `design/grok-build.md`. Pins are User-only.

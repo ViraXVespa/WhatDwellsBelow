@@ -1,8 +1,9 @@
-# Grok Build post-slice gate: script cap on changed .gd + editor import check.
+# Grok Build post-slice gate: editor import check.
+# Script-cap is opt-in (-ScriptCap). Bot owns the 10KB floor.
 # Usage (from repo root):
 #   powershell -File tools/run_build_gate.ps1
 #   powershell -File tools/run_build_gate.ps1 -SkipImport
-#   powershell -File tools/run_build_gate.ps1 -OverKb 10 -Force
+#   powershell -File tools/run_build_gate.ps1 -ScriptCap -OverKb 10 -Force
 # Writes _logs/build-gate/summary.txt
 # Refuses if Godot is already running unless -Force.
 
@@ -10,7 +11,8 @@ param(
     [double]$OverKb = 10,
     [int]$ImportTimeoutSec = 180,
     [switch]$SkipImport,
-    [switch]$Force
+    [switch]$Force,
+    [switch]$ScriptCap
 )
 
 $ErrorActionPreference = "Stop"
@@ -36,23 +38,28 @@ if (-not $Force -and -not $SkipImport) {
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("build gate $(Get-Date -Format o)")
 $lines.Add("root=$Root")
-$lines.Add("overKb=$OverKb skipImport=$SkipImport force=$Force")
+$lines.Add("overKb=$OverKb skipImport=$SkipImport force=$Force scriptCap=$ScriptCap")
 $lines.Add("")
 $fail = 0
 
-Write-Host "== script cap (git changed) =="
-$capArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $CapScript, "-OverKb", "$OverKb", "-GitChanged")
-$p = Start-Process -FilePath "powershell.exe" -ArgumentList $capArgs -Wait -PassThru -NoNewWindow
-$capSummary = Join-Path $Root "_logs\script-cap\summary.txt"
-$lines.Add("--- script cap exit=$($p.ExitCode) ---")
-if (Test-Path $capSummary) {
-    Get-Content $capSummary | ForEach-Object { $lines.Add($_) }
+if ($ScriptCap) {
+    Write-Host "== script cap (git changed) =="
+    $capArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $CapScript, "-OverKb", "$OverKb", "-GitChanged")
+    $p = Start-Process -FilePath "powershell.exe" -ArgumentList $capArgs -Wait -PassThru -NoNewWindow
+    $capSummary = Join-Path $Root "_logs\script-cap\summary.txt"
+    $lines.Add("--- script cap exit=$($p.ExitCode) ---")
+    if (Test-Path $capSummary) {
+        Get-Content $capSummary | ForEach-Object { $lines.Add($_) }
+    } else {
+        $lines.Add("(missing script-cap summary)")
+        $fail += 1
+    }
+    if ($p.ExitCode -ne 0) { $fail += 1 }
+    $lines.Add("")
 } else {
-    $lines.Add("(missing script-cap summary)")
-    $fail += 1
+    $lines.Add("--- script cap skipped ---")
+    $lines.Add("")
 }
-if ($p.ExitCode -ne 0) { $fail += 1 }
-$lines.Add("")
 
 if (-not $SkipImport) {
     Write-Host "== import check =="
