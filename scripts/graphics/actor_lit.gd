@@ -11,13 +11,14 @@ const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const SUN_AWAY := Vector2(0.406138, 0.913811)
 const HUB_STRETCH := 0.72
 const HUB_ALPHA := 0.55
-const D_NEAR := 0.64
-const D_FAR := 0.80
+const D_NEAR := 0.12
+const D_FAR := 0.72
 const A_NEAR := 0.50
-const A_FAR := 0.38
+const A_FAR := 0.0
 const MIN_DOWN := 0.28
-const TURN_RATE := 6.0
-const EASE_RATE := 5.0
+const TURN_RATE := 20.0
+const EASE_RATE := 12.0
+const HIDE_A := 0.03
 
 const SHADE := """
 shader_type spatial;
@@ -117,6 +118,9 @@ func _lay(host: Node3D, delta: float) -> void:
 		return
 	_flip = spr.flip_h
 	_drive(feet, delta)
+	if App.in_dungeon and _alpha < HIDE_A:
+		mark.visible = false
+		return
 	var dir: Vector2 = _biased()
 	_sync(tex, dir, feet)
 	mark.global_transform = Transform3D(Basis.IDENTITY, Vector3(feet.x, T.FLOOR_Y, feet.y))
@@ -134,8 +138,8 @@ func _drive(feet: Vector2, delta: float) -> void:
 		return
 	var hit: Dictionary = LightRt.nearest_cast(feet)
 	var aim: Vector2 = _away
-	var goal_s: float = _stretch
-	var goal_a: float = _alpha
+	var goal_s: float = D_NEAR
+	var goal_a: float = 0.0
 	if hit.get("ok", false) == true:
 		var src: Vector2 = hit["xz"]
 		var step: Vector2 = feet - src
@@ -143,7 +147,9 @@ func _drive(feet: Vector2, delta: float) -> void:
 			aim = step.normalized()
 		var reach: float = maxf(float(hit["reach"]), 0.001)
 		var along: float = clampf(float(hit["dist"]) / reach, 0.0, 1.0)
-		goal_s = lerpf(D_NEAR, D_FAR, along)
+		var mid: float = sin(along * PI)
+		goal_s = lerpf(D_NEAR, D_FAR, mid)
+		goal_s *= maxf(absf(aim.y), 0.2)
 		goal_a = lerpf(A_NEAR, A_FAR, along)
 	_turn(aim, delta)
 	var k: float = clampf(delta * EASE_RATE, 0.0, 1.0)
@@ -168,14 +174,15 @@ func _turn(aim: Vector2, delta: float) -> void:
 
 
 func _biased() -> Vector2:
-	# +Z is screen-down. Hold a little so the head cannot flip up-screen or flatten.
+	# Keep a little Z so a side-on light does not flatten the quad.
+	# Sign follows the light so a source toward camera can cast up-screen.
 	var dir: Vector2 = _away
 	if dir.length_squared() < 0.0004:
 		dir = SUN_AWAY
 	else:
 		dir = dir.normalized()
-	if dir.y < MIN_DOWN:
-		dir.y = MIN_DOWN
+	if absf(dir.y) < MIN_DOWN:
+		dir.y = MIN_DOWN if dir.y >= 0.0 else -MIN_DOWN
 	return dir.normalized()
 
 
@@ -195,7 +202,7 @@ func _sync(tex: Texture2D, dir: Vector2, host_xz: Vector2) -> void:
 	var fl: Vector2 = _sole_xz(soles.x, soles.y, tw, th) - host_xz
 	var fr: Vector2 = _sole_xz(soles.z, soles.w, tw, th) - host_xz
 	var reach: Vector2 = dir * _stretch
-	var key: String = "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
+	var key: String = "%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
 		tex.get_instance_id(), px, _flip,
 		snappedf(fl.x, 0.01), snappedf(fl.y, 0.01),
 		snappedf(fr.x, 0.01), snappedf(fr.y, 0.01),
