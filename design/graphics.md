@@ -6,7 +6,7 @@ Code: `scripts/graphics/`
 
 This file is the door. Open the Job-table sibling only when that row matches.
 
-World presentation owner. Hub and dungeon share one env kit, one ground shader, one light RT (render target: a small texture lights are drawn into, then sampled), and one actor policy (sprite tint + idle silhouette pinned at both feet).
+World presentation owner. Hub and dungeon share one env kit, one ground shader, one light RT (render target: a small texture lights are drawn into, then sampled), and one actor policy (sprite tint + two-foot-pinned squash).
 
 Live helpers already exist: `env_kit.gd`, `nearest_mat.gd`, `wrap_shader.gd`, `mm_emit.gd`. Minimap is `dungeon_minimap.gd`. Foundation smoke calls the env kit only.
 
@@ -25,7 +25,7 @@ Jobs after the reuse PR, one session each, forked from this door:
 1. ground — shared shader, world-xz hash variants, RT sample (white until buffer)
 2. volume — exposed greedy wall faces, world-UV, wall samples RT
 3. buffer — 1 texel per tile on the stream ring, occupancy, sources
-4. actor — RT tint at feet, two-foot-pinned idle squash (sun on hub, nearest local source in dungeon)
+4. actor — RT tint at feet, two-foot-pinned squash (player current frame, others still; sun on hub, nearest local source in dungeon)
 
 Env fog and void ride the kit, not a fifth owner.
 

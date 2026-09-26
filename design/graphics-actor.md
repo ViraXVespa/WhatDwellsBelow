@@ -5,9 +5,9 @@ Read when: billboard-alpha squash quads, player yard-mannequin foes, source-offs
 
 Y-billboard frames stay nearest stickers. Multiply the sprite by the RT sample at the actor's feet so characters take the light.
 
-Floor mark is the idle silhouette, near-black, low alpha, projected onto the floor. Left foot of the mark stays on the sticker's left foot. Right foot stays on the sticker's right foot. Those two points do not move. The head edge warps away from the driving light as a trapezoid. It must not read as a second actor. Hidden when no driving light applies.
+Floor mark is a near-black, low-alpha silhouette projected onto the floor. Player mark uses the current animation frame. Dummy and enemies use their still. In that texture, the left-foot opaque pixel pins to the sticker's left foot on the floor, and the right-foot opaque pixel pins to the right foot. The head edge warps away from the driving light as a trapezoid. The quad must keep area when the light sits on the foot line: add a minimum camera-facing shear and smooth the warp so it does not pop. It must not read as a second actor.
 
-Casters: player, training dummy, and every enemy that uses the billboard helper (boss, named, summons). One squash per actor. The mark keeps the idle frame while the sticker walks or attacks. Do not copy walk flip_h onto the mark.
+Casters: player, training dummy, and every enemy that uses the billboard helper (boss, named, summons). One squash per actor. Player UVs follow the current frame. Dummy and enemies stay on the still.
 
 Hub squash follows the sun: one direction and one length for the whole yard. It does not rotate around a point on the dirt and does not grow as the actor walks. Crystal may tint a local bump; it is not the hub squash origin. Dungeon squash follows the nearest torch, crystal, or campfire, and length/alpha change with distance.
 
