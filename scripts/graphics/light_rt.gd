@@ -24,6 +24,11 @@ static var _rect := Rect2i(-1, -1, 0, 0)
 static var _live := ""
 static var _knob := ""
 static var _bill: GDScript
+static var _img: Image
+static var _occ: PackedByteArray = PackedByteArray()
+static var _tw := 0
+static var _th := 0
+static var _casts: Array[Dictionary] = []
 
 
 static func texture() -> Texture2D:
@@ -146,6 +151,11 @@ static func _publish(
 	Stamp.paint(img, use, tw, th, lights)
 	origin = Vector2(float(x0), float(z0))
 	span = Vector2(float(tw), float(th))
+	_img = img
+	_occ = use
+	_tw = tw
+	_th = th
+	_keep_casts(x0, z0, tw, th, use, lights)
 	if _gpu == null:
 		_gpu = ImageTexture.create_from_image(img)
 	else:
@@ -354,3 +364,72 @@ static func _push() -> void:
 		mat.set_shader_parameter("light_span", span)
 		keep.append(mat)
 	_mats = keep
+
+
+static func sample_xz(world: Vector2) -> Color:
+	# Same luv the floor and wall shaders already use. Nearest texel.
+	if _img == null:
+		return Color.WHITE
+	var sp: Vector2 = span
+	if sp.x < 0.001 or sp.y < 0.001:
+		return Color.WHITE
+	var luv: Vector2 = (world - origin) / sp
+	var w: int = _img.get_width()
+	var h: int = _img.get_height()
+	if w < 1 or h < 1:
+		return Color.WHITE
+	var u: float = clampf(luv.x, 0.0, 1.0)
+	var v: float = clampf(luv.y, 0.0, 1.0)
+	var tx: int = mini(int(floor(u * float(w))), w - 1)
+	var ty: int = mini(int(floor(v * float(h))), h - 1)
+	return _img.get_pixel(tx, ty)
+
+
+static func floor_open(world: Vector2) -> bool:
+	if _occ.is_empty() or _tw < 1 or _th < 1:
+		return false
+	var tx: int = int(floor(world.x)) - int(floor(origin.x))
+	var tz: int = int(floor(world.y)) - int(floor(origin.y))
+	if tx < 0 or tz < 0 or tx >= _tw or tz >= _th:
+		return false
+	return int(_occ[tz * _tw + tx]) == 0
+
+
+static func nearest_cast(world: Vector2) -> Dictionary:
+	var found := false
+	var best := Vector2.ZERO
+	var best_d := 0.0
+	var best_r := 0.0
+	for src in _casts:
+		var item: Dictionary = src
+		var xz: Vector2 = item["xz"]
+		var reach: float = float(item["reach"])
+		var dist: float = world.distance_to(xz)
+		if dist > reach:
+			continue
+		if found and dist >= best_d:
+			continue
+		found = true
+		best = xz
+		best_d = dist
+		best_r = reach
+	return {"ok": found, "xz": best, "dist": best_d, "reach": best_r}
+
+
+static func _keep_casts(x0: int, z0: int, tw: int, th: int, occ: PackedByteArray, lights: Array) -> void:
+	_casts.clear()
+	for src in lights:
+		var item: Dictionary = src
+		var tx: int = int(item["tx"])
+		var tz: int = int(item["tz"])
+		if tx < 0 or tz < 0 or tx >= tw or tz >= th:
+			continue
+		if not occ.is_empty() and int(occ[tz * tw + tx]) != 0:
+			continue
+		var reach: float = float(item["reach"])
+		if reach < 0.25:
+			continue
+		_casts.append({
+			"xz": Vector2(float(x0 + tx) + 0.5, float(z0 + tz) + 0.5),
+			"reach": reach,
+		})
