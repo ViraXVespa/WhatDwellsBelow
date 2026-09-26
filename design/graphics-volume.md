@@ -1,5 +1,7 @@
 # Graphics volume
 
+# Graphics volume
+
 Status: binding design + live snapshot
 Read when: exposed coplanar brick runs, BoxMesh retirement, hitbox-untouched
 

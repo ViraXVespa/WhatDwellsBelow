@@ -61,5 +61,6 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 9. Topic job siblings name no other `design/*.md` paths.
 10. Opening the topic table is not a boot step.
 11. README and code-map are human indexes, not boot files.
+12. Door and job files start with an H1.
 
 Machine-readable edges: `design/routes.yaml`. This file is the human sketch only.
