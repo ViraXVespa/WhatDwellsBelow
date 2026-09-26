@@ -196,17 +196,17 @@ func _sync(tex: Texture2D, dir: Vector2, host_xz: Vector2) -> void:
 	var fr: Vector2 = _sole_xz(soles.z, soles.w, tw, th) - host_xz
 	var reach: Vector2 = dir * _stretch
 	var key: String = "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
-		tex.get_rid().get_id(), px, _flip,
+		tex.get_instance_id(), px, _flip,
 		snappedf(fl.x, 0.01), snappedf(fl.y, 0.01),
 		snappedf(fr.x, 0.01), snappedf(fr.y, 0.01),
 		snappedf(reach.x, 0.01), snappedf(reach.y, 0.01),
 	]
-	if key == _key and mark.mesh != null:
-		return
-	_key = key
 	var mat: ShaderMaterial = mark.material_override as ShaderMaterial
 	if mat != null:
 		mat.set_shader_parameter("albedo_tex", tex)
+	if key == _key and mark.mesh != null:
+		return
+	_key = key
 	mark.mesh = _quad(tex, _span(tex), soles, fl, fr, dir, px)
 
 
