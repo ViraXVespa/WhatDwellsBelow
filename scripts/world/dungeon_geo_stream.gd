@@ -4,6 +4,7 @@ const T := preload("res://scripts/data/tunables.gd")
 const Gen := preload("res://scripts/dungeon/gen.gd")
 const MmEmit := preload("res://scripts/graphics/mm_emit.gd")
 const WallRects := preload("res://scripts/world/wall_rects.gd")
+const WallMesh: GDScript = preload("res://scripts/graphics/wall_mesh.gd")
 
 const RING_IN := 1
 const RING_OUT := 2
@@ -11,7 +12,6 @@ const CHUNK := 32
 const PER_FRAME := 3
 
 static var _floor_mesh: PlaneMesh
-static var _wall_mesh: BoxMesh
 
 
 static func setup(host: Node) -> void:
@@ -28,9 +28,6 @@ static func ensure_meshes() -> void:
 	if _floor_mesh == null:
 		_floor_mesh = PlaneMesh.new()
 		_floor_mesh.size = Vector2(T.TILE, T.TILE)
-	if _wall_mesh == null:
-		_wall_mesh = BoxMesh.new()
-		_wall_mesh.size = Vector3(T.TILE, T.WALL_H, T.TILE)
 
 
 static func chunk_origin(c: Vector2i) -> Vector2i:
@@ -117,7 +114,6 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 	var x1 := mini(w, ox + CHUNK)
 	var y1 := mini(h, oy + CHUNK)
 	var floors: Array = []
-	var wallp: Array = []
 	var wall_cells: Array[Vector2i] = []
 	for y in range(oy, y1):
 		for x in range(ox, x1):
@@ -126,9 +122,8 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 				continue
 			if not wall_faces_floor(grid, w, h, x, y):
 				continue
-			wallp.append(Vector3(float(x) + 0.5, T.WALL_H * 0.5, float(y) + 0.5))
 			wall_cells.append(Vector2i(x, y))
-	if floors.is_empty() and wallp.is_empty():
+	if floors.is_empty() and wall_cells.is_empty():
 		job.state = "cleared"
 		return
 	var root := Node3D.new()
@@ -139,8 +134,13 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 		root.add_child(fm)
 		if host.floor_mm == null:
 			host.floor_mm = fm
-	if not wallp.is_empty():
-		root.add_child(MmEmit.make_mm(wallp, _wall_mesh, host.wall_mat))
+	if not wall_cells.is_empty():
+		var runs: Array[Dictionary] = WallRects.faces(grid, w, h, wall_cells)
+		if not runs.is_empty():
+			var wall_inst: MeshInstance3D = MeshInstance3D.new()
+			wall_inst.mesh = WallMesh.from_faces(runs)
+			wall_inst.material_override = host.wall_mat
+			root.add_child(wall_inst)
 	add_collision(root, wall_cells)
 	job.node = root
 	job.state = "live"
