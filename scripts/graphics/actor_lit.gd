@@ -1,8 +1,9 @@
 extends Node
 
-## Feet tint from the light RT. Idle silhouette on FLOOR_Y.
-## Both feet stay on the sticker. The head edge shears away from the light.
-## Hub driver is the sun. Dungeon length follows the nearest torch, crystal, or campfire.
+## Feet tint from the light RT. One floor mark per caster.
+## Player uses the live sticker after flip_h. Dummy and enemies use their still.
+## Sole pixels pin to the sticker. The head shears with a screen-down bias.
+## Hub is the sun, one length. Dungeon uses the nearest torch, crystal, or campfire.
 
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
@@ -10,6 +11,13 @@ const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const SUN_AWAY := Vector2(0.406138, 0.913811)
 const HUB_STRETCH := 0.72
 const HUB_ALPHA := 0.55
+const D_NEAR := 0.64
+const D_FAR := 0.80
+const A_NEAR := 0.50
+const A_FAR := 0.38
+const MIN_DOWN := 0.28
+const TURN_RATE := 6.0
+const EASE_RATE := 5.0
 
 const SHADE := """
 shader_type spatial;
@@ -35,7 +43,7 @@ void fragment() {
 
 static var _shade: Shader
 static var _spans: Dictionary = {}
-static var _feet_ok: Dictionary = {}
+static var _sole_at: Dictionary = {}
 
 var spr: Sprite3D
 var mark: MeshInstance3D
@@ -43,6 +51,8 @@ var _game: Color = Color.WHITE
 var _sent: Color = Color(-1.0, -1.0, -1.0, -1.0)
 var _key: String = ""
 var _away: Vector2 = SUN_AWAY
+var _stretch: float = HUB_STRETCH
+var _alpha: float = HUB_ALPHA
 var _flip: bool = false
 
 
@@ -68,7 +78,7 @@ func _ready() -> void:
 	add_child(mark)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if spr == null or not is_instance_valid(spr):
 		queue_free()
 		return
@@ -80,7 +90,7 @@ func _process(_delta: float) -> void:
 	if host == null:
 		return
 	_tint(host)
-	_lay(host)
+	_lay(host, delta)
 
 
 func _tint(host: Node3D) -> void:
@@ -89,170 +99,107 @@ func _tint(host: Node3D) -> void:
 		_game = cur
 	var feet: Vector2 = Vector2(host.global_position.x, host.global_position.z)
 	var sample: Color = LightRt.sample_xz(feet)
-	var out: Color = _mix(sample)
-	_sent = out
-	spr.modulate = out
+	_sent = _mix(sample)
+	spr.modulate = _sent
 
 
-func _lay(host: Node3D) -> void:
+func _lay(host: Node3D, delta: float) -> void:
 	if spr.texture == null or not spr.visible:
 		mark.visible = false
 		return
 	var feet: Vector2 = Vector2(host.global_position.x, host.global_position.z)
-	var tex: Texture2D = _planted()
+	if App.in_dungeon and not LightRt.floor_open(feet):
+		mark.visible = false
+		return
+	var tex: Texture2D = spr.texture
 	if not _usable(tex):
 		mark.visible = false
 		return
-	var stretch: float = HUB_STRETCH
-	var alpha: float = HUB_ALPHA
-	_away = SUN_AWAY
-	if App.in_dungeon:
-		if not LightRt.floor_open(feet):
-			mark.visible = false
-			return
-		var hit: Dictionary = LightRt.nearest_cast(feet)
-		if hit.get("ok", false) == true:
-			var src: Vector2 = hit["xz"]
-			var delta: Vector2 = feet - src
-			if delta.length_squared() > 0.0004:
-				_away = delta.normalized()
-			var reach: float = maxf(float(hit["reach"]), 0.001)
-			var along: float = clampf(float(hit["dist"]) / reach, 0.0, 1.0)
-			stretch = lerpf(0.32, 1.2, along)
-			alpha = lerpf(0.55, 0.22, along)
-	var shown: float = spr.pixel_size * float(maxi(1, spr.texture.get_height()))
-	var px: float = shown / float(maxi(1, tex.get_height()))
-	var warp: Vector2 = _shear(_away) * (px * float(tex.get_height())) * stretch
-	_sync(tex, px, warp)
+	_flip = spr.flip_h
+	_drive(feet, delta)
+	var dir: Vector2 = _biased()
+	_sync(tex, dir, feet)
 	mark.global_transform = Transform3D(Basis.IDENTITY, Vector3(feet.x, T.FLOOR_Y, feet.y))
 	var shade_mat: ShaderMaterial = mark.material_override as ShaderMaterial
 	if shade_mat != null:
-		shade_mat.set_shader_parameter("shade", Color(0.02, 0.02, 0.02, alpha))
+		shade_mat.set_shader_parameter("shade", Color(0.02, 0.02, 0.02, _alpha))
 	mark.visible = true
 
 
-func _shear(away: Vector2) -> Vector2:
-	# Feet lie on camera X. A light beside the actor would slide the head
-	# along that same line and the quad would have no area.
-	var dir: Vector2 = SUN_AWAY
-	if away.length_squared() > 0.0004:
-		dir = away.normalized()
-	if absf(dir.y) < 0.35:
-		var side: float = 1.0 if dir.x >= 0.0 else -1.0
-		dir = Vector2(side * 0.45, 0.89).normalized()
-	return dir
+func _drive(feet: Vector2, delta: float) -> void:
+	if not App.in_dungeon:
+		_away = SUN_AWAY
+		_stretch = HUB_STRETCH
+		_alpha = HUB_ALPHA
+		return
+	var hit: Dictionary = LightRt.nearest_cast(feet)
+	var aim: Vector2 = _away
+	var goal_s: float = _stretch
+	var goal_a: float = _alpha
+	if hit.get("ok", false) == true:
+		var src: Vector2 = hit["xz"]
+		var step: Vector2 = feet - src
+		if step.length_squared() > 0.0004:
+			aim = step.normalized()
+		var reach: float = maxf(float(hit["reach"]), 0.001)
+		var along: float = clampf(float(hit["dist"]) / reach, 0.0, 1.0)
+		goal_s = lerpf(D_NEAR, D_FAR, along)
+		goal_a = lerpf(A_NEAR, A_FAR, along)
+	_turn(aim, delta)
+	var k: float = clampf(delta * EASE_RATE, 0.0, 1.0)
+	_stretch = lerpf(_stretch, goal_s, k)
+	_alpha = lerpf(_alpha, goal_a, k)
+
+
+func _turn(aim: Vector2, delta: float) -> void:
+	var dest: Vector2 = SUN_AWAY
+	if aim.length_squared() > 0.0004:
+		dest = aim.normalized()
+	if _away.length_squared() < 0.0004:
+		_away = dest
+		return
+	var src: Vector2 = _away.normalized()
+	var ang: float = src.angle_to(dest)
+	var step: float = TURN_RATE * delta
+	if absf(ang) <= step:
+		_away = dest
+		return
+	_away = src.rotated(step if ang > 0.0 else -step)
+
+
+func _biased() -> Vector2:
+	# +Z is screen-down. Hold a little so the head cannot flip up-screen or flatten.
+	var dir: Vector2 = _away
+	if dir.length_squared() < 0.0004:
+		dir = SUN_AWAY
+	else:
+		dir = dir.normalized()
+	if dir.y < MIN_DOWN:
+		dir.y = MIN_DOWN
+	return dir.normalized()
 
 
 func _mix(sample: Color) -> Color:
 	return Color(_game.r * sample.r, _game.g * sample.g, _game.b * sample.b, _game.a)
 
 
-func _planted() -> Texture2D:
-	_flip = false
-	var host: Node = get_parent()
-	if host != null and host.get("idle") is Dictionary:
-		var sheet: Texture2D = _idle_sheet(host)
-		if _usable(sheet):
-			return sheet
-	if _usable(spr.texture):
-		_flip = spr.flip_h
-		return spr.texture
-	return null
-
-
-func _idle_sheet(host: Node) -> Texture2D:
-	var key: String = "down"
-	var raw: Variant = host.get("facing_key")
-	if raw is String and raw != "":
-		key = raw
-	var book: Variant = host.get("idle")
-	if book is Dictionary:
-		var face: Texture2D = _book_tex(book, key)
-		if _usable(face) and _feet_in_frame(face):
-			return face
-		var down: Texture2D = _book_tex(book, "down")
-		if _usable(down) and _feet_in_frame(down):
-			return down
-	var kind: String = str(App.character_type)
-	if kind != "male" and kind != "female":
-		kind = "male"
-	var path: String = "res://assets/sprites/player/%s/idle_%s.png" % [kind, key]
-	if not ResourceLoader.exists(path):
-		path = "res://assets/sprites/player/%s/idle_down.png" % kind
-	if not ResourceLoader.exists(path):
-		return null
-	var loaded: Texture2D = load(path) as Texture2D
-	if _usable(loaded) and _feet_in_frame(loaded):
-		return loaded
-	return null
-
-
-func _book_tex(book: Dictionary, key: String) -> Texture2D:
-	if key == "" or not book.has(key):
-		return null
-	return book[key] as Texture2D
-
-
 func _usable(tex: Texture2D) -> bool:
 	return tex != null and tex.get_width() > 8 and tex.get_height() > 8
 
 
-func _feet_in_frame(tex: Texture2D) -> bool:
-	var id: int = tex.get_rid().get_id()
-	if _feet_ok.has(id):
-		return _feet_ok[id] == true
-	var ok: bool = _both_feet(tex)
-	_feet_ok[id] = ok
-	return ok
-
-
-func _both_feet(tex: Texture2D) -> bool:
-	var img: Image = tex.get_image()
-	if img == null or img.is_empty():
-		return false
-	if img.get_format() != Image.FORMAT_RGBA8:
-		var copy: Image = img.duplicate()
-		copy.convert(Image.FORMAT_RGBA8)
-		img = copy
-	var tw: int = img.get_width()
-	var th: int = img.get_height()
-	var bytes: PackedByteArray = img.get_data()
-	if tw < 8 or th < 8 or bytes.size() < tw * th * 4:
-		return false
-	var min_x: int = tw
-	var max_x: int = -1
-	var max_y: int = -1
-	for y in th:
-		for x in tw:
-			if bytes[(y * tw + x) * 4 + 3] < 51:
-				continue
-			if x < min_x:
-				min_x = x
-			if x > max_x:
-				max_x = x
-			if y > max_y:
-				max_y = y
-	if max_x < min_x or max_y < 1:
-		return false
-	var foot_y: int = maxi(0, max_y - maxi(2, int(float(th) * 0.14)))
-	var mid: int = int(float(min_x + max_x) * 0.5)
-	var left_foot: bool = false
-	var right_foot: bool = false
-	for y2 in range(foot_y, max_y + 1):
-		for x2 in range(min_x, max_x + 1):
-			if bytes[(y2 * tw + x2) * 4 + 3] < 51:
-				continue
-			if x2 <= mid:
-				left_foot = true
-			else:
-				right_foot = true
-	return left_foot and right_foot
-
-
-func _sync(tex: Texture2D, px: float, warp: Vector2) -> void:
-	var qwarp: Vector2 = Vector2(snappedf(warp.x, 0.02), snappedf(warp.y, 0.02))
-	var key: String = "%s|%s|%s|%s|%s" % [
-		tex.get_rid().get_id(), px, _flip, qwarp.x, qwarp.y,
+func _sync(tex: Texture2D, dir: Vector2, host_xz: Vector2) -> void:
+	var soles: Vector4 = _soles(tex)
+	var tw: float = float(maxi(1, tex.get_width()))
+	var th: float = float(maxi(1, tex.get_height()))
+	var px: float = spr.pixel_size
+	var fl: Vector2 = _sole_xz(soles.x, soles.y, tw, th) - host_xz
+	var fr: Vector2 = _sole_xz(soles.z, soles.w, tw, th) - host_xz
+	var reach: Vector2 = dir * _stretch
+	var key: String = "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
+		tex.get_rid().get_id(), px, _flip,
+		snappedf(fl.x, 0.01), snappedf(fl.y, 0.01),
+		snappedf(fr.x, 0.01), snappedf(fr.y, 0.01),
+		snappedf(reach.x, 0.01), snappedf(reach.y, 0.01),
 	]
 	if key == _key and mark.mesh != null:
 		return
@@ -260,34 +207,68 @@ func _sync(tex: Texture2D, px: float, warp: Vector2) -> void:
 	var mat: ShaderMaterial = mark.material_override as ShaderMaterial
 	if mat != null:
 		mat.set_shader_parameter("albedo_tex", tex)
-	mark.mesh = _quad(tex, _span(tex), px, qwarp)
+	mark.mesh = _quad(tex, _span(tex), soles, fl, fr, dir, px)
 
 
-func _quad(tex: Texture2D, span: Vector4, px: float, warp: Vector2) -> ArrayMesh:
-	var world_w: float = px * float(maxi(1, tex.get_width()))
-	var x0: float = (span.x - 0.5) * world_w
-	var x1: float = (span.z - 0.5) * world_w
+func _sole_xz(tx: float, ty: float, tw: float, th: float) -> Vector2:
+	var ox: float = spr.offset.x
+	var oy: float = spr.offset.y
+	if spr.centered:
+		ox -= tw * 0.5
+		oy -= th * 0.5
+	var g: float = tx / tw
 	if _flip:
-		x0 = -x0
-		x1 = -x1
-	var shift: Vector3 = Vector3(warp.x, 0.0, warp.y)
+		g = 1.0 - g
+	var lx: float = (ox + g * tw) * spr.pixel_size
+	var ly: float = (oy + (th - ty)) * spr.pixel_size
+	var axis: Vector3 = _bill_x()
+	var world: Vector3 = spr.global_position + axis * lx + Vector3(0.0, ly, 0.0)
+	return _drop_floor(world)
+
+
+func _bill_x() -> Vector3:
+	var cam: Camera3D = get_viewport().get_camera_3d()
+	if cam == null:
+		return Vector3.RIGHT
+	var side: Vector3 = Vector3.UP.cross(cam.global_transform.basis.z)
+	if side.length_squared() < 0.0004:
+		return Vector3.RIGHT
+	return side.normalized()
+
+
+func _drop_floor(world: Vector3) -> Vector2:
+	var cam: Camera3D = get_viewport().get_camera_3d()
+	if cam == null:
+		return Vector2(world.x, world.z)
+	var view: Vector3 = -cam.global_transform.basis.z
+	if absf(view.y) < 0.05:
+		return Vector2(world.x, world.z)
+	var t: float = (T.FLOOR_Y - world.y) / view.y
+	if absf(t) > 3.0:
+		return Vector2(world.x, world.z)
+	var hit: Vector3 = world + view * t
+	return Vector2(hit.x, hit.z)
+
+
+func _quad(tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float) -> ArrayMesh:
+	var tw: float = float(maxi(1, tex.get_width()))
+	var th: float = float(maxi(1, tex.get_height()))
+	var x0: float = span.x * tw
+	var x1: float = span.z * tw
+	var y0: float = span.y * th
+	var y1: float = span.w * th
 	var verts: PackedVector3Array = PackedVector3Array()
 	var uvs: PackedVector2Array = PackedVector2Array()
 	var indices: PackedInt32Array = PackedInt32Array()
-	verts.append(Vector3(x0, 0.0, 0.0))
-	verts.append(Vector3(x1, 0.0, 0.0))
-	verts.append(Vector3(x1, 0.0, 0.0) + shift)
-	verts.append(Vector3(x0, 0.0, 0.0) + shift)
+	verts.append(_corner(x0, y1, soles, fl, fr, dir, px))
+	verts.append(_corner(x1, y1, soles, fl, fr, dir, px))
+	verts.append(_corner(x1, y0, soles, fl, fr, dir, px))
+	verts.append(_corner(x0, y0, soles, fl, fr, dir, px))
 	uvs.append(Vector2(span.x, span.w))
 	uvs.append(Vector2(span.z, span.w))
 	uvs.append(Vector2(span.z, span.y))
 	uvs.append(Vector2(span.x, span.y))
-	indices.append(0)
-	indices.append(1)
-	indices.append(2)
-	indices.append(0)
-	indices.append(2)
-	indices.append(3)
+	indices.append_array(PackedInt32Array([0, 1, 2, 0, 2, 3]))
 	var arrays: Array = []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = verts
@@ -298,33 +279,43 @@ func _quad(tex: Texture2D, span: Vector4, px: float, warp: Vector2) -> ArrayMesh
 	return mesh
 
 
-static func _span(tex: Texture2D) -> Vector4:
+func _corner(tx: float, ty: float, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float) -> Vector3:
+	var span_x: float = soles.z - soles.x
+	if absf(span_x) < 0.5:
+		span_x = 0.5 if soles.z >= soles.x else -0.5
+	var a: float = (tx - soles.x) / span_x
+	var foot_y: float = soles.y + a * (soles.w - soles.y)
+	var pos: Vector2 = fl.lerp(fr, a) + dir * ((foot_y - ty) * px * _stretch)
+	return Vector3(pos.x, 0.0, pos.y)
+
+
+static func _soles(tex: Texture2D) -> Vector4:
 	var id: int = tex.get_rid().get_id()
-	if _spans.has(id):
-		return _spans[id] as Vector4
-	var full: Vector4 = Vector4(0.0, 0.0, 1.0, 1.0)
+	if _sole_at.has(id):
+		return _sole_at[id] as Vector4
+	var tw: int = maxi(1, tex.get_width())
+	var th: int = maxi(1, tex.get_height())
+	var fb: Vector4 = Vector4(0.0, float(th), float(tw), float(th))
 	var img: Image = tex.get_image()
 	if img == null or img.is_empty():
-		_spans[id] = full
-		return full
+		return _keep(id, fb)
 	if img.get_format() != Image.FORMAT_RGBA8:
 		var copy: Image = img.duplicate()
 		copy.convert(Image.FORMAT_RGBA8)
 		img = copy
-	var tw: int = img.get_width()
-	var th: int = img.get_height()
+	var w: int = img.get_width()
+	var h: int = img.get_height()
 	var bytes: PackedByteArray = img.get_data()
-	if tw < 1 or th < 1 or bytes.size() < tw * th * 4:
-		_spans[id] = full
-		return full
-	var min_x: int = tw
-	var min_y: int = th
+	if w < 1 or h < 1 or bytes.size() < w * h * 4:
+		return _keep(id, fb)
+	var min_x: int = w
+	var min_y: int = h
 	var max_x: int = -1
 	var max_y: int = -1
-	for y in th:
-		for x in tw:
-			var a: int = bytes[(y * tw + x) * 4 + 3]
-			if a < 51:
+	for y in h:
+		var row: int = y * w * 4
+		for x in w:
+			if bytes[row + x * 4 + 3] < 51:
 				continue
 			if x < min_x:
 				min_x = x
@@ -335,16 +326,79 @@ static func _span(tex: Texture2D) -> Vector4:
 			if y > max_y:
 				max_y = y
 	if max_x < 0:
-		_spans[id] = full
-		return full
-	var span: Vector4 = Vector4(
-		float(min_x) / float(tw),
-		float(min_y) / float(th),
-		float(max_x + 1) / float(tw),
-		float(max_y + 1) / float(th)
+		return _keep(id, fb)
+	_spans[id] = Vector4(
+		float(min_x) / float(w), float(min_y) / float(h),
+		float(max_x + 1) / float(w), float(max_y + 1) / float(h)
 	)
-	_spans[id] = span
-	return span
+	var mid: int = int(float(min_x + max_x) * 0.5)
+	var ly: int = -1
+	var ry: int = -1
+	var ls: float = 0.0
+	var ln: int = 0
+	var rs: float = 0.0
+	var rn: int = 0
+	for y2 in range(min_y, max_y + 1):
+		var row2: int = y2 * w * 4
+		var lsum: float = 0.0
+		var lnum: int = 0
+		var rsum: float = 0.0
+		var rnum: int = 0
+		for x2 in range(min_x, max_x + 1):
+			if bytes[row2 + x2 * 4 + 3] < 51:
+				continue
+			if x2 <= mid:
+				lsum += float(x2) + 0.5
+				lnum += 1
+			else:
+				rsum += float(x2) + 0.5
+				rnum += 1
+		if lnum > 0:
+			ly = y2
+			ls = lsum
+			ln = lnum
+		if rnum > 0:
+			ry = y2
+			rs = rsum
+			rn = rnum
+	if ly < 0 or ry < 0:
+		return _keep(id, _bottom_span(bytes, w, max_y, min_x, max_x))
+	var lx: float = ls / float(ln)
+	var rx: float = rs / float(rn)
+	if absf(rx - lx) < 0.5:
+		lx = float(min_x) + 0.5
+		rx = float(max_x) + 0.5
+	return _keep(id, Vector4(lx, float(ly + 1), rx, float(ry + 1)))
+
+
+static func _keep(id: int, sole: Vector4) -> Vector4:
+	_sole_at[id] = sole
+	return sole
+
+
+static func _bottom_span(bytes: PackedByteArray, w: int, y: int, x0: int, x1: int) -> Vector4:
+	var row: int = y * w * 4
+	var left: int = x1
+	var right: int = x0
+	for x in range(x0, x1 + 1):
+		if bytes[row + x * 4 + 3] < 51:
+			continue
+		if x < left:
+			left = x
+		if x > right:
+			right = x
+	if right <= left:
+		right = mini(w - 1, left + 1)
+	return Vector4(float(left) + 0.5, float(y + 1), float(right) + 0.5, float(y + 1))
+
+
+static func _span(tex: Texture2D) -> Vector4:
+	var id: int = tex.get_rid().get_id()
+	if not _spans.has(id):
+		_soles(tex)
+	if _spans.has(id):
+		return _spans[id] as Vector4
+	return Vector4(0.0, 0.0, 1.0, 1.0)
 
 
 static func _mat() -> ShaderMaterial:
