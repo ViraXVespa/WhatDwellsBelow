@@ -3,6 +3,7 @@
 const T := preload("res://scripts/data/tunables.gd")
 const Gen := preload("res://scripts/dungeon/gen.gd")
 const MmEmit := preload("res://scripts/graphics/mm_emit.gd")
+const WallRects := preload("res://scripts/world/wall_rects.gd")
 
 const RING_IN := 1
 const RING_OUT := 2
@@ -159,41 +160,19 @@ static func wall_faces_floor(grid: PackedByteArray, w: int, h: int, x: int, y: i
 static func add_collision(root: Node3D, walls: Array[Vector2i]) -> void:
 	if walls.is_empty():
 		return
-	var used := {}
-	for c in walls:
-		used[c] = false
 	var body := StaticBody3D.new()
 	body.collision_layer = 1
 	body.collision_mask = 0
 	root.add_child(body)
-	for c in walls:
-		if used[c]:
-			continue
-		var x := c.x
-		var y := c.y
-		var xa := x
-		while used.has(Vector2i(xa + 1, y)) and not used[Vector2i(xa + 1, y)]:
-			xa += 1
-		var ya := y
-		var row_ok := true
-		while row_ok:
-			for xx in range(x, xa + 1):
-				var below := Vector2i(xx, ya + 1)
-				if not used.has(below) or used[below]:
-					row_ok = false
-					break
-			if row_ok:
-				ya += 1
-		for yy in range(y, ya + 1):
-			for xx in range(x, xa + 1):
-				used[Vector2i(xx, yy)] = true
-		var sx := float(xa - x + 1)
-		var sz := float(ya - y + 1)
+	var rects: Array[Rect2i] = WallRects.merge(walls)
+	for r in rects:
+		var sx := float(r.size.x)
+		var sz := float(r.size.y)
 		var cs := CollisionShape3D.new()
 		var sh := BoxShape3D.new()
 		sh.size = Vector3(sx, T.WALL_H, sz)
 		cs.shape = sh
-		cs.position = Vector3(float(x) + sx * 0.5, T.WALL_H * 0.5, float(y) + sz * 0.5)
+		cs.position = Vector3(float(r.position.x) + sx * 0.5, T.WALL_H * 0.5, float(r.position.y) + sz * 0.5)
 		body.add_child(cs)
 
 
