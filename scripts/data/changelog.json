@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.19",
+			"points": [
+				{
+					"text": "Register graphics door (env, ground, volume, buffer, actor)."
+				},
+				{
+					"text": "Web/chat may picture-read named work; Build gather stays thin; 10KB remains Bot."
+				},
+				{
+					"text": "Stage Bot reuse brief: extract env kit, nearest-mat, minimap, shared emit, wrap shader into scripts/graphics/."
+				},
+				{
+					"text": "Require an H1 on door and job files; add the missing graphics-volume title."
+				}
+			],
+			"summary": "Graphics owner routed; Bot reuse staged."
+		},
+		{
 			"label": "0.4.18",
 			"points": [
 				{
