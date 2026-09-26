@@ -25,7 +25,7 @@ Jobs after the reuse PR, one session each, forked from this door:
 1. ground — shared shader, world-xz hash variants, RT sample (white until buffer)
 2. volume — exposed greedy wall faces, world-UV, wall samples RT
 3. buffer — 1 texel per tile on the stream ring, occupancy, sources
-4. actor — RT tint at feet, two-foot-pinned squash (player current frame, others still; sun on hub, nearest local source in dungeon)
+4. actor — RT tint at feet, two-foot-pinned squash (player current frame, others still; sun on hub, up to three local sources in dungeon)
 
 Env fog and void ride the kit, not a fifth owner.
 

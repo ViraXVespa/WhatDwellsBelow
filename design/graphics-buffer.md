@@ -3,7 +3,7 @@
 Status: binding design + live snapshot
 Read when: one-texel radiance buffer, disc blobs, tile occupancy
 
-The light RT is a small texture lights are stamped into. Ground, walls, and actors sample it. Live map is four texels per tile. Occupancy stays one cell per tile. Size follows the live stream ring, not a free camera pad.
+The light RT is a small texture lights are stamped into. Ground, walls, and actors sample it. Actors may query nearest_cast (one) or up to three in-range casts, nearest first. Stamp, occupancy, and the source list do not change for that query. Live map is four texels per tile. Occupancy stays one cell per tile. Size follows the live stream ring, not a free camera pad.
 
 Occupancy: WALL cells block. Floor, door, opening, and stairs pass. One pass; do not split openings later. No extra door occluders this week.
 
