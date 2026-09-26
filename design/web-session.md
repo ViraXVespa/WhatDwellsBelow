@@ -51,6 +51,15 @@ Docs in this pass: same scratch updates topic files, one code-map row, and tunab
 
 Review the Phase 4 RESULT. Mechanical errors (failed replace, missing required sentence, checker FAIL on a line just written): emit the corrected Phase 4 scratch in the same turn. The corrected scratch owns only the failed step plus leftover cites that scan named. Already-landed files stay untouched. A judgment call the agent cannot infer: one blocking question, then wait. Otherwise loop to Phase 2. The Phase 3 goal stays unless the User changes the goal or the list.
 
+## Scratch helpers
+
+Do not reimplement doc_patch. Import it from tools/.
+Reuse Brief items must be numbered `1. ` `2. ` so bot_status.parse_reuse_brief counts them. Prose under ## Brief counts as empty.
+Changelog: doc_patch.write_changelog. If version.json lags the files in design/changelog/, use the next free 0.N.N label, do not reuse an existing note.
+Code-map rows: code_map_lib / patch_code_map, not a hand regex on the table.
+Markdown bytes: md_format_lib write helpers. Always run doc_patch.run_checker and print RESULT checker=PASS|FAIL.
+lint_hostify out-dir takes ROOT, not root.
+
 ## Fetching a live path
 
 1. One page fetch of the raw GitHub file. Open the saved artifact. Use it when the tail is a complete line and API `size` equals artifact UTF-8 bytes, or API `size` equals artifact bytes + 3 (UTF-8 BOM).

@@ -11,7 +11,7 @@ Sources v1: wall torch, floor crystal, campfire only. No shop, gate, stair, or p
 
 Hub RT: one wide warm sun disc plus the floor crystal. Dungeon RT: no sun. Ambient comes from the env kit only so pits stay dark.
 
-Torch placement: at most one per room unless a crystal or campfire already lights it. Halls only at doorways, junctions, and dead ends. Hard cap on sources in the live ring. Source sits on the floor in front of the bracket, not inside the wall. Torches spawn and despawn with the geo chunk.
+Torch placement: at most one per room unless a crystal or campfire already lights it. Halls only at doorways, junctions, and dead ends. Hard cap on sources in the live ring. The bracket stays on the interior wall. The flame is a Y-billboard, not a wall decal. Source sits on the floor in front of the bracket, not inside the wall. Torches spawn and despawn with the geo chunk.
 
 Stamp discs plus occupancy. Engine DirectionalLight3D and OmniLight3D shadows stay off. Compatibility and web stay the leash. Do not use Decal3D.
 

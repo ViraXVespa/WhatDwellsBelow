@@ -17,6 +17,8 @@ Does not own: dungeon gen, stream rings, wall collision merge, map reveal, camer
 Out this week: engine shadow maps, unique atlas, hex-tile, player lantern, shop/gate/stair lights, foundation pretty-pass, flicker system.
 
 Build Imagine makes field sheets and the unlit 4-facing torch bible plus flame VFX (same harvest style as character stills). Isolated, one unit per job.
+When a job Imagines, the User names the Imagine / isolated-media owner in that Build session's first message. Job files do not name that owner.
+If the week slips: drop extra variants, then extra light discs. Do not drop ground, the light RT, or player squash.
 
 Jobs after the reuse PR, one session each, forked from this door:
 
