@@ -3,6 +3,7 @@ extends Object
 const T := preload("res://scripts/data/tunables.gd")
 const MeshS := preload("res://scripts/world/camp_build_mesh.gd")
 const Roof := preload("res://scripts/world/camp_build_roof.gd")
+const EnvKit := preload("res://scripts/graphics/env_kit.gd")
 
 const GROUND_W := 36
 const GROUND_D := 32
@@ -19,21 +20,7 @@ const PATH_Z := 15.0
 
 
 static func world(host: Node3D) -> void:
-	var env := WorldEnvironment.new()
-	var e := Environment.new()
-	e.background_mode = Environment.BG_COLOR
-	e.background_color = Color(0.45, 0.58, 0.62)
-	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color(0.95, 0.86, 0.7)
-	e.ambient_light_energy = 1.15
-	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.environment = e
-	host.add_child(env)
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-50.0, 30.0, 0.0)
-	sun.light_energy = 0.9
-	sun.shadow_enabled = false
-	host.add_child(sun)
+	EnvKit.apply(host, Color(0.45, 0.58, 0.62), Color(0.95, 0.86, 0.7), 1.15, Vector3(-50.0, 30.0, 0.0), 0.9)
 
 
 static func ground(host: Node3D) -> void:

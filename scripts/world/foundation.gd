@@ -5,6 +5,7 @@ const Depth := preload("res://scripts/world/depth.gd")
 const PlayerS := preload("res://scripts/world/player.gd")
 const DummyS := preload("res://scripts/combat/dummy.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
+const EnvKit := preload("res://scripts/graphics/env_kit.gd")
 
 var player: CharacterBody3D
 var hint: Label
@@ -47,22 +48,9 @@ func _process(delta: float) -> void:
 
 
 func _world() -> void:
-	var env := WorldEnvironment.new()
-	var e := Environment.new()
-	e.background_mode = Environment.BG_COLOR
-	e.background_color = Color(0.04, 0.045, 0.06)
-	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color(0.78, 0.74, 0.68)
-	e.ambient_light_energy = 0.9
-	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.environment = e
-	add_child(env)
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-52.0, 28.0, 0.0)
-	sun.light_energy = 0.75
-	sun.light_color = Color(0.85, 0.88, 0.95)
-	sun.shadow_enabled = false
-	add_child(sun)
+	EnvKit.apply(
+		self, Color(0.04, 0.045, 0.06), Color(0.78, 0.74, 0.68), 0.9, Vector3(-52.0, 28.0, 0.0), 0.75, Color(0.85, 0.88, 0.95)
+	)
 
 
 func _ground() -> void:
