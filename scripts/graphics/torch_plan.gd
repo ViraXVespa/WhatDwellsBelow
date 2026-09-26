@@ -6,6 +6,10 @@ const Gen := preload("res://scripts/dungeon/gen.gd")
 const WallRects := preload("res://scripts/world/wall_rects.gd")
 
 const DIRS: Array[Vector2i] = [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]
+const RING: Array[Vector2i] = [
+	Vector2i(0, -1), Vector2i(1, -1), Vector2i(1, 0), Vector2i(1, 1),
+	Vector2i(0, 1), Vector2i(-1, 1), Vector2i(-1, 0), Vector2i(-1, -1),
+]
 
 
 static func build(host: Node, props: Array) -> Array[Dictionary]:
@@ -42,13 +46,17 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 		if lit.has(i):
 			continue
 		var room_s: Dictionary = rooms[i]
-		var floor_cell: Vector2i = _room_floor(grid, map_w, map_h, room_s, facing)
+		var floor_cell: Vector2i = _room_floor(grid, map_w, map_h, room_s, facing, true)
+		if floor_cell.x < 0:
+			floor_cell = _room_floor(grid, map_w, map_h, room_s, facing, false)
 		if floor_cell.x < 0:
 			continue
 		var site: Dictionary = _site(facing, floor_cell)
 		if site.is_empty():
+			site = _mount(facing, floor_cell)
+		if site.is_empty():
 			continue
-		used[floor_cell] = true
+		used[Vector2i(int(site["fx"]), int(site["fz"]))] = true
 		out.append(site)
 	var mouths: Dictionary = {}
 	for y in range(1, map_h - 1):
@@ -58,7 +66,7 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 				continue
 			if grid[y * map_w + x] != Gen.FLOOR:
 				continue
-			if _touches_room(inside, cell):
+			if _touches_room(grid, map_w, map_h, inside, cell):
 				mouths[cell] = true
 	var seen: Dictionary = {}
 	var keys: Array = mouths.keys()
@@ -80,30 +88,48 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 					seen[nxt] = true
 					q.append(nxt)
 		var door: Vector2i = _run_pick(run, facing)
-		if door.x < 0 or _taken(used, door):
+		if door.x < 0:
+			if run.is_empty():
+				continue
+			door = run[int(float(run.size() - 1) / 2.0)]
+		if _taken(used, door):
 			continue
-		var hall: Dictionary = _site(facing, door)
+		var hall: Dictionary = _mount(facing, door)
 		if hall.is_empty():
 			continue
-		used[door] = true
+		var at: Vector2i = Vector2i(int(hall["fx"]), int(hall["fz"]))
+		if _taken(used, at):
+			continue
+		used[at] = true
 		out.append(hall)
-	for y2 in range(1, map_h - 1):
-		for x2 in range(1, map_w - 1):
-			var hall_cell: Vector2i = Vector2i(x2, y2)
-			if inside.has(hall_cell) or mouths.has(hall_cell):
+	var mask: Dictionary = {}
+	for y3 in range(1, map_h - 1):
+		for x3 in range(1, map_w - 1):
+			var hall_cell: Vector2i = Vector2i(x3, y3)
+			if inside.has(hall_cell):
 				continue
-			if grid[y2 * map_w + x2] != Gen.FLOOR:
+			if grid[y3 * map_w + x3] != Gen.FLOOR:
 				continue
-			var deg: int = _degree(grid, map_w, map_h, hall_cell)
-			if deg != 1 and deg < 3:
-				continue
-			if _taken(used, hall_cell):
-				continue
-			var spur: Dictionary = _site(facing, hall_cell)
-			if spur.is_empty():
-				continue
-			used[hall_cell] = true
-			out.append(spur)
+			mask[hall_cell] = true
+	_thin(mask, mouths)
+	var spine: Array = mask.keys()
+	for s in spine.size():
+		var spot: Vector2i = spine[s]
+		if mouths.has(spot):
+			continue
+		var exits: int = _ring_exits(mask, spot)
+		if exits != 1 and exits < 3:
+			continue
+		if _taken(used, spot):
+			continue
+		var spur: Dictionary = _mount(facing, spot)
+		if spur.is_empty():
+			continue
+		var mounted: Vector2i = Vector2i(int(spur["fx"]), int(spur["fz"]))
+		if _taken(used, mounted):
+			continue
+		used[mounted] = true
+		out.append(spur)
 	return out
 
 
@@ -152,7 +178,8 @@ static func _room_floor(
 	map_w: int,
 	map_h: int,
 	room: Dictionary,
-	facing: Dictionary
+	facing: Dictionary,
+	ends_only: bool
 ) -> Vector2i:
 	var rx: int = int(room["x"])
 	var ry: int = int(room["y"])
@@ -171,7 +198,7 @@ static func _room_floor(
 			if not facing.has(Vector2i(x, y)):
 				continue
 			var hit: Dictionary = facing[Vector2i(x, y)]
-			if not bool(hit.get("end", false)):
+			if ends_only and not bool(hit.get("end", false)):
 				continue
 			var score: int = absi(x - cx) + absi(y - cy)
 			var better: bool = score < best_s
@@ -210,16 +237,80 @@ static func _touches_floor(grid: PackedByteArray, map_w: int, map_h: int, x: int
 	return false
 
 
-static func _degree(grid: PackedByteArray, map_w: int, map_h: int, cell: Vector2i) -> int:
-	var n: int = 0
+static func _mount(facing: Dictionary, floor_cell: Vector2i) -> Dictionary:
+	var best: Vector2i = Vector2i(-1, -1)
+	var best_d: int = 99
+	for z in range(-2, 3):
+		for x in range(-2, 3):
+			var n: Vector2i = floor_cell + Vector2i(x, z)
+			if not facing.has(n):
+				continue
+			var dist: int = absi(x) + absi(z)
+			if dist < best_d:
+				best_d = dist
+				best = n
+	if best.x < 0:
+		return {}
+	var hit: Dictionary = facing[best]
+	return {
+		"fx": best.x,
+		"fz": best.y,
+		"wx": int(hit["wx"]),
+		"wz": int(hit["wz"]),
+		"nx": int(hit["nx"]),
+		"nz": int(hit["nz"]),
+	}
+
+
+static func _thin(mask: Dictionary, mouths: Dictionary) -> void:
+	var step: int = 0
+	while step < 6:
+		step += 1
+		var peel: Array[Vector2i] = []
+		var keys: Array = mask.keys()
+		for i in keys.size():
+			var cell: Vector2i = keys[i]
+			if _peelable(mask, mouths, cell):
+				peel.append(cell)
+		if peel.is_empty():
+			break
+		for j in peel.size():
+			mask.erase(peel[j])
+
+
+static func _peelable(mask: Dictionary, mouths: Dictionary, cell: Vector2i) -> bool:
+	if mouths.has(cell):
+		return false
+	var orth: int = 0
+	var pos_side: bool = false
 	for d: Vector2i in DIRS:
-		var nx: int = cell.x + d.x
-		var ny: int = cell.y + d.y
-		if nx < 0 or ny < 0 or nx >= map_w or ny >= map_h:
-			continue
-		if grid[ny * map_w + nx] == Gen.FLOOR:
-			n += 1
-	return n
+		var nxt: Vector2i = cell + d
+		if mask.has(nxt):
+			orth += 1
+		elif (d.x > 0 or d.y > 0) and mask.has(cell - d):
+			pos_side = true
+	if orth < 2 or not pos_side:
+		return false
+	return _ring_exits(mask, cell) == 1
+
+
+static func _ring_exits(mask: Dictionary, cell: Vector2i) -> int:
+	var on: Array[bool] = []
+	on.resize(8)
+	var any: bool = false
+	for i in 8:
+		var hit: bool = mask.has(cell + RING[i])
+		on[i] = hit
+		if hit:
+			any = true
+	if not any:
+		return 0
+	var exits: int = 0
+	for j in 8:
+		var prev: int = (j + 7) % 8
+		if on[j] and not on[prev]:
+			exits += 1
+	return exits
 
 
 static func _run_pick(run: Array[Vector2i], facing: Dictionary) -> Vector2i:
@@ -237,17 +328,29 @@ static func _run_pick(run: Array[Vector2i], facing: Dictionary) -> Vector2i:
 	return pick
 
 
-static func _touches_room(inside: Dictionary, cell: Vector2i) -> bool:
+static func _touches_room(
+	grid: PackedByteArray,
+	map_w: int,
+	map_h: int,
+	inside: Dictionary,
+	cell: Vector2i
+) -> bool:
 	for d: Vector2i in DIRS:
-		if inside.has(cell + d):
+		var n: Vector2i = cell + d
+		if not inside.has(n):
+			continue
+		if n.x < 0 or n.y < 0 or n.x >= map_w or n.y >= map_h:
+			continue
+		if grid[n.y * map_w + n.x] == Gen.FLOOR:
 			return true
 	return false
 
 
 static func _taken(used: Dictionary, cell: Vector2i) -> bool:
-	if used.has(cell):
-		return true
-	for d: Vector2i in DIRS:
-		if used.has(cell + d):
-			return true
+	for z in range(-2, 3):
+		for x in range(-2, 3):
+			if absi(x) + absi(z) > 2:
+				continue
+			if used.has(cell + Vector2i(x, z)):
+				return true
 	return false

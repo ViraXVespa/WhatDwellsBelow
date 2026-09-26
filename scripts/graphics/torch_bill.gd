@@ -104,12 +104,13 @@ func _ready() -> void:
 		var spr: Sprite3D = Sprite3D.new()
 		spr.centered = true
 		spr.shaded = false
-		spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+		spr.billboard = BaseMaterial3D.BILLBOARD_DISABLED
 		spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 		spr.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
 		spr.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		spr.texture = tex
 		spr.region_enabled = true
+		spr.region_rect = _front_cell()
 		spr.pixel_size = 1.45 / maxf(_half, 1.0)
 		spr.position.y = 0.72
 		_spr = spr
@@ -119,19 +120,13 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if _flame == null:
+		return
 	var vp: Viewport = get_viewport()
 	if vp == null:
 		return
 	var cam: Camera3D = vp.get_camera_3d()
 	if cam == null:
-		return
-	_face(cam)
-
-
-func _face(cam: Camera3D) -> void:
-	if _spr != null and _spr.texture != null:
-		_spr.region_rect = _region(cam)
-	if _flame == null:
 		return
 	var flat: Vector3 = cam.global_position - _flame.global_position
 	flat.y = 0.0
@@ -140,12 +135,9 @@ func _face(cam: Camera3D) -> void:
 	_flame.look_at(_flame.global_position + flat, Vector3.UP)
 
 
-func _region(cam: Camera3D) -> Rect2:
-	var fwd: Vector2 = Vector2(float(_nx), float(_nz))
-	var delta: Vector2 = Vector2(cam.global_position.x - global_position.x, cam.global_position.z - global_position.z)
-	var side: float = fwd.x * delta.y - fwd.y * delta.x
-	var facing: float = fwd.x * delta.x + fwd.y * delta.y
-	var q: int = int(round(atan2(side, facing) / (PI * 0.5)))
+func _front_cell() -> Rect2:
+	# Wall normal against the fixed south camera. Quad stays put; only the flame yaws.
+	var q: int = int(round(atan2(float(_nx), float(_nz)) / (PI * 0.5)))
 	var col: float = 0.0
 	var row: float = 0.0
 	if q == 1:

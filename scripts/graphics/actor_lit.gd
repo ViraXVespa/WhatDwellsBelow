@@ -1,6 +1,7 @@
 extends Node
 
-## Feet tint from the light RT. Floor mark is the current frame, near-black, hinged at the feet.
+## Feet tint from the light RT. Current frame, near-black, flat on FLOOR_Y.
+## Feet stay on the actor. Yaw, length, and alpha follow the nearest source.
 
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
@@ -28,6 +29,8 @@ var mark: MeshInstance3D
 var _game: Color = Color.WHITE
 var _sent: Color = Color(-1.0, -1.0, -1.0, -1.0)
 var _key: String = ""
+var _yaw: float = 0.0
+var _stretch: float = 1.0
 
 
 static func bind(body: Node3D, sticker: Sprite3D) -> void:
@@ -48,6 +51,7 @@ func _ready() -> void:
 	mesh_node.material_override = _mat()
 	mesh_node.visible = false
 	mark = mesh_node
+	mark.top_level = true
 	add_child(mark)
 
 
@@ -86,9 +90,19 @@ func _lay(host: Node3D) -> void:
 	if not bool(hit.get("ok", false)) or not LightRt.floor_open(feet):
 		mark.visible = false
 		return
+	var src: Vector2 = hit["xz"]
+	var away: Vector2 = feet - src
+	var reach: float = maxf(float(hit["reach"]), 0.001)
+	var along: float = clampf(float(hit["dist"]) / reach, 0.0, 1.0)
+	if away.length_squared() > 0.0004:
+		_yaw = atan2(away.x, away.y)
+	_stretch = lerpf(0.32, 1.2, along)
 	_sync_frame()
-	mark.global_position = Vector3(feet.x, T.FLOOR_Y + T.FEET_LIFT, feet.y)
-	mark.global_rotation = Vector3.ZERO
+	var basis: Basis = Basis(Vector3.UP, _yaw)
+	mark.global_transform = Transform3D(basis, Vector3(feet.x, T.FLOOR_Y + 0.001, feet.y))
+	var shade_mat: ShaderMaterial = mark.material_override as ShaderMaterial
+	if shade_mat != null:
+		shade_mat.set_shader_parameter("shade", Color(0.02, 0.02, 0.02, lerpf(0.5, 0.1, along)))
 	mark.visible = true
 
 
@@ -98,8 +112,8 @@ func _mix(sample: Color) -> Color:
 
 func _sync_frame() -> void:
 	var rect: Rect2 = _frame_rect()
-	var key: String = "%s|%s|%s|%s|%s" % [
-		spr.texture.get_rid().get_id(), rect, spr.flip_h, spr.flip_v, spr.pixel_size,
+	var key: String = "%s|%s|%s|%s|%s|%s" % [
+		spr.texture.get_rid().get_id(), rect, spr.flip_h, spr.flip_v, spr.pixel_size, snappedf(_stretch, 0.05),
 	]
 	if key == _key and mark.mesh != null:
 		return
@@ -129,7 +143,7 @@ func _flat_mesh(rect: Rect2) -> ArrayMesh:
 	var tex_w: float = float(maxi(1, spr.texture.get_width()))
 	var tex_h: float = float(maxi(1, spr.texture.get_height()))
 	var w: float = spr.pixel_size * rect.size.x
-	var h: float = spr.pixel_size * rect.size.y
+	var h: float = spr.pixel_size * rect.size.y * _stretch
 	var u0: float = rect.position.x / tex_w
 	var v0: float = rect.position.y / tex_h
 	var u1: float = (rect.position.x + rect.size.x) / tex_w
