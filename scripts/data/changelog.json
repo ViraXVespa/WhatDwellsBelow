@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.25",
+			"points": [
+				{
+					"text": "Add `WallRects.faces` on `scripts/world/wall_rects.gd`: greedy-merged wall faces toward FLOOR as `{ \"origin\", \"size\", \"normal\" }` in tile cells."
+				},
+				{
+					"text": "A face needs an in-bounds FLOOR neighbor across its normal (same index math as `wall_faces_floor`). Collinear faces that share a normal merge; seed order follows the cell list."
+				},
+				{
+					"text": "Nothing calls it yet. `add_collision`, `merge`, and BoxMesh walls are unchanged. Same look; no new numbers."
+				},
+				{
+					"text": "Clear the staged reuse Brief."
+				}
+			],
+			"summary": "Wall faces have a helper ready for the volume job."
+		},
+		{
 			"label": "0.4.24",
 			"points": [
 				{
