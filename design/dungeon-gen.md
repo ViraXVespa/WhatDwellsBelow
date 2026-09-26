@@ -22,6 +22,14 @@ Halls are carved 2–4 tiles wide. Width 3 is the mode. Width changes at `hall_w
 
 `gen.gd` uses the requested room count. Extra winding loops use the full `gen_extra_loops` value. Dead-end spurs scale with room count.
 
+## Off-grid outline
+
+The 1 m FLOOR/WALL grid stays the logical map: rooms, MST, hall-width budget, doors, stairs, prop snaps, ambush anchors, fog, minimap, crystal separation, and stream chunk index.
+
+After carve, gen traces the floor/void boundary, fillets a fraction of convex corners, and jags a fraction of long abyss edges. It rasterizes that outline to `outline_fine_m` occupancy (live start 0.25). That fine solid is walk collision. Interior room cells are not eaten. Outline must not pinch a hall under the coarse width.
+
+Do not ship a shader nibble on 1 m faces as the silhouette. Do not author arches or modular kits. One brick sheet stays a volume concern; this job does not add a second rock sheet.
+
 ## Key object placement
 
 Placement rules and probabilities for crystal, stairs, Extraction Gates, mining nodes, wood nodes, breakables, shrine, campfire, ghost shop, puzzle elements, chests, and enemy bases are fully tunable.

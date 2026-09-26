@@ -163,6 +163,9 @@ One texel per tile. Dungeon discs are torch, crystal, and campfire. The hub adds
 | Crystal CL band | 2 | **2** | Walk-level CL per placement band |
 | Crystal dead-end sep | 32 | **32** | Minimum Manhattan from spawn |
 | Crystal dead-end length | 28 | **28** | Spur walk to the nearest multi-exit room |
+| Outline fine size (`outline_fine_m`) | 0.25 m | — | Planned; not live. Raster of the post-carve outline |
+| Outline fillet fraction | a fraction of convex corners | — | Planned knob; no pretend-final ratio |
+| Outline jag fraction | a fraction of long abyss edges | — | Planned knob; no pretend-final ratio |
 
 ## Enemies and combat level
 

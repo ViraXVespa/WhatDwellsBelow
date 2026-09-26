@@ -13,6 +13,7 @@ Read when: PREPARE plaque, extraction clerks, stair hold, reveal disk
 ## Fog of war
 
 - Reveal radius starts at a 5-tile baseline disk. Visited tiles stay revealed for the run.
+- Reveal disk, visited tiles, map occupancy, and boss-door freed cells stay coarse 1 m tiles.
 - 3D floor, wall, and prop meshes are not gated on fog. Streaming draws complete nearby chunks.
 - Large map overlay (View button) shows discovered tiles and important markers while the game continues running. Markers on unseen tiles stay hidden (`need_seen`).
 - Large map starts at fit-to-frame. Zoom and pan live in `dungeon_map_act.gd` (wheel / pinch / look-mode RS). World camera zoom is unchanged. Bindings: input and ui.

@@ -19,5 +19,6 @@ Read when: RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo
 Job states: `pending`, `live`, `cleared`. Do not stream out an enemy the player is fighting.
 Geometry jobs never go `cleared`; they sleep back to `pending`.
 Only chunks that contain a floor cell, or a wall adjacent to a floor, are queued.
+`CHUNK`, `RING_IN`, and `RING_OUT` stay coarse 1 m. A chunk queues if it holds any fine floor, or a wall facing that floor. Streamed collision is the fine solid inside the chunk, not a 1 m box that the outline vacated.
 `stream_all` / `force_all` still force enemy jobs; geometry stays proximity-streamed so smoke does not bake the whole floor.
 Jobs whose anchor sits inside an activated crystal’s arrive radius stay `cleared`.
