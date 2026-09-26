@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.23",
+			"points": [
+				{
+					"text": "Extract the greedy wall-rect merge from `dungeon_geo_stream.gd` `add_collision` into `scripts/world/wall_rects.gd` (`WallRects.merge`)."
+				},
+				{
+					"text": "`add_collision` keeps the StaticBody3D, BoxShape3D sizes, layer / mask, and positions; it only asks `merge` for the rects."
+				},
+				{
+					"text": "Same collision and look; no new numbers."
+				}
+			],
+			"summary": "Wall collision merge has its own helper."
+		},
+		{
 			"label": "0.4.22",
 			"points": [
 				{
