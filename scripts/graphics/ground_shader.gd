@@ -34,12 +34,19 @@ void vertex() {
 void fragment() {
 	vec2 xz = world_pos.xz;
 	float cell = max(hash_m, 0.001);
-	vec2 quilt = floor(xz / cell);
-	float h = fract(sin(dot(quilt, vec2(127.1, 311.7))) * 43758.5453);
+	vec2 q = xz / cell;
+	vec2 qi = floor(q);
+	vec2 qf = fract(q);
+	qf = qf * qf * (3.0 - 2.0 * qf);
+	float h00 = fract(sin(dot(qi, vec2(127.1, 311.7))) * 43758.5453);
+	float h10 = fract(sin(dot(qi + vec2(1.0, 0.0), vec2(127.1, 311.7))) * 43758.5453);
+	float h01 = fract(sin(dot(qi + vec2(0.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
+	float h11 = fract(sin(dot(qi + vec2(1.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
+	float h = mix(mix(h00, h10, qf.x), mix(h01, h11, qf.x), qf.y);
 	float nvar = max(variant_n, 1.0);
 	vec3 quilt_tint = vec3(1.0);
 	if (nvar > 1.5) {
-		float pick = floor(h * nvar) / (nvar - 1.0);
+		float pick = h;
 		quilt_tint = mix(vec3(0.98), vec3(1.02), pick);
 	}
 	vec2 uv = fract(xz * uv_scale + uv_off);
