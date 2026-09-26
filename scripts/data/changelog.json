@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.21",
+			"points": [
+				{
+					"text": "Document locked graphics week: RT mapping, occupancy, sources, hub sun disc, torch bible, actor tint."
+				},
+				{
+					"text": "Grok Build gather is owned only by design/build-job-cycle.md: planned list_xref, planned show_func, and one list_code_map_row when a live script is in the slice."
+				},
+				{
+					"text": "Slice-boot postcard and run_build_gate match that contract. Script-cap is opt-in; import check is the default prove."
+				},
+				{
+					"text": "Drop week/catch-up, cross-path leash, and per-catalog-call summary language from the Build protocol files."
+				}
+			],
+			"summary": "Graphics jobs match the locked week spec."
+		},
+		{
 			"label": "0.4.20",
 			"points": [
 				{
