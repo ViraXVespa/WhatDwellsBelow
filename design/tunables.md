@@ -49,6 +49,17 @@ Forge keys that are not yet on `balance.gd` fall back inside `progress_forge.gd`
 | Archive catalog | `scripts/data/archive_catalog.json` |
 | `TOUCH_DEAD` | 0.24 |
 
+## Ground field
+
+World-xz sheets on grass pads, packed yard, and dungeon floors. Debug menu category Ground. `ground_wear` at 0 leaves the sheet untinted by wear.
+
+| Key | Live |
+|-----|------|
+| `GROUND_PX_PER_M` / `ground_px_per_m` | 128 |
+| `GROUND_HASH_M` / `ground_hash_m` | 4 |
+| `GROUND_VARIANTS` / `ground_variants` | 3 |
+| `GROUND_WEAR` / `ground_wear` | 0.22 |
+
 ## Movement and combat
 
 | Parameter | Suggested start | Live default | Notes |

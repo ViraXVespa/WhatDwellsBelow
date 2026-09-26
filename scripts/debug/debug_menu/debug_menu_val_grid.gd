@@ -10,6 +10,7 @@ const CATS: Array[String] = [
 	"Enemies",
 	"Camera",
 	"Dungeon",
+	"Ground",
 	"Economy",
 	"UI",
 	"Other",
@@ -28,6 +29,8 @@ static func cat_of(name: String) -> String:
 		return "Enemies"
 	if n.begins_with("cam") or n.begins_with("zoom") or n.begins_with("look"):
 		return "Camera"
+	if n.begins_with("ground"):
+		return "Ground"
 	if n.begins_with("floor") or n.begins_with("room") or n.begins_with("dung") or n.begins_with("door") or n.begins_with("spawn"):
 		return "Dungeon"
 	if n.begins_with("gold") or n.begins_with("ore") or n.begins_with("root") or n.begins_with("shop") or n.begins_with("price"):

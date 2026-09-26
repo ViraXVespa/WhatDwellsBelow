@@ -2,7 +2,7 @@ extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 const WrapShader := preload("res://scripts/graphics/wrap_shader.gd")
-const NearestMat := preload("res://scripts/graphics/nearest_mat.gd")
+const GroundShader := preload("res://scripts/graphics/ground_shader.gd")
 const GROUND_W := 36
 const GROUND_D := 32
 const GROUND_OX := -2
@@ -181,8 +181,8 @@ static func ground(host: Node3D) -> void:
 				path.append(pos)
 			else:
 				packed.append(pos)
-	tile_layer(host, "res://assets/tiles/plaza_grass.png", grass, Color(0.34, 0.46, 0.24))
-	tile_layer(host, "res://assets/tiles/plaza_ground.png", packed, Color(0.46, 0.42, 0.30))
+	tile_layer(host, "res://assets/tiles/grass_field.png", grass, Color(0.34, 0.46, 0.24))
+	tile_layer(host, "res://assets/tiles/packed_dirt.png", packed, Color(0.46, 0.42, 0.30))
 	tile_layer(host, "res://assets/tiles/plaza_path.png", path, Color(0.44, 0.38, 0.28))
 	_fac.outer_grass(host)
 
@@ -201,8 +201,7 @@ static func tile_layer(host: Node3D, tex_path: String, points: Array, fallback: 
 		mm.set_instance_transform(i, xf)
 	var inst := MultiMeshInstance3D.new()
 	inst.multimesh = mm
-	var mat: StandardMaterial3D = NearestMat.make(tex_path, fallback, true)
-	inst.material_override = mat
+	inst.material_override = GroundShader.material(tex_path, fallback)
 	host.add_child(inst)
 
 
@@ -216,9 +215,7 @@ static func grass_pad(
 	var inst := MeshInstance3D.new()
 	inst.mesh = mesh
 	inst.position = center
-	var mat: StandardMaterial3D = NearestMat.make(tex_path, fallback, true)
-	mat.uv1_scale = Vector3(dim.x / T.TILE, dim.y / T.TILE, 1.0)
-	inst.material_override = mat
+	inst.material_override = GroundShader.material(tex_path, fallback)
 	host.add_child(inst)
 
 

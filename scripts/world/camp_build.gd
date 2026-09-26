@@ -37,7 +37,7 @@ static func outer_grass(host: Node3D) -> void:
 	var ix1: float = float(GROUND_OX + GROUND_W)
 	var iz1: float = float(GROUND_OZ + GROUND_D)
 	var y: float = T.FLOOR_Y
-	var tex := "res://assets/tiles/plaza_grass.png"
+	var tex := "res://assets/tiles/grass_field.png"
 	var fb := Color(0.34, 0.46, 0.24)
 	MeshS.grass_pad(
 		host, Vector3((x0 + x1) * 0.5, y, (z0 + iz0) * 0.5), Vector2(x1 - x0, iz0 - z0), tex, fb

@@ -149,4 +149,8 @@ static func rows() -> Array:
 		["set_iron_3", 0.0, 20.0, 0.5],
 		["set_iron_4", 0.0, 20.0, 0.5],
 		["set_iron_5", 0.0, 40.0, 0.5],
+		["ground_px_per_m", 32.0, 256.0, 8.0],
+		["ground_hash_m", 1.0, 16.0, 0.5],
+		["ground_variants", 1.0, 6.0, 1.0],
+		["ground_wear", 0.0, 1.0, 0.01],
 	]

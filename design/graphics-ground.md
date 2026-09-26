@@ -12,3 +12,5 @@ Stop using a framed medallion as the only dungeon albedo. Sheets: grass field, p
 `tile_layer`, `grass_pad`, and dungeon floor MultiMeshes share the material path. Unique hub atlas is not the system. Hex-tile is not the system.
 
 Unshaded StandardMaterial3D on those surfaces goes away. Invented variant counts and UV scales go in tunables and debug.
+
+Live: `scripts/graphics/ground_shader.gd` samples `scripts/graphics/light_rt.gd` (white texel, world xz). Sheets: `assets/tiles/grass_field.png`, `packed_dirt.png`, `dungeon_floor.png`. The yard path keeps `plaza_path.png` on that same shader. Wall faces stay on the volume job.

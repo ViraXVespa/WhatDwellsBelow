@@ -3,6 +3,7 @@
 ## All Phase 2 combat numbers. Mutated by the secret debug menu.
 ## Bump BAL_REV when shipping new defaults that old saves should receive.
 const Schema := preload("res://scripts/data/balance_schema.gd")
+const Tune := preload("res://scripts/data/tunables.gd")
 const Enemies := preload("res://scripts/data/balance_enemies.gd")
 const Migrate := preload("res://scripts/data/balance_migrate.gd")
 const BAL_REV := 12
@@ -291,6 +292,10 @@ var quest_xp_a := 24.0
 var quest_xp_b := 16.0
 
 var near_death_hp := 0.2
+var ground_px_per_m: float = Tune.GROUND_PX_PER_M
+var ground_hash_m: float = Tune.GROUND_HASH_M
+var ground_variants: float = Tune.GROUND_VARIANTS
+var ground_wear: float = Tune.GROUND_WEAR
 var cam_pitch := -58.0
 var cam_height := 14.0
 var look_lift := 0.42
