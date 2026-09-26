@@ -1,7 +1,7 @@
 # Graphics buffer
 
 Status: binding design + live snapshot
-Read when: 256-512 xz radiance buffer, disc blobs, tile occupancy
+Read when: one-texel radiance buffer, disc blobs, tile occupancy
 
 The light RT is a small texture lights are stamped into. Ground, walls, and actors sample it. One texel equals one tile. Size follows the live stream ring, not a free camera pad.
 
@@ -9,7 +9,7 @@ Occupancy: WALL cells block. Floor, door, opening, and stairs pass. One pass; do
 
 Sources v1: wall torch, floor crystal, campfire only. No shop, gate, stair, or player lantern. Crystal and campfire keep live meshes; this job only stamps discs on them.
 
-Hub RT: one wide warm sun disc plus the floor crystal. Dungeon RT: no sun. Ambient comes from the env kit only so pits stay dark.
+Hub RT: one wide warm sun disc plus the floor crystal. Map world xz to texels at one texel per T.TILE over the camp ground AABB (yard plus grass pads). Dungeon RT: no sun. Size follows the live stream ring. Ambient comes from the env kit only so pits stay dark.
 
 Torch placement: at most one per room unless a crystal or campfire already lights it. Halls only at doorways, junctions, and dead ends. Hard cap on sources in the live ring. The bracket stays on the interior wall. Flame is code VFX on a Y-billboard (shader or particles), organic and random. No flame sheet. No flicker system. Source sits on the floor in front of the bracket, not inside the wall. Torches spawn and despawn with the geo chunk.
 
