@@ -128,21 +128,20 @@ static func skip_drain(host: CanvasLayer) -> void:
 static func finish(host: CanvasLayer) -> void:
 	if host.draining:
 		return
+	if not host.open:
+		return
 	RecapBars.hide_tip(host)
 	host.open = false
-	App.ui_open = true
-	host.get_tree().paused = false
+	host.visible = false
 	host.set_process(false)
+	UiSession.close(host)
 	App.prog.lose_unextracted()
 	App.save_now()
 	if App.playtest and App.playtest.has_method("consume_recap") and App.playtest.consume_recap():
-		host.visible = false
-		App.ui_open = false
 		return
 	App.wake_pending = true
 	if App.present and App.present.has_method("cover_wake"):
 		App.present.cover_wake()
-	host.visible = false
 	App.go_camp()
 
 static func mark_starting(host: CanvasLayer) -> void:

@@ -44,13 +44,20 @@ func _ready() -> void:
 		ensure_dummy()
 	_hud()
 	_music()
-	if App.wake_pending:
+	var hold_wake: bool = (
+		App.present != null
+		and bool(App.present.visible)
+		and App.present.has_method("release_wake")
+	)
+	if App.wake_pending or hold_wake:
 		App.wake_pending = false
 		if App.recap:
 			App.recap.visible = false
 			App.recap.open = false
 		App.ui_open = false
-		if App.present and App.present.has_method("release_wake"):
+		if App.get_tree():
+			App.get_tree().paused = false
+		if hold_wake:
 			App.present.release_wake()
 		elif App.present and App.present.has_method("play_wake"):
 			App.present.play_wake()
