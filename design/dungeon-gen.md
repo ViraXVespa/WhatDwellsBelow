@@ -1,7 +1,7 @@
 # Dungeon — generation and placement
 
 Status: binding design + live snapshot  
-Read when: MST loops, deadend termini, hall widths, size rebalance ledger
+Read when: MST loops, deadend termini, hall widths, size rebalance ledger, fillet raster, walkable solid, void rim, outline
 
 
 ## Overall structure

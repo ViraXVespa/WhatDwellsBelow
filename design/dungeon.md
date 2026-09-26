@@ -11,7 +11,7 @@ Gen keeps the 1 m carve for rooms, MST, halls, and placement. Gen owns the post-
 
 | Job | Open |
 |-----|------|
-| MST loops, deadend termini, hall widths, size rebalance ledger | `design/dungeon-gen.md` |
+| MST loops, deadend termini, hall widths, size rebalance ledger, fillet raster, walkable solid, void rim, outline | `design/dungeon-gen.md` |
 | PREPARE plaque, extraction clerks, stair hold, reveal disk | `design/dungeon-gates.md` |
 | transport decades, warp silence, spur length | `design/dungeon-crystals.md` |
 | RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo | `design/dungeon-stream.md` |
