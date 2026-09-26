@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.4.20",
+			"points": [
+				{
+					"text": "Add `scripts/graphics/`: `env_kit.gd` (WorldEnvironment + sun), `nearest_mat.gd` (nearest-filter material), `mm_emit.gd` (shared MultiMesh emit), `wrap_shader.gd` (cached hub roof / awning / tarp shader)."
+				},
+				{
+					"text": "Hub (`camp_build.gd`, `camp_build_mesh.gd`), dungeon (`dungeon_geo.gd`, `dungeon_geo_stream.gd`), and `foundation.gd` call those helpers with their existing literals; drop unused `mm_planes` / `mm_boxes`."
+				},
+				{
+					"text": "Move the floor minimap and fog reveal out of `dungeon_geo.gd` into `scripts/world/dungeon_minimap.gd`; `dungeon.gd` keeps `_map`, `_redraw_map`, `_reveal_around`."
+				},
+				{
+					"text": "Same look and behavior; no new numbers."
+				}
+			],
+			"summary": "Graphics helpers shared; minimap has its own file."
+		},
+		{
 			"label": "0.4.19",
 			"points": [
 				{
