@@ -83,9 +83,6 @@ static func note_prop(node: Node) -> void:
 	if not _props.has(node):
 		_props.append(node)
 	_plan_dirty = true
-	var host: Node = node.get_parent()
-	if host != null and host.get("data") != null:
-		maintain(host)
 
 
 static func drop_prop(node: Node) -> void:
@@ -141,7 +138,7 @@ static func _publish(
 	lights: Array,
 	hub_open: bool
 ) -> void:
-	var img: Image = Image.create(tw, th, false, Image.FORMAT_RGBA8)
+	var img: Image = Image.create(tw * Stamp.SUB, th * Stamp.SUB, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 1))
 	var use: PackedByteArray = occ
 	if hub_open:
@@ -367,22 +364,34 @@ static func _push() -> void:
 
 
 static func sample_xz(world: Vector2) -> Color:
-	# Same luv the floor and wall shaders already use. Nearest texel.
+	# Same luv as the floor and wall shaders. Bilinear across texels.
 	if _img == null:
 		return Color.WHITE
 	var sp: Vector2 = span
 	if sp.x < 0.001 or sp.y < 0.001:
 		return Color.WHITE
-	var luv: Vector2 = (world - origin) / sp
 	var w: int = _img.get_width()
 	var h: int = _img.get_height()
 	if w < 1 or h < 1:
 		return Color.WHITE
+	var luv: Vector2 = (world - origin) / sp
 	var u: float = clampf(luv.x, 0.0, 1.0)
 	var v: float = clampf(luv.y, 0.0, 1.0)
-	var tx: int = mini(int(floor(u * float(w))), w - 1)
-	var ty: int = mini(int(floor(v * float(h))), h - 1)
-	return _img.get_pixel(tx, ty)
+	var max_x: float = maxf(float(w) - 1.0001, 0.0)
+	var max_y: float = maxf(float(h) - 1.0001, 0.0)
+	var px: float = clampf(u * float(w) - 0.5, 0.0, max_x)
+	var py: float = clampf(v * float(h) - 0.5, 0.0, max_y)
+	var x0: int = int(floor(px))
+	var y0: int = int(floor(py))
+	var x1: int = mini(x0 + 1, w - 1)
+	var y1: int = mini(y0 + 1, h - 1)
+	var fx: float = px - float(x0)
+	var fy: float = py - float(y0)
+	var c00: Color = _img.get_pixel(x0, y0)
+	var c10: Color = _img.get_pixel(x1, y0)
+	var c01: Color = _img.get_pixel(x0, y1)
+	var c11: Color = _img.get_pixel(x1, y1)
+	return c00.lerp(c10, fx).lerp(c01.lerp(c11, fx), fy)
 
 
 static func floor_open(world: Vector2) -> bool:

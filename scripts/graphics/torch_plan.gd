@@ -50,6 +50,7 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 			continue
 		used[floor_cell] = true
 		out.append(site)
+	var mouths: Dictionary = {}
 	for y in range(1, map_h - 1):
 		for x in range(1, map_w - 1):
 			var cell: Vector2i = Vector2i(x, y)
@@ -57,17 +58,52 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 				continue
 			if grid[y * map_w + x] != Gen.FLOOR:
 				continue
-			var deg: int = _degree(grid, map_w, map_h, cell)
-			var mouth: bool = _touches_room(inside, cell)
-			if deg != 1 and deg < 3 and not mouth:
+			if _touches_room(inside, cell):
+				mouths[cell] = true
+	var seen: Dictionary = {}
+	var keys: Array = mouths.keys()
+	for i in keys.size():
+		var start: Vector2i = keys[i]
+		if seen.has(start):
+			continue
+		var run: Array[Vector2i] = []
+		var q: Array[Vector2i] = [start]
+		seen[start] = true
+		var head: int = 0
+		while head < q.size():
+			var cur: Vector2i = q[head]
+			head += 1
+			run.append(cur)
+			for d: Vector2i in DIRS:
+				var nxt: Vector2i = cur + d
+				if mouths.has(nxt) and not seen.has(nxt):
+					seen[nxt] = true
+					q.append(nxt)
+		var door: Vector2i = _run_pick(run, facing)
+		if door.x < 0 or _taken(used, door):
+			continue
+		var hall: Dictionary = _site(facing, door)
+		if hall.is_empty():
+			continue
+		used[door] = true
+		out.append(hall)
+	for y2 in range(1, map_h - 1):
+		for x2 in range(1, map_w - 1):
+			var hall_cell: Vector2i = Vector2i(x2, y2)
+			if inside.has(hall_cell) or mouths.has(hall_cell):
 				continue
-			if _taken(used, cell):
+			if grid[y2 * map_w + x2] != Gen.FLOOR:
 				continue
-			var hall: Dictionary = _site(facing, cell)
-			if hall.is_empty():
+			var deg: int = _degree(grid, map_w, map_h, hall_cell)
+			if deg != 1 and deg < 3:
 				continue
-			used[cell] = true
-			out.append(hall)
+			if _taken(used, hall_cell):
+				continue
+			var spur: Dictionary = _site(facing, hall_cell)
+			if spur.is_empty():
+				continue
+			used[hall_cell] = true
+			out.append(spur)
 	return out
 
 
@@ -84,8 +120,11 @@ static func _face_map(grid: PackedByteArray, map_w: int, map_h: int) -> Dictiona
 	var cells: Array[Vector2i] = []
 	for y in map_h:
 		for x in map_w:
-			if grid[y * map_w + x] != Gen.FLOOR:
-				cells.append(Vector2i(x, y))
+			if grid[y * map_w + x] == Gen.FLOOR:
+				continue
+			if not _touches_floor(grid, map_w, map_h, x, y):
+				continue
+			cells.append(Vector2i(x, y))
 	var runs: Array[Dictionary] = WallRects.faces(grid, map_w, map_h, cells)
 	var by_floor: Dictionary = {}
 	for run in runs:
@@ -97,9 +136,14 @@ static func _face_map(grid: PackedByteArray, map_w: int, map_h: int) -> Dictiona
 		for k in length:
 			var wall: Vector2i = origin + Vector2i(along.x * k, along.y * k)
 			var floor_cell: Vector2i = wall + n
+			var is_end: bool = k == 0 or k == length - 1
 			if by_floor.has(floor_cell):
-				continue
-			by_floor[floor_cell] = {"wx": wall.x, "wz": wall.y, "nx": n.x, "nz": n.y}
+				var prev: Dictionary = by_floor[floor_cell]
+				if bool(prev.get("end", false)) or not is_end:
+					continue
+			by_floor[floor_cell] = {
+				"wx": wall.x, "wz": wall.y, "nx": n.x, "nz": n.y, "end": is_end,
+			}
 	return by_floor
 
 
@@ -126,6 +170,9 @@ static func _room_floor(
 				continue
 			if not facing.has(Vector2i(x, y)):
 				continue
+			var hit: Dictionary = facing[Vector2i(x, y)]
+			if not bool(hit.get("end", false)):
+				continue
 			var score: int = absi(x - cx) + absi(y - cy)
 			var better: bool = score < best_s
 			if not better and score == best_s and best.x >= 0:
@@ -140,6 +187,8 @@ static func _site(facing: Dictionary, floor_cell: Vector2i) -> Dictionary:
 	if not facing.has(floor_cell):
 		return {}
 	var hit: Dictionary = facing[floor_cell]
+	if not bool(hit.get("end", false)):
+		return {}
 	return {
 		"fx": floor_cell.x,
 		"fz": floor_cell.y,
@@ -148,6 +197,17 @@ static func _site(facing: Dictionary, floor_cell: Vector2i) -> Dictionary:
 		"nx": int(hit["nx"]),
 		"nz": int(hit["nz"]),
 	}
+
+
+static func _touches_floor(grid: PackedByteArray, map_w: int, map_h: int, x: int, y: int) -> bool:
+	for d: Vector2i in DIRS:
+		var nx: int = x + d.x
+		var ny: int = y + d.y
+		if nx < 0 or ny < 0 or nx >= map_w or ny >= map_h:
+			continue
+		if grid[ny * map_w + nx] == Gen.FLOOR:
+			return true
+	return false
 
 
 static func _degree(grid: PackedByteArray, map_w: int, map_h: int, cell: Vector2i) -> int:
@@ -160,6 +220,21 @@ static func _degree(grid: PackedByteArray, map_w: int, map_h: int, cell: Vector2
 		if grid[ny * map_w + nx] == Gen.FLOOR:
 			n += 1
 	return n
+
+
+static func _run_pick(run: Array[Vector2i], facing: Dictionary) -> Vector2i:
+	var mid: int = int(float(run.size() - 1) / 2.0)
+	var pick: Vector2i = Vector2i(-1, -1)
+	var best: int = 1 << 30
+	for i in run.size():
+		var cell: Vector2i = run[i]
+		if not facing.has(cell):
+			continue
+		var score: int = absi(i - mid)
+		if score < best:
+			best = score
+			pick = cell
+	return pick
 
 
 static func _touches_room(inside: Dictionary, cell: Vector2i) -> bool:

@@ -1,15 +1,33 @@
 extends Node
 
-## Feet tint from the light RT, plus one floor squash of the current frame.
+## Feet tint from the light RT. Floor mark is the current frame, near-black, hinged at the feet.
 
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
-const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
+
+const SHADE := """
+shader_type spatial;
+render_mode unshaded, cull_disabled, blend_mix, depth_draw_opaque;
+uniform sampler2D albedo_tex : source_color, filter_nearest;
+uniform vec4 shade = vec4(0.02, 0.02, 0.02, 0.32);
+
+void fragment() {
+	vec4 tex = texture(albedo_tex, UV);
+	if (tex.a < 0.2) {
+		discard;
+	}
+	ALBEDO = shade.rgb;
+	ALPHA = shade.a;
+}
+"""
+
+static var _shade: Shader
 
 var spr: Sprite3D
-var quad: Sprite3D
+var mark: MeshInstance3D
 var _game: Color = Color.WHITE
 var _sent: Color = Color(-1.0, -1.0, -1.0, -1.0)
+var _key: String = ""
 
 
 static func bind(body: Node3D, sticker: Sprite3D) -> void:
@@ -25,18 +43,12 @@ static func bind(body: Node3D, sticker: Sprite3D) -> void:
 
 
 func _ready() -> void:
-	var q: Sprite3D = Sprite3D.new()
-	q.centered = true
-	q.shaded = false
-	q.double_sided = true
-	q.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-	q.axis = Vector3.AXIS_Y
-	q.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	q.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	q.render_priority = 0
-	q.visible = false
-	quad = SpriteFilt.decorate(q)
-	add_child(quad)
+	var mesh_node: MeshInstance3D = MeshInstance3D.new()
+	mesh_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mesh_node.material_override = _mat()
+	mesh_node.visible = false
+	mark = mesh_node
+	add_child(mark)
 
 
 func _process(_delta: float) -> void:
@@ -45,7 +57,7 @@ func _process(_delta: float) -> void:
 		return
 	var body: Node = get_parent()
 	if body != null and body.get("dead") == true:
-		quad.visible = false
+		mark.visible = false
 		return
 	var host: Node3D = body as Node3D
 	if host == null:
@@ -67,70 +79,102 @@ func _tint(host: Node3D) -> void:
 
 func _lay(host: Node3D) -> void:
 	if spr.texture == null or not spr.visible:
-		quad.visible = false
+		mark.visible = false
 		return
 	var feet: Vector2 = Vector2(host.global_position.x, host.global_position.z)
 	var hit: Dictionary = LightRt.nearest_cast(feet)
-	if not hit.get("ok", false):
-		quad.visible = false
+	if not bool(hit.get("ok", false)) or not LightRt.floor_open(feet):
+		mark.visible = false
 		return
-	var src: Vector2 = hit["xz"]
-	var dist: float = float(hit["dist"])
-	var reach: float = float(hit["reach"])
-	var off: Vector2 = _offset(feet, src, dist, reach)
-	var place: Vector2 = feet + off
-	if not LightRt.floor_open(place):
-		if not LightRt.floor_open(feet):
-			quad.visible = false
-			return
-		off = Vector2.ZERO
-		place = feet
-	_copy_frame()
-	quad.global_position = Vector3(place.x, T.FLOOR_Y + T.FEET_LIFT, place.y)
-	quad.modulate = _mix(LightRt.sample_xz(place))
-	quad.visible = true
-
-
-func _offset(feet: Vector2, src: Vector2, dist: float, reach: float) -> Vector2:
-	# One tile away at the rim of the source, none when standing on it.
-	if dist <= 0.001 or reach <= 0.001:
-		return Vector2.ZERO
-	var away: Vector2 = (feet - src) / dist
-	return away * ((dist / reach) * T.TILE)
+	_sync_frame()
+	mark.global_position = Vector3(feet.x, T.FLOOR_Y + T.FEET_LIFT, feet.y)
+	mark.global_rotation = Vector3.ZERO
+	mark.visible = true
 
 
 func _mix(sample: Color) -> Color:
 	return Color(_game.r * sample.r, _game.g * sample.g, _game.b * sample.b, _game.a)
 
 
-func _copy_frame() -> void:
-	if _same_frame():
+func _sync_frame() -> void:
+	var rect: Rect2 = _frame_rect()
+	var key: String = "%s|%s|%s|%s|%s" % [
+		spr.texture.get_rid().get_id(), rect, spr.flip_h, spr.flip_v, spr.pixel_size,
+	]
+	if key == _key and mark.mesh != null:
 		return
-	quad.texture = spr.texture
-	quad.hframes = maxi(1, spr.hframes)
-	quad.vframes = maxi(1, spr.vframes)
-	var max_frame: int = quad.hframes * quad.vframes - 1
-	quad.frame = clampi(spr.frame, 0, max_frame)
-	quad.region_enabled = spr.region_enabled
-	quad.region_rect = spr.region_rect
-	quad.flip_h = spr.flip_h
-	quad.flip_v = spr.flip_v
-	quad.pixel_size = spr.pixel_size
-	quad.alpha_cut = spr.alpha_cut
-	quad.alpha_scissor_threshold = spr.alpha_scissor_threshold
+	_key = key
+	var mat: ShaderMaterial = mark.material_override as ShaderMaterial
+	if mat != null:
+		mat.set_shader_parameter("albedo_tex", spr.texture)
+	mark.mesh = _flat_mesh(rect)
 
 
-func _same_frame() -> bool:
-	if quad.texture != spr.texture:
-		return false
-	if quad.frame != spr.frame or quad.hframes != spr.hframes or quad.vframes != spr.vframes:
-		return false
-	if quad.flip_h != spr.flip_h or quad.flip_v != spr.flip_v:
-		return false
-	if quad.pixel_size != spr.pixel_size:
-		return false
-	if quad.region_enabled != spr.region_enabled or quad.region_rect != spr.region_rect:
-		return false
-	if quad.alpha_cut != spr.alpha_cut:
-		return false
-	return quad.alpha_scissor_threshold == spr.alpha_scissor_threshold
+func _frame_rect() -> Rect2:
+	var tex_w: float = float(maxi(1, spr.texture.get_width()))
+	var tex_h: float = float(maxi(1, spr.texture.get_height()))
+	if spr.region_enabled:
+		return spr.region_rect
+	var hf: int = maxi(1, spr.hframes)
+	var vf: int = maxi(1, spr.vframes)
+	var fw: float = tex_w / float(hf)
+	var fh: float = tex_h / float(vf)
+	var frame: int = clampi(spr.frame, 0, hf * vf - 1)
+	var col: int = frame % hf
+	var row: int = int(float(frame) / float(hf))
+	return Rect2(float(col) * fw, float(row) * fh, fw, fh)
+
+
+func _flat_mesh(rect: Rect2) -> ArrayMesh:
+	var tex_w: float = float(maxi(1, spr.texture.get_width()))
+	var tex_h: float = float(maxi(1, spr.texture.get_height()))
+	var w: float = spr.pixel_size * rect.size.x
+	var h: float = spr.pixel_size * rect.size.y
+	var u0: float = rect.position.x / tex_w
+	var v0: float = rect.position.y / tex_h
+	var u1: float = (rect.position.x + rect.size.x) / tex_w
+	var v1: float = (rect.position.y + rect.size.y) / tex_h
+	if spr.flip_h:
+		var swap_u: float = u0
+		u0 = u1
+		u1 = swap_u
+	if spr.flip_v:
+		var swap_v: float = v0
+		v0 = v1
+		v1 = swap_v
+	var half_w: float = w * 0.5
+	var verts: PackedVector3Array = PackedVector3Array()
+	var uvs: PackedVector2Array = PackedVector2Array()
+	var indices: PackedInt32Array = PackedInt32Array()
+	verts.append(Vector3(-half_w, 0.0, h))
+	verts.append(Vector3(half_w, 0.0, h))
+	verts.append(Vector3(half_w, 0.0, 0.0))
+	verts.append(Vector3(-half_w, 0.0, 0.0))
+	uvs.append(Vector2(u0, v0))
+	uvs.append(Vector2(u1, v0))
+	uvs.append(Vector2(u1, v1))
+	uvs.append(Vector2(u0, v1))
+	indices.append(0)
+	indices.append(2)
+	indices.append(1)
+	indices.append(0)
+	indices.append(3)
+	indices.append(2)
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var mesh: ArrayMesh = ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
+
+
+static func _mat() -> ShaderMaterial:
+	if _shade == null:
+		var sh: Shader = Shader.new()
+		sh.code = SHADE
+		_shade = sh
+	var mat: ShaderMaterial = ShaderMaterial.new()
+	mat.shader = _shade
+	return mat

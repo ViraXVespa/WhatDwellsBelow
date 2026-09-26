@@ -4,6 +4,7 @@ extends Object
 
 const Gen := preload("res://scripts/dungeon/gen.gd")
 
+const SUB := 4
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
 
@@ -33,7 +34,9 @@ static func occupancy(
 
 
 static func paint(img: Image, occ: PackedByteArray, tw: int, th: int, lights: Array) -> void:
-	var n: int = tw * th
+	var iw: int = tw * SUB
+	var ih: int = th * SUB
+	var n: int = iw * ih
 	var rr: PackedFloat32Array = PackedFloat32Array()
 	var gg: PackedFloat32Array = PackedFloat32Array()
 	var bb: PackedFloat32Array = PackedFloat32Array()
@@ -46,9 +49,11 @@ static func paint(img: Image, occ: PackedByteArray, tw: int, th: int, lights: Ar
 	for src in lights:
 		_disc(rr, gg, bb, occ, tw, th, src)
 	_walls(rr, gg, bb, occ, tw, th)
-	for y in th:
-		for x in tw:
-			var i: int = y * tw + x
+	for y in ih:
+		for x in iw:
+			var i: int = y * iw + x
+			if rr[i] <= 0.0 and gg[i] <= 0.0 and bb[i] <= 0.0:
+				continue
 			img.set_pixel(x, y, Color(rr[i], gg[i], bb[i], 1.0))
 
 
@@ -99,13 +104,9 @@ static func _disc(
 		var dx: float = float(c.x - sx)
 		var dy: float = float(c.y - sy)
 		var dist: float = sqrt(dx * dx + dy * dy)
-		if dist > reach:
+		if dist > reach + 1.0:
 			continue
-		var fall: float = energy * (1.0 - dist / reach)
-		var i: int = c.y * tw + c.x
-		rr[i] = minf(rr[i] + col.r * fall, 1.0)
-		gg[i] = minf(gg[i] + col.g * fall, 1.0)
-		bb[i] = minf(bb[i] + col.b * fall, 1.0)
+		_paint_tile(rr, gg, bb, tw, c.x, c.y, sx, sy, reach, energy, col)
 		for d: Vector2i in DIRS:
 			var n: Vector2i = c + d
 			if n.x < 0 or n.y < 0 or n.x >= tw or n.y >= th:
@@ -116,10 +117,42 @@ static func _disc(
 				continue
 			var ndx: float = float(n.x - sx)
 			var ndy: float = float(n.y - sy)
-			if sqrt(ndx * ndx + ndy * ndy) > reach:
+			if sqrt(ndx * ndx + ndy * ndy) > reach + 1.0:
 				continue
 			seen[n] = true
 			q.append(n)
+
+
+static func _paint_tile(
+	rr: PackedFloat32Array,
+	gg: PackedFloat32Array,
+	bb: PackedFloat32Array,
+	tw: int,
+	tile_x: int,
+	tile_y: int,
+	src_x: int,
+	src_y: int,
+	reach: float,
+	energy: float,
+	col: Color
+) -> void:
+	var iw: int = tw * SUB
+	var cx: float = float(src_x) + 0.5
+	var cz: float = float(src_y) + 0.5
+	for sy in SUB:
+		for sx in SUB:
+			var px: int = tile_x * SUB + sx
+			var py: int = tile_y * SUB + sy
+			var wx: float = (float(px) + 0.5) / float(SUB)
+			var wz: float = (float(py) + 0.5) / float(SUB)
+			var dist: float = sqrt((wx - cx) * (wx - cx) + (wz - cz) * (wz - cz))
+			if dist > reach:
+				continue
+			var fall: float = energy * (1.0 - dist / reach)
+			var i: int = py * iw + px
+			rr[i] = minf(rr[i] + col.r * fall, 1.0)
+			gg[i] = minf(gg[i] + col.g * fall, 1.0)
+			bb[i] = minf(bb[i] + col.b * fall, 1.0)
 
 
 static func _walls(
@@ -130,13 +163,11 @@ static func _walls(
 	tw: int,
 	th: int
 ) -> void:
-	var sr: PackedFloat32Array = rr.duplicate()
-	var sg: PackedFloat32Array = gg.duplicate()
-	var sb: PackedFloat32Array = bb.duplicate()
+	var iw: int = tw * SUB
 	for y in th:
 		for x in tw:
-			var i: int = y * tw + x
-			if occ[i] == 0:
+			var ti: int = y * tw + x
+			if occ[ti] == 0:
 				continue
 			var br: float = 0.0
 			var bg: float = 0.0
@@ -146,13 +177,49 @@ static func _walls(
 				var ny: int = y + d.y
 				if nx < 0 or ny < 0 or nx >= tw or ny >= th:
 					continue
-				var j: int = ny * tw + nx
-				if occ[j] != 0:
+				if occ[ny * tw + nx] != 0:
 					continue
-				br = maxf(br, sr[j])
-				bg = maxf(bg, sg[j])
-				bv = maxf(bv, sb[j])
-			if br > 0.0 or bg > 0.0 or bv > 0.0:
-				rr[i] = br
-				gg[i] = bg
-				bb[i] = bv
+				var edge: Vector3 = _edge_max(rr, gg, bb, iw, nx, ny, -d)
+				br = maxf(br, edge.x)
+				bg = maxf(bg, edge.y)
+				bv = maxf(bv, edge.z)
+			if br <= 0.0 and bg <= 0.0 and bv <= 0.0:
+				continue
+			for sy in SUB:
+				for sx in SUB:
+					var i: int = (y * SUB + sy) * iw + x * SUB + sx
+					rr[i] = br
+					gg[i] = bg
+					bb[i] = bv
+
+
+static func _edge_max(
+	rr: PackedFloat32Array,
+	gg: PackedFloat32Array,
+	bb: PackedFloat32Array,
+	iw: int,
+	tile_x: int,
+	tile_y: int,
+	toward: Vector2i
+) -> Vector3:
+	var br: float = 0.0
+	var bg: float = 0.0
+	var bv: float = 0.0
+	var sx0: int = 0
+	var sy0: int = 0
+	if toward.x > 0:
+		sx0 = SUB - 1
+	elif toward.y > 0:
+		sy0 = SUB - 1
+	for k in SUB:
+		var sx: int = sx0
+		var sy: int = sy0
+		if toward.x != 0:
+			sy = k
+		else:
+			sx = k
+		var i: int = (tile_y * SUB + sy) * iw + tile_x * SUB + sx
+		br = maxf(br, rr[i])
+		bg = maxf(bg, gg[i])
+		bv = maxf(bv, bb[i])
+	return Vector3(br, bg, bv)

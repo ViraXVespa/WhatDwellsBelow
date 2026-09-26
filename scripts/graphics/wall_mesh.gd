@@ -41,12 +41,13 @@ static func _push(run: Dictionary, verts: PackedVector3Array, norms: PackedVecto
 	for i in range(corners.size()):
 		verts.append(corners[i])
 		norms.append(n)
+	# Clockwise from the floor. Matches BoxMesh: that side is the front face.
 	indices.append(base)
+	indices.append(base + 2)
 	indices.append(base + 1)
-	indices.append(base + 2)
 	indices.append(base)
-	indices.append(base + 2)
 	indices.append(base + 3)
+	indices.append(base + 2)
 
 
 static func _corners(n2: Vector2i, x0: float, x1: float, y0: float, y1: float, z0: float, z1: float) -> PackedVector3Array:

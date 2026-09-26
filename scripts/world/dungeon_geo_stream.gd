@@ -118,14 +118,25 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 	var y1 := mini(h, oy + CHUNK)
 	var floors: Array = []
 	var wall_cells: Array[Vector2i] = []
+	var seen_wall: Dictionary = {}
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 	for y in range(oy, y1):
 		for x in range(ox, x1):
-			if grid[Gen.idx(x, y, w)] == Gen.FLOOR:
-				floors.append(Vector3(float(x) + 0.5, T.FLOOR_Y, float(y) + 0.5))
+			if grid[Gen.idx(x, y, w)] != Gen.FLOOR:
 				continue
-			if not wall_faces_floor(grid, w, h, x, y):
-				continue
-			wall_cells.append(Vector2i(x, y))
+			floors.append(Vector3(float(x) + 0.5, T.FLOOR_Y, float(y) + 0.5))
+			for n: Vector2i in dirs:
+				var nx: int = x + n.x
+				var ny: int = y + n.y
+				if nx < 0 or ny < 0 or nx >= w or ny >= h:
+					continue
+				if grid[Gen.idx(nx, ny, w)] == Gen.FLOOR:
+					continue
+				var wc: Vector2i = Vector2i(nx, ny)
+				if seen_wall.has(wc):
+					continue
+				seen_wall[wc] = true
+				wall_cells.append(wc)
 	if floors.is_empty() and wall_cells.is_empty():
 		job.state = "cleared"
 		return
@@ -138,24 +149,51 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 		if host.floor_mm == null:
 			host.floor_mm = fm
 	if not wall_cells.is_empty():
-		var runs: Array[Dictionary] = WallRects.faces(grid, w, h, wall_cells)
+		var runs: Array[Dictionary] = _faces_on_chunk(grid, w, h, wall_cells, ox, oy, x1, y1)
 		if not runs.is_empty():
 			var wall_inst: MeshInstance3D = MeshInstance3D.new()
 			wall_inst.mesh = WallMesh.from_faces(runs)
 			wall_inst.material_override = host.wall_mat
+			wall_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			root.add_child(wall_inst)
-	add_collision(root, wall_cells)
+	var collide: Array[Vector2i] = []
+	for wc2: Vector2i in wall_cells:
+		if wc2.x < ox or wc2.y < oy or wc2.x >= x1 or wc2.y >= y1:
+			continue
+		collide.append(wc2)
+	add_collision(root, collide)
 	job.node = root
 	job.state = "live"
 
 
-static func wall_faces_floor(grid: PackedByteArray, w: int, h: int, x: int, y: int) -> bool:
-	for n in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-		var nx: int = x + n.x
-		var ny: int = y + n.y
-		if nx < 0 or ny < 0 or nx >= w or ny >= h:
-			continue
-		if grid[Gen.idx(nx, ny, w)] == Gen.FLOOR:
+static func _faces_on_chunk(
+	grid: PackedByteArray,
+	w: int,
+	h: int,
+	wall_cells: Array[Vector2i],
+	ox: int,
+	oy: int,
+	x1: int,
+	y1: int
+) -> Array[Dictionary]:
+	var runs: Array[Dictionary] = WallRects.faces(grid, w, h, wall_cells)
+	var kept: Array[Dictionary] = []
+	for run: Dictionary in runs:
+		if _run_looks_in(run, ox, oy, x1, y1):
+			kept.append(run)
+	return kept
+
+
+static func _run_looks_in(run: Dictionary, ox: int, oy: int, x1: int, y1: int) -> bool:
+	var origin: Vector2i = run["origin"] as Vector2i
+	var span_cells: Vector2i = run["size"] as Vector2i
+	var n2: Vector2i = run["normal"] as Vector2i
+	var along: Vector2i = Vector2i(1, 0) if span_cells.x >= span_cells.y else Vector2i(0, 1)
+	var length: int = maxi(span_cells.x, span_cells.y)
+	for k in length:
+		var wall: Vector2i = origin + Vector2i(along.x * k, along.y * k)
+		var floor_cell: Vector2i = wall + n2
+		if floor_cell.x >= ox and floor_cell.y >= oy and floor_cell.x < x1 and floor_cell.y < y1:
 			return true
 	return false
 

@@ -5,26 +5,32 @@ extends Node3D
 const BIBLE := "res://assets/sprites/props/torch_bracket_bible.png"
 const FLAME := """
 shader_type spatial;
-render_mode unshaded, cull_disabled, blend_mix, depth_draw_opaque;
+render_mode unshaded, cull_disabled, blend_add, depth_draw_opaque;
 uniform float flame_seed = 0.0;
 varying vec2 uv;
 
 void vertex() {
 	uv = UV;
+	float flick = 0.82 + 0.22 * sin(TIME * 17.0 + flame_seed);
+	float tall = 0.86 + 0.22 * sin(TIME * 11.0 + flame_seed * 2.1);
+	VERTEX.x *= flick;
+	VERTEX.y *= tall;
 }
 
 void fragment() {
 	vec2 p = uv * 2.0 - 1.0;
-	float wob = sin(p.y * 5.0 + flame_seed * 11.0 + TIME * 1.4) * 0.07;
-	p.x += wob * (0.4 + p.y);
-	float body = 1.0 - smoothstep(0.12, 0.82, length(vec2(p.x * 1.35, (p.y - 0.12) * 0.8)));
-	float a = body;
-	if (a < 0.2) {
+	float wob = sin(p.y * 6.0 + flame_seed + TIME * 13.0) * 0.16;
+	p.x += wob * (0.35 + p.y);
+	float body = 1.0 - smoothstep(0.06, 0.72, length(vec2(p.x * 1.45, (p.y - 0.08) * 0.7)));
+	float flick = 0.55 + 0.45 * abs(sin(TIME * 23.0 + flame_seed * 3.0));
+	float a = body * flick;
+	if (a < 0.06) {
 		discard;
 	}
-	vec3 col = mix(vec3(1.0, 0.82, 0.28), vec3(0.75, 0.18, 0.04), clamp(p.y * 0.55 + 0.45, 0.0, 1.0));
-	ALBEDO = col;
-	ALPHA = 1.0;
+	float hot = clamp(p.y * 0.55 + 0.35, 0.0, 1.0);
+	vec3 col = mix(vec3(1.0, 0.92, 0.45), vec3(0.95, 0.28, 0.04), hot);
+	ALBEDO = col * (0.65 + 0.55 * flick);
+	ALPHA = a;
 }
 """
 
@@ -82,20 +88,10 @@ static func _clear(root: Node) -> void:
 static func _bracket_pos(site: Dictionary) -> Vector3:
 	var fx: int = int(site["fx"])
 	var fz: int = int(site["fz"])
-	var wx: int = int(site["wx"])
-	var wz: int = int(site["wz"])
 	var nx: int = int(site["nx"])
 	var nz: int = int(site["nz"])
-	var px: float = float(fx) + 0.5
-	var pz: float = float(fz) + 0.5
-	if nx > 0:
-		px = float(wx + 1) + 0.06
-	elif nx < 0:
-		px = float(wx) - 0.06
-	if nz > 0:
-		pz = float(wz + 1) + 0.06
-	elif nz < 0:
-		pz = float(wz) - 0.06
+	var px: float = float(fx) + 0.5 - float(nx) * 0.44
+	var pz: float = float(fz) + 0.5 - float(nz) * 0.44
 	return Vector3(px, 0.0, pz)
 
 
@@ -178,8 +174,8 @@ func _make_flame() -> MeshInstance3D:
 	mesh.mesh = _quad
 	mesh.material_override = mat
 	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var lift: float = 1.05
-	mesh.position = Vector3(float(_nx) * 0.1, lift, float(_nz) * 0.1)
+	var lift: float = 1.18
+	mesh.position = Vector3(float(_nx) * 0.12, lift, float(_nz) * 0.12)
 	return mesh
 
 

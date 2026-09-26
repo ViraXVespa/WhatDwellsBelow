@@ -16,7 +16,7 @@ static func shader() -> Shader:
 shader_type spatial;
 render_mode unshaded;
 uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_enable;
-uniform sampler2D light_tex : source_color, filter_nearest;
+uniform sampler2D light_tex : source_color, filter_linear;
 uniform vec2 uv_scale = vec2(1.0);
 uniform vec2 uv_off = vec2(0.0);
 uniform vec3 tint = vec3(1.0);
@@ -40,14 +40,24 @@ void fragment() {
 	vec3 quilt_tint = vec3(1.0);
 	if (nvar > 1.5) {
 		float pick = floor(h * nvar) / (nvar - 1.0);
-		quilt_tint = mix(vec3(0.86), vec3(1.08), pick);
+		quilt_tint = mix(vec3(0.98), vec3(1.02), pick);
 	}
 	vec2 uv = fract(xz * uv_scale + uv_off);
 	vec3 c = texture(albedo_tex, uv).rgb;
 	float worn = mix(1.0, mix(0.78, 1.0, h), clamp(wear, 0.0, 1.0));
 	vec2 span = max(light_span, vec2(0.001));
-	vec2 luv = (xz - light_origin) / span;
-	vec3 lit = texture(light_tex, luv).rgb;
+	vec2 luv = clamp((xz - light_origin) / span, vec2(0.0), vec2(1.0));
+	ivec2 ts = max(textureSize(light_tex, 0), ivec2(1));
+	vec2 max_p = max(vec2(ts) - vec2(1.0001), vec2(0.0));
+	vec2 p = clamp(luv * vec2(ts) - vec2(0.5), vec2(0.0), max_p);
+	vec2 fr = fract(p);
+	ivec2 i0 = ivec2(floor(p));
+	ivec2 i1 = min(i0 + ivec2(1), ts - ivec2(1));
+	vec3 s00 = texelFetch(light_tex, i0, 0).rgb;
+	vec3 s10 = texelFetch(light_tex, ivec2(i1.x, i0.y), 0).rgb;
+	vec3 s01 = texelFetch(light_tex, ivec2(i0.x, i1.y), 0).rgb;
+	vec3 s11 = texelFetch(light_tex, i1, 0).rgb;
+	vec3 lit = mix(mix(s00, s10, fr.x), mix(s01, s11, fr.x), fr.y);
 	ALBEDO = c * tint * quilt_tint * worn * lit;
 }
 """
