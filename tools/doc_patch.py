@@ -172,14 +172,27 @@ def write_changelog(root: Path, bullets: list[str], label: str | None = None, su
     if path.is_file():
         text = read_text(path)
         added = False
+        found = re.search(r"(?im)^Summary:", text)
+        insert_at = found.start() if found else len(text)
+        chunk = ""
         for bullet in incoming:
             line = f"- {bullet}"
             if line in text or bullet in text:
                 continue
-            if not text.endswith("\n"):
-                text += "\n"
-            text += line + "\n"
+            chunk += line + "\n"
             added = True
+        if chunk:
+            prefix = text[:insert_at]
+            suffix = text[insert_at:]
+            if prefix and not prefix.endswith("\n"):
+                prefix += "\n"
+            text = prefix + chunk
+            if suffix:
+                if not text.endswith("\n"):
+                    text += "\n"
+                if suffix.startswith("Summary:") and not text.endswith("\n\n"):
+                    text += "\n"
+                text += suffix
         if summary:
             text, sum_added = _ensure_summary(text, summary)
             added = added or sum_added
