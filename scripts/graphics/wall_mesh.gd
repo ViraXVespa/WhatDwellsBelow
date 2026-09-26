@@ -1,6 +1,7 @@
 extends Object
 
 ## Quads for WallRects.faces runs. One meter per cell. Visible side looks at the floor.
+## One top per wall cell. End caps only when that plane is not already a face.
 
 const T := preload("res://scripts/data/tunables.gd")
 
@@ -9,8 +10,17 @@ static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 	var verts: PackedVector3Array = PackedVector3Array()
 	var norms: PackedVector3Array = PackedVector3Array()
 	var indices: PackedInt32Array = PackedInt32Array()
+	var faced: Dictionary = {}
+	var topped: Dictionary = {}
+	var cells: Dictionary = {}
 	for run in runs:
-		_push(run, verts, norms, indices)
+		_mark_faces(run, faced)
+		_mark_cells(run, cells)
+	for run in runs:
+		_push_face(run, verts, norms, indices)
+		_push_top(run, topped, verts, norms, indices)
+		_push_ends(run, faced, verts, norms, indices)
+	_push_void(cells, faced, verts, norms, indices)
 	var mesh: ArrayMesh = ArrayMesh.new()
 	if verts.is_empty():
 		return mesh
@@ -23,7 +33,54 @@ static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 	return mesh
 
 
-static func _push(run: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, indices: PackedInt32Array) -> void:
+static func _push_void(cells: Dictionary, faced: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, indices: PackedInt32Array) -> void:
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	for key in cells.keys():
+		var cell: Vector2i = key
+		for n2 in dirs:
+			var next: Vector2i = cell + n2
+			if cells.has(next):
+				continue
+			var ni: int = _ni(n2)
+			if faced.has(Vector3i(cell.x, cell.y, ni)):
+				continue
+			faced[Vector3i(cell.x, cell.y, ni)] = true
+			var x0: float = float(cell.x)
+			var z0: float = float(cell.y)
+			var x1: float = x0 + 1.0
+			var z1: float = z0 + 1.0
+			_quad(_corners(n2, x0, x1, 0.0, T.WALL_H, z0, z1), Vector3(float(n2.x), 0.0, float(n2.y)), verts, norms, indices)
+
+
+static func _ni(n2: Vector2i) -> int:
+	if n2.x > 0:
+		return 0
+	if n2.x < 0:
+		return 1
+	if n2.y > 0:
+		return 2
+	return 3
+
+
+static func _mark_cells(run: Dictionary, cells: Dictionary) -> void:
+	var origin: Vector2i = run["origin"] as Vector2i
+	var span_cells: Vector2i = run["size"] as Vector2i
+	for z in range(origin.y, origin.y + span_cells.y):
+		for x in range(origin.x, origin.x + span_cells.x):
+			cells[Vector2i(x, z)] = true
+
+
+static func _mark_faces(run: Dictionary, faced: Dictionary) -> void:
+	var origin: Vector2i = run["origin"] as Vector2i
+	var span_cells: Vector2i = run["size"] as Vector2i
+	var n2: Vector2i = run["normal"] as Vector2i
+	var ni: int = _ni(n2)
+	for z in range(origin.y, origin.y + span_cells.y):
+		for x in range(origin.x, origin.x + span_cells.x):
+			faced[Vector3i(x, z, ni)] = true
+
+
+static func _push_face(run: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, indices: PackedInt32Array) -> void:
 	var origin: Vector2i = run["origin"] as Vector2i
 	var span_cells: Vector2i = run["size"] as Vector2i
 	var n2: Vector2i = run["normal"] as Vector2i
@@ -33,15 +90,77 @@ static func _push(run: Dictionary, verts: PackedVector3Array, norms: PackedVecto
 	var z0: float = float(origin.y)
 	var x1: float = x0 + float(span_cells.x)
 	var z1: float = z0 + float(span_cells.y)
+	var n: Vector3 = Vector3(float(n2.x), 0.0, float(n2.y))
+	_quad(_corners(n2, x0, x1, 0.0, T.WALL_H, z0, z1), n, verts, norms, indices)
+
+
+static func _push_top(run: Dictionary, topped: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, indices: PackedInt32Array) -> void:
+	var origin: Vector2i = run["origin"] as Vector2i
+	var span_cells: Vector2i = run["size"] as Vector2i
+	for z in range(origin.y, origin.y + span_cells.y):
+		for x in range(origin.x, origin.x + span_cells.x):
+			var key: Vector2i = Vector2i(x, z)
+			if topped.has(key):
+				continue
+			topped[key] = true
+			var x0: float = float(x)
+			var z0: float = float(z)
+			var x1: float = x0 + 1.0
+			var z1: float = z0 + 1.0
+			var y1: float = T.WALL_H
+			var top: PackedVector3Array = PackedVector3Array()
+			top.append(Vector3(x0, y1, z0))
+			top.append(Vector3(x1, y1, z0))
+			top.append(Vector3(x1, y1, z1))
+			top.append(Vector3(x0, y1, z1))
+			_quad(top, Vector3.UP, verts, norms, indices)
+
+
+static func _push_ends(run: Dictionary, faced: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, indices: PackedInt32Array) -> void:
+	var origin: Vector2i = run["origin"] as Vector2i
+	var span_cells: Vector2i = run["size"] as Vector2i
+	var n2: Vector2i = run["normal"] as Vector2i
+	if span_cells.x < 1 or span_cells.y < 1:
+		return
 	var y0: float = 0.0
 	var y1: float = T.WALL_H
-	var n: Vector3 = Vector3(float(n2.x), 0.0, float(n2.y))
-	var corners: PackedVector3Array = _corners(n2, x0, x1, y0, y1, z0, z1)
+	if absi(n2.x) > 0:
+		_end_row(origin.x, origin.x + span_cells.x, origin.y, Vector2i(0, -1), faced, y0, y1, verts, norms, indices)
+		_end_row(origin.x, origin.x + span_cells.x, origin.y + span_cells.y - 1, Vector2i(0, 1), faced, y0, y1, verts, norms, indices)
+	else:
+		_end_col(origin.y, origin.y + span_cells.y, origin.x, Vector2i(-1, 0), faced, y0, y1, verts, norms, indices)
+		_end_col(origin.y, origin.y + span_cells.y, origin.x + span_cells.x - 1, Vector2i(1, 0), faced, y0, y1, verts, norms, indices)
+
+
+static func _end_row(x0i: int, x1i: int, z: int, n2: Vector2i, faced: Dictionary, y0: float, y1: float, verts: PackedVector3Array, norms: PackedVector3Array, indices: PackedInt32Array) -> void:
+	var ni: int = _ni(n2)
+	for x in range(x0i, x1i):
+		if faced.has(Vector3i(x, z, ni)):
+			continue
+		var x0: float = float(x)
+		var x1: float = x0 + 1.0
+		var z0: float = float(z)
+		var z1: float = z0 + 1.0
+		_quad(_corners(n2, x0, x1, y0, y1, z0, z1), Vector3(0.0, 0.0, float(n2.y)), verts, norms, indices)
+
+
+static func _end_col(z0i: int, z1i: int, x: int, n2: Vector2i, faced: Dictionary, y0: float, y1: float, verts: PackedVector3Array, norms: PackedVector3Array, indices: PackedInt32Array) -> void:
+	var ni: int = _ni(n2)
+	for z in range(z0i, z1i):
+		if faced.has(Vector3i(x, z, ni)):
+			continue
+		var x0: float = float(x)
+		var x1: float = x0 + 1.0
+		var z0: float = float(z)
+		var z1: float = z0 + 1.0
+		_quad(_corners(n2, x0, x1, y0, y1, z0, z1), Vector3(float(n2.x), 0.0, 0.0), verts, norms, indices)
+
+
+static func _quad(corners: PackedVector3Array, n: Vector3, verts: PackedVector3Array, norms: PackedVector3Array, indices: PackedInt32Array) -> void:
 	var base: int = verts.size()
 	for i in range(corners.size()):
 		verts.append(corners[i])
 		norms.append(n)
-	# Clockwise from the floor. Matches BoxMesh: that side is the front face.
 	indices.append(base)
 	indices.append(base + 2)
 	indices.append(base + 1)
