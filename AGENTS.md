@@ -20,12 +20,15 @@ Navigation is only `design/routes.yaml`. `See also:` is forbidden.
 | Need | File |
 |------|------|
 | Law (web / Build) | `design/protocol.md` + `design/constraints.md` |
-| GDScript types / warnings / tabs / 10KB | `design/gdscript-law.md` |
+| GDScript types / warnings / tabs | `design/gdscript-law.md` |
 | Live code map (one system row) | `design/code-map.md` |
 | Numbers (when they change) | `design/tunables.md` |
 | Windows inventory / verify / write | pc-offload skill + `design/pc-offload.md` |
 
-Load cap: this file + the path file + (web / Build) the law pair + one topic door + one Job sibling + gates whose `when` matches. A second topic door only when the User names the owner. Do not fetch this file again. Do not open the topic index or `design/load-graph.md` unless the User named routing work.
+Load cap (implementation): this file + the path file + (web / Build) the law pair + one topic door + one Job sibling + gates whose `when` matches. A second topic door only when the User names the owner.
+Web / chat may read further live scripts and design files when the User named that work; the budget is turns, not tokens. That is not a license to implement two doors in one slice.
+Build gather stays thin (`list_xref`, planned `show_func`, one prove). 10KB ship floor is Bot (`design/gdscript-law.md`); Grok Build does not measure or cap-split.
+Do not fetch this file again. Do not open the topic index or `design/load-graph.md` unless the User named routing work.
 
 Pickup is git plus `_logs/sess/<Grok session id>/`. Fresh Build: this file, then `design/grok-build.md`. Pins are User-only.
 Build Imagine: `design/isolated-media.md` first. Web / chat and Grok Bot do not run Imagine.

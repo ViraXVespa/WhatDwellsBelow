@@ -8,7 +8,7 @@ If a path file is already loaded, stay on that path. Web / Bot leashes do not bi
 
 ## Core rules
 
-- Fresh web / Build: this file, `design/constraints.md`, then only the topic that matches the work. One system row in `design/code-map.md`. Do not walk `assets/` unless the task names sprites or audio. Do not start by archiving or rewriting the live path. Open `design/changelog/` only for a named pin, a revert, a named past build, or when the User asks what shipped.
+- Fresh web / Build: this file, `design/constraints.md`, then the topic that matches the work. Web may read further files for a clear picture of named work (turns, not tokens). Build gather stays thin. Implementation uses one topic door. One system row in `design/code-map.md` when editing live files. Do not walk `assets/` unless the task names sprites or audio. Do not start by archiving or rewriting the live path. Open `design/changelog/` only for a named pin, a revert, a named past build, or when the User asks what shipped.
 - Grok Bot does not follow that read list. Onboard is `BOT.md` plus `python tools/bot_status.py`, then one Job file.
 - Implement only the **game** systems this database requires. Do not invent skills, rarities, hub upgrades, meta-progression, or co-op scaffolding. Grok Build MAY add helpers and same-system APIs. A new cross-system owner or named-architecture replace is Build stop-and-propose.
 - Open numbers MAY start coherent. Expose every invented value in the secret debug menu and record it in `design/tunables.md`. Grok Bot MUST NOT invent numbers.
@@ -36,4 +36,4 @@ Numbers, formulas, enemy specifics, and set bonuses start in `design/tunables.md
 ## Loaded set
 
 Default: the agents file, this path file, and (web / Build) this file plus constraints.
-Cap: boot files + one topic door + one Job sibling + matching gates.
+Cap (implementation): boot files + one topic door + one Job sibling + matching gates. Web picture-reads do not expand what a slice may implement. Build gather stays catalog-thin.

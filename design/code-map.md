@@ -32,6 +32,7 @@ Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facade
 | Archives UI | `scripts/ui/archives_ui.gd` + `archives_ui_view.gd`, `archives_ui_act.gd`; `scripts/data/archives_catalog.gd`, `archives_launch.gd`, `archives_docs.gd`, `archive_catalog.json` |
 | Plate chrome tokens | `scripts/ui/plate_chrome.gd` |
 | Tip place geometry | `scripts/ui/tip_place.gd` |
+| Graphics | `scripts/graphics/` (env kit, nearest-mat, wrap shader, shared emit, ground shader, light RT, actor masks). Callers stay `camp_build.gd`, `camp_build_mesh.gd`, `dungeon_geo.gd`, `dungeon_geo_stream.gd`, `foundation.gd`, `floor_crystal.gd`, `billboard_spr.gd`. |
 | Y-billboard Sprite3D | `scripts/world/billboard_spr.gd` |
 
 Public entry points that must not change when a helper is split: `App.playtest`, `App.set_zoom` / `App.set_hud_scale` / `App.set_volume`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.

@@ -28,6 +28,7 @@ The demo MUST ship with the Archives browser on the title card. This is required
 ## Renderer
 
 Prefer the Compatibility renderer for the final shippable build if it does not compromise the web export. Mobile renderer is acceptable only if required for web stability.
+World env palettes, ground lighting, wall volume, the light RT, and actor sprite shadows are not this door.
 
 Sprite3D filter is not the project canvas default. Live default is nearest + mips + anisotropic. Settings → Graphics exposes Mipmaps and Anisotropic checkboxes (nearest implied; aniso off when mips is off). Linear modes live only on the secret debug Settings tab. See audio_visual and debug.
 

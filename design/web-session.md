@@ -21,7 +21,7 @@ Move only when the User names the next phase. Do not emit during Phase 1-3.
 
 The User tells the agent to review the repo.
 
-If the agents file already routed here, do not re-read it. Load `design/protocol.md` and `design/constraints.md` only when missing. Then only the named topic. Inspect the live tree from **one system row** in `design/code-map.md`. Do not open the Build path file, `BOT.md`, `design/README.md`, or Grok Bot Job files. Do not treat git as the hand-off.
+If the agents file already routed here, do not re-read it. Load `design/protocol.md` and `design/constraints.md` only when missing. Then the named topic. Web / chat may also read live scripts and further design files to get a clear picture of that named work; the budget is turns, not tokens. Implementation still uses one topic door (second door only when the User names the owner). Inspect the live tree from **one system row** in `design/code-map.md` when editing live files. Do not open the Build path file, `BOT.md`, `design/README.md`, or Grok Bot Job files. Do not treat git as the hand-off.
 
 Open `design/parked-tasks.md` only when the User names a parked task. If the first message matches that table, load only that Open file after the law pair and continue. If the park already has a mandate, Phase 2 is optional. Closing a finished park deletes the Open file and its parked-tasks row. Do not rewrite that file as closed.
 
