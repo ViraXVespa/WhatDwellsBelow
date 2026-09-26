@@ -25,5 +25,6 @@ id | trigger | open | path
 --- | --- | --- | ---
 attack_keyframes | resume parked, attack keyframes, coil stills | art-attack-keyframes.md (art_pipeline job) | web or isolated media
 smoke_shots | resume parked, smoke shots, headless screenshots, _logs/shots | park-smoke-shots.md | web then Build / tools
+session_src | resume parked, session src, harvest stills, _src/sessions | park-session-src.md | web / tools
 
 Do not invent rows.

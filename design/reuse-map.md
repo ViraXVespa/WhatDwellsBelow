@@ -16,3 +16,8 @@ Replace Brief with the full mandate. Multiple clusters in one body still ride th
 If Brief is empty, stop and report empty. Do not start a size sweep. If Brief has any content, implement all of it on the current open Bot PR (create that PR if none exists).
 
 ## Brief
+1. Add `WallRects.faces(grid: PackedByteArray, w: int, h: int, cells: Array[Vector2i]) -> Array[Dictionary]` on `scripts/world/wall_rects.gd`. Each dictionary is `{ "origin": Vector2i, "size": Vector2i, "normal": Vector2i }` in tile cells. `normal` is one of `(1,0), (-1,0), (0,1), (0,-1)`.
+2. A face exists only when the neighbor cell across that normal is `Gen.FLOOR` (same index math as `dungeon_geo_stream.wall_faces_floor`). Out of bounds is not a face.
+3. Greedy-merge collinear faces that share a normal. Seed order follows `cells`. Same used-mark style as `merge`. Empty cells returns an empty array.
+4. Do not create meshes, materials, torches, or lights. Do not change `add_collision` or `merge`. BoxMesh walls stay until the volume job. No new numbers.
+5. Leave the Dungeon code-map row naming `wall_rects.gd`. Same look.
