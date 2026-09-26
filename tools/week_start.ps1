@@ -124,8 +124,19 @@ if ($patch -eq 0 -and [string]$ver.label -eq $newLabel) {
             label       = $newLabel
             open_commit = $sha
         }
-        $verJson = $verOut | ConvertTo-Json-DISABLED
-        [IO.File]::WriteAllText($verPath, $verJson + "`n")
+        python -c @"
+import json
+from pathlib import Path
+p = Path(r'$verPath')
+data = {
+    'epoch': $epoch,
+    'series': $newSeries,
+    'patch': 0,
+    'label': '$newLabel',
+    'open_commit': '$sha',
+}
+p.write_text(json.dumps(data, indent='\t') + '\n', encoding='utf-8')
+"@
     }
 }
 
