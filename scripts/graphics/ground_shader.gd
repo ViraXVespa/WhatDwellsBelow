@@ -1,6 +1,6 @@
 extends Object
 
-## One spatial field shader. Albedo is world xz. Light sample stays white until the buffer job.
+## One spatial field shader. Albedo is world xz. Light is the buffer RT.
 
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
@@ -77,9 +77,7 @@ static func material(tex_path: String, fallback: Color, tint: Color = Color.WHIT
 	mat.set_shader_parameter("hash_m", hash_m)
 	mat.set_shader_parameter("variant_n", variants)
 	mat.set_shader_parameter("wear", App.bal.getv("ground_wear"))
-	mat.set_shader_parameter("light_tex", LightRt.texture())
-	mat.set_shader_parameter("light_origin", LightRt.origin)
-	mat.set_shader_parameter("light_span", LightRt.span)
+	LightRt.bind(mat)
 	return mat
 
 

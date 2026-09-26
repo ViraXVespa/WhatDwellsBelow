@@ -1,6 +1,7 @@
 ﻿extends Node3D
 
 const Build := preload("res://scripts/world/camp_build.gd")
+const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const View := preload("res://scripts/world/camp_view.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const Warm := preload("res://scripts/world/camp_warm.gd")
@@ -17,6 +18,11 @@ func _ready() -> void:
 	LoadTiming.mark("camp_enter")
 	Build.world(self)
 	LoadTiming.mark("camp_world")
+	var x0: int = Build.GROUND_OX - Build.GRASS_PAD
+	var z0: int = Build.GROUND_OZ - Build.GRASS_PAD
+	var x1: int = Build.GROUND_OX + Build.GROUND_W + Build.GRASS_PAD
+	var z1: int = Build.GROUND_OZ + Build.GROUND_D + Build.GRASS_PAD
+	LightRt.prepare_hub(x0, z0, x1, z1, Vector2(16.475, 10.2))
 	Build.ground(self)
 	LoadTiming.mark("camp_ground")
 	Build.buildings(self)

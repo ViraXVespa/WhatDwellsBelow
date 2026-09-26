@@ -153,4 +153,13 @@ static func rows() -> Array:
 		["ground_hash_m", 1.0, 16.0, 0.5],
 		["ground_variants", 1.0, 6.0, 1.0],
 		["ground_wear", 0.0, 1.0, 0.01],
+		["light_torch_range", 1.0, 16.0, 0.5],
+		["light_torch_energy", 0.05, 2.0, 0.05],
+		["light_crystal_range", 1.0, 20.0, 0.5],
+		["light_crystal_energy", 0.05, 2.0, 0.05],
+		["light_fire_range", 1.0, 16.0, 0.5],
+		["light_fire_energy", 0.05, 2.0, 0.05],
+		["light_sun_range", 4.0, 64.0, 1.0],
+		["light_sun_energy", 0.05, 2.0, 0.05],
+		["light_source_cap", 1.0, 64.0, 1.0],
 	]

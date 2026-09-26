@@ -60,6 +60,22 @@ World-xz sheets on grass pads, packed yard, and dungeon floors. Debug menu categ
 | `GROUND_VARIANTS` / `ground_variants` | 3 |
 | `GROUND_WEAR` / `ground_wear` | 0.22 |
 
+## Light buffer
+
+One texel per tile. Dungeon discs are torch, crystal, and campfire. The hub adds one wide sun disc. Debug menu reads the same keys.
+
+| Key | Live |
+|-----|------|
+| `LIGHT_TORCH_RANGE` / `light_torch_range` | 5.5 |
+| `LIGHT_TORCH_ENERGY` / `light_torch_energy` | 1.0 |
+| `LIGHT_CRYSTAL_RANGE` / `light_crystal_range` | 7.5 |
+| `LIGHT_CRYSTAL_ENERGY` / `light_crystal_energy` | 0.95 |
+| `LIGHT_FIRE_RANGE` / `light_fire_range` | 6.0 |
+| `LIGHT_FIRE_ENERGY` / `light_fire_energy` | 1.0 |
+| `LIGHT_SUN_RANGE` / `light_sun_range` | 48 |
+| `LIGHT_SUN_ENERGY` / `light_sun_energy` | 0.9 |
+| `LIGHT_SOURCE_CAP` / `light_source_cap` | 24 |
+
 ## Movement and combat
 
 | Parameter | Suggested start | Live default | Notes |

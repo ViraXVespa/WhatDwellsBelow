@@ -1,0 +1,207 @@
+extends Node3D
+
+## Unlit bracket from the 4-facing bible. Flame is a Y-billboard shader, not a sheet.
+
+const BIBLE := "res://assets/sprites/props/torch_bracket_bible.png"
+const FLAME := """
+shader_type spatial;
+render_mode unshaded, cull_disabled, blend_mix, depth_draw_opaque;
+uniform float flame_seed = 0.0;
+varying vec2 uv;
+
+void vertex() {
+	uv = UV;
+}
+
+void fragment() {
+	vec2 p = uv * 2.0 - 1.0;
+	float wob = sin(p.y * 5.0 + flame_seed * 11.0 + TIME * 1.4) * 0.07;
+	p.x += wob * (0.4 + p.y);
+	float body = 1.0 - smoothstep(0.12, 0.82, length(vec2(p.x * 1.35, (p.y - 0.12) * 0.8)));
+	float a = body;
+	if (a < 0.2) {
+		discard;
+	}
+	vec3 col = mix(vec3(1.0, 0.82, 0.28), vec3(0.75, 0.18, 0.04), clamp(p.y * 0.55 + 0.45, 0.0, 1.0));
+	ALBEDO = col;
+	ALPHA = 1.0;
+}
+"""
+
+static var _keyed: Texture2D
+static var _flame_shader: Shader
+static var _quad: QuadMesh
+
+var _spr: Sprite3D
+var _flame: MeshInstance3D
+var _nx: int = 0
+var _nz: int = 1
+var _half: float = 512.0
+
+
+static func refill(host: Node, sites: Array, chunk: int) -> void:
+	if host.geo_root == null:
+		return
+	for job in host.geo_jobs:
+		if str(job.state) != "live":
+			continue
+		var root: Node = job.node
+		if root == null or not is_instance_valid(root):
+			continue
+		var origin: Vector2i = Vector2i(job.origin)
+		_clear(root)
+		add_chunk(root, origin.x, origin.y, sites, chunk)
+
+
+static func add_chunk(root: Node, ox: int, oy: int, sites: Array, chunk: int) -> void:
+	var script: GDScript = load("res://scripts/graphics/torch_bill.gd") as GDScript
+	for site in sites:
+		var fx: int = int(site["fx"])
+		var fz: int = int(site["fz"])
+		if fx < ox or fz < oy or fx >= ox + chunk or fz >= oy + chunk:
+			continue
+		var node: Node3D = script.new() as Node3D
+		node.set_meta("nx", int(site["nx"]))
+		node.set_meta("nz", int(site["nz"]))
+		node.set_meta("fx", fx)
+		node.position = _bracket_pos(site)
+		node.add_to_group("wall_torch")
+		root.add_child(node)
+
+
+static func _clear(root: Node) -> void:
+	var doomed: Array[Node] = []
+	for child in root.get_children():
+		if child.is_in_group("wall_torch"):
+			doomed.append(child)
+	for n in doomed:
+		root.remove_child(n)
+		n.free()
+
+
+static func _bracket_pos(site: Dictionary) -> Vector3:
+	var fx: int = int(site["fx"])
+	var fz: int = int(site["fz"])
+	var wx: int = int(site["wx"])
+	var wz: int = int(site["wz"])
+	var nx: int = int(site["nx"])
+	var nz: int = int(site["nz"])
+	var px: float = float(fx) + 0.5
+	var pz: float = float(fz) + 0.5
+	if nx > 0:
+		px = float(wx + 1) + 0.06
+	elif nx < 0:
+		px = float(wx) - 0.06
+	if nz > 0:
+		pz = float(wz + 1) + 0.06
+	elif nz < 0:
+		pz = float(wz) - 0.06
+	return Vector3(px, 0.0, pz)
+
+
+func _ready() -> void:
+	_nx = int(get_meta("nx", 0))
+	_nz = int(get_meta("nz", 1))
+	var tex: Texture2D = _bible()
+	if tex != null:
+		_half = float(tex.get_width()) * 0.5
+		var spr: Sprite3D = Sprite3D.new()
+		spr.centered = true
+		spr.shaded = false
+		spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+		spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		spr.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+		spr.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		spr.texture = tex
+		spr.region_enabled = true
+		spr.pixel_size = 1.45 / maxf(_half, 1.0)
+		spr.position.y = 0.72
+		_spr = spr
+		add_child(spr)
+	_flame = _make_flame()
+	add_child(_flame)
+
+
+func _process(_delta: float) -> void:
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return
+	var cam: Camera3D = vp.get_camera_3d()
+	if cam == null:
+		return
+	_face(cam)
+
+
+func _face(cam: Camera3D) -> void:
+	if _spr != null and _spr.texture != null:
+		_spr.region_rect = _region(cam)
+	if _flame == null:
+		return
+	var flat: Vector3 = cam.global_position - _flame.global_position
+	flat.y = 0.0
+	if flat.length_squared() < 0.0001:
+		return
+	_flame.look_at(_flame.global_position + flat, Vector3.UP)
+
+
+func _region(cam: Camera3D) -> Rect2:
+	var fwd: Vector2 = Vector2(float(_nx), float(_nz))
+	var delta: Vector2 = Vector2(cam.global_position.x - global_position.x, cam.global_position.z - global_position.z)
+	var side: float = fwd.x * delta.y - fwd.y * delta.x
+	var facing: float = fwd.x * delta.x + fwd.y * delta.y
+	var q: int = int(round(atan2(side, facing) / (PI * 0.5)))
+	var col: float = 0.0
+	var row: float = 0.0
+	if q == 1:
+		col = _half
+	elif absi(q) == 2:
+		col = _half
+		row = _half
+	elif q == -1:
+		row = _half
+	return Rect2(col, row, _half, _half)
+
+
+func _make_flame() -> MeshInstance3D:
+	if _quad == null:
+		var quad: QuadMesh = QuadMesh.new()
+		quad.size = Vector2(0.26, 0.42)
+		_quad = quad
+	if _flame_shader == null:
+		var sh: Shader = Shader.new()
+		sh.code = FLAME
+		_flame_shader = sh
+	var mat: ShaderMaterial = ShaderMaterial.new()
+	mat.shader = _flame_shader
+	mat.set_shader_parameter("flame_seed", float(int(get_meta("fx", 0)) * 13 + _nz * 3))
+	var mesh: MeshInstance3D = MeshInstance3D.new()
+	mesh.mesh = _quad
+	mesh.material_override = mat
+	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var lift: float = 1.05
+	mesh.position = Vector3(float(_nx) * 0.1, lift, float(_nz) * 0.1)
+	return mesh
+
+
+static func _bible() -> Texture2D:
+	if _keyed != null:
+		return _keyed
+	if not ResourceLoader.exists(BIBLE):
+		return null
+	var src: Texture2D = load(BIBLE) as Texture2D
+	if src == null:
+		return null
+	var img: Image = src.get_image()
+	if img == null:
+		_keyed = src
+		return _keyed
+	img.convert(Image.FORMAT_RGBA8)
+	var w: int = img.get_width()
+	var h: int = img.get_height()
+	for y in h:
+		for x in w:
+			var c: Color = img.get_pixel(x, y)
+			if c.r > 0.65 and c.b > 0.65 and c.g < 0.28:
+				img.set_pixel(x, y, Color(0, 0, 0, 0))
+	_keyed = ImageTexture.create_from_image(img)
+	return _keyed

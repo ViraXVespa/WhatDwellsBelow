@@ -5,6 +5,7 @@ const Gen := preload("res://scripts/dungeon/gen.gd")
 const MmEmit := preload("res://scripts/graphics/mm_emit.gd")
 const WallRects := preload("res://scripts/world/wall_rects.gd")
 const WallMesh: GDScript = preload("res://scripts/graphics/wall_mesh.gd")
+const LightRt := preload("res://scripts/graphics/light_rt.gd")
 
 const RING_IN := 1
 const RING_OUT := 2
@@ -91,6 +92,7 @@ static func follow(host: Node, delta: float) -> void:
 				continue
 			activate_job(host, job)
 			built += 1
+	LightRt.maintain(host)
 
 
 static func tick(host: Node, delta: float) -> void:
@@ -101,6 +103,7 @@ static func tick(host: Node, delta: float) -> void:
 	for job in host.geo_jobs:
 		if str(job.state) == "live" and chunk_ring(Vector2i(job.origin), origin) > RING_OUT:
 			sleep_job(host, job)
+	LightRt.maintain(host)
 
 
 static func activate_job(host: Node, job: Dictionary) -> void:
