@@ -17,6 +17,7 @@ AGENTS.md
 
 Then, only if the User named work:
     one topic door -> one Job sibling (if that door has a Job table)
+    graphics jobs are env, ground, volume, buffer, actor (not a boot path)
     (second door only when the User names the owner; conflicts_with is a load ban)
     and one design/code-map.md system row when live files are needed
     and design/tunables.md iff a number changes
@@ -60,5 +61,6 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 9. Topic job siblings name no other `design/*.md` paths.
 10. Opening the topic table is not a boot step.
 11. README and code-map are human indexes, not boot files.
+12. Door and job files start with an H1.
 
 Machine-readable edges: `design/routes.yaml`. This file is the human sketch only.

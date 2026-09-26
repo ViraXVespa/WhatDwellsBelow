@@ -847,6 +847,10 @@ def main() -> int:
         if role in {"door", "job"}:
             for hit in skip_door_hits(text, posix, door_stems):
                 fails.append(f"skip-door phrase: {posix} ({hit})")
+            body = text.lstrip("\ufeff")
+            first = next((ln.strip() for ln in body.splitlines() if ln.strip()), "")
+            if not first.startswith("# "):
+                fails.append(f"door/job missing H1: {posix}")
         if role == "unknown":
             continue
 

@@ -87,6 +87,15 @@ doors:
     file: design/camera.md
     read_when: "Camera3D, zoom, renderer, depth sorting"
     jobs: {}
+  graphics:
+    file: design/graphics.md
+    read_when: "cel-look owner, dual-palette atmosphere"
+    jobs:
+      env: design/graphics-env.md
+      ground: design/graphics-ground.md
+      volume: design/graphics-volume.md
+      buffer: design/graphics-buffer.md
+      actor: design/graphics-actor.md
   player:
     file: design/player.md
     read_when: "movement, collision, character select, eight-dir body"
@@ -234,6 +243,11 @@ job_read_when:
   dungeon.gates: "PREPARE plaque, extraction clerks, stair hold, reveal disk"
   dungeon.crystals: "transport decades, warp silence, spur length"
   dungeon.stream: "RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo"
+  graphics.env: "hearth-warm hole-cold Environment, abyss-plinth, caller redirect"
+  graphics.ground: "hashed field albedo, shared spatial shader, turf quilts, carved planes"
+  graphics.volume: "exposed coplanar brick runs, BoxMesh retirement, hitbox-untouched"
+  graphics.buffer: "256-512 xz radiance buffer, disc blobs, tile occupancy"
+  graphics.actor: "billboard-alpha squash quads, player yard-mannequin foes, source-offset"
   save_tech.persist: "primary backup wipe, game_ver stamp, isolated AI profiles"
   save_tech.web: "COOP COEP off, id.txt querybust, serviceworker rename"
   save_tech.runtime: "borderless exclusive, mip decode ban, Compatibility preferred"

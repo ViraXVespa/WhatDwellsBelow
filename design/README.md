@@ -40,7 +40,8 @@ Do not open art_pipeline parked attack-keyframes unless the User is resuming the
 | Must / must-not, checklist | `constraints.md` |
 | Vision, scope, lore | `overview.md` |
 | Gamepad, KB/M, web pad, web touch, menu binds | `input.md` |
-| Camera, renderer | `camera.md` |
+| Camera, zoom, filter | `camera.md` |
+| World lighting, ground shader, wall volume, light RT, actor shadows | `graphics.md` |
 | Avatar, move, facing | `player.md` |
 | Weapons, dash, crits, adrenaline, hit coverage | `combat.md` |
 | Eleven skills, XP, combat level | `skills.md` |
