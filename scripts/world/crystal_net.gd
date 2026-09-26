@@ -238,7 +238,7 @@ static func guard(host: Node) -> void:
 static func paint(host: Node) -> void:
 	if host.map_img == null:
 		return
-	var Geo = load("res://scripts/world/dungeon_geo.gd")
+	var Geo = load("res://scripts/world/dungeon_minimap.gd")
 	for n: Node in floor_list(host):
 		var cell: Vector2i = Vector2i(n.get("crystal_cell"))
 		var on: bool = bool(n.get("crystal_on"))

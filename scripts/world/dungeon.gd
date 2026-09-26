@@ -4,6 +4,7 @@ const T := preload("res://scripts/data/tunables.gd")
 const HudS := preload("res://scripts/ui/hud.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const DungeonGeo := preload("res://scripts/world/dungeon_geo.gd")
+const DungeonMinimap := preload("res://scripts/world/dungeon_minimap.gd")
 const DungeonCells := preload("res://scripts/world/dungeon_cells.gd")
 const DungeonPack := preload("res://scripts/world/dungeon_pack.gd")
 const DungeonBoot := preload("res://scripts/world/dungeon_boot.gd")
@@ -97,7 +98,7 @@ func _on_boss_dead() -> void:
 
 
 func _reveal_around(c: Vector2i, rad: int) -> bool:
-	return DungeonGeo.reveal_around(self, c, rad)
+	return DungeonMinimap.reveal_around(self, c, rad)
 
 
 func _hud() -> void:
@@ -119,11 +120,11 @@ func _refresh_hint() -> void:
 
 
 func _map() -> void:
-	DungeonGeo.make_map(self)
+	DungeonMinimap.make_map(self)
 
 
 func _redraw_map() -> void:
-	DungeonGeo.redraw_map(self)
+	DungeonMinimap.redraw_map(self)
 	if map_layer and map_layer.visible:
 		var MapActS: GDScript = load("res://scripts/world/dungeon_map_act.gd") as GDScript
 		MapActS.apply(self)
