@@ -1,9 +1,9 @@
 extends Node
 
-## Feet tint from the light RT. One floor mark per caster.
+## Feet tint from the light RT. Hub keeps one sun mark. Dungeon uses up to three.
 ## Player uses the live sticker after flip_h. Dummy and enemies use their still.
-## Sole pixels pin to the sticker. The head shears with a screen-down bias.
-## Hub is the sun, one length. Dungeon uses the nearest torch, crystal, or campfire.
+## Sole pixels pin to the sticker. The head shears with a signed floor-Z bias.
+## Dungeon alpha is split across the live marks so they do not smear black.
 
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
@@ -19,6 +19,7 @@ const MIN_DOWN := 0.28
 const TURN_RATE := 20.0
 const EASE_RATE := 12.0
 const HIDE_A := 0.03
+const MARK_N := 3
 
 const SHADE := """
 shader_type spatial;
@@ -47,13 +48,17 @@ static var _spans: Dictionary = {}
 static var _sole_at: Dictionary = {}
 
 var spr: Sprite3D
-var mark: MeshInstance3D
+var marks: Array[MeshInstance3D] = []
 var _game: Color = Color.WHITE
 var _sent: Color = Color(-1.0, -1.0, -1.0, -1.0)
-var _key: String = ""
-var _away: Vector2 = SUN_AWAY
-var _stretch: float = HUB_STRETCH
-var _alpha: float = HUB_ALPHA
+var _key_at: Array[String] = []
+var _away_at: Array[Vector2] = []
+var _stretch_at: Array[float] = []
+var _alpha_at: Array[float] = []
+var _src_at: Array[Vector2] = []
+var _held: Array[bool] = []
+var _rank_at: Array[int] = []
+var _ink_budget: float = 0.0
 var _flip: bool = false
 
 
@@ -70,13 +75,26 @@ static func bind(body: Node3D, sticker: Sprite3D) -> void:
 
 
 func _ready() -> void:
-	var mesh_node: MeshInstance3D = MeshInstance3D.new()
-	mesh_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mesh_node.material_override = _mat()
-	mesh_node.visible = false
-	mark = mesh_node
-	mark.top_level = true
-	add_child(mark)
+	for slot in MARK_N:
+		var mesh_node: MeshInstance3D = MeshInstance3D.new()
+		mesh_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var mat: ShaderMaterial = _mat()
+		mat.render_priority = 8 - slot
+		mesh_node.material_override = mat
+		mesh_node.visible = false
+		mesh_node.top_level = true
+		marks.append(mesh_node)
+		add_child(mesh_node)
+		_key_at.append("")
+		_away_at.append(SUN_AWAY)
+		_stretch_at.append(HUB_STRETCH)
+		var start_a: float = 0.0
+		if slot == 0:
+			start_a = HUB_ALPHA
+		_alpha_at.append(start_a)
+		_src_at.append(Vector2.ZERO)
+		_held.append(false)
+		_rank_at.append(slot)
 
 
 func _process(delta: float) -> void:
@@ -85,13 +103,18 @@ func _process(delta: float) -> void:
 		return
 	var body: Node = get_parent()
 	if body != null and body.get("dead") == true:
-		mark.visible = false
+		_hide_all()
 		return
 	var host: Node3D = body as Node3D
 	if host == null:
 		return
 	_tint(host)
 	_lay(host, delta)
+
+
+func _hide_all() -> void:
+	for slot in marks.size():
+		marks[slot].visible = false
 
 
 func _tint(host: Node3D) -> void:
@@ -106,77 +129,183 @@ func _tint(host: Node3D) -> void:
 
 func _lay(host: Node3D, delta: float) -> void:
 	if spr.texture == null or not spr.visible:
-		mark.visible = false
+		_hide_all()
 		return
 	var feet: Vector2 = Vector2(host.global_position.x, host.global_position.z)
 	if App.in_dungeon and not LightRt.floor_open(feet):
-		mark.visible = false
+		_hide_all()
 		return
 	var tex: Texture2D = spr.texture
 	if not _usable(tex):
-		mark.visible = false
+		_hide_all()
 		return
 	_flip = spr.flip_h
-	_drive(feet, delta)
-	if App.in_dungeon and _alpha < HIDE_A:
-		mark.visible = false
-		return
-	var dir: Vector2 = _biased()
-	_sync(tex, dir, feet)
-	mark.global_transform = Transform3D(Basis.IDENTITY, Vector3(feet.x, T.FLOOR_Y, feet.y))
-	var shade_mat: ShaderMaterial = mark.material_override as ShaderMaterial
-	if shade_mat != null:
-		shade_mat.set_shader_parameter("shade", Color(0.02, 0.02, 0.02, _alpha))
-	mark.visible = true
+	if App.in_dungeon:
+		_drive_many(feet, delta)
+	else:
+		_drive_sun()
+	_place(tex, feet)
 
 
-func _drive(feet: Vector2, delta: float) -> void:
-	if not App.in_dungeon:
-		_away = SUN_AWAY
-		_stretch = HUB_STRETCH
-		_alpha = HUB_ALPHA
-		return
-	var hit: Dictionary = LightRt.nearest_cast(feet)
-	var aim: Vector2 = _away
-	var goal_s: float = D_NEAR
-	var goal_a: float = 0.0
-	if hit.get("ok", false) == true:
+func _drive_sun() -> void:
+	_away_at[0] = SUN_AWAY
+	_stretch_at[0] = HUB_STRETCH
+	_alpha_at[0] = HUB_ALPHA
+	_held[0] = false
+	_src_at[0] = Vector2.ZERO
+	_rank_at[0] = 0
+	_ink_budget = 0.0
+	for slot in range(1, MARK_N):
+		_alpha_at[slot] = 0.0
+		_held[slot] = false
+		_src_at[slot] = Vector2.ZERO
+		_rank_at[slot] = slot
+
+
+func _drive_many(feet: Vector2, delta: float) -> void:
+	var hits: Array[Dictionary] = LightRt.nearest_casts(feet, MARK_N)
+	var hit_n: int = hits.size()
+	var srcs: Array[Vector2] = []
+	var aims: Array[Vector2] = []
+	var goal_s: PackedFloat32Array = PackedFloat32Array()
+	var raw_a: PackedFloat32Array = PackedFloat32Array()
+	_ink_budget = 0.0
+	for i in hit_n:
+		var hit: Dictionary = hits[i]
 		var src: Vector2 = hit["xz"]
+		var aim: Vector2 = Vector2.ZERO
 		var step: Vector2 = feet - src
 		if step.length_squared() > 0.0004:
 			aim = step.normalized()
 		var reach: float = maxf(float(hit["reach"]), 0.001)
 		var along: float = clampf(float(hit["dist"]) / reach, 0.0, 1.0)
 		var mid: float = sin(along * PI)
-		goal_s = lerpf(D_NEAR, D_FAR, mid)
-		goal_s *= maxf(absf(aim.y), 0.2)
-		goal_a = lerpf(A_NEAR, A_FAR, along)
-	_turn(aim, delta)
+		var stretch: float = lerpf(D_NEAR, D_FAR, mid)
+		# aim.y is floor Z. A side light shortens the mark into a puddle.
+		stretch *= maxf(absf(aim.y), 0.2)
+		var raw: float = lerpf(A_NEAR, A_FAR, along)
+		srcs.append(src)
+		aims.append(aim)
+		goal_s.append(stretch)
+		raw_a.append(raw)
+	var goal_a: PackedFloat32Array = _split(raw_a)
+	if hit_n > 0:
+		_ink_budget = raw_a[0]
+	var claim: Array[int] = []
+	var taken: Array[bool] = []
+	var fresh: Array[bool] = []
+	for slot in MARK_N:
+		claim.append(-1)
+		fresh.append(false)
+	taken.resize(hit_n)
+	taken.fill(false)
+	for slot in MARK_N:
+		if not _held[slot]:
+			continue
+		var best: int = -1
+		var best_d: float = 0.5
+		for hi in hit_n:
+			if taken[hi]:
+				continue
+			var gap: float = _src_at[slot].distance_to(srcs[hi])
+			if gap < best_d:
+				best_d = gap
+				best = hi
+		if best >= 0:
+			taken[best] = true
+			claim[slot] = best
+	for hi in hit_n:
+		if taken[hi]:
+			continue
+		var open: int = _open_slot(claim)
+		if open < 0:
+			continue
+		claim[open] = hi
+		taken[hi] = true
+		fresh[open] = true
 	var k: float = clampf(delta * EASE_RATE, 0.0, 1.0)
-	_stretch = lerpf(_stretch, goal_s, k)
-	_alpha = lerpf(_alpha, goal_a, k)
+	for slot in MARK_N:
+		var pick: int = claim[slot]
+		if pick < 0:
+			_alpha_at[slot] = lerpf(_alpha_at[slot], 0.0, k)
+			_rank_at[slot] = MARK_N
+			if _alpha_at[slot] < HIDE_A:
+				_alpha_at[slot] = 0.0
+				_held[slot] = false
+			continue
+		if fresh[slot] and _alpha_at[slot] < HIDE_A:
+			var born: Vector2 = aims[pick]
+			if born.length_squared() > 0.0004:
+				_away_at[slot] = born
+			else:
+				_away_at[slot] = SUN_AWAY
+			_stretch_at[slot] = goal_s[pick]
+		_src_at[slot] = srcs[pick]
+		_held[slot] = true
+		_rank_at[slot] = pick
+		_turn_slot(slot, aims[pick], delta)
+		_stretch_at[slot] = lerpf(_stretch_at[slot], goal_s[pick], k)
+		_alpha_at[slot] = lerpf(_alpha_at[slot], goal_a[pick], k)
 
 
-func _turn(aim: Vector2, delta: float) -> void:
-	var dest: Vector2 = SUN_AWAY
-	if aim.length_squared() > 0.0004:
-		dest = aim.normalized()
-	if _away.length_squared() < 0.0004:
-		_away = dest
+func _split(raw: PackedFloat32Array) -> PackedFloat32Array:
+	var hit_n: int = raw.size()
+	var out: PackedFloat32Array = PackedFloat32Array()
+	if hit_n < 1:
+		return out
+	var sum_w: float = 0.0
+	var weights: PackedFloat32Array = PackedFloat32Array()
+	for i in hit_n:
+		var w: float = float(hit_n - i) * maxf(raw[i], 0.001)
+		weights.append(w)
+		sum_w += w
+	var budget: float = raw[0]
+	if sum_w < 0.0001:
+		out.resize(hit_n)
+		return out
+	for i in hit_n:
+		out.append(budget * (weights[i] / sum_w))
+	return out
+
+
+func _open_slot(claim: Array[int]) -> int:
+	var fading: int = -1
+	var fading_a: float = 2.0
+	for slot in MARK_N:
+		if claim[slot] >= 0:
+			continue
+		if not _held[slot]:
+			return slot
+		if _alpha_at[slot] < fading_a:
+			fading_a = _alpha_at[slot]
+			fading = slot
+	return fading
+
+
+func _turn_slot(slot: int, aim: Vector2, delta: float) -> void:
+	if aim.length_squared() <= 0.0004:
 		return
-	var src: Vector2 = _away.normalized()
+	var dest: Vector2 = aim.normalized()
+	var away: Vector2 = _away_at[slot]
+	if away.length_squared() < 0.0004:
+		_away_at[slot] = dest
+		return
+	var src: Vector2 = away.normalized()
 	var ang: float = src.angle_to(dest)
 	var step: float = TURN_RATE * delta
 	if absf(ang) <= step:
-		_away = dest
+		_away_at[slot] = dest
 		return
-	_away = src.rotated(step if ang > 0.0 else -step)
+	var spin: float = step
+	if ang <= 0.0:
+		spin = -step
+	_away_at[slot] = src.rotated(spin)
 
 
-func _biased() -> Vector2:
+func _biased(away: Vector2) -> Vector2:
 	# Keep a little Z so a side-on light does not flatten the quad.
-	# Sign follows the light so a source toward camera can cast up-screen.
-	var dir: Vector2 = _away
+	# Sign follows the light so a source toward the camera can cast up-screen.
+	var dir: Vector2 = away
 	if dir.length_squared() < 0.0004:
 		dir = SUN_AWAY
 	else:
@@ -194,27 +323,57 @@ func _usable(tex: Texture2D) -> bool:
 	return tex != null and tex.get_width() > 8 and tex.get_height() > 8
 
 
-func _sync(tex: Texture2D, dir: Vector2, host_xz: Vector2) -> void:
+func _place(tex: Texture2D, feet: Vector2) -> void:
 	var soles: Vector4 = _soles(tex)
 	var tw: float = float(maxi(1, tex.get_width()))
 	var th: float = float(maxi(1, tex.get_height()))
 	var px: float = spr.pixel_size
-	var fl: Vector2 = _sole_xz(soles.x, soles.y, tw, th) - host_xz
-	var fr: Vector2 = _sole_xz(soles.z, soles.w, tw, th) - host_xz
-	var reach: Vector2 = dir * _stretch
+	var fl: Vector2 = _sole_xz(soles.x, soles.y, tw, th) - feet
+	var fr: Vector2 = _sole_xz(soles.z, soles.w, tw, th) - feet
+	var origin: Vector3 = Vector3(feet.x, T.FLOOR_Y, feet.y)
+	var ink: float = 0.0
+	if App.in_dungeon:
+		for slot in MARK_N:
+			if _alpha_at[slot] >= HIDE_A:
+				ink += _alpha_at[slot]
+	var scale: float = 1.0
+	if App.in_dungeon and _ink_budget > 0.001 and ink > _ink_budget:
+		scale = _ink_budget / ink
+	for slot in MARK_N:
+		var node: MeshInstance3D = marks[slot]
+		var live: bool = _alpha_at[slot] >= HIDE_A
+		if not App.in_dungeon and slot > 0:
+			live = false
+		if not live:
+			node.visible = false
+			continue
+		var dir: Vector2 = _biased(_away_at[slot])
+		_sync_slot(slot, tex, soles, fl, fr, dir, px)
+		node.global_transform = Transform3D(Basis.IDENTITY, origin)
+		var shade_mat: ShaderMaterial = node.material_override as ShaderMaterial
+		if shade_mat != null:
+			shade_mat.render_priority = 8 - _rank_at[slot]
+			var shown: float = _alpha_at[slot] * scale
+			shade_mat.set_shader_parameter("shade", Color(0.02, 0.02, 0.02, shown))
+		node.visible = true
+
+
+func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float) -> void:
+	var node: MeshInstance3D = marks[slot]
+	var reach: Vector2 = dir * _stretch_at[slot]
 	var key: String = "%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
 		tex.get_instance_id(), px, _flip,
 		snappedf(fl.x, 0.01), snappedf(fl.y, 0.01),
 		snappedf(fr.x, 0.01), snappedf(fr.y, 0.01),
 		snappedf(reach.x, 0.01), snappedf(reach.y, 0.01),
 	]
-	var mat: ShaderMaterial = mark.material_override as ShaderMaterial
+	var mat: ShaderMaterial = node.material_override as ShaderMaterial
 	if mat != null:
 		mat.set_shader_parameter("albedo_tex", tex)
-	if key == _key and mark.mesh != null:
+	if key == _key_at[slot] and node.mesh != null:
 		return
-	_key = key
-	mark.mesh = _quad(tex, _span(tex), soles, fl, fr, dir, px)
+	_key_at[slot] = key
+	node.mesh = _quad(tex, _span(tex), soles, fl, fr, dir, px, _stretch_at[slot])
 
 
 func _sole_xz(tx: float, ty: float, tw: float, th: float) -> Vector2:
@@ -257,7 +416,7 @@ func _drop_floor(world: Vector3) -> Vector2:
 	return Vector2(hit.x, hit.z)
 
 
-func _quad(tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float) -> ArrayMesh:
+func _quad(tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float) -> ArrayMesh:
 	var tw: float = float(maxi(1, tex.get_width()))
 	var th: float = float(maxi(1, tex.get_height()))
 	var x0: float = span.x * tw
@@ -267,10 +426,10 @@ func _quad(tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vecto
 	var verts: PackedVector3Array = PackedVector3Array()
 	var uvs: PackedVector2Array = PackedVector2Array()
 	var indices: PackedInt32Array = PackedInt32Array()
-	verts.append(_corner(x0, y1, soles, fl, fr, dir, px))
-	verts.append(_corner(x1, y1, soles, fl, fr, dir, px))
-	verts.append(_corner(x1, y0, soles, fl, fr, dir, px))
-	verts.append(_corner(x0, y0, soles, fl, fr, dir, px))
+	verts.append(_corner(x0, y1, soles, fl, fr, dir, px, stretch))
+	verts.append(_corner(x1, y1, soles, fl, fr, dir, px, stretch))
+	verts.append(_corner(x1, y0, soles, fl, fr, dir, px, stretch))
+	verts.append(_corner(x0, y0, soles, fl, fr, dir, px, stretch))
 	uvs.append(Vector2(span.x, span.w))
 	uvs.append(Vector2(span.z, span.w))
 	uvs.append(Vector2(span.z, span.y))
@@ -286,13 +445,13 @@ func _quad(tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vecto
 	return mesh
 
 
-func _corner(tx: float, ty: float, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float) -> Vector3:
+func _corner(tx: float, ty: float, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float) -> Vector3:
 	var span_x: float = soles.z - soles.x
 	if absf(span_x) < 0.5:
 		span_x = 0.5 if soles.z >= soles.x else -0.5
 	var a: float = (tx - soles.x) / span_x
 	var foot_y: float = soles.y + a * (soles.w - soles.y)
-	var pos: Vector2 = fl.lerp(fr, a) + dir * ((foot_y - ty) * px * _stretch)
+	var pos: Vector2 = fl.lerp(fr, a) + dir * ((foot_y - ty) * px * stretch)
 	return Vector3(pos.x, 0.0, pos.y)
 
 

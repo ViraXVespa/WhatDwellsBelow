@@ -428,6 +428,33 @@ static func nearest_cast(world: Vector2) -> Dictionary:
 	return {"ok": found, "xz": best, "dist": best_d, "reach": best_r}
 
 
+static func nearest_casts(world: Vector2, cap: int = 3) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var limit: int = cap
+	if limit < 1:
+		return out
+	for src in _casts:
+		var item: Dictionary = src
+		var xz: Vector2 = item["xz"]
+		var reach: float = float(item["reach"])
+		var dist: float = world.distance_to(xz)
+		if dist > reach:
+			continue
+		var row: Dictionary = {"ok": true, "xz": xz, "dist": dist, "reach": reach}
+		var at: int = out.size()
+		for i in out.size():
+			var prev: Dictionary = out[i]
+			if dist < float(prev["dist"]):
+				at = i
+				break
+		if at >= limit:
+			continue
+		out.insert(at, row)
+		if out.size() > limit:
+			out.resize(limit)
+	return out
+
+
 static func _keep_casts(x0: int, z0: int, tw: int, th: int, occ: PackedByteArray, lights: Array) -> void:
 	_casts.clear()
 	for src in lights:
