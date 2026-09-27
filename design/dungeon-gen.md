@@ -1,7 +1,7 @@
 # Dungeon — generation and placement
 
 Status: binding design + live snapshot  
-Read when: MST loops, deadend termini, hall widths, size rebalance ledger, fillet raster, walkable solid, void rim, outline, diagonal band, band fold, no jag on band, void teeth
+Read when: authored polylines, hall segments, size rebalance ledger, walkable solid, fillet jag, bake from rims, deadend termini
 
 
 ## Overall structure
@@ -18,16 +18,15 @@ Read when: MST loops, deadend termini, hall widths, size rebalance ledger, fille
 Grid size, room count, room size ranges, and connection algorithm (MST + extra loops) are fully tunable.
 Target: floors MUST feel expansive enough to support a 5–10 minute first successful extraction for a new player and longer skilled runs, but rooms and combat MUST be dense enough that the player is not wandering empty halls for long stretches.
 
-Halls are carved 2–4 tiles wide. Width 3 is the mode. A connection that moves on both axes is a diagonal band around the segment (rare perpendicular jog), not a per-tile staircase. Cardinal connections stay a winding span; width still changes at `hall_w_interval` on those.
+Halls are 2–4 tiles wide. Width 3 is the mode. A connection is a segment plus width, not a cell sausage that later pretends to be a line. A connection that moves on both axes is a diagonal band around that segment (rare perpendicular jog), not a per-tile staircase. Cardinal connections stay a winding span; width still changes at `hall_w_interval` on those. Carve may stamp 1 m cells for placement and pathing. That stamp is not the wall.
 
 `gen.gd` uses the requested room count. Extra winding loops use the full `gen_extra_loops` value. Dead-end spurs scale with room count.
 
 ## Off-grid outline
 
-The 1 m FLOOR/WALL grid stays the logical map: rooms, MST, hall-width budget, doors, stairs, prop snaps, ambush anchors, fog, minimap, crystal separation, and stream chunk index. After outline, gen writes one silhouette: outline_spans plus a fine bake that is those spans (walk and floor). That bake is the wall. Volume draws it. Stream boxes it. Buffer stamps light and mounts torches on it. Enemies stand on it. Interactables snap to it. Those jobs read the bake; they do not retune carve. Do not keep a second staircase occupancy to burn toward the ribbon.
+The 1 m FLOOR/WALL grid stays the logical map: rooms, connection endpoints, hall-width budget, doors, stairs, prop snaps, ambush anchors, fog, minimap, crystal separation, and stream chunk index. Silhouette order is fixed. Author both rims as polylines from hall segments and room rectangles. Fillet and jag are vertex operations on those polylines (`outline_fillet_frac`, `outline_jag_frac`). Fold joins collinear runs. Then rasterize that polyline once into solid at `outline_fine_m`. outline_spans is the polyline that was rasterized. solid is that raster. Walk, collision, lights, and snaps that need occupancy read solid. Brick reads outline_spans. Do not extract spans from the raster. Do not keep a second staircase occupancy.
 
-After carve, gen traces the floor/void boundary and fillets a fraction of convex corners (`outline_fillet_frac`, live 0.40). Jag (`outline_jag_frac`, live 0.35) is 1–3 m plateaus on cardinal halls only, one face, not a sawtooth on both walls. Do not jag a rim that is already a diagonal band. If a band needs irregularity, put it on the span as vertices after the fold. It rasterizes that outline to `outline_fine_m` occupancy (live 0.25). Interior room cells are not eaten. Hall cells are not cleared, so a hall stays at its carved width. Hall corners may only gain solid in the void.
-Outline may not leave a lone 1 m tooth on the abyss rim. Gen already stores `outline_spans` as a thin rim polyline (any heading). Fold both rims of a band (2x1 / 3x2 / 1x1) into one span each. Short axis-aligned stair spans on a band rim are a defect. Do not drop a short axis-aligned span that closes a kink. After the fold, the fine bake is those spans. Short axis-aligned stair spans on a band rim are a defect. A width change may flare on the diagonal; a short step on one rim only is fine when that jump is cleaner. Collision stays BoxShape on void that touches that bake. Do not emit a 1 m slab per span. Do not retune `outline_fine_m`, fillet, jag, or `carve_winding`. Prove: both walls of a slant follow their rims; the shell is closed; feet stop on the brick; no stair rim on a band.
+Room interiors stay solid. A hall keeps its segment width; corners may only gain solid in the void. Jag is vertex plateaus on authored rims, not a raster nibble of a 1 m stamp. Collision is BoxShape on void that touches solid. Do not emit a 1 m slab per span. Do not ship a trace-then-repair loop (stair spans, tooth strip, burn toward ribbon) as the silhouette. The live tree may still invert this order until the source pass. This page is the contract that pass implements.
 
 Do not ship a shader nibble on 1 m faces as the silhouette. Do not author arches or modular kits. One brick sheet stays a volume concern; this job does not add a second rock sheet.
 

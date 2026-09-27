@@ -5,7 +5,7 @@ Read when: hashed field albedo, shared spatial shader, turf quilts, carved plane
 
 One spatial shader on Placeholdia grass pads, packed yard, and dungeon chunk floors.
 
-Dungeon floor mesh on the abyss rim follows gen's walkable solid. The sheet and world-xz shader do not change.
+Dungeon floor mesh on the abyss rim follows gen's solid, the raster of the authored polyline. The sheet and world-xz shader do not change.
 
 Field albedo. One seamless sheet per surface, projected in world xz so moving a pad or chunk does not need new art. Hub pads are large planes; do not hash cell index. Sample the light RT in world xz. Mapping stays one texel per tile. The sample may filter across texels.
 

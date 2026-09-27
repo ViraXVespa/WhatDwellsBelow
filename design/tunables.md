@@ -163,9 +163,9 @@ One texel per tile. Dungeon discs are torch, crystal, and campfire. The hub adds
 | Crystal CL band | 2 | **2** | Walk-level CL per placement band |
 | Crystal dead-end sep | 32 | **32** | Minimum Manhattan from spawn |
 | Crystal dead-end length | 28 | **28** | Spur walk to the nearest multi-exit room |
-| Outline fine size (`outline_fine_m`) | 0.25 m | **0.25** | Raster of the post-carve walk solid. Debug steps 0.25 / 0.5 / 1 |
-| Outline fillet fraction (`outline_fillet_frac`) | 0.40 | **0.40** | Share of clean convex corners. Room rims are cut; hall corners only bulge outward |
-| Outline jag fraction (`outline_jag_frac`) | 0.35 | **0.35** | Share of long abyss edges. 1–3 m plateaus on one hall face; rest stays flat |
+| Outline fine size (`outline_fine_m`) | 0.25 m | **0.25** | Rasterize resolution of the authored polyline. Debug steps 0.25 / 0.5 / 1 |
+| Outline fillet fraction (`outline_fillet_frac`) | 0.40 | **0.40** | Share of convex polyline corners to fillet as vertices. Room rims cut; hall corners only bulge outward |
+| Outline jag fraction (`outline_jag_frac`) | 0.35 | **0.35** | Share of long authored rims that receive vertex plateaus. 1–3 m on one hall face; rest stays flat |
 
 ## Enemies and combat level
 
