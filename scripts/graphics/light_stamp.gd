@@ -55,13 +55,13 @@ static func paint(
 ) -> void:
 	var iw: int = tw * SUB
 	var ih: int = th * SUB
-	var n: int = iw * ih
+	var pxn: int = iw * ih
 	var rr: PackedFloat32Array = PackedFloat32Array()
 	var gg: PackedFloat32Array = PackedFloat32Array()
 	var bb: PackedFloat32Array = PackedFloat32Array()
-	rr.resize(n)
-	gg.resize(n)
-	bb.resize(n)
+	rr.resize(pxn)
+	gg.resize(pxn)
+	bb.resize(pxn)
 	rr.fill(0.0)
 	gg.fill(0.0)
 	bb.fill(0.0)
@@ -121,8 +121,8 @@ static func _sub_walk(
 ) -> bool:
 	if solid.is_empty() or n < 1 or sw < 1 or sh < 1:
 		return true
-	var fx: int = cx * n + int(sx * n / SUB)
-	var fy: int = cz * n + int(sy * n / SUB)
+	var fx: int = cx * n + int(float(sx) * float(n) / float(SUB))
+	var fy: int = cz * n + int(float(sy) * float(n) / float(SUB))
 	if fx < 0 or fy < 0 or fx >= sw or fy >= sh:
 		return false
 	return solid[fy * sw + fx] != 0
@@ -210,19 +210,19 @@ static func _disc(
 			continue
 		_paint_tile(rr, gg, bb, tw, c.x, c.y, sx, sy, reach, energy, col, solid, sw, sh, n, x0, z0)
 		for d: Vector2i in DIRS:
-			var n: Vector2i = c + d
-			if n.x < 0 or n.y < 0 or n.x >= tw or n.y >= th:
+			var nb: Vector2i = c + d
+			if nb.x < 0 or nb.y < 0 or nb.x >= tw or nb.y >= th:
 				continue
-			if seen.has(n):
+			if seen.has(nb):
 				continue
-			if occ[n.y * tw + n.x] != 0:
+			if occ[nb.y * tw + nb.x] != 0:
 				continue
-			var ndx: float = float(n.x - sx)
-			var ndy: float = float(n.y - sy)
+			var ndx: float = float(nb.x - sx)
+			var ndy: float = float(nb.y - sy)
 			if sqrt(ndx * ndx + ndy * ndy) > reach + 1.0:
 				continue
-			seen[n] = true
-			q.append(n)
+			seen[nb] = true
+			q.append(nb)
 
 
 static func _paint_tile(

@@ -102,7 +102,7 @@ static func play_from_menu_async(host: Node) -> void:
 		host.loader.set_progress(0.08)
 	await host.get_tree().process_frame
 	LoadTiming.mark("loader_paint")
-	await preload_hub(host)
+	preload_hub(host)
 	if host.loader:
 		host.loader.set_status("Raising Placeholdia…")
 		host.loader.set_progress(0.90)
@@ -217,7 +217,7 @@ static func _warmup_hub(host: Node) -> void:
 	LoadTiming.mark("warmup_end")
 
 
-static func hub_preload_paths(host: Node) -> PackedStringArray:
+static func hub_preload_paths(_host: Node) -> PackedStringArray:
 	return PackedStringArray([
 		"res://assets/sprites/buildings/guild.png",
 		"res://assets/sprites/buildings/guild_reception.png",

@@ -320,7 +320,7 @@ static func _depth(rng: RandomNumberGenerator) -> int:
 	return 2
 
 
-static func _jag_x(n: int, gw: int, kind: PackedByteArray, solid: PackedByteArray, sw: int, sh: int, fx: int, y: int, dir: int, depth: int, notch: bool) -> void:
+static func _jag_x(n: int, _gw: int, _kind: PackedByteArray, solid: PackedByteArray, sw: int, sh: int, fx: int, y: int, dir: int, depth: int, _notch: bool) -> void:
 	var outward: int = -1 if dir < 0 else 1
 	var edge: int = y * n if dir < 0 else (y + 1) * n - 1
 	var d := 1
@@ -336,7 +336,7 @@ static func _jag_x(n: int, gw: int, kind: PackedByteArray, solid: PackedByteArra
 		d += 1
 
 
-static func _jag_y(n: int, gw: int, kind: PackedByteArray, solid: PackedByteArray, sw: int, sh: int, x: int, fy: int, dir: int, depth: int, notch: bool) -> void:
+static func _jag_y(n: int, _gw: int, _kind: PackedByteArray, solid: PackedByteArray, sw: int, sh: int, x: int, fy: int, dir: int, depth: int, _notch: bool) -> void:
 	var outward: int = -1 if dir < 0 else 1
 	var edge: int = x * n if dir < 0 else (x + 1) * n - 1
 	var d := 1

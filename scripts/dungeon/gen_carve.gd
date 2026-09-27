@@ -220,7 +220,72 @@ static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArra
 		added += 1
 
 
+static func _seg_dist2(px: float, py: float, ax: float, ay: float, bx: float, by: float) -> float:
+	var vx: float = bx - ax
+	var vy: float = by - ay
+	var len2: float = vx * vx + vy * vy
+	if len2 < 0.0001:
+		var dx0: float = px - ax
+		var dy0: float = py - ay
+		return dx0 * dx0 + dy0 * dy0
+	var t: float = clampf(((px - ax) * vx + (py - ay) * vy) / len2, 0.0, 1.0)
+	var qx: float = ax + t * vx
+	var qy: float = ay + t * vy
+	var dx1: float = px - qx
+	var dy1: float = py - qy
+	return dx1 * dx1 + dy1 * dy1
+
+
+static func _stamp_band(
+	grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i, width: int
+) -> void:
+	var pad: int = maxi(width, 2)
+	var x0: int = mini(a.x, b.x) - pad
+	var x1: int = maxi(a.x, b.x) + pad
+	var y0: int = mini(a.y, b.y) - pad
+	var y1: int = maxi(a.y, b.y) + pad
+	var rad: float = float(maxi(1, width)) * 0.5
+	var r2: float = rad * rad + 0.25
+	for y in range(y0, y1 + 1):
+		for x in range(x0, x1 + 1):
+			if _seg_dist2(
+				float(x) + 0.5, float(y) + 0.5,
+				float(a.x) + 0.5, float(a.y) + 0.5,
+				float(b.x) + 0.5, float(b.y) + 0.5
+			) > r2:
+				continue
+			dig(grid, w, h, x, y)
+
+
+static func _carve_band(
+	rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i
+) -> void:
+	var width: int = roll_hall_width(rng)
+	if rng.randf() < 0.22:
+		var px: int = 0
+		var py: int = 0
+		var bump: int = (2 + rng.randi() % 3) * (1 if rng.randf() < 0.5 else -1)
+		if absi(b.x - a.x) >= absi(b.y - a.y):
+			py = bump
+		else:
+			px = bump
+		var mid := Vector2i(
+			clampi(int((a.x + b.x) / 2) + px, 1, w - 3),
+			clampi(int((a.y + b.y) / 2) + py, 1, h - 3)
+		)
+		_stamp_band(grid, w, h, a, mid, width)
+		width = roll_hall_width(rng)
+		_stamp_band(grid, w, h, mid, b, width)
+	else:
+		_stamp_band(grid, w, h, a, b, width)
+	dig_span(grid, w, h, a.x, a.y, Vector2i(1, 0), width)
+	dig_span(grid, w, h, b.x, b.y, Vector2i(1, 0), width)
+
+
 static func carve_winding(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i) -> void:
+	if absi(b.x - a.x) >= 2 and absi(b.y - a.y) >= 2:
+		_carve_band(rng, grid, w, h, a, b)
+		return
 	var x := a.x
 	var y := a.y
 	var guard := 0
