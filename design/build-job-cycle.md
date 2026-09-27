@@ -11,7 +11,7 @@ Gather is planned `list_xref` plus planned `show_func` plus one `list_code_map_r
 
 Name a **planned gather list** (distinct xref patterns and show-func names) before the first catalog call. Those planned calls are one gather phase. A gather call invented after a prove summary, or the same command with the same args again, or a show-func not on the list, is a second job.
 
-Change is one slice in a Grok worktree that merges into the live checkout. Prove is one import check (`tools/run_build_gate.ps1`), or one listed smoke set, or both **once**. Do not import, then smoke, then import.
+Change is one slice in a Grok worktree that merges into the live checkout. Prove is one import check (`tools/run_build_gate.ps1`), or one listed smoke set, or both **once**. Do not import, then smoke, then import. Do not pass `-ScriptCap` unless the User named a size job. A cap red is Bot work, not this slice.
 
 Listed smoke set (run the runner; do not open smoke helpers just to pick the command):
 

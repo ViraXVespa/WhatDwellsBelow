@@ -7,9 +7,9 @@ This file is the live-path map. It is not a boot file and not a topic index.
 
 Open **only the matching system row**. Do not read the rest of the table “for context.” Do not walk `assets/` unless the task names sprites or audio.
 
-When live scripts are split under the 10KB cap, update **this** file in the same slice.
+When Grok Bot splits a live script, update **this** file in the same slice.
 
-Every live `scripts/**/*.gd` file must stay under **10KB** when it ships. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`.
+Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`. The 10KB ship floor is Bot-owned. Grok Build does not split from this page.
 
 | System | Live files |
 |--------|------------|

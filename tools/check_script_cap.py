@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail if live scripts/**/*.gd are at or over the ship floor. Linux twin of check_script_cap.ps1."""
+"""Fail if live scripts/**/*.gd are at or over the ship floor. Linux twin of check_script_cap.ps1. Grok Bot owns this cap. Grok Build prove does not run it unless the User named size."""
 
 from __future__ import annotations
 
@@ -85,7 +85,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         dest="over_kb",
         type=float,
         default=DEFAULT_OVER_KB,
-        help="Ship floor in KB. Limit is round(over_kb * 1000) bytes (default 10 -> 10000).",
+        help="Bot-owned ship floor in KB. Limit is round(over_kb * 1000) bytes (default 10 -> 10000). Pass 5 for the Bot sweep target.",
     )
     parser.add_argument(
         "--git-changed",
