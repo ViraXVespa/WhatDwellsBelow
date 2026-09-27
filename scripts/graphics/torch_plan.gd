@@ -56,6 +56,8 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 			site = _mount(facing, floor_cell)
 		if site.is_empty():
 			continue
+		if not _snap_span(host, site):
+			continue
 		used[Vector2i(int(site["fx"]), int(site["fz"]))] = true
 		out.append(site)
 	var mouths: Dictionary = {}
@@ -97,6 +99,8 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 		var hall: Dictionary = _mount(facing, door)
 		if hall.is_empty():
 			continue
+		if not _snap_span(host, hall):
+			continue
 		var at: Vector2i = Vector2i(int(hall["fx"]), int(hall["fz"]))
 		if _taken(used, at):
 			continue
@@ -124,6 +128,8 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 			continue
 		var spur: Dictionary = _mount(facing, spot)
 		if spur.is_empty():
+			continue
+		if not _snap_span(host, spur):
 			continue
 		var mounted: Vector2i = Vector2i(int(spur["fx"]), int(spur["fz"]))
 		if _taken(used, mounted):
@@ -344,6 +350,59 @@ static func _touches_room(
 		if grid[n.y * map_w + n.x] == Gen.FLOOR:
 			return true
 	return false
+
+
+static func _snap_span(host: Node, site: Dictionary) -> bool:
+	var spans: Variant = host.data.get("outline_spans", [])
+	if not (spans is Array) or (spans as Array).is_empty():
+		return true
+	var px: float = float(site["wx"]) + 0.5
+	var pz: float = float(site["wz"]) + 0.5
+	var cn: Vector2 = Vector2(float(site["nx"]), float(site["nz"]))
+	if cn.length_squared() < 0.0001:
+		return false
+	cn = cn.normalized()
+	var best_n := Vector2.ZERO
+	var best_d := 4.0
+	for item in spans:
+		if not (item is Dictionary):
+			continue
+		var run: Dictionary = item
+		if not run.has("delta"):
+			continue
+		var o: Vector2 = run["origin"] as Vector2
+		var d: Vector2 = run["delta"] as Vector2
+		var slen: float = d.length()
+		if slen < 0.001:
+			continue
+		var ux: float = d.x / slen
+		var uy: float = d.y / slen
+		var rx: float = px - o.x
+		var ry: float = pz - o.y
+		var along: float = rx * ux + ry * uy
+		if along < -1.0 or along > slen + 1.0:
+			continue
+		var dist: float = absf(-uy * rx + ux * ry)
+		if dist > 3.0 or dist >= best_d:
+			continue
+		var nrm: Vector2 = Vector2(-uy, ux)
+		if run.has("normal"):
+			var raw_n: Vector2 = run["normal"] as Vector2
+			if raw_n.length_squared() > 0.0001:
+				nrm = raw_n.normalized()
+		var to_floor: Vector2 = Vector2(
+			float(site["fx"]) + 0.5 - px,
+			float(site["fz"]) + 0.5 - pz
+		)
+		if to_floor.dot(nrm) < 0.0:
+			nrm = -nrm
+		best_d = dist
+		best_n = nrm
+	if best_n == Vector2.ZERO:
+		return false
+	site["nx"] = best_n.x
+	site["nz"] = best_n.y
+	return true
 
 
 static func _taken(used: Dictionary, cell: Vector2i) -> bool:

@@ -95,7 +95,24 @@ static func is_floor_cell(host: Node, c: Vector2i) -> bool:
 	if c.x < 1 or c.y < 1 or c.x >= w - 1 or c.y >= h - 1:
 		return false
 	var grid: PackedByteArray = host.data.grid
-	return grid[Gen.idx(c.x, c.y, w)] == Gen.FLOOR
+	if grid[Gen.idx(c.x, c.y, w)] != Gen.FLOOR:
+		return false
+	var raw: Variant = host.data.get("solid", PackedByteArray())
+	if not (raw is PackedByteArray):
+		return true
+	var bake: PackedByteArray = raw
+	if bake.is_empty():
+		return true
+	var n: int = maxi(1, int(host.data.get("solid_n", 1)))
+	var sw: int = int(host.data.get("solid_w", 0))
+	var sh: int = int(host.data.get("solid_h", 0))
+	if sw < 1 or sh < 1:
+		return true
+	var fx: int = c.x * n + int(n / 2.0)
+	var fy: int = c.y * n + int(n / 2.0)
+	if fx < 0 or fy < 0 or fx >= sw or fy >= sh:
+		return false
+	return bake[fy * sw + fx] != 0
 
 
 static func is_safe_cell(host: Node, c: Vector2i) -> bool:

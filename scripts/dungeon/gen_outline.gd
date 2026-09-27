@@ -602,7 +602,7 @@ static func _drop_stub_spans(spans: Array, solid: PackedByteArray, sw: int, sh: 
 		var sd: Vector2 = stub["delta"] as Vector2
 		var axis: bool = absf(sd.x) < 0.75 or absf(sd.y) < 0.75
 		if axis and sd.length() < 8.0 and _stub_on_slant(stub, slants):
-			_clear_stub(solid, sw, sh, stub)
+			kept.append(stub)
 			continue
 		kept.append(stub)
 	spans.clear()
@@ -891,7 +891,8 @@ static func _fit_idxs(spans: Array, rd: PackedInt32Array, rl: PackedInt32Array, 
 				far = dist
 				far_i = t
 		if far <= _STAIR_TOL:
-			if _real_slant(rd, rl, cur):
+			var slant_chord: bool = absf(ex - sx) >= 1.0 and absf(ey - sy) >= 1.0
+			if slant_chord or _real_slant(rd, rl, cur):
 				_push_rec(spans, sx, sy, ex, ey)
 			else:
 				_emit_runs(spans, rd, rl, rx, ry, cur)

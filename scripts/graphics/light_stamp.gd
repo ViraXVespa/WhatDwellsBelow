@@ -32,7 +32,8 @@ static func occupancy(
 			var cz: int = z0 + tz
 			var block: int = 1
 			if _pass(grid, map_w, map_h, cx, cz, open_cells):
-				block = 0
+				if solid.is_empty() or _fine_walk(solid, sw, sh, n, cx, cz):
+					block = 0
 			elif _fine_walk(solid, sw, sh, n, cx, cz):
 				block = 0
 			occ[tz * tw + tx] = block
@@ -67,7 +68,7 @@ static func paint(
 	bb.fill(0.0)
 	for src in lights:
 		_disc(rr, gg, bb, occ, tw, th, src, solid, sw, sh, n, x0, z0)
-	_walls(rr, gg, bb, occ, tw, th)
+	_walls(rr, gg, bb, occ, tw, th, solid, sw, sh, n, x0, z0)
 	_lift_floor(rr, gg, bb, occ, tw, th, ambient, solid, sw, sh, n, x0, z0)
 	for y in ih:
 		for x in iw:
@@ -127,6 +128,31 @@ static func _sub_walk(
 		return false
 	return solid[fy * sw + fx] != 0
 
+
+static func _sub_rim(
+	solid: PackedByteArray,
+	sw: int,
+	sh: int,
+	n: int,
+	cx: int,
+	cz: int,
+	sx: int,
+	sy: int
+) -> bool:
+	if solid.is_empty() or n < 1 or sw < 1 or sh < 1:
+		return true
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	for d: Vector2i in dirs:
+		var nx: int = sx + d.x
+		var ny: int = sy + d.y
+		if nx < 0 or ny < 0 or nx >= SUB or ny >= SUB:
+			if _sub_walk(solid, sw, sh, n, cx + d.x, cz + d.y, clampi(nx, 0, SUB - 1), clampi(ny, 0, SUB - 1)):
+				return true
+			continue
+		if _sub_walk(solid, sw, sh, n, cx, cz, nx, ny):
+			return true
+	return false
+
 static func _pass(
 	grid: PackedByteArray,
 	map_w: int,
@@ -157,6 +183,8 @@ static func _fine_walk(
 		return false
 	var fx0: int = cx * n
 	var fz0: int = cz * n
+	var walk := 0
+	var seen := 0
 	for dz in n:
 		var fy: int = fz0 + dz
 		if fy < 0 or fy >= sh:
@@ -166,9 +194,12 @@ static func _fine_walk(
 			var fx: int = fx0 + dx
 			if fx < 0 or fx >= sw:
 				continue
+			seen += 1
 			if solid[row + fx] != 0:
-				return true
-	return false
+				walk += 1
+	if seen < 1:
+		return false
+	return walk * 2 >= seen
 
 
 static func _disc(
@@ -271,7 +302,13 @@ static func _walls(
 	bb: PackedFloat32Array,
 	occ: PackedByteArray,
 	tw: int,
-	th: int
+	th: int,
+	solid: PackedByteArray = PackedByteArray(),
+	sw: int = 0,
+	sh: int = 0,
+	n: int = 1,
+	x0: int = 0,
+	z0: int = 0
 ) -> void:
 	var iw: int = tw * SUB
 	for y in th:
@@ -297,6 +334,10 @@ static func _walls(
 				continue
 			for sy in SUB:
 				for sx in SUB:
+					if _sub_walk(solid, sw, sh, n, x0 + x, z0 + y, sx, sy):
+						continue
+					if not _sub_rim(solid, sw, sh, n, x0 + x, z0 + y, sx, sy):
+						continue
 					var i: int = (y * SUB + sy) * iw + x * SUB + sx
 					rr[i] = br
 					gg[i] = bg
