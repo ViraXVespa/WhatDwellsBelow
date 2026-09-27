@@ -134,7 +134,12 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 		if host.floor_mm == null:
 			host.floor_mm = fm
 	if not wall_cells.is_empty():
-		var runs: Array[Dictionary] = _faces_on_chunk(solid, sw, sh, wall_cells, ox * n, oy * n, x1 * n, y1 * n)
+		var runs: Array[Dictionary] = []
+		var spans: Variant = host.data.get("outline_spans", [])
+		if spans is Array and not (spans as Array).is_empty():
+			runs = _spans_on_chunk(spans, ox * n, oy * n, x1 * n, y1 * n)
+		else:
+			runs = _faces_on_chunk(solid, sw, sh, wall_cells, ox * n, oy * n, x1 * n, y1 * n)
 		if not runs.is_empty():
 			var wall_inst: MeshInstance3D = MeshInstance3D.new()
 			wall_inst.mesh = WallMesh.from_faces(runs)
@@ -181,6 +186,32 @@ static func _emit_floors(rects: Array[Rect2i], fine_m: float, mat: Material) -> 
 	if mat:
 		inst.material_override = mat
 	return inst
+
+
+static func _spans_on_chunk(spans: Array, fx0: int, fy0: int, fx1: int, fy1: int) -> Array[Dictionary]:
+    var kept: Array[Dictionary] = []
+    var pad: float = 2.0
+    var x0: float = float(fx0) - pad
+    var y0: float = float(fy0) - pad
+    var x1: float = float(fx1) + pad
+    var y1: float = float(fy1) + pad
+    for item in spans:
+        if not (item is Dictionary):
+            continue
+        var run: Dictionary = item
+        if not run.has("delta"):
+            continue
+        var o: Vector2 = run["origin"] as Vector2
+        var d: Vector2 = run["delta"] as Vector2
+        var p: Vector2 = o + d
+        var hit: bool = _pt_in(o.x, o.y, x0, y0, x1, y1) or _pt_in(p.x, p.y, x0, y0, x1, y1)
+        if hit:
+            kept.append(run)
+    return kept
+
+
+static func _pt_in(x: float, y: float, x0: float, y0: float, x1: float, y1: float) -> bool:
+    return x >= x0 and y >= y0 and x <= x1 and y <= y1
 
 
 static func _faces_on_chunk(

@@ -14,9 +14,14 @@ static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 	var topped: Dictionary = {}
 	var cells: Dictionary = {}
 	for run in runs:
+		if run.has("delta"):
+			continue
 		_mark_faces(run, faced)
 		_mark_cells(run, cells)
 	for run in runs:
+		if run.has("delta"):
+			_push_span(run, verts, norms, indices)
+			continue
 		_push_face(run, verts, norms, indices)
 		_push_top(run, topped, verts, norms, indices)
 		_push_ends(run, faced, verts, norms, indices)
@@ -31,6 +36,57 @@ static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 	arrays[Mesh.ARRAY_INDEX] = indices
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh
+
+
+static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, indices: PackedInt32Array) -> void:
+    var o: Vector2 = run["origin"] as Vector2
+    var d: Vector2 = run["delta"] as Vector2
+    if d.length_squared() < 0.25:
+        return
+    var n2: Vector2 = run["normal"] as Vector2
+    if n2.length_squared() < 0.0001:
+        n2 = Vector2(-d.y, d.x)
+    n2 = n2.normalized()
+    var thick: float = float(run.get("thick", 4.0))
+    if thick < 1.0:
+        thick = 1.0
+    var v: Vector2 = n2 * -thick
+    var a: Vector2 = o
+    var b: Vector2 = o + d
+    var a2: Vector2 = a + v
+    var b2: Vector2 = b + v
+    var h: float = T.WALL_H
+    var nf: Vector3 = Vector3(n2.x, 0.0, n2.y)
+    var front: PackedVector3Array = PackedVector3Array()
+    front.append(Vector3(a.x, 0.0, a.y))
+    front.append(Vector3(b.x, 0.0, b.y))
+    front.append(Vector3(b.x, h, b.y))
+    front.append(Vector3(a.x, h, a.y))
+    _quad(front, nf, verts, norms, indices)
+    var back: PackedVector3Array = PackedVector3Array()
+    back.append(Vector3(b2.x, 0.0, b2.y))
+    back.append(Vector3(a2.x, 0.0, a2.y))
+    back.append(Vector3(a2.x, h, a2.y))
+    back.append(Vector3(b2.x, h, b2.y))
+    _quad(back, -nf, verts, norms, indices)
+    var top: PackedVector3Array = PackedVector3Array()
+    top.append(Vector3(a.x, h, a.y))
+    top.append(Vector3(b.x, h, b.y))
+    top.append(Vector3(b2.x, h, b2.y))
+    top.append(Vector3(a2.x, h, a2.y))
+    _quad(top, Vector3.UP, verts, norms, indices)
+    var e0: PackedVector3Array = PackedVector3Array()
+    e0.append(Vector3(a.x, 0.0, a.y))
+    e0.append(Vector3(a.x, h, a.y))
+    e0.append(Vector3(a2.x, h, a2.y))
+    e0.append(Vector3(a2.x, 0.0, a2.y))
+    _quad(e0, Vector3(-d.y, 0.0, d.x).normalized(), verts, norms, indices)
+    var e1: PackedVector3Array = PackedVector3Array()
+    e1.append(Vector3(b.x, 0.0, b.y))
+    e1.append(Vector3(b2.x, 0.0, b2.y))
+    e1.append(Vector3(b2.x, h, b2.y))
+    e1.append(Vector3(b.x, h, b.y))
+    _quad(e1, Vector3(d.y, 0.0, -d.x).normalized(), verts, norms, indices)
 
 
 static func _push_void(cells: Dictionary, faced: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, indices: PackedInt32Array) -> void:

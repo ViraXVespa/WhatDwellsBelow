@@ -27,7 +27,7 @@ Halls are carved 2–4 tiles wide. Width 3 is the mode. Width changes at `hall_w
 The 1 m FLOOR/WALL grid stays the logical map: rooms, MST, hall-width budget, doors, stairs, prop snaps, ambush anchors, fog, minimap, crystal separation, and stream chunk index.
 
 After carve, gen traces the floor/void boundary, fillets a fraction of convex corners (`outline_fillet_frac`, live 0.40), and jags a sparse fraction of long abyss edges (`outline_jag_frac`, live 0.35) as 1–3 m plateaus on one face of a hall, not a sawtooth on both walls. It rasterizes that outline to `outline_fine_m` occupancy (live 0.25). That fine solid is walk collision. Interior room cells are not eaten. Hall cells are not cleared, so a hall stays at its carved width. Hall corners may only gain solid in the void.
-Outline may not leave a lone 1 m tooth on the abyss rim.
+Outline may not leave a lone 1 m tooth on the abyss rim. Gen stores outline_spans for volume: one run per flattened rim span.
 
 Do not ship a shader nibble on 1 m faces as the silhouette. Do not author arches or modular kits. One brick sheet stays a volume concern; this job does not add a second rock sheet.
 

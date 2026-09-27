@@ -35,6 +35,7 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 	data["solid_w"] = sw
 	data["solid_h"] = sh
 	data["solid_n"] = n
+	data["outline_spans"] = _spans(solid, sw, sh, n)
 
 
 static func _fine_m(bal: Object) -> float:
@@ -390,6 +391,126 @@ static func _strip_nubs(solid: PackedByteArray, sw: int, sh: int) -> void:
 		for idx in kill:
 			solid[idx] = 0
 		pass_i += 1
+
+static func _spans(solid: PackedByteArray, sw: int, sh: int, n: int) -> Array:
+    var edges: Array[Dictionary] = []
+    var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+    for y in sh:
+        var row: int = y * sw
+        for x in sw:
+            if solid[row + x] == 0:
+                continue
+            for d in dirs:
+                var nx: int = x + d.x
+                var ny: int = y + d.y
+                var is_void: bool = nx < 0 or ny < 0 or nx >= sw or ny >= sh
+                if not is_void:
+                    is_void = solid[ny * sw + nx] == 0
+                if not is_void:
+                    continue
+                var a := Vector2.ZERO
+                var b := Vector2.ZERO
+                if d.x > 0:
+                    a = Vector2(float(x + 1), float(y))
+                    b = Vector2(float(x + 1), float(y + 1))
+                elif d.x < 0:
+                    a = Vector2(float(x), float(y + 1))
+                    b = Vector2(float(x), float(y))
+                elif d.y > 0:
+                    a = Vector2(float(x + 1), float(y + 1))
+                    b = Vector2(float(x), float(y + 1))
+                else:
+                    a = Vector2(float(x), float(y))
+                    b = Vector2(float(x + 1), float(y))
+                edges.append({
+                    "a": a,
+                    "b": b,
+                    "n": Vector2(float(d.x), float(d.y)) * -1.0,
+                })
+    var spans: Array = []
+    var used: PackedByteArray = PackedByteArray()
+    used.resize(edges.size())
+    used.fill(0)
+    var ei: int = 0
+    while ei < edges.size():
+        if used[ei] != 0:
+            ei += 1
+            continue
+        var chain: Array[Vector2] = [edges[ei]["a"] as Vector2, edges[ei]["b"] as Vector2]
+        var acc_n: Vector2 = edges[ei]["n"] as Vector2
+        used[ei] = 1
+        var grew: bool = true
+        while grew:
+            grew = false
+            var head: Vector2 = chain[chain.size() - 1]
+            var k: int = 0
+            while k < edges.size():
+                if used[k] != 0:
+                    k += 1
+                    continue
+                var ea: Vector2 = edges[k]["a"] as Vector2
+                var eb: Vector2 = edges[k]["b"] as Vector2
+                if ea.distance_squared_to(head) < 0.01:
+                    chain.append(eb)
+                    acc_n += edges[k]["n"] as Vector2
+                    used[k] = 1
+                    grew = true
+                    break
+                if eb.distance_squared_to(head) < 0.01:
+                    chain.append(ea)
+                    acc_n += edges[k]["n"] as Vector2
+                    used[k] = 1
+                    grew = true
+                    break
+                k += 1
+        _fit_chain(chain, acc_n, n, spans)
+        ei += 1
+    return spans
+
+
+static func _fit_chain(chain: Array[Vector2], acc_n: Vector2, n: int, spans: Array) -> void:
+    if chain.size() < 2:
+        return
+    var i: int = 0
+    while i < chain.size() - 1:
+        var j: int = i + 1
+        var best: int = j
+        while j < chain.size():
+            if _chain_flat(chain, i, j, 1.25):
+                best = j
+            j += 1
+        var a: Vector2 = chain[i]
+        var b: Vector2 = chain[best]
+        var d: Vector2 = b - a
+        if d.length_squared() >= 0.25:
+            var nrm: Vector2 = acc_n
+            if nrm.length_squared() < 0.01:
+                nrm = Vector2(-d.y, d.x)
+            spans.append({
+                "origin": a,
+                "delta": d,
+                "normal": nrm.normalized(),
+                "thick": float(maxi(n, 1)),
+            })
+        i = best
+
+
+static func _chain_flat(chain: Array[Vector2], i: int, j: int, eps: float) -> bool:
+    var a: Vector2 = chain[i]
+    var b: Vector2 = chain[j]
+    var ab: Vector2 = b - a
+    var len2: float = ab.length_squared()
+    if len2 < 0.0001:
+        return false
+    var k: int = i + 1
+    while k < j:
+        var p: Vector2 = chain[k]
+        var t: float = clampf((p - a).dot(ab) / len2, 0.0, 1.0)
+        if (p - (a + ab * t)).length() > eps:
+            return false
+        k += 1
+    return true
+
 
 static func _void_gap(solid: PackedByteArray, sw: int, sh: int, fx: int, fy: int, dx: int, dy: int) -> int:
 	var gap := 0
