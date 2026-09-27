@@ -270,8 +270,8 @@ static func _carve_band(
 		else:
 			px = bump
 		var mid := Vector2i(
-			clampi(int((a.x + b.x) / 2) + px, 1, w - 3),
-			clampi(int((a.y + b.y) / 2) + py, 1, h - 3)
+			clampi(int(float(a.x + b.x) * 0.5) + px, 1, w - 3),
+			clampi(int(float(a.y + b.y) * 0.5) + py, 1, h - 3)
 		)
 		_stamp_band(grid, w, h, a, mid, width)
 		width = roll_hall_width(rng)
