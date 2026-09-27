@@ -27,8 +27,9 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 	solid.fill(0)
 	_upsample(grid, w, h, n, solid, sw)
 	if n >= 2:
-		_jag(rng, grid, w, h, n, kind, solid, sw, sh, _frac(bal, "outline_jag_frac", 0.62))
+		_jag(rng, grid, w, h, n, kind, solid, sw, sh, _frac(bal, "outline_jag_frac", 0.35))
 		_fillet(rng, grid, w, h, n, kind, solid, sw, sh, _frac(bal, "outline_fillet_frac", 0.40))
+		_strip_nubs(solid, sw, sh)
 	data["outline_fine_m"] = fine_m
 	data["solid"] = solid
 	data["solid_w"] = sw
@@ -216,9 +217,7 @@ static func _jag(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: i
 	if frac <= 0.0:
 		return
 	var runs: Array[Dictionary] = []
-	_collect_h(runs, grid, w, h, -1)
 	_collect_h(runs, grid, w, h, 1)
-	_collect_v(runs, grid, w, h, -1)
 	_collect_v(runs, grid, w, h, 1)
 	if runs.is_empty():
 		return
@@ -276,7 +275,7 @@ static func _v_edge(grid: PackedByteArray, w: int, h: int, x: int, y: int, dir: 
 
 
 static func _jag_run(rng: RandomNumberGenerator, n: int, gw: int, kind: PackedByteArray, solid: PackedByteArray, sw: int, sh: int, run: Dictionary) -> void:
-	var segs: Array[int] = [2, 3, 5, 7]
+	var segs: Array[int] = [4, 6, 8, 12]
 	var axis: int = int(run["axis"])
 	var dir: int = int(run["dir"])
 	if axis == 0:
@@ -284,6 +283,8 @@ static func _jag_run(rng: RandomNumberGenerator, n: int, gw: int, kind: PackedBy
 		var fx_end: int = int(run["x1"]) * n
 		var y: int = int(run["y"])
 		while fx < fx_end:
+			if fx_end - fx < n:
+				break
 			var seg: int = segs[rng.randi() % segs.size()]
 			var depth: int = _depth(rng)
 			var notch: bool = depth == 0 and rng.randf() < 0.4
@@ -292,11 +293,14 @@ static func _jag_run(rng: RandomNumberGenerator, n: int, gw: int, kind: PackedBy
 					break
 				_jag_x(n, gw, kind, solid, sw, sh, fx, y, dir, depth, notch)
 				fx += 1
+			fx += 4 + rng.randi() % 5
 		return
 	var fy: int = (int(run["y0"]) + 1) * n
 	var fy_end: int = int(run["y1"]) * n
 	var x: int = int(run["x"])
 	while fy < fy_end:
+		if fy_end - fy < n:
+			break
 		var seg_y: int = segs[rng.randi() % segs.size()]
 		var depth_y: int = _depth(rng)
 		var notch_y: bool = depth_y == 0 and rng.randf() < 0.4
@@ -305,6 +309,7 @@ static func _jag_run(rng: RandomNumberGenerator, n: int, gw: int, kind: PackedBy
 				break
 			_jag_y(n, gw, kind, solid, sw, sh, x, fy, dir, depth_y, notch_y)
 			fy += 1
+		fy += 4 + rng.randi() % 5
 
 
 static func _depth(rng: RandomNumberGenerator) -> int:
@@ -329,8 +334,6 @@ static func _jag_x(n: int, gw: int, kind: PackedByteArray, solid: PackedByteArra
 			break
 		solid[fy * sw + fx] = 1
 		d += 1
-	if notch:
-		_notch_at(n, gw, kind, solid, sw, fx, edge)
 
 
 static func _jag_y(n: int, gw: int, kind: PackedByteArray, solid: PackedByteArray, sw: int, sh: int, x: int, fy: int, dir: int, depth: int, notch: bool) -> void:
@@ -347,8 +350,6 @@ static func _jag_y(n: int, gw: int, kind: PackedByteArray, solid: PackedByteArra
 			break
 		solid[fy * sw + fx] = 1
 		d += 1
-	if notch:
-		_notch_at(n, gw, kind, solid, sw, edge, fy)
 
 
 static func _notch_at(n: int, gw: int, kind: PackedByteArray, solid: PackedByteArray, sw: int, fx: int, fy: int) -> void:
@@ -363,6 +364,32 @@ static func _notch_at(n: int, gw: int, kind: PackedByteArray, solid: PackedByteA
 		return
 	solid[fy * sw + fx] = 0
 
+
+static func _strip_nubs(solid: PackedByteArray, sw: int, sh: int) -> void:
+	var dirs: Array[Vector2i] = [
+		Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)
+	]
+	var pass_i: int = 0
+	while pass_i < 3:
+		var kill: Array[int] = []
+		for y in sh:
+			var row: int = y * sw
+			for x in sw:
+				if solid[row + x] == 0:
+					continue
+				var nbor: int = 0
+				for d in dirs:
+					var nx: int = x + d.x
+					var ny: int = y + d.y
+					if nx < 0 or ny < 0 or nx >= sw or ny >= sh:
+						continue
+					if solid[ny * sw + nx] != 0:
+						nbor += 1
+				if nbor <= 1:
+					kill.append(row + x)
+		for idx in kill:
+			solid[idx] = 0
+		pass_i += 1
 
 static func _void_gap(solid: PackedByteArray, sw: int, sh: int, fx: int, fy: int, dx: int, dy: int) -> int:
 	var gap := 0

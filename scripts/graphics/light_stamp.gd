@@ -18,7 +18,11 @@ static func occupancy(
 	z0: int,
 	tw: int,
 	th: int,
-	open_cells: Dictionary
+	open_cells: Dictionary,
+	solid: PackedByteArray = PackedByteArray(),
+	sw: int = 0,
+	sh: int = 0,
+	n: int = 1
 ) -> PackedByteArray:
 	var occ: PackedByteArray = PackedByteArray()
 	occ.resize(tw * th)
@@ -26,11 +30,11 @@ static func occupancy(
 		for tx in tw:
 			var cx: int = x0 + tx
 			var cz: int = z0 + tz
-			var block: int = 0
+			var block: int = 1
 			if _pass(grid, map_w, map_h, cx, cz, open_cells):
 				block = 0
-			else:
-				block = 1
+			elif _fine_walk(solid, sw, sh, n, cx, cz):
+				block = 0
 			occ[tz * tw + tx] = block
 	return occ
 
@@ -41,7 +45,13 @@ static func paint(
 	tw: int,
 	th: int,
 	lights: Array,
-	ambient: Color = Color(0, 0, 0, 1)
+	ambient: Color = Color(0, 0, 0, 1),
+	solid: PackedByteArray = PackedByteArray(),
+	sw: int = 0,
+	sh: int = 0,
+	n: int = 1,
+	x0: int = 0,
+	z0: int = 0
 ) -> void:
 	var iw: int = tw * SUB
 	var ih: int = th * SUB
@@ -56,9 +66,9 @@ static func paint(
 	gg.fill(0.0)
 	bb.fill(0.0)
 	for src in lights:
-		_disc(rr, gg, bb, occ, tw, th, src)
+		_disc(rr, gg, bb, occ, tw, th, src, solid, sw, sh, n, x0, z0)
 	_walls(rr, gg, bb, occ, tw, th)
-	_lift_floor(rr, gg, bb, occ, tw, th, ambient)
+	_lift_floor(rr, gg, bb, occ, tw, th, ambient, solid, sw, sh, n, x0, z0)
 	for y in ih:
 		for x in iw:
 			var i: int = y * iw + x
@@ -74,22 +84,48 @@ static func _lift_floor(
 	occ: PackedByteArray,
 	tw: int,
 	th: int,
-	ambient: Color
+	ambient: Color,
+	solid: PackedByteArray = PackedByteArray(),
+	sw: int = 0,
+	sh: int = 0,
+	n: int = 1,
+	x0: int = 0,
+	z0: int = 0
 ) -> void:
 	if ambient.r <= 0.0 and ambient.g <= 0.0 and ambient.b <= 0.0:
 		return
 	var iw: int = tw * SUB
 	for y in th:
 		for x in tw:
-			if occ[y * tw + x] != 0:
+			if occ[y * tw + x] != 0 and solid.is_empty():
 				continue
 			for sy in SUB:
 				for sx in SUB:
+					if not _sub_walk(solid, sw, sh, n, x0 + x, z0 + y, sx, sy):
+						continue
 					var i: int = (y * SUB + sy) * iw + x * SUB + sx
 					rr[i] = minf(rr[i] + ambient.r, 1.0)
 					gg[i] = minf(gg[i] + ambient.g, 1.0)
 					bb[i] = minf(bb[i] + ambient.b, 1.0)
 
+
+static func _sub_walk(
+	solid: PackedByteArray,
+	sw: int,
+	sh: int,
+	n: int,
+	cx: int,
+	cz: int,
+	sx: int,
+	sy: int
+) -> bool:
+	if solid.is_empty() or n < 1 or sw < 1 or sh < 1:
+		return true
+	var fx: int = cx * n + int(sx * n / SUB)
+	var fy: int = cz * n + int(sy * n / SUB)
+	if fx < 0 or fy < 0 or fx >= sw or fy >= sh:
+		return false
+	return solid[fy * sw + fx] != 0
 
 static func _pass(
 	grid: PackedByteArray,
@@ -109,6 +145,32 @@ static func _pass(
 	return grid[y * map_w + x] == Gen.FLOOR
 
 
+static func _fine_walk(
+	solid: PackedByteArray,
+	sw: int,
+	sh: int,
+	n: int,
+	cx: int,
+	cz: int
+) -> bool:
+	if solid.is_empty() or n < 1 or sw < 1 or sh < 1:
+		return false
+	var fx0: int = cx * n
+	var fz0: int = cz * n
+	for dz in n:
+		var fy: int = fz0 + dz
+		if fy < 0 or fy >= sh:
+			continue
+		var row: int = fy * sw
+		for dx in n:
+			var fx: int = fx0 + dx
+			if fx < 0 or fx >= sw:
+				continue
+			if solid[row + fx] != 0:
+				return true
+	return false
+
+
 static func _disc(
 	rr: PackedFloat32Array,
 	gg: PackedFloat32Array,
@@ -116,7 +178,13 @@ static func _disc(
 	occ: PackedByteArray,
 	tw: int,
 	th: int,
-	src: Dictionary
+	src: Dictionary,
+	solid: PackedByteArray = PackedByteArray(),
+	sw: int = 0,
+	sh: int = 0,
+	n: int = 1,
+	x0: int = 0,
+	z0: int = 0
 ) -> void:
 	var sx: int = int(src["tx"])
 	var sy: int = int(src["tz"])
@@ -140,7 +208,7 @@ static func _disc(
 		var dist: float = sqrt(dx * dx + dy * dy)
 		if dist > reach + 1.0:
 			continue
-		_paint_tile(rr, gg, bb, tw, c.x, c.y, sx, sy, reach, energy, col)
+		_paint_tile(rr, gg, bb, tw, c.x, c.y, sx, sy, reach, energy, col, solid, sw, sh, n, x0, z0)
 		for d: Vector2i in DIRS:
 			var n: Vector2i = c + d
 			if n.x < 0 or n.y < 0 or n.x >= tw or n.y >= th:
@@ -168,7 +236,13 @@ static func _paint_tile(
 	src_y: int,
 	reach: float,
 	energy: float,
-	col: Color
+	col: Color,
+	solid: PackedByteArray = PackedByteArray(),
+	sw: int = 0,
+	sh: int = 0,
+	n: int = 1,
+	x0: int = 0,
+	z0: int = 0
 ) -> void:
 	var iw: int = tw * SUB
 	var cx: float = float(src_x) + 0.5
@@ -177,6 +251,8 @@ static func _paint_tile(
 		for sx in SUB:
 			var px: int = tile_x * SUB + sx
 			var py: int = tile_y * SUB + sy
+			if not _sub_walk(solid, sw, sh, n, x0 + tile_x, z0 + tile_y, sx, sy):
+				continue
 			var wx: float = (float(px) + 0.5) / float(SUB)
 			var wz: float = (float(py) + 0.5) / float(SUB)
 			var dist: float = sqrt((wx - cx) * (wx - cx) + (wz - cz) * (wz - cz))

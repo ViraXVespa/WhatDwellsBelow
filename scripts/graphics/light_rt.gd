@@ -124,9 +124,20 @@ static func _publish_dungeon(host: Node, rect: Rect2i) -> void:
 	var map_w: int = int(host.data.w)
 	var map_h: int = int(host.data.h)
 	var open_cells: Dictionary = _open_cells(host.data)
-	var occ: PackedByteArray = Stamp.occupancy(grid, map_w, map_h, x0, z0, tw, th, open_cells)
+	var solid: PackedByteArray = PackedByteArray()
+	var sw: int = 0
+	var sh: int = 0
+	var n: int = 1
+	if host.data.has("solid") and host.data["solid"] is PackedByteArray:
+		solid = host.data["solid"]
+		sw = int(host.data.get("solid_w", 0))
+		sh = int(host.data.get("solid_h", 0))
+		n = maxi(1, int(host.data.get("solid_n", 1)))
+	var occ: PackedByteArray = Stamp.occupancy(
+		grid, map_w, map_h, x0, z0, tw, th, open_cells, solid, sw, sh, n
+	)
 	var lights: Array = _dungeon_lights(host, x0, z0, tw, th)
-	_publish(x0, z0, tw, th, occ, lights, false)
+	_publish(x0, z0, tw, th, occ, lights, false, solid, sw, sh, n)
 
 
 static func _publish(
@@ -136,7 +147,11 @@ static func _publish(
 	th: int,
 	occ: PackedByteArray,
 	lights: Array,
-	hub_open: bool
+	hub_open: bool,
+	solid: PackedByteArray = PackedByteArray(),
+	sw: int = 0,
+	sh: int = 0,
+	n: int = 1
 ) -> void:
 	var img: Image = Image.create(tw * Stamp.SUB, th * Stamp.SUB, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 1))
@@ -148,7 +163,7 @@ static func _publish(
 	var fill: Color = Color(0.0, 0.0, 0.0, 1.0)
 	if not hub_open:
 		fill = Stamp.COL_FLOOR
-	Stamp.paint(img, use, tw, th, lights, fill)
+	Stamp.paint(img, use, tw, th, lights, fill, solid, sw, sh, n, x0, z0)
 	origin = Vector2(float(x0), float(z0))
 	span = Vector2(float(tw), float(th))
 	_img = img
