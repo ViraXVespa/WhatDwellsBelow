@@ -1,7 +1,7 @@
 # Dungeon — generation and placement
 
 Status: binding design + live snapshot  
-Read when: MST loops, deadend termini, hall widths, size rebalance ledger, fillet raster, walkable solid, void rim, outline, diagonal band
+Read when: MST loops, deadend termini, hall widths, size rebalance ledger, fillet raster, walkable solid, void rim, outline, diagonal band, band fold, no jag on band, void teeth
 
 
 ## Overall structure
@@ -26,8 +26,8 @@ Halls are carved 2–4 tiles wide. Width 3 is the mode. A connection that moves 
 
 The 1 m FLOOR/WALL grid stays the logical map: rooms, MST, hall-width budget, doors, stairs, prop snaps, ambush anchors, fog, minimap, crystal separation, and stream chunk index.
 
-After carve, gen traces the floor/void boundary, fillets a fraction of convex corners (`outline_fillet_frac`, live 0.40), and jags a sparse fraction of long abyss edges (`outline_jag_frac`, live 0.35) as 1–3 m plateaus on one face of a hall, not a sawtooth on both walls. It rasterizes that outline to `outline_fine_m` occupancy (live 0.25). That fine solid is walk collision. Interior room cells are not eaten. Hall cells are not cleared, so a hall stays at its carved width. Hall corners may only gain solid in the void.
-Outline may not leave a lone 1 m tooth on the abyss rim. Gen may store `outline_spans` as a thin rim polyline (any heading). Collision stays the fine solid. Do not emit a 1 m slab per span.
+After carve, gen traces the floor/void boundary and fillets a fraction of convex corners (`outline_fillet_frac`, live 0.40). Jag (`outline_jag_frac`, live 0.35) is 1–3 m plateaus on cardinal halls only, one face, not a sawtooth on both walls. Do not jag a rim that is already a diagonal band. If a band needs irregularity, put it on the span as vertices after the fold. It rasterizes that outline to `outline_fine_m` occupancy (live 0.25). Interior room cells are not eaten. Hall cells are not cleared, so a hall stays at its carved width. Hall corners may only gain solid in the void.
+Outline may not leave a lone 1 m tooth on the abyss rim. Gen already stores `outline_spans` as a thin rim polyline (any heading). Fold both rims of a band (2x1 / 3x2 / 1x1) into one span each. Short axis-aligned stair spans on a band rim are a defect. After the fold, burn fine solid to those spans so teeth in front of the ribbon are gone. Collision stays BoxShape on that clipped solid. Do not emit a 1 m slab per span. Do not retune `outline_fine_m`, fillet, jag, occupancy, or `carve_winding`. Prove: both walls of a 2x1 follow the band; feet stop on the visible wall; no bump in the black triangles.
 
 Do not ship a shader nibble on 1 m faces as the silhouette. Do not author arches or modular kits. One brick sheet stays a volume concern; this job does not add a second rock sheet.
 

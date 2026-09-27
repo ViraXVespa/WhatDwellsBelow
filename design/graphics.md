@@ -33,6 +33,6 @@ Env fog and void ride the kit, not a fifth owner.
 |-----|------|
 | hearth-warm hole-cold Environment, abyss-plinth, caller redirect | `design/graphics-env.md` |
 | hashed field albedo, shared spatial shader, turf quilts, carved planes | `design/graphics-ground.md` |
-| exposed coplanar brick runs, BoxMesh retirement, hitbox-untouched | `design/graphics-volume.md` |
+| exposed coplanar brick runs, BoxMesh retirement, BoxShape on welded mass, span ribbon | `design/graphics-volume.md` |
 | one-texel radiance buffer, disc blobs, tile occupancy | `design/graphics-buffer.md` |
 | billboard-alpha squash quads, player yard-mannequin foes, source-offset | `design/graphics-actor.md` |
