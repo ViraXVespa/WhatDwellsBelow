@@ -10,6 +10,9 @@ const LONG_EDGE := 4
 const K_HALL := 1
 const K_INTERIOR := 2
 const K_RIM := 3
+const _EPS := 4.5
+const _LOCK := 64.0
+const _DOMIN := 0.62
 
 
 static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> void:
@@ -35,7 +38,7 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 	data["solid_w"] = sw
 	data["solid_h"] = sh
 	data["solid_n"] = n
-	data["outline_spans"] = []
+	data["outline_spans"] = _spans(solid, sw, sh, grid, w, h, n)
 
 
 static func _fine_m(bal: Object) -> float:
@@ -392,138 +395,401 @@ static func _strip_nubs(solid: PackedByteArray, sw: int, sh: int) -> void:
 			solid[idx] = 0
 		pass_i += 1
 
-static func _spans(solid: PackedByteArray, sw: int, sh: int, n: int) -> Array:
-	var edges: Array[Dictionary] = []
-	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
-	for y in sh:
-		var row: int = y * sw
-		for x in sw:
-			if solid[row + x] == 0:
-				continue
-			for d in dirs:
-				var nx: int = x + d.x
-				var ny: int = y + d.y
-				var is_void: bool = nx < 0 or ny < 0 or nx >= sw or ny >= sh
-				if not is_void:
-					is_void = solid[ny * sw + nx] == 0
-				if not is_void:
-					continue
-				var a := Vector2.ZERO
-				var b := Vector2.ZERO
-				if d.x > 0:
-					a = Vector2(float(x + 1), float(y))
-					b = Vector2(float(x + 1), float(y + 1))
-				elif d.x < 0:
-					a = Vector2(float(x), float(y + 1))
-					b = Vector2(float(x), float(y))
-				elif d.y > 0:
-					a = Vector2(float(x + 1), float(y + 1))
-					b = Vector2(float(x), float(y + 1))
-				else:
-					a = Vector2(float(x), float(y))
-					b = Vector2(float(x + 1), float(y))
-				edges.append({
-					"a": a,
-					"b": b,
-					"n": Vector2(float(d.x), float(d.y)) * -1.0,
-				})
+static func _spans(solid: PackedByteArray, sw: int, sh: int, grid: PackedByteArray, gw: int, gh: int, n: int) -> Array:
+	var pack: Dictionary = _collect_edges(solid, sw, sh, grid, gw, gh, n)
+	var ex: PackedInt32Array = pack["ex"]
 	var spans: Array = []
+	if ex.is_empty():
+		return spans
+	var vw: int = int(pack["vw"])
+	var head: PackedInt32Array = pack["head"]
+	var ey: PackedInt32Array = pack["ey"]
+	var ed: PackedInt32Array = pack["ed"]
+	var link: PackedInt32Array = pack["link"]
 	var used: PackedByteArray = PackedByteArray()
-	used.resize(edges.size())
+	used.resize(ex.size())
 	used.fill(0)
-	var at: Dictionary = {}
-	var eix: int = 0
-	while eix < edges.size():
-		var ea0: Vector2 = edges[eix]["a"] as Vector2
-		var eb0: Vector2 = edges[eix]["b"] as Vector2
-		var ka := Vector2i(int(round(ea0.x)), int(round(ea0.y)))
-		var kb := Vector2i(int(round(eb0.x)), int(round(eb0.y)))
-		var la: Array = at.get(ka, [])
-		la.append(eix)
-		at[ka] = la
-		var lb: Array = at.get(kb, [])
-		lb.append(eix)
-		at[kb] = lb
-		eix += 1
-	var ei: int = 0
-	while ei < edges.size():
-		if used[ei] != 0:
-			ei += 1
+	var ecount: int = ex.size()
+	for s in ecount:
+		if used[s] != 0:
 			continue
-		var chain: Array[Vector2] = [edges[ei]["a"] as Vector2, edges[ei]["b"] as Vector2]
-		var acc_n: Vector2 = edges[ei]["n"] as Vector2
-		used[ei] = 1
-		var grew: bool = true
-		while grew:
-			grew = false
-			var head: Vector2 = chain[chain.size() - 1]
-			var hk := Vector2i(int(round(head.x)), int(round(head.y)))
-			if not at.has(hk):
+		var xs: PackedInt32Array = PackedInt32Array()
+		var ys: PackedInt32Array = PackedInt32Array()
+		xs.append(ex[s])
+		ys.append(ey[s])
+		var e: int = s
+		var guard: int = ecount + 2
+		while guard > 0:
+			guard -= 1
+			if used[e] != 0:
 				break
-			var cand: Array = at[hk]
-			for raw in cand:
-				var k: int = int(raw)
-				if used[k] != 0:
-					continue
-				var ea: Vector2 = edges[k]["a"] as Vector2
-				var eb: Vector2 = edges[k]["b"] as Vector2
-				if ea.distance_squared_to(head) < 0.01:
-					chain.append(eb)
-					acc_n += edges[k]["n"] as Vector2
-					used[k] = 1
-					grew = true
-					break
-				if eb.distance_squared_to(head) < 0.01:
-					chain.append(ea)
-					acc_n += edges[k]["n"] as Vector2
-					used[k] = 1
-					grew = true
-					break
-		_fit_chain(chain, acc_n, n, spans)
-		ei += 1
+			used[e] = 1
+			var d: int = ed[e]
+			var bx: int = ex[e] + _step_x(d)
+			var by: int = ey[e] + _step_y(d)
+			xs.append(bx)
+			ys.append(by)
+			if bx == xs[0] and by == ys[0]:
+				break
+			e = _pick_edge(head, vw, ed, link, used, bx, by, d)
+			if e < 0:
+				break
+		var closed: bool = xs.size() >= 2 and xs[0] == xs[xs.size() - 1] and ys[0] == ys[ys.size() - 1]
+		var local: Array = _fold_spans(_fit_xy(xs, ys), closed)
+		for item in local:
+			spans.append(item)
 	return spans
 
 
-static func _fit_chain(chain: Array[Vector2], acc_n: Vector2, n: int, spans: Array) -> void:
-	if chain.size() < 2:
-		return
+static func _step_x(d: int) -> int:
+	if d == 0:
+		return 1
+	if d == 2:
+		return -1
+	return 0
+
+
+static func _step_y(d: int) -> int:
+	if d == 1:
+		return 1
+	if d == 3:
+		return -1
+	return 0
+
+
+static func _skip_block(grid: PackedByteArray, gw: int, gh: int, x: int, y: int) -> bool:
+	var here: int = grid[y * gw + x]
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	for d in dirs:
+		var nx: int = x + d.x
+		var ny: int = y + d.y
+		var v: int = 0
+		if nx >= 0 and ny >= 0 and nx < gw and ny < gh:
+			v = grid[ny * gw + nx]
+		if v != here:
+			return false
+	return true
+
+
+static func _collect_edges(solid: PackedByteArray, sw: int, sh: int, grid: PackedByteArray, gw: int, gh: int, n: int) -> Dictionary:
+	var step: int = n
+	if step < 1:
+		step = 1
+	var vw: int = sw + 1
+	var vh: int = sh + 1
+	var head: PackedInt32Array = PackedInt32Array()
+	head.resize(vw * vh)
+	head.fill(-1)
+	var ex: PackedInt32Array = PackedInt32Array()
+	var ey: PackedInt32Array = PackedInt32Array()
+	var ed: PackedInt32Array = PackedInt32Array()
+	var link: PackedInt32Array = PackedInt32Array()
+	for cy in gh:
+		for cx in gw:
+			if _skip_block(grid, gw, gh, cx, cy):
+				continue
+			var x0: int = cx * step
+			var y0: int = cy * step
+			var x1: int = x0 + step
+			var y1: int = y0 + step
+			if x1 > sw:
+				x1 = sw
+			if y1 > sh:
+				y1 = sh
+			for y in range(y0, y1):
+				var row: int = y * sw
+				for x in range(x0, x1):
+					if solid[row + x] == 0:
+						continue
+					if x + 1 >= sw or solid[row + x + 1] == 0:
+						var e0: int = ex.size()
+						ex.append(x + 1)
+						ey.append(y)
+						ed.append(1)
+						link.append(head[(y * vw) + (x + 1)])
+						head[(y * vw) + (x + 1)] = e0
+					if x <= 0 or solid[row + x - 1] == 0:
+						var e1: int = ex.size()
+						ex.append(x)
+						ey.append(y + 1)
+						ed.append(3)
+						link.append(head[((y + 1) * vw) + x])
+						head[((y + 1) * vw) + x] = e1
+					if y + 1 >= sh or solid[(y + 1) * sw + x] == 0:
+						var e2: int = ex.size()
+						ex.append(x + 1)
+						ey.append(y + 1)
+						ed.append(2)
+						link.append(head[((y + 1) * vw) + (x + 1)])
+						head[((y + 1) * vw) + (x + 1)] = e2
+					if y <= 0 or solid[(y - 1) * sw + x] == 0:
+						var e3: int = ex.size()
+						ex.append(x)
+						ey.append(y)
+						ed.append(0)
+						link.append(head[(y * vw) + x])
+						head[(y * vw) + x] = e3
+	return {"vw": vw, "head": head, "ex": ex, "ey": ey, "ed": ed, "link": link}
+
+
+static func _pick_edge(head: PackedInt32Array, vw: int, ed: PackedInt32Array, link: PackedInt32Array, used: PackedByteArray, bx: int, by: int, in_d: int) -> int:
+	var key: int = by * vw + bx
+	if key < 0 or key >= head.size():
+		return -1
+	var e: int = head[key]
+	var best: int = -1
+	var best_sc: int = 99
+	var guard: int = 8
+	while e >= 0 and guard > 0:
+		guard -= 1
+		if used[e] == 0:
+			var sc: int = (ed[e] - in_d) & 3
+			if sc < best_sc:
+				best_sc = sc
+				best = e
+		e = link[e]
+	return best
+
+
+static func _fit_xy(xs: PackedInt32Array, ys: PackedInt32Array) -> Array:
+	var rd: PackedInt32Array = PackedInt32Array()
+	var rl: PackedInt32Array = PackedInt32Array()
+	var rx: PackedInt32Array = PackedInt32Array()
+	var ry: PackedInt32Array = PackedInt32Array()
+	var npts: int = xs.size()
+	if npts < 2:
+		return []
+	var closed: bool = xs[0] == xs[npts - 1] and ys[0] == ys[npts - 1]
 	var i: int = 0
-	while i < chain.size() - 1:
+	var last: int = npts - 1
+	while i < last:
+		var dx: int = _sgn(xs[i + 1] - xs[i])
+		var dy: int = _sgn(ys[i + 1] - ys[i])
+		var dir: int = _dir4(dx, dy)
 		var j: int = i + 1
-		while j + 1 < chain.size() and _chain_flat(chain, i, j + 1, 1.25):
+		while j < last:
+			var dx2: int = _sgn(xs[j + 1] - xs[j])
+			var dy2: int = _sgn(ys[j + 1] - ys[j])
+			if _dir4(dx2, dy2) != dir:
+				break
 			j += 1
-		var best: int = j
-		var a: Vector2 = chain[i]
-		var b: Vector2 = chain[best]
-		var d: Vector2 = b - a
-		if d.length_squared() >= 0.25:
-			var nrm: Vector2 = acc_n
-			if nrm.length_squared() < 0.01:
-				nrm = Vector2(-d.y, d.x)
-			spans.append({
-				"origin": a,
-				"delta": d,
-				"normal": nrm.normalized(),
-				"thick": float(maxi(n, 1)),
-			})
-		i = best
+		rd.append(dir)
+		rl.append(j - i)
+		rx.append(xs[i])
+		ry.append(ys[i])
+		i = j
+	if rd.is_empty():
+		return []
+	if closed and rd.size() >= 2 and rd[0] == rd[rd.size() - 1]:
+		rl[0] = rl[0] + rl[rl.size() - 1]
+		rx[0] = rx[rx.size() - 1]
+		ry[0] = ry[ry.size() - 1]
+		rd.resize(rd.size() - 1)
+		rl.resize(rl.size() - 1)
+		rx.resize(rx.size() - 1)
+		ry.resize(ry.size() - 1)
+	return _fit_runs(rd, rl, rx, ry)
 
 
-static func _chain_flat(chain: Array[Vector2], i: int, j: int, eps: float) -> bool:
-	var a: Vector2 = chain[i]
-	var b: Vector2 = chain[j]
-	var ab: Vector2 = b - a
-	var len2: float = ab.length_squared()
-	if len2 < 0.0001:
+static func _sgn(v: int) -> int:
+	if v > 0:
+		return 1
+	if v < 0:
+		return -1
+	return 0
+
+
+static func _dir4(dx: int, dy: int) -> int:
+	if dx > 0:
+		return 0
+	if dy > 0:
+		return 1
+	if dx < 0:
+		return 2
+	return 3
+
+
+static func _fit_runs(rd: PackedInt32Array, rl: PackedInt32Array, rx: PackedInt32Array, ry: PackedInt32Array) -> Array:
+	var spans: Array = []
+	var count: int = rd.size()
+	var i: int = 0
+	while i < count:
+		var counts: PackedInt32Array = PackedInt32Array([0, 0, 0, 0])
+		counts[rd[i]] = counts[rd[i]] + 1
+		var longest: int = rl[i]
+		var sx: float = float(rx[i])
+		var sy: float = float(ry[i])
+		var locked: bool = false
+		var lx: float = 1.0
+		var ly: float = 0.0
+		var j: int = i
+		while j + 1 < count:
+			var nd: int = rd[j + 1]
+			if not _quadrant_ok(counts, nd):
+				break
+			var ex: float = float(_end_x(rx, rd, rl, j + 1))
+			var ey: float = float(_end_y(ry, rd, rl, j + 1))
+			if not locked:
+				if not _prefix_flat(rx, ry, rd, rl, i, j + 1):
+					break
+			elif _line_dist(float(rx[j + 1]), float(ry[j + 1]), sx, sy, lx, ly) > _EPS or _line_dist(ex, ey, sx, sy, lx, ly) > _EPS:
+				break
+			j += 1
+			counts[nd] = counts[nd] + 1
+			if rl[j] > longest:
+				longest = rl[j]
+			var chord: float = Vector2(ex - sx, ey - sy).length()
+			if not locked and chord >= _LOCK and _both_axes(counts):
+				if _prefix_flat(rx, ry, rd, rl, i, j):
+					locked = true
+					if chord < 0.001:
+						chord = 1.0
+					lx = (ex - sx) / chord
+					ly = (ey - sy) / chord
+				else:
+					counts[nd] = counts[nd] - 1
+					j -= 1
+					break
+		var ex2: float = float(_end_x(rx, rd, rl, j))
+		var ey2: float = float(_end_y(ry, rd, rl, j))
+		var chord2: float = Vector2(ex2 - sx, ey2 - sy).length()
+		var stair: bool = j > i and _dirs_twice(counts) and float(longest) <= maxf(6.0, _DOMIN * chord2)
+		if stair:
+			_push_rec(spans, sx, sy, ex2, ey2)
+			i = j + 1
+		else:
+			_push_rec(spans, sx, sy, float(_end_x(rx, rd, rl, i)), float(_end_y(ry, rd, rl, i)))
+			i += 1
+	return spans
+
+
+static func _end_x(rx: PackedInt32Array, rd: PackedInt32Array, rl: PackedInt32Array, j: int) -> int:
+	return rx[j] + _step_x(rd[j]) * rl[j]
+
+
+static func _end_y(ry: PackedInt32Array, rd: PackedInt32Array, rl: PackedInt32Array, j: int) -> int:
+	return ry[j] + _step_y(rd[j]) * rl[j]
+
+
+static func _quadrant_ok(counts: PackedInt32Array, nd: int) -> bool:
+	if nd == 0 and counts[2] > 0:
 		return false
+	if nd == 2 and counts[0] > 0:
+		return false
+	if nd == 1 and counts[3] > 0:
+		return false
+	if nd == 3 and counts[1] > 0:
+		return false
+	return true
+
+
+static func _dirs_twice(counts: PackedInt32Array) -> bool:
+	var used_n: int = 0
+	for c in counts:
+		if c > 0:
+			used_n += 1
+			if c < 2:
+				return false
+	return used_n >= 2
+
+
+static func _both_axes(counts: PackedInt32Array) -> bool:
+	var horiz: bool = counts[0] > 0 or counts[2] > 0
+	var vert: bool = counts[1] > 0 or counts[3] > 0
+	return horiz and vert
+
+
+static func _prefix_flat(rx: PackedInt32Array, ry: PackedInt32Array, rd: PackedInt32Array, rl: PackedInt32Array, i: int, j: int) -> bool:
+	var sx: float = float(rx[i])
+	var sy: float = float(ry[i])
+	var ex: float = float(_end_x(rx, rd, rl, j))
+	var ey: float = float(_end_y(ry, rd, rl, j))
 	var k: int = i + 1
-	while k < j:
-		var p: Vector2 = chain[k]
-		var t: float = clampf((p - a).dot(ab) / len2, 0.0, 1.0)
-		if (p - (a + ab * t)).length() > eps:
+	while k <= j:
+		if _chord_dist(float(rx[k]), float(ry[k]), sx, sy, ex, ey) > _EPS:
 			return false
 		k += 1
 	return true
+
+
+static func _chord_dist(px: float, py: float, sx: float, sy: float, ex: float, ey: float) -> float:
+	var vx: float = ex - sx
+	var vy: float = ey - sy
+	var span_l: float = sqrt(vx * vx + vy * vy)
+	if span_l < 0.001:
+		return 0.0
+	return absf(vx * (py - sy) - vy * (px - sx)) / span_l
+
+
+static func _line_dist(px: float, py: float, sx: float, sy: float, lx: float, ly: float) -> float:
+	return absf(lx * (py - sy) - ly * (px - sx))
+
+
+static func _push_rec(spans: Array, sx: float, sy: float, ex: float, ey: float) -> void:
+	var delta := Vector2(ex - sx, ey - sy)
+	if delta.length_squared() < 0.25:
+		return
+	var nrm: Vector2 = Vector2(-delta.y, delta.x)
+	if nrm.length_squared() > 0.0001:
+		nrm = nrm.normalized()
+	spans.append({
+		"origin": Vector2(sx, sy),
+		"delta": delta,
+		"normal": nrm,
+		"thick": 1.0,
+	})
+
+
+static func _fold_spans(spans: Array, closed: bool) -> Array:
+	if spans.size() < 2:
+		return spans
+	var merged: Array = [spans[0]]
+	for idx in range(1, spans.size()):
+		var prev: Dictionary = merged[merged.size() - 1]
+		var nxt: Dictionary = spans[idx]
+		if _can_fold(prev, nxt):
+			merged[merged.size() - 1] = _combine_span(prev, nxt)
+		else:
+			merged.append(nxt)
+	if closed and merged.size() >= 2 and _can_fold(merged[merged.size() - 1], merged[0]):
+		var combined: Dictionary = _combine_span(merged[merged.size() - 1], merged[0])
+		var rest: Array = [combined]
+		for k in range(1, merged.size() - 1):
+			rest.append(merged[k])
+		return rest
+	return merged
+
+
+static func _can_fold(a: Dictionary, b: Dictionary) -> bool:
+	var ao: Vector2 = a["origin"]
+	var ad: Vector2 = a["delta"]
+	var bo: Vector2 = b["origin"]
+	var bd: Vector2 = b["delta"]
+	var end: Vector2 = ao + ad
+	if end.distance_squared_to(bo) > 0.01:
+		return false
+	var al: float = ad.length()
+	var bl: float = bd.length()
+	if al < 0.1 or bl < 0.1:
+		return false
+	return ad.dot(bd) / (al * bl) > 0.985
+
+
+static func _combine_span(a: Dictionary, b: Dictionary) -> Dictionary:
+	var ao: Vector2 = a["origin"]
+	var bo: Vector2 = b["origin"]
+	var bd: Vector2 = b["delta"]
+	var end: Vector2 = bo + bd
+	var delta: Vector2 = end - ao
+	var nrm: Vector2 = Vector2(-delta.y, delta.x)
+	if nrm.length_squared() > 0.0001:
+		nrm = nrm.normalized()
+	return {
+		"origin": ao,
+		"delta": delta,
+		"normal": nrm,
+		"thick": 1.0,
+	}
 
 
 static func _void_gap(solid: PackedByteArray, sw: int, sh: int, fx: int, fy: int, dx: int, dy: int) -> int:

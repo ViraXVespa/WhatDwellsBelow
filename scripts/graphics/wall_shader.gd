@@ -26,24 +26,29 @@ uniform float wear = 0.0;
 uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
 varying vec3 world_pos;
+varying vec2 side_uv;
 varying float face_mode;
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	float sx = length(vec3(MODEL_MATRIX[0].x, MODEL_MATRIX[1].x, MODEL_MATRIX[2].x));
+	side_uv = vec2(UV.x * sx, UV.y);
 	vec3 wn = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 	if (abs(wn.y) > abs(wn.x) && abs(wn.y) > abs(wn.z)) {
 		face_mode = 2.0;
-	} else if (abs(wn.x) > abs(wn.z)) {
-		face_mode = 1.0;
+	} else if (abs(wn.x) < 0.2 || abs(wn.z) < 0.2) {
+		face_mode = abs(wn.x) > abs(wn.z) ? 1.0 : 0.0;
 	} else {
-		face_mode = 0.0;
+		face_mode = 3.0;
 	}
 }
 
 void fragment() {
 	vec2 xz = world_pos.xz;
 	vec2 face = world_pos.xy;
-	if (face_mode > 1.5) {
+	if (face_mode > 2.5) {
+		face = side_uv;
+	} else if (face_mode > 1.5) {
 		face = world_pos.xz;
 	} else if (face_mode > 0.5) {
 		face = world_pos.zy;
