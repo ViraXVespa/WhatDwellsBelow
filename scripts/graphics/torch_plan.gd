@@ -356,8 +356,9 @@ static func _snap_span(host: Node, site: Dictionary) -> bool:
 	var spans: Variant = host.data.get("outline_spans", [])
 	if not (spans is Array) or (spans as Array).is_empty():
 		return true
-	var px: float = float(site["wx"]) + 0.5
-	var pz: float = float(site["wz"]) + 0.5
+	var n: int = maxi(1, int(host.data.get("solid_n", 1)))
+	var px: float = (float(site["wx"]) + 0.5) * float(n)
+	var pz: float = (float(site["wz"]) + 0.5) * float(n)
 	var cn: Vector2 = Vector2(float(site["nx"]), float(site["nz"]))
 	if cn.length_squared() < 0.0001:
 		return false
@@ -383,7 +384,7 @@ static func _snap_span(host: Node, site: Dictionary) -> bool:
 		if along < -1.0 or along > slen + 1.0:
 			continue
 		var dist: float = absf(-uy * rx + ux * ry)
-		if dist > 3.0 or dist >= best_d:
+		if dist > float(n) * 1.25 or dist >= best_d:
 			continue
 		var nrm: Vector2 = Vector2(-uy, ux)
 		if run.has("normal"):
@@ -399,7 +400,7 @@ static func _snap_span(host: Node, site: Dictionary) -> bool:
 		best_d = dist
 		best_n = nrm
 	if best_n == Vector2.ZERO:
-		return false
+		return true
 	site["nx"] = best_n.x
 	site["nz"] = best_n.y
 	return true

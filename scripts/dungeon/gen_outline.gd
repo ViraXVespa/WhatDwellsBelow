@@ -890,12 +890,15 @@ static func _fit_idxs(spans: Array, rd: PackedInt32Array, rl: PackedInt32Array, 
 			if dist > far:
 				far = dist
 				far_i = t
+		var slant_chord: bool = absf(ex - sx) >= 1.0 and absf(ey - sy) >= 1.0
 		if far <= _STAIR_TOL:
-			var slant_chord: bool = absf(ex - sx) >= 1.0 and absf(ey - sy) >= 1.0
 			if slant_chord or _real_slant(rd, rl, cur):
 				_push_rec(spans, sx, sy, ex, ey)
 			else:
 				_emit_runs(spans, rd, rl, rx, ry, cur)
+			continue
+		if slant_chord and _stair_band(rd, cur):
+			_push_rec(spans, sx, sy, ex, ey)
 			continue
 		if far_i < 1:
 			far_i = 1
@@ -920,6 +923,18 @@ static func _one_dir(rd: PackedInt32Array, cur: PackedInt32Array) -> bool:
 		if rd[cur[t]] != d0:
 			return false
 	return true
+
+
+static func _stair_band(rd: PackedInt32Array, cur: PackedInt32Array) -> bool:
+	var h_n := 0
+	var v_n := 0
+	for k in cur:
+		var dir: int = rd[k]
+		if dir == 0 or dir == 2:
+			h_n += 1
+		else:
+			v_n += 1
+	return h_n >= 2 and v_n >= 2
 
 
 static func _real_slant(rd: PackedInt32Array, rl: PackedInt32Array, cur: PackedInt32Array) -> bool:
@@ -1025,10 +1040,14 @@ static func _can_fold(a: Dictionary, b: Dictionary) -> bool:
 	var bl: float = bd.length()
 	if al < 0.1 or bl < 0.1:
 		return false
-	if ad.dot(bd) / (al * bl) <= 0.985:
-		return false
 	var end_b: Vector2 = bo + bd
-	return _chord_dist(bo.x, bo.y, ao.x, ao.y, end_b.x, end_b.y) <= _STAIR_TOL
+	var bow: float = _chord_dist(bo.x, bo.y, ao.x, ao.y, end_b.x, end_b.y)
+	if bow > _STAIR_TOL:
+		return false
+	var comb: Vector2 = end_b - ao
+	if absf(comb.x) >= 1.0 and absf(comb.y) >= 1.0:
+		return true
+	return ad.dot(bd) / (al * bl) > 0.985
 
 
 static func _combine_span(a: Dictionary, b: Dictionary) -> Dictionary:
