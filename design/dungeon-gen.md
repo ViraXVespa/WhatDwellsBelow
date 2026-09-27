@@ -1,7 +1,7 @@
 # Dungeon — generation and placement
 
 Status: binding design + live snapshot  
-Read when: MST loops, deadend termini, hall widths, size rebalance ledger, fillet raster, walkable solid, void rim, outline
+Read when: MST loops, deadend termini, hall widths, size rebalance ledger, fillet raster, walkable solid, void rim, outline, diagonal band
 
 
 ## Overall structure
@@ -18,7 +18,7 @@ Read when: MST loops, deadend termini, hall widths, size rebalance ledger, fille
 Grid size, room count, room size ranges, and connection algorithm (MST + extra loops) are fully tunable.
 Target: floors MUST feel expansive enough to support a 5–10 minute first successful extraction for a new player and longer skilled runs, but rooms and combat MUST be dense enough that the player is not wandering empty halls for long stretches.
 
-Halls are carved 2–4 tiles wide. Width 3 is the mode. Width changes at `hall_w_interval` steps along a winding path.
+Halls are carved 2–4 tiles wide. Width 3 is the mode. A connection that moves on both axes is a diagonal band around the segment (rare perpendicular jog), not a per-tile staircase. Cardinal connections stay a winding span; width still changes at `hall_w_interval` on those.
 
 `gen.gd` uses the requested room count. Extra winding loops use the full `gen_extra_loops` value. Dead-end spurs scale with room count.
 
@@ -27,7 +27,7 @@ Halls are carved 2–4 tiles wide. Width 3 is the mode. Width changes at `hall_w
 The 1 m FLOOR/WALL grid stays the logical map: rooms, MST, hall-width budget, doors, stairs, prop snaps, ambush anchors, fog, minimap, crystal separation, and stream chunk index.
 
 After carve, gen traces the floor/void boundary, fillets a fraction of convex corners (`outline_fillet_frac`, live 0.40), and jags a sparse fraction of long abyss edges (`outline_jag_frac`, live 0.35) as 1–3 m plateaus on one face of a hall, not a sawtooth on both walls. It rasterizes that outline to `outline_fine_m` occupancy (live 0.25). That fine solid is walk collision. Interior room cells are not eaten. Hall cells are not cleared, so a hall stays at its carved width. Hall corners may only gain solid in the void.
-Outline may not leave a lone 1 m tooth on the abyss rim. Gen stores outline_spans for volume: one run per flattened rim span.
+Outline may not leave a lone 1 m tooth on the abyss rim. Gen may store `outline_spans` as a thin rim polyline (any heading). Collision stays the fine solid. Do not emit a 1 m slab per span.
 
 Do not ship a shader nibble on 1 m faces as the silhouette. Do not author arches or modular kits. One brick sheet stays a volume concern; this job does not add a second rock sheet.
 
@@ -86,7 +86,7 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 | `crystal_deadend_len` | 28 |
 | `outline_fine_m` | 0.25 |
 | `outline_fillet_frac` | 0.40 |
-| `outline_jag_frac` | 0.62 |
+| `outline_jag_frac` | 0.35 |
 
 `gen.gd` clamps to minimum 24×24 and at least 6 rooms.
 Boss room is farthest from spawn that still meets `_min_boss_sep = max(16, max(w,h) * 0.5)`.

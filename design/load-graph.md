@@ -18,8 +18,8 @@ AGENTS.md
 Then, only if the User named work:
     one topic door -> one Job sibling (if that door has a Job table)
     graphics jobs are env, ground, volume, buffer, actor (not a boot path)
-    fillet raster / walkable solid / void rim / outline -> dungeon then gen
-    volume extrudes that solid later; buffer retargets last
+    fillet raster / walkable solid / void rim / outline / diagonal band -> dungeon then gen
+    volume extrudes a thin span ribbon later (or ortho faces if spans are empty); buffer retargets last
     (second door only when the User names the owner; conflicts_with is a load ban)
     and one design/code-map.md system row when live files are needed
     and design/tunables.md iff a number changes

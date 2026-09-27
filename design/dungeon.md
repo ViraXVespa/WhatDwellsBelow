@@ -7,7 +7,7 @@ Code: `scripts/dungeon/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_boot.gd`, `
 
 This file is the door. Open the Job-table sibling only when that row matches.
 
-Gen keeps the 1 m carve for rooms, MST, halls, and placement. Gen owns the post-carve outline and the walkable solid rasterized from it. Collision and wall faces follow that solid. Volume does not invent the silhouette.
+Gen keeps the 1 m carve for rooms, MST, halls, and placement. Gen owns the post-carve outline and the walkable solid rasterized from it. Collision follows that solid. Gen owns outline_spans. Volume extrudes a thin ribbon from those spans and does not invent the silhouette.
 
 | Job | Open |
 |-----|------|
