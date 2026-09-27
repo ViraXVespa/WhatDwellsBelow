@@ -10,9 +10,8 @@ const LONG_EDGE := 4
 const K_HALL := 1
 const K_INTERIOR := 2
 const K_RIM := 3
-const _EPS := 4.5
-const _LOCK := 64.0
-const _DOMIN := 0.62
+const _STAIR_TOL := 6.0
+const _BURN_REACH := 4.0
 
 
 static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> void:
@@ -141,9 +140,36 @@ static func _fillet(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h
 		corners[j] = swap
 		var picked: Vector4i = corners[i]
 		if picked.w == K_HALL:
-			_bulge_quarter(solid, sw, sh, n, picked)
+			if not _stair_corner(grid, w, h, picked):
+				_bulge_quarter(solid, sw, sh, n, picked)
 		else:
 			_cut_quarter(solid, sw, n, picked)
+
+
+static func _stair_corner(grid: PackedByteArray, w: int, h: int, corner: Vector4i) -> bool:
+	var x: int = corner.x
+	var y: int = corner.y
+	var q: int = corner.z
+	var step_x: int = -1 if q == 1 or q == 3 else 1
+	var step_y: int = -1 if q == 2 or q == 3 else 1
+	var void_y: int = -1 if q == 0 or q == 1 else 1
+	var void_x: int = -1 if q == 0 or q == 2 else 1
+	var h_len: int = _arm(grid, w, h, x, y, step_x, 0, 0, void_y)
+	var v_len: int = _arm(grid, w, h, x, y, 0, step_y, void_x, 0)
+	return h_len < LONG_EDGE and v_len < LONG_EDGE
+
+
+static func _arm(grid: PackedByteArray, w: int, h: int, x: int, y: int, step_x: int, step_y: int, void_x: int, void_y: int) -> int:
+	var n_len := 0
+	var cx: int = x
+	var cy: int = y
+	while _floor_at(grid, w, h, cx, cy) and not _floor_at(grid, w, h, cx + void_x, cy + void_y):
+		n_len += 1
+		if n_len >= LONG_EDGE:
+			return n_len
+		cx += step_x
+		cy += step_y
+	return n_len
 
 
 static func _convex_q(grid: PackedByteArray, w: int, h: int, x: int, y: int) -> int:
@@ -225,6 +251,14 @@ static func _jag(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: i
 	_collect_v(runs, grid, w, h, 1)
 	if runs.is_empty():
 		return
+	var kept: Array[Dictionary] = []
+	for run in runs:
+		if _band_run(grid, w, h, run):
+			continue
+		kept.append(run)
+	if kept.is_empty():
+		return
+	runs = kept
 	var want: int = int(round(frac * float(runs.size())))
 	if want < 1:
 		want = 1
@@ -439,6 +473,8 @@ static func _spans(solid: PackedByteArray, sw: int, sh: int, grid: PackedByteArr
 		for item in local:
 			spans.append(item)
 	_face_spans(spans, solid, sw, sh)
+	_burn(spans, solid, sw, sh)
+	_strip_nubs(solid, sw, sh)
 	return spans
 
 
@@ -465,12 +501,101 @@ static func _face_spans(spans: Array, solid: PackedByteArray, sw: int, sh: int) 
 		if nrm.length_squared() < 0.0001:
 			continue
 		nrm = nrm.normalized()
-		var mx: int = int(floor((o.x + d.x * 0.5) + nrm.x * 0.6))
-		var my: int = int(floor((o.y + d.y * 0.5) + nrm.y * 0.6))
-		var hit: bool = mx >= 0 and my >= 0 and mx < sw and my < sh and solid[my * sw + mx] != 0
-		if not hit:
+		var toward := 0
+		var away := 0
+		var samples: Array[float] = [0.25, 0.5, 0.75]
+		var dists: Array[float] = [1.0, 2.0, 3.0, 4.0]
+		for dist in dists:
+			for s in samples:
+				var px: float = o.x + d.x * s
+				var py: float = o.y + d.y * s
+				if _solid_at(solid, sw, sh, px + nrm.x * dist, py + nrm.y * dist):
+					toward += 1
+				if _solid_at(solid, sw, sh, px - nrm.x * dist, py - nrm.y * dist):
+					away += 1
+		if away > toward:
 			nrm = -nrm
 		run["normal"] = nrm
+
+
+static func _solid_at(solid: PackedByteArray, sw: int, sh: int, x: float, y: float) -> bool:
+	var ix: int = int(floor(x))
+	var iy: int = int(floor(y))
+	if ix < 0 or iy < 0 or ix >= sw or iy >= sh:
+		return false
+	return solid[iy * sw + ix] != 0
+
+
+static func _burn(spans: Array, solid: PackedByteArray, sw: int, sh: int) -> void:
+	for item in spans:
+		if not (item is Dictionary):
+			continue
+		var run: Dictionary = item
+		if not run.has("delta"):
+			continue
+		var o: Vector2 = run["origin"] as Vector2
+		var d: Vector2 = run["delta"] as Vector2
+		if absf(d.x) < 0.75 or absf(d.y) < 0.75:
+			continue
+		var nrm: Vector2 = run["normal"] as Vector2
+		var span_l: float = d.length()
+		if span_l < 4.0 or nrm.length_squared() < 0.0001:
+			continue
+		var ux: float = d.x / span_l
+		var uy: float = d.y / span_l
+		var reach: float = _BURN_REACH
+		var min_x: int = int(floor(minf(o.x, o.x + d.x) - reach))
+		var max_x: int = int(ceil(maxf(o.x, o.x + d.x) + reach))
+		var min_y: int = int(floor(minf(o.y, o.y + d.y) - reach))
+		var max_y: int = int(ceil(maxf(o.y, o.y + d.y) + reach))
+		if min_x < 0:
+			min_x = 0
+		if min_y < 0:
+			min_y = 0
+		if max_x > sw:
+			max_x = sw
+		if max_y > sh:
+			max_y = sh
+		for fy in range(min_y, max_y):
+			var row: int = fy * sw
+			for fx in range(min_x, max_x):
+				var cx: float = float(fx) + 0.5
+				var cy: float = float(fy) + 0.5
+				var rx: float = cx - o.x
+				var ry: float = cy - o.y
+				var along: float = rx * ux + ry * uy
+				if along < 0.0 or along > span_l:
+					continue
+				var side: float = rx * nrm.x + ry * nrm.y
+				if absf(side) > reach:
+					continue
+				if side >= 0.0:
+					solid[row + fx] = 1
+				else:
+					solid[row + fx] = 0
+
+
+static func _band_run(grid: PackedByteArray, w: int, h: int, run: Dictionary) -> bool:
+	var axis: int = int(run["axis"])
+	if axis == 0:
+		var x0: int = int(run["x0"])
+		var x1: int = int(run["x1"])
+		var y: int = int(run["y"])
+		var dir: int = int(run["dir"])
+		return _tread_h(grid, w, h, x0 - 1, y, dir) and _tread_h(grid, w, h, x1 + 1, y, dir)
+	var xv: int = int(run["x"])
+	var y0: int = int(run["y0"])
+	var y1: int = int(run["y1"])
+	var dir_v: int = int(run["dir"])
+	return _tread_v(grid, w, h, xv, y0 - 1, dir_v) and _tread_v(grid, w, h, xv, y1 + 1, dir_v)
+
+
+static func _tread_h(grid: PackedByteArray, w: int, h: int, x: int, y: int, dir: int) -> bool:
+	return _h_edge(grid, w, h, x, y - 1, dir) or _h_edge(grid, w, h, x, y + 1, dir)
+
+
+static func _tread_v(grid: PackedByteArray, w: int, h: int, x: int, y: int, dir: int) -> bool:
+	return _v_edge(grid, w, h, x - 1, y, dir) or _v_edge(grid, w, h, x + 1, y, dir)
 
 
 static func _step_y(d: int) -> int:
@@ -639,52 +764,99 @@ static func _fit_runs(rd: PackedInt32Array, rl: PackedInt32Array, rx: PackedInt3
 	var i: int = 0
 	while i < count:
 		var counts: PackedInt32Array = PackedInt32Array([0, 0, 0, 0])
-		counts[rd[i]] = counts[rd[i]] + 1
-		var longest: int = rl[i]
-		var sx: float = float(rx[i])
-		var sy: float = float(ry[i])
-		var locked: bool = false
-		var lx: float = 1.0
-		var ly: float = 0.0
+		counts[rd[i]] = 1
+		var idxs := PackedInt32Array()
+		idxs.append(i)
 		var j: int = i
-		while j + 1 < count:
-			var nd: int = rd[j + 1]
-			if not _quadrant_ok(counts, nd):
-				break
-			var ex: float = float(_end_x(rx, rd, rl, j + 1))
-			var ey: float = float(_end_y(ry, rd, rl, j + 1))
-			if not locked:
-				if not _prefix_flat(rx, ry, rd, rl, i, j + 1):
-					break
-			elif _line_dist(float(rx[j + 1]), float(ry[j + 1]), sx, sy, lx, ly) > _EPS or _line_dist(ex, ey, sx, sy, lx, ly) > _EPS:
-				break
+		while j + 1 < count and _quadrant_ok(counts, rd[j + 1]):
 			j += 1
-			counts[nd] = counts[nd] + 1
-			if rl[j] > longest:
-				longest = rl[j]
-			var chord: float = Vector2(ex - sx, ey - sy).length()
-			if not locked and chord >= _LOCK and _both_axes(counts):
-				if _prefix_flat(rx, ry, rd, rl, i, j):
-					locked = true
-					if chord < 0.001:
-						chord = 1.0
-					lx = (ex - sx) / chord
-					ly = (ey - sy) / chord
-				else:
-					counts[nd] = counts[nd] - 1
-					j -= 1
-					break
-		var ex2: float = float(_end_x(rx, rd, rl, j))
-		var ey2: float = float(_end_y(ry, rd, rl, j))
-		var chord2: float = Vector2(ex2 - sx, ey2 - sy).length()
-		var stair: bool = j > i and _dirs_twice(counts) and float(longest) <= maxf(6.0, _DOMIN * chord2)
-		if stair:
-			_push_rec(spans, sx, sy, ex2, ey2)
-			i = j + 1
-		else:
-			_push_rec(spans, sx, sy, float(_end_x(rx, rd, rl, i)), float(_end_y(ry, rd, rl, i)))
-			i += 1
+			idxs.append(j)
+			counts[rd[j]] = counts[rd[j]] + 1
+		_fit_idxs(spans, rd, rl, rx, ry, idxs)
+		i = j + 1
 	return spans
+
+
+static func _fit_idxs(spans: Array, rd: PackedInt32Array, rl: PackedInt32Array, rx: PackedInt32Array, ry: PackedInt32Array, idxs: PackedInt32Array) -> void:
+	var stack: Array = [idxs]
+	var guard := 0
+	while not stack.is_empty() and guard < 8000:
+		guard += 1
+		var cur: PackedInt32Array = stack[stack.size() - 1] as PackedInt32Array
+		stack.remove_at(stack.size() - 1)
+		if cur.is_empty():
+			continue
+		if cur.size() == 1 or _one_dir(rd, cur):
+			_emit_runs(spans, rd, rl, rx, ry, cur)
+			continue
+		var sx: float = float(rx[cur[0]])
+		var sy: float = float(ry[cur[0]])
+		var last: int = cur[cur.size() - 1]
+		var ex: float = float(_end_x(rx, rd, rl, last))
+		var ey: float = float(_end_y(ry, rd, rl, last))
+		var far := 0.0
+		var far_i := 1
+		for t in range(1, cur.size()):
+			var dist: float = _chord_dist(float(rx[cur[t]]), float(ry[cur[t]]), sx, sy, ex, ey)
+			if dist > far:
+				far = dist
+				far_i = t
+		if far <= _STAIR_TOL:
+			if _real_slant(rd, rl, cur):
+				_push_rec(spans, sx, sy, ex, ey)
+			else:
+				_emit_runs(spans, rd, rl, rx, ry, cur)
+			continue
+		if far_i < 1:
+			far_i = 1
+		if far_i >= cur.size():
+			far_i = cur.size() - 1
+		var left := PackedInt32Array()
+		var right := PackedInt32Array()
+		for t in far_i:
+			left.append(cur[t])
+		for t2 in range(far_i, cur.size()):
+			right.append(cur[t2])
+		if left.is_empty() or right.is_empty():
+			_emit_runs(spans, rd, rl, rx, ry, cur)
+			continue
+		stack.append(right)
+		stack.append(left)
+
+
+static func _one_dir(rd: PackedInt32Array, cur: PackedInt32Array) -> bool:
+	var d0: int = rd[cur[0]]
+	for t in range(1, cur.size()):
+		if rd[cur[t]] != d0:
+			return false
+	return true
+
+
+static func _real_slant(rd: PackedInt32Array, rl: PackedInt32Array, cur: PackedInt32Array) -> bool:
+	var horiz := 0
+	var vert := 0
+	var h_n := 0
+	var v_n := 0
+	for k in cur:
+		var dir: int = rd[k]
+		if dir == 0 or dir == 2:
+			horiz += rl[k]
+			h_n += 1
+		else:
+			vert += rl[k]
+			v_n += 1
+	if horiz == 0 or vert == 0:
+		return false
+	var minor_n: int = h_n if horiz <= vert else v_n
+	var minor_l: int = horiz if horiz <= vert else vert
+	return minor_n >= 2 or minor_l >= 4
+
+
+static func _emit_runs(spans: Array, rd: PackedInt32Array, rl: PackedInt32Array, rx: PackedInt32Array, ry: PackedInt32Array, cur: PackedInt32Array) -> void:
+	for k in cur:
+		var ex: float = float(_end_x(rx, rd, rl, k))
+		var ey: float = float(_end_y(ry, rd, rl, k))
+		_push_rec(spans, float(rx[k]), float(ry[k]), ex, ey)
 
 
 static func _end_x(rx: PackedInt32Array, rd: PackedInt32Array, rl: PackedInt32Array, j: int) -> int:
@@ -707,35 +879,6 @@ static func _quadrant_ok(counts: PackedInt32Array, nd: int) -> bool:
 	return true
 
 
-static func _dirs_twice(counts: PackedInt32Array) -> bool:
-	var used_n: int = 0
-	for c in counts:
-		if c > 0:
-			used_n += 1
-			if c < 2:
-				return false
-	return used_n >= 2
-
-
-static func _both_axes(counts: PackedInt32Array) -> bool:
-	var horiz: bool = counts[0] > 0 or counts[2] > 0
-	var vert: bool = counts[1] > 0 or counts[3] > 0
-	return horiz and vert
-
-
-static func _prefix_flat(rx: PackedInt32Array, ry: PackedInt32Array, rd: PackedInt32Array, rl: PackedInt32Array, i: int, j: int) -> bool:
-	var sx: float = float(rx[i])
-	var sy: float = float(ry[i])
-	var ex: float = float(_end_x(rx, rd, rl, j))
-	var ey: float = float(_end_y(ry, rd, rl, j))
-	var k: int = i + 1
-	while k <= j:
-		if _chord_dist(float(rx[k]), float(ry[k]), sx, sy, ex, ey) > _EPS:
-			return false
-		k += 1
-	return true
-
-
 static func _chord_dist(px: float, py: float, sx: float, sy: float, ex: float, ey: float) -> float:
 	var vx: float = ex - sx
 	var vy: float = ey - sy
@@ -743,10 +886,6 @@ static func _chord_dist(px: float, py: float, sx: float, sy: float, ex: float, e
 	if span_l < 0.001:
 		return 0.0
 	return absf(vx * (py - sy) - vy * (px - sx)) / span_l
-
-
-static func _line_dist(px: float, py: float, sx: float, sy: float, lx: float, ly: float) -> float:
-	return absf(lx * (py - sy) - ly * (px - sx))
 
 
 static func _push_rec(spans: Array, sx: float, sy: float, ex: float, ey: float) -> void:
@@ -796,7 +935,10 @@ static func _can_fold(a: Dictionary, b: Dictionary) -> bool:
 	var bl: float = bd.length()
 	if al < 0.1 or bl < 0.1:
 		return false
-	return ad.dot(bd) / (al * bl) > 0.985
+	if ad.dot(bd) / (al * bl) <= 0.985:
+		return false
+	var end_b: Vector2 = bo + bd
+	return _chord_dist(bo.x, bo.y, ao.x, ao.y, end_b.x, end_b.y) <= _STAIR_TOL
 
 
 static func _combine_span(a: Dictionary, b: Dictionary) -> Dictionary:

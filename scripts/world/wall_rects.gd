@@ -85,8 +85,7 @@ static func solid_cells(solid: PackedByteArray, sw: int, sh: int, n: int, ox: in
 	return out
 
 
-## Void rim and the coarse wall mass that touches this chunk's floor.
-## Faces and merge consume the returned cells. Collision includes the rim.
+## One fine cell of void that touches the clipped solid. No coarse slab.
 static func volume_cells(solid: PackedByteArray, sw: int, sh: int, n: int, grid: PackedByteArray, gw: int, gh: int, ox: int, oy: int, x1: int, y1: int) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	var fx_lo: int = ox * n - n
@@ -112,10 +111,8 @@ static func volume_cells(solid: PackedByteArray, sw: int, sh: int, n: int, grid:
 	return out
 
 
-static func _blocks(solid: PackedByteArray, sw: int, sh: int, grid: PackedByteArray, gw: int, gh: int, fx: int, fy: int, cx: int, cy: int) -> bool:
-	if _touches_solid(solid, sw, sh, fx, fy):
-		return true
-	return _coarse_wall(grid, gw, gh, cx, cy)
+static func _blocks(solid: PackedByteArray, sw: int, sh: int, _grid: PackedByteArray, _gw: int, _gh: int, fx: int, fy: int, _cx: int, _cy: int) -> bool:
+	return _touches_solid(solid, sw, sh, fx, fy)
 
 
 static func _touches_solid(solid: PackedByteArray, sw: int, sh: int, fx: int, fy: int) -> bool:
