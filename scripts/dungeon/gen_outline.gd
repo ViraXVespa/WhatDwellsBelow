@@ -413,7 +413,7 @@ static func _strip_nubs(solid: PackedByteArray, sw: int, sh: int) -> void:
 		Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)
 	]
 	var pass_i: int = 0
-	while pass_i < 3:
+	while pass_i < 1:
 		var kill: Array[int] = []
 		for y in sh:
 			var row: int = y * sw
@@ -474,13 +474,12 @@ static func _spans(solid: PackedByteArray, sw: int, sh: int, grid: PackedByteArr
 			if e < 0:
 				break
 		var closed: bool = xs.size() >= 2 and xs[0] == xs[xs.size() - 1] and ys[0] == ys[ys.size() - 1]
-		var local: Array = _merge_stair_chain(_fold_spans(_fit_xy(xs, ys), closed), closed)
+		var local: Array = _fold_spans(_fit_xy(xs, ys), closed)
 		for item in local:
 			spans.append(item)
 	_face_spans(spans, solid, sw, sh)
 	_burn(spans, solid, sw, sh, grid, gw, gh, n)
 	_drop_stub_spans(spans, solid, sw, sh)
-	_strip_nubs(solid, sw, sh)
 	return spans
 
 
@@ -550,40 +549,29 @@ static func _burn(spans: Array, solid: PackedByteArray, sw: int, sh: int, grid: 
 		var ux: float = d.x / span_l
 		var uy: float = d.y / span_l
 		var reach: float = _BURN_REACH
-		var min_x: int = int(floor(minf(o.x, o.x + d.x) - reach))
-		var max_x: int = int(ceil(maxf(o.x, o.x + d.x) + reach))
-		var min_y: int = int(floor(minf(o.y, o.y + d.y) - reach))
-		var max_y: int = int(ceil(maxf(o.y, o.y + d.y) + reach))
-		if min_x < 0:
-			min_x = 0
-		if min_y < 0:
-			min_y = 0
-		if max_x > sw:
-			max_x = sw
-		if max_y > sh:
-			max_y = sh
-		for fy in range(min_y, max_y):
-			var row: int = fy * sw
-			for fx in range(min_x, max_x):
-				var cx: float = float(fx) + 0.5
-				var cy: float = float(fy) + 0.5
-				var rx: float = cx - o.x
-				var ry: float = cy - o.y
-				var along: float = rx * ux + ry * uy
-				if along < 0.0 or along > span_l:
+		var ir: int = int(ceil(reach))
+		var steps: int = maxi(1, int(ceil(span_l + 1.0)))
+		for s in range(steps + 1):
+			var t: float = (float(s) / float(steps)) * span_l
+			var px: float = o.x + ux * t
+			var py: float = o.y + uy * t
+			for k in range(0, ir + 1):
+				var fx: int = int(floor(px + nrm.x * float(k)))
+				var fy: int = int(floor(py + nrm.y * float(k)))
+				if fx < 0 or fy < 0 or fx >= sw or fy >= sh:
 					continue
-				var side: float = rx * nrm.x + ry * nrm.y
-				if absf(side) > reach:
+				solid[fy * sw + fx] = 1
+			for k2 in range(1, ir + 1):
+				var fx2: int = int(floor(px - nrm.x * float(k2)))
+				var fy2: int = int(floor(py - nrm.y * float(k2)))
+				if fx2 < 0 or fy2 < 0 or fx2 >= sw or fy2 >= sh:
 					continue
-				if side >= 0.0:
-					solid[row + fx] = 1
-				else:
-					var mx: int = int(fx / n) if n > 0 else fx
-					var my: int = int(fy / n) if n > 0 else fy
-					if n >= 1 and mx >= 0 and my >= 0 and mx < gw and my < gh:
-						if grid[my * gw + mx] == FLOOR:
-							continue
-					solid[row + fx] = 0
+				var mx: int = int(fx2 / n) if n > 0 else fx2
+				var my: int = int(fy2 / n) if n > 0 else fy2
+				if n >= 1 and mx >= 0 and my >= 0 and mx < gw and my < gh:
+					if grid[my * gw + mx] == FLOOR:
+						continue
+				solid[fy2 * sw + fx2] = 0
 
 
 static func _drop_stub_spans(spans: Array, solid: PackedByteArray, sw: int, sh: int) -> void:
