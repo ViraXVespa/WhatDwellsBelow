@@ -474,6 +474,7 @@ static func _spans(solid: PackedByteArray, sw: int, sh: int, grid: PackedByteArr
 			spans.append(item)
 	_face_spans(spans, solid, sw, sh)
 	_burn(spans, solid, sw, sh)
+	_drop_stub_spans(spans, solid, sw, sh)
 	_strip_nubs(solid, sw, sh)
 	return spans
 
@@ -573,6 +574,94 @@ static func _burn(spans: Array, solid: PackedByteArray, sw: int, sh: int) -> voi
 					solid[row + fx] = 1
 				else:
 					solid[row + fx] = 0
+
+
+static func _drop_stub_spans(spans: Array, solid: PackedByteArray, sw: int, sh: int) -> void:
+	var slants: Array = []
+	for item in spans:
+		if not (item is Dictionary):
+			continue
+		var run: Dictionary = item
+		if not run.has("delta"):
+			continue
+		var d: Vector2 = run["delta"] as Vector2
+		if absf(d.x) < 0.75 or absf(d.y) < 0.75:
+			continue
+		if d.length() < 4.0:
+			continue
+		slants.append(run)
+	if slants.is_empty():
+		return
+	var kept: Array = []
+	for item2 in spans:
+		if not (item2 is Dictionary):
+			continue
+		var stub: Dictionary = item2
+		if not stub.has("delta"):
+			continue
+		var sd: Vector2 = stub["delta"] as Vector2
+		var axis: bool = absf(sd.x) < 0.75 or absf(sd.y) < 0.75
+		if axis and sd.length() < 8.0 and _stub_on_slant(stub, slants):
+			_clear_stub(solid, sw, sh, stub)
+			continue
+		kept.append(stub)
+	spans.clear()
+	for keep in kept:
+		spans.append(keep)
+
+
+static func _stub_on_slant(stub: Dictionary, slants: Array) -> bool:
+	var o: Vector2 = stub["origin"] as Vector2
+	var d: Vector2 = stub["delta"] as Vector2
+	var mid: Vector2 = o + d * 0.5
+	var lim: float = _BURN_REACH + 1.0
+	for item in slants:
+		var sl: Dictionary = item
+		var so: Vector2 = sl["origin"] as Vector2
+		var sd: Vector2 = sl["delta"] as Vector2
+		var slen: float = sd.length()
+		if slen < 0.001:
+			continue
+		var ux: float = sd.x / slen
+		var uy: float = sd.y / slen
+		var rx: float = mid.x - so.x
+		var ry: float = mid.y - so.y
+		var along: float = rx * ux + ry * uy
+		if along < -1.0 or along > slen + 1.0:
+			continue
+		var nx: float = -uy
+		var ny: float = ux
+		if sl.has("normal"):
+			var nrm: Vector2 = sl["normal"] as Vector2
+			if nrm.length_squared() > 0.0001:
+				nx = nrm.x
+				ny = nrm.y
+		var side: float = rx * nx + ry * ny
+		if absf(side) <= lim:
+			return true
+	return false
+
+
+static func _clear_stub(solid: PackedByteArray, sw: int, sh: int, stub: Dictionary) -> void:
+	var o: Vector2 = stub["origin"] as Vector2
+	var d: Vector2 = stub["delta"] as Vector2
+	var pad := 2.0
+	var min_x: int = int(floor(minf(o.x, o.x + d.x) - pad))
+	var max_x: int = int(ceil(maxf(o.x, o.x + d.x) + pad))
+	var min_y: int = int(floor(minf(o.y, o.y + d.y) - pad))
+	var max_y: int = int(ceil(maxf(o.y, o.y + d.y) + pad))
+	if min_x < 0:
+		min_x = 0
+	if min_y < 0:
+		min_y = 0
+	if max_x > sw:
+		max_x = sw
+	if max_y > sh:
+		max_y = sh
+	for fy in range(min_y, max_y):
+		var row: int = fy * sw
+		for fx in range(min_x, max_x):
+			solid[row + fx] = 0
 
 
 static func _band_run(grid: PackedByteArray, w: int, h: int, run: Dictionary) -> bool:
