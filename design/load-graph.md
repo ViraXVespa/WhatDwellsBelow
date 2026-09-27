@@ -12,6 +12,7 @@ AGENTS.md
     web   -> design/web-session.md -> protocol.md and constraints.md
     build -> design/grok-build.md -> protocol.md and constraints.md
             -> design/build-job-cycle.md when gathering, changing, or proving
+            -> listed runner from that cycle table when proving; do not invent a flag
             -> next unit is User-named
     bot   -> BOT.md -> exactly one Job sibling
 
