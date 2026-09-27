@@ -85,4 +85,51 @@ static func _emit_spec(lines: Array[String], host: Node, data: Dictionary, objs:
 		if raw2 is Dictionary and str(raw2.get("kind", "")) == "ambush":
 			ambush_n += 1
 	fail += Util._spec(lines, "ambush_cap", ambush_n <= ambush_cap, "n=%d cap=%d" % [ambush_n, ambush_cap])
-	return fail
+    var spans: Array = data.get("outline_spans", []) as Array
+    var solid: PackedByteArray = PackedByteArray()
+    var raw_solid: Variant = data.get("solid", PackedByteArray())
+    if raw_solid is PackedByteArray:
+        solid = raw_solid
+    var sw: int = int(data.get("solid_w", 0))
+    var sh: int = int(data.get("solid_h", 0))
+    var n: int = int(data.get("solid_n", 0))
+    var gw: int = int(data.get("w", 0))
+    var gh: int = int(data.get("h", 0))
+    fail += Util._spec(lines, "spans_present", spans.size() > 0, "n=%d" % spans.size())
+    fail += Util._spec(lines, "solid_size", n >= 2 and sw == gw * n and sh == gh * n and solid.size() == sw * sh, "n=%d sw=%d sh=%d want=%dx%d bytes=%d" % [n, sw, sh, gw * n, gh * n, solid.size()])
+    var span_hits: int = 0
+    var span_miss: int = 0
+    for raw_span: Variant in spans:
+        if not (raw_span is Dictionary):
+            continue
+        var sp: Dictionary = raw_span
+        var o: Vector2 = Vector2(sp.get("origin", Vector2.ZERO))
+        var d: Vector2 = Vector2(sp.get("delta", Vector2.ZERO))
+        var slen: float = d.length()
+        if slen < 0.5:
+            continue
+        var steps: int = maxi(1, int(slen))
+        for si: int in range(steps + 1):
+            var t: float = float(si) / float(steps)
+            var p: Vector2 = o + d * t
+            var fx: int = clampi(int(floor(p.x)), 0, maxi(0, sw - 1))
+            var fy: int = clampi(int(floor(p.y)), 0, maxi(0, sh - 1))
+            if solid.size() == sw * sh and sw > 0 and solid[fy * sw + fx] != 0:
+                span_hits += 1
+            else:
+                span_miss += 1
+    fail += Util._spec(lines, "span_on_solid", span_hits > 0 and span_miss == 0, "hit=%d miss=%d" % [span_hits, span_miss])
+    var job_ok: int = 0
+    var job_bad: int = 0
+    for rawj: Variant in jobs:
+        if not (rawj is Dictionary):
+            continue
+        var jc: Vector2i = Vector2i(rawj.get("cell", Vector2i.ZERO))
+        var fx2: int = jc.x * n + n / 2
+        var fy2: int = jc.y * n + n / 2
+        if n >= 2 and solid.size() == sw * sh and sw > 0 and fx2 >= 0 and fy2 >= 0 and fx2 < sw and fy2 < sh and solid[fy2 * sw + fx2] != 0:
+            job_ok += 1
+        else:
+            job_bad += 1
+    fail += Util._spec(lines, "jobs_on_solid", job_bad == 0 and job_ok > 0, "ok=%d bad=%d" % [job_ok, job_bad])
+    return fail
