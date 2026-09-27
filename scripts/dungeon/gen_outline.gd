@@ -308,7 +308,7 @@ static func _jag_run(rng: RandomNumberGenerator, n: int, gw: int, kind: PackedBy
 		var seg_y: int = segs[rng.randi() % segs.size()]
 		var depth_y: int = _depth(rng)
 		var notch_y: bool = depth_y == 0 and rng.randf() < 0.4
-		for _step_y in seg_y:
+		for _jag_step_y in seg_y:
 			if fy >= fy_end:
 				break
 			_jag_y(n, gw, kind, solid, sw, sh, x, fy, dir, depth_y, notch_y)
@@ -438,6 +438,7 @@ static func _spans(solid: PackedByteArray, sw: int, sh: int, grid: PackedByteArr
 		var local: Array = _fold_spans(_fit_xy(xs, ys), closed)
 		for item in local:
 			spans.append(item)
+	_face_spans(spans, solid, sw, sh)
 	return spans
 
 
@@ -447,6 +448,29 @@ static func _step_x(d: int) -> int:
 	if d == 2:
 		return -1
 	return 0
+
+
+static func _face_spans(spans: Array, solid: PackedByteArray, sw: int, sh: int) -> void:
+	for item in spans:
+		if not (item is Dictionary):
+			continue
+		var run: Dictionary = item
+		if not run.has("delta"):
+			continue
+		var o: Vector2 = run["origin"] as Vector2
+		var d: Vector2 = run["delta"] as Vector2
+		var nrm: Vector2 = run["normal"] as Vector2
+		if nrm.length_squared() < 0.0001:
+			nrm = Vector2(-d.y, d.x)
+		if nrm.length_squared() < 0.0001:
+			continue
+		nrm = nrm.normalized()
+		var mx: int = int(floor((o.x + d.x * 0.5) + nrm.x * 0.6))
+		var my: int = int(floor((o.y + d.y * 0.5) + nrm.y * 0.6))
+		var hit: bool = mx >= 0 and my >= 0 and mx < sw and my < sh and solid[my * sw + mx] != 0
+		if not hit:
+			nrm = -nrm
+		run["normal"] = nrm
 
 
 static func _step_y(d: int) -> int:
