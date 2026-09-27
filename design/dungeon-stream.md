@@ -6,7 +6,7 @@ Read when: RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo
 
 ## Live snapshot — streaming
 
-`dungeon_stream.gd` streams enemy jobs. `dungeon_geo_stream.gd` streams floor/wall MultiMeshes and wall collision the same way so 432×432 stays inside the 60 FPS budget. Chunks draw every floor and facing wall they contain.
+`dungeon_stream.gd` streams enemy jobs. `dungeon_geo_stream.gd` streams floor/wall MultiMeshes and wall collision the same way so 432×432 stays inside the 60 FPS budget. Chunks draw every floor and facing wall they contain. Wall collision is BoxShape on void that touches gen's bake, not a 1 m slab and not a second staircase.
 
 | Constant | Cells | Meaning |
 |----------|-------|---------|

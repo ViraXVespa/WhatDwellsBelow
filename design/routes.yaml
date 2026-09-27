@@ -281,9 +281,6 @@ conflicts_with:
   player:
     - art_pipeline
     - combat
-  dungeon:
-    - enemies
-    - interactables
   skills:
     - inventory
   ui.gear_entry:
@@ -293,7 +290,6 @@ conflicts_with:
   ui.pause:
     - inventory
   enemies:
-    - dungeon
     - combat
   art_pipeline:
     - player

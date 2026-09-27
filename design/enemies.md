@@ -63,7 +63,7 @@ Exact leash distance, hunt duration after lost LOS, and re-aggro rules are tunab
 Implement clean steering, separation, and stuck-handling appropriate for the orthographic Camera3D live path.  
 Flee event occurs an average of 2 times per floor on a full clear: after the group has taken sufficient damage, the fastest enemy in the encounter flashes a clear “!” overhead, receives a small but noticeable speed boost, and flees to spawn reinforcements. No other telegraph is required beyond the “!”.
 
-Reinforcements, ambushes, and pressure spawns use BFS on the floor graph. They MUST appear in the connected hallway the player is standing in, not in an adjacent hall cut off by a wall. Placement caps: dungeon.
+Reinforcements, ambushes, and pressure spawns use BFS on gen's bake walkable floor. They MUST appear in the connected hallway the player is standing in, not in an adjacent hall cut off by a wall, and not in void the ribbon closed. This job reads the bake. It does not retune carve. Placement caps stay with dungeon gen.
 
 ## Idle / pressure spawns
 

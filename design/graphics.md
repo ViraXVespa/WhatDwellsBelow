@@ -12,7 +12,7 @@ Live helpers already exist: `env_kit.gd`, `nearest_mat.gd`, `wrap_shader.gd`, `m
 
 Hub: warm kit, wide sun fill in the RT, floor crystal as a local bump. Hub squash follows the sun as parallel light. Dungeon: cold kit, no sun in the RT, walkable dim fill plus wall torches, crystals, and campfires. Pits stay black. Characters tint from the RT. Promo is before/after wherever it reads.
 
-Does not own: dungeon gen, stream rings, wall collision merge, map reveal, camera zoom, Sprite3D filter modes. Volume extrudes the walkable solid gen emits. Hitboxes stay gen and stream, not volume.
+Does not own: dungeon carve, stream rings, map reveal, camera zoom, Sprite3D filter modes. Gen writes the silhouette bake. Volume draws that bake. Buffer stamps the light RT and mounts torches on that bake. Hitboxes stay stream boxes on that bake, not a third grid.
 
 Out this week: engine shadow maps, unique atlas, hex-tile, player lantern, shop/gate/stair lights, foundation pretty-pass.
 
