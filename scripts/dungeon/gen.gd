@@ -6,6 +6,7 @@ const Carve := preload("res://scripts/dungeon/gen_carve.gd")
 const Rooms := preload("res://scripts/dungeon/gen_rooms.gd")
 const Doors := preload("res://scripts/dungeon/gen_doors.gd")
 const Outline := preload("res://scripts/dungeon/gen_outline.gd")
+const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 
 
 static func cycle_of(floor_n: int) -> int:
@@ -46,7 +47,9 @@ static func generate(floor_n: int, run_seed: int, bal: Object) -> Dictionary:
 			data["cycle"] = cycle_of(floor_n)
 			data["boss_title"] = boss_title(floor_n)
 			data["gate_master"] = is_gate_master(floor_n)
+			LoadTiming.dmark("gen_carve")
 			Outline.stamp(data, rng, bal)
+			LoadTiming.dmark("gen_outline")
 			return data
 	return _fallback(floor_n, w, h, bal)
 

@@ -1,5 +1,7 @@
 extends Object
 
+const LoadTiming := preload("res://scripts/debug/load_timing.gd")
+
 ## Post-carve floor/void outline. The 1 m grid stays the logical map.
 ## Fine occupancy is the walk solid. Room corners are cut to a quarter-round.
 ## Hall cells are never cleared. Hall corners only gain an outward round.
@@ -28,16 +30,19 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 	solid.resize(sw * sh)
 	solid.fill(0)
 	_upsample(grid, w, h, n, solid, sw)
+	LoadTiming.dmark("gen_outline_up")
 	if n >= 2:
 		_jag(rng, grid, w, h, n, kind, solid, sw, sh, _frac(bal, "outline_jag_frac", 0.35))
 		_fillet(rng, grid, w, h, n, kind, solid, sw, sh, _frac(bal, "outline_fillet_frac", 0.40))
 		_strip_nubs(solid, sw, sh)
+	LoadTiming.dmark("gen_outline_jag")
 	data["outline_fine_m"] = fine_m
 	data["solid"] = solid
 	data["solid_w"] = sw
 	data["solid_h"] = sh
 	data["solid_n"] = n
 	data["outline_spans"] = _spans(solid, sw, sh, grid, w, h, n)
+	LoadTiming.dmark("gen_outline_spans")
 
 
 static func _fine_m(bal: Object) -> float:
@@ -469,11 +474,11 @@ static func _spans(solid: PackedByteArray, sw: int, sh: int, grid: PackedByteArr
 			if e < 0:
 				break
 		var closed: bool = xs.size() >= 2 and xs[0] == xs[xs.size() - 1] and ys[0] == ys[ys.size() - 1]
-		var local: Array = _fold_spans(_fit_xy(xs, ys), closed)
+		var local: Array = _merge_stair_chain(_fold_spans(_fit_xy(xs, ys), closed), closed)
 		for item in local:
 			spans.append(item)
 	_face_spans(spans, solid, sw, sh)
-	_burn(spans, solid, sw, sh)
+	_burn(spans, solid, sw, sh, grid, gw, gh, n)
 	_drop_stub_spans(spans, solid, sw, sh)
 	_strip_nubs(solid, sw, sh)
 	return spans
@@ -527,7 +532,7 @@ static func _solid_at(solid: PackedByteArray, sw: int, sh: int, x: float, y: flo
 	return solid[iy * sw + ix] != 0
 
 
-static func _burn(spans: Array, solid: PackedByteArray, sw: int, sh: int) -> void:
+static func _burn(spans: Array, solid: PackedByteArray, sw: int, sh: int, grid: PackedByteArray, gw: int, gh: int, n: int) -> void:
 	for item in spans:
 		if not (item is Dictionary):
 			continue
@@ -573,6 +578,11 @@ static func _burn(spans: Array, solid: PackedByteArray, sw: int, sh: int) -> voi
 				if side >= 0.0:
 					solid[row + fx] = 1
 				else:
+					var mx: int = int(fx / n) if n > 0 else fx
+					var my: int = int(fy / n) if n > 0 else fy
+					if n >= 1 and mx >= 0 and my >= 0 and mx < gw and my < gh:
+						if grid[my * gw + mx] == FLOOR:
+							continue
 					solid[row + fx] = 0
 
 
@@ -1008,6 +1018,42 @@ static func _push_rec(spans: Array, sx: float, sy: float, ex: float, ey: float) 
 	})
 
 
+static func _merge_stair_chain(spans: Array, closed: bool) -> Array:
+	if spans.size() < 2:
+		return spans
+	var merged: Array = [spans[0]]
+	for idx in range(1, spans.size()):
+		var prev: Dictionary = merged[merged.size() - 1]
+		var nxt: Dictionary = spans[idx]
+		if _can_stair_merge(prev, nxt):
+			merged[merged.size() - 1] = _combine_span(prev, nxt)
+		else:
+			merged.append(nxt)
+	if closed and merged.size() >= 2 and _can_stair_merge(merged[merged.size() - 1], merged[0]):
+		var combined: Dictionary = _combine_span(merged[merged.size() - 1], merged[0])
+		var rest: Array = [combined]
+		for k in range(1, merged.size() - 1):
+			rest.append(merged[k])
+		return rest
+	return merged
+
+
+static func _can_stair_merge(a: Dictionary, b: Dictionary) -> bool:
+	var ao: Vector2 = a["origin"] as Vector2
+	var ad: Vector2 = a["delta"] as Vector2
+	var bo: Vector2 = b["origin"] as Vector2
+	var bd: Vector2 = b["delta"] as Vector2
+	var end: Vector2 = ao + ad
+	if end.distance_to(bo) > 0.5:
+		return false
+	var end_b: Vector2 = bo + bd
+	var comb: Vector2 = end_b - ao
+	if absf(comb.x) < 1.0 or absf(comb.y) < 1.0:
+		return _can_fold(a, b)
+	var bow: float = _chord_dist(bo.x, bo.y, ao.x, ao.y, end_b.x, end_b.y)
+	return bow <= _STAIR_TOL
+
+
 static func _fold_spans(spans: Array, closed: bool) -> Array:
 	if spans.size() < 2:
 		return spans
@@ -1034,7 +1080,7 @@ static func _can_fold(a: Dictionary, b: Dictionary) -> bool:
 	var bo: Vector2 = b["origin"]
 	var bd: Vector2 = b["delta"]
 	var end: Vector2 = ao + ad
-	if end.distance_squared_to(bo) > 0.01:
+	if end.distance_to(bo) > 0.5:
 		return false
 	var al: float = ad.length()
 	var bl: float = bd.length()

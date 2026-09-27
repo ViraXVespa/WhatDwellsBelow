@@ -355,16 +355,15 @@ static func _touches_room(
 static func _snap_span(host: Node, site: Dictionary) -> bool:
 	var spans: Variant = host.data.get("outline_spans", [])
 	if not (spans is Array) or (spans as Array).is_empty():
-		return true
+		return false
 	var n: int = maxi(1, int(host.data.get("solid_n", 1)))
 	var px: float = (float(site["wx"]) + 0.5) * float(n)
 	var pz: float = (float(site["wz"]) + 0.5) * float(n)
-	var cn: Vector2 = Vector2(float(site["nx"]), float(site["nz"]))
-	if cn.length_squared() < 0.0001:
-		return false
-	cn = cn.normalized()
+	var fx: float = (float(site["fx"]) + 0.5) * float(n)
+	var fz: float = (float(site["fz"]) + 0.5) * float(n)
 	var best_n := Vector2.ZERO
-	var best_d := 4.0
+	var best_hit := Vector2.ZERO
+	var best_d := float(n) * 1.5
 	for item in spans:
 		if not (item is Dictionary):
 			continue
@@ -383,26 +382,34 @@ static func _snap_span(host: Node, site: Dictionary) -> bool:
 		var along: float = rx * ux + ry * uy
 		if along < -1.0 or along > slen + 1.0:
 			continue
-		var dist: float = absf(-uy * rx + ux * ry)
-		if dist > float(n) * 1.25 or dist >= best_d:
+		var t: float = clampf(along, 0.0, slen)
+		var hit: Vector2 = o + Vector2(ux, uy) * t
+		var dist: float = hit.distance_to(Vector2(px, pz))
+		if dist >= best_d:
 			continue
 		var nrm: Vector2 = Vector2(-uy, ux)
 		if run.has("normal"):
 			var raw_n: Vector2 = run["normal"] as Vector2
 			if raw_n.length_squared() > 0.0001:
 				nrm = raw_n.normalized()
-		var to_floor: Vector2 = Vector2(
-			float(site["fx"]) + 0.5 - px,
-			float(site["fz"]) + 0.5 - pz
-		)
+		var to_floor: Vector2 = Vector2(fx - hit.x, fz - hit.y)
 		if to_floor.dot(nrm) < 0.0:
 			nrm = -nrm
 		best_d = dist
 		best_n = nrm
+		best_hit = hit
 	if best_n == Vector2.ZERO:
-		return true
+		return false
+	var wall: Vector2 = best_hit / float(n)
+	var floor_p: Vector2 = wall + best_n * 0.45
+	site["wx"] = wall.x - 0.5
+	site["wz"] = wall.y - 0.5
+	site["fx"] = int(round(floor_p.x - 0.5))
+	site["fz"] = int(round(floor_p.y - 0.5))
 	site["nx"] = best_n.x
 	site["nz"] = best_n.y
+	site["px"] = wall.x + best_n.x * 0.12
+	site["pz"] = wall.y + best_n.y * 0.12
 	return true
 
 

@@ -86,12 +86,14 @@ static func _clear(root: Node) -> void:
 
 
 static func _bracket_pos(site: Dictionary) -> Vector3:
+	if site.has("px") and site.has("pz"):
+		return Vector3(float(site["px"]), 0.0, float(site["pz"]))
 	var fx: int = int(site["fx"])
 	var fz: int = int(site["fz"])
-	var nx: int = int(site["nx"])
-	var nz: int = int(site["nz"])
-	var px: float = float(fx) + 0.5 - float(nx) * 0.44
-	var pz: float = float(fz) + 0.5 - float(nz) * 0.44
+	var nx: float = float(site["nx"])
+	var nz: float = float(site["nz"])
+	var px: float = float(fx) + 0.5 - nx * 0.44
+	var pz: float = float(fz) + 0.5 - nz * 0.44
 	return Vector3(px, 0.0, pz)
 
 
