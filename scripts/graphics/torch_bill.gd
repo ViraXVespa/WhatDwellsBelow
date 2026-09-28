@@ -34,7 +34,6 @@ void fragment() {
 }
 """
 
-static var _keyed: Texture2D
 static var _flame_shader: Shader
 static var _quad: QuadMesh
 
@@ -174,24 +173,6 @@ func _make_flame() -> MeshInstance3D:
 
 
 static func _bible() -> Texture2D:
-	if _keyed != null:
-		return _keyed
 	if not ResourceLoader.exists(BIBLE):
 		return null
-	var src: Texture2D = load(BIBLE) as Texture2D
-	if src == null:
-		return null
-	var img: Image = src.get_image()
-	if img == null:
-		_keyed = src
-		return _keyed
-	img.convert(Image.FORMAT_RGBA8)
-	var w: int = img.get_width()
-	var h: int = img.get_height()
-	for y in h:
-		for x in w:
-			var c: Color = img.get_pixel(x, y)
-			if c.r > 0.65 and c.b > 0.65 and c.g < 0.28:
-				img.set_pixel(x, y, Color(0, 0, 0, 0))
-	_keyed = ImageTexture.create_from_image(img)
-	return _keyed
+	return load(BIBLE) as Texture2D
