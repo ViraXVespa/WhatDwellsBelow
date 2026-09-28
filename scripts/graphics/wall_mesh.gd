@@ -476,8 +476,14 @@ static func _bevel_corners(runs: Array[Dictionary]) -> Array[Dictionary]:
 			if absf(dir_a.dot(dir_b)) > 0.35:
 				continue
 			var cut: float = minf(2.4, minf(len0, len1) * 0.4)
+			var pad: float = 0.55
 			var new_end: Vector2 = endp - dir_a * cut
 			var new_start: Vector2 = endp + dir_b * cut
+			run["delta"] = new_end - o
+			other["origin"] = new_start
+			other["delta"] = (o + d + d2) - new_start
+			new_end = new_end - dir_a * pad
+			new_start = new_start + dir_b * pad
 			var nd: Vector2 = (run["normal"] as Vector2) + (other["normal"] as Vector2)
 			if nd.length_squared() < 0.0001:
 				nd = Vector2(-dir_a.y, dir_a.x) + Vector2(-dir_b.y, dir_b.x)

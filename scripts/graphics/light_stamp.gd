@@ -75,7 +75,8 @@ static func paint(
 	bb.fill(0.0)
 	for src in lights:
 		var item: Dictionary = src
-		_disc(rr, gg, bb, walk, iw, ih, item, x0, z0, loops, n)
+		var segs: Array = _loop_segs(loops, n)
+		_disc(rr, gg, bb, walk, iw, ih, item, x0, z0, loops, n, segs)
 	_lift_floor(rr, gg, bb, walk, iw, ih, ambient, n)
 	_walls(rr, gg, bb, walk, iw, ih, n)
 	for y in ih:
@@ -191,7 +192,8 @@ static func _disc(
 	x0: int,
 	z0: int,
 	loops: Array = [],
-	n: int = 1
+	n: int = 1,
+	segs: Array = []
 ) -> void:
 	var reach: float = float(src["reach"])
 	if reach < 0.25:
@@ -236,6 +238,8 @@ static func _disc(
 				continue
 			var nwx: float = float(x0) + (float(npx) + 0.5) / float(SUB)
 			var nwz: float = float(z0) + (float(npy) + 0.5) / float(SUB)
+			if not segs.is_empty() and _span_hit(segs, wx, wz, nwx, nwz):
+				continue
 			var nd: float = sqrt((nwx - mx) * (nwx - mx) + (nwz - mz) * (nwz - mz))
 			if nd > reach:
 				continue
