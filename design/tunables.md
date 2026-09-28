@@ -262,5 +262,8 @@ Roll rules and holds cap live on inventory (gear job).
 | Target first-extraction time | 5–10 min | New player on gamepad |
 | Target floor-5 clear time | 5–10 hours | Competent player; feel target |
 | FPS | 60 minimum | Higher allowed |
+| Hitch budget | 1/60 s | Frame budget used by the hitch log |
+| Hitch multiplier | 4 | Trip when `delta >= budget × 4` (~66.7 ms) |
+| Hitch cap | 256 | Newest hitch rows kept in `user://hitch/hitch.jsonl` |
 
 All other values (enemy stats, drop rates, remaining forge fields, weapon-specific leftovers, quest rewards, leash-adjacent keys, Bitter loop offset timestamp, etc.) should be chosen to support the same feel targets and MUST also be exposed in the debug menu.

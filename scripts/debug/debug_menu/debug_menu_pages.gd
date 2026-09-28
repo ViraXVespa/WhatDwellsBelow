@@ -1,5 +1,7 @@
 ﻿# Playtest and animation browser pages for DebugMenu
 
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+
 static func page_playtest(host) -> void:
 	host.status.text = "Live AI. Queue closes this menu so the avatar can move. Logs go to user://playtest/runs/"
 	host.root_box.add_child(host._btn("Queue full-target batch (6 live runs)", func(): host._start_play(host.play.queue_batch())))
@@ -40,3 +42,23 @@ static func page_anim(host) -> void:
 static func open_anim(_host) -> void:
 	if App.anim_browser and App.anim_browser.has_method("open_browser"):
 		App.anim_browser.open_browser()
+
+
+static func hitch_chrome(host: Node) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	var lab := Label.new()
+	lab.text = HitchLog.status_line()
+	lab.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(lab)
+	row.add_child(host._chrome_btn("Copy hitch log", func():
+		var txt: String = HitchLog.copy_text()
+		host.status.text = "Copied hitch log" if txt != "" else "Hitch log empty"
+		lab.text = HitchLog.status_line()
+	))
+	row.add_child(host._chrome_btn("Clear hitch log", func():
+		HitchLog.clear_log()
+		lab.text = HitchLog.status_line()
+		host.status.text = "Hitch log cleared"
+	))
+	host.chrome_box.add_child(row)
