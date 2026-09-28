@@ -75,7 +75,8 @@ static func paint(
 	bb.fill(0.0)
 	for src in lights:
 		var item: Dictionary = src
-		_disc(rr, gg, bb, walk, iw, ih, item, x0, z0, loops, n)
+		var segs: Array = _loop_segs(loops, n)
+		_disc(rr, gg, bb, walk, iw, ih, item, x0, z0, segs)
 	_lift_floor(rr, gg, bb, walk, iw, ih, ambient, n)
 	_walls(rr, gg, bb, walk, iw, ih, n)
 	for y in ih:
@@ -190,8 +191,7 @@ static func _disc(
 	src: Dictionary,
 	x0: int,
 	z0: int,
-	loops: Array = [],
-	n: int = 1
+	segs: Array = []
 ) -> void:
 	var reach: float = float(src["reach"])
 	if reach < 0.25:
@@ -220,7 +220,7 @@ static func _disc(
 		var wx: float = float(x0) + (float(px) + 0.5) / float(SUB)
 		var wz: float = float(z0) + (float(py) + 0.5) / float(SUB)
 		var dist: float = sqrt((wx - mx) * (wx - mx) + (wz - mz) * (wz - mz))
-		if dist <= reach and not _span_hit(loops, n, mx, mz, wx, wz):
+		if dist <= reach and not _span_hit(segs, mx, mz, wx, wz):
 			var fall: float = energy * (1.0 - dist / reach)
 			rr[i] = minf(rr[i] + col.r * fall, 1.0)
 			gg[i] = minf(gg[i] + col.g * fall, 1.0)
@@ -340,14 +340,8 @@ static func _past_span(spans: Array, world_x: float, world_z: float) -> bool:
 	return false
 
 
-static func _span_hit(loops: Array, n: int, ax: float, az: float, bx: float, bz: float) -> bool:
-	if loops.is_empty():
-		return false
-	var nf: float = float(maxi(n, 1))
-	var a: Vector2 = Vector2(ax * nf, az * nf)
-	var b: Vector2 = Vector2(bx * nf, bz * nf)
-	if a.distance_to(b) < 0.05:
-		return false
+static func _loop_segs(loops: Array, n: int) -> Array:
+	var segs: Array = []
 	for item in loops:
 		var poly: PackedVector2Array = item as PackedVector2Array
 		var count: int = poly.size()
@@ -356,9 +350,38 @@ static func _span_hit(loops: Array, n: int, ax: float, az: float, bx: float, bz:
 		var prev: Vector2 = poly[count - 1]
 		for i in count:
 			var cur: Vector2 = poly[i]
-			if _seg_cross(a, b, prev, cur):
-				return true
+			var d: Vector2 = cur - prev
+			if d.length_squared() >= 0.04:
+				var s: float = 1.0 / float(maxi(n, 1))
+				segs.append(prev * s)
+				segs.append(cur * s)
 			prev = cur
+	return segs
+
+
+static func _span_hit(segs: Array, ax: float, az: float, bx: float, bz: float) -> bool:
+	var count: int = segs.size()
+	if count < 2:
+		return false
+	var a: Vector2 = Vector2(ax, az)
+	var b: Vector2 = Vector2(bx, bz)
+	if a.distance_to(b) < 0.05:
+		return false
+	var minx: float = minf(a.x, b.x)
+	var maxx: float = maxf(a.x, b.x)
+	var minz: float = minf(a.y, b.y)
+	var maxz: float = maxf(a.y, b.y)
+	var i: int = 0
+	while i + 1 < count:
+		var c: Vector2 = segs[i]
+		var d: Vector2 = segs[i + 1]
+		i += 2
+		if maxf(c.x, d.x) < minx or minf(c.x, d.x) > maxx:
+			continue
+		if maxf(c.y, d.y) < minz or minf(c.y, d.y) > maxz:
+			continue
+		if _seg_cross(a, b, c, d):
+			return true
 	return false
 
 
