@@ -79,8 +79,9 @@ static func note_prop(node: Node) -> void:
 		return
 	if not App.in_dungeon:
 		return
-	if not _props.has(node):
-		_props.append(node)
+	if _props.has(node):
+		return
+	_props.append(node)
 	_plan_dirty = true
 
 
