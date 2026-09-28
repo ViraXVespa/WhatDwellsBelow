@@ -45,7 +45,7 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 			loops.append(part)
 			continue
 		var pts: Array[Vector2] = _copy_pts(part)
-		if false and per >= 2 and part.size() > 4:
+		if per >= 2 and part.size() > 4:
 			pts = _fillet_points(pts, rng, fillet, per, kind, w, h)
 		loops.append(_fold_pts(pts))
 	LoadTiming.dmark("gen_outline_jag")

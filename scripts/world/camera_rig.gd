@@ -13,7 +13,7 @@ func _ready() -> void:
 	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 	cam.keep_aspect = Camera3D.KEEP_HEIGHT
 	cam.near = 0.05
-	cam.far = 140.0
+	cam.far = 260.0
 	cam.current = true
 	_place_local()
 	apply_zoom(App.cam_zoom)
@@ -55,7 +55,7 @@ func apply_zoom(z: float) -> void:
 		return
 	var zoom := clampf(z, T.ZOOM_MIN, T.ZOOM_MAX)
 	cam.size = 1080.0 / T.PX / zoom
-	cam.far = 140.0
+	cam.far = 260.0
 
 
 func apply_size(s: float) -> void:
@@ -63,7 +63,7 @@ func apply_size(s: float) -> void:
 		return
 	var size: float = maxf(s, 0.01)
 	cam.size = size
-	cam.far = maxf(140.0, size * 3.0)
+	cam.far = maxf(260.0, size * 3.0)
 
 
 func frame_hub(center: Vector3, size: float) -> void:

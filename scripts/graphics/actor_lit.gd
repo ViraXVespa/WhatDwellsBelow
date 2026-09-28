@@ -158,23 +158,24 @@ func _drive_hub(host: Node3D, feet: Vector2) -> void:
 	_drive_sun()
 	if not _is_player(host):
 		return
-	var hits: Array[Dictionary] = LightRt.nearest_casts(feet, 3)
-	for hit in hits:
-		var src: Vector2 = hit["xz"]
-		var reach: float = maxf(float(hit["reach"]), 0.001)
-		if reach > 6.0:
-			continue
-		var step: Vector2 = feet - src
-		if step.length_squared() < 0.0004:
-			continue
-		var along: float = clampf(float(hit["dist"]) / reach, 0.0, 1.0)
-		_away_at[1] = step.normalized()
-		_stretch_at[1] = lerpf(0.18, 0.34, 1.0 - along)
-		_alpha_at[1] = lerpf(0.28, 0.0, along)
-		_src_at[1] = src
-		_held[1] = true
-		_rank_at[1] = 1
+	var src: Vector2 = LightRt.hub_crystal
+	if src == Vector2.ZERO:
 		return
+	var reach: float = 2.2
+	var dist: float = feet.distance_to(src)
+	if dist > reach:
+		return
+	var step: Vector2 = feet - src
+	if step.length_squared() < 0.0004:
+		return
+	var along: float = clampf(dist / reach, 0.0, 1.0)
+	_away_at[1] = step.normalized()
+	_stretch_at[1] = lerpf(1.45, 1.05, along)
+	_alpha_at[1] = lerpf(0.16, 0.05, along)
+	_src_at[1] = src
+	_held[1] = true
+	_rank_at[1] = 1
+
 
 
 func _drive_sun() -> void:
@@ -210,9 +211,13 @@ func _drive_many(feet: Vector2, delta: float) -> void:
 		var reach: float = maxf(float(hit["reach"]), 0.001)
 		var along: float = clampf(float(hit["dist"]) / reach, 0.0, 1.0)
 		var mid: float = sin(along * PI)
+		var kind: String = str(hit.get("kind", ""))
 		var stretch: float = lerpf(D_NEAR, D_FAR, mid)
-		# aim.y is floor Z. A side light shortens the mark into a puddle.
-		stretch *= maxf(absf(aim.y), 0.2)
+		if kind == "crystal":
+			stretch = lerpf(1.85, 1.15, along)
+		else:
+			# aim.y is floor Z. A side light shortens the mark into a puddle.
+			stretch *= maxf(absf(aim.y), 0.2)
 		var raw: float = lerpf(A_NEAR, A_FAR, along)
 		srcs.append(src)
 		aims.append(aim)

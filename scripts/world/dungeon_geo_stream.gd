@@ -108,9 +108,7 @@ static func follow(host: Node, delta: float) -> void:
 	if host.has_meta("wdb_geo_origin"):
 		last = host.get_meta("wdb_geo_origin")
 	host.set_meta("wdb_geo_origin", origin)
-	var budget: int = 1
-	if last != origin:
-		budget = (2 * RING_IN + 1) * (2 * RING_IN + 1)
+	var budget: int = PER_FRAME
 	var built := 0
 	for dy in range(-RING_IN, RING_IN + 1):
 		for dx in range(-RING_IN, RING_IN + 1):
@@ -280,10 +278,10 @@ static func _spans_on_chunk(spans: Array, fx0: int, fy0: int, fx1: int, fy1: int
 	var iy0: float = float(fy0) - pad
 	var ix1: float = float(fx1) + pad
 	var iy1: float = float(fy1) + pad
-	var x0: float = float(fx0)
-	var y0: float = float(fy0)
-	var x1: float = float(fx1)
-	var y1: float = float(fy1)
+	var x0: float = float(fx0) - 1.0
+	var y0: float = float(fy0) - 1.0
+	var x1: float = float(fx1) + 1.0
+	var y1: float = float(fy1) + 1.0
 	for item in spans:
 		if not (item is Dictionary):
 			continue

@@ -7,7 +7,7 @@ extends Object
 ## Wall texels stay dark except the neighbor sample along the bake. SUB stays 4.
 
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
-const SUB := 8
+const SUB := 4
 const COL_FLOOR := Color(0.50, 0.56, 0.74)
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 

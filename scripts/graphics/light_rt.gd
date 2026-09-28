@@ -76,7 +76,7 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	sun.y = clampf(sun.y, float(z0) + 0.6, float(z1) - 0.6)
 	var sun_item: Dictionary = _light_at(sun.x, sun.y, x0, z0, "sun")
 	sun_item["energy"] = _bal("light_hub_sun_energy", T.LIGHT_HUB_SUN_ENERGY)
-	sun_item["reach"] = 96.0
+	sun_item["reach"] = maxf(96.0, Vector2(float(tw), float(th)).length())
 	sun_item["kind"] = "sun"
 	sun_item["occlude"] = true
 	lights.append(sun_item)
@@ -87,7 +87,8 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	cry["occlude"] = false
 	lights.append(cry)
 	var occ: Dictionary = _hub_occ(x0, z0, tw, th, layout)
-	_publish(x0, z0, tw, th, lights, Color(0.78, 0.70, 0.56, 1.0), occ["solid"], int(occ["sw"]), int(occ["sh"]), Stamp.SUB)
+	_publish(x0, z0, tw, th, lights, Color(0.86, 0.78, 0.64, 1.0), occ["solid"], int(occ["sw"]), int(occ["sh"]), Stamp.SUB)
+	_hub_finish_yard(x0, z0, layout)
 
 
 
@@ -205,6 +206,84 @@ static func _hub_in_boxes(wx: float, wz: float, boxes: Array) -> bool:
 			return true
 	return false
 
+static func _hub_lift_dark(img: Image) -> void:
+	if img == null:
+		return
+	var amb := Color(0.86, 0.78, 0.64, 1.0)
+	var w: int = img.get_width()
+	var h: int = img.get_height()
+	var y: int = 0
+	while y < h:
+		var x: int = 0
+		while x < w:
+			var c: Color = img.get_pixel(x, y)
+			if c.r < amb.r or c.g < amb.g or c.b < amb.b:
+				img.set_pixel(x, y, Color(maxf(c.r, amb.r), maxf(c.g, amb.g), maxf(c.b, amb.b), 1.0))
+			x += 1
+		y += 1
+
+static func _hub_building_shade(img: Image, x0: int, z0: int, layout: Node) -> void:
+	if img == null or layout == null or not layout.has_method("hall_pos"):
+		return
+	var away := Vector2(0.406138, 0.913811)
+	var boxes: Array = [
+		{"pos": layout.hall_pos(), "box": layout.hall_box, "len": 3.4},
+		{"pos": layout.wing_pos(), "box": layout.wing_box, "len": 2.6},
+		{"pos": layout.stall_pos(), "box": layout.stall_box, "len": 2.2},
+	]
+	if layout.get("hall_awning_depth") != null:
+		var hp: Vector3 = layout.hall_pos()
+		var hb: Vector3 = layout.hall_box
+		var ad: float = float(layout.hall_awning_depth)
+		boxes.append({"pos": Vector3(hp.x, 0.0, hp.z + hb.z * 0.5 + ad * 0.5), "box": Vector3(hb.x, 1.0, ad), "len": 1.4})
+		var wp: Vector3 = layout.wing_pos()
+		var wb: Vector3 = layout.wing_box
+		var wad: float = float(layout.wing_awning_depth)
+		boxes.append({"pos": Vector3(wp.x, 0.0, wp.z + wb.z * 0.5 + wad * 0.5), "box": Vector3(wb.x, 1.0, wad), "len": 1.2})
+	var w: int = img.get_width()
+	var h: int = img.get_height()
+	var sub: float = float(Stamp.SUB)
+	var y: int = 0
+	while y < h:
+		var x: int = 0
+		while x < w:
+			var wx: float = float(x0) + (float(x) + 0.5) / sub
+			var wz: float = float(z0) + (float(y) + 0.5) / sub
+			if _hub_box_hit(wx, wz, boxes):
+				x += 1
+				continue
+			var cover: float = _hub_shade_cover(wx, wz, boxes, away)
+			if cover > 0.0:
+				var c: Color = img.get_pixel(x, y)
+				var k: float = lerpf(1.0, 0.58, cover)
+				img.set_pixel(x, y, Color(c.r * k, c.g * k * 0.98, c.b * k * 0.96, 1.0))
+			x += 1
+		y += 1
+
+static func _hub_box_hit(wx: float, wz: float, boxes: Array) -> bool:
+	for raw in boxes:
+		var item: Dictionary = raw
+		var p: Vector3 = item["pos"]
+		var b: Vector3 = item["box"]
+		if absf(wx - p.x) <= b.x * 0.5 and absf(wz - p.z) <= b.z * 0.5:
+			return true
+	return false
+
+static func _hub_shade_cover(wx: float, wz: float, boxes: Array, away: Vector2) -> float:
+	var best: float = 0.0
+	for raw in boxes:
+		var item: Dictionary = raw
+		var slen: float = float(item["len"])
+		var t: float = 0.12
+		while t <= slen:
+			var px: float = wx - away.x * t
+			var pz: float = wz - away.y * t
+			if _hub_box_hit(px, pz, [item]):
+				best = maxf(best, 1.0 - t / slen)
+				break
+			t += 0.12
+	return best
+
 static func note_prop(node: Node) -> void:
 	if node == null:
 		return
@@ -314,7 +393,7 @@ static func _publish(
 	_sn = n
 	_keep_casts(x0, z0, tw, th, lights)
 	if not App.in_dungeon:
-		_blur_hub(img)
+		_hub_lift_dark(img)
 	if _gpu == null:
 		_gpu = ImageTexture.create_from_image(img)
 	else:
@@ -397,6 +476,7 @@ static func _light_at(world_x: float, world_z: float, x0: int, z0: int, kind: St
 		"reach": _reach(kind),
 		"energy": _energy(kind),
 		"col": _color(kind),
+		"kind": kind,
 	}
 
 
@@ -651,4 +731,107 @@ static func _keep_casts(x0: int, z0: int, tw: int, th: int, lights: Array) -> vo
 		_casts.append({
 			"xz": Vector2(mx, mz),
 			"reach": reach,
+			"kind": str(item.get("kind", "")),
 		})
+
+static func _hub_finish_yard(x0: int, z0: int, layout: Node) -> void:
+	if _img == null:
+		return
+	_hub_lift_dark(_img)
+	_hub_cast_buildings(_img, x0, z0, layout)
+	if _gpu != null:
+		_gpu.set_image(_img)
+	tex = _gpu
+	_push()
+
+static func _hub_cast_buildings(img: Image, x0: int, z0: int, layout: Node) -> void:
+	if img == null:
+		return
+	var away := Vector2(0.406138, 0.913811)
+	var boxes: Array = []
+	if layout != null and layout.has_method("hall_pos"):
+		boxes.append(_hub_box_of(layout.hall_pos(), layout.hall_box, 3.2))
+		boxes.append(_hub_box_of(layout.wing_pos(), layout.wing_box, 2.4))
+		boxes.append(_hub_box_of(layout.stall_pos(), layout.stall_box, 2.2))
+	else:
+		boxes.append(_hub_box_of(Vector3(8.2, 0.0, 6.0), Vector3(5.6, 3.4, 4.2), 3.2))
+		boxes.append(_hub_box_of(Vector3(25.0, 0.0, 8.0), Vector3(4.6, 2.4, 3.4), 2.2))
+	var sub: float = float(Stamp.SUB)
+	if sub < 1.0:
+		sub = 8.0
+	var w: int = img.get_width()
+	var h: int = img.get_height()
+	for raw in boxes:
+		var b: Dictionary = raw
+		_hub_stamp_skirt(img, x0, z0, sub, w, h, b, away)
+
+
+static func _hub_stamp_skirt(img: Image, x0: int, z0: int, sub: float, w: int, h: int, b: Dictionary, away: Vector2) -> void:
+	var slen: float = minf(float(b["len"]), 4.0)
+	var cx: float = float(b["x"])
+	var cz: float = float(b["z"])
+	var hx: float = float(b["hx"])
+	var hz: float = float(b["hz"])
+	var x_a: float = cx - hx + minf(0.0, away.x * slen)
+	var x_b: float = cx + hx + maxf(0.0, away.x * slen)
+	var z_a: float = cz - hz + minf(0.0, away.y * slen)
+	var z_b: float = cz + hz + maxf(0.0, away.y * slen)
+	var px0: int = clampi(int(floor((x_a - float(x0)) * sub)), 0, w - 1)
+	var px1: int = clampi(int(ceil((x_b - float(x0)) * sub)), 0, w)
+	var pz0: int = clampi(int(floor((z_a - float(z0)) * sub)), 0, h - 1)
+	var pz1: int = clampi(int(ceil((z_b - float(z0)) * sub)), 0, h)
+	var y: int = pz0
+	while y < pz1:
+		var x: int = px0
+		while x < px1:
+			var wx: float = float(x0) + (float(x) + 0.5) / sub
+			var wz: float = float(z0) + (float(y) + 0.5) / sub
+			if _hub_inside(wx, wz, b):
+				x += 1
+				continue
+			var t: float = 0.12
+			var cover: float = 0.0
+			while t <= slen:
+				if _hub_inside(wx - away.x * t, wz - away.y * t, b):
+					cover = 1.0 - t / slen
+					break
+				t += 0.12
+			if cover > 0.02:
+				var c: Color = img.get_pixel(x, y)
+				var k: float = lerpf(1.0, 0.55, cover)
+				img.set_pixel(x, y, Color(c.r * k, c.g * k, c.b * k, 1.0))
+			x += 1
+		y += 1
+	var bx0: int = maxi(px0 - 2, 0)
+	var bx1: int = mini(px1 + 2, w)
+	var bz0: int = maxi(pz0 - 2, 0)
+	var bz1: int = mini(pz1 + 2, h)
+	var copy: Image = img.get_region(Rect2i(bx0, bz0, bx1 - bx0, bz1 - bz0))
+	var yy: int = bz0
+	while yy < bz1:
+		var xx: int = bx0
+		while xx < bx1:
+			var acc := Color(0, 0, 0, 0)
+			var n: int = 0
+			var oy: int = -1
+			while oy <= 1:
+				var ox: int = -1
+				while ox <= 1:
+					var sx: int = xx + ox - bx0
+					var sy: int = yy + oy - bz0
+					if sx >= 0 and sy >= 0 and sx < copy.get_width() and sy < copy.get_height():
+						acc += copy.get_pixel(sx, sy)
+						n += 1
+					ox += 1
+				oy += 1
+			if n > 0:
+				img.set_pixel(xx, yy, acc / float(n))
+			xx += 1
+		yy += 1
+
+
+static func _hub_box_of(pos: Vector3, box: Vector3, slen: float) -> Dictionary:
+	return {"x": pos.x, "z": pos.z, "hx": box.x * 0.5, "hz": box.z * 0.5, "len": slen}
+
+static func _hub_inside(wx: float, wz: float, b: Dictionary) -> bool:
+	return absf(wx - float(b["x"])) <= float(b["hx"]) and absf(wz - float(b["z"])) <= float(b["hz"])

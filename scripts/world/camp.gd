@@ -36,6 +36,7 @@ func _ready() -> void:
 		Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z),
 		_layout
 	)
+	LightRt.hub_crystal = Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z)
 	Build.ground(self)
 	LoadTiming.mark("camp_ground")
 	Build.buildings(self)
