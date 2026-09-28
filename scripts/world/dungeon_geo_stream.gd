@@ -257,7 +257,7 @@ static func _outline_loops(host: Node) -> Array:
 static func _wall_runs(host: Node, solid: PackedByteArray, sw: int, sh: int, wall_cells: Array[Vector2i], ox: int, oy: int, x1: int, y1: int, n: int) -> Array[Dictionary]:
 	if _outline_spans(host).is_empty():
 		return _faces_on_chunk(solid, sw, sh, wall_cells, ox * n, oy * n, x1 * n, y1 * n)
-	return WallMesh.prepare(_spans_on_chunk(_outline_spans(host), ox * n, oy * n, x1 * n, y1 * n))
+	return _spans_on_chunk(_prepared_spans(host), ox * n, oy * n, x1 * n, y1 * n)
 
 
 static func _prepared_spans(host: Node) -> Array:
@@ -282,8 +282,8 @@ static func _spans_on_chunk(spans: Array, fx0: int, fy0: int, fx1: int, fy1: int
 	var iy1: float = float(fy1) + pad
 	var x0: float = float(fx0)
 	var y0: float = float(fy0)
-	var x1: float = float(fx1) - 0.0001
-	var y1: float = float(fy1) - 0.0001
+	var x1: float = float(fx1)
+	var y1: float = float(fy1)
 	for item in spans:
 		if not (item is Dictionary):
 			continue
@@ -332,7 +332,7 @@ static func _clip_axis(p: float, dp: float, min_v: float, max_v: float, ts: Arra
 	var t0: float = float(ts[0])
 	var t1: float = float(ts[1])
 	if absf(dp) < 0.0000001:
-		if p < min_v or p > max_v:
+		if p < min_v or p >= max_v:
 			return false
 		return true
 	var a: float = (min_v - p) / dp
@@ -396,10 +396,11 @@ static func _emit_floor_lip(spans: Array, x0: int, y0: int, x1: int, y1: int, fi
 	holder.name = "Floors"
 	var loops: Array = spans
 	var box: PackedVector2Array = PackedVector2Array()
-	box.append(Vector2(float(x0), float(y0)))
-	box.append(Vector2(float(x1), float(y0)))
-	box.append(Vector2(float(x1), float(y1)))
-	box.append(Vector2(float(x0), float(y1)))
+	var grow: float = 1.0
+	box.append(Vector2(float(x0) - grow, float(y0) - grow))
+	box.append(Vector2(float(x1) + grow, float(y0) - grow))
+	box.append(Vector2(float(x1) + grow, float(y1) + grow))
+	box.append(Vector2(float(x0) - grow, float(y1) + grow))
 	var pieces: Array = []
 	for loop_v in loops:
 		var loop: PackedVector2Array = loop_v

@@ -31,6 +31,8 @@ static var _sw := 0
 static var _sh := 0
 static var _sn := 0
 static var _casts: Array[Dictionary] = []
+static var hub_crystal := Vector2.ZERO
+static var _hub_layout: Node
 
 
 static func texture() -> Texture2D:
@@ -62,12 +64,19 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	_live = ""
 	_knob = ""
 	_rect = Rect2i(-1, -1, 0, 0)
+	hub_crystal = crystal_xz
+	_hub_layout = layout
 	var tw: int = maxi(1, x1 - x0)
 	var th: int = maxi(1, z1 - z0)
 	var lights: Array = []
-	var sun: Vector2 = Vector2((float(x0) + float(x1)) * 0.5, (float(z0) + float(z1)) * 0.5)
+	var mid := Vector2((float(x0) + float(x1)) * 0.5, (float(z0) + float(z1)) * 0.5)
+	var away := Vector2(0.406138, 0.913811)
+	var sun: Vector2 = mid - away * 80.0
+	sun.x = clampf(sun.x, float(x0) + 0.6, float(x1) - 0.6)
+	sun.y = clampf(sun.y, float(z0) + 0.6, float(z1) - 0.6)
 	var sun_item: Dictionary = _light_at(sun.x, sun.y, x0, z0, "sun")
 	sun_item["energy"] = _bal("light_hub_sun_energy", T.LIGHT_HUB_SUN_ENERGY)
+	sun_item["reach"] = 96.0
 	sun_item["kind"] = "sun"
 	sun_item["occlude"] = true
 	lights.append(sun_item)
@@ -79,6 +88,7 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	lights.append(cry)
 	var occ: Dictionary = _hub_occ(x0, z0, tw, th, layout)
 	_publish(x0, z0, tw, th, lights, Color(0.78, 0.70, 0.56, 1.0), occ["solid"], int(occ["sw"]), int(occ["sh"]), Stamp.SUB)
+
 
 
 
@@ -143,6 +153,57 @@ static func _blur_hub(img: Image) -> void:
 			x += 1
 		y += 1
 
+
+static func _hub_day_finish(img: Image, x0: int, z0: int, layout: Node) -> void:
+	if img == null:
+		return
+	var amb := Color(0.82, 0.74, 0.60, 1.0)
+	var w: int = img.get_width()
+	var h: int = img.get_height()
+	var sub: float = float(Stamp.SUB)
+	var boxes: Array = []
+	if layout != null and layout.has_method("hall_pos"):
+		boxes.append({"pos": layout.hall_pos(), "box": layout.hall_box})
+		boxes.append({"pos": layout.wing_pos(), "box": layout.wing_box})
+		boxes.append({"pos": layout.stall_pos(), "box": layout.stall_box})
+	var away := Vector2(0.406138, 0.913811)
+	var y: int = 0
+	while y < h:
+		var x: int = 0
+		while x < w:
+			var c: Color = img.get_pixel(x, y)
+			if c.r + c.g + c.b < 0.12:
+				c = amb
+			else:
+				c = Color(maxf(c.r, amb.r * 0.85), maxf(c.g, amb.g * 0.85), maxf(c.b, amb.b * 0.85), 1.0)
+			var wx: float = float(x0) + (float(x) + 0.5) / sub
+			var wz: float = float(z0) + (float(y) + 0.5) / sub
+			if _hub_in_sun_shade(wx, wz, boxes, away):
+				c = Color(c.r * 0.62, c.g * 0.60, c.b * 0.58, 1.0)
+			img.set_pixel(x, y, c)
+			x += 1
+		y += 1
+
+static func _hub_in_sun_shade(wx: float, wz: float, boxes: Array, away: Vector2) -> bool:
+	if _hub_in_boxes(wx, wz, boxes):
+		return false
+	var t: float = 0.15
+	while t <= 3.6:
+		var px: float = wx - away.x * t
+		var pz: float = wz - away.y * t
+		if _hub_in_boxes(px, pz, boxes):
+			return true
+		t += 0.15
+	return false
+
+static func _hub_in_boxes(wx: float, wz: float, boxes: Array) -> bool:
+	for raw in boxes:
+		var item: Dictionary = raw
+		var p: Vector3 = item["pos"]
+		var b: Vector3 = item["box"]
+		if absf(wx - p.x) <= b.x * 0.5 and absf(wz - p.z) <= b.z * 0.5:
+			return true
+	return false
 
 static func note_prop(node: Node) -> void:
 	if node == null:
