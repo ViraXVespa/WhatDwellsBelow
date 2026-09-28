@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python bin/wdb-pretool.py",
+            "command": "python .grok/hooks/bin/wdb-pretool.py",
             "timeout": 10
           }
         ]

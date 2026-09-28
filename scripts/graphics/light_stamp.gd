@@ -1,7 +1,7 @@
 extends Object
 
 ## Fine solid blocks. Discs flood walkable texels from the mount. Cold fill is those samples only.
-## Falloff is flood-path meters (1/SUB per ortho step), not straight-line range.
+## Falloff is straight-line meters on a clear segment. Wall mass blocks the disc.
 ## The walk mask is gen solid under the texel center. Loops do not replace that mask.
 ## A 4-neighbor does not open a cell past the lip.
 ## Wall texels stay dark except the neighbor sample along the bake. SUB stays 4.
@@ -202,45 +202,93 @@ static func _disc(
 	var start_i: int = _seed(walk, iw, ih, mx, mz, x0, z0)
 	if start_i < 0:
 		return
-	var step_m: float = 1.0 / float(SUB)
-	var seen: PackedByteArray = PackedByteArray()
-	seen.resize(iw * ih)
-	var path: PackedFloat32Array = PackedFloat32Array()
-	path.resize(iw * ih)
-	var q: PackedInt32Array = PackedInt32Array()
-	q.resize(iw * ih)
-	var head: int = 0
-	var tail: int = 0
-	seen[start_i] = 1
-	path[start_i] = 0.0
-	q[tail] = start_i
-	tail += 1
-	while head < tail:
-		var i: int = q[head]
-		head += 1
-		var walked: float = path[i]
-		if walked <= reach:
-			var fall: float = energy * (1.0 - walked / reach)
-			rr[i] = minf(rr[i] + col.r * fall, 1.0)
-			gg[i] = minf(gg[i] + col.g * fall, 1.0)
-			bb[i] = minf(bb[i] + col.b * fall, 1.0)
-		var py: int = int(float(i) / float(iw))
-		var px: int = i - py * iw
-		for d: Vector2i in DIRS:
-			var npx: int = px + d.x
-			var npy: int = py + d.y
-			if npx < 0 or npy < 0 or npx >= iw or npy >= ih:
-				continue
-			var ni: int = npy * iw + npx
-			if seen[ni] != 0 or walk[ni] == 0:
-				continue
-			var nd: float = walked + step_m
-			if nd > reach:
-				continue
-			seen[ni] = 1
-			path[ni] = nd
-			q[tail] = ni
-			tail += 1
+	var sy: int = int(float(start_i) / float(iw))
+	var sx: int = start_i - sy * iw
+	var rpx: int = int(ceil(reach * float(SUB)))
+	var py0: int = maxi(0, sy - rpx)
+	var py1: int = mini(ih - 1, sy + rpx)
+	var px0: int = maxi(0, sx - rpx)
+	var px1: int = mini(iw - 1, sx + rpx)
+	var py: int = py0
+	while py <= py1:
+		var row: int = py * iw
+		var px: int = px0
+		while px <= px1:
+			var i: int = row + px
+			if walk[i] != 0:
+				var wx: float = float(x0) + (float(px) + 0.5) / float(SUB)
+				var wz: float = float(z0) + (float(py) + 0.5) / float(SUB)
+				var dist: float = sqrt((wx - mx) * (wx - mx) + (wz - mz) * (wz - mz))
+				if dist <= reach and _clear(walk, iw, ih, sx, sy, px, py):
+					var fall: float = energy * (1.0 - dist / reach)
+					rr[i] = minf(rr[i] + col.r * fall, 1.0)
+					gg[i] = minf(gg[i] + col.g * fall, 1.0)
+					bb[i] = minf(bb[i] + col.b * fall, 1.0)
+			px += 1
+		py += 1
+
+
+static func _clear(
+	walk: PackedByteArray,
+	iw: int,
+	ih: int,
+	x0: int,
+	y0: int,
+	x1: int,
+	y1: int
+) -> bool:
+	if x0 < 0 or y0 < 0 or x0 >= iw or y0 >= ih:
+		return false
+	if x1 < 0 or y1 < 0 or x1 >= iw or y1 >= ih:
+		return false
+	if walk[y0 * iw + x0] == 0 or walk[y1 * iw + x1] == 0:
+		return false
+	if x0 == x1 and y0 == y1:
+		return true
+	var dx: int = x1 - x0
+	var dy: int = y1 - y0
+	var nx: int = absi(dx)
+	var ny: int = absi(dy)
+	var step_x: int = 0
+	var step_y: int = 0
+	if dx > 0:
+		step_x = 1
+	elif dx < 0:
+		step_x = -1
+	if dy > 0:
+		step_y = 1
+	elif dy < 0:
+		step_y = -1
+	var x: int = x0
+	var y: int = y0
+	var ix: int = 0
+	var iy: int = 0
+	while ix < nx or iy < ny:
+		var decision: int = (1 + 2 * ix) * ny - (1 + 2 * iy) * nx
+		if decision == 0:
+			var cx: int = x + step_x
+			var cy: int = y + step_y
+			if cx < 0 or cy < 0 or cx >= iw or cy >= ih:
+				return false
+			if walk[y * iw + cx] == 0 or walk[cy * iw + x] == 0:
+				return false
+			x = cx
+			y = cy
+			ix += 1
+			iy += 1
+		elif decision < 0:
+			x += step_x
+			ix += 1
+		else:
+			y += step_y
+			iy += 1
+		if x == x1 and y == y1:
+			return true
+		if x < 0 or y < 0 or x >= iw or y >= ih:
+			return false
+		if walk[y * iw + x] == 0:
+			return false
+	return true
 
 
 static func _walls(
