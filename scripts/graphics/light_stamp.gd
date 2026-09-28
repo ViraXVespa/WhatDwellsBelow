@@ -371,7 +371,12 @@ static func _seg_cross(a: Vector2, b: Vector2, c: Vector2, d: Vector2) -> bool:
 	var ac: Vector2 = c - a
 	var t: float = (ac.x * cd.y - ac.y * cd.x) / den
 	var u: float = (ac.x * ab.y - ac.y * ab.x) / den
-	return t > 0.04 and t < 0.96 and u > 0.02 and u < 0.98
+	if t <= 0.04 or t >= 0.96 or u <= 0.02 or u >= 0.98:
+		return false
+	var hit: Vector2 = a + ab * t
+	if hit.distance_to(a) < 1.6 or hit.distance_to(b) < 1.6:
+		return false
+	return true
 
 
 static func _seed(
