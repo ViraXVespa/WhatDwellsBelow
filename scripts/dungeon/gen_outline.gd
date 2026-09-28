@@ -760,9 +760,13 @@ static func _push_clipped(
 				continue
 			var mid: Vector2 = a + delta * ((t0 + t1) * 0.5)
 			var out_p: Vector2 = mid - nrm * 0.4
-			var void_out: bool = not _hit_other(out_p, loops, boxes, poly)
 			var in_p: Vector2 = mid + nrm * 0.4
-			var solid_in: bool = Geometry2D.is_point_in_polygon(in_p, poly)
+			var ox: int = int(floor(out_p.x))
+			var oy: int = int(floor(out_p.y))
+			var ix: int = int(floor(in_p.x))
+			var iy: int = int(floor(in_p.y))
+			var void_out: bool = ox < 0 or oy < 0 or ox >= sw or oy >= sh or _solid[oy * sw + ox] == 0
+			var solid_in: bool = ix >= 0 and iy >= 0 and ix < sw and iy < sh and _solid[iy * sw + ix] != 0
 			if void_out and solid_in:
 				kept0.append(t0)
 				kept1.append(t1)

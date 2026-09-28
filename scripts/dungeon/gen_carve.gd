@@ -301,23 +301,24 @@ static func _seg_dist2(px: float, py: float, ax: float, ay: float, bx: float, by
 static func _stamp_band(
 	grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i, width: int
 ) -> void:
-	var pad: int = maxi(width, 2)
-	var x0: int = mini(a.x, b.x) - pad
-	var x1: int = maxi(a.x, b.x) + pad
-	var y0: int = mini(a.y, b.y) - pad
-	var y1: int = maxi(a.y, b.y) + pad
-	var rad: float = float(maxi(1, width)) * 0.5
-	var r2: float = rad * rad + 0.25
+	var rad: int = maxi(1, int(ceil(float(maxi(1, width)) * 0.5)))
+	var r2: int = rad * rad + 1
 	_note_band(a, b, width)
-	for y in range(y0, y1 + 1):
-		for x in range(x0, x1 + 1):
-			if _seg_dist2(
-				float(x) + 0.5, float(y) + 0.5,
-				float(a.x) + 0.5, float(a.y) + 0.5,
-				float(b.x) + 0.5, float(b.y) + 0.5
-			) > r2:
-				continue
-			dig(grid, w, h, x, y)
+	var steps: int = maxi(1, absi(b.x - a.x) + absi(b.y - a.y))
+	var s: int = 0
+	while s <= steps:
+		var t: float = float(s) / float(steps)
+		var cx: int = int(round(lerpf(float(a.x), float(b.x), t)))
+		var cy: int = int(round(lerpf(float(a.y), float(b.y), t)))
+		var oy: int = -rad
+		while oy <= rad:
+			var ox: int = -rad
+			while ox <= rad:
+				if ox * ox + oy * oy <= r2:
+					dig(grid, w, h, cx + ox, cy + oy)
+				ox += 1
+			oy += 1
+		s += 1
 
 
 static func _carve_band(
