@@ -61,7 +61,16 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 		if _area(loop) > 1.0:
 			_fill(solid, sw, sh, loop, 1)
 	_keep_rooms(solid, sw, sh, rooms, per)
-	var spans: Array = _spans_from_solid(solid, sw, sh)
+	var spans: Array = []
+	for loop_v3 in loops:
+		var rim: PackedVector2Array = loop_v3
+		if _area(rim) < 0.0:
+			rim.reverse()
+		if _area(rim) > 1.0:
+			_push_clipped(spans, rim, solid, sw, sh)
+	for item in spans:
+		if item is Dictionary:
+			_paint(solid, sw, sh, item)
 	data["outline_fine_m"] = fine_m
 	data["solid"] = solid
 	data["solid_w"] = sw
@@ -579,6 +588,59 @@ static func _fill(solid: PackedByteArray, sw: int, sh: int, poly: PackedVector2A
 			for x in range(x_from, x_to + 1):
 				solid[row + x] = value
 			k += 2
+
+
+static func _emit_frag(spans: Array, a: Vector2, delta: Vector2, nrm: Vector2, t0: float, t1: float) -> void:
+	var d: Vector2 = delta * (t1 - t0)
+	if d.length_squared() < 0.04:
+		return
+	var o: Vector2 = a + delta * t0
+	spans.append({"origin": o, "delta": d, "normal": nrm, "thick": 1.0})
+
+
+static func _push_clipped(spans: Array, poly: PackedVector2Array, solid: PackedByteArray, sw: int, sh: int) -> void:
+	var count: int = poly.size()
+	if count < 2 or _area(poly) <= 1.0 or sw < 1 or sh < 1:
+		return
+	for i in count:
+		var a: Vector2 = poly[i]
+		var b: Vector2 = poly[(i + 1) % count]
+		var delta: Vector2 = b - a
+		var span_l: float = delta.length()
+		if span_l < 0.5:
+			continue
+		var nrm: Vector2 = Vector2(-delta.y, delta.x)
+		if nrm.length_squared() > 0.0001:
+			nrm = nrm.normalized()
+		var steps: int = maxi(2, int(ceil(span_l * 2.0)))
+		var run_a: int = -1
+		var last: int = -2
+		for si in range(steps + 1):
+			var t: float = float(si) / float(steps)
+			var p: Vector2 = a + delta * t
+			var out_p: Vector2 = p - nrm * 0.6
+			var fx: int = int(floor(out_p.x))
+			var fy: int = int(floor(out_p.y))
+			var void_out: bool = fx < 0 or fy < 0 or fx >= sw or fy >= sh
+			if not void_out:
+				void_out = solid[fy * sw + fx] == 0
+			var in_p: Vector2 = p + nrm * 0.6
+			var ix: int = int(floor(in_p.x))
+			var iy: int = int(floor(in_p.y))
+			var solid_in: bool = false
+			if ix >= 0 and iy >= 0 and ix < sw and iy < sh:
+				solid_in = solid[iy * sw + ix] != 0
+			if void_out and solid_in:
+				if run_a < 0:
+					run_a = si
+				last = si
+			else:
+				if run_a >= 0 and last > run_a:
+					_emit_frag(spans, a, delta, nrm, float(run_a) / float(steps), float(last) / float(steps))
+				run_a = -1
+				last = -2
+		if run_a >= 0 and last > run_a:
+			_emit_frag(spans, a, delta, nrm, float(run_a) / float(steps), float(last) / float(steps))
 
 
 static func _spans_from_solid(solid: PackedByteArray, sw: int, sh: int) -> Array:
