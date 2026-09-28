@@ -346,32 +346,19 @@ static func _first_mm(node: Node) -> MultiMeshInstance3D:
 
 
 static func _emit_floor_lip(cells: Array[Vector2i], spans: Array, fine_m: float, mat: Material) -> Node3D:
-	var owned: Dictionary = {}
-	for cell in cells:
-		owned[cell] = true
-	var cut: Dictionary = {}
-	for item in spans:
-		if item is Dictionary and (item as Dictionary).has("delta"):
-			_mark_span(cut, item)
 	var flush: Array[Vector2i] = []
-	var pieces: Array = []
-	var used: Dictionary = {}
-	for key in cut.keys():
-		var cell: Vector2i = key
-		var poly: PackedVector2Array = _clip_cell(cell.x, cell.y, spans)
-		if poly.size() < 3:
-			continue
-		if _still_square(poly, cell.x, cell.y):
-			if owned.has(cell):
-				flush.append(cell)
-				used[cell] = true
-			continue
-		pieces.append(poly)
-		used[cell] = true
 	for cell in cells:
-		if used.has(cell):
-			continue
 		flush.append(cell)
+	var pieces: Array = []
+	for item in spans:
+		if not (item is Dictionary):
+			continue
+		var run: Dictionary = item
+		if not run.has("delta"):
+			continue
+		var poly: PackedVector2Array = _floor_splint(run)
+		if poly.size() >= 3:
+			pieces.append(poly)
 	var holder: Node3D = Node3D.new()
 	holder.name = "Floors"
 	if not flush.is_empty():
@@ -384,6 +371,26 @@ static func _emit_floor_lip(cells: Array[Vector2i], spans: Array, fine_m: float,
 			inst.material_override = mat
 		holder.add_child(inst)
 	return holder
+
+
+static func _floor_splint(run: Dictionary) -> PackedVector2Array:
+	var o: Vector2 = run["origin"] as Vector2
+	var d: Vector2 = run["delta"] as Vector2
+	if d.length_squared() < 0.04:
+		return PackedVector2Array()
+	var nrm: Vector2 = run["normal"] as Vector2
+	if nrm.length_squared() < 0.0001:
+		nrm = Vector2(-d.y, d.x)
+	if nrm.length_squared() < 0.0001:
+		return PackedVector2Array()
+	nrm = nrm.normalized()
+	var w: float = 2.0
+	var poly: PackedVector2Array = PackedVector2Array()
+	poly.append(o)
+	poly.append(o + d)
+	poly.append(o + d + nrm * w)
+	poly.append(o + nrm * w)
+	return poly
 
 
 static func _mark_span(cut: Dictionary, run: Dictionary) -> void:
@@ -524,8 +531,8 @@ static func _lip_mesh(pieces: Array, fine_m: float) -> ArrayMesh:
 			uvs.append(Vector2(x, z))
 		for i in range(1, poly.size() - 1):
 			indices.append(base)
-			indices.append(base + i + 1)
 			indices.append(base + i)
+			indices.append(base + i + 1)
 	var mesh: ArrayMesh = ArrayMesh.new()
 	if verts.is_empty():
 		return mesh
