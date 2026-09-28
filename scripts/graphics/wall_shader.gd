@@ -25,12 +25,14 @@ uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
 varying vec3 world_pos;
 varying vec2 side_uv;
+varying vec2 face_xz;
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float sx = length(vec3(MODEL_MATRIX[0].x, MODEL_MATRIX[1].x, MODEL_MATRIX[2].x));
 	float sz = length(vec3(MODEL_MATRIX[0].z, MODEL_MATRIX[1].z, MODEL_MATRIX[2].z));
 	vec3 wn = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	face_xz = wn.xz;
 	if (abs(wn.y) > abs(wn.x) && abs(wn.y) > abs(wn.z)) {
 		side_uv = vec2(UV.x * sx, UV.y * sz);
 	} else {
@@ -38,12 +40,7 @@ void vertex() {
 	}
 }
 
-void fragment() {
-	vec2 xz = world_pos.xz;
-	vec2 uv = fract(side_uv * uv_scale + uv_off);
-	vec3 c = texture(albedo_tex, uv).rgb;
-	float h = fract(sin(dot(floor(side_uv * 0.25), vec2(127.1, 311.7))) * 43758.5453);
-	float worn = mix(1.0, mix(0.78, 1.0, h), clamp(wear, 0.0, 1.0));
+vec3 tap_lit(vec2 xz) {
 	vec2 span = max(light_span, vec2(0.001));
 	vec2 luv = clamp((xz - light_origin) / span, vec2(0.0), vec2(1.0));
 	ivec2 ts = max(textureSize(light_tex, 0), ivec2(1));
@@ -56,7 +53,21 @@ void fragment() {
 	vec3 s10 = texelFetch(light_tex, ivec2(i1.x, i0.y), 0).rgb;
 	vec3 s01 = texelFetch(light_tex, ivec2(i0.x, i1.y), 0).rgb;
 	vec3 s11 = texelFetch(light_tex, i1, 0).rgb;
-	vec3 lit = mix(mix(s00, s10, fr.x), mix(s01, s11, fr.x), fr.y);
+	return mix(mix(s00, s10, fr.x), mix(s01, s11, fr.x), fr.y);
+}
+
+void fragment() {
+	vec2 n2 = face_xz;
+	float nl = length(n2);
+	vec2 inward = vec2(0.0);
+	if (nl > 0.001) {
+		inward = (n2 / nl) * 0.25;
+	}
+	vec2 uv = fract(side_uv * uv_scale + uv_off);
+	vec3 c = texture(albedo_tex, uv).rgb;
+	float h = fract(sin(dot(floor(side_uv * 0.25), vec2(127.1, 311.7))) * 43758.5453);
+	float worn = mix(1.0, mix(0.78, 1.0, h), clamp(wear, 0.0, 1.0));
+	vec3 lit = max(tap_lit(world_pos.xz), tap_lit(world_pos.xz + inward));
 	ALBEDO = c * tint * worn * lit;
 }
 """
