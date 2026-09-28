@@ -47,7 +47,7 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 		var pts: Array[Vector2] = _copy_pts(part)
 		if false and per >= 2 and part.size() > 4:
 			pts = _fillet_points(pts, rng, fillet, per, kind, w, h)
-		loops.append(_bevel_poly(_fold_pts(pts)))
+		loops.append(_fold_pts(pts))
 	LoadTiming.dmark("gen_outline_jag")
 	var sw: int = w * per
 	var sh: int = h * per

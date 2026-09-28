@@ -324,7 +324,7 @@ static func prepare(raw: Array) -> Array[Dictionary]:
 			runs.append(item as Dictionary)
 	if runs.is_empty():
 		return runs
-	return _merge_opposite(_fold_teeth(runs))
+	return _merge_opposite(_bevel_corners(_fold_teeth(runs)))
 
 
 static func _pt_key(p: Vector2) -> Vector2i:
@@ -475,12 +475,9 @@ static func _bevel_corners(runs: Array[Dictionary]) -> Array[Dictionary]:
 			var dir_b: Vector2 = d2 / len1
 			if absf(dir_a.dot(dir_b)) > 0.35:
 				continue
-			var cut: float = minf(1.15, minf(len0, len1) * 0.33)
+			var cut: float = minf(2.4, minf(len0, len1) * 0.4)
 			var new_end: Vector2 = endp - dir_a * cut
 			var new_start: Vector2 = endp + dir_b * cut
-			run["delta"] = new_end - o
-			other["origin"] = new_start
-			other["delta"] = (o + d + d2) - new_start
 			var nd: Vector2 = (run["normal"] as Vector2) + (other["normal"] as Vector2)
 			if nd.length_squared() < 0.0001:
 				nd = Vector2(-dir_a.y, dir_a.x) + Vector2(-dir_b.y, dir_b.x)
