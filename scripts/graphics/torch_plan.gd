@@ -104,9 +104,7 @@ static func _bin_near(cell: Vector2i) -> PackedInt32Array:
 static func build(host: Node, props: Array) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if host == null or host.data == null:
-		_cache_key = key
-	_cache = out
-	return out
+		return out
 	var grid: PackedByteArray = host.data.grid
 	var map_w: int = int(host.data.w)
 	var map_h: int = int(host.data.h)
@@ -235,6 +233,8 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 				continue
 			used[mounted] = true
 			out.append(spur)
+	_cache_key = key
+	_cache = out
 	return out
 
 
