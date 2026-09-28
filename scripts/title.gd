@@ -15,10 +15,41 @@ var _title_btns: Array = []
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	var bg := ColorRect.new()
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.color = Color(0.06, 0.05, 0.045, 1)
-	add_child(bg)
+	var fall := ColorRect.new()
+	fall.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fall.color = Color(0.06, 0.05, 0.045, 1)
+	fall.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(fall)
+	var bg_path := "res://assets/ui/load_background.jpg"
+	if ResourceLoader.exists(bg_path):
+		var art := TextureRect.new()
+		art.set_anchors_preset(Control.PRESET_FULL_RECT)
+		art.texture = load(bg_path)
+		art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(art)
+	var plate := TextureRect.new()
+	plate.set_anchors_preset(Control.PRESET_CENTER)
+	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var grad := Gradient.new()
+	grad.offsets = PackedFloat32Array([0.0, 0.90, 1.0])
+	grad.colors = PackedColorArray([
+		Color(0.0, 0.0, 0.0, 0.72),
+		Color(0.0, 0.0, 0.0, 0.72),
+		Color(0.0, 0.0, 0.0, 0.0)
+	])
+	var gt := GradientTexture2D.new()
+	gt.gradient = grad
+	gt.fill = GradientTexture2D.FILL_SQUARE
+	gt.fill_from = Vector2(0.5, 0.5)
+	gt.fill_to = Vector2(0.97, 0.5)
+	gt.width = 512
+	gt.height = 384
+	plate.texture = gt
+	plate.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	plate.stretch_mode = TextureRect.STRETCH_SCALE
+	add_child(plate)
 	var card := VBoxContainer.new()
 	card.set_anchors_preset(Control.PRESET_CENTER)
 	card.offset_left = -420
@@ -61,6 +92,8 @@ func _ready() -> void:
 	_wire_focus(play_a, play_b, updates, archives)
 	call_deferred("_focus_first")
 	call_deferred("_maybe_news")
+
+	call_deferred("_fit_title_plate", plate, card)
 
 
 func _debug_open() -> bool:
@@ -214,3 +247,16 @@ func _close_archives() -> void:
 	if App.archives_ui and App.archives_ui.has_method("hide_browser"):
 		App.archives_ui.hide_browser()
 	_focus_first()
+
+func _fit_title_plate(plate: Control, card: Control) -> void:
+	if plate == null or card == null:
+		return
+	await get_tree().process_frame
+	var w: float = card.offset_right - card.offset_left + 176.0
+	var h: float = card.get_combined_minimum_size().y + 44.0
+	if h < 280.0:
+		h = 360.0
+	plate.offset_left = -w * 0.5
+	plate.offset_right = w * 0.5
+	plate.offset_top = -h * 0.5
+	plate.offset_bottom = h * 0.5 + 36.0

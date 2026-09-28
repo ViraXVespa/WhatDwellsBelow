@@ -3,9 +3,10 @@
 ## All Phase 2 combat numbers. Mutated by the secret debug menu.
 ## Bump BAL_REV when shipping new defaults that old saves should receive.
 const Schema := preload("res://scripts/data/balance_schema.gd")
+const Tune := preload("res://scripts/data/tunables.gd")
 const Enemies := preload("res://scripts/data/balance_enemies.gd")
 const Migrate := preload("res://scripts/data/balance_migrate.gd")
-const BAL_REV := 12
+const BAL_REV := 13
 
 var move_speed := 4.5
 var dash_speed_mult := 2.8
@@ -99,6 +100,9 @@ var hall_w_max := 4
 var hall_w_interval := 10
 var hall_w_min_pct := 0.15
 var hall_w_mode_pct := 0.60
+var outline_fine_m := 0.25
+var outline_fillet_frac := 0.40
+var outline_jag_frac := 0.35
 var fog_radius := 5
 var max_clerks := 3
 var ghost_shop_chance := 0.33
@@ -291,6 +295,19 @@ var quest_xp_a := 24.0
 var quest_xp_b := 16.0
 
 var near_death_hp := 0.2
+var ground_px_per_m: float = Tune.GROUND_PX_PER_M
+var ground_hash_m: float = Tune.GROUND_HASH_M
+var ground_variants: float = Tune.GROUND_VARIANTS
+var ground_wear: float = Tune.GROUND_WEAR
+var light_torch_range: float = Tune.LIGHT_TORCH_RANGE
+var light_torch_energy: float = Tune.LIGHT_TORCH_ENERGY
+var light_crystal_range: float = Tune.LIGHT_CRYSTAL_RANGE
+var light_crystal_energy: float = Tune.LIGHT_CRYSTAL_ENERGY
+var light_fire_range: float = Tune.LIGHT_FIRE_RANGE
+var light_fire_energy: float = Tune.LIGHT_FIRE_ENERGY
+var light_sun_range: float = Tune.LIGHT_SUN_RANGE
+var light_sun_energy: float = Tune.LIGHT_SUN_ENERGY
+var light_source_cap: float = Tune.LIGHT_SOURCE_CAP
 var cam_pitch := -58.0
 var cam_height := 14.0
 var look_lift := 0.42

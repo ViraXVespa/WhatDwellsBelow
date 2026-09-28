@@ -32,6 +32,7 @@ static func dump_floor(host: Node) -> void:
 	Emit._emit_jobs(lines, host)
 	Emit._emit_counts(lines, host, data, objs)
 	var spec_fail: int = Spec._emit_spec(lines, host, data, objs)
+	Spec.mark_holes(overlays, data)
 	Ascii._emit_ascii(lines, data, overlays)
 	Util._out(lines, "spec_fail=%d" % spec_fail)
 	Util._out(lines, "ok=true")

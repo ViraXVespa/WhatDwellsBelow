@@ -4,6 +4,8 @@ extends Object
 
 const TelegraphS := preload("res://scripts/combat/telegraph.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
+const BillSpr := preload("res://scripts/world/billboard_spr.gd")
+const ActorLit := preload("res://scripts/graphics/actor_lit.gd")
 
 
 static func ready(host: CharacterBody3D) -> void:
@@ -18,15 +20,11 @@ static func ready(host: CharacterBody3D) -> void:
 	cs.shape = sh
 	cs.position = Vector3(0.0, 0.52, 0.0)
 	host.add_child(cs)
-	host.spr = Sprite3D.new()
-	host.spr.centered = true
-	host.spr.shaded = false
+	host.spr = BillSpr.bare(1)
 	host.spr.double_sided = true
-	host.spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	host.spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	host.spr.render_priority = 1
 	host.spr = SpriteFilt.decorate(host.spr)
 	host.add_child(host.spr)
+	ActorLit.bind(host, host.spr)
 	host.tag = Label3D.new()
 	host.tag.position = Vector3(0.0, 1.55, 0.0)
 	host.tag.font_size = 34

@@ -1,20 +1,22 @@
 # Graphics buffer
 
 Status: binding design + live snapshot
-Read when: one-texel radiance buffer, disc blobs, tile occupancy
+Read when: four-texel radiance buffer, disc blobs, fine occupancy
 
-The light RT is a small texture lights are stamped into. Ground, walls, and actors sample it. One texel equals one tile. Size follows the live stream ring, not a free camera pad.
+The light RT is a small texture lights are stamped into. Ground, walls, and actors sample it. Actors may query nearest_cast (one) or up to three in-range casts, nearest first. Stamp, occupancy, and the source list do not change for that query. Live map is eight texels per tile (`SUB` 8). Do not retune range or energy to fake smoothness. Occupancy and disc blockers follow gen's solid only, not a second trace, not outline_loops as a walk mask, and not 1 m cell teeth. Dungeon discs flood walkable fine cells / RT subpixels. Falloff is straight-line meters from the mount when the fine-cell segment is clear, not membership in a 1 m BFS tile. A disc does not wash through wall mass. Line of sight is one pass from the mount over the walk mask at SUB, not a segment walk per texel. A blocked fine cell gets no energy from that source. An open doorway still passes light. Do not use a 1 m tile trace. Do not accept a whole 1 m tile then paint. A coarse tile must not pass light because one fine cell walks if the ribbon closed the rest of that meter. Walk mask and occupancy stop on the same span lip as the ribbon and the floor edge. A fine cell past the polyline does not carry flood because it 4-connects. Do not retune range or energy to fake a straight edge. Cold fill only on walkable solid samples. Do not lift a whole 1 m FLOOR cell. Wall mass stays unlit except a neighbor-edge copy along the bake. Torch brackets sit on the shell: rotate to a provided span that faces floor. Do not mount on 1 m cell faces the ribbon replaced. Size follows the live stream ring, not a free camera pad. Occupancy restamp follows the ring rect and knobs. A geo chunk flipping live only refills torch bills. Do not republish the whole RT on every live-chunk flip. Live `maintain` does at most one of plan, stamp, or torch refill per call. First dungeon publish is those three frames, not one. Do not copy hub publish (`hub_open`, blank occupancy, sun disc) into the dungeon.
 
-Occupancy: WALL cells block. Floor, door, opening, and stairs pass. One pass; do not split openings later. No extra door occluders this week.
+Occupancy follows gen's solid, not a 1 m WALL grid. Floor, door, opening, and stairs pass. Pits and wall mass block. One pass; do not split openings later. No extra door occluders this week.
 
 Sources v1: wall torch, floor crystal, campfire only. No shop, gate, stair, or player lantern. Crystal and campfire keep live meshes; this job only stamps discs on them.
 
-Hub RT: one wide warm sun disc plus the floor crystal. Map world xz to texels at one texel per T.TILE over the camp ground AABB (yard plus grass pads). Dungeon RT: no sun. Size follows the live stream ring. Ambient comes from the env kit only so pits stay dark.
+Hub RT: a wide warm sun fill over the camp AABB (yard plus grass pads) plus a small floor-crystal bump. The sun disc paints brightness. It is not a point origin for actor squash. Dungeon RT: no sun. Size follows the live stream ring. Walkable floor starts at a visible dim cold fill in the RT (high enough to read the slate). Torches, crystals, and campfires boost that fill. Pits and void stay black. Env kit owns fog and void, not the floor fill.
 
-Torch placement: at most one per room unless a crystal or campfire already lights it. Halls only at doorways, junctions, and dead ends. Hard cap on sources in the live ring. The bracket stays on the interior wall. Flame is code VFX on a Y-billboard (shader or particles), organic and random. No flame sheet. No flicker system. Source sits on the floor in front of the bracket, not inside the wall. Torches spawn and despawn with the geo chunk.
+Torch placement: at most one per room unless a crystal or campfire already lights it. Halls only at doorways, junctions, and dead ends. Hard cap on sources in the live ring. The bracket stays on the interior shell. Flame is generated code VFX on a Y-billboard (shader or particles): organic fire with flicker. Never a flame sheet. Source sits on the floor in front of the bracket, not inside the wall and not in the abyss behind it. Torches spawn and despawn with the geo chunk. Engine DirectionalLight3D and OmniLight3D shadows stay off.
 
-Stamp discs plus occupancy. Engine DirectionalLight3D and OmniLight3D shadows stay off. Compatibility and web stay the leash. Do not use Decal3D.
+Shaders may filter across texels (bilinear and disc falloff) so a stamp is not a hard square. Stamp discs plus occupancy. Engine DirectionalLight3D and OmniLight3D shadows stay off. Compatibility and web stay the leash. Do not use Decal3D.
 
 Build Imagine: unlit 4-facing torch-and-bracket bible only, isolated, wording like the character stills harvest.
 
-Invented range, energy, and cap values go in tunables and debug.
+Invented range, energy, and cap values go in tunables and debug. Do not retune those values to fake smoothness.
+
+Hub sun uses building occupancy. Hub crystal disc does not. Hub RT gets a 3x3 blur. Actor crystal squash is player-only.

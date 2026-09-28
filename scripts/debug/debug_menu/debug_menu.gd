@@ -105,6 +105,7 @@ func _rebuild() -> void:
 	status.add_theme_font_size_override("font_size", 18)
 	status.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	chrome_box.add_child(status)
+	DebugMenuPages.hitch_chrome(self)
 	match page:
 		"values":
 			DebugMenuVal.page_values(self)

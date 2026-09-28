@@ -12,15 +12,16 @@ static func idx(x: int, y: int, w: int) -> int:
 
 
 static func floor_nbs(grid: PackedByteArray, w: int, h: int, x: int, y: int) -> int:
-	var n := 0
-	var nbs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
-	for d in nbs:
-		var nx: int = x + d.x
-		var ny: int = y + d.y
-		if nx < 1 or ny < 1 or nx >= w - 1 or ny >= h - 1:
-			continue
-		if grid[idx(nx, ny, w)] == FLOOR:
-			n += 1
+	var n: int = 0
+	var i: int = y * w + x
+	if x + 1 < w - 1 and grid[i + 1] == FLOOR:
+		n += 1
+	if x - 1 >= 1 and grid[i - 1] == FLOOR:
+		n += 1
+	if y + 1 < h - 1 and grid[i + w] == FLOOR:
+		n += 1
+	if y - 1 >= 1 and grid[i - w] == FLOOR:
+		n += 1
 	return n
 
 
@@ -48,25 +49,35 @@ static func room_exits(grid: PackedByteArray, w: int, h: int, r: Dictionary) -> 
 
 
 static func mark_ambushes(grid: PackedByteArray, w: int, h: int, rooms: Array, bal: Object = null) -> Array:
-	var roomish := {}
+	var roomish: PackedByteArray = PackedByteArray()
+	roomish.resize(w * h)
+	roomish.fill(0)
 	for r in rooms:
-		var x0 := int(r.x) - 1
-		var y0 := int(r.y) - 1
-		var x1 := int(r.x) + int(r.w)
-		var y1 := int(r.y) + int(r.h)
-		for yy in range(y0, y1 + 1):
-			for xx in range(x0, x1 + 1):
-				roomish[Vector2i(xx, yy)] = true
+		var x0: int = int(r.x) - 1
+		var y0: int = int(r.y) - 1
+		var x1: int = int(r.x) + int(r.w)
+		var y1: int = int(r.y) + int(r.h)
+		var yy: int = y0
+		while yy <= y1:
+			if yy >= 0 and yy < h:
+				var row: int = yy * w
+				var xx: int = x0
+				while xx <= x1:
+					if xx >= 0 and xx < w:
+						roomish[row + xx] = 1
+					xx += 1
+			yy += 1
 	var halls: Array[Vector2i] = []
 	for y in range(1, h - 1):
+		var row2: int = y * w
 		for x in range(1, w - 1):
-			if grid[idx(x, y, w)] != FLOOR:
+			var i: int = row2 + x
+			if grid[i] != FLOOR:
 				continue
-			var c := Vector2i(x, y)
-			if roomish.has(c):
+			if roomish[i] != 0:
 				continue
 			if floor_nbs(grid, w, h, x, y) >= 2:
-				halls.append(c)
+				halls.append(Vector2i(x, y))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = w * 73856093 + h * 19349663 + halls.size()
 	var Rooms = load("res://scripts/dungeon/gen_rooms.gd")
@@ -93,27 +104,39 @@ static func mark_ambushes(grid: PackedByteArray, w: int, h: int, rooms: Array, b
 
 static func mark_deadends(grid: PackedByteArray, w: int, h: int, rooms: Array) -> Array:
 	var out: Array = []
+	var inside: PackedByteArray = PackedByteArray()
+	inside.resize(w * h)
+	inside.fill(0)
 	for r in rooms:
-		var kind := str(r.get("kind", "normal"))
-		if kind == "spawn" or kind == "boss":
-			continue
-		if room_exits(grid, w, h, r) <= 1:
-			out.append(Carve.center(r))
+		var kind: String = str(r.get("kind", "normal"))
+		var ry: int = int(r.y)
+		var rx: int = int(r.x)
+		var rh: int = int(r.h)
+		var rw: int = int(r.w)
+		var y0: int = ry
+		while y0 < ry + rh:
+			if y0 >= 0 and y0 < h:
+				var row: int = y0 * w
+				var x0: int = rx
+				while x0 < rx + rw:
+					if x0 >= 0 and x0 < w:
+						inside[row + x0] = 1
+					x0 += 1
+			y0 += 1
+		if kind != "spawn" and kind != "boss":
+			if room_exits(grid, w, h, r) <= 1:
+				out.append(Carve.center(r))
 	for y in range(1, h - 1):
+		var row2: int = y * w
 		for x in range(1, w - 1):
-			if grid[idx(x, y, w)] != FLOOR:
+			var i: int = row2 + x
+			if grid[i] != FLOOR:
 				continue
 			if floor_nbs(grid, w, h, x, y) != 1:
 				continue
-			var c := Vector2i(x, y)
-			var inside := false
-			for r in rooms:
-				if in_room(r, c):
-					inside = true
-					break
-			if inside:
+			if inside[i] != 0:
 				continue
-			out.append(c)
+			out.append(Vector2i(x, y))
 	var cleaned: Array = []
 	for c in out:
 		var ok := true

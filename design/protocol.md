@@ -8,7 +8,7 @@ If a path file is already loaded, stay on that path.
 
 ## Core rules
 
-- Fresh web / Build: this file, `design/constraints.md`, then the topic that matches the work. Web may read further files for a clear picture of named work (turns, not tokens). Implementation uses one topic door. One system row in `design/code-map.md` when editing live files. Do not walk `assets/` unless the task names sprites or audio. Do not start by archiving or rewriting the live path. Open `design/changelog/` only for a named pin, a revert, a named past build, or when the User asks what shipped.
+- Fresh web / Build: this file, `design/constraints.md`, then the topic that matches the work. Web may picture-read further design files and live scripts when the thread names that system, a shot cannot be explained without that owner, a routes read_when matches, or the User asked who owns it (turns, not tokens). That is not curiosity-walk of `design/`. Implementation uses one writer door. One system row in `design/code-map.md` when editing live files. Do not walk `assets/` unless the task names sprites or audio. Do not start by archiving or rewriting the live path. Open `design/changelog/` only for a named pin, a revert, a named past build, or when the User asks what shipped.
 - Implement only the **game** systems this database requires. Do not invent skills, rarities, hub upgrades, meta-progression, or co-op scaffolding. Grok Build MAY add helpers and same-system APIs. A new cross-system owner or named live-module replace is Build stop-and-propose.
 - Open numbers MAY start coherent. Expose every invented value in the secret debug menu and record it in `design/tunables.md`.
 - Coverage fills gaps in the live build. It is not a license to delete and rebuild.

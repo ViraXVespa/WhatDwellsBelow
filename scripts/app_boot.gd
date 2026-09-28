@@ -2,6 +2,7 @@ extends Object
 
 const DebugS := preload("res://scripts/debug/debug_menu/debug_menu.gd")
 const AnimS := preload("res://scripts/debug/anim_browser.gd")
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 
 static func _ready(host: Node) -> void:
 	host.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -46,6 +47,8 @@ static func _ready(host: Node) -> void:
 		host.call_deferred("ensure_anim_browser")
 	if "--wdb-debug" in OS.get_cmdline_user_args():
 		host.call_deferred("_open_debug")
+	HitchLog.begin(host)
+	host.tree_exiting.connect(func(): HitchLog.close())
 
 
 
@@ -77,6 +80,7 @@ static func hitstop(host: Node, sec: float) -> void:
 
 static func _process(host: Node, delta: float) -> void:
 	App.Pad.tick()
+	HitchLog.tick(host, delta)
 	if host._in_world() and not host.ui_open:
 		var vp := host.get_viewport()
 		if vp and vp.gui_get_focus_owner() != null:

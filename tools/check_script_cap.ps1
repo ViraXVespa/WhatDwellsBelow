@@ -5,7 +5,7 @@
 #   powershell -File tools/check_script_cap.ps1 -OverKb 10 -GitChanged
 #   powershell -File tools/check_script_cap.ps1 -Path scripts/app.gd,scripts/ui/hud.gd
 # Writes _logs/script-cap/summary.txt - agents read that file only.
-# Default OverKb=10 (Grok Build ship floor). Use -OverKb 5 for Bot sweep target.
+# Default OverKb=10 is the ship floor. Grok Bot owns both floors. Use -OverKb 5 for the Bot sweep target. Grok Build prove does not run this unless the User named size.
 
 param(
     [double]$OverKb = 10,

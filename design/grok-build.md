@@ -12,7 +12,7 @@ Concurrent CLI chats: Slice, Bot notes, PC offload, Smoke tests. Do not fold ano
 
 Agents file once, then this file. Law pair only if missing. Then the named topic. Imagine: `design/isolated-media.md` before any Imagine call. Gather / change / prove: `design/build-job-cycle.md`.
 
-Git inventory (not gather): `tools/list_changed.ps1`. Search: `tools/list_xref.ps1`, not grep. No `python -c`. Do not start by archiving the live path. Do not resume unnamed work from git status.
+Git inventory (not gather): `tools/list_changed.ps1`. Search: `tools/list_xref.ps1`, not grep. Extract: `python tools/show_func.py --path <script> --name <func>`. No `python -c`. Do not start by archiving the live path. Do not resume unnamed work from git status.
 
 ## Work
 

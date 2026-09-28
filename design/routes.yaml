@@ -240,14 +240,14 @@ job_read_when:
   hub.benches: "ore-for-gold stall, dumpster flavor, plaza_tarp host"
   hub.guild: "receptionist bust, notice errands, welcome cloth"
   hub.yard: "striking dummy, Label3D priorities, post-rail fence, hopeful ambience, warmup overlay"
-  dungeon.gen: "MST loops, deadend termini, hall widths, size rebalance ledger"
+  dungeon.gen: "authored polylines, hall segments, size rebalance ledger, walkable solid, fillet jag, bake from rims, deadend termini"
   dungeon.gates: "PREPARE plaque, extraction clerks, stair hold, reveal disk"
   dungeon.crystals: "transport decades, warp silence, spur length"
   dungeon.stream: "RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo"
   graphics.env: "hearth-warm hole-cold Environment, abyss-plinth, caller redirect"
   graphics.ground: "hashed field albedo, shared spatial shader, turf quilts, carved planes"
-  graphics.volume: "exposed coplanar brick runs, BoxMesh retirement, hitbox-untouched"
-  graphics.buffer: "one-texel radiance buffer, disc blobs, tile occupancy"
+  graphics.volume: "exposed coplanar brick runs, BoxMesh retirement, BoxShape on welded mass, provided ribbon"
+  graphics.buffer: "four-texel radiance buffer, disc blobs, fine occupancy"
   graphics.actor: "billboard-alpha squash quads, player yard-mannequin foes, source-offset"
   save_tech.persist: "primary backup wipe, game_ver stamp, isolated AI profiles"
   save_tech.web: "COOP COEP off, id.txt querybust, serviceworker rename"
@@ -281,9 +281,6 @@ conflicts_with:
   player:
     - art_pipeline
     - combat
-  dungeon:
-    - enemies
-    - interactables
   skills:
     - inventory
   ui.gear_entry:
@@ -293,7 +290,6 @@ conflicts_with:
   ui.pause:
     - inventory
   enemies:
-    - dungeon
     - combat
   art_pipeline:
     - player

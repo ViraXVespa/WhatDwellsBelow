@@ -38,31 +38,45 @@ static func mark_deadends(grid: PackedByteArray, w: int, h: int, rooms: Array) -
 
 
 static func bfs(grid: PackedByteArray, w: int, h: int, start: Vector2i) -> PackedInt32Array:
-	var dist := PackedInt32Array()
+	var dist: PackedInt32Array = PackedInt32Array()
 	dist.resize(w * h)
 	dist.fill(-1)
 	if start.x < 1 or start.y < 1 or start.x >= w - 1 or start.y >= h - 1:
 		return dist
-	if grid[idx(start.x, start.y, w)] != FLOOR:
+	var s: int = start.y * w + start.x
+	if grid[s] != FLOOR:
 		return dist
-	var q: Array[Vector2i] = [start]
-	dist[idx(start.x, start.y, w)] = 0
-	var qi := 0
-	var nbs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	var q: PackedInt32Array = PackedInt32Array()
+	q.append(s)
+	dist[s] = 0
+	var qi: int = 0
 	while qi < q.size():
-		var c: Vector2i = q[qi]
+		var i: int = q[qi]
 		qi += 1
-		var d := dist[idx(c.x, c.y, w)]
-		for n in nbs:
-			var nx: int = c.x + n.x
-			var ny: int = c.y + n.y
-			if nx < 1 or ny < 1 or nx >= w - 1 or ny >= h - 1:
-				continue
-			var i := idx(nx, ny, w)
-			if grid[i] != FLOOR or dist[i] >= 0:
-				continue
-			dist[i] = d + 1
-			q.append(Vector2i(nx, ny))
+		var d: int = dist[i]
+		var nd: int = d + 1
+		var y: int = int(float(i) / float(w))
+		var x: int = i - y * w
+		if x + 1 < w - 1:
+			var n0: int = i + 1
+			if grid[n0] == FLOOR and dist[n0] < 0:
+				dist[n0] = nd
+				q.append(n0)
+		if x - 1 >= 1:
+			var n1: int = i - 1
+			if grid[n1] == FLOOR and dist[n1] < 0:
+				dist[n1] = nd
+				q.append(n1)
+		if y + 1 < h - 1:
+			var n2: int = i + w
+			if grid[n2] == FLOOR and dist[n2] < 0:
+				dist[n2] = nd
+				q.append(n2)
+		if y - 1 >= 1:
+			var n3: int = i - w
+			if grid[n3] == FLOOR and dist[n3] < 0:
+				dist[n3] = nd
+				q.append(n3)
 	return dist
 
 

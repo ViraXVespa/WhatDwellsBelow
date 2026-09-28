@@ -9,9 +9,14 @@ const Smoke := preload("res://scripts/debug/smoke.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const CrystalNet := preload("res://scripts/world/crystal_net.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+
+static var _first_tick: bool = true
 
 
 static func ready_floor(host: Node) -> void:
+	_first_tick = true
+	HitchLog.mark("dungeon_ready")
 	LoadTiming.dmark("dungeon_enter")
 	App.in_dungeon = true
 	CrystalNet.arrive()
@@ -21,6 +26,7 @@ static func ready_floor(host: Node) -> void:
 	host.visited = PackedByteArray()
 	host.visited.resize(int(host.data.w) * int(host.data.h))
 	host.visited.fill(0)
+	HitchLog.mark("dungeon_gen")
 	LoadTiming.dmark("gen")
 	LoadTiming.dnote("gen_ok", str(host.data.get("ok", false)))
 	LoadTiming.dnote("rooms", str((host.data.get("rooms", []) as Array).size()))
@@ -38,21 +44,35 @@ static func ready_floor(host: Node) -> void:
 	LoadTiming.dmark("spawns")
 	host._hud()
 	LoadTiming.dmark("hud")
-	LoadTiming.dnote("map", "deferred")
+	host._map()
+	LoadTiming.dnote("map", "built")
 	LoadTiming.dmark("map")
 	host._reveal_around(host.data.spawn, int(App.bal.fog_radius) + 2)
 	if host.player:
 		host._reveal_around(host._world_cell(host.player.global_position), int(App.bal.fog_radius) + 2)
+	host._redraw_map()
+	if host.hud and host.hud.has_method("bind_map") and host.map_tex:
+		host.hud.bind_map(host.map_tex)
 	LoadTiming.dmark("reveal")
 	var GeoStreamS: GDScript = load("res://scripts/world/dungeon_geo_stream.gd") as GDScript
-	GeoStreamS.follow(host, 1.0)
+	GeoStreamS.prime_visible(host)
+	HitchLog.mark("dungeon_follow")
 	LoadTiming.dmark("stream")
+	var LightRtS: GDScript = load("res://scripts/graphics/light_rt.gd") as GDScript
+	LightRtS.reset_floor()
+	LightRtS.maintain(host)
+	LightRtS.maintain(host)
+	HitchLog.mark("dungeon_light")
+	LoadTiming.dmark("light")
 	if App.present and App.present.has_method("release_enter"):
 		App.present.release_enter()
 	Smoke.attach_dungeon(host)
 
 
 static func process_floor(host: Node, delta: float) -> void:
+	if _first_tick:
+		HitchLog.mark("dungeon_tick")
+		_first_tick = false
 	host.frame_acc += delta
 	host.frame_n += 1
 	if host.frame_acc >= 0.5:
@@ -123,12 +143,9 @@ static func spawns(host: Node) -> void:
 	var boss_job: Dictionary = DungeonStream.new_job(host, "boss", bp, {}, PackedStringArray(), false, str(host.data.boss_title))
 	host.spawn_jobs.append(boss_job)
 	LoadTiming.dmark("spawn_boss")
-	if Smoke.phase(5):
-		var SpawnS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
-		SpawnS.spawn_world(host)
-		host.set_meta("props_booted", true)
-	else:
-		LoadTiming.dnote("spawn_props", "deferred")
+	var SpawnS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
+	SpawnS.spawn_world(host)
+	host.set_meta("props_booted", true)
 	LoadTiming.dmark("spawn_props")
 	LoadTiming.dnote("spawn_ambushes", "deferred")
 	LoadTiming.dmark("spawn_ambushes")

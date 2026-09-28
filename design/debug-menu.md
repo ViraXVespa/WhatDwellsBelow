@@ -56,6 +56,8 @@ Linear filters MUST stay on this tab. Player Settings → Graphics uses Mipmaps 
 
 **Other pages.** Settings, Profiles, and Playtest still use normal button / LineEdit / slider focus. Up / Down moves among those controls.
 
+**Hitch log.** Chrome under the status line on every page: live count / worst dt / path, Copy hitch log, Clear hitch log. Copy writes the JSONL to the clipboard. Clear deletes `user://hitch/hitch.jsonl` and opens a new session line. Threshold is 4× the 60 FPS budget. Cap is 256 hitch rows. Not a sixth page.
+
 **Animation Browser tab.** Navigating to that tab (LB / RB or mouse) only rebuilds a confirm prompt. It does not open the full-screen viewer. The first control is **Open Animation Browser**; **A** on that control launches `anim_browser.open_browser()`. **B** on the prompt returns to Values. While the viewer is open, the debug menu MUST release GUI focus and stop processing input so the viewer can take D-pad / keyboard. Debug-menu LB / RB must not steal model-cycle input. Closing the viewer restores debug-menu input and returns focus to this prompt, not to a hidden tab button.
 
 The Phase 7 “gamepad-focusable Animation Browser control” is that Open button, not the top tab chrome.

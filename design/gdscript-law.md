@@ -3,7 +3,7 @@
 Status: protocol
 Read when: editing or emitting GDScript
 
-Tabs. Types, warnings, and the 10KB cap live only here. Do not copy these rules back into the agents file.
+Tabs, types, and warnings live only here. Do not copy these rules back into the agents file. The 10KB ship floor is documented under Script cap. Grok Bot owns it. Grok Build does not measure or split.
 
 ## Types
 

@@ -77,6 +77,8 @@ static func _rank(kind: String) -> int:
 			return 20
 		"ambush":
 			return 10
+		"rim_hole":
+			return 8
 		_:
 			return 5
 
@@ -119,6 +121,8 @@ static func _glyph(kind: String) -> String:
 			return "L"
 		"ambush":
 			return "A"
+		"rim_hole":
+			return "!"
 		"enemy_job":
 			return "E"
 		"named":

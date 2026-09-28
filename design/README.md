@@ -48,7 +48,7 @@ Do not open art_pipeline parked attack-keyframes unless the User is resuming the
 | Bag, gear, artifacts, extract, analyze / forge | `inventory.md` |
 | Shared inventory / loadout / anvil board | `gear-ui.md` |
 | Placeholdia (door) | `hub.md` |
-| Gen, floors, stream, doors, crystals (door) | `dungeon.md` |
+| Gen, floors, stream, doors, crystals, off-grid outline (door) | `dungeon.md` |
 | Roster, AI, named, pressure | `enemies.md` |
 | Mine, wood, shrine, puzzles, crystals | `interactables.md` |
 | HUD, pause, recap, maps, UIs | `ui.md` |

@@ -1,7 +1,7 @@
 # Dungeon — generation and placement
 
 Status: binding design + live snapshot  
-Read when: MST loops, deadend termini, hall widths, size rebalance ledger
+Read when: authored polylines, hall segments, size rebalance ledger, walkable solid, fillet jag, bake from rims, deadend termini
 
 
 ## Overall structure
@@ -18,9 +18,17 @@ Read when: MST loops, deadend termini, hall widths, size rebalance ledger
 Grid size, room count, room size ranges, and connection algorithm (MST + extra loops) are fully tunable.
 Target: floors MUST feel expansive enough to support a 5–10 minute first successful extraction for a new player and longer skilled runs, but rooms and combat MUST be dense enough that the player is not wandering empty halls for long stretches.
 
-Halls are carved 2–4 tiles wide. Width 3 is the mode. Width changes at `hall_w_interval` steps along a winding path.
+Halls are 2–4 tiles wide. Width 3 is the mode. A connection is a segment plus width, not a cell sausage that later pretends to be a line. A connection that moves on both axes is a diagonal band around that segment (rare perpendicular jog), not a per-tile staircase. Cardinal connections stay a winding span; width still changes at `hall_w_interval` on those. Carve may stamp 1 m cells for placement and pathing. That stamp is not the wall.
 
 `gen.gd` uses the requested room count. Extra winding loops use the full `gen_extra_loops` value. Dead-end spurs scale with room count.
+
+## Off-grid outline
+
+The 1 m FLOOR/WALL grid stays the logical map: rooms, connection endpoints, hall-width budget, doors, stairs, prop snaps, ambush anchors, fog, minimap, crystal separation, and stream chunk index. Silhouette order is fixed. Author both rims as polylines from hall segments and room rectangles. Fillet and jag are vertex operations on those polylines (`outline_fillet_frac`, `outline_jag_frac`). Do not merge every room and hall into one hull (`Geometry2D.merge_polygons` / `_union_all`) and fill that. Rasterize each room rectangle and each hall band on its own. Room rectangles stay unpadded and axis-aligned. Do not jag the merged outline. Do not retune the three outline fractions to hide a merge. Room rectangles are unpadded and stay axis-aligned. Do not pad rooms so they merge through a 1 m wall. Do not jag the union hull; jag only hall-band edges, and not in this pass. Fillet only hall turns and hall-room joins. Do not retune the three outline fractions to hide a merge. Fold joins collinear runs. Then OR-fill each authored polygon into solid at `outline_fine_m`. outline_spans is the authored polyline that was rasterized, not a trace of the raster. solid is that raster. Walk, collision, lights, and snaps that need occupancy read solid: floor mesh, `is_floor_cell`, enemy and stream-job landing, BoxShape, and buffer occupancy. Brick and torch mounts read outline_spans. Do not push every room and hall loop as brick. Do not keep a second staircase occupancy. Do not enlarge 1 m FLOOR or shrink spans as separate knobs to close a hole. Fix the authored rim, then rasterize once. Keep a rim fragment when an outward step reaches void in a different fine cell than the inward solid sample.
+
+Room interiors stay solid. A hall keeps its segment width; corners may only gain solid in the void. Jag is vertex plateaus on authored rims, not a raster nibble of a 1 m stamp. Collision is BoxShape on void that touches solid. Do not emit a 1 m slab per span. Do not ship a trace-then-repair loop (stair spans, tooth strip, burn toward ribbon) as the silhouette. The live tree may still invert this order until the source pass. This page is the contract that pass implements.
+
+Do not ship a shader nibble on 1 m faces as the silhouette. Do not author arches or modular kits. One brick sheet stays a volume concern; this job does not add a second rock sheet.
 
 ## Key object placement
 
@@ -75,6 +83,9 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 | `crystal_deadend_sep` | 32 |
 | `crystal_cl_band` | 2 |
 | `crystal_deadend_len` | 28 |
+| `outline_fine_m` | 0.25 |
+| `outline_fillet_frac` | 0.40 |
+| `outline_jag_frac` | 0.35 |
 
 `gen.gd` clamps to minimum 24×24 and at least 6 rooms.
 Boss room is farthest from spawn that still meets `_min_boss_sep = max(16, max(w,h) * 0.5)`.
