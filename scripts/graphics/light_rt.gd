@@ -311,7 +311,7 @@ static func _ring_rect(host: Node) -> Rect2i:
 	var stream: GDScript = load("res://scripts/world/dungeon_geo_stream.gd") as GDScript
 	var pc: Vector2i = _focus(host)
 	var origin_cell: Vector2i = stream.chunk_origin(pc)
-	var ring: int = int(stream.RING_IN)
+	var ring: int = int(stream.RING_OUT)
 	var chunk: int = int(stream.CHUNK)
 	var map_w: int = int(host.data.w)
 	var map_h: int = int(host.data.h)
@@ -323,7 +323,7 @@ static func _ring_rect(host: Node) -> Rect2i:
 	z0 = clampi(z0, 0, maxi(0, map_h - 1))
 	x1 = clampi(x1, x0 + 1, map_w)
 	z1 = clampi(z1, z0 + 1, map_h)
-	var hold: int = chunk
+	var hold: int = 2
 	if _rect.size.x >= chunk and _rect.size.y >= chunk:
 		var hx0: int = _rect.position.x
 		var hz0: int = _rect.position.y
