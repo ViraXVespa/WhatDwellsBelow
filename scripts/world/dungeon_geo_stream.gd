@@ -138,7 +138,7 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 		runs = _wall_runs(host, solid, sw, sh, wall_cells, ox, oy, x1, y1, n)
 	if not floor_cells.is_empty():
 		if outlined:
-			var lip: Node3D = _emit_floor_lip(_outline_spans(host), ox, oy, x1, y1, fine_m, host.floor_mat)
+			var lip: Node3D = _emit_floor_lip(_outline_spans(host), ox * n, oy * n, x1 * n, y1 * n, fine_m, host.floor_mat)
 			root.add_child(lip)
 			var mm: MultiMeshInstance3D = _first_mm(lip)
 			if host.floor_mm == null and mm != null:
