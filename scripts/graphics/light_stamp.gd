@@ -75,7 +75,7 @@ static func paint(
 	bb.fill(0.0)
 	for src in lights:
 		var item: Dictionary = src
-		_disc(rr, gg, bb, walk, iw, ih, item, x0, z0)
+		_disc(rr, gg, bb, walk, iw, ih, item, x0, z0, loops, n)
 	_lift_floor(rr, gg, bb, walk, iw, ih, ambient, n)
 	_walls(rr, gg, bb, walk, iw, ih, n)
 	for y in ih:
@@ -189,7 +189,9 @@ static func _disc(
 	ih: int,
 	src: Dictionary,
 	x0: int,
-	z0: int
+	z0: int,
+	loops: Array = [],
+	n: int = 1
 ) -> void:
 	var reach: float = float(src["reach"])
 	if reach < 0.25:
@@ -218,7 +220,7 @@ static func _disc(
 		var wx: float = float(x0) + (float(px) + 0.5) / float(SUB)
 		var wz: float = float(z0) + (float(py) + 0.5) / float(SUB)
 		var dist: float = sqrt((wx - mx) * (wx - mx) + (wz - mz) * (wz - mz))
-		if dist <= reach:
+		if dist <= reach and not _span_hit(loops, n, mx, mz, wx, wz):
 			var fall: float = energy * (1.0 - dist / reach)
 			rr[i] = minf(rr[i] + col.r * fall, 1.0)
 			gg[i] = minf(gg[i] + col.g * fall, 1.0)
@@ -336,6 +338,40 @@ static func _past_span(spans: Array, world_x: float, world_z: float) -> bool:
 		if (p - o).dot(nrm) < 0.0:
 			return true
 	return false
+
+
+static func _span_hit(loops: Array, n: int, ax: float, az: float, bx: float, bz: float) -> bool:
+	if loops.is_empty():
+		return false
+	var nf: float = float(maxi(n, 1))
+	var a: Vector2 = Vector2(ax * nf, az * nf)
+	var b: Vector2 = Vector2(bx * nf, bz * nf)
+	if a.distance_to(b) < 0.05:
+		return false
+	for item in loops:
+		var poly: PackedVector2Array = item as PackedVector2Array
+		var count: int = poly.size()
+		if count < 2:
+			continue
+		var prev: Vector2 = poly[count - 1]
+		for i in count:
+			var cur: Vector2 = poly[i]
+			if _seg_cross(a, b, prev, cur):
+				return true
+			prev = cur
+	return false
+
+
+static func _seg_cross(a: Vector2, b: Vector2, c: Vector2, d: Vector2) -> bool:
+	var ab: Vector2 = b - a
+	var cd: Vector2 = d - c
+	var den: float = ab.x * cd.y - ab.y * cd.x
+	if absf(den) < 0.0000001:
+		return false
+	var ac: Vector2 = c - a
+	var t: float = (ac.x * cd.y - ac.y * cd.x) / den
+	var u: float = (ac.x * ab.y - ac.y * ab.x) / den
+	return t > 0.04 and t < 0.96 and u > 0.02 and u < 0.98
 
 
 static func _seed(
