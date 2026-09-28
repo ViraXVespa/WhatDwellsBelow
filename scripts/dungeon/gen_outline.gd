@@ -64,13 +64,16 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 		if _area(loop) > 1.0:
 			_fill(solid, sw, sh, loop, 1)
 	_keep_rooms(solid, sw, sh, rooms, per)
+	_prep_edge_bins(loops)
 	var spans: Array = []
-	for loop_v3 in loops:
-		var rim: PackedVector2Array = loop_v3
+	var li3: int = 0
+	while li3 < loops.size():
+		var rim: PackedVector2Array = loops[li3]
 		if _area(rim) < 0.0:
 			rim.reverse()
 		if _area(rim) > 1.0:
-			_push_clipped(spans, rim, loops, boxes, solid, sw, sh)
+			_push_clipped(spans, rim, li3, loops, boxes, solid, sw, sh)
+		li3 += 1
 	for item in spans:
 		if item is Dictionary:
 			_paint(solid, sw, sh, item)
@@ -755,9 +758,77 @@ static func _hit_other(p: Vector2, loops: Array, boxes: Array, skip: PackedVecto
 	return false
 
 
+static var _edge_bins: Dictionary = {}
+
+
+static func _bin_put(key: Vector2i, li: int) -> void:
+	var bucket: Variant = _edge_bins.get(key)
+	if bucket is Array:
+		(bucket as Array).append(li)
+	else:
+		var row: Array = []
+		row.append(li)
+		_edge_bins[key] = row
+
+
+static func _prep_edge_bins(loops: Array) -> void:
+	_edge_bins.clear()
+	var scale: float = 16.0
+	var li: int = 0
+	while li < loops.size():
+		var poly: PackedVector2Array = loops[li]
+		var n: int = poly.size()
+		var j: int = 0
+		while j < n:
+			var a: Vector2 = poly[j]
+			var b: Vector2 = poly[(j + 1) % n]
+			var x0: int = int(floor(minf(a.x, b.x) / scale))
+			var x1: int = int(floor(maxf(a.x, b.x) / scale))
+			var y0: int = int(floor(minf(a.y, b.y) / scale))
+			var y1: int = int(floor(maxf(a.y, b.y) / scale))
+			var yy: int = y0
+			while yy <= y1:
+				var xx: int = x0
+				while xx <= x1:
+					_bin_put(Vector2i(xx, yy), li)
+					xx += 1
+				yy += 1
+			j += 1
+		li += 1
+
+
+static func _loops_near(a: Vector2, b: Vector2, skip_i: int) -> PackedInt32Array:
+	var out: PackedInt32Array = PackedInt32Array()
+	var seen: Dictionary = {}
+	var scale: float = 16.0
+	var x0: int = int(floor(minf(a.x, b.x) / scale))
+	var x1: int = int(floor(maxf(a.x, b.x) / scale))
+	var y0: int = int(floor(minf(a.y, b.y) / scale))
+	var y1: int = int(floor(maxf(a.y, b.y) / scale))
+	var yy: int = y0
+	while yy <= y1:
+		var xx: int = x0
+		while xx <= x1:
+			var bucket: Variant = _edge_bins.get(Vector2i(xx, yy))
+			if bucket is Array:
+				var arr: Array = bucket
+				var k: int = 0
+				while k < arr.size():
+					var li: int = int(arr[k])
+					k += 1
+					if li == skip_i or seen.has(li):
+						continue
+					seen[li] = true
+					out.append(li)
+			xx += 1
+		yy += 1
+	return out
+
+
 static func _push_clipped(
 	spans: Array,
 	poly: PackedVector2Array,
+	skip_i: int,
 	loops: Array,
 	boxes: Array,
 	_solid: PackedByteArray,
@@ -783,13 +854,12 @@ static func _push_clipped(
 		ts.append(0.0)
 		ts.append(1.0)
 		var edge: Rect2 = Rect2(a, Vector2.ZERO).expand(b).grow(0.05)
-		var li: int = 0
-		while li < loops.size():
-			var other: PackedVector2Array = loops[li]
-			var box_i: int = li
-			li += 1
-			if other == poly:
-				continue
+		var near: PackedInt32Array = _loops_near(a, b, skip_i)
+		var ni: int = 0
+		while ni < near.size():
+			var box_i: int = near[ni]
+			ni += 1
+			var other: PackedVector2Array = loops[box_i]
 			if box_i < boxes.size() and not (boxes[box_i] as Rect2).intersects(edge):
 				continue
 			var oc: int = other.size()
