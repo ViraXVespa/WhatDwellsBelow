@@ -75,8 +75,7 @@ static func paint(
 	bb.fill(0.0)
 	for src in lights:
 		var item: Dictionary = src
-		var segs: Array = _loop_segs(loops, n)
-		_disc(rr, gg, bb, walk, iw, ih, item, x0, z0, segs)
+		_disc(rr, gg, bb, walk, iw, ih, item, x0, z0, loops, n)
 	_lift_floor(rr, gg, bb, walk, iw, ih, ambient, n)
 	_walls(rr, gg, bb, walk, iw, ih, n)
 	for y in ih:
@@ -191,7 +190,8 @@ static func _disc(
 	src: Dictionary,
 	x0: int,
 	z0: int,
-	segs: Array = []
+	loops: Array = [],
+	n: int = 1
 ) -> void:
 	var reach: float = float(src["reach"])
 	if reach < 0.25:
@@ -203,6 +203,7 @@ static func _disc(
 	var seed: int = _seed(walk, iw, ih, mx, mz, x0, z0)
 	if seed < 0:
 		return
+	var home: Array = _loops_at(loops, n, mx, mz)
 	var seen: PackedByteArray = PackedByteArray()
 	seen.resize(iw * ih)
 	var q: PackedInt32Array = PackedInt32Array()
@@ -235,6 +236,8 @@ static func _disc(
 				continue
 			var nwx: float = float(x0) + (float(npx) + 0.5) / float(SUB)
 			var nwz: float = float(z0) + (float(npy) + 0.5) / float(SUB)
+			if not home.is_empty() and not _inside_loops(home, nwx * float(maxi(n, 1)), nwz * float(maxi(n, 1))):
+				continue
 			var nd: float = sqrt((nwx - mx) * (nwx - mx) + (nwz - mz) * (nwz - mz))
 			if nd > reach:
 				continue
@@ -338,6 +341,17 @@ static func _past_span(spans: Array, world_x: float, world_z: float) -> bool:
 		if (p - o).dot(nrm) < 0.0:
 			return true
 	return false
+
+
+static func _loops_at(loops: Array, n: int, wx: float, wz: float) -> Array:
+	var hit: Array = []
+	var fx: float = wx * float(maxi(n, 1))
+	var fz: float = wz * float(maxi(n, 1))
+	for item in loops:
+		var poly: PackedVector2Array = item as PackedVector2Array
+		if poly.size() >= 3 and Geometry2D.is_point_in_polygon(Vector2(fx, fz), poly):
+			hit.append(item)
+	return hit
 
 
 static func _loop_segs(loops: Array, n: int) -> Array:
