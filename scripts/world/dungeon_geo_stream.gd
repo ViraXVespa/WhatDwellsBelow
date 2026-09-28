@@ -92,7 +92,7 @@ static func prime_visible(host: Node) -> void:
 		dy += 1
 
 
-static func follow(host: Node, delta: float) -> void:
+static func follow(host: Node, _delta: float) -> void:
 	if host.player == null:
 		return
 	ensure_meshes()
@@ -104,9 +104,9 @@ static func follow(host: Node, delta: float) -> void:
 	if str(cur.state) == "pending":
 		HitchLog.mark("geo_activate", Vector2i(cur.origin))
 		activate_job(host, cur)
-	var last: Vector2i = Vector2i(-9999, -9999)
+	var _last: Vector2i = Vector2i(-9999, -9999)
 	if host.has_meta("wdb_geo_origin"):
-		last = host.get_meta("wdb_geo_origin")
+		_last = host.get_meta("wdb_geo_origin")
 	host.set_meta("wdb_geo_origin", origin)
 	var budget: int = PER_FRAME
 	var built := 0

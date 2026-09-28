@@ -18,7 +18,7 @@ static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 	var verts: PackedVector3Array = PackedVector3Array()
 	var norms: PackedVector3Array = PackedVector3Array()
 	var uvs: PackedVector2Array = PackedVector2Array()
-	var uv2s: PackedVector2Array = PackedVector2Array()
+	var _uv2s: PackedVector2Array = PackedVector2Array()
 	var indices: PackedInt32Array = PackedInt32Array()
 	_uv2_buf = PackedVector2Array()
 	_uv2_in = Vector2.ZERO
@@ -121,9 +121,9 @@ static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: Packed
 
 static func _corner_post(p: Vector2, n2: Vector2, thick: float, h: float, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var inn: Vector2 = n2.normalized() * thick
-	var tan: Vector2 = Vector2(-n2.y, n2.x).normalized() * thick * 0.5
-	var a: Vector2 = p - tan
-	var b: Vector2 = p + tan
+	var edge_t: Vector2 = Vector2(-n2.y, n2.x).normalized() * thick * 0.5
+	var a: Vector2 = p - edge_t
+	var b: Vector2 = p + edge_t
 	var a2: Vector2 = a + inn * -1.0
 	var b2: Vector2 = b + inn * -1.0
 	var top: PackedVector3Array = PackedVector3Array()

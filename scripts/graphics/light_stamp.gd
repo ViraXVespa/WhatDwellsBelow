@@ -252,9 +252,9 @@ static func _lift_floor(
 	rr: PackedFloat32Array,
 	gg: PackedFloat32Array,
 	bb: PackedFloat32Array,
-	walk: PackedByteArray,
-	iw: int,
-	ih: int,
+	_walk: PackedByteArray,
+	_iw: int,
+	_ih: int,
 	ambient: Color,
 	n: int
 ) -> void:

@@ -46,7 +46,7 @@ static func clear_generated(host: Node3D) -> Node3D:
     return node
 
 
-static func realize_editor(host: Node3D, layout: Node3D) -> void:
+static func realize_editor(host: Node3D, _layout: Node3D) -> void:
     var bucket: Node3D = clear_generated(host)
     world(bucket)
     ground(bucket)

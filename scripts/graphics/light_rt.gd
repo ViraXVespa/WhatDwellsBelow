@@ -93,7 +93,7 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 
 
 
-static func _hub_occ(x0: int, z0: int, tw: int, th: int, layout: Node) -> Dictionary:
+static func _hub_occ(_x0: int, _z0: int, tw: int, th: int, layout: Node) -> Dictionary:
 	var n: int = Stamp.SUB
 	var sw: int = tw * n
 	var sh: int = th * n

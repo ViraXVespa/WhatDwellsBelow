@@ -44,11 +44,15 @@ static func ready_floor(host: Node) -> void:
 	LoadTiming.dmark("spawns")
 	host._hud()
 	LoadTiming.dmark("hud")
-	LoadTiming.dnote("map", "deferred")
+	host._map()
+	LoadTiming.dnote("map", "built")
 	LoadTiming.dmark("map")
 	host._reveal_around(host.data.spawn, int(App.bal.fog_radius) + 2)
 	if host.player:
 		host._reveal_around(host._world_cell(host.player.global_position), int(App.bal.fog_radius) + 2)
+	host._redraw_map()
+	if host.hud and host.hud.has_method("bind_map") and host.map_tex:
+		host.hud.bind_map(host.map_tex)
 	LoadTiming.dmark("reveal")
 	var GeoStreamS: GDScript = load("res://scripts/world/dungeon_geo_stream.gd") as GDScript
 	GeoStreamS.prime_visible(host)

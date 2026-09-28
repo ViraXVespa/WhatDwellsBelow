@@ -232,7 +232,7 @@ static func rim_report(data: Dictionary) -> Dictionary:
 			if cover[row + x] != 0:
 				continue
 			hole_n += 1
-			var cell: Vector2i = Vector2i(int(x / per), int(y / per))
+			var cell: Vector2i = Vector2i(int(float(x) / float(per)), int(float(y) / float(per)))
 			if not seen.has(cell):
 				seen[cell] = true
 				cells.append(cell)
