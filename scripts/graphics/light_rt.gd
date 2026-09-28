@@ -97,21 +97,22 @@ static func maintain(host: Node) -> void:
 	var key: String = _knob_key()
 	var live: String = _live_key(host)
 	var need_plan: bool = _plan_dirty or not _planned
-	var need_torch: bool = need_plan or live != _live
-	var need_stamp: bool = need_plan or key != _knob or rect != _rect
-	if not need_stamp and not need_torch:
+	var need_torch: bool = live != _live
+	var need_stamp: bool = key != _knob or rect != _rect
+	if not need_plan and not need_stamp and not need_torch:
 		return
 	if need_plan:
 		_sites = Plan.build(host, _props)
 		_planned = true
 		_plan_dirty = false
+		return
 	if need_stamp:
 		_rect = rect
 		_knob = key
 		_publish_dungeon(host, rect)
+		return
 	_live = live
-	if need_torch:
-		_refill(host)
+	_refill(host)
 
 
 static func _publish_dungeon(host: Node, rect: Rect2i) -> void:
