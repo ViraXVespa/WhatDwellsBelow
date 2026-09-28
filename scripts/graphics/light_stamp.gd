@@ -1,7 +1,9 @@
 extends Object
 
 ## Fine solid blocks. Discs flood walkable texels from the mount. Cold fill is those samples only.
-## The walk mask is the fine cell under the texel center. A 4-neighbor does not open a cell past the lip.
+## Falloff is flood-path meters (1/SUB per ortho step), not straight-line range.
+## The walk mask is gen solid under the texel center. Loops do not replace that mask.
+## A 4-neighbor does not open a cell past the lip.
 ## Wall texels stay dark except the neighbor sample along the bake. SUB stays 4.
 
 const SUB := 4
@@ -95,20 +97,17 @@ static func _walk_mask(
 	z0: int,
 	iw: int,
 	ih: int,
-	loops: Array = []
+	_loops: Array = []
 ) -> PackedByteArray:
 	var walk: PackedByteArray = PackedByteArray()
 	walk.resize(iw * ih)
 	if n < 1:
 		walk.fill(1)
 		return walk
-	if not loops.is_empty():
-		_fill_loops(walk, loops, x0, z0, iw, ih, n)
-		return walk
 	for py in ih:
 		var row: int = py * iw
 		for px in iw:
-			if _lip_open(solid, sw, sh, n, x0, z0, px, py, loops):
+			if _lip_open(solid, sw, sh, n, x0, z0, px, py):
 				walk[row + px] = 1
 	return walk
 
@@ -190,8 +189,8 @@ static func _disc(
 	src: Dictionary,
 	x0: int,
 	z0: int,
-	loops: Array = [],
-	n: int = 1
+	_loops: Array = [],
+	_n: int = 1
 ) -> void:
 	var reach: float = float(src["reach"])
 	if reach < 0.25:
@@ -200,32 +199,33 @@ static func _disc(
 	var col: Color = src["col"] as Color
 	var mx: float = float(src["mx"])
 	var mz: float = float(src["mz"])
-	var seed: int = _seed(walk, iw, ih, mx, mz, x0, z0)
-	if seed < 0:
+	var start_i: int = _seed(walk, iw, ih, mx, mz, x0, z0)
+	if start_i < 0:
 		return
-	var home: Array = _loops_at(loops, n, mx, mz)
+	var step_m: float = 1.0 / float(SUB)
 	var seen: PackedByteArray = PackedByteArray()
 	seen.resize(iw * ih)
+	var path: PackedFloat32Array = PackedFloat32Array()
+	path.resize(iw * ih)
 	var q: PackedInt32Array = PackedInt32Array()
 	q.resize(iw * ih)
 	var head: int = 0
 	var tail: int = 0
-	seen[seed] = 1
-	q[tail] = seed
+	seen[start_i] = 1
+	path[start_i] = 0.0
+	q[tail] = start_i
 	tail += 1
 	while head < tail:
 		var i: int = q[head]
 		head += 1
-		var py: int = int(float(i) / float(iw))
-		var px: int = i - py * iw
-		var wx: float = float(x0) + (float(px) + 0.5) / float(SUB)
-		var wz: float = float(z0) + (float(py) + 0.5) / float(SUB)
-		var dist: float = sqrt((wx - mx) * (wx - mx) + (wz - mz) * (wz - mz))
-		if dist <= reach:
-			var fall: float = energy * (1.0 - dist / reach)
+		var walked: float = path[i]
+		if walked <= reach:
+			var fall: float = energy * (1.0 - walked / reach)
 			rr[i] = minf(rr[i] + col.r * fall, 1.0)
 			gg[i] = minf(gg[i] + col.g * fall, 1.0)
 			bb[i] = minf(bb[i] + col.b * fall, 1.0)
+		var py: int = int(float(i) / float(iw))
+		var px: int = i - py * iw
 		for d: Vector2i in DIRS:
 			var npx: int = px + d.x
 			var npy: int = py + d.y
@@ -234,12 +234,11 @@ static func _disc(
 			var ni: int = npy * iw + npx
 			if seen[ni] != 0 or walk[ni] == 0:
 				continue
-			var nwx: float = float(x0) + (float(npx) + 0.5) / float(SUB)
-			var nwz: float = float(z0) + (float(npy) + 0.5) / float(SUB)
-			var nd: float = sqrt((nwx - mx) * (nwx - mx) + (nwz - mz) * (nwz - mz))
+			var nd: float = walked + step_m
 			if nd > reach:
 				continue
 			seen[ni] = 1
+			path[ni] = nd
 			q[tail] = ni
 			tail += 1
 
@@ -291,14 +290,12 @@ static func _lip_open(
 	z0: int,
 	px: int,
 	py: int,
-	loops: Array = []
+	_loops: Array = []
 ) -> bool:
 	if n < 1:
 		return true
 	var world_x: float = float(x0) + (float(px) + 0.5) / float(SUB)
 	var world_z: float = float(z0) + (float(py) + 0.5) / float(SUB)
-	if not loops.is_empty():
-		return _inside_loops(loops, world_x * float(maxi(n, 1)), world_z * float(maxi(n, 1)))
 	return solid_open(solid, sw, sh, n, world_x, world_z)
 
 
