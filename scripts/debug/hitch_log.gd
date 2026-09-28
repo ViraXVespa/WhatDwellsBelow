@@ -17,6 +17,9 @@ static var ver: String = ""
 static var _on: int = -1
 static var _fh: FileAccess = null
 static var _t0_ms: int = 0
+static var why: String = ""
+static var gx: int = 0
+static var gy: int = 0
 
 
 static func enabled() -> bool:
@@ -87,6 +90,12 @@ static func close() -> void:
 	_close()
 
 
+static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
+	why = reason
+	gx = int(origin.x)
+	gy = int(origin.y)
+
+
 static func status_line() -> String:
 	if not enabled():
 		return "Hitch log off"
@@ -142,6 +151,11 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 		"draw": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
 		"proc_ms": snappedf(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0, 0.1),
 	}
+	if why != "":
+		row["why"] = why
+	if why == "geo_activate":
+		row["gx"] = gx
+		row["gy"] = gy
 	return row
 
 

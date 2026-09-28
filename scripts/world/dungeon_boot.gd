@@ -45,7 +45,7 @@ static func ready_floor(host: Node) -> void:
 		host._reveal_around(host._world_cell(host.player.global_position), int(App.bal.fog_radius) + 2)
 	LoadTiming.dmark("reveal")
 	var GeoStreamS: GDScript = load("res://scripts/world/dungeon_geo_stream.gd") as GDScript
-	GeoStreamS.follow(host, 1.0)
+	GeoStreamS.follow(host, 0.0)
 	LoadTiming.dmark("stream")
 	if App.present and App.present.has_method("release_enter"):
 		App.present.release_enter()

@@ -4,6 +4,7 @@ const T := preload("res://scripts/data/tunables.gd")
 const WallRects := preload("res://scripts/world/wall_rects.gd")
 const WallMesh: GDScript = preload("res://scripts/graphics/wall_mesh.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 
 const RING_IN := 1
 const RING_OUT := 2
@@ -77,8 +78,9 @@ static func follow(host: Node, delta: float) -> void:
 	var h: int = host.data.h
 	var cur: Dictionary = job_at(host, origin)
 	if str(cur.state) == "pending":
+		HitchLog.mark("geo_activate", Vector2i(cur.origin))
 		activate_job(host, cur)
-	var budget := 9 if delta >= 0.9 else PER_FRAME
+	var budget: int = 1
 	var built := 0
 	for dy in range(-RING_IN, RING_IN + 1):
 		for dx in range(-RING_IN, RING_IN + 1):
@@ -92,8 +94,10 @@ static func follow(host: Node, delta: float) -> void:
 				continue
 			if built >= budget:
 				continue
+			HitchLog.mark("geo_activate", Vector2i(job.origin))
 			activate_job(host, job)
 			built += 1
+	HitchLog.mark("light_rt")
 	LightRt.maintain(host)
 
 
@@ -105,6 +109,7 @@ static func tick(host: Node, delta: float) -> void:
 	for job in host.geo_jobs:
 		if str(job.state) == "live" and chunk_ring(Vector2i(job.origin), origin) > RING_OUT:
 			sleep_job(host, job)
+	HitchLog.mark("light_rt")
 	LightRt.maintain(host)
 
 
