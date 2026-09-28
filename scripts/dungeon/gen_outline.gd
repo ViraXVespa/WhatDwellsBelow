@@ -2,8 +2,8 @@ extends Object
 
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 
-## Authored rims first, then one solid raster. outline_spans is that polyline.
-## The 1 m grid stays the logical map. Fillet and jag edit rim vertices.
+## OR-fill each room rect and hall band. outline_spans is the solid perimeter.
+## The 1 m grid stays the logical map. Do not push every shape loop as brick.
 
 const FLOOR := 1
 const LONG_EDGE := 4
@@ -32,8 +32,11 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 		var poly: PackedVector2Array = shape_v
 		if poly.size() >= 3:
 			parts.append(poly)
-	_orient(parts)
-	var jag: float = _frac(bal, "outline_jag_frac", 0.35)
+	for i in parts.size():
+		var flip: PackedVector2Array = parts[i]
+		if _area(flip) < 0.0:
+			flip.reverse()
+			parts[i] = flip
 	var fillet: float = _frac(bal, "outline_fillet_frac", 0.40)
 	var loops: Array = []
 	for part_v in parts:
@@ -42,7 +45,7 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 			loops.append(part)
 			continue
 		var pts: Array[Vector2] = _copy_pts(part)
-		if per >= 2:
+		if per >= 2 and part.size() > 4:
 			pts = _fillet_points(pts, rng, fillet, per, kind, w, h)
 		loops.append(_fold_pts(pts))
 	LoadTiming.dmark("gen_outline_jag")
@@ -53,21 +56,12 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 	solid.fill(0)
 	for loop_v in loops:
 		var loop: PackedVector2Array = loop_v
+		if _area(loop) < 0.0:
+			loop.reverse()
 		if _area(loop) > 1.0:
 			_fill(solid, sw, sh, loop, 1)
-	for loop_v2 in loops:
-		var hole: PackedVector2Array = loop_v2
-		if _area(hole) < -1.0:
-			_fill(solid, sw, sh, hole, 0)
-	var spans: Array = []
-	for loop_v3 in loops:
-		var rim: PackedVector2Array = loop_v3
-		if _area(rim) > 1.0:
-			_push_loop(spans, rim)
-	for item in spans:
-		if item is Dictionary:
-			_paint(solid, sw, sh, item)
 	_keep_rooms(solid, sw, sh, rooms, per)
+	var spans: Array = _spans_from_solid(solid, sw, sh)
 	data["outline_fine_m"] = fine_m
 	data["solid"] = solid
 	data["solid_w"] = sw
@@ -585,6 +579,75 @@ static func _fill(solid: PackedByteArray, sw: int, sh: int, poly: PackedVector2A
 			for x in range(x_from, x_to + 1):
 				solid[row + x] = value
 			k += 2
+
+
+static func _spans_from_solid(solid: PackedByteArray, sw: int, sh: int) -> Array:
+	var spans: Array = []
+	if sw < 1 or sh < 1:
+		return spans
+	var used: Dictionary = {}
+	var dirs: Array[Vector2i] = [
+		Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)
+	]
+	for y in sh:
+		var row: int = y * sw
+		for x in sw:
+			if solid[row + x] == 0:
+				continue
+			for di in 4:
+				var n: Vector2i = dirs[di]
+				var nx: int = x + n.x
+				var ny: int = y + n.y
+				var outside: bool = nx < 0 or ny < 0 or nx >= sw or ny >= sh
+				if not outside and solid[ny * sw + nx] != 0:
+					continue
+				var key: Vector3i = Vector3i(x, y, di)
+				if bool(used.get(key, false)):
+					continue
+				var tan: Vector2i = Vector2i(absi(n.y), absi(n.x))
+				var run_n: int = 1
+				while true:
+					var xx: int = x + tan.x * run_n
+					var yy: int = y + tan.y * run_n
+					if xx < 0 or yy < 0 or xx >= sw or yy >= sh:
+						break
+					if solid[yy * sw + xx] == 0:
+						break
+					var ox: int = xx + n.x
+					var oy: int = yy + n.y
+					var out2: bool = ox < 0 or oy < 0 or ox >= sw or oy >= sh
+					if not out2 and solid[oy * sw + ox] != 0:
+						break
+					var nk: Vector3i = Vector3i(xx, yy, di)
+					if bool(used.get(nk, false)):
+						break
+					run_n += 1
+				for k in run_n:
+					used[Vector3i(x + tan.x * k, y + tan.y * k, di)] = true
+				var origin: Vector2 = Vector2(float(x), float(y))
+				var delta: Vector2 = Vector2.ZERO
+				var nrm: Vector2 = Vector2.ZERO
+				var run_f: float = float(run_n) - 0.02
+				if run_f < 0.5:
+					run_f = 0.5
+				if n.x == 1:
+					origin = Vector2(float(x) + 0.99, float(y) + 0.01)
+					delta = Vector2(0.0, run_f)
+					nrm = Vector2(-1.0, 0.0)
+				elif n.x == -1:
+					origin = Vector2(float(x) + 0.01, float(y + run_n) - 0.01)
+					delta = Vector2(0.0, -run_f)
+					nrm = Vector2(1.0, 0.0)
+				elif n.y == 1:
+					origin = Vector2(float(x + run_n) - 0.01, float(y) + 0.99)
+					delta = Vector2(-run_f, 0.0)
+					nrm = Vector2(0.0, -1.0)
+				else:
+					origin = Vector2(float(x) + 0.01, float(y) + 0.01)
+					delta = Vector2(run_f, 0.0)
+					nrm = Vector2(0.0, 1.0)
+				spans.append({"origin": origin, "delta": delta, "normal": nrm, "thick": 1.0})
+	return spans
 
 
 static func _push_loop(spans: Array, poly: PackedVector2Array) -> void:
