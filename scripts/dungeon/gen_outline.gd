@@ -27,7 +27,11 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 	var kind: PackedByteArray = _kinds(grid, w, h, rooms)
 	var shapes: Array = _shapes(rooms, halls, per)
 	LoadTiming.dmark("gen_outline_up")
-	var parts: Array = _union_all(shapes)
+	var parts: Array = []
+	for shape_v in shapes:
+		var poly: PackedVector2Array = shape_v
+		if poly.size() >= 3:
+			parts.append(poly)
 	_orient(parts)
 	var jag: float = _frac(bal, "outline_jag_frac", 0.35)
 	var fillet: float = _frac(bal, "outline_fillet_frac", 0.40)
@@ -39,7 +43,6 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 			continue
 		var pts: Array[Vector2] = _copy_pts(part)
 		if per >= 2:
-			pts = _jag_points(pts, rng, jag, per)
 			pts = _fillet_points(pts, rng, fillet, per, kind, w, h)
 		loops.append(_fold_pts(pts))
 	LoadTiming.dmark("gen_outline_jag")
@@ -173,10 +176,10 @@ static func _shapes(rooms: Array, halls: Array, per: int) -> Array:
 	var scale: float = float(per)
 	for room_v in rooms:
 		var room: Dictionary = room_v
-		var x0: float = float(int(room["x"])) * scale - pad
-		var y0: float = float(int(room["y"])) * scale - pad
-		var x1: float = float(int(room["x"]) + int(room["w"])) * scale + pad
-		var y1: float = float(int(room["y"]) + int(room["h"])) * scale + pad
+		var x0: float = float(int(room["x"])) * scale
+		var y0: float = float(int(room["y"])) * scale
+		var x1: float = float(int(room["x"]) + int(room["w"])) * scale
+		var y1: float = float(int(room["y"]) + int(room["h"])) * scale
 		out.append(_rect(x0, y0, x1, y1))
 	for hall_v in halls:
 		var hall: Dictionary = hall_v
