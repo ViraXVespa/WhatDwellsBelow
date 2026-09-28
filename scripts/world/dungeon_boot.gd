@@ -51,7 +51,7 @@ static func ready_floor(host: Node) -> void:
 		host._reveal_around(host._world_cell(host.player.global_position), int(App.bal.fog_radius) + 2)
 	LoadTiming.dmark("reveal")
 	var GeoStreamS: GDScript = load("res://scripts/world/dungeon_geo_stream.gd") as GDScript
-	GeoStreamS.follow(host, 0.0)
+	GeoStreamS.prime_visible(host)
 	HitchLog.mark("dungeon_follow")
 	LoadTiming.dmark("stream")
 	var LightRtS: GDScript = load("res://scripts/graphics/light_rt.gd") as GDScript

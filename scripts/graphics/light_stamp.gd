@@ -84,9 +84,13 @@ static func paint(
 	var rr: PackedFloat32Array = _rr_buf
 	var gg: PackedFloat32Array = _gg_buf
 	var bb: PackedFloat32Array = _bb_buf
-	rr.fill(0.0)
-	gg.fill(0.0)
-	bb.fill(0.0)
+	var zi: int = 0
+	while zi < _floor_n:
+		var fi: int = _floor_ix[zi]
+		rr[fi] = 0.0
+		gg[fi] = 0.0
+		bb[fi] = 0.0
+		zi += 1
 	for src in lights:
 		var item: Dictionary = src
 		_disc(rr, gg, bb, walk, iw, ih, item, x0, z0, loops, n)
@@ -332,7 +336,16 @@ static func _fov_mark(
 	var need: int = iw * ih
 	if _vis_buf.size() != need:
 		_vis_buf.resize(need)
-	_vis_buf.fill(0)
+		_vis_buf.fill(0)
+	else:
+		var zy: int = py0
+		while zy <= py1:
+			var zrow: int = zy * iw
+			var zx: int = px0
+			while zx <= px1:
+				_vis_buf[zrow + zx] = 0
+				zx += 1
+			zy += 1
 	var px: int = px0
 	while px <= px1:
 		_mark_ray(walk, iw, ih, sx, sy, px, py0)

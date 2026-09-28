@@ -68,6 +68,30 @@ static func job_at(host: Node, origin: Vector2i) -> Dictionary:
 	return job
 
 
+static func prime_visible(host: Node) -> void:
+	if host.player == null:
+		return
+	ensure_meshes()
+	var pc: Vector2i = host._player_cell()
+	var origin := chunk_origin(pc)
+	var w: int = host.data.w
+	var h: int = host.data.h
+	var dy: int = -RING_IN
+	while dy <= RING_IN:
+		var dx: int = -RING_IN
+		while dx <= RING_IN:
+			var o := Vector2i(origin.x + dx * CHUNK, origin.y + dy * CHUNK)
+			dx += 1
+			if o.x < 0 or o.y < 0 or o.x >= w or o.y >= h:
+				continue
+			var job: Dictionary = job_at(host, o)
+			if str(job.state) != "pending":
+				continue
+			HitchLog.mark("geo_activate", Vector2i(job.origin))
+			activate_job(host, job)
+		dy += 1
+
+
 static func follow(host: Node, delta: float) -> void:
 	if host.player == null:
 		return
