@@ -324,7 +324,7 @@ static func prepare(raw: Array) -> Array[Dictionary]:
 			runs.append(item as Dictionary)
 	if runs.is_empty():
 		return runs
-	return _merge_opposite(_bevel_corners(_fold_teeth(runs)))
+	return _merge_opposite(_fold_teeth(runs))
 
 
 static func _pt_key(p: Vector2) -> Vector2i:
