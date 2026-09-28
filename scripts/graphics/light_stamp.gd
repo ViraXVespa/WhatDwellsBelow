@@ -95,7 +95,7 @@ static func paint(
 	HitchLog.mark("light_lift")
 	_walls(rr, gg, bb, walk, iw, ih, n)
 	HitchLog.mark("light_walls")
-	_blit(img, rr, gg, bb, iw, ih)
+	_blit(img, rr, gg, bb, walk, iw, ih)
 	HitchLog.mark("light_blit")
 
 
@@ -105,20 +105,49 @@ static func _blit(
 	rr: PackedFloat32Array,
 	gg: PackedFloat32Array,
 	bb: PackedFloat32Array,
+	walk: PackedByteArray,
 	iw: int,
 	ih: int
 ) -> void:
 	var pxn: int = iw * ih
 	if _rgba.size() != pxn * 4:
 		_rgba.resize(pxn * 4)
-	var i: int = 0
-	while i < pxn:
-		var o: int = i * 4
-		_rgba[o] = int(minf(rr[i], 1.0) * 255.0 + 0.5)
-		_rgba[o + 1] = int(minf(gg[i], 1.0) * 255.0 + 0.5)
-		_rgba[o + 2] = int(minf(bb[i], 1.0) * 255.0 + 0.5)
-		_rgba[o + 3] = 255
-		i += 1
+	if _floor_n < 1:
+		var i: int = 0
+		while i < pxn:
+			var o: int = i * 4
+			_rgba[o] = int(minf(rr[i], 1.0) * 255.0 + 0.5)
+			_rgba[o + 1] = int(minf(gg[i], 1.0) * 255.0 + 0.5)
+			_rgba[o + 2] = int(minf(bb[i], 1.0) * 255.0 + 0.5)
+			_rgba[o + 3] = 255
+			i += 1
+		img.set_data(iw, ih, false, Image.FORMAT_RGBA8, _rgba)
+		return
+	_rgba.fill(0)
+	var k: int = 0
+	while k < _floor_n:
+		var i2: int = _floor_ix[k]
+		var o2: int = i2 * 4
+		_rgba[o2] = int(minf(rr[i2], 1.0) * 255.0 + 0.5)
+		_rgba[o2 + 1] = int(minf(gg[i2], 1.0) * 255.0 + 0.5)
+		_rgba[o2 + 2] = int(minf(bb[i2], 1.0) * 255.0 + 0.5)
+		_rgba[o2 + 3] = 255
+		var py: int = int(float(i2) / float(iw))
+		var px: int = i2 - py * iw
+		for d: Vector2i in DIRS:
+			var npx: int = px + d.x
+			var npy: int = py + d.y
+			if npx < 0 or npy < 0 or npx >= iw or npy >= ih:
+				continue
+			var ni: int = npy * iw + npx
+			if walk[ni] != 0:
+				continue
+			var no: int = ni * 4
+			_rgba[no] = int(minf(rr[ni], 1.0) * 255.0 + 0.5)
+			_rgba[no + 1] = int(minf(gg[ni], 1.0) * 255.0 + 0.5)
+			_rgba[no + 2] = int(minf(bb[ni], 1.0) * 255.0 + 0.5)
+			_rgba[no + 3] = 255
+		k += 1
 	img.set_data(iw, ih, false, Image.FORMAT_RGBA8, _rgba)
 
 

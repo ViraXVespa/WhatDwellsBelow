@@ -319,14 +319,27 @@ static func _span_in_room(room: Dictionary, per: int) -> Dictionary:
 	var best_s: int = 1 << 30
 	var scale: float = float(maxi(1, per))
 	var inset: float = 0.45 * scale
-	var i: int = 0
-	while i < _pn:
+	var seen: Dictionary = {}
+	var hits: PackedInt32Array = PackedInt32Array()
+	var x: int = rx
+	while x < rx + rw:
+		_collect_bin(hits, seen, Vector2i(x, ry))
+		_collect_bin(hits, seen, Vector2i(x, ry + rh - 1))
+		x += 1
+	var y: int = ry + 1
+	while y < ry + rh - 1:
+		_collect_bin(hits, seen, Vector2i(rx, y))
+		_collect_bin(hits, seen, Vector2i(rx + rw - 1, y))
+		y += 1
+	var hi: int = 0
+	while hi < hits.size():
+		var i: int = hits[hi]
+		hi += 1
 		var nrm: Vector2 = _snrm[i]
 		var mid: Vector2 = _smid[i]
 		var sample: Vector2 = mid + nrm * inset
 		var sx: int = int(floor(sample.x / scale))
 		var sz: int = int(floor(sample.y / scale))
-		i += 1
 		if sx < rx or sz < ry or sx >= rx + rw or sz >= ry + rh:
 			continue
 		var score: int = absi(sx - cx) + absi(sz - cy)
@@ -340,6 +353,18 @@ static func _span_in_room(room: Dictionary, per: int) -> Dictionary:
 		best_s = score
 		best = _site_on(mid, nrm, scale, sx, sz)
 	return best
+
+static func _collect_bin(hits: PackedInt32Array, seen: Dictionary, cell: Vector2i) -> void:
+	var bucket: Variant = _bins.get(cell, PackedInt32Array())
+	var arr: PackedInt32Array = bucket
+	var i: int = 0
+	while i < arr.size():
+		var pi: int = arr[i]
+		i += 1
+		if seen.has(pi):
+			continue
+		seen[pi] = true
+		hits.append(pi)
 
 
 static func _run_site(run: Array[Vector2i], per: int) -> Dictionary:
@@ -446,22 +471,38 @@ static func _site_on(hit: Vector2, nrm: Vector2, scale: float, fx: int, fz: int)
 
 
 static func _thin_arr(mask: PackedByteArray, mouths: PackedByteArray, w: int, h: int) -> void:
+	var live: PackedInt32Array = PackedInt32Array()
+	for y0 in range(1, h - 1):
+		var row0: int = y0 * w
+		for x0 in range(1, w - 1):
+			var i0: int = row0 + x0
+			if mask[i0] != 0 and mouths[i0] == 0:
+				live.append(i0)
 	var step: int = 0
 	while step < 6:
 		step += 1
 		var peel: PackedInt32Array = PackedInt32Array()
-		for y in range(1, h - 1):
-			var row: int = y * w
-			for x in range(1, w - 1):
-				var i: int = row + x
-				if mask[i] == 0 or mouths[i] != 0:
-					continue
-				if _peelable_arr(mask, mouths, w, h, x, y):
-					peel.append(i)
-		for j in peel.size():
+		var keep: PackedInt32Array = PackedInt32Array()
+		var k: int = 0
+		while k < live.size():
+			var i: int = live[k]
+			k += 1
+			if mask[i] == 0:
+				continue
+			var y: int = int(float(i) / float(w))
+			var x: int = i - y * w
+			if _peelable_arr(mask, mouths, w, h, x, y):
+				peel.append(i)
+			else:
+				keep.append(i)
+		var j: int = 0
+		while j < peel.size():
 			mask[peel[j]] = 0
+			j += 1
 		if peel.is_empty():
 			break
+		live = keep
+
 
 static func _peelable_arr(mask: PackedByteArray, mouths: PackedByteArray, w: int, h: int, x: int, y: int) -> bool:
 	var i: int = y * w + x

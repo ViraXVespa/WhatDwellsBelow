@@ -9,9 +9,14 @@ const Smoke := preload("res://scripts/debug/smoke.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const CrystalNet := preload("res://scripts/world/crystal_net.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+
+static var _first_tick: bool = true
 
 
 static func ready_floor(host: Node) -> void:
+	_first_tick = true
+	HitchLog.mark("dungeon_ready")
 	LoadTiming.dmark("dungeon_enter")
 	App.in_dungeon = true
 	CrystalNet.arrive()
@@ -21,6 +26,7 @@ static func ready_floor(host: Node) -> void:
 	host.visited = PackedByteArray()
 	host.visited.resize(int(host.data.w) * int(host.data.h))
 	host.visited.fill(0)
+	HitchLog.mark("dungeon_gen")
 	LoadTiming.dmark("gen")
 	LoadTiming.dnote("gen_ok", str(host.data.get("ok", false)))
 	LoadTiming.dnote("rooms", str((host.data.get("rooms", []) as Array).size()))
@@ -46,6 +52,7 @@ static func ready_floor(host: Node) -> void:
 	LoadTiming.dmark("reveal")
 	var GeoStreamS: GDScript = load("res://scripts/world/dungeon_geo_stream.gd") as GDScript
 	GeoStreamS.follow(host, 0.0)
+	HitchLog.mark("dungeon_follow")
 	LoadTiming.dmark("stream")
 	if App.present and App.present.has_method("release_enter"):
 		App.present.release_enter()
@@ -53,6 +60,9 @@ static func ready_floor(host: Node) -> void:
 
 
 static func process_floor(host: Node, delta: float) -> void:
+	if _first_tick:
+		HitchLog.mark("dungeon_tick")
+		_first_tick = false
 	host.frame_acc += delta
 	host.frame_n += 1
 	if host.frame_acc >= 0.5:

@@ -106,7 +106,7 @@ static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
 	why = reason
 	gx = int(origin.x)
 	gy = int(origin.y)
-	if _whys.size() >= 12:
+	if _whys.size() >= 16:
 		_whys.remove_at(0)
 	_whys.append("%s:%d" % [reason, dt])
 
