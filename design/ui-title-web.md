@@ -43,6 +43,7 @@ If the viewport is taller than wide, the card MUST say to rotate to landscape. L
 ## Live snapshot — title
 
 `title.gd` builds the card and focus graph. `title_news.gd` builds the overlay.
+- Title backdrop is `assets/ui/load_background.jpg` full-bleed (no global dim). A centered 0.62-alpha black plate sits only behind the title / buttons.
 Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close is the focused control. Right stick and mouse wheel move `ScrollContainer.scroll_vertical`. Overlay body is a `RichTextLabel` on an opaque panel.
 
 ## Live snapshot — web fullscreen gate

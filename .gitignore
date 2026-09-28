@@ -16,6 +16,7 @@ _logs/
 
 # Local scratch from asset processing
 _src/
+_old/
 _atk_*.jpg
 _inspect_*.jpg
 _rng*.jpg

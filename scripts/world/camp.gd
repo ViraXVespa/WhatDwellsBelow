@@ -1,22 +1,42 @@
-﻿extends Node3D
+@tool
+extends Node3D
 
 const Build := preload("res://scripts/world/camp_build.gd")
+const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const View := preload("res://scripts/world/camp_view.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const Warm := preload("res://scripts/world/camp_warm.gd")
+const LayoutS := preload("res://scripts/world/camp_layout.gd")
 
 var player: CharacterBody3D
 var dummy: CharacterBody3D
 var ui: CanvasLayer
 var hint: Label
 var prompt: Label
+var _layout: Node3D
+var _editor_hooked: bool = false
 
 
 func _ready() -> void:
+	_layout = LayoutS.on_camp(self)
+	_layout.ensure_tree()
+	if Engine.is_editor_hint():
+		_hook_editor()
+		Build.realize_editor(self, _layout)
+		return
 	App.in_dungeon = false
 	LoadTiming.mark("camp_enter")
 	Build.world(self)
 	LoadTiming.mark("camp_world")
+	LightRt.prepare_hub(
+		int(_layout.aabb_x0()),
+		int(_layout.aabb_z0()),
+		int(_layout.aabb_x1()),
+		int(_layout.aabb_z1()),
+		Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z),
+		_layout
+	)
+	LightRt.hub_crystal = Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z)
 	Build.ground(self)
 	LoadTiming.mark("camp_ground")
 	Build.buildings(self)
@@ -25,7 +45,7 @@ func _ready() -> void:
 	LoadTiming.mark("camp_fence")
 	var PlayerS: GDScript = load("res://scripts/world/player.gd") as GDScript
 	player = PlayerS.new() as CharacterBody3D
-	player.position = Vector3(Build.PATH_X, 0.0, 16.0)
+	player.position = _layout.spot_pos("Spawn")
 	add_child(player)
 	if player.body:
 		player.body.render_priority = 18
@@ -38,13 +58,20 @@ func _ready() -> void:
 		ensure_dummy()
 	_hud()
 	_music()
-	if App.wake_pending:
+	var hold_wake: bool = (
+		App.present != null
+		and bool(App.present.visible)
+		and App.present.has_method("release_wake")
+	)
+	if App.wake_pending or hold_wake:
 		App.wake_pending = false
 		if App.recap:
 			App.recap.visible = false
 			App.recap.open = false
 		App.ui_open = false
-		if App.present and App.present.has_method("release_wake"):
+		if App.get_tree():
+			App.get_tree().paused = false
+		if hold_wake:
 			App.present.release_wake()
 		elif App.present and App.present.has_method("play_wake"):
 			App.present.play_wake()
@@ -63,6 +90,19 @@ func _ready() -> void:
 	if Smoke.phase(6):
 		ensure_ui()
 	Smoke.attach_camp(self)
+
+
+func _hook_editor() -> void:
+	if _editor_hooked:
+		return
+	_editor_hooked = true
+	if not _layout.editor_redraw.is_connected(_on_layout_redraw):
+		_layout.editor_redraw.connect(_on_layout_redraw)
+
+
+func _on_layout_redraw() -> void:
+	if Engine.is_editor_hint():
+		Build.realize_editor(self, _layout)
 
 
 func world_ui() -> Node:
@@ -95,6 +135,8 @@ func warmup_restore() -> void:
 
 
 func _process(_delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	if App.pause_just() if App.has_method("pause_just") else (Input.is_action_just_pressed("pause") or App.pad_just("pause")):
 		if App.ui_open and ui and ui.visible:
 			ui.close_ui()
@@ -113,7 +155,7 @@ func _process(_delta: float) -> void:
 
 func _banner() -> void:
 	var root := Node3D.new()
-	root.position = Vector3(Build.PATH_X, 0.0, 22.0)
+	root.position = _layout.spot_pos("Banner")
 	add_child(root)
 	_banner_pole(root, Vector3(-1.45, 1.1, 0.0))
 	_banner_pole(root, Vector3(1.45, 1.1, 0.0))
@@ -151,7 +193,7 @@ func ensure_dummy() -> void:
 		return
 	var DummyS: GDScript = load("res://scripts/combat/dummy.gd") as GDScript
 	var n: CharacterBody3D = DummyS.new() as CharacterBody3D
-	n.position = Vector3(8.5, 0.0, Build.PATH_Z + 0.5)
+	n.position = _layout.spot_pos("Dummy")
 	dummy = n
 	add_child(n)
 
@@ -169,21 +211,20 @@ func _spots() -> void:
 	_banner()
 	var SpotS: GDScript = load("res://scripts/world/interact.gd") as GDScript
 	var c: Node3D = SpotS.new()
-	c.call("setup", "loadout_crystal", Vector3(16.475, 0.0, 10.2))
+	var crystal: Vector3 = _layout.spot_pos("Crystal")
+	c.call("setup", "loadout_crystal", crystal)
 	add_child(c)
 	_tune_label(c)
 	var a: Node3D = SpotS.new()
-	a.call("setup", "anvil", Vector3(21.2, 0.0, 11.4))
+	a.call("setup", "anvil", _layout.spot_pos("Anvil"))
 	add_child(a)
 	_tune_label(a)
 	var q: Node3D = SpotS.new()
-	q.call("setup", "quest_board", Vector3(16.1, 0.0, 6.2))
+	q.call("setup", "quest_board", _layout.spot_pos("Board"))
 	add_child(q)
 	_tune_label(q)
-	var wp: Vector3 = Build.wing_pos()
-	var face_z: float = wp.z + Build.WING_SIZE.z * 0.5
 	var rec: Node3D = SpotS.new()
-	rec.call("setup", "receptionist", Vector3(wp.x + 0.027, 0.785, face_z + 0.07))
+	rec.call("setup", "receptionist", _layout.reception_pos())
 	add_child(rec)
 	var rec_spr: Sprite3D = rec.get("spr") as Sprite3D
 	if rec_spr:
@@ -198,18 +239,18 @@ func _spots() -> void:
 		rec_lab.position.y = 0.85
 	_tune_label(rec)
 	var v: Node3D = SpotS.new()
-	v.call("setup", "vendor", Vector3(25.0, 0.0, 10.2))
+	v.call("setup", "vendor", _layout.spot_pos("Vendor"))
 	add_child(v)
 	var v_lab: Label3D = v.get("label") as Label3D
 	if v_lab:
 		v_lab.position.y = 2.25
 	_tune_label(v)
 	var d: Node3D = SpotS.new()
-	d.call("setup", "dumpster", Vector3(5.2, 0.0, 9.4))
+	d.call("setup", "dumpster", _layout.spot_pos("Dumpster"))
 	add_child(d)
 	_tune_label(d)
 	var b: Node3D = SpotS.new()
-	b.call("setup", "billboard", Vector3(20.5, 0.0, 16.5))
+	b.call("setup", "billboard", _layout.spot_pos("Billboard"))
 	add_child(b)
 	_tune_label(b)
 
@@ -221,12 +262,12 @@ shader_type spatial;
 render_mode unshaded, cull_disabled, depth_draw_always;
 uniform sampler2D albedo_tex : source_color, filter_nearest;
 void fragment() {
-	vec4 c = texture(albedo_tex, UV);
-	if (UV.y > 0.50 || c.a < 0.1) {
-		discard;
-	}
-	ALBEDO = c.rgb;
-	ALPHA = 1.0;
+    vec4 c = texture(albedo_tex, UV);
+    if (UV.y > 0.50 || c.a < 0.1) {
+        discard;
+    }
+    ALBEDO = c.rgb;
+    ALPHA = 1.0;
 }
 """
 	var mat := ShaderMaterial.new()

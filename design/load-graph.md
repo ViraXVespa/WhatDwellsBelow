@@ -12,12 +12,15 @@ AGENTS.md
     web   -> design/web-session.md -> protocol.md and constraints.md
     build -> design/grok-build.md -> protocol.md and constraints.md
             -> design/build-job-cycle.md when gathering, changing, or proving
+            -> listed runner from that cycle table when proving; do not invent a flag
             -> next unit is User-named
     bot   -> BOT.md -> exactly one Job sibling
 
 Then, only if the User named work:
     one topic door -> one Job sibling (if that door has a Job table)
     graphics jobs are env, ground, volume, buffer, actor (not a boot path)
+    authored polylines / hall segments / bake from rims -> dungeon then gen
+    gen publishes outline_spans and solid; volume skins provided spans with UV along the span; stream instances bake boxes; buffer occupancy reads solid only; dungeon discs flood fine solid, not 1 m tile membership
     (second door only when the User names the owner; conflicts_with is a load ban)
     and one design/code-map.md system row when live files are needed
     and design/tunables.md iff a number changes

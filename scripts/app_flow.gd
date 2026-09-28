@@ -2,6 +2,7 @@ extends Object
 
 const Anim := preload("res://scripts/world/player_anim.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
+const AppRunS := preload("res://scripts/app_run.gd")
 
 
 static func enter_dungeon(host: Node) -> void:
@@ -12,6 +13,7 @@ static func enter_dungeon(host: Node) -> void:
 	if host.present and str(host.present.get("_mode")) == "enter_hold" and bool(host.in_dungeon):
 		return
 	if host.playtest and bool(host.playtest.get("live_running")):
+		AppRunS.ensure_dungeon_packed(host)
 		host._after_enter()
 		return
 	var holding: bool = host.present != null and str(host.present.get("_mode")) == "enter_hold"
@@ -25,6 +27,7 @@ static func enter_dungeon(host: Node) -> void:
 		host.sfx("enter")
 		_close_hub_ui(host)
 		host.save_now()
+		AppRunS.ensure_dungeon_packed(host)
 		host._after_enter()
 	elif host.present and host.present.has_method("play_enter"):
 		host.save_now()
@@ -34,6 +37,7 @@ static func enter_dungeon(host: Node) -> void:
 	else:
 		host.save_now()
 		host.ui_open = true
+		AppRunS.ensure_dungeon_packed(host)
 		host._after_enter()
 
 
@@ -102,7 +106,7 @@ static func play_from_menu_async(host: Node) -> void:
 		host.loader.set_progress(0.08)
 	await host.get_tree().process_frame
 	LoadTiming.mark("loader_paint")
-	await preload_hub(host)
+	preload_hub(host)
 	if host.loader:
 		host.loader.set_status("Raising Placeholdia…")
 		host.loader.set_progress(0.90)
@@ -145,6 +149,8 @@ static func dungeon_load_timing_async(host: Node) -> void:
 			break
 		await host.get_tree().process_frame
 	LoadTiming.dnote("hub_wait_frames", str(hub_guard))
+	AppRunS.ensure_dungeon_packed(host)
+	LoadTiming.dmark("dungeon_pack")
 	LoadTiming.dmark("enter_begin")
 	host.save_now()
 	LoadTiming.dmark("save")
@@ -163,8 +169,15 @@ static func dungeon_load_timing_async(host: Node) -> void:
 		if dun and dun.is_node_ready() and (str(dun.scene_file_path).find("dungeon") >= 0 or str(dun.name) == "Dungeon"):
 			break
 		await host.get_tree().process_frame
-	LoadTiming.dmark("dungeon_ready")
+	LoadTiming.dmark("dungeon_scene")
 	LoadTiming.dnote("dungeon_wait_frames", str(dun_guard))
+	var warm: int = 0
+	while warm < 2:
+		RenderingServer.force_draw()
+		await host.get_tree().process_frame
+		warm += 1
+	LoadTiming.dmark("dungeon_warm")
+	LoadTiming.dmark("dungeon_ready")
 	LoadTiming.finish()
 
 
@@ -217,7 +230,7 @@ static func _warmup_hub(host: Node) -> void:
 	LoadTiming.mark("warmup_end")
 
 
-static func hub_preload_paths(host: Node) -> PackedStringArray:
+static func hub_preload_paths(_host: Node) -> PackedStringArray:
 	return PackedStringArray([
 		"res://assets/sprites/buildings/guild.png",
 		"res://assets/sprites/buildings/guild_reception.png",

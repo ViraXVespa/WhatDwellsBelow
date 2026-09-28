@@ -4,7 +4,7 @@ Status: protocol
 Read when: web / chat path; every web session after the repo-review message
 
 Binding for **web / chat** only. Grok Build and Grok Bot ignore it.
-Second topic door: ask the User to name the owner first. If `conflicts_with` lists the pair, do not open the second door in this slice.
+Second topic door: ask the User to name the owner first. That is the second *writer*. If `conflicts_with` lists the pair, do not implement the second core in this slice. Reading both is allowed.
 The User pastes every emit. Never assume a disk write landed. Do not push `main` or create a side branch unless the User named that branch.
 
 After Phase 3, one `tools/_scratch.py` is the whole remaining action. A scratch that writes a runnable this slice owns must run it before exit and print `RESULT checker=PASS|FAIL` when the load-graph checker applies. The User runs only `python tools/_scratch.py` from the repo root and pastes the RESULT. If a step cannot live in that scratch, say so and wait.
@@ -21,7 +21,7 @@ Move only when the User names the next phase. Do not emit during Phase 1-3.
 
 The User tells the agent to review the repo.
 
-If the agents file already routed here, do not re-read it. Load `design/protocol.md` and `design/constraints.md` only when missing. Then the named topic. Web / chat may also read live scripts and further design files to get a clear picture of that named work; the budget is turns, not tokens. Implementation still uses one topic door (second door only when the User names the owner). Inspect the live tree from **one system row** in `design/code-map.md` when editing live files. Do not open the Build path file, `BOT.md`, `design/README.md`, or Grok Bot Job files. Do not treat git as the hand-off.
+If the agents file already routed here, do not re-read it. Load `design/protocol.md` and `design/constraints.md` only when missing. Picture-read before a named topic when the thread already needs it. Open a design file or its code-map row when one of these is true: (1) the thread already names that system; (2) a shot or live miss cannot be explained without that owner; (3) `routes.yaml` read_when / job_read_when matches those words; (4) the User asked who owns it. Budget is turns, not tokens. Do not walk all of `design/` for curiosity. Implementation still uses one writer door (second writer only when the User names the owner). Inspect the live tree from **one system row** in `design/code-map.md` when editing live files. This chat may generate non-tile images. It does not spawn the isolated media runner and does not Imagine tiled world assets (floor, brick, dirt, grass, seamless walls). Do not open the Build path file, `BOT.md`, `design/README.md`, or Grok Bot Job files. Do not treat git as the hand-off.
 
 Open `design/parked-tasks.md` only when the User names a parked task. If the first message matches that table, load only that Open file after the law pair and continue. If the park already has a mandate, Phase 2 is optional. Closing a finished park deletes the Open file and its parked-tasks row. Do not rewrite that file as closed.
 

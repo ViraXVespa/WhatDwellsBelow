@@ -26,8 +26,7 @@ $godotArgs = @(
 )
 
 Write-Host "Running Placeholdia to Dungeon load timing..."
-$r = Invoke-WdbGodot -RepoRoot $Root -GodotPath $Root -GodotArgs $godotArgs `
-    -OutLog $OutLog -ErrLog $ErrLog -TimeoutSec $TimeoutSec
+$r = Invoke-WdbGodot -RepoRoot $Root -GodotPath $Root -GodotArgs $godotArgs -OutLog $OutLog -ErrLog $ErrLog -TimeoutSec $TimeoutSec
 $status = $r.Status
 $ms = $r.Ms
 

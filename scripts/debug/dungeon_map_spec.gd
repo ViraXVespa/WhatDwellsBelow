@@ -85,4 +85,160 @@ static func _emit_spec(lines: Array[String], host: Node, data: Dictionary, objs:
 		if raw2 is Dictionary and str(raw2.get("kind", "")) == "ambush":
 			ambush_n += 1
 	fail += Util._spec(lines, "ambush_cap", ambush_n <= ambush_cap, "n=%d cap=%d" % [ambush_n, ambush_cap])
+	var spans: Array = data.get("outline_spans", []) as Array
+	var solid: PackedByteArray = PackedByteArray()
+	var raw_solid: Variant = data.get("solid", PackedByteArray())
+	if raw_solid is PackedByteArray:
+		solid = raw_solid
+	var sw: int = int(data.get("solid_w", 0))
+	var sh: int = int(data.get("solid_h", 0))
+	var n: int = int(data.get("solid_n", 0))
+	var gw: int = int(data.get("w", 0))
+	var gh: int = int(data.get("h", 0))
+	fail += Util._spec(lines, "spans_present", spans.size() > 0, "n=%d" % spans.size())
+	fail += Util._spec(lines, "solid_size", n >= 2 and sw == gw * n and sh == gh * n and solid.size() == sw * sh, "n=%d sw=%d sh=%d want=%dx%d bytes=%d" % [n, sw, sh, gw * n, gh * n, solid.size()])
+	var span_hits: int = 0
+	var span_miss: int = 0
+	for raw_span: Variant in spans:
+		if not (raw_span is Dictionary):
+			continue
+		var sp: Dictionary = raw_span
+		var o: Vector2 = Vector2(sp.get("origin", Vector2.ZERO))
+		var d: Vector2 = Vector2(sp.get("delta", Vector2.ZERO))
+		var slen: float = d.length()
+		if slen < 0.5:
+			continue
+		var steps: int = maxi(1, int(slen))
+		for si: int in range(steps + 1):
+			var t: float = float(si) / float(steps)
+			var p: Vector2 = o + d * t
+			var nrm: Vector2 = Vector2(sp.get("normal", Vector2.ZERO))
+			if nrm.length_squared() < 0.0001:
+				nrm = Vector2(-d.y, d.x)
+			if nrm.length_squared() > 0.0001:
+				nrm = nrm.normalized()
+			var hit_now: bool = false
+			var step_i: int = 0
+			while step_i < 3 and not hit_now:
+				var q: Vector2 = p + nrm * (0.5 + float(step_i) * 0.5)
+				var qx: int = int(floor(q.x))
+				var qy: int = int(floor(q.y))
+				var ni: int = 0
+				while ni < 5 and not hit_now:
+					var ax: int = qx
+					var ay: int = qy
+					if ni == 1:
+						ax = qx + 1
+					elif ni == 2:
+						ax = qx - 1
+					elif ni == 3:
+						ay = qy + 1
+					elif ni == 4:
+						ay = qy - 1
+					if ax >= 0 and ay >= 0 and ax < sw and ay < sh and solid.size() == sw * sh and solid[ay * sw + ax] != 0:
+						hit_now = true
+					ni += 1
+				step_i += 1
+			if hit_now:
+				span_hits += 1
+			else:
+				span_miss += 1
+	fail += Util._spec(lines, "span_on_solid", span_hits > 0 and span_miss == 0, "hit=%d miss=%d" % [span_hits, span_miss])
+	var job_ok: int = 0
+	var job_bad: int = 0
+	for rawj: Variant in jobs:
+		if not (rawj is Dictionary):
+			continue
+		var jc: Vector2i = Vector2i(rawj.get("cell", Vector2i.ZERO))
+		var fx2: int = jc.x * n + (n >> 1)
+		var fy2: int = jc.y * n + (n >> 1)
+		if n >= 2 and solid.size() == sw * sh and sw > 0 and fx2 >= 0 and fy2 >= 0 and fx2 < sw and fy2 < sh and solid[fy2 * sw + fx2] != 0:
+			job_ok += 1
+		else:
+			job_bad += 1
+	fail += Util._spec(lines, "jobs_on_solid", job_bad == 0 and job_ok > 0, "ok=%d bad=%d" % [job_ok, job_bad])
+	var rim: Dictionary = rim_report(data)
+	var hole_n: int = int(rim.get("holes", 0))
+	var hole_txt: String = str(rim.get("sample", ""))
+	fail += Util._spec(lines, "rim_closed", hole_n == 0, "holes=%d sample=%s" % [hole_n, hole_txt])
 	return fail
+
+
+static func mark_holes(overlays: Dictionary, data: Dictionary) -> int:
+	var rim: Dictionary = rim_report(data)
+	var cells: Array = rim.get("cells", []) as Array
+	for raw: Variant in cells:
+		if raw is Vector2i and not overlays.has(raw):
+			overlays[raw] = "rim_hole"
+	return int(rim.get("holes", 0))
+
+
+static func rim_report(data: Dictionary) -> Dictionary:
+	var empty: Dictionary = {"holes": 0, "cells": [], "sample": "-"}
+	var spans: Array = data.get("outline_spans", []) as Array
+	var raw_solid: Variant = data.get("solid", PackedByteArray())
+	if not (raw_solid is PackedByteArray):
+		return empty
+	var solid: PackedByteArray = raw_solid
+	var sw: int = int(data.get("solid_w", 0))
+	var sh: int = int(data.get("solid_h", 0))
+	var per: int = int(data.get("solid_n", 0))
+	if per < 1 or sw < 2 or sh < 2 or solid.size() != sw * sh:
+		return empty
+	var cover: PackedByteArray = PackedByteArray()
+	cover.resize(sw * sh)
+	cover.fill(0)
+	for raw_span: Variant in spans:
+		if not (raw_span is Dictionary):
+			continue
+		var sp: Dictionary = raw_span
+		var o: Vector2 = Vector2(sp.get("origin", Vector2.ZERO))
+		var d: Vector2 = Vector2(sp.get("delta", Vector2.ZERO))
+		var slen: float = d.length()
+		if slen < 0.5:
+			continue
+		var steps: int = maxi(1, int(ceil(slen * 2.0)))
+		for si: int in range(steps + 1):
+			var t: float = float(si) / float(steps)
+			var p: Vector2 = o + d * t
+			var cx: int = int(floor(p.x))
+			var cy: int = int(floor(p.y))
+			for oy: int in range(cy - 2, cy + 3):
+				if oy < 0 or oy >= sh:
+					continue
+				for ox: int in range(cx - 2, cx + 3):
+					if ox < 0 or ox >= sw:
+						continue
+					cover[oy * sw + ox] = 1
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	var hole_n: int = 0
+	var cells: Array[Vector2i] = []
+	var seen: Dictionary = {}
+	var sample: PackedStringArray = PackedStringArray()
+	for y: int in sh:
+		var row: int = y * sw
+		for x: int in sw:
+			if solid[row + x] == 0:
+				continue
+			var edge: bool = false
+			for d2: Vector2i in dirs:
+				var nx: int = x + d2.x
+				var ny: int = y + d2.y
+				if nx < 0 or ny < 0 or nx >= sw or ny >= sh or solid[ny * sw + nx] == 0:
+					edge = true
+					break
+			if not edge:
+				continue
+			if cover[row + x] != 0:
+				continue
+			hole_n += 1
+			var cell: Vector2i = Vector2i(int(float(x) / float(per)), int(float(y) / float(per)))
+			if not seen.has(cell):
+				seen[cell] = true
+				cells.append(cell)
+				if sample.size() < 8:
+					sample.append("%d,%d" % [cell.x, cell.y])
+	var shown: String = "-"
+	if sample.size() > 0:
+		shown = ",".join(sample)
+	return {"holes": hole_n, "cells": cells, "sample": shown}

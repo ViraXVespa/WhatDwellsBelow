@@ -2,6 +2,7 @@
 
 const InteractFx := preload("res://scripts/world/interact_fx.gd")
 const Prompt := preload("res://scripts/world/interact_prompt.gd")
+const LightRt := preload("res://scripts/graphics/light_rt.gd")
 
 static var _act_s: GDScript
 
@@ -37,6 +38,7 @@ func setup(k: String, pos: Vector3, lock := false) -> void:
 	InteractFx.build(self)
 	InteractFx.add_label(self)
 	refresh()
+	LightRt.note_prop(self)
 
 
 func setup_extract_gate(pos: Vector3) -> void:
@@ -57,6 +59,10 @@ func setup_shop(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	var n := rng.randi_range(lo, hi)
 	var Catalog: GDScript = load("res://scripts/data/catalog.gd") as GDScript
 	stock = Catalog.pick(rng, n)
+
+
+func _exit_tree() -> void:
+	LightRt.drop_prop(self)
 
 
 func refresh() -> void:

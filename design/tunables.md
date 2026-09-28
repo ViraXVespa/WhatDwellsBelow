@@ -49,6 +49,33 @@ Forge keys that are not yet on `balance.gd` fall back inside `progress_forge.gd`
 | Archive catalog | `scripts/data/archive_catalog.json` |
 | `TOUCH_DEAD` | 0.24 |
 
+## Ground field
+
+World-xz sheets on grass pads, packed yard, and dungeon floors. Debug menu category Ground. `ground_wear` at 0 leaves the sheet untinted by wear.
+
+| Key | Live |
+|-----|------|
+| `GROUND_PX_PER_M` / `ground_px_per_m` | 128 |
+| `GROUND_HASH_M` / `ground_hash_m` | 4 |
+| `GROUND_VARIANTS` / `ground_variants` | 3 |
+| `GROUND_WEAR` / `ground_wear` | 0.22 |
+
+## Light buffer
+
+Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub adds one wide sun disc. Debug menu reads the same keys. Do not retune range or energy to fake smoothness.
+
+| Key | Live |
+|-----|------|
+| `LIGHT_TORCH_RANGE` / `light_torch_range` | 5.5 |
+| `LIGHT_TORCH_ENERGY` / `light_torch_energy` | 1.0 |
+| `LIGHT_CRYSTAL_RANGE` / `light_crystal_range` | 7.5 |
+| `LIGHT_CRYSTAL_ENERGY` / `light_crystal_energy` | 0.95 |
+| `LIGHT_FIRE_RANGE` / `light_fire_range` | 6.0 |
+| `LIGHT_FIRE_ENERGY` / `light_fire_energy` | 1.0 |
+| `LIGHT_SUN_RANGE` / `light_sun_range` | 48 |
+| `LIGHT_SUN_ENERGY` / `light_sun_energy` | 0.9 |
+| `LIGHT_SOURCE_CAP` / `light_source_cap` | 24 |
+
 ## Movement and combat
 
 | Parameter | Suggested start | Live default | Notes |
@@ -136,6 +163,9 @@ Forge keys that are not yet on `balance.gd` fall back inside `progress_forge.gd`
 | Crystal CL band | 2 | **2** | Walk-level CL per placement band |
 | Crystal dead-end sep | 32 | **32** | Minimum Manhattan from spawn |
 | Crystal dead-end length | 28 | **28** | Spur walk to the nearest multi-exit room |
+| Outline fine size (`outline_fine_m`) | 0.25 m | **0.25** | Rasterize resolution of the authored polyline. Debug steps 0.25 / 0.5 / 1 |
+| Outline fillet fraction (`outline_fillet_frac`) | 0.40 | **0.40** | Share of convex polyline corners to fillet as vertices. Room rims cut; hall corners only bulge outward |
+| Outline jag fraction (`outline_jag_frac`) | 0.35 | **0.35** | Share of long authored rims that receive vertex plateaus. 1–3 m on one hall face; rest stays flat |
 
 ## Enemies and combat level
 
@@ -232,5 +262,8 @@ Roll rules and holds cap live on inventory (gear job).
 | Target first-extraction time | 5–10 min | New player on gamepad |
 | Target floor-5 clear time | 5–10 hours | Competent player; feel target |
 | FPS | 60 minimum | Higher allowed |
+| Hitch budget | 1/60 s | Frame budget used by the hitch log |
+| Hitch multiplier | 4 | Trip when `delta >= budget × 4` (~66.7 ms) |
+| Hitch cap | 256 | Newest hitch rows kept in `user://hitch/hitch.jsonl` |
 
 All other values (enemy stats, drop rates, remaining forge fields, weapon-specific leftovers, quest rewards, leash-adjacent keys, Bitter loop offset timestamp, etc.) should be chosen to support the same feel targets and MUST also be exposed in the debug menu.

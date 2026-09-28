@@ -1,5 +1,6 @@
 extends CharacterBody3D
 const BillSpr := preload("res://scripts/world/billboard_spr.gd")
+const ActorLit := preload("res://scripts/graphics/actor_lit.gd")
 
 const Depth := preload("res://scripts/world/depth.gd")
 const T := preload("res://scripts/data/tunables.gd")
@@ -37,6 +38,7 @@ func _ready() -> void:
 	spr = BillSpr.make("res://assets/fx/dummy.png", 1.7, 0.85, 1, false)
 	spr.double_sided = true
 	add_child(spr)
+	ActorLit.bind(self, spr)
 	tag.position = Vector3(0.0, 1.7, 0.0)
 	tag.font_size = 36
 	tag.outline_size = 8

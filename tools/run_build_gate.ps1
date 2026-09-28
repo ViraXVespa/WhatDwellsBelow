@@ -65,7 +65,8 @@ if (-not $SkipImport) {
     Write-Host "== import check =="
     $importArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $ImportScript, "-TimeoutSec", "$ImportTimeoutSec")
     $p2 = Start-Process -FilePath "powershell.exe" -ArgumentList $importArgs -Wait -PassThru -NoNewWindow
-    $importSummary = Join-Path $Root "_logs\godot-import-check\summary.txt"
+    $importDir = Ensure-WdbAgentLogDir -Job "godot-import-check" -Root $Root
+    $importSummary = Join-Path $importDir "summary.txt"
     $lines.Add("--- import check exit=$($p2.ExitCode) ---")
     if (Test-Path $importSummary) {
         Get-Content $importSummary | ForEach-Object { $lines.Add($_) }

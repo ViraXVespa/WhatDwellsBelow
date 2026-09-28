@@ -114,4 +114,8 @@ static func run(b: Object, old_rev: int, bal_rev: int) -> bool:
 		b.affix_luck_max = 1.25
 		b.affix_white_quality = 0.5
 		b.affix_white_luck = 0.75
+	if old_rev < 13:
+		b.outline_fine_m = 0.25
+		b.outline_fillet_frac = 0.40
+		b.outline_jag_frac = 0.62
 	return true

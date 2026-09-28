@@ -12,3 +12,5 @@ Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/de
 | phase assertions, runner summary | `design/debug-smokes.md` |
 
 When running smokes, use the listed runner and read only that runner's `_logs` summary.
+
+Hitch log is `scripts/debug/hitch_log.gd`. On editor, desktop, and localhost web it is on by default. GitHub Pages does not hook it. A frame at least four times the 60 FPS budget appends one JSONL line to `user://hitch/hitch.jsonl`. Newest 256 hitch rows are kept. Session and hitch rows stamp `ver` from `scripts/data/version.json`. Debug chrome can copy or clear the file. Not part of the playtest journal.

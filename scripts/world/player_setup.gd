@@ -7,6 +7,7 @@ const T := preload("res://scripts/data/tunables.gd")
 const CamRig := preload("res://scripts/world/camera_rig.gd")
 const PlayerAnim := preload("res://scripts/world/player_anim.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
+const ActorLit := preload("res://scripts/graphics/actor_lit.gd")
 
 
 static func ready(host: CharacterBody3D) -> void:
@@ -20,6 +21,7 @@ static func ready(host: CharacterBody3D) -> void:
 	host.body = make_sprite(host, 2)
 	host.body.visible = false
 	host.add_child(host.body)
+	ActorLit.bind(host, host.body)
 	host.aura = make_sprite(host, 3)
 	host.aura.visible = false
 	host.aura.modulate = Color(1.0, 0.45, 0.12, 0.0)
