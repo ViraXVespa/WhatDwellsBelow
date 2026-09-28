@@ -114,9 +114,9 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 	if spans.is_empty():
 		return out
 	var rooms_n: int = (host.data.get("rooms", []) as Array).size()
-	var key: String = "%d:%d:%d:%d:%d" % [map_w, map_h, rooms_n, spans.size(), props.size()]
+	var key: String = "%d:%d:%d:%d" % [map_w, map_h, rooms_n, spans.size()]
 	if key == _cache_key and not _cache.is_empty():
-		return _cache
+		return _apply_lit(host, props, _cache)
 	var per: int = maxi(1, int(host.data.get("solid_n", 1)))
 	_prep_spans(spans, per)
 	var rooms: Array = host.data.get("rooms", [])
@@ -153,8 +153,6 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 			lit[ri] = 1
 	var used: Dictionary = {}
 	for i2 in rooms.size():
-		if lit[i2] != 0:
-			continue
 		var site: Dictionary = _span_in_room(rooms[i2], per)
 		if site.is_empty():
 			continue
@@ -235,6 +233,62 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 			out.append(spur)
 	_cache_key = key
 	_cache = out
+	return _apply_lit(host, props, out)
+
+
+static func _apply_lit(host: Node, props: Array, layout: Array[Dictionary]) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if host == null or host.data == null or layout.is_empty():
+		return out
+	var map_w: int = int(host.data.w)
+	var map_h: int = int(host.data.h)
+	var rooms: Array = host.data.get("rooms", [])
+	var inside: PackedInt32Array = PackedInt32Array()
+	inside.resize(map_w * map_h)
+	inside.fill(-1)
+	for i in rooms.size():
+		var room: Dictionary = rooms[i]
+		var rx: int = int(room["x"])
+		var ry: int = int(room["y"])
+		var rw: int = int(room["w"])
+		var rh: int = int(room["h"])
+		var y: int = ry
+		while y < ry + rh:
+			if y >= 0 and y < map_h:
+				var row: int = y * map_w
+				var x: int = rx
+				while x < rx + rw:
+					if x >= 0 and x < map_w:
+						inside[row + x] = i
+					x += 1
+			y += 1
+	var lit: PackedByteArray = PackedByteArray()
+	lit.resize(rooms.size())
+	lit.fill(0)
+	for node in props:
+		if not is_instance_valid(node):
+			continue
+		var cell: Vector2i = _prop_cell(node)
+		if cell.x < 0 or cell.y < 0 or cell.x >= map_w or cell.y >= map_h:
+			continue
+		var ri: int = inside[cell.y * map_w + cell.x]
+		if ri >= 0:
+			lit[ri] = 1
+	var used: Dictionary = {}
+	for item in layout:
+		var site: Dictionary = item
+		var fx: int = int(site.get("fx", -1))
+		var fz: int = int(site.get("fz", -1))
+		if fx < 0 or fz < 0 or fx >= map_w or fz >= map_h:
+			continue
+		var room_i: int = inside[fz * map_w + fx]
+		if room_i >= 0 and lit[room_i] != 0:
+			continue
+		var at: Vector2i = Vector2i(fx, fz)
+		if _taken(used, at):
+			continue
+		used[at] = true
+		out.append(site)
 	return out
 
 

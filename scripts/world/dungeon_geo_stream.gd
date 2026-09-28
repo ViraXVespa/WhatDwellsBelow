@@ -227,7 +227,7 @@ static func _outline_loops(host: Node) -> Array:
 static func _wall_runs(host: Node, solid: PackedByteArray, sw: int, sh: int, wall_cells: Array[Vector2i], ox: int, oy: int, x1: int, y1: int, n: int) -> Array[Dictionary]:
 	if _outline_spans(host).is_empty():
 		return _faces_on_chunk(solid, sw, sh, wall_cells, ox * n, oy * n, x1 * n, y1 * n)
-	return WallMesh.prepare(_spans_on_chunk(_prepared_spans(host), ox * n, oy * n, x1 * n, y1 * n))
+	return WallMesh.prepare(_spans_on_chunk(_outline_spans(host), ox * n, oy * n, x1 * n, y1 * n))
 
 
 static func _prepared_spans(host: Node) -> Array:
