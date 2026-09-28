@@ -458,8 +458,8 @@ static func _thin_arr(mask: PackedByteArray, mouths: PackedByteArray, w: int, h:
 					continue
 				if _peelable_arr(mask, mouths, w, h, x, y):
 					peel.append(i)
-			for j in peel.size():
-				mask[peel[j]] = 0
+		for j in peel.size():
+			mask[peel[j]] = 0
 		if peel.is_empty():
 			break
 
