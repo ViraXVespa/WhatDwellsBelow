@@ -64,8 +64,10 @@ void fragment() {
 	float worn = mix(1.0, mix(0.78, 1.0, h), clamp(wear, 0.0, 1.0));
 	vec2 inn = UV2;
 	vec3 lit;
-	if (length(face_xz) > 0.2 && length(inn) > 0.2 && dot(normalize(face_xz), normalize(inn)) < 0.0) {
-		lit = vec3(0.16);
+	if (length(face_xz) <= 0.2) {
+		lit = vec3(0.22);
+	} else if (length(inn) > 0.2 && dot(normalize(face_xz), normalize(inn)) < 0.0) {
+		lit = vec3(0.14);
 	} else if (length(inn) > 0.2) {
 		lit = tap_lit(xz + normalize(inn) * 0.35);
 	} else {
