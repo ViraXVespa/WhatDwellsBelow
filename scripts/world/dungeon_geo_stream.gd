@@ -104,7 +104,13 @@ static func follow(host: Node, delta: float) -> void:
 	if str(cur.state) == "pending":
 		HitchLog.mark("geo_activate", Vector2i(cur.origin))
 		activate_job(host, cur)
+	var last: Vector2i = Vector2i(-9999, -9999)
+	if host.has_meta("wdb_geo_origin"):
+		last = host.get_meta("wdb_geo_origin")
+	host.set_meta("wdb_geo_origin", origin)
 	var budget: int = 1
+	if last != origin:
+		budget = (2 * RING_IN + 1) * (2 * RING_IN + 1)
 	var built := 0
 	for dy in range(-RING_IN, RING_IN + 1):
 		for dx in range(-RING_IN, RING_IN + 1):

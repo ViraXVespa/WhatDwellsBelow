@@ -323,7 +323,7 @@ static func _ring_rect(host: Node) -> Rect2i:
 	z0 = clampi(z0, 0, maxi(0, map_h - 1))
 	x1 = clampi(x1, x0 + 1, map_w)
 	z1 = clampi(z1, z0 + 1, map_h)
-	var hold: int = 2
+	var hold: int = chunk
 	if _rect.size.x >= chunk and _rect.size.y >= chunk:
 		var hx0: int = _rect.position.x
 		var hz0: int = _rect.position.y
