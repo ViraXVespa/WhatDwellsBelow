@@ -819,13 +819,24 @@ static func _paint(solid: PackedByteArray, sw: int, sh: int, run: Dictionary) ->
 	var span_l: float = d.length()
 	if span_l < 0.5 or sw < 1 or sh < 1:
 		return
-	var steps: int = maxi(1, int(span_l))
+	var nrm: Vector2 = run["normal"]
+	if nrm.length_squared() < 0.0001:
+		nrm = Vector2(-d.y, d.x)
+	if nrm.length_squared() > 0.0001:
+		nrm = nrm.normalized()
+	var steps: int = maxi(1, int(ceil(span_l * 2.0)))
 	for si in range(steps + 1):
 		var t: float = float(si) / float(steps)
 		var p: Vector2 = o + d * t
-		var fx: int = clampi(int(floor(p.x)), 0, sw - 1)
-		var fy: int = clampi(int(floor(p.y)), 0, sh - 1)
-		solid[fy * sw + fx] = 1
+		var inside: Vector2 = p + nrm * 0.49
+		var ix: int = int(floor(inside.x))
+		var iy: int = int(floor(inside.y))
+		if ix < 0 or iy < 0 or ix >= sw or iy >= sh:
+			continue
+		var center: Vector2 = Vector2(float(ix) + 0.5, float(iy) + 0.5)
+		if (center - p).dot(nrm) < 0.0:
+			continue
+		solid[iy * sw + ix] = 1
 
 
 static func _keep_rooms(solid: PackedByteArray, sw: int, sh: int, rooms: Array, per: int) -> void:

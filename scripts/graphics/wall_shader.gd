@@ -1,6 +1,6 @@
 extends Object
 
-## Wall albedo is world position on the face. Light sample matches the floor buffer.
+## Brick UV is the span tangent and world height. Light sample matches the floor buffer.
 
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
@@ -20,50 +20,29 @@ uniform sampler2D light_tex : source_color, filter_linear;
 uniform vec2 uv_scale = vec2(1.0);
 uniform vec2 uv_off = vec2(0.0);
 uniform vec3 tint = vec3(1.0);
-uniform float hash_m = 4.0;
-uniform float variant_n = 3.0;
 uniform float wear = 0.0;
 uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
 varying vec3 world_pos;
 varying vec2 side_uv;
-varying float face_mode;
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float sx = length(vec3(MODEL_MATRIX[0].x, MODEL_MATRIX[1].x, MODEL_MATRIX[2].x));
-	side_uv = vec2(UV.x * sx, UV.y);
+	float sz = length(vec3(MODEL_MATRIX[0].z, MODEL_MATRIX[1].z, MODEL_MATRIX[2].z));
 	vec3 wn = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 	if (abs(wn.y) > abs(wn.x) && abs(wn.y) > abs(wn.z)) {
-		face_mode = 2.0;
-	} else if (abs(wn.x) < 0.2 || abs(wn.z) < 0.2) {
-		face_mode = abs(wn.x) > abs(wn.z) ? 1.0 : 0.0;
+		side_uv = vec2(UV.x * sx, UV.y * sz);
 	} else {
-		face_mode = 3.0;
+		side_uv = vec2(UV.x * sx, UV.y);
 	}
 }
 
 void fragment() {
 	vec2 xz = world_pos.xz;
-	vec2 face = world_pos.xy;
-	if (face_mode > 2.5) {
-		face = side_uv;
-	} else if (face_mode > 1.5) {
-		face = world_pos.xz;
-	} else if (face_mode > 0.5) {
-		face = world_pos.zy;
-	}
-	float cell = max(hash_m, 0.001);
-	vec2 quilt = floor(face / cell);
-	float h = fract(sin(dot(quilt, vec2(127.1, 311.7))) * 43758.5453);
-	float nvar = max(variant_n, 1.0);
-	vec3 quilt_tint = vec3(1.0);
-	if (nvar > 1.5) {
-		float pick = floor(h * nvar) / (nvar - 1.0);
-		quilt_tint = mix(vec3(0.86), vec3(1.08), pick);
-	}
-	vec2 uv = fract(face * uv_scale + uv_off);
+	vec2 uv = fract(side_uv * uv_scale + uv_off);
 	vec3 c = texture(albedo_tex, uv).rgb;
+	float h = fract(sin(dot(floor(side_uv * 0.25), vec2(127.1, 311.7))) * 43758.5453);
 	float worn = mix(1.0, mix(0.78, 1.0, h), clamp(wear, 0.0, 1.0));
 	vec2 span = max(light_span, vec2(0.001));
 	vec2 luv = clamp((xz - light_origin) / span, vec2(0.0), vec2(1.0));
@@ -78,8 +57,7 @@ void fragment() {
 	vec3 s01 = texelFetch(light_tex, ivec2(i0.x, i1.y), 0).rgb;
 	vec3 s11 = texelFetch(light_tex, i1, 0).rgb;
 	vec3 lit = mix(mix(s00, s10, fr.x), mix(s01, s11, fr.x), fr.y);
-	lit = max(lit, vec3(0.42));
-	ALBEDO = c * tint * quilt_tint * worn * lit;
+	ALBEDO = c * tint * worn * lit;
 }
 """
 	_sh = sh
@@ -94,19 +72,11 @@ static func material(tex_path: String, fallback: Color, tint: Color = Color.WHIT
 	var density: float = App.bal.getv("ground_px_per_m")
 	if density < 1.0:
 		density = T.GROUND_PX_PER_M
-	var hash_m: float = App.bal.getv("ground_hash_m")
-	if hash_m < 1.0:
-		hash_m = T.GROUND_HASH_M
-	var variants: float = App.bal.getv("ground_variants")
-	if variants < 1.0:
-		variants = T.GROUND_VARIANTS
 	var repeats: float = density / px
 	mat.set_shader_parameter("albedo_tex", albedo)
 	mat.set_shader_parameter("uv_scale", Vector2(repeats, repeats))
 	mat.set_shader_parameter("uv_off", Vector2.ZERO)
 	mat.set_shader_parameter("tint", Vector3(tint.r, tint.g, tint.b))
-	mat.set_shader_parameter("hash_m", hash_m)
-	mat.set_shader_parameter("variant_n", variants)
 	mat.set_shader_parameter("wear", App.bal.getv("ground_wear"))
 	LightRt.bind(mat)
 	return mat

@@ -1,6 +1,7 @@
 extends Object
 
 ## Fine solid blocks. Discs flood walkable texels from the mount. Cold fill is those samples only.
+## The walk mask is the fine cell under the texel center. A 4-neighbor does not open a cell past the lip.
 ## Wall texels stay dark except the neighbor sample along the bake. SUB stays 4.
 
 const SUB := 4
@@ -102,7 +103,7 @@ static func _walk_mask(
 	for py in ih:
 		var row: int = py * iw
 		for px in iw:
-			if _tex_walk(solid, sw, sh, n, x0, z0, px, py):
+			if _lip_open(solid, sw, sh, n, x0, z0, px, py):
 				walk[row + px] = 1
 	return walk
 
@@ -231,7 +232,7 @@ static func _walls(
 			bb[i] = bv
 
 
-static func _tex_walk(
+static func _lip_open(
 	solid: PackedByteArray,
 	sw: int,
 	sh: int,

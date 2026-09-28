@@ -15,6 +15,10 @@ static var _floor_mesh: PlaneMesh
 
 static func setup(host: Node) -> void:
 	host.geo_jobs.clear()
+	if host.has_meta("wdb_ribbon_n"):
+		host.remove_meta("wdb_ribbon_n")
+	if host.has_meta("wdb_ribbon"):
+		host.remove_meta("wdb_ribbon")
 	if host.geo_root != null and is_instance_valid(host.geo_root):
 		host.geo_root.queue_free()
 	host.geo_root = Node3D.new()
@@ -128,21 +132,33 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 	var root := Node3D.new()
 	root.name = "Geo_%d_%d" % [ox, oy]
 	host.geo_root.add_child(root)
+	var outlined: bool = not _outline_spans(host).is_empty()
+	var runs: Array[Dictionary] = []
+	if outlined or not wall_cells.is_empty():
+		runs = _wall_runs(host, solid, sw, sh, wall_cells, ox, oy, x1, y1, n)
 	if not floor_cells.is_empty():
-		var fm: MultiMeshInstance3D = _emit_floors(WallRects.merge(floor_cells), fine_m, host.floor_mat)
-		root.add_child(fm)
-		if host.floor_mm == null:
-			host.floor_mm = fm
-	if not wall_cells.is_empty():
-		var runs: Array[Dictionary] = _wall_runs(host, solid, sw, sh, wall_cells, ox, oy, x1, y1, n)
-		if not runs.is_empty():
-			var wall_inst: MeshInstance3D = MeshInstance3D.new()
-			wall_inst.mesh = WallMesh.from_faces(runs)
-			wall_inst.scale = Vector3(fine_m, 1.0, fine_m)
-			wall_inst.material_override = host.wall_mat
-			wall_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			root.add_child(wall_inst)
-	add_collision(root, wall_cells, fine_m)
+		if outlined:
+			var lip: Node3D = _emit_floor_lip(floor_cells, runs, fine_m, host.floor_mat)
+			root.add_child(lip)
+			var mm: MultiMeshInstance3D = _first_mm(lip)
+			if host.floor_mm == null and mm != null:
+				host.floor_mm = mm
+		else:
+			var fm: MultiMeshInstance3D = _emit_floors(WallRects.merge(floor_cells), fine_m, host.floor_mat)
+			root.add_child(fm)
+			if host.floor_mm == null:
+				host.floor_mm = fm
+	if not runs.is_empty():
+		var wall_inst: MeshInstance3D = MeshInstance3D.new()
+		wall_inst.mesh = WallMesh.from_faces(runs)
+		wall_inst.scale = Vector3(fine_m, 1.0, fine_m)
+		wall_inst.material_override = host.wall_mat
+		wall_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		root.add_child(wall_inst)
+	if outlined:
+		_add_ribbon_boxes(root, runs, fine_m)
+	elif not wall_cells.is_empty():
+		add_collision(root, wall_cells, fine_m)
 	job.node = root
 	job.state = "live"
 
@@ -193,10 +209,22 @@ static func _outline_spans(host: Node) -> Array:
 
 
 static func _wall_runs(host: Node, solid: PackedByteArray, sw: int, sh: int, wall_cells: Array[Vector2i], ox: int, oy: int, x1: int, y1: int, n: int) -> Array[Dictionary]:
-	var spans: Array = _outline_spans(host)
-	if spans.is_empty():
+	if _outline_spans(host).is_empty():
 		return _faces_on_chunk(solid, sw, sh, wall_cells, ox * n, oy * n, x1 * n, y1 * n)
-	return _spans_on_chunk(spans, ox * n, oy * n, x1 * n, y1 * n)
+	return WallMesh.prepare(_spans_on_chunk(_prepared_spans(host), ox * n, oy * n, x1 * n, y1 * n))
+
+
+static func _prepared_spans(host: Node) -> Array:
+	var raw: Array = _outline_spans(host)
+	var mark: int = raw.size()
+	if host.has_meta("wdb_ribbon_n") and int(host.get_meta("wdb_ribbon_n")) == mark and host.has_meta("wdb_ribbon"):
+		var cached: Variant = host.get_meta("wdb_ribbon")
+		if cached is Array:
+			return cached
+	var prepared: Array = WallMesh.prepare(raw)
+	host.set_meta("wdb_ribbon", prepared)
+	host.set_meta("wdb_ribbon_n", mark)
+	return prepared
 
 
 static func _spans_on_chunk(spans: Array, fx0: int, fy0: int, fx1: int, fy1: int) -> Array[Dictionary]:
@@ -308,6 +336,239 @@ static func _run_looks_in(run: Dictionary, ox: int, oy: int, x1: int, y1: int) -
 		if floor_cell.x >= ox and floor_cell.y >= oy and floor_cell.x < x1 and floor_cell.y < y1:
 			return true
 	return false
+
+
+static func _first_mm(node: Node) -> MultiMeshInstance3D:
+	for child in node.get_children():
+		if child is MultiMeshInstance3D:
+			return child as MultiMeshInstance3D
+	return null
+
+
+static func _emit_floor_lip(cells: Array[Vector2i], spans: Array, fine_m: float, mat: Material) -> Node3D:
+	var cut: Dictionary = {}
+	for item in spans:
+		if item is Dictionary and (item as Dictionary).has("delta"):
+			_mark_span(cut, item)
+	var flush: Array[Vector2i] = []
+	var pieces: Array = []
+	for cell in cells:
+		if not cut.has(cell):
+			flush.append(cell)
+			continue
+		var poly: PackedVector2Array = _clip_cell(cell.x, cell.y, spans)
+		if poly.size() < 3:
+			continue
+		if _still_square(poly, cell.x, cell.y):
+			flush.append(cell)
+		else:
+			pieces.append(poly)
+	var holder: Node3D = Node3D.new()
+	holder.name = "Floors"
+	if not flush.is_empty():
+		holder.add_child(_emit_floors(WallRects.merge(flush), fine_m, mat))
+	if not pieces.is_empty():
+		var inst: MeshInstance3D = MeshInstance3D.new()
+		inst.mesh = _lip_mesh(pieces, fine_m)
+		inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		if mat:
+			inst.material_override = mat
+		holder.add_child(inst)
+	return holder
+
+
+static func _mark_span(cut: Dictionary, run: Dictionary) -> void:
+	var o: Vector2 = run["origin"]
+	var d: Vector2 = run["delta"]
+	var span_l: float = d.length()
+	if span_l < 0.2:
+		return
+	var steps: int = maxi(1, int(ceil(span_l * 2.0)))
+	for s in range(steps + 1):
+		var p: Vector2 = o + d * (float(s) / float(steps))
+		var fx: int = int(floor(p.x))
+		var fy: int = int(floor(p.y))
+		for oy in range(-1, 2):
+			for ox in range(-1, 2):
+				cut[Vector2i(fx + ox, fy + oy)] = true
+
+
+static func _square(fx: int, fy: int) -> PackedVector2Array:
+	var poly: PackedVector2Array = PackedVector2Array()
+	var x0: float = float(fx)
+	var y0: float = float(fy)
+	poly.append(Vector2(x0, y0))
+	poly.append(Vector2(x0 + 1.0, y0))
+	poly.append(Vector2(x0 + 1.0, y0 + 1.0))
+	poly.append(Vector2(x0, y0 + 1.0))
+	return poly
+
+
+static func _seg_dist(p: Vector2, o: Vector2, d: Vector2) -> float:
+	var l2: float = d.length_squared()
+	if l2 < 0.0001:
+		return p.distance_to(o)
+	var t: float = clampf((p - o).dot(d) / l2, 0.0, 1.0)
+	return p.distance_to(o + d * t)
+
+
+static func _near_span(run: Dictionary, fx: int, fy: int) -> bool:
+	var center: Vector2 = Vector2(float(fx) + 0.5, float(fy) + 0.5)
+	var origin: Vector2 = run["origin"] as Vector2
+	var delta: Vector2 = run["delta"] as Vector2
+	return _seg_dist(center, origin, delta) <= 1.8
+
+
+static func _clip_cell(fx: int, fy: int, spans: Array) -> PackedVector2Array:
+	var poly: PackedVector2Array = _square(fx, fy)
+	for item in spans:
+		if not (item is Dictionary):
+			continue
+		var run: Dictionary = item
+		if not run.has("delta"):
+			continue
+		if not _near_span(run, fx, fy):
+			continue
+		var d: Vector2 = run["delta"] as Vector2
+		var nrm: Vector2 = run["normal"] as Vector2
+		if nrm.length_squared() < 0.0001:
+			nrm = Vector2(-d.y, d.x)
+		if nrm.length_squared() > 0.0001:
+			nrm = nrm.normalized()
+		var origin: Vector2 = run["origin"] as Vector2
+		poly = _clip_half(poly, origin, nrm)
+		if poly.size() < 3:
+			return poly
+	return poly
+
+
+static func _clip_half(poly: PackedVector2Array, origin: Vector2, inward: Vector2) -> PackedVector2Array:
+	var count: int = poly.size()
+	var out: PackedVector2Array = PackedVector2Array()
+	if count < 3:
+		return out
+	var prev: Vector2 = poly[count - 1]
+	var prev_in: bool = (prev - origin).dot(inward) >= -0.02
+	for i in count:
+		var cur: Vector2 = poly[i]
+		var cur_in: bool = (cur - origin).dot(inward) >= -0.02
+		if cur_in:
+			if not prev_in:
+				out.append(_edge_hit(prev, cur, origin, inward))
+			out.append(cur)
+		elif prev_in:
+			out.append(_edge_hit(prev, cur, origin, inward))
+		prev = cur
+		prev_in = cur_in
+	return out
+
+
+static func _edge_hit(a: Vector2, b: Vector2, origin: Vector2, inward: Vector2) -> Vector2:
+	var da: float = (a - origin).dot(inward)
+	var db: float = (b - origin).dot(inward)
+	var den: float = da - db
+	var t: float = 0.0
+	if absf(den) > 0.00001:
+		t = da / den
+	return a + (b - a) * clampf(t, 0.0, 1.0)
+
+
+static func _still_square(poly: PackedVector2Array, fx: int, fy: int) -> bool:
+	if poly.size() != 4:
+		return false
+	var x0: float = float(fx)
+	var y0: float = float(fy)
+	var corners: Array[Vector2] = [
+		Vector2(x0, y0),
+		Vector2(x0 + 1.0, y0),
+		Vector2(x0 + 1.0, y0 + 1.0),
+		Vector2(x0, y0 + 1.0),
+	]
+	var hits: int = 0
+	for corner in corners:
+		var found: bool = false
+		for i in poly.size():
+			if poly[i].distance_squared_to(corner) <= 0.004:
+				found = true
+				break
+		if found:
+			hits += 1
+	return hits == 4
+
+
+static func _lip_mesh(pieces: Array, fine_m: float) -> ArrayMesh:
+	var verts: PackedVector3Array = PackedVector3Array()
+	var norms: PackedVector3Array = PackedVector3Array()
+	var uvs: PackedVector2Array = PackedVector2Array()
+	var indices: PackedInt32Array = PackedInt32Array()
+	for piece in pieces:
+		var poly: PackedVector2Array = piece as PackedVector2Array
+		if poly.size() < 3:
+			continue
+		var base: int = verts.size()
+		for i in poly.size():
+			var p: Vector2 = poly[i]
+			var x: float = p.x * fine_m
+			var z: float = p.y * fine_m
+			verts.append(Vector3(x, T.FLOOR_Y, z))
+			norms.append(Vector3.UP)
+			uvs.append(Vector2(x, z))
+		for i in range(1, poly.size() - 1):
+			indices.append(base)
+			indices.append(base + i + 1)
+			indices.append(base + i)
+	var mesh: ArrayMesh = ArrayMesh.new()
+	if verts.is_empty():
+		return mesh
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = norms
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = indices
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
+
+
+static func _add_ribbon_boxes(root: Node3D, spans: Array, fine_m: float) -> void:
+	if spans.is_empty():
+		return
+	var body: StaticBody3D = StaticBody3D.new()
+	body.collision_layer = 1
+	body.collision_mask = 0
+	root.add_child(body)
+	for item in spans:
+		if not (item is Dictionary):
+			continue
+		var run: Dictionary = item
+		if not run.has("delta"):
+			continue
+		var o: Vector2 = run["origin"] as Vector2
+		var d: Vector2 = run["delta"] as Vector2
+		var span_l: float = d.length()
+		if span_l < 0.2:
+			continue
+		var tangent: Vector2 = d / span_l
+		var left: Vector2 = Vector2(-tangent.y, tangent.x)
+		var inward: Vector2 = left
+		var nrm: Vector2 = run["normal"] as Vector2
+		if nrm.length_squared() < 0.0001:
+			nrm = left
+		else:
+			nrm = nrm.normalized()
+		if inward.dot(nrm) < 0.0:
+			inward = -inward
+		var thick: float = float(run.get("thick", 1.0))
+		if thick <= 0.0 or thick > 1.5:
+			thick = 1.0
+		var mid: Vector2 = o + d * 0.5 - inward * (thick * 0.5)
+		var basis: Basis = Basis(Vector3(tangent.x, 0.0, tangent.y), Vector3.UP, Vector3(left.x, 0.0, left.y))
+		var box: BoxShape3D = BoxShape3D.new()
+		box.size = Vector3(span_l * fine_m, T.WALL_H, thick * fine_m)
+		var cs: CollisionShape3D = CollisionShape3D.new()
+		cs.shape = box
+		cs.transform = Transform3D(basis, Vector3(mid.x * fine_m, T.WALL_H * 0.5, mid.y * fine_m))
+		body.add_child(cs)
 
 
 static func add_collision(root: Node3D, walls: Array[Vector2i], fine_m: float) -> void:
