@@ -1,516 +1,60 @@
 {
-	"series": "0.4",
+	"series": "0.5",
 	"generated_from": "design/changelog",
 	"entries": [
 		{
-			"label": "0.4.25",
+			"label": "0.5.0",
 			"points": [
 				{
-					"text": "Add `WallRects.faces` on `scripts/world/wall_rects.gd`: greedy-merged wall faces toward FLOOR as `{ \"origin\", \"size\", \"normal\" }` in tile cells."
+					"text": "Opened development week 5 on the live path"
 				},
 				{
-					"text": "A face needs an in-bounds FLOOR neighbor across its normal (same index math as `wall_faces_floor`). Collinear faces that share a normal merge; seed order follows the cell list."
+					"text": "Placeholdia yard uses seamless grass and packed-dirt sheets; the path stays cobble-tinted; a post-and-rail fence rings the slab"
 				},
 				{
-					"text": "Nothing calls it yet. `add_collision`, `merge`, and BoxMesh walls are unchanged. Same look; no new numbers."
+					"text": "Guild and reception sit as 3D boxes with russet shingles and a short striped awning; the vendor stall keeps its canvas tarp"
 				},
 				{
-					"text": "Clear the staged reuse Brief."
+					"text": "Dummy pad, floor crystal, anvil, and notice board keep labeled spots; camp layout is one authored yard"
+				},
+				{
+					"text": "Actors pick up light at their feet. Hub squash is one sun mark for the whole yard. Dungeon squash is up to three nearby torches, crystals, or fires, pinned to the current walk frame, faded so marks do not smear"
+				},
+				{
+					"text": "Dungeon walls are brick ribbons along the floor outline, with caps on tops and ends, not one box per cell"
+				},
+				{
+					"text": "Floors follow a carved outline: filleted corners, occasional jagged runs, then filled solid. Hall joins keep a closed rim so walkable holes do not open at diagonal bands"
+				},
+				{
+					"text": "Collision follows that same solid. Ribbons are a thin shell on the outline; you walk the fill, not the brick"
+				},
+				{
+					"text": "Torches hang on wall brackets and throw a real light disc; crystals and campfires do the same. Occupancy keeps stamps off solid rock"
+				},
+				{
+					"text": "Ground in the dungeon uses the dungeon-floor sheet; light and shadow paint across the walkable fill"
+				},
+				{
+					"text": "Interact props register as light sources so benches and pads take the same discs"
+				},
+				{
+					"text": "Entering a floor still covers immediately; nearby volume streams first. The dungeon scene is packed before the swap"
+				},
+				{
+					"text": "Returning to the hub no longer freezes the session"
+				},
+				{
+					"text": "The HUD map well is built when the floor is ready. Opening the map only toggles the overlay; it does not create the picture"
+				},
+				{
+					"text": "Title load uses the new load background and a dark plate over the art"
+				},
+				{
+					"text": "Ground scale, wear, outline fillet/jag, and torch / crystal / fire / sun range and energy are on the secret debug menu"
 				}
 			],
-			"summary": "Wall faces have a helper ready for the volume job."
-		},
-		{
-			"label": "0.4.24",
-			"points": [
-				{
-					"text": "Lock graphics leftovers: sheet list, bracket on the wall, Imagine owner named in the first Build message."
-				},
-				{
-					"text": "Document scratch helpers on the web path. Park session_src harvest into _src/sessions."
-				},
-				{
-					"text": "Imagine this week is one sheet each for grass, packed dirt, dungeon floor, wall brick, plus the unlit torch-and-bracket bible."
-				},
-				{
-					"text": "Ground and wall variants are shader hash/tint. Flame is code VFX. Crystal and campfire stay live meshes. Occupancy stays WALL-only."
-				},
-				{
-					"text": "Strike leftover 256-512 RT size. One texel per tile: dungeon follows the stream ring, hub uses the camp AABB."
-				},
-				{
-					"text": "Volume visuals use WallRects.faces, not merge. Stage numbered Bot Brief for that sibling."
-				}
-			],
-			"summary": "Graphics week locks, scratch cookbook, and wall-face Brief."
-		},
-		{
-			"label": "0.4.23",
-			"points": [
-				{
-					"text": "Extract the greedy wall-rect merge from `dungeon_geo_stream.gd` `add_collision` into `scripts/world/wall_rects.gd` (`WallRects.merge`)."
-				},
-				{
-					"text": "`add_collision` keeps the StaticBody3D, BoxShape3D sizes, layer / mask, and positions; it only asks `merge` for the rects."
-				},
-				{
-					"text": "Same collision and look; no new numbers."
-				}
-			],
-			"summary": "Wall collision merge has its own helper."
-		},
-		{
-			"label": "0.4.22",
-			"points": [
-				{
-					"text": "Stage Bot reuse Brief: extract dungeon_geo_stream wall-rect merge into scripts/world/wall_rects.gd."
-				},
-				{
-					"text": "Collision body and BoxShape path stay in add_collision. No visual or lighting change."
-				}
-			],
-			"summary": "Stage wall-rect merge reuse for Grok Bot."
-		},
-		{
-			"label": "0.4.21",
-			"points": [
-				{
-					"text": "Document locked graphics week: RT mapping, occupancy, sources, hub sun disc, torch bible, actor tint."
-				},
-				{
-					"text": "Grok Build gather is owned only by design/build-job-cycle.md: planned list_xref, planned show_func, and one list_code_map_row when a live script is in the slice."
-				},
-				{
-					"text": "Slice-boot postcard and run_build_gate match that contract. Script-cap is opt-in; import check is the default prove."
-				},
-				{
-					"text": "Drop week/catch-up, cross-path leash, and per-catalog-call summary language from the Build protocol files."
-				}
-			],
-			"summary": "Graphics jobs match the locked week spec."
-		},
-		{
-			"label": "0.4.20",
-			"points": [
-				{
-					"text": "Add `scripts/graphics/`: `env_kit.gd` (WorldEnvironment + sun), `nearest_mat.gd` (nearest-filter material), `mm_emit.gd` (shared MultiMesh emit), `wrap_shader.gd` (cached hub roof / awning / tarp shader)."
-				},
-				{
-					"text": "Hub (`camp_build.gd`, `camp_build_mesh.gd`), dungeon (`dungeon_geo.gd`, `dungeon_geo_stream.gd`), and `foundation.gd` call those helpers with their existing literals; drop unused `mm_planes` / `mm_boxes`."
-				},
-				{
-					"text": "Move the floor minimap and fog reveal out of `dungeon_geo.gd` into `scripts/world/dungeon_minimap.gd`; `dungeon.gd` keeps `_map`, `_redraw_map`, `_reveal_around`."
-				},
-				{
-					"text": "Same look and behavior; no new numbers."
-				}
-			],
-			"summary": "Graphics helpers shared; minimap has its own file."
-		},
-		{
-			"label": "0.4.19",
-			"points": [
-				{
-					"text": "Register graphics door (env, ground, volume, buffer, actor)."
-				},
-				{
-					"text": "Web/chat may picture-read named work; Build gather stays thin; 10KB remains Bot."
-				},
-				{
-					"text": "Stage Bot reuse brief: extract env kit, nearest-mat, minimap, shared emit, wrap shader into scripts/graphics/."
-				},
-				{
-					"text": "Require an H1 on door and job files; add the missing graphics-volume title."
-				}
-			],
-			"summary": "Graphics owner routed; Bot reuse staged."
-		},
-		{
-			"label": "0.4.18",
-			"points": [
-				{
-					"text": "Set `WDB_AGENT_SESSION=github-actions` on the bot-gate Actions job so `check_script_cap.py` / `agent_log` can run without a Grok VM session folder."
-				},
-				{
-					"text": "PR script-cap no longer fails with `agent_log: no session key`. Allowlist and real over-10KB fails are unchanged."
-				}
-			],
-			"summary": "bot-gate CI gets a session key; cap/allowlist checks can mean what they say."
-		},
-		{
-			"label": "0.4.17",
-			"points": [
-				{
-					"text": "Centralize Autoload/flow `preload(\"res://...\")` literals on facade owners (`app.gd`, `app_boot.gd`, `app_flow.gd`, `app_run.gd`, `app_set.gd`)."
-				},
-				{
-					"text": "Shared scripts and tunables live on `App` (plus `T`); boot-only `DebugS`/`AnimS` stay on `app_boot`; `LoadTiming`/`Anim` on `app_flow`; `UiText` on `app_set`."
-				},
-				{
-					"text": "Cluster callers (`app_boot`, `app_run`, `app_set`, `boot`, `title`, `title_news`) use those consts \u2014 no `preload(variable)`, no load timing/path change."
-				}
-			],
-			"summary": "One preload owner per Autoload/flow API; cluster files reuse App/facade consts."
-		},
-		{
-			"label": "0.4.16",
-			"points": [
-				{
-					"text": "Extract shared markdown formatting helpers into `tools/md_format_lib.py`."
-				},
-				{
-					"text": "`bot_opt.py`, `code_map_lib.py`, `patch_code_map.py`, and `doc_patch.py` import the library for UTF-8/LF write, tick wrap, path-tick replace-once, HTML-comment marker split, and table-row rewrite."
-				},
-				{
-					"text": "`anim_review_lib.write_text` uses the shared write helper. Queue semantics and code-map patch results unchanged."
-				}
-			],
-			"summary": "Shared md formatting library for Bot/doc tools; no queue or code-map behavior change."
-		},
-		{
-			"label": "0.4.15",
-			"points": [
-				{
-					"text": "Docs facade: `design/gear-ui.md` is the door under 4KB."
-				},
-				{
-					"text": "Siblings: `gear-ui-board.md`, `gear-ui-stats.md`, `gear-ui-reequip.md`, `gear-ui-chrome.md` (each under 8KB)."
-				},
-				{
-					"text": "Job table covers former gear-ui `##` clusters; callers keep linking the facade."
-				},
-				{
-					"text": "`design/routes.yaml` registers `gear_ui.board|stats|reequip|chrome`. No binding change."
-				},
-				{
-					"text": "Docs facade: `design/hub.md` door under 4KB (was ~10.6KB)."
-				},
-				{
-					"text": "Siblings: `hub-crystal.md`, `hub-benches.md`, `hub-guild.md`, `hub-yard.md` (each under 8KB)."
-				},
-				{
-					"text": "`design/routes.yaml` registers `hub.crystal|benches|guild|yard` plus `job_read_when`. No binding change."
-				},
-				{
-					"text": "`tools/bot_status.py` `_git` uses `rstrip` so porcelain leading spaces survive (allowlist path parse)."
-				},
-				{
-					"text": "Docs facade: `design/dungeon.md` door under 4KB (was ~10.1KB)."
-				},
-				{
-					"text": "Siblings: `dungeon-gen.md`, `dungeon-gates.md`, `dungeon-crystals.md`, `dungeon-stream.md` (each under 8KB)."
-				},
-				{
-					"text": "`design/routes.yaml` registers `dungeon.gen|gates|crystals|stream`. No binding change."
-				},
-				{
-					"text": "Docs facade: `design/save-tech.md` door under 4KB (was ~10.0KB)."
-				},
-				{
-					"text": "Siblings: `save-tech-persist.md`, `save-tech-web.md`, `save-tech-runtime.md` (each under 8KB)."
-				},
-				{
-					"text": "`design/routes.yaml` registers `save_tech.persist|web|runtime`. No binding change."
-				},
-				{
-					"text": "Docs facade: `design/archives.md` door under 4KB (was ~8.9KB); core rule stays on the door."
-				},
-				{
-					"text": "Siblings: `archives-catalog.md`, `archives-play.md`, `archives-ui.md` (each under 8KB)."
-				},
-				{
-					"text": "`design/routes.yaml` registers `archives.catalog|play|ui`. No binding change."
-				}
-			],
-			"summary": "Gear-ui, hub, dungeon, save-tech, and archives doors + siblings; facade paths unchanged."
-		},
-		{
-			"label": "0.4.14",
-			"points": [
-				{
-					"text": "Prompt chrome gold and 5px dark outline are ThemeS tokens shared by prompt bars and confirm hints."
-				},
-				{
-					"text": "Wipe-children for prompt paint and progress menus shares one small helper."
-				},
-				{
-					"text": "Progress extract, shop, and abandon confirms use the confirm modal instead of press-twice."
-				},
-				{
-					"text": "Pause / progress / crystal / recap open and close share a short ui_session helper for tree pause and App.ui_open."
-				},
-				{
-					"text": "Confirm dialog left/right focus uses split_menu_view.wire_horiz; Select/Back come from PromptView.merge_parts."
-				},
-				{
-					"text": "Pause skills and recap bars share skill_row_view for the skill label and single-fill XP track."
-				}
-			],
-			"summary": "Confirm modal and shared UI session / skill-row / focus helpers; menus stay the same."
-		},
-		{
-			"label": "0.4.13",
-			"points": [
-				{
-					"text": "Size sweep: split `scripts/world/dungeon_stream.gd` under the 5KB sweep target."
-				},
-				{
-					"text": "Facade stays at `dungeon_stream.gd`; helpers: `dungeon_stream_queue.gd`, `dungeon_stream_act.gd`."
-				},
-				{
-					"text": "code-map Dungeon row lists the new siblings. No behavior change."
-				}
-			],
-			"summary": "Dungeon stream size split under 5KB; public path unchanged."
-		},
-		{
-			"label": "0.4.12",
-			"points": [
-				{
-					"text": "Size sweep: split `scripts/debug/dungeon_map.gd` under the 10KB ship floor."
-				},
-				{
-					"text": "Facade stays at `dungeon_map.gd`; helpers: `dungeon_map_dump.gd`, `dungeon_map_util.gd`, `dungeon_map_collect.gd`, `dungeon_map_emit.gd`, `dungeon_map_spec.gd`, `dungeon_map_ascii.gd`."
-				},
-				{
-					"text": "code-map Debug row lists the new siblings. No behavior change."
-				}
-			],
-			"summary": "Dungeon map dump size split under 10KB; public path unchanged."
-		},
-		{
-			"label": "0.4.11",
-			"points": [
-				{
-					"text": "GROK-BOT.md Auto-review Allow stays git add / commit / push on bot/* under /workspace/WhatDwellsBelow."
-				},
-				{
-					"text": "Auto-review Ask first also covers deletes outside the cluster, plus push main, gh pr merge, and force-push."
-				},
-				{
-					"text": "Drop deleted design/park-bot-setup.md from the Bot allowlist."
-				},
-				{
-					"text": "Main-changed wake is status then size-only on bot/refactorer after a saved size skill."
-				},
-				{
-					"text": "bot-wake.yml runs the punch list on main; webhook fires only when over_10kb count is above 0 and GROK_BOT_WEBHOOK_URL is set."
-				}
-			],
-			"summary": "Bot branch ship on bot/* stays Allow; main-wake is size-only after a saved skill and stays quiet until over_10kb count is above 0 and a webhook secret exists."
-		},
-		{
-			"label": "0.4.10",
-			"points": [
-				{
-					"text": "Rewrote GROK-BOT.md to the official Grok Bot product model (profile, first message names bot/refactorer, Auto-review Allow on bot/*, Local Computer Never)."
-				},
-				{
-					"text": "Job files Verify with Prove per BOT.md. No Steam / WDB_ROOT / pc-offload prove path."
-				},
-				{
-					"text": "Deleted tools/sync_agent_skills.ps1. Quarantined tools/week_start.ps1 as human-only."
-				},
-				{
-					"text": "pc-offload and load-graph no longer treat the cloud Bot as a catalog user."
-				},
-				{
-					"text": "Dropped copy-.grok/skills tombstones and the live pc-offload skill cite of the deleted sync script."
-				},
-				{
-					"text": "Finished parks delete the Open file and the parked-tasks row. Do not rewrite a park file as closed."
-				},
-				{
-					"text": "Deleted design/park-agent-setup.md."
-				},
-				{
-					"text": "Web/chat retry scratches are deltas: skip writes that already landed; do not re-emit the whole Phase 3 list."
-				}
-			],
-			"summary": "Parked agent_setup closed (delete, not a closed stamp) plus web retry-scratch rule."
-		},
-		{
-			"label": "0.4.9",
-			"points": [
-				{
-					"text": "Web path is five phases: boot, discuss, goal and emit list, emit, test. Phase 3 names the goal. No auto-advance. Mechanical RESULT errors return to emit; a new assumption is one blocking question."
-				},
-				{
-					"text": "Bot owns live script size. Web does not cap-split. Documentation is not a separate phase."
-				},
-				{
-					"text": "Path and law files no longer teach leave-off, pin-scripts, paste-emit, Bot intake, or compaction recovery."
-				},
-				{
-					"text": "Build gather/change/prove lives in `design/build-job-cycle.md`. The Grok Build path file is the thin remainder."
-				},
-				{
-					"text": "Grok Bot works on the cloud VM only. It does not load pc-offload or repo Imagine skills. It may save a product skill after a good method."
-				},
-				{
-					"text": "`tools/check_load_graph.py` fails leftover ritual phrases. AGENTS.md load cap is one paragraph."
-				}
-			],
-			"summary": "Agent routing compressed to path pick plus one path file; web loops instead of a seven-phase stack; Bot stays off the User PC."
-		},
-		{
-			"label": "0.4.8",
-			"points": [
-				{
-					"text": "Grok Bot is one product: BOT.md plus bot_status plus one Job file. Deleted design/grok-bot-session.md."
-				},
-				{
-					"text": "Week pins are User-only. Agent-facing docs no longer name or launch the week-start script."
-				},
-				{
-					"text": "Versioning gate is named pin or archive. Ship label stays on versioning-log."
-				}
-			],
-			"summary": "Bot boot is one file; week pins stay human."
-		},
-		{
-			"label": "0.4.7",
-			"points": [
-				{
-					"text": "Grok Build slice boot: name an area, run start_build_slice, gather on live, User launches the FORK worktree argv off clean main."
-				},
-				{
-					"text": "Week start is the week_start.ps1 script, not a new-week passphrase."
-				},
-				{
-					"text": "Fork-session is the return from that gather pin after a red postcard; the guilty transcript does not keep patching."
-				},
-				{
-					"text": "Drop stage_patch / promote_patch from the loop detector and the pc-offload catalog."
-				},
-				{
-					"text": "read_summary uses the session path only; list_xref header matches agent_log."
-				}
-			],
-			"summary": "Build slice boot plus harness hygiene: week_start is the week trigger, worktrees fork from a gather pin, dead patch tools stay gone."
-		},
-		{
-			"label": "0.4.6",
-			"points": [
-				{
-					"text": "Add the missing 0.4.5 changelog for the allowlist commit already stamped on main."
-				},
-				{
-					"text": "Web / chat must not push main and must not hand the User a command list in place of one tools/_scratch.py."
-				}
-			],
-			"summary": "Backfill 0.4.5 notes and lock web sessions to one scratch off main."
-		},
-		{
-			"label": "0.4.5",
-			"points": [
-				{
-					"text": "Allow README.md, GROK-BOT.md, and deleting design/park-bot-setup.md on bot/* PRs."
-				}
-			],
-			"summary": "Bot PR allowlist includes the human setup files."
-		},
-		{
-			"label": "0.4.4",
-			"points": [
-				{
-					"text": "Add BOT.md plus Linux bot_status / check_script_cap / allowlist / bot-gate so Grok Bot does not load the web/Build protocol backpack."
-				},
-				{
-					"text": "Keep reuse-map and grok-bot-opt markdown as the only queues; status reads them."
-				},
-				{
-					"text": "Agent path files boot the cloud Refactorer from BOT.md and python tools/bot_status.py."
-				},
-				{
-					"text": "check_load_graph treats root BOT.md like AGENTS.md so routes.yaml may name it."
-				}
-			],
-			"summary": "Grok Bot gets a parallel onboard surface without rewriting web/Build protocols."
-		},
-		{
-			"label": "0.4.3",
-			"points": [
-				{
-					"text": "Per-path Godot lock and invoke helper; runners no longer kill godot*."
-				},
-				{
-					"text": "Week start pins grok_web_w{N} at HEAD and seeds the next series; no leave-off files."
-				},
-				{
-					"text": "Catalog summaries under _logs/sess/<Grok session id>/; stage/promote removed."
-				},
-				{
-					"text": "Project PreToolUse hook denies Imagine in the game-repo cwd."
-				}
-			],
-			"summary": "Grok Build flow: worktree-safe Godot, week_start Web pin, session-keyed logs, no handoff files."
-		},
-		{
-			"label": "0.4.2",
-			"points": [
-				{
-					"text": "Agent jobs are gather once, change once, prove once, with session-keyed _logs/sess summaries."
-				},
-				{
-					"text": "New tools: agent_log helpers, stage_patch / promote_patch, NewWeek log wipe, pack/report turn detail."
-				},
-				{
-					"text": "Web Phase 4 emits new files one at a time; revisions and Phase 5 tests use one tools/_scratch.py."
-				},
-				{
-					"text": "Parked mandates: Build harness, Refactorer setup, Build week session guide."
-				}
-			],
-			"summary": "Session-keyed agent logs, staged patches, and a stricter Build job cycle."
-		},
-		{
-			"label": "0.4.1",
-			"points": [
-				{
-					"text": "Catalog pack/report/read_summary/list_route runners and bind grep, git porcelain, python -c, and double-quoted PowerShell bodies as failed lookups."
-				},
-				{
-					"text": "One catalog summary read per runner per slice via read_summary.ps1; route cards from list_route.ps1 instead of load-graph crawls."
-				},
-				{
-					"text": "Session pack skips empty plan stubs; tool histogram ignores shell title junk."
-				},
-				{
-					"text": "Baked version.json to 0.4.0 after week-4 series-open was left under design/changelog/archive/0.4/0.4.0.md."
-				},
-				{
-					"text": "Pages skips a full Godot export when game paths are unchanged and reuses a live export cache."
-				},
-				{
-					"text": "In-game notes on web read window.__wdbNotes from /data/notes.js; service worker cache follows the PCK hash, not the version label."
-				}
-			],
-			"summary": "Offload intercepts plus Pages notes-only deploys so web players can get change notes without re-downloading the whole game cache."
-		},
-		{
-			"label": "0.4.0",
-			"points": [
-				{
-					"text": "Opened development week 4 on the live path",
-					"subs": [
-						"Grok Build Week 4 completion commit"
-					]
-				},
-				{
-					"text": "Placeholdia guild roofs are russet shingles; storefronts have a short striped cloth awning; the vendor stall uses a canvas tarp"
-				},
-				{
-					"text": "Enter dungeon shows \u201cConsciousness slips the body\u2026\u201d immediately, then the floor loads under that overlay"
-				},
-				{
-					"text": "Dungeon floors paint nearby space first; distant props, extra crystals, ambushes, and the Floor Guardian stream in as you explore"
-				},
-				{
-					"text": "The large dungeon map builds when you open it, not while the floor is loading"
-				}
-			],
-			"summary": "Week 4 Grok Build snapshot. Placeholdia roofs and stall cloth are in, and entering a floor covers immediately while nearby dungeon space loads first."
+			"summary": "Week 5 Grok Build snapshot. Placeholdia is sheeted and fenced, dungeon walls follow the floor outline with torch light and foot squash, the map is ready on enter, and hub return no longer freezes."
 		}
 	]
 }
