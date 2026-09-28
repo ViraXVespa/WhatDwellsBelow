@@ -74,6 +74,8 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 	for item in spans:
 		if item is Dictionary:
 			_paint(solid, sw, sh, item)
+	LoadTiming.dnote("outline_loops", str(loops.size()))
+	LoadTiming.dnote("outline_spans_n", str(spans.size()))
 	data["outline_fine_m"] = fine_m
 	data["solid"] = solid
 	data["solid_w"] = sw
@@ -572,9 +574,56 @@ static func _sort_xs(xs: PackedFloat32Array) -> void:
 		xs[j] = v
 
 
+static func _fill_axis_rect(
+	solid: PackedByteArray, sw: int, sh: int, poly: PackedVector2Array, value: int
+) -> bool:
+	if poly.size() != 4:
+		return false
+	var e: int = 0
+	while e < 4:
+		var d: Vector2 = poly[(e + 1) % 4] - poly[e]
+		if absf(d.x) > 0.001 and absf(d.y) > 0.001:
+			return false
+		e += 1
+	var minx: float = poly[0].x
+	var maxx: float = poly[0].x
+	var miny: float = poly[0].y
+	var maxy: float = poly[0].y
+	var i: int = 1
+	while i < 4:
+		var px: float = poly[i].x
+		var py: float = poly[i].y
+		if px < minx:
+			minx = px
+		if px > maxx:
+			maxx = px
+		if py < miny:
+			miny = py
+		if py > maxy:
+			maxy = py
+		i += 1
+	var y0: int = maxi(0, int(ceil(miny - 0.5)))
+	var y1: int = mini(sh - 1, int(ceil(maxy - 0.5)) - 1)
+	var x0: int = maxi(0, int(ceil(minx - 0.5)))
+	var x1: int = mini(sw - 1, int(floor(maxx - 0.5)))
+	if y1 < y0 or x1 < x0:
+		return true
+	var y: int = y0
+	while y <= y1:
+		var row: int = y * sw
+		var x: int = x0
+		while x <= x1:
+			solid[row + x] = value
+			x += 1
+		y += 1
+	return true
+
+
 static func _fill(solid: PackedByteArray, sw: int, sh: int, poly: PackedVector2Array, value: int) -> void:
 	var count: int = poly.size()
 	if count < 3 or sw < 1 or sh < 1:
+		return
+	if _fill_axis_rect(solid, sw, sh, poly, value):
 		return
 	var y_min: int = sh
 	var y_max: int = -1
