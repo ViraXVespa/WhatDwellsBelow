@@ -1,48 +1,52 @@
 extends Object
 
-## One occupancy pass, then disc stamps. Dungeon walkable floor gets a cold fill.
-## WALL blocks. Floor, door, opening, and stairs pass. Pits stay black.
-
-const Gen := preload("res://scripts/dungeon/gen.gd")
+## Fine solid blocks. Discs flood walkable texels from the mount. Cold fill is those samples only.
+## Wall texels stay dark except the neighbor sample along the bake. SUB stays 4.
 
 const SUB := 4
 const COL_FLOOR := Color(0.50, 0.56, 0.74)
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
 
-static func occupancy(
-	grid: PackedByteArray,
-	map_w: int,
-	map_h: int,
-	x0: int,
-	z0: int,
-	tw: int,
-	th: int,
-	open_cells: Dictionary,
-	solid: PackedByteArray = PackedByteArray(),
-	sw: int = 0,
-	sh: int = 0,
-	n: int = 1
-) -> PackedByteArray:
-	var occ: PackedByteArray = PackedByteArray()
-	occ.resize(tw * th)
-	for tz in th:
-		for tx in tw:
-			var cx: int = x0 + tx
-			var cz: int = z0 + tz
-			var block: int = 1
-			if _pass(grid, map_w, map_h, cx, cz, open_cells):
-				if solid.is_empty() or _fine_walk(solid, sw, sh, n, cx, cz):
-					block = 0
-			elif _fine_walk(solid, sw, sh, n, cx, cz):
-				block = 0
-			occ[tz * tw + tx] = block
-	return occ
+static func solid_open(
+	solid: PackedByteArray,
+	sw: int,
+	sh: int,
+	n: int,
+	world_x: float,
+	world_z: float
+) -> bool:
+	if n < 1 or solid.is_empty() or sw < 1 or sh < 1:
+		return false
+	var fx: int = int(floor(world_x * float(n)))
+	var fy: int = int(floor(world_z * float(n)))
+	if fx < 0 or fy < 0 or fx >= sw or fy >= sh:
+		return false
+	return solid[fy * sw + fx] != 0
+
+
+static func near_open(
+	solid: PackedByteArray,
+	sw: int,
+	sh: int,
+	n: int,
+	world_x: float,
+	world_z: float
+) -> bool:
+	if n < 1 or solid.is_empty():
+		return true
+	var step: float = 1.0 / float(SUB)
+	for oy in range(-2, 3):
+		for ox in range(-2, 3):
+			var sx: float = world_x + float(ox) * step
+			var sz: float = world_z + float(oy) * step
+			if solid_open(solid, sw, sh, n, sx, sz):
+				return true
+	return false
 
 
 static func paint(
 	img: Image,
-	occ: PackedByteArray,
 	tw: int,
 	th: int,
 	lights: Array,
@@ -50,13 +54,14 @@ static func paint(
 	solid: PackedByteArray = PackedByteArray(),
 	sw: int = 0,
 	sh: int = 0,
-	n: int = 1,
+	n: int = 0,
 	x0: int = 0,
 	z0: int = 0
 ) -> void:
 	var iw: int = tw * SUB
 	var ih: int = th * SUB
 	var pxn: int = iw * ih
+	var walk: PackedByteArray = _walk_mask(solid, sw, sh, n, x0, z0, iw, ih)
 	var rr: PackedFloat32Array = PackedFloat32Array()
 	var gg: PackedFloat32Array = PackedFloat32Array()
 	var bb: PackedFloat32Array = PackedFloat32Array()
@@ -67,9 +72,10 @@ static func paint(
 	gg.fill(0.0)
 	bb.fill(0.0)
 	for src in lights:
-		_disc(rr, gg, bb, occ, tw, th, src, solid, sw, sh, n, x0, z0)
-	_walls(rr, gg, bb, occ, tw, th, solid, sw, sh, n, x0, z0)
-	_lift_floor(rr, gg, bb, occ, tw, th, ambient, solid, sw, sh, n, x0, z0)
+		var item: Dictionary = src
+		_disc(rr, gg, bb, walk, iw, ih, item, x0, z0)
+	_lift_floor(rr, gg, bb, walk, iw, ih, ambient, n)
+	_walls(rr, gg, bb, walk, iw, ih, n)
 	for y in ih:
 		for x in iw:
 			var i: int = y * iw + x
@@ -78,299 +84,190 @@ static func paint(
 			img.set_pixel(x, y, Color(rr[i], gg[i], bb[i], 1.0))
 
 
+static func _walk_mask(
+	solid: PackedByteArray,
+	sw: int,
+	sh: int,
+	n: int,
+	x0: int,
+	z0: int,
+	iw: int,
+	ih: int
+) -> PackedByteArray:
+	var walk: PackedByteArray = PackedByteArray()
+	walk.resize(iw * ih)
+	if n < 1:
+		walk.fill(1)
+		return walk
+	for py in ih:
+		var row: int = py * iw
+		for px in iw:
+			if _tex_walk(solid, sw, sh, n, x0, z0, px, py):
+				walk[row + px] = 1
+	return walk
+
+
 static func _lift_floor(
 	rr: PackedFloat32Array,
 	gg: PackedFloat32Array,
 	bb: PackedFloat32Array,
-	occ: PackedByteArray,
-	tw: int,
-	th: int,
+	walk: PackedByteArray,
+	iw: int,
+	ih: int,
 	ambient: Color,
-	solid: PackedByteArray = PackedByteArray(),
-	sw: int = 0,
-	sh: int = 0,
-	n: int = 1,
-	x0: int = 0,
-	z0: int = 0
+	n: int
 ) -> void:
+	if n < 1:
+		return
 	if ambient.r <= 0.0 and ambient.g <= 0.0 and ambient.b <= 0.0:
 		return
-	var iw: int = tw * SUB
-	for y in th:
-		for x in tw:
-			if occ[y * tw + x] != 0 and solid.is_empty():
+	for py in ih:
+		var row: int = py * iw
+		for px in iw:
+			var i: int = row + px
+			if walk[i] == 0:
 				continue
-			for sy in SUB:
-				for sx in SUB:
-					if not _sub_walk(solid, sw, sh, n, x0 + x, z0 + y, sx, sy):
-						continue
-					var i: int = (y * SUB + sy) * iw + x * SUB + sx
-					rr[i] = minf(rr[i] + ambient.r, 1.0)
-					gg[i] = minf(gg[i] + ambient.g, 1.0)
-					bb[i] = minf(bb[i] + ambient.b, 1.0)
-
-
-static func _sub_walk(
-	solid: PackedByteArray,
-	sw: int,
-	sh: int,
-	n: int,
-	cx: int,
-	cz: int,
-	sx: int,
-	sy: int
-) -> bool:
-	if solid.is_empty() or n < 1 or sw < 1 or sh < 1:
-		return true
-	var fx: int = cx * n + int(float(sx) * float(n) / float(SUB))
-	var fy: int = cz * n + int(float(sy) * float(n) / float(SUB))
-	if fx < 0 or fy < 0 or fx >= sw or fy >= sh:
-		return false
-	return solid[fy * sw + fx] != 0
-
-
-static func _sub_rim(
-	solid: PackedByteArray,
-	sw: int,
-	sh: int,
-	n: int,
-	cx: int,
-	cz: int,
-	sx: int,
-	sy: int
-) -> bool:
-	if solid.is_empty() or n < 1 or sw < 1 or sh < 1:
-		return true
-	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
-	for d: Vector2i in dirs:
-		var nx: int = sx + d.x
-		var ny: int = sy + d.y
-		if nx < 0 or ny < 0 or nx >= SUB or ny >= SUB:
-			if _sub_walk(solid, sw, sh, n, cx + d.x, cz + d.y, clampi(nx, 0, SUB - 1), clampi(ny, 0, SUB - 1)):
-				return true
-			continue
-		if _sub_walk(solid, sw, sh, n, cx, cz, nx, ny):
-			return true
-	return false
-
-static func _pass(
-	grid: PackedByteArray,
-	map_w: int,
-	map_h: int,
-	x: int,
-	y: int,
-	open_cells: Dictionary
-) -> bool:
-	var cell: Vector2i = Vector2i(x, y)
-	if open_cells.has(cell):
-		return true
-	if x < 0 or y < 0 or x >= map_w or y >= map_h:
-		return false
-	if grid.is_empty():
-		return true
-	return grid[y * map_w + x] == Gen.FLOOR
-
-
-static func _fine_walk(
-	solid: PackedByteArray,
-	sw: int,
-	sh: int,
-	n: int,
-	cx: int,
-	cz: int
-) -> bool:
-	if solid.is_empty() or n < 1 or sw < 1 or sh < 1:
-		return false
-	var fx0: int = cx * n
-	var fz0: int = cz * n
-	var walk := 0
-	var seen := 0
-	for dz in n:
-		var fy: int = fz0 + dz
-		if fy < 0 or fy >= sh:
-			continue
-		var row: int = fy * sw
-		for dx in n:
-			var fx: int = fx0 + dx
-			if fx < 0 or fx >= sw:
-				continue
-			seen += 1
-			if solid[row + fx] != 0:
-				walk += 1
-	if seen < 1:
-		return false
-	return walk * 2 >= seen
+			rr[i] = minf(rr[i] + ambient.r, 1.0)
+			gg[i] = minf(gg[i] + ambient.g, 1.0)
+			bb[i] = minf(bb[i] + ambient.b, 1.0)
 
 
 static func _disc(
 	rr: PackedFloat32Array,
 	gg: PackedFloat32Array,
 	bb: PackedFloat32Array,
-	occ: PackedByteArray,
-	tw: int,
-	th: int,
+	walk: PackedByteArray,
+	iw: int,
+	ih: int,
 	src: Dictionary,
-	solid: PackedByteArray = PackedByteArray(),
-	sw: int = 0,
-	sh: int = 0,
-	n: int = 1,
-	x0: int = 0,
-	z0: int = 0
+	x0: int,
+	z0: int
 ) -> void:
-	var sx: int = int(src["tx"])
-	var sy: int = int(src["tz"])
-	if sx < 0 or sy < 0 or sx >= tw or sy >= th:
-		return
-	if occ[sy * tw + sx] != 0:
-		return
 	var reach: float = float(src["reach"])
 	if reach < 0.25:
 		return
 	var energy: float = float(src["energy"])
-	var col: Color = src["col"]
-	var q: Array[Vector2i] = [Vector2i(sx, sy)]
-	var seen: Dictionary = {Vector2i(sx, sy): true}
+	var col: Color = src["col"] as Color
+	var mx: float = float(src["mx"])
+	var mz: float = float(src["mz"])
+	var seed: int = _seed(walk, iw, ih, mx, mz, x0, z0)
+	if seed < 0:
+		return
+	var seen: PackedByteArray = PackedByteArray()
+	seen.resize(iw * ih)
+	var q: PackedInt32Array = PackedInt32Array()
+	q.resize(iw * ih)
 	var head: int = 0
-	while head < q.size():
-		var c: Vector2i = q[head]
+	var tail: int = 0
+	seen[seed] = 1
+	q[tail] = seed
+	tail += 1
+	while head < tail:
+		var i: int = q[head]
 		head += 1
-		var dx: float = float(c.x - sx)
-		var dy: float = float(c.y - sy)
-		var dist: float = sqrt(dx * dx + dy * dy)
-		if dist > reach + 1.0:
-			continue
-		_paint_tile(rr, gg, bb, tw, c.x, c.y, sx, sy, reach, energy, col, solid, sw, sh, n, x0, z0)
-		for d: Vector2i in DIRS:
-			var nb: Vector2i = c + d
-			if nb.x < 0 or nb.y < 0 or nb.x >= tw or nb.y >= th:
-				continue
-			if seen.has(nb):
-				continue
-			if occ[nb.y * tw + nb.x] != 0:
-				continue
-			var ndx: float = float(nb.x - sx)
-			var ndy: float = float(nb.y - sy)
-			if sqrt(ndx * ndx + ndy * ndy) > reach + 1.0:
-				continue
-			seen[nb] = true
-			q.append(nb)
-
-
-static func _paint_tile(
-	rr: PackedFloat32Array,
-	gg: PackedFloat32Array,
-	bb: PackedFloat32Array,
-	tw: int,
-	tile_x: int,
-	tile_y: int,
-	src_x: int,
-	src_y: int,
-	reach: float,
-	energy: float,
-	col: Color,
-	solid: PackedByteArray = PackedByteArray(),
-	sw: int = 0,
-	sh: int = 0,
-	n: int = 1,
-	x0: int = 0,
-	z0: int = 0
-) -> void:
-	var iw: int = tw * SUB
-	var cx: float = float(src_x) + 0.5
-	var cz: float = float(src_y) + 0.5
-	for sy in SUB:
-		for sx in SUB:
-			var px: int = tile_x * SUB + sx
-			var py: int = tile_y * SUB + sy
-			if not _sub_walk(solid, sw, sh, n, x0 + tile_x, z0 + tile_y, sx, sy):
-				continue
-			var wx: float = (float(px) + 0.5) / float(SUB)
-			var wz: float = (float(py) + 0.5) / float(SUB)
-			var dist: float = sqrt((wx - cx) * (wx - cx) + (wz - cz) * (wz - cz))
-			if dist > reach:
-				continue
+		var py: int = int(float(i) / float(iw))
+		var px: int = i - py * iw
+		var wx: float = float(x0) + (float(px) + 0.5) / float(SUB)
+		var wz: float = float(z0) + (float(py) + 0.5) / float(SUB)
+		var dist: float = sqrt((wx - mx) * (wx - mx) + (wz - mz) * (wz - mz))
+		if dist <= reach:
 			var fall: float = energy * (1.0 - dist / reach)
-			var i: int = py * iw + px
 			rr[i] = minf(rr[i] + col.r * fall, 1.0)
 			gg[i] = minf(gg[i] + col.g * fall, 1.0)
 			bb[i] = minf(bb[i] + col.b * fall, 1.0)
+		for d: Vector2i in DIRS:
+			var npx: int = px + d.x
+			var npy: int = py + d.y
+			if npx < 0 or npy < 0 or npx >= iw or npy >= ih:
+				continue
+			var ni: int = npy * iw + npx
+			if seen[ni] != 0 or walk[ni] == 0:
+				continue
+			var nwx: float = float(x0) + (float(npx) + 0.5) / float(SUB)
+			var nwz: float = float(z0) + (float(npy) + 0.5) / float(SUB)
+			var nd: float = sqrt((nwx - mx) * (nwx - mx) + (nwz - mz) * (nwz - mz))
+			if nd > reach:
+				continue
+			seen[ni] = 1
+			q[tail] = ni
+			tail += 1
 
 
 static func _walls(
 	rr: PackedFloat32Array,
 	gg: PackedFloat32Array,
 	bb: PackedFloat32Array,
-	occ: PackedByteArray,
-	tw: int,
-	th: int,
-	solid: PackedByteArray = PackedByteArray(),
-	sw: int = 0,
-	sh: int = 0,
-	n: int = 1,
-	x0: int = 0,
-	z0: int = 0
+	walk: PackedByteArray,
+	iw: int,
+	ih: int,
+	n: int
 ) -> void:
-	var iw: int = tw * SUB
-	for y in th:
-		for x in tw:
-			var ti: int = y * tw + x
-			if occ[ti] == 0:
+	if n < 1:
+		return
+	for py in ih:
+		var row: int = py * iw
+		for px in iw:
+			var i: int = row + px
+			if walk[i] != 0:
 				continue
 			var br: float = 0.0
 			var bg: float = 0.0
 			var bv: float = 0.0
 			for d: Vector2i in DIRS:
-				var nx: int = x + d.x
-				var ny: int = y + d.y
-				if nx < 0 or ny < 0 or nx >= tw or ny >= th:
+				var npx: int = px + d.x
+				var npy: int = py + d.y
+				if npx < 0 or npy < 0 or npx >= iw or npy >= ih:
 					continue
-				if occ[ny * tw + nx] != 0:
+				var ni: int = npy * iw + npx
+				if walk[ni] == 0:
 					continue
-				var edge: Vector3 = _edge_max(rr, gg, bb, iw, nx, ny, -d)
-				br = maxf(br, edge.x)
-				bg = maxf(bg, edge.y)
-				bv = maxf(bv, edge.z)
+				br = maxf(br, rr[ni])
+				bg = maxf(bg, gg[ni])
+				bv = maxf(bv, bb[ni])
 			if br <= 0.0 and bg <= 0.0 and bv <= 0.0:
 				continue
-			for sy in SUB:
-				for sx in SUB:
-					if _sub_walk(solid, sw, sh, n, x0 + x, z0 + y, sx, sy):
-						continue
-					if not _sub_rim(solid, sw, sh, n, x0 + x, z0 + y, sx, sy):
-						continue
-					var i: int = (y * SUB + sy) * iw + x * SUB + sx
-					rr[i] = br
-					gg[i] = bg
-					bb[i] = bv
+			rr[i] = br
+			gg[i] = bg
+			bb[i] = bv
 
 
-static func _edge_max(
-	rr: PackedFloat32Array,
-	gg: PackedFloat32Array,
-	bb: PackedFloat32Array,
+static func _tex_walk(
+	solid: PackedByteArray,
+	sw: int,
+	sh: int,
+	n: int,
+	x0: int,
+	z0: int,
+	px: int,
+	py: int
+) -> bool:
+	if n < 1:
+		return true
+	var world_x: float = float(x0) + (float(px) + 0.5) / float(SUB)
+	var world_z: float = float(z0) + (float(py) + 0.5) / float(SUB)
+	return solid_open(solid, sw, sh, n, world_x, world_z)
+
+
+static func _seed(
+	walk: PackedByteArray,
 	iw: int,
-	tile_x: int,
-	tile_y: int,
-	toward: Vector2i
-) -> Vector3:
-	var br: float = 0.0
-	var bg: float = 0.0
-	var bv: float = 0.0
-	var sx0: int = 0
-	var sy0: int = 0
-	if toward.x > 0:
-		sx0 = SUB - 1
-	elif toward.y > 0:
-		sy0 = SUB - 1
-	for k in SUB:
-		var sx: int = sx0
-		var sy: int = sy0
-		if toward.x != 0:
-			sy = k
-		else:
-			sx = k
-		var i: int = (tile_y * SUB + sy) * iw + tile_x * SUB + sx
-		br = maxf(br, rr[i])
-		bg = maxf(bg, gg[i])
-		bv = maxf(bv, bb[i])
-	return Vector3(br, bg, bv)
+	ih: int,
+	mx: float,
+	mz: float,
+	x0: int,
+	z0: int
+) -> int:
+	var cx: int = int(floor((mx - float(x0)) * float(SUB)))
+	var cy: int = int(floor((mz - float(z0)) * float(SUB)))
+	for rad in range(0, 3):
+		for oy in range(-rad, rad + 1):
+			for ox in range(-rad, rad + 1):
+				if rad > 0 and absi(ox) != rad and absi(oy) != rad:
+					continue
+				var px: int = cx + ox
+				var py: int = cy + oy
+				if px < 0 or py < 0 or px >= iw or py >= ih:
+					continue
+				if walk[py * iw + px] != 0:
+					return py * iw + px
+	return -1

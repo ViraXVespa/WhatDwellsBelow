@@ -40,8 +40,8 @@ static var _quad: QuadMesh
 
 var _spr: Sprite3D
 var _flame: MeshInstance3D
-var _nx: int = 0
-var _nz: int = 1
+var _nx: float = 0.0
+var _nz: float = 1.0
 var _half: float = 512.0
 
 
@@ -67,8 +67,8 @@ static func add_chunk(root: Node, ox: int, oy: int, sites: Array, chunk: int) ->
 		if fx < ox or fz < oy or fx >= ox + chunk or fz >= oy + chunk:
 			continue
 		var node: Node3D = script.new() as Node3D
-		node.set_meta("nx", int(site["nx"]))
-		node.set_meta("nz", int(site["nz"]))
+		node.set_meta("nx", float(site["nx"]))
+		node.set_meta("nz", float(site["nz"]))
 		node.set_meta("fx", fx)
 		node.position = _bracket_pos(site)
 		node.add_to_group("wall_torch")
@@ -98,8 +98,8 @@ static func _bracket_pos(site: Dictionary) -> Vector3:
 
 
 func _ready() -> void:
-	_nx = int(get_meta("nx", 0))
-	_nz = int(get_meta("nz", 1))
+	_nx = float(get_meta("nx", 0.0))
+	_nz = float(get_meta("nz", 1.0))
 	var tex: Texture2D = _bible()
 	if tex != null:
 		_half = float(tex.get_width()) * 0.5

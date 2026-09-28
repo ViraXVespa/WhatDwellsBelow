@@ -25,9 +25,10 @@ static var _live := ""
 static var _knob := ""
 static var _bill: GDScript
 static var _img: Image
-static var _occ: PackedByteArray = PackedByteArray()
-static var _tw := 0
-static var _th := 0
+static var _solid: PackedByteArray = PackedByteArray()
+static var _sw := 0
+static var _sh := 0
+static var _sn := 0
 static var _casts: Array[Dictionary] = []
 
 
@@ -66,10 +67,7 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2)
 	var sun: Vector2 = Vector2((float(x0) + float(x1)) * 0.5, (float(z0) + float(z1)) * 0.5)
 	lights.append(_light_at(sun.x, sun.y, x0, z0, "sun"))
 	lights.append(_light_at(crystal_xz.x, crystal_xz.y, x0, z0, "crystal"))
-	var blank: PackedByteArray = PackedByteArray()
-	blank.resize(tw * th)
-	blank.fill(0)
-	_publish(x0, z0, tw, th, blank, lights, true)
+	_publish(x0, z0, tw, th, lights, Color(0, 0, 0, 1), PackedByteArray(), 0, 0, 0)
 
 
 static func note_prop(node: Node) -> void:
@@ -121,10 +119,6 @@ static func _publish_dungeon(host: Node, rect: Rect2i) -> void:
 	var z0: int = rect.position.y
 	var tw: int = rect.size.x
 	var th: int = rect.size.y
-	var grid: PackedByteArray = host.data.grid
-	var map_w: int = int(host.data.w)
-	var map_h: int = int(host.data.h)
-	var open_cells: Dictionary = _open_cells(host.data)
 	var solid: PackedByteArray = PackedByteArray()
 	var sw: int = 0
 	var sh: int = 0
@@ -134,11 +128,8 @@ static func _publish_dungeon(host: Node, rect: Rect2i) -> void:
 		sw = int(host.data.get("solid_w", 0))
 		sh = int(host.data.get("solid_h", 0))
 		n = maxi(1, int(host.data.get("solid_n", 1)))
-	var occ: PackedByteArray = Stamp.occupancy(
-		grid, map_w, map_h, x0, z0, tw, th, open_cells, solid, sw, sh, n
-	)
 	var lights: Array = _dungeon_lights(host, x0, z0, tw, th)
-	_publish(x0, z0, tw, th, occ, lights, false, solid, sw, sh, n)
+	_publish(x0, z0, tw, th, lights, Stamp.COL_FLOOR, solid, sw, sh, n)
 
 
 static func _publish(
@@ -146,32 +137,24 @@ static func _publish(
 	z0: int,
 	tw: int,
 	th: int,
-	occ: PackedByteArray,
 	lights: Array,
-	hub_open: bool,
-	solid: PackedByteArray = PackedByteArray(),
-	sw: int = 0,
-	sh: int = 0,
-	n: int = 1
+	ambient: Color,
+	solid: PackedByteArray,
+	sw: int,
+	sh: int,
+	n: int
 ) -> void:
 	var img: Image = Image.create(tw * Stamp.SUB, th * Stamp.SUB, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 1))
-	var use: PackedByteArray = occ
-	if hub_open:
-		use = PackedByteArray()
-		use.resize(tw * th)
-		use.fill(0)
-	var fill: Color = Color(0.0, 0.0, 0.0, 1.0)
-	if not hub_open:
-		fill = Stamp.COL_FLOOR
-	Stamp.paint(img, use, tw, th, lights, fill, solid, sw, sh, n, x0, z0)
+	Stamp.paint(img, tw, th, lights, ambient, solid, sw, sh, n, x0, z0)
 	origin = Vector2(float(x0), float(z0))
 	span = Vector2(float(tw), float(th))
 	_img = img
-	_occ = use
-	_tw = tw
-	_th = th
-	_keep_casts(x0, z0, tw, th, use, lights)
+	_solid = solid
+	_sw = sw
+	_sh = sh
+	_sn = n
+	_keep_casts(x0, z0, tw, th, lights)
 	if _gpu == null:
 		_gpu = ImageTexture.create_from_image(img)
 	else:
@@ -193,16 +176,30 @@ static func _dungeon_lights(host: Node, x0: int, z0: int, tw: int, th: int) -> A
 		var cell: Vector2i = _node_cell(node)
 		if not _inside(cell.x, cell.y, x0, z0, tw, th):
 			continue
-		var item: Dictionary = _light_at(float(cell.x) + 0.5, float(cell.y) + 0.5, x0, z0, kind)
+		var wx: float = float(cell.x) + 0.5
+		var wz: float = float(cell.y) + 0.5
+		if kind != "crystal":
+			var body: Node3D = node as Node3D
+			if body != null:
+				wx = body.global_position.x
+				wz = body.global_position.z
+		var item: Dictionary = _light_at(wx, wz, x0, z0, kind)
 		item["pri"] = 0
 		item["dist"] = _dist(cell, focus)
 		ranked.append(item)
-	for site in _sites:
+	for raw_site in _sites:
+		var site: Dictionary = raw_site as Dictionary
 		var fx: int = int(site["fx"])
 		var fz: int = int(site["fz"])
 		if not _inside(fx, fz, x0, z0, tw, th):
 			continue
-		var torch: Dictionary = _light_at(float(fx) + 0.5, float(fz) + 0.5, x0, z0, "torch")
+		var lx: float = float(fx) + 0.5
+		var lz: float = float(fz) + 0.5
+		if site.has("lx"):
+			lx = float(site["lx"])
+		if site.has("lz"):
+			lz = float(site["lz"])
+		var torch: Dictionary = _light_at(lx, lz, x0, z0, "torch")
 		torch["pri"] = 1
 		torch["dist"] = _dist(Vector2i(fx, fz), focus)
 		ranked.append(torch)
@@ -233,6 +230,8 @@ static func _light_at(world_x: float, world_z: float, x0: int, z0: int, kind: St
 	return {
 		"tx": int(floor(world_x)) - x0,
 		"tz": int(floor(world_z)) - z0,
+		"mx": world_x,
+		"mz": world_z,
 		"reach": _reach(kind),
 		"energy": _energy(kind),
 		"col": _color(kind),
@@ -290,20 +289,6 @@ static func _knob_key() -> String:
 		_bal("light_sun_energy", T.LIGHT_SUN_ENERGY),
 		_bal("light_source_cap", T.LIGHT_SOURCE_CAP),
 	]
-
-
-static func _open_cells(data: Dictionary) -> Dictionary:
-	var extra: Dictionary = {}
-	var stairs: Variant = data.get("stairs", null)
-	if stairs is Vector2i:
-		extra[stairs] = true
-	var door: Variant = data.get("door", null)
-	if door is Vector2i and door.x >= 0:
-		extra[door] = true
-	for op in data.get("openings", []):
-		for raw in op.get("cells", []):
-			extra[Vector2i(raw)] = true
-	return extra
 
 
 static func _ring_rect(host: Node) -> Rect2i:
@@ -414,13 +399,18 @@ static func sample_xz(world: Vector2) -> Color:
 
 
 static func floor_open(world: Vector2) -> bool:
-	if _occ.is_empty() or _tw < 1 or _th < 1:
+	if _img == null:
 		return false
-	var tx: int = int(floor(world.x)) - int(floor(origin.x))
-	var tz: int = int(floor(world.y)) - int(floor(origin.y))
-	if tx < 0 or tz < 0 or tx >= _tw or tz >= _th:
+	var sp: Vector2 = span
+	if sp.x < 0.001 or sp.y < 0.001:
 		return false
-	return int(_occ[tz * _tw + tx]) == 0
+	if world.x < origin.x or world.y < origin.y:
+		return false
+	if world.x >= origin.x + sp.x or world.y >= origin.y + sp.y:
+		return false
+	if _sn < 1 or _solid.is_empty():
+		return true
+	return Stamp.solid_open(_solid, _sw, _sh, _sn, world.x, world.y)
 
 
 static func nearest_cast(world: Vector2) -> Dictionary:
@@ -471,20 +461,22 @@ static func nearest_casts(world: Vector2, cap: int = 3) -> Array[Dictionary]:
 	return out
 
 
-static func _keep_casts(x0: int, z0: int, tw: int, th: int, occ: PackedByteArray, lights: Array) -> void:
+static func _keep_casts(x0: int, z0: int, tw: int, th: int, lights: Array) -> void:
 	_casts.clear()
+	var x1: float = float(x0 + tw)
+	var z1: float = float(z0 + th)
 	for src in lights:
 		var item: Dictionary = src
-		var tx: int = int(item["tx"])
-		var tz: int = int(item["tz"])
-		if tx < 0 or tz < 0 or tx >= tw or tz >= th:
+		var mx: float = float(item["mx"])
+		var mz: float = float(item["mz"])
+		if mx < float(x0) or mz < float(z0) or mx >= x1 or mz >= z1:
 			continue
-		if not occ.is_empty() and int(occ[tz * tw + tx]) != 0:
+		if not Stamp.near_open(_solid, _sw, _sh, _sn, mx, mz):
 			continue
 		var reach: float = float(item["reach"])
 		if reach < 0.25:
 			continue
 		_casts.append({
-			"xz": Vector2(float(x0 + tx) + 0.5, float(z0 + tz) + 0.5),
+			"xz": Vector2(mx, mz),
 			"reach": reach,
 		})
