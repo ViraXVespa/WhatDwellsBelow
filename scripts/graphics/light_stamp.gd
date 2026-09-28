@@ -102,12 +102,57 @@ static func _walk_mask(
 	if n < 1:
 		walk.fill(1)
 		return walk
+	if not loops.is_empty():
+		_fill_loops(walk, loops, x0, z0, iw, ih, n)
+		return walk
 	for py in ih:
 		var row: int = py * iw
 		for px in iw:
 			if _lip_open(solid, sw, sh, n, x0, z0, px, py, loops):
 				walk[row + px] = 1
 	return walk
+
+
+static func _fill_loops(
+	walk: PackedByteArray,
+	loops: Array,
+	x0: int,
+	z0: int,
+	iw: int,
+	ih: int,
+	n: int
+) -> void:
+	var nf: float = float(maxi(n, 1))
+	var sub: float = float(SUB)
+	for item in loops:
+		var poly: PackedVector2Array = item as PackedVector2Array
+		if poly.size() < 3:
+			continue
+		var min_x: float = poly[0].x
+		var max_x: float = poly[0].x
+		var min_z: float = poly[0].y
+		var max_z: float = poly[0].y
+		for i in range(1, poly.size()):
+			var q: Vector2 = poly[i]
+			min_x = minf(min_x, q.x)
+			max_x = maxf(max_x, q.x)
+			min_z = minf(min_z, q.y)
+			max_z = maxf(max_z, q.y)
+		var px0: int = clampi(int(floor((min_x / nf - float(x0)) * sub)), 0, iw - 1)
+		var px1: int = clampi(int(ceil((max_x / nf - float(x0)) * sub)), 0, iw - 1)
+		var py0: int = clampi(int(floor((min_z / nf - float(z0)) * sub)), 0, ih - 1)
+		var py1: int = clampi(int(ceil((max_z / nf - float(z0)) * sub)), 0, ih - 1)
+		var py: int = py0
+		while py <= py1:
+			var row: int = py * iw
+			var px: int = px0
+			while px <= px1:
+				var fx: float = (float(x0) + (float(px) + 0.5) / sub) * nf
+				var fz: float = (float(z0) + (float(py) + 0.5) / sub) * nf
+				if Geometry2D.is_point_in_polygon(Vector2(fx, fz), poly):
+					walk[row + px] = 1
+				px += 1
+			py += 1
 
 
 static func _lift_floor(
