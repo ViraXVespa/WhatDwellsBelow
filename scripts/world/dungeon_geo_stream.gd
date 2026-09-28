@@ -346,23 +346,32 @@ static func _first_mm(node: Node) -> MultiMeshInstance3D:
 
 
 static func _emit_floor_lip(cells: Array[Vector2i], spans: Array, fine_m: float, mat: Material) -> Node3D:
+	var owned: Dictionary = {}
+	for cell in cells:
+		owned[cell] = true
 	var cut: Dictionary = {}
 	for item in spans:
 		if item is Dictionary and (item as Dictionary).has("delta"):
 			_mark_span(cut, item)
 	var flush: Array[Vector2i] = []
 	var pieces: Array = []
-	for cell in cells:
-		if not cut.has(cell):
-			flush.append(cell)
-			continue
+	var used: Dictionary = {}
+	for key in cut.keys():
+		var cell: Vector2i = key
 		var poly: PackedVector2Array = _clip_cell(cell.x, cell.y, spans)
 		if poly.size() < 3:
 			continue
 		if _still_square(poly, cell.x, cell.y):
-			flush.append(cell)
-		else:
-			pieces.append(poly)
+			if owned.has(cell):
+				flush.append(cell)
+				used[cell] = true
+			continue
+		pieces.append(poly)
+		used[cell] = true
+	for cell in cells:
+		if used.has(cell):
+			continue
+		flush.append(cell)
 	var holder: Node3D = Node3D.new()
 	holder.name = "Floors"
 	if not flush.is_empty():
