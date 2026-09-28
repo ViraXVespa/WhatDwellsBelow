@@ -21,6 +21,9 @@ The Archives browser lists every catalog row. Play on a row launches **that comm
 | grok_web_w2 | Grok Web Results (Week 2) | `bb70f556108d0e09e070cfaa42260f642af3737a` |
 | grok_build_w3 | Grok Build Results (Week 3) | `e7a9d2cf56965b711dc5b22eb7735a1875d96407` |
 | grok_web_w3 | Grok Web Results (Week 3) | `b87bd169fb4dce839753a37cb8dbb7a837d82f48` |
+| grok_build_w4 | Grok Build Results (Week 4) | `03fa012959474ce995f48bf76e3e7677ea379a4d` |
+| grok_web_w4 | Grok Web Results (Week 4) | `313bb3e3dce29a3d75f4214c0cdadfe16ef9ba00` |
+| grok_build_w5 | Grok Build Results (Week 5) | `75b3bea979bf0fc530ab9660ca177c327eb465d8` |
 
 After each Grok Build week ritual, also list `grok_web_w{N-1}` and `grok_build_wN` as specified in the versioning gate. Those rows use the same isolation rules as the rows above.
 

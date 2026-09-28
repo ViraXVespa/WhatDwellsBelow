@@ -41,3 +41,4 @@ _godot_*.err
 
 # Scratch Runners
 tools/_scratch.py
+/_old
