@@ -659,6 +659,16 @@ static func _emit_frag(spans: Array, a: Vector2, delta: Vector2, nrm: Vector2, t
 	spans.append({"origin": o, "delta": d, "normal": nrm, "thick": 1.0})
 
 
+static func _hit_other(p: Vector2, loops: Array, skip: PackedVector2Array) -> bool:
+	for loop_v in loops:
+		var other: PackedVector2Array = loop_v
+		if other == skip:
+			continue
+		if Geometry2D.is_point_in_polygon(p, other):
+			return true
+	return false
+
+
 static func _push_clipped(spans: Array, poly: PackedVector2Array, loops: Array, solid: PackedByteArray, sw: int, sh: int) -> void:
 	var count: int = poly.size()
 	if count < 2 or _area(poly) <= 1.0 or sw < 1 or sh < 1:
@@ -673,6 +683,8 @@ static func _push_clipped(spans: Array, poly: PackedVector2Array, loops: Array, 
 		var nrm: Vector2 = Vector2(-delta.y, delta.x)
 		if nrm.length_squared() > 0.0001:
 			nrm = nrm.normalized()
+		var kept0: PackedFloat32Array = PackedFloat32Array()
+		var kept1: PackedFloat32Array = PackedFloat32Array()
 		var ts: PackedFloat32Array = PackedFloat32Array()
 		ts.append(0.0)
 		ts.append(1.0)
@@ -696,23 +708,24 @@ static func _push_clipped(spans: Array, poly: PackedVector2Array, loops: Array, 
 			if t1 - t0 < 0.001:
 				continue
 			var mid: Vector2 = a + delta * ((t0 + t1) * 0.5)
-			var ox: int = int(floor(mid.x - nrm.x * 0.4))
-			var oy: int = int(floor(mid.y - nrm.y * 0.4))
-			var void_out: bool = ox < 0 or oy < 0 or ox >= sw or oy >= sh
-			if not void_out:
-				void_out = solid[oy * sw + ox] == 0
-			var solid_in: bool = false
-			for k_in in range(1, 5):
-				var d_in: float = float(k_in) * 0.5
-				var ix2: int = int(floor(mid.x + nrm.x * d_in))
-				var iy2: int = int(floor(mid.y + nrm.y * d_in))
-				if ix2 < 0 or iy2 < 0 or ix2 >= sw or iy2 >= sh:
-					continue
-				if solid[iy2 * sw + ix2] != 0:
-					solid_in = true
-					break
+			var out_p: Vector2 = mid - nrm * 0.4
+			var void_out: bool = not _hit_other(out_p, loops, poly)
+			var in_p: Vector2 = mid + nrm * 0.4
+			var solid_in: bool = Geometry2D.is_point_in_polygon(in_p, poly)
 			if void_out and solid_in:
-				_emit_frag(spans, a, delta, nrm, t0, t1)
+				kept0.append(t0)
+				kept1.append(t1)
+		var m: int = kept0.size()
+		var i0: int = 0
+		while i0 < m:
+			var u0: float = kept0[i0]
+			var u1: float = kept1[i0]
+			var i1: int = i0 + 1
+			while i1 < m and kept0[i1] - u1 <= 1.5 / span_l:
+				u1 = kept1[i1]
+				i1 += 1
+			_emit_frag(spans, a, delta, nrm, u0, u1)
+			i0 = i1
 
 
 static func _spans_from_solid(solid: PackedByteArray, sw: int, sh: int) -> Array:
