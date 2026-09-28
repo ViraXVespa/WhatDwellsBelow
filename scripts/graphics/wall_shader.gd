@@ -62,10 +62,14 @@ void fragment() {
 	vec3 c = texture(albedo_tex, uv).rgb;
 	float h = fract(sin(dot(floor(side_uv * 0.25), vec2(127.1, 311.7))) * 43758.5453);
 	float worn = mix(1.0, mix(0.78, 1.0, h), clamp(wear, 0.0, 1.0));
-	vec3 lit = tap_lit(xz);
 	vec2 inn = UV2;
+	vec3 lit;
 	if (length(face_xz) > 0.2 && length(inn) > 0.2 && dot(normalize(face_xz), normalize(inn)) < 0.0) {
-		lit = vec3(0.05);
+		lit = vec3(0.16);
+	} else if (length(inn) > 0.2) {
+		lit = tap_lit(xz + normalize(inn) * 0.35);
+	} else {
+		lit = tap_lit(xz);
 	}
 	ALBEDO = c * tint * worn * lit;
 }
