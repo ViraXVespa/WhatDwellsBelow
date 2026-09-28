@@ -138,7 +138,7 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 		runs = _wall_runs(host, solid, sw, sh, wall_cells, ox, oy, x1, y1, n)
 	if not floor_cells.is_empty():
 		if outlined:
-			var lip: Node3D = _emit_floor_lip(floor_cells, runs, fine_m, host.floor_mat)
+			var lip: Node3D = _emit_floor_lip(_outline_spans(host), ox, oy, x1, y1, fine_m, host.floor_mat)
 			root.add_child(lip)
 			var mm: MultiMeshInstance3D = _first_mm(lip)
 			if host.floor_mm == null and mm != null:
@@ -345,32 +345,135 @@ static func _first_mm(node: Node) -> MultiMeshInstance3D:
 	return null
 
 
-static func _emit_floor_lip(cells: Array[Vector2i], spans: Array, fine_m: float, mat: Material) -> Node3D:
-	var flush: Array[Vector2i] = []
-	for cell in cells:
-		flush.append(cell)
+static func _emit_floor_lip(spans: Array, x0: int, y0: int, x1: int, y1: int, fine_m: float, mat: Material) -> Node3D:
+	var holder: Node3D = Node3D.new()
+	holder.name = "Floors"
+	var loops: Array = _span_loops(spans)
+	var box: PackedVector2Array = PackedVector2Array()
+	box.append(Vector2(float(x0), float(y0)))
+	box.append(Vector2(float(x1), float(y0)))
+	box.append(Vector2(float(x1), float(y1)))
+	box.append(Vector2(float(x0), float(y1)))
 	var pieces: Array = []
+	for loop_v in loops:
+		var loop: PackedVector2Array = loop_v
+		if loop.size() < 3:
+			continue
+		var clipped: Array = Geometry2D.intersect_polygons(loop, box)
+		for poly_v in clipped:
+			var poly: PackedVector2Array = poly_v
+			if poly.size() >= 3:
+				pieces.append(poly)
+	if not pieces.is_empty():
+		var inst: MeshInstance3D = MeshInstance3D.new()
+		inst.mesh = _loop_mesh(pieces, fine_m)
+		inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		if mat:
+			inst.material_override = mat
+		holder.add_child(inst)
+	return holder
+
+
+static func _span_loops(spans: Array) -> Array:
+	var segs: Array = []
 	for item in spans:
 		if not (item is Dictionary):
 			continue
 		var run: Dictionary = item
 		if not run.has("delta"):
 			continue
-		var poly: PackedVector2Array = _floor_splint(run)
+		var o: Vector2 = run["origin"] as Vector2
+		var d: Vector2 = run["delta"] as Vector2
+		if d.length_squared() < 0.04:
+			continue
+		segs.append([o, o + d])
+	var loops: Array = []
+	var used: Array[bool] = []
+	used.resize(segs.size())
+	used.fill(false)
+	for si in segs.size():
+		if used[si]:
+			continue
+		var start: Vector2 = segs[si][0]
+		var cur: Vector2 = segs[si][1]
+		var poly: PackedVector2Array = PackedVector2Array()
+		poly.append(start)
+		poly.append(cur)
+		used[si] = true
+		var guard: int = 0
+		while guard < segs.size() + 2:
+			guard += 1
+			if cur.distance_to(start) <= 0.25 and poly.size() >= 3:
+				break
+			var found: int = -1
+			var flip: bool = false
+			var best: float = 0.25
+			for j in segs.size():
+				if used[j]:
+					continue
+				var a: Vector2 = segs[j][0]
+				var b: Vector2 = segs[j][1]
+				var da: float = cur.distance_to(a)
+				var db: float = cur.distance_to(b)
+				if da <= best:
+					best = da
+					found = j
+					flip = false
+				if db <= best:
+					best = db
+					found = j
+					flip = true
+			if found < 0:
+				break
+			used[found] = true
+			if flip:
+				cur = segs[found][0]
+			else:
+				cur = segs[found][1]
+			poly.append(cur)
 		if poly.size() >= 3:
-			pieces.append(poly)
-	var holder: Node3D = Node3D.new()
-	holder.name = "Floors"
-	if not flush.is_empty():
-		holder.add_child(_emit_floors(WallRects.merge(flush), fine_m, mat))
-	if not pieces.is_empty():
-		var inst: MeshInstance3D = MeshInstance3D.new()
-		inst.mesh = _lip_mesh(pieces, fine_m)
-		inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		if mat:
-			inst.material_override = mat
-		holder.add_child(inst)
-	return holder
+			if poly[poly.size() - 1].distance_to(poly[0]) <= 0.25:
+				poly.remove_at(poly.size() - 1)
+			loops.append(poly)
+	return loops
+
+
+static func _loop_mesh(pieces: Array, fine_m: float) -> ArrayMesh:
+	var verts: PackedVector3Array = PackedVector3Array()
+	var norms: PackedVector3Array = PackedVector3Array()
+	var uvs: PackedVector2Array = PackedVector2Array()
+	var indices: PackedInt32Array = PackedInt32Array()
+	for piece in pieces:
+		var poly: PackedVector2Array = piece as PackedVector2Array
+		if poly.size() < 3:
+			continue
+		var tris: PackedInt32Array = Geometry2D.triangulate_polygon(poly)
+		if tris.is_empty():
+			poly.reverse()
+			tris = Geometry2D.triangulate_polygon(poly)
+		if tris.is_empty():
+			continue
+		var base: int = verts.size()
+		for i in poly.size():
+			var p: Vector2 = poly[i]
+			var x: float = p.x * fine_m
+			var z: float = p.y * fine_m
+			verts.append(Vector3(x, T.FLOOR_Y, z))
+			norms.append(Vector3.UP)
+			uvs.append(Vector2(x, z))
+		for k in tris.size():
+			indices.append(base + int(tris[k]))
+	var mesh: ArrayMesh = ArrayMesh.new()
+	if verts.is_empty():
+		return mesh
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = norms
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = indices
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
 
 
 static func _floor_splint(run: Dictionary) -> PackedVector2Array:
