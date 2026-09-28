@@ -48,7 +48,7 @@ static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 	return mesh
 
 
-static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, uv2s: PackedVector2Array, indices: PackedInt32Array) -> void:
+static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var o: Vector2 = run["origin"] as Vector2
 	var d: Vector2 = run["delta"] as Vector2
 	if d.length_squared() < 0.04:
@@ -68,6 +68,7 @@ static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: Packed
 	var h: float = T.WALL_H
 	var run_len: float = d.length()
 	var nf: Vector3 = Vector3(n2.x, 0.0, n2.y)
+	_uv2_in = n2
 	var cap_a: bool = true
 	var cap_b: bool = true
 	if run.has("cap_a"):
@@ -79,21 +80,21 @@ static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: Packed
 	front.append(Vector3(b.x, 0.0, b.y))
 	front.append(Vector3(b.x, h, b.y))
 	front.append(Vector3(a.x, h, a.y))
-	_quad(front, nf, verts, norms, uvs, uv2s, indices, n2)
+	_quad(front, nf, verts, norms, uvs, indices)
 	_uv4(uvs, Vector2(0.0, 0.0), Vector2(run_len, 0.0), Vector2(run_len, h), Vector2(0.0, h))
 	var back: PackedVector3Array = PackedVector3Array()
 	back.append(Vector3(b2.x, 0.0, b2.y))
 	back.append(Vector3(a2.x, 0.0, a2.y))
 	back.append(Vector3(a2.x, h, a2.y))
 	back.append(Vector3(b2.x, h, b2.y))
-	_quad(back, -nf, verts, norms, uvs, uv2s, indices, n2)
+	_quad(back, -nf, verts, norms, uvs, indices)
 	_uv4(uvs, Vector2(run_len, 0.0), Vector2(0.0, 0.0), Vector2(0.0, h), Vector2(run_len, h))
 	var top: PackedVector3Array = PackedVector3Array()
 	top.append(Vector3(a.x, h, a.y))
 	top.append(Vector3(b.x, h, b.y))
 	top.append(Vector3(b2.x, h, b2.y))
 	top.append(Vector3(a2.x, h, a2.y))
-	_quad(top, Vector3.UP, verts, norms, uvs, uv2s, indices, n2)
+	_quad(top, Vector3.UP, verts, norms, uvs, indices)
 	_uv4(uvs, Vector2(0.0, 0.0), Vector2(run_len, 0.0), Vector2(run_len, thick), Vector2(0.0, thick))
 	if cap_a:
 		var e0: PackedVector3Array = PackedVector3Array()
@@ -252,13 +253,17 @@ static func _end_col(z0i: int, z1i: int, x: int, n2: Vector2i, faced: Dictionary
 		_uv4(uvs, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, y1), Vector2(0.0, y1))
 
 
-static func _quad(corners: PackedVector3Array, n: Vector3, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, uv2s: PackedVector2Array, indices: PackedInt32Array, inward: Vector2 = Vector2.ZERO) -> void:
+static var _uv2_buf: PackedVector2Array = PackedVector2Array()
+static var _uv2_in: Vector2 = Vector2.ZERO
+
+
+static func _quad(corners: PackedVector3Array, n: Vector3, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var base: int = verts.size()
 	for i in range(corners.size()):
 		verts.append(corners[i])
 		norms.append(n)
 		uvs.append(Vector2.ZERO)
-		uv2s.append(inward)
+		_uv2_buf.append(_uv2_in)
 	indices.append(base)
 	indices.append(base + 2)
 	indices.append(base + 1)
