@@ -47,7 +47,7 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 		var pts: Array[Vector2] = _copy_pts(part)
 		if false and per >= 2 and part.size() > 4:
 			pts = _fillet_points(pts, rng, fillet, per, kind, w, h)
-		loops.append(_fold_pts(pts))
+		loops.append(_bevel_poly(_fold_pts(pts)))
 	LoadTiming.dmark("gen_outline_jag")
 	var sw: int = w * per
 	var sh: int = h * per
@@ -314,6 +314,33 @@ static func _collinear(a: Vector2, b: Vector2, c: Vector2) -> bool:
 	var ac: Vector2 = c - a
 	var cross: float = ab.x * ac.y - ab.y * ac.x
 	return absf(cross) <= 0.2 * maxf(ab.length(), 1.0)
+
+
+static func _bevel_poly(poly: PackedVector2Array, cut: float = 2.0) -> PackedVector2Array:
+	var count: int = poly.size()
+	var out: PackedVector2Array = PackedVector2Array()
+	if count < 3:
+		return poly
+	for i in count:
+		var prev: Vector2 = poly[(i + count - 1) % count]
+		var cur: Vector2 = poly[i]
+		var nxt: Vector2 = poly[(i + 1) % count]
+		var da: Vector2 = cur - prev
+		var db: Vector2 = nxt - cur
+		var la: float = da.length()
+		var lb: float = db.length()
+		if la < 0.2 or lb < 0.2:
+			out.append(cur)
+			continue
+		da /= la
+		db /= lb
+		if absf(da.dot(db)) > 0.35:
+			out.append(cur)
+			continue
+		var c: float = minf(cut, minf(la, lb) * 0.45)
+		out.append(cur - da * c)
+		out.append(cur + db * c)
+	return out
 
 
 static func _fold_pts(pts: Array[Vector2]) -> PackedVector2Array:
