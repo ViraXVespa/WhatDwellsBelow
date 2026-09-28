@@ -67,7 +67,7 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 		if _area(rim) < 0.0:
 			rim.reverse()
 		if _area(rim) > 1.0:
-			_push_clipped(spans, rim, solid, sw, sh)
+			_push_clipped(spans, rim, loops, solid, sw, sh)
 	for item in spans:
 		if item is Dictionary:
 			_paint(solid, sw, sh, item)
@@ -590,6 +590,54 @@ static func _fill(solid: PackedByteArray, sw: int, sh: int, poly: PackedVector2A
 			k += 2
 
 
+static func _join_ends(spans: Array, solid: PackedByteArray, sw: int, sh: int) -> void:
+	var ends: Array = []
+	for i in spans.size():
+		var run: Dictionary = spans[i]
+		var o: Vector2 = run["origin"]
+		var d: Vector2 = run["delta"]
+		ends.append({"p": o, "i": i})
+		ends.append({"p": o + d, "i": i})
+	var taken: Dictionary = {}
+	for a_i in ends.size():
+		if bool(taken.get(a_i, false)):
+			continue
+		var a: Dictionary = ends[a_i]
+		var best_j: int = -1
+		var best_l: float = 4.0
+		for b_i in ends.size():
+			if a_i == b_i or bool(taken.get(b_i, false)):
+				continue
+			var b: Dictionary = ends[b_i]
+			if int(a["i"]) == int(b["i"]):
+				continue
+			var p0: Vector2 = a["p"]
+			var p1: Vector2 = b["p"]
+			var dist: float = p0.distance_to(p1)
+			if dist < 0.2 or dist > best_l:
+				continue
+			best_l = dist
+			best_j = b_i
+		if best_j < 0:
+			continue
+		taken[a_i] = true
+		taken[best_j] = true
+		var b2: Dictionary = ends[best_j]
+		var q0: Vector2 = a["p"]
+		var q1: Vector2 = b2["p"]
+		var delta: Vector2 = q1 - q0
+		var nrm: Vector2 = Vector2(-delta.y, delta.x)
+		if nrm.length_squared() > 0.0001:
+			nrm = nrm.normalized()
+		var mid: Vector2 = (q0 + q1) * 0.5
+		var ix: int = int(floor(mid.x + nrm.x * 0.6))
+		var iy: int = int(floor(mid.y + nrm.y * 0.6))
+		var solid_in: bool = ix >= 0 and iy >= 0 and ix < sw and iy < sh and solid[iy * sw + ix] != 0
+		if not solid_in:
+			nrm = -nrm
+		spans.append({"origin": q0, "delta": delta, "normal": nrm, "thick": 1.0})
+
+
 static func _emit_cut(spans: Array, a: Vector2, delta: Vector2, nrm: Vector2, span_l: float, steps: int, run_a: int, last: int) -> void:
 	var t0: float = float(run_a) / float(steps)
 	var t1: float = float(last) / float(steps)
@@ -611,7 +659,7 @@ static func _emit_frag(spans: Array, a: Vector2, delta: Vector2, nrm: Vector2, t
 	spans.append({"origin": o, "delta": d, "normal": nrm, "thick": 1.0})
 
 
-static func _push_clipped(spans: Array, poly: PackedVector2Array, solid: PackedByteArray, sw: int, sh: int) -> void:
+static func _push_clipped(spans: Array, poly: PackedVector2Array, loops: Array, solid: PackedByteArray, sw: int, sh: int) -> void:
 	var count: int = poly.size()
 	if count < 2 or _area(poly) <= 1.0 or sw < 1 or sh < 1:
 		return
@@ -625,35 +673,46 @@ static func _push_clipped(spans: Array, poly: PackedVector2Array, solid: PackedB
 		var nrm: Vector2 = Vector2(-delta.y, delta.x)
 		if nrm.length_squared() > 0.0001:
 			nrm = nrm.normalized()
-		var steps: int = maxi(2, int(ceil(span_l * 2.0)))
-		var run_a: int = -1
-		var last: int = -2
-		for si in range(steps + 1):
-			var t: float = float(si) / float(steps)
-			var p: Vector2 = a + delta * t
-			var out_p: Vector2 = p - nrm * 0.6
-			var fx: int = int(floor(out_p.x))
-			var fy: int = int(floor(out_p.y))
-			var void_out: bool = fx < 0 or fy < 0 or fx >= sw or fy >= sh
+		var ts: PackedFloat32Array = PackedFloat32Array()
+		ts.append(0.0)
+		ts.append(1.0)
+		for loop_v in loops:
+			var other: PackedVector2Array = loop_v
+			if other == poly:
+				continue
+			var oc: int = other.size()
+			for j in oc:
+				var hit: Variant = Geometry2D.segment_intersects_segment(a, b, other[j], other[(j + 1) % oc])
+				if not (hit is Vector2):
+					continue
+				var p: Vector2 = hit
+				var t: float = (p - a).dot(delta) / (span_l * span_l)
+				if t > 0.001 and t < 0.999:
+					ts.append(t)
+		_sort_xs(ts)
+		for k in range(ts.size() - 1):
+			var t0: float = ts[k]
+			var t1: float = ts[k + 1]
+			if t1 - t0 < 0.001:
+				continue
+			var mid: Vector2 = a + delta * ((t0 + t1) * 0.5)
+			var ox: int = int(floor(mid.x - nrm.x * 0.4))
+			var oy: int = int(floor(mid.y - nrm.y * 0.4))
+			var void_out: bool = ox < 0 or oy < 0 or ox >= sw or oy >= sh
 			if not void_out:
-				void_out = solid[fy * sw + fx] == 0
-			var in_p: Vector2 = p + nrm * 0.6
-			var ix: int = int(floor(in_p.x))
-			var iy: int = int(floor(in_p.y))
+				void_out = solid[oy * sw + ox] == 0
 			var solid_in: bool = false
-			if ix >= 0 and iy >= 0 and ix < sw and iy < sh:
-				solid_in = solid[iy * sw + ix] != 0
+			for k_in in range(1, 5):
+				var d_in: float = float(k_in) * 0.5
+				var ix2: int = int(floor(mid.x + nrm.x * d_in))
+				var iy2: int = int(floor(mid.y + nrm.y * d_in))
+				if ix2 < 0 or iy2 < 0 or ix2 >= sw or iy2 >= sh:
+					continue
+				if solid[iy2 * sw + ix2] != 0:
+					solid_in = true
+					break
 			if void_out and solid_in:
-				if run_a < 0:
-					run_a = si
-				last = si
-			else:
-				if run_a >= 0 and last > run_a:
-					_emit_cut(spans, a, delta, nrm, span_l, steps, run_a, last)
-				run_a = -1
-				last = -2
-		if run_a >= 0 and last > run_a:
-			_emit_cut(spans, a, delta, nrm, span_l, steps, run_a, last)
+				_emit_frag(spans, a, delta, nrm, t0, t1)
 
 
 static func _spans_from_solid(solid: PackedByteArray, sw: int, sh: int) -> Array:
