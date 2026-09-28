@@ -10,6 +10,12 @@ const SUB := 4
 const COL_FLOOR := Color(0.50, 0.56, 0.74)
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
+static var _rgba: PackedByteArray = PackedByteArray()
+static var _walk_buf: PackedByteArray = PackedByteArray()
+static var _rr_buf: PackedFloat32Array = PackedFloat32Array()
+static var _gg_buf: PackedFloat32Array = PackedFloat32Array()
+static var _bb_buf: PackedFloat32Array = PackedFloat32Array()
+
 
 static func solid_open(
 	solid: PackedByteArray,
@@ -66,12 +72,13 @@ static func paint(
 	var ih: int = th * SUB
 	var pxn: int = iw * ih
 	var walk: PackedByteArray = _walk_mask(solid, sw, sh, n, x0, z0, iw, ih, loops)
-	var rr: PackedFloat32Array = PackedFloat32Array()
-	var gg: PackedFloat32Array = PackedFloat32Array()
-	var bb: PackedFloat32Array = PackedFloat32Array()
-	rr.resize(pxn)
-	gg.resize(pxn)
-	bb.resize(pxn)
+	if _rr_buf.size() != pxn:
+		_rr_buf.resize(pxn)
+		_gg_buf.resize(pxn)
+		_bb_buf.resize(pxn)
+	var rr: PackedFloat32Array = _rr_buf
+	var gg: PackedFloat32Array = _gg_buf
+	var bb: PackedFloat32Array = _bb_buf
 	rr.fill(0.0)
 	gg.fill(0.0)
 	bb.fill(0.0)
@@ -80,12 +87,30 @@ static func paint(
 		_disc(rr, gg, bb, walk, iw, ih, item, x0, z0, loops, n)
 	_lift_floor(rr, gg, bb, walk, iw, ih, ambient, n)
 	_walls(rr, gg, bb, walk, iw, ih, n)
-	for y in ih:
-		for x in iw:
-			var i: int = y * iw + x
-			if rr[i] <= 0.0 and gg[i] <= 0.0 and bb[i] <= 0.0:
-				continue
-			img.set_pixel(x, y, Color(rr[i], gg[i], bb[i], 1.0))
+	_blit(img, rr, gg, bb, iw, ih)
+
+
+
+static func _blit(
+	img: Image,
+	rr: PackedFloat32Array,
+	gg: PackedFloat32Array,
+	bb: PackedFloat32Array,
+	iw: int,
+	ih: int
+) -> void:
+	var pxn: int = iw * ih
+	if _rgba.size() != pxn * 4:
+		_rgba.resize(pxn * 4)
+	var i: int = 0
+	while i < pxn:
+		var o: int = i * 4
+		_rgba[o] = int(minf(rr[i], 1.0) * 255.0 + 0.5)
+		_rgba[o + 1] = int(minf(gg[i], 1.0) * 255.0 + 0.5)
+		_rgba[o + 2] = int(minf(bb[i], 1.0) * 255.0 + 0.5)
+		_rgba[o + 3] = 255
+		i += 1
+	img.set_data(iw, ih, false, Image.FORMAT_RGBA8, _rgba)
 
 
 static func _walk_mask(
@@ -99,8 +124,11 @@ static func _walk_mask(
 	ih: int,
 	_loops: Array = []
 ) -> PackedByteArray:
-	var walk: PackedByteArray = PackedByteArray()
-	walk.resize(iw * ih)
+	var need: int = iw * ih
+	if _walk_buf.size() != need:
+		_walk_buf.resize(need)
+	var walk: PackedByteArray = _walk_buf
+	walk.fill(0)
 	if n < 1:
 		walk.fill(1)
 		return walk
@@ -219,7 +247,7 @@ static func _disc(
 				var wx: float = float(x0) + (float(px) + 0.5) / float(SUB)
 				var wz: float = float(z0) + (float(py) + 0.5) / float(SUB)
 				var dist: float = sqrt((wx - mx) * (wx - mx) + (wz - mz) * (wz - mz))
-				if dist <= reach and _clear(walk, iw, ih, sx, sy, px, py):
+				if dist <= reach and (_n < 1 or _clear(walk, iw, ih, sx, sy, px, py)):
 					var fall: float = energy * (1.0 - dist / reach)
 					rr[i] = minf(rr[i] + col.r * fall, 1.0)
 					gg[i] = minf(gg[i] + col.g * fall, 1.0)

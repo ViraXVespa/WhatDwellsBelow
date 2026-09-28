@@ -5,6 +5,7 @@ extends Object
 const T := preload("res://scripts/data/tunables.gd")
 const Stamp := preload("res://scripts/graphics/light_stamp.gd")
 const Plan := preload("res://scripts/graphics/torch_plan.gd")
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 
 const COL_TORCH := Color(1.0, 0.48, 0.16)
 const COL_CRYSTAL := Color(0.35, 0.72, 1.0)
@@ -101,6 +102,7 @@ static func maintain(host: Node) -> void:
 	var need_stamp: bool = key != _knob or rect != _rect
 	if not need_plan and not need_stamp and not need_torch:
 		return
+	HitchLog.mark("light_rt")
 	if need_plan:
 		_sites = Plan.build(host, _props)
 		_planned = true
@@ -149,7 +151,11 @@ static func _publish(
 	n: int,
 	loops: Array = []
 ) -> void:
-	var img: Image = Image.create(tw * Stamp.SUB, th * Stamp.SUB, false, Image.FORMAT_RGBA8)
+	var iw: int = tw * Stamp.SUB
+	var ih: int = th * Stamp.SUB
+	var img: Image = _img
+	if img == null or img.get_width() != iw or img.get_height() != ih:
+		img = Image.create(iw, ih, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 1))
 	Stamp.paint(img, tw, th, lights, ambient, solid, sw, sh, n, x0, z0, loops)
 	origin = Vector2(float(x0), float(z0))

@@ -47,8 +47,10 @@ MAX_SIDE = 192
 AGREE_TOL = 28.0
 MIN_SIDE = 24
 FIGURE_MAD = 22.0
-FIGURE_AGREE = 0.74
+FIGURE_AGREE = 0.70
 FIGURE_OVERLAP = 0.88
+CELL_MAD = 16.0
+CELL_AGREE = 0.86
 CROP_MAD = 24.0
 CROP_AGREE = 0.85
 CROP_OVERLAP = 0.88
@@ -78,13 +80,14 @@ def _posix(path: Path) -> str:
         return path.resolve().as_posix()
 
 
-def load_rgba(path: Path, max_side: int = MAX_SIDE) -> tuple[np.ndarray, int]:
-    """Return a capped RGBA array and the opaque short side in original pixels."""
+def load_rgba(path: Path, max_side: int = MAX_SIDE) -> tuple[np.ndarray, int, int]:
+    """Return a capped RGBA array, opaque short side, and opaque pixel count."""
     im = Image.open(path)
     im.load()
     im = im.convert("RGBA")
     full = np.asarray(im)
     side = opaque_side(full)
+    pixels = int((full[:, :, 3] >= 16).sum())
     w, h = im.size
     m = max(w, h)
     if m > max_side:
@@ -94,7 +97,7 @@ def load_rgba(path: Path, max_side: int = MAX_SIDE) -> tuple[np.ndarray, int]:
             Image.Resampling.BOX,
         )
         full = np.asarray(im)
-    return full, side
+    return full, side, pixels
 
 
 def looks_finished_sprite(path: Path) -> bool:
@@ -243,11 +246,42 @@ def score_batch(
     return mad, agree, overlap
 
 
-def accept_score(kind: str, mad: float, agree: float, overlap: float, side: int) -> bool:
-    if side < MIN_SIDE:
+def area_ok(agree: float, pixels: int, agree_min: float) -> bool:
+    """Agreeing area must be at least min_side squared, or most of a small sprite."""
+    if agree < agree_min:
         return False
+    if pixels >= MIN_SIDE * MIN_SIDE:
+        return agree * pixels >= float(MIN_SIDE * MIN_SIDE)
+    return pixels >= 160
+
+
+def loose_windows_ok(live: str) -> bool:
+    text = live.replace("\\", "/")
+    return "/tiles/" in text or "/ui/" in text
+
+
+def accept_score(
+    kind: str,
+    window: str,
+    mad: float,
+    agree: float,
+    overlap: float,
+    pixels: int,
+    live: str,
+) -> bool:
+    base = window.split("/")[0]
+    if base.startswith("cell_"):
+        if not area_ok(agree, pixels, CELL_AGREE):
+            return False
+        return mad <= CELL_MAD and agree >= CELL_AGREE and overlap >= FIGURE_OVERLAP
     if kind == "crop":
-        return mad <= CROP_MAD and agree >= CROP_AGREE and overlap >= CROP_OVERLAP
+        if not area_ok(agree, pixels, CROP_AGREE):
+            return False
+        return loose_windows_ok(live) and mad <= CROP_MAD and agree >= CROP_AGREE and overlap >= CROP_OVERLAP
+    if not area_ok(agree, pixels, FIGURE_AGREE):
+        return False
+    if base != "full" and not loose_windows_ok(live):
+        return False
     return mad <= FIGURE_MAD and agree >= FIGURE_AGREE and overlap >= FIGURE_OVERLAP
 
 
@@ -268,7 +302,7 @@ def _grids_from_parts(parts: list[tuple[str, np.ndarray]]) -> list[tuple[str, np
 
 
 def score_pair(live: Path, src: Path, pipeline: bool = False) -> dict:
-    live_arr, side = load_rgba(live, 160)
+    live_arr, side, pixels = load_rgba(live, 160)
     figure = opaque_crop(live_arr)
     fig_rgb, fig_mask = to_grid(figure)
     inn_rgb, inn_mask = to_grid(opaque_crop(inner_crop(figure)))
@@ -288,7 +322,16 @@ def score_pair(live: Path, src: Path, pipeline: bool = False) -> dict:
             "flip": name.endswith("/flip"),
             "kind": kind,
             "opaque_side": side,
-            "accept": accept_score(kind, float(mad_a[0]), float(agree_a[0]), float(overlap_a[0]), side),
+            "opaque_pixels": pixels,
+            "accept": accept_score(
+                kind,
+                name,
+                float(mad_a[0]),
+                float(agree_a[0]),
+                float(overlap_a[0]),
+                pixels,
+                str(live),
+            ),
         }
         if best is None or row["mad"] < best["mad"]:
             best = row
@@ -409,9 +452,10 @@ def prepare_lives(paths: list[Path]) -> dict:
     inn_rgb = []
     inn_mask = []
     sides = []
+    pix = []
     crop_ok = []
     for path in paths:
-        arr, side = load_rgba(path, 160)
+        arr, side, pixels = load_rgba(path, 160)
         figure = opaque_crop(arr)
         rgb, mask = to_grid(figure)
         irgb, imask = to_grid(opaque_crop(inner_crop(figure)))
@@ -422,6 +466,7 @@ def prepare_lives(paths: list[Path]) -> dict:
         inn_rgb.append(irgb)
         inn_mask.append(imask)
         sides.append(side)
+        pix.append(pixels)
         crop_ok.append(rel.startswith("assets/tiles/") or rel.startswith("assets/ui/"))
     return {
         "paths": paths,
@@ -431,6 +476,7 @@ def prepare_lives(paths: list[Path]) -> dict:
         "inn_rgb": np.stack(inn_rgb),
         "inn_mask": np.stack(inn_mask),
         "sides": np.asarray(sides, dtype=np.int32),
+        "pixels": np.asarray(pix, dtype=np.int32),
         "crop_ok": np.asarray(crop_ok, dtype=bool),
     }
 
@@ -451,7 +497,7 @@ def scan_with_near(images: list[Path], lives: dict) -> tuple[list[dict | None], 
         if looks_finished_sprite(path):
             continue
         try:
-            arr, _side = load_rgba(path)
+            arr, _side, _pixels = load_rgba(path)
             grids = candidate_grids(arr)
         except OSError as exc:
             print(f"skip {path}: {exc}", flush=True)
@@ -475,14 +521,18 @@ def scan_with_near(images: list[Path], lives: dict) -> tuple[list[dict | None], 
                 for hit in np.flatnonzero(closer):
                     near_window[hit] = name
                     near_kind[hit] = kind
-            ok = (
-                allowed
-                & (lives["sides"] >= MIN_SIDE)
-                & (mad <= mad_max)
-                & (agree >= agree_min)
-                & (overlap >= overlap_min)
-            )
-            for hit in np.flatnonzero(ok):
+            rough = allowed & (mad <= mad_max) & (agree >= agree_min) & (overlap >= overlap_min)
+            for hit in np.flatnonzero(rough):
+                if not accept_score(
+                    kind,
+                    name,
+                    float(mad[hit]),
+                    float(agree[hit]),
+                    float(overlap[hit]),
+                    int(lives["pixels"][hit]),
+                    lives["rels"][hit],
+                ):
+                    continue
                 row = {
                     "mad": float(mad[hit]),
                     "agree": float(agree[hit]),
@@ -515,7 +565,6 @@ def scan_with_near(images: list[Path], lives: dict) -> tuple[list[dict | None], 
 
 
 def related_videos(origins: list[Path], videos: list[Path]) -> list[Path]:
-    folders = {path.parent.resolve() for path in origins}
     harvest_dirs: set[str] = set()
     oneshot_keys: set[str] = set()
     for origin in origins:
@@ -536,9 +585,7 @@ def related_videos(origins: list[Path], videos: list[Path]) -> list[Path]:
         if key in seen:
             continue
         take = False
-        if video.parent.resolve() in folders:
-            take = True
-        elif video.parent.name == "walk_final" and video.stem in harvest_dirs:
+        if video.parent.name == "walk_final" and video.stem in harvest_dirs:
             take = True
         elif video.parent.name == "oneshot" and video.stem in oneshot_keys:
             take = True
