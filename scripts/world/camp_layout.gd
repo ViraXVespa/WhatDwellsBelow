@@ -58,6 +58,72 @@ const BANNER_POS_DEFAULT := Vector3(16.5, 0.0, 22.0)
 @export var wing_awning_slope: float = AWNING_SLOPE_DEFAULT
 @export var wing_awning_valance: float = AWNING_VALANCE_DEFAULT
 
+@export var rebuild_preview: bool = false:
+	set(v):
+		rebuild_preview = false
+		_kick_redraw()
+
+
+func _kick_redraw() -> void:
+	if Engine.is_editor_hint():
+		editor_redraw.emit()
+
+
+func _set(property: StringName, value: Variant) -> bool:
+	var key: String = String(property)
+	var dress: PackedStringArray = PackedStringArray([
+		"tile_w", "hall_box", "wing_box", "stall_box",
+		"hall_eave", "wing_eave", "stall_eave",
+		"hall_tile_w", "wing_tile_w", "stall_tile_w",
+		"hall_uv_off", "wing_uv_off", "stall_uv_off",
+		"hall_awning_depth", "hall_awning_slope", "hall_awning_valance",
+		"wing_awning_depth", "wing_awning_slope", "wing_awning_valance"
+	])
+	if key not in dress:
+		return false
+	match key:
+		"tile_w":
+			tile_w = float(value)
+		"hall_box":
+			hall_box = value
+		"wing_box":
+			wing_box = value
+		"stall_box":
+			stall_box = value
+		"hall_eave":
+			hall_eave = float(value)
+		"wing_eave":
+			wing_eave = float(value)
+		"stall_eave":
+			stall_eave = float(value)
+		"hall_tile_w":
+			hall_tile_w = float(value)
+		"wing_tile_w":
+			wing_tile_w = float(value)
+		"stall_tile_w":
+			stall_tile_w = float(value)
+		"hall_uv_off":
+			hall_uv_off = value
+		"wing_uv_off":
+			wing_uv_off = value
+		"stall_uv_off":
+			stall_uv_off = value
+		"hall_awning_depth":
+			hall_awning_depth = float(value)
+		"hall_awning_slope":
+			hall_awning_slope = float(value)
+		"hall_awning_valance":
+			hall_awning_valance = float(value)
+		"wing_awning_depth":
+			wing_awning_depth = float(value)
+		"wing_awning_slope":
+			wing_awning_slope = float(value)
+		"wing_awning_valance":
+			wing_awning_valance = float(value)
+	notify_property_list_changed()
+	_kick_redraw()
+	return true
+
 
 static func on_camp(host: Node3D) -> Node3D:
 	var existing: Node = host.get_node_or_null("Layout")
@@ -289,16 +355,10 @@ func _default_wing_pos() -> Vector3:
 
 
 func _default_roof_pos(body_pos: Vector3, body_box: Vector3, eave: float, y_bias: float) -> Vector3:
-    var y: float = body_pos.y + body_box.y * 0.5 + 0.03 + y_bias
-    var z0: float = body_pos.z - body_box.z * 0.5
-    return Vector3(body_pos.x, y, z0 + (body_box.z + eave) * 0.5)
+	var y: float = body_pos.y + body_box.y * 0.5 + 0.03 + y_bias
+	var z0: float = body_pos.z - body_box.z * 0.5
+	return Vector3(body_pos.x, y, z0 + (body_box.z + eave) * 0.5)
 
 
 func _ready() -> void:
-    ensure_tree()
-    set_notify_transform(true)
-
-
-func _notification(what: int) -> void:
-    if what == NOTIFICATION_TRANSFORM_CHANGED and Engine.is_editor_hint():
-        editor_redraw.emit()
+	ensure_tree()

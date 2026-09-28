@@ -106,8 +106,6 @@ static func _bin_near(cell: Vector2i) -> PackedInt32Array:
 	return out
 
 
-
-
 static func build(host: Node, props: Array) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if host == null or host.data == null:

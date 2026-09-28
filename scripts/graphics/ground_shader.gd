@@ -77,15 +77,21 @@ static func material(tex_path: String, fallback: Color, tint: Color = Color.WHIT
 	mat.shader = shader()
 	var albedo: Texture2D = _albedo(tex_path, fallback)
 	var px: float = float(maxi(albedo.get_width(), 1))
-	var density: float = App.bal.getv("ground_px_per_m")
-	if density < 1.0:
-		density = T.GROUND_PX_PER_M
-	var hash_m: float = App.bal.getv("ground_hash_m")
-	if hash_m < 1.0:
-		hash_m = T.GROUND_HASH_M
-	var variants: float = App.bal.getv("ground_variants")
-	if variants < 1.0:
-		variants = T.GROUND_VARIANTS
+	var density: float = T.GROUND_PX_PER_M
+	var hash_m: float = T.GROUND_HASH_M
+	var variants: float = T.GROUND_VARIANTS
+	var wear: float = 0.0
+	if not Engine.is_editor_hint() and App.get("bal") != null:
+		density = App.bal.getv("ground_px_per_m")
+		if density < 1.0:
+			density = T.GROUND_PX_PER_M
+		hash_m = App.bal.getv("ground_hash_m")
+		if hash_m < 1.0:
+			hash_m = T.GROUND_HASH_M
+		variants = App.bal.getv("ground_variants")
+		if variants < 1.0:
+			variants = T.GROUND_VARIANTS
+		wear = App.bal.getv("ground_wear")
 	var repeats: float = density / px
 	mat.set_shader_parameter("albedo_tex", albedo)
 	mat.set_shader_parameter("uv_scale", Vector2(repeats, repeats))
@@ -93,10 +99,9 @@ static func material(tex_path: String, fallback: Color, tint: Color = Color.WHIT
 	mat.set_shader_parameter("tint", Vector3(tint.r, tint.g, tint.b))
 	mat.set_shader_parameter("hash_m", hash_m)
 	mat.set_shader_parameter("variant_n", variants)
-	mat.set_shader_parameter("wear", App.bal.getv("ground_wear"))
+	mat.set_shader_parameter("wear", wear)
 	LightRt.bind(mat)
 	return mat
-
 
 static func _albedo(tex_path: String, fallback: Color) -> Texture2D:
 	if ResourceLoader.exists(tex_path):
