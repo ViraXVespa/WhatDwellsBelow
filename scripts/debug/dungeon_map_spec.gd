@@ -125,8 +125,8 @@ static func _emit_spec(lines: Array[String], host: Node, data: Dictionary, objs:
 		if not (rawj is Dictionary):
 			continue
 		var jc: Vector2i = Vector2i(rawj.get("cell", Vector2i.ZERO))
-		var fx2: int = jc.x * n + n / 2
-		var fy2: int = jc.y * n + n / 2
+		var fx2: int = jc.x * n + (n >> 1)
+		var fy2: int = jc.y * n + (n >> 1)
 		if n >= 2 and solid.size() == sw * sh and sw > 0 and fx2 >= 0 and fy2 >= 0 and fx2 < sw and fy2 < sh and solid[fy2 * sw + fx2] != 0:
 			job_ok += 1
 		else:

@@ -669,7 +669,7 @@ static func _hit_other(p: Vector2, loops: Array, skip: PackedVector2Array) -> bo
 	return false
 
 
-static func _push_clipped(spans: Array, poly: PackedVector2Array, loops: Array, solid: PackedByteArray, sw: int, sh: int) -> void:
+static func _push_clipped(spans: Array, poly: PackedVector2Array, loops: Array, _solid: PackedByteArray, sw: int, sh: int) -> void:
 	var count: int = poly.size()
 	if count < 2 or _area(poly) <= 1.0 or sw < 1 or sh < 1:
 		return
@@ -751,11 +751,11 @@ static func _spans_from_solid(solid: PackedByteArray, sw: int, sh: int) -> Array
 				var key: Vector3i = Vector3i(x, y, di)
 				if bool(used.get(key, false)):
 					continue
-				var tan: Vector2i = Vector2i(absi(n.y), absi(n.x))
+				var along: Vector2i = Vector2i(absi(n.y), absi(n.x))
 				var run_n: int = 1
 				while true:
-					var xx: int = x + tan.x * run_n
-					var yy: int = y + tan.y * run_n
+					var xx: int = x + along.x * run_n
+					var yy: int = y + along.y * run_n
 					if xx < 0 or yy < 0 or xx >= sw or yy >= sh:
 						break
 					if solid[yy * sw + xx] == 0:
@@ -770,7 +770,7 @@ static func _spans_from_solid(solid: PackedByteArray, sw: int, sh: int) -> Array
 						break
 					run_n += 1
 				for k in run_n:
-					used[Vector3i(x + tan.x * k, y + tan.y * k, di)] = true
+					used[Vector3i(x + along.x * k, y + along.y * k, di)] = true
 				var origin: Vector2 = Vector2(float(x), float(y))
 				var delta: Vector2 = Vector2.ZERO
 				var nrm: Vector2 = Vector2.ZERO
