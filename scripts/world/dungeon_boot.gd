@@ -54,6 +54,11 @@ static func ready_floor(host: Node) -> void:
 	GeoStreamS.follow(host, 0.0)
 	HitchLog.mark("dungeon_follow")
 	LoadTiming.dmark("stream")
+	var LightRtS: GDScript = load("res://scripts/graphics/light_rt.gd") as GDScript
+	LightRtS.maintain(host)
+	LightRtS.maintain(host)
+	HitchLog.mark("dungeon_light")
+	LoadTiming.dmark("light")
 	if App.present and App.present.has_method("release_enter"):
 		App.present.release_enter()
 	Smoke.attach_dungeon(host)

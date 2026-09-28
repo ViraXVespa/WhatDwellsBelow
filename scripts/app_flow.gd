@@ -163,8 +163,15 @@ static func dungeon_load_timing_async(host: Node) -> void:
 		if dun and dun.is_node_ready() and (str(dun.scene_file_path).find("dungeon") >= 0 or str(dun.name) == "Dungeon"):
 			break
 		await host.get_tree().process_frame
-	LoadTiming.dmark("dungeon_ready")
+	LoadTiming.dmark("dungeon_scene")
 	LoadTiming.dnote("dungeon_wait_frames", str(dun_guard))
+	var warm: int = 0
+	while warm < 2:
+		RenderingServer.force_draw()
+		await host.get_tree().process_frame
+		warm += 1
+	LoadTiming.dmark("dungeon_warm")
+	LoadTiming.dmark("dungeon_ready")
 	LoadTiming.finish()
 
 

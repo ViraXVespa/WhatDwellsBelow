@@ -23,6 +23,7 @@ func _ready() -> void:
 	var x1: int = Build.GROUND_OX + Build.GROUND_W + Build.GRASS_PAD
 	var z1: int = Build.GROUND_OZ + Build.GROUND_D + Build.GRASS_PAD
 	LightRt.prepare_hub(x0, z0, x1, z1, Vector2(16.475, 10.2))
+	LoadTiming.mark("camp_light")
 	Build.ground(self)
 	LoadTiming.mark("camp_ground")
 	Build.buildings(self)
