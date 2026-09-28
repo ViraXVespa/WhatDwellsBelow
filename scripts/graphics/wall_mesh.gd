@@ -20,6 +20,8 @@ static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 	var uvs: PackedVector2Array = PackedVector2Array()
 	var uv2s: PackedVector2Array = PackedVector2Array()
 	var indices: PackedInt32Array = PackedInt32Array()
+	_uv2_buf = PackedVector2Array()
+	_uv2_in = Vector2.ZERO
 	var faced: Dictionary = {}
 	var topped: Dictionary = {}
 	var cells: Dictionary = {}
@@ -42,7 +44,7 @@ static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 	arrays[Mesh.ARRAY_VERTEX] = verts
 	arrays[Mesh.ARRAY_NORMAL] = norms
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
-	arrays[Mesh.ARRAY_TEX_UV2] = uv2s
+	arrays[Mesh.ARRAY_TEX_UV2] = _uv2_buf
 	arrays[Mesh.ARRAY_INDEX] = indices
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh
