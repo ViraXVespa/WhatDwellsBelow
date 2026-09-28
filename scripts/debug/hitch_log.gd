@@ -95,7 +95,9 @@ static func close() -> void:
 static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
 	var now: int = Time.get_ticks_msec()
 	var dt: int = 0
-	if _mark_ms > 0:
+	if _mark_ms > 0 and now - _mark_ms > 50:
+		_whys.clear()
+	elif _mark_ms > 0:
 		dt = now - _mark_ms
 	_mark_ms = now
 	why = reason

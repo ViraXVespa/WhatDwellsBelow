@@ -129,6 +129,7 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 	var grid: PackedByteArray = host.data.grid
 	var floor_cells: Array[Vector2i] = WallRects.solid_cells(solid, sw, sh, n, ox, oy, x1, y1)
 	var wall_cells: Array[Vector2i] = WallRects.volume_cells(solid, sw, sh, n, grid, w, h, ox, oy, x1, y1)
+	HitchLog.mark("geo_cells")
 	if floor_cells.is_empty() and wall_cells.is_empty():
 		job.state = "cleared"
 		return
@@ -139,9 +140,11 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 	var runs: Array[Dictionary] = []
 	if outlined or not wall_cells.is_empty():
 		runs = _wall_runs(host, solid, sw, sh, wall_cells, ox, oy, x1, y1, n)
+	HitchLog.mark("geo_runs")
 	if not floor_cells.is_empty():
 		if outlined:
 			var lip: Node3D = _emit_floor_lip(_outline_loops(host), ox * n, oy * n, x1 * n, y1 * n, fine_m, host.floor_mat)
+			HitchLog.mark("geo_lip")
 			root.add_child(lip)
 			var mm: MultiMeshInstance3D = _first_mm(lip)
 			if host.floor_mm == null and mm != null:
@@ -154,12 +157,14 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 	if not runs.is_empty():
 		var wall_inst: MeshInstance3D = MeshInstance3D.new()
 		wall_inst.mesh = WallMesh.from_faces(runs)
+		HitchLog.mark("geo_walls")
 		wall_inst.scale = Vector3(fine_m, 1.0, fine_m)
 		wall_inst.material_override = host.wall_mat
 		wall_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		root.add_child(wall_inst)
 	if outlined:
 		_add_ribbon_boxes(root, runs, fine_m)
+		HitchLog.mark("geo_col")
 	elif not wall_cells.is_empty():
 		add_collision(root, wall_cells, fine_m)
 	job.node = root
