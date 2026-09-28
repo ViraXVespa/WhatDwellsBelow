@@ -6,6 +6,7 @@ extends Object
 ## A 4-neighbor does not open a cell past the lip.
 ## Wall texels stay dark except the neighbor sample along the bake. SUB stays 4.
 
+const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const SUB := 4
 const COL_FLOOR := Color(0.50, 0.56, 0.74)
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
@@ -73,6 +74,7 @@ static func paint(
 	var ih: int = th * SUB
 	var pxn: int = iw * ih
 	var walk: PackedByteArray = _walk_mask(solid, sw, sh, n, x0, z0, iw, ih, loops)
+	HitchLog.mark("light_walk")
 	if _rr_buf.size() != pxn:
 		_rr_buf.resize(pxn)
 		_gg_buf.resize(pxn)
@@ -86,9 +88,12 @@ static func paint(
 	for src in lights:
 		var item: Dictionary = src
 		_disc(rr, gg, bb, walk, iw, ih, item, x0, z0, loops, n)
+	HitchLog.mark("light_disc")
 	_lift_floor(rr, gg, bb, walk, iw, ih, ambient, n)
 	_walls(rr, gg, bb, walk, iw, ih, n)
+	HitchLog.mark("light_lift")
 	_blit(img, rr, gg, bb, iw, ih)
+	HitchLog.mark("light_blit")
 
 
 

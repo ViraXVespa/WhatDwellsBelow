@@ -20,6 +20,8 @@ static var _t0_ms: int = 0
 static var why: String = ""
 static var gx: int = 0
 static var gy: int = 0
+static var _whys: PackedStringArray = PackedStringArray()
+static var _mark_ms: int = 0
 
 
 static func enabled() -> bool:
@@ -91,9 +93,17 @@ static func close() -> void:
 
 
 static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
+	var now: int = Time.get_ticks_msec()
+	var dt: int = 0
+	if _mark_ms > 0:
+		dt = now - _mark_ms
+	_mark_ms = now
 	why = reason
 	gx = int(origin.x)
 	gy = int(origin.y)
+	if _whys.size() >= 8:
+		_whys.remove_at(0)
+	_whys.append("%s:%d" % [reason, dt])
 
 
 static func status_line() -> String:
@@ -114,6 +124,8 @@ static func _note(host: Node, delta: float) -> void:
 	why = ""
 	gx = 0
 	gy = 0
+	_whys.clear()
+	_mark_ms = 0
 	if hitch_n > CAP:
 		_close()
 		_trim_file()
@@ -154,9 +166,11 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 		"draw": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
 		"proc_ms": snappedf(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0, 0.1),
 	}
-	if why != "":
+	if not _whys.is_empty():
+		row["why"] = ",".join(_whys)
+	elif why != "":
 		row["why"] = why
-	if why == "geo_activate":
+	if why == "geo_activate" or (not _whys.is_empty() and _whys[_whys.size() - 1].begins_with("geo_activate")):
 		row["gx"] = gx
 		row["gy"] = gy
 	return row

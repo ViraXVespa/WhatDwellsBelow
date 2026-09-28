@@ -102,17 +102,19 @@ static func maintain(host: Node) -> void:
 	var need_stamp: bool = key != _knob or rect != _rect
 	if not need_plan and not need_stamp and not need_torch:
 		return
-	HitchLog.mark("light_rt")
 	if need_plan:
+		HitchLog.mark("light_plan")
 		_sites = Plan.build(host, _props)
 		_planned = true
 		_plan_dirty = false
 		return
 	if need_stamp:
+		HitchLog.mark("light_stamp")
 		_rect = rect
 		_knob = key
 		_publish_dungeon(host, rect)
 		return
+	HitchLog.mark("light_refill")
 	_live = live
 	_refill(host)
 
