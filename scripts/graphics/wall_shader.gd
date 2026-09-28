@@ -65,7 +65,7 @@ void fragment() {
 	vec2 inn = UV2;
 	vec3 lit;
 	if (length(face_xz) <= 0.2) {
-		lit = vec3(0.22);
+		lit = vec3(0.33);
 	} else if (length(inn) > 0.2 && dot(normalize(face_xz), normalize(inn)) < 0.0) {
 		lit = vec3(0.14);
 	} else if (length(inn) > 0.2) {

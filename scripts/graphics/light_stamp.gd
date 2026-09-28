@@ -236,8 +236,6 @@ static func _disc(
 				continue
 			var nwx: float = float(x0) + (float(npx) + 0.5) / float(SUB)
 			var nwz: float = float(z0) + (float(npy) + 0.5) / float(SUB)
-			if not home.is_empty() and not _inside_loops(home, nwx * float(maxi(n, 1)), nwz * float(maxi(n, 1))):
-				continue
 			var nd: float = sqrt((nwx - mx) * (nwx - mx) + (nwz - mz) * (nwz - mz))
 			if nd > reach:
 				continue

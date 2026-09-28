@@ -107,6 +107,9 @@ static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: Packed
 		var n_start: Vector3 = Vector3(-d.x, 0.0, -d.y).normalized()
 		_quad(e0, n_start, verts, norms, uvs, indices)
 		_uv4(uvs, Vector2(0.0, 0.0), Vector2(0.0, h), Vector2(thick, h), Vector2(thick, 0.0))
+	_uv2_in = n2
+	_corner_post(a, n2, thick, h, verts, norms, uvs, indices)
+	_corner_post(b, n2, thick, h, verts, norms, uvs, indices)
 	if cap_b:
 		var e1: PackedVector3Array = PackedVector3Array()
 		e1.append(Vector3(b.x, 0.0, b.y))
@@ -116,6 +119,22 @@ static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: Packed
 		var n_end: Vector3 = Vector3(d.x, 0.0, d.y).normalized()
 		_quad(e1, n_end, verts, norms, uvs, indices)
 		_uv4(uvs, Vector2(0.0, 0.0), Vector2(thick, 0.0), Vector2(thick, h), Vector2(0.0, h))
+
+
+static func _corner_post(p: Vector2, n2: Vector2, thick: float, h: float, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
+	var inn: Vector2 = n2.normalized() * thick
+	var tan: Vector2 = Vector2(-n2.y, n2.x).normalized() * thick * 0.5
+	var a: Vector2 = p - tan
+	var b: Vector2 = p + tan
+	var a2: Vector2 = a + inn * -1.0
+	var b2: Vector2 = b + inn * -1.0
+	var top: PackedVector3Array = PackedVector3Array()
+	top.append(Vector3(a.x, h, a.y))
+	top.append(Vector3(b.x, h, b.y))
+	top.append(Vector3(b2.x, h, b2.y))
+	top.append(Vector3(a2.x, h, a2.y))
+	_quad(top, Vector3.UP, verts, norms, uvs, indices)
+	_uv4(uvs, Vector2(0.0, 0.0), Vector2(thick, 0.0), Vector2(thick, thick), Vector2(0.0, thick))
 
 
 static func _uv4(uvs: PackedVector2Array, a: Vector2, b: Vector2, c: Vector2, d: Vector2) -> void:
