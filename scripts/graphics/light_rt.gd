@@ -787,6 +787,8 @@ static func _hub_stamp_skirt(img: Image, x0: int, z0: int, sub: float, w: int, h
 			var wx: float = float(x0) + (float(x) + 0.5) / sub
 			var wz: float = float(z0) + (float(y) + 0.5) / sub
 			if _hub_inside(wx, wz, b):
+				var ic: Color = img.get_pixel(x, y)
+				img.set_pixel(x, y, Color(ic.r * 0.62, ic.g * 0.62, ic.b * 0.62, 1.0))
 				x += 1
 				continue
 			var t: float = 0.12
@@ -831,7 +833,7 @@ static func _hub_stamp_skirt(img: Image, x0: int, z0: int, sub: float, w: int, h
 
 
 static func _hub_box_of(pos: Vector3, box: Vector3, slen: float) -> Dictionary:
-	return {"x": pos.x, "z": pos.z, "hx": box.x * 0.5, "hz": box.z * 0.5, "len": slen}
+	return {"x": pos.x, "z": pos.z, "hx": box.x * 0.5 + 0.32, "hz": box.z * 0.5 + 0.32, "len": slen}
 
 static func _hub_inside(wx: float, wz: float, b: Dictionary) -> bool:
 	return absf(wx - float(b["x"])) <= float(b["hx"]) and absf(wz - float(b["z"])) <= float(b["hz"])
