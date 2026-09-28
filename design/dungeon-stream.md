@@ -6,7 +6,7 @@ Read when: RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo
 
 ## Live snapshot — streaming
 
-`dungeon_stream.gd` streams enemy jobs. `dungeon_geo_stream.gd` streams floor/wall MultiMeshes and wall collision the same way so 432×432 stays inside the 60 FPS budget. Chunks instance gen's published floor solid, span ribbon, and BoxShape recipe. Stream does not derive a wall. Floor planes and wall BoxShapes on a slant follow outline_spans. Do not merge 4-connected cells into a stair lip the polyline already closed. Live _emit_floors PlaneMesh rects and add_collision via WallRects.merge(wall_cells) are the miss on a slant. Wall collision is BoxShape on void that touches that bounded solid, not a 1 m slab and not a second staircase.
+`dungeon_stream.gd` streams enemy jobs. `dungeon_geo_stream.gd` streams floor/wall MultiMeshes and wall collision the same way so 432×432 stays inside the 60 FPS budget. Chunks instance gen's published floor solid, span ribbon, and BoxShape recipe. Stream does not derive a wall. Floor edge and wall ribbon are one span recipe: same outline_spans, origin, delta, and normal. Interior floor may stay merged rects. Do not derive the lip by clipping 4-connected cells. Wall BoxShapes on a slant follow that same polyline. Live _emit_floor_lip / _clip_cell and add_collision via WallRects.merge(wall_cells) are the miss on a slant. Wall collision is BoxShape on void that touches that bounded solid, not a 1 m slab and not a second staircase.
 
 | Constant | Cells | Meaning |
 |----------|-------|---------|
