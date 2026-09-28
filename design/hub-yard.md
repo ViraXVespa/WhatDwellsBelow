@@ -10,7 +10,7 @@ Read when: striking dummy, Label3D priorities, post-rail fence, hopeful ambience
 - No combat level / `Lv` tag (`combat_lv := 0`).
 - Dark ground pad allowed for telegraph readability.
 - Sandbox object, not interactable like Floor Crystal / Anvil.
-- Centered at the west arm of the cross path (`8.5, 0, PATH_Z + 0.5`).
+- Centered on the `Layout/Spots/Dummy` node (default west arm of the cross path).
 
 ## Labels
 - Hub and dungeon spot labels use `Label3D` with `no_depth_test`, `render_priority = 8`, `outline_render_priority = 7`.
@@ -23,7 +23,7 @@ Read when: striking dummy, Label3D priorities, post-rail fence, hopeful ambience
 - Hidden-until-`update_line` / no cream-box flash: combat.
 
 ## Fence / play area
-- Post-and-rail fence on all four edges of the current ground slab (`camp_view.gd`).
+- Post-and-rail fence on all four edges of the current ground slab (`camp_view.gd`). Slab extents come from `Layout`.
 - Collision matches the rails so the player cannot leave the yard.
 - Grass tiles continue past the slab (`GRASS_PAD`) so the world does not drop to empty outside the fence.
 
@@ -32,6 +32,7 @@ Read when: striking dummy, Label3D priorities, post-rail fence, hopeful ambience
 - Lighting/mood contrasts with darker dungeon.
 
 ## Live Snapshot
+- Editor: opening `camp.tscn` realizes ground, buildings, roofs, awnings, and fence under an unsaved `Generated` node. Awning depth/slope/valance and roof `tile_w` / `uv_off` are Layout exports. Sliding `RoofHall` / `RoofWing` plus those UV offsets phases the shingles. Play does not persist `Generated`.
 - `App.play_from_menu()` / `enter_dungeon()` use loading overlay for hub/dungeon assets (ui). Floor Crystal **Enter dungeon** calls `present.cover_enter` (opaque cyan + caption) on the press, then `wait_painted` (0s always-timer + two `frame_post_draw`) so that sheet is on screen before save / close / scene change. Loadout pause must not block that wait. Do not hitch on the same stack as the cover — Compatibility will present the previous frame.
 - Title → Play: `loader.begin()` puts a near-opaque black sheet (`#000000` at alpha `0xFE`) over the viewport for the whole load. The 3D world still draws under it so WebGL can compile and upload. The player must not see the square pop or flicker.
 - After camp is ready, the overlay status is `Warming things up for you...`. `camp.warmup()` frames the yard and dummy-slides when the dummy already exists. `AppFlow._warmup_hub` applies already-loaded player textures (idle stills at spawn) in one beat under the sheet, one pinned `move_and_slide`, a `force_draw`, then restores the saved camera and waits two frames. The player body stays visible under the sheet. There is no empty “The square holds.” hold. Title → Play sync-loads hub building facades, props, NPCs, dummy, and hub music (not plaza tiles — ground / buildings `load()` those — and not 8-dir player clips). `camp.tscn` does not const-preload player, interact, dummy, smoke, or gear UI; those `load()` when `_ready` / `ensure_ui()` need them. Hub spots build sprites and labels only; `interact_act` / `interact_chest` load on first interact. Title → Play defers the sandbox dummy until after `loader.finish()`. Extract-wake also defers it (`call_deferred` after the wake fade starts). Other camp loads still spawn it in `_ready`. Dummy sprite and collision only at spawn; hp bar and float numbers load on first hit (boss/guard still pin a bar in setup). Gear UI (`progress_ui`) loads on first crystal / anvil / vendor interact (`world_ui` → `ensure_ui`), not during Title → Play. P6 smoke still builds it before assertions. Hub spawn loads walk/camera/sprites only; combat, telegraph, aim line, and `combat.gd` wait until physics after the sheet. Player spawn loads idle stills; walk / start / stop load on first stick per facing, Down attack/special on first swing. Outer grass is four tiled planes, not a 1×1 MultiMesh ring.
