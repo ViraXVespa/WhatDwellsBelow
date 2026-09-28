@@ -55,6 +55,7 @@ static func ready_floor(host: Node) -> void:
 	HitchLog.mark("dungeon_follow")
 	LoadTiming.dmark("stream")
 	var LightRtS: GDScript = load("res://scripts/graphics/light_rt.gd") as GDScript
+	LightRtS.reset_floor()
 	LightRtS.maintain(host)
 	LightRtS.maintain(host)
 	HitchLog.mark("dungeon_light")

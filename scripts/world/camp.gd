@@ -33,7 +33,8 @@ func _ready() -> void:
 		int(_layout.aabb_z0()),
 		int(_layout.aabb_x1()),
 		int(_layout.aabb_z1()),
-		Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z)
+		Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z),
+		_layout
 	)
 	Build.ground(self)
 	LoadTiming.mark("camp_ground")

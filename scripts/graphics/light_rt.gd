@@ -54,7 +54,7 @@ static func bind(mat: ShaderMaterial) -> void:
 		_mats.append(mat)
 
 
-static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2) -> void:
+static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2, layout: Node = null) -> void:
 	_props.clear()
 	_sites.clear()
 	_planned = false
@@ -66,9 +66,55 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2)
 	var th: int = maxi(1, z1 - z0)
 	var lights: Array = []
 	var sun: Vector2 = Vector2((float(x0) + float(x1)) * 0.5, (float(z0) + float(z1)) * 0.5)
-	lights.append(_light_at(sun.x, sun.y, x0, z0, "sun"))
-	lights.append(_light_at(crystal_xz.x, crystal_xz.y, x0, z0, "crystal"))
-	_publish(x0, z0, tw, th, lights, Color(0, 0, 0, 1), PackedByteArray(), 0, 0, 0)
+	var sun_item: Dictionary = _light_at(sun.x, sun.y, x0, z0, "sun")
+	sun_item["energy"] = _bal("light_hub_sun_energy", T.LIGHT_HUB_SUN_ENERGY)
+	sun_item["kind"] = "sun"
+	lights.append(sun_item)
+	var cry: Dictionary = _light_at(crystal_xz.x, crystal_xz.y, x0, z0, "crystal")
+	cry["reach"] = _bal("light_hub_crystal_range", T.LIGHT_HUB_CRYSTAL_RANGE)
+	cry["energy"] = _bal("light_hub_crystal_energy", T.LIGHT_HUB_CRYSTAL_ENERGY)
+	cry["kind"] = "crystal"
+	lights.append(cry)
+	var occ: Dictionary = _hub_occ(x0, z0, tw, th, layout)
+	_publish(x0, z0, tw, th, lights, Color(0.78, 0.70, 0.56, 1.0), occ["solid"], int(occ["sw"]), int(occ["sh"]), Stamp.SUB)
+
+
+
+static func _hub_occ(x0: int, z0: int, tw: int, th: int, layout: Node) -> Dictionary:
+	var n: int = Stamp.SUB
+	var sw: int = tw * n
+	var sh: int = th * n
+	var solid := PackedByteArray()
+	solid.resize(sw * sh)
+	solid.fill(1)
+	if layout == null:
+		return {"solid": solid, "sw": sw, "sh": sh}
+	var boxes: Array = []
+	if layout.has_method("hall_pos"):
+		boxes.append({"pos": layout.hall_pos(), "box": layout.hall_box})
+		boxes.append({"pos": layout.wing_pos(), "box": layout.wing_box})
+		boxes.append({"pos": layout.stall_pos(), "box": layout.stall_box})
+	for raw in boxes:
+		var item: Dictionary = raw
+		var p: Vector3 = item["pos"]
+		var b: Vector3 = item["box"]
+		var x_a: float = p.x - b.x * 0.5
+		var x_b: float = p.x + b.x * 0.5
+		var z_a: float = p.z - b.z * 0.5
+		var z_b: float = p.z + b.z * 0.5
+		var fx0: int = clampi(int(floor(x_a * float(n))), 0, sw - 1)
+		var fx1: int = clampi(int(ceil(x_b * float(n))), 0, sw)
+		var fz0: int = clampi(int(floor(z_a * float(n))), 0, sh - 1)
+		var fz1: int = clampi(int(ceil(z_b * float(n))), 0, sh)
+		var fz: int = fz0
+		while fz < fz1:
+			var row: int = fz * sw
+			var fx: int = fx0
+			while fx < fx1:
+				solid[row + fx] = 0
+				fx += 1
+			fz += 1
+	return {"solid": solid, "sw": sw, "sh": sh}
 
 
 static func note_prop(node: Node) -> void:
@@ -88,6 +134,16 @@ static func note_prop(node: Node) -> void:
 static func drop_prop(node: Node) -> void:
 	_props.erase(node)
 	_plan_dirty = true
+
+
+static func reset_floor() -> void:
+	_props.clear()
+	_sites.clear()
+	_planned = false
+	_plan_dirty = true
+	_live = ""
+	_knob = ""
+	_rect = Rect2i(-1, -1, 0, 0)
 
 
 static func maintain(host: Node) -> void:
@@ -499,6 +555,8 @@ static func _keep_casts(x0: int, z0: int, tw: int, th: int, lights: Array) -> vo
 			continue
 		var reach: float = float(item["reach"])
 		if reach < 0.25:
+			continue
+		if str(item.get("kind", "")) == "sun":
 			continue
 		_casts.append({
 			"xz": Vector2(mx, mz),

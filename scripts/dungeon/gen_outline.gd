@@ -626,8 +626,6 @@ static func _fill(solid: PackedByteArray, sw: int, sh: int, poly: PackedVector2A
 	var count: int = poly.size()
 	if count < 3 or sw < 1 or sh < 1:
 		return
-	if _fill_axis_rect(solid, sw, sh, poly, value):
-		return
 	var y_min: int = sh
 	var y_max: int = -1
 	for i in count:
@@ -854,13 +852,14 @@ static func _push_clipped(
 		ts.append(0.0)
 		ts.append(1.0)
 		var edge: Rect2 = Rect2(a, Vector2.ZERO).expand(b).grow(0.05)
-		var near: PackedInt32Array = _loops_near(a, b, skip_i)
-		var ni: int = 0
-		while ni < near.size():
-			var box_i: int = near[ni]
-			ni += 1
+		var box_i: int = 0
+		while box_i < loops.size():
+			if box_i == skip_i:
+				box_i += 1
+				continue
 			var other: PackedVector2Array = loops[box_i]
 			if box_i < boxes.size() and not (boxes[box_i] as Rect2).intersects(edge):
+				box_i += 1
 				continue
 			var oc: int = other.size()
 			for j in oc:
@@ -871,6 +870,7 @@ static func _push_clipped(
 				var t: float = (p - a).dot(delta) / (span_l * span_l)
 				if t > 0.001 and t < 0.999:
 					ts.append(t)
+			box_i += 1
 		_sort_xs(ts)
 		for k in range(ts.size() - 1):
 			var t0: float = ts[k]

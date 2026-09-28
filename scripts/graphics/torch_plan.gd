@@ -119,7 +119,12 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 	if spans.is_empty():
 		return out
 	var rooms_n: int = (host.data.get("rooms", []) as Array).size()
-	var key: String = "%d:%d:%d:%d" % [map_w, map_h, rooms_n, spans.size()]
+	var seed_n: int = 0
+	var floor_n: int = 0
+	if App != null:
+		seed_n = int(App.run_seed)
+		floor_n = int(App.floor_n)
+	var key: String = "%d:%d:%d:%d:%d:%d" % [map_w, map_h, rooms_n, spans.size(), seed_n, floor_n]
 	if key == _cache_key and not _cache.is_empty():
 		return _apply_lit(host, props, _cache)
 	var per: int = maxi(1, int(host.data.get("solid_n", 1)))
