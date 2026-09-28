@@ -823,6 +823,23 @@ static func _loops_near(a: Vector2, b: Vector2, skip_i: int) -> PackedInt32Array
 	return out
 
 
+static func _rim_faces_void(solid: PackedByteArray, sw: int, sh: int, mid: Vector2, nrm: Vector2) -> bool:
+    var off: float = 0.4
+    while off <= 1.25:
+        var out_p: Vector2 = mid - nrm * off
+        var in_p: Vector2 = mid + nrm * off
+        var ox: int = int(floor(out_p.x))
+        var oy: int = int(floor(out_p.y))
+        var ix: int = int(floor(in_p.x))
+        var iy: int = int(floor(in_p.y))
+        if ox != ix or oy != iy:
+            var void_out: bool = ox < 0 or oy < 0 or ox >= sw or oy >= sh or solid[oy * sw + ox] == 0
+            var solid_in: bool = ix >= 0 and iy >= 0 and ix < sw and iy < sh and solid[iy * sw + ix] != 0
+            return void_out and solid_in
+        off += 0.2
+    return false
+
+
 static func _push_clipped(
 	spans: Array,
 	poly: PackedVector2Array,
@@ -878,15 +895,7 @@ static func _push_clipped(
 			if t1 - t0 < 0.001:
 				continue
 			var mid: Vector2 = a + delta * ((t0 + t1) * 0.5)
-			var out_p: Vector2 = mid - nrm * 0.4
-			var in_p: Vector2 = mid + nrm * 0.4
-			var ox: int = int(floor(out_p.x))
-			var oy: int = int(floor(out_p.y))
-			var ix: int = int(floor(in_p.x))
-			var iy: int = int(floor(in_p.y))
-			var void_out: bool = ox < 0 or oy < 0 or ox >= sw or oy >= sh or _solid[oy * sw + ox] == 0
-			var solid_in: bool = ix >= 0 and iy >= 0 and ix < sw and iy < sh and _solid[iy * sw + ix] != 0
-			if void_out and solid_in:
+			if _rim_faces_void(_solid, sw, sh, mid, nrm):
 				kept0.append(t0)
 				kept1.append(t1)
 		var m: int = kept0.size()

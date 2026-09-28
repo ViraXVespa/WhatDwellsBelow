@@ -12,7 +12,7 @@ static func _emit_ascii(lines: Array[String], data: Dictionary, overlays: Dictio
 	var dw: int = int((float(grid_w) + float(sc) - 1.0) / float(sc))
 	var dh: int = int((float(grid_h) + float(sc) - 1.0) / float(sc))
 	Util._out(lines, "ascii scale=%d dw=%d dh=%d" % [sc, dw, dh])
-	Util._out(lines, "legend #=wall .=floor S=spawn B=boss D=door T=stairs C=crystal G=extract_gate $=shop P=puzzle U=puzzle_gate X=chest M=mine W=wood K=break/barrel R=crack F=campfire H=shrine L=lever/plate A=ambush E=enemy_job N=named Q=quest")
+	Util._out(lines, "legend #=wall .=floor !=rim_hole S=spawn B=boss D=door T=stairs C=crystal G=extract_gate $=shop P=puzzle U=puzzle_gate X=chest M=mine W=wood K=break/barrel R=crack F=campfire H=shrine L=lever/plate A=ambush E=enemy_job N=named Q=quest")
 	for gy: int in dh:
 		var row: String = ""
 		for gx: int in dw:
