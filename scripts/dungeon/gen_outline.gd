@@ -49,6 +49,9 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 			pts = _fillet_points(pts, rng, fillet, per, kind, w, h)
 		loops.append(_fold_pts(pts))
 	LoadTiming.dmark("gen_outline_jag")
+	var boxes: Array = []
+	for box_v in loops:
+		boxes.append(_loop_box(box_v))
 	var sw: int = w * per
 	var sh: int = h * per
 	var solid: PackedByteArray = PackedByteArray()
