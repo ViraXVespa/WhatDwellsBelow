@@ -108,7 +108,6 @@ static func tick(host: Node, delta: float) -> void:
 	for job in host.geo_jobs:
 		if str(job.state) == "live" and chunk_ring(Vector2i(job.origin), origin) > RING_OUT:
 			sleep_job(host, job)
-	LightRt.maintain(host)
 
 
 static func activate_job(host: Node, job: Dictionary) -> void:

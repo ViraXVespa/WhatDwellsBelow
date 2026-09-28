@@ -13,6 +13,8 @@ const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), 
 
 static var _rgba: PackedByteArray = PackedByteArray()
 static var _walk_buf: PackedByteArray = PackedByteArray()
+static var _floor_ix: PackedInt32Array = PackedInt32Array()
+static var _floor_n: int = 0
 static var _vis_buf: PackedByteArray = PackedByteArray()
 static var _rr_buf: PackedFloat32Array = PackedFloat32Array()
 static var _gg_buf: PackedFloat32Array = PackedFloat32Array()
@@ -90,8 +92,9 @@ static func paint(
 		_disc(rr, gg, bb, walk, iw, ih, item, x0, z0, loops, n)
 	HitchLog.mark("light_disc")
 	_lift_floor(rr, gg, bb, walk, iw, ih, ambient, n)
-	_walls(rr, gg, bb, walk, iw, ih, n)
 	HitchLog.mark("light_lift")
+	_walls(rr, gg, bb, walk, iw, ih, n)
+	HitchLog.mark("light_walls")
 	_blit(img, rr, gg, bb, iw, ih)
 	HitchLog.mark("light_blit")
 
@@ -133,8 +136,11 @@ static func _walk_mask(
 	var need: int = iw * ih
 	if _walk_buf.size() != need:
 		_walk_buf.resize(need)
+	if _floor_ix.size() != need:
+		_floor_ix.resize(need)
 	var walk: PackedByteArray = _walk_buf
 	walk.fill(0)
+	_floor_n = 0
 	if n < 1:
 		walk.fill(1)
 		return walk
@@ -149,7 +155,10 @@ static func _walk_mask(
 				while px < iw:
 					var fx: int = x0 * n + px
 					if fx >= 0 and fx < sw and solid[srow + fx] != 0:
-						walk[row + px] = 1
+						var i: int = row + px
+						walk[i] = 1
+						_floor_ix[_floor_n] = i
+						_floor_n += 1
 					px += 1
 			py += 1
 		return walk
@@ -157,7 +166,10 @@ static func _walk_mask(
 		var row2: int = py2 * iw
 		for px2 in iw:
 			if _lip_open(solid, sw, sh, n, x0, z0, px2, py2):
-				walk[row2 + px2] = 1
+				var j: int = row2 + px2
+				walk[j] = 1
+				_floor_ix[_floor_n] = j
+				_floor_n += 1
 	return walk
 
 
@@ -217,15 +229,13 @@ static func _lift_floor(
 		return
 	if ambient.r <= 0.0 and ambient.g <= 0.0 and ambient.b <= 0.0:
 		return
-	for py in ih:
-		var row: int = py * iw
-		for px in iw:
-			var i: int = row + px
-			if walk[i] == 0:
-				continue
-			rr[i] = minf(rr[i] + ambient.r, 1.0)
-			gg[i] = minf(gg[i] + ambient.g, 1.0)
-			bb[i] = minf(bb[i] + ambient.b, 1.0)
+	var k: int = 0
+	while k < _floor_n:
+		var i: int = _floor_ix[k]
+		rr[i] = minf(rr[i] + ambient.r, 1.0)
+		gg[i] = minf(gg[i] + ambient.g, 1.0)
+		bb[i] = minf(bb[i] + ambient.b, 1.0)
+		k += 1
 
 
 static func _disc(
@@ -375,33 +385,25 @@ static func _walls(
 	ih: int,
 	n: int
 ) -> void:
-	if n < 1:
+	if n < 1 or _floor_n < 1:
 		return
-	for py in ih:
-		var row: int = py * iw
-		for px in iw:
-			var i: int = row + px
-			if walk[i] != 0:
+	var k: int = 0
+	while k < _floor_n:
+		var i: int = _floor_ix[k]
+		var py: int = int(float(i) / float(iw))
+		var px: int = i - py * iw
+		for d: Vector2i in DIRS:
+			var npx: int = px + d.x
+			var npy: int = py + d.y
+			if npx < 0 or npy < 0 or npx >= iw or npy >= ih:
 				continue
-			var br: float = 0.0
-			var bg: float = 0.0
-			var bv: float = 0.0
-			for d: Vector2i in DIRS:
-				var npx: int = px + d.x
-				var npy: int = py + d.y
-				if npx < 0 or npy < 0 or npx >= iw or npy >= ih:
-					continue
-				var ni: int = npy * iw + npx
-				if walk[ni] == 0:
-					continue
-				br = maxf(br, rr[ni])
-				bg = maxf(bg, gg[ni])
-				bv = maxf(bv, bb[ni])
-			if br <= 0.0 and bg <= 0.0 and bv <= 0.0:
+			var ni: int = npy * iw + npx
+			if walk[ni] != 0:
 				continue
-			rr[i] = br
-			gg[i] = bg
-			bb[i] = bv
+			rr[ni] = maxf(rr[ni], rr[i])
+			gg[ni] = maxf(gg[ni], gg[i])
+			bb[ni] = maxf(bb[ni], bb[i])
+		k += 1
 
 
 static func _lip_open(

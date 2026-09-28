@@ -103,8 +103,8 @@ static func maintain(host: Node) -> void:
 	if not need_plan and not need_stamp and not need_torch:
 		return
 	if need_plan:
-		HitchLog.mark("light_plan")
 		_sites = Plan.build(host, _props)
+		HitchLog.mark("light_plan")
 		_planned = true
 		_plan_dirty = false
 		return
