@@ -4,6 +4,9 @@ const WALL := 0
 const FLOOR := 1
 
 static var _halls: Array = []
+static var _disk_ox: PackedInt32Array = PackedInt32Array()
+static var _disk_oy: PackedInt32Array = PackedInt32Array()
+static var _disk_rad: int = -1
 
 
 static func begin_halls() -> void:
@@ -118,13 +121,25 @@ static func roll_hall_width(rng: RandomNumberGenerator) -> int:
 
 
 static func dig_span(grid: PackedByteArray, w: int, h: int, x: int, y: int, heading: Vector2i, width: int) -> void:
-	var n := maxi(1, width)
+	var n: int = maxi(1, width)
 	if heading.y == 0:
-		for i in n:
-			dig(grid, w, h, x, y + i)
+		if x <= 0 or x >= w - 1:
+			return
+		var i: int = 0
+		while i < n:
+			var yy: int = y + i
+			if yy > 0 and yy < h - 1:
+				grid[yy * w + x] = FLOOR
+			i += 1
 	else:
-		for i in n:
-			dig(grid, w, h, x + i, y)
+		if y <= 0 or y >= h - 1:
+			return
+		var j: int = 0
+		while j < n:
+			var xx: int = x + j
+			if xx > 0 and xx < w - 1:
+				grid[y * w + xx] = FLOOR
+			j += 1
 
 
 static func dig_wide(grid: PackedByteArray, w: int, h: int, x: int, y: int) -> void:
@@ -298,26 +313,48 @@ static func _seg_dist2(px: float, py: float, ax: float, ay: float, bx: float, by
 	return dx1 * dx1 + dy1 * dy1
 
 
+static func _prime_disk(rad: int) -> void:
+	if rad == _disk_rad:
+		return
+	_disk_rad = rad
+	_disk_ox = PackedInt32Array()
+	_disk_oy = PackedInt32Array()
+	var r2: int = rad * rad + 1
+	var oy: int = -rad
+	while oy <= rad:
+		var ox: int = -rad
+		while ox <= rad:
+			if ox * ox + oy * oy <= r2:
+				_disk_ox.append(ox)
+				_disk_oy.append(oy)
+			ox += 1
+		oy += 1
+
+
 static func _stamp_band(
 	grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i, width: int
 ) -> void:
 	var rad: int = maxi(1, int(ceil(float(maxi(1, width)) * 0.5)))
-	var r2: int = rad * rad + 1
+	_prime_disk(rad)
 	_note_band(a, b, width)
 	var steps: int = maxi(1, absi(b.x - a.x) + absi(b.y - a.y))
+	var off_n: int = _disk_ox.size()
 	var s: int = 0
 	while s <= steps:
 		var t: float = float(s) / float(steps)
 		var cx: int = int(round(lerpf(float(a.x), float(b.x), t)))
 		var cy: int = int(round(lerpf(float(a.y), float(b.y), t)))
-		var oy: int = -rad
-		while oy <= rad:
-			var ox: int = -rad
-			while ox <= rad:
-				if ox * ox + oy * oy <= r2:
-					dig(grid, w, h, cx + ox, cy + oy)
-				ox += 1
-			oy += 1
+		var k: int = 0
+		while k < off_n:
+			var xx: int = cx + _disk_ox[k]
+			var yy: int = cy + _disk_oy[k]
+			k += 1
+			if xx <= 0 or yy <= 0 or xx >= w - 1 or yy >= h - 1:
+				continue
+			var i: int = yy * w + xx
+			if grid[i] == FLOOR:
+				continue
+			grid[i] = FLOOR
 		s += 1
 
 

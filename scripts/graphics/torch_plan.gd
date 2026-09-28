@@ -21,6 +21,7 @@ static var _pn: int = 0
 static var _cache_key: String = ""
 static var _cache: Array[Dictionary] = []
 static var _bins: Dictionary = {}
+static var _room_ix: PackedInt32Array = PackedInt32Array()
 
 static func _prep_spans(spans: Array, per: int) -> void:
 	_pn = 0
@@ -70,10 +71,13 @@ static func _bin_span(pi: int, a: Vector2, b: Vector2, scale: float) -> void:
 		var t: float = float(s) / float(steps)
 		var p: Vector2 = a.lerp(b, t)
 		var key: Vector2i = Vector2i(int(floor(p.x / scale)), int(floor(p.y / scale)))
-		var bucket: Variant = _bins.get(key, PackedInt32Array())
-		var arr: PackedInt32Array = bucket
-		arr.append(pi)
-		_bins[key] = arr
+		var bucket: Variant = _bins.get(key)
+		if bucket is Array:
+			(bucket as Array).append(pi)
+		else:
+			var row: Array = []
+			row.append(pi)
+			_bins[key] = row
 		s += 1
 
 
@@ -84,11 +88,14 @@ static func _bin_near(cell: Vector2i) -> PackedInt32Array:
 	while dy <= 2:
 		var dx: int = -2
 		while dx <= 2:
-			var bucket: Variant = _bins.get(cell + Vector2i(dx, dy), PackedInt32Array())
-			var arr: PackedInt32Array = bucket
+			var bucket: Variant = _bins.get(cell + Vector2i(dx, dy))
+			if not (bucket is Array):
+				dx += 1
+				continue
+			var arr: Array = bucket
 			var i: int = 0
 			while i < arr.size():
-				var pi: int = arr[i]
+				var pi: int = int(arr[i])
 				i += 1
 				if seen.has(pi):
 					continue
@@ -139,18 +146,7 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 						inside[row + x] = i
 					x += 1
 			y += 1
-	var lit: PackedByteArray = PackedByteArray()
-	lit.resize(rooms.size())
-	lit.fill(0)
-	for node in props:
-		if not is_instance_valid(node):
-			continue
-		var cell: Vector2i = _prop_cell(node)
-		if cell.x < 0 or cell.y < 0 or cell.x >= map_w or cell.y >= map_h:
-			continue
-		var ri: int = inside[cell.y * map_w + cell.x]
-		if ri >= 0:
-			lit[ri] = 1
+	_room_ix = inside
 	var used: Dictionary = {}
 	for i2 in rooms.size():
 		var site: Dictionary = _span_in_room(rooms[i2], per)
@@ -165,6 +161,7 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 	mouth.fill(0)
 	hall.fill(0)
 	var mouths: Array[Vector2i] = []
+	var hall_ix: PackedInt32Array = PackedInt32Array()
 	for y2 in range(1, map_h - 1):
 		var row2: int = y2 * map_w
 		for x2 in range(1, map_w - 1):
@@ -174,6 +171,7 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 			if grid[i3] != Gen.FLOOR:
 				continue
 			hall[i3] = 1
+			hall_ix.append(i3)
 			if _touches_room_arr(grid, inside, map_w, map_h, x2, y2):
 				mouth[i3] = 1
 				mouths.append(Vector2i(x2, y2))
@@ -209,28 +207,31 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 			continue
 		used[at] = true
 		out.append(hall_site)
-	_thin_arr(hall, mouth, map_w, map_h)
-	for y3 in range(1, map_h - 1):
-		var row3: int = y3 * map_w
-		for x3 in range(1, map_w - 1):
-			if hall[row3 + x3] == 0:
-				continue
-			if mouth[row3 + x3] != 0:
-				continue
-			var spot: Vector2i = Vector2i(x3, y3)
-			var exits: int = _ring_exits_arr(hall, map_w, map_h, spot)
-			if exits != 1 and exits < 3:
-				continue
-			if _taken(used, spot):
-				continue
-			var spur: Dictionary = _span_at(per, spot)
-			if spur.is_empty():
-				continue
-			var mounted: Vector2i = Vector2i(int(spur["fx"]), int(spur["fz"]))
-			if _taken(used, mounted):
-				continue
-			used[mounted] = true
-			out.append(spur)
+	_thin_arr(hall, mouth, map_w, map_h, hall_ix)
+	var hi3: int = 0
+	while hi3 < hall_ix.size():
+		var i4: int = hall_ix[hi3]
+		hi3 += 1
+		if hall[i4] == 0:
+			continue
+		if mouth[i4] != 0:
+			continue
+		var y3: int = int(float(i4) / float(map_w))
+		var x3: int = i4 - y3 * map_w
+		var spot: Vector2i = Vector2i(x3, y3)
+		var exits: int = _ring_exits_arr(hall, map_w, map_h, spot)
+		if exits != 1 and exits < 3:
+			continue
+		if _taken(used, spot):
+			continue
+		var spur: Dictionary = _span_at(per, spot)
+		if spur.is_empty():
+			continue
+		var mounted: Vector2i = Vector2i(int(spur["fx"]), int(spur["fz"]))
+		if _taken(used, mounted):
+			continue
+		used[mounted] = true
+		out.append(spur)
 	_cache_key = key
 	_cache = out
 	return _apply_lit(host, props, out)
@@ -243,25 +244,28 @@ static func _apply_lit(host: Node, props: Array, layout: Array[Dictionary]) -> A
 	var map_w: int = int(host.data.w)
 	var map_h: int = int(host.data.h)
 	var rooms: Array = host.data.get("rooms", [])
-	var inside: PackedInt32Array = PackedInt32Array()
-	inside.resize(map_w * map_h)
-	inside.fill(-1)
-	for i in rooms.size():
-		var room: Dictionary = rooms[i]
-		var rx: int = int(room["x"])
-		var ry: int = int(room["y"])
-		var rw: int = int(room["w"])
-		var rh: int = int(room["h"])
-		var y: int = ry
-		while y < ry + rh:
-			if y >= 0 and y < map_h:
-				var row: int = y * map_w
-				var x: int = rx
-				while x < rx + rw:
-					if x >= 0 and x < map_w:
-						inside[row + x] = i
-					x += 1
-			y += 1
+	var inside: PackedInt32Array = _room_ix
+	if inside.size() != map_w * map_h:
+		inside = PackedInt32Array()
+		inside.resize(map_w * map_h)
+		inside.fill(-1)
+		for i in rooms.size():
+			var room: Dictionary = rooms[i]
+			var rx: int = int(room["x"])
+			var ry: int = int(room["y"])
+			var rw: int = int(room["w"])
+			var rh: int = int(room["h"])
+			var y: int = ry
+			while y < ry + rh:
+				if y >= 0 and y < map_h:
+					var row: int = y * map_w
+					var x: int = rx
+					while x < rx + rw:
+						if x >= 0 and x < map_w:
+							inside[row + x] = i
+						x += 1
+				y += 1
+		_room_ix = inside
 	var lit: PackedByteArray = PackedByteArray()
 	lit.resize(rooms.size())
 	lit.fill(0)
@@ -355,11 +359,13 @@ static func _span_in_room(room: Dictionary, per: int) -> Dictionary:
 	return best
 
 static func _collect_bin(hits: PackedInt32Array, seen: Dictionary, cell: Vector2i) -> void:
-	var bucket: Variant = _bins.get(cell, PackedInt32Array())
-	var arr: PackedInt32Array = bucket
+	var bucket: Variant = _bins.get(cell)
+	if not (bucket is Array):
+		return
+	var arr: Array = bucket
 	var i: int = 0
 	while i < arr.size():
-		var pi: int = arr[i]
+		var pi: int = int(arr[i])
 		i += 1
 		if seen.has(pi):
 			continue
@@ -470,14 +476,16 @@ static func _site_on(hit: Vector2, nrm: Vector2, scale: float, fx: int, fz: int)
 	}
 
 
-static func _thin_arr(mask: PackedByteArray, mouths: PackedByteArray, w: int, h: int) -> void:
+static func _thin_arr(
+	mask: PackedByteArray, mouths: PackedByteArray, w: int, h: int, live_src: PackedInt32Array
+) -> void:
 	var live: PackedInt32Array = PackedInt32Array()
-	for y0 in range(1, h - 1):
-		var row0: int = y0 * w
-		for x0 in range(1, w - 1):
-			var i0: int = row0 + x0
-			if mask[i0] != 0 and mouths[i0] == 0:
-				live.append(i0)
+	var s0: int = 0
+	while s0 < live_src.size():
+		var i0: int = live_src[s0]
+		s0 += 1
+		if mask[i0] != 0 and mouths[i0] == 0:
+			live.append(i0)
 	var step: int = 0
 	while step < 6:
 		step += 1

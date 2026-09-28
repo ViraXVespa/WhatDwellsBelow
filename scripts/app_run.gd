@@ -1,5 +1,17 @@
 extends Object
 
+static var _dungeon_packed: PackedScene = null
+
+
+static func ensure_dungeon_packed(host: Node) -> PackedScene:
+	if _dungeon_packed != null:
+		return _dungeon_packed
+	var packed: Resource = ResourceLoader.load(str(host.DUNGEON_SCENE))
+	if packed is PackedScene:
+		_dungeon_packed = packed as PackedScene
+	return _dungeon_packed
+
+
 static func begin_run(host: Node) -> void:
 	App.AppFlow.LoadTiming.dmark("begin_run")
 	host.floor_n = maxi(1, host.prog.start_floor)
@@ -40,7 +52,11 @@ static func go_dungeon(host: Node) -> void:
 		Engine.time_scale = 1.0
 	if host.music and host.music.has_method("play_dungeon") and str(host.music.get("kind")) != "dungeon":
 		host.music.play_dungeon()
-	host.get_tree().call_deferred("change_scene_to_file", host.DUNGEON_SCENE)
+	var packed: PackedScene = ensure_dungeon_packed(host)
+	if packed != null:
+		host.get_tree().call_deferred("change_scene_to_packed", packed)
+	else:
+		host.get_tree().call_deferred("change_scene_to_file", host.DUNGEON_SCENE)
 	host.call_deferred("wake_web_pad")
 
 
