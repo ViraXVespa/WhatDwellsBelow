@@ -18,9 +18,11 @@ static var _sux: PackedFloat32Array = PackedFloat32Array()
 static var _suy: PackedFloat32Array = PackedFloat32Array()
 static var _slen: PackedFloat32Array = PackedFloat32Array()
 static var _pn: int = 0
+static var _cache_key: String = ""
+static var _cache: Array[Dictionary] = []
 static var _bins: Dictionary = {}
 
-static func _prep_spans(spans: Array) -> void:
+static func _prep_spans(spans: Array, per: int) -> void:
 	_pn = 0
 	_bins.clear()
 	var n: int = spans.size()
@@ -31,6 +33,7 @@ static func _prep_spans(spans: Array) -> void:
 		_sux.resize(n)
 		_suy.resize(n)
 		_slen.resize(n)
+	var scale: float = float(maxi(1, per))
 	var i: int = 0
 	while i < n:
 		var item: Variant = spans[i]
@@ -57,24 +60,22 @@ static func _prep_spans(spans: Array) -> void:
 		_suy[pi] = d.y / slen
 		_slen[pi] = slen
 		_pn += 1
-		_bin_span(pi, ends[0], ends[1])
+		_bin_span(pi, ends[0], ends[1], scale)
 
-static func _bin_span(pi: int, a: Vector2, b: Vector2) -> void:
-	var x0: int = int(floor(minf(a.x, b.x)))
-	var y0: int = int(floor(minf(a.y, b.y)))
-	var x1: int = int(floor(maxf(a.x, b.x)))
-	var y1: int = int(floor(maxf(a.y, b.y)))
-	var y: int = y0
-	while y <= y1:
-		var x: int = x0
-		while x <= x1:
-			var key: Vector2i = Vector2i(x, y)
-			var bucket: Variant = _bins.get(key, PackedInt32Array())
-			var arr: PackedInt32Array = bucket
-			arr.append(pi)
-			_bins[key] = arr
-			x += 1
-		y += 1
+
+static func _bin_span(pi: int, a: Vector2, b: Vector2, scale: float) -> void:
+	var steps: int = maxi(1, int(ceil(a.distance_to(b) / scale)))
+	var s: int = 0
+	while s <= steps:
+		var t: float = float(s) / float(steps)
+		var p: Vector2 = a.lerp(b, t)
+		var key: Vector2i = Vector2i(int(floor(p.x / scale)), int(floor(p.y / scale)))
+		var bucket: Variant = _bins.get(key, PackedInt32Array())
+		var arr: PackedInt32Array = bucket
+		arr.append(pi)
+		_bins[key] = arr
+		s += 1
+
 
 static func _bin_near(cell: Vector2i) -> PackedInt32Array:
 	var out: PackedInt32Array = PackedInt32Array()
@@ -103,7 +104,9 @@ static func _bin_near(cell: Vector2i) -> PackedInt32Array:
 static func build(host: Node, props: Array) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if host == null or host.data == null:
-		return out
+		_cache_key = key
+	_cache = out
+	return out
 	var grid: PackedByteArray = host.data.grid
 	var map_w: int = int(host.data.w)
 	var map_h: int = int(host.data.h)
@@ -112,8 +115,12 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 	var spans: Array = _span_list(host)
 	if spans.is_empty():
 		return out
-	_prep_spans(spans)
+	var rooms_n: int = (host.data.get("rooms", []) as Array).size()
+	var key: String = "%d:%d:%d:%d:%d" % [map_w, map_h, rooms_n, spans.size(), props.size()]
+	if key == _cache_key and not _cache.is_empty():
+		return _cache
 	var per: int = maxi(1, int(host.data.get("solid_n", 1)))
+	_prep_spans(spans, per)
 	var rooms: Array = host.data.get("rooms", [])
 	var inside: PackedInt32Array = PackedInt32Array()
 	inside.resize(map_w * map_h)
