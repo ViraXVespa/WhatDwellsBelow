@@ -45,7 +45,7 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 			loops.append(part)
 			continue
 		var pts: Array[Vector2] = _copy_pts(part)
-		if per >= 2 and part.size() > 4:
+		if false and per >= 2 and part.size() > 4:
 			pts = _fillet_points(pts, rng, fillet, per, kind, w, h)
 		loops.append(_fold_pts(pts))
 	LoadTiming.dmark("gen_outline_jag")
@@ -590,6 +590,19 @@ static func _fill(solid: PackedByteArray, sw: int, sh: int, poly: PackedVector2A
 			k += 2
 
 
+static func _emit_cut(spans: Array, a: Vector2, delta: Vector2, nrm: Vector2, span_l: float, steps: int, run_a: int, last: int) -> void:
+	var t0: float = float(run_a) / float(steps)
+	var t1: float = float(last) / float(steps)
+	var pad_t: float = 0.0
+	if span_l > 0.001:
+		pad_t = 1.0 / span_l
+	if run_a > 0:
+		t0 = maxf(0.0, t0 - pad_t)
+	if last < steps:
+		t1 = minf(1.0, t1 + pad_t)
+	_emit_frag(spans, a, delta, nrm, t0, t1)
+
+
 static func _emit_frag(spans: Array, a: Vector2, delta: Vector2, nrm: Vector2, t0: float, t1: float) -> void:
 	var d: Vector2 = delta * (t1 - t0)
 	if d.length_squared() < 0.04:
@@ -636,11 +649,11 @@ static func _push_clipped(spans: Array, poly: PackedVector2Array, solid: PackedB
 				last = si
 			else:
 				if run_a >= 0 and last > run_a:
-					_emit_frag(spans, a, delta, nrm, float(run_a) / float(steps), float(last) / float(steps))
+					_emit_cut(spans, a, delta, nrm, span_l, steps, run_a, last)
 				run_a = -1
 				last = -2
 		if run_a >= 0 and last > run_a:
-			_emit_frag(spans, a, delta, nrm, float(run_a) / float(steps), float(last) / float(steps))
+			_emit_cut(spans, a, delta, nrm, span_l, steps, run_a, last)
 
 
 static func _spans_from_solid(solid: PackedByteArray, sw: int, sh: int) -> Array:
