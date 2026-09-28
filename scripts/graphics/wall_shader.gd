@@ -57,17 +57,17 @@ vec3 tap_lit(vec2 xz) {
 }
 
 void fragment() {
-	vec2 n2 = face_xz;
-	float nl = length(n2);
-	vec2 inward = vec2(0.0);
-	if (nl > 0.001) {
-		inward = (n2 / nl) * 0.25;
-	}
+	vec2 xz = world_pos.xz;
 	vec2 uv = fract(side_uv * uv_scale + uv_off);
 	vec3 c = texture(albedo_tex, uv).rgb;
 	float h = fract(sin(dot(floor(side_uv * 0.25), vec2(127.1, 311.7))) * 43758.5453);
 	float worn = mix(1.0, mix(0.78, 1.0, h), clamp(wear, 0.0, 1.0));
-	vec3 lit = max(tap_lit(world_pos.xz), tap_lit(world_pos.xz + inward));
+	float o = 0.4;
+	vec3 lit = tap_lit(xz);
+	lit = max(lit, tap_lit(xz + vec2(o, 0.0)));
+	lit = max(lit, tap_lit(xz + vec2(-o, 0.0)));
+	lit = max(lit, tap_lit(xz + vec2(0.0, o)));
+	lit = max(lit, tap_lit(xz + vec2(0.0, -o)));
 	ALBEDO = c * tint * worn * lit;
 }
 """
