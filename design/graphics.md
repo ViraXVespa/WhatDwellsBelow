@@ -23,7 +23,7 @@ If the week slips: drop extra shader tints, then extra light discs. Do not drop 
 Jobs after the reuse PR, one session each, forked from this door:
 
 1. ground — shared shader, world-xz hash variants, RT sample (white until buffer)
-2. volume — exposed greedy wall faces, world-UV, wall samples RT
+2. volume — provided ribbon, span UV, wall samples RT
 3. buffer — four-texel radiance buffer, disc blobs, fine occupancy
 4. actor — RT tint at feet, two-foot-pinned squash (player current frame, others still; sun on hub, up to three local sources in dungeon)
 
