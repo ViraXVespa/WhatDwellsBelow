@@ -3,6 +3,30 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.5.3",
+			"points": [
+				{
+					"text": "Wall torches load the bracket bible as-is. The live path no longer chroma-keys magenta at runtime."
+				},
+				{
+					"text": "torch_bracket_bible import detect_3d/compress_to is 0 so the web export does not smear the baked alpha edge."
+				}
+			],
+			"summary": "Torch brackets keep baked alpha on web; no runtime magenta key."
+		},
+		{
+			"label": "0.5.2",
+			"points": [
+				{
+					"text": "Torch bracket bible PNG now carries real alpha. Runtime magenta punch is gone."
+				},
+				{
+					"text": "Web import no longer VRAM-compresses that sheet, so the plate does not smear pink."
+				}
+			],
+			"summary": "Torch brackets use baked alpha; web build no longer shows a pink plate."
+		},
+		{
 			"label": "0.5.1",
 			"points": [
 				{
