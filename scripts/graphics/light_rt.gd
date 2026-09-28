@@ -172,8 +172,10 @@ static func _publish(
 		_gpu = ImageTexture.create_from_image(img)
 	else:
 		_gpu.set_image(img)
+	HitchLog.mark("light_gpu")
 	tex = _gpu
 	_push()
+	HitchLog.mark("light_push")
 
 
 static func _dungeon_lights(host: Node, x0: int, z0: int, tw: int, th: int) -> Array:

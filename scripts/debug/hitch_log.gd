@@ -22,6 +22,7 @@ static var gx: int = 0
 static var gy: int = 0
 static var _whys: PackedStringArray = PackedStringArray()
 static var _mark_ms: int = 0
+static var _mark_frame: int = -1
 
 
 static func enabled() -> bool:
@@ -94,16 +95,18 @@ static func close() -> void:
 
 static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
 	var now: int = Time.get_ticks_msec()
+	var frame: int = int(Engine.get_process_frames())
 	var dt: int = 0
-	if _mark_ms > 0 and now - _mark_ms > 50:
+	if frame != _mark_frame:
 		_whys.clear()
+		_mark_frame = frame
 	elif _mark_ms > 0:
 		dt = now - _mark_ms
 	_mark_ms = now
 	why = reason
 	gx = int(origin.x)
 	gy = int(origin.y)
-	if _whys.size() >= 8:
+	if _whys.size() >= 12:
 		_whys.remove_at(0)
 	_whys.append("%s:%d" % [reason, dt])
 
