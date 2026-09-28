@@ -69,11 +69,13 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	var sun_item: Dictionary = _light_at(sun.x, sun.y, x0, z0, "sun")
 	sun_item["energy"] = _bal("light_hub_sun_energy", T.LIGHT_HUB_SUN_ENERGY)
 	sun_item["kind"] = "sun"
+	sun_item["occlude"] = true
 	lights.append(sun_item)
 	var cry: Dictionary = _light_at(crystal_xz.x, crystal_xz.y, x0, z0, "crystal")
 	cry["reach"] = _bal("light_hub_crystal_range", T.LIGHT_HUB_CRYSTAL_RANGE)
 	cry["energy"] = _bal("light_hub_crystal_energy", T.LIGHT_HUB_CRYSTAL_ENERGY)
 	cry["kind"] = "crystal"
+	cry["occlude"] = false
 	lights.append(cry)
 	var occ: Dictionary = _hub_occ(x0, z0, tw, th, layout)
 	_publish(x0, z0, tw, th, lights, Color(0.78, 0.70, 0.56, 1.0), occ["solid"], int(occ["sw"]), int(occ["sh"]), Stamp.SUB)
@@ -115,6 +117,31 @@ static func _hub_occ(x0: int, z0: int, tw: int, th: int, layout: Node) -> Dictio
 				fx += 1
 			fz += 1
 	return {"solid": solid, "sw": sw, "sh": sh}
+
+
+static func _blur_hub(img: Image) -> void:
+	var w: int = img.get_width()
+	var h: int = img.get_height()
+	var copy: Image = img.duplicate()
+	var y: int = 0
+	while y < h:
+		var x: int = 0
+		while x < w:
+			var acc := Color(0, 0, 0, 0)
+			var n: float = 0.0
+			for oy in range(-1, 2):
+				var py: int = y + oy
+				if py < 0 or py >= h:
+					continue
+				for ox in range(-1, 2):
+					var px: int = x + ox
+					if px < 0 or px >= w:
+						continue
+					acc += copy.get_pixel(px, py)
+					n += 1.0
+			img.set_pixel(x, y, acc / n)
+			x += 1
+		y += 1
 
 
 static func note_prop(node: Node) -> void:
@@ -225,6 +252,8 @@ static func _publish(
 	_sh = sh
 	_sn = n
 	_keep_casts(x0, z0, tw, th, lights)
+	if not App.in_dungeon:
+		_blur_hub(img)
 	if _gpu == null:
 		_gpu = ImageTexture.create_from_image(img)
 	else:

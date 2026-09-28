@@ -7,7 +7,7 @@ extends Object
 ## Wall texels stay dark except the neighbor sample along the bake. SUB stays 4.
 
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
-const SUB := 4
+const SUB := 8
 const COL_FLOOR := Color(0.50, 0.56, 0.74)
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
@@ -301,7 +301,8 @@ static func _disc(
 	var py1: int = mini(ih - 1, sy + rpx)
 	var px0: int = maxi(0, sx - rpx)
 	var px1: int = mini(iw - 1, sx + rpx)
-	if _n >= 1:
+	var block: bool = bool(src.get("occlude", true))
+	if _n >= 1 and block:
 		_fov_mark(walk, iw, ih, sx, sy, px0, py0, px1, py1)
 	var py: int = py0
 	while py <= py1:
@@ -309,7 +310,7 @@ static func _disc(
 		var px: int = px0
 		while px <= px1:
 			var i: int = row + px
-			if walk[i] != 0 and (_n < 1 or _vis_buf[i] != 0):
+			if walk[i] != 0 and (_n < 1 or not block or _vis_buf[i] != 0):
 				var wx: float = float(x0) + (float(px) + 0.5) / float(SUB)
 				var wz: float = float(z0) + (float(py) + 0.5) / float(SUB)
 				var dist: float = sqrt((wx - mx) * (wx - mx) + (wz - mz) * (wz - mz))

@@ -143,8 +143,38 @@ func _lay(host: Node3D, delta: float) -> void:
 	if App.in_dungeon:
 		_drive_many(feet, delta)
 	else:
-		_drive_sun()
+		_drive_hub(host, feet)
 	_place(tex, feet)
+
+
+func _is_player(host: Node) -> bool:
+	var scr: Script = host.get_script()
+	if scr == null:
+		return false
+	return str(scr.resource_path).ends_with("player.gd")
+
+
+func _drive_hub(host: Node3D, feet: Vector2) -> void:
+	_drive_sun()
+	if not _is_player(host):
+		return
+	var hits: Array[Dictionary] = LightRt.nearest_casts(feet, 3)
+	for hit in hits:
+		var src: Vector2 = hit["xz"]
+		var reach: float = maxf(float(hit["reach"]), 0.001)
+		if reach > 6.0:
+			continue
+		var step: Vector2 = feet - src
+		if step.length_squared() < 0.0004:
+			continue
+		var along: float = clampf(float(hit["dist"]) / reach, 0.0, 1.0)
+		_away_at[1] = step.normalized()
+		_stretch_at[1] = lerpf(0.18, 0.34, 1.0 - along)
+		_alpha_at[1] = lerpf(0.28, 0.0, along)
+		_src_at[1] = src
+		_held[1] = true
+		_rank_at[1] = 1
+		return
 
 
 func _drive_sun() -> void:
@@ -342,7 +372,7 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 	for slot in MARK_N:
 		var node: MeshInstance3D = marks[slot]
 		var live: bool = _alpha_at[slot] >= HIDE_A
-		if not App.in_dungeon and slot > 0:
+		if not App.in_dungeon and slot > 1:
 			live = false
 		if not live:
 			node.visible = false
