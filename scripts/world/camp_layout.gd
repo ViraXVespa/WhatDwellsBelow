@@ -289,11 +289,9 @@ func _default_wing_pos() -> Vector3:
 
 
 func _default_roof_pos(body_pos: Vector3, body_box: Vector3, eave: float, y_bias: float) -> Vector3:
-	var y: float = body_pos.y + body_box.y * 0.5 + 0.03 + y_bias
-	var z0: float = body_pos.z - body_box.z * 0.5
-	return Vector3(body_pos.x, y, z0 + (body_box.z + eave) * 0.5)
-
-signal editor_redraw
+    var y: float = body_pos.y + body_box.y * 0.5 + 0.03 + y_bias
+    var z0: float = body_pos.z - body_box.z * 0.5
+    return Vector3(body_pos.x, y, z0 + (body_box.z + eave) * 0.5)
 
 
 func _ready() -> void:
