@@ -116,12 +116,25 @@ static func queue_ambushes(host: Node, pool: PackedStringArray) -> void:
 		placed += 1
 
 
+static func _land(host: Node, cell: Vector2i) -> Vector2i:
+	if host._is_floor_cell(cell):
+		return cell
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
+	for rad in range(1, 4):
+		for d: Vector2i in dirs:
+			var n: Vector2i = cell + d * rad
+			if host._is_floor_cell(n):
+				return n
+	return cell
+
+
 static func new_job(host: Node, kind: String, cell: Vector2i, room: Dictionary, ids: PackedStringArray, named: bool, nname: String) -> Dictionary:
 	var gid: int = host.next_group
 	host.next_group = gid + 1
+	var land: Vector2i = _land(host, cell)
 	return {
 		"kind": kind,
-		"cell": cell,
+		"cell": land,
 		"room": room,
 		"ids": ids,
 		"named": named,

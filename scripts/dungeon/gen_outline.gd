@@ -2,51 +2,80 @@ extends Object
 
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 
-## Post-carve floor/void outline. The 1 m grid stays the logical map.
-## Fine occupancy is the walk solid. Room corners are cut to a quarter-round.
-## Hall cells are never cleared. Hall corners only gain an outward round.
-## Long abyss edges pick up irregular 0.25–0.5 m steps.
+## Authored rims first, then one solid raster. outline_spans is that polyline.
+## The 1 m grid stays the logical map. Fillet and jag edit rim vertices.
 
 const FLOOR := 1
 const LONG_EDGE := 4
 const K_HALL := 1
 const K_INTERIOR := 2
 const K_RIM := 3
-const _STAIR_TOL := 6.0
-const _BURN_REACH := 4.0
+const PAD := 0.75
 
 
 static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> void:
 	var fine_m: float = _fine_m(bal)
-	var n: int = _per_m(fine_m)
+	var per: int = _per_m(fine_m)
 	var grid: PackedByteArray = data["grid"]
 	var w: int = int(data["w"])
 	var h: int = int(data["h"])
 	var rooms: Array = data["rooms"]
+	var halls: Array = []
+	var raw_halls: Variant = data.get("halls", [])
+	if raw_halls is Array:
+		halls = raw_halls
 	var kind: PackedByteArray = _kinds(grid, w, h, rooms)
-	var sw: int = w * n
-	var sh: int = h * n
-	var solid := PackedByteArray()
+	var shapes: Array = _shapes(rooms, halls, per)
+	LoadTiming.dmark("gen_outline_up")
+	var parts: Array = _union_all(shapes)
+	_orient(parts)
+	var jag: float = _frac(bal, "outline_jag_frac", 0.35)
+	var fillet: float = _frac(bal, "outline_fillet_frac", 0.40)
+	var loops: Array = []
+	for part_v in parts:
+		var part: PackedVector2Array = part_v
+		if _area(part) <= 1.0:
+			loops.append(part)
+			continue
+		var pts: Array[Vector2] = _copy_pts(part)
+		if per >= 2:
+			pts = _jag_points(pts, rng, jag, per)
+			pts = _fillet_points(pts, rng, fillet, per, kind, w, h)
+		loops.append(_fold_pts(pts))
+	LoadTiming.dmark("gen_outline_jag")
+	var sw: int = w * per
+	var sh: int = h * per
+	var solid: PackedByteArray = PackedByteArray()
 	solid.resize(sw * sh)
 	solid.fill(0)
-	_upsample(grid, w, h, n, solid, sw)
-	LoadTiming.dmark("gen_outline_up")
-	if n >= 2:
-		_jag(rng, grid, w, h, n, kind, solid, sw, sh, _frac(bal, "outline_jag_frac", 0.35))
-		_fillet(rng, grid, w, h, n, kind, solid, sw, sh, _frac(bal, "outline_fillet_frac", 0.40))
-		_strip_nubs(solid, sw, sh)
-	LoadTiming.dmark("gen_outline_jag")
+	for loop_v in loops:
+		var loop: PackedVector2Array = loop_v
+		if _area(loop) > 1.0:
+			_fill(solid, sw, sh, loop, 1)
+	for loop_v2 in loops:
+		var hole: PackedVector2Array = loop_v2
+		if _area(hole) < -1.0:
+			_fill(solid, sw, sh, hole, 0)
+	var spans: Array = []
+	for loop_v3 in loops:
+		var rim: PackedVector2Array = loop_v3
+		if _area(rim) > 1.0:
+			_push_loop(spans, rim)
+	for item in spans:
+		if item is Dictionary:
+			_paint(solid, sw, sh, item)
+	_keep_rooms(solid, sw, sh, rooms, per)
 	data["outline_fine_m"] = fine_m
 	data["solid"] = solid
 	data["solid_w"] = sw
 	data["solid_h"] = sh
-	data["solid_n"] = n
-	data["outline_spans"] = _spans(solid, sw, sh, grid, w, h, n)
+	data["solid_n"] = per
+	data["outline_spans"] = spans
 	LoadTiming.dmark("gen_outline_spans")
 
 
 static func _fine_m(bal: Object) -> float:
-	var m := 0.25
+	var m: float = 0.25
 	if bal != null:
 		m = float(bal.get("outline_fine_m"))
 	if m >= 0.87:
@@ -68,7 +97,7 @@ static func _frac(bal: Object, key: String, fallback: float) -> float:
 
 
 static func _kinds(grid: PackedByteArray, w: int, h: int, rooms: Array) -> PackedByteArray:
-	var kind := PackedByteArray()
+	var kind: PackedByteArray = PackedByteArray()
 	kind.resize(w * h)
 	kind.fill(0)
 	for y in h:
@@ -76,7 +105,7 @@ static func _kinds(grid: PackedByteArray, w: int, h: int, rooms: Array) -> Packe
 		for x in w:
 			if grid[row + x] == FLOOR:
 				kind[row + x] = K_HALL
-	for room_v: Variant in rooms:
+	for room_v in rooms:
 		var room: Dictionary = room_v
 		var rx: int = int(room["x"])
 		var ry: int = int(room["y"])
@@ -97,262 +126,207 @@ static func _kinds(grid: PackedByteArray, w: int, h: int, rooms: Array) -> Packe
 	return kind
 
 
-static func _upsample(grid: PackedByteArray, w: int, h: int, n: int, solid: PackedByteArray, sw: int) -> void:
-	for y in h:
-		var row: int = y * w
-		for x in w:
-			if grid[row + x] != FLOOR:
-				continue
-			var fx0: int = x * n
-			var fy0: int = y * n
-			for ly in n:
-				var dst: int = (fy0 + ly) * sw + fx0
-				for lx in n:
-					solid[dst + lx] = 1
+static func _rect(x0: float, y0: float, x1: float, y1: float) -> PackedVector2Array:
+	var poly: PackedVector2Array = PackedVector2Array()
+	poly.append(Vector2(x0, y0))
+	poly.append(Vector2(x1, y0))
+	poly.append(Vector2(x1, y1))
+	poly.append(Vector2(x0, y1))
+	return poly
 
 
-static func _floor_at(grid: PackedByteArray, w: int, h: int, x: int, y: int) -> bool:
-	if x < 0 or y < 0 or x >= w or y >= h:
-		return false
-	return grid[y * w + x] == FLOOR
+static func _band(a: Vector2, b: Vector2, rad: float) -> PackedVector2Array:
+	var poly: PackedVector2Array = PackedVector2Array()
+	var delta: Vector2 = b - a
+	var span_l: float = delta.length()
+	if span_l < 0.001:
+		return _circle(a, rad, 8)
+	var dir: Vector2 = delta / span_l
+	var perp: Vector2 = Vector2(-dir.y, dir.x)
+	var steps: int = 4
+	poly.append(a + perp * rad)
+	poly.append(b + perp * rad)
+	var ang0: float = atan2(perp.y, perp.x)
+	for s in range(1, steps):
+		var ang: float = ang0 - PI * float(s) / float(steps)
+		poly.append(b + Vector2(cos(ang), sin(ang)) * rad)
+	poly.append(b - perp * rad)
+	poly.append(a - perp * rad)
+	var ang1: float = atan2(-perp.y, -perp.x)
+	for s2 in range(1, steps):
+		var ang_b: float = ang1 - PI * float(s2) / float(steps)
+		poly.append(a + Vector2(cos(ang_b), sin(ang_b)) * rad)
+	return poly
 
 
-static func _fillet(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, n: int, kind: PackedByteArray, solid: PackedByteArray, sw: int, sh: int, frac: float) -> void:
-	if frac <= 0.0:
-		return
-	var corners: Array[Vector4i] = []
-	for y in range(1, h - 1):
-		var row: int = y * w
-		for x in range(1, w - 1):
-			var k: int = kind[row + x]
-			if k != K_RIM and k != K_HALL:
-				continue
-			var q: int = _convex_q(grid, w, h, x, y)
-			if q < 0:
-				continue
-			corners.append(Vector4i(x, y, q, k))
-	if corners.is_empty():
-		return
-	var want: int = int(round(frac * float(corners.size())))
-	if want < 1:
-		want = 1
-	if want > corners.size():
-		want = corners.size()
-	for i in want:
-		var j: int = i + (rng.randi() % (corners.size() - i))
-		var swap: Vector4i = corners[i]
-		corners[i] = corners[j]
-		corners[j] = swap
-		var picked: Vector4i = corners[i]
-		if picked.w == K_HALL:
-			if not _stair_corner(grid, w, h, picked):
-				_bulge_quarter(solid, sw, sh, n, picked)
+static func _circle(c: Vector2, rad: float, steps: int) -> PackedVector2Array:
+	var poly: PackedVector2Array = PackedVector2Array()
+	for s in steps:
+		var ang: float = TAU * float(s) / float(steps)
+		poly.append(c + Vector2(cos(ang), sin(ang)) * rad)
+	return poly
+
+
+static func _shapes(rooms: Array, halls: Array, per: int) -> Array:
+	var out: Array = []
+	var pad: float = PAD
+	var scale: float = float(per)
+	for room_v in rooms:
+		var room: Dictionary = room_v
+		var x0: float = float(int(room["x"])) * scale - pad
+		var y0: float = float(int(room["y"])) * scale - pad
+		var x1: float = float(int(room["x"]) + int(room["w"])) * scale + pad
+		var y1: float = float(int(room["y"]) + int(room["h"])) * scale + pad
+		out.append(_rect(x0, y0, x1, y1))
+	for hall_v in halls:
+		var hall: Dictionary = hall_v
+		if str(hall.get("k", "")) == "band":
+			var half: float = float(maxi(1, int(hall["w"]))) * 0.5
+			var rad: float = sqrt(half * half + 0.25) * scale + pad
+			var a: Vector2 = Vector2((float(int(hall["ax"])) + 0.5) * scale, (float(int(hall["ay"])) + 0.5) * scale)
+			var b: Vector2 = Vector2((float(int(hall["bx"])) + 0.5) * scale, (float(int(hall["by"])) + 0.5) * scale)
+			out.append(_band(a, b, rad))
 		else:
-			_cut_quarter(solid, sw, n, picked)
+			var hx0: float = float(int(hall["x0"])) * scale - pad
+			var hy0: float = float(int(hall["y0"])) * scale - pad
+			var hx1: float = float(int(hall["x1"]) + 1) * scale + pad
+			var hy1: float = float(int(hall["y1"]) + 1) * scale + pad
+			out.append(_rect(hx0, hy0, hx1, hy1))
+	return out
 
 
-static func _stair_corner(grid: PackedByteArray, w: int, h: int, corner: Vector4i) -> bool:
-	var x: int = corner.x
-	var y: int = corner.y
-	var q: int = corner.z
-	var step_x: int = -1 if q == 1 or q == 3 else 1
-	var step_y: int = -1 if q == 2 or q == 3 else 1
-	var void_y: int = -1 if q == 0 or q == 1 else 1
-	var void_x: int = -1 if q == 0 or q == 2 else 1
-	var h_len: int = _arm(grid, w, h, x, y, step_x, 0, 0, void_y)
-	var v_len: int = _arm(grid, w, h, x, y, 0, step_y, void_x, 0)
-	return h_len < LONG_EDGE and v_len < LONG_EDGE
+static func _area(poly: PackedVector2Array) -> float:
+	var count: int = poly.size()
+	var acc: float = 0.0
+	if count < 3:
+		return 0.0
+	for i in count:
+		var p: Vector2 = poly[i]
+		var q: Vector2 = poly[(i + 1) % count]
+		acc += p.x * q.y - q.x * p.y
+	return acc * 0.5
 
 
-static func _arm(grid: PackedByteArray, w: int, h: int, x: int, y: int, step_x: int, step_y: int, void_x: int, void_y: int) -> int:
-	var n_len := 0
-	var cx: int = x
-	var cy: int = y
-	while _floor_at(grid, w, h, cx, cy) and not _floor_at(grid, w, h, cx + void_x, cy + void_y):
-		n_len += 1
-		if n_len >= LONG_EDGE:
-			return n_len
-		cx += step_x
-		cy += step_y
-	return n_len
+static func _box(poly: PackedVector2Array) -> Vector4:
+	var x0: float = poly[0].x
+	var y0: float = poly[0].y
+	var x1: float = x0
+	var y1: float = y0
+	for i in poly.size():
+		var p: Vector2 = poly[i]
+		x0 = minf(x0, p.x)
+		y0 = minf(y0, p.y)
+		x1 = maxf(x1, p.x)
+		y1 = maxf(y1, p.y)
+	return Vector4(x0, y0, x1, y1)
 
 
-static func _convex_q(grid: PackedByteArray, w: int, h: int, x: int, y: int) -> int:
-	var west: bool = not _floor_at(grid, w, h, x - 1, y)
-	var east: bool = not _floor_at(grid, w, h, x + 1, y)
-	var north: bool = not _floor_at(grid, w, h, x, y - 1)
-	var south: bool = not _floor_at(grid, w, h, x, y + 1)
-	if west and north and not east and not south and not _floor_at(grid, w, h, x - 1, y - 1):
-		return 0
-	if east and north and not west and not south and not _floor_at(grid, w, h, x + 1, y - 1):
-		return 1
-	if west and south and not east and not north and not _floor_at(grid, w, h, x - 1, y + 1):
-		return 2
-	if east and south and not west and not north and not _floor_at(grid, w, h, x + 1, y + 1):
-		return 3
-	return -1
+static func _box_hit(a: Vector4, b: Vector4) -> bool:
+	return not (a.z < b.x or b.z < a.x or a.w < b.y or b.w < a.y)
 
 
-static func _cut_quarter(solid: PackedByteArray, sw: int, n: int, corner: Vector4i) -> void:
-	var box: int = n - 1
-	if box < 1:
-		return
-	var rad: float = 0.5 if n < 3 else float(n - 2)
-	var rad2: float = rad * rad
-	var inward: float = float(n - 1)
-	var x0: int = corner.x * n
-	var y0: int = corner.y * n
-	var x_hi: bool = corner.z == 1 or corner.z == 3
-	var y_hi: bool = corner.z == 2 or corner.z == 3
-	for ly in box:
-		for lx in box:
-			var dx: float = float(lx) + 0.5 - inward
-			var dy: float = float(ly) + 0.5 - inward
-			if dx * dx + dy * dy <= rad2:
-				continue
-			var fx: int = x0 + (n - 1 - lx) if x_hi else x0 + lx
-			var fy: int = y0 + (n - 1 - ly) if y_hi else y0 + ly
-			solid[fy * sw + fx] = 0
-
-
-static func _bulge_quarter(solid: PackedByteArray, sw: int, sh: int, n: int, corner: Vector4i) -> void:
-	var box: int = n - 1
-	if box < 1:
-		return
-	var rad: float = float(box)
-	var rad2: float = rad * rad
-	var x_sign: int = -1 if corner.z == 0 or corner.z == 2 else 1
-	var y_sign: int = -1 if corner.z == 0 or corner.z == 1 else 1
-	var px: int = corner.x * n if x_sign < 0 else (corner.x + 1) * n
-	var py: int = corner.y * n if y_sign < 0 else (corner.y + 1) * n
-	var cell_x0: int = corner.x * n
-	var cell_y0: int = corner.y * n
-	var cell_x1: int = cell_x0 + n
-	var cell_y1: int = cell_y0 + n
-	for fy in range(py - box, py + box):
-		for fx in range(px - box, px + box):
-			if fx >= cell_x0 and fx < cell_x1 and fy >= cell_y0 and fy < cell_y1:
-				continue
-			if fx < 0 or fy < 0 or fx >= sw or fy >= sh:
-				continue
-			var dx: float = float(fx) + 0.5 - float(px)
-			var dy: float = float(fy) + 0.5 - float(py)
-			if dx * dx + dy * dy > rad2:
-				continue
-			if solid[fy * sw + fx] != 0:
-				continue
-			if _void_gap(solid, sw, sh, fx, fy, x_sign, 0) < 2:
-				continue
-			if _void_gap(solid, sw, sh, fx, fy, 0, y_sign) < 2:
-				continue
-			solid[fy * sw + fx] = 1
-
-
-static func _jag(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, n: int, kind: PackedByteArray, solid: PackedByteArray, sw: int, sh: int, frac: float) -> void:
-	if frac <= 0.0:
-		return
-	var runs: Array[Dictionary] = []
-	_collect_h(runs, grid, w, h, 1)
-	_collect_v(runs, grid, w, h, 1)
-	if runs.is_empty():
-		return
-	var kept: Array[Dictionary] = []
-	for run in runs:
-		if _band_run(grid, w, h, run):
+static func _union_all(shapes: Array) -> Array:
+	var parts: Array = []
+	var boxes: Array = []
+	for shape_v in shapes:
+		var poly: PackedVector2Array = shape_v
+		if poly.size() < 3:
 			continue
-		kept.append(run)
-	if kept.is_empty():
+		var pending: Array = [poly]
+		var pending_box: Array = [_box(poly)]
+		var spins: int = 0
+		while not pending.is_empty() and spins < 8000:
+			spins += 1
+			var last: int = pending.size() - 1
+			var cur: PackedVector2Array = pending[last]
+			var cur_box: Vector4 = pending_box[last] as Vector4
+			pending.remove_at(last)
+			pending_box.remove_at(last)
+			var i: int = 0
+			var guard: int = 0
+			while i < parts.size() and guard < 8000:
+				guard += 1
+				if not _box_hit(cur_box, boxes[i] as Vector4):
+					i += 1
+					continue
+				var other: PackedVector2Array = parts[i]
+				var got: Array = Geometry2D.merge_polygons(other, cur)
+				if got.is_empty():
+					i += 1
+					continue
+				parts.remove_at(i)
+				boxes.remove_at(i)
+				var best: int = 0
+				var best_a: float = -1.0e20
+				for gi in got.size():
+					var piece: PackedVector2Array = got[gi] as PackedVector2Array
+					var area: float = _area(piece)
+					if area > best_a:
+						best_a = area
+						best = gi
+				cur = got[best] as PackedVector2Array
+				cur_box = _box(cur)
+				for gi2 in got.size():
+					if gi2 == best:
+						continue
+					var extra: PackedVector2Array = got[gi2] as PackedVector2Array
+					pending.append(extra)
+					pending_box.append(_box(extra))
+				i = 0
+			parts.append(cur)
+			boxes.append(cur_box)
+	return parts
+
+
+static func _orient(parts: Array) -> void:
+	var max_abs: float = 0.0
+	var max_signed: float = 0.0
+	for part_v in parts:
+		var poly: PackedVector2Array = part_v
+		var area: float = _area(poly)
+		if absf(area) > max_abs:
+			max_abs = absf(area)
+			max_signed = area
+	if max_signed >= 0.0:
 		return
-	runs = kept
-	var want: int = int(round(frac * float(runs.size())))
-	if want < 1:
-		want = 1
-	if want > runs.size():
-		want = runs.size()
-	for i in want:
-		var j: int = i + (rng.randi() % (runs.size() - i))
-		var swap: Dictionary = runs[i]
-		runs[i] = runs[j]
-		runs[j] = swap
-		_jag_run(rng, n, w, kind, solid, sw, sh, runs[i])
+	for i in parts.size():
+		var flip: PackedVector2Array = parts[i]
+		flip.reverse()
+		parts[i] = flip
 
 
-static func _collect_h(runs: Array[Dictionary], grid: PackedByteArray, w: int, h: int, dir: int) -> void:
-	var y0: int = 1 if dir < 0 else 0
-	var y1: int = h if dir < 0 else h - 1
-	for y in range(y0, y1):
-		var x := 0
-		while x < w:
-			if not _h_edge(grid, w, h, x, y, dir):
-				x += 1
-				continue
-			var x0: int = x
-			while x < w and _h_edge(grid, w, h, x, y, dir):
-				x += 1
-			if x - x0 >= LONG_EDGE:
-				runs.append({"x0": x0, "x1": x - 1, "y": y, "dir": dir, "axis": 0})
+static func _copy_pts(poly: PackedVector2Array) -> Array[Vector2]:
+	var pts: Array[Vector2] = []
+	for p in poly:
+		pts.append(p)
+	return pts
 
 
-static func _collect_v(runs: Array[Dictionary], grid: PackedByteArray, w: int, h: int, dir: int) -> void:
-	var x0: int = 1 if dir < 0 else 0
-	var x1: int = w if dir < 0 else w - 1
-	for x in range(x0, x1):
-		var y := 0
-		while y < h:
-			if not _v_edge(grid, w, h, x, y, dir):
-				y += 1
-				continue
-			var y_start: int = y
-			while y < h and _v_edge(grid, w, h, x, y, dir):
-				y += 1
-			if y - y_start >= LONG_EDGE:
-				runs.append({"x": x, "y0": y_start, "y1": y - 1, "dir": dir, "axis": 1})
+static func _collinear(a: Vector2, b: Vector2, c: Vector2) -> bool:
+	var ab: Vector2 = b - a
+	var ac: Vector2 = c - a
+	var cross: float = ab.x * ac.y - ab.y * ac.x
+	return absf(cross) <= 0.2 * maxf(ab.length(), 1.0)
 
 
-static func _h_edge(grid: PackedByteArray, w: int, h: int, x: int, y: int, dir: int) -> bool:
-	return _floor_at(grid, w, h, x, y) and not _floor_at(grid, w, h, x, y + dir)
-
-
-static func _v_edge(grid: PackedByteArray, w: int, h: int, x: int, y: int, dir: int) -> bool:
-	return _floor_at(grid, w, h, x, y) and not _floor_at(grid, w, h, x + dir, y)
-
-
-static func _jag_run(rng: RandomNumberGenerator, n: int, gw: int, kind: PackedByteArray, solid: PackedByteArray, sw: int, sh: int, run: Dictionary) -> void:
-	var segs: Array[int] = [4, 6, 8, 12]
-	var axis: int = int(run["axis"])
-	var dir: int = int(run["dir"])
-	if axis == 0:
-		var fx: int = (int(run["x0"]) + 1) * n
-		var fx_end: int = int(run["x1"]) * n
-		var y: int = int(run["y"])
-		while fx < fx_end:
-			if fx_end - fx < n:
-				break
-			var seg: int = segs[rng.randi() % segs.size()]
-			var depth: int = _depth(rng)
-			var notch: bool = depth == 0 and rng.randf() < 0.4
-			for _step in seg:
-				if fx >= fx_end:
-					break
-				_jag_x(n, gw, kind, solid, sw, sh, fx, y, dir, depth, notch)
-				fx += 1
-			fx += 4 + rng.randi() % 5
-		return
-	var fy: int = (int(run["y0"]) + 1) * n
-	var fy_end: int = int(run["y1"]) * n
-	var x: int = int(run["x"])
-	while fy < fy_end:
-		if fy_end - fy < n:
-			break
-		var seg_y: int = segs[rng.randi() % segs.size()]
-		var depth_y: int = _depth(rng)
-		var notch_y: bool = depth_y == 0 and rng.randf() < 0.4
-		for _jag_step_y in seg_y:
-			if fy >= fy_end:
-				break
-			_jag_y(n, gw, kind, solid, sw, sh, x, fy, dir, depth_y, notch_y)
-			fy += 1
-		fy += 4 + rng.randi() % 5
+static func _fold_pts(pts: Array[Vector2]) -> PackedVector2Array:
+	var count: int = pts.size()
+	var out: PackedVector2Array = PackedVector2Array()
+	if count < 3:
+		return out
+	for i in count:
+		var prev: Vector2 = pts[(i + count - 1) % count]
+		var cur: Vector2 = pts[i]
+		var nxt: Vector2 = pts[(i + 1) % count]
+		if cur.distance_squared_to(prev) < 0.01:
+			continue
+		if _collinear(prev, cur, nxt):
+			continue
+		out.append(cur)
+	if out.size() < 3:
+		for p in pts:
+			out.append(p)
+	return out
 
 
 static func _depth(rng: RandomNumberGenerator) -> int:
@@ -363,752 +337,293 @@ static func _depth(rng: RandomNumberGenerator) -> int:
 	return 2
 
 
-static func _jag_x(n: int, _gw: int, _kind: PackedByteArray, solid: PackedByteArray, sw: int, sh: int, fx: int, y: int, dir: int, depth: int, _notch: bool) -> void:
-	var outward: int = -1 if dir < 0 else 1
-	var edge: int = y * n if dir < 0 else (y + 1) * n - 1
-	var d := 1
-	while d <= depth:
-		var fy: int = edge + outward * d
-		if fy < 0 or fy >= sh or fx < 0 or fx >= sw:
-			break
-		if solid[fy * sw + fx] != 0:
-			break
-		if _void_gap(solid, sw, sh, fx, fy, 0, outward) < 2:
-			break
-		solid[fy * sw + fx] = 1
-		d += 1
-
-
-static func _jag_y(n: int, _gw: int, _kind: PackedByteArray, solid: PackedByteArray, sw: int, sh: int, x: int, fy: int, dir: int, depth: int, _notch: bool) -> void:
-	var outward: int = -1 if dir < 0 else 1
-	var edge: int = x * n if dir < 0 else (x + 1) * n - 1
-	var d := 1
-	while d <= depth:
-		var fx: int = edge + outward * d
-		if fx < 0 or fx >= sw or fy < 0 or fy >= sh:
-			break
-		if solid[fy * sw + fx] != 0:
-			break
-		if _void_gap(solid, sw, sh, fx, fy, outward, 0) < 2:
-			break
-		solid[fy * sw + fx] = 1
-		d += 1
-
-
-static func _notch_at(n: int, gw: int, kind: PackedByteArray, solid: PackedByteArray, sw: int, fx: int, fy: int) -> void:
-	if fx < 0 or fy < 0:
+static func _jag_edge(out: Array[Vector2], rng: RandomNumberGenerator, a: Vector2, b: Vector2, per: int) -> void:
+	var delta: Vector2 = b - a
+	var span_l: float = delta.length()
+	if span_l < 1.0:
 		return
-	var cx: int = int(float(fx) / float(n))
-	var cy: int = int(float(fy) / float(n))
-	var ki: int = cy * gw + cx
-	if cx < 0 or cy < 0 or cx >= gw or ki < 0 or ki >= kind.size():
+	var dir: Vector2 = delta / span_l
+	var outward: Vector2 = Vector2(dir.y, -dir.x)
+	var segs: Array[int] = [4, 6, 8, 12]
+	var t: float = float(per)
+	var end: float = span_l - float(per)
+	while t < end:
+		if end - t < float(per):
+			break
+		var seg: int = segs[rng.randi() % segs.size()]
+		var depth: int = _depth(rng)
+		if depth == 0 and rng.randf() < 0.4:
+			depth = 0
+		var run: float = float(seg)
+		if t + run > end:
+			run = end - t
+		if depth > 0 and run >= 2.0:
+			var p0: Vector2 = a + dir * t
+			out.append(p0)
+			out.append(p0 + outward * float(depth))
+			out.append(p0 + outward * float(depth) + dir * run)
+			out.append(a + dir * (t + run))
+		t += run + float(4 + rng.randi() % 5)
+
+
+static func _jag_points(pts: Array[Vector2], rng: RandomNumberGenerator, frac: float, per: int) -> Array[Vector2]:
+	var count: int = pts.size()
+	if frac <= 0.0 or count < 3:
+		return pts
+	var edges: PackedInt32Array = PackedInt32Array()
+	var limit: float = float(LONG_EDGE * per)
+	for i in count:
+		var delta: Vector2 = pts[(i + 1) % count] - pts[i]
+		var card_x: bool = absf(delta.y) < 0.2 and absf(delta.x) >= limit
+		var card_y: bool = absf(delta.x) < 0.2 and absf(delta.y) >= limit
+		if card_x or card_y:
+			edges.append(i)
+	if edges.is_empty():
+		return pts
+	var want: int = int(round(frac * float(edges.size())))
+	if want < 1:
+		want = 1
+	if want > edges.size():
+		want = edges.size()
+	for i in want:
+		var j: int = i + (rng.randi() % (edges.size() - i))
+		var swap: int = edges[i]
+		edges[i] = edges[j]
+		edges[j] = swap
+	var picked: Dictionary = {}
+	for i2 in want:
+		picked[int(edges[i2])] = true
+	var out: Array[Vector2] = []
+	for i3 in count:
+		var a: Vector2 = pts[i3]
+		out.append(a)
+		if not bool(picked.get(i3, false)):
+			continue
+		_jag_edge(out, rng, a, pts[(i3 + 1) % count], per)
+	return out
+
+
+static func _fillet_at(out: Array[Vector2], pts: Array[Vector2], i: int, per: int, kind: PackedByteArray, gw: int, gh: int) -> void:
+	var count: int = pts.size()
+	var prev: Vector2 = pts[(i + count - 1) % count]
+	var cur: Vector2 = pts[i]
+	var nxt: Vector2 = pts[(i + 1) % count]
+	var vin: Vector2 = cur - prev
+	var vout: Vector2 = nxt - cur
+	var lin: float = vin.length()
+	var lout: float = vout.length()
+	if lin < 0.5 or lout < 0.5:
+		out.append(cur)
 		return
-	if kind[ki] != K_RIM:
+	vin = vin / lin
+	vout = vout / lout
+	var dot: float = clampf(vin.dot(vout), -0.999, 0.999)
+	var phi: float = acos(dot)
+	if absf(phi - PI * 0.5) > 0.35:
+		out.append(cur)
 		return
-	solid[fy * sw + fx] = 0
-
-
-static func _strip_nubs(solid: PackedByteArray, sw: int, sh: int) -> void:
-	var dirs: Array[Vector2i] = [
-		Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)
-	]
-	var pass_i: int = 0
-	while pass_i < 1:
-		var kill: Array[int] = []
-		for y in sh:
-			var row: int = y * sw
-			for x in sw:
-				if solid[row + x] == 0:
-					continue
-				var nbor: int = 0
-				for d in dirs:
-					var nx: int = x + d.x
-					var ny: int = y + d.y
-					if nx < 0 or ny < 0 or nx >= sw or ny >= sh:
-						continue
-					if solid[ny * sw + nx] != 0:
-						nbor += 1
-				if nbor <= 1:
-					kill.append(row + x)
-		for idx in kill:
-			solid[idx] = 0
-		pass_i += 1
-
-static func _spans(solid: PackedByteArray, sw: int, sh: int, grid: PackedByteArray, gw: int, gh: int, n: int) -> Array:
-	var pack: Dictionary = _collect_edges(solid, sw, sh, grid, gw, gh, n)
-	var ex: PackedInt32Array = pack["ex"]
-	var spans: Array = []
-	if ex.is_empty():
-		return spans
-	var vw: int = int(pack["vw"])
-	var head: PackedInt32Array = pack["head"]
-	var ey: PackedInt32Array = pack["ey"]
-	var ed: PackedInt32Array = pack["ed"]
-	var link: PackedInt32Array = pack["link"]
-	var used: PackedByteArray = PackedByteArray()
-	used.resize(ex.size())
-	used.fill(0)
-	var ecount: int = ex.size()
-	for s in ecount:
-		if used[s] != 0:
-			continue
-		var xs: PackedInt32Array = PackedInt32Array()
-		var ys: PackedInt32Array = PackedInt32Array()
-		xs.append(ex[s])
-		ys.append(ey[s])
-		var e: int = s
-		var guard: int = ecount + 2
-		while guard > 0:
-			guard -= 1
-			if used[e] != 0:
-				break
-			used[e] = 1
-			var d: int = ed[e]
-			var bx: int = ex[e] + _step_x(d)
-			var by: int = ey[e] + _step_y(d)
-			xs.append(bx)
-			ys.append(by)
-			if bx == xs[0] and by == ys[0]:
-				break
-			e = _pick_edge(head, vw, ed, link, used, bx, by, d)
-			if e < 0:
-				break
-		var closed: bool = xs.size() >= 2 and xs[0] == xs[xs.size() - 1] and ys[0] == ys[ys.size() - 1]
-		var local: Array = _fold_spans(_fit_xy(xs, ys), closed)
-		for item in local:
-			spans.append(item)
-	_face_spans(spans, solid, sw, sh)
-	_burn(spans, solid, sw, sh, grid, gw, gh, n)
-	_drop_stub_spans(spans, solid, sw, sh)
-	return spans
-
-
-static func _step_x(d: int) -> int:
-	if d == 0:
-		return 1
-	if d == 2:
-		return -1
-	return 0
-
-
-static func _face_spans(spans: Array, solid: PackedByteArray, sw: int, sh: int) -> void:
-	for item in spans:
-		if not (item is Dictionary):
-			continue
-		var run: Dictionary = item
-		if not run.has("delta"):
-			continue
-		var o: Vector2 = run["origin"] as Vector2
-		var d: Vector2 = run["delta"] as Vector2
-		var nrm: Vector2 = run["normal"] as Vector2
-		if nrm.length_squared() < 0.0001:
-			nrm = Vector2(-d.y, d.x)
-		if nrm.length_squared() < 0.0001:
-			continue
-		nrm = nrm.normalized()
-		var toward := 0
-		var away := 0
-		var samples: Array[float] = [0.25, 0.5, 0.75]
-		var dists: Array[float] = [1.0, 2.0, 3.0, 4.0]
-		for dist in dists:
-			for s in samples:
-				var px: float = o.x + d.x * s
-				var py: float = o.y + d.y * s
-				if _solid_at(solid, sw, sh, px + nrm.x * dist, py + nrm.y * dist):
-					toward += 1
-				if _solid_at(solid, sw, sh, px - nrm.x * dist, py - nrm.y * dist):
-					away += 1
-		if away > toward:
-			nrm = -nrm
-		run["normal"] = nrm
-
-
-static func _solid_at(solid: PackedByteArray, sw: int, sh: int, x: float, y: float) -> bool:
-	var ix: int = int(floor(x))
-	var iy: int = int(floor(y))
-	if ix < 0 or iy < 0 or ix >= sw or iy >= sh:
-		return false
-	return solid[iy * sw + ix] != 0
-
-
-static func _burn(spans: Array, solid: PackedByteArray, sw: int, sh: int, grid: PackedByteArray, gw: int, gh: int, n: int) -> void:
-	for item in spans:
-		if not (item is Dictionary):
-			continue
-		var run: Dictionary = item
-		if not run.has("delta"):
-			continue
-		var o: Vector2 = run["origin"] as Vector2
-		var d: Vector2 = run["delta"] as Vector2
-		if absf(d.x) < 0.75 or absf(d.y) < 0.75:
-			continue
-		var nrm: Vector2 = run["normal"] as Vector2
-		var span_l: float = d.length()
-		if span_l < 4.0 or nrm.length_squared() < 0.0001:
-			continue
-		var ux: float = d.x / span_l
-		var uy: float = d.y / span_l
-		var reach: float = _BURN_REACH
-		var ir: int = int(ceil(reach))
-		var steps: int = maxi(1, int(ceil(span_l + 1.0)))
-		for s in range(steps + 1):
-			var t: float = (float(s) / float(steps)) * span_l
-			var px: float = o.x + ux * t
-			var py: float = o.y + uy * t
-			for k in range(0, ir + 1):
-				var fx: int = int(floor(px + nrm.x * float(k)))
-				var fy: int = int(floor(py + nrm.y * float(k)))
-				if fx < 0 or fy < 0 or fx >= sw or fy >= sh:
-					continue
-				solid[fy * sw + fx] = 1
-			for k2 in range(1, ir + 1):
-				var fx2: int = int(floor(px - nrm.x * float(k2)))
-				var fy2: int = int(floor(py - nrm.y * float(k2)))
-				if fx2 < 0 or fy2 < 0 or fx2 >= sw or fy2 >= sh:
-					continue
-				var mx: int = int(fx2 / n) if n > 0 else fx2
-				var my: int = int(fy2 / n) if n > 0 else fy2
-				if n >= 1 and mx >= 0 and my >= 0 and mx < gw and my < gh:
-					if grid[my * gw + mx] == FLOOR:
-						continue
-				solid[fy2 * sw + fx2] = 0
-
-
-static func _drop_stub_spans(spans: Array, solid: PackedByteArray, sw: int, sh: int) -> void:
-	var slants: Array = []
-	for item in spans:
-		if not (item is Dictionary):
-			continue
-		var run: Dictionary = item
-		if not run.has("delta"):
-			continue
-		var d: Vector2 = run["delta"] as Vector2
-		if absf(d.x) < 0.75 or absf(d.y) < 0.75:
-			continue
-		if d.length() < 4.0:
-			continue
-		slants.append(run)
-	if slants.is_empty():
+	var inward: Vector2 = Vector2(-vin.y, vin.x)
+	var sample: Vector2 = cur + inward * float(per) * 0.75
+	var cx: int = int(floor(sample.x / float(per)))
+	var cy: int = int(floor(sample.y / float(per)))
+	var hall: bool = false
+	if cx >= 0 and cy >= 0 and cx < gw and cy < gh:
+		hall = int(kind[cy * gw + cx]) == K_HALL
+	var rad: float = float(per - 1) if hall else float(maxi(1, per - 2))
+	var bis: Vector2 = vout - vin
+	if bis.length_squared() < 0.0001:
+		out.append(cur)
 		return
-	var kept: Array = []
-	for item2 in spans:
-		if not (item2 is Dictionary):
+	bis = bis.normalized()
+	if hall:
+		var bite: float = minf(rad * 0.5, minf(lin, lout) * 0.3)
+		if bite < 0.4:
+			out.append(cur)
+			return
+		var bump: Vector2 = cur - bis * rad
+		out.append(cur - vin * bite)
+		out.append(cur - vin * bite * 0.35 + bump * 0.65)
+		out.append(bump)
+		out.append(cur + vout * bite * 0.35 + bump * 0.65)
+		out.append(cur + vout * bite)
+		return
+	var tlen: float = rad * tan(phi * 0.5)
+	if tlen < 0.4 or tlen > lin * 0.45 or tlen > lout * 0.45:
+		out.append(cur)
+		return
+	var t1: Vector2 = cur - vin * tlen
+	var t2: Vector2 = cur + vout * tlen
+	var dist: float = rad / sin(phi * 0.5)
+	var center: Vector2 = cur + bis * dist
+	var a0: float = atan2(t1.y - center.y, t1.x - center.x)
+	var a1: float = atan2(t2.y - center.y, t2.x - center.x)
+	var da: float = a1 - a0
+	if da > PI:
+		da -= TAU
+	elif da < -PI:
+		da += TAU
+	out.append(t1)
+	var steps: int = 3
+	for s in range(1, steps):
+		var ang: float = a0 + da * float(s) / float(steps)
+		out.append(center + Vector2(cos(ang), sin(ang)) * rad)
+	out.append(t2)
+
+
+static func _fillet_points(pts: Array[Vector2], rng: RandomNumberGenerator, frac: float, per: int, kind: PackedByteArray, gw: int, gh: int) -> Array[Vector2]:
+	var count: int = pts.size()
+	if frac <= 0.0 or count < 4:
+		return pts
+	var corners: PackedInt32Array = PackedInt32Array()
+	var min_arm: float = float(LONG_EDGE * per)
+	for i in count:
+		var prev: Vector2 = pts[(i + count - 1) % count]
+		var cur: Vector2 = pts[i]
+		var nxt: Vector2 = pts[(i + 1) % count]
+		var vin: Vector2 = cur - prev
+		var vout: Vector2 = nxt - cur
+		var lin: float = vin.length()
+		var lout: float = vout.length()
+		if lin < 0.5 or lout < 0.5:
 			continue
-		var stub: Dictionary = item2
-		if not stub.has("delta"):
+		if lin < min_arm and lout < min_arm:
 			continue
-		var sd: Vector2 = stub["delta"] as Vector2
-		var axis: bool = absf(sd.x) < 0.75 or absf(sd.y) < 0.75
-		if axis and sd.length() < 8.0 and _stub_on_slant(stub, slants):
-			kept.append(stub)
+		vin = vin / lin
+		vout = vout / lout
+		var cross: float = vin.x * vout.y - vin.y * vout.x
+		if cross <= 0.08:
 			continue
-		kept.append(stub)
-	spans.clear()
-	for keep in kept:
-		spans.append(keep)
-
-
-static func _stub_on_slant(stub: Dictionary, slants: Array) -> bool:
-	var o: Vector2 = stub["origin"] as Vector2
-	var d: Vector2 = stub["delta"] as Vector2
-	var mid: Vector2 = o + d * 0.5
-	var lim: float = _BURN_REACH + 1.0
-	for item in slants:
-		var sl: Dictionary = item
-		var so: Vector2 = sl["origin"] as Vector2
-		var sd: Vector2 = sl["delta"] as Vector2
-		var slen: float = sd.length()
-		if slen < 0.001:
+		corners.append(i)
+	if corners.is_empty():
+		return pts
+	var want: int = int(round(frac * float(corners.size())))
+	if want < 1:
+		want = 1
+	if want > corners.size():
+		want = corners.size()
+	for i in want:
+		var j: int = i + (rng.randi() % (corners.size() - i))
+		var swap: int = corners[i]
+		corners[i] = corners[j]
+		corners[j] = swap
+	var picked: Dictionary = {}
+	for i2 in want:
+		var idx: int = int(corners[i2])
+		var prev_i: int = (idx + count - 1) % count
+		var next_i: int = (idx + 1) % count
+		if picked.has(prev_i) or picked.has(next_i):
 			continue
-		var ux: float = sd.x / slen
-		var uy: float = sd.y / slen
-		var rx: float = mid.x - so.x
-		var ry: float = mid.y - so.y
-		var along: float = rx * ux + ry * uy
-		if along < -1.0 or along > slen + 1.0:
+		picked[idx] = true
+	var out: Array[Vector2] = []
+	for i3 in count:
+		if not bool(picked.get(i3, false)):
+			out.append(pts[i3])
 			continue
-		var nx: float = -uy
-		var ny: float = ux
-		if sl.has("normal"):
-			var nrm: Vector2 = sl["normal"] as Vector2
-			if nrm.length_squared() > 0.0001:
-				nx = nrm.x
-				ny = nrm.y
-		var side: float = rx * nx + ry * ny
-		if absf(side) <= lim:
-			return true
-	return false
+		_fillet_at(out, pts, i3, per, kind, gw, gh)
+	if out.size() < 3:
+		return pts
+	return out
 
 
-static func _clear_stub(solid: PackedByteArray, sw: int, sh: int, stub: Dictionary) -> void:
-	var o: Vector2 = stub["origin"] as Vector2
-	var d: Vector2 = stub["delta"] as Vector2
-	var pad := 2.0
-	var min_x: int = int(floor(minf(o.x, o.x + d.x) - pad))
-	var max_x: int = int(ceil(maxf(o.x, o.x + d.x) + pad))
-	var min_y: int = int(floor(minf(o.y, o.y + d.y) - pad))
-	var max_y: int = int(ceil(maxf(o.y, o.y + d.y) + pad))
-	if min_x < 0:
-		min_x = 0
-	if min_y < 0:
-		min_y = 0
-	if max_x > sw:
-		max_x = sw
-	if max_y > sh:
-		max_y = sh
-	for fy in range(min_y, max_y):
-		var row: int = fy * sw
-		for fx in range(min_x, max_x):
-			solid[row + fx] = 0
-
-
-static func _band_run(grid: PackedByteArray, w: int, h: int, run: Dictionary) -> bool:
-	var axis: int = int(run["axis"])
-	if axis == 0:
-		var x0: int = int(run["x0"])
-		var x1: int = int(run["x1"])
-		var y: int = int(run["y"])
-		var dir: int = int(run["dir"])
-		return _tread_h(grid, w, h, x0 - 1, y, dir) and _tread_h(grid, w, h, x1 + 1, y, dir)
-	var xv: int = int(run["x"])
-	var y0: int = int(run["y0"])
-	var y1: int = int(run["y1"])
-	var dir_v: int = int(run["dir"])
-	return _tread_v(grid, w, h, xv, y0 - 1, dir_v) and _tread_v(grid, w, h, xv, y1 + 1, dir_v)
-
-
-static func _tread_h(grid: PackedByteArray, w: int, h: int, x: int, y: int, dir: int) -> bool:
-	return _h_edge(grid, w, h, x, y - 1, dir) or _h_edge(grid, w, h, x, y + 1, dir)
-
-
-static func _tread_v(grid: PackedByteArray, w: int, h: int, x: int, y: int, dir: int) -> bool:
-	return _v_edge(grid, w, h, x - 1, y, dir) or _v_edge(grid, w, h, x + 1, y, dir)
-
-
-static func _step_y(d: int) -> int:
-	if d == 1:
-		return 1
-	if d == 3:
-		return -1
-	return 0
-
-
-static func _skip_block(grid: PackedByteArray, gw: int, gh: int, x: int, y: int) -> bool:
-	var here: int = grid[y * gw + x]
-	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
-	for d in dirs:
-		var nx: int = x + d.x
-		var ny: int = y + d.y
-		var v: int = 0
-		if nx >= 0 and ny >= 0 and nx < gw and ny < gh:
-			v = grid[ny * gw + nx]
-		if v != here:
-			return false
-	return true
-
-
-static func _collect_edges(solid: PackedByteArray, sw: int, sh: int, grid: PackedByteArray, gw: int, gh: int, n: int) -> Dictionary:
-	var step: int = n
-	if step < 1:
-		step = 1
-	var vw: int = sw + 1
-	var vh: int = sh + 1
-	var head: PackedInt32Array = PackedInt32Array()
-	head.resize(vw * vh)
-	head.fill(-1)
-	var ex: PackedInt32Array = PackedInt32Array()
-	var ey: PackedInt32Array = PackedInt32Array()
-	var ed: PackedInt32Array = PackedInt32Array()
-	var link: PackedInt32Array = PackedInt32Array()
-	for cy in gh:
-		for cx in gw:
-			if _skip_block(grid, gw, gh, cx, cy):
-				continue
-			var x0: int = cx * step
-			var y0: int = cy * step
-			var x1: int = x0 + step
-			var y1: int = y0 + step
-			if x1 > sw:
-				x1 = sw
-			if y1 > sh:
-				y1 = sh
-			for y in range(y0, y1):
-				var row: int = y * sw
-				for x in range(x0, x1):
-					if solid[row + x] == 0:
-						continue
-					if x + 1 >= sw or solid[row + x + 1] == 0:
-						var e0: int = ex.size()
-						ex.append(x + 1)
-						ey.append(y)
-						ed.append(1)
-						link.append(head[(y * vw) + (x + 1)])
-						head[(y * vw) + (x + 1)] = e0
-					if x <= 0 or solid[row + x - 1] == 0:
-						var e1: int = ex.size()
-						ex.append(x)
-						ey.append(y + 1)
-						ed.append(3)
-						link.append(head[((y + 1) * vw) + x])
-						head[((y + 1) * vw) + x] = e1
-					if y + 1 >= sh or solid[(y + 1) * sw + x] == 0:
-						var e2: int = ex.size()
-						ex.append(x + 1)
-						ey.append(y + 1)
-						ed.append(2)
-						link.append(head[((y + 1) * vw) + (x + 1)])
-						head[((y + 1) * vw) + (x + 1)] = e2
-					if y <= 0 or solid[(y - 1) * sw + x] == 0:
-						var e3: int = ex.size()
-						ex.append(x)
-						ey.append(y)
-						ed.append(0)
-						link.append(head[(y * vw) + x])
-						head[(y * vw) + x] = e3
-	return {"vw": vw, "head": head, "ex": ex, "ey": ey, "ed": ed, "link": link}
-
-
-static func _pick_edge(head: PackedInt32Array, vw: int, ed: PackedInt32Array, link: PackedInt32Array, used: PackedByteArray, bx: int, by: int, in_d: int) -> int:
-	var key: int = by * vw + bx
-	if key < 0 or key >= head.size():
-		return -1
-	var e: int = head[key]
-	var best: int = -1
-	var best_sc: int = 99
-	var guard: int = 8
-	while e >= 0 and guard > 0:
-		guard -= 1
-		if used[e] == 0:
-			var sc: int = (ed[e] - in_d) & 3
-			if sc < best_sc:
-				best_sc = sc
-				best = e
-		e = link[e]
-	return best
-
-
-static func _fit_xy(xs: PackedInt32Array, ys: PackedInt32Array) -> Array:
-	var rd: PackedInt32Array = PackedInt32Array()
-	var rl: PackedInt32Array = PackedInt32Array()
-	var rx: PackedInt32Array = PackedInt32Array()
-	var ry: PackedInt32Array = PackedInt32Array()
-	var npts: int = xs.size()
-	if npts < 2:
-		return []
-	var closed: bool = xs[0] == xs[npts - 1] and ys[0] == ys[npts - 1]
-	var i: int = 0
-	var last: int = npts - 1
-	while i < last:
-		var dx: int = _sgn(xs[i + 1] - xs[i])
-		var dy: int = _sgn(ys[i + 1] - ys[i])
-		var dir: int = _dir4(dx, dy)
-		var j: int = i + 1
-		while j < last:
-			var dx2: int = _sgn(xs[j + 1] - xs[j])
-			var dy2: int = _sgn(ys[j + 1] - ys[j])
-			if _dir4(dx2, dy2) != dir:
-				break
-			j += 1
-		rd.append(dir)
-		rl.append(j - i)
-		rx.append(xs[i])
-		ry.append(ys[i])
-		i = j
-	if rd.is_empty():
-		return []
-	if closed and rd.size() >= 2 and rd[0] == rd[rd.size() - 1]:
-		rl[0] = rl[0] + rl[rl.size() - 1]
-		rx[0] = rx[rx.size() - 1]
-		ry[0] = ry[ry.size() - 1]
-		rd.resize(rd.size() - 1)
-		rl.resize(rl.size() - 1)
-		rx.resize(rx.size() - 1)
-		ry.resize(ry.size() - 1)
-	return _fit_runs(rd, rl, rx, ry)
-
-
-static func _sgn(v: int) -> int:
-	if v > 0:
-		return 1
-	if v < 0:
-		return -1
-	return 0
-
-
-static func _dir4(dx: int, dy: int) -> int:
-	if dx > 0:
-		return 0
-	if dy > 0:
-		return 1
-	if dx < 0:
-		return 2
-	return 3
-
-
-static func _fit_runs(rd: PackedInt32Array, rl: PackedInt32Array, rx: PackedInt32Array, ry: PackedInt32Array) -> Array:
-	var spans: Array = []
-	var count: int = rd.size()
-	var i: int = 0
-	while i < count:
-		var counts: PackedInt32Array = PackedInt32Array([0, 0, 0, 0])
-		counts[rd[i]] = 1
-		var idxs := PackedInt32Array()
-		idxs.append(i)
+static func _sort_xs(xs: PackedFloat32Array) -> void:
+	for i in range(1, xs.size()):
+		var v: float = xs[i]
 		var j: int = i
-		while j + 1 < count and _quadrant_ok(counts, rd[j + 1]):
-			j += 1
-			idxs.append(j)
-			counts[rd[j]] = counts[rd[j]] + 1
-		_fit_idxs(spans, rd, rl, rx, ry, idxs)
-		i = j + 1
-	return spans
+		while j > 0 and xs[j - 1] > v:
+			xs[j] = xs[j - 1]
+			j -= 1
+		xs[j] = v
 
 
-static func _fit_idxs(spans: Array, rd: PackedInt32Array, rl: PackedInt32Array, rx: PackedInt32Array, ry: PackedInt32Array, idxs: PackedInt32Array) -> void:
-	var stack: Array = [idxs]
-	var guard := 0
-	while not stack.is_empty() and guard < 8000:
-		guard += 1
-		var cur: PackedInt32Array = stack[stack.size() - 1] as PackedInt32Array
-		stack.remove_at(stack.size() - 1)
-		if cur.is_empty():
-			continue
-		if cur.size() == 1 or _one_dir(rd, cur):
-			_emit_runs(spans, rd, rl, rx, ry, cur)
-			continue
-		var sx: float = float(rx[cur[0]])
-		var sy: float = float(ry[cur[0]])
-		var last: int = cur[cur.size() - 1]
-		var ex: float = float(_end_x(rx, rd, rl, last))
-		var ey: float = float(_end_y(ry, rd, rl, last))
-		var far := 0.0
-		var far_i := 1
-		for t in range(1, cur.size()):
-			var dist: float = _chord_dist(float(rx[cur[t]]), float(ry[cur[t]]), sx, sy, ex, ey)
-			if dist > far:
-				far = dist
-				far_i = t
-		var slant_chord: bool = absf(ex - sx) >= 1.0 and absf(ey - sy) >= 1.0
-		if far <= _STAIR_TOL:
-			if slant_chord or _real_slant(rd, rl, cur):
-				_push_rec(spans, sx, sy, ex, ey)
-			else:
-				_emit_runs(spans, rd, rl, rx, ry, cur)
-			continue
-		if slant_chord and _stair_band(rd, cur):
-			_push_rec(spans, sx, sy, ex, ey)
-			continue
-		if far_i < 1:
-			far_i = 1
-		if far_i >= cur.size():
-			far_i = cur.size() - 1
-		var left := PackedInt32Array()
-		var right := PackedInt32Array()
-		for t in far_i:
-			left.append(cur[t])
-		for t2 in range(far_i, cur.size()):
-			right.append(cur[t2])
-		if left.is_empty() or right.is_empty():
-			_emit_runs(spans, rd, rl, rx, ry, cur)
-			continue
-		stack.append(right)
-		stack.append(left)
-
-
-static func _one_dir(rd: PackedInt32Array, cur: PackedInt32Array) -> bool:
-	var d0: int = rd[cur[0]]
-	for t in range(1, cur.size()):
-		if rd[cur[t]] != d0:
-			return false
-	return true
-
-
-static func _stair_band(rd: PackedInt32Array, cur: PackedInt32Array) -> bool:
-	var h_n := 0
-	var v_n := 0
-	for k in cur:
-		var dir: int = rd[k]
-		if dir == 0 or dir == 2:
-			h_n += 1
-		else:
-			v_n += 1
-	return h_n >= 2 and v_n >= 2
-
-
-static func _real_slant(rd: PackedInt32Array, rl: PackedInt32Array, cur: PackedInt32Array) -> bool:
-	var horiz := 0
-	var vert := 0
-	var h_n := 0
-	var v_n := 0
-	for k in cur:
-		var dir: int = rd[k]
-		if dir == 0 or dir == 2:
-			horiz += rl[k]
-			h_n += 1
-		else:
-			vert += rl[k]
-			v_n += 1
-	if horiz == 0 or vert == 0:
-		return false
-	var minor_n: int = h_n if horiz <= vert else v_n
-	var minor_l: int = horiz if horiz <= vert else vert
-	return minor_n >= 2 or minor_l >= 4
-
-
-static func _emit_runs(spans: Array, rd: PackedInt32Array, rl: PackedInt32Array, rx: PackedInt32Array, ry: PackedInt32Array, cur: PackedInt32Array) -> void:
-	for k in cur:
-		var ex: float = float(_end_x(rx, rd, rl, k))
-		var ey: float = float(_end_y(ry, rd, rl, k))
-		_push_rec(spans, float(rx[k]), float(ry[k]), ex, ey)
-
-
-static func _end_x(rx: PackedInt32Array, rd: PackedInt32Array, rl: PackedInt32Array, j: int) -> int:
-	return rx[j] + _step_x(rd[j]) * rl[j]
-
-
-static func _end_y(ry: PackedInt32Array, rd: PackedInt32Array, rl: PackedInt32Array, j: int) -> int:
-	return ry[j] + _step_y(rd[j]) * rl[j]
-
-
-static func _quadrant_ok(counts: PackedInt32Array, nd: int) -> bool:
-	if nd == 0 and counts[2] > 0:
-		return false
-	if nd == 2 and counts[0] > 0:
-		return false
-	if nd == 1 and counts[3] > 0:
-		return false
-	if nd == 3 and counts[1] > 0:
-		return false
-	return true
-
-
-static func _chord_dist(px: float, py: float, sx: float, sy: float, ex: float, ey: float) -> float:
-	var vx: float = ex - sx
-	var vy: float = ey - sy
-	var span_l: float = sqrt(vx * vx + vy * vy)
-	if span_l < 0.001:
-		return 0.0
-	return absf(vx * (py - sy) - vy * (px - sx)) / span_l
-
-
-static func _push_rec(spans: Array, sx: float, sy: float, ex: float, ey: float) -> void:
-	var delta := Vector2(ex - sx, ey - sy)
-	if delta.length_squared() < 0.25:
+static func _fill(solid: PackedByteArray, sw: int, sh: int, poly: PackedVector2Array, value: int) -> void:
+	var count: int = poly.size()
+	if count < 3 or sw < 1 or sh < 1:
 		return
-	var nrm: Vector2 = Vector2(-delta.y, delta.x)
-	if nrm.length_squared() > 0.0001:
-		nrm = nrm.normalized()
-	spans.append({
-		"origin": Vector2(sx, sy),
-		"delta": delta,
-		"normal": nrm,
-		"thick": 1.0,
-	})
+	var y_min: int = sh
+	var y_max: int = -1
+	for i in count:
+		var iy: int = int(floor(poly[i].y))
+		if iy < y_min:
+			y_min = iy
+		if iy > y_max:
+			y_max = iy
+	if y_min < 0:
+		y_min = 0
+	if y_max >= sh:
+		y_max = sh - 1
+	if y_max < y_min:
+		return
+	for y in range(y_min, y_max + 1):
+		var scan: float = float(y) + 0.5
+		var xs: PackedFloat32Array = PackedFloat32Array()
+		for e in count:
+			var a: Vector2 = poly[e]
+			var b: Vector2 = poly[(e + 1) % count]
+			var lo: float = a.y if a.y < b.y else b.y
+			var hi: float = b.y if b.y > a.y else a.y
+			if scan < lo or scan >= hi:
+				continue
+			var t: float = (scan - a.y) / (b.y - a.y)
+			xs.append(a.x + (b.x - a.x) * t)
+		if xs.size() < 2:
+			continue
+		_sort_xs(xs)
+		var k: int = 0
+		var row: int = y * sw
+		while k + 1 < xs.size():
+			var left: float = xs[k]
+			var right: float = xs[k + 1]
+			var x_from: int = int(ceil(left - 0.5))
+			var x_to: int = int(floor(right - 0.5))
+			if x_from < 0:
+				x_from = 0
+			if x_to >= sw:
+				x_to = sw - 1
+			for x in range(x_from, x_to + 1):
+				solid[row + x] = value
+			k += 2
 
 
-static func _merge_stair_chain(spans: Array, closed: bool) -> Array:
-	if spans.size() < 2:
-		return spans
-	var merged: Array = [spans[0]]
-	for idx in range(1, spans.size()):
-		var prev: Dictionary = merged[merged.size() - 1]
-		var nxt: Dictionary = spans[idx]
-		if _can_stair_merge(prev, nxt):
-			merged[merged.size() - 1] = _combine_span(prev, nxt)
-		else:
-			merged.append(nxt)
-	if closed and merged.size() >= 2 and _can_stair_merge(merged[merged.size() - 1], merged[0]):
-		var combined: Dictionary = _combine_span(merged[merged.size() - 1], merged[0])
-		var rest: Array = [combined]
-		for k in range(1, merged.size() - 1):
-			rest.append(merged[k])
-		return rest
-	return merged
+static func _push_loop(spans: Array, poly: PackedVector2Array) -> void:
+	var count: int = poly.size()
+	if count < 2 or _area(poly) <= 1.0:
+		return
+	for i in count:
+		var a: Vector2 = poly[i]
+		var b: Vector2 = poly[(i + 1) % count]
+		var delta: Vector2 = b - a
+		if delta.length_squared() < 0.25:
+			continue
+		var nrm: Vector2 = Vector2(-delta.y, delta.x)
+		if nrm.length_squared() > 0.0001:
+			nrm = nrm.normalized()
+		spans.append({"origin": a, "delta": delta, "normal": nrm, "thick": 1.0})
 
 
-static func _can_stair_merge(a: Dictionary, b: Dictionary) -> bool:
-	var ao: Vector2 = a["origin"] as Vector2
-	var ad: Vector2 = a["delta"] as Vector2
-	var bo: Vector2 = b["origin"] as Vector2
-	var bd: Vector2 = b["delta"] as Vector2
-	var end: Vector2 = ao + ad
-	if end.distance_to(bo) > 0.5:
-		return false
-	var end_b: Vector2 = bo + bd
-	var comb: Vector2 = end_b - ao
-	if absf(comb.x) < 1.0 or absf(comb.y) < 1.0:
-		return _can_fold(a, b)
-	var bow: float = _chord_dist(bo.x, bo.y, ao.x, ao.y, end_b.x, end_b.y)
-	return bow <= _STAIR_TOL
+static func _paint(solid: PackedByteArray, sw: int, sh: int, run: Dictionary) -> void:
+	var o: Vector2 = run["origin"]
+	var d: Vector2 = run["delta"]
+	var span_l: float = d.length()
+	if span_l < 0.5 or sw < 1 or sh < 1:
+		return
+	var steps: int = maxi(1, int(span_l))
+	for si in range(steps + 1):
+		var t: float = float(si) / float(steps)
+		var p: Vector2 = o + d * t
+		var fx: int = clampi(int(floor(p.x)), 0, sw - 1)
+		var fy: int = clampi(int(floor(p.y)), 0, sh - 1)
+		solid[fy * sw + fx] = 1
 
 
-static func _fold_spans(spans: Array, closed: bool) -> Array:
-	if spans.size() < 2:
-		return spans
-	var merged: Array = [spans[0]]
-	for idx in range(1, spans.size()):
-		var prev: Dictionary = merged[merged.size() - 1]
-		var nxt: Dictionary = spans[idx]
-		if _can_fold(prev, nxt):
-			merged[merged.size() - 1] = _combine_span(prev, nxt)
-		else:
-			merged.append(nxt)
-	if closed and merged.size() >= 2 and _can_fold(merged[merged.size() - 1], merged[0]):
-		var combined: Dictionary = _combine_span(merged[merged.size() - 1], merged[0])
-		var rest: Array = [combined]
-		for k in range(1, merged.size() - 1):
-			rest.append(merged[k])
-		return rest
-	return merged
-
-
-static func _can_fold(a: Dictionary, b: Dictionary) -> bool:
-	var ao: Vector2 = a["origin"]
-	var ad: Vector2 = a["delta"]
-	var bo: Vector2 = b["origin"]
-	var bd: Vector2 = b["delta"]
-	var end: Vector2 = ao + ad
-	if end.distance_to(bo) > 0.5:
-		return false
-	var al: float = ad.length()
-	var bl: float = bd.length()
-	if al < 0.1 or bl < 0.1:
-		return false
-	var end_b: Vector2 = bo + bd
-	var bow: float = _chord_dist(bo.x, bo.y, ao.x, ao.y, end_b.x, end_b.y)
-	if bow > _STAIR_TOL:
-		return false
-	var comb: Vector2 = end_b - ao
-	if absf(comb.x) >= 1.0 and absf(comb.y) >= 1.0:
-		return true
-	return ad.dot(bd) / (al * bl) > 0.985
-
-
-static func _combine_span(a: Dictionary, b: Dictionary) -> Dictionary:
-	var ao: Vector2 = a["origin"]
-	var bo: Vector2 = b["origin"]
-	var bd: Vector2 = b["delta"]
-	var end: Vector2 = bo + bd
-	var delta: Vector2 = end - ao
-	var nrm: Vector2 = Vector2(-delta.y, delta.x)
-	if nrm.length_squared() > 0.0001:
-		nrm = nrm.normalized()
-	return {
-		"origin": ao,
-		"delta": delta,
-		"normal": nrm,
-		"thick": 1.0,
-	}
-
-
-static func _void_gap(solid: PackedByteArray, sw: int, sh: int, fx: int, fy: int, dx: int, dy: int) -> int:
-	var gap := 0
-	var x: int = fx + dx
-	var y: int = fy + dy
-	while x >= 0 and y >= 0 and x < sw and y < sh and gap < 3:
-		if solid[y * sw + x] != 0:
-			return gap
-		gap += 1
-		x += dx
-		y += dy
-	return 99
+static func _keep_rooms(solid: PackedByteArray, sw: int, sh: int, rooms: Array, per: int) -> void:
+	if per < 1 or sw < 1 or sh < 1:
+		return
+	for room_v in rooms:
+		var room: Dictionary = room_v
+		var cx: int = int(room["x"]) + int(int(room["w"]) / 2.0)
+		var cy: int = int(room["y"]) + int(int(room["h"]) / 2.0)
+		var fx: int = cx * per + int(float(per) / 2.0)
+		var fy: int = cy * per + int(float(per) / 2.0)
+		if fx < 0 or fy < 0 or fx >= sw or fy >= sh:
+			continue
+		solid[fy * sw + fx] = 1

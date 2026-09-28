@@ -55,6 +55,7 @@ static func generate(floor_n: int, run_seed: int, bal: Object) -> Dictionary:
 
 
 static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin: int, rmax: int, loops: int, bal: Object) -> Dictionary:
+	Carve.begin_halls()
 	var grid: PackedByteArray = PackedByteArray()
 	grid.resize(w * h)
 	grid.fill(WALL)
@@ -100,6 +101,7 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 		"deadends": deadends,
 		"bases": Rooms.kind_centers(rooms, "base"),
 		"safe": Rooms.kind_centers(rooms, "extract_gate") + Rooms.kind_centers(rooms, "shop") + Rooms.kind_centers(rooms, "puzzle") + Rooms.kind_centers(rooms, "stash") + Rooms.kind_centers(rooms, "vein"),
+		"halls": Carve.take_halls(),
 	}
 
 
@@ -153,6 +155,7 @@ static func _fallback(floor_n: int, w: int, h: int, bal: Object) -> Dictionary:
 	]
 	for r: Variant in rooms:
 		Carve.carve_room(grid, w, h, r)
+	Carve.begin_halls()
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	Carve.carve_winding(rng, grid, w, h, Carve.center(rooms[0]), Carve.center(rooms[1]))
 	Carve.carve_winding(rng, grid, w, h, Carve.center(rooms[0]), Carve.center(rooms[2]))
@@ -182,6 +185,7 @@ static func _fallback(floor_n: int, w: int, h: int, bal: Object) -> Dictionary:
 		"deadends": [],
 		"bases": [Carve.center(rooms[1])],
 		"safe": [Carve.center(rooms[2])],
+		"halls": Carve.take_halls(),
 		"floor": floor_n,
 		"cycle": cycle_of(floor_n),
 		"boss_title": boss_title(floor_n),
