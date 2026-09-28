@@ -74,6 +74,9 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 		if _area(rim) > 1.0:
 			_push_clipped(spans, rim, li3, loops, boxes, solid, sw, sh)
 		li3 += 1
+	_join_ends(spans, solid, sw, sh)
+	_fill_missing_rim(spans, loops, solid, sw, sh)
+	_seal_holes(spans, solid, sw, sh)
 	for item in spans:
 		if item is Dictionary:
 			_paint(solid, sw, sh, item)
@@ -685,7 +688,7 @@ static func _join_ends(spans: Array, solid: PackedByteArray, sw: int, sh: int) -
 			continue
 		var a: Dictionary = ends[a_i]
 		var best_j: int = -1
-		var best_l: float = 4.0
+		var best_l: float = 6.0
 		for b_i in ends.size():
 			if a_i == b_i or bool(taken.get(b_i, false)):
 				continue
@@ -823,21 +826,129 @@ static func _loops_near(a: Vector2, b: Vector2, skip_i: int) -> PackedInt32Array
 	return out
 
 
+static func _seal_holes(spans: Array, solid: PackedByteArray, sw: int, sh: int) -> void:
+	if sw < 2 or sh < 2 or solid.size() != sw * sh:
+		return
+	var cover: PackedByteArray = PackedByteArray()
+	cover.resize(sw * sh)
+	cover.fill(0)
+	var si: int = 0
+	while si < spans.size():
+		var raw: Variant = spans[si]
+		si += 1
+		if not (raw is Dictionary):
+			continue
+		var run: Dictionary = raw
+		var o: Vector2 = run["origin"]
+		var d: Vector2 = run["delta"]
+		var slen: float = d.length()
+		if slen < 0.25:
+			continue
+		var steps: int = maxi(1, int(ceil(slen * 2.0)))
+		var ti: int = 0
+		while ti <= steps:
+			var p: Vector2 = o + d * (float(ti) / float(steps))
+			var cx: int = int(floor(p.x))
+			var cy: int = int(floor(p.y))
+			var oy: int = cy - 2
+			while oy <= cy + 2:
+				if oy >= 0 and oy < sh:
+					var ox: int = cx - 2
+					while ox <= cx + 2:
+						if ox >= 0 and ox < sw:
+							cover[oy * sw + ox] = 1
+						ox += 1
+				oy += 1
+			ti += 1
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	var y: int = 0
+	while y < sh:
+		var row: int = y * sw
+		var x: int = 0
+		while x < sw:
+			if solid[row + x] != 0 and cover[row + x] == 0:
+				for d2: Vector2i in dirs:
+					var nx: int = x + d2.x
+					var ny: int = y + d2.y
+					var is_void: bool = nx < 0 or ny < 0 or nx >= sw or ny >= sh or solid[ny * sw + nx] == 0
+					if not is_void:
+						continue
+					var along: Vector2 = Vector2(float(-d2.y), float(d2.x))
+					var mid: Vector2 = Vector2(float(x) + 0.5 + float(d2.x) * 0.5, float(y) + 0.5 + float(d2.y) * 0.5)
+					var nrm: Vector2 = Vector2(float(-d2.x), float(-d2.y))
+					spans.append({"origin": mid - along * 0.5, "delta": along, "normal": nrm, "thick": 1.0})
+					cover[row + x] = 1
+					break
+			x += 1
+		y += 1
+
+
+static func _span_near(spans: Array, p: Vector2) -> bool:
+	var i: int = 0
+	while i < spans.size():
+		var raw: Variant = spans[i]
+		i += 1
+		if not (raw is Dictionary):
+			continue
+		var run: Dictionary = raw
+		var o: Vector2 = run["origin"]
+		var d: Vector2 = run["delta"]
+		var slen2: float = d.length_squared()
+		if slen2 < 0.0001:
+			continue
+		var t: float = clampf((p - o).dot(d) / slen2, 0.0, 1.0)
+		if p.distance_to(o + d * t) <= 1.0:
+			return true
+	return false
+
+
+static func _fill_missing_rim(spans: Array, loops: Array, solid: PackedByteArray, sw: int, sh: int) -> void:
+	var li: int = 0
+	while li < loops.size():
+		var poly: PackedVector2Array = loops[li]
+		li += 1
+		if _area(poly) < 0.0:
+			poly.reverse()
+		if _area(poly) <= 1.0:
+			continue
+		var n: int = poly.size()
+		var ei: int = 0
+		while ei < n:
+			var a: Vector2 = poly[ei]
+			var b: Vector2 = poly[(ei + 1) % n]
+			ei += 1
+			var delta: Vector2 = b - a
+			var span_l: float = delta.length()
+			if span_l < 0.25:
+				continue
+			var nrm: Vector2 = Vector2(-delta.y, delta.x) / span_l
+			var u: float = 0.0
+			while u < 0.999:
+				var u1: float = minf(1.0, u + 0.2)
+				var p: Vector2 = a + delta * ((u + u1) * 0.5)
+				if _rim_faces_void(solid, sw, sh, p, nrm) and not _span_near(spans, p):
+					_emit_frag(spans, a, delta, nrm, u, u1)
+				u = u1
+
+
 static func _rim_faces_void(solid: PackedByteArray, sw: int, sh: int, mid: Vector2, nrm: Vector2) -> bool:
-    var off: float = 0.4
-    while off <= 1.25:
-        var out_p: Vector2 = mid - nrm * off
-        var in_p: Vector2 = mid + nrm * off
-        var ox: int = int(floor(out_p.x))
-        var oy: int = int(floor(out_p.y))
-        var ix: int = int(floor(in_p.x))
-        var iy: int = int(floor(in_p.y))
-        if ox != ix or oy != iy:
-            var void_out: bool = ox < 0 or oy < 0 or ox >= sw or oy >= sh or solid[oy * sw + ox] == 0
-            var solid_in: bool = ix >= 0 and iy >= 0 and ix < sw and iy < sh and solid[iy * sw + ix] != 0
-            return void_out and solid_in
-        off += 0.2
-    return false
+	var off: float = 0.4
+	while off <= 2.5:
+		var out_p: Vector2 = mid - nrm * off
+		var in_p: Vector2 = mid + nrm * off
+		var ox: int = int(floor(out_p.x))
+		var oy: int = int(floor(out_p.y))
+		var ix: int = int(floor(in_p.x))
+		var iy: int = int(floor(in_p.y))
+		if ox != ix or oy != iy:
+			var void_out: bool = ox < 0 or oy < 0 or ox >= sw or oy >= sh or solid[oy * sw + ox] == 0
+			var solid_in: bool = ix >= 0 and iy >= 0 and ix < sw and iy < sh and solid[iy * sw + ix] != 0
+			if void_out and solid_in:
+				return true
+			if not void_out:
+				return false
+		off += 0.2
+	return false
 
 
 static func _push_clipped(

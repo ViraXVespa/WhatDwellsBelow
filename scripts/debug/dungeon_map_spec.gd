@@ -112,9 +112,34 @@ static func _emit_spec(lines: Array[String], host: Node, data: Dictionary, objs:
 		for si: int in range(steps + 1):
 			var t: float = float(si) / float(steps)
 			var p: Vector2 = o + d * t
-			var fx: int = clampi(int(floor(p.x)), 0, maxi(0, sw - 1))
-			var fy: int = clampi(int(floor(p.y)), 0, maxi(0, sh - 1))
-			if solid.size() == sw * sh and sw > 0 and solid[fy * sw + fx] != 0:
+			var nrm: Vector2 = Vector2(sp.get("normal", Vector2.ZERO))
+			if nrm.length_squared() < 0.0001:
+				nrm = Vector2(-d.y, d.x)
+			if nrm.length_squared() > 0.0001:
+				nrm = nrm.normalized()
+			var hit_now: bool = false
+			var step_i: int = 0
+			while step_i < 3 and not hit_now:
+				var q: Vector2 = p + nrm * (0.5 + float(step_i) * 0.5)
+				var qx: int = int(floor(q.x))
+				var qy: int = int(floor(q.y))
+				var ni: int = 0
+				while ni < 5 and not hit_now:
+					var ax: int = qx
+					var ay: int = qy
+					if ni == 1:
+						ax = qx + 1
+					elif ni == 2:
+						ax = qx - 1
+					elif ni == 3:
+						ay = qy + 1
+					elif ni == 4:
+						ay = qy - 1
+					if ax >= 0 and ay >= 0 and ax < sw and ay < sh and solid.size() == sw * sh and solid[ay * sw + ax] != 0:
+						hit_now = true
+					ni += 1
+				step_i += 1
+			if hit_now:
 				span_hits += 1
 			else:
 				span_miss += 1
@@ -178,10 +203,10 @@ static func rim_report(data: Dictionary) -> Dictionary:
 			var p: Vector2 = o + d * t
 			var cx: int = int(floor(p.x))
 			var cy: int = int(floor(p.y))
-			for oy: int in range(cy - 1, cy + 2):
+			for oy: int in range(cy - 2, cy + 3):
 				if oy < 0 or oy >= sh:
 					continue
-				for ox: int in range(cx - 1, cx + 2):
+				for ox: int in range(cx - 2, cx + 3):
 					if ox < 0 or ox >= sw:
 						continue
 					cover[oy * sw + ox] = 1

@@ -47,8 +47,8 @@ static func place(host: Node, r: Dictionary) -> void:
 	var mid: Vector2i = north_mid(host, r)
 	if mid.x < 0:
 		mid = host._free_cell(r)
-		if mid.x < 0:
-			return
+	if mid.x < 0:
+		mid = host._center_room(r)
 	var pos: Vector3 = host._cell_pos(mid)
 	pos.z += 0.55
 	var g := SpotS.new()

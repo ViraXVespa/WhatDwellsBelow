@@ -65,7 +65,7 @@ static func tick(host: Node, delta: float) -> void:
 		Queue.queue_initial(host, pool)
 		Queue.queue_ambushes(host, pool)
 		var SpawnS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
-		if host.prop_jobs.is_empty() and not bool(host.get_meta("props_scattered", false)):
+		if host.prop_jobs.is_empty() and not bool(host.get_meta("props_booted", false)) and not bool(host.get_meta("props_scattered", false)):
 			SpawnS.spawn_world(host)
 	var pc: Vector2i = host._player_cell()
 	var budget: int = SPAWN_BOOT if delta >= 0.9 else SPAWN_PER_TICK
@@ -95,7 +95,7 @@ static func force_all(host: Node) -> void:
 		var pool: PackedStringArray = Roster.floor_types(App.floor_n)
 		Queue.queue_initial(host, pool)
 		Queue.queue_ambushes(host, pool)
-	if host.prop_jobs.is_empty() and not bool(host.get_meta("props_scattered", false)):
+	if host.prop_jobs.is_empty() and not bool(host.get_meta("props_booted", false)) and not bool(host.get_meta("props_scattered", false)):
 		var SpawnS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
 		SpawnS.spawn_world(host)
 	for job in host.spawn_jobs:

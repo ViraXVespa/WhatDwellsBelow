@@ -85,10 +85,7 @@ static func spawn_world(host: Node) -> void:
 			if kind == "vein" or kind == "shop":
 				continue
 		if kind == "extract_gate":
-			if eager:
-				_gate().place(host, r)
-			else:
-				_queue(host, "extract_gate", host._center_room(r), r)
+			_gate().place(host, r)
 		elif kind == "shop":
 			var sc: Vector2i = host._free_cell(r)
 			if not host._cell_clear(sc, 1):
@@ -143,6 +140,7 @@ static func spawn_world(host: Node) -> void:
 				host.add_child(q)
 			else:
 				_queue(host, "quest_item", qc)
+	host.set_meta("props_booted", true)
 
 
 static func _queue_scatter(host: Node) -> void:

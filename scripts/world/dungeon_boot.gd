@@ -139,12 +139,9 @@ static func spawns(host: Node) -> void:
 	var boss_job: Dictionary = DungeonStream.new_job(host, "boss", bp, {}, PackedStringArray(), false, str(host.data.boss_title))
 	host.spawn_jobs.append(boss_job)
 	LoadTiming.dmark("spawn_boss")
-	if Smoke.phase(5):
-		var SpawnS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
-		SpawnS.spawn_world(host)
-		host.set_meta("props_booted", true)
-	else:
-		LoadTiming.dnote("spawn_props", "deferred")
+	var SpawnS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
+	SpawnS.spawn_world(host)
+	host.set_meta("props_booted", true)
 	LoadTiming.dmark("spawn_props")
 	LoadTiming.dnote("spawn_ambushes", "deferred")
 	LoadTiming.dmark("spawn_ambushes")
