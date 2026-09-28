@@ -111,6 +111,9 @@ static func _note(host: Node, delta: float) -> void:
 		worst_ms = dt_ms
 	hitch_n += 1
 	_write_row(_hitch_row(host, dt_ms))
+	why = ""
+	gx = 0
+	gy = 0
 	if hitch_n > CAP:
 		_close()
 		_trim_file()

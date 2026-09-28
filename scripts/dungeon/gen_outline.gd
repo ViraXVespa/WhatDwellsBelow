@@ -67,7 +67,7 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 		if _area(rim) < 0.0:
 			rim.reverse()
 		if _area(rim) > 1.0:
-			_push_clipped(spans, rim, loops, solid, sw, sh)
+			_push_clipped(spans, rim, loops, boxes, solid, sw, sh)
 	for item in spans:
 		if item is Dictionary:
 			_paint(solid, sw, sh, item)
@@ -687,17 +687,31 @@ static func _emit_frag(spans: Array, a: Vector2, delta: Vector2, nrm: Vector2, t
 	spans.append({"origin": o, "delta": d, "normal": nrm, "thick": 1.0})
 
 
-static func _hit_other(p: Vector2, loops: Array, skip: PackedVector2Array) -> bool:
-	for loop_v in loops:
-		var other: PackedVector2Array = loop_v
-		if other == skip:
-			continue
-		if Geometry2D.is_point_in_polygon(p, other):
-			return true
+static func _hit_other(p: Vector2, loops: Array, boxes: Array, skip: PackedVector2Array) -> bool:
+	var i: int = 0
+	while i < loops.size():
+		var other: PackedVector2Array = loops[i]
+		if other != skip:
+			var inside_box: bool = true
+			if i < boxes.size():
+				var box: Rect2 = boxes[i]
+				if p.x < box.position.x or p.y < box.position.y or p.x > box.end.x or p.y > box.end.y:
+					inside_box = false
+			if inside_box and Geometry2D.is_point_in_polygon(p, other):
+				return true
+		i += 1
 	return false
 
 
-static func _push_clipped(spans: Array, poly: PackedVector2Array, loops: Array, _solid: PackedByteArray, sw: int, sh: int) -> void:
+static func _push_clipped(
+	spans: Array,
+	poly: PackedVector2Array,
+	loops: Array,
+	boxes: Array,
+	_solid: PackedByteArray,
+	sw: int,
+	sh: int
+) -> void:
 	var count: int = poly.size()
 	if count < 2 or _area(poly) <= 1.0 or sw < 1 or sh < 1:
 		return
@@ -716,9 +730,15 @@ static func _push_clipped(spans: Array, poly: PackedVector2Array, loops: Array, 
 		var ts: PackedFloat32Array = PackedFloat32Array()
 		ts.append(0.0)
 		ts.append(1.0)
-		for loop_v in loops:
-			var other: PackedVector2Array = loop_v
+		var edge: Rect2 = Rect2(a, Vector2.ZERO).expand(b).grow(0.05)
+		var li: int = 0
+		while li < loops.size():
+			var other: PackedVector2Array = loops[li]
+			var box_i: int = li
+			li += 1
 			if other == poly:
+				continue
+			if box_i < boxes.size() and not (boxes[box_i] as Rect2).intersects(edge):
 				continue
 			var oc: int = other.size()
 			for j in oc:
@@ -737,7 +757,7 @@ static func _push_clipped(spans: Array, poly: PackedVector2Array, loops: Array, 
 				continue
 			var mid: Vector2 = a + delta * ((t0 + t1) * 0.5)
 			var out_p: Vector2 = mid - nrm * 0.4
-			var void_out: bool = not _hit_other(out_p, loops, poly)
+			var void_out: bool = not _hit_other(out_p, loops, boxes, poly)
 			var in_p: Vector2 = mid + nrm * 0.4
 			var solid_in: bool = Geometry2D.is_point_in_polygon(in_p, poly)
 			if void_out and solid_in:
@@ -865,6 +885,17 @@ static func _paint(solid: PackedByteArray, sw: int, sh: int, run: Dictionary) ->
 		if (center - p).dot(nrm) < 0.0:
 			continue
 		solid[iy * sw + ix] = 1
+
+
+static func _loop_box(poly: PackedVector2Array) -> Rect2:
+	if poly.is_empty():
+		return Rect2()
+	var box: Rect2 = Rect2(poly[0], Vector2.ZERO)
+	var i: int = 1
+	while i < poly.size():
+		box = box.expand(poly[i])
+		i += 1
+	return box.grow(0.05)
 
 
 static func _keep_rooms(solid: PackedByteArray, sw: int, sh: int, rooms: Array, per: int) -> void:
