@@ -9,7 +9,7 @@ A **job** is one cycle: gather once, then change once, then prove once. Pause an
 
 Gather is planned `list_xref` plus planned `show_func` plus one `list_code_map_row` when a live script is in the slice. `summarize_scripts` is not gather. `list_route` and `list_changed` stay outside the gather set (`list_route` is slice boot; `list_changed` is git inventory).
 
-Name a **planned gather list** (distinct xref patterns and show-func names) before the first catalog call. Those planned calls are one gather phase. A gather call invented after a prove summary, or the same command with the same args again, or a show-func not on the list, is a second job.
+Name a **planned gather list** (distinct xref patterns and show-func names) before the first catalog call. Those planned calls are one gather phase. A gather call invented after a prove summary, or the same command with the same args again, or a show-func not on the list, is a second job. Xref hits do not add `show_func` names in this job.
 
 Change is one slice in a Grok worktree that merges into the live checkout. Prove is one import check (`tools/run_build_gate.ps1`), or one listed smoke set, or both **once**. Do not import, then smoke, then import. Do not pass `-ScriptCap` unless the User named a size job. A cap red is Bot work, not this slice.
 

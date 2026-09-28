@@ -24,7 +24,7 @@ Jobs after the reuse PR, one session each, forked from this door:
 
 1. ground — shared shader, world-xz hash variants, RT sample (white until buffer)
 2. volume — exposed greedy wall faces, world-UV, wall samples RT
-3. buffer — 1 texel per tile on the stream ring, occupancy, sources
+3. buffer — four-texel radiance buffer, disc blobs, fine occupancy
 4. actor — RT tint at feet, two-foot-pinned squash (player current frame, others still; sun on hub, up to three local sources in dungeon)
 
 Env fog and void ride the kit, not a fifth owner.
@@ -34,5 +34,5 @@ Env fog and void ride the kit, not a fifth owner.
 | hearth-warm hole-cold Environment, abyss-plinth, caller redirect | `design/graphics-env.md` |
 | hashed field albedo, shared spatial shader, turf quilts, carved planes | `design/graphics-ground.md` |
 | exposed coplanar brick runs, BoxMesh retirement, BoxShape on welded mass, provided ribbon | `design/graphics-volume.md` |
-| one-texel radiance buffer, disc blobs, tile occupancy | `design/graphics-buffer.md` |
+| four-texel radiance buffer, disc blobs, fine occupancy | `design/graphics-buffer.md` |
 | billboard-alpha squash quads, player yard-mannequin foes, source-offset | `design/graphics-actor.md` |

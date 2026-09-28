@@ -1,6 +1,6 @@
 extends Object
 
-## One texel per tile. Origin and span are what the floor and wall shaders already sample.
+## Origin and span are what the floor and wall shaders already sample. The RT is SUB 4 texels per tile.
 
 const T := preload("res://scripts/data/tunables.gd")
 const Stamp := preload("res://scripts/graphics/light_stamp.gd")

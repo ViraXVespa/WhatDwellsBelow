@@ -247,7 +247,7 @@ job_read_when:
   graphics.env: "hearth-warm hole-cold Environment, abyss-plinth, caller redirect"
   graphics.ground: "hashed field albedo, shared spatial shader, turf quilts, carved planes"
   graphics.volume: "exposed coplanar brick runs, BoxMesh retirement, BoxShape on welded mass, provided ribbon"
-  graphics.buffer: "one-texel radiance buffer, disc blobs, tile occupancy"
+  graphics.buffer: "four-texel radiance buffer, disc blobs, fine occupancy"
   graphics.actor: "billboard-alpha squash quads, player yard-mannequin foes, source-offset"
   save_tech.persist: "primary backup wipe, game_ver stamp, isolated AI profiles"
   save_tech.web: "COOP COEP off, id.txt querybust, serviceworker rename"
