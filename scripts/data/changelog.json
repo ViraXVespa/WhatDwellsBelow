@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.5.1",
+			"points": [
+				{
+					"text": "Pin Grok Build week 4 on main: catalog id grok_build_w4, commit 03fa012959474ce995f48bf76e3e7677ea379a4d."
+				},
+				{
+					"text": "Pin Grok Build week 5 on main: catalog id grok_build_w5, commit 75b3bea979bf0fc530ab9660ca177c327eb465d8."
+				},
+				{
+					"text": "Pages slugs archives/grok_build_w4 and archives/grok_build_w5."
+				},
+				{
+					"text": "Week 3 notes copied under archives/docs/grok_build_w4/. Week 4 notes copied under archives/docs/grok_build_w5/."
+				},
+				{
+					"text": "Each docs[] is the design tree on that pin commit plus the museum copies."
+				}
+			],
+			"summary": "Archive catalog now has Grok Build week 4 at 03fa012 and week 5 at 75b3bea."
+		},
+		{
 			"label": "0.5.0",
 			"points": [
 				{
