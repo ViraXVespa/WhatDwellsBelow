@@ -129,7 +129,10 @@ static func _publish_dungeon(host: Node, rect: Rect2i) -> void:
 		sh = int(host.data.get("solid_h", 0))
 		n = maxi(1, int(host.data.get("solid_n", 1)))
 	var lights: Array = _dungeon_lights(host, x0, z0, tw, th)
-	_publish(x0, z0, tw, th, lights, Stamp.COL_FLOOR, solid, sw, sh, n)
+	var loops: Array = []
+	if host.data.has("outline_loops") and host.data["outline_loops"] is Array:
+		loops = host.data["outline_loops"]
+	_publish(x0, z0, tw, th, lights, Stamp.COL_FLOOR, solid, sw, sh, n, loops)
 
 
 static func _publish(
@@ -142,11 +145,12 @@ static func _publish(
 	solid: PackedByteArray,
 	sw: int,
 	sh: int,
-	n: int
+	n: int,
+	loops: Array = []
 ) -> void:
 	var img: Image = Image.create(tw * Stamp.SUB, th * Stamp.SUB, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 1))
-	Stamp.paint(img, tw, th, lights, ambient, solid, sw, sh, n, x0, z0)
+	Stamp.paint(img, tw, th, lights, ambient, solid, sw, sh, n, x0, z0, loops)
 	origin = Vector2(float(x0), float(z0))
 	span = Vector2(float(tw), float(th))
 	_img = img

@@ -57,12 +57,13 @@ static func paint(
 	sh: int = 0,
 	n: int = 0,
 	x0: int = 0,
-	z0: int = 0
+	z0: int = 0,
+	loops: Array = []
 ) -> void:
 	var iw: int = tw * SUB
 	var ih: int = th * SUB
 	var pxn: int = iw * ih
-	var walk: PackedByteArray = _walk_mask(solid, sw, sh, n, x0, z0, iw, ih)
+	var walk: PackedByteArray = _walk_mask(solid, sw, sh, n, x0, z0, iw, ih, loops)
 	var rr: PackedFloat32Array = PackedFloat32Array()
 	var gg: PackedFloat32Array = PackedFloat32Array()
 	var bb: PackedFloat32Array = PackedFloat32Array()
@@ -93,7 +94,8 @@ static func _walk_mask(
 	x0: int,
 	z0: int,
 	iw: int,
-	ih: int
+	ih: int,
+	loops: Array = []
 ) -> PackedByteArray:
 	var walk: PackedByteArray = PackedByteArray()
 	walk.resize(iw * ih)
@@ -103,7 +105,7 @@ static func _walk_mask(
 	for py in ih:
 		var row: int = py * iw
 		for px in iw:
-			if _lip_open(solid, sw, sh, n, x0, z0, px, py):
+			if _lip_open(solid, sw, sh, n, x0, z0, px, py, loops):
 				walk[row + px] = 1
 	return walk
 
@@ -240,13 +242,25 @@ static func _lip_open(
 	x0: int,
 	z0: int,
 	px: int,
-	py: int
+	py: int,
+	loops: Array = []
 ) -> bool:
 	if n < 1:
 		return true
 	var world_x: float = float(x0) + (float(px) + 0.5) / float(SUB)
 	var world_z: float = float(z0) + (float(py) + 0.5) / float(SUB)
+	if not loops.is_empty():
+		return _inside_loops(loops, world_x * float(maxi(n, 1)), world_z * float(maxi(n, 1)))
 	return solid_open(solid, sw, sh, n, world_x, world_z)
+
+
+static func _inside_loops(loops: Array, fx: float, fz: float) -> bool:
+	var p: Vector2 = Vector2(fx, fz)
+	for item in loops:
+		var poly: PackedVector2Array = item as PackedVector2Array
+		if poly.size() >= 3 and Geometry2D.is_point_in_polygon(p, poly):
+			return true
+	return false
 
 
 static func _past_span(spans: Array, world_x: float, world_z: float) -> bool:

@@ -77,6 +77,7 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 	data["solid_h"] = sh
 	data["solid_n"] = per
 	data["outline_spans"] = spans
+	data["outline_loops"] = loops
 	LoadTiming.dmark("gen_outline_spans")
 
 

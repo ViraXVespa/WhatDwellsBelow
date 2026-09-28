@@ -138,7 +138,7 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 		runs = _wall_runs(host, solid, sw, sh, wall_cells, ox, oy, x1, y1, n)
 	if not floor_cells.is_empty():
 		if outlined:
-			var lip: Node3D = _emit_floor_lip(_outline_spans(host), ox * n, oy * n, x1 * n, y1 * n, fine_m, host.floor_mat)
+			var lip: Node3D = _emit_floor_lip(_outline_loops(host), ox * n, oy * n, x1 * n, y1 * n, fine_m, host.floor_mat)
 			root.add_child(lip)
 			var mm: MultiMeshInstance3D = _first_mm(lip)
 			if host.floor_mm == null and mm != null:
@@ -203,6 +203,15 @@ static func _outline_spans(host: Node) -> Array:
 	if host.data == null or not host.data.has("outline_spans"):
 		return []
 	var raw: Variant = host.data["outline_spans"]
+	if raw is Array:
+		return raw
+	return []
+
+
+static func _outline_loops(host: Node) -> Array:
+	if host.data == null or not host.data.has("outline_loops"):
+		return []
+	var raw: Variant = host.data["outline_loops"]
 	if raw is Array:
 		return raw
 	return []
@@ -348,7 +357,7 @@ static func _first_mm(node: Node) -> MultiMeshInstance3D:
 static func _emit_floor_lip(spans: Array, x0: int, y0: int, x1: int, y1: int, fine_m: float, mat: Material) -> Node3D:
 	var holder: Node3D = Node3D.new()
 	holder.name = "Floors"
-	var loops: Array = _span_loops(spans)
+	var loops: Array = spans
 	var box: PackedVector2Array = PackedVector2Array()
 	box.append(Vector2(float(x0), float(y0)))
 	box.append(Vector2(float(x1), float(y0)))
