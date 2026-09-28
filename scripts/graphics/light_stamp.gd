@@ -12,6 +12,7 @@ const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), 
 
 static var _rgba: PackedByteArray = PackedByteArray()
 static var _walk_buf: PackedByteArray = PackedByteArray()
+static var _vis_buf: PackedByteArray = PackedByteArray()
 static var _rr_buf: PackedFloat32Array = PackedFloat32Array()
 static var _gg_buf: PackedFloat32Array = PackedFloat32Array()
 static var _bb_buf: PackedFloat32Array = PackedFloat32Array()
@@ -237,17 +238,19 @@ static func _disc(
 	var py1: int = mini(ih - 1, sy + rpx)
 	var px0: int = maxi(0, sx - rpx)
 	var px1: int = mini(iw - 1, sx + rpx)
+	if _n >= 1:
+		_fov_mark(walk, iw, ih, sx, sy, px0, py0, px1, py1)
 	var py: int = py0
 	while py <= py1:
 		var row: int = py * iw
 		var px: int = px0
 		while px <= px1:
 			var i: int = row + px
-			if walk[i] != 0:
+			if walk[i] != 0 and (_n < 1 or _vis_buf[i] != 0):
 				var wx: float = float(x0) + (float(px) + 0.5) / float(SUB)
 				var wz: float = float(z0) + (float(py) + 0.5) / float(SUB)
 				var dist: float = sqrt((wx - mx) * (wx - mx) + (wz - mz) * (wz - mz))
-				if dist <= reach and (_n < 1 or _clear(walk, iw, ih, sx, sy, px, py)):
+				if dist <= reach:
 					var fall: float = energy * (1.0 - dist / reach)
 					rr[i] = minf(rr[i] + col.r * fall, 1.0)
 					gg[i] = minf(gg[i] + col.g * fall, 1.0)
@@ -256,7 +259,34 @@ static func _disc(
 		py += 1
 
 
-static func _clear(
+static func _fov_mark(
+	walk: PackedByteArray,
+	iw: int,
+	ih: int,
+	sx: int,
+	sy: int,
+	px0: int,
+	py0: int,
+	px1: int,
+	py1: int
+) -> void:
+	var need: int = iw * ih
+	if _vis_buf.size() != need:
+		_vis_buf.resize(need)
+	_vis_buf.fill(0)
+	var px: int = px0
+	while px <= px1:
+		_mark_ray(walk, iw, ih, sx, sy, px, py0)
+		_mark_ray(walk, iw, ih, sx, sy, px, py1)
+		px += 1
+	var py: int = py0 + 1
+	while py <= py1 - 1:
+		_mark_ray(walk, iw, ih, sx, sy, px0, py)
+		_mark_ray(walk, iw, ih, sx, sy, px1, py)
+		py += 1
+
+
+static func _mark_ray(
 	walk: PackedByteArray,
 	iw: int,
 	ih: int,
@@ -264,15 +294,14 @@ static func _clear(
 	y0: int,
 	x1: int,
 	y1: int
-) -> bool:
+) -> void:
 	if x0 < 0 or y0 < 0 or x0 >= iw or y0 >= ih:
-		return false
-	if x1 < 0 or y1 < 0 or x1 >= iw or y1 >= ih:
-		return false
-	if walk[y0 * iw + x0] == 0 or walk[y1 * iw + x1] == 0:
-		return false
+		return
+	if walk[y0 * iw + x0] == 0:
+		return
+	_vis_buf[y0 * iw + x0] = 1
 	if x0 == x1 and y0 == y1:
-		return true
+		return
 	var dx: int = x1 - x0
 	var dy: int = y1 - y0
 	var nx: int = absi(dx)
@@ -297,9 +326,9 @@ static func _clear(
 			var cx: int = x + step_x
 			var cy: int = y + step_y
 			if cx < 0 or cy < 0 or cx >= iw or cy >= ih:
-				return false
+				return
 			if walk[y * iw + cx] == 0 or walk[cy * iw + x] == 0:
-				return false
+				return
 			x = cx
 			y = cy
 			ix += 1
@@ -310,13 +339,11 @@ static func _clear(
 		else:
 			y += step_y
 			iy += 1
-		if x == x1 and y == y1:
-			return true
 		if x < 0 or y < 0 or x >= iw or y >= ih:
-			return false
+			return
 		if walk[y * iw + x] == 0:
-			return false
-	return true
+			return
+		_vis_buf[y * iw + x] = 1
 
 
 static func _walls(

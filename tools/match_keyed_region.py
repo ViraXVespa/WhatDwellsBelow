@@ -637,6 +637,26 @@ def build_plan(lives: dict, best: list[dict | None], near: list[dict | None], vi
 
     sources = []
     for origin, rows in by_origin.items():
+        best_mad = min(row["mad"] for row in rows)
+        kept_rows = []
+        for row in rows:
+            if row["mad"] <= best_mad + 12.0:
+                kept_rows.append(row)
+                continue
+            unmatched.append(
+                {
+                    "live": row["live"],
+                    "opaque_side": row["opaque_side"],
+                    "best_mad": row["mad"],
+                    "best_agree": row["agree"],
+                    "best_window": row["window"],
+                    "best_origin": _posix(origin),
+                    "rejected": "same source matches another live asset much more closely",
+                }
+            )
+        if not kept_rows:
+            continue
+        rows = kept_rows
         primary = _primary(rows)
         live_path = Path(primary["live"])
         dest_rel = Path("sources") / live_path.with_suffix(origin.suffix)
@@ -665,6 +685,23 @@ def build_plan(lives: dict, best: list[dict | None], near: list[dict | None], vi
         video_plan.append({"origin": video, "dest": dest.as_posix(), "copy": _is_copy_only(video)})
 
     return {"sources": sources, "videos": video_plan, "unmatched": unmatched}
+
+
+def archived_posix(origin: str) -> str | None:
+    """Where a moved non-match landed under _old, if it is still there."""
+    text = origin.replace("\\", "/")
+    if text.startswith("_src/"):
+        dest = OLD_ROOT / "src" / text[len("_src/") :]
+    elif text.startswith("tools/_src/"):
+        dest = OLD_ROOT / "tools_src" / text[len("tools/_src/") :]
+    else:
+        sess = SESS_ROOT.as_posix()
+        if not text.startswith(sess):
+            return None
+        dest = OLD_ROOT / "sessions" / text[len(sess) :].lstrip("/")
+    if not dest.is_file():
+        return None
+    return dest.resolve().relative_to(ROOT.resolve()).as_posix()
 
 
 def _archive_rel(path: Path) -> Path:
@@ -787,7 +824,7 @@ def organize(plan: dict) -> dict:
                     "kind": live["kind"],
                     "loose": live["loose"],
                     "opaque_side": live["opaque_side"],
-                    "cell": item["cell"] if live["window"].split("/")[0].startswith("cell_") else "",
+                    "cell": live["window"].split("/")[0][len("cell_") :] if live["window"].split("/")[0].startswith("cell_") else "",
                 }
             )
     manifest = {
@@ -798,7 +835,10 @@ def organize(plan: dict) -> dict:
         "crop": {"mad": CROP_MAD, "agree": CROP_AGREE, "overlap": CROP_OVERLAP},
         "entries": entries,
         "videos": [{"source": item["dest"], "origin": _posix(item["origin"])} for item in plan["videos"]],
-        "unmatched_live": plan["unmatched"],
+        "unmatched_live": [
+            item | ({"archived": archived} if (archived := archived_posix(str(item.get("best_origin", "")))) else {})
+            for item in plan["unmatched"]
+        ],
     }
     (SRC_ROOT / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     gdignore = SRC_ROOT / ".gdignore"
@@ -842,8 +882,15 @@ def summarize(plan: dict) -> str:
 def self_test() -> None:
     axe = ROOT / "assets" / "ui" / "gear" / "head.png"
     src = SRC_ROOT / "gear" / "head.jpg"
+    manifest = SRC_ROOT / "manifest.json"
+    if not src.is_file() and manifest.is_file():
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+        for entry in data["entries"]:
+            if entry["live"].endswith("ui/gear/head.png"):
+                src = SRC_ROOT / entry["source"]
+                break
     if not axe.is_file() or not src.is_file():
-        raise SystemExit("self-test needs _src/gear/head.jpg and assets/ui/gear/head.png")
+        raise SystemExit("self-test needs the head icon and its source")
     good = score_pair(axe, src, pipeline=False)
     bad = score_pair(ROOT / "assets" / "sprites" / "player" / "male" / "walk_down_0.png", src, pipeline=False)
     print(json.dumps({"good": good, "bad": bad}, indent=2))
