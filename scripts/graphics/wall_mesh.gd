@@ -108,8 +108,6 @@ static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: Packed
 		_quad(e0, n_start, verts, norms, uvs, indices)
 		_uv4(uvs, Vector2(0.0, 0.0), Vector2(0.0, h), Vector2(thick, h), Vector2(thick, 0.0))
 	_uv2_in = n2
-	_corner_post(a, n2, thick, h, verts, norms, uvs, indices)
-	_corner_post(b, n2, thick, h, verts, norms, uvs, indices)
 	if cap_b:
 		var e1: PackedVector3Array = PackedVector3Array()
 		e1.append(Vector3(b.x, 0.0, b.y))
@@ -326,7 +324,7 @@ static func prepare(raw: Array) -> Array[Dictionary]:
 			runs.append(item as Dictionary)
 	if runs.is_empty():
 		return runs
-	return _merge_opposite(_fold_teeth(runs))
+	return _merge_opposite(_bevel_corners(_fold_teeth(runs)))
 
 
 static func _pt_key(p: Vector2) -> Vector2i:
@@ -442,6 +440,62 @@ static func _emit_chain(runs: Array[Dictionary], chain: Array[int], out: Array[D
 		else:
 			out.append(_chord(runs, chain, i, best))
 		i = best + 1
+
+
+static func _bevel_corners(runs: Array[Dictionary]) -> Array[Dictionary]:
+	var n: int = runs.size()
+	var starts: Dictionary = {}
+	for i in n:
+		var key: Vector2i = _pt_key(runs[i]["origin"] as Vector2)
+		if not starts.has(key):
+			starts[key] = []
+		(starts[key] as Array).append(i)
+	var extra: Array[Dictionary] = []
+	for i in n:
+		var run: Dictionary = runs[i]
+		var o: Vector2 = run["origin"] as Vector2
+		var d: Vector2 = run["delta"] as Vector2
+		var len0: float = d.length()
+		if len0 < 1.4:
+			continue
+		var endp: Vector2 = o + d
+		var key2: Vector2i = _pt_key(endp)
+		if not starts.has(key2):
+			continue
+		var dir_a: Vector2 = d / len0
+		for cand in starts[key2]:
+			var j: int = int(cand)
+			if j == i:
+				continue
+			var other: Dictionary = runs[j]
+			var d2: Vector2 = other["delta"] as Vector2
+			var len1: float = d2.length()
+			if len1 < 1.4:
+				continue
+			var dir_b: Vector2 = d2 / len1
+			if absf(dir_a.dot(dir_b)) > 0.35:
+				continue
+			var cut: float = minf(1.15, minf(len0, len1) * 0.33)
+			var new_end: Vector2 = endp - dir_a * cut
+			var new_start: Vector2 = endp + dir_b * cut
+			run["delta"] = new_end - o
+			other["origin"] = new_start
+			other["delta"] = (o + d + d2) - new_start
+			var nd: Vector2 = (run["normal"] as Vector2) + (other["normal"] as Vector2)
+			if nd.length_squared() < 0.0001:
+				nd = Vector2(-dir_a.y, dir_a.x) + Vector2(-dir_b.y, dir_b.x)
+			extra.append({
+				"origin": new_end,
+				"delta": new_start - new_end,
+				"normal": nd.normalized(),
+				"thick": float(run.get("thick", 1.0)),
+				"cap_a": false,
+				"cap_b": false,
+			})
+			break
+	for item in extra:
+		runs.append(item)
+	return runs
 
 
 static func _fold_teeth(runs: Array[Dictionary]) -> Array[Dictionary]:
