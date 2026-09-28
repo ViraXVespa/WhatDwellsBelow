@@ -220,7 +220,7 @@ static func _disc(
 		var wx: float = float(x0) + (float(px) + 0.5) / float(SUB)
 		var wz: float = float(z0) + (float(py) + 0.5) / float(SUB)
 		var dist: float = sqrt((wx - mx) * (wx - mx) + (wz - mz) * (wz - mz))
-		if dist <= reach and not _span_hit(segs, mx, mz, wx, wz):
+		if dist <= reach:
 			var fall: float = energy * (1.0 - dist / reach)
 			rr[i] = minf(rr[i] + col.r * fall, 1.0)
 			gg[i] = minf(gg[i] + col.g * fall, 1.0)
