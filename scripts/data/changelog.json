@@ -3,6 +3,36 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.5.5",
+			"points": [
+				{
+					"text": "Dungeon law is maze-first: carve and clean the 1 m grid, then rare angled pieces."
+				},
+				{
+					"text": "Floor-wide polyline fillet/jag is no longer the silhouette."
+				},
+				{
+					"text": "Stream instances 1 m chunks by default and angled packets as the exception."
+				},
+				{
+					"text": "Load-graph gen to volume/buffer edge follows the cleaned grid plus piece hulls."
+				},
+				{
+					"text": "Volume skins 1 m maze faces by default."
+				},
+				{
+					"text": "Ribbon walls are only for rare angled pieces."
+				},
+				{
+					"text": "Buffer occupancy is the cleaned 1 m grid plus angled-piece hulls."
+				},
+				{
+					"text": "Light SUB is stamp density, not a floor-wide walk mask."
+				}
+			],
+			"summary": "Maze-first dungeon law. Angled walls are rare packets, not the floor rim."
+		},
+		{
 			"label": "0.5.4",
 			"points": [
 				{
