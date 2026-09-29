@@ -3,6 +3,36 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.5.4",
+			"points": [
+				{
+					"text": "Web / chat defaults to brainstorm after boot. Goal names are memory; directed-goal starts when the User asks for the list."
+				},
+				{
+					"text": "Present-User web picture-read is uncapped in design/ and the live thread tree. Implementation stays one writer per slice."
+				},
+				{
+					"text": "Phase 3 may list multiple slices. A pasted PASS goes to the next slice Phase 3."
+				},
+				{
+					"text": "Phase 4 prove dumps existing runner summaries to stdout and fails on broken new or edited Python."
+				},
+				{
+					"text": "Build-coop gather uses pack/report; Build prompts stay a sealed brief."
+				},
+				{
+					"text": "md_format_lib maps leading four-space runs to tabs on .gd write and replace-once retry; other suffixes untouched."
+				},
+				{
+					"text": "doc_patch.replace_once forwards the target path so .gd indent retry can fire."
+				},
+				{
+					"text": "list_tunable / patch_tunables edit one tunables.md Live cell via summary files under _logs/tunable-*."
+				}
+			],
+			"summary": "Web session flows, uncapped present-User reads, multi-slice emit loop."
+		},
+		{
 			"label": "0.5.3",
 			"points": [
 				{
