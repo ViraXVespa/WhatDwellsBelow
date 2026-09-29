@@ -165,9 +165,14 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | Crystal CL band | 2 | **2** | Walk-level CL per placement band |
 | Crystal dead-end sep | 32 | **32** | Minimum Manhattan from spawn |
 | Crystal dead-end length | 28 | **28** | Spur walk to the nearest multi-exit room |
-| Outline fine size (`outline_fine_m`) | 0.25 m | **0.25** | Rasterize resolution of the authored polyline. Debug steps 0.25 / 0.5 / 1 |
-| Outline fillet fraction (`outline_fillet_frac`) | 0.40 | **0.40** | Share of convex polyline corners to fillet as vertices. Room rims cut; hall corners only bulge outward |
-| Outline jag fraction (`outline_jag_frac`) | 0.35 | **0.35** | Share of long authored rims that receive vertex plateaus. 1–3 m on one hall face; rest stays flat |
+| Outline fine size (`outline_fine_m`) | piece bake only | **0.25** | Angled-piece bake only. Not a floor-wide walk grid. Debug steps 0.25 / 0.5 / 1 |
+| Outline fillet fraction (`outline_fillet_frac`) | 0 | **0.40** | Law: unused floor-wide. Live still fillets until the gen source slice |
+| Outline jag fraction (`outline_jag_frac`) | 0 | **0.35** | Law: unused as a rim operator. Wear stays a shader concern. Live still jags until the gen source slice |
+| Angled corridors max (`angled_corridor_max`) | 4 | **4** | First-class off-axis halls per floor |
+| Corner chords max (`corner_chord_max`) | 8 | **8** | Short turn cuts per floor |
+| Angled degrees (`angled_deg`) | 27 / 33 / 45 | **27 / 33 / 45** | Snap targets |
+| Angled snap (`angled_snap_deg`) | 6 | **6** | Degrees off a target before the link stays cardinal |
+| Angled vs dogleg (`angled_vs_dogleg_min`) | 12 | **12** | Extra cardinal tiles before an angled piece wins | |
 
 ## Enemies and combat level
 

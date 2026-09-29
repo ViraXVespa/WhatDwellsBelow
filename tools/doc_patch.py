@@ -182,15 +182,13 @@ def write_changelog(root: Path, bullets: list[str], label: str | None = None, su
             chunk += line + "\n"
             added = True
         if chunk:
-            prefix = text[:insert_at]
-            suffix = text[insert_at:]
-            if prefix and not prefix.endswith("\n"):
-                prefix += "\n"
+            prefix = text[:insert_at].rstrip("\n") + "\n"
+            suffix = text[insert_at:].lstrip("\n")
             text = prefix + chunk
             if suffix:
                 if not text.endswith("\n"):
                     text += "\n"
-                if suffix.startswith("Summary:") and not text.endswith("\n\n"):
+                if suffix.startswith("Summary:"):
                     text += "\n"
                 text += suffix
         if summary:

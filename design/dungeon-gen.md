@@ -1,7 +1,7 @@
 # Dungeon — generation and placement
 
 Status: binding design + live snapshot  
-Read when: authored polylines, hall segments, size rebalance ledger, walkable solid, fillet jag, bake from rims, deadend termini
+Read when: maze carve, hall segments, size rebalance ledger, accidental jogs, angled halls, deadend termini
 
 
 ## Overall structure
@@ -18,17 +18,19 @@ Read when: authored polylines, hall segments, size rebalance ledger, walkable so
 Grid size, room count, room size ranges, and connection algorithm (MST + extra loops) are fully tunable.
 Target: floors MUST feel expansive enough to support a 5–10 minute first successful extraction for a new player and longer skilled runs, but rooms and combat MUST be dense enough that the player is not wandering empty halls for long stretches.
 
-Halls are 2–4 tiles wide. Width 3 is the mode. A connection is a segment plus width, not a cell sausage that later pretends to be a line. A connection that moves on both axes is a diagonal band around that segment (rare perpendicular jog), not a per-tile staircase. Cardinal connections stay a winding span; width still changes at `hall_w_interval` on those. Carve may stamp 1 m cells for placement and pathing. That stamp is not the wall.
+Halls are 2–4 tiles wide. Width 3 is the mode. A connection is a segment plus width. Cardinal connections stay a winding span on the 1 m grid; width still changes at `hall_w_interval` on those. After carve, clean one-tile teeth and accidental stair-steps. Keep intentional maze jogs. An off-axis corridor is rare: snap the room-to-room segment to 27 / 33 / 45 only when it sits within `angled_snap_deg` and the cardinal dogleg is at least `angled_vs_dogleg_min` tiles longer. Cap those halls with `angled_corridor_max` and short corner cuts with `corner_chord_max`. The cleaned 1 m grid is the maze. Angled pieces are packets on top of it, not a floor-wide rim.
 
 `gen.gd` uses the requested room count. Extra winding loops use the full `gen_extra_loops` value. Dead-end spurs scale with room count.
 
-## Off-grid outline
+## Maze carve and angled pieces
 
-The 1 m FLOOR/WALL grid stays the logical map: rooms, connection endpoints, hall-width budget, doors, stairs, prop snaps, ambush anchors, fog, minimap, crystal separation, and stream chunk index. Silhouette order is fixed. Author both rims as polylines from hall segments and room rectangles. Fillet and jag are vertex operations on those polylines (`outline_fillet_frac`, `outline_jag_frac`). Do not merge every room and hall into one hull (`Geometry2D.merge_polygons` / `_union_all`) and fill that. Rasterize each room rectangle and each hall band on its own. Room rectangles stay unpadded and axis-aligned. Do not jag the merged outline. Do not retune the three outline fractions to hide a merge. Room rectangles are unpadded and stay axis-aligned. Do not pad rooms so they merge through a 1 m wall. Do not jag the union hull; jag only hall-band edges, and not in this pass. Fillet only hall turns and hall-room joins. Do not retune the three outline fractions to hide a merge. Fold joins collinear runs. Then OR-fill each authored polygon into solid at `outline_fine_m`. outline_spans is the authored polyline that was rasterized, not a trace of the raster. solid is that raster. Walk, collision, lights, and snaps that need occupancy read solid: floor mesh, `is_floor_cell`, enemy and stream-job landing, BoxShape, and buffer occupancy. Brick and torch mounts read outline_spans. Do not push every room and hall loop as brick. Do not keep a second staircase occupancy. Do not enlarge 1 m FLOOR or shrink spans as separate knobs to close a hole. Fix the authored rim, then rasterize once. Keep a rim fragment when an outward step reaches void in a different fine cell than the inward solid sample.
+The 1 m FLOOR/WALL grid is the maze: rooms, connection endpoints, hall-width budget, doors, stairs, prop snaps, ambush anchors, fog, minimap, crystal separation, stream chunk index, default walk, default collision, and default floor/wall skin. Room rectangles stay unpadded and axis-aligned. Do not pad rooms so they merge through a 1 m wall.
 
-Room interiors stay solid. A hall keeps its segment width; corners may only gain solid in the void. Jag is vertex plateaus on authored rims, not a raster nibble of a 1 m stamp. Collision is BoxShape on void that touches solid. Do not emit a 1 m slab per span. Do not ship a trace-then-repair loop (stair spans, tooth strip, burn toward ribbon) as the silhouette. The live tree may still invert this order until the source pass. This page is the contract that pass implements.
+Silhouette order is fixed. Carve the 1 m grid. Clean one-tile teeth and accidental stair-steps. Do not fillet or jag the whole rim. Do not author both rims as a floor-wide polyline and rasterize that as walk truth. Do not merge every room and hall into one hull (`Geometry2D.merge_polygons` / `_union_all`) and fill that. Floor-wide `outline_fillet_frac` and `outline_jag_frac` are unused. Jag-as-wear is a shader concern, not a rim operator.
 
-Do not ship a shader nibble on 1 m faces as the silhouette. Do not author arches or modular kits. One brick sheet stays a volume concern; this job does not add a second rock sheet.
+An angled piece is a closed packet for one rare off-axis hall or short corner chord: a floor band, the two long wall runs, and collision hulls that match that mesh. Brick and torch mounts on that piece read its runs. Walk, lights, and snaps inside the piece follow the packet, not a second staircase of 1 m boxes under the pretty wall. Outside the piece, occupancy is the cleaned grid. `outline_fine_m` is piece-bake resolution only. Do not keep a floor-wide fine solid as a second dungeon. Do not ship a floor-wide trace-then-repair loop as the silhouette.
+
+Live gen may still publish floor-wide outline_spans until the source slice. This page is the contract that slice implements. Do not author arches or modular kits. One brick sheet stays a volume concern; this job does not add a second rock sheet.
 
 ## Key object placement
 
@@ -83,9 +85,14 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 | `crystal_deadend_sep` | 32 |
 | `crystal_cl_band` | 2 |
 | `crystal_deadend_len` | 28 |
-| `outline_fine_m` | 0.25 |
-| `outline_fillet_frac` | 0.40 |
-| `outline_jag_frac` | 0.35 |
+| `outline_fine_m` | 0.25 (piece bake only) |
+| `outline_fillet_frac` | 0.40 live / 0 law |
+| `outline_jag_frac` | 0.35 live / 0 law |
+| `angled_corridor_max` | 4 |
+| `corner_chord_max` | 8 |
+| `angled_deg` | 27 / 33 / 45 |
+| `angled_snap_deg` | 6 |
+| `angled_vs_dogleg_min` | 12 |
 
 `gen.gd` clamps to minimum 24×24 and at least 6 rooms.
 Boss room is farthest from spawn that still meets `_min_boss_sep = max(16, max(w,h) * 0.5)`.

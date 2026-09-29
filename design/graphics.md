@@ -12,7 +12,7 @@ Live helpers already exist: `env_kit.gd`, `nearest_mat.gd`, `wrap_shader.gd`, `m
 
 Hub: warm kit, wide sun fill in the RT, floor crystal as a local bump. Hub squash follows the sun as parallel light. Dungeon: cold kit, no sun in the RT, walkable dim fill plus wall torches, crystals, and campfires. Pits stay black. Characters tint from the RT. Promo is before/after wherever it reads.
 
-Does not own: dungeon carve, hall segments, authored rims, solid bake, stream rings, map reveal, camera zoom, Sprite3D filter modes. Gen writes outline_spans and solid. Volume skins the provided spans only. Buffer stamps the light RT and mounts torches on those spans. Occupancy reads solid only. Hitboxes stay stream boxes on solid, not a third grid.
+Does not own: dungeon carve, hall segments, authored rims, solid bake, stream rings, map reveal, camera zoom, Sprite3D filter modes. Gen writes a cleaned 1 m maze plus rare angled pieces. Volume skins 1 m faces by default and ribbons only on those pieces. Buffer stamps the light RT and mounts torches. Occupancy reads the cleaned 1 m grid plus angled-piece hulls. SUB is stamp density, not a second dungeon. Hitboxes stay stream boxes on the same recipe, not a third grid.
 
 Out this week: engine shadow maps, unique atlas, hex-tile, player lantern, shop/gate/stair lights, foundation pretty-pass.
 
@@ -23,7 +23,7 @@ If the week slips: drop extra shader tints, then extra light discs. Do not drop 
 Jobs after the reuse PR, one session each, forked from this door:
 
 1. ground — shared shader, world-xz hash variants, RT sample (white until buffer)
-2. volume — provided ribbon, span UV, wall samples RT
+2. volume — 1 m faces default, ribbon only on angled pieces, wall samples RT
 3. buffer — four-texel radiance buffer, disc blobs, fine occupancy
 4. actor — RT tint at feet, two-foot-pinned squash (player current frame, others still; sun on hub, up to three local sources in dungeon)
 

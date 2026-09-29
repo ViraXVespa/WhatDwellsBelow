@@ -22,8 +22,8 @@ AGENTS.md
 Then, only if the User named work:
     one topic door -> one Job sibling (if that door has a Job table)
     graphics jobs are env, ground, volume, buffer, actor (not a boot path)
-    authored polylines / hall segments / bake from rims -> dungeon then gen
-    gen publishes outline_spans and solid; volume skins provided spans with UV along the span; stream instances bake boxes; buffer occupancy reads solid only; dungeon discs flood fine solid, not 1 m tile membership
+    grid carve / hall segments / angled pieces -> dungeon then gen
+    gen publishes a cleaned 1 m maze plus rare angled pieces; volume skins 1 m faces by default and ribbons only on those pieces; stream instances that recipe; buffer occupancy reads the cleaned grid plus piece hulls
     (second door only when the User names the owner; conflicts_with is a load ban)
     and one design/code-map.md system row when live files are needed
     and design/tunables.md iff a number changes
