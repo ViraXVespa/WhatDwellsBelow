@@ -11,6 +11,8 @@ Suggested starts are seeds only.
 Live defaults are what `balance.gd` / `tunables.gd` ship today.  
 If you change a live default, update this table in the same slice.
 
+List one key with `python tools/list_tunable.py --key CAM_PITCH` (summary: `_logs/sess/<id>/tunable-row/summary.txt`). Patch one Live cell with `python tools/patch_tunables.py --key CAM_PITCH --set -58` (summary: `_logs/sess/<id>/tunable-patch/summary.txt`). Do not open this whole file to change one number.
+
 `BAL_REV` is 12. Old saves pick up shipped default retunes through `balance_migrate.gd`.
 
 Forge keys that are not yet on `balance.gd` fall back inside `progress_forge.gd` / `gear_roll.gd`. Add them to balance + the debug menu when that slice lands.

@@ -26,9 +26,11 @@ Navigation is only `design/routes.yaml`. `See also:` is forbidden.
 | Windows inventory / verify / write | pc-offload skill + `design/pc-offload.md` |
 
 Load cap (implementation): this file + the path file + (web / Build) the law pair + one writer door + one Job sibling + gates whose `when` matches. A second writer door only when the User names the owner.
-Web / chat may picture-read further live scripts and design files when the thread names that system, a shot cannot be explained without that owner, a routes read_when matches, or the User asked who owns it. Budget is turns, not tokens. That is not a license to implement two writer doors in one slice.
-Do not fetch this file again. Do not open the topic index or `design/load-graph.md` unless the User named routing work.
+Web / chat, User present: picture-read is uncapped inside `design/` and the live tree the thread is on. Load-graph, topic index, and extra code-map rows are allowed on a docs or routing pass. That is not a license to implement two writer doors in one slice.
+Do not fetch this file again. Open `design/load-graph.md` or the topic index when the User named routing work, or on a web docs/routing pass.
+Web default after boot is brainstorm. Goal names are memory. Directed-goal starts when the User asks for the list / Phase 3 / emit.
 
-Pickup is git plus `_logs/sess/<Grok session id>/`. Fresh Build: this file, then `design/grok-build.md`. Pins are User-only.
+Build pickup is git plus `_logs/sess/<Grok session id>/`. That folder is PC job output, not web-chat memory. Fresh Build: this file, then `design/grok-build.md`. Pins are User-only.
+Web build-coop / build-week gather with pack_grok_sessions / report_grok_sessions; the paste is the packet.
 Build tile/sheet Imagine: `design/isolated-media.md` first. Web / chat may generate non-tile images. Web does not spawn the isolated media runner and does not Imagine tiled world assets. Grok Bot does not run Imagine.
 After a slice: stop and report.

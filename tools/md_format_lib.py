@@ -11,6 +11,34 @@ from pathlib import Path
 
 TICK_RE = re.compile(r"`([^`]+)`")
 
+_FOUR_SPACES = "    "
+
+
+def is_gdscript_path(path: Path | str | None) -> bool:
+    if path is None:
+        return False
+    return Path(str(path)).suffix.lower() == ".gd"
+
+
+def leading_spaces_to_tabs(text: str) -> str:
+    """Map each leading run of four spaces to one tab. Mid-line spaces stay."""
+    text = force_lf(text)
+    out: list[str] = []
+    for line in text.split("\n"):
+        i = 0
+        n = 0
+        while line.startswith(_FOUR_SPACES, i):
+            n += 1
+            i += 4
+        out.append(("\t" * n) + line[i:])
+    return "\n".join(out)
+
+
+def maybe_gd_indent(text: str, path: Path | str | None) -> str:
+    if is_gdscript_path(path):
+        return leading_spaces_to_tabs(text)
+    return text
+
 
 def posix(rel: str) -> str:
     p = rel.replace("\\", "/").strip()
@@ -39,10 +67,10 @@ def ensure_trailing_newline(text: str) -> str:
 
 def write_utf8(path: Path, text: str, *, mkdir: bool = False) -> None:
     """UTF-8 text write with LF newlines and a trailing newline."""
+    text = maybe_gd_indent(text, path)
     if mkdir:
         path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(ensure_trailing_newline(force_lf(text)), encoding="utf-8", newline="\n")
-
 
 def write_lines(path: Path, lines: list[str], *, mkdir: bool = False) -> None:
     write_utf8(path, "\n".join(lines), mkdir=mkdir)
@@ -69,13 +97,25 @@ def path_tick_variants(old: str) -> list[str]:
     return out
 
 
-def replace_once_text(text: str, old: str, new: str) -> str | None:
-    """Replace the first matching path-tick variant. None if no candidate hits."""
+def replace_once_text(
+    text: str, old: str, new: str, *, path: Path | str | None = None
+) -> str | None:
+    """Replace the first matching path-tick variant. None if no candidate hits.
+
+    For .gd targets, retry after mapping leading four-space runs to tabs on
+    both the needle and the replacement.
+    """
     for cand in path_tick_variants(old):
         if cand in text:
-            return text.replace(cand, new, 1)
+            return text.replace(cand, maybe_gd_indent(new, path), 1)
+    if is_gdscript_path(path):
+        old_gd = leading_spaces_to_tabs(old)
+        new_gd = leading_spaces_to_tabs(new)
+        if old_gd != old or new_gd != new:
+            for cand in path_tick_variants(old_gd):
+                if cand in text:
+                    return text.replace(cand, new_gd, 1)
     return None
-
 
 def split_marker_block(text: str, begin: str, end: str) -> tuple[str, str, str] | None:
     """Split on HTML-comment markers. Mid includes begin through end (inclusive)."""

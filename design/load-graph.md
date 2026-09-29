@@ -10,6 +10,9 @@ Never open `notes/`.
 
 AGENTS.md
     web   -> design/web-session.md -> protocol.md and constraints.md
+            -> default brainstorm after boot; directed-goal only when the User asks
+            -> present-User picture-read uncapped in design/ and the live thread tree
+            -> docs/routing may open this file and the topic index; write stays one door
     build -> design/grok-build.md -> protocol.md and constraints.md
             -> design/build-job-cycle.md when gathering, changing, or proving
             -> listed runner from that cycle table when proving; do not invent a flag
@@ -60,7 +63,7 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 5. Doors with a Job table stay thin.
 6. Path files never appear on topic See also.
 7. Versioning / changelog body is ship-only.
-8. Opening this file happens only when the User names routing work. Open design/parked-tasks.md only when the User names a parked task or resume parked.
+8. Opening this file happens when the User names routing work, or on a web docs/routing pass. Open design/parked-tasks.md only when the User names a parked task or resume parked.
 9. Topic job siblings name no other `design/*.md` paths.
 10. Opening the topic table is not a boot step.
 11. README and code-map are human indexes, not boot files.

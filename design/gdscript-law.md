@@ -5,6 +5,10 @@ Read when: editing or emitting GDScript
 
 Tabs, types, and warnings live only here. Do not copy these rules back into the agents file. The 10KB ship floor is documented under Script cap. Grok Bot owns it. Grok Build does not measure or split.
 
+## Indent
+
+Live `.gd` uses tabs. Web / chat scratches must not emit four-space GDScript against tabbed files. `tools/md_format_lib.py` maps a leading run of four spaces to one tab on `.gd` write and on replace-once retry. Only the line prefix. Mid-line spaces stay. `.py` / `.md` / other suffixes are untouched.
+
 ## Types
 
 New or rewritten lines only. Do not convert a file for style.

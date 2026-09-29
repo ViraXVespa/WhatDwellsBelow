@@ -48,7 +48,7 @@ def _variants(old: str) -> list[str]:
 
 
 def replace_once(text: str, old: str, new: str, where: str) -> str:
-    hit = md.replace_once_text(text, old, new)
+    hit = md.replace_once_text(text, old, new, path=where)
     if hit is not None:
         return hit
     if new in text:
