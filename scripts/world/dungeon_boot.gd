@@ -61,7 +61,6 @@ static func ready_floor(host: Node) -> void:
 	var LightRtS: GDScript = load("res://scripts/graphics/light_rt.gd") as GDScript
 	LightRtS.reset_floor()
 	LightRtS.maintain(host)
-	LightRtS.maintain(host)
 	HitchLog.mark("dungeon_light")
 	LoadTiming.dmark("light")
 	if App.present and App.present.has_method("release_enter"):
@@ -72,6 +71,8 @@ static func ready_floor(host: Node) -> void:
 static func process_floor(host: Node, delta: float) -> void:
 	if _first_tick:
 		HitchLog.mark("dungeon_tick")
+		var LightRtS: GDScript = load("res://scripts/graphics/light_rt.gd") as GDScript
+		LightRtS.maintain(host)
 		_first_tick = false
 	host.frame_acc += delta
 	host.frame_n += 1

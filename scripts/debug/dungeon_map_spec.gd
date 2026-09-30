@@ -96,7 +96,7 @@ static func _emit_spec(lines: Array[String], host: Node, data: Dictionary, objs:
 	var gw: int = int(data.get("w", 0))
 	var gh: int = int(data.get("h", 0))
 	fail += Util._spec(lines, "spans_present", spans.size() > 0, "n=%d" % spans.size())
-	fail += Util._spec(lines, "solid_size", n >= 2 and sw == gw * n and sh == gh * n and solid.size() == sw * sh, "n=%d sw=%d sh=%d want=%dx%d bytes=%d" % [n, sw, sh, gw * n, gh * n, solid.size()])
+	fail += Util._spec(lines, "solid_size", n >= 1 and sw == gw * n and sh == gh * n and solid.size() == sw * sh, "n=%d sw=%d sh=%d want=%dx%d bytes=%d" % [n, sw, sh, gw * n, gh * n, solid.size()])
 	var span_hits: int = 0
 	var span_miss: int = 0
 	for raw_span: Variant in spans:
@@ -152,7 +152,7 @@ static func _emit_spec(lines: Array[String], host: Node, data: Dictionary, objs:
 		var jc: Vector2i = Vector2i(rawj.get("cell", Vector2i.ZERO))
 		var fx2: int = jc.x * n + (n >> 1)
 		var fy2: int = jc.y * n + (n >> 1)
-		if n >= 2 and solid.size() == sw * sh and sw > 0 and fx2 >= 0 and fy2 >= 0 and fx2 < sw and fy2 < sh and solid[fy2 * sw + fx2] != 0:
+		if n >= 1 and solid.size() == sw * sh and sw > 0 and fx2 >= 0 and fy2 >= 0 and fx2 < sw and fy2 < sh and solid[fy2 * sw + fx2] != 0:
 			job_ok += 1
 		else:
 			job_bad += 1

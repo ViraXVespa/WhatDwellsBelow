@@ -4,7 +4,7 @@ Status: protocol
 Read when: web / chat path; every web session after the repo-review message
 
 Binding for **web / chat** only. Grok Build and Grok Bot ignore it.
-Second topic door: ask the User to name the owner first. That is the second *writer*. If `conflicts_with` lists the pair, do not implement the second core in this slice. Reading both is allowed.
+Second topic door: ask the User to name the owner first. That is the second *writer*. If `conflicts_with` lists the pair, do not implement the second core in this slice. Reading both is allowed. Packed pass: when the User names several owners (or says one go / pack these) and the paths do not share a live file and `conflicts_with` does not list the pair, one scratch may revise those Source paths together. Still one `tools/_scratch.py`. Still User-paste. Do not use a packed pass to invent a system.
 The User pastes every emit. Never assume a disk write landed. Do not push `main` or create a side branch unless the User named that branch.
 
 After Phase 3, one `tools/_scratch.py` is the whole remaining action. A scratch that writes a runnable this slice owns must run it before exit and print `RESULT checker=PASS|FAIL` when the load-graph checker applies. The User runs only `python tools/_scratch.py` from the repo root and pastes the RESULT. If a step cannot live in that scratch, say so and wait.
@@ -33,7 +33,7 @@ Do not open the Build path file, `BOT.md`, or Grok Bot Job files from this path 
 ## Read vs write
 
 When the User is present: picture-read is uncapped inside `design/` and the live tree the thread is talking about. Load-graph, topic index, and extra code-map rows are allowed on a docs or routing pass.
-Implementation still uses one writer door. A second writer only when the User names the owner. `conflicts_with` still blocks implementing both cores in one slice.
+Implementation default is one writer door. A packed pass is the exception above. `conflicts_with` still blocks implementing both cores in one slice.
 Inspect the live tree from **one system row** in `design/code-map.md` when editing live files.
 
 ## Phases
@@ -70,13 +70,13 @@ A park from brainstorm must carry: mandate, frozen decisions, open questions, li
 
 Name the goal for this emit pass. Ask only what cannot be inferred.
 Split the list: **Source** (`scripts/`, `scenes/`, `assets/`, `tools/`, `project.godot`, other non-doc live files) and **Docs**. Mark each path `new`, `revise`, or `delete`.
-Phase 3 may list multiple slices. Each slice has its own goal, writer, Source/Docs, and prove. Sequential one-writer: the writer may change per slice; one scratch does not own two cores.
+Phase 3 may list multiple slices, or one packed pass with several named owners. A packed pass still lists Source/Docs and prove per owner. One scratch may own those cores when the packed-pass rule holds.
 
 This phase ends when the User accepts the list. Do not start Phase 4 without that. If Source is empty, Phase 4 is docs-only.
 
 ### Phase 4 — Emit
 
-One action. Prefer one `tools/_scratch.py` for every revise/delete path and the docs in this pass. New source files emit one at a time (path line, blank line, full body in one language fence) until the User says `Next`.
+One action. Prefer one `tools/_scratch.py` for every revise/delete path and the docs in this pass. A packed pass is still one action and one scratch. New source files emit one at a time (path line, blank line, full body in one language fence) until the User says `Next`.
 
 Revise from a fetched raw body plus the artifact byte check, or from a User paste already in this conversation. Fetch budget: one pull per path. After a failed check, do not fetch again. Do not assemble a revision from a tool-card summary. Do not put a markdown fence opener inside a fenced emit. Do not reimplement `tools/doc_patch.py`.
 

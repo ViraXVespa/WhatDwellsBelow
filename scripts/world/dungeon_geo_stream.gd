@@ -25,7 +25,10 @@ static func setup(host: Node) -> void:
 	host.geo_root = Node3D.new()
 	host.geo_root.name = "GeoStream"
 	host.add_child(host.geo_root)
+	if host.has_meta("wdb_wall_mi"):
+		host.remove_meta("wdb_wall_mi")
 	ensure_meshes()
+	_ensure_wall_mesh(host)
 
 
 static func ensure_meshes() -> void:
@@ -184,13 +187,8 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 			host.floor_mm = fm
 		HitchLog.mark("geo_lip")
 	if not runs.is_empty():
-		var wall_inst: MeshInstance3D = MeshInstance3D.new()
-		wall_inst.mesh = WallMesh.from_faces(runs)
+		_ensure_wall_mesh(host)
 		HitchLog.mark("geo_walls")
-		wall_inst.scale = Vector3(fine_m, 1.0, fine_m)
-		wall_inst.material_override = host.wall_mat
-		wall_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		root.add_child(wall_inst)
 	if outlined or not runs.is_empty():
 		_add_ribbon_boxes(root, runs, fine_m)
 		HitchLog.mark("geo_col")
@@ -198,6 +196,34 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 		add_collision(root, wall_cells, fine_m)
 	job.node = root
 	job.state = "live"
+
+
+
+static func _ensure_wall_mesh(host: Node) -> void:
+	if host.has_meta("wdb_wall_mi"):
+		var old: Variant = host.get_meta("wdb_wall_mi")
+		if old is Node and is_instance_valid(old):
+			return
+	var spans: Array = _prepared_spans(host)
+	if spans.is_empty() or host.geo_root == null:
+		return
+	var typed: Array[Dictionary] = []
+	for item in spans:
+		if item is Dictionary:
+			typed.append(item)
+	if typed.is_empty():
+		return
+	var wall_inst: MeshInstance3D = MeshInstance3D.new()
+	wall_inst.name = "WallRibbons"
+	wall_inst.mesh = WallMesh.from_faces(typed)
+	var fine_m: float = float(host.data.get("outline_fine_m", 1.0))
+	if fine_m < 0.2:
+		fine_m = 1.0
+	wall_inst.scale = Vector3(fine_m, 1.0, fine_m)
+	wall_inst.material_override = host.wall_mat
+	wall_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	host.geo_root.add_child(wall_inst)
+	host.set_meta("wdb_wall_mi", wall_inst)
 
 
 static func _mask(host: Node) -> Dictionary:
@@ -724,9 +750,9 @@ static func _add_ribbon_boxes(root: Node3D, spans: Array, fine_m: float) -> void
 			nrm = nrm.normalized()
 		if inward.dot(nrm) < 0.0:
 			inward = -inward
-		var thick: float = float(run.get("thick", 1.0))
-		if thick <= 0.0 or thick > 1.5:
-			thick = 1.0
+		var thick: float = float(run.get("thick", 0.25))
+		if thick <= 0.0 or thick > 0.3:
+			thick = 0.25
 		var mid: Vector2 = o + d * 0.5 - inward * (thick * 0.5)
 		var basis: Basis = Basis(Vector3(tangent.x, 0.0, tangent.y), Vector3.UP, Vector3(left.x, 0.0, left.y))
 		var box: BoxShape3D = BoxShape3D.new()
