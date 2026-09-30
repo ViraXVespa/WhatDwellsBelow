@@ -175,7 +175,7 @@ func enter_dungeon() -> void:
 
 
 func _pump_enter_async() -> void:
-	if bool(get("_enter_pumped")):
+	if get("_enter_pumped") == true:
 		return
 	set("_enter_pumped", true)
 	await AppFlow.pump_fps(self, false)

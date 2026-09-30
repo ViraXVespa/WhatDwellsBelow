@@ -173,9 +173,8 @@ static func _arm_capture(host: Node) -> void:
 	if not is_instance_valid(host):
 		printerr("SHOT: ok=false err=host_gone")
 		return
+	_apply_pose(host)
 	RenderingServer.frame_post_draw.connect(func() -> void: _capture(host), CONNECT_ONE_SHOT)
-
-
 static func _apply_pose(host: Node) -> void:
 	var player: Node3D = host.get("player") as Node3D
 	if player != null and has_player_pos():
@@ -206,6 +205,10 @@ static func _apply_pose(host: Node) -> void:
 		rig.call("apply_size", 1080.0 / float(T.PX) / maxf(0.01, z))
 	var cam: Camera3D = host.get_viewport().get_camera_3d()
 	if cam != null:
+		cam.size = 1080.0 / 64.0 / maxf(0.01, z)
+		cam.far = maxf(cam.far, cam.size * 3.0)
+		printerr("SHOT: mark=camsize size=%s zoom=%s" % [str(cam.size), str(z)])
+	if cam != null and false:
 		if z != 1.0:
 			cam.fov = clampf(cam.fov / z, 1.0, 170.0)
 			if rig == null or not rig.has_method("apply_size"):

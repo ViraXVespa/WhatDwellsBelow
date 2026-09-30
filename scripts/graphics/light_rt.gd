@@ -13,6 +13,7 @@ const COL_FIRE := Color(1.0, 0.40, 0.12)
 const COL_SUN := Color(1.0, 0.86, 0.62)
 
 const HUB_LIGHT_PATH := "res://assets/baked/hub_light.png"
+const HUB_SUB := 16
 static var tex: Texture2D
 static var origin := Vector2.ZERO
 static var span := Vector2.ONE
@@ -74,6 +75,19 @@ static func _try_hub_baked() -> bool:
 	return true
 
 
+static func _hub_make_rt(x0: int, z0: int, tw: int, th: int) -> void:
+	var n: int = HUB_SUB
+	var iw: int = tw * n
+	var ih: int = th * n
+	var img: Image = Image.create(iw, ih, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0.98, 0.96, 0.93, 1.0))
+	origin = Vector2(float(x0), float(z0))
+	span = Vector2(float(tw), float(th))
+	_img = img
+	_gpu = ImageTexture.create_from_image(img)
+	tex = _gpu
+	_push()
+	printerr("bake_camp: rt=%dx%d sub=%d tw=%d th=%d" % [iw, ih, n, tw, th])
 static func rebuild_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2, layout: Node = null) -> void:
 	_props.clear()
 	_sites.clear()
@@ -83,29 +97,8 @@ static func rebuild_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	var th: int = maxi(1, z1 - z0)
 	origin = Vector2(float(x0), float(z0))
 	span = Vector2(float(tw), float(th))
-	var lights: Array = []
-	var mid := Vector2((float(x0) + float(x1)) * 0.5, (float(z0) + float(z1)) * 0.5)
-	var away := Vector2(0.406138, 0.913811)
-	var sun: Vector2 = mid - away * 80.0
-	sun.x = clampf(sun.x, float(x0) + 0.6, float(x1) - 0.6)
-	sun.y = clampf(sun.y, float(z0) + 0.6, float(z1) - 0.6)
-	var sun_item: Dictionary = _light_at(sun.x, sun.y, x0, z0, "sun")
-	sun_item["energy"] = _bal("light_hub_sun_energy", T.LIGHT_HUB_SUN_ENERGY)
-	sun_item["reach"] = maxf(96.0, Vector2(float(tw), float(th)).length())
-	sun_item["kind"] = "sun"
-	sun_item["occlude"] = true
-	lights.append(sun_item)
-	var cry: Dictionary = _light_at(crystal_xz.x, crystal_xz.y, x0, z0, "crystal")
-	cry["reach"] = _bal("light_hub_crystal_range", T.LIGHT_HUB_CRYSTAL_RANGE)
-	cry["energy"] = _bal("light_hub_crystal_energy", T.LIGHT_HUB_CRYSTAL_ENERGY)
-	cry["kind"] = "crystal"
-	cry["occlude"] = false
-	lights.append(cry)
-	var occ: Dictionary = _hub_occ(x0, z0, tw, th, layout)
-	_publish(x0, z0, tw, th, lights, Color(0.98, 0.96, 0.93, 1.0), occ["solid"], int(occ["sw"]), int(occ["sh"]), Stamp.SUB)
+	_hub_make_rt(x0, z0, tw, th)
 	_hub_finish_yard(x0, z0, layout)
-
-
 static func rebind_tree(n: Node) -> void:
 	if n == null:
 		return
@@ -123,13 +116,12 @@ static func save_hub_bake() -> void:
 	if _img == null:
 		push_error("bake_camp: _img null")
 		return
+	_hub_fill_black(_img)
 	var nwrite: int = _hub_lock_shadows(_img, origin, _hub_layout)
 	var abs_path: String = ProjectSettings.globalize_path(HUB_LIGHT_PATH)
 	DirAccess.make_dir_recursive_absolute(abs_path.get_base_dir())
 	_img.save_png(abs_path)
 	printerr("bake_camp: shadow_px=%d %dx%d" % [nwrite, _img.get_width(), _img.get_height()])
-
-
 static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2, layout: Node = null) -> void:
 	_props.clear()
 	_sites.clear()
@@ -142,37 +134,14 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	_hub_layout = layout
 	var tw: int = maxi(1, x1 - x0)
 	var th: int = maxi(1, z1 - z0)
-	var lights: Array = []
-	var mid := Vector2((float(x0) + float(x1)) * 0.5, (float(z0) + float(z1)) * 0.5)
-	var away := Vector2(0.406138, 0.913811)
-	var sun: Vector2 = mid - away * 80.0
-	sun.x = clampf(sun.x, float(x0) + 0.6, float(x1) - 0.6)
-	sun.y = clampf(sun.y, float(z0) + 0.6, float(z1) - 0.6)
-	var sun_item: Dictionary = _light_at(sun.x, sun.y, x0, z0, "sun")
-	sun_item["energy"] = _bal("light_hub_sun_energy", T.LIGHT_HUB_SUN_ENERGY)
-	sun_item["reach"] = maxf(96.0, Vector2(float(tw), float(th)).length())
-	sun_item["kind"] = "sun"
-	sun_item["occlude"] = true
-	lights.append(sun_item)
-	var cry: Dictionary = _light_at(crystal_xz.x, crystal_xz.y, x0, z0, "crystal")
-	cry["reach"] = _bal("light_hub_crystal_range", T.LIGHT_HUB_CRYSTAL_RANGE)
-	cry["energy"] = _bal("light_hub_crystal_energy", T.LIGHT_HUB_CRYSTAL_ENERGY)
-	cry["kind"] = "crystal"
-	cry["occlude"] = false
-	lights.append(cry)
 	origin = Vector2(float(x0), float(z0))
 	span = Vector2(float(tw), float(th))
 	if _try_hub_baked():
 		return
-	var occ: Dictionary = _hub_occ(x0, z0, tw, th, layout)
-	_publish(x0, z0, tw, th, lights, Color(0.98, 0.96, 0.93, 1.0), occ["solid"], int(occ["sw"]), int(occ["sh"]), Stamp.SUB)
+	_hub_make_rt(x0, z0, tw, th)
 	_hub_finish_yard(x0, z0, layout)
-
-
-
-
 static func _hub_occ(_x0: int, _z0: int, tw: int, th: int, layout: Node) -> Dictionary:
-	var n: int = Stamp.SUB
+	var n: int = HUB_SUB
 	var sw: int = tw * n
 	var sh: int = th * n
 	var solid := PackedByteArray()
@@ -193,10 +162,10 @@ static func _hub_occ(_x0: int, _z0: int, tw: int, th: int, layout: Node) -> Dict
 		var x_b: float = p.x + b.x * 0.5
 		var z_a: float = p.z - b.z * 0.5
 		var z_b: float = p.z + b.z * 0.5
-		var fx0: int = clampi(int(floor(x_a * float(n))), 0, sw - 1)
-		var fx1: int = clampi(int(ceil(x_b * float(n))), 0, sw)
-		var fz0: int = clampi(int(floor(z_a * float(n))), 0, sh - 1)
-		var fz1: int = clampi(int(ceil(z_b * float(n))), 0, sh)
+		var fx0: int = clampi(int(floor((x_a - float(_x0)) * float(n))), 0, sw - 1)
+		var fx1: int = clampi(int(ceil((x_b - float(_x0)) * float(n))), 0, sw)
+		var fz0: int = clampi(int(floor((z_a - float(_z0)) * float(n))), 0, sh - 1)
+		var fz1: int = clampi(int(ceil((z_b - float(_z0)) * float(n))), 0, sh)
 		var fz: int = fz0
 		while fz < fz1:
 			var row: int = fz * sw
@@ -206,8 +175,6 @@ static func _hub_occ(_x0: int, _z0: int, tw: int, th: int, layout: Node) -> Dict
 				fx += 1
 			fz += 1
 	return {"solid": solid, "sw": sw, "sh": sh}
-
-
 static func _blur_hub(img: Image) -> void:
 	var w: int = img.get_width()
 	var h: int = img.get_height()
@@ -239,7 +206,7 @@ static func _hub_day_finish(img: Image, x0: int, z0: int, layout: Node) -> void:
 	var amb := Color(0.82, 0.74, 0.60, 1.0)
 	var w: int = img.get_width()
 	var h: int = img.get_height()
-	var sub: float = float(Stamp.SUB)
+	var sub: float = float(img.get_width()) / maxf(span.x, 1.0)
 	var boxes: Array = []
 	if layout != null and layout.has_method("hall_pos"):
 		boxes.append({"pos": layout.hall_pos(), "box": layout.hall_box})
@@ -320,7 +287,7 @@ static func _hub_building_shade(img: Image, x0: int, z0: int, layout: Node) -> v
 		boxes.append({"pos": Vector3(wp.x, 0.0, wp.z + wb.z * 0.5 + wad * 0.5), "box": Vector3(wb.x, 1.0, wad), "len": 1.2})
 	var w: int = img.get_width()
 	var h: int = img.get_height()
-	var sub: float = float(Stamp.SUB)
+	var sub: float = float(HUB_SUB)
 	var y: int = 0
 	while y < h:
 		var x: int = 0
@@ -464,8 +431,8 @@ static func _publish(
 	n: int,
 	loops: Array = []
 ) -> void:
-	var iw: int = tw * Stamp.SUB
-	var ih: int = th * Stamp.SUB
+	var iw: int = tw * maxi(1, n)
+	var ih: int = th * maxi(1, n)
 	var img: Image = _img
 	if img == null or img.get_width() != iw or img.get_height() != ih:
 		img = Image.create(iw, ih, false, Image.FORMAT_RGBA8)
@@ -824,39 +791,50 @@ static func _keep_casts(x0: int, z0: int, tw: int, th: int, lights: Array) -> vo
 			"kind": str(item.get("kind", "")),
 		})
 
+static func _hub_fill_black(img: Image) -> void:
+	if img == null:
+		return
+	var field := Color(0.98, 0.96, 0.93, 1.0)
+	var w: int = img.get_width()
+	var h: int = img.get_height()
+	var y: int = 0
+	while y < h:
+		var x: int = 0
+		while x < w:
+			var c: Color = img.get_pixel(x, y)
+			if c.r <= 0.02 and c.g <= 0.02 and c.b <= 0.02:
+				img.set_pixel(x, y, field)
+			x += 1
+		y += 1
 static func _hub_finish_yard(x0: int, z0: int, layout: Node) -> void:
 	if _img == null:
 		return
+	_hub_fill_black(_img)
 	_hub_cast_buildings(_img, x0, z0, layout)
 	if _gpu != null:
 		_gpu.set_image(_img)
 	tex = _gpu
 	_push()
-
 static func _hub_cast_buildings(img: Image, x0: int, z0: int, layout: Node) -> void:
 	if img == null:
 		return
 	var away := Vector2(0.406138, 0.913811)
 	var boxes: Array = []
 	if layout != null and layout.has_method("hall_pos"):
-		boxes.append(_hub_box_of(layout.hall_pos(), layout.hall_box, 3.2))
-		boxes.append(_hub_box_of(layout.wing_pos(), layout.wing_box, 2.4))
-		boxes.append(_hub_box_of(layout.stall_pos(), layout.stall_box, 2.2))
+		boxes.append(_hub_box_of(layout.hall_pos(), layout.hall_box, 4.4))
+		boxes.append(_hub_box_of(layout.wing_pos(), layout.wing_box, 3.6))
+		boxes.append(_hub_box_of(layout.stall_pos(), layout.stall_box, 3.0))
 	else:
-		boxes.append(_hub_box_of(Vector3(8.2, 0.0, 6.0), Vector3(5.6, 3.4, 4.2), 3.2))
-		boxes.append(_hub_box_of(Vector3(25.0, 0.0, 8.0), Vector3(4.6, 2.4, 3.4), 2.2))
-	var sub: float = float(Stamp.SUB)
-	if sub < 1.0:
-		sub = 8.0
+		boxes.append(_hub_box_of(Vector3(8.2, 0.0, 6.0), Vector3(5.6, 3.4, 4.2), 4.4))
+		boxes.append(_hub_box_of(Vector3(25.0, 0.0, 8.0), Vector3(4.6, 2.4, 3.4), 3.0))
+	var sub: float = float(HUB_SUB)
 	var w: int = img.get_width()
 	var h: int = img.get_height()
 	for raw in boxes:
 		var b: Dictionary = raw
 		_hub_stamp_skirt(img, x0, z0, sub, w, h, b, away)
-
-
 static func _hub_stamp_skirt(img: Image, x0: int, z0: int, sub: float, w: int, h: int, b: Dictionary, away: Vector2) -> void:
-	var slen: float = minf(float(b["len"]), 4.0)
+	var slen: float = maxf(float(b["len"]), 0.5)
 	var cx: float = float(b["x"])
 	var cz: float = float(b["z"])
 	var hx: float = float(b["hx"])
@@ -877,22 +855,22 @@ static func _hub_stamp_skirt(img: Image, x0: int, z0: int, sub: float, w: int, h
 			var wz: float = float(z0) + (float(y) + 0.5) / sub
 			var k: float = 1.0
 			if _hub_inside(wx, wz, b):
-				k = 0.58
+				k = 1.0
 			else:
-				var t: float = 0.1
+				var t: float = 0.05
 				while t <= slen:
 					if _hub_inside(wx - away.x * t, wz - away.y * t, b):
-						k = lerpf(0.58, 0.88, t / slen)
+						k = lerpf(0.48, 0.94, t / slen)
 						break
-					t += 0.1
+					t += 0.05
 			if k < 0.99:
 				img.set_pixel(x, y, Color(0.98 * k, 0.96 * k, 0.93 * k, 1.0))
 			x += 1
 		y += 1
-	var bx0: int = maxi(px0 - 2, 0)
-	var bx1: int = mini(px1 + 2, w)
-	var bz0: int = maxi(pz0 - 2, 0)
-	var bz1: int = mini(pz1 + 2, h)
+	var bx0: int = maxi(px0 - 3, 0)
+	var bx1: int = mini(px1 + 3, w)
+	var bz0: int = maxi(pz0 - 3, 0)
+	var bz1: int = mini(pz1 + 3, h)
 	var copy: Image = img.get_region(Rect2i(bx0, bz0, bx1 - bx0, bz1 - bz0))
 	var yy: int = bz0
 	while yy < bz1:
@@ -900,10 +878,10 @@ static func _hub_stamp_skirt(img: Image, x0: int, z0: int, sub: float, w: int, h
 		while xx < bx1:
 			var acc := Color(0, 0, 0, 0)
 			var n: int = 0
-			var oy: int = -1
-			while oy <= 1:
-				var ox: int = -1
-				while ox <= 1:
+			var oy: int = -2
+			while oy <= 2:
+				var ox: int = -2
+				while ox <= 2:
 					var sx: int = xx + ox - bx0
 					var sy: int = yy + oy - bz0
 					if sx >= 0 and sy >= 0 and sx < copy.get_width() and sy < copy.get_height():
@@ -915,10 +893,16 @@ static func _hub_stamp_skirt(img: Image, x0: int, z0: int, sub: float, w: int, h
 				img.set_pixel(xx, yy, acc / float(n))
 			xx += 1
 		yy += 1
-
-
+static func _hub_roof_box(pos: Vector3, box: Vector3, eave: float, slen: float) -> Dictionary:
+	return {
+		"x": pos.x,
+		"z": pos.z + eave * 0.35,
+		"hx": box.x * 0.5 + 0.08,
+		"hz": box.z * 0.5 + eave + 0.35,
+		"len": slen
+	}
 static func _hub_box_of(pos: Vector3, box: Vector3, slen: float) -> Dictionary:
-	return {"x": pos.x, "z": pos.z, "hx": box.x * 0.5 + 0.32, "hz": box.z * 0.5 + 0.32, "len": slen}
+	return {"x": pos.x, "z": pos.z, "hx": box.x * 0.5 + 0.06, "hz": box.z * 0.5 + 0.06, "len": slen}
 
 static func _hub_inside(wx: float, wz: float, b: Dictionary) -> bool:
 	return absf(wx - float(b["x"])) <= float(b["hx"]) and absf(wz - float(b["z"])) <= float(b["hz"])
@@ -927,23 +911,21 @@ static func _hub_inside(wx: float, wz: float, b: Dictionary) -> bool:
 static func _hub_lock_shadows(img: Image, org: Vector2, layout: Node) -> int:
 	var boxes: Array = []
 	if layout != null and layout.has_method("hall_pos"):
-		boxes.append(_hub_box_of(layout.hall_pos(), layout.hall_box, 3.4))
-		boxes.append(_hub_box_of(layout.wing_pos(), layout.wing_box, 2.6))
-		boxes.append(_hub_box_of(layout.stall_pos(), layout.stall_box, 2.8))
+		boxes.append(_hub_box_of(layout.hall_pos(), layout.hall_box, 4.6))
+		boxes.append(_hub_box_of(layout.wing_pos(), layout.wing_box, 3.8))
+		boxes.append(_hub_box_of(layout.stall_pos(), layout.stall_box, 3.2))
 	else:
-		boxes.append(_hub_box_of(Vector3(8.2, 0.0, 6.0), Vector3(5.6, 3.4, 4.2), 3.4))
-		boxes.append(_hub_box_of(Vector3(25.0, 0.0, 8.0), Vector3(4.6, 2.4, 3.4), 2.8))
+		boxes.append(_hub_box_of(Vector3(8.2, 0.0, 6.0), Vector3(5.6, 3.4, 4.2), 4.6))
+		boxes.append(_hub_box_of(Vector3(25.0, 0.0, 8.0), Vector3(4.6, 2.4, 3.4), 3.2))
 	printerr("bake_camp: boxes=%d" % boxes.size())
 	var away := Vector2(0.406138, 0.913811)
-	var sub: float = float(Stamp.SUB)
+	var sub: float = float(HUB_SUB)
 	var wrote: int = 0
 	var bi: int = 0
 	while bi < boxes.size():
 		wrote += _hub_stamp_lock_box(img, org, sub, img.get_width(), img.get_height(), boxes[bi], away)
 		bi += 1
 	return wrote
-
-
 static func _hub_stamp_lock_box(img: Image, org: Vector2, sub: float, w: int, h: int, b: Dictionary, away: Vector2) -> int:
 	var slen: float = float(b["len"])
 	var cx: float = float(b["x"])

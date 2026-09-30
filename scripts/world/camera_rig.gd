@@ -51,13 +51,13 @@ func _place_local() -> void:
 
 
 func apply_zoom(z: float) -> void:
+	if warm_hold:
+		return
 	if cam == null:
 		return
-	var zoom := clampf(z, T.ZOOM_MIN, T.ZOOM_MAX)
+	var zoom: float = clampf(z, T.ZOOM_MIN, T.ZOOM_MAX)
 	cam.size = 1080.0 / T.PX / zoom
 	cam.far = 260.0
-
-
 func apply_size(s: float) -> void:
 	if cam == null:
 		return

@@ -46,14 +46,14 @@ static func clear_generated(host: Node3D) -> Node3D:
 	return node
 
 
-static func realize_editor(host: Node3D, _layout: Node3D) -> void:
+static func realize_editor(host: Node3D, layout: Node3D) -> void:
+	host.set_meta("wdb_layout", layout)
 	var bucket: Node3D = clear_generated(host)
+	bucket.set_meta("wdb_layout", layout)
 	ground(bucket)
 	buildings(bucket)
 	var ViewS: GDScript = load("res://scripts/world/camp_view.gd") as GDScript
 	ViewS.fence(bucket)
-
-
 static func world(host: Node3D) -> void:
 	EnvKit.apply(host, Color(0.45, 0.58, 0.62), Color(0.95, 0.86, 0.7), 1.15, Vector3(-50.0, 30.0, 0.0), 0.9)
 
@@ -104,6 +104,7 @@ static func guild(host: Node3D) -> void:
 	var hall_box: Vector3 = lay.hall_box if lay else HALL_SIZE
 	var wing_at: Vector3 = lay.wing_pos() if lay else wing_pos()
 	var wing_box: Vector3 = lay.wing_box if lay else WING_SIZE
+	wing_box.y = maxf(wing_box.y, 3.8)
 	var hall_body: StaticBody3D = box(host, hall_at, hall_box, Color(0.45, 0.32, 0.22))
 	var wing_body: StaticBody3D = box(host, wing_at, wing_box, Color(0.5, 0.38, 0.28))
 	face(hall_body, hall_box, "res://assets/sprites/buildings/guild.png", 0.0, hall_box.x)
@@ -112,15 +113,18 @@ static func guild(host: Node3D) -> void:
 	var hs: float = lay.awning_slope("Hall") if lay else 0.10
 	var hv: float = lay.awning_valance("Hall") if lay else 0.16
 	var he: float = lay.eave_for("Hall") if lay else ROOF_EAVE
-	var wd: float = lay.awning_depth("Wing") if lay else 0.48
-	var ws: float = lay.awning_slope("Wing") if lay else 0.10
-	var wv: float = lay.awning_valance("Wing") if lay else 0.16
 	var we: float = lay.eave_for("Wing") if lay else ROOF_EAVE
 	awning(hall_body, hall_box, hd, hs, hv, he)
-	awning(wing_body, wing_box, wd, ws, wv, we)
-	guild_roofs(host)
-
-
+	var hall_tile: float = lay.tile_for("Hall") if lay else TILE_W
+	var wing_tile: float = lay.tile_for("Wing") if lay else TILE_W
+	var hall_uv: Vector2 = lay.hall_uv_off if lay else Vector2.ZERO
+	var wing_uv: Vector2 = lay.wing_uv_off if lay else Vector2.ZERO
+	var hx0: float = hall_at.x - hall_box.x * 0.5
+	var hz0: float = hall_at.z - hall_box.z * 0.5
+	var wx0: float = wing_at.x - wing_box.x * 0.5
+	var wz0: float = wing_at.z - wing_box.z * 0.5
+	MeshS.pitched_roof(hall_body, hall_box, he, 1.15, Vector3(hx0, 0.0, hz0), hall_tile, hall_uv)
+	MeshS.pitched_roof(wing_body, wing_box, we, 1.05, Vector3(wx0, 0.0, wz0), wing_tile, wing_uv)
 static func guild_roofs(host: Node3D) -> void:
 	MeshS.guild_roofs(host)
 
@@ -139,18 +143,19 @@ static func solid(
 	var lay: Node3D = _layout_from_build_host(host)
 	if lay:
 		eave = lay.eave_for("Stall")
-	roof_plane(
-		body,
-		Vector3(0.0, box_size.y * 0.5 + 0.03, eave * 0.5),
-		Vector2(box_size.x + 0.06, box_size.z + eave),
-		Vector3(x0, 0.0, z0),
-		tarp,
-		lay.tile_for("Stall") if lay else TILE_W,
-		lay.stall_uv_off if lay else Vector2.ZERO
-	)
+	if tarp:
+		MeshS.rumpled_tarp(body, box_size, eave, Vector3(x0, 0.0, z0))
+	else:
+		roof_plane(
+			body,
+			Vector3(0.0, box_size.y * 0.5 + 0.03, eave * 0.5),
+			Vector2(box_size.x + 0.06, box_size.z + eave),
+			Vector3(x0, 0.0, z0),
+			false,
+			lay.tile_for("Stall") if lay else TILE_W,
+			lay.stall_uv_off if lay else Vector2.ZERO
+		)
 	face(body, box_size, tex, 0.0, box_size.x)
-
-
 static func face(body: Node3D, box_size: Vector3, tex: String, x_off: float, face_w: float) -> void:
 	if not ResourceLoader.exists(tex):
 		return
@@ -206,6 +211,10 @@ static func awning(
 static func _layout_from_build_host(host: Node3D) -> Node3D:
 	var n: Node = host
 	while n != null:
+		if n.has_meta("wdb_layout"):
+			var tagged: Node = n.get_meta("wdb_layout") as Node
+			if tagged is Node3D:
+				return tagged as Node3D
 		var lay: Node = n.get_node_or_null("Layout")
 		if lay is Node3D:
 			return lay as Node3D

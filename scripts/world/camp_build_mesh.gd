@@ -422,7 +422,7 @@ static func attach_awning(
 
 
 
-	var z0: float = box_size.z * 0.5 + eave + 0.02
+	var z0: float = box_size.z * 0.5 + eave
 
 
 
@@ -430,7 +430,7 @@ static func attach_awning(
 
 
 
-	var y_back: float = box_size.y * 0.5 - 0.02
+	var y_back: float = box_size.y * 0.5 + 0.02
 
 
 
@@ -711,8 +711,8 @@ static func ground(host: Node3D) -> void:
 	_band(host, 31, 4, ox + gw - 1, 24, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
 	# yard dirt + path plus
 	_band(host, 2, 4, 30, 24, y, "res://assets/tiles/packed_dirt.png", Color(0.46, 0.42, 0.30))
-	_band(host, 6, 13, 26, 16, y, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28))
-	_band(host, 15, 8, 17, 22, y, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28))
+	_band(host, 6, 13, 26, 16, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28))
+	_band(host, 15, 8, 17, 22, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28))
 	_fac.outer_grass(host)
 
 
@@ -802,204 +802,68 @@ static func grass_pad(
 
 
 
+static func pitched_roof(
+	body: Node3D,
+	box_size: Vector3,
+	eave: float,
+	rise: float,
+	world_min: Vector3,
+	tile: float,
+	uv_off: Vector2
+) -> void:
+	var hx: float = box_size.x * 0.5 + 0.04
+	var zn: float = -box_size.z * 0.5
+	var zs: float = box_size.z * 0.5 + eave
+	var y_lid: float = box_size.y * 0.5 + 0.03
+	var y_ridge: float = y_lid + rise
+	var nl := Vector3(-hx, y_ridge, zn)
+	var nr := Vector3(hx, y_ridge, zn)
+	var sl := Vector3(-hx, y_lid, zs)
+	var sr := Vector3(hx, y_lid, zs)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var u0 := Vector2(0.0, 0.0)
+	var u1 := Vector2(0.0, 1.0)
+	var u2 := Vector2(1.0, 1.0)
+	var u3 := Vector2(1.0, 0.0)
+	_quad(st, nl, sl, sr, nr, u0, u1, u2, u3)
+	st.generate_normals()
+	var mi := MeshInstance3D.new()
+	mi.name = "PitchedRoof"
+	mi.mesh = st.commit()
+	mi.material_override = roof_mat(Vector2(box_size.x, box_size.z + eave), world_min, tile, uv_off)
+	body.add_child(mi)
+static func rumpled_tarp(body: Node3D, box_size: Vector3, eave: float, world_min: Vector3) -> void:
+	var cols: int = 5
+	var rows: int = 4
+	var hx: float = box_size.x * 0.5 + 0.03
+	var zn: float = -box_size.z * 0.5
+	var zs: float = box_size.z * 0.5 + eave
+	var y0: float = box_size.y * 0.5 + 0.04
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var r: int = 0
+	while r < rows:
+		var c: int = 0
+		while c < cols:
+			var u0: float = float(c) / float(cols)
+			var u1: float = float(c + 1) / float(cols)
+			var v0: float = float(r) / float(rows)
+			var v1: float = float(r + 1) / float(rows)
+			var p00 := Vector3(-hx + 2.0 * hx * u0, _tarp_y(u0, v0, y0), zn + (zs - zn) * v0)
+			var p10 := Vector3(-hx + 2.0 * hx * u1, _tarp_y(u1, v0, y0), zn + (zs - zn) * v0)
+			var p11 := Vector3(-hx + 2.0 * hx * u1, _tarp_y(u1, v1, y0), zn + (zs - zn) * v1)
+			var p01 := Vector3(-hx + 2.0 * hx * u0, _tarp_y(u0, v1, y0), zn + (zs - zn) * v1)
+			_quad(st, p00, p01, p11, p10, Vector2(u0, v0), Vector2(u0, v1), Vector2(u1, v1), Vector2(u1, v0))
+			c += 1
+		r += 1
+	st.generate_normals()
+	var mi := MeshInstance3D.new()
+	mi.name = "RumpledTarp"
+	mi.mesh = st.commit()
+	mi.material_override = tarp_mat(Vector2(box_size.x + eave, box_size.z + eave), world_min)
+	body.add_child(mi)
+static func _tarp_y(u: float, v: float, y0: float) -> float:
+	return y0 + 0.12 * sin(u * 9.42478) * sin(v * 6.28318) + 0.05 * sin(u * 18.8496 + 0.7) + 0.04 * sin(v * 12.5664 + 1.1)
 static func guild_roofs(host: Node3D) -> void:
-
-
-
-	var _fac = load("res://scripts/world/camp_build.gd")
-
-
-
-	var lay: Node3D = _fac._layout_from_build_host(host)
-
-
-
-	var hall_at: Vector3 = lay.hall_pos() if lay else HALL_POS
-
-
-
-	var hall_box: Vector3 = lay.hall_box if lay else HALL_SIZE
-
-
-
-	var eave_h: float = lay.eave_for("Hall") if lay else ROOF_EAVE
-
-
-
-	var y: float = hall_at.y + hall_box.y * 0.5 + 0.03
-
-
-
-	var hx0: float = hall_at.x - hall_box.x * 0.5
-
-
-
-	var hz0: float = hall_at.z - hall_box.z * 0.5
-
-
-
-	var hall_node := Node3D.new()
-
-
-
-	if lay:
-
-
-
-		hall_node.global_transform = lay.roof_hall().global_transform
-
-
-
-	else:
-
-
-
-		hall_node.position = Vector3(hall_at.x, y, hz0 + (hall_box.z + eave_h) * 0.5)
-
-
-
-	host.add_child(hall_node)
-
-
-
-	var hall_uv: Vector2 = lay.hall_uv_off if lay else Vector2.ZERO
-
-
-
-	var hall_tile: float = lay.tile_for("Hall") if lay else TILE_W
-
-
-
-	_fac.roof_plane(
-
-
-
-		hall_node,
-
-
-
-		Vector3.ZERO,
-
-
-
-		Vector2(hall_box.x, hall_box.z + eave_h),
-
-
-
-		Vector3(hx0, 0.0, hz0),
-
-
-
-		false,
-
-
-
-		hall_tile,
-
-
-
-		hall_uv
-
-
-
-	)
-
-
-
-	var wp: Vector3 = lay.wing_pos() if lay else _fac.wing_pos()
-
-
-
-	var wing_box: Vector3 = lay.wing_box if lay else WING_SIZE
-
-
-
-	var eave_w: float = lay.eave_for("Wing") if lay else ROOF_EAVE
-
-
-
-	var wx0: float = wp.x - wing_box.x * 0.5
-
-
-
-	var wz0: float = wp.z - wing_box.z * 0.5
-
-
-
-	var wing_node := Node3D.new()
-
-
-
-	if lay:
-
-
-
-		wing_node.global_transform = lay.roof_wing().global_transform
-
-
-
-	else:
-
-
-
-		wing_node.position = Vector3(wx0 + wing_box.x * 0.5, y + 0.01, wz0 + (wing_box.z + eave_w) * 0.5)
-
-
-
-	host.add_child(wing_node)
-
-
-
-	var wing_uv: Vector2 = lay.wing_uv_off if lay else Vector2.ZERO
-
-
-
-	var wing_tile: float = lay.tile_for("Wing") if lay else TILE_W
-
-
-
-	_fac.roof_plane(
-
-
-
-		wing_node,
-
-
-
-		Vector3.ZERO,
-
-
-
-		Vector2(wing_box.x, wing_box.z + eave_w),
-
-
-
-		Vector3(wx0, 0.0, wz0),
-
-
-
-		false,
-
-
-
-		wing_tile,
-
-
-
-		wing_uv
-
-
-
-	)
-
-
-
-
-
-
-
-
-
-
-
-
+	pass

@@ -16,7 +16,7 @@ const AWNING_DEPTH_DEFAULT: float = 0.48
 const AWNING_SLOPE_DEFAULT: float = 0.10
 const AWNING_VALANCE_DEFAULT: float = 0.16
 const HALL_SIZE_DEFAULT := Vector3(5.6, 3.4, 4.2)
-const WING_SIZE_DEFAULT := Vector3(3.8, 2.7, 3.2)
+const WING_SIZE_DEFAULT := Vector3(3.8, 3.8, 3.2)
 const HALL_POS_DEFAULT := Vector3(8.2, 1.7, 6.0)
 const STALL_POS_DEFAULT := Vector3(25.0, 1.2, 8.0)
 const STALL_SIZE_DEFAULT := Vector3(4.6, 2.4, 3.4)
@@ -190,26 +190,29 @@ func spot(spot_id: String) -> Node3D:
 	return _leaf("Spots/" + spot_id)
 
 
+func _pose_of(n: Node3D) -> Vector3:
+	if n == null:
+		return Vector3.ZERO
+	if is_inside_tree() and n.is_inside_tree():
+		return n.global_position
+	var xf: Transform3D = n.transform
+	var p: Node = n.get_parent()
+	while p is Node3D:
+		if p == self:
+			break
+		xf = (p as Node3D).transform * xf
+		p = p.get_parent()
+	return xf.origin
 func hall_pos() -> Vector3:
-	return hall().global_position
-
-
+	return _pose_of(hall())
 func wing_pos() -> Vector3:
-	return wing().global_position
-
-
+	return _pose_of(wing())
 func stall_pos() -> Vector3:
-	return stall().global_position
-
-
+	return _pose_of(stall())
 func spot_pos(spot_id: String) -> Vector3:
-	return spot(spot_id).global_position
-
-
+	return _pose_of(spot(spot_id))
 func roof_origin(which: String) -> Vector3:
-	return _leaf(which).global_position
-
-
+	return _pose_of(_leaf(which))
 func roof_uv(which: String) -> Vector2:
 	var n: Node3D = _leaf(which)
 	var authored: Vector2 = hall_uv_off
