@@ -247,145 +247,41 @@ static func awning_mat(dim: Vector2, world_min: Vector3) -> Material:
 
 
 static func wrap_mat(
-
-
-
 	path: String,
-
-
-
 	dim: Vector2,
-
-
-
 	world_min: Vector3,
-
-
-
 	fallback: Color,
-
-
-
 	tint: Color,
-
-
-
 	single_sheet: bool = false,
-
-
-
 	russet: bool = false,
-
-
-
 	tile: float = TILE_W,
-
-
-
 	uv_off: Vector2 = Vector2.ZERO
-
-
-
 ) -> Material:
-
-
-
 	if not ResourceLoader.exists(path):
-
-
-
 		var fb := StandardMaterial3D.new()
-
-
-
 		fb.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-
-
-
 		fb.albedo_color = fallback
-
-
-
 		return fb
-
-
-
 	var src: Texture2D = load(path)
-
-
-
 	var mat := ShaderMaterial.new()
-
-
-
 	mat.shader = WrapShader.wrap_shader()
-
-
-
 	mat.set_shader_parameter("albedo_tex", src)
-
-
-
 	var use_tile: float = tile if tile > 0.05 else TILE_W
-
-
-
 	if single_sheet:
-
-
-
 		mat.set_shader_parameter("uv_scale", Vector2.ONE)
-
-
-
 		mat.set_shader_parameter("uv_off", Vector2.ZERO)
-
-
-
 	else:
-
-
-
 		mat.set_shader_parameter("uv_scale", Vector2(dim.x / use_tile, dim.y / use_tile))
-
-
-
 		mat.set_shader_parameter(
-
-
-
 			"uv_off",
-
-
-
 			Vector2(world_min.x / use_tile, world_min.z / use_tile) + uv_off
-
-
-
 		)
-
-
-
 	mat.set_shader_parameter("tint", Vector3(tint.r, tint.g, tint.b))
-
-
-
 	mat.set_shader_parameter("russet", 1.0 if russet else 0.0)
-
-
-
+	mat.set_shader_parameter("shade_use", 0.0)
+	mat.set_shader_parameter("shade_lo", 1.0)
+	mat.set_shader_parameter("shade_hi", 1.0)
 	return mat
-
-
-
-
-
-
-
-
-
-
-
 static func attach_awning(
 
 
@@ -828,14 +724,22 @@ static func pitched_roof(
 	var u3 := Vector2(1.0, 0.0)
 	_quad(st, nl, sl, sr, nr, u0, u1, u2, u3)
 	st.generate_normals()
+	var fall_h: float = zs - zn
+	var fall_len: float = sqrt(fall_h * fall_h + rise * rise)
+	var mat: Material = roof_mat(Vector2(hx * 2.0, fall_len), world_min, tile, uv_off)
+	if mat is ShaderMaterial:
+		var sm: ShaderMaterial = mat
+		sm.set_shader_parameter("shade_use", 1.0)
+		sm.set_shader_parameter("shade_lo", 0.76)
+		sm.set_shader_parameter("shade_hi", 1.08)
 	var mi := MeshInstance3D.new()
 	mi.name = "PitchedRoof"
 	mi.mesh = st.commit()
-	mi.material_override = roof_mat(Vector2(box_size.x, box_size.z + eave), world_min, tile, uv_off)
+	mi.material_override = mat
 	body.add_child(mi)
 static func rumpled_tarp(body: Node3D, box_size: Vector3, eave: float, world_min: Vector3) -> void:
-	var cols: int = 5
-	var rows: int = 4
+	var cols: int = 9
+	var rows: int = 7
 	var hx: float = box_size.x * 0.5 + 0.03
 	var zn: float = -box_size.z * 0.5
 	var zs: float = box_size.z * 0.5 + eave
@@ -864,6 +768,11 @@ static func rumpled_tarp(body: Node3D, box_size: Vector3, eave: float, world_min
 	mi.material_override = tarp_mat(Vector2(box_size.x + eave, box_size.z + eave), world_min)
 	body.add_child(mi)
 static func _tarp_y(u: float, v: float, y0: float) -> float:
-	return y0 + 0.12 * sin(u * 9.42478) * sin(v * 6.28318) + 0.05 * sin(u * 18.8496 + 0.7) + 0.04 * sin(v * 12.5664 + 1.1)
+	return (
+		y0
+		+ 0.045 * sin(u * 9.42478) * sin(v * 6.28318)
+		+ 0.02 * sin(u * 18.8496 + 0.7)
+		+ 0.015 * sin(v * 12.5664 + 1.1)
+	)
 static func guild_roofs(host: Node3D) -> void:
 	pass

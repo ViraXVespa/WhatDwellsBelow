@@ -17,6 +17,9 @@ uniform vec2 uv_scale = vec2(1.0);
 uniform vec2 uv_off = vec2(0.0);
 uniform vec3 tint = vec3(1.0);
 uniform float russet = 0.0;
+uniform float shade_use = 0.0;
+uniform float shade_lo = 1.0;
+uniform float shade_hi = 1.0;
 void fragment() {
 	vec2 uv = fract(UV * uv_scale + uv_off);
 	vec3 c = texture(albedo_tex, uv).rgb;
@@ -29,6 +32,9 @@ void fragment() {
 		c = mix(c, hi, smoothstep(0.46, 0.80, l));
 	} else {
 		c *= tint;
+	}
+	if (shade_use > 0.5) {
+		c *= mix(shade_lo, shade_hi, clamp(UV.y, 0.0, 1.0));
 	}
 	ALBEDO = c;
 	ROUGHNESS = 1.0;
