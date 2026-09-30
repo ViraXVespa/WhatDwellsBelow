@@ -29,6 +29,8 @@ func _ready() -> void:
 	LoadTiming.mark("camp_enter")
 	var baked: bool = has_node("Generated") and get_node("Generated").get_child_count() > 0
 	LoadTiming.note("camp_geo", "baked" if baked else "build")
+	if baked:
+		_strip_baked_env(get_node("Generated"))
 	Build.world(self)
 	LoadTiming.mark("camp_world")
 	LightRt.prepare_hub(
@@ -40,6 +42,7 @@ func _ready() -> void:
 		_layout
 	)
 	LightRt.hub_crystal = Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z)
+	LightRt.rebind_tree(self)
 	LoadTiming.mark("camp_light")
 	if not baked:
 		Build.ground(self)
@@ -314,3 +317,17 @@ func _hud() -> void:
 	prompt.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.03))
 	prompt.add_theme_constant_override("outline_size", 6)
 	layer.add_child(prompt)
+
+
+func _strip_baked_env(n: Node) -> void:
+	if n == null:
+		return
+	var i: int = n.get_child_count() - 1
+	while i >= 0:
+		var c: Node = n.get_child(i)
+		if c is WorldEnvironment or c is DirectionalLight3D:
+			n.remove_child(c)
+			c.free()
+		else:
+			_strip_baked_env(c)
+		i -= 1

@@ -111,7 +111,7 @@ static func zoom() -> float:
 	var raw: String = _arg_val("--wdb-shot-zoom")
 	if raw.is_empty():
 		return 1.0
-	return maxf(0.1, raw.to_float())
+	return maxf(0.01, raw.to_float())
 
 
 static func has_player_pos() -> bool:
@@ -195,11 +195,21 @@ static func _apply_pose(host: Node) -> void:
 		map_n.visible = hud_on()
 	if not hud_on():
 		_hide_label3d(host)
+	var z: float = zoom()
+	App.cam_zoom = z
+	var rig: Node = host.get_tree().get_first_node_in_group("camera_rig")
+	if rig == null and player != null:
+		rig = player.get_node_or_null("CameraRig")
+	if rig != null and rig.has_method("apply_size"):
+		var T = load("res://scripts/data/tunables.gd")
+		rig.warm_hold = true
+		rig.call("apply_size", 1080.0 / float(T.PX) / maxf(0.01, z))
 	var cam: Camera3D = host.get_viewport().get_camera_3d()
 	if cam != null:
-		var z: float = zoom()
 		if z != 1.0:
-			cam.fov = clampf(cam.fov / z, 10.0, 120.0)
+			cam.fov = clampf(cam.fov / z, 1.0, 170.0)
+			if rig == null or not rig.has_method("apply_size"):
+				cam.size = maxf(0.05, cam.size / z)
 		if player != null:
 			var look: Vector3 = player.global_position + Vector3(cam_x(), 0.0, cam_z())
 			cam.look_at(look, Vector3.UP)
