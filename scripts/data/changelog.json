@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.5.7",
+			"points": [
+				{
+					"text": "Add posed-camera postcard tool (`tools/run_shots.py`, `shot_tool.gd`)."
+				},
+				{
+					"text": "Document the shot-tool page and skill; catalog and web prove row."
+				},
+				{
+					"text": "Restored catalog pin grok_web_w4 (Grok Web Results Week 4) at 313bb3e3dce29a3d75f4214c0cdadfe16ef9ba00 so Pages can export archives/grok_web_w4."
+				}
+			],
+			"summary": "Postcard shot tool"
+		},
+		{
 			"label": "0.5.6",
 			"points": [
 				{
