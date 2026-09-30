@@ -182,6 +182,41 @@ func _pump_enter_async() -> void:
 	if present and present.has_method("release_enter"):
 		present.release_enter()
 
+func _bake_camp() -> void:
+	var packed = load(CAMP_SCENE)
+	if packed == null:
+		push_error("bake_camp: camp.tscn missing")
+		get_tree().quit()
+		return
+	var camp = packed.instantiate()
+	var LayoutS = load("res://scripts/world/camp_layout.gd")
+	var Build = load("res://scripts/world/camp_build.gd")
+	var layout = LayoutS.on_camp(camp)
+	layout.ensure_tree()
+	Build.realize_editor(camp, layout)
+	var gen = camp.get_node_or_null("Generated")
+	if gen:
+		_mark_bake_owner(gen, camp)
+	var out = PackedScene.new()
+	var err = out.pack(camp)
+	if err != OK:
+		push_error("bake_camp: pack failed %s" % str(err))
+		get_tree().quit()
+		return
+	err = ResourceSaver.save(out, CAMP_SCENE)
+	if err != OK:
+		push_error("bake_camp: save failed %s" % str(err))
+	get_tree().quit()
+
+
+func _mark_bake_owner(n, own) -> void:
+	n.owner = own
+	var i = 0
+	while i < n.get_child_count():
+		_mark_bake_owner(n.get_child(i), own)
+		i += 1
+
+
 func _after_enter() -> void:
 	ui_open = false
 	Touch.clear_world()

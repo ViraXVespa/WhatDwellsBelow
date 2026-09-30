@@ -55,6 +55,7 @@ def _extra_flags(args: argparse.Namespace) -> list[str]:
         f"--wdb-shot-zoom={args.zoom}",
         f"--wdb-shot-cx={args.cx}",
         f"--wdb-shot-cz={args.cz}",
+        "--wdb-shot-scene=camp" if getattr(args, "scene", "dungeon") in ("camp", "hub") else "--wdb-shot-scene=dungeon",
     ]
     if args.width > 0:
         extra.append(f"--wdb-shot-width={args.width}")
@@ -160,7 +161,7 @@ def _write_invoke_ps1(
         "--wdb-shot",
         f"--wdb-shot-seed={seed}",
         "--wdb-shot-show=1" if show_window else "--wdb-shot-show=0",
-        f"--wdb-shot-floor={floor_n}",
+            "--wdb-shot-floor={floor_n}",
         f"--wdb-shot-out={png}",
         f"--wdb-shot-scale={scale_pct}",
         f"--wdb-shot-settle-ms={settle_ms}",
@@ -335,6 +336,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     p.add_argument("--mode", choices=("web", "build", "user"), default="user")
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--scene", choices=("dungeon", "camp", "hub"), default="dungeon")
     p.add_argument("--floor", type=int, default=1)
     p.add_argument("--scale", type=int, default=0, help="PNG scale percent; 0 picks mode default")
     p.add_argument("--settle-ms", type=int, default=SETTLE_MS)

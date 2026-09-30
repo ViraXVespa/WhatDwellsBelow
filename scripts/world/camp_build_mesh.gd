@@ -687,159 +687,42 @@ static func _tri(
 
 
 static func ground(host: Node3D) -> void:
-
-
-
 	var _fac = load("res://scripts/world/camp_build.gd")
-
-
-
 	var lay: Node3D = _fac._layout_from_build_host(host)
-
-
-
 	var gw: int = int(lay.ground_w) if lay else GROUND_W
-
-
-
 	var gd: int = int(lay.ground_d) if lay else GROUND_D
-
-
-
 	var ox: int = int(lay.ground_ox) if lay else GROUND_OX
-
-
-
 	var oz: int = int(lay.ground_oz) if lay else GROUND_OZ
-
-
-
 	var body := StaticBody3D.new()
-
-
-
 	body.name = "Ground"
-
-
-
 	body.collision_layer = 1
-
-
-
 	host.add_child(body)
-
-
-
 	var cs := CollisionShape3D.new()
-
-
-
 	var sh := BoxShape3D.new()
-
-
-
 	sh.size = Vector3(float(gw), 0.4, float(gd))
-
-
-
 	cs.shape = sh
-
-
-
 	cs.position = Vector3(float(ox) + float(gw) * 0.5, -0.2, float(oz) + float(gd) * 0.5)
-
-
-
 	body.add_child(cs)
-
-
-
-	var grass: Array = []
-
-
-
-	var packed: Array = []
-
-
-
-	var path: Array = []
-
-
-
-	for z in gd:
-
-
-
-		for x in gw:
-
-
-
-			var gx: int = ox + x
-
-
-
-			var gz: int = oz + z
-
-
-
-			var pos := Vector3(float(gx) + 0.5, T.FLOOR_Y, float(gz) + 0.5)
-
-
-
-			var in_yard := gx >= 2 and gx <= 30 and gz >= 4 and gz <= 24
-
-
-
-			var on_path := (gz >= 13 and gz <= 16 and gx >= 6 and gx <= 26) or (gx >= 15 and gx <= 17 and gz >= 8 and gz <= 22)
-
-
-
-			if not in_yard:
-
-
-
-				grass.append(pos)
-
-
-
-			elif on_path:
-
-
-
-				path.append(pos)
-
-
-
-			else:
-
-
-
-				packed.append(pos)
-
-
-
-	tile_layer(host, "res://assets/tiles/grass_field.png", grass, Color(0.34, 0.46, 0.24))
-
-
-
-	tile_layer(host, "res://assets/tiles/packed_dirt.png", packed, Color(0.46, 0.42, 0.30))
-
-
-
-	tile_layer(host, "res://assets/tiles/plaza_path.png", path, Color(0.44, 0.38, 0.28))
-
-
-
+	var y: float = T.FLOOR_Y
+	# grass frame
+	_band(host, ox, oz, ox + gw - 1, 3, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
+	_band(host, ox, 25, ox + gw - 1, oz + gd - 1, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
+	_band(host, ox, 4, 1, 24, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
+	_band(host, 31, 4, ox + gw - 1, 24, y, "res://assets/tiles/grass_field.png", Color(0.34, 0.46, 0.24))
+	# yard dirt + path plus
+	_band(host, 2, 4, 30, 24, y, "res://assets/tiles/packed_dirt.png", Color(0.46, 0.42, 0.30))
+	_band(host, 6, 13, 26, 16, y, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28))
+	_band(host, 15, 8, 17, 22, y, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28))
 	_fac.outer_grass(host)
 
 
-
-
-
-
-
-
-
+static func _band(host: Node3D, x0: int, z0: int, x1: int, z1: int, y: float, tex_path: String, fallback: Color) -> void:
+	if x1 < x0 or z1 < z0:
+		return
+	var sx: float = float(x1 - x0 + 1) * T.TILE
+	var sz: float = float(z1 - z0 + 1) * T.TILE
+	var c := Vector3(float(x0) + sx * 0.5, y, float(z0) + sz * 0.5)
+	grass_pad(host, c, Vector2(sx, sz), tex_path, fallback)
 
 
 static func tile_layer(host: Node3D, tex_path: String, points: Array, fallback: Color) -> void:
@@ -1108,6 +991,8 @@ static func guild_roofs(host: Node3D) -> void:
 
 
 	)
+
+
 
 
 

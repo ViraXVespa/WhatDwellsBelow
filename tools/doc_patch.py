@@ -325,4 +325,15 @@ def dump_job(root: Path | None, job: str, script: str | None = None) -> tuple[in
         err = (proc.stderr or b"").decode("utf-8", errors="replace")
         if err:
             out(err[-2000:])
+    broke = "COMPILE" in body or "clean=false" in body or compile_broke(body)
+    if broke and hits:
+        extra: list[str] = []
+        for p in hits[0].parent.glob("*"):
+            n = p.name.lower()
+            if p.is_file() and ("err" in n) and p.suffix.lower() in {".log", ".txt"}:
+                extra.append(p.read_text(encoding="utf-8-sig", errors="replace")[-4000:])
+        if extra:
+            out("--- err log ---")
+            out("\n".join(extra))
+            body = body + "\n" + "\n".join(extra)
     return int(proc.returncode), body

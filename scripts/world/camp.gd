@@ -11,6 +11,7 @@ const LayoutS := preload("res://scripts/world/camp_layout.gd")
 var player: CharacterBody3D
 var dummy: CharacterBody3D
 var ui: CanvasLayer
+var hud: CanvasLayer
 var hint: Label
 var prompt: Label
 var _layout: Node3D
@@ -26,6 +27,8 @@ func _ready() -> void:
 		return
 	App.in_dungeon = false
 	LoadTiming.mark("camp_enter")
+	var baked: bool = has_node("Generated") and get_node("Generated").get_child_count() > 0
+	LoadTiming.note("camp_geo", "baked" if baked else "build")
 	Build.world(self)
 	LoadTiming.mark("camp_world")
 	LightRt.prepare_hub(
@@ -37,11 +40,14 @@ func _ready() -> void:
 		_layout
 	)
 	LightRt.hub_crystal = Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z)
-	Build.ground(self)
+	if not baked:
+		Build.ground(self)
 	LoadTiming.mark("camp_ground")
-	Build.buildings(self)
+	if not baked:
+		Build.buildings(self)
 	LoadTiming.mark("camp_buildings")
-	View.fence(self)
+	if not baked:
+		View.fence(self)
 	LoadTiming.mark("camp_fence")
 	var PlayerS: GDScript = load("res://scripts/world/player.gd") as GDScript
 	player = PlayerS.new() as CharacterBody3D
@@ -262,12 +268,12 @@ shader_type spatial;
 render_mode unshaded, cull_disabled, depth_draw_always;
 uniform sampler2D albedo_tex : source_color, filter_nearest;
 void fragment() {
-    vec4 c = texture(albedo_tex, UV);
-    if (UV.y > 0.50 || c.a < 0.1) {
-        discard;
-    }
-    ALBEDO = c.rgb;
-    ALPHA = 1.0;
+	vec4 c = texture(albedo_tex, UV);
+	if (UV.y > 0.50 || c.a < 0.1) {
+		discard;
+	}
+	ALBEDO = c.rgb;
+	ALPHA = 1.0;
 }
 """
 	var mat := ShaderMaterial.new()
@@ -283,6 +289,7 @@ func _music() -> void:
 
 func _hud() -> void:
 	var layer := CanvasLayer.new()
+	hud = layer
 	add_child(layer)
 	var panel := ColorRect.new()
 	panel.color = Color(0.1, 0.08, 0.06, 0.82)

@@ -53,6 +53,13 @@ static func _arg_str(key: String, fallback: String) -> String:
 	return fallback
 
 
+static func scene_name() -> String:
+	var s: String = _arg_str("--wdb-shot-scene", "dungeon")
+	if s == "camp" or s == "hub":
+		return "camp"
+	return "dungeon"
+
+
 static func run_seed() -> int:
 	var n: int = _arg_int("--wdb-shot-seed", 42)
 	if n == 0:
@@ -177,9 +184,17 @@ static func _apply_pose(host: Node) -> void:
 	var hud_n: Node = host.get("hud") as Node
 	if hud_n != null:
 		hud_n.visible = hud_on()
+	var hint_n: Node = host.get("hint") as Node
+	if hint_n != null:
+		hint_n.visible = hud_on()
+	var prompt_n: Node = host.get("prompt") as Node
+	if prompt_n != null:
+		prompt_n.visible = hud_on()
 	var map_n: Node = host.get("map_layer") as Node
 	if map_n != null:
 		map_n.visible = hud_on()
+	if not hud_on():
+		_hide_label3d(host)
 	var cam: Camera3D = host.get_viewport().get_camera_3d()
 	if cam != null:
 		var z: float = zoom()
@@ -239,3 +254,12 @@ static func _quit(host: Node, code: int) -> void:
 	if tree == null:
 		return
 	tree.create_timer(0.2).timeout.connect(func() -> void: tree.quit(code))
+
+
+static func _hide_label3d(n: Node) -> void:
+	if n is Label3D:
+		(n as Label3D).visible = false
+	var i: int = 0
+	while i < n.get_child_count():
+		_hide_label3d(n.get_child(i))
+		i += 1

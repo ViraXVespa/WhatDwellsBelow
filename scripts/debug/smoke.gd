@@ -50,6 +50,9 @@ static func hold_player() -> bool:
 
 
 static func route_boot() -> bool:
+	if "--wdb-bake-camp" in args():
+		App.call_deferred("_bake_camp")
+		return true
 	if LoadTiming.hub_active():
 		App.character_type = "male"
 		App.character_chosen = true
@@ -71,9 +74,12 @@ static func route_boot() -> bool:
 		App.character_type = "male"
 		App.character_chosen = true
 		ShotTool.hide_window()
-		App.begin_run()
-		App.floor_n = ShotTool.floor_n()
-		App.run_seed = ShotTool.run_seed()
+		if ShotTool.scene_name() == "camp":
+			App.go_camp()
+		else:
+			App.begin_run()
+			App.floor_n = ShotTool.floor_n()
+			App.run_seed = ShotTool.run_seed()
 		return true
 	if phase(1) or phase(2):
 		App.go_foundation()
@@ -115,6 +121,8 @@ static func attach_dungeon(host: Node) -> void:
 
 
 static func attach_camp(host: Node) -> void:
+	if ShotTool.active():
+		ShotTool.attach_dungeon(host)
 	if phase(6):
 		Late.p6(host)
 	if phase(8):
