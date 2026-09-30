@@ -3,7 +3,7 @@
 Status: binding design + live snapshot
 Read when: exposed coplanar brick runs, BoxMesh retirement, BoxShape on welded mass, provided ribbon
 
-Dungeon wall visuals stop being one 1 m cell slab per cell (WallRects.faces / per-cell quads). BoxMesh retirement means that slab skin, not a Godot BoxMesh type hunt. Skin gen's provided hall runs as one thin ribbon per run (any heading, same brick sheet). Live already has a delta-span path and a faces fallback. When published runs exist for a chunk, do not keep the 1 m faces skin in that chunk. A walkable hall with no ribbon or cap on a published run is a volume miss. Do not invent rims. Do not extract a new silhouette from the walk mask. Do not bake outline. Gen solid is the one bake; paint it bounded by the provided runs. Ortho faces from the solid are a fallback only when published runs are empty.
+Dungeon wall visuals stop being one 1 m cell slab per cell (WallRects.faces / per-cell quads). BoxMesh retirement means that slab skin, not a Godot BoxMesh type hunt. Skin gen's provided hall runs as one thin ribbon per run (any heading, same brick sheet). Live already has a delta-span path and a faces fallback. When published runs exist for a chunk, do not keep the 1 m faces skin in that chunk. Live from_faces skips ortho faces, tops, ends, and void fill if any ribbon is present. A walkable hall with no ribbon or cap on a published run is a volume miss. Do not invent rims. Do not extract a new silhouette from the walk mask. Do not bake outline. Gen solid is the one bake; paint it bounded by the provided runs. Ortho faces from the solid are a fallback only when published runs are empty.
 
 Live files in this job: scripts/graphics/wall_mesh.gd, scripts/graphics/wall_shader.gd, and the wall MeshInstance path in scripts/world/dungeon_geo_stream.gd. Out: gen_outline.gd, torch_plan.gd, light_rt.gd, and WallRects.merge used as skin or as a stair collision lip.
 
@@ -14,3 +14,4 @@ Volume closes the hall with ribbon plus caps. Stream floor planes and boxes foll
 Torches hang only on interior faces (the face looks at a floor, not the void). This job emits the faces; buffer places the sources. Close each ribbon with a top cap and end caps so halls do not open into void. Caps use the same brick sheet and the same run-tangent / world-height UV. Do not extrude a 1 m slab along each run.
 
 Hub buildings are not this job. Do not author arches or modular kits.
+Shared ribbon ends drop open caps and get a square corner column. Do not chamfer or fillet the rim.

@@ -189,7 +189,7 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 		wall_inst.material_override = host.wall_mat
 		wall_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		root.add_child(wall_inst)
-	if outlined:
+	if outlined or not runs.is_empty():
 		_add_ribbon_boxes(root, runs, fine_m)
 		HitchLog.mark("geo_col")
 	elif not wall_cells.is_empty():

@@ -28,14 +28,16 @@ static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 	for run in ortho:
 		_mark_faces(run, faced)
 		_mark_cells(run, cells)
+	_close_ribbon_corners(ribbons, verts, norms, uvs, indices)
 	for run in ribbons:
 		_push_span(run, verts, norms, uvs, indices)
-	for run in ortho:
-		_push_face(run, verts, norms, uvs, indices)
-		_push_top(run, topped, verts, norms, uvs, indices)
-		_push_ends(run, faced, verts, norms, uvs, indices)
-	if not ortho.is_empty():
-		_push_void(cells, faced, verts, norms, uvs, indices)
+	if ribbons.is_empty():
+		for run in ortho:
+			_push_face(run, verts, norms, uvs, indices)
+			_push_top(run, topped, verts, norms, uvs, indices)
+			_push_ends(run, faced, verts, norms, uvs, indices)
+		if not ortho.is_empty():
+			_push_void(cells, faced, verts, norms, uvs, indices)
 	var mesh: ArrayMesh = ArrayMesh.new()
 	if verts.is_empty():
 		return mesh
@@ -119,21 +121,107 @@ static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: Packed
 		_uv4(uvs, Vector2(0.0, 0.0), Vector2(thick, 0.0), Vector2(thick, h), Vector2(0.0, h))
 
 
-static func _corner_post(p: Vector2, n2: Vector2, thick: float, h: float, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
-	var inn: Vector2 = n2.normalized() * thick
-	var edge_t: Vector2 = Vector2(-n2.y, n2.x).normalized() * thick * 0.5
-	var a: Vector2 = p - edge_t
-	var b: Vector2 = p + edge_t
-	var a2: Vector2 = a + inn * -1.0
-	var b2: Vector2 = b + inn * -1.0
-	var top: PackedVector3Array = PackedVector3Array()
-	top.append(Vector3(a.x, h, a.y))
-	top.append(Vector3(b.x, h, b.y))
-	top.append(Vector3(b2.x, h, b2.y))
-	top.append(Vector3(a2.x, h, a2.y))
-	_quad(top, Vector3.UP, verts, norms, uvs, indices)
-	_uv4(uvs, Vector2(0.0, 0.0), Vector2(thick, 0.0), Vector2(thick, thick), Vector2(0.0, thick))
 
+static func _close_ribbon_corners(runs: Array[Dictionary], verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
+	var pts: Dictionary = {}
+	var i: int = 0
+	while i < runs.size():
+		var run: Dictionary = runs[i]
+		var o: Vector2 = run["origin"] as Vector2
+		var d: Vector2 = run["delta"] as Vector2
+		var b: Vector2 = o + d
+		var ka: Vector2i = _pt_key(o)
+		var kb: Vector2i = _pt_key(b)
+		if not pts.has(ka):
+			pts[ka] = []
+		if not pts.has(kb):
+			pts[kb] = []
+		(pts[ka] as Array).append({"i": i, "end": "a", "n": run.get("normal", Vector2.ZERO), "thick": float(run.get("thick", 1.0)), "p": o})
+		(pts[kb] as Array).append({"i": i, "end": "b", "n": run.get("normal", Vector2.ZERO), "thick": float(run.get("thick", 1.0)), "p": b})
+		i += 1
+	for key in pts.keys():
+		var hits: Array = pts[key]
+		if hits.size() < 2:
+			continue
+		var nsum: Vector2 = Vector2.ZERO
+		var thick: float = 1.0
+		var p: Vector2 = (hits[0] as Dictionary)["p"]
+		for raw in hits:
+			var hit: Dictionary = raw
+			var ri: int = int(hit["i"])
+			var run2: Dictionary = runs[ri]
+			if str(hit["end"]) == "a":
+				run2["cap_a"] = false
+			else:
+				run2["cap_b"] = false
+			nsum += hit["n"] as Vector2
+			thick = maxf(thick, float(hit["thick"]))
+			p = hit["p"] as Vector2
+		if nsum.length_squared() < 0.0001:
+			nsum = Vector2.DOWN
+		_corner_post(p, nsum.normalized(), thick, T.WALL_H, verts, norms, uvs, indices)
+
+
+static func _corner_post(p: Vector2, n2: Vector2, thick: float, h: float, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
+	var t: float = maxf(0.25, thick)
+	var nx: float = 0.0
+	var nz: float = 0.0
+	if absf(n2.x) >= 0.01:
+		nx = -t if n2.x > 0.0 else t
+	if absf(n2.y) >= 0.01:
+		nz = -t if n2.y > 0.0 else t
+	if absf(nx) < 0.01 and absf(nz) < 0.01:
+		nx = -t
+		nz = -t
+	var x0: float = p.x if nx >= 0.0 else p.x + nx
+	var x1: float = p.x + nx if nx >= 0.0 else p.x
+	var z0: float = p.y if nz >= 0.0 else p.y + nz
+	var z1: float = p.y + nz if nz >= 0.0 else p.y
+	if x1 < x0:
+		var sx: float = x0
+		x0 = x1
+		x1 = sx
+	if z1 < z0:
+		var sz: float = z0
+		z0 = z1
+		z1 = sz
+	var y0: float = 0.0
+	var y1: float = h
+	var west: PackedVector3Array = PackedVector3Array()
+	west.append(Vector3(x0, y0, z0))
+	west.append(Vector3(x0, y0, z1))
+	west.append(Vector3(x0, y1, z1))
+	west.append(Vector3(x0, y1, z0))
+	_quad(west, Vector3.LEFT, verts, norms, uvs, indices)
+	_uv4(uvs, Vector2(0.0, 0.0), Vector2(t, 0.0), Vector2(t, h), Vector2(0.0, h))
+	var east: PackedVector3Array = PackedVector3Array()
+	east.append(Vector3(x1, y0, z1))
+	east.append(Vector3(x1, y0, z0))
+	east.append(Vector3(x1, y1, z0))
+	east.append(Vector3(x1, y1, z1))
+	_quad(east, Vector3.RIGHT, verts, norms, uvs, indices)
+	_uv4(uvs, Vector2(0.0, 0.0), Vector2(t, 0.0), Vector2(t, h), Vector2(0.0, h))
+	var north: PackedVector3Array = PackedVector3Array()
+	north.append(Vector3(x0, y0, z1))
+	north.append(Vector3(x1, y0, z1))
+	north.append(Vector3(x1, y1, z1))
+	north.append(Vector3(x0, y1, z1))
+	_quad(north, Vector3.FORWARD, verts, norms, uvs, indices)
+	_uv4(uvs, Vector2(0.0, 0.0), Vector2(t, 0.0), Vector2(t, h), Vector2(0.0, h))
+	var south: PackedVector3Array = PackedVector3Array()
+	south.append(Vector3(x1, y0, z0))
+	south.append(Vector3(x0, y0, z0))
+	south.append(Vector3(x0, y1, z0))
+	south.append(Vector3(x1, y1, z0))
+	_quad(south, Vector3.BACK, verts, norms, uvs, indices)
+	_uv4(uvs, Vector2(0.0, 0.0), Vector2(t, 0.0), Vector2(t, h), Vector2(0.0, h))
+	var top: PackedVector3Array = PackedVector3Array()
+	top.append(Vector3(x0, y1, z0))
+	top.append(Vector3(x0, y1, z1))
+	top.append(Vector3(x1, y1, z1))
+	top.append(Vector3(x1, y1, z0))
+	_quad(top, Vector3.UP, verts, norms, uvs, indices)
+	_uv4(uvs, Vector2(0.0, 0.0), Vector2(t, 0.0), Vector2(t, t), Vector2(0.0, t))
 
 static func _uv4(uvs: PackedVector2Array, a: Vector2, b: Vector2, c: Vector2, d: Vector2) -> void:
 	var base: int = uvs.size() - 4

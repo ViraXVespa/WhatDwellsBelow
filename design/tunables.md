@@ -137,7 +137,7 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | Parameter | Suggested start | Live default | Notes |
 |-----------|-----------------|--------------|-------|
 | Floor grid size | 48×48 – 64×64 | **432×432** | Geo streams like enemies |
-| Rooms | — | **64** | Dense enough that empty walks stay short |
+| Rooms | — | **128** | Dense enough that empty walks stay short |
 | Room min / max | — | 5 / 9 | |
 | Extra loops | — | 8 | MST + extra loops |
 | Hall hug gap min / default | 3 / 4 | **3 / 4** | Unused cells between two hall floors. Reject closer loops |

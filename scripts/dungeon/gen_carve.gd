@@ -155,35 +155,44 @@ static func carve_room(grid: PackedByteArray, w: int, h: int, r: Dictionary) -> 
 
 
 static func place_spread_rooms(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, want: int, rmin: int, rmax: int) -> void:
-	var cols := maxi(3, int(ceil(sqrt(float(want)))))
-	var rows := cols
-	var cell_w := maxi(6, int((w - 6) / float(cols)))
-	var cell_h := maxi(6, int((h - 6) / float(rows)))
-	for gy in rows:
-		for gx in cols:
-			if rooms.size() >= want:
-				return
-			var rw := rng.randi_range(rmin, rmax)
-			var rh := rng.randi_range(rmin, rmax)
-			var slack_x := maxi(0, cell_w - rw - 1)
-			var slack_y := maxi(0, cell_h - rh - 1)
-			var x := clampi(3 + gx * cell_w + rng.randi_range(0, slack_x), 2, w - rw - 3)
-			var y := clampi(3 + gy * cell_h + rng.randi_range(0, slack_y), 2, h - rh - 3)
-			if not can_place(rooms, x, y, rw, rh):
-				continue
-			var room := {"x": x, "y": y, "w": rw, "h": rh, "kind": "normal"}
-			rooms.append(room)
-			carve_room(grid, w, h, room)
-	for _i in want * 24:
-		if rooms.size() >= want:
-			return
-		var rw2 := rng.randi_range(rmin, rmax)
-		var rh2 := rng.randi_range(rmin, rmax)
-		var x2 := rng.randi_range(2, maxi(2, w - rw2 - 3))
-		var y2 := rng.randi_range(2, maxi(2, h - rh2 - 3))
+	var cols: int = maxi(3, int(ceil(sqrt(float(want)))))
+	var rows: int = cols
+	var slots: int = rows * cols
+	var i: int = 0
+	while i < slots and rooms.size() < want:
+		var remain_slots: int = slots - i
+		var remain_rooms: int = want - rooms.size()
+		if remain_slots > remain_rooms and rng.randf() > float(remain_rooms) / float(remain_slots):
+			i += 1
+			continue
+		var gx: int = i % cols
+		var gy: int = int(float(i) / float(cols))
+		var x_lo: int = 3 + int(gx * (w - 6) / float(cols))
+		var x_hi: int = 3 + int((gx + 1) * (w - 6) / float(cols))
+		var y_lo: int = 3 + int(gy * (h - 6) / float(rows))
+		var y_hi: int = 3 + int((gy + 1) * (h - 6) / float(rows))
+		var rw: int = rng.randi_range(rmin, rmax)
+		var rh: int = rng.randi_range(rmin, rmax)
+		var slack_x: int = maxi(0, (x_hi - x_lo) - rw - 1)
+		var slack_y: int = maxi(0, (y_hi - y_lo) - rh - 1)
+		var x: int = clampi(x_lo + rng.randi_range(0, slack_x), 2, w - rw - 3)
+		var y: int = clampi(y_lo + rng.randi_range(0, slack_y), 2, h - rh - 3)
+		i += 1
+		if not can_place(rooms, x, y, rw, rh):
+			continue
+		var room: Dictionary = {"x": x, "y": y, "w": rw, "h": rh, "kind": "normal"}
+		rooms.append(room)
+		carve_room(grid, w, h, room)
+	var _j: int = 0
+	while _j < want * 24 and rooms.size() < want:
+		_j += 1
+		var rw2: int = rng.randi_range(rmin, rmax)
+		var rh2: int = rng.randi_range(rmin, rmax)
+		var x2: int = rng.randi_range(2, maxi(2, w - rw2 - 3))
+		var y2: int = rng.randi_range(2, maxi(2, h - rh2 - 3))
 		if not can_place(rooms, x2, y2, rw2, rh2):
 			continue
-		var extra := {"x": x2, "y": y2, "w": rw2, "h": rh2, "kind": "normal"}
+		var extra: Dictionary = {"x": x2, "y": y2, "w": rw2, "h": rh2, "kind": "normal"}
 		rooms.append(extra)
 		carve_room(grid, w, h, extra)
 
@@ -215,12 +224,97 @@ static func connect_winding_tree(rng: RandomNumberGenerator, grid: PackedByteArr
 		carve_winding(rng, grid, w, h, center(rooms[best_a]), center(rooms[best_b]))
 
 
+static func _hug_gap() -> int:
+	var floor_min: int = 3
+	var gap: int = 4
+	if App.bal:
+		floor_min = maxi(1, int(App.bal.get("hall_hug_gap_min")))
+		gap = int(App.bal.get("hall_hug_gap"))
+	return maxi(floor_min, gap)
+
+
+static func _in_room(r: Dictionary, x: int, y: int) -> bool:
+	return x >= int(r.x) and y >= int(r.y) and x < int(r.x) + int(r.w) and y < int(r.y) + int(r.h)
+
+
+static func _cell_hugs(grid: PackedByteArray, w: int, h: int, x: int, y: int, gap: int, a: Dictionary, b: Dictionary) -> bool:
+	var r: int = maxi(1, gap)
+	var yy: int = y - r
+	while yy <= y + r:
+		var xx: int = x - r
+		while xx <= x + r:
+			if xx != x or yy != y:
+				if xx > 0 and yy > 0 and xx < w - 1 and yy < h - 1:
+					if grid[yy * w + xx] == FLOOR:
+						if not _in_room(a, xx, yy) and not _in_room(b, xx, yy):
+							return true
+			xx += 1
+		yy += 1
+	return false
+
+
+static func _loop_hugs(old_g: PackedByteArray, new_g: PackedByteArray, w: int, h: int, a: Dictionary, b: Dictionary, gap: int) -> bool:
+	var y: int = 1
+	while y < h - 1:
+		var x: int = 1
+		while x < w - 1:
+			var i: int = y * w + x
+			if new_g[i] == FLOOR and old_g[i] != FLOOR:
+				if _cell_hugs(old_g, w, h, x, y, gap, a, b):
+					return true
+			x += 1
+		y += 1
+	return false
+
+
+static func _restore(grid: PackedByteArray, saved: PackedByteArray) -> void:
+	var i: int = 0
+	var n: int = mini(grid.size(), saved.size())
+	while i < n:
+		grid[i] = saved[i]
+		i += 1
+
+
+static func _attempt_winding(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, ra: Dictionary, rb: Dictionary) -> bool:
+	var gap: int = _hug_gap()
+	var saved: PackedByteArray = grid.duplicate()
+	var hall_n: int = _halls.size()
+	carve_winding(rng, grid, w, h, center(ra), center(rb))
+	if not _loop_hugs(saved, grid, w, h, ra, rb, gap):
+		return true
+	_restore(grid, saved)
+	_halls.resize(hall_n)
+	var ca: Vector2i = center(ra)
+	var cb: Vector2i = center(rb)
+	var mx: int = int(float(ca.x + cb.x) * 0.5)
+	var my: int = int(float(ca.y + cb.y) * 0.5)
+	var off: int = gap + 6
+	var mids: Array[Vector2i] = [
+		Vector2i(clampi(mx + off, 2, w - 3), clampi(my, 2, h - 3)),
+		Vector2i(clampi(mx - off, 2, w - 3), clampi(my, 2, h - 3)),
+		Vector2i(clampi(mx, 2, w - 3), clampi(my + off, 2, h - 3)),
+		Vector2i(clampi(mx, 2, w - 3), clampi(my - off, 2, h - 3)),
+		Vector2i(clampi(mx + off, 2, w - 3), clampi(my + off, 2, h - 3)),
+		Vector2i(clampi(mx - off, 2, w - 3), clampi(my - off, 2, h - 3)),
+	]
+	for mid: Vector2i in mids:
+		saved = grid.duplicate()
+		hall_n = _halls.size()
+		carve_winding(rng, grid, w, h, ca, mid)
+		carve_winding(rng, grid, w, h, mid, cb)
+		if not _loop_hugs(saved, grid, w, h, ra, rb, gap):
+			return true
+		_restore(grid, saved)
+		_halls.resize(hall_n)
+	return false
+
+
 static func extra_winding_loops(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, extra: int) -> void:
 	if extra <= 0 or rooms.size() < 4:
 		return
 	var added := 0
 	var guard := 0
-	while added < extra and guard < extra * 10:
+	while added < extra and guard < extra * 40:
 		guard += 1
 		var a := rng.randi() % rooms.size()
 		var b := rng.randi() % rooms.size()
@@ -228,9 +322,8 @@ static func extra_winding_loops(rng: RandomNumberGenerator, grid: PackedByteArra
 			continue
 		if dist(rooms[a], rooms[b]) < 18:
 			continue
-		carve_winding(rng, grid, w, h, center(rooms[a]), center(rooms[b]))
-		added += 1
-
+		if _attempt_winding(rng, grid, w, h, rooms[a], rooms[b]):
+			added += 1
 
 static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, count: int) -> void:
 	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
@@ -269,6 +362,8 @@ static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArra
 			steps += 1
 			if steps % interval == 0:
 				width = roll_hall_width(rng)
+			if _cell_hugs(grid, w, h, x, y, _hug_gap(), src, src):
+				break
 			dig_span(grid, w, h, x, y, heading, width)
 			last = Vector2i(x, y)
 			if not run_on:

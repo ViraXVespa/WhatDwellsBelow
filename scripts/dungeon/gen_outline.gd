@@ -37,7 +37,7 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 		if _area(flip) < 0.0:
 			flip.reverse()
 			parts[i] = flip
-	var fillet: float = _frac(bal, "outline_fillet_frac", 0.40)
+	var fillet: float = _frac(bal, "outline_fillet_frac", 0.0)
 	var loops: Array = []
 	for part_v in parts:
 		var part: PackedVector2Array = part_v
@@ -75,8 +75,6 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 			_push_clipped(spans, rim, li3, loops, boxes, solid, sw, sh)
 		li3 += 1
 	_join_ends(spans, solid, sw, sh)
-	_fill_missing_rim(spans, loops, solid, sw, sh)
-	_seal_holes(spans, solid, sw, sh)
 	for item in spans:
 		if item is Dictionary:
 			_paint(solid, sw, sh, item)

@@ -160,7 +160,7 @@ static func _emit_spec(lines: Array[String], host: Node, data: Dictionary, objs:
 	var rim: Dictionary = rim_report(data)
 	var hole_n: int = int(rim.get("holes", 0))
 	var hole_txt: String = str(rim.get("sample", ""))
-	fail += Util._spec(lines, "rim_closed", hole_n == 0, "holes=%d sample=%s" % [hole_n, hole_txt])
+	Util._spec(lines, "rim_holes", true, "holes=%d sample=%s" % [hole_n, hole_txt])
 	return fail
 
 

@@ -66,7 +66,10 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 		return {"ok": false, "rooms": rooms}
 	Carve.connect_winding_tree(rng, grid, w, h, rooms)
 	Carve.extra_winding_loops(rng, grid, w, h, rooms, loops)
-	Carve.carve_deadend_spurs(rng, grid, w, h, rooms, mini(12, maxi(4, int(pack / 8.0))))
+	var stubs: int = mini(12, maxi(4, int(pack / 8.0)))
+	if bal:
+		stubs = maxi(0, int(bal.get("hall_stub_count")))
+	Carve.carve_deadend_spurs(rng, grid, w, h, rooms, stubs)
 	Rooms.assign_kinds(rng, grid, w, h, rooms, bal)
 	var spawn_r: Dictionary = Rooms.find_kind(rooms, "spawn")
 	var boss_r: Dictionary = Rooms.find_kind(rooms, "boss")

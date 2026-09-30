@@ -180,7 +180,7 @@ def _write_invoke_ps1(
         "    ('STATUS=' + [string]$r.Status),\n"
         "    ('EXIT=' + [string]$r.ExitCode),\n"
         "    ('MS=' + [string]$r.Ms),\n"
-        "    ('TIMEOUT=' + [string]$r.TimedOut)\n"
+        "    ('TIMEOUT=' + [string]$r.TimedOut),\n    ('PID=' + [string]$r.Pid)\n"
         ")\n"
         "$lines | Set-Content -Path $mark -Encoding utf8\n"
     )
@@ -245,25 +245,66 @@ def _png_info(png: Path) -> tuple[int, int, int]:
     return nbytes, width, height
 
 
+
+def _kill_shot_pid(marks: dict[str, str]) -> None:
+    raw = marks.get("PID", "").strip()
+    if not raw.isdigit():
+        return
+    subprocess.run(
+        ["taskkill", "/PID", raw, "/T", "/F"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
 def _clipboard_png(png: Path) -> str:
     if not png.is_file():
         return "skip"
     ps = (
         "Add-Type -AssemblyName System.Drawing\n"
         "Add-Type -AssemblyName System.Windows.Forms\n"
-        f"$img = [System.Drawing.Image]::FromFile({_ps_literal(str(png))})\n"
+        f"$path = {_ps_literal(str(png))}\n"
+        "$img = [System.Drawing.Image]::FromFile($path)\n"
         "try {\n"
-        "    [System.Windows.Forms.Clipboard]::SetImage($img)\n"
+        "    $data = New-Object System.Windows.Forms.DataObject\n"
+        "    $data.SetImage($img)\n"
+        "    $bytes = [System.IO.File]::ReadAllBytes($path)\n"
+        "    $ms = New-Object System.IO.MemoryStream\n"
+        "    $null = $ms.Write($bytes, 0, $bytes.Length)\n"
+        "    $ms.Position = 0\n"
+        "    $data.SetData('PNG', $ms)\n"
+        "    $files = New-Object System.Collections.Specialized.StringCollection\n"
+        "    $null = $files.Add($path)\n"
+        "    $data.SetFileDropList($files)\n"
+        "    [System.Windows.Forms.Clipboard]::SetDataObject($data, $true)\n"
         "} finally {\n"
         "    $img.Dispose()\n"
         "}\n"
     )
     r = subprocess.run(
-        ["powershell", "-NoProfile", "-Command", ps],
+        ["powershell", "-STA", "-NoProfile", "-Command", ps],
         capture_output=True,
         text=True,
     )
-    return "ok" if r.returncode == 0 else "fail"
+    if r.returncode != 0:
+        return "fail"
+    check = subprocess.run(
+        [
+            "powershell",
+            "-STA",
+            "-NoProfile",
+            "-Command",
+            "Add-Type -AssemblyName System.Windows.Forms; "
+            "if ([System.Windows.Forms.Clipboard]::ContainsImage()) { 'has' } "
+            "elseif ([System.Windows.Forms.Clipboard]::ContainsFileDropList()) { 'has' } "
+            "else { 'empty' }",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    got = (check.stdout or "").strip()
+    return "ok" if got == "has" else "empty"
 
 
 def _open_png(png: Path) -> str:
@@ -346,6 +387,9 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         stop.set()
     marks = _read_invoke_mark(out_dir)
+    _kill_shot_pid(marks)
+    import time as _time
+    _time.sleep(0.3)
     shot_hits = _shot_lines(out_dir)
     err_hits = _error_lines(out_dir)
     nbytes, width, height = _png_info(png)

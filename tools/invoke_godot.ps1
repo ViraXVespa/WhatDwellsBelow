@@ -85,13 +85,39 @@ function Invoke-WdbGodot {
         }
 
         $proc = Start-Process @start
-        $ok = $proc.WaitForExit([Math]::Max(1000, $TimeoutSec * 1000))
-        if (-not $ok) {
+        $deadline = [Diagnostics.Stopwatch]::StartNew()
+        $compileHit = $false
+        $ok = $false
+        while ($deadline.Elapsed.TotalSeconds -lt $TimeoutSec) {
+            if ($proc.HasExited) {
+                $ok = $true
+                break
+            }
+            $blob = ""
+            if ($ErrLog -and (Test-Path -LiteralPath $ErrLog)) {
+                try { $blob += Get-Content -LiteralPath $ErrLog -Raw -ErrorAction SilentlyContinue } catch {}
+            }
+            if ($OutLog -and (Test-Path -LiteralPath $OutLog)) {
+                try { $blob += Get-Content -LiteralPath $OutLog -Raw -ErrorAction SilentlyContinue } catch {}
+            }
+            if ($blob -match "Parse Error|Compile Error|Failed to compile|Failed to load script") {
+                $compileHit = $true
+                break
+            }
+            Start-Sleep -Milliseconds 250
+        }
+        if ($compileHit -or -not $ok) {
             Stop-WdbChildPid -PidToKill $proc.Id
-            Start-Sleep -Milliseconds 200
-            $timedOut = $true
-            $status = "TIMEOUT"
-            $code = -1
+            Start-Sleep -Milliseconds 400
+            if ($compileHit) {
+                $timedOut = $false
+                $status = "COMPILE"
+                $code = 1
+            } else {
+                $timedOut = $true
+                $status = "TIMEOUT"
+                $code = -1
+            }
         } else {
             $code = $proc.ExitCode
             if ($null -eq $code) { $code = 0 }
