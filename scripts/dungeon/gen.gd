@@ -56,6 +56,7 @@ static func generate(floor_n: int, run_seed: int, bal: Object) -> Dictionary:
 
 static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin: int, rmax: int, loops: int, bal: Object) -> Dictionary:
 	Carve.begin_halls()
+	LoadTiming.dmark("gen_place")
 	var grid: PackedByteArray = PackedByteArray()
 	grid.resize(w * h)
 	grid.fill(WALL)
@@ -64,12 +65,16 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 	Carve.place_spread_rooms(rng, grid, w, h, rooms, pack, rmin, rmax)
 	if rooms.size() < 6:
 		return {"ok": false, "rooms": rooms}
+	LoadTiming.dmark("gen_tree")
 	Carve.connect_winding_tree(rng, grid, w, h, rooms)
+	LoadTiming.dmark("gen_loops")
 	Carve.extra_winding_loops(rng, grid, w, h, rooms, loops)
 	var stubs: int = mini(12, maxi(4, int(pack / 8.0)))
 	if bal:
 		stubs = maxi(0, int(bal.get("hall_stub_count")))
+	LoadTiming.dmark("gen_spurs")
 	Carve.carve_deadend_spurs(rng, grid, w, h, rooms, stubs)
+	LoadTiming.dmark("gen_kinds")
 	Rooms.assign_kinds(rng, grid, w, h, rooms, bal)
 	var spawn_r: Dictionary = Rooms.find_kind(rooms, "spawn")
 	var boss_r: Dictionary = Rooms.find_kind(rooms, "boss")
