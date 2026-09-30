@@ -27,10 +27,8 @@ func _ready() -> void:
 		return
 	App.in_dungeon = false
 	LoadTiming.mark("camp_enter")
-	var baked: bool = has_node("Generated") and get_node("Generated").get_child_count() > 0
-	LoadTiming.note("camp_geo", "baked" if baked else "build")
-	if baked:
-		_strip_baked_env(get_node("Generated"))
+	Build.clear_generated(self)
+	LoadTiming.note("camp_geo", "build")
 	Build.world(self)
 	LoadTiming.mark("camp_world")
 	LightRt.prepare_hub(
@@ -44,14 +42,11 @@ func _ready() -> void:
 	LightRt.hub_crystal = Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z)
 	LightRt.rebind_tree(self)
 	LoadTiming.mark("camp_light")
-	if not baked:
-		Build.ground(self)
+	Build.ground(self)
 	LoadTiming.mark("camp_ground")
-	if not baked:
-		Build.buildings(self)
+	Build.buildings(self)
 	LoadTiming.mark("camp_buildings")
-	if not baked:
-		View.fence(self)
+	View.fence(self)
 	LoadTiming.mark("camp_fence")
 	var PlayerS: GDScript = load("res://scripts/world/player.gd") as GDScript
 	player = PlayerS.new() as CharacterBody3D
@@ -100,8 +95,6 @@ func _ready() -> void:
 	if Smoke.phase(6):
 		ensure_ui()
 	Smoke.attach_camp(self)
-
-
 func _hook_editor() -> void:
 	if _editor_hooked:
 		return

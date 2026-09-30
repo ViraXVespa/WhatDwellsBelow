@@ -104,9 +104,6 @@ static func guild(host: Node3D) -> void:
 	var hall_box: Vector3 = lay.hall_box if lay else HALL_SIZE
 	var wing_at: Vector3 = lay.wing_pos() if lay else wing_pos()
 	var wing_box: Vector3 = lay.wing_box if lay else WING_SIZE
-	wing_box.y = maxf(wing_box.y, 3.8)
-	hall_at.y = hall_box.y * 0.5
-	wing_at.y = wing_box.y * 0.5
 	var hall_body: StaticBody3D = box(host, hall_at, hall_box, Color(0.45, 0.32, 0.22))
 	var wing_body: StaticBody3D = box(host, wing_at, wing_box, Color(0.5, 0.38, 0.28))
 	face(hall_body, hall_box, "res://assets/sprites/buildings/guild.png", 0.0, hall_box.x, 0.30)
@@ -176,15 +173,16 @@ static func face(
 	var tw := float(maxi(1, spr.texture.get_width()))
 	var th := float(maxi(1, spr.texture.get_height()))
 	var cap: float = clampf(crop_top, 0.0, 0.6)
-	var rh: float = th * (1.0 - cap)
+	var rh: float = maxf(th * (1.0 - cap), 1.0)
 	if cap > 0.01:
 		spr.region_enabled = true
 		spr.region_rect = Rect2(0.0, th * cap, tw, rh)
 	var fw: float = maxf(face_w, 0.2)
 	var fh: float = maxf(box_size.y, 0.2)
-	spr.pixel_size = minf(fw / tw, fh / maxf(rh, 1.0))
-	var sh: float = spr.pixel_size * maxf(rh, 1.0)
-	spr.position = Vector3(x_off, (sh - box_size.y) * 0.5, box_size.z * 0.5 + 0.05)
+	spr.pixel_size = minf(fw / tw, fh / rh)
+	var sh: float = spr.pixel_size * rh
+	var ground_local: float = -body.position.y
+	spr.position = Vector3(x_off, ground_local + sh * 0.5, box_size.z * 0.5 + 0.05)
 	body.add_child(spr)
 static func roof_mat(dim: Vector2, world_min: Vector3, tile: float = TILE_W, uv_off: Vector2 = Vector2.ZERO) -> Material:
 	return MeshS.roof_mat(dim, world_min, tile, uv_off)

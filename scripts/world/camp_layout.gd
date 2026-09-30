@@ -291,7 +291,7 @@ func wing_face_z() -> float:
 
 
 func reception_pos() -> Vector3:
-	return Vector3(wing_pos().x + 0.027, maxf(0.9, wing_box.y * 0.36), wing_face_z() + 0.08)
+	return Vector3(wing_pos().x + 0.027, 0.785, wing_face_z() + 0.07)
 func aabb_x0() -> float:
 	return float(ground_ox - grass_pad)
 
