@@ -762,5 +762,79 @@ static func _tarp_y(u: float, v: float, y0: float) -> float:
 		+ 0.02 * sin(u * 18.8496 + 0.7)
 		+ 0.015 * sin(v * 12.5664 + 1.1)
 	)
+
+static func shed_roof(
+	body: Node3D,
+	x0: float,
+	x1: float,
+	zn: float,
+	zs: float,
+	y_lid: float,
+	rise: float,
+	world_min: Vector3,
+	tile: float,
+	uv_off: Vector2
+) -> void:
+	var y_ridge: float = y_lid + rise
+	var nl := Vector3(x0, y_ridge, zn)
+	var nr := Vector3(x1, y_ridge, zn)
+	var sl := Vector3(x0, y_lid, zs)
+	var sr := Vector3(x1, y_lid, zs)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var u0 := Vector2(0.0, 0.0)
+	var u1 := Vector2(0.0, 1.0)
+	var u2 := Vector2(1.0, 1.0)
+	var u3 := Vector2(1.0, 0.0)
+	_quad(st, nl, sl, sr, nr, u0, u1, u2, u3)
+	st.generate_normals()
+	var fall_h: float = zs - zn
+	var fall_len: float = sqrt(fall_h * fall_h + rise * rise)
+	var mi := MeshInstance3D.new()
+	mi.name = "PitchedRoof"
+	mi.mesh = st.commit()
+	mi.material_override = roof_mat(Vector2(x1 - x0, fall_len), world_min, tile, uv_off)
+	body.add_child(mi)
+
+
+static func shed_pair(
+	body: Node3D,
+	spans: Array,
+	y_lid: float,
+	rise: float,
+	world_min: Vector3,
+	tile: float,
+	uv_off: Vector2
+) -> void:
+	var y_ridge: float = y_lid + rise
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var u0 := Vector2(0.0, 0.0)
+	var u1 := Vector2(0.0, 1.0)
+	var u2 := Vector2(1.0, 1.0)
+	var u3 := Vector2(1.0, 0.0)
+	var width: float = 0.2
+	var fall_len: float = rise
+	for raw in spans:
+		var s: Dictionary = raw
+		var x0: float = float(s["x0"])
+		var x1: float = float(s["x1"])
+		var zn: float = float(s["zn"])
+		var zs: float = float(s["zs"])
+		var nl := Vector3(x0, y_ridge, zn)
+		var nr := Vector3(x1, y_ridge, zn)
+		var sl := Vector3(x0, y_lid, zs)
+		var sr := Vector3(x1, y_lid, zs)
+		_quad(st, nl, sl, sr, nr, u0, u1, u2, u3)
+		width = maxf(width, x1 - x0)
+		var fh: float = zs - zn
+		fall_len = maxf(fall_len, sqrt(fh * fh + rise * rise))
+	st.generate_normals()
+	var mi := MeshInstance3D.new()
+	mi.name = "PitchedRoof"
+	mi.mesh = st.commit()
+	mi.material_override = roof_mat(Vector2(width, fall_len), world_min, tile, uv_off)
+	body.add_child(mi)
+
 static func guild_roofs(host: Node3D) -> void:
 	pass

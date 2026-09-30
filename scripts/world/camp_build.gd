@@ -52,6 +52,8 @@ static func realize_editor(host: Node3D, layout: Node3D) -> void:
 	bucket.set_meta("wdb_layout", layout)
 	ground(bucket)
 	buildings(bucket)
+	strip_building_cubes(host)
+	dump_meshes(host)
 	var ViewS: GDScript = load("res://scripts/world/camp_view.gd") as GDScript
 	ViewS.fence(bucket)
 static func world(host: Node3D) -> void:
@@ -126,8 +128,32 @@ static func guild(host: Node3D) -> void:
 	var hz0: float = hall_at.z - hall_box.z * 0.5
 	var wx0: float = wing_at.x - wing_box.x * 0.5
 	var wz0: float = wing_at.z - wing_box.z * 0.5
-	MeshS.pitched_roof(hall_body, hall_box, he, 1.15, Vector3(hx0, 0.0, hz0), hall_tile, hall_uv)
-	MeshS.pitched_roof(wing_body, wing_box, we, 1.05, Vector3(wx0, 0.0, wz0), wing_tile, wing_uv)
+	var wl: Vector3 = wing_at - hall_at
+	var y_lid: float = hall_box.y * 0.5
+	var rise: float = 0.95
+	var lid_min := Vector3(minf(hx0, wx0), 0.0, minf(hz0, wz0))
+	MeshS.shed_pair(
+		hall_body,
+		[
+			{
+				"x0": -hall_box.x * 0.5,
+				"x1": hall_box.x * 0.5,
+				"zn": -hall_box.z * 0.5,
+				"zs": hall_box.z * 0.5 + he
+			},
+			{
+				"x0": wl.x - wing_box.x * 0.5,
+				"x1": wl.x + wing_box.x * 0.5,
+				"zn": wl.z - wing_box.z * 0.5,
+				"zs": wl.z + wing_box.z * 0.5 + he
+			}
+		],
+		y_lid,
+		rise,
+		lid_min,
+		hall_tile,
+		hall_uv
+	)
 static func guild_roofs(host: Node3D) -> void:
 	MeshS.guild_roofs(host)
 
@@ -232,3 +258,57 @@ static func _layout_from_build_host(host: Node3D) -> Node3D:
 			return lay as Node3D
 		n = n.get_parent()
 	return null
+
+static func strip_building_cubes(root: Node) -> int:
+	var cut: int = 0
+	var stack: Array[Node] = [root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		for child in n.get_children():
+			stack.append(child)
+		var mi := n as MeshInstance3D
+		if mi == null or not (mi.mesh is BoxMesh):
+			continue
+		var sz: Vector3 = (mi.mesh as BoxMesh).size
+		print(
+			"CAMP_MESH box parent=",
+			n.get_parent().name if n.get_parent() else "?",
+			" size=",
+			sz
+		)
+		if sz.x < 2.0 or sz.z < 2.0 or sz.y < 1.0:
+			continue
+		var parent: Node = n.get_parent()
+		if parent == null:
+			continue
+		parent.remove_child(n)
+		n.free()
+		cut += 1
+	print("CAMP_MESH stripped_building_cubes=", cut)
+	return cut
+
+
+static func dump_meshes(root: Node) -> void:
+	var stack: Array[Node] = [root]
+	var boxes: int = 0
+	var sprites: int = 0
+	var other: int = 0
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		for child in n.get_children():
+			stack.append(child)
+		if n is Sprite3D:
+			sprites += 1
+			var spr := n as Sprite3D
+			print("CAMP_MESH sprite parent=", n.get_parent().name if n.get_parent() else "?", " pos=", spr.position, " px=", spr.pixel_size)
+			continue
+		var mi := n as MeshInstance3D
+		if mi == null:
+			continue
+		if mi.mesh is BoxMesh:
+			boxes += 1
+			print("CAMP_MESH keep_box parent=", n.get_parent().name if n.get_parent() else "?", " size=", (mi.mesh as BoxMesh).size)
+		else:
+			other += 1
+			print("CAMP_MESH other name=", n.name, " mesh=", mi.mesh.get_class() if mi.mesh else "null")
+	print("CAMP_MESH totals boxes=", boxes, " sprites=", sprites, " other=", other)

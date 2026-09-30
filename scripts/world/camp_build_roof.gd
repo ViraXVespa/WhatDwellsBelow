@@ -25,17 +25,4 @@ static func box(host: Node3D, pos: Vector3, size: Vector3, col: Color) -> Static
 	sh.size = size
 	cs.shape = sh
 	body.add_child(cs)
-	var vis := MeshInstance3D.new()
-	var box_mesh := BoxMesh.new()
-	box_mesh.size = size
-	vis.mesh = box_mesh
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-	mat.albedo_color = col
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	if ResourceLoader.exists("res://assets/tiles/plaza_wall.png"):
-		mat.albedo_texture = load("res://assets/tiles/plaza_wall.png")
-		mat.albedo_color = Color.WHITE
-	vis.material_override = mat
-	body.add_child(vis)
 	return body

@@ -834,7 +834,7 @@ static func _hub_paint_day(img: Image, x0: int, z0: int, layout: Node) -> void:
 			var u: float = clampf(1.0 - d / reach, 0.0, 1.0)
 			u = u * u
 			var c: Color = img.get_pixel(x, y)
-			var k: float = 0.48 * u
+			var k: float = 0.72 * u
 			img.set_pixel(
 				x,
 				y,
@@ -896,7 +896,7 @@ static func _hub_cast_buildings(img: Image, x0: int, z0: int, layout: Node) -> v
 static func _hub_stamp_skirt(
 	img: Image, x0: int, z0: int, sub: float, w: int, h: int, b: Dictionary, away: Vector2
 ) -> int:
-	var slen: float = minf(maxf(float(b["len"]), 0.8), 5.0)
+	var slen: float = minf(maxf(float(b["len"]), 0.6), 2.2)
 	var bh: float = maxf(float(b["h"]), 1.0)
 	var lid: float = float(b["lid"]) if b.has("lid") else 1.0
 	var cx: float = float(b["x"])
@@ -906,8 +906,8 @@ static func _hub_stamp_skirt(
 	var an: float = away.length()
 	var ax: float = away.x / maxf(an, 0.001)
 	var az: float = away.y / maxf(an, 0.001)
-	var rad: float = 0.85
-	var pad: float = slen + rad + 0.6
+	var rad: float = 1.35
+	var pad: float = slen + rad + 0.4
 	var px0: int = clampi(int(floor((cx - hx - pad - float(x0)) * sub)), 0, w - 1)
 	var px1: int = clampi(int(ceil((cx + hx + pad - float(x0)) * sub)), 0, w)
 	var pz0: int = clampi(int(floor((cz - hz - pad - float(z0)) * sub)), 0, h - 1)
@@ -933,12 +933,16 @@ static func _hub_stamp_skirt(
 					wrote += 1
 				x += 1
 				continue
+			var side: float = dx * ax + dz * az
+			if side < 0.12:
+				x += 1
+				continue
 			var qx: float = absf(dx) - maxf(hx - rad, 0.1)
 			var qz: float = absf(dz) - maxf(hz - rad, 0.1)
 			var sdf: float = Vector2(maxf(qx, 0.0), maxf(qz, 0.0)).length() + minf(maxf(qx, qz), 0.0) - rad
 			var ao: float = 1.0
-			if sdf < 0.85:
-				ao = lerpf(0.80, 1.0, clampf(sdf / 0.85, 0.0, 1.0))
+			if sdf < 0.55:
+				ao = lerpf(0.90, 1.0, clampf(sdf / 0.55, 0.0, 1.0))
 			var cover: float = 0.0
 			var ri: int = 0
 			while ri < 9:
@@ -974,16 +978,17 @@ static func _hub_stamp_skirt(
 				var t: float = 0.12
 				while t <= slen:
 					if _hub_inside(wx - jx * t, wz - jz * t, b):
-						var reach: float = minf(slen, bh * 1.15)
+						var reach: float = minf(slen, bh * 0.85)
 						if t <= reach:
 							cover += 1.0 - t / maxf(reach, 0.2)
 						break
 					t += 0.16
 				ri += 1
 			cover = clampf(cover / 9.0, 0.0, 1.0)
-			var k2: float = ao * lerpf(1.0, 0.54, cover)
+			cover *= clampf((side - 0.12) / 0.70, 0.0, 1.0)
+			var k2: float = ao * lerpf(1.0, 0.74, cover)
 			if k2 < 0.995:
-				img.set_pixel(x, y, Color(c.r * k2, c.g * k2, c.b * k2 * 0.96, 1.0))
+				img.set_pixel(x, y, Color(c.r * k2, c.g * k2, c.b * k2 * 0.98, 1.0))
 				wrote += 1
 			x += 1
 		y += 1

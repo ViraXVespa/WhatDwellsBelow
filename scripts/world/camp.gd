@@ -27,8 +27,6 @@ func _ready() -> void:
 		return
 	App.in_dungeon = false
 	LoadTiming.mark("camp_enter")
-	Build.clear_generated(self)
-	LoadTiming.note("camp_geo", "build")
 	Build.world(self)
 	LoadTiming.mark("camp_world")
 	LightRt.prepare_hub(
@@ -42,11 +40,17 @@ func _ready() -> void:
 	LightRt.hub_crystal = Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z)
 	LightRt.rebind_tree(self)
 	LoadTiming.mark("camp_light")
-	Build.ground(self)
+	var gen: Node3D = Build.generated(self)
+	if gen.get_child_count() > 0:
+		Build.clear_generated(self)
+		gen = Build.generated(self)
+	LoadTiming.note("camp_geo", "build")
+	Build.ground(gen)
 	LoadTiming.mark("camp_ground")
-	Build.buildings(self)
+	Build.buildings(gen)
+	Build.strip_building_cubes(gen)
 	LoadTiming.mark("camp_buildings")
-	View.fence(self)
+	View.fence(gen)
 	LoadTiming.mark("camp_fence")
 	var PlayerS: GDScript = load("res://scripts/world/player.gd") as GDScript
 	player = PlayerS.new() as CharacterBody3D

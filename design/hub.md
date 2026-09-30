@@ -17,7 +17,7 @@ Code: `scripts/world/camp.gd` (facade, `@tool` preview), `scripts/world/camp_lay
 - Test dummy (coverage / weapon sandbox)
 
 All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidity under the orthographic Camera3D.
-- Layout lives on `scenes/camp.tscn` → `Layout`. Generated meshes are unsaved editor preview (`Generated`). Play reads the same nodes.
+- Layout and `Generated` live on `scenes/camp.tscn`. `Generated` is the hub geo bucket. Play clears it and runs the helpers so Title and shots show the same town. `realize_editor` writes a preview; do not ship a stale packed tree as a second owner.
 
 This file is the door. Open the Job-table sibling only when that row matches.
 
