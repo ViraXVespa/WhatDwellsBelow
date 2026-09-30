@@ -5,6 +5,7 @@ const WallRects := preload("res://scripts/world/wall_rects.gd")
 const WallMesh: GDScript = preload("res://scripts/graphics/wall_mesh.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 
 const RING_IN := 1
 const RING_OUT := 2
@@ -75,13 +76,20 @@ static func prime_visible(host: Node) -> void:
 	var origin := chunk_origin(host._player_cell())
 	var w: int = host.data.w
 	var h: int = host.data.h
-	if origin.x < 0 or origin.y < 0 or origin.x >= w or origin.y >= h:
-		return
-	var job: Dictionary = job_at(host, origin)
-	if str(job.state) != "pending":
-		return
-	HitchLog.mark("geo_activate", Vector2i(job.origin))
-	activate_job(host, job)
+	var dy: int = -RING_IN
+	while dy <= RING_IN:
+		var dx: int = -RING_IN
+		while dx <= RING_IN:
+			var o := Vector2i(origin.x + dx * CHUNK, origin.y + dy * CHUNK)
+			dx += 1
+			if o.x < 0 or o.y < 0 or o.x >= w or o.y >= h:
+				continue
+			var job: Dictionary = job_at(host, o)
+			if str(job.state) != "pending":
+				continue
+			HitchLog.mark("geo_activate", Vector2i(job.origin))
+			activate_job(host, job)
+		dy += 1
 static func follow(host: Node, _delta: float) -> void:
 	if host.player == null:
 		return
@@ -94,10 +102,10 @@ static func follow(host: Node, _delta: float) -> void:
 	if str(cur.state) == "pending":
 		HitchLog.mark("geo_activate", Vector2i(cur.origin))
 		activate_job(host, cur)
-	if host.has_meta("wdb_geo_origin"):
-		pass
 	host.set_meta("wdb_geo_origin", origin)
 	var budget: int = PER_FRAME
+	if int(host.get("frame_n")) <= 2:
+		budget = 1
 	var built := 0
 	var dy: int = -RING_IN
 	while dy <= RING_IN:
@@ -138,6 +146,7 @@ static func follow(host: Node, _delta: float) -> void:
 				activate_job(host, job2)
 				built += 1
 			dy2 += 1
+	LoadTiming.dnote("geo_built", str(built))
 	LightRt.maintain(host)
 static func tick(host: Node, delta: float) -> void:
 	follow(host, delta)

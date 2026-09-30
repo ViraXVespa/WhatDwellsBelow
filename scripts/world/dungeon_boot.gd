@@ -61,6 +61,7 @@ static func ready_floor(host: Node) -> void:
 	var LightRtS: GDScript = load("res://scripts/graphics/light_rt.gd") as GDScript
 	LightRtS.reset_floor()
 	LightRtS.maintain(host)
+	LightRtS.maintain(host)
 	HitchLog.mark("dungeon_light")
 	LoadTiming.dmark("light")
 	if App.present and App.present.has_method("release_enter"):

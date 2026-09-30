@@ -326,23 +326,28 @@ static func maintain(host: Node) -> void:
 	var need_stamp: bool = key != _knob or rect != _rect
 	if not need_plan and not need_stamp and not need_torch:
 		return
+	var LoadTiming: GDScript = load("res://scripts/debug/load_timing.gd") as GDScript
 	if need_plan:
 		_sites = Plan.build(host, _props)
 		HitchLog.mark("light_plan")
+		if LoadTiming:
+			LoadTiming.dnote("light_kind", "plan")
 		_planned = true
 		_plan_dirty = false
 		return
 	if need_stamp:
 		HitchLog.mark("light_stamp")
+		if LoadTiming:
+			LoadTiming.dnote("light_kind", "stamp")
 		_rect = rect
 		_knob = key
 		_publish_dungeon(host, rect)
 		return
 	HitchLog.mark("light_refill")
+	if LoadTiming:
+		LoadTiming.dnote("light_kind", "refill")
 	_live = live
 	_refill(host)
-
-
 static func _publish_dungeon(host: Node, rect: Rect2i) -> void:
 	var x0: int = rect.position.x
 	var z0: int = rect.position.y
@@ -537,7 +542,11 @@ static func _ring_rect(host: Node) -> Rect2i:
 	var stream: GDScript = load("res://scripts/world/dungeon_geo_stream.gd") as GDScript
 	var pc: Vector2i = _focus(host)
 	var origin_cell: Vector2i = stream.chunk_origin(pc)
-	var ring: int = int(stream.RING_OUT)
+	var mode := ""
+	if App.present:
+		mode = str(App.present.get("_mode"))
+	var entering: bool = mode == "enter_hold" or mode == "enter_fade" or _rect.size.x < 1
+	var ring: int = int(stream.RING_IN) if entering else int(stream.RING_OUT)
 	var chunk: int = int(stream.CHUNK)
 	var map_w: int = int(host.data.w)
 	var map_h: int = int(host.data.h)
@@ -555,11 +564,11 @@ static func _ring_rect(host: Node) -> Rect2i:
 		var hz0: int = _rect.position.y
 		var hx1: int = hx0 + _rect.size.x
 		var hz1: int = hz0 + _rect.size.y
+		if entering:
+			return _rect
 		if pc.x >= hx0 + hold and pc.x < hx1 - hold and pc.y >= hz0 + hold and pc.y < hz1 - hold:
 			return _rect
 	return Rect2i(x0, z0, x1 - x0, z1 - z0)
-
-
 static func _focus(host: Node) -> Vector2i:
 	if host.player != null:
 		return host._player_cell()
