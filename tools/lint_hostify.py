@@ -18,6 +18,7 @@ from datetime import datetime
 from pathlib import Path
 
 import agent_log
+import md_format_lib as md
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
@@ -105,7 +106,7 @@ def main() -> int:
         if len(all_hits) > 500:
             lines.append(f"... +{len(all_hits) - 500} more")
     lines += ["", f"RESULT hits={len(all_hits)}"]
-    SUMMARY.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    md.write_utf8(SUMMARY, "\n".join(lines))
     print(f"Scanned {len(files)} scripts; {len(all_hits)} hits")
     for k, v in sorted(kinds.items()):
         print(f"  {k}: {v}")
