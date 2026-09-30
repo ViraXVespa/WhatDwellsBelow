@@ -64,8 +64,9 @@ static func ready_floor(host: Node) -> void:
 	LightRtS.maintain(host)
 	HitchLog.mark("dungeon_light")
 	LoadTiming.dmark("light")
-	if App.present and App.present.has_method("release_enter"):
-		App.present.release_enter()
+	if App:
+		App.set("_enter_pumped", false)
+		App.call_deferred("_pump_enter_async")
 	Smoke.attach_dungeon(host)
 
 

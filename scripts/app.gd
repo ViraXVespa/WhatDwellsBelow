@@ -174,6 +174,14 @@ func enter_dungeon() -> void:
 
 
 
+func _pump_enter_async() -> void:
+	if bool(get("_enter_pumped")):
+		return
+	set("_enter_pumped", true)
+	await AppFlow.pump_fps(self, false)
+	if present and present.has_method("release_enter"):
+		present.release_enter()
+
 func _after_enter() -> void:
 	ui_open = false
 	Touch.clear_world()

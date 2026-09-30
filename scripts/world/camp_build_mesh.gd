@@ -212,31 +212,112 @@ static func ground(host: Node3D) -> void:
 static func tile_layer(host: Node3D, tex_path: String, points: Array, fallback: Color) -> void:
 	if points.is_empty():
 		return
+	var mat: Material = GroundShader.material(tex_path, fallback)
 	var rects: Array = _points_to_rects(points)
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for raw in rects:
-		var r: Dictionary = raw
-		var c: Vector3 = r["c"]
-		var sx: float = float(r["sx"])
-		var sz: float = float(r["sz"])
-		var y: float = c.y
-		var x0: float = c.x - sx * 0.5
-		var x1: float = c.x + sx * 0.5
-		var z0: float = c.z - sz * 0.5
-		var z1: float = c.z + sz * 0.5
-		var n := Vector3(0.0, 1.0, 0.0)
-		st.set_normal(n)
-		st.add_vertex(Vector3(x0, y, z0))
-		st.add_vertex(Vector3(x1, y, z0))
-		st.add_vertex(Vector3(x1, y, z1))
-		st.add_vertex(Vector3(x0, y, z0))
-		st.add_vertex(Vector3(x1, y, z1))
-		st.add_vertex(Vector3(x0, y, z1))
-	var inst := MeshInstance3D.new()
-	inst.mesh = st.commit()
-	inst.material_override = GroundShader.material(tex_path, fallback)
-	host.add_child(inst)
+	var i: int = 0
+	while i < rects.size():
+		var r: Dictionary = rects[i]
+		var mesh := PlaneMesh.new()
+		mesh.size = Vector2(float(r["sx"]), float(r["sz"]))
+		var inst := MeshInstance3D.new()
+		inst.mesh = mesh
+		inst.position = r["c"]
+		inst.material_override = mat
+		host.add_child(inst)
+		i += 1
+
+
+static func _points_to_rects(points: Array) -> Array:
+	var cells: Dictionary = {}
+	var used: Dictionary = {}
+	var pi: int = 0
+	while pi < points.size():
+		var v: Vector3 = points[pi]
+		var ix: int = int(floor(v.x))
+		var iz: int = int(floor(v.z))
+		cells[Vector2i(ix, iz)] = v
+		pi += 1
+	var rects: Array = []
+	var keys: Array = cells.keys()
+	var ki: int = 0
+	while ki < keys.size():
+		var k: Vector2i = keys[ki] as Vector2i
+		ki += 1
+		if used.has(k):
+			continue
+		var base: Vector3 = cells[k]
+		var w: int = 1
+		while cells.has(Vector2i(k.x + w, k.y)) and not used.has(Vector2i(k.x + w, k.y)):
+			w += 1
+		var h: int = 1
+		var grow: bool = true
+		while grow:
+			var x: int = 0
+			while x < w:
+				var ck := Vector2i(k.x + x, k.y + h)
+				if not cells.has(ck) or used.has(ck):
+					grow = false
+					break
+				x += 1
+			if grow:
+				h += 1
+		var x2: int = 0
+		while x2 < w:
+			var z2: int = 0
+			while z2 < h:
+				used[Vector2i(k.x + x2, k.y + z2)] = true
+				z2 += 1
+			x2 += 1
+		var sx: float = float(w) * T.TILE
+		var sz: float = float(h) * T.TILE
+		var c := Vector3(float(k.x) + sx * 0.5, base.y, float(k.y) + sz * 0.5)
+		rects.append({"c": c, "sx": sx, "sz": sz})
+	return rects
+
+
+static func _points_to_rects(points: Array) -> Array:
+	var cells: Dictionary = {}
+	var used: Dictionary = {}
+	var pi: int = 0
+	while pi < points.size():
+		var v: Vector3 = points[pi]
+		var ix: int = int(floor(v.x))
+		var iz: int = int(floor(v.z))
+		cells[Vector2i(ix, iz)] = v
+		pi += 1
+	var rects: Array = []
+	for raw_k in cells.keys():
+		var k: Vector2i = raw_k
+		if used.has(k):
+			continue
+		var base: Vector3 = cells[k]
+		var w: int = 1
+		while cells.has(Vector2i(k.x + w, k.y)) and not used.has(Vector2i(k.x + w, k.y)):
+			w += 1
+		var h: int = 1
+		var grow: bool = true
+		while grow:
+			var x: int = 0
+			while x < w:
+				var ck := Vector2i(k.x + x, k.y + h)
+				if not cells.has(ck) or used.has(ck):
+					grow = false
+					break
+				x += 1
+			if grow:
+				h += 1
+		var x2: int = 0
+		while x2 < w:
+			var z2: int = 0
+			while z2 < h:
+				used[Vector2i(k.x + x2, k.y + z2)] = true
+				z2 += 1
+			x2 += 1
+		var sx: float = float(w) * T.TILE
+		var sz: float = float(h) * T.TILE
+		var c := Vector3(float(k.x) + sx * 0.5, base.y, float(k.y) + sz * 0.5)
+		rects.append({"c": c, "sx": sx, "sz": sz})
+	return rects
 
 
 static func _points_to_rects(points: Array) -> Array:

@@ -171,8 +171,10 @@ static func dungeon_load_timing_async(host: Node) -> void:
 		await host.get_tree().process_frame
 	LoadTiming.dmark("dungeon_scene")
 	LoadTiming.dnote("dungeon_wait_frames", str(dun_guard))
+	await pump_fps(host, false)
+	if host.present and host.present.has_method("release_enter"):
+		host.present.release_enter()
 	LoadTiming.dmark("dungeon_ready")
-	LoadTiming.dnote("warm", "deferred")
 	LoadTiming.finish()
 
 
@@ -181,6 +183,32 @@ static func _hub_player(host: Node, scene: Node) -> Node:
 		return scene.player
 	return host.get_tree().get_first_node_in_group("player")
 
+
+static func pump_fps(host: Node, hub: bool) -> void:
+	var good: int = 0
+	var n: int = 0
+	var last_dt: int = 0
+	while n < 12:
+		var t0: int = Time.get_ticks_usec()
+		RenderingServer.force_draw()
+		await host.get_tree().process_frame
+		last_dt = int((Time.get_ticks_usec() - t0) / 1000)
+		n += 1
+		if last_dt <= 17:
+			good += 1
+			if good >= 2:
+				break
+		else:
+			good = 0
+	var ok_s: String = "1" if good >= 2 else "0"
+	if hub:
+		LoadTiming.note("warm_frames", str(n))
+		LoadTiming.note("fps_ok", ok_s)
+		LoadTiming.note("warm_last_dt", str(last_dt))
+	else:
+		LoadTiming.dnote("warm_frames", str(n))
+		LoadTiming.dnote("fps_ok", ok_s)
+		LoadTiming.dnote("warm_last_dt", str(last_dt))
 
 static func _warmup_hub(host: Node) -> void:
 	LoadTiming.mark("warmup_begin")
@@ -216,10 +244,7 @@ static func _warmup_hub(host: Node) -> void:
 	LoadTiming.mark("warmup_gpu")
 	if scene and scene.has_method("warmup_restore"):
 		scene.warmup_restore()
-	var rest: int = 0
-	while rest < 2:
-		await host.get_tree().process_frame
-		rest += 1
+	await pump_fps(host, true)
 	if host.loader:
 		host.loader.set_progress(0.98)
 	LoadTiming.mark("warmup_end")
