@@ -7,6 +7,8 @@ static var _halls: Array = []
 static var _disk_ox: PackedInt32Array = PackedInt32Array()
 static var _disk_oy: PackedInt32Array = PackedInt32Array()
 static var _disk_rad: int = -1
+static var _near: PackedByteArray = PackedByteArray()
+static var _near_w: int = 0
 
 
 static func begin_halls() -> void:
@@ -199,6 +201,19 @@ static func place_spread_rooms(rng: RandomNumberGenerator, grid: PackedByteArray
 
 static func connect_winding_tree(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array) -> void:
 	var n := rooms.size()
+	if n < 2:
+		return
+	_near_build(grid, w, h, _hug_gap())
+	var cx: PackedInt32Array = PackedInt32Array()
+	var cy: PackedInt32Array = PackedInt32Array()
+	cx.resize(n)
+	cy.resize(n)
+	var ri: int = 0
+	while ri < n:
+		var c: Vector2i = center(rooms[ri])
+		cx[ri] = c.x
+		cy[ri] = c.y
+		ri += 1
 	var used := PackedByteArray()
 	used.resize(n)
 	used.fill(0)
@@ -213,7 +228,7 @@ static func connect_winding_tree(rng: RandomNumberGenerator, grid: PackedByteArr
 			for j in n:
 				if used[j] != 0:
 					continue
-				var d := dist(rooms[i], rooms[j]) + rng.randi_range(0, 8)
+				var d := absi(cx[i] - cx[j]) + absi(cy[i] - cy[j]) + rng.randi_range(0, 8)
 				if d < best_d:
 					best_d = d
 					best_a = i
@@ -221,9 +236,60 @@ static func connect_winding_tree(rng: RandomNumberGenerator, grid: PackedByteArr
 		if best_a < 0:
 			break
 		used[best_b] = 1
-		carve_winding(rng, grid, w, h, center(rooms[best_a]), center(rooms[best_b]))
+		carve_winding(rng, grid, w, h, Vector2i(cx[best_a], cy[best_a]), Vector2i(cx[best_b], cy[best_b]))
+static func _near_stamp(w: int, h: int, x: int, y: int, r: int) -> void:
+	var y0: int = maxi(0, y - r)
+	var y1: int = mini(h - 1, y + r)
+	var x0: int = maxi(0, x - r)
+	var x1: int = mini(w - 1, x + r)
+	var yy: int = y0
+	while yy <= y1:
+		var row: int = yy * w
+		var xx: int = x0
+		while xx <= x1:
+			_near[row + xx] = 1
+			xx += 1
+		yy += 1
 
 
+static func _near_build(grid: PackedByteArray, w: int, h: int, gap: int) -> void:
+	var n: int = w * h
+	_near.resize(n)
+	_near.fill(0)
+	_near_w = w
+	var r: int = maxi(1, gap)
+	var y: int = 1
+	while y < h - 1:
+		var row: int = y * w
+		var x: int = 1
+		while x < w - 1:
+			if grid[row + x] == FLOOR:
+				_near_stamp(w, h, x, y, r)
+			x += 1
+		y += 1
+
+
+static func _near_paint_axis(w: int, h: int, a: Vector2i, b: Vector2i, gap: int) -> void:
+	var r: int = maxi(1, gap)
+	var heading: Vector2i = Vector2i(0, 0)
+	if b.x != a.x:
+		heading = Vector2i(1 if b.x > a.x else -1, 0)
+	elif b.y != a.y:
+		heading = Vector2i(0, 1 if b.y > a.y else -1)
+	else:
+		_near_stamp(w, h, a.x, a.y, r)
+		return
+	var x: int = a.x
+	var y: int = a.y
+	var guard: int = 0
+	var limit: int = absi(a.x - b.x) + absi(a.y - b.y) + 4
+	while guard < limit:
+		guard += 1
+		_near_stamp(w, h, x, y, r)
+		if x == b.x and y == b.y:
+			return
+		x += heading.x
+		y += heading.y
 static func _hug_gap() -> int:
 	var floor_min: int = 3
 	var gap: int = 4
@@ -239,20 +305,32 @@ static func _in_room(r: Dictionary, x: int, y: int) -> bool:
 
 static func _cell_hugs(grid: PackedByteArray, w: int, h: int, x: int, y: int, gap: int, a: Dictionary, b: Dictionary) -> bool:
 	var r: int = maxi(1, gap)
-	var yy: int = y - r
-	while yy <= y + r:
-		var xx: int = x - r
-		while xx <= x + r:
+	var ax0: int = int(a["x"])
+	var ay0: int = int(a["y"])
+	var ax1: int = ax0 + int(a["w"])
+	var ay1: int = ay0 + int(a["h"])
+	var bx0: int = int(b["x"])
+	var by0: int = int(b["y"])
+	var bx1: int = bx0 + int(b["w"])
+	var by1: int = by0 + int(b["h"])
+	var y0: int = maxi(1, y - r)
+	var y1: int = mini(h - 2, y + r)
+	var x0: int = maxi(1, x - r)
+	var x1: int = mini(w - 2, x + r)
+	var yy: int = y0
+	while yy <= y1:
+		var row: int = yy * w
+		var xx: int = x0
+		while xx <= x1:
 			if xx != x or yy != y:
-				if xx > 0 and yy > 0 and xx < w - 1 and yy < h - 1:
-					if grid[yy * w + xx] == FLOOR:
-						if not _in_room(a, xx, yy) and not _in_room(b, xx, yy):
-							return true
+				if grid[row + xx] == FLOOR:
+					var in_a: bool = xx >= ax0 and xx < ax1 and yy >= ay0 and yy < ay1
+					var in_b: bool = xx >= bx0 and xx < bx1 and yy >= by0 and yy < by1
+					if not in_a and not in_b:
+						return true
 			xx += 1
 		yy += 1
 	return false
-
-
 static func _loop_hugs(old_g: PackedByteArray, new_g: PackedByteArray, w: int, h: int, a: Dictionary, b: Dictionary, gap: int) -> bool:
 	var pad: int = maxi(2, gap + 2)
 	var x0: int = mini(int(a.x), int(b.x)) - pad
@@ -292,6 +370,16 @@ static func _axis_hugs(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Ve
 		heading = Vector2i(0, 1 if b.y > a.y else -1)
 	else:
 		return false
+	var ax0: int = int(ra["x"])
+	var ay0: int = int(ra["y"])
+	var ax1: int = ax0 + int(ra["w"])
+	var ay1: int = ay0 + int(ra["h"])
+	var bx0: int = int(rb["x"])
+	var by0: int = int(rb["y"])
+	var bx1: int = bx0 + int(rb["w"])
+	var by1: int = by0 + int(rb["h"])
+	var r: int = maxi(1, gap)
+	var use_near: bool = _near.size() == w * h
 	var x: int = a.x
 	var y: int = a.y
 	var guard: int = 0
@@ -301,16 +389,33 @@ static func _axis_hugs(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Ve
 		if x < 1 or y < 1 or x > w - 3 or y > h - 3:
 			return true
 		var i: int = y * w + x
-		if grid[i] != FLOOR:
-			if _cell_hugs(grid, w, h, x, y, gap, ra, rb):
+		if grid[i] != FLOOR and (not use_near or _near[i] != 0):
+			var y0: int = maxi(1, y - r)
+			var y1: int = mini(h - 2, y + r)
+			var x0: int = maxi(1, x - r)
+			var x1: int = mini(w - 2, x + r)
+			var yy: int = y0
+			var hit: bool = false
+			while yy <= y1 and not hit:
+				var row: int = yy * w
+				var xx: int = x0
+				while xx <= x1:
+					if xx != x or yy != y:
+						if grid[row + xx] == FLOOR:
+							var in_a: bool = xx >= ax0 and xx < ax1 and yy >= ay0 and yy < ay1
+							var in_b: bool = xx >= bx0 and xx < bx1 and yy >= by0 and yy < by1
+							if not in_a and not in_b:
+								hit = true
+								break
+					xx += 1
+				yy += 1
+			if hit:
 				return true
 		if x == b.x and y == b.y:
 			return false
 		x += heading.x
 		y += heading.y
 	return true
-
-
 static func _dogleg_mid(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i, gap: int, ra: Dictionary, rb: Dictionary) -> Vector2i:
 	var mids: Array[Vector2i] = [Vector2i(b.x, a.y), Vector2i(a.x, b.y)]
 	for mid in mids:
@@ -332,9 +437,9 @@ static func _attempt_winding(rng: RandomNumberGenerator, grid: PackedByteArray, 
 	var width: int = roll_hall_width(rng)
 	_carve_axis(grid, w, h, ca, mid, width)
 	_carve_axis(grid, w, h, mid, cb, width)
+	_near_paint_axis(w, h, ca, mid, gap)
+	_near_paint_axis(w, h, mid, cb, gap)
 	return true
-
-
 static func extra_winding_loops(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, extra: int) -> void:
 	if extra <= 0 or rooms.size() < 3:
 		return
@@ -343,6 +448,8 @@ static func extra_winding_loops(rng: RandomNumberGenerator, grid: PackedByteArra
 	var landed: int = 0
 	var tries: int = 0
 	var cap: int = want * 6
+	if _near.size() != w * h:
+		_near_build(grid, w, h, _hug_gap())
 	while landed < want and tries < cap:
 		tries += 1
 		var ia: int = rng.randi() % n
@@ -355,8 +462,6 @@ static func extra_winding_loops(rng: RandomNumberGenerator, grid: PackedByteArra
 			continue
 		if _attempt_winding(rng, grid, w, h, ra, rb):
 			landed += 1
-
-
 static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, count: int) -> void:
 	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 	var added := 0
@@ -542,5 +647,6 @@ static func carve_winding(rng: RandomNumberGenerator, grid: PackedByteArray, w: 
 		mid = Vector2i(a.x, b.y)
 	_carve_axis(grid, w, h, a, mid, width)
 	_carve_axis(grid, w, h, mid, b, width)
-
-
+	if _near.size() == w * h:
+		_near_paint_axis(w, h, a, mid, _hug_gap())
+		_near_paint_axis(w, h, mid, b, _hug_gap())

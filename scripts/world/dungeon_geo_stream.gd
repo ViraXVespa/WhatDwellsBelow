@@ -28,9 +28,6 @@ static func setup(host: Node) -> void:
 	if host.has_meta("wdb_wall_mi"):
 		host.remove_meta("wdb_wall_mi")
 	ensure_meshes()
-	_ensure_wall_mesh(host)
-
-
 static func ensure_meshes() -> void:
 	if _floor_mesh == null:
 		_floor_mesh = PlaneMesh.new()
@@ -75,26 +72,16 @@ static func prime_visible(host: Node) -> void:
 	if host.player == null:
 		return
 	ensure_meshes()
-	var pc: Vector2i = host._player_cell()
-	var origin := chunk_origin(pc)
+	var origin := chunk_origin(host._player_cell())
 	var w: int = host.data.w
 	var h: int = host.data.h
-	var dy: int = -RING_IN
-	while dy <= RING_IN:
-		var dx: int = -RING_IN
-		while dx <= RING_IN:
-			var o := Vector2i(origin.x + dx * CHUNK, origin.y + dy * CHUNK)
-			dx += 1
-			if o.x < 0 or o.y < 0 or o.x >= w or o.y >= h:
-				continue
-			var job: Dictionary = job_at(host, o)
-			if str(job.state) != "pending":
-				continue
-			HitchLog.mark("geo_activate", Vector2i(job.origin))
-			activate_job(host, job)
-		dy += 1
-
-
+	if origin.x < 0 or origin.y < 0 or origin.x >= w or origin.y >= h:
+		return
+	var job: Dictionary = job_at(host, origin)
+	if str(job.state) != "pending":
+		return
+	HitchLog.mark("geo_activate", Vector2i(job.origin))
+	activate_job(host, job)
 static func follow(host: Node, _delta: float) -> void:
 	if host.player == null:
 		return
@@ -107,17 +94,20 @@ static func follow(host: Node, _delta: float) -> void:
 	if str(cur.state) == "pending":
 		HitchLog.mark("geo_activate", Vector2i(cur.origin))
 		activate_job(host, cur)
-	var _last: Vector2i = Vector2i(-9999, -9999)
 	if host.has_meta("wdb_geo_origin"):
-		_last = host.get_meta("wdb_geo_origin")
+		pass
 	host.set_meta("wdb_geo_origin", origin)
 	var budget: int = PER_FRAME
 	var built := 0
-	for dy in range(-RING_IN, RING_IN + 1):
-		for dx in range(-RING_IN, RING_IN + 1):
+	var dy: int = -RING_IN
+	while dy <= RING_IN:
+		var dx: int = -RING_IN
+		while dx <= RING_IN:
 			if dx == 0 and dy == 0:
+				dx += 1
 				continue
 			var o := Vector2i(origin.x + dx * CHUNK, origin.y + dy * CHUNK)
+			dx += 1
 			if o.x < 0 or o.y < 0 or o.x >= w or o.y >= h:
 				continue
 			var job: Dictionary = job_at(host, o)
@@ -128,9 +118,27 @@ static func follow(host: Node, _delta: float) -> void:
 			HitchLog.mark("geo_activate", Vector2i(job.origin))
 			activate_job(host, job)
 			built += 1
+		dy += 1
+	if built < budget:
+		var dy2: int = -RING_OUT
+		while dy2 <= RING_OUT and built < budget:
+			var dx2: int = -RING_OUT
+			while dx2 <= RING_OUT and built < budget:
+				if maxi(absi(dx2), absi(dy2)) <= RING_IN:
+					dx2 += 1
+					continue
+				var o2 := Vector2i(origin.x + dx2 * CHUNK, origin.y + dy2 * CHUNK)
+				dx2 += 1
+				if o2.x < 0 or o2.y < 0 or o2.x >= w or o2.y >= h:
+					continue
+				var job2: Dictionary = job_at(host, o2)
+				if str(job2.state) != "pending":
+					continue
+				HitchLog.mark("geo_activate", Vector2i(job2.origin))
+				activate_job(host, job2)
+				built += 1
+			dy2 += 1
 	LightRt.maintain(host)
-
-
 static func tick(host: Node, delta: float) -> void:
 	follow(host, delta)
 	if host.player == null:
@@ -187,7 +195,9 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 			host.floor_mm = fm
 		HitchLog.mark("geo_lip")
 	if not runs.is_empty():
-		_ensure_wall_mesh(host)
+		var wall_inst: MeshInstance3D = _ensure_wall_mesh(host, runs, fine_m)
+		if wall_inst != null:
+			root.add_child(wall_inst)
 		HitchLog.mark("geo_walls")
 	if outlined or not runs.is_empty():
 		_add_ribbon_boxes(root, runs, fine_m)
@@ -199,33 +209,25 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 
 
 
-static func _ensure_wall_mesh(host: Node) -> void:
-	if host.has_meta("wdb_wall_mi"):
-		var old: Variant = host.get_meta("wdb_wall_mi")
-		if old is Node and is_instance_valid(old):
-			return
-	var spans: Array = _prepared_spans(host)
-	if spans.is_empty() or host.geo_root == null:
-		return
+static func _ensure_wall_mesh(host: Node, runs: Array = [], fine_m: float = 1.0) -> MeshInstance3D:
+	if runs.is_empty():
+		return null
 	var typed: Array[Dictionary] = []
-	for item in spans:
+	for item in runs:
 		if item is Dictionary:
 			typed.append(item)
 	if typed.is_empty():
-		return
+		return null
 	var wall_inst: MeshInstance3D = MeshInstance3D.new()
 	wall_inst.name = "WallRibbons"
 	wall_inst.mesh = WallMesh.from_faces(typed)
-	var fine_m: float = float(host.data.get("outline_fine_m", 1.0))
-	if fine_m < 0.2:
-		fine_m = 1.0
-	wall_inst.scale = Vector3(fine_m, 1.0, fine_m)
+	var scale_m: float = fine_m
+	if scale_m < 0.2:
+		scale_m = 1.0
+	wall_inst.scale = Vector3(scale_m, 1.0, scale_m)
 	wall_inst.material_override = host.wall_mat
 	wall_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	host.geo_root.add_child(wall_inst)
-	host.set_meta("wdb_wall_mi", wall_inst)
-
-
+	return wall_inst
 static func _mask(host: Node) -> Dictionary:
 	var w: int = int(host.data.w)
 	var h: int = int(host.data.h)
@@ -281,11 +283,26 @@ static func _outline_loops(host: Node) -> Array:
 
 
 static func _wall_runs(host: Node, solid: PackedByteArray, sw: int, sh: int, wall_cells: Array[Vector2i], ox: int, oy: int, x1: int, y1: int, n: int) -> Array[Dictionary]:
-	if _outline_spans(host).is_empty():
+	var raw: Array = _outline_spans(host)
+	if raw.is_empty():
 		return _faces_on_chunk(solid, sw, sh, wall_cells, ox * n, oy * n, x1 * n, y1 * n)
-	return _spans_on_chunk(_prepared_spans(host), ox * n, oy * n, x1 * n, y1 * n)
-
-
+	var fx0: int = ox * n
+	var fy0: int = oy * n
+	var fx1: int = x1 * n
+	var fy1: int = y1 * n
+	var hit: Array = []
+	for item in raw:
+		if not (item is Dictionary):
+			continue
+		var run: Dictionary = item
+		if not run.has("delta"):
+			continue
+		var o: Vector2 = run["origin"] as Vector2
+		var d: Vector2 = run["delta"] as Vector2
+		if _clip_span(o, d, float(fx0) - 2.0, float(fy0) - 2.0, float(fx1) + 2.0, float(fy1) + 2.0).is_empty():
+			continue
+		hit.append(run)
+	return _spans_on_chunk(WallMesh.prepare(hit), fx0, fy0, fx1, fy1)
 static func _prepared_spans(host: Node) -> Array:
 	var raw: Array = _outline_spans(host)
 	var mark: int = raw.size()
