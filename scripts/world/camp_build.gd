@@ -105,16 +105,22 @@ static func guild(host: Node3D) -> void:
 	var wing_at: Vector3 = lay.wing_pos() if lay else wing_pos()
 	var wing_box: Vector3 = lay.wing_box if lay else WING_SIZE
 	wing_box.y = maxf(wing_box.y, 3.8)
+	hall_at.y = hall_box.y * 0.5
+	wing_at.y = wing_box.y * 0.5
 	var hall_body: StaticBody3D = box(host, hall_at, hall_box, Color(0.45, 0.32, 0.22))
 	var wing_body: StaticBody3D = box(host, wing_at, wing_box, Color(0.5, 0.38, 0.28))
-	face(hall_body, hall_box, "res://assets/sprites/buildings/guild.png", 0.0, hall_box.x)
-	face(wing_body, wing_box, "res://assets/sprites/buildings/guild_reception.png", 0.0, wing_box.x)
+	face(hall_body, hall_box, "res://assets/sprites/buildings/guild.png", 0.0, hall_box.x, 0.30)
+	face(wing_body, wing_box, "res://assets/sprites/buildings/guild_reception.png", 0.0, wing_box.x, 0.28)
 	var hd: float = lay.awning_depth("Hall") if lay else 0.48
 	var hs: float = lay.awning_slope("Hall") if lay else 0.10
 	var hv: float = lay.awning_valance("Hall") if lay else 0.16
 	var he: float = lay.eave_for("Hall") if lay else ROOF_EAVE
+	var wd: float = lay.awning_depth("Wing") if lay else 0.48
+	var ws: float = lay.awning_slope("Wing") if lay else 0.10
+	var wv: float = lay.awning_valance("Wing") if lay else 0.16
 	var we: float = lay.eave_for("Wing") if lay else ROOF_EAVE
 	awning(hall_body, hall_box, hd, hs, hv, he)
+	awning(wing_body, wing_box, wd, ws, wv, we)
 	var hall_tile: float = lay.tile_for("Hall") if lay else TILE_W
 	var wing_tile: float = lay.tile_for("Wing") if lay else TILE_W
 	var hall_uv: Vector2 = lay.hall_uv_off if lay else Vector2.ZERO
@@ -156,7 +162,9 @@ static func solid(
 			lay.stall_uv_off if lay else Vector2.ZERO
 		)
 	face(body, box_size, tex, 0.0, box_size.x)
-static func face(body: Node3D, box_size: Vector3, tex: String, x_off: float, face_w: float) -> void:
+static func face(
+	body: Node3D, box_size: Vector3, tex: String, x_off: float, face_w: float, crop_top: float = 0.0
+) -> void:
 	if not ResourceLoader.exists(tex):
 		return
 	var spr := Sprite3D.new()
@@ -167,11 +175,17 @@ static func face(body: Node3D, box_size: Vector3, tex: String, x_off: float, fac
 	spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	var tw := float(maxi(1, spr.texture.get_width()))
 	var th := float(maxi(1, spr.texture.get_height()))
-	spr.pixel_size = minf(face_w / tw, box_size.y / th)
-	spr.position = Vector3(x_off, 0.0, box_size.z * 0.5 + 0.05)
+	var cap: float = clampf(crop_top, 0.0, 0.6)
+	var rh: float = th * (1.0 - cap)
+	if cap > 0.01:
+		spr.region_enabled = true
+		spr.region_rect = Rect2(0.0, th * cap, tw, rh)
+	var fw: float = maxf(face_w, 0.2)
+	var fh: float = maxf(box_size.y, 0.2)
+	spr.pixel_size = minf(fw / tw, fh / maxf(rh, 1.0))
+	var sh: float = spr.pixel_size * maxf(rh, 1.0)
+	spr.position = Vector3(x_off, (sh - box_size.y) * 0.5, box_size.z * 0.5 + 0.05)
 	body.add_child(spr)
-
-
 static func roof_mat(dim: Vector2, world_min: Vector3, tile: float = TILE_W, uv_off: Vector2 = Vector2.ZERO) -> Material:
 	return MeshS.roof_mat(dim, world_min, tile, uv_off)
 

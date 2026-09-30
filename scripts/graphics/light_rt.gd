@@ -817,11 +817,10 @@ static func _hub_paint_day(img: Image, x0: int, z0: int, layout: Node) -> void:
 	var tw: float = span.x
 	var th: float = span.y
 	var mid := Vector2(float(x0) + tw * 0.5, float(z0) + th * 0.5)
-	var sun: Vector2 = mid - away * 80.0
-	sun.x = clampf(sun.x, float(x0) + 0.6, float(x0) + tw - 0.6)
-	sun.y = clampf(sun.y, float(z0) + 0.6, float(z0) + th - 0.6)
-	var reach: float = maxf(96.0, Vector2(tw, th).length())
-	var boxes: Array = _hub_yard_boxes(layout, false)
+	var sun: Vector2 = mid - away * 18.0
+	sun.x = clampf(sun.x, float(x0) + 2.0, float(x0) + tw - 2.0)
+	sun.y = clampf(sun.y, float(z0) + 2.0, float(z0) + th - 2.0)
+	var reach: float = 40.0
 	var sub: float = float(HUB_SUB)
 	var w: int = img.get_width()
 	var h: int = img.get_height()
@@ -831,22 +830,11 @@ static func _hub_paint_day(img: Image, x0: int, z0: int, layout: Node) -> void:
 		while x < w:
 			var wx: float = float(x0) + (float(x) + 0.5) / sub
 			var wz: float = float(z0) + (float(y) + 0.5) / sub
-			var blocked := false
-			var bi: int = 0
-			while bi < boxes.size():
-				var b: Dictionary = boxes[bi]
-				if _hub_inside(wx, wz, b):
-					blocked = true
-					break
-				bi += 1
-			if blocked:
-				x += 1
-				continue
 			var d: float = Vector2(wx - sun.x, wz - sun.y).length()
 			var u: float = clampf(1.0 - d / reach, 0.0, 1.0)
 			u = u * u
 			var c: Color = img.get_pixel(x, y)
-			var k: float = 0.30 * u
+			var k: float = 0.48 * u
 			img.set_pixel(
 				x,
 				y,
@@ -856,7 +844,7 @@ static func _hub_paint_day(img: Image, x0: int, z0: int, layout: Node) -> void:
 		y += 1
 	if hub_crystal.length() < 0.2:
 		return
-	var cr: float = 3.2
+	var cr: float = 4.2
 	var y2: int = 0
 	while y2 < h:
 		var x2: int = 0
@@ -868,7 +856,7 @@ static func _hub_paint_day(img: Image, x0: int, z0: int, layout: Node) -> void:
 				var u2: float = 1.0 - dc / cr
 				u2 = u2 * u2
 				var c2: Color = img.get_pixel(x2, y2)
-				var k2: float = 0.34 * u2
+				var k2: float = 0.38 * u2
 				img.set_pixel(
 					x2,
 					y2,
@@ -908,13 +896,18 @@ static func _hub_cast_buildings(img: Image, x0: int, z0: int, layout: Node) -> v
 static func _hub_stamp_skirt(
 	img: Image, x0: int, z0: int, sub: float, w: int, h: int, b: Dictionary, away: Vector2
 ) -> int:
-	var slen: float = maxf(float(b["len"]), 0.5)
+	var slen: float = minf(maxf(float(b["len"]), 0.8), 5.0)
+	var bh: float = maxf(float(b["h"]), 1.0)
+	var lid: float = float(b["lid"]) if b.has("lid") else 1.0
 	var cx: float = float(b["x"])
 	var cz: float = float(b["z"])
 	var hx: float = float(b["hx"])
 	var hz: float = float(b["hz"])
-	var rad: float = 0.42
-	var pad: float = slen + rad + 0.35
+	var an: float = away.length()
+	var ax: float = away.x / maxf(an, 0.001)
+	var az: float = away.y / maxf(an, 0.001)
+	var rad: float = 0.85
+	var pad: float = slen + rad + 0.6
 	var px0: int = clampi(int(floor((cx - hx - pad - float(x0)) * sub)), 0, w - 1)
 	var px1: int = clampi(int(ceil((cx + hx + pad - float(x0)) * sub)), 0, w)
 	var pz0: int = clampi(int(floor((cz - hz - pad - float(z0)) * sub)), 0, h - 1)
@@ -926,37 +919,72 @@ static func _hub_stamp_skirt(
 		while x < px1:
 			var wx: float = float(x0) + (float(x) + 0.5) / sub
 			var wz: float = float(z0) + (float(y) + 0.5) / sub
-			if _hub_inside(wx, wz, b):
-				x += 1
-				continue
-			var px: float = wx - cx
-			var pz: float = wz - cz
-			var qx: float = absf(px) - maxf(hx - rad, 0.08)
-			var qz: float = absf(pz) - maxf(hz - rad, 0.08)
-			var sdf: float = Vector2(maxf(qx, 0.0), maxf(qz, 0.0)).length()
-			sdf += minf(maxf(qx, qz), 0.0)
-			sdf -= rad
-			if sdf <= 0.0:
-				x += 1
-				continue
-			var side: float = px * away.x + pz * away.y
-			var reach: float = slen
-			if side < 0.1:
-				reach = 0.2
-			if sdf > reach:
-				x += 1
-				continue
-			var t: float = clampf(sdf / maxf(reach, 0.2), 0.0, 1.0)
-			var s: float = t * t * (3.0 - 2.0 * t)
-			var k: float = lerpf(0.50, 1.0, s)
-			if side < 0.1:
-				k = lerpf(0.88, 1.0, s)
-			if k >= 0.995:
-				x += 1
-				continue
 			var c: Color = img.get_pixel(x, y)
-			img.set_pixel(x, y, Color(c.r * k, c.g * k, c.b * k, 1.0))
-			wrote += 1
+			var dx: float = wx - cx
+			var dz: float = wz - cz
+			var inset: float = 0.16
+			var deep: bool = absf(dx) <= hx - inset and absf(dz) <= hz - inset
+			if _hub_inside(wx, wz, b):
+				if lid > 0.02 and deep:
+					var vz: float = clampf((wz - (cz - hz)) / maxf(hz * 2.0, 0.2), 0.0, 1.0)
+					var k: float = lerpf(0.66, 1.18, vz)
+					k = lerpf(1.0, k, lid)
+					img.set_pixel(x, y, Color(c.r * k, c.g * k, c.b * k, 1.0))
+					wrote += 1
+				x += 1
+				continue
+			var qx: float = absf(dx) - maxf(hx - rad, 0.1)
+			var qz: float = absf(dz) - maxf(hz - rad, 0.1)
+			var sdf: float = Vector2(maxf(qx, 0.0), maxf(qz, 0.0)).length() + minf(maxf(qx, qz), 0.0) - rad
+			var ao: float = 1.0
+			if sdf < 0.85:
+				ao = lerpf(0.80, 1.0, clampf(sdf / 0.85, 0.0, 1.0))
+			var cover: float = 0.0
+			var ri: int = 0
+			while ri < 9:
+				var jx: float = ax
+				var jz: float = az
+				if ri == 1:
+					jx = ax + 0.14
+					jz = az - 0.06
+				elif ri == 2:
+					jx = ax - 0.14
+					jz = az + 0.06
+				elif ri == 3:
+					jx = ax + 0.08
+					jz = az + 0.12
+				elif ri == 4:
+					jx = ax - 0.08
+					jz = az - 0.12
+				elif ri == 5:
+					jx = ax + 0.18
+					jz = az
+				elif ri == 6:
+					jx = ax - 0.18
+					jz = az
+				elif ri == 7:
+					jx = ax
+					jz = az + 0.16
+				elif ri == 8:
+					jx = ax
+					jz = az - 0.16
+				var jl: float = sqrt(jx * jx + jz * jz)
+				jx /= maxf(jl, 0.001)
+				jz /= maxf(jl, 0.001)
+				var t: float = 0.12
+				while t <= slen:
+					if _hub_inside(wx - jx * t, wz - jz * t, b):
+						var reach: float = minf(slen, bh * 1.15)
+						if t <= reach:
+							cover += 1.0 - t / maxf(reach, 0.2)
+						break
+					t += 0.16
+				ri += 1
+			cover = clampf(cover / 9.0, 0.0, 1.0)
+			var k2: float = ao * lerpf(1.0, 0.54, cover)
+			if k2 < 0.995:
+				img.set_pixel(x, y, Color(c.r * k2, c.g * k2, c.b * k2 * 0.96, 1.0))
+				wrote += 1
 			x += 1
 		y += 1
 	return wrote
@@ -969,21 +997,42 @@ static func _hub_roof_box(pos: Vector3, box: Vector3, eave: float, slen: float) 
 		"len": slen
 	}
 static func _hub_yard_boxes(layout: Node, bake: bool) -> Array:
-	var hall_len: float = 4.6 if bake else 4.4
-	var wing_len: float = 3.9 if bake else 3.6
-	var stall_len: float = 2.5 if bake else 2.4
 	var boxes: Array = []
 	if layout != null and layout.has_method("hall_pos"):
-		boxes.append(_hub_box_of(layout.hall_pos(), layout.hall_box, hall_len))
-		boxes.append(_hub_box_of(layout.wing_pos(), layout.wing_box, wing_len))
-		boxes.append(_hub_box_of(layout.stall_pos(), layout.stall_box, stall_len))
+		var hall: Dictionary = _hub_box_of(layout.hall_pos(), layout.hall_box, 4.2)
+		hall["lid"] = 1.0
+		boxes.append(hall)
+		var wing: Dictionary = _hub_box_of(layout.wing_pos(), layout.wing_box, 4.6)
+		wing["lid"] = 1.0
+		boxes.append(wing)
+		var stall: Dictionary = _hub_box_of(layout.stall_pos(), layout.stall_box, 2.6)
+		stall["lid"] = 0.4
+		boxes.append(stall)
+		if layout.get("hall_awning_depth") != null:
+			var hp: Vector3 = layout.hall_pos()
+			var hb: Vector3 = layout.hall_box
+			var ad: float = float(layout.hall_awning_depth)
+			var aw: Dictionary = _hub_box_of(
+				Vector3(hp.x, 0.0, hp.z + hb.z * 0.5 + ad * 0.5),
+				Vector3(hb.x, 1.2, ad),
+				1.6
+			)
+			aw["lid"] = 0.0
+			boxes.append(aw)
 	else:
-		boxes.append(_hub_box_of(Vector3(8.2, 0.0, 6.0), Vector3(5.6, 3.4, 4.2), hall_len))
-		boxes.append(_hub_box_of(Vector3(25.0, 0.0, 8.0), Vector3(4.6, 2.4, 3.4), stall_len))
+		boxes.append(_hub_box_of(Vector3(8.2, 0.0, 6.0), Vector3(5.6, 3.4, 4.2), 4.2))
+		boxes.append(_hub_box_of(Vector3(25.0, 0.0, 8.0), Vector3(4.6, 2.4, 3.4), 2.6))
 	return boxes
 static func _hub_box_of(pos: Vector3, box: Vector3, slen: float) -> Dictionary:
-	return {"x": pos.x, "z": pos.z, "hx": box.x * 0.5 + 0.06, "hz": box.z * 0.5 + 0.06, "len": slen}
-
+	return {
+		"x": pos.x,
+		"z": pos.z,
+		"hx": box.x * 0.5 + 0.06,
+		"hz": box.z * 0.5 + 0.06,
+		"h": maxf(box.y, 1.0),
+		"len": slen,
+		"lid": 1.0
+	}
 static func _hub_inside(wx: float, wz: float, b: Dictionary) -> bool:
 	return absf(wx - float(b["x"])) <= float(b["hx"]) and absf(wz - float(b["z"])) <= float(b["hz"])
 

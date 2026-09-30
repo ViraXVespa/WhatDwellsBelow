@@ -726,41 +726,29 @@ static func pitched_roof(
 	st.generate_normals()
 	var fall_h: float = zs - zn
 	var fall_len: float = sqrt(fall_h * fall_h + rise * rise)
-	var mat: Material = roof_mat(Vector2(hx * 2.0, fall_len), world_min, tile, uv_off)
-	if mat is ShaderMaterial:
-		var sm: ShaderMaterial = mat
-		sm.set_shader_parameter("shade_use", 1.0)
-		sm.set_shader_parameter("shade_lo", 0.76)
-		sm.set_shader_parameter("shade_hi", 1.08)
 	var mi := MeshInstance3D.new()
 	mi.name = "PitchedRoof"
 	mi.mesh = st.commit()
-	mi.material_override = mat
+	mi.material_override = roof_mat(Vector2(hx * 2.0, fall_len), world_min, tile, uv_off)
 	body.add_child(mi)
 static func rumpled_tarp(body: Node3D, box_size: Vector3, eave: float, world_min: Vector3) -> void:
-	var cols: int = 9
-	var rows: int = 7
 	var hx: float = box_size.x * 0.5 + 0.03
 	var zn: float = -box_size.z * 0.5
 	var zs: float = box_size.z * 0.5 + eave
 	var y0: float = box_size.y * 0.5 + 0.04
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var r: int = 0
-	while r < rows:
-		var c: int = 0
-		while c < cols:
-			var u0: float = float(c) / float(cols)
-			var u1: float = float(c + 1) / float(cols)
-			var v0: float = float(r) / float(rows)
-			var v1: float = float(r + 1) / float(rows)
-			var p00 := Vector3(-hx + 2.0 * hx * u0, _tarp_y(u0, v0, y0), zn + (zs - zn) * v0)
-			var p10 := Vector3(-hx + 2.0 * hx * u1, _tarp_y(u1, v0, y0), zn + (zs - zn) * v0)
-			var p11 := Vector3(-hx + 2.0 * hx * u1, _tarp_y(u1, v1, y0), zn + (zs - zn) * v1)
-			var p01 := Vector3(-hx + 2.0 * hx * u0, _tarp_y(u0, v1, y0), zn + (zs - zn) * v1)
-			_quad(st, p00, p01, p11, p10, Vector2(u0, v0), Vector2(u0, v1), Vector2(u1, v1), Vector2(u1, v0))
-			c += 1
-		r += 1
+	_quad(
+		st,
+		Vector3(-hx, y0, zn),
+		Vector3(-hx, y0, zs),
+		Vector3(hx, y0, zs),
+		Vector3(hx, y0, zn),
+		Vector2(0.0, 0.0),
+		Vector2(0.0, 1.0),
+		Vector2(1.0, 1.0),
+		Vector2(1.0, 0.0)
+	)
 	st.generate_normals()
 	var mi := MeshInstance3D.new()
 	mi.name = "RumpledTarp"
