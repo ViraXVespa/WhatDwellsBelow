@@ -1,6 +1,9 @@
 # Dungeon — generation and placement
 
 Status: binding design + live snapshot  
+
+Target feel (not live): expansive rooms-and-tunnels dungeon, dark unused stone, moderate angled packets, one wall pair per hall. Live tree matches this page's snapshot after the 2026-09-29 revert.
+
 Read when: maze carve, hall segments, size rebalance ledger, accidental jogs, angled halls, deadend termini
 
 

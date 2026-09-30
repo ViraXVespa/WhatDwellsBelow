@@ -17,3 +17,4 @@ Floor ready builds the map image and binds it to the HUD well. The overlay start
 | PREPARE plaque, extraction clerks, stair hold, reveal disk | `design/dungeon-gates.md` |
 | transport decades, warp silence, spur length | `design/dungeon-crystals.md` |
 | RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo | `design/dungeon-stream.md` |
+

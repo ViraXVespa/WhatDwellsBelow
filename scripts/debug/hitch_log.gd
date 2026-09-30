@@ -215,9 +215,11 @@ static func _trim_file() -> void:
 	while i > 0:
 		i -= 1
 		var line: String = parts[i].strip_edges()
-		if line == "":
+		if line == "" or not line.begins_with("{"):
 			continue
 		var parsed: Variant = JSON.parse_string(line)
+		if parsed == null:
+			continue
 		var is_hitch: bool = parsed is Dictionary and str((parsed as Dictionary).get("ev", "")) == "hitch"
 		if is_hitch:
 			if found >= CAP:

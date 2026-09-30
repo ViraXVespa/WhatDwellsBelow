@@ -13,24 +13,21 @@ Need to fix design of pressure plate trap things.
 ### Can Do Now
 ## Sexy
 Hide hallways behind walls
-Need to create new UI for forging menu in blacksmith.
 Add a red outline around enemies that have targeted the player.
 Add X Money donation links
 Cleanup leftover hitching in pack_locomotion.py and/or player_anim.gd.
 Need to add view on web logic to archive docs. Could use custom html to open browser and load GitHub render of docs in a clean UI.
-Need to create a sub-menu flow for weapon type in the inventory.
-Analyze and forge aren't working correctly.
 Chest needs Open state.
 Ore label needs to be raised (or removed)
 Fix the chroma keying so no pink shows up on sprites.
-Smooth out the corners in the dungeon so it doesn't look so blocky.
-Need to sort out level scaling. First crystal should always be CL1 and enemies should gradually increase in level based on minimum walk distance from start.
+Add run modifier system similar to the fountain in HoH1.
+Have Quests affect a Guild Rank that increases quest difficulty and gives an XP boost
 
 ## Unsexy
 Need to fix automated playtest
 Need to organize debug vars menu.
 Need to fix animation browser controls.
-Make a thing that lets me send thoughts for later without interrupting.
+Have to set up tools to check seams so there isn't extra work doing that in the future.
 
 ### Needs Investigation
 pc-offload logics for grok build

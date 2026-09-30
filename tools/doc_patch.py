@@ -216,3 +216,58 @@ def run_checker(root: Path | None = None) -> int:
     if proc.returncode != 0:
         print(f"FAIL  check_load_graph exit {proc.returncode}")
     return proc.returncode
+
+JOB_SCRIPTS = {
+    "build-gate": "run_build_gate.ps1",
+    "dungeon-map": "run_dungeon_map.ps1",
+    "load-timing": "run_load_timing.ps1",
+    "dungeon-load-timing": "run_dungeon_load_timing.ps1",
+    "smokes": "run_smokes.ps1",
+}
+
+
+def out(text: str) -> None:
+    text = str(text).replace("\ufeff", "").rstrip()
+    sys.stdout.buffer.write((text + "\n").encode("utf-8", errors="replace"))
+    sys.stdout.buffer.flush()
+
+
+def compile_broke(body: str) -> bool:
+    low = body.lower()
+    return (
+        "parse error" in low
+        or "compile error" in low
+        or "failed to compile" in low
+        or "failed to load script" in low
+    )
+
+
+def dump_job(root: Path | None, job: str, script: str | None = None) -> tuple[int, str]:
+    """Run a tools/*.ps1 prove script, print its summary.txt body, return (rc, body)."""
+    root = repo_root(root)
+    name = script or JOB_SCRIPTS.get(job)
+    if not name:
+        raise SystemExit(f"FAIL  unknown prove job {job!r}")
+    proc = subprocess.run(
+        ["powershell", "-File", str(root / "tools" / name)],
+        cwd=str(root),
+        capture_output=True,
+    )
+    hits = sorted(
+        (
+            p
+            for p in (root / "_logs").rglob("summary.txt")
+            if p.is_file() and job in p.as_posix().replace("\\", "/")
+        ),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    body = hits[0].read_text(encoding="utf-8-sig") if hits else ""
+    if body:
+        out(body)
+    else:
+        out(f"missing {job} summary")
+        err = (proc.stderr or b"").decode("utf-8", errors="replace")
+        if err:
+            out(err[-2000:])
+    return int(proc.returncode), body

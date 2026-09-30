@@ -25,6 +25,7 @@ notes_exempt:
   - design/parked-tasks.md
   - design/park-smoke-shots.md
   - design/park-session-src.md
+  - design/park-dungeon-feel.md
 
 parked_jobs:
   - design/art-attack-keyframes.md

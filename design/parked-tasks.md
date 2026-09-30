@@ -28,3 +28,4 @@ smoke_shots | resume parked, smoke shots, headless screenshots, _logs/shots | pa
 session_src | resume parked, session src, harvest stills, _src/sessions | park-session-src.md | web / tools
 
 Do not invent rows.
+dungeon_feel | resume parked, dungeon feel, colony hybrid, hall ribbons, stacked walls | park-dungeon-feel.md | web then live gen/volume

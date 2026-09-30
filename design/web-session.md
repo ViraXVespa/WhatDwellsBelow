@@ -82,7 +82,7 @@ Revise from a fetched raw body plus the artifact byte check, or from a User past
 
 Docs in this pass: same scratch updates topic files, one code-map row, and tunables the slice made wrong, writes `design/changelog/{label}.md` via `doc_patch.write_changelog`, and runs `tools/check_load_graph.py`. A later scratch in the same emit pass is a delta. Skip every path whose write already printed `wrote`, `deleted`, or `already applied` / `already gone`. Do not re-emit the whole Phase 3 list. Do not rewrite a file that already matches the accepted goal unless that file is why RESULT failed.
 
-Prove from work that landed, using only existing runners. The scratch runs the test. After the process exits, read that runner's summary file and print it to stdout. Last line is `RESULT checker=PASS|FAIL` or `RESULT gate=PASS|FAIL` plus any extra marks. `sys.exit(0)` on PASS and `sys.exit(1)` on FAIL.
+Prove from work that landed, using only existing runners. The scratch runs the test through `doc_patch.dump_job(ROOT, job)` (or `run_checker` for the load-graph). After the process exits, print the summary file body, never the `Summary ->` path. Last line is `RESULT checker=PASS|FAIL` or `RESULT gate=PASS|FAIL` plus any extra marks. `sys.exit(0)` on PASS and `sys.exit(1)` on FAIL. If `dump_job` / import check reports a parse or compile error, stop; do not start a longer Godot prove.
 
 | Work that landed | Prove | Dump |
 |------|-------|------|
@@ -109,7 +109,7 @@ A prompt for Grok Build is a sealed brief, not a session export. Only: named job
 
 ## Scratch helpers
 
-Do not reimplement doc_patch. Import it from tools/.
+Do not reimplement doc_patch. Import it from tools/. Godot prove dumps go through `doc_patch.dump_job`; do not print `Summary ->` paths.
 Reuse Brief items must be numbered `1. ` `2. ` so bot_status.parse_reuse_brief counts them. Prose under ## Brief counts as empty.
 Changelog: doc_patch.write_changelog. If version.json lags the files in design/changelog/, use the next free 0.N.N label, do not reuse an existing note.
 Code-map rows: code_map_lib / patch_code_map, not a hand regex on the table.
