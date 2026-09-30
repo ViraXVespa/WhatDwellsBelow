@@ -210,22 +210,76 @@ static func ground(host: Node3D) -> void:
 
 
 static func tile_layer(host: Node3D, tex_path: String, points: Array, fallback: Color) -> void:
-    if points.is_empty():
-        return
-    var mesh := PlaneMesh.new()
-    mesh.size = Vector2(T.TILE, T.TILE)
-    var mm := MultiMesh.new()
-    mm.transform_format = MultiMesh.TRANSFORM_3D
-    mm.mesh = mesh
-    mm.instance_count = points.size()
-    for i in points.size():
-        var xf := Transform3D.IDENTITY
-        xf.origin = points[i]
-        mm.set_instance_transform(i, xf)
-    var inst := MultiMeshInstance3D.new()
-    inst.multimesh = mm
-    inst.material_override = GroundShader.material(tex_path, fallback)
-    host.add_child(inst)
+	if points.is_empty():
+		return
+	var rects: Array = _points_to_rects(points)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for raw in rects:
+		var r: Dictionary = raw
+		var c: Vector3 = r["c"]
+		var sx: float = float(r["sx"])
+		var sz: float = float(r["sz"])
+		var y: float = c.y
+		var x0: float = c.x - sx * 0.5
+		var x1: float = c.x + sx * 0.5
+		var z0: float = c.z - sz * 0.5
+		var z1: float = c.z + sz * 0.5
+		var n := Vector3(0.0, 1.0, 0.0)
+		st.set_normal(n)
+		st.add_vertex(Vector3(x0, y, z0))
+		st.add_vertex(Vector3(x1, y, z0))
+		st.add_vertex(Vector3(x1, y, z1))
+		st.add_vertex(Vector3(x0, y, z0))
+		st.add_vertex(Vector3(x1, y, z1))
+		st.add_vertex(Vector3(x0, y, z1))
+	var inst := MeshInstance3D.new()
+	inst.mesh = st.commit()
+	inst.material_override = GroundShader.material(tex_path, fallback)
+	host.add_child(inst)
+
+
+static func _points_to_rects(points: Array) -> Array:
+	var used: Dictionary = {}
+	var cells: Dictionary = {}
+	for p in points:
+		var v: Vector3 = p
+		var ix: int = int(floor(v.x))
+		var iz: int = int(floor(v.z))
+		cells[Vector2i(ix, iz)] = v
+	var rects: Array = []
+	for key in cells.keys():
+		var k: Vector2i = key
+		if used.has(k):
+			continue
+		var y: float = (cells[k] as Vector3).y
+		var w: int = 1
+		while cells.has(Vector2i(k.x + w, k.y)) and not used.has(Vector2i(k.x + w, k.y)):
+			w += 1
+		var h: int = 1
+		var grow: bool = true
+		while grow:
+			var x: int = 0
+			while x < w:
+				var ck := Vector2i(k.x + x, k.y + h)
+				if not cells.has(ck) or used.has(ck):
+					grow = false
+					break
+				x += 1
+			if grow:
+				h += 1
+		var x2: int = 0
+		while x2 < w:
+			var z2: int = 0
+			while z2 < h:
+				used[Vector2i(k.x + x2, k.y + z2)] = true
+				z2 += 1
+			x2 += 1
+		var sx: float = float(w) * T.TILE
+		var sz: float = float(h) * T.TILE
+		var c := Vector3(float(k.x) + sx * 0.5, y, float(k.y) + sz * 0.5)
+		rects.append({"c": c, "sx": sx, "sz": sz})
+	return rects
 
 
 static func grass_pad(
