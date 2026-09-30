@@ -181,6 +181,8 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 			root.add_child(fm)
 			if host.floor_mm == null:
 				host.floor_mm = fm
+			host.floor_mm = fm
+		HitchLog.mark("geo_lip")
 	if not runs.is_empty():
 		var wall_inst: MeshInstance3D = MeshInstance3D.new()
 		wall_inst.mesh = WallMesh.from_faces(runs)
