@@ -59,16 +59,51 @@ static func bind(mat: ShaderMaterial) -> void:
 
 
 static func _try_hub_baked() -> bool:
-	if not ResourceLoader.exists(HUB_LIGHT_PATH):
+	var abs_path: String = ProjectSettings.globalize_path(HUB_LIGHT_PATH)
+	if not FileAccess.file_exists(abs_path):
 		return false
-	var baked = load(HUB_LIGHT_PATH)
-	if baked == null:
+	var img := Image.new()
+	if img.load(abs_path) != OK:
 		return false
-	tex = baked
-	if baked is ImageTexture:
-		_gpu = baked
+	if img.get_width() < 16 or img.get_height() < 16:
+		return false
+	_img = img
+	_gpu = ImageTexture.create_from_image(img)
+	tex = _gpu
 	_push()
 	return true
+
+
+static func rebuild_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2, layout: Node = null) -> void:
+	_props.clear()
+	_sites.clear()
+	hub_crystal = crystal_xz
+	_hub_layout = layout
+	var tw: int = maxi(1, x1 - x0)
+	var th: int = maxi(1, z1 - z0)
+	origin = Vector2(float(x0), float(z0))
+	span = Vector2(float(tw), float(th))
+	var lights: Array = []
+	var mid := Vector2((float(x0) + float(x1)) * 0.5, (float(z0) + float(z1)) * 0.5)
+	var away := Vector2(0.406138, 0.913811)
+	var sun: Vector2 = mid - away * 80.0
+	sun.x = clampf(sun.x, float(x0) + 0.6, float(x1) - 0.6)
+	sun.y = clampf(sun.y, float(z0) + 0.6, float(z1) - 0.6)
+	var sun_item: Dictionary = _light_at(sun.x, sun.y, x0, z0, "sun")
+	sun_item["energy"] = _bal("light_hub_sun_energy", T.LIGHT_HUB_SUN_ENERGY)
+	sun_item["reach"] = maxf(96.0, Vector2(float(tw), float(th)).length())
+	sun_item["kind"] = "sun"
+	sun_item["occlude"] = true
+	lights.append(sun_item)
+	var cry: Dictionary = _light_at(crystal_xz.x, crystal_xz.y, x0, z0, "crystal")
+	cry["reach"] = _bal("light_hub_crystal_range", T.LIGHT_HUB_CRYSTAL_RANGE)
+	cry["energy"] = _bal("light_hub_crystal_energy", T.LIGHT_HUB_CRYSTAL_ENERGY)
+	cry["kind"] = "crystal"
+	cry["occlude"] = false
+	lights.append(cry)
+	var occ: Dictionary = _hub_occ(x0, z0, tw, th, layout)
+	_publish(x0, z0, tw, th, lights, Color(0.98, 0.96, 0.93, 1.0), occ["solid"], int(occ["sw"]), int(occ["sh"]), Stamp.SUB)
+	_hub_finish_yard(x0, z0, layout)
 
 
 static func save_hub_bake() -> void:
@@ -114,7 +149,7 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	if _try_hub_baked():
 		return
 	var occ: Dictionary = _hub_occ(x0, z0, tw, th, layout)
-	_publish(x0, z0, tw, th, lights, Color(0.86, 0.78, 0.64, 1.0), occ["solid"], int(occ["sw"]), int(occ["sh"]), Stamp.SUB)
+	_publish(x0, z0, tw, th, lights, Color(0.98, 0.96, 0.93, 1.0), occ["solid"], int(occ["sw"]), int(occ["sh"]), Stamp.SUB)
 	_hub_finish_yard(x0, z0, layout)
 
 
@@ -428,8 +463,7 @@ static func _publish(
 	_sh = sh
 	_sn = n
 	_keep_casts(x0, z0, tw, th, lights)
-	if not App.in_dungeon:
-		_hub_lift_dark(img)
+	# hub lift skipped: warm fill flattened the yard RT
 	if _gpu == null:
 		_gpu = ImageTexture.create_from_image(img)
 	else:
@@ -777,7 +811,6 @@ static func _keep_casts(x0: int, z0: int, tw: int, th: int, lights: Array) -> vo
 static func _hub_finish_yard(x0: int, z0: int, layout: Node) -> void:
 	if _img == null:
 		return
-	_hub_lift_dark(_img)
 	_hub_cast_buildings(_img, x0, z0, layout)
 	if _gpu != null:
 		_gpu.set_image(_img)
@@ -826,22 +859,18 @@ static func _hub_stamp_skirt(img: Image, x0: int, z0: int, sub: float, w: int, h
 		while x < px1:
 			var wx: float = float(x0) + (float(x) + 0.5) / sub
 			var wz: float = float(z0) + (float(y) + 0.5) / sub
+			var k: float = 1.0
 			if _hub_inside(wx, wz, b):
-				var ic: Color = img.get_pixel(x, y)
-				img.set_pixel(x, y, Color(ic.r * 0.62, ic.g * 0.62, ic.b * 0.62, 1.0))
-				x += 1
-				continue
-			var t: float = 0.12
-			var cover: float = 0.0
-			while t <= slen:
-				if _hub_inside(wx - away.x * t, wz - away.y * t, b):
-					cover = 1.0 - t / slen
-					break
-				t += 0.12
-			if cover > 0.02:
-				var c: Color = img.get_pixel(x, y)
-				var k: float = lerpf(1.0, 0.55, cover)
-				img.set_pixel(x, y, Color(c.r * k, c.g * k, c.b * k, 1.0))
+				k = 0.58
+			else:
+				var t: float = 0.1
+				while t <= slen:
+					if _hub_inside(wx - away.x * t, wz - away.y * t, b):
+						k = lerpf(0.58, 0.88, t / slen)
+						break
+					t += 0.1
+			if k < 0.99:
+				img.set_pixel(x, y, Color(0.98 * k, 0.96 * k, 0.93 * k, 1.0))
 			x += 1
 		y += 1
 	var bx0: int = maxi(px0 - 2, 0)
