@@ -43,6 +43,9 @@ def main() -> int:
         body = body[3:]
 
     out.parent.mkdir(parents=True, exist_ok=True)
+    # normalize CRLF for repo text writes
+    if b"\x00" not in body:
+        body = body.replace(b"\r\n", b"\n").replace(b"\r", b"\n").replace(b"\n", b"\r\n")
     prefix = b"\xef\xbb\xbf" if args.bom else b""
     if args.append and out.is_file():
         existing = out.read_bytes()

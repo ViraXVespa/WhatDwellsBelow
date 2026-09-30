@@ -19,6 +19,11 @@ from pathlib import Path
 import md_format_lib as md
 
 
+def write_text(path: Path, text: str) -> None:
+    data = text.replace("\r\n", "\n").replace("\r", "\n")
+    write_text(path, data.replace("\n", "\r\n"), encoding="utf-8", newline="")
+
+
 def repo_root(start: Path | None = None) -> Path:
     if start is None:
         start = Path(__file__).resolve()
