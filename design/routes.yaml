@@ -138,6 +138,7 @@ doors:
       benches: design/hub-benches.md
       guild: design/hub-guild.md
       yard: design/hub-yard.md
+    bake: design/hub-bake.md
   dungeon:
     file: design/dungeon.md
     read_when: "gen, streaming, guardian doors, fog, crystals"

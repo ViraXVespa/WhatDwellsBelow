@@ -27,3 +27,4 @@ This file is the door. Open the Job-table sibling only when that row matches.
 | ore-for-gold stall, dumpster flavor, plaza_tarp host | `design/hub-benches.md` |
 | receptionist bust, notice errands, welcome cloth | `design/hub-guild.md` |
 | striking dummy, Label3D priorities, post-rail fence, hopeful ambience, warmup overlay | `design/hub-yard.md` |
+| baked light RT, pitched roofs, wow puddles, HUB_SUB | `design/hub-bake.md` |
