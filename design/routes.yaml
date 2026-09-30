@@ -47,6 +47,7 @@ skills:
   imagine_isolated: .grok/skills/imagine-isolated/SKILL.md
   i2v_isolated: .grok/skills/i2v-isolated/SKILL.md
   pc_offload: .grok/skills/pc-offload/SKILL.md
+  shot_tool: .grok/skills/shot-tool/SKILL.md
 
 gates:
   tunables:
@@ -70,6 +71,9 @@ gates:
   build_job_cycle:
     file: design/build-job-cycle.md
     when: build_job
+  shot_tool:
+    file: design/shot-tool.md
+    when: postcard_shot
 
 doors:
   overview:

@@ -53,6 +53,7 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Gro
 | Title → Placeholdia load timing | `powershell -File tools/run_load_timing.ps1` (optional `-TimeoutSec 180`) | `_logs/sess/<session>/load-timing/summary.txt` |
 | Placeholdia → Dungeon load timing | `powershell -File tools/run_dungeon_load_timing.ps1` (optional `-TimeoutSec 180`) | `_logs/sess/<session>/dungeon-load-timing/summary.txt` |
 | Dungeon map dump | `powershell -File tools/run_dungeon_map.ps1` (optional `-Seed 42`, `-Floor 1`, `-Scale 8`, `-TimeoutSec 180`) | `_logs/sess/<session>/dungeon-map/summary.txt` |
+| Postcard shot | `python tools/run_shots.py --mode web|build|user` (optional `--seed 42`, `--floor 1`, `--scale 50`, `--settle-ms 1000`, `--timeout-sec 180`) | `_logs/sess/<session>/shots/summary.txt` |
 | Hostify lint (advisory) | `powershell -File tools/lint_hostify.ps1` | `_logs/sess/<session>/hostify-lint/summary.txt` |
 | Post-split gate (Bot) | `powershell -File tools/run_post_split_gate.ps1` (optional `-WithSmokes`, `-Force`) | `_logs/sess/<session>/post-split-gate/summary.txt` |
 | Build gate (Build) | `powershell -File tools/run_build_gate.ps1` (optional `-SkipImport`, `-OverKb 10`, `-Force`) | `_logs/sess/<session>/build-gate/summary.txt` |

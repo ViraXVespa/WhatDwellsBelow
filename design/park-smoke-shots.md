@@ -8,7 +8,8 @@ Not a boot file. See also is forbidden.
 
 ## Goal
 
-Headless smoke screenshots for map objects / shoot / crop. Real rendering driver, not Dummy. Write postcards under `_logs/shots` (or the session summary dir). Do not attach PNGs to a fat CLI transcript by default.
+Thin core has landed: `tools/run_shots.py` plus `--wdb-shot` worker, real `d3d12` frame, session shots dir, web clipboard / build scale / user open, window parked off-screen by default. Park stays open for crop-to-object, custom camera, earlier boot hide, and named presets.
+Do not attach PNGs to a fat CLI transcript by default.
 
 Out of this park: Godot path lock and Imagine deny. Those already shipped.
 

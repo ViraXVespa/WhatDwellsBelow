@@ -5,11 +5,13 @@ extends RefCounted
 ## Load timing: --wdb-load-timing-smoke (Title → Placeholdia; not a numbered phase)
 ## Dungeon load timing: --wdb-dungeon-load-timing-smoke (Placeholdia → Dungeon; not a numbered phase)
 ## Dungeon map: --wdb-dungeon-map-smoke (floor dump; not a numbered phase)
+## Postcard shot: --wdb-shot (play-camera PNG; not a numbered phase)
 
 const Early := preload("res://scripts/debug/smoke_early.gd")
 const Late := preload("res://scripts/debug/smoke_late.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const DungeonMap := preload("res://scripts/debug/dungeon_map.gd")
+const ShotTool := preload("res://scripts/debug/shot_tool.gd")
 
 static var enter_flag: bool = false
 
@@ -33,6 +35,8 @@ static func active() -> bool:
 		if s == LoadTiming.DUNGEON_FLAG:
 			return true
 		if s == DungeonMap.FLAG:
+			return true
+		if s == ShotTool.FLAG:
 			return true
 	return false
 
@@ -63,6 +67,14 @@ static func route_boot() -> bool:
 		App.floor_n = DungeonMap.floor_n()
 		App.run_seed = DungeonMap.run_seed()
 		return true
+	if ShotTool.active():
+		App.character_type = "male"
+		App.character_chosen = true
+		ShotTool.hide_window()
+		App.begin_run()
+		App.floor_n = ShotTool.floor_n()
+		App.run_seed = ShotTool.run_seed()
+		return true
 	if phase(1) or phase(2):
 		App.go_foundation()
 		return true
@@ -83,6 +95,10 @@ static func attach_foundation(host: Node) -> void:
 static func attach_dungeon(host: Node) -> void:
 	if DungeonMap.active():
 		DungeonMap.dump_floor(host)
+		return
+	if ShotTool.active():
+		host.call("_stream_force_all")
+		ShotTool.attach_dungeon(host)
 		return
 	if phase(3) or phase(4):
 		host.call("_stream_force_all")

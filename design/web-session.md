@@ -82,7 +82,7 @@ Revise from a fetched raw body plus the artifact byte check, or from a User past
 
 Docs in this pass: same scratch updates topic files, one code-map row, and tunables the slice made wrong, writes `design/changelog/{label}.md` via `doc_patch.write_changelog`, and runs `tools/check_load_graph.py`. A later scratch in the same emit pass is a delta. Skip every path whose write already printed `wrote`, `deleted`, or `already applied` / `already gone`. Do not re-emit the whole Phase 3 list. Do not rewrite a file that already matches the accepted goal unless that file is why RESULT failed.
 
-Prove from work that landed, using only existing runners. The scratch runs the test through `doc_patch.dump_job(ROOT, job)` (or `run_checker` for the load-graph). After the process exits, print the summary file body, never the `Summary ->` path. Last line is `RESULT checker=PASS|FAIL` or `RESULT gate=PASS|FAIL` plus any extra marks. `sys.exit(0)` on PASS and `sys.exit(1)` on FAIL. If `dump_job` / import check reports a parse or compile error, stop; do not start a longer Godot prove.
+When a slice needs a visual proof, run `python tools/run_shots.py --mode web` and paste the clipboard image with the printed RESULT. Prove from work that landed, using only existing runners. The scratch runs the test through `doc_patch.dump_job(ROOT, job)` (or `run_checker` for the load-graph). After the process exits, print the summary file body, never the `Summary ->` path. Last line is `RESULT checker=PASS|FAIL` or `RESULT gate=PASS|FAIL` plus any extra marks. `sys.exit(0)` on PASS and `sys.exit(1)` on FAIL. If `dump_job` / import check reports a parse or compile error, stop; do not start a longer Godot prove.
 
 | Work that landed | Prove | Dump |
 |------|-------|------|
@@ -92,6 +92,7 @@ Prove from work that landed, using only existing runners. The scratch runs the t
 | Hub to dungeon load | `tools/run_dungeon_load_timing.ps1` | dungeon-load-timing summary |
 | Gen / map shape | `tools/run_dungeon_map.ps1` | dungeon-map summary |
 | Named phase assert | `tools/run_smokes.ps1` | smokes summary |
+| Postcard shot | `python tools/run_shots.py --mode web` | shots summary; paste clipboard image |
 
 A slice that only edits protocol docs does not boot Godot. If there is no runner for that work, say so and prove with the load-graph / gate only.
 
