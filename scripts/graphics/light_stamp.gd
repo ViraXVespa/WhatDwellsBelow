@@ -177,35 +177,25 @@ static func _walk_mask(
 	if n < 1:
 		walk.fill(1)
 		return walk
-	if n == SUB and not solid.is_empty() and sw > 0 and sh > 0:
-		var py: int = 0
-		while py < ih:
-			var row: int = py * iw
-			var fy: int = z0 * n + py
-			if fy >= 0 and fy < sh:
-				var srow: int = fy * sw
-				var px: int = 0
-				while px < iw:
-					var fx: int = x0 * n + px
-					if fx >= 0 and fx < sw and solid[srow + fx] != 0:
-						var i: int = row + px
-						walk[i] = 1
-						_floor_ix[_floor_n] = i
-						_floor_n += 1
-					px += 1
-			py += 1
+	if solid.is_empty() or sw < 1 or sh < 1:
 		return walk
-	for py2 in ih:
-		var row2: int = py2 * iw
-		for px2 in iw:
-			if _lip_open(solid, sw, sh, n, x0, z0, px2, py2):
-				var j: int = row2 + px2
-				walk[j] = 1
-				_floor_ix[_floor_n] = j
-				_floor_n += 1
+	var py: int = 0
+	while py < ih:
+		var row: int = py * iw
+		var fy: int = z0 * n + (py * n) / SUB
+		if fy >= 0 and fy < sh:
+			var srow: int = fy * sw
+			var px: int = 0
+			while px < iw:
+				var fx: int = x0 * n + (px * n) / SUB
+				if fx >= 0 and fx < sw and solid[srow + fx] != 0:
+					var i: int = row + px
+					walk[i] = 1
+					_floor_ix[_floor_n] = i
+					_floor_n += 1
+				px += 1
+		py += 1
 	return walk
-
-
 static func _fill_loops(
 	walk: PackedByteArray,
 	loops: Array,
