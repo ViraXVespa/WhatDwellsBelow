@@ -13,10 +13,27 @@ const K_RIM := 3
 const PAD := 0.75
 
 
+static func _emit_edge(spans: Array, a: Vector2, b: Vector2, nrm: Vector2) -> void:
+	var d: Vector2 = b - a
+	if d.length_squared() < 0.04:
+		return
+	spans.append({"origin": a, "delta": d, "normal": nrm, "thick": 1.0})
+
+
+static func _stamp_rect(solid: PackedByteArray, sw: int, sh: int, spans: Array, x0: float, y0: float, x1: float, y1: float) -> void:
+	if x1 <= x0 or y1 <= y0:
+		return
+	var poly: PackedVector2Array = _rect(x0, y0, x1, y1)
+	_fill_axis_rect(solid, sw, sh, poly, 1)
+	_emit_edge(spans, Vector2(x0, y0), Vector2(x1, y0), Vector2(0.0, 1.0))
+	_emit_edge(spans, Vector2(x1, y0), Vector2(x1, y1), Vector2(-1.0, 0.0))
+	_emit_edge(spans, Vector2(x1, y1), Vector2(x0, y1), Vector2(0.0, -1.0))
+	_emit_edge(spans, Vector2(x0, y1), Vector2(x0, y0), Vector2(1.0, 0.0))
+
+
 static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> void:
 	var fine_m: float = _fine_m(bal)
 	var per: int = _per_m(fine_m)
-	var grid: PackedByteArray = data["grid"]
 	var w: int = int(data["w"])
 	var h: int = int(data["h"])
 	var rooms: Array = data["rooms"]
@@ -24,60 +41,35 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 	var raw_halls: Variant = data.get("halls", [])
 	if raw_halls is Array:
 		halls = raw_halls
-	var kind: PackedByteArray = _kinds(grid, w, h, rooms)
-	var shapes: Array = _shapes(rooms, halls, per)
 	LoadTiming.dmark("gen_outline_up")
-	var parts: Array = []
-	for shape_v in shapes:
-		var poly: PackedVector2Array = shape_v
-		if poly.size() >= 3:
-			parts.append(poly)
-	for i in parts.size():
-		var flip: PackedVector2Array = parts[i]
-		if _area(flip) < 0.0:
-			flip.reverse()
-			parts[i] = flip
-	var fillet: float = _frac(bal, "outline_fillet_frac", 0.0)
-	var loops: Array = []
-	for part_v in parts:
-		var part: PackedVector2Array = part_v
-		if _area(part) <= 1.0:
-			loops.append(part)
-			continue
-		var pts: Array[Vector2] = _copy_pts(part)
-		if per >= 2 and part.size() > 4:
-			pts = _fillet_points(pts, rng, fillet, per, kind, w, h)
-		loops.append(_fold_pts(pts))
 	LoadTiming.dmark("gen_outline_jag")
-	var boxes: Array = []
-	for box_v in loops:
-		boxes.append(_loop_box(box_v))
 	var sw: int = w * per
 	var sh: int = h * per
 	var solid: PackedByteArray = PackedByteArray()
 	solid.resize(sw * sh)
 	solid.fill(0)
-	for loop_v in loops:
-		var loop: PackedVector2Array = loop_v
-		if _area(loop) < 0.0:
-			loop.reverse()
-		if _area(loop) > 1.0:
-			_fill(solid, sw, sh, loop, 1)
-	_keep_rooms(solid, sw, sh, rooms, per)
-	_prep_edge_bins(loops)
 	var spans: Array = []
-	var li3: int = 0
-	while li3 < loops.size():
-		var rim: PackedVector2Array = loops[li3]
-		if _area(rim) < 0.0:
-			rim.reverse()
-		if _area(rim) > 1.0:
-			_push_clipped(spans, rim, li3, loops, boxes, solid, sw, sh)
-		li3 += 1
-	_join_ends(spans, solid, sw, sh)
-	for item in spans:
-		if item is Dictionary:
-			_paint(solid, sw, sh, item)
+	var scale: float = float(per)
+	var loops: Array = []
+	for room_v in rooms:
+		var room: Dictionary = room_v
+		var x0: float = float(int(room["x"])) * scale
+		var y0: float = float(int(room["y"])) * scale
+		var x1: float = float(int(room["x"]) + int(room["w"])) * scale
+		var y1: float = float(int(room["y"]) + int(room["h"])) * scale
+		_stamp_rect(solid, sw, sh, spans, x0, y0, x1, y1)
+		loops.append(_rect(x0, y0, x1, y1))
+	for hall_v in halls:
+		var hall: Dictionary = hall_v
+		if str(hall.get("k", "")) == "band":
+			continue
+		var hx0: float = float(int(hall["x0"])) * scale
+		var hy0: float = float(int(hall["y0"])) * scale
+		var hx1: float = float(int(hall["x1"]) + 1) * scale
+		var hy1: float = float(int(hall["y1"]) + 1) * scale
+		_stamp_rect(solid, sw, sh, spans, hx0, hy0, hx1, hy1)
+		loops.append(_rect(hx0, hy0, hx1, hy1))
+	_keep_rooms(solid, sw, sh, rooms, per)
 	LoadTiming.dnote("outline_loops", str(loops.size()))
 	LoadTiming.dnote("outline_spans_n", str(spans.size()))
 	data["outline_fine_m"] = fine_m

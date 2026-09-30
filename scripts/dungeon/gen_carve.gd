@@ -254,10 +254,19 @@ static func _cell_hugs(grid: PackedByteArray, w: int, h: int, x: int, y: int, ga
 
 
 static func _loop_hugs(old_g: PackedByteArray, new_g: PackedByteArray, w: int, h: int, a: Dictionary, b: Dictionary, gap: int) -> bool:
-	var y: int = 1
-	while y < h - 1:
-		var x: int = 1
-		while x < w - 1:
+	var pad: int = maxi(2, gap + 2)
+	var x0: int = mini(int(a.x), int(b.x)) - pad
+	var y0: int = mini(int(a.y), int(b.y)) - pad
+	var x1: int = maxi(int(a.x) + int(a.w), int(b.x) + int(b.w)) + pad
+	var y1: int = maxi(int(a.y) + int(a.h), int(b.y) + int(b.h)) + pad
+	x0 = clampi(x0, 1, w - 2)
+	y0 = clampi(y0, 1, h - 2)
+	x1 = clampi(x1, 1, w - 2)
+	y1 = clampi(y1, 1, h - 2)
+	var y: int = y0
+	while y <= y1:
+		var x: int = x0
+		while x <= x1:
 			var i: int = y * w + x
 			if new_g[i] == FLOOR and old_g[i] != FLOOR:
 				if _cell_hugs(old_g, w, h, x, y, gap, a, b):
@@ -275,55 +284,78 @@ static func _restore(grid: PackedByteArray, saved: PackedByteArray) -> void:
 		i += 1
 
 
+static func _axis_hugs(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i, gap: int, ra: Dictionary, rb: Dictionary) -> bool:
+	var heading: Vector2i = Vector2i(0, 0)
+	if b.x != a.x:
+		heading = Vector2i(1 if b.x > a.x else -1, 0)
+	elif b.y != a.y:
+		heading = Vector2i(0, 1 if b.y > a.y else -1)
+	else:
+		return false
+	var x: int = a.x
+	var y: int = a.y
+	var guard: int = 0
+	var limit: int = absi(a.x - b.x) + absi(a.y - b.y) + 4
+	while guard < limit:
+		guard += 1
+		if x < 1 or y < 1 or x > w - 3 or y > h - 3:
+			return true
+		var i: int = y * w + x
+		if grid[i] != FLOOR:
+			if _cell_hugs(grid, w, h, x, y, gap, ra, rb):
+				return true
+		if x == b.x and y == b.y:
+			return false
+		x += heading.x
+		y += heading.y
+	return true
+
+
+static func _dogleg_mid(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i, gap: int, ra: Dictionary, rb: Dictionary) -> Vector2i:
+	var mids: Array[Vector2i] = [Vector2i(b.x, a.y), Vector2i(a.x, b.y)]
+	for mid in mids:
+		if _axis_hugs(grid, w, h, a, mid, gap, ra, rb):
+			continue
+		if _axis_hugs(grid, w, h, mid, b, gap, ra, rb):
+			continue
+		return mid
+	return Vector2i(-9999, -9999)
+
+
 static func _attempt_winding(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, ra: Dictionary, rb: Dictionary) -> bool:
 	var gap: int = _hug_gap()
-	var saved: PackedByteArray = grid.duplicate()
-	var hall_n: int = _halls.size()
-	carve_winding(rng, grid, w, h, center(ra), center(rb))
-	if not _loop_hugs(saved, grid, w, h, ra, rb, gap):
-		return true
-	_restore(grid, saved)
-	_halls.resize(hall_n)
 	var ca: Vector2i = center(ra)
 	var cb: Vector2i = center(rb)
-	var mx: int = int(float(ca.x + cb.x) * 0.5)
-	var my: int = int(float(ca.y + cb.y) * 0.5)
-	var off: int = gap + 6
-	var mids: Array[Vector2i] = [
-		Vector2i(clampi(mx + off, 2, w - 3), clampi(my, 2, h - 3)),
-		Vector2i(clampi(mx - off, 2, w - 3), clampi(my, 2, h - 3)),
-		Vector2i(clampi(mx, 2, w - 3), clampi(my + off, 2, h - 3)),
-		Vector2i(clampi(mx, 2, w - 3), clampi(my - off, 2, h - 3)),
-		Vector2i(clampi(mx + off, 2, w - 3), clampi(my + off, 2, h - 3)),
-		Vector2i(clampi(mx - off, 2, w - 3), clampi(my - off, 2, h - 3)),
-	]
-	for mid: Vector2i in mids:
-		saved = grid.duplicate()
-		hall_n = _halls.size()
-		carve_winding(rng, grid, w, h, ca, mid)
-		carve_winding(rng, grid, w, h, mid, cb)
-		if not _loop_hugs(saved, grid, w, h, ra, rb, gap):
-			return true
-		_restore(grid, saved)
-		_halls.resize(hall_n)
-	return false
+	var mid: Vector2i = _dogleg_mid(grid, w, h, ca, cb, gap, ra, rb)
+	if mid.x < -9000:
+		return false
+	var width: int = roll_hall_width(rng)
+	_carve_axis(grid, w, h, ca, mid, width)
+	_carve_axis(grid, w, h, mid, cb, width)
+	return true
 
 
 static func extra_winding_loops(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, extra: int) -> void:
-	if extra <= 0 or rooms.size() < 4:
+	if extra <= 0 or rooms.size() < 3:
 		return
-	var added := 0
-	var guard := 0
-	while added < extra and guard < extra * 40:
-		guard += 1
-		var a := rng.randi() % rooms.size()
-		var b := rng.randi() % rooms.size()
-		if a == b:
+	var n: int = rooms.size()
+	var want: int = extra
+	var landed: int = 0
+	var tries: int = 0
+	var cap: int = want * 6
+	while landed < want and tries < cap:
+		tries += 1
+		var ia: int = rng.randi() % n
+		var ib: int = rng.randi() % n
+		if ia == ib:
 			continue
-		if dist(rooms[a], rooms[b]) < 18:
+		var ra: Dictionary = rooms[ia]
+		var rb: Dictionary = rooms[ib]
+		if dist(ra, rb) < 18:
 			continue
-		if _attempt_winding(rng, grid, w, h, rooms[a], rooms[b]):
-			added += 1
+		if _attempt_winding(rng, grid, w, h, ra, rb):
+			landed += 1
+
 
 static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, count: int) -> void:
 	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
@@ -480,54 +512,35 @@ static func _carve_band(
 	_note_rect(w, h, b.x, b.y, b.x, b.y, Vector2i(1, 0), width)
 
 
-static func carve_winding(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i) -> void:
-	if absi(b.x - a.x) >= 2 and absi(b.y - a.y) >= 2:
-		_carve_band(rng, grid, w, h, a, b)
+static func _carve_axis(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i, width: int) -> void:
+	if a == b:
+		dig_span(grid, w, h, a.x, a.y, Vector2i(1, 0), width)
+		_note_rect(w, h, a.x, a.y, a.x, a.y, Vector2i(1, 0), width)
 		return
-	var x := a.x
-	var y := a.y
-	var guard := 0
-	var limit := absi(a.x - b.x) + absi(a.y - b.y) + 36
-	var heading := Vector2i(1, 0)
-	if absi(b.x - a.x) < absi(b.y - a.y):
-		heading = Vector2i(0, 1 if b.y > a.y else -1)
-	elif b.x != a.x:
+	var heading: Vector2i = Vector2i(0, 0)
+	if b.x != a.x:
 		heading = Vector2i(1 if b.x > a.x else -1, 0)
-	var width := roll_hall_width(rng)
-	var interval := _hall_interval()
-	var steps := 0
-	dig_span(grid, w, h, x, y, heading, width)
-	var run_x: int = x
-	var run_y: int = y
-	var run_h: Vector2i = heading
-	var run_w: int = width
+	else:
+		heading = Vector2i(0, 1 if b.y > a.y else -1)
+	var x: int = a.x
+	var y: int = a.y
+	var guard: int = 0
+	var limit: int = absi(a.x - b.x) + absi(a.y - b.y) + 4
 	while (x != b.x or y != b.y) and guard < limit:
 		guard += 1
-		var choices: Array[Vector2i] = []
-		if x != b.x:
-			choices.append(Vector2i(1 if b.x > x else -1, 0))
-		if y != b.y:
-			choices.append(Vector2i(0, 1 if b.y > y else -1))
-		if rng.randf() < 0.22:
-			var perp: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
-			choices.append(perp[rng.randi() % perp.size()])
-		var d: Vector2i = choices[rng.randi() % choices.size()]
-		var prev_x: int = x
-		var prev_y: int = y
-		heading = d
-		x = clampi(x + d.x, 1, w - 3)
-		y = clampi(y + d.y, 1, h - 3)
-		steps += 1
-		if steps % interval == 0:
-			width = roll_hall_width(rng)
 		dig_span(grid, w, h, x, y, heading, width)
-		if heading != run_h or width != run_w:
-			_note_rect(w, h, run_x, run_y, prev_x, prev_y, run_h, run_w)
-			run_x = x
-			run_y = y
-			run_h = heading
-			run_w = width
-	_note_rect(w, h, run_x, run_y, x, y, run_h, run_w)
+		x = clampi(x + heading.x, 1, w - 3)
+		y = clampi(y + heading.y, 1, h - 3)
 	dig_span(grid, w, h, b.x, b.y, heading, width)
-	if b.x != x or b.y != y:
-		_note_rect(w, h, b.x, b.y, b.x, b.y, heading, width)
+	_note_rect(w, h, a.x, a.y, b.x, b.y, heading, width)
+
+
+static func carve_winding(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i) -> void:
+	var width: int = roll_hall_width(rng)
+	var mid: Vector2i = Vector2i(b.x, a.y)
+	if rng.randf() < 0.5:
+		mid = Vector2i(a.x, b.y)
+	_carve_axis(grid, w, h, a, mid, width)
+	_carve_axis(grid, w, h, mid, b, width)
+
+

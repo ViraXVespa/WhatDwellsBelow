@@ -35,6 +35,7 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Gro
 | Run ephemeral agent Python | `powershell -File tools/run_agent_py.ps1 -Script _logs/agent-py/foo.py` (optional `-KeepScript`) | `_logs/sess/<session>/agent-py/summary.txt` |
 | Bake 3D texture mipmaps | `python tools/enable_texture_mips.py` (optional `--root`, `--dry-run`) | (stdout counts; rewrites `.import` under `assets/sprites|tiles|props|fx`) |
 | Oversize inventory | `powershell -File tools/list_oversize_scripts.ps1` (optional `-OverKb 5` or `10`) | `_logs/sess/<session>/oversize/summary.txt` |
+| File bytes / newlines / indent | `python tools/file_stat.py --path scripts/dungeon/gen_outline.gd` (repeat `--path`, optional `--glob *.gd`, `--max 40`) | `_logs/sess/<session>/file-stat/summary.txt` |
 | Func-level inventory | `powershell -File tools/summarize_scripts.ps1` (optional `-OverKb 5`, `-TopFuncs 8`, `-Path scripts/...`) | `_logs/sess/<session>/script-summary/summary.txt` |
 | Facade + siblings by size | `powershell -File tools/list_facade_cluster.ps1 -Facade scripts/combat/enemy.gd` | `_logs/sess/<session>/facade-cluster/summary.txt` |
 | Script cap gate | `powershell -File tools/check_script_cap.ps1` (optional `-OverKb 10`, `-GitChanged`, `-Path ...`) | `_logs/sess/<session>/script-cap/summary.txt` |

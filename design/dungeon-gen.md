@@ -108,3 +108,5 @@ Boss room is farthest from spawn that still meets `_min_boss_sep = max(16, max(w
 cycle_of(n)     = (n - 1) / 5
 loop_index(n)   = ((n - 1) % 5) + 1
 is_gate_master  = loop_index == 5
+
+Live winding stays on the 1 m cardinal grid. `_carve_band` is not used for room-to-room links.
