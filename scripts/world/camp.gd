@@ -40,6 +40,7 @@ func _ready() -> void:
 		_layout
 	)
 	LightRt.hub_crystal = Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z)
+	LoadTiming.mark("camp_light")
 	if not baked:
 		Build.ground(self)
 	LoadTiming.mark("camp_ground")

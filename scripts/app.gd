@@ -194,6 +194,16 @@ func _bake_camp() -> void:
 	var layout = LayoutS.on_camp(camp)
 	layout.ensure_tree()
 	Build.realize_editor(camp, layout)
+	var LightRt = load("res://scripts/graphics/light_rt.gd")
+	LightRt.prepare_hub(
+		int(layout.aabb_x0()),
+		int(layout.aabb_z0()),
+		int(layout.aabb_x1()),
+		int(layout.aabb_z1()),
+		Vector2(layout.spot_pos("Crystal").x, layout.spot_pos("Crystal").z),
+		layout
+	)
+	LightRt.save_hub_bake()
 	var gen = camp.get_node_or_null("Generated")
 	if gen:
 		_mark_bake_owner(gen, camp)

@@ -12,6 +12,7 @@ const COL_CRYSTAL := Color(0.35, 0.72, 1.0)
 const COL_FIRE := Color(1.0, 0.40, 0.12)
 const COL_SUN := Color(1.0, 0.86, 0.62)
 
+const HUB_LIGHT_PATH := "res://assets/baked/hub_light.png"
 static var tex: Texture2D
 static var origin := Vector2.ZERO
 static var span := Vector2.ONE
@@ -57,6 +58,27 @@ static func bind(mat: ShaderMaterial) -> void:
 		_mats.append(mat)
 
 
+static func _try_hub_baked() -> bool:
+	if not ResourceLoader.exists(HUB_LIGHT_PATH):
+		return false
+	var baked = load(HUB_LIGHT_PATH)
+	if baked == null:
+		return false
+	tex = baked
+	if baked is ImageTexture:
+		_gpu = baked
+	_push()
+	return true
+
+
+static func save_hub_bake() -> void:
+	if _img == null:
+		return
+	var abs_path: String = ProjectSettings.globalize_path(HUB_LIGHT_PATH)
+	DirAccess.make_dir_recursive_absolute(abs_path.get_base_dir())
+	_img.save_png(abs_path)
+
+
 static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2, layout: Node = null) -> void:
 	_props.clear()
 	_sites.clear()
@@ -87,6 +109,10 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	cry["kind"] = "crystal"
 	cry["occlude"] = false
 	lights.append(cry)
+	origin = Vector2(float(x0), float(z0))
+	span = Vector2(float(tw), float(th))
+	if _try_hub_baked():
+		return
 	var occ: Dictionary = _hub_occ(x0, z0, tw, th, layout)
 	_publish(x0, z0, tw, th, lights, Color(0.86, 0.78, 0.64, 1.0), occ["solid"], int(occ["sw"]), int(occ["sh"]), Stamp.SUB)
 	_hub_finish_yard(x0, z0, layout)

@@ -264,6 +264,10 @@ static func hub_preload_paths(_host: Node) -> PackedStringArray:
 		"res://assets/sprites/npcs/vendor.png",
 		"res://assets/sprites/npcs/receptionist.png",
 		"res://assets/sprites/npcs/shopkeep.png",
+		"res://assets/sprites/player/male/idle_down.png",
+		"res://assets/sprites/player/male/idle_up.png",
+		"res://assets/sprites/player/male/idle_left.png",
+		"res://assets/sprites/player/male/idle_right.png",
 		"res://assets/fx/dummy.png",
 		"res://assets/audio/music_hub.wav",
 	])
