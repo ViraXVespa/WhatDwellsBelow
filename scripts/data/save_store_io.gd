@@ -5,6 +5,7 @@ extends RefCounted
 const LIVE := "user://live"
 const FRESH := "user://playtest/fresh"
 const PROG := "user://playtest/progressed"
+const SMOKE := "user://playtest/smoke"
 
 
 static func dir_for(slot: String) -> String:
@@ -12,6 +13,8 @@ static func dir_for(slot: String) -> String:
 		return FRESH
 	if slot == "progressed":
 		return PROG
+	if slot == "smoke":
+		return SMOKE
 	return LIVE
 
 

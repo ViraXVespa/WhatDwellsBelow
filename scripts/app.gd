@@ -145,6 +145,9 @@ func _open_debug() -> void:
 
 
 func save_now() -> void:
+	if Smoke.active():
+		Store.save_slot("smoke")
+		return
 	if playtest and bool(playtest.get("live_running")):
 		Store.save_slot(str(playtest.slot))
 		return

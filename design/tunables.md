@@ -140,6 +140,7 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | Rooms | — | **64** | Dense enough that empty walks stay short |
 | Room min / max | — | 5 / 9 | |
 | Extra loops | — | 8 | MST + extra loops |
+| Hall hug gap min / default | 3 / 4 | **3 / 4** | Unused cells between two hall floors. Reject closer loops |
 | Hall width min / mode / max | 2 / 3 / 4 | **2 / 3 / 4** | Mode 3; changes every `hall_w_interval` |
 | Hall width interval | 10 | **10** | Tiles along a winding path |
 | Hall width min / mode pct | 0.15 / 0.60 | **0.15 / 0.60** | Remainder is max width |
@@ -165,9 +166,9 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | Crystal CL band | 2 | **2** | Walk-level CL per placement band |
 | Crystal dead-end sep | 32 | **32** | Minimum Manhattan from spawn |
 | Crystal dead-end length | 28 | **28** | Spur walk to the nearest multi-exit room |
-| Outline fine size (`outline_fine_m`) | piece bake only | **0.25** | Angled-piece bake only. Not a floor-wide walk grid. Debug steps 0.25 / 0.5 / 1 |
-| Outline fillet fraction (`outline_fillet_frac`) | 0 | **0.40** | Law: unused floor-wide. Live still fillets until the gen source slice |
-| Outline jag fraction (`outline_jag_frac`) | 0 | **0.35** | Law: unused as a rim operator. Wear stays a shader concern. Live still jags until the gen source slice |
+| Outline fine size (`outline_fine_m`) | 0.25 m | **0.25** | Piece-bake resolution only. Not a floor-wide polyline |
+| Outline fillet fraction (`outline_fillet_frac`) | unused | **unused** | Not a rim operator. Wear is shader-side |
+| Outline jag fraction (`outline_jag_frac`) | unused | **unused** | Not a rim operator. Wear is shader-side |
 | Angled corridors max (`angled_corridor_max`) | 4 | **4** | First-class off-axis halls per floor |
 | Corner chords max (`corner_chord_max`) | 8 | **8** | Short turn cuts per floor |
 | Angled degrees (`angled_deg`) | 27 / 33 / 45 | **27 / 33 / 45** | Snap targets |

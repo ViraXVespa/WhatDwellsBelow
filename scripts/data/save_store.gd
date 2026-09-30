@@ -7,6 +7,7 @@ static var _migrated := false
 const LIVE := "user://live"
 const FRESH := "user://playtest/fresh"
 const PROG := "user://playtest/progressed"
+const SMOKE := "user://playtest/smoke"
 const Io := preload("res://scripts/data/save_store_io.gd")
 const Data := preload("res://scripts/data/save_store_data.gd")
 const Collect := preload("res://scripts/data/save_store_collect.gd")

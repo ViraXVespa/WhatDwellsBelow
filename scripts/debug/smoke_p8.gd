@@ -43,20 +43,20 @@ static func p8(host: Node) -> void:
 	App.bank_ore = 7
 	App.prog.deepest = 4
 	App.prog.skills_perm["axe"] = 120.0
-	StoreS.save_slot("live")
-	StoreS.save_slot("live")
+	StoreS.save_slot("smoke")
+	StoreS.save_slot("smoke")
 	App.bank_gold = 1
 	App.prog.deepest = 1
-	StoreS.corrupt_primary("live")
-	var how: String = StoreS.load_slot("live")
+	StoreS.corrupt_primary("smoke")
+	var how: String = StoreS.load_slot("smoke")
 	printerr("P8: load_after_corrupt=" + how + " gold=" + str(App.bank_gold) + " deep=" + str(App.prog.deepest) + " axe_perm=" + str(App.prog.skills_perm.get("axe", 0)))
 	printerr("P8: backup_ok=" + str(how == "backup" and App.bank_gold == 42 and App.prog.deepest == 4))
-	StoreS.corrupt_primary("live")
-	var bakp: String = StoreS.backup_path("live")
+	StoreS.corrupt_primary("smoke")
+	var bakp: String = StoreS.backup_path("smoke")
 	var bf: FileAccess = FileAccess.open(bakp, FileAccess.WRITE)
 	if bf:
 		bf.store_string("%%%")
-	var how2: String = StoreS.load_slot("live")
+	var how2: String = StoreS.load_slot("smoke")
 	printerr("P8: both_fail=" + how2 + " fresh_ok=" + str(how2 == "fresh"))
 	StoreS.wipe_slot("fresh")
 	StoreS.wipe_slot("progressed")
@@ -93,6 +93,6 @@ static func p8(host: Node) -> void:
 	printerr("P8: archives_ok=" + str(CatS.ok()))
 	tree(host).create_timer(1.6, true, false, true).timeout.connect(func():
 		printerr("P8: enter_cb=" + str(enter_flag))
-		StoreS.wipe_slot("live")
+		StoreS.wipe_slot("smoke")
 		tree(host).quit()
 	)

@@ -42,7 +42,7 @@ Binary (Steam tools build): `C:/Program Files (x86)/Steam/steamapps/common/Godot
 | p5 | Gather nodes, extract UI, puzzle props |
 | p6 | Artifacts, food/potion, forge, quests |
 | p7 | HUD, pause, debug, recap |
-| p8 | Hub spots, building depth, save backup, archive catalog |
+| p8 | Hub spots, building depth, save backup on the smoke slot, archive catalog |
 | p9 | Audio, archive catalog, anim models, playtest hook |
 
 
