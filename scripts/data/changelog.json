@@ -3,6 +3,18 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.5.8",
+			"points": [
+				{
+					"text": "Dungeon feel spec is occupancy-first: unused stone stays uncarved, extra loops need a 3-cell minimum hug gap (default 4), and angled packets stay seasoning."
+				},
+				{
+					"text": "Ownership is one-way publish: gen writes hall runs, stream instances them, volume skins them, buffer mounts lights on interior faces. Outline bake is gen, not volume."
+				}
+			],
+			"summary": "Lean dungeon-feel spec and one-way wall ownership."
+		},
+		{
 			"label": "0.5.7",
 			"points": [
 				{
