@@ -20,6 +20,7 @@ static var _mats: Array[ShaderMaterial] = []
 static var _props: Array[Node] = []
 static var _sites: Array[Dictionary] = []
 static var _planned := false
+static var _plan_partial := false
 static var _plan_dirty := true
 static var _rect := Rect2i(-1, -1, 0, 0)
 static var _live := ""
@@ -307,28 +308,32 @@ static func reset_floor() -> void:
 	_props.clear()
 	_sites.clear()
 	_planned = false
+	_plan_partial = false
 	_plan_dirty = true
 	_live = ""
 	_knob = ""
 	_rect = Rect2i(-1, -1, 0, 0)
-
-
 static func maintain(host: Node) -> void:
 	if host == null or host.get("data") == null:
 		return
 	var rect: Rect2i = _ring_rect(host)
 	if rect.size.x < 1 or rect.size.y < 1:
 		return
+	var mode := ""
+	if App.present:
+		mode = str(App.present.get("_mode"))
+	var entering: bool = mode == "enter_hold" or mode == "enter_fade" or _rect.size.x < 1
 	var key: String = _knob_key()
 	var live: String = _live_key(host)
-	var need_plan: bool = _plan_dirty or not _planned
+	var need_plan: bool = _plan_dirty or not _planned or (_plan_partial and not entering)
 	var need_torch: bool = live != _live
 	var need_stamp: bool = key != _knob or rect != _rect
 	if not need_plan and not need_stamp and not need_torch:
 		return
 	var LoadTiming: GDScript = load("res://scripts/debug/load_timing.gd") as GDScript
 	if need_plan:
-		_sites = Plan.build(host, _props)
+		_sites = Plan.build(host, _props, rect if entering else Rect2i())
+		_plan_partial = entering
 		HitchLog.mark("light_plan")
 		if LoadTiming:
 			LoadTiming.dnote("light_kind", "plan")

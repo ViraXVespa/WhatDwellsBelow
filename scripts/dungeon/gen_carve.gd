@@ -203,7 +203,7 @@ static func connect_winding_tree(rng: RandomNumberGenerator, grid: PackedByteArr
 	var n := rooms.size()
 	if n < 2:
 		return
-	_near_build(grid, w, h, _hug_gap())
+	_near_build(grid, w, h, _hug_gap(), rooms)
 	var cx: PackedInt32Array = PackedInt32Array()
 	var cy: PackedInt32Array = PackedInt32Array()
 	cx.resize(n)
@@ -252,12 +252,30 @@ static func _near_stamp(w: int, h: int, x: int, y: int, r: int) -> void:
 		yy += 1
 
 
-static func _near_build(grid: PackedByteArray, w: int, h: int, gap: int) -> void:
+static func _near_build(grid: PackedByteArray, w: int, h: int, gap: int, rooms: Array = []) -> void:
 	var n: int = w * h
 	_near.resize(n)
 	_near.fill(0)
 	_near_w = w
 	var r: int = maxi(1, gap)
+	if rooms.size() > 0:
+		var ri: int = 0
+		while ri < rooms.size():
+			var rr: Dictionary = rooms[ri]
+			ri += 1
+			var x0: int = maxi(0, int(rr["x"]) - r)
+			var y0: int = maxi(0, int(rr["y"]) - r)
+			var x1: int = mini(w - 1, int(rr["x"]) + int(rr["w"]) - 1 + r)
+			var y1: int = mini(h - 1, int(rr["y"]) + int(rr["h"]) - 1 + r)
+			var yy: int = y0
+			while yy <= y1:
+				var row: int = yy * w
+				var xx: int = x0
+				while xx <= x1:
+					_near[row + xx] = 1
+					xx += 1
+				yy += 1
+		return
 	var y: int = 1
 	while y < h - 1:
 		var row: int = y * w
@@ -267,8 +285,6 @@ static func _near_build(grid: PackedByteArray, w: int, h: int, gap: int) -> void
 				_near_stamp(w, h, x, y, r)
 			x += 1
 		y += 1
-
-
 static func _near_paint_axis(w: int, h: int, a: Vector2i, b: Vector2i, gap: int) -> void:
 	var r: int = maxi(1, gap)
 	var heading: Vector2i = Vector2i(0, 0)
@@ -449,7 +465,7 @@ static func extra_winding_loops(rng: RandomNumberGenerator, grid: PackedByteArra
 	var tries: int = 0
 	var cap: int = want * 6
 	if _near.size() != w * h:
-		_near_build(grid, w, h, _hug_gap())
+		_near_build(grid, w, h, _hug_gap(), rooms)
 	while landed < want and tries < cap:
 		tries += 1
 		var ia: int = rng.randi() % n

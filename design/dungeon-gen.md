@@ -27,7 +27,7 @@ Live extra loops copy the grid and carve. A hug reverts, then retries through of
 
 `gen.gd` uses the requested room count. Extra winding loops use the full `gen_extra_loops` value. Dead-end hall stubs are a small leaf budget on the order of extra loops, not on the order of rooms.
 
-Extra loops may approach another hall. They MUST NOT hug it. Hug clearance counts unused cells between the two floors. Legal minimum is `hall_hug_gap_min` (3). First live default is `hall_hug_gap` (4). Reject the candidate. Do not weld spans across the gap.
+Hug mask `_near` is dilated room AABBs plus hall-axis paint. Do not rebuild it from post-tree occupancy. Extra loops may approach another hall. They MUST NOT hug it. Hug clearance counts unused cells between the two floors. Legal minimum is `hall_hug_gap_min` (3). First live default is `hall_hug_gap` (4). Reject the candidate. Do not weld spans across the gap.
 
 ## Maze carve and hall runs
 

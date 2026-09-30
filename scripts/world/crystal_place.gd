@@ -180,8 +180,6 @@ static func _try_add(host: Node, spots: Array, pick: Dictionary, sep: int) -> bo
 static func place_floor(host: Node) -> void:
 	place_entrance(host)
 	place_extras(host)
-
-
 static func place_entrance(host: Node) -> void:
 	var Net = load("res://scripts/world/crystal_net.gd")
 	Net.ensure_run()

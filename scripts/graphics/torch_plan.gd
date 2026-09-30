@@ -106,7 +106,7 @@ static func _bin_near(cell: Vector2i) -> PackedInt32Array:
 	return out
 
 
-static func build(host: Node, props: Array) -> Array[Dictionary]:
+static func build(host: Node, props: Array, clip: Rect2i = Rect2i()) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if host == null or host.data == null:
 		return out
@@ -124,7 +124,7 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 	if App != null:
 		seed_n = int(App.run_seed)
 		floor_n = int(App.floor_n)
-	var key: String = "%d:%d:%d:%d:%d:%d" % [map_w, map_h, rooms_n, spans.size(), seed_n, floor_n]
+	var key: String = "%d:%d:%d:%d:%d:%d:%d:%d:%d:%d" % [map_w, map_h, rooms_n, spans.size(), seed_n, floor_n, clip.position.x, clip.position.y, clip.size.x, clip.size.y]
 	if key == _cache_key and not _cache.is_empty():
 		return _apply_lit(host, props, _cache)
 	var per: int = maxi(1, int(host.data.get("solid_n", 1)))
@@ -133,6 +133,15 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 	var inside: PackedInt32Array = PackedInt32Array()
 	inside.resize(map_w * map_h)
 	inside.fill(-1)
+	var cx0: int = 1
+	var cy0: int = 1
+	var cx1: int = map_w - 1
+	var cy1: int = map_h - 1
+	if clip.size.x > 0 and clip.size.y > 0:
+		cx0 = clampi(clip.position.x, 1, map_w - 1)
+		cy0 = clampi(clip.position.y, 1, map_h - 1)
+		cx1 = clampi(clip.position.x + clip.size.x, 1, map_w - 1)
+		cy1 = clampi(clip.position.y + clip.size.y, 1, map_h - 1)
 	for i in rooms.size():
 		var room: Dictionary = rooms[i]
 		var rx: int = int(room["x"])
@@ -152,7 +161,14 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 	_room_ix = inside
 	var used: Dictionary = {}
 	for i2 in rooms.size():
-		var site: Dictionary = _span_in_room(rooms[i2], per)
+		var room2: Dictionary = rooms[i2]
+		var rx2: int = int(room2["x"])
+		var ry2: int = int(room2["y"])
+		var rw2: int = int(room2["w"])
+		var rh2: int = int(room2["h"])
+		if rx2 + rw2 < cx0 or ry2 + rh2 < cy0 or rx2 > cx1 or ry2 > cy1:
+			continue
+		var site: Dictionary = _span_in_room(room2, per)
 		if site.is_empty():
 			continue
 		used[Vector2i(int(site["fx"]), int(site["fz"]))] = true
@@ -165,19 +181,25 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 	hall.fill(0)
 	var mouths: Array[Vector2i] = []
 	var hall_ix: PackedInt32Array = PackedInt32Array()
-	for y2 in range(1, map_h - 1):
+	var y2: int = cy0
+	while y2 < cy1:
 		var row2: int = y2 * map_w
-		for x2 in range(1, map_w - 1):
+		var x2: int = cx0
+		while x2 < cx1:
 			var i3: int = row2 + x2
 			if inside[i3] >= 0:
+				x2 += 1
 				continue
 			if grid[i3] != Gen.FLOOR:
+				x2 += 1
 				continue
 			hall[i3] = 1
 			hall_ix.append(i3)
 			if _touches_room_arr(grid, inside, map_w, map_h, x2, y2):
 				mouth[i3] = 1
 				mouths.append(Vector2i(x2, y2))
+			x2 += 1
+		y2 += 1
 	var seen: PackedByteArray = PackedByteArray()
 	seen.resize(map_w * map_h)
 	seen.fill(0)
@@ -196,6 +218,8 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 			run.append(cur)
 			for d: Vector2i in DIRS:
 				var nxt: Vector2i = cur + d
+				if nxt.x < 1 or nxt.y < 1 or nxt.x > map_w - 2 or nxt.y > map_h - 2:
+					continue
 				var ni: int = nxt.y * map_w + nxt.x
 				if mouth[ni] != 0 and seen[ni] == 0:
 					seen[ni] = 1
@@ -238,8 +262,6 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 	_cache_key = key
 	_cache = out
 	return _apply_lit(host, props, out)
-
-
 static func _apply_lit(host: Node, props: Array, layout: Array[Dictionary]) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if host == null or host.data == null or layout.is_empty():
