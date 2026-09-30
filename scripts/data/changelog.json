@@ -3,6 +3,18 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.5.6",
+			"points": [
+				{
+					"text": "Parked dungeon_feel after reverting the 2026-09-29 gen/skin thrash."
+				},
+				{
+					"text": "Gen docs point at design/dungeon-feel.md. Live snapshot stays the reverted main recipe."
+				}
+			],
+			"summary": "Parked the colony-hybrid dungeon feel. Live gen was reverted."
+		},
+		{
 			"label": "0.5.5",
 			"points": [
 				{
