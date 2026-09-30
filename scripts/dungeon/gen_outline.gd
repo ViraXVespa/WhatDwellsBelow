@@ -5,6 +5,28 @@ const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const FLOOR := 1
 
 
+static func _on_room_rim(rooms: Array, mid: Vector2, nrm: Vector2, scale: float) -> bool:
+	var slop: float = 0.6
+	var horiz: bool = absf(nrm.y) >= absf(nrm.x)
+	for room_v in rooms:
+		var room: Dictionary = room_v
+		var x0: float = float(int(room["x"])) * scale
+		var y0: float = float(int(room["y"])) * scale
+		var x1: float = float(int(room["x"]) + int(room["w"])) * scale
+		var y1: float = float(int(room["y"]) + int(room["h"])) * scale
+		if horiz:
+			if mid.x < x0 - slop or mid.x > x1 + slop:
+				continue
+			if absf(mid.y - y0) <= slop or absf(mid.y - y1) <= slop:
+				return true
+		else:
+			if mid.y < y0 - slop or mid.y > y1 + slop:
+				continue
+			if absf(mid.x - x0) <= slop or absf(mid.x - x1) <= slop:
+				return true
+	return false
+
+
 static func _on_rim(grid: PackedByteArray, gw: int, gh: int, per: int, mid: Vector2, nrm: Vector2) -> bool:
 	var inn: Vector2 = mid + nrm * 0.6
 	var outp: Vector2 = mid - nrm * 0.6
@@ -24,10 +46,10 @@ static func _on_rim(grid: PackedByteArray, gw: int, gh: int, per: int, mid: Vect
 static func _emit_frag_run(spans: Array, a: Vector2, dir: Vector2, t0: float, t1: float, nrm: Vector2) -> void:
 	if t1 - t0 < 0.04:
 		return
-	spans.append({"origin": a + dir * t0, "delta": dir * (t1 - t0), "normal": nrm, "thick": 1.0})
+	spans.append({"origin": a + dir * t0, "delta": dir * (t1 - t0), "normal": nrm, "thick": 0.25})
 
 
-static func _emit_edge(spans: Array, grid: PackedByteArray, gw: int, gh: int, per: int, a: Vector2, b: Vector2, nrm: Vector2) -> void:
+static func _emit_edge(spans: Array, grid: PackedByteArray, gw: int, gh: int, per: int, a: Vector2, b: Vector2, nrm: Vector2, rooms: Array, scale: float, skip_rooms: bool) -> void:
 	var d: Vector2 = b - a
 	var span_l: float = d.length()
 	if span_l < 0.04:
@@ -39,7 +61,10 @@ static func _emit_edge(spans: Array, grid: PackedByteArray, gw: int, gh: int, pe
 	while t < span_l - 0.001:
 		var t1: float = minf(span_l, t + step)
 		var mid: Vector2 = a + dir * ((t + t1) * 0.5)
-		if _on_rim(grid, gw, gh, per, mid, nrm):
+		var keep: bool = _on_rim(grid, gw, gh, per, mid, nrm)
+		if keep and skip_rooms and _on_room_rim(rooms, mid, nrm, scale):
+			keep = false
+		if keep:
 			if run0 < 0.0:
 				run0 = t
 		elif run0 >= 0.0:
@@ -83,22 +108,17 @@ static func _fill_axis_rect(solid: PackedByteArray, sw: int, sh: int, poly: Pack
 	return true
 
 
-static func _stamp_rect(solid: PackedByteArray, sw: int, sh: int, spans: Array, grid: PackedByteArray, gw: int, gh: int, per: int, x0: float, y0: float, x1: float, y1: float) -> void:
+static func _stamp_rect(solid: PackedByteArray, sw: int, sh: int, spans: Array, grid: PackedByteArray, gw: int, gh: int, per: int, x0: float, y0: float, x1: float, y1: float, rooms: Array, scale: float, skip_rooms: bool) -> void:
 	if x1 <= x0 or y1 <= y0:
 		return
 	_fill_axis_rect(solid, sw, sh, _rect(x0, y0, x1, y1), 1)
-	_emit_edge(spans, grid, gw, gh, per, Vector2(x0, y0), Vector2(x1, y0), Vector2(0.0, 1.0))
-	_emit_edge(spans, grid, gw, gh, per, Vector2(x1, y0), Vector2(x1, y1), Vector2(-1.0, 0.0))
-	_emit_edge(spans, grid, gw, gh, per, Vector2(x1, y1), Vector2(x0, y1), Vector2(0.0, -1.0))
-	_emit_edge(spans, grid, gw, gh, per, Vector2(x0, y1), Vector2(x0, y0), Vector2(1.0, 0.0))
+	_emit_edge(spans, grid, gw, gh, per, Vector2(x0, y0), Vector2(x1, y0), Vector2(0.0, 1.0), rooms, scale, skip_rooms)
+	_emit_edge(spans, grid, gw, gh, per, Vector2(x1, y0), Vector2(x1, y1), Vector2(-1.0, 0.0), rooms, scale, skip_rooms)
+	_emit_edge(spans, grid, gw, gh, per, Vector2(x1, y1), Vector2(x0, y1), Vector2(0.0, -1.0), rooms, scale, skip_rooms)
+	_emit_edge(spans, grid, gw, gh, per, Vector2(x0, y1), Vector2(x0, y0), Vector2(1.0, 0.0), rooms, scale, skip_rooms)
 
 
 static func _fine_m(bal: Object) -> float:
-	var m: float = 1.0
-	if bal != null:
-		m = float(bal.get("outline_fine_m"))
-	if m >= 0.87:
-		return 1.0
 	return 1.0
 
 
@@ -133,7 +153,7 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 		var y0: float = float(int(room["y"])) * scale
 		var x1: float = float(int(room["x"]) + int(room["w"])) * scale
 		var y1: float = float(int(room["y"]) + int(room["h"])) * scale
-		_stamp_rect(solid, sw, sh, spans, grid, w, h, per, x0, y0, x1, y1)
+		_stamp_rect(solid, sw, sh, spans, grid, w, h, per, x0, y0, x1, y1, rooms, scale, false)
 		loops.append(_rect(x0, y0, x1, y1))
 	for hall_v in halls:
 		var hall: Dictionary = hall_v
@@ -143,7 +163,7 @@ static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> 
 		var hy0: float = float(int(hall["y0"])) * scale
 		var hx1: float = float(int(hall["x1"]) + 1) * scale
 		var hy1: float = float(int(hall["y1"]) + 1) * scale
-		_stamp_rect(solid, sw, sh, spans, grid, w, h, per, hx0, hy0, hx1, hy1)
+		_stamp_rect(solid, sw, sh, spans, grid, w, h, per, hx0, hy0, hx1, hy1, rooms, scale, true)
 		loops.append(_rect(hx0, hy0, hx1, hy1))
 	LoadTiming.dnote("outline_loops", str(loops.size()))
 	LoadTiming.dnote("outline_spans_n", str(spans.size()))

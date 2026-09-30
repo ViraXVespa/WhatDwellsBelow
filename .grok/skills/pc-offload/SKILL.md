@@ -9,7 +9,7 @@ description: >
   Do not use for Imagine stills or I2V (those stay Build-only and must not
   be copied to Cursor).
 when-to-use: >
-  measure size, inventory scripts, list changed files, git inventory,
+  measure size (file_stat.py; not python -c), inventory scripts, list changed files, git inventory,
   repo search (list_xref, not grep), code-map row, patch code-map row,
   check code-map coverage, scene nodes, changelog label, Godot import,
   smokes, load timing, dungeon map, build gate, post-split gate,
@@ -38,7 +38,8 @@ Intercept (raw tool is a failed lookup, not a fallback):
 - list_dir of those trees -> list_xref.ps1 or list_scenes.ps1
 - git status / git log / git diff in chat -> tools/list_changed.ps1
 - open whole design/code-map.md -> list_code_map_row.py / patch_code_map.py / check_code_map.py
-- size a .gd by reading it -> list_oversize_scripts.ps1
+- size / newlines / indent / BOM on a live path -> tools/file_stat.py (not python -c; oversize inventory stays list_oversize_scripts.ps1)
+- python -c for bytes, newlines, tabs, or indent -> tools/file_stat.py
 - python -c / double-quoted PowerShell body / echo Set-Content of a script ->
   single-quoted here-string piped to tools/write_utf8_file.py, then
   tools/run_agent_py.ps1

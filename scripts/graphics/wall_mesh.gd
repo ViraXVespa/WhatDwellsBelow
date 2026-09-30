@@ -61,9 +61,10 @@ static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: Packed
 	if n2.length_squared() < 0.0001:
 		n2 = Vector2(-d.y, d.x)
 	n2 = n2.normalized()
-	var thick: float = float(run.get("thick", 1.0))
+	var thick: float = float(run.get("thick", 0.25))
 	if thick <= 0.0 or thick > 1.5:
-		thick = 1.0
+		thick = 0.25
+	thick = minf(thick, 0.3)
 	var v: Vector2 = n2 * -thick
 	var a: Vector2 = o
 	var b: Vector2 = o + d
@@ -136,15 +137,15 @@ static func _close_ribbon_corners(runs: Array[Dictionary], verts: PackedVector3A
 			pts[ka] = []
 		if not pts.has(kb):
 			pts[kb] = []
-		(pts[ka] as Array).append({"i": i, "end": "a", "n": run.get("normal", Vector2.ZERO), "thick": float(run.get("thick", 1.0)), "p": o})
-		(pts[kb] as Array).append({"i": i, "end": "b", "n": run.get("normal", Vector2.ZERO), "thick": float(run.get("thick", 1.0)), "p": b})
+		(pts[ka] as Array).append({"i": i, "end": "a", "n": run.get("normal", Vector2.ZERO), "thick": float(run.get("thick", 0.25)), "p": o})
+		(pts[kb] as Array).append({"i": i, "end": "b", "n": run.get("normal", Vector2.ZERO), "thick": float(run.get("thick", 0.25)), "p": b})
 		i += 1
 	for key in pts.keys():
 		var hits: Array = pts[key]
 		if hits.size() < 2:
 			continue
 		var nsum: Vector2 = Vector2.ZERO
-		var thick: float = 1.0
+		var thick: float = 0.25
 		var p: Vector2 = (hits[0] as Dictionary)["p"]
 		for raw in hits:
 			var hit: Dictionary = raw
@@ -163,7 +164,7 @@ static func _close_ribbon_corners(runs: Array[Dictionary], verts: PackedVector3A
 
 
 static func _corner_post(p: Vector2, n2: Vector2, thick: float, h: float, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
-	var t: float = maxf(0.25, thick)
+	var t: float = clampf(thick, 0.2, 0.3)
 	var nx: float = 0.0
 	var nz: float = 0.0
 	if absf(n2.x) >= 0.01:
@@ -579,7 +580,7 @@ static func _bevel_corners(runs: Array[Dictionary]) -> Array[Dictionary]:
 				"origin": new_end,
 				"delta": new_start - new_end,
 				"normal": nd.normalized(),
-				"thick": float(run.get("thick", 1.0)),
+				"thick": float(run.get("thick", 0.25)),
 				"cap_a": false,
 				"cap_b": false,
 			})
