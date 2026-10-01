@@ -144,7 +144,6 @@ def _hide_godot_taskbar() -> int:
         user32.ShowWindow(hwnd, 0)
         user32.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style)
         user32.SetWindowPos(hwnd, 0, -32000, -32000, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED)
-        user32.ShowWindow(hwnd, 5)
         hits += 1
     return hits
 

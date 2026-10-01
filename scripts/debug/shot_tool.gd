@@ -291,6 +291,8 @@ static func _hide_label3d(n: Node) -> void:
 static var _pose_i: int = 0
 static var _strips: Array[Image] = []
 
+static var _token: String = ""
+
 static func _after_frame(host: Node, img: Image) -> void:
 	var copy: Image = img.duplicate()
 	copy.convert(Image.FORMAT_RGBA8)
@@ -301,18 +303,13 @@ static func _after_frame(host: Node, img: Image) -> void:
 		_write_strip()
 		_quit(host, 0)
 		return
-	_apply_pose_token(host, list[_pose_i])
-	await host.get_tree().create_timer(0.3).timeout
-	await RenderingServer.frame_post_draw
+	_token = list[_pose_i]
+	_apply_pose_token(host, _token)
+	await host.get_tree().process_frame
+	await RenderingServer.frame_pre_draw
+	_apply_pose_token(host, _token)
 	await RenderingServer.frame_post_draw
 	_capture(host)
-
-static func _shot_cam(host: Node) -> Camera3D:
-	var rig: Node = host.get_tree().get_first_node_in_group("camera_rig")
-	if rig != null:
-		rig.set("warm_hold", true)
-		rig.process_mode = Node.PROCESS_MODE_DISABLED
-	return host.get_viewport().get_camera_3d()
 
 static func _apply_pose_token(host: Node, token: String) -> void:
 	var bits: PackedStringArray = token.split(",")
@@ -321,7 +318,13 @@ static func _apply_pose_token(host: Node, token: String) -> void:
 	var cz: float = float(bits[2]) if bits.size() > 2 else 15.0
 	var ox: float = float(bits[3]) if bits.size() > 3 else 0.0
 	var oz: float = float(bits[4]) if bits.size() > 4 else 0.0
-	var cam: Camera3D = _shot_cam(host)
+	var rig: Node = host.get_tree().get_first_node_in_group("camera_rig")
+	if rig != null:
+		rig.set("warm_hold", true)
+		rig.process_mode = Node.PROCESS_MODE_DISABLED
+		rig.set_process(false)
+		rig.set_physics_process(false)
+	var cam: Camera3D = host.get_viewport().get_camera_3d()
 	if cam == null:
 		printerr("SHOT: token=%s err=no_cam" % token)
 		return
