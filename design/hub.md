@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: Placeholdia, camp benches
-Code: `scripts/world/camp.gd` (facade, `@tool` preview), `scripts/world/camp_layout.gd` (scene-authored pose / eave / UV), `scripts/world/camp_warm.gd` (Title → Play GPU frame), `scripts/world/camp_build.gd` (ground, guild, realize), `scripts/world/camp_build_mesh.gd` (roofs, tarp, awning), `scripts/world/camp_build_roof.gd`, `scripts/world/camp_view.gd` (fence), `scripts/world/camera_rig.gd`, `scripts/world/interact.gd`, `scripts/world/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`  
+Code: `scripts/world/camp.gd` (facade, `@tool` preview), `scripts/world/camp_layout.gd` (script-default pose / eave / UV; scene exports override), `scripts/world/camp_warm.gd` (Title → Play GPU frame), `scripts/world/camp_build.gd` (ground, guild, realize), `scripts/world/camp_build_mesh.gd` (roofs, tarp, awning), `scripts/world/camp_build_roof.gd`, `scripts/world/camp_view.gd` (fence), `scripts/world/camera_rig.gd`, `scripts/world/interact.gd`, `scripts/world/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`  
 
 
 ## Required Interactables
@@ -17,7 +17,7 @@ Code: `scripts/world/camp.gd` (facade, `@tool` preview), `scripts/world/camp_lay
 - Test dummy (coverage / weapon sandbox)
 
 All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidity under the orthographic Camera3D.
-- Layout and `Generated` live on `scenes/camp.tscn`. `Generated` is the hub geo bucket. Play clears it and runs the helpers so Title and shots show the same town. `realize_editor` writes a preview; do not ship a stale packed tree as a second owner.
+- `Layout` on `scenes/camp.tscn` is the pose hook. `ensure_tree()` creates the spot and roof children from script defaults. Scene exports override eave, UV, and box size. An empty `Layout` is valid. `Generated` is a runtime bucket. Play clears it and runs the helpers so Title and shots show the same town. Do not pack `Generated` into the scene.
 
 This file is the door. Open the Job-table sibling only when that row matches.
 
@@ -27,4 +27,4 @@ This file is the door. Open the Job-table sibling only when that row matches.
 | ore-for-gold stall, dumpster flavor, plaza_tarp host | `design/hub-benches.md` |
 | receptionist bust, notice errands, welcome cloth | `design/hub-guild.md` |
 | striking dummy, Label3D priorities, post-rail fence, hopeful ambience, warmup overlay | `design/hub-yard.md` |
-| baked light RT, pitched roofs, wow puddles, HUB_SUB | `design/hub-bake.md` |
+| baked light RT, shed lids, contact puddles, HUB_SUB | `design/hub-bake.md` |

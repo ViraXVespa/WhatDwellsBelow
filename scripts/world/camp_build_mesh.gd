@@ -97,8 +97,8 @@ static func roof_mat(
 		"res://assets/tiles/plaza_roof.png",
 		dim,
 		world_min,
-		Color(0.42, 0.16, 0.10),
-		Color(1.0, 0.86, 0.62),
+		Color(0.55, 0.14, 0.08),
+		Color(1.0, 1.0, 1.0),
 		false,
 		true,
 		tile,
@@ -106,8 +106,12 @@ static func roof_mat(
 	)
 	if mat is ShaderMaterial:
 		mat.set_shader_parameter("shade_use", 1.0)
-		mat.set_shader_parameter("shade_lo", 1.22)
-		mat.set_shader_parameter("shade_hi", 0.34)
+		mat.set_shader_parameter("shade_lo", 1.16)
+		mat.set_shader_parameter("shade_hi", 0.58)
+		var tile_px: float = tile if tile > 0.05 else 0.62
+		if tile_px > 0.7:
+			tile_px = 0.62
+		mat.set_shader_parameter("uv_scale", Vector2(dim.x / tile_px, dim.y / tile_px))
 	return mat
 static func tarp_mat(dim: Vector2, world_min: Vector3) -> Material:
 

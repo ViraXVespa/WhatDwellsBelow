@@ -246,7 +246,7 @@ job_read_when:
   hub.benches: "ore-for-gold stall, dumpster flavor, plaza_tarp host"
   hub.guild: "receptionist bust, notice errands, welcome cloth"
   hub.yard: "striking dummy, Label3D priorities, post-rail fence, hopeful ambience, warmup overlay"
-  hub.bake: "baked light RT, pitched roofs, wow puddles, HUB_SUB"
+  hub.bake: "baked light RT, shed lids, contact puddles, HUB_SUB"
   dungeon.gen: "maze carve, hall segments, size rebalance ledger, accidental jogs, angled halls, deadend termini, unused stone, hug clearance, outline spans"
   dungeon.gates: "PREPARE plaque, extraction clerks, stair hold, reveal disk"
   dungeon.crystals: "transport decades, warp silence, spur length"

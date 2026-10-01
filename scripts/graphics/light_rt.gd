@@ -216,7 +216,7 @@ static func _hub_day_finish(img: Image, x0: int, z0: int, layout: Node) -> void:
 		boxes.append({"pos": layout.hall_pos(), "box": layout.hall_box})
 		boxes.append({"pos": layout.wing_pos(), "box": layout.wing_box})
 		boxes.append({"pos": layout.stall_pos(), "box": layout.stall_box})
-	var away := Vector2(0.406138, 0.913811)
+	var away := Vector2(-0.22, 0.98)
 	var y: int = 0
 	while y < h:
 		var x: int = 0
@@ -274,7 +274,7 @@ static func _hub_lift_dark(img: Image) -> void:
 static func _hub_building_shade(img: Image, x0: int, z0: int, layout: Node) -> void:
 	if img == null or layout == null or not layout.has_method("hall_pos"):
 		return
-	var away := Vector2(0.406138, 0.913811)
+	var away := Vector2(-0.22, 0.98)
 	var boxes: Array = [
 		{"pos": layout.hall_pos(), "box": layout.hall_box, "len": 3.4},
 		{"pos": layout.wing_pos(), "box": layout.wing_box, "len": 2.6},
@@ -813,7 +813,7 @@ static func _hub_fill_black(img: Image) -> void:
 static func _hub_paint_day(img: Image, x0: int, z0: int, layout: Node) -> void:
 	if img == null:
 		return
-	var away := Vector2(0.406138, 0.913811)
+	var away := Vector2(-0.22, 0.98)
 	var tw: float = span.x
 	var th: float = span.y
 	var mid := Vector2(float(x0) + tw * 0.5, float(z0) + th * 0.5)
@@ -834,7 +834,7 @@ static func _hub_paint_day(img: Image, x0: int, z0: int, layout: Node) -> void:
 			var u: float = clampf(1.0 - d / reach, 0.0, 1.0)
 			u = u * u
 			var c: Color = img.get_pixel(x, y)
-			var k: float = 0.88 * u
+			var k: float = 0.28 * u
 			img.set_pixel(
 				x,
 				y,
@@ -883,7 +883,7 @@ static func _hub_finish_yard(x0: int, z0: int, layout: Node) -> void:
 static func _hub_cast_buildings(img: Image, x0: int, z0: int, layout: Node) -> void:
 	if img == null:
 		return
-	var away := Vector2(0.406138, 0.913811)
+	var away := Vector2(-0.22, 0.98)
 	var boxes: Array = _hub_yard_boxes(layout, false)
 	var sub: float = float(HUB_SUB)
 	var w: int = img.get_width()
@@ -896,7 +896,9 @@ static func _hub_cast_buildings(img: Image, x0: int, z0: int, layout: Node) -> v
 static func _hub_stamp_skirt(
 	img: Image, x0: int, z0: int, sub: float, w: int, h: int, b: Dictionary, away: Vector2
 ) -> int:
-	var slen: float = 1.05
+	var slope: float = 0.55
+	var bh: float = float(b["h"])
+	var reach: float = bh * slope
 	var cx: float = float(b["x"])
 	var cz: float = float(b["z"])
 	var hx: float = float(b["hx"])
@@ -904,7 +906,7 @@ static func _hub_stamp_skirt(
 	var an: float = away.length()
 	var ax: float = away.x / maxf(an, 0.001)
 	var az: float = away.y / maxf(an, 0.001)
-	var pad: float = slen + 0.4
+	var pad: float = reach + 0.8
 	var px0: int = clampi(int(floor((cx - hx - pad - float(x0)) * sub)), 0, w - 1)
 	var px1: int = clampi(int(ceil((cx + hx + pad - float(x0)) * sub)), 0, w)
 	var pz0: int = clampi(int(floor((cz - hz - pad - float(z0)) * sub)), 0, h - 1)
@@ -919,30 +921,30 @@ static func _hub_stamp_skirt(
 			if _hub_inside(wx, wz, b):
 				x += 1
 				continue
-			var dx: float = wx - cx
-			var dz: float = wz - cz
-			var side: float = dx * ax + dz * az
-			if side < 0.02:
-				x += 1
-				continue
-			var ox: float = maxf(absf(dx) - hx, 0.0)
-			var oz: float = maxf(absf(dz) - hz, 0.0)
-			var dist: float = Vector2(ox, oz).length()
-			if dist > slen:
-				x += 1
-				continue
-			var along: float = clampf(side / slen, 0.0, 1.0)
-			var edge: float = clampf(dist / slen, 0.0, 1.0)
-			var k: float = lerpf(0.70, 1.0, maxf(along, edge))
-			if k > 0.97:
+			var best: float = 1.0
+			var step: int = 0
+			while step < 14:
+				var t: float = reach * float(step) / 13.0
+				var bx: float = wx - ax * t
+				var bz: float = wz - az * t
+				var ox: float = absf(bx - cx) - hx
+				var oz: float = absf(bz - cz) - hz
+				if ox <= 0.2 and oz <= 0.2:
+					var edge: float = clampf(maxf(ox, oz) / 0.2, 0.0, 1.0)
+					var fade: float = clampf(t / maxf(reach, 0.001), 0.0, 1.0)
+					var k: float = lerpf(0.36, 0.9, maxf(fade, edge))
+					best = minf(best, k)
+				step += 1
+			if best > 0.96:
 				x += 1
 				continue
 			var c: Color = img.get_pixel(x, y)
-			img.set_pixel(x, y, Color(c.r * k, c.g * k, c.b * k, 1.0))
+			img.set_pixel(x, y, Color(c.r * best, c.g * best, c.b * best, 1.0))
 			wrote += 1
 			x += 1
 		y += 1
 	return wrote
+
 static func _hub_roof_box(pos: Vector3, box: Vector3, eave: float, slen: float) -> Dictionary:
 	return {
 		"x": pos.x,
@@ -995,7 +997,7 @@ static func _hub_inside(wx: float, wz: float, b: Dictionary) -> bool:
 static func _hub_lock_shadows(img: Image, org: Vector2, layout: Node) -> int:
 	var boxes: Array = _hub_yard_boxes(layout, true)
 	printerr("bake_camp: boxes=%d" % boxes.size())
-	var away := Vector2(0.406138, 0.913811)
+	var away := Vector2(-0.22, 0.98)
 	var sub: float = float(HUB_SUB)
 	var wrote: int = 0
 	var x0: int = int(org.x)

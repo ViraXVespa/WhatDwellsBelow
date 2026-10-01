@@ -10,7 +10,7 @@ World presentation owner. Hub and dungeon share one env kit, one ground shader, 
 
 Live helpers already exist: `env_kit.gd`, `nearest_mat.gd`, `wrap_shader.gd`, `mm_emit.gd`. Minimap is `dungeon_minimap.gd`. Foundation smoke calls the env kit only.
 
-Hub: warm kit, wide sun fill in the RT, floor crystal as a local bump. Hub squash follows the sun as parallel light. Dungeon: cold kit, no sun in the RT, walkable dim fill plus wall torches, crystals, and campfires. Pits stay black. Characters tint from the RT. Promo is before/after wherever it reads.
+Hub: warm kit, wide sun fill in the RT, floor crystal as a local bump. Hub squash follows the sun as parallel light. Hub lids do not sample the RT. Ground and actors still do. Dungeon: cold kit, no sun in the RT, walkable dim fill plus wall torches, crystals, and campfires. Pits stay black. Characters tint from the RT. Promo is before/after wherever it reads.
 
 Does not own: dungeon carve, hall segments, hall runs, solid bake, stream rings, map reveal, camera zoom, Sprite3D filter modes. Gen writes hall runs and solid. Volume skins the provided runs only. Buffer stamps the light RT and mounts torches on those interior faces. Occupancy reads solid only. Hitboxes stay stream boxes on solid, not a third grid.
 
