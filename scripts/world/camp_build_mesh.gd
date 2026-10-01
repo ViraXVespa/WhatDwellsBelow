@@ -754,9 +754,9 @@ static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, 
 
 static func pitched_tarp(body: Node3D, box_size: Vector3, eave: float, _world_min: Vector3 = Vector3.ZERO) -> void:
 	var hx: float = box_size.x * 0.5 + eave
-	var hz: float = box_size.z * 0.5 + eave * 0.5
+	var hz: float = box_size.z * 0.5 + eave + 0.8
 	var y0: float = box_size.y * 0.5
-	var ridge: float = y0 + 0.55
+	var ridge: float = y0 + 1.35
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_uv(Vector2(0, 1))
@@ -792,5 +792,39 @@ static func pitched_tarp(body: Node3D, box_size: Vector3, eave: float, _world_mi
 	body.add_child(inst)
 	var hit := CollisionShape3D.new()
 	hit.name = "TarpHit"
+	hit.shape = mesh.create_trimesh_shape()
+	body.add_child(hit)
+
+static func wall_box(body: Node3D, box_size: Vector3, col: Color) -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var hx: float = box_size.x * 0.5
+	var hy: float = box_size.y * 0.5
+	var hz: float = box_size.z * 0.5
+	var faces: Array = [
+		[Vector3(-hx, -hy, hz), Vector3(hx, -hy, hz), Vector3(hx, hy, hz), Vector3(-hx, hy, hz)],
+		[Vector3(hx, -hy, -hz), Vector3(-hx, -hy, -hz), Vector3(-hx, hy, -hz), Vector3(hx, hy, -hz)],
+		[Vector3(-hx, -hy, -hz), Vector3(-hx, -hy, hz), Vector3(-hx, hy, hz), Vector3(-hx, hy, -hz)],
+		[Vector3(hx, -hy, hz), Vector3(hx, -hy, -hz), Vector3(hx, hy, -hz), Vector3(hx, hy, hz)],
+	]
+	for quad in faces:
+		st.add_vertex(quad[0])
+		st.add_vertex(quad[1])
+		st.add_vertex(quad[2])
+		st.add_vertex(quad[0])
+		st.add_vertex(quad[2])
+		st.add_vertex(quad[3])
+	st.generate_normals()
+	var mesh: ArrayMesh = st.commit()
+	var inst := MeshInstance3D.new()
+	inst.name = "Walls"
+	inst.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = col
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	inst.material_override = mat
+	body.add_child(inst)
+	var hit := CollisionShape3D.new()
+	hit.name = "WallHit"
 	hit.shape = mesh.create_trimesh_shape()
 	body.add_child(hit)

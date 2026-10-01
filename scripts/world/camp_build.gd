@@ -109,7 +109,9 @@ static func guild(host: Node3D) -> void:
 	var hall_body: StaticBody3D = box(host, hall_at, hall_box, Color(0.45, 0.32, 0.22))
 	var wing_body: StaticBody3D = box(host, wing_at, wing_box, Color(0.5, 0.38, 0.28))
 	face(hall_body, hall_box, "res://assets/sprites/buildings/guild.png", 0.0, hall_box.x, 0.30)
+	MeshS.wall_box(hall_body, hall_box, Color(0.45, 0.32, 0.22))
 	face(wing_body, wing_box, "res://assets/sprites/buildings/guild_reception.png", 0.0, wing_box.x, 0.28)
+	MeshS.wall_box(wing_body, wing_box, Color(0.5, 0.38, 0.28))
 	var hd: float = lay.awning_depth("Hall") if lay else 0.48
 	var hs: float = lay.awning_slope("Hall") if lay else 0.10
 	var hv: float = lay.awning_valance("Hall") if lay else 0.16
@@ -166,6 +168,7 @@ static func solid(
 			lay.stall_uv_off if lay else Vector2.ZERO
 		)
 	face(body, box_size, tex, 0.0, box_size.x)
+	MeshS.wall_box(body, box_size, Color(0.42, 0.28, 0.16))
 static func face(
 	body: Node3D, box_size: Vector3, tex: String, x_off: float, face_w: float, crop_top: float = 0.0
 ) -> void:

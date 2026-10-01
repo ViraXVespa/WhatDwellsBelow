@@ -151,7 +151,8 @@ static func hide_window() -> void:
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_NO_FOCUS, true)
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_POPUP_WM_HINT, true)
-	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MINIMIZED)
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_position(Vector2i(-32000, -32000))
 	var ww: int = win_w()
 	var hh: int = win_h()
 	if ww > 0 and hh > 0:
@@ -257,6 +258,9 @@ static func _capture(host: Node) -> void:
 		var f: FileAccess = FileAccess.open(path, FileAccess.READ)
 		if f != null:
 			nbytes = int(f.get_length())
+	var cam_now: Camera3D = host.get_viewport().get_camera_3d()
+	var at: String = str(cam_now.global_position) if cam_now != null else "none"
+	printerr("SHOT: grab at=%s" % at)
 	printerr("SHOT: ok=true path=%s w=%d h=%d bytes=%d" % [path, img.get_width(), img.get_height(), nbytes])
 	_after_frame(host, img)
 
@@ -297,7 +301,8 @@ static func _after_frame(host: Node, img: Image) -> void:
 		_quit(host, 0)
 		return
 	_apply_pose_token(host, list[_pose_i])
-	await host.get_tree().create_timer(0.7).timeout
+	await host.get_tree().create_timer(0.3).timeout
+	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	_capture(host)
 
@@ -306,13 +311,17 @@ static func _apply_pose_token(host: Node, token: String) -> void:
 	var kind: String = bits[0] if bits.size() > 0 else "play"
 	var cx: float = float(bits[1]) if bits.size() > 1 else 16.5
 	var cz: float = float(bits[2]) if bits.size() > 2 else 15.0
+	var ox: float = float(bits[3]) if bits.size() > 3 else 0.0
+	var oz: float = float(bits[4]) if bits.size() > 4 else 0.0
 	var cam: Camera3D = host.get_viewport().get_camera_3d()
 	var rig: Node3D = host.get_tree().get_first_node_in_group("camera_rig") as Node3D
 	if rig != null:
 		rig.set("warm_hold", true)
 		rig.set_process(false)
 		rig.set_physics_process(false)
+		rig.top_level = true
 	if cam == null:
+		printerr("SHOT: token=%s err=no_cam" % token)
 		return
 	cam.top_level = true
 	cam.current = true
@@ -321,13 +330,17 @@ static func _apply_pose_token(host: Node, token: String) -> void:
 		cam.size = 1080.0 / 64.0 / 0.69
 		cam.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
 		cam.global_position = Vector3(16.5, 24.0, 15.0)
+		printerr("SHOT: token=%s at=%s" % [token, str(cam.global_position)])
 		return
-	var look := Vector3(cx, 1.8, cz)
-	var at := look + Vector3(float(bits[3]) if bits.size() > 3 else 7.0, 5.5, float(bits[4]) if bits.size() > 4 else 7.0)
+	var look := Vector3(cx, 1.6, cz)
+	var at := look + Vector3(ox, 4.2, oz)
 	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
-	cam.fov = 50.0
+	cam.fov = 42.0
 	cam.global_position = at
 	cam.look_at(look, Vector3.UP)
+	if rig != null:
+		rig.global_position = at
+	printerr("SHOT: token=%s at=%s look=%s" % [token, str(cam.global_position), str(look)])
 
 static func _write_strip() -> void:
 	if _strips.is_empty():

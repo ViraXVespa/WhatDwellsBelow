@@ -1,0 +1,55 @@
+{
+  "hub-buildings": {
+    "name": "hub-buildings",
+    "scene": "camp",
+    "hud": 0,
+    "one_boot": true,
+    "frames": [
+      {
+        "id": "play",
+        "kind": "play",
+        "note": "ortho play zoom 0.69, whole yard"
+      },
+      {
+        "id": "hall-eave",
+        "kind": "hall",
+        "look": [
+          8.2,
+          6.0
+        ],
+        "offset": [
+          4.5,
+          7.5
+        ],
+        "note": "south of the hall, gable and awning"
+      },
+      {
+        "id": "stall-front",
+        "kind": "stall",
+        "look": [
+          25.0,
+          8.0
+        ],
+        "offset": [
+          0.5,
+          7.0
+        ],
+        "note": "south of the stall, tarp over the counter"
+      },
+      {
+        "id": "stall-side",
+        "kind": "stall",
+        "look": [
+          25.0,
+          8.0
+        ],
+        "offset": [
+          7.0,
+          1.5
+        ],
+        "note": "east of the stall, wall and ridge"
+      }
+    ]
+  },
+  "poses": "play,16.5,15,0,0;hall,8.2,6.0,4.5,7.5;stall,25.0,8.0,0.5,7.0;stall,25.0,8.0,7.0,1.5"
+}
