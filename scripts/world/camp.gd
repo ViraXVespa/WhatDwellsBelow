@@ -49,6 +49,7 @@ func _ready() -> void:
 	LoadTiming.mark("camp_ground")
 	Build.buildings(gen)
 	Build.strip_building_cubes(gen)
+	Build.quiet_shadows(gen)
 	LoadTiming.mark("camp_buildings")
 	View.fence(gen)
 	LoadTiming.mark("camp_fence")

@@ -54,6 +54,7 @@ const AWNING_VALANCE := 0.16
 
 
 
+const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const TILE_W := 3.2
 
 
@@ -87,69 +88,27 @@ const PATH_Z := 15.0
 
 
 static func roof_mat(
-
-
-
-	dim: Vector2, world_min: Vector3, tile: float = TILE_W, uv_off: Vector2 = Vector2.ZERO
-
-
-
+	dim: Vector2,
+	world_min: Vector3,
+	tile: float = TILE_W,
+	uv_off: Vector2 = Vector2.ZERO
 ) -> Material:
-
-
-
-	return wrap_mat(
-
-
-
+	var mat := wrap_mat(
 		"res://assets/tiles/plaza_roof.png",
-
-
-
 		dim,
-
-
-
 		world_min,
-
-
-
 		Color(0.42, 0.16, 0.10),
-
-
-
-		Color.WHITE,
-
-
-
+		Color(1.0, 0.86, 0.62),
 		false,
-
-
-
 		true,
-
-
-
 		tile,
-
-
-
 		uv_off
-
-
-
 	)
-
-
-
-
-
-
-
-
-
-
-
+	if mat is ShaderMaterial:
+		mat.set_shader_parameter("shade_use", 1.0)
+		mat.set_shader_parameter("shade_lo", 1.22)
+		mat.set_shader_parameter("shade_hi", 0.34)
+	return mat
 static func tarp_mat(dim: Vector2, world_min: Vector3) -> Material:
 
 
@@ -283,201 +242,55 @@ static func wrap_mat(
 	mat.set_shader_parameter("shade_hi", 1.0)
 	return mat
 static func attach_awning(
-
-
-
 	body: Node3D,
-
-
-
 	box_size: Vector3,
-
-
-
 	depth: float = AWNING_DEPTH,
-
-
-
 	slope: float = AWNING_SLOPE,
-
-
-
 	valance: float = AWNING_VALANCE,
-
-
-
-	eave: float = ROOF_EAVE
-
-
-
+	eave: float = ROOF_EAVE,
+	inset_l: float = 0.0,
+	inset_r: float = 0.0
 ) -> void:
-
-
-
-	var half_w: float = box_size.x * 0.5 + 0.04
-
-
-
-	var z0: float = box_size.z * 0.5 + eave
-
-
-
+	var x0: float = -box_size.x * 0.5 - 0.04 + inset_l
+	var x1: float = box_size.x * 0.5 + 0.04 - inset_r
+	var z0: float = box_size.z * 0.5 + eave + 0.04
 	var z1: float = z0 + depth
-
-
-
-	var y_back: float = box_size.y * 0.5 + 0.02
-
-
-
+	var y_back: float = box_size.y * 0.5 + 0.0
 	var y_ft: float = y_back - slope
-
-
-
 	var y_fb: float = y_ft - valance
-
-
-
-	var bl := Vector3(-half_w, y_back, z0)
-
-
-
-	var br := Vector3(half_w, y_back, z0)
-
-
-
-	var fl := Vector3(-half_w, y_ft, z1)
-
-
-
-	var fr := Vector3(half_w, y_ft, z1)
-
-
-
-	var vl := Vector3(-half_w, y_fb, z1)
-
-
-
-	var vr := Vector3(half_w, y_fb, z1)
-
-
-
+	var bl := Vector3(x0, y_back, z0)
+	var br := Vector3(x1, y_back, z0)
+	var fl := Vector3(x0, y_ft, z1)
+	var fr := Vector3(x1, y_ft, z1)
+	var vl := Vector3(x0, y_fb, z1)
+	var vr := Vector3(x1, y_fb, z1)
 	var u0 := Vector2(0.0, 0.0)
-
-
-
 	var u1 := Vector2(1.0, 0.0)
-
-
-
 	var u2 := Vector2(1.0, 1.0)
-
-
-
 	var u3 := Vector2(0.0, 1.0)
-
-
-
 	var st := SurfaceTool.new()
-
-
-
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-
-
-
 	_quad(st, bl, fl, fr, br, u0, u3, u2, u1)
-
-
-
 	_quad(st, fl, fr, vr, vl, u0, u1, u2, u3)
-
-
-
 	_tri(st, bl, fl, vl, u0, u1, u2)
-
-
-
 	_tri(st, br, vr, fr, u0, u2, u1)
-
-
-
 	st.generate_normals()
-
-
-
 	var cloth := MeshInstance3D.new()
-
-
-
 	cloth.mesh = st.commit()
-
-
-
-	cloth.material_override = awning_mat(Vector2(box_size.x, depth), Vector3.ZERO)
-
-
-
+	cloth.material_override = awning_mat(Vector2(maxf(x1 - x0, 0.2), depth), Vector3.ZERO)
 	body.add_child(cloth)
-
-
-
 	var und := SurfaceTool.new()
-
-
-
 	und.begin(Mesh.PRIMITIVE_TRIANGLES)
-
-
-
 	_quad(und, br, fr, fl, bl, u0, u1, u2, u3)
-
-
-
 	und.generate_normals()
-
-
-
 	var cave := MeshInstance3D.new()
-
-
-
 	cave.mesh = und.commit()
-
-
-
 	var dark := StandardMaterial3D.new()
-
-
-
 	dark.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-
-
-
 	dark.albedo_color = Color(0.10, 0.04, 0.03)
-
-
-
 	dark.cull_mode = BaseMaterial3D.CULL_DISABLED
-
-
-
 	cave.material_override = dark
-
-
-
 	body.add_child(cave)
-
-
-
-
-
-
-
-
-
-
-
 static func _quad(
 
 
@@ -809,18 +622,26 @@ static func shed_pair(
 	var y_ridge: float = y_lid + rise
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var trim := SurfaceTool.new()
+	trim.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var u0 := Vector2(0.0, 0.0)
 	var u1 := Vector2(0.0, 1.0)
 	var u2 := Vector2(1.0, 1.0)
 	var u3 := Vector2(1.0, 0.0)
 	var width: float = 0.2
 	var fall_len: float = rise
+	var xmin: float = 1.0e9
+	var xmax: float = -1.0e9
 	for raw in spans:
 		var s: Dictionary = raw
-		var x0: float = float(s["x0"])
-		var x1: float = float(s["x1"])
-		var zn: float = float(s["zn"])
-		var zs: float = float(s["zs"])
+		xmin = minf(xmin, float(s["x0"]))
+		xmax = maxf(xmax, float(s["x1"]))
+	for raw2 in spans:
+		var sp: Dictionary = raw2
+		var x0: float = float(sp["x0"])
+		var x1: float = float(sp["x1"])
+		var zn: float = float(sp["zn"])
+		var zs: float = float(sp["zs"])
 		var nl := Vector3(x0, y_ridge, zn)
 		var nr := Vector3(x1, y_ridge, zn)
 		var sl := Vector3(x0, y_lid, zs)
@@ -829,12 +650,56 @@ static func shed_pair(
 		width = maxf(width, x1 - x0)
 		var fh: float = zs - zn
 		fall_len = maxf(fall_len, sqrt(fh * fh + rise * rise))
+		var drop: float = 0.22
+		_quad(
+			trim,
+			Vector3(x0, y_lid, zs),
+			Vector3(x0, y_lid - drop, zs),
+			Vector3(x1, y_lid - drop, zs),
+			Vector3(x1, y_lid, zs),
+			u0, u1, u2, u3
+		)
+		_quad(
+			trim,
+			Vector3(x0, y_ridge, zn),
+			Vector3(x0, y_ridge - 0.16, zn),
+			Vector3(x1, y_ridge - 0.16, zn),
+			Vector3(x1, y_ridge, zn),
+			u0, u1, u2, u3
+		)
+		if absf(x0 - xmin) < 0.05:
+			_quad(
+				trim,
+				Vector3(x0 - 0.06, y_ridge, zn),
+				Vector3(x0 - 0.06, y_lid, zs),
+				Vector3(x0 - 0.06, y_lid - drop, zs),
+				Vector3(x0 - 0.06, y_ridge - 0.14, zn),
+				u0, u1, u2, u3
+			)
+		if absf(x1 - xmax) < 0.05:
+			_quad(
+				trim,
+				Vector3(x1 + 0.06, y_ridge - 0.14, zn),
+				Vector3(x1 + 0.06, y_lid - drop, zs),
+				Vector3(x1 + 0.06, y_lid, zs),
+				Vector3(x1 + 0.06, y_ridge, zn),
+				u0, u1, u2, u3
+			)
 	st.generate_normals()
+	trim.generate_normals()
 	var mi := MeshInstance3D.new()
 	mi.name = "PitchedRoof"
 	mi.mesh = st.commit()
 	mi.material_override = roof_mat(Vector2(width, fall_len), world_min, tile, uv_off)
 	body.add_child(mi)
-
+	var edge := MeshInstance3D.new()
+	edge.name = "RoofTrim"
+	edge.mesh = trim.commit()
+	var board := StandardMaterial3D.new()
+	board.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	board.albedo_color = Color(0.24, 0.13, 0.08)
+	board.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	edge.material_override = board
+	body.add_child(edge)
 static func guild_roofs(host: Node3D) -> void:
 	pass

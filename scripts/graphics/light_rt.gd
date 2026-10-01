@@ -10,7 +10,7 @@ const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const COL_TORCH := Color(1.0, 0.48, 0.16)
 const COL_CRYSTAL := Color(0.35, 0.72, 1.0)
 const COL_FIRE := Color(1.0, 0.40, 0.12)
-const COL_SUN := Color(1.0, 0.86, 0.62)
+const COL_SUN := Color(1.0, 0.78, 0.48)
 
 const HUB_LIGHT_PATH := "res://assets/baked/hub_light.png"
 const HUB_SUB := 16
@@ -834,7 +834,7 @@ static func _hub_paint_day(img: Image, x0: int, z0: int, layout: Node) -> void:
 			var u: float = clampf(1.0 - d / reach, 0.0, 1.0)
 			u = u * u
 			var c: Color = img.get_pixel(x, y)
-			var k: float = 0.72 * u
+			var k: float = 0.88 * u
 			img.set_pixel(
 				x,
 				y,
@@ -896,9 +896,7 @@ static func _hub_cast_buildings(img: Image, x0: int, z0: int, layout: Node) -> v
 static func _hub_stamp_skirt(
 	img: Image, x0: int, z0: int, sub: float, w: int, h: int, b: Dictionary, away: Vector2
 ) -> int:
-	var slen: float = minf(maxf(float(b["len"]), 0.6), 2.2)
-	var bh: float = maxf(float(b["h"]), 1.0)
-	var lid: float = float(b["lid"]) if b.has("lid") else 1.0
+	var slen: float = 1.05
 	var cx: float = float(b["x"])
 	var cz: float = float(b["z"])
 	var hx: float = float(b["hx"])
@@ -906,8 +904,7 @@ static func _hub_stamp_skirt(
 	var an: float = away.length()
 	var ax: float = away.x / maxf(an, 0.001)
 	var az: float = away.y / maxf(an, 0.001)
-	var rad: float = 1.35
-	var pad: float = slen + rad + 0.4
+	var pad: float = slen + 0.4
 	var px0: int = clampi(int(floor((cx - hx - pad - float(x0)) * sub)), 0, w - 1)
 	var px1: int = clampi(int(ceil((cx + hx + pad - float(x0)) * sub)), 0, w)
 	var pz0: int = clampi(int(floor((cz - hz - pad - float(z0)) * sub)), 0, h - 1)
@@ -919,77 +916,30 @@ static func _hub_stamp_skirt(
 		while x < px1:
 			var wx: float = float(x0) + (float(x) + 0.5) / sub
 			var wz: float = float(z0) + (float(y) + 0.5) / sub
-			var c: Color = img.get_pixel(x, y)
+			if _hub_inside(wx, wz, b):
+				x += 1
+				continue
 			var dx: float = wx - cx
 			var dz: float = wz - cz
-			var inset: float = 0.16
-			var deep: bool = absf(dx) <= hx - inset and absf(dz) <= hz - inset
-			if _hub_inside(wx, wz, b):
-				if lid > 0.02 and deep:
-					var vz: float = clampf((wz - (cz - hz)) / maxf(hz * 2.0, 0.2), 0.0, 1.0)
-					var k: float = lerpf(0.66, 1.18, vz)
-					k = lerpf(1.0, k, lid)
-					img.set_pixel(x, y, Color(c.r * k, c.g * k, c.b * k, 1.0))
-					wrote += 1
-				x += 1
-				continue
 			var side: float = dx * ax + dz * az
-			if side < 0.12:
+			if side < 0.02:
 				x += 1
 				continue
-			var qx: float = absf(dx) - maxf(hx - rad, 0.1)
-			var qz: float = absf(dz) - maxf(hz - rad, 0.1)
-			var sdf: float = Vector2(maxf(qx, 0.0), maxf(qz, 0.0)).length() + minf(maxf(qx, qz), 0.0) - rad
-			var ao: float = 1.0
-			if sdf < 0.55:
-				ao = lerpf(0.90, 1.0, clampf(sdf / 0.55, 0.0, 1.0))
-			var cover: float = 0.0
-			var ri: int = 0
-			while ri < 9:
-				var jx: float = ax
-				var jz: float = az
-				if ri == 1:
-					jx = ax + 0.14
-					jz = az - 0.06
-				elif ri == 2:
-					jx = ax - 0.14
-					jz = az + 0.06
-				elif ri == 3:
-					jx = ax + 0.08
-					jz = az + 0.12
-				elif ri == 4:
-					jx = ax - 0.08
-					jz = az - 0.12
-				elif ri == 5:
-					jx = ax + 0.18
-					jz = az
-				elif ri == 6:
-					jx = ax - 0.18
-					jz = az
-				elif ri == 7:
-					jx = ax
-					jz = az + 0.16
-				elif ri == 8:
-					jx = ax
-					jz = az - 0.16
-				var jl: float = sqrt(jx * jx + jz * jz)
-				jx /= maxf(jl, 0.001)
-				jz /= maxf(jl, 0.001)
-				var t: float = 0.12
-				while t <= slen:
-					if _hub_inside(wx - jx * t, wz - jz * t, b):
-						var reach: float = minf(slen, bh * 0.85)
-						if t <= reach:
-							cover += 1.0 - t / maxf(reach, 0.2)
-						break
-					t += 0.16
-				ri += 1
-			cover = clampf(cover / 9.0, 0.0, 1.0)
-			cover *= clampf((side - 0.12) / 0.70, 0.0, 1.0)
-			var k2: float = ao * lerpf(1.0, 0.74, cover)
-			if k2 < 0.995:
-				img.set_pixel(x, y, Color(c.r * k2, c.g * k2, c.b * k2 * 0.98, 1.0))
-				wrote += 1
+			var ox: float = maxf(absf(dx) - hx, 0.0)
+			var oz: float = maxf(absf(dz) - hz, 0.0)
+			var dist: float = Vector2(ox, oz).length()
+			if dist > slen:
+				x += 1
+				continue
+			var along: float = clampf(side / slen, 0.0, 1.0)
+			var edge: float = clampf(dist / slen, 0.0, 1.0)
+			var k: float = lerpf(0.70, 1.0, maxf(along, edge))
+			if k > 0.97:
+				x += 1
+				continue
+			var c: Color = img.get_pixel(x, y)
+			img.set_pixel(x, y, Color(c.r * k, c.g * k, c.b * k, 1.0))
+			wrote += 1
 			x += 1
 		y += 1
 	return wrote

@@ -57,7 +57,7 @@ static func realize_editor(host: Node3D, layout: Node3D) -> void:
 	var ViewS: GDScript = load("res://scripts/world/camp_view.gd") as GDScript
 	ViewS.fence(bucket)
 static func world(host: Node3D) -> void:
-	EnvKit.apply(host, Color(0.45, 0.58, 0.62), Color(0.95, 0.86, 0.7), 1.15, Vector3(-50.0, 30.0, 0.0), 0.9)
+	EnvKit.apply(host, Color(0.45, 0.58, 0.62), Color(0.95, 0.86, 0.7), 1.15, Vector3(-18.0, 34.0, -42.0), 0.9)
 
 
 static func ground(host: Node3D) -> void:
@@ -118,8 +118,8 @@ static func guild(host: Node3D) -> void:
 	var ws: float = lay.awning_slope("Wing") if lay else 0.10
 	var wv: float = lay.awning_valance("Wing") if lay else 0.16
 	var we: float = lay.eave_for("Wing") if lay else ROOF_EAVE
-	awning(hall_body, hall_box, hd, hs, hv, he)
-	awning(wing_body, wing_box, wd, ws, wv, we)
+	awning(hall_body, hall_box, hd, hs, hv, he, 0.0, 0.0)
+	awning(wing_body, wing_box, wd, ws, wv, we, 0.0, 0.0)
 	var hall_tile: float = lay.tile_for("Hall") if lay else TILE_W
 	var wing_tile: float = lay.tile_for("Wing") if lay else TILE_W
 	var hall_uv: Vector2 = lay.hall_uv_off if lay else Vector2.ZERO
@@ -130,7 +130,7 @@ static func guild(host: Node3D) -> void:
 	var wz0: float = wing_at.z - wing_box.z * 0.5
 	var wl: Vector3 = wing_at - hall_at
 	var y_lid: float = hall_box.y * 0.5
-	var rise: float = 0.95
+	var rise: float = 1.65
 	var lid_min := Vector3(minf(hx0, wx0), 0.0, minf(hz0, wz0))
 	MeshS.shed_pair(
 		hall_body,
@@ -151,7 +151,7 @@ static func guild(host: Node3D) -> void:
 		y_lid,
 		rise,
 		lid_min,
-		hall_tile,
+		0.72,
 		hall_uv
 	)
 static func guild_roofs(host: Node3D) -> void:
@@ -235,17 +235,30 @@ static func roof_plane(
 	host.add_child(roof)
 
 
+static func quiet_shadows(host: Node3D) -> void:
+	var stack: Array[Node] = [host]
+	while stack.size() > 0:
+		var n: Node = stack.pop_back()
+		if n is DirectionalLight3D:
+			var sun := n as DirectionalLight3D
+			sun.shadow_enabled = false
+		if n is GeometryInstance3D:
+			var geo := n as GeometryInstance3D
+			geo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		for c in n.get_children():
+			stack.append(c)
+
 static func awning(
 	body: Node3D,
 	box_size: Vector3,
 	depth: float = 0.48,
 	slope: float = 0.10,
 	valance: float = 0.16,
-	eave: float = ROOF_EAVE
+	eave: float = ROOF_EAVE,
+	inset_l: float = 0.0,
+	inset_r: float = 0.0
 ) -> void:
-	MeshS.attach_awning(body, box_size, depth, slope, valance, eave)
-
-
+	MeshS.attach_awning(body, box_size, depth, slope, valance, eave, inset_l, inset_r)
 static func _layout_from_build_host(host: Node3D) -> Node3D:
 	var n: Node = host
 	while n != null:
