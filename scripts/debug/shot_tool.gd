@@ -159,7 +159,7 @@ static func hide_window() -> void:
 	if ww > 0 and hh > 0:
 		DisplayServer.window_set_size(Vector2i(ww, hh))
 	var sz: Vector2i = DisplayServer.screen_get_size()
-	DisplayServer.window_set_position(Vector2i(sz.x + 64, sz.y + 64))
+	DisplayServer.window_set_position(Vector2i(-32000, -32000))
 	printerr("SHOT: mark=window shown=0 taskbar=%d" % [1 if taskbar_on() else 0])
 
 
@@ -307,6 +307,13 @@ static func _after_frame(host: Node, img: Image) -> void:
 	await RenderingServer.frame_post_draw
 	_capture(host)
 
+static func _shot_cam(host: Node) -> Camera3D:
+	var rig: Node = host.get_tree().get_first_node_in_group("camera_rig")
+	if rig != null:
+		rig.set("warm_hold", true)
+		rig.process_mode = Node.PROCESS_MODE_DISABLED
+	return host.get_viewport().get_camera_3d()
+
 static func _apply_pose_token(host: Node, token: String) -> void:
 	var bits: PackedStringArray = token.split(",")
 	var kind: String = bits[0] if bits.size() > 0 else "play"
@@ -314,17 +321,7 @@ static func _apply_pose_token(host: Node, token: String) -> void:
 	var cz: float = float(bits[2]) if bits.size() > 2 else 15.0
 	var ox: float = float(bits[3]) if bits.size() > 3 else 0.0
 	var oz: float = float(bits[4]) if bits.size() > 4 else 0.0
-	var rig: Node3D = host.get_tree().get_first_node_in_group("camera_rig") as Node3D
-	if rig != null:
-		rig.set("warm_hold", true)
-		rig.process_mode = Node.PROCESS_MODE_DISABLED
-	var cam: Camera3D = host.get_viewport().get_camera_3d()
-	if rig != null:
-		var child: Camera3D = rig.get_node_or_null("Camera3D") as Camera3D
-		if child == null:
-			child = rig.find_child("", true, false) as Camera3D
-		if child != null:
-			cam = child
+	var cam: Camera3D = _shot_cam(host)
 	if cam == null:
 		printerr("SHOT: token=%s err=no_cam" % token)
 		return

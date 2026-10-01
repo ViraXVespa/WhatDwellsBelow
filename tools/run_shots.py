@@ -118,6 +118,11 @@ def _hide_godot_taskbar() -> int:
     if shot <= 0:
         return 0
     pids = {shot}
+    kids = subprocess.run(['wmic', 'process', 'where', f'ParentProcessId={shot}', 'get', 'ProcessId'], capture_output=True, text=True)
+    for line in (kids.stdout or '').splitlines():
+        line = line.strip()
+        if line.isdigit():
+            pids.add(int(line))
     found: list[int] = []
 
     @ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
@@ -130,14 +135,16 @@ def _hide_godot_taskbar() -> int:
 
     user32.EnumWindows(_cb, 0)
     for hwnd in found:
-        style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+        user32.GetWindowLongPtrW.restype = ctypes.c_longlong
+        user32.GetWindowLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        user32.SetWindowLongPtrW.restype = ctypes.c_longlong
+        user32.SetWindowLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_longlong]
+        style = user32.GetWindowLongPtrW(hwnd, GWL_EXSTYLE)
         style = (style | WS_EX_TOOLWINDOW) & ~WS_EX_APPWINDOW
-        user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
-        user32.SetWindowPos(
-            hwnd, 0, 0, 0, 0, 0,
-            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED,
-        )
-        user32.ShowWindow(hwnd, SW_HIDE)
+        user32.ShowWindow(hwnd, 0)
+        user32.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style)
+        user32.SetWindowPos(hwnd, 0, -32000, -32000, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED)
+        user32.ShowWindow(hwnd, 5)
         hits += 1
     return hits
 
