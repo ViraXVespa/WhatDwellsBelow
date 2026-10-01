@@ -17,7 +17,7 @@ The hub ships one baked light RT. Offline bake quality is the look lock. Runtime
 - Yard atlas paints a warm sun disc plus a small crystal bump by hand at `HUB_SUB`. Do not send hub through `Stamp.paint`.
 - Cream field `Color(0.98, 0.96, 0.93)` is the floor under the sun, not the finished picture.
 - Building interiors are not written. Lids own their shade and do not sample `light_tex`. Dirt owns the yard.
-- Shadows are the building boxes projected along `away` -X+Z, the same fall as the actor blob. Length is height times 0.55. Edge is feathered, not a hard box. No skirt smear.
+- Shadows use `actor_lit.gd` `SUN_AWAY` `Vector2(0.406138, 0.913811)` and `HUB_STRETCH` 0.72. Do not invent a second sun. Project the live boxes along that fall. Feather the edge. No skirt smear.
 - Finish and save use the same skirt. Then one 3x3 blur.
 - Hall and wing lids are one south-falling shed. WrapShader russet is the lid color, matching the awning red, not the sun disc. Ridge-to-eave wrap uses `shade_lo` at the north ridge and `shade_hi` at the south eave. `shade_hi` stays high enough that the eave is still tile. Tile `uv_scale` uses surface fall length.
 - Stall tarp is a 9x7 cloth with small rumple and one sheet of `plaza_tarp.png`. No lid wrap term on the cloth.

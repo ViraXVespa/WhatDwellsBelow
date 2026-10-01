@@ -15,5 +15,6 @@
 - Hub shadow fall is -X +Z again, length height times 0.9, so the direction reads.
 - Roof shingles repeat tighter and the sun disc no longer washes the dirt.
 - Hub shadow fall matches the actor blob: mostly +Z, slight -X. Edge is feathered.
+- Hub bake copies actor_lit SUN_AWAY and HUB_STRETCH. No second sun vector.
 
 Summary: Hub look lock is the play frame. Lids do not sample the yard atlas. The scene is not a second town.
