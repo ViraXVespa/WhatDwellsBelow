@@ -151,8 +151,9 @@ static func hide_window() -> void:
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_NO_FOCUS, true)
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_POPUP_WM_HINT, true)
-	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-	DisplayServer.window_set_position(Vector2i(-32000, -32000))
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_POPUP, true)
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_NO_FOCUS, true)
 	var ww: int = win_w()
 	var hh: int = win_h()
 	if ww > 0 and hh > 0:
@@ -313,18 +314,22 @@ static func _apply_pose_token(host: Node, token: String) -> void:
 	var cz: float = float(bits[2]) if bits.size() > 2 else 15.0
 	var ox: float = float(bits[3]) if bits.size() > 3 else 0.0
 	var oz: float = float(bits[4]) if bits.size() > 4 else 0.0
-	var cam: Camera3D = host.get_viewport().get_camera_3d()
 	var rig: Node3D = host.get_tree().get_first_node_in_group("camera_rig") as Node3D
 	if rig != null:
 		rig.set("warm_hold", true)
-		rig.set_process(false)
-		rig.set_physics_process(false)
-		rig.top_level = true
+		rig.process_mode = Node.PROCESS_MODE_DISABLED
+	var cam: Camera3D = host.get_viewport().get_camera_3d()
+	if rig != null:
+		var child: Camera3D = rig.get_node_or_null("Camera3D") as Camera3D
+		if child == null:
+			child = rig.find_child("", true, false) as Camera3D
+		if child != null:
+			cam = child
 	if cam == null:
 		printerr("SHOT: token=%s err=no_cam" % token)
 		return
-	cam.top_level = true
 	cam.current = true
+	cam.top_level = true
 	if kind == "play":
 		cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 		cam.size = 1080.0 / 64.0 / 0.69
@@ -338,8 +343,6 @@ static func _apply_pose_token(host: Node, token: String) -> void:
 	cam.fov = 42.0
 	cam.global_position = at
 	cam.look_at(look, Vector3.UP)
-	if rig != null:
-		rig.global_position = at
 	printerr("SHOT: token=%s at=%s look=%s" % [token, str(cam.global_position), str(look)])
 
 static func _write_strip() -> void:
