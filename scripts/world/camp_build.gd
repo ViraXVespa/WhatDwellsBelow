@@ -119,7 +119,7 @@ static func guild(host: Node3D) -> void:
 	var wv: float = lay.awning_valance("Wing") if lay else 0.16
 	var we: float = lay.eave_for("Wing") if lay else ROOF_EAVE
 	awning(hall_body, hall_box, hd, hs, hv, he, 0.0, 0.0)
-	awning(wing_body, wing_box, wd, ws, wv, we, 0.0, 0.0)
+	# Wing stays bare. Hall awning is seated on the south eave by gable_on.
 	var hall_tile: float = lay.tile_for("Hall") if lay else TILE_W
 	var wing_tile: float = lay.tile_for("Wing") if lay else TILE_W
 	var hall_uv: Vector2 = lay.hall_uv_off if lay else Vector2.ZERO
@@ -132,28 +132,9 @@ static func guild(host: Node3D) -> void:
 	var y_lid: float = hall_box.y * 0.5
 	var rise: float = 1.65
 	var lid_min := Vector3(minf(hx0, wx0), 0.0, minf(hz0, wz0))
-	MeshS.shed_pair(
-		hall_body,
-		[
-			{
-				"x0": -hall_box.x * 0.5,
-				"x1": hall_box.x * 0.5,
-				"zn": -hall_box.z * 0.5,
-				"zs": hall_box.z * 0.5 + he
-			},
-			{
-				"x0": wl.x - wing_box.x * 0.5,
-				"x1": wl.x + wing_box.x * 0.5,
-				"zn": wl.z - wing_box.z * 0.5,
-				"zs": wl.z + wing_box.z * 0.5 + he
-			}
-		],
-		y_lid,
-		rise,
-		lid_min,
-		0.72,
-		hall_uv
-	)
+	MeshS.gable_on(hall_body, hall_box, he, rise, 0.62, hall_uv)
+	MeshS.gable_on(wing_body, wing_box, we, rise + 0.25, 0.62, wing_uv)
+
 static func guild_roofs(host: Node3D) -> void:
 	MeshS.guild_roofs(host)
 
@@ -173,7 +154,7 @@ static func solid(
 	if lay:
 		eave = lay.eave_for("Stall")
 	if tarp:
-		MeshS.rumpled_tarp(body, box_size, eave, Vector3(x0, 0.0, z0))
+		MeshS.pitched_tarp(body, box_size, eave, Vector3(x0, 0.0, z0))
 	else:
 		roof_plane(
 			body,

@@ -16,5 +16,7 @@
 - Roof shingles repeat tighter and the sun disc no longer washes the dirt.
 - Hub shadow fall matches the actor blob: mostly +Z, slight -X. Edge is feathered.
 - Hub bake copies actor_lit SUN_AWAY and HUB_STRETCH. No second sun vector.
+- Hall and wing are gables. Stall tarp pitches over the counter. Collision is the same mesh.
+- Camp proof stitches the play frame with two angled building shots into one paste.
 
 Summary: Hub look lock is the play frame. Lids do not sample the yard atlas. The scene is not a second town.

@@ -4,7 +4,7 @@ Status: binding design
 Read when: hub light, roofs, camp shot, wow pass  
 Code: `scripts/graphics/light_rt.gd` (`HUB_SUB`, `_hub_make_rt`, `_hub_paint_day`, `_hub_stamp_skirt`, `save_hub_bake`), `scripts/graphics/wrap_shader.gd`, `scripts/world/camp_build.gd`, `scripts/world/camp_build_mesh.gd`, `scripts/world/camp_layout.gd`, `scripts/debug/shot_tool.gd`, `assets/baked/hub_light.png`, `tools/run_bake_camp.ps1`
 
-The hub ships one baked light RT. Offline bake quality is the look lock. Runtime `camp_light` milliseconds are not. Ortho-down at play zoom is the judge. Roofs read through lid shade and tile grain. The yard reads through a shadow projected from the real hall, wing, stall, and awning boxes. Height sets the length. Not a fake gable triangle.
+The hub ships one baked light RT. Offline bake quality is the look lock. Runtime `camp_light` milliseconds are not. Ortho-down at play zoom is the judge. Roofs read through lid shade and tile grain. The yard reads through a shadow projected from the real hall, wing, stall, and awning boxes. Height sets the length. Hall and wing are real gables. The stall tarp is pitched over the counter. Collision comes from those meshes.
 
 ## Lock
 - Shipped atlas: `res://assets/baked/hub_light.png` from `LightRt.save_hub_bake`.
@@ -35,7 +35,7 @@ The hub ships one baked light RT. Offline bake quality is the look lock. Runtime
 - Do not occupancy-march walls.
 - Do not add a second EnvKit.
 - Do not lift the whole yard with `_hub_lift_dark`.
-- Do not fake a second roof AABB so the postcard grows a triangle.
+- Do not fake a shed in place of the gable.
 - Do not treat live-main load-time as the hub look cap. Leftover hitch is `camp_enter` and player/spots, not the atlas.
 - Do not let `camera_rig.apply_zoom` run while `warm_hold` is on.
 - Do not trust a plus-only crop. Judge zoom 0.69, then the 0.38 postcard.

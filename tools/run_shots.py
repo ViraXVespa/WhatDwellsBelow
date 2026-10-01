@@ -159,6 +159,7 @@ def _write_invoke_ps1(
         str(root),
         "--",
         "--wdb-shot",
+        "--wdb-shot-poses=0.69,16.5,15,-90;0.85,8.2,6,-42;0.85,25,8,-42",
         f"--wdb-shot-seed={seed}",
         "--wdb-shot-show=1" if show_window else "--wdb-shot-show=0",
             "--wdb-shot-floor={floor_n}",

@@ -707,3 +707,90 @@ static func shed_pair(
 	body.add_child(edge)
 static func guild_roofs(host: Node3D) -> void:
 	pass
+
+static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, tile: float, uv_off: Vector2) -> void:
+	var hx: float = box_size.x * 0.5 + eave
+	var hz: float = box_size.z * 0.5 + eave
+	var y0: float = box_size.y * 0.5
+	var ridge: float = y0 + rise
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_uv(uv_off)
+	st.add_vertex(Vector3(-hx, y0, hz))
+	st.set_uv(uv_off + Vector2(1, 0))
+	st.add_vertex(Vector3(hx, y0, hz))
+	st.set_uv(uv_off + Vector2(0.5, 1))
+	st.add_vertex(Vector3(hx, ridge, 0.0))
+	st.set_uv(uv_off)
+	st.add_vertex(Vector3(-hx, y0, hz))
+	st.set_uv(uv_off + Vector2(0.5, 1))
+	st.add_vertex(Vector3(hx, ridge, 0.0))
+	st.set_uv(uv_off + Vector2(0, 1))
+	st.add_vertex(Vector3(-hx, ridge, 0.0))
+	st.set_uv(uv_off)
+	st.add_vertex(Vector3(-hx, y0, -hz))
+	st.set_uv(uv_off + Vector2(0.5, 1))
+	st.add_vertex(Vector3(-hx, ridge, 0.0))
+	st.set_uv(uv_off + Vector2(1, 0))
+	st.add_vertex(Vector3(hx, ridge, 0.0))
+	st.set_uv(uv_off)
+	st.add_vertex(Vector3(-hx, y0, -hz))
+	st.set_uv(uv_off + Vector2(1, 0))
+	st.add_vertex(Vector3(hx, ridge, 0.0))
+	st.set_uv(uv_off + Vector2(1, 1))
+	st.add_vertex(Vector3(hx, y0, -hz))
+	st.generate_normals()
+	var mesh: ArrayMesh = st.commit()
+	var inst := MeshInstance3D.new()
+	inst.name = "Gable"
+	inst.mesh = mesh
+	inst.material_override = roof_mat(Vector2(box_size.x, box_size.z + rise), body.global_position, tile, uv_off)
+	body.add_child(inst)
+	var hit := CollisionShape3D.new()
+	hit.name = "GableHit"
+	hit.shape = mesh.create_trimesh_shape()
+	body.add_child(hit)
+
+
+static func pitched_tarp(body: Node3D, box_size: Vector3, eave: float, _world_min: Vector3 = Vector3.ZERO) -> void:
+	var hx: float = box_size.x * 0.5 + eave
+	var hz: float = box_size.z * 0.5 + eave * 0.5
+	var y0: float = box_size.y * 0.5
+	var ridge: float = y0 + 0.55
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_uv(Vector2(0, 1))
+	st.add_vertex(Vector3(-hx, y0, hz))
+	st.set_uv(Vector2(1, 1))
+	st.add_vertex(Vector3(hx, y0, hz))
+	st.set_uv(Vector2(1, 0))
+	st.add_vertex(Vector3(hx, ridge, 0.0))
+	st.set_uv(Vector2(0, 1))
+	st.add_vertex(Vector3(-hx, y0, hz))
+	st.set_uv(Vector2(1, 0))
+	st.add_vertex(Vector3(hx, ridge, 0.0))
+	st.set_uv(Vector2(0, 0))
+	st.add_vertex(Vector3(-hx, ridge, 0.0))
+	st.set_uv(Vector2(0, 1))
+	st.add_vertex(Vector3(-hx, y0, -hz))
+	st.set_uv(Vector2(0, 0))
+	st.add_vertex(Vector3(-hx, ridge, 0.0))
+	st.set_uv(Vector2(1, 0))
+	st.add_vertex(Vector3(hx, ridge, 0.0))
+	st.set_uv(Vector2(0, 1))
+	st.add_vertex(Vector3(-hx, y0, -hz))
+	st.set_uv(Vector2(1, 0))
+	st.add_vertex(Vector3(hx, ridge, 0.0))
+	st.set_uv(Vector2(1, 1))
+	st.add_vertex(Vector3(hx, y0, -hz))
+	st.generate_normals()
+	var mesh: ArrayMesh = st.commit()
+	var inst := MeshInstance3D.new()
+	inst.name = "PitchedTarp"
+	inst.mesh = mesh
+	inst.material_override = tarp_mat(Vector2(box_size.x, box_size.z), body.global_position)
+	body.add_child(inst)
+	var hit := CollisionShape3D.new()
+	hit.name = "TarpHit"
+	hit.shape = mesh.create_trimesh_shape()
+	body.add_child(hit)

@@ -107,6 +107,12 @@ static func win_h() -> int:
 	return _arg_int("--wdb-shot-height", 0)
 
 
+static func poses() -> PackedStringArray:
+	var raw: String = _arg_val("--wdb-shot-poses")
+	if raw.is_empty():
+		return PackedStringArray()
+	return raw.split(";")
+
 static func zoom() -> float:
 	var raw: String = _arg_val("--wdb-shot-zoom")
 	if raw.is_empty():
@@ -252,7 +258,7 @@ static func _capture(host: Node) -> void:
 		if f != null:
 			nbytes = int(f.get_length())
 	printerr("SHOT: ok=true path=%s w=%d h=%d bytes=%d" % [path, img.get_width(), img.get_height(), nbytes])
-	_quit(host, 0)
+	_after_frame(host)
 
 
 static func _fail(host: Node, why: String) -> void:
@@ -276,3 +282,67 @@ static func _hide_label3d(n: Node) -> void:
 	while i < n.get_child_count():
 		_hide_label3d(n.get_child(i))
 		i += 1
+
+static var _pose_i: int = 0
+static var _strips: Array[Image] = []
+
+static func _after_frame(host: Node) -> void:
+	var saved := Image.new()
+	if saved.load(out_path()) == OK:
+		_strips.append(saved)
+	var list: PackedStringArray = poses()
+	_pose_i += 1
+	if list.is_empty() or _pose_i >= list.size():
+		_write_strip()
+		_quit(host, 0)
+		return
+	_apply_pose_token(host, list[_pose_i])
+	await host.get_tree().create_timer(0.6).timeout
+	await RenderingServer.frame_post_draw
+	_capture(host)
+
+static func _apply_pose_token(host: Node, token: String) -> void:
+	var bits: PackedStringArray = token.split(",")
+	var zoom_v: float = 0.69
+	var cx: float = 16.5
+	var cz: float = 15.0
+	var pitch: float = -42.0
+	if bits.size() > 0:
+		zoom_v = float(bits[0])
+	if bits.size() > 1:
+		cx = float(bits[1])
+	if bits.size() > 2:
+		cz = float(bits[2])
+	if bits.size() > 3:
+		pitch = float(bits[3])
+	var cam: Camera3D = host.get_viewport().get_camera_3d()
+	if cam == null:
+		return
+	var look := Vector3(cx, 1.4, cz)
+	cam.current = true
+	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
+	cam.fov = 42.0
+	cam.global_position = look + Vector3(0.0, 7.5, 9.0)
+	cam.look_at(look, Vector3.UP)
+	if zoom_v < 0.8:
+		cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+		cam.size = 16.0 / maxf(zoom_v, 0.01)
+		cam.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
+		cam.global_position = Vector3(16.5, 24.0, 15.0)
+
+static func _write_strip() -> void:
+	if _strips.is_empty():
+		return
+	var w: int = 0
+	var h: int = 0
+	for frame in _strips:
+		w += frame.get_width()
+		h = maxi(h, frame.get_height())
+	if w < 8 or h < 8:
+		return
+	var out := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var x: int = 0
+	for frame in _strips:
+		out.blit_rect(frame, Rect2i(0, 0, frame.get_width(), frame.get_height()), Vector2i(x, 0))
+		x += frame.get_width()
+	out.save_png(out_path())
