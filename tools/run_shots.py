@@ -278,111 +278,39 @@ def _kill_shot_pid(marks: dict[str, str]) -> None:
 def _clipboard_png(png: Path) -> str:
     if os.name != 'nt' or not png.is_file():
         return 'skip'
-    import ctypes
-    from ctypes import wintypes
-    gdiplus = ctypes.windll.gdiplus
-    user32 = ctypes.windll.user32
-    gdi32 = ctypes.windll.gdi32
-    kernel32 = ctypes.windll.kernel32
-    kernel32.GlobalAlloc.restype = ctypes.c_void_p
-    kernel32.GlobalLock.restype = ctypes.c_void_p
-    kernel32.GlobalLock.argtypes = [ctypes.c_void_p]
-    kernel32.GlobalUnlock.argtypes = [ctypes.c_void_p]
-    kernel32.GlobalFree.argtypes = [ctypes.c_void_p]
-    class _Startup(ctypes.Structure):
-        _fields_ = [
-            ('GdiplusVersion', ctypes.c_uint32),
-            ('DebugEventCallback', ctypes.c_void_p),
-            ('SuppressBackgroundThread', ctypes.c_int),
-            ('SuppressExternalCodecs', ctypes.c_int),
-        ]
-    class _Hdr(ctypes.Structure):
-        _fields_ = [
-            ('biSize', wintypes.DWORD),
-            ('biWidth', wintypes.LONG),
-            ('biHeight', wintypes.LONG),
-            ('biPlanes', wintypes.WORD),
-            ('biBitCount', wintypes.WORD),
-            ('biCompression', wintypes.DWORD),
-            ('biSizeImage', wintypes.DWORD),
-            ('biXPelsPerMeter', wintypes.LONG),
-            ('biYPelsPerMeter', wintypes.LONG),
-            ('biClrUsed', wintypes.DWORD),
-            ('biClrImportant', wintypes.DWORD),
-        ]
-    token = ctypes.c_ulong()
-    if gdiplus.GdiplusStartup(ctypes.byref(token), ctypes.byref(_Startup(1, None, 0, 0)), None) != 0:
+    import subprocess
+    script = png.parent / '_clip.ps1'
+    body = [
+        'Add-Type -AssemblyName System.Windows.Forms',
+        'Add-Type -AssemblyName System.Drawing',
+        "$path = '%s'" % str(png),
+        '$bytes = [System.IO.File]::ReadAllBytes($path)',
+        '$img = [System.Drawing.Image]::FromFile($path)',
+        '$copy = New-Object System.Drawing.Bitmap $img',
+        '$img.Dispose()',
+        '$ms = New-Object System.IO.MemoryStream',
+        '$ms.Write($bytes, 0, $bytes.Length)',
+        '$ms.Position = 0',
+        '$data = New-Object System.Windows.Forms.DataObject',
+        '$data.SetData([System.Windows.Forms.DataFormats]::Bitmap, $true, $copy)',
+        "$data.SetData('PNG', $true, $ms)",
+        '[System.Windows.Forms.Clipboard]::SetDataObject($data, $true)',
+        'Start-Sleep -Milliseconds 1200',
+        '$has = [System.Windows.Forms.Clipboard]::ContainsImage()',
+        'Write-Output ("contains_image=" + $has)',
+    ]
+    script.write_text('\n'.join(body), encoding='utf-8')
+    done = subprocess.run(
+        ['powershell', '-NoProfile', '-STA', '-File', str(script)],
+        cwd=str(png.parent),
+        capture_output=True,
+        text=True,
+    )
+    out = (done.stdout or '') + (done.stderr or '')
+    print(out.strip())
+    if done.returncode != 0:
         return 'fail'
-    image = ctypes.c_void_p()
-    if gdiplus.GdipCreateBitmapFromFile(ctypes.c_wchar_p(str(png)), ctypes.byref(image)) != 0:
-        return 'fail'
-    width = ctypes.c_uint()
-    height = ctypes.c_uint()
-    gdiplus.GdipGetImageWidth(image, ctypes.byref(width))
-    gdiplus.GdipGetImageHeight(image, ctypes.byref(height))
-    w = int(width.value)
-    h = int(height.value)
-    hbmp = ctypes.c_void_p()
-    if gdiplus.GdipCreateHBITMAPFromBitmap(image, ctypes.byref(hbmp), 0x00FFFFFF) != 0:
-        gdiplus.GdipDisposeImage(image)
-        return 'fail'
-    hdr = _Hdr()
-    hdr.biSize = ctypes.sizeof(_Hdr)
-    hdr.biWidth = w
-    hdr.biHeight = h
-    hdr.biPlanes = 1
-    hdr.biBitCount = 32
-    hdr.biCompression = 0
-    hdr.biSizeImage = w * h * 4
-    total = ctypes.sizeof(_Hdr) + int(hdr.biSizeImage)
-    hglob = kernel32.GlobalAlloc(0x0002, total)
-    if not hglob:
-        gdi32.DeleteObject(hbmp)
-        gdiplus.GdipDisposeImage(image)
-        return 'fail'
-    ptr = kernel32.GlobalLock(hglob)
-    if not ptr:
-        kernel32.GlobalFree(hglob)
-        gdi32.DeleteObject(hbmp)
-        gdiplus.GdipDisposeImage(image)
-        return 'fail'
-    ctypes.memmove(ptr, ctypes.byref(hdr), ctypes.sizeof(hdr))
-    hdc = user32.GetDC(None)
-    rows = gdi32.GetDIBits(hdc, hbmp, 0, h, ctypes.c_void_p(ptr + ctypes.sizeof(hdr)), ctypes.byref(hdr), 0)
-    user32.ReleaseDC(None, hdc)
-    kernel32.GlobalUnlock(hglob)
-    if rows == 0:
-        kernel32.GlobalFree(hglob)
-        gdi32.DeleteObject(hbmp)
-        gdiplus.GdipDisposeImage(image)
-        return 'fail'
-    opened = False
-    for _try in range(8):
-        if user32.OpenClipboard(None):
-            opened = True
-            break
-    if not opened:
-        kernel32.GlobalFree(hglob)
-        gdi32.DeleteObject(hbmp)
-        gdiplus.GdipDisposeImage(image)
-        return 'fail'
-    user32.SetClipboardData.argtypes = [ctypes.c_uint, ctypes.c_void_p]
-    user32.SetClipboardData.restype = ctypes.c_void_p
-    user32.GetClipboardData.argtypes = [ctypes.c_uint]
-    user32.GetClipboardData.restype = ctypes.c_void_p
-    user32.EmptyClipboard()
-    placed = user32.SetClipboardData(8, hglob)
-    user32.CloseClipboard()
-    gdi32.DeleteObject(hbmp)
-    gdiplus.GdipDisposeImage(image)
-    gdiplus.GdiplusShutdown(token)
-    if not placed:
-        return 'fail'
-    if not user32.OpenClipboard(None):
-        return 'fail'
-    got = user32.GetClipboardData(8)
-    user32.CloseClipboard()
-    return 'ok' if got else 'fail'
+    return 'ok' if 'contains_image=True' in out else 'fail'
 
 
 def _open_png(png: Path) -> str:
