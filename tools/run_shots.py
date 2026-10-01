@@ -89,6 +89,18 @@ def _godot_pids() -> list[int]:
     return pids
 
 
+def _shot_pid() -> int:
+    logs = Path(__file__).resolve().parents[1] / "_logs"
+    hits = sorted(logs.rglob("invoke.txt"), key=lambda p: p.stat().st_mtime)
+    if not hits:
+        return 0
+    for line in hits[-1].read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.startswith("PID="):
+            raw = line.split("=", 1)[1].strip()
+            return int(raw) if raw.isdigit() else 0
+    return 0
+
+
 def _hide_godot_taskbar() -> int:
     if os.name != "nt":
         return 0
@@ -100,10 +112,12 @@ def _hide_godot_taskbar() -> int:
     SWP_NOMOVE = 0x0002
     SWP_NOZORDER = 0x0004
     SWP_FRAMECHANGED = 0x0020
+    SW_HIDE = 0
     hits = 0
-    pids = set(_godot_pids())
-    if not pids:
+    shot = _shot_pid()
+    if shot <= 0:
         return 0
+    pids = {shot}
     found: list[int] = []
 
     @ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
@@ -123,6 +137,7 @@ def _hide_godot_taskbar() -> int:
             hwnd, 0, 0, 0, 0, 0,
             SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED,
         )
+        user32.ShowWindow(hwnd, SW_HIDE)
         hits += 1
     return hits
 
@@ -159,7 +174,7 @@ def _write_invoke_ps1(
         str(root),
         "--",
         "--wdb-shot",
-        "--wdb-shot-poses=0.69,16.5,15,-90;0.85,8.2,6,-42;0.85,25,8,-42",
+        "--wdb-shot-poses=play,16.5,15,0,0;hall,8.2,6.0,6.5,8.0;stall,25.0,8.0,-7.0,7.5",
         f"--wdb-shot-seed={seed}",
         "--wdb-shot-show=1" if show_window else "--wdb-shot-show=0",
             "--wdb-shot-floor={floor_n}",
@@ -261,52 +276,113 @@ def _kill_shot_pid(marks: dict[str, str]) -> None:
 
 
 def _clipboard_png(png: Path) -> str:
-    if not png.is_file():
-        return "skip"
-    ps = (
-        "Add-Type -AssemblyName System.Drawing\n"
-        "Add-Type -AssemblyName System.Windows.Forms\n"
-        f"$path = {_ps_literal(str(png))}\n"
-        "$img = [System.Drawing.Image]::FromFile($path)\n"
-        "try {\n"
-        "    $data = New-Object System.Windows.Forms.DataObject\n"
-        "    $data.SetImage($img)\n"
-        "    $bytes = [System.IO.File]::ReadAllBytes($path)\n"
-        "    $ms = New-Object System.IO.MemoryStream\n"
-        "    $null = $ms.Write($bytes, 0, $bytes.Length)\n"
-        "    $ms.Position = 0\n"
-        "    $data.SetData('PNG', $ms)\n"
-        "    $files = New-Object System.Collections.Specialized.StringCollection\n"
-        "    $null = $files.Add($path)\n"
-        "    $data.SetFileDropList($files)\n"
-        "    [System.Windows.Forms.Clipboard]::SetDataObject($data, $true)\n"
-        "} finally {\n"
-        "    $img.Dispose()\n"
-        "}\n"
-    )
-    r = subprocess.run(
-        ["powershell", "-STA", "-NoProfile", "-Command", ps],
-        capture_output=True,
-        text=True,
-    )
-    if r.returncode != 0:
-        return "fail"
-    check = subprocess.run(
-        [
-            "powershell",
-            "-STA",
-            "-NoProfile",
-            "-Command",
-            "Add-Type -AssemblyName System.Windows.Forms; "
-            "if ([System.Windows.Forms.Clipboard]::ContainsImage()) { 'has' } "
-            "elseif ([System.Windows.Forms.Clipboard]::ContainsFileDropList()) { 'has' } "
-            "else { 'empty' }",
-        ],
-        capture_output=True,
-        text=True,
-    )
-    got = (check.stdout or "").strip()
-    return "ok" if got == "has" else "empty"
+    if os.name != 'nt' or not png.is_file():
+        return 'skip'
+    import ctypes
+    from ctypes import wintypes
+    gdiplus = ctypes.windll.gdiplus
+    user32 = ctypes.windll.user32
+    gdi32 = ctypes.windll.gdi32
+    kernel32 = ctypes.windll.kernel32
+    kernel32.GlobalAlloc.restype = ctypes.c_void_p
+    kernel32.GlobalLock.restype = ctypes.c_void_p
+    kernel32.GlobalLock.argtypes = [ctypes.c_void_p]
+    kernel32.GlobalUnlock.argtypes = [ctypes.c_void_p]
+    kernel32.GlobalFree.argtypes = [ctypes.c_void_p]
+    class _Startup(ctypes.Structure):
+        _fields_ = [
+            ('GdiplusVersion', ctypes.c_uint32),
+            ('DebugEventCallback', ctypes.c_void_p),
+            ('SuppressBackgroundThread', ctypes.c_int),
+            ('SuppressExternalCodecs', ctypes.c_int),
+        ]
+    class _Hdr(ctypes.Structure):
+        _fields_ = [
+            ('biSize', wintypes.DWORD),
+            ('biWidth', wintypes.LONG),
+            ('biHeight', wintypes.LONG),
+            ('biPlanes', wintypes.WORD),
+            ('biBitCount', wintypes.WORD),
+            ('biCompression', wintypes.DWORD),
+            ('biSizeImage', wintypes.DWORD),
+            ('biXPelsPerMeter', wintypes.LONG),
+            ('biYPelsPerMeter', wintypes.LONG),
+            ('biClrUsed', wintypes.DWORD),
+            ('biClrImportant', wintypes.DWORD),
+        ]
+    token = ctypes.c_ulong()
+    if gdiplus.GdiplusStartup(ctypes.byref(token), ctypes.byref(_Startup(1, None, 0, 0)), None) != 0:
+        return 'fail'
+    image = ctypes.c_void_p()
+    if gdiplus.GdipCreateBitmapFromFile(ctypes.c_wchar_p(str(png)), ctypes.byref(image)) != 0:
+        return 'fail'
+    width = ctypes.c_uint()
+    height = ctypes.c_uint()
+    gdiplus.GdipGetImageWidth(image, ctypes.byref(width))
+    gdiplus.GdipGetImageHeight(image, ctypes.byref(height))
+    w = int(width.value)
+    h = int(height.value)
+    hbmp = ctypes.c_void_p()
+    if gdiplus.GdipCreateHBITMAPFromBitmap(image, ctypes.byref(hbmp), 0x00FFFFFF) != 0:
+        gdiplus.GdipDisposeImage(image)
+        return 'fail'
+    hdr = _Hdr()
+    hdr.biSize = ctypes.sizeof(_Hdr)
+    hdr.biWidth = w
+    hdr.biHeight = h
+    hdr.biPlanes = 1
+    hdr.biBitCount = 32
+    hdr.biCompression = 0
+    hdr.biSizeImage = w * h * 4
+    total = ctypes.sizeof(_Hdr) + int(hdr.biSizeImage)
+    hglob = kernel32.GlobalAlloc(0x0002, total)
+    if not hglob:
+        gdi32.DeleteObject(hbmp)
+        gdiplus.GdipDisposeImage(image)
+        return 'fail'
+    ptr = kernel32.GlobalLock(hglob)
+    if not ptr:
+        kernel32.GlobalFree(hglob)
+        gdi32.DeleteObject(hbmp)
+        gdiplus.GdipDisposeImage(image)
+        return 'fail'
+    ctypes.memmove(ptr, ctypes.byref(hdr), ctypes.sizeof(hdr))
+    hdc = user32.GetDC(None)
+    rows = gdi32.GetDIBits(hdc, hbmp, 0, h, ctypes.c_void_p(ptr + ctypes.sizeof(hdr)), ctypes.byref(hdr), 0)
+    user32.ReleaseDC(None, hdc)
+    kernel32.GlobalUnlock(hglob)
+    if rows == 0:
+        kernel32.GlobalFree(hglob)
+        gdi32.DeleteObject(hbmp)
+        gdiplus.GdipDisposeImage(image)
+        return 'fail'
+    opened = False
+    for _try in range(8):
+        if user32.OpenClipboard(None):
+            opened = True
+            break
+    if not opened:
+        kernel32.GlobalFree(hglob)
+        gdi32.DeleteObject(hbmp)
+        gdiplus.GdipDisposeImage(image)
+        return 'fail'
+    user32.SetClipboardData.argtypes = [ctypes.c_uint, ctypes.c_void_p]
+    user32.SetClipboardData.restype = ctypes.c_void_p
+    user32.GetClipboardData.argtypes = [ctypes.c_uint]
+    user32.GetClipboardData.restype = ctypes.c_void_p
+    user32.EmptyClipboard()
+    placed = user32.SetClipboardData(8, hglob)
+    user32.CloseClipboard()
+    gdi32.DeleteObject(hbmp)
+    gdiplus.GdipDisposeImage(image)
+    gdiplus.GdiplusShutdown(token)
+    if not placed:
+        return 'fail'
+    if not user32.OpenClipboard(None):
+        return 'fail'
+    got = user32.GetClipboardData(8)
+    user32.CloseClipboard()
+    return 'ok' if got else 'fail'
 
 
 def _open_png(png: Path) -> str:

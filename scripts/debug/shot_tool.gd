@@ -151,7 +151,7 @@ static func hide_window() -> void:
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_NO_FOCUS, true)
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_POPUP_WM_HINT, true)
-	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MINIMIZED)
 	var ww: int = win_w()
 	var hh: int = win_h()
 	if ww > 0 and hh > 0:
@@ -258,7 +258,7 @@ static func _capture(host: Node) -> void:
 		if f != null:
 			nbytes = int(f.get_length())
 	printerr("SHOT: ok=true path=%s w=%d h=%d bytes=%d" % [path, img.get_width(), img.get_height(), nbytes])
-	_after_frame(host)
+	_after_frame(host, img)
 
 
 static func _fail(host: Node, why: String) -> void:
@@ -286,10 +286,10 @@ static func _hide_label3d(n: Node) -> void:
 static var _pose_i: int = 0
 static var _strips: Array[Image] = []
 
-static func _after_frame(host: Node) -> void:
-	var saved := Image.new()
-	if saved.load(out_path()) == OK:
-		_strips.append(saved)
+static func _after_frame(host: Node, img: Image) -> void:
+	var copy: Image = img.duplicate()
+	copy.convert(Image.FORMAT_RGBA8)
+	_strips.append(copy)
 	var list: PackedStringArray = poses()
 	_pose_i += 1
 	if list.is_empty() or _pose_i >= list.size():
@@ -297,38 +297,37 @@ static func _after_frame(host: Node) -> void:
 		_quit(host, 0)
 		return
 	_apply_pose_token(host, list[_pose_i])
-	await host.get_tree().create_timer(0.6).timeout
+	await host.get_tree().create_timer(0.7).timeout
 	await RenderingServer.frame_post_draw
 	_capture(host)
 
 static func _apply_pose_token(host: Node, token: String) -> void:
 	var bits: PackedStringArray = token.split(",")
-	var zoom_v: float = 0.69
-	var cx: float = 16.5
-	var cz: float = 15.0
-	var pitch: float = -42.0
-	if bits.size() > 0:
-		zoom_v = float(bits[0])
-	if bits.size() > 1:
-		cx = float(bits[1])
-	if bits.size() > 2:
-		cz = float(bits[2])
-	if bits.size() > 3:
-		pitch = float(bits[3])
+	var kind: String = bits[0] if bits.size() > 0 else "play"
+	var cx: float = float(bits[1]) if bits.size() > 1 else 16.5
+	var cz: float = float(bits[2]) if bits.size() > 2 else 15.0
 	var cam: Camera3D = host.get_viewport().get_camera_3d()
+	var rig: Node3D = host.get_tree().get_first_node_in_group("camera_rig") as Node3D
+	if rig != null:
+		rig.set("warm_hold", true)
+		rig.set_process(false)
+		rig.set_physics_process(false)
 	if cam == null:
 		return
-	var look := Vector3(cx, 1.4, cz)
+	cam.top_level = true
 	cam.current = true
-	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
-	cam.fov = 42.0
-	cam.global_position = look + Vector3(0.0, 7.5, 9.0)
-	cam.look_at(look, Vector3.UP)
-	if zoom_v < 0.8:
+	if kind == "play":
 		cam.projection = Camera3D.PROJECTION_ORTHOGONAL
-		cam.size = 16.0 / maxf(zoom_v, 0.01)
+		cam.size = 1080.0 / 64.0 / 0.69
 		cam.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
 		cam.global_position = Vector3(16.5, 24.0, 15.0)
+		return
+	var look := Vector3(cx, 1.8, cz)
+	var at := look + Vector3(float(bits[3]) if bits.size() > 3 else 7.0, 5.5, float(bits[4]) if bits.size() > 4 else 7.0)
+	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
+	cam.fov = 50.0
+	cam.global_position = at
+	cam.look_at(look, Vector3.UP)
 
 static func _write_strip() -> void:
 	if _strips.is_empty():
@@ -338,11 +337,11 @@ static func _write_strip() -> void:
 	for frame in _strips:
 		w += frame.get_width()
 		h = maxi(h, frame.get_height())
-	if w < 8 or h < 8:
-		return
 	var out := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	out.fill(Color(0.15, 0.12, 0.1))
 	var x: int = 0
 	for frame in _strips:
 		out.blit_rect(frame, Rect2i(0, 0, frame.get_width(), frame.get_height()), Vector2i(x, 0))
 		x += frame.get_width()
 	out.save_png(out_path())
+	printerr("SHOT: strip frames=%d bytes_path=%s" % [_strips.size(), out_path()])
