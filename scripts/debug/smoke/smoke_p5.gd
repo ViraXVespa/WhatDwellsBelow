@@ -1,6 +1,6 @@
 extends Object
 
-const GatherRules := preload("res://scripts/world/gather/gather_rules.gd")
+const GatherRules := preload("res://scripts/world/gather/rules.gd")
 
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()

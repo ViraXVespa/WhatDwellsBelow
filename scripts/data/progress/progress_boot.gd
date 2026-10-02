@@ -1,8 +1,8 @@
 extends Object
 
-const Gear := preload("res://scripts/data/progress_gear/progress_gear.gd")
-const Rules := preload("res://scripts/data/gear_rules/gear_rules.gd")
-const ForgeP := preload("res://scripts/data/progress_forge/progress_forge.gd")
+const Gear := preload("res://scripts/data/progress_gear.gd")
+const Rules := preload("res://scripts/data/gear_rules.gd")
+const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const Town := preload("res://scripts/data/progress/progress_town.gd")
 
 static func reset_meta(p: Object) -> void:

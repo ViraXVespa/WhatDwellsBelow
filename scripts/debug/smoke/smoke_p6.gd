@@ -1,7 +1,7 @@
 extends Object
 
 const Cat := preload("res://scripts/data/catalog.gd")
-const ForgeP := preload("res://scripts/data/progress_forge/progress_forge.gd")
+const ForgeP := preload("res://scripts/data/progress_forge.gd")
 
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()

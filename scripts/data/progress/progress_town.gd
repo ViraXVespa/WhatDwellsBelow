@@ -1,8 +1,8 @@
 ﻿extends Object
 
-const Extract := preload("res://scripts/data/progress/progress_extract.gd")
-const Quest := preload("res://scripts/data/progress_quest/progress_quest.gd")
-const ForgeP := preload("res://scripts/data/progress_forge/progress_forge.gd")
+const Extract := preload("res://scripts/data/progress/extract.gd")
+const Quest := preload("res://scripts/data/progress_quest.gd")
+const ForgeP := preload("res://scripts/data/progress_forge.gd")
 
 static func extractable(p: Object, role: String = "") -> Array:
 	return Extract.extractable(p, role)

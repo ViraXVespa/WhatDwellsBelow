@@ -12,7 +12,7 @@ Read when: transport decades, warp silence, spur length
 - A placement band is `crystal_cl_band` combat levels wide (live default 2). At most one non-dead-end crystal per band. A band is not required to receive a crystal.
 - Extra crystals MUST keep `crystal_min_sep` from the entrance and from each other. Separation is checked on the final cell after the room snap.
 - Dead-end crystals ignore the per-band cap. They still need a long spur (`crystal_deadend_len`), `crystal_deadend_sep` from spawn, and `crystal_min_sep` from every other crystal.
-- Layout lives in `crystal_place.gd`. Bind, warp, silence, and menus live in `crystal_net.gd`.
+- Layout lives in `crystal_place.gd`. Bind, warp, silence, and menus live in `net.gd`.
 - The entrance crystal is bound on arrival. Any other crystal is unbound until the player clears enemies in its area (`crystal_clear_r`) and interacts.
 - Bound crystals open the transport menu. They do not descend.
 - Local Transport Network unlocks when at least two crystals on the current floor are bound. Selecting a bound crystal teleports the player there and silences nearby spawn jobs.

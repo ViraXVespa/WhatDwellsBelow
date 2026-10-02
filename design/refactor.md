@@ -39,7 +39,7 @@ A non-empty `design/reuse-map.md` brief may name small kits at the surface that 
 
 ## Cluster folders (placement rule; one copy)
 
-A facade and its stem helpers live together in one folder named by the stem: `scripts/<area>/<stem>/<stem>.gd` plus `<stem>_*.gd` (example: `scripts/graphics/light_rt/light_rt.gd`, `light_rt_publish.gd`). Facade-less families that share a first token (two or more files) get a folder named by the token (`scripts/world/crystal/`). Folders stay inside the existing area (`audio combat data debug dungeon graphics input ui world`, and the root `scripts/`); depth stops at the stem folder. A cluster over 9 files splits one level into sibling stem folders (`playtest/`, `playtest_ai/`, `playtest_log/`). Loose single files stay loose. Names never change: file and class names are the stem.
+A facade and its stem helpers live together in one folder named by the stem: `scripts/<area>/<stem>/<stem>.gd` plus `<stem>_*.gd` (example: `scripts/graphics/light_rt.gd`, `publish.gd`). Facade-less families that share a first token (two or more files) get a folder named by the token (`scripts/world/crystal/`). Folders stay inside the existing area (`audio combat data debug dungeon graphics input ui world`, and the root `scripts/`); depth stops at the stem folder. A cluster over 9 files splits one level into sibling stem folders (`playtest/`, `playtest_ai/`, `playtest_log/`). Loose single files stay loose. Names never change: file and class names are the stem.
 - A new helper from a size split or extract goes into the facade's folder. Splitting a loose facade: move it with its helpers first (`tools/move_script_cluster.py`, below), then split.
 - A folder move carries `.uid` sidecars and every `res://` / bare path (tool rewrites scripts, scenes, `project.godot`, design, tools, `.grok`). Path length counts toward the 10KB floor.
 
@@ -50,7 +50,7 @@ If a file must be split:
 1. Split into a sibling helper (`*_act.gd`, `*_view.gd`, `*_boot.gd`, `*_text.gd`, …).
 2. Keep the original facade (in its cluster folder, above) as the facade (`App.playtest`, `PauseInv.build`, `Gen.generate`, `EnemyAI.tick`, `SmokeLate.p7`).
 3. Helpers are `static func` with `host` / `pt` / `ui` / `p` first.
-4. No circular `preload()`: the facade preloads its helpers; helpers never preload the facade. If a helper needs facade-held `static var` state, use `var rt: Variant = load(RT_PATH)` then `rt.name` (see `light_rt_publish.gd`). For a node script, the facade stays the owner of state and keeps one-line delegates; each moved instance func becomes `static func name(node: Variant, ...)` in a sibling `extends Object` helper that reads state as `node.field` (see `actor_lit_drive.gd`). Prove by a line-multiset compare against the original after stripping qualifiers, plus smokes before and after. `tools/facade_requal.py` qualifies moved names in the facade.
+4. No circular `preload()`: the facade preloads its helpers; helpers never preload the facade. If a helper needs facade-held `static var` state, use `var rt: Variant = load(RT_PATH)` then `rt.name` (see `publish.gd`). For a node script, the facade stays the owner of state and keeps one-line delegates; each moved instance func becomes `static func name(node: Variant, ...)` in a sibling `extends Object` helper that reads state as `node.field` (see `drive.gd`). Prove by a line-multiset compare against the original after stripping qualifiers, plus smokes before and after. `tools/facade_requal.py` qualifies moved names in the facade.
 5. Godot 4 analyzes a parent script alone. Do not call methods that exist only on a child; call the helper module from the parent.
 6. Never split files under a pinned archive commit. Slim `archives/docs/` copies are live-tree museum text only.
 7. Split the largest first. One cluster per batch. Stop so the User can compile (web / chat: so the User can paste; Grok Bot: ship the PR, report, and follow the already-open Bot door before the next cluster).
@@ -79,7 +79,7 @@ Hunt for copied logic only after size work on the current cluster, or when the a
 2. If the copy is the same concern as an **existing** shared script **and** routing call sites there keeps that owner under the size cap, change the copies to call that script. Discover owners from the live tree + one `design/code-map.md` row, not from a standing reuse-map table. Short reminders that already ship:
    - menu tab / confirm / back / page: `scripts/ui/menu_pad.gd`
    - bottom prompt / hint strip: `scripts/ui/prompt_view.gd`
-   - other existing shared scripts already in the tree (`theme.gd`, `pause_menu_util.gd`, `gear_board_tip.gd`, `plate_chrome.gd`, `tip_place.gd`, …) when they already expose the function
+   - other existing shared scripts already in the tree (`theme.gd`, `menu_util.gd`, `tip.gd`, `plate_chrome.gd`, `tip_place.gd`, …) when they already expose the function
 3. If nothing existing owns it, or the owner would blow the size cap: **Grok Bot** prefers a new shared module for near-identical spanning copies; otherwise leave the copies and report them. Do not add a new method on an existing owner just so the copies can fit. **Grok Build** may add a same-system method or helper; a new cross-system owner is propose-first.
 
 Reuse against an existing owner is call-site edits plus using a function that already exists. Grok Bot extract to a new shared module is moved bodies into a new file, not invented logic. Do not merge pairs listed under **Do not merge** on the Bot extract job.
@@ -120,7 +120,7 @@ When gameplay uses a formula (gather interval, forge→hold, damage, etc.), put 
 
 Rules:
 
-1. Prefer a small `extends Object` helper next to the owner (example: `scripts/world/gather/gather_rules.gd` for gather timing; `ForgeP.forge_hold` for programmatic forge→hold).
+1. Prefer a small `extends Object` helper next to the owner (example: `scripts/world/gather/rules.gd` for gather timing; `ForgeP.forge_hold` for programmatic forge→hold).
 2. Before asserting in a smoke, search for an existing helper (`interval_for`, `forge_hold`, …). If none exists, **extract** it from the live code first, then assert against the helper’s result. Grok Build may write that helper as a same-system API.
 3. When hostifying, keep smoke-reachable facades (see Hostify pitfall 9) **and** keep smokes on the shared calc route — updating only the smoke’s hardcoded constants is a regression waiting to happen.
 4. Search for duplicated literals of the same feature (example: `2.4` / `mine_time`) during size sweeps; fold them into the helper in the same batch when safe.

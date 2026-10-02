@@ -4,7 +4,7 @@ const Anim := preload("res://scripts/world/player/player_anim.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const AppRunS := preload("res://scripts/app/app_run.gd")
 
-const Hub := preload("res://scripts/app/app_flow_hub.gd")
+const Hub := preload("res://scripts/app/flow_hub.gd")
 static func enter_dungeon(host: Node) -> void:
 	if host.present and str(host.present.get("_mode")) == "enter":
 		return
@@ -189,4 +189,4 @@ static func launch_archive(host: Node, id: String) -> void:
 	host._launch_archive_async(id)
 
 static func launch_archive_async(host: Node, id: String) -> void:
-	await load("res://scripts/data/archives/archives_launch.gd").run(host, id)
+	await load("res://scripts/data/archives/launch.gd").run(host, id)

@@ -50,4 +50,4 @@ Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: k
 
 ## Live snapshot — web touch
 
-`App` instances `scripts/ui/touch_hud/touch_hud.gd` and `scripts/web_pad.gd`. `touch_hud.gd` draws the move stick, the right-hand cluster, pinch, and map swipe; `touch_pad.gd` owns detection, move vector, and `force_show`. Overlay layer 28. Visibility is `Touch.wants_show()`. Large-map transform lives in `dungeon_map_act.gd`.
+`App` instances `scripts/ui/touch_hud.gd` and `scripts/web_pad.gd`. `touch_hud.gd` draws the move stick, the right-hand cluster, pinch, and map swipe; `touch_pad.gd` owns detection, move vector, and `force_show`. Overlay layer 28. Visibility is `Touch.wants_show()`. Large-map transform lives in `map_act.gd`.

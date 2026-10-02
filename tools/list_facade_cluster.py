@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """List a facade and its same-folder sibling helpers (<stem>.gd, <stem>_*.gd) by byte size.
 
-    python3 tools/list_facade_cluster.py --facade scripts/combat/enemy/enemy.gd
+    python3 tools/list_facade_cluster.py --facade scripts/combat/enemy.gd
 Summary: _logs/facade-cluster/summary.txt. Old spelling: -Facade.
 """
 from __future__ import annotations

@@ -1,6 +1,6 @@
 extends CharacterBody3D
 const BillSpr := preload("res://scripts/world/billboard_spr.gd")
-const ActorLit := preload("res://scripts/graphics/actor_lit/actor_lit.gd")
+const ActorLit := preload("res://scripts/graphics/actor_lit.gd")
 
 const Depth := preload("res://scripts/world/depth.gd")
 const T := preload("res://scripts/data/tunables.gd")

@@ -2,7 +2,7 @@
 
 Status: suggested starts + live snapshot  
 Read when: the work changes a number, formula, or debug default  
-Code: `scripts/data/balance/balance.gd`, `balance_access.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode/display_mode.gd`, `scripts/combat/cover/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
+Code: `scripts/data/balance.gd`, `access.gd`, `schema.gd`, `enemies.gd`, `migrate.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
 
 
 These are recommended starting points for the current live implementation.  
@@ -13,7 +13,7 @@ If you change a live default, update this table in the same slice.
 
 List one key with `python tools/tunables.py get --key CAM_PITCH` (summary: `_logs/tunable-row/summary.txt`). Patch one Live cell with `python tools/tunables.py set --key CAM_PITCH --set -58` (summary: `_logs/tunable-patch/summary.txt`). Do not open this whole file to change one number.
 
-`BAL_REV` is 13. Old saves pick up shipped default retunes through `balance_migrate.gd`.
+`BAL_REV` is 13. Old saves pick up shipped default retunes through `migrate.gd`.
 
 Forge keys that are not yet on `balance.gd` fall back inside `progress_forge.gd` / `gear_roll.gd`. Add them to balance + the debug menu when that slice lands.
 
@@ -155,7 +155,7 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | Ambush cap / spacing | 40 / 10 | **40 / 10** | Hall anchors outside rooms |
 | Ambush pack min / max | 1 / 2 | **1 / 2** | |
 | Stream in / out (cells) | — | **28 / 42** | enemies |
-| Geo chunk (cells) | — | **32** | `dungeon_geo_stream.gd` |
+| Geo chunk (cells) | — | **32** | `geo_stream.gd` |
 | Geo ring in / out | — | **1 / 2** | Chunks around the player |
 | Geo jobs per follow | — | **3** | 9 on a long tick |
 | Crystal min separation | 56 cells | **56** | Between every crystal, including dead-ends |
@@ -210,7 +210,7 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | `xp_per_kill` | **22** |
 | `xp_kill_hp` / `xp_kill_def` | **11.0 / 11.0** |
 
-Roster HP: `balance_enemies.gd`. CL 17 budget and rank-multiplier feel live on combat. Enemy walk vs crystal labels live on the enemies and dungeon doors.
+Roster HP: `enemies.gd`. CL 17 budget and rank-multiplier feel live on combat. Enemy walk vs crystal labels live on the enemies and dungeon doors.
 
 ## Progression and economy
 

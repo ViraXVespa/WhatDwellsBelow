@@ -2,9 +2,9 @@ extends Node3D
 
 const T := preload("res://scripts/data/tunables.gd")
 const Depth := preload("res://scripts/world/depth.gd")
-const PlayerS := preload("res://scripts/world/player/player.gd")
+const PlayerS := preload("res://scripts/world/player.gd")
 const DummyS := preload("res://scripts/combat/dummy.gd")
-const Smoke := preload("res://scripts/debug/smoke/smoke.gd")
+const Smoke := preload("res://scripts/debug/smoke.gd")
 const EnvKit := preload("res://scripts/graphics/env_kit.gd")
 
 var player: CharacterBody3D

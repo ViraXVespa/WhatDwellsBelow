@@ -1,6 +1,6 @@
 extends Object
 
-## Settings cluster split out of App. Facade path stays scripts/app/app.gd.
+## Settings cluster split out of App. Facade path stays scripts/app.gd.
 
 const UiText := preload("res://scripts/ui/ui_text.gd")
 

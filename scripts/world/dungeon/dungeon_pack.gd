@@ -3,7 +3,7 @@ extends Object
 const Roster := preload("res://scripts/combat/roster.gd")
 
 static func add_enemy(host: Node, id: String, pos: Vector3, gid: int, named: bool, nname: String) -> Node:
-	var EnemyS: GDScript = load("res://scripts/combat/enemy/enemy.gd") as GDScript
+	var EnemyS: GDScript = load("res://scripts/combat/enemy.gd") as GDScript
 	var e: CharacterBody3D = EnemyS.new() as CharacterBody3D
 	e.position = pos
 	host.add_child(e)

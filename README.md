@@ -50,7 +50,7 @@ Code map:
 - `scripts/input/prompts.gd` — bind → glyph id / texture
 - `scripts/ui/prompt_view.gd` — `fill`, `footer`, `pulse`
 - `scripts/ui/menu_pad.gd` — menu confirm / back / tabs / paging; notes the event and refills the footer on a scheme flip
-- `scripts/input/binds/binds.gd` — `tab_left`, `tab_right`, `gear_tip`, `gear_drop`, `crystal_zoom`
+- `scripts/input/binds.gd` — `tab_left`, `tab_right`, `gear_tip`, `gear_drop`, `crystal_zoom`
 
 Menus keep Select / Back in a footer strip at the bottom-right of the panel. Tab glyphs sit on the tab header. Stats paging stays on the stats card (Q / E on keyboard, LT / RT on pad). World interact uses the `interact` glyph plus a verb on the HUD.
 

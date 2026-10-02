@@ -24,4 +24,4 @@ Title → Play (`scripts/app/app_flow.gd`) sync-loads a short hub list (scene, t
 
 Compatibility renderer is preferred for the shippable build if it does not break the web export. Mobile renderer may be retained only if required for web stability.
 
-Godot target: **4.7.2**. Main scene `res://scenes/boot.tscn`. Autoload `App = *res://scripts/app/app.gd`.
+Godot target: **4.7.2**. Main scene `res://scenes/boot.tscn`. Autoload `App = *res://scripts/app.gd`.

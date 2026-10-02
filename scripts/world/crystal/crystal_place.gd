@@ -1,5 +1,5 @@
 extends Object
-const RoomsPlace := preload("res://scripts/dungeon/gen/gen_rooms_place.gd")
+const RoomsPlace := preload("res://scripts/dungeon/gen/rooms_place.gd")
 
 const Threat := preload("res://scripts/combat/threat.gd")
 const FloorCrystal := preload("res://scripts/world/floor_crystal.gd")
@@ -161,7 +161,7 @@ static func place_floor(host: Node) -> void:
 	place_entrance(host)
 	place_extras(host)
 static func place_entrance(host: Node) -> void:
-	var Net = load("res://scripts/world/crystal/crystal_net.gd")
+	var Net = load("res://scripts/world/crystal/net.gd")
 	Net.ensure_run()
 	Net.arrive()
 	var spots: Array = []

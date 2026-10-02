@@ -1,6 +1,6 @@
 extends Object
 
-## HUD refresh. Host is the CanvasLayer at scripts/ui/hud/hud.gd.
+## HUD refresh. Host is the CanvasLayer at scripts/ui/hud.gd.
 
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")

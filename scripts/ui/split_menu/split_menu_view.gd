@@ -1,8 +1,8 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Split := preload("res://scripts/ui/split_menu/split_menu.gd")
-const Chrome := preload("res://scripts/ui/split_menu/split_menu_chrome.gd")
+const Split := preload("res://scripts/ui/split_menu.gd")
+const Chrome := preload("res://scripts/ui/split_menu/chrome.gd")
 
 const COL_LIVE := Color(1, 1, 1, 1)
 const COL_DIM := Color(0.55, 0.52, 0.48, 1)

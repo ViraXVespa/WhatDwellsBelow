@@ -4,7 +4,7 @@ extends RefCounted
 ## Pad.aim() must treat eats_aim() as "right stick is not aim."
 
 const T := preload("res://scripts/data/tunables.gd")
-const MapAct := preload("res://scripts/world/dungeon/dungeon_map_act.gd")
+const MapAct := preload("res://scripts/world/dungeon/map_act.gd")
 
 static var mode := false
 static var wheel_step := 0.08

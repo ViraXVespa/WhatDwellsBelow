@@ -2,7 +2,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 
-## HUD chrome. Host is the CanvasLayer at scripts/ui/hud/hud.gd.
+## HUD chrome. Host is the CanvasLayer at scripts/ui/hud.gd.
 
 static func build(host: CanvasLayer) -> void:
 	host.strip = Control.new()

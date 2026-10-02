@@ -1,7 +1,7 @@
 extends Object
 
-const Los := preload("res://scripts/debug/playtest_los/playtest_los.gd")
-const Path := preload("res://scripts/debug/playtest_path/playtest_path.gd")
+const Los := preload("res://scripts/debug/playtest_los.gd")
+const Path := preload("res://scripts/debug/playtest_path.gd")
 
 static func world3(pt: Node) -> World3D:
 	return Los.world3(pt)

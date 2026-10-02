@@ -2,7 +2,7 @@ extends Object
 
 const Combat := preload("res://scripts/combat/combat.gd")
 static func _mask_pack(spr: Sprite3D) -> Dictionary:
-	var _fac = load("res://scripts/combat/cover/cover.gd")
+	var _fac = load("res://scripts/combat/cover.gd")
 	if spr.has_meta("cover_pack"):
 		return spr.get_meta("cover_pack")
 	var empty := {"cells": PackedByteArray(), "cols": 0, "rows": 0, "width": 0.0, "height": 0.0, "locals": PackedVector3Array()}
@@ -59,7 +59,7 @@ static func _mask_pack(spr: Sprite3D) -> Dictionary:
 	return pack
 
 static func hit_shot(origin: Vector3, dir: Vector2, radius: float, host: Node3D) -> float:
-	var _fac = load("res://scripts/combat/cover/cover.gd")
+	var _fac = load("res://scripts/combat/cover.gd")
 	if host == null or not is_instance_valid(host) or radius <= 0.001:
 		return 0.0
 	if not _fac._near_host(origin, radius, host):
@@ -106,7 +106,7 @@ static func hit_shot(origin: Vector3, dir: Vector2, radius: float, host: Node3D)
 	return lerpf(1.0, 0.35, (d - inner) / maxf(0.001, span - inner))
 
 static func _sprite_pts(host: Node3D) -> Array[Vector3]:
-	var _fac = load("res://scripts/combat/cover/cover.gd")
+	var _fac = load("res://scripts/combat/cover.gd")
 	var spr: Sprite3D = _fac._spr_of(host)
 	if spr == null or spr.texture == null:
 		return [host.global_position + Vector3(0.0, 0.5, 0.0)]
@@ -134,7 +134,7 @@ static func _sprite_pts(host: Node3D) -> Array[Vector3]:
 				along = -along
 			pts.append(c + rx * along + up * off.y)
 	else:
-		pts = load("res://scripts/combat/cover/cover_geom.gd")._sprite_pts_cells(spr, pack, c, rx, up)
+		pts = load("res://scripts/combat/cover/geom.gd")._sprite_pts_cells(spr, pack, c, rx, up)
 	spr.set_meta("cover_pts_f", frame)
 	spr.set_meta("cover_pts", pts)
 	return pts

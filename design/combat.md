@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: strike detection, dash, lock, juice, crits
-Code: `scripts/combat/combat.gd`, `cover.gd`, `player_hit.gd`, `threat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `float_num.gd`, `dummy.gd`, `enemy_ai.gd`, `scripts/world/player/player.gd`, `player_combat.gd`  
+Code: `scripts/combat/combat.gd`, `cover.gd`, `player_hit.gd`, `threat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `float_num.gd`, `dummy.gd`, `enemy_ai.gd`, `scripts/world/player.gd`, `player_combat.gd`  
 
 
 ## Weapon system
@@ -15,7 +15,7 @@ All player attacks (basic and special) MUST clearly telegraph their range and pr
 
 ## Hit coverage
 
-Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occupancy against the attack volume (`Cover` in `scripts/combat/cover/cover.gd`).
+Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occupancy against the attack volume (`Cover` in `scripts/combat/cover.gd`).
 
 - Occupancy is the opaque texels of the target `Sprite3D` (player, enemy, dummy, or breakable). Transparent pixels MUST NOT register.
 - Axe and staff basics: the ground fan must overlap those opaque samples on screen. Any opaque overlap is a hit.

@@ -2,7 +2,7 @@ extends Object
 
 ## Greedy wall-cell merge into tile rects (x, y, w, h) for collision boxes.
 
-const Gen := preload("res://scripts/dungeon/gen/gen.gd")
+const Gen := preload("res://scripts/dungeon/gen.gd")
 
 static func merge(walls: Array[Vector2i]) -> Array[Rect2i]:
 	var rects: Array[Rect2i] = []

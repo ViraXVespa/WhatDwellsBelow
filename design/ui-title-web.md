@@ -6,7 +6,7 @@ Read when: title / play menu, web fullscreen gate, loader
 
 ## Title / play menu
 
-`scripts/title/title.gd` is the play menu. Overlay body lives in `scripts/title/title_news.gd`. The card MUST show `Version: {label}` from `version.json` at all times.
+`scripts/title.gd` is the play menu. Overlay body lives in `scripts/title/news.gd`. The card MUST show `Version: {label}` from `version.json` at all times.
 
 Buttons, top to bottom: Play (or Play — Male / Play — Female), Updates, Archives.
 
@@ -42,13 +42,13 @@ If the viewport is taller than wide, the card MUST say to rotate to landscape. L
 
 ## Live snapshot — title
 
-`title.gd` builds the card and focus graph. `title_news.gd` builds the overlay.
+`title.gd` builds the card and focus graph. `news.gd` builds the overlay.
 - Title backdrop is `assets/ui/load_background.jpg` full-bleed (no global dim). A centered 0.62-alpha black plate sits only behind the title / buttons.
 Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close is the focused control. Right stick and mouse wheel move `ScrollContainer.scroll_vertical`. Overlay body is a `RichTextLabel` on an opaque panel.
 
 ## Live snapshot — web fullscreen gate
 
-`scripts/ui/fs_gate.gd` on `scenes/fs_gate.tscn`. `scripts/display_mode/display_mode.gd` owns platform buckets, window modes, sessionStorage, landscape lock, Esc hooks, and the PWA install prompt. `scripts/boot.gd` routes web → gate when the session still needs it. The gate rebuilds two themed buttons, keeps focus after `wake_web`, polls `App.web_pad` for A / B / Start / Back, and leaves to splash when fullscreen or standalone becomes true.
+`scripts/ui/fs_gate.gd` on `scenes/fs_gate.tscn`. `scripts/display_mode.gd` owns platform buckets, window modes, sessionStorage, landscape lock, Esc hooks, and the PWA install prompt. `scripts/boot.gd` routes web → gate when the session still needs it. The gate rebuilds two themed buttons, keeps focus after `wake_web`, polls `App.web_pad` for A / B / Start / Back, and leaves to splash when fullscreen or standalone becomes true.
 
 ## Live snapshot — loading bar (`loader.gd`)
 

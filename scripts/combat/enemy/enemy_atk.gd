@@ -1,7 +1,7 @@
 ﻿extends Object
 
 const Combat := preload("res://scripts/combat/combat.gd")
-const Cover := preload("res://scripts/combat/cover/cover.gd")
+const Cover := preload("res://scripts/combat/cover.gd")
 const ProjS := preload("res://scripts/combat/projectile.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
 

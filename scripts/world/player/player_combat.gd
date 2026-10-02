@@ -1,6 +1,6 @@
 ﻿extends Object
 
-const PlayerHit := preload("res://scripts/combat/player_hit/player_hit.gd")
+const PlayerHit := preload("res://scripts/combat/player_hit.gd")
 
 static func try_dash(p: CharacterBody3D, move: Vector2) -> void:
 	(load("res://scripts/world/player/player_setup.gd") as GDScript).ensure_combat_fx(p)

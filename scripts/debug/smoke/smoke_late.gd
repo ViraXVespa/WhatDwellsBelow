@@ -2,7 +2,7 @@ extends Object
 
 const P5 := preload("res://scripts/debug/smoke/smoke_p5.gd")
 const P6 := preload("res://scripts/debug/smoke/smoke_p6.gd")
-const P79 := preload("res://scripts/debug/smoke/smoke_p79.gd")
+const P79 := preload("res://scripts/debug/smoke/p79.gd")
 
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()

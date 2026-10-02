@@ -3,7 +3,7 @@ const BillSpr := preload("res://scripts/world/billboard_spr.gd")
 
 const Depth := preload("res://scripts/world/depth.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
-const GatherRules := preload("res://scripts/world/gather/gather_rules.gd")
+const GatherRules := preload("res://scripts/world/gather/rules.gd")
 
 var kind := "mine"
 var hits := 4

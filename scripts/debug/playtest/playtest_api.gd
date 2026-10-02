@@ -2,11 +2,11 @@
 
 ## State, public API, and live driver. playtest.gd extends this.
 
-const Store := preload("res://scripts/data/save_store/save_store.gd")
-const PlaytestAI := preload("res://scripts/debug/playtest_ai/playtest_ai.gd")
-const PlaytestGoals := preload("res://scripts/debug/playtest_goals/playtest_goals.gd")
-const PlaytestSim := preload("res://scripts/debug/playtest/playtest_sim.gd")
-const PlaytestLog := preload("res://scripts/debug/playtest_log/playtest_log.gd")
+const Store := preload("res://scripts/data/save_store.gd")
+const PlaytestAI := preload("res://scripts/debug/playtest_ai.gd")
+const PlaytestGoals := preload("res://scripts/debug/playtest_goals.gd")
+const PlaytestSim := preload("res://scripts/debug/playtest/sim.gd")
+const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const THINK_DT := 0.12
 
 var history: Array = []

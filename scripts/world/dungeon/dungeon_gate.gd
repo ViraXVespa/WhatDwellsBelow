@@ -1,7 +1,7 @@
 ﻿extends Object
 
-const SpotS := preload("res://scripts/world/interact/interact.gd")
-const Gen := preload("res://scripts/dungeon/gen/gen.gd")
+const SpotS := preload("res://scripts/world/interact.gd")
+const Gen := preload("res://scripts/dungeon/gen.gd")
 
 static func _wall(host: Node, c: Vector2i) -> bool:
 	var w: int = host.data.w

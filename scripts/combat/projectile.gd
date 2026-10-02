@@ -1,7 +1,7 @@
 ﻿extends Node3D
 
 const Combat := preload("res://scripts/combat/combat.gd")
-const Cover := preload("res://scripts/combat/cover/cover.gd")
+const Cover := preload("res://scripts/combat/cover.gd")
 const Depth := preload("res://scripts/world/depth.gd")
 
 var dir := Vector2.DOWN

@@ -9,12 +9,12 @@ static func _bake_camp(host: Node) -> void:
 		host.get_tree().quit()
 		return
 	var camp = packed.instantiate()
-	var LayoutS = load("res://scripts/world/camp/camp_layout.gd")
-	var Build = load("res://scripts/world/camp_build/camp_build.gd")
+	var LayoutS = load("res://scripts/world/camp/layout.gd")
+	var Build = load("res://scripts/world/camp_build.gd")
 	var layout = LayoutS.on_camp(camp)
 	layout.ensure_tree()
 	Build.realize_editor(camp, layout)
-	var HubLight = load("res://scripts/graphics/light_rt/light_rt.gd")
+	var HubLight = load("res://scripts/graphics/light_rt.gd")
 	HubLight.rebuild_hub(
 		int(layout.aabb_x0()),
 		int(layout.aabb_z0()),

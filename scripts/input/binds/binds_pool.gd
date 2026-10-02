@@ -7,7 +7,7 @@ const GAMEPLAY_ACTIONS: PackedStringArray = [
 ]
 
 static func _binds():
-	return load("res://scripts/input/binds/binds.gd")
+	return load("res://scripts/input/binds.gd")
 
 static func event_in_pool(e: InputEvent, pool: String) -> bool:
 	if e == null:

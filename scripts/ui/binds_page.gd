@@ -2,7 +2,7 @@
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
-const Binds := preload("res://scripts/input/binds/binds.gd")
+const Binds := preload("res://scripts/input/binds.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 

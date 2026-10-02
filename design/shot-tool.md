@@ -25,10 +25,10 @@ Summary: `_logs/shots/summary.txt`; the last line is `RESULT PASS|INFO|FAIL band
 |---|---|
 | Orchestrator, bands, summary, clipboard/open | `tools/run_shots.py` |
 | Presets (poses, zoom, hud) | `tools/shot-recipes.json` |
-| Worker entry (`--wdb-shot` boot, settle, grab, quit) | `scripts/debug/shot_tool/shot_tool.gd` |
-| Flag parsing (`--wdb-shot-*`) | `scripts/debug/shot_tool/shot_tool_args.gd` |
-| Camera pose and zoom | `scripts/debug/shot_tool/shot_tool_pose.gd` |
-| Viewport capture and `SHOT:` marks | `scripts/debug/shot_tool/shot_tool_capture.gd` |
+| Worker entry (`--wdb-shot` boot, settle, grab, quit) | `scripts/debug/shot_tool.gd` |
+| Flag parsing (`--wdb-shot-*`) | `scripts/debug/shot_tool/tool_args.gd` |
+| Camera pose and zoom | `scripts/debug/shot_tool/tool_pose.gd` |
+| Viewport capture and `SHOT:` marks | `scripts/debug/shot_tool/capture.gd` |
 
 ## Worker
 
@@ -54,7 +54,7 @@ Scenes `dungeon`, `camp`, `hub`; camera pose (`--px --pz --cx --cz --zoom`, reci
 Extending the tool is part of the task. Do not work around it (no hand-driven Godot, no scratch, no PNG edits, no stand-in older image).
 1. Name the missing state in one line (example: "quest pane open with three offers", "anvil open with a forged item", "recap mid XP drain").
 2. Check `tools/shot-recipes.json` and the flag list above for an existing way. Smallest change wins: recipe > `run_shots.py` argument > worker flag.
-3. Add **one** knob (below), prove it with one shot, then the next gap. Never batch knobs. Typical worker knob: `--wdb-shot-ui=<mode>` opens the same panel an interact opens (for example `open_quest()` / `open_anvil()` on `scripts/ui/progress_ui/progress_ui.gd`) after `begin_run`/camp ready and before the grab; state seeding goes through `App.prog` in the same step and stays shot-only.
+3. Add **one** knob (below), prove it with one shot, then the next gap. Never batch knobs. Typical worker knob: `--wdb-shot-ui=<mode>` opens the same panel an interact opens (for example `open_quest()` / `open_anvil()` on `scripts/ui/progress_ui.gd`) after `begin_run`/camp ready and before the grab; state seeding goes through `App.prog` in the same step and stays shot-only.
 4. Document it here in one row of the table below, and in `--help` (`check_tool_cli.py`).
 5. Use it for the task's pictures. Name each new knob in the report and the changelog bullet only if players see a change.
 
@@ -66,7 +66,7 @@ Extending the tool is part of the task. Do not work around it (no hand-driven Go
 
 One flag or one preset, one prove shot, then stop (or go on to the next gap with its own prove). Crop-to-object and earlier boot hide are later knobs.
 1. Python only (a preset or a default): edit `tools/shot-recipes.json` or the constant in `tools/run_shots.py`.
-2. New flag: add the `--wdb-shot-<name>` parse in `shot_tool_args.gd`, apply it in `shot_tool_pose.gd` or `shot_tool_capture.gd`, add the matching `run_shots.py` argument (it forwards through `_extra_flags`). Keep each `.gd` under the script cap.
+2. New flag: add the `--wdb-shot-<name>` parse in `tool_args.gd`, apply it in `tool_pose.gd` or `capture.gd`, add the matching `run_shots.py` argument (it forwards through `_extra_flags`). Keep each `.gd` under the script cap.
 3. Prove: one `python tools/run_shots.py --mode build` shot; read `_logs/shots/summary.txt`. Then `check_tool_cli.py`.
 
 ## Troubleshooting

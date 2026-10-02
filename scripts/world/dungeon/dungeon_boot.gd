@@ -1,13 +1,13 @@
 extends Object
 
-const Gen := preload("res://scripts/dungeon/gen/gen.gd")
-const PlayerS := preload("res://scripts/world/player/player.gd")
+const Gen := preload("res://scripts/dungeon/gen.gd")
+const PlayerS := preload("res://scripts/world/player.gd")
 const Roster := preload("res://scripts/combat/roster.gd")
 const DoorS := preload("res://scripts/world/boss_door.gd")
-const SpotS := preload("res://scripts/world/interact/interact.gd")
-const Smoke := preload("res://scripts/debug/smoke/smoke.gd")
-const DungeonStream := preload("res://scripts/world/dungeon_stream/dungeon_stream.gd")
-const CrystalNet := preload("res://scripts/world/crystal/crystal_net.gd")
+const SpotS := preload("res://scripts/world/interact.gd")
+const Smoke := preload("res://scripts/debug/smoke.gd")
+const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
+const CrystalNet := preload("res://scripts/world/crystal/net.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 
@@ -53,11 +53,11 @@ static func ready_floor(host: Node) -> void:
 	if host.hud and host.hud.has_method("bind_map") and host.map_tex:
 		host.hud.bind_map(host.map_tex)
 	LoadTiming.dmark("reveal")
-	var GeoStreamS: GDScript = load("res://scripts/world/dungeon_geo/dungeon_geo_stream.gd") as GDScript
+	var GeoStreamS: GDScript = load("res://scripts/world/dungeon_geo/geo_stream.gd") as GDScript
 	GeoStreamS.prime_visible(host)
 	HitchLog.mark("dungeon_follow")
 	LoadTiming.dmark("stream")
-	var LightRtS: GDScript = load("res://scripts/graphics/light_rt/light_rt.gd") as GDScript
+	var LightRtS: GDScript = load("res://scripts/graphics/light_rt.gd") as GDScript
 	LightRtS.reset_floor()
 	LightRtS.maintain(host)
 	LightRtS.maintain(host)
@@ -71,7 +71,7 @@ static func ready_floor(host: Node) -> void:
 static func process_floor(host: Node, delta: float) -> void:
 	if _first_tick:
 		HitchLog.mark("dungeon_tick")
-		var LightRtS: GDScript = load("res://scripts/graphics/light_rt/light_rt.gd") as GDScript
+		var LightRtS: GDScript = load("res://scripts/graphics/light_rt.gd") as GDScript
 		LightRtS.maintain(host)
 		_first_tick = false
 	host.frame_acc += delta
@@ -112,7 +112,7 @@ static func process_floor(host: Node, delta: float) -> void:
 		if host.map_layer:
 			host.map_layer.visible = not host.map_layer.visible
 			if host.map_layer.visible:
-				var MapActS: GDScript = load("res://scripts/world/dungeon/dungeon_map_act.gd") as GDScript
+				var MapActS: GDScript = load("res://scripts/world/dungeon/map_act.gd") as GDScript
 				MapActS.reset(host)
 				host._redraw_map()
 				CrystalNet.paint(host)
@@ -143,7 +143,7 @@ static func spawns(host: Node) -> void:
 	var boss_job: Dictionary = DungeonStream.new_job(host, "boss", bp, {}, PackedStringArray(), false, str(host.data.boss_title))
 	host.spawn_jobs.append(boss_job)
 	LoadTiming.dmark("spawn_boss")
-	var SpawnS: GDScript = load("res://scripts/world/dungeon_props/dungeon_props_spawn.gd") as GDScript
+	var SpawnS: GDScript = load("res://scripts/world/dungeon_props/spawn.gd") as GDScript
 	SpawnS.spawn_world(host)
 	host.set_meta("props_booted", true)
 	LoadTiming.dmark("spawn_props")

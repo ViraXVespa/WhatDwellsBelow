@@ -2,10 +2,10 @@ extends Object
 
 ## Recap play / drain / finish flow.
 
-const RecapBars := preload("res://scripts/ui/recap/recap_bars.gd")
+const RecapBars := preload("res://scripts/ui/recap/bars.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
-const Rebuild := preload("res://scripts/ui/recap/recap_rebuild.gd")
+const Rebuild := preload("res://scripts/ui/recap/rebuild.gd")
 
 static func play(host: CanvasLayer, cond: String) -> void:
 	host.open = true

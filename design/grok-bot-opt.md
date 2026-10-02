@@ -73,7 +73,7 @@ A new tools/ module is in scope because this item names it. Prefer one library i
 ### opt-002 (done)
 - Title: Centralize preload literals on Autoload/flow facades
 - Cluster: Autoload / flow
-- Files: `scripts/app/app.gd`, `scripts/app/app_boot.gd`, `scripts/app/app_flow.gd`, `scripts/app/app_run.gd`, `scripts/app/app_set.gd`
+- Files: `scripts/app.gd`, `scripts/app/app_boot.gd`, `scripts/app/app_flow.gd`, `scripts/app/app_run.gd`, `scripts/app/app_set.gd`
 
 Inventory first. Do not edit until the shape is listed.
 
@@ -90,7 +90,7 @@ Touched live scripts stay under 10KB. Land on the current open Bot PR. Mark this
 ### opt-003 (pending)
 - Title: Shared helper for Title/Placeholdia/Dungeon load legs
 - Cluster: Autoload / flow
-- Files: `scripts/app/app.gd`, `scripts/app/app_flow.gd`, `scripts/app/app_run.gd`, `scripts/app/app_boot.gd`, `scripts/app/app_set.gd`
+- Files: `scripts/app.gd`, `scripts/app/app_flow.gd`, `scripts/app/app_run.gd`, `scripts/app/app_boot.gd`, `scripts/app/app_set.gd`
 
 Inventory first. Do not edit until shared enter/exit logic is listed as real duplication (not three similar-looking calls that already go through one function).
 
@@ -103,7 +103,7 @@ Likely entry points (confirm, do not treat as the worklist):
 - Placeholdia -> Dungeon: live enter (`save_now`, `_after_enter` / `begin_run` / `go_dungeon` / `dungeon_boot.ready_floor`). Smoke: `--wdb-dungeon-load-timing-smoke`.
 - Dungeon -> Placeholdia: inventory every live return to camp (extract-wake, recap, death/abort if those call `go_camp`). Do not assume extract is the only path.
 
-Also inspect `scripts/world/camp/camp.gd` enter/wake and dummy defer only as callers of flow. `scripts/debug/load_timing.gd` is marks, not the logic to extract. Keep those smokes green; do not invent a new numbered phase.
+Also inspect `scripts/world/camp.gd` enter/wake and dummy defer only as callers of flow. `scripts/debug/load_timing.gd` is marks, not the logic to extract. Keep those smokes green; do not invent a new numbered phase.
 
 Look for shared steps: scene change, loader overlay, preload vs `load()`, dummy/NPC spawn defer, camera warmup, seed/floor pin, save-before-enter. Extract only what is duplicated. A thin `AppFlow` static helper (or one module imported by `app_flow` / `app_run`) is in scope. Do not build a generic scene manager, loading framework, or new game system.
 

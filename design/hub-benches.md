@@ -12,7 +12,7 @@ Read when: ore-for-gold stall, dumpster flavor, plaza_tarp host
 
 Live camp position: `Layout/Spots/Anvil` (default down and left of the vendor stall’s southwest corner).
 
-Live scripts: board `scripts/ui/gear_board/gear_board.gd` in `gear_mode="anvil"`; tabs `gear_board_anvil.gd` + `gear_board_anvil_view.gd`; forge body `gear_board_anvil_forge.gd`; ledger `scripts/data/progress_forge/progress_forge.gd` + `affixes.gd` + `gear_roll.gd`. `progress_town.gd` still owns extract / quests / analyze-destroy wrapper.
+Live scripts: board `scripts/ui/gear_board.gd` in `gear_mode="anvil"`; tabs `anvil.gd` + `anvil_view.gd`; forge body `anvil_forge.gd`; ledger `scripts/data/progress_forge.gd` + `affixes.gd` + `gear_roll.gd`. `progress_town.gd` still owns extract / quests / analyze-destroy wrapper.
 
 ## Vendor Stall
 - Buys ore for gold.

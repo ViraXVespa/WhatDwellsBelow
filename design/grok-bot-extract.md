@@ -40,7 +40,7 @@ Keep these as separate concerns unless the User overrides a specific row:
 - `present.gd` vs menu dim
 - `web_pad.gd` vs `input/pad.gd` vs `touch_pad.gd`
 - `display_mode` web vs desktop
-- `dungeon_map_act` pan / zoom vs crystal map marks
+- `map_act` pan / zoom vs crystal map marks
 - `step_row` vs sliders vs debug SpinBox
 - `interact_prompt.gd` vs `PromptView`
 - Playtest grid walk vs combat cover projection

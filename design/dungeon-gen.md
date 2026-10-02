@@ -37,7 +37,7 @@ Silhouette order is fixed. Carve the 1 m grid. Clean one-tile teeth and accident
 
 Gen publishes hall runs from that carve: one corridor is one wall pair. An angled piece is a closed packet for one rare off-axis hall or short corner chord: a floor band, the two long wall runs, and collision hulls that match that mesh. Brick and torch mounts on that piece read its runs. Walk, lights, and snaps inside the piece follow the packet. Outside the piece, occupancy is the cleaned grid. `outline_fine_m` is piece-bake resolution only. Do not keep a floor-wide fine solid as a second dungeon. Do not ship a floor-wide trace-then-repair loop as the silhouette. Do not stamp rim_closed OK to hide holes on hall-local spans.
 
-Live outline publishes spans from room and hall shapes after join-ends only. This page is the contract that slice implements. Outline bake is this job (`gen_outline.gd`). Do not author arches or modular kits. One brick sheet stays a volume concern; this job does not add a second rock sheet.
+Live outline publishes spans from room and hall shapes after join-ends only. This page is the contract that slice implements. Outline bake is this job (`outline.gd`). Do not author arches or modular kits. One brick sheet stays a volume concern; this job does not add a second rock sheet.
 
 ## Key object placement
 
