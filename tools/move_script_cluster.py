@@ -46,6 +46,7 @@ def list_cluster(from_dir: Path, stem: str) -> list[Path]:
 
 
 def collect_files(args: argparse.Namespace) -> list[Path]:
+    args.files = agent_log.split_list(args.files)
     if args.files:
         out = []
         for f in args.files:
@@ -183,12 +184,12 @@ def find_residuals(pairs: list[tuple[str, str]]) -> list[str]:
 def main() -> int:
     global ROOT
     ap = agent_log.std_parser("Move a script cluster into a folder and rewrite references.", writes=True)
-    ap.add_argument("--stem", default="")
-    ap.add_argument("--from-dir", default="")
-    ap.add_argument("--to-dir", required=True)
-    ap.add_argument("--files", nargs="*", default=[])
-    ap.add_argument("--wrapper", action="store_true")
-    ap.add_argument("--no-git", action="store_true")
+    ap.add_argument("--stem", "-Stem", default="")
+    ap.add_argument("--from-dir", "-FromDir", default="")
+    ap.add_argument("--to-dir", "-ToDir", required=True)
+    ap.add_argument("--files", "-Files", nargs="*", default=[])
+    ap.add_argument("--wrapper", "-Wrapper", action="store_true")
+    ap.add_argument("--no-git", "-NoGit", action="store_true")
     args = ap.parse_args()
     ROOT = agent_log.resolve_root(args)
 

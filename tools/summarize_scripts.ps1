@@ -1,25 +1,9 @@
-# Func-level script inventory. Agents read _logs/script-summary/summary.txt only.
-# Usage (from repo root):
-#   powershell -File tools/summarize_scripts.ps1
-#   powershell -File tools/summarize_scripts.ps1 -OverKb 5 -TopFuncs 8
-#   powershell -File tools/summarize_scripts.ps1 -Path scripts/combat/enemy.gd
-
-param(
-    [double]$OverKb = 0,
-    [int]$TopFuncs = 6,
-    [string[]]$Path = @()
-)
-
+﻿# SHIM (kept one release): forwards every argument to summarize_scripts.py. The old -Flag spellings work there.
+# Prefer: python3 tools/summarize_scripts.py --help
 $ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent $PSScriptRoot
-$Py = Join-Path $Root "tools\summarize_scripts.py"
-if (-not (Test-Path $Py)) { throw "missing $Py" }
-$argsList = @($Py, "--over-kb", "$OverKb", "--top-funcs", "$TopFuncs")
-foreach ($p in $Path) { $argsList += @("--path", $p) }
-Push-Location $Root
-try {
-    & python @argsList
-    exit $LASTEXITCODE
-} finally {
-    Pop-Location
-}
+$py = Join-Path $PSScriptRoot "summarize_scripts.py"
+$python = Get-Command python -ErrorAction SilentlyContinue
+if (-not $python) { $python = Get-Command py -ErrorAction SilentlyContinue }
+if (-not $python) { throw "python not found on PATH" }
+& $python.Source $py @args
+exit $LASTEXITCODE

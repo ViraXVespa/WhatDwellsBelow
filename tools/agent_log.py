@@ -43,12 +43,20 @@ def rel(root: Path | str, path: Path | str) -> str:
 
 def std_parser(description: str, *, writes: bool = False, json_out: bool = False) -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=description)
-    ap.add_argument("--root", default=None, help="Repo root (default: auto-discovered).")
+    ap.add_argument("--root", "-Root", default=None, help="Repo root (default: auto-discovered).")
     if writes:
-        ap.add_argument("--dry-run", dest="dry_run", action="store_true", help="Print what would change; write nothing.")
+        ap.add_argument("--dry-run", "-DryRun", "-WhatIf", dest="dry_run", action="store_true", help="Print what would change; write nothing.")
     if json_out:
         ap.add_argument("--json", dest="json", action="store_true", help="Print one JSON object instead of text.")
     return ap
+
+
+def split_list(values: object, cast: type = str) -> list:
+    """Flatten ['a,b', 'c'] (comma/space separated, PowerShell style) into [a, b, c]."""
+    out: list = []
+    for v in values or []:
+        out += [cast(p) for p in re.split(r"[,\s]+", str(v)) if p]
+    return out
 
 
 def resolve_root(args_or_hint: object = None) -> Path:

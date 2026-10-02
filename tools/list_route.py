@@ -84,8 +84,8 @@ def _job_card(data: dict, job_id: str) -> list[str]:
 
 def parse_args(argv: list[str]):
     parser = agent_log.std_parser("Print one door or job card from design/routes.yaml.", json_out=True)
-    parser.add_argument("--door", default="")
-    parser.add_argument("--job", default="")
+    parser.add_argument("--door", "-Door", default="")
+    parser.add_argument("--job", "-Job", default="")
     return parser.parse_args(argv)
 
 

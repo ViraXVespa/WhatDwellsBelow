@@ -21,20 +21,20 @@ DEFAULT_OVER_KB = 10
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser("Check scripts/**/*.gd against the on-disk byte cap.", json_out=True)
     parser.add_argument(
-        "--over-kb",
+        "--over-kb", "-OverKb",
         dest="over_kb",
         type=float,
         default=DEFAULT_OVER_KB,
         help="Bot-owned ship floor in KB. Limit is round(over_kb * 1000) bytes (default 10 -> 10000). Pass 5 for the Bot sweep target.",
     )
     parser.add_argument(
-        "--git-changed",
+        "--git-changed", "-GitChanged",
         dest="git_changed",
         action="store_true",
         help="Only files listed by git status --porcelain -- scripts.",
     )
     parser.add_argument(
-        "--path",
+        "--path", "-Path",
         action="append",
         default=[],
         help="Explicit script path (repeatable). Relative to --root unless absolute.",
@@ -47,6 +47,7 @@ def main(argv: list[str] | None = None) -> int:
     root = agent_log.resolve_root(args)
     limit = int(round(args.over_kb * 1000))
 
+    args.path = agent_log.split_list(args.path)
     if args.path:
         files: list[Path] = []
         for raw in args.path:

@@ -16,9 +16,9 @@ import agent_log
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser("Length, newline, BOM, and indent stats without reading into chat.", json_out=True)
-    parser.add_argument("--path", action="append", default=[], help="File or directory")
-    parser.add_argument("--glob", default="", help="Only under a directory --path")
-    parser.add_argument("--max", type=int, default=40)
+    parser.add_argument("--path", "-Path", action="append", default=[], help="File or directory")
+    parser.add_argument("--glob", "-Glob", default="", help="Only under a directory --path")
+    parser.add_argument("--max", "-Max", type=int, default=40)
     return parser.parse_args(argv)
 
 
@@ -99,6 +99,7 @@ def render(rows: list[dict[str, object]], root: Path) -> str:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     root = agent_log.resolve_root(args)
+    args.path = agent_log.split_list(args.path)
     rows = collect(root, list(args.path), args.glob, int(args.max))
     missing = sum(1 for r in rows if not r["exists"])
     return agent_log.finish("file-stat", root, render(rows, root), "FAIL" if missing else "PASS",

@@ -16,7 +16,7 @@ import agent_log
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List design/*.md by os.path.getsize; OVER marks files at or over --over-kb.", json_out=True)
-    ap.add_argument("--over-kb", type=float, default=8.0, help="limit = round(kb * 1000) bytes (default 8)")
+    ap.add_argument("--over-kb", "-OverKb", type=float, default=8.0, help="limit = round(kb * 1000) bytes (default 8)")
     args = ap.parse_args(sys.argv[1:] if argv is None else argv)
     root = agent_log.resolve_root(args)
     limit = round(args.over_kb * 1000)

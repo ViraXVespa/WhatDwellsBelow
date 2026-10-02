@@ -239,12 +239,12 @@ def build_report(rows: list[dict[str, Any]]) -> str:
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser("Write a paste-sized Grok session burn report.")
-    parser.add_argument("--pack-dir", default="", help="Existing pack dir")
-    parser.add_argument("--session-root", default="", help="Live session dir")
-    parser.add_argument("--since", default="", help="Local start time")
-    parser.add_argument("--until", default="", help="Local end time")
-    parser.add_argument("--top", type=int, default=10)
-    parser.add_argument("--out-dir", default="")
+    parser.add_argument("--pack-dir", "-PackDir", default="", help="Existing pack dir")
+    parser.add_argument("--session-root", "-SessionRoot", default="", help="Live session dir")
+    parser.add_argument("--since", "-Since", default="", help="Local start time")
+    parser.add_argument("--until", "-Until", default="", help="Local end time")
+    parser.add_argument("--top", "-Top", type=int, default=10)
+    parser.add_argument("--out-dir", "-OutDir", default="")
     return parser.parse_args(argv)
 
 

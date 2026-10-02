@@ -494,17 +494,17 @@ def write_summary(
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser("Copy the top Grok sessions in a time range into _logs.")
-    parser.add_argument("--session-root", default="", help="Override session dir")
-    parser.add_argument("--since", default="", help="Local start time")
-    parser.add_argument("--until", default="", help="Local end time")
-    parser.add_argument("--top", type=int, default=10, help="Max sessions")
+    parser.add_argument("--session-root", "-SessionRoot", default="", help="Override session dir")
+    parser.add_argument("--since", "-Since", default="", help="Local start time")
+    parser.add_argument("--until", "-Until", default="", help="Local end time")
+    parser.add_argument("--top", "-Top", type=int, default=10, help="Max sessions")
     parser.add_argument(
-        "--include-empty",
+        "--include-empty", "-IncludeEmpty",
         action="store_true",
         help="Keep zero-token plan stubs in the pack",
     )
     parser.add_argument(
-        "--out-dir",
+        "--out-dir", "-OutDir",
         default="",
         help="Output dir (default: session-keyed _logs/sess/<session>/grok-sessions-pack)",
     )

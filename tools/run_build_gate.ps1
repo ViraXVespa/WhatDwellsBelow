@@ -1,90 +1,9 @@
-# Grok Build post-slice gate: editor import check.
-# Script-cap is opt-in (-ScriptCap). Bot owns the 10KB floor.
-# Usage (from repo root):
-#   powershell -File tools/run_build_gate.ps1
-#   powershell -File tools/run_build_gate.ps1 -SkipImport
-#   powershell -File tools/run_build_gate.ps1 -ScriptCap -OverKb 10 -Force
-# Writes _logs/build-gate/summary.txt
-# Refuses if Godot is already running unless -Force.
-
-param(
-    [double]$OverKb = 10,
-    [int]$ImportTimeoutSec = 180,
-    [switch]$SkipImport,
-    [switch]$Force,
-    [switch]$ScriptCap
-)
-
+﻿# SHIM (kept one release): forwards every argument to run_build_gate.py. The old -Flag spellings work there.
+# Prefer: python3 tools/run_build_gate.py --help
 $ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent $PSScriptRoot
-. (Join-Path $PSScriptRoot "agent_log.ps1")
-$OutDir = Ensure-WdbAgentLogDir -Job "build-gate" -Root $Root
-$Summary = Join-Path $OutDir "summary.txt"
-$CapScript = Join-Path $Root "tools\check_script_cap.ps1"
-$ImportScript = Join-Path $Root "tools\run_godot_import_check.ps1"
-New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-
-if (-not $Force -and -not $SkipImport) {
-    . (Join-Path $PSScriptRoot "godot_lock.ps1")
-    $existing = @(Get-WdbGodotProcessesOnPath -GodotPath $Root)
-    if ($existing.Count -gt 0) {
-        $msg = "Godot already on this --path (pids=$($existing.Pid -join ',')). Pass -Force to continue, or -SkipImport."
-        Write-Host $msg
-        $msg | Set-Content -Path $Summary -Encoding utf8
-        exit 2
-    }
-}
-
-$lines = New-Object System.Collections.Generic.List[string]
-$lines.Add("build gate $(Get-Date -Format o)")
-$lines.Add("root=.")
-$lines.Add("overKb=$OverKb skipImport=$SkipImport force=$Force scriptCap=$ScriptCap")
-$lines.Add("")
-$fail = 0
-
-if ($ScriptCap) {
-    Write-Host "== script cap (git changed) =="
-    $capArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $CapScript, "-OverKb", "$OverKb", "-GitChanged")
-    $p = Start-Process -FilePath "powershell.exe" -ArgumentList $capArgs -Wait -PassThru -NoNewWindow
-    $capSummary = Join-Path $Root "_logs\script-cap\summary.txt"
-    $lines.Add("--- script cap exit=$($p.ExitCode) ---")
-    if (Test-Path $capSummary) {
-        Get-Content $capSummary | ForEach-Object { $lines.Add($_) }
-    } else {
-        $lines.Add("(missing script-cap summary)")
-        $fail += 1
-    }
-    if ($p.ExitCode -ne 0) { $fail += 1 }
-    $lines.Add("")
-} else {
-    $lines.Add("--- script cap skipped ---")
-    $lines.Add("")
-}
-
-if (-not $SkipImport) {
-    Write-Host "== import check =="
-    $importArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $ImportScript, "-TimeoutSec", "$ImportTimeoutSec")
-    $p2 = Start-Process -FilePath "powershell.exe" -ArgumentList $importArgs -Wait -PassThru -NoNewWindow
-    $importDir = Ensure-WdbAgentLogDir -Job "godot-import-check" -Root $Root
-    $importSummary = Join-Path $importDir "summary.txt"
-    $lines.Add("--- import check exit=$($p2.ExitCode) ---")
-    if (Test-Path $importSummary) {
-        Get-Content $importSummary | ForEach-Object { $lines.Add($_) }
-    } else {
-        $lines.Add("(missing import summary)")
-        $fail += 1
-    }
-    if ($p2.ExitCode -ne 0) { $fail += 1 }
-    $lines.Add("")
-} else {
-    $lines.Add("--- import skipped ---")
-    $lines.Add("")
-}
-
-$lines.Add(("RESULT fail_signals={0}" -f $fail))
-$lines | Set-Content -Path $Summary -Encoding utf8
-Write-Host ""
-Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
-Write-Host ("fail_signals={0}" -f $fail)
-if ($fail -gt 0) { exit 1 }
-exit 0
+$py = Join-Path $PSScriptRoot "run_build_gate.py"
+$python = Get-Command python -ErrorAction SilentlyContinue
+if (-not $python) { $python = Get-Command py -ErrorAction SilentlyContinue }
+if (-not $python) { throw "python not found on PATH" }
+& $python.Source $py @args
+exit $LASTEXITCODE
