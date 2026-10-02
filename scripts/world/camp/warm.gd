@@ -1,40 +1,19 @@
 extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
-const Build := preload("res://scripts/world/camp_build.gd")
+const LayoutS := preload("res://scripts/world/camp/layout.gd")
 
 const WARM_SPAN_PAD := 1.25
 
-static func _layout(scene: Node) -> Node3D:
-    if scene == null:
-        return null
-    var n: Node = scene.get_node_or_null("Layout")
-    if n is Node3D:
-        return n as Node3D
-    return null
-
 static func yard_center_of(scene: Node) -> Vector3:
-    var lay: Node3D = _layout(scene)
-    if lay:
-        return Vector3((lay.aabb_x0() + lay.aabb_x1()) * 0.5, 0.0, (lay.aabb_z0() + lay.aabb_z1()) * 0.5)
-    var x0: float = float(Build.GROUND_OX - Build.GRASS_PAD)
-    var z0: float = float(Build.GROUND_OZ - Build.GRASS_PAD)
-    var x1: float = float(Build.GROUND_OX + Build.GROUND_W + Build.GRASS_PAD)
-    var z1: float = float(Build.GROUND_OZ + Build.GROUND_D + Build.GRASS_PAD)
-    return Vector3((x0 + x1) * 0.5, 0.0, (z0 + z1) * 0.5)
-
-static func yard_size() -> float:
-    var span_x: float = float(Build.GROUND_W + Build.GRASS_PAD * 2)
-    var span_z: float = float(Build.GROUND_D + Build.GRASS_PAD * 2)
-    return maxf(span_x, span_z) * WARM_SPAN_PAD
+    var lay: Node3D = LayoutS.of(scene)
+    return Vector3((lay.aabb_x0() + lay.aabb_x1()) * 0.5, 0.0, (lay.aabb_z0() + lay.aabb_z1()) * 0.5)
 
 static func yard_size_of(scene: Node) -> float:
-    var lay: Node3D = _layout(scene)
-    if lay:
-        var span_x: float = float(lay.ground_w + lay.grass_pad * 2)
-        var span_z: float = float(lay.ground_d + lay.grass_pad * 2)
-        return maxf(span_x, span_z) * WARM_SPAN_PAD
-    return yard_size()
+    var lay: Node3D = LayoutS.of(scene)
+    var span_x: float = float(lay.ground_w + lay.grass_pad * 2)
+    var span_z: float = float(lay.ground_d + lay.grass_pad * 2)
+    return maxf(span_x, span_z) * WARM_SPAN_PAD
 
 static func _rig(scene: Node) -> Node:
     if scene == null:

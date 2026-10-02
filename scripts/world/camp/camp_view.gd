@@ -1,21 +1,13 @@
 extends Object
 
 const FENCE_TEX := "res://assets/sprites/props/fence.png"
-const GROUND_W := 36
-const GROUND_D := 32
-const GROUND_OX := -2
-const GROUND_OZ := -2
+const LayoutS := preload("res://scripts/world/camp/layout.gd")
 
 static var _fence_mat: StandardMaterial3D
 
 static func _slab(host: Node3D) -> Vector4i:
-    var n: Node = host
-    while n != null:
-        var lay: Node = n.get_node_or_null("Layout")
-        if lay != null:
-            return Vector4i(int(lay.ground_ox), int(lay.ground_oz), int(lay.ground_w), int(lay.ground_d))
-        n = n.get_parent()
-    return Vector4i(GROUND_OX, GROUND_OZ, GROUND_W, GROUND_D)
+    var lay: Node3D = LayoutS.of(host)
+    return Vector4i(int(lay.ground_ox), int(lay.ground_oz), int(lay.ground_w), int(lay.ground_d))
 
 static func fence(host: Node3D) -> void:
     var slab: Vector4i = _slab(host)
