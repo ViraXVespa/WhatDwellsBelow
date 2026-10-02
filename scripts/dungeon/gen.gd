@@ -105,17 +105,11 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 		"halls": Carve.take_halls(),
 	}
 
-static func _ri(r: Dictionary, k: String) -> int:
-	return Doors._ri(r, k)
-
 static func make_opening(side: String, cells: Array) -> Dictionary:
 	return Doors.make_opening(side, cells)
 
 static func boss_openings(grid: PackedByteArray, w: int, h: int, boss: Dictionary) -> Array:
 	return Doors.boss_openings(grid, w, h, boss)
-
-static func _side_runs(side: String, cells: Array) -> Array:
-	return Doors._side_runs(side, cells)
 
 static func is_safe_kind(kind: String) -> bool:
 	return kind == "extract_gate" or kind == "shop" or kind == "puzzle" or kind == "spawn" or kind == "stash" or kind == "vein"

@@ -174,6 +174,9 @@ def collapse_blanks(lines: list[str]) -> str:
     return text
 
 
+
+def reach_tree(root: Path) -> list[tuple[str, int, str]]:
+    return []
 def apply_unused(root: Path, unused: list[tuple[str, int, str, int]]) -> int:
     by_file: dict[str, list[int]] = defaultdict(list)
     for rel, lineno, _name, _nbytes in unused:
@@ -212,6 +215,220 @@ def apply_unused(root: Path, unused: list[tuple[str, int, str, int]]) -> int:
     return deleted
 
 
+
+def reach_dead(root: Path) -> list[tuple[str, int, str]]:
+    files = files_of(root)
+    defs = []
+    code_hits = defaultdict(set)
+    quote_hits = defaultdict(set)
+    call_quotes = defaultdict(set)
+    for path in files:
+        rel = path.relative_to(root).as_posix()
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        for lineno, raw in enumerate(lines, 1):
+            head = raw.split("#", 1)[0]
+            matched = FUNC_RE.match(head) if rel.endswith(".gd") else None
+            if matched and matched.group(1) not in VIRTUAL:
+                defs.append((rel, lineno, matched.group(1)))
+            connectish = "connect" in head or ".call" in head or "Callable" in head
+            skipped = False
+            for name, in_quote in scan(raw):
+                if matched and not skipped and not in_quote and name == matched.group(1):
+                    skipped = True
+                    continue
+                if in_quote:
+                    quote_hits[name].add(rel)
+                    if connectish or not rel.endswith(".gd"):
+                        call_quotes[name].add(rel)
+                    continue
+                code_hits[name].add(rel)
+    dead = []
+    for rel, lineno, name in defs:
+        if not name.startswith("_"):
+            continue
+        callers = set(code_hits.get(name, ()))
+        callers.discard(rel)
+        if callers:
+            continue
+        if rel in code_hits.get(name, ()):
+            continue
+        if call_quotes.get(name) or quote_hits.get(name):
+            continue
+        dead.append((rel, lineno, name))
+    return dead
+
+
+
+def apply_facade_auto(root: Path, do_delete: bool = True) -> int:
+    import re
+    from collections import defaultdict
+    path_re = re.compile(r"res://([A-Za-z0-9_./]+\.gd)")
+    load_re = re.compile(r"(?:preload|load)\(\s*[\"']res://([A-Za-z0-9_./]+\.gd)[\"']")
+    method_re = re.compile(r'method="([A-Za-z_][A-Za-z0-9_]*)"')
+    alias_re = re.compile(
+        r"^(?:static[ \t]+)?(?:const|var)[ \t]+([A-Za-z_][A-Za-z0-9_]*)"
+        r"[ \t]*(?::[ \t]*[A-Za-z0-9_., \"\[\]]+)?[ \t]*:?=[ \t]*preload\(\s*[\"']res://([^\"']+\.gd)[\"']"
+    )
+    class_re = re.compile(r"^class_name[ \t]+([A-Za-z_][A-Za-z0-9_]*)")
+    qual_re = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)\s*\(")
+    pre_call = re.compile(r"preload\(\s*[\"']res://([^\"']+\.gd)[\"']\s*\)\.([A-Za-z_][A-Za-z0-9_]*)")
+    callback_line = re.compile(r"connect|Callable|method=|JavaScriptBridge|javascript_bridge", re.I)
+    skip_name = re.compile(r"^_(on_|js_|back$|focus|rebuild|play$|wake|wipe$|cap$|joy_)")
+    forward = re.compile(r"^[ \t]*(?:return[ \t]+)?[A-Za-z_][A-Za-z0-9_]*\.([A-Za-z_][A-Za-z0-9_]*)\s*\(")
+    defs = defaultdict(list)
+    by_name = defaultdict(list)
+    texts = {}
+    alias = defaultdict(dict)
+    class_of = {}
+    preloads = defaultdict(set)
+    quoted_names = set()
+    callback_names = set()
+    for path in files_of(root):
+        blob = path.read_text(encoding="utf-8", errors="replace")
+        if path.suffix != ".gd":
+            for match in method_re.finditer(blob):
+                callback_names.add(match.group(1))
+            continue
+        rel = path.relative_to(root).as_posix()
+        lines = blob.splitlines()
+        texts[rel] = lines
+        for match in load_re.finditer(blob):
+            preloads[rel].add(match.group(1))
+        for i, raw in enumerate(lines):
+            head = raw.split("#", 1)[0]
+            if callback_line.search(head):
+                for name, in_quote in scan(raw):
+                    if in_quote or name.startswith("_"):
+                        callback_names.add(name)
+            for name, in_quote in scan(raw):
+                if in_quote:
+                    quoted_names.add(name)
+            matched = FUNC_RE.match(head)
+            if matched:
+                name = matched.group(1)
+                defs[rel].append((i + 1, name, i, span_end(lines, i)))
+                by_name[name].append(rel)
+            aliased = alias_re.match(head)
+            if aliased:
+                alias[rel][aliased.group(1)] = aliased.group(2)
+                preloads[rel].add(aliased.group(2))
+            named = class_re.match(head)
+            if named:
+                class_of[named.group(1)] = rel
+    root_files = set()
+    for path in files_of(root):
+        blob = path.read_text(encoding="utf-8", errors="replace")
+        if path.suffix != ".gd":
+            for match in path_re.finditer(blob):
+                root_files.add(match.group(1))
+            continue
+        root_files |= preloads[path.relative_to(root).as_posix()]
+    reached = set()
+    queue = []
+
+    def add(rel, name):
+        key = (rel, name)
+        if key in reached or rel not in defs:
+            return
+        if not any(item[1] == name for item in defs[rel]):
+            return
+        reached.add(key)
+        queue.append(key)
+
+    for rel in root_files:
+        for _lineno, name, _start, _end in defs.get(rel, []):
+            if name in VIRTUAL or not name.startswith("_"):
+                add(rel, name)
+    for name in callback_names:
+        for rel in by_name.get(name, []):
+            add(rel, name)
+    while queue:
+        rel, name = queue.pop()
+        span = next(item for item in defs[rel] if item[1] == name)
+        for raw in texts[rel][span[2]:span[3]]:
+            head = raw.split("#", 1)[0]
+            connectish = callback_line.search(head) is not None
+            skipped = False
+            matched = FUNC_RE.match(head)
+            for called, in_quote in scan(raw):
+                if matched and not skipped and not in_quote and called == matched.group(1):
+                    skipped = True
+                    continue
+                if in_quote and not connectish:
+                    continue
+                if any(item[1] == called for item in defs[rel]):
+                    add(rel, called)
+                    continue
+                owners = by_name.get(called, [])
+                if len(owners) == 1:
+                    add(owners[0], called)
+            for match in pre_call.finditer(head):
+                add(match.group(1), match.group(2))
+            for match in qual_re.finditer(head):
+                target = alias[rel].get(match.group(1)) or class_of.get(match.group(1))
+                if target:
+                    add(target, match.group(2))
+    auto = []
+    for rel, items in defs.items():
+        if "/ui/" in rel:
+            continue
+        for lineno, name, start, end in items:
+            if not name.startswith("_") or name in VIRTUAL or (rel, name) in reached:
+                continue
+            if name.startswith("_on_") or name.startswith("_js_") or name in callback_names:
+                continue
+            if skip_name.search(name) or name in quoted_names:
+                continue
+            sibling = ""
+            for target in preloads.get(rel, ()):
+                if (target, name) in reached:
+                    sibling = target
+                    break
+            if not sibling:
+                continue
+            back = "." + name + "("
+            sibling_text = texts.get(sibling, [])
+            called_back = False
+            for raw in sibling_text:
+                head = raw.split("#", 1)[0]
+                if back not in head:
+                    continue
+                alias_call = False
+                for alias_name, target in alias.get(sibling, {}).items():
+                    if target == rel and (alias_name + back) in head:
+                        alias_call = True
+                        break
+                if not alias_call:
+                    called_back = True
+                    break
+            if called_back:
+                continue
+            body = [ln.strip() for ln in texts[rel][start + 1:end] if ln.strip()]
+            matched = forward.match(body[0]) if len(body) == 1 else None
+            if matched and matched.group(1) == name:
+                auto.append((rel, lineno, name))
+    by_file = defaultdict(list)
+    for rel, lineno, _name in auto:
+        by_file[rel].append(lineno)
+    deleted = 0
+    for rel, linenos in by_file.items():
+        path = root / rel
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for lineno in sorted(set(linenos), reverse=True):
+            idx = lineno - 1
+            if idx < 0 or idx >= len(lines) or FUNC_RE.match(lines[idx].split("#", 1)[0]) is None:
+                print("skip\t%s:%s" % (rel, lineno))
+                continue
+            start = span_start(lines, idx)
+            end = span_end(lines, idx)
+            del lines[start:end]
+            deleted += 1
+            print(("%s\t%s:%s" % (("facade_deleted" if do_delete else "facade_auto"), rel, lineno)))
+        if do_delete:
+            path.write_text(collapse_blanks(lines), encoding="utf-8", newline=chr(10))
+    return deleted
+
+
 def write_summary(root: Path, unused, maybe, defs, elapsed: float) -> Path:
     log_dir = root / "_logs" / "unused-funcs"
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -239,6 +456,9 @@ def main() -> int:
     deleted = 0
     if ns.apply:
         deleted = apply_unused(root, unused)
+        deleted += apply_facade_auto(root, True)
+    else:
+        apply_facade_auto(root, False)
         unused, maybe, defs = collect(root)
     elapsed = time.perf_counter() - started
     summary = write_summary(root, unused, maybe, defs, elapsed)

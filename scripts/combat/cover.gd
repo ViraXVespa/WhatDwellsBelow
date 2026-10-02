@@ -80,9 +80,6 @@ static func _fan_hits_sprite(origin: Vector3, aim: Vector2, rng: float, half: fl
 static func _disk_hits_sprite(origin: Vector3, radius: float, host: Node3D) -> bool:
 	return Geom._disk_hits_sprite(origin, radius, host)
 
-static func _sprite_pts(host: Node3D) -> Array[Vector3]:
-	return Hit._sprite_pts(host)
-
 static func _sprite_pts_cells(spr: Sprite3D, pack: Dictionary, c: Vector3, rx: Vector3, up: Vector3) -> Array[Vector3]:
 	return Geom._sprite_pts_cells(spr, pack, c, rx, up)
 
@@ -123,6 +120,3 @@ static func _world_h(spr: Sprite3D) -> float:
 	if spr.texture == null:
 		return 1.2
 	return maxf(0.08, float(spr.texture.get_height()) * spr.pixel_size)
-
-static func _mask_pack(spr: Sprite3D) -> Dictionary:
-	return Hit._mask_pack(spr)

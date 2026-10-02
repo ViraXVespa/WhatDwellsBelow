@@ -50,29 +50,5 @@ static func _mark_pad(pt: Node, n: Node, w: int = 1) -> void:
 			m[k] = int(m.get(k, 0)) + w
 	pt.set_meta("seen_map", m)
 
-static func _is_junk(pt: Node, n: Node) -> bool:
-	return Misc._is_junk(pt, n)
-
-static func _usable_local(pt: Node, p: Node, lim: float) -> Node:
-	return Misc._usable_local(pt, p, lim)
-
-static func _wants_clerk(pt: Node, n: Node) -> bool:
-	return Misc._wants_clerk(pt, n)
-
-static func _done_with_clerk(pt: Node, n: Node) -> void:
-	Misc._done_with_clerk(pt, n)
-
-static func _clear_lock(pt: Node) -> void:
-	Misc._clear_lock(pt)
-
-static func _mail_if_close(pt: Node, p: Node, clerk: Node) -> bool:
-	return Misc._mail_if_close(pt, p, clerk)
-
-static func _engage(pt: Node, p: Node, foe: Node, why: String) -> void:
-	Misc._engage(pt, p, foe, why)
-
-static func _leave_crystal(pt: Node, p: Node, crystal: Node) -> void:
-	Misc._leave_crystal(pt, p, crystal)
-
 static func think(pt: Node, p: Node, delta: float) -> void:
 	Core.think(pt, p, delta)

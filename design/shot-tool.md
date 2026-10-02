@@ -23,7 +23,7 @@ Summary: `_logs/sess/<session>/shots/summary.txt` (falls back to `_logs/shots/` 
 
 Flag `--wdb-shot` plus `--wdb-shot-seed`, `--wdb-shot-floor`, `--wdb-shot-out`, `--wdb-shot-scale`, `--wdb-shot-settle-ms`, `--wdb-shot-show`.
 Boots past splash/title through the existing CLI multiplexer, `begin_run` on that seed/floor, forces stream, settles, captures the play viewport, prints `SHOT:` marks, quits.
-Rendering driver is `d3d12`. Audio is Dummy. Do not pass `--headless` or `--display-driver headless` (that pair is Dummy rasterizer and yields no pixels).
+Rendering method is `gl_compatibility` and the driver is `opengl3`, same as play. Audio is Dummy. Do not pass `--rendering-driver d3d12` (that leaves Compatibility and washes the hub through the Forward+ filmic pass). Do not pass `--headless` or `--display-driver headless` (that pair is Dummy rasterizer and yields no pixels).
 Default window: no-focus, borderless, popup-wm-hint, parked off the primary screen, still WINDOWED so the frame keeps drawing. `tools/run_shots.py` also polls Godot HWNDs by PID and sets `WS_EX_TOOLWINDOW` so the process stays off the taskbar. `--show` or `--taskbar 1` leaves the tab visible.
 
 ## Bands

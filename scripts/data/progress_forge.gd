@@ -91,18 +91,3 @@ static func type_of(it: Dictionary) -> String:
 
 static func _type_of(it: Dictionary) -> String:
 	return Book._type_of(it)
-
-static func _stat_key(id: String) -> String:
-	return Book._stat_key(id)
-
-static func _traits_of(it: Dictionary) -> Array:
-	return Book._traits_of(it)
-
-static func _blank(p: Object, slot: String, type_id: String, rarity: String) -> Dictionary:
-	return Act._blank(p, slot, type_id, rarity)
-
-static func _spend_pair(need: int, pocket: String, bank: String) -> void:
-	Act._spend_pair(need, pocket, bank)
-
-static func _bal(key: String, fallback: float) -> float:
-	return Act._bal(key, fallback)

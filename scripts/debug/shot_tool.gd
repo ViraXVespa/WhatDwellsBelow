@@ -74,20 +74,8 @@ static func settle_sec() -> float:
 	var ms: int = maxi(0, _arg_int("--wdb-shot-settle-ms", 1000))
 	return float(ms) / 1000.0
 
-static func show_window() -> bool:
-	return _arg_int("--wdb-shot-show", 0) != 0
-
 static func hud_on() -> bool:
 	return _arg_int("--wdb-shot-hud", 1) != 0
-
-static func taskbar_on() -> bool:
-	return _arg_int("--wdb-shot-taskbar", 0) != 0
-
-static func win_w() -> int:
-	return _arg_int("--wdb-shot-width", 0)
-
-static func win_h() -> int:
-	return _arg_int("--wdb-shot-height", 0)
 
 static func poses() -> PackedStringArray:
 	var raw: String = _arg_val("--wdb-shot-poses")
@@ -117,31 +105,22 @@ static func cam_z() -> float:
 	return _arg_val("--wdb-shot-cz").to_float()
 
 static func hide_window() -> void:
-	if show_window():
-		printerr("SHOT: mark=window shown=1")
-		return
 	var win: Window = Engine.get_main_loop().root as Window
 	if win != null:
 		win.unfocusable = true
 		win.borderless = true
+		win.mode = Window.MODE_WINDOWED
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_NO_FOCUS, true)
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
-	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_POPUP_WM_HINT, true)
-	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
-	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_POPUP, true)
-	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_NO_FOCUS, true)
-	var ww: int = win_w()
-	var hh: int = win_h()
-	if ww > 0 and hh > 0:
-		DisplayServer.window_set_size(Vector2i(ww, hh))
-	var sz: Vector2i = DisplayServer.screen_get_size()
 	DisplayServer.window_set_position(Vector2i(-32000, -32000))
-	printerr("SHOT: mark=window shown=0 taskbar=%d" % [1 if taskbar_on() else 0])
-
+	printerr("SHOT: mark=window shown=0")
 static func attach_dungeon(host: Node) -> void:
 	if not active():
 		return
 	hide_window()
+	var method := str(ProjectSettings.get_setting("rendering/renderer/rendering_method"))
+	var rd := RenderingServer.get_rendering_device()
+	printerr("SHOT: mark=renderer method=%s rd=%s" % [method, "0" if rd == null else "1"])
 	printerr("SHOT: mark=attach seed=%d floor=%d scale=%d out=%s" % [run_seed(), floor_n(), scale_pct(), out_path()])
 	_apply_pose(host)
 	var tree: SceneTree = host.get_tree()
@@ -168,6 +147,9 @@ static func _apply_pose(host: Node) -> void:
 	if player != null and has_player_pos():
 		var p: Vector3 = player.global_position
 		player.global_position = Vector3(player_x(), p.y, player_z())
+	elif player != null and str(host.scene_file_path).contains("camp"):
+		var p2: Vector3 = player.global_position
+		player.global_position = Vector3(15.2, p2.y, 7.6)
 	var hud_n: Node = host.get("hud") as Node
 	if hud_n != null:
 		hud_n.visible = hud_on()
@@ -180,8 +162,6 @@ static func _apply_pose(host: Node) -> void:
 	var map_n: Node = host.get("map_layer") as Node
 	if map_n != null:
 		map_n.visible = hud_on()
-	if not hud_on():
-		_hide_label3d(host)
 	var z: float = zoom()
 	App.cam_zoom = z
 	var rig: Node = host.get_tree().get_first_node_in_group("camera_rig")
@@ -238,6 +218,7 @@ static func _capture(host: Node) -> void:
 		var f: FileAccess = FileAccess.open(path, FileAccess.READ)
 		if f != null:
 			nbytes = int(f.get_length())
+	printerr("SHOT: atlas bound=%s" % str(_hub_atlas_bound()))
 	var cam_now: Camera3D = host.get_viewport().get_camera_3d()
 	var at: String = str(cam_now.global_position) if cam_now != null else "none"
 	printerr("SHOT: grab at=%s" % at)
@@ -331,6 +312,7 @@ static func _grab_pose(host: Node, token: String) -> void:
 	var copy: Image = img.duplicate()
 	copy.convert(Image.FORMAT_RGBA8)
 	_strips.append(copy)
+	printerr("SHOT: atlas bound=%s" % str(_hub_atlas_bound()))
 	var cam_now: Camera3D = host.get_viewport().get_camera_3d()
 	var at: String = str(cam_now.global_position) if cam_now != null else "none"
 	printerr("SHOT: grab token=%s frame=%d at=%s w=%d h=%d" % [token, _pose_i, at, copy.get_width(), copy.get_height()])

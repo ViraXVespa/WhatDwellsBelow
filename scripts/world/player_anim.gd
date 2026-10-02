@@ -111,6 +111,3 @@ static func _stop_from(li: int, loop_n: int, stop_n: int) -> int:
 	if li <= cross_b:
 		return 0
 	return stop_n - 1
-
-static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> Texture2D:
-	return Loco._locomotion(host, key, moving, delta)

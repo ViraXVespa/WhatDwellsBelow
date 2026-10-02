@@ -1,4 +1,68 @@
-#!/usr/bin/env python3
+from __future__ import annotations
+
+def _present_over(png, pid):
+    import ctypes
+    from ctypes import wintypes
+    user32 = ctypes.windll.user32
+    gdi32 = ctypes.windll.gdi32
+    PW_RENDERFULLCONTENT = 2
+    found = []
+
+    @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    def _enum(hwnd, _lparam):
+        if not user32.IsWindowVisible(hwnd):
+            return True
+        proc = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(proc))
+        if proc.value == pid:
+            found.append(hwnd)
+        return True
+
+    user32.EnumWindows(_enum, 0)
+    if not found:
+        return False
+    hwnd = found[0]
+    rect = wintypes.RECT()
+    user32.GetClientRect(hwnd, ctypes.byref(rect))
+    w, h = rect.right, rect.bottom
+    if w < 32 or h < 32:
+        return False
+    hdc = user32.GetDC(hwnd)
+    mem = gdi32.CreateCompatibleDC(hdc)
+    bmp = gdi32.CreateCompatibleBitmap(hdc, w, h)
+    gdi32.SelectObject(mem, bmp)
+    ok = user32.PrintWindow(hwnd, mem, PW_RENDERFULLCONTENT)
+    user32.ReleaseDC(hwnd, hdc)
+    if not ok:
+        gdi32.DeleteObject(bmp)
+        gdi32.DeleteDC(mem)
+        return False
+    class BMI(ctypes.Structure):
+        _fields_ = [
+            ("biSize", wintypes.DWORD), ("biWidth", wintypes.LONG), ("biHeight", wintypes.LONG),
+            ("biPlanes", wintypes.WORD), ("biBitCount", wintypes.WORD), ("biCompression", wintypes.DWORD),
+            ("biSizeImage", wintypes.DWORD), ("biXPelsPerMeter", wintypes.LONG), ("biYPelsPerMeter", wintypes.LONG),
+            ("biClrUsed", wintypes.DWORD), ("biClrImportant", wintypes.DWORD),
+        ]
+    bmi = BMI()
+    bmi.biSize = ctypes.sizeof(BMI)
+    bmi.biWidth = w
+    bmi.biHeight = -h
+    bmi.biPlanes = 1
+    bmi.biBitCount = 32
+    buf = ctypes.create_string_buffer(w * h * 4)
+    gdi32.GetDIBits(mem, bmp, 0, h, buf, ctypes.byref(bmi), 0)
+    gdi32.DeleteObject(bmp)
+    gdi32.DeleteDC(mem)
+    try:
+        from PIL import Image
+    except ImportError:
+        return False
+    img = Image.frombuffer("RGBA", (w, h), buf, "raw", "BGRA", 0, 1)
+    img.convert("RGB").save(png)
+    print("present_png=%s %dx%d" % (png, w, h))
+    return True
+
 """Posed-camera postcard tool. Not a numbered P1-P9 smoke.
 
 Modes:
@@ -9,7 +73,6 @@ Modes:
 Numbers live here, not in a prompt.
 """
 
-from __future__ import annotations
 
 import argparse
 import ctypes
@@ -33,7 +96,8 @@ BUILD_SCALE_PCT = 50
 SETTLE_MS = 1000
 TIMEOUT_SEC = 180
 WARN_BYTES = 2048
-RENDER_DRIVER = "d3d12"
+RENDER_DRIVER = "opengl3"
+RENDER_METHOD = "gl_compatibility"
 
 
 def _root() -> Path:
@@ -161,17 +225,19 @@ def _hide_godot_taskbar(pids: set[int]) -> int:
         user32.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style)
         user32.ShowWindow(hwnd, SW_HIDE)
         user32.ShowWindow(hwnd, SW_SHOWNA)
-        user32.SetWindowPos(hwnd, 0, -32000, -32000, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED)
+        user32.SetWindowPos(hwnd, 0, 80, 80, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED)
         styled.add(hwnd)
         hits += 1
     return hits
 
 
-def _taskbar_watch(stop: threading.Event, before: set[int]) -> None:
+def _taskbar_watch(stop: threading.Event, before: set[int], png: Path | None = None) -> None:
     while not stop.is_set():
         live = set(_godot_pids()) - before
-        _hide_godot_taskbar(live)
-        stop.wait(0.03)
+        if png is not None:
+            for pid in live:
+                _present_over(png, pid)
+        stop.wait(0.2)
 
 
 def _ps_literal(value: str) -> str:
@@ -195,6 +261,8 @@ def _write_invoke_ps1(
     godot_args = [
         "--audio-driver",
         "Dummy",
+        "--rendering-method",
+        RENDER_METHOD,
         "--rendering-driver",
         RENDER_DRIVER,
         "--path",
@@ -202,7 +270,7 @@ def _write_invoke_ps1(
         "--",
         "--wdb-shot",
         f"--wdb-shot-seed={seed}",
-        "--wdb-shot-show=1" if show_window else "--wdb-shot-show=0",
+        "--wdb-shot-show=1",
         f"--wdb-shot-floor={floor_n}",
         f"--wdb-shot-out={png}",
         f"--wdb-shot-scale={scale_pct}",
@@ -482,8 +550,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     before = set(_godot_pids())
     stop = threading.Event()
-    watcher = threading.Thread(target=_taskbar_watch, args=(stop, before), daemon=True)
-    if not args.show and args.taskbar == 0:
+    watcher = threading.Thread(target=_taskbar_watch, args=(stop, before, png), daemon=True)
+    if False:
         watcher.start()
     try:
         subprocess.run(
@@ -525,7 +593,7 @@ def main(argv: list[str] | None = None) -> int:
         f"shots {datetime.now(timezone.utc).isoformat()}",
         f"root={root}",
         f"mode={args.mode} seed={max(1, args.seed)} floor={max(1, args.floor)} "
-        f"scale={scale_pct} settle_ms={max(0, args.settle_ms)} driver={RENDER_DRIVER}",
+        f"scale={scale_pct} settle_ms={max(0, args.settle_ms)} method={RENDER_METHOD} driver={RENDER_DRIVER}",
         f"status={status} wall_ms={marks.get('MS', '-1')} timeout={timed_out}",
         f"png={png} bytes={nbytes} w={width} h={height}",
         f"clipboard={clip} open={opened} band={band}",

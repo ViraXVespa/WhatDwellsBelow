@@ -213,8 +213,5 @@ static func _openness(pt: Node, c: Vector2i) -> int:
 			n += 1
 	return n
 
-static func _pick_front(pt: Node, here: Vector2i, last: Vector2) -> Vector2i:
-	return Move._pick_front(pt, here, last)
-
 static func wander(pt: Node, p: Node, _delta: float = 0.0) -> void:
 	Move.wander(pt, p, _delta)

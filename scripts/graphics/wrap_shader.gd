@@ -42,7 +42,10 @@ void fragment() {
 	if (shade_use > 0.5) {
 		c *= mix(shade_lo, shade_hi, clamp(UV.y, 0.0, 1.0));
 	}
-	ALBEDO = c;
+	vec2 span = max(light_span, vec2(0.001));
+	vec2 luv = clamp((wpos.xz - light_origin) / span, vec2(0.0), vec2(1.0));
+	vec3 lit = texture(light_tex, luv).rgb;
+	ALBEDO = c * lit;
 	ROUGHNESS = 1.0;
 	ALPHA = 1.0;
 }
