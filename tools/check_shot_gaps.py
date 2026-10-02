@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Shot-gap check: which UI states (menus, NPC panels, pages) have no shot flow, and are flows/published shots healthy.
 
-  python3 tools/check_shot_gaps.py [--changed [REF]] [--strict] [--json]
+  python3 tools/check_shot_gaps.py [--changed [REF]] [--advisory] [--strict] [--json]
 
 States come from tools/shot-flows/states.json (regexes over the UI/interact sources; add a source for a new
 menu). A flow covers a state when it lists it in `covers`, or derives it (an `interact` op for kind K covers
@@ -11,6 +11,8 @@ interact:K; an assert on host.ui.mode equals M covers ui:M). Reports:
   problem   a flow with no shot or no assert, a covers entry naming no state, a publish manifest that is
             missing files or stale (file sha differs from shots.json).
 RESULT PASS = no gaps or problems, INFO = gaps only, FAIL = problems, uncovered new states, or gaps under --strict.
+Gate mode (routes.yaml shot_gaps): Bot = required (bot_smokes.py, run_build_gate.py --batch call it with --changed and
+FAIL on a new gap); Build = advisory (run_smokes.py, plain run_build_gate.py pass --advisory: prints, status INFO, exit 0).
 """
 from __future__ import annotations
 

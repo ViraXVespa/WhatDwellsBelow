@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Run scripted shot flows (tools/shot-flows/*.json): open an NPC menu or screen, press pad/key input,
-set state, shoot every page, assert, then diff against a baseline or publish into the docs/assets.
+set state, shoot every page, assert, then diff against a baseline or publish to _out/shots/<flow>/ (never assets/: Grok Build places those).
 
   python3 tools/run_shot_flow.py --list
   python3 tools/run_shot_flow.py --flow camp-receptionist-menu [--baseline DIR] [--save-baseline DIR] [--publish]
@@ -168,10 +168,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--save-baseline", default="", help="copy this run's frames to DIR/<flow>/ (run before the change)")
     p.add_argument("--tol", type=int, default=0, help="per-channel diff tolerance")
     p.add_argument("--max-ratio", type=float, default=None, help="FAIL when a frame changes more than this pixel fraction")
-    p.add_argument("--publish", action="store_true", help="copy frames to the flow's publish.dir and write shots.json")
+    p.add_argument("--publish", action="store_true", help="copy frames to the flow's publish.dir (default _out/shots/<flow>; assets/ is refused) and write shots.json")
     p.add_argument("--check-published", action="store_true",
                    help="after capture, FAIL when the flow's published shots no longer match (UI changed: re-publish)")
-    p.add_argument("--publish-dir", default="", help="publish here instead of the flow's publish.dir")
+    p.add_argument("--publish-dir", default="", help="publish here instead of the flow's publish.dir (assets/ is refused)")
     args = p.parse_args(argv)
     root = Path(args.root).resolve() if args.root else agent_log.repo_root(_TOOLS.parent)
     flows = list_flows(root)

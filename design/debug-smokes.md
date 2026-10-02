@@ -23,7 +23,7 @@ Preferred (agent-friendly): from repo root, prefer `python tools/run_smokes.py -
 
 Binary (Steam tools build): `C:/Program Files (x86)/Steam/steamapps/common/Godot Engine/godot.windows.opt.tools.64.exe` (also in `tools/export_web.py`).
 
-Bot Linux VM (headless smokes only): BOT.md Smokes (`python3 tools/bot_smokes.py`). It uses the same required flags below, does not replace the Steam path, and does not open the editor.
+Bot Linux VM (headless smokes, plus `--flows` and the required shot-gap check): BOT.md Smokes (`python3 tools/bot_smokes.py`). It uses the same required flags below, does not replace the Steam path, and does not open the editor.
 
 **Required flags** when stdout/stderr are redirected (CI, `Start-Process -Redirect*`, agent shells):
 

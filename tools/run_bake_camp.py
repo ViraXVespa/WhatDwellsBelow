@@ -4,8 +4,9 @@
     python3 tools/run_bake_camp.py [--timeout-sec 180] [--headless]
 
 Default is a real renderer: uses $DISPLAY / a live X socket, else xvfb-run (godot_lib.pick_display), software GL
-is fine. Headless (--headless, or no display and no xvfb-run) draws no shadow pixels (shadow_px=0), so that run
-is INFO, not a bake. Never rewrites camp.tscn. Per-path Godot lock; never kills godot*.
+is fine. --headless (or no display and no xvfb-run) forces the headless driver: the shadow projection is CPU-side,
+so it gives the same atlas. shadow_px=0 is a FAIL in either mode (the camp node must be in the scene tree).
+Never rewrites camp.tscn. Per-path Godot lock; never kills godot*.
 Summary: _logs/bake-camp/summary.txt; RESULT carries clean=, shadow_px=, display=.
 """
 from __future__ import annotations
@@ -24,7 +25,7 @@ GUI_HEAD = ["--audio-driver", "Dummy", "--rendering-method", "gl_compatibility",
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Bake hub_light.png through the --wdb-bake-camp hook (real renderer by default).", json_out=True)
     ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=180)
-    ap.add_argument("--headless", action="store_true", help="force the headless driver (no shadow pixels; INFO only)")
+    ap.add_argument("--headless", action="store_true", help="force the headless driver (same atlas, no display needed)")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     d = agent_log.ensure_agent_log_dir("bake-camp", root)
@@ -41,7 +42,7 @@ def main(argv: list[str] | None = None) -> int:
     clean = r["status"] == "EXIT=0" and not hard
     status = "PASS" if clean else "FAIL"
     if clean and shadow == 0:
-        status = "FAIL" if gui else "INFO"
+        status = "FAIL"
     body = ["bake camp root=.", f"status={r['status']} ms={r['ms']} display={kind} shadow_px={shadow} errBytes={r['err_bytes']} outBytes={r['out_bytes']}",
             "", "--- highlights ---"] + (hits[:120] or ["(no SCRIPT ERROR / WARNING highlights)"])
     return agent_log.finish("bake-camp", root, "\n".join(body), status, args=args,
