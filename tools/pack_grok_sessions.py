@@ -506,7 +506,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--out-dir", "-OutDir",
         default="",
-        help="Output dir (default: session-keyed _logs/sess/<session>/grok-sessions-pack)",
+        help="Output dir (default: _logs/grok-sessions-pack)",
     )
     return parser.parse_args(argv)
 
