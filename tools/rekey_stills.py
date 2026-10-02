@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Re-key live stills from Grok session sources with plate_remap + sprite_pipeline."""
 from __future__ import annotations
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Section 19 cleanup: Paint.NET-style outside wand + Color-to-Alpha lip + 128 fit."""
 from __future__ import annotations
 

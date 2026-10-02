@@ -22,6 +22,10 @@ import agent_log
 import repo_lib
 
 MEDIA_IMPORTS = ("PIL", "numpy", "cv2", "wave", "scipy")
+# printers: stdout is the payload (prompt text to copy), so no RESULT line, no --root
+PRINTERS = {"bible_prompt", "attack_keyframes", "i2v_seeds", "anim_review_tree"}
+# art workflow tools that resolve paths through their own lib (anim_review_lib.ROOT)
+NO_ROOT = {"anim_review_pack", "anim_review_regen"}
 EXEMPT_RESULT = {"agent_log", "wdb_scratch_server"}  # run helper itself; long-running HTTP server
 WRITERS = {
     "doc_patch", "patch_code_map", "code_map", "patch_tunables", "tunables", "build_changelog",
@@ -66,8 +70,8 @@ def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int]) -> N
         return
     if not re.search(r"ArgumentParser\(|std_parser\(", src):
         bad.append(f"ARGS    {path.name}: no argparse (use agent_log.std_parser)")
-    if kind == "ops":
-        if "--root" not in src and "std_parser" not in src:
+    if kind == "ops" and name not in PRINTERS:
+        if name not in NO_ROOT and "--root" not in src and "std_parser" not in src:
             bad.append(f"ROOT    {path.name}: ops tool without --root")
         if name not in EXEMPT_RESULT and not re.search(r"agent_log\.(finish|emit_result|result_line)\(", src):
             bad.append(f"RESULT  {path.name}: ops tool must end with agent_log.finish/emit_result (final RESULT line)")

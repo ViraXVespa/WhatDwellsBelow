@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Appendix E remaining SFX + gendered VO stand-ins."""
 from __future__ import annotations
 

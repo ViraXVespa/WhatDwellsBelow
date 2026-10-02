@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Key _src/gear/*.jpg through the live still pipeline into assets/ui/gear/*.png
 from __future__ import annotations
 

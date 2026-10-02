@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Pack corrected left-facing player sheets with magenta key + despill."""
 from pathlib import Path
 from PIL import Image

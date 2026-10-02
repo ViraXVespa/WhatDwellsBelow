@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Write tiny placeholder WAV loops and one-shot SFX. Final music is by Vira."""
 from __future__ import annotations
 

@@ -238,10 +238,7 @@ def build_report(rows: list[dict[str, Any]]) -> str:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Write a paste-sized Grok session burn report."
-    )
-    parser.add_argument("--root", default=".", help="Repo root")
+    parser = agent_log.std_parser("Write a paste-sized Grok session burn report.")
     parser.add_argument("--pack-dir", default="", help="Existing pack dir")
     parser.add_argument("--session-root", default="", help="Live session dir")
     parser.add_argument("--since", default="", help="Local start time")
@@ -253,7 +250,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
-    repo_root = Path(args.root).expanduser().resolve()
+    repo_root = agent_log.resolve_root(args)
     if args.pack_dir:
         pack_dir = Path(args.pack_dir).expanduser().resolve()
     else:
@@ -292,7 +289,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     print(body, end="")
-    return 0
+    return agent_log.emit_result("PASS", summary=agent_log.rel(repo_root, out_dir / "summary.txt"), sessions=len(rows))
 
 
 if __name__ == "__main__":

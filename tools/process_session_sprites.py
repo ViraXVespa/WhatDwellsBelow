@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Key whatever-magenta Imagine stills and fit them into engine sprites."""
 from pathlib import Path
 

@@ -11,35 +11,38 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+import sys
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 HOST = "127.0.0.1"
 PORT = 10536
 TIMEOUT_SEC = 3600
 CREATE_NO_WINDOW = 0x08000000
 TOKEN_HEADER = "X-WDB-Scratch-Token"
-TOKEN = os.environ.get("WDB_SCRATCH_TOKEN") or "REPLACE_WITH_A_LONG_RANDOM_TOKEN"
+TOKEN = ""
 
 JOBS: dict[str, dict] = {}
 JOBS_LOCK = threading.Lock()
 
 
-def fail(msg: str) -> None:
-    raise SystemExit(msg)
+ROOT: Path | None = None
+SCRATCH: Path | None = None
 
 
-if not TOKEN or TOKEN == "REPLACE_WITH_A_LONG_RANDOM_TOKEN":
-    fail("Set a real token in TOKEN or env WDB_SCRATCH_TOKEN.")
-
-WDB_ROOT = os.environ.get("WDB_ROOT")
-if not WDB_ROOT:
-    fail("WDB_ROOT is not set in the environment.")
-
-ROOT = Path(WDB_ROOT).expanduser().resolve()
-if not ROOT.is_dir():
-    fail(f"WDB_ROOT is not a directory: {ROOT}")
-
-SCRATCH = ROOT / "tools" / "_scratch.py"
-SCRATCH.parent.mkdir(parents=True, exist_ok=True)
+def configure(root: Path, token: str) -> None:
+    """Bind the repo root, scratch file, and token (called from main so --help never needs them)."""
+    global ROOT, SCRATCH, TOKEN
+    if not token or token == "REPLACE_WITH_A_LONG_RANDOM_TOKEN":
+        agent_log.fail("set a real token in env WDB_SCRATCH_TOKEN")
+    TOKEN = token
+    ROOT = root
+    SCRATCH = ROOT / "tools" / "_scratch.py"
+    SCRATCH.parent.mkdir(parents=True, exist_ok=True)
 
 
 def job_snapshot(job: dict) -> dict:
@@ -220,7 +223,21 @@ class Handler(BaseHTTPRequestHandler):
         self._json(200, {"ok": True, "job_id": job_id, "done": False, "output": ""})
 
 
-if __name__ == "__main__":
+def main(argv: list[str] | None = None) -> int:
+    global HOST, PORT
+    ap = agent_log.std_parser("Token-protected local HTTP runner for web scratch files (needs WDB_SCRATCH_TOKEN; WDB_ROOT is the --root default).")
+    ap.add_argument("--host", default=HOST)
+    ap.add_argument("--port", type=int, default=PORT)
+    args = ap.parse_args(argv)
+    HOST, PORT = args.host, args.port
+    hint = args.root or os.environ.get("WDB_ROOT") or None
+    configure(agent_log.repo_root(hint), os.environ.get("WDB_SCRATCH_TOKEN", ""))
     print(f"WDB scratch server on http://{HOST}:{PORT}")
-    print(f"scratch file: {SCRATCH}")
+    print(f"scratch file: {agent_log.rel(ROOT, SCRATCH)}")
+    agent_log.emit_result("INFO", status="listening", host=HOST, port=PORT)
     ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

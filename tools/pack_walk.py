@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Extract, key, and pack walk-cycle frames from Imagine videos."""
 from __future__ import annotations
 

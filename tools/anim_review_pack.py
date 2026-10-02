@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Build a Grok-readable pack brief from Animation Browser review.json.
 
 Reads Repack notes plus Good locomotion clips already on disk so pack_locomotion.py
@@ -11,6 +12,14 @@ import json
 from collections import defaultdict
 
 import anim_review_lib as lib
+import sys
+from pathlib import Path
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 
 def _scan_good_pack_clips() -> list[dict]:
@@ -143,7 +152,7 @@ def main() -> int:
     print(f"wrote {args.out_md}")
     print(f"wrote {args.out_json}")
     print(f"repack {len(repack)} good {len(good)}")
-    return 0
+    return agent_log.emit_result("PASS", repack=len(repack), good=len(good), missing=len(missing))
 
 
 if __name__ == "__main__":

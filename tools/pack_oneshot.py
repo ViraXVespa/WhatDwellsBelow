@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Pack one-shot I2V clips into engine frames.
 
 Walk / idle_to_walk / walk_to_idle stay in pack_locomotion.py.

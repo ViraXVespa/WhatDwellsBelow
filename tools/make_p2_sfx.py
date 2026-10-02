@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Tiny placeholder wavs for Phase 2 combat (Section 14 placeholder policy)."""
 from __future__ import annotations
 

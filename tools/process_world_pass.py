@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Key and install the Placeholdia / dungeon art pass stills."""
 from __future__ import annotations
 

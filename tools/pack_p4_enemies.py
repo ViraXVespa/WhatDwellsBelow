@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Pack Phase 4 enemy stills: magenta key, 128 canvas, 8-dir copies."""
 from __future__ import annotations
 

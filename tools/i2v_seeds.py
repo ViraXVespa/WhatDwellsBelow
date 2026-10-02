@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """I2V plates: splice or single cell, exact integer nearest-neighbor scale, leave chroma.
 
 Attack body stills (parked keyframe pipeline): tools/attack_keyframes.py
@@ -821,7 +822,7 @@ def main() -> None:
         description="Exact integer nearest-neighbor scale, then #FF00FF pad. No key, no 1024 fit."
     )
     src = p.add_mutually_exclusive_group(required=True)
-    src.add_argument("--cell", type=Path, help="One splice still, same as Paint.NET 400%")
+    src.add_argument("--cell", type=Path, help="One splice still, same as Paint.NET 400%%")
     src.add_argument("--bible", type=Path, help="Locked 3x3 Bible; split then scale each cell")
     p.add_argument("--dest", required=True, type=Path)
     p.add_argument("--scale", type=int, default=SCALE)

@@ -493,10 +493,7 @@ def write_summary(
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Copy the top Grok sessions in a time range into _logs."
-    )
-    parser.add_argument("--root", default=".", help="Repo root (default: .)")
+    parser = agent_log.std_parser("Copy the top Grok sessions in a time range into _logs.")
     parser.add_argument("--session-root", default="", help="Override session dir")
     parser.add_argument("--since", default="", help="Local start time")
     parser.add_argument("--until", default="", help="Local end time")
@@ -516,7 +513,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
-    repo_root = Path(args.root).expanduser().resolve()
+    repo_root = agent_log.resolve_root(args)
     now = _now_local()
     until = _parse_when(args.until or None, now)
     since = _parse_when(args.since or None, until - timedelta(hours=24))
@@ -543,7 +540,7 @@ def main(argv: list[str] | None = None) -> int:
             error="session root missing",
         )
         print(summary_path.read_text(encoding="utf-8"), end="")
-        return 1
+        return agent_log.emit_result("FAIL", summary=agent_log.rel(repo_root, summary_path), error="session-root-missing")
     rows = collect_sessions(session_root, since, until)
     if not args.include_empty:
         rows = [
@@ -563,7 +560,7 @@ def main(argv: list[str] | None = None) -> int:
         out_dir=out_dir,
     )
     print(summary_path.read_text(encoding="utf-8"), end="")
-    return 0
+    return agent_log.emit_result("PASS", summary=agent_log.rel(repo_root, summary_path), sessions=len(rows))
 
 
 if __name__ == "__main__":

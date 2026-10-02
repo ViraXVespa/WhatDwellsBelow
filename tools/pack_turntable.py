@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Pack 8-dir player sheets from turntable + facing clips, shared scale and torso pin."""
 from pathlib import Path
 from PIL import Image

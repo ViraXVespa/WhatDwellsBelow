@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Build a wiped I2V test tree for every Regenerate clip in review.json.
 
 Each folder contains:

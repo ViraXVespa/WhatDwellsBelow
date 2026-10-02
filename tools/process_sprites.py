@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from pathlib import Path
 from PIL import Image
 import math

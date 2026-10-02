@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from __future__ import annotations
 
 from agent_log import rel
@@ -499,10 +500,7 @@ def _band(ok: bool, nbytes: int, width: int, height: int) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(
-        prog="run_shots.py",
-        description="Capture a play-camera postcard from a pinned dungeon seed.",
-    )
+    p = agent_log.std_parser("Capture a play-camera postcard from a pinned dungeon seed.")
     p.add_argument("--mode", choices=("web", "build", "user"), default="user")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--scene", choices=("dungeon", "camp", "hub"), default="dungeon")
@@ -629,11 +627,12 @@ def main(argv: list[str] | None = None) -> int:
     else:
         lines.append("(none)")
     lines.append("")
-    lines.append(
-        f"RESULT band={band} shot_ok={str(shot_ok).lower()} "
-        f"bytes={nbytes} clipboard={clip} open={opened}"
-    )
     summary = out_dir / "summary.txt"
+    lines.append(agent_log.result_line(
+        "FAIL" if band == "fail" else ("INFO" if band == "warn" else "PASS"),
+        agent_log.rel(root, summary),
+        band=band, shot_ok=str(shot_ok).lower(), bytes=nbytes, clipboard=clip, open=opened,
+    ))
     text = "\n".join(lines) + "\n"
     summary.write_text(text, encoding="utf-8")
     sys.stdout.write(text)
@@ -641,4 +640,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

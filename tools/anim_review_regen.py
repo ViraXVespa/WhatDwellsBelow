@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Build a Grok-readable regen brief from Animation Browser review.json.
 
 Use Regenerate notes to tune tools/i2v_seeds.py prompts. Enemy rows are listed
@@ -12,6 +13,14 @@ from collections import defaultdict
 
 import anim_review_lib as lib
 import i2v_seeds
+import sys
+from pathlib import Path
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 
 def _prompt_for(row: dict) -> str:
@@ -111,7 +120,7 @@ def main() -> int:
     print(f"wrote {args.out_md}")
     print(f"wrote {args.out_json}")
     print(f"regenerate {len(regen)}")
-    return 0
+    return agent_log.emit_result("PASS", regenerate=len(regen), missing=len(missing))
 
 
 if __name__ == "__main__":

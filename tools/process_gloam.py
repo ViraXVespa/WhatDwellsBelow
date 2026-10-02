@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Key Imagine stills into assets/3d for the Gloam 3D view."""
 from pathlib import Path
 from PIL import Image, ImageOps, ImageFilter

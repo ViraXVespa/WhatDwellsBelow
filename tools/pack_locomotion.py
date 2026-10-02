@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Pack idle stills + idle_to_walk / walk / walk_to_idle from I2V clips."""
 from __future__ import annotations
 

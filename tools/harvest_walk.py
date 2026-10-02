@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Extract evenly spaced walk frames from I2V clips (Section 19)."""
 from __future__ import annotations
 
