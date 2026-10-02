@@ -95,6 +95,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import godot_lib
 
 JOB = "shots"
 BUILD_SCALE_PCT = 50
@@ -164,6 +165,8 @@ def _extra_flags(args: argparse.Namespace) -> list[str]:
 
 
 def _godot_pids() -> list[int]:
+    if os.name != "nt":
+        return []
     r = subprocess.run(
         ["tasklist", "/FO", "CSV", "/NH"],
         capture_output=True,
@@ -251,24 +254,16 @@ def _taskbar_watch(stop: threading.Event, before: set[int], png: Path | None = N
         stop.wait(0.2)
 
 
-def _ps_literal(value: str) -> str:
-    return "'" + value.replace("'", "''") + "'"
-
-
-def _write_invoke_ps1(
+def _godot_args(
     root: Path,
-    tools: Path,
-    out_dir: Path,
     png: Path,
     seed: int,
     floor_n: int,
     scale_pct: int,
     settle_ms: int,
-    timeout_sec: int,
-    show_window: bool,
     extra: list[str],
     poses: str,
-) -> Path:
+) -> list[str]:
     godot_args = [
         "--audio-driver",
         "Dummy",
@@ -289,41 +284,7 @@ def _write_invoke_ps1(
     ] + extra
     if poses:
         godot_args.append("--wdb-shot-poses=" + poses)
-    arg_lines = ",\n    ".join(_ps_literal(a) for a in godot_args)
-    body = (
-        f". {_ps_literal(str(tools / 'invoke_godot.ps1'))}\n"
-        f"$godotArgs = @(\n    {arg_lines}\n)\n"
-        f"$r = Invoke-WdbGodot -RepoRoot {_ps_literal(str(root))} "
-        f"-GodotPath {_ps_literal(str(root))} "
-        f"-GodotArgs $godotArgs "
-        f"-OutLog {_ps_literal(str(out_dir / 'out.log'))} "
-        f"-ErrLog {_ps_literal(str(out_dir / 'err.log'))} "
-        f"-TimeoutSec {int(timeout_sec)}\n"
-        f"$mark = Join-Path {_ps_literal(str(out_dir))} 'invoke.txt'\n"
-        "$lines = @(\n"
-        "    ('STATUS=' + [string]$r.Status),\n"
-        "    ('EXIT=' + [string]$r.ExitCode),\n"
-        "    ('MS=' + [string]$r.Ms),\n"
-        "    ('TIMEOUT=' + [string]$r.TimedOut),\n    ('PID=' + [string]$r.Pid)\n"
-        ")\n"
-        "$lines | Set-Content -Path $mark -Encoding utf8\n"
-    )
-    path = out_dir / "_invoke.ps1"
-    path.write_text(body, encoding="utf-8")
-    return path
-
-
-def _read_invoke_mark(out_dir: Path) -> dict[str, str]:
-    path = out_dir / "invoke.txt"
-    marks: dict[str, str] = {}
-    if not path.is_file():
-        return marks
-    for raw in path.read_text(encoding="utf-8-sig").splitlines():
-        if "=" not in raw:
-            continue
-        key, val = raw.split("=", 1)
-        marks[key.strip()] = val.strip()
-    return marks
+    return godot_args
 
 
 def _shot_lines(out_dir: Path) -> list[str]:
@@ -368,18 +329,6 @@ def _png_info(png: Path) -> tuple[int, int, int]:
         height = int.from_bytes(data[20:24], "big")
     return nbytes, width, height
 
-
-
-def _kill_shot_pid(marks: dict[str, str]) -> None:
-    raw = marks.get("PID", "").strip()
-    if not raw.isdigit():
-        return
-    subprocess.run(
-        ["taskkill", "/PID", raw, "/T", "/F"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
 
 
 def _clipboard_png(png: Path) -> str:
@@ -550,35 +499,23 @@ def main(argv: list[str] | None = None) -> int:
     png = Path(args.out) if args.out else (out_dir / f"shot-s{args.seed}-f{args.floor}.png")
     png.parent.mkdir(parents=True, exist_ok=True)
 
-    invoke = _write_invoke_ps1(
-        root,
-        _TOOLS,
-        out_dir,
-        png,
-        max(1, args.seed),
-        max(1, args.floor),
-        scale_pct,
-        max(0, args.settle_ms),
-        max(1, args.timeout_sec),
-        args.show,
-        _extra_flags(args),
-        poses,
-    )
+    godot_args = _godot_args(root, png, max(1, args.seed), max(1, args.floor), scale_pct, max(0, args.settle_ms),
+                             _extra_flags(args), poses)
     before = set(_godot_pids())
     stop = threading.Event()
     watcher = threading.Thread(target=_taskbar_watch, args=(stop, before, png), daemon=True)
     if False:
         watcher.start()
     try:
-        subprocess.run(
-            ["powershell", "-NoProfile", "-File", str(invoke)],
-            cwd=str(root),
-            capture_output=True,
-        )
+        try:
+            run = godot_lib.run_godot(root, root, godot_args, out_dir / "out.log", out_dir / "err.log",
+                                      max(1, args.timeout_sec))
+        except (FileNotFoundError, godot_lib.GodotBusy) as exc:
+            agent_log.fail(str(exc))
     finally:
         stop.set()
-    marks = _read_invoke_mark(out_dir)
-    _kill_shot_pid(marks)
+    marks = {"STATUS": run["status"], "EXIT": str(run["exit_code"]), "MS": str(run["ms"]),
+             "TIMEOUT": str(run["timed_out"]), "PID": str(run["pid"])}
     import time as _time
     _time.sleep(0.3)
     shot_hits = _shot_lines(out_dir)

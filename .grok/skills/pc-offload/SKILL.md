@@ -34,26 +34,26 @@ Do not paste raw Godot logs, whole .gd files, whole .tscn files, or
 unbounded search output into the session.
 
 Intercept (raw tool is a failed lookup, not a fallback):
-- grep / rg on scripts/, design/, tools/, scenes/ -> tools/list_xref.ps1
-- list_dir of those trees -> list_xref.ps1 or list_scenes.ps1
-- git status / git log / git diff in chat -> tools/list_changed.ps1
+- grep / rg on scripts/, design/, tools/, scenes/ -> tools/list_xref.py
+- list_dir of those trees -> list_xref.py or list_scenes.py
+- git status / git log / git diff in chat -> tools/list_changed.py
 - open whole design/code-map.md -> list_code_map_row.py / patch_code_map.py / check_code_map.py
-- size / newlines / indent / BOM on a live path -> tools/file_stat.py (not python -c; oversize inventory stays list_oversize_scripts.ps1)
+- size / newlines / indent / BOM on a live path -> tools/file_stat.py (not python -c; oversize inventory stays list_oversize_scripts.py)
 - python -c for bytes, newlines, tabs, or indent -> tools/file_stat.py
 - python -c / double-quoted PowerShell body / echo Set-Content of a script ->
   single-quoted here-string piped to tools/write_utf8_file.py, then
-  tools/run_agent_py.ps1
+  tools/run_agent_py.py
 - open tools/*.ps1 or tools/*.py to learn flags -> catalog row only
 - read the same _logs/*/summary.txt again this slice -> stop;
-  one read via tools/read_summary.ps1 -Job <name>
+  one read via tools/read_summary.py -Job <name>
 - check_load_graph.py after every markdown edit -> only at ship,
   or named routing work
 - door or job routing by opening README / load-graph / memory topics ->
-  tools/list_route.ps1 -Door <name> or -Job door.job
+  tools/list_route.py -Door <name> or -Job door.job
 
 1. Pick the catalog row that matches the job.
 2. Run that command from the repo root.
-3. Read only that row's summary with read_summary.ps1 -Job <name> (or stdout
+3. Read only that row's summary with read_summary.py -Job <name> (or stdout
    when the catalog says there is no summary). Once per runner per slice.
 4. If no row exists and the work would be expensive in-session, propose a
    new runner and wait. Implement it only when the User has approved that

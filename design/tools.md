@@ -10,17 +10,27 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 ## Rules
 
 1. **Allowlist.** `tools/bot_allow.txt` is the authority for the Bot: it runs only tools marked `A=Y` here and changes only allowlisted paths (CI `bot-gate.yml` and `bot_status.py --prove` read it). Anything else is for the User, Build or web.
-2. **Platform.** `.py` tools run as `python3 tools/X.py` (there is no bare `python` on the Bot box). `.ps1` tools need PowerShell on the User's PC (no pwsh on the Bot box); many have a `.py` twin. Write-file and quoting rules for Windows: `pc-offload.md`.
-3. **Usage truth.** `.py`: `python3 tools/X.py --help` (a tool marked "module docstring" has no `--help`: read its header). `.ps1`: the Use column. Docs do not repeat flags.
-4. **Summaries.** Runners that write `_logs/sess/<session>/<job>/summary.txt` (gitignored): read that file once, not raw logs or script bodies.
-5. **New tool.** Propose first (name, command, what it saves) and implement after approval. Add its row here (and the allowlist line if the Bot may run it), then run `python3 tools/check_tool_docs.py`.
-6. **Duplicates.** `next_changelog_label.py` and `write_utf8_file.py` duplicate `doc_patch.py`; prefer `doc_patch`.
+2. **Platform.** Every tool is Python: `python3 tools/X.py` (Windows PC: `python`). A `.ps1` is a one-release shim that forwards its arguments to the `.py` twin; old `-OverKb` and new `--over-kb` spellings both work. Quoting and Godot rules for Windows: `pc-offload.md`.
+3. **Usage truth.** `python3 tools/X.py --help` for every CLI tool (`check_tool_cli.py` keeps that true); `*_lib.py` files have a module docstring. Docs do not repeat flags.
+4. **Summaries.** Runners write `_logs/<job>/summary.txt` (gitignored, one dir per job; no session keys). Read the final `RESULT` line, then the summary once, not raw logs or script bodies.
+5. **New tool.** Propose first (name, command, what it saves) and implement after approval. Add its row here (and the allowlist line if the Bot may run it), then run `check_tool_docs.py` and `check_tool_cli.py`.
+6. **Duplicates are shims.** A renamed or folded tool stays as a shim (docstring starts `"""Shim`) for one release, then goes. New logic goes in the owner: `agent_log` (run helpers), `repo_lib` (git, allowlist, version), `gd_lib` (`.gd` funcs), `md_format_lib` (text write), `doc_patch` (doc edits).
+7. **Tools, not scratches.** If you would need it again, update the tool or propose a new one. A scratch is for a niche one-off, in temp. Web doc edits: `doc_patch.py` CLI (`doc-library.md`).
+8. **Fix the tool.** If a tool does not work intuitively, it is designed wrong: fix it (or propose the fix), do not work around it.
+9. **Rough edges (end of every task).** List the rough edges you hit (a guessed flag, output re-run, a scratch you wrote, a doc that lied) and fix them in the same PR when the allowlist and task allow, else name them in the report. This is the one copy of the rule; the Bot, Build and web entry docs point here.
+
+## Contract (enforced by `check_tool_cli.py`)
+
+- Shebang `#!/usr/bin/env python3`, `argparse` (`agent_log.std_parser`), a working non-mutating `--help`, ASCII output.
+- Ops tools take `--root`, writers take `--dry-run`, reports may take `--json`. Errors go to stderr as `error: ...`. Exit 0 ok, 1 findings, 2 usage.
+- Last line is `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`; the legacy `Summary -> <abs>` line stays for one release. Exempt: printers (their stdout is the payload) and `wdb_scratch_server`.
+- Read and write text through `md_format_lib` (BOM and line endings kept). Paths printed are repo-relative POSIX.
 
 ## Run when
 
 - **Bot:** boot with `bot_status.py`, then the one flow doc from `BOT.md` (size, extract, reuse, relocate, docs, opt). Prove and smokes: `BOT.md` (single copy). Never open the Build docs (`pc-offload.md`, `tools-build.md`, `tools-media.md`) or Imagine/I2V skills.
-- **Web/chat:** documentation slices go through `tools/_scratch.py` importing `doc_patch` (`web-session.md`); `check_load_graph.py`; `run_shots.py --mode web`; the prove table in `web-session.md` names the `run_*.ps1` runners the User runs. No Godot runners from the chat itself.
-- **Build (User PC):** measure with `file_stat.py` (not `python -c`), `list_xref.ps1`, `list_changed.ps1`, `list_oversize_scripts.ps1`; after a `.gd` slice `run_build_gate.ps1`; edit one code-map row with `patch_code_map.py`; park opt items with `bot_opt.py`. Runner rules: `pc-offload.md`. Do not run a full-repo Bot size sweep.
+- **Web/chat:** documentation slices go through the `doc_patch.py` CLI or import (`doc-library.md`); `check_load_graph.py`; `run_shots.py --mode web` (prints its RESULT line, no scratch needed). Godot runners are the User's: `web-session.md` names them.
+- **Build (User PC):** measure with `file_stat.py` (not `python -c`), `list_xref.py`, `list_changed.py`, `list_oversize_scripts.py`; after a `.gd` slice `run_build_gate.py`; edit one code-map row with `code_map.py patch`; park opt items with `bot_opt.py`. Runner rules: `pc-offload.md`. Do not run a full-repo Bot size sweep.
 
 ## Catalog: shared and Bot tools
 
@@ -31,12 +41,14 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `bot_status.py` | Punch list: over-10KB/5KB, reuse brief, opt queue; `--prove` = script cap + allowlist + load graph; `--sweep` lists 5-10KB | BD | `--help` | Y |
 | `check_script_cap.py` | Script size cap: `--git-changed`, `--path`, `--over-kb 5` for the sweep | BWD | `--help` | Y |
 | `check_load_graph.py` | Doc routing vs `design/routes.yaml` (prints PASS/FAIL, no summary) | BWD | `--help` | Y |
-| `check_code_map.py` | Live `.gd` vs `design/code-map.md` ticks. Rule: no new UNMAPPED for files you touched (older ones are expected). Summary: `code-map-check`. | BD | `--help` | Y |
+| `code_map.py` | Code map: `check` (live `.gd` vs `design/code-map.md` ticks; exits 1 on new UNMAPPED or missing, older UNMAPPED are expected), `row --path P`, `patch --system S --add/--remove/--rename`. Summaries: `code-map-check`, `code-map-row`, `code-map-patch`. | BD | `--help` | Y |
+| `check_code_map.py` | Shim -> `code_map.py check`, one release | BD | `--help` | Y |
 | `bot_smokes.py` | Headless phase smokes on the Linux VM (`--phases 1,2,6`). Pin, install and `.uid` import: BOT.md Smokes. | B | `--help` | Y |
 | `bot_warnscan.py` | Warning sweep by area; `--save-baseline P` before, `--non-leak-diff P` after (same `--areas`). Procedure: BOT.md Smokes. | B | `--help` | Y |
 | `bot_warnscan_lib.py` | Log parser for `bot_warnscan.py` | B | module docstring (no `--help`) | Y |
 | `bot_opt.py` | Opt queue: `--list`, `--id`, `--status opt-N=done`, `--add`, `--remove`. Never hand-edit the queue block. Summary: `bot-opt`. | BD | `--help` | Y |
 | `bot_allow.txt` | Allowlist: the paths the Bot may change; read by CI and `bot_status --prove`. Deny lines first. Authority for Bot scope. | BWD | - | Y |
+| `check_tool_cli.py` | CLI contract check over `tools/` (see Contract above) plus the `.ps1` shim check. Run after adding or editing a tool. | BWD | `--help` | Y |
 | `check_tool_docs.py` | Catalog check: every `tools/` file has a row, `A` matches `bot_allow.txt`, rows name real files. Run it after adding or renaming a tool | BWD | `--help` | Y |
 
 ### Split, code map and doc edits
@@ -45,11 +57,11 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 |---|---|---|---|---|
 | `split_funcs.py` | Split a GDScript into facade + sibling helpers: `FILE --list`, then `--plan plan.json [--dry-run]` (`{helper_stem: [names]}`); node funcs move host-first; runs `facade_requal.py` and a line-multiset check. Flow: grok-bot-size.md. | B | `--help` | Y |
 | `facade_requal.py` | Qualify names that moved to sibling helpers (`FILE`, `--check`, `--dry-run`, `--sym NAME=Mod`). `split_funcs.py` runs it itself. | B | `--help` | Y |
-| `doc_patch.py` | Idempotent doc edits: `write_changelog`, `replace_once`, `ensure_line`, `replace_func`, `upsert_func`, `set_read_when`; import it from a scratch runner. Writes CRLF; do not point it at LF files outside the repo. | BWD | module docstring (no `--help`) | Y |
-| `md_format_lib.py` | Markdown/UTF-8 write helpers behind `doc_patch.py` | BWD | module docstring (no `--help`) | Y |
-| `patch_code_map.py` | Add/remove/rename ticks on one code-map row: `--system NAME --add PATH`. Summary: `code-map-patch`. | BD | `--help` | Y |
-| `code_map_lib.py` | Code-map row parser/writer used by `patch_code_map.py` | BD | module docstring (no `--help`) | Y |
-| `list_code_map_row.py` | Print the one code-map row naming `--path`. Summary: `code-map-row`. | BD | `--help` | Y |
+| `doc_patch.py` | Idempotent doc edits. CLI: `replace`, `ensure-line`, `set-read-when`, `changelog`, `next-label`, `write`, `apply plan.json`, `check` (`--dry-run`, `--eol keep\|crlf\|lf`); also importable (`write_changelog`, `replace_once`, `replace_func`, `upsert_func`). Keeps each file's BOM and line endings. Detail: `doc-library.md`. | BWD | `--help` | Y |
+| `md_format_lib.py` | Text I/O for every tool: `read_text`, `write_text` (BOM and EOL kept), `detect_eol`; markdown format checks | BWD | module docstring (no `--help`) | Y |
+| `patch_code_map.py` | Shim -> `code_map.py patch`, one release | BD | `--help` | Y |
+| `code_map_lib.py` | Code-map row parser/writer used by `code_map.py` | BD | module docstring (no `--help`) | Y |
+| `list_code_map_row.py` | Shim -> `code_map.py row`, one release | BD | `--help` | Y |
 | `list_oversize_docs.py` | List `design/*.md` by size, OVER at `--over-kb` (default 8) | BD | `--help` | Y |
 | `list_route.py` | Print one `routes.yaml` door or job card (`--job door.job`) | BD | `--help` | Y |
 
@@ -59,9 +71,11 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 |---|---|---|---|---|
 | `file_stat.py` | Bytes, BOM, CRLF/LF, indent for a path or glob (verify a split kept them). Summary: `file-stat`. | BD | `--help` | Y |
 | `summarize_scripts.py` | Func inventory per `.gd` (`--over-kb`, `--top-funcs`) | BD | `--help` | Y |
-| `lint_hostify.py` | Advisory scan for `:=`/load inference and host pitfalls; always exits 0 | BD | module docstring (no `--help`) | Y |
+| `lint_hostify.py` | Advisory scan for `:=`/load inference and host pitfalls; always exits 0 (RESULT INFO) | BD | `--help` | Y |
 | `list_unused_funcs.py` | Dead-code report (`--limit N`). **`--apply` DELETES funcs**: only when the opt item says so; check `call_deferred`/string refs first. | B | `--help` | Y |
 | `move_script_cluster.py` | `git mv` a facade + siblings and rewrite `res://` repo-wide (`--to-dir`, `--dry-run`, `--wrapper`). Only for a user-named relocate job; can touch non-allowlisted docs. | BD | `--help` | Y |
-| `agent_log.py` | Session-keyed `_logs/sess/<session>/<job>` paths (library) | BD | module docstring (no `--help`) | Y |
-| `next_changelog_label.py` | Print the next changelog label. Duplicates `doc_patch.next_label`; prefer `doc_patch`. Summary: `changelog-label`. | BD | `--help` | N |
-| `write_utf8_file.py` | Write a UTF-8 file from stdin (`--path`, `--bom`, `--b64`). Windows: pipe a single-quoted here-string. Duplicates `doc_patch.write_text` on Linux. | BD | `--help` | Y |
+| `repo_lib.py` | Git, allowlist, version and changelog-label helpers shared by tools | BWD | module docstring (no `--help`) | Y |
+| `gd_lib.py` | `.gd` func parser shared by `split_funcs`, `summarize_scripts`, `show_func`, `doc_patch` | BD | module docstring (no `--help`) | Y |
+| `agent_log.py` | Run helpers: `std_parser`, `resolve_root`, `finish`/`emit_result` (RESULT line), `_logs/<job>` paths. CLI prints a job dir. | BD | `--help` | Y |
+| `next_changelog_label.py` | Shim -> `doc_patch.py next-label`, one release. Summary: `changelog-label`. | BD | `--help` | N |
+| `write_utf8_file.py` | Shim -> `doc_patch.py write` (`--path`, `--bom`, `--b64`), one release | BD | `--help` | Y |

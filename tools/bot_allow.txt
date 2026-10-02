@@ -47,7 +47,6 @@ tools/check_tool_cli.py
 tools/repo_lib.py
 tools/gd_lib.py
 tools/code_map.py
-tools/tunables.py
 AGENTS.md
 BOT.md
 .github/workflows/bot-gate.yml

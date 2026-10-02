@@ -21,7 +21,7 @@ Open only the topic files that match the requested work. Numbers: `design/tunabl
 
 Do not open this table as a boot list. Open a topic when `design/routes.yaml` names that door / job or the User names that work.
 
-Design doors: open the facade, then only the Job-table sibling. Isolated Imagine is a gate, not an art-pipeline job. Rules: `design/doc-refactor.md`. Oversize check: `tools/list_oversize_docs.ps1`.
+Design doors: open the facade, then only the Job-table sibling. Isolated Imagine is a gate, not an art-pipeline job. Rules: `design/doc-refactor.md`. Oversize check: `tools/list_oversize_docs.py`.
 
 Do not open art_pipeline parked attack-keyframes unless the User is resuming the attack animation keyframe pipeline. Web / chat writes `design/reuse-map.md` in Phase 7 when that is the goal.
 

@@ -106,7 +106,7 @@ Facade + `static func(host, ...)` splits must keep Godot 4.7 compiling. Watch fo
 
 After a hostify batch, run the **editor import** compile check via `design/pc-offload.md` (`--headless --editor --import --path <WDB_ROOT> --quit`). Plain `--quit` alone is not sufficient — it can miss `:=` inference errors the editor surfaces on reload.
 
-Optional advisory scan: `lint_hostify.py` (Bot/Linux) or `lint_hostify.ps1` (PC), always exit 0; it is not a compile substitute. After a size-split batch: Bot, `bot_warnscan.py --non-leak-diff` per BOT.md; PC, `run_post_split_gate.ps1` (`-WithSmokes` when coverage matters). Tool details: design/tools.md.
+Optional advisory scan: `lint_hostify.py`, always exit 0; it is not a compile substitute. After a size-split batch: Bot, `bot_warnscan.py --non-leak-diff` per BOT.md; PC, `run_post_split_gate.py` (`-WithSmokes` when coverage matters). Tool details: design/tools.md.
 
 ## Shared calculations (gameplay + smoke)
 
@@ -132,13 +132,13 @@ Rules:
 
 Update `design/code-map.md` when a new sibling or shared module must be listed. Do not update topic design files unless behavior changed (a legal sweep does not change behavior). Do not write extract results into `design/reuse-map.md` from Bot; web / chat Phase 7 owns that staging brief.
 
-Grok Bot sweep notes: optional `_logs/grok-bot-sweep.md`. Not `tools/week_start.ps1` / git. Not `design/changelog/`.
+Grok Bot sweep notes: optional `_logs/grok-bot-sweep.md`. Not `tools/week_start.py` / git. Not `design/changelog/`.
 
 ## Parked folder moves
 
 Do **not** fold these into a size split. Folder relocates use the Bot relocate job, not this recipe's size-split steps. Every `preload` / `load` / ExtResource path plus `design/code-map.md` rows must stay correct. No behavior change.
 
-From repo root run `python3 tools/move_script_cluster.py` (PC: `move_script_cluster.ps1`; flags in design/tools.md). It `git mv`s the facade + stem siblings (+ `.uid`), rewrites `res://` and bare paths under `scripts/`, `design/`, scenes, and `project.godot`, and writes `_logs/move-cluster/summary.txt`. Then run the editor import check.
+From repo root run `python3 tools/move_script_cluster.py` (flags: `--help`; catalog in design/tools.md). It `git mv`s the facade + stem siblings (+ `.uid`), rewrites `res://` and bare paths under `scripts/`, `design/`, scenes, and `project.godot`, and writes `_logs/move-cluster/summary.txt`. Then run the editor import check.
 
 Done (0.3.11 relocate batch):
 

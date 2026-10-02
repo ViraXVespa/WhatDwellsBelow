@@ -32,6 +32,7 @@ Then, only if the User named work:
     and design/isolated-media.md iff Grok Build is about to call Imagine
     and design/gdscript-law.md iff editing GDScript
     and design/tools.md iff running, adding, or documenting a tool (Build-only siblings tools-build.md, tools-media.md)
+    and design/doc-library.md iff editing docs by script or changing doc_patch / md_format_lib
     and design/pc-offload.md iff inventory, verify, Windows write, or a new local runner
 
 Imagine tool calls use the isolated-media **gate** only. Do not also open art_pipeline to generate.

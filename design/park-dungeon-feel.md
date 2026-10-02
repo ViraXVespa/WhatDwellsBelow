@@ -33,7 +33,7 @@ Angled corridors (27 / 33 / 45) are rare local packets on long two-axis links. T
 
 - Source: scripts/dungeon/gen.gd, scripts/dungeon/gen_carve.gd, scripts/dungeon/gen_outline.gd, scripts/world/dungeon_geo_stream.gd, scripts/graphics/wall_mesh.gd
 - Docs: dungeon owner, gen job, stream job, volume job, buffer job
-- Tests: tools/run_dungeon_map.ps1. Walk spawn for one corridor = two faces.
+- Tests: tools/run_dungeon_map.py. Walk spawn for one corridor = two faces.
 
 ## Why parked
 
