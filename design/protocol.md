@@ -12,7 +12,7 @@ If a path file is already loaded, stay on that path.
 - Implement only the **game** systems this database requires. Do not invent skills, rarities, hub upgrades, meta-progression, or co-op scaffolding. Grok Build MAY add helpers and same-system APIs. A new cross-system owner or named live-module replace is Build stop-and-propose.
 - Open numbers MAY start coherent. Expose every invented value in the secret debug menu and record it in `design/tunables.md`.
 - Coverage fills gaps in the live build. It is not a license to delete and rebuild.
-- Player-facing ambiguity: ask. Code shape inside one system: Build decides. After a slice: pause and report.
+- Design or product ambiguity (not only player-facing): web asks one blocking question; Build asks with `ask_user_question` (Build session flow, Design decisions), even under always-allow. Code shape inside one system: Build decides. After a slice: pause and report.
 - Git history on `main` is the game version. `scripts/data/version.json` is the baked copy.
 - When editing GDScript, load `design/gdscript-law.md`. Size splits are `design/refactor.md` for Grok Bot only. Web / chat does not cap-split.
 - Self-verify against the Demo-Complete Checklist in `design/constraints.md` before calling the build complete.
@@ -26,7 +26,7 @@ Pins are User-only.
 ## Database
 
 Open a topic door only when its `Read when` matches, a Job table names it, or the User names that work. Do not treat this paragraph as a read list.
-All previously open design questions are closed. Do not invent additional game systems or reopen settled decisions.
+The design questions that were open when the database was frozen are closed; do not reopen them. A new request raises new questions: ask them (Build: `ask_user_question`), do not invent systems or answers.
 
 ## Variation
 
