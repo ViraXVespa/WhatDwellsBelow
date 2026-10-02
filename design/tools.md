@@ -45,7 +45,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 |---|---|---|---|---|
 | `bot_status.py` | Punch list: over-10KB/5KB, reuse brief, opt queue; `--prove` = script cap + allowlist + load graph; `--sweep` lists 5-10KB | BD | `--help` | Y |
 | `check_script_cap.py` | Script size cap + duplicate-basename check (`dupes=`): `--git-changed`, `--path`, `--over-kb 5` for the sweep | BWD | `--help` | Y |
-| `check_load_graph.py` | Doc routing vs `design/routes.yaml` (prints PASS/FAIL, no summary) | BWD | `--help` | Y |
+| `check_load_graph.py` | Doc routing vs `design/routes.yaml` (prints PASS/FAIL, no summary); also FAILs a boot file over its `boot_bytes` budget | BWD | `--help` | Y |
 | `code_map.py` | Code map: `check` (live `.gd` vs `design/code-map.md` ticks; exits 1 on new UNMAPPED or missing, older UNMAPPED are expected), `row --path P`, `patch --system S --add/--remove/--rename`. Summaries: `code-map-check`, `code-map-row`, `code-map-patch`. | BD | `--help` | Y |
 | `check_code_map.py` | Shim -> `code_map.py check`, one release | BD | `--help` | Y |
 | `bot_smokes.py` | Headless phase smokes on the Linux VM (`--phases 1,2,6`, or `--door` / `--job` for the `routes.yaml` `smokes` map). Also runs `check_shot_gaps.py --changed` as a required gate (`--no-gaps` skips). Pin, install and `.uid` import: BOT.md Smokes. | B | `--help` | Y |

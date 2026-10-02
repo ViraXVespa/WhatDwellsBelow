@@ -38,6 +38,7 @@ from load_routes import (  # noqa: E402
     RoutesError,
     allowed_citations,
     all_route_files,
+    boot_bytes,
     boot_max,
     conflicts_with,
     door_job_targets,
@@ -543,6 +544,25 @@ def increment6_schema_fails(routes: dict) -> list[str]:
     return fails
 
 
+def boot_budget_fails(root: Path, routes: dict) -> list[str]:
+    """Every boot_max path needs a routes.yaml boot_bytes budget; on-disk size must not exceed it."""
+    budgets = boot_bytes(routes)
+    if not budgets:
+        return []
+    fails: list[str] = []
+    boot_paths = sorted({p for paths in boot_max(routes).values() for p in paths})
+    for posix in boot_paths:
+        cap = budgets.get(posix)
+        if cap is None:
+            fails.append(f"boot_bytes missing budget for boot file {posix}")
+            continue
+        path = root / posix
+        size = path.stat().st_size if path.is_file() else 0
+        if size > cap:
+            fails.append(f"boot file over byte budget: {posix} is {size} bytes, boot_bytes {cap}")
+    return fails
+
+
 def boot_instruct_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     fails: list[str] = []
     listed = boot_max(routes)
@@ -931,6 +951,7 @@ def main() -> int:
     fails.extend(fetch_ban_fails(routes, texts))
     fails.extend(recipe_phrase_fails(routes, texts))
     fails.extend(boot_instruct_fails(routes, texts))
+    fails.extend(boot_budget_fails(root, routes))
     fails.extend(citation_budget_fails(routes, texts))
     fails.extend(load_ban_fails(routes, texts))
     fails.extend(job_cell_token_fails(routes, texts))
