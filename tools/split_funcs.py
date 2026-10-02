@@ -9,7 +9,7 @@ plan.json maps helper file stem -> names to move (static funcs, consts, top-leve
   {"light_stamp_walk": ["_walk_mask", "_lift_floor", "_walk_buf"]}
 Writes <stem>.gd beside FILE (extends Object, static funcs), removes the items from FILE, adds
 `const Mod := preload(...)`, leaves a one-line delegate (same signature) for each moved public
-func (and any func an outside script calls through FILE), copies preload consts the moved code
+func (and any func an outside script calls through FILE; `await` kept if the body awaits), copies preload consts the moved code
 uses, then runs tools/facade_requal.py (rewrite + --check) on every file and prints a
 line-multiset check (missing lines must be 0) and byte sizes. Keeps BOM and line endings.
 Errors (nothing written): instance funcs, moved code using a facade-only const/var/func,
@@ -223,6 +223,8 @@ def build(items, plan, path, root):
             if it["kind"] == "func" and (not n.startswith("_") or ext[n]):
                 sig, args, ret = sig_of(it)
                 call = f"{alias[owner[n]]}.{n}({', '.join(args)})"
+                if re.search(r"(?<![\w.])await\b", body(it)):  # coroutine: keep the delegate awaiting it
+                    call = "await " + call
                 fac.append(sig + "\n\t" + ("" if ret == "void" else "return ") + call + "\n")
             elif it["kind"] == "const" and ext[n]:
                 fac.append(f"const {n} := {alias[owner[n]]}.{n}")
