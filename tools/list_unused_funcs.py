@@ -118,8 +118,13 @@ def collect(root: Path):
     return unused, maybe, defs
 
 
+DECL_END = re.compile(
+    "^(?P<indent>[ " + chr(9) + "]*)(?:static[ " + chr(9) + "]+)?(?:func|const|var|class_name|enum|signal)[ " + chr(9) + "]+"
+)
+
+
 def span_end(lines: list[str], start: int) -> int:
-    indent = len(lines[start]) - len(lines[start].lstrip(" \t"))
+    base = re.match(r"[ \t]*", lines[start]).group(0)
     end = start + 1
     while end < len(lines):
         raw = lines[end]
@@ -127,15 +132,18 @@ def span_end(lines: list[str], start: int) -> int:
             end += 1
             continue
         body = raw.lstrip(" \t")
-        ind = len(raw) - len(body)
-        if ind <= indent and not body.startswith("#"):
+        indent = raw[: len(raw) - len(body)]
+        if indent == base and body.startswith("#") and not body.startswith("##"):
+            break
+        matched = DECL_END.match(raw)
+        if matched and matched.group("indent") == base:
+            break
+        if len(indent) < len(base) and not body.startswith("#"):
             break
         end += 1
     while end > start + 1 and lines[end - 1].strip() == "":
         end -= 1
     return end
-
-
 def span_start(lines: list[str], func_at: int) -> int:
     start = func_at
     while start > 0:
