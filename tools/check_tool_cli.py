@@ -94,7 +94,7 @@ SMOKE: dict[str, list] = {
     "show_func": [(["--path", "scripts/graphics/mesh_commit.gd", "--name", "no_such_func"], _ERR)],
     "split_funcs": [["scripts/graphics/mesh_commit.gd", "--list"]],
     "summarize_scripts": [[]],
-    "start_build_slice": [["--door", "debug", "--job", "smokes", "--dry-run"]],
+    "start_build_slice": [["--door", "debug", "--job", "debug.smokes", "--dry-run"]],
     "tunables": [["get", "--key", "x"]],
     "week_pin": [["--dry-run", "--id", "smoke", "--label", "l", "--desc", "d", "--commit", "abc"]],
     "week_start": [["--dry-run"]],
@@ -227,7 +227,7 @@ def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], ta
         bad.append(f"NOISE   {label}: {lines} lines (budget {SMOKE_LINES.get(stem, SMOKE_MAX_LINES)})")
     if not out.isascii() and stem not in PRINTERS:
         bad.append(f"ASCII   {label}: non-ASCII output")
-    if sb.as_posix() in out:
+    if sb.as_posix() in out and "--doctor" not in args:  # --doctor echoes the GODOT_BIN pin (a machine path)
         bad.append(f"ABSPATH {label}: prints absolute paths (use repo-relative)")
     if "--dry-run" in args and "--help" not in args:
         rc, status = repo_lib.run_git(sb, "status", "--porcelain")
