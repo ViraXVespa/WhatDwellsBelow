@@ -1,7 +1,18 @@
 #!/usr/bin/env python3
-"""Idempotent documentation helpers for web / chat Phase 7 runners.
+"""Idempotent text/doc edit library and CLI (design/doc-library.md).
 
-Scratch runners must import this module instead of copying replace logic:
+CLI (no scratch file needed; --dry-run prints "would write" and changes nothing):
+
+    python3 tools/doc_patch.py replace FILE --old "x" --new "y"
+    python3 tools/doc_patch.py ensure-line FILE --line "text" [--after "anchor"]
+    python3 tools/doc_patch.py set-read-when FILE "when text"
+    python3 tools/doc_patch.py changelog --bullet "one line" [--bullet ...] [--label 0.5.11] [--summary "s"]
+    python3 tools/doc_patch.py next-label
+    python3 tools/doc_patch.py write FILE [--b64 S | stdin] [--bom] [--append]
+    python3 tools/doc_patch.py apply plan.json
+    python3 tools/doc_patch.py check
+
+Library: scratch runners import this module instead of copying replace logic:
 
     import sys
     from pathlib import Path
@@ -10,13 +21,25 @@ Scratch runners must import this module instead of copying replace logic:
 """
 from __future__ import annotations
 
+import argparse
+import base64
 import json
 import re
 import subprocess
 import sys
 from pathlib import Path
 
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+import gd_lib
 import md_format_lib as md
+import repo_lib
+
+DRY = False  # set by the CLI --dry-run; library callers may set dp.DRY = True
+EOL = "keep"  # keep | crlf | lf. keep = the existing file's line ending (CRLF for new files)
 
 
 def _gd_tabs(text: str) -> str:
@@ -80,37 +103,38 @@ def _near(lines: list[str], needle: str) -> str:
 
 
 def func_count(text: str, name: str) -> int:
-    n = 0
-    for ln in text.splitlines():
-        if ln.startswith("static func " + name + "(") or ln.startswith("func " + name + "("):
-            n += 1
-    return n
+    return gd_lib.func_count(text, name)
+
 
 def repo_root(start: Path | None = None) -> Path:
-    if start is None:
-        start = Path(__file__).resolve()
-    here = start if start.is_dir() else start.parent
-    for cand in [here, *here.parents]:
-        if (cand / "AGENTS.md").is_file() and (cand / "design").is_dir():
-            return cand
-    cwd = Path.cwd()
-    if (cwd / "AGENTS.md").is_file() and (cwd / "design").is_dir():
-        return cwd
-    raise SystemExit("FAIL  run from the WhatDwellsBelow repo root")
+    try:
+        return agent_log.repo_root(start)
+    except FileNotFoundError:
+        raise SystemExit("FAIL  run from the WhatDwellsBelow repo root")
+
+
+def _shown(path: Path) -> str:
+    try:
+        return agent_log.rel(agent_log.repo_root(), path)
+    except FileNotFoundError:
+        return Path(path).as_posix()
 
 
 def read_text(path: Path) -> str:
     if not path.is_file():
         raise SystemExit(f"FAIL  missing {path.as_posix()}")
-    return path.read_text(encoding="utf-8")
+    return md.read_text(path)
 
 
 def write_text(path: Path, text: str) -> None:
     if path.suffix == ".gd":
         text = _gd_tabs(text)
     _py_ok(path, text)
-    md.write_utf8(path, text, mkdir=True)
-    print("  wrote %s (%d bytes)" % (path.as_posix(), path.stat().st_size))
+    if DRY:
+        print("  would write %s (%d bytes)" % (_shown(path), len(text.encode("utf-8"))))
+        return
+    md.write_text(path, text, eol=EOL, mkdir=True)
+    print("  wrote %s (%d bytes)" % (_shown(path), path.stat().st_size))
 
 
 def _variants(old: str) -> list[str]:
@@ -143,21 +167,10 @@ def replace_once_any(text: str, olds: list[str], new: str, where: str) -> str:
 
 def func_span(text: str, name: str) -> tuple[int, int]:
     """Line range [start, end) for column-0 func name( / static func name(."""
-    lines = text.splitlines(keepends=True)
-    start = -1
-    for i, ln in enumerate(lines):
-        if ln.startswith("static func " + name + "(") or ln.startswith("func " + name + "("):
-            start = i
-            break
-    if start < 0:
+    try:
+        return gd_lib.func_span(text, name)
+    except ValueError:
         raise SystemExit(f"FAIL  func {name} missing")
-    end = start + 1
-    while end < len(lines):
-        ln = lines[end]
-        if ln.startswith("func ") or ln.startswith("static func "):
-            break
-        end += 1
-    return start, end
 
 
 def replace_func(path: Path, name: str, new_src: str) -> None:
@@ -296,12 +309,7 @@ def drop_table_column(path: Path, header: str) -> None:
 
 def next_label(root: Path | None = None) -> str:
     """Baked version.json label with patch + 1. Ignore stamp commits."""
-    root = repo_root(root)
-    raw = json.loads((root / "scripts/data/version.json").read_text(encoding="utf-8"))
-    epoch = int(raw["epoch"])
-    series = int(raw["series"])
-    patch = int(raw["patch"])
-    return f"{epoch}.{series}.{patch + 1}"
+    return repo_lib.next_label(repo_root(root))
 
 
 def _ensure_summary(text: str, summary: str) -> tuple[str, bool]:
@@ -372,7 +380,7 @@ JOB_SCRIPTS = {
     "load-timing": "run_load_timing.ps1",
     "dungeon-load-timing": "run_dungeon_load_timing.ps1",
     "smokes": "run_smokes.ps1",
-}
+}  # stems; run_prove() picks the .py twin when it exists, else the .ps1
 
 
 def out(text: str) -> None:
@@ -392,17 +400,16 @@ def compile_broke(body: str) -> bool:
 
 
 def dump_job(root: Path | None, job: str, script: str | None = None) -> tuple[int, str]:
-    """Run a tools/*.ps1 prove script, print its summary.txt body, return (rc, body)."""
+    """Run a prove runner (tools/<stem>.py if it exists, else the .ps1), print its summary.txt body, return (rc, body)."""
     root = repo_root(root)
     name = script or JOB_SCRIPTS.get(job)
     if not name:
         raise SystemExit(f"FAIL  unknown prove job {job!r}")
-    proc = subprocess.run(
-        ["powershell", "-File", str(root / "tools" / name)],
-        cwd=str(root),
-        capture_output=True,
-    )
-    hits = sorted(
+    py = root / "tools" / (Path(name).stem + ".py")
+    cmd = [sys.executable, str(py)] if py.is_file() else ["powershell", "-File", str(root / "tools" / name)]
+    proc = subprocess.run(cmd, cwd=str(root), capture_output=True)
+    exact = root / "_logs" / job / "summary.txt"
+    hits = [exact] if exact.is_file() else sorted(
         (
             p
             for p in (root / "_logs").rglob("summary.txt")
@@ -431,3 +438,109 @@ def dump_job(root: Path | None, job: str, script: str | None = None) -> tuple[in
             out("\n".join(extra))
             body = body + "\n" + "\n".join(extra)
     return int(proc.returncode), body
+
+
+def _arg_text(inline: str | None, file: str | None, what: str) -> str:
+    if file:
+        return md.read_text(file)
+    if inline is None:
+        raise SystemExit(f"FAIL  need --{what} or --{what}-file")
+    return inline.replace("\\n", "\n") if "\\n" in inline and "\n" not in inline else inline
+
+
+def _run_op(root: Path, op: dict) -> None:
+    kind = op["op"]
+    path = root / op["file"] if "file" in op else None
+    if kind == "replace":
+        patch_file(path, op["old"], op["new"])
+    elif kind == "ensure-line":
+        ensure_line(path, op["line"], op.get("after"))
+    elif kind == "set-read-when":
+        set_read_when(path, op["value"])
+    elif kind == "changelog":
+        write_changelog(root, list(op["bullets"]), op.get("label"), op.get("summary"))
+    elif kind == "write":
+        write_text(path, op["text"])
+    elif kind == "replace-func":
+        replace_func(path, op["name"], op["src"])
+    elif kind == "upsert-func":
+        upsert_func(path, op["name"], op["src"])
+    else:
+        raise SystemExit(f"FAIL  unknown op {kind!r} (replace, ensure-line, set-read-when, changelog, write, replace-func, upsert-func)")
+
+
+def _write_cmd(root: Path, args: argparse.Namespace) -> None:
+    body = base64.b64decode(args.b64) if args.b64 is not None else sys.stdin.buffer.read()
+    if body.startswith(b"\xef\xbb\xbf"):
+        body = body[3:]
+    path = Path(args.file)
+    path = path if path.is_absolute() else root / path
+    text = body.decode("utf-8")
+    if args.append and path.is_file():
+        text = read_text(path).rstrip("\n") + "\n" + text
+    if DRY:
+        print("  would write %s (%d bytes)" % (_shown(path), len(text.encode("utf-8"))))
+        return
+    md.write_text(path, text, eol=EOL, bom=True if args.bom else None, mkdir=True)
+    print("  wrote %s (%d bytes)" % (_shown(path), path.stat().st_size))
+
+
+def main(argv: list[str] | None = None) -> int:
+    global DRY, EOL
+    ap = agent_log.std_parser("Idempotent text/doc edits without a scratch file.", writes=True)
+    ap.add_argument("--eol", choices=("keep", "crlf", "lf"), default="keep", help="Line ending for written files (default keep the file's own).")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    s = sub.add_parser("replace", help="Replace the first occurrence (idempotent).")
+    s.add_argument("file"); s.add_argument("--old"); s.add_argument("--old-file"); s.add_argument("--new"); s.add_argument("--new-file")
+    s = sub.add_parser("ensure-line", help="Add a line if missing.")
+    s.add_argument("file"); s.add_argument("--line", required=True); s.add_argument("--after")
+    s = sub.add_parser("set-read-when", help="Set the 'Read when:' line.")
+    s.add_argument("file"); s.add_argument("value")
+    s = sub.add_parser("changelog", help="Add bullets to design/changelog/<label>.md.")
+    s.add_argument("--bullet", action="append", required=True); s.add_argument("--label"); s.add_argument("--summary")
+    sub.add_parser("next-label", help="Print the next changelog label.")
+    s = sub.add_parser("write", help="Write a file from stdin or --b64 (BOM stripped, EOL kept).")
+    s.add_argument("file"); s.add_argument("--b64"); s.add_argument("--bom", action="store_true"); s.add_argument("--append", action="store_true")
+    s = sub.add_parser("apply", help="Run a JSON plan: {\"ops\": [{op, file, ...}], \"check\": true} or a bare list.")
+    s.add_argument("plan")
+    sub.add_parser("check", help="Run tools/check_load_graph.py.")
+    args = ap.parse_args(argv)
+    DRY, EOL = bool(args.dry_run), args.eol
+    root = agent_log.resolve_root(args)
+    try:
+        if args.cmd == "replace":
+            patch_file(root / args.file, _arg_text(args.old, args.old_file, "old"), _arg_text(args.new, args.new_file, "new"))
+        elif args.cmd == "ensure-line":
+            ensure_line(root / args.file, args.line, args.after)
+        elif args.cmd == "set-read-when":
+            set_read_when(root / args.file, args.value)
+        elif args.cmd == "changelog":
+            write_changelog(root, args.bullet, args.label, args.summary)
+        elif args.cmd == "next-label":
+            label = next_label(root)
+            print(f"next={label}")
+            return agent_log.emit_result("INFO", next=label)
+        elif args.cmd == "write":
+            _write_cmd(root, args)
+        elif args.cmd == "apply":
+            plan = json.loads(md.read_text(args.plan))
+            ops = plan["ops"] if isinstance(plan, dict) else plan
+            for op in ops:
+                _run_op(root, op)
+            if isinstance(plan, dict) and plan.get("check") and not DRY:
+                if run_checker(root) != 0:
+                    return agent_log.emit_result("FAIL", cmd="apply", ops=len(ops), checker="FAIL")
+            return agent_log.emit_result("PASS", cmd="apply", ops=len(ops), dry_run=DRY)
+        elif args.cmd == "check":
+            rc = run_checker(root)
+            return agent_log.emit_result("PASS" if rc == 0 else "FAIL", cmd="check", checker="PASS" if rc == 0 else "FAIL")
+    except SystemExit as exc:
+        if isinstance(exc.code, str):
+            print("error: " + re.sub(r"^FAIL\s+", "", exc.code), file=sys.stderr)
+            return agent_log.emit_result("FAIL", cmd=args.cmd)
+        raise
+    return agent_log.emit_result("PASS", cmd=args.cmd, dry_run=DRY)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

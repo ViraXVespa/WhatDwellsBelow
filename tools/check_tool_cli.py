@@ -22,6 +22,7 @@ import agent_log
 import repo_lib
 
 MEDIA_IMPORTS = ("PIL", "numpy", "cv2", "wave", "scipy")
+EXEMPT_RESULT = {"agent_log", "wdb_scratch_server"}  # run helper itself; long-running HTTP server
 WRITERS = {
     "doc_patch", "patch_code_map", "code_map", "patch_tunables", "tunables", "build_changelog",
     "week_pin", "write_utf8_file", "list_unused_funcs", "bot_opt", "split_funcs", "facade_requal",
@@ -49,6 +50,11 @@ def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int]) -> N
         tally["libs"] += 1
         return
     tally["checked"] += 1
+    if src[:400].lstrip("#!/usr/bin/env python3\n ").startswith('"""Shim'):
+        first = src.splitlines()[0]
+        if first.strip() != "#!/usr/bin/env python3":
+            bad.append(f"SHEBANG {path.name}: first line must be #!/usr/bin/env python3")
+        return
     kind = classify(src)
     first = src.splitlines()[0] if src else ""
     if first.strip() != "#!/usr/bin/env python3":
@@ -63,8 +69,8 @@ def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int]) -> N
     if kind == "ops":
         if "--root" not in src and "std_parser" not in src:
             bad.append(f"ROOT    {path.name}: ops tool without --root")
-        if "agent_log" not in src:
-            bad.append(f"RESULT  {path.name}: ops tool does not use agent_log (RESULT line / summary)")
+        if name not in EXEMPT_RESULT and not re.search(r"agent_log\.(finish|emit_result|result_line)\(", src):
+            bad.append(f"RESULT  {path.name}: ops tool must end with agent_log.finish/emit_result (final RESULT line)")
     if name in WRITERS and "--dry-run" not in src and "std_parser" not in src:
         bad.append(f"DRYRUN  {path.name}: writer without --dry-run")
     if "writes=True" not in src and name in WRITERS and "--dry-run" not in src:

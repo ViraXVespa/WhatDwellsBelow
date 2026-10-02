@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+"""design/tunables.md CLI: get, set (folds list_tunable and patch_tunables).
+
+    python3 tools/tunables.py get --key <key-or-alias>
+    python3 tools/tunables.py set --key <key-or-alias> --set "new Live cell" [--dry-run]
+
+Logic lives in tunables_lib. The two old script names stay as shims for one release.
+Summaries: _logs/tunable-row/ and _logs/tunable-patch/.
+"""
+from __future__ import annotations
+
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+import md_format_lib as md
+import tunables_lib as tl
+
+
+def _head(title: str, *extra: str) -> list[str]:
+    return [f"tunable {title} {datetime.now(timezone.utc).isoformat()}", "root=.", *extra]
+
+
+def cmd_get(root: Path, args) -> int:
+    path = root / "design" / "tunables.md"
+    lines = _head("row", f"key={args.key}")
+    if not path.is_file():
+        return agent_log.finish("tunable-row", root, "\n".join(lines), "FAIL", args=args, matches=0, error="missing-tunables")
+    hits = tl.find_hits(tl.parse_hits(md.read_text(path)), args.key)
+    lines += [f"matches={len(hits)}", "measure=parse tunables tables; do not read the rest of the file", ""]
+    if not hits:
+        lines.append("NO_ROW")
+    for hit in hits:
+        lines += tl.format_hit(hit) + [""]
+    return agent_log.finish("tunable-row", root, "\n".join(lines), "PASS" if hits else "FAIL", args=args,
+                            echo=f"matches={len(hits)}", matches=len(hits))
+
+
+def cmd_set(root: Path, args) -> int:
+    path = root / "design" / "tunables.md"
+    lines = _head("patch", f"key={args.key}", f"set={args.value}")
+
+    def end(status: str, echo: str | None = None, **kv) -> int:
+        return agent_log.finish("tunable-patch", root, "\n".join(lines), status, args=args, echo=echo, **kv)
+
+    if not path.is_file():
+        return end("FAIL", changed=0, error="missing-tunables")
+    raw = md.read_text(path)
+    hits = tl.find_hits(tl.parse_hits(raw), args.key)
+    lines.append(f"matches={len(hits)}")
+    if len(hits) != 1:
+        lines.append("sections=" + ", ".join(h.section for h in hits))
+        return end("FAIL", changed=0, error="no-row" if not hits else "ambiguous")
+    hit = hits[0]
+    lines.extend(tl.format_hit(hit))
+    if hit.live_cell == args.value:
+        return end("PASS", "changed=0", changed=0, skipped="already")
+    file_lines = raw.splitlines(keepends=True)
+    file_lines[hit.index] = tl.set_live_cell(file_lines[hit.index], hit.live_col, args.value)
+    if not args.dry_run:
+        md.write_text(path, md.join_lines_keep_trailing(raw, file_lines))
+    lines += [f"live_was={hit.live_cell}", f"live_now={args.value}", "measure=mutate one tunables Live cell; do not read the rest of the file"]
+    return end("PASS", f"changed=1 live={args.value}" + (" (dry-run)" if args.dry_run else ""), changed=1, dry_run=args.dry_run)
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("Read or patch design/tunables.md rows.", writes=True, json_out=True)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    s = sub.add_parser("get", help="Print one tunables row.")
+    s.add_argument("--key", required=True, help="Tunable key or unique alias")
+    s = sub.add_parser("set", help="Patch one Live cell.")
+    s.add_argument("--key", required=True, help="Tunable key or unique alias")
+    s.add_argument("--set", dest="value", required=True, help="New Live cell text")
+    for name in ("get", "set"):
+        sub.choices[name].add_argument("--root", default=None, help="Repo root (default: auto).", dest="root_sub")
+        sub.choices[name].add_argument("--json", dest="json_sub", action="store_true")
+    sub.choices["set"].add_argument("--dry-run", dest="dry_sub", action="store_true", help="Print what would change; write nothing.")
+    args = ap.parse_args(argv)
+    args.root = getattr(args, "root_sub", None) or args.root
+    args.json = args.json or getattr(args, "json_sub", False)
+    args.dry_run = args.dry_run or getattr(args, "dry_sub", False)
+    root = agent_log.resolve_root(args)
+    return {"get": cmd_get, "set": cmd_set}[args.cmd](root, args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

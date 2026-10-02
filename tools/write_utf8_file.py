@@ -1,65 +1,32 @@
 #!/usr/bin/env python3
-"""Write a UTF-8 text file without putting the body through PowerShell expansion.
+"""Shim (one release): same as `python3 tools/doc_patch.py write FILE [--b64 S] [--bom] [--append]`.
 
-Preferred (agents on Windows):
-  @'
-  ...body...
-  '@ | python tools/write_utf8_file.py --path path/to/out.py
-
-  # or base64 (safe in single-quoted PS strings):
-  python tools/write_utf8_file.py --path path/to/out.py --b64 '....'
-
-Options:
-  --bom     prepend a single UTF-8 BOM (use when replacing a BOM'd design doc)
-  --append  append instead of overwrite
-
-Ephemeral agent scripts should go under _logs/agent-py/ and be run via
-tools/run_agent_py.ps1 (deletes the script after run by default).
+Writes UTF-8 text from stdin or --b64 without shell expansion. Keeps the file's own
+line ending (CRLF for new files). Flags: --path (required), --b64, --bom, --append.
 """
 from __future__ import annotations
 
-import argparse
-import base64
 import sys
 from pathlib import Path
 
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
 
-def main() -> int:
-    ap = argparse.ArgumentParser(description="Write UTF-8 text from stdin or --b64")
+import agent_log
+import doc_patch
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("Write UTF-8 text from stdin or --b64.", writes=True)
     ap.add_argument("--path", required=True, help="Output path (repo-relative or absolute)")
     ap.add_argument("--b64", default=None, help="Base64 body instead of stdin")
     ap.add_argument("--bom", action="store_true", help="Prepend UTF-8 BOM")
     ap.add_argument("--append", action="store_true", help="Append instead of overwrite")
-    args = ap.parse_args()
-
-    out = Path(args.path)
-    if args.b64 is not None:
-        body = base64.b64decode(args.b64)
-    else:
-        body = sys.stdin.buffer.read()
-
-    # If stdin was text with a BOM already, keep at most one BOM when --bom set
-    if body.startswith(b"\xef\xbb\xbf"):
-        body = body[3:]
-
-    out.parent.mkdir(parents=True, exist_ok=True)
-    # normalize CRLF for repo text writes
-    if b"\x00" not in body:
-        body = body.replace(b"\r\n", b"\n").replace(b"\r", b"\n").replace(b"\n", b"\r\n")
-    prefix = b"\xef\xbb\xbf" if args.bom else b""
-    if args.append and out.is_file():
-        existing = out.read_bytes()
-        if existing.startswith(b"\xef\xbb\xbf"):
-            # keep existing BOM; do not double
-            data = existing + body
-        else:
-            data = prefix + existing + body if args.bom else existing + body
-        out.write_bytes(data)
-    else:
-        out.write_bytes(prefix + body)
-
-    print(f"wrote {out} bytes={out.stat().st_size} bom={args.bom} append={args.append}")
-    return 0
+    args = ap.parse_args(argv)
+    cmd = ["write", args.path] + (["--b64", args.b64] if args.b64 is not None else []) + (["--bom"] if args.bom else []) + (["--append"] if args.append else [])
+    pre = (["--root", args.root] if args.root else []) + (["--dry-run"] if args.dry_run else [])
+    return doc_patch.main(pre + cmd)
 
 
 if __name__ == "__main__":
