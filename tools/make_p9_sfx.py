@@ -2,62 +2,46 @@
 """Appendix E remaining SFX + gendered VO stand-ins."""
 from __future__ import annotations
 
-import math
-import struct
-import wave
+import sys
 from pathlib import Path
 
-OUT = Path("assets/audio")
-OUT.mkdir(parents=True, exist_ok=True)
-SR = 22050
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+import audio_lib as al
+
+OUT: Path = Path("assets/audio")
+ROOT: Path = Path(".")
+WRITTEN: list[str] = []
 
 
 def write(name: str, samples: list[float]) -> None:
     path = OUT / f"{name}.wav"
-    with wave.open(str(path), "w") as w:
-        w.setnchannels(1)
-        w.setsampwidth(2)
-        w.setframerate(SR)
-        frames = b"".join(struct.pack("<h", int(max(-1.0, min(1.0, s)) * 30000)) for s in samples)
-        w.writeframes(frames)
-    print("sfx", path)
+    al.write_wav(path, samples, 30000)
+    WRITTEN.append(path.name)
+    print("sfx", agent_log.rel(ROOT, path))
 
 
 def tone(freq: float, dur: float, vol: float = 0.35, decay: bool = True) -> list[float]:
-    n = int(SR * dur)
-    out = []
-    for i in range(n):
-        t = i / SR
-        env = (1.0 - t / dur) ** 0.7 if decay else 1.0
-        out.append(vol * env * math.sin(2 * math.pi * freq * t))
-    return out
+    return al.sine(freq, dur, vol, decay, 0.7)
 
 
-def noise(dur: float, vol: float = 0.2, seed: int = 1) -> list[float]:
-    n = int(SR * dur)
-    x = seed
-    out = []
-    for i in range(n):
-        x = (x * 1103515245 + 12345) % 2**31
-        env = 1.0 - i / n
-        out.append(vol * env * ((x / 2**30) - 1.0))
-    return out
-
-
-def mix(*parts: list[float]) -> list[float]:
-    n = max(len(p) for p in parts)
-    out = [0.0] * n
-    for p in parts:
-        for i, s in enumerate(p):
-            out[i] += s
-    return out
+noise = al.noise
+mix = al.mix
 
 
 def vo(base: float, dur: float, vol: float) -> list[float]:
     return mix(tone(base, dur, vol), tone(base * 1.5, dur, vol * 0.35), noise(dur, 0.06, int(base)))
 
 
-if __name__ == "__main__":
+def main(argv: list[str] | None = None) -> int:
+    global OUT, ROOT
+    ap = agent_log.std_parser("Appendix E remaining SFX + gendered VO stand-ins.")
+    args = ap.parse_args(argv)
+    ROOT = agent_log.resolve_root(args)
+    OUT = ROOT / "assets" / "audio"
     write("p9_potion", mix(tone(520, 0.12, 0.28), tone(780, 0.16, 0.22)))
     write("p9_food", mix(tone(180, 0.18, 0.3), tone(240, 0.22, 0.18)))
     write("p9_wood", mix(tone(140, 0.1, 0.32), noise(0.12, 0.22, 9)))
@@ -72,3 +56,8 @@ if __name__ == "__main__":
     write("p9_hurk_male", mix(vo(110, 0.32, 0.45), noise(0.28, 0.12, 4)))
     write("p9_hurk_female", mix(vo(175, 0.32, 0.42), noise(0.28, 0.1, 5)))
     write("p9_level", mix(tone(440, 0.18, 0.28), tone(660, 0.22, 0.2), tone(880, 0.26, 0.14)))
+    return agent_log.emit_result("PASS", written=len(WRITTEN), dir="assets/audio")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
