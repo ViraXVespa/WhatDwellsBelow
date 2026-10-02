@@ -1,23 +1,28 @@
 #!/usr/bin/env python3
-"""Qualify moved symbols in a facade after a size split (stdlib only).
+"""Qualify names that moved to sibling helper modules after a size split (stdlib only).
 
-  python tools/facade_requal.py scripts/x.gd --sym DIRS=Grid --sym _thin_arr=Grid
-  python tools/facade_requal.py scripts/x.gd --sym DIRS=Grid --dry-run
-  python tools/facade_requal.py scripts/x.gd --sym DIRS=Grid --check
+  python tools/facade_requal.py scripts/x.gd            # auto: rewrite
+  python tools/facade_requal.py scripts/x.gd --dry-run  # list code vs comment/string matches
+  python tools/facade_requal.py scripts/x.gd --check    # change nothing; exit 1 if a problem is left
 
-Each NAME=Mod rewrites bare NAME to Mod.NAME (not after a dot or word char).
-Use NAME()=Mod for calls only when a local variable shares the name.
-Only CODE matches are rewritten; matches inside comments or strings are
-listed separately (add --all to rewrite them too). Keeps BOM and line endings.
---check changes nothing: it lists bare code matches left in FILE (exit 1 if any)
-and other scripts/**/*.gd that call X.NAME (they need NAME kept on the facade).
+Auto mode: the modules are FILE's own `const Mod := preload("res://...")` lines for scripts in
+the same folder. A name used bare in FILE but not defined in FILE, and defined (func, const,
+or top-level var) in exactly one such module, becomes Mod.name. Functions match call sites
+only (`name(`), so a local variable of the same name is safe; consts and vars match any bare
+use. Only CODE is rewritten; comment/string matches are listed (--all rewrites them too).
+--check also lists BAD-CALLER lines: other scripts that call Alias.name on FILE for a name
+that was defined in FILE at git HEAD but is gone now (a facade delegate is missing).
+Manual: --sym NAME=Mod or NAME()=Mod (calls only) skips the auto lookup. Keeps BOM and EOLs.
 """
 from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
+
+DEF = re.compile(r"^(?:static\s+)?func\s+(\w+)|^const\s+(\w+)|^(?:static\s+)?var\s+(\w+)", re.M)
 
 
 def kinds(text: str) -> list[str]:
@@ -53,14 +58,19 @@ def kinds(text: str) -> list[str]:
     return out
 
 
-def find(text: str, name: str, cls: list[str]) -> dict[str, list[int]]:
-    """NAME matches any bare use; NAME() matches calls only (skips locals of the same name)."""
-    call = name.endswith("()")
-    name = name[:-2] if call else name
+def defs(text: str) -> dict[str, str]:
+    """name -> 'f' (func) or 'v' (const/var), top level only."""
+    d = {}
+    for m in DEF.finditer(text):
+        d[m.group(1) or m.group(2) or m.group(3)] = "f" if m.group(1) else "v"
+    return d
+
+
+def find(text: str, name: str, cls: list[str], call: bool) -> dict[str, list[int]]:
     hits: dict[str, list[int]] = {"c": [], "m": [], "s": []}
     for m in re.finditer(r"(?<![\w.])" + re.escape(name) + (r"(?=\()" if call else r"\b"), text):
-        line_start = text.rfind("\n", 0, m.start()) + 1
-        if re.match(r"\s*(static\s+)?func\s+$", text[line_start:m.start()]):
+        ls = text.rfind("\n", 0, m.start()) + 1
+        if re.match(r"\s*(static\s+)?(func|var|const)\s+$", text[ls:m.start()]):
             continue
         hits[cls[m.start()]].append(m.start())
     return hits
@@ -68,6 +78,63 @@ def find(text: str, name: str, cls: list[str]) -> dict[str, list[int]]:
 
 def line_of(text: str, pos: int) -> int:
     return text.count("\n", 0, pos) + 1
+
+
+def project_root(p: Path) -> Path:
+    for d in [p.resolve().parent, *p.resolve().parents]:
+        if (d / "project.godot").is_file():
+            return d
+    return Path.cwd()
+
+
+def modules(text: str, path: Path, root: Path) -> dict[str, dict[str, str]]:
+    mods = {}
+    for m in re.finditer(r'^const\s+(\w+)\s*(?::[^=]*)?:?=\s*preload\("res://([^"]+)"\)', text, re.M):
+        f = root / m.group(2)
+        if f.parent.resolve() == path.resolve().parent and f.is_file() and f.resolve() != path.resolve():
+            mods[m.group(1)] = defs(f.read_text(encoding="utf-8-sig"))
+    return mods
+
+
+def auto_syms(text: str, path: Path, root: Path) -> tuple[list[tuple[str, str, bool]], list[str]]:
+    own, mods = defs(text), modules(text, path, root)
+    owners: dict[str, list[str]] = {}
+    for mod, d in mods.items():
+        for n in d:
+            if n not in own:
+                owners.setdefault(n, []).append(mod)
+    cls = kinds(text)
+    syms, notes = [], []
+    for n, mm in sorted(owners.items()):
+        kind = {mods[m][n] for m in mm}
+        call = kind == {"f"}
+        if not find(text, n, cls, call)["c"] and not any(find(text, n, cls, call)[k] for k in "ms"):
+            continue
+        if len(mm) > 1:
+            notes.append(f"ambiguous {n}: {', '.join(mm)} (use --sym)")
+            continue
+        syms.append((n, mm[0], call))
+    return syms, notes
+
+
+def bad_callers(text: str, path: Path, root: Path) -> list[str]:
+    rel = path.resolve().relative_to(root).as_posix()
+    try:
+        old = subprocess.run(["git", "show", f"HEAD:{rel}"], cwd=root, capture_output=True, check=True).stdout.decode("utf-8-sig")
+    except Exception:
+        return []
+    gone = set(defs(old)) - set(defs(text))
+    out = []
+    alias = re.compile(r'(?:const|var)\s+(\w+)\s*(?::[^=]*)?:?=\s*(?:preload|load)\("res://' + re.escape(rel) + r'"\)')
+    for f in sorted((root / "scripts").rglob("*.gd")):
+        if f.resolve() == path.resolve():
+            continue
+        t = f.read_text(encoding="utf-8-sig", errors="replace")
+        for a in {m.group(1) for m in alias.finditer(t)}:
+            for m in re.finditer(r"\b" + re.escape(a) + r"\.(\w+)", t):
+                if m.group(1) in gone:
+                    out.append(f"BAD-CALLER {f.relative_to(root)}:{line_of(t, m.start())}: {a}.{m.group(1)}")
+    return out
 
 
 def main() -> int:
@@ -80,39 +147,37 @@ def main() -> int:
     ns = p.parse_args()
     path = Path(ns.file)
     text = path.read_bytes().decode("utf-8")
-    syms = []
-    for spec in ns.sym:
-        if "=" not in spec:
-            print(f"bad --sym {spec!r}", file=sys.stderr)
-            return 2
-        syms.append(tuple(spec.split("=", 1)))
+    root = project_root(path)
+    if ns.sym:
+        syms = []
+        for spec in ns.sym:
+            if "=" not in spec:
+                print(f"bad --sym {spec!r}", file=sys.stderr)
+                return 2
+            n, mod = spec.split("=", 1)
+            syms.append((n[:-2] if n.endswith("()") else n, mod, n.endswith("()")))
+        notes: list[str] = []
+    else:
+        syms, notes = auto_syms(text, path, root)
+    for n in notes:
+        print("note " + n)
     if ns.check:
-        cls = kinds(text)
-        left = 0
-        for name, _ in syms:
-            h = find(text, name, cls)
+        cls, bad = kinds(text), 0
+        for n, mod, call in syms:
+            h = find(text, n, cls, call)
             for pos in h["c"]:
-                left += 1
-                print(f"BARE {path}:{line_of(text, pos)}: {name}")
-            for k, label in (("m", "comment"), ("s", "string")):
-                for pos in h[k]:
-                    print(f"note {label} {path}:{line_of(text, pos)}: {name}")
-        names = {n[:-2] if n.endswith("()") else n for n, _ in syms}
-        root = Path(__file__).resolve().parent.parent / "scripts"
-        for f in sorted(root.rglob("*.gd")):
-            if f.resolve() == path.resolve():
-                continue
-            t = f.read_text(encoding="utf-8-sig", errors="replace")
-            for n in names:
-                for m in re.finditer(r"\w\." + re.escape(n) + r"\b", t):
-                    print(f"caller {f.relative_to(root.parent)}:{line_of(t, m.start())}: {m.group(0)}")
-        print(f"check: bare={left}")
-        return 1 if left else 0
-    for name, mod in syms:
+                bad += 1
+                print(f"BARE {path}:{line_of(text, pos)}: {n} (use {mod}.{n})")
+        for line in bad_callers(text, path, root):
+            bad += 1
+            print(line)
+        print(f"check: problems={bad}")
+        return 1 if bad else 0
+    for n, mod, call in syms:
         cls = kinds(text)
-        h = find(text, name, cls)
+        h = find(text, n, cls, call)
         todo = h["c"] + (h["m"] + h["s"] if ns.all else [])
-        print(f"{name} -> {mod}.{name}: code={len(h['c'])} comment={len(h['m'])} string={len(h['s'])}")
+        print(f"{n} -> {mod}.{n}: code={len(h['c'])} comment={len(h['m'])} string={len(h['s'])}")
         for k, label in (("m", "comment"), ("s", "string")):
             for pos in h[k]:
                 print(f"  {label} line {line_of(text, pos)}{'' if ns.all else ' (left as is)'}")
