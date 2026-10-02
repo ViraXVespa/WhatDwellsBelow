@@ -12,6 +12,11 @@
     {"op": "assert", "target": "host.ui.mode", "equals": "vendor"},
     {"op": "shot", "name": "vendor", "texts": true},
     {"op": "press", "pad": "B"},
+    {"op": "set", "target": "App.prog.quests_offered", "value": [
+      {"kind": "kill", "title": "Cull the bat", "type": "bat", "need": 5, "have": 0, "reward": "xp"},
+      {"kind": "ore", "title": "Mail 8 ore", "need": 8, "have": 0, "reward": "gold"},
+      {"kind": "fetch", "title": "Retrieve a guild cache from floor 1", "floor": 1, "have": 0, "need": 1, "reward": "gear"}
+    ]},
     {"op": "interact", "kind": "quest_board"},
     {"op": "assert", "target": "host.ui.mode", "equals": "quest"},
     {"op": "shot", "name": "quest-board"},
