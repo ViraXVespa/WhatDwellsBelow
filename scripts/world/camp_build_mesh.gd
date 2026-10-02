@@ -2,9 +2,9 @@ extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 
-const WrapShader := preload("res://scripts/graphics/wrap_shader.gd")
-
 const GroundShader := preload("res://scripts/graphics/ground_shader.gd")
+const Mat := preload("res://scripts/world/camp_build_mesh_mat.gd")
+const Tent := preload("res://scripts/world/camp_build_mesh_tent.gd")
 
 const GROUND_W := 36
 
@@ -18,14 +18,7 @@ const GRASS_PAD := 16
 
 const ROOF_EAVE := 0.42
 
-const AWNING_DEPTH := 0.48
-
-const AWNING_SLOPE := 0.10
-
-const AWNING_VALANCE := 0.16
-
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
-const TILE_W := 3.2
 
 const HALL_SIZE := Vector3(5.6, 3.4, 4.2)
 
@@ -40,68 +33,16 @@ const PATH_Z := 15.0
 static func roof_mat(
 	dim: Vector2,
 	world_min: Vector3,
-	tile: float = TILE_W,
+	tile: float = Mat.TILE_W,
 	uv_off: Vector2 = Vector2.ZERO
 ) -> Material:
-	var mat := wrap_mat(
-		"res://assets/tiles/plaza_roof.png",
-		dim,
-		world_min,
-		Color(0.55, 0.14, 0.08),
-		Color(1.0, 1.0, 1.0),
-		false,
-		true,
-		tile,
-		uv_off
-	)
-	if mat is ShaderMaterial:
-		mat.set_shader_parameter("shade_use", 1.0)
-		mat.set_shader_parameter("shade_lo", 1.16)
-		mat.set_shader_parameter("shade_hi", 0.58)
-		var tile_px: float = tile if tile > 0.05 else 0.62
-		if tile_px > 0.7:
-			tile_px = 0.62
-		mat.set_shader_parameter("uv_scale", Vector2(dim.x / tile_px, dim.y / tile_px))
-	return mat
+	return Mat.roof_mat(dim, world_min, tile, uv_off)
+
 static func tarp_mat(dim: Vector2, world_min: Vector3) -> Material:
-
-	return wrap_mat(
-
-		"res://assets/tiles/plaza_tarp.png",
-
-		dim,
-
-		world_min,
-
-		Color(0.40, 0.46, 0.28),
-
-		Color.WHITE,
-
-		true,
-
-		false
-
-	)
+	return Mat.tarp_mat(dim, world_min)
 
 static func awning_mat(dim: Vector2, world_min: Vector3) -> Material:
-
-	return wrap_mat(
-
-		"res://assets/tiles/plaza_awning.png",
-
-		dim,
-
-		world_min,
-
-		Color(0.62, 0.22, 0.16),
-
-		Color.WHITE,
-
-		true,
-
-		false
-
-	)
+	return Mat.awning_mat(dim, world_min)
 
 static func wrap_mat(
 	path: String,
@@ -111,129 +52,28 @@ static func wrap_mat(
 	tint: Color,
 	single_sheet: bool = false,
 	russet: bool = false,
-	tile: float = TILE_W,
+	tile: float = Mat.TILE_W,
 	uv_off: Vector2 = Vector2.ZERO
 ) -> Material:
-	if not ResourceLoader.exists(path):
-		var fb := StandardMaterial3D.new()
-		fb.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-		fb.albedo_color = fallback
-		return fb
-	var src: Texture2D = load(path)
-	var mat := ShaderMaterial.new()
-	mat.shader = WrapShader.wrap_shader()
-	mat.set_shader_parameter("albedo_tex", src)
-	var use_tile: float = tile if tile > 0.05 else TILE_W
-	if single_sheet:
-		mat.set_shader_parameter("uv_scale", Vector2.ONE)
-		mat.set_shader_parameter("uv_off", Vector2.ZERO)
-	else:
-		mat.set_shader_parameter("uv_scale", Vector2(dim.x / use_tile, dim.y / use_tile))
-		mat.set_shader_parameter(
-			"uv_off",
-			Vector2(world_min.x / use_tile, world_min.z / use_tile) + uv_off
-		)
-	mat.set_shader_parameter("tint", Vector3(tint.r, tint.g, tint.b))
-	mat.set_shader_parameter("russet", 1.0 if russet else 0.0)
-	mat.set_shader_parameter("shade_use", 0.0)
-	mat.set_shader_parameter("shade_lo", 1.0)
-	mat.set_shader_parameter("shade_hi", 1.0)
-	return mat
+	return Mat.wrap_mat(path, dim, world_min, fallback, tint, single_sheet, russet, tile, uv_off)
+
 static func attach_awning(
 	body: Node3D,
 	box_size: Vector3,
-	depth: float = AWNING_DEPTH,
-	_slope: float = AWNING_SLOPE,
-	valance: float = AWNING_VALANCE,
+	depth: float = Tent.AWNING_DEPTH,
+	_slope: float = Tent.AWNING_SLOPE,
+	valance: float = Tent.AWNING_VALANCE,
 	_eave: float = 0.0,
 	inset_l: float = 0.0,
 	inset_r: float = 0.0
 ) -> void:
-	var x0: float = -box_size.x * 0.5 + inset_l
-	var x1: float = box_size.x * 0.5 - inset_r
-	var z_eave: float = box_size.z * 0.5
-	var z_hem: float = box_size.z * 0.5 + depth
-	var y_eave: float = box_size.y * 0.5
-	var y_hem: float = y_eave - valance
-	var tl := Vector3(x0, y_eave, z_eave)
-	var tr := Vector3(x1, y_eave, z_eave)
-	var bl := Vector3(x0, y_hem, z_eave)
-	var br := Vector3(x1, y_hem, z_eave)
-	var hl := Vector3(x0, y_hem, z_hem)
-	var hr := Vector3(x1, y_hem, z_hem)
-	var u0 := Vector2(0.0, 0.0)
-	var u1 := Vector2(1.0, 0.0)
-	var u2 := Vector2(1.0, 1.0)
-	var u3 := Vector2(0.0, 1.0)
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_quad(st, tl, tr, hr, hl, u0, u1, u2, u3)
-	_quad(st, tl, bl, br, tr, u0, u3, u2, u1)
-	st.generate_normals()
-	var built: ArrayMesh = st.commit()
-	var cloth := MeshInstance3D.new()
-	cloth.name = "Awning"
-	cloth.mesh = built
-	cloth.material_override = awning_mat(Vector2(maxf(x1 - x0, 0.2), depth + valance), Vector3.ZERO)
-	body.add_child(cloth)
-	_hit(body, built, "AwningHit")
-	var ends := SurfaceTool.new()
-	ends.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_tri(ends, tl, bl, hl, u0, u1, u2)
-	_tri(ends, tr, hr, br, u0, u2, u1)
-	ends.generate_normals()
-	var cap := MeshInstance3D.new()
-	cap.name = "AwningEnd"
-	cap.mesh = ends.commit()
-	var plain := StandardMaterial3D.new()
-	plain.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	plain.albedo_color = Color(0.72, 0.18, 0.12)
-	plain.cull_mode = BaseMaterial3D.CULL_DISABLED
-	cap.material_override = plain
-	body.add_child(cap)
-static func _quad(
+	Tent.attach_awning(body, box_size, depth, _slope, valance, _eave, inset_l, inset_r)
 
-	st: SurfaceTool,
+static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, tile: float, uv_off: Vector2) -> void:
+	Tent.gable_on(body, box_size, eave, rise, tile, uv_off)
 
-	p0: Vector3,
-
-	p1: Vector3,
-
-	p2: Vector3,
-
-	p3: Vector3,
-
-	t0: Vector2,
-
-	t1: Vector2,
-
-	t2: Vector2,
-
-	t3: Vector2
-
-) -> void:
-
-	_tri(st, p0, p1, p2, t0, t1, t2)
-
-	_tri(st, p0, p2, p3, t0, t2, t3)
-
-static func _tri(
-
-	st: SurfaceTool, p0: Vector3, p1: Vector3, p2: Vector3, t0: Vector2, t1: Vector2, t2: Vector2
-
-) -> void:
-
-	st.set_uv(t0)
-
-	st.add_vertex(p0)
-
-	st.set_uv(t1)
-
-	st.add_vertex(p1)
-
-	st.set_uv(t2)
-
-	st.add_vertex(p2)
+static func pitched_tarp(body: Node3D, box_size: Vector3, eave: float, _world_min: Vector3) -> void:
+	Tent.pitched_tarp(body, box_size, eave, _world_min)
 
 static func ground(host: Node3D) -> void:
 	var _fac = load("res://scripts/world/camp_build.gd")
@@ -319,73 +159,6 @@ static func grass_pad(
 static func guild_roofs(_host: Node3D) -> void:
 	pass
 
-static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, tile: float, uv_off: Vector2) -> void:
-	var wx: float = box_size.x * 0.5
-	var wz: float = box_size.z * 0.5
-	var hx: float = wx + eave
-	var hz: float = wz + eave
-	var y0: float = box_size.y * 0.5
-	var ridge: float = y0 + rise
-	var sl := Vector3(-hx, y0, hz)
-	var sr := Vector3(hx, y0, hz)
-	var nl := Vector3(-hx, y0, -hz)
-	var nr := Vector3(hx, y0, -hz)
-	var rl := Vector3(-hx, ridge, 0.0)
-	var rr := Vector3(hx, ridge, 0.0)
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_quad(st, rl, rr, sr, sl, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
-	_quad(st, rr, rl, nl, nr, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
-	st.generate_normals()
-	var built: ArrayMesh = st.commit()
-	var inst := MeshInstance3D.new()
-	inst.name = "Gable"
-	inst.mesh = built
-	var span: float = sqrt(hz * hz + rise * rise)
-	inst.material_override = roof_mat(Vector2(hx * 2.0, span), body.global_position, tile, uv_off)
-	body.add_child(inst)
-	_hit(body, built, "GableHit")
-	var ends := SurfaceTool.new()
-	ends.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_tri(ends, Vector3(-wx, y0, wz), Vector3(-wx, y0, -wz), Vector3(-wx, ridge, 0.0), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-	_tri(ends, Vector3(wx, y0, -wz), Vector3(wx, y0, wz), Vector3(wx, ridge, 0.0), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-	ends.generate_normals()
-	var end_mesh: ArrayMesh = ends.commit()
-	var cap := MeshInstance3D.new()
-	cap.name = "GableEnd"
-	cap.mesh = end_mesh
-	cap.material_override = _timber(Color(0.42, 0.28, 0.16))
-	body.add_child(cap)
-	_hit(body, end_mesh, "GableEndHit")
-static func pitched_tarp(body: Node3D, box_size: Vector3, eave: float, _world_min: Vector3) -> void:
-	var hx: float = box_size.x * 0.5 + eave
-	var hz: float = box_size.z * 0.5 + eave
-	var y_eave: float = box_size.y * 0.42
-	var ridge: float = y_eave + 0.92
-	var sl := Vector3(-hx, y_eave, hz)
-	var sr := Vector3(hx, y_eave, hz)
-	var nl := Vector3(-hx, y_eave, -hz)
-	var nr := Vector3(hx, y_eave, -hz)
-	var rl := Vector3(-hx, ridge, 0.0)
-	var rr := Vector3(hx, ridge, 0.0)
-	var drop: float = 0.22
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_quad(st, rl, rr, sr, sl, Vector2(0.0, 0.5), Vector2(1.0, 0.5), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
-	_quad(st, rr, rl, nl, nr, Vector2(1.0, 0.5), Vector2(0.0, 0.5), Vector2(0.0, 0.0), Vector2(1.0, 0.0))
-	_quad(st, sl, sr, sr + Vector3(0.0, -drop, 0.04), sl + Vector3(0.0, -drop, 0.04), Vector2(0.0, 0.82), Vector2(1.0, 0.82), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
-	st.generate_normals()
-	var built: ArrayMesh = st.commit()
-	var inst := MeshInstance3D.new()
-	inst.name = "StallPitch"
-	inst.mesh = built
-	inst.material_override = tarp_mat(Vector2(box_size.x, box_size.z), Vector3.ZERO)
-	body.add_child(inst)
-	_hit(body, built, "StallPitchHit")
-	_post(body, Vector3(-box_size.x * 0.42, y_eave, box_size.z * 0.42), box_size.y)
-	_post(body, Vector3(box_size.x * 0.42, y_eave, box_size.z * 0.42), box_size.y)
-	_post(body, Vector3(-box_size.x * 0.42, y_eave, -box_size.z * 0.42), box_size.y)
-	_post(body, Vector3(box_size.x * 0.42, y_eave, -box_size.z * 0.42), box_size.y)
 static func wall_box(body: Node3D, box_size: Vector3, col: Color) -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -430,44 +203,3 @@ static func wall_box(body: Node3D, box_size: Vector3, col: Color) -> void:
 	hit.name = "WallHit"
 	hit.shape = built.create_trimesh_shape()
 	body.add_child(hit)
-
-static func _hit(body: Node3D, built: ArrayMesh, label: String) -> void:
-	var hit := CollisionShape3D.new()
-	hit.name = label
-	hit.shape = built.create_trimesh_shape()
-	body.add_child(hit)
-
-static func _timber(col: Color) -> Material:
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_color = col
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	return mat
-
-static func _post(body: Node3D, top: Vector3, box_h: float) -> void:
-	var foot: float = -box_h * 0.5
-	var x: float = 0.08
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var a := Vector3(top.x - x, foot, top.z - x)
-	var b := Vector3(top.x + x, foot, top.z - x)
-	var c := Vector3(top.x + x, foot, top.z + x)
-	var d := Vector3(top.x - x, foot, top.z + x)
-	var e := Vector3(top.x - x, top.y, top.z - x)
-	var f := Vector3(top.x + x, top.y, top.z - x)
-	var g := Vector3(top.x + x, top.y, top.z + x)
-	var h := Vector3(top.x - x, top.y, top.z + x)
-	var u := Vector2.ZERO
-	_quad(st, d, c, g, h, u, u, u, u)
-	_quad(st, a, e, f, b, u, u, u, u)
-	_quad(st, a, d, h, e, u, u, u, u)
-	_quad(st, b, f, g, c, u, u, u, u)
-	st.generate_normals()
-	var built: ArrayMesh = st.commit()
-	var inst := MeshInstance3D.new()
-	inst.name = "StallPost"
-	inst.mesh = built
-	inst.material_override = _timber(Color(0.36, 0.22, 0.12))
-	body.add_child(inst)
-	_hit(body, built, "StallPostHit")
