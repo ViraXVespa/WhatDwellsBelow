@@ -10,8 +10,8 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
 | `audio_lib.py` | Placeholder audio helpers (`write_wav`, `write_pcm`, `sine`, `noise`, `mix`, `mix_norm`) behind the `make_*` audio tools; WAV output byte-identical | D | module docstring (no `--help`) | N |
-| `sprite_lib.py` | Shared sprite helpers (`dist`, `neighbors8`, `shrink_keyed`, `KEYED_CAP`) for the pack/key tools; variants stay in their tools | D | module docstring (no `--help`) | N |
-| `anim_review_lib.py` | Read helpers for the Animation Browser review tools. Allowlisted but only supports non-Bot tools. | D | module docstring (no `--help`) | Y |
+| `sprite_lib.py` | Shared sprite helpers (`dist`, `neighbors8`, `shrink_keyed`, `KEYED_CAP`, `chroma_alpha`, `flood_border`, `fill_pockets`, `fit_box`) for the pack/key tools; per-class `key()` rules stay in their tools | D | module docstring (no `--help`) | N |
+| `anim_review_lib.py` | Read helpers for the Animation Browser review tools, plus the shared pack/regen brief CLI and writer (`brief_args`, `load_with_missing`, `add_missing`, `write_brief`). Allowlisted but only supports non-Bot tools. | D | module docstring (no `--help`) | Y |
 | `anim_review_pack.py` | Build a Grok-readable pack brief from Animation Browser review.json | D | `--help` | N |
 | `anim_review_regen.py` | Build a Grok-readable regen brief from Animation Browser review.json | D | `--help` | N |
 | `anim_review_tree.py` | Build a wiped I2V test tree for every Regenerate clip in review.json | D | `--help` | N |

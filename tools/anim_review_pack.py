@@ -7,8 +7,6 @@ and sibling pack_*.py scripts can be tuned against both failure and success case
 
 from __future__ import annotations
 
-import argparse
-import json
 from collections import defaultdict
 
 import anim_review_lib as lib
@@ -104,11 +102,7 @@ def _md(repack: list[dict], good: list[dict], missing: list[str]) -> str:
         for row in good:
             lines.append(f"- `{row['key']}` frames={len(row['frames'])}")
         lines.append("")
-    if missing:
-        lines.extend(["## Missing review store", ""])
-        for line in missing:
-            lines.append(f"- {line}")
-        lines.append("")
+    lib.add_missing(lines, missing)
     lines.extend(
         [
             "## Tuning hint",
@@ -123,18 +117,8 @@ def _md(repack: list[dict], good: list[dict], missing: list[str]) -> str:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--review", type=lib.Path, default=lib.REVIEW_PATH)
-    ap.add_argument("--out-md", type=lib.Path, default=lib.REVIEW_DIR / "pack_brief.md")
-    ap.add_argument("--out-json", type=lib.Path, default=lib.REVIEW_DIR / "pack_brief.json")
-    args = ap.parse_args()
-
-    missing: list[str] = []
-    if not args.review.is_file():
-        missing.append(f"no review file at {args.review}")
-        review = {"v": 1, "clips": {}}
-    else:
-        review = lib.load_review(args.review)
+    args = lib.brief_args(agent_log.std_parser(__doc__), "pack_brief")
+    review, missing = lib.load_with_missing(args.review)
 
     rows = lib.clip_rows(review)
     repack = [r for r in rows if r["state"] == "repack"]
@@ -147,10 +131,7 @@ def main() -> int:
         "good": good,
         "missing": missing,
     }
-    lib.write_text(args.out_md, _md(repack, good, missing))
-    lib.write_text(args.out_json, json.dumps(payload, indent="\t"))
-    print(f"wrote {args.out_md}")
-    print(f"wrote {args.out_json}")
+    lib.write_brief(args, _md(repack, good, missing), payload)
     print(f"repack {len(repack)} good {len(good)}")
     return agent_log.emit_result("PASS", repack=len(repack), good=len(good), missing=len(missing))
 

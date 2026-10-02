@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import json
 import math
-from collections import deque
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
-from sprite_lib import neighbors8 as _neighbors8  # noqa: E402
+import sprite_lib  # noqa: E402
 
 MAGENTA = (255, 0, 255, 255)
 KEY_RGB = (255, 0, 255)
@@ -167,33 +166,7 @@ def _spill_map(arr: np.ndarray, bg: tuple[int, int, int]) -> np.ndarray:
 
 def _fill_pockets(mask: bytearray, distances: list[float], w: int, h: int) -> bytearray:
     """Grab enclosed chroma islands the border wand cannot reach."""
-    n = w * h
-    cap = max(64, int(n * POCKET_FRAC))
-    seen = bytearray(n)
-    for i in range(n):
-        if mask[i] or seen[i] or distances[i] > POCKET_DIST:
-            continue
-        comp: list[int] = []
-        q: deque[int] = deque([i])
-        seen[i] = 1
-        total = 0.0
-        while q:
-            j = q.popleft()
-            comp.append(j)
-            total += distances[j]
-            x = j % w
-            y = j // w
-            for nx, ny in _neighbors8(x, y, w, h):
-                nj = ny * w + nx
-                if seen[nj] or mask[nj]:
-                    continue
-                if distances[nj] <= POCKET_DIST:
-                    seen[nj] = 1
-                    q.append(nj)
-        mean = total / max(1, len(comp))
-        if len(comp) <= cap or mean <= TIGHT_DIST:
-            for j in comp:
-                mask[j] = 1
+    sprite_lib.fill_pockets(mask, distances, w, h, POCKET_DIST, POCKET_FRAC, TIGHT_DIST)
     return mask
 
 
@@ -211,39 +184,7 @@ def wand_mask(
     accept |= arr[:, :, 3] == 0
     if spill_flood:
         accept |= _spill_map(arr, bg)
-    mask2d = np.zeros((h, w), dtype=np.uint8)
-    seen = np.zeros((h, w), dtype=np.uint8)
-    q: deque[tuple[int, int]] = deque()
-
-    def seed(x: int, y: int) -> None:
-        if seen[y, x]:
-            return
-        seen[y, x] = 1
-        if accept[y, x]:
-            q.append((x, y))
-
-    for x in range(w):
-        seed(x, 0)
-        seed(x, h - 1)
-    for y in range(h):
-        seed(0, y)
-        seed(w - 1, y)
-
-    while q:
-        x, y = q.popleft()
-        mask2d[y, x] = 1
-        x0 = 0 if x == 0 else x - 1
-        x1 = w if x + 2 > w else x + 2
-        y0 = 0 if y == 0 else y - 1
-        y1 = h if y + 2 > h else y + 2
-        for ny in range(y0, y1):
-            for nx in range(x0, x1):
-                if seen[ny, nx]:
-                    continue
-                seen[ny, nx] = 1
-                if accept[ny, nx]:
-                    q.append((nx, ny))
-
+    mask2d = sprite_lib.flood_border(accept)
     mask2d[dist2d <= TIGHT_DIST] = 1
     mask = bytearray(mask2d.ravel().tolist())
     return _fill_pockets(mask, distances, w, h)
@@ -295,18 +236,7 @@ def color_to_alpha_via_green(r: int, g: int, b: int, a: int) -> tuple[int, int, 
 def _c2a_np(rgb: np.ndarray, a: np.ndarray, key: tuple[int, int, int]) -> tuple[np.ndarray, np.ndarray]:
     p = rgb.astype(np.float32) / 255.0
     k = np.array(key, dtype=np.float32) / 255.0
-    alpha = np.zeros(a.shape, dtype=np.float32)
-    for i in range(3):
-        pv = p[..., i]
-        kv = float(k[i])
-        ch = np.zeros_like(pv)
-        if kv < 0.999:
-            hi = pv > kv
-            ch[hi] = (pv[hi] - kv) / (1.0 - kv)
-        if kv > 0.001:
-            lo = pv < kv
-            ch[lo] = (kv - pv[lo]) / kv
-        alpha = np.maximum(alpha, ch)
+    alpha = sprite_lib.chroma_alpha(p, k)
     empty = alpha < 0.01
     safe = np.maximum(alpha, 1e-6)[..., None]
     recon = (p - k) / safe + k
@@ -444,26 +374,7 @@ def fit_canvas(
 ) -> Image.Image:
     if key:
         im = flatten_magenta_to_alpha(im, spill_flood=spill_flood)
-    bbox = im.getbbox()
-    if bbox is None:
-        return Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
-    cropped = im.crop(bbox)
-    cw, ch = cropped.size
-    box = Image.new("RGBA", (cw + PAD * 2, ch + PAD * 2), (0, 0, 0, 0))
-    box.paste(cropped, (PAD, PAD), cropped)
-    scale = min(canvas / box.size[0], canvas / box.size[1])
-    nw = max(1, int(round(box.size[0] * scale)))
-    nh = max(1, int(round(box.size[1] * scale)))
-    resized = box.resize((nw, nh), Image.Resampling.NEAREST)
-    out = Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
-    ox = (canvas - nw) // 2
-    if baseline is None:
-        oy = canvas - nh - 2
-    else:
-        oy = baseline - nh
-    oy = max(0, min(canvas - nh, oy))
-    out.paste(resized, (ox, oy), resized)
-    return out
+    return sprite_lib.fit_box(im, canvas, PAD, oy=lambda nh: max(0, min(canvas - nh, canvas - nh - 2 if baseline is None else baseline - nh)))
 
 
 def foot_baseline(im: Image.Image) -> int:

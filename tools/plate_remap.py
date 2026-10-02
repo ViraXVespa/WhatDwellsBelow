@@ -15,13 +15,12 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from collections import deque
 from math import sqrt
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
-from sprite_lib import neighbors8 as _neighbors8  # noqa: E402
+import sprite_lib  # noqa: E402
 
 KEY = (255, 0, 255)
 KEY_HEX = "#FF00FF"
@@ -79,19 +78,7 @@ def plate_amount(p: tuple[int, int, int], chroma: tuple[int, int, int]) -> float
 def _fg_alpha_np(rgb: np.ndarray, key: tuple[int, int, int]) -> np.ndarray:
     p = rgb.astype(np.float32) / 255.0
     k = np.array(key, dtype=np.float32) / 255.0
-    alpha = np.zeros(rgb.shape[:2], dtype=np.float32)
-    for i in range(3):
-        pv = p[..., i]
-        kv = float(k[i])
-        ch = np.zeros_like(pv)
-        if kv < 0.999:
-            hi = pv > kv
-            ch[hi] = (pv[hi] - kv) / (1.0 - kv)
-        if kv > 0.001:
-            lo = pv < kv
-            ch[lo] = (kv - pv[lo]) / kv
-        alpha = np.maximum(alpha, ch)
-    return alpha
+    return sprite_lib.chroma_alpha(p, k)
 
 
 def _plate_amount_np(rgb: np.ndarray, chroma: tuple[int, int, int]) -> np.ndarray:
@@ -156,45 +143,12 @@ def wand_plate(
 ) -> list[int]:
     """8-connected wand from the border. 1 = plate, 0 = figure."""
     arr = np.asarray(im.convert("RGBA"))
-    h, w = arr.shape[:2]
     rgb = arr[:, :, :3]
     a = arr[:, :, 3]
     d = _rgb_dist32(rgb, chroma)
     amt = _plate_amount_np(rgb, chroma)
     accept = (a < 8) | (d <= wand_dist) | (amt >= min_amount)
-    mask = np.zeros((h, w), dtype=np.uint8)
-    seen = np.zeros((h, w), dtype=np.uint8)
-    q: deque[tuple[int, int]] = deque()
-
-    def seed(x: int, y: int) -> None:
-        if seen[y, x]:
-            return
-        seen[y, x] = 1
-        if accept[y, x]:
-            q.append((x, y))
-
-    for x in range(w):
-        seed(x, 0)
-        seed(x, h - 1)
-    for y in range(h):
-        seed(0, y)
-        seed(w - 1, y)
-
-    while q:
-        x, y = q.popleft()
-        mask[y, x] = 1
-        x0 = 0 if x == 0 else x - 1
-        x1 = w if x + 2 > w else x + 2
-        y0 = 0 if y == 0 else y - 1
-        y1 = h if y + 2 > h else y + 2
-        for ny in range(y0, y1):
-            for nx in range(x0, x1):
-                if seen[ny, nx]:
-                    continue
-                seen[ny, nx] = 1
-                if accept[ny, nx]:
-                    q.append((nx, ny))
-    return mask.ravel().tolist()
+    return sprite_lib.flood_border(accept).ravel().tolist()
 
 
 def fill_pockets(
@@ -211,37 +165,7 @@ def fill_pockets(
     near-chroma components; keep them if they are small or very tight to
     the sampled plate colour (armpits, crotch, between arm and torso).
     """
-    n = w * h
-    cap = max(64, int(n * pocket_frac))
-    seen = [0] * n
-    added = 0
-    for i in range(n):
-        if mask[i] or seen[i] or distances[i] > pocket_dist:
-            continue
-        comp: list[int] = []
-        q: deque[int] = deque([i])
-        seen[i] = 1
-        total = 0.0
-        while q:
-            j = q.popleft()
-            comp.append(j)
-            total += distances[j]
-            x = j % w
-            y = j // w
-            for nx, ny in _neighbors8(x, y, w, h):
-                nj = ny * w + nx
-                if seen[nj] or mask[nj]:
-                    continue
-                if distances[nj] <= pocket_dist:
-                    seen[nj] = 1
-                    q.append(nj)
-        mean = total / max(1, len(comp))
-        if len(comp) <= cap or mean <= TIGHT_DIST:
-            for j in comp:
-                if not mask[j]:
-                    mask[j] = 1
-                    added += 1
-    return added
+    return sprite_lib.fill_pockets(mask, distances, w, h, pocket_dist, pocket_frac, TIGHT_DIST)
 
 
 def edge_band(mask: list[int], w: int, h: int, radius: int) -> list[int]:

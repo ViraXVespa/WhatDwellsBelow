@@ -60,7 +60,7 @@ def matches(needle: str, listed: list[str]) -> bool:
     for item in listed:
         if item == n or item.endswith("/" + n):
             return True
-        if item == base or item.rsplit("/", 1)[-1] == base:
+        if base and (item == base or item.rsplit("/", 1)[-1] == base):
             return True
     return False
 

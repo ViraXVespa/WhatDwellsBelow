@@ -7,8 +7,6 @@ with a warning until that I2V pipeline exists.
 
 from __future__ import annotations
 
-import argparse
-import json
 from collections import defaultdict
 
 import anim_review_lib as lib
@@ -75,11 +73,7 @@ def _md(regen: list[dict], prompts: dict[str, str], missing: list[str]) -> str:
                         lines.append(f"    {ln}")
                     lines.append("")
             lines.append("")
-    if missing:
-        lines.extend(["## Missing review store", ""])
-        for line in missing:
-            lines.append(f"- {line}")
-        lines.append("")
+    lib.add_missing(lines, missing)
     lines.extend(
         [
             "## Tuning hint",
@@ -93,18 +87,8 @@ def _md(regen: list[dict], prompts: dict[str, str], missing: list[str]) -> str:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--review", type=lib.Path, default=lib.REVIEW_PATH)
-    ap.add_argument("--out-md", type=lib.Path, default=lib.REVIEW_DIR / "regen_brief.md")
-    ap.add_argument("--out-json", type=lib.Path, default=lib.REVIEW_DIR / "regen_brief.json")
-    args = ap.parse_args()
-
-    missing: list[str] = []
-    if not args.review.is_file():
-        missing.append(f"no review file at {args.review}")
-        review = {"v": 1, "clips": {}}
-    else:
-        review = lib.load_review(args.review)
+    args = lib.brief_args(agent_log.std_parser(__doc__), "regen_brief")
+    review, missing = lib.load_with_missing(args.review)
 
     regen = [r for r in lib.clip_rows(review) if r["state"] == "regenerate"]
     prompts = {row["key"]: _prompt_for(row) for row in regen}
@@ -115,10 +99,7 @@ def main() -> int:
         "regenerate": [{**row, "prompt": prompts.get(row["key"], "")} for row in regen],
         "missing": missing,
     }
-    lib.write_text(args.out_md, _md(regen, prompts, missing))
-    lib.write_text(args.out_json, json.dumps(payload, indent="\t"))
-    print(f"wrote {args.out_md}")
-    print(f"wrote {args.out_json}")
+    lib.write_brief(args, _md(regen, prompts, missing), payload)
     print(f"regenerate {len(regen)}")
     return agent_log.emit_result("PASS", regenerate=len(regen), missing=len(missing))
 

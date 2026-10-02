@@ -282,37 +282,28 @@ def job_parked_ids(data: dict[str, Any]) -> list[str]:
     return [str(item) for item in raw]
 
 
-def conflicts_with(data: dict[str, Any]) -> dict[str, list[str]]:
-    raw = data.get("conflicts_with") or {}
+def _str_lists(data: dict[str, Any], key: str) -> dict[str, list[str]]:
+    """data[key] as {str: [str]}; anything not a dict gives {}, a non-list value gives []."""
+    raw = data.get(key) or {}
     if not isinstance(raw, dict):
         return {}
     out: dict[str, list[str]] = {}
-    for key, val in raw.items():
+    for k, val in raw.items():
         items = val if isinstance(val, list) else []
-        out[str(key)] = [str(item) for item in items]
+        out[str(k)] = [str(item) for item in items]
     return out
+
+
+def conflicts_with(data: dict[str, Any]) -> dict[str, list[str]]:
+    return _str_lists(data, "conflicts_with")
 
 
 def boot_max(data: dict[str, Any]) -> dict[str, list[str]]:
-    raw = data.get("boot_max") or {}
-    if not isinstance(raw, dict):
-        return {}
-    out: dict[str, list[str]] = {}
-    for key, val in raw.items():
-        items = val if isinstance(val, list) else []
-        out[str(key)] = [str(item) for item in items]
-    return out
+    return _str_lists(data, "boot_max")
 
 
 def fetch_ban(data: dict[str, Any]) -> dict[str, list[str]]:
-    raw = data.get("fetch_ban") or {}
-    if not isinstance(raw, dict):
-        return {}
-    out: dict[str, list[str]] = {}
-    for key, val in raw.items():
-        items = val if isinstance(val, list) else []
-        out[str(key)] = [str(item) for item in items]
-    return out
+    return _str_lists(data, "fetch_ban")
 
 
 def resolve_route_ref(data: dict[str, Any], raw: str) -> str:

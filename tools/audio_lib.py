@@ -14,24 +14,24 @@ from pathlib import Path
 SR = 22050
 
 
-def write_wav(path: Path, samples: list[float], scale: int = 32000) -> None:
-    """Clip to +-1.0 then scale (the p2/p9 sfx writer)."""
+def _write(path: Path, frames: list[int]) -> None:
+    """Mono 16-bit wav from int samples; creates parent folders."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with wave.open(str(path), "w") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
         w.setframerate(SR)
-        w.writeframes(b"".join(struct.pack("<h", int(max(-1.0, min(1.0, s)) * scale)) for s in samples))
+        w.writeframes(b"".join(struct.pack("<h", f) for f in frames))
+
+
+def write_wav(path: Path, samples: list[float], scale: int = 32000) -> None:
+    """Clip to +-1.0 then scale (the p2/p9 sfx writer)."""
+    _write(path, [int(max(-1.0, min(1.0, s)) * scale) for s in samples])
 
 
 def write_pcm(path: Path, samples: list[float]) -> None:
     """Scale by 32767 then clamp (the music/placeholder writer)."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with wave.open(str(path), "w") as w:
-        w.setnchannels(1)
-        w.setsampwidth(2)
-        w.setframerate(SR)
-        w.writeframes(b"".join(struct.pack("<h", max(-32767, min(32767, int(s * 32767)))) for s in samples))
+    _write(path, [max(-32767, min(32767, int(s * 32767))) for s in samples])
 
 
 def sine(freq: float, dur: float, vol: float = 0.35, decay: bool = True, power: float = 1.0) -> list[float]:

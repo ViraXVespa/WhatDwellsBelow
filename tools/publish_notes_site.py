@@ -13,6 +13,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+from repo_lib import write_text_nl
 
 
 def _load(path: Path) -> dict:
@@ -25,25 +26,18 @@ def _load(path: Path) -> dict:
     return raw if isinstance(raw, dict) else {}
 
 
-def _write(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if not text.endswith("\n"):
-        text += "\n"
-    path.write_text(text, encoding="utf-8")
-
-
 def publish(root: Path, site: Path) -> dict:
     version = _load(root / "scripts" / "data" / "version.json")
     changelog = _load(root / "scripts" / "data" / "changelog.json")
     data_dir = site / "data"
-    _write(data_dir / "version.json", json.dumps(version, ensure_ascii=False, indent=2))
-    _write(
+    write_text_nl(data_dir / "version.json", json.dumps(version, ensure_ascii=False, indent=2))
+    write_text_nl(
         data_dir / "changelog.json",
         json.dumps(changelog, ensure_ascii=False, indent=2),
     )
     payload = {"version": version, "changelog": changelog}
     body = "window.__wdbNotes = %s;\n" % json.dumps(payload, ensure_ascii=False)
-    _write(data_dir / "notes.js", body)
+    write_text_nl(data_dir / "notes.js", body)
     label = str(version.get("label") or "")
     entries = changelog.get("entries") if isinstance(changelog.get("entries"), list) else []
     summary = (
@@ -53,7 +47,7 @@ def publish(root: Path, site: Path) -> dict:
         "wrote data/version.json data/changelog.json data/notes.js\n"
         % (label, site, label, len(entries))
     )
-    _write(root / "_logs" / "notes-site" / "summary.txt", summary)
+    write_text_nl(root / "_logs" / "notes-site" / "summary.txt", summary)
     return {"label": label, "entries": len(entries), "site": str(site)}
 
 

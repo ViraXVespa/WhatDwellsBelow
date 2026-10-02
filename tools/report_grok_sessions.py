@@ -16,14 +16,8 @@ if str(_TOOLS) not in sys.path:
 
 import grok_session_lib as gsl
 import agent_log
+from repo_lib import write_text_nl
 import pack_grok_sessions as packer
-
-
-def _write(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if not text.endswith("\n"):
-        text += "\n"
-    path.write_text(text, encoding="utf-8")
 
 
 def _fmt_usd(ticks: int) -> str:
@@ -34,6 +28,23 @@ def _table(headers: list[str], rows: list[list[str]]) -> list[str]:
     lines = ["\t".join(headers)]
     lines.extend("\t".join(row) for row in rows)
     return lines
+
+
+def _hist_table(label: str, hist: dict, limit: int | None = None) -> list[str]:
+    """count/turns/uncached/usd table of a gsl histogram, biggest first."""
+    return _table(
+        [label, "count", "turns", "uncached", "usd"],
+        [
+            [
+                key,
+                str(stats.get("count", 0)),
+                str(stats.get("turns", 0)),
+                str(stats.get("uncached", 0)),
+                _fmt_usd(int(stats.get("cost_ticks") or 0)),
+            ]
+            for key, stats in gsl.sort_hist(hist)[:limit]
+        ],
+    )
 
 
 def _metrics_from_pack(pack_dir: Path, rank: int, item: dict[str, Any]) -> dict[str, Any]:
@@ -144,21 +155,7 @@ def build_report(rows: list[dict[str, Any]]) -> str:
         )
     )
     lines.extend(["", "## tools"])
-    lines.extend(
-        _table(
-            ["tool", "count", "turns", "uncached", "usd"],
-            [
-                [
-                    key,
-                    str(stats.get("count", 0)),
-                    str(stats.get("turns", 0)),
-                    str(stats.get("uncached", 0)),
-                    _fmt_usd(int(stats.get("cost_ticks") or 0)),
-                ]
-                for key, stats in gsl.sort_hist(tools)[:30]
-            ],
-        )
-    )
+    lines.extend(_hist_table("tool", tools, 30))
     lines.extend(["", "## top turns"])
     lines.extend(
         _table(
@@ -204,21 +201,7 @@ def build_report(rows: list[dict[str, Any]]) -> str:
         )
     )
     lines.extend(["", "## intercepts"])
-    lines.extend(
-        _table(
-            ["label", "count", "turns", "uncached", "usd"],
-            [
-                [
-                    key,
-                    str(stats.get("count", 0)),
-                    str(stats.get("turns", 0)),
-                    str(stats.get("uncached", 0)),
-                    _fmt_usd(int(stats.get("cost_ticks") or 0)),
-                ]
-                for key, stats in gsl.sort_hist(intercepts)
-            ],
-        )
-    )
+    lines.extend(_hist_table("label", intercepts))
     lines.extend(["", "## paths"])
     lines.extend(
         _table(
@@ -280,8 +263,8 @@ def main(argv: list[str] | None = None) -> int:
             until,
         )[: max(1, int(args.top))]
     body = build_report(rows)
-    _write(out_dir / "summary.txt", body)
-    _write(
+    write_text_nl(out_dir / "summary.txt", body)
+    write_text_nl(
         out_dir / "meta.json",
         json.dumps(
             {"sessions": len(rows), "ids": [row["session_id"] for row in rows]},
