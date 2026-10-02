@@ -1,0 +1,6 @@
+{
+  "title-idle": {"about": "Load, pass the fullscreen gate, sit on the title screen.", "steps": [{"wait": 1500}, {"key": "Escape"}, {"wait": 8000}, {"shot": "title"}]},
+  "camp-walk": {"about": "Load, pass the gate, click Play, walk. UNPROVEN: the Play click did not start a run in headless Chrome on the box; read the shots.",
+    "steps": [{"wait": 1500}, {"key": "Escape"}, {"wait": 3000}, {"click": [0.41, 0.533]}, {"wait": 10000}, {"shot": "camp-start"},
+      {"hold": "d", "ms": 3000}, {"hold": "s", "ms": 3000}, {"hold": "a", "ms": 3000}, {"hold": "w", "ms": 3000}, {"shot": "camp-end"}]}
+}

@@ -46,7 +46,7 @@ Do not vendor bundled skill bodies into this repo. Point at them by name. `job.m
 
 Must resolve **outside** the git tree. A folder under `WhatDwellsBelow/` still walks up to the repo agent-rules file. `--worktree` copies the tree and is the wrong isolator.
 
-Runner: `python tools/run_isolated_grok.py --kind <kind> …`
+Runner: `python3 tools/run_isolated_grok.py --kind <kind> …`
 
 - Default one-shot scratch is `tempfile.TemporaryDirectory()` (OS temp). `--keep` uses `mkdtemp` and prints the path. `--no-reuse` forces that path.
 - With staged reference images (Bibles, `--copy`, I2V seed) the default is a durable scratch under `%USERPROFILE%\.grok\wdb-iso\work\<ref_key>\` (or `$GROK_HOME/wdb-iso/...`). Catalog: `catalog.json` beside the work dirs. Key is SHA-256 of `--kind` plus each reference filename and file hash. Prompt text / brief is not in the key.

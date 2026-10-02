@@ -20,7 +20,7 @@ Enemy frames follow art_pipeline. There is not a second enemy pipeline. 8-dir Bi
 
 ## Roles present in demo
 
-The following are suggested starting roles, not a closed or mandatory roster. Grok Build MAY invent additional or different roles so long as combat stays readable and the floor-variety rules in this section are met.  
+The following are suggested starting roles, not a closed or mandatory roster. A new or different role is a design decision: Grok Build asks the User through `ask_user_question` (never picks one), and the role must keep combat readable and meet the floor-variety rules in this section.  
 Suggested starting roles:
 
 - Bruiser (melee)

@@ -84,8 +84,15 @@ def main(argv: list[str] | None = None) -> int:
             "return=you launch the fork argv; CLI does not auto-resume this pin", "", f"FORK {fork}", f"RETRY {retry}", ""]
     if route_lines:
         body += ["--- route ---"] + route_lines + [""]
+    if route == "ok":
+        head = "\n".join(l for l in route_lines if not l.startswith(("Summary", "RESULT")))
+    elif route.startswith("exit"):
+        head = "route failed:\n" + "\n".join(route_lines)
+    else:
+        head = f"smokes={smokes or 'n/a'} flows={flows or 'n/a'}" + ("" if smokes else " (--area has no route card; name a door/job for smokes)")
+    tail = "" if route.startswith("exit") else f"\nFORK {fork}\nRETRY {retry}\nlaunch={launch}"
     code = agent_log.finish("slice-boot", root, "\n".join(body), "FAIL" if route.startswith("exit") else ("PASS" if session else "INFO"),
-                            args=args, write=not args.dry_run, echo=f"worktree={wt}\nsmokes={smokes or 'n/a'}\nFORK {fork}\nRETRY {retry}\nlaunch={launch}",
+                            args=args, write=not args.dry_run, echo=f"worktree={wt}\n{head}{tail}",
                             worktree=wt, session_ready=bool(session), route=route, launch=launch)
     return code
 

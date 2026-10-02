@@ -21,10 +21,11 @@ Smokes at prove: the phases mapped to the door or job in `routes.yaml` `smokes` 
 | Placeholdia to dungeon timing | `tools/run_dungeon_load_timing.py` |
 | named phase asserts | `tools/run_smokes.py` `--door D` / `--job door.job` / `--phases N` |
 | scripts compile / unnamed prove | `tools/run_build_gate.py` |
+| exported web build load, frame time, heap, asset sizes (advisory) | `tools/web_perf.py` (`--flow`, `--baseline`) after `export_web.py` |
 
 A new numbered phase, `--wdb-*-smoke` flag, or host scene is allowed only when the feature is new and no mapped phase fits (add it with the feature; name it in the report). A new catalog runner is stop-and-propose. A postcard or shot flow (`shot-tool.md`) is a deliverable or a visual check, not the build gate or a smoke; the headless flow asserts (`bot_smokes.py --flows`) may be named in the prove step. When a task needs a picture the tool cannot stage, extend the tool inside the change job (`shot-flows.md` gap process); do not hand-drive Godot or edit a PNG. A red postcard (`fail` band) gets one same-command rerun only for `truncated`, timeout or `busy`; otherwise fix the tool or script. Two reds on the same unit: stop and report the RETRY line from `_logs/slice-boot/summary.txt`; do not keep patching on the guilty transcript. `--fork-session` is the return from that gather pin; do not auto-fork mid-change.
 
-Read each job summary once via `python tools/read_summary.py --job <name>`. The path is `_logs/<job>/summary.txt`. Do not open the summary file directly. Catalog and this file must agree: once per job.
+Read each job summary once via `python3 tools/read_summary.py --job <name>`. The path is `_logs/<job>/summary.txt`. Do not open the summary file directly. Catalog and this file must agree: once per job.
 
 A second job in the same Grok Build session is allowed only when a **new field** is named first. Do not wait for the User between job 1 and job 2 when that field is named. Still pause and report after every job. The field must already be a key printed by that job's summary template, or `truncated` / crash / `busy` / wrong scene. Do not invent a key the template does not print. "Add a field so I can rerun" is invalid. The only valid same-command rerun is `truncated`, crash, `busy` lock, or wrong scene, and then the same command once.
 

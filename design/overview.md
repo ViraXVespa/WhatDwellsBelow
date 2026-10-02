@@ -67,7 +67,7 @@ The player character is a dungeon delver working for a known and trusted guild t
 **Information the Player Receives**
 No mandatory intro cutscene or long exposition is required. The player learns the fantasy through:
 - Short environmental flavor text on signs and the notice board.
-- Receptionist lines (minimal today; planned role: lore notes plus the How to Play guide, see the hub guild job). Extraction Gates have no NPC dialogue.
+- Receptionist lines (minimal today). Extraction Gates have no NPC dialogue.
 - Recap screen titles, subtitles, and special case lines (including verge and empty-run variants).
 - The mechanical consequences of death versus successful extraction.
 - Consciousness-transfer VFX when leaving Placeholdia and a wake-up sequence when returning.

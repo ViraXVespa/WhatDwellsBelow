@@ -38,7 +38,7 @@ Commands:
 ## New UI state checklist (Build)
 
 1. A new menu, NPC panel or page: add its mode/kind strings to a `states.json` source if the regexes do not already match; `check_shot_gaps.py --changed` must list it as covered. Gate: **required for Bot** (`bot_smokes.py` and `run_build_gate.py --batch` FAIL on a new uncovered state), **advisory for Build** (`run_smokes.py` and plain `run_build_gate.py` print it, never fail); `routes.yaml` `shot_gaps` sets the mode, `--no-gaps` / `--shot-gaps off|advisory|required` override it.
-2. Copy the nearest flow (`camp-receptionist-menu` for an NPC menu, `camp-anvil-tabs` for pages, `camp-billboard-controls` for a static panel, `camp-npc-panels` for several NPC panels in one session, `camp-inventory` for a panel opened by its method, `dungeon-gate-shop` for dungeon-only panels), change the `interact`, state and asserts, set `covers`, add `smoke: true`.
+2. Copy the nearest flow (`camp-receptionist-menu` for an NPC menu, `camp-anvil-tabs` for pages, `camp-billboard-controls` for a static panel, `camp-npc-panels` for several NPC panels in one session, `camp-inventory` for a panel opened by its method, `dungeon-gate-shop` for dungeon-only panels, `camp-pause-menu` for the pause/split menu, `camp-recap` for the delve recap), change the `interact`, state and asserts, set `covers`, add `smoke: true`.
 3. `run_shot_flow.py --flow N`; read the frames (one look), then `--no-pixels` is the cheap rerun. Map it in `routes.yaml` `shot_flows` so `start_build_slice.py` prints it.
 4. The report names the flow, the frames, and the `check_shot_gaps.py` RESULT.
 
@@ -47,11 +47,11 @@ Commands:
 Extending the tool is part of the task. Do not work around it (no hand-driven Godot, no scratch, no PNG edits, no stand-in older image).
 1. Name the missing state in one line (example: "tutorial page 3 of 5 open", "anvil with a forged item").
 2. Try a flow first (ops above cover input, state, text and pages). A new op goes in `step_ops.gd`/`step_input.gd` with one flow that proves it.
-3. A new worker flag or `run_shots.py` argument is the last resort: parse in `tool_args.gd`, add the matching argument, keep each `.gd` under the script cap.
+3. A new worker flag or `run_shots.py` argument is the last resort: parse in `tool_args.gd`, add the matching argument. The script cap is Bot's sweep, not a Build step.
 4. Document it in the table below and in `--help` (`check_tool_cli.py`).
 
 | Knob | Stages | Added for |
 |---|---|---|
-| `--steps`, `--frames-dir`, `--no-pixels` | scripted flows, numbered frames, headless asserts | NPC/menu/page captures (this table's first row) |
-| `--width`, `--height`, `--show` | window size; window left visible | were accepted but ignored; now honored |
+| `--steps`, `--frames-dir`, `--no-pixels` | scripted flows, numbered frames, headless asserts | NPC/menu/page captures (first row) |
+| `--width`, `--height`, `--show` | window size; window left visible | honored by the shot runner |
 

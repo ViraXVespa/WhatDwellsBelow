@@ -117,7 +117,12 @@ def find_hits(hits: list[Hit], needle: str) -> list[Hit]:
     exact = [h for h in hits if any(_norm(a) == want for a in h.aliases)]
     if exact:
         return exact
-    return [h for h in hits if any(want in _norm(a) or _norm(a) in want for a in h.aliases)]
+    sub = [h for h in hits if any(want in _norm(a) or _norm(a) in want for a in h.aliases)]
+    if sub:
+        return sub
+    # Code keys (move_speed) vs prose rows ("Base move speed"): every key token appears in an alias.
+    toks = {t.rstrip("s") for t in re.split(r"[^a-z0-9]+", needle.lower()) if t}
+    return [h for h in hits if toks and any(toks <= {t.rstrip("s") for t in re.split(r"[^a-z0-9]+", a.lower()) if t} for a in h.aliases)]
 
 
 def set_live_cell(line: str, live_col: int, value: str) -> str:

@@ -3,7 +3,7 @@
 Status: suggested starts + live snapshot  
 Read when: the work changes a dungeon-gen, enemy, progression, anvil or UI-feel number  
 
-Same table shape and rules as the tunables door. `python tools/tunables.py get|set --key KEY` reads both files.
+Same table shape and rules as the tunables door. `python3 tools/tunables.py get|set --key KEY` reads both files.
 
 ## Dungeon generation
 
