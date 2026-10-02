@@ -88,7 +88,9 @@ def flow_problems(root: Path, name: str, flow: dict, states: dict) -> list[str]:
         if c not in states:
             probs.append(f"{name}: covers {c} but no such state in the sources")
     pub = flow.get("publish") or {}
-    if pub.get("dir"):
+    if pub.get("dir") and run_shot_flow.publish_blocked(root, root / pub["dir"]):
+        probs.append(f"{name}: publish.dir {pub['dir']} is under assets/ (tooling never publishes there; use _out/shots/{name})")
+    elif pub.get("dir"):
         d = root / pub["dir"]
         man = d / (str(pub.get("prefix", "")) + "shots.json")
         if not man.is_file():
@@ -108,6 +110,8 @@ def main(argv: list[str] | None = None) -> int:
                              json_out=True)
     p.add_argument("--changed", nargs="?", const="origin/main", default=None, metavar="REF",
                    help="also list states new since REF (default origin/main); uncovered ones FAIL")
+    p.add_argument("--advisory", action="store_true",
+                   help="print everything but never FAIL (Build gate); the Bot gate runs without it")
     p.add_argument("--strict", action="store_true", help="FAIL on any uncovered state, not just new ones")
     args = p.parse_args(argv)
     root = Path(args.root).resolve() if args.root else agent_log.repo_root(_TOOLS.parent)
@@ -136,7 +140,9 @@ def main(argv: list[str] | None = None) -> int:
     if gaps:
         status = "INFO"
     if problems or new_gaps or (args.strict and gaps):
-        status = "FAIL"
+        status = "INFO" if args.advisory else "FAIL"
+        if args.advisory:
+            lines.append("advisory: new gaps / problems above do not fail this gate (Build); Bot gate requires them fixed")
     out_dir = agent_log.ensure_agent_log_dir("shot-gaps", root)
     summary = out_dir / "summary.txt"
     res = agent_log.result_line(status, rel(root, summary), states=len(states), gaps=len(gaps), new_gaps=len(new_gaps),

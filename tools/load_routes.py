@@ -266,6 +266,15 @@ def shot_flows(data: dict[str, Any], door: str = "", job: str = "") -> list[str]
     return []
 
 
+def shot_gaps_mode(data: dict[str, Any], who: str) -> str:
+    """'required' | 'advisory' | 'off' for new-UI-state shot gaps, per agent (bot, build). Default: bot required, build advisory."""
+    raw = data.get("shot_gaps") or {}
+    want = str(raw.get(who, "")) if isinstance(raw, dict) else ""
+    if want in ("required", "advisory", "off"):
+        return want
+    return "required" if who == "bot" else "advisory"
+
+
 def job_parked_ids(data: dict[str, Any]) -> list[str]:
     raw = data.get("job_parked") or []
     if not isinstance(raw, list):

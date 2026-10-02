@@ -130,6 +130,8 @@ def main() -> int:
     p.add_argument("--job", default="", help="Phases mapped to this routes.yaml door.job (instead of --phases).")
     p.add_argument("--flows", nargs="?", const="mapped", default="", metavar="NAMES",
                    help="Also run shot flows headless (asserts, no pixels): NAMES comma list, or the --door/--job mapping when bare.")
+    p.add_argument("--no-gaps", action="store_true",
+                   help="skip check_shot_gaps --changed (Bot gate: a new UI state without a shot flow FAILS this run)")
     p.add_argument("--timeout", type=int, default=120)
     p.add_argument("--verbose", action="store_true")
     ns = p.parse_args()
@@ -167,6 +169,17 @@ def main() -> int:
             frc = subprocess.run(cmd, check=False).returncode
             print(f"flows={'PASS' if frc == 0 else 'FAIL'}\t{names}")
             rc |= 1 if frc else 0
+    if not ns.no_gaps and (phases or ns.flows):
+        from load_routes import load_routes, shot_gaps_mode
+        mode = shot_gaps_mode(load_routes(root), "bot")
+        if mode != "off":
+            cmd = [sys.executable, str(Path(__file__).resolve().parent / "check_shot_gaps.py"), "--changed", "--root", str(root)]
+            if mode == "advisory":
+                cmd.append("--advisory")
+            print("run\t" + " ".join(cmd))
+            grc = subprocess.run(cmd, check=False).returncode
+            print(f"gaps={'PASS' if grc == 0 else 'FAIL'}\t{mode}")
+            rc |= 1 if grc else 0
     for n in phases:
         if n < 1 or n > 9:
             print(f"P{n}=FAIL\tout_of_range")

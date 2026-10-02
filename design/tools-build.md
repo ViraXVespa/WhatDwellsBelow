@@ -12,7 +12,7 @@ Rules, the CLI contract and the surface key are in `tools.md` (single copy). The
 | `godot_lib.py` | Godot launch + per-path lock library (kills only its own pid, never godot*). `gui=True` runs pick a display (`$DISPLAY`, a live X socket, else `xvfb-run`). CLI: lock probe, `--display` shows the pick. | BD | module docstring (no `--help`) | Y |
 | `run_godot_import_check.py` | Editor import / script-reload check. RESULT `clean=true|false`. Summary: `godot-import-check`. | WD | `python tools/run_godot_import_check.py` | N |
 | `run_post_split_gate.py` | Import check, then optional smokes. Summary: `post-split-gate`. | D | `python tools/run_post_split_gate.py` (`--with-smokes`, `--phases 1,2,6`, `--force`) | N |
-| `run_smokes.py` | Phase smokes on the PC (Bot VM: `bot_smokes.py`). `--door D` / `--job door.job` pick the phases mapped in `routes.yaml` `smokes`. Summary: `smokes`. | D | `python tools/run_smokes.py --phases 4,5` | N |
+| `run_smokes.py` | Phase smokes on the PC (Bot VM: `bot_smokes.py`). `--door D` / `--job door.job` pick the phases mapped in `routes.yaml` `smokes`. Prints `check_shot_gaps.py --changed --advisory` (never fails Build; `--no-gaps` skips). Summary: `smokes`. | D | `python tools/run_smokes.py --phases 4,5` | N |
 | `run_load_timing.py` | Title -> Placeholdia load-timing smoke. Summary: `load-timing`. | WD | `python tools/run_load_timing.py` (`--timeout-sec 180`) | N |
 | `run_dungeon_load_timing.py` | Placeholdia -> Dungeon load-timing smoke. Summary: `dungeon-load-timing`. | WD | `python tools/run_dungeon_load_timing.py` | N |
 | `run_dungeon_map.py` | Dungeon generation map smoke. Summary: `dungeon-map`. | WD | `python tools/run_dungeon_map.py` (`--seed 42 --floor 1 --scale 8`) | N |
@@ -93,9 +93,9 @@ Each forwards its arguments to the Python twin, so CI and muscle memory keep wor
 | `patch_tunables.py` | Shim -> `tunables.py set`, one release | D | `--help` | N |
 | `publish_notes_site.py` | Copy baked version/changelog JSON onto the Pages site as loose /data files | D | `--help` | N |
 | `run_shots.py` | Posed-camera postcard tool (`--mode web/build/user`), or one scripted flow (`--steps`, `--no-pixels`). Not a numbered smoke. Summary: `shots`. | BWD | `--help` | Y |
-| `run_shot_flow.py` | Scripted shot flows (`tools/shot-flows/*.json`): `--list`, `--flow/--all/--smoke`, `--baseline/--save-baseline` diff, `--publish`, `--check-published`. Summary: `shot-flow`. | BWD | `--help` | Y |
+| `run_shot_flow.py` | Scripted shot flows (`tools/shot-flows/*.json`): `--list`, `--flow/--all/--smoke`, `--baseline/--save-baseline` diff, `--publish` (to `_out/shots/<flow>/`, refuses `assets/`), `--check-published`. Summary: `shot-flow`. | BWD | `--help` | Y |
 | `shot_diff.py` | Before/after diff of shot PNGs (files or dirs): changed pixels, bbox, `*.diff.png`. Summary: `shot-diff`. | BWD | `--help` | Y |
-| `check_shot_gaps.py` | UI states with no shot flow, new uncovered states since a ref (`--changed`), flow and published-shot problems. Summary: `shot-gaps`. | BWD | `--help` | Y |
+| `check_shot_gaps.py` | UI states with no shot flow, new uncovered states since a ref (`--changed`; FAIL for Bot, `--advisory` for Build), flow and published-shot problems. Summary: `shot-gaps`. | BWD | `--help` | Y |
 | `shot_clip_lib.py` | Clipboard paste and open-in-viewer helpers for `run_shots.py` | WD | module docstring (no `--help`) | Y |
 | `show_func.py` | Extract one func/const/var (`--path`, `--name`). Summary: `show-func`. | D | `--help` | N |
 | `tunables.py` | `get --key K` / `set --key K --value V` on `design/tunables.md` (`design/tunables.md` is deny-listed for the Bot). Summaries: `tunable-row`, `tunable-patch`. | D | `--help` | N |

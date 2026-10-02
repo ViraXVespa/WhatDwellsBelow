@@ -53,12 +53,25 @@ def pick(flows: dict[str, dict], names: list[str], smoke: bool, every: bool) -> 
     return names
 
 
+def publish_blocked(root: Path, dest: Path) -> bool:
+    """True when dest is inside <root>/assets (after resolving .. and symlinks). Build alone places assets."""
+    try:
+        d = dest.resolve()
+        a = (root / "assets").resolve()
+    except OSError:
+        return True
+    return d == a or a in d.parents
+
+
 def publish(root: Path, flow: dict, frames_dir: Path, dest_override: str, dry: bool) -> dict:
     """Copy a flow's PNGs to its publish dir and write shots.json (name, file, sha256, size)."""
     spec = flow.get("publish") or {}
-    dest = Path(dest_override) if dest_override else root / str(spec.get("dir") or "")
-    if not dest_override and not spec.get("dir"):
-        agent_log.fail("flow %s has no publish.dir (or pass --publish-dir)" % flow.get("name"))
+    dest = Path(dest_override) if dest_override else root / str(spec.get("dir") or "_out/shots/%s" % flow.get("name"))
+    if not dest.is_absolute():
+        dest = root / dest
+    if publish_blocked(root, dest):
+        agent_log.fail("refusing to publish into %s: tooling never writes under assets/ (Grok Build places "
+                       "guide images; publish to _out/shots/<flow> and hand them over)" % dest)
     prefix = str(spec.get("prefix", ""))
     rows = []
     for fr in json.loads((frames_dir / "flow.json").read_text(encoding="utf-8")).get("frames", []):
