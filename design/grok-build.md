@@ -4,7 +4,7 @@ Status: protocol
 Read when: Grok Build (CLI) path; every CLI instance after a gap
 
 You can write the live tree.
-Second topic door: ask the User to name the owner first (Design decisions, below). If `conflicts_with` lists the pair, do not open the second door in this slice.
+Second topic door: ask the User to name the owner first. If `conflicts_with` lists the pair, do not open the second door in this slice.
 
 Concurrent CLI chats: Slice, Bot notes, PC offload, Smoke tests. Do not fold another role into this thread unless the User names it here. Pins are User-only.
 
