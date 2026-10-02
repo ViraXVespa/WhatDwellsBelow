@@ -72,7 +72,7 @@ Do not run editor playtest. Do not schedule a routine that launches Godot.
 Warning sweep (User-named only): `python tools/bot_warnscan.py` runs every smoke area plus boot/static, collects Godot warnings, errors, and leaks, and exits 0 only on zero findings. It reports; it does not fix game code. `--list` shows areas, `--repeat 2` steadies leaks.
 Before/after a change: `--save-baseline PATH` before, then `--non-leak-diff PATH` after (the baseline and the after run must use the same `--areas`). It ignores leaks and sites, prints NEW and FIXED, and exits 1 only on NEW.
 Targeted areas for a split: the smoke phases that load the file, `dungeon-load-timing`, `map-f1`, `static`.
-Facade names after a split: `python tools/facade_requal.py FILE --sym NAME=Mod` rewrites bare moved names in code to `Mod.NAME` (keeps BOM and line endings; `--dry-run` lists comment/string matches separately; `NAME()=Mod` rewrites calls only when a local shares the name; `--check` lists any bare names left and other callers, exit 1 if bare). Fast compile check, seconds not minutes: `bot_warnscan.py --areas static --non-leak-diff PATH`; a missed qualifier shows as NEW script-error. Run it before the smokes, which wait out a timeout on a compile error.
+Facade names after a split: `python tools/facade_requal.py FILE` rewrites names that moved to same-folder `preload` helpers into `Mod.name` (code only; keeps BOM and line endings; `--dry-run` lists comment/string matches; `--sym NAME=Mod` or `NAME()=Mod` for manual cases). Run `FILE --check` on the facade and on every new helper: it exits 1 on a bare moved name, or on an outside `Alias.name` caller whose name is gone from FILE. Fast compile check (seconds; the smokes wait out a timeout on a compile error): `bot_warnscan.py --areas static --non-leak-diff PATH`, run before the smokes.
 
 ## Hard stops
 
@@ -97,3 +97,5 @@ Do not declare the whole sweep done and then start a second flow.
 
 PR URL, squash-merge reminder, path + bytes before/after, changelog path if
 shipping, what is still over 10KB, next printed item.
+
+Rough edges: at the end of each file in a size pass, list the rough edges you hit (tooling, docs, waiting time, ambiguity) and fix them in the same PR (tool/doc edits within the allowlist) before finishing the task. Anything not fixable (outside the allowlist) goes in the PR body for the User.
