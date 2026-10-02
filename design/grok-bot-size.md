@@ -9,7 +9,7 @@ Read when: Grok Bot Job table → size sweep
 Read only this file, `BOT.md`, and `design/refactor.md` rules 1-7 (skip the reuse, extract, and doc-split sections). Run `python tools/bot_status.py` (prints only the over-10KB list; `--sweep` lists 5-10KB rows). Per file:
 
 1. Baseline: `bot_warnscan.py --areas <areas that load it> --save-baseline PATH`, plus `bot_smokes.py --phases 1,2,6,<relevant>`. Run both in the background while reading the file.
-2. Call graph: per function, calls, statics/consts used, external callers. Keep public funcs and shared consts on the facade; move whole underscore funcs with the statics they own to `extends Object` siblings (static-helper pattern, refactor.md rule 4). Keep BOM/CRLF. `python tools/facade_requal.py FILE` qualifies moved names (BOT.md Smokes).
+2. Call graph: per function, calls, statics/consts used, external callers. Keep public funcs and shared consts on the facade; move whole underscore funcs with the statics they own to `extends Object` siblings (static-helper pattern, refactor.md rule 4). If a public func must move (facade too big), leave a one-line delegate with the same signature; `facade_requal.py` also qualifies consts in default args. Keep BOM/CRLF. `python tools/facade_requal.py FILE` qualifies moved names (BOT.md Smokes).
 3. Install, import for `.uid` (BOT.md Smokes), line-multiset check against the original, `facade_requal.py FILE --check` on the facade and each helper, the static `--non-leak-diff` (compile check; the import does not compile scripts), then smokes, then `--non-leak-diff PATH` with the same `--areas`.
 4. Changelog entry, code-map row, prove trio, commit, push.
 5. Rough edges: per BOT.md (After-cluster report), fix them in the same PR before the next file.
