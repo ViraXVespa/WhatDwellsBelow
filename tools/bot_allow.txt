@@ -33,6 +33,15 @@ tools/code_map_lib.py
 tools/md_format_lib.py
 tools/facade_requal.py
 tools/split_funcs.py
+tools/file_stat.py
+tools/list_code_map_row.py
+tools/summarize_scripts.py
+tools/list_route.py
+tools/agent_log.py
+tools/lint_hostify.py
+tools/move_script_cluster.py
+tools/list_oversize_docs.py
+tools/build_changelog.py
 AGENTS.md
 BOT.md
 .github/workflows/bot-gate.yml

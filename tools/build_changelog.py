@@ -10,6 +10,7 @@ changelog.json as the ledger.
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 from pathlib import Path
@@ -81,6 +82,7 @@ def ver_tuple(label: str) -> tuple[int, int, int]:
 
 
 def main() -> int:
+    argparse.ArgumentParser(description="Rewrite scripts/data/changelog.json from design/changelog/*.md (takes no arguments).").parse_args()
     ver = load_version()
     epoch = int(ver.get("epoch", 0))
     series = int(ver.get("series", 0))

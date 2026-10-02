@@ -38,7 +38,7 @@ RE_EXTENDS_CB = re.compile(r"^extends\s+CharacterBody(?:2D|3D)\b", re.M)
 
 
 def rel(p: Path) -> str:
-    return str(p.relative_to(ROOT)).replace("/", "\\")
+    return p.relative_to(ROOT).as_posix()
 
 
 def iter_gd() -> list[Path]:

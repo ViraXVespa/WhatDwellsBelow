@@ -75,6 +75,12 @@ Targeted areas for a split: the smoke phases that load the file, `dungeon-load-t
 Split tool: `python tools/split_funcs.py FILE --list` shows func sizes, uses, and outside callers; write `plan.json` (`{helper_stem: [names]}`), run `--plan plan.json --dry-run`, then without `--dry-run`. It writes the helpers (static funcs, consts, vars), one-line delegates for public funcs (`await` kept for coroutines), and preloads, runs `facade_requal.py` on every file, and prints the line-multiset check and sizes. Node (instance) funcs move too: they become `static func f(host: <the facade's extends type>, ...)` and the facade keeps a delegate.
 Facade names (`split_funcs.py` runs this itself): `python tools/facade_requal.py FILE` rewrites names that moved to same-folder `preload` helpers into `Mod.name` (code only; keeps BOM and line endings; `--dry-run` lists comment/string matches; `--sym NAME=Mod` or `NAME()=Mod` for manual cases). Run `FILE --check` on the facade and on every new helper: it exits 1 on a bare moved name, or on an outside `Alias.name` caller whose name is gone from FILE. Fast compile check (seconds; the smokes wait out a timeout on a compile error): `bot_warnscan.py --areas static --non-leak-diff PATH`, run before the smokes.
 Doc edits: `import doc_patch as dp` (`tools/doc_patch.py`; `write_changelog`, `replace_once`, `ensure_line`, `replace_func`, `upsert_func`, `set_read_when`) from a scratch runner; it keeps CRLF and skips edits already applied.
+Python tools (the `.ps1` tools need PowerShell and are unusable on the box, no pwsh; skip `design/pc-offload.md`). One-liners, `python3 tools/X.py --help` for flags:
+- `check_code_map.py`: live `.gd` vs code-map ticks; rule: no new UNMAPPED for touched files. `patch_code_map.py --system NAME --add PATH`: edit one row's ticks. `list_code_map_row.py --path P`: print one row.
+- `file_stat.py --path P`: bytes, BOM, CRLF/LF, indent (verify a split kept them). `summarize_scripts.py --over-kb 5`: funcs per file. `lint_hostify.py`: advisory `:=`/host pitfalls.
+- `list_oversize_docs.py [--over-kb 8]`: design/*.md by size (doc facade). `list_route.py --job door.job`: one routes.yaml card. `list_unused_funcs.py --limit N`: dead-code report; `--apply` DELETES funcs, use only if the opt item says so.
+- `move_script_cluster.py --to-dir D [--dry-run]`: move a facade + siblings and rewrite `res://`; only for a user-named relocate job.
+- `next_changelog_label.py` and `write_utf8_file.py` duplicate `doc_patch` (`next_label`, `write_text`); prefer `doc_patch`.
 
 ## Hard stops
 
