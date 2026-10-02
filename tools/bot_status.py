@@ -95,7 +95,11 @@ def parse_reuse_brief(root: Path) -> list[str]:
         body = " ".join(found.group(2).split())
         if body:
             items.append(body)
-    return items
+    if items:
+        return items
+    prose = re.sub(r"(?s)<!--.*?-->", "", rest)
+    lines = [ln.strip() for ln in prose.splitlines() if ln.strip()]
+    return [" ".join(lines)] if lines else []
 
 
 def parse_opt_queue(root: Path) -> list[dict[str, str]]:

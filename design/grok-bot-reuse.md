@@ -10,9 +10,9 @@ Binding for **Grok Bot** when the User names the staged reuse PR / reuse-map / q
 
 Size, prove, changelog, and `version.json` rules live in `BOT.md`.
 
-Confirm `reuse_brief count` from `python tools/bot_status.py`. The current body of `design/reuse-map.md` is **one** PR goal. Implement that brief. Do not take a subset. Do not invent rows. Do not mark rows done. Do not start a size sweep, extract hunt, relocate, or doc facade pass in the same session.
+Confirm `reuse_brief count` from `python tools/bot_status.py`. The current body of `design/reuse-map.md` is **one** PR goal. Implement that brief. Do not take a subset. Do not invent rows. Do not start a size sweep, extract hunt, relocate, or doc facade pass in the same session.
 
-Web / chat Phase 7 owns that file. After squash-merge, stop. Clearing or replacing the brief is the next web session, not this flow.
+Web / chat Phase 7 writes that file. The Bot clears the completed Brief items from `design/reuse-map.md` on the same PR (keep the how-to headers). Do not add Ready / Done columns. After the User squash-merges, stop.
 
 If `design/reuse-map.md` is missing the how-to header only, or the body under the how-to is the empty template (no brief), stop and report empty. Do not invent work.
 
@@ -34,7 +34,7 @@ Do not walk the live tree to rediscover copies the brief does not name.
 1. Show the brief back to the User as the PR mandate. Do not edit yet if the brief is ambiguous — ask once.
 2. Implement the brief as one branch / one PR.
 3. Update `design/code-map.md` when a new public helper path appears.
-4. Do not rewrite `design/reuse-map.md` except a compile-safe typo fix the User already named. No Ready / Done columns.
+4. Clear the completed Brief items from `design/reuse-map.md` in the same PR. Leave the how-to headers. No Ready / Done columns.
 5. Prove per BOT.md.
 ## Verify
 
