@@ -23,5 +23,4 @@ Do not pass Godot `--headless` or `--display-driver headless` for a postcard.
 Default hides the window off-screen and strips the taskbar tab from the Godot HWND. `--show` or `--taskbar 1` only when the User wants to watch.
 
 Source map, adding a knob, troubleshooting: the doc above. If the tool is awkward, fix the tool, do not work around it.
-Extension test: add a knob only when this session cannot take the picture without it.
-Propose the knob, wait if it is a new owner, prove with one shot, stop.
+Gap: when the picture needs a UI page or staged state the tool cannot set, extend the tool as part of the task (one knob at a time, one prove shot, documented in the doc's gap process). Do not work around it. A new runner is still propose-first.

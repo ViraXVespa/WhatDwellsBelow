@@ -50,6 +50,8 @@ Bot Linux VM (headless smokes only): BOT.md Smokes (`python3 tools/bot_smokes.py
 
 ## Dedicated smoke session
 
+Build slices do not need this session: they run the phases mapped in `routes.yaml` `smokes` and add or update asserts for what they implement (Build job cycle). The limits below apply to this dedicated session only.
+
 Smoke coverage is a Build session. **Weekly:** sessions in one instance, kept thin enough to last about one quota (catalog summaries, not Godot logs in chat). Slice, Bot-notes, and PC-offload chats must not rewrite these habits.
 
 - Purpose: write named smoke coverage. Numbered P1–P9: `smoke.gd` (`route_boot` / `attach_*`) plus `smoke_early.gd` / `smoke_late.gd` / `smoke_p*.gd`. Dedicated sweeps are extra flags, not a new N: `--wdb-load-timing-smoke` and `--wdb-dungeon-load-timing-smoke` (`load_timing.gd` mark / dmark), `--wdb-dungeon-map-smoke` (`dungeon_map.gd`)

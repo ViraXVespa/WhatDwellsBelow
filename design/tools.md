@@ -43,7 +43,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `check_load_graph.py` | Doc routing vs `design/routes.yaml` (prints PASS/FAIL, no summary) | BWD | `--help` | Y |
 | `code_map.py` | Code map: `check` (live `.gd` vs `design/code-map.md` ticks; exits 1 on new UNMAPPED or missing, older UNMAPPED are expected), `row --path P`, `patch --system S --add/--remove/--rename`. Summaries: `code-map-check`, `code-map-row`, `code-map-patch`. | BD | `--help` | Y |
 | `check_code_map.py` | Shim -> `code_map.py check`, one release | BD | `--help` | Y |
-| `bot_smokes.py` | Headless phase smokes on the Linux VM (`--phases 1,2,6`). Pin, install and `.uid` import: BOT.md Smokes. | B | `--help` | Y |
+| `bot_smokes.py` | Headless phase smokes on the Linux VM (`--phases 1,2,6`, or `--door` / `--job` for the `routes.yaml` `smokes` map). Pin, install and `.uid` import: BOT.md Smokes. | B | `--help` | Y |
 | `bot_warnscan.py` | Warning sweep by area; `--save-baseline P` before, `--non-leak-diff P` after (same `--areas`). Procedure: BOT.md Smokes. | B | `--help` | Y |
 | `bot_warnscan_lib.py` | Log parser for `bot_warnscan.py` | B | module docstring (no `--help`) | Y |
 | `bot_opt.py` | Opt queue: `--list`, `--id`, `--status opt-N=done`, `--add`, `--remove`. Never hand-edit the queue block. Summary: `bot-opt`. | BD | `--help` | Y |
@@ -63,7 +63,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `code_map_lib.py` | Code-map row parser/writer used by `code_map.py` | BD | module docstring (no `--help`) | Y |
 | `list_code_map_row.py` | Shim -> `code_map.py row`, one release | BD | `--help` | Y |
 | `list_oversize_docs.py` | List `design/*.md` by size, OVER at `--over-kb` (default 8) | BD | `--help` | Y |
-| `list_route.py` | Print one `routes.yaml` door or job card (`--job door.job`) | BD | `--help` | Y |
+| `list_route.py` | Print one `routes.yaml` door or job card (`--job door.job`), incl. its smoke phases | BD | `--help` | Y |
 
 ### Inventory and lint
 

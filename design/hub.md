@@ -19,6 +19,19 @@ Code: `scripts/world/camp.gd` (facade, `@tool` preview), `scripts/world/camp_lay
 All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidity under the orthographic Camera3D.
 - `Layout` on `scenes/camp.tscn` is the pose hook. `ensure_tree()` creates the spot and roof children from script defaults. Scene exports override eave, UV, and box size. An empty `Layout` is valid. `Generated` is a runtime bucket. Play clears it and runs the helpers so Title and shots show the same town. Do not pack `Generated` into the scene.
 
+## Camp entry events
+
+Every way the player reaches Placeholdia (there is no Continue button on the title; Title has Play, the other entry is the dungeon). Code: `scripts/app_flow.gd`, `scripts/world/camp.gd`, `scripts/ui/recap_flow.gd`.
+
+| Event | Path | Wake block in `camp.gd` (`wake_pending`: wake VFX, `roll_quests(true)`, `restock()`) |
+|---|---|---|
+| Title → Play | `title.gd _play` → `App.play_from_menu` → `go_camp` | skipped (`wake_pending` is false); saved quests and shop stock load as they were |
+| Run ends (death or “Dispel”; extraction only banks items) | `App.end_run` / `finish_end` → recap → its **Continue** button → `recap_flow.finish` sets `wake_pending` → `go_camp` | runs: new quest offers, shop restock, wake-up sequence |
+| Run ends with no recap node | `app_run.finish_end` → `go_camp` | skipped (fallback only) |
+| Pause → Main Menu → Title → Play | same as Title → Play | skipped |
+
+"Each time the delver re-enters Placeholdia" therefore means either every row (hook in `camp.gd` setup) or only the run-end row (hook beside `roll_quests`); pick one in the design before building a per-entry feature.
+
 This file is the door. Open the Job-table sibling only when that row matches.
 
 | Job | Open |

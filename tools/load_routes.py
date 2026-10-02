@@ -240,6 +240,20 @@ def job_read_when(data: dict[str, Any]) -> dict[str, str]:
     return {str(key): str(val) for key, val in raw.items()}
 
 
+def smoke_phases(data: dict[str, Any], door: str = "", job: str = "") -> list[int]:
+    """Numbered smoke phases for a door/job: job key, then door key, then `default`."""
+    raw = data.get("smokes") or {}
+    if not isinstance(raw, dict):
+        raw = {}
+    door = door or job.split(".", 1)[0]
+    val = None
+    for key in (job, door, "default"):
+        if key and raw.get(key):
+            val = raw[key]
+            break
+    return [int(x) for x in str(val or "1").replace(" ", "").split(",") if x.isdigit()]
+
+
 def job_parked_ids(data: dict[str, Any]) -> list[str]:
     raw = data.get("job_parked") or []
     if not isinstance(raw, list):
