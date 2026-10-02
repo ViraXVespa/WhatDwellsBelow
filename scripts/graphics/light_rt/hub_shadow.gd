@@ -26,7 +26,7 @@ static func _hub_lock_shadows(img: Image, org: Vector2, layout: Node) -> int:
 		if at.y > 0.2 and (at.x < 0.5 or at.z < -1.5):
 			continue
 		if node.global_position.length() < 0.5:
-			printerr("bake_camp: drop unplaced %s parent=%s" % [node.name, node.get_parent().name if node.get_parent() else ""])
+			printerr("bake_camp: drop unplaced %s parent=%s" % [node.name, String(node.get_parent().name) if node.get_parent() else ""])
 			continue
 		wrote += _hub_project_mesh(img, org, node, sun)
 	var sprites: Array = root.find_children("*", "Sprite3D", true, false)
@@ -120,7 +120,6 @@ static func _hub_project_sprite(img: Image, org: Vector2, spr: Sprite3D, sun: Ve
 	if spr.region_enabled:
 		tw = spr.region_rect.size.x * spr.pixel_size
 		th = spr.region_rect.size.y * spr.pixel_size
-	var c: Vector3 = spr.global_position
 	var xf: Transform3D = spr.global_transform
 	var p0: Vector3 = xf * Vector3(-tw * 0.5, -th * 0.5, 0.0)
 	var p1: Vector3 = xf * Vector3(tw * 0.5, -th * 0.5, 0.0)

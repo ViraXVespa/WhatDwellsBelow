@@ -86,12 +86,12 @@ static func _walk_mask(
 	var py: int = 0
 	while py < ih:
 		var row: int = py * iw
-		var fy: int = z0 * n + (py * n) / K.SUB
+		var fy: int = z0 * n + int((py * n) / float(K.SUB))
 		if fy >= 0 and fy < sh:
 			var srow: int = fy * sw
 			var px: int = 0
 			while px < iw:
-				var fx: int = x0 * n + (px * n) / K.SUB
+				var fx: int = x0 * n + int((px * n) / float(K.SUB))
 				if fx >= 0 and fx < sw and solid[srow + fx] != 0:
 					var i: int = row + px
 					walk[i] = 1

@@ -118,7 +118,7 @@ static func pump_fps(host: Node, hub: bool) -> void:
 		var t0: int = Time.get_ticks_usec()
 		RenderingServer.force_draw()
 		await host.get_tree().process_frame
-		last_dt = int((Time.get_ticks_usec() - t0) / 1000)
+		last_dt = int((Time.get_ticks_usec() - t0) / 1000.0)
 		n += 1
 		if last_dt <= 17:
 			good += 1

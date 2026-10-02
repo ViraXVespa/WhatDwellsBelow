@@ -82,8 +82,8 @@ func _process(_dt: float) -> void:
 func _keep_focus() -> void:
 	if _action == null:
 		return
-	var owner: Control = get_viewport().gui_get_focus_owner() as Control
-	if owner == _action or owner == _continue:
+	var focused: Control = get_viewport().gui_get_focus_owner() as Control
+	if focused == _action or focused == _continue:
 		return
 	_action.grab_focus()
 
@@ -119,8 +119,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _activate_focused() -> void:
-	var owner: Control = get_viewport().gui_get_focus_owner() as Control
-	if owner == _continue:
+	var focused: Control = get_viewport().gui_get_focus_owner() as Control
+	if focused == _continue:
 		_on_continue()
 		return
 	_on_action()
@@ -171,8 +171,8 @@ func _rotate_line() -> String:
 		return "Rotate the device to landscape."
 	return "A confirms the focused button. B / Esc continues."
 
-func _lab(t: String, size: int, col: Color) -> Label:
-	var l: Label = ThemeS.lab(t, size, col)
+func _lab(t: String, font_px: int, col: Color) -> Label:
+	var l: Label = ThemeS.lab(t, font_px, col)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return l

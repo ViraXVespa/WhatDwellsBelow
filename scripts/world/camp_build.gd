@@ -105,7 +105,7 @@ static func strip_building_cubes(root: Node) -> int:
 		var sz: Vector3 = (mi.mesh as BoxMesh).size
 		print(
 			"CAMP_MESH box parent=",
-			n.get_parent().name if n.get_parent() else "?",
+			String(n.get_parent().name) if n.get_parent() else "?",
 			" size=",
 			sz
 		)
@@ -132,14 +132,14 @@ static func dump_meshes(root: Node) -> void:
 		if n is Sprite3D:
 			sprites += 1
 			var spr := n as Sprite3D
-			print("CAMP_MESH sprite parent=", n.get_parent().name if n.get_parent() else "?", " pos=", spr.position, " px=", spr.pixel_size)
+			print("CAMP_MESH sprite parent=", String(n.get_parent().name) if n.get_parent() else "?", " pos=", spr.position, " px=", spr.pixel_size)
 			continue
 		var mi := n as MeshInstance3D
 		if mi == null:
 			continue
 		if mi.mesh is BoxMesh:
 			boxes += 1
-			print("CAMP_MESH keep_box parent=", n.get_parent().name if n.get_parent() else "?", " size=", (mi.mesh as BoxMesh).size)
+			print("CAMP_MESH keep_box parent=", String(n.get_parent().name) if n.get_parent() else "?", " size=", (mi.mesh as BoxMesh).size)
 		else:
 			other += 1
 			print("CAMP_MESH other name=", n.name, " mesh=", mi.mesh.get_class() if mi.mesh else "null")

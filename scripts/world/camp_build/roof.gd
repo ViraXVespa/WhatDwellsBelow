@@ -15,7 +15,7 @@ const PATH_X := 16.5
 const PATH_Z := 15.0
 const CampMesh := preload("res://scripts/world/camp_build/mesh.gd")
 
-static func box(host: Node3D, pos: Vector3, box_size: Vector3, _col: Color) -> StaticBody3D:
+static func box(host: Node3D, pos: Vector3, _box_size: Vector3, _col: Color) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.collision_layer = 1
 	body.position = pos
