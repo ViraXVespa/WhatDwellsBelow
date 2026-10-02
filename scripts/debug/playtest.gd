@@ -1,6 +1,6 @@
-extends "res://scripts/debug/playtest_api.gd"
+extends "res://scripts/debug/playtest/playtest_api.gd"
 
-const PlaytestNav := preload("res://scripts/debug/playtest_nav.gd")
+const PlaytestNav := preload("res://scripts/debug/playtest/playtest_nav.gd")
 const PlaytestGoals2 := preload("res://scripts/debug/playtest_goals.gd")
 
 func _use_prop(p: Node, dest: Node, _reach: float = 1.18) -> void:

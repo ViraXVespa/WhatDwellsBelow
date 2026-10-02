@@ -1,6 +1,6 @@
 extends Object
-const Web := preload("res://scripts/display_mode_web.gd")
-const Desk := preload("res://scripts/display_mode_desk.gd")
+const Web := preload("res://scripts/display_mode/mode_web.gd")
+const Desk := preload("res://scripts/display_mode/mode_desk.gd")
 
 ## Desktop window modes, web fullscreen / PWA, session gate, landscape lock.
 

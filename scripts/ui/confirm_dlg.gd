@@ -2,7 +2,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
-const View := preload("res://scripts/ui/split_menu_view.gd")
+const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 const NODE_NAME := "confirm_dlg"

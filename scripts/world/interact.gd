@@ -1,7 +1,7 @@
 ﻿extends Node3D
 
-const InteractFx := preload("res://scripts/world/interact_fx.gd")
-const Prompt := preload("res://scripts/world/interact_prompt.gd")
+const InteractFx := preload("res://scripts/world/interact/interact_fx.gd")
+const Prompt := preload("res://scripts/world/interact/interact_prompt.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 
 static var _act_s: GDScript
@@ -64,7 +64,7 @@ func _title() -> String:
 
 func _act() -> GDScript:
 	if _act_s == null:
-		_act_s = load("res://scripts/world/interact_act.gd") as GDScript
+		_act_s = load("res://scripts/world/interact/interact_act.gd") as GDScript
 	return _act_s
 
 func interact(who: Node) -> String:

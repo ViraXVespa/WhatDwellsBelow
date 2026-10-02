@@ -1,7 +1,7 @@
 extends CanvasLayer
 
-const Draw := preload("res://scripts/ui/touch_hud_draw.gd")
-const PadInput := preload("res://scripts/ui/touch_hud_input.gd")
+const Draw := preload("res://scripts/ui/touch_hud/hud_draw.gd")
+const PadInput := preload("res://scripts/ui/touch_hud/hud_input.gd")
 
 var root: Control
 var _tex: Dictionary = {}

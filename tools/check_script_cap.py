@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail if live scripts/**/*.gd are at or over the ship floor. Linux twin of check_script_cap.ps1. Grok Bot owns this cap. Grok Build prove does not run it unless the User named size."""
+"""Fail if live scripts/**/*.gd are at or over the ship floor, or if two scripts share a basename (dupes=). Linux twin of check_script_cap.ps1. Grok Bot owns this cap. Grok Build prove does not run it unless the User named size."""
 
 from __future__ import annotations
 
@@ -70,22 +70,30 @@ def main(argv: list[str] | None = None) -> int:
         if size >= limit:
             over.append((size, agent_log.rel(root, path)))
     over.sort(key=lambda row: (-row[0], row[1]))
+    # basenames must stay unique repo-wide (editor tabs, quick-open, grep, bare code-map names): design/refactor.md Cluster folders
+    by_name: dict[str, list[str]] = {}
+    for gp in gd_lib.iter_gd(root):
+        by_name.setdefault(gp.name, []).append(agent_log.rel(root, gp))
+    mine = {agent_log.rel(root, f) for f in files}
+    dupes = sorted((n, ps) for n, ps in by_name.items() if len(ps) > 1 and mine & set(ps))
 
     lines = [
         "script cap",
         "root=.",
         f"overKb={args.over_kb} limit={limit}",
         "measure=os.path.getsize (== Get-Item Length)",
-        f"checked={len(files)} over={len(over)}",
+        f"checked={len(files)} over={len(over)} dupes={len(dupes)}",
         "",
         "bytes\tpath",
     ]
     for size, rel in over:
         lines.append(f"{size}\t{rel}")
+    for name, paths in dupes:
+        lines.append(f"DUPE\t{name}\t" + " | ".join(paths))
     body = "\n".join(lines)
     return agent_log.finish(
-        "script-cap", root, body, "FAIL" if over else "PASS", args=args,
-        checked=len(files), over=len(over), limit=limit,
+        "script-cap", root, body, "FAIL" if over or dupes else "PASS", args=args,
+        checked=len(files), over=len(over), dupes=len(dupes), limit=limit,
     )
 
 

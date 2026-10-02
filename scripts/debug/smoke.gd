@@ -8,7 +8,7 @@ extends RefCounted
 ## Postcard shot: --wdb-shot (play-camera PNG; not a numbered phase)
 
 const Early := preload("res://scripts/debug/smoke_early.gd")
-const Late := preload("res://scripts/debug/smoke_late.gd")
+const Late := preload("res://scripts/debug/smoke/smoke_late.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const DungeonMap := preload("res://scripts/debug/dungeon_map.gd")
 const ShotTool := preload("res://scripts/debug/shot_tool.gd")

@@ -1,9 +1,9 @@
 extends Object
 
 const REACH := 36
-const Util := preload("res://scripts/debug/playtest_path_util.gd")
-const Nav := preload("res://scripts/debug/playtest_path_nav.gd")
-const Step := preload("res://scripts/debug/playtest_path_step.gd")
+const Util := preload("res://scripts/debug/playtest_path/path_util.gd")
+const Nav := preload("res://scripts/debug/playtest_path/path_nav.gd")
+const Step := preload("res://scripts/debug/playtest_path/path_step.gd")
 
 static func door_bypass(pt: Node, p: Node, boss: Node) -> Vector2:
 	return Step.door_bypass(pt, p, boss)

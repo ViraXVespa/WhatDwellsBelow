@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-"""Split a static-helper GDScript into a facade plus sibling helper modules (stdlib only).
+"""Split a static-helper GDScript into a facade plus helper modules in its cluster folder (stdlib only).
 
   python tools/split_funcs.py FILE --list                  # sizes, calls, decls used, outside callers
   python tools/split_funcs.py FILE --plan plan.json --dry-run
   python tools/split_funcs.py FILE --plan plan.json        # write, qualify, check
 
-plan.json maps helper file stem -> names to move (static funcs, consts, top-level vars):
+plan.json maps helper key (`<facade stem>_<rest>`) -> names to move (static funcs, consts, top-level vars):
   {"light_stamp_walk": ["_walk_mask", "_lift_floor", "_walk_buf"]}
-Writes <stem>.gd beside FILE (extends Object, static funcs), removes the items from FILE, adds
+Layout (design/refactor.md "Cluster folders"): the facade stays beside its folder (scripts/graphics/light_stamp.gd) and each
+helper is written to scripts/graphics/light_stamp/<name>.gd with the repeated stem trimmed (walk.gd); a generic/short/colliding
+trim keeps a qualifier (gd_lib.helper_basenames; --dry-run prints the chosen names). If FILE is itself a helper inside a
+cluster folder, new helpers go beside it in that folder, named by the same rule against the folder's stem.
+Writes the helper files (extends Object, static funcs), removes the items from FILE, adds
 `const Mod := preload(...)`, leaves a one-line delegate (same signature) for each moved public
 func (and any func an outside script calls through FILE; `await` kept if the body awaits), copies preload consts the moved code
 uses, then runs tools/facade_requal.py (rewrite + --check) on every file and prints a
@@ -32,6 +36,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import facade_requal as fr  # noqa: E402
+import gd_lib  # noqa: E402
 
 _TOOLS = Path(__file__).resolve().parent
 if str(_TOOLS) not in sys.path:
@@ -213,7 +218,17 @@ def do_list(items, path, root):
         print(f"{it['kind']:5} {it['name']:<28}{sz:>6}B uses={r}{extra}")
 
 
-def build(items, plan, path, root):
+def helper_dir(path: Path, in_folder: bool = False) -> tuple[Path, str]:
+    """(folder for new helpers, cluster stem). Facade beside its folder -> `<dir>/<stem>/`; a helper already inside a
+    cluster folder (`<dir>/<stem>/x.gd` with `<dir>/<stem>.gd` present, or --in-folder for facade-less families such as
+    scripts/world/crystal/) -> the same folder."""
+    par = path.resolve().parent
+    if path.stem != par.name and ((par.parent / (par.name + ".gd")).is_file() or in_folder):
+        return par, par.name
+    return par / path.stem, path.stem
+
+
+def build(items, plan, path, root, in_folder=False):
     names = {it["name"]: it["kind"] for it in items if it["name"]}
     owner = {}
     for stem, lst in plan.items():
@@ -262,21 +277,24 @@ def build(items, plan, path, root):
                     stack.append(d)
     ext = outside(path, root)
     strs = outside_strs(root)
-    resdir = path.resolve().parent.relative_to(root).as_posix()
+    hdir, hstem = helper_dir(path, in_folder)
+    taken = {f.stem for f in gd_lib.iter_gd(root)} - {s for s in plan if (hdir / (s + ".gd")).exists()}
+    fname = gd_lib.helper_basenames(hstem, list(plan), taken)
+    hres = {s: f"res://{(hdir / (fname[s] + '.gd')).relative_to(root).as_posix()}" for s in plan}
     out = {}
     for stem, lst in plan.items():
         parts = [f"extends Object\n\n## Split from {path.name}: {', '.join(lst[:3])}{'...' if len(lst) > 3 else ''}.\n"]
         for r in copy[stem]:
             parts.append(body(preloads[r]).rstrip("\n"))
         for d in sorted(dep[stem]):
-            parts.append(f'const {alias[d]} := preload("res://{resdir}/{d}.gd")')
+            parts.append(f'const {alias[d]} := preload("{hres[d]}")')
         pre = "\n".join(parts[1:])
         decls = [body(byname[n]) for n in lst if byname[n]["kind"] != "func"]
         funcs = [htxt.get(n) or body(byname[n]) for n in lst if byname[n]["kind"] == "func"]
         txt = parts[0] + "\n" + (pre + "\n\n" if pre else "") + ("\n".join(decls) + "\n\n" if decls else "") + "\n".join(funcs)
-        out[path.with_name(stem + ".gd")] = txt
+        out[hdir / (fname[stem] + ".gd")] = txt
     fac, added = [], False
-    new_pre = "\n".join(f'const {alias[s]} := preload("res://{resdir}/{s}.gd")' for s in plan)
+    new_pre = "\n".join(f'const {alias[s]} := preload("{hres[s]}")' for s in plan)
     last_pre = max([i for i, it in enumerate(items) if it["name"] in preloads and it["name"] not in owner], default=-1)
     if last_pre < 0:
         last_pre = max([i for i, it in enumerate(items) if it["kind"] in ("pre", "other")], default=-1)
@@ -318,6 +336,7 @@ def main() -> int:
     p.add_argument("file")
     p.add_argument("--list", action="store_true")
     p.add_argument("--plan")
+    p.add_argument("--in-folder", action="store_true", help="FILE is a helper in a facade-less cluster folder: new helpers go beside it")
     ns = p.parse_args()
     path = Path(ns.file)
     root = agent_log.resolve_root(ns) if ns.root else fr.project_root(path)
@@ -327,13 +346,14 @@ def main() -> int:
         do_list(items, path, root)
         return agent_log.emit_result("INFO", mode="list", items=len(items))
     plan = json.loads(Path(ns.plan).read_text(encoding="utf-8"))
-    out, alias = build(items, plan, path, root)
+    out, alias = build(items, plan, path, root, ns.in_folder)
     before = path.stat().st_size
     if ns.dry_run:
         for f, t in out.items():
             print(f"would write {f}  ~{len(encode(t, bom, crlf))}B" + (f"  (was {before}B)" if f == path else ""))
         return agent_log.emit_result("PASS", mode="plan", dry_run=True, files=len(out))
     for f, t in out.items():
+        f.parent.mkdir(parents=True, exist_ok=True)
         f.write_bytes(encode(t, bom, crlf))
     tool = Path(__file__).resolve().parent / "facade_requal.py"
     bad = 0

@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot  
 Read when: Camera3D, zoom, renderer, depth sorting
-Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/camp_warm.gd`, `scripts/input/look_ctrl.gd`, `scripts/app.gd`, `project.godot`  
+Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/camp/warm.gd`, `scripts/input/look_ctrl.gd`, `scripts/app.gd`, `project.godot`  
 
 
 ## Camera (live 3D path)
@@ -20,7 +20,7 @@ Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/
 - Depth sorting SHOULD respect implied real-world positions of the player, enemies, walls, and props. Arbitrary front/back popping MUST be avoided wherever possible, but perfect freedom from popping is not required.
 
 Title → Play hub warmup MAY set `cam.size` wider than `ZOOM_MIN` so the full Placeholdia slab plus `GRASS_PAD` is on screen under the loader sheet. That size MUST NOT write `App.cam_zoom`. `camera_rig.warm_hold` MUST ignore player `follow` until restore. Restore the user’s zoom and follow target before `loader.finish()`. The player MUST NOT see the pulled-back view.
-- Debug camp shots re-apply pose in `_arm_capture` (`shot_tool_capture.gd`) after settle. Zoom `0.69` is the roof-judge crop. It MUST NOT write `App.cam_zoom` for play. The player never keeps that view.
+- Debug camp shots re-apply pose in `_arm_capture` (`capture.gd`) after settle. Zoom `0.69` is the roof-judge crop. It MUST NOT write `App.cam_zoom` for play. The player never keeps that view.
  Extract-wake does not run this.
 
 ## Archives
@@ -52,4 +52,4 @@ Sprite3D filter is not the project canvas default. Live default is nearest + mip
 
 `project.godot`: viewport 1920×1080, `canvas_items` stretch, aspect `expand`, `default_texture_filter = 0` (nearest, canvas/HUD only), renderer `gl_compatibility`.
 
-Hub warmup (`camp_warm.gd`): yard center from `camp_build.gd` slab + `GRASS_PAD`; `cam.size = max(span_x, span_z) * 1.25`. `apply_size` is unclamped. `restore_user` calls `apply_zoom(App.cam_zoom)`.
+Hub warmup (`warm.gd`): yard center from `camp_build.gd` slab + `GRASS_PAD`; `cam.size = max(span_x, span_z) * 1.25`. `apply_size` is unclamped. `restore_user` calls `apply_zoom(App.cam_zoom)`.

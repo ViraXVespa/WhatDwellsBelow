@@ -26,7 +26,7 @@ def main(argv: list[str] | None = None) -> int:
     rows = []
     for p in (root / "scripts").rglob("*.gd"):
         parts = p.relative_to(root).parts
-        if "archives" in parts or ".archive_worktrees" in parts:
+        if parts[0] in ("archives", ".archive_worktrees"):
             continue
         n = p.stat().st_size
         if lo <= n < hi:

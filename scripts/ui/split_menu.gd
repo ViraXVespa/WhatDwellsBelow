@@ -1,6 +1,6 @@
 ﻿extends Object
 
-const View := preload("res://scripts/ui/split_menu_view.gd")
+const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 
 static func rows(host: Node) -> Array:
 	if host.has_method("split_rows"):

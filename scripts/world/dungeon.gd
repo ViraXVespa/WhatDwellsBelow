@@ -4,10 +4,10 @@ const T := preload("res://scripts/data/tunables.gd")
 const HudS := preload("res://scripts/ui/hud.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream.gd")
 const DungeonGeo := preload("res://scripts/world/dungeon_geo.gd")
-const DungeonMinimap := preload("res://scripts/world/dungeon_minimap.gd")
-const DungeonCells := preload("res://scripts/world/dungeon_cells.gd")
-const DungeonPack := preload("res://scripts/world/dungeon_pack.gd")
-const DungeonBoot := preload("res://scripts/world/dungeon_boot.gd")
+const DungeonMinimap := preload("res://scripts/world/dungeon/minimap.gd")
+const DungeonCells := preload("res://scripts/world/dungeon/dungeon_cells.gd")
+const DungeonPack := preload("res://scripts/world/dungeon/dungeon_pack.gd")
+const DungeonBoot := preload("res://scripts/world/dungeon/dungeon_boot.gd")
 
 var data: Dictionary = {}
 var player: CharacterBody3D
@@ -111,7 +111,7 @@ func _map() -> void:
 func _redraw_map() -> void:
 	DungeonMinimap.redraw_map(self)
 	if map_layer and map_layer.visible:
-		var MapActS: GDScript = load("res://scripts/world/dungeon_map_act.gd") as GDScript
+		var MapActS: GDScript = load("res://scripts/world/dungeon/map_act.gd") as GDScript
 		MapActS.apply(self)
 
 func _note_verge() -> void:

@@ -73,7 +73,7 @@ A new tools/ module is in scope because this item names it. Prefer one library i
 ### opt-002 (done)
 - Title: Centralize preload literals on Autoload/flow facades
 - Cluster: Autoload / flow
-- Files: `scripts/app.gd`, `scripts/app_boot.gd`, `scripts/app_flow.gd`, `scripts/app_run.gd`, `scripts/app_set.gd`
+- Files: `scripts/app.gd`, `scripts/app/app_boot.gd`, `scripts/app/app_flow.gd`, `scripts/app/app_run.gd`, `scripts/app/app_set.gd`
 
 Inventory first. Do not edit until the shape is listed.
 
@@ -90,7 +90,7 @@ Touched live scripts stay under 10KB. Land on the current open Bot PR. Mark this
 ### opt-003 (pending)
 - Title: Shared helper for Title/Placeholdia/Dungeon load legs
 - Cluster: Autoload / flow
-- Files: `scripts/app.gd`, `scripts/app_flow.gd`, `scripts/app_run.gd`, `scripts/app_boot.gd`, `scripts/app_set.gd`
+- Files: `scripts/app.gd`, `scripts/app/app_flow.gd`, `scripts/app/app_run.gd`, `scripts/app/app_boot.gd`, `scripts/app/app_set.gd`
 
 Inventory first. Do not edit until shared enter/exit logic is listed as real duplication (not three similar-looking calls that already go through one function).
 

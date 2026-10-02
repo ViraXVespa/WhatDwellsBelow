@@ -1,10 +1,10 @@
 ﻿extends CharacterBody3D
 
-const EnemySetup := preload("res://scripts/combat/enemy_setup.gd")
-const EnemyAI := preload("res://scripts/combat/enemy_ai.gd")
-const Ready := preload("res://scripts/combat/enemy_ready.gd")
-const Hit := preload("res://scripts/combat/enemy_hit.gd")
-const Present := preload("res://scripts/combat/enemy_present.gd")
+const EnemySetup := preload("res://scripts/combat/enemy/enemy_setup.gd")
+const EnemyAI := preload("res://scripts/combat/enemy/enemy_ai.gd")
+const Ready := preload("res://scripts/combat/enemy/enemy_ready.gd")
+const Hit := preload("res://scripts/combat/enemy/enemy_hit.gd")
+const Present := preload("res://scripts/combat/enemy/enemy_present.gd")
 
 const ST_IDLE := 0
 const ST_CHASE := 1

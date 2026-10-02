@@ -3,9 +3,9 @@ extends RefCounted
 const Combat := preload("res://scripts/combat/combat.gd")
 const Cover := preload("res://scripts/combat/cover.gd")
 const ProjS := preload("res://scripts/combat/projectile.gd")
-const PlayerLock := preload("res://scripts/world/player_lock.gd")
-const Atk := preload("res://scripts/combat/player_hit_atk.gd")
-const Fx := preload("res://scripts/combat/player_hit_fx.gd")
+const PlayerLock := preload("res://scripts/world/player/player_lock.gd")
+const Atk := preload("res://scripts/combat/player_hit/hit_atk.gd")
+const Fx := preload("res://scripts/combat/player_hit/hit_fx.gd")
 
 static func draw_basic_tele(host: Node, _active: bool) -> void:
 	if host.telegraph == null:

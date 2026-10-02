@@ -1,10 +1,10 @@
 extends RefCounted
 
 const Roster := preload("res://scripts/combat/roster.gd")
-const GeoStream := preload("res://scripts/world/dungeon_geo_stream.gd")
-const CrystalNet := preload("res://scripts/world/crystal_net.gd")
-const Queue := preload("res://scripts/world/dungeon_stream_queue.gd")
-const Act := preload("res://scripts/world/dungeon_stream_act.gd")
+const GeoStream := preload("res://scripts/world/dungeon_geo/geo_stream.gd")
+const CrystalNet := preload("res://scripts/world/crystal/net.gd")
+const Queue := preload("res://scripts/world/dungeon_stream/queue.gd")
+const Act := preload("res://scripts/world/dungeon_stream/stream_act.gd")
 
 const STREAM_IN := 28
 const STREAM_OUT := 42
@@ -53,7 +53,7 @@ static func tick(host: Node, delta: float) -> void:
 		var pool: PackedStringArray = Roster.floor_types(App.floor_n)
 		Queue.queue_initial(host, pool)
 		Queue.queue_ambushes(host, pool)
-		var SpawnS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
+		var SpawnS: GDScript = load("res://scripts/world/dungeon_props/spawn.gd") as GDScript
 		if host.prop_jobs.is_empty() and not bool(host.get_meta("props_booted", false)) and not bool(host.get_meta("props_scattered", false)):
 			SpawnS.spawn_world(host)
 	var pc: Vector2i = host._player_cell()
@@ -71,7 +71,7 @@ static func tick(host: Node, delta: float) -> void:
 			spawned += 1
 		elif st == "live" and not host.stream_all and d >= STREAM_OUT and not Act.job_in_combat(host, job):
 			Act.sleep_job(host, job)
-	var PropS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
+	var PropS: GDScript = load("res://scripts/world/dungeon_props/spawn.gd") as GDScript
 	PropS.tick(host, pc, budget)
 	CrystalNet.place_extras(host)
 	GeoStream.tick(host, delta)
@@ -84,11 +84,11 @@ static func force_all(host: Node) -> void:
 		Queue.queue_initial(host, pool)
 		Queue.queue_ambushes(host, pool)
 	if host.prop_jobs.is_empty() and not bool(host.get_meta("props_booted", false)) and not bool(host.get_meta("props_scattered", false)):
-		var SpawnS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
+		var SpawnS: GDScript = load("res://scripts/world/dungeon_props/spawn.gd") as GDScript
 		SpawnS.spawn_world(host)
 	for job in host.spawn_jobs:
 		if str(job.state) == "pending":
 			Act.activate_job(host, job)
-	var PropS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
+	var PropS: GDScript = load("res://scripts/world/dungeon_props/spawn.gd") as GDScript
 	PropS.flush(host)
 	CrystalNet.place_extras(host)

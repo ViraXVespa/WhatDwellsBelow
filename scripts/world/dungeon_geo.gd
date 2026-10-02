@@ -1,6 +1,6 @@
 extends Object
 
-const Rooms := preload("res://scripts/dungeon/gen_rooms.gd")
+const Rooms := preload("res://scripts/dungeon/gen/rooms.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
 const EnvKit := preload("res://scripts/graphics/env_kit.gd")
 const GroundShader := preload("res://scripts/graphics/ground_shader.gd")
@@ -28,7 +28,7 @@ static func box(body: StaticBody3D, size: Vector3, offset: Vector3) -> void:
 static func build_visuals(host: Node) -> void:
 	host.floor_mat = GroundShader.material("res://assets/tiles/dungeon_floor.png", Color(0.18, 0.2, 0.24))
 	host.wall_mat = WallShader.material("res://assets/tiles/wall_brick.png", Color(0.22, 0.22, 0.26))
-	var StreamGeo = load("res://scripts/world/dungeon_geo_stream.gd")
+	var StreamGeo = load("res://scripts/world/dungeon_geo/geo_stream.gd")
 	StreamGeo.setup(host)
 
 static func build_travel(host: Node) -> void:

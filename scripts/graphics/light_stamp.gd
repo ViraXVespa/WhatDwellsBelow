@@ -7,9 +7,9 @@ extends Object
 ## Wall texels stay dark except the neighbor sample along the bake. SUB stays 4.
 
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
-const K := preload("res://scripts/graphics/light_stamp_k.gd")
-const Fov := preload("res://scripts/graphics/light_stamp_fov.gd")
-const Grid := preload("res://scripts/graphics/light_stamp_grid.gd")
+const K := preload("res://scripts/graphics/light_stamp/stamp_k.gd")
+const Fov := preload("res://scripts/graphics/light_stamp/fov.gd")
+const Grid := preload("res://scripts/graphics/light_stamp/stamp_grid.gd")
 const COL_FLOOR := Color(0.50, 0.56, 0.74)
 static var _rr_buf: PackedFloat32Array = PackedFloat32Array()
 static var _gg_buf: PackedFloat32Array = PackedFloat32Array()

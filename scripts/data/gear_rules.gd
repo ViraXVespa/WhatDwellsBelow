@@ -1,7 +1,7 @@
 extends Object
 
-const Kit := preload("res://scripts/data/gear_rules_kit.gd")
-const Norm := preload("res://scripts/data/gear_rules_norm.gd")
+const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
+const Norm := preload("res://scripts/data/gear_rules/rules_norm.gd")
 
 const BUILTIN_WEAPONS := ["great_axe", "staff", "longbow"]
 const BUILTIN_TOOLS := ["pickaxe", "hatchet"]

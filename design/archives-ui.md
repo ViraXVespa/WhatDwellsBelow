@@ -8,7 +8,7 @@ Read when: split chevron, Documents reader, dim inactive columnstack
 
 Opened from title **Archives** only. Pause Settings MUST NOT open this browser.
 
-Shared two-column chrome: `split_menu.gd` + `split_menu_view.gd` (same helper as Pause Settings). Archive-specific Play / Documents / Video stay in `archives_ui_act.gd`.
+Shared two-column chrome: `split_menu.gd` + `split_menu_view.gd` (same helper as Pause Settings). Archive-specific Play / Documents / Video stay in `ui_act.gd`.
 
 Two columns. Only one column is active.
 
@@ -27,6 +27,6 @@ List MUST include every catalog row, including Classic 2D, Art experiment, Full 
 
 ## Live snapshot
 
-`archives_ui.gd` is the facade and split host. `archives_ui_view.gd` still owns archive-only panels. `archives_ui_act.gd` handles Play, docs fetch, and video. Column focus / dim / chevron come from `split_menu_view.gd`.
+`archives_ui.gd` is the facade and split host. `ui_view.gd` still owns archive-only panels. `ui_act.gd` handles Play, docs fetch, and video. Column focus / dim / chevron come from `split_menu_view.gd`.
 
 Pages CI exports live HEAD first, then runs `tools/export_archives.py` against the catalog. Failed pins stay in the catalog and in the Archives browser; their Pages URL may 404 until that SHA imports cleanly under the CI Godot and lands in `.archive_export_cache/`.

@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: gathering swings, shops, shrines, puzzles, extract-wells
-Code: `scripts/world/gather_node.gd`, `breakable.gd`, `interact.gd`, `interact_act.gd`, `interact_prompt.gd`, `interact_chest.gd`, `interact_fx.gd`, `dungeon_props.gd`, `dungeon_props_place.gd`, `floor_crystal.gd`, `crystal_net.gd`, `pickup.gd`, `scripts/ui/hud.gd`, `scripts/input/prompts.gd`  
+Code: `scripts/world/gather/gather_node.gd`, `breakable.gd`, `interact.gd`, `interact_act.gd`, `interact_prompt.gd`, `interact_chest.gd`, `interact_fx.gd`, `dungeon_props.gd`, `props_place.gd`, `floor_crystal.gd`, `net.gd`, `pickup.gd`, `scripts/ui/hud.gd`, `scripts/input/prompts.gd`  
 
 
 ## Mining nodes
@@ -77,7 +77,7 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 
 ## Live snapshot — puzzle rooms
 
-`dungeon_props_place.spawn_puzzle` walks clear cells inside the room rectangle and takes what fits. `interact_act.plate_held` stores `pressed` on the plate and only calls `toggle_gates` when the player first enters the 0.7 radius. `interact_fx.paint_used_chest` sets sprite modulate to a faded brown after open.
+`props_place.spawn_puzzle` walks clear cells inside the room rectangle and takes what fits. `interact_act.plate_held` stores `pressed` on the plate and only calls `toggle_gates` when the player first enters the 0.7 radius. `interact_fx.paint_used_chest` sets sprite modulate to a faded brown after open.
 
 ## Stairs
 

@@ -1,7 +1,7 @@
 extends Control
 
 const GameVer := preload("res://scripts/data/game_ver.gd")
-const News := preload("res://scripts/title_news.gd")
+const News := preload("res://scripts/title/news.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 
 var _busy := false

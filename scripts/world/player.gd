@@ -1,8 +1,8 @@
 extends CharacterBody3D
 
-const PlayerAnim := preload("res://scripts/world/player_anim.gd")
-const Setup := preload("res://scripts/world/player_setup.gd")
-const Tick := preload("res://scripts/world/player_tick.gd")
+const PlayerAnim := preload("res://scripts/world/player/player_anim.gd")
+const Setup := preload("res://scripts/world/player/player_setup.gd")
+const Tick := preload("res://scripts/world/player/player_tick.gd")
 
 const ATK_NONE := 0
 const ATK_BASIC := 1
@@ -88,34 +88,34 @@ func _script_at(path: String) -> GDScript:
 	return load(path) as GDScript
 
 func take_hit(raw: float, from_dir: Vector2, crit: bool, src := "") -> void:
-	_script_at("res://scripts/world/player_act.gd").take_hit(self, raw, from_dir, crit, src)
+	_script_at("res://scripts/world/player/player_act.gd").take_hit(self, raw, from_dir, crit, src)
 
 func heal(amount: float) -> void:
-	_script_at("res://scripts/world/player_act.gd").heal(self, amount)
+	_script_at("res://scripts/world/player/player_act.gd").heal(self, amount)
 
 func play_exit(cond: String, killer := "") -> void:
-	_script_at("res://scripts/world/player_act.gd").play_exit(self, cond, killer)
+	_script_at("res://scripts/world/player/player_act.gd").play_exit(self, cond, killer)
 
 func start_gather(node: Node) -> void:
-	_script_at("res://scripts/world/player_act.gd").start_gather(self, node)
+	_script_at("res://scripts/world/player/player_act.gd").start_gather(self, node)
 
 func stop_gather() -> void:
-	_script_at("res://scripts/world/player_act.gd").stop_gather(self)
+	_script_at("res://scripts/world/player/player_act.gd").stop_gather(self)
 
 func _ai_just(action: String) -> bool:
-	return _script_at("res://scripts/world/player_lock.gd").ai_just(self, action)
+	return _script_at("res://scripts/world/player/player_lock.gd").ai_just(self, action)
 
 func _ai_held(action: String) -> bool:
-	return _script_at("res://scripts/world/player_lock.gd").ai_held(self, action)
+	return _script_at("res://scripts/world/player/player_lock.gd").ai_held(self, action)
 
 func _try_dash(move: Vector2) -> void:
-	_script_at("res://scripts/world/player_combat.gd").try_dash(self, move)
+	_script_at("res://scripts/world/player/player_combat.gd").try_dash(self, move)
 
 func _basic_duration() -> float:
-	return _script_at("res://scripts/world/player_combat.gd").basic_duration()
+	return _script_at("res://scripts/world/player/player_combat.gd").basic_duration()
 
 func _hit_norm() -> float:
-	return _script_at("res://scripts/world/player_combat.gd").hit_norm()
+	return _script_at("res://scripts/world/player/player_combat.gd").hit_norm()
 
 func _draw_basic_tele(active: bool) -> void:
 	_script_at("res://scripts/combat/player_hit.gd").draw_basic_tele(self, active)
@@ -136,7 +136,7 @@ func _trail(delta: float) -> void:
 	_script_at("res://scripts/combat/player_hit.gd").trail(self, delta)
 
 func _weapon_reach() -> float:
-	return _script_at("res://scripts/world/player_combat.gd").weapon_reach()
+	return _script_at("res://scripts/world/player/player_combat.gd").weapon_reach()
 
 func _apply_facing(delta: float) -> void:
 	PlayerAnim.apply_facing(self, delta)

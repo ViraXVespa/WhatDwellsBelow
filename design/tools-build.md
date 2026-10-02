@@ -27,7 +27,7 @@ Rules, the CLI contract and the surface key are in `tools.md` (single copy). The
 | `list_xref.py` | Capped text search (case-insensitive). Summary: `xref`. | D | `python tools/list_xref.py --pattern needle` (`--path design`, `--include *.gd`, `--regex`) | N |
 | `list_scenes.py` | `.tscn` nodes and scripts without dumping scenes. Summary: `scenes`. | D | `python tools/list_scenes.py` (`--path scenes/dungeon.tscn`) | N |
 | `list_oversize_scripts.py` | Live `.gd` by bytes. Summary: `oversize`. | D | `python tools/list_oversize_scripts.py` (`--over-kb 5`) | N |
-| `list_facade_cluster.py` | A facade + sibling helpers by bytes. Summary: `facade-cluster`. | D | `python tools/list_facade_cluster.py --facade scripts/combat/enemy.gd` | N |
+| `list_facade_cluster.py` | A facade + its stem-folder helpers by bytes (a helper path or a cluster folder also works). Summary: `facade-cluster`. | D | `python tools/list_facade_cluster.py --facade scripts/combat/enemy.gd` | N |
 | `start_build_slice.py` | Resolve a route and print the `grok --worktree` fork argv (`--launch` spawns it). Session id optional (`--session` or `$GROK_SESSION_ID`; else placeholder, RESULT INFO). Prints the mapped smoke phases. Summary: `slice-boot`. | D | `python tools/start_build_slice.py --door dungeon` (or `--job`, `--area`, `--dry-run`) | N |
 | `week_start.py` | Week pin, changelog archive, log clean. **Human-only (QUARANTINE).** Agents must not run it. | D | `python tools/week_start.py` (`--dry-run`) | N |
 

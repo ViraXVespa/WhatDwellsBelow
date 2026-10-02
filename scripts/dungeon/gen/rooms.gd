@@ -1,0 +1,258 @@
+﻿extends Object
+
+const WALL := 0
+const FLOOR := 1
+const Carve := preload("res://scripts/dungeon/gen/carve.gd")
+const Place := preload("res://scripts/dungeon/gen/rooms_place.gd")
+
+static func idx(x: int, y: int, w: int) -> int:
+	return y * w + x
+
+static func min_boss_sep(w: int, h: int) -> int:
+	return maxi(16, int(maxf(w, h) * 0.5))
+
+static func find_kind(rooms: Array, kind: String) -> Dictionary:
+	for r in rooms:
+		if r.kind == kind:
+			return r
+	return {}
+
+static func kind_centers(rooms: Array, kind: String) -> Array:
+	var out: Array = []
+	for r in rooms:
+		if r.kind == kind:
+			out.append(Carve.center(r))
+	return out
+
+static func mark_ambushes(grid: PackedByteArray, w: int, h: int, rooms: Array, bal: Object = null) -> Array:
+	return Place.mark_ambushes(grid, w, h, rooms, bal)
+
+static func mark_deadends(grid: PackedByteArray, w: int, h: int, rooms: Array) -> Array:
+	return Place.mark_deadends(grid, w, h, rooms)
+
+static func bfs(grid: PackedByteArray, w: int, h: int, start: Vector2i) -> PackedInt32Array:
+	var dist: PackedInt32Array = PackedInt32Array()
+	dist.resize(w * h)
+	dist.fill(-1)
+	if start.x < 1 or start.y < 1 or start.x >= w - 1 or start.y >= h - 1:
+		return dist
+	var s: int = start.y * w + start.x
+	if grid[s] != FLOOR:
+		return dist
+	var q: PackedInt32Array = PackedInt32Array()
+	q.append(s)
+	dist[s] = 0
+	var qi: int = 0
+	while qi < q.size():
+		var i: int = q[qi]
+		qi += 1
+		var d: int = dist[i]
+		var nd: int = d + 1
+		var y: int = int(float(i) / float(w))
+		var x: int = i - y * w
+		if x + 1 < w - 1:
+			var n0: int = i + 1
+			if grid[n0] == FLOOR and dist[n0] < 0:
+				dist[n0] = nd
+				q.append(n0)
+		if x - 1 >= 1:
+			var n1: int = i - 1
+			if grid[n1] == FLOOR and dist[n1] < 0:
+				dist[n1] = nd
+				q.append(n1)
+		if y + 1 < h - 1:
+			var n2: int = i + w
+			if grid[n2] == FLOOR and dist[n2] < 0:
+				dist[n2] = nd
+				q.append(n2)
+		if y - 1 >= 1:
+			var n3: int = i - w
+			if grid[n3] == FLOOR and dist[n3] < 0:
+				dist[n3] = nd
+				q.append(n3)
+	return dist
+
+static func cell_dist(dist: PackedInt32Array, w: int, c: Vector2i) -> int:
+	if c.x < 0 or c.y < 0:
+		return -1
+	var i := idx(c.x, c.y, w)
+	if i < 0 or i >= dist.size():
+		return -1
+	return dist[i]
+
+static func shuffle_i(rng: RandomNumberGenerator, arr: Array) -> void:
+	for i in arr.size():
+		var j := rng.randi_range(i, arr.size() - 1)
+		var tmp: Variant = arr[i]
+		arr[i] = arr[j]
+		arr[j] = tmp
+
+static func assign_extract_gates(rooms: Array, rng: RandomNumberGenerator, bal: Object) -> void:
+	var want := maxi(1, mini(3, int(bal.get("max_clerks"))))
+	var spawn: Vector2i = Vector2i.ZERO
+	var sr: Dictionary = find_kind(rooms, "spawn")
+	if not sr.is_empty():
+		spawn = Carve.center(sr)
+	var cands: Array = []
+	for i in rooms.size():
+		if str(rooms[i].kind) != "normal":
+			continue
+		if int(rooms[i].w) < 5 or int(rooms[i].h) < 4 or int(rooms[i].y) < 1:
+			continue
+		cands.append(i)
+	shuffle_i(rng, cands)
+	var picked: Array = []
+	var min_sep := 28
+	for _n in want:
+		var best := -1
+		var best_s := -1.0
+		for i in cands:
+			if picked.has(i):
+				continue
+			var c: Vector2i = Carve.center(rooms[i])
+			var s := float(absi(c.x - spawn.x) + absi(c.y - spawn.y))
+			var ok := true
+			for j in picked:
+				var d: Vector2i = Carve.center(rooms[j])
+				var sep := absi(c.x - d.x) + absi(c.y - d.y)
+				if sep < min_sep:
+					ok = false
+					break
+				s = minf(s, float(sep))
+			if ok and s > best_s:
+				best_s = s
+				best = i
+		if best < 0:
+			for i in cands:
+				if not picked.has(i):
+					best = i
+					break
+		if best < 0:
+			break
+		picked.append(best)
+		rooms[best].kind = "extract_gate"
+	if picked.is_empty():
+		for r in rooms:
+			if str(r.kind) == "normal" and int(r.w) >= 5 and int(r.y) >= 1:
+				r.kind = "extract_gate"
+				break
+
+static func assign_kinds(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, bal: Object) -> void:
+	var spawn_i := 0
+	var best_s := 1 << 30
+	for i in rooms.size():
+		var c: Vector2i = Carve.center(rooms[i])
+		var s := c.x + c.y
+		if s < best_s:
+			best_s = s
+			spawn_i = i
+	rooms[spawn_i].kind = "spawn"
+	var dist := bfs(grid, w, h, Carve.center(rooms[spawn_i]))
+	var max_d := 0
+	for i in rooms.size():
+		if i == spawn_i:
+			continue
+		max_d = maxi(max_d, cell_dist(dist, w, Carve.center(rooms[i])))
+	var need := maxi(min_boss_sep(w, h), int(float(maxi(1, max_d)) * 0.55))
+	var candidates: Array[int] = []
+	var far_i := spawn_i
+	var far_d := -1
+	for i in rooms.size():
+		if i == spawn_i:
+			continue
+		var d := cell_dist(dist, w, Carve.center(rooms[i]))
+		var md := Carve.dist(rooms[i], rooms[spawn_i])
+		if d > far_d:
+			far_d = d
+			far_i = i
+		if d >= need and md >= min_boss_sep(w, h):
+			candidates.append(i)
+	var boss_i := far_i
+	if not candidates.is_empty():
+		boss_i = candidates[rng.randi() % candidates.size()]
+	rooms[boss_i].kind = "boss"
+	var base_set := false
+	for r in rooms:
+		if str(r.kind) != "normal":
+			continue
+		if not base_set:
+			r.kind = "base"
+			base_set = true
+	var vein_n := mini(3, maxi(2, int(rooms.size() / 16.0)))
+	var vein_types: Array = ["mine", "wood", "break"]
+	shuffle_i(rng, vein_types)
+	var vein_idxs: Array = []
+	for i in rooms.size():
+		if str(rooms[i].kind) != "normal":
+			continue
+		if int(rooms[i].w) * int(rooms[i].h) < 16:
+			continue
+		vein_idxs.append(i)
+	shuffle_i(rng, vein_idxs)
+	var veins := 0
+	for i in vein_idxs:
+		if veins >= vein_n:
+			break
+		rooms[i].kind = "vein"
+		rooms[i].vein = str(vein_types[veins % vein_types.size()])
+		veins += 1
+	assign_extract_gates(rooms, rng, bal)
+	if find_kind(rooms, "shop").is_empty() and rng.randf() < float(bal.get("ghost_shop_chance")):
+		for r in rooms:
+			if str(r.kind) == "normal":
+				r.kind = "shop"
+				break
+	if find_kind(rooms, "puzzle").is_empty():
+		for r in rooms:
+			if str(r.kind) == "normal":
+				r.kind = "puzzle"
+				break
+
+static func fallback(floor_n: int, w: int, h: int, cycle_of: Callable, boss_title: Callable, is_gate_master: Callable, door_fn: Callable, openings_fn: Callable, far_fn: Callable, guess_fn: Callable, make_fn: Callable) -> Dictionary:
+	w = maxi(28, w)
+	h = maxi(28, h)
+	var grid := PackedByteArray()
+	grid.resize(w * h)
+	grid.fill(WALL)
+	var rooms: Array = [
+		{"x": 3, "y": 3, "w": 8, "h": 8, "kind": "spawn"},
+		{"x": mini(w - 12, maxi(12, int(w * 0.35))), "y": 4, "w": 7, "h": 7, "kind": "base"},
+		{"x": 4, "y": mini(h - 12, maxi(12, int(h * 0.35))), "w": 7, "h": 7, "kind": "extract_gate"},
+		{"x": maxi(12, w - 11), "y": maxi(12, h - 11), "w": 8, "h": 8, "kind": "boss"},
+	]
+	for r in rooms:
+		Carve.carve_room(grid, w, h, r)
+	var rng := RandomNumberGenerator.new()
+	Carve.carve_winding(rng, grid, w, h, Carve.center(rooms[0]), Carve.center(rooms[1]))
+	Carve.carve_winding(rng, grid, w, h, Carve.center(rooms[0]), Carve.center(rooms[2]))
+	Carve.carve_winding(rng, grid, w, h, Carve.center(rooms[1]), Carve.center(rooms[3]))
+	var boss_r: Dictionary = rooms[3]
+	var spawn := Carve.center(rooms[0])
+	var door: Vector2i = door_fn.call(grid, w, h, boss_r, spawn)
+	if door == Vector2i(-1, -1):
+		door = Vector2i(boss_r.x, Carve.center(boss_r).y)
+		Carve.dig(grid, w, h, door.x - 1, door.y)
+	var openings: Array = openings_fn.call(grid, w, h, boss_r)
+	if openings.is_empty() and door != Vector2i(-1, -1):
+		openings = [make_fn.call(guess_fn.call(boss_r, door), [door])]
+	return {
+		"ok": true,
+		"grid": grid,
+		"w": w,
+		"h": h,
+		"rooms": rooms,
+		"spawn": spawn,
+		"crystal": spawn,
+		"stairs": far_fn.call(boss_r, door),
+		"door": door,
+		"openings": openings,
+		"boss": Carve.center(boss_r),
+		"ambushes": [],
+		"deadends": [],
+		"bases": [Carve.center(rooms[1])],
+		"safe": [Carve.center(rooms[2])],
+		"floor": floor_n,
+		"cycle": cycle_of.call(floor_n),
+		"boss_title": boss_title.call(floor_n),
+		"gate_master": is_gate_master.call(floor_n),
+	}

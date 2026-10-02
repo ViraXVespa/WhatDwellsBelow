@@ -3,8 +3,8 @@
 ## Dungeon gauntlet cluster (top-left) + minimap (top-right).
 ## Custom ColorRects, no default ProgressBar.
 
-const View := preload("res://scripts/ui/hud_view.gd")
-const Act := preload("res://scripts/ui/hud_act.gd")
+const View := preload("res://scripts/ui/hud/hud_view.gd")
+const Act := preload("res://scripts/ui/hud/hud_act.gd")
 
 const STRIP_W := 540.0
 const STRIP_H := 196.0

@@ -1,9 +1,9 @@
 extends Object
 
-const Roll := preload("res://scripts/data/progress_quest_roll.gd")
-const Prog := preload("res://scripts/data/progress_quest_prog.gd")
-const Meta := preload("res://scripts/data/progress_quest_meta.gd")
-const Restock := preload("res://scripts/data/progress_quest_restock.gd")
+const Roll := preload("res://scripts/data/progress_quest/quest_roll.gd")
+const Prog := preload("res://scripts/data/progress_quest/quest_prog.gd")
+const Meta := preload("res://scripts/data/progress_quest/quest_meta.gd")
+const Restock := preload("res://scripts/data/progress_quest/restock.gd")
 
 static func roll_quests(p: Object, keep_active: bool) -> void:
 	Roll.roll_quests(p, keep_active)

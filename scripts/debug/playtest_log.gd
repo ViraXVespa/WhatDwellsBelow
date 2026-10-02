@@ -3,8 +3,8 @@ extends Object
 ## ver 2 journal: compact JSON, no tel.cfg, packed cards, sparse beats, coalesced steps.
 ## cards bit order is EWNS as a 4-char "01" string.
 
-const PlaytestLogUtil := preload("res://scripts/debug/playtest_log_util.gd")
-const Core := preload("res://scripts/debug/playtest_log_core.gd")
+const PlaytestLogUtil := preload("res://scripts/debug/playtest_log/log_util.gd")
+const Core := preload("res://scripts/debug/playtest_log/log_core.gd")
 
 # Facade aliases — callers still use PlaytestLog.started / .file_name / etc.
 static var events: Array:

@@ -2,8 +2,8 @@ extends Object
 
 const SEE := 36.0
 const ROOM := 11.0
-const Near := preload("res://scripts/debug/playtest_goals_near.gd")
-const Best := preload("res://scripts/debug/playtest_goals_best.gd")
+const Near := preload("res://scripts/debug/playtest_goals/goals_near.gd")
+const Best := preload("res://scripts/debug/playtest_goals/goals_best.gd")
 
 static func world_ui(pt: Node) -> Node:
 	var tree: SceneTree = pt.get_tree()

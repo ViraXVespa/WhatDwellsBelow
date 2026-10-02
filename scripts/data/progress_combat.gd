@@ -2,8 +2,8 @@ extends Object
 
 const CatalogS := preload("res://scripts/data/catalog.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
-const Stat := preload("res://scripts/data/progress_combat_stat.gd")
-const Xp := preload("res://scripts/data/progress_combat_xp.gd")
+const Stat := preload("res://scripts/data/progress_combat/stat.gd")
+const Xp := preload("res://scripts/data/progress_combat/combat_xp.gd")
 
 static func skill_xp(p, id: String) -> float:
 	return float(p.skills_run.get(id, 0.0)) + float(p.skills_perm.get(id, 0.0))

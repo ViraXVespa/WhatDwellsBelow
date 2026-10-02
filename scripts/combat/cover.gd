@@ -1,8 +1,8 @@
 extends Object
 
 const Combat := preload("res://scripts/combat/combat.gd")
-const Hit := preload("res://scripts/combat/cover_hit.gd")
-const Geom := preload("res://scripts/combat/cover_geom.gd")
+const Hit := preload("res://scripts/combat/cover/cover_hit.gd")
+const Geom := preload("res://scripts/combat/cover/geom.gd")
 
 static func hit_arc(origin: Vector3, dir: Vector2, rng: float, arc_deg: float, host: Node3D) -> float:
 	if host == null or not is_instance_valid(host) or rng <= 0.001:

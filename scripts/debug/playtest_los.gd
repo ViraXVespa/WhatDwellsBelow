@@ -1,9 +1,9 @@
 extends Object
 
 const Combat := preload("res://scripts/combat/combat.gd")
-const Util := preload("res://scripts/debug/playtest_los_util.gd")
-const Walk := preload("res://scripts/debug/playtest_los_walk.gd")
-const Door := preload("res://scripts/debug/playtest_los_door.gd")
+const Util := preload("res://scripts/debug/playtest_los/los_util.gd")
+const Walk := preload("res://scripts/debug/playtest_los/los_walk.gd")
+const Door := preload("res://scripts/debug/playtest_los/los_door.gd")
 
 static func world3(pt: Node) -> World3D:
 	return Util.world3(pt)

@@ -7,7 +7,7 @@ func _init() -> void:
 		quit()
 		return
 	var camp = packed.instantiate()
-	var LayoutS = load("res://scripts/world/camp_layout.gd")
+	var LayoutS = load("res://scripts/world/camp/layout.gd")
 	var Build = load("res://scripts/world/camp_build.gd")
 	var layout = LayoutS.on_camp(camp)
 	layout.ensure_tree()

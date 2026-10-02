@@ -5,7 +5,7 @@ extends Object
 ## Lines: MAP: key=value  (and MAP: ascii= rows). Not a numbered phase.
 
 const FLAG := "--wdb-dungeon-map-smoke"
-const Dump := preload("res://scripts/debug/dungeon_map_dump.gd")
+const Dump := preload("res://scripts/debug/dungeon_map/map_dump.gd")
 
 static var _cached := -1
 

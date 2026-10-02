@@ -1,7 +1,7 @@
 extends Object
 
-const Bag := preload("res://scripts/data/progress_gear_bag.gd")
-const Use := preload("res://scripts/data/progress_gear_use.gd")
+const Bag := preload("res://scripts/data/progress_gear/gear_bag.gd")
+const Use := preload("res://scripts/data/progress_gear/gear_use.gd")
 
 static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:
 	return Bag.make_weapon(p, wpn, rarity, ilvl)

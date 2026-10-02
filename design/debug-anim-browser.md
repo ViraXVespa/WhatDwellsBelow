@@ -82,5 +82,5 @@ Exact compare-two, frame-scrubber, and bible-overlay extras MAY be invented at i
 ### Live snapshot — review chrome
 
 - Facade: `scripts/debug/anim_browser.gd`
-- Review helper: `scripts/debug/anim_browser_review.gd`
+- Review helper: `scripts/debug/anim_browser/review.gd`
 - Ledger: `scripts/debug/anim_review.gd`

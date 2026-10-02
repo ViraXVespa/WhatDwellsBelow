@@ -5,8 +5,8 @@ extends Object
 
 const Gen := preload("res://scripts/dungeon/gen.gd")
 
-const Spans := preload("res://scripts/graphics/torch_plan_spans.gd")
-const Grid := preload("res://scripts/graphics/torch_plan_grid.gd")
+const Spans := preload("res://scripts/graphics/torch_plan/spans.gd")
+const Grid := preload("res://scripts/graphics/torch_plan/plan_grid.gd")
 
 static var _cache_key: String = ""
 static var _cache: Array[Dictionary] = []

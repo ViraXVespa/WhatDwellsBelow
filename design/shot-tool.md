@@ -26,9 +26,9 @@ Summary: `_logs/shots/summary.txt`; the last line is `RESULT PASS|INFO|FAIL band
 | Orchestrator, bands, summary, clipboard/open | `tools/run_shots.py` |
 | Presets (poses, zoom, hud) | `tools/shot-recipes.json` |
 | Worker entry (`--wdb-shot` boot, settle, grab, quit) | `scripts/debug/shot_tool.gd` |
-| Flag parsing (`--wdb-shot-*`) | `scripts/debug/shot_tool_args.gd` |
-| Camera pose and zoom | `scripts/debug/shot_tool_pose.gd` |
-| Viewport capture and `SHOT:` marks | `scripts/debug/shot_tool_capture.gd` |
+| Flag parsing (`--wdb-shot-*`) | `scripts/debug/shot_tool/tool_args.gd` |
+| Camera pose and zoom | `scripts/debug/shot_tool/tool_pose.gd` |
+| Viewport capture and `SHOT:` marks | `scripts/debug/shot_tool/capture.gd` |
 
 ## Worker
 
@@ -66,7 +66,7 @@ Extending the tool is part of the task. Do not work around it (no hand-driven Go
 
 One flag or one preset, one prove shot, then stop (or go on to the next gap with its own prove). Crop-to-object and earlier boot hide are later knobs.
 1. Python only (a preset or a default): edit `tools/shot-recipes.json` or the constant in `tools/run_shots.py`.
-2. New flag: add the `--wdb-shot-<name>` parse in `shot_tool_args.gd`, apply it in `shot_tool_pose.gd` or `shot_tool_capture.gd`, add the matching `run_shots.py` argument (it forwards through `_extra_flags`). Keep each `.gd` under the script cap.
+2. New flag: add the `--wdb-shot-<name>` parse in `tool_args.gd`, apply it in `tool_pose.gd` or `capture.gd`, add the matching `run_shots.py` argument (it forwards through `_extra_flags`). Keep each `.gd` under the script cap.
 3. Prove: one `python tools/run_shots.py --mode build` shot; read `_logs/shots/summary.txt`. Then `check_tool_cli.py`.
 
 ## Troubleshooting

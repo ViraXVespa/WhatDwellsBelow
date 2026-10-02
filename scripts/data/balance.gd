@@ -2,11 +2,11 @@
 
 ## All Phase 2 combat numbers. Mutated by the secret debug menu.
 ## Bump BAL_REV when shipping new defaults that old saves should receive.
-const Schema := preload("res://scripts/data/balance_schema.gd")
+const Schema := preload("res://scripts/data/balance/schema.gd")
 const Tune := preload("res://scripts/data/tunables.gd")
-const Enemies := preload("res://scripts/data/balance_enemies.gd")
-const Migrate := preload("res://scripts/data/balance_migrate.gd")
-const Access := preload("res://scripts/data/balance_access.gd")
+const Enemies := preload("res://scripts/data/balance/enemies.gd")
+const Migrate := preload("res://scripts/data/balance/migrate.gd")
+const Access := preload("res://scripts/data/balance/access.gd")
 const BAL_REV := 13
 
 var move_speed := 4.5

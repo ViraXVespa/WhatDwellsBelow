@@ -2,10 +2,10 @@
 
 const WALL := 0
 const FLOOR := 1
-const Carve := preload("res://scripts/dungeon/gen_carve.gd")
-const Rooms := preload("res://scripts/dungeon/gen_rooms.gd")
-const Doors := preload("res://scripts/dungeon/gen_doors.gd")
-const Outline := preload("res://scripts/dungeon/gen_outline.gd")
+const Carve := preload("res://scripts/dungeon/gen/carve.gd")
+const Rooms := preload("res://scripts/dungeon/gen/rooms.gd")
+const Doors := preload("res://scripts/dungeon/gen/doors.gd")
+const Outline := preload("res://scripts/dungeon/gen/outline.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 
 static func cycle_of(floor_n: int) -> int:

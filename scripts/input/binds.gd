@@ -1,7 +1,7 @@
 ﻿extends RefCounted
 
-const Pool := preload("res://scripts/input/binds_pool.gd")
-const Defaults := preload("res://scripts/input/binds_defaults.gd")
+const Pool := preload("res://scripts/input/binds/binds_pool.gd")
+const Defaults := preload("res://scripts/input/binds/defaults.gd")
 
 const BIND_ACTIONS: PackedStringArray = [
 	"move_left", "move_right", "move_up", "move_down",

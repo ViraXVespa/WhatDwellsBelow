@@ -4,10 +4,10 @@ extends Object
 ## UV runs along the span and up the wall. Visible side looks at the floor.
 
 const T := preload("res://scripts/data/tunables.gd")
-const Quad := preload("res://scripts/graphics/wall_mesh_quad.gd")
-const Span := preload("res://scripts/graphics/wall_mesh_span.gd")
-const Faces := preload("res://scripts/graphics/wall_mesh_faces.gd")
-const Fold := preload("res://scripts/graphics/wall_mesh_fold.gd")
+const Quad := preload("res://scripts/graphics/wall_mesh/mesh_quad.gd")
+const Span := preload("res://scripts/graphics/wall_mesh/mesh_span.gd")
+const Faces := preload("res://scripts/graphics/wall_mesh/faces.gd")
+const Fold := preload("res://scripts/graphics/wall_mesh/mesh_fold.gd")
 
 static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 	var ortho: Array[Dictionary] = []

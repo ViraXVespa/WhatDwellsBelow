@@ -10,7 +10,7 @@ Boot `BOT.md` + `python3 tools/bot_status.py` first. Binding for **Grok Bot** wh
 
 Size, prove, changelog, and `version.json` rules live in `BOT.md`.
 
-Move an existing facade + stem siblings to a new folder. No behavior change. No wrappers unless the User asked for `-Wrapper` or external refs are too many to retarget in the same PR.
+Move an existing facade + helpers to a new location or rename them (placement and naming convention: refactor.md, Cluster folders; tool modes there). No behavior change. No wrappers unless the User asked for `-Wrapper` or external refs are too many to retarget in the same PR.
 
 Out of scope: inventing a new cluster to move, archives, art, features.
 
@@ -26,10 +26,10 @@ Do not open the staged reuse brief. Do not read every caller first — run the m
 ## Pass
 
 1. User names the source facade and destination folder. Stop and ask if either is missing.
-2. From repo root: `python3 tools/move_script_cluster.py` (`--dry-run`, `--wrapper` leaves `extends "res://..."` stubs at old paths; design/tools.md).
-3. The tool `git mv`s the facade + stem siblings (+ `.uid`), rewrites `res://` and bare paths under `scripts/`, `design/`, scenes, and `project.godot`, and writes `_logs/move-cluster/summary.txt`.
+2. From repo root: `python3 tools/move_script_cluster.py` (`--dry-run`, `--plan plan.json` for a batch, `--wrapper` leaves `extends "res://..."` stubs at old paths; design/tools.md).
+3. The tool `git mv`s the facade + helpers (+ `.uid`; `--map` for renames), rewrites `res://`, bare paths and renamed basenames under `scripts/`, `design/`, scenes, and `project.godot`, and writes `_logs/move-cluster/summary.txt`.
 4. Prefer updating call sites over wrappers when external refs are few.
-5. Update `design/code-map.md` rows in the same PR.
+5. Update `design/code-map.md` rows in the same PR. Do the manual checks from refactor.md Cluster folders (prose globs, old basenames of renamed files, string-built paths, the four wdb-* skills).
 6. Prove per BOT.md.
 
 ## Verify

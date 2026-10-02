@@ -22,6 +22,7 @@ Navigation is only `design/routes.yaml`. `See also:` is forbidden.
 | Law (web / Build) | `design/protocol.md` + `design/constraints.md` |
 | GDScript types / warnings / tabs | `design/gdscript-law.md` |
 | Live code map (one system row) | `design/code-map.md` |
+| New or moved script placement (cluster folders) | `design/refactor.md` (Cluster folders section only) |
 | Numbers (when they change) | `design/tunables.md` |
 | Tools (what runs where, allowlist) | `design/tools.md` |
 | Windows inventory / verify / write | pc-offload skill + `design/pc-offload.md` |

@@ -1,11 +1,11 @@
 extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
-const MeshS := preload("res://scripts/world/camp_build_mesh.gd")
+const MeshS := preload("res://scripts/world/camp_build/mesh.gd")
 const EnvKit := preload("res://scripts/graphics/env_kit.gd")
-const LayoutS := preload("res://scripts/world/camp_layout.gd")
-const Util := preload("res://scripts/world/camp_build_util.gd")
-const Parts := preload("res://scripts/world/camp_build_parts.gd")
+const LayoutS := preload("res://scripts/world/camp/layout.gd")
+const Util := preload("res://scripts/world/camp_build/build_util.gd")
+const Parts := preload("res://scripts/world/camp_build/build_parts.gd")
 
 const GROUND_W := 36
 const GROUND_D := 32
@@ -40,7 +40,7 @@ static func realize_editor(host: Node3D, layout: Node3D) -> void:
 	buildings(bucket)
 	strip_building_cubes(host)
 	dump_meshes(host)
-	var ViewS: GDScript = load("res://scripts/world/camp_view.gd") as GDScript
+	var ViewS: GDScript = load("res://scripts/world/camp/camp_view.gd") as GDScript
 	ViewS.fence(bucket)
 static func world(host: Node3D) -> void:
 	EnvKit.apply(host, Color(0.45, 0.58, 0.62), Color(0.95, 0.86, 0.7), 1.15, Vector3(-18.0, 34.0, -42.0), 0.9)

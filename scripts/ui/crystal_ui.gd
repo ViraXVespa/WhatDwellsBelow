@@ -2,12 +2,12 @@ extends CanvasLayer
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
-const CrystalNet := preload("res://scripts/world/crystal_net.gd")
-const Util := preload("res://scripts/ui/crystal_ui_util.gd")
+const CrystalNet := preload("res://scripts/world/crystal/net.gd")
+const Util := preload("res://scripts/ui/crystal_ui/ui_util.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const MenuPad := preload("res://scripts/ui/menu_pad.gd")
-const Pages := preload("res://scripts/ui/crystal_ui_pages.gd")
+const Pages := preload("res://scripts/ui/crystal_ui/ui_pages.gd")
 
 const ZOOM_NEAR := 96
 

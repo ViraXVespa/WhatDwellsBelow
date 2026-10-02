@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: movement, collision, character select, eight-dir body
-Code: `scripts/world/player.gd`, `player_anim.gd`, `player_anim_load.gd`, `player_anim_loco.gd`, `facing.gd`  
+Code: `scripts/world/player.gd`, `player_anim.gd`, `anim_load.gd`, `anim_loco.gd`, `facing.gd`  
 
 
 ## Character selection

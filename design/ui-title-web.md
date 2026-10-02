@@ -6,7 +6,7 @@ Read when: title / play menu, web fullscreen gate, loader
 
 ## Title / play menu
 
-`scripts/title.gd` is the play menu. Overlay body lives in `scripts/title_news.gd`. The card MUST show `Version: {label}` from `version.json` at all times.
+`scripts/title.gd` is the play menu. Overlay body lives in `scripts/title/news.gd`. The card MUST show `Version: {label}` from `version.json` at all times.
 
 Buttons, top to bottom: Play (or Play — Male / Play — Female), Updates, Archives.
 
@@ -42,7 +42,7 @@ If the viewport is taller than wide, the card MUST say to rotate to landscape. L
 
 ## Live snapshot — title
 
-`title.gd` builds the card and focus graph. `title_news.gd` builds the overlay.
+`title.gd` builds the card and focus graph. `news.gd` builds the overlay.
 - Title backdrop is `assets/ui/load_background.jpg` full-bleed (no global dim). A centered 0.62-alpha black plate sits only behind the title / buttons.
 Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close is the focused control. Right stick and mouse wheel move `ScrollContainer.scroll_vertical`. Overlay body is a `RichTextLabel` on an opaque panel.
 
@@ -62,7 +62,7 @@ Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close 
 
 Visual: full-viewport dim, heading, status, percent, 720×20 gold fill on a dark track. Positions are computed from `get_viewport().get_visible_rect()` so the overlay stays centered on desktop and the no-threads web export.
 
-Play → camp pacing in `scripts/app_flow.gd`:
+Play → camp pacing in `scripts/app/app_flow.gd`:
 - Preload listed hub assets up to about 70%, with status lines for camp / tiles / buildings / delver / music.
 - Ease toward 90% while still on the title scene.
 - `go_camp()` (scene instantiate may hitch; the bar is already near the end).

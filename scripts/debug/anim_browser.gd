@@ -3,11 +3,11 @@ extends CanvasLayer
 ## Full Animation Browser. Secret debug page, gamepad-first.
 
 const AnimScan := preload("res://scripts/debug/anim_scan.gd")
-const Review := preload("res://scripts/debug/anim_browser_review.gd")
-const Nav := preload("res://scripts/debug/anim_browser_nav.gd")
-const Ui := preload("res://scripts/debug/anim_browser_ui.gd")
-const Play := preload("res://scripts/debug/anim_browser_play.gd")
-const Inp := preload("res://scripts/debug/anim_browser_input.gd")
+const Review := preload("res://scripts/debug/anim_browser/review.gd")
+const Nav := preload("res://scripts/debug/anim_browser/browser_nav.gd")
+const Ui := preload("res://scripts/debug/anim_browser/browser_ui.gd")
+const Play := preload("res://scripts/debug/anim_browser/play.gd")
+const Inp := preload("res://scripts/debug/anim_browser/browser_input.gd")
 
 var open := false
 var models: Array = []

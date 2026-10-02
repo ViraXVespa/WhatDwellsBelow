@@ -11,7 +11,7 @@ Pause → Settings → Controls.
 - Two pools: Keyboard / mouse and Gamepad. A selector at the top of the page switches the list. Switching rebuilds the rows for that pool.
 - The selector wraps both ways (Keyboard ↔ Gamepad). D-pad and arrow keys are discrete. Left-stick X switches once per push past a deadzone and must return to center before another switch. Left-stick Y stays vertical menu navigation.
 - First row after the selector is Reset Controls (that pool only). Confirm via `confirm_dlg.gd` before restocking defaults. Cancel / B / Esc backs out and returns focus to Reset.
-- `binds.gd` facades `ensure_mouse` and `ensure_axis` into `binds_defaults.gd`. Pad reset MUST restock left-stick move axes as well as buttons.
+- `binds.gd` facades `ensure_mouse` and `ensure_axis` into `defaults.gd`. Pad reset MUST restock left-stick move axes as well as buttons.
 - Exposed actions are gameplay only: move (keyboard), attack, special, dash, target lock, interact, map, inventory, potion, food, look mode (pad). Item tip and drop are not listed.
 - Two slots per action. A new bind that collides inside the same pool swaps with the other action’s slot. Cross-pool events are ignored.
 - Gamepad left / right sticks cannot be rebound. Move and aim stay on those axes.

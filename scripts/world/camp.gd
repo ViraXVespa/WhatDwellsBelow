@@ -3,11 +3,12 @@ extends Node3D
 
 const Build := preload("res://scripts/world/camp_build.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
-const View := preload("res://scripts/world/camp_view.gd")
+const View := preload("res://scripts/world/camp/camp_view.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
-const Warm := preload("res://scripts/world/camp_warm.gd")
-const LayoutS := preload("res://scripts/world/camp_layout.gd")
+const Warm := preload("res://scripts/world/camp/warm.gd")
+const LayoutS := preload("res://scripts/world/camp/layout.gd")
 
+const Banner := preload("res://scripts/world/camp/banner.gd")
 var player: CharacterBody3D
 var dummy: CharacterBody3D
 var ui: CanvasLayer
@@ -154,39 +155,6 @@ func _process(_delta: float) -> void:
 	if prompt:
 		prompt.text = App.interact_prompt
 
-func _banner() -> void:
-	var root := Node3D.new()
-	root.position = _layout.spot_pos("Banner")
-	add_child(root)
-	_banner_pole(root, Vector3(-1.45, 1.1, 0.0))
-	_banner_pole(root, Vector3(1.45, 1.1, 0.0))
-	var spr := Sprite3D.new()
-	var path := "res://assets/sprites/props/welcome_banner.png"
-	if ResourceLoader.exists(path):
-		spr.texture = load(path)
-	elif ResourceLoader.exists("res://assets/sprites/props/banner.png"):
-		spr.texture = load("res://assets/sprites/props/banner.png")
-	spr.centered = true
-	spr.shaded = false
-	spr.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	if spr.texture:
-		spr.pixel_size = 4.4 / float(maxi(1, spr.texture.get_height()))
-	spr.position = Vector3(0.0, 2.2, 0.0)
-	root.add_child(spr)
-
-func _banner_pole(root: Node3D, pos: Vector3) -> void:
-	var pole := StaticBody3D.new()
-	pole.collision_layer = 1
-	pole.position = pos
-	root.add_child(pole)
-	var cs := CollisionShape3D.new()
-	var sh := BoxShape3D.new()
-	sh.size = Vector3(0.28, 2.2, 0.28)
-	cs.shape = sh
-	pole.add_child(cs)
-
 func ensure_dummy() -> void:
 	if dummy != null:
 		return
@@ -206,7 +174,7 @@ func _tune_label(host: Node3D) -> void:
 	host.label.sorting_offset = 0.0
 
 func _spots() -> void:
-	_banner()
+	Banner._banner(self)
 	var SpotS: GDScript = load("res://scripts/world/interact.gd") as GDScript
 	var c: Node3D = SpotS.new()
 	var crystal: Vector3 = _layout.spot_pos("Crystal")

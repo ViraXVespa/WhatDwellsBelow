@@ -8,10 +8,10 @@ extends Node
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 
-const K := preload("res://scripts/graphics/actor_lit_k.gd")
-const Soles := preload("res://scripts/graphics/actor_lit_soles.gd")
-const Geo := preload("res://scripts/graphics/actor_lit_geo.gd")
-const Drive := preload("res://scripts/graphics/actor_lit_drive.gd")
+const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
+const Soles := preload("res://scripts/graphics/actor_lit/soles.gd")
+const Geo := preload("res://scripts/graphics/actor_lit/lit_geo.gd")
+const Drive := preload("res://scripts/graphics/actor_lit/drive.gd")
 
 static var _shade: Shader
 

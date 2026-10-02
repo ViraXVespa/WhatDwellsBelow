@@ -5,9 +5,9 @@
 ## Optional: --wdb-shot-seed=N --wdb-shot-floor=N --wdb-shot-out=PATH
 ##		   --wdb-shot-scale=PCT --wdb-shot-settle-ms=N
 
-const Args := preload("res://scripts/debug/shot_tool_args.gd")
-const Pose := preload("res://scripts/debug/shot_tool_pose.gd")
-const Capture := preload("res://scripts/debug/shot_tool_capture.gd")
+const Args := preload("res://scripts/debug/shot_tool/tool_args.gd")
+const Pose := preload("res://scripts/debug/shot_tool/tool_pose.gd")
+const Capture := preload("res://scripts/debug/shot_tool/capture.gd")
 
 const FLAG := Args.FLAG
 

@@ -22,11 +22,11 @@ Live also opens with CLI `--wdb-debug`.
 
 ### Live snapshot — menu chrome and Values
 
-Live path: `scripts/debug/debug_menu/debug_menu.gd`. This is current chrome, not a new system.
+Live path: `scripts/debug/debug_menu.gd`. This is current chrome, not a new system.
 
 **Pages.** Five pages in LB / RB order: Values → Settings → Profiles → Playtest → Animation Browser. Close (B) sits in the top row but is not a page. The top tab buttons are mouse-clickable and must not take gamepad focus. Title, tabs, and status stay pinned above the scroll so first-open focus cannot hide the tab labels. The active tab is tinted.
 
-**Values (browse / edit).** Values does not use engine SpinBox focus. Tunables are grouped by category in two columns (`debug_menu_val_grid.gd`). Opening the page highlights the top-left category.
+**Values (browse / edit).** Values does not use engine SpinBox focus. Tunables are grouped by category in two columns (`val_grid.gd`). Opening the page highlights the top-left category.
 
 - D-pad / left-stick Up / Down move within the current category column and wrap in that column.
 - D-pad / left-stick Left / Right move between the two category columns.
@@ -38,7 +38,7 @@ Live path: `scripts/debug/debug_menu/debug_menu.gd`. This is current chrome, not
 - **B** on the category grid closes the secret menu (Values is the home page).
 - Fly-out ideals still update from the highlighted variable.
 
-**Settings.** Catch-all for in-test display and camera options. Built by `debug_menu_settings.gd`. Changes apply live and persist through `App.save_now()`.
+**Settings.** Catch-all for in-test display and camera options. Built by `settings.gd`. Changes apply live and persist through `App.save_now()`.
 
 - Camera zoom slider (`ZOOM_MIN`–`ZOOM_MAX`)
 - HUD scale slider

@@ -8,9 +8,9 @@ const LIVE := "user://live"
 const FRESH := "user://playtest/fresh"
 const PROG := "user://playtest/progressed"
 const SMOKE := "user://playtest/smoke"
-const Io := preload("res://scripts/data/save_store_io.gd")
-const Data := preload("res://scripts/data/save_store_data.gd")
-const Collect := preload("res://scripts/data/save_store_collect.gd")
+const Io := preload("res://scripts/data/save_store/store_io.gd")
+const Data := preload("res://scripts/data/save_store/store_data.gd")
+const Collect := preload("res://scripts/data/save_store/store_collect.gd")
 
 static func dir_for(slot: String) -> String:
 	return Io.dir_for(slot)

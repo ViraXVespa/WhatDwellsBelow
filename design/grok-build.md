@@ -36,7 +36,7 @@ First message names the area. `python tools/start_build_slice.py --door <door>` 
 
 Access (permission, not design): if a task needs something outside Build's normal reach (a new asset location, an external tool or network, files outside the allowed set), show the User a one-line confirm first, or proceed when the User has set always-allow. Design questions are never covered by always-allow.
 
-Just do: helpers and APIs inside one system. Stop and ask (Design decisions): a new cross-system owner (a new `routes.yaml` door owner), a named live-module replace, a greenfield rewrite, or copying archive scenes over live.
+Just do: helpers and APIs inside one system (new helper files go in the facade's stem folder, `refactor.md` Cluster folders). Stop and ask (Design decisions): a new cross-system owner (a new `routes.yaml` door owner), a named live-module replace, a greenfield rewrite, or copying archive scenes over live.
 
 ## Other roles in this instance
 

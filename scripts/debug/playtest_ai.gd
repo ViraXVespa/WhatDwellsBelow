@@ -1,16 +1,16 @@
 extends Object
 
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
-const Util := preload("res://scripts/debug/playtest_ai_util.gd")
-const Act := preload("res://scripts/debug/playtest_ai_act.gd")
+const Util := preload("res://scripts/debug/playtest_ai/ai_util.gd")
+const Act := preload("res://scripts/debug/playtest_ai/ai_act.gd")
 const Goals := preload("res://scripts/debug/playtest_goals.gd")
 const NEAR := 22.0
 const SEE := 28.0
 const CLOSE := 2.4
 const START := 24.0
 const GATHER := 9.0
-const Core := preload("res://scripts/debug/playtest_ai_core.gd")
-const Misc := preload("res://scripts/debug/playtest_ai_misc.gd")
+const Core := preload("res://scripts/debug/playtest_ai/ai_core.gd")
+const Misc := preload("res://scripts/debug/playtest_ai/ai_misc.gd")
 
 static func weapon_range() -> float:
 	return Util.weapon_range()

@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot  
 Read when: roster, AI, pressure
-Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/threat.gd`, `scripts/data/balance_enemies.gd`  
+Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/threat.gd`, `scripts/data/balance/enemies.gd`  
 
 
 ## Enemy variety
@@ -52,7 +52,7 @@ Floor Guardians (floors 1–4) and the Gate Master (floor 5) MUST have high heal
 Floor band, rank-multiplier feel, and the floor-1 CL 17 budget: combat. Live keys: the tunables gate.
 
 - Enemy CL is walked from spawn travel distance (`Threat.level_at`).
-- Base HP lives in `balance_enemies.gd` and is about double the pre-retune table. Packs MUST take more than one swing.
+- Base HP lives in `enemies.gd` and is about double the pre-retune table. Packs MUST take more than one swing.
 
 ## AI behavior
 

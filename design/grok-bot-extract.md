@@ -40,7 +40,7 @@ Keep these as separate concerns unless the User overrides a specific row:
 - `present.gd` vs menu dim
 - `web_pad.gd` vs `input/pad.gd` vs `touch_pad.gd`
 - `display_mode` web vs desktop
-- `dungeon_map_act` pan / zoom vs crystal map marks
+- `map_act` pan / zoom vs crystal map marks
 - `step_row` vs sliders vs debug SpinBox
 - `interact_prompt.gd` vs `PromptView`
 - Playtest grid walk vs combat cover projection
@@ -51,7 +51,7 @@ Keep these as separate concerns unless the User overrides a specific row:
 
 1. Name the cluster and the intended owner or new module. Wait if that is not already explicit.
 2. Verify both bodies before moving.
-3. Route call sites. Update `design/code-map.md` in the same PR when a new public helper path appears.
+3. Route call sites. A new shared module goes in its owner's stem folder (refactor.md, Cluster folders). Update `design/code-map.md` in the same PR when a new public helper path appears.
 4. Prove per BOT.md.
 4. 
 
