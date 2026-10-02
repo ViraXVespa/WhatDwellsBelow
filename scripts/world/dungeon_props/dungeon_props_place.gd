@@ -4,7 +4,7 @@ const GatherS := preload("res://scripts/world/gather/gather_node.gd")
 const BreakS := preload("res://scripts/world/breakable.gd")
 const SpotS := preload("res://scripts/world/interact/interact.gd")
 const Gate := preload("res://scripts/world/dungeon/dungeon_gate.gd")
-const Smoke := preload("res://scripts/debug/smoke.gd")
+const Smoke := preload("res://scripts/debug/smoke/smoke.gd")
 
 static func place_n(host: Node, rooms: Array, n: int, what: String, eager: bool = true) -> void:
 	var _fac = load("res://scripts/world/dungeon_props/dungeon_props.gd")

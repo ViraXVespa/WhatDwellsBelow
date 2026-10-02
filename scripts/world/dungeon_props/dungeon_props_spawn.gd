@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Smoke := preload("res://scripts/debug/smoke.gd")
+const Smoke := preload("res://scripts/debug/smoke/smoke.gd")
 
 static func _place() -> GDScript:
 	return load("res://scripts/world/dungeon_props/dungeon_props_place.gd") as GDScript

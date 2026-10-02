@@ -2,7 +2,7 @@
 
 Status: protocol / checklist  
 Read when: complete-checklist audit, absent-system survey
-Code: `scripts/debug/smoke.gd`  
+Code: `scripts/debug/smoke/smoke.gd`  
 
 The live path already exists. Phases below are a hard coverage list, not a license to delete and rebuild.
 

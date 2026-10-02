@@ -91,7 +91,7 @@ func _ready() -> void:
 		var r := App.prog.restock()
 		if r != "":
 			App.toast(r)
-	var Smoke: GDScript = load("res://scripts/debug/smoke.gd") as GDScript
+	var Smoke: GDScript = load("res://scripts/debug/smoke/smoke.gd") as GDScript
 	if (
 		not Smoke.phase(8)
 		and not (App.playtest and bool(App.playtest.get("live_running")))

@@ -1,7 +1,7 @@
 extends Object
 
 const DebugS := preload("res://scripts/debug/debug_menu/debug_menu.gd")
-const AnimS := preload("res://scripts/debug/anim_browser.gd")
+const AnimS := preload("res://scripts/debug/anim_browser/anim_browser.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 
 static func _ready(host: Node) -> void:

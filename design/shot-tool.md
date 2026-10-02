@@ -25,10 +25,10 @@ Summary: `_logs/shots/summary.txt`; the last line is `RESULT PASS|INFO|FAIL band
 |---|---|
 | Orchestrator, bands, summary, clipboard/open | `tools/run_shots.py` |
 | Presets (poses, zoom, hud) | `tools/shot-recipes.json` |
-| Worker entry (`--wdb-shot` boot, settle, grab, quit) | `scripts/debug/shot_tool.gd` |
-| Flag parsing (`--wdb-shot-*`) | `scripts/debug/shot_tool_args.gd` |
-| Camera pose and zoom | `scripts/debug/shot_tool_pose.gd` |
-| Viewport capture and `SHOT:` marks | `scripts/debug/shot_tool_capture.gd` |
+| Worker entry (`--wdb-shot` boot, settle, grab, quit) | `scripts/debug/shot_tool/shot_tool.gd` |
+| Flag parsing (`--wdb-shot-*`) | `scripts/debug/shot_tool/shot_tool_args.gd` |
+| Camera pose and zoom | `scripts/debug/shot_tool/shot_tool_pose.gd` |
+| Viewport capture and `SHOT:` marks | `scripts/debug/shot_tool/shot_tool_capture.gd` |
 
 ## Worker
 

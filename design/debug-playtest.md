@@ -92,7 +92,7 @@ Per weapon (Great Axe / Lightning Staff / Longbow), while that weapon was equipp
 
 ## Playtest journal (PC / Xbox debug only)
 
-`scripts/debug/playtest_log.gd` writes one compact JSON per live Automated Playtest run.
+`scripts/debug/playtest_log/playtest_log.gd` writes one compact JSON per live Automated Playtest run.
 
 - Path: `user://playtest/runs/`
   Windows: `%APPDATA%\Godot\app_userdata\What Dwells Below\playtest\runs`

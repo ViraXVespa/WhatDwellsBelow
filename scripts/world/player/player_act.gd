@@ -1,7 +1,7 @@
 extends Object
 
 const Depth := preload("res://scripts/world/depth.gd")
-const Smoke := preload("res://scripts/debug/smoke.gd")
+const Smoke := preload("res://scripts/debug/smoke/smoke.gd")
 const FloatS := preload("res://scripts/combat/float_num.gd")
 
 static func take_hit(host: Node, raw: float, from_dir: Vector2, crit: bool, src := "") -> void:
