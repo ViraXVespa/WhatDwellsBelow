@@ -90,5 +90,25 @@
       }
     ]
   },
-  "poses": "play,16.5,15,0,0;hall,8.2,6.0,4.5,7.5;hall,8.2,6.0,-6.5,2.0;hall,8.2,6.0,0.4,-7.0;stall,25.0,8.0,0.4,5.5;stall,25.0,8.0,6.5,0.4;stall,25.0,8.0,-0.4,-6.5"
+  "poses": "play,16.5,15,0,0;hall,8.2,6.0,4.5,7.5;hall,8.2,6.0,-6.5,2.0;hall,8.2,6.0,0.4,-7.0;stall,25.0,8.0,0.4,5.5;stall,25.0,8.0,6.5,0.4;stall,25.0,8.0,-0.4,-6.5",
+  "shadow-hub": {
+    "scene": "hub",
+    "hud": 0,
+    "zoom": 1.0,
+    "note": "gameplay camera, player beside the crystal",
+    "frames": [
+      {
+        "kind": "play",
+        "look": [
+          17.2,
+          11.4
+        ],
+        "offset": [
+          0.0,
+          0.0
+        ],
+        "zoom": 1.0
+      }
+    ]
+  }
 }

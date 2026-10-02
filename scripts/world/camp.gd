@@ -61,6 +61,7 @@ func _ready() -> void:
 	LoadTiming.mark("camp_player")
 	_spots()
 	LoadTiming.mark("camp_spots")
+	Build.stamp_actor_blobs(self)
 	if bool(App.get("_menu_loading")) or App.wake_pending:
 		LoadTiming.note("camp_dummy", "deferred")
 	else:
@@ -194,6 +195,7 @@ func ensure_dummy() -> void:
 	n.position = _layout.spot_pos("Dummy")
 	dummy = n
 	add_child(n)
+	Build.stamp_actor_blobs(self)
 
 func _tune_label(host: Node3D) -> void:
 	if host == null or not ("label" in host) or host.label == null:

@@ -9,6 +9,9 @@ const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 
 const SUN_AWAY := Vector2(0.406138, 0.913811)
+const SUN_ELEV := 0.45
+const TORCH_H := 1.65
+const MARK_MAX := 1.8
 const HUB_STRETCH := 0.72
 const HUB_ALPHA := 0.55
 const D_NEAR := 0.12
@@ -365,7 +368,7 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 			node.visible = false
 			continue
 		var dir: Vector2 = _biased(_away_at[slot])
-		_sync_slot(slot, tex, soles, fl, fr, dir, px)
+		_sync_slot(slot, tex, soles, fl, fr, dir, px, feet)
 		node.global_transform = Transform3D(Basis.IDENTITY, origin)
 		var shade_mat: ShaderMaterial = node.material_override as ShaderMaterial
 		if shade_mat != null:
@@ -374,7 +377,7 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 			shade_mat.set_shader_parameter("shade", Color(0.02, 0.02, 0.02, shown))
 		node.visible = true
 
-func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float) -> void:
+func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, feet: Vector2) -> void:
 	var node: MeshInstance3D = marks[slot]
 	var reach: Vector2 = dir * _stretch_at[slot]
 	var key: String = "%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
@@ -389,7 +392,10 @@ func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vect
 	if key == _key_at[slot] and node.mesh != null:
 		return
 	_key_at[slot] = key
-	node.mesh = _quad(tex, _span(tex), soles, fl, fr, dir, px, _stretch_at[slot])
+	var src: Vector2 = Vector2.ZERO
+	if _src_at[slot].length_squared() > 0.0004:
+		src = _src_at[slot] - feet
+	node.mesh = _quad(tex, _span(tex), soles, fl, fr, dir, px, _stretch_at[slot], src)
 
 func _sole_xz(tx: float, ty: float, tw: float, th: float) -> Vector2:
 	var ox: float = spr.offset.x
@@ -428,7 +434,7 @@ func _drop_floor(world: Vector3) -> Vector2:
 	var hit: Vector3 = world + view * t
 	return Vector2(hit.x, hit.z)
 
-func _quad(tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float) -> ArrayMesh:
+func _quad(tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float, src: Vector2) -> ArrayMesh:
 	var tw: float = float(maxi(1, tex.get_width()))
 	var th: float = float(maxi(1, tex.get_height()))
 	var x0: float = span.x * tw
@@ -438,10 +444,10 @@ func _quad(tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vecto
 	var verts: PackedVector3Array = PackedVector3Array()
 	var uvs: PackedVector2Array = PackedVector2Array()
 	var indices: PackedInt32Array = PackedInt32Array()
-	verts.append(_corner(x0, y1, soles, fl, fr, dir, px, stretch))
-	verts.append(_corner(x1, y1, soles, fl, fr, dir, px, stretch))
-	verts.append(_corner(x1, y0, soles, fl, fr, dir, px, stretch))
-	verts.append(_corner(x0, y0, soles, fl, fr, dir, px, stretch))
+	verts.append(_corner(x0, y1, soles, fl, fr, dir, px, stretch, src))
+	verts.append(_corner(x1, y1, soles, fl, fr, dir, px, stretch, src))
+	verts.append(_corner(x1, y0, soles, fl, fr, dir, px, stretch, src))
+	verts.append(_corner(x0, y0, soles, fl, fr, dir, px, stretch, src))
 	uvs.append(Vector2(span.x, span.w))
 	uvs.append(Vector2(span.z, span.w))
 	uvs.append(Vector2(span.z, span.y))
@@ -456,14 +462,38 @@ func _quad(tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vecto
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh
 
-func _corner(tx: float, ty: float, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float) -> Vector3:
+func _corner(tx: float, ty: float, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float, src: Vector2) -> Vector3:
+	var aim: Vector2 = dir
+	if aim.length_squared() < 0.0004:
+		aim = SUN_AWAY
+	else:
+		aim = aim.normalized()
+	var side: Vector2 = Vector2(aim.y, -aim.x)
+	var mid_x: float = (soles.x + soles.z) * 0.5
+	var sole_y: float = maxf(soles.y, soles.w)
 	var span_x: float = soles.z - soles.x
-	if absf(span_x) < 0.5:
-		span_x = 0.5 if soles.z >= soles.x else -0.5
-	var a: float = (tx - soles.x) / span_x
-	var foot_y: float = soles.y + a * (soles.w - soles.y)
-	var pos: Vector2 = fl.lerp(fr, a) + dir * ((foot_y - ty) * px * stretch)
-	return Vector3(pos.x, 0.0, pos.y)
+	var pin: Vector2 = fl.lerp(fr, 0.5)
+	if absf(span_x) >= 2.0:
+		pin = fl.lerp(fr, clampf((tx - soles.x) / span_x, 0.0, 1.0))
+	var across: float = (tx - mid_x) * px
+	var h: float = maxf(sole_y - ty, 0.0) * px
+	var air: Vector3 = Vector3(pin.x + side.x * across, h, pin.y + side.y * across)
+	var hit: Vector3 = air
+	if src.length_squared() > 0.0004:
+		var lamp: Vector3 = Vector3(src.x, TORCH_H, src.y)
+		var cast: Vector3 = air - lamp
+		if absf(cast.y) < 0.001:
+			cast.y = -0.001
+		hit = lamp + cast * (-lamp.y / cast.y)
+	else:
+		var down: float = maxf(SUN_ELEV, 0.2)
+		hit = air + Vector3(aim.x, -down, aim.y) * (h / down)
+	var delta: Vector2 = Vector2(hit.x, hit.z) - pin
+	var cap: float = maxf(px * 48.0, MARK_MAX) * maxf(stretch, 0.35)
+	if delta.length() > cap:
+		delta = delta.normalized() * cap
+	return Vector3(pin.x + delta.x, 0.0, pin.y + delta.y)
+
 
 static func _soles(tex: Texture2D) -> Vector4:
 	var id: int = tex.get_rid().get_id()

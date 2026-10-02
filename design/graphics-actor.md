@@ -5,7 +5,7 @@ Read when: billboard-alpha squash quads, player yard-mannequin foes, source-offs
 
 Y-billboard frames stay nearest stickers. Multiply the sprite by the RT sample at the actor's feet so characters take the light.
 
-Floor mark is a near-black, low-alpha silhouette projected onto the floor. Player mark uses the current animation frame. Dummy and enemies use their still. In that texture, the left-foot opaque pixel pins to the sticker's left foot on the floor, and the right-foot opaque pixel pins to the right foot. The head edge warps away from the driving light as a trapezoid. The quad must keep area when the light sits on the foot line: add a minimum camera-facing shear and smooth the warp so it does not pop. It must not read as a second actor.
+Floor mark is a near-black, low-alpha silhouette projected onto the floor. Player mark uses the current animation frame. Dummy and enemies use their still. The sole line pins to the sticker's feet. Each texel is a point in the air, and the mark is the floor hit of the ray from the hub sun or the torch through that point. The head edge warps away from the driving light as a trapezoid. The quad must keep area when the light sits on the foot line: add a minimum camera-facing shear and smooth the warp so it does not pop. It must not read as a second actor.
 
 Casters: player, training dummy, and every enemy that uses the billboard helper (boss, named, summons). Hub: one mark. Dungeon: up to three marks. Player UVs follow the current frame. Dummy and enemies stay on the still.
 

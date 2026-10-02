@@ -802,17 +802,18 @@ static func _hub_awning(pos: Vector3, box: Vector3, depth: float) -> Dictionary:
 		"h": eave * 0.7
 	}
 static func _hub_tarp(pos: Vector3, box: Vector3) -> Dictionary:
+	var eave: float = box.y * 0.42
+	var ridge: float = eave + 0.92
 	return {
 		"kind": "tarp",
 		"x": pos.x,
 		"z": pos.z,
 		"hx": box.x * 0.5,
 		"hz": box.z * 0.5,
-		"eave": 1.05,
-		"ridge": 1.7,
-		"h": 1.7
+		"eave": eave,
+		"ridge": ridge,
+		"h": ridge
 	}
-
 static func _hub_post(pos: Vector3, box: Vector3, sx: float, sz: float) -> Dictionary:
 	return {
 		"kind": "post",
@@ -855,9 +856,15 @@ static func _hub_lock_shadows(img: Image, org: Vector2, layout: Node) -> int:
 		i += 1
 		if node == null or not is_instance_valid(node) or not node.visible:
 			continue
+		var low: String = str(node.name).to_lower()
+		var path: String = str(node.get_path()).to_lower()
+		if low == "blob" or low.find("grass") >= 0 or low.find("ground") >= 0 or low.find("fence") >= 0 or path.find("fence") >= 0:
+			continue
 		var at: Vector3 = node.global_position
-		if at.x < 1.0 or at.x > 33.0 or at.z < -2.0 or at.z > 26.0:
-			printerr("sweep skip %s at=%s" % [node.get_path(), at])
+		if at.y > 0.2 and (at.x < 0.5 or at.z < -1.5):
+			continue
+		if node.global_position.length() < 0.5:
+			printerr("bake_camp: drop unplaced %s parent=%s" % [node.name, node.get_parent().name if node.get_parent() else ""])
 			continue
 		wrote += _hub_project_mesh(img, org, node, sun)
 	var sprites: Array = root.find_children("*", "Sprite3D", true, false)

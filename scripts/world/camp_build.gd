@@ -333,15 +333,18 @@ static func sweep(root: Node) -> void:
 		node.queue_free()
 
 static func _stall_walls(body: StaticBody3D, box_size: Vector3) -> void:
+	var foot: float = -box_size.y * 0.5
+	var wall_h: float = box_size.y * 0.72
+	var mid_y: float = foot + wall_h * 0.5
 	var specs: Array = [
-		Vector3(0.0, 0.7, -box_size.z * 0.46),
-		Vector3(box_size.x * 0.46, 0.7, 0.0),
-		Vector3(-box_size.x * 0.46, 0.7, 0.0),
+		Vector3(0.0, mid_y, -box_size.z * 0.46),
+		Vector3(box_size.x * 0.46, mid_y, 0.0),
+		Vector3(-box_size.x * 0.46, mid_y, 0.0),
 	]
 	var sizes: Array = [
-		Vector3(box_size.x * 0.9, 1.4, 0.28),
-		Vector3(0.28, 1.4, box_size.z * 0.8),
-		Vector3(0.28, 1.4, box_size.z * 0.8),
+		Vector3(box_size.x * 0.9, wall_h, 0.28),
+		Vector3(0.28, wall_h, box_size.z * 0.8),
+		Vector3(0.28, wall_h, box_size.z * 0.8),
 	]
 	var i: int = 0
 	while i < specs.size():
@@ -353,7 +356,6 @@ static func _stall_walls(body: StaticBody3D, box_size: Vector3) -> void:
 		shape.position = specs[i]
 		body.add_child(shape)
 		i += 1
-
 static func _blob(parent: Node3D, at: Vector3) -> void:
 	var mesh := MeshInstance3D.new()
 	mesh.name = "Blob"
@@ -364,7 +366,36 @@ static func _blob(parent: Node3D, at: Vector3) -> void:
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.albedo_color = Color(0.12, 0.08, 0.06, 0.45)
+	mat.no_depth_test = false
+	mat.render_priority = -2
 	mesh.material_override = mat
+	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mesh.position = at + Vector3(-0.28, 0.04, 0.42)
 	mesh.rotation_degrees = Vector3(-90.0, 0.0, 18.0)
 	parent.add_child(mesh)
+
+static func stamp_actor_blobs(host: Node3D) -> void:
+	if host == null:
+		return
+	var lay: Node3D = _layout_from_build_host(host)
+	var names: Array = ["Vendor", "Anvil", "Dummy"]
+	var i: int = 0
+	while i < names.size():
+		var key: String = str(names[i])
+		if lay != null and lay.has_method("spot_pos"):
+			var p: Vector3 = lay.spot_pos(key)
+			_blob(host, Vector3(p.x, 0.0, p.z))
+		i += 1
+	var goods: Array = host.find_children("*", "Sprite3D", true, false)
+	var g: int = 0
+	while g < goods.size():
+		var spr: Sprite3D = goods[g]
+		g += 1
+		if spr == null or spr.get_parent() == null:
+			continue
+		var parent_name: String = str(spr.get_parent().name).to_lower()
+		var spr_name: String = str(spr.name).to_lower()
+		if parent_name.find("stall") < 0 and spr_name.find("good") < 0 and spr_name.find("ware") < 0:
+			continue
+		var at: Vector3 = spr.global_position
+		_blob(host, Vector3(at.x, 0.0, at.z))
