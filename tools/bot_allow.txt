@@ -31,6 +31,7 @@ tools/anim_review_lib.py
 tools/patch_code_map.py
 tools/code_map_lib.py
 tools/md_format_lib.py
+tools/facade_requal.py
 AGENTS.md
 BOT.md
 .github/workflows/bot-gate.yml
