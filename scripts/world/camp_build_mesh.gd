@@ -714,13 +714,12 @@ static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, 
 	var hz: float = box_size.z * 0.5
 	var y0: float = box_size.y * 0.5
 	var ridge: float = y0 + rise
-	var oh: float = eave
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var sl := Vector3(-hx - oh, y0, hz + oh)
-	var sr := Vector3(hx + oh, y0, hz + oh)
-	var nl := Vector3(-hx - oh, y0, -hz - oh)
-	var nr := Vector3(hx + oh, y0, -hz - oh)
+	var sl := Vector3(-hx, y0, hz + eave)
+	var sr := Vector3(hx, y0, hz + eave)
+	var nl := Vector3(-hx, y0, -hz - eave)
+	var nr := Vector3(hx, y0, -hz - eave)
 	var rl := Vector3(-hx, ridge, 0.0)
 	var rr := Vector3(hx, ridge, 0.0)
 	st.add_vertex(sl)
@@ -757,16 +756,16 @@ static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, 
 static func pitched_tarp(body: Node3D, box_size: Vector3, _eave: float, world_min: Vector3) -> void:
 	var hx: float = box_size.x * 0.5
 	var hz: float = box_size.z * 0.5
-	var y_post: float = box_size.y * 0.55
-	var ridge: float = y_post + box_size.z * 0.42
+	var y_post: float = box_size.y * 0.42
+	var ridge: float = y_post + 1.15
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var sl := Vector3(-hx, y_post, hz + 0.35)
-	var sr := Vector3(hx, y_post, hz + 0.35)
+	var sl := Vector3(-hx, y_post, hz + 0.9)
+	var sr := Vector3(hx, y_post, hz + 0.9)
 	var nl := Vector3(-hx, y_post, -hz)
 	var nr := Vector3(hx, y_post, -hz)
-	var rl := Vector3(-hx, ridge, 0.0)
-	var rr := Vector3(hx, ridge, 0.0)
+	var rl := Vector3(-hx, ridge, 0.15)
+	var rr := Vector3(hx, ridge, 0.15)
 	st.set_uv(Vector2(0, 1))
 	st.add_vertex(sl)
 	st.set_uv(Vector2(1, 1))

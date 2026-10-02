@@ -155,7 +155,6 @@ static func solid(
 			lay.stall_uv_off if lay else Vector2.ZERO
 		)
 	if not tarp:
-		if not tarp:
 			face(body, box_size, tex, 0.0, box_size.x)
 	MeshS.wall_box(body, box_size, Color(0.42, 0.28, 0.16))
 static func face(
