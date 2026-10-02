@@ -12,8 +12,8 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 import audio_lib as al
 
-OUT: Path = Path("assets/audio")
-ROOT: Path = Path(".")
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "assets" / "audio"
 WRITTEN: list[str] = []
 
 
@@ -21,7 +21,6 @@ def write(name: str, samples: list[float]) -> None:
     path = OUT / f"{name}.wav"
     al.write_wav(path, samples, 30000)
     WRITTEN.append(path.name)
-    print("sfx", agent_log.rel(ROOT, path))
 
 
 def tone(freq: float, dur: float, vol: float = 0.35, decay: bool = True) -> list[float]:
@@ -36,12 +35,7 @@ def vo(base: float, dur: float, vol: float) -> list[float]:
     return mix(tone(base, dur, vol), tone(base * 1.5, dur, vol * 0.35), noise(dur, 0.06, int(base)))
 
 
-def main(argv: list[str] | None = None) -> int:
-    global OUT, ROOT
-    ap = agent_log.std_parser("Appendix E remaining SFX + gendered VO stand-ins.")
-    args = ap.parse_args(argv)
-    ROOT = agent_log.resolve_root(args)
-    OUT = ROOT / "assets" / "audio"
+def _run() -> None:
     write("p9_potion", mix(tone(520, 0.12, 0.28), tone(780, 0.16, 0.22)))
     write("p9_food", mix(tone(180, 0.18, 0.3), tone(240, 0.22, 0.18)))
     write("p9_wood", mix(tone(140, 0.1, 0.32), noise(0.12, 0.22, 9)))
@@ -56,7 +50,10 @@ def main(argv: list[str] | None = None) -> int:
     write("p9_hurk_male", mix(vo(110, 0.32, 0.45), noise(0.28, 0.12, 4)))
     write("p9_hurk_female", mix(vo(175, 0.32, 0.42), noise(0.28, 0.1, 5)))
     write("p9_level", mix(tone(440, 0.18, 0.28), tone(660, 0.22, 0.2), tone(880, 0.26, 0.14)))
-    return agent_log.emit_result("PASS", written=len(WRITTEN), dir="assets/audio")
+
+
+def main(argv: list[str] | None = None) -> int:
+    return agent_log.run_writer("make_p9_sfx", "Appendix E remaining SFX + gendered VO stand-ins (placeholder wavs).", _run, argv, globals())
 
 
 if __name__ == "__main__":

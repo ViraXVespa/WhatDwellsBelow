@@ -70,7 +70,7 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    return agent_log.run_legacy("process_sprites", 'Key numbered _src stills (1.jpg ...) into engine sprites.', _run, argv, globals())
+    return agent_log.run_writer("process_sprites", 'Key numbered _src stills (1.jpg ...) into engine sprites.', _run, argv, globals())
 
 
 if __name__ == "__main__":

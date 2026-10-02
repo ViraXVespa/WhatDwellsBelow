@@ -73,6 +73,8 @@ def collect(root: Path, paths: list[str], glob: str, cap: int) -> list[dict[str,
                 hits.extend(sorted(p for p in target.glob(glob) if p.is_file()))
             else:
                 hits.append(target)
+            continue
+        hits.append(target)  # missing: probe() reports exists=0
     return [probe(path) for path in hits[: max(1, cap)]]
 
 
@@ -102,6 +104,8 @@ def main(argv: list[str] | None = None) -> int:
     args.path = agent_log.split_list(args.path)
     rows = collect(root, list(args.path), args.glob, int(args.max))
     missing = sum(1 for r in rows if not r["exists"])
+    if missing:
+        print(f"error: {missing} path(s) not found (exists=0 rows); pass files or directories relative to the repo root", file=sys.stderr)
     return agent_log.finish("file-stat", root, render(rows, root), "FAIL" if missing else "PASS",
                             args=args, legacy=False, count=len(rows), missing=missing)
 

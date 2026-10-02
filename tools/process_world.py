@@ -150,7 +150,7 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    return agent_log.run_legacy("process_world", 'Key and fit the _src world stills (tiles, props) into assets/.', _run, argv, globals())
+    return agent_log.run_writer("process_world", 'Key and fit the _src world stills (tiles, props) into assets/.', _run, argv, globals())
 
 
 if __name__ == "__main__":

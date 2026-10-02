@@ -16,7 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 import godot_lib
-from load_routes import load_routes, smoke_phases
+from load_routes import check_route, load_routes, smoke_phases
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -30,7 +30,13 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     phases = agent_log.split_list(args.phases, int)
+    bad = [n for n in phases if not 1 <= n <= 9]
+    if bad:
+        agent_log.fail(f"bad phase {bad[0]} in --phases. Valid phases are 1-9 (example: --phases 1,2,6)")
     if args.door or args.job:
+        bad_route = check_route(load_routes(root), args.door, args.job)
+        if bad_route:
+            agent_log.fail(bad_route)
         phases = smoke_phases(load_routes(root), door=args.door.strip(), job=args.job.strip())
     d = agent_log.ensure_agent_log_dir("smokes", root)
     for f in d.glob("p*-*.log"):

@@ -137,7 +137,7 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    return agent_log.run_legacy("pack_turntable", "Pack 8-dir player sheets from turntable + facing clips, shared scale and torso pin.", _run, argv, globals())
+    return agent_log.run_writer("pack_turntable", "Pack 8-dir player sheets from turntable + facing clips, shared scale and torso pin.", _run, argv, globals())
 
 
 if __name__ == "__main__":

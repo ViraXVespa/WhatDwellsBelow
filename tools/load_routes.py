@@ -240,6 +240,17 @@ def job_read_when(data: dict[str, Any]) -> dict[str, str]:
     return {str(key): str(val) for key, val in raw.items()}
 
 
+def check_route(data: dict[str, Any], door: str = "", job: str = "") -> str:
+    """Error text naming the valid doors/jobs when door or job is not in routes.yaml, else ''."""
+    doors = sorted((data.get("doors") or {}).keys())
+    if door.strip() and door.strip() not in doors:
+        return f"unknown door {door.strip()!r}. doors: {', '.join(doors)}"
+    jobs = sorted(job_index(data)["by_id"])
+    if job.strip() and job.strip() not in jobs:
+        return f"unknown job {job.strip()!r} (use door.job). jobs: {', '.join(jobs)}"
+    return ""
+
+
 def smoke_phases(data: dict[str, Any], door: str = "", job: str = "") -> list[int]:
     """Numbered smoke phases for a door/job: job key, then door key, then `default`."""
     raw = data.get("smokes") or {}

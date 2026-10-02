@@ -156,7 +156,7 @@ def _run(args: argparse.Namespace) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    return agent_log.run_legacy("pack_oneshot", "Pack one-shot I2V clips (attack, special, gather, death, dispel) into engine frames.", _run, argv, [globals(), loc.__dict__], add_args=_add_args)
+    return agent_log.run_writer("pack_oneshot", "Pack one-shot I2V clips (attack, special, gather, death, dispel) into engine frames.", _run, argv, [globals(), loc.__dict__], add_args=_add_args)
 
 
 if __name__ == "__main__":

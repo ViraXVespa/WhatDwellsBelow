@@ -382,7 +382,7 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    return agent_log.run_legacy("gen_prompt_glyphs", "Chunky pixel prompt glyphs. Run from repo root:", _run, argv, globals())
+    return agent_log.run_writer("gen_prompt_glyphs", "Chunky pixel prompt glyphs. Run from repo root:", _run, argv, globals())
 
 
 if __name__ == "__main__":

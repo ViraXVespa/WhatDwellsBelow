@@ -35,7 +35,10 @@ def main(argv: list[str] | None = None) -> int:
         print(s)
 
     def py(script: str, *a: str) -> int:
-        return subprocess.run([sys.executable, str(TOOLS / script), "--root", str(root), *a], cwd=root).returncode
+        p = subprocess.run([sys.executable, str(TOOLS / script), "--root", str(root), *a], cwd=root, capture_output=True, text=True)
+        if p.returncode:
+            print((p.stdout + p.stderr).strip(), file=sys.stderr)
+        return p.returncode
 
     ver_p, cat_p = root / "scripts/data/version.json", root / "scripts/data/archive_catalog.json"
     for p in (ver_p, cat_p):

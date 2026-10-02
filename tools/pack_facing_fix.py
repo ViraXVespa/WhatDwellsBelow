@@ -83,7 +83,7 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    return agent_log.run_legacy("pack_facing_fix", "Pack corrected left-facing player sheets with magenta key + despill.", _run, argv, globals())
+    return agent_log.run_writer("pack_facing_fix", "Pack corrected left-facing player sheets with magenta key + despill.", _run, argv, globals())
 
 
 if __name__ == "__main__":

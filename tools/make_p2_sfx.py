@@ -12,7 +12,8 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 import audio_lib as al
 
-OUT: Path = Path("assets/audio")
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "assets" / "audio"
 WRITTEN: list[str] = []
 
 
@@ -20,7 +21,6 @@ def write(name: str, samples: list[float]) -> None:
     path = OUT / f"p2_{name}.wav"
     al.write_wav(path, samples, 32000)
     WRITTEN.append(path.name)
-    print("sfx", agent_log.rel(ROOT, path))
 
 
 def tone(freq: float, dur: float, vol: float = 0.35, decay: bool = True) -> list[float]:
@@ -35,12 +35,7 @@ mix = al.mix
 ROOT: Path = Path(".")
 
 
-def main(argv: list[str] | None = None) -> int:
-    global OUT, ROOT
-    ap = agent_log.std_parser("Tiny placeholder wavs for Phase 2 combat (Section 14 placeholder policy).")
-    args = ap.parse_args(argv)
-    ROOT = agent_log.resolve_root(args)
-    OUT = ROOT / "assets" / "audio"
+def _run() -> None:
     write("hit", mix(tone(180, 0.08, 0.4), noise(0.09, 0.25)))
     write("crit", mix(tone(520, 0.12, 0.35), tone(780, 0.12, 0.25)))
     write("slam", mix(tone(70, 0.22, 0.5), noise(0.2, 0.35)))
@@ -50,7 +45,10 @@ def main(argv: list[str] | None = None) -> int:
     write("bow", tone(420, 0.07, 0.28))
     loop = tone(90, 0.4, 0.12, False) + tone(110, 0.4, 0.1, False)
     write("adrenaline_loop", mix(loop, noise(0.8, 0.05)))
-    return agent_log.emit_result("PASS", written=len(WRITTEN), dir="assets/audio")
+
+
+def main(argv: list[str] | None = None) -> int:
+    return agent_log.run_writer("make_p2_sfx", "Tiny placeholder wavs for Phase 2 combat (Section 14 placeholder policy).", _run, argv, globals())
 
 
 if __name__ == "__main__":

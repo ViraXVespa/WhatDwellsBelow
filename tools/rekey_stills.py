@@ -294,7 +294,7 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    return agent_log.run_legacy("rekey_stills", "Re-key live stills from Grok session sources with plate_remap + sprite_pipeline.", _run, argv, globals())
+    return agent_log.run_writer("rekey_stills", "Re-key live stills from Grok session sources with plate_remap + sprite_pipeline.", _run, argv, globals())
 
 
 if __name__ == "__main__":

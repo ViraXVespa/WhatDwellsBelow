@@ -61,6 +61,7 @@ def cmd_row(root: Path, args) -> int:
     lines += [f"rows_scanned={len(rows)} matches={len(hits)}", "measure=parse design/code-map.md table; do not read the rest of the map", ""]
     if not hits:
         lines.append("NO_ROW")
+        print(f"error: no code-map row lists {needle}; run `code_map.py check` (UNMAPPED lists unmapped scripts) or `code_map.py patch --system S --add {needle}`", file=sys.stderr)
     for r in hits:
         lines += [f"system={r.system}", f"live={r.live}", ""]
     return agent_log.finish("code-map-row", root, "\n".join(lines), "PASS" if hits else "FAIL", args=args,

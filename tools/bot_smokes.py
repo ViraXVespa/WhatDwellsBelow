@@ -121,7 +121,7 @@ def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool) ->
     return 1 if bad else 0
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Bot headless phase smokes")
     p.add_argument("--doctor", action="store_true", help="Check the pinned Godot binary and print the setup state; run nothing.")
     p.add_argument("--setup", action="store_true", help="Download the official 4.7.2 Linux binary if the pin is missing, then exit.")
@@ -134,8 +134,16 @@ def main() -> int:
                    help="skip check_shot_gaps --changed (Bot gate: a new UI state without a shot flow FAILS this run)")
     p.add_argument("--timeout", "--timeout-sec", "-TimeoutSec", dest="timeout", type=int, default=120, help="Seconds per smoke phase (default 120).")
     p.add_argument("--verbose", action="store_true", help="Print each Godot command and longer failure output.")
-    ns = p.parse_args()
+    ns = p.parse_args(argv)
     root = agent_log.resolve_root(ns)
+    for tok in [t for t in ns.phases.replace(" ", "").split(",") if t]:
+        if not tok.isdigit() or not 0 <= int(tok) <= 9:
+            agent_log.fail(f"bad phase {tok!r} in --phases. Valid phases are 1-9 (comma list, example 1,2,6)")
+    if ns.door or ns.job:
+        from load_routes import check_route, load_routes
+        bad_route = check_route(load_routes(root), ns.door, ns.job)
+        if bad_route:
+            agent_log.fail(bad_route)
     if (ns.door or ns.job) and not ns.phases:
         from load_routes import load_routes, smoke_phases
         ns.phases = ",".join(map(str, smoke_phases(load_routes(root), door=ns.door.strip(), job=ns.job.strip())))

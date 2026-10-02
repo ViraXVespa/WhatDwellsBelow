@@ -33,6 +33,8 @@ def main(argv: list[str] | None = None) -> int:
             scenes += [s for s in p.rglob("*.tscn") if "archives" not in s.parts and ".archive_worktrees" not in s.parts]
         elif p.suffix.lower() == ".tscn" and p.is_file():
             scenes.append(p)
+    if not scenes:
+        agent_log.fail(f"no .tscn found under {', '.join(paths)} (give scene files or folders, default: scenes)")
     body = [f"root=. path={','.join(paths)} scenes={len(scenes)} maxNodes={args.max_nodes}",
             "measure=parse .tscn headers; do not open scene bodies in chat", ""]
     nodes = scripts = 0

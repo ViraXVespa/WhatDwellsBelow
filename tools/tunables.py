@@ -49,6 +49,7 @@ def cmd_get(root: Path, args) -> int:
     lines += [f"matches={len(hits)}", "measure=parse tunables tables; do not read the rest of the file", ""]
     if not hits:
         lines.append("NO_ROW")
+        print(f"error: no tunable row matches {args.key!r}; --key matches a name or alias substring in design/tunables*.md (try a shorter fragment)", file=sys.stderr)
     for hit in hits:
         lines += tl.format_hit(hit) + [""]
     return agent_log.finish("tunable-row", root, "\n".join(lines), "PASS" if hits else "FAIL", args=args,

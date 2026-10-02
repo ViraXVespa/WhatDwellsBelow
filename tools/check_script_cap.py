@@ -54,8 +54,9 @@ def main(argv: list[str] | None = None) -> int:
             path = Path(raw)
             if not path.is_absolute():
                 path = root / path
-            if path.is_file():
-                files.append(path)
+            if not path.is_file():
+                agent_log.fail(f"--path {raw}: no such file (give repo-relative .gd paths, or omit for all scripts)")
+            files.append(path)
     elif args.git_changed:
         found = repo_lib.git_changed(root, "scripts")
         if found is None:

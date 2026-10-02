@@ -14,6 +14,7 @@ the copy unchanged. The per-run table (rc, lines, seconds) goes to the summary f
 from __future__ import annotations
 
 import ast
+import json
 import os
 import re
 import shutil
@@ -43,9 +44,63 @@ WRITERS = {
 ADVISORY_PS1_OK = ("python",)
 # --smoke-run: tool stem -> arg lists run in the sandbox copy. A tool not listed gets only the bad-flag and bad-root probes.
 # Keep every case read-only or --dry-run. No Godot, network or long-running tools here.
-SMOKE: dict[str, list[list[str]]] = {}
+# A case is an arg list, or (arg list, allowed exit codes) when a clean `error:` exit 2 is the right answer in the sandbox.
+_ERR = (0, 1, 2)
+SMOKE: dict[str, list] = {
+    "agent_log": [["smoke-job"]],
+    "anim_review_pack": [["--dry-run"]], "anim_review_regen": [["--dry-run"]], "anim_review_tree": [["--dry-run"]],
+    "archive_prior_changelogs": [["--dry-run"]],
+    "attack_keyframes": [["--beats"]],
+    "bible_prompt": [["--gender", "female"]],
+    "bot_opt": [["--list"]],
+    "bot_smokes": [["--doctor"]],
+    "bot_status": [[], ["--sweep"]],
+    "bot_warnscan": [["--list"]],
+    "build_changelog": [["--dry-run"]],
+    "check_code_map": [[]],
+    "check_load_graph": [[]],
+    "check_script_cap": [[], ["--git-changed"]],
+    "check_shot_gaps": [[]],
+    "check_tool_docs": [[]],
+    "clean_agent_logs": [["--dry-run"]],
+    "code_map": [["check"]],
+    "doc_patch": [["next-label"], ["--dry-run", "replace-file", "design/tools.md", "--from-file", "design/tools.md"]],
+    "enable_texture_mips": [["--dry-run"]],
+    "facade_requal": [["scripts/graphics/mesh_commit.gd", "--check"]],
+    "file_stat": [["--path", "tools"]],
+    "gen_prompt_glyphs": [["--dry-run"]],
+    "godot_lib": [["--display"]],
+    "lint_hostify": [[]],
+    "list_changed": [[]],
+    "list_dupes": [["--lang", "py"]],
+    "list_facade_cluster": [["scripts/graphics/mesh_commit.gd"]],
+    "list_oversize_docs": [[]],
+    "list_oversize_scripts": [[]],
+    "list_route": [[], ["debug.smokes"]],
+    "list_scenes": [[]],
+    "list_unused_funcs": [["--dry-run"]],
+    "list_xref": [["bot_status"]],
+    "make_p2_sfx": [["--dry-run"]], "make_p9_sfx": [["--dry-run"]], "make_placeholder_audio": [["--dry-run"]],
+    "pack_facing_fix": [(["--dry-run"], _ERR)], "pack_locomotion": [["--dry-run"]], "pack_oneshot": [["--dry-run"]],
+    "pack_p2_art": [(["--dry-run"], _ERR)], "pack_turntable": [(["--dry-run"], _ERR)], "pack_walk": [(["--dry-run"], _ERR)],
+    "pages_game_hash": [[]],
+    "process_enemies": [(["--dry-run"], _ERR)], "process_gear_icons": [(["--dry-run"], _ERR)], "process_gloam": [(["--dry-run"], _ERR)],
+    "process_session_sprites": [(["--dry-run"], _ERR)], "process_sprites": [(["--dry-run"], _ERR)],
+    "process_world": [(["--dry-run"], _ERR)], "process_world_pass": [(["--dry-run"], _ERR)],
+    "read_summary": [["bot-status"]],
+    "rekey_stills": [(["--dry-run"], _ERR)],
+    "report_grok_sessions": [[]], "report_grok_week": [["--dry-run"]],
+    "run_shot_flow": [["--list"]],
+    "show_func": [(["--path", "scripts/graphics/mesh_commit.gd", "--name", "no_such_func"], _ERR)],
+    "split_funcs": [["scripts/graphics/mesh_commit.gd", "--list"]],
+    "summarize_scripts": [[]],
+    "start_build_slice": [["--door", "debug", "--job", "smokes", "--dry-run"]],
+    "tunables": [["get", "--key", "x"]],
+    "week_pin": [["--dry-run", "--id", "smoke", "--label", "l", "--desc", "d", "--commit", "abc"]],
+    "week_start": [["--dry-run"]],
+}
 SMOKE_MAX_LINES = 40  # stdout line budget per smoke run
-SMOKE_LINES = {"list_dupes": 70}  # per-tool override for reports that are the payload
+SMOKE_LINES = {"list_dupes": 70, "bot_status": 60, "list_oversize_docs": 120}  # per-tool override for reports that are the payload
 SMOKE_NO_RESULT = PRINTERS | {"agent_log", "wdb_scratch_server"}
 PRINT_STR = re.compile(r"print\(\s*f?[\"']([^\"']*)[\"']")
 
@@ -82,14 +137,14 @@ def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int]) -> N
     except SyntaxError as exc:
         bad.append(f"SYNTAX  {path.name}: {exc.msg} line {exc.lineno}")
         return
-    if not re.search(r"ArgumentParser\(|std_parser\(|timing_parser\(|run_legacy\(", src):
+    if not re.search(r"ArgumentParser\(|std_parser\(|timing_parser\(|run_writer\(", src):
         bad.append(f"ARGS    {path.name}: no argparse (use agent_log.std_parser)")
     if kind == "ops" and name not in PRINTERS:
-        if name not in NO_ROOT and "--root" not in src and "std_parser" not in src and "timing_parser" not in src and "run_legacy" not in src:
+        if name not in NO_ROOT and "--root" not in src and "std_parser" not in src and "timing_parser" not in src and "run_writer" not in src:
             bad.append(f"ROOT    {path.name}: ops tool without --root")
-        if name not in EXEMPT_RESULT and not re.search(r"(agent_log\.(finish|emit_result|result_line|run_legacy|guarded)|godot_lib\.timing_job)\(", src):
+        if name not in EXEMPT_RESULT and not re.search(r"(agent_log\.(finish|emit_result|result_line|run_writer|guarded)|godot_lib\.timing_job)\(", src):
             bad.append(f"RESULT  {path.name}: ops tool must end with agent_log.finish/emit_result (final RESULT line)")
-    if name in WRITERS and "--dry-run" not in src and "std_parser" not in src and "run_legacy" not in src:
+    if name in WRITERS and "--dry-run" not in src and "std_parser" not in src and "run_writer" not in src:
         bad.append(f"DRYRUN  {path.name}: writer without --dry-run")
     if "writes=True" not in src and name in WRITERS and "--dry-run" not in src:
         pass
@@ -99,7 +154,7 @@ def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int]) -> N
                 if isinstance(arg, ast.Constant) and isinstance(arg.value, str) and not arg.value.isascii():
                     bad.append(f"ASCII   {path.name}: non-ASCII in print() line {node.lineno}")
                     break
-    if not re.search(r"ArgumentParser\(|std_parser\(|timing_parser\(|run_legacy\(", src):
+    if not re.search(r"ArgumentParser\(|std_parser\(|timing_parser\(|run_writer\(", src):
         return  # never execute a tool that cannot parse --help
     before = snapshot(root)
     try:
@@ -132,7 +187,8 @@ def make_sandbox(root: Path) -> Path:
     return sb
 
 
-def smoke_one(sb: Path, stem: str, args: list[str], bad: list[str], table: list[str]) -> None:
+def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], table: list[str]) -> None:
+    args, ok_codes = (case[0], case[1]) if isinstance(case, tuple) else (case, (0, 1))
     label = f"{stem} {' '.join(args)}".strip()
     t0 = time.time()
     try:
@@ -152,18 +208,28 @@ def smoke_one(sb: Path, stem: str, args: list[str], bad: list[str], table: list[
         if proc.returncode != 2 or "error" not in err.lower():
             bad.append(f"USAGE   {label}: want exit 2 + an error: line on stderr, got exit {proc.returncode}")
         return
-    if proc.returncode not in (0, 1):
+    if args[:1] != ["--json"] and proc.returncode not in ok_codes:
         bad.append(f"EXIT    {label}: exit {proc.returncode} ({err.strip().splitlines()[-1][:90] if err.strip() else 'no message'})")
     last = out.strip().splitlines()[-1] if out.strip() else ""
-    if stem not in SMOKE_NO_RESULT and not last.startswith("RESULT ") and not last.startswith("{"):
+    if args[:1] == ["--json"]:
+        try:
+            ok = isinstance(json.loads(out), dict)
+        except ValueError:
+            ok = False
+        if not ok:
+            bad.append(f"JSON    {label}: stdout is not exactly one JSON object ({lines} lines)")
+        return
+    if proc.returncode == 2 and "error:" in err:
+        pass  # clean failure with a message
+    elif stem not in SMOKE_NO_RESULT and not last.startswith("RESULT ") and not last.startswith("{"):
         bad.append(f"RESULT  {label}: last line is not RESULT")
     if lines > SMOKE_LINES.get(stem, SMOKE_MAX_LINES) and "--json" not in args:
         bad.append(f"NOISE   {label}: {lines} lines (budget {SMOKE_LINES.get(stem, SMOKE_MAX_LINES)})")
-    if not out.isascii():
+    if not out.isascii() and stem not in PRINTERS:
         bad.append(f"ASCII   {label}: non-ASCII output")
     if sb.as_posix() in out:
         bad.append(f"ABSPATH {label}: prints absolute paths (use repo-relative)")
-    if "--dry-run" in args:
+    if "--dry-run" in args and "--help" not in args:
         rc, status = repo_lib.run_git(sb, "status", "--porcelain")
         if status.strip():
             bad.append(f"DRYRUN  {label}: changed files: {status.strip().splitlines()[0][:80]}")
@@ -185,10 +251,16 @@ def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, li
                 continue
             tools += 1
             cases = [["--nope"]]
-            if "--root" in subprocess.run([sys.executable, str(sb / "tools" / f"{stem}.py"), "--help"], cwd=sb, capture_output=True, text=True,
-                                          stdin=subprocess.DEVNULL, timeout=60).stdout:
+            helptext = subprocess.run([sys.executable, str(sb / "tools" / f"{stem}.py"), "--help"], cwd=sb, capture_output=True, text=True,
+                                      stdin=subprocess.DEVNULL, timeout=60).stdout
+            has_json = "--json" in helptext
+            if "--root" in helptext:
                 cases.append(["--root", "/nonexistent/wdb-smoke-root"])
-            for args in cases + SMOKE.get(stem, []):
+            mine = SMOKE.get(stem, [])
+            if mine and has_json and stem not in SMOKE_NO_RESULT:
+                first = mine[0][0] if isinstance(mine[0], tuple) else mine[0]
+                mine = mine + [(["--json"] + first, (0, 1, 2))]
+            for args in cases + mine:
                 runs += 1
                 smoke_one(sb, stem, args, bad, table)
     finally:

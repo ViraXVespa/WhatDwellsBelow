@@ -540,7 +540,7 @@ def _run(args: argparse.Namespace) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    return agent_log.run_legacy("pack_locomotion", "Pack idle stills + idle_to_walk / walk / walk_to_idle from I2V clips into engine frames.", _run, argv, globals(), add_args=_add_args)
+    return agent_log.run_writer("pack_locomotion", "Pack idle stills + idle_to_walk / walk / walk_to_idle from I2V clips into engine frames.", _run, argv, globals(), add_args=_add_args)
 
 
 if __name__ == "__main__":

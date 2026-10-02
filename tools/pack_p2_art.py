@@ -60,7 +60,7 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    return agent_log.run_legacy("pack_p2_art", 'Key and fit Phase 2 equipment and fx stills from a Grok session into assets/sprites and assets/fx.', _run, argv, globals())
+    return agent_log.run_writer("pack_p2_art", 'Key and fit Phase 2 equipment and fx stills from a Grok session into assets/sprites and assets/fx.', _run, argv, globals())
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ from pathlib import Path
 
 _JOB_KEY = re.compile(r"^[A-Za-z0-9._-]+$")
 STATUSES = ("PASS", "FAIL", "INFO")
-DRY_RUN = False  # set by run_legacy --dry-run; tools that fan out to worker processes run serially when true
+DRY_RUN = False  # set by run_writer --dry-run; tools that fan out to worker processes run serially when true
 
 
 def repo_root(hint: str | Path | None = None) -> Path:
@@ -189,7 +189,7 @@ def finish(
     status: str,
     *,
     args: object = None,
-    legacy: bool = True,
+    legacy: bool = False,
     write: bool = True,
     echo: str | None = None,
     **kv: object,
@@ -278,7 +278,7 @@ def _dry_writes() -> "contextlib.ExitStack":
     return st
 
 
-def run_legacy(tool: str, desc: str, run, argv: list[str] | None = None, g: "dict | list | None" = None, job: str | None = None, add_args=None) -> int:
+def run_writer(tool: str, desc: str, run, argv: list[str] | None = None, g: "dict | list | None" = None, job: str | None = None, add_args=None) -> int:
     """Shared main for the one-shot art generators: --root, --dry-run, --verbose, folded output, summary + RESULT.
 
     run() does the work and prints one line per file; g=globals() lets --root re-point the module's Path constants
@@ -324,11 +324,12 @@ def run_legacy(tool: str, desc: str, run, argv: list[str] | None = None, g: "dic
     lines = [ln.replace(root.as_posix() + "/", "") for ln in buf.getvalue().splitlines()]
     wrote = sum(1 for ln in lines if ln.startswith(("wrote", "would write")))
     missing = sum(1 for ln in lines if ln.startswith("missing"))
-    shown = lines if args.verbose or len(lines) <= 8 else lines[:8] + [f"... {len(lines) - 8} more lines (summary file has all)"]
+    shown = lines if args.verbose or len(lines) <= 12 else lines[:8] + [f"... {len(lines) - 8} more lines (summary file has all)"]
     body = "\n".join(lines)
     if err:
-        print("\n".join(shown), file=sys.stderr) if shown else None
-        print(f"error: {err}", file=sys.stderr)
+        if shown:
+            print("\n".join(shown), file=sys.stderr)
+        _err(err)
         return 2
     status = "FAIL" if missing and not wrote else "PASS"  # every source missing = nothing happened
     return finish(job or tool, root, body, status, args=args, legacy=False, echo="\n".join(shown), tool=tool, wrote=wrote, missing=missing, dry_run=bool(args.dry_run))
