@@ -3,24 +3,15 @@
 
 from __future__ import annotations
 
-import argparse
 import sys
 from pathlib import Path
-
-import agent_log
 
 _TOOLS = Path(__file__).resolve().parent
 if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
+import agent_log
 from load_routes import job_index, job_read_when, load_routes
-
-
-def _write(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if not text.endswith("\n"):
-        text += "\n"
-    path.write_text(text, encoding="utf-8")
 
 
 def _gate_lines(data: dict) -> list[str]:
@@ -41,10 +32,10 @@ def _door_card(data: dict, door_name: str) -> list[str]:
     doors = data.get("doors")
     if not isinstance(doors, dict) or door_name not in doors:
         names = ", ".join(sorted(doors.keys())) if isinstance(doors, dict) else ""
-        raise SystemExit("unknown door %s. doors: %s" % (door_name, names))
+        agent_log.fail("unknown door %s. doors: %s" % (door_name, names))
     spec = doors[door_name]
     if not isinstance(spec, dict):
-        raise SystemExit("bad door %s" % door_name)
+        agent_log.fail("bad door %s" % door_name)
     path = spec.get("file") or ""
     when = spec.get("read_when") or ""
     lines = [
@@ -71,9 +62,9 @@ def _job_card(data: dict, job_id: str) -> list[str]:
     idx = job_index(data)["by_id"]
     if job_id not in idx:
         if "." not in job_id:
-            raise SystemExit("use --job door.job (example: debug.smokes)")
+            agent_log.fail("use --job door.job (example: debug.smokes)")
         names = ", ".join(sorted(idx.keys()))
-        raise SystemExit("unknown job %s. jobs: %s" % (job_id, names))
+        agent_log.fail("unknown job %s. jobs: %s" % (job_id, names))
     door_name = job_id.split(".", 1)[0]
     doors = data.get("doors") if isinstance(data.get("doors"), dict) else {}
     door_spec = doors.get(door_name) if isinstance(doors, dict) else {}
@@ -91,11 +82,8 @@ def _job_card(data: dict, job_id: str) -> list[str]:
     return lines
 
 
-def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Print one door or job card from design/routes.yaml."
-    )
-    parser.add_argument("--root", default=".")
+def parse_args(argv: list[str]):
+    parser = agent_log.std_parser("Print one door or job card from design/routes.yaml.", json_out=True)
     parser.add_argument("--door", default="")
     parser.add_argument("--job", default="")
     return parser.parse_args(argv)
@@ -104,20 +92,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     if not args.door and not args.job:
-        print("usage: python tools/list_route.py --door dungeon")
-        print("       python tools/list_route.py --job debug.smokes")
-        return 2
-    root = Path(args.root).expanduser().resolve()
+        agent_log.fail("need --door <name> or --job <door.job> (example: --job debug.smokes)")
+    root = agent_log.resolve_root(args)
     data = load_routes(root)
     if args.job:
         lines = _job_card(data, args.job.strip())
     else:
         lines = _door_card(data, args.door.strip())
-    body = "\n".join(lines) + "\n"
-    out = agent_log.ensure_agent_log_dir("route", root) / "summary.txt"
-    _write(out, body)
-    print(body, end="")
-    return 0
+    return agent_log.finish("route", root, "\n".join(lines), "PASS", args=args, legacy=False,
+                            door=args.door or args.job.split(".", 1)[0], cards=len(lines))
 
 
 if __name__ == "__main__":

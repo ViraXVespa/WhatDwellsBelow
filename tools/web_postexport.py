@@ -9,6 +9,12 @@ import pathlib
 import re
 import sys
 
+_TOOLS = pathlib.Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+
 NOTES_SCRIPT = '<script src="data/notes.js"></script>'
 DATA_FETCH = (
     "self.addEventListener('fetch',event=>{"
@@ -155,19 +161,18 @@ def stamp(out_dir: pathlib.Path, root: pathlib.Path, notes_only: bool = False) -
     return build_id
 
 
-def main() -> int:
-    args = [a for a in sys.argv[1:] if a]
-    notes_only = False
-    if "--notes-only" in args:
-        notes_only = True
-        args.remove("--notes-only")
-    if not args:
-        print("usage: web_postexport.py [--notes-only] <export-dir>", file=sys.stderr)
-        return 2
-    out_dir = pathlib.Path(args[0]).resolve()
-    root = pathlib.Path(__file__).resolve().parents[1]
-    stamp(out_dir, root, notes_only=notes_only)
-    return 0
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("Stamp a Godot Web export (cache id follows the binary).", writes=True)
+    ap.add_argument("export_dir", help="Godot web export directory")
+    ap.add_argument("--notes-only", action="store_true", help="Only inject the notes script and data.")
+    args = ap.parse_args(argv)
+    out_dir = pathlib.Path(args.export_dir).resolve()
+    root = agent_log.resolve_root(args)
+    if args.dry_run:
+        print(f"would stamp {out_dir.as_posix()} notes_only={args.notes_only}")
+        return agent_log.emit_result("PASS", dry_run=True)
+    stamp(out_dir, root, notes_only=args.notes_only)
+    return agent_log.emit_result("PASS", notes_only=args.notes_only)
 
 
 if __name__ == "__main__":

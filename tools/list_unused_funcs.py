@@ -7,6 +7,12 @@ import time
 from collections import Counter, defaultdict
 from pathlib import Path
 
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+
 FUNC_RE = re.compile(
     r"^(?:static[ \t]+)?func[ \t]+([A-Za-z_][A-Za-z0-9_]*)[ \t]*\("
 )
@@ -22,13 +28,6 @@ VIRTUAL = frozenset({
     "_clips_input", "_mouse_enter", "_mouse_exit", "_import",
     "_export_begin", "_export_end",
 })
-
-
-def repo_root() -> Path:
-    here = Path(__file__).resolve().parents[1]
-    if (here / "project.godot").is_file() and (here / "scripts").is_dir():
-        return here
-    raise SystemExit("FAIL list_unused_funcs: run from the WhatDwellsBelow checkout")
 
 
 def scan(line: str):
@@ -446,12 +445,15 @@ def write_summary(root: Path, unused, maybe, defs, elapsed: float) -> Path:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Unused GDScript funcs")
+    parser = agent_log.std_parser("Unused GDScript funcs (--apply deletes them; --dry-run previews).", writes=True)
     parser.add_argument("--limit", type=int, default=80)
     parser.add_argument("--apply", action="store_true")
     ns = parser.parse_args()
     started = time.perf_counter()
-    root = repo_root()
+    root = agent_log.resolve_root(ns)
+    if ns.apply and ns.dry_run:
+        ns.apply = False
+        print("dry-run: --apply skipped, listing only")
     unused, maybe, defs = collect(root)
     deleted = 0
     if ns.apply:
@@ -473,11 +475,9 @@ def main() -> int:
     print("maybe_count=%s" % len(maybe))
     print("deleted=%s" % deleted)
     print("seconds=%.2f" % elapsed)
-    print("full=%s" % summary.as_posix())
+    print("full=%s" % agent_log.rel(root, summary))
     print("report=PASS")
-    if ns.apply and unused:
-        return 1
-    return 0
+    return agent_log.emit_result("FAIL" if ns.apply and unused else "PASS", summary=agent_log.rel(root, summary), scanned=len(defs), unused=len(unused), maybe=len(maybe), deleted=deleted)
 
 
 if __name__ == "__main__":

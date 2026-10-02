@@ -2,20 +2,25 @@
 """Add a grok_web_wN catalog row for HEAD. Does not bump version.json."""
 from __future__ import annotations
 
-import argparse
 import json
+import sys
 from pathlib import Path
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--root", default=".")
+    ap = agent_log.std_parser("Add a grok_web_wN catalog row for HEAD (does not bump version.json).", writes=True)
     ap.add_argument("--id", required=True)
     ap.add_argument("--label", required=True)
     ap.add_argument("--desc", required=True)
     ap.add_argument("--commit", required=True)
     args = ap.parse_args()
-    root = Path(args.root).resolve()
+    root = agent_log.resolve_root(args)
     cat_path = root / "scripts" / "data" / "archive_catalog.json"
     data = json.loads(cat_path.read_text(encoding="utf-8"))
     builds = data.get("builds") or data.get("archives") or data
@@ -31,7 +36,7 @@ def main() -> int:
             builds = data["builds"]
     if any(b.get("id") == args.id for b in builds):
         print(f"exists {args.id}")
-        return 0
+        return agent_log.emit_result("PASS", id=args.id, added=0)
     docs = []
     design = root / "design"
     if design.is_dir():
@@ -49,12 +54,10 @@ def main() -> int:
             "docs": docs,
         }
     )
-    if wrapper is None:
-        cat_path.write_text(json.dumps(builds, indent="\t") + "\n", encoding="utf-8")
-    else:
-        cat_path.write_text(json.dumps(wrapper, indent="\t") + "\n", encoding="utf-8")
-    print(f"added {args.id} commit={args.commit} docs={len(docs)}")
-    return 0
+    if not args.dry_run:
+        cat_path.write_text(json.dumps(builds if wrapper is None else wrapper, indent="\t") + "\n", encoding="utf-8")
+    print(f"{'would add' if args.dry_run else 'added'} {args.id} commit={args.commit} docs={len(docs)}")
+    return agent_log.emit_result("PASS", id=args.id, added=1, docs=len(docs), dry_run=args.dry_run)
 
 
 if __name__ == "__main__":

@@ -22,6 +22,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+
 DEF = re.compile(r"^(?:static\s+)?func\s+(\w+)|^const\s+(\w+)|^(?:static\s+)?var\s+(\w+)", re.M)
 
 
@@ -138,22 +144,21 @@ def bad_callers(text: str, path: Path, root: Path) -> list[str]:
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p = agent_log.std_parser(__doc__, writes=True)
+    p.formatter_class = argparse.RawDescriptionHelpFormatter
     p.add_argument("file")
     p.add_argument("--sym", action="append", default=[], metavar="NAME=Mod")
-    p.add_argument("--dry-run", action="store_true")
     p.add_argument("--check", action="store_true")
     p.add_argument("--all", action="store_true", help="also rewrite comment/string matches")
     ns = p.parse_args()
     path = Path(ns.file)
     text = path.read_bytes().decode("utf-8")
-    root = project_root(path)
+    root = agent_log.resolve_root(ns) if ns.root else project_root(path)
     if ns.sym:
         syms = []
         for spec in ns.sym:
             if "=" not in spec:
-                print(f"bad --sym {spec!r}", file=sys.stderr)
-                return 2
+                agent_log.fail(f"bad --sym {spec!r} (want NAME=Mod)")
             n, mod = spec.split("=", 1)
             syms.append((n[:-2] if n.endswith("()") else n, mod, n.endswith("()")))
         notes: list[str] = []
@@ -172,7 +177,7 @@ def main() -> int:
             bad += 1
             print(line)
         print(f"check: problems={bad}")
-        return 1 if bad else 0
+        return agent_log.emit_result("FAIL" if bad else "PASS", mode="check", problems=bad)
     for n, mod, call in syms:
         cls = kinds(text)
         h = find(text, n, cls, call)
@@ -185,8 +190,8 @@ def main() -> int:
             text = text[:pos] + f"{mod}." + text[pos:]
     if not ns.dry_run:
         path.write_bytes(text.encode("utf-8"))
-    return 0
+    return agent_log.emit_result("PASS", mode="rewrite", syms=len(syms), dry_run=ns.dry_run)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

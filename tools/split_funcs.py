@@ -33,6 +33,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import facade_requal as fr  # noqa: E402
 
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+
 HOSTCALLS = ("get_tree get_node get_node_or_null get_viewport get_window add_child remove_child queue_free "
              "get_children get_child get_child_count get_parent get set has_method call call_deferred "
              "is_inside_tree create_tween set_process set_process_input").split()
@@ -307,26 +313,26 @@ def outside_strs(root: Path) -> collections.Counter:
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p = agent_log.std_parser(__doc__, writes=True)
+    p.formatter_class = argparse.RawDescriptionHelpFormatter
     p.add_argument("file")
     p.add_argument("--list", action="store_true")
     p.add_argument("--plan")
-    p.add_argument("--dry-run", action="store_true")
     ns = p.parse_args()
     path = Path(ns.file)
-    root = fr.project_root(path)
+    root = agent_log.resolve_root(ns) if ns.root else fr.project_root(path)
     text, bom, crlf = decode(path)
     items = parse(text)
     if ns.list or not ns.plan:
         do_list(items, path, root)
-        return 0
+        return agent_log.emit_result("INFO", mode="list", items=len(items))
     plan = json.loads(Path(ns.plan).read_text(encoding="utf-8"))
     out, alias = build(items, plan, path, root)
     before = path.stat().st_size
     if ns.dry_run:
         for f, t in out.items():
             print(f"would write {f}  ~{len(encode(t, bom, crlf))}B" + (f"  (was {before}B)" if f == path else ""))
-        return 0
+        return agent_log.emit_result("PASS", mode="plan", dry_run=True, files=len(out))
     for f, t in out.items():
         f.write_bytes(encode(t, bom, crlf))
     tool = Path(__file__).resolve().parent / "facade_requal.py"
@@ -349,8 +355,8 @@ def main() -> int:
     print(f"requal --check problems in {bad} file(s)")
     for f in out:
         print(f"{os.path.getsize(f):>7}B {f}" + (f"  (was {before}B)" if f == path else ""))
-    return 1 if bad or miss else 0
+    return agent_log.emit_result("FAIL" if bad or miss else "PASS", mode="plan", files=len(out), requal_bad=bad, line_missing=sum(miss.values()))
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

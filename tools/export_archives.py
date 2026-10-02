@@ -16,6 +16,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+
 
 def run_git(root: Path, args: list[str], check: bool = False) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
@@ -206,14 +212,13 @@ def export_archives(root: Path, site: Path, godot: Path, cache_root: Path, wt_ro
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Best-effort cached export of catalog archives.")
-    parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser = agent_log.std_parser("Best-effort cached export of catalog archives.")
     parser.add_argument("--site", type=Path, required=True)
     parser.add_argument("--godot", type=Path, required=True)
     parser.add_argument("--cache", type=Path, required=True)
     parser.add_argument("--worktrees", type=Path, default=None)
     args = parser.parse_args()
-    root = args.root.resolve()
+    root = agent_log.resolve_root(args)
     site = args.site if args.site.is_absolute() else root / args.site
     cache = args.cache if args.cache.is_absolute() else root / args.cache
     wt = args.worktrees
@@ -221,7 +226,8 @@ def main() -> int:
         wt = root / ".archive_worktrees"
     elif not wt.is_absolute():
         wt = root / wt
-    return export_archives(root, site, args.godot.resolve(), cache, wt)
+    rc = export_archives(root, site, args.godot.resolve(), cache, wt)
+    return agent_log.emit_result("PASS" if rc == 0 else "FAIL", exit=rc)
 
 
 if __name__ == "__main__":
