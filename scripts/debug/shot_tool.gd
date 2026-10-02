@@ -296,8 +296,8 @@ static func _hide_label3d(n: Node) -> void:
 
 static var _pose_i: int = 0
 static var _strips: Array[Image] = []
-static var _warm_leftstatic var _atlas_left: int = 0
-: int = 0
+static var _warm_left: int = 0
+static var _atlas_left: int = 0
 
 static var _token: String = ""
 
@@ -317,12 +317,19 @@ static func _kick_pose(host: Node) -> void:
 	_apply_pose_token(host, token)
 	host.get_tree().process_frame.connect(_on_warm.bind(host, token), CONNECT_ONE_SHOT)
 static func _hub_atlas_bound() -> bool:
+	var abs_path: String = ProjectSettings.globalize_path("res://assets/baked/hub_light.png")
+	if not FileAccess.file_exists(abs_path):
+		return false
+	var img := Image.new()
+	if img.load(abs_path) != OK:
+		return false
+	if img.get_width() < 1088 or img.get_height() < 1024:
+		return false
 	var rt = load("res://scripts/graphics/light_rt.gd")
-	if rt == null:
-		return true
-	if rt.has_method("texture"):
-		return rt.texture() != null
-	return true
+	if rt == null or not rt.has_method("texture"):
+		return false
+	var tex: Texture2D = rt.texture()
+	return tex != null and tex.get_width() >= 1088
 static func _on_warm(host: Node, token: String) -> void:
 	if not is_instance_valid(host):
 		printerr("SHOT: ok=false err=host_gone")

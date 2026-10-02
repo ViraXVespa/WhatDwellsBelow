@@ -956,6 +956,7 @@ static func _hub_yard_boxes(layout: Node, _bake: bool) -> Array:
 		var sp: Vector3 = layout.stall_pos()
 		var sb: Vector3 = layout.stall_box
 		boxes.append(_hub_tarp(sp, sb))
+		_hub_prop_blobs(layout, boxes)
 		boxes.append(_hub_post(sp, sb, -1.0, -1.0))
 		boxes.append(_hub_post(sp, sb, 1.0, -1.0))
 		boxes.append(_hub_post(sp, sb, -1.0, 1.0))
@@ -964,18 +965,26 @@ static func _hub_yard_boxes(layout: Node, _bake: bool) -> Array:
 		boxes.append(_hub_gable(Vector3(8.2, 0.0, 6.0), Vector3(5.6, 3.4, 4.2)))
 		boxes.append(_hub_tarp(Vector3(25.0, 0.0, 8.0), Vector3(4.6, 2.4, 3.4)))
 	return boxes
-static func _hub_box_of(pos: Vector3, box: Vector3, slen: float) -> Dictionary:
-	return {
-		"x": pos.x,
-		"z": pos.z,
-		"hx": box.x * 0.5 + 0.06,
-		"hz": box.z * 0.5 + 0.06,
-		"h": maxf(box.y, 1.0),
-		"len": slen,
-		"lid": 1.0
-	}
-
-
+static func _hub_prop_blobs(layout: Node, boxes: Array) -> void:
+	if layout == null:
+		return
+	var names: Array = ["anvil", "dumpster", "board", "notice", "crystal", "dummy", "vendor"]
+	var i: int = 0
+	while i < names.size():
+		var meth: String = str(names[i]) + "_pos"
+		if layout.has_method(meth):
+			var p: Vector3 = layout.call(meth)
+			boxes.append({
+				"kind": "post",
+				"x": p.x,
+				"z": p.z,
+				"hx": 0.34,
+				"hz": 0.26,
+				"eave": 0.65,
+				"ridge": 0.65,
+				"h": 0.85
+			})
+		i += 1
 static func _hub_gable(pos: Vector3, box: Vector3) -> Dictionary:
 	var eave: float = maxf(box.y, 1.2) * 0.82
 	return {

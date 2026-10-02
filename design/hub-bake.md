@@ -18,7 +18,7 @@ The hub ships one baked light RT. Offline bake quality is the look lock. Runtime
 - Yard atlas paints a warm sun disc plus a small crystal bump by hand at `HUB_SUB`. Do not send hub through `Stamp.paint`.
 - Cream field `Color(0.98, 0.96, 0.93)` is the floor under the sun, not the finished picture.
 - Building interiors are not written. Roofs, awnings, and the stall tarp sample `light_tex`. Dirt owns the yard.
-- Shadows fall with the player blob: down-left, -X +Z. Do not invent a second sun, and do not lock a +X vector over the blob. Project the live gable, wall, awning, and stall meshes along that fall. Feather the edge. No skirt smear. No shed AABB.
+- Shadows fall with the player blob: down-left, -X +Z. Do not invent a second sun, and do not lock a +X vector over the blob. Project the live gable, wall, awning, stall, and yard props along that fall. Anvil, dumpster, board, crystal, and dummy use the player blob. Feather the edge. No skirt smear. No shed AABB.
 - Finish and save use the same skirt. Then one 3x3 blur.
 - Hall and wing lids are two-slope gables, not a south-falling shed. WrapShader russet is the lid color, matching the awning red, not the sun disc. Each slope runs from the ridge to its eave. `shade_hi` stays high enough that the eave is still tile. Tile `uv_scale` uses the slope length.
 - Stall tarp is a pitched sheet over the counter, high enough to cover the goods, one sheet of `plaza_tarp.png`. No lid wrap term on the cloth. A small rumple is not the pitch.
