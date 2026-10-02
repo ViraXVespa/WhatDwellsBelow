@@ -1,0 +1,18 @@
+{
+  "name": "camp-inventory",
+  "about": "Placeholdia: open the inventory panel directly (no NPC; the pause menu path needs a key chord), shoot it, close with B. Template for opening a panel by calling its open method.",
+  "scene": "camp",
+  "hud": 0,
+  "settle_ms": 1500,
+  "covers": ["ui:inv"],
+  "smoke": true,
+  "steps": [
+    {"op": "device", "kind": "pad"},
+    {"op": "call", "target": "host.ui", "method": "open_inventory"},
+    {"op": "assert", "target": "host.ui.mode", "equals": "inv"},
+    {"op": "shot", "name": "inventory", "texts": true},
+    {"op": "assert_texts", "min_font": 14},
+    {"op": "press", "pad": "B"},
+    {"op": "assert", "target": "App.ui_open", "equals": false}
+  ]
+}

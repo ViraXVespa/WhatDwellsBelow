@@ -309,6 +309,23 @@ smokes:
   art_pipeline: "9"
   archives: "9"
 
+# Build prove: scripted shot flows (tools/shot-flows/*.json) per door or door.job (job key wins). Headless asserts:
+# bot_smokes.py --flows; pictures: run_shot_flow.py --flow N. Printed by list_route and start_build_slice.
+shot_flows:
+  hub: "camp-receptionist-menu,camp-anvil-tabs,camp-billboard-controls,camp-npc-panels,camp-inventory"
+  hub.guild: "camp-receptionist-menu"
+  hub.benches: "camp-billboard-controls"
+  hub.crystal: "camp-npc-panels"
+  gear_ui: "camp-anvil-tabs,camp-inventory"
+  inventory: "camp-inventory"
+  dungeon.gates: "dungeon-gate-shop"
+
+# New UI states with no shot flow (check_shot_gaps.py --changed): Bot gate = required (bot_smokes.py and
+# run_build_gate.py --batch FAIL on a new uncovered state); Build gate = advisory (printed, never fails).
+shot_gaps:
+  bot: required
+  build: advisory
+
 conflicts_with:
   inventory:
     - gear_ui

@@ -1,0 +1,16 @@
+{
+  "about": "Where check_shot_gaps.py finds UI states. A state is '<prefix><match>' for every regex match in a source file. Add a source when a new menu or NPC flow gets its own mode/kind strings. 'ignore' = states that need no shot (state id: reason).",
+  "sources": [
+    {"glob": "scripts/ui/progress_ui.gd", "regex": "\\bmode = \"(\\w+)\"", "prefix": "ui:"},
+    {"glob": "scripts/ui/progress_ui/*.gd", "regex": "\\bmode = \"(\\w+)\"", "prefix": "ui:"},
+    {"glob": "scripts/world/interact/interact_act.gd", "regex": "\\.kind == \"(\\w+)\"", "prefix": "interact:"}
+  ],
+  "ignore": {
+    "interact:quest_item": "pickup, no panel",
+    "interact:stairs": "dungeon traversal, not a menu",
+    "interact:lever": "dungeon puzzle prop, no panel",
+    "interact:campfire": "dungeon prop, no panel",
+    "interact:shrine": "dungeon prop, toast only",
+    "interact:shop": "dungeon ghost shop, covered by ui:shop when a flow needs it"
+  }
+}

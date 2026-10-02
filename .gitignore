@@ -43,3 +43,6 @@ _godot_*.err
 # Scratch Runners
 tools/_scratch.py
 /_old
+
+# Shot tooling hand-over folder (run_shot_flow.py --publish); Grok Build places files into assets/ when needed
+_out/

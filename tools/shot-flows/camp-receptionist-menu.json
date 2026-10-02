@@ -1,0 +1,26 @@
+{
+  "name": "camp-receptionist-menu",
+  "about": "Placeholdia: talk to the receptionist with a gamepad, shoot the guild menu, close with B. Proves interact + press + shot + asserts on an existing NPC menu.",
+  "scene": "camp",
+  "hud": 1,
+  "settle_ms": 1500,
+  "covers": ["interact:receptionist", "ui:quest"],
+  "smoke": true,
+  "steps": [
+    {"op": "device", "kind": "pad"},
+    {"op": "set", "target": "App.prog.quests_offered", "value": [
+      {"kind": "kill", "title": "Cull the bat", "type": "bat", "need": 5, "have": 0, "reward": "xp"},
+      {"kind": "ore", "title": "Mail 8 ore", "need": 8, "have": 0, "reward": "gold"},
+      {"kind": "fetch", "title": "Retrieve a guild cache from floor 1", "floor": 1, "have": 0, "need": 1, "reward": "gear"}
+    ]},
+    {"op": "interact", "kind": "receptionist", "near": true},
+    {"op": "assert", "target": "App.ui_open", "equals": true},
+    {"op": "assert", "target": "host.ui.mode", "equals": "quest"},
+    {"op": "wait", "ms": 400},
+    {"op": "shot", "name": "menu-open", "texts": true},
+    {"op": "assert_texts", "min_font": 14, "must_contain": ["Guild"]},
+    {"op": "press", "pad": "B"},
+    {"op": "assert", "target": "App.ui_open", "equals": false},
+    {"op": "shot", "name": "menu-closed"}
+  ]
+}

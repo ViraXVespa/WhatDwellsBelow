@@ -5,6 +5,10 @@ Rules: the lock key is the normalized --path dir; wait until that path is free;
 a timeout or compile error kills ONLY the pid this call started, never godot*.
 
     python3 tools/godot_lib.py --path . --timeout-sec 5     # lock probe: locks, prints, unlocks
+    python3 tools/godot_lib.py --display                    # which display GUI runs (shots, bakes) will use
+
+GUI runs (`run_godot(..., gui=True)`) need a real renderer: pick_display() takes $DISPLAY, else the first live
+X socket, else wraps the command in xvfb-run (software GL). Headless smokes never need a display.
 """
 from __future__ import annotations
 
@@ -139,10 +143,47 @@ def _read(p: Path | None) -> str:
         return ""
 
 
+XVFB_SCREEN = "-screen 0 1280x800x24 +extension GLX +render -noreset"
+
+
+def _x_live(display: str) -> bool:
+    """True when an X server answers on `display` (xdpyinfo when present, else the socket file)."""
+    if not display:
+        return False
+    num = display.split(":")[-1].split(".")[0]
+    if not os.path.exists(f"/tmp/.X11-unix/X{num}"):
+        return False
+    from shutil import which
+    if which("xdpyinfo"):
+        return subprocess.run(["xdpyinfo", "-display", display], capture_output=True).returncode == 0
+    return True
+
+
+def pick_display() -> tuple[str, str]:
+    """(kind, display): ('env'|'socket', ':N') for an existing X, ('xvfb', '') to wrap in xvfb-run, ('none', '')."""
+    if os.name == "nt":
+        return "env", os.environ.get("DISPLAY", "")
+    cur = os.environ.get("DISPLAY", "")
+    if _x_live(cur):
+        return "env", cur
+    socks = sorted(Path("/tmp/.X11-unix").glob("X*")) if Path("/tmp/.X11-unix").is_dir() else []
+    for s in socks:
+        d = ":" + s.name[1:]
+        if _x_live(d):
+            return "socket", d
+    from shutil import which
+    if which("xvfb-run"):
+        return "xvfb", ""
+    return "none", ""
+
+
 def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path | None = None,
               err_log: Path | None = None, timeout: int = 120, lock_timeout: int = 120,
-              hold: int = 0, exe: str = "") -> dict:
-    """Run Godot under the path lock. status: EXIT=<n> | COMPILE | TIMEOUT. Kills only its own pid."""
+              hold: int = 0, exe: str = "", gui: bool = False) -> dict:
+    """Run Godot under the path lock. status: EXIT=<n> | COMPILE | TIMEOUT. Kills only its own pid.
+
+    gui=True: the run needs a real renderer (pixels, light bakes). Uses pick_display(); result["display"]
+    is env|socket|xvfb|none (none still launches, so the run fails loudly)."""
     exe_path = godot_exe(exe)
     path = norm_path(godot_path)
     args = list(args)
@@ -150,7 +191,7 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
         args = ["--path", path] + args
     lf = lock(root, path, lock_timeout, hold if hold > 0 else max(60, timeout + 30))
     t0 = time.monotonic()
-    pid, status, code, timed_out = 0, "ERROR", -1, False
+    pid, status, code, timed_out, dkind = 0, "ERROR", -1, False, "none"
     handles = []
     try:
         kw: dict = {}
@@ -162,7 +203,14 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
                 kw[key] = fh
             else:
                 kw[key] = subprocess.DEVNULL
-        proc = subprocess.Popen([str(exe_path)] + args, **kw)
+        cmd, env = [str(exe_path)] + args, None
+        if gui:
+            dkind, disp = pick_display()
+            if dkind == "xvfb":
+                cmd = ["xvfb-run", "-a", "-s", XVFB_SCREEN] + cmd
+            elif disp:
+                env = dict(os.environ, DISPLAY=disp)
+        proc = subprocess.Popen(cmd, env=env, start_new_session=(os.name != "nt" and gui), **kw)
         pid = proc.pid
         ended = compile_hit = False
         while time.monotonic() - t0 < timeout:
@@ -174,7 +222,14 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
                 break
             time.sleep(0.25)
         if compile_hit or not ended:
-            proc.kill()
+            if gui and os.name != "nt":
+                import signal
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)  # xvfb-run wrapper + Godot, our own group only
+                except ProcessLookupError:
+                    pass
+            else:
+                proc.kill()
             proc.wait()
             time.sleep(0.4)
             status, code, timed_out = ("COMPILE", 1, False) if compile_hit else ("TIMEOUT", -1, True)
@@ -188,7 +243,8 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
     size = lambda p: p.stat().st_size if p and p.is_file() else 0  # noqa: E731
     return {"status": status, "exit_code": code, "timed_out": timed_out, "pid": pid,
             "ms": int((time.monotonic() - t0) * 1000), "err_bytes": size(err_log),
-            "out_bytes": size(out_log), "godot_path": path, "exe": str(exe_path)}
+            "out_bytes": size(out_log), "godot_path": path, "exe": str(exe_path),
+            "display": (dkind if gui else "n/a")}
 
 
 def headless_args(root: Path, *app_args: str) -> list[str]:
@@ -238,11 +294,16 @@ def timing_parser(desc: str) -> "argparse.ArgumentParser":
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Probe the per-path Godot lock: lock, print, unlock.")
+    ap = agent_log.std_parser("Probe the per-path Godot lock: lock, print, unlock. --display reports the GUI display choice.")
+    ap.add_argument("--display", action="store_true", help="print which display GUI runs (shots, bakes) will use, then exit")
     ap.add_argument("--path", "-Path", default=None, help="Godot --path to lock (default: repo root).")
     ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=120)
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
+    if args.display:
+        kind, disp = pick_display()
+        print(f"display kind={kind} display={disp or '-'}")
+        return agent_log.emit_result("FAIL" if kind == "none" else "PASS", display=kind)
     try:
         lf = lock(root, args.path or root, args.timeout_sec)
     except GodotBusy as e:

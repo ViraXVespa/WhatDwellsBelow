@@ -34,7 +34,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 ## Run when
 
 - **Bot:** boot with `bot_status.py`, then the one flow doc from `BOT.md` (size, extract, reuse, relocate, docs, opt). Prove and smokes: `BOT.md` (single copy). Never open the Build docs (`pc-offload.md`, `tools-build.md`, `tools-media.md`) or Imagine/I2V skills.
-- **Web/chat:** documentation slices go through the `doc_patch.py` CLI or import (`doc-library.md`); `check_load_graph.py`; `run_shots.py --mode web` (prints its RESULT line, no scratch needed). Godot runners are the User's: `web-session.md` names them.
+- **Web/chat:** documentation slices go through the `doc_patch.py` CLI or import (`doc-library.md`); `check_load_graph.py`; `run_shots.py --mode web` (prints its RESULT line, no scratch needed); scripted flows `run_shot_flow.py` (`shot-tool.md`). Godot runners are the User's: `web-session.md` names them.
 - **Build (User PC):** measure with `file_stat.py` (not `python -c`), `list_xref.py`, `list_changed.py`, `list_oversize_scripts.py`; after a `.gd` slice `run_build_gate.py`; edit one code-map row with `code_map.py patch`; park opt items with `bot_opt.py`. Runner rules: `pc-offload.md`. Do not run a full-repo Bot size sweep.
 
 ## Catalog: shared and Bot tools
@@ -48,9 +48,9 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `check_load_graph.py` | Doc routing vs `design/routes.yaml` (prints PASS/FAIL, no summary) | BWD | `--help` | Y |
 | `code_map.py` | Code map: `check` (live `.gd` vs `design/code-map.md` ticks; exits 1 on new UNMAPPED or missing, older UNMAPPED are expected), `row --path P`, `patch --system S --add/--remove/--rename`. Summaries: `code-map-check`, `code-map-row`, `code-map-patch`. | BD | `--help` | Y |
 | `check_code_map.py` | Shim -> `code_map.py check`, one release | BD | `--help` | Y |
-| `bot_smokes.py` | Headless phase smokes on the Linux VM (`--phases 1,2,6`, or `--door` / `--job` for the `routes.yaml` `smokes` map). Pin, install and `.uid` import: BOT.md Smokes. | B | `--help` | Y |
+| `bot_smokes.py` | Headless phase smokes on the Linux VM (`--phases 1,2,6`, or `--door` / `--job` for the `routes.yaml` `smokes` map). Also runs `check_shot_gaps.py --changed` as a required gate (`--no-gaps` skips). Pin, install and `.uid` import: BOT.md Smokes. | B | `--help` | Y |
 | `bot_warnscan.py` | Warning sweep by area; `--save-baseline P` before, `--non-leak-diff P` after (same `--areas`); `--findings-md P` writes the findings grouped by kind with counts. Procedure: BOT.md Smokes. | B | `--help` | Y |
-| `run_build_gate.py` | One batch gate: editor import (restores `assets/*.import` churn), `--script-cap` (changed) or `--batch` (import + `check_load_graph` + whole-tree script cap and dupes), `--warnscan-baseline B [--areas A]` adds the non-leak diff. Run once per batch (rule 10). Summary: `build-gate`. | BWD | `--help` | Y |
+| `run_build_gate.py` | One batch gate: editor import (restores `assets/*.import` churn), `--script-cap` (changed) or `--batch` (import + `check_load_graph` + whole-tree script cap and dupes), `--warnscan-baseline B [--areas A]` adds the non-leak diff. Shot gaps: `--shot-gaps required|advisory|off` (default `routes.yaml` `shot_gaps`: required with `--batch`, advisory otherwise). Run once per batch (rule 10). Summary: `build-gate`. | BWD | `--help` | Y |
 | `bot_warnscan_lib.py` | Log parser for `bot_warnscan.py` | B | module docstring (no `--help`) | Y |
 | `bot_opt.py` | Opt queue: `--list`, `--id`, `--status opt-N=done`, `--add`, `--remove`. Never hand-edit the queue block. Summary: `bot-opt`. | BD | `--help` | Y |
 | `bot_allow.txt` | Allowlist: the paths the Bot may change; read by CI and `bot_status --prove`. Deny lines first. Authority for Bot scope. | BWD | - | Y |

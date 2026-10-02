@@ -1,0 +1,20 @@
+{
+  "name": "camp-anvil-tabs",
+  "about": "Placeholdia: open the anvil, page through its tabs with the gamepad bumpers (RB), shoot each tab, close with B. Template for any paged menu: repeat { shot, press } until the pager wraps or closes.",
+  "scene": "camp",
+  "hud": 0,
+  "settle_ms": 1500,
+  "covers": ["interact:anvil", "ui:anvil"],
+  "smoke": true,
+  "steps": [
+    {"op": "device", "kind": "pad"},
+    {"op": "interact", "kind": "anvil"},
+    {"op": "assert", "target": "host.ui.mode", "equals": "anvil"},
+    {"op": "repeat", "max": 2, "steps": [
+      {"op": "shot", "name": "tab", "texts": true},
+      {"op": "press", "pad": "RB"}
+    ]},
+    {"op": "press", "pad": "B"},
+    {"op": "assert", "target": "App.ui_open", "equals": false}
+  ]
+}

@@ -16,6 +16,9 @@ static func _arm_capture(host: Node) -> void:
 		printerr("SHOT: ok=false err=host_gone")
 		return
 	Pose._apply_pose(host)
+	if not Args.steps_path().is_empty():
+		(load("res://scripts/debug/shot_tool/step_runner.gd") as GDScript).call("run", host)
+		return
 	var list: PackedStringArray = Args.poses()
 	if list.is_empty():
 		RenderingServer.frame_post_draw.connect(func() -> void: _capture(host), CONNECT_ONE_SHOT)

@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+"""Before/after diff of shot PNGs (two files, or two directories paired by file name).
+
+  python3 tools/shot_diff.py BEFORE AFTER [--tol 0] [--max-ratio 0.02] [--out DIR] [--json]
+
+Identical bytes short-circuit (no Pillow needed). Otherwise Pillow + numpy count changed pixels
+(any channel differs by more than --tol), the changed bounding box and the max channel delta, and
+write NAME.diff.png (dimmed BEFORE with changed pixels in red) under --out. Importable:
+compare(a, b, tol, out_png) and compare_dirs(a, b, tol, out_dir).
+
+RESULT PASS = all identical, INFO = changed but within --max-ratio (or no limit given),
+FAIL = size mismatch, a frame only on one side, or over --max-ratio.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+from agent_log import rel
+
+
+def _sha(p: Path) -> str:
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def compare(a: Path, b: Path, tol: int = 0, out_png: Path | None = None) -> dict:
+    """Compare two PNGs. status: same | changed | size | missing."""
+    if not a.is_file() or not b.is_file():
+        return {"status": "missing", "name": b.name, "changed_px": 0, "ratio": 0.0}
+    if _sha(a) == _sha(b):
+        return {"status": "same", "name": b.name, "changed_px": 0, "ratio": 0.0}
+    try:
+        import numpy as np
+        from PIL import Image
+    except ImportError:
+        agent_log.fail("shot_diff needs Pillow and numpy for non-identical PNGs (pip install pillow numpy)")
+    ia = Image.open(a).convert("RGBA")
+    ib = Image.open(b).convert("RGBA")
+    if ia.size != ib.size:
+        return {"status": "size", "name": b.name, "before": list(ia.size), "after": list(ib.size),
+                "changed_px": 0, "ratio": 1.0}
+    xa = np.asarray(ia).astype(int)
+    xb = np.asarray(ib).astype(int)
+    delta = np.abs(xa - xb).max(axis=2)
+    mask = delta > tol
+    n = int(mask.sum())
+    total = int(mask.size)
+    res = {"status": "changed" if n else "same", "name": b.name, "changed_px": n, "ratio": round(n / total, 6),
+           "max_delta": int(delta.max()), "bbox": None}
+    if n:
+        ys, xs = np.where(mask)
+        res["bbox"] = [int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1]
+        if out_png is not None:
+            out_png.parent.mkdir(parents=True, exist_ok=True)
+            vis = (xa[:, :, :3] * 0.35).astype("uint8")
+            vis[mask] = (255, 40, 40)
+            Image.fromarray(vis, "RGB").save(out_png)
+            res["diff_png"] = str(out_png)
+    return res
+
+
+def compare_dirs(a: Path, b: Path, tol: int = 0, out_dir: Path | None = None) -> list[dict]:
+    names = sorted({p.name for p in a.glob("*.png")} | {p.name for p in b.glob("*.png")})
+    rows = []
+    for nm in names:
+        if not (a / nm).is_file():
+            rows.append({"status": "added", "name": nm, "changed_px": 0, "ratio": 0.0})
+        elif not (b / nm).is_file():
+            rows.append({"status": "removed", "name": nm, "changed_px": 0, "ratio": 0.0})
+        else:
+            rows.append(compare(a / nm, b / nm, tol, (out_dir / (nm[:-4] + ".diff.png")) if out_dir else None))
+    return rows
+
+
+def verdict(rows: list[dict], max_ratio: float | None) -> str:
+    if any(r["status"] in ("size", "missing", "added", "removed") for r in rows):
+        return "FAIL"
+    if max_ratio is not None and any(r["ratio"] > max_ratio for r in rows):
+        return "FAIL"
+    return "PASS" if all(r["status"] == "same" for r in rows) else "INFO"
+
+
+def main(argv: list[str] | None = None) -> int:
+    p = agent_log.std_parser("Diff shot PNGs: before vs after (files or directories).", writes=True, json_out=True)
+    p.add_argument("before")
+    p.add_argument("after")
+    p.add_argument("--tol", type=int, default=0, help="per-channel delta that still counts as unchanged")
+    p.add_argument("--max-ratio", type=float, default=None, help="FAIL when a frame changes more than this fraction of pixels")
+    p.add_argument("--out", default="", help="diff PNG directory (default _logs/shot-diff)")
+    args = p.parse_args(argv)
+    root = Path(args.root).resolve() if args.root else agent_log.repo_root(_TOOLS.parent)
+    a, b = Path(args.before), Path(args.after)
+    out_dir = Path(args.out) if args.out else root / "_logs" / "shot-diff"
+    if not args.dry_run:
+        out_dir.mkdir(parents=True, exist_ok=True)
+    if a.is_dir() != b.is_dir():
+        agent_log.fail("give two files or two directories")
+    if not a.exists() or not b.exists():
+        agent_log.fail(f"not found: {a if not a.exists() else b}")
+    sink = None if args.dry_run else out_dir
+    if a.is_dir():
+        rows = compare_dirs(a, b, args.tol, sink)
+    else:
+        rows = [compare(a, b, args.tol, (out_dir / (b.stem + ".diff.png")) if sink else None)]
+    status = verdict(rows, args.max_ratio)
+    lines = [f"shot-diff before={a} after={b} tol={args.tol}"]
+    for r in rows:
+        extra = f" max_delta={r.get('max_delta')} bbox={r.get('bbox')}" if r["status"] == "changed" else ""
+        lines.append(f"{r['status']:8s} {r['name']} changed_px={r['changed_px']} ratio={r['ratio']}{extra}")
+    summary = root / "_logs" / "shot-diff" / "summary.txt"
+    res = agent_log.result_line(status, rel(root, summary), frames=len(rows),
+                                same=sum(r["status"] == "same" for r in rows),
+                                changed=sum(r["status"] == "changed" for r in rows),
+                                bad=sum(r["status"] in ("size", "missing", "added", "removed") for r in rows))
+    if not args.dry_run:
+        summary.parent.mkdir(parents=True, exist_ok=True)
+        summary.write_text("\n".join(lines + [res]) + "\n", encoding="utf-8")
+    if args.json:
+        print(json.dumps({"status": status, "rows": rows}))
+    else:
+        print("\n".join(lines + [res]))
+    return agent_log.exit_code(status)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

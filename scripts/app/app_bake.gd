@@ -9,6 +9,8 @@ static func _bake_camp(host: Node) -> void:
 		host.get_tree().quit()
 		return
 	var camp = packed.instantiate()
+	camp.set_script(null)  # no live _ready; the node must be in the tree so global transforms (shadow projection) are valid
+	host.get_tree().root.add_child(camp)
 	var LayoutS = load("res://scripts/world/camp/layout.gd")
 	var Build = load("res://scripts/world/camp_build.gd")
 	var layout = LayoutS.on_camp(camp)

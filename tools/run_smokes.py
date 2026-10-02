@@ -9,6 +9,7 @@ Summary: _logs/smokes/summary.txt. Bot VM: use bot_smokes.py instead.
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -24,6 +25,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--door", default="", help="Run the phases mapped to this routes.yaml door.")
     ap.add_argument("--job", default="", help="Run the phases mapped to this routes.yaml door.job.")
     ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=120)
+    ap.add_argument("--no-gaps", action="store_true", help="skip the advisory check_shot_gaps --changed print")
     ap.add_argument("--verbose-godot", "-VerboseGodot", action="store_true")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
@@ -53,6 +55,12 @@ def main(argv: list[str] | None = None) -> int:
         body += [head, "--- highlights ---"] + (hits[:80] or ["(no P*/SCRIPT ERROR highlights - check logs if TIMEOUT)"]) + [""]
         if r["status"] != "TIMEOUT" and any(re.search(r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed to", h) for h in hits):
             fail += 1
+    if not args.no_gaps:
+        from load_routes import shot_gaps_mode
+        if shot_gaps_mode(load_routes(root), "build") != "off":
+            adv = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "check_shot_gaps.py"),
+                                  "--changed", "--advisory", "--root", str(root)], check=False)
+            body += [f"--- shot gaps advisory exit={adv.returncode} (never fails Build) ---", ""]
     return agent_log.finish("smokes", root, "\n".join(body), "FAIL" if fail else "PASS", args=args, fail_signals=fail)
 
 

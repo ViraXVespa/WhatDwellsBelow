@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: hub light, roofs, camp shot, wow pass  
-Code: `scripts/graphics/light_rt.gd` (`HUB_SUB`), `scripts/graphics/light_rt/hub_bake.gd` (`_hub_make_rt`, `_hub_paint_day`, `save_hub_bake`), `scripts/graphics/light_rt/hub_cast.gd` (`_hub_stamp_skirt`), `scripts/graphics/wrap_shader.gd`, `scripts/world/camp_build.gd`, `scripts/world/camp_build/mesh.gd`, `scripts/world/camp/layout.gd`, `assets/baked/hub_light.png`, `tools/run_bake_camp.py`
+Code: `scripts/graphics/light_rt.gd` (`HUB_SUB`), `scripts/graphics/light_rt/hub_bake.gd` (`_hub_make_rt`, `_hub_paint_day`, `save_hub_bake`), `scripts/graphics/light_rt/hub_cast.gd` (`_hub_stamp_skirt`), `scripts/app/app_bake.gd` (`--wdb-bake-camp`: realizes the Layout camp in memory and adds it to the scene tree before baking), `scripts/graphics/wrap_shader.gd`, `scripts/world/camp_build.gd`, `scripts/world/camp_build/mesh.gd`, `scripts/world/camp/layout.gd`, `assets/baked/hub_light.png`, `tools/run_bake_camp.py`
 
 The hub ships one baked light RT. Offline bake quality is the look lock. Runtime `camp_light` milliseconds are not. Ortho-down at play zoom is the judge. Roofs read through lid shade and tile grain. The yard reads through a shadow projected from the real hall, wing, stall, and awning boxes. Height sets the length. Hall and wing are real gables. The stall tarp is pitched over the counter. Collision comes from those meshes.
 - Building collision is the live wall, gable, awning, and stall-pitch meshes. Do not put the player on a box lid.
@@ -10,7 +10,7 @@ The hub ships one baked light RT. Offline bake quality is the look lock. Runtime
 ## Lock
 - Shipped atlas: `res://assets/baked/hub_light.png` from `LightRt.save_hub_bake`.
 - Shipped atlas is the png only. `scenes/camp.tscn` must not embed a second copy.
-- Prove bake: `bake_camp: rt=` at least `1088x1024`, `sub=16`, `shadow_px` not 0. `shadow_px` not 0 is a pipeline check, not a look pass.
+- Prove bake: `bake_camp: rt=` at least `1088x1024`, `sub=16`, `shadow_px` not 0 (`run_bake_camp.py` fails any bake with 0, headless or not; the camp node must be in the tree or the projection reads no transforms). The tool picks a display itself (`shot-tool.md` Display). `shadow_px` not 0 is a pipeline check, not a look pass.
 - Prove shot: `python tools/run_shots.py --mode web --scene camp --hud 0 --zoom 0.69`. The runner stitches the `design/shot-recipes.json` poses into one paste. `_arm_capture` must call `_apply_pose` again so settle cannot keep the play crop.
 - Play zoom 0.69 is how we judge roofs and puddles (stall, hall, dumpster, receptionist). The 0.38 postcard is the wide frame only.
 
