@@ -316,8 +316,6 @@ static func _kick_pose(host: Node) -> void:
 	_atlas_left = 40
 	_apply_pose_token(host, token)
 	host.get_tree().process_frame.connect(_on_warm.bind(host, token), CONNECT_ONE_SHOT)
-
-
 static func _hub_atlas_bound() -> bool:
 	var rt = load("res://scripts/graphics/light_rt.gd")
 	if rt == null:
@@ -325,16 +323,6 @@ static func _hub_atlas_bound() -> bool:
 	if rt.has_method("texture"):
 		return rt.texture() != null
 	return true
-static func _hub_atlas_bound() -> bool:
-	var rt = load("res://scripts/graphics/light_rt.gd")
-	if rt == null:
-		return true
-	var tex: Texture2D = null
-	if rt.has_method("texture"):
-		tex = rt.texture()
-	elif "tex" in rt:
-		tex = rt.tex
-	return tex != null
 static func _on_warm(host: Node, token: String) -> void:
 	if not is_instance_valid(host):
 		printerr("SHOT: ok=false err=host_gone")

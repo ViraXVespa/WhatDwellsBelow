@@ -17,7 +17,7 @@ The hub ships one baked light RT. Offline bake quality is the look lock. Runtime
 ## Look
 - Yard atlas paints a warm sun disc plus a small crystal bump by hand at `HUB_SUB`. Do not send hub through `Stamp.paint`.
 - Cream field `Color(0.98, 0.96, 0.93)` is the floor under the sun, not the finished picture.
-- Building interiors are not written. Lids own their shade and do not sample `light_tex`. Dirt owns the yard.
+- Building interiors are not written. Roofs, awnings, and the stall tarp sample `light_tex`. Dirt owns the yard.
 - Shadows fall with the player blob: down-left, -X +Z. Do not invent a second sun, and do not lock a +X vector over the blob. Project the live gable, wall, awning, and stall meshes along that fall. Feather the edge. No skirt smear. No shed AABB.
 - Finish and save use the same skirt. Then one 3x3 blur.
 - Hall and wing lids are two-slope gables, not a south-falling shed. WrapShader russet is the lid color, matching the awning red, not the sun disc. Each slope runs from the ridge to its eave. `shade_hi` stays high enough that the eave is still tile. Tile `uv_scale` uses the slope length.
@@ -28,7 +28,7 @@ The hub ships one baked light RT. Offline bake quality is the look lock. Runtime
 ## Allowed
 - `HUB_SUB` 16 or higher. Raise it when puddles look stair-stepped.
 - Projected shadows from the live boxes. Spend bake time.
-- Ground stays unshaded times `light_tex`. Lids do not.
+- Ground, roofs, awnings, and the stall tarp sample `light_tex`.
 - One EnvKit on Camp only. It must not second-light a lid.
 
 ## Do not
@@ -42,7 +42,7 @@ The hub ships one baked light RT. Offline bake quality is the look lock. Runtime
 - Do not trust a plus-only crop. Judge zoom 0.69, then the stitched recipe.
 - Do not embed the atlas in `scenes/camp.tscn`.
 - Do not pack `Generated` as a shipped town.
-- Do not multiply a lid by `light_tex` or by EnvKit ambient.
+- Do not add a second EnvKit. Lids sample the hub atlas, not a second light.
 
 ## Process
 1. Edit mesh / lid wrap / dirt skirt.
