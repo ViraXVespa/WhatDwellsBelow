@@ -89,3 +89,5 @@ Do not declare the whole sweep done and then start a second flow.
 
 PR URL, squash-merge reminder, path + bytes before/after, changelog path if
 shipping, what is still over 10KB, next printed item.
+
+No-editor carve-out: a new `.gd` may run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets`. Commit the `.uid` only. That is the import, not an editor session.

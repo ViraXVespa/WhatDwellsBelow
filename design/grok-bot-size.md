@@ -42,10 +42,12 @@ Inventory and before/after sizes use `os.path.getsize`.
 
 1. Split every over-10KB live script with `design/refactor.md`. Facade keeps the public path. Stop each file at under 10KB.
 2. Then split over-5KB files only when whole functions can move.
-3. One size PR may batch over-10KB then over-5KB clusters. Do not start extract, relocate, docs, or reuse-map work in this PR.
+3. One size PR may batch over-10KB then over-5KB clusters. Do not start extract, relocate, or reuse-map work in this PR. A stale code line that names a func this split moved may be edited in the same PR. Do not add an allowlist row to do that.
 
 Work in `/workspace/WhatDwellsBelow`. Commit per cluster on the Bot branch.
 
 ## Verify
 
 Prove per BOT.md.
+
+PR body: `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -F body=@file`. Do not use `gh pr edit`. Projects classic shutdown breaks it.

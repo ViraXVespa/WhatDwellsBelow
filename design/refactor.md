@@ -151,3 +151,5 @@ Still open for later User go: other fat facade clusters (same tool). Prefer upda
 ## Documentation facades
 
 Script splits stay in this file. Topic markdown door + sibling splits are the doc-split recipe.
+
+Size splits use the size job, not this recipe's reuse section. Facade keeps state. Helpers preload. Do not load the facade.
