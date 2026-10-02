@@ -18,7 +18,7 @@ Rules, the CLI contract and the surface key are in `tools.md` (single copy). The
 | `run_dungeon_map.py` | Dungeon generation map smoke. Summary: `dungeon-map`. | WD | `python3 tools/run_dungeon_map.py` (`--seed 42 --floor 1 --scale 8`) | N |
 | `run_dungeon_map_sweep.py` | Map smoke over seeds. Summary: `dungeon-map-sweep`. | D | `python3 tools/run_dungeon_map_sweep.py` (`--count 10` or `--seed-list 42,7`) | N |
 | `run_bake_camp.py` | Bake `hub_light.png` through `--wdb-bake-camp` on a real renderer (auto display; `--headless` forces the headless driver, same atlas; `shadow_px=0` FAILs). Never rewrites `camp.tscn`. RESULT `clean=`, `shadow_px=`, `display=`. Summary: `bake-camp`. | BD | `--help` | Y |
-| `export_web.py` | Export the GitHub Pages build (Godot Web, no threads); `--archives` adds the combined `_pages/` site. Logs: `_logs/export-web/`. | D | `python3 tools/export_web.py` (`--archives`) | N |
+| `export_web.py` | Export the GitHub Pages build (Godot Web, no threads; runs `enable_texture_mips.py` before `--import`, no second bake after the PCK); `--archives` adds the combined `_pages/` site. Logs: `_logs/export-web/`. | D | `python3 tools/export_web.py` (`--archives`) | N |
 | `run_agent_py.py` | Run an ephemeral script from `_logs/agent-py/` and delete it after. Prefer a real tool. Summary: `agent-py`. | D | `python3 tools/run_agent_py.py --script _logs/agent-py/foo.py` | N |
 | `clean_agent_logs.py` | Delete raw logs under `_logs/` (`--new-week` also old summaries). Summary: `clean`. | D | `python3 tools/clean_agent_logs.py` (`--keep-raw`, `--max-age-hours 24`, `--dry-run`) | N |
 | `read_summary.py` | Print `_logs/<job>/summary.txt` (no args lists jobs). | WD | `python3 tools/read_summary.py --job xref` | N |

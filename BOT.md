@@ -3,18 +3,13 @@
 Status: protocol
 Read when: Grok Bot (The Refactorer) boots or starts a job
 
-This is the only Bot constitution. Grok Build and web/chat keep their path files.
-Do not collapse those into this file.
-Second topic door: ask the User to name the owner first. If `conflicts_with` lists the pair, do not open the second door in this slice.
+The only Bot constitution. Second topic door: ask the User to name the owner first.
+
 ## Workspace
 
-Clone github.com/ViraXVespa/WhatDwellsBelow to /workspace/WhatDwellsBelow.
-Work that tree. Work a fresh `bot/<flow>` branch per flow. One open Bot PR. Commit per cluster.
-User squash-merges. Never push main. Never merge the PR.
+Clone github.com/ViraXVespa/WhatDwellsBelow to /workspace/WhatDwellsBelow and work that tree. Fresh `bot/<flow>` branch per flow (from `origin/main`; e.g. `bot/size-xyz`). One open Bot PR. Commit per cluster. User squash-merges. Never push main. Never merge the PR.
 
-Publish with plain `git push` over HTTPS (gh credential helper) to `bot/*` or the PR branch only. No force pushes, ever. After the User squash-merges, create a fresh `bot/<flow>` branch from `origin/main` (e.g. `bot/reuse-xyz`, `bot/size-xyz`), push it with `git push -u origin bot/<flow>`, and open the PR with `gh pr create` (if that fails, GitHub MCP `create_pull_request`).
-
-The box repo has a local git identity (Grok Bot / grok-bot@users.noreply.github.com), so plain `git commit` works. PR body edits: `gh api -X PATCH repos/<repo>/pulls/N -F body=@file` (`gh pr edit` fails on the Projects classic shutdown).
+Publish with plain `git push -u origin bot/<flow>` over HTTPS (gh credential helper) to `bot/*` or the PR branch only. No force pushes, ever. Open the PR with `gh pr create` (if that fails, GitHub MCP `create_pull_request`). Edit a PR body with `gh api -X PATCH repos/<repo>/pulls/N -F body=@file` (`gh pr edit` fails on the Projects classic shutdown). The box repo identity is Grok Bot (grok-bot@users.noreply.github.com), so plain `git commit` works.
 
 ## Boot
 
@@ -33,68 +28,44 @@ The box repo has a local git identity (Grok Bot / grok-bot@users.noreply.github.
 | Doc facade / sibling split | `design/grok-bot-docs.md` |
 | Named optimization item from the parked queue | `design/grok-bot-opt.md` |
 
-If the User names more than one job, ask which flow this session is. One flow, one PR, then stop.
+Job files do not restate this file: size, prove, changelog and `version.json` rules live here (label math: `design/versioning-log.md` body shape, not the changelog tree or `scripts/data/version.json`, at ship). One flow, one PR, then stop; if the User names more than one job, ask which. Do not declare the whole sweep done and then start a second flow.
 
-If this session woke because main moved: run python3 tools/bot_status.py first.
-If over_10kb count is 0, report and stop. If over_10kb count is above 0,
-open only design/grok-bot-size.md. Do not start reuse, extract, relocate,
-docs, or opt from that wake. Commit on the Bot branch only. Never push main.
-Never merge the PR.
+Woke because main moved: run bot_status first. over_10kb count 0: report and stop. Above 0: open only `design/grok-bot-size.md`; no other flow from that wake. Commit on the Bot branch only.
 
-
-Prove a cluster with:
+## Prove
 
 - python3 tools/check_script_cap.py --git-changed
 - python3 tools/check_load_graph.py
 - python3 tools/bot_status.py --prove
 - python3 tools/check_code_map.py (no new UNMAPPED for files you touched; older ones are expected)
-- python3 tools/check_tool_docs.py (only when `tools/` or the catalog changed); `python3 tools/check_tool_docs.py --stale-refs` after any doc edit that names paths
+- python3 tools/check_tool_docs.py (only when `tools/` or the catalog changed); `--stale-refs` after any doc edit that names paths
 
-CI: .github/workflows/bot-gate.yml
-Allowlist: tools/bot_allow.txt (default deny; deny lines first)
-Stale docs: `design/` and `tools/` are fully allowlisted, so the Bot fixes stale doc lines in the job it is on (`check_tool_docs.py --stale-refs` finds dead refs). When the current truth is unclear it does not guess; it lists the line under `Stale doc lines (for the User)` in the PR body: file, line, what it says, what it might say.
-Measure: os.path.getsize, same floor as Get-Item Length (10,000 bytes).
-Touched live `scripts/**/*.gd` must ship under 10KB. Split with `design/refactor.md` (recipe only). The under-5KB target is only `design/grok-bot-size.md`. Label math: `design/versioning-log.md`.
+CI: .github/workflows/bot-gate.yml. Allowlist: tools/bot_allow.txt (default deny; deny lines first).
+Stale docs: `design/` and `tools/` are allowlisted, so fix stale doc lines in the job you are on. When the current truth is unclear, do not guess: list the line under `Stale doc lines (for the User)` in the PR body (file, line, what it says, what it might say).
+Measure: os.path.getsize (10,000-byte floor). Touched live `scripts/**/*.gd` ship under 10KB; split with `design/refactor.md` (recipe only; the 5KB target is only `design/grok-bot-size.md`).
 Do not open `design/reuse-map.md` except from `design/grok-bot-reuse.md` when that brief is not the empty template.
+New `tools/` runners: `design/tools.md` rule 5 (propose first). Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
+Gates: batch same-kind fixes, run once, at most 2 reruns (`design/tools.md` rule 10).
 
-New `tools/` runners: `design/tools.md` rule 5 (propose first; implement after the User approves).
-Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
-
-Work only in `/workspace/WhatDwellsBelow` on the Bot VM. Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `design/tools-shims.md`, `design/tools-media.md`), the pc-offload skill, or Imagine / I2V skills. Do not use a Windows desktop checkout, `WDB_ROOT`, or the Steam Godot path.
+Work only in `/workspace/WhatDwellsBelow`. Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `design/tools-shims.md`, `design/tools-media.md`), the pc-offload skill, or Imagine / I2V skills. No Windows checkout, `WDB_ROOT`, or Steam Godot.
 
 ## Smokes
 
-Not a boot step. Not a Job flow. When a cluster needs a headless prove,
-run `python3 tools/bot_smokes.py --phases 1,2,6` from the repo root.
-Setup downloads the official 4.7.2 Linux tools binary only if the pin is missing.
-Binary: `GODOT_BIN`, else the pin `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
-New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets`, and commit the `.uid` files only. That is the import, not an editor session.
-Do not run editor playtest. Do not schedule a routine that launches Godot.
-Shots and light bakes are not headless: `run_shots.py`, `run_shot_flow.py` and `run_bake_camp.py` pick the box display themselves (`$DISPLAY`, a live X socket, else `xvfb-run`; `python3 tools/godot_lib.py --display`). Menu/NPC proof: `bot_smokes.py --door D --flows` (headless asserts) and `design/shot-flows.md`. Required Bot gate: `check_shot_gaps.py --changed` (run by `bot_smokes.py` unless `--no-gaps`, and by `run_build_gate.py --batch`) FAILS on a new UI state with no shot flow; add a small flow in `tools/shot-flows/` in the same PR. Published shots go to `_out/shots/<flow>/`; never write under `assets/` (Grok Build places those).
+Not a boot step or Job flow. When a cluster needs a headless prove: `python3 tools/bot_smokes.py --phases 1,2,6` from the repo root. Setup downloads the official 4.7.2 Linux tools binary only if the pin is missing. Binary: `GODOT_BIN`, else `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
+New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets`, and commit the `.uid` files only.
+No editor playtest, no routine that launches Godot.
+Shots and light bakes are not headless: `run_shots.py`, `run_shot_flow.py`, `run_bake_camp.py` pick the box display themselves (`python3 tools/godot_lib.py --display`). Menu/NPC proof: `bot_smokes.py --door D --flows` and `design/shot-flows.md`. `check_shot_gaps.py --changed` (run by `bot_smokes.py` unless `--no-gaps`, and by `run_build_gate.py --batch`) FAILS on a new UI state with no shot flow; add a small flow in `tools/shot-flows/` in the same PR. Published shots go to `_out/shots/<flow>/`; never write under `assets/`.
 
-Warning sweep (User-named only): `python3 tools/bot_warnscan.py` runs every smoke area plus boot/static, collects Godot warnings, errors, and leaks, and exits 0 only on zero findings. It reports; it does not fix game code. `--list` shows areas, `--repeat 2` steadies leaks.
-Findings by kind: `--findings-md PATH`. One-shot gate for a fix batch: `python3 tools/run_build_gate.py --batch --warnscan-baseline PATH --areas ...`. Before/after a change: `--save-baseline PATH` before, then `--non-leak-diff PATH` after (the baseline and the after run must use the same `--areas`). It ignores leaks and sites, prints NEW and FIXED, and exits 1 only on NEW.
-Targeted areas for a split: the smoke phases that load the file, `dungeon-load-timing`, `map-f1`, `static`.
-Tools: `design/tools.md` is the catalog (single source: what each tool does, `--help` for flags, gotchas, which are allowlisted). The Bot runs only tools marked `A=Y` there, always as `python3 tools/X.py`; the `.ps1` files are shims the Bot never runs. Tools, not scratches: update the tool or propose one; a scratch is for a niche one-off, in temp. Every tool ends with a `RESULT PASS|FAIL|INFO ... summary=<path>` line.
+Warning sweep (User-named only): `python3 tools/bot_warnscan.py` runs every smoke area plus boot/static and exits 0 only on zero findings. It reports; it does not fix game code. `--list`, `--repeat 2`, `--findings-md PATH`. Before/after a change: `--save-baseline PATH`, then `--non-leak-diff PATH` with the same `--areas` (prints NEW and FIXED, exits 1 only on NEW). One-shot gate: `python3 tools/run_build_gate.py --batch --warnscan-baseline PATH --areas ...`. Targeted areas for a split: the smoke phases that load the file, `dungeon-load-timing`, `map-f1`, `static`.
+Tools: `design/tools.md` is the catalog. The Bot runs only `A=Y` tools, as `python3 tools/X.py`, never the `.ps1` shims. Every tool ends with a `RESULT PASS|FAIL|INFO ... summary=<path>` line.
 
 ## Hard stops
 
-No new player-facing systems, tunables, combat feel, editor playtest,
-art/I2V, locale sweeps, or pause redesign.
-Smokes are headless (see Smokes); shots and bakes use the box display. Do not install a Windows or Steam Godot. Do not open the editor.
-Do not enable Execution on Local Computer.
-Bot may save its own skill after two good clusters. Skills are the account private library.
-Do not walk design/ for context beyond this file and the one Job file.
-Do not pin weeks or run `tools/week_start.py` (human-only).
-Do not invent numbers.
-Behavior changes, drive-by renames, comment rewrites, wholesale retypes, reformats
-are out unless a User-named `design/grok-bot-opt.md` item lists that change.
-No `Entity.gd`, UI framework, ECS, or flattening hostify clusters back into one oversized script.
-Do not declare the whole sweep done and then start a second flow.
+No new player-facing systems, tunables, combat feel, editor playtest, art/I2V, locale sweeps, pause redesign, `Entity.gd`, UI framework, ECS, or flattening hostify clusters back into one oversized script. No Windows or Steam Godot; do not open the editor or enable Execution on Local Computer.
+Behavior changes, drive-by renames, comment rewrites, wholesale retypes and reformats are out unless a User-named `design/grok-bot-opt.md` item lists them.
+Do not walk design/ for context beyond this file and the one Job file. Do not pin weeks or run `tools/week_start.py` (human-only). Do not invent numbers.
+Bot may save its own skill after two good clusters (skills are the account private library).
 
 ## After-cluster report
 
-PR URL, squash-merge reminder, path + bytes before/after, changelog path if
-shipping, what is still over 10KB, next printed item.
-
-No loops: batch same-kind fixes, run gates once per batch, at most 2 reruns, then report (`design/tools.md` rule 10). Rough edges: the rule is `design/tools.md` rule 9; apply it at the end of each file in a size pass. Anything not fixable (outside the allowlist) goes in the PR body for the User.
+PR URL, squash-merge reminder, path + bytes before/after, changelog path if shipping, what is still over 10KB, next printed item, and the rough edges you hit (`design/tools.md` rule 9). Anything not fixable (outside the allowlist) goes in the PR body for the User.

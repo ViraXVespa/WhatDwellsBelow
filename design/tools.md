@@ -15,7 +15,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 4. **Summaries.** Runners write `_logs/<job>/summary.txt` (gitignored, one dir per job; no session keys). Read the final `RESULT` line, then the summary once, not raw logs or script bodies.
 5. **New tool.** Propose first (Build: through `ask_user_question`; name, command, what it saves) and implement after approval. Add its row here (and the allowlist line if the Bot may run it), then run `check_tool_docs.py` and `check_tool_cli.py`.
 6. **Duplicates are shims.** A renamed or folded tool stays as a shim (docstring starts `"""Shim`) for one release, then goes. New logic goes in the owner: `agent_log` (run helpers), `repo_lib` (git, allowlist, version), `gd_lib` (`.gd` funcs), `md_format_lib` (text write), `doc_patch` (doc edits).
-7. **Tools, not scratches.** If you would need it again, update the tool or propose a new one. A scratch is for a niche one-off, in temp. Web doc edits: `doc_patch.py` CLI (`doc-library.md`).
+7. **Tools, not scratches.** If you would need it again, update the tool or propose a new one; a scratch is only for a niche one-off, in temp. Web doc edits: `doc_patch.py` CLI (`doc-library.md`).
 8. **Fix the tool.** If a tool does not work intuitively, it is designed wrong: fix it (or propose the fix), do not work around it.
 9. **Rough edges (end of every task).** List the rough edges you hit (a guessed flag, output re-run, a scratch you wrote, a doc that lied) and fix them in the same PR when the allowlist and task allow, else name them in the report. This is the one copy of the rule; the Bot, Build and web entry docs point here.
 10. **No loops (gates and fixes).** One copy of the rule; entry docs, jobs and skills point here.
@@ -28,12 +28,12 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 
 - Shebang `#!/usr/bin/env python3`, `argparse` (`agent_log.std_parser`), a working non-mutating `--help`, ASCII output.
 - Ops tools take `--root`, writers take `--dry-run`, reports may take `--json`. Errors go to stderr as `error: ...`. Exit 0 ok, 1 findings, 2 usage.
-- Last line is `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`; a `Summary -> <abs>` line also prints unless the runner opts out (`legacy=False` in `agent_log.finish`). Exempt: printers (their stdout is the payload) and `wdb_scratch_server`.
+- Last line is `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`; a `Summary -> <abs>` line also prints unless the runner opts out in `agent_log.finish`. Exempt: printers (their stdout is the payload) and `wdb_scratch_server`.
 - Read and write text through `md_format_lib` (BOM and line endings kept). Paths printed are repo-relative POSIX.
 
 ## Run when
 
-- **Bot:** boot with `bot_status.py`, then the one flow doc from `BOT.md` (size, extract, reuse, relocate, docs, opt). Prove and smokes: `BOT.md` (single copy). Never open the Build docs (`pc-offload.md`, `tools-build.md`, `tools-media.md`) or Imagine/I2V skills.
+- **Bot:** `BOT.md` (boot, prove, smokes, Build-doc ban).
 - **Web/chat:** documentation slices go through the `doc_patch.py` CLI or import (`doc-library.md`); `check_load_graph.py`; `run_shots.py --mode web` (prints its RESULT line, no scratch needed); scripted flows `run_shot_flow.py` (`shot-tool.md`). Godot runners are the User's: `web-session.md` names them.
 - **Build (User PC):** measure with `file_stat.py` (not `python -c`), `list_xref.py`, `list_changed.py`, `list_oversize_scripts.py`; after a `.gd` slice `run_build_gate.py`; web build performance after an export: `web_perf.py` (advisory, `tools-build.md`); edit one code-map row with `code_map.py patch`; park opt items with `bot_opt.py`. Runner rules: `pc-offload.md`. Do not run a full-repo Bot size sweep.
 
@@ -55,7 +55,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `bot_opt.py` | Opt queue: `--list`, `--id`, `--status opt-N=done`, `--add`, `--remove`. Never hand-edit the queue block. Summary: `bot-opt`. | BD | `--help` | Y |
 | `bot_allow.txt` | Allowlist: the paths the Bot may change; read by CI and `bot_status --prove`. Deny lines first. Authority for Bot scope. | BWD | - | Y |
 | `check_tool_cli.py` | CLI contract check over `tools/` (see Contract above) plus the `.ps1` shim check. Run after adding or editing a tool. | BWD | `--help` | Y |
-| `check_tool_docs.py` | Catalog check: every `tools/` file has a row, `A=Y` rows are allowed by `bot_allow.txt` (glob-aware), rows name real files. Run it after adding or renaming a tool. `--stale-refs` scans docs, root md and the four workflow skills for dead backticked paths and `Class.member` names (fails) and, with `--narration`, will-be-added / legacy / formerly / no-longer lines (advisory); run it on every doc sweep | BWD | `--help` | Y |
+| `check_tool_docs.py` | Catalog check: every `tools/` file has a row, `A=Y` rows are allowed by `bot_allow.txt` (glob-aware), rows name real files. Run it after adding or renaming a tool. `--stale-refs` scans docs, root md and the four workflow skills for dead backticked paths and `Class.member` names (fails); `--narration` adds history-sounding lines (advisory). Run both on every doc sweep | BWD | `--help` | Y |
 
 ### Split, code map, doc edits, inventory and lint
 
