@@ -16,6 +16,7 @@
 
 scripts/*
 tools/*
+design/*
 AGENTS.md
 BOT.md
 .github/workflows/bot-gate.yml
