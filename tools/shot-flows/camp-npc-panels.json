@@ -1,0 +1,30 @@
+{
+  "name": "camp-npc-panels",
+  "about": "Placeholdia: open the vendor, quest board, dumpster and loadout crystal one after another (pad), shoot each panel, close with B. Template for a chain of NPC panels in one session.",
+  "scene": "camp",
+  "hud": 0,
+  "settle_ms": 1500,
+  "covers": ["interact:vendor", "ui:vendor", "interact:quest_board", "interact:dumpster", "ui:flavor", "interact:loadout_crystal", "ui:loadout"],
+  "smoke": true,
+  "steps": [
+    {"op": "device", "kind": "pad"},
+    {"op": "interact", "kind": "vendor"},
+    {"op": "assert", "target": "host.ui.mode", "equals": "vendor"},
+    {"op": "shot", "name": "vendor", "texts": true},
+    {"op": "press", "pad": "B"},
+    {"op": "interact", "kind": "quest_board"},
+    {"op": "assert", "target": "host.ui.mode", "equals": "quest"},
+    {"op": "shot", "name": "quest-board"},
+    {"op": "press", "pad": "B"},
+    {"op": "interact", "kind": "dumpster"},
+    {"op": "assert", "target": "host.ui.mode", "equals": "flavor"},
+    {"op": "shot", "name": "dumpster"},
+    {"op": "press", "pad": "B"},
+    {"op": "interact", "kind": "loadout_crystal"},
+    {"op": "assert", "target": "host.ui.mode", "equals": "loadout"},
+    {"op": "shot", "name": "loadout", "texts": true},
+    {"op": "assert_texts", "min_font": 14},
+    {"op": "press", "pad": "B"},
+    {"op": "assert", "target": "App.ui_open", "equals": false}
+  ]
+}

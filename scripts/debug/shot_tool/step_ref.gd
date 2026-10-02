@@ -41,6 +41,8 @@ static func _step(cur: Variant, seg: String) -> Variant:
 	if cur is Object and is_instance_valid(cur):
 		var o: Object = cur
 		var v: Variant = o.get(seg)
+		if v == null and seg == "ui" and o.has_method("world_ui"):
+			return o.call("world_ui")
 		if v == null and o is Node:
 			return (o as Node).get_node_or_null(seg)
 		return v

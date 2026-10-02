@@ -1,0 +1,22 @@
+{
+  "name": "dungeon-gate-shop",
+  "about": "Dungeon: open the extract gate by interacting, then the ghost shop panel by calling its open method (shops spawn only on some floors; a null spot shows the empty stock), shoot each, close with B. Template for dungeon-only panels.",
+  "scene": "dungeon",
+  "seed": 1,
+  "floor": 1,
+  "settle_ms": 1500,
+  "covers": ["interact:extract_gate", "ui:extract", "ui:shop"],
+  "smoke": true,
+  "steps": [
+    {"op": "device", "kind": "pad"},
+    {"op": "interact", "kind": "extract_gate", "near": true},
+    {"op": "assert", "target": "host.ui.mode", "equals": "extract"},
+    {"op": "shot", "name": "extract", "texts": true},
+    {"op": "press", "pad": "B"},
+    {"op": "call", "target": "host.ui", "method": "open_shop", "args": [null]},
+    {"op": "assert", "target": "host.ui.mode", "equals": "shop"},
+    {"op": "shot", "name": "shop", "texts": true},
+    {"op": "press", "pad": "B"},
+    {"op": "assert", "target": "App.ui_open", "equals": false}
+  ]
+}
