@@ -32,6 +32,7 @@ tools/patch_code_map.py
 tools/code_map_lib.py
 tools/md_format_lib.py
 tools/facade_requal.py
+tools/split_funcs.py
 AGENTS.md
 BOT.md
 .github/workflows/bot-gate.yml
