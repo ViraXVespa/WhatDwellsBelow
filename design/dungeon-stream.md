@@ -23,3 +23,5 @@ Only chunks that contain a floor cell, or a wall adjacent to a floor, are queued
 `CHUNK`, `RING_IN`, and `RING_OUT` stay coarse 1 m. A chunk queues if it holds any published floor from solid, or a run facing that floor. Streamed collision is that run-bounded solid inside the chunk.
 `stream_all` / `force_all` still force enemy jobs; geometry stays proximity-streamed so smoke does not bake the whole floor.
 Jobs whose anchor sits inside an activated crystal’s arrive radius stay `cleared`.
+
+Enter stamp timing is not this job.
