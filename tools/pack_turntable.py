@@ -3,6 +3,14 @@
 from pathlib import Path
 from PIL import Image
 import math
+from sprite_lib import dist  # noqa: E402
+import sys
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
 FRAMES = ROOT / "_src" / "anim_frames"
@@ -16,10 +24,6 @@ MAGENTA = (239, 19, 106)
 LAWN = (124, 252, 0)
 PICKS = [8, 12, 16, 20]
 ATK_PICKS = [8, 18, 28, 38]
-
-
-def dist(a, b):
-    return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
 
 
 def key(im: Image.Image) -> Image.Image:
@@ -101,7 +105,7 @@ def pack_list(folder: str, idxs: list, dest_prefix: str) -> None:
         n += 1
 
 
-def main() -> None:
+def _run() -> None:
     # Idles from stills + turntable
     save(Image.open(ROOT / "assets" / "live" / "player" / "down.png"), OUT / "down.png")
     save(Image.open(IMG / "191.jpg"), OUT / "right.png")
@@ -132,5 +136,12 @@ def main() -> None:
     print("turntable pack done")
 
 
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("Pack 8-dir player sheets from turntable + facing clips, shared scale and torso pin.")
+    ap.parse_args(argv)
+    _run()
+    return agent_log.emit_result("PASS", tool="pack_turntable")
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -6,6 +6,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sprite_pipeline import fit_canvas, quantize_palette, range_key
 from PIL import Image
 
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+
 IMG = Path(r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a03e55-f390-7750-ab00-b30f1e6ba566\images")
 KEYS = ["up", "down", "left", "right", "up_left", "up_right", "down_left", "down_right"]
 
@@ -18,7 +24,7 @@ def save(src: Path, dest: Path) -> None:
     print("wrote", dest)
 
 
-def main() -> None:
+def _run() -> None:
     jobs = {
         "assets/sprites/player/male/equip_great_axe_down.png": "15.jpg",
         "assets/sprites/player/male/equip_staff_down.png": "9.jpg",
@@ -51,5 +57,12 @@ def main() -> None:
                     print("fill", p)
 
 
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("pack_p2_art")
+    ap.parse_args(argv)
+    _run()
+    return agent_log.emit_result("PASS", tool="pack_p2_art")
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

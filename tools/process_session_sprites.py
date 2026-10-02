@@ -6,6 +6,13 @@ from PIL import Image
 
 import plate_remap as pr
 from sprite_pipeline import fit_canvas, key_to_alpha
+import sys
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
 SESSION = Path(
@@ -37,7 +44,7 @@ def key_and_fit(src: Path, dest: Path, canvas: int) -> None:
     print(f"wrote {dest.name} {out.size}")
 
 
-def main():
+def _run() -> None:
     for name, dest, canvas in JOBS:
         src = SESSION / name
         if not src.exists():
@@ -45,5 +52,12 @@ def main():
         key_and_fit(src, dest, canvas)
 
 
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("Key whatever-magenta Imagine stills and fit them into engine sprites.")
+    ap.parse_args(argv)
+    _run()
+    return agent_log.emit_result("PASS", tool="process_session_sprites")
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

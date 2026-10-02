@@ -3,6 +3,14 @@
 from pathlib import Path
 from PIL import Image
 import math
+from sprite_lib import dist  # noqa: E402
+import sys
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = Path(
@@ -14,10 +22,6 @@ MAGENTA = (239, 19, 106)
 LAWN = (124, 252, 0)
 WALK_PICKS = [8, 12, 16, 20]
 ATK_PICKS = [8, 18, 28, 38]
-
-
-def dist(a, b):
-    return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
 
 
 def key(im: Image.Image) -> Image.Image:
@@ -77,7 +81,7 @@ def pack_cycle(folder: str, prefix: str, picks: list[int]) -> None:
         save_img(Image.open(src), OUT / f"{prefix}_{i}.png")
 
 
-def main() -> None:
+def _run() -> None:
     save_img(Image.open(SRC / "190.jpg"), OUT / "left.png")
     save_img(Image.open(SRC / "188.jpg"), OUT / "up_left.png")
     save_img(Image.open(SRC / "189.jpg"), OUT / "down_left.png")
@@ -90,5 +94,12 @@ def main() -> None:
     print("facing fix packed")
 
 
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("Pack corrected left-facing player sheets with magenta key + despill.")
+    ap.parse_args(argv)
+    _run()
+    return agent_log.emit_result("PASS", tool="pack_facing_fix")
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

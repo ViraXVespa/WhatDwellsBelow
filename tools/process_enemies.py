@@ -2,14 +2,18 @@
 from pathlib import Path
 from PIL import Image, ImageOps
 import math
+from sprite_lib import dist  # noqa: E402
+import sys
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
 CANVAS = 128
 THRESH = 62
-
-
-def dist(a, b):
-    return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
 
 
 def sample_bg(im: Image.Image) -> tuple:
@@ -49,7 +53,7 @@ def key_and_fit(src: Path, dest: Path, flip: bool = False) -> None:
     print("wrote", dest)
 
 
-def main():
+def _run() -> None:
     jobs = [
         ("bruiser", "idle", "down", ROOT / "_src/bruiser_idle_down.jpg", False),
         ("bruiser", "idle", "right", ROOT / "_src/bruiser_idle_right.jpg", False),
@@ -73,5 +77,12 @@ def main():
         key_and_fit(src, dest, flip=flip)
 
 
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("process_enemies")
+    ap.parse_args(argv)
+    _run()
+    return agent_log.emit_result("PASS", tool="process_enemies")
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

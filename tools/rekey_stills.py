@@ -14,6 +14,12 @@ import i2v_seeds  # noqa: E402
 import plate_remap as pr  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
 
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+
 SESS = Path(r"C:\Users\Vira\.grok\sessions")
 P4 = SESS / r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a03e55-f390-7750-ab00-b30f1e6ba566\images"
 LIVE = SESS / r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images"
@@ -131,7 +137,7 @@ def _run_pool(jobs: list) -> None:
             fut.result()
 
 
-def main() -> None:
+def _run() -> None:
     p4_enemies = {
         "21.jpg": "orc",
         "22.jpg": "spider",
@@ -293,5 +299,12 @@ def main() -> None:
     print("rekey stills done", flush=True)
 
 
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("Re-key live stills from Grok session sources with plate_remap + sprite_pipeline.")
+    ap.parse_args(argv)
+    _run()
+    return agent_log.emit_result("PASS", tool="rekey_stills")
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

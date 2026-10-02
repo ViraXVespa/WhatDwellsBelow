@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 import i2v_seeds  # noqa: E402
 import plate_remap as pr  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
+from sprite_lib import shrink_keyed as _shrink_keyed  # noqa: E402
 
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 FINAL = ROOT / "_src" / "walk_final"
@@ -70,18 +71,6 @@ def extract(video: Path, dest: Path, fps: int = 8, reuse: bool = False) -> list[
     ]
     subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return sorted(dest.glob("f*.png"))
-
-
-def _shrink_keyed(im: Image.Image, cap: int = KEYED_CAP) -> Image.Image:
-    w, h = im.size
-    m = max(w, h)
-    if m <= cap:
-        return im
-    s = cap / m
-    return im.resize(
-        (max(1, int(w * s)), max(1, int(h * s))),
-        Image.Resampling.NEAREST,
-    )
 
 
 def bible_cell(gender: str, facing: str) -> Image.Image:
