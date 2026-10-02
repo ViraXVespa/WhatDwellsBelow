@@ -38,10 +38,6 @@ RENDER_METHOD = "gl_compatibility"
 FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "width", "height")
 
 
-def _root() -> Path:
-    return agent_log.repo_root(_TOOLS.parent)
-
-
 def _load_recipe(root: Path, name: str) -> dict:
     path = root / "tools" / "shot-recipes.json"
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -263,7 +259,7 @@ def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     args = p.parse_args(argv)
     given = {a.lstrip("-").replace("-", "_").split("=")[0] for a in argv if a.startswith("--")}
-    root = Path(args.root).resolve() if args.root else _root()
+    root = agent_log.resolve_root(args)
     res = capture(args, root, given)
     png = res["png"]
     clip = opened = "n/a"
@@ -315,4 +311,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

@@ -266,11 +266,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Key Imagine stills into assets/3d for the Gloam 3D view.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="process_gloam")
+    return agent_log.run_legacy("process_gloam", "Key Imagine stills into assets/3d for the Gloam 3D view.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

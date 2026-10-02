@@ -10,6 +10,7 @@ import argparse
 import json
 from pathlib import Path
 
+import agent_log
 import md_format_lib as md
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -157,22 +158,44 @@ def frame_paths(model: str, facing: str, anim: str) -> list[Path]:
     return []
 
 
-def write_text(path: Path, body: str) -> None:
-    md.write_utf8(path, body, mkdir=True)
+def write_text(path: Path, body: str, dry: bool = False) -> None:
+    if dry:
+        print(f"would write {agent_log.rel(ROOT, path)}")
+        return
+    md.write_text(path, body, mkdir=True)
 
 
-def brief_args(ap: argparse.ArgumentParser, stem: str) -> argparse.Namespace:
-    """Add --review, --out-md, --out-json (defaults <stem>.md/.json) to the tool's std_parser and parse."""
-    ap.add_argument("--review", type=Path, default=REVIEW_PATH)
-    ap.add_argument("--out-md", type=Path, default=REVIEW_DIR / f"{stem}.md")
-    ap.add_argument("--out-json", type=Path, default=REVIEW_DIR / f"{stem}.json")
-    return ap.parse_args()
+def set_root(root: Path) -> None:
+    """Point every module path at another repo root (the tools' --root)."""
+    g = globals()
+    g["ROOT"] = root
+    g["REVIEW_DIR"] = root / "tools" / "anim_review"
+    g["REVIEW_PATH"] = g["REVIEW_DIR"] / "review.json"
+    g["PLAYER_SPRITE"] = root / "assets" / "sprites" / "player"
+    g["BIBLE"] = {"male": g["PLAYER_SPRITE"] / "bible_locked_male.png", "female": g["PLAYER_SPRITE"] / "bible_locked_female.png"}
+
+
+def brief_args(ap: argparse.ArgumentParser, stem: str | None = None, argv: list[str] | None = None) -> argparse.Namespace:
+    """Add --review (and --out-md/--out-json when stem is set), parse, apply --root. Paths may lie outside the repo."""
+    ap.add_argument("--review", type=Path, default=None, help="review.json (default tools/anim_review/review.json).")
+    if stem:
+        ap.add_argument("--out-md", type=Path, default=None, help=f"Brief markdown (default tools/anim_review/{stem}.md).")
+        ap.add_argument("--out-json", type=Path, default=None, help=f"Brief JSON (default tools/anim_review/{stem}.json).")
+    args = ap.parse_args(argv)
+    set_root(agent_log.resolve_root(args))
+    if args.review is not None and not args.review.is_file():
+        agent_log.fail(f"--review {args.review}: no such file (default: tools/anim_review/review.json, written by the Animation Browser)")
+    args.review = args.review or REVIEW_PATH
+    if stem:
+        args.out_md = args.out_md or REVIEW_DIR / f"{stem}.md"
+        args.out_json = args.out_json or REVIEW_DIR / f"{stem}.json"
+    return args
 
 
 def load_with_missing(path: Path) -> tuple[dict, list[str]]:
     """(review, missing notes): an absent file gives an empty review and one note."""
     if not path.is_file():
-        return {"v": 1, "clips": {}}, [f"no review file at {path}"]
+        return {"v": 1, "clips": {}}, [f"no review file at {agent_log.rel(ROOT, path)}"]
     return load_review(path), []
 
 
@@ -186,7 +209,9 @@ def add_missing(lines: list[str], missing: list[str]) -> None:
 
 
 def write_brief(args: argparse.Namespace, body: str, payload: dict) -> None:
-    write_text(args.out_md, body)
-    write_text(args.out_json, json.dumps(payload, indent="\t"))
-    print(f"wrote {args.out_md}")
-    print(f"wrote {args.out_json}")
+    dry = bool(getattr(args, "dry_run", False))
+    write_text(args.out_md, body, dry)
+    write_text(args.out_json, json.dumps(payload, indent="\t"), dry)
+    if not dry:
+        print(f"wrote {agent_log.rel(ROOT, args.out_md)}")
+        print(f"wrote {agent_log.rel(ROOT, args.out_json)}")

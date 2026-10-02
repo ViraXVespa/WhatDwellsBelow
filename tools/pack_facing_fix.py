@@ -83,11 +83,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Pack corrected left-facing player sheets with magenta key + despill.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="pack_facing_fix")
+    return agent_log.run_legacy("pack_facing_fix", "Pack corrected left-facing player sheets with magenta key + despill.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

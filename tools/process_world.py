@@ -150,11 +150,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("process_world")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="process_world")
+    return agent_log.run_legacy("process_world", 'Key and fit the _src world stills (tiles, props) into assets/.', _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

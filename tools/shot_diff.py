@@ -95,7 +95,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--max-ratio", type=float, default=None, help="FAIL when a frame changes more than this fraction of pixels")
     p.add_argument("--out", default="", help="diff PNG directory (default _logs/shot-diff)")
     args = p.parse_args(argv)
-    root = Path(args.root).resolve() if args.root else agent_log.repo_root(_TOOLS.parent)
+    root = agent_log.resolve_root(args)
     a, b = Path(args.before), Path(args.after)
     out_dir = Path(args.out) if args.out else root / "_logs" / "shot-diff"
     if not args.dry_run:
@@ -130,4 +130,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

@@ -78,11 +78,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("process_enemies")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="process_enemies")
+    return agent_log.run_legacy("process_enemies", 'Key the _src enemy stills into the live enemy sprites.', _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

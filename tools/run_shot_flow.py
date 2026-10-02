@@ -173,7 +173,7 @@ def main(argv: list[str] | None = None) -> int:
                    help="after capture, FAIL when the flow's published shots no longer match (UI changed: re-publish)")
     p.add_argument("--publish-dir", default="", help="publish here instead of the flow's publish.dir (assets/ is refused)")
     args = p.parse_args(argv)
-    root = Path(args.root).resolve() if args.root else agent_log.repo_root(_TOOLS.parent)
+    root = agent_log.resolve_root(args)
     flows = list_flows(root)
     if args.list:
         for n, d in flows.items():
@@ -221,4 +221,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

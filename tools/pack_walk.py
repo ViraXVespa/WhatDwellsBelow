@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import imageio_ffmpeg
@@ -108,20 +107,12 @@ def _run() -> None:
             print("missing", vid)
             continue
         jobs.append(("walk", facing, str(vid)))
-    if not jobs:
-        return
-    with ProcessPoolExecutor() as pool:
-        futs = [pool.submit(_pack_one, kind, facing, video) for kind, facing, video in jobs]
-        for fut in as_completed(futs):
-            print(fut.result())
+    agent_log.run_jobs([(_pack_one, job) for job in jobs])
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Extract, key, and pack walk-cycle frames from Imagine videos.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="pack_walk")
+    return agent_log.run_legacy("pack_walk", "Extract, key, and pack walk-cycle frames from Imagine videos.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

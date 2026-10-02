@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sys
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 from PIL import Image
@@ -129,12 +128,7 @@ def _enemy_job(name: str, typ: str) -> str:
 
 
 def _run_pool(jobs: list) -> None:
-    if not jobs:
-        return
-    with ProcessPoolExecutor() as pool:
-        futs = [pool.submit(fn, *args) for fn, args in jobs]
-        for fut in as_completed(futs):
-            fut.result()
+    agent_log.run_jobs(jobs)
 
 
 def _run() -> None:
@@ -300,11 +294,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Re-key live stills from Grok session sources with plate_remap + sprite_pipeline.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="rekey_stills")
+    return agent_log.run_legacy("rekey_stills", "Re-key live stills from Grok session sources with plate_remap + sprite_pipeline.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

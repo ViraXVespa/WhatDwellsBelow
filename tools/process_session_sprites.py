@@ -53,11 +53,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Key whatever-magenta Imagine stills and fit them into engine sprites.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="process_session_sprites")
+    return agent_log.run_legacy("process_session_sprites", "Key whatever-magenta Imagine stills and fit them into engine sprites.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))
