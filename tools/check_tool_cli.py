@@ -28,7 +28,7 @@ PRINTERS = {"bible_prompt", "attack_keyframes", "i2v_seeds", "anim_review_tree",
 NO_ROOT = {"anim_review_pack", "anim_review_regen"}
 EXEMPT_RESULT = {"agent_log", "wdb_scratch_server"}  # run helper itself; long-running HTTP server
 WRITERS = {
-    "doc_patch", "patch_code_map", "code_map", "patch_tunables", "tunables", "build_changelog",
+    "doc_patch", "patch_code_map", "code_map", "tunables", "build_changelog",
     "week_pin", "write_utf8_file", "list_unused_funcs", "bot_opt", "split_funcs", "facade_requal",
     "move_script_cluster", "archive_prior_changelogs", "enable_texture_mips",
 }

@@ -1,12 +1,12 @@
 # Grok Bot path allowlist. Default deny.
 # tools/bot_status.py --prove and .github/workflows/bot-gate.yml read this file.
-# Python fnmatch: * matches across slashes. Put deny lines first.
+# Python fnmatch: * matches across slashes. First match wins, so deny lines go first.
+# design/ and tools/ are fully allowed (User grant); do not add a broad !design/* deny.
 
 !assets/*
 !archives/*
 !docs/*
 !notes/*
-!design/*.md
 !design/changelog/archive/*
 !scenes/*
 !site/*

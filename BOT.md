@@ -52,7 +52,7 @@ Prove a cluster with:
 
 CI: .github/workflows/bot-gate.yml
 Allowlist: tools/bot_allow.txt (default deny; deny lines first)
-Stale docs: the allowlist exists so unattended Bot jobs never change out-of-scope files on their own. The Bot does not edit design docs outside it. It flags stale lines in the PR body under `Stale doc lines (for the User)`: file, line, what it says, what it should say. The User edits them, and the red `Allowlist on bot branches` check on that PR can then be ignored. When the User works alongside the Bot in session and says so, the Bot may edit them.
+Stale docs: `design/` and `tools/` are fully allowlisted, so the Bot fixes stale doc lines in the job it is on (`check_tool_docs.py --stale-refs` finds dead refs). When the current truth is unclear it does not guess; it lists the line under `Stale doc lines (for the User)` in the PR body: file, line, what it says, what it might say.
 Measure: os.path.getsize, same floor as Get-Item Length (10,000 bytes).
 Touched live `scripts/**/*.gd` must ship under 10KB. Split with `design/refactor.md` (recipe only). The under-5KB target is only `design/grok-bot-size.md`. Label math: `design/versioning-log.md`.
 Do not open `design/reuse-map.md` except from `design/grok-bot-reuse.md` when that brief is not the empty template.
@@ -60,7 +60,7 @@ Do not open `design/reuse-map.md` except from `design/grok-bot-reuse.md` when th
 New `tools/` runners: `design/tools.md` rule 5 (propose first; implement after the User approves).
 Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
 
-Work only in `/workspace/WhatDwellsBelow` on the Bot VM. Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `design/tools-media.md`), the pc-offload skill, or Imagine / I2V skills. Do not use a Windows desktop checkout, `WDB_ROOT`, or the Steam Godot path.
+Work only in `/workspace/WhatDwellsBelow` on the Bot VM. Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `design/tools-shims.md`, `design/tools-media.md`), the pc-offload skill, or Imagine / I2V skills. Do not use a Windows desktop checkout, `WDB_ROOT`, or the Steam Godot path.
 
 ## Smokes
 

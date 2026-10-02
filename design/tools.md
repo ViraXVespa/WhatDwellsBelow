@@ -3,7 +3,7 @@
 Status: binding  
 Read when: running, adding, or documenting a tool (Bot, web/chat, or Build)  
 
-Single source for what each tool is, which surface runs it, and its gotchas. Other docs say "run X at step N" and point here. Inventory, size, dupe and dead-code tools: `tools-lint.md`. Windows runners and release tools: `tools-build.md`. Media pipeline: `tools-media.md`. Build-only rules (Length, here-strings, locks): `pc-offload.md`. `python3 tools/check_tool_docs.py` keeps these tables in step with `tools/` and `tools/bot_allow.txt`.
+Single source for what each tool is, which surface runs it, and its gotchas. Other docs say "run X at step N" and point here. Inventory, size, dupe and dead-code tools: `tools-lint.md`. Windows runners and release tools: `tools-build.md` (`.ps1` twins: `tools-shims.md`). Media pipeline: `tools-media.md`. Build-only rules (Length, here-strings, locks): `pc-offload.md`. `python3 tools/check_tool_docs.py` keeps these tables in step with `tools/` and `tools/bot_allow.txt`.
 
 Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if the Bot may run the tool (its `tools/` path must be allowed by `tools/bot_allow.txt`, globs such as `tools/*` count; A=N is fine either way).
 
@@ -57,20 +57,6 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `check_tool_cli.py` | CLI contract check over `tools/` (see Contract above) plus the `.ps1` shim check. Run after adding or editing a tool. | BWD | `--help` | Y |
 | `check_tool_docs.py` | Catalog check: every `tools/` file has a row, `A=Y` rows are allowed by `bot_allow.txt` (glob-aware), rows name real files. Run it after adding or renaming a tool. `--stale-refs` scans docs, root md and the four workflow skills for dead backticked paths and `Class.member` names (fails) and, with `--narration`, will-be-added / legacy / formerly / no-longer lines (advisory); run it on every doc sweep | BWD | `--help` | Y |
 
-### Split, code map and doc edits
+### Split, code map, doc edits, inventory and lint
 
-| Tool | Does | Surf | Use | A |
-|---|---|---|---|---|
-| `split_funcs.py` | Split a GDScript into the facade + helpers in its stem folder (trimmed unique names; `--dry-run` shows them): `FILE --list`, then `--plan plan.json [--dry-run] [--in-folder]` (`{<stem>_<rest>: [names]}`); node funcs move host-first; runs `facade_requal.py` and a line-multiset check. Flow: grok-bot-size.md. | B | `--help` | Y |
-| `facade_requal.py` | Qualify names that moved to helpers (same folder or the facade's stem folder; `FILE`, `--check`, `--dry-run`, `--sym NAME=Mod`). `split_funcs.py` runs it itself. | B | `--help` | Y |
-| `doc_patch.py` | Idempotent doc edits. CLI: `replace`, `ensure-line`, `set-read-when`, `changelog`, `next-label`, `write`, `apply plan.json`, `check` (`--dry-run`, `--eol keep\|crlf\|lf`); also importable (`write_changelog`, `replace_once`, `replace_func`, `upsert_func`). Keeps each file's BOM and line endings. Detail: `doc-library.md`. | BWD | `--help` | Y |
-| `md_format_lib.py` | Text I/O for every tool: `read_text`, `write_text` (BOM and EOL kept), `detect_eol`; markdown format checks | BWD | module docstring (no `--help`) | Y |
-| `patch_code_map.py` | Shim -> `code_map.py patch`, one release | BD | `--help` | Y |
-| `code_map_lib.py` | Code-map row parser/writer used by `code_map.py` | BD | module docstring (no `--help`) | Y |
-| `list_code_map_row.py` | Shim -> `code_map.py row`, one release | BD | `--help` | Y |
-| `list_oversize_docs.py` | List `design/*.md` by size, OVER at `--over-kb` (default 8) | BD | `--help` | Y |
-| `list_route.py` | Print one `routes.yaml` door or job card (`--job door.job`), incl. its smoke phases | BD | `--help` | Y |
-
-### Inventory and lint
-
-Moved to `tools-lint.md` (same columns): `file_stat`, `summarize_scripts`, `lint_hostify`, `list_dupes`, `list_unused_funcs`, `move_script_cluster`, and the shared libs `repo_lib`, `gd_lib`, `agent_log`, plus the two shims.
+These tools are cataloged in `tools-lint.md` (same columns): size and dupe inventory, `split_funcs`, `facade_requal`, `doc_patch`, `patch_code_map`, `list_route`, and the shared libs `repo_lib`, `gd_lib`, `agent_log`.

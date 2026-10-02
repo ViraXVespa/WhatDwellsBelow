@@ -21,7 +21,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 import repo_lib
 
-CATALOGS = ("tools.md", "tools-lint.md", "tools-build.md", "tools-media.md")
+CATALOGS = ("tools.md", "tools-lint.md", "tools-build.md", "tools-shims.md", "tools-media.md")
 ROW = re.compile(r"^\|\s*`([^`|]+)`\s*\|.*\|\s*([BWD]+)\s*\|[^|]*\|\s*([YN])\s*\|\s*$")
 
 

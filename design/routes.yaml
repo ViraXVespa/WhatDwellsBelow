@@ -23,9 +23,6 @@ indexes:
 notes_exempt:
   - design/reuse-map.md
   - design/parked-tasks.md
-  - design/park-smoke-shots.md
-  - design/park-session-src.md
-  - design/park-dungeon-feel.md
 
 parked_jobs:
   - design/art-attack-keyframes.md
@@ -54,6 +51,12 @@ gates:
   tunables:
     file: design/tunables.md
     when: numbers_change
+  tunables_world:
+    file: design/tunables-world.md
+    when: world_economy_or_ui_number_change
+  web_emit:
+    file: design/web-emit.md
+    when: web_phase_4_emit
   versioning:
     file: design/versioning.md
     when: named_pin_or_archive
@@ -78,6 +81,9 @@ gates:
   tools_build:
     file: design/tools-build.md
     when: windows_runner_or_release_tool
+  tools_shims:
+    file: design/tools-shims.md
+    when: powershell_twin_tool
   tools_media:
     file: design/tools-media.md
     when: media_pipeline_tool
@@ -224,6 +230,7 @@ doors:
       review: design/art-review.md
       attack_keyframes: design/art-attack-keyframes.md
       bible: design/art-bible.md
+      bible_character: design/art-bible-character.md
   archives:
     file: design/archives.md
     read_when: "Pages builds, catalog pins"
@@ -245,7 +252,7 @@ job_read_when:
   ui.theme: "color tokens, playable surfaces"
   ui.title_web: "title poster, loading bar, fs-gate"
   ui.hud: "gauntlet strip, pip cluster"
-  ui.pause: "inventory tab, skills tab, system page"
+  ui.pause: "inventory tab, skills tab, settings page"
   ui.run_flow: "recap reel, ghost vendor pane, quest pane, banner"
   ui.gear_entry: "loadout tray, tooltip shell"
   debug.menu: "balance sliders, profile banks"
@@ -257,6 +264,7 @@ job_read_when:
   art_pipeline.review: "brief packet, tree tour"
   art_pipeline.attack_keyframes: "resume parked, attack keyframes"
   art_pipeline.bible: "canon bible, layer law, quality floor"
+  art_pipeline.bible_character: "identity sketch, template wording, reliability notes"
   gear_ui.board: "armor columns, plate icons, rarity wash, stepper neighbors"
   gear_ui.stats: "kit deltas, combat totals, hover highlight, Y preview"
   gear_ui.reequip: "re-equip lists, submenu chrome"

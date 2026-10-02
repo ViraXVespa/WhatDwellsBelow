@@ -13,6 +13,7 @@ This file is the door. Do not run `tools/bible_prompt.py` unless you are writing
 | brief packet, tree tour | `design/art-review.md` |
 | parked | parked |
 | canon bible, layer law, quality floor | `design/art-bible.md` |
+| identity sketch, template wording, reliability notes | `design/art-bible-character.md` |
 
 I2V stays in Grok Build unless the User says otherwise. I2V stays in a slice thread (not Bot notes, PC offload, or smoke tests). One unit per review gate. Mid-week new CLI chat is a catch-up: no week pin.
 
