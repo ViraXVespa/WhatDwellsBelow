@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
-from load_routes import load_routes, smoke_phases
+from load_routes import load_routes, shot_flows, smoke_phases
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -50,12 +50,16 @@ def main(argv: list[str] | None = None) -> int:
             p = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
             route = "ok" if p.returncode == 0 else f"exit={p.returncode}"
             route_lines = (p.stdout + p.stderr).splitlines()
-    smokes = ""
+    smokes = flows = ""
     if args.door or args.job:
         try:
             smokes = ",".join(map(str, smoke_phases(load_routes(root), door=args.door.strip(), job=args.job.strip())))
         except Exception:
             smokes = ""
+        try:
+            flows = ",".join(shot_flows(load_routes(root), door=args.door.strip(), job=args.job.strip()))
+        except Exception:
+            flows = ""
     resume = session or "<gather-session-id>"
     fork = f"grok --worktree={wt} --ref {args.ref} -r {resume} --fork-session"
     retry = f"grok -r {resume} --fork-session"
@@ -76,6 +80,7 @@ def main(argv: list[str] | None = None) -> int:
             "outside_gather=list_changed (git inventory)", "change=worktree only; do not edit live checkout",
             "prove=one run_build_gate (import check) or one listed smoke set, or both once",
             f"smokes={smokes or 'n/a'} (run: tools/run_smokes.py --door/--job; add or update asserts for new systems)",
+            f"flows={flows or 'n/a'} (headless: tools/bot_smokes.py --flows; pictures: tools/run_shot_flow.py --flow N; UI states: tools/check_shot_gaps.py --changed)",
             "return=you launch the fork argv; CLI does not auto-resume this pin", "", f"FORK {fork}", f"RETRY {retry}", ""]
     if route_lines:
         body += ["--- route ---"] + route_lines + [""]

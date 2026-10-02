@@ -128,6 +128,8 @@ def main() -> int:
     p.add_argument("--phases", default="")
     p.add_argument("--door", default="", help="Phases mapped to this routes.yaml door (instead of --phases).")
     p.add_argument("--job", default="", help="Phases mapped to this routes.yaml door.job (instead of --phases).")
+    p.add_argument("--flows", nargs="?", const="mapped", default="", metavar="NAMES",
+                   help="Also run shot flows headless (asserts, no pixels): NAMES comma list, or the --door/--job mapping when bare.")
     p.add_argument("--timeout", type=int, default=120)
     p.add_argument("--verbose", action="store_true")
     ns = p.parse_args()
@@ -147,11 +149,24 @@ def main() -> int:
     exe = found
     if ns.setup or exe is None:
         exe = setup(pin)
+    if ns.flows and not ns.phases:
+        ns.phases = "0"
     if not ns.phases:
         print(f"ready\t{exe}")
         return agent_log.emit_result("PASS", mode="setup")
-    phases = [int(x) for x in ns.phases.split(",") if x.strip()]
+    phases = [int(x) for x in ns.phases.split(",") if x.strip() and x.strip() != "0"]
     rc = 0
+    if ns.flows:
+        names = ns.flows
+        if names == "mapped":
+            from load_routes import load_routes, shot_flows
+            names = ",".join(shot_flows(load_routes(root), door=ns.door.strip(), job=ns.job.strip()))
+        if names:
+            cmd = [sys.executable, str(Path(__file__).resolve().parent / "run_shot_flow.py"), "--no-pixels", "--flow", names, "--root", str(root)]
+            print("run\t" + " ".join(cmd))
+            frc = subprocess.run(cmd, check=False).returncode
+            print(f"flows={'PASS' if frc == 0 else 'FAIL'}\t{names}")
+            rc |= 1 if frc else 0
     for n in phases:
         if n < 1 or n > 9:
             print(f"P{n}=FAIL\tout_of_range")

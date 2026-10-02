@@ -254,6 +254,18 @@ def smoke_phases(data: dict[str, Any], door: str = "", job: str = "") -> list[in
     return [int(x) for x in str(val or "1").replace(" ", "").split(",") if x.isdigit()]
 
 
+def shot_flows(data: dict[str, Any], door: str = "", job: str = "") -> list[str]:
+    """Shot flow names for a door/job: job key, then door key (no default; empty when unmapped)."""
+    raw = data.get("shot_flows") or {}
+    if not isinstance(raw, dict):
+        return []
+    door = door or job.split(".", 1)[0]
+    for key in (job, door):
+        if key and raw.get(key):
+            return [x for x in str(raw[key]).replace(" ", "").split(",") if x]
+    return []
+
+
 def job_parked_ids(data: dict[str, Any]) -> list[str]:
     raw = data.get("job_parked") or []
     if not isinstance(raw, list):

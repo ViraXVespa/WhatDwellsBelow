@@ -11,7 +11,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
-from load_routes import job_index, job_read_when, load_routes, smoke_phases
+from load_routes import job_index, job_read_when, load_routes, shot_flows, smoke_phases
 
 
 def _gate_lines(data: dict) -> list[str]:
@@ -55,6 +55,7 @@ def _door_card(data: dict, door_name: str) -> list[str]:
         lines.append("job\t(none)")
     lines.extend(_gate_lines(data))
     lines.append("smokes\t%s" % ",".join(map(str, smoke_phases(data, door=door_name))))
+    lines.append("flows\t%s" % ",".join(shot_flows(data, door=door_name)))
     lines.append("note\topen one job sibling only; gates only if when matches")
     return lines
 
@@ -80,6 +81,7 @@ def _job_card(data: dict, job_id: str) -> list[str]:
     ]
     lines.extend(_gate_lines(data))
     lines.append("smokes\t%s" % ",".join(map(str, smoke_phases(data, door=door_name, job=job_id))))
+    lines.append("flows\t%s" % ",".join(shot_flows(data, door=door_name, job=job_id)))
     lines.append("note\topen this job sibling only; gates only if when matches")
     return lines
 

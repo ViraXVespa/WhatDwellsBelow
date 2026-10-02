@@ -309,6 +309,14 @@ smokes:
   art_pipeline: "9"
   archives: "9"
 
+# Build prove: scripted shot flows (tools/shot-flows/*.json) per door or door.job (job key wins). Headless asserts:
+# bot_smokes.py --flows; pictures: run_shot_flow.py --flow N. Printed by list_route and start_build_slice.
+shot_flows:
+  hub: "camp-receptionist-menu,camp-anvil-tabs,camp-billboard-controls"
+  hub.guild: "camp-receptionist-menu"
+  hub.benches: "camp-billboard-controls"
+  gear_ui: "camp-anvil-tabs"
+
 conflicts_with:
   inventory:
     - gear_ui
