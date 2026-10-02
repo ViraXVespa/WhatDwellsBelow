@@ -80,6 +80,33 @@ One action. Prefer one `tools/_scratch.py` for every revise/delete path and the 
 
 Revise from a fetched raw body plus the artifact byte check, or from a User paste already in this conversation. Fetch budget: one pull per path. After a failed check, do not fetch again. Do not assemble a revision from a tool-card summary. Do not put a markdown fence opener inside a fenced emit. Do not reimplement `tools/doc_patch.py`.
 
+Scratch shape. One file, `tools/_scratch.py`. The runner imports `doc_patch` before the scratch body, so a scratch cannot repair a broken `doc_patch`. That repair is a direct `python` file.
+
+```python
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import doc_patch as dp
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def main() -> None:
+    dp.run_checker(ROOT)
+    print("RESULT checker=PASS")
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+Callable list: `replace_func`, `upsert_func`, `ensure_line`, `patch_file`, `write_text`, `write_changelog`, `run_checker`, `dump_job`. `append_funcs` does not exist. A new function is `upsert_func`. `replace_func` is only for a function that is already there, and it fails if the name appears twice.
+
+A `.gd` body is tabs. `write_text` turns a leading run of four spaces into one tab, but the scratch still emits tabs. Do not prepend above `from __future__ import`. A `.py` write that does not compile, or that moves that import, is refused. `run_shots.py` stays hidden. `--show` only when the User asks to see the window.
+
+
 Docs in this pass: same scratch updates topic files, one code-map row, and tunables the slice made wrong, writes `design/changelog/{label}.md` via `doc_patch.write_changelog`, and runs `tools/check_load_graph.py`. A later scratch in the same emit pass is a delta. Skip every path whose write already printed `wrote`, `deleted`, or `already applied` / `already gone`. Do not re-emit the whole Phase 3 list. Do not rewrite a file that already matches the accepted goal unless that file is why RESULT failed.
 
 When a slice needs a visual proof, run `python tools/run_shots.py --mode web` and paste the clipboard image with the printed RESULT. Prove from work that landed, using only existing runners. The scratch runs the test through `doc_patch.dump_job(ROOT, job)` (or `run_checker` for the load-graph). `dump_job` returns `(rc, body)` and already prints the summary. Unpack it: `rc, body = dp.dump_job(ROOT, job)`. Never `sys.exit(dp.dump_job(...))` — a tuple exit is a false fail. After the process exits, print the summary file body only if you did not call `dump_job`, never the `Summary ->` path. Last line is `RESULT checker=PASS|FAIL` or `RESULT gate=PASS|FAIL` plus any extra marks. `sys.exit(int)` only: `sys.exit(0)` on PASS and `sys.exit(1)` on FAIL. If `dump_job` / import check reports a parse or compile error, stop; do not start a longer Godot prove.

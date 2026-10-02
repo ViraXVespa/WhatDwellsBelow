@@ -105,7 +105,7 @@ def _root() -> Path:
 
 
 def _load_recipe(root: Path, name: str) -> dict:
-    path = root / "design" / "shot-recipes.json"
+    path = root / "tools" / "shot-recipes.json"
     data = json.loads(path.read_text(encoding="utf-8"))
     rec = data.get(name)
     if not isinstance(rec, dict) or not rec.get("frames"):
@@ -119,7 +119,13 @@ def _recipe_poses(rec: dict) -> str:
         kind = str(fr.get("kind") or "play")
         look = fr.get("look") or [16.5, 15.0]
         off = fr.get("offset") or [0.0, 0.0]
-        bits.append("%s,%s,%s,%s,%s" % (kind, look[0], look[1], off[0], off[1]))
+        zoom = fr.get("zoom")
+        if zoom is None:
+            zoom = rec.get("zoom", 1.0)
+        px = fr.get("px", rec.get("px", look[0]))
+        pz = fr.get("pz", rec.get("pz", look[1]))
+        face = fr.get("face", "down")
+        bits.append("%s,%s,%s,%s,%s,%s,%s,%s,%s" % (kind, look[0], look[1], off[0], off[1], zoom, px, pz, face))
     return ";".join(bits)
 
 
@@ -511,7 +517,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--cx", type=float, default=0.0, help="camera look offset X")
     p.add_argument("--cz", type=float, default=0.0, help="camera look offset Z")
     p.add_argument("--taskbar", type=int, default=0, help="1=show taskbar entry")
-    p.add_argument("--recipe", default="", help="design/shot-recipes.json key; empty is the play camera")
+    p.add_argument("--recipe", default="", help="tools/shot-recipes.json key; empty is the play camera")
     args = p.parse_args(argv)
 
     root = _root()
@@ -522,8 +528,16 @@ def main(argv: list[str] | None = None) -> int:
         poses = _recipe_poses(rec)
         if args.scene == "dungeon" and str(rec.get("scene") or "") in ("camp", "hub"):
             args.scene = "camp"
-        if args.hud < 0:
+        if rec.get("scene"):
+            args.scene = str(rec.get("scene"))
+        if "hud" in rec:
             args.hud = 0 if int(rec.get("hud", 1)) == 0 else 1
+        if rec.get("zoom") is not None:
+            args.zoom = float(rec.get("zoom"))
+        if rec.get("px") not in (None, ""):
+            args.px = str(rec.get("px"))
+        if rec.get("pz") not in (None, ""):
+            args.pz = str(rec.get("pz"))
     if args.hud < 0:
         args.hud = 1
     out_dir = _out_dir(root)

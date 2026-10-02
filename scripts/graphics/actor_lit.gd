@@ -380,7 +380,7 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, feet: Vector2) -> void:
 	var node: MeshInstance3D = marks[slot]
 	var reach: Vector2 = dir * _stretch_at[slot]
-	var key: String = "%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
+	var key: String = "%s|%s|%s|%s|%s|%s|%s|%s|%s|foot3" % [
 		tex.get_instance_id(), px, _flip,
 		snappedf(fl.x, 0.01), snappedf(fl.y, 0.01),
 		snappedf(fr.x, 0.01), snappedf(fr.y, 0.01),
@@ -468,33 +468,33 @@ func _corner(tx: float, ty: float, soles: Vector4, fl: Vector2, fr: Vector2, dir
 		aim = SUN_AWAY
 	else:
 		aim = aim.normalized()
-	var side: Vector2 = Vector2(aim.y, -aim.x)
-	var mid_x: float = (soles.x + soles.z) * 0.5
-	var sole_y: float = maxf(soles.y, soles.w)
 	var span_x: float = soles.z - soles.x
-	var pin: Vector2 = fl.lerp(fr, 0.5)
-	if absf(span_x) >= 2.0:
-		pin = fl.lerp(fr, clampf((tx - soles.x) / span_x, 0.0, 1.0))
-	var across: float = (tx - mid_x) * px
-	var h: float = maxf(sole_y - ty, 0.0) * px
-	var air: Vector3 = Vector3(pin.x + side.x * across, h, pin.y + side.y * across)
-	var hit: Vector3 = air
+	if absf(span_x) < 0.5:
+		span_x = 0.5 if soles.z >= soles.x else -0.5
+	var a: float = clampf((tx - soles.x) / span_x, 0.0, 1.0)
+	var pin: Vector2 = fl.lerp(fr, a)
+	var sole_y: float = lerpf(soles.y, soles.w, a)
+	var above: float = maxf(sole_y - ty, 0.0)
+	if above < 1.0:
+		return Vector3(pin.x, 0.0, pin.y)
+	var h: float = above * px
+	var hit: Vector2 = pin
 	if src.length_squared() > 0.0004:
 		var lamp: Vector3 = Vector3(src.x, TORCH_H, src.y)
+		var air: Vector3 = Vector3(pin.x, h, pin.y)
 		var cast: Vector3 = air - lamp
 		if absf(cast.y) < 0.001:
 			cast.y = -0.001
-		hit = lamp + cast * (-lamp.y / cast.y)
+		var landed: Vector3 = lamp + cast * (-lamp.y / cast.y)
+		hit = Vector2(landed.x, landed.z)
 	else:
-		var down: float = maxf(SUN_ELEV, 0.2)
-		hit = air + Vector3(aim.x, -down, aim.y) * (h / down)
-	var delta: Vector2 = Vector2(hit.x, hit.z) - pin
-	var cap: float = maxf(px * 48.0, MARK_MAX) * maxf(stretch, 0.35)
+		var down: float = maxf(SUN_ELEV, 0.2) * 1.6
+		hit = pin + aim * (h / down)
+	var delta: Vector2 = hit - pin
+	var cap: float = maxf(px * 32.0, MARK_MAX * 0.6) * maxf(stretch, 0.35)
 	if delta.length() > cap:
 		delta = delta.normalized() * cap
 	return Vector3(pin.x + delta.x, 0.0, pin.y + delta.y)
-
-
 static func _soles(tex: Texture2D) -> Vector4:
 	var id: int = tex.get_rid().get_id()
 	if _sole_at.has(id):

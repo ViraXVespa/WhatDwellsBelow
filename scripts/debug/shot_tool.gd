@@ -343,29 +343,57 @@ static func _apply_pose_token(host: Node, token: String) -> void:
 	var cz: float = float(bits[2]) if bits.size() > 2 else 15.0
 	var ox: float = float(bits[3]) if bits.size() > 3 else 0.0
 	var oz: float = float(bits[4]) if bits.size() > 4 else 0.0
+	var zoom: float = float(bits[5]) if bits.size() > 5 else 1.0
+	var px: float = float(bits[6]) if bits.size() > 6 else cx
+	var pz: float = float(bits[7]) if bits.size() > 7 else cz
+	var face: String = bits[8] if bits.size() > 8 else "down"
 	var rig: Node = host.get_tree().get_first_node_in_group("camera_rig")
-	if rig != null:
-		rig.set("warm_hold", true)
-		rig.process_mode = Node.PROCESS_MODE_DISABLED
-		rig.set_process(false)
-		rig.set_physics_process(false)
 	var cam: Camera3D = host.get_viewport().get_camera_3d()
 	if cam == null:
 		printerr("SHOT: token=%s err=no_cam" % token)
 		return
+	var rt = load("res://scripts/graphics/light_rt.gd")
+	if rt != null and rt.get("hub_crystal") == Vector2.ZERO:
+		rt.set("hub_crystal", Vector2(16.475, 10.2))
+	var crystal: Vector2 = rt.get("hub_crystal") if rt != null else Vector2.ZERO
+	var player: Node = host.get("player")
+	if player == null:
+		player = host.get_tree().get_first_node_in_group("player")
+	if player != null and player is Node3D:
+		var body: Node3D = player as Node3D
+		body.global_position = Vector3(px, body.global_position.y, pz)
+		var aim := Vector2.DOWN
+		if face == "up":
+			aim = Vector2.UP
+		elif face == "left":
+			aim = Vector2.LEFT
+		elif face == "right":
+			aim = Vector2.RIGHT
+		player.set("aim_dir", aim)
+		player.set("facing_key", face)
+	if kind == "play":
+		if rig != null:
+			cam.global_transform = rig.global_transform
+		cam.current = true
+		cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+		cam.size = 16.875 / maxf(zoom, 0.2)
+		printerr("SHOT: token=play face=%s crystal=%s rot=%s" % [face, str(crystal), str(cam.global_rotation_degrees)])
+		if rig != null:
+			rig.set("warm_hold", true)
+			rig.process_mode = Node.PROCESS_MODE_DISABLED
+		return
+	if rig != null:
+		rig.set("warm_hold", true)
+		rig.process_mode = Node.PROCESS_MODE_DISABLED
 	cam.current = true
 	cam.top_level = true
-	if kind == "play":
-		printerr("SHOT: token=play rig at=%s" % str(cam.global_position))
-		return
 	var look := Vector3(cx, 1.6, cz)
-	var at := look + Vector3(ox, 4.2, oz)
+	var persp := look + Vector3(ox, 4.2, oz)
 	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
 	cam.fov = 42.0
-	cam.global_position = at
+	cam.global_position = persp
 	cam.look_at(look, Vector3.UP)
 	printerr("SHOT: token=%s at=%s look=%s" % [token, str(cam.global_position), str(look)])
-
 static func _grid_shape(n: int) -> Vector2i:
 	var rows: int = maxi(1, ceili(sqrt(float(n))))
 	var cols: int = maxi(1, ceili(float(n) / float(rows)))
