@@ -23,7 +23,7 @@ Just do: helpers and APIs inside one system. Stop and propose: a new cross-syste
 ## Other roles in this instance
 
 - Bot notes: park with `python tools/bot_opt.py`. Do not implement those items or open a Bot PR.
-- PC offload: `design/pc-offload.md`. New runner: propose and wait.
+- Tools: `design/tools.md` (catalog); PC offload habits: `design/pc-offload.md`. New runner: propose and wait (catalog rule 5).
 - Smoke tests: only coverage the User named.
 - I2V: this path, isolated-media gate, stay in the slice thread.
 

@@ -138,7 +138,7 @@ A prompt for Grok Build is a sealed brief, not a session export. Only: named job
 
 ## Scratch helpers
 
-Do not reimplement doc_patch. Import it from tools/. Godot prove dumps go through `doc_patch.dump_job`; do not print `Summary ->` paths.
+Tool catalog (what each runner is, which are web/User tools): `tools.md`. Do not reimplement doc_patch. Import it from tools/. Godot prove dumps go through `doc_patch.dump_job`; do not print `Summary ->` paths.
 Reuse Brief items must be numbered `1. ` `2. ` so bot_status.parse_reuse_brief counts them. Prose under ## Brief counts as empty.
 Changelog: doc_patch.write_changelog. If version.json lags the files in design/changelog/, use the next free 0.N.N label, do not reuse an existing note.
 Code-map rows: code_map_lib / patch_code_map, not a hand regex on the table.

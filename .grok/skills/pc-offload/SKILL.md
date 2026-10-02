@@ -26,7 +26,7 @@ metadata:
 
 # PC offload
 
-Read design/pc-offload.md once per session and follow it. That file is binding.
+Read design/pc-offload.md (habits) and design/tools.md (tool catalog; Windows runners in design/tools-build.md) once per session and follow them. Those files are binding.
 Do not reopen this skill or that file after compact.
 
 You are on a local checkout. Do not measure size by reading file bodies.

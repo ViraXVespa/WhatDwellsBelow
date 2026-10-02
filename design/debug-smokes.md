@@ -21,7 +21,7 @@ Preferred (agent-friendly): from repo root, prefer `& .\tools\run_smokes.ps1 -Ph
 
 Binary (Steam tools build): `C:/Program Files (x86)/Steam/steamapps/common/Godot Engine/godot.windows.opt.tools.64.exe` (also in `tools/export_web.ps1`).
 
-Bot Linux VM (headless smokes only): `python tools/bot_smokes.py --phases 1,2,6`. That runner installs the official 4.7.2 Linux tools binary only when the pin is missing, then uses the same required flags below. It does not replace the Steam path and it does not open the editor.
+Bot Linux VM (headless smokes only): BOT.md Smokes (`python3 tools/bot_smokes.py`). It uses the same required flags below, does not replace the Steam path, and does not open the editor.
 
 **Required flags** when stdout/stderr are redirected (CI, `Start-Process -Redirect*`, agent shells):
 
@@ -33,7 +33,7 @@ Bot Linux VM (headless smokes only): `python tools/bot_smokes.py --phases 1,2,6`
 - Put the phase flag in **user** args (after `--`) so `OS.get_cmdline_user_args()` sees it.
 - Capture stderr for `P1:`…`P9:` lines and `SCRIPT ERROR`. Exit is self-quit from the phase (or kill after a timeout if hung).
 - Optional: `--verbose` for load traces (huge logs). Not required once drivers are set.
-- Compile/reload check is separate: `tools/run_godot_import_check.ps1` (`--headless --editor --import`). Catalog: the pc offload recipe. Do not treat a smoke pass as proof scripts are editor-clean, or vice versa.
+- Compile/reload check is separate: `tools/run_godot_import_check.ps1` (`--headless --editor --import`). Catalog: `tools.md`. Do not treat a smoke pass as proof scripts are editor-clean, or vice versa.
 
 | Fn | Checks |
 |----|--------|
