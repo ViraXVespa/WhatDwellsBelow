@@ -42,7 +42,7 @@ Inventory and before/after sizes use `os.path.getsize`.
 
 1. Split every over-10KB live script with `design/refactor.md`. Facade keeps the public path. Stop each file at under 10KB.
 2. Then split over-5KB files only when whole functions can move.
-3. One size PR may batch over-10KB then over-5KB clusters. Do not start extract, relocate, or reuse-map work in this PR. Stale lines in design docs that name symbols this split moved may be edited in the same PR, but only files in `tools/bot_allow.txt`; report any other stale doc in the PR body. Do not add allowlist rows.
+3. One size PR may batch over-10KB then over-5KB clusters. Do not start extract, relocate, or reuse-map work in this PR. Stale design-doc lines that name moved symbols: flag them in the PR body per BOT.md (Allowlist). Do not add allowlist rows.
 
 Each new `.gd` needs a `.uid` sidecar: use the import step in BOT.md Smokes.
 

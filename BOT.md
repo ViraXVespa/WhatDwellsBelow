@@ -50,6 +50,7 @@ Prove a cluster with:
 
 CI: .github/workflows/bot-gate.yml
 Allowlist: tools/bot_allow.txt (default deny; deny lines first)
+Stale docs: the allowlist exists so unattended Bot jobs never change out-of-scope files on their own. The Bot does not edit design docs outside it. It flags stale lines in the PR body under `Stale doc lines (for the User)`: file, line, what it says, what it should say. The User edits them, and the red `Allowlist on bot branches` check on that PR can then be ignored. When the User works alongside the Bot in session and says so, the Bot may edit them.
 Measure: os.path.getsize, same floor as Get-Item Length (10,000 bytes).
 Touched live `scripts/**/*.gd` must ship under 10KB. Split with `design/refactor.md` (recipe only). The under-5KB target is only `design/grok-bot-size.md`. Label math: `design/versioning-log.md`.
 Do not open `design/reuse-map.md` except from `design/grok-bot-reuse.md` when that brief is not the empty template.
@@ -69,7 +70,7 @@ New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headles
 Do not run editor playtest. Do not schedule a routine that launches Godot.
 
 Warning sweep (User-named only): `python tools/bot_warnscan.py` runs every smoke area plus boot/static, collects Godot warnings, errors, and leaks, and exits 0 only on zero findings. It reports; it does not fix game code. `--list` shows areas, `--repeat 2` steadies leaks.
-Before/after a change: `--save-baseline PATH` before, then `--non-leak-diff PATH` after (same `--areas`). It ignores leaks and sites, prints NEW and FIXED, and exits 1 only on NEW.
+Before/after a change: `--save-baseline PATH` before, then `--non-leak-diff PATH` after (the baseline and the after run must use the same `--areas`). It ignores leaks and sites, prints NEW and FIXED, and exits 1 only on NEW.
 Targeted areas for a split: the smoke phases that load the file, `dungeon-load-timing`, `map-f1`, `static`.
 
 ## Hard stops
