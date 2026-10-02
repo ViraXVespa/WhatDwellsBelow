@@ -20,5 +20,6 @@
 - Camp proof stitches the play frame with two angled building shots into one paste.
 - Hall and wing have wall meshes. Stall tarp ridge is 1.15. Third proof frame aims at the stall.
 - Shot recipe design/shot-recipes.json. Hub proof is play, hall eave, stall front, stall side.
+- Hub bake lock is gables, pitched stall, blob fall -X +Z, and the shot recipe. Shed lid and optional tilt are retired.
 
 Summary: Hub look lock is the play frame. Lids do not sample the yard atlas. The scene is not a second town.

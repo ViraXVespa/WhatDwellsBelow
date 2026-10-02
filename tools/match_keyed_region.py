@@ -10,6 +10,8 @@ its short side, and most of that box has to agree.
   python tools/match_keyed_region.py LIVE SRC --pipeline
   python tools/match_keyed_region.py --report
   python tools/match_keyed_region.py --organize
+  python tools/match_keyed_region.py --fill-missing
+  python tools/match_keyed_region.py --fill-missing --what-if
 
 --pipeline runs plate_remap + key_to_alpha on one pair. The library scan uses
 the flat mask so it can cover every session still and _src frame.
@@ -17,7 +19,12 @@ the flat mask so it can cover every session still and _src frame.
 --organize copies or moves the winning sources into _src/sources, mirroring
 the live asset path, and writes _src/manifest.json. Media that matches nothing
 goes to _old. Live files under assets/ stay where they are. Isolated-media
-cache files are copied, not moved.
+cache files are copied, not moved. A source that already passed the gate is
+copied to every matching live path, not kept only for the closest live.
+
+--fill-missing reads _src/manifest.json, scores _old plus already placed
+_src/sources files against unmatched lives, and copies hits to
+_src/sources/<live path>. It never moves _old. --what-if prints that plan.
 """
 from __future__ import annotations
 
@@ -41,6 +48,7 @@ SESS_ROOT = (
 SRC_ROOT = ROOT / "_src"
 TOOLS_SRC = ROOT / "tools" / "_src"
 OLD_ROOT = ROOT / "_old"
+SESSION_MARK = "C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow"
 
 GRID = 32
 MAX_SIDE = 192
@@ -54,6 +62,10 @@ CELL_AGREE = 0.86
 CROP_MAD = 24.0
 CROP_AGREE = 0.85
 CROP_OVERLAP = 0.88
+GLYPH_MAD = 48.0
+GLYPH_AGREE = 0.70
+GLYPH_OVERLAP = 0.88
+GLYPH_MIN_SIDE = 8
 MAG = np.array([255.0, 0.0, 255.0], dtype=np.float32)
 
 IMAGE_EXT = {".png", ".jpg", ".jpeg", ".webp"}
@@ -70,6 +82,7 @@ CELL_NAMES = (
     "cell_down_right",
 )
 FIGURE_BASES = {"full", "center", "mid"}
+OLD_SKIP = {"sidecars", "src_notes"}
 
 
 def _posix(path: Path) -> str:
@@ -78,6 +91,24 @@ def _posix(path: Path) -> str:
         return rel.as_posix()
     except ValueError:
         return path.resolve().as_posix()
+
+
+def _under(path: Path, root: Path) -> bool:
+    try:
+        path.resolve().relative_to(root.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def is_glyph(live: str) -> bool:
+    text = live.replace("\\", "/")
+    return text.startswith("assets/ui/prompts/") or "/ui/prompts/" in text
+
+
+def is_player(live: str) -> bool:
+    text = live.replace("\\", "/")
+    return text.startswith("assets/sprites/player/") or "/sprites/player/" in text
 
 
 def load_rgba(path: Path, max_side: int = MAX_SIDE) -> tuple[np.ndarray, int, int]:
@@ -223,7 +254,7 @@ def candidate_grids(arr: np.ndarray) -> list[tuple[str, np.ndarray, np.ndarray, 
     opaque = float((keyed[:, :, 3] >= 16).mean())
     windows = _windows(keyed)
     # A character on a plate only needs the whole figure and sheet cells.
-    # Quadrant search is for full-bleed tiles.
+    # Quadrant search is for full-bleed tiles and prompt stills.
     if opaque < 0.45:
         windows = [item for item in windows if item[0] == "full" or item[0].startswith("cell_")]
     return _grids_from_parts(windows)
@@ -246,13 +277,15 @@ def score_batch(
     return mad, agree, overlap
 
 
-def area_ok(agree: float, pixels: int, agree_min: float) -> bool:
-    """Agreeing area must be at least min_side squared, or most of a small sprite."""
+def area_ok(agree: float, pixels: int, agree_min: float, min_side: int = MIN_SIDE) -> bool:
+    """Agreeing area must cover min_side squared, or most of a small sprite."""
     if agree < agree_min:
         return False
-    if pixels >= MIN_SIDE * MIN_SIDE:
-        return agree * pixels >= float(MIN_SIDE * MIN_SIDE)
-    return pixels >= 160
+    floor = min_side * min_side
+    if pixels >= floor:
+        return agree * pixels >= float(floor)
+    small_floor = 40 if min_side < MIN_SIDE else 160
+    return pixels >= small_floor
 
 
 def loose_windows_ok(live: str) -> bool:
@@ -270,7 +303,13 @@ def accept_score(
     live: str,
 ) -> bool:
     base = window.split("/")[0]
+    if is_glyph(live):
+        if not area_ok(agree, pixels, GLYPH_AGREE, GLYPH_MIN_SIDE):
+            return False
+        return mad <= GLYPH_MAD and agree >= GLYPH_AGREE and overlap >= GLYPH_OVERLAP
     if base.startswith("cell_"):
+        if not (is_player(live) or loose_windows_ok(live)):
+            return False
         if not area_ok(agree, pixels, CELL_AGREE):
             return False
         return mad <= CELL_MAD and agree >= CELL_AGREE and overlap >= FIGURE_OVERLAP
@@ -355,7 +394,7 @@ def _iso_roots() -> list[Path]:
 
 def _is_copy_only(path: Path) -> bool:
     text = str(path).lower()
-    if "wdb-iso" in text:
+    if "wdb-iso" in text or _under(path, OLD_ROOT):
         return True
     try:
         path.resolve().relative_to((ROOT / "assets").resolve())
@@ -364,12 +403,19 @@ def _is_copy_only(path: Path) -> bool:
         return False
 
 
+def _skip_old_meta(path: Path) -> bool:
+    if not _under(path, OLD_ROOT):
+        return False
+    rel = path.resolve().relative_to(OLD_ROOT.resolve())
+    return bool(rel.parts) and rel.parts[0] in OLD_SKIP
+
+
 def iter_files(root: Path, exts: set[str]) -> list[Path]:
     if not root.exists():
         return []
     found: list[Path] = []
     for path in root.rglob("*"):
-        if path.is_file() and path.suffix.lower() in exts:
+        if path.is_file() and path.suffix.lower() in exts and not _skip_old_meta(path):
             found.append(path)
     return found
 
@@ -377,20 +423,25 @@ def iter_files(root: Path, exts: set[str]) -> list[Path]:
 def collect_inputs() -> tuple[list[Path], list[Path]]:
     images: list[Path] = []
     videos: list[Path] = []
-    roots = [SRC_ROOT, TOOLS_SRC, SESS_ROOT, *(_iso_roots())]
+    roots = [SRC_ROOT, TOOLS_SRC, OLD_ROOT, SESS_ROOT, *(_iso_roots())]
     sheets = [
         ROOT / "assets" / "sprites" / "player" / "bible_locked_male.png",
         ROOT / "assets" / "sprites" / "player" / "bible_locked_female.png",
         ROOT / "assets" / "sprites" / "player" / "gdd_reference_bible.jpg",
     ]
+    seen: set[Path] = set()
     for root in roots:
         for path in iter_files(root, IMAGE_EXT | VIDEO_EXT):
+            key = path.resolve()
+            if key in seen:
+                continue
+            seen.add(key)
             if path.suffix.lower() in VIDEO_EXT:
                 videos.append(path)
             else:
                 images.append(path)
     for sheet in sheets:
-        if sheet.is_file():
+        if sheet.is_file() and sheet.resolve() not in seen:
             images.append(sheet)
     return images, videos
 
@@ -433,6 +484,8 @@ def _origin_rank(path: Path) -> int:
     text = str(path)
     if "wdb-iso" in text.lower():
         return 3
+    if _under(path, OLD_ROOT):
+        return 0
     try:
         path.resolve().relative_to(TOOLS_SRC.resolve())
         return 2
@@ -454,6 +507,8 @@ def prepare_lives(paths: list[Path]) -> dict:
     sides = []
     pix = []
     crop_ok = []
+    glyph = []
+    player = []
     for path in paths:
         arr, side, pixels = load_rgba(path, 160)
         figure = opaque_crop(arr)
@@ -468,6 +523,8 @@ def prepare_lives(paths: list[Path]) -> dict:
         sides.append(side)
         pix.append(pixels)
         crop_ok.append(rel.startswith("assets/tiles/") or rel.startswith("assets/ui/"))
+        glyph.append(is_glyph(rel))
+        player.append(is_player(rel))
     return {
         "paths": paths,
         "rels": rels,
@@ -478,6 +535,8 @@ def prepare_lives(paths: list[Path]) -> dict:
         "sides": np.asarray(sides, dtype=np.int32),
         "pixels": np.asarray(pix, dtype=np.int32),
         "crop_ok": np.asarray(crop_ok, dtype=bool),
+        "glyph": np.asarray(glyph, dtype=bool),
+        "player": np.asarray(player, dtype=bool),
     }
 
 
@@ -494,7 +553,8 @@ def scan_with_near(images: list[Path], lives: dict) -> tuple[list[dict | None], 
     for index, path in enumerate(images):
         if index % 400 == 0:
             print(f"scored {index}/{n}", flush=True)
-        if looks_finished_sprite(path):
+        recoverable = _under(path, OLD_ROOT) or _under(path, SRC_ROOT / "sources")
+        if looks_finished_sprite(path) and not recoverable:
             continue
         try:
             arr, _side, _pixels = load_rgba(path)
@@ -504,13 +564,24 @@ def scan_with_near(images: list[Path], lives: dict) -> tuple[list[dict | None], 
             continue
         rank = _origin_rank(path)
         for name, rgb, mask, kind in grids:
+            base = name.split("/")[0]
             if kind == "crop":
                 mad, agree, overlap = score_batch(lives["inn_rgb"], lives["inn_mask"], rgb, mask)
-                mad_max, agree_min, overlap_min = CROP_MAD, CROP_AGREE, CROP_OVERLAP
-                allowed = lives["crop_ok"]
+                mad_max = np.where(lives["glyph"], GLYPH_MAD, CROP_MAD)
+                agree_min = np.where(lives["glyph"], GLYPH_AGREE, CROP_AGREE)
+                overlap_min = np.where(lives["glyph"], GLYPH_OVERLAP, CROP_OVERLAP)
+                allowed = lives["crop_ok"] | lives["glyph"]
+            elif base.startswith("cell_"):
+                mad, agree, overlap = score_batch(lives["fig_rgb"], lives["fig_mask"], rgb, mask)
+                mad_max = np.where(lives["glyph"], GLYPH_MAD, CELL_MAD)
+                agree_min = np.where(lives["glyph"], GLYPH_AGREE, CELL_AGREE)
+                overlap_min = np.where(lives["glyph"], GLYPH_OVERLAP, FIGURE_OVERLAP)
+                allowed = lives["player"] | lives["crop_ok"] | lives["glyph"]
             else:
                 mad, agree, overlap = score_batch(lives["fig_rgb"], lives["fig_mask"], rgb, mask)
-                mad_max, agree_min, overlap_min = FIGURE_MAD, FIGURE_AGREE, FIGURE_OVERLAP
+                mad_max = np.where(lives["glyph"], GLYPH_MAD, FIGURE_MAD)
+                agree_min = np.where(lives["glyph"], GLYPH_AGREE, FIGURE_AGREE)
+                overlap_min = np.where(lives["glyph"], GLYPH_OVERLAP, FIGURE_OVERLAP)
                 allowed = np.ones(count, dtype=bool)
             closer = mad < near_mad
             if closer.any():
@@ -553,8 +624,8 @@ def scan_with_near(images: list[Path], lives: dict) -> tuple[list[dict | None], 
         origin_index = int(near_origin[hit])
         near[hit] = {
             "mad": float(near_mad[hit]),
-            "agree": float(near_agree[hit]),
-            "overlap": float(near_overlap[hit]),
+            "agree": float(agree[hit]),
+            "overlap": float(overlap[hit]),
             "window": near_window[hit],
             "kind": near_kind[hit],
             "origin": images[origin_index],
@@ -602,6 +673,10 @@ def _primary(rows: list[dict]) -> dict:
     return sorted(rows, key=sort_key)[0]
 
 
+def _dest_for(origin: Path, live: str) -> str:
+    return (Path("sources") / Path(live).with_suffix(origin.suffix)).as_posix()
+
+
 def build_plan(lives: dict, best: list[dict | None], near: list[dict | None], videos: list[Path]) -> dict:
     by_origin: dict[Path, list[dict]] = {}
     unmatched = []
@@ -637,42 +712,21 @@ def build_plan(lives: dict, best: list[dict | None], near: list[dict | None], vi
 
     sources = []
     for origin, rows in by_origin.items():
-        best_mad = min(row["mad"] for row in rows)
-        kept_rows = []
+        # Every row already passed accept_score. Fan out; do not drop a live
+        # because the same still matches another asset more closely.
+        copy = _is_copy_only(origin) or len(rows) > 1
         for row in rows:
-            if row["mad"] <= best_mad + 12.0:
-                kept_rows.append(row)
-                continue
-            unmatched.append(
+            base = row["window"].split("/")[0]
+            cell = base[len("cell_") :] if base.startswith("cell_") else ""
+            sources.append(
                 {
-                    "live": row["live"],
-                    "opaque_side": row["opaque_side"],
-                    "best_mad": row["mad"],
-                    "best_agree": row["agree"],
-                    "best_window": row["window"],
-                    "best_origin": _posix(origin),
-                    "rejected": "same source matches another live asset much more closely",
+                    "origin": origin,
+                    "dest": _dest_for(origin, row["live"]),
+                    "copy": copy,
+                    "cell": cell,
+                    "lives": [row],
                 }
             )
-        if not kept_rows:
-            continue
-        rows = kept_rows
-        primary = _primary(rows)
-        live_path = Path(primary["live"])
-        dest_rel = Path("sources") / live_path.with_suffix(origin.suffix)
-        cell = ""
-        base = primary["window"].split("/")[0]
-        if base.startswith("cell_"):
-            cell = base[len("cell_") :]
-        sources.append(
-            {
-                "origin": origin,
-                "dest": dest_rel.as_posix(),
-                "copy": _is_copy_only(origin),
-                "cell": cell,
-                "lives": rows,
-            }
-        )
 
     video_paths = related_videos([item["origin"] for item in sources], videos)
     video_plan = []
@@ -687,21 +741,47 @@ def build_plan(lives: dict, best: list[dict | None], near: list[dict | None], vi
     return {"sources": sources, "videos": video_plan, "unmatched": unmatched}
 
 
+def archive_candidates(origin: str) -> list[Path]:
+    """Paths where a moved non-match, or an already-archived origin, can sit."""
+    text = origin.replace("\\", "/")
+    out: list[Path] = []
+    if not text:
+        return out
+    if text.startswith("_old/"):
+        out.append(ROOT / text)
+    if text.startswith("_src/"):
+        out.append(OLD_ROOT / "src" / text[len("_src/") :])
+        out.append(SRC_ROOT / text[len("_src/") :])
+    if text.startswith("tools/_src/"):
+        out.append(OLD_ROOT / "tools_src" / text[len("tools/_src/") :])
+    if SESSION_MARK in text:
+        rest = text.split(SESSION_MARK, 1)[1].lstrip("/")
+        out.append(OLD_ROOT / "sessions" / rest)
+    try:
+        sess = SESS_ROOT.as_posix()
+        if text.startswith(sess):
+            out.append(OLD_ROOT / "sessions" / text[len(sess) :].lstrip("/"))
+    except ValueError:
+        pass
+    name = Path(text).name
+    if name:
+        out.append(OLD_ROOT / "other" / name)
+    return out
+
+
+def resolve_origin(origin: str) -> Path | None:
+    for cand in archive_candidates(origin):
+        if cand.is_file():
+            return cand
+    return None
+
+
 def archived_posix(origin: str) -> str | None:
     """Where a moved non-match landed under _old, if it is still there."""
-    text = origin.replace("\\", "/")
-    if text.startswith("_src/"):
-        dest = OLD_ROOT / "src" / text[len("_src/") :]
-    elif text.startswith("tools/_src/"):
-        dest = OLD_ROOT / "tools_src" / text[len("tools/_src/") :]
-    else:
-        sess = SESS_ROOT.as_posix()
-        if not text.startswith(sess):
-            return None
-        dest = OLD_ROOT / "sessions" / text[len(sess) :].lstrip("/")
-    if not dest.is_file():
+    found = resolve_origin(origin)
+    if found is None or not _under(found, OLD_ROOT):
         return None
-    return dest.resolve().relative_to(ROOT.resolve()).as_posix()
+    return found.resolve().relative_to(ROOT.resolve()).as_posix()
 
 
 def _archive_rel(path: Path) -> Path:
@@ -739,6 +819,30 @@ def _sidecar(path: Path) -> Path | None:
     return None
 
 
+def _manifest_entries(plan: dict) -> list[dict]:
+    entries = []
+    for item in plan["sources"]:
+        for live in item["lives"]:
+            base = live["window"].split("/")[0]
+            entries.append(
+                {
+                    "live": live["live"],
+                    "source": item["dest"],
+                    "origin": _posix(item["origin"]),
+                    "mad": live["mad"],
+                    "agree": live["agree"],
+                    "overlap": live["overlap"],
+                    "flip": live["flip"],
+                    "window": live["window"],
+                    "kind": live["kind"],
+                    "loose": live["loose"],
+                    "opaque_side": live["opaque_side"],
+                    "cell": base[len("cell_") :] if base.startswith("cell_") else "",
+                }
+            )
+    return entries
+
+
 def organize(plan: dict) -> dict:
     kept_images = {item["origin"].resolve() for item in plan["sources"]}
     kept_videos = {item["origin"].resolve() for item in plan["videos"]}
@@ -750,8 +854,9 @@ def organize(plan: dict) -> dict:
         if origin.resolve() == dest.resolve():
             placed[origin.resolve()] = item["dest"]
             continue
-        if item["copy"]:
-            _copy_file(origin, dest)
+        if item["copy"] or dest.exists():
+            if not dest.exists():
+                _copy_file(origin, dest)
         else:
             _move_file(origin, dest)
             side = _sidecar(origin)
@@ -765,7 +870,8 @@ def organize(plan: dict) -> dict:
         if origin.resolve() == dest.resolve():
             continue
         if item["copy"]:
-            _copy_file(origin, dest)
+            if not dest.exists():
+                _copy_file(origin, dest)
         else:
             _move_file(origin, dest)
 
@@ -773,9 +879,9 @@ def organize(plan: dict) -> dict:
     for root in (SRC_ROOT, TOOLS_SRC, SESS_ROOT):
         for path in list(iter_files(root, IMAGE_EXT | VIDEO_EXT)):
             resolved = path.resolve()
-            if resolved in placed or resolved in kept_videos:
+            if resolved in placed or resolved in kept_images or resolved in kept_videos:
                 continue
-            if SRC_ROOT in path.resolve().parents and "sources" in path.resolve().relative_to(SRC_ROOT.resolve()).parts:
+            if _under(path, SRC_ROOT / "sources"):
                 continue
             dest = OLD_ROOT / _archive_rel(path)
             if dest.exists():
@@ -808,31 +914,14 @@ def organize(plan: dict) -> dict:
             if path.is_dir() and not any(path.iterdir()):
                 path.rmdir()
 
-    entries = []
-    for item in plan["sources"]:
-        for live in item["lives"]:
-            entries.append(
-                {
-                    "live": live["live"],
-                    "source": item["dest"],
-                    "origin": _posix(item["origin"]),
-                    "mad": live["mad"],
-                    "agree": live["agree"],
-                    "overlap": live["overlap"],
-                    "flip": live["flip"],
-                    "window": live["window"],
-                    "kind": live["kind"],
-                    "loose": live["loose"],
-                    "opaque_side": live["opaque_side"],
-                    "cell": live["window"].split("/")[0][len("cell_") :] if live["window"].split("/")[0].startswith("cell_") else "",
-                }
-            )
+    entries = _manifest_entries(plan)
     manifest = {
         "min_side": MIN_SIDE,
         "grid": GRID,
         "agree_tol": AGREE_TOL,
         "figure": {"mad": FIGURE_MAD, "agree": FIGURE_AGREE, "overlap": FIGURE_OVERLAP},
         "crop": {"mad": CROP_MAD, "agree": CROP_AGREE, "overlap": CROP_OVERLAP},
+        "glyph": {"mad": GLYPH_MAD, "agree": GLYPH_AGREE, "overlap": GLYPH_OVERLAP},
         "entries": entries,
         "videos": [{"source": item["dest"], "origin": _posix(item["origin"])} for item in plan["videos"]],
         "unmatched_live": [
@@ -845,6 +934,63 @@ def organize(plan: dict) -> dict:
     if not gdignore.exists():
         gdignore.write_text("", encoding="utf-8")
     return {"archived": archived, "notes": notes, "entries": len(entries)}
+
+
+def fill_missing(what_if: bool) -> dict:
+    """Copy accepted _old / placed sources onto unmatched live paths. Never move."""
+    manifest_path = SRC_ROOT / "manifest.json"
+    if not manifest_path.is_file():
+        print("no manifest, nothing to fill")
+        return {"filled": 0, "unmatched": 0}
+    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    known = {entry["live"] for entry in data.get("entries", [])}
+    pending = [item for item in data.get("unmatched_live", []) if item.get("live") not in known]
+    live_paths = []
+    for item in pending:
+        path = ROOT / item["live"]
+        if path.is_file():
+            live_paths.append(path)
+        else:
+            print(f"missing live {item['live']}")
+    if not live_paths:
+        print("no unmatched lives on disk")
+        return {"filled": 0, "unmatched": len(pending)}
+    images, videos = collect_inputs()
+    print(f"fill images {len(images)} lives {len(live_paths)}", flush=True)
+    lives = prepare_lives(live_paths)
+    best, near = scan_with_near(images, lives)
+    plan = build_plan(lives, best, near, videos)
+    filled_rels: set[str] = set()
+    new_entries = _manifest_entries(plan)
+    for item in plan["sources"]:
+        dest = SRC_ROOT / item["dest"]
+        origin = item["origin"]
+        rel = item["lives"][0]["live"]
+        filled_rels.add(rel)
+        if what_if:
+            print(f"would copy {_posix(origin)} -> {item['dest']} {rel} mad={item['lives'][0]['mad']} agree={item['lives'][0]['agree']}")
+            continue
+        if dest.exists():
+            print(f"keep {item['dest']}")
+            continue
+        _copy_file(origin, dest)
+        print(f"copied {_posix(origin)} -> {item['dest']}")
+    if not what_if:
+        data.setdefault("glyph", {"mad": GLYPH_MAD, "agree": GLYPH_AGREE, "overlap": GLYPH_OVERLAP})
+        data.setdefault("entries", []).extend(new_entries)
+        still = []
+        for item in data.get("unmatched_live", []):
+            if item.get("live") in filled_rels:
+                continue
+            origin = str(item.get("best_origin", ""))
+            archived = archived_posix(origin)
+            if archived:
+                item = item | {"archived": archived}
+            still.append(item)
+        data["unmatched_live"] = still
+        manifest_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    print(f"fill {'plan' if what_if else 'wrote'} {len(filled_rels)} left {len(plan['unmatched'])}")
+    return {"filled": len(filled_rels), "unmatched": len(plan["unmatched"])}
 
 
 def summarize(plan: dict) -> str:
@@ -908,6 +1054,8 @@ def main() -> None:
     parser.add_argument("--pipeline", action="store_true", help="Key one pair with plate_remap + key_to_alpha")
     parser.add_argument("--report", action="store_true", help="Scan and print a summary. Do not move files.")
     parser.add_argument("--organize", action="store_true", help="Put matching sources in _src and the rest in _old.")
+    parser.add_argument("--fill-missing", action="store_true", help="Copy _old and placed sources onto unmatched lives.")
+    parser.add_argument("--what-if", action="store_true", help="With --fill-missing, print copies and do not write.")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
 
@@ -918,10 +1066,13 @@ def main() -> None:
         result = score_pair(args.live, args.src, pipeline=args.pipeline)
         print(json.dumps(result, indent=2))
         return
+    if args.fill_missing:
+        fill_missing(args.what_if)
+        return
     if not args.report and not args.organize:
-        parser.error("pass LIVE SRC, --report, or --organize")
+        parser.error("pass LIVE SRC, --report, --organize, or --fill-missing")
     if args.organize and (SRC_ROOT / "manifest.json").exists():
-        raise SystemExit("_src/manifest.json already exists; remove it before organizing again")
+        raise SystemExit("_src/manifest.json already exists; use --fill-missing to add unmatched lives")
 
     images, videos = collect_inputs()
     live_paths = collect_lives()

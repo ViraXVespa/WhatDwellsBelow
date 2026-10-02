@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import ctypes
+import json
 import os
 import subprocess
 import sys
@@ -37,6 +38,25 @@ RENDER_DRIVER = "d3d12"
 
 def _root() -> Path:
     return agent_log.repo_root(_TOOLS.parent)
+
+
+def _load_recipe(root: Path, name: str) -> dict:
+    path = root / "design" / "shot-recipes.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    rec = data.get(name)
+    if not isinstance(rec, dict) or not rec.get("frames"):
+        raise SystemExit("FAIL unknown shot recipe " + name)
+    return rec
+
+
+def _recipe_poses(rec: dict) -> str:
+    bits: list[str] = []
+    for fr in rec.get("frames") or []:
+        kind = str(fr.get("kind") or "play")
+        look = fr.get("look") or [16.5, 15.0]
+        off = fr.get("offset") or [0.0, 0.0]
+        bits.append("%s,%s,%s,%s,%s" % (kind, look[0], look[1], off[0], off[1]))
+    return ";".join(bits)
 
 
 def _out_dir(root: Path) -> Path:
@@ -101,29 +121,23 @@ def _shot_pid() -> int:
     return 0
 
 
-def _hide_godot_taskbar() -> int:
-    if os.name != "nt":
+def _hide_godot_taskbar(pids: set[int]) -> int:
+    if os.name != "nt" or not pids:
         return 0
     user32 = ctypes.windll.user32
     GWL_EXSTYLE = -20
     WS_EX_TOOLWINDOW = 0x00000080
     WS_EX_APPWINDOW = 0x00040000
     SWP_NOSIZE = 0x0001
-    SWP_NOMOVE = 0x0002
     SWP_NOZORDER = 0x0004
+    SWP_NOACTIVATE = 0x0010
     SWP_FRAMECHANGED = 0x0020
     SW_HIDE = 0
+    SW_SHOWNA = 8
     hits = 0
-    shot = _shot_pid()
-    if shot <= 0:
-        return 0
-    pids = {shot}
-    kids = subprocess.run(['wmic', 'process', 'where', f'ParentProcessId={shot}', 'get', 'ProcessId'], capture_output=True, text=True)
-    for line in (kids.stdout or '').splitlines():
-        line = line.strip()
-        if line.isdigit():
-            pids.add(int(line))
     found: list[int] = []
+    styled = getattr(_hide_godot_taskbar, "_styled", set())
+    _hide_godot_taskbar._styled = styled
 
     @ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
     def _cb(hwnd: int, _lp: int) -> bool:
@@ -133,25 +147,31 @@ def _hide_godot_taskbar() -> int:
             found.append(int(hwnd))
         return True
 
+    _hide_godot_taskbar._cb = _cb
+    user32.GetWindowLongPtrW.restype = ctypes.c_longlong
+    user32.GetWindowLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int]
+    user32.SetWindowLongPtrW.restype = ctypes.c_longlong
+    user32.SetWindowLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_longlong]
     user32.EnumWindows(_cb, 0)
     for hwnd in found:
-        user32.GetWindowLongPtrW.restype = ctypes.c_longlong
-        user32.GetWindowLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int]
-        user32.SetWindowLongPtrW.restype = ctypes.c_longlong
-        user32.SetWindowLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_longlong]
+        if hwnd in styled:
+            continue
         style = user32.GetWindowLongPtrW(hwnd, GWL_EXSTYLE)
         style = (style | WS_EX_TOOLWINDOW) & ~WS_EX_APPWINDOW
-        user32.ShowWindow(hwnd, 0)
         user32.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style)
-        user32.SetWindowPos(hwnd, 0, -32000, -32000, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED)
+        user32.ShowWindow(hwnd, SW_HIDE)
+        user32.ShowWindow(hwnd, SW_SHOWNA)
+        user32.SetWindowPos(hwnd, 0, -32000, -32000, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED)
+        styled.add(hwnd)
         hits += 1
     return hits
 
 
-def _taskbar_watch(stop: threading.Event) -> None:
+def _taskbar_watch(stop: threading.Event, before: set[int]) -> None:
     while not stop.is_set():
-        _hide_godot_taskbar()
-        stop.wait(0.2)
+        live = set(_godot_pids()) - before
+        _hide_godot_taskbar(live)
+        stop.wait(0.03)
 
 
 def _ps_literal(value: str) -> str:
@@ -170,6 +190,7 @@ def _write_invoke_ps1(
     timeout_sec: int,
     show_window: bool,
     extra: list[str],
+    poses: str,
 ) -> Path:
     godot_args = [
         "--audio-driver",
@@ -180,14 +201,15 @@ def _write_invoke_ps1(
         str(root),
         "--",
         "--wdb-shot",
-        "--wdb-shot-poses=play,16.5,15,0,0;hall,8.2,6.0,4.5,7.5;stall,25.0,8.0,0.5,7.0;stall,25.0,8.0,7.0,1.5",
         f"--wdb-shot-seed={seed}",
         "--wdb-shot-show=1" if show_window else "--wdb-shot-show=0",
-            "--wdb-shot-floor={floor_n}",
+        f"--wdb-shot-floor={floor_n}",
         f"--wdb-shot-out={png}",
         f"--wdb-shot-scale={scale_pct}",
         f"--wdb-shot-settle-ms={settle_ms}",
     ] + extra
+    if poses:
+        godot_args.append("--wdb-shot-poses=" + poses)
     arg_lines = ",\n    ".join(_ps_literal(a) for a in godot_args)
     body = (
         f". {_ps_literal(str(tools / 'invoke_godot.ps1'))}\n"
@@ -412,7 +434,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--timeout-sec", type=int, default=TIMEOUT_SEC)
     p.add_argument("--out", default="", help="PNG path override")
     p.add_argument("--show", action="store_true", help="leave the Godot window visible")
-    p.add_argument("--hud", type=int, default=1, help="1=HUD on, 0=HUD off")
+    p.add_argument("--hud", type=int, default=-1, help="1=HUD on, 0=HUD off; -1 uses recipe")
     p.add_argument("--width", type=int, default=0)
     p.add_argument("--height", type=int, default=0)
     p.add_argument("--zoom", type=float, default=1.0)
@@ -421,9 +443,23 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--cx", type=float, default=0.0, help="camera look offset X")
     p.add_argument("--cz", type=float, default=0.0, help="camera look offset Z")
     p.add_argument("--taskbar", type=int, default=0, help="1=show taskbar entry")
+    p.add_argument("--recipe", default="", help="design/shot-recipes.json key; camp defaults to hub-buildings")
     args = p.parse_args(argv)
 
     root = _root()
+    recipe_name = args.recipe
+    if recipe_name == "" and args.scene in ("camp", "hub"):
+        recipe_name = "hub-buildings"
+    poses = ""
+    if recipe_name:
+        rec = _load_recipe(root, recipe_name)
+        poses = _recipe_poses(rec)
+        if args.scene == "dungeon" and str(rec.get("scene") or "") in ("camp", "hub"):
+            args.scene = "camp"
+        if args.hud < 0:
+            args.hud = 0 if int(rec.get("hud", 1)) == 0 else 1
+    if args.hud < 0:
+        args.hud = 1
     out_dir = _out_dir(root)
     scale_pct = args.scale if args.scale > 0 else (
         BUILD_SCALE_PCT if args.mode == "build" else 100
@@ -444,9 +480,11 @@ def main(argv: list[str] | None = None) -> int:
         max(1, args.timeout_sec),
         args.show,
         _extra_flags(args),
+        poses,
     )
+    before = set(_godot_pids())
     stop = threading.Event()
-    watcher = threading.Thread(target=_taskbar_watch, args=(stop,), daemon=True)
+    watcher = threading.Thread(target=_taskbar_watch, args=(stop, before), daemon=True)
     if not args.show and args.taskbar == 0:
         watcher.start()
     try:

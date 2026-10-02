@@ -39,7 +39,7 @@ static func _arg_int(key: String, fallback: int) -> int:
 
 static func _arg_val(flag: String) -> String:
 	var prefix: String = flag + "="
-	for a: String in OS.get_cmdline_user_args():
+	for a: String in args():
 		if str(a).begins_with(prefix):
 			return str(a).substr(prefix.length())
 	return ""
@@ -182,7 +182,13 @@ static func _arm_capture(host: Node) -> void:
 		printerr("SHOT: ok=false err=host_gone")
 		return
 	_apply_pose(host)
-	RenderingServer.frame_post_draw.connect(func() -> void: _capture(host), CONNECT_ONE_SHOT)
+	var list: PackedStringArray = poses()
+	if list.is_empty():
+		RenderingServer.frame_post_draw.connect(func() -> void: _capture(host), CONNECT_ONE_SHOT)
+		return
+	_pose_i = 0
+	_strips.clear()
+	_kick_pose(host)
 static func _apply_pose(host: Node) -> void:
 	var player: Node3D = host.get("player") as Node3D
 	if player != null and has_player_pos():
@@ -263,7 +269,7 @@ static func _capture(host: Node) -> void:
 	var at: String = str(cam_now.global_position) if cam_now != null else "none"
 	printerr("SHOT: grab at=%s" % at)
 	printerr("SHOT: ok=true path=%s w=%d h=%d bytes=%d" % [path, img.get_width(), img.get_height(), nbytes])
-	_after_frame(host, img)
+	_quit(host, 0)
 
 
 static func _fail(host: Node, why: String) -> void:
@@ -290,26 +296,77 @@ static func _hide_label3d(n: Node) -> void:
 
 static var _pose_i: int = 0
 static var _strips: Array[Image] = []
+static var _warm_left: int = 0
 
 static var _token: String = ""
 
-static func _after_frame(host: Node, img: Image) -> void:
-	var copy: Image = img.duplicate()
-	copy.convert(Image.FORMAT_RGBA8)
-	_strips.append(copy)
+static func _kick_pose(host: Node) -> void:
+	if not is_instance_valid(host):
+		printerr("SHOT: ok=false err=host_gone")
+		return
 	var list: PackedStringArray = poses()
-	_pose_i += 1
-	if list.is_empty() or _pose_i >= list.size():
+	if _pose_i >= list.size():
 		_write_strip()
 		_quit(host, 0)
 		return
-	_token = list[_pose_i]
-	_apply_pose_token(host, _token)
-	await host.get_tree().process_frame
-	await RenderingServer.frame_pre_draw
-	_apply_pose_token(host, _token)
-	await RenderingServer.frame_post_draw
-	_capture(host)
+	var token: String = list[_pose_i]
+	_token = token
+	_warm_left = 3
+	_apply_pose_token(host, token)
+	host.get_tree().process_frame.connect(_on_warm.bind(host, token), CONNECT_ONE_SHOT)
+
+
+static func _on_warm(host: Node, token: String) -> void:
+	if not is_instance_valid(host):
+		printerr("SHOT: ok=false err=host_gone")
+		return
+	_apply_pose_token(host, token)
+	_warm_left -= 1
+	if _warm_left > 0:
+		host.get_tree().process_frame.connect(_on_warm.bind(host, token), CONNECT_ONE_SHOT)
+		return
+	RenderingServer.frame_post_draw.connect(_on_post_draw.bind(host, token), CONNECT_ONE_SHOT)
+
+
+static func _on_post_draw(host: Node, token: String) -> void:
+	RenderingServer.force_sync()
+	_grab_pose(host, token)
+
+
+static func _grab_pose(host: Node, token: String) -> void:
+	if not is_instance_valid(host):
+		printerr("SHOT: ok=false err=host_gone")
+		return
+	var img: Image = _read_frame(host)
+	if img == null:
+		_fail(host, "no_image")
+		return
+	var copy: Image = img.duplicate()
+	copy.convert(Image.FORMAT_RGBA8)
+	_strips.append(copy)
+	var cam_now: Camera3D = host.get_viewport().get_camera_3d()
+	var at: String = str(cam_now.global_position) if cam_now != null else "none"
+	printerr("SHOT: grab token=%s frame=%d at=%s w=%d h=%d" % [token, _pose_i, at, copy.get_width(), copy.get_height()])
+	_pose_i += 1
+	_kick_pose(host)
+
+
+static func _read_frame(host: Node) -> Image:
+	var vp: Viewport = host.get_viewport()
+	if vp == null:
+		return null
+	var tex: ViewportTexture = vp.get_texture()
+	if tex == null:
+		return null
+	var img: Image = tex.get_image()
+	if img == null or img.is_empty():
+		return null
+	var pct: int = scale_pct()
+	if pct < 100:
+		var w: int = maxi(1, int(float(img.get_width()) * (float(pct) / 100.0)))
+		var h: int = maxi(1, int(float(img.get_height()) * (float(pct) / 100.0)))
+		img.resize(w, h, Image.INTERPOLATE_BILINEAR)
+	return img
 
 static func _apply_pose_token(host: Node, token: String) -> void:
 	var bits: PackedStringArray = token.split(",")
@@ -359,5 +416,9 @@ static func _write_strip() -> void:
 	for frame in _strips:
 		out.blit_rect(frame, Rect2i(0, 0, frame.get_width(), frame.get_height()), Vector2i(x, 0))
 		x += frame.get_width()
-	out.save_png(out_path())
+	var err: Error = out.save_png(out_path())
+	if err != OK:
+		printerr("SHOT: ok=false err=strip_%d" % int(err))
+		return
+	printerr("SHOT: ok=true path=%s w=%d h=%d frames=%d" % [out_path(), out.get_width(), out.get_height(), _strips.size()])
 	printerr("SHOT: strip frames=%d bytes_path=%s" % [_strips.size(), out_path()])
