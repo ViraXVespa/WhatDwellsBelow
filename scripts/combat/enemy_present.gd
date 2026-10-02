@@ -7,7 +7,6 @@ const Facing := preload("res://scripts/world/facing.gd")
 const EnemyAI := preload("res://scripts/combat/enemy_ai.gd")
 const Hit := preload("res://scripts/combat/enemy_hit.gd")
 
-
 static func physics(host: CharacterBody3D, delta: float) -> void:
 	if host.dead:
 		return

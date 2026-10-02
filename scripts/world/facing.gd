@@ -6,7 +6,6 @@ const KEYS := [
 	"left", "up_left", "up", "up_right",
 ]
 
-
 static func from_aim(dir: Vector2) -> String:
 	if dir.length_squared() < 0.0001:
 		return "down"

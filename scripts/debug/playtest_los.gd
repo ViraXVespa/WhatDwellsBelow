@@ -5,7 +5,6 @@ const Util := preload("res://scripts/debug/playtest_los_util.gd")
 const Walk := preload("res://scripts/debug/playtest_los_walk.gd")
 const Door := preload("res://scripts/debug/playtest_los_door.gd")
 
-
 static func world3(pt: Node) -> World3D:
 	return Util.world3(pt)
 

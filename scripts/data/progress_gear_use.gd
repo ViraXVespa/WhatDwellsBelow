@@ -15,7 +15,6 @@ static func use_from_bag(p: Object, uid: int) -> String:
 		return eat(p, it, false)
 	return Bag.equip_uid(p, uid)
 
-
 static func use_potion(p: Object) -> String:
 	var it: Dictionary = p.slots.get("potion", {})
 	if it.is_empty():
@@ -27,7 +26,6 @@ static func use_potion(p: Object) -> String:
 		return "Empty."
 	return drink(p, it, true)
 
-
 static func use_food(p: Object) -> String:
 	var it: Dictionary = p.slots.get("food", {})
 	if it.is_empty() or int(it.get("stack", 0)) <= 0:
@@ -35,10 +33,8 @@ static func use_food(p: Object) -> String:
 		return "No food equipped."
 	return eat(p, it, true)
 
-
 static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 	return Rules.drink(p, it, from_slot)
-
 
 static func eat(p: Object, it: Dictionary, from_slot: bool) -> String:
 	var fid: String = str(it.get("food", "ration"))
@@ -54,7 +50,6 @@ static func eat(p: Object, it: Dictionary, from_slot: bool) -> String:
 	App.toast("Food — healing over time.")
 	consume(p, it, from_slot)
 	return "Food."
-
 
 static func consume(p: Object, it: Dictionary, from_slot: bool) -> void:
 	it.stack = int(it.stack) - 1
@@ -72,7 +67,6 @@ static func consume(p: Object, it: Dictionary, from_slot: bool) -> void:
 					p.bag[i] = it
 					break
 
-
 static func tick_food(p: Object, delta: float) -> void:
 	p.potion_cd = maxf(0.0, p.potion_cd - delta)
 	if p.food_t <= 0.0:
@@ -87,18 +81,14 @@ static func tick_food(p: Object, delta: float) -> void:
 	if p.food_t <= 0.0 or p.food_left <= 0.0:
 		p.clear_food()
 
-
 static func dmg(p: Object) -> int:
 	return int(stat(p, "dmg"))
-
 
 static func def(p: Object) -> int:
 	return int(stat(p, "def"))
 
-
 static func hp(p: Object) -> int:
 	return int(stat(p, "hp"))
-
 
 static func stat(p: Object, key: String) -> float:
 	var n := 0.0
@@ -125,23 +115,17 @@ static func stat(p: Object, key: String) -> float:
 		n += float(sets.get(key, 0.0))
 	return n
 
-
 static func tool_quality(p: Object) -> float:
 	return load("res://scripts/data/progress_combat.gd").tool_quality(p)
-
 
 static func set_counts(p: Object) -> Dictionary:
 	return load("res://scripts/data/progress_combat.gd").set_counts(p)
 
-
 static func set_stats(p: Object) -> Dictionary:
 	return load("res://scripts/data/progress_combat.gd").set_stats(p)
-
 
 static func set_bonus_text(p: Object, sid: String) -> String:
 	return load("res://scripts/data/progress_combat.gd").set_bonus_text(p, sid)
 
-
 static func sync_artifacts(p: Object) -> void:
 	load("res://scripts/data/progress_combat.gd").sync_artifacts(p)
-

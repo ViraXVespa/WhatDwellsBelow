@@ -20,11 +20,9 @@ const PRE := ["Gra", "Zul", "Mor", "Vex", "Thal", "Kor", "Ash", "Brul", "Fen", "
 const MID := ["", "a", "o", "ul", "an", "or", "i", "ee", "u"]
 const SUF := ["tok", "nash", "goth", "fang", "rath", "ek", "ba", "moth", "vik", "zul", "orn", "ith"]
 
-
 static func floor_types(floor_n: int) -> PackedStringArray:
 	var i := (maxi(1, floor_n) - 1) % 5
 	return PackedStringArray(POOLS[i])
-
 
 static func def(id: String) -> Dictionary:
 	var all := _all()
@@ -44,10 +42,8 @@ static func def(id: String) -> Dictionary:
 		d.def = App.bal.getv("e_%s_def" % id)
 	return d
 
-
 static func make_name(rng: RandomNumberGenerator) -> String:
 	return PRE[rng.randi() % PRE.size()] + MID[rng.randi() % MID.size()] + SUF[rng.randi() % SUF.size()]
-
 
 static func cycle_tint(cycle: int) -> Color:
 	match cycle % 4:
@@ -59,7 +55,6 @@ static func cycle_tint(cycle: int) -> Color:
 			return Color(0.88, 1.12, 0.84)
 		_:
 			return Color(1, 1, 1)
-
 
 static func _all() -> Dictionary:
 	return {

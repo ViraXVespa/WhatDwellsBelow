@@ -92,11 +92,8 @@ var gear_hint: Control
 var gear_page_left: Control
 var gear_page_right: Control
 
-
 func _ready() -> void:
 	View.build(self)
-
-
 
 func toggle() -> void:
 	Flow.toggle(self)
@@ -138,47 +135,14 @@ func _cap(text: String, size: int = 18, col: Color = Color(0.9, 0.84, 0.7)) -> L
 	l.add_theme_constant_override("outline_size", 6)
 	return l
 
-
-
 func _inv() -> void:
 	PauseInv.build(self)
-
-
 
 func _inv_find_sel() -> Control:
 	return PauseInv.find_sel(self)
 
-
-
-func _inv_use() -> void:
-	PauseInv.use_item(self)
-
-
-
-func _inv_equip() -> void:
-	PauseInv.equip_item(self)
-
-
-
-func _inv_unequip() -> void:
-	PauseInv.unequip_item(self)
-
-
-
-func _inv_drop() -> void:
-	PauseInv.drop_item(self)
-
-
-
-func kind_extract_note(it: Dictionary) -> String:
-	return PauseInv.extract_note(it)
-
-
-
 func _skills() -> void:
 	PauseSkills.build(self)
-
-
 
 func _on_skill_focus(id: String, kind: String, from: Control) -> void:
 	if from is PanelContainer:
@@ -188,14 +152,10 @@ func _on_skill_focus(id: String, kind: String, from: Control) -> void:
 	tip_from = from
 	Util.paint_tip(self)
 
-
-
 func _on_skill_blur(from: Control) -> void:
 	if from is PanelContainer and not from.has_focus():
 		(from as PanelContainer).add_theme_stylebox_override("panel", ThemeS.skill_row_sb(false))
 	call_deferred("_blur_tip")
-
-
 
 func _blur_tip() -> void:
 	var f: Control = get_viewport().gui_get_focus_owner()
@@ -203,44 +163,16 @@ func _blur_tip() -> void:
 		return
 	Util.hide_tip(self)
 
-
-
-func _hide_tip() -> void:
-	Util.hide_tip(self)
-
-
-
-func _paint_tip() -> void:
-	Util.paint_tip(self)
-
-
-
 func _system() -> void:
 	PauseSettings.build(self)
-
-
-
-func _slider_row(title: String, value: float, lo: float, hi: float, step: float, on_change: Callable) -> VBoxContainer:
-	return Util.slider_row(self, title, value, lo, hi, step, on_change)
-
-
-
-func _confirm(fn: Callable, id: String = "anon") -> void:
-	Util.confirm(self, fn, id)
-
-
 
 func _st(msg: String) -> void:
 	if status:
 		status.text = msg
 	App.sfx("ui")
 
-
-
 func _settings_host() -> Node:
 	return box.get_node_or_null("settings_host") if box else null
-
-
 
 func _back() -> void:
 	Flow._back(self)

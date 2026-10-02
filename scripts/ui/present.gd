@@ -13,7 +13,6 @@ var _wake_hold := false
 var _enter_load := false
 var _done: Callable = Callable()
 
-
 func _ready() -> void:
 	layer = 90
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -37,7 +36,6 @@ func _ready() -> void:
 	caption.add_theme_constant_override("outline_size", 8)
 	add_child(caption)
 
-
 func play_enter(done: Callable) -> void:
 	playing = true
 	visible = true
@@ -48,7 +46,6 @@ func play_enter(done: Callable) -> void:
 	overlay.color = Color(0.2, 0.75, 0.95, 0.0)
 	App.sfx("enter")
 	get_tree().create_timer(1.05, true, false, true).timeout.connect(_finish_enter)
-
 
 func cover_enter() -> void:
 	playing = true
@@ -61,7 +58,6 @@ func cover_enter() -> void:
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	overlay.queue_redraw()
 
-
 func wait_painted() -> void:
 	var tree: SceneTree = get_tree()
 	if tree:
@@ -69,13 +65,11 @@ func wait_painted() -> void:
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 
-
 func release_enter() -> void:
 	if _mode != "enter_hold":
 		return
 	_mode = "enter_fade"
 	_t = 0.0
-
 
 func play_wake() -> void:
 	playing = true
@@ -88,13 +82,11 @@ func play_wake() -> void:
 	overlay.color = Color(0.95, 0.88, 0.7, 1.0)
 	App.sfx("wake")
 
-
 func cover_wake() -> void:
 	play_wake()
 	_wake_hold = true
 	_t = 0.0
 	overlay.color.a = 1.0
-
 
 func release_wake() -> void:
 	if _mode != "wake":
@@ -102,7 +94,6 @@ func release_wake() -> void:
 		return
 	_wake_hold = false
 	_t = 0.0
-
 
 func hide_overlay() -> void:
 	playing = false
@@ -114,7 +105,6 @@ func hide_overlay() -> void:
 		overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	caption.text = ""
 	_done = Callable()
-
 
 func _physics_process(delta: float) -> void:
 	if not playing:
@@ -141,7 +131,6 @@ func _physics_process(delta: float) -> void:
 		if _t >= 1.1:
 			_finish_wake()
 
-
 func _finish_enter() -> void:
 	if _mode != "enter":
 		return
@@ -151,7 +140,6 @@ func _finish_enter() -> void:
 	_done = Callable()
 	if cb.is_valid():
 		cb.call()
-
 
 func _finish_wake() -> void:
 	if _mode != "wake":

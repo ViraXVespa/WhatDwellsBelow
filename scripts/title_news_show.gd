@@ -3,7 +3,6 @@ extends Object
 const Fmt := preload("res://scripts/title_news_fmt.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 
-
 static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	var Fac = load("res://scripts/title_news.gd")
 	host._news_open = true

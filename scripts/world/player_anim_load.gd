@@ -12,7 +12,6 @@ const STOP_N := 3
 const ATK_N := 6
 const SPC_N := 6
 
-
 static func _load_n(base: String, prefix: String, n: int) -> Array:
 	var frames: Array = []
 	var i: int = 0
@@ -21,7 +20,6 @@ static func _load_n(base: String, prefix: String, n: int) -> Array:
 		frames.append(SpriteFilt.ensure_mips(load(path)))
 		i += 1
 	return frames
-
 
 static func load_sprites(host: Node) -> void:
 	host.idle.clear()
@@ -49,10 +47,8 @@ static func load_sprites(host: Node) -> void:
 		if ResourceLoader.exists(ep):
 			host.equip[k] = SpriteFilt.ensure_mips(load(ep))
 
-
 static func _player_base() -> String:
 	return "res://assets/sprites/player/%s/" % App.character_type
-
 
 static func ensure_loco(host: Node, key: String) -> void:
 	if host.walk.has(key):
@@ -65,7 +61,6 @@ static func ensure_loco(host: Node, key: String) -> void:
 	host.walk[key] = _load_n(base, "walk_%s" % key, WALK_N)
 	host.idle_to_walk[key] = _load_n(base, "idle_to_walk_%s" % key, START_N)
 	host.walk_to_idle[key] = _load_n(base, "walk_to_idle_%s" % key, STOP_N)
-
 
 static func ensure_attack(host: Node, key: String) -> void:
 	if host.attack.has(key) or host.attack.has("down"):

@@ -13,14 +13,11 @@ const HOLD_DESTROY := 0.55
 
 static var swallow_until := 0
 
-
 static func swallow_cancel() -> void:
 	swallow_until = Time.get_ticks_msec() + 350
 
-
 static func swallowing() -> bool:
 	return Time.get_ticks_msec() < swallow_until
-
 
 static func tick_x(ui: CanvasLayer, delta: float) -> void:
 	if str(ui.get("gear_mode")) == "anvil":
@@ -49,10 +46,8 @@ static func joy_down(btn: int) -> bool:
 			return true
 	return false
 
-
 static func input_tick(ui: CanvasLayer, event: InputEvent) -> bool:
 	return handle_event(ui, event)
-
 
 static func handle_event(ui: CanvasLayer, event: InputEvent) -> bool:
 	if event is InputEventMouse:
@@ -110,12 +105,10 @@ static func is_tip(event: InputEvent) -> bool:
 		return (event as InputEventJoypadButton).button_index == JOY_BUTTON_Y
 	return false
 
-
 static func cycle_tip(ui: CanvasLayer) -> void:
 	ui.gear_tip_mode = (int(ui.gear_tip_mode) + 1) % 3
 	Board.refresh(ui)
 	App.sfx("ui")
-
 
 static func cycle_stats(ui: CanvasLayer, d: int) -> void:
 	if bool(ui.get("gear_sub")) and str(ui.get("forge_phase")) != "pick":

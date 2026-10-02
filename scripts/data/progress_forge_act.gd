@@ -5,7 +5,6 @@ const Roll := preload("res://scripts/data/gear_roll.gd")
 
 const HOLD_CAP := 3
 
-
 static func forge_cost(p: Object, slot: String, rarity: String, ilvl: int, lock_n: int) -> Dictionary:
 	var smith: int = p.skill_lv("smith")
 	var lv: float = float(maxi(1, ilvl))
@@ -37,7 +36,6 @@ static func forge_cost(p: Object, slot: String, rarity: String, ilvl: int, lock_
 		out["wood"] = maxi(1, int(round(wood)))
 	return out
 
-
 static func forge_duration(p: Object, slot_or_lv = 1, _rarity: String = "", ilvl: int = -1) -> float:
 	var lv: int = 1
 	if typeof(slot_or_lv) == TYPE_INT or typeof(slot_or_lv) == TYPE_FLOAT:
@@ -51,11 +49,9 @@ static func forge_duration(p: Object, slot_or_lv = 1, _rarity: String = "", ilvl
 	var delta: int = maxi(1, lv) - p.skill_lv("smith")
 	return clampf(base * pow(step, float(delta)), lo, hi)
 
-
 static func can_pay(_p: Object, c: Dictionary) -> bool:
 	var need_w: int = int(c.get("wood", 0))
 	return App.bank_gold + App.gold >= int(c.get("gold", 0)) and App.bank_ore + App.ore >= int(c.get("ore", 0)) and App.bank_wood + App.wood >= need_w
-
 
 static func pay(_p: Object, c: Dictionary) -> bool:
 	if not can_pay(_p, c):
@@ -65,7 +61,6 @@ static func pay(_p: Object, c: Dictionary) -> bool:
 	_spend_pair(int(c.get("wood", 0)), "wood", "bank_wood")
 	return true
 
-
 static func holds_of(p: Object, slot: String, type_id: String) -> Array:
 	var out: Array = []
 	for raw: Variant in p.holds.get(slot, []):
@@ -73,10 +68,8 @@ static func holds_of(p: Object, slot: String, type_id: String) -> Array:
 			out.append(raw)
 	return out
 
-
 static func hold_open(p: Object, slot: String, type_id: String) -> int:
 	return HOLD_CAP - holds_of(p, slot, type_id).size()
-
 
 static func set_holds_for_type(p: Object, slot: String, type_id: String, keep: Array) -> String:
 	var rest: Array = []
@@ -99,7 +92,6 @@ static func set_holds_for_type(p: Object, slot: String, type_id: String, keep: A
 	App.save_now()
 	return "Kept %d hold%s." % [n, "" if n == 1 else "s"]
 
-
 static func make_forged(p: Object, slot: String, type_id: String, rarity: String, ilvl: int, locked: PackedStringArray) -> Dictionary:
 	var Book = load("res://scripts/data/progress_forge_book.gd")
 	var cap_lv: int = Book.max_ilvl_rarity(p, slot, type_id, rarity)
@@ -114,7 +106,6 @@ static func make_forged(p: Object, slot: String, type_id: String, rarity: String
 	if not str(it.get("name", "")).begins_with("Forged "):
 		it["name"] = "Forged " + str(it.get("name", "item"))
 	return it
-
 
 static func add_hold(p: Object, it: Dictionary) -> String:
 	var slot := str(it.get("slot", ""))
@@ -131,10 +122,8 @@ static func add_hold(p: Object, it: Dictionary) -> String:
 	App.save_now()
 	return "Forged into a hold (%d/%d)." % [holds_of(p, slot, type_id).size(), HOLD_CAP]
 
-
 static func place_hold(p: Object, it: Dictionary) -> void:
 	add_hold(p, it)
-
 
 static func replace_hold(p: Object, a, b, c = 0, d = {}) -> String:
 	if a is Dictionary:
@@ -166,11 +155,9 @@ static func replace_hold(p: Object, a, b, c = 0, d = {}) -> String:
 	App.save_now()
 	return "Forged into a hold (%d/%d)." % [holds_of(p, slot, type_id).size(), HOLD_CAP]
 
-
 static func to_meta(p: Object) -> Dictionary:
 	var Book = load("res://scripts/data/progress_forge_book.gd")
 	return {"forge_book": Book.book(p)}
-
 
 static func from_meta(p: Object, d: Dictionary) -> void:
 	var Book = load("res://scripts/data/progress_forge_book.gd")
@@ -181,10 +168,8 @@ static func from_meta(p: Object, d: Dictionary) -> void:
 		p.set("forge_book", {})
 	Book.migrate(p)
 
-
 static func type_of(it: Dictionary) -> String:
 	return Affix.type_of(it)
-
 
 static func _blank(p: Object, slot: String, type_id: String, rarity: String) -> Dictionary:
 	if slot == "weapon":
@@ -192,7 +177,6 @@ static func _blank(p: Object, slot: String, type_id: String, rarity: String) -> 
 	if slot == "tool":
 		return p.make_tool(type_id)
 	return p.make_armor(slot, rarity)
-
 
 static func _spend_pair(need: int, pocket: String, bank: String) -> void:
 	if need <= 0:
@@ -203,7 +187,6 @@ static func _spend_pair(need: int, pocket: String, bank: String) -> void:
 	need -= use
 	if need > 0:
 		App.set(bank, maxi(0, int(App.get(bank)) - need))
-
 
 static func _bal(key: String, fallback: float) -> float:
 	if App.bal != null and App.bal.get(key) != null:

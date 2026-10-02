@@ -17,7 +17,6 @@ const BIND_ACTIONS: PackedStringArray = [
 
 const GAMEPLAY_ACTIONS: PackedStringArray = Pool.GAMEPLAY_ACTIONS
 
-
 static func collect() -> Array:
 	var out: Array = []
 	for a in BIND_ACTIONS:
@@ -49,7 +48,6 @@ static func collect() -> Array:
 			out.append(row)
 	return out
 
-
 static func apply(rows: Array) -> void:
 	if rows.is_empty():
 		return
@@ -70,7 +68,6 @@ static func apply(rows: Array) -> void:
 			InputMap.action_add_event(a, ev)
 	Defaults.ensure_key("inventory", KEY_I)
 	Defaults.ensure_joy("inventory", JOY_BUTTON_DPAD_RIGHT)
-
 
 static func bind_event(row: Dictionary) -> InputEvent:
 	var t: String = str(row.get("type", ""))
@@ -93,30 +90,23 @@ static func bind_event(row: Dictionary) -> InputEvent:
 		return mb
 	return null
 
-
 static func event_in_pool(e: InputEvent, pool: String) -> bool:
 	return Pool.event_in_pool(e, pool)
-
 
 static func events_equal(a: InputEvent, b: InputEvent) -> bool:
 	return Pool.events_equal(a, b)
 
-
 static func pool_events(action: String, pool: String) -> Array:
 	return Pool.pool_events(action, pool)
-
 
 static func slot_event(action: String, pool: String, slot: int) -> InputEvent:
 	return Pool.slot_event(action, pool, slot)
 
-
 static func bind_slot(action: String, pool: String, slot: int, ev: InputEvent) -> void:
 	Pool.bind_slot(action, pool, slot, ev)
 
-
 static func reset_pool(pool: String) -> void:
 	Pool.reset_pool(pool)
-
 
 static func reset() -> void:
 	for a in BIND_ACTIONS:
@@ -124,26 +114,20 @@ static func reset() -> void:
 			InputMap.action_erase_events(a)
 	register()
 
-
 static func register() -> void:
 	Defaults.register()
-
 
 static func apply_pc_defaults() -> void:
 	Defaults.apply_pc_defaults()
 
-
 static func ensure_key(action: String, keycode: int) -> void:
 	Defaults.ensure_key(action, keycode)
-
 
 static func ensure_joy(action: String, button: int) -> void:
 	Defaults.ensure_joy(action, button)
 
-
 static func ensure_mouse(action: String, btn: int) -> void:
 	Defaults.ensure_mouse(action, btn)
-
 
 static func ensure_axis(action: String, axis: int, axis_value: float) -> void:
 	Defaults.ensure_axis(action, axis, axis_value)

@@ -1,9 +1,7 @@
 extends Object
 
-
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
-
 
 static func p7(host: Node) -> void:
 	var hud: Variant = host.get("hud")

@@ -19,6 +19,78 @@ from pathlib import Path
 import md_format_lib as md
 
 
+def _gd_tabs(text: str) -> str:
+    out: list[str] = []
+    for line in text.splitlines(keepends=True):
+        raw = line.lstrip(" ")
+        spaces = len(line) - len(raw)
+        if spaces and spaces % 4 == 0 and raw[:1] != " ":
+            line = ("\t" * (spaces // 4)) + raw
+        out.append(line)
+    return "".join(out)
+
+
+def _py_ok(path: Path, text: str) -> None:
+    if path.suffix != ".py":
+        return
+    try:
+        compile(text, str(path), "exec")
+    except SyntaxError as exc:
+        raise SystemExit("FAIL  py syntax %s:%s: %s" % (path.as_posix(), exc.lineno, exc.msg)) from exc
+    if "from __future__ import" not in text:
+        return
+    body = text.lstrip("\ufeff")
+    lines = body.splitlines()
+    i = 0
+    if lines and lines[0].startswith("#!"):
+        i = 1
+    while i < len(lines) and (not lines[i].strip() or lines[i].lstrip().startswith("#")):
+        i += 1
+    mark = lines[i][:3] if i < len(lines) else ""
+    if mark in (chr(34) * 3, chr(39) * 3):
+        if lines[i].count(mark) < 2:
+            i += 1
+            while i < len(lines) and mark not in lines[i]:
+                i += 1
+        i += 1
+    while i < len(lines) and not lines[i].strip():
+        i += 1
+    if i >= len(lines) or not lines[i].startswith("from __future__ import"):
+        raise SystemExit("FAIL  future import not first in %s" % path.as_posix())
+
+
+def _near(lines: list[str], needle: str) -> str:
+    want = needle.strip()
+    best = 0
+    score = -1
+    for i, ln in enumerate(lines):
+        got = ln.strip()
+        n = 0
+        for ch_a, ch_b in zip(got, want):
+            if ch_a != ch_b:
+                break
+            n += 1
+        if n > score:
+            score = n
+            best = i
+    lo = max(0, best - 1)
+    hi = min(len(lines), best + 2)
+    shown = " | ".join(lines[j].strip() for j in range(lo, hi))
+    return "line %d: %s" % (best + 1, shown)
+
+
+def func_count(text: str, name: str) -> int:
+    n = 0
+    for ln in text.splitlines():
+        if ln.startswith("static func " + name + "(") or ln.startswith("func " + name + "("):
+            n += 1
+    return n
+
+def write_text(path: Path, text: str) -> None:
+    data = text.replace("\r\n", "\n").replace("\r", "\n")
+    write_text(path, data.replace("\n", "\r\n"), encoding="utf-8", newline="")
+
+
 def repo_root(start: Path | None = None) -> Path:
     if start is None:
         start = Path(__file__).resolve()
@@ -39,8 +111,11 @@ def read_text(path: Path) -> str:
 
 
 def write_text(path: Path, text: str) -> None:
+    if path.suffix == ".gd":
+        text = _gd_tabs(text)
+    _py_ok(path, text)
     md.write_utf8(path, text, mkdir=True)
-    print(f"  wrote {path.as_posix()} ({path.stat().st_size} bytes)")
+    print("  wrote %s (%d bytes)" % (path.as_posix(), path.stat().st_size))
 
 
 def _variants(old: str) -> list[str]:
@@ -70,6 +145,76 @@ def replace_once_any(text: str, olds: list[str], new: str, where: str) -> str:
     raise SystemExit(f"FAIL  patch miss in {where}: {last[:96]!r}")
 
 
+
+def func_span(text: str, name: str) -> tuple[int, int]:
+    """Line range [start, end) for column-0 func name( / static func name(."""
+    lines = text.splitlines(keepends=True)
+    start = -1
+    for i, ln in enumerate(lines):
+        if ln.startswith("static func " + name + "(") or ln.startswith("func " + name + "("):
+            start = i
+            break
+    if start < 0:
+        raise SystemExit(f"FAIL  func {name} missing")
+    end = start + 1
+    while end < len(lines):
+        ln = lines[end]
+        if ln.startswith("func ") or ln.startswith("static func "):
+            break
+        end += 1
+    return start, end
+
+
+def replace_func(path: Path, name: str, new_src: str) -> None:
+    text = read_text(path)
+    if func_count(text, name) > 1:
+        raise SystemExit("FAIL  func %s duplicated in %s" % (name, path.as_posix()))
+    lines = text.splitlines(keepends=True)
+    start, end = func_span(text, name)
+    body = new_src if new_src.endswith("\n") else new_src + "\n"
+    write_text(path, "".join(lines[:start]) + body + "".join(lines[end:]))
+
+
+def upsert_func(path: Path, name: str, new_src: str) -> None:
+    text = read_text(path)
+    if func_count(text, name) > 1:
+        raise SystemExit("FAIL  func %s duplicated in %s" % (name, path.as_posix()))
+    if func_count(text, name) == 1:
+        replace_func(path, name, new_src)
+        return
+    body = new_src if new_src.endswith("\n") else new_src + "\n"
+    if not body.endswith("\n\n"):
+        body = body.rstrip("\n") + "\n\n"
+    lines = text.splitlines(keepends=True)
+    at = len(lines)
+    for i, ln in enumerate(lines):
+        if ln.startswith("func ") or ln.startswith("static func "):
+            at = i
+    write_text(path, "".join(lines[:at]) + body + "".join(lines[at:]))
+
+
+def replace_block(path: Path, start_pred, end_pred, new_src: str) -> None:
+    """Replace a line span. start_pred/end_pred are callables(line, index, lines)->bool."""
+    text = read_text(path)
+    lines = text.splitlines(keepends=True)
+    start = next((i for i, ln in enumerate(lines) if start_pred(ln, i, lines)), -1)
+    if start < 0:
+        raise SystemExit(f"FAIL  block start miss in {path.as_posix()}")
+    end = start + 1
+    while end < len(lines) and not end_pred(lines[end], end, lines):
+        end += 1
+    if end < len(lines) and end_pred(lines[end], end, lines):
+        end += 1
+    body = new_src if new_src.endswith("\n") else new_src + "\n"
+    write_text(path, "".join(lines[:start]) + body + "".join(lines[end:]))
+
+
+def run_cmd(argv: list, cwd: Path | None = None):
+    root = repo_root(cwd)
+    proc = subprocess.run(list(argv), cwd=str(root))
+    return proc.returncode, ""
+
+
 def patch_file(path: Path, old: str, new: str) -> None:
     text = replace_once(read_text(path), old, new, path.as_posix())
     write_text(path, text)
@@ -90,17 +235,26 @@ def set_read_when(path: Path, value: str) -> None:
 def ensure_line(path: Path, line: str, after: str | None = None) -> None:
     text = read_text(path)
     needle = line.rstrip("\n")
-    if needle in text:
-        print(f"  skip {path.as_posix()} ensure_line (already applied)")
+    if needle in text or any(ln.strip() == needle.strip() for ln in text.splitlines()):
+        print("  skip %s ensure_line (already applied)" % path.as_posix())
         return
     insert = needle + "\n"
     if after is None:
         write_text(path, text.rstrip("\n") + "\n" + insert)
         return
-    if after not in text:
-        raise SystemExit(f"FAIL  ensure_line anchor miss in {path.as_posix()}: {after[:96]!r}")
-    write_text(path, text.replace(after, after + insert, 1))
-
+    lines = text.splitlines(keepends=True)
+    want = after.strip()
+    hit = -1
+    for i, ln in enumerate(lines):
+        if ln.strip() == want or after in ln:
+            hit = i
+            break
+    if hit < 0:
+        raise SystemExit(
+            "FAIL  ensure_line anchor miss in %s: %r near %s" % (path.as_posix(), after[:96], _near(lines, after))
+        )
+    lines.insert(hit + 1, insert if insert.endswith("\n") else insert + "\n")
+    write_text(path, "".join(lines))
 
 def drop_citations(path: Path, needles: list[str]) -> None:
     text = read_text(path)
@@ -270,4 +424,15 @@ def dump_job(root: Path | None, job: str, script: str | None = None) -> tuple[in
         err = (proc.stderr or b"").decode("utf-8", errors="replace")
         if err:
             out(err[-2000:])
+    broke = "COMPILE" in body or "clean=false" in body or compile_broke(body)
+    if broke and hits:
+        extra: list[str] = []
+        for p in hits[0].parent.glob("*"):
+            n = p.name.lower()
+            if p.is_file() and ("err" in n) and p.suffix.lower() in {".log", ".txt"}:
+                extra.append(p.read_text(encoding="utf-8-sig", errors="replace")[-4000:])
+        if extra:
+            out("--- err log ---")
+            out("\n".join(extra))
+            body = body + "\n" + "\n".join(extra)
     return int(proc.returncode), body

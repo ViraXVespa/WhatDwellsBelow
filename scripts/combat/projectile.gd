@@ -25,7 +25,6 @@ var lock_t := 0.0
 const EMBED := 0.05
 const SHOULDER := 1.08
 
-
 func setup(from: Vector3, aim: Vector2, spd: float, rng: float, dmg: float, need_los: bool, is_crit := false, from_enemy := false, tex_path := "", player_xp := false) -> void:
 	dir = aim.normalized() if aim.length_squared() > 0.0001 else Vector2.DOWN
 	speed = spd
@@ -58,7 +57,6 @@ func setup(from: Vector3, aim: Vector2, spd: float, rng: float, dmg: float, need
 	add_child(spr)
 	_face()
 
-
 func _face() -> void:
 	var fwd := Vector3(dir.x, 0.0, dir.y)
 	if fwd.length_squared() <= 0.0001:
@@ -79,13 +77,11 @@ func _face() -> void:
 			thick = float(spr.texture.get_height()) * spr.pixel_size
 		spr.position = Vector3(0.0, thick * 0.3, 0.0)
 
-
 func _tip() -> Vector3:
 	var extra := 0.18
 	if spr and spr.texture:
 		extra = maxf(0.12, float(spr.texture.get_width()) * spr.pixel_size * 0.45)
 	return global_position + Vector3(dir.x, 0.0, dir.y) * extra
-
 
 func _tip_r() -> float:
 	var r := 0.16
@@ -93,11 +89,9 @@ func _tip_r() -> float:
 		r = float(App.bal.arrow_tip_radius)
 	return maxf(0.08, r)
 
-
 func _near_tip(host: Node3D, tip: Vector3, rad: float) -> bool:
 	var d: float = Vector2(host.global_position.x - tip.x, host.global_position.z - tip.z).length()
 	return d <= rad + 1.6
-
 
 func _physics_process(delta: float) -> void:
 	var step := speed * delta
@@ -120,10 +114,8 @@ func _physics_process(delta: float) -> void:
 		_flush()
 		queue_free()
 
-
 func _cov_at(host: Node3D) -> float:
 	return Cover.hit_shot(_tip(), dir, _tip_r(), host)
-
 
 func _strike(delta: float) -> bool:
 	var tip := _tip()
@@ -169,7 +161,6 @@ func _strike(delta: float) -> bool:
 		return _resolve(lock_e, lock_cov)
 	return false
 
-
 func _resolve(e: Node, cov: float) -> bool:
 	if e == null or not is_instance_valid(e):
 		_clear_lock()
@@ -188,17 +179,14 @@ func _resolve(e: Node, cov: float) -> bool:
 	live_dmg *= maxf(0.05, 1.0 - cov)
 	return false
 
-
 func _flush() -> void:
 	if lock_e != null:
 		_resolve(lock_e, lock_cov)
-
 
 func _clear_lock() -> void:
 	lock_e = null
 	lock_cov = 0.0
 	lock_t = 0.0
-
 
 func _smash_breakables(tip: Vector3, rad: float) -> void:
 	if hurt_player:
@@ -220,7 +208,6 @@ func _smash_breakables(tip: Vector3, rad: float) -> void:
 		seen[id] = true
 		if b.has_method("take_hit"):
 			b.take_hit(damage, dir, false)
-
 
 func _hit(e: Node, cov: float) -> void:
 	if "last_glance" in e:

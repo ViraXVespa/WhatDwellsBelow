@@ -3,7 +3,6 @@ extends Object
 const Make := preload("res://scripts/data/progress_make.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
 
-
 static func required_ok(slot: String, it: Dictionary) -> bool:
 	if it.is_empty() or str(it.get("slot", "")) != slot:
 		return false
@@ -12,7 +11,6 @@ static func required_ok(slot: String, it: Dictionary) -> bool:
 	if slot == "tool":
 		return Rules.BUILTIN_TOOLS.find(str(it.get("tool", ""))) >= 0
 	return false
-
 
 static func required_piece(p: Object, slot: String) -> Dictionary:
 	if slot != "weapon" and slot != "tool":
@@ -33,7 +31,6 @@ static func required_piece(p: Object, slot: String) -> Dictionary:
 		t = "pickaxe"
 	return Make.make_tool(p, t)
 
-
 static func ensure_required_slots(p: Object) -> void:
 	for slot in ["weapon", "tool"]:
 		var cur: Dictionary = p.slots.get(slot, {})
@@ -41,7 +38,6 @@ static func ensure_required_slots(p: Object) -> void:
 			p.slots[slot] = required_piece(p, slot)
 		if slot == "weapon":
 			_sync_weapon(p)
-
 
 static func _sync_weapon(p: Object) -> void:
 	var it: Dictionary = p.slots.get("weapon", {})

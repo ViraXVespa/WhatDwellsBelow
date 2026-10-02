@@ -65,12 +65,16 @@ def ensure_trailing_newline(text: str) -> str:
     return text
 
 
+def force_crlf(text: str) -> str:
+    return force_lf(text).replace("\n", "\r\n")
+
+
 def write_utf8(path: Path, text: str, *, mkdir: bool = False) -> None:
-    """UTF-8 text write with LF newlines and a trailing newline."""
+    """UTF-8 text write with CRLF newlines and a trailing newline."""
     text = maybe_gd_indent(text, path)
     if mkdir:
         path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(ensure_trailing_newline(force_lf(text)), encoding="utf-8", newline="\n")
+    path.write_text(ensure_trailing_newline(force_lf(text)).replace("\n", "\r\n"), encoding="utf-8", newline="")
 
 def write_lines(path: Path, lines: list[str], *, mkdir: bool = False) -> None:
     write_utf8(path, "\n".join(lines), mkdir=mkdir)

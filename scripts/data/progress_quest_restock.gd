@@ -2,7 +2,6 @@ extends Object
 
 ## Guild restock helper for progress.
 
-
 static func restock(p: Object) -> String:
 	var Extract := load("res://scripts/data/progress_extract.gd")
 	Extract.withdraw_bank_consumables(p)

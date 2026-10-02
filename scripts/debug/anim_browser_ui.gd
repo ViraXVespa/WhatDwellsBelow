@@ -6,7 +6,6 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const Review := preload("res://scripts/debug/anim_browser_review.gd")
 
-
 static func build(host: CanvasLayer) -> void:
 	Plate.dim(host)
 	var prev := ThemeS.btn("Previous (LB)", func(): host._shift_model(-1))

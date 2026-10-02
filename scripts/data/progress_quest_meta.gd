@@ -2,7 +2,6 @@ extends Object
 
 ## Quest / gear meta serialize for progress saves.
 
-
 static func starters_of(p: Object) -> Dictionary:
 	var s: Variant = p.get("starters")
 	if s is Dictionary:

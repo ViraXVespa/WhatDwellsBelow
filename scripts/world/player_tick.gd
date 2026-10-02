@@ -5,10 +5,8 @@ extends Object
 const Depth := preload("res://scripts/world/depth.gd")
 const PlayerAnim := preload("res://scripts/world/player_anim.gd")
 
-
 static func _gd(path: String) -> GDScript:
 	return load(path) as GDScript
-
 
 static func physics(host: CharacterBody3D, delta: float) -> void:
 	if bool(App.get("_menu_loading")):
@@ -103,7 +101,6 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 			App.prog.use_potion()
 		if PlayerLock.ai_just(host, "food") or App.pad_just("food"):
 			App.prog.use_food()
-
 
 static func _loco(host: CharacterBody3D, delta: float) -> void:
 	var move: Vector2 = Vector2.ZERO

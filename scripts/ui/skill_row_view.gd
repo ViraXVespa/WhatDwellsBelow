@@ -6,7 +6,6 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 
 const TRACK_COL := Color(0.18, 0.14, 0.1)
 
-
 static func skill_lab(text: String, size: int = 16, col: Color = Color(0.9, 0.84, 0.7)) -> Label:
 	var l: Label = ThemeS.lab(text, size, col, HORIZONTAL_ALIGNMENT_LEFT, false, true)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -14,7 +13,6 @@ static func skill_lab(text: String, size: int = 16, col: Color = Color(0.9, 0.84
 	l.custom_minimum_size = Vector2(0, 22)
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return l
-
 
 static func make_track() -> ColorRect:
 	var track: ColorRect = ColorRect.new()
@@ -24,7 +22,6 @@ static func make_track() -> ColorRect:
 	track.color = TRACK_COL
 	track.clip_contents = true
 	return track
-
 
 static func single_fill(ratio: float, fill_col: Color) -> ColorRect:
 	var track: ColorRect = make_track()
@@ -39,7 +36,6 @@ static func single_fill(ratio: float, fill_col: Color) -> ColorRect:
 	fill.offset_bottom = 0.0
 	track.add_child(fill)
 	return track
-
 
 static func row_single(text: String, ratio: float, fill_col: Color) -> PanelContainer:
 	var shell: PanelContainer = ThemeS.skill_row()

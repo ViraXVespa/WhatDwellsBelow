@@ -4,14 +4,11 @@ const WALL := 0
 const FLOOR := 1
 const Carve := preload("res://scripts/dungeon/gen_carve.gd")
 
-
 static func idx(x: int, y: int, w: int) -> int:
 	return y * w + x
 
-
 static func _ri(r: Dictionary, k: String) -> int:
 	return int(r[k])
-
 
 static func outside_floor(grid: PackedByteArray, w: int, h: int, boss: Dictionary, x: int, y: int) -> bool:
 	if x < 0 or y < 0 or x >= w or y >= h:
@@ -23,7 +20,6 @@ static func outside_floor(grid: PackedByteArray, w: int, h: int, boss: Dictionar
 	if x >= bx and y >= by and x < bx + bw and y < by + bh:
 		return false
 	return grid[idx(x, y, w)] == FLOOR
-
 
 static func guess_side(boss: Dictionary, cell: Vector2i) -> String:
 	var bx: int = _ri(boss, "x")
@@ -39,7 +35,6 @@ static func guess_side(boss: Dictionary, cell: Vector2i) -> String:
 	if cell.x == bx + bw - 1:
 		return "e"
 	return "s"
-
 
 static func make_opening(side: String, cells: Array) -> Dictionary:
 	var packed: Array = []
@@ -80,7 +75,6 @@ static func make_opening(side: String, cells: Array) -> Dictionary:
 		"reach": maxf(1.85, span * 0.5 + 1.1),
 	}
 
-
 static func boss_openings(grid: PackedByteArray, w: int, h: int, boss: Dictionary) -> Array:
 	var out: Array = []
 	if boss.is_empty():
@@ -112,7 +106,6 @@ static func boss_openings(grid: PackedByteArray, w: int, h: int, boss: Dictionar
 	out.append_array(_side_runs("w", west))
 	return out
 
-
 static func _side_runs(side: String, cells: Array) -> Array:
 	var uniq: Dictionary = {}
 	var list: Array = []
@@ -142,7 +135,6 @@ static func _side_runs(side: String, cells: Array) -> Array:
 	if not cur.is_empty():
 		runs.append(make_opening(side, cur))
 	return runs
-
 
 static func boss_door_cell(grid: PackedByteArray, w: int, h: int, boss: Dictionary, spawn: Vector2i) -> Vector2i:
 	var best: Vector2i = Vector2i(-1, -1)
@@ -175,7 +167,6 @@ static func boss_door_cell(grid: PackedByteArray, w: int, h: int, boss: Dictiona
 				best_d = d
 				best = Vector2i(x, y)
 	return best
-
 
 static func far_cell(room: Dictionary, from: Vector2i) -> Vector2i:
 	var best: Vector2i = Carve.center(room)

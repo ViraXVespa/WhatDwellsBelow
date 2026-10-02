@@ -2,7 +2,6 @@ extends Object
 
 const Roster := preload("res://scripts/combat/roster.gd")
 
-
 static func add_enemy(host: Node, id: String, pos: Vector3, gid: int, named: bool, nname: String) -> Node:
 	var EnemyS: GDScript = load("res://scripts/combat/enemy.gd") as GDScript
 	var e: CharacterBody3D = EnemyS.new() as CharacterBody3D
@@ -18,7 +17,6 @@ static func add_enemy(host: Node, id: String, pos: Vector3, gid: int, named: boo
 		host.types_present.append(id)
 	return e
 
-
 static func note_enemy_hit(host: Node, e: Node, dmg: float) -> void:
 	if e == null or not is_instance_valid(e):
 		return
@@ -33,7 +31,6 @@ static func note_enemy_hit(host: Node, e: Node, dmg: float) -> void:
 		return
 	if float(g.hp) <= float(g.max_hp) * (1.0 - App.bal.flee_hp_frac):
 		trigger_flee(host, gid)
-
 
 static func trigger_flee(host: Node, gid: int) -> Node:
 	if not host.groups.has(gid):
@@ -61,13 +58,11 @@ static func trigger_flee(host: Node, gid: int) -> Node:
 		host.flee_used += 1
 	return best
 
-
 static func spawn_reinforcement(host: Node, id: String, from: Vector3, gid: int) -> Node:
 	var cell: Vector2i = host._walkable_near(Vector2i(int(from.x), int(from.z)), 3, false)
 	if cell == Vector2i(-1, -1):
 		return null
 	return host._add_enemy(id, host._cell_pos(cell), gid, false, "")
-
 
 static func _pressure_cap(host: Node) -> bool:
 	if not host.has_meta("pressure_floor") or int(host.get_meta("pressure_floor")) != App.floor_n:
@@ -79,11 +74,9 @@ static func _pressure_cap(host: Node) -> bool:
 		cap = maxi(0, int(App.bal.get("pressure_waves")))
 	return used < cap
 
-
 static func _note_pressure_wave(host: Node) -> void:
 	var used := int(host.get_meta("pressure_waves_used"))
 	host.set_meta("pressure_waves_used", used + 1)
-
 
 static func tick_pressure(host: Node, delta: float, grew: bool) -> void:
 	if host.player == null:
@@ -109,7 +102,6 @@ static func tick_pressure(host: Node, delta: float, grew: bool) -> void:
 		host.idle_t = 0.0
 		host.noreveal_t = 0.0
 		host.pressure_cd_t = App.bal.pressure_cd
-
 
 static func pressure_spawn(host: Node) -> int:
 	if host.player and host.is_safe_world(host.player.global_position):

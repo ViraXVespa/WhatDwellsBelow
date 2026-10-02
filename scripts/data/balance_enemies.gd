@@ -5,7 +5,6 @@ const IDS: PackedStringArray = [
 	"archer", "shaman", "imp", "wolf", "beetle", "wisp",
 ]
 
-
 static func defaults() -> Dictionary:
 	return {
 		"slime": {"hp": 48.0, "dmg": 6.0, "spd": 2.2, "range": 0.95, "def": 2.0},
@@ -22,7 +21,6 @@ static func defaults() -> Dictionary:
 		"wisp": {"hp": 36.0, "dmg": 8.0, "spd": 2.95, "range": 5.4, "def": 0.0},
 	}
 
-
 static func parse_key(name: String) -> Array:
 	if not name.begins_with("e_"):
 		return []
@@ -32,14 +30,12 @@ static func parse_key(name: String) -> Array:
 		return []
 	return [cut.substr(0, us), cut.substr(us + 1)]
 
-
 static func fill(stats: Dictionary) -> void:
 	if not stats.is_empty():
 		return
 	var src := defaults()
 	for id in src.keys():
 		stats[id] = (src[id] as Dictionary).duplicate()
-
 
 static func read_stat(stats: Dictionary, name: String) -> float:
 	var ek := parse_key(name)
@@ -51,7 +47,6 @@ static func read_stat(stats: Dictionary, name: String) -> float:
 		return float((stats[id] as Dictionary)[key])
 	return 0.0
 
-
 static func write_stat(stats: Dictionary, name: String, value: float) -> bool:
 	var ek := parse_key(name)
 	if ek.size() != 2:
@@ -62,7 +57,6 @@ static func write_stat(stats: Dictionary, name: String, value: float) -> bool:
 		stats[id] = {}
 	(stats[id] as Dictionary)[key] = value
 	return true
-
 
 static func append_schema(rows: Array) -> void:
 	for id in IDS:

@@ -4,10 +4,8 @@ extends Object
 
 const Text := preload("res://scripts/ui/gear_board/gear_board_text.gd")
 
-
 static func locked_slot(slot: String) -> bool:
 	return slot == "weapon" or slot == "tool"
-
 
 static func st(ui: CanvasLayer, msg: String) -> void:
 	if ui.has_method("_st"):
@@ -15,7 +13,6 @@ static func st(ui: CanvasLayer, msg: String) -> void:
 	elif ui.status:
 		ui.status.text = msg
 	App.sfx("ui")
-
 
 static func rebuild(ui: CanvasLayer) -> void:
 	var Sub := load("res://scripts/ui/gear_board/gear_board_sub.gd")
@@ -32,7 +29,6 @@ static func rebuild(ui: CanvasLayer) -> void:
 		ui._rebuild_inv()
 		ui._show()
 	ui.call_deferred("_focus")
-
 
 static func bag_primary(ui: CanvasLayer) -> void:
 	var it := Text.selected(ui)

@@ -2,14 +2,11 @@ extends Object
 
 const GatherRules := preload("res://scripts/world/gather_rules.gd")
 
-
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
 
-
 static func quit_in(host: Node, sec: float) -> void:
 	tree(host).create_timer(sec).timeout.connect(func(): tree(host).quit())
-
 
 static func p5(host: Node) -> void:
 	var player: Variant = host.get("player")

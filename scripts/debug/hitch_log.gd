@@ -24,7 +24,6 @@ static var _whys: PackedStringArray = PackedStringArray()
 static var _mark_ms: int = 0
 static var _mark_frame: int = -1
 
-
 static func enabled() -> bool:
 	if _on >= 0:
 		return _on == 1
@@ -33,7 +32,6 @@ static func enabled() -> bool:
 	else:
 		_on = 1
 	return _on == 1
-
 
 static func begin(_host: Node = null) -> void:
 	if started or not enabled():
@@ -54,7 +52,6 @@ static func begin(_host: Node = null) -> void:
 	hitch_n = _count_hitches()
 	_write_row(_session_row())
 
-
 static func tick(host: Node, delta: float) -> void:
 	if not enabled():
 		return
@@ -70,13 +67,11 @@ static func tick(host: Node, delta: float) -> void:
 		return
 	_note(host, delta)
 
-
 static func copy_text() -> String:
 	var txt: String = _read_all()
 	if txt != "":
 		DisplayServer.clipboard_set(txt)
 	return txt
-
 
 static func clear_log() -> void:
 	_close()
@@ -88,10 +83,8 @@ static func clear_log() -> void:
 	if enabled():
 		begin()
 
-
 static func close() -> void:
 	_close()
-
 
 static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
 	var now: int = Time.get_ticks_msec()
@@ -110,7 +103,6 @@ static func mark(reason: String, origin: Vector2i = Vector2i.ZERO) -> void:
 		_whys.remove_at(0)
 	_whys.append("%s:%d" % [reason, dt])
 
-
 static func status_line() -> String:
 	if not enabled():
 		return "Hitch log off"
@@ -118,7 +110,6 @@ static func status_line() -> String:
 	if worst_ms > 0.0:
 		worst = str(snappedf(worst_ms, 0.1))
 	return "Hitch %d/%d  worst %s ms  %s" % [hitch_n, CAP, worst, file_path]
-
 
 static func _note(host: Node, delta: float) -> void:
 	var dt_ms: float = snappedf(delta * 1000.0, 0.1)
@@ -141,7 +132,6 @@ static func _note(host: Node, delta: float) -> void:
 			_fh.seek_end()
 		hitch_n = _count_hitches()
 
-
 static func _session_row() -> Dictionary:
 	var row: Dictionary = {
 		"ev": "session",
@@ -153,7 +143,6 @@ static func _session_row() -> Dictionary:
 		"godot": str(Engine.get_version_info().get("string", "")),
 	}
 	return row
-
 
 static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 	var t_sec: float = 0.0
@@ -180,7 +169,6 @@ static func _hitch_row(host: Node, dt_ms: float) -> Dictionary:
 		row["gy"] = gy
 	return row
 
-
 static func _where(host: Node) -> String:
 	if App != null and App.in_dungeon:
 		return "dungeon"
@@ -194,13 +182,11 @@ static func _where(host: Node) -> String:
 		return "hub"
 	return scn
 
-
 static func _write_row(row: Dictionary) -> void:
 	if _fh == null:
 		return
 	_fh.store_line(JSON.stringify(row))
 	_fh.flush()
-
 
 static func _trim_file() -> void:
 	if file_path == "" or not FileAccess.file_exists(file_path):
@@ -233,7 +219,6 @@ static func _trim_file() -> void:
 		out.store_line(line)
 	out.close()
 
-
 static func _count_hitches() -> int:
 	var raw: String = _read_all()
 	if raw == "":
@@ -244,12 +229,10 @@ static func _count_hitches() -> int:
 			n += 1
 	return n
 
-
 static func _read_all() -> String:
 	if file_path != "" and FileAccess.file_exists(file_path):
 		return FileAccess.get_file_as_string(file_path)
 	return ""
-
 
 static func _ver_label() -> String:
 	var txt: String = FileAccess.get_file_as_string("res://scripts/data/version.json")
@@ -260,14 +243,12 @@ static func _ver_label() -> String:
 		return str((parsed as Dictionary).get("label", ""))
 	return ""
 
-
 static func _localhost() -> bool:
 	if not OS.has_feature("web"):
 		return false
 	var host: Variant = JavaScriptBridge.eval("window.location.hostname", true)
 	var h: String = str(host)
 	return h == "localhost" or h == "127.0.0.1" or h == "[::1]"
-
 
 static func _close() -> void:
 	if _fh != null:

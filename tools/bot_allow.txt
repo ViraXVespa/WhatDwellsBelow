@@ -16,6 +16,10 @@
 
 scripts/*
 tools/bot_status.py
+tools/bot_smokes.py
+tools/bot_warnscan.py
+tools/bot_warnscan_lib.py
+tools/list_unused_funcs.py
 tools/check_script_cap.py
 tools/bot_allow.txt
 tools/bot_opt.py

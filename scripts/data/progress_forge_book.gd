@@ -4,7 +4,6 @@ const Affix := preload("res://scripts/data/affixes.gd")
 
 const FORGE_SLOTS: PackedStringArray = ["weapon", "tool", "head", "body", "legs"]
 
-
 static func book(p: Object) -> Dictionary:
 	var raw: Variant = p.get("forge_book")
 	if raw is Dictionary:
@@ -12,13 +11,11 @@ static func book(p: Object) -> Dictionary:
 	p.set("forge_book", {})
 	return p.forge_book
 
-
 static func entry(p: Object, slot: String, type_id: String, rarity: String) -> Dictionary:
 	var raw: Variant = book(p).get(Affix.book_key(slot, type_id, rarity), {})
 	if raw is Dictionary:
 		return raw
 	return {}
-
 
 static func unlocks_for(p: Object, slot: String, type_id: String, rarity: String) -> Dictionary:
 	var ent: Dictionary = entry(p, slot, type_id, rarity)
@@ -42,18 +39,14 @@ static func unlocks_for(p: Object, slot: String, type_id: String, rarity: String
 		"ilvl": int(ent.get("ilvl", 0)),
 	}
 
-
 static func max_ilvl_rarity(p: Object, slot: String, type_id: String, rarity: String) -> int:
 	return int(entry(p, slot, type_id, rarity).get("ilvl", 0))
-
 
 static func max_ilvl_type(p: Object, slot: String, type_id: String) -> int:
 	return maxi(max_ilvl_rarity(p, slot, type_id, "green"), max_ilvl_rarity(p, slot, type_id, "blue"))
 
-
 static func max_ilvl(p: Object, slot: String, type_id: String) -> int:
 	return max_ilvl_type(p, slot, type_id)
-
 
 static func types_for(p: Object, slot: String) -> PackedStringArray:
 	var seen: Dictionary = {}
@@ -66,10 +59,8 @@ static func types_for(p: Object, slot: String) -> PackedStringArray:
 		out.append(str(id))
 	return out
 
-
 static func can_forge_rarity(p: Object, slot: String, type_id: String, rarity: String) -> bool:
 	return rarity != "white" and max_ilvl_rarity(p, slot, type_id, rarity) > 0
-
 
 static func can_analyze(p: Object, it: Dictionary) -> bool:
 	if it.is_empty():
@@ -87,7 +78,6 @@ static func can_analyze(p: Object, it: Dictionary) -> bool:
 	if Rules.is_starter(p, it):
 		return false
 	return true
-
 
 static func is_duplicate(p: Object, it: Dictionary) -> bool:
 	if it.is_empty() or not can_analyze(p, it):
@@ -121,7 +111,6 @@ static func is_duplicate(p: Object, it: Dictionary) -> bool:
 		if float(lucks.get(id, 0.0)) < float(row.get("luck", 0.0)):
 			return false
 	return true
-
 
 static func grant(p: Object, it: Dictionary) -> void:
 	if it.is_empty():
@@ -160,7 +149,6 @@ static func grant(p: Object, it: Dictionary) -> void:
 	b[Affix.book_key(slot, type_id, rarity)] = ent
 	p.set("forge_book", b)
 
-
 static func migrate(p: Object) -> void:
 	var old: Variant = p.get("analyzed")
 	if not (old is Array) or old.is_empty():
@@ -170,18 +158,14 @@ static func migrate(p: Object) -> void:
 			grant(p, raw)
 	p.analyzed = []
 
-
 static func type_of(it: Dictionary) -> String:
 	return Affix.type_of(it)
-
 
 static func _type_of(it: Dictionary) -> String:
 	return Affix.type_of(it)
 
-
 static func _stat_key(id: String) -> String:
 	return Affix.stat_key(id)
-
 
 static func _traits_of(it: Dictionary) -> Array:
 	var raw: Variant = it.get("affixes", [])

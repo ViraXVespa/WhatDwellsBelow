@@ -5,21 +5,17 @@ const FLOOR := 1
 const Carve := preload("res://scripts/dungeon/gen_carve.gd")
 const Place := preload("res://scripts/dungeon/gen_rooms_place.gd")
 
-
 static func idx(x: int, y: int, w: int) -> int:
 	return y * w + x
 
-
 static func min_boss_sep(w: int, h: int) -> int:
 	return maxi(16, int(maxf(w, h) * 0.5))
-
 
 static func find_kind(rooms: Array, kind: String) -> Dictionary:
 	for r in rooms:
 		if r.kind == kind:
 			return r
 	return {}
-
 
 static func kind_centers(rooms: Array, kind: String) -> Array:
 	var out: Array = []
@@ -28,14 +24,11 @@ static func kind_centers(rooms: Array, kind: String) -> Array:
 			out.append(Carve.center(r))
 	return out
 
-
 static func mark_ambushes(grid: PackedByteArray, w: int, h: int, rooms: Array, bal: Object = null) -> Array:
 	return Place.mark_ambushes(grid, w, h, rooms, bal)
 
-
 static func mark_deadends(grid: PackedByteArray, w: int, h: int, rooms: Array) -> Array:
 	return Place.mark_deadends(grid, w, h, rooms)
-
 
 static func bfs(grid: PackedByteArray, w: int, h: int, start: Vector2i) -> PackedInt32Array:
 	var dist: PackedInt32Array = PackedInt32Array()
@@ -79,7 +72,6 @@ static func bfs(grid: PackedByteArray, w: int, h: int, start: Vector2i) -> Packe
 				q.append(n3)
 	return dist
 
-
 static func cell_dist(dist: PackedInt32Array, w: int, c: Vector2i) -> int:
 	if c.x < 0 or c.y < 0:
 		return -1
@@ -88,14 +80,12 @@ static func cell_dist(dist: PackedInt32Array, w: int, c: Vector2i) -> int:
 		return -1
 	return dist[i]
 
-
 static func shuffle_i(rng: RandomNumberGenerator, arr: Array) -> void:
 	for i in arr.size():
 		var j := rng.randi_range(i, arr.size() - 1)
 		var tmp: Variant = arr[i]
 		arr[i] = arr[j]
 		arr[j] = tmp
-
 
 static func assign_extract_gates(rooms: Array, rng: RandomNumberGenerator, bal: Object) -> void:
 	var want := maxi(1, mini(3, int(bal.get("max_clerks"))))
@@ -146,7 +136,6 @@ static func assign_extract_gates(rooms: Array, rng: RandomNumberGenerator, bal: 
 			if str(r.kind) == "normal" and int(r.w) >= 5 and int(r.y) >= 1:
 				r.kind = "extract_gate"
 				break
-
 
 static func assign_kinds(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, bal: Object) -> void:
 	var spawn_i := 0
@@ -218,7 +207,6 @@ static func assign_kinds(rng: RandomNumberGenerator, grid: PackedByteArray, w: i
 			if str(r.kind) == "normal":
 				r.kind = "puzzle"
 				break
-
 
 static func fallback(floor_n: int, w: int, h: int, cycle_of: Callable, boss_title: Callable, is_gate_master: Callable, door_fn: Callable, openings_fn: Callable, far_fn: Callable, guess_fn: Callable, make_fn: Callable) -> Dictionary:
 	w = maxi(28, w)

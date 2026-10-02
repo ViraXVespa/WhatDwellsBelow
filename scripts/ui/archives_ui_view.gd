@@ -5,17 +5,14 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const SplitView := preload("res://scripts/ui/split_menu_view.gd")
 
-
 static func rebuild(host: Node) -> void:
 	SplitView.rebuild_list(host)
 	rebuild_info(host)
 	apply_col(host)
 	host.call_deferred("_focus_col")
 
-
 static func rebuild_list(host: Node) -> void:
 	SplitView.rebuild_list(host)
-
 
 static func rebuild_info(host: Node) -> void:
 	for c: Node in host.info_box.get_children():
@@ -31,41 +28,32 @@ static func rebuild_info(host: Node) -> void:
 	SplitView.wire_vert(host.info_btns)
 	path_text(host)
 
-
 static func paint_list(host: Node) -> void:
 	SplitView.paint_list(host)
 
-
 static func place_chevron(host: Node) -> void:
 	SplitView.place_chevron(host)
-
 
 static func apply_col(host: Node) -> void:
 	SplitView.apply_col(host)
 	hint(host)
 	path_text(host)
 
-
 static func set_col_focus(host: Node) -> void:
 	SplitView.set_col_focus(host)
-
 
 static func focus_col(host: Node) -> void:
 	SplitView.focus_col(host)
 
-
 static func first_enabled_info(host: Node) -> Button:
 	return SplitView.first_enabled_info(host)
-
 
 static func wire_vert(btns: Array) -> void:
 	SplitView.wire_vert(btns)
 
-
 static func add_info_btn(host: Node, b: Button) -> void:
 	host.info_box.add_child(b)
 	host.info_btns.append(b)
-
 
 static func hint(host: Node) -> void:
 	if not (host is CanvasLayer):
@@ -86,7 +74,6 @@ static func hint(host: Node) -> void:
 		extra.append({"action": "ui_cancel", "verb": "back"})
 	PromptView.footer(host as CanvasLayer, extra)
 
-
 static func path_text(host: Node) -> void:
 	if host._path == null:
 		return
@@ -94,7 +81,6 @@ static func path_text(host: Node) -> void:
 		host._path.text = str(host.split_path_text())
 		return
 	host._path.text = "Snapshots"
-
 
 static func info_panel(host: Node) -> void:
 	var e: Dictionary = host._cur()
@@ -109,7 +95,6 @@ static func info_panel(host: Node) -> void:
 	add_info_btn(host, ThemeS.btn("Documents", host._on_docs, docs.size() > 0))
 	add_info_btn(host, ThemeS.btn("Play", host._on_play))
 
-
 static func docs_panel(host: Node) -> void:
 	var e: Dictionary = host._cur()
 	host.info_box.add_child(ThemeS.lab("%s — Documents" % str(e.label), 26, Color(0.95, 0.86, 0.55)))
@@ -121,7 +106,6 @@ static func docs_panel(host: Node) -> void:
 		var ii: int = i
 		add_info_btn(host, ThemeS.btn(Docs.display_name(str(docs[i])), func() -> void: host._open_read(ii)))
 	add_info_btn(host, ThemeS.btn("Back to info", host._back))
-
 
 static func read_panel(host: Node) -> void:
 	var e: Dictionary = host._cur()

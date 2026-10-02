@@ -5,7 +5,6 @@ extends Object
 const Grid := preload("res://scripts/debug/debug_menu/debug_menu_val_grid.gd")
 const Page := preload("res://scripts/debug/debug_menu/debug_menu_val_page.gd")
 
-
 static func page_values(host) -> void:
 	Page.page_values(host)
 
@@ -25,8 +24,6 @@ static func fly(host, name: String) -> void:
 		cur = float(host.val_rows[host.val_i].sp.value)
 	host.fly.text = "%s  ·  fresh ideal %.2f  ·  progressed ideal %.2f  ·  current %.2f" % [name, f, p, cur]
 
-
-
 static func val_sb(_host, sel: bool, edit: bool) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = Color(0.08, 0.07, 0.07, 0.55)
@@ -41,8 +38,6 @@ static func val_sb(_host, sel: bool, edit: bool) -> StyleBoxFlat:
 		s.bg_color = Color(0.32, 0.22, 0.08, 1)
 		s.border_color = Color(1, 0.9, 0.45, 1)
 	return s
-
-
 
 static func val_spin_sb(_host, sel: bool, edit: bool) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
@@ -59,8 +54,6 @@ static func val_spin_sb(_host, sel: bool, edit: bool) -> StyleBoxFlat:
 		s.border_color = Color(1, 0.92, 0.5, 1)
 	return s
 
-
-
 static func val_paint(host) -> void:
 	Page.val_paint(host)
 
@@ -75,8 +68,6 @@ static func val_reveal(host) -> void:
 	if shell and not shell.is_queued_for_deletion() and host.scroll.has_method("ensure_control_visible"):
 		host.scroll.ensure_control_visible(shell)
 
-
-
 static func val_nudge(host, delta_i: int) -> void:
 	Page.val_nudge(host, delta_i)
 
@@ -85,8 +76,6 @@ static func val_nudge_col(host, delta_i: int) -> void:
 		return
 	Grid.nudge_col(host, delta_i)
 	val_paint(host)
-
-
 
 static func val_accept(host) -> void:
 	if str(host.val_mode) == "cats":
@@ -107,8 +96,6 @@ static func val_accept(host) -> void:
 	host.val_edit = true
 	host.val_mode = "edit"
 	val_paint(host)
-
-
 
 static func val_cancel(host) -> bool:
 	if host.val_edit:
@@ -131,15 +118,11 @@ static func val_cancel(host) -> bool:
 		return true
 	return false
 
-
-
 static func page_profiles(host) -> void:
 	Page.page_profiles(host)
 
 static func dir() -> String:
 	return "user://wdb_profiles"
-
-
 
 static func list_profiles() -> PackedStringArray:
 	var d := DirAccess.open("user://")
@@ -157,8 +140,6 @@ static func list_profiles() -> PackedStringArray:
 		f = pd.get_next()
 	return out
 
-
-
 static func save_profile(host) -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir()))
 	var data := {}
@@ -168,8 +149,6 @@ static func save_profile(host) -> void:
 	if f:
 		f.store_string(JSON.stringify(data))
 		host.loaded_profile = host.profile_name
-
-
 
 static func load_profile(host) -> void:
 	var f := FileAccess.open("%s/%s.json" % [dir(), host.profile_name], FileAccess.READ)
@@ -183,12 +162,8 @@ static func load_profile(host) -> void:
 			App.bal.setv(str(k), float(d[k]))
 		host.loaded_profile = host.profile_name
 
-
-
 static func delete_profile(host) -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("%s/%s.json" % [dir(), host.profile_name]))
-
-
 
 static func rename_profile(host) -> void:
 	var prev: String = host.loaded_profile

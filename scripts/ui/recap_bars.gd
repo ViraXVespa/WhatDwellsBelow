@@ -23,14 +23,11 @@ const COL_GAIN := Color(0.46, 0.78, 0.42)
 const COL_DUNGEON := Color(0.86, 0.74, 0.32)
 const COL_TRACK := Color(0.18, 0.14, 0.1)
 
-
 static func skill_title(id: String) -> String:
 	return str(SKILL_NAMES.get(id, id))
 
-
 static func skill_lab(text: String, size := 16, col := Color(0.9, 0.84, 0.7)) -> Label:
 	return SkillRow.skill_lab(text, size, col)
-
 
 static func make_block(host: Node, id: String, kind: String) -> Dictionary:
 	var shell := ThemeS.skill_row()
@@ -72,7 +69,6 @@ static func make_block(host: Node, id: String, kind: String) -> Dictionary:
 	shell.mouse_exited.connect(func(): on_skill_blur(host, shell))
 	return {"wrap": shell, "lab": lab, "base": base, "gain": gain}
 
-
 static func on_skill_focus(host: Node, id: String, kind: String, from: Control) -> void:
 	if from is PanelContainer:
 		(from as PanelContainer).add_theme_stylebox_override("panel", ThemeS.skill_row_sb(true))
@@ -81,19 +77,16 @@ static func on_skill_focus(host: Node, id: String, kind: String, from: Control) 
 	host.tip_from = from
 	paint_tip(host)
 
-
 static func on_skill_blur(host: Node, from: Control) -> void:
 	if from is PanelContainer and not from.has_focus():
 		(from as PanelContainer).add_theme_stylebox_override("panel", ThemeS.skill_row_sb(false))
 	host.call_deferred("_blur_tip")
-
 
 static func blur_tip(host: Node) -> void:
 	var f := host.get_viewport().gui_get_focus_owner()
 	if f != null and f.has_meta("skill_id"):
 		return
 	hide_tip(host)
-
 
 static func hide_tip(host: Node) -> void:
 	host.tip_id = ""
@@ -102,7 +95,6 @@ static func hide_tip(host: Node) -> void:
 	if host.tip_host:
 		host.tip_host.visible = false
 
-
 static func tip_lv(host: Node, id: String, kind: String) -> int:
 	var start := float(host.perm0.get(id, 0.0))
 	if kind == "run":
@@ -110,7 +102,6 @@ static func tip_lv(host: Node, id: String, kind: String) -> int:
 			return CombatP.level_from_xp(App.prog, start)
 		return CombatP.level_from_xp(App.prog, start + float(host.shown.get(id, 0.0)))
 	return CombatP.level_from_xp(App.prog, start + float(host.gain_now.get(id, 0.0)))
-
 
 static func paint_tip(host: Node) -> void:
 	if host.tip_id == "" or host.tip_from == null or not is_instance_valid(host.tip_from):
@@ -133,13 +124,11 @@ static func paint_tip(host: Node) -> void:
 	host.tip_host.position = pos
 	host.tip_host.visible = true
 
-
 static func set_span(fill: ColorRect, left_r: float, right_r: float) -> void:
 	fill.anchor_left = clampf(left_r, 0.0, 1.0)
 	fill.anchor_right = clampf(right_r, 0.0, 1.0)
 	fill.offset_left = 0.0
 	fill.offset_right = 0.0
-
 
 static func perm_ratios(start_xp: float, gain: float) -> Vector2:
 	var total := start_xp + gain
@@ -151,7 +140,6 @@ static func perm_ratios(start_xp: float, gain: float) -> Vector2:
 	var base_r := CombatP.xp_ratio(App.prog, start_xp)
 	return Vector2(base_r, clampf(into - base_r, 0.0, 1.0))
 
-
 static func xfer_speed(host: Node, id: String, rem: float) -> float:
 	var start := float(host.run0.get(id, 0.0))
 	var peak := maxf(8.0, start * 1.8)
@@ -159,7 +147,6 @@ static func xfer_speed(host: Node, id: String, rem: float) -> float:
 		return peak
 	var p := clampf(1.0 - rem / start, 0.0, 1.0)
 	return 8.0 + (peak - 8.0) * sin(PI * p)
-
 
 static func refresh(host: Node) -> void:
 	for id in host.rows.keys():

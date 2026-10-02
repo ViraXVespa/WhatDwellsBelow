@@ -6,9 +6,7 @@ const GROUND_D := 32
 const GROUND_OX := -2
 const GROUND_OZ := -2
 
-
 static var _fence_mat: StandardMaterial3D
-
 
 static func _slab(host: Node3D) -> Vector4i:
     var n: Node = host
@@ -18,7 +16,6 @@ static func _slab(host: Node3D) -> Vector4i:
             return Vector4i(int(lay.ground_ox), int(lay.ground_oz), int(lay.ground_w), int(lay.ground_d))
         n = n.get_parent()
     return Vector4i(GROUND_OX, GROUND_OZ, GROUND_W, GROUND_D)
-
 
 static func fence(host: Node3D) -> void:
     var slab: Vector4i = _slab(host)
@@ -33,7 +30,6 @@ static func fence(host: Node3D) -> void:
     fence_run(host, Vector3(float(ox) + float(gw) * 0.5, y, float(oz + gd) - 0.08), Vector3(float(gw), h, t), true)
     fence_run(host, Vector3(float(ox) + 0.08, y, float(oz) + float(gd) * 0.5), Vector3(t, h, float(gd)), false)
     fence_run(host, Vector3(float(ox + gw) - 0.08, y, float(oz) + float(gd) * 0.5), Vector3(t, h, float(gd)), false)
-
 
 static func fence_run(host: Node3D, pos: Vector3, box_size: Vector3, along_x: bool) -> void:
     var body := StaticBody3D.new()
@@ -57,12 +53,10 @@ static func fence_run(host: Node3D, pos: Vector3, box_size: Vector3, along_x: bo
         var ppos: Vector3 = Vector3(off, 0.02, 0.0) if along_x else Vector3(0.0, 0.02, off)
         fence_box(body, Vector3(0.18, box_size.y, 0.18), ppos, wood)
 
-
 static func fence_rail_size(along_x: bool, length: float, thick: float, tall: float) -> Vector3:
     if along_x:
         return Vector3(length, tall, thick)
     return Vector3(thick, tall, length)
-
 
 static func fence_box(host: Node3D, box_size: Vector3, local: Vector3, mat: StandardMaterial3D) -> void:
     var vis := MeshInstance3D.new()
@@ -73,7 +67,6 @@ static func fence_box(host: Node3D, box_size: Vector3, local: Vector3, mat: Stan
     vis.material_override = mat
     vis.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
     host.add_child(vis)
-
 
 static func fence_mat() -> StandardMaterial3D:
     if _fence_mat != null:

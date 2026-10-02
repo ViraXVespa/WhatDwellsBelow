@@ -33,24 +33,19 @@ var review_btn: Button
 var note_edit: LineEdit
 var note_lock := false
 
-
 func _ready() -> void:
 	layer = 86
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible = false
 
-
 static func catalog_models() -> Array:
 	return AnimScan.catalog_models()
-
 
 static func model_count() -> int:
 	return AnimScan.model_count()
 
-
 func _build() -> void:
 	Ui.build(self)
-
 
 func open_browser() -> void:
 	if preview == null:
@@ -69,7 +64,6 @@ func open_browser() -> void:
 	_load_model()
 	call_deferred("_focus_dir")
 
-
 func close_browser() -> void:
 	Review.close(self)
 	open = false
@@ -83,14 +77,11 @@ func close_browser() -> void:
 	else:
 		App.ui_open = false
 
-
 func _focus_dir() -> void:
 	Nav.focus_dir(self)
 
-
 func _focus_anim() -> void:
 	Nav.focus_anim(self)
-
 
 func _shift_model(d: int) -> void:
 	if models.is_empty():
@@ -102,7 +93,6 @@ func _shift_model(d: int) -> void:
 	else:
 		call_deferred("_focus_dir")
 
-
 func _load_model() -> void:
 	var m: Dictionary = models[model_i]
 	name_lab.text = str(m.label)
@@ -112,50 +102,17 @@ func _load_model() -> void:
 	Nav.rebuild_anims(self)
 	_show_clip()
 
-
-func _set_facing(k: String) -> void:
-	Nav.set_facing(self, k)
-
-
-func _set_anim(n: String) -> void:
-	Nav.set_anim(self, n)
-
-
 func _toggle_play() -> void:
 	Play.toggle_play(self)
-
-
-func _refresh_play() -> void:
-	Play.refresh_play(self)
-
 
 func _frames() -> Array:
 	return Play.frames(self)
 
-
 func _show_clip() -> void:
 	Play.show_clip(self)
 
-
-func _nudge_speed(delta_i: int) -> void:
-	Play.nudge_speed(self, delta_i)
-
-
-func _step_frame(delta_i: int) -> void:
-	Play.step_frame(self, delta_i)
-
-
-func _stick_play() -> void:
-	Play.stick_play(self)
-
-
 func _process(delta: float) -> void:
 	Play.tick(self, delta)
-
-
-func _pad_list_event(event: InputEvent) -> bool:
-	return Inp.pad_list_event(event)
-
 
 func _input(event: InputEvent) -> void:
 	Inp.handle_input(self, event)

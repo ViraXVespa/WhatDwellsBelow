@@ -3,7 +3,6 @@ extends Node3D
 var mesh_i: MeshInstance3D
 var mat: StandardMaterial3D
 
-
 func _ready() -> void:
 	mesh_i = MeshInstance3D.new()
 	mat = StandardMaterial3D.new()
@@ -16,11 +15,9 @@ func _ready() -> void:
 	mesh_i.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mesh_i)
 
-
 func set_color(c: Color) -> void:
 	if mat:
 		mat.albedo_color = c
-
 
 func show_arc(origin: Vector3, dir: Vector2, dist: float, arc_deg: float, col: Color) -> void:
 	global_position = Vector3(origin.x, 0.04, origin.z)
@@ -28,21 +25,14 @@ func show_arc(origin: Vector3, dir: Vector2, dist: float, arc_deg: float, col: C
 	mesh_i.mesh = _fan(dir, dist, arc_deg, 14)
 	visible = true
 
-
 func show_circle(origin: Vector3, radius: float, col: Color) -> void:
 	show_arc(origin, Vector2.DOWN, radius, 360.0, col)
-
-
-func show_cone(origin: Vector3, dir: Vector2, dist: float, cone_deg: float, col: Color) -> void:
-	show_arc(origin, dir, dist, cone_deg, col)
-
 
 func show_line(origin: Vector3, dir: Vector2, dist: float, width: float, col: Color) -> void:
 	global_position = Vector3(origin.x, 0.04, origin.z)
 	set_color(col)
 	mesh_i.mesh = _strip(dir, dist, width)
 	visible = true
-
 
 func show_spread(origin: Vector3, dir: Vector2, dist: float, cone_deg: float, count: int, width: float, col: Color) -> void:
 	global_position = Vector3(origin.x, 0.04, origin.z)
@@ -62,10 +52,8 @@ func show_spread(origin: Vector3, dir: Vector2, dist: float, cone_deg: float, co
 	mesh_i.mesh = st.commit()
 	visible = true
 
-
 func hide_now() -> void:
 	visible = false
-
 
 func _fan(dir: Vector2, dist: float, arc_deg: float, segs: int) -> ArrayMesh:
 	var st := SurfaceTool.new()
@@ -83,13 +71,11 @@ func _fan(dir: Vector2, dist: float, arc_deg: float, segs: int) -> ArrayMesh:
 		st.add_vertex(Vector3(cos(a1) * dist, 0.0, sin(a1) * dist))
 	return st.commit()
 
-
 func _strip(dir: Vector2, dist: float, width: float) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	_strip_into(st, dir, dist, width)
 	return st.commit()
-
 
 func _strip_into(st: SurfaceTool, dir: Vector2, dist: float, width: float) -> void:
 	var d := dir.normalized() if dir.length_squared() > 0.0001 else Vector2.DOWN

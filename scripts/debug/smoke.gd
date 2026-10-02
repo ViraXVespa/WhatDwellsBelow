@@ -15,7 +15,6 @@ const ShotTool := preload("res://scripts/debug/shot_tool.gd")
 
 static var enter_flag: bool = false
 
-
 static func args() -> PackedStringArray:
 	# Prefer user args (after --). Fall back to full cmdline so Steam/redirected
 	# launches still see --wdb-phaseN-smoke when user-args arrive empty.
@@ -23,7 +22,6 @@ static func args() -> PackedStringArray:
 	if user.size() > 0:
 		return user
 	return OS.get_cmdline_args()
-
 
 static func active() -> bool:
 	for a: String in args():
@@ -40,16 +38,16 @@ static func active() -> bool:
 			return true
 	return false
 
-
 static func phase(n: int) -> bool:
 	return ("--wdb-phase%d-smoke" % n) in args()
-
 
 static func hold_player() -> bool:
 	return phase(3) or phase(4) or phase(5) or phase(7)
 
-
 static func route_boot() -> bool:
+	if "--wdb-bake-camp" in args():
+		App.call_deferred("_bake_camp")
+		return true
 	if LoadTiming.hub_active():
 		App.character_type = "male"
 		App.character_chosen = true
@@ -71,9 +69,12 @@ static func route_boot() -> bool:
 		App.character_type = "male"
 		App.character_chosen = true
 		ShotTool.hide_window()
-		App.begin_run()
-		App.floor_n = ShotTool.floor_n()
-		App.run_seed = ShotTool.run_seed()
+		if ShotTool.scene_name() == "camp":
+			App.go_camp()
+		else:
+			App.begin_run()
+			App.floor_n = ShotTool.floor_n()
+			App.run_seed = ShotTool.run_seed()
 		return true
 	if phase(1) or phase(2):
 		App.go_foundation()
@@ -86,11 +87,9 @@ static func route_boot() -> bool:
 		return true
 	return false
 
-
 static func attach_foundation(host: Node) -> void:
 	if phase(1) or phase(2):
 		Early.p12(host)
-
 
 static func attach_dungeon(host: Node) -> void:
 	if DungeonMap.active():
@@ -113,17 +112,16 @@ static func attach_dungeon(host: Node) -> void:
 	if phase(9):
 		Late.p9(host)
 
-
 static func attach_camp(host: Node) -> void:
+	if ShotTool.active():
+		ShotTool.attach_dungeon(host)
 	if phase(6):
 		Late.p6(host)
 	if phase(8):
 		Late.p8(host)
 
-
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
-
 
 static func quit_in(host: Node, sec: float) -> void:
 	tree(host).create_timer(sec).timeout.connect(func(): tree(host).quit())

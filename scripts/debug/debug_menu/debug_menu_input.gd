@@ -5,7 +5,6 @@
 const Pad := preload("res://scripts/input/pad.gd")
 const DebugMenuVal := preload("res://scripts/debug/debug_menu/debug_menu_val.gd")
 
-
 static func tick(host, delta: float) -> void:
 	if not host.open or host._busy_anim():
 		return
@@ -32,7 +31,6 @@ static func tick(host, delta: float) -> void:
 		if not items.is_empty():
 			items[0].grab_focus()
 
-
 static func shift_page(host, delta_i: int) -> void:
 	if host.val_edit:
 		DebugMenuVal.val_cancel(host)
@@ -43,14 +41,12 @@ static func shift_page(host, delta_i: int) -> void:
 	host.page = pages[(i + delta_i + pages.size()) % pages.size()]
 	host._rebuild()
 
-
 static func accept_pressed(event: InputEvent) -> bool:
 	if event.is_action_pressed("ui_accept") or event.is_action_pressed("interact"):
 		return true
 	if event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_A:
 		return true
 	return false
-
 
 static func handle_input(host, event: InputEvent) -> void:
 	if not host.open or host._busy_anim():

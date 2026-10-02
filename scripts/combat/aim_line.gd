@@ -9,7 +9,6 @@ var mesh_i: MeshInstance3D
 var mat: ShaderMaterial
 var col: Color = Color(1.0, 0.92, 0.55, 0.85)
 
-
 func _ready() -> void:
 	visible = false
 	mesh_i = MeshInstance3D.new()
@@ -25,7 +24,6 @@ func _ready() -> void:
 	mesh_i.sorting_offset = 256.0
 	mesh_i.visible = false
 	add_child(mesh_i)
-
 
 func _shader() -> Shader:
 	var sh := Shader.new()
@@ -45,7 +43,6 @@ void fragment() {
 }
 """
 	return sh
-
 
 func update_line(origin: Vector3, dir: Vector2, length: float, width: float, opacity: float, on: bool) -> void:
 	var usable: float = length - CLIP

@@ -1,6 +1,5 @@
 extends Node
 
-
 func _ready() -> void:
 	if App.Smoke.route_boot():
 		return

@@ -4,7 +4,6 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const Act := preload("res://scripts/ui/gear_board/gear_board_act.gd")
 const StepRow := preload("res://scripts/ui/step_row.gd")
 
-
 static func footer(ui: CanvasLayer) -> void:
 	var row: HBoxContainer = StepRow.make("Floor:", func(): Act.floor_step(ui, -1), func(): Act.floor_step(ui, 1))
 	var enter: Button = ThemeS.btn("Enter dungeon", func(): Act.enter(ui))
@@ -20,7 +19,6 @@ static func footer(ui: CanvasLayer) -> void:
 	ui.inv_sel = "enter"
 	ui.focus_btn = enter
 	sync(ui)
-
 
 static func sync(ui: CanvasLayer) -> void:
 	if str(ui.get("gear_mode")) != "loadout":
@@ -41,13 +39,11 @@ static func sync(ui: CanvasLayer) -> void:
 		return
 	_wire(ui)
 
-
 static func _meta(ui: CanvasLayer, key: String) -> Control:
 	if not ui.has_meta(key):
 		return null
 	var n: Variant = ui.get_meta(key)
 	return n if n is Control else null
-
 
 static func _slot(ui: CanvasLayer, slot: String) -> Control:
 	if ui.box == null:
@@ -59,7 +55,6 @@ static func _slot(ui: CanvasLayer, slot: String) -> Control:
 		if str(n.get_meta("inv_key", "")) == want:
 			return n as Control
 	return null
-
 
 static func _nb(from: Control, dir: String, to: Control) -> void:
 	if from == null:
@@ -77,7 +72,6 @@ static func _nb(from: Control, dir: String, to: Control) -> void:
 		"d":
 			from.focus_neighbor_bottom = p
 
-
 static func _live(minus: Control, plus: Control, prefer_plus: bool) -> Control:
 	if prefer_plus:
 		if plus != null and plus.focus_mode != Control.FOCUS_NONE:
@@ -90,7 +84,6 @@ static func _live(minus: Control, plus: Control, prefer_plus: bool) -> Control:
 		if plus != null and plus.focus_mode != Control.FOCUS_NONE:
 			return plus
 	return null
-
 
 static func _wire(ui: CanvasLayer) -> void:
 	var minus := _meta(ui, "loadout_floor_minus")
@@ -117,7 +110,6 @@ static func _wire(ui: CanvasLayer) -> void:
 		_nb(plus, "r", enter)
 	if enter:
 		_nb(enter, "u", any_step if any_step else legs)
-
 
 static func _restore(ui: CanvasLayer, was: Control) -> void:
 	var minus := _meta(ui, "loadout_floor_minus")

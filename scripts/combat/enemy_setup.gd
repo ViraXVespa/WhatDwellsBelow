@@ -5,7 +5,6 @@ const Threat := preload("res://scripts/combat/threat.gd")
 const HpBarS := preload("res://scripts/combat/hp_bar.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 
-
 static func setup(host: Node, id: String, floor_n: int, named := false, given_name := "") -> void:
 	host.type_id = id
 	var d: Dictionary = Roster.def(id)
@@ -29,7 +28,6 @@ static func setup(host: Node, id: String, floor_n: int, named := false, given_na
 	load_tex(host)
 	HpBarS.ensure(host)
 	host.call_deferred("_mark_post")
-
 
 static func setup_boss(host: Node, title: String, floor_n: int) -> void:
 	host.is_boss = true
@@ -65,7 +63,6 @@ static func setup_boss(host: Node, title: String, floor_n: int) -> void:
 	HpBarS.ensure(host)
 	host.call_deferred("_mark_post")
 
-
 static func resolve_cl(host: Node, floor_n: int, at_end: bool) -> int:
 	if at_end:
 		return Threat.floor_hi(floor_n)
@@ -74,14 +71,12 @@ static func resolve_cl(host: Node, floor_n: int, at_end: bool) -> int:
 		return int(parent.enemy_combat_lv(host.global_position))
 	return Threat.floor_lo(floor_n)
 
-
 static func paint_rank(host: Node) -> void:
 	if host.tag == null:
 		return
 	if host.is_boss or host.is_named:
 		return
 	host.tag.visible = false
-
 
 static func make_named(host: Node, given: String, _floor_n: int) -> void:
 	host.is_named = true
@@ -98,7 +93,6 @@ static func make_named(host: Node, given: String, _floor_n: int) -> void:
 	host.tag.outline_modulate = Color(0, 0, 0)
 	host.tag.outline_size = 12
 	host.base_mod *= Color(1.08, 1.05, 0.9)
-
 
 static func load_tex(host: Node, boss_title := "") -> void:
 	if host.spr == null:

@@ -62,7 +62,6 @@ var gear_hint: Control
 var gear_page_left: Control
 var gear_page_right: Control
 
-
 func _ready() -> void:
 	Flow._ready(self)
 
@@ -76,15 +75,11 @@ func _drop_sub() -> void:
 		old = get_node_or_null("gear_sub_panel")
 	ForgeUI.reset_job(self)
 
-
-
 func _sub_up() -> bool:
 	if gear_sub:
 		return true
 	var old: Node = get_node_or_null("gear_sub_panel")
 	return old != null and not old.is_queued_for_deletion()
-
-
 
 func close_ui() -> void:
 	Flow.close_ui(self)
@@ -96,14 +91,10 @@ func _show() -> void:
 	_paint_menu_hint()
 	call_deferred("_focus")
 
-
-
 func _paint_menu_hint() -> void:
 	if _gear_busy():
 		return
 	PromptView.footer(self, [{"action": "ui_cancel", "verb": "leave"}])
-
-
 
 func _focus() -> void:
 	Flow._focus(self)
@@ -121,14 +112,10 @@ func _clear() -> void:
 	gear_page_left = null
 	gear_page_right = null
 
-
-
 func _st(msg: String) -> void:
 	if status:
 		status.text = msg
 	App.sfx("ui")
-
-
 
 func open_inventory() -> void:
 	mode = "inv"
@@ -136,8 +123,6 @@ func open_inventory() -> void:
 	_drop_sub()
 	_rebuild_inv()
 	_show()
-
-
 
 func open_extract(role: String, spot: Node = null) -> void:
 	mode = "extract"
@@ -148,21 +133,12 @@ func open_extract(role: String, spot: Node = null) -> void:
 	_rebuild_extract()
 	_show()
 
-
-
-func open_clerk(role: String) -> void:
-	open_extract(role)
-
-
-
 func open_shop(spot: Node) -> void:
 	mode = "shop"
 	shop_spot = spot
 	_drop_sub()
 	_rebuild_shop()
 	_show()
-
-
 
 func open_anvil() -> void:
 	Flow.open_anvil(self)
@@ -176,15 +152,11 @@ func open_vendor() -> void:
 	_rebuild_vendor()
 	_show()
 
-
-
 func open_controls() -> void:
 	mode = "controls"
 	_drop_sub()
 	_rebuild_controls()
 	_show()
-
-
 
 func open_flavor(title: String, body: String) -> void:
 	Flow.open_flavor(self, title, body)
@@ -197,27 +169,11 @@ func open_quest() -> void:
 	_rebuild_quest()
 	_show()
 
-
-
 func _rebuild_inv() -> void:
 	Inv.rebuild_inv(self)
 
-
-
-func _inv_act(uid: int) -> void:
-	Inv.inv_act(self, uid)
-
-
-
-func _sets_blurb() -> String:
-	return Inv.sets_blurb()
-
-
-
 func _rebuild_extract() -> void:
 	Inv.rebuild_extract(self)
-
-
 
 func _do_send_all() -> void:
 	_st(App.prog.extract_all(extract_role))
@@ -226,8 +182,6 @@ func _do_send_all() -> void:
 	_rebuild_extract()
 	_show()
 
-
-
 func _do_send_one(it: Dictionary) -> void:
 	_st(App.prog.extract_one(it, extract_role))
 	if App.extracted:
@@ -235,59 +189,39 @@ func _do_send_one(it: Dictionary) -> void:
 	_rebuild_extract()
 	_show()
 
-
-
 func _rebuild_shop() -> void:
 	Shop.rebuild_shop(self)
-
-
 
 func _rebuild_anvil() -> void:
 	Hub.rebuild_anvil(self)
 
-
-
 func _rebuild_loadout() -> void:
 	Hub.rebuild_loadout(self)
-
-
 
 func _rebuild_quest() -> void:
 	Hub.rebuild_quest(self)
 
-
-
 func _rebuild_vendor() -> void:
 	Shop.rebuild_vendor(self)
-
-
 
 func _rebuild_controls() -> void:
 	Hub.rebuild_controls(self)
 
-
-
 func _buy_snack() -> void:
 	Shop.buy_snack(self)
-
 
 func _buy_art(id: String, nm: String) -> void:
 	Shop.buy_art(self, id, nm)
 
-
 func _extract_all() -> void:
 	_st(App.prog.extract_all("gate"))
 	extract_mailed = true
-
-
 
 func _process(delta: float) -> void:
 	Flow._process(self, delta)
 
 func _gear_busy() -> bool:
 	return mode == "loadout" or mode == "inv" or mode == "anvil"
-
-
 
 func _input(event: InputEvent) -> void:
 	Flow._input(self, event)

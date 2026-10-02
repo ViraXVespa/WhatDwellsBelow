@@ -11,11 +11,11 @@ const LayoutS := preload("res://scripts/world/camp_layout.gd")
 var player: CharacterBody3D
 var dummy: CharacterBody3D
 var ui: CanvasLayer
+var hud: CanvasLayer
 var hint: Label
 var prompt: Label
 var _layout: Node3D
 var _editor_hooked: bool = false
-
 
 func _ready() -> void:
 	_layout = LayoutS.on_camp(self)
@@ -37,11 +37,20 @@ func _ready() -> void:
 		_layout
 	)
 	LightRt.hub_crystal = Vector2(_layout.spot_pos("Crystal").x, _layout.spot_pos("Crystal").z)
-	Build.ground(self)
+	LightRt.rebind_tree(self)
+	LoadTiming.mark("camp_light")
+	var gen: Node3D = Build.generated(self)
+	if gen.get_child_count() > 0:
+		Build.clear_generated(self)
+		gen = Build.generated(self)
+	LoadTiming.note("camp_geo", "build")
+	Build.ground(gen)
 	LoadTiming.mark("camp_ground")
-	Build.buildings(self)
+	Build.buildings(gen)
+	Build.strip_building_cubes(gen)
+	Build.quiet_shadows(gen)
 	LoadTiming.mark("camp_buildings")
-	View.fence(self)
+	View.fence(gen)
 	LoadTiming.mark("camp_fence")
 	var PlayerS: GDScript = load("res://scripts/world/player.gd") as GDScript
 	player = PlayerS.new() as CharacterBody3D
@@ -52,6 +61,7 @@ func _ready() -> void:
 	LoadTiming.mark("camp_player")
 	_spots()
 	LoadTiming.mark("camp_spots")
+	Build.stamp_actor_blobs(self)
 	if bool(App.get("_menu_loading")) or App.wake_pending:
 		LoadTiming.note("camp_dummy", "deferred")
 	else:
@@ -90,8 +100,6 @@ func _ready() -> void:
 	if Smoke.phase(6):
 		ensure_ui()
 	Smoke.attach_camp(self)
-
-
 func _hook_editor() -> void:
 	if _editor_hooked:
 		return
@@ -99,16 +107,13 @@ func _hook_editor() -> void:
 	if not _layout.editor_redraw.is_connected(_on_layout_redraw):
 		_layout.editor_redraw.connect(_on_layout_redraw)
 
-
 func _on_layout_redraw() -> void:
 	if Engine.is_editor_hint():
 		Build.realize_editor(self, _layout)
 
-
 func world_ui() -> Node:
 	ensure_ui()
 	return ui
-
 
 func ensure_ui() -> void:
 	if ui != null:
@@ -119,7 +124,6 @@ func ensure_ui() -> void:
 	add_child(ui)
 	LoadTiming.mark("camp_ui")
 
-
 func warmup() -> void:
 	Warm.frame(self)
 	if dummy:
@@ -129,10 +133,8 @@ func warmup() -> void:
 		dummy.velocity = stored
 		dummy.global_position.y = 0.0
 
-
 func warmup_restore() -> void:
 	Warm.restore(self)
-
 
 func _process(_delta: float) -> void:
 	if Engine.is_editor_hint():
@@ -151,7 +153,6 @@ func _process(_delta: float) -> void:
 		hint.text = "Placeholdia  ·  bank %dg  %d ore  %d wood  ·  deepest F%d%s\nCrystal  ·  Anvil  ·  Vendor  ·  Guild  ·  Billboard  ·  Start pause" % [App.bank_gold, App.bank_ore, App.bank_wood, App.prog.deepest, hot]
 	if prompt:
 		prompt.text = App.interact_prompt
-
 
 func _banner() -> void:
 	var root := Node3D.new()
@@ -175,7 +176,6 @@ func _banner() -> void:
 	spr.position = Vector3(0.0, 2.2, 0.0)
 	root.add_child(spr)
 
-
 func _banner_pole(root: Node3D, pos: Vector3) -> void:
 	var pole := StaticBody3D.new()
 	pole.collision_layer = 1
@@ -187,7 +187,6 @@ func _banner_pole(root: Node3D, pos: Vector3) -> void:
 	cs.shape = sh
 	pole.add_child(cs)
 
-
 func ensure_dummy() -> void:
 	if dummy != null:
 		return
@@ -196,7 +195,7 @@ func ensure_dummy() -> void:
 	n.position = _layout.spot_pos("Dummy")
 	dummy = n
 	add_child(n)
-
+	Build.stamp_actor_blobs(self)
 
 func _tune_label(host: Node3D) -> void:
 	if host == null or not ("label" in host) or host.label == null:
@@ -205,7 +204,6 @@ func _tune_label(host: Node3D) -> void:
 	host.label.render_priority = 8
 	host.label.outline_render_priority = 7
 	host.label.sorting_offset = 0.0
-
 
 func _spots() -> void:
 	_banner()
@@ -254,7 +252,6 @@ func _spots() -> void:
 	add_child(b)
 	_tune_label(b)
 
-
 func _bust_mat(tex: Texture2D) -> ShaderMaterial:
 	var sh := Shader.new()
 	sh.code = """
@@ -262,12 +259,12 @@ shader_type spatial;
 render_mode unshaded, cull_disabled, depth_draw_always;
 uniform sampler2D albedo_tex : source_color, filter_nearest;
 void fragment() {
-    vec4 c = texture(albedo_tex, UV);
-    if (UV.y > 0.50 || c.a < 0.1) {
-        discard;
-    }
-    ALBEDO = c.rgb;
-    ALPHA = 1.0;
+	vec4 c = texture(albedo_tex, UV);
+	if (UV.y > 0.50 || c.a < 0.1) {
+		discard;
+	}
+	ALBEDO = c.rgb;
+	ALPHA = 1.0;
 }
 """
 	var mat := ShaderMaterial.new()
@@ -275,14 +272,13 @@ void fragment() {
 	mat.set_shader_parameter("albedo_tex", tex)
 	return mat
 
-
 func _music() -> void:
 	if App.music and App.music.has_method("play_hub"):
 		App.music.play_hub()
 
-
 func _hud() -> void:
 	var layer := CanvasLayer.new()
+	hud = layer
 	add_child(layer)
 	var panel := ColorRect.new()
 	panel.color = Color(0.1, 0.08, 0.06, 0.82)
@@ -306,3 +302,16 @@ func _hud() -> void:
 	prompt.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.03))
 	prompt.add_theme_constant_override("outline_size", 6)
 	layer.add_child(prompt)
+
+func _strip_baked_env(n: Node) -> void:
+	if n == null:
+		return
+	var i: int = n.get_child_count() - 1
+	while i >= 0:
+		var c: Node = n.get_child(i)
+		if c is WorldEnvironment or c is DirectionalLight3D:
+			n.remove_child(c)
+			c.free()
+		else:
+			_strip_baked_env(c)
+		i -= 1

@@ -1,6 +1,5 @@
 extends Object
 
-
 static func compute_coefs(pt: Node) -> void:
 	pt.coefs.clear()
 	for key: String in ["axe_damage", "staff_damage", "bow_damage", "enemy_hp_mult", "mine_chance"]:
@@ -11,7 +10,6 @@ static func compute_coefs(pt: Node) -> void:
 			ys.append(float(row.get("dmg_dealt", 0)) + 1.0 / maxf(0.2, float(row.get("duration", 1.0))))
 		pt.coefs[key] = pt._corr(xs, ys)
 	pt._weapon_aware_nudge()
-
 
 static func weapon_aware_nudge(pt: Node) -> void:
 	var dmg: Dictionary = {"great_axe": 0.0, "staff": 0.0, "longbow": 0.0}
@@ -32,7 +30,6 @@ static func weapon_aware_nudge(pt: Node) -> void:
 	if dmg["great_axe"] < mx * 0.55:
 		pt.coefs["axe_damage"] = maxf(float(pt.coefs.get("axe_damage", 0.0)), 0.35)
 
-
 static func cfg_proxy(key: String, row: Dictionary) -> float:
 	var w: Dictionary = row.get("wpn", {})
 	if key == "axe_damage":
@@ -44,7 +41,6 @@ static func cfg_proxy(key: String, row: Dictionary) -> float:
 	if key == "enemy_hp_mult":
 		return 1.0 / maxf(0.5, float(row.get("kills", 1)))
 	return float(row.get("mine_ok", 0))
-
 
 static func corr(xs: Array, ys: Array) -> float:
 	var n: int = mini(xs.size(), ys.size())
@@ -69,7 +65,6 @@ static func corr(xs: Array, ys: Array) -> float:
 	if dx < 0.0001 or dy < 0.0001:
 		return 0.0
 	return clampf(num / sqrt(dx * dy), -1.0, 1.0)
-
 
 static func build_recs(pt: Node) -> void:
 	var base: Dictionary = {
@@ -98,13 +93,11 @@ static func build_recs(pt: Node) -> void:
 		{"label": "Alt B — keep current", "cfg": base.duplicate()},
 	]
 
-
 static func merge(base: Dictionary, extra: Dictionary) -> Dictionary:
 	var o: Dictionary = base.duplicate()
 	for k: Variant in extra.keys():
 		o[k] = extra[k]
 	return o
-
 
 static func snap_bal() -> Dictionary:
 	var d: Dictionary = {}
@@ -112,11 +105,9 @@ static func snap_bal() -> Dictionary:
 		d[str(row[0])] = App.bal.getv(str(row[0]))
 	return d
 
-
 static func restore_bal(d: Dictionary) -> void:
 	for k: Variant in d.keys():
 		App.bal.setv(str(k), float(d[k]))
-
 
 static func format_summary(pt: Node) -> String:
 	var s: String = "Playtest  ·  rows %d  ·  queue %d\n" % [pt.history.size(), pt.queue.size()]
@@ -131,7 +122,6 @@ static func format_summary(pt: Node) -> String:
 		s += str(r2.label) + " | "
 	s += "\n" + pt.success_report()
 	return s
-
 
 static func success_report(pt: Node) -> String:
 	if pt.history.is_empty():
@@ -156,13 +146,11 @@ static func success_report(pt: Node) -> String:
 	var t_ok: bool = extract_t <= 600.0
 	return "SuccessCriterion extract_s=%.1f t_ok=%s recap=%s weapons_bal=%s" % [extract_t, str(t_ok), str(drain), str(bal_ok)]
 
-
 static func save_history(pt: Node) -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("user://playtest"))
 	var f: FileAccess = FileAccess.open("user://playtest/history.json", FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(pt.history))
-
 
 static func load_history(pt: Node) -> void:
 	if not FileAccess.file_exists("user://playtest/history.json"):
@@ -174,13 +162,11 @@ static func load_history(pt: Node) -> void:
 	if parsed is Array:
 		pt.history = parsed
 
-
 static func save_coefs(pt: Node) -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("user://playtest"))
 	var f: FileAccess = FileAccess.open("user://playtest/coefs.json", FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(pt.coefs))
-
 
 static func load_coefs(pt: Node) -> void:
 	if not FileAccess.file_exists("user://playtest/coefs.json"):

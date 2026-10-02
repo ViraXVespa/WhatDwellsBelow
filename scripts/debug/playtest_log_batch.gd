@@ -6,7 +6,6 @@ const Digest := preload("res://scripts/debug/playtest_log_batch_digest.gd")
 const Flags := preload("res://scripts/debug/playtest_log_batch_flags.gd")
 const Prune := preload("res://scripts/debug/playtest_log_batch_prune.gd")
 
-
 static var active: bool = false
 static var stamp: String = ""
 static var runs: Array = []
@@ -89,23 +88,8 @@ static func close() -> PackedStringArray:
 	Prune._prune()
 	return out
 
-static func _rm(path: String) -> void:
-	Prune._rm(path)
-
-static func _drop_batch(dir_path: String, json_name: String) -> void:
-	Prune._drop_batch(dir_path, json_name)
-
 static func _prune() -> void:
 	Prune._prune()
 
 static func _digest() -> String:
 	return Digest._digest()
-
-static func _goal_counts(events: Array) -> Dictionary:
-	return Flags._goal_counts(events)
-
-static func _goal_flow(events: Array) -> String:
-	return Flags._goal_flow(events)
-
-static func _flags(events: Array) -> PackedStringArray:
-	return Flags._flags(events)

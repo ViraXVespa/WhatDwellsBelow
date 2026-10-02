@@ -4,19 +4,16 @@ const TipPlace := preload("res://scripts/ui/tip_place.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Text := preload("res://scripts/ui/gear_board/gear_board_text.gd")
 
-
 static func on(ui: CanvasLayer, key: String) -> bool:
 	if ui.has_meta(key):
 		return ui.get_meta(key) == true
 	return ui.get(key) == true
-
 
 static func hide_tip(ui: CanvasLayer) -> void:
 	ensure_tip(ui)
 	var host: Control = ui.get("gear_tip_host")
 	if host:
 		host.visible = false
-
 
 static func ensure_tip(ui: CanvasLayer) -> void:
 	var host: Node = ui.get_node_or_null("gear_tip_host")
@@ -54,7 +51,6 @@ static func ensure_tip(ui: CanvasLayer) -> void:
 	ui.gear_tip_host = panel
 	ui.gear_tip = lab
 
-
 static func _as_int(v: Variant, fallback: int) -> int:
 	if v is int:
 		return v
@@ -63,7 +59,6 @@ static func _as_int(v: Variant, fallback: int) -> int:
 	if v is String and str(v).is_valid_int():
 		return int(str(v))
 	return fallback
-
 
 static func _tip_anchor(ui: CanvasLayer) -> Control:
 	var inv_tab: int = 1
@@ -87,7 +82,6 @@ static func _tip_anchor(ui: CanvasLayer) -> Control:
 	if str(f.get_meta("inv_key", "")) == "":
 		return null
 	return f
-
 
 static func place_tip(ui: CanvasLayer) -> void:
 	if not on(ui, "gear_tip_ready") and not on(ui, "gear_hover"):
@@ -116,7 +110,6 @@ static func place_tip(ui: CanvasLayer) -> void:
 		return
 	_place_now(ui)
 
-
 static func _rect_ready(ui: CanvasLayer, r: Rect2) -> bool:
 	if r.size.x < 8.0 or r.size.y < 8.0:
 		return false
@@ -128,7 +121,6 @@ static func _rect_ready(ui: CanvasLayer, r: Rect2) -> bool:
 	if r.position.y > view.position.y + view.size.y - 8.0:
 		return false
 	return true
-
 
 static func _place_now(ui: CanvasLayer) -> void:
 	if not on(ui, "gear_tip_ready") and not on(ui, "gear_hover"):

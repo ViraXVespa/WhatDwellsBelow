@@ -8,7 +8,6 @@ const Floor := preload("res://scripts/ui/gear_board/gear_board_floor.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
-
 static func build_title(_ui: CanvasLayer, mode: String, _title_col: Color) -> String:
 	var title := "Inventory"
 	if mode == "loadout":
@@ -19,7 +18,6 @@ static func build_title(_ui: CanvasLayer, mode: String, _title_col: Color) -> St
 		_title_col = Color(0.95, 0.78, 0.42)
 	return title
 
-
 static func build_subtitle(_ui: CanvasLayer, mode: String) -> String:
 	if mode == "loadout":
 		return "Choose holds or stash gear. Only floors you have reached."
@@ -27,12 +25,10 @@ static func build_subtitle(_ui: CanvasLayer, mode: String) -> String:
 		return "Analyze DESTROYS a piece. Forge those remains on the Forge tab. Starters stay off the list."
 	return ""
 
-
 static func build_status_text(mode: String) -> String:
 	if mode == "loadout" or mode == "anvil":
 		return ""
 	return "Carried  %dg   %d ore   %d wood   bag %d/%d" % [App.gold, App.ore, App.wood, App.prog.bag_count(), int(App.bal.bag_cap)]
-
 
 static func plain_lab(t: String, size: int, col: Color) -> Label:
 	var l := Label.new()
@@ -45,13 +41,11 @@ static func plain_lab(t: String, size: int, col: Color) -> Label:
 	l.add_theme_constant_override("outline_size", 6)
 	return l
 
-
 static func sync_chrome(ui: CanvasLayer) -> void:
 	if ui.get("gear_page_left") is Control:
 		PromptView.fill(ui.gear_page_left, [{"action": Prompts.page_prev()}], 16, Color(0.72, 0.66, 0.52))
 	if ui.get("gear_page_right") is Control:
 		PromptView.fill(ui.gear_page_right, [{"action": Prompts.page_next()}], 16, Color(0.72, 0.66, 0.52))
-
 
 static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	var panel := PanelContainer.new()
@@ -100,7 +94,6 @@ static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	sync_chrome(ui)
 	return panel
 
-
 static func build_slot_btn(_ui: CanvasLayer, slot: String) -> Button:
 	var it: Dictionary = Text.slot_item(slot)
 	var b := Button.new()
@@ -120,7 +113,6 @@ static func build_slot_btn(_ui: CanvasLayer, slot: String) -> Button:
 		b.add_theme_font_size_override("font_size", 18)
 		b.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
 	return b
-
 
 static func build_bag_cell(_ui: CanvasLayer, it: Dictionary) -> Button:
 	var b := Button.new()
@@ -147,7 +139,6 @@ static func build_bag_cell(_ui: CanvasLayer, it: Dictionary) -> Button:
 		b.add_theme_color_override("font_color", Fmt.item_color(it))
 	_paint_item_btn(b, it)
 	return b
-
 
 static func _paint_item_btn(b: Button, it: Dictionary) -> void:
 	var fill: Color = Icons.rarity_fill(it)

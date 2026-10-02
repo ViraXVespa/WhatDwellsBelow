@@ -14,7 +14,6 @@ var _combat_lv := 0
 var _sticky := false
 var _dead := false
 
-
 static func pulse(host: Node3D, hp: float, max_hp: float, combat_lv: int = -1) -> void:
 	var bar := _bar(host)
 	if bar == null:
@@ -22,7 +21,6 @@ static func pulse(host: Node3D, hp: float, max_hp: float, combat_lv: int = -1) -
 	var lv := _lv_of(host, combat_lv)
 	if bar.has_method("show_hp"):
 		bar.show_hp(hp, max_hp, lv, false)
-
 
 static func ensure(host: Node3D) -> void:
 	var bar := _bar(host)
@@ -34,7 +32,6 @@ static func ensure(host: Node3D) -> void:
 	if bar.has_method("show_hp"):
 		bar.show_hp(hp, mx, lv, true)
 
-
 static func _bar(host: Node3D) -> Node:
 	if host == null or not is_instance_valid(host):
 		return null
@@ -45,18 +42,15 @@ static func _bar(host: Node3D) -> Node:
 		host.add_child(bar)
 	return bar
 
-
 static func _lv_of(host: Node3D, combat_lv: int) -> int:
 	if combat_lv >= 0:
 		return combat_lv
 	var raw: Variant = host.get("combat_lv")
 	return int(raw) if raw != null else 0
 
-
 static func _flag(host: Node, key: String) -> bool:
 	var v: Variant = host.get(key)
 	return v is bool and bool(v)
-
 
 func _ready() -> void:
 	_spr = Sprite3D.new()
@@ -84,7 +78,6 @@ func _ready() -> void:
 	_lv.visible = false
 	add_child(_lv)
 
-
 func show_hp(hp: float, max_hp: float, combat_lv: int = 0, sticky: bool = false) -> void:
 	_combat_lv = combat_lv
 	if sticky:
@@ -99,7 +92,6 @@ func show_hp(hp: float, max_hp: float, combat_lv: int = 0, sticky: bool = false)
 	_spr.modulate.a = 1.0
 	_place_lv(1.0)
 	_sort()
-
 
 func _process(delta: float) -> void:
 	_sort()
@@ -122,7 +114,6 @@ func _process(delta: float) -> void:
 	_spr.modulate.a = a
 	_place_lv(a)
 
-
 func _hide() -> void:
 	if _sticky and not _dead:
 		return
@@ -130,7 +121,6 @@ func _hide() -> void:
 		_spr.visible = false
 	if _lv:
 		_lv.visible = false
-
 
 func _place_lv(alpha: float) -> void:
 	if _lv == null:
@@ -147,13 +137,11 @@ func _place_lv(alpha: float) -> void:
 	_lv.modulate = col
 	_lv.visible = _spr != null and _spr.visible
 
-
 func _name_owns_lv() -> bool:
 	var host := get_parent()
 	if host == null:
 		return false
 	return _flag(host, "is_boss") or _flag(host, "is_named")
-
 
 func _lv_color() -> Color:
 	var ply := 1
@@ -170,7 +158,6 @@ func _lv_color() -> Color:
 		return Color(0.72, 0.82, 0.62)
 	return Color(0.92, 0.86, 0.72)
 
-
 func _lift() -> float:
 	var host := get_parent()
 	if host != null and _flag(host, "is_boss"):
@@ -179,7 +166,6 @@ func _lift() -> float:
 	if host != null and host.get("size_u") != null:
 		size_u = float(host.get("size_u"))
 	return size_u * 0.95 + 0.28
-
 
 func _sort() -> void:
 	var host := get_parent()
@@ -192,7 +178,6 @@ func _sort() -> void:
 		_spr.position.y = _lift()
 	if _lv:
 		_lv.sorting_offset = off
-
 
 func _paint(hp: float, max_hp: float) -> ImageTexture:
 	var frac := 0.0 if max_hp <= 0.0 else clampf(hp / max_hp, 0.0, 1.0)

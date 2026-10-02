@@ -6,10 +6,8 @@ const WALL := 0
 const FLOOR := 1
 const Carve := preload("res://scripts/dungeon/gen_carve.gd")
 
-
 static func idx(x: int, y: int, w: int) -> int:
 	return y * w + x
-
 
 static func floor_nbs(grid: PackedByteArray, w: int, h: int, x: int, y: int) -> int:
 	var n: int = 0
@@ -24,10 +22,8 @@ static func floor_nbs(grid: PackedByteArray, w: int, h: int, x: int, y: int) -> 
 		n += 1
 	return n
 
-
 static func in_room(r: Dictionary, c: Vector2i) -> bool:
 	return c.x >= int(r.x) and c.y >= int(r.y) and c.x < int(r.x) + int(r.w) and c.y < int(r.y) + int(r.h)
-
 
 static func room_exits(grid: PackedByteArray, w: int, h: int, r: Dictionary) -> int:
 	var seen := {}
@@ -46,7 +42,6 @@ static func room_exits(grid: PackedByteArray, w: int, h: int, r: Dictionary) -> 
 					continue
 				seen[c] = true
 	return seen.size()
-
 
 static func mark_ambushes(grid: PackedByteArray, w: int, h: int, rooms: Array, bal: Object = null) -> Array:
 	var roomish: PackedByteArray = PackedByteArray()
@@ -100,7 +95,6 @@ static func mark_ambushes(grid: PackedByteArray, w: int, h: int, rooms: Array, b
 		if ok:
 			out.append(c)
 	return out
-
 
 static func mark_deadends(grid: PackedByteArray, w: int, h: int, rooms: Array) -> Array:
 	var out: Array = []

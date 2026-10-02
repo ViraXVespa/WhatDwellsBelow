@@ -3,7 +3,6 @@
 const Combat := preload("res://scripts/combat/combat.gd")
 const Atk := preload("res://scripts/combat/enemy_atk.gd")
 
-
 static func tick(host: Node, delta: float) -> void:
 	var player: Node = host._player() as Node
 	if player == null:
@@ -61,7 +60,6 @@ static func tick(host: Node, delta: float) -> void:
 		return
 	idle(host, delta)
 
-
 static func _los(host: Node, ppos: Vector3, dist: float, delta: float) -> bool:
 	var period: float = maxf(0.02, float(App.bal.los_period))
 	host.los_t -= delta
@@ -89,30 +87,23 @@ static func _los(host: Node, ppos: Vector3, dist: float, delta: float) -> bool:
 	host.los_ok = Combat.los(host.global_position, ppos, host.get_world_3d())
 	return host.los_ok
 
-
 static func begin_windup(host: Node) -> void:
 	Atk.begin_windup(host)
-
 
 static func do_attack(host: Node, delta: float) -> void:
 	Atk.do_attack(host, delta)
 
-
 static func draw_tele(host: Node, active: bool) -> void:
 	Atk.draw_tele(host, active)
-
 
 static func strike(host: Node) -> void:
 	Atk.strike(host)
 
-
 static func hit_player(host: Node, player: Node, mult: float = 1.0) -> void:
 	Atk.hit_player(host, player, mult)
 
-
 static func spawn_shot(host: Node, dir: Vector2) -> void:
 	Atk.spawn_shot(host, dir)
-
 
 static func start_flee(host: Node) -> void:
 	if host.dead or host.is_boss:
@@ -125,7 +116,6 @@ static func start_flee(host: Node) -> void:
 		host.telegraph.hide_now()
 	call_help(host)
 
-
 static func do_flee(host: Node, delta: float, to_p: Vector2) -> void:
 	host.flee_t -= delta
 	var away: Vector2 = - to_p.normalized() if to_p.length_squared() > 0.0001 else Vector2.RIGHT
@@ -136,7 +126,6 @@ static func do_flee(host: Node, delta: float, to_p: Vector2) -> void:
 		call_help(host)
 		host.state = host.ST_CHASE
 
-
 static func steer_to(host: Node, dest: Vector3, _delta: float) -> void:
 	var d: Vector2 = Vector2(dest.x - host.global_position.x, dest.z - host.global_position.z)
 	if d.length_squared() < 0.0004:
@@ -144,7 +133,6 @@ static func steer_to(host: Node, dest: Vector3, _delta: float) -> void:
 		return
 	host.aim = d.normalized()
 	move_dir(host, host.aim, 1.0, _delta)
-
 
 static func idle(host: Node, delta: float) -> void:
 	host.state = host.ST_IDLE
@@ -159,7 +147,6 @@ static func idle(host: Node, delta: float) -> void:
 		steer_to(host, dest, delta)
 	else:
 		host.velocity = Vector3.ZERO
-
 
 static func stuck(host: Node, delta: float) -> void:
 	if host.state != host.ST_CHASE and host.state != host.ST_HUNT and host.state != host.ST_RETURN:
@@ -179,7 +166,6 @@ static func stuck(host: Node, delta: float) -> void:
 	else:
 		host.stuck_t = 0.0
 
-
 static func sep(host: Node) -> Vector3:
 	var push: Vector3 = Vector3.ZERO
 	var lim: float = App.bal.enemy_sep
@@ -198,7 +184,6 @@ static func sep(host: Node) -> Vector3:
 				break
 	return push
 
-
 static func call_help(host: Node) -> void:
 	if host.spawned_help:
 		return
@@ -208,7 +193,6 @@ static func call_help(host: Node) -> void:
 		var n: int = int(App.bal.flee_help)
 		for i: int in n:
 			parent.spawn_reinforcement(host.type_id, host.global_position, host.group_id)
-
 
 static func move_dir(host: Node, dir: Vector2, spd_m: float, delta: float) -> void:
 	var push: Vector3 = sep(host)

@@ -7,7 +7,7 @@ One spatial shader on Placeholdia grass pads, packed yard, and dungeon chunk flo
 
 Dungeon floor mesh on the abyss rim follows the cleaned 1 m maze. Angled pieces use their published band, not a floor-wide polyline raster. The sheet and world-xz shader do not change.
 
-Field albedo. One seamless sheet per surface, projected in world xz so moving a pad or chunk does not need new art. Hub pads are large planes; do not hash cell index. Sample the light RT in world xz. The RT is four texels per 1 m tile. Shaders use textureSize and may filter across texels. Do not sample as one texel per tile.
+Field albedo. One seamless sheet per surface, projected in world xz so moving a pad or chunk does not need new art. Hub pads are large planes; do not hash cell index. Sample the light RT in world xz. Dungeon RT is four texels per 1 m tile (`Stamp.SUB`). Hub bake is `HUB_SUB` 16 texels per metre. Do not sample hub as one texel per tile. Shaders use textureSize and may filter across texels. Do not sample as one texel per tile.
 
 Stop using a framed medallion as the only dungeon albedo. Sheets: grass field, packed dirt, dungeon floor. Wall brick belongs to volume. Variants are shader-side (world-xz hash, tint, wear). Do not Imagine a second sheet per surface.
 

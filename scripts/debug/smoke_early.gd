@@ -5,7 +5,6 @@ const Roster := preload("res://scripts/combat/roster.gd")
 const P4 := preload("res://scripts/debug/smoke_early_p4.gd")
 const P3 := preload("res://scripts/debug/smoke_early_p3.gd")
 
-
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
 

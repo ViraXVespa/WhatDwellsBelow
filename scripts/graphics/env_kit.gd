@@ -2,7 +2,6 @@ extends Object
 
 ## Shared WorldEnvironment + DirectionalLight3D block. Callers pass their own literals.
 
-
 static func apply(
 	host: Node,
 	bg: Color,

@@ -49,7 +49,6 @@ var cfg_hash := ""
 var cfg: Dictionary = {}
 var run_start := 0.0
 
-
 func reset(save_kind: String, is_playtest: bool) -> void:
 	end_cond = ""
 	duration = 0.0
@@ -102,17 +101,14 @@ func reset(save_kind: String, is_playtest: bool) -> void:
 	cfg_hash = _hash()
 	run_start = App.clock
 
-
 func _snap() -> Dictionary:
 	var d := {}
 	for row in App.bal.schema():
 		d[str(row[0])] = App.bal.getv(str(row[0]))
 	return d
 
-
 func _w() -> Dictionary:
 	return {"time": 0.0, "dmg": 0.0, "kills": 0, "deaths": 0, "spec": 0, "spec_hit": 0}
-
 
 func tick(delta: float, fighting: bool) -> void:
 	duration += delta
@@ -130,7 +126,6 @@ func tick(delta: float, fighting: bool) -> void:
 	deepest = maxi(deepest, App.floor_n)
 	cycle = int((maxi(1, App.floor_n) - 1) / 5.0)
 
-
 func note_damage_dealt(n: float, crit: bool) -> void:
 	dmg_dealt += n
 	if crit:
@@ -139,12 +134,10 @@ func note_damage_dealt(n: float, crit: bool) -> void:
 	if wpn.has(key):
 		wpn[key].dmg = float(wpn[key].dmg) + n
 
-
 func note_damage_taken(n: float, hp: float, max_hp: float) -> void:
 	dmg_taken += n
 	if max_hp > 0.0 and hp / max_hp <= App.bal.near_death_hp:
 		near_death += 1
-
 
 func note_kill() -> void:
 	kills += 1
@@ -152,10 +145,8 @@ func note_kill() -> void:
 	if wpn.has(key):
 		wpn[key].kills = int(wpn[key].kills) + 1
 
-
 func note_dash() -> void:
 	dash_n += 1
-
 
 func note_special(hit: bool) -> void:
 	spec_n += 1
@@ -166,10 +157,8 @@ func note_special(hit: bool) -> void:
 			spec_hit += 1
 			wpn[key].spec_hit = int(wpn[key].spec_hit) + 1
 
-
 func note_adrenaline() -> void:
 	adrenaline_n += 1
-
 
 func note_extract(g: int, o: int, w: int) -> void:
 	if extract_t < 0.0:
@@ -177,7 +166,6 @@ func note_extract(g: int, o: int, w: int) -> void:
 	gold_extracted += g
 	ore_extracted += o
 	wood_extracted += w
-
 
 func note_end(cond: String, killer: String) -> void:
 	end_cond = cond
@@ -192,13 +180,11 @@ func note_end(cond: String, killer: String) -> void:
 		if wpn.has(key):
 			wpn[key].deaths = int(wpn[key].deaths) + 1
 
-
 func _hash() -> String:
 	var s := ""
 	for row in App.bal.schema():
 		s += str(row[0]) + "=" + str(App.bal.getv(str(row[0]))) + ";"
 	return str(s.hash())
-
 
 func to_dict() -> Dictionary:
 	return {

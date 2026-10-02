@@ -18,7 +18,6 @@ var _bar_h := 20.0
 const DIM_SOFT := Color(0.04, 0.03, 0.025, 0.88)
 const DIM_SOLID := Color(0.0, 0.0, 0.0, 254.0 / 255.0)
 
-
 func _ready() -> void:
 	layer = 110
 	visible = false
@@ -47,7 +46,6 @@ func _ready() -> void:
 	add_child(_pct)
 	_layout_bar()
 
-
 func begin(heading: String, status: String = "") -> void:
 	open = true
 	visible = true
@@ -63,7 +61,6 @@ func begin(heading: String, status: String = "") -> void:
 	if App:
 		App.ui_open = true
 
-
 func set_solid(on: bool) -> void:
 	if _dim == null:
 		return
@@ -72,15 +69,12 @@ func set_solid(on: bool) -> void:
 	else:
 		_dim.color = DIM_SOFT
 
-
 func set_status(text: String) -> void:
 	if _status:
 		_status.text = text
 
-
 func set_progress(v: float) -> void:
 	_target = maxf(_target, clampf(v, 0.0, 1.0))
-
 
 func finish() -> void:
 	_target = 1.0
@@ -96,7 +90,6 @@ func finish() -> void:
 			App.ui_open = false
 	App.wake_web_pad()
 
-
 func _process(delta: float) -> void:
 	if not visible:
 		return
@@ -107,7 +100,6 @@ func _process(delta: float) -> void:
 	_shown = move_toward(_shown, _target, step)
 	_sync_bar()
 
-
 func _vp() -> Vector2:
 	var vp := get_viewport()
 	if vp:
@@ -115,7 +107,6 @@ func _vp() -> Vector2:
 		if r.x > 1.0 and r.y > 1.0:
 			return r
 	return Vector2(1920, 1080)
-
 
 func _layout_bar() -> void:
 	var s := _vp()
@@ -143,12 +134,10 @@ func _layout_bar() -> void:
 		_pct.position = Vector2(cx - 80.0, cy + 56.0)
 		_pct.size = Vector2(160.0, 32.0)
 
-
 func _sync_bar() -> void:
 	_layout_bar()
 	if _pct:
 		_pct.text = "%d%%" % int(round(clampf(_shown, 0.0, 1.0) * 100.0))
-
 
 func _lab(text: String, font_px: int, col: Color) -> Label:
 	var l := Label.new()

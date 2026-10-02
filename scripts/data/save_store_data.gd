@@ -4,7 +4,6 @@ extends RefCounted
 
 const Rules := preload("res://scripts/data/gear_rules.gd")
 
-
 static func apply(data: Dictionary) -> bool:
 	var migrated: bool = false
 	App.character_type = str(data.get("character_type", "male"))

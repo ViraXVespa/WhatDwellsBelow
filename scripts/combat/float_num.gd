@@ -7,7 +7,6 @@ var vel := Vector3(0.0, 1.05, 0.0)
 var life := HOLD + FADE
 var fade_mul := 1.0
 
-
 func setup(amount: int, crit: bool, glance := false) -> void:
 	text = str(amount)
 	billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -28,7 +27,6 @@ func setup(amount: int, crit: bool, glance := false) -> void:
 	else:
 		modulate = Color(0.98, 0.88, 0.78)
 		outline_modulate = Color(0.05, 0.04, 0.06)
-
 
 func _process(delta: float) -> void:
 	life -= delta

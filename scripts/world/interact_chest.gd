@@ -6,7 +6,6 @@ const Catalog := preload("res://scripts/data/catalog.gd")
 const Prompt := preload("res://scripts/world/interact_prompt.gd")
 const InteractFx := preload("res://scripts/world/interact_fx.gd")
 
-
 static func open_chest(host: Node3D) -> String:
 	if host.used:
 		return "Empty."

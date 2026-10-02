@@ -29,7 +29,6 @@ var val_cats: Array = []
 var val_cat_i := 0
 var val_mode := "cats"
 
-
 func _ready() -> void:
 	layer = 80
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -71,7 +70,6 @@ func _ready() -> void:
 	root_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	root_box.add_theme_constant_override("separation", 6)
 	scroll.add_child(root_box)
-
 
 func _rebuild() -> void:
 	for c in chrome_box.get_children():
@@ -121,7 +119,6 @@ func _rebuild() -> void:
 		scroll.scroll_vertical = 0
 	call_deferred("_focus")
 
-
 func _inside_spin(c: Control) -> bool:
 	var p := c.get_parent()
 	while p != null and p != root_box:
@@ -129,7 +126,6 @@ func _inside_spin(c: Control) -> bool:
 			return true
 		p = p.get_parent()
 	return false
-
 
 func _focusables() -> Array[Control]:
 	var out: Array[Control] = []
@@ -150,7 +146,6 @@ func _focusables() -> Array[Control]:
 		out.append(c)
 	return out
 
-
 func _page_owner(ctrl: Control) -> Control:
 	var walk: Node = ctrl
 	while walk != null and walk != root_box:
@@ -158,7 +153,6 @@ func _page_owner(ctrl: Control) -> Control:
 			return walk as Control
 		walk = walk.get_parent()
 	return ctrl
-
 
 func _wire_focus() -> void:
 	var items := _focusables()
@@ -175,7 +169,6 @@ func _wire_focus() -> void:
 		cur.focus_next = nxt.get_path()
 		cur.focus_neighbor_left = NodePath("")
 		cur.focus_neighbor_right = NodePath("")
-
 
 func _focus() -> void:
 	if not open:
@@ -195,7 +188,6 @@ func _focus() -> void:
 		return
 	items[0].grab_focus()
 
-
 func _nudge_focus(delta_i: int) -> void:
 	if page == "values":
 		DebugMenuVal.val_nudge(self, delta_i)
@@ -213,7 +205,6 @@ func _nudge_focus(delta_i: int) -> void:
 			idx = found
 	items[(idx + delta_i + n) % n].grab_focus()
 
-
 func _btn(t: String, cb: Callable) -> Button:
 	var b := Button.new()
 	b.text = t
@@ -223,20 +214,17 @@ func _btn(t: String, cb: Callable) -> Button:
 	b.pressed.connect(cb)
 	return b
 
-
 func _chrome_btn(t: String, cb: Callable) -> Button:
 	var b := _btn(t, cb)
 	b.focus_mode = Control.FOCUS_NONE
 	b.custom_minimum_size = Vector2(200, 44)
 	return b
 
-
 func _tab_btn(t: String, id: String) -> Button:
 	var b := _chrome_btn(t, func(): page = id; _rebuild())
 	if page == id:
 		b.add_theme_color_override("font_color", Color(1, 0.92, 0.45))
 	return b
-
 
 func show_menu() -> void:
 	open = true
@@ -247,7 +235,6 @@ func show_menu() -> void:
 	set_process_input(true)
 	page = "values"
 	_rebuild()
-
 
 func hide_menu() -> void:
 	open = false
@@ -265,13 +252,11 @@ func hide_menu() -> void:
 	if not keep:
 		App.save_now()
 
-
 func toggle() -> void:
 	if open:
 		hide_menu()
 	else:
 		show_menu()
-
 
 func release_for_anim() -> void:
 	var focus_ctrl: Control = get_viewport().gui_get_focus_owner() if get_viewport() else null
@@ -279,26 +264,21 @@ func release_for_anim() -> void:
 		focus_ctrl.release_focus()
 	set_process_input(false)
 
-
 func restore_from_anim() -> void:
 	if not open:
 		return
 	set_process_input(true)
 	call_deferred("_focus")
 
-
 func _start_play(msg: String) -> void:
 	status.text = msg
 	hide_menu()
 
-
 func _busy_anim() -> bool:
 	return App.anim_browser != null and bool(App.anim_browser.get("open"))
 
-
 func _process(delta: float) -> void:
 	DebugMenuInput.tick(self, delta)
-
 
 func _input(event: InputEvent) -> void:
 	DebugMenuInput.handle_input(self, event)

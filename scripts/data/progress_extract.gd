@@ -4,10 +4,8 @@ const ProgressQuest := preload("res://scripts/data/progress_quest.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 
-
 static func _full_mail(role: String) -> bool:
 	return role == "" or role == "patty" or role == "gate"
-
 
 static func extractable(p: Object, role: String = "") -> Array:
 	var out: Array = []
@@ -28,7 +26,6 @@ static func extractable(p: Object, role: String = "") -> Array:
 				out.append(it)
 	return out
 
-
 static func _beats_keep(it: Dictionary) -> bool:
 	var finish := float(it.get("quality", 0.5))
 	var fortune := float(it.get("luck", 0.75))
@@ -36,14 +33,12 @@ static func _beats_keep(it: Dictionary) -> bool:
 	var need_l := clampf(float(App.get("salvage_fortune")), 0.75, 1.25)
 	return finish >= need_f or fortune >= need_l
 
-
 static func _salvage_spare(p: Object, it: Dictionary) -> bool:
 	if not bool(App.get("salvage_dupes")):
 		return false
 	if not ForgeP.is_duplicate(p, it):
 		return false
 	return not _beats_keep(it)
-
 
 static func _mail_item(p: Object, it: Dictionary) -> String:
 	var special := Rules.handle_mail(p, it)
@@ -55,7 +50,6 @@ static func _mail_item(p: Object, it: Dictionary) -> String:
 	App.extracted = true
 	p.mailed_names.append(str(it.name))
 	return "Sent " + str(it.name)
-
 
 static func extract_all(p: Object, role: String) -> String:
 	var g: int = 0
@@ -97,7 +91,6 @@ static func extract_all(p: Object, role: String) -> String:
 			App.tel.note_extract(g, o, w)
 			App.tel.forge_n = p.forge_count
 	return "Banked %dg, %d ore, %d wood, %d root, %d items." % [g, o, w, r, items]
-
 
 static func extract_one(p: Object, it: Dictionary, role: String) -> String:
 	var k: String = str(it.get("kind", ""))
@@ -146,7 +139,6 @@ static func extract_one(p: Object, it: Dictionary, role: String) -> String:
 			return "Forged holds stay with you."
 		return _mail_item(p, got)
 	return "Nothing."
-
 
 static func withdraw_bank_consumables(p: Object) -> void:
 	var keep: Array = []

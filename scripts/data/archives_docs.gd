@@ -3,7 +3,6 @@ extends Object
 const Cat := preload("res://scripts/data/archives_catalog.gd")
 const CLIP := 4000
 
-
 static func names(e: Dictionary) -> PackedStringArray:
 	var raw: Variant = e.get("docs", [])
 	var out := PackedStringArray()
@@ -14,21 +13,17 @@ static func names(e: Dictionary) -> PackedStringArray:
 			out.append(str(x))
 	return out
 
-
 static func display_name(path: String) -> String:
 	var n := path.replace("\\", "/").get_file()
 	return n if n != "" else path
-
 
 static func clip(t: String) -> String:
 	if t.length() > CLIP:
 		return t.substr(0, CLIP) + "\n…"
 	return t
 
-
 static func extra_path(id: String, path: String) -> String:
 	return "res://archives/docs/%s/%s" % [id, path.get_file()]
-
 
 static func read_now(e: Dictionary, path: String) -> String:
 	if path == "":

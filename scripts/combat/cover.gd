@@ -4,7 +4,6 @@ const Combat := preload("res://scripts/combat/combat.gd")
 const Hit := preload("res://scripts/combat/cover_hit.gd")
 const Geom := preload("res://scripts/combat/cover_geom.gd")
 
-
 static func hit_arc(origin: Vector3, dir: Vector2, rng: float, arc_deg: float, host: Node3D) -> float:
 	if host == null or not is_instance_valid(host) or rng <= 0.001:
 		return 0.0
@@ -22,9 +21,6 @@ static func hit_circle(origin: Vector3, radius: float, host: Node3D) -> float:
 		return 0.0
 	var reach := Combat.xz(host).distance_to(Vector2(origin.x, origin.z))
 	return _radial_q(reach, radius)
-
-static func hit_disk(origin: Vector3, radius: float, host: Node3D) -> float:
-	return Hit.hit_shot(origin, Vector2.ZERO, radius, host)
 
 static func hit_shot(origin: Vector3, dir: Vector2, radius: float, host: Node3D) -> float:
 	return Hit.hit_shot(origin, dir, radius, host)
@@ -84,9 +80,6 @@ static func _fan_hits_sprite(origin: Vector3, aim: Vector2, rng: float, half: fl
 static func _disk_hits_sprite(origin: Vector3, radius: float, host: Node3D) -> bool:
 	return Geom._disk_hits_sprite(origin, radius, host)
 
-static func _sprite_pts(host: Node3D) -> Array[Vector3]:
-	return Hit._sprite_pts(host)
-
 static func _sprite_pts_cells(spr: Sprite3D, pack: Dictionary, c: Vector3, rx: Vector3, up: Vector3) -> Array[Vector3]:
 	return Geom._sprite_pts_cells(spr, pack, c, rx, up)
 
@@ -127,6 +120,3 @@ static func _world_h(spr: Sprite3D) -> float:
 	if spr.texture == null:
 		return 1.2
 	return maxf(0.08, float(spr.texture.get_height()) * spr.pixel_size)
-
-static func _mask_pack(spr: Sprite3D) -> Dictionary:
-	return Hit._mask_pack(spr)

@@ -4,7 +4,6 @@ const Fmt := preload("res://scripts/ui/gear_board/gear_board_text_fmt.gd")
 
 static var seen_uids: Dictionary = {}
 
-
 static func slot_item(slot: String) -> Dictionary:
 	var raw: Variant = App.prog.slots.get(slot, {})
 	if raw is Dictionary and not (raw as Dictionary).is_empty():
@@ -37,7 +36,6 @@ static func slot_item(slot: String) -> Dictionary:
 		}
 	return {}
 
-
 static func _weapon_label(w: String) -> String:
 	match w:
 		"staff":
@@ -46,7 +44,6 @@ static func _weapon_label(w: String) -> String:
 			return "Longbow"
 		_:
 			return "Great Axe"
-
 
 static func options_for(slot: String) -> Array:
 	var out: Array = []
@@ -140,7 +137,6 @@ static func options_for(slot: String) -> Array:
 			out.append({"it": bk, "src": "bank", "uid": uid2})
 	return out
 
-
 static func has_unseen(slot: String) -> bool:
 	var seen: Array = seen_uids.get(slot, [])
 	for row: Dictionary in options_for(slot):
@@ -152,7 +148,6 @@ static func has_unseen(slot: String) -> bool:
 		if seen.find(uid) < 0:
 			return true
 	return false
-
 
 static func mark_seen(slot: String) -> void:
 	var ids: Array = []

@@ -3,19 +3,15 @@ extends Object
 const Prompts := preload("res://scripts/input/prompts.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 
-
 const PROMPT_GOLD := Color(0.86, 0.80, 0.66)
 const PROMPT_OUTLINE := Color(0.05, 0.03, 0.02)
 const PROMPT_OUTLINE_SIZE := 5
 
-
 static func text_scale() -> float:
 	return UiText.applied()
 
-
 static func font_px(size: int) -> int:
 	return UiText.font_px(size)
-
 
 static func lab(
 	t: String,
@@ -37,7 +33,6 @@ static func lab(
 		l.add_theme_constant_override("outline_size", 6)
 	return l
 
-
 static func btn(t: String, cb: Callable, enabled := true) -> Button:
 	var b := Button.new()
 	b.text = t
@@ -57,7 +52,6 @@ static func btn(t: String, cb: Callable, enabled := true) -> Button:
 		b.pressed.connect(cb)
 	return b
 
-
 static func skill_row_sb(lit: bool) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	if lit:
@@ -73,7 +67,6 @@ static func skill_row_sb(lit: bool) -> StyleBoxFlat:
 	s.content_margin_bottom = 10
 	return s
 
-
 static func skill_row() -> PanelContainer:
 	var p := PanelContainer.new()
 	p.focus_mode = Control.FOCUS_ALL
@@ -82,7 +75,6 @@ static func skill_row() -> PanelContainer:
 	p.custom_minimum_size = UiText.min_size(0.0, 52.0)
 	p.add_theme_stylebox_override("panel", skill_row_sb(false))
 	return p
-
 
 static func skill_name(id: String) -> String:
 	match id:
@@ -110,10 +102,8 @@ static func skill_name(id: String) -> String:
 			return "Smithing"
 	return id
 
-
 static func _pct(v: float) -> String:
 	return "%d%%" % int(round(v * 100.0))
-
 
 static func skill_tip(id: String, lv: int) -> String:
 	lv = maxi(1, lv)
@@ -191,11 +181,6 @@ static func skill_tip(id: String, lv: int) -> String:
 			per = "No per-level bonus is defined."
 	return "%s  ·  Level %d\n\n%s\n\n%s" % [n, lv, now, per]
 
-
-static func bind_text(action: String) -> String:
-	return Prompts.chip_for(action)
-
-
 static func _joy_btn(i: int) -> String:
 	match i:
 		JOY_BUTTON_A:
@@ -228,7 +213,6 @@ static func _joy_btn(i: int) -> String:
 			return "D-pad Right"
 	return "Pad " + str(i)
 
-
 static func _joy_axis(axis: int, val: float) -> String:
 	if axis == JOY_AXIS_TRIGGER_RIGHT:
 		return "RT"
@@ -243,7 +227,6 @@ static func _joy_axis(axis: int, val: float) -> String:
 	if axis == JOY_AXIS_RIGHT_Y:
 		return "Right Stick Y"
 	return "Axis %d%s" % [axis, "+" if val >= 0.0 else "-"]
-
 
 static func sb(bg: Color, border: Color) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()

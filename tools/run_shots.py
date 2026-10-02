@@ -1,4 +1,68 @@
-#!/usr/bin/env python3
+from __future__ import annotations
+
+def _present_over(png, pid):
+    import ctypes
+    from ctypes import wintypes
+    user32 = ctypes.windll.user32
+    gdi32 = ctypes.windll.gdi32
+    PW_RENDERFULLCONTENT = 2
+    found = []
+
+    @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    def _enum(hwnd, _lparam):
+        if not user32.IsWindowVisible(hwnd):
+            return True
+        proc = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(proc))
+        if proc.value == pid:
+            found.append(hwnd)
+        return True
+
+    user32.EnumWindows(_enum, 0)
+    if not found:
+        return False
+    hwnd = found[0]
+    rect = wintypes.RECT()
+    user32.GetClientRect(hwnd, ctypes.byref(rect))
+    w, h = rect.right, rect.bottom
+    if w < 32 or h < 32:
+        return False
+    hdc = user32.GetDC(hwnd)
+    mem = gdi32.CreateCompatibleDC(hdc)
+    bmp = gdi32.CreateCompatibleBitmap(hdc, w, h)
+    gdi32.SelectObject(mem, bmp)
+    ok = user32.PrintWindow(hwnd, mem, PW_RENDERFULLCONTENT)
+    user32.ReleaseDC(hwnd, hdc)
+    if not ok:
+        gdi32.DeleteObject(bmp)
+        gdi32.DeleteDC(mem)
+        return False
+    class BMI(ctypes.Structure):
+        _fields_ = [
+            ("biSize", wintypes.DWORD), ("biWidth", wintypes.LONG), ("biHeight", wintypes.LONG),
+            ("biPlanes", wintypes.WORD), ("biBitCount", wintypes.WORD), ("biCompression", wintypes.DWORD),
+            ("biSizeImage", wintypes.DWORD), ("biXPelsPerMeter", wintypes.LONG), ("biYPelsPerMeter", wintypes.LONG),
+            ("biClrUsed", wintypes.DWORD), ("biClrImportant", wintypes.DWORD),
+        ]
+    bmi = BMI()
+    bmi.biSize = ctypes.sizeof(BMI)
+    bmi.biWidth = w
+    bmi.biHeight = -h
+    bmi.biPlanes = 1
+    bmi.biBitCount = 32
+    buf = ctypes.create_string_buffer(w * h * 4)
+    gdi32.GetDIBits(mem, bmp, 0, h, buf, ctypes.byref(bmi), 0)
+    gdi32.DeleteObject(bmp)
+    gdi32.DeleteDC(mem)
+    try:
+        from PIL import Image
+    except ImportError:
+        return False
+    img = Image.frombuffer("RGBA", (w, h), buf, "raw", "BGRA", 0, 1)
+    img.convert("RGB").save(png)
+    print("present_png=%s %dx%d" % (png, w, h))
+    return True
+
 """Posed-camera postcard tool. Not a numbered P1-P9 smoke.
 
 Modes:
@@ -9,10 +73,10 @@ Modes:
 Numbers live here, not in a prompt.
 """
 
-from __future__ import annotations
 
 import argparse
 import ctypes
+import json
 import os
 import subprocess
 import sys
@@ -32,11 +96,37 @@ BUILD_SCALE_PCT = 50
 SETTLE_MS = 1000
 TIMEOUT_SEC = 180
 WARN_BYTES = 2048
-RENDER_DRIVER = "d3d12"
+RENDER_DRIVER = "opengl3"
+RENDER_METHOD = "gl_compatibility"
 
 
 def _root() -> Path:
     return agent_log.repo_root(_TOOLS.parent)
+
+
+def _load_recipe(root: Path, name: str) -> dict:
+    path = root / "tools" / "shot-recipes.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    rec = data.get(name)
+    if not isinstance(rec, dict) or not rec.get("frames"):
+        raise SystemExit("FAIL unknown shot recipe " + name)
+    return rec
+
+
+def _recipe_poses(rec: dict) -> str:
+    bits: list[str] = []
+    for fr in rec.get("frames") or []:
+        kind = str(fr.get("kind") or "play")
+        look = fr.get("look") or [16.5, 15.0]
+        off = fr.get("offset") or [0.0, 0.0]
+        zoom = fr.get("zoom")
+        if zoom is None:
+            zoom = rec.get("zoom", 1.0)
+        px = fr.get("px", rec.get("px", look[0]))
+        pz = fr.get("pz", rec.get("pz", look[1]))
+        face = fr.get("face", "down")
+        bits.append("%s,%s,%s,%s,%s,%s,%s,%s,%s" % (kind, look[0], look[1], off[0], off[1], zoom, px, pz, face))
+    return ";".join(bits)
 
 
 def _out_dir(root: Path) -> Path:
@@ -55,6 +145,7 @@ def _extra_flags(args: argparse.Namespace) -> list[str]:
         f"--wdb-shot-zoom={args.zoom}",
         f"--wdb-shot-cx={args.cx}",
         f"--wdb-shot-cz={args.cz}",
+        "--wdb-shot-scene=camp" if getattr(args, "scene", "dungeon") in ("camp", "hub") else "--wdb-shot-scene=dungeon",
     ]
     if args.width > 0:
         extra.append(f"--wdb-shot-width={args.width}")
@@ -88,22 +179,35 @@ def _godot_pids() -> list[int]:
     return pids
 
 
-def _hide_godot_taskbar() -> int:
-    if os.name != "nt":
+def _shot_pid() -> int:
+    logs = Path(__file__).resolve().parents[1] / "_logs"
+    hits = sorted(logs.rglob("invoke.txt"), key=lambda p: p.stat().st_mtime)
+    if not hits:
+        return 0
+    for line in hits[-1].read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.startswith("PID="):
+            raw = line.split("=", 1)[1].strip()
+            return int(raw) if raw.isdigit() else 0
+    return 0
+
+
+def _hide_godot_taskbar(pids: set[int]) -> int:
+    if os.name != "nt" or not pids:
         return 0
     user32 = ctypes.windll.user32
     GWL_EXSTYLE = -20
     WS_EX_TOOLWINDOW = 0x00000080
     WS_EX_APPWINDOW = 0x00040000
     SWP_NOSIZE = 0x0001
-    SWP_NOMOVE = 0x0002
     SWP_NOZORDER = 0x0004
+    SWP_NOACTIVATE = 0x0010
     SWP_FRAMECHANGED = 0x0020
+    SW_HIDE = 0
+    SW_SHOWNA = 8
     hits = 0
-    pids = set(_godot_pids())
-    if not pids:
-        return 0
     found: list[int] = []
+    styled = getattr(_hide_godot_taskbar, "_styled", set())
+    _hide_godot_taskbar._styled = styled
 
     @ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
     def _cb(hwnd: int, _lp: int) -> bool:
@@ -113,22 +217,32 @@ def _hide_godot_taskbar() -> int:
             found.append(int(hwnd))
         return True
 
+    _hide_godot_taskbar._cb = _cb
+    user32.GetWindowLongPtrW.restype = ctypes.c_longlong
+    user32.GetWindowLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int]
+    user32.SetWindowLongPtrW.restype = ctypes.c_longlong
+    user32.SetWindowLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_longlong]
     user32.EnumWindows(_cb, 0)
     for hwnd in found:
-        style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+        if hwnd in styled:
+            continue
+        style = user32.GetWindowLongPtrW(hwnd, GWL_EXSTYLE)
         style = (style | WS_EX_TOOLWINDOW) & ~WS_EX_APPWINDOW
-        user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
-        user32.SetWindowPos(
-            hwnd, 0, 0, 0, 0, 0,
-            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED,
-        )
+        user32.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style)
+        user32.ShowWindow(hwnd, SW_HIDE)
+        user32.ShowWindow(hwnd, SW_SHOWNA)
+        user32.SetWindowPos(hwnd, 0, 80, 80, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED)
+        styled.add(hwnd)
         hits += 1
     return hits
 
 
-def _taskbar_watch(stop: threading.Event) -> None:
+def _taskbar_watch(stop: threading.Event, before: set[int], png: Path | None = None) -> None:
     while not stop.is_set():
-        _hide_godot_taskbar()
+        live = set(_godot_pids()) - before
+        if png is not None:
+            for pid in live:
+                _present_over(png, pid)
         stop.wait(0.2)
 
 
@@ -148,10 +262,13 @@ def _write_invoke_ps1(
     timeout_sec: int,
     show_window: bool,
     extra: list[str],
+    poses: str,
 ) -> Path:
     godot_args = [
         "--audio-driver",
         "Dummy",
+        "--rendering-method",
+        RENDER_METHOD,
         "--rendering-driver",
         RENDER_DRIVER,
         "--path",
@@ -159,12 +276,14 @@ def _write_invoke_ps1(
         "--",
         "--wdb-shot",
         f"--wdb-shot-seed={seed}",
-        "--wdb-shot-show=1" if show_window else "--wdb-shot-show=0",
+        "--wdb-shot-show=1",
         f"--wdb-shot-floor={floor_n}",
         f"--wdb-shot-out={png}",
         f"--wdb-shot-scale={scale_pct}",
         f"--wdb-shot-settle-ms={settle_ms}",
     ] + extra
+    if poses:
+        godot_args.append("--wdb-shot-poses=" + poses)
     arg_lines = ",\n    ".join(_ps_literal(a) for a in godot_args)
     body = (
         f". {_ps_literal(str(tools / 'invoke_godot.ps1'))}\n"
@@ -180,7 +299,7 @@ def _write_invoke_ps1(
         "    ('STATUS=' + [string]$r.Status),\n"
         "    ('EXIT=' + [string]$r.ExitCode),\n"
         "    ('MS=' + [string]$r.Ms),\n"
-        "    ('TIMEOUT=' + [string]$r.TimedOut)\n"
+        "    ('TIMEOUT=' + [string]$r.TimedOut),\n    ('PID=' + [string]$r.Pid)\n"
         ")\n"
         "$lines | Set-Content -Path $mark -Encoding utf8\n"
     )
@@ -245,25 +364,113 @@ def _png_info(png: Path) -> tuple[int, int, int]:
     return nbytes, width, height
 
 
-def _clipboard_png(png: Path) -> str:
-    if not png.is_file():
-        return "skip"
-    ps = (
-        "Add-Type -AssemblyName System.Drawing\n"
-        "Add-Type -AssemblyName System.Windows.Forms\n"
-        f"$img = [System.Drawing.Image]::FromFile({_ps_literal(str(png))})\n"
-        "try {\n"
-        "    [System.Windows.Forms.Clipboard]::SetImage($img)\n"
-        "} finally {\n"
-        "    $img.Dispose()\n"
-        "}\n"
-    )
-    r = subprocess.run(
-        ["powershell", "-NoProfile", "-Command", ps],
+
+def _kill_shot_pid(marks: dict[str, str]) -> None:
+    raw = marks.get("PID", "").strip()
+    if not raw.isdigit():
+        return
+    subprocess.run(
+        ["taskkill", "/PID", raw, "/T", "/F"],
         capture_output=True,
         text=True,
+        check=False,
     )
-    return "ok" if r.returncode == 0 else "fail"
+
+
+def _clipboard_png(png: Path) -> str:
+    if os.name != 'nt' or not png.is_file():
+        return 'skip'
+    import ctypes
+    from ctypes import wintypes
+    gdiplus = ctypes.windll.gdiplus
+    user32 = ctypes.windll.user32
+    gdi32 = ctypes.windll.gdi32
+    kernel32 = ctypes.windll.kernel32
+    kernel32.GlobalAlloc.restype = ctypes.c_void_p
+    kernel32.GlobalLock.restype = ctypes.c_void_p
+    kernel32.GlobalLock.argtypes = [ctypes.c_void_p]
+    kernel32.GlobalUnlock.argtypes = [ctypes.c_void_p]
+    user32.SetClipboardData.argtypes = [ctypes.c_uint, ctypes.c_void_p]
+    user32.SetClipboardData.restype = ctypes.c_void_p
+    user32.OpenClipboard.argtypes = [ctypes.c_void_p]
+    class _Startup(ctypes.Structure):
+        _fields_ = [
+            ('GdiplusVersion', ctypes.c_uint32),
+            ('DebugEventCallback', ctypes.c_void_p),
+            ('SuppressBackgroundThread', ctypes.c_int),
+            ('SuppressExternalCodecs', ctypes.c_int),
+        ]
+    class _Hdr(ctypes.Structure):
+        _fields_ = [
+            ('biSize', wintypes.DWORD),
+            ('biWidth', wintypes.LONG),
+            ('biHeight', wintypes.LONG),
+            ('biPlanes', wintypes.WORD),
+            ('biBitCount', wintypes.WORD),
+            ('biCompression', wintypes.DWORD),
+            ('biSizeImage', wintypes.DWORD),
+            ('biXPelsPerMeter', wintypes.LONG),
+            ('biYPelsPerMeter', wintypes.LONG),
+            ('biClrUsed', wintypes.DWORD),
+            ('biClrImportant', wintypes.DWORD),
+        ]
+    token = ctypes.c_ulong()
+    if gdiplus.GdiplusStartup(ctypes.byref(token), ctypes.byref(_Startup(1, None, 0, 0)), None) != 0:
+        return 'fail'
+    image = ctypes.c_void_p()
+    if gdiplus.GdipCreateBitmapFromFile(ctypes.c_wchar_p(str(png)), ctypes.byref(image)) != 0:
+        return 'fail'
+    width = ctypes.c_uint()
+    height = ctypes.c_uint()
+    gdiplus.GdipGetImageWidth(image, ctypes.byref(width))
+    gdiplus.GdipGetImageHeight(image, ctypes.byref(height))
+    w = int(width.value)
+    h = int(height.value)
+    scale = 1.0
+    while (w * scale) * (h * scale) * 3 > 3500000:
+        scale *= 0.9
+    tw = max(1, int(w * scale))
+    th = max(1, int(h * scale))
+    small = ctypes.c_void_p()
+    if gdiplus.GdipGetImageThumbnail(image, tw, th, ctypes.byref(small), None, None) != 0:
+        gdiplus.GdipDisposeImage(image)
+        return 'fail'
+    hbmp = ctypes.c_void_p()
+    if gdiplus.GdipCreateHBITMAPFromBitmap(small, ctypes.byref(hbmp), 0x00FFFFFF) != 0:
+        return 'fail'
+    stride = ((tw * 3 + 3) // 4) * 4
+    hdr = _Hdr()
+    hdr.biSize = ctypes.sizeof(_Hdr)
+    hdr.biWidth = tw
+    hdr.biHeight = th
+    hdr.biPlanes = 1
+    hdr.biBitCount = 24
+    hdr.biCompression = 0
+    hdr.biSizeImage = stride * th
+    total = ctypes.sizeof(_Hdr) + int(hdr.biSizeImage)
+    hglob = kernel32.GlobalAlloc(0x0002, total)
+    ptr = kernel32.GlobalLock(hglob)
+    if not hglob or not ptr:
+        return 'fail'
+    ctypes.memmove(ptr, ctypes.byref(hdr), ctypes.sizeof(hdr))
+    hdc = user32.GetDC(None)
+    rows = gdi32.GetDIBits(hdc, hbmp, 0, th, ctypes.c_void_p(ptr + ctypes.sizeof(hdr)), ctypes.byref(hdr), 0)
+    user32.ReleaseDC(None, hdc)
+    kernel32.GlobalUnlock(hglob)
+    if rows == 0:
+        return 'fail'
+    if not user32.OpenClipboard(None):
+        return 'fail'
+    user32.EmptyClipboard()
+    placed = user32.SetClipboardData(8, hglob)
+    user32.CloseClipboard()
+    gdi32.DeleteObject(hbmp)
+    gdiplus.GdipDisposeImage(small)
+    gdiplus.GdipDisposeImage(image)
+    gdiplus.GdiplusShutdown(token)
+    print('clip_px=%dx%d dib_bytes=%d' % (tw, th, total))
+    time.sleep(0.5)
+    return 'ok' if placed else 'fail'
 
 
 def _open_png(png: Path) -> str:
@@ -294,13 +501,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     p.add_argument("--mode", choices=("web", "build", "user"), default="user")
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--scene", choices=("dungeon", "camp", "hub"), default="dungeon")
     p.add_argument("--floor", type=int, default=1)
     p.add_argument("--scale", type=int, default=0, help="PNG scale percent; 0 picks mode default")
     p.add_argument("--settle-ms", type=int, default=SETTLE_MS)
     p.add_argument("--timeout-sec", type=int, default=TIMEOUT_SEC)
     p.add_argument("--out", default="", help="PNG path override")
     p.add_argument("--show", action="store_true", help="leave the Godot window visible")
-    p.add_argument("--hud", type=int, default=1, help="1=HUD on, 0=HUD off")
+    p.add_argument("--hud", type=int, default=-1, help="1=HUD on, 0=HUD off; -1 uses recipe")
     p.add_argument("--width", type=int, default=0)
     p.add_argument("--height", type=int, default=0)
     p.add_argument("--zoom", type=float, default=1.0)
@@ -309,9 +517,29 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--cx", type=float, default=0.0, help="camera look offset X")
     p.add_argument("--cz", type=float, default=0.0, help="camera look offset Z")
     p.add_argument("--taskbar", type=int, default=0, help="1=show taskbar entry")
+    p.add_argument("--recipe", default="", help="tools/shot-recipes.json key; empty is the play camera")
     args = p.parse_args(argv)
 
     root = _root()
+    recipe_name = args.recipe
+    poses = ""
+    if recipe_name:
+        rec = _load_recipe(root, recipe_name)
+        poses = _recipe_poses(rec)
+        if args.scene == "dungeon" and str(rec.get("scene") or "") in ("camp", "hub"):
+            args.scene = "camp"
+        if rec.get("scene"):
+            args.scene = str(rec.get("scene"))
+        if "hud" in rec:
+            args.hud = 0 if int(rec.get("hud", 1)) == 0 else 1
+        if rec.get("zoom") is not None:
+            args.zoom = float(rec.get("zoom"))
+        if rec.get("px") not in (None, ""):
+            args.px = str(rec.get("px"))
+        if rec.get("pz") not in (None, ""):
+            args.pz = str(rec.get("pz"))
+    if args.hud < 0:
+        args.hud = 1
     out_dir = _out_dir(root)
     scale_pct = args.scale if args.scale > 0 else (
         BUILD_SCALE_PCT if args.mode == "build" else 100
@@ -332,10 +560,12 @@ def main(argv: list[str] | None = None) -> int:
         max(1, args.timeout_sec),
         args.show,
         _extra_flags(args),
+        poses,
     )
+    before = set(_godot_pids())
     stop = threading.Event()
-    watcher = threading.Thread(target=_taskbar_watch, args=(stop,), daemon=True)
-    if not args.show and args.taskbar == 0:
+    watcher = threading.Thread(target=_taskbar_watch, args=(stop, before, png), daemon=True)
+    if False:
         watcher.start()
     try:
         subprocess.run(
@@ -346,6 +576,9 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         stop.set()
     marks = _read_invoke_mark(out_dir)
+    _kill_shot_pid(marks)
+    import time as _time
+    _time.sleep(0.3)
     shot_hits = _shot_lines(out_dir)
     err_hits = _error_lines(out_dir)
     nbytes, width, height = _png_info(png)
@@ -374,7 +607,7 @@ def main(argv: list[str] | None = None) -> int:
         f"shots {datetime.now(timezone.utc).isoformat()}",
         f"root={root}",
         f"mode={args.mode} seed={max(1, args.seed)} floor={max(1, args.floor)} "
-        f"scale={scale_pct} settle_ms={max(0, args.settle_ms)} driver={RENDER_DRIVER}",
+        f"scale={scale_pct} settle_ms={max(0, args.settle_ms)} method={RENDER_METHOD} driver={RENDER_DRIVER}",
         f"status={status} wall_ms={marks.get('MS', '-1')} timeout={timed_out}",
         f"png={png} bytes={nbytes} w={width} h={height}",
         f"clipboard={clip} open={opened} band={band}",

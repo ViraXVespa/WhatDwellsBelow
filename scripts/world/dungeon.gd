@@ -56,50 +56,38 @@ var geo_root: Node3D
 var floor_mat: Material
 var wall_mat: Material
 
-
 func _ready() -> void:
 	DungeonBoot.ready_floor(self)
-
 
 func _process(delta: float) -> void:
 	DungeonBoot.process_floor(self, delta)
 
-
 func _world() -> void:
 	DungeonGeo.world(self)
-
 
 func _collision_walls() -> void:
 	DungeonGeo.collision_walls(self)
 
-
 func _build_visuals() -> void:
 	DungeonGeo.build_visuals(self)
-
 
 func _build_travel() -> void:
 	DungeonGeo.build_travel(self)
 
-
 func enemy_combat_lv(pos: Vector3) -> int:
 	return DungeonGeo.enemy_combat_lv(self, pos)
-
 
 func _spawns() -> void:
 	DungeonBoot.spawns(self)
 
-
 func _place_doors() -> void:
 	DungeonBoot.place_doors(self)
-
 
 func _on_boss_dead() -> void:
 	DungeonBoot.on_boss_dead(self)
 
-
 func _reveal_around(c: Vector2i, rad: int) -> bool:
 	return DungeonMinimap.reveal_around(self, c, rad)
-
 
 func _hud() -> void:
 	hud = HudS.new()
@@ -111,24 +99,20 @@ func _hud() -> void:
 	toast_lab = null
 	shrine_lab = null
 
-
 func _refresh_hint() -> void:
 	if hud and hud.has_method("refresh"):
 		hud.refresh(player, self)
 	if hud and hud.has_method("bind_map") and map_tex:
 		hud.bind_map(map_tex)
 
-
 func _map() -> void:
 	DungeonMinimap.make_map(self)
-
 
 func _redraw_map() -> void:
 	DungeonMinimap.redraw_map(self)
 	if map_layer and map_layer.visible:
 		var MapActS: GDScript = load("res://scripts/world/dungeon_map_act.gd") as GDScript
 		MapActS.apply(self)
-
 
 func _note_verge() -> void:
 	if stairs and not bool(stairs.get("locked")):
@@ -143,127 +127,84 @@ func _note_verge() -> void:
 		if hp / mx <= 0.3:
 			App.boss_low = true
 
-
 func _player_cell() -> Vector2i:
 	return DungeonCells.player_cell(self)
-
 
 func _cell_manhattan(a: Vector2i, b: Vector2i) -> int:
 	return DungeonCells.cell_manhattan(a, b)
 
-
 func _near_spawn(c: Vector2i, rad: int = SPAWN_CLEAR) -> bool:
 	return DungeonCells.near_spawn(self, c, rad)
-
 
 func _away_room() -> Dictionary:
 	return DungeonCells.away_room(self)
 
-
 func _stream_force_all() -> void:
 	DungeonStream.force_all(self)
-
-
-func _spawn_room(r: Dictionary, pool: PackedStringArray) -> void:
-	DungeonStream.activate_room(self, r, pool)
-
-
-func _maybe_named(pool: PackedStringArray) -> void:
-	DungeonStream.queue_named(self, pool)
-
 
 func _combat_room() -> Dictionary:
 	return DungeonCells.combat_room(self)
 
-
 func _add_enemy(id: String, pos: Vector3, gid: int, named: bool, nname: String) -> Node:
 	return DungeonPack.add_enemy(self, id, pos, gid, named, nname)
-
-
-func _ensure_pool(pool: PackedStringArray) -> void:
-	DungeonStream.queue_pool(self, pool)
-
 
 func _rand_cell(r: Dictionary) -> Vector2i:
 	return DungeonCells.rand_cell(self, r)
 
-
 func _cell_pos(c: Vector2i) -> Vector3:
 	return DungeonCells.cell_pos(c)
-
 
 func _world_cell(p: Vector3) -> Vector2i:
 	return DungeonCells.world_cell(p)
 
-
 func _mark_cell(c: Vector2i) -> void:
 	DungeonCells.mark_cell(self, c)
-
 
 func _cell_clear(c: Vector2i, gap: int = PROP_GAP) -> bool:
 	return DungeonCells.cell_clear(self, c, gap)
 
-
 func _free_cell(r: Dictionary, gap: int = PROP_GAP) -> Vector2i:
 	return DungeonCells.free_cell(self, r, gap)
-
 
 func _free_cell_world(prefer: Dictionary, gap: int = PROP_GAP) -> Vector2i:
 	return DungeonCells.free_cell_world(self, prefer, gap)
 
-
 func _free_near(center: Vector2i, gap: int = PROP_GAP) -> Vector2i:
 	return DungeonCells.free_near(self, center, gap)
-
 
 func _seed_occupied() -> void:
 	DungeonCells.seed_occupied(self)
 
-
 func _is_floor_cell(c: Vector2i) -> bool:
 	return DungeonCells.is_floor_cell(self, c)
-
-
-func _is_safe_cell(c: Vector2i) -> bool:
-	return DungeonCells.is_safe_cell(self, c)
-
 
 func is_safe_world(p: Vector3) -> bool:
 	return DungeonCells.is_safe_world(self, p)
 
-
 func note_enemy_hit(e: Node, dmg: float) -> void:
 	DungeonPack.note_enemy_hit(self, e, dmg)
-
 
 func _trigger_flee(gid: int) -> Node:
 	return DungeonPack.trigger_flee(self, gid)
 
-
 func spawn_reinforcement(id: String, from: Vector3, gid: int) -> Node:
 	return DungeonPack.spawn_reinforcement(self, id, from, gid)
-
 
 func _walkable_near(center: Vector2i, radius: int, allow_safe: bool) -> Vector2i:
 	return DungeonCells.walkable_near(self, center, radius, allow_safe)
 
-
 func _tick_pressure(delta: float, grew: bool) -> void:
 	DungeonPack.tick_pressure(self, delta, grew)
-
 
 func _pressure_spawn() -> int:
 	return DungeonPack.pressure_spawn(self)
 
-
 func _find_kind_room(kind: String) -> Dictionary:
 	return DungeonCells.find_kind_room(self, kind)
-
 
 func world_ui() -> Node:
 	ensure_ui()
 	return ui
-
 
 func ensure_ui() -> void:
 	if ui != null:
@@ -272,14 +213,11 @@ func ensure_ui() -> void:
 	ui = UiS.new() as CanvasLayer
 	add_child(ui)
 
-
 func _note(k: String) -> void:
 	counts[k] = int(counts.get(k, 0)) + 1
 
-
 func _center_room(r: Dictionary) -> Vector2i:
 	return DungeonCells.center_room(r)
-
 
 func _tick_plates() -> void:
 	if player == null:

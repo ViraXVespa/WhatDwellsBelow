@@ -2,33 +2,27 @@
 
 const Gen := preload("res://scripts/dungeon/gen.gd")
 
-
 static func player_cell(host: Node) -> Vector2i:
 	if host.player == null:
 		return Vector2i(int(host.data.spawn.x), int(host.data.spawn.y))
 	return Vector2i(int(host.player.global_position.x), int(host.player.global_position.z))
 
-
 static func cell_manhattan(a: Vector2i, b: Vector2i) -> int:
 	return absi(a.x - b.x) + absi(a.y - b.y)
-
 
 static func near_spawn(host: Node, c: Vector2i, rad: int = -1) -> bool:
 	if rad < 0:
 		rad = host.SPAWN_CLEAR
 	return cell_manhattan(c, host.data.spawn) < rad
 
-
 static func center_room(r: Dictionary) -> Vector2i:
 	return Vector2i(int(r.x) + int(int(r.w) / 2.0), int(r.y) + int(int(r.h) / 2.0))
-
 
 static func find_kind_room(host: Node, kind: String) -> Dictionary:
 	for r in host.data.get("rooms", []):
 		if str(r.get("kind", "")) == kind:
 			return r
 	return {}
-
 
 static func away_room(host: Node) -> Dictionary:
 	var best := {}
@@ -50,7 +44,6 @@ static func away_room(host: Node) -> Dictionary:
 			return r
 	return {}
 
-
 static func combat_room(host: Node) -> Dictionary:
 	for r in host.data.get("rooms", []):
 		var kind := str(r.get("kind", "normal"))
@@ -60,7 +53,6 @@ static func combat_room(host: Node) -> Dictionary:
 			continue
 		return r
 	return away_room(host)
-
 
 static func rand_cell(host: Node, r: Dictionary) -> Vector2i:
 	var rx := int(r.x)
@@ -75,19 +67,15 @@ static func rand_cell(host: Node, r: Dictionary) -> Vector2i:
 			return c
 	return Vector2i(rx + int(rw / 2.0), ry + int(rh / 2.0))
 
-
 static func cell_pos(c: Vector2i) -> Vector3:
 	return Vector3(float(c.x) + 0.5, 0.0, float(c.y) + 0.5)
-
 
 static func world_cell(p: Vector3) -> Vector2i:
 	return Vector2i(int(round(p.x - 0.5)), int(round(p.z - 0.5)))
 
-
 static func mark_cell(host: Node, c: Vector2i) -> void:
 	if c.x >= 0 and c.y >= 0:
 		host.occupied[c] = true
-
 
 static func is_floor_cell(host: Node, c: Vector2i) -> bool:
 	var w: int = host.data.w
@@ -114,7 +102,6 @@ static func is_floor_cell(host: Node, c: Vector2i) -> bool:
 		return false
 	return bake[fy * sw + fx] != 0
 
-
 static func is_safe_cell(host: Node, c: Vector2i) -> bool:
 	if near_spawn(host, c, 8):
 		return true
@@ -125,10 +112,8 @@ static func is_safe_cell(host: Node, c: Vector2i) -> bool:
 			return true
 	return false
 
-
 static func is_safe_world(host: Node, p: Vector3) -> bool:
 	return is_safe_cell(host, Vector2i(int(p.x), int(p.z)))
-
 
 static func cell_clear(host: Node, c: Vector2i, gap: int = -1) -> bool:
 	if gap < 0:
@@ -140,7 +125,6 @@ static func cell_clear(host: Node, c: Vector2i, gap: int = -1) -> bool:
 		if maxi(absi(o.x - c.x), absi(o.y - c.y)) < gap:
 			return false
 	return true
-
 
 static func free_cell(host: Node, r: Dictionary, gap: int = -1) -> Vector2i:
 	if gap < 0:
@@ -169,7 +153,6 @@ static func free_cell(host: Node, r: Dictionary, gap: int = -1) -> Vector2i:
 		return opts[host.floor_rng.randi() % opts.size()]
 	return rand_cell(host, r)
 
-
 static func free_cell_world(host: Node, prefer: Dictionary, gap: int = -1) -> Vector2i:
 	if gap < 0:
 		gap = host.PROP_GAP
@@ -191,7 +174,6 @@ static func free_cell_world(host: Node, prefer: Dictionary, gap: int = -1) -> Ve
 	if not away.is_empty():
 		return rand_cell(host, away)
 	return Vector2i(int(host.data.spawn.x) + 8, int(host.data.spawn.y) + 8)
-
 
 static func free_near(host: Node, center: Vector2i, gap: int = -1) -> Vector2i:
 	if gap < 0:
@@ -218,7 +200,6 @@ static func free_near(host: Node, center: Vector2i, gap: int = -1) -> Vector2i:
 			return opts2[host.floor_rng.randi() % opts2.size()]
 	return center
 
-
 static func seed_occupied(host: Node) -> void:
 	host.occupied.clear()
 	mark_cell(host, host.data.spawn)
@@ -234,7 +215,6 @@ static func seed_occupied(host: Node) -> void:
 	for n in host.get_tree().get_nodes_in_group("interact"):
 		if n is Node3D:
 			mark_cell(host, world_cell((n as Node3D).global_position))
-
 
 static func walkable_near(host: Node, center: Vector2i, radius: int, allow_safe: bool) -> Vector2i:
 	var rad := maxi(1, radius)

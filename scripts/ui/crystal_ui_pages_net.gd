@@ -7,7 +7,6 @@ const CrystalNet := preload("res://scripts/world/crystal_net.gd")
 const Util := preload("res://scripts/ui/crystal_ui_util.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
-
 static func net_tabs(host, box: VBoxContainer) -> void:
 	var shell := HBoxContainer.new()
 	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL

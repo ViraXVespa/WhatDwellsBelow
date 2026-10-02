@@ -43,8 +43,6 @@ static func _ready(host: CanvasLayer) -> void:
 	host.box.add_theme_constant_override("separation", 8)
 	scroll.add_child(host.box)
 
-
-
 static func close_ui(host: CanvasLayer) -> void:
 	if host.mode == "extract" and host.extract_mailed and host.extract_spot and is_instance_valid(host.extract_spot) and host.extract_spot.has_method("mark_spent"):
 		host.extract_spot.mark_spent()
@@ -66,8 +64,6 @@ static func close_ui(host: CanvasLayer) -> void:
 	App.swallow_close_pad()
 	App.wake_web_pad()
 
-
-
 static func _focus(host: CanvasLayer) -> void:
 	if host._sub_up():
 		return
@@ -80,8 +76,6 @@ static func _focus(host: CanvasLayer) -> void:
 	if host.focus_btn and is_instance_valid(host.focus_btn) and host.focus_btn.is_inside_tree() and not host.focus_btn.is_queued_for_deletion():
 		if host.focus_btn.focus_mode != Control.FOCUS_NONE:
 			host.focus_btn.grab_focus()
-
-
 
 static func open_anvil(host: CanvasLayer) -> void:
 	host.mode = "anvil"
@@ -98,8 +92,6 @@ static func open_anvil(host: CanvasLayer) -> void:
 	host._rebuild_anvil()
 	host._show()
 
-
-
 static func open_loadout(host: CanvasLayer) -> void:
 	host.mode = "loadout"
 	host.inv_sel = "slot:weapon"
@@ -110,8 +102,6 @@ static func open_loadout(host: CanvasLayer) -> void:
 	host._rebuild_loadout()
 	host._show()
 
-
-
 static func open_flavor(host: CanvasLayer, title: String, body: String) -> void:
 	host.mode = "flavor"
 	host._drop_sub()
@@ -121,8 +111,6 @@ static func open_flavor(host: CanvasLayer, title: String, body: String) -> void:
 	host.focus_btn = ThemeS.btn("Leave", func(): host.close_ui())
 	host.box.add_child(host.focus_btn)
 	host._show()
-
-
 
 static func _process(host: CanvasLayer, delta: float) -> void:
 	if host.open and host._gear_busy():
@@ -139,8 +127,6 @@ static func _process(host: CanvasLayer, delta: float) -> void:
 		return
 	ForgeUI.finish(host)
 
-
-
 static func _input(host: CanvasLayer, event: InputEvent) -> void:
 	if not host.open or not host._gear_busy():
 		return
@@ -154,8 +140,6 @@ static func _input(host: CanvasLayer, event: InputEvent) -> void:
 			return
 	if GearAct.handle_event(host, event):
 		host.get_viewport().set_input_as_handled()
-
-
 
 static func _unhandled_input(host: CanvasLayer, event: InputEvent) -> void:
 	if not host.open:
@@ -195,4 +179,3 @@ static func _unhandled_input(host: CanvasLayer, event: InputEvent) -> void:
 		host.get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("interact") or event.is_action_pressed("ui_accept"):
 		host.get_viewport().set_input_as_handled()
-

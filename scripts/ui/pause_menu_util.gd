@@ -3,11 +3,9 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const PauseSkills := preload("res://scripts/ui/pause_skills.gd")
 
-
 static func cap(_ui: Node, text: String, size: int = 18, col: Color = Color(0.9, 0.84, 0.7)) -> Label:
 	# No outline: matches prior pause chrome look.
 	return ThemeS.lab(text, size, col, HORIZONTAL_ALIGNMENT_LEFT, false, false)
-
 
 static func slider_row(
 	ui: Node,
@@ -40,18 +38,15 @@ static func slider_row(
 	row.add_child(slider)
 	return row
 
-
 static func blur_tip(ui: CanvasLayer) -> void:
 	ui.tip_from = null
 	ui.tip_id = ""
 	ui.tip_kind = ""
 
-
 static func hide_tip(ui: CanvasLayer) -> void:
 	blur_tip(ui)
 	if ui.tip_host:
 		ui.tip_host.visible = false
-
 
 static func paint_tip(ui: CanvasLayer) -> void:
 	var kind: String = str(ui.tip_kind)
@@ -62,9 +57,3 @@ static func paint_tip(ui: CanvasLayer) -> void:
 		return
 	if ui.tip_host:
 		ui.tip_host.visible = false
-
-
-static func confirm(ui: CanvasLayer, fn: Callable, id: String = "anon") -> void:
-	ui.pending = true
-	ui.pending_id = id
-	ui.pending_fn = fn

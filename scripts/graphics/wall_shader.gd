@@ -7,7 +7,6 @@ const LightRt := preload("res://scripts/graphics/light_rt.gd")
 
 static var _sh: Shader
 
-
 static func shader() -> Shader:
 	if _sh != null:
 		return _sh
@@ -79,7 +78,6 @@ void fragment() {
 	_sh = sh
 	return sh
 
-
 static func material(tex_path: String, fallback: Color, tint: Color = Color.WHITE) -> ShaderMaterial:
 	var mat: ShaderMaterial = ShaderMaterial.new()
 	mat.shader = shader()
@@ -96,7 +94,6 @@ static func material(tex_path: String, fallback: Color, tint: Color = Color.WHIT
 	mat.set_shader_parameter("wear", App.bal.getv("ground_wear"))
 	LightRt.bind(mat)
 	return mat
-
 
 static func _albedo(tex_path: String, fallback: Color) -> Texture2D:
 	if ResourceLoader.exists(tex_path):

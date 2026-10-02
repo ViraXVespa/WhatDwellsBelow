@@ -7,7 +7,7 @@ Read when: RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo, clip-free chunk in
 
 `dungeon_stream.gd` streams enemy jobs. `dungeon_geo_stream.gd` streams floor/wall MultiMeshes and wall collision the same way so 432×432 stays inside the 60 FPS budget.
 
-Stream instances gen's published runs. It does not derive a wall, a lip, or a silhouette. Floor edge, wall ribbon recipe, and BoxShapes on a slant follow the same published origin, delta, and normal. Interior floor may stay merged rects. Do not clip 4-connected cells to invent an edge. Do not call WallRects.merge on wall_cells to build a stair lip. Wall collision is BoxShape on void that touches that bounded solid, flush with the published run, not a 1 m slab and not a second staircase.
+Stream instances gen's published runs. Ribbon boxes fire when those runs exist, not only when the outlined flag is set. WallRects.merge collision is fallback for chunks with no runs. It does not derive a wall, a lip, or a silhouette. Floor edge, wall ribbon recipe, and BoxShapes on a slant follow the same published origin, delta, and normal. Interior floor may stay merged rects. Do not clip 4-connected cells to invent an edge. Do not call WallRects.merge on wall_cells to build a stair lip. Wall collision is BoxShape on void that touches that bounded solid, flush with the published run, not a 1 m slab and not a second staircase.
 
 | Constant | Cells | Meaning |
 |----------|-------|---------|

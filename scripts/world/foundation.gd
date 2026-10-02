@@ -13,7 +13,6 @@ var fps_lab: Label
 var frame_acc := 0.0
 var frame_n := 0
 
-
 func _ready() -> void:
 	_world()
 	_ground()
@@ -25,7 +24,6 @@ func _ready() -> void:
 	_dummies()
 	_hud()
 	Smoke.attach_foundation(self)
-
 
 func _process(delta: float) -> void:
 	frame_acc += delta
@@ -46,12 +44,10 @@ func _process(delta: float) -> void:
 	if player:
 		_refresh_hint()
 
-
 func _world() -> void:
 	EnvKit.apply(
 		self, Color(0.04, 0.045, 0.06), Color(0.78, 0.74, 0.68), 0.9, Vector3(-52.0, 28.0, 0.0), 0.75, Color(0.85, 0.88, 0.95)
 	)
-
 
 func _ground() -> void:
 	var mesh := PlaneMesh.new()
@@ -81,7 +77,6 @@ func _ground() -> void:
 	inst.material_override = mat
 	add_child(inst)
 
-
 func _walls() -> void:
 	var body := StaticBody3D.new()
 	body.name = "Walls"
@@ -105,7 +100,6 @@ func _walls() -> void:
 	_clone_wall_mesh(stone, Vector3(14.5, T.WALL_H * 0.5, 12.0), Vector3(2.2, T.WALL_H, 1.1))
 	_clone_wall_mesh(stone, Vector3(6.0, T.WALL_H * 0.5, 15.5), Vector3(1.1, T.WALL_H, 2.4))
 
-
 func _stone_mat() -> StandardMaterial3D:
 	var stone := StandardMaterial3D.new()
 	stone.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
@@ -116,7 +110,6 @@ func _stone_mat() -> StandardMaterial3D:
 		stone.albedo_texture = load(wall_path)
 	return stone
 
-
 func _clone_wall_mesh(mat: Material, pos: Vector3, size: Vector3) -> void:
 	var vis := MeshInstance3D.new()
 	var box := BoxMesh.new()
@@ -126,7 +119,6 @@ func _clone_wall_mesh(mat: Material, pos: Vector3, size: Vector3) -> void:
 	vis.material_override = mat
 	add_child(vis)
 
-
 func _box(host: StaticBody3D, size: Vector3, offset: Vector3) -> void:
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
@@ -134,7 +126,6 @@ func _box(host: StaticBody3D, size: Vector3, offset: Vector3) -> void:
 	cs.shape = sh
 	cs.position = offset
 	host.add_child(cs)
-
 
 func _sort_props() -> void:
 	var spots := [
@@ -160,7 +151,6 @@ func _sort_props() -> void:
 		s.position = p + Vector3(0.0, 0.55, 0.0)
 		Depth.apply(s, p)
 		add_child(s)
-
 
 func _hud() -> void:
 	var layer := CanvasLayer.new()
@@ -195,7 +185,6 @@ func _hud() -> void:
 	layer.add_child(fps_lab)
 	_refresh_hint()
 
-
 func _dummies() -> void:
 	var spots := [
 		Vector3(11.0, 0.0, 12.2),
@@ -210,7 +199,6 @@ func _dummies() -> void:
 		var d = DummyS.new()
 		d.position = p
 		add_child(d)
-
 
 func _refresh_hint() -> void:
 	if hint == null:

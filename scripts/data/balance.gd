@@ -90,19 +90,22 @@ var trail_life := 0.22
 
 var gen_w := 432
 var gen_h := 432
-var gen_rooms := 64
+var gen_rooms := 128
 var gen_room_min := 5
 var gen_room_max := 9
 var gen_extra_loops := 8
+var hall_hug_gap_min := 3
+var hall_hug_gap := 4
+var hall_stub_count := 8
 var hall_w_min := 2
 var hall_w_mode := 3
 var hall_w_max := 4
 var hall_w_interval := 10
 var hall_w_min_pct := 0.15
 var hall_w_mode_pct := 0.60
-var outline_fine_m := 0.25
-var outline_fillet_frac := 0.40
-var outline_jag_frac := 0.35
+var outline_fine_m := 1.0
+var outline_fillet_frac := 0.0
+var outline_jag_frac := 0.0
 var fog_radius := 5
 var max_clerks := 3
 var ghost_shop_chance := 0.33
@@ -339,21 +342,17 @@ var set_iron_5 := 10.0
 
 var enemy_stats: Dictionary = {}
 
-
 func schema() -> Array:
 	var rows: Array = Schema.rows()
 	_ensure_enemies()
 	Enemies.append_schema(rows)
 	return rows
 
-
 func _init() -> void:
 	_ensure_enemies()
 
-
 func _ensure_enemies() -> void:
 	Enemies.fill(enemy_stats)
-
 
 func getv(name: String) -> float:
 	_ensure_enemies()
@@ -366,10 +365,8 @@ func getv(name: String) -> float:
 		return 0.0
 	return float(v)
 
-
 func migrate_from(old_rev: int) -> bool:
 	return Migrate.run(self, old_rev, BAL_REV)
-
 
 func setv(name: String, value: float) -> void:
 	_ensure_enemies()
@@ -383,13 +380,11 @@ func setv(name: String, value: float) -> void:
 	else:
 		set(name, value)
 
-
 func snapshot() -> Dictionary:
 	var d := {}
 	for row in schema():
 		d[str(row[0])] = getv(str(row[0]))
 	return d
-
 
 func apply_defense(raw: float, defense: float) -> float:
 	return raw * (defense_k / (defense_k + maxf(0.0, defense)))

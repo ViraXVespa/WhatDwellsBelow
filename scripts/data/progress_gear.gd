@@ -42,9 +42,6 @@ static func bag_stack_index(p: Object, it: Dictionary) -> int:
 static func bag_can_accept(p: Object, it: Dictionary) -> bool:
 	return Bag.bag_can_accept(p, it)
 
-static func _has_white_copy(p: Object, it: Dictionary) -> bool:
-	return Bag._has_white_copy(p, it)
-
 static func add_item(p: Object, it: Dictionary) -> bool:
 	return Bag.add_item(p, it)
 
@@ -125,4 +122,3 @@ static func set_bonus_text(p: Object, sid: String) -> String:
 
 static func sync_artifacts(p: Object) -> void:
 	Use.sync_artifacts(p)
-

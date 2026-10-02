@@ -10,10 +10,8 @@ const LOC_START := 1
 const LOC_LOOP := 2
 const LOC_STOP := 3
 
-
 static func load_sprites(host: Node) -> void:
 	Load.load_sprites(host)
-
 
 static func warmup_texs(host: Node) -> Array:
 	var out: Array = []
@@ -30,7 +28,6 @@ static func warmup_texs(host: Node) -> Array:
 			_add_tex(out, seen, tex)
 	return out
 
-
 static func _add_tex(out: Array, seen: Dictionary, tex: Texture2D) -> void:
 	if tex == null:
 		return
@@ -39,7 +36,6 @@ static func _add_tex(out: Array, seen: Dictionary, tex: Texture2D) -> void:
 		return
 	seen[id] = true
 	out.append(tex)
-
 
 static func warmup_physics(host: Node) -> void:
 	if host == null or not (host is CharacterBody3D):
@@ -50,7 +46,6 @@ static func warmup_physics(host: Node) -> void:
 	body.move_and_slide()
 	body.velocity = stored
 	body.global_position.y = 0.0
-
 
 static func warmup(host: Node) -> void:
 	if host == null:
@@ -67,7 +62,6 @@ static func warmup(host: Node) -> void:
 	host.loc_t = 0.0
 	host.walk_t = 0.0
 
-
 static func pose_tex(host: Node, key: String) -> Texture2D:
 	if host.idle.has(key):
 		return host.idle[key]
@@ -76,7 +70,6 @@ static func pose_tex(host: Node, key: String) -> Texture2D:
 	if host.equip.has(key):
 		return host.equip[key]
 	return null
-
 
 static func clip(store: Dictionary, key: String) -> Array:
 	if store.has(key):
@@ -96,7 +89,6 @@ static func clip(store: Dictionary, key: String) -> Array:
 		return store["down"]
 	return []
 
-
 static func apply_tex(host: Node, tex: Texture2D) -> void:
 	if host.body == null or tex == null:
 		return
@@ -106,10 +98,8 @@ static func apply_tex(host: Node, tex: Texture2D) -> void:
 	host.body.pixel_size = T.PLAYER_H / th
 	host.body.position.y = T.PLAYER_H * 0.5 + T.FEET_LIFT
 
-
 static func apply_facing(host: Node, delta: float) -> void:
 	Loco.apply_facing(host, delta)
-
 
 static func _stop_from(li: int, loop_n: int, stop_n: int) -> int:
 	if loop_n <= 0 or stop_n <= 0:
@@ -121,7 +111,3 @@ static func _stop_from(li: int, loop_n: int, stop_n: int) -> int:
 	if li <= cross_b:
 		return 0
 	return stop_n - 1
-
-
-static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> Texture2D:
-	return Loco._locomotion(host, key, moving, delta)

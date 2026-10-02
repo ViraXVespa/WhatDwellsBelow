@@ -8,11 +8,9 @@ const Nav := preload("res://scripts/debug/anim_browser_nav.gd")
 
 const SPEEDS: Array[float] = [0.25, 0.5, 1.0, 1.5, 2.0]
 
-
 static func toggle_play(host: CanvasLayer) -> void:
 	host.playing = not host.playing
 	refresh_play(host)
-
 
 static func refresh_play(host: CanvasLayer) -> void:
 	if host.playing:
@@ -22,7 +20,6 @@ static func refresh_play(host: CanvasLayer) -> void:
 		host.play_btn.text = "Paused %.2fx - X to play" % host.play_speed
 		host.play_btn.add_theme_color_override("font_color", Color(1.0, 0.82, 0.45))
 
-
 static func frames(host: CanvasLayer) -> Array:
 	if not host.clips.has(host.facing):
 		return []
@@ -30,7 +27,6 @@ static func frames(host: CanvasLayer) -> Array:
 	if not d.has(host.anim_name):
 		return []
 	return d[host.anim_name]
-
 
 static func show_clip(host: CanvasLayer) -> void:
 	var fr := frames(host)
@@ -46,7 +42,6 @@ static func show_clip(host: CanvasLayer) -> void:
 	refresh_play(host)
 	Review.refresh(host)
 
-
 static func nudge_speed(host: CanvasLayer, delta_i: int) -> void:
 	var idx: int = 2
 	var best: float = absf(host.play_speed - SPEEDS[2])
@@ -59,7 +54,6 @@ static func nudge_speed(host: CanvasLayer, delta_i: int) -> void:
 	host.play_speed = SPEEDS[idx]
 	refresh_play(host)
 
-
 static func step_frame(host: CanvasLayer, delta_i: int) -> void:
 	var fr: Array = frames(host)
 	if fr.size() <= 1:
@@ -68,7 +62,6 @@ static func step_frame(host: CanvasLayer, delta_i: int) -> void:
 	host.frame_t = 0.0
 	if host.preview:
 		host.preview.texture = fr[host.frame_i]
-
 
 static func stick_play(host: CanvasLayer) -> void:
 	var v := Input.get_vector("move_left", "move_right", "move_up", "move_down")
@@ -84,7 +77,6 @@ static func stick_play(host: CanvasLayer) -> void:
 	else:
 		step_frame(host, delta_i)
 	host.stick_cool = 0.18
-
 
 static func tick(host: CanvasLayer, delta: float) -> void:
 	if not host.open:

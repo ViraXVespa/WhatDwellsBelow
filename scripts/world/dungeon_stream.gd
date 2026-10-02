@@ -11,46 +11,35 @@ const STREAM_OUT := 42
 const SPAWN_PER_TICK := 2
 const SPAWN_BOOT := 6
 
-
 static func queue_initial(host: Node, pool: PackedStringArray) -> void:
 	Queue.queue_initial(host, pool)
-
 
 static func queue_room(host: Node, r: Dictionary, pool: PackedStringArray) -> void:
 	Queue.queue_room(host, r, pool)
 
-
 static func queue_pool(host: Node, pool: PackedStringArray) -> void:
 	Queue.queue_pool(host, pool)
-
 
 static func queue_named(host: Node, pool: PackedStringArray) -> void:
 	Queue.queue_named(host, pool)
 
-
 static func queue_ambushes(host: Node, pool: PackedStringArray) -> void:
 	Queue.queue_ambushes(host, pool)
-
 
 static func new_job(host: Node, kind: String, cell: Vector2i, room: Dictionary, ids: PackedStringArray, named: bool, nname: String) -> Dictionary:
 	return Queue.new_job(host, kind, cell, room, ids, named, nname)
 
-
 static func job_anchor(job: Dictionary) -> Vector2i:
 	return Act.job_anchor(job)
-
 
 static func activate_job(host: Node, job: Dictionary) -> void:
 	Act.activate_job(host, job)
 
-
 static func sleep_job(host: Node, job: Dictionary) -> void:
 	Act.sleep_job(host, job)
 
-
 static func job_in_combat(host: Node, job: Dictionary) -> bool:
 	return Act.job_in_combat(host, job)
-
 
 static func tick(host: Node, delta: float) -> void:
 	host.stream_t += delta
@@ -87,7 +76,6 @@ static func tick(host: Node, delta: float) -> void:
 	CrystalNet.place_extras(host)
 	GeoStream.tick(host, delta)
 
-
 static func force_all(host: Node) -> void:
 	host.stream_all = true
 	if not bool(host.get_meta("ambush_q", false)):
@@ -104,10 +92,3 @@ static func force_all(host: Node) -> void:
 	var PropS: GDScript = load("res://scripts/world/dungeon_props_spawn.gd") as GDScript
 	PropS.flush(host)
 	CrystalNet.place_extras(host)
-
-
-static func activate_room(host: Node, r: Dictionary, pool: PackedStringArray) -> void:
-	Queue.queue_room(host, r, pool)
-	for job in host.spawn_jobs:
-		if str(job.state) == "pending" and job.get("room", {}) == r:
-			Act.activate_job(host, job)

@@ -2,10 +2,8 @@
 
 ## Playtest log field formatters. Host module is playtest_log_util.gd.
 
-
 static func _util():
 	return load("res://scripts/debug/playtest_log_util.gd")
-
 
 static func near(pt: Node, p: Node, lim: float = 40.0) -> Array:
 	var U = _util()
@@ -39,7 +37,6 @@ static func near(pt: Node, p: Node, lim: float = 40.0) -> Array:
 		out.resize(6)
 	return out
 
-
 static func skip_hint(pt: Node, p: Node) -> String:
 	var U = _util()
 	if p == null or pt.get_tree() == null:
@@ -69,7 +66,6 @@ static func skip_hint(pt: Node, p: Node) -> String:
 		return "hits0:" + kind
 	return ""
 
-
 static func lock_fields(pt: Node, p: Node) -> Dictionary:
 	var U = _util()
 	var out: Dictionary = {}
@@ -86,7 +82,6 @@ static func lock_fields(pt: Node, p: Node) -> Dictionary:
 	if pt.has_meta("lock_t"):
 		out["lock_t"] = snappedf(float(pt.get_meta("lock_t")), 0.1)
 	return out
-
 
 static func path_fields(pt: Node) -> Dictionary:
 	var out: Dictionary = {}

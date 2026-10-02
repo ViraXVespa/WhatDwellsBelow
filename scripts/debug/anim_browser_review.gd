@@ -5,14 +5,12 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const AnimReview := preload("res://scripts/debug/anim_review.gd")
 
-
 static func model_id(host: Node) -> String:
 	var models: Array = host.models
 	if models.is_empty():
 		return ""
 	var m: Dictionary = models[host.model_i]
 	return str(m.get("id", m.get("label", "")))
-
 
 static func build(host: Node) -> void:
 	var review_btn: Button = ThemeS.btn("Good  (Y)", func(): cycle(host))
@@ -32,15 +30,12 @@ static func build(host: Node) -> void:
 	host.add_child(note_edit)
 	host.note_edit = note_edit
 
-
 static func open(host: Node) -> void:
 	AnimReview.ensure_loaded()
 	refresh(host)
 
-
 static func close(_host: Node) -> void:
 	AnimReview.save_disk()
-
 
 static func cycle(host: Node) -> void:
 	var anim: String = host.anim_name
@@ -48,7 +43,6 @@ static func cycle(host: Node) -> void:
 		return
 	AnimReview.cycle(model_id(host), str(host.facing), anim, host._frames().size())
 	refresh(host)
-
 
 static func refresh(host: Node) -> void:
 	var review_btn: Button = host.review_btn
@@ -80,12 +74,10 @@ static func refresh(host: Node) -> void:
 		note_edit.text = AnimReview.note_of(id, facing, anim)
 	host.note_lock = false
 
-
 static func on_note(host: Node, t: String) -> void:
 	if bool(host.note_lock) or str(host.anim_name) == "":
 		return
 	AnimReview.set_note(model_id(host), str(host.facing), str(host.anim_name), t, host._frames().size())
-
 
 static func handle_tip(host: Node, event: InputEvent) -> bool:
 	if not event.is_action_pressed("gear_tip"):

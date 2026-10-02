@@ -63,7 +63,6 @@ static func _prep_spans(spans: Array, per: int) -> void:
 		_pn += 1
 		_bin_span(pi, ends[0], ends[1], scale)
 
-
 static func _bin_span(pi: int, a: Vector2, b: Vector2, scale: float) -> void:
 	var steps: int = maxi(1, int(ceil(a.distance_to(b) / scale)))
 	var s: int = 0
@@ -79,7 +78,6 @@ static func _bin_span(pi: int, a: Vector2, b: Vector2, scale: float) -> void:
 			row.append(pi)
 			_bins[key] = row
 		s += 1
-
 
 static func _bin_near(cell: Vector2i) -> PackedInt32Array:
 	var out: PackedInt32Array = PackedInt32Array()
@@ -105,8 +103,7 @@ static func _bin_near(cell: Vector2i) -> PackedInt32Array:
 		dy += 1
 	return out
 
-
-static func build(host: Node, props: Array) -> Array[Dictionary]:
+static func build(host: Node, props: Array, clip: Rect2i = Rect2i()) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if host == null or host.data == null:
 		return out
@@ -124,7 +121,7 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 	if App != null:
 		seed_n = int(App.run_seed)
 		floor_n = int(App.floor_n)
-	var key: String = "%d:%d:%d:%d:%d:%d" % [map_w, map_h, rooms_n, spans.size(), seed_n, floor_n]
+	var key: String = "%d:%d:%d:%d:%d:%d:%d:%d:%d:%d" % [map_w, map_h, rooms_n, spans.size(), seed_n, floor_n, clip.position.x, clip.position.y, clip.size.x, clip.size.y]
 	if key == _cache_key and not _cache.is_empty():
 		return _apply_lit(host, props, _cache)
 	var per: int = maxi(1, int(host.data.get("solid_n", 1)))
@@ -133,6 +130,15 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 	var inside: PackedInt32Array = PackedInt32Array()
 	inside.resize(map_w * map_h)
 	inside.fill(-1)
+	var cx0: int = 1
+	var cy0: int = 1
+	var cx1: int = map_w - 1
+	var cy1: int = map_h - 1
+	if clip.size.x > 0 and clip.size.y > 0:
+		cx0 = clampi(clip.position.x, 1, map_w - 1)
+		cy0 = clampi(clip.position.y, 1, map_h - 1)
+		cx1 = clampi(clip.position.x + clip.size.x, 1, map_w - 1)
+		cy1 = clampi(clip.position.y + clip.size.y, 1, map_h - 1)
 	for i in rooms.size():
 		var room: Dictionary = rooms[i]
 		var rx: int = int(room["x"])
@@ -152,7 +158,14 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 	_room_ix = inside
 	var used: Dictionary = {}
 	for i2 in rooms.size():
-		var site: Dictionary = _span_in_room(rooms[i2], per)
+		var room2: Dictionary = rooms[i2]
+		var rx2: int = int(room2["x"])
+		var ry2: int = int(room2["y"])
+		var rw2: int = int(room2["w"])
+		var rh2: int = int(room2["h"])
+		if rx2 + rw2 < cx0 or ry2 + rh2 < cy0 or rx2 > cx1 or ry2 > cy1:
+			continue
+		var site: Dictionary = _span_in_room(room2, per)
 		if site.is_empty():
 			continue
 		used[Vector2i(int(site["fx"]), int(site["fz"]))] = true
@@ -165,19 +178,25 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 	hall.fill(0)
 	var mouths: Array[Vector2i] = []
 	var hall_ix: PackedInt32Array = PackedInt32Array()
-	for y2 in range(1, map_h - 1):
+	var y2: int = cy0
+	while y2 < cy1:
 		var row2: int = y2 * map_w
-		for x2 in range(1, map_w - 1):
+		var x2: int = cx0
+		while x2 < cx1:
 			var i3: int = row2 + x2
 			if inside[i3] >= 0:
+				x2 += 1
 				continue
 			if grid[i3] != Gen.FLOOR:
+				x2 += 1
 				continue
 			hall[i3] = 1
 			hall_ix.append(i3)
 			if _touches_room_arr(grid, inside, map_w, map_h, x2, y2):
 				mouth[i3] = 1
 				mouths.append(Vector2i(x2, y2))
+			x2 += 1
+		y2 += 1
 	var seen: PackedByteArray = PackedByteArray()
 	seen.resize(map_w * map_h)
 	seen.fill(0)
@@ -196,6 +215,8 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 			run.append(cur)
 			for d: Vector2i in DIRS:
 				var nxt: Vector2i = cur + d
+				if nxt.x < 1 or nxt.y < 1 or nxt.x > map_w - 2 or nxt.y > map_h - 2:
+					continue
 				var ni: int = nxt.y * map_w + nxt.x
 				if mouth[ni] != 0 and seen[ni] == 0:
 					seen[ni] = 1
@@ -238,8 +259,6 @@ static func build(host: Node, props: Array) -> Array[Dictionary]:
 	_cache_key = key
 	_cache = out
 	return _apply_lit(host, props, out)
-
-
 static func _apply_lit(host: Node, props: Array, layout: Array[Dictionary]) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if host == null or host.data == null or layout.is_empty():
@@ -298,7 +317,6 @@ static func _apply_lit(host: Node, props: Array, layout: Array[Dictionary]) -> A
 		out.append(site)
 	return out
 
-
 static func _prop_cell(node: Node) -> Vector2i:
 	if str(node.get("kind")) == "crystal":
 		var raw: Variant = node.get("crystal_cell")
@@ -307,13 +325,11 @@ static func _prop_cell(node: Node) -> Vector2i:
 	var p: Vector3 = (node as Node3D).global_position
 	return Vector2i(int(round(p.x - 0.5)), int(round(p.z - 0.5)))
 
-
 static func _span_list(host: Node) -> Array:
 	var raw: Variant = host.data.get("outline_spans", [])
 	if raw is Array:
 		return raw
 	return []
-
 
 static func _span_in_room(room: Dictionary, per: int) -> Dictionary:
 	var rx: int = int(room["x"])
@@ -375,7 +391,6 @@ static func _collect_bin(hits: PackedInt32Array, seen: Dictionary, cell: Vector2
 		seen[pi] = true
 		hits.append(pi)
 
-
 static func _run_site(run: Array[Vector2i], per: int) -> Dictionary:
 	if run.is_empty():
 		return {}
@@ -395,7 +410,6 @@ static func _run_site(run: Array[Vector2i], per: int) -> Dictionary:
 			if not site.is_empty():
 				return site
 	return {}
-
 
 static func _span_at(per: int, cell: Vector2i) -> Dictionary:
 	var scale: float = float(maxi(1, per))
@@ -436,7 +450,6 @@ static func _span_at(per: int, cell: Vector2i) -> Dictionary:
 		return {}
 	return _site_on(best_hit, best_n, scale, cell.x, cell.y)
 
-
 static func _span_ends(run: Dictionary) -> PackedVector2Array:
 	var out: PackedVector2Array = PackedVector2Array()
 	var raw_o: Variant = run.get("origin", null)
@@ -448,7 +461,6 @@ static func _span_ends(run: Dictionary) -> PackedVector2Array:
 	out.append(o)
 	out.append(o + d)
 	return out
-
 
 static func _span_normal(run: Dictionary) -> Vector2:
 	var raw_n: Variant = run.get("normal", null)
@@ -464,7 +476,6 @@ static func _span_normal(run: Dictionary) -> Vector2:
 		return Vector2.ZERO
 	return Vector2(-d.y, d.x).normalized()
 
-
 static func _site_on(hit: Vector2, nrm: Vector2, scale: float, fx: int, fz: int) -> Dictionary:
 	var wall: Vector2 = hit / scale
 	return {
@@ -477,7 +488,6 @@ static func _site_on(hit: Vector2, nrm: Vector2, scale: float, fx: int, fz: int)
 		"lx": wall.x + nrm.x * 0.45,
 		"lz": wall.y + nrm.y * 0.45,
 	}
-
 
 static func _thin_arr(
 	mask: PackedByteArray, mouths: PackedByteArray, w: int, h: int, live_src: PackedInt32Array
@@ -513,7 +523,6 @@ static func _thin_arr(
 		if peel.is_empty():
 			break
 		live = keep
-
 
 static func _peelable_arr(mask: PackedByteArray, mouths: PackedByteArray, w: int, h: int, x: int, y: int) -> bool:
 	var i: int = y * w + x
@@ -576,60 +585,6 @@ static func _touches_room_arr(
 		if grid[ni] == Gen.FLOOR:
 			return true
 	return false
-
-
-static func _peelable(mask: Dictionary, mouths: Dictionary, cell: Vector2i) -> bool:
-	if mouths.has(cell):
-		return false
-	var orth: int = 0
-	var pos_side: bool = false
-	for d: Vector2i in DIRS:
-		var nxt: Vector2i = cell + d
-		if mask.has(nxt):
-			orth += 1
-		elif (d.x > 0 or d.y > 0) and mask.has(cell - d):
-			pos_side = true
-	if orth < 2 or not pos_side:
-		return false
-	return _ring_exits(mask, cell) == 1
-
-
-static func _ring_exits(mask: Dictionary, cell: Vector2i) -> int:
-	var on: Array[bool] = []
-	on.resize(8)
-	var any: bool = false
-	for i in 8:
-		var hit: bool = mask.has(cell + RING[i])
-		on[i] = hit
-		if hit:
-			any = true
-	if not any:
-		return 0
-	var exits: int = 0
-	for j in 8:
-		var prev: int = (j + 7) % 8
-		if on[j] and not on[prev]:
-			exits += 1
-	return exits
-
-
-static func _touches_room(
-	grid: PackedByteArray,
-	map_w: int,
-	map_h: int,
-	inside: Dictionary,
-	cell: Vector2i
-) -> bool:
-	for d: Vector2i in DIRS:
-		var n: Vector2i = cell + d
-		if not inside.has(n):
-			continue
-		if n.x < 0 or n.y < 0 or n.x >= map_w or n.y >= map_h:
-			continue
-		if grid[n.y * map_w + n.x] == Gen.FLOOR:
-			return true
-	return false
-
 
 static func _taken(used: Dictionary, cell: Vector2i) -> bool:
 	for z in range(-2, 3):

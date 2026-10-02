@@ -1,6 +1,5 @@
 ﻿extends Object
 
-
 static func run(b: Object, old_rev: int, bal_rev: int) -> bool:
 	if old_rev >= bal_rev:
 		return false

@@ -5,13 +5,11 @@ const Roster := preload("res://scripts/combat/roster.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
 const CrystalNet := preload("res://scripts/world/crystal_net.gd")
 
-
 static func queue_initial(host: Node, pool: PackedStringArray) -> void:
 	for r in host.data.get("rooms", []):
 		queue_room(host, r, pool)
 	queue_pool(host, pool)
 	queue_named(host, pool)
-
 
 static func queue_room(host: Node, r: Dictionary, pool: PackedStringArray) -> void:
 	var kind: String = str(r.get("kind", "normal"))
@@ -34,7 +32,6 @@ static func queue_room(host: Node, r: Dictionary, pool: PackedStringArray) -> vo
 	for i in n:
 		ids.append(pool[host.floor_rng.randi() % pool.size()])
 	host.spawn_jobs.append(new_job(host, "room", host._center_room(r), r, ids, false, ""))
-
 
 static func queue_pool(host: Node, pool: PackedStringArray) -> void:
 	var room: Dictionary = host._combat_room()
@@ -59,7 +56,6 @@ static func queue_pool(host: Node, pool: PackedStringArray) -> void:
 		return
 	host.spawn_jobs.append(new_job(host, "fill", host._center_room(room), room, ids, false, ""))
 
-
 static func queue_named(host: Node, pool: PackedStringArray) -> void:
 	var ntype := ""
 	var nname := ""
@@ -82,7 +78,6 @@ static func queue_named(host: Node, pool: PackedStringArray) -> void:
 	var ids := PackedStringArray()
 	ids.append(ntype)
 	host.spawn_jobs.append(new_job(host, "named", host._center_room(room), room, ids, true, nname))
-
 
 static func queue_ambushes(host: Node, pool: PackedStringArray) -> void:
 	if pool.is_empty():
@@ -115,7 +110,6 @@ static func queue_ambushes(host: Node, pool: PackedStringArray) -> void:
 		host.spawn_jobs.append(new_job(host, "ambush", center, {}, ids, false, ""))
 		placed += 1
 
-
 static func _land(host: Node, cell: Vector2i) -> Vector2i:
 	if host._is_floor_cell(cell):
 		return cell
@@ -126,7 +120,6 @@ static func _land(host: Node, cell: Vector2i) -> Vector2i:
 			if host._is_floor_cell(n):
 				return n
 	return cell
-
 
 static func new_job(host: Node, kind: String, cell: Vector2i, room: Dictionary, ids: PackedStringArray, named: bool, nname: String) -> Dictionary:
 	var gid: int = host.next_group

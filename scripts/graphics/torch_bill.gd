@@ -43,7 +43,6 @@ var _nx: float = 0.0
 var _nz: float = 1.0
 var _half: float = 512.0
 
-
 static func refill(host: Node, sites: Array, chunk: int) -> void:
 	if host.geo_root == null:
 		return
@@ -56,7 +55,6 @@ static func refill(host: Node, sites: Array, chunk: int) -> void:
 		var origin: Vector2i = Vector2i(job.origin)
 		_clear(root)
 		add_chunk(root, origin.x, origin.y, sites, chunk)
-
 
 static func add_chunk(root: Node, ox: int, oy: int, sites: Array, chunk: int) -> void:
 	var script: GDScript = load("res://scripts/graphics/torch_bill.gd") as GDScript
@@ -73,7 +71,6 @@ static func add_chunk(root: Node, ox: int, oy: int, sites: Array, chunk: int) ->
 		node.add_to_group("wall_torch")
 		root.add_child(node)
 
-
 static func _clear(root: Node) -> void:
 	var doomed: Array[Node] = []
 	for child in root.get_children():
@@ -82,7 +79,6 @@ static func _clear(root: Node) -> void:
 	for n in doomed:
 		root.remove_child(n)
 		n.free()
-
 
 static func _bracket_pos(site: Dictionary) -> Vector3:
 	if site.has("px") and site.has("pz"):
@@ -94,7 +90,6 @@ static func _bracket_pos(site: Dictionary) -> Vector3:
 	var px: float = float(fx) + 0.5 - nx * 0.44
 	var pz: float = float(fz) + 0.5 - nz * 0.44
 	return Vector3(px, 0.0, pz)
-
 
 func _ready() -> void:
 	_nx = float(get_meta("nx", 0.0))
@@ -119,7 +114,6 @@ func _ready() -> void:
 	_flame = _make_flame()
 	add_child(_flame)
 
-
 func _process(_delta: float) -> void:
 	if _flame == null:
 		return
@@ -135,7 +129,6 @@ func _process(_delta: float) -> void:
 		return
 	_flame.look_at(_flame.global_position + flat, Vector3.UP)
 
-
 func _front_cell() -> Rect2:
 	# Wall normal against the fixed south camera. Quad stays put; only the flame yaws.
 	var q: int = int(round(atan2(float(_nx), float(_nz)) / (PI * 0.5)))
@@ -149,7 +142,6 @@ func _front_cell() -> Rect2:
 	elif q == -1:
 		row = _half
 	return Rect2(col, row, _half, _half)
-
 
 func _make_flame() -> MeshInstance3D:
 	if _quad == null:
@@ -170,7 +162,6 @@ func _make_flame() -> MeshInstance3D:
 	var lift: float = 1.18
 	mesh.position = Vector3(float(_nx) * 0.12, lift, float(_nz) * 0.12)
 	return mesh
-
 
 static func _bible() -> Texture2D:
 	if not ResourceLoader.exists(BIBLE):

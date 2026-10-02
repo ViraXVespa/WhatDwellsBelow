@@ -6,7 +6,6 @@ const Beat := preload("res://scripts/debug/playtest_log_core_beat.gd")
 static func _dir() -> String:
 	return PlaytestLogUtil._dir()
 
-
 static var events: Array = []
 static var file_name: String = ""
 static var started: bool = false

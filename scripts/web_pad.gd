@@ -19,7 +19,6 @@ var _was_y := false
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
-
 func _process(_delta: float) -> void:
 	if not OS.has_feature("web"):
 		return
@@ -74,7 +73,6 @@ func _process(_delta: float) -> void:
 		_emit_joy(JOY_BUTTON_Y, y)
 		_was_y = y
 
-
 static func browser_pad_connected() -> bool:
 	if not OS.has_feature("web"):
 		return not Input.get_connected_joypads().is_empty()
@@ -89,10 +87,8 @@ static func browser_pad_connected() -> bool:
 	""", true))
 	return raw == "1"
 
-
 func connected() -> bool:
 	return device_ok or browser_pad_connected()
-
 
 func _emit_joy(button: JoyButton, pressed: bool) -> void:
 	var ev := InputEventJoypadButton.new()
@@ -100,19 +96,15 @@ func _emit_joy(button: JoyButton, pressed: bool) -> void:
 	ev.pressed = pressed
 	Input.parse_input_event(ev)
 
-
 func _stick(ax: Array, x_i: int, y_i: int) -> Vector2:
 	var v := Vector2(_axis_at(ax, x_i), _axis_at(ax, y_i))
 	return v if v.length() >= 0.24 else Vector2.ZERO
 
-
 func _axis_at(ax: Array, i: int) -> float:
 	return float(ax[i]) if i < ax.size() else 0.0
 
-
 func _held(bt: Array, i: int) -> bool:
 	return i < bt.size() and float(bt[i]) >= 0.45
-
 
 func _axis(ax: Array, i: int) -> bool:
 	return _axis_at(ax, i) >= 0.45

@@ -4,7 +4,6 @@ const Desk := preload("res://scripts/display_mode_desk.gd")
 
 ## Desktop window modes, web fullscreen / PWA, session gate, landscape lock.
 
-
 static func is_web() -> bool:
 	return OS.has_feature("web")
 

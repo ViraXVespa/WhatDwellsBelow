@@ -7,7 +7,6 @@ const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 
-
 static func page_settings(host) -> void:
 	host.status.text = "Settings. In-test options. LB/RB change pages."
 	host.root_box.add_child(_cap("Settings", 24, Color(0.95, 0.8, 0.45)))
@@ -80,7 +79,6 @@ static func page_settings(host) -> void:
 		host.status.text = "Settings saved."
 	))
 
-
 static func grant_anvil_kit(host) -> void:
 	var p: Object = App.prog
 	if p == null:
@@ -104,7 +102,6 @@ static func grant_anvil_kit(host) -> void:
 	App.save_now()
 	host.status.text = "Anvil kit: %d banked, +200g +60 ore +40 wood." % added
 
-
 static func _cap(t: String, size: int, col: Color) -> Label:
 	var lab := Label.new()
 	lab.text = t
@@ -113,7 +110,6 @@ static func _cap(t: String, size: int, col: Color) -> Label:
 	lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lab.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return lab
-
 
 static func _slider(host, title: String, value: float, lo: float, hi: float, step: float, on_change: Callable) -> VBoxContainer:
 	var shell: VBoxContainer = MenuUtil.slider_row(host, title, value, lo, hi, step, on_change, false, 640.0)

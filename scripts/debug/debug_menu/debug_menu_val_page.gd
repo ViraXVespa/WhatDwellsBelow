@@ -22,8 +22,6 @@ static func page_values(host) -> void:
 	host.root_box.add_child(host.fly)
 	Grid.build(host)
 
-
-
 static func add_row(host, parent: Control, name: String, lo: float, hi: float, step: float) -> void:
 	var shell: PanelContainer = PanelContainer.new()
 	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -76,8 +74,6 @@ static func add_row(host, parent: Control, name: String, lo: float, hi: float, s
 		"step": step,
 	})
 
-
-
 static func val_paint(host) -> void:
 	Grid.paint_cats(host)
 	var n: int = host.val_rows.size()
@@ -111,8 +107,6 @@ static func val_paint(host) -> void:
 		host.status.text = "Vars. Up/Down move. A edits. B back to categories."
 	load("res://scripts/debug/debug_menu/debug_menu_val.gd").val_reveal.bind(host).call_deferred()
 
-
-
 static func val_nudge(host, delta_i: int) -> void:
 	if host.val_edit or str(host.val_mode) == "edit":
 		if host.val_rows.is_empty():
@@ -132,8 +126,6 @@ static func val_nudge(host, delta_i: int) -> void:
 	Grid.nudge_cat(host, delta_i)
 	val_paint(host)
 
-
-
 static func page_profiles(host) -> void:
 	host.status.text = "Unlimited named profiles. Saved under user://wdb_profiles/"
 	var le: LineEdit = LineEdit.new()
@@ -150,6 +142,3 @@ static func page_profiles(host) -> void:
 	for n in load("res://scripts/debug/debug_menu/debug_menu_val.gd").list_profiles():
 		var nm: String = str(n)
 		host.root_box.add_child(host._btn("Load " + nm, func(): host.profile_name = nm; load("res://scripts/debug/debug_menu/debug_menu_val.gd").load_profile(host); host.status.text = "Loaded " + nm))
-
-
-

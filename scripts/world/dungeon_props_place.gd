@@ -6,7 +6,6 @@ const SpotS := preload("res://scripts/world/interact.gd")
 const Gate := preload("res://scripts/world/dungeon_gate.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
 
-
 static func place_n(host: Node, rooms: Array, n: int, what: String, eager: bool = true) -> void:
 	var _fac = load("res://scripts/world/dungeon_props.gd")
 	if n <= 0 or rooms.is_empty():
@@ -29,7 +28,6 @@ static func place_n(host: Node, rooms: Array, n: int, what: String, eager: bool 
 		else:
 			host.prop_jobs.append({"kind": what, "cell": cell, "state": "pending"})
 		placed += 1
-
 
 static func commit_kind(host: Node, what: String, cell: Vector2i) -> void:
 	var pos: Vector3 = host._cell_pos(cell)
@@ -62,7 +60,6 @@ static func commit_kind(host: Node, what: String, cell: Vector2i) -> void:
 		var q: Node = SpotS.new()
 		q.setup("quest_item", pos)
 		host.add_child(q)
-
 
 static func spawn_puzzle(host: Node, r: Dictionary) -> void:
 	var _fac = load("res://scripts/world/dungeon_props.gd")
@@ -121,7 +118,6 @@ static func spawn_puzzle(host: Node, r: Dictionary) -> void:
 	for extra: Vector2i in _fac.puzzle_cells(used):
 		host._mark_cell(extra)
 
-
 static func _room_spots(host: Node, r: Dictionary) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	var x0: int = int(r.x)
@@ -135,7 +131,6 @@ static func _room_spots(host: Node, r: Dictionary) -> Array[Vector2i]:
 				out.append(c)
 	return out
 
-
 static func _take_spot(host: Node, spots: Array[Vector2i]) -> Vector2i:
 	if spots.is_empty():
 		return Vector2i(-999, -999)
@@ -143,7 +138,6 @@ static func _take_spot(host: Node, spots: Array[Vector2i]) -> Vector2i:
 	var c: Vector2i = spots[i]
 	spots.remove_at(i)
 	return c
-
 
 static func _take_adjacent(host: Node, spots: Array[Vector2i], origin: Vector2i) -> Vector2i:
 	var hits: Array[Vector2i] = []
@@ -163,7 +157,6 @@ static func _take_adjacent(host: Node, spots: Array[Vector2i], origin: Vector2i)
 	var c: Vector2i = hits[i]
 	spots.erase(c)
 	return c
-
 
 static func _valid_cell(c: Vector2i) -> bool:
 	return c.x > -900 and c.y > -900

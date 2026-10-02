@@ -9,7 +9,7 @@ Live palettes stay. Hub: background (0.45, 0.58, 0.62), warm ambient (0.95, 0.86
 
 Depth fog and void color on the two play palettes. Hub haze warm, dungeon pit black. Invented fog numbers go in tunables and the secret debug menu.
 
-Hub daylight in the RT is a wide sun disc (buffer job), not this DirectionalLight casting shadows. Dungeon RT has no sun.
+Hub daylight in the RT is a wide sun disc (buffer job), not this DirectionalLight casting shadows. Dungeon RT has no sun. Hub lids are unshaded by this kit. Ambient and sun must not second-light a roof or tarp. The bake is the yard light only.
 
 Map reveal is not render fog. Foundation smoke: kit only, no torches, no actor RT.
 

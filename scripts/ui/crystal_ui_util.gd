@@ -6,7 +6,6 @@ const CrystalNet := preload("res://scripts/world/crystal_net.gd")
 
 const ZOOM_NEAR := 96
 
-
 static func zoom_view(ui: CanvasLayer, host: Node) -> int:
 	if host == null:
 		return ZOOM_NEAR
@@ -18,7 +17,6 @@ static func zoom_view(ui: CanvasLayer, host: Node) -> int:
 		return maxi(near, int(round((near + full) * 0.5)))
 	return near
 
-
 static func zoom_tip(ui: CanvasLayer) -> String:
 	match ui.zoom_lv:
 		1:
@@ -28,10 +26,8 @@ static func zoom_tip(ui: CanvasLayer) -> String:
 		_:
 			return "Zoom: close"
 
-
 static func zoom_event(event: InputEvent) -> bool:
 	return event.is_action_pressed("crystal_zoom")
-
 
 static func place_mark(ui: CanvasLayer, cell: Vector2i, rx: int, ry: int, rw: int, rh: int) -> void:
 	if ui.map_mark == null or ui.map_clip == null:
@@ -52,7 +48,6 @@ static func place_mark(ui: CanvasLayer, cell: Vector2i, rx: int, ry: int, rw: in
 	ui.map_mark.position = Vector2(px - mark * 0.5, py - mark * 0.5)
 	ui.map_mark.visible = true
 	ui.map_mark.color = Color(1.0, 0.92, 0.35, 0.95)
-
 
 static func panel(ui: CanvasLayer, pos: Vector2, size: Vector2) -> ColorRect:
 	var plate: ColorRect = Plate.plate(ui, pos, size)

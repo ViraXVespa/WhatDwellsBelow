@@ -6,7 +6,6 @@ const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
 const MapAct := preload("res://scripts/world/dungeon_map_act.gd")
 
-
 static func handle_input(host: CanvasLayer, event: InputEvent) -> void:
 	if not host.visible:
 		return

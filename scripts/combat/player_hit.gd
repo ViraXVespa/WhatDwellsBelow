@@ -7,7 +7,6 @@ const PlayerLock := preload("res://scripts/world/player_lock.gd")
 const Atk := preload("res://scripts/combat/player_hit_atk.gd")
 const Fx := preload("res://scripts/combat/player_hit_fx.gd")
 
-
 static func draw_basic_tele(host: Node, _active: bool) -> void:
 	if host.telegraph == null:
 		return

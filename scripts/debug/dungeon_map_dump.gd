@@ -39,7 +39,6 @@ static func dump_floor(host: Node) -> void:
 	_write_dump(lines)
 	_finish(lines, true)
 
-
 static func _write_dump(lines: Array[String]) -> void:
 	var root_path: String = ProjectSettings.globalize_path("res://")
 	var dir_path: String = root_path.path_join("_logs").path_join("dungeon-map")
@@ -53,7 +52,6 @@ static func _write_dump(lines: Array[String]) -> void:
 		f.store_line(line)
 	f.close()
 	printerr("MAP: dump=%s" % file_path)
-
 
 static func _finish(_lines: Array[String], _ok: bool) -> void:
 	if App == null:

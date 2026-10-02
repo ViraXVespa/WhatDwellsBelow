@@ -30,7 +30,6 @@ const ITEM_PATHS := {
 
 static var _cache: Dictionary = {}
 
-
 static func tex_for_slot(slot: String, it: Dictionary) -> Texture2D:
 	if it.is_empty():
 		return _load_path(str(EMPTY_PATHS.get(slot, "")))
@@ -39,14 +38,11 @@ static func tex_for_slot(slot: String, it: Dictionary) -> Texture2D:
 		return filled
 	return _load_path(str(EMPTY_PATHS.get(slot, "")))
 
-
 static func tex_for_item(it: Dictionary) -> Texture2D:
 	return _load_path(_item_path(it))
 
-
 static func has_item_icon(it: Dictionary) -> bool:
 	return _item_path(it) != ""
-
 
 static func rarity_fill(it: Dictionary) -> Color:
 	if it.is_empty():
@@ -58,7 +54,6 @@ static func rarity_fill(it: Dictionary) -> Color:
 			return Color(0.14, 0.2, 0.34)
 		_:
 			return Color(0.28, 0.24, 0.18)
-
 
 static func rarity_border(it: Dictionary) -> Color:
 	if _at_risk(it):
@@ -73,10 +68,8 @@ static func rarity_border(it: Dictionary) -> Color:
 		_:
 			return Color(0.78, 0.7, 0.48)
 
-
 static func _at_risk(it: Dictionary) -> bool:
 	return Fmt.is_risk(it)
-
 
 static func _item_path(it: Dictionary) -> String:
 	if it.is_empty():
@@ -99,7 +92,6 @@ static func _item_path(it: Dictionary) -> String:
 		return str(ITEM_PATHS.get("legs", ""))
 	return ""
 
-
 static func _weapon_key(it: Dictionary) -> String:
 	var w: String = str(it.get("weapon", "")).to_lower()
 	if w == "staff" or w == "longbow" or w == "great_axe":
@@ -110,7 +102,6 @@ static func _weapon_key(it: Dictionary) -> String:
 	if n.find("bow") >= 0:
 		return "longbow"
 	return "great_axe"
-
 
 static func _tool_key(it: Dictionary) -> String:
 	var t: String = str(it.get("tool", "")).to_lower()
@@ -123,7 +114,6 @@ static func _tool_key(it: Dictionary) -> String:
 		return "hatchet"
 	return "pickaxe"
 
-
 static func _food_key(it: Dictionary) -> String:
 	var f: String = str(it.get("food", "")).to_lower()
 	if f == "ration":
@@ -134,7 +124,6 @@ static func _food_key(it: Dictionary) -> String:
 	if n.find("ration") >= 0:
 		return "ration"
 	return "trail_bread"
-
 
 static func _load_path(path: String) -> Texture2D:
 	if path == "":

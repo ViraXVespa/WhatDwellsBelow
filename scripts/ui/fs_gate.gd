@@ -16,7 +16,6 @@ var _was_b := false
 var _was_start := false
 var _was_back := false
 
-
 func _ready() -> void:
 	_kind = Disp.web_kind()
 	if _kind == "":
@@ -59,18 +58,15 @@ func _ready() -> void:
 
 	call_deferred("_wake")
 
-
 func _wake() -> void:
 	if App and App.has_method("wake_web_pad"):
 		App.wake_web_pad()
 	call_deferred("_refocus")
 
-
 func _refocus() -> void:
 	if _leaving or _action == null:
 		return
 	_action.grab_focus()
-
 
 func _process(_dt: float) -> void:
 	if _leaving:
@@ -83,7 +79,6 @@ func _process(_dt: float) -> void:
 		return
 	_poll_web_pad()
 
-
 func _keep_focus() -> void:
 	if _action == null:
 		return
@@ -91,7 +86,6 @@ func _keep_focus() -> void:
 	if owner == _action or owner == _continue:
 		return
 	_action.grab_focus()
-
 
 func _poll_web_pad() -> void:
 	var wp: Node = App.web_pad if App else null
@@ -113,7 +107,6 @@ func _poll_web_pad() -> void:
 	_was_start = start_now
 	_was_back = back_now
 
-
 func _unhandled_input(event: InputEvent) -> void:
 	if _leaving:
 		return
@@ -125,14 +118,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_on_continue()
 		get_viewport().set_input_as_handled()
 
-
 func _activate_focused() -> void:
 	var owner: Control = get_viewport().gui_get_focus_owner() as Control
 	if owner == _continue:
 		_on_continue()
 		return
 	_on_action()
-
 
 func _on_action() -> void:
 	if _leaving:
@@ -144,10 +135,8 @@ func _on_action() -> void:
 	if _kind == "ios" and _hint:
 		_hint.text = "Safari cannot open Add to Home Screen for you. Use Share → Add to Home Screen, then Continue."
 
-
 func _on_continue() -> void:
 	_leave()
-
 
 func _leave() -> void:
 	if _leaving:
@@ -156,14 +145,12 @@ func _leave() -> void:
 	Disp.mark_gate_seen()
 	get_tree().change_scene_to_file("res://scenes/splash.tscn")
 
-
 func _headline() -> String:
 	if _kind == "ios":
 		return "Fullscreen on iPhone"
 	if _kind == "android":
 		return "Play fullscreen"
 	return "Enter fullscreen"
-
 
 func _body() -> String:
 	if _kind == "ios":
@@ -172,7 +159,6 @@ func _body() -> String:
 		return "Tap Fullscreen to hide the browser bars. If the tap also offers Install, accept it for a Home Screen icon that launches landscape and chrome-less. Pause → System or Alt+Enter toggles fullscreen later. Rotate the phone sideways."
 	return "Click Fullscreen to hide browser chrome. Chromium may also offer an Install prompt — that adds a standalone window. Pause → System or Alt+Enter toggles fullscreen later."
 
-
 func _action_label() -> String:
 	if _kind == "ios":
 		return "Try fullscreen"
@@ -180,12 +166,10 @@ func _action_label() -> String:
 		return "Fullscreen / Install"
 	return "Fullscreen"
 
-
 func _rotate_line() -> String:
 	if Disp.viewport_portrait():
 		return "Rotate the device to landscape."
 	return "A confirms the focused button. B / Esc continues."
-
 
 func _lab(t: String, size: int, col: Color) -> Label:
 	var l: Label = ThemeS.lab(t, size, col)
@@ -193,12 +177,10 @@ func _lab(t: String, size: int, col: Color) -> Label:
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return l
 
-
 func _size_btn(b: Button) -> void:
 	var sc: float = ThemeS.text_scale()
 	b.custom_minimum_size = Vector2(280.0 * sc, 56.0 * sc)
 	b.focus_mode = Control.FOCUS_ALL
-
 
 func _fill(c: Control) -> void:
 	c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

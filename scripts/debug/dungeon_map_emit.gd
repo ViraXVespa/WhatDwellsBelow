@@ -16,7 +16,6 @@ static func _emit_kinds(lines: Array[String], rooms: Array) -> void:
 		bits.append("%s=%d" % [str(k), int(tallies[k])])
 	Util._out(lines, "kinds " + " ".join(bits))
 
-
 static func _emit_rooms(lines: Array[String], rooms: Array) -> void:
 	var i: int = 0
 	for r: Variant in rooms:
@@ -26,7 +25,6 @@ static func _emit_rooms(lines: Array[String], rooms: Array) -> void:
 			extra = " vein=" + vein
 		Util._out(lines, "room i=%d kind=%s x=%d y=%d w=%d h=%d c=%s%s" % [i, str(r.get("kind", "normal")), int(r.x), int(r.y), int(r.w), int(r.h), Util._fmt(Cells.center_room(r)), extra])
 		i += 1
-
 
 static func _emit_objs(lines: Array[String], objs: Array) -> void:
 	for raw: Variant in objs:
@@ -42,7 +40,6 @@ static func _emit_objs(lines: Array[String], objs: Array) -> void:
 			extra += " title=%s" % str(o.title)
 		Util._out(lines, "obj kind=%s cell=%s%s" % [kind, Util._fmt(cell), extra])
 
-
 static func _emit_jobs(lines: Array[String], host: Node) -> void:
 	var jobs: Array = host.get("spawn_jobs") as Array
 	var i: int = 0
@@ -56,7 +53,6 @@ static func _emit_jobs(lines: Array[String], host: Node) -> void:
 		var rk: String = str(room.get("kind", ""))
 		Util._out(lines, "job i=%d kind=%s cell=%s pack=%d state=%s named=%s nname=%s room=%s ids=%s" % [i, str(job.get("kind", "")), Util._fmt(cell), ids.size(), str(job.get("state", "")), str(job.get("named", false)), str(job.get("nname", "")), rk, ",".join(ids)])
 		i += 1
-
 
 static func _emit_counts(lines: Array[String], host: Node, data: Dictionary, objs: Array) -> void:
 	var t: Dictionary = Util._tally_objs(objs)

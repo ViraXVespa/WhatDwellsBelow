@@ -7,11 +7,9 @@ const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 const NODE_NAME := "confirm_dlg"
 
-
 static func is_open(parent: Node) -> bool:
 	var n: Node = parent.get_node_or_null(NODE_NAME)
 	return n != null and n.visible
-
 
 static func close(parent: Node) -> void:
 	var n: Node = parent.get_node_or_null(NODE_NAME)
@@ -27,7 +25,6 @@ static func close(parent: Node) -> void:
 		var focus_to: Control = prev as Control
 		if is_instance_valid(focus_to) and not focus_to.is_queued_for_deletion():
 			focus_to.call_deferred("grab_focus")
-
 
 static func open(parent: Node, title: String, body: String, on_yes: Callable) -> void:
 	var prev: Control = parent.get_viewport().gui_get_focus_owner() if parent.get_viewport() else null
@@ -93,7 +90,6 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable) ->
 			root.accept_event()
 	)
 	App.sfx("ui")
-
 
 static func _cancel_shortcut() -> Shortcut:
 	var sc := Shortcut.new()

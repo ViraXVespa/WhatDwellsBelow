@@ -4,10 +4,10 @@ Status: protocol
 Read when: web / chat path; every web session after the repo-review message
 
 Binding for **web / chat** only. Grok Build and Grok Bot ignore it.
-Second topic door: ask the User to name the owner first. That is the second *writer*. If `conflicts_with` lists the pair, do not implement the second core in this slice. Reading both is allowed.
+Second topic door: ask the User to name the owner first. That is the second *writer*. If `conflicts_with` lists the pair, do not implement the second core in this slice. Reading both is allowed. Packed pass: when the User names several owners (or says one go / pack these) and the paths do not share a live file and `conflicts_with` does not list the pair, one scratch may revise those Source paths together. Still one `tools/_scratch.py`. Still User-paste. Do not use a packed pass to invent a system.
 The User pastes every emit. Never assume a disk write landed. Do not push `main` or create a side branch unless the User named that branch.
 
-After Phase 3, one `tools/_scratch.py` is the whole remaining action. A scratch that writes a runnable this slice owns must run it before exit and print `RESULT checker=PASS|FAIL` when the load-graph checker applies. The User runs only `python tools/_scratch.py` from the repo root and pastes the RESULT. If a step cannot live in that scratch, say so and wait.
+After Phase 3, one `tools/_scratch.py` is the whole remaining action. Emit a blank line, then one python fence. The blank line is required so the fence is not dropped. No other prose in that message. A scratch that writes a runnable this slice owns must run it before exit and print `RESULT checker=PASS|FAIL` when the load-graph checker applies. The User runs only `python tools/_scratch.py` from the repo root and pastes the RESULT plus any clipboard shot the scratch armed. If a step cannot live in that scratch, say so and wait. Never print prove commands for the User to run. Never write a `prove:` homework list. Load-graph, import check, build-gate, shots, bake, map, smokes, and load-timing belong inside the same scratch that landed the write. The chat after emit only reads the pasted RESULT.
 
 I2V and complex animation packing stay in Grok Build unless the User says otherwise.
 Web / chat may generate non-tile images. It does not spawn the isolated media runner and does not Imagine tiled world assets (floor, brick, dirt, grass, seamless walls).
@@ -33,7 +33,7 @@ Do not open the Build path file, `BOT.md`, or Grok Bot Job files from this path 
 ## Read vs write
 
 When the User is present: picture-read is uncapped inside `design/` and the live tree the thread is talking about. Load-graph, topic index, and extra code-map rows are allowed on a docs or routing pass.
-Implementation still uses one writer door. A second writer only when the User names the owner. `conflicts_with` still blocks implementing both cores in one slice.
+Implementation default is one writer door. A packed pass is the exception above. `conflicts_with` still blocks implementing both cores in one slice.
 Inspect the live tree from **one system row** in `design/code-map.md` when editing live files.
 
 ## Phases
@@ -70,15 +70,42 @@ A park from brainstorm must carry: mandate, frozen decisions, open questions, li
 
 Name the goal for this emit pass. Ask only what cannot be inferred.
 Split the list: **Source** (`scripts/`, `scenes/`, `assets/`, `tools/`, `project.godot`, other non-doc live files) and **Docs**. Mark each path `new`, `revise`, or `delete`.
-Phase 3 may list multiple slices. Each slice has its own goal, writer, Source/Docs, and prove. Sequential one-writer: the writer may change per slice; one scratch does not own two cores.
+Phase 3 may list multiple slices, or one packed pass with several named owners. A packed pass still lists Source/Docs and prove per owner. One scratch may own those cores when the packed-pass rule holds.
 
 This phase ends when the User accepts the list. Do not start Phase 4 without that. If Source is empty, Phase 4 is docs-only.
 
 ### Phase 4 — Emit
 
-One action. Prefer one `tools/_scratch.py` for every revise/delete path and the docs in this pass. New source files emit one at a time (path line, blank line, full body in one language fence) until the User says `Next`.
+One action. Prefer one `tools/_scratch.py` for every revise/delete path and the docs in this pass. A packed pass is still one action and one scratch. New source files emit one at a time (path line, blank line, full body in one language fence) until the User says `Next`.
 
 Revise from a fetched raw body plus the artifact byte check, or from a User paste already in this conversation. Fetch budget: one pull per path. After a failed check, do not fetch again. Do not assemble a revision from a tool-card summary. Do not put a markdown fence opener inside a fenced emit. Do not reimplement `tools/doc_patch.py`.
+
+Scratch shape. One file, `tools/_scratch.py`. The runner imports `doc_patch` before the scratch body, so a scratch cannot repair a broken `doc_patch`. That repair is a direct `python` file.
+
+```python
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import doc_patch as dp
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def main() -> None:
+    dp.run_checker(ROOT)
+    print("RESULT checker=PASS")
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+Callable list: `replace_func`, `upsert_func`, `ensure_line`, `patch_file`, `write_text`, `write_changelog`, `run_checker`, `dump_job`. `append_funcs` does not exist. A new function is `upsert_func`. `replace_func` is only for a function that is already there, and it fails if the name appears twice.
+
+A `.gd` body is tabs. `write_text` turns a leading run of four spaces into one tab, but the scratch still emits tabs. Do not prepend above `from __future__ import`. A `.py` write that does not compile, or that moves that import, is refused. `run_shots.py` stays hidden. `--show` only when the User asks to see the window.
+
 
 Docs in this pass: same scratch updates topic files, one code-map row, and tunables the slice made wrong, writes `design/changelog/{label}.md` via `doc_patch.write_changelog`, and runs `tools/check_load_graph.py`. A later scratch in the same emit pass is a delta. Skip every path whose write already printed `wrote`, `deleted`, or `already applied` / `already gone`. Do not re-emit the whole Phase 3 list. Do not rewrite a file that already matches the accepted goal unless that file is why RESULT failed.
 
@@ -92,7 +119,8 @@ When a slice needs a visual proof, run `python tools/run_shots.py --mode web` an
 | Hub to dungeon load | `tools/run_dungeon_load_timing.ps1` | dungeon-load-timing summary |
 | Gen / map shape | `tools/run_dungeon_map.ps1` | dungeon-map summary |
 | Named phase assert | `tools/run_smokes.ps1` | smokes summary |
-| Postcard shot | `python tools/run_shots.py --mode web` | shots summary; paste clipboard image |
+| GDScript import / COMPILE | `tools/run_godot_import_check.ps1` via `dump_job(..., "godot-import-check", script="run_godot_import_check.ps1")` | godot-import-check summary; fail on COMPILE or clean=false |
+| Postcard shot | `python tools/run_shots.py --mode web` from the scratch (same flags the slice named) | shots summary; User pastes the clipboard image |
 
 A slice that only edits protocol docs does not boot Godot. If there is no runner for that work, say so and prove with the load-graph / gate only.
 
@@ -128,6 +156,7 @@ Do not treat a page-tool summary as the live file.
 ## Do not
 
 - Do not emit during Phase 1-3.
+- Do not hand the User a prove command list. The scratch runs the runners.
 - Do not open Grok Bot Job files from this path.
 - Do not emit `_logs/`, `scripts/data/changelog.json`, or a hand-edit of `scripts/data/version.json`.
 - Do not write the label into `design/versioning.md`.

@@ -5,26 +5,21 @@ const Docs := preload("res://scripts/data/archives_docs.gd")
 const View := preload("res://scripts/ui/archives_ui_view.gd")
 const Split := preload("res://scripts/ui/split_menu.gd")
 
-
 static func preview(host: Node, i: int) -> void:
 	host.mode = "info"
 	Split.preview(host, i)
-
 
 static func list_pressed(host: Node, i: int) -> void:
 	host.mode = "info"
 	Split.list_pressed(host, i)
 
-
 static func enter_detail(host: Node) -> void:
 	Split.enter_detail(host)
-
 
 static func enter_list(host: Node) -> void:
 	host.mode = "info"
 	View.rebuild_info(host)
 	Split.enter_list(host)
-
 
 static func info_gui(host: Node, event: InputEvent) -> void:
 	if not host.open or host.col != "list":
@@ -32,24 +27,20 @@ static func info_gui(host: Node, event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
 		enter_detail(host)
 
-
 static func on_video(host: Node) -> void:
 	if host.col != "detail":
 		enter_detail(host)
 	host._st("No video for this build.")
-
 
 static func on_docs(host: Node) -> void:
 	if host.col != "detail":
 		enter_detail(host)
 	open_docs(host)
 
-
 static func on_play(host: Node) -> void:
 	if host.col != "detail":
 		enter_detail(host)
 	play(host)
-
 
 static func open_read(host: Node, i: int) -> void:
 	host.doc_i = i
@@ -58,7 +49,6 @@ static func open_read(host: Node, i: int) -> void:
 	View.rebuild_info(host)
 	View.apply_col(host)
 	host.call_deferred("_focus_col")
-
 
 static func open_docs(host: Node) -> void:
 	var e: Dictionary = host._cur()
@@ -72,14 +62,12 @@ static func open_docs(host: Node) -> void:
 	View.apply_col(host)
 	host.call_deferred("_focus_col")
 
-
 static func play(host: Node) -> void:
 	var e: Dictionary = host._cur()
 	if e.is_empty():
 		return
 	App.launch_archive(str(e.id))
 	host.hide_browser()
-
 
 static func read_doc(host: Node, id: String, name: String) -> String:
 	if name == "":
@@ -101,7 +89,6 @@ static func read_doc(host: Node, id: String, name: String) -> String:
 			return "Loading…"
 	return "(missing)"
 
-
 static func http_done(host: Node, code: int, body: PackedByteArray) -> void:
 	host.http_busy = false
 	var key: String = str(host.http_key)
@@ -115,7 +102,6 @@ static func http_done(host: Node, code: int, body: PackedByteArray) -> void:
 		View.rebuild_info(host)
 		View.apply_col(host)
 		host.call_deferred("_focus_col")
-
 
 static func back(host: Node) -> void:
 	if host.mode == "read":
@@ -134,7 +120,6 @@ static func back(host: Node) -> void:
 		enter_list(host)
 	else:
 		Split.back(host)
-
 
 static func unhandled(host: Node, event: InputEvent) -> void:
 	if not host.open:

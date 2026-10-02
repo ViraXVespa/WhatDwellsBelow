@@ -9,13 +9,11 @@ const FRAME_CAP := 800.0
 static var _drag := false
 static var _drag_at := Vector2.ZERO
 
-
 static func is_open(host: Node) -> bool:
 	if host == null:
 		return false
 	var layer: CanvasLayer = host.get("map_layer") as CanvasLayer
 	return layer != null and layer.visible
-
 
 static func reset(host: Node) -> void:
 	_drag = false
@@ -23,7 +21,6 @@ static func reset(host: Node) -> void:
 		return
 	_set_z(host, 1.0)
 	apply(host)
-
 
 static func apply(host: Node) -> void:
 	if host == null or host.get("map_rect") == null or host.get("data") == null:
@@ -42,7 +39,6 @@ static func apply(host: Node) -> void:
 		rect.position = frame.position + (frame.size - rect.size) * 0.5
 	_clamp(host, frame)
 
-
 static func zoom_at(host: Node, gain: float, focus: Vector2) -> void:
 	if not is_open(host) or host.get("map_rect") == null:
 		return
@@ -60,7 +56,6 @@ static func zoom_at(host: Node, gain: float, focus: Vector2) -> void:
 	rect.position = focus - u * rect.size
 	_clamp(host, _frame(host))
 
-
 static func zoom_player(host: Node, delta_z: float) -> void:
 	if not is_open(host):
 		return
@@ -70,7 +65,6 @@ static func zoom_player(host: Node, delta_z: float) -> void:
 		return
 	zoom_at(host, z1 / z0, _player_focus(host))
 
-
 static func pan_by(host: Node, delta: Vector2) -> void:
 	if not is_open(host) or host.get("map_rect") == null:
 		return
@@ -79,7 +73,6 @@ static func pan_by(host: Node, delta: Vector2) -> void:
 		return
 	host.map_rect.position += delta
 	_clamp(host, _frame(host))
-
 
 static func handle_mouse(host: Node, event: InputEvent) -> bool:
 	if not is_open(host):
@@ -104,14 +97,11 @@ static func handle_mouse(host: Node, event: InputEvent) -> bool:
 		return true
 	return false
 
-
 static func _z(host: Node) -> float:
 	return float(host.get_meta("map_zoom", 1.0))
 
-
 static func _set_z(host: Node, z: float) -> void:
 	host.set_meta("map_zoom", clampf(z, 1.0, ZOOM_MAX))
-
 
 static func _frame(host: Node) -> Rect2:
 	var vp := host.get_viewport().get_visible_rect().size
@@ -119,7 +109,6 @@ static func _frame(host: Node) -> Rect2:
 	side = maxf(side, 160.0)
 	var pos := (vp - Vector2(side, side)) * 0.5
 	return Rect2(pos, Vector2(side, side))
-
 
 static func _clamp(host: Node, frame: Rect2) -> void:
 	var rect: TextureRect = host.map_rect
@@ -131,7 +120,6 @@ static func _clamp(host: Node, frame: Rect2) -> void:
 		rect.position.y = frame.position.y + (frame.size.y - rect.size.y) * 0.5
 	else:
 		rect.position.y = clampf(rect.position.y, frame.end.y - rect.size.y, frame.position.y)
-
 
 static func _player_focus(host: Node) -> Vector2:
 	var frame := _frame(host)

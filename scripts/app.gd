@@ -119,7 +119,6 @@ const FOUNDATION_SCENE := "res://scenes/foundation.tscn"
 const DUNGEON_SCENE := "res://scenes/dungeon.tscn"
 const CAMP_SCENE := "res://scenes/camp.tscn"
 
-
 func _ready() -> void:
 	Boot._ready(self)
 
@@ -127,22 +126,16 @@ func _on_node_added(n: Node) -> void:
 	if n is Sprite3D:
 		SpriteFilt.apply_sprite(n as Sprite3D)
 
-
-
 func ensure_debug() -> void:
 	Boot.ensure_debug(self)
 
-
 func ensure_anim_browser() -> void:
 	Boot.ensure_anim_browser(self)
-
 
 func _open_debug() -> void:
 	Boot.ensure_debug(self)
 	if debug and debug.has_method("show_menu"):
 		debug.show_menu()
-
-
 
 func save_now() -> void:
 	if Smoke.active():
@@ -153,94 +146,122 @@ func save_now() -> void:
 		return
 	Store.save_slot("live")
 
-
-
 func wipe_save() -> void:
 	Store.wipe_slot("live")
 	Store.fresh_delver()
 	save_now()
-
-
 
 func ack_game_ver() -> void:
 	var GameVer := load("res://scripts/data/game_ver.gd")
 	last_seen_game_ver = str(GameVer.label())
 	save_now()
 
-
-
 func enter_dungeon() -> void:
 	await AppFlow.enter_dungeon(self)
 
+func _pump_enter_async() -> void:
+	if get("_enter_pumped") == true:
+		return
+	set("_enter_pumped", true)
+	await AppFlow.pump_fps(self, false)
+	if present and present.has_method("release_enter"):
+		present.release_enter()
 
+func _bake_camp() -> void:
+	var packed = load(CAMP_SCENE)
+	if packed == null:
+		push_error("bake_camp: camp.tscn missing")
+		get_tree().quit()
+		return
+	var camp = packed.instantiate()
+	var LayoutS = load("res://scripts/world/camp_layout.gd")
+	var Build = load("res://scripts/world/camp_build.gd")
+	var layout = LayoutS.on_camp(camp)
+	layout.ensure_tree()
+	Build.realize_editor(camp, layout)
+	var HubLight = load("res://scripts/graphics/light_rt.gd")
+	HubLight.rebuild_hub(
+		int(layout.aabb_x0()),
+		int(layout.aabb_z0()),
+		int(layout.aabb_x1()),
+		int(layout.aabb_z1()),
+		Vector2(layout.spot_pos("Crystal").x, layout.spot_pos("Crystal").z),
+		layout
+	)
+	HubLight.save_hub_bake()
+	HubLight.rebuild_hub(
+		int(layout.aabb_x0()),
+		int(layout.aabb_z0()),
+		int(layout.aabb_x1()),
+		int(layout.aabb_z1()),
+		Vector2(layout.spot_pos("Crystal").x, layout.spot_pos("Crystal").z),
+		layout
+	)
+	HubLight.save_hub_bake()
+	var gen = camp.get_node_or_null("Generated")
+	if gen:
+		_mark_bake_owner(gen, camp)
+	var out = PackedScene.new()
+	var err = out.pack(camp)
+	if err != OK:
+		push_error("bake_camp: pack failed %s" % str(err))
+		get_tree().quit()
+		return
+	err = ResourceSaver.save(out, CAMP_SCENE)
+	if err != OK:
+		push_error("bake_camp: save failed %s" % str(err))
+	get_tree().quit()
+
+func _mark_bake_owner(n, own) -> void:
+	n.owner = own
+	var i = 0
+	while i < n.get_child_count():
+		_mark_bake_owner(n.get_child(i), own)
+		i += 1
 
 func _after_enter() -> void:
 	ui_open = false
 	Touch.clear_world()
 	begin_run()
 
-
-
 func go_title() -> void:
 	Touch.clear_world()
 	AppFlow.go_title(self)
-
-
 
 func go_foundation() -> void:
 	Touch.clear_world()
 	AppFlow.go_foundation(self)
 
-
-
 func go_camp() -> void:
 	Touch.clear_world()
 	AppFlow.go_camp(self)
 
-
-
 func play_from_menu() -> void:
 	AppFlow.play_from_menu(self)
-
-
 
 func _play_from_menu_async() -> void:
 	await AppFlow.play_from_menu_async(self)
 
-
-
 func _dungeon_load_timing_async() -> void:
 	await AppFlow.dungeon_load_timing_async(self)
-
-
 
 func begin_run() -> void:
 	AppRun.begin_run(self)
 
-
-
 func go_dungeon() -> void:
 	AppRun.go_dungeon(self)
-
-
 
 func next_floor() -> void:
 	AppRun.next_floor(self)
 
-
-
 func notify_boss_dead() -> void:
 	AppRun.notify_boss_dead(self)
-
-
 
 func set_character(kind: String) -> void:
 	if kind != "male" and kind != "female":
 		kind = "male"
 	character_type = kind
 	character_chosen = true
-
-
 
 func gain_gold(n: int) -> void:
 	n = maxi(0, n)
@@ -250,13 +271,9 @@ func gain_gold(n: int) -> void:
 	if tel:
 		tel.gold_gained += n
 
-
-
 func sfx(sfx_id: String) -> void:
 	if sfx_node and sfx_node.has_method("play"):
 		sfx_node.play(sfx_id)
-
-
 
 func hitstop(sec: float) -> void:
 	Boot.hitstop(self, sec)
@@ -265,78 +282,48 @@ func end_run(cond: String, killer := "") -> void:
 	Touch.clear_world()
 	AppRun.end_run(self, cond, killer)
 
-
-
 func finish_end(cond: String, killer := "") -> void:
 	Touch.clear_world()
 	AppRun.finish_end(self, cond, killer)
 
-
-
 func set_volume(which: String, v: float) -> void:
 	AppSet.set_volume(self, which, v)
-
-
 
 func set_zoom(z: float) -> void:
 	AppSet.set_zoom(self, z)
 
-
-
 func set_hud_scale(v: float) -> void:
 	AppSet.set_hud_scale(self, v)
-
-
 
 func set_ui_text_floor(v: float) -> void:
 	AppSet.set_ui_text_floor(self, v)
 
-
-
 func ui_text_applied() -> float:
 	return AppSet.ui_text_applied(self)
-
-
 
 func refresh_ui_text_scale() -> void:
 	AppSet.refresh_ui_text_scale(self)
 
-
-
 func set_sprite_filter(id: int, allow_linear := false) -> void:
 	AppSet.set_sprite_filter(self, id, allow_linear)
-
-
 
 func set_sprite_mip_sharp(on: bool) -> void:
 	AppSet.set_sprite_mip_sharp(self, on)
 
-
-
 func set_sprite_mip_bias(v: float) -> void:
 	AppSet.set_sprite_mip_bias(self, v)
-
-
 
 func set_display_mode(mode: String) -> void:
 	AppSet.set_display_mode(self, mode)
 
-
-
 func set_web_fullscreen(on: bool) -> void:
 	AppSet.set_web_fullscreen(self, on)
-
-
 
 func on_kill() -> void:
 	AppRun.on_kill(self)
 
-
-
 func spawn_floor_item(it: Dictionary, pos := Vector3.INF) -> void:
 	AppRun.spawn_floor_item(self, it, pos)
-
-
 
 func toast(msg: String) -> void:
 	if msg == toast_msg and toast_t > 0.35:
@@ -344,20 +331,14 @@ func toast(msg: String) -> void:
 	toast_msg = msg
 	toast_t = 2.2
 
-
-
 func note_clerk() -> void:
 	if clerk_t < 0.0:
 		clerk_t = clock
 	if tel and tel.clerk_t < 0.0:
 		tel.clerk_t = tel.duration
 
-
-
 func _in_world() -> bool:
 	return get_tree().get_first_node_in_group("player") != null
-
-
 
 func _process(delta: float) -> void:
 	Boot._process(self, delta)
@@ -371,77 +352,41 @@ func _unhandled_input(event: InputEvent) -> void:
 func using_pad() -> bool:
 	return Pad.mode
 
-
-
 func launch_archive(id: String) -> void:
 	AppFlow.launch_archive(self, id)
-
-
 
 func _launch_archive_async(id: String) -> void:
 	await AppFlow.launch_archive_async(self, id)
 
-
-
 func collect_binds() -> Array:
 	return Binds.collect()
-
-
 
 func apply_binds(rows: Array) -> void:
 	Binds.apply(rows)
 
-
-
 func reset_binds() -> void:
 	Binds.reset()
-
-
 
 func wake_web_pad() -> void:
 	Pad.wake_web()
 
-
-
-func pad_id() -> int:
-	return Pad.id()
-
-
-
-func pad_stick(lx: JoyAxis, ly: JoyAxis, dead := 0.24) -> Vector2:
-	return Pad.stick(lx, ly, dead)
-
-
-
 func pad_move() -> Vector2:
 	return Pad.move()
-
-
 
 func pad_aim() -> Vector2:
 	return Pad.aim()
 
-
-
 func pad_held(action: String) -> bool:
 	return Pad.held(action)
-
-
 
 func pad_just(action: String) -> bool:
 	return Pad.just(action)
 
-
-
 func pause_just() -> bool:
 	return Pad.pause_just()
 
-
-
 func swallow_close_pad() -> void:
 	Pad.swallow_close()
-
-
 
 func web_buttons() -> PackedFloat32Array:
 	return Pad.web_buttons()

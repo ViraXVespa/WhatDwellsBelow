@@ -5,7 +5,6 @@ const CatalogS := preload("res://scripts/data/catalog.gd")
 const Board := preload("res://scripts/ui/gear_board/gear_board.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 
-
 static func sets_blurb() -> String:
 	var bits: PackedStringArray = PackedStringArray()
 	var c: Dictionary = App.prog.set_counts()
@@ -15,29 +14,10 @@ static func sets_blurb() -> String:
 			bits.append("%s %d/%d%s" % [s, n, CatalogS.set_size(s), " *" if n >= 2 else ""])
 	return "Sets: " + (", ".join(bits) if bits.size() > 0 else "none")
 
-
 static func rebuild_inv(ui) -> void:
 	ui._clear()
 	ui.gear_mode = "inv"
 	Board.build(ui, "inv")
-
-
-static func inv_act(ui, uid: int) -> void:
-	var it := {}
-	for b in App.prog.bag:
-		if int(b.uid) == uid:
-			it = b
-			break
-	if it.is_empty():
-		ui._st("Gone.")
-		return
-	if str(it.kind) == "potion" or str(it.kind) == "food":
-		ui._st(App.prog.use_from_bag(uid))
-	else:
-		ui._st(App.prog.equip_uid(uid))
-	ui._rebuild_inv()
-	ui._show()
-
 
 static func rebuild_extract(ui) -> void:
 	ui._clear()

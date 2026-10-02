@@ -2,12 +2,10 @@
 
 const View := preload("res://scripts/ui/split_menu_view.gd")
 
-
 static func rows(host: Node) -> Array:
 	if host.has_method("split_rows"):
 		return host.split_rows()
 	return []
-
 
 static func row_at(host: Node, i: int) -> Dictionary:
 	var list: Array = rows(host)
@@ -18,18 +16,14 @@ static func row_at(host: Node, i: int) -> Dictionary:
 		return raw
 	return {}
 
-
 static func current(host: Node) -> Dictionary:
 	return row_at(host, int(host.get("selected")))
-
 
 static func is_page(row: Dictionary) -> bool:
 	return str(row.get("kind", "page")) == "page"
 
-
 static func is_leaf(row: Dictionary) -> bool:
 	return str(row.get("kind", "")) == "leaf"
-
 
 static func preview(host: Node, i: int) -> void:
 	var n: int = rows(host).size()
@@ -40,12 +34,10 @@ static func preview(host: Node, i: int) -> void:
 	View.paint_list(host)
 	View.apply_col(host)
 
-
 static func _sync_page(host: Node) -> void:
 	var row: Dictionary = current(host)
 	if host.has_method("split_build_page"):
 		host.split_build_page(str(row.get("id", "")))
-
 
 static func list_pressed(host: Node, i: int) -> void:
 	var same_open: bool = str(host.get("col")) == "detail" and int(host.get("selected")) == i
@@ -60,7 +52,6 @@ static func list_pressed(host: Node, i: int) -> void:
 		return
 	enter_detail(host)
 
-
 static func enter_detail(host: Node) -> void:
 	var row: Dictionary = current(host)
 	if not is_page(row):
@@ -69,12 +60,10 @@ static func enter_detail(host: Node) -> void:
 	View.apply_col(host)
 	View.focus_col(host)
 
-
 static func enter_list(host: Node) -> void:
 	host.col = "list"
 	View.apply_col(host)
 	View.focus_col(host)
-
 
 static func back(host: Node) -> bool:
 	if str(host.get("col")) == "detail":
@@ -83,7 +72,6 @@ static func back(host: Node) -> bool:
 	if host.has_method("split_close"):
 		host.split_close()
 	return false
-
 
 static func rebuild(host: Node) -> void:
 	View.rebuild_list(host)
