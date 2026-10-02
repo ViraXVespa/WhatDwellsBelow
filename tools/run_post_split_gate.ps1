@@ -34,7 +34,7 @@ if ($existing.Count -gt 0 -and -not $Force) {
 
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("post-split gate $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("withSmokes=$WithSmokes force=$Force")
 $lines.Add("")
 $fail = 0

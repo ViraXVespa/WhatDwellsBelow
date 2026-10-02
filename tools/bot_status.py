@@ -236,7 +236,7 @@ def main(argv: list[str] | None = None) -> int:
 
     lines: list[str] = [
         "bot status",
-        f"root={root}",
+        "root=.",
         f"measure=os.path.getsize (== Get-Item Length)",
         f"ship_floor={SHIP_BYTES}",
         f"branch={git['branch']}",

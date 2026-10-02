@@ -56,7 +56,7 @@ def main() -> int:
     stamp = datetime.now(timezone.utc).isoformat()
     lines = [
         f"code-map patch {stamp}",
-        f"root={root}",
+        "root=.",
         f"system={args.system}",
     ]
 

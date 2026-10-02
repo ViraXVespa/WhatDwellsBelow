@@ -33,7 +33,7 @@ def main() -> int:
     stamp = datetime.now(timezone.utc).isoformat()
     lines = [
         f"changelog label {stamp}",
-        f"root={root}",
+        "root=.",
         f"source={baked.as_posix()}",
     ]
 

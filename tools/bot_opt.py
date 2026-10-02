@@ -307,7 +307,7 @@ def main() -> int:
 
     lines = [
         f"bot-opt {action} {stamp}",
-        f"root={root}",
+        "root=.",
         f"queue={QUEUE_REL}",
     ]
 

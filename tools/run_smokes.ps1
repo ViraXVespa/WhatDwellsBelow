@@ -62,7 +62,7 @@ $lines = New-Object System.Collections.Generic.List[string]
 
 $lines.Add("smoke summary $(Get-Date -Format o)")
 
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 
 $lines.Add("phases=$($Phases -join ',') timeoutSec=$TimeoutSec")
 

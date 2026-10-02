@@ -32,7 +32,7 @@ $ms = $r.Ms
 
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("dungeon load timing $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("status=$status wall_ms=$ms errBytes=$($r.ErrBytes) outBytes=$($r.OutBytes)")
 $lines.Add("")
 $lines.Add("--- LOAD lines ---")

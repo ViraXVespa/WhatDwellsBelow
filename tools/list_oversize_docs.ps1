@@ -16,7 +16,7 @@ $files = Get-ChildItem -Path (Join-Path $Root "design") -File -Filter *.md |
     Sort-Object Length -Descending
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("oversize docs $(Get-Date -Format o)")
-$lines.Add("root=$Root over_kb=$OverKb limit_bytes=$Limit")
+$lines.Add("root=. over_kb=$OverKb limit_bytes=$Limit")
 $lines.Add("")
 $over = 0
 foreach ($f in $files) {

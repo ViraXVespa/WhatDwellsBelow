@@ -37,7 +37,7 @@ if (-not $Force -and -not $SkipImport) {
 
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("build gate $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("overKb=$OverKb skipImport=$SkipImport force=$Force scriptCap=$ScriptCap")
 $lines.Add("")
 $fail = 0

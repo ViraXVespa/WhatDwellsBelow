@@ -37,7 +37,7 @@ $sibs = Get-ChildItem -Path $dir -File -Filter "*.gd" |
 
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("facade cluster $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("facade=$(RelPath $full)")
 $lines.Add("stem=$stem dir=$(RelPath $dir)")
 $lines.Add("siblings=$($sibs.Count)")

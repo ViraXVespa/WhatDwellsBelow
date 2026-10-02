@@ -40,7 +40,7 @@ $rows = foreach ($f in $files) {
 $sorted = @($rows | Sort-Object Bytes -Descending)
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("oversize inventory $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("overKb=$OverKb underKb=$(if ($UnderKb -gt 0) { $UnderKb } else { 'none' }) count=$($sorted.Count)")
 $lines.Add("measure=filesystem Length (Get-ChildItem .Length)")
 $lines.Add("")

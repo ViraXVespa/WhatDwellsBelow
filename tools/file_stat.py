@@ -82,7 +82,7 @@ def collect(root: Path, paths: list[str], glob: str, cap: int) -> list[dict[str,
 def render(rows: list[dict[str, object]], root: Path) -> str:
     lines = [
         "file-stat",
-        f"root={root}",
+        "root=.",
         f"count={len(rows)}",
         "path\tbytes\tlines\tlf\tcrlf\ttabs\tspace_indent\tbom\texists",
     ]
@@ -109,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
     summary = out_dir / "summary.txt"
     summary.write_text(body, encoding="utf-8")
     sys.stdout.write(body)
-    print(f"summary={summary}")
+    print(f"summary={summary.relative_to(root).as_posix()}")
     return 0
 
 

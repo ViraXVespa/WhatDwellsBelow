@@ -44,7 +44,7 @@ $outBytes = $r.OutBytes
 
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("dungeon map $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("status=$status wall_ms=$ms errBytes=$errBytes outBytes=$outBytes seed=$Seed floor=$Floor scale=$Scale")
 $lines.Add("")
 $lines.Add("--- MAP lines ---")

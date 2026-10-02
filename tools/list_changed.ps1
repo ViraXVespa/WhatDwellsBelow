@@ -115,7 +115,7 @@ $sorted = @(
 )
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("changed inventory $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("scope=$scopeNote count=$($sorted.Count)")
 $lines.Add("measure=git status --porcelain + filesystem Length")
 $lines.Add("")

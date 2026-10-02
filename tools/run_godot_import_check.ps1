@@ -25,7 +25,7 @@ $status = $r.Status
 
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("godot import check $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("status=$status ms=$($r.Ms) errBytes=$($r.ErrBytes) outBytes=$($r.OutBytes)")
 $lines.Add("")
 $lines.Add("--- highlights ---")

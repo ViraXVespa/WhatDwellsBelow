@@ -43,7 +43,7 @@ if ($KeepScript) {
 
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("agent-py $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("script=$scriptPath")
 $lines.Add("under_agent_py=$underAgentPy cleanup=$doCleanup keep=$KeepScript")
 $lines.Add("")

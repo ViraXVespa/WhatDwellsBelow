@@ -29,7 +29,7 @@ $lines = New-Object System.Collections.Generic.List[string]
 function Add-Line([string]$s) { $lines.Add($s); Write-Host $s }
 
 Add-Line "week start $(Get-Date -Format o)"
-Add-Line "root=$Root"
+Add-Line "root=."
 Add-Line "whatIf=$WhatIf"
 Add-Line ""
 

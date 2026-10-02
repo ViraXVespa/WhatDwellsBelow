@@ -95,7 +95,7 @@ $pathNote = ($Path | ForEach-Object { $_.Replace('\', '/') }) -join ","
 $mode = if ($Regex) { "regex" } else { "simple" }
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("xref inventory $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("pattern=$Pattern mode=$mode include=$Include path=$pathNote")
 $lines.Add("maxHits=$MaxHits maxFiles=$MaxFiles scanned=$scanned files=$($filesHit.Count) hits=$($hitLines.Count) truncated=$truncated")
 $lines.Add("measure=Select-String; agents read this summary only")

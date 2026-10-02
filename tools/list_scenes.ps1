@@ -50,7 +50,7 @@ $truncated = $false
 
 $pathNote = ($Path | ForEach-Object { $_.Replace('\', '/') }) -join ","
 $lines.Add("scene inventory $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("path=$pathNote scenes=$($sceneFiles.Count) maxNodes=$MaxNodes")
 $lines.Add("measure=parse .tscn headers; do not open scene bodies in chat")
 $lines.Add("")

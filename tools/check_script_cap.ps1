@@ -61,7 +61,7 @@ if ($Path.Count -gt 0) {
 $over = New-Object System.Collections.Generic.List[string]
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("script cap $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("limit_bytes=$Limit over_kb=$OverKb gitChanged=$GitChanged files_checked=$($files.Count)")
 $lines.Add("")
 
