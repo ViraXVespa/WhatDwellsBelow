@@ -20,7 +20,7 @@ Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/
 - Depth sorting SHOULD respect implied real-world positions of the player, enemies, walls, and props. Arbitrary front/back popping MUST be avoided wherever possible, but perfect freedom from popping is not required.
 
 Title → Play hub warmup MAY set `cam.size` wider than `ZOOM_MIN` so the full Placeholdia slab plus `GRASS_PAD` is on screen under the loader sheet. That size MUST NOT write `App.cam_zoom`. `camera_rig.warm_hold` MUST ignore player `follow` until restore. Restore the user’s zoom and follow target before `loader.finish()`. The player MUST NOT see the pulled-back view.
-- Debug camp shots re-apply pose in `_arm_capture` after settle. Zoom `0.38` (`cam.size` ~44) is the roof-judge crop. It MUST NOT write `App.cam_zoom` for play. The player never keeps that view.
+- Debug camp shots re-apply pose in `_arm_capture` (`shot_tool_capture.gd`) after settle. Zoom `0.69` is the roof-judge crop. It MUST NOT write `App.cam_zoom` for play. The player never keeps that view.
  Extract-wake does not run this.
 
 ## Archives
