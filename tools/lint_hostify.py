@@ -6,7 +6,7 @@ Usage (from repo root):
   powershell -File tools/lint_hostify.ps1
 
 Output: _logs/hostify-lint/summary.txt
-See design/refactor.md (Hostify pitfalls).
+See design/refactor-hostify.md (Hostify pitfalls).
 
 Exit 0 always (advisory report). Read RESULT hits= in the summary.
 """

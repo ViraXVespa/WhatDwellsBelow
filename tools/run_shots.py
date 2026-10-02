@@ -7,7 +7,7 @@ Modes:
   user  full-res PNG and open it
 
 Scripted flows (open a menu, press pad buttons, shoot every page, assert state): --steps FILE
-(a tools/shot-flows/*.json; see design/shot-tool.md). Whole flows, diffs and publishing: run_shot_flow.py.
+(a tools/shot-flows/*.json; see design/shot-flows.md). Whole flows, diffs and publishing: run_shot_flow.py.
 Numbers live here, not in a prompt.
 """
 from __future__ import annotations

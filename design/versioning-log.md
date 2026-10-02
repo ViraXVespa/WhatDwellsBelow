@@ -44,9 +44,9 @@ the changelog directory is not required. Pages `/changelog/` is the public index
 - A / Start or B / Esc dismisses, writes `last_seen_game_ver` = current `label`, focuses Play.
 - Persist `last_seen_game_ver` through `save_store.gd` on the live slot. Do not reuse save-schema `"v"`.
 
-## Web / chat Phase 7
+## Web / chat changelog
 
-After the User is satisfied with the goal’s behavior:
+In the Phase 4 emit, after the User is satisfied with the goal’s behavior:
 
 1. Update topic files this slice made wrong (`design/versioning.md` only if the scheme or ritual changed).
 2. Author `design/changelog/{label}.md` using baked `scripts/data/version.json` `label` with patch + 1. First heading `## {label}`, never `# {label}`. After the bullets, one `Summary:` line for the in-game overlay. Do not write a `## Agent` section. Do not record that label in this file. Do not read older changelog files.

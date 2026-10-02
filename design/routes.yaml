@@ -32,6 +32,7 @@ parked_jobs:
 
 recipes:
   refactor: design/refactor.md
+  refactor_hostify: design/refactor-hostify.md
   doc_refactor: design/doc-refactor.md
 
 bot_jobs:
@@ -89,6 +90,9 @@ gates:
   shot_tool:
     file: design/shot-tool.md
     when: postcard_shot
+  shot_flows:
+    file: design/shot-flows.md
+    when: flow_json_or_new_ui_state_shot
 
 doors:
   overview:

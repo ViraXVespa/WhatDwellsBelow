@@ -11,12 +11,12 @@ Accessed only by the following input sequence (gamepad): all four shoulder butto
 The menu opening itself is the sole confirmation that the sequence succeeded.
 This menu contains:
 
-- Every previously available debug / balance page (all numeric values exposed and tunable)
+- Every debug / balance page (all numeric values exposed and tunable)
 - Debug profile Save / Load / Delete / Rename system (unlimited named profiles, free naming/renaming, saved to files by default, persist across live-path sessions)
 - Automated Playtest / AI Player system
 - Animation Browser page (entry MUST exist when this menu is first implemented; full viewer MAY be a stub until Phase 9, and MUST be complete for Demo-Complete)
 - Settings page for in-test system and game options that are not yet approved for general players
-- All other content that was formerly under Pause → System that is not listed in the player Settings tab
+- All other system content that is not listed in the player Settings tab
 
 Live also opens with CLI `--wdb-debug`.
 

@@ -7,7 +7,7 @@ set state, shoot every page, assert, then diff against a baseline or publish to 
   python3 tools/run_shot_flow.py --smoke --no-pixels        # every smoke:true flow, headless, asserts only
 
 Each flow is one worker boot (run_shots.py --steps). Frames land in _logs/shot-flow/<flow>/ as
-NN-name.png (plus NN-name.texts.json and flow.json). Flow format and ops: design/shot-tool.md.
+NN-name.png (plus NN-name.texts.json and flow.json). Flow format and ops: design/shot-flows.md.
 """
 from __future__ import annotations
 

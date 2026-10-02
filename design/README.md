@@ -23,7 +23,7 @@ Do not open this table as a boot list. Open a topic when `design/routes.yaml` na
 
 Design doors: open the facade, then only the Job-table sibling. Isolated Imagine is a gate, not an art-pipeline job. Rules: `design/doc-refactor.md`. Oversize check: `tools/list_oversize_docs.py`.
 
-Do not open art_pipeline parked attack-keyframes unless the User is resuming the attack animation keyframe pipeline. Web / chat writes `design/reuse-map.md` in Phase 7 when that is the goal.
+Do not open art_pipeline parked attack-keyframes unless the User is resuming the attack animation keyframe pipeline. Web / chat writes `design/reuse-map.md` in a Phase 4 emit when that is the goal.
 
 ## Document kinds
 
@@ -71,4 +71,4 @@ Per-build player notes for the **current series** are flat `design/changelog/{la
 - Mark live-only behavior under **Live snapshot**.
 - Do not collapse `design/` into one document.
 - When live scripts are split under the 10KB cap, update `design/code-map.md` in the same slice.
-- Do not treat `design/reuse-map.md` as an owners encyclopedia. Web Phase 7 writes that brief; Bot does not log extracts there.
+- Do not treat `design/reuse-map.md` as an owners encyclopedia. Web / chat writes that brief; Bot does not log extracts there.

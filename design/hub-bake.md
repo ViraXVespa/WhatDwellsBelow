@@ -11,7 +11,7 @@ The hub ships one baked light RT. Offline bake quality is the look lock. Runtime
 - Shipped atlas: `res://assets/baked/hub_light.png` from `LightRt.save_hub_bake`.
 - Shipped atlas is the png only. `scenes/camp.tscn` must not embed a second copy.
 - Prove bake: `bake_camp: rt=` at least `1088x1024`, `sub=16`, `shadow_px` not 0 (`run_bake_camp.py` fails any bake with 0, headless or not; the camp node must be in the tree or the projection reads no transforms). The tool picks a display itself (`shot-tool.md` Display). `shadow_px` not 0 is a pipeline check, not a look pass.
-- Prove shot: `python tools/run_shots.py --mode web --scene camp --hud 0 --zoom 0.69`. The runner stitches the `design/shot-recipes.json` poses into one paste. `_arm_capture` must call `_apply_pose` again so settle cannot keep the play crop.
+- Prove shot: `python tools/run_shots.py --mode web --scene camp --hud 0 --zoom 0.69`. The runner stitches the `tools/shot-recipes.json` poses into one paste. `_arm_capture` must call `_apply_pose` again so settle cannot keep the play crop.
 - Play zoom 0.69 is how we judge roofs and puddles (stall, hall, dumpster, receptionist). The 0.38 postcard is the wide frame only.
 
 ## Look
@@ -23,7 +23,7 @@ The hub ships one baked light RT. Offline bake quality is the look lock. Runtime
 - Hall and wing lids are two-slope gables, not a south-falling shed. WrapShader russet is the lid color, matching the awning red, not the sun disc. Each slope runs from the ridge to its eave. `shade_hi` stays high enough that the eave is still tile. Tile `uv_scale` uses the slope length.
 - Stall tarp is a pitched sheet over the counter, high enough to cover the goods, one sheet of `plaza_tarp.png`. No lid wrap term on the cloth. A small rumple is not the pitch.
 - Hall and wing are only as tall as their face art. Both awnings hang off the south roof edge and cover the painted shingle band. Roofs stop at the wall edge.
-- Angled frames are part of the proof. The recipe is `design/shot-recipes.json`: play, hall eave, stall front, stall side, one boot, one paste.
+- Angled frames are part of the proof. The recipe is `tools/shot-recipes.json`: play, hall eave, stall front, stall side, one boot, one paste.
 
 ## Allowed
 - `HUB_SUB` 16 or higher. Raise it when puddles look stair-stepped.

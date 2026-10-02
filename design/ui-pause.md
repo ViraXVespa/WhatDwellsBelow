@@ -56,6 +56,6 @@ Leaves
 
 There is no presentation-mode switcher. Archives is title-only (archives).
 
-The full debug / balance menu is **no longer** present in the Pause Menu. In-test display options that are not approved for players live on the secret debug **Settings** tab (debug). The touch stick deadzone slider lives there too. The player display-mode control is mirrored on that Settings tab.
+The full debug / balance menu is not part of the Pause Menu. In-test display options that are not approved for players live on the secret debug **Settings** tab (debug). The touch stick deadzone slider lives there too. The player display-mode control is mirrored on that Settings tab.
 
 Placeholdia inventory (same board, opened outside a run) MUST use Loadout option sources: starters, holds, and non-white bank items. Dungeon inventory MAY only list the equipped piece plus bag items of that slot.

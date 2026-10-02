@@ -35,7 +35,7 @@ Routines only after a saved skill. Do not schedule a routine that commits.
 Do not enable Execution on Local Computer. Build-only docs and skills: BOT.md.
 No new player-facing systems, tunables, combat feel, editor playtest, art/I2V,
 locale sweeps, or pause redesign. Do not invent reuse-map or opt-queue rows.
-Headless smokes only (BOT.md Smokes). Do not install Steam Godot. Do not open the editor.
+Smokes are headless; shots and bakes use the box display (BOT.md Smokes). Do not install Steam Godot. Do not open the editor.
 Live scripts/**/*.gd must ship under 10KB.
 
 ## Off-limits

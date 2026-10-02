@@ -39,7 +39,7 @@ Do not concatenate all siblings into context. Do not open the staged reuse brief
 5. Sibling `See also` may name boundary **topic doors** only. It must not name the parent already open, siblings of current, path/session files, or a path that does not exist. See also is never a read list.
 6. Grep for stale “read the whole of X” wording; point at the Job table.
 7. One `design/changelog/{label}.md` for the PR.
-8. Prove per BOT.md.
+8. `python3 tools/check_tool_docs.py --stale-refs` (dead paths and identifiers in docs; `--narration` lists stale-sounding lines to rewrite in present tense). Prove per BOT.md.
 ## Verify
 
 Prove per BOT.md.

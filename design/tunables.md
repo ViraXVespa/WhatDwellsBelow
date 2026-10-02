@@ -15,7 +15,7 @@ List one key with `python tools/tunables.py get --key CAM_PITCH` (summary: `_log
 
 `BAL_REV` is 13. Old saves pick up shipped default retunes through `migrate.gd`.
 
-Forge keys that are not yet on `balance.gd` fall back inside `progress_forge.gd` / `gear_roll.gd`. Add them to balance + the debug menu when that slice lands.
+Forge keys missing from `balance.gd` fall back inside `progress_forge.gd` / `gear_roll.gd`; a slice that adds a key also adds it to balance and the debug menu.
 
 ## Camera / presentation (`tunables.gd`)
 
