@@ -120,8 +120,8 @@ static func guild(host: Node3D) -> void:
 	var hs: float = lay.awning_slope("Hall") if lay else 0.08
 	var wd: float = lay.awning_depth("Wing") if lay else 0.64
 	var ws: float = lay.awning_slope("Wing") if lay else 0.08
-	awning(hall_body, hall_fit, hd, hs, hall_fit.y * 0.34, 0.0, 0.0, 0.0)
-	awning(wing_body, wing_fit, wd, ws, wing_fit.y * 0.34, 0.0, 0.0, 0.0)
+	awning(hall_body, hall_fit, hd, hs, hall_fit.y * 0.34 / 0.66, 0.0, 0.0, 0.0)
+	awning(wing_body, wing_fit, wd, ws, wing_fit.y * 0.34 / 0.66, 0.0, 0.0, 0.0)
 	var hall_tile: float = lay.tile_for("Hall") if lay else TILE_W
 	var wing_tile: float = lay.tile_for("Wing") if lay else TILE_W
 	var hall_uv: Vector2 = lay.hall_uv_off if lay else Vector2.ZERO
@@ -176,11 +176,9 @@ static func face(
 		spr.region_enabled = true
 		spr.region_rect = Rect2(0.0, th * cap, tw, rh)
 	var fw: float = maxf(face_w, 0.2)
-	var room: float = maxf(box_size.y * (1.0 - cap), 0.4)
-	spr.pixel_size = minf(fw / tw, room / rh)
+	spr.pixel_size = fw / tw
 	var sh: float = spr.pixel_size * rh
-	var hem: float = box_size.y * 0.5 - box_size.y * cap
-	spr.position = Vector3(x_off, hem - sh * 0.5, box_size.z * 0.5 + 0.01)
+	spr.position = Vector3(x_off, sh * 0.5 - box_size.y * 0.5, box_size.z * 0.5 + 0.01)
 	body.add_child(spr)
 static func roof_mat(dim: Vector2, world_min: Vector3, tile: float = TILE_W, uv_off: Vector2 = Vector2.ZERO) -> Material:
 	return MeshS.roof_mat(dim, world_min, tile, uv_off)
@@ -308,11 +306,10 @@ static func face_height(tex: String, face_w: float) -> float:
 
 
 static func seat(body: StaticBody3D, box_size: Vector3, tex: String) -> Vector3:
-	var h: float = face_height(tex, box_size.x) * 0.82
+	var full: float = face_height(tex, box_size.x)
+	var h: float = full * 0.66
 	body.position.y = h * 0.5
 	return Vector3(box_size.x, h, box_size.z)
-
-
 static func _slide(body: StaticBody3D, box_size: Vector3) -> void:
 	var old: Node = body.get_node_or_null("WallHit")
 	if old != null:

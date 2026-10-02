@@ -408,8 +408,9 @@ static func _apply_pose_token(host: Node, token: String) -> void:
 	if kind == "play":
 		cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 		cam.size = 1080.0 / 64.0 / 0.69
-		cam.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
-		cam.global_position = Vector3(16.5, 24.0, 15.0)
+		cam.rotation_degrees = Vector3(-58.0, 0.0, 0.0)
+		var back: float = 14.0 / tan(deg_to_rad(58.0))
+		cam.global_position = Vector3(cx, 14.0, cz + back)
 		printerr("SHOT: token=%s at=%s" % [token, str(cam.global_position)])
 		return
 	var look := Vector3(cx, 1.6, cz)
