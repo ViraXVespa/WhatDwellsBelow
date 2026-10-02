@@ -4,6 +4,15 @@ Status: protocol
 Read when: Grok Bot Job table → size sweep  
 
 
+## Size split quick path
+
+Read only this file, `BOT.md`, and `design/refactor.md` rules 1-7 (skip the reuse, extract, and doc-split sections). Run `python tools/bot_status.py` (prints only the over-10KB list; `--sweep` lists 5-10KB rows). Per file:
+
+1. Baseline: `bot_warnscan.py --areas <areas that load it> --save-baseline PATH`, plus `bot_smokes.py --phases 1,2,6,<relevant>`. Run both in the background while reading the file.
+2. Call graph: per function, calls, statics/consts used, external callers. Keep public funcs and shared consts on the facade; move whole underscore funcs with the statics they own to `extends Object` siblings (static-helper pattern, refactor.md rule 4). Keep BOM/CRLF. `python tools/facade_requal.py FILE --sym NAME=Mod` qualifies moved names in the facade.
+3. Install, import for `.uid` (BOT.md Smokes), line-multiset check against the original, smokes, then `--non-leak-diff PATH` with the same `--areas`.
+4. Changelog entry, code-map row, prove trio, commit, push.
+
 ## Mandate
 
 Size, prove, changelog, and `version.json` rules live in `BOT.md`.

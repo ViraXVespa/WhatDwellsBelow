@@ -209,6 +209,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Also check 10KB ship floor, allowlist on dirty paths, load-graph.",
     )
+    parser.add_argument(
+        "--sweep",
+        action="store_true",
+        help="List the 5-10KB rows too (default: count line only).",
+    )
     return parser.parse_args(argv)
 
 
@@ -246,10 +251,11 @@ def main(argv: list[str] | None = None) -> int:
         lines.append(f"{size}\t{rel}")
     lines.append("")
     lines.append(f"over_5kb_under_10kb count={len(sweep)}")
-    for size, rel in sweep[:20]:
-        lines.append(f"{size}\t{rel}")
-    if len(sweep) > 20:
-        lines.append(f"... +{len(sweep) - 20} more")
+    if args.sweep:
+        for size, rel in sweep[:20]:
+            lines.append(f"{size}\t{rel}")
+        if len(sweep) > 20:
+            lines.append(f"... +{len(sweep) - 20} more")
     lines.append("")
     lines.append(f"reuse_brief count={len(brief)} file={REUSE_FILE}")
     if not brief:
