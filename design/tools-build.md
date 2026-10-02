@@ -9,7 +9,7 @@ Rules, the CLI contract and the surface key are in `tools.md` (single copy). The
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
-| `godot_lib.py` | Godot launch + per-path lock library (kills only its own pid, never godot*). CLI: lock probe. | D | module docstring (no `--help`) | N |
+| `godot_lib.py` | Godot launch + per-path lock library (kills only its own pid, never godot*). `gui=True` runs pick a display (`$DISPLAY`, a live X socket, else `xvfb-run`). CLI: lock probe, `--display` shows the pick. | BD | module docstring (no `--help`) | Y |
 | `run_godot_import_check.py` | Editor import / script-reload check. RESULT `clean=true|false`. Summary: `godot-import-check`. | WD | `python tools/run_godot_import_check.py` | N |
 | `run_post_split_gate.py` | Import check, then optional smokes. Summary: `post-split-gate`. | D | `python tools/run_post_split_gate.py` (`--with-smokes`, `--phases 1,2,6`, `--force`) | N |
 | `run_smokes.py` | Phase smokes on the PC (Bot VM: `bot_smokes.py`). `--door D` / `--job door.job` pick the phases mapped in `routes.yaml` `smokes`. Summary: `smokes`. | D | `python tools/run_smokes.py --phases 4,5` | N |
@@ -17,7 +17,7 @@ Rules, the CLI contract and the surface key are in `tools.md` (single copy). The
 | `run_dungeon_load_timing.py` | Placeholdia -> Dungeon load-timing smoke. Summary: `dungeon-load-timing`. | WD | `python tools/run_dungeon_load_timing.py` | N |
 | `run_dungeon_map.py` | Dungeon generation map smoke. Summary: `dungeon-map`. | WD | `python tools/run_dungeon_map.py` (`--seed 42 --floor 1 --scale 8`) | N |
 | `run_dungeon_map_sweep.py` | Map smoke over seeds. Summary: `dungeon-map-sweep`. | D | `python tools/run_dungeon_map_sweep.py` (`--count 10` or `--seed-list 42,7`) | N |
-| `run_bake_camp.py` | Bake `camp.tscn` headless. RESULT `clean=`. Summary: `bake-camp`. | D | `python tools/run_bake_camp.py` | N |
+| `run_bake_camp.py` | Bake `hub_light.png` through `--wdb-bake-camp` on a real renderer (auto display; `--headless` forces the old driver). Never rewrites `camp.tscn`. RESULT `clean=`, `shadow_px=`, `display=`. Summary: `bake-camp`. | BD | `--help` | Y |
 | `export_web.py` | Export the GitHub Pages build (Godot Web, no threads); `--archives` adds the combined `_pages/` site. Logs: `_logs/export-web/`. | D | `python tools/export_web.py` (`--archives`) | N |
 | `run_agent_py.py` | Run an ephemeral script from `_logs/agent-py/` and delete it after. Prefer a real tool. Summary: `agent-py`. | D | `python tools/run_agent_py.py --script _logs/agent-py/foo.py` | N |
 | `clean_agent_logs.py` | Delete raw logs under `_logs/` (`--new-week` also old summaries). Summary: `clean`. | D | `python tools/clean_agent_logs.py` (`--keep-raw`, `--max-age-hours 24`, `--dry-run`) | N |
@@ -92,7 +92,11 @@ Each forwards its arguments to the Python twin, so CI and muscle memory keep wor
 | `pages_game_hash.py` | Hash game-affecting paths so Pages can skip a full Godot export | D | `--help` | N |
 | `patch_tunables.py` | Shim -> `tunables.py set`, one release | D | `--help` | N |
 | `publish_notes_site.py` | Copy baked version/changelog JSON onto the Pages site as loose /data files | D | `--help` | N |
-| `run_shots.py` | Posed-camera postcard tool (`--mode web/build/user`). Not a numbered smoke. Summary: `shots`. | WD | `--help` | N |
+| `run_shots.py` | Posed-camera postcard tool (`--mode web/build/user`), or one scripted flow (`--steps`, `--no-pixels`). Not a numbered smoke. Summary: `shots`. | BWD | `--help` | Y |
+| `run_shot_flow.py` | Scripted shot flows (`tools/shot-flows/*.json`): `--list`, `--flow/--all/--smoke`, `--baseline/--save-baseline` diff, `--publish`, `--check-published`. Summary: `shot-flow`. | BWD | `--help` | Y |
+| `shot_diff.py` | Before/after diff of shot PNGs (files or dirs): changed pixels, bbox, `*.diff.png`. Summary: `shot-diff`. | BWD | `--help` | Y |
+| `check_shot_gaps.py` | UI states with no shot flow, new uncovered states since a ref (`--changed`), flow and published-shot problems. Summary: `shot-gaps`. | BWD | `--help` | Y |
+| `shot_clip_lib.py` | Clipboard paste and open-in-viewer helpers for `run_shots.py` | WD | module docstring (no `--help`) | Y |
 | `show_func.py` | Extract one func/const/var (`--path`, `--name`). Summary: `show-func`. | D | `--help` | N |
 | `tunables.py` | `get --key K` / `set --key K --value V` on `design/tunables.md` (`design/tunables.md` is deny-listed for the Bot). Summaries: `tunable-row`, `tunable-patch`. | D | `--help` | N |
 | `tunables_lib.py` | Tunables row parser used by the two tunables tools | D | module docstring (no `--help`) | N |

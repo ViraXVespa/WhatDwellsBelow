@@ -70,6 +70,7 @@ Setup downloads the official 4.7.2 Linux tools binary only if the pin is missing
 Binary: `GODOT_BIN`, else the pin `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
 New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets`, and commit the `.uid` files only. That is the import, not an editor session.
 Do not run editor playtest. Do not schedule a routine that launches Godot.
+Shots and light bakes are not headless: `run_shots.py`, `run_shot_flow.py` and `run_bake_camp.py` pick the box display themselves (`$DISPLAY`, a live X socket, else `xvfb-run`; `python3 tools/godot_lib.py --display`). Menu/NPC proof: `bot_smokes.py --door D --flows` (headless asserts) and `design/shot-tool.md`.
 
 Warning sweep (User-named only): `python3 tools/bot_warnscan.py` runs every smoke area plus boot/static, collects Godot warnings, errors, and leaks, and exits 0 only on zero findings. It reports; it does not fix game code. `--list` shows areas, `--repeat 2` steadies leaks.
 Findings by kind: `--findings-md PATH`. One-shot gate for a fix batch: `python3 tools/run_build_gate.py --batch --warnscan-baseline PATH --areas ...`. Before/after a change: `--save-baseline PATH` before, then `--non-leak-diff PATH` after (the baseline and the after run must use the same `--areas`). It ignores leaks and sites, prints NEW and FIXED, and exits 1 only on NEW.
@@ -80,7 +81,7 @@ Tools: `design/tools.md` is the catalog (single source: what each tool does, `--
 
 No new player-facing systems, tunables, combat feel, editor playtest,
 art/I2V, locale sweeps, or pause redesign.
-Headless smokes only (see Smokes). Do not install a Windows or Steam Godot. Do not open the editor.
+Smokes are headless (see Smokes); shots and bakes use the box display. Do not install a Windows or Steam Godot. Do not open the editor.
 Do not enable Execution on Local Computer.
 Bot may save its own skill after two good clusters. Skills are the account private library.
 Do not walk design/ for context beyond this file and the one Job file.

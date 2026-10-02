@@ -21,7 +21,7 @@ Classify the request: **new feature / new system** (something the game does not 
 New feature flow (in order, one job each; pause and report after every job):
 1. Owner: `python tools/list_route.py --door <door>`. If no door or doc owns it, or it needs a second door, stop and propose through `ask_user_question` (Design decisions): door, doc name, and every open question in one batch with options. Do not guess canon, copy, or design choices; wait for the answers.
 2. Design doc first: write or extend the owning topic via `tools/doc_patch.py` (what, where it lives, save keys, entry events), then implement.
-3. Prove: the smoke phases mapped to the door (`routes.yaml` `smokes`, printed by `start_build_slice.py`) plus any assert or phase this feature needs (update or add; see `build-job-cycle.md`). Pictures: `shot-tool.md` (extend the tool when it cannot stage the state).
+3. Prove: the smoke phases mapped to the door (`routes.yaml` `smokes`, printed by `start_build_slice.py`) plus any assert or phase this feature needs (update or add; see `build-job-cycle.md`). Pictures and UI-state proof: `shot-tool.md` (scripted flows via `run_shot_flow.py`, `routes.yaml` `shot_flows` printed by `start_build_slice.py`; `check_shot_gaps.py --changed` for new UI states; extend the tool when it cannot stage the state).
 4. Ship notes: `code_map.py patch` for touched live scripts, `tunables.md` for any number, `doc_patch.py changelog --bullet` for the player-visible change, `check_load_graph.py` when routes or docs moved. Then stop and report with rough edges.
 
 ## Read
