@@ -39,7 +39,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
 | `bot_status.py` | Punch list: over-10KB/5KB, reuse brief, opt queue; `--prove` = script cap + allowlist + load graph; `--sweep` lists 5-10KB | BD | `--help` | Y |
-| `check_script_cap.py` | Script size cap: `--git-changed`, `--path`, `--over-kb 5` for the sweep | BWD | `--help` | Y |
+| `check_script_cap.py` | Script size cap + duplicate-basename check (`dupes=`): `--git-changed`, `--path`, `--over-kb 5` for the sweep | BWD | `--help` | Y |
 | `check_load_graph.py` | Doc routing vs `design/routes.yaml` (prints PASS/FAIL, no summary) | BWD | `--help` | Y |
 | `code_map.py` | Code map: `check` (live `.gd` vs `design/code-map.md` ticks; exits 1 on new UNMAPPED or missing, older UNMAPPED are expected), `row --path P`, `patch --system S --add/--remove/--rename`. Summaries: `code-map-check`, `code-map-row`, `code-map-patch`. | BD | `--help` | Y |
 | `check_code_map.py` | Shim -> `code_map.py check`, one release | BD | `--help` | Y |
@@ -55,8 +55,8 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
-| `split_funcs.py` | Split a GDScript into facade + sibling helpers: `FILE --list`, then `--plan plan.json [--dry-run]` (`{helper_stem: [names]}`); node funcs move host-first; runs `facade_requal.py` and a line-multiset check. Flow: grok-bot-size.md. | B | `--help` | Y |
-| `facade_requal.py` | Qualify names that moved to sibling helpers (`FILE`, `--check`, `--dry-run`, `--sym NAME=Mod`). `split_funcs.py` runs it itself. | B | `--help` | Y |
+| `split_funcs.py` | Split a GDScript into the facade + helpers in its stem folder (trimmed unique names; `--dry-run` shows them): `FILE --list`, then `--plan plan.json [--dry-run] [--in-folder]` (`{<stem>_<rest>: [names]}`); node funcs move host-first; runs `facade_requal.py` and a line-multiset check. Flow: grok-bot-size.md. | B | `--help` | Y |
+| `facade_requal.py` | Qualify names that moved to helpers (same folder or the facade's stem folder; `FILE`, `--check`, `--dry-run`, `--sym NAME=Mod`). `split_funcs.py` runs it itself. | B | `--help` | Y |
 | `doc_patch.py` | Idempotent doc edits. CLI: `replace`, `ensure-line`, `set-read-when`, `changelog`, `next-label`, `write`, `apply plan.json`, `check` (`--dry-run`, `--eol keep\|crlf\|lf`); also importable (`write_changelog`, `replace_once`, `replace_func`, `upsert_func`). Keeps each file's BOM and line endings. Detail: `doc-library.md`. | BWD | `--help` | Y |
 | `md_format_lib.py` | Text I/O for every tool: `read_text`, `write_text` (BOM and EOL kept), `detect_eol`; markdown format checks | BWD | module docstring (no `--help`) | Y |
 | `patch_code_map.py` | Shim -> `code_map.py patch`, one release | BD | `--help` | Y |
@@ -73,7 +73,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `summarize_scripts.py` | Func inventory per `.gd` (`--over-kb`, `--top-funcs`) | BD | `--help` | Y |
 | `lint_hostify.py` | Advisory scan for `:=`/load inference and host pitfalls; always exits 0 (RESULT INFO) | BD | `--help` | Y |
 | `list_unused_funcs.py` | Dead-code report (`--limit N`). **`--apply` DELETES funcs**: only when the opt item says so; check `call_deferred`/string refs first. | B | `--help` | Y |
-| `move_script_cluster.py` | `git mv` a facade + siblings and rewrite `res://` and bare paths repo-wide, incl. tools, skills, root docs (`--to-dir`, `--plan plan.json` batch, `--dry-run`, `--wrapper`). Only for a user-named relocate job; can touch non-allowlisted docs. | BD | `--help` | Y |
+| `move_script_cluster.py` | `git mv` a facade + helpers and rewrite `res://`, bare paths and renamed basenames repo-wide, incl. tools, skills, root docs (`--to-dir`, `--plan plan.json` batch, `--map map.json` exact old->new, `--list-cluster FACADE`, `--dry-run`, `--wrapper`). Only for a user-named relocate job; can touch non-allowlisted docs. | BD | `--help` | Y |
 | `repo_lib.py` | Git, allowlist, version and changelog-label helpers shared by tools | BWD | module docstring (no `--help`) | Y |
 | `gd_lib.py` | `.gd` func parser shared by `split_funcs`, `summarize_scripts`, `show_func`, `doc_patch` | BD | module docstring (no `--help`) | Y |
 | `agent_log.py` | Run helpers: `std_parser`, `resolve_root`, `finish`/`emit_result` (RESULT line), `_logs/<job>` paths. CLI prints a job dir. | BD | `--help` | Y |

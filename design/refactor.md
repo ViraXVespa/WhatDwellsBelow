@@ -39,23 +39,26 @@ A non-empty `design/reuse-map.md` brief may name small kits at the surface that 
 
 ## Cluster folders (placement rule; one copy)
 
-A facade and its stem helpers live together in one folder named by the stem: `scripts/<area>/<stem>/<stem>.gd` plus `<stem>_*.gd` (example: `scripts/graphics/light_rt.gd`, `publish.gd`). Facade-less families that share a first token (two or more files) get a folder named by the token (`scripts/world/crystal/`). Folders stay inside the existing area (`audio combat data debug dungeon graphics input ui world`, and the root `scripts/`); depth stops at the stem folder. A cluster over 9 files splits one level into sibling stem folders (`playtest/`, `playtest_ai/`, `playtest_log/`). Loose single files stay loose. Names never change: file and class names are the stem.
-- A new helper from a size split or extract goes into the facade's folder. Splitting a loose facade: move it with its helpers first (`tools/move_script_cluster.py`, below), then split.
-- A folder move carries `.uid` sidecars and every `res://` / bare path (tool rewrites scripts, scenes, `project.godot`, design, tools, `.grok`). Path length counts toward the 10KB floor.
+The **facade stays beside its folder** in the area dir. Its **helpers live in a folder named by the stem, with the repeated stem trimmed**: `scripts/graphics/light_rt.gd` + `scripts/graphics/light_rt/hub_bake.gd`, `lights.gd`, `publish.gd`. Facade-less families that share a first token (two or more files) get a folder named by the token and no facade (`scripts/world/crystal/net.gd`, `crystal_place.gd`). Folders stay inside the existing area (`audio combat data debug dungeon graphics input ui world`, and the root `scripts/`); depth stops at the stem folder. A cluster over 9 files splits one level into sibling stem folders (`playtest/`, `playtest_ai/`, `playtest_log/`). Loose single files stay loose. Facade file names and `class_name`s never change.
+- **Helper naming.** Drop the leading `<stem>_` (`light_rt_fov` -> `fov.gd`). Keep a qualifier (last stem token, then more tokens, up to the full old name) when the trimmed name is generic (`util`, `parts`, `act`, `view`, `core`, `hub`, ... `gd_lib.GENERIC`), two characters or fewer, or equals another `.gd` basename in the repo: `playtest_ai_util` -> `ai_util.gd`, `camp_build_util` -> `build_util.gd`, `light_stamp_k` -> `stamp_k.gd`, `hud_act` stays `hud_act.gd`. Never create a second `util.gd` / `parts.gd`.
+- **Basenames are unique repo-wide** (editor tabs, quick-open, grep, bare names in code-map rows). `python3 tools/check_script_cap.py` fails on `dupes=`. `split_funcs.py` picks the names (`--dry-run` prints them); `gd_lib.helper_basenames` is the rule.
+- A new helper from a size split or extract goes into the facade's folder (`split_funcs.py` creates it). Splitting a loose facade needs no move first. A helper inside a folder: `split_funcs.py FILE` writes beside it (`--in-folder` for facade-less families).
+- A move or rename carries `.uid` sidecars and every `res://` / bare path (`move_script_cluster.py`, below: scripts, scenes, `project.godot`, design, tools, `.grok`, `.github`, root md). Path length counts toward the 10KB floor.
+- **Manual checks after any move or rename** (the tool cannot see these): grep prose globs (`dir/stem*.gd`, `stem_*`), the OLD basename of every renamed file repo-wide in md / yaml / py / json / gd (skip `design/changelog/`), string-built paths (`"res://scripts/" + ...`, `%s`), shot / smoke / tool code that names a script file, and the three external skills `wdb-size-split`, `wdb-reuse-brief`, `wdb-opt`, `wdb-doc-facade` in `/home/box/agent-data/workflows`. Then editor import, `check_load_graph`, `check_code_map`, `check_script_cap`, `bot_warnscan --areas static --non-leak-diff`.
 
 ## Size split
 
 If a file must be split:
 
-1. Split into a sibling helper (`*_act.gd`, `*_view.gd`, `*_boot.gd`, `*_text.gd`, …).
-2. Keep the original facade (in its cluster folder, above) as the facade (`App.playtest`, `PauseInv.build`, `Gen.generate`, `EnemyAI.tick`, `SmokeLate.p7`).
+1. Split into a helper in the stem folder (`act.gd`, `view.gd`, `boot.gd`, `text.gd`, … with a qualifier where the name would be generic or collide; see Cluster folders).
+2. Keep the original facade (beside its stem folder) as the facade (`App.playtest`, `PauseInv.build`, `Gen.generate`, `EnemyAI.tick`, `SmokeLate.p7`).
 3. Helpers are `static func` with `host` / `pt` / `ui` / `p` first.
 4. No circular `preload()`: the facade preloads its helpers; helpers never preload the facade. If a helper needs facade-held `static var` state, use `var rt: Variant = load(RT_PATH)` then `rt.name` (see `publish.gd`). For a node script, the facade stays the owner of state and keeps one-line delegates; each moved instance func becomes `static func name(node: Variant, ...)` in a sibling `extends Object` helper that reads state as `node.field` (see `drive.gd`). Prove by a line-multiset compare against the original after stripping qualifiers, plus smokes before and after. `tools/facade_requal.py` qualifies moved names in the facade.
 5. Godot 4 analyzes a parent script alone. Do not call methods that exist only on a child; call the helper module from the parent.
 6. Never split files under a pinned archive commit. Slim `archives/docs/` copies are live-tree museum text only.
 7. Split the largest first. One cluster per batch. Stop so the User can compile (web / chat: so the User can paste; Grok Bot: ship the PR, report, and follow the already-open Bot door before the next cluster).
 
-The default new path a **size** split may create is that sibling helper. On **Grok Bot** and **web / chat**, its body is **moved code**, not newly written logic.
+The default new path a **size** split may create is that folder helper. On **Grok Bot** and **web / chat**, its body is **moved code**, not newly written logic.
 
 Grok Bot size sweep: after the split, each resulting live `.gd` should be under 5KB when whole existing functions can move. If one existing function is itself over 5KB, leave it whole and report it. Never leave a touched file over 10KB if a legal split can fix it.
 
@@ -144,14 +147,14 @@ Grok Bot sweep notes: optional `_logs/grok-bot-sweep.md`. Not `tools/week_start.
 
 Do **not** fold these into a size split. Folder relocates use the Bot relocate job, not this recipe's size-split steps. Every `preload` / `load` / ExtResource path plus `design/code-map.md` rows must stay correct. No behavior change.
 
-From repo root run `python3 tools/move_script_cluster.py` (flags: `--help`; catalog in design/tools.md; `--plan plan.json` moves many clusters in one rewrite pass). It `git mv`s the facade + stem siblings (+ `.uid`), rewrites `res://` and bare paths under `scripts/`, `design/`, scenes, `project.godot`, `tools/`, `.grok/`, `.github/` and the root md files (not `design/changelog/`), keeps BOM and CRLF, and writes `_logs/move-cluster/summary.txt`. Prose globs such as `dir/stem*.gd` need a manual pass. Then run the editor import check.
+From repo root run `python3 tools/move_script_cluster.py` (flags: `--help`; catalog in design/tools.md). Modes: `--stem/--from-dir/--to-dir` (one cluster), `--plan plan.json` (`{to_dir: [files]}`), `--map map.json` (exact `{old_file: new_file}` moves and renames, for facade-out and trimmed names), `--list-cluster FACADE`. One run = one rewrite pass. It `git mv`s the files (+ `.uid`), rewrites `res://` and bare paths, and bare old basenames of renamed files (as the bare new basename), under `scripts/`, `design/`, scenes, `project.godot`, `tools/`, `.grok/`, `.github/` and the root md files (not `design/changelog/`), keeps BOM and CRLF, and writes `_logs/move-cluster/summary.txt`. Then do the manual checks in Cluster folders and run the editor import check.
 
 Done (0.3.11 relocate batch):
 
-- `scripts/combat/debug_menu*.gd` -> `scripts/debug/debug_menu/`
+- `scripts/combat/debug_menu*.gd` -> `scripts/debug/debug_menu/` (facade `scripts/debug/debug_menu.gd`)
 - `scripts/combat/sfx.gd` -> `scripts/audio/sfx.gd`
-- Sample facade folder: `scripts/ui/gear_board*.gd` -> `scripts/ui/gear_board/`
-- Folder organize pass (0.5.x): every other stem cluster moved into its own folder under its area (53 folders; layout rule in Cluster folders above).
+- Sample facade folder: `scripts/ui/gear_board*.gd` -> `scripts/ui/gear_board.gd` + `scripts/ui/gear_board/`
+- Folder organize pass (0.5.x): every stem cluster moved into its own folder under its area (55 folders; facades beside the folder, helpers trimmed; layout and naming rule in Cluster folders above).
 
 Still open for later User go: new fat facade clusters (same tool). Prefer updating call sites over wrappers when external refs are few.
 

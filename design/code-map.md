@@ -9,7 +9,7 @@ Open **only the matching system row**. Do not read the rest of the table “for 
 
 When Grok Bot splits a live script, update **this** file in the same slice.
 
-Each facade sits in its cluster folder (`scripts/<area>/<stem>/`, refactor.md). A bare `name.gd` in a row lives in the folder of its stem facade; basenames are unique, so `code_map.py row --path <full path>` and `list_xref.py` find it. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`. The 10KB ship floor is Bot-owned. Grok Build does not split from this page.
+Each facade sits beside its cluster folder (`scripts/<area>/<stem>.gd` + `<stem>/`, refactor.md). A bare `name.gd` in a row is a helper in that folder; basenames are unique repo-wide, so `code_map.py row --path <full path>` and `list_xref.py` find it. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`. The 10KB ship floor is Bot-owned. Grok Build does not split from this page.
 
 | System | Live files |
 |--------|------------|
