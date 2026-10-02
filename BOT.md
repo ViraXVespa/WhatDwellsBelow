@@ -72,6 +72,7 @@ Do not run editor playtest. Do not schedule a routine that launches Godot.
 Warning sweep (User-named only): `python tools/bot_warnscan.py` runs every smoke area plus boot/static, collects Godot warnings, errors, and leaks, and exits 0 only on zero findings. It reports; it does not fix game code. `--list` shows areas, `--repeat 2` steadies leaks.
 Before/after a change: `--save-baseline PATH` before, then `--non-leak-diff PATH` after (the baseline and the after run must use the same `--areas`). It ignores leaks and sites, prints NEW and FIXED, and exits 1 only on NEW.
 Targeted areas for a split: the smoke phases that load the file, `dungeon-load-timing`, `map-f1`, `static`.
+Facade names after a split: `python tools/facade_requal.py FILE --sym NAME=Mod` rewrites bare moved names to `Mod.NAME` (keeps BOM and line endings; `--dry-run` previews).
 
 ## Hard stops
 
