@@ -70,6 +70,12 @@ def result_line(status: str, summary: str | None = None, **kv: object) -> str:
     return " ".join(parts)
 
 
+def emit_result(status: str, summary: str | None = None, **kv: object) -> int:
+    """Print the final RESULT line (no summary file) and return the exit code."""
+    print(result_line(status, summary, **kv))
+    return exit_code(status)
+
+
 def exit_code(status: str) -> int:
     return 1 if status == "FAIL" else 0
 
@@ -106,10 +112,12 @@ def finish(
     args: object = None,
     legacy: bool = True,
     write: bool = True,
+    echo: str | None = None,
     **kv: object,
 ) -> int:
     """Write the summary, print body + legacy line + final RESULT, return the exit code.
 
+    echo: print this instead of body on stdout (body still goes to the summary file).
     With --json (args.json) prints one JSON object and nothing else.
     """
     summary_rel = None
@@ -124,8 +132,9 @@ def finish(
         obj = {"status": status, "summary": summary_rel, **{k: v for k, v in kv.items()}}
         print(json.dumps(obj, sort_keys=False))
     else:
-        if body:
-            print(body.rstrip("\n"))
+        shown = body if echo is None else echo
+        if shown:
+            print(shown.rstrip("\n"))
         if legacy and path is not None:
             print(f"Summary -> {path}")
         print(res)

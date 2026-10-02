@@ -3,27 +3,28 @@
 
 from __future__ import annotations
 
-import argparse
 import re
 import sys
 from pathlib import Path
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+import repo_lib
 
 CATALOGS = ("tools.md", "tools-build.md", "tools-media.md")
 ROW = re.compile(r"^\|\s*`([^`|]+)`\s*\|.*\|\s*([BWD]+)\s*\|[^|]*\|\s*([YN])\s*\|\s*$")
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--root", default=".")
+    ap = agent_log.std_parser("Check the tools catalog (design/tools*.md) against tools/ and tools/bot_allow.txt.", json_out=True)
     args = ap.parse_args(sys.argv[1:] if argv is None else argv)
-    root = Path(args.root).expanduser().resolve()
+    root = agent_log.resolve_root(args)
     tools = root / "tools"
     files = {f.name for f in tools.iterdir() if f.is_file() and f.name != "_scratch.py"}
-    allow = {
-        ln.strip()[len("tools/"):]
-        for ln in (tools / "bot_allow.txt").read_text(encoding="utf-8").splitlines()
-        if ln.strip().startswith("tools/")
-    }
+    allow = {g[len("tools/"):] for g in repo_lib.load_allowlist(root) if g.startswith("tools/")}
     rows: dict[str, tuple[str, str]] = {}
     bad: list[str] = []
     for cat in CATALOGS:
@@ -50,11 +51,10 @@ def main(argv: list[str] | None = None) -> int:
             t = (tools / n).read_text(encoding="utf-8-sig", errors="replace")
             if '"""' not in t[:600] and "argparse" not in t:
                 bad.append(f"HELP    {n}: allowlisted .py without docstring or argparse")
-    for b in bad:
-        print(b)
-    print(f"tool-docs: tools={len(files)} rows={len(rows)} allowlisted={len(allow)} problems={len(bad)}")
-    return 1 if bad else 0
+    head = f"tool-docs: tools={len(files)} rows={len(rows)} allowlisted={len(allow)} problems={len(bad)}"
+    return agent_log.finish("tool-docs", root, "\n".join(bad + [head]), "FAIL" if bad else "PASS", args=args,
+                            legacy=False, tools=len(files), rows=len(rows), problems=len(bad))
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())
