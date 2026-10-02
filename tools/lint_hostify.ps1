@@ -1,16 +1,9 @@
-﻿# Advisory hostify / := lint. Always exits 0; read RESULT hits= in the summary.
-# Usage (from repo root):
-#   powershell -File tools/lint_hostify.ps1
-# Writes _logs/hostify-lint/summary.txt
-
+﻿# SHIM (kept one release): forwards every argument to lint_hostify.py. The old -Flag spellings work there.
+# Prefer: python3 tools/lint_hostify.py --help
 $ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent $PSScriptRoot
-$Py = Join-Path $Root "tools\lint_hostify.py"
-if (-not (Test-Path $Py)) { throw "missing $Py" }
-Push-Location $Root
-try {
-    & python $Py
-    exit $LASTEXITCODE
-} finally {
-    Pop-Location
-}
+$py = Join-Path $PSScriptRoot "lint_hostify.py"
+$python = Get-Command python -ErrorAction SilentlyContinue
+if (-not $python) { $python = Get-Command py -ErrorAction SilentlyContinue }
+if (-not $python) { throw "python not found on PATH" }
+& $python.Source $py @args
+exit $LASTEXITCODE

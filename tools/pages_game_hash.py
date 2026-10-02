@@ -6,6 +6,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 from pathlib import Path
+import sys
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 GAME_FILES = (
     "export_presets.cfg",
@@ -71,17 +78,14 @@ def game_hash(root: Path) -> tuple[str, int]:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Print a stable hash of game-affecting export inputs."
-    )
-    parser.add_argument("--root", default=".")
+    parser = agent_log.std_parser("Print a stable hash of game-affecting export inputs.")
     parser.add_argument("--out", default="", help="Optional stamp file")
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    root = Path(args.root).expanduser().resolve()
+    root = agent_log.resolve_root(args)
     digest, count = game_hash(root)
     summary = "game_hash=%s files=%s\n" % (digest, count)
     log = root / "_logs" / "pages-game-hash" / "summary.txt"
@@ -90,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.out:
         Path(args.out).write_text(digest + "\n", encoding="utf-8")
     print(summary, end="")
-    return 0
+    return agent_log.emit_result("PASS", game_hash=digest, files=count, summary="_logs/pages-game-hash/summary.txt")
 
 
 if __name__ == "__main__":

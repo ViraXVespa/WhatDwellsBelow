@@ -10,12 +10,18 @@ changelog.json as the ledger.
 
 from __future__ import annotations
 
-import argparse
 import json
 import re
+import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+
+ROOT = agent_log.repo_root()
 CHANGELOG_DIR = ROOT / "design" / "changelog"
 VERSION_PATH = ROOT / "scripts" / "data" / "version.json"
 OUT_PATH = ROOT / "scripts" / "data" / "changelog.json"
@@ -82,7 +88,13 @@ def ver_tuple(label: str) -> tuple[int, int, int]:
 
 
 def main() -> int:
-    argparse.ArgumentParser(description="Rewrite scripts/data/changelog.json from design/changelog/*.md (takes no arguments).").parse_args()
+    global ROOT, CHANGELOG_DIR, VERSION_PATH, OUT_PATH
+    ap = agent_log.std_parser("Rewrite scripts/data/changelog.json from design/changelog/*.md.", writes=True)
+    args = ap.parse_args()
+    ROOT = agent_log.resolve_root(args)
+    CHANGELOG_DIR = ROOT / "design" / "changelog"
+    VERSION_PATH = ROOT / "scripts" / "data" / "version.json"
+    OUT_PATH = ROOT / "scripts" / "data" / "changelog.json"
     ver = load_version()
     epoch = int(ver.get("epoch", 0))
     series = int(ver.get("series", 0))
@@ -99,15 +111,19 @@ def main() -> int:
                 continue
             entries.append(parsed)
     entries.sort(key=lambda e: ver_tuple(e["label"]), reverse=True)
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "series": f"{epoch}.{series}",
         "generated_from": "design/changelog",
         "entries": entries,
     }
-    OUT_PATH.write_text(json.dumps(payload, indent="\t") + "\n", encoding="utf-8")
-    print(f"wrote {OUT_PATH.relative_to(ROOT)} ({len(entries)} entries)")
-    return 0
+    rel = OUT_PATH.relative_to(ROOT).as_posix()
+    if args.dry_run:
+        print(f"would write {rel} ({len(entries)} entries)")
+    else:
+        OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        OUT_PATH.write_text(json.dumps(payload, indent="\t") + "\n", encoding="utf-8")
+        print(f"wrote {rel} ({len(entries)} entries)")
+    return agent_log.emit_result("PASS", entries=len(entries), dry_run=args.dry_run, out=rel)
 
 
 if __name__ == "__main__":

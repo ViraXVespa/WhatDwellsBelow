@@ -18,11 +18,11 @@ On-screen prompts follow **last used** input. One scheme at a time: pad glyphs a
 
 This is a no-threads Web export so it runs on GitHub Pages without special COOP/COEP headers. Rebuild live locally with:
 
-powershell -File tools/export_web.ps1
+python tools/export_web.py
 
 That writes into `docs/`. Combined live + archived builds (preview):
 
-powershell -File tools/export_web.ps1 -Archives
+python tools/export_web.py -Archives
 
 That writes into `_pages/` (gitignored). GitHub Actions exports HEAD plus each pin in `scripts/data/archive_catalog.json` and deploys Pages. After the workflow exists, set **Settings → Pages → Source = GitHub Actions**. Archived builds are those commits, served at `/archives/<id>/`. Title Play always launches live.
 

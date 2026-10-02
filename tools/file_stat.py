@@ -15,13 +15,10 @@ import agent_log
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Length, newline, BOM, and indent stats without reading into chat."
-    )
-    parser.add_argument("--root", default=".")
-    parser.add_argument("--path", action="append", default=[], help="File or directory")
-    parser.add_argument("--glob", default="", help="Only under a directory --path")
-    parser.add_argument("--max", type=int, default=40)
+    parser = agent_log.std_parser("Length, newline, BOM, and indent stats without reading into chat.", json_out=True)
+    parser.add_argument("--path", "-Path", action="append", default=[], help="File or directory")
+    parser.add_argument("--glob", "-Glob", default="", help="Only under a directory --path")
+    parser.add_argument("--max", "-Max", type=int, default=40)
     return parser.parse_args(argv)
 
 
@@ -96,22 +93,18 @@ def render(rows: list[dict[str, object]], root: Path) -> str:
             f"{rel}\t{row['bytes']}\t{row['lines']}\t{row['lf']}\t{row['crlf']}\t"
             f"{row['tabs']}\t{row['space_indent']}\t{row['bom']}\t{int(bool(row['exists']))}"
         )
-    lines.append(f"RESULT count={len(rows)}")
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
-    root = Path(args.root).expanduser().resolve()
+    root = agent_log.resolve_root(args)
+    args.path = agent_log.split_list(args.path)
     rows = collect(root, list(args.path), args.glob, int(args.max))
-    body = render(rows, root)
-    out_dir = agent_log.ensure_agent_log_dir("file-stat", root)
-    summary = out_dir / "summary.txt"
-    summary.write_text(body, encoding="utf-8")
-    sys.stdout.write(body)
-    print(f"summary={summary.relative_to(root).as_posix()}")
-    return 0
+    missing = sum(1 for r in rows if not r["exists"])
+    return agent_log.finish("file-stat", root, render(rows, root), "FAIL" if missing else "PASS",
+                            args=args, legacy=False, count=len(rows), missing=missing)
 
 
 if __name__ == "__main__":
-    sys.exit(int(main()))
+    raise SystemExit(main())

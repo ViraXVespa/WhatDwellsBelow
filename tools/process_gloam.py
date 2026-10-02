@@ -1,8 +1,17 @@
+#!/usr/bin/env python3
 """Key Imagine stills into assets/3d for the Gloam 3D view."""
 from pathlib import Path
 from PIL import Image, ImageOps, ImageFilter
 import math
 import shutil
+from sprite_lib import dist  # noqa: E402
+import sys
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = Path(
@@ -11,10 +20,6 @@ SRC = Path(
 OUT = ROOT / "assets" / "3d"
 THRESH = 64
 FACINGS = ["right", "down_right", "down", "down_left", "left", "up_left", "up", "up_right"]
-
-
-def dist(a, b):
-    return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
 
 
 def sample_bg(im: Image.Image) -> tuple:
@@ -128,7 +133,7 @@ def fill_facings(folder: Path, prefix: str, have: dict, canvas_src: Path | None 
             copy_img(Path(src), dest)
 
 
-def main() -> None:
+def _run() -> None:
     if OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir(parents=True)
@@ -272,5 +277,12 @@ def main() -> None:
     print("done")
 
 
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("Key Imagine stills into assets/3d for the Gloam 3D view.")
+    ap.parse_args(argv)
+    _run()
+    return agent_log.emit_result("PASS", tool="process_gloam")
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

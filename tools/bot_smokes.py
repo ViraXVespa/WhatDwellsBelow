@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Headless phase smokes for the Grok Bot Linux VM.
 
 Not a boot step. Setup downloads the official Godot 4.7.2 Linux tools
@@ -18,6 +19,13 @@ import zipfile
 from pathlib import Path
 from urllib.request import urlretrieve
 
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+from agent_log import repo_root  # noqa: F401  (bot_warnscan imports it from here)
+
 VERSION = "4.7.2"
 ZIP_NAME = "Godot_v4.7.2-stable_linux.x86_64.zip"
 BIN_NAME = "Godot_v4.7.2-stable_linux.x86_64"
@@ -29,13 +37,6 @@ STEAM_WIN = (
     "C:\\Program Files (x86)\\Steam\\steamapps\\common\\"
     "Godot Engine\\godot.windows.opt.tools.64.exe"
 )
-
-
-def repo_root() -> Path:
-    here = Path(__file__).resolve().parents[1]
-    if (here / "project.godot").is_file() and (here / "AGENTS.md").is_file():
-        return here
-    raise SystemExit("FAIL bot_smokes: run from the WhatDwellsBelow checkout")
 
 
 def pin_path() -> Path:
@@ -74,7 +75,7 @@ def setup(pin: Path) -> Path:
     with zipfile.ZipFile(zpath) as zf:
         names = [n for n in zf.namelist() if Path(n).name.startswith("Godot_v")]
         if not names:
-            raise SystemExit("FAIL setup: zip had no Godot binary")
+            agent_log.fail("setup: zip had no Godot binary")
         zf.extract(names[0], pin.parent)
         extracted = pin.parent / names[0]
     if extracted.resolve() != pin.resolve():
@@ -120,14 +121,14 @@ def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool) ->
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description="Bot headless phase smokes")
+    p = agent_log.std_parser("Bot headless phase smokes")
     p.add_argument("--doctor", action="store_true")
     p.add_argument("--setup", action="store_true")
     p.add_argument("--phases", default="")
     p.add_argument("--timeout", type=int, default=120)
     p.add_argument("--verbose", action="store_true")
     ns = p.parse_args()
-    root = repo_root()
+    root = agent_log.resolve_root(ns)
     pin = pin_path()
     found = resolve_bin()
     if ns.doctor or (not ns.setup and not ns.phases):
@@ -136,13 +137,13 @@ def main() -> int:
         print(f"bin={'missing' if found is None else found}")
         print("editor_playtest=forbidden")
         print("doctor=PASS")
-        return 0
+        return agent_log.emit_result("PASS", mode="doctor", bin="missing" if found is None else "found")
     exe = found
     if ns.setup or exe is None:
         exe = setup(pin)
     if not ns.phases:
         print(f"ready\t{exe}")
-        return 0
+        return agent_log.emit_result("PASS", mode="setup")
     phases = [int(x) for x in ns.phases.split(",") if x.strip()]
     rc = 0
     for n in phases:
@@ -152,8 +153,8 @@ def main() -> int:
             continue
         rc |= run_phase(exe, root, n, ns.timeout, ns.verbose)
     print(f"smokes={'PASS' if rc == 0 else 'FAIL'}")
-    return rc
+    return agent_log.emit_result("PASS" if rc == 0 else "FAIL", phases=",".join(str(n) for n in phases))
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

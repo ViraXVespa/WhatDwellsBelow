@@ -102,7 +102,7 @@ if __name__ == "__main__":
     main()
 ```
 
-Callable list: `replace_func`, `upsert_func`, `ensure_line`, `patch_file`, `write_text`, `write_changelog`, `run_checker`, `dump_job`. `append_funcs` does not exist. A new function is `upsert_func`. `replace_func` is only for a function that is already there, and it fails if the name appears twice.
+Callables (`replace_func`, `upsert_func`, `ensure_line`, `write_text`, `write_changelog`, `run_checker`, `dump_job`) and the matching `doc_patch.py` CLI subcommands: `doc-library.md`. If a call does not behave intuitively, fix `doc_patch` (direct `python` file), do not work around it.
 
 A `.gd` body is tabs. `write_text` turns a leading run of four spaces into one tab, but the scratch still emits tabs. Do not prepend above `from __future__ import`. A `.py` write that does not compile, or that moves that import, is refused. `run_shots.py` stays hidden. `--show` only when the User asks to see the window.
 
@@ -114,12 +114,12 @@ When a slice needs a visual proof, run `python tools/run_shots.py --mode web` an
 | Work that landed | Prove | Dump |
 |------|-------|------|
 | design / AGENTS / routes / load-graph | `tools/check_load_graph.py` | checker line |
-| GDScript / scenes / project.godot | `tools/run_build_gate.ps1` | gate summary |
-| Title to Play load | `tools/run_load_timing.ps1` | load-timing summary |
-| Hub to dungeon load | `tools/run_dungeon_load_timing.ps1` | dungeon-load-timing summary |
-| Gen / map shape | `tools/run_dungeon_map.ps1` | dungeon-map summary |
-| Named phase assert | `tools/run_smokes.ps1` | smokes summary |
-| GDScript import / COMPILE | `tools/run_godot_import_check.ps1` via `dump_job(..., "godot-import-check", script="run_godot_import_check.ps1")` | godot-import-check summary; fail on COMPILE or clean=false |
+| GDScript / scenes / project.godot | `tools/run_build_gate.py` | gate summary |
+| Title to Play load | `tools/run_load_timing.py` | load-timing summary |
+| Hub to dungeon load | `tools/run_dungeon_load_timing.py` | dungeon-load-timing summary |
+| Gen / map shape | `tools/run_dungeon_map.py` | dungeon-map summary |
+| Named phase assert | `tools/run_smokes.py` | smokes summary |
+| GDScript import / COMPILE | `tools/run_godot_import_check.py` via `dump_job(..., "godot-import-check", script="run_godot_import_check.py")` | godot-import-check summary; fail on COMPILE or clean=false |
 | Postcard shot | `python tools/run_shots.py --mode web` from the scratch (same flags the slice named) | shots summary; User pastes the clipboard image |
 
 A slice that only edits protocol docs does not boot Godot. If there is no runner for that work, say so and prove with the load-graph / gate only.
@@ -138,7 +138,7 @@ A prompt for Grok Build is a sealed brief, not a session export. Only: named job
 
 ## Scratch helpers
 
-Do not reimplement doc_patch. Import it from tools/. Godot prove dumps go through `doc_patch.dump_job`; do not print `Summary ->` paths.
+Tool catalog (what each runner is, which are web/User tools): `tools.md`. Do not reimplement doc_patch. Import it from tools/. Godot prove dumps go through `doc_patch.dump_job`; do not print `Summary ->` paths.
 Reuse Brief items must be numbered `1. ` `2. ` so bot_status.parse_reuse_brief counts them. Prose under ## Brief counts as empty.
 Changelog: doc_patch.write_changelog. If version.json lags the files in design/changelog/, use the next free 0.N.N label, do not reuse an existing note.
 Code-map rows: code_map_lib / patch_code_map, not a hand regex on the table.

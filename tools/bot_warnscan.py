@@ -35,7 +35,8 @@ TOOLS_DIR = Path(__file__).resolve().parent
 if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
-from bot_smokes import repo_root, resolve_bin  # noqa: E402
+import agent_log  # noqa: E402
+from bot_smokes import resolve_bin  # noqa: E402
 from bot_warnscan_lib import merge, parse_stream, run_failure  # noqa: E402
 
 BOOT_FRAMES = 600
@@ -135,7 +136,7 @@ def pick_areas(ns, table: dict) -> list[str]:
         return list(table)
     bad = [n for n in names if n not in table]
     if bad:
-        raise SystemExit(f"FAIL warnscan: unknown area {','.join(bad)} (see --list)")
+        agent_log.fail(f"warnscan: unknown area {','.join(bad)} (see --list)")
     return list(dict.fromkeys(names))
 
 
@@ -193,7 +194,7 @@ def diff_rows(cur: list[dict], base: list[dict]) -> tuple[list[dict], list[dict]
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description="Headless runtime-warning sweep (zero-warning gate)")
+    p = agent_log.std_parser("Headless runtime-warning sweep (zero-warning gate)")
     p.add_argument("--list", action="store_true", help="list areas and exit")
     p.add_argument("--areas", default="", help="comma list of area names (see --list)")
     p.add_argument("--phases", default="", help="shorthand for smoke phases, e.g. 1,2,6")
@@ -203,12 +204,12 @@ def main() -> int:
     p.add_argument("--repeat", type=int, default=1, help="runs per area (leaks can vary run to run)")
     p.add_argument("--no-engine-verbose", action="store_true", help="drop Godot --verbose (no leak detail rows)")
     p.add_argument("--report", default="", help="also write the text report here")
-    p.add_argument("--json", default="", help="write findings as JSON here")
+    p.add_argument("--json-out", "--json", dest="json", default="", help="write findings as JSON to this file (--json kept as an alias; takes a path)")
     p.add_argument("--save-baseline", default="", help="write non-leak findings JSON here (run before a change)")
     p.add_argument("--non-leak-diff", default="", help="compare non-leak findings to a --save-baseline file; exit 1 if NEW")
     p.add_argument("--verbose", action="store_true", help="print commands and longer stacks")
     ns = p.parse_args()
-    root = repo_root()
+    root = agent_log.resolve_root(ns)
     floors = [int(x) for x in ns.map_floors.split(",") if x.strip()]
     table = area_table(floors, ns.map_seed)
     if ns.list:
@@ -216,11 +217,10 @@ def main() -> int:
             print(f"{name:<22}{d}")
         print("\nAll areas run by default. 'extra launch modes' are not --wdb smoke flags;")
         print("they await user approval and can be skipped by naming --areas/--phases.")
-        return 0
+        return agent_log.emit_result("INFO", mode="list")
     exe = resolve_bin()
     if exe is None:
-        print("FAIL warnscan: no Godot binary; run python tools/bot_smokes.py --setup")
-        return 2
+        agent_log.fail("warnscan: no Godot binary; run python3 tools/bot_smokes.py --setup")
     names = pick_areas(ns, table)
     log_dir = root / "_logs" / "warnscan"
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -275,9 +275,9 @@ def main() -> int:
             for r in rs:
                 print(f"{tag}\t{r['kind']}\t{r['site'] or '-'}\t{r['norm'][:110]}")
         print(f"non-leak-diff: baseline={len(base)} now={len(rows_now)} new={len(new)} fixed={len(fixed)}")
-        return 0 if not new else 1
-    return 0 if not merged else 1
+        return agent_log.emit_result("FAIL" if new else "PASS", baseline=len(base), now=len(rows_now), new=len(new), fixed=len(fixed))
+    return agent_log.emit_result("FAIL" if merged else "PASS", findings=len(merged))
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

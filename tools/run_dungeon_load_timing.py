@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+"""Placeholdia -> Dungeon load-timing smoke. Per-path Godot lock; never kills godot*.
+
+    python3 tools/run_dungeon_load_timing.py [--timeout-sec 180]
+Summary: _logs/dungeon-load-timing/summary.txt (python twin of the .ps1).
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import godot_lib
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = godot_lib.timing_parser("Placeholdia to Dungeon load-timing smoke.").parse_args(argv)
+    return godot_lib.timing_job(args, "dungeon-load-timing", "dungeon load timing", "--wdb-dungeon-load-timing-smoke",
+                                "Running Placeholdia to Dungeon load timing...")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

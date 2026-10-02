@@ -1,7 +1,16 @@
+#!/usr/bin/env python3
 from pathlib import Path
 from PIL import Image
 import math
 import shutil
+from sprite_lib import dist  # noqa: E402
+import sys
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = Path(
@@ -9,10 +18,6 @@ SRC = Path(
 )
 THRESH = 58
 CANVAS = 128
-
-
-def dist(a, b):
-    return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
 
 
 def sample_bg(im: Image.Image) -> tuple:
@@ -101,7 +106,7 @@ def building(src_name: str, dest: Path, max_w: int) -> None:
     print("building", dest, resized.size)
 
 
-def main() -> None:
+def _run() -> None:
     tiles = ROOT / "assets" / "tiles"
     props = ROOT / "assets" / "sprites" / "props"
     npcs = ROOT / "assets" / "sprites" / "npcs"
@@ -156,5 +161,12 @@ def main() -> None:
         canvas.resize((256, 256), Image.Resampling.NEAREST).save(check / f"{name}_2x2.png")
 
 
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("process_world")
+    ap.parse_args(argv)
+    _run()
+    return agent_log.emit_result("PASS", tool="process_world")
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

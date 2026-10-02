@@ -14,66 +14,22 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import gd_lib
+import repo_lib
 
 SHIP_BYTES = 10_000
 SWEEP_BYTES = 5_000
-GD_SKIP_PARTS = ("archives", ".archive_worktrees")
-ALLOW_FILE = "tools/bot_allow.txt"
+ALLOW_FILE = repo_lib.ALLOW_FILE
 REUSE_FILE = "design/reuse-map.md"
 OPT_FILE = "design/grok-bot-opt.md"
 
 
-def _write(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if not text.endswith("\n"):
-        text += "\n"
-    path.write_text(text, encoding="utf-8")
-
-
-def _git(root: Path, *args: str) -> tuple[int, str]:
-    try:
-        proc = subprocess.run(
-            ["git", *args],
-            cwd=root,
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-    except FileNotFoundError:
-        return 127, "git-not-found"
-    out = (proc.stdout or "").rstrip()
-    err = (proc.stderr or "").rstrip()
-    return proc.returncode, out if out else err
-
-
-def _rel(root: Path, path: Path) -> str:
-    try:
-        return path.resolve().relative_to(root.resolve()).as_posix()
-    except ValueError:
-        return path.as_posix()
-
-
-def iter_gd(root: Path) -> list[Path]:
-    scripts = root / "scripts"
-    if not scripts.is_dir():
-        return []
-    out: list[Path] = []
-    for path in scripts.rglob("*.gd"):
-        if not path.is_file():
-            continue
-        parts = set(path.parts)
-        if parts & set(GD_SKIP_PARTS):
-            continue
-        out.append(path)
-    return out
-
-
 def list_oversize(root: Path, floor: int) -> list[tuple[int, str]]:
     rows: list[tuple[int, str]] = []
-    for path in iter_gd(root):
+    for path in gd_lib.iter_gd(root):
         size = path.stat().st_size
         if size >= floor:
-            rows.append((size, _rel(root, path)))
+            rows.append((size, agent_log.rel(root, path)))
     rows.sort(key=lambda row: (-row[0], row[1]))
     return rows
 
@@ -125,54 +81,12 @@ def parse_opt_queue(root: Path) -> list[dict[str, str]]:
     return items
 
 
-def load_allow_globs(root: Path) -> list[str]:
-    path = root / ALLOW_FILE
-    if not path.is_file():
-        return []
-    globs: list[str] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        raw = line.split("#", 1)[0].strip()
-        if raw:
-            globs.append(raw)
-    return globs
-
-
-def glob_ok(rel: str, globs: list[str]) -> bool:
-    from fnmatch import fnmatch
-
-    posix = rel.replace("\\", "/")
-    for pattern in globs:
-        if pattern.startswith("!"):
-            if fnmatch(posix, pattern[1:]):
-                return False
-            continue
-        if fnmatch(posix, pattern):
-            return True
-    return False
-
-
-def changed_paths(root: Path) -> list[str]:
-    code, out = _git(root, "status", "--porcelain", "-u")
-    if code != 0:
-        return []
-    paths: list[str] = []
-    for line in out.splitlines():
-        if len(line) < 4:
-            continue
-        rel = line[3:].strip()
-        if " -> " in rel:
-            rel = rel.split(" -> ", 1)[1]
-        if rel:
-            paths.append(rel.replace("\\", "/"))
-    return paths
-
-
 def git_state(root: Path) -> dict[str, str]:
-    _code, branch = _git(root, "rev-parse", "--abbrev-ref", "HEAD")
-    _code, tracking = _git(
+    _code, branch = repo_lib.run_git(root, "rev-parse", "--abbrev-ref", "HEAD")
+    _code, tracking = repo_lib.run_git(
         root, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"
     )
-    _code, porcelain = _git(root, "status", "--porcelain")
+    _code, porcelain = repo_lib.run_git(root, "status", "--porcelain")
     dirty = "dirty" if porcelain else "clean"
     return {
         "branch": branch or "unknown",
@@ -194,16 +108,15 @@ def run_load_graph(root: Path) -> str:
     )
     if proc.returncode == 0:
         return "PASS"
-    err = (proc.stderr or proc.stdout or "").strip().splitlines()
-    tail = err[-1] if err else f"exit={proc.returncode}"
+    err = [ln for ln in (proc.stderr or proc.stdout or "").strip().splitlines() if not ln.startswith(("RESULT", "Summary"))]
+    tail = err[0] if err else f"exit={proc.returncode}"
     return f"FAIL {tail}"
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Print the Grok Bot punch list from live queues and file sizes."
+    parser = agent_log.std_parser(
+        "Print the Grok Bot punch list from live queues and file sizes.", json_out=True
     )
-    parser.add_argument("--root", default=".")
     parser.add_argument(
         "--prove",
         action="store_true",
@@ -219,10 +132,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
-    root = Path(args.root).expanduser().resolve()
-    if not (root / "AGENTS.md").is_file() or not (root / "design").is_dir():
-        print("not a WhatDwellsBelow root", file=sys.stderr)
-        return 2
+    try:
+        root = agent_log.resolve_root(args)
+    except FileNotFoundError as exc:
+        agent_log.fail(str(exc))
 
     git = git_state(root)
     ship = list_oversize(root, SHIP_BYTES)
@@ -230,9 +143,9 @@ def main(argv: list[str] | None = None) -> int:
     brief = parse_reuse_brief(root)
     opts = parse_opt_queue(root)
     pending_opts = [item for item in opts if item["status"] not in ("done", "dropped")]
-    globs = load_allow_globs(root)
-    dirty = changed_paths(root)
-    blocked = [rel for rel in dirty if globs and not glob_ok(rel, globs)]
+    globs = repo_lib.load_allowlist(root)
+    dirty = repo_lib.git_changed(root) or []
+    blocked = [rel for rel in dirty if globs and not repo_lib.allowed(rel, globs)]
 
     lines: list[str] = [
         "bot status",
@@ -295,13 +208,11 @@ def main(argv: list[str] | None = None) -> int:
         if cap_fail or blocked or graph.startswith("FAIL"):
             rc = 1
 
-    body = "\n".join(lines)
-    out = agent_log.ensure_agent_log_dir("bot-status", root) / "summary.txt"
-    _write(out, body)
-    print(body)
-    print("")
-    print(f"Summary -> {out}")
-    return rc
+    status = "FAIL" if rc else "PASS"
+    return agent_log.finish(
+        "bot-status", root, "\n".join(lines), status, args=args,
+        over10kb=len(ship), over5kb=len(sweep), brief=len(brief), opt_pending=len(pending_opts),
+    )
 
 
 if __name__ == "__main__":

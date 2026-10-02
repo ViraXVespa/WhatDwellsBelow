@@ -15,17 +15,22 @@ import argparse
 import subprocess
 from datetime import datetime
 from pathlib import Path
+import sys
 
-ROOT = Path(__file__).resolve().parents[1]
-OUT_DIR = ROOT / "_logs" / "move-cluster"
-SUMMARY = OUT_DIR / "summary.txt"
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+
+ROOT = agent_log.repo_root()
 SCAN_ROOTS = ("scripts", "design", "scenes", "assets")
 SCAN_FILES = ("project.godot", "AGENTS.md", "README.md")
 SCAN_SUFFIXES = {".gd", ".tscn", ".tres", ".md", ".json", ".godot", ".cfg", ".txt"}
 
 
 def rel(p: Path) -> str:
-    return str(p.relative_to(ROOT)).replace("\\", "/")
+    return agent_log.rel(ROOT, p)
 
 
 def run_git(args: list[str]) -> None:
@@ -41,6 +46,7 @@ def list_cluster(from_dir: Path, stem: str) -> list[Path]:
 
 
 def collect_files(args: argparse.Namespace) -> list[Path]:
+    args.files = agent_log.split_list(args.files)
     if args.files:
         out = []
         for f in args.files:
@@ -176,15 +182,16 @@ def find_residuals(pairs: list[tuple[str, str]]) -> list[str]:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--stem", default="")
-    ap.add_argument("--from-dir", default="")
-    ap.add_argument("--to-dir", required=True)
-    ap.add_argument("--files", nargs="*", default=[])
-    ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--wrapper", action="store_true")
-    ap.add_argument("--no-git", action="store_true")
+    global ROOT
+    ap = agent_log.std_parser("Move a script cluster into a folder and rewrite references.", writes=True)
+    ap.add_argument("--stem", "-Stem", default="")
+    ap.add_argument("--from-dir", "-FromDir", default="")
+    ap.add_argument("--to-dir", "-ToDir", required=True)
+    ap.add_argument("--files", "-Files", nargs="*", default=[])
+    ap.add_argument("--wrapper", "-Wrapper", action="store_true")
+    ap.add_argument("--no-git", "-NoGit", action="store_true")
     args = ap.parse_args()
+    ROOT = agent_log.resolve_root(args)
 
     to_dir = Path(args.to_dir)
     if not to_dir.is_absolute():
@@ -193,10 +200,9 @@ def main() -> int:
     moves = build_moves(files, to_dir)
     pairs = rewrite_map(moves)
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
     lines: list[str] = [
         f"move cluster {datetime.now().astimezone().isoformat()}",
-        f"root={ROOT}",
+        "root=.",
         f"to_dir={rel(to_dir)} dry_run={args.dry_run} wrapper={args.wrapper}",
         f"files={len(files)} moves={len(moves)} rewrite_pairs={len(pairs)}",
         "",
@@ -210,7 +216,7 @@ def main() -> int:
         for src, dst in moves:
             dst.parent.mkdir(parents=True, exist_ok=True)
             if dst.exists():
-                raise SystemExit(f"destination exists: {dst}")
+                agent_log.fail(f"destination exists: {rel(dst)}", 1)
             if args.no_git:
                 src.rename(dst)
             else:
@@ -242,16 +248,9 @@ def main() -> int:
     for r in residuals[:50]:
         lines.append(r)
 
-    lines.append("")
-    lines.append(
-        f"RESULT moved={0 if args.dry_run else len(moves)} rewrite_files={len(changed)} residuals={len(residuals)} dry_run={args.dry_run}"
-    )
-    SUMMARY.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"Summary -> {SUMMARY}")
-    print(lines[-1])
-    if residuals and not args.dry_run:
-        return 1
-    return 0
+    status = "FAIL" if residuals and not args.dry_run else "PASS"
+    return agent_log.finish("move-cluster", ROOT, "\n".join(lines), status, args=args, moved=0 if args.dry_run else len(moves),
+                            rewrite_files=len(changed), residuals=len(residuals), dry_run=args.dry_run)
 
 
 if __name__ == "__main__":

@@ -14,53 +14,51 @@ Non-semver names in the root are left alone.
 """
 from __future__ import annotations
 
-import argparse
-import json
 import re
 import shutil
+import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-CHANGELOG_DIR = ROOT / "design" / "changelog"
-ARCHIVE_DIR = CHANGELOG_DIR / "archive"
-VERSION_PATH = ROOT / "scripts" / "data" / "version.json"
-OUT_DIR = ROOT / "_logs" / "changelog-archive"
-SUMMARY = OUT_DIR / "summary.txt"
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+import repo_lib
+
 LABEL_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 
 
-def load_version() -> tuple[int, int, str]:
-    if not VERSION_PATH.is_file():
+def load_version(root: Path) -> tuple[int, int, str]:
+    if not (root / repo_lib.VERSION_FILE).is_file():
         return 0, 3, "0.3.0"
-    ver = json.loads(VERSION_PATH.read_text(encoding="utf-8"))
+    ver = repo_lib.read_version(root)
     epoch = int(ver.get("epoch", 0))
     series = int(ver.get("series", 0))
-    label = str(ver.get("label", f"{epoch}.{series}.0"))
-    return epoch, series, label
+    return epoch, series, str(ver.get("label", f"{epoch}.{series}.0"))
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--dry-run", action="store_true")
+    ap = agent_log.std_parser("Move prior-series design/changelog/*.md into archive/<epoch>.<series>/.", writes=True, json_out=True)
     args = ap.parse_args()
-    epoch, series, label = load_version()
+    ROOT = agent_log.resolve_root(args)
+    CHANGELOG_DIR = repo_lib.changelog_dir(ROOT)
+    ARCHIVE_DIR = CHANGELOG_DIR / "archive"
+    epoch, series, label = load_version(ROOT)
     current_prefix = f"{epoch}.{series}."
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
     lines: list[str] = [
         f"changelog archive {datetime.now().astimezone().isoformat()}",
-        f"root={ROOT}",
+        "root=.",
         f"current={label} prefix={current_prefix} dry_run={args.dry_run}",
         "",
     ]
     moved = 0
     skipped = 0
     if not CHANGELOG_DIR.is_dir():
-        lines.append("RESULT moved=0 note=no_changelog_dir")
-        SUMMARY.write_text("\n".join(lines) + "\n", encoding="utf-8")
-        print(lines[-1])
-        return 0
+        return agent_log.finish("changelog-archive", ROOT, "\n".join(lines), "INFO", args=args, legacy=False, moved=0, note="no_changelog_dir")
 
     for path in sorted(CHANGELOG_DIR.glob("*.md")):
         m = LABEL_RE.fullmatch(path.stem)
@@ -78,11 +76,9 @@ def main() -> int:
         if not args.dry_run:
             dest_dir.mkdir(parents=True, exist_ok=True)
             if dest.exists():
-                raise SystemExit(f"destination exists: {dest}")
+                agent_log.fail(f"destination exists: {dest.relative_to(ROOT).as_posix()}", 1)
             # prefer git mv when in a repo; fall back to rename
             try:
-                import subprocess
-
                 subprocess.run(
                     ["git", "mv", "--", str(path), str(dest)],
                     cwd=ROOT,
@@ -93,12 +89,7 @@ def main() -> int:
                 shutil.move(str(path), str(dest))
         moved += 1
 
-    lines.append("")
-    lines.append(f"RESULT moved={moved} skipped={skipped} dry_run={args.dry_run}")
-    SUMMARY.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"Summary -> {SUMMARY}")
-    print(lines[-1])
-    return 0
+    return agent_log.finish("changelog-archive", ROOT, "\n".join(lines), "PASS", args=args, moved=moved, skipped=skipped, dry_run=args.dry_run)
 
 
 if __name__ == "__main__":

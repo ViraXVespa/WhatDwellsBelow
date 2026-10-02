@@ -9,7 +9,7 @@ Never open `notes/` from an agent path.
 
 `docs/` is the GitHub Pages web export. Never store design notes there. Player-facing changelog pages are built in CI to `/changelog/` on Pages from flat `design/changelog/*.md` plus `design/changelog/archive/*/*.md`, not stored in `docs/` on `main`. Prior series are parked under `design/changelog/archive/{epoch}.{series}/` via `tools/archive_prior_changelogs.py`.
 
-`_logs/` holds local agent tool summaries (and optional Bot sweep notes). It is gitignored. Do not store design there and do not commit it. Catalog: `design/pc-offload.md`.
+`_logs/` holds local agent tool summaries (and optional Bot sweep notes). It is gitignored. Do not store design there and do not commit it. Tool catalog: `design/tools.md` (Build runner habits: `design/pc-offload.md`).
 
 ## How to use
 
@@ -21,7 +21,7 @@ Open only the topic files that match the requested work. Numbers: `design/tunabl
 
 Do not open this table as a boot list. Open a topic when `design/routes.yaml` names that door / job or the User names that work.
 
-Design doors: open the facade, then only the Job-table sibling. Isolated Imagine is a gate, not an art-pipeline job. Rules: `design/doc-refactor.md`. Oversize check: `tools/list_oversize_docs.ps1`.
+Design doors: open the facade, then only the Job-table sibling. Isolated Imagine is a gate, not an art-pipeline job. Rules: `design/doc-refactor.md`. Oversize check: `tools/list_oversize_docs.py`.
 
 Do not open art_pipeline parked attack-keyframes unless the User is resuming the attack animation keyframe pipeline. Web / chat writes `design/reuse-map.md` in Phase 7 when that is the goal.
 

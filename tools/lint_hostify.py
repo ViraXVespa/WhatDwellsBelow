@@ -17,14 +17,14 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-import agent_log
-import md_format_lib as md
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = ROOT / "scripts"
-OUT_DIR = agent_log.ensure_agent_log_dir("hostify-lint", ROOT)
-SUMMARY = OUT_DIR / "summary.txt"
-SKIP_PARTS = (".archive_worktrees", "archives")
+import agent_log
+import gd_lib
+
+ROOT = agent_log.repo_root()
 
 RE_SHADOW_HOST = re.compile(r"^\s*var\s+host\s*:=")
 RE_INFER_LOAD = re.compile(r"^\s*var\s+\w+\s*:=.*\bload\s*\(")
@@ -38,17 +38,7 @@ RE_EXTENDS_CB = re.compile(r"^extends\s+CharacterBody(?:2D|3D)\b", re.M)
 
 
 def rel(p: Path) -> str:
-    return p.relative_to(ROOT).as_posix()
-
-
-def iter_gd() -> list[Path]:
-    out: list[Path] = []
-    for p in SCRIPTS.rglob("*.gd"):
-        s = str(p)
-        if any(part in s for part in SKIP_PARTS):
-            continue
-        out.append(p)
-    return sorted(out)
+    return agent_log.rel(ROOT, p)
 
 
 def lint_file(path: Path) -> list[str]:
@@ -80,8 +70,11 @@ def lint_file(path: Path) -> list[str]:
 
 
 def main() -> int:
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    files = iter_gd()
+    global ROOT
+    ap = agent_log.std_parser("Advisory hostify / := lint over live scripts/**/*.gd (exit 0 always).", json_out=True)
+    args = ap.parse_args()
+    ROOT = agent_log.resolve_root(args)
+    files = gd_lib.iter_gd(ROOT)
     all_hits: list[str] = []
     for p in files:
         all_hits.extend(lint_file(p))
@@ -93,7 +86,7 @@ def main() -> int:
 
     lines = [
         f"hostify lint {datetime.now().astimezone().isoformat()}",
-        f"root={ROOT}",
+        "root=.",
         f"files_scanned={len(files)} hits={len(all_hits)}",
         "kinds=" + ",".join(f"{k}:{v}" for k, v in sorted(kinds.items())),
         "",
@@ -105,13 +98,9 @@ def main() -> int:
         lines.extend(all_hits[:500])
         if len(all_hits) > 500:
             lines.append(f"... +{len(all_hits) - 500} more")
-    lines += ["", f"RESULT hits={len(all_hits)}"]
-    md.write_utf8(SUMMARY, "\n".join(lines))
-    print(f"Scanned {len(files)} scripts; {len(all_hits)} hits")
-    for k, v in sorted(kinds.items()):
-        print(f"  {k}: {v}")
-    print(f"Summary -> {SUMMARY}")
-    return 0
+    head = [f"Scanned {len(files)} scripts; {len(all_hits)} hits"] + [f"  {k}: {v}" for k, v in sorted(kinds.items())]
+    code = agent_log.finish("hostify-lint", ROOT, "\n".join(lines), "INFO", args=args, echo="\n".join(head), hits=len(all_hits), files=len(files))
+    return code
 
 
 if __name__ == "__main__":

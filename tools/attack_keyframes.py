@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Beat-by-beat unarmed attack stills from a locked Bible cell.
 
 I2V clips stay in tools/i2v_seeds.py. Do not mix the two jobs.

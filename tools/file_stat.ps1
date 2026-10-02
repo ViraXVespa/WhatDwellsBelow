@@ -1,18 +1,9 @@
-param(
-    [string[]]$Path = @(),
-    [string]$Glob = "",
-    [int]$Max = 40,
-    [string]$Root = ""
-)
-
+﻿# SHIM (kept one release): forwards every argument to file_stat.py. The old -Flag spellings work there.
+# Prefer: python3 tools/file_stat.py --help
 $ErrorActionPreference = "Stop"
-$here = Split-Path -Parent $PSScriptRoot
-if (-not $Root) { $Root = $here }
 $py = Join-Path $PSScriptRoot "file_stat.py"
-$argv = @($py, "--root", $Root, "--max", "$Max")
-foreach ($item in $Path) {
-    $argv += @("--path", $item)
-}
-if ($Glob) { $argv += @("--glob", $Glob) }
-& python @argv
+$python = Get-Command python -ErrorAction SilentlyContinue
+if (-not $python) { $python = Get-Command py -ErrorAction SilentlyContinue }
+if (-not $python) { throw "python not found on PATH" }
+& $python.Source $py @args
 exit $LASTEXITCODE

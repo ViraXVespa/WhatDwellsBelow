@@ -37,10 +37,7 @@ PER_SESSION_THOUGHTS = 4
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Pack every WDB Grok session root in a week window."
-    )
-    parser.add_argument("--root", default=".")
+    parser = agent_log.std_parser("Pack every WDB Grok session root in a week window.")
     parser.add_argument("--since", default=WEEK5_SINCE)
     parser.add_argument("--until", default=WEEK5_UNTIL)
     parser.add_argument("--top", type=int, default=DEFAULT_TOP)
@@ -236,7 +233,7 @@ def write_packet(path: Path, chunks: list[str]) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
-    repo_root = Path(args.root).expanduser().resolve()
+    repo_root = agent_log.resolve_root(args)
     now = packer._now_local()
     until = packer._parse_when(args.until or None, now)
     since = packer._parse_when(args.since or None, until)
@@ -250,8 +247,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.what_if:
         write_packet(copy_path, [extract])
         print(f"copy: {copy_path}")
-        print("RESULT what-if=PASS")
-        return 0
+        return agent_log.emit_result("PASS", mode="what-if")
     if args.pack_dir:
         pack_dir = Path(args.pack_dir).expanduser().resolve()
     else:
@@ -309,9 +305,8 @@ def main(argv: list[str] | None = None) -> int:
     write_packet(copy_path, chunks)
     print(f"copy: {copy_path}")
     mark = "PASS" if report_rc == 0 else "FAIL"
-    print(f"RESULT pack=PASS report={mark} week={len(rows)}")
-    return 0 if report_rc == 0 else 1
+    return agent_log.emit_result("PASS" if report_rc == 0 else "FAIL", pack="PASS", report=mark, week=len(rows))
 
 
 if __name__ == "__main__":
-    sys.exit(int(main()))
+    raise SystemExit(main())

@@ -6,6 +6,13 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import sys
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 
 def _load(path: Path) -> dict:
@@ -51,23 +58,23 @@ def publish(root: Path, site: Path) -> dict:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Publish loose version/changelog files for GitHub Pages."
-    )
-    parser.add_argument("--root", default=".")
+    parser = agent_log.std_parser("Publish loose version/changelog files for GitHub Pages.", writes=True)
     parser.add_argument("--site", default="site")
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    root = Path(args.root).expanduser().resolve()
+    root = agent_log.resolve_root(args)
     site = Path(args.site)
     if not site.is_absolute():
         site = (root / site).resolve()
+    if args.dry_run:
+        print("would publish to %s" % site.as_posix())
+        return agent_log.emit_result("PASS", dry_run=True)
     info = publish(root, site)
     print("label=%s entries=%s site=%s" % (info["label"], info["entries"], info["site"]))
-    return 0
+    return agent_log.emit_result("PASS", label=info["label"], entries=info["entries"])
 
 
 if __name__ == "__main__":

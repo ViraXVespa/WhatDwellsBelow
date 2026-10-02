@@ -1,73 +1,43 @@
 #!/usr/bin/env python3
-"""Extract one GDScript func/const into _logs/show-func/summary.txt."""
+"""Extract one GDScript func/const into _logs/show-func/summary.txt (first 80 lines)."""
 from __future__ import annotations
 
-import argparse
-import re
+import sys
 from pathlib import Path
 
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
 import agent_log
+import gd_lib
 
-ROOT = Path(__file__).resolve().parent.parent
-OUT_DIR = agent_log.ensure_agent_log_dir("show-func", ROOT)
-SUMMARY = OUT_DIR / "summary.txt"
 MAX_LINES = 80
-DECL = re.compile(
-    r"^(?P<indent>\t*)(?:static\s+)?(?:func|const|var|class_name|enum)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)"
-)
 
 
-def main() -> int:
-    p = argparse.ArgumentParser(description="Extract one GDScript declaration.")
+def main(argv: list[str] | None = None) -> int:
+    p = agent_log.std_parser("Extract one GDScript declaration.", json_out=True)
     p.add_argument("--path", required=True, help="Repo-relative .gd path")
     p.add_argument("--name", required=True, help="func / const / var name")
-    args = p.parse_args()
+    args = p.parse_args(argv)
+    root = agent_log.resolve_root(args)
     rel = args.path.replace("\\", "/").lstrip("/")
-    src = ROOT / rel
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    lines_out: list[str] = [
-        f"show_func path={rel} name={args.name}",
-        f"root={ROOT}",
-    ]
+    src = root / rel
+    head = [f"show_func path={rel} name={args.name}", "root=."]
     if not src.is_file():
-        lines_out.append("RESULT missing")
-        SUMMARY.write_text("\n".join(lines_out) + "\n", encoding="utf-8")
-        print(f"Summary -> {SUMMARY}")
+        agent_log.finish("show-func", root, "\n".join(head), "FAIL", args=args, legacy=False, error="missing")
         return 2
-    body = src.read_text(encoding="utf-8").splitlines()
-    start = -1
-    indent = ""
-    for i, line in enumerate(body):
-        m = DECL.match(line)
-        if m and m.group("name") == args.name:
-            start = i
-            indent = m.group("indent")
-            break
-    if start < 0:
-        lines_out.append("RESULT not_found")
-        SUMMARY.write_text("\n".join(lines_out) + "\n", encoding="utf-8")
-        print(f"Summary -> {SUMMARY}")
-        return 1
-    end = len(body)
-    for j in range(start + 1, len(body)):
-        m = DECL.match(body[j])
-        if m and m.group("indent") == indent:
-            end = j
-            break
+    body = src.read_text(encoding="utf-8-sig").splitlines()
+    span = gd_lib.decl_span(body, args.name)
+    if span is None:
+        return agent_log.finish("show-func", root, "\n".join(head), "FAIL", args=args, error="not_found")
+    start, end = span
     chunk = body[start:end]
-    truncated = False
-    if len(chunk) > MAX_LINES:
-        chunk = chunk[:MAX_LINES]
-        truncated = True
-    lines_out.append(f"lines={start + 1}-{start + len(chunk)} of {len(body)}")
-    lines_out.append(f"truncated={truncated}")
-    lines_out.append("")
-    lines_out.extend(chunk)
-    lines_out.append("")
-    lines_out.append("RESULT ok")
-    SUMMARY.write_text("\n".join(lines_out) + "\n", encoding="utf-8")
-    print(f"Summary -> {SUMMARY}")
-    return 0
+    truncated = len(chunk) > MAX_LINES
+    chunk = chunk[:MAX_LINES]
+    out = head + [f"lines={start + 1}-{start + len(chunk)} of {len(body)}", f"truncated={truncated}", ""] + chunk
+    return agent_log.finish("show-func", root, "\n".join(out), "PASS", args=args, legacy=True,
+                            lines=len(chunk), truncated=truncated)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,15 @@
+#!/usr/bin/env python3
 from pathlib import Path
 from PIL import Image
 import math
+from sprite_lib import dist  # noqa: E402
+import sys
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "assets" / "sprites" / "player"
@@ -18,10 +27,6 @@ FILES = {
 BG = (239, 19, 106)
 THRESH = 55
 CANVAS = 128
-
-
-def dist(a, b):
-    return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
 
 
 def key_and_fit(src: Path, dest: Path) -> None:
@@ -55,7 +60,7 @@ def key_and_fit(src: Path, dest: Path) -> None:
     print(f"wrote {dest} from {src.name} bbox={bbox} -> {nw}x{nh}")
 
 
-def main():
+def _run() -> None:
     if not SESSION.exists():
         raise SystemExit("Set SESSION to a folder of raw Imagine stills (down/right/up/left jpgs).")
     for name, src in FILES.items():
@@ -64,5 +69,12 @@ def main():
         key_and_fit(src, OUT / f"{name}.png")
 
 
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("process_sprites")
+    ap.parse_args(argv)
+    _run()
+    return agent_log.emit_result("PASS", tool="process_sprites")
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

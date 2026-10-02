@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Extract, key, and pack walk-cycle frames from Imagine videos."""
 from __future__ import annotations
 
@@ -13,6 +14,13 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 import plate_remap as pr  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
+from sprite_lib import shrink_keyed as _shrink_keyed  # noqa: E402
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 SESSION_VID = Path(
@@ -58,18 +66,6 @@ def extract(src: Path, dest_dir: Path, fps: int = 8) -> list[Path]:
     return sorted(dest_dir.glob("f*.png"))
 
 
-def _shrink_keyed(im: Image.Image, cap: int = KEYED_CAP) -> Image.Image:
-    w, h = im.size
-    m = max(w, h)
-    if m <= cap:
-        return im
-    s = cap / m
-    return im.resize(
-        (max(1, int(w * s)), max(1, int(h * s))),
-        Image.Resampling.NEAREST,
-    )
-
-
 def fit(im: Image.Image, canvas: int = CANVAS) -> Image.Image:
     remapped, _vis, _info = pr.remap(im.convert("RGBA"))
     keyed = sp.key_to_alpha(remapped, spill_flood=False)
@@ -100,7 +96,7 @@ def _pack_one(kind: str, facing: str, video: str) -> str:
     return f"{kind} {facing} " + " ".join(wrote)
 
 
-def main() -> None:
+def _run() -> None:
     jobs: list[tuple[str, str, str]] = []
     for facing, vid in ATTACK_JOBS.items():
         if not vid.exists():
@@ -120,5 +116,12 @@ def main() -> None:
             print(fut.result())
 
 
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("Extract, key, and pack walk-cycle frames from Imagine videos.")
+    ap.parse_args(argv)
+    _run()
+    return agent_log.emit_result("PASS", tool="pack_walk")
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -31,6 +31,7 @@ TOOLS_DIR = Path(__file__).resolve().parent
 if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
+import agent_log  # noqa: E402
 from load_routes import (  # noqa: E402
     CYCLE_ROLES,
     TOPIC_CYCLE_ROLES,
@@ -721,21 +722,16 @@ def job_cell_token_fails(routes: dict, texts: dict[str, str]) -> list[str]:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(
-        description="Check design-doc routing against design/routes.yaml."
-    )
-    ap.add_argument("--root", default=".", help="Repo root (default: cwd)")
+    ap = agent_log.std_parser("Check design-doc routing against design/routes.yaml.", json_out=True)
     args = ap.parse_args()
-    root = Path(args.root).resolve()
+    root = agent_log.resolve_root(args)
     if not (root / "AGENTS.md").is_file() or not (root / "design").is_dir():
-        print(f"FAIL  not a WDB root: {root}", file=sys.stderr)
-        return 2
+        agent_log.fail(f"not a WDB root: {root.as_posix()}")
 
     try:
         routes = load_routes(root)
     except RoutesError as exc:
-        print(f"FAIL  routes.yaml: {exc}", file=sys.stderr)
-        return 2
+        agent_log.fail(f"routes.yaml: {exc}")
 
     fails: list[str] = []
     known = all_route_files(routes)
@@ -952,12 +948,13 @@ def main() -> int:
 
     n = len(files)
     if fails:
-        print(f"FAIL  {len(fails)} load-graph issue(s) across {n} files")
-        for line in fails:
-            print(f"  - {line}")
-        return 1
-    print(f"PASS  {n} files, routes.yaml ok")
-    return 0
+        body = f"FAIL  {len(fails)} load-graph issue(s) across {n} files\n" + "\n".join(f"  - {line}" for line in fails)
+    else:
+        body = f"PASS  {n} files, routes.yaml ok"
+    return agent_log.finish(
+        "load-graph", root, body, "FAIL" if fails else "PASS", args=args, legacy=False,
+        files=n, issues=len(fails),
+    )
 
 
 if __name__ == "__main__":

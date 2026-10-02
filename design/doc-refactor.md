@@ -21,7 +21,7 @@ Cut routing tokens without losing binding comprehension. Do not change binding m
 - **Facade (door):** prefer under **4KB** — Job table + non-negotiables only; no live-snapshot dumps.
 - **Sibling:** prefer under **8KB** — one job cluster; split again if a single `##` section dominates.
 - **Hard stop:** **~12KB** — do not leave a touched topic file above ~12KB if a legal section split exists.
-- Sizes use filesystem Length (same spirit as scripts). Prefer `tools/list_oversize_docs.ps1` when present.
+- Sizes use filesystem Length (same spirit as scripts). Prefer `tools/list_oversize_docs.py` when present.
 
 ## In scope
 

@@ -11,6 +11,13 @@ from __future__ import annotations
 
 import argparse
 import pathlib
+import sys
+
+_TOOLS = pathlib.Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
@@ -119,21 +126,19 @@ def iter_imports(root: pathlib.Path) -> list[pathlib.Path]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Enable mipmaps/generate on 3D world texture imports.")
-    parser.add_argument("--root", type=pathlib.Path, default=ROOT, help="Repo root")
-    parser.add_argument("--dry-run", action="store_true", help="Report only; do not write")
+    parser = agent_log.std_parser("Enable mipmaps/generate on 3D world texture imports.", writes=True)
     args = parser.parse_args()
-    root = args.root.resolve()
+    root = agent_log.resolve_root(args)
     write = not args.dry_run
     counts = {"on": 0, "insert": 0, "already": 0, "skip": 0}
     paths = iter_imports(root)
     if not paths:
-        print(f"no .import files under 3D asset folders in {root}")
-        return 0
+        print(f"no .import files under 3D asset folders in {root.as_posix()}")
+        return agent_log.emit_result("INFO", files=0, dry_run=args.dry_run)
     for path in paths:
         action = patch_file(path, write)
         counts[action] = counts.get(action, 0) + 1
-        rel = path.relative_to(root)
+        rel = path.relative_to(root).as_posix()
         if action in ("on", "insert"):
             print(f"{action}\t{rel}")
     print(
@@ -142,7 +147,7 @@ def main() -> int:
         f"already={counts['already']} skipped={counts['skip']} "
         f"files={len(paths)} dry_run={args.dry_run}"
     )
-    return 0
+    return agent_log.emit_result("PASS", flipped=counts["on"], inserted=counts["insert"], already=counts["already"], files=len(paths), dry_run=args.dry_run)
 
 
 if __name__ == "__main__":

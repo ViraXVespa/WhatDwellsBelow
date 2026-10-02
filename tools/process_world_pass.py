@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Key and install the Placeholdia / dungeon art pass stills."""
 from __future__ import annotations
 
@@ -10,6 +11,12 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 from sprite_pipeline import fit_canvas  # noqa: E402
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 SESSION = Path(
     r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a08788-1bb6-76c0-8fa8-40b73dda2810\images"
@@ -277,7 +284,7 @@ def mix_path() -> None:
     print("path mix", mixed.size)
 
 
-def main() -> None:
+def _run() -> None:
     tile_out("3.jpg", TILES / "plaza_grass.png")
     tile_out("7.jpg", TILES / "plaza_ground.png")
     tile_out("11.jpg", TILES / "plaza_ground_b.png")
@@ -298,5 +305,12 @@ def main() -> None:
     banner_out()
 
 
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("Key and install the Placeholdia / dungeon art pass stills.")
+    ap.parse_args(argv)
+    _run()
+    return agent_log.emit_result("PASS", tool="process_world_pass")
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

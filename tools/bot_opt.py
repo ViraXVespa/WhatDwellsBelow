@@ -74,8 +74,17 @@ def format_files(files: list[str]) -> str:
     return ", ".join(md.tick_wrap(p) for p in files)
 
 
-def _write(path: Path, lines: list[str]) -> None:
-    md.write_lines(path, lines)
+def _end(root: Path, args: argparse.Namespace, lines: list[str], echo: str | None) -> int:
+    """Turn the trailing `RESULT k=v ...` line into agent_log.finish kv; error= means FAIL."""
+    kv: dict[str, str] = {}
+    if lines and lines[-1].startswith("RESULT "):
+        for tok in lines.pop().split()[1:]:
+            k, _, v = tok.partition("=")
+            kv[k] = v
+    while lines and not lines[-1].strip():
+        lines.pop()
+    status = "FAIL" if "error" in kv else "PASS"
+    return agent_log.finish("bot-opt", root, "\n".join(lines), status, args=args, echo=echo, **kv)
 
 
 def render_item(item: Item) -> str:
@@ -266,8 +275,8 @@ def note_fields(
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(
-        description="List or patch the Grok Bot optimization queue."
+    ap = agent_log.std_parser(
+        "List or patch the Grok Bot optimization queue.", writes=True, json_out=True
     )
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--list", action="store_true", help="List ids and titles")
@@ -281,14 +290,10 @@ def main() -> int:
     ap.add_argument("--files", default="", help="Comma-separated live paths for --add / --replace")
     ap.add_argument("--body", default="", help="Suggestion text for --add / --replace")
     ap.add_argument("--body-file", default="", help="UTF-8 file with suggestion text")
-    ap.add_argument("--root", default=".", help="Repo root (default: cwd)")
     args = ap.parse_args()
 
-    root = Path(args.root).resolve()
+    root = agent_log.resolve_root(args)
     queue_path = root / QUEUE_REL
-    out_dir = agent_log.ensure_agent_log_dir("bot-opt", root)
-    summary = out_dir / "summary.txt"
-    out_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).isoformat()
 
     action = "list"
@@ -313,19 +318,17 @@ def main() -> int:
 
     if not queue_path.is_file():
         lines += ["", "RESULT action=" + action + " error=missing-queue"]
-        _write(summary, lines)
-        print(f"Summary -> {summary}")
-        return 1
+        return _end(root, args, lines, None)
 
     parsed = parse_queue(queue_path.read_text(encoding="utf-8"))
     if isinstance(parsed, str):
         lines += ["", f"RESULT action={action} error={parsed}"]
-        _write(summary, lines)
-        print(f"Summary -> {summary}")
-        return 1
+        return _end(root, args, lines, None)
     prefix, next_id, items, suffix = parsed
 
     def save(new_next: int, new_items: list[Item]) -> None:
+        if args.dry_run:
+            return
         block = render_block(new_next, new_items)
         md.write_utf8(queue_path, prefix + block + suffix)
 
@@ -337,46 +340,32 @@ def main() -> int:
             lines.extend(item_lines(item, include_body=False))
             lines.append("")
         lines.append(result_line("list", items))
-        _write(summary, lines)
-        print(f"count={len(items)} pending={counts(items)['pending']}")
-        print(f"Summary -> {summary}")
-        return 0
+        return _end(root, args, lines, f"count={len(items)} pending={counts(items)['pending']}")
 
     if action == "show":
         item_id = norm_id(args.show_id or "")
         if item_id is None:
             lines += ["", "RESULT action=show error=bad-id"]
-            _write(summary, lines)
-            print(f"Summary -> {summary}")
-            return 1
+            return _end(root, args, lines, None)
         item = find_item(items, item_id)
         if item is None:
             lines.append("ids=" + ", ".join(it.item_id for it in items))
             lines += ["", f"RESULT action=show error=not-found id={item_id}"]
-            _write(summary, lines)
-            print(f"Summary -> {summary}")
-            return 1
+            return _end(root, args, lines, None)
         lines.append("")
         lines.extend(item_lines(item, include_body=True))
         lines.append("")
         lines.append(result_line("show", items, extra=f"id={item.item_id}"))
-        _write(summary, lines)
-        print(f"id={item.item_id} status={item.status}")
-        print(f"Summary -> {summary}")
-        return 0
+        return _end(root, args, lines, f"id={item.item_id} status={item.status}")
 
     if action == "add":
         fields, ferr = note_fields(args, root)
         if ferr or fields is None:
             lines += ["", f"RESULT action=add error={ferr or 'need-title-cluster'}"]
-            _write(summary, lines)
-            print(f"Summary -> {summary}")
-            return 1
+            return _end(root, args, lines, None)
         if next_id > 999:
             lines += ["", "RESULT action=add error=id-overflow"]
-            _write(summary, lines)
-            print(f"Summary -> {summary}")
-            return 1
+            return _end(root, args, lines, None)
         title, cluster, files, body = fields
         item = Item(
             f"opt-{next_id:03d}",
@@ -392,31 +381,22 @@ def main() -> int:
         lines.extend(item_lines(item, include_body=True))
         lines.append("")
         lines.append(result_line("add", new_items, extra=f"changed=1 id={item.item_id}"))
-        _write(summary, lines)
-        print(f"added={item.item_id}")
-        print(f"Summary -> {summary}")
-        return 0
+        return _end(root, args, lines, f"added={item.item_id}")
 
     if action == "replace":
         item_id = norm_id(args.replace or "")
         if item_id is None:
             lines += ["", "RESULT action=replace error=bad-id"]
-            _write(summary, lines)
-            print(f"Summary -> {summary}")
-            return 1
+            return _end(root, args, lines, None)
         item = find_item(items, item_id)
         if item is None:
             lines.append("ids=" + ", ".join(it.item_id for it in items))
             lines += ["", f"RESULT action=replace error=not-found id={item_id}"]
-            _write(summary, lines)
-            print(f"Summary -> {summary}")
-            return 1
+            return _end(root, args, lines, None)
         fields, ferr = note_fields(args, root)
         if ferr or fields is None:
             lines += ["", f"RESULT action=replace error={ferr or 'need-title-cluster'}"]
-            _write(summary, lines)
-            print(f"Summary -> {summary}")
-            return 1
+            return _end(root, args, lines, None)
         title, cluster, files, body = fields
         item.title = title
         item.cluster = cluster
@@ -427,67 +407,48 @@ def main() -> int:
         lines.extend(item_lines(item, include_body=True))
         lines.append("")
         lines.append(result_line("replace", items, extra=f"changed=1 id={item.item_id}"))
-        _write(summary, lines)
-        print(f"replaced={item.item_id}")
-        print(f"Summary -> {summary}")
-        return 0
+        return _end(root, args, lines, f"replaced={item.item_id}")
 
     if action == "status":
         raw = args.status or ""
         if "=" not in raw:
             lines += ["", "RESULT action=status error=bad-status"]
-            _write(summary, lines)
-            print(f"Summary -> {summary}")
-            return 1
+            return _end(root, args, lines, None)
         id_raw, status_raw = raw.split("=", 1)
         item_id = norm_id(id_raw)
         status = status_raw.strip().lower()
         if item_id is None or status not in STATUSES:
             lines += ["", "RESULT action=status error=bad-status"]
-            _write(summary, lines)
-            print(f"Summary -> {summary}")
-            return 1
+            return _end(root, args, lines, None)
         item = find_item(items, item_id)
         if item is None:
             lines.append("ids=" + ", ".join(it.item_id for it in items))
             lines += ["", f"RESULT action=status error=not-found id={item_id}"]
-            _write(summary, lines)
-            print(f"Summary -> {summary}")
-            return 1
+            return _end(root, args, lines, None)
         item.status = status
         save(next_id, items)
         lines.append("")
         lines.extend(item_lines(item, include_body=True))
         lines.append("")
         lines.append(result_line("status", items, extra=f"changed=1 id={item.item_id}"))
-        _write(summary, lines)
-        print(f"id={item.item_id} status={item.status}")
-        print(f"Summary -> {summary}")
-        return 0
+        return _end(root, args, lines, f"id={item.item_id} status={item.status}")
 
     item_id = norm_id(args.remove or "")
     if item_id is None:
         lines += ["", "RESULT action=remove error=bad-id"]
-        _write(summary, lines)
-        print(f"Summary -> {summary}")
-        return 1
+        return _end(root, args, lines, None)
     item = find_item(items, item_id)
     if item is None:
         lines.append("ids=" + ", ".join(it.item_id for it in items))
         lines += ["", f"RESULT action=remove error=not-found id={item_id}"]
-        _write(summary, lines)
-        print(f"Summary -> {summary}")
-        return 1
+        return _end(root, args, lines, None)
     new_items = [it for it in items if it.item_id != item_id]
     save(next_id, new_items)
     lines.append("")
     lines.extend(item_lines(item, include_body=False))
     lines.append("")
     lines.append(result_line("remove", new_items, extra=f"changed=1 id={item.item_id}"))
-    _write(summary, lines)
-    print(f"removed={item.item_id}")
-    print(f"Summary -> {summary}")
-    return 0
+    return _end(root, args, lines, f"removed={item.item_id}")
 
 
 if __name__ == "__main__":

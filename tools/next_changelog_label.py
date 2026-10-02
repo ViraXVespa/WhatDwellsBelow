@@ -1,70 +1,37 @@
 #!/usr/bin/env python3
-"""Print the next design/changelog label. Does not write changelog files.
+"""Shim (one release): print the next design/changelog label. Same as `doc_patch.py next-label`.
 
-    python tools/next_changelog_label.py
-    python tools/next_changelog_label.py --root .
-
-Reads scripts/data/version.json. Next label is epoch.series.(patch + 1).
-Stamp commits are ignored because this uses the baked JSON, not git log.
-Writes _logs/changelog-label/summary.txt. Agents read that file only.
+Reads scripts/data/version.json (epoch.series.(patch + 1)); never writes changelog files.
+Writes _logs/changelog-label/summary.txt.
 """
 from __future__ import annotations
 
-import argparse
-import json
-from datetime import datetime, timezone
+import sys
 from pathlib import Path
 
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
 import agent_log
+import repo_lib
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(
-        description="Print the next design/changelog/{label} value."
-    )
-    ap.add_argument("--root", default=".", help="Repo root (default: cwd)")
-    args = ap.parse_args()
-    root = Path(args.root).resolve()
-    baked = root / "scripts" / "data" / "version.json"
-    out_dir = agent_log.ensure_agent_log_dir("changelog-label", root)
-    summary = out_dir / "summary.txt"
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    stamp = datetime.now(timezone.utc).isoformat()
-    lines = [
-        f"changelog label {stamp}",
-        "root=.",
-        f"source={baked.as_posix()}",
-    ]
-
-    if not baked.is_file():
-        lines += ["", "RESULT error=missing-version-json"]
-        summary.write_text("\n".join(lines) + "\n", encoding="utf-8")
-        print(f"Summary -> {summary}")
-        return 1
-
-    data = json.loads(baked.read_text(encoding="utf-8"))
-    epoch = int(data["epoch"])
-    series = int(data["series"])
-    patch = int(data["patch"])
-    current = str(data.get("label") or f"{epoch}.{series}.{patch}")
-    nxt_patch = patch + 1
-    nxt = f"{epoch}.{series}.{nxt_patch}"
-    dest = f"design/changelog/{nxt}.md"
-
-    lines += [
-        f"current={current}",
-        f"epoch={epoch} series={series} patch={patch}",
-        f"next={nxt}",
-        f"write_path={dest}",
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("Print the next design/changelog/{label} value.", json_out=True)
+    args = ap.parse_args(argv)
+    root = agent_log.resolve_root(args)
+    if not (root / repo_lib.VERSION_FILE).is_file():
+        return agent_log.finish("changelog-label", root, f"source={repo_lib.VERSION_FILE}", "FAIL", args=args, error="missing-version-json")
+    v = repo_lib.read_version(root)
+    nxt = repo_lib.next_label(root)
+    body = "\n".join([
+        "changelog label", "root=.", f"source={repo_lib.VERSION_FILE}",
+        f"current={v.get('label') or '%s.%s.%s' % (v['epoch'], v['series'], v['patch'])}",
+        f"next={nxt}", f"write_path=design/changelog/{nxt}.md",
         "measure=baked version.json patch + 1; do not read design/changelog/",
-        "",
-        f"RESULT next={nxt}",
-    ]
-    summary.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"next={nxt}")
-    print(f"Summary -> {summary}")
-    return 0
+    ])
+    return agent_log.finish("changelog-label", root, body, "PASS", args=args, echo=f"next={nxt}", next=nxt)
 
 
 if __name__ == "__main__":

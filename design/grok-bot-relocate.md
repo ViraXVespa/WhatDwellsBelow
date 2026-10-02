@@ -3,7 +3,7 @@
 Status: protocol  
 Read when: Grok Bot Job table → parked or named folder relocate  
 
-Boot `BOT.md` + `python tools/bot_status.py` first. Binding for **Grok Bot** when the User names a folder move / relocate cluster. Do not fold this into a size sweep, extract, reuse-map brief, or doc facade PR.
+Boot `BOT.md` + `python3 tools/bot_status.py` first. Binding for **Grok Bot** when the User names a folder move / relocate cluster. Do not fold this into a size sweep, extract, reuse-map brief, or doc facade PR.
 
 
 ## Mandate
@@ -26,7 +26,7 @@ Do not open the staged reuse brief. Do not read every caller first — run the m
 ## Pass
 
 1. User names the source facade and destination folder. Stop and ask if either is missing.
-2. From repo root: `python tools/move_script_cluster.py`. Optional `--dry-run` / `-DryRun`, `-Wrapper` (leave `extends "res://..."` stubs at old paths).
+2. From repo root: `python3 tools/move_script_cluster.py` (`--dry-run`, `--wrapper` leaves `extends "res://..."` stubs at old paths; design/tools.md).
 3. The tool `git mv`s the facade + stem siblings (+ `.uid`), rewrites `res://` and bare paths under `scripts/`, `design/`, scenes, and `project.godot`, and writes `_logs/move-cluster/summary.txt`.
 4. Prefer updating call sites over wrappers when external refs are few.
 5. Update `design/code-map.md` rows in the same PR.

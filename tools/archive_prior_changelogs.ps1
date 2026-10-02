@@ -1,14 +1,9 @@
-﻿# Move non-current-series design/changelog/*.md into design/changelog/archive/{epoch}.{series}/
-# Usage (from repo root):
-#   powershell -File tools/archive_prior_changelogs.ps1
-#   powershell -File tools/archive_prior_changelogs.ps1 -DryRun
-# Writes _logs/changelog-archive/summary.txt
-
-param([switch]$DryRun)
+﻿# SHIM (kept one release): forwards every argument to archive_prior_changelogs.py. The old -Flag spellings work there.
+# Prefer: python3 tools/archive_prior_changelogs.py --help
 $ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent $PSScriptRoot
-$Py = Join-Path $Root "tools\archive_prior_changelogs.py"
-$argsList = @($Py)
-if ($DryRun) { $argsList += "--dry-run" }
-Push-Location $Root
-try { & python @argsList; exit $LASTEXITCODE } finally { Pop-Location }
+$py = Join-Path $PSScriptRoot "archive_prior_changelogs.py"
+$python = Get-Command python -ErrorAction SilentlyContinue
+if (-not $python) { $python = Get-Command py -ErrorAction SilentlyContinue }
+if (-not $python) { throw "python not found on PATH" }
+& $python.Source $py @args
+exit $LASTEXITCODE

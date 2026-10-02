@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Character Bible Imagine text. Print and copy.
 
 This file stays the locked 3x3 Bible prompt. I2V / overlay prompts stay in

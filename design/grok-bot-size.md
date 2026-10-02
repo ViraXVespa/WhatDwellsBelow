@@ -6,19 +6,19 @@ Read when: Grok Bot Job table → size sweep
 
 ## Size split quick path
 
-Read only this file, `BOT.md`, and `design/refactor.md` rules 1-7 (skip the reuse, extract, and doc-split sections). Run `python tools/bot_status.py` (prints only the over-10KB list; `--sweep` lists 5-10KB rows). Per file:
+Read only this file, `BOT.md`, and `design/refactor.md` rules 1-7 (skip the reuse, extract, and doc-split sections). Run `python3 tools/bot_status.py` (prints only the over-10KB list; `--sweep` lists 5-10KB rows). Per file:
 
 1. Baseline: `bot_warnscan.py --areas <areas that load it> --save-baseline PATH`, plus `bot_smokes.py --phases 1,2,6,<relevant>`. Run both in the background while reading the file.
-2. Plan: `python tools/split_funcs.py FILE --list` (sizes, uses, outside callers). Keep public funcs and shared consts on the facade; group whole underscore funcs with the statics they own into siblings (static-helper pattern, refactor.md rule 4). Shared consts go in a small leaf helper. Write `plan.json` (`{helper_stem: [names]}`), then `--plan plan.json --dry-run`. Node (instance) funcs move too: they become `static func f(host: <the facade's extends type>, ...)` and the facade keeps a delegate.
-3. `split_funcs.py FILE --plan plan.json` writes helpers, delegates and preloads, runs `facade_requal.py` (rewrite + `--check`), and prints missing=0 and sizes. Then import for `.uid` (BOT.md Smokes), the static `--non-leak-diff` (compile check; the import does not compile scripts), smokes, then `--non-leak-diff PATH` with the same `--areas`. Check BOM/CRLF kept: `python tools/file_stat.py --path FILE`.
-4. Changelog entry, code-map row, prove trio, commit, push. Code map: `python tools/check_code_map.py` (no new UNMAPPED for files you touched; 78 older ones are expected); new helper rows via `patch_code_map.py --system NAME --add PATH`. Doc edits: import `tools/doc_patch.py` in a scratch runner (`write_changelog`, `replace_once`, `ensure_line`, `set_read_when`). Doc edits: import `tools/doc_patch.py` in a scratch runner (`write_changelog`, `replace_once`, `ensure_line`, `set_read_when`).
+2. Plan: `python3 tools/split_funcs.py FILE --list` (sizes, uses, outside callers). Keep public funcs and shared consts on the facade; group whole underscore funcs with the statics they own into siblings (static-helper pattern, refactor.md rule 4). Shared consts go in a small leaf helper. Write `plan.json` (`{helper_stem: [names]}`), then `--plan plan.json --dry-run`. Node (instance) funcs move too: they become `static func f(host: <the facade's extends type>, ...)` and the facade keeps a delegate.
+3. `split_funcs.py FILE --plan plan.json` writes helpers, delegates and preloads, runs `facade_requal.py` (rewrite + `--check`), and prints missing=0 and sizes. Then import for `.uid` (BOT.md Smokes), the static `--non-leak-diff` (compile check; the import does not compile scripts), smokes, then `--non-leak-diff PATH` with the same `--areas`. Check BOM/CRLF kept with `file_stat.py`.
+4. Changelog entry and code-map row via `doc_patch.py` / `patch_code_map.py` (design/tools.md), prove per BOT.md (Prove list), commit, push.
 5. Rough edges: per BOT.md (After-cluster report), fix them in the same PR before the next file.
 
 ## Mandate
 
 Size, prove, changelog, and `version.json` rules live in `BOT.md`.
 
-Start with `python tools/bot_status.py`. Sweep live `scripts/**/*.gd` for size (`rglob`, includes `scripts/*.gd`). Not a feature slice. Not the staged reuse-map brief.
+Start with `python3 tools/bot_status.py`. Sweep live `scripts/**/*.gd` for size (`rglob`, includes `scripts/*.gd`). Not a feature slice. Not the staged reuse-map brief.
 
 - Ship floor: every touched live script under **10KB**.
 - Sweep target: under **5KB** when whole functions can move. If a single function is over 5KB, leave it whole and report it.
@@ -42,9 +42,9 @@ Do not open the staged reuse brief, `design/doc-refactor.md`, or the other Bot f
 
 Do not edit yet. Show the ranked list first.
 
-1. `python tools/check_script_cap.py` plus `python tools/bot_status.py`
+1. `python3 tools/check_script_cap.py` plus `python3 tools/bot_status.py`
 2. Rank: over 10KB first, then over 5KB where whole functions can move
-3. Optional func inventory: `python tools/summarize_scripts.py --over-kb 5 --top-funcs 3`
+3. Optional func inventory: `python3 tools/summarize_scripts.py --over-kb 5 --top-funcs 3`
 
 Inventory and before/after sizes use `os.path.getsize`.
 

@@ -1,28 +1,27 @@
+#!/usr/bin/env python3
 """Write tiny placeholder WAV loops and one-shot SFX. Final music is by Vira."""
 from __future__ import annotations
 
-import math
-import struct
-import wave
+import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
+import audio_lib as al
+
+ROOT = agent_log.repo_root()
 OUT = ROOT / "assets" / "audio"
-OUT.mkdir(parents=True, exist_ok=True)
-SR = 22050
+SR = al.SR
+WRITTEN: list[str] = []
 
 
 def write_wav(path: Path, samples: list[float]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with wave.open(str(path), "w") as w:
-        w.setnchannels(1)
-        w.setsampwidth(2)
-        w.setframerate(SR)
-        frames = b"".join(
-            struct.pack("<h", max(-32767, min(32767, int(s * 32767)))) for s in samples
-        )
-        w.writeframes(frames)
-    print(f"wrote {path} ({len(samples) / SR:.2f}s)")
+    al.write_pcm(path, samples)
+    WRITTEN.append(path.name)
+    print(f"wrote {agent_log.rel(ROOT, path)} ({len(samples) / SR:.2f}s)")
 
 
 def env(i: int, n: int, attack: float = 0.01, release: float = 0.08) -> float:
@@ -50,16 +49,7 @@ def tone(freq: float, dur: float, amp: float = 0.18, kind: str = "tri") -> list[
     return out
 
 
-def mix(*parts: list[float]) -> list[float]:
-    n = max(len(p) for p in parts)
-    out = [0.0] * n
-    for p in parts:
-        for i, s in enumerate(p):
-            out[i] += s
-    peak = max(0.001, max(abs(s) for s in out))
-    if peak > 0.95:
-        out = [s * 0.95 / peak for s in out]
-    return out
+mix = al.mix_norm
 
 
 def pad(samples: list[float], dur: float) -> list[float]:
@@ -116,7 +106,17 @@ def sfx() -> None:
     write_wav(OUT / "sfx_hurt.wav", mix(tone(180, 0.11, 0.2, "sq"), tone(90, 0.14, 0.12, "noise")))
 
 
-if __name__ == "__main__":
+def main(argv: list[str] | None = None) -> int:
+    global ROOT, OUT
+    ap = agent_log.std_parser("Write tiny placeholder WAV loops and one-shot SFX. Final music is by Vira.")
+    args = ap.parse_args(argv)
+    ROOT = agent_log.resolve_root(args)
+    OUT = ROOT / "assets" / "audio"
     loop_hub()
     loop_dungeon()
     sfx()
+    return agent_log.emit_result("PASS", written=len(WRITTEN), dir="assets/audio")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

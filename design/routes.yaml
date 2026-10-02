@@ -65,6 +65,18 @@ gates:
   gdscript_law:
     file: design/gdscript-law.md
     when: editing_gdscript
+  tools:
+    file: design/tools.md
+    when: run_add_or_document_a_tool
+  doc_library:
+    file: design/doc-library.md
+    when: doc_edit_tool
+  tools_build:
+    file: design/tools-build.md
+    when: windows_runner_or_release_tool
+  tools_media:
+    file: design/tools-media.md
+    when: media_pipeline_tool
   pc_offload:
     file: design/pc-offload.md
     when: inventory_verify_or_windows_write

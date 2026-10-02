@@ -21,6 +21,7 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
+from sprite_lib import neighbors8 as _neighbors8  # noqa: E402
 
 KEY = (255, 0, 255)
 KEY_HEX = "#FF00FF"
@@ -39,16 +40,6 @@ def _hex(rgb: tuple[int, int, int]) -> str:
 
 def _clamp(v: float) -> int:
     return 0 if v < 0 else 255 if v > 255 else int(round(v))
-
-
-def _neighbors8(x: int, y: int, w: int, h: int):
-    for dy in (-1, 0, 1):
-        for dx in (-1, 0, 1):
-            if dx == 0 and dy == 0:
-                continue
-            nx, ny = x + dx, y + dy
-            if 0 <= nx < w and 0 <= ny < h:
-                yield nx, ny
 
 
 def _rgb_dist32(rgb: np.ndarray, chroma: tuple[int, int, int] | np.ndarray) -> np.ndarray:

@@ -1,55 +1,9 @@
-# List a facade + same-folder sibling helpers by Length (no body reads).
-# Usage (from repo root):
-#   powershell -File tools/list_facade_cluster.ps1 -Facade scripts/combat/enemy.gd
-# Writes _logs/facade-cluster/summary.txt
-
-param(
-    [Parameter(Mandatory = $true)]
-    [string]$Facade
-)
-
+﻿# SHIM (kept one release): forwards every argument to list_facade_cluster.py. The old -Flag spellings work there.
+# Prefer: python3 tools/list_facade_cluster.py --help
 $ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent $PSScriptRoot
-. (Join-Path $PSScriptRoot "agent_log.ps1")
-$OutDir = Ensure-WdbAgentLogDir -Job "facade-cluster" -Root $Root
-$Summary = Join-Path $OutDir "summary.txt"
-New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-
-function RelPath([string]$full) {
-    $r = $Root.TrimEnd('\')
-    if ($full.StartsWith($r, [StringComparison]::OrdinalIgnoreCase)) {
-        return $full.Substring($r.Length).TrimStart('\')
-    }
-    return $full
-}
-
-$full = if ([IO.Path]::IsPathRooted($Facade)) { $Facade } else { Join-Path $Root $Facade }
-if (-not (Test-Path $full)) { throw "missing facade: $Facade" }
-$full = (Resolve-Path $full).Path
-$dir = Split-Path -Parent $full
-$stem = [IO.Path]::GetFileNameWithoutExtension($full)
-$sibs = Get-ChildItem -Path $dir -File -Filter "*.gd" |
-    Where-Object {
-        $n = $_.BaseName
-        ($n -eq $stem) -or ($n.StartsWith($stem + "_"))
-    } |
-    Sort-Object Length -Descending
-
-$lines = New-Object System.Collections.Generic.List[string]
-$lines.Add("facade cluster $(Get-Date -Format o)")
-$lines.Add("root=.")
-$lines.Add("facade=$(RelPath $full)")
-$lines.Add("stem=$stem dir=$(RelPath $dir)")
-$lines.Add("siblings=$($sibs.Count)")
-$lines.Add("")
-$total = 0
-foreach ($f in $sibs) {
-    $lines.Add("$(RelPath $f.FullName) bytes=$($f.Length)")
-    $total += [int]$f.Length
-}
-$lines.Add("")
-$lines.Add(("RESULT siblings={0} total_bytes={1}" -f $sibs.Count, $total))
-$lines | Set-Content -Path $Summary -Encoding utf8
-Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
-$sibs | ForEach-Object { Write-Host ("{0,6} {1}" -f $_.Length, $_.Name) }
-exit 0
+$py = Join-Path $PSScriptRoot "list_facade_cluster.py"
+$python = Get-Command python -ErrorAction SilentlyContinue
+if (-not $python) { $python = Get-Command py -ErrorAction SilentlyContinue }
+if (-not $python) { throw "python not found on PATH" }
+& $python.Source $py @args
+exit $LASTEXITCODE

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Key _src/gear/*.jpg through the live still pipeline into assets/ui/gear/*.png
 from __future__ import annotations
 
@@ -10,6 +11,12 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 import plate_remap as pr  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 SRC = ROOT / "_src" / "gear"
 DEST = ROOT / "assets" / "ui" / "gear"
@@ -67,7 +74,7 @@ def sources() -> list[Path]:
     return found
 
 
-def main() -> None:
+def _run() -> None:
     if not SRC.is_dir():
         raise SystemExit(f"missing source dir {SRC}")
     DEST.mkdir(parents=True, exist_ok=True)
@@ -86,5 +93,12 @@ def main() -> None:
         print("extra sources: " + ", ".join(extra), flush=True)
 
 
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("process_gear_icons")
+    ap.parse_args(argv)
+    _run()
+    return agent_log.emit_result("PASS", tool="process_gear_icons")
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

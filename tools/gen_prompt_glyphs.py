@@ -9,6 +9,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from PIL import Image, ImageDraw
+import sys
+
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 
 ROOT = Path(__file__).resolve().parents[1] / "assets" / "ui" / "prompts"
 
@@ -322,7 +329,7 @@ def save_aliases(img: Image.Image, folder: str, names: list[str]) -> None:
         save(img, folder, name)
 
 
-def main() -> None:
+def _run() -> None:
     ROOT.mkdir(parents=True, exist_ok=True)
     for ch in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
         save(letter_key(ch), "kb", ch.lower())
@@ -373,5 +380,12 @@ def main() -> None:
     print("wrote", ROOT)
 
 
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser("Chunky pixel prompt glyphs. Run from repo root:")
+    ap.parse_args(argv)
+    _run()
+    return agent_log.emit_result("PASS", tool="gen_prompt_glyphs")
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
