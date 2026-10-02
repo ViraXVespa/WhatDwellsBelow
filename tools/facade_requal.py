@@ -6,6 +6,7 @@
   python tools/facade_requal.py scripts/x.gd --sym DIRS=Grid --check
 
 Each NAME=Mod rewrites bare NAME to Mod.NAME (not after a dot or word char).
+Use NAME()=Mod for calls only when a local variable shares the name.
 Only CODE matches are rewritten; matches inside comments or strings are
 listed separately (add --all to rewrite them too). Keeps BOM and line endings.
 --check changes nothing: it lists bare code matches left in FILE (exit 1 if any)
@@ -53,8 +54,11 @@ def kinds(text: str) -> list[str]:
 
 
 def find(text: str, name: str, cls: list[str]) -> dict[str, list[int]]:
+    """NAME matches any bare use; NAME() matches calls only (skips locals of the same name)."""
+    call = name.endswith("()")
+    name = name[:-2] if call else name
     hits: dict[str, list[int]] = {"c": [], "m": [], "s": []}
-    for m in re.finditer(r"(?<![\w.])" + re.escape(name) + r"\b", text):
+    for m in re.finditer(r"(?<![\w.])" + re.escape(name) + (r"(?=\()" if call else r"\b"), text):
         line_start = text.rfind("\n", 0, m.start()) + 1
         if re.match(r"\s*(static\s+)?func\s+$", text[line_start:m.start()]):
             continue
@@ -93,7 +97,7 @@ def main() -> int:
             for k, label in (("m", "comment"), ("s", "string")):
                 for pos in h[k]:
                     print(f"note {label} {path}:{line_of(text, pos)}: {name}")
-        names = {n for n, _ in syms}
+        names = {n[:-2] if n.endswith("()") else n for n, _ in syms}
         root = Path(__file__).resolve().parent.parent / "scripts"
         for f in sorted(root.rglob("*.gd")):
             if f.resolve() == path.resolve():
