@@ -11,7 +11,7 @@ Suggested starts are seeds only.
 Live defaults are what `balance.gd` / `tunables.gd` ship today.  
 If you change a live default, update this table in the same slice.
 
-List one key with `python tools/tunables.py get --key CAM_PITCH` (summary: `_logs/tunable-row/summary.txt`). Patch one Live cell with `python tools/tunables.py set --key CAM_PITCH --set -58` (summary: `_logs/tunable-patch/summary.txt`). Do not open this whole file to change one number.
+List one key with `python3 tools/tunables.py get --key CAM_PITCH` (summary: `_logs/tunable-row/summary.txt`). Patch one Live cell with `python3 tools/tunables.py set --key CAM_PITCH --set -58` (summary: `_logs/tunable-patch/summary.txt`). Do not open this whole file to change one number.
 
 `BAL_REV` is 13. Old saves pick up shipped default retunes through `migrate.gd`.
 

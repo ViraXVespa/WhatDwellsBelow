@@ -14,13 +14,13 @@ Hub: warm kit, wide sun fill in the RT, floor crystal as a local bump. Hub squas
 
 Does not own: dungeon carve, hall segments, hall runs, solid bake, stream rings, map reveal, camera zoom, Sprite3D filter modes. Gen writes hall runs and solid. Volume skins the provided runs only. Buffer stamps the light RT and mounts torches on those interior faces. Occupancy reads solid only. Hitboxes stay stream boxes on solid, not a third grid.
 
-Out this week: engine shadow maps, unique atlas, hex-tile, player lantern, shop/gate/stair lights, foundation pretty-pass.
+Out of scope: engine shadow maps, unique atlas, hex-tile, player lantern, shop/gate/stair lights, foundation pretty-pass.
 
-Build Imagine stills this week, isolated, one unit per job: grass field, packed dirt, dungeon floor, wall brick, and the unlit 4-facing torch-and-bracket bible. Flame is generated code VFX on a Y-billboard and it flickers. Never a flame sheet. Crystal and campfire keep live meshes.
+Build Imagine stills, isolated, one unit per job: grass field, packed dirt, dungeon floor, wall brick, and the unlit 4-facing torch-and-bracket bible. Flame is generated code VFX on a Y-billboard and it flickers. Never a flame sheet. Crystal and campfire keep live meshes.
 When a job Imagines, the User names the Imagine / isolated-media owner in that Build session's first message. Job files do not name that owner.
-If the week slips: drop extra shader tints, then extra light discs. Do not drop ground, the light RT, or player squash.
+Cut order if scope tightens: drop extra shader tints, then extra light discs. Do not drop ground, the light RT, or player squash.
 
-Jobs after the reuse PR, one session each, forked from this door:
+Jobs, one session each, forked from this door:
 
 1. ground — shared shader, world-xz hash variants, RT sample (white until buffer)
 2. volume — provided ribbon, span UV, wall samples RT

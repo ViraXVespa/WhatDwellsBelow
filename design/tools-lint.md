@@ -31,4 +31,4 @@ Rules, the CLI contract and the surface key (Surf, A) are in `tools.md`. Same ta
 | `patch_code_map.py` | Shim -> `code_map.py patch`, one release | BD | `--help` | Y |
 | `code_map_lib.py` | Code-map row parser/writer used by `code_map.py` | BD | module docstring (no `--help`) | Y |
 | `list_oversize_docs.py` | List `design/*.md` by size, OVER at `--over-kb` (default 8) | BD | `--help` | Y |
-| `list_route.py` | Print one `routes.yaml` door or job card (`--job door.job`), incl. its smoke phases | BD | `--help` | Y |
+| `list_route.py` | Print one `routes.yaml` door or job card (`--job door.job`), incl. smoke phases and shot flows; gates print as one line; no args lists the doors | BD | `--help` | Y |

@@ -12,19 +12,19 @@ Seed: locked Bible Down cell, 4x NN, `#FF00FF`. User file name used in testing: 
 
 ## Resume commands (run these; paste the printed block)
 
-    python tools/attack_keyframes.py --resume
+    python3 tools/attack_keyframes.py --resume
 
 Same prompt without the log:
 
-    python tools/attack_keyframes.py --print --gender female --facing down --action attack_great_axe --beat coil
+    python3 tools/attack_keyframes.py --print --gender female --facing down --action attack_great_axe --beat coil
 
 After a roll:
 
-    python tools/attack_keyframes.py --log --verdict parked --note "short note"
+    python3 tools/attack_keyframes.py --log --verdict parked --note "short note"
 
 `verdict` is `keeper`, `fail`, or `parked`.
 
-    python tools/attack_keyframes.py --beats --action attack_great_axe
+    python3 tools/attack_keyframes.py --beats --action attack_great_axe
 
 Imagine-edit the Bible cell only. Never edit a previous generate. Success means the desired pose appears from that seed on a fresh generate.
 
@@ -129,7 +129,7 @@ Shoulder-twist and ribcage lines stay banned. Hair-unlock + small coil is still 
 4. Generate `coil_v32` from that seed only, using the printed `coil_v31` sheet.
 5. Score against: stacked fists on the sternum, camera-right high (Down), idle feet, square Down, no prop, optional small coil, seed belt copied without naming it.
 6. Log the roll. Do not invent mid-swing until coil is accepted as finished product.
-7. If quota dies, stop. Pickup is this file plus `python tools/attack_keyframes.py --resume`.
+7. If quota dies, stop. Pickup is this file plus `python3 tools/attack_keyframes.py --resume`.
 
 ## Parked pickup (2026-09-16)
 

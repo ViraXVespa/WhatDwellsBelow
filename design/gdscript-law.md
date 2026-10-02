@@ -39,4 +39,4 @@ Every live `scripts/**/*.gd` that ships must stay under **10,000 bytes**. That f
 - New script files and helpers go in the facade's stem folder with trimmed unique names (refactor.md, Cluster folders: read that section only).
 - Grok Build does not measure size, does not split for the cap, and does not open the refactor recipe for bytes. Over-cap files MAY remain on `main` until a Grok Bot size sweep.
 - Web / chat does not cap-split. Over-cap files MAY remain until a Grok Bot size sweep.
-- Grok Bot is the size owner. It uses the refactor recipe on every task. 10KB is the ship floor. The under-5KB sweep target is only the Bot size job. On the Bot VM measure with `os.path.getsize` via `python tools/check_script_cap.py` / `python tools/bot_status.py`. That matches `Get-Item Length`.
+- Grok Bot is the size owner. It uses the refactor recipe on every task. 10KB is the ship floor. The under-5KB sweep target is only the Bot size job. On the Bot VM measure with `os.path.getsize` via `python3 tools/check_script_cap.py` / `python3 tools/bot_status.py`. That matches `Get-Item Length`.

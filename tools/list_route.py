@@ -15,17 +15,15 @@ from load_routes import job_index, job_read_when, load_routes, shot_flows, smoke
 
 
 def _gate_lines(data: dict) -> list[str]:
-    lines = []
     gates = data.get("gates")
     if not isinstance(gates, dict):
-        return lines
-    for name, spec in gates.items():
-        if not isinstance(spec, dict):
-            continue
-        path = spec.get("file") or ""
-        when = spec.get("when") or ""
-        lines.append("gate\t%s\t%s\twhen=%s" % (name, path, when))
-    return lines
+        return []
+    parts = []
+    for spec in gates.values():
+        if isinstance(spec, dict):
+            stem = str(spec.get("file") or "").removeprefix("design/").removesuffix(".md")
+            parts.append("%s=%s" % (stem, spec.get("when") or ""))
+    return ["gates\tdesign/<name>.md, open only when its when matches: " + " ".join(parts)] if parts else []
 
 
 def _door_card(data: dict, door_name: str) -> list[str]:
@@ -95,10 +93,12 @@ def parse_args(argv: list[str]):
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
-    if not args.door and not args.job:
-        agent_log.fail("need --door <name> or --job <door.job> (example: --job debug.smokes)")
     root = agent_log.resolve_root(args)
     data = load_routes(root)
+    if not args.door and not args.job:
+        doors = data.get("doors") if isinstance(data.get("doors"), dict) else {}
+        menu = "\n".join("door\t%s\t%s" % (n, (s or {}).get("read_when", "")) for n, s in doors.items())
+        agent_log.fail("need --door <name> or --job <door.job> (example: --job debug.smokes). doors:\n" + menu)
     if args.job:
         lines = _job_card(data, args.job.strip())
     else:
