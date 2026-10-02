@@ -1,8 +1,8 @@
 extends Node
 
-## Feet tint from the light RT. Hub keeps one sun mark. Dungeon uses up to three.
+## Feet tint from the light RT. Hub keeps one sun mark plus the crystal mark.
 ## Player uses the live sticker after flip_h. Dummy and enemies use their still.
-## Sole pixels pin to the sticker. The head shears with a signed floor-Z bias.
+## Sole pixels pin to the sticker's feet. The head shears away from the light.
 ## Dungeon alpha is split across the live marks so they do not smear black.
 
 const T := preload("res://scripts/data/tunables.gd")
@@ -379,12 +379,16 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 
 func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, feet: Vector2) -> void:
 	var node: MeshInstance3D = marks[slot]
+	var src: Vector2 = Vector2.ZERO
+	if _src_at[slot].length_squared() > 0.0004:
+		src = _src_at[slot] - feet
 	var reach: Vector2 = dir * _stretch_at[slot]
-	var key: String = "%s|%s|%s|%s|%s|%s|%s|%s|%s|foot3" % [
+	var key: String = "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
 		tex.get_instance_id(), px, _flip,
 		snappedf(fl.x, 0.01), snappedf(fl.y, 0.01),
 		snappedf(fr.x, 0.01), snappedf(fr.y, 0.01),
 		snappedf(reach.x, 0.01), snappedf(reach.y, 0.01),
+		snappedf(src.x, 0.05), snappedf(src.y, 0.05),
 	]
 	var mat: ShaderMaterial = node.material_override as ShaderMaterial
 	if mat != null:
@@ -392,11 +396,7 @@ func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vect
 	if key == _key_at[slot] and node.mesh != null:
 		return
 	_key_at[slot] = key
-	var src: Vector2 = Vector2.ZERO
-	if _src_at[slot].length_squared() > 0.0004:
-		src = _src_at[slot] - feet
 	node.mesh = _quad(tex, _span(tex), soles, fl, fr, dir, px, _stretch_at[slot], src)
-
 func _sole_xz(tx: float, ty: float, tw: float, th: float) -> Vector2:
 	var ox: float = spr.offset.x
 	var oy: float = spr.offset.y
@@ -410,8 +410,16 @@ func _sole_xz(tx: float, ty: float, tw: float, th: float) -> Vector2:
 	var ly: float = (oy + (th - ty)) * spr.pixel_size
 	var axis: Vector3 = _bill_x()
 	var world: Vector3 = spr.global_position + axis * lx + Vector3(0.0, ly, 0.0)
-	return _drop_floor(world)
-
+	var dropped: Vector2 = _drop_floor(world)
+	# Drop lands down-screen of the boot. Pull up-screen so the sole tucks under it.
+	var tuck: float = spr.pixel_size * 2.0
+	var back: Vector2 = Vector2(0.0, -1.0)
+	var cam: Camera3D = get_viewport().get_camera_3d()
+	if cam != null:
+		var flat: Vector2 = Vector2(-cam.global_transform.basis.z.x, -cam.global_transform.basis.z.z)
+		if flat.length_squared() > 0.0004:
+			back = flat.normalized()
+	return dropped + back * tuck
 func _bill_x() -> Vector3:
 	var cam: Camera3D = get_viewport().get_camera_3d()
 	if cam == null:
@@ -463,38 +471,39 @@ func _quad(tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vecto
 	return mesh
 
 func _corner(tx: float, ty: float, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float, src: Vector2) -> Vector3:
+	# Sole edge is the camera-dropped foot line. Head shears along the light.
+	# Width stays on the billboard axis so a side stance cannot collapse to a needle.
 	var aim: Vector2 = dir
 	if aim.length_squared() < 0.0004:
 		aim = SUN_AWAY
 	else:
 		aim = aim.normalized()
 	var span_x: float = soles.z - soles.x
-	if absf(span_x) < 0.5:
-		span_x = 0.5 if soles.z >= soles.x else -0.5
-	var a: float = clampf((tx - soles.x) / span_x, 0.0, 1.0)
-	var pin: Vector2 = fl.lerp(fr, a)
-	var sole_y: float = lerpf(soles.y, soles.w, a)
-	var above: float = maxf(sole_y - ty, 0.0)
-	if above < 1.0:
-		return Vector3(pin.x, 0.0, pin.y)
-	var h: float = above * px
-	var hit: Vector2 = pin
-	if src.length_squared() > 0.0004:
-		var lamp: Vector3 = Vector3(src.x, TORCH_H, src.y)
-		var air: Vector3 = Vector3(pin.x, h, pin.y)
-		var cast: Vector3 = air - lamp
-		if absf(cast.y) < 0.001:
-			cast.y = -0.001
-		var landed: Vector3 = lamp + cast * (-lamp.y / cast.y)
-		hit = Vector2(landed.x, landed.z)
+	var u: float = 0.5
+	if absf(span_x) >= 2.0:
+		u = clampf((tx - soles.x) / span_x, 0.0, 1.0)
+	var pin: Vector2 = fl.lerp(fr, u)
+	var sole_tx: float = lerpf(soles.x, soles.z, u)
+	var extra: float = (tx - sole_tx) * px
+	if _flip:
+		extra = -extra
+	var axis: Vector3 = _bill_x()
+	var ax: Vector2 = Vector2(axis.x, axis.z)
+	if ax.length_squared() < 0.0004:
+		ax = Vector2.RIGHT
 	else:
-		var down: float = maxf(SUN_ELEV, 0.2) * 1.6
-		hit = pin + aim * (h / down)
-	var delta: Vector2 = hit - pin
-	var cap: float = maxf(px * 32.0, MARK_MAX * 0.6) * maxf(stretch, 0.35)
-	if delta.length() > cap:
-		delta = delta.normalized() * cap
-	return Vector3(pin.x + delta.x, 0.0, pin.y + delta.y)
+		ax = ax.normalized()
+	var base: Vector2 = pin + ax * extra
+	var sole_y: float = maxf(soles.y, soles.w)
+	var h: float = maxf(sole_y - ty, 0.0) * px
+	var elev: float = SUN_ELEV
+	if src.length_squared() > 0.0004:
+		elev = 0.85
+	var reach: float = h * maxf(stretch, 0.15) / elev
+	var cap: float = h * clampf(0.55 + stretch * 0.45, 0.45, 1.35)
+	if reach > cap:
+		reach = cap
+	return Vector3(base.x + aim.x * reach, 0.0, base.y + aim.y * reach)
 static func _soles(tex: Texture2D) -> Vector4:
 	var id: int = tex.get_rid().get_id()
 	if _sole_at.has(id):
@@ -572,8 +581,9 @@ static func _soles(tex: Texture2D) -> Vector4:
 	var lx: float = ls / float(ln)
 	var rx: float = rs / float(rn)
 	if absf(rx - lx) < 0.5:
-		lx = float(min_x) + 0.5
-		rx = float(max_x) + 0.5
+		var mid_foot: float = (lx + rx) * 0.5
+		lx = mid_foot
+		rx = mid_foot
 	return _keep(id, Vector4(lx, float(ly + 1), rx, float(ry + 1)))
 
 static func _keep(id: int, sole: Vector4) -> Vector4:
