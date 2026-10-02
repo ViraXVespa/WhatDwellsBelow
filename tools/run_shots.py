@@ -303,8 +303,8 @@ def main(argv: list[str] | None = None) -> int:
     text = "\n".join(lines) + "\n"
     summary.write_text(text, encoding="utf-8")
     if args.json:
-        print(json.dumps({"band": res["band"], "status": res["status"], "png": rel(root, png), "frames": frames,
-                          "checks": flow.get("checks", []), "fail": flow.get("fail", ""), "summary": rel(root, summary)}))
+        agent_log.print_json({"band": res["band"], "status": res["status"], "png": rel(root, png), "frames": frames,
+                              "checks": flow.get("checks", []), "fail": flow.get("fail", ""), "summary": rel(root, summary)})
     else:
         sys.stdout.write(text)
     return 0 if res["band"] != "fail" else 1

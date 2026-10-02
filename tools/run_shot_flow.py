@@ -131,7 +131,7 @@ def run_one(root: Path, name: str, flow: dict, args, out_root: Path) -> dict:
             bdir.mkdir()
             for png in base.glob("[0-9]*.png"):
                 shutil.copyfile(png, bdir / png.name)
-            rows = shot_diff.compare_dirs(bdir, tmp, args.tol, fdir / "diff")
+            rows = shot_diff.compare_dirs(bdir, tmp, max(args.tol, int(flow.get("tol", 0))), fdir / "diff", [tuple(m) for m in flow.get("mask", [])])
             row["diff_status"] = shot_diff.verdict(rows, args.max_ratio)
             row["diff"] = [{k: r.get(k) for k in ("name", "status", "changed_px", "ratio", "bbox")} for r in rows]
             shutil.rmtree(tmp)
@@ -214,7 +214,7 @@ def main(argv: list[str] | None = None) -> int:
     if not args.dry_run:
         summary.write_text("\n".join(lines + [res]) + "\n", encoding="utf-8")
     if args.json:
-        print(json.dumps({"status": status, "flows": rows}))
+        agent_log.print_json({"status": status, "flows": rows})
     else:
         print("\n".join(lines + [res]))
     return agent_log.exit_code(status)

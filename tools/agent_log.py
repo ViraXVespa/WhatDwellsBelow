@@ -109,6 +109,12 @@ def fail(msg: str, code: int = 2) -> "None":
     raise SystemExit(code)
 
 
+def print_json(obj: dict) -> None:
+    """Print obj as the one JSON object of a --json run (restores stdout when --json diverted it)."""
+    if not _json_print(obj):
+        print(json.dumps(obj))
+
+
 def _err(msg: str) -> None:
     print(f"error: {msg}", file=sys.stderr)
     _json_print({"status": "FAIL", "error": msg})

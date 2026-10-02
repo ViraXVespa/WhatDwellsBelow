@@ -151,8 +151,8 @@ def main(argv: list[str] | None = None) -> int:
                                 problems=len(problems), flows=len(flows))
     summary.write_text("\n".join(lines + [res]) + "\n", encoding="utf-8")
     if args.json:
-        print(json.dumps({"status": status, "states": states, "gaps": gaps, "new": new, "problems": problems,
-                          "covered": covered}))
+        agent_log.print_json({"status": status, "states": states, "gaps": gaps, "new": new, "problems": problems,
+                              "covered": covered})
     else:
         print("\n".join(lines + [res]))
     return agent_log.exit_code(status)

@@ -272,7 +272,10 @@ def main(argv: list[str] | None = None) -> int:
     d = agent_log.ensure_agent_log_dir("dupes", root)
     (d / "summary.txt").write_text("\n".join(lines + [res]) + "\n", encoding="utf-8")
     (d / "rows.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
-    print(json.dumps({"status": "INFO", "counts": cnt, "rows": rows}) if args.json else "\n".join(lines + [res]))
+    if args.json:
+        agent_log.print_json({"status": "INFO", "counts": cnt, "rows": rows})
+    else:
+        print("\n".join(lines + [res]))
     return 0
 
 
