@@ -43,6 +43,9 @@ tools/move_script_cluster.py
 tools/list_oversize_docs.py
 tools/build_changelog.py
 tools/check_tool_docs.py
+tools/check_tool_cli.py
+tools/repo_lib.py
+tools/gd_lib.py
 AGENTS.md
 BOT.md
 .github/workflows/bot-gate.yml

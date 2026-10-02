@@ -1,131 +1,83 @@
 #!/usr/bin/env python3
-"""Session-keyed agent log paths for Python runners.
+"""Run helpers for every tools/*.py: repo root, std CLI, RESULT line, summary files.
 
-Resolve order: WDB_AGENT_SESSION, else newest updates.jsonl under
-GROK_HOME/sessions/<url-encoded-repo-cwd>/ (same layout as pack).
-No session -> raise. Never write a shared _logs/<job>/ singleton.
+Contract (see design/tools.md): argparse, --root, --dry-run on writers, --json on
+reports, ASCII output, repo-relative POSIX paths, one final line
+`RESULT <PASS|FAIL|INFO> k=v ... summary=<rel>`, exit 0 ok / 1 findings / 2 usage.
+Summaries go to `_logs/<job>/summary.txt` (gitignored). No session keys.
+
+    python3 tools/agent_log.py <job>     # prints dir/summary for a job, makes the dir
 """
 from __future__ import annotations
 
-import os
+import argparse
+import json
 import re
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import quote
 
-_SESSION_KEY = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 _JOB_KEY = re.compile(r"^[A-Za-z0-9._-]+$")
-_SESSION_FILES = (
-    "summary.json",
-    "signals.json",
-    "updates.jsonl",
-    "chat_history.jsonl",
-    "system_prompt.txt",
-    "prompt_context.json",
-)
+STATUSES = ("PASS", "FAIL", "INFO")
 
 
 def repo_root(hint: str | Path | None = None) -> Path:
+    """Walk up from hint, this file, then cwd to the dir holding project.godot."""
+    starts: list[Path] = []
     if hint:
-        cand = Path(hint).expanduser().resolve()
-        if (cand / "project.godot").is_file():
-            return cand
-    here = Path(__file__).resolve().parent.parent
-    if (here / "project.godot").is_file():
-        return here
-    cur = Path.cwd().resolve()
-    for parent in (cur, *cur.parents):
-        if (parent / "project.godot").is_file():
-            return parent
+        starts.append(Path(hint).expanduser().resolve())
+    starts += [Path(__file__).resolve().parent, Path.cwd().resolve()]
+    for start in starts:
+        here = start if start.is_dir() else start.parent
+        for cand in (here, *here.parents):
+            if (cand / "project.godot").is_file():
+                return cand
     raise FileNotFoundError("agent_log: repo root not found (no project.godot)")
 
 
-def grok_home() -> Path:
-    raw = os.environ.get("GROK_HOME", "").strip()
-    if raw:
-        return Path(raw).expanduser().resolve()
-    return (Path.home() / ".grok").resolve()
+def rel(root: Path | str, path: Path | str) -> str:
+    try:
+        return Path(path).resolve().relative_to(Path(root).resolve()).as_posix()
+    except ValueError:
+        return Path(path).as_posix()
 
 
-def encode_cwd(root: Path) -> str:
-    return quote(str(root.resolve()), safe="")
+def std_parser(description: str, *, writes: bool = False, json_out: bool = False) -> argparse.ArgumentParser:
+    ap = argparse.ArgumentParser(description=description)
+    ap.add_argument("--root", default=None, help="Repo root (default: auto-discovered).")
+    if writes:
+        ap.add_argument("--dry-run", dest="dry_run", action="store_true", help="Print what would change; write nothing.")
+    if json_out:
+        ap.add_argument("--json", dest="json", action="store_true", help="Print one JSON object instead of text.")
+    return ap
 
 
-def looks_like_session(path: Path) -> bool:
-    if not path.is_dir():
-        return False
-    return any((path / name).is_file() for name in _SESSION_FILES)
+def resolve_root(args_or_hint: object = None) -> Path:
+    hint = args_or_hint if isinstance(args_or_hint, (str, Path)) else getattr(args_or_hint, "root", None)
+    return repo_root(hint)
 
 
-def session_root(root: Path) -> Path:
-    sessions = grok_home() / "sessions"
-    direct = sessions / encode_cwd(root)
-    if direct.is_dir():
-        return direct
-    if sessions.is_dir():
-        want = root.resolve()
-        for child in sessions.iterdir():
-            marker = child / ".cwd"
-            if not marker.is_file():
-                continue
-            try:
-                body = marker.read_text(encoding="utf-8").strip()
-            except OSError:
-                continue
-            if not body:
-                continue
-            try:
-                got = Path(body).expanduser().resolve()
-            except OSError:
-                continue
-            if got == want:
-                return child
-    return direct
+def fail(msg: str, code: int = 2) -> "None":
+    print(f"error: {msg}", file=sys.stderr)
+    raise SystemExit(code)
 
 
-def _mtime(path: Path) -> datetime:
-    return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+def result_line(status: str, summary: str | None = None, **kv: object) -> str:
+    if status not in STATUSES:
+        raise ValueError(f"agent_log: status must be one of {STATUSES}")
+    parts = ["RESULT", status] + [f"{k}={v}" for k, v in kv.items() if v is not None]
+    if summary:
+        parts.append(f"summary={summary}")
+    return " ".join(parts)
 
 
-def inferred_session_id(root: Path) -> str:
-    base = session_root(root)
-    if not base.is_dir():
-        return ""
-    best_id = ""
-    best_time = datetime.min.replace(tzinfo=timezone.utc)
-    for child in base.iterdir():
-        if not looks_like_session(child):
-            continue
-        updates = child / "updates.jsonl"
-        when = _mtime(updates) if updates.is_file() else _mtime(child)
-        if when >= best_time:
-            best_time = when
-            best_id = child.name
-    return best_id
-
-
-def agent_session(root: Path | None = None) -> str:
-    base = repo_root(root) if root is not None else repo_root()
-    explicit = os.environ.get("WDB_AGENT_SESSION", "").strip()
-    if explicit:
-        if not _SESSION_KEY.fullmatch(explicit):
-            raise ValueError("agent_log: WDB_AGENT_SESSION is not a usable folder key")
-        return explicit
-    inferred = inferred_session_id(base)
-    if inferred and _SESSION_KEY.fullmatch(inferred):
-        return inferred
-    raise FileNotFoundError(
-        "agent_log: no session key (set WDB_AGENT_SESSION or run inside a Grok session for this repo)"
-    )
+def exit_code(status: str) -> int:
+    return 1 if status == "FAIL" else 0
 
 
 def agent_log_dir(job: str, root: Path | None = None) -> Path:
     if not _JOB_KEY.fullmatch(job):
         raise ValueError("agent_log: bad job name")
-    base = repo_root(root) if root is not None else repo_root()
-    session = agent_session(base)
-    return (base / "_logs" / job).resolve()
+    return (repo_root(root) / "_logs" / job).resolve()
 
 
 def agent_summary_path(job: str, root: Path | None = None) -> Path:
@@ -138,45 +90,68 @@ def ensure_agent_log_dir(job: str, root: Path | None = None) -> Path:
     return path
 
 
+def write_summary(job: str, root: Path, body: str) -> Path:
+    path = agent_summary_path(job, root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(body.rstrip("\n") + "\n", encoding="utf-8")
+    return path
+
+
+def finish(
+    job: str,
+    root: Path,
+    body: str,
+    status: str,
+    *,
+    args: object = None,
+    legacy: bool = True,
+    write: bool = True,
+    **kv: object,
+) -> int:
+    """Write the summary, print body + legacy line + final RESULT, return the exit code.
+
+    With --json (args.json) prints one JSON object and nothing else.
+    """
+    summary_rel = None
+    path = None
+    if write:
+        summary_rel = f"_logs/{job}/summary.txt"
+        res = result_line(status, summary_rel, **kv)
+        path = write_summary(job, root, body.rstrip("\n") + "\n" + res if body else res)
+    else:
+        res = result_line(status, None, **kv)
+    if getattr(args, "json", False):
+        obj = {"status": status, "summary": summary_rel, **{k: v for k, v in kv.items()}}
+        print(json.dumps(obj, sort_keys=False))
+    else:
+        if body:
+            print(body.rstrip("\n"))
+        if legacy and path is not None:
+            print(f"Summary -> {path}")
+        print(res)
+    return exit_code(status)
+
+
 def main(argv: list[str] | None = None) -> int:
-    args = list(sys.argv[1:] if argv is None else argv)
-    job = ""
-    hint = ""
-    i = 0
-    while i < len(args):
-        a = args[i]
-        if a in ("-Job", "--job") and i + 1 < len(args):
-            job = args[i + 1]
-            i += 2
-            continue
-        if a in ("-Root", "--root") and i + 1 < len(args):
-            hint = args[i + 1]
-            i += 2
-            continue
-        if not a.startswith("-") and not job:
-            job = a
-        i += 1
+    ap = std_parser("Print (and create) the _logs/<job> directory for a job.")
+    ap.add_argument("job", nargs="?", default="", help="Job name, e.g. build-gate.")
+    ap.add_argument("--job", dest="job_opt", default="", help="Same as the positional job.")
+    args = ap.parse_args(argv)
+    job = args.job_opt or args.job
     try:
-        root = repo_root(hint or None)
-        session = agent_session(root)
-        print(f"session={session}")
-        if job:
-            directory = ensure_agent_log_dir(job, root)
-            summary = directory / "summary.txt"
-            print(f"job={job}")
-            print(f"dir=_logs/{job}")
-            print(f"summary=_logs/{job}/summary.txt")
-        return 0
+        root = resolve_root(args)
+        if not job:
+            print(result_line("INFO", root=".", logs="_logs"))
+            return 0
+        ensure_agent_log_dir(job, root)
     except (OSError, ValueError) as exc:
-        print(str(exc))
-        return 2
+        fail(str(exc))
+    print(f"job={job}")
+    print(f"dir=_logs/{job}")
+    print(f"summary=_logs/{job}/summary.txt")
+    print(result_line("INFO", f"_logs/{job}/summary.txt", job=job))
+    return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-def rel(root: Path, path: Path | str) -> str:
-    try:
-        return Path(path).resolve().relative_to(Path(root).resolve()).as_posix()
-    except ValueError:
-        return Path(path).as_posix()

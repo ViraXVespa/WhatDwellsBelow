@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Shared markdown formatting helpers for surgical doc edits.
 
-Used by bot_opt, code_map_lib, patch_code_map, and doc_patch.
+Used by bot_opt, code_map_lib, patch_code_map, doc_patch, and the tool CLIs.
+Single home for text I/O: read_text (BOM/EOL aware), detect_eol, write_text (EOL kept).
 Not a markdown engine, CommonMark parser, or doc framework.
 """
 from __future__ import annotations
@@ -158,3 +159,51 @@ def join_lines_keep_trailing(raw: str, file_lines: list[str]) -> str:
     if raw.endswith("\n") and not text.endswith("\n"):
         text += "\n"
     return text
+
+
+def detect_eol(raw: bytes | str) -> str:
+    """CRLF if the first line break is CRLF, else LF."""
+    if isinstance(raw, bytes):
+        i = raw.find(b"\n")
+        return "\r\n" if i > 0 and raw[i - 1:i] == b"\r" else "\n"
+    i = raw.find("\n")
+    return "\r\n" if i > 0 and raw[i - 1] == "\r" else "\n"
+
+
+def read_text(path: Path | str, *, with_meta: bool = False):
+    """Decode UTF-8 (BOM stripped), return LF text. with_meta -> (text, eol, bom)."""
+    raw = Path(path).read_bytes()
+    bom = raw.startswith(b"\xef\xbb\xbf")
+    if bom:
+        raw = raw[3:]
+    text = force_lf(raw.decode("utf-8"))
+    if with_meta:
+        return text, detect_eol(raw), bom
+    return text
+
+
+def write_text(
+    path: Path | str,
+    text: str,
+    *,
+    eol: str = "keep",
+    bom: bool | None = None,
+    mkdir: bool = False,
+) -> None:
+    """Write UTF-8. eol: keep (existing file's, else CRLF repo default), crlf, lf.
+
+    bom: None keeps the existing file's BOM. A trailing newline is ensured.
+    """
+    path = Path(path)
+    prior = path.read_bytes() if path.is_file() else b""
+    if eol == "keep":
+        eol = "crlf" if not prior else ("crlf" if detect_eol(prior) == "\r\n" else "lf")
+    if bom is None:
+        bom = prior.startswith(b"\xef\xbb\xbf")
+    text = ensure_trailing_newline(force_lf(maybe_gd_indent(text, path)))
+    if eol == "crlf":
+        text = text.replace("\n", "\r\n")
+    if mkdir:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    data = text.encode("utf-8")
+    path.write_bytes((b"\xef\xbb\xbf" if bom else b"") + data)
