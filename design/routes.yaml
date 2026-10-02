@@ -68,6 +68,9 @@ gates:
   tools:
     file: design/tools.md
     when: run_add_or_document_a_tool
+  tools_lint:
+    file: design/tools-lint.md
+    when: size_dupe_or_dead_code_tool
   doc_library:
     file: design/doc-library.md
     when: doc_edit_tool

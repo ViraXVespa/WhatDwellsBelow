@@ -7,22 +7,24 @@ const LOGO_GROK := "res://assets/ui/logo_grok.png"
 const LOGO_XAI := "res://assets/ui/logo_xai.png"
 const TAG := "res://assets/ui/splash_shamelessly.png"
 
+const ThemeS := preload("res://scripts/ui/theme.gd")
+
 var _done := false
 var fade: ColorRect
 var card: Control
 var _t := 0.0
 
 func _ready() -> void:
-	_fill(self)
+	ThemeS.fill(self)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var void_bg := ColorRect.new()
-	_fill(void_bg)
+	ThemeS.fill(void_bg)
 	void_bg.color = Color(0.03, 0.01, 0.05, 1)
 	add_child(void_bg)
 
 	var portrait := TextureRect.new()
-	_fill(portrait)
+	ThemeS.fill(portrait)
 	portrait.anchor_right = 0.46
 	portrait.offset_right = 0.0
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -33,7 +35,7 @@ func _ready() -> void:
 	add_child(portrait)
 
 	var shade := ColorRect.new()
-	_fill(shade)
+	ThemeS.fill(shade)
 	shade.anchor_left = 0.46
 	shade.offset_left = 0.0
 	shade.color = Color(0.03, 0.01, 0.05, 0.82)
@@ -77,7 +79,7 @@ func _ready() -> void:
 	card.add_child(_lab("A / Start  to continue", 16, Color(0.7, 0.68, 0.74, 0.8)))
 
 	fade = ColorRect.new()
-	_fill(fade)
+	ThemeS.fill(fade)
 	fade.color = Color(0, 0, 0, 1)
 	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(fade)
@@ -92,11 +94,6 @@ func _ready() -> void:
 
 func _wake() -> void:
 	App.wake_web_pad()
-
-func _fill(c: Control) -> void:
-	c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	c.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	c.grow_vertical = Control.GROW_DIRECTION_BOTH
 
 func _mark(path: String, caption: String) -> VBoxContainer:
 	var box := VBoxContainer.new()

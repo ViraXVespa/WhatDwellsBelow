@@ -223,8 +223,8 @@ def citations(text: str) -> list[str]:
     return found
 
 
-def job_table_paths(text: str) -> list[str]:
-    paths: list[str] = []
+def _job_lines(text: str):
+    """Data rows of the job tables (after a JOB_HEAD line, up to the first non-table line, dividers skipped)."""
     in_job = False
     for line in text.splitlines():
         if JOB_HEAD_RE.match(line):
@@ -237,6 +237,12 @@ def job_table_paths(text: str) -> list[str]:
             continue
         if JOB_DIV_RE.match(line):
             continue
+        yield line
+
+
+def job_table_paths(text: str) -> list[str]:
+    paths: list[str] = []
+    for line in _job_lines(text):
         paths.extend(citations(line))
     return paths
 
@@ -660,18 +666,7 @@ LOAD_BAN_NEEDLE = (
 
 def job_table_rows(text: str) -> list[tuple[str, str]]:
     rows: list[tuple[str, str]] = []
-    in_job = False
-    for line in text.splitlines():
-        if JOB_HEAD_RE.match(line):
-            in_job = True
-            continue
-        if not in_job:
-            continue
-        if not line.startswith("|"):
-            in_job = False
-            continue
-        if JOB_DIV_RE.match(line):
-            continue
+    for line in _job_lines(text):
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         if len(cells) >= 2:
             rows.append((cells[0], cells[1]))

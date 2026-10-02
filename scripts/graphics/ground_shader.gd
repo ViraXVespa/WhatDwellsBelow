@@ -5,6 +5,24 @@ extends Object
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 
+## Bilinear light-buffer tap shared with wall_shader. Text only (no function): ground inlines it, wall wraps it
+## in tap_lit(xz). Needs light_tex / light_origin / light_span uniforms and a vec2 `xz` in scope.
+const TAP_BODY := """
+	vec2 span = max(light_span, vec2(0.001));
+	vec2 luv = clamp((xz - light_origin) / span, vec2(0.0), vec2(1.0));
+	ivec2 ts = max(textureSize(light_tex, 0), ivec2(1));
+	vec2 max_p = max(vec2(ts) - vec2(1.0001), vec2(0.0));
+	vec2 p = clamp(luv * vec2(ts) - vec2(0.5), vec2(0.0), max_p);
+	vec2 fr = fract(p);
+	ivec2 i0 = ivec2(floor(p));
+	ivec2 i1 = min(i0 + ivec2(1), ts - ivec2(1));
+	vec3 s00 = texelFetch(light_tex, i0, 0).rgb;
+	vec3 s10 = texelFetch(light_tex, ivec2(i1.x, i0.y), 0).rgb;
+	vec3 s01 = texelFetch(light_tex, ivec2(i0.x, i1.y), 0).rgb;
+	vec3 s11 = texelFetch(light_tex, i1, 0).rgb;
+"""
+const TAP_MIX := "mix(mix(s00, s10, fr.x), mix(s01, s11, fr.x), fr.y);\n"
+
 static var _sh: Shader
 
 static func shader() -> Shader:
@@ -51,20 +69,7 @@ void fragment() {
 	vec2 uv = fract(xz * uv_scale + uv_off);
 	vec3 c = texture(albedo_tex, uv).rgb;
 	float worn = mix(1.0, mix(0.78, 1.0, h), clamp(wear, 0.0, 1.0));
-	vec2 span = max(light_span, vec2(0.001));
-	vec2 luv = clamp((xz - light_origin) / span, vec2(0.0), vec2(1.0));
-	ivec2 ts = max(textureSize(light_tex, 0), ivec2(1));
-	vec2 max_p = max(vec2(ts) - vec2(1.0001), vec2(0.0));
-	vec2 p = clamp(luv * vec2(ts) - vec2(0.5), vec2(0.0), max_p);
-	vec2 fr = fract(p);
-	ivec2 i0 = ivec2(floor(p));
-	ivec2 i1 = min(i0 + ivec2(1), ts - ivec2(1));
-	vec3 s00 = texelFetch(light_tex, i0, 0).rgb;
-	vec3 s10 = texelFetch(light_tex, ivec2(i1.x, i0.y), 0).rgb;
-	vec3 s01 = texelFetch(light_tex, ivec2(i0.x, i1.y), 0).rgb;
-	vec3 s11 = texelFetch(light_tex, i1, 0).rgb;
-	vec3 lit = mix(mix(s00, s10, fr.x), mix(s01, s11, fr.x), fr.y);
-	ALBEDO = c * tint * quilt_tint * worn * lit;
+""" + TAP_BODY + "	vec3 lit = " + TAP_MIX + """	ALBEDO = c * tint * quilt_tint * worn * lit;
 }
 """
 	_sh = sh
@@ -73,7 +78,7 @@ void fragment() {
 static func material(tex_path: String, fallback: Color, tint: Color = Color.WHITE) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = shader()
-	var albedo: Texture2D = _albedo(tex_path, fallback)
+	var albedo: Texture2D = albedo_tex(tex_path, fallback)
 	var px: float = float(maxi(albedo.get_width(), 1))
 	var density: float = T.GROUND_PX_PER_M
 	var hash_m: float = T.GROUND_HASH_M
@@ -101,7 +106,7 @@ static func material(tex_path: String, fallback: Color, tint: Color = Color.WHIT
 	LightRt.bind(mat)
 	return mat
 
-static func _albedo(tex_path: String, fallback: Color) -> Texture2D:
+static func albedo_tex(tex_path: String, fallback: Color) -> Texture2D:
 	if ResourceLoader.exists(tex_path):
 		var loaded: Texture2D = load(tex_path) as Texture2D
 		if loaded != null:

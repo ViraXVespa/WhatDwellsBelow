@@ -12,6 +12,7 @@ const Util := preload("res://scripts/ui/pause_menu/menu_util.gd")
 const View := preload("res://scripts/ui/pause_menu/pause_menu_view.gd")
 const Pad := preload("res://scripts/ui/menu_pad.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
+const UiSession := preload("res://scripts/ui/ui_session.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 const Disp := preload("res://scripts/display_mode.gd")
@@ -167,9 +168,7 @@ func _system() -> void:
 	PauseSettings.build(self)
 
 func _st(msg: String) -> void:
-	if status:
-		status.text = msg
-	App.sfx("ui")
+	UiSession.status(self, msg)
 
 func _settings_host() -> Node:
 	return box.get_node_or_null("settings_host") if box else null

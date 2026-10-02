@@ -13,6 +13,12 @@ static func text_scale() -> float:
 static func font_px(size: int) -> int:
 	return UiText.font_px(size)
 
+## Full-rect anchors with both-way grow (overlay / backdrop fill).
+static func fill(c: Control) -> void:
+	c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	c.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	c.grow_vertical = Control.GROW_DIRECTION_BOTH
+
 static func lab(
 	t: String,
 	size: int,

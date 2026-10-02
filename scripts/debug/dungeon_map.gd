@@ -6,33 +6,20 @@ extends Object
 
 const FLAG := "--wdb-dungeon-map-smoke"
 const Dump := preload("res://scripts/debug/dungeon_map/map_dump.gd")
+const CliArgs := preload("res://scripts/debug/cli_args.gd")
 
 static var _cached := -1
 
 static func _flag_on() -> bool:
-	var user: PackedStringArray = OS.get_cmdline_user_args()
-	if user.size() > 0:
-		return FLAG in user
-	return FLAG in OS.get_cmdline_args()
+	return CliArgs.has(FLAG)
 
 static func active() -> bool:
 	if _cached < 0:
 		_cached = 1 if _flag_on() else 0
 	return _cached == 1
 
-static func _args() -> PackedStringArray:
-	var user: PackedStringArray = OS.get_cmdline_user_args()
-	if user.size() > 0:
-		return user
-	return OS.get_cmdline_args()
-
 static func _arg_int(key: String, fallback: int) -> int:
-	var prefix: String = key + "="
-	for a: String in _args():
-		var s: String = str(a)
-		if s.begins_with(prefix):
-			return int(s.substr(prefix.length()))
-	return fallback
+	return CliArgs.int_arg(key, fallback)
 
 static func run_seed() -> int:
 	var n: int = _arg_int("--wdb-dungeon-map-seed", 42)

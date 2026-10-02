@@ -21,10 +21,10 @@ func _ready() -> void:
 	if _kind == "":
 		_kind = "web"
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	_fill(self)
+	ThemeS.fill(self)
 
 	var bg := ColorRect.new()
-	_fill(bg)
+	ThemeS.fill(bg)
 	bg.color = Color(0.06, 0.05, 0.045, 1)
 	add_child(bg)
 
@@ -181,8 +181,3 @@ func _size_btn(b: Button) -> void:
 	var sc: float = ThemeS.text_scale()
 	b.custom_minimum_size = Vector2(280.0 * sc, 56.0 * sc)
 	b.focus_mode = Control.FOCUS_ALL
-
-func _fill(c: Control) -> void:
-	c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	c.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	c.grow_vertical = Control.GROW_DIRECTION_BOTH

@@ -6,6 +6,7 @@ That directory is gitignored. These tools never touch SaveStore.
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
@@ -158,3 +159,34 @@ def frame_paths(model: str, facing: str, anim: str) -> list[Path]:
 
 def write_text(path: Path, body: str) -> None:
     md.write_utf8(path, body, mkdir=True)
+
+
+def brief_args(ap: argparse.ArgumentParser, stem: str) -> argparse.Namespace:
+    """Add --review, --out-md, --out-json (defaults <stem>.md/.json) to the tool's std_parser and parse."""
+    ap.add_argument("--review", type=Path, default=REVIEW_PATH)
+    ap.add_argument("--out-md", type=Path, default=REVIEW_DIR / f"{stem}.md")
+    ap.add_argument("--out-json", type=Path, default=REVIEW_DIR / f"{stem}.json")
+    return ap.parse_args()
+
+
+def load_with_missing(path: Path) -> tuple[dict, list[str]]:
+    """(review, missing notes): an absent file gives an empty review and one note."""
+    if not path.is_file():
+        return {"v": 1, "clips": {}}, [f"no review file at {path}"]
+    return load_review(path), []
+
+
+def add_missing(lines: list[str], missing: list[str]) -> None:
+    """Append the Missing review store section when there are notes."""
+    if missing:
+        lines.extend(["## Missing review store", ""])
+        for line in missing:
+            lines.append(f"- {line}")
+        lines.append("")
+
+
+def write_brief(args: argparse.Namespace, body: str, payload: dict) -> None:
+    write_text(args.out_md, body)
+    write_text(args.out_json, json.dumps(payload, indent="\t"))
+    print(f"wrote {args.out_md}")
+    print(f"wrote {args.out_json}")

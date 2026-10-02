@@ -2,6 +2,8 @@
 
 ## Web-only virtual pad state. TouchHud writes sticks/buttons; Pad reads them.
 
+const WebPad := preload("res://scripts/web_pad.gd")
+
 const ACTIONS: PackedStringArray = [
 	"attack", "special", "dash", "interact", "pause",
 	"map_view", "potion", "food",
@@ -103,12 +105,7 @@ static func clear_world() -> void:
 	_attack_finger = false
 
 static func _idle_sticks() -> void:
-	move = Vector2.ZERO
-	aim = Vector2.ZERO
-	move_live = false
-	down.clear()
-	attack_latch = false
-	_attack_finger = false
+	clear_world()
 
 static func _play_surface() -> bool:
 	var loop := Engine.get_main_loop()
@@ -139,13 +136,4 @@ static func _pad_connected() -> bool:
 		return true
 	if not OS.has_feature("web"):
 		return false
-	var raw := str(JavaScriptBridge.eval("""
-		(function () {
-			var pads = navigator.getGamepads ? navigator.getGamepads() : [];
-			for (var i = 0; i < pads.length; i++) {
-				if (pads[i]) return "1";
-			}
-			return "0";
-		})();
-	""", true))
-	return raw == "1"
+	return WebPad.js_pad_any()

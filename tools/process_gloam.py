@@ -4,7 +4,7 @@ from pathlib import Path
 from PIL import Image, ImageOps, ImageFilter
 import math
 import shutil
-from sprite_lib import dist  # noqa: E402
+from sprite_lib import dist, fit_box  # noqa: E402
 import sys
 
 _TOOLS = Path(__file__).resolve().parent
@@ -51,19 +51,7 @@ def key(im: Image.Image) -> Image.Image:
 
 
 def fit(im: Image.Image, canvas: int, pad: int = 8) -> Image.Image:
-    bbox = im.getbbox()
-    if not bbox:
-        raise SystemExit("empty after key")
-    cropped = im.crop(bbox)
-    box = Image.new("RGBA", (cropped.size[0] + pad * 2, cropped.size[1] + pad * 2), (0, 0, 0, 0))
-    box.paste(cropped, (pad, pad), cropped)
-    scale = min(canvas / box.size[0], canvas / box.size[1])
-    nw = max(1, int(box.size[0] * scale))
-    nh = max(1, int(box.size[1] * scale))
-    resized = box.resize((nw, nh), Image.Resampling.LANCZOS)
-    out = Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
-    out.paste(resized, ((canvas - nw) // 2, (canvas - nh) // 2), resized)
-    return out
+    return fit_box(im, canvas, pad, resample=Image.Resampling.LANCZOS, to_int=int, empty_exit="empty after key")
 
 
 def sprite(name: str, dest: Path, canvas: int = 256) -> Image.Image:

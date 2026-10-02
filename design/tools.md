@@ -3,7 +3,7 @@
 Status: binding  
 Read when: running, adding, or documenting a tool (Bot, web/chat, or Build)  
 
-Single source for what each tool is, which surface runs it, and its gotchas. Other docs say "run X at step N" and point here. Windows runners and release tools: `tools-build.md`. Media pipeline: `tools-media.md`. Build-only rules (Length, here-strings, locks): `pc-offload.md`. `python3 tools/check_tool_docs.py` keeps these tables in step with `tools/` and `tools/bot_allow.txt`.
+Single source for what each tool is, which surface runs it, and its gotchas. Other docs say "run X at step N" and point here. Inventory, size, dupe and dead-code tools: `tools-lint.md`. Windows runners and release tools: `tools-build.md`. Media pipeline: `tools-media.md`. Build-only rules (Length, here-strings, locks): `pc-offload.md`. `python3 tools/check_tool_docs.py` keeps these tables in step with `tools/` and `tools/bot_allow.txt`.
 
 Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if the Bot may run the tool (its `tools/` path must be allowed by `tools/bot_allow.txt`, globs such as `tools/*` count; A=N is fine either way).
 
@@ -73,15 +73,4 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 
 ### Inventory and lint
 
-| Tool | Does | Surf | Use | A |
-|---|---|---|---|---|
-| `file_stat.py` | Bytes, BOM, CRLF/LF, indent for a path or glob (verify a split kept them). Summary: `file-stat`. | BD | `--help` | Y |
-| `summarize_scripts.py` | Func inventory per `.gd` (`--over-kb`, `--top-funcs`) | BD | `--help` | Y |
-| `lint_hostify.py` | Advisory scan for `:=`/load inference and host pitfalls; always exits 0 (RESULT INFO) | BD | `--help` | Y |
-| `list_unused_funcs.py` | Dead-code report (`--limit N`). **`--apply` DELETES funcs**: only when the opt item says so; check `call_deferred`/string refs first. | B | `--help` | Y |
-| `move_script_cluster.py` | `git mv` a facade + helpers and rewrite `res://`, bare paths and renamed basenames repo-wide, incl. tools, skills, root docs (`--to-dir`, `--plan plan.json` batch, `--map map.json` exact old->new, `--list-cluster FACADE`, `--dry-run`, `--wrapper`). Only for a user-named relocate job; can touch non-allowlisted docs. | BD | `--help` | Y |
-| `repo_lib.py` | Git, allowlist, version and changelog-label helpers shared by tools | BWD | module docstring (no `--help`) | Y |
-| `gd_lib.py` | `.gd` func parser shared by `split_funcs`, `summarize_scripts`, `show_func`, `doc_patch` | BD | module docstring (no `--help`) | Y |
-| `agent_log.py` | Run helpers: `std_parser`, `resolve_root`, `finish`/`emit_result` (RESULT line), `_logs/<job>` paths. CLI prints a job dir. | BD | `--help` | Y |
-| `next_changelog_label.py` | Shim -> `doc_patch.py next-label`, one release. Summary: `changelog-label`. | BD | `--help` | N |
-| `write_utf8_file.py` | Shim -> `doc_patch.py write` (`--path`, `--bom`, `--b64`), one release | BD | `--help` | Y |
+Moved to `tools-lint.md` (same columns): `file_stat`, `summarize_scripts`, `lint_hostify`, `list_dupes`, `list_unused_funcs`, `move_script_cluster`, and the shared libs `repo_lib`, `gd_lib`, `agent_log`, plus the two shims.

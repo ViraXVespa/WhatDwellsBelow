@@ -125,20 +125,3 @@ static func val_nudge(host, delta_i: int) -> void:
 		return
 	Grid.nudge_cat(host, delta_i)
 	val_paint(host)
-
-static func page_profiles(host) -> void:
-	host.status.text = "Unlimited named profiles. Saved under user://wdb_profiles/"
-	var le: LineEdit = LineEdit.new()
-	le.text = host.profile_name
-	le.custom_minimum_size = Vector2(360, 36)
-	le.focus_mode = Control.FOCUS_ALL
-	le.text_changed.connect(func(t): host.profile_name = t)
-	host.root_box.add_child(le)
-	host.root_box.add_child(host._btn("Save", func(): load("res://scripts/debug/debug_menu/menu_val.gd").save_profile(host); host.status.text = "Saved " + host.profile_name))
-	host.root_box.add_child(host._btn("Load", func(): load("res://scripts/debug/debug_menu/menu_val.gd").load_profile(host); host.status.text = "Loaded " + host.profile_name; host.page = "values"; host._rebuild()))
-	host.root_box.add_child(host._btn("Delete", func(): load("res://scripts/debug/debug_menu/menu_val.gd").delete_profile(host); host.status.text = "Deleted " + host.profile_name))
-	host.root_box.add_child(host._btn("Rename current to field", func(): load("res://scripts/debug/debug_menu/menu_val.gd").rename_profile(host); host.status.text = "Renamed"))
-	host.root_box.add_child(Label.new())
-	for n in load("res://scripts/debug/debug_menu/menu_val.gd").list_profiles():
-		var nm: String = str(n)
-		host.root_box.add_child(host._btn("Load " + nm, func(): host.profile_name = nm; load("res://scripts/debug/debug_menu/menu_val.gd").load_profile(host); host.status.text = "Loaded " + nm))

@@ -12,6 +12,9 @@ static func _near_stamp(w: int, h: int, x: int, y: int, r: int) -> void:
 	var y1: int = mini(h - 1, y + r)
 	var x0: int = maxi(0, x - r)
 	var x1: int = mini(w - 1, x + r)
+	_near_fill(w, x0, y0, x1, y1)
+
+static func _near_fill(w: int, x0: int, y0: int, x1: int, y1: int) -> void:
 	var yy: int = y0
 	while yy <= y1:
 		var row: int = yy * w
@@ -36,14 +39,7 @@ static func _near_build(grid: PackedByteArray, w: int, h: int, gap: int, rooms: 
 			var y0: int = maxi(0, int(rr["y"]) - r)
 			var x1: int = mini(w - 1, int(rr["x"]) + int(rr["w"]) - 1 + r)
 			var y1: int = mini(h - 1, int(rr["y"]) + int(rr["h"]) - 1 + r)
-			var yy: int = y0
-			while yy <= y1:
-				var row: int = yy * w
-				var xx: int = x0
-				while xx <= x1:
-					_near[row + xx] = 1
-					xx += 1
-				yy += 1
+			_near_fill(w, x0, y0, x1, y1)
 		return
 	var y: int = 1
 	while y < h - 1:
@@ -130,15 +126,6 @@ static func _axis_hugs(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Ve
 		heading = Vector2i(0, 1 if b.y > a.y else -1)
 	else:
 		return false
-	var ax0: int = int(ra["x"])
-	var ay0: int = int(ra["y"])
-	var ax1: int = ax0 + int(ra["w"])
-	var ay1: int = ay0 + int(ra["h"])
-	var bx0: int = int(rb["x"])
-	var by0: int = int(rb["y"])
-	var bx1: int = bx0 + int(rb["w"])
-	var by1: int = by0 + int(rb["h"])
-	var r: int = maxi(1, gap)
 	var use_near: bool = _near.size() == w * h
 	var x: int = a.x
 	var y: int = a.y
@@ -150,26 +137,7 @@ static func _axis_hugs(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Ve
 			return true
 		var i: int = y * w + x
 		if grid[i] != Hall.FLOOR and (not use_near or _near[i] != 0):
-			var y0: int = maxi(1, y - r)
-			var y1: int = mini(h - 2, y + r)
-			var x0: int = maxi(1, x - r)
-			var x1: int = mini(w - 2, x + r)
-			var yy: int = y0
-			var hit: bool = false
-			while yy <= y1 and not hit:
-				var row: int = yy * w
-				var xx: int = x0
-				while xx <= x1:
-					if xx != x or yy != y:
-						if grid[row + xx] == Hall.FLOOR:
-							var in_a: bool = xx >= ax0 and xx < ax1 and yy >= ay0 and yy < ay1
-							var in_b: bool = xx >= bx0 and xx < bx1 and yy >= by0 and yy < by1
-							if not in_a and not in_b:
-								hit = true
-								break
-					xx += 1
-				yy += 1
-			if hit:
+			if _cell_hugs(grid, w, h, x, y, gap, ra, rb):
 				return true
 		if x == b.x and y == b.y:
 			return false

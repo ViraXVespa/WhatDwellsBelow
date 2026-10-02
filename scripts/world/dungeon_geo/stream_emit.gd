@@ -4,6 +4,7 @@
 
 const T := preload("res://scripts/data/tunables.gd")
 const WallMesh: GDScript = preload("res://scripts/graphics/wall_mesh.gd")
+const Commit := preload("res://scripts/graphics/mesh_commit.gd")
 
 static var _floor_mesh: PlaneMesh
 
@@ -125,17 +126,7 @@ static func _loop_mesh(pieces: Array, fine_m: float) -> ArrayMesh:
 			uvs.append(Vector2(x, z))
 		for k in tris.size():
 			indices.append(base + int(tris[k]))
-	var mesh: ArrayMesh = ArrayMesh.new()
-	if verts.is_empty():
-		return mesh
-	var arrays: Array = []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = verts
-	arrays[Mesh.ARRAY_NORMAL] = norms
-	arrays[Mesh.ARRAY_TEX_UV] = uvs
-	arrays[Mesh.ARRAY_INDEX] = indices
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	return mesh
+	return Commit.commit(verts, norms, uvs, indices)
 
 static func _seg_dist(p: Vector2, o: Vector2, d: Vector2) -> float:
 	var l2: float = d.length_squared()

@@ -7,6 +7,7 @@ const Docs := preload("res://scripts/data/archives/docs.gd")
 const ArchView := preload("res://scripts/ui/archives_ui/ui_view.gd")
 const Act := preload("res://scripts/ui/archives_ui/ui_act.gd")
 const Split := preload("res://scripts/ui/split_menu.gd")
+const UiSession := preload("res://scripts/ui/ui_session.gd")
 const SplitView := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 
 var open := false
@@ -115,9 +116,7 @@ func _docs_of(e: Dictionary) -> PackedStringArray:
 	return Docs.names(e)
 
 func _st(msg: String) -> void:
-	if status:
-		status.text = msg
-	App.sfx("ui")
+	UiSession.status(self, msg)
 
 func _rebuild() -> void:
 	Split.rebuild(self)

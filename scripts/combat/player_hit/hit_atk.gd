@@ -8,7 +8,7 @@ const Fx := preload("res://scripts/combat/player_hit/hit_fx.gd")
 
 static func apply_special(host: Node) -> void:
 	var _fac = load("res://scripts/combat/player_hit.gd")
-	var extra: float = _fac._gear("atk_range")
+	var extra: float = App.gear("atk_range")
 	if App.weapon == "great_axe":
 		App.sfx("slam")
 		Fx.hit_circle(host, host.global_position, App.bal.slam_radius + extra, App.bal.axe_damage * App.bal.axe_slam_mult, false, true, "auto", true)
@@ -62,7 +62,7 @@ static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "
 	if xp == "magic":
 		_is_special = true
 	_fac.grant_hit_xp(xp)
-	var chance: float = App.bal.crit_chance + _fac._gear("crit_chance")
+	var chance: float = App.bal.crit_chance + App.gear("crit_chance")
 	var crit := can_crit and Combat.roll_crit(chance)
 	if "last_glance" in e:
 		e.last_glance = glance and not crit
@@ -70,7 +70,7 @@ static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "
 		e.take_hit(dmg, host.aim_dir, crit)
 	_fac._life_tap(host, e)
 	if App.tel:
-		var shown: float = dmg if not crit else dmg * (App.bal.crit_mult + _fac._gear("crit_dmg"))
+		var shown: float = dmg if not crit else dmg * (App.bal.crit_mult + App.gear("crit_dmg"))
 		App.tel.note_damage_dealt(shown, crit)
 		if host.atk_state == host.ATK_ACT or host.atk_state == host.ATK_WIND:
 			App.tel.spec_hit += 1

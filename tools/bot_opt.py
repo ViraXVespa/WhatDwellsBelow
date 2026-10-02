@@ -74,6 +74,19 @@ def format_files(files: list[str]) -> str:
     return ", ".join(md.tick_wrap(p) for p in files)
 
 
+def _lookup(items: list[Item], raw_id: str, action: str, lines: list[str]) -> Item | None:
+    """Item for raw_id, or None after appending the bad-id / not-found RESULT lines."""
+    item_id = norm_id(raw_id)
+    if item_id is None:
+        lines += ["", f"RESULT action={action} error=bad-id"]
+        return None
+    item = find_item(items, item_id)
+    if item is None:
+        lines.append("ids=" + ", ".join(it.item_id for it in items))
+        lines += ["", f"RESULT action={action} error=not-found id={item_id}"]
+    return item
+
+
 def _end(root: Path, args: argparse.Namespace, lines: list[str], echo: str | None) -> int:
     """Turn the trailing `RESULT k=v ...` line into agent_log.finish kv; error= means FAIL."""
     kv: dict[str, str] = {}
@@ -343,14 +356,8 @@ def main() -> int:
         return _end(root, args, lines, f"count={len(items)} pending={counts(items)['pending']}")
 
     if action == "show":
-        item_id = norm_id(args.show_id or "")
-        if item_id is None:
-            lines += ["", "RESULT action=show error=bad-id"]
-            return _end(root, args, lines, None)
-        item = find_item(items, item_id)
+        item = _lookup(items, args.show_id or "", "show", lines)
         if item is None:
-            lines.append("ids=" + ", ".join(it.item_id for it in items))
-            lines += ["", f"RESULT action=show error=not-found id={item_id}"]
             return _end(root, args, lines, None)
         lines.append("")
         lines.extend(item_lines(item, include_body=True))
@@ -384,14 +391,8 @@ def main() -> int:
         return _end(root, args, lines, f"added={item.item_id}")
 
     if action == "replace":
-        item_id = norm_id(args.replace or "")
-        if item_id is None:
-            lines += ["", "RESULT action=replace error=bad-id"]
-            return _end(root, args, lines, None)
-        item = find_item(items, item_id)
+        item = _lookup(items, args.replace or "", "replace", lines)
         if item is None:
-            lines.append("ids=" + ", ".join(it.item_id for it in items))
-            lines += ["", f"RESULT action=replace error=not-found id={item_id}"]
             return _end(root, args, lines, None)
         fields, ferr = note_fields(args, root)
         if ferr or fields is None:
@@ -415,15 +416,12 @@ def main() -> int:
             lines += ["", "RESULT action=status error=bad-status"]
             return _end(root, args, lines, None)
         id_raw, status_raw = raw.split("=", 1)
-        item_id = norm_id(id_raw)
         status = status_raw.strip().lower()
-        if item_id is None or status not in STATUSES:
+        if norm_id(id_raw) is None or status not in STATUSES:
             lines += ["", "RESULT action=status error=bad-status"]
             return _end(root, args, lines, None)
-        item = find_item(items, item_id)
+        item = _lookup(items, id_raw, "status", lines)
         if item is None:
-            lines.append("ids=" + ", ".join(it.item_id for it in items))
-            lines += ["", f"RESULT action=status error=not-found id={item_id}"]
             return _end(root, args, lines, None)
         item.status = status
         save(next_id, items)
@@ -433,16 +431,10 @@ def main() -> int:
         lines.append(result_line("status", items, extra=f"changed=1 id={item.item_id}"))
         return _end(root, args, lines, f"id={item.item_id} status={item.status}")
 
-    item_id = norm_id(args.remove or "")
-    if item_id is None:
-        lines += ["", "RESULT action=remove error=bad-id"]
-        return _end(root, args, lines, None)
-    item = find_item(items, item_id)
+    item = _lookup(items, args.remove or "", "remove", lines)
     if item is None:
-        lines.append("ids=" + ", ".join(it.item_id for it in items))
-        lines += ["", f"RESULT action=remove error=not-found id={item_id}"]
         return _end(root, args, lines, None)
-    new_items = [it for it in items if it.item_id != item_id]
+    new_items = [it for it in items if it.item_id != item.item_id]
     save(next_id, new_items)
     lines.append("")
     lines.extend(item_lines(item, include_body=False))

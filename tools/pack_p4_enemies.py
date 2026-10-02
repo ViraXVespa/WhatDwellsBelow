@@ -12,6 +12,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+from sprite_lib import fit_box
 
 CANVAS = 128
 PAD = 8
@@ -53,21 +54,8 @@ def key_bg(im: Image.Image) -> Image.Image:
 
 
 def fit_local(im: Image.Image) -> Image.Image:
-    bbox = im.getbbox()
-    if bbox is None:
-        return Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
-    cropped = im.crop(bbox)
-    box = Image.new("RGBA", (cropped.size[0] + PAD * 2, cropped.size[1] + PAD * 2), (0, 0, 0, 0))
-    box.paste(cropped, (PAD, PAD), cropped)
-    scale = min(CANVAS / box.size[0], CANVAS / box.size[1])
-    nw = max(1, int(round(box.size[0] * scale)))
-    nh = max(1, int(round(box.size[1] * scale)))
-    resized = box.resize((nw, nh), Image.Resampling.NEAREST)
-    out = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
-    ox = (CANVAS - nw) // 2
-    oy = max(0, min(CANVAS - nh, CANVAS - nh - 2))
-    out.paste(resized, (ox, oy), resized)
-    return out
+    return fit_box(im, CANVAS, PAD, oy=lambda nh: max(0, min(CANVAS - nh, CANVAS - nh - 2)))
+
 
 
 def pack_one(src: Path, dest_dir: Path) -> Path:

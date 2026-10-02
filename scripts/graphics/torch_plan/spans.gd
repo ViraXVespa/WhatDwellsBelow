@@ -74,19 +74,7 @@ static func _bin_near(cell: Vector2i) -> PackedInt32Array:
 	while dy <= 2:
 		var dx: int = -2
 		while dx <= 2:
-			var bucket: Variant = _bins.get(cell + Vector2i(dx, dy))
-			if not (bucket is Array):
-				dx += 1
-				continue
-			var arr: Array = bucket
-			var i: int = 0
-			while i < arr.size():
-				var pi: int = int(arr[i])
-				i += 1
-				if seen.has(pi):
-					continue
-				seen[pi] = true
-				out.append(pi)
+			_collect_bin(out, seen, cell + Vector2i(dx, dy))
 			dx += 1
 		dy += 1
 	return out

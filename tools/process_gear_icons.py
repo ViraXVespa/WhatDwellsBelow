@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from PIL import Image
+from sprite_lib import fit_box  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
@@ -50,20 +51,7 @@ def key_still(src: Path) -> Image.Image:
 
 
 def fit_icon(keyed: Image.Image, canvas: int = CANVAS) -> Image.Image:
-    bbox = keyed.getbbox()
-    if bbox is None:
-        return Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
-    cropped = keyed.crop(bbox)
-    cw, ch = cropped.size
-    box = Image.new("RGBA", (cw + PAD * 2, ch + PAD * 2), (0, 0, 0, 0))
-    box.paste(cropped, (PAD, PAD), cropped)
-    scale = min(canvas / box.size[0], canvas / box.size[1])
-    nw = max(1, int(round(box.size[0] * scale)))
-    nh = max(1, int(round(box.size[1] * scale)))
-    resized = box.resize((nw, nh), Image.Resampling.NEAREST)
-    out = Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
-    out.paste(resized, ((canvas - nw) // 2, (canvas - nh) // 2), resized)
-    return out
+    return fit_box(keyed, canvas, PAD)
 
 
 def sources() -> list[Path]:

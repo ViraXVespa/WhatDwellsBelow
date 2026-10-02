@@ -1,0 +1,17 @@
+{
+  "name": "camp-recap",
+  "about": "Placeholdia: play the death recap, skip the drain animation, shoot the panel. Look proof for recap_ui and the shared scroll box.",
+  "scene": "camp",
+  "hud": 0,
+  "settle_ms": 1500,
+  "smoke": true,
+  "steps": [
+    {"op": "device", "kind": "pad"},
+    {"op": "call", "target": "App.recap", "method": "play", "args": ["death"]},
+    {"op": "assert", "target": "App.recap.visible", "equals": true},
+    {"op": "call", "target": "App.recap", "method": "skip_drain"},
+    {"op": "wait", "ms": 400},
+    {"op": "shot", "name": "recap", "texts": true},
+    {"op": "assert_texts", "min_font": 14}
+  ]
+}

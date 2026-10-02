@@ -81,3 +81,20 @@ def next_label(root: Path) -> str:
 
 def changelog_dir(root: Path) -> Path:
     return root / "design" / "changelog"
+
+
+def under(path: Path, root: Path) -> bool:
+    """True when `path` resolves inside `root`."""
+    try:
+        path.resolve().relative_to(root.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def write_text_nl(path: Path, text: str) -> None:
+    """Write UTF-8 text with a trailing newline, creating parent folders."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not text.endswith("\n"):
+        text += "\n"
+    path.write_text(text, encoding="utf-8")

@@ -37,6 +37,7 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
+from repo_lib import under as _under  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 SESS_ROOT = (
@@ -91,14 +92,6 @@ def _posix(path: Path) -> str:
         return rel.as_posix()
     except ValueError:
         return path.resolve().as_posix()
-
-
-def _under(path: Path, root: Path) -> bool:
-    try:
-        path.resolve().relative_to(root.resolve())
-        return True
-    except ValueError:
-        return False
 
 
 def is_glyph(live: str) -> bool:
@@ -936,7 +929,6 @@ def organize(plan: dict) -> dict:
     if not gdignore.exists():
         gdignore.write_text("", encoding="utf-8")
     return {"archived": archived, "notes": notes, "entries": len(entries)}
-
 
 
 def live_stem(rel: str) -> str:

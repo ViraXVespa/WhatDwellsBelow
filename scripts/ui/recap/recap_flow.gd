@@ -54,17 +54,8 @@ static func tick(host: CanvasLayer, delta: float) -> void:
 		else:
 			host.gain_now[id] = float(host.keep0.get(id, 0.0))
 	if not left:
-		host.draining = false
-		lock_totals(host)
-		mark_starting(host)
-		RecapBars.refresh(host)
-		if host.flavor:
-			host.flavor.text = "Permanent totals locked in."
-		if host.mailed_lab:
-			host.mailed_lab.text = mailed_line(host)
-		var cont := continue_btn(host)
+		var cont := _lock_in(host)
 		if cont:
-			cont.disabled = false
 			cont.grab_focus()
 	else:
 		RecapBars.refresh(host)
@@ -112,6 +103,9 @@ static func skip_drain(host: CanvasLayer) -> void:
 	for id in App.prog.SKILLS:
 		host.shown[id] = 0.0
 		host.gain_now[id] = float(host.keep0.get(id, 0.0))
+	_lock_in(host)
+
+static func _lock_in(host: CanvasLayer) -> Button:
 	host.draining = false
 	lock_totals(host)
 	mark_starting(host)
@@ -123,6 +117,7 @@ static func skip_drain(host: CanvasLayer) -> void:
 	var cont := continue_btn(host)
 	if cont:
 		cont.disabled = false
+	return cont
 
 static func finish(host: CanvasLayer) -> void:
 	if host.draining:

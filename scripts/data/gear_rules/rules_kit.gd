@@ -1,6 +1,7 @@
 extends Object
 
 const Roll := preload("res://scripts/data/gear_roll.gd")
+const Balance := preload("res://scripts/data/balance.gd")
 
 const BUILTIN_WEAPONS := ["great_axe", "staff", "longbow"]
 const BUILTIN_TOOLS := ["pickaxe", "hatchet"]
@@ -103,9 +104,7 @@ static func locked_equip_slot(slot: String) -> bool:
 	return slot == "weapon" or slot == "tool"
 
 static func smith_xp_for(it: Dictionary) -> float:
-	var base := 12.0
-	if App.bal and App.bal.get("xp_smith") != null:
-		base = float(App.bal.xp_smith)
+	var base: float = Balance.f("xp_smith", 12.0)
 	match str(it.get("rarity", "white")):
 		"green":
 			return base * 1.5

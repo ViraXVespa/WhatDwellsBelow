@@ -4,6 +4,7 @@ extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const Ground := preload("res://scripts/graphics/ground_shader.gd")
 
 static var _sh: Shader
 
@@ -40,20 +41,7 @@ void vertex() {
 }
 
 vec3 tap_lit(vec2 xz) {
-	vec2 span = max(light_span, vec2(0.001));
-	vec2 luv = clamp((xz - light_origin) / span, vec2(0.0), vec2(1.0));
-	ivec2 ts = max(textureSize(light_tex, 0), ivec2(1));
-	vec2 max_p = max(vec2(ts) - vec2(1.0001), vec2(0.0));
-	vec2 p = clamp(luv * vec2(ts) - vec2(0.5), vec2(0.0), max_p);
-	vec2 fr = fract(p);
-	ivec2 i0 = ivec2(floor(p));
-	ivec2 i1 = min(i0 + ivec2(1), ts - ivec2(1));
-	vec3 s00 = texelFetch(light_tex, i0, 0).rgb;
-	vec3 s10 = texelFetch(light_tex, ivec2(i1.x, i0.y), 0).rgb;
-	vec3 s01 = texelFetch(light_tex, ivec2(i0.x, i1.y), 0).rgb;
-	vec3 s11 = texelFetch(light_tex, i1, 0).rgb;
-	return mix(mix(s00, s10, fr.x), mix(s01, s11, fr.x), fr.y);
-}
+""" + Ground.TAP_BODY + "\treturn " + Ground.TAP_MIX + """}
 
 void fragment() {
 	vec2 xz = world_pos.xz;
@@ -81,7 +69,7 @@ void fragment() {
 static func material(tex_path: String, fallback: Color, tint: Color = Color.WHITE) -> ShaderMaterial:
 	var mat: ShaderMaterial = ShaderMaterial.new()
 	mat.shader = shader()
-	var albedo: Texture2D = _albedo(tex_path, fallback)
+	var albedo: Texture2D = Ground.albedo_tex(tex_path, fallback)
 	var px: float = float(maxi(albedo.get_width(), 1))
 	var density: float = App.bal.getv("ground_px_per_m")
 	if density < 1.0:
@@ -94,13 +82,3 @@ static func material(tex_path: String, fallback: Color, tint: Color = Color.WHIT
 	mat.set_shader_parameter("wear", App.bal.getv("ground_wear"))
 	LightRt.bind(mat)
 	return mat
-
-static func _albedo(tex_path: String, fallback: Color) -> Texture2D:
-	if ResourceLoader.exists(tex_path):
-		var loaded: Texture2D = load(tex_path) as Texture2D
-		if loaded != null:
-			return loaded
-	var img: Image = Image.create(4, 4, false, Image.FORMAT_RGBA8)
-	img.fill(fallback)
-	var made: ImageTexture = ImageTexture.create_from_image(img)
-	return made

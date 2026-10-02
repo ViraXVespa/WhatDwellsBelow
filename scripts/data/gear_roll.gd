@@ -1,6 +1,7 @@
 ﻿extends Object
 
 const Affix := preload("res://scripts/data/affixes.gd")
+const Balance := preload("res://scripts/data/balance.gd")
 
 static func roll_dungeon(slot: String, type_id: String, rarity: String, ilvl: int) -> Dictionary:
 	var lv: int = maxi(1, ilvl)
@@ -154,8 +155,8 @@ static func _roll_value(id: String, ilvl: int, quality: float, luck: float) -> f
 	var q: float = clampf(quality, 0.35, 1.25)
 	var lk: float = clampf(luck, 0.5, 1.25)
 	if Affix.kind_of(id) == Affix.KIND_PCT:
-		return (0.02 + _bal("affix_pct_per_lv", 0.004) * float(ilvl)) * q * lk
-	return (_bal("affix_flat_base", 2.0) + _bal("affix_flat_per_lv", 0.65) * float(ilvl)) * q * lk
+		return (0.02 + Balance.f("affix_pct_per_lv", 0.004) * float(ilvl)) * q * lk
+	return (Balance.f("affix_flat_base", 2.0) + Balance.f("affix_flat_per_lv", 0.65) * float(ilvl)) * q * lk
 
 static func _wpn_name(type_id: String) -> String:
 	match type_id:
@@ -167,8 +168,3 @@ static func _wpn_name(type_id: String) -> String:
 			return "Longbow"
 		_:
 			return type_id.capitalize()
-
-static func _bal(key: String, fallback: float) -> float:
-	if App.bal != null and App.bal.get(key) != null:
-		return float(App.bal.get(key))
-	return fallback

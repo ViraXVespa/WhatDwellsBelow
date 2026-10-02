@@ -43,6 +43,8 @@ from urllib.parse import quote
 
 TOOLS = Path(__file__).resolve().parent
 REPO = TOOLS.parent
+sys.path.insert(0, str(TOOLS))
+from repo_lib import under  # noqa: E402
 LOCKED_BIBLES = (
     REPO / "assets" / "sprites" / "player" / "bible_locked_male.png",
     REPO / "assets" / "sprites" / "player" / "bible_locked_female.png",
@@ -105,14 +107,6 @@ DEFAULT_BRIEF = {
 def _die(msg: str, code: int = 2) -> None:
     print(f"run_isolated_grok: {msg}", file=sys.stderr)
     raise SystemExit(code)
-
-
-def _inside(path: Path, root: Path) -> bool:
-    try:
-        path.resolve().relative_to(root.resolve())
-        return True
-    except ValueError:
-        return False
 
 
 def _which_grok(name: str) -> str | None:
@@ -512,7 +506,7 @@ def main() -> None:
     else:
         scratch_holder = tempfile.TemporaryDirectory(prefix="wdb-iso-")
         scratch = Path(scratch_holder.name).resolve()
-    if _inside(scratch, REPO):
+    if under(scratch, REPO):
         _die(f"scratch resolved inside the game repo: {scratch}")
 
     try:

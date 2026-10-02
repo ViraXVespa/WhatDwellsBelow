@@ -2,28 +2,29 @@ extends Object
 
 const Affix := preload("res://scripts/data/affixes.gd")
 const Roll := preload("res://scripts/data/gear_roll.gd")
+const Balance := preload("res://scripts/data/balance.gd")
 
 const HOLD_CAP := 3
 
 static func forge_cost(p: Object, slot: String, rarity: String, ilvl: int, lock_n: int) -> Dictionary:
 	var smith: int = p.skill_lv("smith")
 	var lv: float = float(maxi(1, ilvl))
-	var gold: float = _bal("forge_gold", 18.0) + _bal("forge_gold_per_lv", 3.0) * (lv - 1.0)
-	var ore: float = _bal("forge_ore", 6.0) + _bal("forge_ore_per_lv", 1.0) * (lv - 1.0)
+	var gold: float = Balance.f("forge_gold", 18.0) + Balance.f("forge_gold_per_lv", 3.0) * (lv - 1.0)
+	var ore: float = Balance.f("forge_ore", 6.0) + Balance.f("forge_ore_per_lv", 1.0) * (lv - 1.0)
 	var wood: float = 0.0
 	if slot == "weapon" or slot == "tool":
-		wood = _bal("forge_wood", 4.0) + _bal("forge_wood_per_lv", 1.0) * (lv - 1.0)
+		wood = Balance.f("forge_wood", 4.0) + Balance.f("forge_wood_per_lv", 1.0) * (lv - 1.0)
 	if rarity == "blue":
-		var bm: float = _bal("forge_blue_mult", 1.45)
+		var bm: float = Balance.f("forge_blue_mult", 1.45)
 		gold *= bm
 		ore *= bm
 		wood *= bm
 	if lock_n > 0:
-		var lm: float = pow(_bal("forge_lock_mult", 2.0), float(lock_n))
+		var lm: float = pow(Balance.f("forge_lock_mult", 2.0), float(lock_n))
 		gold *= lm
 		ore *= lm
 		wood *= lm
-	var disc: float = 1.0 / (1.0 + _bal("forge_smith_disc", 0.03) * float(maxi(0, smith - 1)))
+	var disc: float = 1.0 / (1.0 + Balance.f("forge_smith_disc", 0.03) * float(maxi(0, smith - 1)))
 	gold *= disc
 	ore *= disc
 	wood *= disc
@@ -42,10 +43,10 @@ static func forge_duration(p: Object, slot_or_lv = 1, _rarity: String = "", ilvl
 		lv = int(slot_or_lv)
 	elif ilvl > 0:
 		lv = ilvl
-	var base: float = _bal("forge_time", 2.0)
-	var lo: float = _bal("forge_time_min", 0.35)
-	var hi: float = _bal("forge_time_max", 8.0)
-	var step: float = _bal("forge_time_step", 1.15)
+	var base: float = Balance.f("forge_time", 2.0)
+	var lo: float = Balance.f("forge_time_min", 0.35)
+	var hi: float = Balance.f("forge_time_max", 8.0)
+	var step: float = Balance.f("forge_time_step", 1.15)
 	var delta: int = maxi(1, lv) - p.skill_lv("smith")
 	return clampf(base * pow(step, float(delta)), lo, hi)
 
@@ -118,7 +119,7 @@ static func add_hold(p: Object, it: Dictionary) -> String:
 	h.append(it)
 	p.holds[slot] = h
 	p.forge_count += 1
-	p.add_perm_xp("smith", _bal("xp_smith", 12.0))
+	p.add_perm_xp("smith", Balance.f("xp_smith", 12.0))
 	App.save_now()
 	return "Forged into a hold (%d/%d)." % [holds_of(p, slot, type_id).size(), HOLD_CAP]
 
@@ -151,7 +152,7 @@ static func replace_hold(p: Object, a, b, c = 0, d = {}) -> String:
 	h.append(it)
 	p.holds[slot] = h
 	p.forge_count += 1
-	p.add_perm_xp("smith", _bal("xp_smith", 12.0))
+	p.add_perm_xp("smith", Balance.f("xp_smith", 12.0))
 	App.save_now()
 	return "Forged into a hold (%d/%d)." % [holds_of(p, slot, type_id).size(), HOLD_CAP]
 
@@ -187,8 +188,3 @@ static func _spend_pair(need: int, pocket: String, bank: String) -> void:
 	need -= use
 	if need > 0:
 		App.set(bank, maxi(0, int(App.get(bank)) - need))
-
-static func _bal(key: String, fallback: float) -> float:
-	if App.bal != null and App.bal.get(key) != null:
-		return float(App.bal.get(key))
-	return fallback

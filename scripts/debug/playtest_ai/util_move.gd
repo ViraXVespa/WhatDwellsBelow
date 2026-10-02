@@ -1,26 +1,20 @@
 extends Object
 
+const Pick := preload("res://scripts/debug/playtest_goals/pick.gd")
+
 static func _near_prop(pt: Node, p: Node, lim: float) -> Node:
-	var tree: SceneTree = pt.get_tree()
-	if tree == null:
-		return null
-	var best: Node = null
-	var best_d: float = lim
-	for n: Node in tree.get_nodes_in_group("interact"):
-		if n == null or not is_instance_valid(n) or load("res://scripts/debug/playtest_ai/ai_util.gd")._banned(pt, n):
-			continue
-		var k: String = str(n.get("kind"))
-		if k.find("crystal") >= 0 or k == "vendor" or k == "shop":
-			continue
-		if n.get("used") == true:
-			continue
-		if (k == "mine" or k == "wood") and not load("res://scripts/debug/playtest_ai/ai_util.gd").tool_ok(n):
-			continue
-		var d: float = pt._dist(p, n)
-		if d < best_d:
-			best_d = d
-			best = n
-	return best
+	return Pick.nearest(pt, p, "interact", lim, func(n: Node) -> bool: return _prop_ok(pt, n))
+
+static func _prop_ok(pt: Node, n: Node) -> bool:
+	var util: GDScript = load("res://scripts/debug/playtest_ai/ai_util.gd")
+	if util._banned(pt, n):
+		return false
+	var k: String = str(n.get("kind"))
+	if k.find("crystal") >= 0 or k == "vendor" or k == "shop":
+		return false
+	if n.get("used") == true:
+		return false
+	return not ((k == "mine" or k == "wood") and not util.tool_ok(n))
 
 static func tick_motion(pt: Node, p: Node, delta: float) -> void:
 	var pos: Vector3 = (p as Node3D).global_position

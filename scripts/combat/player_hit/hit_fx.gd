@@ -35,11 +35,10 @@ static func hit_arc(host: Node, rng: float, arc: float, dmg: float, need_los: bo
 	_fac.hit_breakables_arc(host, rng, arc, dmg, need_los)
 
 static func draw_special_tele(host: Node, _active: bool) -> void:
-	var _fac = load("res://scripts/combat/player_hit.gd")
 	if host.telegraph == null:
 		return
 	var yel := Color(1.0, 0.92, 0.35, 0.42)
-	var extra: float = _fac._gear("atk_range")
+	var extra: float = App.gear("atk_range")
 	if App.weapon == "great_axe":
 		host.telegraph.show_circle(host.global_position, App.bal.slam_radius + extra, yel)
 	elif App.weapon == "staff":
@@ -52,7 +51,7 @@ static func draw_special_tele(host: Node, _active: bool) -> void:
 
 static func apply_basic(host: Node) -> void:
 	var _fac = load("res://scripts/combat/player_hit.gd")
-	var extra: float = _fac._gear("atk_range")
+	var extra: float = App.gear("atk_range")
 	if App.weapon == "longbow":
 		_fac.spawn_arrow(host, host.aim_dir, _fac.scaled_dmg(App.bal.bow_damage, false), App.bal.bow_range + extra, App.bal.bow_proj_speed, App.bal.bow_los)
 		App.sfx("bow")

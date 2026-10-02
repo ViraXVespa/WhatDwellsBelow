@@ -47,17 +47,7 @@ static func apply(data: Dictionary) -> bool:
 	var binds: Variant = data.get("binds", [])
 	if binds is Array and (binds as Array).size() > 0:
 		App.apply_binds(binds)
-	App.set_volume("master", App.vol_master)
-	App.set_volume("music", App.vol_music)
-	App.set_volume("sfx", App.vol_sfx)
-	if App.has_method("set_zoom"):
-		App.set_zoom(App.cam_zoom)
-	if App.has_method("set_hud_scale"):
-		App.set_hud_scale(App.hud_scale)
-	if App.has_method("set_ui_text_floor"):
-		App.set_ui_text_floor(App.ui_text_floor)
-	if App.has_method("set_sprite_filter"):
-		App.set_sprite_filter(App.sprite_filter, true)
+	_apply_prefs()
 	if App.has_method("set_sprite_mip_sharp"):
 		App.set_sprite_mip_sharp(App.sprite_mip_sharp)
 	if App.has_method("set_sprite_mip_bias"):
@@ -104,6 +94,9 @@ static func fresh_delver() -> void:
 	App.bal.aim_line_on = true
 	App.bal.aim_line_opacity = 0.85
 	App.reset_binds()
+	_apply_prefs()
+
+static func _apply_prefs() -> void:
 	App.set_volume("master", App.vol_master)
 	App.set_volume("music", App.vol_music)
 	App.set_volume("sfx", App.vol_sfx)

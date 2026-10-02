@@ -48,22 +48,7 @@ static func build(host: Node, props: Array, clip: Rect2i = Rect2i()) -> Array[Di
 		cy0 = clampi(clip.position.y, 1, map_h - 1)
 		cx1 = clampi(clip.position.x + clip.size.x, 1, map_w - 1)
 		cy1 = clampi(clip.position.y + clip.size.y, 1, map_h - 1)
-	for i in rooms.size():
-		var room: Dictionary = rooms[i]
-		var rx: int = int(room["x"])
-		var ry: int = int(room["y"])
-		var rw: int = int(room["w"])
-		var rh: int = int(room["h"])
-		var y: int = ry
-		while y < ry + rh:
-			if y >= 0 and y < map_h:
-				var row: int = y * map_w
-				var x: int = rx
-				while x < rx + rw:
-					if x >= 0 and x < map_w:
-						inside[row + x] = i
-					x += 1
-			y += 1
+	_stamp_rooms(inside, rooms, map_w, map_h)
 	_room_ix = inside
 	var used: Dictionary = {}
 	for i2 in rooms.size():
@@ -180,22 +165,7 @@ static func _apply_lit(host: Node, props: Array, layout: Array[Dictionary]) -> A
 		inside = PackedInt32Array()
 		inside.resize(map_w * map_h)
 		inside.fill(-1)
-		for i in rooms.size():
-			var room: Dictionary = rooms[i]
-			var rx: int = int(room["x"])
-			var ry: int = int(room["y"])
-			var rw: int = int(room["w"])
-			var rh: int = int(room["h"])
-			var y: int = ry
-			while y < ry + rh:
-				if y >= 0 and y < map_h:
-					var row: int = y * map_w
-					var x: int = rx
-					while x < rx + rw:
-						if x >= 0 and x < map_w:
-							inside[row + x] = i
-						x += 1
-				y += 1
+		_stamp_rooms(inside, rooms, map_w, map_h)
 		_room_ix = inside
 	var lit: PackedByteArray = PackedByteArray()
 	lit.resize(rooms.size())
@@ -225,6 +195,24 @@ static func _apply_lit(host: Node, props: Array, layout: Array[Dictionary]) -> A
 		used[at] = true
 		out.append(site)
 	return out
+
+static func _stamp_rooms(inside: PackedInt32Array, rooms: Array, map_w: int, map_h: int) -> void:
+	for i in rooms.size():
+		var room: Dictionary = rooms[i]
+		var rx: int = int(room["x"])
+		var ry: int = int(room["y"])
+		var rw: int = int(room["w"])
+		var rh: int = int(room["h"])
+		var y: int = ry
+		while y < ry + rh:
+			if y >= 0 and y < map_h:
+				var row: int = y * map_w
+				var x: int = rx
+				while x < rx + rw:
+					if x >= 0 and x < map_w:
+						inside[row + x] = i
+					x += 1
+			y += 1
 
 static func _prop_cell(node: Node) -> Vector2i:
 	if str(node.get("kind")) == "crystal":
