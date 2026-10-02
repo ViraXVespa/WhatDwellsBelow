@@ -173,7 +173,8 @@ static func face(
 		spr.region_enabled = true
 		spr.region_rect = Rect2(0.0, th * cap, tw, rh)
 	var fw: float = maxf(face_w, 0.2)
-	spr.pixel_size = fw / tw
+	var room: float = maxf(box_size.y * (1.0 - cap), 0.4)
+	spr.pixel_size = minf(fw / tw, room / rh)
 	var sh: float = spr.pixel_size * rh
 	var hem: float = box_size.y * 0.5 - box_size.y * cap
 	spr.position = Vector3(x_off, hem - sh * 0.5, box_size.z * 0.5 + 0.01)
@@ -304,6 +305,6 @@ static func face_height(tex: String, face_w: float) -> float:
 
 
 static func seat(body: StaticBody3D, box_size: Vector3, tex: String) -> Vector3:
-	var h: float = face_height(tex, box_size.x)
+	var h: float = face_height(tex, box_size.x) * 0.82
 	body.position.y = h * 0.5
 	return Vector3(box_size.x, h, box_size.z)

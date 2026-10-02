@@ -204,19 +204,12 @@ static func _blur_hub(img: Image) -> void:
 		y += 1
 
 
-static func _hub_day_finish(img: Image, x0: int, z0: int, layout: Node) -> void:
+static func _hub_day_finish(img: Image, _x0: int, _z0: int, _layout: Node) -> void:
 	if img == null:
 		return
-	var amb := Color(0.82, 0.74, 0.60, 1.0)
+	var amb := Color(0.9, 0.82, 0.68, 1.0)
 	var w: int = img.get_width()
 	var h: int = img.get_height()
-	var sub: float = float(img.get_width()) / maxf(span.x, 1.0)
-	var boxes: Array = []
-	if layout != null and layout.has_method("hall_pos"):
-		boxes.append({"pos": layout.hall_pos(), "box": layout.hall_box})
-		boxes.append({"pos": layout.wing_pos(), "box": layout.wing_box})
-		boxes.append({"pos": layout.stall_pos(), "box": layout.stall_box})
-	var away := Vector2(-0.406138, 0.913811)
 	var y: int = 0
 	while y < h:
 		var x: int = 0
@@ -225,15 +218,10 @@ static func _hub_day_finish(img: Image, x0: int, z0: int, layout: Node) -> void:
 			if c.r + c.g + c.b < 0.12:
 				c = amb
 			else:
-				c = Color(maxf(c.r, amb.r * 0.85), maxf(c.g, amb.g * 0.85), maxf(c.b, amb.b * 0.85), 1.0)
-			var wx: float = float(x0) + (float(x) + 0.5) / sub
-			var wz: float = float(z0) + (float(y) + 0.5) / sub
-			if _hub_in_sun_shade(wx, wz, boxes, away):
-				c = Color(c.r * 0.62, c.g * 0.60, c.b * 0.58, 1.0)
+				c = Color(maxf(c.r, amb.r * 0.72), maxf(c.g, amb.g * 0.72), maxf(c.b, amb.b * 0.72), 1.0)
 			img.set_pixel(x, y, c)
 			x += 1
 		y += 1
-
 static func _hub_in_sun_shade(wx: float, wz: float, boxes: Array, away: Vector2) -> bool:
 	if _hub_in_boxes(wx, wz, boxes):
 		return false
@@ -810,35 +798,34 @@ static func _hub_fill_black(img: Image) -> void:
 				img.set_pixel(x, y, field)
 			x += 1
 		y += 1
-static func _hub_paint_day(img: Image, x0: int, z0: int, layout: Node) -> void:
+static func _hub_paint_day(img: Image, x0: int, z0: int, _layout: Node) -> void:
 	if img == null:
 		return
-	var away := Vector2(0.406138, 0.913811)
+	var away := Vector2(-0.406138, 0.913811)
+	var an: float = away.length()
+	var ax: float = away.x / maxf(an, 0.001)
+	var az: float = away.y / maxf(an, 0.001)
 	var tw: float = span.x
 	var th: float = span.y
 	var mid := Vector2(float(x0) + tw * 0.5, float(z0) + th * 0.5)
-	var sun: Vector2 = mid - away * 18.0
-	sun.x = clampf(sun.x, float(x0) + 2.0, float(x0) + tw - 2.0)
-	sun.y = clampf(sun.y, float(z0) + 2.0, float(z0) + th - 2.0)
-	var reach: float = 40.0
 	var sub: float = float(HUB_SUB)
 	var w: int = img.get_width()
 	var h: int = img.get_height()
+	var warm := Color(1.0, 0.82, 0.55)
 	var y: int = 0
 	while y < h:
 		var x: int = 0
 		while x < w:
 			var wx: float = float(x0) + (float(x) + 0.5) / sub
 			var wz: float = float(z0) + (float(y) + 0.5) / sub
-			var d: float = Vector2(wx - sun.x, wz - sun.y).length()
-			var u: float = clampf(1.0 - d / reach, 0.0, 1.0)
-			u = u * u
+			var along: float = (wx - mid.x) * ax + (wz - mid.y) * az
+			var u: float = clampf(0.55 - along / 36.0, 0.0, 1.0)
 			var c: Color = img.get_pixel(x, y)
-			var k: float = 0.28 * u
+			var k: float = 0.48 * u
 			img.set_pixel(
 				x,
 				y,
-				Color(c.r + (COL_SUN.r - c.r) * k, c.g + (COL_SUN.g - c.g) * k, c.b + (COL_SUN.b - c.b) * k, 1.0)
+				Color(c.r + (warm.r - c.r) * k, c.g + (warm.g - c.g) * k, c.b + (warm.b - c.b) * k, 1.0)
 			)
 			x += 1
 		y += 1
@@ -896,7 +883,7 @@ static func _hub_cast_buildings(img: Image, x0: int, z0: int, layout: Node) -> v
 static func _hub_stamp_skirt(
 	img: Image, x0: int, z0: int, sub: float, w: int, h: int, b: Dictionary, away: Vector2
 ) -> int:
-	var reach: float = float(b["h"]) * 0.62
+	var reach: float = float(b["h"]) * 0.85
 	var cx: float = float(b["x"])
 	var cz: float = float(b["z"])
 	var hx: float = float(b["hx"])
@@ -904,11 +891,12 @@ static func _hub_stamp_skirt(
 	var an: float = away.length()
 	var ax: float = away.x / maxf(an, 0.001)
 	var az: float = away.y / maxf(an, 0.001)
-	var pad: float = reach + 0.35
+	var pad: float = reach + 0.45
 	var px0: int = clampi(int(floor((cx - hx - pad - float(x0)) * sub)), 0, w - 1)
 	var px1: int = clampi(int(ceil((cx + hx + pad - float(x0)) * sub)), 0, w)
 	var pz0: int = clampi(int(floor((cz - hz - pad - float(z0)) * sub)), 0, h - 1)
 	var pz1: int = clampi(int(ceil((cz + hz + pad - float(z0)) * sub)), 0, h)
+	var kind: String = str(b.get("kind", ""))
 	var wrote: int = 0
 	var y: int = pz0
 	while y < pz1:
@@ -916,20 +904,23 @@ static func _hub_stamp_skirt(
 		while x < px1:
 			var wx: float = float(x0) + (float(x) + 0.5) / sub
 			var wz: float = float(z0) + (float(y) + 0.5) / sub
-			if _hub_inside(wx, wz, b):
+			var inside: bool = _hub_inside(wx, wz, b)
+			if inside and kind != "tarp":
 				x += 1
 				continue
 			var best: float = 1.0
+			if inside and kind == "tarp":
+				best = 0.8
 			var step: int = 0
-			while step < 18:
-				var t: float = reach * float(step) / 17.0
+			while step < 20:
+				var t: float = reach * float(step) / 19.0
 				var sx: float = wx - ax * t
 				var sz: float = wz - az * t
 				var roof: float = _hub_roof_h(sx, sz, b)
-				if roof > t / 0.62 + 0.05:
+				if roof > t / 0.85 + 0.03:
 					var fade: float = clampf(t / maxf(reach, 0.001), 0.0, 1.0)
-					var soft: float = clampf((roof - t / 0.62) / 0.45, 0.0, 1.0)
-					best = minf(best, lerpf(0.34, 0.9, maxf(fade, 1.0 - soft)))
+					var tip: float = clampf((fade - 0.62) / 0.38, 0.0, 1.0)
+					best = minf(best, lerpf(0.46, 0.86, tip))
 				step += 1
 			if best > 0.96:
 				x += 1
@@ -962,7 +953,13 @@ static func _hub_yard_boxes(layout: Node, _bake: bool) -> Array:
 			ad = float(layout.hall_awning_depth)
 		boxes.append(_hub_awning(hp, hb, ad))
 		boxes.append(_hub_awning(wp, wb, ad))
-		boxes.append(_hub_tarp(layout.stall_pos(), layout.stall_box))
+		var sp: Vector3 = layout.stall_pos()
+		var sb: Vector3 = layout.stall_box
+		boxes.append(_hub_tarp(sp, sb))
+		boxes.append(_hub_post(sp, sb, -1.0, -1.0))
+		boxes.append(_hub_post(sp, sb, 1.0, -1.0))
+		boxes.append(_hub_post(sp, sb, -1.0, 1.0))
+		boxes.append(_hub_post(sp, sb, 1.0, 1.0))
 	else:
 		boxes.append(_hub_gable(Vector3(8.2, 0.0, 6.0), Vector3(5.6, 3.4, 4.2)))
 		boxes.append(_hub_tarp(Vector3(25.0, 0.0, 8.0), Vector3(4.6, 2.4, 3.4)))
@@ -980,7 +977,7 @@ static func _hub_box_of(pos: Vector3, box: Vector3, slen: float) -> Dictionary:
 
 
 static func _hub_gable(pos: Vector3, box: Vector3) -> Dictionary:
-	var eave: float = maxf(box.y, 1.2)
+	var eave: float = maxf(box.y, 1.2) * 0.82
 	return {
 		"kind": "gable",
 		"x": pos.x,
@@ -988,13 +985,11 @@ static func _hub_gable(pos: Vector3, box: Vector3) -> Dictionary:
 		"hx": box.x * 0.5,
 		"hz": box.z * 0.5,
 		"eave": eave,
-		"ridge": eave + minf(box.z * 0.22, 1.05),
-		"h": eave + minf(box.z * 0.22, 1.05)
+		"ridge": eave + 0.5,
+		"h": eave + 0.5
 	}
-
-
 static func _hub_awning(pos: Vector3, box: Vector3, depth: float) -> Dictionary:
-	var eave: float = maxf(box.y, 1.2)
+	var eave: float = maxf(box.y, 1.2) * 0.82
 	var span: float = maxf(depth, 0.4)
 	return {
 		"kind": "awning",
@@ -1004,10 +999,8 @@ static func _hub_awning(pos: Vector3, box: Vector3, depth: float) -> Dictionary:
 		"hz": span * 0.5,
 		"eave": eave,
 		"hem": eave * 0.66,
-		"h": eave
+		"h": eave * 0.7
 	}
-
-
 static func _hub_tarp(pos: Vector3, box: Vector3) -> Dictionary:
 	return {
 		"kind": "tarp",
@@ -1016,11 +1009,22 @@ static func _hub_tarp(pos: Vector3, box: Vector3) -> Dictionary:
 		"hx": box.x * 0.5,
 		"hz": box.z * 0.5,
 		"eave": 1.05,
-		"ridge": 1.5,
-		"h": 1.5
+		"ridge": 1.7,
+		"h": 1.7
 	}
 
 
+static func _hub_post(pos: Vector3, box: Vector3, sx: float, sz: float) -> Dictionary:
+	return {
+		"kind": "post",
+		"x": pos.x + sx * box.x * 0.42,
+		"z": pos.z + sz * box.z * 0.42,
+		"hx": 0.1,
+		"hz": 0.1,
+		"eave": 1.05,
+		"ridge": 1.05,
+		"h": 1.05
+	}
 static func _hub_roof_h(wx: float, wz: float, b: Dictionary) -> float:
 	var dx: float = absf(wx - float(b["x"])) - float(b["hx"])
 	var dz: float = absf(wz - float(b["z"])) - float(b["hz"])
