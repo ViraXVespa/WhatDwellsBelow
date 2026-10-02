@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: gathering swings, shops, shrines, puzzles, extract-wells
-Code: `scripts/world/gather/gather_node.gd`, `breakable.gd`, `interact.gd`, `interact_act.gd`, `interact_prompt.gd`, `interact_chest.gd`, `interact_fx.gd`, `dungeon_props.gd`, `dungeon_props_place.gd`, `floor_crystal.gd`, `crystal_net.gd`, `pickup.gd`, `scripts/ui/hud.gd`, `scripts/input/prompts.gd`  
+Code: `scripts/world/gather/gather_node.gd`, `breakable.gd`, `interact.gd`, `interact_act.gd`, `interact_prompt.gd`, `interact_chest.gd`, `interact_fx.gd`, `dungeon_props.gd`, `dungeon_props_place.gd`, `floor_crystal.gd`, `crystal_net.gd`, `pickup.gd`, `scripts/ui/hud/hud.gd`, `scripts/input/prompts.gd`  
 
 
 ## Mining nodes

@@ -1,5 +1,5 @@
 extends Object
-const MenuUtil := preload("res://scripts/ui/pause_menu_util.gd")
+const MenuUtil := preload("res://scripts/ui/pause_menu/pause_menu_util.gd")
 
 const T := preload("res://scripts/data/tunables.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")

@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: Pages builds, catalog pins
-Code: `scripts/ui/archives_ui.gd`, `scripts/ui/archives_ui_view.gd`, `scripts/ui/archives_ui_act.gd`, `scripts/ui/split_menu.gd`, `scripts/ui/split_menu_view.gd`, `scripts/ui/split_menu_chrome.gd`, `scripts/data/archives/archives_catalog.gd`, `scripts/data/archives/archives_launch.gd`, `scripts/data/archive_catalog.json`, `scripts/ui/loader.gd`, `tools/export_archives.py`, `.github/workflows/pages.yml`  
+Code: `scripts/ui/archives_ui/archives_ui.gd`, `scripts/ui/archives_ui/archives_ui_view.gd`, `scripts/ui/archives_ui/archives_ui_act.gd`, `scripts/ui/split_menu/split_menu.gd`, `scripts/ui/split_menu/split_menu_view.gd`, `scripts/ui/split_menu/split_menu_chrome.gd`, `scripts/data/archives/archives_catalog.gd`, `scripts/data/archives/archives_launch.gd`, `scripts/data/archive_catalog.json`, `scripts/ui/loader.gd`, `tools/export_archives.py`, `.github/workflows/pages.yml`  
 
 
 ## Core rule

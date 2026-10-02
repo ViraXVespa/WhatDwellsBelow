@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot  
 Read when: XP, forging, formula
-Code: `scripts/data/progress/progress.gd`, `scripts/data/progress_combat/progress_combat.gd`, `scripts/data/progress_forge/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/app/app.gd`, `scripts/ui/hud.gd`, `scripts/ui/pause_menu.gd`, `scripts/data/balance/balance.gd`, `scripts/combat/threat.gd`  
+Code: `scripts/data/progress/progress.gd`, `scripts/data/progress_combat/progress_combat.gd`, `scripts/data/progress_forge/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/app/app.gd`, `scripts/ui/hud/hud.gd`, `scripts/ui/pause_menu/pause_menu.gd`, `scripts/data/balance/balance.gd`, `scripts/combat/threat.gd`  
 
 
 ## Skills included in the demo

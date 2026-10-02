@@ -120,7 +120,7 @@ func ensure_ui() -> void:
 	if ui != null:
 		return
 	LoadTiming.mark("camp_ui_begin")
-	var UiS: GDScript = load("res://scripts/ui/progress_ui.gd") as GDScript
+	var UiS: GDScript = load("res://scripts/ui/progress_ui/progress_ui.gd") as GDScript
 	ui = UiS.new()
 	add_child(ui)
 	LoadTiming.mark("camp_ui")

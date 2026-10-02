@@ -1,7 +1,7 @@
 ﻿extends Node3D
 
 const T := preload("res://scripts/data/tunables.gd")
-const HudS := preload("res://scripts/ui/hud.gd")
+const HudS := preload("res://scripts/ui/hud/hud.gd")
 const DungeonStream := preload("res://scripts/world/dungeon_stream/dungeon_stream.gd")
 const DungeonGeo := preload("res://scripts/world/dungeon_geo/dungeon_geo.gd")
 const DungeonMinimap := preload("res://scripts/world/dungeon/dungeon_minimap.gd")
@@ -209,7 +209,7 @@ func world_ui() -> Node:
 func ensure_ui() -> void:
 	if ui != null:
 		return
-	var UiS: GDScript = load("res://scripts/ui/progress_ui.gd") as GDScript
+	var UiS: GDScript = load("res://scripts/ui/progress_ui/progress_ui.gd") as GDScript
 	ui = UiS.new() as CanvasLayer
 	add_child(ui)
 

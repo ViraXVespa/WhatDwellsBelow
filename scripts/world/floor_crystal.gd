@@ -57,6 +57,6 @@ func interact(who: Node) -> String:
 		CrystalNet.activate(self)
 		refresh()
 		App.toast("Crystal bound to this floor.")
-	var CrystalUIS: GDScript = load("res://scripts/ui/crystal_ui.gd") as GDScript
+	var CrystalUIS: GDScript = load("res://scripts/ui/crystal_ui/crystal_ui.gd") as GDScript
 	CrystalUIS.open(self)
 	return "The crystal hums."

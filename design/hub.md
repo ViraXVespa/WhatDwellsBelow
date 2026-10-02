@@ -21,7 +21,7 @@ All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidi
 
 ## Camp entry events
 
-Every way the player reaches Placeholdia (there is no Continue button on the title; Title has Play, the other entry is the dungeon). Code: `scripts/app/app_flow.gd`, `scripts/world/camp/camp.gd`, `scripts/ui/recap_flow.gd`.
+Every way the player reaches Placeholdia (there is no Continue button on the title; Title has Play, the other entry is the dungeon). Code: `scripts/app/app_flow.gd`, `scripts/world/camp/camp.gd`, `scripts/ui/recap/recap_flow.gd`.
 
 | Event | Path | Wake block in `camp.gd` (`wake_pending`: wake VFX, `roll_quests(true)`, `restock()`) |
 |---|---|---|

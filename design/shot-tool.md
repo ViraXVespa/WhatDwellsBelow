@@ -54,7 +54,7 @@ Scenes `dungeon`, `camp`, `hub`; camera pose (`--px --pz --cx --cz --zoom`, reci
 Extending the tool is part of the task. Do not work around it (no hand-driven Godot, no scratch, no PNG edits, no stand-in older image).
 1. Name the missing state in one line (example: "quest pane open with three offers", "anvil open with a forged item", "recap mid XP drain").
 2. Check `tools/shot-recipes.json` and the flag list above for an existing way. Smallest change wins: recipe > `run_shots.py` argument > worker flag.
-3. Add **one** knob (below), prove it with one shot, then the next gap. Never batch knobs. Typical worker knob: `--wdb-shot-ui=<mode>` opens the same panel an interact opens (for example `open_quest()` / `open_anvil()` on `scripts/ui/progress_ui.gd`) after `begin_run`/camp ready and before the grab; state seeding goes through `App.prog` in the same step and stays shot-only.
+3. Add **one** knob (below), prove it with one shot, then the next gap. Never batch knobs. Typical worker knob: `--wdb-shot-ui=<mode>` opens the same panel an interact opens (for example `open_quest()` / `open_anvil()` on `scripts/ui/progress_ui/progress_ui.gd`) after `begin_run`/camp ready and before the grab; state seeding goes through `App.prog` in the same step and stays shot-only.
 4. Document it here in one row of the table below, and in `--help` (`check_tool_cli.py`).
 5. Use it for the task's pictures. Name each new knob in the report and the changelog bullet only if players see a change.
 

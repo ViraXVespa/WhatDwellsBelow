@@ -4,7 +4,7 @@ extends Control
 
 const Disp := preload("res://scripts/display_mode/display_mode.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const SplitView := preload("res://scripts/ui/split_menu_view.gd")
+const SplitView := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 
 var _kind: String = "web"
 var _action: Button
