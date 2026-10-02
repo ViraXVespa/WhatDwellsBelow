@@ -145,7 +145,10 @@ static func solid(
 	var lay: Node3D = _layout_from_build_host(host)
 	if tarp:
 		MeshS.pitched_tarp(body, box_size, 0.0, Vector3(x0, 0.0, z0))
+		face(body, box_size, tex, 0.0, box_size.x * 0.92)
 		_counter(body, box_size)
+		_stall_walls(body, box_size)
+		_blob(body, Vector3(0.0, 0.0, box_size.z * 0.2))
 	else:
 		roof_plane(
 			body,
@@ -329,3 +332,62 @@ static func _counter(body: StaticBody3D, box_size: Vector3) -> void:
 	shape.shape = block
 	shape.position = Vector3(0.0, 0.52, 0.0)
 	body.add_child(shape)
+
+static func sweep(root: Node) -> void:
+	if root == null:
+		return
+	var nodes: Array = root.find_children("*", "MeshInstance3D", true, false)
+	var i: int = 0
+	while i < nodes.size():
+		var node: MeshInstance3D = nodes[i]
+		i += 1
+		if node == null or not is_instance_valid(node):
+			continue
+		var at: Vector3 = node.global_position
+		var outside: bool = at.x < 1.0 or at.x > 33.0 or at.z < -2.0 or at.z > 26.0
+		var near_origin: bool = at.length() < 1.5
+		if not outside and not near_origin:
+			continue
+		var path: String = str(node.get_path())
+		var low: String = path.to_lower()
+		if low.contains("fence") or low.contains("ground") or low.contains("grass") or low.contains("yard"):
+			continue
+		printerr("sweep drop %s at=%s" % [path, at])
+		node.queue_free()
+
+static func _stall_walls(body: StaticBody3D, box_size: Vector3) -> void:
+	var specs: Array = [
+		Vector3(0.0, 0.7, -box_size.z * 0.46),
+		Vector3(box_size.x * 0.46, 0.7, 0.0),
+		Vector3(-box_size.x * 0.46, 0.7, 0.0),
+	]
+	var sizes: Array = [
+		Vector3(box_size.x * 0.9, 1.4, 0.28),
+		Vector3(0.28, 1.4, box_size.z * 0.8),
+		Vector3(0.28, 1.4, box_size.z * 0.8),
+	]
+	var i: int = 0
+	while i < specs.size():
+		var shape := CollisionShape3D.new()
+		shape.name = "StallWall"
+		var block := BoxShape3D.new()
+		block.size = sizes[i]
+		shape.shape = block
+		shape.position = specs[i]
+		body.add_child(shape)
+		i += 1
+
+static func _blob(parent: Node3D, at: Vector3) -> void:
+	var mesh := MeshInstance3D.new()
+	mesh.name = "Blob"
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(0.9, 0.55)
+	mesh.mesh = plane
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = Color(0.12, 0.08, 0.06, 0.45)
+	mesh.material_override = mat
+	mesh.position = at + Vector3(-0.28, 0.04, 0.42)
+	mesh.rotation_degrees = Vector3(-90.0, 0.0, 18.0)
+	parent.add_child(mesh)

@@ -986,7 +986,7 @@ static func _hub_prop_blobs(layout: Node, boxes: Array) -> void:
 			})
 		i += 1
 static func _hub_gable(pos: Vector3, box: Vector3) -> Dictionary:
-	var eave: float = maxf(box.y, 1.2) * 0.82
+	var eave: float = maxf(box.y, 1.2) * 0.78
 	return {
 		"kind": "gable",
 		"x": pos.x,
@@ -998,7 +998,7 @@ static func _hub_gable(pos: Vector3, box: Vector3) -> Dictionary:
 		"h": eave + 0.5
 	}
 static func _hub_awning(pos: Vector3, box: Vector3, depth: float) -> Dictionary:
-	var eave: float = maxf(box.y, 1.2) * 0.82
+	var eave: float = maxf(box.y, 1.2) * 0.78
 	var span: float = maxf(depth, 0.4)
 	return {
 		"kind": "awning",
@@ -1053,20 +1053,125 @@ static func _hub_inside(wx: float, wz: float, b: Dictionary) -> bool:
 
 
 static func _hub_lock_shadows(img: Image, org: Vector2, layout: Node) -> int:
-	var boxes: Array = _hub_yard_boxes(layout, true)
-	printerr("bake_camp: boxes=%d" % boxes.size())
-	var away := Vector2(0.406138, 0.913811)
-	var sub: float = float(HUB_SUB)
+	var sun := Vector3(-0.42, -1.0, 0.9).normalized()
+	var root: Node = layout.get_parent() if layout != null else null
+	if root == null:
+		printerr("bake_camp: no_scene")
+		return 0
 	var wrote: int = 0
-	var x0: int = int(org.x)
-	var z0: int = int(org.y)
+	var nodes: Array = root.find_children("*", "MeshInstance3D", true, false)
+	var i: int = 0
+	while i < nodes.size():
+		var node: MeshInstance3D = nodes[i]
+		i += 1
+		if node == null or not is_instance_valid(node) or not node.visible:
+			continue
+		var at: Vector3 = node.global_position
+		if at.x < 1.0 or at.x > 33.0 or at.z < -2.0 or at.z > 26.0:
+			printerr("sweep skip %s at=%s" % [node.get_path(), at])
+			continue
+		wrote += _hub_project_mesh(img, org, node, sun)
+	var sprites: Array = root.find_children("*", "Sprite3D", true, false)
+	var s: int = 0
+	while s < sprites.size():
+		wrote += _hub_project_sprite(img, org, sprites[s] as Sprite3D, sun)
+		s += 1
+	printerr("bake_camp: meshes=%d sprites=%d" % [nodes.size(), sprites.size()])
+	return wrote
+static func _hub_ground(v: Vector3, sun: Vector3) -> Vector2:
+	if v.y < 0.12 or sun.y > -0.05:
+		return Vector2(-99999.0, -99999.0)
+	var t: float = (0.02 - v.y) / sun.y
+	if t <= 0.0:
+		return Vector2(-99999.0, -99999.0)
+	var g: Vector3 = v + sun * t
+	return Vector2(g.x, g.z)
+
+
+static func _hub_dark(img: Image, x0: int, z0: int, sub: float, a: Vector2, b: Vector2, c: Vector2) -> int:
+	if a.x < -1000.0 or b.x < -1000.0 or c.x < -1000.0:
+		return 0
+	var minx: float = minf(a.x, minf(b.x, c.x))
+	var maxx: float = maxf(a.x, maxf(b.x, c.x))
+	var minz: float = minf(a.y, minf(b.y, c.y))
+	var maxz: float = maxf(a.y, maxf(b.y, c.y))
 	var w: int = img.get_width()
 	var h: int = img.get_height()
-	var bi: int = 0
-	while bi < boxes.size():
-		var b: Dictionary = boxes[bi]
-		wrote += _hub_stamp_skirt(img, x0, z0, sub, w, h, b, away)
-		bi += 1
+	var px0: int = clampi(int(floor((minx - float(x0)) * sub)), 0, w - 1)
+	var px1: int = clampi(int(ceil((maxx - float(x0)) * sub)), 0, w)
+	var pz0: int = clampi(int(floor((minz - float(z0)) * sub)), 0, h - 1)
+	var pz1: int = clampi(int(ceil((maxz - float(z0)) * sub)), 0, h)
+	var area: float = (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y)
+	if absf(area) < 0.0001:
+		return 0
+	var wrote: int = 0
+	var y: int = pz0
+	while y < pz1:
+		var x: int = px0
+		while x < px1:
+			var wx: float = float(x0) + (float(x) + 0.5) / sub
+			var wz: float = float(z0) + (float(y) + 0.5) / sub
+			var w0: float = (b.x - wx) * (c.y - wz) - (c.x - wx) * (b.y - wz)
+			var w1: float = (c.x - wx) * (a.y - wz) - (a.x - wx) * (c.y - wz)
+			var w2: float = (a.x - wx) * (b.y - wz) - (b.x - wx) * (a.y - wz)
+			if w0 / area >= -0.02 and w1 / area >= -0.02 and w2 / area >= -0.02:
+				var col: Color = img.get_pixel(x, y)
+				img.set_pixel(x, y, Color(minf(col.r, 0.42), minf(col.g, 0.4), minf(col.b, 0.38), 1.0))
+				wrote += 1
+			x += 1
+		y += 1
+	return wrote
+
+
+static func _hub_project_mesh(img: Image, org: Vector2, node: MeshInstance3D, sun: Vector3) -> int:
+	if node == null or node.mesh == null or not node.visible:
+		return 0
+	var mesh: Mesh = node.mesh
+	var xf: Transform3D = node.global_transform
+	var sub: float = float(HUB_SUB)
+	var wrote: int = 0
+	var si: int = 0
+	while si < mesh.get_surface_count():
+		var arrays: Array = mesh.surface_get_arrays(si)
+		if arrays.is_empty() or arrays[Mesh.ARRAY_VERTEX] == null:
+			si += 1
+			continue
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var raw = arrays[Mesh.ARRAY_INDEX]
+		var indexed: bool = raw != null
+		var idx: PackedInt32Array = raw if indexed else PackedInt32Array()
+		var n: int = idx.size() if indexed else verts.size()
+		var t: int = 0
+		while t + 2 < n:
+			var i0: int = idx[t] if indexed else t
+			var i1: int = idx[t + 1] if indexed else t + 1
+			var i2: int = idx[t + 2] if indexed else t + 2
+			if i0 < verts.size() and i1 < verts.size() and i2 < verts.size():
+				var a: Vector2 = _hub_ground(xf * verts[i0], sun)
+				var b: Vector2 = _hub_ground(xf * verts[i1], sun)
+				var c: Vector2 = _hub_ground(xf * verts[i2], sun)
+				wrote += _hub_dark(img, int(org.x), int(org.y), sub, a, b, c)
+			t += 3
+		si += 1
+	return wrote
+static func _hub_project_sprite(img: Image, org: Vector2, spr: Sprite3D, sun: Vector3) -> int:
+	if spr == null or spr.texture == null:
+		return 0
+	var tw: float = float(spr.texture.get_width()) * spr.pixel_size
+	var th: float = float(spr.texture.get_height()) * spr.pixel_size
+	if spr.region_enabled:
+		tw = spr.region_rect.size.x * spr.pixel_size
+		th = spr.region_rect.size.y * spr.pixel_size
+	var c: Vector3 = spr.global_position
+	var xf: Transform3D = spr.global_transform
+	var p0: Vector3 = xf * Vector3(-tw * 0.5, -th * 0.5, 0.0)
+	var p1: Vector3 = xf * Vector3(tw * 0.5, -th * 0.5, 0.0)
+	var p2: Vector3 = xf * Vector3(tw * 0.5, th * 0.5, 0.0)
+	var p3: Vector3 = xf * Vector3(-tw * 0.5, th * 0.5, 0.0)
+	var sub: float = float(HUB_SUB)
+	var wrote: int = 0
+	wrote += _hub_dark(img, int(org.x), int(org.y), sub, _hub_ground(p0, sun), _hub_ground(p1, sun), _hub_ground(p2, sun))
+	wrote += _hub_dark(img, int(org.x), int(org.y), sub, _hub_ground(p0, sun), _hub_ground(p2, sun), _hub_ground(p3, sun))
 	return wrote
 static func _hub_stamp_lock_box(
 	img: Image, org: Vector2, sub: float, w: int, h: int, b: Dictionary, away: Vector2

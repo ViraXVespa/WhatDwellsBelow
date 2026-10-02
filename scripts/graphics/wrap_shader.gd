@@ -43,7 +43,7 @@ void fragment() {
 	if (shade_use > 0.5) {
 		c *= mix(shade_lo, shade_hi, clamp(UV.y, 0.0, 1.0));
 	}
-	ALBEDO = texture(light_tex, UV).rgb *  c;
+	ALBEDO = c;
 	ROUGHNESS = 1.0;
 	ALPHA = 1.0;
 }
