@@ -1,6 +1,6 @@
 extends Object
 
-const Gen := preload("res://scripts/dungeon/gen.gd")
+const Gen := preload("res://scripts/dungeon/gen/gen.gd")
 const PlayerS := preload("res://scripts/world/player.gd")
 const Roster := preload("res://scripts/combat/roster.gd")
 const DoorS := preload("res://scripts/world/boss_door.gd")
@@ -57,7 +57,7 @@ static func ready_floor(host: Node) -> void:
 	GeoStreamS.prime_visible(host)
 	HitchLog.mark("dungeon_follow")
 	LoadTiming.dmark("stream")
-	var LightRtS: GDScript = load("res://scripts/graphics/light_rt.gd") as GDScript
+	var LightRtS: GDScript = load("res://scripts/graphics/light_rt/light_rt.gd") as GDScript
 	LightRtS.reset_floor()
 	LightRtS.maintain(host)
 	LightRtS.maintain(host)
@@ -71,7 +71,7 @@ static func ready_floor(host: Node) -> void:
 static func process_floor(host: Node, delta: float) -> void:
 	if _first_tick:
 		HitchLog.mark("dungeon_tick")
-		var LightRtS: GDScript = load("res://scripts/graphics/light_rt.gd") as GDScript
+		var LightRtS: GDScript = load("res://scripts/graphics/light_rt/light_rt.gd") as GDScript
 		LightRtS.maintain(host)
 		_first_tick = false
 	host.frame_acc += delta

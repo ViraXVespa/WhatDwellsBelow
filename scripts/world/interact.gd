@@ -2,7 +2,7 @@
 
 const InteractFx := preload("res://scripts/world/interact_fx.gd")
 const Prompt := preload("res://scripts/world/interact_prompt.gd")
-const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const LightRt := preload("res://scripts/graphics/light_rt/light_rt.gd")
 
 static var _act_s: GDScript
 

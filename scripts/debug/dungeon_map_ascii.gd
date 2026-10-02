@@ -1,6 +1,6 @@
 extends Object
 
-const Gen := preload("res://scripts/dungeon/gen.gd")
+const Gen := preload("res://scripts/dungeon/gen/gen.gd")
 const Util := preload("res://scripts/debug/dungeon_map_util.gd")
 
 static func _emit_ascii(lines: Array[String], data: Dictionary, overlays: Dictionary) -> void:

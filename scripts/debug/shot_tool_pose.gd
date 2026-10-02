@@ -65,7 +65,7 @@ static func _apply_pose_token(host: Node, token: String) -> void:
 	if cam == null:
 		printerr("SHOT: token=%s err=no_cam" % token)
 		return
-	var rt = load("res://scripts/graphics/light_rt.gd")
+	var rt = load("res://scripts/graphics/light_rt/light_rt.gd")
 	if rt != null and rt.get("hub_crystal") == Vector2.ZERO:
 		rt.set("hub_crystal", Vector2(16.475, 10.2))
 	var crystal: Vector2 = rt.get("hub_crystal") if rt != null else Vector2.ZERO

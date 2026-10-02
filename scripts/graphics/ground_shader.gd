@@ -3,7 +3,7 @@ extends Object
 ## One spatial field shader. Albedo is world xz. Light is the buffer RT.
 
 const T := preload("res://scripts/data/tunables.gd")
-const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const LightRt := preload("res://scripts/graphics/light_rt/light_rt.gd")
 
 static var _sh: Shader
 

@@ -106,7 +106,7 @@ static func _hub_atlas_bound() -> bool:
 		return false
 	if img.get_width() < 1088 or img.get_height() < 1024:
 		return false
-	var rt = load("res://scripts/graphics/light_rt.gd")
+	var rt = load("res://scripts/graphics/light_rt/light_rt.gd")
 	if rt == null or not rt.has_method("texture"):
 		return false
 	var tex: Texture2D = rt.texture()

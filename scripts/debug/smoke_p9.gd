@@ -1,7 +1,7 @@
 ﻿extends Object
 
 const Roster := preload("res://scripts/combat/roster.gd")
-const EnemyS := preload("res://scripts/combat/enemy.gd")
+const EnemyS := preload("res://scripts/combat/enemy/enemy.gd")
 const AnimS := preload("res://scripts/debug/anim_browser.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const CatS := preload("res://scripts/data/archives/archives_catalog.gd")

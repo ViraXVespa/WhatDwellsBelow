@@ -4,7 +4,7 @@ const T := preload("res://scripts/data/tunables.gd")
 const WallRects := preload("res://scripts/world/wall_rects.gd")
 const Clip := preload("res://scripts/world/dungeon_geo_stream_clip.gd")
 const Emit := preload("res://scripts/world/dungeon_geo_stream_emit.gd")
-const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const LightRt := preload("res://scripts/graphics/light_rt/light_rt.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 

@@ -2,7 +2,7 @@ extends Object
 
 ## Floor minimap + fog reveal. Zoom / pan stays in dungeon_map_act.gd.
 
-const Gen := preload("res://scripts/dungeon/gen.gd")
+const Gen := preload("res://scripts/dungeon/gen/gen.gd")
 
 static func cell_color(host: Node, x: int, y: int) -> Color:
 	var w: int = host.data.w

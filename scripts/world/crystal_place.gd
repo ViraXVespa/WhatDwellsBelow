@@ -1,5 +1,5 @@
 extends Object
-const RoomsPlace := preload("res://scripts/dungeon/gen_rooms_place.gd")
+const RoomsPlace := preload("res://scripts/dungeon/gen/gen_rooms_place.gd")
 
 const Threat := preload("res://scripts/combat/threat.gd")
 const FloorCrystal := preload("res://scripts/world/floor_crystal.gd")

@@ -7,7 +7,7 @@ const T := preload("res://scripts/data/tunables.gd")
 const CamRig := preload("res://scripts/world/camera_rig.gd")
 const PlayerAnim := preload("res://scripts/world/player_anim.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
-const ActorLit := preload("res://scripts/graphics/actor_lit.gd")
+const ActorLit := preload("res://scripts/graphics/actor_lit/actor_lit.gd")
 
 static func ready(host: CharacterBody3D) -> void:
 	host.add_to_group("player")

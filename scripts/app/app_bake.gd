@@ -14,7 +14,7 @@ static func _bake_camp(host: Node) -> void:
 	var layout = LayoutS.on_camp(camp)
 	layout.ensure_tree()
 	Build.realize_editor(camp, layout)
-	var HubLight = load("res://scripts/graphics/light_rt.gd")
+	var HubLight = load("res://scripts/graphics/light_rt/light_rt.gd")
 	HubLight.rebuild_hub(
 		int(layout.aabb_x0()),
 		int(layout.aabb_z0()),

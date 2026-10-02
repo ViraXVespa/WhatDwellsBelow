@@ -1,6 +1,6 @@
 extends Object
 
-const Rooms := preload("res://scripts/dungeon/gen_rooms.gd")
+const Rooms := preload("res://scripts/dungeon/gen/gen_rooms.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
 const EnvKit := preload("res://scripts/graphics/env_kit.gd")
 const GroundShader := preload("res://scripts/graphics/ground_shader.gd")

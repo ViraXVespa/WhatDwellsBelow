@@ -2,7 +2,7 @@
 extends Node3D
 
 const Build := preload("res://scripts/world/camp_build.gd")
-const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const LightRt := preload("res://scripts/graphics/light_rt/light_rt.gd")
 const View := preload("res://scripts/world/camp_view.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const Warm := preload("res://scripts/world/camp_warm.gd")

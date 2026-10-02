@@ -1,6 +1,6 @@
 extends Object
 
-const Gen := preload("res://scripts/dungeon/gen.gd")
+const Gen := preload("res://scripts/dungeon/gen/gen.gd")
 const Roster := preload("res://scripts/combat/roster.gd")
 
 static func p3(host: Node) -> void:

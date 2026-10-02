@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot  
 Read when: roster, AI, pressure
-Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/threat.gd`, `scripts/data/balance/balance_enemies.gd`  
+Code: `scripts/combat/enemy/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/threat.gd`, `scripts/data/balance/balance_enemies.gd`  
 
 
 ## Enemy variety

@@ -3,7 +3,7 @@
 ## Dungeon stream mesh emit: wall mesh, floors, floor lip, ribbon boxes. Owns the shared floor plane.
 
 const T := preload("res://scripts/data/tunables.gd")
-const WallMesh: GDScript = preload("res://scripts/graphics/wall_mesh.gd")
+const WallMesh: GDScript = preload("res://scripts/graphics/wall_mesh/wall_mesh.gd")
 
 static var _floor_mesh: PlaneMesh
 

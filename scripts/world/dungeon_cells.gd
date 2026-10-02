@@ -1,6 +1,6 @@
 ﻿extends Object
 
-const Gen := preload("res://scripts/dungeon/gen.gd")
+const Gen := preload("res://scripts/dungeon/gen/gen.gd")
 
 static func player_cell(host: Node) -> Vector2i:
 	if host.player == null:

@@ -3,7 +3,7 @@
 ## Dungeon stream wall runs, outline spans, and span/face clipping to a chunk.
 
 const WallRects := preload("res://scripts/world/wall_rects.gd")
-const WallMesh: GDScript = preload("res://scripts/graphics/wall_mesh.gd")
+const WallMesh: GDScript = preload("res://scripts/graphics/wall_mesh/wall_mesh.gd")
 
 static func _wall_runs(host: Node, solid: PackedByteArray, sw: int, sh: int, wall_cells: Array[Vector2i], ox: int, oy: int, x1: int, y1: int, n: int) -> Array[Dictionary]:
 	var raw: Array = _outline_spans(host)

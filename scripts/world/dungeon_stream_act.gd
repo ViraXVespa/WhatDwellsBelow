@@ -90,7 +90,7 @@ static func job_in_combat(host: Node, job: Dictionary) -> bool:
 	return close
 
 static func _activate_boss(host: Node, job: Dictionary) -> void:
-	var EnemyS: GDScript = load("res://scripts/combat/enemy.gd") as GDScript
+	var EnemyS: GDScript = load("res://scripts/combat/enemy/enemy.gd") as GDScript
 	var boss: CharacterBody3D = EnemyS.new() as CharacterBody3D
 	var bp: Vector2i = job_anchor(job)
 	boss.position = Vector3(float(bp.x) + 0.5, 0.0, float(bp.y) + 0.5)

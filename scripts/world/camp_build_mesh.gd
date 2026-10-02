@@ -18,7 +18,7 @@ const GRASS_PAD := 16
 
 const ROOF_EAVE := 0.42
 
-const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const LightRt := preload("res://scripts/graphics/light_rt/light_rt.gd")
 
 const HALL_SIZE := Vector3(5.6, 3.4, 4.2)
 

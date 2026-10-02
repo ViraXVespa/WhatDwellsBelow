@@ -15,7 +15,7 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 	var PlayerAct: GDScript = _gd("res://scripts/world/player_act.gd")
 	var PlayerLock: GDScript = _gd("res://scripts/world/player_lock.gd")
 	var PlayerCombat: GDScript = _gd("res://scripts/world/player_combat.gd")
-	var PlayerHit: GDScript = _gd("res://scripts/combat/player_hit.gd")
+	var PlayerHit: GDScript = _gd("res://scripts/combat/player_hit/player_hit.gd")
 	if host.exiting:
 		PlayerAct.tick_exit(host, delta)
 		return

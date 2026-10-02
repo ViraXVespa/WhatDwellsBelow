@@ -15,7 +15,7 @@ All player attacks (basic and special) MUST clearly telegraph their range and pr
 
 ## Hit coverage
 
-Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occupancy against the attack volume (`Cover` in `scripts/combat/cover.gd`).
+Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occupancy against the attack volume (`Cover` in `scripts/combat/cover/cover.gd`).
 
 - Occupancy is the opaque texels of the target `Sprite3D` (player, enemy, dummy, or breakable). Transparent pixels MUST NOT register.
 - Axe and staff basics: the ground fan must overlap those opaque samples on screen. Any opaque overlap is a hit.

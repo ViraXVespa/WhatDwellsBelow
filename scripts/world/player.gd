@@ -118,22 +118,22 @@ func _hit_norm() -> float:
 	return _script_at("res://scripts/world/player_combat.gd").hit_norm()
 
 func _draw_basic_tele(active: bool) -> void:
-	_script_at("res://scripts/combat/player_hit.gd").draw_basic_tele(self, active)
+	_script_at("res://scripts/combat/player_hit/player_hit.gd").draw_basic_tele(self, active)
 
 func _draw_special_tele(active: bool) -> void:
-	_script_at("res://scripts/combat/player_hit.gd").draw_special_tele(self, active)
+	_script_at("res://scripts/combat/player_hit/player_hit.gd").draw_special_tele(self, active)
 
 func _special_point() -> Vector3:
-	return _script_at("res://scripts/combat/player_hit.gd").special_point(self)
+	return _script_at("res://scripts/combat/player_hit/player_hit.gd").special_point(self)
 
 func _apply_basic() -> void:
-	_script_at("res://scripts/combat/player_hit.gd").apply_basic(self)
+	_script_at("res://scripts/combat/player_hit/player_hit.gd").apply_basic(self)
 
 func _apply_special() -> void:
-	_script_at("res://scripts/combat/player_hit.gd").apply_special(self)
+	_script_at("res://scripts/combat/player_hit/player_hit.gd").apply_special(self)
 
 func _trail(delta: float) -> void:
-	_script_at("res://scripts/combat/player_hit.gd").trail(self, delta)
+	_script_at("res://scripts/combat/player_hit/player_hit.gd").trail(self, delta)
 
 func _weapon_reach() -> float:
 	return _script_at("res://scripts/world/player_combat.gd").weapon_reach()

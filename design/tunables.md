@@ -2,7 +2,7 @@
 
 Status: suggested starts + live snapshot  
 Read when: the work changes a number, formula, or debug default  
-Code: `scripts/data/balance/balance.gd`, `balance_access.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode/display_mode.gd`, `scripts/combat/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
+Code: `scripts/data/balance/balance.gd`, `balance_access.gd`, `balance_schema.gd`, `balance_enemies.gd`, `balance_migrate.gd`, `scripts/data/tunables.gd`, `scripts/data/progress_forge/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/display_mode/display_mode.gd`, `scripts/combat/cover/cover.gd`, `scripts/input/touch_pad.gd`, `scripts/input/look_ctrl.gd`  
 
 
 These are recommended starting points for the current live implementation.  

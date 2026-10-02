@@ -3,7 +3,7 @@ extends Object
 ## Brick UV is the span tangent and world height. Light sample matches the floor buffer.
 
 const T := preload("res://scripts/data/tunables.gd")
-const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const LightRt := preload("res://scripts/graphics/light_rt/light_rt.gd")
 
 static var _sh: Shader
 

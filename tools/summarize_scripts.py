@@ -3,7 +3,7 @@
 
 Usage (from repo root):
   python tools/summarize_scripts.py
-  python tools/summarize_scripts.py --path scripts/combat/enemy.gd
+  python tools/summarize_scripts.py --path scripts/combat/enemy/enemy.gd
   python tools/summarize_scripts.py --over-kb 5 --top-funcs 8
   powershell -File tools/summarize_scripts.ps1
 
