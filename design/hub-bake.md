@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: hub light, roofs, camp shot, wow pass  
-Code: `scripts/graphics/light_rt.gd` (`HUB_SUB`, `_hub_make_rt`, `_hub_paint_day`, `_hub_stamp_skirt`, `save_hub_bake`), `scripts/graphics/wrap_shader.gd`, `scripts/world/camp_build.gd`, `scripts/world/camp_build_mesh.gd`, `scripts/world/camp_layout.gd`, `scripts/debug/shot_tool.gd`, `assets/baked/hub_light.png`, `tools/run_bake_camp.ps1`
+Code: `scripts/graphics/light_rt.gd` (`HUB_SUB`), `scripts/graphics/light_rt_hub_bake.gd` (`_hub_make_rt`, `_hub_paint_day`, `save_hub_bake`), `scripts/graphics/light_rt_hub_cast.gd` (`_hub_stamp_skirt`), `scripts/graphics/wrap_shader.gd`, `scripts/world/camp_build.gd`, `scripts/world/camp_build_mesh.gd`, `scripts/world/camp_layout.gd`, `assets/baked/hub_light.png`, `tools/run_bake_camp.ps1`
 
 The hub ships one baked light RT. Offline bake quality is the look lock. Runtime `camp_light` milliseconds are not. Ortho-down at play zoom is the judge. Roofs read through lid shade and tile grain. The yard reads through a shadow projected from the real hall, wing, stall, and awning boxes. Height sets the length. Hall and wing are real gables. The stall tarp is pitched over the counter. Collision comes from those meshes.
 - Building collision is the live wall, gable, awning, and stall-pitch meshes. Do not put the player on a box lid.
@@ -50,3 +50,5 @@ The hub ships one baked light RT. Offline bake quality is the look lock. Runtime
 3. `run_bake_camp.ps1`. Fail on `clean=false`, `shadow_px=0`, or a 272x256 atlas.
 4. Camp shot at zoom 0.69. The paste is the recipe strip, pose applied on the camera that renders.
 5. Judge roofs and puddles on the 0.69 PNG. The wide frame is not the look pass. Then playtest hub to dungeon at 60 fps before fade.
+
+The prove command stays here. The shot tool is not this job.

@@ -43,7 +43,7 @@ if ($KeepScript) {
 
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("agent-py $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("script=$scriptPath")
 $lines.Add("under_agent_py=$underAgentPy cleanup=$doCleanup keep=$KeepScript")
 $lines.Add("")
@@ -83,6 +83,6 @@ if ($doCleanup) {
 }
 $lines.Add(("RESULT exit={0} cleaned={1}" -f $exit, $cleaned))
 $lines | Set-Content -Path $Summary -Encoding utf8
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 Write-Host ("exit={0} cleaned={1}" -f $exit, $cleaned)
 exit $exit

@@ -61,7 +61,7 @@ if ($Path.Count -gt 0) {
 $over = New-Object System.Collections.Generic.List[string]
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("script cap $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("limit_bytes=$Limit over_kb=$OverKb gitChanged=$GitChanged files_checked=$($files.Count)")
 $lines.Add("")
 
@@ -77,7 +77,7 @@ foreach ($f in ($files | Sort-Object)) {
 $lines.Add("")
 $lines.Add(("RESULT over={0} checked={1}" -f $over.Count, $files.Count))
 $lines | Set-Content -Path $Summary -Encoding utf8
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 Write-Host ("over={0} checked={1} limit={2}" -f $over.Count, $files.Count, $Limit)
 if ($over.Count -gt 0) { exit 1 }
 exit 0

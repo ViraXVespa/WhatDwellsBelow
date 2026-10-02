@@ -48,7 +48,7 @@ def main() -> int:
     stamp = datetime.now(timezone.utc).isoformat()
     lines = [
         f"code-map check {stamp}",
-        f"root={root}",
+        "root=.",
     ]
 
     if not code_map.is_file():

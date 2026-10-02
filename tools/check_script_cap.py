@@ -133,7 +133,7 @@ def main(argv: list[str] | None = None) -> int:
 
     lines = [
         "script cap",
-        f"root={root}",
+        "root=.",
         f"overKb={args.over_kb} limit={limit}",
         "measure=os.path.getsize (== Get-Item Length)",
         f"checked={len(files)} over={len(over)}",

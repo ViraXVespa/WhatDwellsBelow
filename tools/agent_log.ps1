@@ -155,8 +155,7 @@ function Get-WdbAgentLogDir {
         throw "agent_log: bad job name"
     }
     if (-not $Root) { $Root = Get-WdbRepoRoot }
-    $session = Get-WdbAgentSession -Root $Root
-    return [IO.Path]::GetFullPath((Join-Path $Root ("_logs\sess\{0}\{1}" -f $session, $Job)))
+    return [IO.Path]::GetFullPath((Join-Path $Root ("_logs\{0}" -f $Job)))
 }
 
 function Get-WdbAgentSummaryPath {
@@ -200,8 +199,8 @@ if ($MyInvocation.InvocationName -eq $MyInvocation.MyCommand.Name -or $MyInvocat
                 $dir = Ensure-WdbAgentLogDir -Job $jobArg -Root $root
                 $sum = Join-Path $dir "summary.txt"
                 Write-Output ("job={0}" -f $jobArg)
-                Write-Output ("dir={0}" -f $dir)
-                Write-Output ("summary={0}" -f $sum)
+                Write-Output ("dir=_logs/{0}" -f $jobArg)
+                Write-Output ("summary=_logs/{0}/summary.txt" -f $jobArg)
             }
             exit 0
         } catch {

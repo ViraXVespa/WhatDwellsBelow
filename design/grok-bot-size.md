@@ -4,6 +4,16 @@ Status: protocol
 Read when: Grok Bot Job table → size sweep  
 
 
+## Size split quick path
+
+Read only this file, `BOT.md`, and `design/refactor.md` rules 1-7 (skip the reuse, extract, and doc-split sections). Run `python tools/bot_status.py` (prints only the over-10KB list; `--sweep` lists 5-10KB rows). Per file:
+
+1. Baseline: `bot_warnscan.py --areas <areas that load it> --save-baseline PATH`, plus `bot_smokes.py --phases 1,2,6,<relevant>`. Run both in the background while reading the file.
+2. Plan: `python tools/split_funcs.py FILE --list` (sizes, uses, outside callers). Keep public funcs and shared consts on the facade; group whole underscore funcs with the statics they own into siblings (static-helper pattern, refactor.md rule 4). Shared consts go in a small leaf helper. Write `plan.json` (`{helper_stem: [names]}`), then `--plan plan.json --dry-run`. Node (instance) funcs move too: they become `static func f(host: <the facade's extends type>, ...)` and the facade keeps a delegate.
+3. `split_funcs.py FILE --plan plan.json` writes helpers, delegates and preloads, runs `facade_requal.py` (rewrite + `--check`), and prints missing=0 and sizes. Then import for `.uid` (BOT.md Smokes), the static `--non-leak-diff` (compile check; the import does not compile scripts), smokes, then `--non-leak-diff PATH` with the same `--areas`.
+4. Changelog entry, code-map row, prove trio, commit, push. Doc edits: import `tools/doc_patch.py` in a scratch runner (`write_changelog`, `replace_once`, `ensure_line`, `set_read_when`). Doc edits: import `tools/doc_patch.py` in a scratch runner (`write_changelog`, `replace_once`, `ensure_line`, `set_read_when`).
+5. Rough edges: per BOT.md (After-cluster report), fix them in the same PR before the next file.
+
 ## Mandate
 
 Size, prove, changelog, and `version.json` rules live in `BOT.md`.
@@ -42,10 +52,14 @@ Inventory and before/after sizes use `os.path.getsize`.
 
 1. Split every over-10KB live script with `design/refactor.md`. Facade keeps the public path. Stop each file at under 10KB.
 2. Then split over-5KB files only when whole functions can move.
-3. One size PR may batch over-10KB then over-5KB clusters. Do not start extract, relocate, docs, or reuse-map work in this PR.
+3. One size PR may batch over-10KB then over-5KB clusters. Do not start extract, relocate, or reuse-map work in this PR. Stale design-doc lines that name moved symbols: flag them in the PR body per BOT.md (Allowlist). Do not add allowlist rows.
+
+Each new `.gd` needs a `.uid` sidecar: use the import step in BOT.md Smokes.
 
 Work in `/workspace/WhatDwellsBelow`. Commit per cluster on the Bot branch.
 
 ## Verify
 
 Prove per BOT.md.
+
+PR body: `gh api -X PATCH` per BOT.md (publishing note). Do not use `gh pr edit`.

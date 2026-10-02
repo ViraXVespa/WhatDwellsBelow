@@ -37,7 +37,7 @@ if (-not $Force -and -not $SkipImport) {
 
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("build gate $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("overKb=$OverKb skipImport=$SkipImport force=$Force scriptCap=$ScriptCap")
 $lines.Add("")
 $fail = 0
@@ -84,7 +84,7 @@ if (-not $SkipImport) {
 $lines.Add(("RESULT fail_signals={0}" -f $fail))
 $lines | Set-Content -Path $Summary -Encoding utf8
 Write-Host ""
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 Write-Host ("fail_signals={0}" -f $fail)
 if ($fail -gt 0) { exit 1 }
 exit 0

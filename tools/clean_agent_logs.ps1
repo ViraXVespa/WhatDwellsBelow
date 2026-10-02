@@ -26,7 +26,7 @@ $Logs = Join-Path $Root "_logs"
 
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("clean agent logs $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("keepRaw=$KeepRaw maxAgeHours=$MaxAgeHours whatIf=$WhatIf newWeek=$NewWeek")
 $lines.Add("")
 
@@ -128,6 +128,6 @@ try {
 }
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $summary) | Out-Null
 $lines | Set-Content -Path $summary -Encoding utf8
-Write-Host "Summary -> $summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 Write-Host ("deleted={0} kept={1} bytes_freed={2}" -f $deleted, $kept, $freed)
 exit 0

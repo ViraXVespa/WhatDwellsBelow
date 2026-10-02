@@ -34,7 +34,7 @@ if ($existing.Count -gt 0 -and -not $Force) {
 
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("post-split gate $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("withSmokes=$WithSmokes force=$Force")
 $lines.Add("")
 $fail = 0
@@ -84,7 +84,7 @@ if ($WithSmokes) {
 $lines.Add(("RESULT fail_signals={0}" -f $fail))
 $lines | Set-Content -Path $Summary -Encoding utf8
 Write-Host ""
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 Write-Host ("fail_signals={0}" -f $fail)
 if ($fail -gt 0) { exit 1 }
 exit 0

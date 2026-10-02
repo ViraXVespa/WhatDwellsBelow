@@ -37,7 +37,7 @@ $sibs = Get-ChildItem -Path $dir -File -Filter "*.gd" |
 
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("facade cluster $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("facade=$(RelPath $full)")
 $lines.Add("stem=$stem dir=$(RelPath $dir)")
 $lines.Add("siblings=$($sibs.Count)")
@@ -50,6 +50,6 @@ foreach ($f in $sibs) {
 $lines.Add("")
 $lines.Add(("RESULT siblings={0} total_bytes={1}" -f $sibs.Count, $total))
 $lines | Set-Content -Path $Summary -Encoding utf8
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 $sibs | ForEach-Object { Write-Host ("{0,6} {1}" -f $_.Length, $_.Name) }
 exit 0

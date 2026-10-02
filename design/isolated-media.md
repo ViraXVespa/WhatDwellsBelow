@@ -64,7 +64,7 @@ Runner: `python tools/run_isolated_grok.py --kind <kind> …`
 
 Unit pick and next-unit permission stay on the parent. Pack, review, and bible are not this gate. After the User names that unit, open art_pipeline then one job. The child only pays for the media turn (one Imagine call + copy into scratch). Ingest of the same reference set is cached and forked, not re-read. 2×2 / 4×4 seam checks and retries stay on the parent. Do not `/resume` a fat art thread to “just do one more” clip or tile. The ingest-cache `--resume` is the runner, not that ban.
 
-Placeholdia roofs sample the full `plaza_roof.png` in `camp_build_mesh.gd` `roof_mat` (`fract` wrap). Do not put a V crop back unless a new tile bakes a cap/footer.
+Placeholdia roofs sample the full `plaza_roof.png` in `camp_build_mesh_mat.gd` `roof_mat` (delegate kept on `camp_build_mesh.gd`) (`fract` wrap). Do not put a V crop back unless a new tile bakes a cap/footer.
 
 ## Optional user config
 

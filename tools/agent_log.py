@@ -125,7 +125,7 @@ def agent_log_dir(job: str, root: Path | None = None) -> Path:
         raise ValueError("agent_log: bad job name")
     base = repo_root(root) if root is not None else repo_root()
     session = agent_session(base)
-    return (base / "_logs" / "sess" / session / job).resolve()
+    return (base / "_logs" / job).resolve()
 
 
 def agent_summary_path(job: str, root: Path | None = None) -> Path:
@@ -164,8 +164,8 @@ def main(argv: list[str] | None = None) -> int:
             directory = ensure_agent_log_dir(job, root)
             summary = directory / "summary.txt"
             print(f"job={job}")
-            print(f"dir={directory}")
-            print(f"summary={summary}")
+            print(f"dir=_logs/{job}")
+            print(f"summary=_logs/{job}/summary.txt")
         return 0
     except (OSError, ValueError) as exc:
         print(str(exc))
@@ -174,3 +174,9 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+def rel(root: Path, path: Path | str) -> str:
+    try:
+        return Path(path).resolve().relative_to(Path(root).resolve()).as_posix()
+    except ValueError:
+        return Path(path).as_posix()

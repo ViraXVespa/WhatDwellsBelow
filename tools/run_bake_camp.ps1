@@ -19,7 +19,7 @@ Write-Host "Baking camp.tscn..."
 $r = Invoke-WdbGodot -RepoRoot $Root -GodotPath $Root -GodotArgs $godotArgs -OutLog $OutLog -ErrLog $ErrLog -TimeoutSec $TimeoutSec
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("bake camp $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("status=$($r.Status) ms=$($r.Ms) errBytes=$($r.ErrBytes) outBytes=$($r.OutBytes)")
 $lines.Add("")
 $lines.Add("--- highlights ---")
@@ -44,6 +44,6 @@ $clean = ($r.Status -eq "EXIT=0") -and (-not $hasHard)
 $lines.Add("")
 if ($clean) { $lines.Add("RESULT clean=true") } else { $lines.Add("RESULT clean=false") }
 $lines | Set-Content -Path $Summary -Encoding utf8
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 if (-not $clean) { exit 1 }
 exit 0

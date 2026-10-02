@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from agent_log import rel
+
+
+
 def _present_over(png, pid):
     import ctypes
     from ctypes import wintypes
@@ -605,11 +609,11 @@ def main(argv: list[str] | None = None) -> int:
 
     lines = [
         f"shots {datetime.now(timezone.utc).isoformat()}",
-        f"root={root}",
+        "root=.",
         f"mode={args.mode} seed={max(1, args.seed)} floor={max(1, args.floor)} "
         f"scale={scale_pct} settle_ms={max(0, args.settle_ms)} method={RENDER_METHOD} driver={RENDER_DRIVER}",
         f"status={status} wall_ms={marks.get('MS', '-1')} timeout={timed_out}",
-        f"png={png} bytes={nbytes} w={width} h={height}",
+        f"png={rel(root, png)} bytes={nbytes} w={width} h={height}",
         f"clipboard={clip} open={opened} band={band}",
         "",
         "--- SHOT lines ---",

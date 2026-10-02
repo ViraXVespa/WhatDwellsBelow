@@ -1,46 +1,20 @@
 ﻿extends Object
 
-const WALL := 0
-const FLOOR := 1
+const Hall := preload("res://scripts/dungeon/gen_carve_hall.gd")
+const Near := preload("res://scripts/dungeon/gen_carve_near.gd")
 
-static var _halls: Array = []
+const WALL := Hall.WALL
+const FLOOR := Hall.FLOOR
+
 static var _disk_ox: PackedInt32Array = PackedInt32Array()
 static var _disk_oy: PackedInt32Array = PackedInt32Array()
 static var _disk_rad: int = -1
-static var _near: PackedByteArray = PackedByteArray()
-static var _near_w: int = 0
 
 static func begin_halls() -> void:
-	_halls = []
+	Hall.begin_halls()
 
 static func take_halls() -> Array:
-	var out: Array = _halls
-	_halls = []
-	return out
-
-static func _note_rect(map_w: int, map_h: int, x0: int, y0: int, x1: int, y1: int, heading: Vector2i, width: int) -> void:
-	var span_n: int = maxi(1, width)
-	var xa: int = mini(x0, x1)
-	var xb: int = maxi(x0, x1)
-	var ya: int = mini(y0, y1)
-	var yb: int = maxi(y0, y1)
-	var rx0: int = xa
-	var ry0: int = ya
-	var rx1: int = xb
-	var ry1: int = yb
-	if heading.y == 0:
-		ry1 = ya + span_n - 1
-	else:
-		rx1 = xa + span_n - 1
-	if xb < 1 or xa > map_w - 2 or yb < 1 or ya > map_h - 2:
-		return
-	rx0 = clampi(rx0, 1, map_w - 2)
-	ry0 = clampi(ry0, 1, map_h - 2)
-	rx1 = clampi(rx1, 1, map_w - 2)
-	ry1 = clampi(ry1, 1, map_h - 2)
-	if rx1 < rx0 or ry1 < ry0:
-		return
-	_halls.append({"k": "rect", "x0": rx0, "y0": ry0, "x1": rx1, "y1": ry1})
+	return Hall.take_halls()
 
 static func idx(x: int, y: int, w: int) -> int:
 	return y * w + x
@@ -66,63 +40,6 @@ static func dig(grid: PackedByteArray, w: int, h: int, x: int, y: int) -> void:
 	if x <= 0 or y <= 0 or x >= w - 1 or y >= h - 1:
 		return
 	grid[idx(x, y, w)] = FLOOR
-
-static func _hall_w_min() -> int:
-	if App.bal:
-		return clampi(int(App.bal.get("hall_w_min")), 1, 4)
-	return 2
-
-static func _hall_w_mode() -> int:
-	if App.bal:
-		return clampi(int(App.bal.get("hall_w_mode")), 2, 4)
-	return 3
-
-static func _hall_w_max() -> int:
-	if App.bal:
-		return clampi(int(App.bal.get("hall_w_max")), 2, 6)
-	return 4
-
-static func _hall_interval() -> int:
-	if App.bal:
-		return maxi(4, int(App.bal.get("hall_w_interval")))
-	return 10
-
-static func roll_hall_width(rng: RandomNumberGenerator) -> int:
-	var lo := _hall_w_min()
-	var mid := clampi(_hall_w_mode(), lo, _hall_w_max())
-	var hi := maxi(mid, _hall_w_max())
-	var min_pct := 0.15
-	var mode_pct := 0.60
-	if App.bal:
-		min_pct = clampf(float(App.bal.get("hall_w_min_pct")), 0.0, 1.0)
-		mode_pct = clampf(float(App.bal.get("hall_w_mode_pct")), 0.0, 1.0)
-	var roll := rng.randf()
-	if roll < min_pct:
-		return lo
-	if roll < min_pct + mode_pct:
-		return mid
-	return hi
-
-static func dig_span(grid: PackedByteArray, w: int, h: int, x: int, y: int, heading: Vector2i, width: int) -> void:
-	var n: int = maxi(1, width)
-	if heading.y == 0:
-		if x <= 0 or x >= w - 1:
-			return
-		var i: int = 0
-		while i < n:
-			var yy: int = y + i
-			if yy > 0 and yy < h - 1:
-				grid[yy * w + x] = FLOOR
-			i += 1
-	else:
-		if y <= 0 or y >= h - 1:
-			return
-		var j: int = 0
-		while j < n:
-			var xx: int = x + j
-			if xx > 0 and xx < w - 1:
-				grid[y * w + xx] = FLOOR
-			j += 1
 
 static func carve_room(grid: PackedByteArray, w: int, h: int, r: Dictionary) -> void:
 	for yy in range(r.y, r.y + r.h):
@@ -177,7 +94,7 @@ static func connect_winding_tree(rng: RandomNumberGenerator, grid: PackedByteArr
 	var n := rooms.size()
 	if n < 2:
 		return
-	_near_build(grid, w, h, _hug_gap(), rooms)
+	Near._near_build(grid, w, h, Near._hug_gap(), rooms)
 	var cx: PackedInt32Array = PackedInt32Array()
 	var cy: PackedInt32Array = PackedInt32Array()
 	cx.resize(n)
@@ -211,197 +128,18 @@ static func connect_winding_tree(rng: RandomNumberGenerator, grid: PackedByteArr
 			break
 		used[best_b] = 1
 		carve_winding(rng, grid, w, h, Vector2i(cx[best_a], cy[best_a]), Vector2i(cx[best_b], cy[best_b]))
-static func _near_stamp(w: int, h: int, x: int, y: int, r: int) -> void:
-	var y0: int = maxi(0, y - r)
-	var y1: int = mini(h - 1, y + r)
-	var x0: int = maxi(0, x - r)
-	var x1: int = mini(w - 1, x + r)
-	var yy: int = y0
-	while yy <= y1:
-		var row: int = yy * w
-		var xx: int = x0
-		while xx <= x1:
-			_near[row + xx] = 1
-			xx += 1
-		yy += 1
-
-static func _near_build(grid: PackedByteArray, w: int, h: int, gap: int, rooms: Array = []) -> void:
-	var n: int = w * h
-	_near.resize(n)
-	_near.fill(0)
-	_near_w = w
-	var r: int = maxi(1, gap)
-	if rooms.size() > 0:
-		var ri: int = 0
-		while ri < rooms.size():
-			var rr: Dictionary = rooms[ri]
-			ri += 1
-			var x0: int = maxi(0, int(rr["x"]) - r)
-			var y0: int = maxi(0, int(rr["y"]) - r)
-			var x1: int = mini(w - 1, int(rr["x"]) + int(rr["w"]) - 1 + r)
-			var y1: int = mini(h - 1, int(rr["y"]) + int(rr["h"]) - 1 + r)
-			var yy: int = y0
-			while yy <= y1:
-				var row: int = yy * w
-				var xx: int = x0
-				while xx <= x1:
-					_near[row + xx] = 1
-					xx += 1
-				yy += 1
-		return
-	var y: int = 1
-	while y < h - 1:
-		var row: int = y * w
-		var x: int = 1
-		while x < w - 1:
-			if grid[row + x] == FLOOR:
-				_near_stamp(w, h, x, y, r)
-			x += 1
-		y += 1
-static func _near_paint_axis(w: int, h: int, a: Vector2i, b: Vector2i, gap: int) -> void:
-	var r: int = maxi(1, gap)
-	var heading: Vector2i = Vector2i(0, 0)
-	if b.x != a.x:
-		heading = Vector2i(1 if b.x > a.x else -1, 0)
-	elif b.y != a.y:
-		heading = Vector2i(0, 1 if b.y > a.y else -1)
-	else:
-		_near_stamp(w, h, a.x, a.y, r)
-		return
-	var x: int = a.x
-	var y: int = a.y
-	var guard: int = 0
-	var limit: int = absi(a.x - b.x) + absi(a.y - b.y) + 4
-	while guard < limit:
-		guard += 1
-		_near_stamp(w, h, x, y, r)
-		if x == b.x and y == b.y:
-			return
-		x += heading.x
-		y += heading.y
-static func _hug_gap() -> int:
-	var floor_min: int = 3
-	var gap: int = 4
-	if App.bal:
-		floor_min = maxi(1, int(App.bal.get("hall_hug_gap_min")))
-		gap = int(App.bal.get("hall_hug_gap"))
-	return maxi(floor_min, gap)
-
-static func _in_room(r: Dictionary, x: int, y: int) -> bool:
-	return x >= int(r.x) and y >= int(r.y) and x < int(r.x) + int(r.w) and y < int(r.y) + int(r.h)
-
-static func _cell_hugs(grid: PackedByteArray, w: int, h: int, x: int, y: int, gap: int, a: Dictionary, b: Dictionary) -> bool:
-	var r: int = maxi(1, gap)
-	var ax0: int = int(a["x"])
-	var ay0: int = int(a["y"])
-	var ax1: int = ax0 + int(a["w"])
-	var ay1: int = ay0 + int(a["h"])
-	var bx0: int = int(b["x"])
-	var by0: int = int(b["y"])
-	var bx1: int = bx0 + int(b["w"])
-	var by1: int = by0 + int(b["h"])
-	var y0: int = maxi(1, y - r)
-	var y1: int = mini(h - 2, y + r)
-	var x0: int = maxi(1, x - r)
-	var x1: int = mini(w - 2, x + r)
-	var yy: int = y0
-	while yy <= y1:
-		var row: int = yy * w
-		var xx: int = x0
-		while xx <= x1:
-			if xx != x or yy != y:
-				if grid[row + xx] == FLOOR:
-					var in_a: bool = xx >= ax0 and xx < ax1 and yy >= ay0 and yy < ay1
-					var in_b: bool = xx >= bx0 and xx < bx1 and yy >= by0 and yy < by1
-					if not in_a and not in_b:
-						return true
-			xx += 1
-		yy += 1
-	return false
-
-static func _restore(grid: PackedByteArray, saved: PackedByteArray) -> void:
-	var i: int = 0
-	var n: int = mini(grid.size(), saved.size())
-	while i < n:
-		grid[i] = saved[i]
-		i += 1
-
-static func _axis_hugs(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i, gap: int, ra: Dictionary, rb: Dictionary) -> bool:
-	var heading: Vector2i = Vector2i(0, 0)
-	if b.x != a.x:
-		heading = Vector2i(1 if b.x > a.x else -1, 0)
-	elif b.y != a.y:
-		heading = Vector2i(0, 1 if b.y > a.y else -1)
-	else:
-		return false
-	var ax0: int = int(ra["x"])
-	var ay0: int = int(ra["y"])
-	var ax1: int = ax0 + int(ra["w"])
-	var ay1: int = ay0 + int(ra["h"])
-	var bx0: int = int(rb["x"])
-	var by0: int = int(rb["y"])
-	var bx1: int = bx0 + int(rb["w"])
-	var by1: int = by0 + int(rb["h"])
-	var r: int = maxi(1, gap)
-	var use_near: bool = _near.size() == w * h
-	var x: int = a.x
-	var y: int = a.y
-	var guard: int = 0
-	var limit: int = absi(a.x - b.x) + absi(a.y - b.y) + 4
-	while guard < limit:
-		guard += 1
-		if x < 1 or y < 1 or x > w - 3 or y > h - 3:
-			return true
-		var i: int = y * w + x
-		if grid[i] != FLOOR and (not use_near or _near[i] != 0):
-			var y0: int = maxi(1, y - r)
-			var y1: int = mini(h - 2, y + r)
-			var x0: int = maxi(1, x - r)
-			var x1: int = mini(w - 2, x + r)
-			var yy: int = y0
-			var hit: bool = false
-			while yy <= y1 and not hit:
-				var row: int = yy * w
-				var xx: int = x0
-				while xx <= x1:
-					if xx != x or yy != y:
-						if grid[row + xx] == FLOOR:
-							var in_a: bool = xx >= ax0 and xx < ax1 and yy >= ay0 and yy < ay1
-							var in_b: bool = xx >= bx0 and xx < bx1 and yy >= by0 and yy < by1
-							if not in_a and not in_b:
-								hit = true
-								break
-					xx += 1
-				yy += 1
-			if hit:
-				return true
-		if x == b.x and y == b.y:
-			return false
-		x += heading.x
-		y += heading.y
-	return true
-static func _dogleg_mid(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i, gap: int, ra: Dictionary, rb: Dictionary) -> Vector2i:
-	var mids: Array[Vector2i] = [Vector2i(b.x, a.y), Vector2i(a.x, b.y)]
-	for mid in mids:
-		if _axis_hugs(grid, w, h, a, mid, gap, ra, rb):
-			continue
-		if _axis_hugs(grid, w, h, mid, b, gap, ra, rb):
-			continue
-		return mid
-	return Vector2i(-9999, -9999)
-
 static func _attempt_winding(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, ra: Dictionary, rb: Dictionary) -> bool:
-	var gap: int = _hug_gap()
+	var gap: int = Near._hug_gap()
 	var ca: Vector2i = center(ra)
 	var cb: Vector2i = center(rb)
-	var mid: Vector2i = _dogleg_mid(grid, w, h, ca, cb, gap, ra, rb)
+	var mid: Vector2i = Near._dogleg_mid(grid, w, h, ca, cb, gap, ra, rb)
 	if mid.x < -9000:
 		return false
-	var width: int = roll_hall_width(rng)
-	_carve_axis(grid, w, h, ca, mid, width)
-	_carve_axis(grid, w, h, mid, cb, width)
-	_near_paint_axis(w, h, ca, mid, gap)
-	_near_paint_axis(w, h, mid, cb, gap)
+	var width: int = Hall.roll_hall_width(rng)
+	Hall._carve_axis(grid, w, h, ca, mid, width)
+	Hall._carve_axis(grid, w, h, mid, cb, width)
+	Near._near_paint_axis(w, h, ca, mid, gap)
+	Near._near_paint_axis(w, h, mid, cb, gap)
 	return true
 static func extra_winding_loops(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, extra: int) -> void:
 	if extra <= 0 or rooms.size() < 3:
@@ -411,8 +149,8 @@ static func extra_winding_loops(rng: RandomNumberGenerator, grid: PackedByteArra
 	var landed: int = 0
 	var tries: int = 0
 	var cap: int = want * 6
-	if _near.size() != w * h:
-		_near_build(grid, w, h, _hug_gap(), rooms)
+	if Near._near.size() != w * h:
+		Near._near_build(grid, w, h, Near._hug_gap(), rooms)
 	while landed < want and tries < cap:
 		tries += 1
 		var ia: int = rng.randi() % n
@@ -429,7 +167,7 @@ static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArra
 	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 	var added := 0
 	var guard := 0
-	var interval := _hall_interval()
+	var interval := Hall._hall_interval()
 	while added < count and guard < count * 8:
 		guard += 1
 		if rooms.is_empty():
@@ -441,7 +179,7 @@ static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArra
 		var y := start.y
 		var length := rng.randi_range(10, 16)
 		var last := start
-		var width := roll_hall_width(rng)
+		var width := Hall.roll_hall_width(rng)
 		var steps := 0
 		var run_on := false
 		var run_x := x
@@ -461,10 +199,10 @@ static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArra
 			y = ny
 			steps += 1
 			if steps % interval == 0:
-				width = roll_hall_width(rng)
-			if _cell_hugs(grid, w, h, x, y, _hug_gap(), src, src):
+				width = Hall.roll_hall_width(rng)
+			if Near._cell_hugs(grid, w, h, x, y, Near._hug_gap(), src, src):
 				break
-			dig_span(grid, w, h, x, y, heading, width)
+			Hall.dig_span(grid, w, h, x, y, heading, width)
 			last = Vector2i(x, y)
 			if not run_on:
 				run_x = x
@@ -473,13 +211,13 @@ static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArra
 				run_w = width
 				run_on = true
 			elif heading != run_h or width != run_w:
-				_note_rect(w, h, run_x, run_y, prev_x, prev_y, run_h, run_w)
+				Hall._note_rect(w, h, run_x, run_y, prev_x, prev_y, run_h, run_w)
 				run_x = x
 				run_y = y
 				run_h = heading
 				run_w = width
 		if run_on:
-			_note_rect(w, h, run_x, run_y, x, y, run_h, run_w)
+			Hall._note_rect(w, h, run_x, run_y, x, y, run_h, run_w)
 		if can_place(rooms, last.x, last.y, 3, 3):
 			var kind := "normal"
 			if rng.randf() < 0.3:
@@ -491,35 +229,13 @@ static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArra
 			carve_room(grid, w, h, spur)
 		added += 1
 
-static func _carve_axis(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i, width: int) -> void:
-	if a == b:
-		dig_span(grid, w, h, a.x, a.y, Vector2i(1, 0), width)
-		_note_rect(w, h, a.x, a.y, a.x, a.y, Vector2i(1, 0), width)
-		return
-	var heading: Vector2i = Vector2i(0, 0)
-	if b.x != a.x:
-		heading = Vector2i(1 if b.x > a.x else -1, 0)
-	else:
-		heading = Vector2i(0, 1 if b.y > a.y else -1)
-	var x: int = a.x
-	var y: int = a.y
-	var guard: int = 0
-	var limit: int = absi(a.x - b.x) + absi(a.y - b.y) + 4
-	while (x != b.x or y != b.y) and guard < limit:
-		guard += 1
-		dig_span(grid, w, h, x, y, heading, width)
-		x = clampi(x + heading.x, 1, w - 3)
-		y = clampi(y + heading.y, 1, h - 3)
-	dig_span(grid, w, h, b.x, b.y, heading, width)
-	_note_rect(w, h, a.x, a.y, b.x, b.y, heading, width)
-
 static func carve_winding(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i) -> void:
-	var width: int = roll_hall_width(rng)
+	var width: int = Hall.roll_hall_width(rng)
 	var mid: Vector2i = Vector2i(b.x, a.y)
 	if rng.randf() < 0.5:
 		mid = Vector2i(a.x, b.y)
-	_carve_axis(grid, w, h, a, mid, width)
-	_carve_axis(grid, w, h, mid, b, width)
-	if _near.size() == w * h:
-		_near_paint_axis(w, h, a, mid, _hug_gap())
-		_near_paint_axis(w, h, mid, b, _hug_gap())
+	Hall._carve_axis(grid, w, h, a, mid, width)
+	Hall._carve_axis(grid, w, h, mid, b, width)
+	if Near._near.size() == w * h:
+		Near._near_paint_axis(w, h, a, mid, Near._hug_gap())
+		Near._near_paint_axis(w, h, mid, b, Near._hug_gap())

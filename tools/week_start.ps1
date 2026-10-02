@@ -29,7 +29,7 @@ $lines = New-Object System.Collections.Generic.List[string]
 function Add-Line([string]$s) { $lines.Add($s); Write-Host $s }
 
 Add-Line "week start $(Get-Date -Format o)"
-Add-Line "root=$Root"
+Add-Line "root=."
 Add-Line "whatIf=$WhatIf"
 Add-Line ""
 
@@ -204,5 +204,5 @@ $lines.Add("")
 $lines.Add(("RESULT pin={0} seed={1} archive={2} gc={3} locks_deleted={4} clean={5}" -f $pinStatus, $seedStatus, $archStatus, $gcStatus, $lockDeleted, $cleanStatus))
 $lines | Set-Content -LiteralPath $Summary -Encoding utf8
 Write-Host ""
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 exit 0

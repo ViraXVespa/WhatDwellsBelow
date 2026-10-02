@@ -50,7 +50,7 @@ $truncated = $false
 
 $pathNote = ($Path | ForEach-Object { $_.Replace('\', '/') }) -join ","
 $lines.Add("scene inventory $(Get-Date -Format o)")
-$lines.Add("root=$Root")
+$lines.Add("root=.")
 $lines.Add("path=$pathNote scenes=$($sceneFiles.Count) maxNodes=$MaxNodes")
 $lines.Add("measure=parse .tscn headers; do not open scene bodies in chat")
 $lines.Add("")
@@ -101,5 +101,5 @@ $lines.Add(("RESULT scenes={0} nodes={1} scripts={2} truncated={3}" -f $sceneFil
 $lines | Set-Content -Path $Summary -Encoding utf8
 
 Write-Host "scenes=$($sceneFiles.Count) nodes=$nodeCount scripts=$scriptCount truncated=$truncated"
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 exit 0

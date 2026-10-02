@@ -36,7 +36,7 @@ def main() -> int:
     stamp = datetime.now(timezone.utc).isoformat()
     lines = [
         f"code-map row {stamp}",
-        f"root={root}",
+        "root=.",
         f"path={needle}",
     ]
 

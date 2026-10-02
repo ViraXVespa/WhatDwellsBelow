@@ -14,6 +14,8 @@ User squash-merges. Never push main. Never merge the PR.
 
 Publish with plain `git push` over HTTPS (gh credential helper) to `bot/*` or the PR branch only. Push to `dungeon-reshape` only when the User asks. No force pushes, ever. After the User squash-merges, create a fresh `bot/<flow>` branch from `origin/main` (e.g. `bot/reuse-xyz`, `bot/size-xyz`), push it with `git push -u origin bot/<flow>`, and open the PR with `gh pr create` (if that fails, GitHub MCP `create_pull_request`).
 
+The box repo has a local git identity (Grok Bot / grok-bot@users.noreply.github.com), so plain `git commit` works. PR body edits: `gh api -X PATCH repos/<repo>/pulls/N -F body=@file` (`gh pr edit` fails on the Projects classic shutdown).
+
 ## Boot
 
 1. Read this file. If the agents file already routed you here, do not fetch it again.
@@ -48,6 +50,7 @@ Prove a cluster with:
 
 CI: .github/workflows/bot-gate.yml
 Allowlist: tools/bot_allow.txt (default deny; deny lines first)
+Stale docs: the allowlist exists so unattended Bot jobs never change out-of-scope files on their own. The Bot does not edit design docs outside it. It flags stale lines in the PR body under `Stale doc lines (for the User)`: file, line, what it says, what it should say. The User edits them, and the red `Allowlist on bot branches` check on that PR can then be ignored. When the User works alongside the Bot in session and says so, the Bot may edit them.
 Measure: os.path.getsize, same floor as Get-Item Length (10,000 bytes).
 Touched live `scripts/**/*.gd` must ship under 10KB. Split with `design/refactor.md` (recipe only). The under-5KB target is only `design/grok-bot-size.md`. Label math: `design/versioning-log.md`.
 Do not open `design/reuse-map.md` except from `design/grok-bot-reuse.md` when that brief is not the empty template.
@@ -62,9 +65,16 @@ Work only in `/workspace/WhatDwellsBelow` on the Bot VM. Do not open `design/pc-
 Not a boot step. Not a Job flow. When a cluster needs a headless prove,
 run `python tools/bot_smokes.py --phases 1,2,6` from the repo root.
 Setup downloads the official 4.7.2 Linux tools binary only if the pin is missing.
+Binary: `GODOT_BIN`, else the pin `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
+New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets`, and commit the `.uid` files only. That is the import, not an editor session.
 Do not run editor playtest. Do not schedule a routine that launches Godot.
 
 Warning sweep (User-named only): `python tools/bot_warnscan.py` runs every smoke area plus boot/static, collects Godot warnings, errors, and leaks, and exits 0 only on zero findings. It reports; it does not fix game code. `--list` shows areas, `--repeat 2` steadies leaks.
+Before/after a change: `--save-baseline PATH` before, then `--non-leak-diff PATH` after (the baseline and the after run must use the same `--areas`). It ignores leaks and sites, prints NEW and FIXED, and exits 1 only on NEW.
+Targeted areas for a split: the smoke phases that load the file, `dungeon-load-timing`, `map-f1`, `static`.
+Split tool: `python tools/split_funcs.py FILE --list` shows func sizes, uses, and outside callers; write `plan.json` (`{helper_stem: [names]}`), run `--plan plan.json --dry-run`, then without `--dry-run`. It writes the helpers (static funcs, consts, vars), one-line delegates for public funcs (`await` kept for coroutines), and preloads, runs `facade_requal.py` on every file, and prints the line-multiset check and sizes. Node (instance) funcs move too: they become `static func f(host: <the facade's extends type>, ...)` and the facade keeps a delegate.
+Facade names (`split_funcs.py` runs this itself): `python tools/facade_requal.py FILE` rewrites names that moved to same-folder `preload` helpers into `Mod.name` (code only; keeps BOM and line endings; `--dry-run` lists comment/string matches; `--sym NAME=Mod` or `NAME()=Mod` for manual cases). Run `FILE --check` on the facade and on every new helper: it exits 1 on a bare moved name, or on an outside `Alias.name` caller whose name is gone from FILE. Fast compile check (seconds; the smokes wait out a timeout on a compile error): `bot_warnscan.py --areas static --non-leak-diff PATH`, run before the smokes.
+Doc edits: `import doc_patch as dp` (`tools/doc_patch.py`; `write_changelog`, `replace_once`, `ensure_line`, `replace_func`, `upsert_func`, `set_read_when`) from a scratch runner; it keeps CRLF and skips edits already applied.
 
 ## Hard stops
 
@@ -89,3 +99,5 @@ Do not declare the whole sweep done and then start a second flow.
 
 PR URL, squash-merge reminder, path + bytes before/after, changelog path if
 shipping, what is still over 10KB, next printed item.
+
+Rough edges: at the end of each file in a size pass, list the rough edges you hit (tooling, docs, waiting time, ambiguity) and fix them in the same PR (tool/doc edits within the allowlist) before finishing the task. Anything not fixable (outside the allowlist) goes in the PR body for the User.
