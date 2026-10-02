@@ -70,3 +70,9 @@ func _process(_delta: float) -> void:
 		return
 	if player.get_playback_position() + 0.05 >= loop_offset():
 		passed_intro = true
+
+func _exit_tree() -> void:
+	# Stop and let the mixer drain before the tree frees, or the playback is reported leaked at exit.
+	if player.stream != null:
+		player.stop()
+		OS.delay_msec(60)
