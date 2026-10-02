@@ -7,6 +7,7 @@ binary only when the pin is missing. Editor playtest is out of scope.
   python tools/bot_smokes.py --doctor
   python tools/bot_smokes.py --setup
   python tools/bot_smokes.py --phases 1,2,6
+  python tools/bot_smokes.py --door hub | --job hub.guild   (phases from routes.yaml smokes)
 """
 from __future__ import annotations
 
@@ -125,10 +126,15 @@ def main() -> int:
     p.add_argument("--doctor", action="store_true")
     p.add_argument("--setup", action="store_true")
     p.add_argument("--phases", default="")
+    p.add_argument("--door", default="", help="Phases mapped to this routes.yaml door (instead of --phases).")
+    p.add_argument("--job", default="", help="Phases mapped to this routes.yaml door.job (instead of --phases).")
     p.add_argument("--timeout", type=int, default=120)
     p.add_argument("--verbose", action="store_true")
     ns = p.parse_args()
     root = agent_log.resolve_root(ns)
+    if (ns.door or ns.job) and not ns.phases:
+        from load_routes import load_routes, smoke_phases
+        ns.phases = ",".join(map(str, smoke_phases(load_routes(root), door=ns.door.strip(), job=ns.job.strip())))
     pin = pin_path()
     found = resolve_bin()
     if ns.doctor or (not ns.setup and not ns.phases):

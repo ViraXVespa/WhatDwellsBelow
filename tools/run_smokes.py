@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Phase smoke runner (Windows/any host). Per-path Godot lock; never kills godot*.
 
-    python3 tools/run_smokes.py [--phases 1,2,3] [--timeout-sec 120] [--verbose-godot]
+    python3 tools/run_smokes.py [--phases 1,2,3 | --door D | --job door.job] [--timeout-sec 120] [--verbose-godot]
+--door / --job pick the phases mapped in routes.yaml `smokes` (Build prove). Neither: all nine.
 Old PowerShell spellings work: -Phases 4,5 -TimeoutSec 60 -VerboseGodot.
 Summary: _logs/smokes/summary.txt. Bot VM: use bot_smokes.py instead.
 """
@@ -14,16 +15,21 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 import godot_lib
+from load_routes import load_routes, smoke_phases
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Run Godot phase smokes (--wdb-phaseN-smoke).", json_out=True)
     ap.add_argument("--phases", "-Phases", nargs="+", default=["1,2,3,4,5,6,7,8,9"], help="Phase numbers, 1,2,6 or 1 2 6.")
+    ap.add_argument("--door", default="", help="Run the phases mapped to this routes.yaml door.")
+    ap.add_argument("--job", default="", help="Run the phases mapped to this routes.yaml door.job.")
     ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=120)
     ap.add_argument("--verbose-godot", "-VerboseGodot", action="store_true")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     phases = agent_log.split_list(args.phases, int)
+    if args.door or args.job:
+        phases = smoke_phases(load_routes(root), door=args.door.strip(), job=args.job.strip())
     d = agent_log.ensure_agent_log_dir("smokes", root)
     for f in d.glob("p*-*.log"):
         m = re.match(r"p(\d+)-(err|out)\.log$", f.name)

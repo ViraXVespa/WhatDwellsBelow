@@ -4,7 +4,7 @@
     python3 tools/start_build_slice.py --door dungeon | --job ui.pause | --area player [--ref main] [--launch] [--dry-run]
 Writes a postcard to _logs/slice-boot/summary.txt and prints FORK/RETRY lines. Does not edit the live
 tree or kill Godot; spawns grok only with --launch. Gather session id: --session or $GROK_SESSION_ID
-(else a placeholder and exit 2). Old spellings: -Door -Job -Area -Ref -Launch -WhatIf.
+(optional: without it the FORK/RETRY lines carry a <gather-session-id> placeholder, RESULT INFO, exit 0; the User fills it in). Old spellings: -Door -Job -Area -Ref -Launch -WhatIf.
 """
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
+from load_routes import load_routes, smoke_phases
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -49,6 +50,12 @@ def main(argv: list[str] | None = None) -> int:
             p = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
             route = "ok" if p.returncode == 0 else f"exit={p.returncode}"
             route_lines = (p.stdout + p.stderr).splitlines()
+    smokes = ""
+    if args.door or args.job:
+        try:
+            smokes = ",".join(map(str, smoke_phases(load_routes(root), door=args.door.strip(), job=args.job.strip())))
+        except Exception:
+            smokes = ""
     resume = session or "<gather-session-id>"
     fork = f"grok --worktree={wt} --ref {args.ref} -r {resume} --fork-session"
     retry = f"grok -r {resume} --fork-session"
@@ -68,13 +75,14 @@ def main(argv: list[str] | None = None) -> int:
             "gather=planned list_xref + planned show_func + one code_map row when a live script is in the slice",
             "outside_gather=list_changed (git inventory)", "change=worktree only; do not edit live checkout",
             "prove=one run_build_gate (import check) or one listed smoke set, or both once",
+            f"smokes={smokes or 'n/a'} (run: tools/run_smokes.py --door/--job; add or update asserts for new systems)",
             "return=you launch the fork argv; CLI does not auto-resume this pin", "", f"FORK {fork}", f"RETRY {retry}", ""]
     if route_lines:
         body += ["--- route ---"] + route_lines + [""]
-    code = agent_log.finish("slice-boot", root, "\n".join(body), "PASS" if session and not route.startswith("exit") else "FAIL",
-                            args=args, write=not args.dry_run, echo=f"worktree={wt}\nFORK {fork}\nRETRY {retry}\nlaunch={launch}",
+    code = agent_log.finish("slice-boot", root, "\n".join(body), "FAIL" if route.startswith("exit") else ("PASS" if session else "INFO"),
+                            args=args, write=not args.dry_run, echo=f"worktree={wt}\nsmokes={smokes or 'n/a'}\nFORK {fork}\nRETRY {retry}\nlaunch={launch}",
                             worktree=wt, session_ready=bool(session), route=route, launch=launch)
-    return 2 if not session else code
+    return code
 
 
 if __name__ == "__main__":
