@@ -13,7 +13,7 @@ Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`. 
 
 | System | Live files |
 |--------|------------|
-| Autoload / flow | `scripts/app.gd` + `app_set.gd`, `app_boot.gd`, `app_flow.gd`, `app_run.gd`, `boot.gd`, `title.gd` + `title_news.gd`, `web_pad.gd` |
+| Autoload / flow | `scripts/app.gd` + `app_set.gd`, `app_boot.gd`, `app_flow.gd` (facade; helper `app_flow_hub.gd`), `app_run.gd`, `boot.gd`, `title.gd` + `title_news.gd`, `web_pad.gd` |
 | Display | `scripts/display_mode.gd`, `scripts/ui/fs_gate.gd` |
 | Scenes | `scenes/boot.tscn`, `fs_gate.tscn`, `splash.tscn`, `title.tscn`, `camp.tscn`, `dungeon.tscn`, `foundation.tscn` |
 | Player | `scripts/world/player.gd` + `player_anim.gd`, `player_anim_load.gd`, `player_anim_loco.gd`, `player_setup.gd`, `player_tick.gd`, `player_act.gd`, `player_lock.gd`, `player_combat.gd`, `facing.gd`, `camera_rig.gd`, `sprite_filter.gd` |
