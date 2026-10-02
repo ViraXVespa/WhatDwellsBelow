@@ -108,22 +108,24 @@ static func guild(host: Node3D) -> void:
 	var wing_box: Vector3 = lay.wing_box if lay else WING_SIZE
 	var hall_body: StaticBody3D = box(host, hall_at, hall_box, Color(0.45, 0.32, 0.22))
 	var wing_body: StaticBody3D = box(host, wing_at, wing_box, Color(0.5, 0.38, 0.28))
-	face(hall_body, hall_box, "res://assets/sprites/buildings/guild.png", 0.0, hall_box.x, 0.30)
-	face(wing_body, wing_box, "res://assets/sprites/buildings/guild_reception.png", 0.0, wing_box.x, 0.28)
-	var hd: float = lay.awning_depth("Hall") if lay else 0.48
-	var hs: float = lay.awning_slope("Hall") if lay else 0.10
-	var hv: float = lay.awning_valance("Hall") if lay else 0.16
-	var he: float = lay.eave_for("Hall") if lay else ROOF_EAVE
-	var we: float = lay.eave_for("Wing") if lay else ROOF_EAVE
-	awning(hall_body, hall_box, hd, hs, hv, he, 0.2, 0.2)
+	var hall_fit: Vector3 = seat(hall_body, hall_box, "res://assets/sprites/buildings/guild.png")
+	var wing_fit: Vector3 = seat(wing_body, wing_box, "res://assets/sprites/buildings/guild_reception.png")
+	MeshS.wall_box(hall_body, hall_fit, Color(0.45, 0.32, 0.22))
+	MeshS.wall_box(wing_body, wing_fit, Color(0.5, 0.38, 0.28))
+	face(hall_body, hall_fit, "res://assets/sprites/buildings/guild.png", 0.0, hall_fit.x, 0.0)
+	face(wing_body, wing_fit, "res://assets/sprites/buildings/guild_reception.png", 0.0, wing_fit.x, 0.0)
+	var hd: float = lay.awning_depth("Hall") if lay else 0.72
+	var hs: float = lay.awning_slope("Hall") if lay else 0.08
+	var wd: float = lay.awning_depth("Wing") if lay else 0.64
+	var ws: float = lay.awning_slope("Wing") if lay else 0.08
+	awning(hall_body, hall_fit, hd, hs, hall_fit.y * 0.34, 0.0, 0.0, 0.0)
+	awning(wing_body, wing_fit, wd, ws, wing_fit.y * 0.34, 0.0, 0.0, 0.0)
 	var hall_tile: float = lay.tile_for("Hall") if lay else TILE_W
 	var wing_tile: float = lay.tile_for("Wing") if lay else TILE_W
 	var hall_uv: Vector2 = lay.hall_uv_off if lay else Vector2.ZERO
 	var wing_uv: Vector2 = lay.wing_uv_off if lay else Vector2.ZERO
-	MeshS.gable_on(hall_body, hall_box, he, 1.35, hall_tile, hall_uv)
-	MeshS.gable_on(wing_body, wing_box, we, 1.15, wing_tile, wing_uv)
-
-
+	MeshS.gable_on(hall_body, hall_fit, 0.0, 0.55, hall_tile, hall_uv)
+	MeshS.gable_on(wing_body, wing_fit, 0.0, 0.48, wing_tile, wing_uv)
 static func guild_roofs(host: Node3D) -> void:
 	MeshS.guild_roofs(host)
 
@@ -138,25 +140,20 @@ static func solid(
 	var body: StaticBody3D = box(host, pos, box_size, col)
 	var x0: float = pos.x - box_size.x * 0.5
 	var z0: float = pos.z - box_size.z * 0.5
-	var eave: float = ROOF_EAVE
 	var lay: Node3D = _layout_from_build_host(host)
-	if lay:
-		eave = lay.eave_for("Stall")
 	if tarp:
-		MeshS.pitched_tarp(body, box_size, eave, Vector3(x0, 0.0, z0))
+		MeshS.pitched_tarp(body, box_size, 0.0, Vector3(x0, 0.0, z0))
 	else:
 		roof_plane(
 			body,
-			Vector3(0.0, box_size.y * 0.5 + 0.03, eave * 0.5),
-			Vector2(box_size.x + 0.06, box_size.z + eave),
+			Vector3(0.0, box_size.y * 0.5 + 0.03, 0.0),
+			Vector2(box_size.x, box_size.z),
 			Vector3(x0, 0.0, z0),
 			false,
 			lay.tile_for("Stall") if lay else TILE_W,
 			lay.stall_uv_off if lay else Vector2.ZERO
 		)
-	if not tarp:
-			face(body, box_size, tex, 0.0, box_size.x)
-	MeshS.wall_box(body, box_size, Color(0.42, 0.28, 0.16))
+		face(body, box_size, tex, 0.0, box_size.x)
 static func face(
 	body: Node3D, box_size: Vector3, tex: String, x_off: float, face_w: float, crop_top: float = 0.0
 ) -> void:
@@ -180,7 +177,7 @@ static func face(
 	spr.pixel_size = minf(fw / tw, fh / rh)
 	var sh: float = spr.pixel_size * rh
 	var ground_local: float = -body.position.y
-	spr.position = Vector3(x_off, ground_local + sh * 0.5, box_size.z * 0.5 + 0.05)
+	spr.position = Vector3(x_off, ground_local + sh * 0.5, box_size.z * 0.5 + 0.01)
 	body.add_child(spr)
 static func roof_mat(dim: Vector2, world_min: Vector3, tile: float = TILE_W, uv_off: Vector2 = Vector2.ZERO) -> Material:
 	return MeshS.roof_mat(dim, world_min, tile, uv_off)
@@ -297,3 +294,17 @@ static func dump_meshes(root: Node) -> void:
 			other += 1
 			print("CAMP_MESH other name=", n.name, " mesh=", mi.mesh.get_class() if mi.mesh else "null")
 	print("CAMP_MESH totals boxes=", boxes, " sprites=", sprites, " other=", other)
+
+static func face_height(tex: String, face_w: float) -> float:
+	if not ResourceLoader.exists(tex):
+		return 3.2
+	var img: Texture2D = load(tex)
+	var tw: float = float(maxi(1, img.get_width()))
+	var th: float = float(maxi(1, img.get_height()))
+	return maxf(face_w * th / tw, 1.2)
+
+
+static func seat(body: StaticBody3D, box_size: Vector3, tex: String) -> Vector3:
+	var h: float = face_height(tex, box_size.x)
+	body.position.y = h * 0.5
+	return Vector3(box_size.x, h, box_size.z)

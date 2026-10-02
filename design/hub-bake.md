@@ -5,6 +5,7 @@ Read when: hub light, roofs, camp shot, wow pass
 Code: `scripts/graphics/light_rt.gd` (`HUB_SUB`, `_hub_make_rt`, `_hub_paint_day`, `_hub_stamp_skirt`, `save_hub_bake`), `scripts/graphics/wrap_shader.gd`, `scripts/world/camp_build.gd`, `scripts/world/camp_build_mesh.gd`, `scripts/world/camp_layout.gd`, `scripts/debug/shot_tool.gd`, `assets/baked/hub_light.png`, `tools/run_bake_camp.ps1`
 
 The hub ships one baked light RT. Offline bake quality is the look lock. Runtime `camp_light` milliseconds are not. Ortho-down at play zoom is the judge. Roofs read through lid shade and tile grain. The yard reads through a shadow projected from the real hall, wing, stall, and awning boxes. Height sets the length. Hall and wing are real gables. The stall tarp is pitched over the counter. Collision comes from those meshes.
+- Building collision is the live wall, gable, awning, and stall-pitch meshes. Do not put the player on a box lid.
 
 ## Lock
 - Shipped atlas: `res://assets/baked/hub_light.png` from `LightRt.save_hub_bake`.
@@ -21,7 +22,7 @@ The hub ships one baked light RT. Offline bake quality is the look lock. Runtime
 - Finish and save use the same skirt. Then one 3x3 blur.
 - Hall and wing lids are two-slope gables, not a south-falling shed. WrapShader russet is the lid color, matching the awning red, not the sun disc. Each slope runs from the ridge to its eave. `shade_hi` stays high enough that the eave is still tile. Tile `uv_scale` uses the slope length.
 - Stall tarp is a pitched sheet over the counter, high enough to cover the goods, one sheet of `plaza_tarp.png`. No lid wrap term on the cloth. A small rumple is not the pitch.
-- Wing stays taller and has no awning. Hall keeps the awning.
+- Hall and wing are only as tall as their face art. Both awnings hang off the south roof edge and cover the painted shingle band. Roofs stop at the wall edge.
 - Angled frames are part of the proof. The recipe is `design/shot-recipes.json`: play, hall eave, stall front, stall side, one boot, one paste.
 
 ## Allowed

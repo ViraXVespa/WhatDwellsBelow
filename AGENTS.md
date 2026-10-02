@@ -8,7 +8,7 @@ Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 |------|-----------|---------|
 | **Grok Build (CLI)** | You can write the checkout | `design/grok-build.md`. Edit live files. Same-system APIs just do; a new cross-system owner or named live-module replace is propose-first. |
 | **Web / chat** | You cannot write the repo | `design/web-session.md`. Never assume a disk write landed. |
-| **Grok Bot** | Grok Bot / The Refactorer, or a named Bot / refactor sweep | `BOT.md`, then `python tools/bot_status.py`, then one printed Job file. Refactor only, except a `tools/` runner the User approved this session. Ship via branch + PR. |
+| **Grok Bot** | Grok Bot / The Refactorer, or a named Bot / refactor sweep | `BOT.md`, then `python tools/bot_status.py`, then one printed Job file. Refactor only, except a `tools/` runner the User approved this session. Approved smoke runner: `python tools/bot_smokes.py` (headless phases only; setup if the Linux pin is missing). Ship via branch + PR. |
 
 If unsure: ask once, then **web / chat**.
 

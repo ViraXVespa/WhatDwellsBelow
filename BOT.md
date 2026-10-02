@@ -55,10 +55,20 @@ Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one
 
 Work only in `/workspace/WhatDwellsBelow` on the Bot VM. Do not open `design/pc-offload.md`. Do not load the pc-offload skill. Do not use a Windows desktop checkout, `WDB_ROOT`, or the Steam Godot path.
 
+## Smokes
+
+Not a boot step. Not a Job flow. When a cluster needs a headless prove,
+run `python tools/bot_smokes.py --phases 1,2,6` from the repo root.
+Setup downloads the official 4.7.2 Linux tools binary only if the pin is missing.
+Do not run editor playtest. Do not schedule a routine that launches Godot.
+
 ## Hard stops
 
-No new player-facing systems, tunables, combat feel, playtest, Godot install,
+No new player-facing systems, tunables, combat feel, editor playtest,
 art/I2V, locale sweeps, or pause redesign.
+Headless smokes only: `python tools/bot_smokes.py` may install the official
+Godot 4.7.2 Linux tools binary under the VM pin and run phase smokes.
+Do not install a Windows or Steam Godot. Do not open the editor.
 Do not enable Execution on Local Computer.
 Do not load Imagine / I2V / pc-offload skills. Those are Build skills on the User PC.
 Bot may save its own skill after two good clusters. Skills are the account private library.
