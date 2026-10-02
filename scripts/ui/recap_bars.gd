@@ -1,5 +1,5 @@
 extends Object
-const CombatP := preload("res://scripts/data/progress_combat.gd")
+const CombatP := preload("res://scripts/data/progress_combat/progress_combat.gd")
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const SkillRow := preload("res://scripts/ui/skill_row_view.gd")

@@ -5,7 +5,7 @@ const T := preload("res://scripts/data/tunables.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
-const Disp := preload("res://scripts/display_mode.gd")
+const Disp := preload("res://scripts/display_mode/display_mode.gd")
 
 static func page_settings(host) -> void:
 	host.status.text = "Settings. In-test options. LB/RB change pages."

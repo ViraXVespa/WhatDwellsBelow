@@ -2,7 +2,7 @@
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
-const Disp := preload("res://scripts/display_mode.gd")
+const Disp := preload("res://scripts/display_mode/display_mode.gd")
 
 const PAD := {
 	"interact": JOY_BUTTON_A,

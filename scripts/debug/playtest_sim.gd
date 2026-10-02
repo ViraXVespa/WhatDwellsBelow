@@ -1,6 +1,6 @@
 extends Object
 
-const Store := preload("res://scripts/data/save_store.gd")
+const Store := preload("res://scripts/data/save_store/save_store.gd")
 const Recs := preload("res://scripts/debug/playtest_recs.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const PlaytestLogBatch := preload("res://scripts/debug/playtest_log_batch.gd")

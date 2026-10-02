@@ -6,7 +6,7 @@ const View := preload("res://scripts/ui/split_menu_view.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const BindsPage := preload("res://scripts/ui/binds_page.gd")
 const Pages := preload("res://scripts/ui/pause_settings_pages.gd")
-const Disp := preload("res://scripts/display_mode.gd")
+const Disp := preload("res://scripts/display_mode/display_mode.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 const PATREON := "https://www.patreon.com/cw/ViraXVespa"

@@ -1,7 +1,7 @@
 ﻿extends Object
 
-const Cat := preload("res://scripts/data/archives_catalog.gd")
-const Docs := preload("res://scripts/data/archives_docs.gd")
+const Cat := preload("res://scripts/data/archives/archives_catalog.gd")
+const Docs := preload("res://scripts/data/archives/archives_docs.gd")
 const View := preload("res://scripts/ui/archives_ui_view.gd")
 const Split := preload("res://scripts/ui/split_menu.gd")
 

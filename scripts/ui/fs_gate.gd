@@ -2,7 +2,7 @@ extends Control
 
 ## Web pre-splash: platform copy + a gesture that can request fullscreen / PWA install.
 
-const Disp := preload("res://scripts/display_mode.gd")
+const Disp := preload("res://scripts/display_mode/display_mode.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const SplitView := preload("res://scripts/ui/split_menu_view.gd")
 

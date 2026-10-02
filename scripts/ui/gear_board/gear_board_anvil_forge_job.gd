@@ -1,7 +1,7 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const ForgeP := preload("res://scripts/data/progress_forge.gd")
+const ForgeP := preload("res://scripts/data/progress_forge/progress_forge.gd")
 
 const QTY_MAX := 9
 const HOLD_CAP := 3

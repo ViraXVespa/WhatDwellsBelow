@@ -3,7 +3,7 @@
 ## Title Archives browser. Shared two-column shell.
 
 const T := preload("res://scripts/data/tunables.gd")
-const Docs := preload("res://scripts/data/archives_docs.gd")
+const Docs := preload("res://scripts/data/archives/archives_docs.gd")
 const ArchView := preload("res://scripts/ui/archives_ui_view.gd")
 const Act := preload("res://scripts/ui/archives_ui_act.gd")
 const Split := preload("res://scripts/ui/split_menu.gd")

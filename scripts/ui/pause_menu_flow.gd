@@ -15,7 +15,7 @@ const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
-const Disp := preload("res://scripts/display_mode.gd")
+const Disp := preload("res://scripts/display_mode/display_mode.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const Split := preload("res://scripts/ui/split_menu.gd")
 

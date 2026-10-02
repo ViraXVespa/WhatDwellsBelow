@@ -35,7 +35,7 @@ the changelog directory is not required. Pages `/changelog/` is the public index
 
 ## In-game
 
-- Title / play menu (`scripts/title.gd`) always shows `version.json` `label`.
+- Title / play menu (`scripts/title/title.gd`) always shows `version.json` `label`.
 - If `label` > saved `last_seen_game_ver`, show a gamepad-first “what’s new” overlay **before** Play is used.
 - Overlay lists JSON entries with `label` > `last_seen_game_ver`.
 - First launch or wiped save: show **the current build only**, then write `last_seen_game_ver`.

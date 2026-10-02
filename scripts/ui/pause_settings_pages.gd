@@ -6,7 +6,7 @@ const T := preload("res://scripts/data/tunables.gd")
 const View := preload("res://scripts/ui/split_menu_view.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
-const Disp := preload("res://scripts/display_mode.gd")
+const Disp := preload("res://scripts/display_mode/display_mode.gd")
 
 static func page_gameplay(host: Node) -> void:
 	var ch: Button = ThemeS.btn("Character: %s" % App.character_type, func() -> void:

@@ -21,7 +21,7 @@ def iter_gd(root: Path, *, sub: str = "scripts") -> list[Path]:
     base = root / sub
     if not base.is_dir():
         return []
-    return sorted(p for p in base.rglob("*.gd") if p.is_file() and not set(p.parts) & set(SKIP_PARTS))
+    return sorted(p for p in base.rglob("*.gd") if p.is_file() and p.relative_to(root).parts[0] not in SKIP_PARTS)
 
 
 def func_starts(text: str) -> list[tuple[str, int]]:

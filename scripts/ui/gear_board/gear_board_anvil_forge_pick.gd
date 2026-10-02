@@ -3,7 +3,7 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
 const Board := preload("res://scripts/ui/gear_board/gear_board.gd")
-const ForgeP := preload("res://scripts/data/progress_forge.gd")
+const ForgeP := preload("res://scripts/data/progress_forge/progress_forge.gd")
 
 const HOLD_CAP := 3
 

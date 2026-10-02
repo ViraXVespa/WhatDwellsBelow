@@ -2,7 +2,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Inv := preload("res://scripts/ui/progress_ui_inv.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
+const Rules := preload("res://scripts/data/gear_rules/gear_rules.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 
 static func rebuild_shop(ui) -> void:

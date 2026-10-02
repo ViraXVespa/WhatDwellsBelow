@@ -6,7 +6,7 @@ Read when: title / play menu, web fullscreen gate, loader
 
 ## Title / play menu
 
-`scripts/title.gd` is the play menu. Overlay body lives in `scripts/title_news.gd`. The card MUST show `Version: {label}` from `version.json` at all times.
+`scripts/title/title.gd` is the play menu. Overlay body lives in `scripts/title/title_news.gd`. The card MUST show `Version: {label}` from `version.json` at all times.
 
 Buttons, top to bottom: Play (or Play — Male / Play — Female), Updates, Archives.
 
@@ -48,7 +48,7 @@ Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close 
 
 ## Live snapshot — web fullscreen gate
 
-`scripts/ui/fs_gate.gd` on `scenes/fs_gate.tscn`. `scripts/display_mode.gd` owns platform buckets, window modes, sessionStorage, landscape lock, Esc hooks, and the PWA install prompt. `scripts/boot.gd` routes web → gate when the session still needs it. The gate rebuilds two themed buttons, keeps focus after `wake_web`, polls `App.web_pad` for A / B / Start / Back, and leaves to splash when fullscreen or standalone becomes true.
+`scripts/ui/fs_gate.gd` on `scenes/fs_gate.tscn`. `scripts/display_mode/display_mode.gd` owns platform buckets, window modes, sessionStorage, landscape lock, Esc hooks, and the PWA install prompt. `scripts/boot.gd` routes web → gate when the session still needs it. The gate rebuilds two themed buttons, keeps focus after `wake_web`, polls `App.web_pad` for A / B / Start / Back, and leaves to splash when fullscreen or standalone becomes true.
 
 ## Live snapshot — loading bar (`loader.gd`)
 
@@ -62,7 +62,7 @@ Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close 
 
 Visual: full-viewport dim, heading, status, percent, 720×20 gold fill on a dark track. Positions are computed from `get_viewport().get_visible_rect()` so the overlay stays centered on desktop and the no-threads web export.
 
-Play → camp pacing in `scripts/app_flow.gd`:
+Play → camp pacing in `scripts/app/app_flow.gd`:
 - Preload listed hub assets up to about 70%, with status lines for camp / tiles / buildings / delver / music.
 - Ease toward 90% while still on the title scene.
 - `go_camp()` (scene instantiate may hitch; the bar is already near the end).

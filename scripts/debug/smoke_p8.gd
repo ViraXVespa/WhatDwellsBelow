@@ -1,7 +1,7 @@
 extends Object
 
-const StoreS := preload("res://scripts/data/save_store.gd")
-const CatS := preload("res://scripts/data/archives_catalog.gd")
+const StoreS := preload("res://scripts/data/save_store/save_store.gd")
+const CatS := preload("res://scripts/data/archives/archives_catalog.gd")
 
 static var enter_flag: bool = false
 

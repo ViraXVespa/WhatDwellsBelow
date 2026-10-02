@@ -5,13 +5,17 @@ Usage (from repo root):
   python tools/move_script_cluster.py --dry-run --stem gear_board --from-dir scripts/ui --to-dir scripts/ui/gear_board
   python tools/move_script_cluster.py --stem debug_menu --from-dir scripts/combat --to-dir scripts/debug/debug_menu
   python tools/move_script_cluster.py --files scripts/combat/sfx.gd --to-dir scripts/audio
+  python tools/move_script_cluster.py --dry-run --plan plan.json     (batch: {"scripts/ui/hud": ["scripts/ui/hud.gd", ...], ...})
   powershell -File tools/move_script_cluster.ps1 ...
 
-Writes _logs/move-cluster/summary.txt. Does not commit.
+One run = one rewrite pass over every group in the plan. Rewrites exact paths (`res://`, bare) only (globs like
+`dir/stem*.gd` in prose need a manual pass); keeps BOM and CRLF/LF as found. Skips design/changelog/ and
+scripts/data/changelog.json (history). Writes _logs/move-cluster/summary.txt. Does not commit.
 """
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -24,9 +28,11 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 
 ROOT = agent_log.repo_root()
-SCAN_ROOTS = ("scripts", "design", "scenes", "assets")
-SCAN_FILES = ("project.godot", "AGENTS.md", "README.md")
-SCAN_SUFFIXES = {".gd", ".tscn", ".tres", ".md", ".json", ".godot", ".cfg", ".txt"}
+SCAN_ROOTS = ("scripts", "design", "scenes", "assets", "tools", ".grok", ".github")
+SCAN_FILES = ("project.godot", "AGENTS.md", "README.md", "BOT.md", "GROK-BOT.md", "export_presets.cfg")
+SCAN_SUFFIXES = {".gd", ".tscn", ".tres", ".gdshader", ".md", ".json", ".godot", ".cfg", ".txt", ".py", ".ps1", ".yml", ".yaml"}
+SKIP_PREFIXES = ("archives/", ".archive_worktrees/", "design/changelog/", "_logs/")  # repo-root relative
+SKIP_FILES = ("scripts/data/changelog.json", "tools/move_script_cluster.py")
 
 
 def rel(p: Path) -> str:
@@ -111,7 +117,7 @@ def iter_text_files() -> list[Path]:
             if p.suffix.lower() not in SCAN_SUFFIXES:
                 continue
             s = str(p).replace("\\", "/")
-            if "/archives/" in s or "/.archive_worktrees/" in s:
+            if rel(p).startswith(SKIP_PREFIXES) or rel(p) in SKIP_FILES or "/__pycache__/" in s:
                 continue
             rp = p.resolve()
             if rp in seen:
@@ -133,7 +139,7 @@ def apply_rewrites(pairs: list[tuple[str, str]], dry_run: bool) -> tuple[list[st
     texts: dict[Path, str] = {}
     for path in iter_text_files():
         try:
-            text = path.read_text(encoding="utf-8")
+            text = path.read_bytes().decode("utf-8")
         except Exception:
             continue
         orig = text
@@ -144,13 +150,7 @@ def apply_rewrites(pairs: list[tuple[str, str]], dry_run: bool) -> tuple[list[st
             changed.append(rel(path))
             texts[path] = text
             if not dry_run:
-                raw = path.read_bytes()
-                had_bom = raw.startswith(b"\xef\xbb\xbf") or text.startswith("\ufeff")
-                body = text.lstrip("\ufeff")
-                data = body.encode("utf-8")
-                if had_bom:
-                    data = b"\xef\xbb\xbf" + data
-                path.write_bytes(data)
+                path.write_bytes(text.encode("utf-8"))
     return changed, texts
 
 
@@ -172,7 +172,7 @@ def find_residuals(pairs: list[tuple[str, str]]) -> list[str]:
     res_pairs = [(o, n) for o, n in pairs if o.startswith("res://")]
     for path in iter_text_files():
         try:
-            text = path.read_text(encoding="utf-8")
+            text = path.read_bytes().decode("utf-8")
         except Exception:
             continue
         for old, _new in res_pairs:
@@ -186,24 +186,43 @@ def main() -> int:
     ap = agent_log.std_parser("Move a script cluster into a folder and rewrite references.", writes=True)
     ap.add_argument("--stem", "-Stem", default="")
     ap.add_argument("--from-dir", "-FromDir", default="")
-    ap.add_argument("--to-dir", "-ToDir", required=True)
+    ap.add_argument("--to-dir", "-ToDir", default="")
+    ap.add_argument("--plan", "-Plan", default="", help="JSON {to_dir: [facade/helper .gd paths]} for a batch (one rewrite pass).")
     ap.add_argument("--files", "-Files", nargs="*", default=[])
     ap.add_argument("--wrapper", "-Wrapper", action="store_true")
     ap.add_argument("--no-git", "-NoGit", action="store_true")
     args = ap.parse_args()
     ROOT = agent_log.resolve_root(args)
 
-    to_dir = Path(args.to_dir)
-    if not to_dir.is_absolute():
-        to_dir = ROOT / to_dir
-    files = collect_files(args)
-    moves = build_moves(files, to_dir)
+    if args.plan:
+        plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
+        files, moves = [], []
+        for dest, paths in plan.items():
+            dest_dir = Path(dest) if Path(dest).is_absolute() else ROOT / dest
+            grp = []
+            for f in paths:
+                fp = (Path(f) if Path(f).is_absolute() else ROOT / f).resolve()
+                if not fp.is_file():
+                    raise SystemExit(f"missing file: {f}")
+                grp.append(fp)
+            files += grp
+            moves += build_moves(grp, dest_dir)
+        to_dir = ROOT / "scripts"
+        args.to_dir = f"(plan {len(plan)} folders)"
+    else:
+        if not args.to_dir:
+            agent_log.fail("need --to-dir or --plan")
+        to_dir = Path(args.to_dir)
+        if not to_dir.is_absolute():
+            to_dir = ROOT / to_dir
+        files = collect_files(args)
+        moves = build_moves(files, to_dir)
     pairs = rewrite_map(moves)
 
     lines: list[str] = [
         f"move cluster {datetime.now().astimezone().isoformat()}",
         "root=.",
-        f"to_dir={rel(to_dir)} dry_run={args.dry_run} wrapper={args.wrapper}",
+        f"to_dir={args.to_dir if args.plan else rel(to_dir)} dry_run={args.dry_run} wrapper={args.wrapper}",
         f"files={len(files)} moves={len(moves)} rewrite_pairs={len(pairs)}",
         "",
         "## moves",
@@ -212,7 +231,6 @@ def main() -> int:
         lines.append(f"{rel(src)} -> {rel(dst)}")
 
     if not args.dry_run:
-        to_dir.mkdir(parents=True, exist_ok=True)
         for src, dst in moves:
             dst.parent.mkdir(parents=True, exist_ok=True)
             if dst.exists():

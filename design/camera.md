@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot  
 Read when: Camera3D, zoom, renderer, depth sorting
-Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/camp_warm.gd`, `scripts/input/look_ctrl.gd`, `scripts/app.gd`, `project.godot`  
+Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/camp_warm.gd`, `scripts/input/look_ctrl.gd`, `scripts/app/app.gd`, `project.godot`  
 
 
 ## Camera (live 3D path)

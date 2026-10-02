@@ -1,6 +1,6 @@
 ﻿extends Object
 
-const Docs := preload("res://scripts/data/archives_docs.gd")
+const Docs := preload("res://scripts/data/archives/archives_docs.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const SplitView := preload("res://scripts/ui/split_menu_view.gd")

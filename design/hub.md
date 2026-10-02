@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: Placeholdia, camp benches
-Code: `scripts/world/camp.gd` (facade, `@tool` preview), `scripts/world/camp_layout.gd` (script-default pose / eave / UV; scene exports override), `scripts/world/camp_warm.gd` (Title → Play GPU frame), `scripts/world/camp_build.gd` (ground, guild, realize), `scripts/world/camp_build_mesh.gd` (roofs, tarp, awning), `scripts/world/camp_build_roof.gd`, `scripts/world/camp_view.gd` (fence), `scripts/world/camera_rig.gd`, `scripts/world/interact.gd`, `scripts/world/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`  
+Code: `scripts/world/camp.gd` (facade, `@tool` preview), `scripts/world/camp_layout.gd` (script-default pose / eave / UV; scene exports override), `scripts/world/camp_warm.gd` (Title → Play GPU frame), `scripts/world/camp_build.gd` (ground, guild, realize), `scripts/world/camp_build_mesh.gd` (roofs, tarp, awning), `scripts/world/camp_build_roof.gd`, `scripts/world/camp_view.gd` (fence), `scripts/world/camera_rig.gd`, `scripts/world/interact.gd`, `scripts/world/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`  
 
 
 ## Required Interactables
@@ -21,7 +21,7 @@ All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidi
 
 ## Camp entry events
 
-Every way the player reaches Placeholdia (there is no Continue button on the title; Title has Play, the other entry is the dungeon). Code: `scripts/app_flow.gd`, `scripts/world/camp.gd`, `scripts/ui/recap_flow.gd`.
+Every way the player reaches Placeholdia (there is no Continue button on the title; Title has Play, the other entry is the dungeon). Code: `scripts/app/app_flow.gd`, `scripts/world/camp.gd`, `scripts/ui/recap_flow.gd`.
 
 | Event | Path | Wake block in `camp.gd` (`wake_pending`: wake VFX, `roll_quests(true)`, `restock()`) |
 |---|---|---|
