@@ -1,6 +1,6 @@
 extends Object
 
-const Anim := preload("res://scripts/world/player_anim.gd")
+const Anim := preload("res://scripts/world/player/player_anim.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const AppRunS := preload("res://scripts/app/app_run.gd")
 

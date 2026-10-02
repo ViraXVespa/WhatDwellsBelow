@@ -3,7 +3,7 @@ extends Object
 ## Crystal UI local transport page.
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const CrystalNet := preload("res://scripts/world/crystal_net.gd")
+const CrystalNet := preload("res://scripts/world/crystal/crystal_net.gd")
 const Util := preload("res://scripts/ui/crystal_ui_util.gd")
 const Net := preload("res://scripts/ui/crystal_ui_pages_net.gd")
 

@@ -2,7 +2,7 @@
 
 Status: binding design + live snapshot  
 Read when: gen, streaming, guardian doors, fog, crystals
-Code: `scripts/dungeon/gen/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_boot.gd`, `dungeon_stream.gd`, `dungeon_geo_stream.gd`, `dungeon_map_act.gd`, `dungeon_props.gd`, `boss_door.gd`, `crystal_net.gd`, `crystal_place.gd`, `floor_crystal.gd`
+Code: `scripts/dungeon/gen/gen.gd`, `scripts/world/dungeon/dungeon.gd`, `dungeon_boot.gd`, `dungeon_stream.gd`, `dungeon_geo_stream.gd`, `dungeon_map_act.gd`, `dungeon_props.gd`, `boss_door.gd`, `crystal_net.gd`, `crystal_place.gd`, `floor_crystal.gd`
 
 This file is the door. Open the Job-table sibling only when that row matches.
 

@@ -1,6 +1,6 @@
 extends Object
 
-const Cells := preload("res://scripts/world/dungeon_cells.gd")
+const Cells := preload("res://scripts/world/dungeon/dungeon_cells.gd")
 const Gen := preload("res://scripts/dungeon/gen/gen.gd")
 const Util := preload("res://scripts/debug/dungeon_map_util.gd")
 

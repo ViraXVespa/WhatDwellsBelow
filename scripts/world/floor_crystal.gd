@@ -1,6 +1,6 @@
-extends "res://scripts/world/interact.gd"
+extends "res://scripts/world/interact/interact.gd"
 
-const CrystalNet := preload("res://scripts/world/crystal_net.gd")
+const CrystalNet := preload("res://scripts/world/crystal/crystal_net.gd")
 
 var crystal_cl := 1
 var crystal_cell := Vector2i.ZERO

@@ -2,7 +2,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
-const CrystalNet := preload("res://scripts/world/crystal_net.gd")
+const CrystalNet := preload("res://scripts/world/crystal/crystal_net.gd")
 
 const ZOOM_NEAR := 96
 

@@ -103,7 +103,7 @@ Likely entry points (confirm, do not treat as the worklist):
 - Placeholdia -> Dungeon: live enter (`save_now`, `_after_enter` / `begin_run` / `go_dungeon` / `dungeon_boot.ready_floor`). Smoke: `--wdb-dungeon-load-timing-smoke`.
 - Dungeon -> Placeholdia: inventory every live return to camp (extract-wake, recap, death/abort if those call `go_camp`). Do not assume extract is the only path.
 
-Also inspect `scripts/world/camp.gd` enter/wake and dummy defer only as callers of flow. `scripts/debug/load_timing.gd` is marks, not the logic to extract. Keep those smokes green; do not invent a new numbered phase.
+Also inspect `scripts/world/camp/camp.gd` enter/wake and dummy defer only as callers of flow. `scripts/debug/load_timing.gd` is marks, not the logic to extract. Keep those smokes green; do not invent a new numbered phase.
 
 Look for shared steps: scene change, loader overlay, preload vs `load()`, dummy/NPC spawn defer, camera warmup, seed/floor pin, save-before-enter. Extract only what is duplicated. A thin `AppFlow` static helper (or one module imported by `app_flow` / `app_run`) is in scope. Do not build a generic scene manager, loading framework, or new game system.
 

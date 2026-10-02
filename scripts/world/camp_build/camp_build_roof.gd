@@ -1,0 +1,23 @@
+extends Object
+
+const T := preload("res://scripts/data/tunables.gd")
+const GROUND_W := 36
+const GROUND_D := 32
+const GROUND_OX := -2
+const GROUND_OZ := -2
+const GRASS_PAD := 16
+const ROOF_EAVE := 0.42
+const TILE_W := 3.2
+const HALL_SIZE := Vector3(5.6, 3.4, 4.2)
+const WING_SIZE := Vector3(3.8, 2.7, 3.2)
+const HALL_POS := Vector3(8.2, 1.7, 6.0)
+const PATH_X := 16.5
+const PATH_Z := 15.0
+const CampMesh := preload("res://scripts/world/camp_build/camp_build_mesh.gd")
+
+static func box(host: Node3D, pos: Vector3, box_size: Vector3, _col: Color) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.collision_layer = 1
+	body.position = pos
+	host.add_child(body)
+	return body

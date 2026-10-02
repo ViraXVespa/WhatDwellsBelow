@@ -110,7 +110,7 @@ static func _publish(
 
 static func _ring_rect(host: Node) -> Rect2i:
 	var rt: Variant = load(RT_PATH)
-	var stream: GDScript = load("res://scripts/world/dungeon_geo_stream.gd") as GDScript
+	var stream: GDScript = load("res://scripts/world/dungeon_geo/dungeon_geo_stream.gd") as GDScript
 	var pc: Vector2i = Lights._focus(host)
 	var origin_cell: Vector2i = stream.chunk_origin(pc)
 	var mode := ""
@@ -144,7 +144,7 @@ static func _refill(host: Node) -> void:
 	var rt: Variant = load(RT_PATH)
 	if rt._bill == null:
 		rt._bill = load("res://scripts/graphics/torch_bill.gd") as GDScript
-	var stream: GDScript = load("res://scripts/world/dungeon_geo_stream.gd") as GDScript
+	var stream: GDScript = load("res://scripts/world/dungeon_geo/dungeon_geo_stream.gd") as GDScript
 	rt._bill.refill(host, rt._sites, int(stream.CHUNK))
 
 static func _keep_casts(x0: int, z0: int, tw: int, th: int, lights: Array) -> void:

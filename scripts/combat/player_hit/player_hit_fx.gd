@@ -3,7 +3,7 @@ extends RefCounted
 const Combat := preload("res://scripts/combat/combat.gd")
 const Cover := preload("res://scripts/combat/cover/cover.gd")
 const ProjS := preload("res://scripts/combat/projectile.gd")
-const PlayerLock := preload("res://scripts/world/player_lock.gd")
+const PlayerLock := preload("res://scripts/world/player/player_lock.gd")
 static func hit_circle(host: Node, origin: Vector3, radius: float, dmg: float, need_los: bool, stagger: bool, xp := "auto", is_special := false) -> void:
 	var _fac = load("res://scripts/combat/player_hit/player_hit.gd")
 	for e in Combat.enemies():

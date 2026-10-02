@@ -2,7 +2,7 @@ extends Object
 
 ## Split from app_flow.gd: _warmup_hub, _hub_player, hub_preload_paths....
 
-const Anim := preload("res://scripts/world/player_anim.gd")
+const Anim := preload("res://scripts/world/player/player_anim.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 
 static func _warmup_hub(host: Node) -> void:

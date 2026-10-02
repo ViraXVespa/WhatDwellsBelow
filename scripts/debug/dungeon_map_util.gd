@@ -1,6 +1,6 @@
 extends Object
 
-const Cells := preload("res://scripts/world/dungeon_cells.gd")
+const Cells := preload("res://scripts/world/dungeon/dungeon_cells.gd")
 
 static func _out(lines: Array[String], text: String) -> void:
 	lines.append(text)

@@ -1,7 +1,7 @@
 [gd_scene format=4]
 
-[ext_resource type="Script" path="res://scripts/world/camp.gd" id="1_camp"]
-[ext_resource type="Script" path="res://scripts/world/camp_layout.gd" id="2_layout"]
+[ext_resource type="Script" path="res://scripts/world/camp/camp.gd" id="1_camp"]
+[ext_resource type="Script" path="res://scripts/world/camp/camp_layout.gd" id="2_layout"]
 [ext_resource type="Texture2D" path="res://assets/tiles/grass_field.png" id="3_t5w3m"]
 [ext_resource type="Texture2D" path="res://assets/tiles/packed_dirt.png" id="4_ddxxn"]
 [ext_resource type="Texture2D" path="res://assets/tiles/plaza_path.png" id="5_g0ujn"]
