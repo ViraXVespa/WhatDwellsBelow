@@ -36,6 +36,9 @@ static func _bake_camp(host: Node) -> void:
 	var gen = camp.get_node_or_null("Generated")
 	if gen:
 		_mark_bake_owner(host, gen, camp)
+	camp.remove_meta("wdb_layout")  # realize_editor tags it; packing would bake a detached Layout copy into camp.tscn that leaks on every instantiate
+	if gen:
+		gen.remove_meta("wdb_layout")
 	var out = PackedScene.new()
 	var err = out.pack(camp)
 	if err != OK:

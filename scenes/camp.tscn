@@ -929,7 +929,6 @@ size = Vector3(0.18, 1.05, 0.18)
 
 [node name="Camp" type="Node3D" unique_id=531722360]
 script = ExtResource("1_camp")
-metadata/wdb_layout = Object(Node3D,"unique_name_in_owner":false,"process_mode":0,"process_priority":0,"process_physics_priority":0,"process_thread_group":0,"physics_interpolation_mode":0,"auto_translate_mode":0,"editor_description":"","transform":Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0),"rotation_edit_mode":0,"rotation_order":2,"top_level":false,"visible":true,"visibility_parent":NodePath(""),"script":ExtResource("2_layout"),"ground_w":36,"ground_d":32,"ground_ox":-2,"ground_oz":-2,"grass_pad":16,"path_x":16.5,"path_z":15.0,"tile_w":3.2,"hall_box":Vector3(5.6, 3.4, 4.2),"wing_box":Vector3(3.8, 3.8, 3.2),"stall_box":Vector3(4.6, 2.4, 3.4),"hall_eave":0.42,"wing_eave":0.42,"stall_eave":0.42,"hall_tile_w":0.0,"wing_tile_w":0.0,"stall_tile_w":0.0,"hall_uv_off":Vector2(0, 0),"wing_uv_off":Vector2(0, 0),"stall_uv_off":Vector2(0, 0),"hall_awning_depth":0.48,"hall_awning_slope":0.1,"hall_awning_valance":0.16,"wing_awning_depth":0.48,"wing_awning_slope":0.1,"wing_awning_valance":0.16,"rebuild_preview":false)
 
 
 [node name="Layout" type="Node3D" parent="." unique_id=655462773]
@@ -986,7 +985,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0, 16)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0, 22)
 
 [node name="Generated" type="Node3D" parent="." unique_id=1924445608]
-metadata/wdb_layout = Object(Node3D,"unique_name_in_owner":false,"process_mode":0,"process_priority":0,"process_physics_priority":0,"process_thread_group":0,"physics_interpolation_mode":0,"auto_translate_mode":0,"editor_description":"","transform":Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0),"rotation_edit_mode":0,"rotation_order":2,"top_level":false,"visible":true,"visibility_parent":NodePath(""),"script":ExtResource("2_layout"),"ground_w":36,"ground_d":32,"ground_ox":-2,"ground_oz":-2,"grass_pad":16,"path_x":16.5,"path_z":15.0,"tile_w":3.2,"hall_box":Vector3(5.6, 3.4, 4.2),"wing_box":Vector3(3.8, 3.8, 3.2),"stall_box":Vector3(4.6, 2.4, 3.4),"hall_eave":0.42,"wing_eave":0.42,"stall_eave":0.42,"hall_tile_w":0.0,"wing_tile_w":0.0,"stall_tile_w":0.0,"hall_uv_off":Vector2(0, 0),"wing_uv_off":Vector2(0, 0),"stall_uv_off":Vector2(0, 0),"hall_awning_depth":0.48,"hall_awning_slope":0.1,"hall_awning_valance":0.16,"wing_awning_depth":0.48,"wing_awning_slope":0.1,"wing_awning_valance":0.16,"rebuild_preview":false)
 
 
 [node name="Ground" type="StaticBody3D" parent="Generated" unique_id=143249600]
