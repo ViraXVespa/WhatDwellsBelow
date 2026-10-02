@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""design/code-map.md CLI: check, row, patch (folds check_code_map, list_code_map_row, patch_code_map).
+"""design/code-map.md CLI: check, row, patch (check_code_map.py and patch_code_map.py are shims to it).
 
     python3 tools/code_map.py check
     python3 tools/code_map.py row --path scripts/foo/bar.gd

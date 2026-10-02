@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""design/tunables.md CLI: get, set (folds list_tunable and patch_tunables).
+"""design/tunables.md and tunables-world.md CLI: get, set.
 
     python3 tools/tunables.py get --key <key-or-alias>
     python3 tools/tunables.py set --key <key-or-alias> --set "new Live cell" [--dry-run]
@@ -26,12 +26,26 @@ def _head(title: str, *extra: str) -> list[str]:
     return [f"tunable {title} {datetime.now(timezone.utc).isoformat()}", "root=.", *extra]
 
 
+FILES = ("tunables.md", "tunables-world.md")
+
+
+def _find(root: Path, key: str) -> tuple[list[tuple[Path, str, "tl.Hit"]], bool]:
+    """(path, raw text, hit) for every row matching key across the tunables files; flag = main file exists."""
+    found = []
+    for name in FILES:
+        path = root / "design" / name
+        if path.is_file():
+            raw = md.read_text(path)
+            found += [(path, raw, h) for h in tl.find_hits(tl.parse_hits(raw), key)]
+    return found, (root / "design" / FILES[0]).is_file()
+
+
 def cmd_get(root: Path, args) -> int:
-    path = root / "design" / "tunables.md"
     lines = _head("row", f"key={args.key}")
-    if not path.is_file():
+    found, exists = _find(root, args.key)
+    if not exists:
         return agent_log.finish("tunable-row", root, "\n".join(lines), "FAIL", args=args, matches=0, error="missing-tunables")
-    hits = tl.find_hits(tl.parse_hits(md.read_text(path)), args.key)
+    hits = [h for _p, _r, h in found]
     lines += [f"matches={len(hits)}", "measure=parse tunables tables; do not read the rest of the file", ""]
     if not hits:
         lines.append("NO_ROW")
@@ -42,21 +56,20 @@ def cmd_get(root: Path, args) -> int:
 
 
 def cmd_set(root: Path, args) -> int:
-    path = root / "design" / "tunables.md"
     lines = _head("patch", f"key={args.key}", f"set={args.value}")
 
     def end(status: str, echo: str | None = None, **kv) -> int:
         return agent_log.finish("tunable-patch", root, "\n".join(lines), status, args=args, echo=echo, **kv)
 
-    if not path.is_file():
+    found, exists = _find(root, args.key)
+    if not exists:
         return end("FAIL", changed=0, error="missing-tunables")
-    raw = md.read_text(path)
-    hits = tl.find_hits(tl.parse_hits(raw), args.key)
+    hits = [h for _p, _r, h in found]
     lines.append(f"matches={len(hits)}")
     if len(hits) != 1:
         lines.append("sections=" + ", ".join(h.section for h in hits))
         return end("FAIL", changed=0, error="no-row" if not hits else "ambiguous")
-    hit = hits[0]
+    path, raw, hit = found[0]
     lines.extend(tl.format_hit(hit))
     if hit.live_cell == args.value:
         return end("PASS", "changed=0", changed=0, skipped="already")
@@ -69,7 +82,7 @@ def cmd_set(root: Path, args) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Read or patch design/tunables.md rows.", writes=True, json_out=True)
+    ap = agent_log.std_parser("Read or patch design/tunables.md / tunables-world.md rows.", writes=True, json_out=True)
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("get", help="Print one tunables row.")
     s.add_argument("--key", required=True, help="Tunable key or unique alias")

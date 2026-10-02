@@ -1,7 +1,7 @@
 # Refactor recipe
 
 Status: protocol  
-Read when: splitting a live script for size; Bot size or extract flow; web / chat Phase 6
+Read when: splitting a live script for size; Bot size or extract flow
 
 
 Grok Bot uses this file on every task. Other paths use it only when they must split.
@@ -15,27 +15,24 @@ Grok Build feature work is **not** a refactor. Implementation freedom (new same-
 | Ship floor: every live `scripts/**/*.gd` under **10,000 bytes** | Bot size PR. Not Build while running |
 | Sweep target: each resulting file under **5,000 bytes** when existing code can move | Grok Bot size sweep only |
 
-Web / chat does not cap-split. **Grok Bot** uses this recipe. 10KB is the ship floor. The under-5KB sweep is the Bot size job only. **Grok Build** does not cap-split.
-
+Web / chat and Grok Build do not cap-split.
+
 Do not split a file that is already under the cap that applies to the current path, except Grok Bot extract work (new shared module or fitting existing owner) when that flow is the active Job-table sibling.
 
 ## No new code
 
-This section binds **Grok Bot** and **web / chat Phase 6 size-splits** only. It does not bind Grok Build feature work.
+This section binds **Grok Bot** size splits and extracts only. It does not bind Grok Build feature work.
 
 A refactor only rearranges what already exists.
 
 - Do not add features, tunables, comments, docs-of-taste, renames, reformats, or “while I’m here” cleanups.
 - Do not invent a better API. Do not generalize two vaguely similar features into a new one.
 - Do not add a helper function that was not already in the tree, except Grok Bot’s shared-module extract of **near-identical** existing bodies (same control flow; renamed locals OK).
-- Web / chat size-splits MUST NOT invent new shared modules unless following the Grok Bot path.
 - Edits are the minimum needed to relocate existing lines and keep the project compiling.
-
-**Grok Build** feature helpers stay on the Build path file (**Just do** inside one system). They are not a size-split in this recipe.
 
 Adding `: Type` on a line already being moved, a `load()` / `preload()`, a one-line facade delegate, or `host` / `pt` / `ui` / `p` on a moved `static func` is wiring, not new behavior.
 
-A non-empty `design/reuse-map.md` brief may name small kits at the surface that brief states. That is not a license to invent a widget framework. An empty template is not a kit list.
+A non-empty `design/reuse-map.md` brief may name small kits at the surface that brief states; it is not a license to invent a widget framework.
 
 ## Cluster folders (placement rule; one copy)
 
@@ -70,7 +67,6 @@ Grok Bot **MAY** create shared owners when near-identical behavior spans places.
 - Near-identical = same control flow (renamed locals OK), not vaguely similar features.
 - Point at an existing owner only if it already **is** that concern **and** the addition will not blow the size cap.
 - Never grow an owner just to avoid a new file.
-- Web / chat size-splits still do not invent new shared modules unless following this Grok Bot path.
 - Grok Build does not use this Bot extract leash. Same-system APIs: just do. Cross-system owners: the build path file → **Stop and propose first**.
 - Do not hunt the live tree to rediscover copies when the User already named the cluster. Do not treat `design/reuse-map.md` as an owners encyclopedia.
 
@@ -87,46 +83,9 @@ Hunt for copied logic only after size work on the current cluster, or when the a
 
 Reuse against an existing owner is call-site edits plus using a function that already exists. Grok Bot extract to a new shared module is moved bodies into a new file, not invented logic. Do not merge pairs listed under **Do not merge** on the Bot extract job.
 
-## Types
+## Hostify, types, shared calcs
 
-`design/gdscript-law.md`. On lines already being moved or rewritten:
-
-- `:=` only for literals / typed built-ins Godot 4.7 infers (`0`, `1.5`, `true`, `"male"`, `Vector2.DOWN`, …).
-- Otherwise `var name: Type = ...`.
-- Typed `func` / `static func` args and `->` return.
-- Also follow `design/gdscript-law.md` warnings (no `wrap` / `mini` / `name` / `size` locals, explicit `int()` on integer division and narrowing, enum `as` casts, `_` unused params).
-- `unused_private_class_variable` is project-ignored (hostify `host._` fields). Do not add per-var `@warning_ignore` for it; see `design/gdscript-law.md`.
-
-Do not retype a whole file for style.
-
-## Hostify pitfalls
-
-Facade + `static func(host, ...)` splits must keep Godot 4.7 compiling. Watch for:
-
-1. **Bare Node props / methods on helpers** — after moving a method off a Node script, `layer`, `visible`, `process_mode`, `queue_free()`, `get_tree()`, etc. are not in scope. Use `host.layer`, `host.queue_free()`, `host.get_tree()`.
-2. **Param shadowing** — never `var host := host.get_parent()` (or any `var host :=` that hides the parameter). Rename the local (`parent`, `map_host`, …).
-3. **Enum / const on Object helpers** — `MOTION_MODE_FLOATING` and similar are not free names on `extends Object` helpers. Qualify: `CharacterBody3D.MOTION_MODE_FLOATING`.
-4. **Facade state aliases** — if callers used `PlaytestLog.started` / `.file_name` / `.events` on the old script, the facade must still expose those names (forward to the core helper’s `static var`s). Moving state without aliases yields `Cannot find member "started" in base "..."` and a cascade `Could not resolve class` on the next preload.
-5. **`:=` after `load()` / untyped `_fac`** — `const _fac = load(...)` returns untyped. Do not `var x := _fac.foo()`. Write `var x: Type = ...` (see Types above and the agents file).
-6. **Blind substring rewrites** — replacing `:= n` / bare `name` can corrupt identifiers (`var nm := name` → `var nm: String = str(n)ame`). Prefer AST-aware or line-scoped edits; re-read touched lines.
-7. **Broken call commas** — hostify passes must not leave `tick_pinch(host, )` or dropped args.
-8. **Cross-helper renames** — if a static was renamed (`Present.present` → `present`, `Hit.mark_post`), update every call site in the cluster in the same batch.
-9. **Keep facade wrappers smoke / `call` can reach** — phase smokes still hit private names like `_pressure_spawn` / `_buy_snack` via `host.call` or `ui._…`. After moving the body to a helper, leave a one-line facade (`func _pressure_spawn() -> int: return DungeonPack.pressure_spawn(self)`) or update the smoke in the same batch.
-
-After a hostify batch, run the **editor import** compile check via `design/pc-offload.md` (`--headless --editor --import --path <WDB_ROOT> --quit`). Plain `--quit` alone is not sufficient — it can miss `:=` inference errors the editor surfaces on reload.
-
-Optional advisory scan: `lint_hostify.py`, always exit 0; it is not a compile substitute. After a size-split batch: Bot, `bot_warnscan.py --non-leak-diff` per BOT.md; PC, `run_post_split_gate.py` (`-WithSmokes` when coverage matters). Tool details: design/tools.md.
-
-## Shared calculations (gameplay + smoke)
-
-When gameplay uses a formula (gather interval, forge→hold, damage, etc.), put it in **one** static helper and call that helper from every consumer — live systems, UI, **and** phase smokes. Do not re-derive or hardcode the same numbers in the phase smokes (`scripts/debug/smoke*/`).
-
-Rules:
-
-1. Prefer a small `extends Object` helper next to the owner (example: `scripts/world/gather/rules.gd` for gather timing; `ForgeP.forge_hold` for programmatic forge→hold).
-2. Before asserting in a smoke, search for an existing helper (`interval_for`, `forge_hold`, …). If none exists, **extract** it from the live code first, then assert against the helper’s result. Grok Build may write that helper as a same-system API.
-3. When hostifying, keep smoke-reachable facades (see Hostify pitfall 9) **and** keep smokes on the shared calc route — updating only the smoke’s hardcoded constants is a regression waiting to happen.
-4. Search for duplicated literals of the same feature (example: `2.4` / `mine_time`) during size sweeps; fold them into the helper in the same batch when safe.
+Compile pitfalls of facade + `static func(host, ...)` splits, typing rules for moved lines, and the one-helper rule for gameplay formulas used by smokes: `refactor-hostify.md`. Read it when a split or extract batch touches `host` helpers or a smoke asserts a gameplay number.
 
 ## Token rules
 
@@ -134,14 +93,10 @@ Rules:
 - Measure on-disk byte length (Get-Item Length / dir). Do not guess. Do not ReadAllText + GetByteCount just to size-check.
 - Do not dump whole files on Grok Build or Grok Bot when a diff / PR is enough.
 - Do not restyle, do not rewrite comments, do not rename for taste — on Grok Bot and web / chat size-splits. Grok Build feature work may rename or reshape inside one system per the build path file.
-- Do not combine a refactor with a feature — on Grok Bot and web / chat. Grok Build may split for the cap in the same slice as the feature.
-- Web / chat still emits full files in Phase 4 / Phase 6 as the web path file requires. This recipe does not change emit shape.
 
 ## After a split
 
 Update `design/code-map.md` when a new sibling or shared module must be listed. Do not update topic design files unless behavior changed (a legal sweep does not change behavior). Do not write extract results into `design/reuse-map.md` from Bot; web / chat Phase 7 owns that staging brief.
-
-Grok Bot sweep notes: optional `_logs/grok-bot-sweep.md`. Not `tools/week_start.py` / git. Not `design/changelog/`.
 
 ## Parked folder moves
 
@@ -149,14 +104,7 @@ Do **not** fold these into a size split. Folder relocates use the Bot relocate j
 
 From repo root run `python3 tools/move_script_cluster.py` (flags: `--help`; catalog in design/tools.md). Modes: `--stem/--from-dir/--to-dir` (one cluster), `--plan plan.json` (`{to_dir: [files]}`), `--map map.json` (exact `{old_file: new_file}` moves and renames, for facade-out and trimmed names), `--list-cluster FACADE`. One run = one rewrite pass. It `git mv`s the files (+ `.uid`), rewrites `res://` and bare paths, and bare old basenames of renamed files (as the bare new basename), under `scripts/`, `design/`, scenes, `project.godot`, `tools/`, `.grok/`, `.github/` and the root md files (not `design/changelog/`), keeps BOM and CRLF, and writes `_logs/move-cluster/summary.txt`. Then do the manual checks in Cluster folders and run the editor import check.
 
-Done (0.3.11 relocate batch):
-
-- `scripts/combat/debug_menu*.gd` -> `scripts/debug/debug_menu/` (facade `scripts/debug/debug_menu.gd`)
-- `scripts/combat/sfx.gd` -> `scripts/audio/sfx.gd`
-- Sample facade folder: `scripts/ui/gear_board*.gd` -> `scripts/ui/gear_board.gd` + `scripts/ui/gear_board/`
-- Folder organize pass (0.5.x): every stem cluster moved into its own folder under its area (55 folders; facades beside the folder, helpers trimmed; layout and naming rule in Cluster folders above).
-
-Still open for later User go: new fat facade clusters (same tool). Prefer updating call sites over wrappers when external refs are few.
+New fat facade clusters move only on a User go (same tool). Prefer updating call sites over wrappers when external refs are few.
 
 ## Documentation facades
 

@@ -7,7 +7,7 @@ Read when: Analyze Forge bumpers, verbs, deferred teardown, script map
 ## Anvil tabs
 
 - Analyze / Forge tabs sit in the Anvil footer.
-- The current tab is **highlighted**, not disabled. Match Pause Inventory / Skills / System tab styling (`anvil_view` paint-on).
+- The current tab is **highlighted**, not disabled. Match Pause Settings / Inventory / Skills tab styling (`anvil_view` paint-on).
 - LB / RB (and the on-screen tab glyphs) cycle Analyze ↔ Forge.
 - Switching tabs rebuilds the board and clears the forge draft (type, rarity, level, locks, pending roll, in-flight job). It does not call a missing helper to do that rebuild — the host `_rebuild_anvil` + `_show` path is the refresh.
 

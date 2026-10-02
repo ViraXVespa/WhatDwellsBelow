@@ -1,7 +1,7 @@
-# Tools catalog: inventory and lint
+# Tools catalog: inventory, lint, split and doc edits
 
 Status: binding  
-Read when: running a size, dupe, dead-code or stat tool (Bot sweeps, reuse, extract)  
+Read when: running a size, dupe, dead-code, stat, split, code-map or doc-edit tool (Bot sweeps, reuse, extract)  
 
 Rules, the CLI contract and the surface key (Surf, A) are in `tools.md`. Same table shape; `check_tool_docs.py` reads this file too.
 
@@ -18,5 +18,17 @@ Rules, the CLI contract and the surface key (Surf, A) are in `tools.md`. Same ta
 | `repo_lib.py` | Git, allowlist, version and changelog-label helpers shared by tools (`under`, `write_text_nl` for path guard and LF text writes) | BWD | module docstring (no `--help`) | Y |
 | `gd_lib.py` | `.gd` func parser shared by `split_funcs`, `summarize_scripts`, `show_func`, `doc_patch` | BD | module docstring (no `--help`) | Y |
 | `agent_log.py` | Run helpers: `std_parser`, `resolve_root`, `finish`/`emit_result` (RESULT line), `_logs/<job>` paths. CLI prints a job dir. | BD | `--help` | Y |
-| `next_changelog_label.py` | Shim -> `doc_patch.py next-label`, one release. Summary: `changelog-label`. | BD | `--help` | N |
 | `write_utf8_file.py` | Shim -> `doc_patch.py write` (`--path`, `--bom`, `--b64`), one release | BD | `--help` | Y |
+
+### Split, code map and doc edits
+
+| Tool | Does | Surf | Use | A |
+|---|---|---|---|---|
+| `split_funcs.py` | Split a GDScript into the facade + helpers in its stem folder (trimmed unique names; `--dry-run` shows them): `FILE --list`, then `--plan plan.json [--dry-run] [--in-folder]` (`{<stem>_<rest>: [names]}`); node funcs move host-first; runs `facade_requal.py` and a line-multiset check. Flow: grok-bot-size.md. | B | `--help` | Y |
+| `facade_requal.py` | Qualify names that moved to helpers (same folder or the facade's stem folder; `FILE`, `--check`, `--dry-run`, `--sym NAME=Mod`). `split_funcs.py` runs it itself. | B | `--help` | Y |
+| `doc_patch.py` | Idempotent doc edits. CLI: `replace`, `ensure-line`, `set-read-when`, `changelog`, `next-label`, `write`, `apply plan.json`, `check` (`--dry-run`, `--eol keep\|crlf\|lf`); also importable (`write_changelog`, `replace_once`, `replace_func`, `upsert_func`). Keeps each file's BOM and line endings. Detail: `doc-library.md`. | BWD | `--help` | Y |
+| `md_format_lib.py` | Text I/O for every tool: `read_text`, `write_text` (BOM and EOL kept), `detect_eol`; markdown format checks | BWD | module docstring (no `--help`) | Y |
+| `patch_code_map.py` | Shim -> `code_map.py patch`, one release | BD | `--help` | Y |
+| `code_map_lib.py` | Code-map row parser/writer used by `code_map.py` | BD | module docstring (no `--help`) | Y |
+| `list_oversize_docs.py` | List `design/*.md` by size, OVER at `--over-kb` (default 8) | BD | `--help` | Y |
+| `list_route.py` | Print one `routes.yaml` door or job card (`--job door.job`), incl. its smoke phases | BD | `--help` | Y |

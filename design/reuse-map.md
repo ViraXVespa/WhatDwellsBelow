@@ -1,11 +1,11 @@
 # Staged Bot reuse brief
 
 Status: protocol
-Read when: web / chat Phase 7 is writing this brief, or Grok Bot Job table -> design/grok-bot-reuse.md and this body is not the empty template
+Read when: web / chat is staging this brief, or Grok Bot Job table -> design/grok-bot-reuse.md and this body is not the empty template
 
 This file is a User-authored staging brief for the next Grok Bot reuse work. It is not an owners encyclopedia, not a standing BOT list, and not default Bot context.
 
-Web / chat writes or replaces the whole file in Phase 7. Grok Bot implements this entire Brief on the current open Bot PR (design/grok-bot-reuse.md), including every cluster named under Brief. Do not take a subset. Do not open a second PR only because a later heading exists. Bot does not invent rows and adds no Ready / Done columns; it clears the completed Brief items from this file on the same PR.
+Web / chat writes or replaces the whole file in a Phase 4 emit. Grok Bot implements this entire Brief on the current open Bot PR (design/grok-bot-reuse.md), including every cluster named under Brief. Do not take a subset. Do not open a second PR only because a later heading exists. Bot does not invent rows and adds no Ready / Done columns; it clears the completed Brief items from this file on the same PR.
 
 ## How to fill (web / chat)
 
@@ -17,7 +17,7 @@ If Brief is empty, stop and report empty. Do not start a size sweep. If Brief ha
 
 ## Brief
 
-Open reuse findings after two sweeps (`python3 tools/list_dupes.py --lang all`; regenerate the ranked list with `--md PATH`). Done and cleared: round 1 (profile page triple, dead `think.gd`, `step_row` focus twins, `CliArgs`, `_albedo`, web pad JS probe, JSON payload read, touch reset, wipe loop, double bake pass, torch room stamp, recap lock-in, store prefs, clerk cargo) and round 2 (shared homes now: `ScrollBox` for pause/recap scroll + tip, `Balance.f` / `App.gear` readers, `Pick.nearest` for playtest goals, `mesh_commit.gd`, `ThemeS.fill`, `UiSession.status`, `Prompts.verb_lines`, `split_menu_view._ring`, `chrome._pane`, `GroundShader.TAP_BODY`/`TAP_MIX`, `gen._result`; `nearest_mat.gd` deleted; tools: `sprite_lib` chroma/flood/pockets/fit, `repo_lib.under`/`write_text_nl`, `anim_review_lib.brief_args`, `audio_lib._write`, `load_routes._str_lists`). New shared code needs the golden compare recipe in the reuse skill. What is left needs a design call, a web run, or touches a hot pixel loop, so Bot does not take it without a User go:
+Open reuse findings (`python3 tools/list_dupes.py --lang all`; regenerate the ranked list with `--md PATH`). Shared homes already in the tree: `ScrollBox` (pause/recap scroll + tip), `Balance.f` and `App.gear` readers, `Pick.nearest` (playtest goals), `mesh_commit.gd`, `ThemeS.fill`, `UiSession.status`, `Prompts.verb_lines`, `split_menu_view._ring`, `chrome._pane`, `GroundShader.TAP_BODY` / `TAP_MIX`, `gen._result`; tools: `sprite_lib` (chroma, flood, pockets, fit), `repo_lib.under` / `write_text_nl`, `anim_review_lib.brief_args`, `audio_lib._write`, `load_routes._str_lists`. Hot paths (gen, shaders, pixel loops, tool output) need a golden compare before and after (`design/grok-bot-reuse.md`). The rest needs a design call, a web run, or touches a hot pixel loop, so Bot does not take it without a User go:
 
 | Rank | Where (copies) | Shape | Why left |
 |---|---|---|---|

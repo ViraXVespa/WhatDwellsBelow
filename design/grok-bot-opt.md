@@ -47,46 +47,6 @@ Parked items sit between the markers. Agents must not hand-edit this section.
 <!-- bot-opt:begin -->
 <!-- bot-opt:next=5 -->
 
-### opt-001 (done)
-- Title: Extract reusable markdown formatting library from md-editing tools
-- Cluster: Tools
-- Files: `tools/bot_opt.py`, `tools/code_map_lib.py`, `tools/patch_code_map.py`, `tools/doc_patch.py`, `tools/write_utf8_file.py`
-
-Inventory first. Do not edit until the duplication is real and listed.
-
-Look at tools that surgically edit markdown (not summary.txt dumps) and ask whether the formatting work in tools/bot_opt.py plus existing helpers can become one small reusable library.
-
-Start with:
-- tools/bot_opt.py — marker blocks, item headings, meta list fields, tick-wrapped paths, LF, trailing newline, parse/render roundtrip
-- tools/code_map_lib.py and tools/patch_code_map.py — table-row rewrite, tick tokens, ` + ` / `, ` / `; ` separators, newline preservation
-- tools/doc_patch.py — write_text newline=LF, replace_once, design-path tick variants, ensure_line, set_read_when
-- tools/write_utf8_file.py — generic UTF-8 write (not markdown-specific)
-
-Also inspect, but do not fold in unless a shared write helper is one function: anim_review_lib.py / pack / regen briefs, archive_prior_changelogs.py, export_archives.py, build_changelog.py (reads md, writes json).
-
-Extract only shared formatting. Allowed: UTF-8 write, force LF, trailing newline, tick wrap/unwrap, replace-once with path-tick variants, HTML-comment marker block splice, one table-row rewrite helper.
-
-Do not build a markdown engine, CommonMark parser, HTML sanitizer, or doc framework. Do not change queue semantics, code-map patch results, or web Phase 7 doc_patch behavior.
-
-A new tools/ module is in scope because this item names it. Prefer one library imported by the existing runners. New catalog row only if a new command appears. One PR. Mark this item done in the same PR.
-
-### opt-002 (done)
-- Title: Centralize preload literals on Autoload/flow facades
-- Cluster: Autoload / flow
-- Files: `scripts/app.gd`, `scripts/app/app_boot.gd`, `scripts/app/app_flow.gd`, `scripts/app/app_run.gd`, `scripts/app/app_set.gd`
-
-Inventory first. Do not edit until the shape is listed.
-
-GDScript preload() only accepts a string literal. Do not use preload(variable) or Res.script("data/balance.gd") as a preload stand-in.
-
-This item is option 2 only: per-API static / const preload owner on the Autoload/flow facades. The preload("res://...") literal stays on app.gd / app_boot.gd / app_flow.gd / app_run.gd / app_set.gd. Other files in that cluster use those consts (or a thin static that returns the already-preloaded resource). App remains the autoload. Do not add ResourceBus / Entity.gd / a second autoload.
-
-Do not change what loads or when. Do not convert const preload to load() to hide res://.
-
-Out of this item: wav/png catalogs, gear_board / pause_menu / playtest, tree-wide class_name, ResourceLoader / threaded hub preload, a Res.balance() helper library.
-
-Touched live scripts stay under 10KB. Land on the current open Bot PR. Mark this item done when the cluster convert is in that PR.
-
 ### opt-003 (pending)
 - Title: Shared helper for Title/Placeholdia/Dungeon load legs
 - Cluster: Autoload / flow

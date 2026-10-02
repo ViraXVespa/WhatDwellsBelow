@@ -12,7 +12,7 @@ Size, prove, changelog, and `version.json` rules live in `BOT.md`.
 
 Confirm `reuse_brief count` from `python3 tools/bot_status.py`. The current body of `design/reuse-map.md` is **one** PR goal. Implement that brief. Do not take a subset. Do not invent rows. Do not start a size sweep, extract hunt, relocate, or doc facade pass in the same session.
 
-Web / chat Phase 7 writes that file. The Bot clears the completed Brief items from `design/reuse-map.md` on the same PR (keep the how-to headers). Do not add Ready / Done columns. After the User squash-merges, stop.
+Web / chat writes that file in a Phase 4 emit. The Bot clears the completed Brief items from `design/reuse-map.md` on the same PR (keep the how-to headers). Do not add Ready / Done columns. After the User squash-merges, stop.
 
 If `design/reuse-map.md` is missing the how-to header only, or the body under the how-to is the empty template (no brief), stop and report empty. Do not invent work.
 

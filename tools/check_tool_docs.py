@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
-"""Check the tools catalog (design/tools*.md) against tools/ and tools/bot_allow.txt."""
+"""Check the tools catalog (design/tools*.md) against tools/ and tools/bot_allow.txt.
+
+--stale-refs scans the docs (design/*.md without changelog/, root *.md, skills) for dead references:
+PATH (backticked path or file name that is not in the tree), IDENT (`Class.member` whose class_name
+script has no such member) and, with --narration, NARR lines (will be added, TODO, legacy, formerly,
+previously, no longer, old flat paths). PATH/IDENT fail the run; NARR is advisory (RESULT INFO).
+"""
 
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -14,14 +21,81 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 import repo_lib
 
-CATALOGS = ("tools.md", "tools-lint.md", "tools-build.md", "tools-media.md")
+CATALOGS = ("tools.md", "tools-lint.md", "tools-build.md", "tools-shims.md", "tools-media.md")
 ROW = re.compile(r"^\|\s*`([^`|]+)`\s*\|.*\|\s*([BWD]+)\s*\|[^|]*\|\s*([YN])\s*\|\s*$")
+
+
+SKILL_DIR = Path("/home/box/agent-data/workflows")
+SUFFIX = (".gd", ".py", ".md", ".tscn", ".json", ".yaml", ".yml", ".ps1", ".cfg", ".html", ".txt", ".shader", ".tres", ".uid")
+TICK = re.compile(r"`([^`\n]+)`")
+PATH_SKIP = ("_logs/", "_out/", "user://", "http", ".godot/", "docs/", "design/changelog/")
+NARR = re.compile(r"\b(will be added|to be added|TODO|TBD|legacy|formerly|previously|no longer|used to|not yet|for now|old flat|temporary|deprecated|obsolete|superseded)\b", re.I)
+MEMBER = re.compile(r"^\s*(?:static\s+)?(?:func|var|const|signal|enum|class)\s+(\w+)", re.M)
+
+
+def _doc_files(root: Path, tracked: set[str]) -> list[Path]:
+    out = [root / n for n in sorted(tracked) if n.endswith(".md") and (n.startswith("design/") or "/" not in n)
+           and not n.startswith("design/changelog/")]
+    if SKILL_DIR.is_dir():
+        out += sorted(SKILL_DIR.glob("*/SKILL.md"))
+    return out
+
+
+def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
+    git = subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, text=True).stdout.split("\n")
+    tracked = {g for g in git if g}
+    names = {g.rsplit("/", 1)[-1] for g in tracked}
+    gone = subprocess.run(["git", "log", "--diff-filter=D", "--name-only", "--pretty=format:"], cwd=root, capture_output=True, text=True).stdout.split("\n")
+    gone_names = {g.rsplit("/", 1)[-1] for g in gone if g} - names
+    ignored = subprocess.run(["git", "ls-files", "--others", "--ignored", "--exclude-standard", "--directory"], cwd=root, capture_output=True, text=True).stdout.split("\n")
+    ignored = tuple(i for i in ignored if i)
+    classes: dict[str, set[str]] = {}
+    for g in tracked:
+        if g.endswith(".gd"):
+            src = (root / g).read_text(encoding="utf-8-sig", errors="replace")
+            m = re.search(r"^class_name\s+(\w+)", src, re.M)
+            if m:
+                classes[m.group(1)] = set(MEMBER.findall(src))
+    bad: list[str] = []
+    narr: list[str] = []
+    for f in _doc_files(root, tracked):
+        name = f.relative_to(root).as_posix() if f.is_relative_to(root) else f.parent.name + "/SKILL.md"
+        in_fence = False
+        for no, line in enumerate(f.read_text(encoding="utf-8-sig", errors="replace").splitlines(), 1):
+            if line.lstrip().startswith("```"):
+                in_fence = not in_fence
+                continue
+            if narration and not in_fence and NARR.search(line):
+                narr.append(f"NARR    {name}:{no}: {line.strip()[:110]}")
+            for tok in TICK.findall(line):
+                tok = tok.strip()
+                if tok.startswith("res://"):
+                    tok = tok[6:]
+                if " " in tok or any(c in tok for c in "*<>{}$%|=()[]\\:,;~") or tok.startswith(("-", ".", "/")) or any(tok.startswith(s) for s in PATH_SKIP):
+                    pass
+                elif tok.endswith(SUFFIX) and "." in tok.rsplit("/", 1)[-1]:
+                    if tok.endswith("_scratch.py") or (ignored and tok.startswith(ignored)) or (not f.is_relative_to(root) and (f.parent / tok).exists()):
+                        continue
+                    if tok.rstrip("/") not in tracked and not (root / tok).exists() and not any(g.endswith("/" + tok) for g in tracked) and (("/" in tok) or tok in gone_names):
+                        bad.append(f"PATH    {name}:{no}: {tok}")
+                    continue
+                m = re.match(r"^([A-Z]\w+)\.(\w+)(?:\(.*)?$", tok)
+                if m and m.group(1) in classes and m.group(2) not in classes[m.group(1)]:
+                    bad.append(f"IDENT   {name}:{no}: {m.group(1)}.{m.group(2)}")
+    return bad, narr
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check the tools catalog (design/tools*.md) against tools/ and tools/bot_allow.txt (A=Y needs the path allowed; globs and ! denies count).", json_out=True)
+    ap.add_argument("--stale-refs", action="store_true", help="Scan docs for dead paths and Class.member identifiers instead of checking the catalog.")
+    ap.add_argument("--narration", action="store_true", help="With --stale-refs: also list will-be-added / legacy / formerly / no-longer lines (advisory).")
     args = ap.parse_args(sys.argv[1:] if argv is None else argv)
     root = agent_log.resolve_root(args)
+    if args.stale_refs:
+        bad, narr = stale_refs(root, args.narration)
+        head = f"stale-refs: dead={len(bad)} narration={len(narr)}"
+        return agent_log.finish("stale-refs", root, "\n".join(bad + narr + [head]), "FAIL" if bad else ("INFO" if narr else "PASS"),
+                                args=args, legacy=False, dead=len(bad), narration=len(narr))
     tools = root / "tools"
     files = {f.name for f in tools.iterdir() if f.is_file() and f.name != "_scratch.py"}
     globs = repo_lib.load_allowlist(root)

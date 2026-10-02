@@ -12,9 +12,9 @@ Support development on **[Patreon](https://www.patreon.com/cw/ViraXVespa)**.
 
 Click the game once so the canvas can take keyboard / gamepad input. Xbox pad works in Chromium-based browsers; WASD + mouse still work.
 
-Default keyboard: WASD move, mouse aim, LMB hold-attack, RMB special, Space dash, E interact, F potion, C food, Esc pause (inventory / skills / system), M bigger map, Q target-lock, `[` / `]` tab menus. Wipe save is Pause → System → Delete Save Data. Voluntary exit is **“Dispel”**.
+Default keyboard: WASD move, mouse aim, LMB hold-attack, RMB special, Space dash, E interact, F potion, C food, Esc pause (settings / inventory / skills), M bigger map, Q target-lock, `[` / `]` tab menus. Wipe save is Pause → Settings → Gameplay → Delete Save Data. Voluntary exit is **“Dispel”**.
 
-On-screen prompts follow **last used** input. One scheme at a time: pad glyphs after a gamepad event, keyboard / mouse glyphs after a key or mouse event. Rebind from Pause → System; the glyphs follow the live InputMap.
+On-screen prompts follow **last used** input. One scheme at a time: pad glyphs after a gamepad event, keyboard / mouse glyphs after a key or mouse event. Rebind from Pause → Settings → Controls; the glyphs follow the live InputMap.
 
 This is a no-threads Web export so it runs on GitHub Pages without special COOP/COEP headers. Rebuild live locally with:
 
@@ -22,16 +22,16 @@ python tools/export_web.py
 
 That writes into `docs/`. Combined live + archived builds (preview):
 
-python tools/export_web.py -Archives
+python tools/export_web.py --archives
 
-That writes into `_pages/` (gitignored). GitHub Actions exports HEAD plus each pin in `scripts/data/archive_catalog.json` and deploys Pages. After the workflow exists, set **Settings → Pages → Source = GitHub Actions**. Archived builds are those commits, served at `/archives/<id>/`. Title Play always launches live.
+That writes into `_pages/` (gitignored). GitHub Actions exports HEAD plus each pin in `scripts/data/archive_catalog.json` and deploys Pages. Pages **Source** is **GitHub Actions** (Settings → Pages). Archived builds are those commits, served at `/archives/<id>/`. Title Play always launches live.
 
 Human setup for the cloud Refactorer: [GROK-BOT.md](GROK-BOT.md). The Bot reads [BOT.md](BOT.md).
 
 ## Open in Godot
 
 1. Steam **Godot Engine** 4.7.2
-2. Import / Open `project.godot` in this folder (not the old `GrokSandbox` copy)
+2. Import / Open `project.godot` in this folder
 
 ## Play locally
 

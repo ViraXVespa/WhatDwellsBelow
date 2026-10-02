@@ -23,10 +23,6 @@ This table is not Grok Bot intake. Web / chat does not open Bot Job files to con
 
 id | trigger | open | path
 --- | --- | --- | ---
-dungeon_feel | dungeon feel, colony hybrid, stacked tubes, unused stone | park-dungeon-feel.md | web
 attack_keyframes | resume parked, attack keyframes, coil stills | art-attack-keyframes.md (art_pipeline job) | web or isolated media
-smoke_shots | resume parked, smoke shots, headless screenshots, _logs/shots | park-smoke-shots.md | web then Build / tools
-session_src | resume parked, session src, harvest stills, _src/sessions | park-session-src.md | web / tools
 
 Do not invent rows.
-dungeon_feel | resume parked, dungeon feel, colony hybrid, hall ribbons, stacked walls | park-dungeon-feel.md | web then live gen/volume

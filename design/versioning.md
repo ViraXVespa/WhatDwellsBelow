@@ -36,7 +36,7 @@ CI on each user push to `main` (not on `[skip ci]` stamp pushes):
 6. If generated outputs changed, commit them with `[skip ci]`.
 7. Deploy Pages from the user push. Pages stamps the same number in the export workspace before Godot runs, because a `GITHUB_TOKEN` stamp push does not start a new workflow. Include `/changelog/`.
 
-Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/changelog/{label}.md` still get a patch number and an empty player note. `tools/next_changelog_label.py` is baked patch + 1 on the **current** series only. A series seed (`0.N.0`, later `1.M.0`) is the User’s named completion commit, not that tool.
+Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/changelog/{label}.md` still get a patch number and an empty player note. `doc_patch.py next-label` is baked patch + 1 on the **current** series only. A series seed (`0.N.0`, later `1.M.0`) is the User’s named completion commit, not that tool.
 
 ### Merge shape (Grok Bot and multi-commit PRs)
 

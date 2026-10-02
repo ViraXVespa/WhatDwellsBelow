@@ -49,7 +49,7 @@ Must resolve **outside** the git tree. A folder under `WhatDwellsBelow/` still w
 Runner: `python tools/run_isolated_grok.py --kind <kind> …`
 
 - Default one-shot scratch is `tempfile.TemporaryDirectory()` (OS temp). `--keep` uses `mkdtemp` and prints the path. `--no-reuse` forces that path.
-- With staged reference images (Bibles, `--copy`, I2V seed) the default is a durable scratch under `%USERPROFILE%\.grok\wdb-iso\work\<ref_key>\` (or `$GROK_HOME/wdb-iso/...`). Catalog: `wdb-iso/catalog.json`. Key is SHA-256 of `--kind` plus each reference filename and file hash. Prompt text / brief is not in the key.
+- With staged reference images (Bibles, `--copy`, I2V seed) the default is a durable scratch under `%USERPROFILE%\.grok\wdb-iso\work\<ref_key>\` (or `$GROK_HOME/wdb-iso/...`). Catalog: `catalog.json` beside the work dirs. Key is SHA-256 of `--kind` plus each reference filename and file hash. Prompt text / brief is not in the key.
 - `--bible-style` copies the locked Bibles.
 - `--dry-run` still runs `grok inspect`; it does not run the child generate.
 - Inspect proof is one line: `inspect=ok instructions=0`. The runner does not forward the skill roster. If inspect still names WhatDwellsBelow the repo agent-rules file, or instructions ≠ 0, refuse to generate.

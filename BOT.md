@@ -12,7 +12,7 @@ Clone github.com/ViraXVespa/WhatDwellsBelow to /workspace/WhatDwellsBelow.
 Work that tree. Work a fresh `bot/<flow>` branch per flow. One open Bot PR. Commit per cluster.
 User squash-merges. Never push main. Never merge the PR.
 
-Publish with plain `git push` over HTTPS (gh credential helper) to `bot/*` or the PR branch only. Push to `dungeon-reshape` only when the User asks. No force pushes, ever. After the User squash-merges, create a fresh `bot/<flow>` branch from `origin/main` (e.g. `bot/reuse-xyz`, `bot/size-xyz`), push it with `git push -u origin bot/<flow>`, and open the PR with `gh pr create` (if that fails, GitHub MCP `create_pull_request`).
+Publish with plain `git push` over HTTPS (gh credential helper) to `bot/*` or the PR branch only. No force pushes, ever. After the User squash-merges, create a fresh `bot/<flow>` branch from `origin/main` (e.g. `bot/reuse-xyz`, `bot/size-xyz`), push it with `git push -u origin bot/<flow>`, and open the PR with `gh pr create` (if that fails, GitHub MCP `create_pull_request`).
 
 The box repo has a local git identity (Grok Bot / grok-bot@users.noreply.github.com), so plain `git commit` works. PR body edits: `gh api -X PATCH repos/<repo>/pulls/N -F body=@file` (`gh pr edit` fails on the Projects classic shutdown).
 
@@ -48,11 +48,11 @@ Prove a cluster with:
 - python3 tools/check_load_graph.py
 - python3 tools/bot_status.py --prove
 - python3 tools/check_code_map.py (no new UNMAPPED for files you touched; older ones are expected)
-- python3 tools/check_tool_docs.py (only when `tools/` or the catalog changed)
+- python3 tools/check_tool_docs.py (only when `tools/` or the catalog changed); `python3 tools/check_tool_docs.py --stale-refs` after any doc edit that names paths
 
 CI: .github/workflows/bot-gate.yml
 Allowlist: tools/bot_allow.txt (default deny; deny lines first)
-Stale docs: the allowlist exists so unattended Bot jobs never change out-of-scope files on their own. The Bot does not edit design docs outside it. It flags stale lines in the PR body under `Stale doc lines (for the User)`: file, line, what it says, what it should say. The User edits them, and the red `Allowlist on bot branches` check on that PR can then be ignored. When the User works alongside the Bot in session and says so, the Bot may edit them.
+Stale docs: `design/` and `tools/` are fully allowlisted, so the Bot fixes stale doc lines in the job it is on (`check_tool_docs.py --stale-refs` finds dead refs). When the current truth is unclear it does not guess; it lists the line under `Stale doc lines (for the User)` in the PR body: file, line, what it says, what it might say.
 Measure: os.path.getsize, same floor as Get-Item Length (10,000 bytes).
 Touched live `scripts/**/*.gd` must ship under 10KB. Split with `design/refactor.md` (recipe only). The under-5KB target is only `design/grok-bot-size.md`. Label math: `design/versioning-log.md`.
 Do not open `design/reuse-map.md` except from `design/grok-bot-reuse.md` when that brief is not the empty template.
@@ -60,7 +60,7 @@ Do not open `design/reuse-map.md` except from `design/grok-bot-reuse.md` when th
 New `tools/` runners: `design/tools.md` rule 5 (propose first; implement after the User approves).
 Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
 
-Work only in `/workspace/WhatDwellsBelow` on the Bot VM. Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `design/tools-media.md`), the pc-offload skill, or Imagine / I2V skills. Do not use a Windows desktop checkout, `WDB_ROOT`, or the Steam Godot path.
+Work only in `/workspace/WhatDwellsBelow` on the Bot VM. Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `design/tools-shims.md`, `design/tools-media.md`), the pc-offload skill, or Imagine / I2V skills. Do not use a Windows desktop checkout, `WDB_ROOT`, or the Steam Godot path.
 
 ## Smokes
 
@@ -70,7 +70,7 @@ Setup downloads the official 4.7.2 Linux tools binary only if the pin is missing
 Binary: `GODOT_BIN`, else the pin `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
 New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets`, and commit the `.uid` files only. That is the import, not an editor session.
 Do not run editor playtest. Do not schedule a routine that launches Godot.
-Shots and light bakes are not headless: `run_shots.py`, `run_shot_flow.py` and `run_bake_camp.py` pick the box display themselves (`$DISPLAY`, a live X socket, else `xvfb-run`; `python3 tools/godot_lib.py --display`). Menu/NPC proof: `bot_smokes.py --door D --flows` (headless asserts) and `design/shot-tool.md`. Required Bot gate: `check_shot_gaps.py --changed` (run by `bot_smokes.py` unless `--no-gaps`, and by `run_build_gate.py --batch`) FAILS on a new UI state with no shot flow; add a small flow in `tools/shot-flows/` in the same PR. Published shots go to `_out/shots/<flow>/`; never write under `assets/` (Grok Build places those).
+Shots and light bakes are not headless: `run_shots.py`, `run_shot_flow.py` and `run_bake_camp.py` pick the box display themselves (`$DISPLAY`, a live X socket, else `xvfb-run`; `python3 tools/godot_lib.py --display`). Menu/NPC proof: `bot_smokes.py --door D --flows` (headless asserts) and `design/shot-flows.md`. Required Bot gate: `check_shot_gaps.py --changed` (run by `bot_smokes.py` unless `--no-gaps`, and by `run_build_gate.py --batch`) FAILS on a new UI state with no shot flow; add a small flow in `tools/shot-flows/` in the same PR. Published shots go to `_out/shots/<flow>/`; never write under `assets/` (Grok Build places those).
 
 Warning sweep (User-named only): `python3 tools/bot_warnscan.py` runs every smoke area plus boot/static, collects Godot warnings, errors, and leaks, and exits 0 only on zero findings. It reports; it does not fix game code. `--list` shows areas, `--repeat 2` steadies leaks.
 Findings by kind: `--findings-md PATH`. One-shot gate for a fix batch: `python3 tools/run_build_gate.py --batch --warnscan-baseline PATH --areas ...`. Before/after a change: `--save-baseline PATH` before, then `--non-leak-diff PATH` after (the baseline and the after run must use the same `--areas`). It ignores leaks and sites, prints NEW and FIXED, and exits 1 only on NEW.
