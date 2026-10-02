@@ -17,7 +17,7 @@ Code: `scripts/world/camp.gd` (facade, `@tool` preview), `scripts/world/camp/lay
 - Test dummy (coverage / weapon sandbox)
 
 All buildings must have realistic 3D dimensions (not flat 2D sprites) for solidity under the orthographic Camera3D.
-- `Layout` on `scenes/camp.tscn` is the pose hook. `ensure_tree()` creates the spot and roof children from script defaults. Scene exports override eave, UV, and box size. An empty `Layout` is valid. `Generated` is a runtime bucket. Play clears it and runs the helpers so Title and shots show the same town. Do not pack `Generated` into the scene.
+- `Layout` on `scenes/camp.tscn` is the single source for yard size, box sizes, poses, eave, UV, and awning depth/slope/valance (valance is a fraction of wall height). Build code finds it with `Layout.of(node)` only: no meta tag, no fallback constants, no `if layout else` branches. `ensure_tree()` creates the spot and roof children from script defaults. Scene exports override eave, UV, and box size. An empty `Layout` is valid. `Generated` is a runtime bucket. Play clears it and runs the helpers so Title and shots show the same town. `camp.tscn` holds no `Generated` children and the editor does not re-tag it on save; the bake tools realize it in memory and only write `hub_light.png`.
 
 ## Camp entry events
 
