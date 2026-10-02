@@ -2,20 +2,16 @@ extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 const MeshS := preload("res://scripts/world/camp_build_mesh.gd")
-const Roof := preload("res://scripts/world/camp_build_roof.gd")
 const EnvKit := preload("res://scripts/graphics/env_kit.gd")
 const LayoutS := preload("res://scripts/world/camp_layout.gd")
+const Util := preload("res://scripts/world/camp_build_util.gd")
+const Parts := preload("res://scripts/world/camp_build_parts.gd")
 
 const GROUND_W := 36
 const GROUND_D := 32
 const GROUND_OX := -2
 const GROUND_OZ := -2
 const GRASS_PAD := 16
-const ROOF_EAVE := 0.42
-const TILE_W := 3.2
-const HALL_SIZE := Vector3(5.6, 3.4, 4.2)
-const WING_SIZE := Vector3(3.8, 2.7, 3.2)
-const HALL_POS := Vector3(8.2, 1.7, 6.0)
 const PATH_X := 16.5
 const PATH_Z := 15.0
 const STALL_SIZE := Vector3(4.6, 2.4, 3.4)
@@ -74,119 +70,14 @@ static func tile_layer(host: Node3D, tex_path: String, points: Array, fallback: 
 	MeshS.tile_layer(host, tex_path, points, fallback)
 
 static func buildings(host: Node3D) -> void:
-	guild(host)
+	Parts.guild(host)
 	var lay: Node3D = _layout_from_build_host(host)
 	var stall_at: Vector3 = lay.stall_pos() if lay else Vector3(25.0, 1.2, 8.0)
 	var stall_box: Vector3 = lay.stall_box if lay else STALL_SIZE
-	solid(host, stall_at, stall_box, Color(0.55, 0.35, 0.2), "res://assets/sprites/buildings/stall.png", true)
+	Parts.solid(host, stall_at, stall_box, Color(0.55, 0.35, 0.2), "res://assets/sprites/buildings/stall.png", true)
 
-static func wing_pos() -> Vector3:
-	var back: float = HALL_POS.z - HALL_SIZE.z * 0.5
-	return Vector3(HALL_POS.x + HALL_SIZE.x * 0.5 + WING_SIZE.x * 0.5 - 0.12, WING_SIZE.y * 0.5, back + WING_SIZE.z * 0.5)
-
-static func guild(host: Node3D) -> void:
-	var lay: Node3D = _layout_from_build_host(host)
-	var hall_at: Vector3 = lay.hall_pos() if lay else HALL_POS
-	var hall_box: Vector3 = lay.hall_box if lay else HALL_SIZE
-	var wing_at: Vector3 = lay.wing_pos() if lay else wing_pos()
-	var wing_box: Vector3 = lay.wing_box if lay else WING_SIZE
-	var hall_body: StaticBody3D = box(host, hall_at, hall_box, Color(0.45, 0.32, 0.22))
-	var wing_body: StaticBody3D = box(host, wing_at, wing_box, Color(0.5, 0.38, 0.28))
-	var hall_fit: Vector3 = seat(hall_body, hall_box, "res://assets/sprites/buildings/guild.png")
-	var wing_fit: Vector3 = seat(wing_body, wing_box, "res://assets/sprites/buildings/guild_reception.png")
-	MeshS.wall_box(hall_body, hall_fit, Color(0.45, 0.32, 0.22))
-	_slide(hall_body, hall_fit)
-	MeshS.wall_box(wing_body, wing_fit, Color(0.5, 0.38, 0.28))
-	_slide(wing_body, wing_fit)
-	face(hall_body, hall_fit, "res://assets/sprites/buildings/guild.png", 0.0, hall_fit.x, 0.32)
-	face(wing_body, wing_fit, "res://assets/sprites/buildings/guild_reception.png", 0.0, wing_fit.x, 0.32)
-	var hd: float = lay.awning_depth("Hall") if lay else 0.72
-	var hs: float = lay.awning_slope("Hall") if lay else 0.08
-	var wd: float = lay.awning_depth("Wing") if lay else 0.64
-	var ws: float = lay.awning_slope("Wing") if lay else 0.08
-	awning(hall_body, hall_fit, 0.42, hs, hall_fit.y * 0.16, 0.0, 0.0, 0.0)
-	awning(wing_body, wing_fit, 0.36, ws, wing_fit.y * 0.16, 0.0, 0.0, 0.0)
-	var hall_tile: float = lay.tile_for("Hall") if lay else TILE_W
-	var wing_tile: float = lay.tile_for("Wing") if lay else TILE_W
-	var hall_uv: Vector2 = lay.hall_uv_off if lay else Vector2.ZERO
-	var wing_uv: Vector2 = lay.wing_uv_off if lay else Vector2.ZERO
-	MeshS.gable_on(hall_body, hall_fit, 0.0, 0.55, hall_tile, hall_uv)
-	MeshS.gable_on(wing_body, wing_fit, 0.0, 0.48, wing_tile, wing_uv)
 static func guild_roofs(host: Node3D) -> void:
 	MeshS.guild_roofs(host)
-
-static func box(host: Node3D, pos: Vector3, box_size: Vector3, col: Color) -> StaticBody3D:
-	return Roof.box(host, pos, box_size, col)
-
-static func solid(
-	host: Node3D, pos: Vector3, box_size: Vector3, col: Color, tex: String, tarp: bool = false
-) -> void:
-	var body: StaticBody3D = box(host, pos, box_size, col)
-	var x0: float = pos.x - box_size.x * 0.5
-	var z0: float = pos.z - box_size.z * 0.5
-	var lay: Node3D = _layout_from_build_host(host)
-	if tarp:
-		MeshS.pitched_tarp(body, box_size, 0.0, Vector3(x0, 0.0, z0))
-		face(body, box_size, tex, 0.0, box_size.x * 0.92)
-		_counter(body, box_size)
-		_stall_walls(body, box_size)
-		_blob(body, Vector3(0.0, 0.0, box_size.z * 0.2))
-	else:
-		roof_plane(
-			body,
-			Vector3(0.0, box_size.y * 0.5 + 0.03, 0.0),
-			Vector2(box_size.x, box_size.z),
-			Vector3(x0, 0.0, z0),
-			false,
-			lay.tile_for("Stall") if lay else TILE_W,
-			lay.stall_uv_off if lay else Vector2.ZERO
-		)
-		face(body, box_size, tex, 0.0, box_size.x)
-static func face(
-	body: Node3D, box_size: Vector3, tex: String, x_off: float, face_w: float, crop_top: float = 0.0
-) -> void:
-	if not ResourceLoader.exists(tex):
-		return
-	var spr := Sprite3D.new()
-	spr.texture = load(tex)
-	spr.centered = true
-	spr.shaded = false
-	spr.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	spr.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	var tw := float(maxi(1, spr.texture.get_width()))
-	var th := float(maxi(1, spr.texture.get_height()))
-	var cap: float = clampf(crop_top, 0.0, 0.6)
-	var rh: float = maxf(th * (1.0 - cap), 1.0)
-	if cap > 0.01:
-		spr.region_enabled = true
-		spr.region_rect = Rect2(0.0, th * cap, tw, rh)
-	var fw: float = maxf(face_w, 0.2)
-	spr.pixel_size = fw / tw
-	var sh: float = spr.pixel_size * rh
-	spr.position = Vector3(x_off, -box_size.y * 0.5 + sh * 0.5 - 0.06, box_size.z * 0.5 + 0.01)
-	body.add_child(spr)
-static func roof_mat(dim: Vector2, world_min: Vector3, tile: float = TILE_W, uv_off: Vector2 = Vector2.ZERO) -> Material:
-	return MeshS.roof_mat(dim, world_min, tile, uv_off)
-
-static func roof_plane(
-	host: Node3D,
-	local: Vector3,
-	dim: Vector2,
-	world_min: Vector3,
-	tarp: bool = false,
-	tile: float = TILE_W,
-	uv_off: Vector2 = Vector2.ZERO
-) -> void:
-	var roof := MeshInstance3D.new()
-	var plane := PlaneMesh.new()
-	plane.size = dim
-	roof.mesh = plane
-	roof.position = local
-	if tarp:
-		roof.material_override = MeshS.tarp_mat(dim, world_min)
-	else:
-		roof.material_override = roof_mat(dim, world_min, tile, uv_off)
-	host.add_child(roof)
 
 static func quiet_shadows(host: Node3D) -> void:
 	var stack: Array[Node] = [host]
@@ -200,30 +91,6 @@ static func quiet_shadows(host: Node3D) -> void:
 			geo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		for c in n.get_children():
 			stack.append(c)
-
-static func awning(
-	body: Node3D,
-	box_size: Vector3,
-	depth: float = 0.48,
-	slope: float = 0.10,
-	valance: float = 0.16,
-	eave: float = ROOF_EAVE,
-	inset_l: float = 0.0,
-	inset_r: float = 0.0
-) -> void:
-	MeshS.attach_awning(body, box_size, depth, slope, valance, eave, inset_l, inset_r)
-static func _layout_from_build_host(host: Node3D) -> Node3D:
-	var n: Node = host
-	while n != null:
-		if n.has_meta("wdb_layout"):
-			var tagged: Node = n.get_meta("wdb_layout") as Node
-			if tagged is Node3D:
-				return tagged as Node3D
-		var lay: Node = n.get_node_or_null("Layout")
-		if lay is Node3D:
-			return lay as Node3D
-		n = n.get_parent()
-	return null
 
 static func strip_building_cubes(root: Node) -> int:
 	var cut: int = 0
@@ -278,38 +145,6 @@ static func dump_meshes(root: Node) -> void:
 			print("CAMP_MESH other name=", n.name, " mesh=", mi.mesh.get_class() if mi.mesh else "null")
 	print("CAMP_MESH totals boxes=", boxes, " sprites=", sprites, " other=", other)
 
-static func face_height(tex: String, face_w: float) -> float:
-	if not ResourceLoader.exists(tex):
-		return 3.2
-	var img: Texture2D = load(tex)
-	var tw: float = float(maxi(1, img.get_width()))
-	var th: float = float(maxi(1, img.get_height()))
-	return maxf(face_w * th / tw, 1.2)
-
-static func seat(body: StaticBody3D, box_size: Vector3, tex: String) -> Vector3:
-	var h: float = face_height(tex, box_size.x) * 0.78
-	body.position.y = h * 0.5
-	return Vector3(box_size.x, h, box_size.z)
-static func _slide(body: StaticBody3D, box_size: Vector3) -> void:
-	var old: Node = body.get_node_or_null("WallHit")
-	if old != null:
-		old.queue_free()
-	var shape := CollisionShape3D.new()
-	shape.name = "Slide"
-	var block := BoxShape3D.new()
-	block.size = Vector3(maxf(box_size.x - 0.12, 0.4), box_size.y, maxf(box_size.z - 0.12, 0.4))
-	shape.shape = block
-	body.add_child(shape)
-
-static func _counter(body: StaticBody3D, box_size: Vector3) -> void:
-	var shape := CollisionShape3D.new()
-	shape.name = "StallCounter"
-	var block := BoxShape3D.new()
-	block.size = Vector3(box_size.x * 0.72, 1.05, box_size.z * 0.46)
-	shape.shape = block
-	shape.position = Vector3(0.0, 0.52, 0.0)
-	body.add_child(shape)
-
 static func sweep(root: Node) -> void:
 	if root == null:
 		return
@@ -332,48 +167,6 @@ static func sweep(root: Node) -> void:
 		printerr("sweep drop %s at=%s" % [path, at])
 		node.queue_free()
 
-static func _stall_walls(body: StaticBody3D, box_size: Vector3) -> void:
-	var foot: float = -box_size.y * 0.5
-	var wall_h: float = box_size.y * 0.72
-	var mid_y: float = foot + wall_h * 0.5
-	var specs: Array = [
-		Vector3(0.0, mid_y, -box_size.z * 0.46),
-		Vector3(box_size.x * 0.46, mid_y, 0.0),
-		Vector3(-box_size.x * 0.46, mid_y, 0.0),
-	]
-	var sizes: Array = [
-		Vector3(box_size.x * 0.9, wall_h, 0.28),
-		Vector3(0.28, wall_h, box_size.z * 0.8),
-		Vector3(0.28, wall_h, box_size.z * 0.8),
-	]
-	var i: int = 0
-	while i < specs.size():
-		var shape := CollisionShape3D.new()
-		shape.name = "StallWall"
-		var block := BoxShape3D.new()
-		block.size = sizes[i]
-		shape.shape = block
-		shape.position = specs[i]
-		body.add_child(shape)
-		i += 1
-static func _blob(parent: Node3D, at: Vector3) -> void:
-	var mesh := MeshInstance3D.new()
-	mesh.name = "Blob"
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(0.9, 0.55)
-	mesh.mesh = plane
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.albedo_color = Color(0.12, 0.08, 0.06, 0.45)
-	mat.no_depth_test = false
-	mat.render_priority = -2
-	mesh.material_override = mat
-	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mesh.position = at + Vector3(-0.28, 0.04, 0.42)
-	mesh.rotation_degrees = Vector3(-90.0, 0.0, 18.0)
-	parent.add_child(mesh)
-
 static func stamp_actor_blobs(host: Node3D) -> void:
 	if host == null:
 		return
@@ -384,7 +177,7 @@ static func stamp_actor_blobs(host: Node3D) -> void:
 		var key: String = str(names[i])
 		if lay != null and lay.has_method("spot_pos"):
 			var p: Vector3 = lay.spot_pos(key)
-			_blob(host, Vector3(p.x, 0.0, p.z))
+			Util._blob(host, Vector3(p.x, 0.0, p.z))
 		i += 1
 	var goods: Array = host.find_children("*", "Sprite3D", true, false)
 	var g: int = 0
@@ -398,4 +191,7 @@ static func stamp_actor_blobs(host: Node3D) -> void:
 		if parent_name.find("stall") < 0 and spr_name.find("good") < 0 and spr_name.find("ware") < 0:
 			continue
 		var at: Vector3 = spr.global_position
-		_blob(host, Vector3(at.x, 0.0, at.z))
+		Util._blob(host, Vector3(at.x, 0.0, at.z))
+
+static func _layout_from_build_host(host: Node3D) -> Node3D:
+	return Util._layout_from_build_host(host)
