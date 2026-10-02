@@ -65,4 +65,6 @@ The `.ps1` twins of the Python tools are listed in `tools-shims.md`.
 | `wdb_scratch_server.py` | Token-protected local HTTP runner for web/chat scratch. User setup only; needs `WDB_SCRATCH_TOKEN` and `WDB_ROOT`. | WD | `--help` | N |
 | `web_postexport.py` | Stamp a Godot Web export. Cache id follows the binary, not the notes label | D | `--help` | N |
 | `web_shell.html` | Web export HTML shell | D | - | N |
+| `web-perf-flows.json` | Flows for `web_perf.py`: `title-idle`, `camp-walk` (steps `wait`, `key`, `hold`, `click`, `shot`). `camp-walk` is unproven past the title on the box. | BD | - | N |
+| `web_perf.py` | Advisory perf run of the EXPORTED web build (`docs/` or `--site`/`--url`) in headless Chrome via playwright (`pip install playwright`; system Chrome, no download). Load time, frame ms/fps, long frames, JS heap, asset transfer sizes; flows in `tools/web-perf-flows.json` (key/hold/click/wait/shot). `--save-baseline F`, `--baseline F --max-worse-pct 25` flags WORSE (INFO, exit 0; `--strict` exits 1). Never a gate; software GL, compare on one machine; needs a fresh export (`export_web.py`). Summary: `web-perf`. | BD | `--help` | Y |
 | `week_pin.py` | Add a `grok_web_wN` catalog row for HEAD. Human week ritual. | D | `--help` | N |

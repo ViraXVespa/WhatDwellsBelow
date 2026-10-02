@@ -30,7 +30,7 @@ def _door_card(data: dict, door_name: str) -> list[str]:
     doors = data.get("doors")
     if not isinstance(doors, dict) or door_name not in doors:
         names = ", ".join(sorted(doors.keys())) if isinstance(doors, dict) else ""
-        agent_log.fail("unknown door %s. doors: %s" % (door_name, names))
+        agent_log.fail("unknown door %s. No door = a new or undocumented system: plan it and ask the User via ask_user_question, never guess. doors: %s" % (door_name, names))
     spec = doors[door_name]
     if not isinstance(spec, dict):
         agent_log.fail("bad door %s" % door_name)
@@ -64,7 +64,7 @@ def _job_card(data: dict, job_id: str) -> list[str]:
         if "." not in job_id:
             agent_log.fail("use --job door.job (example: debug.smokes)")
         names = ", ".join(sorted(idx.keys()))
-        agent_log.fail("unknown job %s. jobs: %s" % (job_id, names))
+        agent_log.fail("unknown job %s. No job = a new or undocumented area: plan it and ask the User via ask_user_question, never guess. jobs: %s" % (job_id, names))
     door_name = job_id.split(".", 1)[0]
     doors = data.get("doors") if isinstance(data.get("doors"), dict) else {}
     door_spec = doors.get(door_name) if isinstance(doors, dict) else {}

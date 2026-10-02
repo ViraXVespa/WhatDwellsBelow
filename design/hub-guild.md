@@ -15,11 +15,6 @@ Read when: receptionist bust, notice errands, welcome cloth
 - Quest types: defeat enemies, extract ore, retrieve item, vanquish named enemy (locks enemy spawn).
 - Rewards: XP, unowned gear, gold, items.
 
-## Planned: Receptionist rework (not built)
-
-The Receptionist stops sharing the Notice Board's quest menu and becomes the lore and "How to Play" guide; the Notice Board keeps quests. Requested shape: menu with **Talk** (lore note, different each time the delver enters Placeholdia; seen notes tracked so none repeat until all are seen) and **Ask?** ("What would you like to know about?" → topic list → tutorial pages with screenshots; forging, XP retention, and so on).
-Open questions before any build: owner door and doc for the guide (new door is propose-first); where lore and tutorial text lives and who writes it; which entry event counts as entering (see the camp entry events table); seen-note storage and Delete Save behavior; what happens when all notes are seen; screenshot count and how they ship; reach from Title or Pause; the smoke to add.
-
 ## Controls Billboard
 - Shows TV-readable list of current controls (gamepad primary; keyboard/mouse equivalents).
 - Reflects player bindings from Pause → Settings → Controls. Flavor text allowed; list must be accurate.

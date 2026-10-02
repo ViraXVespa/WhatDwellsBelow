@@ -341,6 +341,11 @@ shot_gaps:
   bot: required
   build: advisory
 
+# Web build performance (tools/web_perf.py, headless Chrome on the exported site): Build prove, advisory only, never a gate.
+web_perf:
+  flows: "title-idle,camp-walk"
+  gate: advisory
+
 conflicts_with:
   inventory:
     - gear_ui

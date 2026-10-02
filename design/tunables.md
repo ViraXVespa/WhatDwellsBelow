@@ -10,6 +10,7 @@ Every value **MUST** be exposed in the debug menu and treated as non-final.
 Suggested starts are seeds only.
 Live defaults are what `balance.gd` / `tunables.gd` ship today.  
 If you change a live default, update this table in the same slice.
+This is a curated table, not a list of every balance key. A number with no row here: add one (name, suggested, live, note) in the same slice, via `tunables.py`; do not hunt for a row that does not exist.
 
 List one key with `python3 tools/tunables.py get --key CAM_PITCH` (summary: `_logs/tunable-row/summary.txt`). Patch one Live cell with `python3 tools/tunables.py set --key CAM_PITCH --set -58` (summary: `_logs/tunable-patch/summary.txt`). Do not open this whole file to change one number.
 

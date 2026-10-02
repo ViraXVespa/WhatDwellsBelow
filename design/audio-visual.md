@@ -46,7 +46,12 @@ All volumes are controlled by the SFX slider. Additional short UI, weapon-specif
 | Consciousness-transfer (enter dungeon) | Short presentation beat |
 | Wake-up (return to Placeholdia) | Short presentation beat |
 
-Live files under `assets/audio/` include `sfx_dash`, `sfx_hit`, `sfx_hurt`, `sfx_level`, `sfx_mine`, `sfx_pickup`, `sfx_slam`, `sfx_smash`, `sfx_ui`, plus dungeon/hub music.
+### Where cues come from, and how Build wires one
+- Assets: `assets/audio/` (`p2_*`, `p9_*` and `sfx_*` wavs, `music_*`). `sfx.gd` `_ready()` maps each cue id to a file (`_load("hit", "res://assets/audio/p2_hit.wav")`); a missing file loads silent, so check the path.
+- Play: `App.sfx("id")` at the event (`App.sfx` forwards to the `sfx.gd` node). `hurt`, `warcry` and `hurk` resolve to `_male` / `_female` by `App.character_type`. The adrenaline loop is `set_adrenaline(true/false)` from `app_run.gd`.
+- Volume: every player is on the Master bus at `vol_sfx * vol_master`; there are no custom buses. Music is `music.gd`.
+- New cue: reuse a file already under `assets/audio/` when one fits. A new file is an access confirm (new asset location) and `isolated-media.md` if Imagined. Then add one `_load` line and one `App.sfx` call, and run smoke 9.
+- An event with no cue today (panel opens in `interact_act.gd`, stairs descend, others) stays silent until the User says to wire it: ask, do not add.
 
 ## Visual and art rules
 
