@@ -76,6 +76,9 @@ func _process(_delta: float) -> void:
 static func browser_pad_connected() -> bool:
 	if not OS.has_feature("web"):
 		return not Input.get_connected_joypads().is_empty()
+	return js_pad_any()
+
+static func js_pad_any() -> bool:
 	var raw := str(JavaScriptBridge.eval("""
 		(function () {
 			var pads = navigator.getGamepads ? navigator.getGamepads() : [];

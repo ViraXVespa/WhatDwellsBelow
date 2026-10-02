@@ -90,14 +90,7 @@ static func misc_cargo() -> int:
 	return n
 
 static func clerk_accepts(pt: Node, n: Node) -> bool:
-	var role: String = pt._clerk_role(n)
-	if role == "gather":
-		return pt._gather_cargo() > 0
-	if role == "misc":
-		return pt._misc_cargo() > 0
-	if role == "patty" or role == "gate":
-		return (pt._gather_cargo() + pt._misc_cargo()) > 0
-	return false
+	return role_has_cargo(pt, pt._clerk_role(n))
 
 static func best_clerk(pt: Node, p: Node) -> Node:
 	return Near.best_clerk(pt, p)

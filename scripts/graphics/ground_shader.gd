@@ -73,7 +73,7 @@ void fragment() {
 static func material(tex_path: String, fallback: Color, tint: Color = Color.WHITE) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = shader()
-	var albedo: Texture2D = _albedo(tex_path, fallback)
+	var albedo: Texture2D = albedo_tex(tex_path, fallback)
 	var px: float = float(maxi(albedo.get_width(), 1))
 	var density: float = T.GROUND_PX_PER_M
 	var hash_m: float = T.GROUND_HASH_M
@@ -101,7 +101,7 @@ static func material(tex_path: String, fallback: Color, tint: Color = Color.WHIT
 	LightRt.bind(mat)
 	return mat
 
-static func _albedo(tex_path: String, fallback: Color) -> Texture2D:
+static func albedo_tex(tex_path: String, fallback: Color) -> Texture2D:
 	if ResourceLoader.exists(tex_path):
 		var loaded: Texture2D = load(tex_path) as Texture2D
 		if loaded != null:

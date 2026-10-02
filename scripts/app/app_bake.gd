@@ -26,13 +26,4 @@ static func _bake_camp(host: Node) -> void:
 		layout
 	)
 	HubLight.save_hub_bake()
-	HubLight.rebuild_hub(
-		int(layout.aabb_x0()),
-		int(layout.aabb_z0()),
-		int(layout.aabb_x1()),
-		int(layout.aabb_z1()),
-		Vector2(layout.spot_pos("Crystal").x, layout.spot_pos("Crystal").z),
-		layout
-	)
-	HubLight.save_hub_bake()
 	host.get_tree().quit()

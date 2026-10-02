@@ -3,14 +3,12 @@
 ## Postcard shot CLI arg readers. Leaf module.
 
 const FLAG := "--wdb-shot"
+const CliArgs := preload("res://scripts/debug/cli_args.gd")
 
 static var _cached: int = -1
 
 static func args() -> PackedStringArray:
-	var user: PackedStringArray = OS.get_cmdline_user_args()
-	if user.size() > 0:
-		return user
-	return OS.get_cmdline_args()
+	return CliArgs.args()
 
 static func _flag_on() -> bool:
 	return FLAG in args()
@@ -21,12 +19,7 @@ static func active() -> bool:
 	return _cached == 1
 
 static func _arg_int(key: String, fallback: int) -> int:
-	var prefix: String = key + "="
-	for a: String in args():
-		var s: String = str(a)
-		if s.begins_with(prefix):
-			return int(s.substr(prefix.length()))
-	return fallback
+	return CliArgs.int_arg(key, fallback)
 
 static func _arg_val(flag: String) -> String:
 	var prefix: String = flag + "="

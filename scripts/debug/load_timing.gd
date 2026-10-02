@@ -6,6 +6,7 @@ extends Object
 
 const FLAG := "--wdb-load-timing-smoke"
 const DUNGEON_FLAG := "--wdb-dungeon-load-timing-smoke"
+const CliArgs := preload("res://scripts/debug/cli_args.gd")
 
 static var _hub := -1
 static var _dungeon := -1
@@ -13,10 +14,7 @@ static var t0 := 0
 static var last := 0
 
 static func _has_flag(flag: String) -> bool:
-	var user: PackedStringArray = OS.get_cmdline_user_args()
-	if user.size() > 0:
-		return flag in user
-	return flag in OS.get_cmdline_args()
+	return CliArgs.has(flag)
 
 static func hub_active() -> bool:
 	if _hub < 0:

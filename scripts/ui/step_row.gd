@@ -90,35 +90,6 @@ static func _arm(b: Control, off: bool) -> void:
 		(b as Button).disabled = off
 	b.focus_mode = Control.FOCUS_NONE if off else Control.FOCUS_ALL
 
-static func _live(minus: Control, plus: Control, prefer_plus: bool) -> Control:
-	if prefer_plus:
-		if plus != null and plus.focus_mode != Control.FOCUS_NONE:
-			return plus
-		if minus != null and minus.focus_mode != Control.FOCUS_NONE:
-			return minus
-	else:
-		if minus != null and minus.focus_mode != Control.FOCUS_NONE:
-			return minus
-		if plus != null and plus.focus_mode != Control.FOCUS_NONE:
-			return plus
-	return null
-
-static func _nb(from: Control, dir: String, to: Control) -> void:
-	if from == null:
-		return
-	var p := NodePath()
-	if to != null and is_instance_valid(to) and to.focus_mode != Control.FOCUS_NONE:
-		p = from.get_path_to(to)
-	match dir:
-		"l":
-			from.focus_neighbor_left = p
-		"r":
-			from.focus_neighbor_right = p
-		"u":
-			from.focus_neighbor_top = p
-		"d":
-			from.focus_neighbor_bottom = p
-
 static func _restore(minus: Control, plus: Control, was: Control) -> void:
 	if was != minus and was != plus:
 		return

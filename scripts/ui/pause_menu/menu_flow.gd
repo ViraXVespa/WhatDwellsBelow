@@ -1,6 +1,7 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const WipeChildren := preload("res://scripts/ui/wipe_children.gd")
 const CatalogS := preload("res://scripts/data/catalog.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const PauseInv := preload("res://scripts/ui/pause_inv.gd")
@@ -82,10 +83,7 @@ static func close_ui(host: CanvasLayer) -> void:
 	Disp.consume_web_esc()
 
 static func _wipe(_host: CanvasLayer, n: Node) -> void:
-	while n.get_child_count() > 0:
-		var c: Node = n.get_child(0)
-		n.remove_child(c)
-		c.queue_free()
+	WipeChildren.wipe(n)
 
 static func _store_tip_restore(host: CanvasLayer) -> void:
 	var tip: Control = host.gear_tip_host

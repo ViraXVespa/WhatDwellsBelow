@@ -7,6 +7,7 @@ extends RefCounted
 ## Dungeon map: --wdb-dungeon-map-smoke (floor dump; not a numbered phase)
 ## Postcard shot: --wdb-shot (play-camera PNG; not a numbered phase)
 
+const CliArgs := preload("res://scripts/debug/cli_args.gd")
 const Early := preload("res://scripts/debug/smoke_early.gd")
 const Late := preload("res://scripts/debug/smoke/smoke_late.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
@@ -18,10 +19,7 @@ static var enter_flag: bool = false
 static func args() -> PackedStringArray:
 	# Prefer user args (after --). Fall back to full cmdline so Steam/redirected
 	# launches still see --wdb-phaseN-smoke when user-args arrive empty.
-	var user: PackedStringArray = OS.get_cmdline_user_args()
-	if user.size() > 0:
-		return user
-	return OS.get_cmdline_args()
+	return CliArgs.args()
 
 static func active() -> bool:
 	for a: String in args():

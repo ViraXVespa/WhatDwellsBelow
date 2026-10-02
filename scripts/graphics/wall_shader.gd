@@ -4,6 +4,7 @@ extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
+const Ground := preload("res://scripts/graphics/ground_shader.gd")
 
 static var _sh: Shader
 
@@ -81,7 +82,7 @@ void fragment() {
 static func material(tex_path: String, fallback: Color, tint: Color = Color.WHITE) -> ShaderMaterial:
 	var mat: ShaderMaterial = ShaderMaterial.new()
 	mat.shader = shader()
-	var albedo: Texture2D = _albedo(tex_path, fallback)
+	var albedo: Texture2D = Ground.albedo_tex(tex_path, fallback)
 	var px: float = float(maxi(albedo.get_width(), 1))
 	var density: float = App.bal.getv("ground_px_per_m")
 	if density < 1.0:
@@ -94,13 +95,3 @@ static func material(tex_path: String, fallback: Color, tint: Color = Color.WHIT
 	mat.set_shader_parameter("wear", App.bal.getv("ground_wear"))
 	LightRt.bind(mat)
 	return mat
-
-static func _albedo(tex_path: String, fallback: Color) -> Texture2D:
-	if ResourceLoader.exists(tex_path):
-		var loaded: Texture2D = load(tex_path) as Texture2D
-		if loaded != null:
-			return loaded
-	var img: Image = Image.create(4, 4, false, Image.FORMAT_RGBA8)
-	img.fill(fallback)
-	var made: ImageTexture = ImageTexture.create_from_image(img)
-	return made
