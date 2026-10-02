@@ -27,7 +27,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 ## Contract (enforced by `check_tool_cli.py`)
 
 - Shebang `#!/usr/bin/env python3`, `argparse` (`agent_log.std_parser`), a working non-mutating `--help`, ASCII output.
-- Ops tools take `--root`, writers take `--dry-run`, every `std_parser` tool takes `--json` (stdout is then one JSON object). Errors go to stderr as `error: ...`. Exit 0 ok, 1 findings, 2 usage.
+- Ops tools take `--root`, writers take `--dry-run`, reports may take `--json`. Errors go to stderr as `error: ...`. Exit 0 ok, 1 findings, 2 usage.
 - Last line is `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`; a `Summary -> <abs>` line also prints unless the runner opts out (`legacy=False` in `agent_log.finish`). Exempt: printers (their stdout is the payload) and `wdb_scratch_server`.
 - Read and write text through `md_format_lib` (BOM and line endings kept). Paths printed are repo-relative POSIX.
 
