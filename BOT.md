@@ -62,6 +62,7 @@ Work only in `/workspace/WhatDwellsBelow` on the Bot VM. Do not open `design/pc-
 Not a boot step. Not a Job flow. When a cluster needs a headless prove,
 run `python tools/bot_smokes.py --phases 1,2,6` from the repo root.
 Setup downloads the official 4.7.2 Linux tools binary only if the pin is missing.
+Binary: `GODOT_BIN`, else the pin `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
 Do not run editor playtest. Do not schedule a routine that launches Godot.
 
 Warning sweep (User-named only): `python tools/bot_warnscan.py` runs every smoke area plus boot/static, collects Godot warnings, errors, and leaks, and exits 0 only on zero findings. It reports; it does not fix game code. `--list` shows areas, `--repeat 2` steadies leaks.

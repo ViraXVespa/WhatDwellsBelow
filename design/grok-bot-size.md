@@ -44,6 +44,8 @@ Inventory and before/after sizes use `os.path.getsize`.
 2. Then split over-5KB files only when whole functions can move.
 3. One size PR may batch over-10KB then over-5KB clusters. Do not start extract, relocate, or reuse-map work in this PR. A stale code line that names a func this split moved may be edited in the same PR. Do not add an allowlist row to do that.
 
+Each new `.gd` needs a `.uid` sidecar. Godot writes it on import: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets`. Commit the `.uid` files.
+
 Work in `/workspace/WhatDwellsBelow`. Commit per cluster on the Bot branch.
 
 ## Verify
