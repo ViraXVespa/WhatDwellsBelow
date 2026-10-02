@@ -69,6 +69,8 @@ New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headles
 Do not run editor playtest. Do not schedule a routine that launches Godot.
 
 Warning sweep (User-named only): `python tools/bot_warnscan.py` runs every smoke area plus boot/static, collects Godot warnings, errors, and leaks, and exits 0 only on zero findings. It reports; it does not fix game code. `--list` shows areas, `--repeat 2` steadies leaks.
+Before/after a change: `--save-baseline PATH` before, then `--non-leak-diff PATH` after (same `--areas`). It ignores leaks and sites, prints NEW and FIXED, and exits 1 only on NEW.
+Targeted areas for a split: the smoke phases that load the file, `dungeon-load-timing`, `map-f1`, `static`.
 
 ## Hard stops
 

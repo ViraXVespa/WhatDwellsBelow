@@ -10,6 +10,11 @@ stderr, de-duplicates by normalized message, prints a report.
   python tools/bot_warnscan.py                       # every area
   python tools/bot_warnscan.py --phases 1,2,6 --report _logs/warnscan/report.txt
   python tools/bot_warnscan.py --areas static,boot --json _logs/warnscan/r.json
+  python tools/bot_warnscan.py --areas p3,static --save-baseline _logs/warnscan/base.json  # before a change
+  python tools/bot_warnscan.py --areas p3,static --non-leak-diff _logs/warnscan/base.json  # after: NEW/FIXED
+
+--non-leak-diff ignores leak findings (they vary run to run) and ignores the
+site, so warnings in moved code are not NEW. Exit 0 if nothing NEW, else 1.
 
 Exit 0: zero warnings, errors and leaks. Exit 1: findings or a failed run
 (timeout, crash, nonzero exit). Exit 2: setup or usage problem.
@@ -159,6 +164,34 @@ def render(rows: list[tuple], findings: list, ns, secs: float) -> str:
     return "\n".join(out) + "\n"
 
 
+def non_leak_rows(findings: list) -> list[dict]:
+    return [{"kind": f.kind, "norm": f.norm, "site": f.site, "areas": sorted(f.areas)}
+            for f in findings if f.kind != "leak"]
+
+
+def diff_rows(cur: list[dict], base: list[dict]) -> tuple[list[dict], list[dict]]:
+    """NEW and FIXED rows by (kind, norm) count; sites only pick which row to show."""
+    def split(rows):
+        d: dict = {}
+        for r in rows:
+            d.setdefault((r["kind"], r["norm"]), []).append(r)
+        return d
+    c, b = split(cur), split(base)
+    new, fixed = [], []
+    for k in sorted(set(c) | set(b)):
+        cs, bs = c.get(k, []), b.get(k, [])
+        bsites = {r["site"] for r in bs}
+        csites = {r["site"] for r in cs}
+        n = len(cs) - len(bs)
+        if n > 0:
+            pick = [r for r in cs if r["site"] not in bsites] or cs
+            new += pick[:n]
+        elif n < 0:
+            pick = [r for r in bs if r["site"] not in csites] or bs
+            fixed += pick[:-n]
+    return new, fixed
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description="Headless runtime-warning sweep (zero-warning gate)")
     p.add_argument("--list", action="store_true", help="list areas and exit")
@@ -171,6 +204,8 @@ def main() -> int:
     p.add_argument("--no-engine-verbose", action="store_true", help="drop Godot --verbose (no leak detail rows)")
     p.add_argument("--report", default="", help="also write the text report here")
     p.add_argument("--json", default="", help="write findings as JSON here")
+    p.add_argument("--save-baseline", default="", help="write non-leak findings JSON here (run before a change)")
+    p.add_argument("--non-leak-diff", default="", help="compare non-leak findings to a --save-baseline file; exit 1 if NEW")
     p.add_argument("--verbose", action="store_true", help="print commands and longer stacks")
     ns = p.parse_args()
     root = repo_root()
@@ -228,6 +263,19 @@ def main() -> int:
                  "areas": f.areas, "first": f.first, "hint": f.hint, "stack": f.stack}
                 for f in merged.values()]
         Path(ns.json).write_text(json.dumps(data, indent=2), encoding="utf-8")
+    rows_now = non_leak_rows(list(merged.values()))
+    if ns.save_baseline:
+        Path(ns.save_baseline).parent.mkdir(parents=True, exist_ok=True)
+        Path(ns.save_baseline).write_text(json.dumps(rows_now, indent=2), encoding="utf-8")
+        print(f"baseline saved: {len(rows_now)} non-leak findings -> {ns.save_baseline}")
+    if ns.non_leak_diff:
+        base = json.loads(Path(ns.non_leak_diff).read_text(encoding="utf-8"))
+        new, fixed = diff_rows(rows_now, base)
+        for tag, rs in (("NEW", new), ("FIXED", fixed)):
+            for r in rs:
+                print(f"{tag}\t{r['kind']}\t{r['site'] or '-'}\t{r['norm'][:110]}")
+        print(f"non-leak-diff: baseline={len(base)} now={len(rows_now)} new={len(new)} fixed={len(fixed)}")
+        return 0 if not new else 1
     return 0 if not merged else 1
 
 
