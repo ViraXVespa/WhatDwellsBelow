@@ -10,7 +10,6 @@ Rules, the CLI contract and the surface key are in `tools.md` (single copy). The
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
 | `godot_lib.py` | Godot launch + per-path lock library (kills only its own pid, never godot*). CLI: lock probe. | D | module docstring (no `--help`) | N |
-| `run_build_gate.py` | Post-slice gate: editor import check; `--script-cap` opt-in. Summary: `build-gate`. | WD | `python tools/run_build_gate.py` (`--skip-import`, `--over-kb 10`, `--force`) | N |
 | `run_godot_import_check.py` | Editor import / script-reload check. RESULT `clean=true|false`. Summary: `godot-import-check`. | WD | `python tools/run_godot_import_check.py` | N |
 | `run_post_split_gate.py` | Import check, then optional smokes. Summary: `post-split-gate`. | D | `python tools/run_post_split_gate.py` (`--with-smokes`, `--phases 1,2,6`, `--force`) | N |
 | `run_smokes.py` | Phase smokes on the PC (Bot VM: `bot_smokes.py`). `--door D` / `--job door.job` pick the phases mapped in `routes.yaml` `smokes`. Summary: `smokes`. | D | `python tools/run_smokes.py --phases 4,5` | N |
