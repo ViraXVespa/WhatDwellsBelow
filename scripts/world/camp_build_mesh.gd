@@ -752,48 +752,56 @@ static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, 
 	body.add_child(hit)
 
 
-static func pitched_tarp(body: Node3D, box_size: Vector3, eave: float, _world_min: Vector3 = Vector3.ZERO) -> void:
-	var hx: float = box_size.x * 0.5 + eave
-	var hz: float = box_size.z * 0.5 + eave + 0.8
-	var y0: float = box_size.y * 0.5
-	var ridge: float = y0 + 1.35
+static func pitched_tarp(body: Node3D, box_size: Vector3, eave: float, world_min: Vector3) -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var hx: float = box_size.x * 0.5 + eave
+	var zs: float = box_size.z * 0.5 + eave + 2.4
+	var zn: float = -box_size.z * 0.5 - 0.15
+	var y0: float = box_size.y * 0.5 + 0.06
+	var ridge: float = y0 + 2.4
+	var rl := Vector3(-hx, ridge, 0.2)
+	var rr := Vector3(hx, ridge, 0.2)
+	var front_l := Vector3(-hx, y0, zs)
+	var front_r := Vector3(hx, y0, zs)
+	var back_l := Vector3(-hx, y0 + 0.2, zn)
+	var back_r := Vector3(hx, y0 + 0.2, zn)
 	st.set_uv(Vector2(0, 1))
-	st.add_vertex(Vector3(-hx, y0, hz))
+	st.add_vertex(front_l)
 	st.set_uv(Vector2(1, 1))
-	st.add_vertex(Vector3(hx, y0, hz))
+	st.add_vertex(front_r)
 	st.set_uv(Vector2(1, 0))
-	st.add_vertex(Vector3(hx, ridge, 0.0))
+	st.add_vertex(rr)
 	st.set_uv(Vector2(0, 1))
-	st.add_vertex(Vector3(-hx, y0, hz))
+	st.add_vertex(front_l)
 	st.set_uv(Vector2(1, 0))
-	st.add_vertex(Vector3(hx, ridge, 0.0))
+	st.add_vertex(rr)
 	st.set_uv(Vector2(0, 0))
-	st.add_vertex(Vector3(-hx, ridge, 0.0))
+	st.add_vertex(rl)
 	st.set_uv(Vector2(0, 1))
-	st.add_vertex(Vector3(-hx, y0, -hz))
-	st.set_uv(Vector2(0, 0))
-	st.add_vertex(Vector3(-hx, ridge, 0.0))
-	st.set_uv(Vector2(1, 0))
-	st.add_vertex(Vector3(hx, ridge, 0.0))
-	st.set_uv(Vector2(0, 1))
-	st.add_vertex(Vector3(-hx, y0, -hz))
-	st.set_uv(Vector2(1, 0))
-	st.add_vertex(Vector3(hx, ridge, 0.0))
+	st.add_vertex(back_r)
 	st.set_uv(Vector2(1, 1))
-	st.add_vertex(Vector3(hx, y0, -hz))
+	st.add_vertex(back_l)
+	st.set_uv(Vector2(1, 0))
+	st.add_vertex(rl)
+	st.set_uv(Vector2(0, 1))
+	st.add_vertex(back_r)
+	st.set_uv(Vector2(1, 0))
+	st.add_vertex(rl)
+	st.set_uv(Vector2(0, 0))
+	st.add_vertex(rr)
 	st.generate_normals()
 	var mesh: ArrayMesh = st.commit()
 	var inst := MeshInstance3D.new()
-	inst.name = "PitchedTarp"
+	inst.name = "StallPitch"
 	inst.mesh = mesh
-	inst.material_override = tarp_mat(Vector2(box_size.x, box_size.z), body.global_position)
+	inst.material_override = tarp_mat(Vector2(box_size.x, box_size.z), world_min)
 	body.add_child(inst)
 	var hit := CollisionShape3D.new()
-	hit.name = "TarpHit"
+	hit.name = "StallPitchHit"
 	hit.shape = mesh.create_trimesh_shape()
 	body.add_child(hit)
+
 
 static func wall_box(body: Node3D, box_size: Vector3, col: Color) -> void:
 	var st := SurfaceTool.new()

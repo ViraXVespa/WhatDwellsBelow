@@ -402,20 +402,33 @@ static func _apply_pose_token(host: Node, token: String) -> void:
 	cam.look_at(look, Vector3.UP)
 	printerr("SHOT: token=%s at=%s look=%s" % [token, str(cam.global_position), str(look)])
 
+static func _grid_shape(n: int) -> Vector2i:
+	var rows: int = maxi(1, ceili(sqrt(float(n))))
+	var cols: int = maxi(1, ceili(float(n) / float(rows)))
+	return Vector2i(cols, rows)
+
+
 static func _write_strip() -> void:
 	if _strips.is_empty():
 		return
-	var w: int = 0
-	var h: int = 0
+	var fw: int = 1
+	var fh: int = 1
 	for frame in _strips:
-		w += frame.get_width()
-		h = maxi(h, frame.get_height())
-	var out := Image.create(w, h, false, Image.FORMAT_RGBA8)
+		fw = maxi(fw, frame.get_width())
+		fh = maxi(fh, frame.get_height())
+	var shape: Vector2i = _grid_shape(_strips.size())
+	var cols: int = shape.x
+	var rows: int = shape.y
+	var out: Image = Image.create(cols * fw, rows * fh, false, Image.FORMAT_RGBA8)
 	out.fill(Color(0.15, 0.12, 0.1))
-	var x: int = 0
-	for frame in _strips:
-		out.blit_rect(frame, Rect2i(0, 0, frame.get_width(), frame.get_height()), Vector2i(x, 0))
-		x += frame.get_width()
+	var i: int = 0
+	while i < _strips.size():
+		var frame: Image = _strips[i]
+		var col: int = i % cols
+		var row: int = int(float(i) / float(cols))
+		out.blit_rect(frame, Rect2i(0, 0, frame.get_width(), frame.get_height()), Vector2i(col * fw, row * fh))
+		i += 1
+	printerr("SHOT: grid cols=%d rows=%d" % [cols, rows])
 	var err: Error = out.save_png(out_path())
 	if err != OK:
 		printerr("SHOT: ok=false err=strip_%d" % int(err))

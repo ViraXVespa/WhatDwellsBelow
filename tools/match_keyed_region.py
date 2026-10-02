@@ -303,10 +303,9 @@ def accept_score(
     live: str,
 ) -> bool:
     base = window.split("/")[0]
+    # generated prompt glyphs are not match sources
     if is_glyph(live):
-        if not area_ok(agree, pixels, GLYPH_AGREE, GLYPH_MIN_SIDE):
-            return False
-        return mad <= GLYPH_MAD and agree >= GLYPH_AGREE and overlap >= GLYPH_OVERLAP
+        return False
     if base.startswith("cell_"):
         if not (is_player(live) or loose_windows_ok(live)):
             return False
@@ -451,6 +450,9 @@ def collect_lives() -> list[Path]:
     assets = ROOT / "assets"
     for path in iter_files(assets, IMAGE_EXT):
         if path.name.endswith(".import"):
+            continue
+        rel = path.resolve().relative_to(ROOT.resolve()).as_posix()
+        if is_glyph(rel):
             continue
         lives.append(path)
     return lives
@@ -936,61 +938,130 @@ def organize(plan: dict) -> dict:
     return {"archived": archived, "notes": notes, "entries": len(entries)}
 
 
+
+def live_stem(rel: str) -> str:
+    return Path(rel).stem.lower()
+
+
+def placed_by_stem(stem: str) -> list[Path]:
+    root = SRC_ROOT / "sources"
+    if not root.is_dir():
+        return []
+    found: list[Path] = []
+    for path in root.rglob("*"):
+        if path.is_file() and path.suffix.lower() in IMAGE_EXT and path.stem.lower() == stem:
+            found.append(path)
+    return found
+
+
+def candidates_for_unmatched(item: dict) -> list[Path]:
+    """Archived _old file for this live, plus a placed source with the same stem."""
+    found: list[Path] = []
+    seen: set[Path] = set()
+
+    def add(path: Path | None) -> None:
+        if path is None or not path.is_file():
+            return
+        key = path.resolve()
+        if key in seen:
+            return
+        seen.add(key)
+        found.append(path)
+
+    archived = str(item.get("archived") or "")
+    if archived:
+        add(ROOT / archived)
+    origin = str(item.get("best_origin") or "")
+    resolved = resolve_origin(origin)
+    if resolved is not None and _under(resolved, OLD_ROOT):
+        add(resolved)
+    for path in placed_by_stem(live_stem(str(item.get("live", "")))):
+        add(path)
+    return found
+
+
+def _fill_entry(live: str, origin: Path, dest: str, row: dict, opaque_side: int) -> dict:
+    base = str(row.get("window", "")).split("/")[0]
+    return {
+        "live": live,
+        "source": dest,
+        "origin": _posix(origin),
+        "mad": row["mad"],
+        "agree": row["agree"],
+        "overlap": row["overlap"],
+        "flip": row["flip"],
+        "window": row["window"],
+        "kind": row["kind"],
+        "loose": row["mad"] > 18.0,
+        "opaque_side": opaque_side,
+        "cell": base[len("cell_") :] if base.startswith("cell_") else "",
+    }
+
+
 def fill_missing(what_if: bool) -> dict:
-    """Copy accepted _old / placed sources onto unmatched live paths. Never move."""
+    """Copy this live's archived _old file, or a same-stem placed source. Never move."""
     manifest_path = SRC_ROOT / "manifest.json"
     if not manifest_path.is_file():
         print("no manifest, nothing to fill")
         return {"filled": 0, "unmatched": 0}
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
     known = {entry["live"] for entry in data.get("entries", [])}
-    pending = [item for item in data.get("unmatched_live", []) if item.get("live") not in known]
-    live_paths = []
-    for item in pending:
-        path = ROOT / item["live"]
-        if path.is_file():
-            live_paths.append(path)
-        else:
-            print(f"missing live {item['live']}")
-    if not live_paths:
-        print("no unmatched lives on disk")
-        return {"filled": 0, "unmatched": len(pending)}
-    images, videos = collect_inputs()
-    print(f"fill images {len(images)} lives {len(live_paths)}", flush=True)
-    lives = prepare_lives(live_paths)
-    best, near = scan_with_near(images, lives)
-    plan = build_plan(lives, best, near, videos)
+    pending = [
+        item for item in data.get("unmatched_live", [])
+        if item.get("live") not in known and not is_glyph(str(item.get("live", "")))
+    ]
+    new_entries: list[dict] = []
+    still: list[dict] = []
     filled_rels: set[str] = set()
-    new_entries = _manifest_entries(plan)
-    for item in plan["sources"]:
-        dest = SRC_ROOT / item["dest"]
-        origin = item["origin"]
-        rel = item["lives"][0]["live"]
-        filled_rels.add(rel)
-        if what_if:
-            print(f"would copy {_posix(origin)} -> {item['dest']} {rel} mad={item['lives'][0]['mad']} agree={item['lives'][0]['agree']}")
+    for item in pending:
+        rel = str(item["live"])
+        live_path = ROOT / rel
+        if not live_path.is_file():
+            print(f"missing live {rel}")
+            still.append(item)
             continue
-        if dest.exists():
-            print(f"keep {item['dest']}")
-            continue
-        _copy_file(origin, dest)
-        print(f"copied {_posix(origin)} -> {item['dest']}")
-    if not what_if:
-        data.setdefault("glyph", {"mad": GLYPH_MAD, "agree": GLYPH_AGREE, "overlap": GLYPH_OVERLAP})
-        data.setdefault("entries", []).extend(new_entries)
-        still = []
-        for item in data.get("unmatched_live", []):
-            if item.get("live") in filled_rels:
+        cands = candidates_for_unmatched(item)
+        best: dict | None = None
+        best_path: Path | None = None
+        for cand in cands:
+            row = score_pair(live_path, cand, pipeline=False)
+            if not row.get("accept"):
                 continue
+            dest = SRC_ROOT / _dest_for(cand, rel)
+            if dest.resolve() == cand.resolve():
+                continue
+            if best is None or float(row["mad"]) < float(best["mad"]):
+                best = row
+                best_path = cand
+        if best is None or best_path is None:
             origin = str(item.get("best_origin", ""))
             archived = archived_posix(origin)
             if archived:
                 item = item | {"archived": archived}
             still.append(item)
+            continue
+        dest_rel = _dest_for(best_path, rel)
+        dest = SRC_ROOT / dest_rel
+        filled_rels.add(rel)
+        new_entries.append(_fill_entry(rel, best_path, dest_rel, best, int(item.get("opaque_side", 0))))
+        if what_if:
+            print(
+                f"would copy {_posix(best_path)} -> {dest_rel} {rel} "
+                f"mad={best['mad']} agree={best['agree']}"
+            )
+            continue
+        if dest.exists():
+            print(f"keep {dest_rel}")
+            continue
+        _copy_file(best_path, dest)
+        print(f"copied {_posix(best_path)} -> {dest_rel}")
+    if not what_if:
+        data.setdefault("glyph", {"mad": GLYPH_MAD, "agree": GLYPH_AGREE, "overlap": GLYPH_OVERLAP})
+        data.setdefault("entries", []).extend(new_entries)
         data["unmatched_live"] = still
         manifest_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
-    print(f"fill {'plan' if what_if else 'wrote'} {len(filled_rels)} left {len(plan['unmatched'])}")
-    return {"filled": len(filled_rels), "unmatched": len(plan["unmatched"])}
+    print(f"fill {'plan' if what_if else 'wrote'} {len(filled_rels)} left {len(still)}")
+    return {"filled": len(filled_rels), "unmatched": len(still)}
 
 
 def summarize(plan: dict) -> str:
