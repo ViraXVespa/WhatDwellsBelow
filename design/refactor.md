@@ -37,12 +37,18 @@ Adding `: Type` on a line already being moved, a `load()` / `preload()`, a one-l
 
 A non-empty `design/reuse-map.md` brief may name small kits at the surface that brief states. That is not a license to invent a widget framework. An empty template is not a kit list.
 
+## Cluster folders (placement rule; one copy)
+
+A facade and its stem helpers live together in one folder named by the stem: `scripts/<area>/<stem>/<stem>.gd` plus `<stem>_*.gd` (example: `scripts/graphics/light_rt/light_rt.gd`, `light_rt_publish.gd`). Facade-less families that share a first token (two or more files) get a folder named by the token (`scripts/world/crystal/`). Folders stay inside the existing area (`audio combat data debug dungeon graphics input ui world`, and the root `scripts/`); depth stops at the stem folder. A cluster over 9 files splits one level into sibling stem folders (`playtest/`, `playtest_ai/`, `playtest_log/`). Loose single files stay loose. Names never change: file and class names are the stem.
+- A new helper from a size split or extract goes into the facade's folder. Splitting a loose facade: move it with its helpers first (`tools/move_script_cluster.py`, below), then split.
+- A folder move carries `.uid` sidecars and every `res://` / bare path (tool rewrites scripts, scenes, `project.godot`, design, tools, `.grok`). Path length counts toward the 10KB floor.
+
 ## Size split
 
 If a file must be split:
 
 1. Split into a sibling helper (`*_act.gd`, `*_view.gd`, `*_boot.gd`, `*_text.gd`, …).
-2. Keep the original path as the facade (`App.playtest`, `PauseInv.build`, `Gen.generate`, `EnemyAI.tick`, `SmokeLate.p7`).
+2. Keep the original facade (in its cluster folder, above) as the facade (`App.playtest`, `PauseInv.build`, `Gen.generate`, `EnemyAI.tick`, `SmokeLate.p7`).
 3. Helpers are `static func` with `host` / `pt` / `ui` / `p` first.
 4. No circular `preload()`: the facade preloads its helpers; helpers never preload the facade. If a helper needs facade-held `static var` state, use `var rt: Variant = load(RT_PATH)` then `rt.name` (see `light_rt_publish.gd`). For a node script, the facade stays the owner of state and keeps one-line delegates; each moved instance func becomes `static func name(node: Variant, ...)` in a sibling `extends Object` helper that reads state as `node.field` (see `actor_lit_drive.gd`). Prove by a line-multiset compare against the original after stripping qualifiers, plus smokes before and after. `tools/facade_requal.py` qualifies moved names in the facade.
 5. Godot 4 analyzes a parent script alone. Do not call methods that exist only on a child; call the helper module from the parent.
@@ -110,7 +116,7 @@ Optional advisory scan: `lint_hostify.py`, always exit 0; it is not a compile su
 
 ## Shared calculations (gameplay + smoke)
 
-When gameplay uses a formula (gather interval, forge→hold, damage, etc.), put it in **one** static helper and call that helper from every consumer — live systems, UI, **and** phase smokes. Do not re-derive or hardcode the same numbers in `scripts/debug/smoke_*.gd`.
+When gameplay uses a formula (gather interval, forge→hold, damage, etc.), put it in **one** static helper and call that helper from every consumer — live systems, UI, **and** phase smokes. Do not re-derive or hardcode the same numbers in the phase smokes (`scripts/debug/smoke*/`).
 
 Rules:
 
@@ -138,15 +144,16 @@ Grok Bot sweep notes: optional `_logs/grok-bot-sweep.md`. Not `tools/week_start.
 
 Do **not** fold these into a size split. Folder relocates use the Bot relocate job, not this recipe's size-split steps. Every `preload` / `load` / ExtResource path plus `design/code-map.md` rows must stay correct. No behavior change.
 
-From repo root run `python3 tools/move_script_cluster.py` (flags: `--help`; catalog in design/tools.md). It `git mv`s the facade + stem siblings (+ `.uid`), rewrites `res://` and bare paths under `scripts/`, `design/`, scenes, and `project.godot`, and writes `_logs/move-cluster/summary.txt`. Then run the editor import check.
+From repo root run `python3 tools/move_script_cluster.py` (flags: `--help`; catalog in design/tools.md; `--plan plan.json` moves many clusters in one rewrite pass). It `git mv`s the facade + stem siblings (+ `.uid`), rewrites `res://` and bare paths under `scripts/`, `design/`, scenes, `project.godot`, `tools/`, `.grok/`, `.github/` and the root md files (not `design/changelog/`), keeps BOM and CRLF, and writes `_logs/move-cluster/summary.txt`. Prose globs such as `dir/stem*.gd` need a manual pass. Then run the editor import check.
 
 Done (0.3.11 relocate batch):
 
 - `scripts/combat/debug_menu*.gd` -> `scripts/debug/debug_menu/`
 - `scripts/combat/sfx.gd` -> `scripts/audio/sfx.gd`
 - Sample facade folder: `scripts/ui/gear_board*.gd` -> `scripts/ui/gear_board/`
+- Folder organize pass (0.5.x): every other stem cluster moved into its own folder under its area (53 folders; layout rule in Cluster folders above).
 
-Still open for later User go: other fat facade clusters (same tool). Prefer updating call sites over wrappers when external refs are few.
+Still open for later User go: new fat facade clusters (same tool). Prefer updating call sites over wrappers when external refs are few.
 
 ## Documentation facades
 

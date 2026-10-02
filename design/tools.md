@@ -73,7 +73,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `summarize_scripts.py` | Func inventory per `.gd` (`--over-kb`, `--top-funcs`) | BD | `--help` | Y |
 | `lint_hostify.py` | Advisory scan for `:=`/load inference and host pitfalls; always exits 0 (RESULT INFO) | BD | `--help` | Y |
 | `list_unused_funcs.py` | Dead-code report (`--limit N`). **`--apply` DELETES funcs**: only when the opt item says so; check `call_deferred`/string refs first. | B | `--help` | Y |
-| `move_script_cluster.py` | `git mv` a facade + siblings and rewrite `res://` repo-wide (`--to-dir`, `--dry-run`, `--wrapper`). Only for a user-named relocate job; can touch non-allowlisted docs. | BD | `--help` | Y |
+| `move_script_cluster.py` | `git mv` a facade + siblings and rewrite `res://` and bare paths repo-wide, incl. tools, skills, root docs (`--to-dir`, `--plan plan.json` batch, `--dry-run`, `--wrapper`). Only for a user-named relocate job; can touch non-allowlisted docs. | BD | `--help` | Y |
 | `repo_lib.py` | Git, allowlist, version and changelog-label helpers shared by tools | BWD | module docstring (no `--help`) | Y |
 | `gd_lib.py` | `.gd` func parser shared by `split_funcs`, `summarize_scripts`, `show_func`, `doc_patch` | BD | module docstring (no `--help`) | Y |
 | `agent_log.py` | Run helpers: `std_parser`, `resolve_root`, `finish`/`emit_result` (RESULT line), `_logs/<job>` paths. CLI prints a job dir. | BD | `--help` | Y |
