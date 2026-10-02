@@ -705,8 +705,9 @@ static func shed_pair(
 	board.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	edge.material_override = board
 	body.add_child(edge)
-static func guild_roofs(host: Node3D) -> void:
+static func guild_roofs(_host: Node3D) -> void:
 	pass
+
 
 static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, tile: float, uv_off: Vector2) -> void:
 	var hx: float = box_size.x * 0.5
@@ -722,19 +723,24 @@ static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, 
 	var nr := Vector3(hx + oh, y0, -hz - oh)
 	var rl := Vector3(-hx, ridge, 0.0)
 	var rr := Vector3(hx, ridge, 0.0)
-	var parts: Array = [[sl, sr, rr, rl], [nr, nl, rl, rr], [sl, rl, nl], [sr, nr, rr]]
-	for face in parts:
-		if face.size() == 4:
-			st.add_vertex(face[0])
-			st.add_vertex(face[1])
-			st.add_vertex(face[2])
-			st.add_vertex(face[0])
-			st.add_vertex(face[2])
-			st.add_vertex(face[3])
-		else:
-			st.add_vertex(face[0])
-			st.add_vertex(face[1])
-			st.add_vertex(face[2])
+	st.add_vertex(sl)
+	st.add_vertex(sr)
+	st.add_vertex(rr)
+	st.add_vertex(sl)
+	st.add_vertex(rr)
+	st.add_vertex(rl)
+	st.add_vertex(nr)
+	st.add_vertex(nl)
+	st.add_vertex(rl)
+	st.add_vertex(nr)
+	st.add_vertex(rl)
+	st.add_vertex(rr)
+	st.add_vertex(sl)
+	st.add_vertex(rl)
+	st.add_vertex(nl)
+	st.add_vertex(sr)
+	st.add_vertex(nr)
+	st.add_vertex(rr)
 	st.generate_normals()
 	var built: ArrayMesh = st.commit()
 	var inst := MeshInstance3D.new()
@@ -748,7 +754,7 @@ static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, 
 	body.add_child(hit)
 
 
-static func pitched_tarp(body: Node3D, box_size: Vector3, _eave: float, world_min: Vector3 = Vector3.ZERO) -> void:
+static func pitched_tarp(body: Node3D, box_size: Vector3, _eave: float, world_min: Vector3) -> void:
 	var hx: float = box_size.x * 0.5
 	var hz: float = box_size.z * 0.5
 	var y_post: float = box_size.y * 0.55
@@ -761,20 +767,30 @@ static func pitched_tarp(body: Node3D, box_size: Vector3, _eave: float, world_mi
 	var nr := Vector3(hx, y_post, -hz)
 	var rl := Vector3(-hx, ridge, 0.0)
 	var rr := Vector3(hx, ridge, 0.0)
-	var slopes: Array = [[sl, sr, rr, rl], [nr, nl, rl, rr]]
-	for quad in slopes:
-		st.set_uv(Vector2(0, 1))
-		st.add_vertex(quad[0])
-		st.set_uv(Vector2(1, 1))
-		st.add_vertex(quad[1])
-		st.set_uv(Vector2(1, 0))
-		st.add_vertex(quad[2])
-		st.set_uv(Vector2(0, 1))
-		st.add_vertex(quad[0])
-		st.set_uv(Vector2(1, 0))
-		st.add_vertex(quad[2])
-		st.set_uv(Vector2(0, 0))
-		st.add_vertex(quad[3])
+	st.set_uv(Vector2(0, 1))
+	st.add_vertex(sl)
+	st.set_uv(Vector2(1, 1))
+	st.add_vertex(sr)
+	st.set_uv(Vector2(1, 0))
+	st.add_vertex(rr)
+	st.set_uv(Vector2(0, 1))
+	st.add_vertex(sl)
+	st.set_uv(Vector2(1, 0))
+	st.add_vertex(rr)
+	st.set_uv(Vector2(0, 0))
+	st.add_vertex(rl)
+	st.set_uv(Vector2(1, 1))
+	st.add_vertex(nr)
+	st.set_uv(Vector2(0, 1))
+	st.add_vertex(nl)
+	st.set_uv(Vector2(0, 0))
+	st.add_vertex(rl)
+	st.set_uv(Vector2(1, 1))
+	st.add_vertex(nr)
+	st.set_uv(Vector2(1, 0))
+	st.add_vertex(rl)
+	st.set_uv(Vector2(0, 0))
+	st.add_vertex(rr)
 	st.generate_normals()
 	var built: ArrayMesh = st.commit()
 	var inst := MeshInstance3D.new()
@@ -794,19 +810,30 @@ static func wall_box(body: Node3D, box_size: Vector3, col: Color) -> void:
 	var hx: float = box_size.x * 0.5
 	var hy: float = box_size.y * 0.5
 	var hz: float = box_size.z * 0.5
-	var faces: Array = [
-		[Vector3(-hx, -hy, hz), Vector3(hx, -hy, hz), Vector3(hx, hy, hz), Vector3(-hx, hy, hz)],
-		[Vector3(hx, -hy, -hz), Vector3(-hx, -hy, -hz), Vector3(-hx, hy, -hz), Vector3(hx, hy, -hz)],
-		[Vector3(-hx, -hy, -hz), Vector3(-hx, -hy, hz), Vector3(-hx, hy, hz), Vector3(-hx, hy, -hz)],
-		[Vector3(hx, -hy, hz), Vector3(hx, -hy, -hz), Vector3(hx, hy, -hz), Vector3(hx, hy, hz)],
-	]
-	for quad in faces:
-		st.add_vertex(quad[0])
-		st.add_vertex(quad[1])
-		st.add_vertex(quad[2])
-		st.add_vertex(quad[0])
-		st.add_vertex(quad[2])
-		st.add_vertex(quad[3])
+	st.add_vertex(Vector3(-hx, -hy, hz))
+	st.add_vertex(Vector3(hx, -hy, hz))
+	st.add_vertex(Vector3(hx, hy, hz))
+	st.add_vertex(Vector3(-hx, -hy, hz))
+	st.add_vertex(Vector3(hx, hy, hz))
+	st.add_vertex(Vector3(-hx, hy, hz))
+	st.add_vertex(Vector3(hx, -hy, -hz))
+	st.add_vertex(Vector3(-hx, -hy, -hz))
+	st.add_vertex(Vector3(-hx, hy, -hz))
+	st.add_vertex(Vector3(hx, -hy, -hz))
+	st.add_vertex(Vector3(-hx, hy, -hz))
+	st.add_vertex(Vector3(hx, hy, -hz))
+	st.add_vertex(Vector3(-hx, -hy, -hz))
+	st.add_vertex(Vector3(-hx, -hy, hz))
+	st.add_vertex(Vector3(-hx, hy, hz))
+	st.add_vertex(Vector3(-hx, -hy, -hz))
+	st.add_vertex(Vector3(-hx, hy, hz))
+	st.add_vertex(Vector3(-hx, hy, -hz))
+	st.add_vertex(Vector3(hx, -hy, hz))
+	st.add_vertex(Vector3(hx, -hy, -hz))
+	st.add_vertex(Vector3(hx, hy, -hz))
+	st.add_vertex(Vector3(hx, -hy, hz))
+	st.add_vertex(Vector3(hx, hy, -hz))
+	st.add_vertex(Vector3(hx, hy, hz))
 	st.generate_normals()
 	var built: ArrayMesh = st.commit()
 	var inst := MeshInstance3D.new()
@@ -821,44 +848,3 @@ static func wall_box(body: Node3D, box_size: Vector3, col: Color) -> void:
 	hit.name = "WallHit"
 	hit.shape = built.create_trimesh_shape()
 	body.add_child(hit)
-
-
-static func pitched_tarp(body: Node3D, box_size: Vector3, _eave: float, world_min: Vector3 = Vector3.ZERO) -> void:
-	var hx: float = box_size.x * 0.5
-	var hz: float = box_size.z * 0.5
-	var y_post: float = box_size.y * 0.55
-	var ridge: float = y_post + box_size.z * 0.42
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var sl := Vector3(-hx, y_post, hz + 0.35)
-	var sr := Vector3(hx, y_post, hz + 0.35)
-	var nl := Vector3(-hx, y_post, -hz)
-	var nr := Vector3(hx, y_post, -hz)
-	var rl := Vector3(-hx, ridge, 0.0)
-	var rr := Vector3(hx, ridge, 0.0)
-	var slopes: Array = [[sl, sr, rr, rl], [nr, nl, rl, rr]]
-	for quad in slopes:
-		st.set_uv(Vector2(0, 1))
-		st.add_vertex(quad[0])
-		st.set_uv(Vector2(1, 1))
-		st.add_vertex(quad[1])
-		st.set_uv(Vector2(1, 0))
-		st.add_vertex(quad[2])
-		st.set_uv(Vector2(0, 1))
-		st.add_vertex(quad[0])
-		st.set_uv(Vector2(1, 0))
-		st.add_vertex(quad[2])
-		st.set_uv(Vector2(0, 0))
-		st.add_vertex(quad[3])
-	st.generate_normals()
-	var built: ArrayMesh = st.commit()
-	var inst := MeshInstance3D.new()
-	inst.name = "StallPitch"
-	inst.mesh = built
-	inst.material_override = tarp_mat(Vector2(box_size.x, box_size.z), world_min)
-	body.add_child(inst)
-	var hit := CollisionShape3D.new()
-	hit.name = "StallPitchHit"
-	hit.shape = built.create_trimesh_shape()
-	body.add_child(hit)
-

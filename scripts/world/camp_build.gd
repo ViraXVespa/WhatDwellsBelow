@@ -123,6 +123,7 @@ static func guild(host: Node3D) -> void:
 	MeshS.gable_on(hall_body, hall_box, he, 1.35, hall_tile, hall_uv)
 	MeshS.gable_on(wing_body, wing_box, we, 1.15, wing_tile, wing_uv)
 
+
 static func guild_roofs(host: Node3D) -> void:
 	MeshS.guild_roofs(host)
 
@@ -154,7 +155,8 @@ static func solid(
 			lay.stall_uv_off if lay else Vector2.ZERO
 		)
 	if not tarp:
-		face(body, box_size, tex, 0.0, box_size.x)
+		if not tarp:
+			face(body, box_size, tex, 0.0, box_size.x)
 	MeshS.wall_box(body, box_size, Color(0.42, 0.28, 0.16))
 static func face(
 	body: Node3D, box_size: Vector3, tex: String, x_off: float, face_w: float, crop_top: float = 0.0
