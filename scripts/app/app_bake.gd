@@ -1,6 +1,6 @@
 extends Object
 
-## Split from app.gd: _bake_camp, _mark_bake_owner.
+## Split from app.gd: _bake_camp (realizes Generated in memory, rebakes hub_light.png; never saves camp.tscn).
 
 static func _bake_camp(host: Node) -> void:
 	var packed = load(host.CAMP_SCENE)
@@ -33,23 +33,4 @@ static func _bake_camp(host: Node) -> void:
 		layout
 	)
 	HubLight.save_hub_bake()
-	var gen = camp.get_node_or_null("Generated")
-	if gen:
-		_mark_bake_owner(host, gen, camp)
-	var out = PackedScene.new()
-	var err = out.pack(camp)
-	if err != OK:
-		push_error("bake_camp: pack failed %s" % str(err))
-		host.get_tree().quit()
-		return
-	err = ResourceSaver.save(out, host.CAMP_SCENE)
-	if err != OK:
-		push_error("bake_camp: save failed %s" % str(err))
 	host.get_tree().quit()
-
-static func _mark_bake_owner(host: Node, n, own) -> void:
-	n.owner = own
-	var i = 0
-	while i < n.get_child_count():
-		_mark_bake_owner(host, n.get_child(i), own)
-		i += 1

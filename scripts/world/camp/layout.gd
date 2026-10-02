@@ -12,7 +12,8 @@ const PATH_X: float = 16.5
 const PATH_Z: float = 15.0
 const TILE_W_DEFAULT: float = 3.2
 const ROOF_EAVE_DEFAULT: float = 0.42
-const AWNING_DEPTH_DEFAULT: float = 0.48
+const HALL_AWNING_DEPTH_DEFAULT: float = 0.42
+const WING_AWNING_DEPTH_DEFAULT: float = 0.36
 const AWNING_SLOPE_DEFAULT: float = 0.10
 const AWNING_VALANCE_DEFAULT: float = 0.16
 const HALL_SIZE_DEFAULT := Vector3(5.6, 3.4, 4.2)
@@ -51,10 +52,10 @@ const BANNER_POS_DEFAULT := Vector3(16.5, 0.0, 22.0)
 @export var hall_uv_off := Vector2.ZERO
 @export var wing_uv_off := Vector2.ZERO
 @export var stall_uv_off := Vector2.ZERO
-@export var hall_awning_depth: float = AWNING_DEPTH_DEFAULT
+@export var hall_awning_depth: float = HALL_AWNING_DEPTH_DEFAULT
 @export var hall_awning_slope: float = AWNING_SLOPE_DEFAULT
 @export var hall_awning_valance: float = AWNING_VALANCE_DEFAULT
-@export var wing_awning_depth: float = AWNING_DEPTH_DEFAULT
+@export var wing_awning_depth: float = WING_AWNING_DEPTH_DEFAULT
 @export var wing_awning_slope: float = AWNING_SLOPE_DEFAULT
 @export var wing_awning_valance: float = AWNING_VALANCE_DEFAULT
 
@@ -121,6 +122,16 @@ func _set(property: StringName, value: Variant) -> bool:
 	notify_property_list_changed()
 	_kick_redraw()
 	return true
+
+## The one layout lookup: nearest `Layout` child on `n` or an ancestor, else a default one on `n`.
+static func of(n: Node) -> Node3D:
+	var at: Node = n
+	while at != null:
+		var found: Node = at.get_node_or_null("Layout")
+		if found is Node3D:
+			return found as Node3D
+		at = at.get_parent()
+	return on_camp(n as Node3D)
 
 static func on_camp(host: Node3D) -> Node3D:
 	var existing: Node = host.get_node_or_null("Layout")
@@ -208,6 +219,12 @@ func awning_slope(which: String) -> float:
 	if which == "Wing":
 		return wing_awning_slope
 	return hall_awning_slope
+
+## Valance height as a fraction of the wall height (not metres).
+func awning_valance(which: String) -> float:
+	if which == "Wing":
+		return wing_awning_valance
+	return hall_awning_valance
 
 func pad() -> int:
 	return grass_pad

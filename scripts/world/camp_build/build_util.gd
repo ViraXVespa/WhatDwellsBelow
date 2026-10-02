@@ -1,21 +1,8 @@
 extends Object
 
-## Camp build shared leaf helpers: layout lookup, box/face emit, stall parts.
+## Camp build shared leaf helpers: box/face emit, stall parts.
 
 const Roof := preload("res://scripts/world/camp_build/roof.gd")
-
-static func _layout_from_build_host(host: Node3D) -> Node3D:
-	var n: Node = host
-	while n != null:
-		if n.has_meta("wdb_layout"):
-			var tagged: Node = n.get_meta("wdb_layout") as Node
-			if tagged is Node3D:
-				return tagged as Node3D
-		var lay: Node = n.get_node_or_null("Layout")
-		if lay is Node3D:
-			return lay as Node3D
-		n = n.get_parent()
-	return null
 
 static func box(host: Node3D, pos: Vector3, box_size: Vector3, col: Color) -> StaticBody3D:
 	return Roof.box(host, pos, box_size, col)

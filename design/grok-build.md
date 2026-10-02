@@ -50,4 +50,4 @@ Archives are pinned commits in `scripts/data/archive_catalog.json`. Do not inven
 
 ## After a slice
 
-Prefer `python tools/run_build_gate.py` and `_logs/build-gate/summary.txt`. That gate is an import check. Script-cap is opt-in `--script-cap`. Stop and report. Two reds: stop. Add the changelog bullet for any player-visible change (`python tools/doc_patch.py changelog --bullet "..."`; never hand-edit `scripts/data/version.json`). Do not commit `_logs/`. Report the rough edges you hit (rule 9 in the catalog) and fix tool ones in the same task.
+No loops: batch fixes, gate once per batch, at most 2 reruns, then report (`design/tools.md` rule 10). Prefer `python tools/run_build_gate.py` and `_logs/build-gate/summary.txt`. That gate is an import check. Script-cap is opt-in `--script-cap`. Stop and report. Two reds: stop. Add the changelog bullet for any player-visible change (`python tools/doc_patch.py changelog --bullet "..."`; never hand-edit `scripts/data/version.json`). Do not commit `_logs/`. Report the rough edges you hit (rule 9 in the catalog) and fix tool ones in the same task.

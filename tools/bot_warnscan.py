@@ -193,6 +193,22 @@ def diff_rows(cur: list[dict], base: list[dict]) -> tuple[list[dict], list[dict]
     return new, fixed
 
 
+def findings_md(findings: list, ns, secs: float) -> str:
+    """Findings grouped by kind (errors, gdscript warnings, leaks) with counts, one line per cause."""
+    out = [f"# Warning findings", "", f"areas={ns.areas or 'all'} repeat={ns.repeat} elapsed={secs:.0f}s unique={len(findings)}", ""]
+    kinds: dict[str, list] = {}
+    for f in findings:
+        kinds.setdefault(f.kind, []).append(f)
+    out += ["| kind | unique | total |", "|---|---|---|"]
+    out += [f"| {k} | {len(v)} | {sum(x.count for x in v)} |" for k, v in sorted(kinds.items())]
+    for k, v in sorted(kinds.items()):
+        out += ["", f"## {k}", ""]
+        for f in sorted(v, key=lambda x: -x.count):
+            first = f.msg.splitlines()[0][:160]
+            out.append(f"- x{f.count} `{f.site or '-'}` {first}" + (f" (hint: {f.hint})" if f.hint else ""))
+    return "\n".join(out) + "\n"
+
+
 def main() -> int:
     p = agent_log.std_parser("Headless runtime-warning sweep (zero-warning gate)")
     p.add_argument("--list", action="store_true", help="list areas and exit")
@@ -205,6 +221,7 @@ def main() -> int:
     p.add_argument("--no-engine-verbose", action="store_true", help="drop Godot --verbose (no leak detail rows)")
     p.add_argument("--report", default="", help="also write the text report here")
     p.add_argument("--json-out", "--json", dest="json", default="", help="write findings as JSON to this file (--json kept as an alias; takes a path)")
+    p.add_argument("--findings-md", default="", help="write findings grouped by kind with counts as markdown here")
     p.add_argument("--save-baseline", default="", help="write non-leak findings JSON here (run before a change)")
     p.add_argument("--non-leak-diff", default="", help="compare non-leak findings to a --save-baseline file; exit 1 if NEW")
     p.add_argument("--verbose", action="store_true", help="print commands and longer stacks")
@@ -257,6 +274,9 @@ def main() -> int:
     if ns.report:
         Path(ns.report).parent.mkdir(parents=True, exist_ok=True)
         Path(ns.report).write_text(text, encoding="utf-8")
+    if ns.findings_md:
+        Path(ns.findings_md).parent.mkdir(parents=True, exist_ok=True)
+        Path(ns.findings_md).write_text(findings_md(list(merged.values()), ns, time.time() - t0), encoding="utf-8")
     if ns.json:
         Path(ns.json).parent.mkdir(parents=True, exist_ok=True)
         data = [{"kind": f.kind, "message": f.msg, "site": f.site, "count": f.count,

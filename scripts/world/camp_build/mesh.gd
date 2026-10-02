@@ -5,30 +5,9 @@ const T := preload("res://scripts/data/tunables.gd")
 const GroundShader := preload("res://scripts/graphics/ground_shader.gd")
 const Mat := preload("res://scripts/world/camp_build/mesh_mat.gd")
 const Tent := preload("res://scripts/world/camp_build/mesh_tent.gd")
-
-const GROUND_W := 36
-
-const GROUND_D := 32
-
-const GROUND_OX := -2
-
-const GROUND_OZ := -2
-
-const GRASS_PAD := 16
-
-const ROOF_EAVE := 0.42
+const LayoutS := preload("res://scripts/world/camp/layout.gd")
 
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
-
-const HALL_SIZE := Vector3(5.6, 3.4, 4.2)
-
-const WING_SIZE := Vector3(3.8, 2.7, 3.2)
-
-const HALL_POS := Vector3(8.2, 1.7, 6.0)
-
-const PATH_X := 16.5
-
-const PATH_Z := 15.0
 
 static func roof_mat(
 	dim: Vector2,
@@ -76,12 +55,11 @@ static func pitched_tarp(body: Node3D, box_size: Vector3, eave: float, _world_mi
 	Tent.pitched_tarp(body, box_size, eave, _world_min)
 
 static func ground(host: Node3D) -> void:
-	var _fac = load("res://scripts/world/camp_build.gd")
-	var lay: Node3D = _fac._layout_from_build_host(host)
-	var gw: int = int(lay.ground_w) if lay else GROUND_W
-	var gd: int = int(lay.ground_d) if lay else GROUND_D
-	var ox: int = int(lay.ground_ox) if lay else GROUND_OX
-	var oz: int = int(lay.ground_oz) if lay else GROUND_OZ
+	var lay: Node3D = LayoutS.of(host)
+	var gw: int = int(lay.ground_w)
+	var gd: int = int(lay.ground_d)
+	var ox: int = int(lay.ground_ox)
+	var oz: int = int(lay.ground_oz)
 	var body := StaticBody3D.new()
 	body.name = "Ground"
 	body.collision_layer = 1
@@ -102,7 +80,7 @@ static func ground(host: Node3D) -> void:
 	_band(host, 2, 4, 30, 24, y, "res://assets/tiles/packed_dirt.png", Color(0.46, 0.42, 0.30))
 	_band(host, 6, 13, 26, 16, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28))
 	_band(host, 15, 8, 17, 22, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28))
-	_fac.outer_grass(host)
+	load("res://scripts/world/camp_build.gd").outer_grass(host)
 
 static func _band(host: Node3D, x0: int, z0: int, x1: int, z1: int, y: float, tex_path: String, fallback: Color) -> void:
 	if x1 < x0 or z1 < z0:

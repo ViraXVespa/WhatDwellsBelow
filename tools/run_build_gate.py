@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Grok Build post-slice gate: editor import check; script cap is opt-in.
+"""Grok Build post-slice gate: editor import check; script cap is opt-in. One batch gate for a fix pass:
 
     python3 tools/run_build_gate.py [--skip-import] [--force] [--script-cap --over-kb 10]
+    python3 tools/run_build_gate.py --batch --warnscan-baseline B.json [--areas p6,static]
+--batch = import + restore `.import` churn under assets/ + check_load_graph + check_script_cap (whole tree, with dupes) +
+`--warnscan-baseline` adds `bot_warnscan --non-leak-diff B` (same --areas as the baseline). Run it once per batch.
 Refuses (exit 2) if Godot is already on this --path unless --force. Old spellings:
 -SkipImport -Force -ScriptCap -OverKb -ImportTimeoutSec. Summary: _logs/build-gate/summary.txt
 """
@@ -30,6 +33,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--skip-import", "-SkipImport", action="store_true")
     ap.add_argument("--force", "-Force", action="store_true", help="Continue even if Godot is on this path.")
     ap.add_argument("--script-cap", "-ScriptCap", action="store_true", help="Also run check_script_cap --git-changed.")
+    ap.add_argument("--batch", action="store_true", help="Import + restore assets/*.import churn + check_load_graph + whole-tree check_script_cap.")
+    ap.add_argument("--warnscan-baseline", default="", help="Also run bot_warnscan --non-leak-diff against this --save-baseline file.")
+    ap.add_argument("--areas", default="", help="bot_warnscan areas for --warnscan-baseline (must match the baseline run).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if not args.force and not args.skip_import:
@@ -56,6 +62,28 @@ def main(argv: list[str] | None = None) -> int:
         fail += int(code != 0) + int(not lines)
     else:
         body += ["--- import skipped ---", ""]
+    if not args.skip_import and (args.batch or args.warnscan_baseline):
+        ch = subprocess.run(["git", "status", "--porcelain", "--", "assets"], cwd=root, capture_output=True, text=True).stdout.splitlines()
+        imp = [ln[3:].strip() for ln in ch if ln[:2].strip() == "M" and ln.rstrip().endswith(".import")]
+        if imp:
+            subprocess.run(["git", "checkout", "--", *imp], cwd=root)
+        body += [f"--- restored {len(imp)} assets/*.import files ---", ""]
+    if args.batch:
+        print("== load graph ==")
+        code, lines = child(root, "check_load_graph.py", "load-graph")
+        body += [f"--- load graph exit={code} ---"] + (lines or ["(missing load-graph summary)"]) + [""]
+        fail += int(code != 0)
+        if not args.script_cap:
+            print("== script cap (whole tree) ==")
+            code, lines = child(root, "check_script_cap.py", "script-cap", "--over-kb", str(args.over_kb))
+            body += [f"--- script cap exit={code} ---"] + (lines or ["(missing script-cap summary)"]) + [""]
+            fail += int(code != 0)
+    if args.warnscan_baseline:
+        print("== warnscan non-leak diff ==")
+        flags = ["--non-leak-diff", args.warnscan_baseline] + (["--areas", args.areas] if args.areas else [])
+        code, lines = child(root, "bot_warnscan.py", "warnscan", *flags)
+        body += [f"--- warnscan diff exit={code} (see its console RESULT line) ---", ""]
+        fail += int(code != 0)
     return agent_log.finish("build-gate", root, "\n".join(body), "FAIL" if fail else "PASS", args=args, fail_signals=fail)
 
 

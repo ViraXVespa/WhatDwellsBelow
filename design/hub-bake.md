@@ -41,7 +41,7 @@ The hub ships one baked light RT. Offline bake quality is the look lock. Runtime
 - Do not let `camera_rig.apply_zoom` run while `warm_hold` is on.
 - Do not trust a plus-only crop. Judge zoom 0.69, then the stitched recipe.
 - Do not embed the atlas in `scenes/camp.tscn`.
-- Do not pack `Generated` as a shipped town.
+- Do not pack `Generated` as a shipped town. `run_bake_camp.py` realizes it in memory, rebakes `hub_light.png`, and never rewrites `camp.tscn`. Awning shadow boxes read the Layout depth per building.
 - Do not add a second EnvKit. Lids sample the hub atlas, not a second light.
 
 ## Process

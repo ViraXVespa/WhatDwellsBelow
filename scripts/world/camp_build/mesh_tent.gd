@@ -26,7 +26,7 @@ static func attach_awning(
 	var y_eave: float = box_size.y * 0.5
 	var y_hem: float = y_eave - valance
 	var tl := Vector3(x0, y_eave, z_eave)
-	var tr := Vector3(x1, y_eave, z_eave)
+	var top_r := Vector3(x1, y_eave, z_eave)
 	var bl := Vector3(x0, y_hem, z_eave)
 	var br := Vector3(x1, y_hem, z_eave)
 	var hl := Vector3(x0, y_hem, z_hem)
@@ -37,8 +37,8 @@ static func attach_awning(
 	var u3 := Vector2(0.0, 1.0)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	Prim._quad(st, tl, tr, hr, hl, u0, u1, u2, u3)
-	Prim._quad(st, tl, bl, br, tr, u0, u3, u2, u1)
+	Prim._quad(st, tl, top_r, hr, hl, u0, u1, u2, u3)
+	Prim._quad(st, tl, bl, br, top_r, u0, u3, u2, u1)
 	st.generate_normals()
 	var built: ArrayMesh = st.commit()
 	var cloth := MeshInstance3D.new()
@@ -50,7 +50,7 @@ static func attach_awning(
 	var ends := SurfaceTool.new()
 	ends.begin(Mesh.PRIMITIVE_TRIANGLES)
 	Prim._tri(ends, tl, bl, hl, u0, u1, u2)
-	Prim._tri(ends, tr, hr, br, u0, u2, u1)
+	Prim._tri(ends, top_r, hr, br, u0, u2, u1)
 	ends.generate_normals()
 	var cap := MeshInstance3D.new()
 	cap.name = "AwningEnd"

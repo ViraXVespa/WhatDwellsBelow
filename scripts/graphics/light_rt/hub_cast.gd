@@ -78,11 +78,8 @@ static func _hub_yard_boxes(layout: Node, _bake: bool) -> Array:
 		var wp: Vector3 = layout.wing_pos()
 		var wb: Vector3 = layout.wing_box
 		boxes.append(_hub_gable(wp, wb))
-		var ad: float = 0.7
-		if layout.get("hall_awning_depth") != null:
-			ad = float(layout.hall_awning_depth)
-		boxes.append(_hub_awning(hp, hb, ad))
-		boxes.append(_hub_awning(wp, wb, ad))
+		boxes.append(_hub_awning(hp, hb, layout.awning_depth("Hall")))
+		boxes.append(_hub_awning(wp, wb, layout.awning_depth("Wing")))
 		var sp: Vector3 = layout.stall_pos()
 		var sb: Vector3 = layout.stall_box
 		boxes.append(_hub_tarp(sp, sb))

@@ -72,7 +72,7 @@ New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headles
 Do not run editor playtest. Do not schedule a routine that launches Godot.
 
 Warning sweep (User-named only): `python3 tools/bot_warnscan.py` runs every smoke area plus boot/static, collects Godot warnings, errors, and leaks, and exits 0 only on zero findings. It reports; it does not fix game code. `--list` shows areas, `--repeat 2` steadies leaks.
-Before/after a change: `--save-baseline PATH` before, then `--non-leak-diff PATH` after (the baseline and the after run must use the same `--areas`). It ignores leaks and sites, prints NEW and FIXED, and exits 1 only on NEW.
+Findings by kind: `--findings-md PATH`. One-shot gate for a fix batch: `python3 tools/run_build_gate.py --batch --warnscan-baseline PATH --areas ...`. Before/after a change: `--save-baseline PATH` before, then `--non-leak-diff PATH` after (the baseline and the after run must use the same `--areas`). It ignores leaks and sites, prints NEW and FIXED, and exits 1 only on NEW.
 Targeted areas for a split: the smoke phases that load the file, `dungeon-load-timing`, `map-f1`, `static`.
 Tools: `design/tools.md` is the catalog (single source: what each tool does, `--help` for flags, gotchas, which are allowlisted). The Bot runs only tools marked `A=Y` there, always as `python3 tools/X.py`; the `.ps1` files are shims the Bot never runs. Tools, not scratches: update the tool or propose one; a scratch is for a niche one-off, in temp. Every tool ends with a `RESULT PASS|FAIL|INFO ... summary=<path>` line.
 
@@ -96,4 +96,4 @@ Do not declare the whole sweep done and then start a second flow.
 PR URL, squash-merge reminder, path + bytes before/after, changelog path if
 shipping, what is still over 10KB, next printed item.
 
-Rough edges: the rule is `design/tools.md` rule 9; apply it at the end of each file in a size pass. Anything not fixable (outside the allowlist) goes in the PR body for the User.
+No loops: batch same-kind fixes, run gates once per batch, at most 2 reruns, then report (`design/tools.md` rule 10). Rough edges: the rule is `design/tools.md` rule 9; apply it at the end of each file in a size pass. Anything not fixable (outside the allowlist) goes in the PR body for the User.

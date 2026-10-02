@@ -7,14 +7,6 @@ const LayoutS := preload("res://scripts/world/camp/layout.gd")
 const Util := preload("res://scripts/world/camp_build/build_util.gd")
 const Parts := preload("res://scripts/world/camp_build/build_parts.gd")
 
-const GROUND_W := 36
-const GROUND_D := 32
-const GROUND_OX := -2
-const GROUND_OZ := -2
-const GRASS_PAD := 16
-const PATH_X := 16.5
-const PATH_Z := 15.0
-const STALL_SIZE := Vector3(4.6, 2.4, 3.4)
 
 static func generated(host: Node3D) -> Node3D:
 	var n: Node = host.get_node_or_null("Generated")
@@ -32,10 +24,8 @@ static func clear_generated(host: Node3D) -> Node3D:
 		child.free()
 	return node
 
-static func realize_editor(host: Node3D, layout: Node3D) -> void:
-	host.set_meta("wdb_layout", layout)
+static func realize_editor(host: Node3D, _layout: Node3D) -> void:
 	var bucket: Node3D = clear_generated(host)
-	bucket.set_meta("wdb_layout", layout)
 	ground(bucket)
 	buildings(bucket)
 	strip_building_cubes(host)
@@ -49,15 +39,15 @@ static func ground(host: Node3D) -> void:
 	MeshS.ground(host)
 
 static func outer_grass(host: Node3D) -> void:
-	var lay: Node3D = _layout_from_build_host(host)
-	var x0: float = float(lay.ground_ox - lay.grass_pad) if lay else float(GROUND_OX - GRASS_PAD)
-	var z0: float = float(lay.ground_oz - lay.grass_pad) if lay else float(GROUND_OZ - GRASS_PAD)
-	var x1: float = float(lay.ground_ox + lay.ground_w + lay.grass_pad) if lay else float(GROUND_OX + GROUND_W + GRASS_PAD)
-	var z1: float = float(lay.ground_oz + lay.ground_d + lay.grass_pad) if lay else float(GROUND_OZ + GROUND_D + GRASS_PAD)
-	var ix0: float = float(lay.ground_ox) if lay else float(GROUND_OX)
-	var iz0: float = float(lay.ground_oz) if lay else float(GROUND_OZ)
-	var ix1: float = float(lay.ground_ox + lay.ground_w) if lay else float(GROUND_OX + GROUND_W)
-	var iz1: float = float(lay.ground_oz + lay.ground_d) if lay else float(GROUND_OZ + GROUND_D)
+	var lay: Node3D = LayoutS.of(host)
+	var x0: float = float(lay.ground_ox - lay.grass_pad)
+	var z0: float = float(lay.ground_oz - lay.grass_pad)
+	var x1: float = float(lay.ground_ox + lay.ground_w + lay.grass_pad)
+	var z1: float = float(lay.ground_oz + lay.ground_d + lay.grass_pad)
+	var ix0: float = float(lay.ground_ox)
+	var iz0: float = float(lay.ground_oz)
+	var ix1: float = float(lay.ground_ox + lay.ground_w)
+	var iz1: float = float(lay.ground_oz + lay.ground_d)
 	var y: float = T.FLOOR_Y
 	var tex := "res://assets/tiles/grass_field.png"
 	var fb := Color(0.34, 0.46, 0.24)
@@ -71,9 +61,9 @@ static func tile_layer(host: Node3D, tex_path: String, points: Array, fallback: 
 
 static func buildings(host: Node3D) -> void:
 	Parts.guild(host)
-	var lay: Node3D = _layout_from_build_host(host)
-	var stall_at: Vector3 = lay.stall_pos() if lay else Vector3(25.0, 1.2, 8.0)
-	var stall_box: Vector3 = lay.stall_box if lay else STALL_SIZE
+	var lay: Node3D = LayoutS.of(host)
+	var stall_at: Vector3 = lay.stall_pos()
+	var stall_box: Vector3 = lay.stall_box
 	Parts.solid(host, stall_at, stall_box, Color(0.55, 0.35, 0.2), "res://assets/sprites/buildings/stall.png", true)
 
 static func guild_roofs(host: Node3D) -> void:
@@ -105,7 +95,7 @@ static func strip_building_cubes(root: Node) -> int:
 		var sz: Vector3 = (mi.mesh as BoxMesh).size
 		print(
 			"CAMP_MESH box parent=",
-			n.get_parent().name if n.get_parent() else "?",
+			String(n.get_parent().name) if n.get_parent() else "?",
 			" size=",
 			sz
 		)
@@ -132,14 +122,14 @@ static func dump_meshes(root: Node) -> void:
 		if n is Sprite3D:
 			sprites += 1
 			var spr := n as Sprite3D
-			print("CAMP_MESH sprite parent=", n.get_parent().name if n.get_parent() else "?", " pos=", spr.position, " px=", spr.pixel_size)
+			print("CAMP_MESH sprite parent=", String(n.get_parent().name) if n.get_parent() else "?", " pos=", spr.position, " px=", spr.pixel_size)
 			continue
 		var mi := n as MeshInstance3D
 		if mi == null:
 			continue
 		if mi.mesh is BoxMesh:
 			boxes += 1
-			print("CAMP_MESH keep_box parent=", n.get_parent().name if n.get_parent() else "?", " size=", (mi.mesh as BoxMesh).size)
+			print("CAMP_MESH keep_box parent=", String(n.get_parent().name) if n.get_parent() else "?", " size=", (mi.mesh as BoxMesh).size)
 		else:
 			other += 1
 			print("CAMP_MESH other name=", n.name, " mesh=", mi.mesh.get_class() if mi.mesh else "null")
@@ -170,14 +160,13 @@ static func sweep(root: Node) -> void:
 static func stamp_actor_blobs(host: Node3D) -> void:
 	if host == null:
 		return
-	var lay: Node3D = _layout_from_build_host(host)
+	var lay: Node3D = LayoutS.of(host)
 	var names: Array = ["Vendor", "Anvil", "Dummy"]
 	var i: int = 0
 	while i < names.size():
 		var key: String = str(names[i])
-		if lay != null and lay.has_method("spot_pos"):
-			var p: Vector3 = lay.spot_pos(key)
-			Util._blob(host, Vector3(p.x, 0.0, p.z))
+		var p: Vector3 = lay.spot_pos(key)
+		Util._blob(host, Vector3(p.x, 0.0, p.z))
 		i += 1
 	var goods: Array = host.find_children("*", "Sprite3D", true, false)
 	var g: int = 0
@@ -192,6 +181,3 @@ static func stamp_actor_blobs(host: Node3D) -> void:
 			continue
 		var at: Vector3 = spr.global_position
 		Util._blob(host, Vector3(at.x, 0.0, at.z))
-
-static func _layout_from_build_host(host: Node3D) -> Node3D:
-	return Util._layout_from_build_host(host)
