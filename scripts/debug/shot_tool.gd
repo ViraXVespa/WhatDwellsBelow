@@ -4,6 +4,8 @@
 ## CLI: --wdb-shot
 ## Optional: --wdb-shot-seed=N --wdb-shot-floor=N --wdb-shot-out=PATH
 ##		   --wdb-shot-scale=PCT --wdb-shot-settle-ms=N
+## Scripted flow: --wdb-shot-steps=FILE.json [--wdb-shot-frames=DIR] [--wdb-shot-nopix=1]
+##		   (step_runner.gd; ops in step_ops.gd; design/shot-tool.md)
 
 const Args := preload("res://scripts/debug/shot_tool/tool_args.gd")
 const Pose := preload("res://scripts/debug/shot_tool/tool_pose.gd")
@@ -24,11 +26,15 @@ static func floor_n() -> int:
 	return Args.floor_n()
 
 static func hide_window() -> void:
+	if Args.show_window():
+		return
 	var win: Window = Engine.get_main_loop().root as Window
 	if win != null:
 		win.unfocusable = true
 		win.borderless = true
 		win.mode = Window.MODE_WINDOWED
+		if Args.win_size().x > 0 and Args.win_size().y > 0:
+			win.size = Args.win_size()
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_NO_FOCUS, true)
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
 	DisplayServer.window_set_position(Vector2i(-32000, -32000))

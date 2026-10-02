@@ -100,3 +100,21 @@ static func cam_x() -> float:
 
 static func cam_z() -> float:
 	return _arg_val("--wdb-shot-cz").to_float()
+
+static func steps_path() -> String:
+	return _arg_str("--wdb-shot-steps", "")
+
+static func frames_dir() -> String:
+	var d: String = _arg_str("--wdb-shot-frames", "")
+	if d != "":
+		return d
+	return out_path().get_base_dir()
+
+static func show_window() -> bool:
+	return _arg_int("--wdb-shot-show", 0) != 0
+
+static func no_pixels() -> bool:
+	return _arg_int("--wdb-shot-nopix", 0) != 0
+
+static func win_size() -> Vector2i:
+	return Vector2i(maxi(0, _arg_int("--wdb-shot-width", 0)), maxi(0, _arg_int("--wdb-shot-height", 0)))
