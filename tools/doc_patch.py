@@ -147,30 +147,33 @@ def replace_once_any(text: str, olds: list[str], new: str, where: str) -> str:
 
 
 def func_span(text: str, name: str) -> tuple[int, int]:
-	"""Line range [start, end) for column-0 func name( / static func name(."""
-	lines = text.splitlines(keepends=True)
-	start = -1
-	for i, ln in enumerate(lines):
-		if ln.startswith("static func " + name + "(") or ln.startswith("func " + name + "("):
-			start = i
-			break
-	if start < 0:
-		raise SystemExit(f"FAIL  func {name} missing")
-	end = start + 1
-	while end < len(lines):
-		ln = lines[end]
-		if ln.startswith("func ") or ln.startswith("static func "):
-			break
-		end += 1
-	return start, end
+    """Line range [start, end) for column-0 func name( / static func name(."""
+    lines = text.splitlines(keepends=True)
+    start = -1
+    for i, ln in enumerate(lines):
+        if ln.startswith("static func " + name + "(") or ln.startswith("func " + name + "("):
+            start = i
+            break
+    if start < 0:
+        raise SystemExit(f"FAIL  func {name} missing")
+    end = start + 1
+    while end < len(lines):
+        ln = lines[end]
+        if ln.startswith("func ") or ln.startswith("static func "):
+            break
+        end += 1
+    return start, end
 
 
 def replace_func(path: Path, name: str, new_src: str) -> None:
-	text = read_text(path)
-	if func_count(text, name) > 1:
-		raise SystemExit("FAIL  func %s duplicated in %s" % (name, path.as_posix()))
-	lines = text.splitlines(keepends=True)
-	start, end = func_span(text, name)
+    text = read_text(path)
+    if func_count(text, name) > 1:
+        raise SystemExit("FAIL  func %s duplicated in %s" % (name, path.as_posix()))
+    lines = text.splitlines(keepends=True)
+    start, end = func_span(text, name)
+    body = new_src if new_src.endswith("\n") else new_src + "\n"
+    write_text(path, "".join(lines[:start]) + body + "".join(lines[end:]))
+
 
 def upsert_func(path: Path, name: str, new_src: str) -> None:
     text = read_text(path)
@@ -189,30 +192,27 @@ def upsert_func(path: Path, name: str, new_src: str) -> None:
             at = i
     write_text(path, "".join(lines[:at]) + body + "".join(lines[at:]))
 
-	body = new_src if new_src.endswith("\n") else new_src + "\n"
-	write_text(path, "".join(lines[:start]) + body + "".join(lines[end:]))
-
 
 def replace_block(path: Path, start_pred, end_pred, new_src: str) -> None:
-	"""Replace a line span. start_pred/end_pred are callables(line, index, lines)->bool."""
-	text = read_text(path)
-	lines = text.splitlines(keepends=True)
-	start = next((i for i, ln in enumerate(lines) if start_pred(ln, i, lines)), -1)
-	if start < 0:
-		raise SystemExit(f"FAIL  block start miss in {path.as_posix()}")
-	end = start + 1
-	while end < len(lines) and not end_pred(lines[end], end, lines):
-		end += 1
-	if end < len(lines) and end_pred(lines[end], end, lines):
-		end += 1
-	body = new_src if new_src.endswith("\n") else new_src + "\n"
-	write_text(path, "".join(lines[:start]) + body + "".join(lines[end:]))
+    """Replace a line span. start_pred/end_pred are callables(line, index, lines)->bool."""
+    text = read_text(path)
+    lines = text.splitlines(keepends=True)
+    start = next((i for i, ln in enumerate(lines) if start_pred(ln, i, lines)), -1)
+    if start < 0:
+        raise SystemExit(f"FAIL  block start miss in {path.as_posix()}")
+    end = start + 1
+    while end < len(lines) and not end_pred(lines[end], end, lines):
+        end += 1
+    if end < len(lines) and end_pred(lines[end], end, lines):
+        end += 1
+    body = new_src if new_src.endswith("\n") else new_src + "\n"
+    write_text(path, "".join(lines[:start]) + body + "".join(lines[end:]))
 
 
 def run_cmd(argv: list, cwd: Path | None = None):
-	root = repo_root(cwd)
-	proc = subprocess.run(list(argv), cwd=str(root))
-	return proc.returncode, ""
+    root = repo_root(cwd)
+    proc = subprocess.run(list(argv), cwd=str(root))
+    return proc.returncode, ""
 
 
 def patch_file(path: Path, old: str, new: str) -> None:
