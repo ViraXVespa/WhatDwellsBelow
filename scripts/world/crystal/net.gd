@@ -1,6 +1,7 @@
 ﻿extends Object
 
 const Threat := preload("res://scripts/combat/threat.gd")
+const Balance := preload("res://scripts/data/balance.gd")
 
 const META_ON := "crystal_on"
 const META_BOSS := "crystal_boss"
@@ -16,9 +17,7 @@ static func _arrive_r() -> int:
 	return _num("crystal_arrive_r", 8)
 
 static func _num(key: String, fallback: int) -> int:
-	if App.bal and App.bal.get(key) != null:
-		return maxi(1, int(App.bal.get(key)))
-	return fallback
+	return maxi(1, int(Balance.f(key, float(fallback))))
 
 static func ensure_run() -> void:
 	if _seed != int(App.run_seed):

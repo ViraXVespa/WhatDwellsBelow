@@ -4,6 +4,7 @@ extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 const K := preload("res://scripts/graphics/actor_lit/lit_k.gd")
+const Commit := preload("res://scripts/graphics/mesh_commit.gd")
 
 static func _sole_xz(lit: Variant, tx: float, ty: float, tw: float, th: float) -> Vector2:
 	var ox: float = lit.spr.offset.x
@@ -69,14 +70,7 @@ static func _quad(lit: Variant, tex: Texture2D, span: Vector4, soles: Vector4, f
 	uvs.append(Vector2(span.z, span.y))
 	uvs.append(Vector2(span.x, span.y))
 	indices.append_array(PackedInt32Array([0, 1, 2, 0, 2, 3]))
-	var arrays: Array = []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = verts
-	arrays[Mesh.ARRAY_TEX_UV] = uvs
-	arrays[Mesh.ARRAY_INDEX] = indices
-	var mesh: ArrayMesh = ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	return mesh
+	return Commit.commit(verts, null, uvs, indices)
 
 static func _corner(lit: Variant, tx: float, ty: float, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float, src: Vector2) -> Vector3:
 	# Sole edge is the camera-dropped foot line. Head shears along the light.

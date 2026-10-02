@@ -2,6 +2,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
+const Balance := preload("res://scripts/data/balance.gd")
 
 const QTY_MAX := 9
 const HOLD_CAP := 3
@@ -124,8 +125,6 @@ static func _open_pick(ui: CanvasLayer) -> void:
 	load("res://scripts/ui/gear_board/anvil_forge.gd")._reload(ui, slot)
 
 static func _grant_smith() -> void:
-	var amt := 12.0
-	if App.bal != null and App.bal.get("xp_smith") != null:
-		amt = float(App.bal.get("xp_smith"))
+	var amt: float = Balance.f("xp_smith", 12.0)
 	App.prog.add_perm_xp("smith", amt)
 	App.prog.forge_count += 1

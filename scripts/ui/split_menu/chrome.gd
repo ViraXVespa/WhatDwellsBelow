@@ -61,30 +61,12 @@ static func setup_embed(host: Node, parent: Control) -> void:
 	host._list_root.mouse_filter = Control.MOUSE_FILTER_STOP
 	_anchor(host._list_root, 0.0, 0.29, 0.0, 1.0, 0.0, -8.0, 8.0, 0.0)
 	parent.add_child(host._list_root)
-	var list_scroll := ScrollContainer.new()
-	list_scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
-	list_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	list_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
-	host.set_meta("_list_scroll", list_scroll)
-	host._list_root.add_child(list_scroll)
-	host.list_box = VBoxContainer.new()
-	host.list_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	host.list_box.add_theme_constant_override("separation", 10)
-	list_scroll.add_child(host.list_box)
+	host.list_box = _pane(host, host._list_root, "_list_scroll")
 	host._info_root = Control.new()
 	host._info_root.mouse_filter = Control.MOUSE_FILTER_STOP
 	_anchor(host._info_root, 0.31, 1.0, 0.0, 1.0, 0.0, 0.0, 8.0, 0.0)
 	parent.add_child(host._info_root)
-	var scroll := ScrollContainer.new()
-	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
-	host.set_meta("_info_scroll", scroll)
-	host._info_root.add_child(scroll)
-	host.info_box = VBoxContainer.new()
-	host.info_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	host.info_box.add_theme_constant_override("separation", 10)
-	scroll.add_child(host.info_box)
+	host.info_box = _pane(host, host._info_root, "_info_scroll")
 	host._chevron = ThemeS.lab(">", 28, GOLD)
 	host._chevron.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_anchor(host._chevron, 0.29, 0.31, 0.0, 0.0, 0.0, 0.0, 8.0, 44.0)
@@ -95,6 +77,20 @@ static func setup_embed(host: Node, parent: Control) -> void:
 	host.list_btns = []
 	host.info_btns = []
 	host.back_btn = null
+
+## Full-rect scroll (no x scroll, hidden y bar) in `root`, remembered as host meta `meta`; returns its content VBox.
+static func _pane(host: Node, root: Control, meta: String) -> VBoxContainer:
+	var sc := ScrollContainer.new()
+	sc.set_anchors_preset(Control.PRESET_FULL_RECT)
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	host.set_meta(meta, sc)
+	root.add_child(sc)
+	var box := VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", 10)
+	sc.add_child(box)
+	return box
 
 static func _anchor(n: Control, al: float, ar: float, at: float, ab: float, ol: float, oright: float, ot: float, ob: float) -> void:
 	n.anchor_left = al
@@ -122,31 +118,13 @@ static func _mount_columns(host: Node, parent: Node, list_pos: Vector2, list_sz:
 	host._list_root.size = list_sz
 	host._list_root.mouse_filter = Control.MOUSE_FILTER_STOP
 	parent.add_child(host._list_root)
-	var list_scroll := ScrollContainer.new()
-	list_scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
-	list_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	list_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
-	host.set_meta("_list_scroll", list_scroll)
-	host._list_root.add_child(list_scroll)
-	host.list_box = VBoxContainer.new()
-	host.list_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	host.list_box.add_theme_constant_override("separation", 10)
-	list_scroll.add_child(host.list_box)
+	host.list_box = _pane(host, host._list_root, "_list_scroll")
 	host._info_root = Control.new()
 	host._info_root.position = info_pos
 	host._info_root.size = info_sz
 	host._info_root.mouse_filter = Control.MOUSE_FILTER_STOP
 	parent.add_child(host._info_root)
-	var scroll := ScrollContainer.new()
-	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
-	host.set_meta("_info_scroll", scroll)
-	host._info_root.add_child(scroll)
-	host.info_box = VBoxContainer.new()
-	host.info_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	host.info_box.add_theme_constant_override("separation", 10)
-	scroll.add_child(host.info_box)
+	host.info_box = _pane(host, host._info_root, "_info_scroll")
 	host.list_btns = []
 	host.info_btns = []
 	host.back_btn = null

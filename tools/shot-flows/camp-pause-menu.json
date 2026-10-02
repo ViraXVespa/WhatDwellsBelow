@@ -1,0 +1,18 @@
+{
+  "name": "camp-pause-menu",
+  "about": "Placeholdia: open the pause menu directly (App.pause_menu.show_menu), shoot it, close it. Look proof for pause_menu_view and the shared scroll box.",
+  "scene": "camp",
+  "hud": 0,
+  "settle_ms": 1500,
+  "smoke": true,
+  "steps": [
+    {"op": "device", "kind": "pad"},
+    {"op": "call", "target": "App.pause_menu", "method": "show_menu"},
+    {"op": "assert", "target": "App.pause_menu.visible", "equals": true},
+    {"op": "wait", "ms": 400},
+    {"op": "shot", "name": "pause-menu", "texts": true},
+    {"op": "assert_texts", "min_font": 14},
+    {"op": "call", "target": "App.pause_menu", "method": "close_ui"},
+    {"op": "assert", "target": "App.pause_menu.visible", "equals": false}
+  ]
+}

@@ -355,6 +355,12 @@ func _init() -> void:
 func _ensure_enemies() -> void:
 	Enemies.fill(enemy_stats)
 
+## Static reader: `App.bal` value of `key` as float, else `fallback` (no bal yet, or no such tunable).
+static func f(key: String, fallback: float) -> float:
+	if App.bal != null and App.bal.get(key) != null:
+		return float(App.bal.get(key))
+	return fallback
+
 func getv(name: String) -> float:
 	return Access.getv(self, name)
 

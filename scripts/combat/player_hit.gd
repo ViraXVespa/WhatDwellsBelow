@@ -14,7 +14,7 @@ static func draw_basic_tele(host: Node, _active: bool) -> void:
 		host.telegraph.hide_now()
 		return
 	var col := Color(1.0, 0.82, 0.28, 0.4)
-	var extra: float = _gear("atk_range")
+	var extra: float = App.gear("atk_range")
 	if App.weapon == "staff":
 		host.telegraph.show_arc(host.global_position, host.aim_dir, App.bal.staff_range + extra, App.bal.staff_arc_deg, col)
 		return
@@ -26,7 +26,7 @@ static func draw_special_tele(host: Node, _active: bool) -> void:
 static func special_point(host: Node) -> Vector3:
 	if PlayerLock.valid_lock(host, host.lock_target):
 		return (host.lock_target as Node3D).global_position
-	var reach: float = App.bal.staff_special_radius + 1.5 + _gear("atk_range")
+	var reach: float = App.bal.staff_special_radius + 1.5 + App.gear("atk_range")
 	return host.global_position + Vector3(host.aim_dir.x, 0.0, host.aim_dir.y) * reach
 
 static func apply_basic(host: Node) -> void:
@@ -51,11 +51,11 @@ static func damage_enemy(host: Node, e: Node, dmg: float, stagger: bool, xp := "
 	Atk.damage_enemy(host, e, dmg, stagger, xp, _is_special, glance, can_crit)
 
 static func _life_tap(host: Node, e: Node) -> void:
-	var hit_heal: float = _gear("hp_on_hit")
+	var hit_heal: float = App.gear("hp_on_hit")
 	if hit_heal > 0.0 and host.has_method("heal"):
 		host.heal(hit_heal)
 	if e != null and is_instance_valid(e) and e.has_method("is_alive") and not e.is_alive():
-		var kill_heal: float = _gear("hp_on_kill")
+		var kill_heal: float = App.gear("hp_on_kill")
 		if kill_heal > 0.0 and host.has_method("heal"):
 			host.heal(kill_heal)
 
@@ -93,7 +93,7 @@ static func spawn_arrow(host: Node, dir: Vector2, dmg: float, rng: float, spd: f
 		world.add_child(p)
 	else:
 		host.add_child(p)
-	var crit := Combat.roll_crit(App.bal.crit_chance + _gear("crit_chance"))
+	var crit := Combat.roll_crit(App.bal.crit_chance + App.gear("crit_chance"))
 	p.setup(host.global_position, dir, spd, rng, dmg, need_los, crit, false, "", true)
 
 static func fx(host: Node, path: String, pos: Vector3, h: float, ybill: bool) -> void:
@@ -101,8 +101,3 @@ static func fx(host: Node, path: String, pos: Vector3, h: float, ybill: bool) ->
 
 static func trail(host: Node, delta: float) -> void:
 	Atk.trail(host, delta)
-
-static func _gear(key: String) -> float:
-	if App.prog == null:
-		return 0.0
-	return App.prog.gear_stat(key)

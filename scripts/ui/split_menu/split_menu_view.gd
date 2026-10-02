@@ -201,39 +201,30 @@ static func first_enabled_info(host: Node) -> Control:
 		return b as Control
 	return null
 
-static func wire_vert(btns: Array) -> void:
+## Wrap-around focus ring over the focusable `btns` (prev/next neighbor props; `tab` also sets focus_next/previous and pins the other axis).
+static func _ring(btns: Array, prev_prop: String, next_prop: String, tab: bool) -> void:
 	var live: Array = []
 	for b: Variant in btns:
 		if _focusable(b):
 			live.append(b)
 	var n: int = live.size()
-	if n == 0:
-		return
 	for i: int in n:
 		var c: Control = live[i]
 		var prev: Control = live[n - 1 if i == 0 else i - 1]
 		var nxt: Control = live[0 if i == n - 1 else i + 1]
-		c.focus_neighbor_top = prev.get_path()
-		c.focus_neighbor_bottom = nxt.get_path()
-		c.focus_next = nxt.get_path()
-		c.focus_previous = prev.get_path()
-		c.focus_neighbor_left = c.get_path()
-		c.focus_neighbor_right = c.get_path()
+		c.set(prev_prop, prev.get_path())
+		c.set(next_prop, nxt.get_path())
+		if tab:
+			c.focus_next = nxt.get_path()
+			c.focus_previous = prev.get_path()
+			c.focus_neighbor_left = c.get_path()
+			c.focus_neighbor_right = c.get_path()
+
+static func wire_vert(btns: Array) -> void:
+	_ring(btns, "focus_neighbor_top", "focus_neighbor_bottom", true)
 
 static func wire_horiz(btns: Array) -> void:
-	var live: Array = []
-	for b: Variant in btns:
-		if _focusable(b):
-			live.append(b)
-	var n: int = live.size()
-	if n == 0:
-		return
-	for i: int in n:
-		var c: Control = live[i]
-		var prev: Control = live[n - 1 if i == 0 else i - 1]
-		var nxt: Control = live[0 if i == n - 1 else i + 1]
-		c.focus_neighbor_left = prev.get_path()
-		c.focus_neighbor_right = nxt.get_path()
+	_ring(btns, "focus_neighbor_left", "focus_neighbor_right", false)
 
 static func path_text(host: Node) -> void:
 	if not _live(host) or host.get("_path") == null:

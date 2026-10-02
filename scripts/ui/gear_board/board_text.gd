@@ -25,15 +25,7 @@ static func hint_parts(ui: CanvasLayer) -> Array:
 	return parts
 
 static func hint_line(ui: CanvasLayer) -> String:
-	var bits: PackedStringArray = PackedStringArray()
-	for row: Variant in hint_parts(ui):
-		if not (row is Dictionary):
-			continue
-		var action := str(row.get("action", ""))
-		if action == "":
-			continue
-		bits.append(Prompts.verb_line(action, str(row.get("verb", ""))))
-	return "   ".join(bits)
+	return Prompts.verb_lines(hint_parts(ui))
 
 static func selected_slot(ui: CanvasLayer) -> String:
 	var sel := str(ui.inv_sel)

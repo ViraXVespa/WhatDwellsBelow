@@ -1,31 +1,19 @@
 extends Object
 
 const SEE := 36.0
+const Pick := preload("res://scripts/debug/playtest_goals/pick.gd")
 const ROOM := 11.0
+
+static func _gatherable(n: Node, tool: String) -> bool:
+	if int(n.get("hits")) <= 0:
+		return false
+	return tool == ("hatchet" if str(n.get("kind")) == "wood" else "pickaxe")
 
 static func best_gather(pt: Node, p: Node) -> Node:
 	if pt._gather_cargo() >= 8:
 		return null
 	var tool: String = str(App.prog.tool_type) if App.prog else "pickaxe"
-	var best: Node = null
-	var best_d: float = SEE
-	var tree: SceneTree = pt.get_tree()
-	if tree == null:
-		return null
-	for n: Node in tree.get_nodes_in_group("gather"):
-		if n == null or not is_instance_valid(n):
-			continue
-		if int(n.get("hits")) <= 0:
-			continue
-		var k: String = str(n.get("kind"))
-		if k == "wood" and tool != "hatchet":
-			continue
-		if k != "wood" and tool != "pickaxe":
-			continue
-		var d: float = pt._dist(p, n)
-		if d < best_d:
-			best_d = d
-			best = n
+	var best: Node = Pick.nearest(pt, p, "gather", SEE, func(n: Node) -> bool: return _gatherable(n, tool))
 	if best and not pt._has_path(p, best):
 		return null
 	return best
@@ -133,20 +121,7 @@ static func nearest_visible_threat(pt: Node, p: Node) -> Node:
 	return best
 
 static func reachable_kind(pt: Node, p: Node, prefix: String) -> Node:
-	var best: Node = null
-	var best_d: float = SEE
-	var tree: SceneTree = pt.get_tree()
-	if tree == null:
-		return null
-	for n: Node in tree.get_nodes_in_group("interact"):
-		if n == null or not is_instance_valid(n):
-			continue
-		if str(n.get("kind")).find(prefix) < 0:
-			continue
-		var d: float = pt._dist(p, n)
-		if d < best_d:
-			best_d = d
-			best = n
+	var best: Node = Pick.nearest(pt, p, "interact", SEE, func(n: Node) -> bool: return str(n.get("kind")).find(prefix) >= 0)
 	if best and not pt._has_path(p, best):
 		return null
 	return best

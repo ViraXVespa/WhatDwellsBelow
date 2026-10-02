@@ -8,6 +8,7 @@ const Quad := preload("res://scripts/graphics/wall_mesh/mesh_quad.gd")
 const Span := preload("res://scripts/graphics/wall_mesh/mesh_span.gd")
 const Faces := preload("res://scripts/graphics/wall_mesh/faces.gd")
 const Fold := preload("res://scripts/graphics/wall_mesh/mesh_fold.gd")
+const Commit := preload("res://scripts/graphics/mesh_commit.gd")
 
 static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 	var ortho: Array[Dictionary] = []
@@ -41,18 +42,7 @@ static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 			Faces._push_ends(run, faced, verts, norms, uvs, indices)
 		if not ortho.is_empty():
 			Faces._push_void(cells, faced, verts, norms, uvs, indices)
-	var mesh: ArrayMesh = ArrayMesh.new()
-	if verts.is_empty():
-		return mesh
-	var arrays: Array = []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = verts
-	arrays[Mesh.ARRAY_NORMAL] = norms
-	arrays[Mesh.ARRAY_TEX_UV] = uvs
-	arrays[Mesh.ARRAY_TEX_UV2] = Quad._uv2_buf
-	arrays[Mesh.ARRAY_INDEX] = indices
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	return mesh
+	return Commit.commit(verts, norms, uvs, indices, Quad._uv2_buf)
 ## Fold stair teeth and duplicate opposite spans before the chunk is skinned.
 static func prepare(raw: Array) -> Array[Dictionary]:
 	return Fold.prepare(raw)

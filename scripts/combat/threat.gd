@@ -1,5 +1,7 @@
 ﻿extends Object
 
+const Balance := preload("res://scripts/data/balance.gd")
+
 ## Enemy combat level from walk-distance to the floor entrance.
 ## Each floor spans 20 combat levels: floor 1 is 1–20, floor 2 is 21–40,
 ## and so on. End-of-floor uses a high percentile of all floor cells so
@@ -70,11 +72,6 @@ static func apply(base_hp: float, base_dmg: float, base_def: float, cl: int) -> 
 		"def": base_def + def_r * rf,
 	}
 
-static func _bal_f(name: String, fallback: float) -> float:
-	if App.bal == null:
-		return fallback
-	return float(App.bal.get(name)) if App.bal.get(name) != null else fallback
-
 ## difference = enemy_lv - effective player lv
 static func rank_diff(enemy_lv: int) -> float:
 	if enemy_lv <= 0:
@@ -88,7 +85,7 @@ static func rank_diff(enemy_lv: int) -> float:
 		else:
 			max_style = float(App.prog.combat_lv())
 			cur_style = float(App.prog.style_lv())
-	var weight := clampf(_bal_f("cl_style_weight", 0.5), 0.0, 1.0)
+	var weight := clampf(Balance.f("cl_style_weight", 0.5), 0.0, 1.0)
 	var player_lv := lerpf(max_style, cur_style, weight)
 	return float(enemy_lv) - player_lv
 
@@ -101,8 +98,8 @@ static func _geom(step_up: float, step_down: float, diff: float) -> float:
 
 ## Enemy damage dealt to the player.
 static func dealt_mult(enemy_lv: int) -> float:
-	return _geom(_bal_f("cl_dealt_up", 1.03), _bal_f("cl_dealt_down", 0.97), rank_diff(enemy_lv))
+	return _geom(Balance.f("cl_dealt_up", 1.03), Balance.f("cl_dealt_down", 0.97), rank_diff(enemy_lv))
 
 ## Damage the enemy receives from the player.
 static func received_mult(enemy_lv: int) -> float:
-	return _geom(_bal_f("cl_received_up", 0.97), _bal_f("cl_received_down", 1.03), rank_diff(enemy_lv))
+	return _geom(Balance.f("cl_received_up", 0.97), Balance.f("cl_received_down", 1.03), rank_diff(enemy_lv))

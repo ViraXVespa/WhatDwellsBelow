@@ -8,7 +8,7 @@ This file is the door. Open the Job-table sibling only when that row matches.
 
 World presentation owner. Hub and dungeon share one env kit, one ground shader, one light RT (render target: a small texture lights are drawn into, then sampled), and one actor policy (sprite tint + two-foot-pinned squash).
 
-Live helpers already exist: `env_kit.gd`, `nearest_mat.gd`, `wrap_shader.gd`. Minimap is `minimap.gd`. Foundation smoke calls the env kit only.
+Live helpers already exist: `env_kit.gd`, `wrap_shader.gd`, `mesh_commit.gd`. Minimap is `minimap.gd`. Foundation smoke calls the env kit only.
 
 Hub: warm kit, wide sun fill in the RT, floor crystal as a local bump. Hub squash follows the sun as parallel light. Hub roofs, awnings, and the stall tarp sample the hub atlas. Ground and actors still do. Dungeon: cold kit, no sun in the RT, walkable dim fill plus wall torches, crystals, and campfires. Pits stay black. Characters tint from the RT. Promo is before/after wherever it reads.
 

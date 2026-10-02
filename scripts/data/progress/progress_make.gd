@@ -2,6 +2,7 @@
 
 const CatalogS := preload("res://scripts/data/catalog.gd")
 const Roll := preload("res://scripts/data/gear_roll.gd")
+const Balance := preload("res://scripts/data/balance.gd")
 
 static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:
 	var n: String = "Great Axe"
@@ -37,9 +38,7 @@ static func make_armor(p: Object, slot: String, rarity: String, ilvl: int = 0) -
 
 static func make_potion(p: Object, n: int) -> Dictionary:
 	var charges: int = n if n > 0 else 2
-	var cd: float = 8.0
-	if App.bal and App.bal.get("potion_cooldown") != null:
-		cd = float(App.bal.potion_cooldown)
+	var cd: float = Balance.f("potion_cooldown", 8.0)
 	return item(p, "potion", "Potion", {
 		"slot": "potion",
 		"stack": 1,

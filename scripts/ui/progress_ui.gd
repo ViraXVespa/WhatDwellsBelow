@@ -113,9 +113,7 @@ func _clear() -> void:
 	gear_page_right = null
 
 func _st(msg: String) -> void:
-	if status:
-		status.text = msg
-	App.sfx("ui")
+	UiSession.status(self, msg)
 
 func open_inventory() -> void:
 	mode = "inv"

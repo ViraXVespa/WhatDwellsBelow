@@ -223,6 +223,11 @@ func gain_gold(n: int) -> void:
 	if tel:
 		tel.gold_gained += n
 
+func gear(key: String) -> float:
+	if prog == null:
+		return 0.0
+	return prog.gear_stat(key)
+
 func sfx(sfx_id: String) -> void:
 	if sfx_node and sfx_node.has_method("play"):
 		sfx_node.play(sfx_id)

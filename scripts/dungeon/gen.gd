@@ -86,6 +86,16 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 		if openings.is_empty():
 			return {"ok": false, "rooms": rooms}
 		door = openings[0]["cells"][0]
+	var data: Dictionary = _result(grid, w, h, rooms, spawn, door, openings, boss_r)
+	data["ambushes"] = ambushes
+	data["deadends"] = deadends
+	data["bases"] = Rooms.kind_centers(rooms, "base")
+	data["safe"] = Rooms.kind_centers(rooms, "extract_gate") + Rooms.kind_centers(rooms, "shop") + Rooms.kind_centers(rooms, "puzzle") + Rooms.kind_centers(rooms, "stash") + Rooms.kind_centers(rooms, "vein")
+	data["halls"] = Carve.take_halls()
+	return data
+
+## Shared head of a generated floor (ok, grid, size, rooms, spawn, crystal, stairs, door, openings, boss).
+static func _result(grid: PackedByteArray, w: int, h: int, rooms: Array, spawn: Vector2i, door: Vector2i, openings: Array, boss_r: Dictionary) -> Dictionary:
 	return {
 		"ok": true,
 		"grid": grid,
@@ -98,11 +108,6 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 		"door": door,
 		"openings": openings,
 		"boss": Carve.center(boss_r),
-		"ambushes": ambushes,
-		"deadends": deadends,
-		"bases": Rooms.kind_centers(rooms, "base"),
-		"safe": Rooms.kind_centers(rooms, "extract_gate") + Rooms.kind_centers(rooms, "shop") + Rooms.kind_centers(rooms, "puzzle") + Rooms.kind_centers(rooms, "stash") + Rooms.kind_centers(rooms, "vein"),
-		"halls": Carve.take_halls(),
 	}
 
 static func make_opening(side: String, cells: Array) -> Dictionary:
@@ -142,27 +147,15 @@ static func _fallback(floor_n: int, w: int, h: int, bal: Object) -> Dictionary:
 	var openings: Array = Doors.boss_openings(grid, w, h, boss_r)
 	if openings.is_empty() and door != Vector2i(-1, -1):
 		openings = [Doors.make_opening(Doors.guess_side(boss_r, door), [door])]
-	var data: Dictionary = {
-		"ok": true,
-		"grid": grid,
-		"w": w,
-		"h": h,
-		"rooms": rooms,
-		"spawn": spawn,
-		"crystal": spawn,
-		"stairs": Doors.far_cell(boss_r, door),
-		"door": door,
-		"openings": openings,
-		"boss": Carve.center(boss_r),
-		"ambushes": [],
-		"deadends": [],
-		"bases": [Carve.center(rooms[1])],
-		"safe": [Carve.center(rooms[2])],
-		"halls": Carve.take_halls(),
-		"floor": floor_n,
-		"cycle": cycle_of(floor_n),
-		"boss_title": boss_title(floor_n),
-		"gate_master": is_gate_master(floor_n),
-	}
+	var data: Dictionary = _result(grid, w, h, rooms, spawn, door, openings, boss_r)
+	data["ambushes"] = []
+	data["deadends"] = []
+	data["bases"] = [Carve.center(rooms[1])]
+	data["safe"] = [Carve.center(rooms[2])]
+	data["halls"] = Carve.take_halls()
+	data["floor"] = floor_n
+	data["cycle"] = cycle_of(floor_n)
+	data["boss_title"] = boss_title(floor_n)
+	data["gate_master"] = is_gate_master(floor_n)
 	Outline.stamp(data, rng, bal)
 	return data

@@ -2,13 +2,12 @@ extends Object
 const RoomsPlace := preload("res://scripts/dungeon/gen/rooms_place.gd")
 
 const Threat := preload("res://scripts/combat/threat.gd")
+const Balance := preload("res://scripts/data/balance.gd")
 const FloorCrystal := preload("res://scripts/world/floor_crystal.gd")
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
 static func _num(key: String, fallback: int) -> int:
-	if App.bal and App.bal.get(key) != null:
-		return maxi(1, int(App.bal.get(key)))
-	return fallback
+	return maxi(1, int(Balance.f(key, float(fallback))))
 
 static func _sep() -> int:
 	return _num("crystal_min_sep", 56)
