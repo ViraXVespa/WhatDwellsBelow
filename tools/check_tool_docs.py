@@ -19,12 +19,14 @@ ROW = re.compile(r"^\|\s*`([^`|]+)`\s*\|.*\|\s*([BWD]+)\s*\|[^|]*\|\s*([YN])\s*\
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Check the tools catalog (design/tools*.md) against tools/ and tools/bot_allow.txt.", json_out=True)
+    ap = agent_log.std_parser("Check the tools catalog (design/tools*.md) against tools/ and tools/bot_allow.txt (A=Y needs the path allowed; globs and ! denies count).", json_out=True)
     args = ap.parse_args(sys.argv[1:] if argv is None else argv)
     root = agent_log.resolve_root(args)
     tools = root / "tools"
     files = {f.name for f in tools.iterdir() if f.is_file() and f.name != "_scratch.py"}
-    allow = {g[len("tools/"):] for g in repo_lib.load_allowlist(root) if g.startswith("tools/")}
+    globs = repo_lib.load_allowlist(root)
+    allow = {n for n in files if repo_lib.allowed(f"tools/{n}", globs)}  # honours globs (`tools/*`), `!` denies and exact lines
+    exact = {g[len("tools/"):] for g in globs if g.startswith("tools/") and not any(c in g for c in "*?[!")}
     rows: dict[str, tuple[str, str]] = {}
     bad: list[str] = []
     for cat in CATALOGS:
@@ -40,11 +42,11 @@ def main(argv: list[str] | None = None) -> int:
         bad.append(f"MISSING {n}: no catalog row")
     for n in sorted(rows.keys() - files):
         bad.append(f"STALE   {n}: catalog row but no such file")
-    for n in sorted(allow - files):
+    for n in sorted(exact - files):
         bad.append(f"ALLOW   {n}: on bot_allow.txt but no such file")
     for n, (surf, a) in sorted(rows.items()):
-        if n in files and (n in allow) != (a == "Y"):
-            bad.append(f"ALLOWED {n}: catalog A={a}, allowlist={'yes' if n in allow else 'no'}")
+        if n in files and a == "Y" and n not in allow:
+            bad.append(f"ALLOWED {n}: catalog A=Y but tools/{n} is not allowed by bot_allow.txt (add a line or mark A=N)")
         if a == "Y" and "B" not in surf and "D" not in surf:
             bad.append(f"SURF    {n}: allowlisted but no B/D surface")
         if a == "Y" and n.endswith(".py") and n in files:

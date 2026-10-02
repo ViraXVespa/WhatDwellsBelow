@@ -5,7 +5,7 @@ Read when: running, adding, or documenting a tool (Bot, web/chat, or Build)
 
 Single source for what each tool is, which surface runs it, and its gotchas. Other docs say "run X at step N" and point here. Windows runners and release tools: `tools-build.md`. Media pipeline: `tools-media.md`. Build-only rules (Length, here-strings, locks): `pc-offload.md`. `python3 tools/check_tool_docs.py` keeps these tables in step with `tools/` and `tools/bot_allow.txt`.
 
-Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if the tool is on `tools/bot_allow.txt`.
+Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if the Bot may run the tool (its `tools/` path must be allowed by `tools/bot_allow.txt`, globs such as `tools/*` count; A=N is fine either way).
 
 ## Rules
 
@@ -55,7 +55,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `bot_opt.py` | Opt queue: `--list`, `--id`, `--status opt-N=done`, `--add`, `--remove`. Never hand-edit the queue block. Summary: `bot-opt`. | BD | `--help` | Y |
 | `bot_allow.txt` | Allowlist: the paths the Bot may change; read by CI and `bot_status --prove`. Deny lines first. Authority for Bot scope. | BWD | - | Y |
 | `check_tool_cli.py` | CLI contract check over `tools/` (see Contract above) plus the `.ps1` shim check. Run after adding or editing a tool. | BWD | `--help` | Y |
-| `check_tool_docs.py` | Catalog check: every `tools/` file has a row, `A` matches `bot_allow.txt`, rows name real files. Run it after adding or renaming a tool | BWD | `--help` | Y |
+| `check_tool_docs.py` | Catalog check: every `tools/` file has a row, `A=Y` rows are allowed by `bot_allow.txt` (glob-aware), rows name real files. Run it after adding or renaming a tool | BWD | `--help` | Y |
 
 ### Split, code map and doc edits
 
