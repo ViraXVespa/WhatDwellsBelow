@@ -33,7 +33,7 @@ Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`. 
 | Archives UI | `scripts/ui/archives_ui.gd` + `archives_ui_view.gd`, `archives_ui_act.gd`; `scripts/data/archives_catalog.gd`, `archives_launch.gd`, `archives_docs.gd`, `archive_catalog.json` |
 | Plate chrome tokens | `scripts/ui/plate_chrome.gd` |
 | Tip place geometry | `scripts/ui/tip_place.gd` |
-| Graphics | `scripts/graphics/env_kit.gd` (`EnvKit.apply`), `nearest_mat.gd` (`NearestMat.make`), `wrap_shader.gd` (`WrapShader.wrap_shader`), `mm_emit.gd` (`MmEmit.make_mm`). Callers stay `camp_build.gd`, `camp_build_mesh.gd`, `dungeon_geo.gd`, `dungeon_geo_stream.gd`, `foundation.gd`, `ground_shader.gd`, `light_rt.gd` (facade; helpers `light_rt_hub_bake.gd`, `light_rt_hub_cast.gd`, `light_rt_hub_shadow.gd`, `light_rt_lights.gd`, `light_rt_publish.gd`), `wall_shader.gd`, `wall_mesh.gd`, `actor_lit.gd`, `light_stamp.gd`, `torch_plan.gd`. |
+| Graphics | `scripts/graphics/env_kit.gd` (`EnvKit.apply`), `nearest_mat.gd` (`NearestMat.make`), `wrap_shader.gd` (`WrapShader.wrap_shader`), Callers stay `camp_build.gd`, `camp_build_mesh.gd`, `dungeon_geo.gd`, `dungeon_geo_stream.gd`, `foundation.gd`, `ground_shader.gd`, `light_rt.gd` (facade; helpers `light_rt_hub_bake.gd`, `light_rt_hub_cast.gd`, `light_rt_hub_shadow.gd`, `light_rt_lights.gd`, `light_rt_publish.gd`), `wall_shader.gd`, `wall_mesh.gd`, `actor_lit.gd`, `light_stamp.gd`, `torch_plan.gd`. |
 | Y-billboard Sprite3D | `scripts/world/billboard_spr.gd` |
 
 Public entry points that must not change when a helper is split: `App.playtest`, `App.set_zoom` / `App.set_hud_scale` / `App.set_volume`, `PauseInv.*`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.
