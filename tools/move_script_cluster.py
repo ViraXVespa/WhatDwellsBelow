@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Move a facade + sibling helpers into a folder and rewrite res:// paths.
+"""Move or rename a facade + helpers (cluster folders: facade beside <stem>/, trimmed helper names) and rewrite references.
 
 Usage (from repo root):
   python tools/move_script_cluster.py --dry-run --stem gear_board --from-dir scripts/ui --to-dir scripts/ui/gear_board
@@ -82,10 +82,11 @@ def collect_files(args: argparse.Namespace) -> list[Path]:
     return files
 
 
-def build_moves(files: list[Path], to_dir: Path) -> list[tuple[Path, Path]]:
+def build_moves(files: list[Path], to_dir: Path, stem: str = "") -> list[tuple[Path, Path]]:
+    """`stem` set (--stem mode): helpers that live in `<stem>/` keep that folder under to_dir (facade lands beside it)."""
     moves = []
     for src in files:
-        dst = to_dir / src.name
+        dst = to_dir / (stem if stem and src.parent.name == stem and src.stem != stem else "") / src.name
         moves.append((src, dst))
         uid = Path(str(src) + ".uid")
         if uid.exists():
@@ -279,7 +280,7 @@ def main() -> int:
         if not to_dir.is_absolute():
             to_dir = ROOT / to_dir
         files = collect_files(args)
-        moves = build_moves(files, to_dir)
+        moves = build_moves(files, to_dir, "" if args.files else args.stem)
     pairs = rewrite_map(moves)
     if args.map:
         args.plan = args.map  # reuse plan-style labels below

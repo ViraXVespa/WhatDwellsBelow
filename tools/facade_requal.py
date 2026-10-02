@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Qualify names that moved to sibling helper modules after a size split (stdlib only).
+"""Qualify names that moved to helper modules after a size split (stdlib only).
 
   python tools/facade_requal.py scripts/x.gd            # auto: rewrite
   python tools/facade_requal.py scripts/x.gd --dry-run  # list code vs comment/string matches
   python tools/facade_requal.py scripts/x.gd --check    # change nothing; exit 1 if a problem is left
 
 Auto mode: the modules are FILE's own `const Mod := preload("res://...")` lines for scripts in
-the same folder. A name used bare in FILE but not defined in FILE, and defined (func, const,
+the same folder or in the facade's cluster folder `<dir>/<stem>/` (facade beside its folder, helpers inside it,
+trimmed names). A name used bare in FILE but not defined in FILE, and defined (func, const,
 or top-level var) in exactly one such module, becomes Mod.name. Functions match call sites
 only (`name(`), so a local variable of the same name is safe; consts and vars match any bare
 use. Only CODE is rewritten; comment/string matches are listed (--all rewrites them too).
@@ -97,7 +98,8 @@ def modules(text: str, path: Path, root: Path) -> dict[str, dict[str, str]]:
     mods = {}
     for m in re.finditer(r'^const\s+(\w+)\s*(?::[^=]*)?:?=\s*preload\("res://([^"]+)"\)', text, re.M):
         f = root / m.group(2)
-        if f.parent.resolve() == path.resolve().parent and f.is_file() and f.resolve() != path.resolve():
+        here = path.resolve().parent
+        if f.is_file() and f.resolve() != path.resolve() and f.parent.resolve() in (here, here / path.stem):
             mods[m.group(1)] = defs(f.read_text(encoding="utf-8-sig"))
     return mods
 
