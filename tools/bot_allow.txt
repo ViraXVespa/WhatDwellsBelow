@@ -41,6 +41,7 @@ tools/agent_log.py
 tools/lint_hostify.py
 tools/move_script_cluster.py
 tools/list_oversize_docs.py
+tools/build_changelog.py
 AGENTS.md
 BOT.md
 .github/workflows/bot-gate.yml
