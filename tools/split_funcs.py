@@ -12,7 +12,7 @@ Writes <stem>.gd beside FILE (extends Object, static funcs), removes the items f
 func (and any func an outside script calls through FILE; `await` kept if the body awaits), copies preload consts the moved code
 uses, then runs tools/facade_requal.py (rewrite + --check) on every file and prints a
 line-multiset check (missing lines must be 0) and byte sizes. Keeps BOM and line endings.
-Node (instance) funcs move too: each becomes `static func f(host: Node, ...)`, `self` and
+Node (instance) funcs move too: each becomes `static func f(host: <the facade's extends type>, ...)`, `self` and
 facade members become `host.x`, builtin calls like get_tree() become `host.get_tree()`, calls
 among moved instance funcs pass `host`, and the facade keeps `f(...)` -> `Mod.f(self, ...)`
 (always for funcs an outside file names in call/call_deferred/has_method strings).
@@ -91,7 +91,7 @@ def refs(it, names, cls_cache=None) -> set[str]:
     return out - {it["name"]}
 
 
-def host_body(it, facade, owner, inst, pre, stem, alias):
+def host_body(it, facade, owner, inst, pre, stem, alias, htype="Node"):
     """Rewrite an instance func into a static host-first func -> (text, helper stems used)."""
     t = body(it)
     cls = fr.kinds(t)
@@ -131,7 +131,7 @@ def host_body(it, facade, owner, inst, pre, stem, alias):
             last = e
     out.append(t[last:])
     t = "".join(out)
-    t = t[: head.start()] + re.sub(r"^([ \t]*)(?:static\s+)?func\s+(\w+)\(\)?", lambda k: k.group(1) + "static func " + k.group(2) + ("(host: Node)" if k.group(0).endswith(")") else "(host: Node, "), t[head.start() :], count=1, flags=re.M)
+    t = t[: head.start()] + re.sub(r"^([ \t]*)(?:static\s+)?func\s+(\w+)\(\)?", lambda k: k.group(1) + "static func " + k.group(2) + ("(host: %s)" if k.group(0).endswith(")") else "(host: %s, ") % htype, t[head.start() :], count=1, flags=re.M)
     return t, deps
 
 
@@ -218,6 +218,8 @@ def build(items, plan, path, root):
                 raise SystemExit(f"error: {n} listed twice")
             owner[n] = stem
     byname = {it["name"]: it for it in items if it["name"]}
+    ext_m = re.search(r"^extends\s+(\w+)", "\n".join(l for it in items if it['kind'] in ('pre', 'other') for l in it['lines']), re.M)
+    htype = ext_m.group(1) if ext_m else "Node"
     inst = {n for n in owner if byname[n]["kind"] == "func" and not byname[n]["static"]}
     base = path.stem
     alias = {}
@@ -230,7 +232,7 @@ def build(items, plan, path, root):
     copy = {s: [] for s in plan}
     htxt = {}
     for n in sorted(inst):
-        htxt[n], ds = host_body(byname[n], names, owner, inst, pre_unmoved, owner[n], alias)
+        htxt[n], ds = host_body(byname[n], names, owner, inst, pre_unmoved, owner[n], alias, htype)
         dep[owner[n]] |= {d for d in ds if d != owner[n]}
     for n, stem in owner.items():
         for r in sorted(refs(byname[n], {k: v for k, v in names.items() if k != n})):
@@ -336,7 +338,7 @@ def main() -> int:
         if r.returncode:
             bad += 1
             print(r.stdout.strip())
-    strip = re.compile(r"\b(" + "|".join(alias.values()) + r")\.|\bhost(: Node)?(\.|, ?)?|\bself\b,? ?|^static ", re.M)
+    strip = re.compile(r"\b(" + "|".join(alias.values()) + r")\.|\bhost(: \w+)?(\.|, ?)?|\bself\b,? ?|^static ", re.M)
     ign = ("extends", "##", "const ")
 
     def lines(t):
