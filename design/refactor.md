@@ -44,7 +44,7 @@ If a file must be split:
 1. Split into a sibling helper (`*_act.gd`, `*_view.gd`, `*_boot.gd`, `*_text.gd`, …).
 2. Keep the original path as the facade (`App.playtest`, `PauseInv.build`, `Gen.generate`, `EnemyAI.tick`, `SmokeLate.p7`).
 3. Helpers are `static func` with `host` / `pt` / `ui` / `p` first.
-4. No circular `preload()`. Use `load()` on one side or put shared state on the host. Facade-held `static var` state: the helper reads and writes it as `var rt: Variant = load(RT_PATH)` then `rt.name` (see `light_rt_publish.gd`); the helper never preloads the facade.
+4. No circular `preload()`: the facade preloads its helpers; helpers never preload the facade. If a helper needs facade-held `static var` state, use `var rt: Variant = load(RT_PATH)` then `rt.name` (see `light_rt_publish.gd`). For a node script, the facade stays the owner of state and keeps one-line delegates; each moved instance func becomes `static func name(node: Variant, ...)` in a sibling `extends Object` helper that reads state as `node.field` (see `actor_lit_drive.gd`). Prove by a line-multiset compare against the original after stripping qualifiers, plus smokes before and after.
 5. Godot 4 analyzes a parent script alone. Do not call methods that exist only on a child; call the helper module from the parent.
 6. Never split files under a pinned archive commit. Slim `archives/docs/` copies are live-tree museum text only.
 7. Split the largest first. One cluster per batch. Stop so the User can compile (web / chat: so the User can paste; Grok Bot: ship the PR, report, and follow the already-open Bot door before the next cluster).
@@ -151,5 +151,3 @@ Still open for later User go: other fat facade clusters (same tool). Prefer upda
 ## Documentation facades
 
 Script splits stay in this file. Topic markdown door + sibling splits are the doc-split recipe.
-
-Size splits use the size job, not this recipe's reuse section. Facade keeps state. Helpers preload. Do not load the facade.

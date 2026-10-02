@@ -42,9 +42,9 @@ Inventory and before/after sizes use `os.path.getsize`.
 
 1. Split every over-10KB live script with `design/refactor.md`. Facade keeps the public path. Stop each file at under 10KB.
 2. Then split over-5KB files only when whole functions can move.
-3. One size PR may batch over-10KB then over-5KB clusters. Do not start extract, relocate, or reuse-map work in this PR. A stale code line that names a func this split moved may be edited in the same PR. Do not add an allowlist row to do that.
+3. One size PR may batch over-10KB then over-5KB clusters. Do not start extract, relocate, or reuse-map work in this PR. Stale lines in design docs that name symbols this split moved may be edited in the same PR, but only files in `tools/bot_allow.txt`; report any other stale doc in the PR body. Do not add allowlist rows.
 
-Each new `.gd` needs a `.uid` sidecar. Godot writes it on import: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets`. Commit the `.uid` files.
+Each new `.gd` needs a `.uid` sidecar: use the import step in BOT.md Smokes.
 
 Work in `/workspace/WhatDwellsBelow`. Commit per cluster on the Bot branch.
 
@@ -52,4 +52,4 @@ Work in `/workspace/WhatDwellsBelow`. Commit per cluster on the Bot branch.
 
 Prove per BOT.md.
 
-PR body: `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -F body=@file`. Do not use `gh pr edit`. Projects classic shutdown breaks it.
+PR body: `gh api -X PATCH` per BOT.md (publishing note). Do not use `gh pr edit`.

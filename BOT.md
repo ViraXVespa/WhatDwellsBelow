@@ -14,6 +14,8 @@ User squash-merges. Never push main. Never merge the PR.
 
 Publish with plain `git push` over HTTPS (gh credential helper) to `bot/*` or the PR branch only. Push to `dungeon-reshape` only when the User asks. No force pushes, ever. After the User squash-merges, create a fresh `bot/<flow>` branch from `origin/main` (e.g. `bot/reuse-xyz`, `bot/size-xyz`), push it with `git push -u origin bot/<flow>`, and open the PR with `gh pr create` (if that fails, GitHub MCP `create_pull_request`).
 
+The box repo has a local git identity (Grok Bot / grok-bot@users.noreply.github.com), so plain `git commit` works. PR body edits: `gh api -X PATCH repos/<repo>/pulls/N -F body=@file` (`gh pr edit` fails on the Projects classic shutdown).
+
 ## Boot
 
 1. Read this file. If the agents file already routed you here, do not fetch it again.
@@ -63,6 +65,7 @@ Not a boot step. Not a Job flow. When a cluster needs a headless prove,
 run `python tools/bot_smokes.py --phases 1,2,6` from the repo root.
 Setup downloads the official 4.7.2 Linux tools binary only if the pin is missing.
 Binary: `GODOT_BIN`, else the pin `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
+New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets`, and commit the `.uid` files only. That is the import, not an editor session.
 Do not run editor playtest. Do not schedule a routine that launches Godot.
 
 Warning sweep (User-named only): `python tools/bot_warnscan.py` runs every smoke area plus boot/static, collects Godot warnings, errors, and leaks, and exits 0 only on zero findings. It reports; it does not fix game code. `--list` shows areas, `--repeat 2` steadies leaks.
@@ -90,5 +93,3 @@ Do not declare the whole sweep done and then start a second flow.
 
 PR URL, squash-merge reminder, path + bytes before/after, changelog path if
 shipping, what is still over 10KB, next printed item.
-
-No-editor carve-out: a new `.gd` may run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets`. Commit the `.uid` only. That is the import, not an editor session.
