@@ -9,10 +9,10 @@ Second topic door: ask the User to name the owner first. If `conflicts_with` lis
 ## Workspace
 
 Clone github.com/ViraXVespa/WhatDwellsBelow to /workspace/WhatDwellsBelow.
-Work that tree. Prefer branch bot/refactorer. One open Bot PR. Commit per cluster.
+Work that tree. Work a fresh `bot/<flow>` branch per flow. One open Bot PR. Commit per cluster.
 User squash-merges. Never push main. Never merge the PR.
 
-Publish with plain `git push` over HTTPS (gh credential helper) to `bot/*` or the PR branch only. Push to `dungeon-reshape` only when the User asks. After the User squash-merges, reset `bot/refactorer` to `origin/main`.
+Publish with plain `git push` over HTTPS (gh credential helper) to `bot/*` or the PR branch only. Push to `dungeon-reshape` only when the User asks. No force pushes, ever. After the User squash-merges, create a fresh `bot/<flow>` branch from `origin/main` (e.g. `bot/reuse-xyz`, `bot/size-xyz`), push it with `git push -u origin bot/<flow>`, and open the PR with `gh pr create` (if that fails, GitHub MCP `create_pull_request`).
 
 ## Boot
 
@@ -36,7 +36,7 @@ If the User names more than one job, ask which flow this session is. One flow, o
 If this session woke because main moved: run python tools/bot_status.py first.
 If over_10kb count is 0, report and stop. If over_10kb count is above 0,
 open only design/grok-bot-size.md. Do not start reuse, extract, relocate,
-docs, or opt from that wake. Commit on bot/refactorer only. Never push main.
+docs, or opt from that wake. Commit on the Bot branch only. Never push main.
 Never merge the PR.
 
 
