@@ -6,6 +6,7 @@ const Schema := preload("res://scripts/data/balance_schema.gd")
 const Tune := preload("res://scripts/data/tunables.gd")
 const Enemies := preload("res://scripts/data/balance_enemies.gd")
 const Migrate := preload("res://scripts/data/balance_migrate.gd")
+const Access := preload("res://scripts/data/balance_access.gd")
 const BAL_REV := 13
 
 var move_speed := 4.5
@@ -355,36 +356,16 @@ func _ensure_enemies() -> void:
 	Enemies.fill(enemy_stats)
 
 func getv(name: String) -> float:
-	_ensure_enemies()
-	if name.begins_with("e_"):
-		return Enemies.read_stat(enemy_stats, name)
-	var v: Variant = get(name)
-	if v is bool:
-		return 1.0 if v else 0.0
-	if v == null:
-		return 0.0
-	return float(v)
+	return Access.getv(self, name)
 
 func migrate_from(old_rev: int) -> bool:
 	return Migrate.run(self, old_rev, BAL_REV)
 
 func setv(name: String, value: float) -> void:
-	_ensure_enemies()
-	if Enemies.write_stat(enemy_stats, name, value):
-		return
-	var cur: Variant = get(name)
-	if cur is bool:
-		set(name, value >= 0.5)
-	elif cur is int:
-		set(name, int(round(value)))
-	else:
-		set(name, value)
+	Access.setv(self, name, value)
 
 func snapshot() -> Dictionary:
-	var d := {}
-	for row in schema():
-		d[str(row[0])] = getv(str(row[0]))
-	return d
+	return Access.snapshot(self)
 
 func apply_defense(raw: float, defense: float) -> float:
 	return raw * (defense_k / (defense_k + maxf(0.0, defense)))
