@@ -443,13 +443,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--cx", type=float, default=0.0, help="camera look offset X")
     p.add_argument("--cz", type=float, default=0.0, help="camera look offset Z")
     p.add_argument("--taskbar", type=int, default=0, help="1=show taskbar entry")
-    p.add_argument("--recipe", default="", help="design/shot-recipes.json key; camp defaults to hub-buildings")
+    p.add_argument("--recipe", default="", help="design/shot-recipes.json key; empty is the play camera")
     args = p.parse_args(argv)
 
     root = _root()
     recipe_name = args.recipe
-    if recipe_name == "" and args.scene in ("camp", "hub"):
-        recipe_name = "hub-buildings"
     poses = ""
     if recipe_name:
         rec = _load_recipe(root, recipe_name)
