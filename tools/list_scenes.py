@@ -21,7 +21,7 @@ SCRIPT = re.compile(r'^script\s*=\s*ExtResource\("([^"]+)"\)')
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List .tscn nodes + scripts (headers only).", json_out=True)
     ap.add_argument("--path", "-Path", nargs="+", default=["scenes"], help="Scene file(s) or dir(s).")
-    ap.add_argument("--max-nodes", "-MaxNodes", type=int, default=200)
+    ap.add_argument("--max-nodes", "-MaxNodes", type=int, default=200, help="Max nodes listed per scene (default 200).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     paths = agent_log.split_list(args.path)

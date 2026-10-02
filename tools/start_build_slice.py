@@ -23,10 +23,10 @@ from load_routes import load_routes, shot_flows, smoke_phases
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Resolve a route and print the grok fork argv for a Build slice.", writes=True)
-    ap.add_argument("--door", "-Door", default="")
-    ap.add_argument("--job", "-Job", default="")
-    ap.add_argument("--area", "-Area", default="")
-    ap.add_argument("--ref", "-Ref", default="main")
+    ap.add_argument("--door", "-Door", default="", help="routes.yaml door to start from.")
+    ap.add_argument("--job", "-Job", default="", help="routes.yaml door.job to start from.")
+    ap.add_argument("--area", "-Area", default="", help="Slice name for the worktree slug (default: job, else door).")
+    ap.add_argument("--ref", "-Ref", default="main", help="Git ref to branch from (default main).")
     ap.add_argument("--session", default="", help="Gather session id (default: $GROK_SESSION_ID).")
     ap.add_argument("--launch", "-Launch", action="store_true", help="Actually start grok with the fork argv.")
     args = ap.parse_args(argv)

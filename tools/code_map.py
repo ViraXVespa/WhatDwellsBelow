@@ -147,7 +147,7 @@ def main(argv: list[str] | None = None) -> int:
     # accept the shared flags after the subcommand too (old tools took --root last)
     for name in ("check", "row", "patch"):
         sub.choices[name].add_argument("--root", default=None, help="Repo root (default: auto).", dest="root_sub")
-        sub.choices[name].add_argument("--json", dest="json_sub", action="store_true")
+        sub.choices[name].add_argument("--json", dest="json_sub", action="store_true", help="Print one JSON object instead of text.")
     sub.choices["patch"].add_argument("--dry-run", dest="dry_sub", action="store_true", help="Print what would change; write nothing.")
     args = ap.parse_args(argv)
     args.root = getattr(args, "root_sub", None) or args.root

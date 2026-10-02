@@ -110,12 +110,12 @@ def pack_one(
 
 
 def _add_args(p: argparse.ArgumentParser) -> None:
-    p.add_argument("--gender", action="append", choices=("male", "female"))
-    p.add_argument("--facing", action="append", choices=KEYS)
-    p.add_argument("--action", action="append", choices=sorted(PREFIX))
-    p.add_argument("--reuse-harvest", action="store_true")
-    p.add_argument("--rim", type=int, default=2)
-    p.add_argument("--rim-hue", type=float, default=26.0)
+    p.add_argument("--gender", action="append", choices=("male", "female"), help="male or female (repeatable; default both).")
+    p.add_argument("--facing", action="append", choices=KEYS, help="Facing to pack (repeatable; default all eight).")
+    p.add_argument("--action", action="append", choices=sorted(PREFIX), help="Action to pack (repeatable; default all).")
+    p.add_argument("--reuse-harvest", action="store_true", help="Reuse frames already extracted.")
+    p.add_argument("--rim", type=int, default=2, help="Rim-clean passes (default 2).")
+    p.add_argument("--rim-hue", type=float, default=26.0, help="Rim hue to clean (default 26).")
     p.add_argument(
         "--frames",
         type=int,

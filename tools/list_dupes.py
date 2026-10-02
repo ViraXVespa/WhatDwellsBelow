@@ -248,7 +248,7 @@ def drop_inside_funcs(blocks: list[dict], fgroups: list[dict]) -> list[dict]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Find duplicated functions and code blocks (exact, same-shape, block clones).", json_out=True)
-    ap.add_argument("--lang", choices=("gd", "py", "all"), default="all")
+    ap.add_argument("--lang", choices=("gd", "py", "all"), default="all", help="Which sources to scan: gd, py or all (default all).")
     ap.add_argument("--min-lines", type=int, default=4, help="min function body lines for exact/shape groups")
     ap.add_argument("--min-block", type=int, default=8, help="min consecutive repeated code lines for block clones")
     ap.add_argument("--top", type=int, default=40, help="rows shown per kind in the console summary")

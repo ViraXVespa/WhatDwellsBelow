@@ -21,12 +21,12 @@ SKIP = {"archives", ".archive_worktrees", "_logs", "docs", ".git"}
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Capped text search over scripts/scenes/tools/design.", json_out=True)
     ap.add_argument("pattern_pos", nargs="?", default="", help="Pattern (same as --pattern).")
-    ap.add_argument("--pattern", "-Pattern", default="")
-    ap.add_argument("--path", "-Path", nargs="+", default=["scripts", "scenes", "tools", "design"])
+    ap.add_argument("--pattern", "-Pattern", default="", help="Text to find (or pass it as the argument).")
+    ap.add_argument("--path", "-Path", nargs="+", default=["scripts", "scenes", "tools", "design"], help="Files or dirs to search (default scripts scenes tools design).")
     ap.add_argument("--include", "-Include", default="*", help="Filename glob, e.g. *.gd")
-    ap.add_argument("--max-hits", "-MaxHits", type=int, default=30)
-    ap.add_argument("--max-files", "-MaxFiles", type=int, default=20)
-    ap.add_argument("--regex", "-Regex", action="store_true")
+    ap.add_argument("--max-hits", "-MaxHits", type=int, default=30, help="Max hits per file (default 30).")
+    ap.add_argument("--max-files", "-MaxFiles", type=int, default=20, help="Max files listed (default 20).")
+    ap.add_argument("--regex", "-Regex", action="store_true", help="Treat the pattern as a regular expression.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     pattern = args.pattern or args.pattern_pos

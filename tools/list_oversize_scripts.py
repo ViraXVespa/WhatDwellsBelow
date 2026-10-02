@@ -16,8 +16,8 @@ import agent_log
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List oversize GDScript files by byte size.", json_out=True)
-    ap.add_argument("--over-kb", "-OverKb", type=float, default=5)
-    ap.add_argument("--under-kb", "-UnderKb", type=float, default=0)
+    ap.add_argument("--over-kb", "-OverKb", type=float, default=5, help="List scripts at or over this size in KB (default 5).")
+    ap.add_argument("--under-kb", "-UnderKb", type=float, default=0, help="Only scripts under this size in KB (0 = no upper bound).")
     ap.add_argument("--glob", "-Glob", default="", help="Ignored (kept for the old .ps1 flags).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)

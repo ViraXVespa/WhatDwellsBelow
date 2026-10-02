@@ -280,8 +280,8 @@ def main() -> None:
     p = argparse.ArgumentParser(
         description="Hue-correct a sampled chroma plate to #FF00FF, including bleed and enclosed pockets."
     )
-    p.add_argument("src", type=Path)
-    p.add_argument("dest", type=Path)
+    p.add_argument("src", type=Path, help="Source still (JPG/PNG).")
+    p.add_argument("dest", type=Path, help="Output PNG path.")
     p.add_argument("--wand", type=float, default=48.0, help="Max RGB distance to start chroma for the plate wand and pockets")
     p.add_argument("--min-amount", type=float, default=0.72, help="Min plate mix to treat a pixel as background")
     p.add_argument("--edge", type=int, default=4, help="Inward radius (px) to hunt bleed")

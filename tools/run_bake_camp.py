@@ -24,7 +24,7 @@ GUI_HEAD = ["--audio-driver", "Dummy", "--rendering-method", "gl_compatibility",
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Bake hub_light.png through the --wdb-bake-camp hook (real renderer by default).", json_out=True)
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=180)
+    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=180, help="Godot timeout in seconds (default 180).")
     ap.add_argument("--headless", action="store_true", help="force the headless driver (same atlas, no display needed)")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)

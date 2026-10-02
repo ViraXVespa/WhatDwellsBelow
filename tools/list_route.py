@@ -85,10 +85,17 @@ def _job_card(data: dict, job_id: str) -> list[str]:
 
 
 def parse_args(argv: list[str]):
-    parser = agent_log.std_parser("Print one door or job card from design/routes.yaml.", json_out=True)
-    parser.add_argument("--door", "-Door", default="")
-    parser.add_argument("--job", "-Job", default="")
-    return parser.parse_args(argv)
+    parser = agent_log.std_parser("Print one door or job card from design/routes.yaml (no argument: list the doors).")
+    parser.add_argument("target", nargs="?", default="", help="Door name, or door.job for a job card (same as --door / --job).")
+    parser.add_argument("--door", "-Door", default="", help="Door name (print its card).")
+    parser.add_argument("--job", "-Job", default="", help="Job id door.job (print its card).")
+    args = parser.parse_args(argv)
+    if args.target and not (args.door or args.job):
+        if "." in args.target:
+            args.job = args.target
+        else:
+            args.door = args.target
+    return args
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -98,7 +105,8 @@ def main(argv: list[str] | None = None) -> int:
     if not args.door and not args.job:
         doors = data.get("doors") if isinstance(data.get("doors"), dict) else {}
         menu = "\n".join("door\t%s\t%s" % (n, (s or {}).get("read_when", "")) for n, s in doors.items())
-        agent_log.fail("need --door <name> or --job <door.job> (example: --job debug.smokes). doors:\n" + menu)
+        menu += "\nnext\tpass a door name, or door.job for a job card (example: debug.smokes)"
+        return agent_log.finish("route", root, menu, "INFO", args=args, legacy=False, doors=len(doors))
     if args.job:
         lines = _job_card(data, args.job.strip())
     else:

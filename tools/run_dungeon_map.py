@@ -17,10 +17,10 @@ import godot_lib
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Dungeon generation map smoke.", json_out=True)
-    ap.add_argument("--seed", "-Seed", type=int, default=42)
-    ap.add_argument("--floor", "-Floor", type=int, default=1)
-    ap.add_argument("--scale", "-Scale", type=int, default=8)
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=180)
+    ap.add_argument("--seed", "-Seed", type=int, default=42, help="Dungeon seed (default 42).")
+    ap.add_argument("--floor", "-Floor", type=int, default=1, help="Floor number (default 1).")
+    ap.add_argument("--scale", "-Scale", type=int, default=8, help="Pixels per cell in the map PNG (default 8).")
+    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=180, help="Godot timeout in seconds (default 180).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     d = agent_log.ensure_agent_log_dir("dungeon-map", root)

@@ -213,10 +213,10 @@ def export_archives(root: Path, site: Path, godot: Path, cache_root: Path, wt_ro
 
 def main() -> int:
     parser = agent_log.std_parser("Best-effort cached export of catalog archives.")
-    parser.add_argument("--site", type=Path, required=True)
-    parser.add_argument("--godot", type=Path, required=True)
-    parser.add_argument("--cache", type=Path, required=True)
-    parser.add_argument("--worktrees", type=Path, default=None)
+    parser.add_argument("--site", type=Path, required=True, help="Pages site dir the archive builds are written under.")
+    parser.add_argument("--godot", type=Path, required=True, help="Godot executable to export with.")
+    parser.add_argument("--cache", type=Path, required=True, help="Cache dir keyed by archive content hash.")
+    parser.add_argument("--worktrees", type=Path, default=None, help="Dir for the per-archive git worktrees (default: temp).")
     args = parser.parse_args()
     root = agent_log.resolve_root(args)
     site = args.site if args.site.is_absolute() else root / args.site

@@ -18,7 +18,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser("Length, newline, BOM, and indent stats without reading into chat.", json_out=True)
     parser.add_argument("--path", "-Path", action="append", default=[], help="File or directory")
     parser.add_argument("--glob", "-Glob", default="", help="Only under a directory --path")
-    parser.add_argument("--max", "-Max", type=int, default=40)
+    parser.add_argument("--max", "-Max", type=int, default=40, help="Max files listed for a directory or glob (default 40).")
     return parser.parse_args(argv)
 
 

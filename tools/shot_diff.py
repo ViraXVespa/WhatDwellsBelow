@@ -89,8 +89,8 @@ def verdict(rows: list[dict], max_ratio: float | None) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Diff shot PNGs: before vs after (files or directories).", writes=True, json_out=True)
-    p.add_argument("before")
-    p.add_argument("after")
+    p.add_argument("before", help="Before PNG (or a folder of PNGs).")
+    p.add_argument("after", help="After PNG (or a folder of PNGs).")
     p.add_argument("--tol", type=int, default=0, help="per-channel delta that still counts as unchanged")
     p.add_argument("--max-ratio", type=float, default=None, help="FAIL when a frame changes more than this fraction of pixels")
     p.add_argument("--out", default="", help="diff PNG directory (default _logs/shot-diff)")

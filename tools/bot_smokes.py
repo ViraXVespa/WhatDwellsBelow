@@ -123,17 +123,17 @@ def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool) ->
 
 def main() -> int:
     p = agent_log.std_parser("Bot headless phase smokes")
-    p.add_argument("--doctor", action="store_true")
-    p.add_argument("--setup", action="store_true")
-    p.add_argument("--phases", default="")
+    p.add_argument("--doctor", action="store_true", help="Check the pinned Godot binary and print the setup state; run nothing.")
+    p.add_argument("--setup", action="store_true", help="Download the official 4.7.2 Linux binary if the pin is missing, then exit.")
+    p.add_argument("--phases", default="", help="Smoke phases, comma list (example 1,2,6).")
     p.add_argument("--door", default="", help="Phases mapped to this routes.yaml door (instead of --phases).")
     p.add_argument("--job", default="", help="Phases mapped to this routes.yaml door.job (instead of --phases).")
     p.add_argument("--flows", nargs="?", const="mapped", default="", metavar="NAMES",
                    help="Also run shot flows headless (asserts, no pixels): NAMES comma list, or the --door/--job mapping when bare.")
     p.add_argument("--no-gaps", action="store_true",
                    help="skip check_shot_gaps --changed (Bot gate: a new UI state without a shot flow FAILS this run)")
-    p.add_argument("--timeout", type=int, default=120)
-    p.add_argument("--verbose", action="store_true")
+    p.add_argument("--timeout", "--timeout-sec", "-TimeoutSec", dest="timeout", type=int, default=120, help="Seconds per smoke phase (default 120).")
+    p.add_argument("--verbose", action="store_true", help="Print each Godot command and longer failure output.")
     ns = p.parse_args()
     root = agent_log.resolve_root(ns)
     if (ns.door or ns.job) and not ns.phases:

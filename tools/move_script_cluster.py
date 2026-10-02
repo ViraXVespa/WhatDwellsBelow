@@ -233,15 +233,15 @@ def find_residuals(pairs: list[tuple[str, str]]) -> list[str]:
 def main() -> int:
     global ROOT
     ap = agent_log.std_parser("Move a script cluster into a folder and rewrite references.", writes=True)
-    ap.add_argument("--stem", "-Stem", default="")
-    ap.add_argument("--from-dir", "-FromDir", default="")
-    ap.add_argument("--to-dir", "-ToDir", default="")
+    ap.add_argument("--stem", "-Stem", default="", help="Facade stem to move (with --from-dir / --to-dir).")
+    ap.add_argument("--from-dir", "-FromDir", default="", help="Folder the cluster lives in now.")
+    ap.add_argument("--to-dir", "-ToDir", default="", help="Folder to move the cluster to.")
     ap.add_argument("--plan", "-Plan", default="", help="JSON {to_dir: [facade/helper .gd paths]} for a batch (one rewrite pass).")
     ap.add_argument("--map", "-Map", default="", help="JSON {old_file: new_file} exact moves/renames (facade-out + trimmed helper names); .uid sidecars follow.")
     ap.add_argument("--list-cluster", "-ListCluster", default="", help="Print facade + <stem>/ helpers for a facade path and exit.")
-    ap.add_argument("--files", "-Files", nargs="*", default=[])
-    ap.add_argument("--wrapper", "-Wrapper", action="store_true")
-    ap.add_argument("--no-git", "-NoGit", action="store_true")
+    ap.add_argument("--files", "-Files", nargs="*", default=[], help="Explicit files to move instead of --stem.")
+    ap.add_argument("--wrapper", "-Wrapper", action="store_true", help="Leave a one-line wrapper at each old .gd path.")
+    ap.add_argument("--no-git", "-NoGit", action="store_true", help="Use plain moves instead of git mv.")
     args = ap.parse_args()
     ROOT = agent_log.resolve_root(args)
 

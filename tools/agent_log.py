@@ -50,13 +50,41 @@ def rel(root: Path | str, path: Path | str) -> str:
         return Path(path).as_posix()
 
 
-def std_parser(description: str, *, writes: bool = False, json_out: bool = False) -> argparse.ArgumentParser:
-    ap = argparse.ArgumentParser(description=description)
+_REAL_STDOUT = None  # set while --json diverts text output; the final JSON object goes to the real stdout
+
+
+def _json_on(ns: argparse.Namespace) -> None:
+    global _REAL_STDOUT
+    if getattr(ns, "json", False) is True and _REAL_STDOUT is None:
+        _REAL_STDOUT = sys.stdout
+        sys.stdout = io.StringIO()  # progress text is dropped; stdout carries exactly one JSON object
+
+
+def _json_print(obj: dict) -> bool:
+    """Print obj as the one JSON object (restoring stdout if --json diverted it). False when not in JSON mode."""
+    global _REAL_STDOUT
+    if _REAL_STDOUT is None:
+        return False
+    sys.stdout, _REAL_STDOUT = _REAL_STDOUT, None
+    print(json.dumps(obj, sort_keys=False))
+    return True
+
+
+class _Parser(argparse.ArgumentParser):
+    def parse_args(self, args=None, namespace=None):
+        ns = super().parse_args(args, namespace)
+        _json_on(ns)
+        return ns
+
+
+def std_parser(description: str, *, writes: bool = False, json_out: bool = True) -> argparse.ArgumentParser:
+    """Parser with --root, --json and (writes=True) --dry-run. json_out stays for old callers; every tool gets --json."""
+    ap = _Parser(description=description)
     ap.add_argument("--root", "-Root", default=None, help="Repo root (default: auto-discovered).")
     if writes:
         ap.add_argument("--dry-run", "-DryRun", "-WhatIf", dest="dry_run", action="store_true", help="Print what would change; write nothing.")
     if json_out:
-        ap.add_argument("--json", dest="json", action="store_true", help="Print one JSON object instead of text.")
+        ap.add_argument("--json", dest="json", action="store_true", help="Print one JSON object (status, summary, counts) instead of text.")
     return ap
 
 
@@ -81,6 +109,11 @@ def fail(msg: str, code: int = 2) -> "None":
     raise SystemExit(code)
 
 
+def _err(msg: str) -> None:
+    print(f"error: {msg}", file=sys.stderr)
+    _json_print({"status": "FAIL", "error": msg})
+
+
 def guarded(main, *args: object) -> int:
     """Run main(*args); a missing/unreadable path or a bare SystemExit("msg") becomes `error: ...` + exit 2, not a traceback."""
     try:
@@ -88,11 +121,11 @@ def guarded(main, *args: object) -> int:
     except (FileNotFoundError, NotADirectoryError, PermissionError) as exc:
         name = getattr(exc, "filename", None)
         why = "missing path" if isinstance(exc, (FileNotFoundError, NotADirectoryError)) else "no permission"
-        print(f"error: {why}: {name}" if name else f"error: {exc}", file=sys.stderr)
+        _err(f"{why}: {name}" if name else str(exc))
         return 2
     except SystemExit as exc:
         if isinstance(exc.code, str):
-            print("error: " + re.sub(r"^(FAIL|error:)\s+", "", exc.code), file=sys.stderr)
+            _err(re.sub(r"^(FAIL|error:)\s+", "", exc.code))
             return 2
         raise
     except KeyboardInterrupt:
@@ -110,8 +143,9 @@ def result_line(status: str, summary: str | None = None, **kv: object) -> str:
 
 
 def emit_result(status: str, summary: str | None = None, **kv: object) -> int:
-    """Print the final RESULT line (no summary file) and return the exit code."""
-    print(result_line(status, summary, **kv))
+    """Print the final RESULT line (no summary file) and return the exit code. Under --json: one JSON object instead."""
+    if not _json_print({"status": status, "summary": summary, **kv}):
+        print(result_line(status, summary, **kv))
     return exit_code(status)
 
 
@@ -167,9 +201,9 @@ def finish(
         path = write_summary(job, root, body.rstrip("\n") + "\n" + res if body else res)
     else:
         res = result_line(status, None, **kv)
-    if getattr(args, "json", False):
-        obj = {"status": status, "summary": summary_rel, **{k: v for k, v in kv.items()}}
-        print(json.dumps(obj, sort_keys=False))
+    if getattr(args, "json", False) is True:
+        if not _json_print({"status": status, "summary": summary_rel, **kv}):
+            print(json.dumps({"status": status, "summary": summary_rel, **kv}, sort_keys=False))
     else:
         shown = body if echo is None else echo
         if shown:

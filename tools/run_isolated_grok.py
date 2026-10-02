@@ -450,10 +450,10 @@ def main() -> None:
     p = argparse.ArgumentParser(
         description="Run one isolated Grok Build media job outside the game repo."
     )
-    p.add_argument("--kind", choices=KINDS, required=True)
+    p.add_argument("--kind", choices=KINDS, required=True, help="Job kind.")
     p.add_argument("--grok", default="grok", help="Grok Build executable (default: grok)")
-    p.add_argument("--max-turns", type=int, default=8)
-    p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--max-turns", type=int, default=8, help="Max Grok turns (default 8).")
+    p.add_argument("--dry-run", action="store_true", help="Print the plan; generate nothing (inspect still runs unless --skip-inspect).")
     p.add_argument("--keep", action="store_true", help="Do not delete scratch; print its path")
     p.add_argument("--out", type=Path, default=None, help="Copy result media here after the child exits")
     p.add_argument("--job-file", type=Path, default=None, help="Use this markdown as job.md instead of the built-in template")
@@ -463,7 +463,7 @@ def main() -> None:
     p.add_argument("--bible-style", action="store_true", help="Copy locked player Bibles as style / identity sheets")
     p.add_argument("--seed", type=Path, default=None, help="I2V first-frame PNG (required for --kind i2v)")
     p.add_argument("--prompt-file", type=Path, default=None, help="I2V prompt text (required for --kind i2v)")
-    p.add_argument("--skip-inspect", action="store_true")
+    p.add_argument("--skip-inspect", action="store_true", help="Skip the `grok inspect` isolation check.")
     p.add_argument(
         "--no-reuse",
         action="store_true",

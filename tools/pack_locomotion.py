@@ -515,12 +515,12 @@ def pack_clip(
 
 
 def _add_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--gender", action="append", choices=("male", "female"))
-    parser.add_argument("--facing", action="append", choices=KEYS)
-    parser.add_argument("--skip-idle", action="store_true")
-    parser.add_argument("--reuse-harvest", action="store_true")
-    parser.add_argument("--rim", type=int, default=2)
-    parser.add_argument("--rim-hue", type=float, default=26.0)
+    parser.add_argument("--gender", action="append", choices=("male", "female"), help="male or female (repeatable; default both).")
+    parser.add_argument("--facing", action="append", choices=KEYS, help="Facing to pack (repeatable; default all eight).")
+    parser.add_argument("--skip-idle", action="store_true", help="Do not repack the idle stills.")
+    parser.add_argument("--reuse-harvest", action="store_true", help="Reuse frames already extracted under _src/walk_harvest.")
+    parser.add_argument("--rim", type=int, default=2, help="Rim-clean passes (default 2).")
+    parser.add_argument("--rim-hue", type=float, default=26.0, help="Rim hue to clean (default 26).")
 
 
 def _run(args: argparse.Namespace) -> None:
