@@ -27,7 +27,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 ## Contract (enforced by `check_tool_cli.py`)
 
 - Shebang `#!/usr/bin/env python3`, `argparse` (`agent_log.std_parser`), a working non-mutating `--help`, ASCII output.
-- Ops tools take `--root`, writers take `--dry-run`, reports may take `--json`. Errors go to stderr as `error: ...`. Exit 0 ok, 1 findings, 2 usage.
+- Ops tools take `--root`, writers take `--dry-run`, every `std_parser` tool takes `--json` (stdout is then one JSON object). Errors go to stderr as `error: ...`. Exit 0 ok, 1 findings, 2 usage.
 - Last line is `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`; a `Summary -> <abs>` line also prints unless the runner opts out (`legacy=False` in `agent_log.finish`). Exempt: printers (their stdout is the payload) and `wdb_scratch_server`.
 - Read and write text through `md_format_lib` (BOM and line endings kept). Paths printed are repo-relative POSIX.
 
@@ -54,7 +54,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `bot_warnscan_lib.py` | Log parser for `bot_warnscan.py` | B | module docstring (no `--help`) | Y |
 | `bot_opt.py` | Opt queue: `--list`, `--id`, `--status opt-N=done`, `--add`, `--remove`. Never hand-edit the queue block. Summary: `bot-opt`. | BD | `--help` | Y |
 | `bot_allow.txt` | Allowlist: the paths the Bot may change; read by CI and `bot_status --prove`. Deny lines first. Authority for Bot scope. | BWD | - | Y |
-| `check_tool_cli.py` | CLI contract check over `tools/` (see Contract above) plus the `.ps1` shim check. Run after adding or editing a tool. | BWD | `--help` | Y |
+| `check_tool_cli.py` | CLI contract check over `tools/` (see Contract above) plus the `.ps1` shim check; `--smoke-run` runs every tool in a throwaway copy (crash, noise, `--json`, dry-run purity; ~1 min). Run after adding or editing a tool. | BWD | `--help` | Y |
 | `check_tool_docs.py` | Catalog check: every `tools/` file has a row, `A=Y` rows are allowed by `bot_allow.txt` (glob-aware), rows name real files. Run it after adding or renaming a tool. `--stale-refs` scans docs, root md and the four workflow skills for dead backticked paths and `Class.member` names (fails) and, with `--narration`, will-be-added / legacy / formerly / no-longer lines (advisory); run it on every doc sweep | BWD | `--help` | Y |
 
 ### Split, code map, doc edits, inventory and lint
