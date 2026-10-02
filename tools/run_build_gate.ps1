@@ -84,7 +84,7 @@ if (-not $SkipImport) {
 $lines.Add(("RESULT fail_signals={0}" -f $fail))
 $lines | Set-Content -Path $Summary -Encoding utf8
 Write-Host ""
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 Write-Host ("fail_signals={0}" -f $fail)
 if ($fail -gt 0) { exit 1 }
 exit 0

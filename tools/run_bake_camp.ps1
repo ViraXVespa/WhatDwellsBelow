@@ -44,6 +44,6 @@ $clean = ($r.Status -eq "EXIT=0") -and (-not $hasHard)
 $lines.Add("")
 if ($clean) { $lines.Add("RESULT clean=true") } else { $lines.Add("RESULT clean=false") }
 $lines | Set-Content -Path $Summary -Encoding utf8
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 if (-not $clean) { exit 1 }
 exit 0

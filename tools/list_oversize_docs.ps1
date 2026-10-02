@@ -31,6 +31,6 @@ foreach ($f in $files) {
 $lines.Add("")
 $lines.Add(("RESULT over={0} files={1}" -f $over, $files.Count))
 $lines | Set-Content -Path $Summary -Encoding utf8
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 Write-Host ("over={0} files={1}" -f $over, $files.Count)
 exit 0

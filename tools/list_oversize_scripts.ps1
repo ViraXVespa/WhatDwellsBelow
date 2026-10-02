@@ -60,5 +60,5 @@ if ($sorted.Count -gt 30) {
     Write-Host ("... +{0} more (see summary)" -f ($sorted.Count - 30))
 }
 Write-Host ""
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 exit 0

@@ -101,5 +101,5 @@ $lines.Add(("RESULT scenes={0} nodes={1} scripts={2} truncated={3}" -f $sceneFil
 $lines | Set-Content -Path $Summary -Encoding utf8
 
 Write-Host "scenes=$($sceneFiles.Count) nodes=$nodeCount scripts=$scriptCount truncated=$truncated"
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 exit 0

@@ -204,5 +204,5 @@ $lines.Add("")
 $lines.Add(("RESULT pin={0} seed={1} archive={2} gc={3} locks_deleted={4} clean={5}" -f $pinStatus, $seedStatus, $archStatus, $gcStatus, $lockDeleted, $cleanStatus))
 $lines | Set-Content -LiteralPath $Summary -Encoding utf8
 Write-Host ""
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 exit 0

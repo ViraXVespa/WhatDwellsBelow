@@ -50,6 +50,6 @@ foreach ($f in $sibs) {
 $lines.Add("")
 $lines.Add(("RESULT siblings={0} total_bytes={1}" -f $sibs.Count, $total))
 $lines | Set-Content -Path $Summary -Encoding utf8
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 $sibs | ForEach-Object { Write-Host ("{0,6} {1}" -f $_.Length, $_.Name) }
 exit 0

@@ -22,10 +22,10 @@ Listed smoke set (run the runner; do not open smoke helpers just to pick the com
 | named phase asserts | `tools/run_smokes.ps1` `-Phases @(N)` |
 | scripts compile / unnamed prove | `tools/run_build_gate.ps1` |
 
-A new `--wdb-*-smoke` flag, new host scene, or new catalog runner is User-named or stop-and-propose. Headless screenshot postcards are parked; do not build them as prove. A red postcard ends this session's change work: stop, report the summary line, and tell the User to launch the RETRY line from `_logs/sess/<session>/slice-boot/summary.txt` (or say skip). Do not keep patching on the guilty transcript. Two reds on the same unit without a skip: stop. `--fork-session` is the return from that gather pin; do not auto-fork mid-change.
+A new `--wdb-*-smoke` flag, new host scene, or new catalog runner is User-named or stop-and-propose. Headless screenshot postcards are parked; do not build them as prove. A red postcard ends this session's change work: stop, report the summary line, and tell the User to launch the RETRY line from `_logs/slice-boot/summary.txt` (or say skip). Do not keep patching on the guilty transcript. Two reds on the same unit without a skip: stop. `--fork-session` is the return from that gather pin; do not auto-fork mid-change.
 
-Read each job summary once via `powershell -File tools/read_summary.ps1 -Job <name>`. Preferred path is `_logs/sess/<session>/<job>/summary.txt` (session = `WDB_AGENT_SESSION` or the inferred Grok session id). Do not open the summary file directly. Catalog and this file must agree: once per job.
+Read each job summary once via `powershell -File tools/read_summary.ps1 -Job <name>`. Preferred path is `_logs/<job>/summary.txt` (session = `WDB_AGENT_SESSION` or the inferred Grok session id). Do not open the summary file directly. Catalog and this file must agree: once per job.
 
 A second job in the same Grok Build session is allowed only when a **new field** is named first. Do not wait for the User between job 1 and job 2 when that field is named. Still pause and report after every job. The field must already be a key printed by that job's summary template, or `truncated` / crash / `busy` / wrong scene. Do not invent a key the template does not print. "Add a field so I can rerun" is invalid. The only valid same-command rerun is `truncated`, crash, `busy` lock, or wrong scene, and then the same command once.
 
-Concurrent agents share catalog tools. They do not share summary files: each session writes under `_logs/sess/<session>/`. Pins are User-only.
+Concurrent agents share catalog tools. They do not share summary files: each session writes under `_logs/`. Pins are User-only.

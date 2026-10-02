@@ -108,5 +108,5 @@ $lines.Add(("RESULT files={0} hits={1} scanned={2} truncated={3}" -f $filesHit.C
 $lines | Set-Content -Path $Summary -Encoding utf8
 
 Write-Host "xref files=$($filesHit.Count) hits=$($hitLines.Count) scanned=$scanned truncated=$truncated"
-Write-Host "Summary -> $Summary"
+Write-Host ("Summary -> _logs/{0}/summary.txt" -f (Split-Path $OutDir -Leaf))
 exit 0

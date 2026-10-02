@@ -155,8 +155,7 @@ function Get-WdbAgentLogDir {
         throw "agent_log: bad job name"
     }
     if (-not $Root) { $Root = Get-WdbRepoRoot }
-    $session = Get-WdbAgentSession -Root $Root
-    return [IO.Path]::GetFullPath((Join-Path $Root ("_logs\sess\{0}\{1}" -f $session, $Job)))
+    return [IO.Path]::GetFullPath((Join-Path $Root ("_logs\{0}" -f $Job)))
 }
 
 function Get-WdbAgentSummaryPath {
