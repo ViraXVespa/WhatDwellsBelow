@@ -296,7 +296,8 @@ static func _hide_label3d(n: Node) -> void:
 
 static var _pose_i: int = 0
 static var _strips: Array[Image] = []
-static var _warm_left: int = 0
+static var _warm_leftstatic var _atlas_left: int = 0
+: int = 0
 
 static var _token: String = ""
 
@@ -312,10 +313,28 @@ static func _kick_pose(host: Node) -> void:
 	var token: String = list[_pose_i]
 	_token = token
 	_warm_left = 3
+	_atlas_left = 40
 	_apply_pose_token(host, token)
 	host.get_tree().process_frame.connect(_on_warm.bind(host, token), CONNECT_ONE_SHOT)
 
 
+static func _hub_atlas_bound() -> bool:
+	var rt = load("res://scripts/graphics/light_rt.gd")
+	if rt == null:
+		return true
+	if rt.has_method("texture"):
+		return rt.texture() != null
+	return true
+static func _hub_atlas_bound() -> bool:
+	var rt = load("res://scripts/graphics/light_rt.gd")
+	if rt == null:
+		return true
+	var tex: Texture2D = null
+	if rt.has_method("texture"):
+		tex = rt.texture()
+	elif "tex" in rt:
+		tex = rt.tex
+	return tex != null
 static func _on_warm(host: Node, token: String) -> void:
 	if not is_instance_valid(host):
 		printerr("SHOT: ok=false err=host_gone")
@@ -325,9 +344,13 @@ static func _on_warm(host: Node, token: String) -> void:
 	if _warm_left > 0:
 		host.get_tree().process_frame.connect(_on_warm.bind(host, token), CONNECT_ONE_SHOT)
 		return
+	if _pose_i == 0 and _atlas_left > 0 and not _hub_atlas_bound():
+		_atlas_left -= 1
+		host.get_tree().process_frame.connect(_on_warm.bind(host, token), CONNECT_ONE_SHOT)
+		return
+	if _pose_i == 0:
+		printerr("SHOT: atlas bound=%s left=%d" % [str(_hub_atlas_bound()), _atlas_left])
 	RenderingServer.frame_post_draw.connect(_on_post_draw.bind(host, token), CONNECT_ONE_SHOT)
-
-
 static func _on_post_draw(host: Node, token: String) -> void:
 	RenderingServer.force_sync()
 	_grab_pose(host, token)

@@ -111,7 +111,9 @@ static func guild(host: Node3D) -> void:
 	var hall_fit: Vector3 = seat(hall_body, hall_box, "res://assets/sprites/buildings/guild.png")
 	var wing_fit: Vector3 = seat(wing_body, wing_box, "res://assets/sprites/buildings/guild_reception.png")
 	MeshS.wall_box(hall_body, hall_fit, Color(0.45, 0.32, 0.22))
+	_slide(hall_body, hall_fit)
 	MeshS.wall_box(wing_body, wing_fit, Color(0.5, 0.38, 0.28))
+	_slide(wing_body, wing_fit)
 	face(hall_body, hall_fit, "res://assets/sprites/buildings/guild.png", 0.0, hall_fit.x, 0.34)
 	face(wing_body, wing_fit, "res://assets/sprites/buildings/guild_reception.png", 0.0, wing_fit.x, 0.34)
 	var hd: float = lay.awning_depth("Hall") if lay else 0.72
@@ -143,6 +145,7 @@ static func solid(
 	var lay: Node3D = _layout_from_build_host(host)
 	if tarp:
 		MeshS.pitched_tarp(body, box_size, 0.0, Vector3(x0, 0.0, z0))
+		_counter(body, box_size)
 	else:
 		roof_plane(
 			body,
@@ -308,3 +311,25 @@ static func seat(body: StaticBody3D, box_size: Vector3, tex: String) -> Vector3:
 	var h: float = face_height(tex, box_size.x) * 0.82
 	body.position.y = h * 0.5
 	return Vector3(box_size.x, h, box_size.z)
+
+
+static func _slide(body: StaticBody3D, box_size: Vector3) -> void:
+	var old: Node = body.get_node_or_null("WallHit")
+	if old != null:
+		old.queue_free()
+	var shape := CollisionShape3D.new()
+	shape.name = "Slide"
+	var block := BoxShape3D.new()
+	block.size = Vector3(maxf(box_size.x - 0.12, 0.4), box_size.y, maxf(box_size.z - 0.12, 0.4))
+	shape.shape = block
+	body.add_child(shape)
+
+
+static func _counter(body: StaticBody3D, box_size: Vector3) -> void:
+	var shape := CollisionShape3D.new()
+	shape.name = "StallCounter"
+	var block := BoxShape3D.new()
+	block.size = Vector3(box_size.x * 0.72, 1.05, box_size.z * 0.46)
+	shape.shape = block
+	shape.position = Vector3(0.0, 0.52, 0.0)
+	body.add_child(shape)
