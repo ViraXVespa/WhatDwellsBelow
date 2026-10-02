@@ -277,7 +277,7 @@ def remap(
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(
+    p = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments).", 
         description="Hue-correct a sampled chroma plate to #FF00FF, including bleed and enclosed pockets."
     )
     p.add_argument("src", type=Path, help="Source still (JPG/PNG).")

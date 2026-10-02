@@ -18,9 +18,7 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 
-SESSION = Path(
-    r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a08788-1bb6-76c0-8fa8-40b73dda2810\images"
-)
+SESSION = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a08788-1bb6-76c0-8fa8-40b73dda2810\images")
 TILES = ROOT / "assets" / "tiles"
 PROPS = ROOT / "assets" / "sprites" / "props"
 NPCS = ROOT / "assets" / "sprites" / "npcs"

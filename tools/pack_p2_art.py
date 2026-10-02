@@ -14,7 +14,7 @@ import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
 
-IMG = Path(r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a03e55-f390-7750-ab00-b30f1e6ba566\images")
+IMG = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a03e55-f390-7750-ab00-b30f1e6ba566\images")
 KEYS = ["up", "down", "left", "right", "up_left", "up_right", "down_left", "down_right"]
 
 

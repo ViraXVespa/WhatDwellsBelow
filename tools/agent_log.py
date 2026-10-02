@@ -24,6 +24,15 @@ STATUSES = ("PASS", "FAIL", "INFO")
 DRY_RUN = False  # set by run_writer --dry-run; tools that fan out to worker processes run serially when true
 
 
+GROK_SESSIONS_DEFAULT = r"C:\Users\Vira\.grok\sessions"
+
+
+def grok_sessions(*rest: str) -> Path:
+    """Grok session store: $WDB_GROK_SESSIONS or the default above; `rest` parts may use backslashes."""
+    base = Path(os.environ.get("WDB_GROK_SESSIONS") or GROK_SESSIONS_DEFAULT)
+    return base.joinpath(*[p for r in rest for p in r.split("\\") if p])
+
+
 def repo_root(hint: str | Path | None = None) -> Path:
     """Walk up from hint, else from this file, then cwd, to the dir holding project.godot.
 
@@ -286,6 +295,7 @@ def run_writer(tool: str, desc: str, run, argv: list[str] | None = None, g: "dic
     run(args) gets the namespace. Default stdout is the first 8 lines + a count; the full text is in the summary file.
     """
     ap = std_parser(desc, writes=True)
+    ap.epilog = f"Env: WDB_GROK_SESSIONS = Grok session store the source images/videos are read from (default {GROK_SESSIONS_DEFAULT})."
     ap.add_argument("--verbose", "-v", action="store_true", help="Print every line (default: first 8 and a count).")
     if add_args:
         add_args(ap)

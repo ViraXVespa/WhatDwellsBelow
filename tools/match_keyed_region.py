@@ -37,15 +37,11 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
+import agent_log
 from repo_lib import under as _under  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-SESS_ROOT = (
-    Path.home()
-    / ".grok"
-    / "sessions"
-    / "C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow"
-)
+SESS_ROOT = agent_log.grok_sessions("C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow")
 SRC_ROOT = ROOT / "_src"
 TOOLS_SRC = ROOT / "tools" / "_src"
 OLD_ROOT = ROOT / "_old"
@@ -371,7 +367,7 @@ def score_pair(live: Path, src: Path, pipeline: bool = False) -> dict:
 
 def _iso_roots() -> list[Path]:
     roots: list[Path] = []
-    sessions = Path.home() / ".grok" / "sessions"
+    sessions = agent_log.grok_sessions()
     if sessions.is_dir():
         for child in sessions.iterdir():
             if "wdb-iso" in child.name.lower():
@@ -1111,7 +1107,7 @@ def self_test() -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Match keyed source regions to live assets.")
+    parser = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments). Session store: $WDB_GROK_SESSIONS (default C:\\Users\\Vira\\.grok\\sessions).", description="Match keyed source regions to live assets.")
     parser.add_argument("live", nargs="?", type=Path, help="Live sprite PNG to patch.")
     parser.add_argument("src", nargs="?", type=Path, help="Source still the region is taken from.")
     parser.add_argument("--pipeline", action="store_true", help="Key one pair with plate_remap + key_to_alpha")

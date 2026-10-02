@@ -13,9 +13,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = Path(
-    r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5Crepos%5CGrokSandbox%5Cwhat-dwells-below\01a01725-c75b-79f2-967f-30d19272bef6\images"
-)
+SRC = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CGrokSandbox%5Cwhat-dwells-below\01a01725-c75b-79f2-967f-30d19272bef6\images")
 THRESH = 58
 CANVAS = 128
 

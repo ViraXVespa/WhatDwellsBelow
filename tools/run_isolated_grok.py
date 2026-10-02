@@ -447,7 +447,7 @@ def run_cmd(
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(
+    p = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments).", 
         description="Run one isolated Grok Build media job outside the game repo."
     )
     p.add_argument("--kind", choices=KINDS, required=True, help="Job kind.")

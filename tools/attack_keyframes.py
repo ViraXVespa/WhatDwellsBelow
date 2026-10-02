@@ -211,7 +211,7 @@ def print_resume() -> None:
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description=__doc__)
+    p = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments).", description=__doc__)
     p.add_argument("--print", action="store_true", dest="do_print", help="Print the still prompt (the default).")
     p.add_argument("--beats", action="store_true", help="List the beats for --action and exit.")
     p.add_argument("--resume", action="store_true", help="Print the resume state from the log and exit.")

@@ -19,9 +19,9 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 
-SESS = Path(r"C:\Users\Vira\.grok\sessions")
-P4 = SESS / r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a03e55-f390-7750-ab00-b30f1e6ba566\images"
-LIVE = SESS / r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images"
+SESS = agent_log.grok_sessions()
+P4 = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a03e55-f390-7750-ab00-b30f1e6ba566\images")
+LIVE = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images")
 FRAMES = ROOT / "_src" / "anim_frames"
 SPR = ROOT / "assets" / "sprites"
 FX = ROOT / "assets" / "fx"

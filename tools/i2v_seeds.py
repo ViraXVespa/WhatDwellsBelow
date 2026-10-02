@@ -818,7 +818,7 @@ def export_bible(
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(
+    p = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments).", 
         description="Exact integer nearest-neighbor scale, then #FF00FF pad. No key, no 1024 fit."
     )
     src = p.add_mutually_exclusive_group(required=True)

@@ -54,7 +54,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `bot_warnscan_lib.py` | Log parser for `bot_warnscan.py` | B | module docstring (no `--help`) | Y |
 | `bot_opt.py` | Opt queue: `--list`, `--id`, `--status opt-N=done`, `--add`, `--remove`. Never hand-edit the queue block. Summary: `bot-opt`. | BD | `--help` | Y |
 | `bot_allow.txt` | Allowlist: the paths the Bot may change; read by CI and `bot_status --prove`. Deny lines first. Authority for Bot scope. | BWD | - | Y |
-| `check_tool_cli.py` | CLI contract check over `tools/` (see Contract above) plus the `.ps1` shim check; `--smoke-run` runs every tool in a throwaway copy (crash, noise, `--json`, dry-run purity; ~1 min). Run after adding or editing a tool. | BWD | `--help` | Y |
+| `check_tool_cli.py` | CLI contract check over `tools/` (see Contract above) plus the `.ps1` shim check. Run after adding or editing a tool. | BWD | `--help` | Y |
 | `check_tool_docs.py` | Catalog check: every `tools/` file has a row, `A=Y` rows are allowed by `bot_allow.txt` (glob-aware), rows name real files. Run it after adding or renaming a tool. `--stale-refs` scans docs, root md and the four workflow skills for dead backticked paths and `Class.member` names (fails) and, with `--narration`, will-be-added / legacy / formerly / no-longer lines (advisory); run it on every doc sweep | BWD | `--help` | Y |
 
 ### Split, code map, doc edits, inventory and lint
