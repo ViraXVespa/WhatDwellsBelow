@@ -24,6 +24,7 @@ Still refactor-shaped unless a row the User wrote is explicit and legal. No inve
 2. `design/reuse-map.md` (the brief)
 3. `design/refactor.md` when a touched file must split (recipe only)
 4. One `design/code-map.md` **system row** for each cluster the brief names
+   (Finding new candidates is a separate User-named sweep: `python3 tools/list_dupes.py --md PATH`, then tier the groups; only near-identical bodies move to a shared module.)
 5. After that: only the live `.gd` files in the active cluster
 6. At ship: `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
 

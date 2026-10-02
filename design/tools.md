@@ -78,6 +78,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `file_stat.py` | Bytes, BOM, CRLF/LF, indent for a path or glob (verify a split kept them). Summary: `file-stat`. | BD | `--help` | Y |
 | `summarize_scripts.py` | Func inventory per `.gd` (`--over-kb`, `--top-funcs`) | BD | `--help` | Y |
 | `lint_hostify.py` | Advisory scan for `:=`/load inference and host pitfalls; always exits 0 (RESULT INFO) | BD | `--help` | Y |
+| `list_dupes.py` | Duplicate finder (read-only): exact / shape / near function clones and verbatim or literal-masked line blocks across `scripts/**/*.gd` and `tools/*.py`, ranked by (copies-1) x lines. `--lang gd\|py\|all`, `--min-lines`, `--min-block`, `--md PATH`. Feeds `design/reuse-map.md`. Summary: `dupes`. | B | `--help` | Y |
 | `list_unused_funcs.py` | Dead-code report (`--limit N`). **`--apply` DELETES funcs**: only when the opt item says so; check `call_deferred`/string refs first. | B | `--help` | Y |
 | `move_script_cluster.py` | `git mv` a facade + helpers and rewrite `res://`, bare paths and renamed basenames repo-wide, incl. tools, skills, root docs (`--to-dir`, `--plan plan.json` batch, `--map map.json` exact old->new, `--list-cluster FACADE`, `--dry-run`, `--wrapper`). Only for a user-named relocate job; can touch non-allowlisted docs. | BD | `--help` | Y |
 | `repo_lib.py` | Git, allowlist, version and changelog-label helpers shared by tools | BWD | module docstring (no `--help`) | Y |
