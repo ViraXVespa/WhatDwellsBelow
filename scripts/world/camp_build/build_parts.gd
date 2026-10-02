@@ -31,9 +31,7 @@ static func guild(host: Node3D) -> void:
 	Util._slide(wing_body, wing_fit)
 	Util.face(hall_body, hall_fit, "res://assets/sprites/buildings/guild.png", 0.0, hall_fit.x, 0.32)
 	Util.face(wing_body, wing_fit, "res://assets/sprites/buildings/guild_reception.png", 0.0, wing_fit.x, 0.32)
-	var _hd: float = lay.awning_depth("Hall") if lay else 0.72
 	var hs: float = lay.awning_slope("Hall") if lay else 0.08
-	var _wd: float = lay.awning_depth("Wing") if lay else 0.64
 	var ws: float = lay.awning_slope("Wing") if lay else 0.08
 	awning(hall_body, hall_fit, 0.42, hs, hall_fit.y * 0.16, 0.0, 0.0, 0.0)
 	awning(wing_body, wing_fit, 0.36, ws, wing_fit.y * 0.16, 0.0, 0.0, 0.0)
