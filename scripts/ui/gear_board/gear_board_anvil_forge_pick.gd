@@ -148,4 +148,3 @@ static func _cmp_line(it: Dictionary) -> String:
 		float(it.get("quality", 0.5)),
 		float(it.get("luck", 0.75)),
 	]
-

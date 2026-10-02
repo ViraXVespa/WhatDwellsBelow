@@ -4,7 +4,6 @@ const Combat := preload("res://scripts/combat/combat.gd")
 const Hit := preload("res://scripts/combat/cover_hit.gd")
 const Geom := preload("res://scripts/combat/cover_geom.gd")
 
-
 static func hit_arc(origin: Vector3, dir: Vector2, rng: float, arc_deg: float, host: Node3D) -> float:
 	if host == null or not is_instance_valid(host) or rng <= 0.001:
 		return 0.0
@@ -22,9 +21,6 @@ static func hit_circle(origin: Vector3, radius: float, host: Node3D) -> float:
 		return 0.0
 	var reach := Combat.xz(host).distance_to(Vector2(origin.x, origin.z))
 	return _radial_q(reach, radius)
-
-static func hit_disk(origin: Vector3, radius: float, host: Node3D) -> float:
-	return Hit.hit_shot(origin, Vector2.ZERO, radius, host)
 
 static func hit_shot(origin: Vector3, dir: Vector2, radius: float, host: Node3D) -> float:
 	return Hit.hit_shot(origin, dir, radius, host)

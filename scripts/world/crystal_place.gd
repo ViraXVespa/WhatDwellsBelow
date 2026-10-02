@@ -5,42 +5,33 @@ const Threat := preload("res://scripts/combat/threat.gd")
 const FloorCrystal := preload("res://scripts/world/floor_crystal.gd")
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
-
 static func _num(key: String, fallback: int) -> int:
 	if App.bal and App.bal.get(key) != null:
 		return maxi(1, int(App.bal.get(key)))
 	return fallback
 
-
 static func _sep() -> int:
 	return _num("crystal_min_sep", 56)
-
 
 static func _deadend_sep() -> int:
 	return _num("crystal_deadend_sep", 32)
 
-
 static func _deadend_len() -> int:
 	return _num("crystal_deadend_len", 28)
-
 
 static func _extra_max() -> int:
 	return _num("crystal_extra_max", 6)
 
-
 static func _band_w() -> int:
 	return _num("crystal_cl_band", 2)
-
 
 static func _place_chance() -> float:
 	if App.bal and App.bal.get("crystal_place_chance") != null:
 		return clampf(float(App.bal.get("crystal_place_chance")), 0.15, 1.0)
 	return 0.50
 
-
 static func cl_at(host: Node, cell: Vector2i) -> int:
 	return Threat.walk_level(App.floor_n, cell, host.travel_dist, int(host.data.w), host.travel_cap)
-
 
 static func _walk(host: Node, cell: Vector2i) -> int:
 	var grid_w: int = int(host.data.w)
@@ -51,12 +42,10 @@ static func _walk(host: Node, cell: Vector2i) -> int:
 		return int(host.travel_dist[i])
 	return 0
 
-
 static func _band_of(cl: int) -> int:
 	var lo: int = Threat.floor_lo(App.floor_n)
 	var span: int = _band_w()
 	return maxi(0, int(float(cl - lo) / float(span)))
-
 
 static func _band_target(band: int) -> int:
 	var lo: int = Threat.floor_lo(App.floor_n)
@@ -64,17 +53,14 @@ static func _band_target(band: int) -> int:
 	var mid: int = int(float(span - 1) / 2.0)
 	return lo + band * span + mid
 
-
 static func _far_enough(host: Node, cell: Vector2i, spots: Array, sep: int) -> bool:
 	for s: Variant in spots:
 		if host._cell_manhattan(cell, Vector2i(s.cell)) < sep:
 			return false
 	return true
 
-
 static func _in_room(r: Dictionary, cell: Vector2i) -> bool:
 	return RoomsPlace.in_room(r, cell)
-
 
 static func _room_exits(host: Node, r: Dictionary) -> int:
 	var seen: Dictionary = {}
@@ -100,14 +86,12 @@ static func _room_exits(host: Node, r: Dictionary) -> int:
 				n += 1
 	return n
 
-
 static func _hub_rooms(host: Node) -> Array:
 	var out: Array = []
 	for r: Variant in host.data.get("rooms", []):
 		if _room_exits(host, r) >= 2:
 			out.append(r)
 	return out
-
 
 static func _hub_cells(host: Node, hubs: Array) -> Dictionary:
 	var cells: Dictionary = {}
@@ -122,7 +106,6 @@ static func _hub_cells(host: Node, hubs: Array) -> Dictionary:
 				if host._is_floor_cell(cell):
 					cells[cell] = true
 	return cells
-
 
 static func _spur_long_enough(host: Node, start: Vector2i, hub_cells: Dictionary, min_len: int) -> bool:
 	if hub_cells.has(start):
@@ -149,7 +132,6 @@ static func _spur_long_enough(host: Node, start: Vector2i, hub_cells: Dictionary
 			q.append(nxt)
 	return false
 
-
 static func _snap_cell(host: Node, pick: Dictionary) -> Vector2i:
 	var cell: Vector2i = Vector2i(pick.cell)
 	if bool(pick.get("gate", false)):
@@ -161,7 +143,6 @@ static func _snap_cell(host: Node, pick: Dictionary) -> Vector2i:
 	if host._is_floor_cell(free):
 		return free
 	return cell
-
 
 static func _try_add(host: Node, spots: Array, pick: Dictionary, sep: int) -> bool:
 	var cell: Vector2i = _snap_cell(host, pick)
@@ -176,7 +157,6 @@ static func _try_add(host: Node, spots: Array, pick: Dictionary, sep: int) -> bo
 	})
 	return true
 
-
 static func place_floor(host: Node) -> void:
 	place_entrance(host)
 	place_extras(host)
@@ -188,7 +168,6 @@ static func place_entrance(host: Node) -> void:
 	var spawn: Vector2i = host.data.spawn
 	_try_add(host, spots, {"cell": spawn, "cl": cl_at(host, spawn), "gate": true}, _sep())
 	_spawn_spots(host, spots, true)
-
 
 static func place_extras(host: Node) -> void:
 	if bool(host.get_meta("crystal_extras", false)):
@@ -243,7 +222,6 @@ static func place_extras(host: Node) -> void:
 		_try_add(host, spots, {"cell": dc, "cl": cl_at(host, dc), "gate": false}, sep)
 	_spawn_spots(host, spots, false)
 
-
 static func _spawn_spots(host: Node, spots: Array, reset: bool) -> void:
 	if reset or not (host.data.get("crystals", []) is Array):
 		host.data["crystals"] = []
@@ -262,7 +240,6 @@ static func _spawn_spots(host: Node, spots: Array, reset: bool) -> void:
 		have[cell] = true
 		if bool(s.gate):
 			host.data.crystal = cell
-
 
 static func _better_band(host: Node, cand: Dictionary, cur: Dictionary, target_cl: int) -> bool:
 	var d_new: int = absi(int(cand.cl) - target_cl)

@@ -37,7 +37,6 @@ static var _casts: Array[Dictionary] = []
 static var hub_crystal := Vector2.ZERO
 static var _hub_layout: Node
 
-
 static func texture() -> Texture2D:
 	if tex != null:
 		return tex
@@ -45,7 +44,6 @@ static func texture() -> Texture2D:
 	img.fill(Color.WHITE)
 	tex = ImageTexture.create_from_image(img)
 	return tex
-
 
 static func bind(mat: ShaderMaterial) -> void:
 	if mat == null:
@@ -57,7 +55,6 @@ static func bind(mat: ShaderMaterial) -> void:
 	mat.set_shader_parameter("light_span", span)
 	if not _mats.has(mat):
 		_mats.append(mat)
-
 
 static func _try_hub_baked() -> bool:
 	var abs_path: String = ProjectSettings.globalize_path(HUB_LIGHT_PATH)
@@ -73,7 +70,6 @@ static func _try_hub_baked() -> bool:
 	tex = _gpu
 	_push()
 	return true
-
 
 static func _hub_make_rt(x0: int, z0: int, tw: int, th: int) -> void:
 	var n: int = HUB_SUB
@@ -111,7 +107,6 @@ static func rebind_tree(n: Node) -> void:
 		rebind_tree(n.get_child(i))
 		i += 1
 
-
 static func save_hub_bake() -> void:
 	if _img == null:
 		push_error("bake_camp: _img null")
@@ -144,41 +139,6 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 		return
 	_hub_make_rt(x0, z0, tw, th)
 	_hub_finish_yard(x0, z0, layout)
-static func _hub_occ(_x0: int, _z0: int, tw: int, th: int, layout: Node) -> Dictionary:
-	var n: int = HUB_SUB
-	var sw: int = tw * n
-	var sh: int = th * n
-	var solid := PackedByteArray()
-	solid.resize(sw * sh)
-	solid.fill(1)
-	if layout == null:
-		return {"solid": solid, "sw": sw, "sh": sh}
-	var boxes: Array = []
-	if layout.has_method("hall_pos"):
-		boxes.append({"pos": layout.hall_pos(), "box": layout.hall_box})
-		boxes.append({"pos": layout.wing_pos(), "box": layout.wing_box})
-		boxes.append({"pos": layout.stall_pos(), "box": layout.stall_box})
-	for raw in boxes:
-		var item: Dictionary = raw
-		var p: Vector3 = item["pos"]
-		var b: Vector3 = item["box"]
-		var x_a: float = p.x - b.x * 0.5
-		var x_b: float = p.x + b.x * 0.5
-		var z_a: float = p.z - b.z * 0.5
-		var z_b: float = p.z + b.z * 0.5
-		var fx0: int = clampi(int(floor((x_a - float(_x0)) * float(n))), 0, sw - 1)
-		var fx1: int = clampi(int(ceil((x_b - float(_x0)) * float(n))), 0, sw)
-		var fz0: int = clampi(int(floor((z_a - float(_z0)) * float(n))), 0, sh - 1)
-		var fz1: int = clampi(int(ceil((z_b - float(_z0)) * float(n))), 0, sh)
-		var fz: int = fz0
-		while fz < fz1:
-			var row: int = fz * sw
-			var fx: int = fx0
-			while fx < fx1:
-				solid[row + fx] = 0
-				fx += 1
-			fz += 1
-	return {"solid": solid, "sw": sw, "sh": sh}
 static func _blur_hub(img: Image) -> void:
 	var w: int = img.get_width()
 	var h: int = img.get_height()
@@ -203,124 +163,6 @@ static func _blur_hub(img: Image) -> void:
 			x += 1
 		y += 1
 
-
-static func _hub_day_finish(img: Image, _x0: int, _z0: int, _layout: Node) -> void:
-	if img == null:
-		return
-	var amb := Color(0.9, 0.82, 0.68, 1.0)
-	var w: int = img.get_width()
-	var h: int = img.get_height()
-	var y: int = 0
-	while y < h:
-		var x: int = 0
-		while x < w:
-			var c: Color = img.get_pixel(x, y)
-			if c.r + c.g + c.b < 0.12:
-				c = amb
-			else:
-				c = Color(maxf(c.r, amb.r * 0.72), maxf(c.g, amb.g * 0.72), maxf(c.b, amb.b * 0.72), 1.0)
-			img.set_pixel(x, y, c)
-			x += 1
-		y += 1
-static func _hub_in_sun_shade(wx: float, wz: float, boxes: Array, away: Vector2) -> bool:
-	if _hub_in_boxes(wx, wz, boxes):
-		return false
-	var t: float = 0.15
-	while t <= 3.6:
-		var px: float = wx - away.x * t
-		var pz: float = wz - away.y * t
-		if _hub_in_boxes(px, pz, boxes):
-			return true
-		t += 0.15
-	return false
-
-static func _hub_in_boxes(wx: float, wz: float, boxes: Array) -> bool:
-	for raw in boxes:
-		var item: Dictionary = raw
-		var p: Vector3 = item["pos"]
-		var b: Vector3 = item["box"]
-		if absf(wx - p.x) <= b.x * 0.5 and absf(wz - p.z) <= b.z * 0.5:
-			return true
-	return false
-
-static func _hub_lift_dark(img: Image) -> void:
-	if img == null:
-		return
-	var amb := Color(0.86, 0.78, 0.64, 1.0)
-	var w: int = img.get_width()
-	var h: int = img.get_height()
-	var y: int = 0
-	while y < h:
-		var x: int = 0
-		while x < w:
-			var c: Color = img.get_pixel(x, y)
-			if c.r < amb.r or c.g < amb.g or c.b < amb.b:
-				img.set_pixel(x, y, Color(maxf(c.r, amb.r), maxf(c.g, amb.g), maxf(c.b, amb.b), 1.0))
-			x += 1
-		y += 1
-
-static func _hub_building_shade(img: Image, x0: int, z0: int, layout: Node) -> void:
-	if img == null or layout == null or not layout.has_method("hall_pos"):
-		return
-	var away := Vector2(-0.406138, 0.913811)
-	var boxes: Array = [
-		{"pos": layout.hall_pos(), "box": layout.hall_box, "len": 3.4},
-		{"pos": layout.wing_pos(), "box": layout.wing_box, "len": 2.6},
-		{"pos": layout.stall_pos(), "box": layout.stall_box, "len": 2.2},
-	]
-	if layout.get("hall_awning_depth") != null:
-		var hp: Vector3 = layout.hall_pos()
-		var hb: Vector3 = layout.hall_box
-		var ad: float = float(layout.hall_awning_depth)
-		boxes.append({"pos": Vector3(hp.x, 0.0, hp.z + hb.z * 0.5 + ad * 0.5), "box": Vector3(hb.x, 1.0, ad), "len": 1.4})
-		var wp: Vector3 = layout.wing_pos()
-		var wb: Vector3 = layout.wing_box
-		var wad: float = float(layout.wing_awning_depth)
-		boxes.append({"pos": Vector3(wp.x, 0.0, wp.z + wb.z * 0.5 + wad * 0.5), "box": Vector3(wb.x, 1.0, wad), "len": 1.2})
-	var w: int = img.get_width()
-	var h: int = img.get_height()
-	var sub: float = float(HUB_SUB)
-	var y: int = 0
-	while y < h:
-		var x: int = 0
-		while x < w:
-			var wx: float = float(x0) + (float(x) + 0.5) / sub
-			var wz: float = float(z0) + (float(y) + 0.5) / sub
-			if _hub_box_hit(wx, wz, boxes):
-				x += 1
-				continue
-			var cover: float = _hub_shade_cover(wx, wz, boxes, away)
-			if cover > 0.0:
-				var c: Color = img.get_pixel(x, y)
-				var k: float = lerpf(1.0, 0.58, cover)
-				img.set_pixel(x, y, Color(c.r * k, c.g * k * 0.98, c.b * k * 0.96, 1.0))
-			x += 1
-		y += 1
-
-static func _hub_box_hit(wx: float, wz: float, boxes: Array) -> bool:
-	for raw in boxes:
-		var item: Dictionary = raw
-		var p: Vector3 = item["pos"]
-		var b: Vector3 = item["box"]
-		if absf(wx - p.x) <= b.x * 0.5 and absf(wz - p.z) <= b.z * 0.5:
-			return true
-	return false
-
-static func _hub_shade_cover(wx: float, wz: float, boxes: Array, away: Vector2) -> float:
-	var best: float = 0.0
-	for raw in boxes:
-		var item: Dictionary = raw
-		var slen: float = float(item["len"])
-		var t: float = 0.12
-		while t <= slen:
-			var px: float = wx - away.x * t
-			var pz: float = wz - away.y * t
-			if _hub_box_hit(px, pz, [item]):
-				best = maxf(best, 1.0 - t / slen)
-				break
-			t += 0.12
-	return best
-
 static func note_prop(node: Node) -> void:
 	if node == null:
 		return
@@ -334,11 +176,9 @@ static func note_prop(node: Node) -> void:
 	_props.append(node)
 	_plan_dirty = true
 
-
 static func drop_prop(node: Node) -> void:
 	_props.erase(node)
 	_plan_dirty = true
-
 
 static func reset_floor() -> void:
 	_props.clear()
@@ -409,7 +249,6 @@ static func _publish_dungeon(host: Node, rect: Rect2i) -> void:
 		loops = host.data["outline_loops"]
 	_publish(x0, z0, tw, th, lights, Stamp.COL_FLOOR, solid, sw, sh, n, loops)
 
-
 static func _publish(
 	x0: int,
 	z0: int,
@@ -447,7 +286,6 @@ static func _publish(
 	tex = _gpu
 	_push()
 	HitchLog.mark("light_push")
-
 
 static func _dungeon_lights(host: Node, x0: int, z0: int, tw: int, th: int) -> Array:
 	var focus: Vector2i = _focus(host)
@@ -505,12 +343,10 @@ static func _dungeon_lights(host: Node, x0: int, z0: int, tw: int, th: int) -> A
 		picked.append(ranked[best_i])
 	return picked
 
-
 static func _before(a: Dictionary, b: Dictionary) -> bool:
 	if int(a["pri"]) != int(b["pri"]):
 		return int(a["pri"]) < int(b["pri"])
 	return float(a["dist"]) < float(b["dist"])
-
 
 static func _light_at(world_x: float, world_z: float, x0: int, z0: int, kind: String) -> Dictionary:
 	return {
@@ -524,7 +360,6 @@ static func _light_at(world_x: float, world_z: float, x0: int, z0: int, kind: St
 		"kind": kind,
 	}
 
-
 static func _reach(kind: String) -> float:
 	if kind == "sun":
 		return _bal("light_sun_range", T.LIGHT_SUN_RANGE)
@@ -533,7 +368,6 @@ static func _reach(kind: String) -> float:
 	if kind == "campfire":
 		return _bal("light_fire_range", T.LIGHT_FIRE_RANGE)
 	return _bal("light_torch_range", T.LIGHT_TORCH_RANGE)
-
 
 static func _energy(kind: String) -> float:
 	if kind == "sun":
@@ -544,7 +378,6 @@ static func _energy(kind: String) -> float:
 		return _bal("light_fire_energy", T.LIGHT_FIRE_ENERGY)
 	return _bal("light_torch_energy", T.LIGHT_TORCH_ENERGY)
 
-
 static func _color(kind: String) -> Color:
 	if kind == "sun":
 		return COL_SUN
@@ -554,7 +387,6 @@ static func _color(kind: String) -> Color:
 		return COL_FIRE
 	return COL_TORCH
 
-
 static func _bal(key: String, fallback: float) -> float:
 	if App.bal == null:
 		return fallback
@@ -562,7 +394,6 @@ static func _bal(key: String, fallback: float) -> float:
 	if v <= 0.0:
 		return fallback
 	return v
-
 
 static func _knob_key() -> String:
 	return "%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
@@ -576,7 +407,6 @@ static func _knob_key() -> String:
 		_bal("light_sun_energy", T.LIGHT_SUN_ENERGY),
 		_bal("light_source_cap", T.LIGHT_SOURCE_CAP),
 	]
-
 
 static func _ring_rect(host: Node) -> Rect2i:
 	var stream: GDScript = load("res://scripts/world/dungeon_geo_stream.gd") as GDScript
@@ -617,7 +447,6 @@ static func _focus(host: Node) -> Vector2i:
 		return sp
 	return Vector2i.ZERO
 
-
 static func _live_key(host: Node) -> String:
 	var parts: PackedStringArray = PackedStringArray()
 	for job in host.geo_jobs:
@@ -627,13 +456,11 @@ static func _live_key(host: Node) -> String:
 		parts.append("%d,%d" % [o.x, o.y])
 	return "|".join(parts)
 
-
 static func _refill(host: Node) -> void:
 	if _bill == null:
 		_bill = load("res://scripts/graphics/torch_bill.gd") as GDScript
 	var stream: GDScript = load("res://scripts/world/dungeon_geo_stream.gd") as GDScript
 	_bill.refill(host, _sites, int(stream.CHUNK))
-
 
 static func _node_cell(node: Node) -> Vector2i:
 	if str(node.get("kind")) == "crystal":
@@ -643,16 +470,13 @@ static func _node_cell(node: Node) -> Vector2i:
 	var body: Node3D = node as Node3D
 	return Vector2i(int(round(body.global_position.x - 0.5)), int(round(body.global_position.z - 0.5)))
 
-
 static func _inside(x: int, z: int, x0: int, z0: int, tw: int, th: int) -> bool:
 	return x >= x0 and z >= z0 and x < x0 + tw and z < z0 + th
-
 
 static func _dist(cell: Vector2i, focus: Vector2i) -> float:
 	var dx: float = float(cell.x - focus.x)
 	var dz: float = float(cell.y - focus.y)
 	return sqrt(dx * dx + dz * dz)
-
 
 static func _push() -> void:
 	var keep: Array[ShaderMaterial] = []
@@ -664,7 +488,6 @@ static func _push() -> void:
 		mat.set_shader_parameter("light_span", span)
 		keep.append(mat)
 	_mats = keep
-
 
 static func sample_xz(world: Vector2) -> Color:
 	# Same luv as the floor and wall shaders. Bilinear across texels.
@@ -696,7 +519,6 @@ static func sample_xz(world: Vector2) -> Color:
 	var c11: Color = _img.get_pixel(x1, y1)
 	return c00.lerp(c10, fx).lerp(c01.lerp(c11, fx), fy)
 
-
 static func floor_open(world: Vector2) -> bool:
 	if _img == null:
 		return false
@@ -710,28 +532,6 @@ static func floor_open(world: Vector2) -> bool:
 	if _sn < 1 or _solid.is_empty():
 		return true
 	return Stamp.solid_open(_solid, _sw, _sh, _sn, world.x, world.y)
-
-
-static func nearest_cast(world: Vector2) -> Dictionary:
-	var found := false
-	var best := Vector2.ZERO
-	var best_d := 0.0
-	var best_r := 0.0
-	for src in _casts:
-		var item: Dictionary = src
-		var xz: Vector2 = item["xz"]
-		var reach: float = float(item["reach"])
-		var dist: float = world.distance_to(xz)
-		if dist > reach:
-			continue
-		if found and dist >= best_d:
-			continue
-		found = true
-		best = xz
-		best_d = dist
-		best_r = reach
-	return {"ok": found, "xz": best, "dist": best_d, "reach": best_r}
-
 
 static func nearest_casts(world: Vector2, cap: int = 3) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
@@ -758,7 +558,6 @@ static func nearest_casts(world: Vector2, cap: int = 3) -> Array[Dictionary]:
 		if out.size() > limit:
 			out.resize(limit)
 	return out
-
 
 static func _keep_casts(x0: int, z0: int, tw: int, th: int, lights: Array) -> void:
 	_casts.clear()
@@ -931,14 +730,6 @@ static func _hub_stamp_skirt(
 			x += 1
 		y += 1
 	return wrote
-static func _hub_roof_box(pos: Vector3, box: Vector3, eave: float, slen: float) -> Dictionary:
-	return {
-		"x": pos.x,
-		"z": pos.z + eave * 0.35,
-		"hx": box.x * 0.5 + 0.08,
-		"hz": box.z * 0.5 + eave + 0.35,
-		"len": slen
-	}
 static func _hub_yard_boxes(layout: Node, _bake: bool) -> Array:
 	var boxes: Array = []
 	if layout != null and layout.has_method("hall_pos"):
@@ -1022,7 +813,6 @@ static func _hub_tarp(pos: Vector3, box: Vector3) -> Dictionary:
 		"h": 1.7
 	}
 
-
 static func _hub_post(pos: Vector3, box: Vector3, sx: float, sz: float) -> Dictionary:
 	return {
 		"kind": "post",
@@ -1050,7 +840,6 @@ static func _hub_roof_h(wx: float, wz: float, b: Dictionary) -> float:
 	return float(b.get("h", 1.0))
 static func _hub_inside(wx: float, wz: float, b: Dictionary) -> bool:
 	return absf(wx - float(b["x"])) <= float(b["hx"]) and absf(wz - float(b["z"])) <= float(b["hz"])
-
 
 static func _hub_lock_shadows(img: Image, org: Vector2, layout: Node) -> int:
 	var sun := Vector3(-0.42, -1.0, 0.9).normalized()
@@ -1087,7 +876,6 @@ static func _hub_ground(v: Vector3, sun: Vector3) -> Vector2:
 	var g: Vector3 = v + sun * t
 	return Vector2(g.x, g.z)
 
-
 static func _hub_dark(img: Image, x0: int, z0: int, sub: float, a: Vector2, b: Vector2, c: Vector2) -> int:
 	if a.x < -1000.0 or b.x < -1000.0 or c.x < -1000.0:
 		return 0
@@ -1121,7 +909,6 @@ static func _hub_dark(img: Image, x0: int, z0: int, sub: float, a: Vector2, b: V
 			x += 1
 		y += 1
 	return wrote
-
 
 static func _hub_project_mesh(img: Image, org: Vector2, node: MeshInstance3D, sun: Vector3) -> int:
 	if node == null or node.mesh == null or not node.visible:
@@ -1173,7 +960,3 @@ static func _hub_project_sprite(img: Image, org: Vector2, spr: Sprite3D, sun: Ve
 	wrote += _hub_dark(img, int(org.x), int(org.y), sub, _hub_ground(p0, sun), _hub_ground(p1, sun), _hub_ground(p2, sun))
 	wrote += _hub_dark(img, int(org.x), int(org.y), sub, _hub_ground(p0, sun), _hub_ground(p2, sun), _hub_ground(p3, sun))
 	return wrote
-static func _hub_stamp_lock_box(
-	img: Image, org: Vector2, sub: float, w: int, h: int, b: Dictionary, away: Vector2
-) -> int:
-	return _hub_stamp_skirt(img, int(org.x), int(org.y), sub, w, h, b, away)

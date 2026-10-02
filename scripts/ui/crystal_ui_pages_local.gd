@@ -7,7 +7,6 @@ const CrystalNet := preload("res://scripts/world/crystal_net.gd")
 const Util := preload("res://scripts/ui/crystal_ui_util.gd")
 const Net := preload("res://scripts/ui/crystal_ui_pages_net.gd")
 
-
 static func page_local(host) -> void:
 	if host.host and host.host.has_method("_redraw_map"):
 		host.host._redraw_map()

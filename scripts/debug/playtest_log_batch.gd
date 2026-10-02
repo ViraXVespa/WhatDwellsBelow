@@ -6,7 +6,6 @@ const Digest := preload("res://scripts/debug/playtest_log_batch_digest.gd")
 const Flags := preload("res://scripts/debug/playtest_log_batch_flags.gd")
 const Prune := preload("res://scripts/debug/playtest_log_batch_prune.gd")
 
-
 static var active: bool = false
 static var stamp: String = ""
 static var runs: Array = []

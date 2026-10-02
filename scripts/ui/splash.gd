@@ -12,7 +12,6 @@ var fade: ColorRect
 var card: Control
 var _t := 0.0
 
-
 func _ready() -> void:
 	_fill(self)
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -91,16 +90,13 @@ func _ready() -> void:
 	if "--wdb-phase9-smoke" in args:
 		printerr("P9: splash_graffiti=Shamelessly Vibecoded with Grok")
 
-
 func _wake() -> void:
 	App.wake_web_pad()
-
 
 func _fill(c: Control) -> void:
 	c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	c.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	c.grow_vertical = Control.GROW_DIRECTION_BOTH
-
 
 func _mark(path: String, caption: String) -> VBoxContainer:
 	var box := VBoxContainer.new()
@@ -116,7 +112,6 @@ func _mark(path: String, caption: String) -> VBoxContainer:
 	box.add_child(icon)
 	box.add_child(_lab(caption, 16, Color(0.86, 0.82, 0.9)))
 	return box
-
 
 func _credit() -> Control:
 	var shell := Control.new()
@@ -157,7 +152,6 @@ func _credit() -> Control:
 		tag.position = Vector2(-79, 87)
 		shell.add_child(tag)
 	return shell
-
 
 class StrikeBar extends Control:
 	var line: Label
@@ -201,7 +195,6 @@ class StrikeBar extends Control:
 		draw_line(Vector2(x0 - 4.0, y - 2.0), Vector2(x1 + 4.0, y + 1.0), col, 5.0, true)
 		draw_line(Vector2(x0 - 2.0, y + 3.0), Vector2(x1 + 2.0, y + 2.0), Color(0.12, 0.03, 0.08, 0.9), 2.8, true)
 
-
 func _lab(text: String, font_px: int, col: Color) -> Label:
 	var l := Label.new()
 	l.text = text
@@ -211,7 +204,6 @@ func _lab(text: String, font_px: int, col: Color) -> Label:
 	l.add_theme_color_override("font_outline_color", Color(0.04, 0.02, 0.06))
 	l.add_theme_constant_override("outline_size", 8 if font_px >= 28 else 5)
 	return l
-
 
 func _process(delta: float) -> void:
 	_t += delta
@@ -231,7 +223,6 @@ func _process(delta: float) -> void:
 		if App.has_method("pad_just") and (App.pad_just("interact") or App.pad_just("pause")):
 			_advance()
 
-
 func _unhandled_input(event: InputEvent) -> void:
 	if _done:
 		return
@@ -241,7 +232,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton and event.pressed:
 		_advance()
 		get_viewport().set_input_as_handled()
-
 
 func _advance() -> void:
 	if _done:

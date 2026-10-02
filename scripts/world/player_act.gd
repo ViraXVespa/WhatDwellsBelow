@@ -4,7 +4,6 @@ const Depth := preload("res://scripts/world/depth.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
 const FloatS := preload("res://scripts/combat/float_num.gd")
 
-
 static func take_hit(host: Node, raw: float, from_dir: Vector2, crit: bool, src := "") -> void:
 	if host.hp <= 0.0 or host.exiting:
 		return
@@ -32,7 +31,6 @@ static func take_hit(host: Node, raw: float, from_dir: Vector2, crit: bool, src 
 	if host.hp <= 0.0:
 		player_die(host)
 
-
 static func _float(host: Node, amount: int, crit: bool, glance: bool) -> void:
 	var n: Label3D = FloatS.new()
 	n.setup(amount, crit, glance)
@@ -43,19 +41,16 @@ static func _float(host: Node, amount: int, crit: bool, glance: bool) -> void:
 	else:
 		host.add_child(n)
 
-
 static func player_die(host: Node) -> void:
 	if Smoke.hold_player():
 		host.hp = host.max_hp
 		return
 	play_exit(host, "death", host.last_hit)
 
-
 static func heal(host: Node, amount: float) -> void:
 	if amount > 0.0 and host.hp < host.max_hp:
 		App.prog.add_run_xp("hp", App.bal.xp_hp_heal)
 	host.hp = minf(host.max_hp, host.hp + amount)
-
 
 static func play_exit(host: Node, cond: String, killer := "") -> void:
 	if host.exiting:
@@ -73,7 +68,6 @@ static func play_exit(host: Node, cond: String, killer := "") -> void:
 	if cond == "death":
 		host.hp = 0.0
 
-
 static func tick_exit(host: Node, delta: float) -> void:
 	host.exit_t += delta
 	host.velocity = Vector3.ZERO
@@ -89,7 +83,6 @@ static func tick_exit(host: Node, delta: float) -> void:
 		host.exiting = false
 		App.finish_end(host.exit_cond, host.exit_killer)
 
-
 static func start_gather(host: Node, node: Node) -> void:
 	if host.exiting:
 		return
@@ -103,11 +96,9 @@ static func start_gather(host: Node, node: Node) -> void:
 	if d.length() > 0.001:
 		host.aim_dir = d.normalized()
 
-
 static func stop_gather(host: Node) -> void:
 	host.gathering = null
 	host.gather_t = 0.0
-
 
 static func tick_gather(host: Node, delta: float, move: Vector2) -> void:
 	if host.gathering == null or not is_instance_valid(host.gathering):
@@ -129,7 +120,6 @@ static func tick_gather(host: Node, delta: float, move: Vector2) -> void:
 			if r.get("done", false):
 				stop_gather(host)
 
-
 static func refresh_prompt(host: Node) -> void:
 	if App.ui_open:
 		return
@@ -148,7 +138,6 @@ static func refresh_prompt(host: Node) -> void:
 	else:
 		App.interact_prompt = ""
 
-
 static func try_interact(host: Node) -> void:
 	if App.ui_open or host.interact_lock > 0.0:
 		return
@@ -165,7 +154,6 @@ static func try_interact(host: Node) -> void:
 		App.interact_prompt = msg
 	else:
 		App.interact_prompt = ""
-
 
 static func cooldowns(host: Node, delta: float) -> void:
 	host.dash_cd = maxf(0.0, host.dash_cd - delta)

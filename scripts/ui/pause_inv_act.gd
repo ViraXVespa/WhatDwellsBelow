@@ -2,12 +2,10 @@ extends Object
 
 const View := preload("res://scripts/ui/pause_inv_view.gd")
 
-
 static func act(ui: CanvasLayer, msg: String) -> void:
 	ui._st(msg)
 	App.save_now()
 	ui._rebuild()
-
 
 static func primary(ui: CanvasLayer) -> void:
 	var it: Dictionary = View.selected(ui)
@@ -20,7 +18,6 @@ static func primary(ui: CanvasLayer) -> void:
 		equip_item(ui)
 		return
 	View.refresh_detail(ui)
-
 
 static func use_item(ui: CanvasLayer) -> void:
 	var it: Dictionary = View.selected(ui)
@@ -36,7 +33,6 @@ static func use_item(ui: CanvasLayer) -> void:
 		msg = App.prog.use_food()
 	act(ui, msg)
 
-
 static func equip_item(ui: CanvasLayer) -> void:
 	var it: Dictionary = View.selected(ui)
 	if not View.can_equip_item(ui, it):
@@ -46,7 +42,6 @@ static func equip_item(ui: CanvasLayer) -> void:
 	var msg: String = App.prog.equip_uid(int(it.uid))
 	ui.inv_sel = "slot:" + slot
 	act(ui, msg)
-
 
 static func unequip_item(ui: CanvasLayer) -> void:
 	if View.from_bag(ui):
@@ -66,7 +61,6 @@ static func unequip_item(ui: CanvasLayer) -> void:
 		if not it.is_empty():
 			ui.inv_sel = "bag:" + str(int(it.uid))
 	act(ui, msg)
-
 
 static func drop_item(ui: CanvasLayer) -> void:
 	if not App.in_dungeon:

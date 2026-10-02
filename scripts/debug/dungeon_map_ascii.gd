@@ -19,7 +19,6 @@ static func _emit_ascii(lines: Array[String], data: Dictionary, overlays: Dictio
 			row += _sample(grid, grid_w, grid_h, overlays, gx * sc, gy * sc, sc)
 		Util._out(lines, "ascii=%s" % row)
 
-
 static func _sample(grid: PackedByteArray, grid_w: int, grid_h: int, overlays: Dictionary, ox: int, oy: int, sc: int) -> String:
 	var best_kind: String = ""
 	var best_rank: int = -1

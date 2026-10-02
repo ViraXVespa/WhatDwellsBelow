@@ -4,7 +4,6 @@ extends Object
 
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 
-
 static func bare(prio: int = 0) -> Sprite3D:
 	var s := Sprite3D.new()
 	s.centered = true
@@ -14,7 +13,6 @@ static func bare(prio: int = 0) -> Sprite3D:
 	s.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	s.render_priority = prio
 	return s
-
 
 static func make(path: String, world_h: float, y: float, prio: int = 0, decorate: bool = true) -> Sprite3D:
 	var s: Sprite3D = bare(prio)

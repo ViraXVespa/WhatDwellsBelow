@@ -34,8 +34,6 @@ static func reset_meta(p: Object) -> void:
 	p.clear_food()
 	Gear.ensure_required_slots(p)
 
-
-
 static func begin_run_loadout(p: Object) -> void:
 	for it in p.bag:
 		if str(it.get("kind", "")) != "artifact":
@@ -72,8 +70,6 @@ static func begin_run_loadout(p: Object) -> void:
 	if str(p.quest_active.get("kind", "")) == "ore":
 		p.quest_active.have = 0
 
-
-
 static func _slot_for_run(p: Object, s: String) -> Dictionary:
 	if s == "weapon" or s == "tool":
 		return Gear.required_piece(p, s)
@@ -83,8 +79,6 @@ static func _slot_for_run(p: Object, s: String) -> Dictionary:
 	if pi >= 0 and pi < h.size():
 		return (h[pi] as Dictionary).duplicate(true)
 	return Gear.starter(p, s)
-
-
 
 static func lose_unextracted(p: Object) -> void:
 	p.bag.clear()
@@ -99,16 +93,12 @@ static func lose_unextracted(p: Object) -> void:
 	p._sync_artifacts()
 	Gear.ensure_required_slots(p)
 
-
-
 static func _clear_mailed(p: Object) -> void:
 	p.mailed_gold = 0
 	p.mailed_ore = 0
 	p.mailed_wood = 0
 	p.mailed_root = 0
 	p.mailed_names = PackedStringArray()
-
-
 
 static func _clamp_food_slot(p: Object) -> void:
 	if App.in_dungeon:
@@ -121,22 +111,16 @@ static func _clamp_food_slot(p: Object) -> void:
 		fd.stack = cap
 		p.slots["food"] = fd
 
-
-
 static func clear_food(p: Object) -> void:
 	p.food_id = ""
 	p.food_t = 0.0
 	p.food_left = 0.0
-
-
 
 static func to_meta(p: Object) -> Dictionary:
 	var m := Town.to_meta(p)
 	m["analyzed"] = p.analyzed.duplicate(true)
 	m["forge_book"] = p.forge_book.duplicate(true)
 	return m
-
-
 
 static func from_meta(p: Object, d: Dictionary) -> void:
 	Town.from_meta(p, d)
@@ -146,6 +130,3 @@ static func from_meta(p: Object, d: Dictionary) -> void:
 	p.forge_book = book.duplicate(true) if book is Dictionary else {}
 	ForgeP.migrate(p)
 	Gear.ensure_required_slots(p)
-
-
-

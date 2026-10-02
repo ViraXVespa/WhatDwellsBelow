@@ -6,10 +6,8 @@ const AnimS := preload("res://scripts/debug/anim_browser.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const CatS := preload("res://scripts/data/archives_catalog.gd")
 
-
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
-
 
 static func p9(host: Node) -> void:
 	var player: Variant = host.get("player")

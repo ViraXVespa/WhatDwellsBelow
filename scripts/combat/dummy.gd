@@ -19,7 +19,6 @@ var is_boss := false
 var tag := Label3D.new()
 var last_glance := false
 
-
 func _ready() -> void:
 	add_to_group("enemies")
 	collision_layer = 4
@@ -51,7 +50,6 @@ func _ready() -> void:
 	tag.visible = false
 	add_child(tag)
 
-
 func setup_boss(title: String, floor_n: int) -> void:
 	is_boss = true
 	add_to_group("boss")
@@ -70,26 +68,12 @@ func setup_boss(title: String, floor_n: int) -> void:
 	tag.modulate = Color(1.0, 0.82, 0.35)
 	_pin_bar()
 
-
-func setup_guard() -> void:
-	hp = App.bal.dummy_hp * 0.85
-	max_hp = hp
-	spr.modulate = Color(0.95, 0.55, 0.45)
-	tag.text = "Base"
-	tag.visible = true
-	tag.modulate = Color(0.95, 0.45, 0.35)
-	tag.font_size = 28
-	_pin_bar()
-
-
 func force_kill() -> void:
 	hp = 0.0
 	_die()
 
-
 func is_alive() -> bool:
 	return not dead and hp > 0.0
-
 
 func take_hit(raw: float, _from_dir: Vector2, crit: bool) -> void:
 	if dead:
@@ -113,18 +97,15 @@ func take_hit(raw: float, _from_dir: Vector2, crit: bool) -> void:
 			hp = max_hp
 			HpBarS.pulse(self, hp, max_hp, combat_lv)
 
-
 func apply_stagger(sec: float) -> void:
 	if is_boss:
 		stagger = maxf(stagger, App.bal.slam_stagger_boss)
 	else:
 		stagger = maxf(stagger, sec)
 
-
 func _pin_bar() -> void:
 	var HpBarS: GDScript = load("res://scripts/combat/hp_bar.gd") as GDScript
 	HpBarS.ensure(self)
-
 
 func _float(amount: int, crit: bool) -> void:
 	var FloatS: GDScript = load("res://scripts/combat/float_num.gd") as GDScript
@@ -137,7 +118,6 @@ func _float(amount: int, crit: bool) -> void:
 		parent_node.add_child(n)
 	else:
 		add_child(n)
-
 
 func _die() -> void:
 	if dead:
@@ -152,7 +132,6 @@ func _die() -> void:
 	var tw := create_tween()
 	tw.tween_property(spr, "modulate:a", 0.0, 0.22)
 	tw.finished.connect(queue_free)
-
 
 func _physics_process(delta: float) -> void:
 	if dead:

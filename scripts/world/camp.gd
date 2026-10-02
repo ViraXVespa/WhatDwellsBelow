@@ -17,7 +17,6 @@ var prompt: Label
 var _layout: Node3D
 var _editor_hooked: bool = false
 
-
 func _ready() -> void:
 	_layout = LayoutS.on_camp(self)
 	_layout.ensure_tree()
@@ -107,16 +106,13 @@ func _hook_editor() -> void:
 	if not _layout.editor_redraw.is_connected(_on_layout_redraw):
 		_layout.editor_redraw.connect(_on_layout_redraw)
 
-
 func _on_layout_redraw() -> void:
 	if Engine.is_editor_hint():
 		Build.realize_editor(self, _layout)
 
-
 func world_ui() -> Node:
 	ensure_ui()
 	return ui
-
 
 func ensure_ui() -> void:
 	if ui != null:
@@ -127,7 +123,6 @@ func ensure_ui() -> void:
 	add_child(ui)
 	LoadTiming.mark("camp_ui")
 
-
 func warmup() -> void:
 	Warm.frame(self)
 	if dummy:
@@ -137,10 +132,8 @@ func warmup() -> void:
 		dummy.velocity = stored
 		dummy.global_position.y = 0.0
 
-
 func warmup_restore() -> void:
 	Warm.restore(self)
-
 
 func _process(_delta: float) -> void:
 	if Engine.is_editor_hint():
@@ -159,7 +152,6 @@ func _process(_delta: float) -> void:
 		hint.text = "Placeholdia  ·  bank %dg  %d ore  %d wood  ·  deepest F%d%s\nCrystal  ·  Anvil  ·  Vendor  ·  Guild  ·  Billboard  ·  Start pause" % [App.bank_gold, App.bank_ore, App.bank_wood, App.prog.deepest, hot]
 	if prompt:
 		prompt.text = App.interact_prompt
-
 
 func _banner() -> void:
 	var root := Node3D.new()
@@ -183,7 +175,6 @@ func _banner() -> void:
 	spr.position = Vector3(0.0, 2.2, 0.0)
 	root.add_child(spr)
 
-
 func _banner_pole(root: Node3D, pos: Vector3) -> void:
 	var pole := StaticBody3D.new()
 	pole.collision_layer = 1
@@ -195,7 +186,6 @@ func _banner_pole(root: Node3D, pos: Vector3) -> void:
 	cs.shape = sh
 	pole.add_child(cs)
 
-
 func ensure_dummy() -> void:
 	if dummy != null:
 		return
@@ -205,7 +195,6 @@ func ensure_dummy() -> void:
 	dummy = n
 	add_child(n)
 
-
 func _tune_label(host: Node3D) -> void:
 	if host == null or not ("label" in host) or host.label == null:
 		return
@@ -213,7 +202,6 @@ func _tune_label(host: Node3D) -> void:
 	host.label.render_priority = 8
 	host.label.outline_render_priority = 7
 	host.label.sorting_offset = 0.0
-
 
 func _spots() -> void:
 	_banner()
@@ -262,7 +250,6 @@ func _spots() -> void:
 	add_child(b)
 	_tune_label(b)
 
-
 func _bust_mat(tex: Texture2D) -> ShaderMaterial:
 	var sh := Shader.new()
 	sh.code = """
@@ -283,11 +270,9 @@ void fragment() {
 	mat.set_shader_parameter("albedo_tex", tex)
 	return mat
 
-
 func _music() -> void:
 	if App.music and App.music.has_method("play_hub"):
 		App.music.play_hub()
-
 
 func _hud() -> void:
 	var layer := CanvasLayer.new()
@@ -315,7 +300,6 @@ func _hud() -> void:
 	prompt.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.03))
 	prompt.add_theme_constant_override("outline_size", 6)
 	layer.add_child(prompt)
-
 
 func _strip_baked_env(n: Node) -> void:
 	if n == null:

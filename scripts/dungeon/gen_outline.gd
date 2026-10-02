@@ -4,7 +4,6 @@ const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 
 const FLOOR := 1
 
-
 static func _on_rim(grid: PackedByteArray, gw: int, gh: int, per: int, mid: Vector2, nrm: Vector2) -> bool:
 	var inn: Vector2 = mid + nrm * 0.6
 	var outp: Vector2 = mid - nrm * 0.6
@@ -20,7 +19,6 @@ static func _on_rim(grid: PackedByteArray, gw: int, gh: int, per: int, mid: Vect
 		return true
 	return grid[oy * gw + ox] != FLOOR
 
-
 static func _rim_add(bucket: Dictionary, key: int, a0: float, a1: float) -> void:
 	var lo: float = minf(a0, a1)
 	var hi: float = maxf(a0, a1)
@@ -29,13 +27,11 @@ static func _rim_add(bucket: Dictionary, key: int, a0: float, a1: float) -> void
 	var rows: Array = bucket[key]
 	rows.append(Vector2(lo, hi))
 
-
 static func _room_rim_hash(horiz: Dictionary, vert: Dictionary, x0: float, y0: float, x1: float, y1: float) -> void:
 	_rim_add(horiz, int(round(y0)), x0, x1)
 	_rim_add(horiz, int(round(y1)), x0, x1)
 	_rim_add(vert, int(round(x0)), y0, y1)
 	_rim_add(vert, int(round(x1)), y0, y1)
-
 
 static func _on_collinear_room_rim(horiz: Dictionary, vert: Dictionary, mid: Vector2, dir: Vector2) -> bool:
 	if absf(dir.x) >= absf(dir.y):
@@ -58,12 +54,10 @@ static func _on_collinear_room_rim(horiz: Dictionary, vert: Dictionary, mid: Vec
 			return true
 	return false
 
-
 static func _emit_frag_run(spans: Array, a: Vector2, dir: Vector2, t0: float, t1: float, nrm: Vector2) -> void:
 	if t1 - t0 < 0.04:
 		return
 	spans.append({"origin": a + dir * t0, "delta": dir * (t1 - t0), "normal": nrm, "thick": 0.25})
-
 
 static func _emit_edge(spans: Array, grid: PackedByteArray, gw: int, gh: int, per: int, a: Vector2, b: Vector2, nrm: Vector2, horiz: Dictionary, vert: Dictionary, skip_rims: bool) -> void:
 	var d: Vector2 = b - a
@@ -90,7 +84,6 @@ static func _emit_edge(spans: Array, grid: PackedByteArray, gw: int, gh: int, pe
 	if run0 >= 0.0:
 		_emit_frag_run(spans, a, dir, run0, span_l, nrm)
 
-
 static func _rect(x0: float, y0: float, x1: float, y1: float) -> PackedVector2Array:
 	var poly: PackedVector2Array = PackedVector2Array()
 	poly.append(Vector2(x0, y0))
@@ -98,7 +91,6 @@ static func _rect(x0: float, y0: float, x1: float, y1: float) -> PackedVector2Ar
 	poly.append(Vector2(x1, y1))
 	poly.append(Vector2(x0, y1))
 	return poly
-
 
 static func _fill_axis_rect(solid: PackedByteArray, sw: int, sh: int, poly: PackedVector2Array, value: int) -> bool:
 	if poly.size() != 4:
@@ -123,7 +115,6 @@ static func _fill_axis_rect(solid: PackedByteArray, sw: int, sh: int, poly: Pack
 		y += 1
 	return true
 
-
 static func _stamp_rect(solid: PackedByteArray, sw: int, sh: int, spans: Array, grid: PackedByteArray, gw: int, gh: int, per: int, x0: float, y0: float, x1: float, y1: float, horiz: Dictionary, vert: Dictionary, skip_rims: bool) -> void:
 	if x1 <= x0 or y1 <= y0:
 		return
@@ -133,7 +124,6 @@ static func _stamp_rect(solid: PackedByteArray, sw: int, sh: int, spans: Array, 
 	_emit_edge(spans, grid, gw, gh, per, Vector2(x1, y1), Vector2(x0, y1), Vector2(0.0, -1.0), horiz, vert, skip_rims)
 	_emit_edge(spans, grid, gw, gh, per, Vector2(x0, y1), Vector2(x0, y0), Vector2(1.0, 0.0), horiz, vert, skip_rims)
 
-
 static func _fine_m(bal: Object) -> float:
 	var m: float = 1.0
 	if bal != null:
@@ -142,10 +132,8 @@ static func _fine_m(bal: Object) -> float:
 		return 1.0
 	return 1.0
 
-
 static func _per_m(fine_m: float) -> int:
 	return clampi(int(round(1.0 / maxf(fine_m, 0.25))), 1, 4)
-
 
 static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> void:
 	var _rng: RandomNumberGenerator = rng

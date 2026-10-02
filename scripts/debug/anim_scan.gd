@@ -3,7 +3,6 @@ extends Object
 const Facing := preload("res://scripts/world/facing.gd")
 const Roster := preload("res://scripts/combat/roster.gd")
 
-
 static func catalog_models() -> Array:
 	var out: Array = []
 	out.append({"id": "player_male", "label": "Player — Male", "dir": "res://assets/sprites/player/male/"})
@@ -14,10 +13,8 @@ static func catalog_models() -> Array:
 	out.append({"id": "gate_master", "label": "Gate Master", "dir": "res://assets/sprites/enemies/gate_master/"})
 	return out
 
-
 static func model_count() -> int:
 	return catalog_models().size()
-
 
 static func scan(base: String) -> Dictionary:
 	var out := {}
@@ -46,11 +43,9 @@ static func scan(base: String) -> Dictionary:
 			(out["idle_none"] as Dictionary)["idle_%s" % k] = (out[k] as Dictionary)["idle"]
 	return out
 
-
 static func put_single(into: Dictionary, name: String, path: String) -> void:
 	if ResourceLoader.exists(path):
 		into[name] = [load(path)]
-
 
 static func put_seq(into: Dictionary, name: String, prefix: String) -> void:
 	var frames: Array = []
@@ -60,7 +55,6 @@ static func put_seq(into: Dictionary, name: String, prefix: String) -> void:
 		i += 1
 	if not frames.is_empty():
 		into[name] = frames
-
 
 static func put_seq_or(into: Dictionary, name: String, prefixes: Array) -> void:
 	for prefix in prefixes:

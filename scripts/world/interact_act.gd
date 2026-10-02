@@ -5,7 +5,6 @@
 const InteractFx := preload("res://scripts/world/interact_fx.gd")
 const Prompt := preload("res://scripts/world/interact_prompt.gd")
 
-
 static func interact(host: Node3D, who: Node) -> String:
 	if App.ui_open:
 		return ""
@@ -77,7 +76,6 @@ static func interact(host: Node3D, who: Node) -> String:
 		return open_chest(host)
 	return host.prompt
 
-
 static func unlock_hidden(host: Node3D) -> void:
 	host.hidden = false
 	host.visible = true
@@ -86,7 +84,6 @@ static func unlock_hidden(host: Node3D) -> void:
 	Prompt.refresh(host)
 	host.add_to_group("interact")
 
-
 static func hide_as_secret(host: Node3D) -> void:
 	host.hidden = true
 	if host.spr:
@@ -94,7 +91,6 @@ static func hide_as_secret(host: Node3D) -> void:
 	if host.label:
 		host.label.visible = false
 	host.remove_from_group("interact")
-
 
 static func shrine(host: Node3D) -> String:
 	if host.used:
@@ -105,7 +101,6 @@ static func shrine(host: Node3D) -> String:
 	App.toast("Damage up.")
 	Prompt.refresh(host)
 	return "A blessing takes hold."
-
 
 static func campfire(host: Node3D, who: Node) -> String:
 	if host.used:
@@ -118,7 +113,6 @@ static func campfire(host: Node3D, who: Node) -> String:
 	Prompt.refresh(host)
 	return "You sit. HP restored."
 
-
 static func open_extract_gate(host: Node3D) -> String:
 	if host.used:
 		return host.prompt
@@ -128,12 +122,10 @@ static func open_extract_gate(host: Node3D) -> String:
 		ui.open_extract("gate", host)
 	return "Feed the gate."
 
-
 static func mark_spent(host: Node3D) -> void:
 	host.used = true
 	InteractFx.set_extract_tex(host, false)
 	Prompt.refresh(host)
-
 
 static func open_shop(host: Node3D) -> String:
 	var ui := ui_node(host)
@@ -141,13 +133,11 @@ static func open_shop(host: Node3D) -> String:
 		ui.open_shop(host)
 	return "A pale shopkeep waits."
 
-
 static func ui_node(host: Node3D) -> Node:
 	var s := host.get_tree().current_scene
 	if s and s.has_method("world_ui"):
 		return s.world_ui()
 	return null
-
 
 static func toggle_gates(host: Node3D) -> void:
 	for n in host.get_tree().get_nodes_in_group("gates"):
@@ -155,7 +145,6 @@ static func toggle_gates(host: Node3D) -> void:
 			var next := not bool(n.get("latched"))
 			n.latched = next
 			n.set_open(next)
-
 
 static func set_open(host: Node3D, v: bool) -> void:
 	host.open = v
@@ -168,7 +157,6 @@ static func set_open(host: Node3D, v: bool) -> void:
 		host.spr.modulate.a = 0.25 if host.open else 1.0
 	Prompt.refresh(host)
 
-
 static func plate_held(host: Node3D, on: bool) -> void:
 	if host.kind != "plate":
 		return
@@ -178,7 +166,6 @@ static func plate_held(host: Node3D, on: bool) -> void:
 		toggle_gates(host)
 		App.sfx("ui")
 		App.toast("The gate shifts.")
-
 
 static func open_chest(host: Node3D) -> String:
 	var ChestS: GDScript = load("res://scripts/world/interact_chest.gd") as GDScript

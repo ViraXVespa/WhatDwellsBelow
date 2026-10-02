@@ -1,6 +1,5 @@
 ﻿extends Object
 
-
 static func rows() -> Array:
 	return [
 		["move_speed", 0.2, 12.0, 0.1],

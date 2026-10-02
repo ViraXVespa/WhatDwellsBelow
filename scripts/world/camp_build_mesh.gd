@@ -1,91 +1,41 @@
 extends Object
 
-
-
-
-
-
-
 const T := preload("res://scripts/data/tunables.gd")
-
-
 
 const WrapShader := preload("res://scripts/graphics/wrap_shader.gd")
 
-
-
 const GroundShader := preload("res://scripts/graphics/ground_shader.gd")
-
-
 
 const GROUND_W := 36
 
-
-
 const GROUND_D := 32
-
-
 
 const GROUND_OX := -2
 
-
-
 const GROUND_OZ := -2
-
-
 
 const GRASS_PAD := 16
 
-
-
 const ROOF_EAVE := 0.42
-
-
 
 const AWNING_DEPTH := 0.48
 
-
-
 const AWNING_SLOPE := 0.10
 
-
-
 const AWNING_VALANCE := 0.16
-
-
 
 const LightRt := preload("res://scripts/graphics/light_rt.gd")
 const TILE_W := 3.2
 
-
-
 const HALL_SIZE := Vector3(5.6, 3.4, 4.2)
-
-
 
 const WING_SIZE := Vector3(3.8, 2.7, 3.2)
 
-
-
 const HALL_POS := Vector3(8.2, 1.7, 6.0)
-
-
 
 const PATH_X := 16.5
 
-
-
 const PATH_Z := 15.0
-
-
-
-
-
-
-
-
-
-
 
 static func roof_mat(
 	dim: Vector2,
@@ -115,99 +65,43 @@ static func roof_mat(
 	return mat
 static func tarp_mat(dim: Vector2, world_min: Vector3) -> Material:
 
-
-
 	return wrap_mat(
-
-
 
 		"res://assets/tiles/plaza_tarp.png",
 
-
-
 		dim,
 
-
-
 		world_min,
-
-
 
 		Color(0.40, 0.46, 0.28),
 
-
-
 		Color.WHITE,
-
-
 
 		true,
 
-
-
 		false
 
-
-
 	)
-
-
-
-
-
-
-
-
-
-
 
 static func awning_mat(dim: Vector2, world_min: Vector3) -> Material:
 
-
-
 	return wrap_mat(
-
-
 
 		"res://assets/tiles/plaza_awning.png",
 
-
-
 		dim,
-
-
 
 		world_min,
 
-
-
 		Color(0.62, 0.22, 0.16),
-
-
 
 		Color.WHITE,
 
-
-
 		true,
-
-
 
 		false
 
-
-
 	)
-
-
-
-
-
-
-
-
-
-
 
 static func wrap_mat(
 	path: String,
@@ -299,107 +193,47 @@ static func attach_awning(
 	body.add_child(cap)
 static func _quad(
 
-
-
 	st: SurfaceTool,
-
-
 
 	p0: Vector3,
 
-
-
 	p1: Vector3,
-
-
 
 	p2: Vector3,
 
-
-
 	p3: Vector3,
-
-
 
 	t0: Vector2,
 
-
-
 	t1: Vector2,
-
-
 
 	t2: Vector2,
 
-
-
 	t3: Vector2
 
-
-
 ) -> void:
-
-
 
 	_tri(st, p0, p1, p2, t0, t1, t2)
 
-
-
 	_tri(st, p0, p2, p3, t0, t2, t3)
-
-
-
-
-
-
-
-
-
-
 
 static func _tri(
 
-
-
 	st: SurfaceTool, p0: Vector3, p1: Vector3, p2: Vector3, t0: Vector2, t1: Vector2, t2: Vector2
-
-
 
 ) -> void:
 
-
-
 	st.set_uv(t0)
-
-
 
 	st.add_vertex(p0)
 
-
-
 	st.set_uv(t1)
-
-
 
 	st.add_vertex(p1)
 
-
-
 	st.set_uv(t2)
 
-
-
 	st.add_vertex(p2)
-
-
-
-
-
-
-
-
-
-
 
 static func ground(host: Node3D) -> void:
 	var _fac = load("res://scripts/world/camp_build.gd")
@@ -430,7 +264,6 @@ static func ground(host: Node3D) -> void:
 	_band(host, 15, 8, 17, 22, y + 0.02, "res://assets/tiles/plaza_path.png", Color(0.44, 0.38, 0.28))
 	_fac.outer_grass(host)
 
-
 static func _band(host: Node3D, x0: int, z0: int, x1: int, z1: int, y: float, tex_path: String, fallback: Color) -> void:
 	if x1 < x0 or z1 < z0:
 		return
@@ -438,7 +271,6 @@ static func _band(host: Node3D, x0: int, z0: int, x1: int, z1: int, y: float, te
 	var sz: float = float(z1 - z0 + 1) * T.TILE
 	var c := Vector3(float(x0) + sx * 0.5, y, float(z0) + sz * 0.5)
 	grass_pad(host, c, Vector2(sx, sz), tex_path, fallback)
-
 
 static func tile_layer(host: Node3D, tex_path: String, points: Array, fallback: Color) -> void:
 	if points.is_empty():
@@ -460,256 +292,32 @@ static func tile_layer(host: Node3D, tex_path: String, points: Array, fallback: 
 	inst.material_override = GroundShader.material(tex_path, fallback)
 	host.add_child(inst)
 
-
 static func grass_pad(
-
-
 
 	host: Node3D, center: Vector3, dim: Vector2, tex_path: String, fallback: Color
 
-
-
 ) -> void:
-
-
 
 	if dim.x <= 0.05 or dim.y <= 0.05:
 
-
-
 		return
-
-
 
 	var mesh := PlaneMesh.new()
 
-
-
 	mesh.size = dim
-
-
 
 	var inst := MeshInstance3D.new()
 
-
-
 	inst.mesh = mesh
-
-
 
 	inst.position = center
 
-
-
 	inst.material_override = GroundShader.material(tex_path, fallback)
-
-
 
 	host.add_child(inst)
 
-
-
-
-
-
-
-
-
-
-
-static func pitched_roof(
-	body: Node3D,
-	box_size: Vector3,
-	eave: float,
-	rise: float,
-	world_min: Vector3,
-	tile: float,
-	uv_off: Vector2
-) -> void:
-	var hx: float = box_size.x * 0.5 + 0.04
-	var zn: float = -box_size.z * 0.5
-	var zs: float = box_size.z * 0.5 + eave
-	var y_lid: float = box_size.y * 0.5 + 0.03
-	var y_ridge: float = y_lid + rise
-	var nl := Vector3(-hx, y_ridge, zn)
-	var nr := Vector3(hx, y_ridge, zn)
-	var sl := Vector3(-hx, y_lid, zs)
-	var sr := Vector3(hx, y_lid, zs)
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var u0 := Vector2(0.0, 0.0)
-	var u1 := Vector2(0.0, 1.0)
-	var u2 := Vector2(1.0, 1.0)
-	var u3 := Vector2(1.0, 0.0)
-	_quad(st, nl, sl, sr, nr, u0, u1, u2, u3)
-	st.generate_normals()
-	var fall_h: float = zs - zn
-	var fall_len: float = sqrt(fall_h * fall_h + rise * rise)
-	var mi := MeshInstance3D.new()
-	mi.name = "PitchedRoof"
-	mi.mesh = st.commit()
-	mi.material_override = roof_mat(Vector2(hx * 2.0, fall_len), world_min, tile, uv_off)
-	body.add_child(mi)
-static func rumpled_tarp(body: Node3D, box_size: Vector3, eave: float, world_min: Vector3) -> void:
-	var hx: float = box_size.x * 0.5 + 0.03
-	var zn: float = -box_size.z * 0.5
-	var zs: float = box_size.z * 0.5 + eave
-	var y0: float = box_size.y * 0.5 + 0.04
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_quad(
-		st,
-		Vector3(-hx, y0, zn),
-		Vector3(-hx, y0, zs),
-		Vector3(hx, y0, zs),
-		Vector3(hx, y0, zn),
-		Vector2(0.0, 0.0),
-		Vector2(0.0, 1.0),
-		Vector2(1.0, 1.0),
-		Vector2(1.0, 0.0)
-	)
-	st.generate_normals()
-	var mi := MeshInstance3D.new()
-	mi.name = "RumpledTarp"
-	mi.mesh = st.commit()
-	mi.material_override = tarp_mat(Vector2(box_size.x + eave, box_size.z + eave), world_min)
-	body.add_child(mi)
-static func _tarp_y(u: float, v: float, y0: float) -> float:
-	return (
-		y0
-		+ 0.045 * sin(u * 9.42478) * sin(v * 6.28318)
-		+ 0.02 * sin(u * 18.8496 + 0.7)
-		+ 0.015 * sin(v * 12.5664 + 1.1)
-	)
-
-static func shed_roof(
-	body: Node3D,
-	x0: float,
-	x1: float,
-	zn: float,
-	zs: float,
-	y_lid: float,
-	rise: float,
-	world_min: Vector3,
-	tile: float,
-	uv_off: Vector2
-) -> void:
-	var y_ridge: float = y_lid + rise
-	var nl := Vector3(x0, y_ridge, zn)
-	var nr := Vector3(x1, y_ridge, zn)
-	var sl := Vector3(x0, y_lid, zs)
-	var sr := Vector3(x1, y_lid, zs)
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var u0 := Vector2(0.0, 0.0)
-	var u1 := Vector2(0.0, 1.0)
-	var u2 := Vector2(1.0, 1.0)
-	var u3 := Vector2(1.0, 0.0)
-	_quad(st, nl, sl, sr, nr, u0, u1, u2, u3)
-	st.generate_normals()
-	var fall_h: float = zs - zn
-	var fall_len: float = sqrt(fall_h * fall_h + rise * rise)
-	var mi := MeshInstance3D.new()
-	mi.name = "PitchedRoof"
-	mi.mesh = st.commit()
-	mi.material_override = roof_mat(Vector2(x1 - x0, fall_len), world_min, tile, uv_off)
-	body.add_child(mi)
-
-
-static func shed_pair(
-	body: Node3D,
-	spans: Array,
-	y_lid: float,
-	rise: float,
-	world_min: Vector3,
-	tile: float,
-	uv_off: Vector2
-) -> void:
-	var y_ridge: float = y_lid + rise
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var trim := SurfaceTool.new()
-	trim.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var u0 := Vector2(0.0, 0.0)
-	var u1 := Vector2(0.0, 1.0)
-	var u2 := Vector2(1.0, 1.0)
-	var u3 := Vector2(1.0, 0.0)
-	var width: float = 0.2
-	var fall_len: float = rise
-	var xmin: float = 1.0e9
-	var xmax: float = -1.0e9
-	for raw in spans:
-		var s: Dictionary = raw
-		xmin = minf(xmin, float(s["x0"]))
-		xmax = maxf(xmax, float(s["x1"]))
-	for raw2 in spans:
-		var sp: Dictionary = raw2
-		var x0: float = float(sp["x0"])
-		var x1: float = float(sp["x1"])
-		var zn: float = float(sp["zn"])
-		var zs: float = float(sp["zs"])
-		var nl := Vector3(x0, y_ridge, zn)
-		var nr := Vector3(x1, y_ridge, zn)
-		var sl := Vector3(x0, y_lid, zs)
-		var sr := Vector3(x1, y_lid, zs)
-		_quad(st, nl, sl, sr, nr, u0, u1, u2, u3)
-		width = maxf(width, x1 - x0)
-		var fh: float = zs - zn
-		fall_len = maxf(fall_len, sqrt(fh * fh + rise * rise))
-		var drop: float = 0.22
-		_quad(
-			trim,
-			Vector3(x0, y_lid, zs),
-			Vector3(x0, y_lid - drop, zs),
-			Vector3(x1, y_lid - drop, zs),
-			Vector3(x1, y_lid, zs),
-			u0, u1, u2, u3
-		)
-		_quad(
-			trim,
-			Vector3(x0, y_ridge, zn),
-			Vector3(x0, y_ridge - 0.16, zn),
-			Vector3(x1, y_ridge - 0.16, zn),
-			Vector3(x1, y_ridge, zn),
-			u0, u1, u2, u3
-		)
-		if absf(x0 - xmin) < 0.05:
-			_quad(
-				trim,
-				Vector3(x0 - 0.06, y_ridge, zn),
-				Vector3(x0 - 0.06, y_lid, zs),
-				Vector3(x0 - 0.06, y_lid - drop, zs),
-				Vector3(x0 - 0.06, y_ridge - 0.14, zn),
-				u0, u1, u2, u3
-			)
-		if absf(x1 - xmax) < 0.05:
-			_quad(
-				trim,
-				Vector3(x1 + 0.06, y_ridge - 0.14, zn),
-				Vector3(x1 + 0.06, y_lid - drop, zs),
-				Vector3(x1 + 0.06, y_lid, zs),
-				Vector3(x1 + 0.06, y_ridge, zn),
-				u0, u1, u2, u3
-			)
-	st.generate_normals()
-	trim.generate_normals()
-	var mi := MeshInstance3D.new()
-	mi.name = "PitchedRoof"
-	mi.mesh = st.commit()
-	mi.material_override = roof_mat(Vector2(width, fall_len), world_min, tile, uv_off)
-	body.add_child(mi)
-	var edge := MeshInstance3D.new()
-	edge.name = "RoofTrim"
-	edge.mesh = trim.commit()
-	var board := StandardMaterial3D.new()
-	board.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	board.albedo_color = Color(0.24, 0.13, 0.08)
-	board.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	edge.material_override = board
-	body.add_child(edge)
 static func guild_roofs(_host: Node3D) -> void:
 	pass
-
 
 static func gable_on(body: Node3D, box_size: Vector3, eave: float, rise: float, tile: float, uv_off: Vector2) -> void:
 	var wx: float = box_size.x * 0.5
@@ -829,7 +437,6 @@ static func _hit(body: Node3D, built: ArrayMesh, label: String) -> void:
 	hit.shape = built.create_trimesh_shape()
 	body.add_child(hit)
 
-
 static func _timber(col: Color) -> Material:
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -837,7 +444,6 @@ static func _timber(col: Color) -> Material:
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	return mat
-
 
 static func _post(body: Node3D, top: Vector3, box_h: float) -> void:
 	var foot: float = -box_h * 0.5

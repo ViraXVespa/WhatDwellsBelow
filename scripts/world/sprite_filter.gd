@@ -18,24 +18,19 @@ const LABELS: PackedStringArray = [
 	"Linear + mips",
 ]
 
-
 static func clamp_id(id: int, allow_linear := false) -> int:
 	return clampi(id, 0, FILT_MAX if allow_linear else FILT_SYS_MAX)
-
 
 static func label(id: int) -> String:
 	id = clampi(id, 0, FILT_MAX)
 	return LABELS[id]
 
-
 static func mips_on(id: int) -> bool:
 	id = clamp_id(id, true)
 	return id == FILT_NEAR_MIP or id == FILT_NEAR_ANISO or id == FILT_LIN_MIP
 
-
 static func aniso_on(id: int) -> bool:
 	return clamp_id(id, false) == FILT_NEAR_ANISO
-
 
 static func from_flags(mips: bool, aniso: bool) -> int:
 	if mips and aniso:
@@ -43,7 +38,6 @@ static func from_flags(mips: bool, aniso: bool) -> int:
 	if mips:
 		return FILT_NEAR_MIP
 	return FILT_NEAREST
-
 
 static func godot_filter(id: int) -> BaseMaterial3D.TextureFilter:
 	match clampi(id, 0, FILT_MAX):
@@ -60,14 +54,8 @@ static func godot_filter(id: int) -> BaseMaterial3D.TextureFilter:
 		_:
 			return BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS_ANISOTROPIC
 
-
-static func cycle_sys(cur: int, dir := 1) -> int:
-	return posmod(clamp_id(cur, false) + dir, FILT_SYS_MAX + 1)
-
-
 static func cycle_all(cur: int, dir := 1) -> int:
 	return posmod(clamp_id(cur, true) + dir, FILT_MAX + 1)
-
 
 static func apply_sprite(s: Sprite3D) -> void:
 	if s == null:
@@ -77,11 +65,9 @@ static func apply_sprite(s: Sprite3D) -> void:
 	if s.texture and mips_on(filt):
 		s.texture = ensure_mips(s.texture)
 
-
 static func decorate(s: Sprite3D) -> Sprite3D:
 	apply_sprite(s)
 	return s
-
 
 static func apply_tree(n: Node = null) -> void:
 	ProjectSettings.set_setting(
@@ -96,13 +82,11 @@ static func apply_tree(n: Node = null) -> void:
 		return
 	_walk(n)
 
-
 static func _walk(n: Node) -> void:
 	if n is Sprite3D:
 		apply_sprite(n as Sprite3D)
 	for c in n.get_children():
 		_walk(c)
-
 
 static func ensure_mips(tex: Texture2D) -> Texture2D:
 	# Imported texture only. Runtime decode → ImageTexture duplicates VRAM and

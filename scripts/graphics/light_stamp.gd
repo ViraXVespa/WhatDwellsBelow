@@ -20,7 +20,6 @@ static var _rr_buf: PackedFloat32Array = PackedFloat32Array()
 static var _gg_buf: PackedFloat32Array = PackedFloat32Array()
 static var _bb_buf: PackedFloat32Array = PackedFloat32Array()
 
-
 static func solid_open(
 	solid: PackedByteArray,
 	sw: int,
@@ -36,7 +35,6 @@ static func solid_open(
 	if fx < 0 or fy < 0 or fx >= sw or fy >= sh:
 		return false
 	return solid[fy * sw + fx] != 0
-
 
 static func near_open(
 	solid: PackedByteArray,
@@ -56,7 +54,6 @@ static func near_open(
 			if solid_open(solid, sw, sh, n, sx, sz):
 				return true
 	return false
-
 
 static func paint(
 	img: Image,
@@ -101,8 +98,6 @@ static func paint(
 	HitchLog.mark("light_walls")
 	_blit(img, rr, gg, bb, walk, iw, ih)
 	HitchLog.mark("light_blit")
-
-
 
 static func _blit(
 	img: Image,
@@ -154,7 +149,6 @@ static func _blit(
 		k += 1
 	img.set_data(iw, ih, false, Image.FORMAT_RGBA8, _rgba)
 
-
 static func _walk_mask(
 	solid: PackedByteArray,
 	sw: int,
@@ -196,47 +190,6 @@ static func _walk_mask(
 				px += 1
 		py += 1
 	return walk
-static func _fill_loops(
-	walk: PackedByteArray,
-	loops: Array,
-	x0: int,
-	z0: int,
-	iw: int,
-	ih: int,
-	n: int
-) -> void:
-	var nf: float = float(maxi(n, 1))
-	var sub: float = float(SUB)
-	for item in loops:
-		var poly: PackedVector2Array = item as PackedVector2Array
-		if poly.size() < 3:
-			continue
-		var min_x: float = poly[0].x
-		var max_x: float = poly[0].x
-		var min_z: float = poly[0].y
-		var max_z: float = poly[0].y
-		for i in range(1, poly.size()):
-			var q: Vector2 = poly[i]
-			min_x = minf(min_x, q.x)
-			max_x = maxf(max_x, q.x)
-			min_z = minf(min_z, q.y)
-			max_z = maxf(max_z, q.y)
-		var px0: int = clampi(int(floor((min_x / nf - float(x0)) * sub)), 0, iw - 1)
-		var px1: int = clampi(int(ceil((max_x / nf - float(x0)) * sub)), 0, iw - 1)
-		var py0: int = clampi(int(floor((min_z / nf - float(z0)) * sub)), 0, ih - 1)
-		var py1: int = clampi(int(ceil((max_z / nf - float(z0)) * sub)), 0, ih - 1)
-		var py: int = py0
-		while py <= py1:
-			var row: int = py * iw
-			var px: int = px0
-			while px <= px1:
-				var fx: float = (float(x0) + (float(px) + 0.5) / sub) * nf
-				var fz: float = (float(z0) + (float(py) + 0.5) / sub) * nf
-				if Geometry2D.is_point_in_polygon(Vector2(fx, fz), poly):
-					walk[row + px] = 1
-				px += 1
-			py += 1
-
 
 static func _lift_floor(
 	rr: PackedFloat32Array,
@@ -259,7 +212,6 @@ static func _lift_floor(
 		gg[i] = minf(gg[i] + ambient.g, 1.0)
 		bb[i] = minf(bb[i] + ambient.b, 1.0)
 		k += 1
-
 
 static func _disc(
 	rr: PackedFloat32Array,
@@ -312,7 +264,6 @@ static func _disc(
 			px += 1
 		py += 1
 
-
 static func _fov_mark(
 	walk: PackedByteArray,
 	iw: int,
@@ -347,7 +298,6 @@ static func _fov_mark(
 		_mark_ray(walk, iw, ih, sx, sy, px0, py)
 		_mark_ray(walk, iw, ih, sx, sy, px1, py)
 		py += 1
-
 
 static func _mark_ray(
 	walk: PackedByteArray,
@@ -408,7 +358,6 @@ static func _mark_ray(
 			return
 		_vis_buf[y * iw + x] = 1
 
-
 static func _walls(
 	rr: PackedFloat32Array,
 	gg: PackedFloat32Array,
@@ -437,137 +386,6 @@ static func _walls(
 			gg[ni] = maxf(gg[ni], gg[i])
 			bb[ni] = maxf(bb[ni], bb[i])
 		k += 1
-
-
-static func _lip_open(
-	solid: PackedByteArray,
-	sw: int,
-	sh: int,
-	n: int,
-	x0: int,
-	z0: int,
-	px: int,
-	py: int,
-	_loops: Array = []
-) -> bool:
-	if n < 1:
-		return true
-	var world_x: float = float(x0) + (float(px) + 0.5) / float(SUB)
-	var world_z: float = float(z0) + (float(py) + 0.5) / float(SUB)
-	return solid_open(solid, sw, sh, n, world_x, world_z)
-
-
-static func _inside_loops(loops: Array, fx: float, fz: float) -> bool:
-	var p: Vector2 = Vector2(fx, fz)
-	for item in loops:
-		var poly: PackedVector2Array = item as PackedVector2Array
-		if poly.size() >= 3 and Geometry2D.is_point_in_polygon(p, poly):
-			return true
-	return false
-
-
-static func _past_span(spans: Array, world_x: float, world_z: float) -> bool:
-	if spans.is_empty():
-		return false
-	var p: Vector2 = Vector2(world_x, world_z)
-	for item in spans:
-		if not (item is Dictionary):
-			continue
-		var run: Dictionary = item
-		if not run.has("delta"):
-			continue
-		var o: Vector2 = run["origin"] as Vector2
-		var d: Vector2 = run["delta"] as Vector2
-		var sl: float = d.length_squared()
-		if sl < 0.04:
-			continue
-		var nrm: Vector2 = run["normal"] as Vector2
-		if nrm.length_squared() < 0.0001:
-			nrm = Vector2(-d.y, d.x)
-		if nrm.length_squared() < 0.0001:
-			continue
-		nrm = nrm.normalized()
-		var t: float = clampf((p - o).dot(d) / sl, 0.0, 1.0)
-		var hit: Vector2 = o + d * t
-		if p.distance_to(hit) > 1.25:
-			continue
-		if (p - o).dot(nrm) < 0.0:
-			return true
-	return false
-
-
-static func _loops_at(loops: Array, n: int, wx: float, wz: float) -> Array:
-	var hit: Array = []
-	var fx: float = wx * float(maxi(n, 1))
-	var fz: float = wz * float(maxi(n, 1))
-	for item in loops:
-		var poly: PackedVector2Array = item as PackedVector2Array
-		if poly.size() >= 3 and Geometry2D.is_point_in_polygon(Vector2(fx, fz), poly):
-			hit.append(item)
-	return hit
-
-
-static func _loop_segs(loops: Array, n: int) -> Array:
-	var segs: Array = []
-	for item in loops:
-		var poly: PackedVector2Array = item as PackedVector2Array
-		var count: int = poly.size()
-		if count < 2:
-			continue
-		var prev: Vector2 = poly[count - 1]
-		for i in count:
-			var cur: Vector2 = poly[i]
-			var d: Vector2 = cur - prev
-			if d.length_squared() >= 0.04:
-				var s: float = 1.0 / float(maxi(n, 1))
-				segs.append(prev * s)
-				segs.append(cur * s)
-			prev = cur
-	return segs
-
-
-static func _span_hit(segs: Array, ax: float, az: float, bx: float, bz: float) -> bool:
-	var count: int = segs.size()
-	if count < 2:
-		return false
-	var a: Vector2 = Vector2(ax, az)
-	var b: Vector2 = Vector2(bx, bz)
-	if a.distance_to(b) < 0.05:
-		return false
-	var minx: float = minf(a.x, b.x)
-	var maxx: float = maxf(a.x, b.x)
-	var minz: float = minf(a.y, b.y)
-	var maxz: float = maxf(a.y, b.y)
-	var i: int = 0
-	while i + 1 < count:
-		var c: Vector2 = segs[i]
-		var d: Vector2 = segs[i + 1]
-		i += 2
-		if maxf(c.x, d.x) < minx or minf(c.x, d.x) > maxx:
-			continue
-		if maxf(c.y, d.y) < minz or minf(c.y, d.y) > maxz:
-			continue
-		if _seg_cross(a, b, c, d):
-			return true
-	return false
-
-
-static func _seg_cross(a: Vector2, b: Vector2, c: Vector2, d: Vector2) -> bool:
-	var ab: Vector2 = b - a
-	var cd: Vector2 = d - c
-	var den: float = ab.x * cd.y - ab.y * cd.x
-	if absf(den) < 0.0000001:
-		return false
-	var ac: Vector2 = c - a
-	var t: float = (ac.x * cd.y - ac.y * cd.x) / den
-	var u: float = (ac.x * ab.y - ac.y * ab.x) / den
-	if t <= 0.04 or t >= 0.96 or u <= 0.02 or u >= 0.98:
-		return false
-	var hit: Vector2 = a + ab * t
-	if hit.distance_to(a) < 1.6 or hit.distance_to(b) < 1.6:
-		return false
-	return true
-
 
 static func _seed(
 	walk: PackedByteArray,

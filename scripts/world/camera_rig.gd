@@ -5,7 +5,6 @@ const T := preload("res://scripts/data/tunables.gd")
 var cam: Camera3D
 var warm_hold := false
 
-
 func _ready() -> void:
 	cam = Camera3D.new()
 	cam.name = "Cam"
@@ -19,36 +18,30 @@ func _ready() -> void:
 	apply_zoom(App.cam_zoom)
 	_look()
 
-
 func _pitch() -> float:
 	if App.bal:
 		return App.bal.cam_pitch
 	return T.CAM_PITCH
-
 
 func _height() -> float:
 	if App.bal:
 		return App.bal.cam_height
 	return T.CAM_HEIGHT
 
-
 func _lift() -> float:
 	if App.bal:
 		return App.bal.look_lift
 	return T.LOOK_LIFT
-
 
 func _look() -> void:
 	var look := global_position + Vector3(0.0, _lift(), 0.0)
 	if cam and cam.global_position.distance_squared_to(look) > 0.0001:
 		cam.look_at(look, Vector3.UP)
 
-
 func _place_local() -> void:
 	var h := _height()
 	var back := h / tan(deg_to_rad(absf(_pitch())))
 	cam.position = Vector3(0.0, h, back)
-
 
 func apply_zoom(z: float) -> void:
 	if warm_hold:
@@ -65,7 +58,6 @@ func apply_size(s: float) -> void:
 	cam.size = size
 	cam.far = maxf(260.0, size * 3.0)
 
-
 func frame_hub(center: Vector3, size: float) -> void:
 	warm_hold = true
 	global_position = center
@@ -73,11 +65,9 @@ func frame_hub(center: Vector3, size: float) -> void:
 	apply_size(size)
 	_look()
 
-
 func restore_user() -> void:
 	warm_hold = false
 	apply_zoom(App.cam_zoom)
-
 
 func follow(target: Vector3) -> void:
 	if warm_hold:

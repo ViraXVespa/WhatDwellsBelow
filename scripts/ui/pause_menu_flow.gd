@@ -25,8 +25,6 @@ static func toggle(host: CanvasLayer) -> void:
 	else:
 		host.show_menu()
 
-
-
 static func show_menu(host: CanvasLayer) -> void:
 	host.open = true
 	host.visible = true
@@ -48,8 +46,6 @@ static func show_menu(host: CanvasLayer) -> void:
 	Board._flag(host, "gear_tip_ready", false)
 	host._rebuild()
 
-
-
 static func show_inventory(host: CanvasLayer) -> void:
 	if not host.open:
 		host.show_menu()
@@ -57,8 +53,6 @@ static func show_inventory(host: CanvasLayer) -> void:
 		host.tab = host.TAB_INV
 		host.sys_page = "main"
 		host._rebuild()
-
-
 
 static func close_ui(host: CanvasLayer) -> void:
 	host.open = false
@@ -87,21 +81,15 @@ static func close_ui(host: CanvasLayer) -> void:
 	App.wake_web_pad()
 	Disp.consume_web_esc()
 
-
-
 static func _wipe(_host: CanvasLayer, n: Node) -> void:
 	while n.get_child_count() > 0:
 		var c: Node = n.get_child(0)
 		n.remove_child(c)
 		c.queue_free()
 
-
-
 static func _store_tip_restore(host: CanvasLayer) -> void:
 	var tip: Control = host.gear_tip_host
 	host.set_meta("gear_tip_restore", tip != null and tip.visible)
-
-
 
 static func _rebuild(host: CanvasLayer) -> void:
 	Util.hide_tip(host)
@@ -163,14 +151,10 @@ static func _rebuild(host: CanvasLayer) -> void:
 	if host.tab_scroll and host.tabs.get_child_count() > host.tab:
 		host.tab_scroll.ensure_control_visible(host.tabs.get_child(host.tab) as Control)
 
-
-
 static func _paint_menu_hint(host: CanvasLayer) -> void:
 	if host.tab == host.TAB_INV:
 		return
 	PromptView.footer(host)
-
-
 
 static func _cycle_tab(host: CanvasLayer, dir: int) -> void:
 	if host.tab == host.TAB_INV:
@@ -181,8 +165,6 @@ static func _cycle_tab(host: CanvasLayer, dir: int) -> void:
 	host.pending_id = ""
 	host.rebind_action = ""
 	host._rebuild()
-
-
 
 static func _focus(host: CanvasLayer) -> void:
 	if host.tab == host.TAB_INV:
@@ -220,8 +202,6 @@ static func _focus(host: CanvasLayer) -> void:
 		(n as Button).grab_focus()
 		return
 
-
-
 static func _back(host: CanvasLayer) -> void:
 	if Confirm.is_open(host):
 		Confirm.close(host)
@@ -235,15 +215,11 @@ static func _back(host: CanvasLayer) -> void:
 			return
 	host.close_ui()
 
-
-
 static func _process(host: CanvasLayer, delta: float) -> void:
 	if host.open and Disp.consume_web_esc():
 		host._back()
 	if host.open and host.tab == host.TAB_INV:
 		GearAct.tick_x(host, delta)
-
-
 
 static func _input(host: CanvasLayer, event: InputEvent) -> void:
 	if not host.open:
@@ -262,8 +238,6 @@ static func _input(host: CanvasLayer, event: InputEvent) -> void:
 		host._back()
 		host.get_viewport().set_input_as_handled()
 		return
-
-
 
 static func _unhandled_input(host: CanvasLayer, event: InputEvent) -> void:
 	if not host.open:

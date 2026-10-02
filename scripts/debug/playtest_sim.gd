@@ -5,7 +5,6 @@ const Recs := preload("res://scripts/debug/playtest_recs.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const PlaytestLogBatch := preload("res://scripts/debug/playtest_log_batch.gd")
 
-
 static func reset_ai_state(pt: Node) -> void:
 	pt.ai_on = false
 	pt.sim_t = 0.0
@@ -43,7 +42,6 @@ static func reset_ai_state(pt: Node) -> void:
 		if pt.has_meta(key):
 			pt.remove_meta(key)
 
-
 static func start_next(pt: Node) -> void:
 	if pt.interrupted or pt.queue.is_empty():
 		pt._stop_live()
@@ -78,7 +76,6 @@ static func start_next(pt: Node) -> void:
 	PlaytestLog.begin(pt)
 	App.begin_run()
 
-
 static func prep_slot(pt: Node) -> void:
 	if pt.slot == "progressed":
 		Store.fresh_delver()
@@ -96,7 +93,6 @@ static func prep_slot(pt: Node) -> void:
 		Store.fresh_delver()
 		Store.save_slot("fresh")
 		Store.load_slot("fresh")
-
 
 static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 	if not pt.live_running:
@@ -121,7 +117,6 @@ static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 		return
 	pt._start_next()
 
-
 static func stop_live(pt: Node) -> void:
 	reset_ai_state(pt)
 	pt.live_running = false
@@ -141,7 +136,6 @@ static func stop_live(pt: Node) -> void:
 	for pth: String in bundle:
 		pt.last_summary += "\nBatch: " + pth
 
-
 static func sim_save(pt: Node, kind: String, progressed: bool) -> void:
 	var weapons: PackedStringArray = PackedStringArray(["great_axe", "staff", "longbow"])
 	var tweaks: Array = [
@@ -157,7 +151,6 @@ static func sim_save(pt: Node, kind: String, progressed: bool) -> void:
 			if pt.interrupted:
 				return
 			pt._one_run(kind, progressed, w, tw)
-
 
 static func one_run(pt: Node, kind: String, progressed: bool, wpn: String, tw: Dictionary) -> void:
 	var snap: Dictionary = pt._snap_bal()
@@ -218,58 +211,44 @@ static func one_run(pt: Node, kind: String, progressed: bool, wpn: String, tw: D
 	pt.history.append(App.tel.to_dict())
 	pt._restore_bal(snap)
 
-
 static func compute_coefs(pt: Node) -> void:
 	Recs.compute_coefs(pt)
-
 
 static func weapon_aware_nudge(pt: Node) -> void:
 	Recs.weapon_aware_nudge(pt)
 
-
 static func cfg_proxy(key: String, row: Dictionary) -> float:
 	return Recs.cfg_proxy(key, row)
-
 
 static func corr(xs: Array, ys: Array) -> float:
 	return Recs.corr(xs, ys)
 
-
 static func build_recs(pt: Node) -> void:
 	Recs.build_recs(pt)
-
 
 static func merge(base: Dictionary, extra: Dictionary) -> Dictionary:
 	return Recs.merge(base, extra)
 
-
 static func snap_bal() -> Dictionary:
 	return Recs.snap_bal()
-
 
 static func restore_bal(d: Dictionary) -> void:
 	Recs.restore_bal(d)
 
-
 static func format_summary(pt: Node) -> String:
 	return Recs.format_summary(pt)
-
 
 static func success_report(pt: Node) -> String:
 	return Recs.success_report(pt)
 
-
 static func save_history(pt: Node) -> void:
 	Recs.save_history(pt)
-
 
 static func load_history(pt: Node) -> void:
 	Recs.load_history(pt)
 
-
 static func save_coefs(pt: Node) -> void:
 	Recs.save_coefs(pt)
-
 
 static func load_coefs(pt: Node) -> void:
 	Recs.load_coefs(pt)

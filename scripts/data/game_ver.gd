@@ -9,7 +9,6 @@ const PAGES_CHANGELOG := "https://viraxvespa.github.io/WhatDwellsBelow/changelog
 static var _web_notes: Dictionary = {}
 static var _web_tried: bool = false
 
-
 static func label() -> String:
     var d := _read_json(VERSION_PATH)
     var s := str(d.get("label", "")).strip_edges()
@@ -19,12 +18,6 @@ static func label() -> String:
     var series := int(d.get("series", 0))
     var patch := int(d.get("patch", 0))
     return "%d.%d.%d" % [e, series, patch]
-
-
-static func series_key() -> String:
-    var d := _read_json(VERSION_PATH)
-    return "%d.%d" % [int(d.get("epoch", 0)), int(d.get("series", 0))]
-
 
 static func cmp(a: String, b: String) -> int:
     var pa := _parts(a)
@@ -36,23 +29,19 @@ static func cmp(a: String, b: String) -> int:
             return 1
     return 0
 
-
 static func is_blank(ver: String) -> bool:
     return ver.strip_edges() == ""
-
 
 static func same_series(a: String, b: String) -> bool:
     var pa := _parts(a)
     var pb := _parts(b)
     return pa[0] == pb[0] and pa[1] == pb[1]
 
-
 static func entries() -> Array:
     var raw: Variant = _read_json(LOG_PATH).get("entries", [])
     if raw is Array:
         return raw
     return []
-
 
 static func unseen(last_seen: String) -> Dictionary:
     var cur := label()
@@ -81,34 +70,11 @@ static func unseen(last_seen: String) -> Dictionary:
     out.sort_custom(func(x, y): return cmp(str(x.get("label", "")), str(y.get("label", ""))) > 0)
     return {"entries": out, "older_series": older_series, "current": cur}
 
-
-static func format_entry(e: Dictionary) -> String:
-    var lab := str(e.get("label", ""))
-    var lines: PackedStringArray = ["## %s" % lab]
-    var points: Variant = e.get("points", [])
-    if points is Array:
-        for p in points:
-            if typeof(p) == TYPE_DICTIONARY:
-                lines.append("- %s" % str((p as Dictionary).get("text", "")))
-                var subs: Variant = (p as Dictionary).get("subs", [])
-                if subs is Array:
-                    for s in subs:
-                        lines.append("-- %s" % str(s))
-            else:
-                lines.append("- %s" % str(p))
-    var summary := str(e.get("summary", "")).strip_edges()
-    if summary != "":
-        lines.append("")
-        lines.append("Summary: %s" % summary)
-    return "\n".join(lines)
-
-
 static func _entry_for(lab: String) -> Dictionary:
     for e in entries():
         if typeof(e) == TYPE_DICTIONARY and str((e as Dictionary).get("label", "")) == lab:
             return e
     return {}
-
 
 static func _parts(ver: String) -> Array:
     var bits := ver.strip_edges().split(".")
@@ -117,7 +83,6 @@ static func _parts(ver: String) -> Array:
         if bits[i].is_valid_int():
             out[i] = int(bits[i])
     return out
-
 
 static func _web_notes_payload() -> Dictionary:
     if _web_tried:
@@ -137,7 +102,6 @@ static func _web_notes_payload() -> Dictionary:
     if parsed is Dictionary:
         _web_notes = parsed
     return _web_notes
-
 
 static func _read_json(path: String) -> Dictionary:
     var web := _web_notes_payload()

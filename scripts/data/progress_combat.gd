@@ -5,7 +5,6 @@ const Affix := preload("res://scripts/data/affixes.gd")
 const Stat := preload("res://scripts/data/progress_combat_stat.gd")
 const Xp := preload("res://scripts/data/progress_combat_xp.gd")
 
-
 static func skill_xp(p, id: String) -> float:
 	return float(p.skills_run.get(id, 0.0)) + float(p.skills_perm.get(id, 0.0))
 
@@ -92,9 +91,6 @@ static func survive_pair(p) -> float:
 
 static func combat_score(p, wpn: String, sty: String) -> float:
 	return (float(skill_lv(p, wpn) + skill_lv(p, sty)) + survive_pair(p)) / 4.0
-
-static func combat_iv(p, wpn: String, sty: String) -> int:
-	return maxi(1, int(round(combat_score(p, wpn, sty))))
 
 static func melee_lv_f(p) -> float:
 	return combat_score(p, "axe", "str")

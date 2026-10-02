@@ -2,7 +2,6 @@ extends Object
 
 static var _dungeon_packed: PackedScene = null
 
-
 static func ensure_dungeon_packed(host: Node) -> PackedScene:
 	if _dungeon_packed != null:
 		return _dungeon_packed
@@ -10,7 +9,6 @@ static func ensure_dungeon_packed(host: Node) -> PackedScene:
 	if packed is PackedScene:
 		_dungeon_packed = packed as PackedScene
 	return _dungeon_packed
-
 
 static func begin_run(host: Node) -> void:
 	App.AppFlow.LoadTiming.dmark("begin_run")
@@ -42,7 +40,6 @@ static func begin_run(host: Node) -> void:
 		host.tel.reset("human", false)
 	host.go_dungeon()
 
-
 static func go_dungeon(host: Node) -> void:
 	App.AppFlow.LoadTiming.dmark("go_dungeon")
 	host.in_dungeon = true
@@ -59,7 +56,6 @@ static func go_dungeon(host: Node) -> void:
 		host.get_tree().call_deferred("change_scene_to_file", host.DUNGEON_SCENE)
 	host.call_deferred("wake_web_pad")
 
-
 static func next_floor(host: Node) -> void:
 	var p := host.get_tree().get_first_node_in_group("player")
 	if p:
@@ -72,13 +68,11 @@ static func next_floor(host: Node) -> void:
 	host.ui_open = false
 	host.go_dungeon()
 
-
 static func notify_boss_dead(host: Node) -> void:
 	host.boss_dead = true
 	var s := host.get_tree().current_scene
 	if s and s.has_method("_on_boss_dead"):
 		s._on_boss_dead()
-
 
 static func end_run(host: Node, cond: String, killer := "") -> void:
 	if host.recap and bool(host.recap.get("open")):
@@ -95,7 +89,6 @@ static func end_run(host: Node, cond: String, killer := "") -> void:
 		return
 	host.finish_end(cond, killer)
 
-
 static func finish_end(host: Node, cond: String, killer := "") -> void:
 	if host.recap and bool(host.recap.get("open")):
 		return
@@ -110,7 +103,6 @@ static func finish_end(host: Node, cond: String, killer := "") -> void:
 		host.recap.play(cond)
 	else:
 		host.go_camp()
-
 
 static func on_kill(host: Node) -> void:
 	host.last_kill = host.clock
@@ -139,7 +131,6 @@ static func on_kill(host: Node) -> void:
 	if host.tel:
 		host.tel.note_kill()
 
-
 static func start_adrenaline(host: Node) -> void:
 	host.adrenaline = true
 	host.adrenaline_xp = 1.0 + host.bal.adrenaline_xp_stack
@@ -149,13 +140,11 @@ static func start_adrenaline(host: Node) -> void:
 	if host.sfx_node and host.sfx_node.has_method("set_adrenaline"):
 		host.sfx_node.set_adrenaline(true)
 
-
 static func end_adrenaline(host: Node) -> void:
 	host.adrenaline = false
 	host.adrenaline_xp = 1.0
 	if host.sfx_node and host.sfx_node.has_method("set_adrenaline"):
 		host.sfx_node.set_adrenaline(false)
-
 
 static func spawn_floor_item(host: Node, it: Dictionary, pos := Vector3.INF) -> void:
 	if it.is_empty():
@@ -169,7 +158,6 @@ static func spawn_floor_item(host: Node, it: Dictionary, pos := Vector3.INF) -> 
 			at = Vector3.ZERO
 	var PickupS := load("res://scripts/world/pickup.gd")
 	PickupS.drop_item(it, at)
-
 
 static func tick(host: Node, delta: float) -> void:
 	host.clock += delta
@@ -198,7 +186,6 @@ static func tick(host: Node, delta: float) -> void:
 		end_adrenaline(host)
 	debug_sequence(host, delta)
 
-
 static func debug_sequence(host: Node, delta: float) -> void:
 	var down := shoulders_down()
 	var up := shoulders_up()
@@ -222,7 +209,6 @@ static func debug_sequence(host: Node, delta: float) -> void:
 		if host.debug and host.debug.has_method("toggle"):
 			host.debug.toggle()
 
-
 static func shoulders_down() -> bool:
 	var pads := Input.get_connected_joypads()
 	if pads.is_empty():
@@ -234,7 +220,6 @@ static func shoulders_down() -> bool:
 		and Input.is_joy_button_pressed(d, JOY_BUTTON_LEFT_SHOULDER)
 		and Input.is_joy_button_pressed(d, JOY_BUTTON_RIGHT_SHOULDER)
 	)
-
 
 static func shoulders_up() -> bool:
 	var pads := Input.get_connected_joypads()

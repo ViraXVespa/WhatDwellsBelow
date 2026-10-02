@@ -6,21 +6,11 @@ const Opts := preload("res://scripts/ui/gear_board/gear_board_opts.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
 
-
-static func slot_face(_ui: CanvasLayer, slot: String, _it: Dictionary) -> String:
-	var head := str(Fmt.NAMES.get(slot, slot))
-	if has_unseen(slot):
-		head = "▸ " + head
-	return head
-
-
 static func item_short(it: Dictionary) -> String:
 	return Fmt.item_short(it)
 
-
 static func item_cell(it: Dictionary) -> String:
 	return Fmt.item_cell(it)
-
 
 static func hint_parts(ui: CanvasLayer) -> Array:
 	var parts: Array = []
@@ -34,7 +24,6 @@ static func hint_parts(ui: CanvasLayer) -> Array:
 	parts.append({"action": "gear_tip", "verb": "tip off/on/forge"})
 	return parts
 
-
 static func hint_line(ui: CanvasLayer) -> String:
 	var bits: PackedStringArray = PackedStringArray()
 	for row: Variant in hint_parts(ui):
@@ -45,7 +34,6 @@ static func hint_line(ui: CanvasLayer) -> String:
 			continue
 		bits.append(Prompts.verb_line(action, str(row.get("verb", ""))))
 	return "   ".join(bits)
-
 
 static func selected_slot(ui: CanvasLayer) -> String:
 	var sel := str(ui.inv_sel)
@@ -58,10 +46,8 @@ static func selected_slot(ui: CanvasLayer) -> String:
 		return str(ui.get("gear_sub_slot"))
 	return ""
 
-
 static func slot_item(slot: String) -> Dictionary:
 	return Opts.slot_item(slot)
-
 
 static func selected(ui: CanvasLayer) -> Dictionary:
 	var sel := str(ui.inv_sel)
@@ -89,18 +75,14 @@ static func selected(ui: CanvasLayer) -> Dictionary:
 				return stored
 	return {}
 
-
 static func options_for(slot: String) -> Array:
 	return Opts.options_for(slot)
-
 
 static func has_unseen(slot: String) -> bool:
 	return Opts.has_unseen(slot)
 
-
 static func mark_seen(slot: String) -> void:
 	Opts.mark_seen(slot)
-
 
 static func tooltip(ui: CanvasLayer) -> String:
 	if str(ui.inv_sel) == "stats":
@@ -128,7 +110,6 @@ static func tooltip(ui: CanvasLayer) -> String:
 		return "%s\n%s" % [head, block]
 	return block
 
-
 static func current_block(it: Dictionary) -> String:
 	var lines := PackedStringArray()
 	var head := str(it.get("name", "Item"))
@@ -153,7 +134,6 @@ static func current_block(it: Dictionary) -> String:
 		lines.append(App.prog.set_bonus_text(sid))
 	return "\n".join(lines)
 
-
 static func forged_block(it: Dictionary) -> String:
 	if it.is_empty():
 		return "Nothing to preview."
@@ -163,11 +143,6 @@ static func forged_block(it: Dictionary) -> String:
 	if str(it.get("rarity", "white")) == "white":
 		return current_block(it) + "\nWhite gear is starter-only. Analyze greens and blues."
 	return current_block(it) + "\nForge tab rolls a new hold from unlocked traits."
-
-
-static func forge_preview(it: Dictionary) -> Dictionary:
-	return it.duplicate(true)
-
 
 static func stat_bits(it: Dictionary) -> String:
 	var bits := PackedStringArray()
@@ -201,18 +176,11 @@ static func stat_bits(it: Dictionary) -> String:
 		bits.append("Style: " + str(it.weapon))
 	return "   ·   ".join(bits)
 
-
 static func stats_title(ui: CanvasLayer) -> String:
 	return Stats.title(ui)
 
-
 static func stats_body(ui: CanvasLayer) -> String:
 	return Stats.body(ui)
-
-
-static func stats_page(ui: CanvasLayer) -> String:
-	return Stats.page(ui)
-
 
 static func page_ids(ui: CanvasLayer) -> PackedStringArray:
 	return Stats.page_ids(ui)

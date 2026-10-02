@@ -3,7 +3,6 @@ const BillSpr := preload("res://scripts/world/billboard_spr.gd")
 
 const Depth := preload("res://scripts/world/depth.gd")
 
-
 static func build(host: Node3D) -> void:
 	var kind: String = host.kind
 	if kind == "crystal" or kind == "loadout_crystal":
@@ -43,7 +42,6 @@ static func build(host: Node3D) -> void:
 		return
 	sprite(host, tex_path(kind), spr_h(kind), spr_y(kind))
 
-
 static func tex_path(kind: String) -> String:
 	match kind:
 		"crystal", "loadout_crystal":
@@ -76,7 +74,6 @@ static func tex_path(kind: String) -> String:
 			return "res://assets/sprites/props/chest.png"
 	return "res://assets/props/sort_crate.png"
 
-
 static func spr_h(kind: String) -> float:
 	if kind == "extract_gate":
 		return 1.7
@@ -87,7 +84,6 @@ static func spr_h(kind: String) -> float:
 	if kind == "shrine" or kind == "crystal" or kind == "loadout_crystal":
 		return 1.2
 	return 0.85
-
 
 static func spr_y(kind: String) -> float:
 	if kind == "extract_gate":
@@ -100,7 +96,6 @@ static func spr_y(kind: String) -> float:
 		return 0.06
 	return 0.48
 
-
 static func sprite(host: Node3D, path: String, h: float, y: float) -> void:
 	var spr: Sprite3D = BillSpr.make(path, h, y, 0, false)
 	if spr.texture != null and host.kind == "extract_gate":
@@ -111,7 +106,6 @@ static func sprite(host: Node3D, path: String, h: float, y: float) -> void:
 	if bool(host.get("used")):
 		paint_used_chest(host)
 
-
 static func set_extract_tex(host: Node3D, on: bool) -> void:
 	if host.spr == null:
 		return
@@ -119,7 +113,6 @@ static func set_extract_tex(host: Node3D, on: bool) -> void:
 	if ResourceLoader.exists(path):
 		host.spr.texture = load(path)
 		host.spr.pixel_size = 3.0 / float(maxi(1, host.spr.texture.get_width()))
-
 
 static func paint_used_chest(host: Node3D) -> void:
 	if host.spr == null:
@@ -132,7 +125,6 @@ static func paint_used_chest(host: Node3D) -> void:
 		return
 	var tw: Tween = host.create_tween()
 	tw.tween_property(host.spr, "modulate", faded, 0.22)
-
 
 static func add_label(host: Node3D) -> void:
 	var label := Label3D.new()

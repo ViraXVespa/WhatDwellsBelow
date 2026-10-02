@@ -129,4 +129,3 @@ static func _grant_smith() -> void:
 		amt = float(App.bal.get("xp_smith"))
 	App.prog.add_perm_xp("smith", amt)
 	App.prog.forge_count += 1
-

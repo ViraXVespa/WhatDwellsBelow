@@ -163,7 +163,6 @@ static func _emit_spec(lines: Array[String], host: Node, data: Dictionary, objs:
 	Util._spec(lines, "rim_holes", true, "holes=%d sample=%s" % [hole_n, hole_txt])
 	return fail
 
-
 static func mark_holes(overlays: Dictionary, data: Dictionary) -> int:
 	var rim: Dictionary = rim_report(data)
 	var cells: Array = rim.get("cells", []) as Array
@@ -171,7 +170,6 @@ static func mark_holes(overlays: Dictionary, data: Dictionary) -> int:
 		if raw is Vector2i and not overlays.has(raw):
 			overlays[raw] = "rim_hole"
 	return int(rim.get("holes", 0))
-
 
 static func rim_report(data: Dictionary) -> Dictionary:
 	var empty: Dictionary = {"holes": 0, "cells": [], "sample": "-"}

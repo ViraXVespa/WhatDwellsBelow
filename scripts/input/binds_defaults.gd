@@ -2,7 +2,6 @@
 
 ## Default InputMap fill. Host module is scripts/input/binds.gd.
 
-
 static func register() -> void:
 	for extra in ["weapon_1", "weapon_2", "weapon_3"]:
 		if InputMap.has_action(extra):
@@ -77,7 +76,6 @@ static func register() -> void:
 		InputMap.action_add_event("special", lt)
 	apply_pc_defaults()
 
-
 static func apply_pc_defaults() -> void:
 	ensure_key("move_left", KEY_A)
 	ensure_key("move_left", KEY_LEFT)
@@ -111,7 +109,6 @@ static func apply_pc_defaults() -> void:
 	ensure_key("ui_down", KEY_DOWN)
 	ensure_key("ui_down", KEY_S)
 
-
 static func ensure_key(action: String, keycode: int) -> void:
 	if not InputMap.has_action(action):
 		InputMap.add_action(action, 0.25)
@@ -123,7 +120,6 @@ static func ensure_key(action: String, keycode: int) -> void:
 				return
 	key(action, keycode)
 
-
 static func ensure_mouse(action: String, btn: int) -> void:
 	if not InputMap.has_action(action):
 		InputMap.add_action(action, 0.25)
@@ -132,7 +128,6 @@ static func ensure_mouse(action: String, btn: int) -> void:
 			return
 	mouse(action, btn)
 
-
 static func ensure_joy(action: String, button: int) -> void:
 	if not InputMap.has_action(action):
 		InputMap.add_action(action, 0.25)
@@ -140,7 +135,6 @@ static func ensure_joy(action: String, button: int) -> void:
 		if e is InputEventJoypadButton and (e as InputEventJoypadButton).button_index == button:
 			return
 	joy(action, button)
-
 
 static func ensure_axis(action: String, axis: int, axis_value: float) -> void:
 	if not InputMap.has_action(action):
@@ -155,7 +149,6 @@ static func ensure_axis(action: String, axis: int, axis_value: float) -> void:
 	jm.axis_value = axis_value
 	InputMap.action_add_event(action, jm)
 
-
 static func strip_key(action: String, keycode: int) -> void:
 	if not InputMap.has_action(action):
 		return
@@ -165,7 +158,6 @@ static func strip_key(action: String, keycode: int) -> void:
 			var code: int = k.physical_keycode if k.physical_keycode != 0 else k.keycode
 			if int(code) == keycode:
 				InputMap.action_erase_event(action, e)
-
 
 static func act(action: String, keys: Array, button: int = -1, axis: int = -1, axis_value: float = 0.0) -> void:
 	if not InputMap.has_action(action):
@@ -184,23 +176,19 @@ static func act(action: String, keys: Array, button: int = -1, axis: int = -1, a
 		jm.axis_value = axis_value
 		InputMap.action_add_event(action, jm)
 
-
 static func mouse(action: String, btn: int) -> void:
 	var e := InputEventMouseButton.new()
 	e.button_index = btn as MouseButton
 	InputMap.action_add_event(action, e)
 
-
 static func ensure(action: String) -> void:
 	if not InputMap.has_action(action):
 		InputMap.add_action(action, 0.5)
-
 
 static func joy(action: String, button: int) -> void:
 	var jb := InputEventJoypadButton.new()
 	jb.button_index = button as JoyButton
 	InputMap.action_add_event(action, jb)
-
 
 static func key(action: String, keycode: int) -> void:
 	var e := InputEventKey.new()

@@ -5,10 +5,8 @@ const CatS := preload("res://scripts/data/archives_catalog.gd")
 
 static var enter_flag: bool = false
 
-
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
-
 
 static func p8(host: Node) -> void:
 	var player: Variant = host.get("player")

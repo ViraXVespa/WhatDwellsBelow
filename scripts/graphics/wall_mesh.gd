@@ -5,7 +5,6 @@ extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 
-
 static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 	var ortho: Array[Dictionary] = []
 	var delta: Array[Dictionary] = []
@@ -50,7 +49,6 @@ static func from_faces(runs: Array[Dictionary]) -> ArrayMesh:
 	arrays[Mesh.ARRAY_INDEX] = indices
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh
-
 
 static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var o: Vector2 = run["origin"] as Vector2
@@ -121,8 +119,6 @@ static func _push_span(run: Dictionary, verts: PackedVector3Array, norms: Packed
 		_quad(e1, n_end, verts, norms, uvs, indices)
 		_uv4(uvs, Vector2(0.0, 0.0), Vector2(thick, 0.0), Vector2(thick, h), Vector2(0.0, h))
 
-
-
 static func _close_ribbon_corners(runs: Array[Dictionary], verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var pts: Dictionary = {}
 	var i: int = 0
@@ -161,7 +157,6 @@ static func _close_ribbon_corners(runs: Array[Dictionary], verts: PackedVector3A
 		if nsum.length_squared() < 0.0001:
 			nsum = Vector2.DOWN
 		_corner_post(p, nsum.normalized(), thick, T.WALL_H, verts, norms, uvs, indices)
-
 
 static func _corner_post(p: Vector2, n2: Vector2, thick: float, h: float, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var t: float = clampf(thick, 0.2, 0.3)
@@ -231,7 +226,6 @@ static func _uv4(uvs: PackedVector2Array, a: Vector2, b: Vector2, c: Vector2, d:
 	uvs[base + 2] = c
 	uvs[base + 3] = d
 
-
 static func _push_void(cells: Dictionary, faced: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 	for key in cells.keys():
@@ -251,7 +245,6 @@ static func _push_void(cells: Dictionary, faced: Dictionary, verts: PackedVector
 			_quad(_corners(n2, x0, x1, 0.0, T.WALL_H, z0, z1), Vector3(float(n2.x), 0.0, float(n2.y)), verts, norms, uvs, indices)
 			_uv4(uvs, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, T.WALL_H), Vector2(0.0, T.WALL_H))
 
-
 static func _ni(n2: Vector2i) -> int:
 	if n2.x > 0:
 		return 0
@@ -261,14 +254,12 @@ static func _ni(n2: Vector2i) -> int:
 		return 2
 	return 3
 
-
 static func _mark_cells(run: Dictionary, cells: Dictionary) -> void:
 	var origin: Vector2i = run["origin"] as Vector2i
 	var span_cells: Vector2i = run["size"] as Vector2i
 	for z in range(origin.y, origin.y + span_cells.y):
 		for x in range(origin.x, origin.x + span_cells.x):
 			cells[Vector2i(x, z)] = true
-
 
 static func _mark_faces(run: Dictionary, faced: Dictionary) -> void:
 	var origin: Vector2i = run["origin"] as Vector2i
@@ -278,7 +269,6 @@ static func _mark_faces(run: Dictionary, faced: Dictionary) -> void:
 	for z in range(origin.y, origin.y + span_cells.y):
 		for x in range(origin.x, origin.x + span_cells.x):
 			faced[Vector3i(x, z, ni)] = true
-
 
 static func _push_face(run: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var origin: Vector2i = run["origin"] as Vector2i
@@ -294,7 +284,6 @@ static func _push_face(run: Dictionary, verts: PackedVector3Array, norms: Packed
 	_quad(_corners(n2, x0, x1, 0.0, T.WALL_H, z0, z1), n, verts, norms, uvs, indices)
 	var along: float = float(maxi(span_cells.x, span_cells.y))
 	_uv4(uvs, Vector2(0.0, 0.0), Vector2(along, 0.0), Vector2(along, T.WALL_H), Vector2(0.0, T.WALL_H))
-
 
 static func _push_top(run: Dictionary, topped: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var origin: Vector2i = run["origin"] as Vector2i
@@ -318,7 +307,6 @@ static func _push_top(run: Dictionary, topped: Dictionary, verts: PackedVector3A
 			_quad(top, Vector3.UP, verts, norms, uvs, indices)
 			_uv4(uvs, Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z1))
 
-
 static func _push_ends(run: Dictionary, faced: Dictionary, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var origin: Vector2i = run["origin"] as Vector2i
 	var span_cells: Vector2i = run["size"] as Vector2i
@@ -334,7 +322,6 @@ static func _push_ends(run: Dictionary, faced: Dictionary, verts: PackedVector3A
 		_end_col(origin.y, origin.y + span_cells.y, origin.x, Vector2i(-1, 0), faced, y0, y1, verts, norms, uvs, indices)
 		_end_col(origin.y, origin.y + span_cells.y, origin.x + span_cells.x - 1, Vector2i(1, 0), faced, y0, y1, verts, norms, uvs, indices)
 
-
 static func _end_row(x0i: int, x1i: int, z: int, n2: Vector2i, faced: Dictionary, y0: float, y1: float, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var ni: int = _ni(n2)
 	for x in range(x0i, x1i):
@@ -346,7 +333,6 @@ static func _end_row(x0i: int, x1i: int, z: int, n2: Vector2i, faced: Dictionary
 		var z1: float = z0 + 1.0
 		_quad(_corners(n2, x0, x1, y0, y1, z0, z1), Vector3(0.0, 0.0, float(n2.y)), verts, norms, uvs, indices)
 		_uv4(uvs, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, y1), Vector2(0.0, y1))
-
 
 static func _end_col(z0i: int, z1i: int, x: int, n2: Vector2i, faced: Dictionary, y0: float, y1: float, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var ni: int = _ni(n2)
@@ -360,10 +346,8 @@ static func _end_col(z0i: int, z1i: int, x: int, n2: Vector2i, faced: Dictionary
 		_quad(_corners(n2, x0, x1, y0, y1, z0, z1), Vector3(float(n2.x), 0.0, 0.0), verts, norms, uvs, indices)
 		_uv4(uvs, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, y1), Vector2(0.0, y1))
 
-
 static var _uv2_buf: PackedVector2Array = PackedVector2Array()
 static var _uv2_in: Vector2 = Vector2.ZERO
-
 
 static func _quad(corners: PackedVector3Array, n: Vector3, verts: PackedVector3Array, norms: PackedVector3Array, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var base: int = verts.size()
@@ -378,7 +362,6 @@ static func _quad(corners: PackedVector3Array, n: Vector3, verts: PackedVector3A
 	indices.append(base)
 	indices.append(base + 3)
 	indices.append(base + 2)
-
 
 static func _corners(n2: Vector2i, x0: float, x1: float, y0: float, y1: float, z0: float, z1: float) -> PackedVector3Array:
 	var quad: PackedVector3Array = PackedVector3Array()
@@ -404,7 +387,6 @@ static func _corners(n2: Vector2i, x0: float, x1: float, y0: float, y1: float, z
 		quad.append(Vector3(x1, y1, z0))
 	return quad
 
-
 ## Fold stair teeth and duplicate opposite spans before the chunk is skinned.
 static func prepare(raw: Array) -> Array[Dictionary]:
 	var runs: Array[Dictionary] = []
@@ -415,20 +397,16 @@ static func prepare(raw: Array) -> Array[Dictionary]:
 		return runs
 	return _merge_opposite(_fold_teeth(runs))
 
-
 static func _pt_key(p: Vector2) -> Vector2i:
 	return Vector2i(roundi(p.x * 5.0), roundi(p.y * 5.0))
-
 
 static func _unit2(v: Vector2) -> Vector2:
 	if v.length_squared() < 0.0001:
 		return Vector2.ZERO
 	return v.normalized()
 
-
 static func _axis_run(d: Vector2) -> bool:
 	return absf(d.x) <= 0.2 or absf(d.y) <= 0.2
-
 
 static func _link_ok(a: Vector2, b: Vector2) -> bool:
 	var al: float = a.length()
@@ -442,13 +420,11 @@ static func _link_ok(a: Vector2, b: Vector2) -> bool:
 		return true
 	return false
 
-
 static func _lat(rel: Vector2, chord: Vector2) -> float:
 	var cl: float = chord.length()
 	if cl < 0.001:
 		return rel.length()
 	return absf(rel.x * chord.y - rel.y * chord.x) / cl
-
 
 static func _can_fold(runs: Array[Dictionary], chain: Array[int], a: int, b: int) -> bool:
 	if b <= a:
@@ -485,7 +461,6 @@ static func _can_fold(runs: Array[Dictionary], chain: Array[int], a: int, b: int
 		return false
 	return absf(chord.x) > 0.75 and absf(chord.y) > 0.75
 
-
 static func _chord(runs: Array[Dictionary], chain: Array[int], a: int, b: int) -> Dictionary:
 	var first: Dictionary = runs[chain[a]]
 	var last: Dictionary = runs[chain[b]]
@@ -512,7 +487,6 @@ static func _chord(runs: Array[Dictionary], chain: Array[int], a: int, b: int) -
 		made["cap_b"] = last["cap_b"] == true
 	return made
 
-
 static func _emit_chain(runs: Array[Dictionary], chain: Array[int], out: Array[Dictionary]) -> void:
 	var count: int = chain.size()
 	if count < 1:
@@ -529,66 +503,6 @@ static func _emit_chain(runs: Array[Dictionary], chain: Array[int], out: Array[D
 		else:
 			out.append(_chord(runs, chain, i, best))
 		i = best + 1
-
-
-static func _bevel_corners(runs: Array[Dictionary]) -> Array[Dictionary]:
-	var n: int = runs.size()
-	var starts: Dictionary = {}
-	for i in n:
-		var key: Vector2i = _pt_key(runs[i]["origin"] as Vector2)
-		if not starts.has(key):
-			starts[key] = []
-		(starts[key] as Array).append(i)
-	var extra: Array[Dictionary] = []
-	for i in n:
-		var run: Dictionary = runs[i]
-		var o: Vector2 = run["origin"] as Vector2
-		var d: Vector2 = run["delta"] as Vector2
-		var len0: float = d.length()
-		if len0 < 1.4:
-			continue
-		var endp: Vector2 = o + d
-		var key2: Vector2i = _pt_key(endp)
-		if not starts.has(key2):
-			continue
-		var dir_a: Vector2 = d / len0
-		for cand in starts[key2]:
-			var j: int = int(cand)
-			if j == i:
-				continue
-			var other: Dictionary = runs[j]
-			var d2: Vector2 = other["delta"] as Vector2
-			var len1: float = d2.length()
-			if len1 < 1.4:
-				continue
-			var dir_b: Vector2 = d2 / len1
-			if absf(dir_a.dot(dir_b)) > 0.35:
-				continue
-			var cut: float = minf(2.4, minf(len0, len1) * 0.4)
-			var pad: float = 0.55
-			var new_end: Vector2 = endp - dir_a * cut
-			var new_start: Vector2 = endp + dir_b * cut
-			run["delta"] = new_end - o
-			other["origin"] = new_start
-			other["delta"] = (o + d + d2) - new_start
-			new_end = new_end - dir_a * pad
-			new_start = new_start + dir_b * pad
-			var nd: Vector2 = (run["normal"] as Vector2) + (other["normal"] as Vector2)
-			if nd.length_squared() < 0.0001:
-				nd = Vector2(-dir_a.y, dir_a.x) + Vector2(-dir_b.y, dir_b.x)
-			extra.append({
-				"origin": new_end,
-				"delta": new_start - new_end,
-				"normal": nd.normalized(),
-				"thick": float(run.get("thick", 0.25)),
-				"cap_a": false,
-				"cap_b": false,
-			})
-			break
-	for item in extra:
-		runs.append(item)
-	return runs
-
 
 static func _fold_teeth(runs: Array[Dictionary]) -> Array[Dictionary]:
 	var n: int = runs.size()
@@ -662,7 +576,6 @@ static func _fold_teeth(runs: Array[Dictionary]) -> Array[Dictionary]:
 				guard += 1
 			_emit_chain(runs, chain, out)
 	return out
-
 
 static func _merge_opposite(runs: Array[Dictionary]) -> Array[Dictionary]:
 	var n: int = runs.size()

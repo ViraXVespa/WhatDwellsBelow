@@ -13,7 +13,6 @@ const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 
 static var _first_tick: bool = true
 
-
 static func ready_floor(host: Node) -> void:
 	_first_tick = true
 	HitchLog.mark("dungeon_ready")
@@ -69,7 +68,6 @@ static func ready_floor(host: Node) -> void:
 		App.call_deferred("_pump_enter_async")
 	Smoke.attach_dungeon(host)
 
-
 static func process_floor(host: Node, delta: float) -> void:
 	if _first_tick:
 		HitchLog.mark("dungeon_tick")
@@ -122,7 +120,6 @@ static func process_floor(host: Node, delta: float) -> void:
 		host.stairs.refresh()
 	host._refresh_hint()
 
-
 static func spawns(host: Node) -> void:
 	host.floor_rng.seed = App.run_seed * 10007 + App.floor_n * 9176
 	host.spawn_jobs.clear()
@@ -156,7 +153,6 @@ static func spawns(host: Node) -> void:
 	LoadTiming.dnote("spawn_ui", "deferred")
 	LoadTiming.dmark("spawn_ui")
 
-
 static func place_doors(host: Node) -> void:
 	host.doors.clear()
 	var openings: Array = host.data.get("openings", [])
@@ -179,7 +175,6 @@ static func place_doors(host: Node) -> void:
 		host.add_child(d)
 		host.doors.append(d)
 	host.door = host.doors[0] if not host.doors.is_empty() else null
-
 
 static func on_boss_dead(host: Node) -> void:
 	App.boss_dead = true

@@ -6,10 +6,8 @@ const GAMEPLAY_ACTIONS: PackedStringArray = [
 	"map_view", "inventory", "potion", "food", "look_mode",
 ]
 
-
 static func _binds():
 	return load("res://scripts/input/binds.gd")
-
 
 static func event_in_pool(e: InputEvent, pool: String) -> bool:
 	if e == null:
@@ -17,7 +15,6 @@ static func event_in_pool(e: InputEvent, pool: String) -> bool:
 	if pool == "pad":
 		return e is InputEventJoypadButton or e is InputEventJoypadMotion
 	return e is InputEventKey or e is InputEventMouseButton
-
 
 static func events_equal(a: InputEvent, b: InputEvent) -> bool:
 	if a == null or b == null:
@@ -38,7 +35,6 @@ static func events_equal(a: InputEvent, b: InputEvent) -> bool:
 		return am.axis == bm.axis and signf(am.axis_value) == signf(bm.axis_value)
 	return false
 
-
 static func pool_events(action: String, pool: String) -> Array:
 	var out: Array = []
 	if not InputMap.has_action(action):
@@ -48,13 +44,11 @@ static func pool_events(action: String, pool: String) -> Array:
 			out.append(e)
 	return out
 
-
 static func slot_event(action: String, pool: String, slot: int) -> InputEvent:
 	var evs: Array = pool_events(action, pool)
 	if slot < 0 or slot >= evs.size():
 		return null
 	return evs[slot]
-
 
 static func bind_slot(action: String, pool: String, slot: int, ev: InputEvent) -> void:
 	if GAMEPLAY_ACTIONS.find(action) < 0 or not event_in_pool(ev, pool):
@@ -81,7 +75,6 @@ static func bind_slot(action: String, pool: String, slot: int, ev: InputEvent) -
 	if other_act != "":
 		_write_slot(other_act, pool, other_slot, displaced)
 
-
 static func _write_slot(action: String, pool: String, slot: int, ev: InputEvent) -> void:
 	var keep: Array = []
 	for e in InputMap.action_get_events(action):
@@ -102,7 +95,6 @@ static func _write_slot(action: String, pool: String, slot: int, ev: InputEvent)
 		if e:
 			InputMap.action_add_event(action, e)
 
-
 static func reset_pool(pool: String) -> void:
 	for a in GAMEPLAY_ACTIONS:
 		if not InputMap.has_action(a):
@@ -115,7 +107,6 @@ static func reset_pool(pool: String) -> void:
 		for e: Variant in keep:
 			InputMap.action_add_event(a, e)
 	_stock_pool(pool)
-
 
 static func _stock_pool(pool: String) -> void:
 	var Binds = _binds()

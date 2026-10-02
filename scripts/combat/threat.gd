@@ -18,21 +18,17 @@
 ## Defense), so one player CL is four skill-levels of old sum-CL.
 ## Floor span and per-CL enemy stats are scaled to that unit.
 
-
 static func per_floor() -> int:
 	if App.bal:
 		return maxi(1, int(App.bal.enemy_cl_per_floor))
 	return 20
 
-
 static func floor_lo(floor_n: int) -> int:
 	var n := maxi(1, floor_n)
 	return per_floor() * (n - 1) + 1
 
-
 static func floor_hi(floor_n: int) -> int:
 	return per_floor() * maxi(1, floor_n)
-
 
 static func walk_level(floor_n: int, cell: Vector2i, dist: PackedInt32Array, w: int, cap: int) -> int:
 	var lo: int = floor_lo(floor_n)
@@ -46,7 +42,6 @@ static func walk_level(floor_n: int, cell: Vector2i, dist: PackedInt32Array, w: 
 	var lv: int = int(round(lerpf(float(lo), float(hi), t)))
 	return clampi(lv, lo, hi)
 
-
 static func level_at(floor_n: int, cell: Vector2i, dist: PackedInt32Array, w: int, cap: int) -> int:
 	var lo: int = floor_lo(floor_n)
 	var hi: int = floor_hi(floor_n)
@@ -58,7 +53,6 @@ static func level_at(floor_n: int, cell: Vector2i, dist: PackedInt32Array, w: in
 		var h: int = absi((cell.x * 73856093) ^ (cell.y * 19349663) ^ (floor_n * 83492791))
 		lv += (h % (jmax * 2 + 1)) - jmax
 	return clampi(lv, lo, hi)
-
 
 static func apply(base_hp: float, base_dmg: float, base_def: float, cl: int) -> Dictionary:
 	var ranks := maxi(0, cl - 1)
@@ -76,12 +70,10 @@ static func apply(base_hp: float, base_dmg: float, base_def: float, cl: int) -> 
 		"def": base_def + def_r * rf,
 	}
 
-
 static func _bal_f(name: String, fallback: float) -> float:
 	if App.bal == null:
 		return fallback
 	return float(App.bal.get(name)) if App.bal.get(name) != null else fallback
-
 
 ## difference = enemy_lv - effective player lv
 static func rank_diff(enemy_lv: int) -> float:
@@ -100,7 +92,6 @@ static func rank_diff(enemy_lv: int) -> float:
 	var player_lv := lerpf(max_style, cur_style, weight)
 	return float(enemy_lv) - player_lv
 
-
 static func _geom(step_up: float, step_down: float, diff: float) -> float:
 	if is_zero_approx(diff):
 		return 1.0
@@ -108,17 +99,10 @@ static func _geom(step_up: float, step_down: float, diff: float) -> float:
 		return pow(step_up, diff)
 	return pow(step_down, -diff)
 
-
 ## Enemy damage dealt to the player.
 static func dealt_mult(enemy_lv: int) -> float:
 	return _geom(_bal_f("cl_dealt_up", 1.03), _bal_f("cl_dealt_down", 0.97), rank_diff(enemy_lv))
 
-
 ## Damage the enemy receives from the player.
 static func received_mult(enemy_lv: int) -> float:
 	return _geom(_bal_f("cl_received_up", 0.97), _bal_f("cl_received_down", 1.03), rank_diff(enemy_lv))
-
-
-## Kill XP multiplier.
-static func xp_mult(enemy_lv: int) -> float:
-	return _geom(_bal_f("cl_xp_up", 1.04), _bal_f("cl_xp_down", 0.97), rank_diff(enemy_lv))

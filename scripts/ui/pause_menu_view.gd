@@ -3,7 +3,6 @@
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 
-
 static func build(host: CanvasLayer) -> void:
 	host.layer = 55
 	host.visible = false
@@ -58,7 +57,6 @@ static func build(host: CanvasLayer) -> void:
 	host.box.add_theme_constant_override("separation", 4)
 	host.scroll.add_child(host.box)
 	make_tip(host)
-
 
 static func make_tip(host: CanvasLayer) -> void:
 	host.tip_host = PanelContainer.new()

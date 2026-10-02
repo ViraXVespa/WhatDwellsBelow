@@ -6,7 +6,6 @@ var players: Dictionary = {}
 var loop_player: AudioStreamPlayer
 var adrenaline_loop := false
 
-
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_load("hit", "res://assets/audio/p2_hit.wav")
@@ -44,14 +43,12 @@ func _ready() -> void:
 	add_child(loop_player)
 	_apply_vol()
 
-
 func _load(sfx_id: String, path: String) -> void:
 	var p := AudioStreamPlayer.new()
 	if ResourceLoader.exists(path):
 		p.stream = load(path)
 	add_child(p)
 	players[sfx_id] = p
-
 
 func play(sfx_id: String) -> void:
 	var key := sfx_id
@@ -66,7 +63,6 @@ func play(sfx_id: String) -> void:
 		_apply_one(players[sfx_id])
 		players[sfx_id].play()
 
-
 func set_adrenaline(on: bool) -> void:
 	if on == adrenaline_loop:
 		return
@@ -78,17 +74,14 @@ func set_adrenaline(on: bool) -> void:
 	else:
 		loop_player.stop()
 
-
 func _apply_vol() -> void:
 	for k in players.keys():
 		_apply_one(players[k])
 	if loop_player:
 		_apply_one(loop_player)
 
-
 func _apply_one(p: AudioStreamPlayer) -> void:
 	p.volume_db = linear_to_db(maxf(0.001, App.vol_sfx * App.vol_master))
-
 
 func _process(_delta: float) -> void:
 	if adrenaline_loop and loop_player.stream and not loop_player.playing:

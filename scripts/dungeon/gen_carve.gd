@@ -10,16 +10,13 @@ static var _disk_rad: int = -1
 static var _near: PackedByteArray = PackedByteArray()
 static var _near_w: int = 0
 
-
 static func begin_halls() -> void:
 	_halls = []
-
 
 static func take_halls() -> Array:
 	var out: Array = _halls
 	_halls = []
 	return out
-
 
 static func _note_rect(map_w: int, map_h: int, x0: int, y0: int, x1: int, y1: int, heading: Vector2i, width: int) -> void:
 	var span_n: int = maxi(1, width)
@@ -45,28 +42,19 @@ static func _note_rect(map_w: int, map_h: int, x0: int, y0: int, x1: int, y1: in
 		return
 	_halls.append({"k": "rect", "x0": rx0, "y0": ry0, "x1": rx1, "y1": ry1})
 
-
-static func _note_band(a: Vector2i, b: Vector2i, width: int) -> void:
-	_halls.append({"k": "band", "ax": a.x, "ay": a.y, "bx": b.x, "by": b.y, "w": maxi(1, width)})
-
-
 static func idx(x: int, y: int, w: int) -> int:
 	return y * w + x
 
-
 static func center(r: Dictionary) -> Vector2i:
 	return Vector2i(r.x + int(r.w / 2.0), r.y + int(r.h / 2.0))
-
 
 static func dist(a: Dictionary, b: Dictionary) -> int:
 	var ca := center(a)
 	var cb := center(b)
 	return absi(ca.x - cb.x) + absi(ca.y - cb.y)
 
-
 static func overlap(x: int, y: int, bw: int, bh: int, r: Dictionary) -> bool:
 	return not (x + bw <= r.x or r.x + r.w <= x or y + bh <= r.y or r.y + r.h <= y)
-
 
 static func can_place(rooms: Array, x: int, y: int, rw: int, rh: int) -> bool:
 	for r in rooms:
@@ -74,36 +62,30 @@ static func can_place(rooms: Array, x: int, y: int, rw: int, rh: int) -> bool:
 			return false
 	return true
 
-
 static func dig(grid: PackedByteArray, w: int, h: int, x: int, y: int) -> void:
 	if x <= 0 or y <= 0 or x >= w - 1 or y >= h - 1:
 		return
 	grid[idx(x, y, w)] = FLOOR
-
 
 static func _hall_w_min() -> int:
 	if App.bal:
 		return clampi(int(App.bal.get("hall_w_min")), 1, 4)
 	return 2
 
-
 static func _hall_w_mode() -> int:
 	if App.bal:
 		return clampi(int(App.bal.get("hall_w_mode")), 2, 4)
 	return 3
-
 
 static func _hall_w_max() -> int:
 	if App.bal:
 		return clampi(int(App.bal.get("hall_w_max")), 2, 6)
 	return 4
 
-
 static func _hall_interval() -> int:
 	if App.bal:
 		return maxi(4, int(App.bal.get("hall_w_interval")))
 	return 10
-
 
 static func roll_hall_width(rng: RandomNumberGenerator) -> int:
 	var lo := _hall_w_min()
@@ -120,7 +102,6 @@ static func roll_hall_width(rng: RandomNumberGenerator) -> int:
 	if roll < min_pct + mode_pct:
 		return mid
 	return hi
-
 
 static func dig_span(grid: PackedByteArray, w: int, h: int, x: int, y: int, heading: Vector2i, width: int) -> void:
 	var n: int = maxi(1, width)
@@ -143,18 +124,12 @@ static func dig_span(grid: PackedByteArray, w: int, h: int, x: int, y: int, head
 				grid[y * w + xx] = FLOOR
 			j += 1
 
-
-static func dig_wide(grid: PackedByteArray, w: int, h: int, x: int, y: int) -> void:
-	dig_span(grid, w, h, x, y, Vector2i(1, 0), _hall_w_mode())
-
-
 static func carve_room(grid: PackedByteArray, w: int, h: int, r: Dictionary) -> void:
 	for yy in range(r.y, r.y + r.h):
 		for xx in range(r.x, r.x + r.w):
 			if xx <= 0 or yy <= 0 or xx >= w - 1 or yy >= h - 1:
 				continue
 			grid[idx(xx, yy, w)] = FLOOR
-
 
 static func place_spread_rooms(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, want: int, rmin: int, rmax: int) -> void:
 	var cols: int = maxi(3, int(ceil(sqrt(float(want)))))
@@ -197,7 +172,6 @@ static func place_spread_rooms(rng: RandomNumberGenerator, grid: PackedByteArray
 		var extra: Dictionary = {"x": x2, "y": y2, "w": rw2, "h": rh2, "kind": "normal"}
 		rooms.append(extra)
 		carve_room(grid, w, h, extra)
-
 
 static func connect_winding_tree(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array) -> void:
 	var n := rooms.size()
@@ -250,7 +224,6 @@ static func _near_stamp(w: int, h: int, x: int, y: int, r: int) -> void:
 			_near[row + xx] = 1
 			xx += 1
 		yy += 1
-
 
 static func _near_build(grid: PackedByteArray, w: int, h: int, gap: int, rooms: Array = []) -> void:
 	var n: int = w * h
@@ -314,10 +287,8 @@ static func _hug_gap() -> int:
 		gap = int(App.bal.get("hall_hug_gap"))
 	return maxi(floor_min, gap)
 
-
 static func _in_room(r: Dictionary, x: int, y: int) -> bool:
 	return x >= int(r.x) and y >= int(r.y) and x < int(r.x) + int(r.w) and y < int(r.y) + int(r.h)
-
 
 static func _cell_hugs(grid: PackedByteArray, w: int, h: int, x: int, y: int, gap: int, a: Dictionary, b: Dictionary) -> bool:
 	var r: int = maxi(1, gap)
@@ -347,28 +318,6 @@ static func _cell_hugs(grid: PackedByteArray, w: int, h: int, x: int, y: int, ga
 			xx += 1
 		yy += 1
 	return false
-static func _loop_hugs(old_g: PackedByteArray, new_g: PackedByteArray, w: int, h: int, a: Dictionary, b: Dictionary, gap: int) -> bool:
-	var pad: int = maxi(2, gap + 2)
-	var x0: int = mini(int(a.x), int(b.x)) - pad
-	var y0: int = mini(int(a.y), int(b.y)) - pad
-	var x1: int = maxi(int(a.x) + int(a.w), int(b.x) + int(b.w)) + pad
-	var y1: int = maxi(int(a.y) + int(a.h), int(b.y) + int(b.h)) + pad
-	x0 = clampi(x0, 1, w - 2)
-	y0 = clampi(y0, 1, h - 2)
-	x1 = clampi(x1, 1, w - 2)
-	y1 = clampi(y1, 1, h - 2)
-	var y: int = y0
-	while y <= y1:
-		var x: int = x0
-		while x <= x1:
-			var i: int = y * w + x
-			if new_g[i] == FLOOR and old_g[i] != FLOOR:
-				if _cell_hugs(old_g, w, h, x, y, gap, a, b):
-					return true
-			x += 1
-		y += 1
-	return false
-
 
 static func _restore(grid: PackedByteArray, saved: PackedByteArray) -> void:
 	var i: int = 0
@@ -376,7 +325,6 @@ static func _restore(grid: PackedByteArray, saved: PackedByteArray) -> void:
 	while i < n:
 		grid[i] = saved[i]
 		i += 1
-
 
 static func _axis_hugs(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i, gap: int, ra: Dictionary, rb: Dictionary) -> bool:
 	var heading: Vector2i = Vector2i(0, 0)
@@ -441,7 +389,6 @@ static func _dogleg_mid(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: V
 			continue
 		return mid
 	return Vector2i(-9999, -9999)
-
 
 static func _attempt_winding(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, ra: Dictionary, rb: Dictionary) -> bool:
 	var gap: int = _hug_gap()
@@ -544,95 +491,6 @@ static func carve_deadend_spurs(rng: RandomNumberGenerator, grid: PackedByteArra
 			carve_room(grid, w, h, spur)
 		added += 1
 
-
-static func _seg_dist2(px: float, py: float, ax: float, ay: float, bx: float, by: float) -> float:
-	var vx: float = bx - ax
-	var vy: float = by - ay
-	var len2: float = vx * vx + vy * vy
-	if len2 < 0.0001:
-		var dx0: float = px - ax
-		var dy0: float = py - ay
-		return dx0 * dx0 + dy0 * dy0
-	var t: float = clampf(((px - ax) * vx + (py - ay) * vy) / len2, 0.0, 1.0)
-	var qx: float = ax + t * vx
-	var qy: float = ay + t * vy
-	var dx1: float = px - qx
-	var dy1: float = py - qy
-	return dx1 * dx1 + dy1 * dy1
-
-
-static func _prime_disk(rad: int) -> void:
-	if rad == _disk_rad:
-		return
-	_disk_rad = rad
-	_disk_ox = PackedInt32Array()
-	_disk_oy = PackedInt32Array()
-	var r2: int = rad * rad + 1
-	var oy: int = -rad
-	while oy <= rad:
-		var ox: int = -rad
-		while ox <= rad:
-			if ox * ox + oy * oy <= r2:
-				_disk_ox.append(ox)
-				_disk_oy.append(oy)
-			ox += 1
-		oy += 1
-
-
-static func _stamp_band(
-	grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i, width: int
-) -> void:
-	var rad: int = maxi(1, int(ceil(float(maxi(1, width)) * 0.5)))
-	_prime_disk(rad)
-	_note_band(a, b, width)
-	var steps: int = maxi(1, absi(b.x - a.x) + absi(b.y - a.y))
-	var off_n: int = _disk_ox.size()
-	var s: int = 0
-	while s <= steps:
-		var t: float = float(s) / float(steps)
-		var cx: int = int(round(lerpf(float(a.x), float(b.x), t)))
-		var cy: int = int(round(lerpf(float(a.y), float(b.y), t)))
-		var k: int = 0
-		while k < off_n:
-			var xx: int = cx + _disk_ox[k]
-			var yy: int = cy + _disk_oy[k]
-			k += 1
-			if xx <= 0 or yy <= 0 or xx >= w - 1 or yy >= h - 1:
-				continue
-			var i: int = yy * w + xx
-			if grid[i] == FLOOR:
-				continue
-			grid[i] = FLOOR
-		s += 1
-
-
-static func _carve_band(
-	rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i
-) -> void:
-	var width: int = roll_hall_width(rng)
-	if rng.randf() < 0.22:
-		var px: int = 0
-		var py: int = 0
-		var bump: int = (2 + rng.randi() % 3) * (1 if rng.randf() < 0.5 else -1)
-		if absi(b.x - a.x) >= absi(b.y - a.y):
-			py = bump
-		else:
-			px = bump
-		var mid := Vector2i(
-			clampi(int(float(a.x + b.x) * 0.5) + px, 1, w - 3),
-			clampi(int(float(a.y + b.y) * 0.5) + py, 1, h - 3)
-		)
-		_stamp_band(grid, w, h, a, mid, width)
-		width = roll_hall_width(rng)
-		_stamp_band(grid, w, h, mid, b, width)
-	else:
-		_stamp_band(grid, w, h, a, b, width)
-	dig_span(grid, w, h, a.x, a.y, Vector2i(1, 0), width)
-	dig_span(grid, w, h, b.x, b.y, Vector2i(1, 0), width)
-	_note_rect(w, h, a.x, a.y, a.x, a.y, Vector2i(1, 0), width)
-	_note_rect(w, h, b.x, b.y, b.x, b.y, Vector2i(1, 0), width)
-
-
 static func _carve_axis(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i, width: int) -> void:
 	if a == b:
 		dig_span(grid, w, h, a.x, a.y, Vector2i(1, 0), width)
@@ -654,7 +512,6 @@ static func _carve_axis(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: V
 		y = clampi(y + heading.y, 1, h - 3)
 	dig_span(grid, w, h, b.x, b.y, heading, width)
 	_note_rect(w, h, a.x, a.y, b.x, b.y, heading, width)
-
 
 static func carve_winding(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i) -> void:
 	var width: int = roll_hall_width(rng)

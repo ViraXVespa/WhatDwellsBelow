@@ -7,7 +7,6 @@ const FRESH := "user://playtest/fresh"
 const PROG := "user://playtest/progressed"
 const SMOKE := "user://playtest/smoke"
 
-
 static func dir_for(slot: String) -> String:
 	if slot == "fresh":
 		return FRESH
@@ -17,18 +16,14 @@ static func dir_for(slot: String) -> String:
 		return SMOKE
 	return LIVE
 
-
 static func primary_path(slot: String) -> String:
 	return dir_for(slot).path_join("save.json")
-
 
 static func backup_path(slot: String) -> String:
 	return dir_for(slot).path_join("save.bak.json")
 
-
 static func ensure_dir(slot: String) -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir_for(slot)))
-
 
 static func write_payload(path: String, data: Dictionary) -> bool:
 	var f := FileAccess.open(path, FileAccess.WRITE)
@@ -36,7 +31,6 @@ static func write_payload(path: String, data: Dictionary) -> bool:
 		return false
 	f.store_string(JSON.stringify(data))
 	return true
-
 
 static func read_payload(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):

@@ -21,7 +21,6 @@ const ID_YIELD := "yield_chance"
 
 const FORGE_SLOTS: PackedStringArray = ["weapon", "tool", "head", "body", "legs"]
 
-
 static func defs() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	out.append(_row(ID_DMG, "Damage", KIND_FLAT, GROUP_COMBAT, true))
@@ -39,7 +38,6 @@ static func defs() -> Array[Dictionary]:
 	out.append(_row(ID_YIELD, "Yield Chance", KIND_PCT, GROUP_TOOL, false))
 	return out
 
-
 static func _row(id: String, label: String, kind: String, group: String, primary: bool) -> Dictionary:
 	return {
 		"id": id,
@@ -49,13 +47,11 @@ static func _row(id: String, label: String, kind: String, group: String, primary
 		"primary": primary,
 	}
 
-
 static func by_id(id: String) -> Dictionary:
 	for row: Dictionary in defs():
 		if str(row.get("id", "")) == id:
 			return row
 	return {}
-
 
 static func label_of(id: String) -> String:
 	var row: Dictionary = by_id(id)
@@ -63,15 +59,12 @@ static func label_of(id: String) -> String:
 		return id.capitalize()
 	return str(row.get("label", id))
 
-
 static func kind_of(id: String) -> String:
 	var row: Dictionary = by_id(id)
 	return str(row.get("kind", KIND_FLAT))
 
-
 static func stat_key(id: String) -> String:
 	return id
-
 
 static func type_of(it: Dictionary) -> String:
 	var slot: String = str(it.get("slot", ""))
@@ -81,7 +74,6 @@ static func type_of(it: Dictionary) -> String:
 		return str(it.get("tool", ""))
 	return slot
 
-
 static func primary_id(slot: String) -> String:
 	if slot == "tool":
 		return ID_GATHER_SPD
@@ -90,7 +82,6 @@ static func primary_id(slot: String) -> String:
 	if slot == "head" or slot == "body" or slot == "legs":
 		return ID_DEF
 	return ID_HP
-
 
 static func bonus_pool(slot: String) -> PackedStringArray:
 	var group := GROUP_TOOL if slot == "tool" else GROUP_COMBAT
@@ -105,7 +96,6 @@ static func bonus_pool(slot: String) -> PackedStringArray:
 		out.append(id)
 	return out
 
-
 static func format_value(id: String, value: float) -> String:
 	if kind_of(id) == KIND_PCT:
 		return "%+.1f%%" % (value * 100.0)
@@ -113,10 +103,8 @@ static func format_value(id: String, value: float) -> String:
 		return "%+d" % int(roundf(value))
 	return "%+.1f" % value
 
-
 static func book_key(slot: String, type_id: String, rarity: String) -> String:
 	return "%s:%s:%s" % [slot, type_id, rarity]
-
 
 static func type_label(slot: String, type_id: String) -> String:
 	if type_id == "":

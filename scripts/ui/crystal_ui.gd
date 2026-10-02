@@ -24,7 +24,6 @@ var band_hi := 10
 var zoom_lv := 0
 var aim_cell := Vector2i.ZERO
 
-
 static func open(from: Node) -> void:
 	var old: Node = from.get_tree().get_first_node_in_group("crystal_ui")
 	if old:
@@ -32,7 +31,6 @@ static func open(from: Node) -> void:
 	var ui := new()
 	from.get_tree().current_scene.add_child(ui)
 	ui.begin(from)
-
 
 func begin(from: Node) -> void:
 	spot = from
@@ -45,7 +43,6 @@ func begin(from: Node) -> void:
 	zoom_lv = 0
 	_rebuild()
 
-
 func close_ui() -> void:
 	focus_btn = null
 	UiSession.close(self)
@@ -55,7 +52,6 @@ func close_ui() -> void:
 	App.swallow_close_pad()
 	App.wake_web_pad()
 	queue_free()
-
 
 func _rebuild() -> void:
 	for c in get_children():
@@ -78,14 +74,12 @@ func _rebuild() -> void:
 	_paint_hint()
 	call_deferred("_focus")
 
-
 func _paint_hint() -> void:
 	var extra: Array = []
 	if page == "local":
 		extra.append({"action": "crystal_zoom", "verb": "zoom map", "gap": true})
 	extra.append({"action": "ui_cancel", "verb": "back"})
 	PromptView.footer(self, extra)
-
 
 func _cycle_zoom() -> void:
 	if page != "local":
@@ -95,7 +89,6 @@ func _cycle_zoom() -> void:
 		status.text = Util.zoom_tip(self)
 	_aim(aim_cell)
 	App.sfx("ui")
-
 
 func _aim(cell: Vector2i) -> void:
 	aim_cell = cell
@@ -120,20 +113,17 @@ func _aim(cell: Vector2i) -> void:
 	map_rect.texture = atlas
 	Util.place_mark(self, cell, x, y, rw, rh)
 
-
 func _pick_local(cell: Vector2i) -> void:
 	if spot and Vector2i(spot.get("crystal_cell")) == cell:
 		return
 	CrystalNet.warp_local(host, cell)
 	close_ui()
 
-
 func _pick_floor(n: int) -> void:
 	if n == App.floor_n or n < 1 or n > int(App.prog.deepest):
 		return
 	close_ui()
 	CrystalNet.warp_floor(n)
-
 
 func _back() -> void:
 	if page == "band":
@@ -146,7 +136,6 @@ func _back() -> void:
 		return
 	close_ui()
 
-
 func _focus() -> void:
 	if not is_inside_tree():
 		return
@@ -157,7 +146,6 @@ func _focus() -> void:
 	if focus_btn.focus_mode == Control.FOCUS_NONE:
 		return
 	focus_btn.grab_focus()
-
 
 func _unhandled_input(event: InputEvent) -> void:
 	if page == "local" and Util.zoom_event(event):

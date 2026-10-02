@@ -7,46 +7,35 @@ const Req := preload("res://scripts/data/progress_gear_req.gd")
 static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:
 	return Make.make_weapon(p, wpn, rarity, ilvl)
 
-
 static func make_tool(p: Object, kind: String, rarity := "white", ilvl: int = 0) -> Dictionary:
 	return Make.make_tool(p, kind, rarity, ilvl)
-
 
 static func make_armor(p: Object, slot: String, rarity: String, ilvl: int = 0) -> Dictionary:
 	return Make.make_armor(p, slot, rarity, ilvl)
 
-
 static func make_potion(p: Object, n: int) -> Dictionary:
 	return Make.make_potion(p, n)
-
 
 static func make_food(p: Object, fid: String, n: int) -> Dictionary:
 	return Make.make_food(p, fid, n)
 
-
 static func make_artifact(p: Object, id: String) -> Dictionary:
 	return Make.make_artifact(p, id)
-
 
 static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Dictionary:
 	return Make.item(p, kind, name, extra)
 
-
 static func starter(p: Object, slot: String) -> Dictionary:
 	return Make.starter(p, slot)
-
 
 static func required_ok(slot: String, it: Dictionary) -> bool:
 	return Req.required_ok(slot, it)
 
-
 static func required_piece(p: Object, slot: String) -> Dictionary:
 	return Req.required_piece(p, slot)
 
-
 static func ensure_required_slots(p: Object) -> void:
 	Req.ensure_required_slots(p)
-
 
 static func bag_stack_index(p: Object, it: Dictionary) -> int:
 	var k: String = str(it.get("kind", ""))
@@ -61,14 +50,12 @@ static func bag_stack_index(p: Object, it: Dictionary) -> int:
 		return i
 	return -1
 
-
 static func bag_can_accept(p: Object, it: Dictionary) -> bool:
 	if it.is_empty():
 		return false
 	if bag_stack_index(p, it) >= 0:
 		return true
 	return not p.bag_full()
-
 
 static func _has_white_copy(p: Object, it: Dictionary) -> bool:
 	if str(it.get("rarity", "white")) != "white":
@@ -81,7 +68,6 @@ static func _has_white_copy(p: Object, it: Dictionary) -> bool:
 		if raw is Dictionary and Rules.tmpl_key(raw) == key and str(raw.get("rarity", "white")) == "white":
 			return true
 	return Rules.is_starter(p, it)
-
 
 static func add_item(p: Object, it: Dictionary) -> bool:
 	if it.is_empty():
@@ -110,7 +96,6 @@ static func add_item(p: Object, it: Dictionary) -> bool:
 			return true
 	return add_to_bag(p, it)
 
-
 static func add_to_bag(p: Object, it: Dictionary) -> bool:
 	if it.is_empty():
 		return false
@@ -132,7 +117,6 @@ static func add_to_bag(p: Object, it: Dictionary) -> bool:
 		p._refresh_player_hp()
 	return true
 
-
 static func remove_uid(p: Object, uid: int) -> Dictionary:
 	for i: int in p.bag.size():
 		if int(p.bag[i].uid) == uid:
@@ -143,7 +127,6 @@ static func remove_uid(p: Object, uid: int) -> Dictionary:
 				p._refresh_player_hp()
 			return it
 	return {}
-
 
 static func equip_uid(p: Object, uid: int) -> String:
 	var it: Dictionary = remove_uid(p, uid)
@@ -180,7 +163,6 @@ static func equip_uid(p: Object, uid: int) -> String:
 	p._refresh_player_hp()
 	return "Equipped " + str(it.name)
 
-
 static func drop_uid(p: Object, uid: int) -> String:
 	var it: Dictionary = remove_uid(p, uid)
 	if it.is_empty():
@@ -188,7 +170,6 @@ static func drop_uid(p: Object, uid: int) -> String:
 	App.spawn_floor_item(it)
 	App.toast("Dropped " + str(it.name))
 	return "Dropped."
-
 
 static func unequip_slot(p: Object, slot: String) -> String:
 	if p.SLOTS.find(slot) < 0:
@@ -209,7 +190,6 @@ static func unequip_slot(p: Object, slot: String) -> String:
 	p._refresh_player_hp()
 	return "Unequipped " + str(it.name)
 
-
 static func fill_slot_after_remove(p: Object, slot: String) -> void:
 	if slot == "weapon":
 		p.slots["weapon"] = make_weapon(p, p.pick_weapon, "white")
@@ -221,7 +201,6 @@ static func fill_slot_after_remove(p: Object, slot: String) -> void:
 		p.slots["tool"] = make_tool(p, p.tool_type)
 	else:
 		p.slots[slot] = {}
-
 
 static func drop_slot(p: Object, slot: String) -> String:
 	if p.SLOTS.find(slot) < 0:
@@ -237,7 +216,6 @@ static func drop_slot(p: Object, slot: String) -> String:
 	App.toast("Dropped " + str(it.name))
 	return "Dropped."
 
-
 static func take_slot(p: Object, slot: String) -> Dictionary:
 	if p.SLOTS.find(slot) < 0:
 		return {}
@@ -250,7 +228,6 @@ static func take_slot(p: Object, slot: String) -> Dictionary:
 	p._refresh_player_hp()
 	return it
 
-
 static func drop_stash(p: Object, uid: int) -> String:
 	for i: int in p.bank_items.size():
 		if int(p.bank_items[i].uid) == uid:
@@ -260,7 +237,6 @@ static func drop_stash(p: Object, uid: int) -> String:
 			return "Discarded."
 	return "Gone."
 
-
 static func give_or_drop(p: Object, it: Dictionary, pos: Vector3) -> bool:
 	if it.is_empty():
 		return false
@@ -268,4 +244,3 @@ static func give_or_drop(p: Object, it: Dictionary, pos: Vector3) -> bool:
 		return true
 	App.spawn_floor_item(it, pos)
 	return false
-

@@ -125,4 +125,3 @@ static func set_bonus_text(p: Object, sid: String) -> String:
 
 static func sync_artifacts(p: Object) -> void:
 	Use.sync_artifacts(p)
-

@@ -4,12 +4,10 @@
 
 const Fmt := preload("res://scripts/debug/playtest_log_fmt.gd")
 
-
 static func _t(pt: Node) -> float:
 	if pt.get("sim_t") == null:
 		return 0.0
 	return snappedf(float(pt.sim_t), 0.1)
-
 
 static func _xy(pt: Node, n: Node) -> Array:
 	if n == null or not is_instance_valid(n):
@@ -17,12 +15,10 @@ static func _xy(pt: Node, n: Node) -> Array:
 	var c: Vector2i = pt._cell_of_node(n)
 	return [c.x, c.y]
 
-
 static func _dir() -> String:
 	var d: String = OS.get_user_data_dir().path_join("playtest").path_join("runs")
 	DirAccess.make_dir_recursive_absolute(d)
 	return d
-
 
 static func _stamp(pt: Node) -> String:
 	var now: Dictionary = Time.get_datetime_dict_from_system()
@@ -35,19 +31,16 @@ static func _stamp(pt: Node) -> String:
 		save, str(App.weapon),
 	]
 
-
 static func _cfg_hash() -> String:
 	if App.tel and App.tel.get("cfg_hash") != null:
 		return str(App.tel.cfg_hash)
 	return ""
-
 
 static func _bits(d: Dictionary) -> String:
 	var s: String = ""
 	for card: String in ["e", "w", "n", "s"]:
 		s += "1" if d.get(card) == true else "0"
 	return s
-
 
 static func _cmd(want: Vector2) -> String:
 	if want.length() < 0.15:
@@ -56,18 +49,10 @@ static func _cmd(want: Vector2) -> String:
 		return "e" if want.x > 0.0 else "w"
 	return "s" if want.y > 0.0 else "n"
 
-
-static func _best_d(pt: Node, p: Node, n: Node) -> float:
-	if n == null or not is_instance_valid(n) or p == null:
-		return -1.0
-	return snappedf(pt._dist(p, n), 0.1)
-
-
 static func _tool_name() -> String:
 	if App.prog:
 		return str(App.prog.tool_type)
 	return "pickaxe"
-
 
 static func _kind_tool_ok(k: String) -> bool:
 	var tool: String = _tool_name()
@@ -77,35 +62,28 @@ static func _kind_tool_ok(k: String) -> bool:
 		return tool == "pickaxe"
 	return true
 
-
 static func _banned_n(pt: Node, n: Node) -> bool:
 	if n == null or not pt.has_meta("skip_list"):
 		return false
 	var a: Variant = pt.get_meta("skip_list")
 	return a is Array and (a as Array).has(n)
 
-
 static func _near(pt: Node, p: Node, lim: float = 40.0) -> Array:
 	return Fmt.near(pt, p, lim)
-
 
 static func _skip_hint(pt: Node, p: Node) -> String:
 	return Fmt.skip_hint(pt, p)
 
-
 static func _lock_fields(pt: Node, p: Node) -> Dictionary:
 	return Fmt.lock_fields(pt, p)
 
-
 static func _path_fields(pt: Node) -> Dictionary:
 	return Fmt.path_fields(pt)
-
 
 static func _wd(pt: Node) -> String:
 	if pt.get("wander_dir") == null:
 		return ""
 	return _cmd(pt.wander_dir)
-
 
 static func _seen_n(pt: Node) -> int:
 	if not pt.has_meta("seen_map"):
@@ -114,7 +92,6 @@ static func _seen_n(pt: Node) -> int:
 	if m is Dictionary:
 		return (m as Dictionary).size()
 	return 0
-
 
 static func _tgt_cell(pt: Node, extra: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
@@ -129,7 +106,6 @@ static func _tgt_cell(pt: Node, extra: Dictionary) -> Dictionary:
 	if n != null and is_instance_valid(n):
 		out["tgt_c"] = _xy(pt, n)
 	return out
-
 
 static func _use_fields(pt: Node, _p: Node) -> Dictionary:
 	var out: Dictionary = {}
@@ -155,14 +131,12 @@ static func _use_fields(pt: Node, _p: Node) -> Dictionary:
 		out["use_ok"] = 0 if n.get("used") == true else 1
 	return out
 
-
 static func _beat_perf() -> Dictionary:
 	var out: Dictionary = {}
 	var fps: float = Engine.get_frames_per_second()
 	if fps > 0.0 and fps < 50.0:
 		out["fps"] = snappedf(fps, 0.1)
 	return out
-
 
 static func _relabel(why: String, clerk_d: float, gather_d: float, cargo: int) -> String:
 	if why != "not_path" and why != "no_local_prop":
@@ -172,7 +146,6 @@ static func _relabel(why: String, clerk_d: float, gather_d: float, cargo: int) -
 	if gather_d < 0.0:
 		return "no_gather"
 	return "gather_far" if gather_d > 16.0 else why
-
 
 static func _card_open(pt: Node, p: Node) -> Dictionary:
 	var keys: Array[String] = ["e", "w", "n", "s"]
@@ -193,7 +166,6 @@ static func _card_open(pt: Node, p: Node) -> Dictionary:
 			blocked = body.test_move(body.global_transform, Vector3(v.x, 0.0, v.y) * 0.42)
 		test[card] = not blocked
 	return {"grid": grid, "open": open, "test": test}
-
 
 static func _maybe_combat(pt: Node, last_combat_kills: int, last_combat_dealt: float, last_combat_taken: float) -> Dictionary:
 	if App.tel == null:
@@ -218,7 +190,6 @@ static func _maybe_combat(pt: Node, last_combat_kills: int, last_combat_dealt: f
 		"taken": taken,
 	}
 
-
 static func _coalesce_step(events: Array, ev: Dictionary) -> bool:
 	if events.is_empty():
 		return false
@@ -236,7 +207,6 @@ static func _coalesce_step(events: Array, ev: Dictionary) -> bool:
 	prev["d"] = ev.get("d")
 	return true
 
-
 static func _godot() -> Dictionary:
 	var v: Dictionary = Engine.get_version_info()
 	return {
@@ -244,14 +214,12 @@ static func _godot() -> Dictionary:
 		"h": str(v.get("hash", "")),
 	}
 
-
 static func _tel_slim() -> Dictionary:
 	if App.tel == null:
 		return {}
 	var raw: Dictionary = App.tel.to_dict()
 	raw.erase("cfg")
 	return raw
-
 
 static func _flush(file_name: String, events: Array, end_cond: String, end_fail: String) -> void:
 	if file_name == "":

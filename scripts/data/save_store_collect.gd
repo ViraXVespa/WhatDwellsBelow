@@ -2,7 +2,6 @@ extends RefCounted
 
 ## Build the save JSON dictionary.
 
-
 static func collect() -> Dictionary:
 	return {
 		"v": 1,

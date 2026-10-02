@@ -21,13 +21,11 @@ const UTIL_KEYS: PackedStringArray = [
 	Affix.ID_YIELD,
 ]
 
-
 static func title(ui: CanvasLayer) -> String:
 	var pages := page_ids(ui)
 	var idx := clampi(int(ui.get("gear_stat_page")), 0, pages.size() - 1)
 	ui.gear_stat_page = idx
 	return page_title(pages[idx])
-
 
 static func body(ui: CanvasLayer) -> String:
 	var pages := page_ids(ui)
@@ -43,17 +41,14 @@ static func body(ui: CanvasLayer) -> String:
 		_:
 			return artifact_block()
 
-
 static func page(ui: CanvasLayer) -> String:
 	return title(ui) + "\n" + body(ui)
-
 
 static func page_ids(ui: CanvasLayer) -> PackedStringArray:
 	var mode := str(ui.get("gear_mode"))
 	if mode == "loadout" or mode == "anvil":
 		return PackedStringArray(["equipped", "combat", "utility"])
 	return PackedStringArray(["equipped", "combat", "utility", "artifacts"])
-
 
 static func page_title(id: String) -> String:
 	match id:
@@ -66,7 +61,6 @@ static func page_title(id: String) -> String:
 		_:
 			return "Artifact sets"
 
-
 static func equipped_only() -> String:
 	var lines := PackedStringArray()
 	for id: String in COMBAT_KEYS:
@@ -77,7 +71,6 @@ static func equipped_only() -> String:
 		return "No equipment bonuses on this kit."
 	return "\n".join(lines)
 
-
 static func all_block(keys: PackedStringArray) -> String:
 	var lines := PackedStringArray()
 	for id: String in keys:
@@ -87,7 +80,6 @@ static func all_block(keys: PackedStringArray) -> String:
 		else:
 			lines.append("%s  %s" % [Affix.label_of(id), Affix.format_value(id, v)])
 	return "\n".join(lines)
-
 
 static func artifact_block() -> String:
 	var counts: Dictionary = App.prog.set_counts()
@@ -104,7 +96,6 @@ static func artifact_block() -> String:
 		return "No artifacts this run."
 	return "\n".join(lines)
 
-
 static func _sum(id: String) -> float:
 	if App.prog.has_method("gear_stat"):
 		return float(App.prog.gear_stat(id))
@@ -115,7 +106,6 @@ static func _sum(id: String) -> float:
 	if id == Affix.ID_HP and App.prog.has_method("gear_hp"):
 		return float(App.prog.gear_hp())
 	return 0.0
-
 
 static func _add_if(lines: PackedStringArray, id: String, v: float) -> void:
 	if absf(v) < 0.001:

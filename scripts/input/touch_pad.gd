@@ -20,12 +20,10 @@ static var tap_window := 0.28
 static var dead := 0.24
 static var _attack_finger := false
 
-
 static func reset_defaults() -> void:
 	tap_window = 0.28
 	dead = 0.24
 	attack_latch = false
-
 
 static func tick() -> void:
 	_probe_ua()
@@ -35,13 +33,11 @@ static func tick() -> void:
 	if App.ui_open:
 		clear_world()
 
-
 static func note_event(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		phys_kb = true
 		if not force_show:
 			clear_world()
-
 
 static func wants_device() -> bool:
 	if force_show:
@@ -53,7 +49,6 @@ static func wants_device() -> bool:
 		return false
 	return not _pad_connected()
 
-
 static func wants_show() -> bool:
 	if App.ui_open:
 		return false
@@ -61,10 +56,8 @@ static func wants_show() -> bool:
 		return false
 	return _play_surface()
 
-
 static func active() -> bool:
 	return wants_show()
-
 
 static func in_camp() -> bool:
 	var loop := Engine.get_main_loop()
@@ -75,30 +68,24 @@ static func in_camp() -> bool:
 		return false
 	return str(tree.current_scene.scene_file_path).ends_with("camp.tscn")
 
-
 static func set_move(v: Vector2) -> void:
 	move = v if v.length() >= dead else Vector2.ZERO
 
-
 static func set_aim(_v: Vector2) -> void:
 	aim = Vector2.ZERO
-
 
 static func set_held(action: String, on: bool) -> void:
 	if action == "attack":
 		return
 	down[action] = on
 
-
 static func attack_press(_now: float) -> void:
 	attack_latch = false
 	_attack_finger = true
 
-
 static func attack_release(_now: float) -> void:
 	attack_latch = false
 	_attack_finger = false
-
 
 static func held(action: String) -> bool:
 	if not active():
@@ -106,7 +93,6 @@ static func held(action: String) -> bool:
 	if action == "attack":
 		return _attack_finger
 	return bool(down.get(action, false))
-
 
 static func clear_world() -> void:
 	move = Vector2.ZERO
@@ -116,7 +102,6 @@ static func clear_world() -> void:
 	attack_latch = false
 	_attack_finger = false
 
-
 static func _idle_sticks() -> void:
 	move = Vector2.ZERO
 	aim = Vector2.ZERO
@@ -124,7 +109,6 @@ static func _idle_sticks() -> void:
 	down.clear()
 	attack_latch = false
 	_attack_finger = false
-
 
 static func _play_surface() -> bool:
 	var loop := Engine.get_main_loop()
@@ -135,7 +119,6 @@ static func _play_surface() -> bool:
 		return false
 	var path := str(tree.current_scene.scene_file_path)
 	return path.ends_with("dungeon.tscn") or path.ends_with("camp.tscn")
-
 
 static func _probe_ua() -> void:
 	if ua_ready or not OS.has_feature("web"):
@@ -150,7 +133,6 @@ static func _probe_ua() -> void:
 		})();
 	""", true))
 	mobile_ua = raw == "1"
-
 
 static func _pad_connected() -> bool:
 	if not Input.get_connected_joypads().is_empty():

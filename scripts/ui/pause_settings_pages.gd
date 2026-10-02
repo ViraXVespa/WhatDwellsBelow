@@ -8,7 +8,6 @@ const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 
-
 static func page_gameplay(host: Node) -> void:
 	var ch: Button = ThemeS.btn("Character: %s" % App.character_type, func() -> void:
 		var nxt: String = "female" if App.character_type == "male" else "male"
@@ -69,12 +68,10 @@ static func page_gameplay(host: Node) -> void:
 	)
 	View.add_page_btn(host, wipe)
 
-
 static func page_audio(host: Node) -> void:
 	_slider(host, "Master volume", float(App.vol_master), 0.0, 1.0, 0.01, func(v: float) -> void: App.set_volume("master", v))
 	_slider(host, "Music volume", float(App.vol_music), 0.0, 1.0, 0.01, func(v: float) -> void: App.set_volume("music", v))
 	_slider(host, "SFX volume", float(App.vol_sfx), 0.0, 1.0, 0.01, func(v: float) -> void: App.set_volume("sfx", v))
-
 
 static func page_graphics(host: Node) -> void:
 	var filt: int = SpriteFilt.clamp_id(int(App.sprite_filter), false)
@@ -138,7 +135,6 @@ static func page_graphics(host: Node) -> void:
 		App.bal.aim_line_opacity = v
 	)
 
-
 static func _set_filter(host: Node, mips_on: bool, aniso_on: bool) -> void:
 	var id: int = SpriteFilt.from_flags(mips_on, aniso_on)
 	App.set_sprite_filter(id, false)
@@ -146,7 +142,6 @@ static func _set_filter(host: Node, mips_on: bool, aniso_on: bool) -> void:
 	host.split_build_page("graphics")
 	View.apply_col(host)
 	View.focus_col(host)
-
 
 static func _focus_named(host: Node, title: String) -> void:
 	var btns: Variant = host.get("info_btns")
@@ -161,7 +156,6 @@ static func _focus_named(host: Node, title: String) -> void:
 				return
 	View.focus_col(host)
 
-
 static func _slider(host: Node, title: String, value: float, lo: float, hi: float, step: float, on_change: Callable) -> void:
 	var shell: VBoxContainer = MenuUtil.slider_row(host, title, value, lo, hi, step, on_change, false, 640.0)
 	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -170,7 +164,6 @@ static func _slider(host: Node, title: String, value: float, lo: float, hi: floa
 	if sl:
 		host.info_btns.append(sl)
 
-
 static func _check(title: String, on: bool, on_change: Callable) -> CheckBox:
 	var b := CheckBox.new()
 	b.text = title
@@ -178,7 +171,6 @@ static func _check(title: String, on: bool, on_change: Callable) -> CheckBox:
 	b.focus_mode = Control.FOCUS_ALL
 	b.toggled.connect(on_change)
 	return b
-
 
 static func _add_check_centered(host: Node, b: CheckBox) -> void:
 	var row := HBoxContainer.new()

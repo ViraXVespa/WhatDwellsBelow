@@ -5,7 +5,6 @@ const Cover := preload("res://scripts/combat/cover.gd")
 const ProjS := preload("res://scripts/combat/projectile.gd")
 const Threat := preload("res://scripts/combat/threat.gd")
 
-
 static func begin_windup(host: Node) -> void:
 	host.state = host.ST_WIND
 	host.wind_t = 0.0
@@ -25,7 +24,6 @@ static func begin_windup(host: Node) -> void:
 	if host.is_boss and host.role == "melee":
 		host.wind_dur += 0.12
 	draw_tele(host, false)
-
 
 static func do_attack(host: Node, delta: float) -> void:
 	if host.state == host.ST_WIND:
@@ -59,7 +57,6 @@ static func do_attack(host: Node, delta: float) -> void:
 			if host.telegraph:
 				host.telegraph.hide_now()
 
-
 static func draw_tele(host: Node, active: bool) -> void:
 	if host.telegraph == null:
 		return
@@ -78,7 +75,6 @@ static func draw_tele(host: Node, active: bool) -> void:
 		host.telegraph.show_circle(host.global_position, host.atk_range, col)
 		return
 	host.telegraph.show_arc(host.global_position, host.locked_aim, host.atk_range, host.arc_deg, col)
-
 
 static func strike(host: Node) -> void:
 	var player: Node = host._player() as Node
@@ -123,7 +119,6 @@ static func strike(host: Node) -> void:
 		if Cover.connected(nc):
 			hit_player(host, player, 0.45, nc)
 
-
 static func hit_player(host: Node, player: Node, mult: float = 1.0, coverage: float = 1.0) -> void:
 	if player == null or not player.has_method("take_hit"):
 		return
@@ -134,7 +129,6 @@ static func hit_player(host: Node, player: Node, mult: float = 1.0, coverage: fl
 		crit = Combat.roll_crit(App.bal.crit_chance)
 	player.set("last_glance", glance)
 	player.take_hit(dmg, host.locked_aim, crit, host.kill_tag())
-
 
 static func spawn_shot(host: Node, dir: Vector2) -> void:
 	var p: Node3D = ProjS.new()

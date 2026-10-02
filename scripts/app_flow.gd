@@ -4,7 +4,6 @@ const Anim := preload("res://scripts/world/player_anim.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const AppRunS := preload("res://scripts/app_run.gd")
 
-
 static func enter_dungeon(host: Node) -> void:
 	if host.present and str(host.present.get("_mode")) == "enter":
 		return
@@ -40,7 +39,6 @@ static func enter_dungeon(host: Node) -> void:
 		AppRunS.ensure_dungeon_packed(host)
 		host._after_enter()
 
-
 static func _close_hub_ui(host: Node) -> void:
 	var scene: Node = host.get_tree().current_scene
 	if scene == null:
@@ -50,7 +48,6 @@ static func _close_hub_ui(host: Node) -> void:
 		var ui: CanvasLayer = raw as CanvasLayer
 		if ui.has_method("close_ui") and bool(ui.get("open")):
 			ui.close_ui()
-
 
 static func go_title(host: Node) -> void:
 	host.in_dungeon = false
@@ -64,13 +61,11 @@ static func go_title(host: Node) -> void:
 	host.get_tree().call_deferred("change_scene_to_file", host.TITLE_SCENE)
 	host.call_deferred("wake_web_pad")
 
-
 static func go_foundation(host: Node) -> void:
 	host.in_dungeon = true
 	host.get_tree().paused = false
 	Engine.time_scale = 1.0
 	host.get_tree().call_deferred("change_scene_to_file", host.FOUNDATION_SCENE)
-
 
 static func go_camp(host: Node) -> void:
 	host.in_dungeon = false
@@ -88,7 +83,6 @@ static func go_camp(host: Node) -> void:
 		host.get_tree().call_deferred("change_scene_to_file", host.CAMP_SCENE)
 	host.call_deferred("wake_web_pad")
 
-
 static func play_from_menu(host: Node) -> void:
 	if host._menu_loading:
 		return
@@ -97,7 +91,6 @@ static func play_from_menu(host: Node) -> void:
 		return
 	host._menu_loading = true
 	host._play_from_menu_async()
-
 
 static func play_from_menu_async(host: Node) -> void:
 	LoadTiming.mark("play_begin")
@@ -138,7 +131,6 @@ static func play_from_menu_async(host: Node) -> void:
 	if scene and scene.has_method("ensure_dummy"):
 		scene.ensure_dummy()
 
-
 static func dungeon_load_timing_async(host: Node) -> void:
 	host.go_camp()
 	var hub_guard: int = 0
@@ -177,12 +169,10 @@ static func dungeon_load_timing_async(host: Node) -> void:
 	LoadTiming.dmark("dungeon_ready")
 	LoadTiming.finish()
 
-
 static func _hub_player(host: Node, scene: Node) -> Node:
 	if scene and ("player" in scene) and scene.player:
 		return scene.player
 	return host.get_tree().get_first_node_in_group("player")
-
 
 static func pump_fps(host: Node, hub: bool) -> void:
 	var good: int = 0
@@ -249,7 +239,6 @@ static func _warmup_hub(host: Node) -> void:
 		host.loader.set_progress(0.98)
 	LoadTiming.mark("warmup_end")
 
-
 static func hub_preload_paths(_host: Node) -> PackedStringArray:
 	return PackedStringArray([
 		"res://assets/sprites/buildings/guild.png",
@@ -271,7 +260,6 @@ static func hub_preload_paths(_host: Node) -> PackedStringArray:
 		"res://assets/fx/dummy.png",
 		"res://assets/audio/music_hub.wav",
 	])
-
 
 static func preload_hub(host: Node, _t0: int = 0) -> void:
 	var paths := hub_preload_paths(host)
@@ -299,7 +287,6 @@ static func preload_hub(host: Node, _t0: int = 0) -> void:
 	LoadTiming.mark("preload_end")
 	LoadTiming.note("preload_got", str(n))
 
-
 static func hub_status_for(path: String) -> String:
 	if path.ends_with("camp.tscn") or path.ends_with("camp.gd"):
 		return "Unfolding Placeholdia…"
@@ -313,20 +300,11 @@ static func hub_status_for(path: String) -> String:
 		return "Gathering the square…"
 	return "Crossing the veil…"
 
-
 static func launch_archive(host: Node, id: String) -> void:
 	if host._menu_loading:
 		return
 	host._menu_loading = true
 	host._launch_archive_async(id)
-
-
-static func archive_label(id: String) -> String:
-	for e in App.T.archive_catalog():
-		if str(e.get("id", "")) == id:
-			return str(e.get("label", id))
-	return id
-
 
 static func launch_archive_async(host: Node, id: String) -> void:
 	await load("res://scripts/data/archives_launch.gd").run(host, id)

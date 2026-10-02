@@ -4,7 +4,6 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 
-
 static func build(host: CanvasLayer) -> void:
 	host.layer = 70
 	host.visible = false

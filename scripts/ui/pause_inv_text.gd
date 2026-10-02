@@ -1,18 +1,14 @@
 extends Object
 const Fmt := preload("res://scripts/ui/gear_board/gear_board_text_fmt.gd")
 
-
 static func item_short(it: Dictionary) -> String:
 	return Fmt.item_short(it)
-
 
 static func item_cell(it: Dictionary) -> String:
 	return Fmt.item_cell(it)
 
-
 static func item_color(it: Dictionary) -> Color:
 	return Fmt.item_color(it)
-
 
 static func selected(ui: CanvasLayer) -> Dictionary:
 	if ui.inv_sel.begins_with("slot:"):
@@ -26,12 +22,10 @@ static func selected(ui: CanvasLayer) -> Dictionary:
 				return raw
 	return {}
 
-
 static func selected_slot(ui: CanvasLayer) -> String:
 	if ui.inv_sel.begins_with("slot:"):
 		return ui.inv_sel.substr(5)
 	return ""
-
 
 static func selected_uid(ui: CanvasLayer) -> int:
 	if ui.inv_sel.begins_with("bag:"):
@@ -41,10 +35,8 @@ static func selected_uid(ui: CanvasLayer) -> int:
 		return 0
 	return int(it.get("uid", 0))
 
-
 static func from_bag(ui: CanvasLayer) -> bool:
 	return ui.inv_sel.begins_with("bag:")
-
 
 static func find_sel(ui: CanvasLayer) -> Control:
 	if ui.inv_sel == "":
@@ -53,7 +45,6 @@ static func find_sel(ui: CanvasLayer) -> Control:
 		if str(n.get_meta("inv_key", "")) == ui.inv_sel:
 			return n as Control
 	return null
-
 
 static func refresh_detail(ui: CanvasLayer) -> void:
 	var it: Dictionary = selected(ui)
@@ -71,7 +62,6 @@ static func refresh_detail(ui: CanvasLayer) -> void:
 		ui.inv_btn_unequip.disabled = not can_uneq
 	if ui.inv_btn_drop:
 		ui.inv_btn_drop.disabled = not can_drop
-
 
 static func detail_text(ui: CanvasLayer, it: Dictionary) -> String:
 	if it.is_empty():
@@ -102,7 +92,6 @@ static func detail_text(ui: CanvasLayer, it: Dictionary) -> String:
 		lines.append(App.prog.set_bonus_text(sid))
 	return "\n".join(lines)
 
-
 static func stat_line(ui: CanvasLayer, it: Dictionary) -> String:
 	var bits: PackedStringArray = PackedStringArray()
 	if int(it.get("dmg", 0)) > 0:
@@ -123,7 +112,6 @@ static func stat_line(ui: CanvasLayer, it: Dictionary) -> String:
 		bits.append(note)
 	return "   ·   ".join(bits)
 
-
 static func extract_note(it: Dictionary) -> String:
 	if str(it.get("kind", "")) == "artifact":
 		return "Cannot mail. Lost on death or Dispel."
@@ -133,13 +121,11 @@ static func extract_note(it: Dictionary) -> String:
 		return "Mail through an Extraction Gate to keep it."
 	return ""
 
-
 static func can_use_item(it: Dictionary) -> bool:
 	if it.is_empty():
 		return false
 	var k: String = str(it.get("kind", ""))
 	return k == "potion" or k == "food"
-
 
 static func can_equip_item(ui: CanvasLayer, it: Dictionary) -> bool:
 	if it.is_empty() or not from_bag(ui):

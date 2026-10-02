@@ -2,11 +2,9 @@
 
 const Affix := preload("res://scripts/data/affixes.gd")
 
-
 static func roll_dungeon(slot: String, type_id: String, rarity: String, ilvl: int) -> Dictionary:
 	var lv: int = maxi(1, ilvl)
 	return _build(slot, type_id, rarity, lv, randf_range(0.5, 1.0), randf_range(0.75, 1.0), PackedStringArray(), {}, false)
-
 
 static func roll_forge(
 	slot: String,
@@ -28,13 +26,11 @@ static func roll_forge(
 		quality = maxf(0.35, quality - 0.06 * float(lv - smith_lv))
 	return _build(slot, type_id, rarity, lv, quality, luck, locked, unlocks, true)
 
-
 static func stamp(it: Dictionary, rolled: Dictionary) -> Dictionary:
 	_wipe_stats(it)
 	for k: Variant in rolled.keys():
 		it[str(k)] = rolled[k]
 	return it
-
 
 static func _wipe_stats(it: Dictionary) -> void:
 	for row: Dictionary in Affix.defs():
@@ -46,7 +42,6 @@ static func _wipe_stats(it: Dictionary) -> void:
 	it["dmg"] = 0
 	it["def"] = 0
 	it["hp"] = 0
-
 
 static func _build(
 	slot: String,
@@ -95,13 +90,11 @@ static func _build(
 	it["hp"] = int(round(float(it.get(Affix.ID_HP, 0.0))))
 	return it
 
-
 static func _peak_luck(id: String, fallback: float, unlocks: Dictionary) -> float:
 	var by: Variant = unlocks.get("luck_by_id", {})
 	if by is Dictionary and by.has(id):
 		return float(by[id])
 	return fallback
-
 
 static func _pick_ids(
 	slot: String,
@@ -157,14 +150,12 @@ static func _pick_ids(
 		used[id] = true
 	return out
 
-
 static func _roll_value(id: String, ilvl: int, quality: float, luck: float) -> float:
 	var q: float = clampf(quality, 0.35, 1.25)
 	var lk: float = clampf(luck, 0.5, 1.25)
 	if Affix.kind_of(id) == Affix.KIND_PCT:
 		return (0.02 + _bal("affix_pct_per_lv", 0.004) * float(ilvl)) * q * lk
 	return (_bal("affix_flat_base", 2.0) + _bal("affix_flat_per_lv", 0.65) * float(ilvl)) * q * lk
-
 
 static func _wpn_name(type_id: String) -> String:
 	match type_id:
@@ -176,7 +167,6 @@ static func _wpn_name(type_id: String) -> String:
 			return "Longbow"
 		_:
 			return type_id.capitalize()
-
 
 static func _bal(key: String, fallback: float) -> float:
 	if App.bal != null and App.bal.get(key) != null:

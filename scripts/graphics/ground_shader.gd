@@ -7,7 +7,6 @@ const LightRt := preload("res://scripts/graphics/light_rt.gd")
 
 static var _sh: Shader
 
-
 static func shader() -> Shader:
 	if _sh != null:
 		return _sh
@@ -70,7 +69,6 @@ void fragment() {
 """
 	_sh = sh
 	return sh
-
 
 static func material(tex_path: String, fallback: Color, tint: Color = Color.WHITE) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()

@@ -3,14 +3,11 @@ extends Object
 const Cat := preload("res://scripts/data/catalog.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 
-
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
 
-
 static func quit_in(host: Node, sec: float) -> void:
 	tree(host).create_timer(sec).timeout.connect(func(): tree(host).quit())
-
 
 static func p6(host: Node) -> void:
 	var player: Variant = host.get("player")

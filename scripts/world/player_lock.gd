@@ -2,14 +2,11 @@
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
 
-
 static func _combat() -> GDScript:
 	return load("res://scripts/combat/combat.gd") as GDScript
 
-
 static func ai_on() -> bool:
 	return App.playtest != null and bool(App.playtest.get("ai_on"))
-
 
 static func ai_or_vec(_host: Node, which: String) -> Vector2:
 	if ai_on():
@@ -22,7 +19,6 @@ static func ai_or_vec(_host: Node, which: String) -> Vector2:
 		return App.pad_aim()
 	return App.pad_move()
 
-
 static func ai_just(_host: Node, action: String) -> bool:
 	if not ai_on():
 		return false
@@ -30,7 +26,6 @@ static func ai_just(_host: Node, action: String) -> bool:
 	if raw is Dictionary:
 		return bool((raw as Dictionary).get(action, false))
 	return false
-
 
 static func ai_held(_host: Node, action: String) -> bool:
 	if not ai_on():
@@ -41,10 +36,8 @@ static func ai_held(_host: Node, action: String) -> bool:
 		return bool(App.playtest.special)
 	return false
 
-
 static func pref_on() -> bool:
 	return bool(App.get("target_lock_pref"))
-
 
 static func apply_pref(host: Node) -> void:
 	if Touch.active():
@@ -55,7 +48,6 @@ static func apply_pref(host: Node) -> void:
 		acquire_lock(host)
 	else:
 		host.lock_target = null
-
 
 static func lock_and_aim(host: Node, move: Vector2, delta: float) -> void:
 	if not bool(host.get_meta("lock_pref_applied", false)):
@@ -91,7 +83,6 @@ static func lock_and_aim(host: Node, move: Vector2, delta: float) -> void:
 		return
 	update_aim(host, move)
 
-
 static func valid_lock(host: Node, n: Node) -> bool:
 	if n == null or not is_instance_valid(n):
 		return false
@@ -102,18 +93,15 @@ static func valid_lock(host: Node, n: Node) -> bool:
 		return false
 	return _combat().los(host.global_position, (n as Node3D).global_position, host.get_world_3d())
 
-
 static func acquire_lock(host: Node) -> void:
 	host.lock_target = nearest(host, null, Vector2.ZERO)
 	if host.lock_target == null:
 		host.lock_armed = true
 
-
 static func cycle_lock(host: Node, dir: Vector2) -> void:
 	var n := nearest(host, host.lock_target, dir)
 	if n:
 		host.lock_target = n
-
 
 static func nearest(host: Node, exclude: Node, dir: Vector2) -> Node:
 	var best: Node = null
@@ -130,7 +118,6 @@ static func nearest(host: Node, exclude: Node, dir: Vector2) -> Node:
 			best = e
 	return best
 
-
 static func mouse_aim_dir(host: Node) -> Vector2:
 	var cam := host.get_viewport().get_camera_3d()
 	if cam == null:
@@ -146,7 +133,6 @@ static func mouse_aim_dir(host: Node) -> Vector2:
 	if d.length_squared() < 0.0004:
 		return Vector2.ZERO
 	return d.normalized()
-
 
 static func update_aim(host: Node, move: Vector2) -> void:
 	var stick := ai_or_vec(host, "aim")

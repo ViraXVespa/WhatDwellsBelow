@@ -1,6 +1,5 @@
 extends SceneTree
 
-
 func _init() -> void:
 	var packed = load("res://scenes/camp.tscn")
 	if packed == null:
@@ -26,7 +25,6 @@ func _init() -> void:
 	if err != OK:
 		push_error("bake_camp: save failed %s" % str(err))
 	quit()
-
 
 func _mark_owner(n, own) -> void:
 	n.owner = own

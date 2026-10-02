@@ -1,6 +1,5 @@
 extends Object
 
-
 static func _near_prop(pt: Node, p: Node, lim: float) -> Node:
 	var tree: SceneTree = pt.get_tree()
 	if tree == null:
@@ -22,8 +21,6 @@ static func _near_prop(pt: Node, p: Node, lim: float) -> Node:
 			best_d = d
 			best = n
 	return best
-
-
 
 static func tick_motion(pt: Node, p: Node, delta: float) -> void:
 	var pos: Vector3 = (p as Node3D).global_position
@@ -47,8 +44,6 @@ static func tick_motion(pt: Node, p: Node, delta: float) -> void:
 	pt.set_meta("wander_hold", maxf(0.0, load("res://scripts/debug/playtest_ai_util.gd")._meta_f(pt, "wander_hold", 0.0) - delta))
 	pt.set_meta("dash_cd", maxf(0.0, load("res://scripts/debug/playtest_ai_util.gd")._meta_f(pt, "dash_cd", 0.0) - delta))
 
-
-
 static func do_unstick(pt: Node) -> void:
 	load("res://scripts/debug/playtest_ai_util.gd")._ban(pt, load("res://scripts/debug/playtest_ai_util.gd")._meta_n(pt, "lock_n"))
 	if pt.path_goal:
@@ -64,8 +59,6 @@ static func do_unstick(pt: Node) -> void:
 	pt.path_goal = null
 	pt.stuck_t = 0.0
 	load("res://scripts/debug/playtest_ai_util.gd").want_dash(pt)
-
-
 
 static func _pick_front(pt: Node, here: Vector2i, last: Vector2) -> Vector2i:
 	var seen: Dictionary = load("res://scripts/debug/playtest_ai_util.gd")._seen(pt)
@@ -98,8 +91,6 @@ static func _pick_front(pt: Node, here: Vector2i, last: Vector2) -> Vector2i:
 				best_s = s
 				best = c
 	return best
-
-
 
 static func wander(pt: Node, p: Node, _delta: float = 0.0) -> void:
 	var here: Vector2i = pt._cell_of_node(p)
@@ -135,4 +126,3 @@ static func wander(pt: Node, p: Node, _delta: float = 0.0) -> void:
 	pt.move = pt._steer(p, desired)
 	pt.path.clear()
 	pt.path_goal = null
-

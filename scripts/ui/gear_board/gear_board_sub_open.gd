@@ -126,8 +126,6 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 				Board.place_tip(ui)
 		, CONNECT_ONE_SHOT)
 
-
-
 static func _wire_opt_focus(opts: Array[Button], back: Button) -> void:
 	var n: int = opts.size()
 	for i: int in n:
@@ -146,8 +144,6 @@ static func _wire_opt_focus(opts: Array[Button], back: Button) -> void:
 		back.focus_neighbor_top = opts[0].get_path()
 		back.focus_neighbor_left = opts[n - 1].get_path()
 		back.focus_previous = opts[n - 1].get_path()
-
-
 
 static func pick(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 	var Act = load("res://scripts/ui/gear_board/gear_board_sub.gd")._act()
@@ -173,8 +169,6 @@ static func pick(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 	Board.clear_sub(ui)
 	Act.swallow_cancel()
 	load("res://scripts/ui/gear_board/gear_board_sub.gd")._after_sub(ui, "slot:" + slot, true)
-
-
 
 static func _apply_loadout(ui: CanvasLayer, slot: String, it: Dictionary, src: String) -> void:
 	var Act = load("res://scripts/ui/gear_board/gear_board_sub.gd")._act()
@@ -204,6 +198,3 @@ static func _apply_loadout(ui: CanvasLayer, slot: String, it: Dictionary, src: S
 		App.prog.tool_type = str(it.get("tool", App.prog.tool_type))
 	Act.st(ui, "Ready: " + str(it.get("name", slot)))
 	App.save_now()
-
-
-

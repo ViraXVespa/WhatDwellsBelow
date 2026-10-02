@@ -4,7 +4,6 @@ extends Object
 
 static var _wrap_sh: Shader
 
-
 static func wrap_shader() -> Shader:
 	if _wrap_sh != null:
 		return _wrap_sh

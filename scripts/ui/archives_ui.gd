@@ -33,7 +33,6 @@ var _info_rule: ColorRect
 var _chevron: Label
 var _path: Label
 
-
 func _ready() -> void:
 	SplitView.setup_overlay(self, "Archives", "Standalone snapshots. Title Play always launches the live path.")
 	if _info_root:
@@ -42,7 +41,6 @@ func _ready() -> void:
 	http.timeout = 12.0
 	http.request_completed.connect(_http_done)
 	add_child(http)
-
 
 func show_browser() -> void:
 	open = true
@@ -55,7 +53,6 @@ func show_browser() -> void:
 	split_page = str(_cur().get("id", ""))
 	Split.rebuild(self)
 
-
 func hide_browser() -> void:
 	open = false
 	visible = false
@@ -67,7 +64,6 @@ func hide_browser() -> void:
 		App.wake_web_pad()
 	if App.pause_menu and bool(App.pause_menu.get("open")) and App.pause_menu.has_method("_focus"):
 		App.pause_menu._focus()
-
 
 func split_rows() -> Array:
 	var out: Array = []
@@ -82,14 +78,11 @@ func split_rows() -> Array:
 		})
 	return out
 
-
 func split_back_label() -> String:
 	return "Back"
 
-
 func split_close() -> void:
 	hide_browser()
-
 
 func split_path_text() -> String:
 	var e: Dictionary = _cur()
@@ -104,13 +97,11 @@ func split_path_text() -> String:
 		return "Snapshots  ›  %s  ›  %s" % [lab, Docs.display_name(doc_name)]
 	return "Snapshots  ›  %s" % lab
 
-
 func split_build_page(id: String) -> void:
 	if id == "":
 		SplitView.clear_page(self)
 		return
 	ArchView.rebuild_info(self)
-
 
 func _cur() -> Dictionary:
 	if selected < 0 or selected >= entries.size():
@@ -120,80 +111,58 @@ func _cur() -> Dictionary:
 		return raw
 	return {}
 
-
 func _docs_of(e: Dictionary) -> PackedStringArray:
 	return Docs.names(e)
-
 
 func _st(msg: String) -> void:
 	if status:
 		status.text = msg
 	App.sfx("ui")
 
-
 func _rebuild() -> void:
 	Split.rebuild(self)
-
 
 func _place_chevron() -> void:
 	SplitView.place_chevron(self)
 
-
 func _focus_col() -> void:
 	SplitView.focus_col(self)
-
 
 func _on_list_hover(i: int) -> void:
 	Split.preview(self, i)
 
-
 func _on_list_focus(i: int) -> void:
 	Split.preview(self, i)
-
 
 func _on_list_pressed(i: int) -> void:
 	Split.list_pressed(self, i)
 
-
 func _on_info_gui(event: InputEvent) -> void:
 	Act.info_gui(self, event)
-
 
 func _on_video() -> void:
 	Act.on_video(self)
 
-
 func _on_docs() -> void:
 	Act.on_docs(self)
-
 
 func _on_play() -> void:
 	Act.on_play(self)
 
-
 func _open_read(i: int) -> void:
 	Act.open_read(self, i)
-
-
-func _open_docs() -> void:
-	Act.open_docs(self)
-
 
 func _play() -> void:
 	Act.play(self)
 
-
 func _read_doc(id: String, doc_name: String) -> String:
 	return Act.read_doc(self, id, doc_name)
-
 
 func _http_done(_result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	Act.http_done(self, code, body)
 
-
 func _back() -> void:
 	Act.back(self)
-
 
 func _unhandled_input(event: InputEvent) -> void:
 	Act.unhandled(self, event)

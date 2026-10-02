@@ -29,7 +29,6 @@ var capture_action := ""
 var capture_slot := -1
 var _pool_stick_armed := true
 
-
 static func build(settings: Node) -> void:
 	var old: Node = settings.get_node_or_null("bind_catcher")
 	if old:
@@ -41,7 +40,6 @@ static func build(settings: Node) -> void:
 	page.process_mode = Node.PROCESS_MODE_ALWAYS
 	settings.add_child(page)
 	page.rebuild()
-
 
 func rebuild() -> void:
 	if host == null or host.info_box == null:
@@ -76,13 +74,11 @@ func rebuild() -> void:
 	if host.has_method("split_hint"):
 		host.split_hint()
 
-
 func _sel_row() -> void:
 	var lab: String = "<  Keyboard  >" if pool == "kb" else "<  Gamepad  >"
 	var b: Button = ThemeS.btn(lab, func() -> void: _cycle_pool(1))
 	b.gui_input.connect(_on_sel_input)
 	View.add_page_btn(host, b)
-
 
 func _on_sel_input(event: InputEvent) -> void:
 	if event is InputEventJoypadMotion:
@@ -96,7 +92,6 @@ func _on_sel_input(event: InputEvent) -> void:
 		_cycle_pool(1)
 		get_viewport().set_input_as_handled()
 
-
 func _sel_stick(motion: InputEventJoypadMotion) -> void:
 	if motion.axis != JOY_AXIS_LEFT_X:
 		return
@@ -109,13 +104,11 @@ func _sel_stick(motion: InputEventJoypadMotion) -> void:
 	_cycle_pool(1)
 	get_viewport().set_input_as_handled()
 
-
 func _cycle_pool(_dir: int) -> void:
 	pool = "pad" if pool == "kb" else "kb"
 	rebuild()
 	View.apply_col(host)
 	View.focus_col(host)
-
 
 func _bind_row(action: String, label: String) -> void:
 	var shell := HBoxContainer.new()
@@ -128,7 +121,6 @@ func _bind_row(action: String, label: String) -> void:
 	shell.add_child(_slot_btn(action, 0))
 	shell.add_child(_slot_btn(action, 1))
 	host.info_box.add_child(shell)
-
 
 func _slot_btn(action: String, slot: int) -> Button:
 	var ev: InputEvent = Binds.slot_event(action, pool, slot)
@@ -150,7 +142,6 @@ func _slot_btn(action: String, slot: int) -> Button:
 	host.info_btns.append(b)
 	return b
 
-
 func _slot_text(ev: InputEvent) -> String:
 	if ev == null:
 		return "—"
@@ -163,13 +154,11 @@ func _slot_text(ev: InputEvent) -> String:
 		return id.substr(5).to_upper()
 	return id.replace("_", " ").to_upper()
 
-
 func _stick_axis(event: InputEvent) -> bool:
 	if not (event is InputEventJoypadMotion):
 		return false
 	var ax: int = (event as InputEventJoypadMotion).axis
 	return ax == JOY_AXIS_LEFT_X or ax == JOY_AXIS_LEFT_Y or ax == JOY_AXIS_RIGHT_X or ax == JOY_AXIS_RIGHT_Y
-
 
 func _unhandled_input(event: InputEvent) -> void:
 	if capture_action == "":

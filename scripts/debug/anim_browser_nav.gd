@@ -19,10 +19,8 @@ const DIR_LABEL := {
 const COL_IDLE := Color(1, 1, 1, 1)
 const COL_ON := Color(1, 0.92, 0.45)
 
-
 static func _anim_caption(nm: String) -> String:
 	return nm.replace("_", " ").capitalize()
-
 
 static func _mark(b: Button, on: bool) -> void:
 	var col: Color = COL_ON if on else COL_IDLE
@@ -31,14 +29,12 @@ static func _mark(b: Button, on: bool) -> void:
 	b.add_theme_color_override("font_pressed_color", col)
 	b.add_theme_color_override("font_focus_color", col)
 
-
 static func _dir_caption(host: CanvasLayer, key: String) -> String:
 	var n: int = 0
 	var clips: Dictionary = host.clips
 	if clips.has(key):
 		n = (clips[key] as Dictionary).size()
 	return "%s%s" % [str(DIR_LABEL.get(key, key)), "" if n > 0 else "  (empty)"]
-
 
 static func pick_facing(host: CanvasLayer) -> void:
 	var clips: Dictionary = host.clips
@@ -49,7 +45,6 @@ static func pick_facing(host: CanvasLayer) -> void:
 				host.facing = str(k)
 				return
 		host.facing = "down"
-
 
 static func focus_dir(host: CanvasLayer) -> void:
 	host.nav_col = "dir"
@@ -63,7 +58,6 @@ static func focus_dir(host: CanvasLayer) -> void:
 		if c is Control and (c as Control).focus_mode != Control.FOCUS_NONE:
 			(c as Control).grab_focus()
 			return
-
 
 static func focus_anim(host: CanvasLayer) -> void:
 	host.nav_col = "anim"
@@ -80,7 +74,6 @@ static func focus_anim(host: CanvasLayer) -> void:
 			return
 	focus_dir(host)
 
-
 static func keep_focus(host: CanvasLayer) -> void:
 	if not bool(host.open):
 		return
@@ -93,10 +86,8 @@ static func keep_focus(host: CanvasLayer) -> void:
 	else:
 		focus_dir(host)
 
-
 static func _note_focused(host: CanvasLayer) -> bool:
 	return host.note_edit != null and is_instance_valid(host.note_edit) and host.note_edit.has_focus()
-
 
 static func nudge_dir(host: CanvasLayer, delta_i: int) -> void:
 	var i: int = DIR_ORDER.find(str(host.facing))
@@ -105,7 +96,6 @@ static func nudge_dir(host: CanvasLayer, delta_i: int) -> void:
 	i = (i + delta_i + DIR_ORDER.size()) % DIR_ORDER.size()
 	set_facing(host, str(DIR_ORDER[i]))
 	host.call_deferred("_focus_dir")
-
 
 static func ui_nav(host: CanvasLayer, event: InputEvent) -> bool:
 	if _note_focused(host):
@@ -132,7 +122,6 @@ static func ui_nav(host: CanvasLayer, event: InputEvent) -> bool:
 		return true
 	return false
 
-
 static func paint_dirs(host: CanvasLayer) -> void:
 	if host.dir_box == null:
 		return
@@ -145,7 +134,6 @@ static func paint_dirs(host: CanvasLayer) -> void:
 			continue
 		b.text = _dir_caption(host, key)
 		_mark(b, key == str(host.facing))
-
 
 static func paint_anims(host: CanvasLayer) -> void:
 	if host.anim_box == null:
@@ -160,14 +148,12 @@ static func paint_anims(host: CanvasLayer) -> void:
 		b.text = _anim_caption(key)
 		_mark(b, key == str(host.anim_name))
 
-
 static func _lock_lr(b: Button) -> void:
 	if not b.is_inside_tree():
 		return
 	var p := b.get_path()
 	b.focus_neighbor_left = p
 	b.focus_neighbor_right = p
-
 
 static func rebuild_dirs(host: CanvasLayer) -> void:
 	for c in host.dir_box.get_children():
@@ -181,7 +167,6 @@ static func rebuild_dirs(host: CanvasLayer) -> void:
 		_mark(b, k == str(host.facing))
 		host.dir_box.add_child(b)
 		_lock_lr(b)
-
 
 static func rebuild_anims(host: CanvasLayer) -> void:
 	for c in host.anim_box.get_children():
@@ -206,7 +191,6 @@ static func rebuild_anims(host: CanvasLayer) -> void:
 		_lock_lr(b)
 	keep_focus(host)
 
-
 static func anim_names(host: CanvasLayer) -> PackedStringArray:
 	var out := PackedStringArray()
 	var clips: Dictionary = host.clips
@@ -217,7 +201,6 @@ static func anim_names(host: CanvasLayer) -> PackedStringArray:
 		out.append(str(k))
 	out.sort()
 	return out
-
 
 static func set_facing(host: CanvasLayer, k: String) -> void:
 	if k == "idle_none":
@@ -232,7 +215,6 @@ static func set_facing(host: CanvasLayer, k: String) -> void:
 		rebuild_anims(host)
 		host._show_clip()
 
-
 static func set_anim(host: CanvasLayer, n: String) -> void:
 	host.anim_name = n
 	host.frame_i = 0
@@ -245,7 +227,6 @@ static func set_anim(host: CanvasLayer, n: String) -> void:
 	if str(host.nav_col) == "anim":
 		host.call_deferred("_focus_anim")
 
-
 static func scroll_anim(host: CanvasLayer, d: int) -> void:
 	var names := anim_names(host)
 	if names.is_empty():
@@ -257,7 +238,6 @@ static func scroll_anim(host: CanvasLayer, d: int) -> void:
 		i = (i + d + names.size()) % names.size()
 	host.anim_scroll = i
 	set_anim(host, names[i])
-
 
 static func stick_facing(host: CanvasLayer) -> void:
 	var v := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")

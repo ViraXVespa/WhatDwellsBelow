@@ -2,7 +2,6 @@
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 
-
 static func make(caption: String, on_down: Callable, on_up: Callable) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
@@ -28,7 +27,6 @@ static func make(caption: String, on_down: Callable, on_up: Callable) -> HBoxCon
 	row.set_meta("step_suffix", suf)
 	return row
 
-
 static func paint(row: HBoxContainer, value_text: String, suffix: String, at_lo: bool, at_hi: bool) -> void:
 	var nlab: Label = value_of(row)
 	if nlab:
@@ -45,47 +43,17 @@ static func paint(row: HBoxContainer, value_text: String, suffix: String, at_lo:
 	_arm(plus, at_hi)
 	_restore(minus, plus, was)
 
-
 static func minus_of(row: HBoxContainer) -> Button:
 	return _meta_btn(row, "step_minus")
-
 
 static func plus_of(row: HBoxContainer) -> Button:
 	return _meta_btn(row, "step_plus")
 
-
 static func value_of(row: HBoxContainer) -> Label:
 	return _meta_lab(row, "step_value")
 
-
 static func suffix_of(row: HBoxContainer) -> Label:
 	return _meta_lab(row, "step_suffix")
-
-
-static func bind_side(row: HBoxContainer, left: Control, right: Control, up: Control, down: Control) -> void:
-	var minus: Button = minus_of(row)
-	var plus: Button = plus_of(row)
-	var left_step: Control = _live(minus, plus, false)
-	var right_step: Control = _live(minus, plus, true)
-	if minus:
-		_nb(minus, "l", left)
-		_nb(minus, "r", plus if plus and plus.focus_mode != Control.FOCUS_NONE else right)
-		_nb(minus, "u", up)
-		_nb(minus, "d", down)
-	if plus:
-		_nb(plus, "l", minus if minus and minus.focus_mode != Control.FOCUS_NONE else left)
-		_nb(plus, "r", right)
-		_nb(plus, "u", up)
-		_nb(plus, "d", down)
-	if left:
-		_nb(left, "r", left_step if left_step else right)
-	if right:
-		_nb(right, "l", right_step if right_step else left)
-	if up:
-		_nb(up, "d", left_step if left_step else (right_step if right_step else down))
-	if down:
-		_nb(down, "u", right_step if right_step else (left_step if left_step else up))
-
 
 static func _row_lab(t: String, font_px: int, col: Color) -> Label:
 	var l := Label.new()
@@ -103,13 +71,11 @@ static func _row_lab(t: String, font_px: int, col: Color) -> Label:
 	l.custom_minimum_size = Vector2(0, 44)
 	return l
 
-
 static func _meta_btn(row: HBoxContainer, key: String) -> Button:
 	if row == null or not row.has_meta(key):
 		return null
 	var n: Variant = row.get_meta(key)
 	return n if n is Button else null
-
 
 static func _meta_lab(row: HBoxContainer, key: String) -> Label:
 	if row == null or not row.has_meta(key):
@@ -117,14 +83,12 @@ static func _meta_lab(row: HBoxContainer, key: String) -> Label:
 	var n: Variant = row.get_meta(key)
 	return n if n is Label else null
 
-
 static func _arm(b: Control, off: bool) -> void:
 	if b == null:
 		return
 	if b is Button:
 		(b as Button).disabled = off
 	b.focus_mode = Control.FOCUS_NONE if off else Control.FOCUS_ALL
-
 
 static func _live(minus: Control, plus: Control, prefer_plus: bool) -> Control:
 	if prefer_plus:
@@ -138,7 +102,6 @@ static func _live(minus: Control, plus: Control, prefer_plus: bool) -> Control:
 		if plus != null and plus.focus_mode != Control.FOCUS_NONE:
 			return plus
 	return null
-
 
 static func _nb(from: Control, dir: String, to: Control) -> void:
 	if from == null:
@@ -155,7 +118,6 @@ static func _nb(from: Control, dir: String, to: Control) -> void:
 			from.focus_neighbor_top = p
 		"d":
 			from.focus_neighbor_bottom = p
-
 
 static func _restore(minus: Control, plus: Control, was: Control) -> void:
 	if was != minus and was != plus:

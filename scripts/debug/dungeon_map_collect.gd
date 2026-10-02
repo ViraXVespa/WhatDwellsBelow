@@ -20,7 +20,6 @@ static func _collect(host: Node, data: Dictionary, overlays: Dictionary) -> Arra
 			_take_job_overlay(overlays, raw)
 	return out
 
-
 static func _take_node(out: Array, seen: Dictionary, overlays: Dictionary, n: Node) -> void:
 	var cell: Vector2i = Util._cell_of(n)
 	var kind: String = Util._kind_of(n)
@@ -39,7 +38,6 @@ static func _take_node(out: Array, seen: Dictionary, overlays: Dictionary, n: No
 		row["title"] = str(n.get("type_id"))
 	out.append(row)
 	Util._mark(overlays, cell, kind)
-
 
 static func _take_job_overlay(overlays: Dictionary, job: Dictionary) -> void:
 	var cell: Vector2i = Vector2i(job.get("cell", Vector2i.ZERO))

@@ -30,7 +30,6 @@ var _info_rule: ColorRect
 var _chevron: Label
 var _path: Label
 
-
 static func build(ui: CanvasLayer) -> void:
 	var host: Control = new()
 	host.name = "settings_host"
@@ -46,7 +45,6 @@ static func build(ui: CanvasLayer) -> void:
 	ui.box.add_child(host)
 	host._setup()
 
-
 func _setup() -> void:
 	open = true
 	col = "list"
@@ -55,7 +53,6 @@ func _setup() -> void:
 	View.setup_embed(self, self)
 	Split.rebuild(self)
 	_sync_leaf()
-
 
 func split_rows() -> Array:
 	var out: Array = [
@@ -73,14 +70,11 @@ func split_rows() -> Array:
 		out.append({"id": "quit", "label": "Quit", "kind": "leaf"})
 	return out
 
-
 func split_back_label() -> String:
 	return ""
 
-
 func split_path_text() -> String:
 	return ""
-
 
 func split_hint() -> void:
 	if pause == null:
@@ -97,11 +91,9 @@ func split_hint() -> void:
 		extra.append({"action": "ui_cancel", "verb": "back"})
 	PromptView.footer(pause, extra)
 
-
 func split_close() -> void:
 	if pause and pause.has_method("close_ui"):
 		pause.close_ui()
-
 
 func split_activate_leaf(id: String) -> void:
 	match id:
@@ -120,7 +112,6 @@ func split_activate_leaf(id: String) -> void:
 				)
 		"quit":
 			Disp.request_quit()
-
 
 func split_build_page(id: String) -> void:
 	View.clear_page(self)
@@ -149,7 +140,6 @@ func split_build_page(id: String) -> void:
 	_sync_leaf()
 	View.tune_host(self)
 
-
 func _leaf_copy(text: String) -> void:
 	var lab: Label = ThemeS.lab(text, 22, Color(0.88, 0.82, 0.72))
 	lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -158,16 +148,13 @@ func _leaf_copy(text: String) -> void:
 	lab.custom_minimum_size = Vector2(520, 80)
 	info_box.add_child(lab)
 
-
 func _sync_leaf() -> void:
 	if _chevron:
 		_chevron.visible = Split.is_page(Split.current(self))
 
-
 func _on_list_pressed(i: int) -> void:
 	Split.list_pressed(self, i)
 	_sync_leaf()
-
 
 func _on_list_focus(i: int) -> void:
 	if col == "detail":
@@ -178,17 +165,14 @@ func _on_list_focus(i: int) -> void:
 		split_build_page(str(row.get("id", "")))
 	_sync_leaf()
 
-
 func _on_list_hover(i: int) -> void:
 	if col == "detail":
 		return
 	_on_list_focus(i)
 
-
 func _focus_col() -> void:
 	View.focus_col(self)
 	_sync_leaf()
-
 
 func _place_chevron() -> void:
 	View.place_chevron(self)

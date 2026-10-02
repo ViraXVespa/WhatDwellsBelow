@@ -8,7 +8,6 @@ const Smoke := preload("res://scripts/debug/smoke.gd")
 const Spawn := preload("res://scripts/world/dungeon_props_spawn.gd")
 const Place := preload("res://scripts/world/dungeon_props_place.gd")
 
-
 static func spawn_world(host: Node) -> void:
 	Spawn.spawn_world(host)
 

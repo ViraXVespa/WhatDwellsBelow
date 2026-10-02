@@ -10,21 +10,14 @@ const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const ForgeUI := preload("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")
 const Open := preload("res://scripts/ui/gear_board/gear_board_sub_open.gd")
 
-
 static func _act():
 	return load("res://scripts/ui/gear_board/gear_board_act.gd")
-
-
 
 static func _anvil():
 	return load("res://scripts/ui/gear_board/gear_board_anvil.gd")
 
-
-
 static func _is_anvil(ui: CanvasLayer) -> bool:
 	return str(ui.get("gear_mode")) == "anvil"
-
-
 
 static func lock_bg(ui: CanvasLayer) -> void:
 	if ui.box == null:
@@ -37,8 +30,6 @@ static func lock_bg(ui: CanvasLayer) -> void:
 			c.set_meta("gear_old_focus", c.focus_mode)
 		c.focus_mode = Control.FOCUS_NONE
 
-
-
 static func unlock_bg(ui: CanvasLayer) -> void:
 	if ui.box == null:
 		return
@@ -48,8 +39,6 @@ static func unlock_bg(ui: CanvasLayer) -> void:
 			continue
 		c.focus_mode = int(c.get_meta("gear_old_focus")) as Control.FocusMode
 		c.remove_meta("gear_old_focus")
-
-
 
 static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	Open.open_sub(ui, slot)
@@ -64,15 +53,11 @@ static func _open_forge(ui: CanvasLayer, box: Control, slot: String) -> void:
 		first.grab_focus()
 	Board.refresh(ui)
 
-
-
 static func _add_strip(box: Control, parts: Array) -> void:
 	var strip := HBoxContainer.new()
 	strip.add_theme_constant_override("separation", 16)
 	PromptView.fill(strip, parts)
 	box.add_child(strip)
-
-
 
 static func _wire_opt_focus(opts: Array[Button], back: Button) -> void:
 	Open._wire_opt_focus(opts, back)
@@ -85,8 +70,6 @@ static func _paint_opt(b: Button, it: Dictionary) -> void:
 	b.add_theme_stylebox_override("pressed", ThemeS.sb(fill.darkened(0.1), border))
 	b.add_theme_stylebox_override("focus", ThemeS.sb(fill.lightened(0.14), border))
 
-
-
 static func close_sub(ui: CanvasLayer) -> void:
 	var Act = _act()
 	var keep := str(ui.gear_sub_slot)
@@ -97,8 +80,6 @@ static func close_sub(ui: CanvasLayer) -> void:
 	Act.swallow_cancel()
 	App.sfx("ui_cancel")
 	_after_sub(ui, "slot:" + (keep if keep != "" else "weapon"), false)
-
-
 
 static func pick(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 	Open.pick(ui, slot, row)
@@ -125,8 +106,6 @@ static func _after_sub(ui: CanvasLayer, sel: String, do_rebuild: bool) -> void:
 			Board.refresh(ui)
 	, CONNECT_ONE_SHOT)
 
-
-
 static func _unequip_or_keep(ui: CanvasLayer, slot: String, it: Dictionary) -> void:
 	var Act = _act()
 	if Act.locked_slot(slot):
@@ -142,8 +121,6 @@ static func _unequip_or_keep(ui: CanvasLayer, slot: String, it: Dictionary) -> v
 		App.save_now()
 		return
 	Act.st(ui, App.prog.unequip_slot(slot))
-
-
 
 static func _apply_loadout(ui: CanvasLayer, slot: String, it: Dictionary, src: String) -> void:
 	Open._apply_loadout(ui, slot, it, src)

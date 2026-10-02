@@ -61,7 +61,6 @@ var _rank_at: Array[int] = []
 var _ink_budget: float = 0.0
 var _flip: bool = false
 
-
 static func bind(body: Node3D, sticker: Sprite3D) -> void:
 	if body == null or sticker == null:
 		return
@@ -72,7 +71,6 @@ static func bind(body: Node3D, sticker: Sprite3D) -> void:
 	lit.set("spr", sticker)
 	lit.name = "ActorLit"
 	body.add_child(lit)
-
 
 func _ready() -> void:
 	for slot in MARK_N:
@@ -96,7 +94,6 @@ func _ready() -> void:
 		_held.append(false)
 		_rank_at.append(slot)
 
-
 func _process(delta: float) -> void:
 	if spr == null or not is_instance_valid(spr):
 		queue_free()
@@ -111,11 +108,9 @@ func _process(delta: float) -> void:
 	_tint(host)
 	_lay(host, delta)
 
-
 func _hide_all() -> void:
 	for slot in marks.size():
 		marks[slot].visible = false
-
 
 func _tint(host: Node3D) -> void:
 	var cur: Color = spr.modulate
@@ -125,7 +120,6 @@ func _tint(host: Node3D) -> void:
 	var sample: Color = LightRt.sample_xz(feet)
 	_sent = _mix(sample)
 	spr.modulate = _sent
-
 
 func _lay(host: Node3D, delta: float) -> void:
 	if spr.texture == null or not spr.visible:
@@ -146,13 +140,11 @@ func _lay(host: Node3D, delta: float) -> void:
 		_drive_hub(host, feet)
 	_place(tex, feet)
 
-
 func _is_player(host: Node) -> bool:
 	var scr: Script = host.get_script()
 	if scr == null:
 		return false
 	return str(scr.resource_path).ends_with("player.gd")
-
 
 func _drive_hub(host: Node3D, feet: Vector2) -> void:
 	_drive_sun()
@@ -176,8 +168,6 @@ func _drive_hub(host: Node3D, feet: Vector2) -> void:
 	_held[1] = true
 	_rank_at[1] = 1
 
-
-
 func _drive_sun() -> void:
 	_away_at[0] = SUN_AWAY
 	_stretch_at[0] = HUB_STRETCH
@@ -191,7 +181,6 @@ func _drive_sun() -> void:
 		_held[slot] = false
 		_src_at[slot] = Vector2.ZERO
 		_rank_at[slot] = slot
-
 
 func _drive_many(feet: Vector2, delta: float) -> void:
 	var hits: Array[Dictionary] = LightRt.nearest_casts(feet, MARK_N)
@@ -282,7 +271,6 @@ func _drive_many(feet: Vector2, delta: float) -> void:
 		_stretch_at[slot] = lerpf(_stretch_at[slot], goal_s[pick], k)
 		_alpha_at[slot] = lerpf(_alpha_at[slot], goal_a[pick], k)
 
-
 func _split(raw: PackedFloat32Array) -> PackedFloat32Array:
 	var hit_n: int = raw.size()
 	var out: PackedFloat32Array = PackedFloat32Array()
@@ -302,7 +290,6 @@ func _split(raw: PackedFloat32Array) -> PackedFloat32Array:
 		out.append(budget * (weights[i] / sum_w))
 	return out
 
-
 func _open_slot(claim: Array[int]) -> int:
 	var fading: int = -1
 	var fading_a: float = 2.0
@@ -315,7 +302,6 @@ func _open_slot(claim: Array[int]) -> int:
 			fading_a = _alpha_at[slot]
 			fading = slot
 	return fading
-
 
 func _turn_slot(slot: int, aim: Vector2, delta: float) -> void:
 	if aim.length_squared() <= 0.0004:
@@ -336,7 +322,6 @@ func _turn_slot(slot: int, aim: Vector2, delta: float) -> void:
 		spin = -step
 	_away_at[slot] = src.rotated(spin)
 
-
 func _biased(away: Vector2) -> Vector2:
 	# Keep a little Z so a side-on light does not flatten the quad.
 	# Sign follows the light so a source toward the camera can cast up-screen.
@@ -349,14 +334,11 @@ func _biased(away: Vector2) -> Vector2:
 		dir.y = MIN_DOWN if dir.y >= 0.0 else -MIN_DOWN
 	return dir.normalized()
 
-
 func _mix(sample: Color) -> Color:
 	return Color(_game.r * sample.r, _game.g * sample.g, _game.b * sample.b, _game.a)
 
-
 func _usable(tex: Texture2D) -> bool:
 	return tex != null and tex.get_width() > 8 and tex.get_height() > 8
-
 
 func _place(tex: Texture2D, feet: Vector2) -> void:
 	var soles: Vector4 = _soles(tex)
@@ -392,7 +374,6 @@ func _place(tex: Texture2D, feet: Vector2) -> void:
 			shade_mat.set_shader_parameter("shade", Color(0.02, 0.02, 0.02, shown))
 		node.visible = true
 
-
 func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float) -> void:
 	var node: MeshInstance3D = marks[slot]
 	var reach: Vector2 = dir * _stretch_at[slot]
@@ -410,7 +391,6 @@ func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vect
 	_key_at[slot] = key
 	node.mesh = _quad(tex, _span(tex), soles, fl, fr, dir, px, _stretch_at[slot])
 
-
 func _sole_xz(tx: float, ty: float, tw: float, th: float) -> Vector2:
 	var ox: float = spr.offset.x
 	var oy: float = spr.offset.y
@@ -426,7 +406,6 @@ func _sole_xz(tx: float, ty: float, tw: float, th: float) -> Vector2:
 	var world: Vector3 = spr.global_position + axis * lx + Vector3(0.0, ly, 0.0)
 	return _drop_floor(world)
 
-
 func _bill_x() -> Vector3:
 	var cam: Camera3D = get_viewport().get_camera_3d()
 	if cam == null:
@@ -435,7 +414,6 @@ func _bill_x() -> Vector3:
 	if side.length_squared() < 0.0004:
 		return Vector3.RIGHT
 	return side.normalized()
-
 
 func _drop_floor(world: Vector3) -> Vector2:
 	var cam: Camera3D = get_viewport().get_camera_3d()
@@ -449,7 +427,6 @@ func _drop_floor(world: Vector3) -> Vector2:
 		return Vector2(world.x, world.z)
 	var hit: Vector3 = world + view * t
 	return Vector2(hit.x, hit.z)
-
 
 func _quad(tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float) -> ArrayMesh:
 	var tw: float = float(maxi(1, tex.get_width()))
@@ -479,7 +456,6 @@ func _quad(tex: Texture2D, span: Vector4, soles: Vector4, fl: Vector2, fr: Vecto
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh
 
-
 func _corner(tx: float, ty: float, soles: Vector4, fl: Vector2, fr: Vector2, dir: Vector2, px: float, stretch: float) -> Vector3:
 	var span_x: float = soles.z - soles.x
 	if absf(span_x) < 0.5:
@@ -488,7 +464,6 @@ func _corner(tx: float, ty: float, soles: Vector4, fl: Vector2, fr: Vector2, dir
 	var foot_y: float = soles.y + a * (soles.w - soles.y)
 	var pos: Vector2 = fl.lerp(fr, a) + dir * ((foot_y - ty) * px * stretch)
 	return Vector3(pos.x, 0.0, pos.y)
-
 
 static func _soles(tex: Texture2D) -> Vector4:
 	var id: int = tex.get_rid().get_id()
@@ -571,11 +546,9 @@ static func _soles(tex: Texture2D) -> Vector4:
 		rx = float(max_x) + 0.5
 	return _keep(id, Vector4(lx, float(ly + 1), rx, float(ry + 1)))
 
-
 static func _keep(id: int, sole: Vector4) -> Vector4:
 	_sole_at[id] = sole
 	return sole
-
 
 static func _bottom_span(bytes: PackedByteArray, w: int, y: int, x0: int, x1: int) -> Vector4:
 	var row: int = y * w * 4
@@ -592,7 +565,6 @@ static func _bottom_span(bytes: PackedByteArray, w: int, y: int, x0: int, x1: in
 		right = mini(w - 1, left + 1)
 	return Vector4(float(left) + 0.5, float(y + 1), float(right) + 0.5, float(y + 1))
 
-
 static func _span(tex: Texture2D) -> Vector4:
 	var id: int = tex.get_rid().get_id()
 	if not _spans.has(id):
@@ -600,7 +572,6 @@ static func _span(tex: Texture2D) -> Vector4:
 	if _spans.has(id):
 		return _spans[id] as Vector4
 	return Vector4(0.0, 0.0, 1.0, 1.0)
-
 
 static func _mat() -> ShaderMaterial:
 	if _shade == null:

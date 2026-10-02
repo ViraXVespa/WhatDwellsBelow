@@ -4,7 +4,6 @@ const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const Util := preload("res://scripts/debug/playtest_ai_util.gd")
 const SEE := 28.0
 
-
 static func approach_boss(pt: Node, p: Node, boss: Node) -> void:
 	if boss == null or not is_instance_valid(boss) or pt._dist(p, boss) > SEE:
 		pt.move = Vector2.ZERO
@@ -27,7 +26,6 @@ static func approach_boss(pt: Node, p: Node, boss: Node) -> void:
 		pt._lock_aim(p, boss)
 		return
 	pt.move = Vector2.ZERO
-
 
 static func fight(pt: Node, p: Node, enemy: Node) -> void:
 	if enemy == null or not is_instance_valid(enemy):
@@ -96,7 +94,6 @@ static func fight(pt: Node, p: Node, enemy: Node) -> void:
 	if pt.stuck_t > 0.55:
 		pt.strafe_sign *= -1.0
 	pt._lock_aim(p, enemy)
-
 
 static func _hold_shot(pt: Node, p: Node, enemy: Node, d: float, too_close: float, boss: bool) -> void:
 	pt.path.clear()

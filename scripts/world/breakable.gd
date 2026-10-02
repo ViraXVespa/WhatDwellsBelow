@@ -13,7 +13,6 @@ var mesh: MeshInstance3D
 var body: StaticBody3D
 var reveal: Node = null
 
-
 func setup(k: String, pos: Vector3) -> void:
 	kind = k
 	position = pos
@@ -25,10 +24,8 @@ func setup(k: String, pos: Vector3) -> void:
 		hp = 1.0
 		_spr()
 
-
 func is_alive() -> bool:
 	return not dead
-
 
 func take_hit(raw: float, _from_dir: Vector2, _crit: bool) -> void:
 	if dead:
@@ -41,7 +38,6 @@ func take_hit(raw: float, _from_dir: Vector2, _crit: bool) -> void:
 	App.sfx("smash")
 	if hp <= 0.0:
 		_die()
-
 
 func _die() -> void:
 	if dead:
@@ -67,7 +63,6 @@ func _die() -> void:
 	else:
 		queue_free()
 
-
 func _drop() -> void:
 	var host := get_parent()
 	if host == null:
@@ -78,7 +73,6 @@ func _drop() -> void:
 	if randf() < App.bal.break_orb:
 		_spawn_pick("hp", 0)
 
-
 func _spawn_pick(what: String, n: int) -> void:
 	var p = PickupS.new()
 	p.setup(what, global_position + Vector3(randf_range(-0.2, 0.2), 0.0, randf_range(-0.2, 0.2)), n)
@@ -86,13 +80,11 @@ func _spawn_pick(what: String, n: int) -> void:
 	if host:
 		host.add_child(p)
 
-
 func _spr() -> void:
 	var path := "res://assets/sprites/props/barrel.png" if kind == "barrel" else "res://assets/sprites/props/pot.png"
 	spr = BillSpr.make(path, 0.85, 0.4)
 	add_child(spr)
 	Depth.apply(spr, position)
-
 
 func _wall() -> void:
 	body = StaticBody3D.new()

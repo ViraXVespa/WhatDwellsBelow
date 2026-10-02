@@ -2,7 +2,6 @@
 
 const PlayerHit := preload("res://scripts/combat/player_hit.gd")
 
-
 static func try_dash(p: CharacterBody3D, move: Vector2) -> void:
 	(load("res://scripts/world/player_setup.gd") as GDScript).ensure_combat_fx(p)
 	if App.ui_open or p.interact_lock > 0.0:
@@ -24,7 +23,6 @@ static func try_dash(p: CharacterBody3D, move: Vector2) -> void:
 	if App.tel:
 		App.tel.note_dash()
 
-
 static func try_special(p: CharacterBody3D) -> void:
 	(load("res://scripts/world/player_setup.gd") as GDScript).ensure_combat_fx(p)
 	if App.ui_open:
@@ -45,7 +43,6 @@ static func try_special(p: CharacterBody3D) -> void:
 	if App.tel:
 		App.tel.note_special(false)
 
-
 static func try_basic(p: CharacterBody3D) -> void:
 	(load("res://scripts/world/player_setup.gd") as GDScript).ensure_combat_fx(p)
 	if App.ui_open:
@@ -58,7 +55,6 @@ static func try_basic(p: CharacterBody3D) -> void:
 	p.atk_t = 0.0
 	p.hit_done = false
 	p._draw_basic_tele(false)
-
 
 static func advance_attack(p: CharacterBody3D, delta: float) -> void:
 	if p.atk_state == p.ATK_NONE:
@@ -97,7 +93,6 @@ static func advance_attack(p: CharacterBody3D, delta: float) -> void:
 		if p.atk_t >= App.bal.special_recovery:
 			p.atk_state = p.ATK_NONE
 
-
 static func basic_duration() -> float:
 	var rate: float = App.bal.axe_rate
 	if App.weapon == "staff":
@@ -107,14 +102,12 @@ static func basic_duration() -> float:
 	rate *= 1.0 + _gear("atk_spd")
 	return 1.0 / maxf(0.2, rate)
 
-
 static func hit_norm() -> float:
 	if App.weapon == "staff":
 		return App.bal.staff_hit_norm
 	if App.weapon == "longbow":
 		return App.bal.bow_hit_norm
 	return App.bal.axe_hit_norm
-
 
 static func update_aim_line(p: CharacterBody3D) -> void:
 	if p.aim_line == null:
@@ -128,7 +121,6 @@ static func update_aim_line(p: CharacterBody3D) -> void:
 		length = App.bal.bow_range + _gear("atk_range")
 	p.aim_line.update_line(p.global_position, p.aim_dir, length, App.bal.aim_line_width, App.bal.aim_line_opacity, on)
 
-
 static func weapon_reach() -> float:
 	var extra: float = _gear("atk_range")
 	if App.weapon == "great_axe":
@@ -136,7 +128,6 @@ static func weapon_reach() -> float:
 	if App.weapon == "staff":
 		return maxf(App.bal.staff_range, App.bal.staff_special_radius) + extra
 	return maxf(App.bal.bow_range, App.bal.bow_special_range) + extra
-
 
 static func update_aura(p: CharacterBody3D, delta: float) -> void:
 	if p.aura == null:
@@ -150,7 +141,6 @@ static func update_aura(p: CharacterBody3D, delta: float) -> void:
 			p.aura.texture = p.body.texture
 			p.aura.pixel_size = p.body.pixel_size * 1.15
 			p.aura.position.y = p.body.position.y
-
 
 static func _gear(key: String) -> float:
 	if App.prog == null:

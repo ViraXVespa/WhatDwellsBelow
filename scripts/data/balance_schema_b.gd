@@ -1,6 +1,5 @@
 ﻿extends Object
 
-
 static func rows() -> Array:
 	return [
 		["ambush_pack_min", 1.0, 6.0, 1.0],

@@ -7,7 +7,6 @@ const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
 const View := preload("res://scripts/ui/hud_view.gd")
 
-
 static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
 	View.layout(host)
 	View.load_portrait(host)
@@ -69,7 +68,6 @@ static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
 	if host.fps_lab:
 		host.fps_lab.text = ""
 
-
 static func paint_look(host: CanvasLayer) -> void:
 	if host.look_lab == null:
 		return
@@ -80,7 +78,6 @@ static func paint_look(host: CanvasLayer) -> void:
 		host.look_lab.text = "Look  RS zoom map" if Look.mode else "Look  RS pan map"
 		return
 	host.look_lab.text = "Look  RS zoom / HUD" if Look.mode else ""
-
 
 static func paint_prompt(host: CanvasLayer) -> void:
 	var text := str(App.interact_prompt)
@@ -98,7 +95,6 @@ static func paint_prompt(host: CanvasLayer) -> void:
 	else:
 		PromptView.fill(host.prompt_row, [{"action": "interact", "verb": text}], 16, Color(0.95, 0.82, 0.4))
 
-
 static func style_name() -> String:
 	if App.weapon == "staff":
 		return "Magic"
@@ -106,10 +102,8 @@ static func style_name() -> String:
 		return "Ranged"
 	return "Melee"
 
-
 static func fill(r: ColorRect, w: float, t: float) -> void:
 	r.size.x = w * clampf(t, 0.0, 1.0)
-
 
 static func boss(host: CanvasLayer, dungeon: Node, player: Node) -> void:
 	var b: Node = null

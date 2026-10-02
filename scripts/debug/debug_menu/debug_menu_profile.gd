@@ -2,7 +2,6 @@
 
 ## Named balance profiles. Host is scripts/debug/debug_menu/debug_menu.gd.
 
-
 static func page_profiles(host) -> void:
 	host.status.text = "Unlimited named profiles. Saved under user://wdb_profiles/"
 	var le := LineEdit.new()
@@ -20,10 +19,8 @@ static func page_profiles(host) -> void:
 		var nm := n
 		host.root_box.add_child(host._btn("Load " + nm, func(): host.profile_name = nm; load_profile(host); host.status.text = "Loaded " + nm))
 
-
 static func dir() -> String:
 	return "user://wdb_profiles"
-
 
 static func list_profiles() -> PackedStringArray:
 	var d := DirAccess.open("user://")
@@ -41,7 +38,6 @@ static func list_profiles() -> PackedStringArray:
 		f = pd.get_next()
 	return out
 
-
 static func save_profile(host) -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir()))
 	var data := {}
@@ -51,7 +47,6 @@ static func save_profile(host) -> void:
 	if f:
 		f.store_string(JSON.stringify(data))
 		host.loaded_profile = host.profile_name
-
 
 static func load_profile(host) -> void:
 	var f := FileAccess.open("%s/%s.json" % [dir(), host.profile_name], FileAccess.READ)
@@ -65,10 +60,8 @@ static func load_profile(host) -> void:
 			App.bal.setv(str(k), float(d[k]))
 		host.loaded_profile = host.profile_name
 
-
 static func delete_profile(host) -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("%s/%s.json" % [dir(), host.profile_name]))
-
 
 static func rename_profile(host) -> void:
 	var prev: String = host.loaded_profile

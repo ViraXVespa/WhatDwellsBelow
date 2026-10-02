@@ -4,7 +4,6 @@ const InputPad := preload("res://scripts/input/pad.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
-
 static func pressed(event: InputEvent) -> bool:
 	InputPad.note_event(event)
 	if Prompts.dirty():
@@ -19,13 +18,6 @@ static func pressed(event: InputEvent) -> bool:
 		return true
 	return false
 
-
-static func is_confirm(event: InputEvent) -> bool:
-	if not pressed(event):
-		return false
-	return event.is_action_pressed("ui_accept") or event.is_action_pressed("interact")
-
-
 static func is_back(event: InputEvent) -> bool:
 	if not pressed(event):
 		return false
@@ -39,7 +31,6 @@ static func is_back(event: InputEvent) -> bool:
 		return (event as InputEventJoypadButton).button_index == JOY_BUTTON_B
 	return false
 
-
 static func is_tab_prev(event: InputEvent) -> bool:
 	if not pressed(event):
 		return false
@@ -48,7 +39,6 @@ static func is_tab_prev(event: InputEvent) -> bool:
 	if event is InputEventJoypadButton:
 		return (event as InputEventJoypadButton).button_index == JOY_BUTTON_LEFT_SHOULDER
 	return false
-
 
 static func is_tab_next(event: InputEvent) -> bool:
 	if not pressed(event):
@@ -59,14 +49,12 @@ static func is_tab_next(event: InputEvent) -> bool:
 		return (event as InputEventJoypadButton).button_index == JOY_BUTTON_RIGHT_SHOULDER
 	return false
 
-
 static func tab_delta(event: InputEvent) -> int:
 	if is_tab_prev(event):
 		return -1
 	if is_tab_next(event):
 		return 1
 	return 0
-
 
 static func is_page_prev(event: InputEvent) -> bool:
 	if not pressed(event):
@@ -77,7 +65,6 @@ static func is_page_prev(event: InputEvent) -> bool:
 			return true
 	return event.is_action_pressed("special")
 
-
 static func is_page_next(event: InputEvent) -> bool:
 	if not pressed(event):
 		return false
@@ -86,7 +73,6 @@ static func is_page_next(event: InputEvent) -> bool:
 		if k.physical_keycode == KEY_E or k.keycode == KEY_E:
 			return true
 	return event.is_action_pressed("attack")
-
 
 static func page_delta(event: InputEvent) -> int:
 	if is_page_prev(event):

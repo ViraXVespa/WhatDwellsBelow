@@ -2,10 +2,8 @@ extends Object
 
 const GameVer := preload("res://scripts/data/game_ver.gd")
 
-
 static func esc_bb(t: String) -> String:
 	return t.replace("[", "[lb]")
-
 
 static func md_inline(t: String) -> String:
 	var s := esc_bb(t)
@@ -27,7 +25,6 @@ static func md_inline(t: String) -> String:
 		out += s.substr(i, 1)
 		i += 1
 	return out
-
 
 static func entry_bbcode(e: Dictionary, is_new: bool) -> String:
 	var lab := str(e.get("label", "")).strip_edges()
@@ -60,7 +57,6 @@ static func entry_bbcode(e: Dictionary, is_new: bool) -> String:
 		lines.append("[i]Summary:[/i] %s" % md_inline(summary))
 	return "\n".join(lines)
 
-
 static func news_text(rows: Array, new_labs: Dictionary) -> String:
 	if rows.is_empty():
 		return "Updates from earlier weeks are on the public changelog."
@@ -71,7 +67,6 @@ static func news_text(rows: Array, new_labs: Dictionary) -> String:
 		var lab := str((e as Dictionary).get("label", ""))
 		parts.append(entry_bbcode(e, new_labs.has(lab)))
 	return "\n\n".join(parts)
-
 
 static func lock_news_focus(close_btn: Button, older_btn: Button) -> void:
 	close_btn.focus_neighbor_left = close_btn.get_path()

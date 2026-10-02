@@ -12,7 +12,6 @@ var reach := 1.85
 var cells: Array = []
 var side := "s"
 
-
 func setup(pos: Vector3) -> void:
 	setup_opening({
 		"cells": [Vector2i(int(pos.x), int(pos.z))],
@@ -23,7 +22,6 @@ func setup(pos: Vector3) -> void:
 		"sz": 1.15,
 		"reach": 1.85,
 	})
-
 
 func setup_opening(opening: Dictionary) -> void:
 	side = str(opening.get("side", "s"))
@@ -75,7 +73,6 @@ func setup_opening(opening: Dictionary) -> void:
 	_add_hotspots()
 	refresh()
 
-
 func _add_hotspots() -> void:
 	for c in cells:
 		var local := Vector3(float(c.x) + 0.5 - position.x, 0.0, float(c.y) + 0.5 - position.z)
@@ -87,7 +84,6 @@ func _add_hotspots() -> void:
 		add_child(h)
 		h.refresh_prompt()
 
-
 func interact(_who: Node) -> String:
 	if open:
 		refresh()
@@ -98,7 +94,6 @@ func interact(_who: Node) -> String:
 	if App.has_method("toast"):
 		App.toast("The door yields. The guardian waits.")
 	return "The door yields. The guardian waits."
-
 
 func refresh() -> void:
 	if open:
@@ -112,7 +107,6 @@ func refresh() -> void:
 		if child is Hotspot:
 			child.refresh_prompt()
 
-
 func _open_all() -> void:
 	open_door()
 	var tree := get_tree()
@@ -121,7 +115,6 @@ func _open_all() -> void:
 	for n in tree.get_nodes_in_group("boss_door"):
 		if n != self and n.has_method("open_door"):
 			n.open_door()
-
 
 func open_door() -> void:
 	if open:
@@ -134,7 +127,6 @@ func open_door() -> void:
 	var tw := create_tween()
 	tw.tween_property(self, "position:y", position.y - 1.8, 0.35)
 
-
 func occupies_cell(c: Vector2i) -> bool:
 	if open:
 		return false
@@ -142,7 +134,6 @@ func occupies_cell(c: Vector2i) -> bool:
 		if Vector2i(cell) == c:
 			return true
 	return false
-
 
 class Hotspot extends Node3D:
 	var host: Node

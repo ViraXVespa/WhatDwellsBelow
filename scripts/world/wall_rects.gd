@@ -4,7 +4,6 @@ extends Object
 
 const Gen := preload("res://scripts/dungeon/gen.gd")
 
-
 static func merge(walls: Array[Vector2i]) -> Array[Rect2i]:
 	var rects: Array[Rect2i] = []
 	if walls.is_empty():
@@ -36,7 +35,6 @@ static func merge(walls: Array[Vector2i]) -> Array[Rect2i]:
 		rects.append(Rect2i(x, y, xa - x + 1, ya - y + 1))
 	return rects
 
-
 ## Greedy-merged wall faces toward FLOOR: { "origin", "size", "normal" } in tile cells.
 static func faces(grid: PackedByteArray, w: int, h: int, cells: Array[Vector2i]) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
@@ -67,7 +65,6 @@ static func faces(grid: PackedByteArray, w: int, h: int, cells: Array[Vector2i])
 			out.append({"origin": c, "size": Vector2i(1 + t.x * (span - 1), 1 + t.y * (span - 1)), "normal": n})
 	return out
 
-
 ## Fine-mask floor cells inside one coarse chunk. 1 = walkable.
 static func solid_cells(solid: PackedByteArray, sw: int, sh: int, n: int, ox: int, oy: int, x1: int, y1: int) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
@@ -83,7 +80,6 @@ static func solid_cells(solid: PackedByteArray, sw: int, sh: int, n: int, ox: in
 			if solid[row + fx] != 0:
 				out.append(Vector2i(fx, fy))
 	return out
-
 
 ## One fine cell of void that touches the clipped solid. No coarse slab.
 static func volume_cells(solid: PackedByteArray, sw: int, sh: int, n: int, grid: PackedByteArray, gw: int, gh: int, ox: int, oy: int, x1: int, y1: int) -> Array[Vector2i]:
@@ -110,10 +106,8 @@ static func volume_cells(solid: PackedByteArray, sw: int, sh: int, n: int, grid:
 			out.append(Vector2i(fx, fy))
 	return out
 
-
 static func _blocks(solid: PackedByteArray, sw: int, sh: int, _grid: PackedByteArray, _gw: int, _gh: int, fx: int, fy: int, _cx: int, _cy: int) -> bool:
 	return _touches_solid(solid, sw, sh, fx, fy)
-
 
 static func _touches_solid(solid: PackedByteArray, sw: int, sh: int, fx: int, fy: int) -> bool:
 	if fx > 0 and solid[fy * sw + fx - 1] != 0:
@@ -126,14 +120,12 @@ static func _touches_solid(solid: PackedByteArray, sw: int, sh: int, fx: int, fy
 		return true
 	return false
 
-
 static func _coarse_wall(grid: PackedByteArray, gw: int, gh: int, cx: int, cy: int) -> bool:
 	if cx < 0 or cy < 0 or cx >= gw or cy >= gh:
 		return false
 	if grid[Gen.idx(cx, cy, gw)] == Gen.FLOOR:
 		return false
 	return _floor_near(grid, gw, gh, cx, cy)
-
 
 static func _floor_near(grid: PackedByteArray, gw: int, gh: int, cx: int, cy: int) -> bool:
 	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
@@ -146,14 +138,12 @@ static func _floor_near(grid: PackedByteArray, gw: int, gh: int, cx: int, cy: in
 			return true
 	return false
 
-
 static func _owned(solid: PackedByteArray, sw: int, sh: int, n: int, grid: PackedByteArray, gw: int, gh: int, fx: int, fy: int, cx: int, cy: int, ox: int, oy: int, x1: int, y1: int) -> bool:
 	if _solid_neighbor_in_chunk(solid, sw, sh, n, fx, fy, ox, oy, x1, y1):
 		return true
 	if not _coarse_wall(grid, gw, gh, cx, cy):
 		return false
 	return _floor_neighbor_in_chunk(grid, gw, gh, cx, cy, ox, oy, x1, y1)
-
 
 static func _solid_neighbor_in_chunk(solid: PackedByteArray, sw: int, sh: int, n: int, fx: int, fy: int, ox: int, oy: int, x1: int, y1: int) -> bool:
 	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
@@ -169,7 +159,6 @@ static func _solid_neighbor_in_chunk(solid: PackedByteArray, sw: int, sh: int, n
 		if ccx >= ox and ccy >= oy and ccx < x1 and ccy < y1:
 			return true
 	return false
-
 
 static func _floor_neighbor_in_chunk(grid: PackedByteArray, gw: int, gh: int, cx: int, cy: int, ox: int, oy: int, x1: int, y1: int) -> bool:
 	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]

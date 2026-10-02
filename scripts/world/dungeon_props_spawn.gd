@@ -5,14 +5,11 @@ const Smoke := preload("res://scripts/debug/smoke.gd")
 static func _place() -> GDScript:
 	return load("res://scripts/world/dungeon_props_place.gd") as GDScript
 
-
 static func _gate() -> GDScript:
 	return load("res://scripts/world/dungeon_gate.gd") as GDScript
 
-
 static func _spot() -> GDScript:
 	return load("res://scripts/world/interact.gd") as GDScript
-
 
 static func ensure_world(host: Node) -> void:
 	var _fac = load("res://scripts/world/dungeon_props.gd")
@@ -69,10 +66,8 @@ static func ensure_world(host: Node) -> void:
 static func _eager(host: Node) -> bool:
 	return bool(host.stream_all) or Smoke.phase(5)
 
-
 static func _queue(host: Node, kind: String, cell: Vector2i, room: Dictionary = {}) -> void:
 	host.prop_jobs.append({"kind": kind, "cell": cell, "room": room, "state": "pending"})
-
 
 static func spawn_world(host: Node) -> void:
 	var eager: bool = _eager(host)
@@ -142,7 +137,6 @@ static func spawn_world(host: Node) -> void:
 				_queue(host, "quest_item", qc)
 	host.set_meta("props_booted", true)
 
-
 static func _queue_scatter(host: Node) -> void:
 	var rooms: Array = []
 	for r: Variant in host.data.get("rooms", []):
@@ -162,7 +156,6 @@ static func _queue_scatter(host: Node) -> void:
 	_queue_n(host, rooms, int(App.bal.break_count), "break")
 	_queue_n(host, rooms, int(App.bal.campfire_count), "campfire")
 	_queue_n(host, rooms, int(App.bal.shrine_count), "shrine")
-
 
 static func _queue_n(host: Node, rooms: Array, n: int, what: String) -> void:
 	if n <= 0 or rooms.is_empty():
@@ -190,7 +183,6 @@ static func _queue_n(host: Node, rooms: Array, n: int, what: String) -> void:
 		_queue(host, what, cell)
 		placed += 1
 
-
 static func tick(host: Node, pc: Vector2i, budget: int) -> void:
 	if not bool(host.get_meta("props_scattered", false)):
 		host.set_meta("props_scattered", true)
@@ -209,7 +201,6 @@ static func tick(host: Node, pc: Vector2i, budget: int) -> void:
 		commit(host, job)
 		spawned += 1
 
-
 static func flush(host: Node) -> void:
 	if not bool(host.get_meta("props_scattered", false)):
 		host.set_meta("props_scattered", true)
@@ -217,7 +208,6 @@ static func flush(host: Node) -> void:
 	for job: Variant in host.prop_jobs:
 		if str(job.state) == "pending":
 			commit(host, job)
-
 
 static func commit(host: Node, job: Dictionary) -> void:
 	if str(job.state) != "pending":

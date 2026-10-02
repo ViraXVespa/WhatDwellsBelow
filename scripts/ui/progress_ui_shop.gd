@@ -5,7 +5,6 @@ const Inv := preload("res://scripts/ui/progress_ui_inv.gd")
 const Rules := preload("res://scripts/data/gear_rules.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 
-
 static func rebuild_shop(ui) -> void:
 	ui._clear()
 	ui.box.add_child(ThemeS.lab("Ghost Shop", 32, Color(0.75, 0.9, 1.0)))
@@ -40,7 +39,6 @@ static func rebuild_shop(ui) -> void:
 			ui.box.add_child(ThemeS.btn("Pawn equipped %s  (%dg)" % [eq.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, "Pawn Equipped", "Pawn equipped %s for %dg?" % [eq.name, int(App.bal.pawn_gold)], func(): pawn_slot(ui, slot))))
 	ui.box.add_child(ThemeS.btn("Leave", func(): ui.close_ui()))
 
-
 static func buy_snack(ui) -> void:
 	if App.gold < int(App.bal.snack_cost):
 		ui._st("Not enough gold.")
@@ -52,7 +50,6 @@ static func buy_snack(ui) -> void:
 		p.heal(App.bal.snack_heal)
 	ui._st("The snack is strangely warm.")
 	App.toast("Snack.")
-
 
 static func buy_art(ui, id: String, nm: String) -> void:
 	if ui.shop_spot == null:
@@ -83,14 +80,12 @@ static func buy_art(ui, id: String, nm: String) -> void:
 	ui._rebuild_shop()
 	ui._show()
 
-
 static func shop_spend(n: int) -> void:
 	App.shop_buys += 1
 	App.shop_spent += n
 	if App.tel:
 		App.tel.shop_buys += 1
 		App.tel.shop_spent += n
-
 
 static func pawn(ui, uid: int) -> void:
 	var it := App.prog.remove_uid(uid)
@@ -101,7 +96,6 @@ static func pawn(ui, uid: int) -> void:
 	ui._st("The ghost takes it for a pittance.")
 	ui._rebuild_shop()
 	ui._show()
-
 
 static func pawn_slot(ui, slot: String) -> void:
 	if Rules.locked_equip_slot(slot):
@@ -116,7 +110,6 @@ static func pawn_slot(ui, slot: String) -> void:
 	ui._rebuild_shop()
 	ui._show()
 
-
 static func rebuild_vendor(ui) -> void:
 	ui._clear()
 	ui.box.add_child(ThemeS.lab("Vendor Stall", 32, Color(0.95, 0.82, 0.5)))
@@ -128,7 +121,6 @@ static func rebuild_vendor(ui) -> void:
 	ui.box.add_child(ThemeS.btn("Buy ration  (%dg, food slot)" % int(App.bal.vendor_food_cost), func(): vend_food(ui)))
 	ui.box.add_child(ThemeS.btn("Sell 1 ore  (%dg)" % int(App.bal.vendor_ore_gold), func(): vend_sell(ui)))
 	ui.box.add_child(ThemeS.btn("Leave", func(): ui.close_ui()))
-
 
 static func vend_potion(ui) -> void:
 	var cost := int(App.bal.vendor_potion_cost)
@@ -146,7 +138,6 @@ static func vend_potion(ui) -> void:
 		return
 	ui._st("Potion ready.")
 	App.save_now()
-
 
 static func vend_food(ui) -> void:
 	var cost := int(App.bal.vendor_food_cost)
@@ -166,7 +157,6 @@ static func vend_food(ui) -> void:
 		App.prog.slots["food"] = fd
 	ui._st("Ration packed in the food slot.")
 	App.save_now()
-
 
 static func vend_sell(ui) -> void:
 	if App.bank_ore < 1:

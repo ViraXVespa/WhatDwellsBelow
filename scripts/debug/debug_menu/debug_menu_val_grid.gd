@@ -16,10 +16,8 @@ const CATS: Array[String] = [
 	"Other",
 ]
 
-
 static func _val():
 	return load("res://scripts/debug/debug_menu/debug_menu_val.gd")
-
 
 static func cat_of(name: String) -> String:
 	var n: String = name.to_lower()
@@ -45,10 +43,8 @@ static func cat_of(name: String) -> String:
 		return "Player"
 	return "Other"
 
-
 static func _left_n(n: int) -> int:
 	return int(ceili(float(n) / 2.0))
-
 
 static func _ensure_cats(host) -> void:
 	if host.get("val_cats") == null:
@@ -58,7 +54,6 @@ static func _ensure_cats(host) -> void:
 	if host.get("val_mode") == null:
 		host.set("val_mode", "cats")
 
-
 static func cat_wrap(host) -> Control:
 	_ensure_cats(host)
 	var cats: Array = host.val_cats
@@ -66,7 +61,6 @@ static func cat_wrap(host) -> Control:
 	if i < 0 or i >= cats.size():
 		return null
 	return cats[i].wrap
-
 
 static func build(host) -> void:
 	_ensure_cats(host)
@@ -92,7 +86,6 @@ static func build(host) -> void:
 	host.val_cat_i = 0
 	host.val_mode = "cats"
 	paint_cats(host)
-
 
 static func _add_cat(host, parent: Control, title: String, idx: int) -> void:
 	var shell := VBoxContainer.new()
@@ -128,7 +121,6 @@ static func _add_cat(host, parent: Control, title: String, idx: int) -> void:
 		"body": body,
 	})
 
-
 static func paint_cats(host) -> void:
 	_ensure_cats(host)
 	var cats: Array = host.val_cats
@@ -147,7 +139,6 @@ static func paint_cats(host) -> void:
 		if str(host.val_mode) == "cats" and on:
 			btn.grab_focus()
 
-
 static func _clear_vars(host) -> void:
 	host.val_rows.clear()
 	var cats: Array = host.val_cats
@@ -156,7 +147,6 @@ static func _clear_vars(host) -> void:
 		for c in body.get_children():
 			c.queue_free()
 		body.visible = false
-
 
 static func open_cat(host) -> void:
 	_ensure_cats(host)
@@ -184,13 +174,11 @@ static func open_cat(host) -> void:
 		empty.add_theme_color_override("font_color", Color(0.8, 0.74, 0.66))
 		body.add_child(empty)
 
-
 static func close_cat(host) -> void:
 	host.val_edit = false
 	_clear_vars(host)
 	host.val_mode = "cats"
 	paint_cats(host)
-
 
 static func nudge_cat(host, delta_i: int) -> void:
 	_ensure_cats(host)
@@ -207,7 +195,6 @@ static func nudge_cat(host, delta_i: int) -> void:
 	var local: int = i - start
 	local = (local + delta_i + count) % count
 	host.val_cat_i = start + local
-
 
 static func nudge_col(host, delta_i: int) -> void:
 	_ensure_cats(host)

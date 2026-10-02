@@ -10,7 +10,6 @@ const NAMES := {
 	"legs": "Legs",
 }
 
-
 static func item_color(it: Dictionary) -> Color:
 	if it.is_empty():
 		return Color(0.62, 0.58, 0.52)
@@ -25,7 +24,6 @@ static func item_color(it: Dictionary) -> Color:
 			if str(it.get("kind", "")) == "artifact":
 				return Color(0.92, 0.78, 0.48)
 			return Color(0.92, 0.84, 0.62)
-
 
 static func is_risk(it: Dictionary) -> bool:
 	if it.is_empty():
@@ -42,22 +40,10 @@ static func is_risk(it: Dictionary) -> bool:
 		return false
 	return true
 
-
-static func risk_mark(it: Dictionary, loadout: bool) -> String:
-	if it.is_empty():
-		return ""
-	if bool(it.get("hold", false)) or str(it.get("kit_src", "")) == "hold":
-		return "HOLD"
-	if loadout and is_risk(it):
-		return "AT RISK"
-	return ""
-
-
 static func _charges(it: Dictionary) -> int:
 	if it.has("charges"):
 		return int(it.charges)
 	return int(it.get("stack", 0))
-
 
 static func _charge_max(it: Dictionary) -> int:
 	if it.has("charge_max"):
@@ -65,7 +51,6 @@ static func _charge_max(it: Dictionary) -> int:
 	if it.has("charges"):
 		return maxi(1, int(it.charges))
 	return maxi(1, int(it.get("stack", 1)))
-
 
 static func _tmpl(it: Dictionary) -> String:
 	var slot := str(it.get("slot", ""))
@@ -76,7 +61,6 @@ static func _tmpl(it: Dictionary) -> String:
 	if slot == "potion":
 		return "potion:" + str(it.get("name", "Potion"))
 	return "%s:%s:%s" % [slot, str(it.get("name", "")), str(it.get("rarity", "white"))]
-
 
 static func item_short(it: Dictionary) -> String:
 	if it.is_empty():
@@ -93,7 +77,6 @@ static func item_short(it: Dictionary) -> String:
 	if bool(it.get("hold", false)):
 		nm += "  (hold)"
 	return nm
-
 
 static func item_cell(it: Dictionary) -> String:
 	var nm: String = str(it.get("name", "item"))

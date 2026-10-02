@@ -15,7 +15,6 @@ const ShotTool := preload("res://scripts/debug/shot_tool.gd")
 
 static var enter_flag: bool = false
 
-
 static func args() -> PackedStringArray:
 	# Prefer user args (after --). Fall back to full cmdline so Steam/redirected
 	# launches still see --wdb-phaseN-smoke when user-args arrive empty.
@@ -23,7 +22,6 @@ static func args() -> PackedStringArray:
 	if user.size() > 0:
 		return user
 	return OS.get_cmdline_args()
-
 
 static func active() -> bool:
 	for a: String in args():
@@ -40,14 +38,11 @@ static func active() -> bool:
 			return true
 	return false
 
-
 static func phase(n: int) -> bool:
 	return ("--wdb-phase%d-smoke" % n) in args()
 
-
 static func hold_player() -> bool:
 	return phase(3) or phase(4) or phase(5) or phase(7)
-
 
 static func route_boot() -> bool:
 	if "--wdb-bake-camp" in args():
@@ -92,11 +87,9 @@ static func route_boot() -> bool:
 		return true
 	return false
 
-
 static func attach_foundation(host: Node) -> void:
 	if phase(1) or phase(2):
 		Early.p12(host)
-
 
 static func attach_dungeon(host: Node) -> void:
 	if DungeonMap.active():
@@ -119,7 +112,6 @@ static func attach_dungeon(host: Node) -> void:
 	if phase(9):
 		Late.p9(host)
 
-
 static func attach_camp(host: Node) -> void:
 	if ShotTool.active():
 		ShotTool.attach_dungeon(host)
@@ -128,10 +120,8 @@ static func attach_camp(host: Node) -> void:
 	if phase(8):
 		Late.p8(host)
 
-
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
-
 
 static func quit_in(host: Node, sec: float) -> void:
 	tree(host).create_timer(sec).timeout.connect(func(): tree(host).quit())

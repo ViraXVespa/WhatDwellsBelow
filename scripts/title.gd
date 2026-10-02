@@ -11,7 +11,6 @@ var _news_layer: Control = null
 var _news_scroll: ScrollContainer = null
 var _title_btns: Array = []
 
-
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -95,10 +94,8 @@ func _ready() -> void:
 
 	call_deferred("_fit_title_plate", plate, card)
 
-
 func _debug_open() -> bool:
 	return App.debug != null and bool(App.debug.get("open"))
-
 
 func _wire_focus(play_a: Button, play_b: Button, updates: Button, archives: Button) -> void:
 	if play_a == null or updates == null or archives == null:
@@ -137,7 +134,6 @@ func _wire_focus(play_a: Button, play_b: Button, updates: Button, archives: Butt
 	archives.focus_next = play_a.get_path()
 	archives.focus_previous = updates.get_path()
 
-
 func _loop_btn(b: Button, up: Button, down: Button) -> void:
 	b.focus_neighbor_top = up.get_path()
 	b.focus_neighbor_bottom = down.get_path()
@@ -146,14 +142,12 @@ func _loop_btn(b: Button, up: Button, down: Button) -> void:
 	if b.focus_neighbor_right == NodePath():
 		b.focus_neighbor_right = b.get_path()
 
-
 func _set_title_focus(on: bool) -> void:
 	var mode := Control.FOCUS_ALL if on else Control.FOCUS_NONE
 	for b in _title_btns:
 		if b == null or not is_instance_valid(b):
 			continue
 		(b as Button).focus_mode = mode
-
 
 func _focus_first() -> void:
 	if _debug_open() or _news_open:
@@ -164,13 +158,11 @@ func _focus_first() -> void:
 		(n as Button).grab_focus()
 		return
 
-
 func _lab(text: String, font_px: int, col: Color) -> Label:
 	var l: Label = ThemeS.lab(text, font_px, col, HORIZONTAL_ALIGNMENT_CENTER, true, true)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.focus_mode = Control.FOCUS_NONE
 	return l
-
 
 func _btn(text: String, cb: Callable) -> Button:
 	var b: Button = ThemeS.btn(text, cb)
@@ -179,22 +171,17 @@ func _btn(text: String, cb: Callable) -> Button:
 	b.focus_mode = Control.FOCUS_ALL
 	return b
 
-
 func _maybe_news() -> void:
 	News.maybe_news(self)
-
 
 func _open_updates() -> void:
 	News.open_updates(self)
 
-
 func _dismiss_news() -> void:
 	News.dismiss(self)
 
-
 func _open_older() -> void:
 	News.open_older()
-
 
 func _process(delta: float) -> void:
 	if _debug_open():
@@ -204,10 +191,8 @@ func _process(delta: float) -> void:
 		_archives_open = false
 		_focus_first()
 
-
 func _input(event: InputEvent) -> void:
 	News.wheel(self, event)
-
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _busy:
@@ -221,7 +206,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if App.archives_ui and bool(App.archives_ui.get("open")):
 		return
 
-
 func _play(kind: String) -> void:
 	if _busy or _debug_open() or _news_open:
 		return
@@ -233,20 +217,12 @@ func _play(kind: String) -> void:
 	else:
 		App.go_camp()
 
-
 func _open_archives() -> void:
 	if _busy or _debug_open() or _news_open:
 		return
 	_archives_open = true
 	if App.archives_ui and App.archives_ui.has_method("show_browser"):
 		App.archives_ui.show_browser()
-
-
-func _close_archives() -> void:
-	_archives_open = false
-	if App.archives_ui and App.archives_ui.has_method("hide_browser"):
-		App.archives_ui.hide_browser()
-	_focus_first()
 
 func _fit_title_plate(plate: Control, card: Control) -> void:
 	if plate == null or card == null:

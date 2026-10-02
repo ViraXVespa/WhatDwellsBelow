@@ -6,66 +6,24 @@ const GearAct := preload("res://scripts/ui/gear_board/gear_board_act.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 
-
 static func rebuild_loadout(ui: CanvasLayer) -> void:
 	ui._clear()
 	ui.gear_mode = "loadout"
 	Board.build(ui, "loadout")
-
 
 static func rebuild_anvil(ui: CanvasLayer) -> void:
 	ui._clear()
 	ui.gear_mode = "anvil"
 	Board.build(ui, "anvil")
 
-
 static func toggle_char(ui) -> void:
 	GearAct.toggle_char(ui)
-
-
-static func set_wpn(ui, w: String) -> void:
-	ui.loadout_wpn = w
-	App.weapon = w
-	App.prog.pick_weapon = w
-	Board.refresh(ui)
-
-
-static func set_tool(ui, t: String) -> void:
-	ui.loadout_tool = t
-	App.prog.tool_type = t
-	Board.refresh(ui)
-
-
-static func matching_hold(slot: String, key: String, want: String) -> int:
-	var h: Array = App.prog.holds[slot]
-	for i in h.size():
-		if str(h[i].get(key, "")) == want:
-			return i
-	return -1
-
 
 static func floor_step(ui, d: int) -> void:
 	GearAct.floor_step(ui, d)
 
-
-static func use_hold(ui, slot: String, i: int) -> void:
-	var h: Array = App.prog.holds[slot]
-	if i < 0 or i >= h.size():
-		return
-	App.prog.hold_pick[slot] = i
-	App.prog.slots[slot] = h[i].duplicate(true)
-	if slot == "weapon":
-		ui.loadout_wpn = str(h[i].get("weapon", ui.loadout_wpn))
-		App.prog.pick_weapon = ui.loadout_wpn
-	if slot == "tool":
-		ui.loadout_tool = str(h[i].get("tool", ui.loadout_tool))
-		App.prog.tool_type = ui.loadout_tool
-	ui._st("Hold ready: " + str(h[i].name))
-
-
 static func enter(ui) -> void:
 	GearAct.enter(ui)
-
 
 static func rebuild_quest(ui) -> void:
 	ui._clear()
@@ -90,7 +48,6 @@ static func rebuild_quest(ui) -> void:
 	if ui.focus_btn == null:
 		ui.focus_btn = close
 	ui.box.add_child(close)
-
 
 static func rebuild_controls(ui) -> void:
 	ui._clear()

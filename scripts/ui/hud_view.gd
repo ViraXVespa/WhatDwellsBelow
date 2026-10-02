@@ -4,7 +4,6 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 
 ## HUD chrome. Host is the CanvasLayer at scripts/ui/hud.gd.
 
-
 static func build(host: CanvasLayer) -> void:
 	host.strip = Control.new()
 	host.add_child(host.strip)
@@ -95,7 +94,6 @@ static func build(host: CanvasLayer) -> void:
 	layout(host)
 	load_portrait(host)
 
-
 static func layout(host: CanvasLayer) -> void:
 	var text_sc: float = 1.0
 	if App.has_method("ui_text_applied"):
@@ -115,7 +113,6 @@ static func layout(host: CanvasLayer) -> void:
 	host.look_lab.scale = Vector2(sc, sc)
 	host.look_lab.position = Vector2(host.mini_wrap.position.x, host.mini_wrap.position.y + host.MINI_H * sc + 28 * sc)
 
-
 static func load_portrait(host: CanvasLayer) -> void:
 	var p := "res://assets/sprites/player/%s/idle_down.png" % App.character_type
 	if p == host.portrait_path:
@@ -123,7 +120,6 @@ static func load_portrait(host: CanvasLayer) -> void:
 	host.portrait_path = p
 	if ResourceLoader.exists(p):
 		host.portrait.texture = load(p)
-
 
 static func meter(owner: Control, pos: Vector2, sz: Vector2, col: Color) -> ColorRect:
 	var back := ColorRect.new()
@@ -137,7 +133,6 @@ static func meter(owner: Control, pos: Vector2, sz: Vector2, col: Color) -> Colo
 	fill.size = sz
 	owner.add_child(fill)
 	return fill
-
 
 static func lab(owner: Node, pos: Vector2, sz: Vector2, fs: int) -> Label:
 	var l := Label.new()

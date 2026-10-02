@@ -42,16 +42,13 @@ var portrait_path := ""
 var _prompt_shown := ""
 var _prompt_scheme := ""
 
-
 func _ready() -> void:
 	layer = 20
 	View.build(self)
 
-
 func bind_map(tex: Texture2D) -> void:
 	if mini_map:
 		mini_map.texture = tex
-
 
 func refresh(player: Node, dungeon: Node) -> void:
 	Act.refresh(self, player, dungeon)

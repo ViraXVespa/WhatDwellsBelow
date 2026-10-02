@@ -9,7 +9,6 @@ static var _scheme := "kb"
 static var _hold := 0.0
 static var _shown := "kb"
 
-
 static func tick(delta: float) -> void:
 	var want := "pad" if Pad.mode else "kb"
 	if want == _scheme:
@@ -20,10 +19,8 @@ static func tick(delta: float) -> void:
 		_scheme = want
 		_hold = 0.0
 
-
 static func scheme() -> String:
 	return "pad" if Pad.mode else "kb"
-
 
 static func dirty() -> bool:
 	var now := scheme()
@@ -32,14 +29,11 @@ static func dirty() -> bool:
 	_shown = now
 	return true
 
-
 static func page_prev() -> String:
 	return "special" if scheme() == "pad" else "target_lock"
 
-
 static func page_next() -> String:
 	return "attack" if scheme() == "pad" else "interact"
-
 
 static func event_for(action: String) -> InputEvent:
 	if not InputMap.has_action(action):
@@ -79,7 +73,6 @@ static func event_for(action: String) -> InputEvent:
 					best = e
 	return best
 
-
 static func id_for_event(e: InputEvent) -> String:
 	if e == null:
 		return ""
@@ -93,10 +86,8 @@ static func id_for_event(e: InputEvent) -> String:
 		return _key(e)
 	return ""
 
-
 static func path_for(action: String) -> String:
 	return path_for_event(event_for(action), scheme())
-
 
 static func path_for_event(e: InputEvent, pool: String = "") -> String:
 	var id: String = id_for_event(e)
@@ -109,20 +100,17 @@ static func path_for_event(e: InputEvent, pool: String = "") -> String:
 		return DIR + "pad/" + id + ".png"
 	return DIR + "kb/" + id + ".png"
 
-
 static func texture_for(action: String) -> Texture2D:
 	var p := path_for(action)
 	if p != "" and ResourceLoader.exists(p):
 		return load(p)
 	return null
 
-
 static func texture_for_event(e: InputEvent, pool: String = "") -> Texture2D:
 	var p: String = path_for_event(e, pool)
 	if p != "" and ResourceLoader.exists(p):
 		return load(p)
 	return null
-
 
 static func chip_for(action: String) -> String:
 	var id := id_for_event(event_for(action))
@@ -132,13 +120,11 @@ static func chip_for(action: String) -> String:
 		return id.substr(6).to_upper()
 	return id.to_upper()
 
-
 static func verb_line(action: String, verb: String) -> String:
 	var chip := chip_for(action)
 	if verb == "":
 		return chip
 	return "%s %s" % [chip, verb]
-
 
 static func _joy_btn(i: int) -> String:
 	match i:
@@ -172,7 +158,6 @@ static func _joy_btn(i: int) -> String:
 			return "dpad_right"
 	return "a"
 
-
 static func _joy_axis(axis: int, value: float) -> String:
 	if axis == JOY_AXIS_TRIGGER_LEFT:
 		return "lt"
@@ -180,14 +165,12 @@ static func _joy_axis(axis: int, value: float) -> String:
 		return "rt"
 	return "ls" if value < 0.0 else "rs"
 
-
 static func _mouse(i: int) -> String:
 	if i == MOUSE_BUTTON_LEFT:
 		return "mouse/lmb"
 	if i == MOUSE_BUTTON_RIGHT:
 		return "mouse/rmb"
 	return "mouse/mmb"
-
 
 static func _layout_code(e: InputEventKey) -> int:
 	var phys: int = int(e.physical_keycode)
@@ -197,7 +180,6 @@ static func _layout_code(e: InputEventKey) -> int:
 			return mapped
 		return phys
 	return int(e.keycode)
-
 
 static func _key(e: InputEventKey) -> String:
 	var code: int = _layout_code(e)

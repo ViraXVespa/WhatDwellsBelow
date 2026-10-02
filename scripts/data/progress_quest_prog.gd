@@ -2,7 +2,6 @@ extends Object
 
 ## Quest kill/fetch/ore notes and completion.
 
-
 static func note_kill(p: Object, type_id: String, named: String) -> void:
 	if p.quest_active.is_empty():
 		return

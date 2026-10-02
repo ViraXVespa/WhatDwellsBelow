@@ -12,7 +12,6 @@ var label: Label3D
 var life := 18.0
 var _block_t := 0.0
 
-
 static func drop_item(it: Dictionary, pos: Vector3) -> void:
 	var tree := Engine.get_main_loop()
 	if tree == null or it.is_empty():
@@ -24,13 +23,11 @@ static func drop_item(it: Dictionary, pos: Vector3) -> void:
 	host.add_child(p)
 	p.setup_item(it, pos)
 
-
 func setup(k: String, pos: Vector3, n := 0) -> void:
 	kind = k
 	amount = n
 	position = pos
 	_visual()
-
 
 func setup_item(it: Dictionary, pos: Vector3) -> void:
 	item = it.duplicate(true)
@@ -38,7 +35,6 @@ func setup_item(it: Dictionary, pos: Vector3) -> void:
 	life = 0.0
 	position = pos
 	_visual()
-
 
 func _visual() -> void:
 	var path := "res://assets/sprites/props/hp_orb.png"
@@ -68,7 +64,6 @@ func _visual() -> void:
 	add_child(spr)
 	Depth.apply(spr, position)
 
-
 func _process(delta: float) -> void:
 	if _block_t > 0.0:
 		_block_t = maxf(0.0, _block_t - delta)
@@ -88,7 +83,6 @@ func _process(delta: float) -> void:
 		var d := Vector2((p as Node3D).global_position.x - global_position.x, (p as Node3D).global_position.z - global_position.z).length()
 		if d < 0.55 and _block_t <= 0.0:
 			_take(p)
-
 
 func _take(p: Node) -> void:
 	if kind == "hp" and p.has_method("heal"):

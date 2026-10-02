@@ -6,7 +6,6 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const Util := preload("res://scripts/ui/crystal_ui_util.gd")
 const Net := preload("res://scripts/ui/crystal_ui_pages_net.gd")
 
-
 static func page_floors(host) -> void:
 	Util.panel(host, Vector2(520, 160), Vector2(880, 760))
 	var box := VBoxContainer.new()

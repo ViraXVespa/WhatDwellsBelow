@@ -9,20 +9,16 @@ const META_SEED := "crystal_seed"
 
 static var _seed := 0
 
-
 static func _clear_r() -> int:
 	return _num("crystal_clear_r", 12)
 
-
 static func _arrive_r() -> int:
 	return _num("crystal_arrive_r", 8)
-
 
 static func _num(key: String, fallback: int) -> int:
 	if App.bal and App.bal.get(key) != null:
 		return maxi(1, int(App.bal.get(key)))
 	return fallback
-
 
 static func ensure_run() -> void:
 	if _seed != int(App.run_seed):
@@ -32,13 +28,11 @@ static func ensure_run() -> void:
 		App.set_meta(META_WARP, Vector2i(-1, -1))
 		App.set_meta(META_SEED, _seed)
 
-
 static func arrive() -> void:
 	ensure_run()
 	var dead: Dictionary = App.get_meta(META_BOSS, {})
 	if bool(dead.get(App.floor_n, false)):
 		App.boss_dead = true
-
 
 static func note_boss() -> void:
 	ensure_run()
@@ -46,23 +40,19 @@ static func note_boss() -> void:
 	dead[App.floor_n] = true
 	App.set_meta(META_BOSS, dead)
 
-
 static func key_of(cell: Vector2i) -> String:
 	return "%d:%d:%d" % [App.floor_n, cell.x, cell.y]
-
 
 static func is_on(cell: Vector2i) -> bool:
 	ensure_run()
 	var on: Dictionary = App.get_meta(META_ON, {})
 	return bool(on.get(key_of(cell), false))
 
-
 static func mark_on(cell: Vector2i) -> void:
 	ensure_run()
 	var on: Dictionary = App.get_meta(META_ON, {})
 	on[key_of(cell)] = true
 	App.set_meta(META_ON, on)
-
 
 static func landing_cell(host: Node) -> Vector2i:
 	ensure_run()
@@ -72,26 +62,21 @@ static func landing_cell(host: Node) -> Vector2i:
 		return warp
 	return Vector2i(host.data.spawn)
 
-
 static func cl_at(host: Node, cell: Vector2i) -> int:
 	return Threat.walk_level(App.floor_n, cell, host.travel_dist, int(host.data.w), host.travel_cap)
-
 
 static func place_floor(host: Node) -> void:
 	var Place: GDScript = load("res://scripts/world/crystal_place.gd") as GDScript
 	Place.place_entrance(host)
 
-
 static func place_extras(host: Node) -> void:
 	var Place: GDScript = load("res://scripts/world/crystal_place.gd") as GDScript
 	Place.place_extras(host)
-
 
 static func _tree(n: Node) -> SceneTree:
 	if n == null or not is_instance_valid(n):
 		return null
 	return n.get_tree()
-
 
 static func floor_list(host: Node) -> Array:
 	var out: Array = []
@@ -115,7 +100,6 @@ static func floor_list(host: Node) -> Array:
 	)
 	return out
 
-
 static func activated_on_floor(host: Node) -> Array:
 	var out: Array = []
 	for n: Node in floor_list(host):
@@ -123,14 +107,11 @@ static func activated_on_floor(host: Node) -> Array:
 			out.append(n)
 	return out
 
-
 static func local_unlocked(host: Node) -> bool:
 	return activated_on_floor(host).size() >= 2
 
-
 static func floor_unlocked() -> bool:
 	return int(App.prog.deepest) > int(App.floor_n)
-
 
 static func area_hostile(spot: Node) -> bool:
 	var tree := _tree(spot)
@@ -156,7 +137,6 @@ static func area_hostile(spot: Node) -> bool:
 				return true
 	return _live_near(spot)
 
-
 static func _live_near(spot: Node) -> bool:
 	var tree := _tree(spot)
 	if tree == null:
@@ -173,7 +153,6 @@ static func _live_near(spot: Node) -> bool:
 			return true
 	return false
 
-
 static func activate(spot: Node) -> void:
 	var cell: Vector2i = Vector2i(spot.get("crystal_cell"))
 	mark_on(cell)
@@ -185,7 +164,6 @@ static func activate(spot: Node) -> void:
 	if scene:
 		silence_near(scene, cell)
 
-
 static func blocks_spawn(host: Node, cell: Vector2i) -> bool:
 	ensure_run()
 	var rad: int = _arrive_r()
@@ -195,7 +173,6 @@ static func blocks_spawn(host: Node, cell: Vector2i) -> bool:
 		if host._cell_manhattan(cell, Vector2i(n.get("crystal_cell"))) <= rad:
 			return true
 	return false
-
 
 static func silence_near(host: Node, cell: Vector2i) -> void:
 	var rad: int = _clear_r()
@@ -212,11 +189,9 @@ static func silence_near(host: Node, cell: Vector2i) -> void:
 		job.ids = PackedStringArray()
 		job.state = "cleared"
 
-
 static func silence_on(host: Node) -> void:
 	for n: Node in activated_on_floor(host):
 		silence_near(host, Vector2i(n.get("crystal_cell")))
-
 
 static func guard(host: Node) -> void:
 	if host.player == null:
@@ -234,7 +209,6 @@ static func guard(host: Node) -> void:
 			if host._cell_manhattan(ec, cell) <= rad:
 				e.queue_free()
 
-
 static func paint(host: Node) -> void:
 	if host.map_img == null:
 		return
@@ -245,7 +219,6 @@ static func paint(host: Node) -> void:
 		var col := Color(0.35, 0.95, 1.0) if on else Color(0.2, 0.45, 0.55)
 		Geo.dot(host, cell, col, true)
 
-
 static func warp_local(host: Node, cell: Vector2i) -> void:
 	if host.player == null:
 		return
@@ -255,7 +228,6 @@ static func warp_local(host: Node, cell: Vector2i) -> void:
 	silence_near(host, cell)
 	host.fog_dirty = true
 	App.toast("The crystal takes you across the floor.")
-
 
 static func warp_floor(n: int) -> void:
 	n = clampi(n, 1, maxi(1, int(App.prog.deepest)))

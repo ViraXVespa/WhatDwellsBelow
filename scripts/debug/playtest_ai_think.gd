@@ -9,12 +9,10 @@ const CLOSE := 2.4
 const START := 24.0
 const ROOM := 11.0
 
-
 static func _drop_lock(pt: Node) -> void:
 	if pt.has_meta("lock_n"):
 		pt.remove_meta("lock_n")
 	pt.set_meta("lock_t", 0.0)
-
 
 static func _mark_pad(pt: Node, n: Node, w: int = 1) -> void:
 	if n == null or not is_instance_valid(n):
@@ -26,7 +24,6 @@ static func _mark_pad(pt: Node, n: Node, w: int = 1) -> void:
 			var k: Vector2i = c + Vector2i(x, y)
 			m[k] = int(m.get(k, 0)) + w
 	pt.set_meta("seen_map", m)
-
 
 static func _is_junk(pt: Node, n: Node) -> bool:
 	if n == null or not is_instance_valid(n):
@@ -44,10 +41,8 @@ static func _is_junk(pt: Node, n: Node) -> bool:
 		return true
 	return false
 
-
 static func _is_use_kind(k: String) -> bool:
 	return k == "shrine" or k == "campfire" or k == "lever" or k == "extract_gate"
-
 
 static func use_prop(pt: Node, p: Node, dest: Node, _reach: float = 1.18) -> void:
 	if dest == null or not is_instance_valid(dest):
@@ -71,7 +66,6 @@ static func use_prop(pt: Node, p: Node, dest: Node, _reach: float = 1.18) -> voi
 		return
 	pt._follow_goal(p, dest)
 
-
 static func _usable_local(pt: Node, p: Node, lim: float) -> Node:
 	var guard: int = 0
 	while guard < 8:
@@ -86,7 +80,6 @@ static func _usable_local(pt: Node, p: Node, lim: float) -> Node:
 		return n
 	return null
 
-
 static func _wants_clerk(pt: Node, n: Node) -> bool:
 	if n == null or not is_instance_valid(n) or Util._banned(pt, n):
 		return false
@@ -99,7 +92,6 @@ static func _wants_clerk(pt: Node, n: Node) -> bool:
 		return int(pt._gather_cargo()) > 0
 	return int(App.gold) > 0 or int(pt._gather_cargo()) > 0 or int(pt._misc_cargo()) > 0
 
-
 static func _done_with_clerk(pt: Node, n: Node) -> void:
 	if n == null or not is_instance_valid(n):
 		return
@@ -107,11 +99,9 @@ static func _done_with_clerk(pt: Node, n: Node) -> void:
 	_mark_pad(pt, n)
 	_drop_lock(pt)
 
-
 static func _stop_gather(p: Node) -> void:
 	if p != null and is_instance_valid(p) and p.has_method("stop_gather"):
 		p.stop_gather()
-
 
 static func _foe(pt: Node, p: Node) -> Node:
 	var seen_e: Node = pt._nearest_visible_threat(p)
@@ -119,10 +109,8 @@ static func _foe(pt: Node, p: Node) -> Node:
 		return seen_e
 	return Goals.nearest_room_threat(pt, p, ROOM)
 
-
 static func wander(pt: Node, p: Node, _delta: float) -> void:
 	Util.wander(pt, p)
-
 
 static func _engage(pt: Node, p: Node, foe: Node, why: String) -> void:
 	_drop_lock(pt)
@@ -131,7 +119,6 @@ static func _engage(pt: Node, p: Node, foe: Node, why: String) -> void:
 		pt._approach_boss(p, foe)
 	else:
 		pt._fight(p, foe)
-
 
 static func think(pt: Node, p: Node, delta: float) -> void:
 	Util.tick_motion(pt, p, delta)

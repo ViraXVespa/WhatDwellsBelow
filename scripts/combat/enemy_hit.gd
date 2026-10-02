@@ -6,7 +6,6 @@ const Threat := preload("res://scripts/combat/threat.gd")
 const HpBarS := preload("res://scripts/combat/hp_bar.gd")
 const FloatS := preload("res://scripts/combat/float_num.gd")
 
-
 static func take_hit(host: CharacterBody3D, raw: float, from_dir: Vector2, crit: bool) -> void:
 	if host.dead:
 		return

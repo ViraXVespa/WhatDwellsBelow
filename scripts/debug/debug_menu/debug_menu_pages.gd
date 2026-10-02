@@ -27,7 +27,6 @@ static func page_playtest(host) -> void:
 	n.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	host.root_box.add_child(n)
 
-
 static func page_anim(host) -> void:
 	host.status.text = "Animation Browser. Press A on Open to launch the viewer. B returns to Values."
 	var hint := Label.new()
@@ -38,11 +37,9 @@ static func page_anim(host) -> void:
 	host.root_box.add_child(hint)
 	host.root_box.add_child(host._btn("Open Animation Browser", func(): open_anim(host)))
 
-
 static func open_anim(_host) -> void:
 	if App.anim_browser and App.anim_browser.has_method("open_browser"):
 		App.anim_browser.open_browser()
-
 
 static func hitch_chrome(host: Node) -> void:
 	var row := HBoxContainer.new()

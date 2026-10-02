@@ -20,14 +20,6 @@ const PATH_X := 16.5
 const PATH_Z := 15.0
 const STALL_SIZE := Vector3(4.6, 2.4, 3.4)
 
-
-static func layout_of(host: Node3D) -> Node3D:
-	var n: Node = host.get_node_or_null("Layout")
-	if n is Node3D:
-		return n as Node3D
-	return LayoutS.on_camp(host)
-
-
 static func generated(host: Node3D) -> Node3D:
 	var n: Node = host.get_node_or_null("Generated")
 	if n is Node3D:
@@ -37,14 +29,12 @@ static func generated(host: Node3D) -> Node3D:
 	host.add_child(node)
 	return node
 
-
 static func clear_generated(host: Node3D) -> Node3D:
 	var node: Node3D = generated(host)
 	for child in node.get_children():
 		node.remove_child(child)
 		child.free()
 	return node
-
 
 static func realize_editor(host: Node3D, layout: Node3D) -> void:
 	host.set_meta("wdb_layout", layout)
@@ -59,10 +49,8 @@ static func realize_editor(host: Node3D, layout: Node3D) -> void:
 static func world(host: Node3D) -> void:
 	EnvKit.apply(host, Color(0.45, 0.58, 0.62), Color(0.95, 0.86, 0.7), 1.15, Vector3(-18.0, 34.0, -42.0), 0.9)
 
-
 static func ground(host: Node3D) -> void:
 	MeshS.ground(host)
-
 
 static func outer_grass(host: Node3D) -> void:
 	var lay: Node3D = _layout_from_build_host(host)
@@ -82,10 +70,8 @@ static func outer_grass(host: Node3D) -> void:
 	MeshS.grass_pad(host, Vector3((x0 + ix0) * 0.5, y, (iz0 + iz1) * 0.5), Vector2(ix0 - x0, iz1 - iz0), tex, fb)
 	MeshS.grass_pad(host, Vector3((ix1 + x1) * 0.5, y, (iz0 + iz1) * 0.5), Vector2(x1 - ix1, iz1 - iz0), tex, fb)
 
-
 static func tile_layer(host: Node3D, tex_path: String, points: Array, fallback: Color) -> void:
 	MeshS.tile_layer(host, tex_path, points, fallback)
-
 
 static func buildings(host: Node3D) -> void:
 	guild(host)
@@ -94,11 +80,9 @@ static func buildings(host: Node3D) -> void:
 	var stall_box: Vector3 = lay.stall_box if lay else STALL_SIZE
 	solid(host, stall_at, stall_box, Color(0.55, 0.35, 0.2), "res://assets/sprites/buildings/stall.png", true)
 
-
 static func wing_pos() -> Vector3:
 	var back: float = HALL_POS.z - HALL_SIZE.z * 0.5
 	return Vector3(HALL_POS.x + HALL_SIZE.x * 0.5 + WING_SIZE.x * 0.5 - 0.12, WING_SIZE.y * 0.5, back + WING_SIZE.z * 0.5)
-
 
 static func guild(host: Node3D) -> void:
 	var lay: Node3D = _layout_from_build_host(host)
@@ -131,10 +115,8 @@ static func guild(host: Node3D) -> void:
 static func guild_roofs(host: Node3D) -> void:
 	MeshS.guild_roofs(host)
 
-
 static func box(host: Node3D, pos: Vector3, box_size: Vector3, col: Color) -> StaticBody3D:
 	return Roof.box(host, pos, box_size, col)
-
 
 static func solid(
 	host: Node3D, pos: Vector3, box_size: Vector3, col: Color, tex: String, tarp: bool = false
@@ -186,7 +168,6 @@ static func face(
 static func roof_mat(dim: Vector2, world_min: Vector3, tile: float = TILE_W, uv_off: Vector2 = Vector2.ZERO) -> Material:
 	return MeshS.roof_mat(dim, world_min, tile, uv_off)
 
-
 static func roof_plane(
 	host: Node3D,
 	local: Vector3,
@@ -206,7 +187,6 @@ static func roof_plane(
 	else:
 		roof.material_override = roof_mat(dim, world_min, tile, uv_off)
 	host.add_child(roof)
-
 
 static func quiet_shadows(host: Node3D) -> void:
 	var stack: Array[Node] = [host]
@@ -273,7 +253,6 @@ static func strip_building_cubes(root: Node) -> int:
 	print("CAMP_MESH stripped_building_cubes=", cut)
 	return cut
 
-
 static func dump_meshes(root: Node) -> void:
 	var stack: Array[Node] = [root]
 	var boxes: int = 0
@@ -307,7 +286,6 @@ static func face_height(tex: String, face_w: float) -> float:
 	var th: float = float(maxi(1, img.get_height()))
 	return maxf(face_w * th / tw, 1.2)
 
-
 static func seat(body: StaticBody3D, box_size: Vector3, tex: String) -> Vector3:
 	var h: float = face_height(tex, box_size.x) * 0.78
 	body.position.y = h * 0.5
@@ -322,7 +300,6 @@ static func _slide(body: StaticBody3D, box_size: Vector3) -> void:
 	block.size = Vector3(maxf(box_size.x - 0.12, 0.4), box_size.y, maxf(box_size.z - 0.12, 0.4))
 	shape.shape = block
 	body.add_child(shape)
-
 
 static func _counter(body: StaticBody3D, box_size: Vector3) -> void:
 	var shape := CollisionShape3D.new()

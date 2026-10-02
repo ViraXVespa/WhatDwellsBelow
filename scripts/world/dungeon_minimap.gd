@@ -4,7 +4,6 @@ extends Object
 
 const Gen := preload("res://scripts/dungeon/gen.gd")
 
-
 static func cell_color(host: Node, x: int, y: int) -> Color:
 	var w: int = host.data.w
 	if host.visited[Gen.idx(x, y, w)] == 0:
@@ -13,14 +12,12 @@ static func cell_color(host: Node, x: int, y: int) -> Color:
 		return Color(0.22, 0.24, 0.28)
 	return Color(0.08, 0.08, 0.1)
 
-
 static func paint_cell(host: Node, x: int, y: int) -> void:
 	if host.map_img == null:
 		return
 	if x < 0 or y < 0 or x >= host.data.w or y >= host.data.h:
 		return
 	host.map_img.set_pixel(x, y, cell_color(host, x, y))
-
 
 static func reveal_around(host: Node, c: Vector2i, rad: int) -> bool:
 	var w: int = host.data.w
@@ -38,7 +35,6 @@ static func reveal_around(host: Node, c: Vector2i, rad: int) -> bool:
 					grew = true
 					paint_cell(host, x, y)
 	return grew
-
 
 static func make_map(host: Node) -> void:
 	host.map_layer = CanvasLayer.new()
@@ -64,14 +60,12 @@ static func make_map(host: Node) -> void:
 	var MapActS: GDScript = load("res://scripts/world/dungeon_map_act.gd") as GDScript
 	MapActS.reset(host)
 
-
 static func _map_input(host: Node, event: InputEvent) -> void:
 	var LookS: GDScript = load("res://scripts/input/look_ctrl.gd") as GDScript
 	LookS.note_event(event)
 	var MapActS: GDScript = load("res://scripts/world/dungeon_map_act.gd") as GDScript
 	if MapActS.handle_mouse(host, event):
 		host.get_viewport().set_input_as_handled()
-
 
 static func redraw_map(host: Node) -> void:
 	if host.map_img == null:
@@ -101,7 +95,6 @@ static func redraw_map(host: Node) -> void:
 		host.set_meta("map_pc", pc)
 		dot(host, pc, Color(1, 1, 1), false)
 	host.map_tex.update(host.map_img)
-
 
 static func dot(host: Node, p: Vector2i, col: Color, need_seen := false) -> void:
 	if p.x < 0 or p.y < 0 or p.x >= host.data.w or p.y >= host.data.h:

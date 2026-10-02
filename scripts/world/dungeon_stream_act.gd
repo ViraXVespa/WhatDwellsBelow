@@ -2,10 +2,8 @@ extends RefCounted
 
 const CrystalNet := preload("res://scripts/world/crystal_net.gd")
 
-
 static func job_anchor(job: Dictionary) -> Vector2i:
 	return Vector2i(job.cell)
-
 
 static func activate_job(host: Node, job: Dictionary) -> void:
 	if str(job.state) != "pending":
@@ -39,7 +37,6 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 	job.live = live
 	job.state = "live" if not live.is_empty() else "cleared"
 
-
 static func sleep_job(host: Node, job: Dictionary) -> void:
 	if str(job.state) != "live":
 		return
@@ -71,7 +68,6 @@ static func sleep_job(host: Node, job: Dictionary) -> void:
 	host.next_group += 1
 	job.state = "pending"
 
-
 static func job_in_combat(host: Node, job: Dictionary) -> bool:
 	if host.player == null:
 		return false
@@ -92,7 +88,6 @@ static func job_in_combat(host: Node, job: Dictionary) -> bool:
 			close = true
 	job.live = kept
 	return close
-
 
 static func _activate_boss(host: Node, job: Dictionary) -> void:
 	var EnemyS: GDScript = load("res://scripts/combat/enemy.gd") as GDScript

@@ -7,7 +7,6 @@ const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const BillSpr := preload("res://scripts/world/billboard_spr.gd")
 const ActorLit := preload("res://scripts/graphics/actor_lit.gd")
 
-
 static func ready(host: CharacterBody3D) -> void:
 	host.add_to_group("enemies")
 	host.collision_layer = 4

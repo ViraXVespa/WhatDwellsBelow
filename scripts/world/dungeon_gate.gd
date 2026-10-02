@@ -3,14 +3,12 @@
 const SpotS := preload("res://scripts/world/interact.gd")
 const Gen := preload("res://scripts/dungeon/gen.gd")
 
-
 static func _wall(host: Node, c: Vector2i) -> bool:
 	var w: int = host.data.w
 	var h: int = host.data.h
 	if c.x < 0 or c.y < 0 or c.x >= w or c.y >= h:
 		return false
 	return host.data.grid[Gen.idx(c.x, c.y, w)] == Gen.WALL
-
 
 static func north_mid(host: Node, r: Dictionary) -> Vector2i:
 	var rx := int(r.x)
@@ -41,7 +39,6 @@ static func north_mid(host: Node, r: Dictionary) -> Vector2i:
 	if best < 0:
 		return Vector2i(-1, -1)
 	return Vector2i(best, wy)
-
 
 static func place(host: Node, r: Dictionary) -> void:
 	var mid: Vector2i = north_mid(host, r)

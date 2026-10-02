@@ -6,12 +6,10 @@ const Review := preload("res://scripts/debug/anim_browser_review.gd")
 const Nav := preload("res://scripts/debug/anim_browser_nav.gd")
 const Play := preload("res://scripts/debug/anim_browser_play.gd")
 
-
 static func pad_list_event(event: InputEvent) -> bool:
 	if event is InputEventMouse:
 		return false
 	return event is InputEventJoypadButton or event is InputEventJoypadMotion
-
 
 static func handle_input(host: CanvasLayer, event: InputEvent) -> void:
 	if not host.open:

@@ -13,7 +13,6 @@ var spr: Sprite3D
 var label: Label3D
 var busy := false
 
-
 func setup(k: String, pos: Vector3) -> void:
 	kind = k
 	position = pos
@@ -31,13 +30,11 @@ func setup(k: String, pos: Vector3) -> void:
 	_label()
 	refresh()
 
-
 func refresh() -> void:
 	prompt = "Gather"
 	if label:
 		label.text = "ORE" if kind == "mine" else "WOOD"
 		label.modulate = Color(0.75, 0.9, 1.0) if kind == "mine" else Color(0.7, 0.9, 0.55)
-
 
 func interact(who: Node) -> String:
 	if hits <= 0:
@@ -53,7 +50,6 @@ func interact(who: Node) -> String:
 		who.start_gather(self)
 		return "Gathering…  (move to stop)"
 	return "Gather"
-
 
 func strike() -> Dictionary:
 	if hits <= 0:
@@ -115,10 +111,8 @@ func strike() -> Dictionary:
 			label.text = ("%s  %d" % [label.text, hits])
 	return {"ok": ok, "done": done, "ore": ore, "wood": wood, "gold": gold}
 
-
 func _sync_interval() -> void:
 	interval = GatherRules.interval_for(kind)
-
 
 func _flash() -> void:
 	if spr == null:
@@ -126,7 +120,6 @@ func _flash() -> void:
 	spr.modulate = Color(1.4, 1.4, 1.4)
 	var tw := create_tween()
 	tw.tween_property(spr, "modulate", Color.WHITE, 0.12)
-
 
 func _break() -> void:
 	remove_from_group("interact")
@@ -136,7 +129,6 @@ func _break() -> void:
 		tw.tween_property(spr, "modulate:a", 0.0, 0.18)
 	tw.finished.connect(queue_free)
 
-
 func _visual() -> void:
 	var path := "res://assets/sprites/props/tree.png" if kind == "wood" else "res://assets/sprites/props/ore.png"
 	var wh: float = 1.55 if kind == "wood" else 1.05
@@ -144,7 +136,6 @@ func _visual() -> void:
 	spr = BillSpr.make(path, wh, yy)
 	add_child(spr)
 	Depth.apply(spr, position)
-
 
 func _label() -> void:
 	label = Label3D.new()

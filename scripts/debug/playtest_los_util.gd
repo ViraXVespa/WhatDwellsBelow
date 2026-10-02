@@ -2,13 +2,11 @@
 
 const Combat := preload("res://scripts/combat/combat.gd")
 
-
 static func world3(pt: Node) -> World3D:
 	var tree: SceneTree = pt.get_tree()
 	if tree == null or tree.root == null:
 		return null
 	return tree.root.get_viewport().world_3d
-
 
 static func grid_dims(pt: Node) -> Dictionary:
 	var dung: Node = pt._dungeon()
@@ -16,7 +14,6 @@ static func grid_dims(pt: Node) -> Dictionary:
 		return {}
 	var data: Dictionary = dung.data
 	return {"grid": data.grid, "w": int(data.w), "h": int(data.h)}
-
 
 static func door_cells(pt: Node, door: Node) -> Array:
 	var out: Array = []
@@ -29,7 +26,6 @@ static func door_cells(pt: Node, door: Node) -> Array:
 		return out
 	out.append(pt._cell_of_node(door))
 	return out
-
 
 static func obstacle_cell(pt: Node, c: Vector2i) -> bool:
 	var tree: SceneTree = pt.get_tree()
@@ -44,7 +40,6 @@ static func obstacle_cell(pt: Node, c: Vector2i) -> bool:
 		if b and is_instance_valid(b) and pt._cell_of_node(b) == c:
 			return true
 	return false
-
 
 static func prop_cell(pt: Node, c: Vector2i) -> bool:
 	var tree: SceneTree = pt.get_tree()
@@ -61,7 +56,6 @@ static func prop_cell(pt: Node, c: Vector2i) -> bool:
 		if n2 and is_instance_valid(n2) and pt._cell_of_node(n2) == c:
 			return true
 	return false
-
 
 static func closed_doors(pt: Node) -> Array:
 	var out: Array = []

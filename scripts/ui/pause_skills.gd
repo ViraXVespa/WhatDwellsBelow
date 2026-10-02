@@ -5,10 +5,8 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const TipPlace := preload("res://scripts/ui/tip_place.gd")
 const SkillRow := preload("res://scripts/ui/skill_row_view.gd")
 
-
 static func skill_title(ui: CanvasLayer, id: String) -> String:
 	return str(ui.SKILL_NAMES.get(id, id))
-
 
 static func perm_line(ui: CanvasLayer, id: String, perm: float) -> String:
 	return "%s Lv %d | Next Level: %dXP | Total XP: %dXP" % [
@@ -17,7 +15,6 @@ static func perm_line(ui: CanvasLayer, id: String, perm: float) -> String:
 		int(round(CombatP.xp_to_next(App.prog, perm))),
 		int(round(perm)),
 	]
-
 
 static func run_line(ui: CanvasLayer, id: String, perm: float, runx: float) -> String:
 	var live: float = perm + runx
@@ -28,14 +25,8 @@ static func run_line(ui: CanvasLayer, id: String, perm: float, runx: float) -> S
 		int(round(CombatP.xp_to_next(App.prog, live))),
 	]
 
-
 static func skill_lab(text: String, size: int = 16, col: Color = Color(0.9, 0.84, 0.7)) -> Label:
 	return SkillRow.skill_lab(text, size, col)
-
-
-static func xp_bar(ratio: float, fill_col: Color) -> ColorRect:
-	return SkillRow.single_fill(ratio, fill_col)
-
 
 static func skill_block(ui: CanvasLayer, id: String, kind: String, text: String, ratio: float, fill_col: Color) -> PanelContainer:
 	var shell: PanelContainer = SkillRow.row_single(text, ratio, fill_col)
@@ -47,14 +38,12 @@ static func skill_block(ui: CanvasLayer, id: String, kind: String, text: String,
 	shell.mouse_exited.connect(ui._on_skill_blur.bind(shell))
 	return shell
 
-
 static func tip_lv(_ui: CanvasLayer, id: String, kind: String) -> int:
 	var perm: float = float(App.prog.skills_perm.get(id, 0.0))
 	var runx: float = float(App.prog.skills_run.get(id, 0.0))
 	if kind == "run":
 		return CombatP.level_from_xp(App.prog, perm + runx)
 	return CombatP.level_from_xp(App.prog, perm)
-
 
 static func _footer_top(ui: CanvasLayer) -> float:
 	var view: Rect2 = ui.get_viewport().get_visible_rect()
@@ -65,7 +54,6 @@ static func _footer_top(ui: CanvasLayer) -> float:
 		if br.size.y > 1.0:
 			cut = minf(cut, br.position.y)
 	return cut
-
 
 static func paint_tip(ui: CanvasLayer) -> void:
 	if ui.tip_id == "" or ui.tip_from == null or not is_instance_valid(ui.tip_from):
@@ -83,7 +71,6 @@ static func paint_tip(ui: CanvasLayer) -> void:
 	TipPlace.place_flip_below(ui.tip_host, r, cut, w)
 	ui.tip_host.visible = true
 	ui.tip_host.z_index = 90
-
 
 static func build(ui: CanvasLayer) -> void:
 	ui.box.add_child(ui._cap("Combat Level %d" % App.prog.combat_lv(), 24, Color(0.95, 0.8, 0.45)))

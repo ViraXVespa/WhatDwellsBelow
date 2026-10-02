@@ -3,10 +3,8 @@
 const REACH := 36
 const ASTAR_GUARD := 720
 
-
 static func _manh(a: Vector2i, b: Vector2i) -> int:
 	return absi(a.x - b.x) + absi(a.y - b.y)
-
 
 static func _toward(pt: Node, start: Vector2i, goal: Vector2i) -> Vector2i:
 	var md: int = _manh(start, goal)
@@ -37,7 +35,6 @@ static func _toward(pt: Node, start: Vector2i, goal: Vector2i) -> Vector2i:
 			continue
 		break
 	return cur
-
 
 static func astar(pt: Node, p: Node, dest: Node) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []

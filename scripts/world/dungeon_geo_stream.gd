@@ -14,7 +14,6 @@ const PER_FRAME := 3
 
 static var _floor_mesh: PlaneMesh
 
-
 static func setup(host: Node) -> void:
 	host.geo_jobs.clear()
 	if host.has_meta("wdb_ribbon_n"):
@@ -34,7 +33,6 @@ static func ensure_meshes() -> void:
 		_floor_mesh = PlaneMesh.new()
 		_floor_mesh.size = Vector2(T.TILE, T.TILE)
 
-
 static func chunk_origin(c: Vector2i) -> Vector2i:
 	var x := c.x
 	var y := c.y
@@ -44,14 +42,11 @@ static func chunk_origin(c: Vector2i) -> Vector2i:
 		y -= CHUNK - 1
 	return Vector2i(int(x / float(CHUNK)) * CHUNK, int(y / float(CHUNK)) * CHUNK)
 
-
 static func chunk_center(origin: Vector2i, w: int, h: int) -> Vector2i:
 	return Vector2i(origin.x + int(mini(CHUNK, w - origin.x) / 2.0), origin.y + int(mini(CHUNK, h - origin.y) / 2.0))
 
-
 static func chunk_ring(a: Vector2i, b: Vector2i) -> int:
 	return maxi(int(absi(a.x - b.x) / float(CHUNK)), int(absi(a.y - b.y) / float(CHUNK)))
-
 
 static func job_at(host: Node, origin: Vector2i) -> Dictionary:
 	for job in host.geo_jobs:
@@ -67,7 +62,6 @@ static func job_at(host: Node, origin: Vector2i) -> Dictionary:
 	}
 	host.geo_jobs.append(job)
 	return job
-
 
 static func prime_visible(host: Node) -> void:
 	if host.player == null:
@@ -157,7 +151,6 @@ static func tick(host: Node, delta: float) -> void:
 		if str(job.state) == "live" and chunk_ring(Vector2i(job.origin), origin) > RING_OUT:
 			sleep_job(host, job)
 
-
 static func activate_job(host: Node, job: Dictionary) -> void:
 	if str(job.state) != "pending":
 		return
@@ -216,8 +209,6 @@ static func activate_job(host: Node, job: Dictionary) -> void:
 	job.node = root
 	job.state = "live"
 
-
-
 static func _ensure_wall_mesh(host: Node, runs: Array = [], fine_m: float = 1.0) -> MeshInstance3D:
 	if runs.is_empty():
 		return null
@@ -253,7 +244,6 @@ static func _mask(host: Node) -> Dictionary:
 		}
 	return {"solid": host.data.grid, "sw": w, "sh": h, "n": 1, "fine": 1.0}
 
-
 static func _emit_floors(rects: Array[Rect2i], fine_m: float, mat: Material) -> MultiMeshInstance3D:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
@@ -272,7 +262,6 @@ static func _emit_floors(rects: Array[Rect2i], fine_m: float, mat: Material) -> 
 		inst.material_override = mat
 	return inst
 
-
 static func _outline_spans(host: Node) -> Array:
 	if host.data == null or not host.data.has("outline_spans"):
 		return []
@@ -281,7 +270,6 @@ static func _outline_spans(host: Node) -> Array:
 		return raw
 	return []
 
-
 static func _outline_loops(host: Node) -> Array:
 	if host.data == null or not host.data.has("outline_loops"):
 		return []
@@ -289,7 +277,6 @@ static func _outline_loops(host: Node) -> Array:
 	if raw is Array:
 		return raw
 	return []
-
 
 static func _wall_runs(host: Node, solid: PackedByteArray, sw: int, sh: int, wall_cells: Array[Vector2i], ox: int, oy: int, x1: int, y1: int, n: int) -> Array[Dictionary]:
 	var raw: Array = _outline_spans(host)
@@ -312,18 +299,6 @@ static func _wall_runs(host: Node, solid: PackedByteArray, sw: int, sh: int, wal
 			continue
 		hit.append(run)
 	return _spans_on_chunk(WallMesh.prepare(hit), fx0, fy0, fx1, fy1)
-static func _prepared_spans(host: Node) -> Array:
-	var raw: Array = _outline_spans(host)
-	var mark: int = raw.size()
-	if host.has_meta("wdb_ribbon_n") and int(host.get_meta("wdb_ribbon_n")) == mark and host.has_meta("wdb_ribbon"):
-		var cached: Variant = host.get_meta("wdb_ribbon")
-		if cached is Array:
-			return cached
-	var prepared: Array = WallMesh.prepare(raw)
-	host.set_meta("wdb_ribbon", prepared)
-	host.set_meta("wdb_ribbon_n", mark)
-	return prepared
-
 
 static func _spans_on_chunk(spans: Array, fx0: int, fy0: int, fx1: int, fy1: int) -> Array[Dictionary]:
 	var kept: Array[Dictionary] = []
@@ -361,7 +336,6 @@ static func _spans_on_chunk(spans: Array, fx0: int, fy0: int, fx1: int, fy1: int
 		})
 	return kept
 
-
 static func _clip_span(o: Vector2, d: Vector2, x0: float, y0: float, x1: float, y1: float) -> Dictionary:
 	var ts: Array = [0.0, 1.0]
 	if not _clip_axis(o.x, d.x, x0, x1, ts):
@@ -378,7 +352,6 @@ static func _clip_span(o: Vector2, d: Vector2, x0: float, y0: float, x1: float, 
 		"t0": t0,
 		"t1": t1,
 	}
-
 
 static func _clip_axis(p: float, dp: float, min_v: float, max_v: float, ts: Array) -> bool:
 	var t0: float = float(ts[0])
@@ -403,7 +376,6 @@ static func _clip_axis(p: float, dp: float, min_v: float, max_v: float, ts: Arra
 	ts[1] = t1
 	return true
 
-
 static func _faces_on_chunk(
 	grid: PackedByteArray,
 	w: int,
@@ -421,7 +393,6 @@ static func _faces_on_chunk(
 			kept.append(run)
 	return kept
 
-
 static func _run_looks_in(run: Dictionary, ox: int, oy: int, x1: int, y1: int) -> bool:
 	var origin: Vector2i = run["origin"] as Vector2i
 	var span_cells: Vector2i = run["size"] as Vector2i
@@ -435,13 +406,11 @@ static func _run_looks_in(run: Dictionary, ox: int, oy: int, x1: int, y1: int) -
 			return true
 	return false
 
-
 static func _first_mm(node: Node) -> MultiMeshInstance3D:
 	for child in node.get_children():
 		if child is MultiMeshInstance3D:
 			return child as MultiMeshInstance3D
 	return null
-
 
 static func _emit_floor_lip(spans: Array, x0: int, y0: int, x1: int, y1: int, fine_m: float, mat: Material) -> Node3D:
 	var holder: Node3D = Node3D.new()
@@ -471,71 +440,6 @@ static func _emit_floor_lip(spans: Array, x0: int, y0: int, x1: int, y1: int, fi
 			inst.material_override = mat
 		holder.add_child(inst)
 	return holder
-
-
-static func _span_loops(spans: Array) -> Array:
-	var segs: Array = []
-	for item in spans:
-		if not (item is Dictionary):
-			continue
-		var run: Dictionary = item
-		if not run.has("delta"):
-			continue
-		var o: Vector2 = run["origin"] as Vector2
-		var d: Vector2 = run["delta"] as Vector2
-		if d.length_squared() < 0.04:
-			continue
-		segs.append([o, o + d])
-	var loops: Array = []
-	var used: Array[bool] = []
-	used.resize(segs.size())
-	used.fill(false)
-	for si in segs.size():
-		if used[si]:
-			continue
-		var start: Vector2 = segs[si][0]
-		var cur: Vector2 = segs[si][1]
-		var poly: PackedVector2Array = PackedVector2Array()
-		poly.append(start)
-		poly.append(cur)
-		used[si] = true
-		var guard: int = 0
-		while guard < segs.size() + 2:
-			guard += 1
-			if cur.distance_to(start) <= 0.25 and poly.size() >= 3:
-				break
-			var found: int = -1
-			var flip: bool = false
-			var best: float = 0.25
-			for j in segs.size():
-				if used[j]:
-					continue
-				var a: Vector2 = segs[j][0]
-				var b: Vector2 = segs[j][1]
-				var da: float = cur.distance_to(a)
-				var db: float = cur.distance_to(b)
-				if da <= best:
-					best = da
-					found = j
-					flip = false
-				if db <= best:
-					best = db
-					found = j
-					flip = true
-			if found < 0:
-				break
-			used[found] = true
-			if flip:
-				cur = segs[found][0]
-			else:
-				cur = segs[found][1]
-			poly.append(cur)
-		if poly.size() >= 3:
-			if poly[poly.size() - 1].distance_to(poly[0]) <= 0.25:
-				poly.remove_at(poly.size() - 1)
-			loops.append(poly)
-	return loops
-
 
 static func _loop_mesh(pieces: Array, fine_m: float) -> ArrayMesh:
 	var verts: PackedVector3Array = PackedVector3Array()
@@ -574,179 +478,12 @@ static func _loop_mesh(pieces: Array, fine_m: float) -> ArrayMesh:
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh
 
-
-static func _floor_splint(run: Dictionary) -> PackedVector2Array:
-	var o: Vector2 = run["origin"] as Vector2
-	var d: Vector2 = run["delta"] as Vector2
-	if d.length_squared() < 0.04:
-		return PackedVector2Array()
-	var nrm: Vector2 = run["normal"] as Vector2
-	if nrm.length_squared() < 0.0001:
-		nrm = Vector2(-d.y, d.x)
-	if nrm.length_squared() < 0.0001:
-		return PackedVector2Array()
-	nrm = nrm.normalized()
-	var w: float = 2.0
-	var poly: PackedVector2Array = PackedVector2Array()
-	poly.append(o)
-	poly.append(o + d)
-	poly.append(o + d + nrm * w)
-	poly.append(o + nrm * w)
-	return poly
-
-
-static func _mark_span(cut: Dictionary, run: Dictionary) -> void:
-	var o: Vector2 = run["origin"]
-	var d: Vector2 = run["delta"]
-	var span_l: float = d.length()
-	if span_l < 0.2:
-		return
-	var steps: int = maxi(1, int(ceil(span_l * 2.0)))
-	for s in range(steps + 1):
-		var p: Vector2 = o + d * (float(s) / float(steps))
-		var fx: int = int(floor(p.x))
-		var fy: int = int(floor(p.y))
-		for oy in range(-1, 2):
-			for ox in range(-1, 2):
-				cut[Vector2i(fx + ox, fy + oy)] = true
-
-
-static func _square(fx: int, fy: int) -> PackedVector2Array:
-	var poly: PackedVector2Array = PackedVector2Array()
-	var x0: float = float(fx)
-	var y0: float = float(fy)
-	poly.append(Vector2(x0, y0))
-	poly.append(Vector2(x0 + 1.0, y0))
-	poly.append(Vector2(x0 + 1.0, y0 + 1.0))
-	poly.append(Vector2(x0, y0 + 1.0))
-	return poly
-
-
 static func _seg_dist(p: Vector2, o: Vector2, d: Vector2) -> float:
 	var l2: float = d.length_squared()
 	if l2 < 0.0001:
 		return p.distance_to(o)
 	var t: float = clampf((p - o).dot(d) / l2, 0.0, 1.0)
 	return p.distance_to(o + d * t)
-
-
-static func _near_span(run: Dictionary, fx: int, fy: int) -> bool:
-	var center: Vector2 = Vector2(float(fx) + 0.5, float(fy) + 0.5)
-	var origin: Vector2 = run["origin"] as Vector2
-	var delta: Vector2 = run["delta"] as Vector2
-	return _seg_dist(center, origin, delta) <= 1.8
-
-
-static func _clip_cell(fx: int, fy: int, spans: Array) -> PackedVector2Array:
-	var poly: PackedVector2Array = _square(fx, fy)
-	for item in spans:
-		if not (item is Dictionary):
-			continue
-		var run: Dictionary = item
-		if not run.has("delta"):
-			continue
-		if not _near_span(run, fx, fy):
-			continue
-		var d: Vector2 = run["delta"] as Vector2
-		var nrm: Vector2 = run["normal"] as Vector2
-		if nrm.length_squared() < 0.0001:
-			nrm = Vector2(-d.y, d.x)
-		if nrm.length_squared() > 0.0001:
-			nrm = nrm.normalized()
-		var origin: Vector2 = run["origin"] as Vector2
-		poly = _clip_half(poly, origin, nrm)
-		if poly.size() < 3:
-			return poly
-	return poly
-
-
-static func _clip_half(poly: PackedVector2Array, origin: Vector2, inward: Vector2) -> PackedVector2Array:
-	var count: int = poly.size()
-	var out: PackedVector2Array = PackedVector2Array()
-	if count < 3:
-		return out
-	var prev: Vector2 = poly[count - 1]
-	var prev_in: bool = (prev - origin).dot(inward) >= -0.02
-	for i in count:
-		var cur: Vector2 = poly[i]
-		var cur_in: bool = (cur - origin).dot(inward) >= -0.02
-		if cur_in:
-			if not prev_in:
-				out.append(_edge_hit(prev, cur, origin, inward))
-			out.append(cur)
-		elif prev_in:
-			out.append(_edge_hit(prev, cur, origin, inward))
-		prev = cur
-		prev_in = cur_in
-	return out
-
-
-static func _edge_hit(a: Vector2, b: Vector2, origin: Vector2, inward: Vector2) -> Vector2:
-	var da: float = (a - origin).dot(inward)
-	var db: float = (b - origin).dot(inward)
-	var den: float = da - db
-	var t: float = 0.0
-	if absf(den) > 0.00001:
-		t = da / den
-	return a + (b - a) * clampf(t, 0.0, 1.0)
-
-
-static func _still_square(poly: PackedVector2Array, fx: int, fy: int) -> bool:
-	if poly.size() != 4:
-		return false
-	var x0: float = float(fx)
-	var y0: float = float(fy)
-	var corners: Array[Vector2] = [
-		Vector2(x0, y0),
-		Vector2(x0 + 1.0, y0),
-		Vector2(x0 + 1.0, y0 + 1.0),
-		Vector2(x0, y0 + 1.0),
-	]
-	var hits: int = 0
-	for corner in corners:
-		var found: bool = false
-		for i in poly.size():
-			if poly[i].distance_squared_to(corner) <= 0.004:
-				found = true
-				break
-		if found:
-			hits += 1
-	return hits == 4
-
-
-static func _lip_mesh(pieces: Array, fine_m: float) -> ArrayMesh:
-	var verts: PackedVector3Array = PackedVector3Array()
-	var norms: PackedVector3Array = PackedVector3Array()
-	var uvs: PackedVector2Array = PackedVector2Array()
-	var indices: PackedInt32Array = PackedInt32Array()
-	for piece in pieces:
-		var poly: PackedVector2Array = piece as PackedVector2Array
-		if poly.size() < 3:
-			continue
-		var base: int = verts.size()
-		for i in poly.size():
-			var p: Vector2 = poly[i]
-			var x: float = p.x * fine_m
-			var z: float = p.y * fine_m
-			verts.append(Vector3(x, T.FLOOR_Y, z))
-			norms.append(Vector3.UP)
-			uvs.append(Vector2(x, z))
-		for i in range(1, poly.size() - 1):
-			indices.append(base)
-			indices.append(base + i)
-			indices.append(base + i + 1)
-	var mesh: ArrayMesh = ArrayMesh.new()
-	if verts.is_empty():
-		return mesh
-	var arrays: Array = []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = verts
-	arrays[Mesh.ARRAY_NORMAL] = norms
-	arrays[Mesh.ARRAY_TEX_UV] = uvs
-	arrays[Mesh.ARRAY_INDEX] = indices
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	return mesh
-
 
 static func _add_ribbon_boxes(root: Node3D, spans: Array, fine_m: float) -> void:
 	if spans.is_empty():
@@ -788,7 +525,6 @@ static func _add_ribbon_boxes(root: Node3D, spans: Array, fine_m: float) -> void
 		cs.transform = Transform3D(basis, Vector3(mid.x * fine_m, T.WALL_H * 0.5, mid.y * fine_m))
 		body.add_child(cs)
 
-
 static func add_collision(root: Node3D, walls: Array[Vector2i], fine_m: float) -> void:
 	if walls.is_empty():
 		return
@@ -806,7 +542,6 @@ static func add_collision(root: Node3D, walls: Array[Vector2i], fine_m: float) -
 		cs.shape = box
 		cs.position = Vector3((float(r.position.x) + float(r.size.x) * 0.5) * fine_m, T.WALL_H * 0.5, (float(r.position.y) + float(r.size.y) * 0.5) * fine_m)
 		body.add_child(cs)
-
 
 static func sleep_job(host: Node, job: Dictionary) -> void:
 	if str(job.state) != "live":

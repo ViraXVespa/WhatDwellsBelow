@@ -7,7 +7,6 @@ const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const Rebuild := preload("res://scripts/ui/recap_rebuild.gd")
 
-
 static func play(host: CanvasLayer, cond: String) -> void:
 	host.open = true
 	host.visible = true
@@ -147,7 +146,6 @@ static func finish(host: CanvasLayer) -> void:
 static func mark_starting(host: CanvasLayer) -> void:
 	if host.head_right:
 		host.head_right.text = "Starting XP"
-
 
 static func handle_unhandled(host: CanvasLayer, event: InputEvent) -> void:
 	if not host.open:

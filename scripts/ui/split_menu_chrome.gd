@@ -9,7 +9,6 @@ const RULE_ON := Color(0.95, 0.78, 0.35, 1)
 const RULE_OFF := Color(0.35, 0.28, 0.18, 1)
 const GOLD := Color(1, 0.92, 0.45, 1)
 
-
 static func setup_overlay(host: Node, title_text: String, hint_text: String) -> void:
 	host.layer = 62
 	host.visible = false
@@ -39,7 +38,6 @@ static func setup_overlay(host: Node, title_text: String, hint_text: String) -> 
 	host.status.position = Vector2(192, 920)
 	host.status.size = Vector2(1520, 40)
 	host.add_child(host.status)
-
 
 static func setup_embed(host: Node, parent: Control) -> void:
 	host.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -98,7 +96,6 @@ static func setup_embed(host: Node, parent: Control) -> void:
 	host.info_btns = []
 	host.back_btn = null
 
-
 static func _anchor(n: Control, al: float, ar: float, at: float, ab: float, ol: float, oright: float, ot: float, ob: float) -> void:
 	n.anchor_left = al
 	n.anchor_right = ar
@@ -108,7 +105,6 @@ static func _anchor(n: Control, al: float, ar: float, at: float, ab: float, ol: 
 	n.offset_right = oright
 	n.offset_top = ot
 	n.offset_bottom = ob
-
 
 static func _mount_columns(host: Node, parent: Node, list_pos: Vector2, list_sz: Vector2, info_pos: Vector2, info_sz: Vector2, list_rule_pos: Vector2, info_rule_pos: Vector2) -> void:
 	host._list_rule = ColorRect.new()

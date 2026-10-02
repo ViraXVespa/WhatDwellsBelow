@@ -10,22 +10,18 @@ const RULE_ON := Color(0.95, 0.78, 0.35, 1)
 const RULE_OFF := Color(0.35, 0.28, 0.18, 1)
 const GOLD := Color(1, 0.92, 0.45, 1)
 
-
 static func _live(host: Node) -> bool:
 	return host != null and is_instance_valid(host)
-
 
 static func setup_overlay(host: Node, title_text: String, hint_text: String) -> void:
 	if not _live(host):
 		return
 	Chrome.setup_overlay(host, title_text, hint_text)
 
-
 static func setup_embed(host: Node, parent: Control) -> void:
 	if not _live(host):
 		return
 	Chrome.setup_embed(host, parent)
-
 
 static func _col_scroll(host: Node, key: String) -> ScrollContainer:
 	if not _live(host):
@@ -35,7 +31,6 @@ static func _col_scroll(host: Node, key: String) -> ScrollContainer:
 		if n is ScrollContainer:
 			return n as ScrollContainer
 	return null
-
 
 static func tune_scroll(sc: ScrollContainer) -> void:
 	if sc == null or not is_instance_valid(sc):
@@ -47,13 +42,11 @@ static func tune_scroll(sc: ScrollContainer) -> void:
 		need = c.get_combined_minimum_size().y > sc.size.y + 2.0
 	sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS if need else ScrollContainer.SCROLL_MODE_SHOW_NEVER
 
-
 static func tune_host(host: Node) -> void:
 	if not _live(host):
 		return
 	tune_scroll(_col_scroll(host, "_list_scroll"))
 	tune_scroll(_col_scroll(host, "_info_scroll"))
-
 
 static func rebuild_list(host: Node) -> void:
 	if not _live(host) or host.list_box == null:
@@ -91,11 +84,6 @@ static func rebuild_list(host: Node) -> void:
 				tune_host(host)
 		, CONNECT_ONE_SHOT)
 
-
-static func rebuild_page(host: Node) -> void:
-	clear_page(host)
-
-
 static func clear_page(host: Node) -> void:
 	if not _live(host) or host.info_box == null:
 		return
@@ -109,13 +97,11 @@ static func clear_page(host: Node) -> void:
 				tune_host(host)
 		, CONNECT_ONE_SHOT)
 
-
 static func add_page_btn(host: Node, b: Button) -> void:
 	if not _live(host) or host.info_box == null:
 		return
 	host.info_box.add_child(b)
 	host.info_btns.append(b)
-
 
 static func paint_list(host: Node) -> void:
 	if not _live(host):
@@ -134,7 +120,6 @@ static func paint_list(host: Node) -> void:
 	else:
 		place_chevron(host)
 
-
 static func place_chevron(host: Node) -> void:
 	if not _live(host) or host._chevron == null or host._list_root == null:
 		return
@@ -144,7 +129,6 @@ static func place_chevron(host: Node) -> void:
 		var b: Button = host.list_btns[selected]
 		y = host._list_root.position.y + b.position.y + maxf(b.size.y, 44.0) * 0.5 - 16.0
 	host._chevron.position.y = y
-
 
 static func apply_col(host: Node) -> void:
 	if not _live(host):
@@ -168,14 +152,12 @@ static func apply_col(host: Node) -> void:
 	place_chevron(host)
 	tune_host(host)
 
-
 static func _focusable(n: Variant) -> bool:
 	if n == null or not is_instance_valid(n) or not (n is Control):
 		return false
 	if n is BaseButton and (n as BaseButton).disabled:
 		return false
 	return true
-
 
 static func set_col_focus(host: Node) -> void:
 	if not _live(host):
@@ -194,7 +176,6 @@ static func set_col_focus(host: Node) -> void:
 			continue
 		(b as Control).focus_mode = Control.FOCUS_ALL if detail_on else Control.FOCUS_NONE
 
-
 static func focus_col(host: Node) -> void:
 	if not _live(host) or not bool(host.get("open")):
 		return
@@ -211,7 +192,6 @@ static func focus_col(host: Node) -> void:
 			c.grab_focus()
 	place_chevron(host)
 
-
 static func first_enabled_info(host: Node) -> Control:
 	if not _live(host):
 		return null
@@ -220,7 +200,6 @@ static func first_enabled_info(host: Node) -> Control:
 			continue
 		return b as Control
 	return null
-
 
 static func wire_vert(btns: Array) -> void:
 	var live: Array = []
@@ -240,9 +219,6 @@ static func wire_vert(btns: Array) -> void:
 		c.focus_previous = prev.get_path()
 		c.focus_neighbor_left = c.get_path()
 		c.focus_neighbor_right = c.get_path()
-
-
-
 
 static func wire_horiz(btns: Array) -> void:
 	var live: Array = []

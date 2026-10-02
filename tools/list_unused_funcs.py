@@ -155,6 +155,25 @@ def span_start(lines: list[str], func_at: int) -> int:
     return start
 
 
+def collapse_blanks(lines: list[str]) -> str:
+    out: list[str] = []
+    blank = 0
+    for line in lines:
+        if line.strip() == "":
+            blank += 1
+            if blank == 1:
+                out.append("")
+            continue
+        blank = 0
+        out.append(line)
+    while out and out[0] == "":
+        out.pop(0)
+    text = "\n".join(out)
+    if text and not text.endswith("\n"):
+        text += "\n"
+    return text
+
+
 def apply_unused(root: Path, unused: list[tuple[str, int, str, int]]) -> int:
     by_file: dict[str, list[int]] = defaultdict(list)
     for rel, lineno, _name, _nbytes in unused:
@@ -175,10 +194,8 @@ def apply_unused(root: Path, unused: list[tuple[str, int, str, int]]) -> int:
             end = span_end(lines, idx)
             del lines[start:end]
             deleted += 1
-        text = "\n".join(lines)
-        if text and not text.endswith("\n"):
-            text += "\n"
-        path.write_text(text, encoding="utf-8", newline="\n")
+        text = collapse_blanks(lines)
+        path.write_text(text, encoding="utf-8", newline=chr(10))
         if not FUNC_RE.search(text):
             res = "res://" + rel
             held = False

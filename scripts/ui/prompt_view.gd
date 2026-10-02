@@ -10,7 +10,6 @@ const BAR_W := 620.0
 const BAR_H := 40.0
 const BAR_INSET := Vector2(28.0, 20.0)
 
-
 static func fill(host: Control, parts: Array, font_size: int = 16, color: Color = ThemeS.PROMPT_GOLD) -> void:
 	if host == null:
 		return
@@ -21,7 +20,6 @@ static func fill(host: Control, parts: Array, font_size: int = 16, color: Color 
 	host.set_meta("prompt_color", color)
 	_paint(host, parts, font_size, color)
 
-
 static func footer(ui: CanvasLayer, extra: Array = [], font_size: int = 16, color: Color = ThemeS.PROMPT_GOLD) -> Control:
 	var bar := ensure_bar(ui)
 	place_bar(ui, bar)
@@ -30,7 +28,6 @@ static func footer(ui: CanvasLayer, extra: Array = [], font_size: int = 16, colo
 	bar.set_meta("prompt_color", color)
 	fill(bar, merge_parts(extra), font_size, color)
 	return bar
-
 
 static func pulse() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
@@ -52,7 +49,6 @@ static func pulse() -> void:
 		if host is CanvasLayer:
 			place_bar(host as CanvasLayer, n as Control)
 
-
 static func ensure_bar(ui: CanvasLayer) -> Control:
 	var bar: Control = ui.get_node_or_null(BAR_NAME)
 	if bar == null:
@@ -65,7 +61,6 @@ static func ensure_bar(ui: CanvasLayer) -> Control:
 	if ui.get("gear_hint") != null or "gear_hint" in ui:
 		ui.gear_hint = bar
 	return bar
-
 
 static func place_bar(ui: CanvasLayer, bar: Control = null) -> void:
 	if bar == null:
@@ -88,7 +83,6 @@ static func place_bar(ui: CanvasLayer, bar: Control = null) -> void:
 	bar.size = Vector2(BAR_W, BAR_H)
 	bar.custom_minimum_size = Vector2(BAR_W, BAR_H)
 
-
 static func _menu_panel(ui: CanvasLayer) -> ColorRect:
 	var best: ColorRect = null
 	var best_a := 0.0
@@ -105,7 +99,6 @@ static func _menu_panel(ui: CanvasLayer) -> ColorRect:
 			best = r
 			best_a = a
 	return best
-
 
 static func merge_parts(extra: Array) -> Array:
 	var out: Array = []
@@ -131,30 +124,16 @@ static func merge_parts(extra: Array) -> Array:
 		out.append({"action": "ui_cancel", "verb": "Back"})
 	return out
 
-
 static func _cap_verb(verb_text: String) -> String:
 	if verb_text == "":
 		return ""
 	return verb_text.substr(0, 1).to_upper() + verb_text.substr(1)
 
-
 static func hint_line(host: Control, action: String, verb_text: String, font_size: int = 16, color: Color = ThemeS.PROMPT_GOLD) -> void:
 	fill(host, [{"action": action, "verb": verb_text}], font_size, color)
 
-
 static func verb(host: Control, action: String, verb_text: String, font_size: int = 16, color: Color = ThemeS.PROMPT_GOLD) -> void:
 	hint_line(host, action, verb_text, font_size, color)
-
-
-static func bind_icon(host: Control, action: String, font_size: int = 16) -> void:
-	fill(host, [{"action": action}], font_size)
-
-
-static func apply_label(lab: Label, action: String, verb_text: String = "") -> void:
-	if lab == null:
-		return
-	lab.text = Prompts.verb_line(action, _cap_verb(verb_text))
-
 
 static func _row_action(row: Dictionary) -> String:
 	if bool(row.get("page_prev", false)) or str(row.get("kind", "")) == "page_prev":
@@ -162,7 +141,6 @@ static func _row_action(row: Dictionary) -> String:
 	if bool(row.get("page_next", false)) or str(row.get("kind", "")) == "page_next":
 		return Prompts.page_next()
 	return str(row.get("action", ""))
-
 
 static func _paint(host: Control, parts: Array, font_size: int, color: Color) -> void:
 	WipeChildren.wipe(host)
@@ -189,7 +167,6 @@ static func _paint(host: Control, parts: Array, font_size: int, color: Color) ->
 			gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			host.add_child(gap)
 
-
 static func _glyph(tex: Texture2D, font_size: int) -> TextureRect:
 	var r := TextureRect.new()
 	var h := float(maxi(font_size + 14, 28))
@@ -204,7 +181,6 @@ static func _glyph(tex: Texture2D, font_size: int) -> TextureRect:
 	r.custom_minimum_size = Vector2(w, h)
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return r
-
 
 static func _lab(text: String, font_size: int, color: Color) -> Label:
 	var l := Label.new()

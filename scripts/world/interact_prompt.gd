@@ -2,7 +2,6 @@
 
 ## Prompt / title refresh for world interactables.
 
-
 static func refresh(host: Node3D) -> void:
 	if host.kind == "stairs":
 		host.locked = not App.boss_dead
@@ -52,7 +51,6 @@ static func refresh(host: Node3D) -> void:
 		if host.hidden:
 			host.label.visible = false
 		host.label.modulate = Color(0.95, 0.75, 0.35) if host.locked or host.used else Color(0.75, 0.95, 0.85)
-
 
 static func title(host: Node3D) -> String:
 	match host.kind:

@@ -8,28 +8,22 @@ const Doors := preload("res://scripts/dungeon/gen_doors.gd")
 const Outline := preload("res://scripts/dungeon/gen_outline.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 
-
 static func cycle_of(floor_n: int) -> int:
 	return int((maxi(1, floor_n) - 1) / 5.0)
-
 
 static func loop_index(floor_n: int) -> int:
 	return ((maxi(1, floor_n) - 1) % 5) + 1
 
-
 static func is_gate_master(floor_n: int) -> bool:
 	return loop_index(floor_n) == 5
-
 
 static func boss_title(floor_n: int) -> String:
 	if is_gate_master(floor_n):
 		return "Gate Master"
 	return "Floor Guardian"
 
-
 static func idx(x: int, y: int, w: int) -> int:
 	return Doors.idx(x, y, w)
-
 
 static func generate(floor_n: int, run_seed: int, bal: Object) -> Dictionary:
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -52,7 +46,6 @@ static func generate(floor_n: int, run_seed: int, bal: Object) -> Dictionary:
 			LoadTiming.dmark("gen_outline")
 			return data
 	return _fallback(floor_n, w, h, bal)
-
 
 static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin: int, rmax: int, loops: int, bal: Object) -> Dictionary:
 	Carve.begin_halls()
@@ -112,42 +105,20 @@ static func _try_gen(rng: RandomNumberGenerator, w: int, h: int, want: int, rmin
 		"halls": Carve.take_halls(),
 	}
 
-
 static func _ri(r: Dictionary, k: String) -> int:
 	return Doors._ri(r, k)
-
-
-static func _outside_floor(grid: PackedByteArray, w: int, h: int, boss: Dictionary, x: int, y: int) -> bool:
-	return Doors.outside_floor(grid, w, h, boss, x, y)
-
-
-static func _guess_side(boss: Dictionary, cell: Vector2i) -> String:
-	return Doors.guess_side(boss, cell)
-
 
 static func make_opening(side: String, cells: Array) -> Dictionary:
 	return Doors.make_opening(side, cells)
 
-
 static func boss_openings(grid: PackedByteArray, w: int, h: int, boss: Dictionary) -> Array:
 	return Doors.boss_openings(grid, w, h, boss)
-
 
 static func _side_runs(side: String, cells: Array) -> Array:
 	return Doors._side_runs(side, cells)
 
-
-static func _boss_door_cell(grid: PackedByteArray, w: int, h: int, boss: Dictionary, spawn: Vector2i) -> Vector2i:
-	return Doors.boss_door_cell(grid, w, h, boss, spawn)
-
-
-static func _far_cell(room: Dictionary, from: Vector2i) -> Vector2i:
-	return Doors.far_cell(room, from)
-
-
 static func is_safe_kind(kind: String) -> bool:
 	return kind == "extract_gate" or kind == "shop" or kind == "puzzle" or kind == "spawn" or kind == "stash" or kind == "vein"
-
 
 static func _fallback(floor_n: int, w: int, h: int, bal: Object) -> Dictionary:
 	w = maxi(28, w)

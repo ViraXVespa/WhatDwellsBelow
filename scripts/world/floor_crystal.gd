@@ -7,7 +7,6 @@ var crystal_cell := Vector2i.ZERO
 var crystal_on := false
 var crystal_gate := false
 
-
 func setup_crystal(pos: Vector3, cell: Vector2i, cl: int, gate: bool) -> void:
 	crystal_cell = cell
 	crystal_cl = maxi(1, cl)
@@ -18,7 +17,6 @@ func setup_crystal(pos: Vector3, cell: Vector2i, cl: int, gate: bool) -> void:
 	if crystal_on:
 		CrystalNet.mark_on(cell)
 	refresh()
-
 
 func refresh() -> void:
 	if kind != "crystal":
@@ -40,14 +38,12 @@ func refresh() -> void:
 		var mat: StandardMaterial3D = mesh.material_override
 		mat.albedo_color = tint
 
-
 func _title() -> String:
 	if kind != "crystal":
 		return super._title()
 	if crystal_gate:
 		return "ENTRANCE CRYSTAL  ·  CL %d" % crystal_cl
 	return "FLOOR CRYSTAL  ·  CL %d" % crystal_cl
-
 
 func interact(who: Node) -> String:
 	if kind != "crystal":

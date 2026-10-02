@@ -2,7 +2,6 @@
 
 const Cat := preload("res://scripts/data/archives_catalog.gd")
 
-
 static func run(host: Node, id: String) -> void:
 	host.archive_cancel = false
 	host.archive_job_pid = -1
@@ -64,7 +63,6 @@ static func run(host: Node, id: String) -> void:
 	host._menu_loading = false
 	await watch_child(host, pid)
 
-
 static func watch_child(host: Node, pid: int) -> void:
 	host.archive_job_pid = pid
 	var prev_mode: int = DisplayServer.window_get_mode()
@@ -80,32 +78,25 @@ static func watch_child(host: Node, pid: int) -> void:
 	if App.has_method("go_title"):
 		App.go_title()
 
-
 static func can_spawn_local() -> bool:
 	return not OS.has_feature("web")
-
 
 static func git_repo() -> bool:
 	var root := project_root()
 	return DirAccess.dir_exists_absolute(root.path_join(".git")) or FileAccess.file_exists(root.path_join(".git"))
 
-
 static func have_git() -> bool:
 	var out: Array = []
 	return OS.execute("git", PackedStringArray(["--version"]), out, true, false) == 0
 
-
 static func project_root() -> String:
 	return ProjectSettings.globalize_path("res://").trim_suffix("/").trim_suffix("\\")
-
 
 static func worktree_dir(id: String) -> String:
 	return project_root().path_join(".archive_worktrees").path_join(id)
 
-
 static func imported(wt: String) -> bool:
 	return DirAccess.dir_exists_absolute(wt.path_join(".godot"))
-
 
 static func worktree_ready(wt: String, sha: String) -> bool:
 	if not FileAccess.file_exists(wt.path_join("project.godot")):
@@ -113,14 +104,12 @@ static func worktree_ready(wt: String, sha: String) -> bool:
 	var got := head_sha(wt)
 	return got == sha or (got != "" and sha.begins_with(got)) or (got != "" and got.begins_with(sha))
 
-
 static func head_sha(wt: String) -> String:
 	var out: Array = []
 	var code := OS.execute("git", PackedStringArray(["-C", wt, "rev-parse", "HEAD"]), out, true, false)
 	if code != 0 or out.is_empty():
 		return ""
 	return str(out[0]).strip_edges()
-
 
 static func ensure_worktree(host: Node, wt: String, sha: String) -> bool:
 	var parent := wt.get_base_dir()
@@ -132,7 +121,6 @@ static func ensure_worktree(host: Node, wt: String, sha: String) -> bool:
 			rm_dir(wt)
 	var args := PackedStringArray(["-C", root, "worktree", "add", "--detach", wt, sha])
 	return await run_wait(host, "git", args, 0.08, 0.4) and FileAccess.file_exists(wt.path_join("project.godot"))
-
 
 static func stamp_name(wt: String, label: String) -> void:
 	var p := wt.path_join("project.godot")
@@ -146,7 +134,6 @@ static func stamp_name(wt: String, label: String) -> void:
 	var f := FileAccess.open(p, FileAccess.WRITE)
 	if f:
 		f.store_string(t)
-
 
 static func run_wait(host: Node, exe: String, args: PackedStringArray, lo: float, hi: float) -> bool:
 	var pid := OS.create_process(exe, args)
@@ -165,7 +152,6 @@ static func run_wait(host: Node, exe: String, args: PackedStringArray, lo: float
 		await host.get_tree().process_frame
 	host.archive_job_pid = -1
 	return not bool(host.archive_cancel)
-
 
 static func open_pages(host: Node, e: Dictionary) -> void:
 	var url := Cat.pages_url(e)
@@ -187,7 +173,6 @@ static func open_pages(host: Node, e: Dictionary) -> void:
 		host.loader.finish()
 	host._menu_loading = false
 
-
 static func fail(host: Node, msg: String) -> void:
 	push_warning(msg)
 	host.toast(msg)
@@ -197,7 +182,6 @@ static func fail(host: Node, msg: String) -> void:
 		host.loader.finish()
 	host._menu_loading = false
 	reopen_browser(host)
-
 
 static func cancel(host: Node) -> void:
 	kill_job(host)
@@ -209,11 +193,9 @@ static func cancel(host: Node) -> void:
 	host.archive_cancel = false
 	reopen_browser(host)
 
-
 static func reopen_browser(host: Node) -> void:
 	if host.archives_ui and host.archives_ui.has_method("show_browser"):
 		host.archives_ui.show_browser()
-
 
 static func kill_job(host: Node) -> void:
 	var pid := int(host.archive_job_pid)
@@ -221,21 +203,17 @@ static func kill_job(host: Node) -> void:
 		OS.kill(pid)
 	host.archive_job_pid = -1
 
-
 static func set_status(host: Node, text: String, p: float) -> void:
 	if host.loader:
 		host.loader.set_status(text)
 		host.loader.set_progress(p)
 
-
 static func set_progress(host: Node, p: float) -> void:
 	if host.loader:
 		host.loader.set_progress(p)
 
-
 static func beat(host: Node, sec: float) -> void:
 	await host.get_tree().create_timer(sec, true, false, true).timeout
-
 
 static func rm_dir(path: String) -> void:
 	var d := DirAccess.open(path)

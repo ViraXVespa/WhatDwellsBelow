@@ -9,23 +9,19 @@ const FLAG := "--wdb-shot"
 
 static var _cached: int = -1
 
-
 static func args() -> PackedStringArray:
 	var user: PackedStringArray = OS.get_cmdline_user_args()
 	if user.size() > 0:
 		return user
 	return OS.get_cmdline_args()
 
-
 static func _flag_on() -> bool:
 	return FLAG in args()
-
 
 static func active() -> bool:
 	if _cached < 0:
 		_cached = 1 if _flag_on() else 0
 	return _cached == 1
-
 
 static func _arg_int(key: String, fallback: int) -> int:
 	var prefix: String = key + "="
@@ -34,8 +30,6 @@ static func _arg_int(key: String, fallback: int) -> int:
 		if s.begins_with(prefix):
 			return int(s.substr(prefix.length()))
 	return fallback
-
-
 
 static func _arg_val(flag: String) -> String:
 	var prefix: String = flag + "="
@@ -52,13 +46,11 @@ static func _arg_str(key: String, fallback: String) -> String:
 			return s.substr(prefix.length())
 	return fallback
 
-
 static func scene_name() -> String:
 	var s: String = _arg_str("--wdb-shot-scene", "dungeon")
 	if s == "camp" or s == "hub":
 		return "camp"
 	return "dungeon"
-
 
 static func run_seed() -> int:
 	var n: int = _arg_int("--wdb-shot-seed", 42)
@@ -66,10 +58,8 @@ static func run_seed() -> int:
 		return 1
 	return n
 
-
 static func floor_n() -> int:
 	return maxi(1, _arg_int("--wdb-shot-floor", 1))
-
 
 static func out_path() -> String:
 	var p: String = _arg_str("--wdb-shot-out", "")
@@ -77,35 +67,27 @@ static func out_path() -> String:
 		return p
 	return ProjectSettings.globalize_path("user://wdb_shot.png")
 
-
 static func scale_pct() -> int:
 	return clampi(_arg_int("--wdb-shot-scale", 100), 1, 100)
-
 
 static func settle_sec() -> float:
 	var ms: int = maxi(0, _arg_int("--wdb-shot-settle-ms", 1000))
 	return float(ms) / 1000.0
 
-
 static func show_window() -> bool:
 	return _arg_int("--wdb-shot-show", 0) != 0
-
 
 static func hud_on() -> bool:
 	return _arg_int("--wdb-shot-hud", 1) != 0
 
-
 static func taskbar_on() -> bool:
 	return _arg_int("--wdb-shot-taskbar", 0) != 0
-
 
 static func win_w() -> int:
 	return _arg_int("--wdb-shot-width", 0)
 
-
 static func win_h() -> int:
 	return _arg_int("--wdb-shot-height", 0)
-
 
 static func poses() -> PackedStringArray:
 	var raw: String = _arg_val("--wdb-shot-poses")
@@ -119,26 +101,20 @@ static func zoom() -> float:
 		return 1.0
 	return maxf(0.01, raw.to_float())
 
-
 static func has_player_pos() -> bool:
 	return not _arg_val("--wdb-shot-px").is_empty() or not _arg_val("--wdb-shot-pz").is_empty()
-
 
 static func player_x() -> float:
 	return _arg_val("--wdb-shot-px").to_float()
 
-
 static func player_z() -> float:
 	return _arg_val("--wdb-shot-pz").to_float()
-
 
 static func cam_x() -> float:
 	return _arg_val("--wdb-shot-cx").to_float()
 
-
 static func cam_z() -> float:
 	return _arg_val("--wdb-shot-cz").to_float()
-
 
 static func hide_window() -> void:
 	if show_window():
@@ -162,7 +138,6 @@ static func hide_window() -> void:
 	DisplayServer.window_set_position(Vector2i(-32000, -32000))
 	printerr("SHOT: mark=window shown=0 taskbar=%d" % [1 if taskbar_on() else 0])
 
-
 static func attach_dungeon(host: Node) -> void:
 	if not active():
 		return
@@ -175,7 +150,6 @@ static func attach_dungeon(host: Node) -> void:
 		tree.process_frame.connect(func() -> void: _arm_capture(host), CONNECT_ONE_SHOT)
 		return
 	tree.create_timer(sec).timeout.connect(func() -> void: _arm_capture(host))
-
 
 static func _arm_capture(host: Node) -> void:
 	if not is_instance_valid(host):
@@ -233,7 +207,6 @@ static func _apply_pose(host: Node) -> void:
 	DisplayServer.register_additional_output(host)
 	printerr("SHOT: mark=pose hud=%d zoom=%s px=%s pz=%s" % [1 if hud_on() else 0, str(zoom()), _arg_val("--wdb-shot-px"), _arg_val("--wdb-shot-pz")])
 
-
 static func _capture(host: Node) -> void:
 	if not is_instance_valid(host):
 		printerr("SHOT: ok=false err=host_gone")
@@ -271,11 +244,9 @@ static func _capture(host: Node) -> void:
 	printerr("SHOT: ok=true path=%s w=%d h=%d bytes=%d" % [path, img.get_width(), img.get_height(), nbytes])
 	_quit(host, 0)
 
-
 static func _fail(host: Node, why: String) -> void:
 	printerr("SHOT: ok=false err=%s" % why)
 	_quit(host, 1)
-
 
 static func _quit(host: Node, code: int) -> void:
 	if not is_instance_valid(host):
@@ -284,7 +255,6 @@ static func _quit(host: Node, code: int) -> void:
 	if tree == null:
 		return
 	tree.create_timer(0.2).timeout.connect(func() -> void: tree.quit(code))
-
 
 static func _hide_label3d(n: Node) -> void:
 	if n is Label3D:
@@ -350,7 +320,6 @@ static func _on_post_draw(host: Node, token: String) -> void:
 	RenderingServer.force_sync()
 	_grab_pose(host, token)
 
-
 static func _grab_pose(host: Node, token: String) -> void:
 	if not is_instance_valid(host):
 		printerr("SHOT: ok=false err=host_gone")
@@ -367,7 +336,6 @@ static func _grab_pose(host: Node, token: String) -> void:
 	printerr("SHOT: grab token=%s frame=%d at=%s w=%d h=%d" % [token, _pose_i, at, copy.get_width(), copy.get_height()])
 	_pose_i += 1
 	_kick_pose(host)
-
 
 static func _read_frame(host: Node) -> Image:
 	var vp: Viewport = host.get_viewport()
@@ -420,7 +388,6 @@ static func _grid_shape(n: int) -> Vector2i:
 	var rows: int = maxi(1, ceili(sqrt(float(n))))
 	var cols: int = maxi(1, ceili(float(n) / float(rows)))
 	return Vector2i(cols, rows)
-
 
 static func _write_strip() -> void:
 	if _strips.is_empty():

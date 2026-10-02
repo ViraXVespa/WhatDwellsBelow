@@ -22,7 +22,6 @@ static var edge: Dictionary = {}
 static var eat_pause := false
 static var mode := false
 
-
 static func note_event(event: InputEvent) -> void:
 	Touch.note_event(event)
 	Look.note_event(event)
@@ -47,20 +46,17 @@ static func note_event(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and (event as InputEventMouseMotion).relative.length() > 2.0:
 		_set_mode(false)
 
-
 static func _set_mode(pad_on: bool) -> void:
 	if mode == pad_on:
 		return
 	mode = pad_on
 	_refresh_prompts()
 
-
 static func _refresh_prompts() -> void:
 	var Prompts = load("res://scripts/input/prompts.gd")
 	var PView = load("res://scripts/ui/prompt_view.gd")
 	if Prompts.dirty():
 		PView.pulse()
-
 
 static func wake_web(release_gui: bool = true) -> void:
 	if Engine.get_main_loop() == null:
@@ -80,11 +76,9 @@ static func wake_web(release_gui: bool = true) -> void:
 		})();
 	""", true)
 
-
 static func id() -> int:
 	var pads := Input.get_connected_joypads()
 	return pads[0] if not pads.is_empty() else -1
-
 
 static func stick(lx: JoyAxis, ly: JoyAxis, dead := 0.24) -> Vector2:
 	var pid := id()
@@ -93,7 +87,6 @@ static func stick(lx: JoyAxis, ly: JoyAxis, dead := 0.24) -> Vector2:
 	var v := Vector2(Input.get_joy_axis(pid, lx), Input.get_joy_axis(pid, ly))
 	return v if v.length() >= dead else Vector2.ZERO
 
-
 static func move() -> Vector2:
 	if Touch.active() and Touch.move.length() > 0.01:
 		return Touch.move
@@ -101,7 +94,6 @@ static func move() -> Vector2:
 	if v.length() > 0.01:
 		return v
 	return stick(JOY_AXIS_LEFT_X, JOY_AXIS_LEFT_Y)
-
 
 static func aim() -> Vector2:
 	if Look.eats_aim():
@@ -112,7 +104,6 @@ static func aim() -> Vector2:
 	if v.length() > 0.01:
 		return v
 	return stick(JOY_AXIS_RIGHT_X, JOY_AXIS_RIGHT_Y)
-
 
 static func held(action: String) -> bool:
 	if Touch.held(action):
@@ -129,7 +120,6 @@ static func held(action: String) -> bool:
 			return true
 	return false
 
-
 static func just(action: String) -> bool:
 	if eat_pause and action in ["dash", "pause", "interact", "attack", "special", "potion", "food", "target_lock"]:
 		return false
@@ -140,7 +130,6 @@ static func just(action: String) -> bool:
 	if bool(was.get(action, false)):
 		return false
 	return Input.is_action_just_pressed(action)
-
 
 static func pause_just() -> bool:
 	var menu_open := App != null and App.pause_menu != null and bool(App.pause_menu.get("open"))
@@ -156,7 +145,6 @@ static func pause_just() -> bool:
 		return false
 	return Input.is_action_just_pressed("pause") or just("pause")
 
-
 static func swallow_close() -> void:
 	for action in ["dash", "attack", "special", "interact", "potion", "food", "target_lock", "pause"]:
 		edge[action] = false
@@ -164,12 +152,10 @@ static func swallow_close() -> void:
 	eat_pause = true
 	Look.clear()
 
-
 static func blocked(action: String) -> bool:
 	if not App.ui_open:
 		return false
 	return action in ["dash", "attack", "special", "interact", "potion", "food", "target_lock"]
-
 
 static func tick() -> void:
 	Touch.tick()
@@ -213,13 +199,11 @@ static func tick() -> void:
 		if not held_close:
 			eat_pause = false
 
-
 static func _dt() -> float:
 	var loop := Engine.get_main_loop()
 	if loop is SceneTree:
 		return (loop as SceneTree).root.get_process_delta_time()
 	return 0.016666
-
 
 static func web_buttons() -> PackedFloat32Array:
 	if not OS.has_feature("web"):

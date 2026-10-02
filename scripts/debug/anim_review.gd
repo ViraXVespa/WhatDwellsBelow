@@ -13,18 +13,14 @@ const ORDER: Array[String] = [GOOD, REPACK, REGEN]
 static var mem: Dictionary = {}
 static var loaded: bool = false
 
-
 static func clip_key(model_id: String, facing: String, anim: String) -> String:
 	return "%s/%s/%s" % [model_id, facing, anim]
-
 
 static func can_review(frame_n: int) -> bool:
 	return frame_n > 1
 
-
 static func can_write() -> bool:
 	return OS.has_feature("editor")
-
 
 static func ensure_loaded() -> void:
 	if loaded:
@@ -57,7 +53,6 @@ static func ensure_loaded() -> void:
 			"note": str((entry as Dictionary).get("note", "")),
 		}
 
-
 static func row(model_id: String, facing: String, anim: String) -> Dictionary:
 	ensure_loaded()
 	var k := clip_key(model_id, facing, anim)
@@ -65,14 +60,11 @@ static func row(model_id: String, facing: String, anim: String) -> Dictionary:
 		return mem[k]
 	return {"state": GOOD, "note": ""}
 
-
 static func state_of(model_id: String, facing: String, anim: String) -> String:
 	return str(row(model_id, facing, anim).get("state", GOOD))
 
-
 static func note_of(model_id: String, facing: String, anim: String) -> String:
 	return str(row(model_id, facing, anim).get("note", ""))
-
 
 static func label_of(model_id: String, facing: String, anim: String) -> String:
 	var st := state_of(model_id, facing, anim)
@@ -81,7 +73,6 @@ static func label_of(model_id: String, facing: String, anim: String) -> String:
 	if st == REGEN:
 		return "Regenerate"
 	return "Good"
-
 
 static func set_state(model_id: String, facing: String, anim: String, st: String, frame_n: int) -> String:
 	if not can_review(frame_n):
@@ -95,7 +86,6 @@ static func set_state(model_id: String, facing: String, anim: String, st: String
 	save_disk()
 	return st
 
-
 static func set_note(model_id: String, facing: String, anim: String, note: String, frame_n: int) -> void:
 	if not can_review(frame_n):
 		return
@@ -104,7 +94,6 @@ static func set_note(model_id: String, facing: String, anim: String, note: Strin
 	var st := state_of(model_id, facing, anim)
 	mem[k] = {"state": st, "note": note}
 	save_disk()
-
 
 static func cycle(model_id: String, facing: String, anim: String, frame_n: int) -> String:
 	if not can_review(frame_n):
@@ -115,7 +104,6 @@ static func cycle(model_id: String, facing: String, anim: String, frame_n: int) 
 		i = 0
 	var nxt: String = ORDER[(i + 1) % ORDER.size()]
 	return set_state(model_id, facing, anim, nxt, frame_n)
-
 
 static func save_disk() -> bool:
 	if not can_write():

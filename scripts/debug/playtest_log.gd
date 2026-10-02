@@ -33,7 +33,6 @@ static var end_fail: String:
 	set(v):
 		Core.end_fail = v
 
-
 static func _dir() -> String:
 	return Core._dir()
 
@@ -53,8 +52,6 @@ static func wait(pt: Node, reason: String) -> void:
 		"ui_open": App.get("ui_open") == true,
 	})
 
-
-
 static func goal(pt: Node, p: Node, name: String, extra: Dictionary = {}) -> void:
 	if name == Core.last_goal and extra.is_empty():
 		return
@@ -69,8 +66,6 @@ static func goal(pt: Node, p: Node, name: String, extra: Dictionary = {}) -> voi
 	if extra.size() > 0:
 		ev.merge(extra)
 	Core.events.append(ev)
-
-
 
 static func act(pt: Node, p: Node) -> void:
 	if not pt.dash and not pt.special and not pt.potion and not pt.interact:
@@ -91,8 +86,6 @@ static func act(pt: Node, p: Node) -> void:
 		ev.merge(PlaytestLogUtil._use_fields(pt, p))
 	Core.events.append(ev)
 
-
-
 static func beat(pt: Node, p: Node) -> void:
 	Core.beat(pt, p)
 
@@ -103,8 +96,6 @@ static func _check_combat(pt: Node) -> void:
 		Core.last_combat_kills = result.kills
 		Core.last_combat_dealt = result.dealt
 		Core.last_combat_taken = result.taken
-
-
 
 static func target(n: Node) -> Dictionary:
 	if n == null or not is_instance_valid(n):
@@ -119,8 +110,6 @@ static func target(n: Node) -> Dictionary:
 	if is_boss:
 		out["boss"] = 1
 	return out
-
-
 
 static func _scan_dists(near: Array) -> Dictionary:
 	var gather_d: float = -1.0
@@ -137,8 +126,6 @@ static func _scan_dists(near: Array) -> Dictionary:
 		if clerk_d < 0.0 and (k == "extract_gate" or k.find("clerk") >= 0 or k == "patty" or k == "receptionist"):
 			clerk_d = d
 	return {"gather_d": gather_d, "gather_k": gather_k, "clerk_d": clerk_d}
-
-
 
 static func decide(pt: Node, p: Node, name: String, why: String, extra: Dictionary = {}) -> void:
 	Core.decide(pt, p, name, why, extra)
@@ -168,8 +155,6 @@ static func finish(pt: Node, cond: String, fail: String = "") -> void:
 	})
 	_flush(pt)
 	Core.started = false
-
-
 
 static func _flush(pt: Node) -> void:
 	if Core.file_name == "":

@@ -2,7 +2,6 @@ extends Object
 
 const Affix := preload("res://scripts/data/affixes.gd")
 
-
 static func normalize_prog(p: Object) -> void:
 	if p == null:
 		return
@@ -24,12 +23,10 @@ static func normalize_prog(p: Object) -> void:
 			if st is Array:
 				_norm_list(st)
 
-
 static func _norm_list(arr: Array) -> void:
 	for i: int in arr.size():
 		if arr[i] is Dictionary:
 			arr[i] = normalize_item(arr[i])
-
 
 static func normalize_item(it: Dictionary) -> Dictionary:
 	if it.is_empty():
@@ -81,7 +78,6 @@ static func normalize_item(it: Dictionary) -> Dictionary:
 	it["hp"] = int(round(float(it.get(Affix.ID_HP, 0.0))))
 	return it
 
-
 static func _map_legacy(it: Dictionary) -> void:
 	if it.has("crit") and not it.has(Affix.ID_CRIT_CHANCE):
 		it[Affix.ID_CRIT_CHANCE] = float(it.get("crit", 0.0))
@@ -89,7 +85,6 @@ static func _map_legacy(it: Dictionary) -> void:
 		it[Affix.ID_MOVE] = float(it.get("spd", 0.0))
 	if it.has("gather") and not it.has(Affix.ID_GATHER_SPD):
 		it[Affix.ID_GATHER_SPD] = float(it.get("gather", 0.0))
-
 
 static func _map_id(id: String) -> String:
 	match id:
@@ -102,20 +97,16 @@ static func _map_id(id: String) -> String:
 		_:
 			return id
 
-
 static func _clamp_stat(id: String, v: float, cap_flat: float, cap_pct: float) -> float:
 	if Affix.kind_of(id) == Affix.KIND_PCT:
 		return clampf(v, 0.0, cap_pct)
 	return clampf(v, 0.0, cap_flat)
 
-
 static func _cap_flat(ilvl: int) -> float:
 	return (2.0 + 0.65 * float(maxi(1, ilvl))) * 1.25 * 1.25
 
-
 static func _cap_pct(ilvl: int) -> float:
 	return (0.02 + 0.004 * float(maxi(1, ilvl))) * 1.25 * 1.25
-
 
 static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 	if p.potion_cd > 0.0:
@@ -145,7 +136,6 @@ static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 	App.sfx("potion")
 	App.toast("Potion — instant.")
 	return "Potion."
-
 
 static func refill_potion(p: Object) -> void:
 	var it: Dictionary = p.slots.get("potion", {})

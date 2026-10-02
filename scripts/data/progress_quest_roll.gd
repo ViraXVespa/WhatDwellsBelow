@@ -2,7 +2,6 @@ extends Object
 
 ## Quest board offer roll / accept / abandon.
 
-
 static func roll_quests(p: Object, keep_active: bool) -> void:
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.randomize()

@@ -26,7 +26,6 @@ const KNOB := Color(0.9, 0.7, 0.3, 0.82)
 const PRESS := Color(0.16, 0.12, 0.08, 0.48)
 const LATCH := Color(0.95, 0.78, 0.35, 0.78)
 
-
 static func ready(host: CanvasLayer) -> void:
 	host.layer = 28
 	host.process_mode = Node.PROCESS_MODE_ALWAYS

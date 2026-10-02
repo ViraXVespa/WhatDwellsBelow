@@ -64,75 +64,48 @@ var last_glance := false
 var los_ok := false
 var los_t := 0.0
 
-
-
 func _ready() -> void:
 	Ready.ready(self)
-
 
 func setup(id: String, floor_n: int, named := false, given_name := "") -> void:
 	EnemySetup.setup(self, id, floor_n, named, given_name)
 
-
 func setup_boss(title: String, floor_n: int) -> void:
 	EnemySetup.setup_boss(self, title, floor_n)
-
-
-func setup_guard(id: String, floor_n: int) -> void:
-	setup(id, floor_n, false, "")
-
 
 func _mark_post() -> void:
 	Hit.mark_post(self)
 
-
 func take_hit(raw: float, from_dir: Vector2, crit: bool) -> void:
 	Hit.take_hit(self, raw, from_dir, crit)
-
 
 func apply_stagger(sec: float) -> void:
 	Hit.apply_stagger(self, sec)
 
-
 func _float(amount: int, crit: bool) -> void:
 	Hit.float_num(self, amount, crit)
 
-
 func _die() -> void:
 	Hit.die(self)
-
 
 func force_kill() -> void:
 	hp = 0.0
 	_die()
 
-
 func is_alive() -> bool:
 	return not dead and hp > 0.0
-
 
 func start_flee() -> void:
 	EnemyAI.start_flee(self)
 
-
 func _physics_process(delta: float) -> void:
 	Present.physics(self, delta)
-
-
-func _present(delta: float) -> void:
-	Present.present(self, delta)
-
 
 func kill_tag() -> String:
 	if is_boss:
 		var title := str(tag.text) if tag else ""
 		return "gate_master" if title.begins_with("Gate Master") else "guardian"
 	return type_id
-
-
-func _drop_loot() -> void:
-	Hit.drop_loot(self)
-
 
 func _player() -> Node3D:
 	var tree := get_tree()
@@ -143,10 +116,8 @@ func _player() -> Node3D:
 		return n
 	return null
 
-
 func _begin_windup() -> void:
 	EnemyAI.begin_windup(self)
-
 
 func smoke_force_leash() -> String:
 	post = global_position
@@ -154,7 +125,6 @@ func smoke_force_leash() -> String:
 	state = ST_CHASE
 	EnemyAI.tick(self, 0.016)
 	return state_name()
-
 
 func state_name() -> String:
 	match state:

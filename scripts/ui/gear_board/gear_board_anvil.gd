@@ -8,15 +8,9 @@ const Prompts := preload("res://scripts/input/prompts.gd")
 const View := preload("res://scripts/ui/gear_board/gear_board_anvil_view.gd")
 const ForgeUI := preload("res://scripts/ui/gear_board/gear_board_anvil_forge.gd")
 
-
-static func is_anvil(ui: CanvasLayer) -> bool:
-	return str(ui.get("gear_mode")) == "anvil"
-
-
 static func tab(ui: CanvasLayer) -> String:
 	var t := str(ui.get("anvil_tab"))
 	return t if t == "forge" else "analyze"
-
 
 static func hint_parts(ui: CanvasLayer) -> Array:
 	var parts: Array = []
@@ -34,7 +28,6 @@ static func hint_parts(ui: CanvasLayer) -> Array:
 	parts.append({"action": "ui_cancel", "verb": "back"})
 	return parts
 
-
 static func hint_line(ui: CanvasLayer) -> String:
 	var bits: PackedStringArray = PackedStringArray()
 	for row: Variant in hint_parts(ui):
@@ -46,14 +39,12 @@ static func hint_line(ui: CanvasLayer) -> String:
 		bits.append(Prompts.verb_line(action, str(row.get("verb", ""))))
 	return "   ".join(bits)
 
-
 static func options_for(slot: String, ui: CanvasLayer) -> Array:
 	if slot == "potion" or slot == "food":
 		return []
 	if tab(ui) == "forge":
 		return []
 	return _analyze_options(slot)
-
 
 static func _analyze_options(slot: String) -> Array:
 	var out: Array = []
@@ -65,12 +56,10 @@ static func _analyze_options(slot: String) -> Array:
 		_try_add(out, seen, eq, "equipped")
 	return out
 
-
 static func _add_src(out: Array, seen: Dictionary, slot: String, arr: Array, src: String) -> void:
 	for raw: Variant in arr:
 		if raw is Dictionary and str(raw.get("slot", "")) == slot:
 			_try_add(out, seen, raw, src)
-
 
 static func _try_add(out: Array, seen: Dictionary, it: Dictionary, src: String) -> void:
 	var uid := int(it.get("uid", 0))
@@ -85,16 +74,13 @@ static func _try_add(out: Array, seen: Dictionary, it: Dictionary, src: String) 
 		row_it["kit_src"] = "bank"
 	out.append({"it": row_it, "src": src, "uid": uid})
 
-
 static func footer(ui: CanvasLayer) -> void:
 	View.footer(ui)
-
 
 static func cycle_tab(ui: CanvasLayer, dir: int) -> void:
 	if dir == 0:
 		return
 	View.set_tab(ui, "forge" if tab(ui) == "analyze" else "analyze")
-
 
 static func analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 	if tab(ui) == "forge":
@@ -107,7 +93,6 @@ static func analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 	ui.anvil_item = it
 	ui.anvil_src = str(row.get("src", ""))
 	_commit_analyze(ui, slot, row)
-
 
 static func _commit_analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 	var taken: Dictionary = Town.analyze_destroy(App.prog, row)
@@ -126,10 +111,5 @@ static func _commit_analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> v
 	if bool(ui.get("gear_sub")):
 		Sub.open_sub(ui, slot)
 
-
 static func restore(_ui: CanvasLayer) -> void:
 	pass
-
-
-static func start_forge(ui: CanvasLayer) -> void:
-	ForgeUI.start(ui)

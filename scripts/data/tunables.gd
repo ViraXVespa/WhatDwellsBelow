@@ -58,6 +58,5 @@ const BITTER_LOOP_DEFAULT := 15.52
 const TOUCH_TAP_WINDOW := 0.28
 const TOUCH_DEAD := 0.24
 
-
 static func archive_catalog() -> Array:
 	return load("res://scripts/data/archives_catalog.gd").all()

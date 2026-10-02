@@ -3,11 +3,9 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
-
 static func tab(ui: CanvasLayer) -> String:
 	var t := str(ui.get("anvil_tab"))
 	return t if t == "forge" else "analyze"
-
 
 static func footer(ui: CanvasLayer) -> void:
 	_tabs(ui)
@@ -24,7 +22,6 @@ static func footer(ui: CanvasLayer) -> void:
 		_forge_body(ui, smith)
 	else:
 		_analyze_body(ui, smith)
-
 
 static func _tabs(ui: CanvasLayer) -> void:
 	var shell := HBoxContainer.new()
@@ -67,7 +64,6 @@ static func _tabs(ui: CanvasLayer) -> void:
 	PromptView.fill(right, [{"action": "tab_right"}], 16, Color(0.72, 0.66, 0.52))
 	ui.box.add_child(shell)
 
-
 static func drop_sub(ui: CanvasLayer) -> void:
 	ui.gear_sub = false
 	ui.gear_sub_slot = ""
@@ -80,7 +76,6 @@ static func drop_sub(ui: CanvasLayer) -> void:
 		old = ui.get_node_or_null("gear_sub_panel")
 	var Board = load("res://scripts/ui/gear_board/gear_board.gd")
 	Board.hide_tip(ui)
-
 
 static func set_tab(ui: CanvasLayer, t: String) -> void:
 	ui.anvil_tab = t
@@ -97,10 +92,8 @@ static func set_tab(ui: CanvasLayer, t: String) -> void:
 	ui.call_deferred("_rebuild_anvil")
 	ui.call_deferred("_show")
 
-
 static func _analyze_body(ui: CanvasLayer, smith: int) -> void:
 	ui.status.text = "Smithing %d. Open a slot to analyze an AT RISK piece." % smith
-
 
 static func _forge_body(ui: CanvasLayer, smith: int) -> void:
 	if float(ui.get("forge_t")) > 0.0:
@@ -113,7 +106,6 @@ static func _forge_body(ui: CanvasLayer, smith: int) -> void:
 		ui.status.text = "Smithing %d. Analyze a piece before you can forge." % smith
 		return
 	ui.status.text = "Smithing %d. Open a slot to set type, rarity, level, and locks." % smith
-
 
 static func _paint_on(b: Button) -> void:
 	var ink := Color(0.92, 0.84, 0.62)

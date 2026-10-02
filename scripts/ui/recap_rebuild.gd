@@ -5,7 +5,6 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const RecapBars := preload("res://scripts/ui/recap_bars.gd")
 
-
 static func rebuild(host: CanvasLayer, cond: String) -> void:
 	for c in host.box.get_children():
 		c.queue_free()

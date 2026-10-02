@@ -31,7 +31,6 @@ const ARTS: Array = [
 	{"id": "iron_heart", "name": "Iron Heart", "set": "iron", "desc": "Heavier than it looks. +defense."},
 ]
 
-
 static func pick(rng: RandomNumberGenerator, n: int) -> Array:
 	var pool: Array = ARTS.duplicate()
 	var out: Array = []
@@ -44,13 +43,11 @@ static func pick(rng: RandomNumberGenerator, n: int) -> Array:
 		pool.remove_at(j)
 	return out
 
-
 static func by_id(id: String) -> Dictionary:
 	for a in ARTS:
 		if str(a.id) == id:
 			return a
 	return {}
-
 
 static func set_size(set_id: String) -> int:
 	var n := 0
@@ -58,7 +55,6 @@ static func set_size(set_id: String) -> int:
 		if str(a.set) == set_id:
 			n += 1
 	return n
-
 
 static func set_bonus_line(set_id: String, n: int) -> String:
 	match set_id:
@@ -79,7 +75,6 @@ static func set_bonus_line(set_id: String, n: int) -> String:
 		"iron":
 			return "+defense stacking through 5." if n >= 2 else ""
 	return ""
-
 
 static func set_ids() -> PackedStringArray:
 	return SETS

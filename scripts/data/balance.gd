@@ -342,21 +342,17 @@ var set_iron_5 := 10.0
 
 var enemy_stats: Dictionary = {}
 
-
 func schema() -> Array:
 	var rows: Array = Schema.rows()
 	_ensure_enemies()
 	Enemies.append_schema(rows)
 	return rows
 
-
 func _init() -> void:
 	_ensure_enemies()
 
-
 func _ensure_enemies() -> void:
 	Enemies.fill(enemy_stats)
-
 
 func getv(name: String) -> float:
 	_ensure_enemies()
@@ -369,10 +365,8 @@ func getv(name: String) -> float:
 		return 0.0
 	return float(v)
 
-
 func migrate_from(old_rev: int) -> bool:
 	return Migrate.run(self, old_rev, BAL_REV)
-
 
 func setv(name: String, value: float) -> void:
 	_ensure_enemies()
@@ -386,13 +380,11 @@ func setv(name: String, value: float) -> void:
 	else:
 		set(name, value)
 
-
 func snapshot() -> Dictionary:
 	var d := {}
 	for row in schema():
 		d[str(row[0])] = getv(str(row[0]))
 	return d
-
 
 func apply_defense(raw: float, defense: float) -> float:
 	return raw * (defense_k / (defense_k + maxf(0.0, defense)))
