@@ -29,6 +29,14 @@ Read when: extraction gate, ghost shop, quest, recap, minimap, crystal map UI, t
 - Clear accept / decline flow.
 - Active quest status visible where appropriate.
 
+## Back layers (multi-level menus)
+
+Rule: B / Esc / Start backs out one layer; at the root it closes (input and pause docs). There is **no shared back stack**; each UI keeps its own layer state:
+- `scripts/ui/crystal_ui.gd`: a `page` string (`root` / `local` / `floors` / `band`) rebuilt by `_rebuild()`, with `_back()` stepping one page up and closing at `root`. Cleanest model for a page-per-level menu; footer verb via `PromptView.footer` (`ui_cancel` → "back").
+- `scripts/ui/pause_menu_flow.gd` `_back()`: Confirm → gear sub-panel → Settings column → close.
+- `scripts/ui/progress_ui.gd` (quest, vendor, shop, controls, extract, flavor): one level only. `progress_ui_flow.gd` `_unhandled_input` maps cancel to Confirm close, forge cancel, or `close_ui()` (whole UI). A Talk → Ask? → topic → page flow must add its own page var and route cancel to a `_back()` there (new sibling file; the facade and flow files are near the script cap).
+- Pad paging inside a layer: `MenuPad.tab_delta` (wired for the anvil and crystal pages).
+
 ## Recap screen (mandatory sequence)
 
 Triggered on every death or “Dispel”.

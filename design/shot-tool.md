@@ -16,7 +16,7 @@ Unattended play-camera postcard. Godot paints a real GPU frame. Python owns mode
 - user: full-res PNG and open it when done.
 
 Command: `python tools/run_shots.py --mode web|build|user` (optional `--seed`, `--floor`, `--scale`, `--settle-ms`, `--timeout-sec`, `--show`, `--out`, `--hud 0|1`, `--width`, `--height`, `--zoom`, `--px`, `--pz`, `--cx`, `--cz`, `--taskbar 0|1`; `--help` is the truth). Presets live in `tools/shot-recipes.json`.
-Default: HUD on, spawn pose, zoom 1, no taskbar, window parked off-screen.
+Needs a real GL window, so a display: a Windows desktop with a GPU, or Linux with `DISPLAY` set (the Bot box uses `:2`; a 960x540 build shot was verified there). Default: HUD on, spawn pose, zoom 1, no taskbar, window parked off-screen.
 Summary: `_logs/shots/summary.txt`; the last line is `RESULT PASS|INFO|FAIL band=... summary=_logs/shots/summary.txt`. The Godot launch and lock come from `godot_lib.py` (per-path lock, kills only its own pid).
 
 ## Source map
@@ -45,9 +45,26 @@ warn: PNG exists but bytes below warn floor.
 fail: timeout, nonzero Godot exit, no image, or script error.
 Do not attach PNG bytes to the CLI transcript.
 
+## What it can stage today
+
+Scenes `dungeon`, `camp`, `hub`; camera pose (`--px --pz --cx --cz --zoom`, recipes); HUD on/off; window size. It does **not** open a UI page (quest, anvil, inventory, recap, extract, map) and does not set game state (bag, forged item, XP drain, quests). Those are gaps, filled by the process below.
+
+## Gap process: the task needs a shot the tool cannot stage
+
+Extending the tool is part of the task. Do not work around it (no hand-driven Godot, no scratch, no PNG edits, no stand-in older image).
+1. Name the missing state in one line (example: "quest pane open with three offers", "anvil open with a forged item", "recap mid XP drain").
+2. Check `tools/shot-recipes.json` and the flag list above for an existing way. Smallest change wins: recipe > `run_shots.py` argument > worker flag.
+3. Add **one** knob (below), prove it with one shot, then the next gap. Never batch knobs. Typical worker knob: `--wdb-shot-ui=<mode>` opens the same panel an interact opens (for example `open_quest()` / `open_anvil()` on `scripts/ui/progress_ui.gd`) after `begin_run`/camp ready and before the grab; state seeding goes through `App.prog` in the same step and stays shot-only.
+4. Document it here in one row of the table below, and in `--help` (`check_tool_cli.py`).
+5. Use it for the task's pictures. Name each new knob in the report and the changelog bullet only if players see a change.
+
+| Knob | Stages | Added for |
+|---|---|---|
+| (none yet) | | |
+
 ## Add or change a knob
 
-Add a knob only when a session cannot take the needed picture without it. One flag or one preset, one prove shot, then stop. Crop-to-object, custom camera, UI pages, and earlier boot hide are later knobs.
+One flag or one preset, one prove shot, then stop (or go on to the next gap with its own prove). Crop-to-object and earlier boot hide are later knobs.
 1. Python only (a preset or a default): edit `tools/shot-recipes.json` or the constant in `tools/run_shots.py`.
 2. New flag: add the `--wdb-shot-<name>` parse in `shot_tool_args.gd`, apply it in `shot_tool_pose.gd` or `shot_tool_capture.gd`, add the matching `run_shots.py` argument (it forwards through `_extra_flags`). Keep each `.gd` under the script cap.
 3. Prove: one `python tools/run_shots.py --mode build` shot; read `_logs/shots/summary.txt`. Then `check_tool_cli.py`.

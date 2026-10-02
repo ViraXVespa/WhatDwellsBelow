@@ -37,7 +37,7 @@ Intercept (raw tool is a failed lookup, not a fallback):
 - grep / rg on scripts/, design/, tools/, scenes/ -> tools/list_xref.py
 - list_dir of those trees -> list_xref.py or list_scenes.py
 - git status / git log / git diff in chat -> tools/list_changed.py
-- open whole design/code-map.md -> list_code_map_row.py / patch_code_map.py / check_code_map.py
+- open whole design/code-map.md -> tools/code_map.py (row / patch / check)
 - size / newlines / indent / BOM on a live path -> tools/file_stat.py (not python -c; oversize inventory stays list_oversize_scripts.py)
 - python -c for bytes, newlines, tabs, or indent -> tools/file_stat.py
 - python -c / double-quoted PowerShell body / echo Set-Content of a script ->
@@ -45,15 +45,15 @@ Intercept (raw tool is a failed lookup, not a fallback):
   tools/run_agent_py.py
 - open tools/*.ps1 or tools/*.py to learn flags -> catalog row only
 - read the same _logs/*/summary.txt again this slice -> stop;
-  one read via tools/read_summary.py -Job <name>
+  one read via tools/read_summary.py --job <name>
 - check_load_graph.py after every markdown edit -> only at ship,
-  or named routing work
+  or when routes or docs moved
 - door or job routing by opening README / load-graph / memory topics ->
-  tools/list_route.py -Door <name> or -Job door.job
+  tools/list_route.py --door <name> or --job door.job
 
 1. Pick the catalog row that matches the job.
 2. Run that command from the repo root.
-3. Read only that row's summary with read_summary.py -Job <name> (or stdout
+3. Read only that row's summary with read_summary.py --job <name> (or stdout
    when the catalog says there is no summary). Once per runner per slice.
 4. If no row exists and the work would be expensive in-session, propose a
    new runner and wait. Implement it only when the User has approved that

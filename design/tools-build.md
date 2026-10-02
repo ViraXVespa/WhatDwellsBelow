@@ -13,7 +13,7 @@ Rules, the CLI contract and the surface key are in `tools.md` (single copy). The
 | `run_build_gate.py` | Post-slice gate: editor import check; `--script-cap` opt-in. Summary: `build-gate`. | WD | `python tools/run_build_gate.py` (`--skip-import`, `--over-kb 10`, `--force`) | N |
 | `run_godot_import_check.py` | Editor import / script-reload check. RESULT `clean=true|false`. Summary: `godot-import-check`. | WD | `python tools/run_godot_import_check.py` | N |
 | `run_post_split_gate.py` | Import check, then optional smokes. Summary: `post-split-gate`. | D | `python tools/run_post_split_gate.py` (`--with-smokes`, `--phases 1,2,6`, `--force`) | N |
-| `run_smokes.py` | Phase smokes on the PC (Bot VM: `bot_smokes.py`). Summary: `smokes`. | D | `python tools/run_smokes.py --phases 4,5` | N |
+| `run_smokes.py` | Phase smokes on the PC (Bot VM: `bot_smokes.py`). `--door D` / `--job door.job` pick the phases mapped in `routes.yaml` `smokes`. Summary: `smokes`. | D | `python tools/run_smokes.py --phases 4,5` | N |
 | `run_load_timing.py` | Title -> Placeholdia load-timing smoke. Summary: `load-timing`. | WD | `python tools/run_load_timing.py` (`--timeout-sec 180`) | N |
 | `run_dungeon_load_timing.py` | Placeholdia -> Dungeon load-timing smoke. Summary: `dungeon-load-timing`. | WD | `python tools/run_dungeon_load_timing.py` | N |
 | `run_dungeon_map.py` | Dungeon generation map smoke. Summary: `dungeon-map`. | WD | `python tools/run_dungeon_map.py` (`--seed 42 --floor 1 --scale 8`) | N |
@@ -28,7 +28,7 @@ Rules, the CLI contract and the surface key are in `tools.md` (single copy). The
 | `list_scenes.py` | `.tscn` nodes and scripts without dumping scenes. Summary: `scenes`. | D | `python tools/list_scenes.py` (`--path scenes/dungeon.tscn`) | N |
 | `list_oversize_scripts.py` | Live `.gd` by bytes. Summary: `oversize`. | D | `python tools/list_oversize_scripts.py` (`--over-kb 5`) | N |
 | `list_facade_cluster.py` | A facade + sibling helpers by bytes. Summary: `facade-cluster`. | D | `python tools/list_facade_cluster.py --facade scripts/combat/enemy.gd` | N |
-| `start_build_slice.py` | Resolve a route and print the `grok --worktree` fork argv (`--launch` spawns it). Needs `--session` or `$GROK_SESSION_ID`. Summary: `slice-boot`. | D | `python tools/start_build_slice.py --door dungeon` (or `--job`, `--area`, `--dry-run`) | N |
+| `start_build_slice.py` | Resolve a route and print the `grok --worktree` fork argv (`--launch` spawns it). Session id optional (`--session` or `$GROK_SESSION_ID`; else placeholder, RESULT INFO). Prints the mapped smoke phases. Summary: `slice-boot`. | D | `python tools/start_build_slice.py --door dungeon` (or `--job`, `--area`, `--dry-run`) | N |
 | `week_start.py` | Week pin, changelog archive, log clean. **Human-only (QUARANTINE).** Agents must not run it. | D | `python tools/week_start.py` (`--dry-run`) | N |
 
 ### PowerShell shims (kept one release)
