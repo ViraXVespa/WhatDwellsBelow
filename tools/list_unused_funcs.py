@@ -1,21 +1,14 @@
-"""Candidate unused GDScript functions. Report only. Does not edit.
-
-A name is unused when it never appears outside its own func line in
-scripts/, scenes/, and project.godot. Engine callbacks are skipped.
-A name that appears only inside quotes is maybe, not unused.
-
-  python tools/list_unused_funcs.py
-  python tools/list_unused_funcs.py --limit 40
-"""
 from __future__ import annotations
 
 import argparse
 import re
 import sys
+import time
+from collections import Counter, defaultdict
 from pathlib import Path
 
 FUNC_RE = re.compile(
-    r"^(?P<indent>[ \t]*)(?:static[ \t]+)?func[ \t]+(?P<name>[A-Za-z_][A-Za-z0-9_]*)[ \t]*\("
+    r"^(?:static[ \t]+)?func[ \t]+([A-Za-z_][A-Za-z0-9_]*)[ \t]*\("
 )
 VIRTUAL = frozenset({
     "_init", "_static_init", "_enter_tree", "_exit_tree", "_ready",
@@ -38,125 +31,207 @@ def repo_root() -> Path:
     raise SystemExit("FAIL list_unused_funcs: run from the WhatDwellsBelow checkout")
 
 
-def strip_comment(line: str) -> str:
-    out = []
-    quote = ""
+def scan(line: str):
     i = 0
-    while i < len(line):
+    n = len(line)
+    quote = ""
+    while i < n:
         ch = line[i]
         if quote:
-            out.append(ch)
-            if ch == "\\" and i + 1 < len(line):
-                out.append(line[i + 1])
+            if ch == "\\" and i + 1 < n:
                 i += 2
                 continue
             if ch == quote:
                 quote = ""
-            i += 1
-            continue
-        if ch in ("'", '"'):
-            quote = ch
-            out.append(ch)
+                i += 1
+                continue
+            if ch.isalpha() or ch == "_":
+                j = i + 1
+                while j < n and (line[j].isalnum() or line[j] == "_"):
+                    j += 1
+                yield line[i:j], True
+                i = j
+                continue
             i += 1
             continue
         if ch == "#":
-            break
-        out.append(ch)
+            return
+        if ch in "\"'":
+            quote = ch
+            i += 1
+            continue
+        if ch.isalpha() or ch == "_":
+            j = i + 1
+            while j < n and (line[j].isalnum() or line[j] == "_"):
+                j += 1
+            yield line[i:j], False
+            i = j
+            continue
         i += 1
-    return "".join(out)
 
 
-def quoted_only(line: str, name: str) -> bool:
-    bare = re.sub(r"(\"[^\"]*\"|'[^']*')", " ", line)
-    return re.search(r"\b" + re.escape(name) + r"\b", bare) is None
-
-
-def load_corpus(root: Path) -> list[tuple[str, list[str]]]:
-    files: list[Path] = []
-    files.extend(sorted((root / "scripts").rglob("*.gd")))
-    if (root / "scenes").is_dir():
-        files.extend(sorted((root / "scenes").rglob("*.tscn")))
+def files_of(root: Path) -> list[Path]:
+    found = sorted((root / "scripts").rglob("*.gd"))
+    scenes = root / "scenes"
+    if scenes.is_dir():
+        found.extend(sorted(scenes.rglob("*.tscn")))
     project = root / "project.godot"
     if project.is_file():
-        files.append(project)
-    corpus = []
-    for path in files:
-        rel = path.relative_to(root).as_posix()
-        text = path.read_text(encoding="utf-8", errors="replace")
-        corpus.append((rel, text.splitlines()))
-    return corpus
+        found.append(project)
+    return found
 
 
-def main() -> int:
-    p = argparse.ArgumentParser(description="Candidate unused GDScript funcs")
-    p.add_argument("--limit", type=int, default=80)
-    ns = p.parse_args()
-    root = repo_root()
-    corpus = load_corpus(root)
+def collect(root: Path):
+    hits: Counter[str] = Counter()
+    quoted: Counter[str] = Counter()
     defs: list[tuple[str, int, str]] = []
     sizes: dict[str, int] = {}
-    for rel, lines in corpus:
-        if not rel.endswith(".gd"):
-            continue
-        sizes[rel] = (root / rel).stat().st_size
-        for i, line in enumerate(lines, 1):
-            m = FUNC_RE.match(strip_comment(line))
-            if not m:
-                continue
-            name = m.group("name")
-            if name in VIRTUAL:
-                continue
-            defs.append((rel, i, name))
+    for path in files_of(root):
+        rel = path.relative_to(root).as_posix()
+        if rel.endswith(".gd"):
+            sizes[rel] = path.stat().st_size
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for lineno, raw in enumerate(text.splitlines(), 1):
+            skip = ""
+            if rel.endswith(".gd"):
+                matched = FUNC_RE.match(raw.split("#", 1)[0])
+                if matched:
+                    skip = matched.group(1)
+                    if skip not in VIRTUAL:
+                        defs.append((rel, lineno, skip))
+            skipped = False
+            for name, in_quote in scan(raw):
+                if skip and not skipped and not in_quote and name == skip:
+                    skipped = True
+                    continue
+                hits[name] += 1
+                if in_quote:
+                    quoted[name] += 1
     unused = []
     maybe = []
     for rel, lineno, name in defs:
-        token = re.compile(r"\b" + re.escape(name) + r"\b")
-        def_line = re.compile(r"\bfunc[ \t]+" + re.escape(name) + r"[ \t]*\(")
-        uses = 0
-        quoted = 0
-        for crel, lines in corpus:
-            for i, raw in enumerate(lines, 1):
-                line = strip_comment(raw)
-                if not token.search(line):
+        used = hits[name]
+        if used == 0:
+            unused.append((rel, lineno, name, sizes.get(rel, 0)))
+        elif quoted[name] == used:
+            maybe.append((rel, lineno, name, sizes.get(rel, 0)))
+    return unused, maybe, defs
+
+
+def span_end(lines: list[str], start: int) -> int:
+    indent = len(lines[start]) - len(lines[start].lstrip(" \t"))
+    end = start + 1
+    while end < len(lines):
+        raw = lines[end]
+        if raw.strip() == "":
+            end += 1
+            continue
+        body = raw.lstrip(" \t")
+        ind = len(raw) - len(body)
+        if ind <= indent and not body.startswith("#"):
+            break
+        end += 1
+    while end > start + 1 and lines[end - 1].strip() == "":
+        end -= 1
+    return end
+
+
+def span_start(lines: list[str], func_at: int) -> int:
+    start = func_at
+    while start > 0:
+        prev = lines[start - 1].strip()
+        if prev.startswith("@") or prev.startswith("##"):
+            start -= 1
+            continue
+        break
+    return start
+
+
+def apply_unused(root: Path, unused: list[tuple[str, int, str, int]]) -> int:
+    by_file: dict[str, list[int]] = defaultdict(list)
+    for rel, lineno, _name, _nbytes in unused:
+        by_file[rel].append(lineno)
+    deleted = 0
+    for rel, linenos in by_file.items():
+        path = root / rel
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        for lineno in sorted(set(linenos), reverse=True):
+            idx = lineno - 1
+            if idx < 0 or idx >= len(lines):
+                print("skip\t%s:%s\tmissing" % (rel, lineno))
+                continue
+            if FUNC_RE.match(lines[idx].split("#", 1)[0]) is None:
+                print("skip\t%s:%s\tnot a func line" % (rel, lineno))
+                continue
+            start = span_start(lines, idx)
+            end = span_end(lines, idx)
+            del lines[start:end]
+            deleted += 1
+        text = "\n".join(lines)
+        if text and not text.endswith("\n"):
+            text += "\n"
+        path.write_text(text, encoding="utf-8", newline="\n")
+        if not FUNC_RE.search(text):
+            res = "res://" + rel
+            held = False
+            for other in files_of(root):
+                if other.resolve() == path.resolve():
                     continue
-                if crel == rel and i == lineno:
-                    continue
-                if def_line.search(line):
-                    continue
-                uses += 1
-                if quoted_only(line, name):
-                    quoted += 1
-        row = (rel, lineno, name, sizes.get(rel, 0))
-        if uses == 0:
-            unused.append(row)
-        elif quoted == uses:
-            maybe.append(row)
+                blob = other.read_text(encoding="utf-8", errors="replace")
+                if res in blob or rel in blob:
+                    held = True
+                    break
+            if not held:
+                path.unlink()
+                print("deleted_file\t%s" % rel)
+    return deleted
+
+
+def write_summary(root: Path, unused, maybe, defs, elapsed: float) -> Path:
     log_dir = root / "_logs" / "unused-funcs"
     log_dir.mkdir(parents=True, exist_ok=True)
     summary = log_dir / "summary.txt"
-    lines_out = []
-    for kind, rows in (("unused", unused), ("maybe", maybe)):
-        for rel, lineno, name, nbytes in rows:
-            lines_out.append(f"{kind}\t{rel}:{lineno}\t{name}\t{nbytes}")
-    lines_out.append(f"funcs_scanned={len(defs)}")
-    lines_out.append(f"unused_count={len(unused)}")
-    lines_out.append(f"maybe_count={len(maybe)}")
-    summary.write_text("\n".join(lines_out) + "\n", encoding="utf-8", newline="\n")
+    rows = []
+    for kind, items in (("unused", unused), ("maybe", maybe)):
+        for rel, lineno, name, nbytes in items:
+            rows.append("%s\t%s:%s\t%s\t%s" % (kind, rel, lineno, name, nbytes))
+    rows.append("funcs_scanned=%s" % len(defs))
+    rows.append("unused_count=%s" % len(unused))
+    rows.append("maybe_count=%s" % len(maybe))
+    rows.append("seconds=%.2f" % elapsed)
+    summary.write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
+    return summary
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Unused GDScript funcs")
+    parser.add_argument("--limit", type=int, default=80)
+    parser.add_argument("--apply", action="store_true")
+    ns = parser.parse_args()
+    started = time.perf_counter()
+    root = repo_root()
+    unused, maybe, defs = collect(root)
+    deleted = 0
+    if ns.apply:
+        deleted = apply_unused(root, unused)
+        unused, maybe, defs = collect(root)
+    elapsed = time.perf_counter() - started
+    summary = write_summary(root, unused, maybe, defs, elapsed)
     shown = 0
-    for line in lines_out:
-        if line.startswith("funcs_scanned=") or line.startswith("unused_count=") or line.startswith("maybe_count="):
-            print(line)
-            continue
+    for rel, lineno, name, nbytes in unused:
         if shown >= ns.limit:
-            continue
-        print(line)
+            break
+        print("unused\t%s:%s\t%s\t%s" % (rel, lineno, name, nbytes))
         shown += 1
-    hidden = len(unused) + len(maybe) - shown
-    if hidden > 0:
-        print(f"hidden={hidden}\tfull={summary.as_posix()}")
-    else:
-        print(f"full={summary.as_posix()}")
+    print("funcs_scanned=%s" % len(defs))
+    print("unused_count=%s" % len(unused))
+    print("maybe_count=%s" % len(maybe))
+    print("deleted=%s" % deleted)
+    print("seconds=%.2f" % elapsed)
+    print("full=%s" % summary.as_posix())
     print("report=PASS")
+    if ns.apply and unused:
+        return 1
     return 0
 
 

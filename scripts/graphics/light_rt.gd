@@ -216,7 +216,7 @@ static func _hub_day_finish(img: Image, x0: int, z0: int, layout: Node) -> void:
 		boxes.append({"pos": layout.hall_pos(), "box": layout.hall_box})
 		boxes.append({"pos": layout.wing_pos(), "box": layout.wing_box})
 		boxes.append({"pos": layout.stall_pos(), "box": layout.stall_box})
-	var away := Vector2(0.406138, 0.913811)
+	var away := Vector2(-0.406138, 0.913811)
 	var y: int = 0
 	while y < h:
 		var x: int = 0
@@ -274,7 +274,7 @@ static func _hub_lift_dark(img: Image) -> void:
 static func _hub_building_shade(img: Image, x0: int, z0: int, layout: Node) -> void:
 	if img == null or layout == null or not layout.has_method("hall_pos"):
 		return
-	var away := Vector2(0.406138, 0.913811)
+	var away := Vector2(-0.406138, 0.913811)
 	var boxes: Array = [
 		{"pos": layout.hall_pos(), "box": layout.hall_box, "len": 3.4},
 		{"pos": layout.wing_pos(), "box": layout.wing_box, "len": 2.6},
@@ -896,9 +896,7 @@ static func _hub_cast_buildings(img: Image, x0: int, z0: int, layout: Node) -> v
 static func _hub_stamp_skirt(
 	img: Image, x0: int, z0: int, sub: float, w: int, h: int, b: Dictionary, away: Vector2
 ) -> int:
-	var slope: float = 0.72
-	var bh: float = float(b["h"])
-	var reach: float = bh * slope
+	var reach: float = float(b["h"]) * 0.62
 	var cx: float = float(b["x"])
 	var cz: float = float(b["z"])
 	var hx: float = float(b["hx"])
@@ -906,7 +904,7 @@ static func _hub_stamp_skirt(
 	var an: float = away.length()
 	var ax: float = away.x / maxf(an, 0.001)
 	var az: float = away.y / maxf(an, 0.001)
-	var pad: float = reach + 0.9
+	var pad: float = reach + 0.35
 	var px0: int = clampi(int(floor((cx - hx - pad - float(x0)) * sub)), 0, w - 1)
 	var px1: int = clampi(int(ceil((cx + hx + pad - float(x0)) * sub)), 0, w)
 	var pz0: int = clampi(int(floor((cz - hz - pad - float(z0)) * sub)), 0, h - 1)
@@ -923,28 +921,25 @@ static func _hub_stamp_skirt(
 				continue
 			var best: float = 1.0
 			var step: int = 0
-			while step < 16:
-				var t: float = reach * float(step) / 15.0
-				var bx: float = wx - ax * t
-				var bz: float = wz - az * t
-				var ox: float = absf(bx - cx) - hx
-				var oz: float = absf(bz - cz) - hz
-				if ox <= 0.45 and oz <= 0.45:
-					var edge: float = clampf(maxf(ox, oz) / 0.45, 0.0, 1.0)
+			while step < 18:
+				var t: float = reach * float(step) / 17.0
+				var sx: float = wx - ax * t
+				var sz: float = wz - az * t
+				var roof: float = _hub_roof_h(sx, sz, b)
+				if roof > t / 0.62 + 0.05:
 					var fade: float = clampf(t / maxf(reach, 0.001), 0.0, 1.0)
-					var k: float = lerpf(0.42, 0.92, maxf(fade, edge * 0.85))
-					best = minf(best, k)
+					var soft: float = clampf((roof - t / 0.62) / 0.45, 0.0, 1.0)
+					best = minf(best, lerpf(0.34, 0.9, maxf(fade, 1.0 - soft)))
 				step += 1
 			if best > 0.96:
 				x += 1
 				continue
 			var c: Color = img.get_pixel(x, y)
-			img.set_pixel(x, y, Color(c.r * best, c.g * best, c.b * best, 1.0))
+			img.set_pixel(x, y, Color(minf(c.r, best), minf(c.g, best), minf(c.b, best), 1.0))
 			wrote += 1
 			x += 1
 		y += 1
 	return wrote
-
 static func _hub_roof_box(pos: Vector3, box: Vector3, eave: float, slen: float) -> Dictionary:
 	return {
 		"x": pos.x,
@@ -953,32 +948,24 @@ static func _hub_roof_box(pos: Vector3, box: Vector3, eave: float, slen: float) 
 		"hz": box.z * 0.5 + eave + 0.35,
 		"len": slen
 	}
-static func _hub_yard_boxes(layout: Node, bake: bool) -> Array:
+static func _hub_yard_boxes(layout: Node, _bake: bool) -> Array:
 	var boxes: Array = []
 	if layout != null and layout.has_method("hall_pos"):
-		var hall: Dictionary = _hub_box_of(layout.hall_pos(), layout.hall_box, 4.2)
-		hall["lid"] = 1.0
-		boxes.append(hall)
-		var wing: Dictionary = _hub_box_of(layout.wing_pos(), layout.wing_box, 4.6)
-		wing["lid"] = 1.0
-		boxes.append(wing)
-		var stall: Dictionary = _hub_box_of(layout.stall_pos(), layout.stall_box, 2.6)
-		stall["lid"] = 0.4
-		boxes.append(stall)
+		var hp: Vector3 = layout.hall_pos()
+		var hb: Vector3 = layout.hall_box
+		boxes.append(_hub_gable(hp, hb))
+		var wp: Vector3 = layout.wing_pos()
+		var wb: Vector3 = layout.wing_box
+		boxes.append(_hub_gable(wp, wb))
+		var ad: float = 0.7
 		if layout.get("hall_awning_depth") != null:
-			var hp: Vector3 = layout.hall_pos()
-			var hb: Vector3 = layout.hall_box
-			var ad: float = float(layout.hall_awning_depth)
-			var aw: Dictionary = _hub_box_of(
-				Vector3(hp.x, 0.0, hp.z + hb.z * 0.5 + ad * 0.5),
-				Vector3(hb.x, 1.2, ad),
-				1.6
-			)
-			aw["lid"] = 0.0
-			boxes.append(aw)
+			ad = float(layout.hall_awning_depth)
+		boxes.append(_hub_awning(hp, hb, ad))
+		boxes.append(_hub_awning(wp, wb, ad))
+		boxes.append(_hub_tarp(layout.stall_pos(), layout.stall_box))
 	else:
-		boxes.append(_hub_box_of(Vector3(8.2, 0.0, 6.0), Vector3(5.6, 3.4, 4.2), 4.2))
-		boxes.append(_hub_box_of(Vector3(25.0, 0.0, 8.0), Vector3(4.6, 2.4, 3.4), 2.6))
+		boxes.append(_hub_gable(Vector3(8.2, 0.0, 6.0), Vector3(5.6, 3.4, 4.2)))
+		boxes.append(_hub_tarp(Vector3(25.0, 0.0, 8.0), Vector3(4.6, 2.4, 3.4)))
 	return boxes
 static func _hub_box_of(pos: Vector3, box: Vector3, slen: float) -> Dictionary:
 	return {
@@ -990,6 +977,64 @@ static func _hub_box_of(pos: Vector3, box: Vector3, slen: float) -> Dictionary:
 		"len": slen,
 		"lid": 1.0
 	}
+
+
+static func _hub_gable(pos: Vector3, box: Vector3) -> Dictionary:
+	var eave: float = maxf(box.y, 1.2)
+	return {
+		"kind": "gable",
+		"x": pos.x,
+		"z": pos.z,
+		"hx": box.x * 0.5,
+		"hz": box.z * 0.5,
+		"eave": eave,
+		"ridge": eave + minf(box.z * 0.22, 1.05),
+		"h": eave + minf(box.z * 0.22, 1.05)
+	}
+
+
+static func _hub_awning(pos: Vector3, box: Vector3, depth: float) -> Dictionary:
+	var eave: float = maxf(box.y, 1.2)
+	var span: float = maxf(depth, 0.4)
+	return {
+		"kind": "awning",
+		"x": pos.x,
+		"z": pos.z + box.z * 0.5 + span * 0.5,
+		"hx": box.x * 0.5,
+		"hz": span * 0.5,
+		"eave": eave,
+		"hem": eave * 0.66,
+		"h": eave
+	}
+
+
+static func _hub_tarp(pos: Vector3, box: Vector3) -> Dictionary:
+	return {
+		"kind": "tarp",
+		"x": pos.x,
+		"z": pos.z,
+		"hx": box.x * 0.5,
+		"hz": box.z * 0.5,
+		"eave": 1.05,
+		"ridge": 1.5,
+		"h": 1.5
+	}
+
+
+static func _hub_roof_h(wx: float, wz: float, b: Dictionary) -> float:
+	var dx: float = absf(wx - float(b["x"])) - float(b["hx"])
+	var dz: float = absf(wz - float(b["z"])) - float(b["hz"])
+	if dx > 0.04 or dz > 0.04:
+		return 0.0
+	var kind: String = str(b.get("kind", "box"))
+	if kind == "gable" or kind == "tarp":
+		var along: float = absf(wz - float(b["z"])) / maxf(float(b["hz"]), 0.001)
+		return lerpf(float(b["ridge"]), float(b["eave"]), clampf(along, 0.0, 1.0))
+	if kind == "awning":
+		var wall_z: float = float(b["z"]) - float(b["hz"])
+		var along_s: float = (wz - wall_z) / maxf(float(b["hz"]) * 2.0, 0.001)
+		return lerpf(float(b["eave"]), float(b["hem"]), clampf(along_s, 0.0, 1.0))
+	return float(b.get("h", 1.0))
 static func _hub_inside(wx: float, wz: float, b: Dictionary) -> bool:
 	return absf(wx - float(b["x"])) <= float(b["hx"]) and absf(wz - float(b["z"])) <= float(b["hz"])
 

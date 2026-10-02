@@ -257,14 +257,14 @@ static func attach_awning(
 ) -> void:
 	var x0: float = -box_size.x * 0.5 + inset_l
 	var x1: float = box_size.x * 0.5 - inset_r
-	var z_wall: float = box_size.z * 0.5
-	var z_hem: float = z_wall + depth
-	var y_top: float = box_size.y * 0.5
-	var y_hem: float = y_top - valance
-	var tl := Vector3(x0, y_top, z_wall)
-	var tr := Vector3(x1, y_top, z_wall)
-	var bl := Vector3(x0, y_hem, z_wall)
-	var br := Vector3(x1, y_hem, z_wall)
+	var z_eave: float = box_size.z * 0.5
+	var z_hem: float = box_size.z * 0.5 + depth
+	var y_eave: float = box_size.y * 0.5
+	var y_hem: float = y_eave - valance
+	var tl := Vector3(x0, y_eave, z_eave)
+	var tr := Vector3(x1, y_eave, z_eave)
+	var bl := Vector3(x0, y_hem, z_eave)
+	var br := Vector3(x1, y_hem, z_eave)
 	var hl := Vector3(x0, y_hem, z_hem)
 	var hr := Vector3(x1, y_hem, z_hem)
 	var u0 := Vector2(0.0, 0.0)
@@ -275,7 +275,6 @@ static func attach_awning(
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	_quad(st, tl, tr, hr, hl, u0, u1, u2, u3)
 	_quad(st, tl, bl, br, tr, u0, u3, u2, u1)
-	_quad(st, bl, hl, hr, br, u0, u1, u2, u3)
 	st.generate_normals()
 	var built: ArrayMesh = st.commit()
 	var cloth := MeshInstance3D.new()
