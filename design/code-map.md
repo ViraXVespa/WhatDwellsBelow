@@ -3,7 +3,7 @@
 Status: index  
 Read when: you need a live script or scene for a named system
 
-Open **only the matching system row**, not the rest of the table. When Grok Bot splits a live script, update this file in the same slice.
+Game code only (tools live in the `design/tools.md` catalog). Open **only the matching system row**, not the rest of the table. When Grok Bot splits a live script, update this file in the same slice.
 
 Each facade sits beside its cluster folder (`scripts/<area>/<stem>.gd` + `<stem>/`, refactor.md). A bare `name.gd` in a row is a helper in that folder; basenames are unique repo-wide, so `code_map.py row --path <full path>` and `list_xref.py` find it. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`.
 

@@ -67,7 +67,7 @@ Where cues come from, how Build wires one, and the silent-today event table: `au
 - Lighting, fog color/density, and void plane MUST create a clear visual contrast between the warmer Placeholdia hub and the colder, darker dungeon floors. That contrast is product law. World env, ground shader, wall volume, light RT, and actor shadows belong to the graphics owner.
 - Consciousness-transfer VFX on dungeon enter and wake-up VFX on return to Placeholdia are required presentation beats.
 
-Live world art (2026-09-09 pass): Placeholdia and dungeon tiles, building facades, hub/dungeon props, hub NPCs, ghost shopkeep, dummy, boss door, and cracked wall were replaced to match the locked player Bibles. Installer `tools/process_world_pass.py`. Key native-resolution stills, then nearest-neighbor fit; do not downscale before chroma key. Player I2V, enemy stills, and UI icons were not in that pass. Placeholder policy below still applies.
+World art pass history (2026-09-09): `design/changelog/archive/world-art-2026-09-09.md`.
 
 ## Credit splash → title sequence
 

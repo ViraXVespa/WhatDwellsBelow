@@ -39,7 +39,7 @@ One Build session owns catalog / runner / skill optimizations. Keep the session 
 - Purpose: When the User names a catalog / runner / skill job, implement that one optimization (catalog row, `tools/` runner, skill when-to-use). Catalog summaries only. Not a game-slice CLI.
 - Typical slice: one named runner. Propose if new, wait for Go. Edit that runner / catalog row / skill when-to-use. Read that row via `tools/read_summary.py --job <name>`. Stop after the report.
 - Just do: same-catalog shared helper; skill `when-to-use` tokens; summary shape matching sibling rows; catalog line next to the existing job.
-- Stop and propose: a new catalog runner (already binding). A generic markdown or pickup writer; a suite of extra doc runners; putting runners on the live code map; a skill rewrite that pastes the catalog into every Build boot.
+- Stop and propose: a new catalog runner (already binding). A generic markdown or pickup writer; a suite of extra doc runners; a skill rewrite that pastes the catalog into every Build boot.
 - Do not: Imagine / I2V; Grok Bot PRs; week pin ritual; tree dumps or whole tool bodies in chat; parking Bot opt notes; folding slice work into this thread.
 - Stop after the report. Pickup is git plus the `_logs/<job>/` postcards.
 - Overlap: Bot-notes parks queue items with `bot_opt.py`; Smoke-tests writes phase coverage; Slice sessions consume this catalog. This session does not park Bot notes or add smoke assertions unless the User names that. Slice sessions do not add runners unless named in that thread.
