@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: secret console, playtest, journal, smoke
-Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/debug/debug_menu/`
+Code: `scripts/debug/` (menu helpers in `scripts/debug/debug_menu/`)
 
 | Job | Open |
 |-----|------|

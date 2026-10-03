@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: secret debug menu / balance page  
-Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/debug/debug_menu/`  
+Code: `scripts/debug/`  
 
 
 ## Secret debug / balance menu

@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: automated playtest or playtest journal  
-Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/debug/debug_menu/`  
+Code: `scripts/debug/`  
 
 
 ## Automated Playtest / AI Player system

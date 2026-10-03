@@ -17,11 +17,11 @@ Same table shape and rules as the tunables door; `tools/tunables.py get|set|add 
 | Hall width min / mode / max | 2 / 3 / 4 | **2 / 3 / 4** | Mode changes every `hall_w_interval` |
 | Hall width interval | 10 | **10** | Tiles along a winding path |
 | Hall width min / mode pct | 0.15 / 0.60 | **0.15 / 0.60** | Remainder is max width |
-| Fog of war reveal radius | 5 tiles | 5 | Map disk only; 3D chunks are not fog-gated |
+| Fog of war reveal radius | 5 tiles | 5 | Map disk only, not 3D chunks |
 | Max Extraction Gates per floor (`max_clerks`) | 3 | 3 | |
 | Ghost shop chance | ~33 % | 0.33 | Always in safe room |
 | Named monster rate | ~1 every 3 floors | 3 | |
-| Flee events per full clear | Average 2 | 2 | Small speed boost when fleeing |
+| Flee events per full clear | Average 2 | 2 | Small speed boost |
 | Idle / no-reveal timers | 20–30 s | 24 / 22 | Outside safe rooms |
 | Pressure count / radius / cd | — | 3 / 5 / 18 | |
 | Pressure waves per floor | 3 | **3** | Caps idle/pressure XP |
@@ -39,7 +39,7 @@ Same table shape and rules as the tunables door; `tools/tunables.py get|set|add 
 | Crystal CL band | 2 | **2** | Walk-level CL per placement band |
 | Crystal dead-end sep | 32 | **32** | Minimum Manhattan from spawn |
 | Crystal dead-end length | 28 | **28** | Spur walk to nearest multi-exit room |
-| Outline fine size (`outline_fine_m`) | 0.25 m | **0.25** | Piece-bake resolution only, not a floor-wide polyline |
+| Outline fine size (`outline_fine_m`) | 0.25 m | **0.25** | Piece-bake resolution only |
 | Outline fillet fraction (`outline_fillet_frac`) | unused | **unused** | Wear is shader-side |
 | Outline jag fraction (`outline_jag_frac`) | unused | **unused** | Wear is shader-side |
 | Angled corridors max (`angled_corridor_max`) | 4 | **4** | First-class off-axis halls per floor |
@@ -130,7 +130,7 @@ Roll rules and the holds cap: inventory (gear job).
 
 | Parameter | Suggested start | Notes |
 |-----------|-----------------|-------|
-| Camera zoom range | 1.0 – 4.0 | Saved. Default 1.75. Wheel / pinch / look-mode RS also write `App.set_zoom`. |
+| Camera zoom range | 1.0 – 4.0 | Saved. Default 1.75. Wheel / pinch / look-mode RS also set it. |
 | HUD scale range | 0.7 – 1.4 | System slider and look-mode RS X. |
 | UI text floor | 14 | Debug slider (8–24). Floor is saved; applied scale (clamp formula: debug menu) is recomputed on resize. |
 | Look wheel step | 0.08 | Per notch; debug slider. |

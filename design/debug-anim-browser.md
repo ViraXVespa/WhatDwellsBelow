@@ -2,7 +2,7 @@
 
 Status: binding design  
 Read when: animation browser debug page  
-Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/debug/debug_menu/`  
+Code: `scripts/debug/`  
 
 
 ## Animation Browser (secret debug page)
