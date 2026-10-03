@@ -7,7 +7,7 @@ Imagine runs only through the isolated-media gate (CLI Build). Structure, not st
 
 ## Where things stand
 
-- Live enemy stills are ONE picture per type, copied to five directions and flipped for three (`pack_p4_enemies.py`): `idle_up` shows the front and flips swap prop hands. No real directional set yet.
+- Live enemy stills are ONE picture per type, copied to five directions and flipped for three (`pack_p4_enemies.py`): `idle_up` shows the front and flips swap prop hands. No real directional set.
 - Reuse: 8 directions (Up, Down, Left, Right and the four diagonals), 3x3 sheet with the same cell order as the player Bible (`art-bible-character`), centre cell = close-up, opaque `#FF00FF` plate, then `plate_remap.py`.  `bible_prompt.py` is player-only; copy the template below by hand.
 - Samples stay out of git: `$WDB_GROK_SESSIONS` (`agent_log.grok_sessions()`).
 
@@ -73,7 +73,7 @@ Design question: does the archer keep the bow and accept (b) or (c), or become a
 
 ## Template notes (from the test runs)
 
-- Describe facing in image-edge terms ("viewer's RIGHT" was drawn facing left): "face, chest, bow and arrow point toward the RIGHT EDGE of the image; bow in the left hand = the far arm, extended toward the right edge; right hand = near arm pulls the string".
+- Describe facing in image-edge terms ("viewer's RIGHT" can be drawn facing left): "face, chest, bow and arrow point toward the RIGHT EDGE of the image; bow in the left hand = the far arm, extended toward the right edge; right hand = near arm pulls the string".
 - Spell out each cell's side of every prop and armour piece (orc pauldron: LEFT shoulder). Keep clauses short (long geometry hurt facing).
 - "Exactly one {PROP}". Two-handed prop: BOTH hands in EVERY figure, including Up with the haft seen from behind; fix the grip.
 - "Right is NOT a flipped Left" helps orc, not asymmetric props.

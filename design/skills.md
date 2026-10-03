@@ -91,4 +91,4 @@ HUD ints = max(1, round(those scores))
 Example: lv 11 / 11 / 11 / 11 → combat 11.  
 Fragment rate is `App.bal.xp_keep` (live 0.20). Adrenaline multiplies run XP in `add_run_xp`.
 
-Player CL is ~1/4 of the old sum-of-four-skills value. Floor span and per-CL enemy rates live in the tunables gate so same-floor raw stats stay in the same ballpark.
+Player CL is ~1/4 of the sum of the four skills. Floor span and per-CL enemy rates live in the tunables gate so same-floor raw stats stay in the same ballpark.

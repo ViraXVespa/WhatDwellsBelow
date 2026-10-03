@@ -73,7 +73,7 @@ Walk-over HP orbs (`pickup.gd`) apply `orb_heal`. If the player is already at fu
 - Plate prompt verb is “Step the plate”. Lever prompt verb is “Pull lever”.
 - Cracked walls have higher HP than normal breakables (suggested start: 8). Breaking one reveals its linked hidden chest.
 - Dead-end chests and puzzle chests may optionally contain Artifacts in addition to normal loot.
-- There is no open-chest sprite yet. A used chest (`chest`, `base_chest`, `puzzle_chest`) fades and tints in place and keeps the “Empty.” prompt for the rest of the floor.
+- There is no open-chest sprite. A used chest (`chest`, `base_chest`, `puzzle_chest`) fades and tints in place and keeps the “Empty.” prompt for the rest of the floor.
 
 ## Live snapshot — puzzle rooms
 

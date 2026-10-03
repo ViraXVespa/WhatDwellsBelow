@@ -58,7 +58,7 @@ Extending the tool is part of the task. Do not work around it (no hand-driven Go
 3. A new worker flag or `run_shots.py` argument is the last resort: parse in `tool_args.gd`, add the matching argument. The script cap is Bot's sweep, not a Build step.
 4. Document it in the table below and in `--help` (`check_tool_cli.py`).
 
-| Knob | Stages | Added for |
+| Knob | Stages | Used for |
 |---|---|---|
 | `--steps`, `--frames-dir`, `--no-pixels` | scripted flows, numbered frames, headless asserts | NPC/menu/page captures (first row) |
 | `--width`, `--height`, `--show` | window size; window left visible | honored by the shot runner |

@@ -14,7 +14,7 @@ English is the default locale and reads exactly as before. Player-facing strings
 
 Registration: `project.godot` `[internationalization]` lists `en.po` (new locales are also added to `LOCALES` below). `setup()` is idempotent and also picks the locale.
 
-Locale choice: default `en`. `--wdb-locale=xx` (web: `?wdb-locale=xx`) selects another code in `LOCALES`; unknown codes fall back to `en`. `LocS.set_locale(code)` is the hook for a future settings UI. The OS locale is ignored on purpose. Nothing is saved yet.
+Locale choice: default `en`. `--wdb-locale=xx` (web: `?wdb-locale=xx`) selects another code in `LOCALES`; unknown codes fall back to `en`. `LocS.set_locale(code)` is the hook for a future settings UI. The OS locale is ignored on purpose. Nothing is saved.
 
 ## Key naming
 
@@ -73,11 +73,11 @@ Out of scope by design: `debug/*`, smokes, playtest and log text, ids and node n
 
 ## Decisions (owner delegated, 2026-10-03)
 
-1. **Keys**: keep `<file stem>.<slug>`. A rename pass is cheap later with a key-map script; not worth doing now.
+1. **Keys**: keep `<file stem>.<slug>`. A rename pass is cheap later with a key-map script; not planned.
 2. **Plurals**: use `tr_n` and PO plural forms when a second locale is actually added. Until then `%s` suffix cases stay: `anvil_forge_job.stopped_the_queue_pick_from` ("piece%s") and `forge_act.kept_hold` ("hold%s").
 3. **Placeholders**: new strings use named placeholders: `tr("scope.key").format({"gold": g})` with `{gold}` in the `msgstr`. Existing positional `%s`/`%d` strings convert opportunistically when touched.
-4. **Locale persistence**: save the choice in settings (not the save slot) when a settings row is added. Not built yet.
+4. **Locale persistence**: save the choice in settings (not the save slot) when a settings row is added. Not built.
 5. **Data tables** (catalog, affixes, archives): translate by id, key derived from the id (`item.<id>.name`). Done in pass 2; quest titles still come from generated text.
 6. **Fonts and RTL**: deferred until a target language is chosen. Then: pick a UI font with the needed glyphs (CJK/Cyrillic/Thai fallback chain), check label widths, and add mirrored layout for RTL.
 
-Registration: `project.godot` now lists `en.po` under `[internationalization]`. `LocS.setup()` skips a locale that is already registered, so there are no duplicates; it still adds any other code in `LOCALES` and picks the locale.
+Registration: `project.godot` lists `en.po` under `[internationalization]`. `LocS.setup()` skips a locale that is already registered, so there are no duplicates; it still adds any other code in `LOCALES` and picks the locale.

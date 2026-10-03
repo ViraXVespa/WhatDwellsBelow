@@ -59,7 +59,7 @@ Allowed extras on top of the v31 sheet: drop "same hair"; "small body coil"; "ha
 ## Derived rules (read before changing a prompt)
 
 1. The editor is literal. A noun often becomes a drawn object (plates, vortex, pouch, gloves, belt, buckle).
-2. "Empty hands + two-hand swing" in I2V fills the gap between palms with a prop. Palms-apart + "plate visible between palms" was the I2V counter; it still failed in Build tests.
+2. "Empty hands + two-hand swing" in I2V fills the gap between palms with a prop. Palms-apart + "plate visible between palms" is the I2V counter; it still fails in Build tests.
 3. Image-edit from the Bible can stack two fists on the sternum. Same prompt is not 100% stable (`fingers curled` coin-flips to tummy-ache). The word `fists` is what repeated (v22-v25 and v31).
 4. Foot language must be last and explicit or the stance widens into a fight pose.
 5. Long prompts drop the stack. Stack sentence stays early.

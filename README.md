@@ -2,7 +2,7 @@
 
 A gamepad-first dungeon crawler where you pilot disposable spirit avatars, mail loot home, and slowly remember the skills you earned in the dark.
 
-**Playable demo** — a polished proof of the full game, not a greybox. Staging hub is **Placeholdia** (a fragment, not the real city). Take a Great Axe and pickaxe into the dungeon, fight, mine, extract, and wake with a fragment of what you earned. It should look and feel like What Dwells Below; a lot of the full game (other skills, weapons, biomes, co-op, story, the actual city) is simply not in this build yet.
+**Playable demo** — a polished proof of the full game, not a greybox. Staging hub is **Placeholdia** (a fragment, not the real city). Take a Great Axe and pickaxe into the dungeon, fight, mine, extract, and wake with a fragment of what you earned. It should look and feel like What Dwells Below; a lot of the full game (other skills, weapons, biomes, co-op, story, the actual city) is simply not in this build.
 
 ## Play in the browser
 
