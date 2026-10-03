@@ -13,7 +13,7 @@ static func take_hit(host: CharacterBody3D, raw: float, from_dir: Vector2, crit:
 	var dmg: float = App.bal.apply_defense(raw, host.defense)
 	dmg *= Threat.received_mult(host.combat_lv)
 	if crit:
-		dmg *= App.bal.crit_mult
+		dmg *= App.bal.crit_mult + App.gear("crit_dmg")
 		host.flash = 0.16
 	else:
 		host.flash = 0.08

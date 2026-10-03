@@ -55,6 +55,7 @@ const DYNRES_WINDOW_S := 1.5
 const DYNRES_RECOVER_WINDOWS := 8
 const DYNRES_BACKOFF_MAX := 8
 const DYNRES_HITCH_S := 0.5
+const FLEE_PACK_MEAN := 4.0
 const WALL_H := 1.45
 const ARENA := 22
 const PATREON_URL := "https://www.patreon.com/cw/ViraXVespa"

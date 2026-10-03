@@ -50,6 +50,7 @@ Same table shape and rules as the tunables door; `tools/tunables.py get|set|add 
 | `aggro_range` | 7.5 |
 | `flee_speed_mult` | 1.45 |
 | `flee_hp_frac` | 0.4 |
+| `FLEE_PACK_MEAN` | 4 (`tunables.gd`; flee packs per floor) |
 | `flee_run_time` | 1.15 |
 | `flee_help` | 2 |
 | `boss_hp_mult` | 8 |
