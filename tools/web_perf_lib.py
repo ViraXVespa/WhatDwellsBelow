@@ -19,7 +19,7 @@ setInterval(samp,500);
 if(W.seen&&!b&&!W.gone){W.gone=performance.now()}
 if(W.t&&W.gone){(W.f[W.ph]=W.f[W.ph]||[]).push(t-W.t)}W.t=t;requestAnimationFrame(l)})(0);
 window.addEventListener('error',function(){W.errs++});
-var ce=console.error;console.error=function(){var m=Array.prototype.join.call(arguments,' ');if(/keyboard_get_keycode_from_physical|Not supported by this display server/.test(m))return ce.apply(console,arguments);W.cerr[W.ph]=(W.cerr[W.ph]||0)+1;if(W.cmsg.length<4&&W.ph[0]!='_')W.cmsg.push(W.ph+': '+Array.prototype.join.call(arguments,' ').slice(0,140));return ce.apply(console,arguments)};window.__wpSamp=samp})();
+var ce=console.error;console.error=function(){W.cerr[W.ph]=(W.cerr[W.ph]||0)+1;if(W.cmsg.length<4&&W.ph[0]!='_')W.cmsg.push(W.ph+': '+Array.prototype.join.call(arguments,' ').slice(0,140));return ce.apply(console,arguments)};window.__wpSamp=samp})();
 """
 PLAY = ("stuck_t", "seed", "floor", "end_cond", "duration", "kills", "dmg_dealt", "dmg_taken", "crits", "combat_t", "near_death")
 READY = "!!window.__wp.gone&&!!document.getElementById('canvas')"
