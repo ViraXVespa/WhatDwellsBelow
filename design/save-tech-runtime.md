@@ -18,7 +18,7 @@ Read when: borderless exclusive, mip decode ban, Compatibility preferred
 
 `SpriteFilt.ensure_mips` must not decode a `CompressedTexture2D` into `ImageTexture` at runtime. Web export bakes mip chains via `tools/enable_texture_mips.py`. Local play uses the imported texture as-is.
 
-Frame-time breakdown (0.5.45, ms per frame, 8-core Xeon shared with other jobs, so +-20% noise; software GL both ways). Measured with a temporary probe (not kept): `process_priority` +-100000 marker nodes bracket every `_process` / `_physics_process` (script and node time), `RenderingServer.viewport_get_measured_render_time_cpu` gives render CPU. `Performance.TIME_PROCESS` / `TIME_PHYSICS_PROCESS` read above the frame time here and are not usable.
+Frame-time breakdown (0.5.21, ms per frame, 8-core Xeon shared with other jobs, so +-20% noise; software GL both ways). Measured with a temporary probe (not kept): `process_priority` +-100000 marker nodes bracket every `_process` / `_physics_process` (script and node time), `RenderingServer.viewport_get_measured_render_time_cpu` gives render CPU. `Performance.TIME_PROCESS` / `TIME_PHYSICS_PROCESS` read above the frame time here and are not usable.
 
 | Build, scene | Frame | Script process | Script physics | Render CPU | Rest (GPU / swap wait) |
 |---|---|---|---|---|---|
