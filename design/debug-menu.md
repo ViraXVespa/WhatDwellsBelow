@@ -26,7 +26,9 @@ Live path: `scripts/debug/debug_menu.gd`. This is current chrome, not a new syst
 
 **Pages.** Five pages in LB / RB order: Values → Settings → Profiles → Playtest → Animation Browser. Close (B) sits in the top row but is not a page. The top tab buttons are mouse-clickable and must not take gamepad focus. Title, tabs, and status stay pinned above the scroll so first-open focus cannot hide the tab labels. The active tab is tinted.
 
-**Values (browse / edit).** Values does not use engine SpinBox focus. Tunables are grouped by category in two columns (`val_grid.gd`). Opening the page highlights the top-left category.
+**Values (browse / edit).** Values does not use engine SpinBox focus. Tunables are grouped by category in two columns (`val_grid.gd`; key to category prefix rules in `val_cat_map.gd`, first match wins, no match lands in Other). Opening the page highlights the top-left category.
+
+Categories (27). Left column: Player, Movement, Combat, Cover, Aim & Lock, Adrenaline, Great Axe, Staff, Bow, Enemy Melee Stats, Enemy Ranged Stats (`e_<id>_*` for archer / shaman / imp / wisp), Enemy AI, Enemy Spawns, Level Scaling. Right column: Dungeon Layout, Gathering & Props, Camera, Ground, Lighting, XP & Skills, Gear, Set Bonuses, Forge & Affixes, Loot & Drops, Shops & Quests, Consumables, Other (music, playtest, and any new key without a rule). A new key needs a rule line in `val_cat_map.gd` to leave Other.
 
 - D-pad / left-stick Up / Down move within the current category column and wrap in that column.
 - D-pad / left-stick Left / Right move between the two category columns.

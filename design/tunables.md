@@ -64,7 +64,7 @@ World-xz sheets on grass pads, packed yard, and dungeon floors. Debug menu categ
 
 ## Light buffer
 
-Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub adds one wide sun disc. Debug menu reads the same keys. Do not retune range or energy to fake smoothness.
+Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub adds one wide sun disc. Debug menu category Lighting reads the same keys. Do not retune range or energy to fake smoothness.
 
 | Key | Live |
 |-----|------|
