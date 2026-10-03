@@ -19,6 +19,8 @@ static func begin() -> void:
 	]
 
 static func note_run() -> void:
+	if PlaytestLog.off():
+		return
 	if not active:
 		begin()
 	var events: Array = PlaytestLog.events
@@ -44,6 +46,10 @@ static func note_run() -> void:
 	runs.append(body)
 
 static func close() -> PackedStringArray:
+	if PlaytestLog.off():
+		active = false
+		runs = []
+		return PackedStringArray()
 	var out: PackedStringArray = PackedStringArray()
 	if runs.is_empty():
 		active = false

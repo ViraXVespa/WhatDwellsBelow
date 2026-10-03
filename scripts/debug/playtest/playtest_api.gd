@@ -7,6 +7,7 @@ const PlaytestAI := preload("res://scripts/debug/playtest_ai.gd")
 const PlaytestGoals := preload("res://scripts/debug/playtest_goals.gd")
 const PlaytestSim := preload("res://scripts/debug/playtest/sim.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
+const PtGate := preload("res://scripts/debug/playtest/pt_gate.gd")
 const THINK_DT := 0.12
 
 var history: Array = []
@@ -46,9 +47,15 @@ var path_i: int = 0
 var path_goal: Node = null
 var log_path: String = ""
 var strafe_sign: float = 1.0
+var hum: Dictionary = {}  # per-run state of playtest_ai/ai_human.gd (reaction timers, aim wobble, hp watch)
 var last_beat_t: float = -1.0
 var last_wait_t: float = -9.0
 var last_think_t: float = -1.0
+var act_t: float = 0.0
+var gate_t: float = 0.0
+var gate_why: String = ""
+var perf: Dictionary = {}
+var rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -99,6 +106,8 @@ func begin_smoke() -> void:
 	last_beat_t = -1.0
 	last_wait_t = -9.0
 	last_think_t = -1.0
+	act_t = 0.0
+	reset_perf()
 	path.clear()
 	path_i = 0
 	path_goal = null
@@ -184,12 +193,31 @@ func _end_log(cond: String, fail: String) -> void:
 	if PlaytestLog.started:
 		PlaytestLog.finish(self, cond, fail)
 
+func stall_abort(why: String) -> void:
+	# The gate never opened (no dungeon / no player): end the run as stalled instead of waiting forever.
+	_end_log("stalled", "gate_" + why)
+	PlaytestSim.finish_job(self, "stalled", true)
+
+func reset_perf() -> void:
+	PtGate.reset(self)
+
+func perf_report() -> Dictionary:
+	return PtGate.report(self)
+
 func _physics_process(delta: float) -> void:
 	if not live_running:
 		return
+	var t0: int = Time.get_ticks_usec()
+	_tick(delta)
+	var us: int = Time.get_ticks_usec() - t0
+	PtGate.note(self, "phys", us)
+
+func _tick(delta: float) -> void:
 	if not PlaytestLog.started:
 		PlaytestLog.begin(self)
 		last_beat_t = -1.0
+	if perf.is_empty():
+		reset_perf()
 	just.clear()
 	special = false
 	interact = false
@@ -197,57 +225,50 @@ func _physics_process(delta: float) -> void:
 	potion = false
 	spec_cd = maxf(0.0, spec_cd - delta)
 	sim_t += delta
-	if App.recap and bool(App.recap.get("open")):
-		if bool(App.recap.get("draining")):
+	if App.recap and (App.recap.get("open") == true):
+		PtGate.set_scale(1.0)
+		if (App.recap.get("draining") == true):
 			App.recap.skip_drain()
 		elif not recap_taken:
 			App.recap._finish()
 		return
 	if _dismiss_world_ui():
 		return
-	if not App.in_dungeon:
-		ai_on = false
-		move = Vector2.ZERO
-		attack = false
-		if sim_t - last_wait_t >= 2.0:
-			last_wait_t = sim_t
-			PlaytestLog.wait(self, "no_dungeon")
-		return
-	if PlaytestGoals.dungeon(self) == null:
-		ai_on = false
-		move = Vector2.ZERO
-		attack = false
-		if sim_t - last_wait_t >= 2.0:
-			last_wait_t = sim_t
-			PlaytestLog.wait(self, "no_dungeon")
-		return
+	var why: String = PtGate.not_ready(self)
+	if why != "":
+		if PtGate.hold(self, why, delta):
+			return
+	else:
+		gate_why = ""
+		gate_t = 0.0
 	var p: Node = get_tree().get_first_node_in_group("player")
 	if p == null or not is_instance_valid(p):
-		ai_on = false
-		move = Vector2.ZERO
-		attack = false
-		if sim_t - last_wait_t >= 2.0:
-			last_wait_t = sim_t
-			PlaytestLog.wait(self, "no_player")
 		return
 	ai_on = true
-	if smoke_mode and sim_t >= 8.0:
+	act_t += delta
+	PtGate.set_scale(PtGate.acting_scale(self))
+	perf["scale"] = float(Engine.time_scale)
+	if smoke_mode and act_t >= 8.0:
 		_end_log("interrupted playtest", "smoke_limit")
 		PlaytestSim.finish_job(self, "interrupted playtest", true)
 		return
 	var limit: float = float(job.get("limit", App.bal.playtest_limit))
-	if not smoke_mode and sim_t >= limit:
+	if not smoke_mode and act_t >= limit:
 		_end_log("interrupted playtest", "time_limit")
 		PlaytestSim.finish_job(self, "interrupted playtest", true)
 		return
 	var due: bool = last_think_t < 0.0 or sim_t - last_think_t >= THINK_DT
 	if due:
+		var el: float = THINK_DT if last_think_t < 0.0 else sim_t - last_think_t
 		attack = false
 		move = Vector2.ZERO
 		last_think_t = sim_t
-		PlaytestAI.think(self, p, delta)
+		var t1: int = Time.get_ticks_usec()
+		PlaytestAI.think(self, p, el)
 		PlaytestLog.act(self, p)
 		PlaytestLog.step(self, p)
+		var us: int = Time.get_ticks_usec() - t1
+		PtGate.note(self, "think", us)
 	if last_beat_t < 0.0 or sim_t - last_beat_t >= 0.5:
 		last_beat_t = sim_t
 		PlaytestLog.beat(self, p)

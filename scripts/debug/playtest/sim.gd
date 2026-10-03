@@ -2,6 +2,7 @@ extends Object
 
 const Store := preload("res://scripts/data/save_store.gd")
 const WebHook := preload("res://scripts/debug/web_hook.gd")
+const LiveSmoke := preload("res://scripts/debug/playtest/live_smoke.gd")
 const Recs := preload("res://scripts/debug/playtest/recs.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const PlaytestLogBatch := preload("res://scripts/debug/playtest_log/batch.gd")
@@ -9,6 +10,9 @@ const PlaytestLogBatch := preload("res://scripts/debug/playtest_log/batch.gd")
 static func reset_ai_state(pt: Node) -> void:
 	pt.ai_on = false
 	pt.sim_t = 0.0
+	pt.act_t = 0.0
+	pt.reset_perf()
+	pt.hum = {}
 	pt.stuck_t = 0.0
 	pt.wander_t = 0.0
 	pt.wander_dir = Vector2.ZERO
@@ -68,7 +72,7 @@ static func start_next(pt: Node) -> void:
 	App.prog.begin_run_loadout()
 	App.tel.reset(pt.slot, true)
 	App.tel.start_weapon = App.weapon
-	Engine.time_scale = maxf(1.0, float(pt.job.get("scale", App.bal.playtest_scale)))
+	Engine.time_scale = 1.0  # the job scale only applies once the AI is acting (playtest_api _tick), never during loads
 	if App.debug and bool(App.debug.get("open")):
 		App.debug.hide_menu()
 	if App.pause_menu and bool(App.pause_menu.get("open")):
@@ -112,6 +116,7 @@ static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 	PlaytestLogBatch.note_run()
 	pt.history.append(App.tel.to_dict())
 	WebHook.publish(App.tel.to_dict())
+	LiveSmoke.report(App.tel.to_dict())
 	pt._save_history()
 	reset_ai_state(pt)
 	if pt.queue.is_empty() or pt.interrupted:
@@ -132,7 +137,7 @@ static func stop_live(pt: Node) -> void:
 	pt._build_recs()
 	pt._save_coefs()
 	pt.last_summary = pt._format()
-	if PlaytestLog.file_name != "":
+	if PlaytestLog.file_name != "" and not PlaytestLog.off():
 		pt.last_summary += "\nLog: " + PlaytestLog._dir().path_join(PlaytestLog.file_name)
 	var bundle: PackedStringArray = PlaytestLogBatch.close()
 	for pth: String in bundle:

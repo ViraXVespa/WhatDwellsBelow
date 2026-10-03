@@ -3,6 +3,7 @@ extends Object
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const Util := preload("res://scripts/debug/playtest_ai/ai_util.gd")
 const SEE := 28.0
+const Human := preload("res://scripts/debug/playtest_ai/ai_human.gd")
 
 static func approach_boss(pt: Node, p: Node, boss: Node) -> void:
 	if boss == null or not is_instance_valid(boss) or pt._dist(p, boss) > SEE:
@@ -80,7 +81,7 @@ static func fight(pt: Node, p: Node, enemy: Node) -> void:
 		if slide == Vector2.ZERO or Util.spinning(pt):
 			slide = Vector2(-pt.aim.y, pt.aim.x) * pt.strafe_sign
 			if pt.stuck_t > 0.45:
-				pt.strafe_sign *= -1.0
+				Human.flip_strafe(pt)
 		pt.move = pt._steer(p, slide)
 		pt._lock_aim(p, enemy)
 		if pt.stuck_t > 0.7:
@@ -92,7 +93,7 @@ static func fight(pt: Node, p: Node, enemy: Node) -> void:
 		return
 	pt.move = pt._safe_step(p, Vector2(-pt.aim.y, pt.aim.x) * pt.strafe_sign)
 	if pt.stuck_t > 0.55:
-		pt.strafe_sign *= -1.0
+		Human.flip_strafe(pt)
 	pt._lock_aim(p, enemy)
 
 static func _hold_shot(pt: Node, p: Node, enemy: Node, d: float, too_close: float, boss: bool) -> void:
@@ -118,5 +119,5 @@ static func _hold_shot(pt: Node, p: Node, enemy: Node, d: float, too_close: floa
 		return
 	pt.move = pt._safe_step(p, Vector2(-pt.aim.y, pt.aim.x) * pt.strafe_sign)
 	if pt.stuck_t > 0.55:
-		pt.strafe_sign *= -1.0
+		Human.flip_strafe(pt)
 	pt._lock_aim(p, enemy)

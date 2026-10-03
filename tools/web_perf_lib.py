@@ -21,7 +21,8 @@ if(W.t&&W.gone){(W.f[W.ph]=W.f[W.ph]||[]).push(t-W.t)}W.t=t;requestAnimationFram
 window.addEventListener('error',function(){W.errs++});
 var ce=console.error;console.error=function(){var a0=arguments[0];if(typeof a0=='string'&&a0.indexOf('LOAD: ')==0){samp();W.load.push(a0.slice(6)+' wasm='+Math.round(W.wasm/1048576));return}W.cerr[W.ph]=(W.cerr[W.ph]||0)+1;if(W.cmsg.length<4&&W.ph[0]!='_')W.cmsg.push(W.ph+': '+Array.prototype.join.call(arguments,' ').slice(0,140));return ce.apply(console,arguments)};window.__wpSamp=samp})();
 """
-PLAY = ("stuck_t", "seed", "floor", "end_cond", "duration", "kills", "dmg_dealt", "dmg_taken", "crits", "combat_t", "near_death")
+PLAY = ("stuck_t", "seed", "floor", "end_cond", "duration", "kills", "dmg_dealt", "dmg_taken", "crits", "combat_t", "near_death",
+        "think_ms", "think_max_ms", "think_n", "phys_ms", "gate_s", "gate_over", "unstick_n", "stuck_max", "time_scale")
 READY = "!!window.__wp.gone&&!!document.getElementById('canvas')"
 
 

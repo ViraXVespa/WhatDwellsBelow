@@ -89,6 +89,12 @@ def health(rep: dict) -> list[str]:
         bad.append("INVALID playtester made no kills")
     if p.get("stuck_t", 0) > 5.0:
         bad.append("INVALID playtester stuck %ss" % p.get("stuck_t"))
+    if p.get("stuck_max", 0) > 6.0:
+        bad.append("INVALID playtester was stuck %ss before an unstick" % p.get("stuck_max"))
+    if p.get("gate_over", 0) > 0:
+        bad.append("INVALID playtester gate (menu/load/pause) never opened for 15s")
+    if p.get("time_scale", 1.0) != 1.0:
+        bad.append("INVALID playtester ran at time_scale %s (frame times skewed)" % p.get("time_scale"))
     ce = sum(rep["console_errors"].values())
     if ce:
         bad.append("INVALID %d console errors during the run, first: %s" % (ce, " | ".join(rep.get("console_msgs", []))[:300]))

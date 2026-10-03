@@ -4,6 +4,7 @@ const Combat := preload("res://scripts/combat/combat.gd")
 const Util := preload("res://scripts/debug/playtest_los/los_util.gd")
 const Walk := preload("res://scripts/debug/playtest_los/los_walk.gd")
 const Door := preload("res://scripts/debug/playtest_los/los_door.gd")
+const Cache := preload("res://scripts/debug/playtest_los/los_cache.gd")
 
 static func grid_dims(pt: Node) -> Dictionary:
 	return Util.grid_dims(pt)
@@ -55,13 +56,7 @@ static func door_between(pt: Node, a: Node, b: Node) -> bool:
 	return Walk.door_between(pt, a, b)
 
 static func door_blocks_cell(pt: Node, c: Vector2i) -> bool:
-	for d: Node in pt._closed_doors():
-		if d.has_method("occupies_cell") and d.occupies_cell(c):
-			return true
-		for cell: Variant in pt._door_cells(d):
-			if cell == c:
-				return true
-	return false
+	return Cache.door_blocks(pt, c)
 
 static func has_wide_los(pt: Node, a: Node, b: Node) -> bool:
 	return Door.has_wide_los(pt, a, b)
@@ -70,21 +65,13 @@ static func has_los_from_wide(pt: Node, pos: Vector3, b: Node) -> bool:
 	return Walk.has_los_from_wide(pt, pos, b)
 
 static func grid_floor(pt: Node, c: Vector2i) -> bool:
-	var dim: Dictionary = pt._grid_dims()
-	if dim.is_empty():
-		return false
-	var grid: PackedByteArray = dim.grid
-	var w: int = dim.w
-	var h: int = dim.h
-	if c.x < 0 or c.y < 0 or c.x >= w or c.y >= h:
-		return false
-	return grid[c.y * w + c.x] == 1
+	return Cache.grid_floor(pt, c)
 
 static func floor_cell(pt: Node, _grid: PackedByteArray, _w: int, _h: int, c: Vector2i) -> bool:
-	return pt._grid_floor(c) and not pt._obstacle_cell(c) and not pt._prop_cell(c)
+	return Cache.floor_cell(pt, c)
 
 static func steer_floor(pt: Node, c: Vector2i) -> bool:
-	return pt._grid_floor(c) and not pt._obstacle_cell(c)
+	return Cache.steer_floor(pt, c)
 
 static func pos_walkable(pt: Node, pos: Vector3) -> bool:
 	return Walk.pos_walkable(pt, pos)
