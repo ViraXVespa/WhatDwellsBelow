@@ -1,6 +1,19 @@
 extends Object
 
 const Roster := preload("res://scripts/combat/roster.gd")
+const T := preload("res://scripts/data/tunables.gd")
+const FLEE_KINDS: PackedStringArray = ["room", "fill", "named", "ambush"]
+
+## Decided once per pack (group id): chance is FLEE_PACK_MEAN over this floor's pack count, drawn from a
+## generator seeded by run seed + floor + group id, so a seed replays and floor_rng is not disturbed.
+static func flee_pack(host: Node, gid: int) -> bool:
+	var n := 0
+	for j: Dictionary in host.spawn_jobs:
+		if FLEE_KINDS.has(str(j.get("kind", ""))):
+			n += 1
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(App.run_seed * 10007 + App.floor_n * 9176 + gid * 7919)
+	return rng.randf() < clampf(T.FLEE_PACK_MEAN / float(maxi(1, n)), 0.0, 1.0)
 
 static func add_enemy(host: Node, id: String, pos: Vector3, gid: int, named: bool, nname: String) -> Node:
 	var EnemyS: GDScript = load("res://scripts/combat/enemy.gd") as GDScript
@@ -10,7 +23,7 @@ static func add_enemy(host: Node, id: String, pos: Vector3, gid: int, named: boo
 	e.call("setup", id, App.floor_n, named, nname)
 	e.set("group_id", gid)
 	if not host.groups.has(gid):
-		host.groups[gid] = {"max_hp": 0.0, "hp": 0.0, "fled": false}
+		host.groups[gid] = {"max_hp": 0.0, "hp": 0.0, "fled": false, "flee_pack": flee_pack(host, gid)}
 	host.groups[gid].max_hp += float(e.get("max_hp"))
 	host.groups[gid].hp += float(e.get("max_hp"))
 	if host.types_present.find(id) < 0:
@@ -25,7 +38,7 @@ static func note_enemy_hit(host: Node, e: Node, dmg: float) -> void:
 		return
 	var g: Dictionary = host.groups[gid]
 	g.hp = maxf(0.0, float(g.hp) - dmg)
-	if g.fled:
+	if g.fled or not g.get("flee_pack", false):
 		return
 	if host.flee_used >= int(App.bal.flee_per_floor):
 		return

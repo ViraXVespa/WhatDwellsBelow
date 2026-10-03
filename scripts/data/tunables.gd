@@ -43,6 +43,7 @@ const LIGHT_FIRE_ENERGY := 1.0
 const LIGHT_SUN_RANGE := 48.0
 const LIGHT_SUN_ENERGY := 0.9
 const LIGHT_SOURCE_CAP := 24.0
+const FLEE_PACK_MEAN := 4.0
 const WALL_H := 1.45
 const ARENA := 22
 const PATREON_URL := "https://www.patreon.com/cw/ViraXVespa"

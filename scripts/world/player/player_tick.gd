@@ -65,7 +65,7 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 		PlayerCombat.try_special(host)
 		PlayerCombat.try_basic(host)
 		PlayerCombat.try_dash(host, move)
-	var spd: float = App.bal.move_speed * (1.0 + float(App.prog.set_stats().spd))
+	var spd: float = App.bal.move_speed * (1.0 + App.gear("move_spd"))
 	if App.adrenaline:
 		spd *= App.bal.adrenaline_speed
 	if host.atk_state == host.ATK_BASIC:
