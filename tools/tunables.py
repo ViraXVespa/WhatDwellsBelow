@@ -117,9 +117,9 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--set", dest="value", required=True, help="Live cell text")
     for name in ("get", "set", "add"):
         sub.choices[name].add_argument("--root", default=None, help="Repo root (default: auto).", dest="root_sub")
-        sub.choices[name].add_argument("--json", dest="json_sub", action="store_true")
-    for name in ("set", "add"):
-        sub.choices[name].add_argument("--dry-run", dest="dry_sub", action="store_true", help="Print what would change; write nothing.")
+        sub.choices[name].add_argument("--json", dest="json_sub", action="store_true", help="Print one JSON object instead of text.")
+    sub.choices["set"].add_argument("--dry-run", dest="dry_sub", action="store_true", help="Print what would change; write nothing.")
+    sub.choices["add"].add_argument("--dry-run", dest="dry_sub", action="store_true", help="Print what would change; write nothing.")
     args = ap.parse_args(argv)
     args.root = getattr(args, "root_sub", None) or args.root
     args.json = args.json or getattr(args, "json_sub", False)
