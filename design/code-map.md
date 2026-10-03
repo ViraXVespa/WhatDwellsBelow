@@ -9,7 +9,7 @@ Each facade sits beside its cluster folder (`scripts/<area>/<stem>.gd` + `<stem>
 
 | System | Live files |
 |--------|------------|
-| Autoload / flow | `scripts/app.gd` (facade; helper `app_bake.gd`) + `app_set.gd`, `app_boot.gd`, `app_flow.gd` (facade; helper `flow_hub.gd`), `app_run.gd`, `boot.gd`, `title.gd` + `news.gd`, `web_pad.gd`; `scripts/title/news_fmt.gd` + `news_show.gd` |
+| Autoload / flow | `scripts/app.gd` (facade; helper `app_bake.gd`) + `app_set.gd`, `app_boot.gd`, `app_flow.gd` (facade; helper `flow_hub.gd`), `app_run.gd`, `boot.gd`, `title.gd` + `news.gd`, `web_pad.gd`; `scripts/title/news_fmt.gd` + `news_show.gd`; `scripts/app/app_loc.gd` |
 | Display | `scripts/display_mode.gd`, `scripts/ui/fs_gate.gd`; `scripts/display_mode/` |
 | Scenes | `scenes/boot.tscn`, `fs_gate.tscn`, `splash.tscn`, `title.tscn`, `camp.tscn`, `dungeon.tscn`, `foundation.tscn` |
 | Player | `scripts/world/player.gd` + `player_anim.gd`, `anim_load.gd`, `anim_loco.gd`, `player_setup.gd`, `player_tick.gd`, `player_act.gd`, `player_lock.gd`, `player_combat.gd`, `facing.gd`, `camera_rig.gd`, `sprite_filter.gd` |

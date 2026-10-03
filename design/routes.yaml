@@ -135,6 +135,10 @@ doors:
       kb_mouse: design/input-kb-mouse.md
       web_touch: design/input-web-touch.md
       input_live: design/input-live.md
+  localization:
+    file: design/localization.md
+    read_when: "tr(), translation keys, adding a locale"
+    jobs: {}
   camera:
     file: design/camera.md
     read_when: "Camera3D, zoom, renderer, depth sorting"
