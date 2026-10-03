@@ -30,7 +30,7 @@ Same table shape and rules as the tunables door; `tools/tunables.py get|set|add 
 | Stream in / out (cells) | — | **28 / 42** | enemies |
 | Geo chunk (cells) | — | **32** | `geo_stream.gd` |
 | Geo ring in / out | — | **1 / 2** | Chunks around the player |
-| Geo jobs per follow | — | **3** | 9 on a long tick |
+| Geo jobs per follow | — | **3** | 1 on the first two frames |
 | Crystal min separation | 56 cells | **56** | Between every crystal, dead-ends included |
 | Crystal clear radius | 12 cells | **12** | Enemies block activation |
 | Crystal arrive radius | 8 cells | **8** | No respawn after a hop |

@@ -15,7 +15,7 @@ If a call does not work intuitively, it is designed wrong. Fix `doc_patch` (or t
 
 | Cmd | Does |
 |---|---|
-| `replace FILE --old X --new Y` | Replace exactly one occurrence; fails on zero or many |
+| `replace FILE --old X --new Y` | Replace the first occurrence; no-op if already applied; fails if absent |
 | `ensure-line FILE --line L [--after A]` | Add the line once |
 | `set-read-when FILE "text"` | Rewrite the `Read when:` header line |
 | `changelog --bullet B [--label L] [--summary S]` | Write `design/changelog/<label>.md` at the next free label |

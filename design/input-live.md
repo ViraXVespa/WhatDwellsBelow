@@ -30,7 +30,7 @@ These are implementation defaults, not a replacement for rebinding.
 | Crystal zoom | Tab |
 | Display toggle | Alt+Enter (desktop and web, not rebindable) |
 
-`binds.apply_pc_defaults()` strips `KEY_R` from special. README text that still says “R special” is stale relative to live binds.
+`binds.apply_pc_defaults()` strips `KEY_R` from special.
 
 Q pages stats only while a gear board is open; during gameplay it remains target-lock. E pages stats only while a gear board is open; during gameplay it remains interact. LMB / RMB never page the stats card.
 
