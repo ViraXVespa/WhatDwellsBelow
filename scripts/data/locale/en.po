@@ -1,0 +1,1353 @@
+# English source strings. Keys are stable ids; never rename a shipped key.
+# Add a locale by copying this file to <code>.po and translating each msgstr.
+msgid ""
+msgstr ""
+"Project-Id-Version: What Dwells Below\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "act_items.destroyed"
+msgstr "Destroyed."
+
+msgid "act_items.nothing_to_destroy"
+msgstr "Nothing to destroy."
+
+msgid "act_items.pick_a_slot_or_bag"
+msgstr "Pick a slot or bag item first."
+
+msgid "act_items.starters_aren_t_stored"
+msgstr "Starters aren't stored."
+
+msgid "anvil.analyzed_unlocks_ready_on_the"
+msgstr "Analyzed. Unlocks ready on the Forge tab."
+
+msgid "anvil_forge.kept_the_old_holds_new"
+msgstr "Kept the old holds. New rolls are gone."
+
+msgid "anvil_forge_edit_fill.analyze_this_slot_before_you"
+msgstr "Analyze this slot before you can forge it."
+
+msgid "anvil_forge_edit_fill.cost_g_ore_wood_wait"
+msgstr "Cost %dg  %d ore  %d wood\tWait %.1fs each"
+
+msgid "anvil_forge_edit_fill.forge_x"
+msgstr "Forge x%d"
+
+msgid "anvil_forge_edit_fill.item_level"
+msgstr "Item Level:"
+
+msgid "anvil_forge_edit_fill.rarity"
+msgstr "Rarity"
+
+msgid "anvil_forge_edit_fill.type"
+msgstr "Type"
+
+msgid "anvil_forge_edit_lock.lock_traits"
+msgstr "Lock traits  (%d/%d)"
+
+msgid "anvil_forge_job.forging_1_of"
+msgstr "Forging 1 of %d…"
+
+msgid "anvil_forge_job.not_enough_banked_materials"
+msgstr "Not enough banked materials."
+
+msgid "anvil_forge_job.s_left_on_this_piece"
+msgstr "%.1fs left on this piece. Back stops the queue."
+
+msgid "anvil_forge_job.stopped_the_queue_pick_from"
+msgstr "Stopped the queue. Pick from the %d finished piece%s."
+
+msgid "anvil_forge_pick.hold_already_stored_new_this"
+msgstr "Hold = already stored. New = this batch."
+
+msgid "anvil_forge_pick.keep_old_holds"
+msgstr "Keep old holds"
+
+msgid "anvil_forge_pick.keep_selected"
+msgstr "Keep selected"
+
+msgid "anvil_forge_pick.keep_three_held_pieces_start"
+msgstr "Keep three. Held pieces start selected. Highlight a piece for its stats."
+
+msgid "anvil_forge_pick.lv_finish_fortune"
+msgstr "%s  lv %d  finish %.2f  fortune %.2f"
+
+msgid "anvil_forge_pick.picked"
+msgstr "Picked %d / %d"
+
+msgid "anvil_view.analyze"
+msgstr "Analyze"
+
+msgid "anvil_view.bank_g_ore_wood_carried"
+msgstr "Bank %dg  %d ore  %d wood  Carried %dg  %d ore  %d wood"
+
+msgid "anvil_view.forge"
+msgstr "Forge"
+
+msgid "anvil_view.smithing_analyze_a_piece_before"
+msgstr "Smithing %d. Analyze a piece before you can forge."
+
+msgid "anvil_view.smithing_forging_s"
+msgstr "Smithing %d. Forging… %.1fs."
+
+msgid "anvil_view.smithing_open_a_slot_to"
+msgstr "Smithing %d. Open a slot to analyze an AT RISK piece."
+
+msgid "anvil_view.smithing_open_a_slot_to_2"
+msgstr "Smithing %d. Open a slot to set type, rarity, level, and locks."
+
+msgid "app_flow.raising_placeholdia"
+msgstr "Raising Placeholdia…"
+
+msgid "app_run.already_on_the_surface"
+msgstr "Already on the surface."
+
+msgid "archives_ui.snapshots"
+msgstr "Snapshots  ›  %s  ›  %s"
+
+msgid "archives_ui.snapshots_2"
+msgstr "Snapshots  ›  %s"
+
+msgid "archives_ui.snapshots_documents"
+msgstr "Snapshots  ›  %s  ›  Documents"
+
+msgid "archives_ui.standalone_snapshots_title_play"
+msgstr "Standalone snapshots. Title Play always launches the live path."
+
+msgid "board_build.analyze_destroys_a_piece_forge"
+msgstr "Analyze DESTROYS a piece. Forge those remains on the Forge tab. Starters stay off the list."
+
+msgid "board_build.carried_g_ore_wood_bag"
+msgstr "Carried  %dg   %d ore   %d wood   bag %d/%d"
+
+msgid "board_build.choose_holds_or_stash_gear"
+msgstr "Choose holds or stash gear. Only floors you have reached."
+
+msgid "board_build.floor_crystal_loadout"
+msgstr "Floor Crystal — Loadout"
+
+msgid "board_build.inventory"
+msgstr "Inventory"
+
+msgid "board_host.bag"
+msgstr "Bag"
+
+msgid "board_sub.can_t_use_that_here"
+msgstr "Can't use that here."
+
+msgid "board_sub.starters_stay_on_the_slot"
+msgstr "Starters stay on the slot."
+
+msgid "board_sub.unequipped"
+msgstr "Unequipped."
+
+msgid "board_text.charges"
+msgstr "Charges %d/%d"
+
+msgid "board_text.cooldown_s"
+msgstr "Cooldown %.1fs"
+
+msgid "board_text.empty_bag_slot"
+msgstr "Empty bag slot."
+
+msgid "board_text.empty_opens_anything_that_can"
+msgstr "%s — empty\nOpens anything that can go here."
+
+msgid "board_text.nothing_to_preview"
+msgstr "Nothing to preview."
+
+msgid "boss_door.open"
+msgstr "OPEN"
+
+msgid "boss_door.open_the_guardian_door"
+msgstr "Open the guardian door"
+
+msgid "boss_door.prepare"
+msgstr "PREPARE"
+
+msgid "boss_door.the_way_is_open"
+msgstr "The way is open."
+
+msgid "breakable.cracked"
+msgstr "CRACKED"
+
+msgid "breakable.the_wall_gives"
+msgstr "The wall gives."
+
+msgid "camp.placeholdia_bank_g_ore_wood"
+msgstr "Placeholdia  ·  bank %dg  %d ore  %d wood  ·  deepest F%d%s\nCrystal  ·  Anvil  ·  Vendor  ·  Guild  ·  Billboard  ·  Start pause"
+
+msgid "camp_build.camp_mesh_box_parent"
+msgstr "CAMP_MESH box parent="
+
+msgid "combat_xp.set"
+msgstr "Set %s  %d/%d"
+
+msgid "common.a_verge_of_success"
+msgstr "A verge of success."
+
+msgid "common.anvil"
+msgstr "Anvil"
+
+msgid "common.back"
+msgstr "Back"
+
+msgid "common.bag_full"
+msgstr "Bag full."
+
+msgid "common.can_t_analyze_that"
+msgstr "Can't analyze that."
+
+msgid "common.can_t_destroy_that"
+msgstr "Can't destroy that."
+
+msgid "common.can_t_equip_that"
+msgstr "Can't equip that."
+
+msgid "common.close"
+msgstr "Close"
+
+msgid "common.consciousness_slips_the_body"
+msgstr "Consciousness slips the body…"
+
+msgid "common.continue"
+msgstr "Continue"
+
+msgid "common.controls_billboard"
+msgstr "Controls Billboard"
+
+msgid "common.deepest_floor"
+msgstr "Deepest floor: %d"
+
+msgid "common.delete_save_data"
+msgstr "Delete Save Data"
+
+msgid "common.drop_on_the_dungeon_floor"
+msgstr "Drop on the dungeon floor only."
+
+msgid "common.dropped"
+msgstr "Dropped."
+
+msgid "common.dungeon_xp"
+msgstr "Dungeon XP"
+
+msgid "common.each_level_after_1_style"
+msgstr "Each level after 1: +%s style damage."
+
+msgid "common.empty"
+msgstr "Empty."
+
+msgid "common.extraction_gate"
+msgstr "Extraction Gate"
+
+msgid "common.floor_crystal"
+msgstr "FLOOR CRYSTAL"
+
+msgid "common.floor_transport_network"
+msgstr "Floor Transport Network"
+
+msgid "common.floors"
+msgstr "Floors %d–%d"
+
+msgid "common.forge_cancelled_materials_stay_s"
+msgstr "Forge cancelled. Materials stay spent."
+
+msgid "common.forged_into_a_hold"
+msgstr "Forged into a hold (%d/%d)."
+
+msgid "common.forging_of"
+msgstr "Forging %d of %d"
+
+msgid "common.fullscreen_on"
+msgstr "Fullscreen: On"
+
+msgid "common.g"
+msgstr "+%dg"
+
+msgid "common.gathering_the_square"
+msgstr "Gathering the square…"
+
+msgid "common.ghost_shop"
+msgstr "Ghost Shop"
+
+msgid "common.gone"
+msgstr "Gone."
+
+msgid "common.great_axe"
+msgstr "Great Axe"
+
+msgid "common.holds_full"
+msgstr "Holds full."
+
+msgid "common.leave"
+msgstr "Leave"
+
+msgid "common.level_up"
+msgstr "Level up — %s %d"
+
+msgid "common.lightning_staff"
+msgstr "Lightning Staff"
+
+msgid "common.local_transport_network"
+msgstr "Local Transport Network"
+
+msgid "common.lv"
+msgstr "%s  ·  Lv %d"
+
+msgid "common.lv_next_level_xp_total"
+msgstr "%s Lv %d | Next Level: %dXP | Total XP: %dXP"
+
+msgid "common.lv_this_run_xp_next"
+msgstr "%s Lv %d | This Run: %dXP | Next Level: %dXP"
+
+msgid "common.main_menu"
+msgstr "Main Menu"
+
+msgid "common.no_charges_left_this_run"
+msgstr "No charges left this run."
+
+msgid "common.no_documents_for_this_build"
+msgstr "No documents for this build."
+
+msgid "common.no_food_equipped"
+msgstr "No food equipped."
+
+msgid "common.no_potion_equipped"
+msgstr "No potion equipped."
+
+msgid "common.no_slot"
+msgstr "No slot."
+
+msgid "common.not_enough_banked_gold"
+msgstr "Not enough banked gold."
+
+msgid "common.not_enough_gold"
+msgstr "Not enough gold."
+
+msgid "common.nothing"
+msgstr "Nothing."
+
+msgid "common.nothing_to_drop"
+msgstr "Nothing to drop."
+
+msgid "common.now_no_damage_bonus_yet"
+msgstr "Now: no damage bonus yet."
+
+msgid "common.now_no_style_bonus_yet"
+msgstr "Now: no style bonus yet."
+
+msgid "common.play"
+msgstr "Play"
+
+msgid "common.reward"
+msgstr "%s\nReward: %s"
+
+msgid "common.salvage_spare_gear"
+msgstr "Salvage spare gear"
+
+msgid "common.send_all"
+msgstr "Send All"
+
+msgid "common.starter_leveled_to"
+msgstr "Starter leveled to %d."
+
+msgid "common.text"
+msgstr "%s %s."
+
+msgid "common.text_2"
+msgstr "%s %s"
+
+msgid "common.text_3"
+msgstr "%s  %s"
+
+msgid "common.the_door_yields_the_guardian"
+msgstr "The door yields. The guardian waits."
+
+msgid "common.the_gate_shifts"
+msgstr "The gate shifts."
+
+msgid "common.the_ghost_takes_it_for"
+msgstr "The ghost takes it for a pittance."
+
+msgid "common.use_analyze_to_destroy_a"
+msgstr "Use Analyze to destroy a piece."
+
+msgid "common.vanquish_the"
+msgstr "Vanquish %s the %s"
+
+msgid "common.weapon_and_tool_stay_equipped"
+msgstr "Weapon and tool stay equipped."
+
+msgid "common.you_used_to_eat_from"
+msgstr "You used to eat from this. Career upgrade pending."
+
+msgid "confirm_dlg.cancel"
+msgstr "Cancel"
+
+msgid "confirm_dlg.confirm"
+msgstr "Confirm"
+
+msgid "display_mode.display_borderless_fullscreen"
+msgstr "Display: Borderless fullscreen"
+
+msgid "display_mode.display_true_fullscreen"
+msgstr "Display: True fullscreen"
+
+msgid "display_mode.display_windowed"
+msgstr "Display: Windowed"
+
+msgid "display_mode.fullscreen_off"
+msgstr "Fullscreen: Off"
+
+msgid "extract.artifacts_cannot_be_mailed"
+msgstr "Artifacts cannot be mailed."
+
+msgid "extract.banked_g_ore_wood_root"
+msgstr "Banked %dg, %d ore, %d wood, %d root, %d items."
+
+msgid "extract.forged_holds_stay_with_you"
+msgstr "Forged holds stay with you."
+
+msgid "extract.sent_g"
+msgstr "Sent %dg."
+
+msgid "extract.sent_ore"
+msgstr "Sent %d ore."
+
+msgid "extract.sent_root"
+msgstr "Sent %d root."
+
+msgid "extract.sent_to_the_surface"
+msgstr "Sent to the surface."
+
+msgid "extract.sent_wood"
+msgstr "Sent %d wood."
+
+msgid "extract.this_gate_takes_ore_wood"
+msgstr "This gate takes ore, wood, and root."
+
+msgid "extract.unequip_that_first"
+msgstr "Unequip that first."
+
+msgid "floor.enter_dungeon"
+msgstr "Enter dungeon"
+
+msgid "floor_crystal.activate_crystal"
+msgstr "Activate crystal"
+
+msgid "floor_crystal.clear_the_area_to_activate"
+msgstr "Clear the area to activate."
+
+msgid "floor_crystal.crystal_bound_to_this_floor"
+msgstr "Crystal bound to this floor."
+
+msgid "floor_crystal.entrance_crystal_cl"
+msgstr "ENTRANCE CRYSTAL  ·  CL %d"
+
+msgid "floor_crystal.floor_crystal_cl"
+msgstr "FLOOR CRYSTAL  ·  CL %d"
+
+msgid "floor_crystal.the_crystal_hums"
+msgstr "The crystal hums."
+
+msgid "floor_crystal.transport_network"
+msgstr "Transport network"
+
+msgid "flow_hub.crossing_the_veil"
+msgstr "Crossing the veil…"
+
+msgid "flow_hub.dt"
+msgstr "%s dt=%d"
+
+msgid "flow_hub.raising_the_guild_row"
+msgstr "Raising the guild row…"
+
+msgid "flow_hub.tuning_the_square"
+msgstr "Tuning the square…"
+
+msgid "flow_hub.unfolding_placeholdia"
+msgstr "Unfolding Placeholdia…"
+
+msgid "flow_hub.waking_a_delver"
+msgstr "Waking a delver…"
+
+msgid "flow_hub.warming_things_up_for_you"
+msgstr "Warming things up for you..."
+
+msgid "forge_act.kept_hold"
+msgstr "Kept %d hold%s."
+
+msgid "forge_act.the_anvil_won_t_take"
+msgstr "The anvil won't take that."
+
+msgid "fs_gate.a_confirms_the_focused_button"
+msgstr "A confirms the focused button. B / Esc continues."
+
+msgid "fs_gate.click_fullscreen_to_hide_browser"
+msgstr "Click Fullscreen to hide browser chrome. Chromium may also offer an Install prompt — that adds a standalone window. Pause → System or Alt+Enter toggles fullscreen later."
+
+msgid "fs_gate.enter_fullscreen"
+msgstr "Enter fullscreen"
+
+msgid "fs_gate.fullscreen_install"
+msgstr "Fullscreen / Install"
+
+msgid "fs_gate.fullscreen_on_iphone"
+msgstr "Fullscreen on iPhone"
+
+msgid "fs_gate.play_fullscreen"
+msgstr "Play fullscreen"
+
+msgid "fs_gate.rotate_the_device_to_landscape"
+msgstr "Rotate the device to landscape."
+
+msgid "fs_gate.safari_cannot_open_add_to"
+msgstr "Safari cannot open Add to Home Screen for you. Use Share → Add to Home Screen, then Continue."
+
+msgid "fs_gate.tap_fullscreen_to_hide_the"
+msgstr "Tap Fullscreen to hide the browser bars. If the tap also offers Install, accept it for a Home Screen icon that launches landscape and chrome-less. Pause → System or Alt+Enter toggles fullscreen later. Rotate the phone sideways."
+
+msgid "fs_gate.try_fullscreen"
+msgstr "Try fullscreen"
+
+msgid "fs_gate.what_dwells_below"
+msgstr "What Dwells Below"
+
+msgid "gather_node.1_ore"
+msgstr "+1 ore"
+
+msgid "gather_node.1_wood"
+msgstr "+1 wood"
+
+msgid "gather_node.clink"
+msgstr "clink…"
+
+msgid "gather_node.gather"
+msgstr "Gather"
+
+msgid "gather_node.gathering_move_to_stop"
+msgstr "Gathering…  (move to stop)"
+
+msgid "gather_node.need_a_hatchet_this_run"
+msgstr "Need a hatchet this run."
+
+msgid "gather_node.need_a_pickaxe_this_run"
+msgstr "Need a pickaxe this run."
+
+msgid "gather_node.ore"
+msgstr "ORE"
+
+msgid "gather_node.text"
+msgstr "%s  %d"
+
+msgid "gather_node.tool_locked_to_hatchet"
+msgstr "Tool locked to hatchet."
+
+msgid "gather_node.tool_locked_to_pickaxe"
+msgstr "Tool locked to pickaxe."
+
+msgid "gear_bag.discarded"
+msgstr "Discarded."
+
+msgid "gear_bag.tool_locked_to_this_run"
+msgstr "Tool locked to %s this run."
+
+msgid "gear_use.already_eating_that"
+msgstr "Already eating that."
+
+msgid "gear_use.food"
+msgstr "Food."
+
+msgid "gear_use.food_healing_over_time"
+msgstr "Food — healing over time."
+
+msgid "gear_use.that_food_is_already_working"
+msgstr "That food is already working."
+
+msgid "hp_bar.lv"
+msgstr "Lv %d"
+
+msgid "hud_act.f"
+msgstr "F%d"
+
+msgid "hud_act.food_hot_s"
+msgstr "Food HoT  %ds"
+
+msgid "hud_act.g_ore_wood"
+msgstr "%dg   %d ore   %d wood"
+
+msgid "hud_act.guardian"
+msgstr "Guardian"
+
+msgid "hud_act.level"
+msgstr "Level %d (%s %d)"
+
+msgid "hud_act.level_2"
+msgstr "Level %d"
+
+msgid "hud_act.look_rs_pan_map"
+msgstr "Look  RS pan map"
+
+msgid "hud_act.look_rs_zoom_hud"
+msgstr "Look  RS zoom / HUD"
+
+msgid "hud_act.look_rs_zoom_map"
+msgstr "Look  RS zoom map"
+
+msgid "hud_act.potion_x"
+msgstr "Potion x%d"
+
+msgid "hud_act.potion_x_s"
+msgstr "Potion x%d  %.1fs"
+
+msgid "hud_act.shrine_s"
+msgstr "Shrine +%d%%  %ds"
+
+msgid "hud_act.text"
+msgstr "%d / %d"
+
+msgid "hud_act.text_2"
+msgstr "%s  %d / %d"
+
+msgid "hud_view.dash"
+msgstr "Dash"
+
+msgid "hud_view.special"
+msgstr "Special"
+
+msgid "interact_act.a_blessing_takes_hold"
+msgstr "A blessing takes hold."
+
+msgid "interact_act.a_pale_shopkeep_waits"
+msgstr "A pale shopkeep waits."
+
+msgid "interact_act.cache_recovered"
+msgstr "Cache recovered."
+
+msgid "interact_act.choose_your_loadout"
+msgstr "Choose your loadout."
+
+msgid "interact_act.confirm_descend_to_f"
+msgstr "Confirm descend to F%d"
+
+msgid "interact_act.damage_up"
+msgstr "Damage up."
+
+msgid "interact_act.dumpster"
+msgstr "Dumpster"
+
+msgid "interact_act.feed_the_gate"
+msgstr "Feed the gate."
+
+msgid "interact_act.the_anvil_waits"
+msgstr "The anvil waits."
+
+msgid "interact_act.the_gate_answers"
+msgstr "The gate answers."
+
+msgid "interact_act.the_guild_cache_is_yours"
+msgstr "The guild cache is yours."
+
+msgid "interact_act.the_guild_has_work"
+msgstr "The guild has work."
+
+msgid "interact_act.the_painted_list"
+msgstr "The painted list."
+
+msgid "interact_act.wares_in_the_sun"
+msgstr "Wares in the sun."
+
+msgid "interact_act.warmth_returns"
+msgstr "Warmth returns."
+
+msgid "interact_act.you_sit_hp_restored"
+msgstr "You sit. HP restored."
+
+msgid "interact_prompt.already_used"
+msgstr "Already used."
+
+msgid "interact_prompt.boss_chest"
+msgstr "BOSS CHEST"
+
+msgid "interact_prompt.dead_gate"
+msgstr "DEAD GATE"
+
+msgid "interact_prompt.descend"
+msgstr "Descend"
+
+msgid "interact_prompt.extraction_gate"
+msgstr "EXTRACTION GATE"
+
+msgid "interact_prompt.ghost_shop"
+msgstr "GHOST SHOP"
+
+msgid "interact_prompt.guild_tasks"
+msgstr "Guild tasks"
+
+msgid "interact_prompt.interact"
+msgstr "Interact"
+
+msgid "interact_prompt.loadout_enter_dungeon"
+msgstr "Loadout / enter dungeon"
+
+msgid "interact_prompt.locked_defeat_the_guardian"
+msgstr "Locked. Defeat the guardian."
+
+msgid "interact_prompt.locked_stairs"
+msgstr "LOCKED STAIRS"
+
+msgid "interact_prompt.notice_board"
+msgstr "NOTICE BOARD"
+
+msgid "interact_prompt.open_chest"
+msgstr "Open chest"
+
+msgid "interact_prompt.pray_dmg"
+msgstr "Pray  (+%d%% dmg)"
+
+msgid "interact_prompt.pull_lever"
+msgstr "Pull lever"
+
+msgid "interact_prompt.quest_cache"
+msgstr "QUEST CACHE"
+
+msgid "interact_prompt.read_the_dumpster"
+msgstr "Read the dumpster"
+
+msgid "interact_prompt.sit_heal"
+msgstr "Sit  (heal)"
+
+msgid "interact_prompt.spent_the_portal_is_dark"
+msgstr "Spent. The portal is dark."
+
+msgid "interact_prompt.step_the_plate"
+msgstr "Step the plate"
+
+msgid "interact_prompt.take_the_guild_cache"
+msgstr "Take the guild cache"
+
+msgid "interact_prompt.talk_guild_work"
+msgstr "Talk - guild work"
+
+msgid "interact_prompt.the_fire_is_spent"
+msgstr "The fire is spent."
+
+msgid "interact_prompt.vendor_stall"
+msgstr "Vendor stall"
+
+msgid "inv.mail_all_extractable_goods_to"
+msgstr "Mail all extractable goods to the surface?"
+
+msgid "inv.mail_goods_to_the_surface"
+msgstr "Mail goods to the surface. Artifacts stay with you (run-only)."
+
+msgid "inv.mail_to_the_surface"
+msgstr "Mail %s to the surface?"
+
+msgid "inv.send_item"
+msgstr "Send Item"
+
+msgid "inv.text"
+msgstr "%s %d/%d%s"
+
+msgid "inv_act.can_t_use_that"
+msgstr "Can't use that."
+
+msgid "loader.loading"
+msgstr "Loading"
+
+msgid "loader.text"
+msgstr "%d%%"
+
+msgid "net.the_crystal_takes_you_across"
+msgstr "The crystal takes you across the floor."
+
+msgid "news_fmt.updates_from_earlier_weeks_are"
+msgstr "Updates from earlier weeks are on the public changelog."
+
+msgid "news_show.earlier_weeks"
+msgstr "Earlier weeks"
+
+msgid "news_show.what_s_new"
+msgstr "What's new"
+
+msgid "pages_floors.floor"
+msgstr "Floor %d"
+
+msgid "pages_local.bound_crystals_on_this_floor"
+msgstr "Bound crystals on this floor."
+
+msgid "pages_local.cl_crystal"
+msgstr "CL %d Crystal"
+
+msgid "pages_local.entrance_cl"
+msgstr "Entrance  ·  CL %d"
+
+msgid "pages_net.f_cl"
+msgstr "F%d  ·  CL %d"
+
+msgid "pages_net.floor_crystal"
+msgstr "Floor Crystal"
+
+msgid "pages_net.floor_transport_network_reach_a"
+msgstr "Floor Transport Network  (reach a deeper floor)"
+
+msgid "pages_net.floors"
+msgstr "Floors"
+
+msgid "pages_net.local"
+msgstr "Local"
+
+msgid "pages_net.local_transport_network_bind_ano"
+msgstr "Local Transport Network  (bind another crystal)"
+
+msgid "pause_settings.audio"
+msgstr "Audio"
+
+msgid "pause_settings.close_the_game"
+msgstr "Close the game."
+
+msgid "pause_settings.controls"
+msgstr "Controls"
+
+msgid "pause_settings.dispel"
+msgstr "Dispel"
+
+msgid "pause_settings.dispel_avatar"
+msgstr "Dispel Avatar"
+
+msgid "pause_settings.end_this_run_and_return"
+msgstr "End this run and return to Placeholdia?"
+
+msgid "pause_settings.end_this_run_and_return_2"
+msgstr "End this run and return to Placeholdia. Unextracted loot is lost."
+
+msgid "pause_settings.gameplay"
+msgstr "Gameplay"
+
+msgid "pause_settings.graphics"
+msgstr "Graphics"
+
+msgid "pause_settings.patreon"
+msgstr "Patreon"
+
+msgid "pause_settings.quit"
+msgstr "Quit"
+
+msgid "pause_settings.return_to_the_title_screen"
+msgstr "Return to the title screen?"
+
+msgid "pause_settings.return_to_the_title_screen_2"
+msgstr "Return to the title screen."
+
+msgid "pause_settings.support_development_on_patreon_o"
+msgstr "Support development on Patreon. Opens in your browser."
+
+msgid "pause_skills.combat_level"
+msgstr "Combat Level %d"
+
+msgid "pause_skills.highlight_a_skill_for_its"
+msgstr "Highlight a skill for its bonuses."
+
+msgid "pause_skills.permanent"
+msgstr "Permanent"
+
+msgid "pickup.hp"
+msgstr "+HP"
+
+msgid "player_act.gathering"
+msgstr "Gathering…"
+
+msgid "present.you_wake_in_placeholdia"
+msgstr "You wake in Placeholdia."
+
+msgid "progress_make.a_curious_relic"
+msgstr "A curious relic."
+
+msgid "progress_make.a_run_only_relic"
+msgstr "A run-only relic."
+
+msgid "progress_make.heal_over_time"
+msgstr "Heal-over-time."
+
+msgid "progress_make.instant_heal_charges_per_run"
+msgstr "Instant heal. %d charges per run."
+
+msgid "progress_make.run_tool_locked_to"
+msgstr "Run tool. Locked to %s."
+
+msgid "progress_make.trail_bread"
+msgstr "Trail Bread"
+
+msgid "quest_prog.quest_complete_g_banked"
+msgstr "Quest complete — %dg banked."
+
+msgid "quest_prog.quest_complete_gear_mailed_to"
+msgstr "Quest complete — gear mailed to stash."
+
+msgid "quest_prog.quest_complete_xp"
+msgstr "Quest complete — %s / %s XP."
+
+msgid "quest_roll.abandoned"
+msgstr "Abandoned."
+
+msgid "quest_roll.accepted"
+msgstr "Accepted."
+
+msgid "quest_roll.cull_the"
+msgstr "Cull the %s"
+
+msgid "quest_roll.finish_or_abandon_the_current"
+msgstr "Finish or abandon the current task first."
+
+msgid "quest_roll.mail_ore"
+msgstr "Mail %d ore"
+
+msgid "quest_roll.no_task"
+msgstr "No task."
+
+msgid "quest_roll.none"
+msgstr "None."
+
+msgid "quest_roll.retrieve_a_guild_cache_from"
+msgstr "Retrieve a guild cache from floor %d"
+
+msgid "quest_roll.task_abandoned"
+msgstr "Task abandoned."
+
+msgid "quest_roll.vanquish_a_named_foe"
+msgstr "Vanquish a named foe"
+
+msgid "rebuild.a_fragment_remains"
+msgstr "A fragment remains."
+
+msgid "rebuild.carried_g_ore_wood_bag"
+msgstr "Carried  %dg  %d ore  %d wood  ·  bag %d"
+
+msgid "rebuild.deep_enough_to_matter"
+msgstr "Deep enough to matter."
+
+msgid "rebuild.dispel"
+msgstr "“Dispel”"
+
+msgid "rebuild.end_floor_f"
+msgstr "End: %s   Floor F%d"
+
+msgid "rebuild.floor_1_empty_handed"
+msgstr "Floor 1. Empty-handed."
+
+msgid "rebuild.permanent_xp"
+msgstr "Permanent XP"
+
+msgid "rebuild.run_s_kills"
+msgstr "Run  %ds  ·  %d kills  ·  %s  ·  %s  ·  %s"
+
+msgid "rebuild.so_close"
+msgstr "So close."
+
+msgid "rebuild.some_of_it_reached_daylight"
+msgstr "Some of it reached daylight."
+
+msgid "rebuild.the_depths_keep_their_due"
+msgstr "The depths keep their due."
+
+msgid "rebuild.the_gate_remembers"
+msgstr "The Gate remembers."
+
+msgid "rebuild.the_guild_will_keep_it"
+msgstr "The guild will keep it."
+
+msgid "rebuild.they_lived_just_to_die"
+msgstr "They lived just to die. What a waste."
+
+msgid "rebuild.xp_host_draining"
+msgstr "XP host.draining…"
+
+msgid "rebuild.you_chose_the_surface"
+msgstr "You chose the surface."
+
+msgid "recap_flow.nothing_reached_the_surface"
+msgstr "Nothing reached the surface."
+
+msgid "recap_flow.ore"
+msgstr "%d ore"
+
+msgid "recap_flow.permanent_totals_locked_in"
+msgstr "Permanent totals locked in."
+
+msgid "recap_flow.root"
+msgstr "%d root"
+
+msgid "recap_flow.starting_xp"
+msgstr "Starting XP"
+
+msgid "recap_flow.wood"
+msgstr "%d wood"
+
+msgid "rules_kit.broken_down_for_smithing"
+msgstr "Broken down for smithing."
+
+msgid "rules_kit.converted_to_smithing_xp"
+msgstr "Converted %s to smithing XP."
+
+msgid "rules_kit.unlocked_as_a_starter"
+msgstr "Unlocked as a starter."
+
+msgid "rules_norm.not_now"
+msgstr "Not now."
+
+msgid "rules_norm.not_ready"
+msgstr "Not ready."
+
+msgid "rules_norm.potion"
+msgstr "Potion."
+
+msgid "rules_norm.potion_cooling_down"
+msgstr "Potion cooling down."
+
+msgid "rules_norm.potion_instant"
+msgstr "Potion — instant."
+
+msgid "settings_pages.aim_line"
+msgstr "Aim line: %s"
+
+msgid "settings_pages.aim_line_opacity"
+msgstr "Aim line opacity"
+
+msgid "settings_pages.break_down_mailed_copies_you"
+msgstr "Break down mailed copies you already know, unless they beat the bars below."
+
+msgid "settings_pages.camera_zoom"
+msgstr "Camera zoom"
+
+msgid "settings_pages.character"
+msgstr "Character: %s"
+
+msgid "settings_pages.finish"
+msgstr "Finish  %.2f"
+
+msgid "settings_pages.fortune"
+msgstr "Fortune  %.2f"
+
+msgid "settings_pages.hud_scale"
+msgstr "HUD scale"
+
+msgid "settings_pages.keep_a_copy_when"
+msgstr "Keep a copy when"
+
+msgid "settings_pages.master_volume"
+msgstr "Master volume"
+
+msgid "settings_pages.music_volume"
+msgstr "Music volume"
+
+msgid "settings_pages.off"
+msgstr "Off"
+
+msgid "settings_pages.sfx_volume"
+msgstr "SFX volume"
+
+msgid "settings_pages.sprite_filtering"
+msgstr "Sprite filtering"
+
+msgid "settings_pages.target_lock"
+msgstr "Target lock"
+
+msgid "settings_pages.wipe_all_save_data_and"
+msgstr "Wipe all save data and return to the title screen?"
+
+msgid "shop.bank_g_ore_potions_and"
+msgstr "Bank %dg  %d ore   ·   potions and rations for the next drop."
+
+msgid "shop.buy_artifact"
+msgstr "Buy Artifact"
+
+msgid "shop.buy_g"
+msgstr "Buy %s  (%dg)\n%s%s"
+
+msgid "shop.buy_potion_g"
+msgstr "Buy potion  (%dg)"
+
+msgid "shop.buy_ration_g_food_slot"
+msgstr "Buy ration  (%dg, food slot)"
+
+msgid "shop.buy_snack"
+msgstr "Buy Snack"
+
+msgid "shop.food_slot_is_full"
+msgstr "Food slot is full (%d)."
+
+msgid "shop.gold_bought"
+msgstr "Gold %d   Bought %d/%d"
+
+msgid "shop.no_ore_in_the_bank"
+msgstr "No ore in the bank."
+
+msgid "shop.pawn_equipped"
+msgstr "Pawn Equipped"
+
+msgid "shop.pawn_equipped_for_g"
+msgstr "Pawn equipped %s for %dg?"
+
+msgid "shop.pawn_equipped_g"
+msgstr "Pawn equipped %s  (%dg)"
+
+msgid "shop.pawn_for_g"
+msgstr "Pawn %s for %dg?"
+
+msgid "shop.pawn_g"
+msgstr "Pawn %s  (%dg)"
+
+msgid "shop.pawn_item"
+msgstr "Pawn Item"
+
+msgid "shop.potion_ready"
+msgstr "Potion ready."
+
+msgid "shop.ration_packed_in_the_food"
+msgstr "Ration packed in the food slot."
+
+msgid "shop.sell_1_ore_g"
+msgstr "Sell 1 ore  (%dg)"
+
+msgid "shop.snack"
+msgstr "Snack."
+
+msgid "shop.snack_g_hp"
+msgstr "Snack  (%dg, +HP)"
+
+msgid "shop.sold_1_ore"
+msgstr "Sold 1 ore."
+
+msgid "shop.spend_g_for"
+msgstr "Spend %dg for %s?"
+
+msgid "shop.spend_g_for_a_snack"
+msgstr "Spend %dg for a snack (+HP)?"
+
+msgid "shop.the_snack_is_strangely_warm"
+msgstr "The snack is strangely warm."
+
+msgid "shop.two_artifacts_a_visit"
+msgstr "Two artifacts a visit."
+
+msgid "shop.two_artifacts_a_visit_snacks"
+msgstr "Two artifacts a visit. Snacks %dg. Artifacts are run-only."
+
+msgid "shop.vendor_stall"
+msgstr "Vendor Stall"
+
+msgid "splash.a_start_to_continue"
+msgstr "A / Start  to continue"
+
+msgid "splash.a_viraxvespa_production"
+msgstr "A  @ViraXVespa  production"
+
+msgid "splash.proudly_vibecoded_with_grok"
+msgstr "Proudly Vibecoded with Grok"
+
+msgid "splash.shamelessly"
+msgstr "Shamelessly"
+
+msgid "stats.all_combat_stats"
+msgstr "All combat stats"
+
+msgid "stats.all_utility_stats"
+msgstr "All utility stats"
+
+msgid "stats.artifact_sets"
+msgstr "Artifact sets"
+
+msgid "stats.bonuses_from_this_kit"
+msgstr "Bonuses from this kit"
+
+msgid "stats.no_artifacts_this_run"
+msgstr "No artifacts this run."
+
+msgid "stats.no_equipment_bonuses_on_this"
+msgstr "No equipment bonuses on this kit."
+
+msgid "stats.text"
+msgstr "%s  —"
+
+msgid "stats.text_2"
+msgstr "%s  %d/%d"
+
+msgid "sub_open.at_risk_gear_is_lost"
+msgstr "AT RISK gear is lost on death or Dispel."
+
+msgid "sub_open.no_at_risk_pieces_for"
+msgstr "No AT RISK pieces for this slot."
+
+msgid "sub_open.nothing_else_for_this_slot"
+msgstr "Nothing else for this slot."
+
+msgid "sub_open.nothing_to_equip"
+msgstr "Nothing to equip."
+
+msgid "sub_open.set_type_rarity_level_and"
+msgstr "Set type, rarity, level, and locks."
+
+msgid "sub_open.warning_analyzing_destroys_the_s"
+msgstr "WARNING: Analyzing DESTROYS the selected item. This cannot be undone."
+
+msgid "theme.each_level_2g_1_ore"
+msgstr "Each level: −2g −1 ore on forge cost.\nEach level after 1: 12% faster forging.\nEvery 4 levels: +1 extra forged weapon damage."
+
+msgid "theme.each_level_after_1_defense"
+msgstr "Each level after 1: +%.1f defense."
+
+msgid "theme.each_level_after_1_great"
+msgstr "Each level after 1: +%s Great Axe damage, +%s special damage."
+
+msgid "theme.each_level_after_1_longbow"
+msgstr "Each level after 1: +%s Longbow damage, +%s special damage."
+
+msgid "theme.each_level_after_1_max"
+msgstr "Each level after 1: +%d max HP."
+
+msgid "theme.each_level_after_1_staff"
+msgstr "Each level after 1: +%s staff damage, +%s special damage."
+
+msgid "theme.each_level_mining_success_chance"
+msgstr "Each level: +%s mining success chance."
+
+msgid "theme.each_level_woodcutting_success_c"
+msgstr "Each level: +%s woodcutting success chance."
+
+msgid "theme.level"
+msgstr "%s  ·  Level %d\n\n%s\n\n%s"
+
+msgid "theme.no_per_level_bonus_is"
+msgstr "No per-level bonus is defined."
+
+msgid "theme.now_defense"
+msgstr "Now: +%.1f defense."
+
+msgid "theme.now_forge_cost_g_ore"
+msgstr "Now: forge cost −%dg −%d ore.\n\t  Forge time ÷ %.2f.\n\t  Forged weapons +%d extra damage."
+
+msgid "theme.now_great_axe_damage_great"
+msgstr "Now: +%s Great Axe damage.\n\t  +%s Great Axe special damage."
+
+msgid "theme.now_longbow_damage_longbow_speci"
+msgstr "Now: +%s Longbow damage.\n\t  +%s Longbow special damage."
+
+msgid "theme.now_magic_style_damage_staff"
+msgstr "Now: +%s magic-style damage (staff special)."
+
+msgid "theme.now_max_hp"
+msgstr "Now: +%d max HP."
+
+msgid "theme.now_melee_style_damage_great"
+msgstr "Now: +%s melee-style damage (Great Axe and staff melee)."
+
+msgid "theme.now_mining_success_chance"
+msgstr "Now: +%s mining success chance."
+
+msgid "theme.now_no_defense_bonus_yet"
+msgstr "Now: no defense bonus yet."
+
+msgid "theme.now_no_hitpoints_bonus_yet"
+msgstr "Now: no Hitpoints bonus yet."
+
+msgid "theme.now_no_listed_bonus"
+msgstr "Now: no listed bonus."
+
+msgid "theme.now_ranged_style_damage_longbow"
+msgstr "Now: +%s ranged-style damage (Longbow)."
+
+msgid "theme.now_staff_damage_staff_special"
+msgstr "Now: +%s staff damage.\n\t  +%s staff special damage."
+
+msgid "theme.now_woodcutting_success_chance"
+msgstr "Now: +%s woodcutting success chance."
+
+msgid "title.archives"
+msgstr "Archives"
+
+msgid "title.choose_a_delver_switch_later"
+msgstr "Choose a delver  ·  switch later from pause."
+
+msgid "title.dungeon_music_bitter_by_vira"
+msgstr "Dungeon Music: Bitter - by Vira X Vespa"
+
+msgid "title.play_female"
+msgstr "Play — Female"
+
+msgid "title.play_male"
+msgstr "Play — Male"
+
+msgid "title.updates"
+msgstr "Updates"
+
+msgid "title.version"
+msgstr "Version: %s"
+
+msgid "title.what_dwells_below"
+msgstr "WHAT DWELLS BELOW"
+
+msgid "ui_act.loading"
+msgstr "Loading…"
+
+msgid "ui_act.missing"
+msgstr "(missing)"
+
+msgid "ui_act.no_video_for_this_build"
+msgstr "No video for this build."
+
+msgid "ui_flow.forging_of_s"
+msgstr "Forging %d of %d… %.1fs."
+
+msgid "ui_hub.abandon_active_task"
+msgstr "Abandon active task"
+
+msgid "ui_hub.abandon_task"
+msgstr "Abandon Task"
+
+msgid "ui_hub.abandon_the_active_guild_task"
+msgstr "Abandon the active guild task?"
+
+msgid "ui_hub.active"
+msgstr "Active: %s  (%d/%d)"
+
+msgid "ui_hub.guild_tasks"
+msgstr "Guild Tasks"
+
+msgid "ui_hub.three_choices_one_active_named"
+msgstr "Three choices. One active. Named vanquish locks that named foe."
+
+msgid "ui_hub.what_the_guild_painted_up"
+msgstr "What the guild painted up. Bindings follow your System tab."
+
+msgid "ui_util.zoom_close"
+msgstr "Zoom: close"
+
+msgid "ui_util.zoom_full_floor"
+msgstr "Zoom: full floor"
+
+msgid "ui_util.zoom_mid"
+msgstr "Zoom: mid"
+
+msgid "ui_view.back_to_documents"
+msgstr "Back to documents"
+
+msgid "ui_view.back_to_info"
+msgstr "Back to info"
+
+msgid "ui_view.documents"
+msgstr "Documents"
+
+msgid "ui_view.documents_2"
+msgstr "%s — Documents"
+
+msgid "ui_view.no_archives"
+msgstr "No archives."
+
+msgid "ui_view.snapshots"
+msgstr "Snapshots"
+
+msgid "ui_view.video"
+msgstr "Video"

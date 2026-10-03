@@ -4,8 +4,10 @@ const DebugS := preload("res://scripts/debug/debug_menu.gd")
 const AnimS := preload("res://scripts/debug/anim_browser.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const WebHook := preload("res://scripts/debug/web_hook.gd")
+const LocS := preload("res://scripts/app/app_loc.gd")
 
 static func _ready(host: Node) -> void:
+	LocS.setup()
 	host.process_mode = Node.PROCESS_MODE_ALWAYS
 	host.bal = App.BalanceS.new()
 	host.prog = App.ProgressS.new()

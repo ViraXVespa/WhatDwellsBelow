@@ -8,7 +8,7 @@ const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 static func _warmup_hub(host: Node) -> void:
 	LoadTiming.mark("warmup_begin")
 	if host.loader:
-		host.loader.set_status("Warming things up for you...")
+		host.loader.set_status(App.tr("flow_hub.warming_things_up_for_you"))
 		if host.loader.has_method("set_solid"):
 			host.loader.set_solid(true)
 		host.loader.set_progress(0.94)
@@ -90,7 +90,7 @@ static func preload_hub(host: Node, _t0: int = 0) -> void:
 			host.loader.set_status(hub_status_for(path))
 		var t_file: int = Time.get_ticks_msec()
 		ResourceLoader.load(path)
-		LoadTiming.note("file", "%s dt=%d" % [path.get_file(), Time.get_ticks_msec() - t_file])
+		LoadTiming.note("file", App.tr("flow_hub.dt") % [path.get_file(), Time.get_ticks_msec() - t_file])
 		if host.loader:
 			host.loader.set_progress(0.08 + float(i + 1) / float(n) * 0.62)
 		i += 1
@@ -99,16 +99,16 @@ static func preload_hub(host: Node, _t0: int = 0) -> void:
 
 static func hub_status_for(path: String) -> String:
 	if path.ends_with("camp.tscn") or path.ends_with("camp.gd"):
-		return "Unfolding Placeholdia…"
+		return App.tr("flow_hub.unfolding_placeholdia")
 	if path.find("/player/") >= 0:
-		return "Waking a delver…"
+		return App.tr("flow_hub.waking_a_delver")
 	if path.find("music_hub") >= 0:
-		return "Tuning the square…"
+		return App.tr("flow_hub.tuning_the_square")
 	if path.find("buildings") >= 0 or path.find("banner") >= 0:
-		return "Raising the guild row…"
+		return App.tr("flow_hub.raising_the_guild_row")
 	if path.find("tiles") >= 0:
-		return "Gathering the square…"
-	return "Crossing the veil…"
+		return App.tr("common.gathering_the_square")
+	return App.tr("flow_hub.crossing_the_veil")
 
 static func pump_fps(host: Node, hub: bool) -> void:
 	var good: int = 0

@@ -95,13 +95,13 @@ static func play_from_menu(host: Node) -> void:
 static func play_from_menu_async(host: Node) -> void:
 	LoadTiming.mark("play_begin")
 	if host.loader:
-		host.loader.begin("Placeholdia", "Gathering the square…")
+		host.loader.begin("Placeholdia", App.tr("common.gathering_the_square"))
 		host.loader.set_progress(0.08)
 	await host.get_tree().process_frame
 	LoadTiming.mark("loader_paint")
 	preload_hub(host)
 	if host.loader:
-		host.loader.set_status("Raising Placeholdia…")
+		host.loader.set_status(App.tr("app_flow.raising_placeholdia"))
 		host.loader.set_progress(0.90)
 	await host.get_tree().process_frame
 	LoadTiming.mark("camp_change")

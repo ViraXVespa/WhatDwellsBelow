@@ -86,7 +86,7 @@ static func end_run(host: Node, cond: String, killer := "") -> void:
 	if host.recap and bool(host.recap.get("open")):
 		return
 	if not host.in_dungeon:
-		host.toast("Already on the surface.")
+		host.toast(App.tr("app_run.already_on_the_surface"))
 		return
 	if host.playtest and bool(host.playtest.get("live_running")):
 		host.finish_end(cond, killer)
