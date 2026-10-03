@@ -106,3 +106,7 @@ Live AI defaults: leash 9, hunt 1.8, reaggro 0.6, aggro 7.5, flee speed ×1.45, 
 Room pack 3. Base guards 5. Ambush cap 40, spacing 10, pack 1–2.
 
 Enemy combat level keys: the tunables gate. Player-facing CL feel: combat.
+
+## Add an enemy type (live files)
+
+One id (`wolf`) lives in: `roster.gd` (`IDS`, `POOLS` so every floor keeps at least 5 types, the `_all()` row: role, move, base stats), `scripts/data/balance/enemies.gd` (`IDS` plus the live row; its `e_<id>_*` keys feed `App.bal` and the debug menu, and `Roster.def` prefers them over the `roster.gd` row), art `assets/sprites/enemies/<id>/idle_down.png` (`enemy_setup.gd` loads it by id; produce it through art_pipeline), then the roster and HP lines above and the HP row in the tunables gate. Prove with smoke 4. A new role or family is a question to the User (Roles above).

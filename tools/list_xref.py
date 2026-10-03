@@ -71,7 +71,7 @@ def main(argv: list[str] | None = None) -> int:
     body = [f"root=. pattern={pattern} mode={mode} include={args.include} path={','.join(paths)}",
             f"maxHits={args.max_hits} maxFiles={args.max_files} scanned={scanned} files={len(files_hit)} hits={len(hits)} truncated={trunc}",
             ""] + hits
-    echo = f"xref files={len(files_hit)} hits={len(hits)} scanned={scanned} truncated={trunc}"
+    echo = "\n".join(body[1:])  # the hits are the payload (a second read_summary call per lookup was a kink)
     return agent_log.finish("xref", root, "\n".join(body), "INFO", args=args, echo=echo, files=len(files_hit),
                             hits=len(hits), scanned=scanned, truncated=trunc)
 

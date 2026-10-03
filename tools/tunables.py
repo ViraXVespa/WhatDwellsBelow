@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""design/tunables.md and tunables-world.md CLI: get, set.
+"""design/tunables.md and tunables-world.md CLI: get, set, add.
 
     python3 tools/tunables.py get --key <key-or-alias>
     python3 tools/tunables.py set --key <key-or-alias> --set "new Live cell" [--dry-run]
+    python3 tools/tunables.py add --after <existing-key> --key NEW_KEY --set "Live cell" [--dry-run]
 
 Logic lives in tunables_lib. The two old script names stay as shims for one release.
 Summaries: _logs/tunable-row/ and _logs/tunable-patch/.
@@ -52,7 +53,28 @@ def cmd_get(root: Path, args) -> int:
     for hit in hits:
         lines += tl.format_hit(hit) + [""]
     return agent_log.finish("tunable-row", root, "\n".join(lines), "PASS" if hits else "FAIL", args=args,
-                            echo=f"matches={len(hits)}", matches=len(hits))
+                            echo="\n".join(lines[2:]), matches=len(hits))
+
+
+def cmd_add(root: Path, args) -> int:
+    """Insert one row after an existing key's row (same table); other cells are `-` for the caller to fill."""
+    lines = _head("add", f"key={args.key}", f"after={args.after}", f"set={args.value}")
+
+    def end(status: str, echo: str | None = None, **kv) -> int:
+        return agent_log.finish("tunable-add", root, "\n".join(lines), status, args=args, echo=echo, **kv)
+
+    if _find(root, args.key)[0]:
+        return end("PASS", "changed=0", changed=0, skipped="exists")
+    found, exists = _find(root, args.after)
+    if not exists or len(found) != 1:
+        return end("FAIL", changed=0, error="missing-tunables" if not exists else "after-not-unique-or-missing")
+    path, raw, hit = found[0]
+    file_lines = raw.splitlines(keepends=True)
+    out = tl.insert_row(file_lines, hit, f"`{args.key}`", args.value)
+    if not args.dry_run:
+        md.write_text(path, md.join_lines_keep_trailing(raw, out))
+    lines += [f"section={hit.section}", f"inserted_after_line={hit.index + 1}", "other cells are `-`; fill them (suggested, note) with doc_patch.py replace"]
+    return end("PASS", f"changed=1 section={hit.section}" + (" (dry-run)" if args.dry_run else ""), changed=1, dry_run=args.dry_run)
 
 
 def cmd_set(root: Path, args) -> int:
@@ -89,16 +111,21 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("set", help="Patch one Live cell.")
     s.add_argument("--key", required=True, help="Tunable key or unique alias")
     s.add_argument("--set", dest="value", required=True, help="New Live cell text")
-    for name in ("get", "set"):
+    s = sub.add_parser("add", help="Insert a row after an existing key's row.")
+    s.add_argument("--key", required=True, help="New key (no row exists yet)")
+    s.add_argument("--after", required=True, help="Existing key or alias; the new row goes below it, same table")
+    s.add_argument("--set", dest="value", required=True, help="Live cell text")
+    for name in ("get", "set", "add"):
         sub.choices[name].add_argument("--root", default=None, help="Repo root (default: auto).", dest="root_sub")
         sub.choices[name].add_argument("--json", dest="json_sub", action="store_true")
-    sub.choices["set"].add_argument("--dry-run", dest="dry_sub", action="store_true", help="Print what would change; write nothing.")
+    for name in ("set", "add"):
+        sub.choices[name].add_argument("--dry-run", dest="dry_sub", action="store_true", help="Print what would change; write nothing.")
     args = ap.parse_args(argv)
     args.root = getattr(args, "root_sub", None) or args.root
     args.json = args.json or getattr(args, "json_sub", False)
     args.dry_run = args.dry_run or getattr(args, "dry_sub", False)
     root = agent_log.resolve_root(args)
-    return {"get": cmd_get, "set": cmd_set}[args.cmd](root, args)
+    return {"get": cmd_get, "set": cmd_set, "add": cmd_add}[args.cmd](root, args)
 
 
 if __name__ == "__main__":

@@ -47,8 +47,9 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
     names = {g.rsplit("/", 1)[-1] for g in tracked}
     gone = subprocess.run(["git", "log", "--diff-filter=D", "--name-only", "--pretty=format:"], cwd=root, capture_output=True, text=True).stdout.split("\n")
     gone_names = {g.rsplit("/", 1)[-1] for g in gone if g} - names
-    ignored = subprocess.run(["git", "ls-files", "--others", "--ignored", "--exclude-standard", "--directory"], cwd=root, capture_output=True, text=True).stdout.split("\n")
-    ignored = tuple(i for i in ignored if i)
+    def ignored(tok: str) -> bool:
+        """Gitignored runtime paths (tools/anim_review/...) are not dead refs even when the dir is absent."""
+        return subprocess.run(["git", "check-ignore", "-q", "--", tok], cwd=root, capture_output=True).returncode == 0
     classes: dict[str, set[str]] = {}
     for g in tracked:
         if g.endswith(".gd"):
@@ -74,7 +75,7 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
                 if " " in tok or any(c in tok for c in "*<>{}$%|=()[]\\:,;~") or tok.startswith(("-", ".", "/")) or any(tok.startswith(s) for s in PATH_SKIP):
                     pass
                 elif tok.endswith(SUFFIX) and "." in tok.rsplit("/", 1)[-1]:
-                    if tok.endswith("_scratch.py") or (ignored and tok.startswith(ignored)) or (not f.is_relative_to(root) and (f.parent / tok).exists()):
+                    if tok.endswith("_scratch.py") or ignored(tok) or (not f.is_relative_to(root) and (f.parent / tok).exists()):
                         continue
                     if tok.rstrip("/") not in tracked and not (root / tok).exists() and not any(g.endswith("/" + tok) for g in tracked) and (("/" in tok) or tok in gone_names):
                         bad.append(f"PATH    {name}:{no}: {tok}")

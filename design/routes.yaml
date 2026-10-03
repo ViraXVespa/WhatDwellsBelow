@@ -200,8 +200,9 @@ doors:
       smokes: design/debug-smokes.md
   audio_visual:
     file: design/audio-visual.md
-    read_when: "music, SFX, splash stills, presentation rules"
-    jobs: {}
+    read_when: "music, splash stills, presentation rules"
+    jobs:
+      sfx: design/audio-visual-sfx.md
   save_tech:
     file: design/save-tech.md
     read_when: "persistence, wasm headers, autoloads, perf"
@@ -283,6 +284,7 @@ job_read_when:
   graphics.volume: "exposed coplanar brick runs, BoxMesh retirement, BoxShape on welded mass, provided ribbon"
   graphics.buffer: "four-texel radiance buffer, disc blobs, fine occupancy"
   graphics.actor: "billboard-alpha squash quads, player yard-mannequin foes, source-offset"
+  audio_visual.sfx: "sfx wiring, silent events, wav ids, appendix E"
   save_tech.persist: "primary backup wipe, game_ver stamp, isolated AI profiles"
   save_tech.web: "COOP COEP off, id.txt querybust, serviceworker rename"
   save_tech.runtime: "borderless exclusive, mip decode ban, Compatibility preferred"
@@ -334,6 +336,8 @@ shot_flows:
   gear_ui: "camp-anvil-tabs,camp-inventory"
   inventory: "camp-inventory"
   dungeon.gates: "dungeon-gate-shop"
+  ui.pause: "camp-pause-menu"
+  ui.run_flow: "camp-recap"
 
 # New UI states with no shot flow (check_shot_gaps.py --changed): Bot gate = required (bot_smokes.py and
 # run_build_gate.py --batch FAIL on a new uncovered state); Build gate = advisory (printed, never fails).

@@ -149,3 +149,13 @@ def format_hit(hit: Hit) -> list[str]:
         "aliases=%s" % ", ".join(hit.aliases),
         "line=%d" % (hit.index + 1),
     ]
+
+
+def insert_row(lines: list[str], after: "Hit", key_cell: str, live: str) -> list[str]:
+    """New row after `after` in the same table: key cell, Live cell, every other cell `-` (fill by hand)."""
+    cells = ["-"] * after.n_cols
+    cells[0] = key_cell
+    cells[after.live_col] = live
+    row = "| " + " | ".join(cells) + " |"
+    nl = "\r\n" if lines[after.index].endswith("\r\n") else "\n"
+    return lines[: after.index + 1] + [row + nl] + lines[after.index + 1 :]

@@ -64,7 +64,7 @@ def cmd_row(root: Path, args) -> int:
     for r in hits:
         lines += [f"system={r.system}", f"live={r.live}", ""]
     return agent_log.finish("code-map-row", root, "\n".join(lines), "PASS" if hits else "FAIL", args=args,
-                            echo=f"matches={len(hits)}", matches=len(hits))
+                            echo="\n".join(lines[2:]), matches=len(hits))
 
 
 def _parse_rename(raw: str) -> tuple[str, str] | None:

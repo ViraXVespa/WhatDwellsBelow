@@ -60,7 +60,7 @@ The `.ps1` twins of the Python tools are listed in `tools-shims.md`.
 | `check_shot_gaps.py` | UI states with no shot flow, new uncovered states since a ref (`--changed`; FAIL for Bot, `--advisory` for Build), flow and published-shot problems. Summary: `shot-gaps`. | BWD | `--help` | Y |
 | `shot_clip_lib.py` | Clipboard paste and open-in-viewer helpers for `run_shots.py` | WD | module docstring (no `--help`) | Y |
 | `show_func.py` | Extract one func/const/var (`--path`, `--name`). Summary: `show-func`. | D | `--help` | N |
-| `tunables.py` | `get --key K` / `set --key K --value V` on `design/tunables.md` and `tunables-world.md`; a code key like `move_speed` matches a prose row ("Base move speed") when all its words appear; `set` needs exactly one hit. Summaries: `tunable-row`, `tunable-patch`. | D | `--help` | N |
+| `tunables.py` | `get --key K` / `set --key K --set V` / `add --after K --key NEW --set V` on `design/tunables.md` and `tunables-world.md`; a code key like `move_speed` matches a prose row ("Base move speed") when all its words appear; `set` needs exactly one hit. Summaries: `tunable-row`, `tunable-patch`. | D | `--help` | N |
 | `tunables_lib.py` | Tunables row parser used by the two tunables tools | D | module docstring (no `--help`) | N |
 | `wdb_scratch_server.py` | Token-protected local HTTP runner for web/chat scratch. User setup only; needs `WDB_SCRATCH_TOKEN` and `WDB_ROOT`. | WD | `--help` | N |
 | `web_postexport.py` | Stamp a Godot Web export. Cache id follows the binary, not the notes label | D | `--help` | N |
