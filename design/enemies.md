@@ -16,7 +16,7 @@ Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/th
 
 ## Art and I2V
 
-Enemy frames follow art_pipeline. There is not a second enemy pipeline. 8-dir Bible layout, plate seed, remap, and review-gate law live there.
+Enemy frames follow art_pipeline (directional sets with props: its enemy_bible job). There is not a second enemy pipeline. 8-dir Bible layout, plate seed, remap, and review-gate law live there.
 
 ## Roles present in demo
 

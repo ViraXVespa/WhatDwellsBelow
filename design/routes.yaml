@@ -256,6 +256,7 @@ doors:
       attack_keyframes: design/art-attack-keyframes.md
       bible: design/art-bible.md
       bible_character: design/art-bible-character.md
+      enemy_bible: design/art-bible-enemy.md
   archives:
     file: design/archives.md
     read_when: "Pages builds, catalog pins"
@@ -290,6 +291,7 @@ job_read_when:
   art_pipeline.attack_keyframes: "resume parked, attack keyframes"
   art_pipeline.bible: "canon bible, layer law, quality floor"
   art_pipeline.bible_character: "identity sketch, template wording, reliability notes"
+  art_pipeline.enemy_bible: "enemy facings, prop hands, mirror swap, quiver and staff"
   gear_ui.board: "armor columns, plate icons, rarity wash, stepper neighbors"
   gear_ui.stats: "kit deltas, combat totals, hover highlight, Y preview"
   gear_ui.reequip: "re-equip lists, submenu chrome"
