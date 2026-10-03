@@ -1,5 +1,7 @@
 extends Object
 
+const CliArgs := preload("res://scripts/debug/cli_args.gd")
+
 static var _dungeon_packed: PackedScene = null
 
 static func ensure_dungeon_packed(host: Node) -> PackedScene:
@@ -16,6 +18,10 @@ static func begin_run(host: Node) -> void:
 	host.run_seed = randi()
 	if host.run_seed == 0:
 		host.run_seed = 1
+	var fixed: int = CliArgs.seed_arg(0)
+	if fixed > 0:
+		host.run_seed = fixed
+		seed(fixed)
 	host.boss_dead = false
 	host.saw_stairs = false
 	host.boss_low = false

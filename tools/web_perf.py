@@ -4,7 +4,7 @@
   python3 tools/web_perf.py [--site DIR | --url U] [--flow NAME[,NAME]|all] [--save-baseline F | --baseline F]
 
 Serves --site (default docs; use a fresh `export_web.py --out DIR`, docs/ may be stale) and replays flows from
-tools/web-perf-flows.json (steps: phase wait key hold click shot; `boot` prepends the splash/title steps). Reports load_ms
+tools/web-perf-flows.json (steps: phase wait settle key hold click eval waitplay shot; `query` adds URL args like wdb-seed=42; `boot` prepends the splash/title steps). Reports load_ms
 (navigation to the engine overlay gone), its breakdown (wasm_dl_ms, wasm_compile_ms, init_ms), frame ms/fps and long
 frames per phase, JS heap and wasm memory peaks (sampled every 500 ms; wasm memory never shrinks), transfer sizes and
 page errors. Writes _logs/web-perf/report.json. --baseline F diffs against a saved file (tools/web-perf-baseline.json);
@@ -56,6 +56,8 @@ def median(runs: list[dict]) -> dict:
     for k in SCALAR:
         rep[k] = round(statistics.median(r[k] for r in runs), 2)
     rep["runs"] = len(runs)
+    if any(r["play"] for r in runs):
+        rep["play_runs"] = [r["play"] for r in runs]  # per-run playtester telemetry: what differs between runs
     return rep
 
 
@@ -125,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
         for n in names:
             steps = (boot if flows[n].get("boot") else []) + flows[n]["steps"]
             runs = [web_perf_lib.measure(url, chrome, steps, args.long_ms, args.timeout_sec, (args.width, args.height), shots,
-                                         n, args.mbps) for _ in range(max(args.repeat, 1))]
+                                         n, args.mbps, flows[n].get("query", "")) for _ in range(max(args.repeat, 1))]
             reps[n] = median(runs)
     except Exception as e:  # load timeout, Chrome launch
         return agent_log.finish(JOB, root, "error: %s" % str(e).splitlines()[0], "FAIL", args=args, flow=args.flow)
@@ -152,6 +154,7 @@ def main(argv: list[str] | None = None) -> int:
         lines.append("flow %s" % n)
         lines += ["  %s=%s" % (k, r[k]) for k in SCALAR]
         lines += ["  mark %s=%s" % kv for kv in r["marks"].items()]
+        lines += ["  play %s" % json.dumps(p, sort_keys=True) for p in r.get("play_runs", [])]
         lines += ["  phase %s %s" % (k, " ".join("%s=%s" % (a, b) for a, b in v.items())) for k, v in r["phases"].items()]
         lines += ["  big_asset %(file)s %(kb)s KB" % a for a in r["assets"][:4]]
         notes = stuck(flows[n], r["shots"])

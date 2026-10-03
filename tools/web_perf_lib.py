@@ -20,6 +20,7 @@ if(W.seen&&!b&&!W.gone){W.gone=performance.now()}
 if(W.t&&W.gone){(W.f[W.ph]=W.f[W.ph]||[]).push(t-W.t)}W.t=t;requestAnimationFrame(l)})(0);
 window.addEventListener('error',function(){W.errs++});window.__wpSamp=samp})();
 """
+PLAY = ("seed", "floor", "end_cond", "duration", "kills", "dmg_dealt", "dmg_taken", "crits", "combat_t", "near_death")
 READY = "!!window.__wp.gone&&!!document.getElementById('canvas')"
 
 
@@ -51,6 +52,13 @@ def run_flow(page, steps: list[dict], out: Path, tag: str) -> tuple[dict, dict]:
                 pass
             if s.get("as"):
                 marks[s["as"]] = round((time.time() - t0) * 1000)
+        elif "eval" in s:  # JS in the page, e.g. window.wdbPlaytest(30) (needs ?wdb-playtest in the flow query)
+            page.evaluate(s["eval"])
+        elif "waitplay" in s:  # wait for the playtester's finished run (window.__wdbPlay), at most "waitplay" ms
+            try:
+                page.wait_for_function("!!window.__wdbPlay", timeout=int(s["waitplay"]))
+            except Exception:
+                pass
         elif "click" in s:  # [x, y] as viewport fractions
             v = page.viewport_size
             page.mouse.click(v["width"] * s["click"][0], v["height"] * s["click"][1])
@@ -78,7 +86,7 @@ def _stats(fs: list[float], long_ms: float) -> dict:
 
 
 def measure(url: str, chrome: str, steps: list[dict], long_ms: float, timeout_s: int, size: tuple[int, int], out: Path,
-            tag: str, mbps: float = 0.0) -> dict:
+            tag: str, mbps: float = 0.0, query: str = "") -> dict:
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as pw:
@@ -97,12 +105,13 @@ def measure(url: str, chrome: str, steps: list[dict], long_ms: float, timeout_s:
             cdp.send("Network.emulateNetworkConditions", {"offline": False, "latency": 20,
                                                           "downloadThroughput": mbps * 125000, "uploadThroughput": mbps * 125000})
         t0 = time.time()
-        page.goto(url, wait_until="commit")
+        page.goto(url + (("&" if "?" in url else "?") + query if query else ""), wait_until="commit")
         page.wait_for_function(READY, timeout=timeout_s * 1000)
         wall_ms = (time.time() - t0) * 1000
         shots, marks = run_flow(page, steps, out, tag)
         page.evaluate("window.__wpSamp()")
         w = page.evaluate("window.__wp")
+        play = page.evaluate("window.__wdbPlay||null")
         m = {x["name"]: x["value"] for x in cdp.send("Performance.getMetrics")["metrics"]}
         res = page.evaluate("performance.getEntriesByType('resource').map(r=>[r.name.split('/').pop().split('?')[0],"
                             "r.transferSize||r.encodedBodySize||0,r.startTime,r.responseEnd])")
@@ -118,6 +127,6 @@ def measure(url: str, chrome: str, steps: list[dict], long_ms: float, timeout_s:
            **_stats(meas, long_ms), "heap_mb": round(max(w["heap"], m.get("JSHeapUsedSize", 0)) / 1048576, 1),
            "wasm_mem_mb": round(w["wasm"] / 1048576, 1), "dom_nodes": int(m.get("Nodes", 0)),
            "transfer_mb": round(sum(b for _, b, _, _ in res) / 1048576, 2), "page_errors": len(errs) + w["errs"],
-           "phases": ph, "marks": marks, "shots": shots,
+           "phases": ph, "marks": marks, "play": {k: play[k] for k in PLAY if k in play} if play else {}, "shots": shots,
            "assets": sorted(({"file": n, "kb": round(b / 1024)} for n, b, _, _ in res if b > 262144), key=lambda a: -a["kb"])}
     return rep
