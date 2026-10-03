@@ -7,6 +7,7 @@ const Goals := preload("res://scripts/debug/playtest_goals.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const CliArgs := preload("res://scripts/debug/cli_args.gd")
 const FAST_FLAG := "--wdb-pt-fast"  # the only way to get a scale above 1.0
+const REPEAT_FLAG := "--wdb-pt-repeat"  # opt-in exact repeats: the global RNG is reseeded before every think
 const GATE_MAX := 15.0  # s on a soft gate (paused / transition / loading) before acting anyway, so a stuck overlay cannot stall a run
 const HARD_MAX := 90.0  # s on a hard gate (no dungeon / no player) before the run is ended as "stalled"
 const GATE_SOFT := ["paused", "transition", "loading", "scene_not_ready"]
@@ -47,6 +48,12 @@ static func acting_scale(pt: Node) -> float:
 	if pt.smoke_mode or not CliArgs.has(FAST_FLAG):
 		return 1.0
 	return clampf(float(pt.job.get("scale", App.bal.playtest_scale)), 1.0, 6.0)
+
+static func repeat_seed(pt: Node) -> void:
+	# Opt-in (?wdb-pt-repeat). Enemy/crit rolls use the global RNG, which frame-timed systems also draw from; reseeding it per think
+	# from (run seed, think index) keeps that drift from piling up. Default runs stay random.
+	if CliArgs.has(REPEAT_FLAG):
+		seed(int(App.run_seed) * 131 + int(pt.perf.get("think_n", 0)))
 
 static func set_scale(want: float) -> void:
 	if not is_equal_approx(Engine.time_scale, want):

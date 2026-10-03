@@ -263,6 +263,7 @@ func _tick(delta: float) -> void:
 		attack = false
 		move = Vector2.ZERO
 		last_think_t = sim_t
+		PtGate.repeat_seed(self)
 		var t1: int = Time.get_ticks_usec()
 		PlaytestAI.think(self, p, el)
 		PlaytestLog.act(self, p)
