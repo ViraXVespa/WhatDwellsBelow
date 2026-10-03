@@ -40,7 +40,7 @@ static func slot_btn(ui: CanvasLayer, slot: String) -> Button:
 	return Sync.slot_btn(ui, slot)
 
 static func bag_grid(ui: CanvasLayer) -> void:
-	ui.box.add_child(ThemeS.lab("Bag", 20, Color(0.88, 0.82, 0.7)))
+	ui.box.add_child(ThemeS.lab(App.tr("board_host.bag"), 20, Color(0.88, 0.82, 0.7)))
 	var grid := GridContainer.new()
 	grid.columns = 7
 	grid.add_theme_constant_override("h_separation", 8)

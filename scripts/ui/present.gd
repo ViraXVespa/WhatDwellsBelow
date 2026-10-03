@@ -42,7 +42,7 @@ func play_enter(done: Callable) -> void:
 	_mode = "enter"
 	_t = 0.0
 	_done = done
-	caption.text = "Consciousness slips the body…"
+	caption.text = tr("common.consciousness_slips_the_body")
 	overlay.color = Color(0.2, 0.75, 0.95, 0.0)
 	App.sfx("enter")
 	get_tree().create_timer(1.05, true, false, true).timeout.connect(_finish_enter)
@@ -53,7 +53,7 @@ func cover_enter() -> void:
 	_mode = "enter_hold"
 	_t = 0.0
 	_done = Callable()
-	caption.text = "Consciousness slips the body…"
+	caption.text = tr("common.consciousness_slips_the_body")
 	overlay.color = Color(0.2, 0.75, 0.95, 1.0)
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	overlay.queue_redraw()
@@ -78,7 +78,7 @@ func play_wake() -> void:
 	_t = 0.0
 	_wake_hold = false
 	_done = Callable()
-	caption.text = "You wake in Placeholdia."
+	caption.text = tr("present.you_wake_in_placeholdia")
 	overlay.color = Color(0.95, 0.88, 0.7, 1.0)
 	App.sfx("wake")
 

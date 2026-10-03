@@ -155,21 +155,21 @@ static func refresh(host: Node) -> void:
 		var gain := float(host.gain_now.get(id, 0.0))
 		var perm_total := start + gain
 		var run_total := start + run_left
-		(rec.perm_lab as Label).text = "%s Lv %d | Next Level: %dXP | Total XP: %dXP" % [
+		(rec.perm_lab as Label).text = App.tr("common.lv_next_level_xp_total") % [
 			skill_title(id),
 			CombatP.level_from_xp(App.prog, perm_total),
 			int(round(CombatP.xp_to_next(App.prog, perm_total))),
 			int(round(perm_total)),
 		]
 		if host.applied:
-			(rec.run_lab as Label).text = "%s Lv %d | Next Level: %dXP | Total XP: %dXP" % [
+			(rec.run_lab as Label).text = App.tr("common.lv_next_level_xp_total") % [
 				skill_title(id),
 				CombatP.level_from_xp(App.prog, start),
 				int(round(CombatP.xp_to_next(App.prog, start))),
 				int(round(start)),
 			]
 		else:
-			(rec.run_lab as Label).text = "%s Lv %d | This Run: %dXP | Next Level: %dXP" % [
+			(rec.run_lab as Label).text = App.tr("common.lv_this_run_xp_next") % [
 				skill_title(id),
 				CombatP.level_from_xp(App.prog, run_total),
 				int(round(run_left)),

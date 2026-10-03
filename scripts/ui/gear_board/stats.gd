@@ -53,13 +53,13 @@ static func page_ids(ui: CanvasLayer) -> PackedStringArray:
 static func page_title(id: String) -> String:
 	match id:
 		"equipped":
-			return "Bonuses from this kit"
+			return App.tr("stats.bonuses_from_this_kit")
 		"combat":
-			return "All combat stats"
+			return App.tr("stats.all_combat_stats")
 		"utility":
-			return "All utility stats"
+			return App.tr("stats.all_utility_stats")
 		_:
-			return "Artifact sets"
+			return App.tr("stats.artifact_sets")
 
 static func equipped_only() -> String:
 	var lines := PackedStringArray()
@@ -68,7 +68,7 @@ static func equipped_only() -> String:
 	for id: String in UTIL_KEYS:
 		_add_if(lines, id, _sum(id))
 	if lines.is_empty():
-		return "No equipment bonuses on this kit."
+		return App.tr("stats.no_equipment_bonuses_on_this")
 	return "\n".join(lines)
 
 static func all_block(keys: PackedStringArray) -> String:
@@ -76,9 +76,9 @@ static func all_block(keys: PackedStringArray) -> String:
 	for id: String in keys:
 		var v := _sum(id)
 		if absf(v) < 0.001:
-			lines.append("%s  —" % Affix.label_of(id))
+			lines.append(App.tr("stats.text") % Affix.label_of(id))
 		else:
-			lines.append("%s  %s" % [Affix.label_of(id), Affix.format_value(id, v)])
+			lines.append(App.tr("common.text_3") % [Affix.label_of(id), Affix.format_value(id, v)])
 	return "\n".join(lines)
 
 static func artifact_block() -> String:
@@ -88,12 +88,12 @@ static func artifact_block() -> String:
 		var n := int(counts.get(sid, 0))
 		if n <= 0:
 			continue
-		var bit := "%s  %d/%d" % [sid.capitalize(), n, CatalogS.set_size(sid)]
+		var bit := App.tr("stats.text_2") % [sid.capitalize(), n, CatalogS.set_size(sid)]
 		if n >= 2:
 			bit += "  —  " + CatalogS.set_bonus_line(sid, n)
 		lines.append(bit)
 	if lines.is_empty():
-		return "No artifacts this run."
+		return App.tr("stats.no_artifacts_this_run")
 	return "\n".join(lines)
 
 static func _sum(id: String) -> float:
@@ -110,4 +110,4 @@ static func _sum(id: String) -> float:
 static func _add_if(lines: PackedStringArray, id: String, v: float) -> void:
 	if absf(v) < 0.001:
 		return
-	lines.append("%s  %s" % [Affix.label_of(id), Affix.format_value(id, v)])
+	lines.append(App.tr("common.text_3") % [Affix.label_of(id), Affix.format_value(id, v)])

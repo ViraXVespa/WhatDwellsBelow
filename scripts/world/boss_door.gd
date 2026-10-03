@@ -61,7 +61,7 @@ func setup_opening(opening: Dictionary) -> void:
 	vis.material_override = m
 	add_child(vis)
 	label = Label3D.new()
-	label.text = "PREPARE"
+	label.text = tr("boss_door.prepare")
 	label.position = Vector3(0.0, tall + 0.55, 0.0)
 	label.font_size = 48
 	label.outline_size = 10
@@ -92,16 +92,16 @@ func interact(_who: Node) -> String:
 	if App.has_method("sfx"):
 		App.sfx("ui")
 	if App.has_method("toast"):
-		App.toast("The door yields. The guardian waits.")
-	return "The door yields. The guardian waits."
+		App.toast(tr("common.the_door_yields_the_guardian"))
+	return tr("common.the_door_yields_the_guardian")
 
 func refresh() -> void:
 	if open:
-		prompt = "The way is open."
+		prompt = tr("boss_door.the_way_is_open")
 	else:
-		prompt = "Open the guardian door"
+		prompt = tr("boss_door.open_the_guardian_door")
 	if label:
-		label.text = "OPEN" if open else "PREPARE"
+		label.text = tr("boss_door.open") if open else "PREPARE"
 		label.modulate = Color(0.6, 0.95, 0.55) if open else Color(1.0, 0.45, 0.35)
 	for child in get_children():
 		if child is Hotspot:

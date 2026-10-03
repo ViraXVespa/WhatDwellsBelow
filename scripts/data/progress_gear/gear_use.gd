@@ -10,7 +10,7 @@ static func use_from_bag(p: Object, uid: int) -> String:
 			it = b
 			break
 	if it.is_empty():
-		return "Gone."
+		return App.tr("common.gone")
 	if str(it.kind) == "food":
 		return eat(p, it, false)
 	return Bag.equip_uid(p, uid)
@@ -18,19 +18,19 @@ static func use_from_bag(p: Object, uid: int) -> String:
 static func use_potion(p: Object) -> String:
 	var it: Dictionary = p.slots.get("potion", {})
 	if it.is_empty():
-		App.toast("No potion equipped.")
-		return "No potion equipped."
+		App.toast(App.tr("common.no_potion_equipped"))
+		return App.tr("common.no_potion_equipped")
 	var ch: int = int(it.get("charges", it.get("stack", 0)))
 	if ch <= 0:
-		App.toast("No charges left this run.")
-		return "Empty."
+		App.toast(App.tr("common.no_charges_left_this_run"))
+		return App.tr("common.empty")
 	return drink(p, it, true)
 
 static func use_food(p: Object) -> String:
 	var it: Dictionary = p.slots.get("food", {})
 	if it.is_empty() or int(it.get("stack", 0)) <= 0:
-		App.toast("No food equipped.")
-		return "No food equipped."
+		App.toast(App.tr("common.no_food_equipped"))
+		return App.tr("common.no_food_equipped")
 	return eat(p, it, true)
 
 static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
@@ -39,17 +39,17 @@ static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 static func eat(p: Object, it: Dictionary, from_slot: bool) -> String:
 	var fid: String = str(it.get("food", "ration"))
 	if p.food_t > 0.0 and fid == p.food_id:
-		App.toast("That food is already working.")
-		return "Already eating that."
+		App.toast(App.tr("gear_use.that_food_is_already_working"))
+		return App.tr("gear_use.already_eating_that")
 	if p.food_t > 0.0 and fid != p.food_id:
 		p.clear_food()
 	p.food_id = fid
 	p.food_t = App.bal.food_hot_y
 	p.food_left = App.bal.food_hot_x
 	App.sfx("food")
-	App.toast("Food — healing over time.")
+	App.toast(App.tr("gear_use.food_healing_over_time"))
 	consume(p, it, from_slot)
-	return "Food."
+	return App.tr("gear_use.food")
 
 static func consume(p: Object, it: Dictionary, from_slot: bool) -> void:
 	it.stack = int(it.stack) - 1

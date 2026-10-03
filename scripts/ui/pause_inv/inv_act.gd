@@ -22,7 +22,7 @@ static func primary(ui: CanvasLayer) -> void:
 static func use_item(ui: CanvasLayer) -> void:
 	var it: Dictionary = View.selected(ui)
 	if not View.can_use_item(it):
-		ui._st("Can't use that.")
+		ui._st(App.tr("inv_act.can_t_use_that"))
 		return
 	var msg: String = ""
 	if View.from_bag(ui):
@@ -36,7 +36,7 @@ static func use_item(ui: CanvasLayer) -> void:
 static func equip_item(ui: CanvasLayer) -> void:
 	var it: Dictionary = View.selected(ui)
 	if not View.can_equip_item(ui, it):
-		ui._st("Can't equip that.")
+		ui._st(App.tr("common.can_t_equip_that"))
 		return
 	var slot: String = str(it.get("slot", ""))
 	var msg: String = App.prog.equip_uid(int(it.uid))
@@ -45,11 +45,11 @@ static func equip_item(ui: CanvasLayer) -> void:
 
 static func drop_item(ui: CanvasLayer) -> void:
 	if not App.in_dungeon:
-		ui._st("Drop on the dungeon floor only.")
+		ui._st(App.tr("common.drop_on_the_dungeon_floor"))
 		return
 	var it: Dictionary = View.selected(ui)
 	if it.is_empty():
-		ui._st("Nothing to drop.")
+		ui._st(App.tr("common.nothing_to_drop"))
 		return
 	var msg: String = ""
 	if View.from_bag(ui):

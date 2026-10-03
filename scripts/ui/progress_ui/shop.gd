@@ -7,13 +7,13 @@ const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 
 static func rebuild_shop(ui) -> void:
 	ui._clear()
-	ui.box.add_child(ThemeS.lab("Ghost Shop", 32, Color(0.75, 0.9, 1.0)))
-	ui.box.add_child(ThemeS.lab("Two artifacts a visit. Snacks %dg. Artifacts are run-only." % int(App.bal.snack_cost), 18, Color(0.82, 0.76, 0.66)))
-	ui.box.add_child(ThemeS.lab("Gold %d   Bought %d/%d" % [App.gold, int(ui.shop_spot.get("bought") if ui.shop_spot else 0), int(App.bal.shop_buy_max)], 20, Color(0.9, 0.88, 0.78)))
+	ui.box.add_child(ThemeS.lab(App.tr("common.ghost_shop"), 32, Color(0.75, 0.9, 1.0)))
+	ui.box.add_child(ThemeS.lab(App.tr("shop.two_artifacts_a_visit_snacks") % int(App.bal.snack_cost), 18, Color(0.82, 0.76, 0.66)))
+	ui.box.add_child(ThemeS.lab(App.tr("shop.gold_bought") % [App.gold, int(ui.shop_spot.get("bought") if ui.shop_spot else 0), int(App.bal.shop_buy_max)], 20, Color(0.9, 0.88, 0.78)))
 	ui.box.add_child(ThemeS.lab(Inv.sets_blurb(), 18, Color(0.85, 0.72, 0.45)))
 	ui.status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
 	ui.box.add_child(ui.status)
-	ui.focus_btn = ThemeS.btn("Snack  (%dg, +HP)" % int(App.bal.snack_cost), func(): Confirm.open(ui, "Buy Snack", "Spend %dg for a snack (+HP)?" % int(App.bal.snack_cost), func(): buy_snack(ui)))
+	ui.focus_btn = ThemeS.btn(App.tr("shop.snack_g_hp") % int(App.bal.snack_cost), func(): Confirm.open(ui, App.tr("shop.buy_snack"), App.tr("shop.spend_g_for_a_snack") % int(App.bal.snack_cost), func(): buy_snack(ui)))
 	ui.box.add_child(ui.focus_btn)
 	if ui.shop_spot:
 		for a in ui.shop_spot.stock:
@@ -24,11 +24,11 @@ static func rebuild_shop(ui) -> void:
 			var extra := ""
 			if set_id != "":
 				extra = "\n" + App.prog.set_bonus_text(set_id)
-			ui.box.add_child(ThemeS.btn("Buy %s  (%dg)\n%s%s" % [nm, int(App.bal.art_cost), desc, extra], func(): Confirm.open(ui, "Buy Artifact", "Spend %dg for %s?" % [int(App.bal.art_cost), nm], func(): buy_art(ui, id, nm))))
+			ui.box.add_child(ThemeS.btn(App.tr("shop.buy_g") % [nm, int(App.bal.art_cost), desc, extra], func(): Confirm.open(ui, App.tr("shop.buy_artifact"), App.tr("shop.spend_g_for") % [int(App.bal.art_cost), nm], func(): buy_art(ui, id, nm))))
 		for it in App.prog.bag:
 			if str(it.kind) == "artifact" or str(it.kind) == "weapon" or str(it.kind) == "head" or str(it.kind) == "body" or str(it.kind) == "legs":
 				var uid := int(it.uid)
-				ui.box.add_child(ThemeS.btn("Pawn %s  (%dg)" % [it.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, "Pawn Item", "Pawn %s for %dg?" % [it.name, int(App.bal.pawn_gold)], func(): pawn(ui, uid))))
+				ui.box.add_child(ThemeS.btn(App.tr("shop.pawn_g") % [it.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, App.tr("shop.pawn_item"), App.tr("shop.pawn_for_g") % [it.name, int(App.bal.pawn_gold)], func(): pawn(ui, uid))))
 		for s in ["weapon", "tool", "head", "body", "legs"]:
 			var eq: Dictionary = App.prog.slots.get(s, {})
 			if eq.is_empty():
@@ -36,32 +36,32 @@ static func rebuild_shop(ui) -> void:
 			if Kit.locked_equip_slot(str(s)):
 				continue
 			var slot := str(s)
-			ui.box.add_child(ThemeS.btn("Pawn equipped %s  (%dg)" % [eq.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, "Pawn Equipped", "Pawn equipped %s for %dg?" % [eq.name, int(App.bal.pawn_gold)], func(): pawn_slot(ui, slot))))
-	ui.box.add_child(ThemeS.btn("Leave", func(): ui.close_ui()))
+			ui.box.add_child(ThemeS.btn(App.tr("shop.pawn_equipped_g") % [eq.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, App.tr("shop.pawn_equipped"), App.tr("shop.pawn_equipped_for_g") % [eq.name, int(App.bal.pawn_gold)], func(): pawn_slot(ui, slot))))
+	ui.box.add_child(ThemeS.btn(App.tr("common.leave"), func(): ui.close_ui()))
 
 static func buy_snack(ui) -> void:
 	if App.gold < int(App.bal.snack_cost):
-		ui._st("Not enough gold.")
+		ui._st(App.tr("common.not_enough_gold"))
 		return
 	App.gold -= int(App.bal.snack_cost)
 	shop_spend(int(App.bal.snack_cost))
 	var p: Node = ui.get_tree().get_first_node_in_group("player")
 	if p and p.has_method("heal"):
 		p.heal(App.bal.snack_heal)
-	ui._st("The snack is strangely warm.")
-	App.toast("Snack.")
+	ui._st(App.tr("shop.the_snack_is_strangely_warm"))
+	App.toast(App.tr("shop.snack"))
 
 static func buy_art(ui, id: String, nm: String) -> void:
 	if ui.shop_spot == null:
 		return
 	if int(ui.shop_spot.bought) >= int(App.bal.shop_buy_max):
-		ui._st("Two artifacts a visit.")
+		ui._st(App.tr("shop.two_artifacts_a_visit"))
 		return
 	if App.gold < int(App.bal.art_cost):
-		ui._st("Not enough gold.")
+		ui._st(App.tr("common.not_enough_gold"))
 		return
 	if App.prog.bag_full():
-		ui._st("Bag full.")
+		ui._st(App.tr("common.bag_full"))
 		return
 	App.gold -= int(App.bal.art_cost)
 	ui.shop_spot.bought = int(ui.shop_spot.bought) + 1
@@ -90,42 +90,42 @@ static func shop_spend(n: int) -> void:
 static func pawn(ui, uid: int) -> void:
 	var it := App.prog.remove_uid(uid)
 	if it.is_empty():
-		ui._st("Gone.")
+		ui._st(App.tr("common.gone"))
 		return
 	App.gain_gold(int(App.bal.pawn_gold))
-	ui._st("The ghost takes it for a pittance.")
+	ui._st(App.tr("common.the_ghost_takes_it_for"))
 	ui._rebuild_shop()
 	ui._show()
 
 static func pawn_slot(ui, slot: String) -> void:
 	if Kit.locked_equip_slot(slot):
-		ui._st("Weapon and tool stay equipped.")
+		ui._st(App.tr("common.weapon_and_tool_stay_equipped"))
 		return
 	var it := App.prog.take_slot(slot)
 	if it.is_empty():
-		ui._st("Gone.")
+		ui._st(App.tr("common.gone"))
 		return
 	App.gain_gold(int(App.bal.pawn_gold))
-	ui._st("The ghost takes it for a pittance.")
+	ui._st(App.tr("common.the_ghost_takes_it_for"))
 	ui._rebuild_shop()
 	ui._show()
 
 static func rebuild_vendor(ui) -> void:
 	ui._clear()
-	ui.box.add_child(ThemeS.lab("Vendor Stall", 32, Color(0.95, 0.82, 0.5)))
-	ui.box.add_child(ThemeS.lab("Bank %dg  %d ore   ·   potions and rations for the next drop." % [App.bank_gold, App.bank_ore], 18, Color(0.82, 0.76, 0.66)))
+	ui.box.add_child(ThemeS.lab(App.tr("shop.vendor_stall"), 32, Color(0.95, 0.82, 0.5)))
+	ui.box.add_child(ThemeS.lab(App.tr("shop.bank_g_ore_potions_and") % [App.bank_gold, App.bank_ore], 18, Color(0.82, 0.76, 0.66)))
 	ui.status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
 	ui.box.add_child(ui.status)
-	ui.focus_btn = ThemeS.btn("Buy potion  (%dg)" % int(App.bal.vendor_potion_cost), func(): vend_potion(ui))
+	ui.focus_btn = ThemeS.btn(App.tr("shop.buy_potion_g") % int(App.bal.vendor_potion_cost), func(): vend_potion(ui))
 	ui.box.add_child(ui.focus_btn)
-	ui.box.add_child(ThemeS.btn("Buy ration  (%dg, food slot)" % int(App.bal.vendor_food_cost), func(): vend_food(ui)))
-	ui.box.add_child(ThemeS.btn("Sell 1 ore  (%dg)" % int(App.bal.vendor_ore_gold), func(): vend_sell(ui)))
-	ui.box.add_child(ThemeS.btn("Leave", func(): ui.close_ui()))
+	ui.box.add_child(ThemeS.btn(App.tr("shop.buy_ration_g_food_slot") % int(App.bal.vendor_food_cost), func(): vend_food(ui)))
+	ui.box.add_child(ThemeS.btn(App.tr("shop.sell_1_ore_g") % int(App.bal.vendor_ore_gold), func(): vend_sell(ui)))
+	ui.box.add_child(ThemeS.btn(App.tr("common.leave"), func(): ui.close_ui()))
 
 static func vend_potion(ui) -> void:
 	var cost := int(App.bal.vendor_potion_cost)
 	if App.bank_gold < cost:
-		ui._st("Not enough banked gold.")
+		ui._st(App.tr("common.not_enough_banked_gold"))
 		return
 	var pot: Dictionary = App.prog.make_potion(2)
 	var cur: Dictionary = App.prog.slots.get("potion", {})
@@ -134,20 +134,20 @@ static func vend_potion(ui) -> void:
 		App.prog.slots["potion"] = pot
 	elif not App.prog.add_to_bag(pot):
 		App.bank_gold += cost
-		ui._st("Bag full.")
+		ui._st(App.tr("common.bag_full"))
 		return
-	ui._st("Potion ready.")
+	ui._st(App.tr("shop.potion_ready"))
 	App.save_now()
 
 static func vend_food(ui) -> void:
 	var cost := int(App.bal.vendor_food_cost)
 	if App.bank_gold < cost:
-		ui._st("Not enough banked gold.")
+		ui._st(App.tr("common.not_enough_banked_gold"))
 		return
 	var fd: Dictionary = App.prog.slots.get("food", {})
 	var cap := int(App.bal.food_bring_max)
 	if not fd.is_empty() and int(fd.get("stack", 0)) >= cap:
-		ui._st("Food slot is full (%d)." % cap)
+		ui._st(App.tr("shop.food_slot_is_full") % cap)
 		return
 	App.bank_gold -= cost
 	if fd.is_empty():
@@ -155,14 +155,14 @@ static func vend_food(ui) -> void:
 	else:
 		fd.stack = mini(int(fd.get("stack", 0)) + 1, cap)
 		App.prog.slots["food"] = fd
-	ui._st("Ration packed in the food slot.")
+	ui._st(App.tr("shop.ration_packed_in_the_food"))
 	App.save_now()
 
 static func vend_sell(ui) -> void:
 	if App.bank_ore < 1:
-		ui._st("No ore in the bank.")
+		ui._st(App.tr("shop.no_ore_in_the_bank"))
 		return
 	App.bank_ore -= 1
 	App.bank_gold += int(App.bal.vendor_ore_gold)
-	ui._st("Sold 1 ore.")
+	ui._st(App.tr("shop.sold_1_ore"))
 	App.save_now()

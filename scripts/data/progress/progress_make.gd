@@ -5,16 +5,16 @@ const Roll := preload("res://scripts/data/gear_roll.gd")
 const Balance := preload("res://scripts/data/balance.gd")
 
 static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:
-	var n: String = "Great Axe"
+	var n: String = App.tr("common.great_axe")
 	if wpn == "staff":
-		n = "Lightning Staff"
+		n = App.tr("common.lightning_staff")
 	elif wpn == "longbow":
 		n = "Longbow"
 	var it: Dictionary = item(p, "weapon", n, {
 		"slot": "weapon",
 		"weapon": wpn,
 		"rarity": rarity,
-		"desc": "%s %s." % [rarity.capitalize(), n],
+		"desc": App.tr("common.text") % [rarity.capitalize(), n],
 	})
 	return _roll_onto(it, "weapon", wpn, rarity, ilvl)
 
@@ -24,15 +24,15 @@ static func make_tool(p: Object, kind: String, rarity: String = "white", ilvl: i
 		"slot": "tool",
 		"tool": kind,
 		"rarity": rarity,
-		"desc": "Run tool. Locked to %s." % kind,
+		"desc": App.tr("progress_make.run_tool_locked_to") % kind,
 	})
 	return _roll_onto(it, "tool", kind, rarity, ilvl)
 
 static func make_armor(p: Object, slot: String, rarity: String, ilvl: int = 0) -> Dictionary:
-	var it: Dictionary = item(p, slot, "%s %s" % [rarity.capitalize(), slot.capitalize()], {
+	var it: Dictionary = item(p, slot, App.tr("common.text_2") % [rarity.capitalize(), slot.capitalize()], {
 		"slot": slot,
 		"rarity": rarity,
-		"desc": "%s %s." % [rarity.capitalize(), slot.capitalize()],
+		"desc": App.tr("common.text") % [rarity.capitalize(), slot.capitalize()],
 	})
 	return _roll_onto(it, slot, slot, rarity, ilvl)
 
@@ -45,18 +45,18 @@ static func make_potion(p: Object, n: int) -> Dictionary:
 		"charges": charges,
 		"charge_max": charges,
 		"cooldown": cd,
-		"desc": "Instant heal. %d charges per run." % charges,
+		"desc": App.tr("progress_make.instant_heal_charges_per_run") % charges,
 	})
 
 static func make_food(p: Object, fid: String, n: int) -> Dictionary:
-	var nm: String = "Ration" if fid == "ration" else "Trail Bread"
-	return item(p, "food", nm, {"slot": "food", "food": fid, "stack": n, "desc": "Heal-over-time."})
+	var nm: String = "Ration" if fid == "ration" else App.tr("progress_make.trail_bread")
+	return item(p, "food", nm, {"slot": "food", "food": fid, "stack": n, "desc": App.tr("progress_make.heal_over_time")})
 
 static func make_artifact(p: Object, id: String) -> Dictionary:
 	var a: Dictionary = CatalogS.by_id(id)
 	if a.is_empty():
-		a = {"id": id, "name": id, "set": "", "desc": "A curious relic."}
-	return item(p, "artifact", str(a.name), {"id": id, "set": str(a.get("set", "")), "desc": str(a.get("desc", "A run-only relic.")), "extract": false})
+		a = {"id": id, "name": id, "set": "", "desc": App.tr("progress_make.a_curious_relic")}
+	return item(p, "artifact", str(a.name), {"id": id, "set": str(a.get("set", "")), "desc": str(a.get("desc", App.tr("progress_make.a_run_only_relic"))), "extract": false})
 
 static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Dictionary:
 	var it: Dictionary = {

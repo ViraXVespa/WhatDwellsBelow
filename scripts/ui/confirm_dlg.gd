@@ -58,7 +58,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable) ->
 	msg.size = Vector2(736, 120)
 	msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(msg)
-	var yes: Button = ThemeS.btn("Confirm", func() -> void:
+	var yes: Button = ThemeS.btn(App.tr("confirm_dlg.confirm"), func() -> void:
 		close(parent)
 		if on_yes.is_valid():
 			on_yes.call()
@@ -66,7 +66,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable) ->
 	yes.position = Vector2(592, 520)
 	yes.size = Vector2(340, 52)
 	root.add_child(yes)
-	var no: Button = ThemeS.btn("Cancel", func() -> void: close(parent))
+	var no: Button = ThemeS.btn(App.tr("confirm_dlg.cancel"), func() -> void: close(parent))
 	no.position = Vector2(980, 520)
 	no.size = Vector2(340, 52)
 	no.shortcut = _cancel_shortcut()

@@ -222,7 +222,7 @@ static func warp_local(host: Node, cell: Vector2i) -> void:
 	host._reveal_around(cell, int(App.bal.fog_radius) + 2)
 	silence_near(host, cell)
 	host.fog_dirty = true
-	App.toast("The crystal takes you across the floor.")
+	App.toast(App.tr("net.the_crystal_takes_you_across"))
 
 static func warp_floor(n: int) -> void:
 	n = clampi(n, 1, maxi(1, int(App.prog.deepest)))

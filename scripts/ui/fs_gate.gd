@@ -38,7 +38,7 @@ func _ready() -> void:
 	card.add_theme_constant_override("separation", 16)
 	add_child(card)
 
-	card.add_child(_lab("What Dwells Below", 40, Color(0.92, 0.78, 0.48)))
+	card.add_child(_lab(tr("fs_gate.what_dwells_below"), 40, Color(0.92, 0.78, 0.48)))
 	card.add_child(_lab(_headline(), 26, Color(0.95, 0.86, 0.4)))
 	card.add_child(_lab(_body(), 18, Color(0.78, 0.72, 0.62)))
 
@@ -49,7 +49,7 @@ func _ready() -> void:
 	_size_btn(_action)
 	card.add_child(_action)
 
-	_continue = ThemeS.btn("Continue", _on_continue)
+	_continue = ThemeS.btn(tr("common.continue"), _on_continue)
 	_size_btn(_continue)
 	card.add_child(_continue)
 
@@ -133,7 +133,7 @@ func _on_action() -> void:
 		_leave()
 		return
 	if _kind == "ios" and _hint:
-		_hint.text = "Safari cannot open Add to Home Screen for you. Use Share → Add to Home Screen, then Continue."
+		_hint.text = tr("fs_gate.safari_cannot_open_add_to")
 
 func _on_continue() -> void:
 	_leave()
@@ -147,29 +147,29 @@ func _leave() -> void:
 
 func _headline() -> String:
 	if _kind == "ios":
-		return "Fullscreen on iPhone"
+		return tr("fs_gate.fullscreen_on_iphone")
 	if _kind == "android":
-		return "Play fullscreen"
-	return "Enter fullscreen"
+		return tr("fs_gate.play_fullscreen")
+	return tr("fs_gate.enter_fullscreen")
 
 func _body() -> String:
 	if _kind == "ios":
 		return "iPhone Safari cannot hide the browser chrome from a button. Add the game to your Home Screen for a chrome-less launch: tap Share (square with arrow) → Add to Home Screen → Add. Leave Open as Web App on. Then open the icon. You can Continue in this tab without that."
 	if _kind == "android":
-		return "Tap Fullscreen to hide the browser bars. If the tap also offers Install, accept it for a Home Screen icon that launches landscape and chrome-less. Pause → System or Alt+Enter toggles fullscreen later. Rotate the phone sideways."
-	return "Click Fullscreen to hide browser chrome. Chromium may also offer an Install prompt — that adds a standalone window. Pause → System or Alt+Enter toggles fullscreen later."
+		return tr("fs_gate.tap_fullscreen_to_hide_the")
+	return tr("fs_gate.click_fullscreen_to_hide_browser")
 
 func _action_label() -> String:
 	if _kind == "ios":
-		return "Try fullscreen"
+		return tr("fs_gate.try_fullscreen")
 	if _kind == "android":
-		return "Fullscreen / Install"
+		return tr("fs_gate.fullscreen_install")
 	return "Fullscreen"
 
 func _rotate_line() -> String:
 	if Disp.viewport_portrait():
-		return "Rotate the device to landscape."
-	return "A confirms the focused button. B / Esc continues."
+		return tr("fs_gate.rotate_the_device_to_landscape")
+	return tr("fs_gate.a_confirms_the_focused_button")
 
 func _lab(t: String, font_px: int, col: Color) -> Label:
 	var l: Label = ThemeS.lab(t, font_px, col)

@@ -87,7 +87,7 @@ static func strip_building_cubes(root: Node) -> int:
 			continue
 		var sz: Vector3 = (mi.mesh as BoxMesh).size
 		print(
-			"CAMP_MESH box parent=",
+			App.tr("camp_build.camp_mesh_box_parent"),
 			String(n.get_parent().name) if n.get_parent() else "?",
 			" size=",
 			sz

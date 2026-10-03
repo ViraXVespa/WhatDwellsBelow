@@ -8,26 +8,26 @@ const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 static func build_title(_ui: CanvasLayer, mode: String, _title_col: Color) -> String:
-	var title := "Inventory"
+	var title := App.tr("board_build.inventory")
 	if mode == "loadout":
-		title = "Floor Crystal — Loadout"
+		title = App.tr("board_build.floor_crystal_loadout")
 		_title_col = Color(0.6, 0.9, 1.0)
 	elif mode == "anvil":
-		title = "Anvil"
+		title = App.tr("common.anvil")
 		_title_col = Color(0.95, 0.78, 0.42)
 	return title
 
 static func build_subtitle(_ui: CanvasLayer, mode: String) -> String:
 	if mode == "loadout":
-		return "Choose holds or stash gear. Only floors you have reached."
+		return App.tr("board_build.choose_holds_or_stash_gear")
 	elif mode == "anvil":
-		return "Analyze DESTROYS a piece. Forge those remains on the Forge tab. Starters stay off the list."
+		return App.tr("board_build.analyze_destroys_a_piece_forge")
 	return ""
 
 static func build_status_text(mode: String) -> String:
 	if mode == "loadout" or mode == "anvil":
 		return ""
-	return "Carried  %dg   %d ore   %d wood   bag %d/%d" % [App.gold, App.ore, App.wood, App.prog.bag_count(), int(App.bal.bag_cap)]
+	return App.tr("board_build.carried_g_ore_wood_bag") % [App.gold, App.ore, App.wood, App.prog.bag_count(), int(App.bal.bag_cap)]
 
 static func plain_lab(t: String, size: int, col: Color) -> Label:
 	var l := Label.new()

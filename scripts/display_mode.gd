@@ -68,10 +68,10 @@ static func cycle_desktop() -> void:
 static func desktop_label() -> String:
 	var cur: String = str(App.display_mode)
 	if cur == "windowed":
-		return "Display: Windowed"
+		return App.tr("display_mode.display_windowed")
 	if cur == "exclusive":
-		return "Display: True fullscreen"
-	return "Display: Borderless fullscreen"
+		return App.tr("display_mode.display_true_fullscreen")
+	return App.tr("display_mode.display_borderless_fullscreen")
 
 static func set_web_fullscreen(on: bool, persist: bool = true) -> void:
 	Web.set_web_fullscreen(on, persist)
@@ -84,10 +84,10 @@ static func toggle_web_fullscreen() -> void:
 
 static func web_label() -> String:
 	if is_web() and Web.is_fullscreen_now():
-		return "Fullscreen: On"
+		return App.tr("common.fullscreen_on")
 	if bool(App.web_fullscreen):
-		return "Fullscreen: On"
-	return "Fullscreen: Off"
+		return App.tr("common.fullscreen_on")
+	return App.tr("display_mode.fullscreen_off")
 
 static func try_fullscreen_gesture() -> bool:
 	return Desk.try_fullscreen_gesture()

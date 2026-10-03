@@ -106,7 +106,7 @@ static func add_to_bag(p: Object, it: Dictionary) -> bool:
 		p.bag[idx] = b
 		return true
 	if p.bag_full():
-		App.toast("Bag full.")
+		App.toast(App.tr("common.bag_full"))
 		return false
 	p.bag.append(it)
 	if str(it.kind) == "artifact":
@@ -128,26 +128,26 @@ static func remove_uid(p: Object, uid: int) -> Dictionary:
 static func equip_uid(p: Object, uid: int) -> String:
 	var it: Dictionary = remove_uid(p, uid)
 	if it.is_empty():
-		return "Gone."
+		return App.tr("common.gone")
 	var slot: String = str(it.get("slot", ""))
 	if p.SLOTS.find(slot) < 0:
 		add_to_bag(p, it)
-		return "Can't equip that."
+		return App.tr("common.can_t_equip_that")
 	if slot == "tool":
 		var t: String = str(it.get("tool", ""))
 		if t != "" and t != p.tool_type:
 			add_to_bag(p, it)
-			return "Tool locked to %s this run." % p.tool_type
+			return App.tr("gear_bag.tool_locked_to_this_run") % p.tool_type
 	var cur: Dictionary = p.slots.get(slot, {})
 	if not cur.is_empty():
 		if not bag_can_accept(p, cur):
 			add_to_bag(p, it)
-			return "Bag full."
+			return App.tr("common.bag_full")
 		p.slots[slot] = {}
 		if not add_to_bag(p, cur):
 			p.slots[slot] = cur
 			add_to_bag(p, it)
-			return "Bag full."
+			return App.tr("common.bag_full")
 	p.slots[slot] = it
 	if slot == "food":
 		p._clamp_food_slot()
@@ -163,26 +163,26 @@ static func equip_uid(p: Object, uid: int) -> String:
 static func drop_uid(p: Object, uid: int) -> String:
 	var it: Dictionary = remove_uid(p, uid)
 	if it.is_empty():
-		return "Gone."
+		return App.tr("common.gone")
 	App.spawn_floor_item(it)
 	App.toast("Dropped " + str(it.name))
-	return "Dropped."
+	return App.tr("common.dropped")
 
 static func unequip_slot(p: Object, slot: String) -> String:
 	if p.SLOTS.find(slot) < 0:
-		return "No slot."
+		return App.tr("common.no_slot")
 	if Kit.locked_equip_slot(slot):
-		return "Weapon and tool stay equipped."
+		return App.tr("common.weapon_and_tool_stay_equipped")
 	var it: Dictionary = p.slots.get(slot, {})
 	if it.is_empty():
-		return "Empty."
+		return App.tr("common.empty")
 	if not bag_can_accept(p, it):
-		App.toast("Bag full.")
-		return "Bag full."
+		App.toast(App.tr("common.bag_full"))
+		return App.tr("common.bag_full")
 	p.slots[slot] = {}
 	if not add_to_bag(p, it):
 		p.slots[slot] = it
-		return "Bag full."
+		return App.tr("common.bag_full")
 	p._sync_artifacts()
 	p._refresh_player_hp()
 	return "Unequipped " + str(it.name)
@@ -201,17 +201,17 @@ static func fill_slot_after_remove(p: Object, slot: String) -> void:
 
 static func drop_slot(p: Object, slot: String) -> String:
 	if p.SLOTS.find(slot) < 0:
-		return "No slot."
+		return App.tr("common.no_slot")
 	if Kit.locked_equip_slot(slot):
-		return "Weapon and tool stay equipped."
+		return App.tr("common.weapon_and_tool_stay_equipped")
 	var it: Dictionary = p.slots.get(slot, {})
 	if it.is_empty():
-		return "Empty."
+		return App.tr("common.empty")
 	fill_slot_after_remove(p, slot)
 	p._refresh_player_hp()
 	App.spawn_floor_item(it)
 	App.toast("Dropped " + str(it.name))
-	return "Dropped."
+	return App.tr("common.dropped")
 
 static func take_slot(p: Object, slot: String) -> Dictionary:
 	if p.SLOTS.find(slot) < 0:
@@ -231,5 +231,5 @@ static func drop_stash(p: Object, uid: int) -> String:
 			var it: Dictionary = p.bank_items[i]
 			p.bank_items.remove_at(i)
 			App.toast("Discarded " + str(it.name))
-			return "Discarded."
-	return "Gone."
+			return App.tr("gear_bag.discarded")
+	return App.tr("common.gone")

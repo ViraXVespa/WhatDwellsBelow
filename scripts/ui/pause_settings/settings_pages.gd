@@ -9,7 +9,7 @@ const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 
 static func page_gameplay(host: Node) -> void:
-	var ch: Button = ThemeS.btn("Character: %s" % App.character_type, func() -> void:
+	var ch: Button = ThemeS.btn(App.tr("settings_pages.character") % App.character_type, func() -> void:
 		var nxt: String = "female" if App.character_type == "male" else "male"
 		if App.has_method("set_character"):
 			App.set_character(nxt)
@@ -22,45 +22,45 @@ static func page_gameplay(host: Node) -> void:
 	)
 	View.add_page_btn(host, ch)
 	var lock_on: bool = bool(App.get("target_lock_pref"))
-	var lock: CheckBox = _check("Target lock", lock_on, func(on: bool) -> void:
+	var lock: CheckBox = _check(App.tr("settings_pages.target_lock"), lock_on, func(on: bool) -> void:
 		App.target_lock_pref = on
 		if App.has_method("save_now"):
 			App.save_now()
 	)
 	_add_check_centered(host, lock)
 	var salvage_on: bool = bool(App.get("salvage_dupes"))
-	var salvage: CheckBox = _check("Salvage spare gear", salvage_on, func(on: bool) -> void:
+	var salvage: CheckBox = _check(App.tr("common.salvage_spare_gear"), salvage_on, func(on: bool) -> void:
 		App.salvage_dupes = on
 		if App.has_method("save_now"):
 			App.save_now()
 		host.split_build_page("gameplay")
 		View.apply_col(host)
-		_focus_named(host, "Salvage spare gear")
+		_focus_named(host, App.tr("common.salvage_spare_gear"))
 	)
 	_add_check_centered(host, salvage)
 	if salvage_on:
-		var hint: Label = ThemeS.lab("Break down mailed copies you already know, unless they beat the bars below.", 16, Color(0.82, 0.76, 0.66))
+		var hint: Label = ThemeS.lab(App.tr("settings_pages.break_down_mailed_copies_you"), 16, Color(0.82, 0.76, 0.66))
 		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		host.info_box.add_child(hint)
-		var keep: Label = ThemeS.lab("Keep a copy when", 20, Color(0.9, 0.84, 0.7))
+		var keep: Label = ThemeS.lab(App.tr("settings_pages.keep_a_copy_when"), 20, Color(0.9, 0.84, 0.7))
 		keep.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		keep.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		host.info_box.add_child(keep)
 		var finish_v: float = clampf(float(App.get("salvage_finish")), 0.5, 1.0)
-		_slider(host, "Finish  %.2f" % finish_v, finish_v, 0.5, 1.0, 0.05, func(v: float) -> void:
+		_slider(host, App.tr("settings_pages.finish") % finish_v, finish_v, 0.5, 1.0, 0.05, func(v: float) -> void:
 			App.salvage_finish = v
 			if App.has_method("save_now"):
 				App.save_now()
 		)
 		var fortune_v: float = clampf(float(App.get("salvage_fortune")), 0.75, 1.25)
-		_slider(host, "Fortune  %.2f" % fortune_v, fortune_v, 0.75, 1.25, 0.05, func(v: float) -> void:
+		_slider(host, App.tr("settings_pages.fortune") % fortune_v, fortune_v, 0.75, 1.25, 0.05, func(v: float) -> void:
 			App.salvage_fortune = v
 			if App.has_method("save_now"):
 				App.save_now()
 		)
-	var wipe: Button = ThemeS.btn("Delete Save Data", func() -> void:
-		Confirm.open(host.pause, "Delete Save Data", "Wipe all save data and return to the title screen?", func() -> void:
+	var wipe: Button = ThemeS.btn(App.tr("common.delete_save_data"), func() -> void:
+		Confirm.open(host.pause, App.tr("common.delete_save_data"), App.tr("settings_pages.wipe_all_save_data_and"), func() -> void:
 			App.wipe_save()
 			host.pause.close_ui()
 			App.go_title()
@@ -69,15 +69,15 @@ static func page_gameplay(host: Node) -> void:
 	View.add_page_btn(host, wipe)
 
 static func page_audio(host: Node) -> void:
-	_slider(host, "Master volume", float(App.vol_master), 0.0, 1.0, 0.01, func(v: float) -> void: App.set_volume("master", v))
-	_slider(host, "Music volume", float(App.vol_music), 0.0, 1.0, 0.01, func(v: float) -> void: App.set_volume("music", v))
-	_slider(host, "SFX volume", float(App.vol_sfx), 0.0, 1.0, 0.01, func(v: float) -> void: App.set_volume("sfx", v))
+	_slider(host, App.tr("settings_pages.master_volume"), float(App.vol_master), 0.0, 1.0, 0.01, func(v: float) -> void: App.set_volume("master", v))
+	_slider(host, App.tr("settings_pages.music_volume"), float(App.vol_music), 0.0, 1.0, 0.01, func(v: float) -> void: App.set_volume("music", v))
+	_slider(host, App.tr("settings_pages.sfx_volume"), float(App.vol_sfx), 0.0, 1.0, 0.01, func(v: float) -> void: App.set_volume("sfx", v))
 
 static func page_graphics(host: Node) -> void:
 	var filt: int = SpriteFilt.clamp_id(int(App.sprite_filter), false)
 	var mips_on: bool = SpriteFilt.mips_on(filt)
 	var aniso_on: bool = SpriteFilt.aniso_on(filt)
-	var cap: Label = ThemeS.lab("Sprite filtering", 20, Color(0.9, 0.84, 0.7))
+	var cap: Label = ThemeS.lab(App.tr("settings_pages.sprite_filtering"), 20, Color(0.9, 0.84, 0.7))
 	cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.info_box.add_child(cap)
@@ -97,13 +97,13 @@ static func page_graphics(host: Node) -> void:
 	host.info_box.add_child(row)
 	host.info_btns.append(mips)
 	host.info_btns.append(aniso)
-	_slider(host, "Camera zoom", float(App.cam_zoom), T.ZOOM_MIN, T.ZOOM_MAX, 0.05, func(v: float) -> void:
+	_slider(host, App.tr("settings_pages.camera_zoom"), float(App.cam_zoom), T.ZOOM_MIN, T.ZOOM_MAX, 0.05, func(v: float) -> void:
 		if App.has_method("set_zoom"):
 			App.set_zoom(v)
 		else:
 			App.cam_zoom = v
 	)
-	_slider(host, "HUD scale", float(App.hud_scale), 0.7, 1.4, 0.05, func(v: float) -> void:
+	_slider(host, App.tr("settings_pages.hud_scale"), float(App.hud_scale), 0.7, 1.4, 0.05, func(v: float) -> void:
 		if App.has_method("set_hud_scale"):
 			App.set_hud_scale(v)
 		else:
@@ -124,14 +124,14 @@ static func page_graphics(host: Node) -> void:
 			View.focus_col(host)
 		))
 	var aim_on: bool = bool(App.bal.aim_line_on)
-	View.add_page_btn(host, ThemeS.btn("Aim line: %s" % ("On" if aim_on else "Off"), func() -> void:
+	View.add_page_btn(host, ThemeS.btn(App.tr("settings_pages.aim_line") % ("On" if aim_on else App.tr("settings_pages.off")), func() -> void:
 		App.bal.aim_line_on = not App.bal.aim_line_on
 		App.save_now()
 		host.split_build_page("graphics")
 		View.apply_col(host)
 		View.focus_col(host)
 	))
-	_slider(host, "Aim line opacity", float(App.bal.aim_line_opacity), 0.05, 1.0, 0.05, func(v: float) -> void:
+	_slider(host, App.tr("settings_pages.aim_line_opacity"), float(App.bal.aim_line_opacity), 0.05, 1.0, 0.05, func(v: float) -> void:
 		App.bal.aim_line_opacity = v
 	)
 

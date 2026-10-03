@@ -134,7 +134,7 @@ static func refresh_prompt(host: Node) -> void:
 	if best and best.get("prompt") != null:
 		App.interact_prompt = str(best.prompt)
 	elif host.gathering:
-		App.interact_prompt = "Gathering…"
+		App.interact_prompt = App.tr("player_act.gathering")
 	else:
 		App.interact_prompt = ""
 

@@ -27,37 +27,37 @@ static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
 		else:
 			spec = 1.0
 	fill(host.hp_fill, 280.0, hp / maxh)
-	host.hp_lab.text = "%d / %d" % [int(hp), int(maxh)]
+	host.hp_lab.text = App.tr("hud_act.text") % [int(hp), int(maxh)]
 	var pot: Dictionary = App.prog.slots.get("potion", {})
 	var pn := int(pot.get("stack", 0))
 	var pcd: float = App.prog.potion_cd
 	var pmax: float = maxf(0.05, App.bal.potion_cooldown)
 	fill(host.pot_fill, 120.0, 1.0 if pcd <= 0.0 and pn > 0 else 1.0 - clampf(pcd / pmax, 0.0, 1.0))
 	if pcd > 0.0:
-		host.pot_lab.text = "Potion x%d  %.1fs" % [pn, pcd]
+		host.pot_lab.text = App.tr("hud_act.potion_x_s") % [pn, pcd]
 	else:
-		host.pot_lab.text = "Potion x%d" % pn
+		host.pot_lab.text = App.tr("hud_act.potion_x") % pn
 	fill(host.dash_fill, 112.0, dash)
 	fill(host.spec_fill, 112.0, spec)
 	var clv := App.prog.combat_lv()
 	var slv := App.prog.style_lv()
 	if slv < clv:
-		host.lvl.text = "Level %d (%s %d)" % [clv, style_name(), slv]
+		host.lvl.text = App.tr("hud_act.level") % [clv, style_name(), slv]
 	else:
-		host.lvl.text = "Level %d" % clv
-	host.res.text = "%dg   %d ore   %d wood" % [App.gold, App.ore, App.wood]
-	host.floor_lab.text = "F%d" % App.floor_n
+		host.lvl.text = App.tr("hud_act.level_2") % clv
+	host.res.text = App.tr("hud_act.g_ore_wood") % [App.gold, App.ore, App.wood]
+	host.floor_lab.text = App.tr("hud_act.f") % App.floor_n
 	if App.shrine_t > 0.0:
 		host.shrine_icon.visible = true
 		host.shrine_lab.visible = true
-		host.shrine_lab.text = "Shrine +%d%%  %ds" % [int(App.bal.shrine_dmg * 100.0), int(ceil(App.shrine_t))]
+		host.shrine_lab.text = App.tr("hud_act.shrine_s") % [int(App.bal.shrine_dmg * 100.0), int(ceil(App.shrine_t))]
 	else:
 		host.shrine_icon.visible = false
 		host.shrine_lab.visible = false
 	if App.prog.food_t > 0.0:
 		host.food_icon.visible = true
 		host.food_lab.visible = true
-		host.food_lab.text = "Food HoT  %ds" % int(ceil(App.prog.food_t))
+		host.food_lab.text = App.tr("hud_act.food_hot_s") % int(ceil(App.prog.food_t))
 	else:
 		host.food_icon.visible = false
 		host.food_lab.visible = false
@@ -75,9 +75,9 @@ static func paint_look(host: CanvasLayer) -> void:
 		host.look_lab.text = ""
 		return
 	if Look.map_open():
-		host.look_lab.text = "Look  RS zoom map" if Look.mode else "Look  RS pan map"
+		host.look_lab.text = App.tr("hud_act.look_rs_zoom_map") if Look.mode else App.tr("hud_act.look_rs_pan_map")
 		return
-	host.look_lab.text = "Look  RS zoom / HUD" if Look.mode else ""
+	host.look_lab.text = App.tr("hud_act.look_rs_zoom_hud") if Look.mode else ""
 
 static func paint_prompt(host: CanvasLayer) -> void:
 	var text := str(App.interact_prompt)
@@ -124,7 +124,7 @@ static func boss(host: CanvasLayer, dungeon: Node, player: Node) -> void:
 	var bh := float(b.get("hp"))
 	var bm := maxf(1.0, float(b.get("max_hp")))
 	fill(host.boss_fill, 360.0, bh / bm)
-	var title := "Guardian"
+	var title := App.tr("hud_act.guardian")
 	if b.get("tag") != null and str(b.tag.text) != "":
 		title = str(b.tag.text)
-	host.boss_lab.text = "%s  %d / %d" % [title, int(bh), int(bm)]
+	host.boss_lab.text = App.tr("hud_act.text_2") % [title, int(bh), int(bm)]

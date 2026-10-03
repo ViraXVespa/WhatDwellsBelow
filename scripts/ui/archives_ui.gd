@@ -35,7 +35,7 @@ var _chevron: Label
 var _path: Label
 
 func _ready() -> void:
-	SplitView.setup_overlay(self, "Archives", "Standalone snapshots. Title Play always launches the live path.")
+	SplitView.setup_overlay(self, "Archives", tr("archives_ui.standalone_snapshots_title_play"))
 	if _info_root:
 		_info_root.gui_input.connect(_on_info_gui)
 	http = HTTPRequest.new()
@@ -91,12 +91,12 @@ func split_path_text() -> String:
 	if col == "list":
 		return "Snapshots"
 	if mode == "docs":
-		return "Snapshots  ›  %s  ›  Documents" % lab
+		return tr("archives_ui.snapshots_documents") % lab
 	if mode == "read":
 		var docs: PackedStringArray = _docs_of(e)
 		var doc_name: String = str(docs[doc_i]) if doc_i >= 0 and doc_i < docs.size() else ""
-		return "Snapshots  ›  %s  ›  %s" % [lab, Docs.display_name(doc_name)]
-	return "Snapshots  ›  %s" % lab
+		return tr("archives_ui.snapshots") % [lab, Docs.display_name(doc_name)]
+	return tr("archives_ui.snapshots_2") % lab
 
 func split_build_page(id: String) -> void:
 	if id == "":

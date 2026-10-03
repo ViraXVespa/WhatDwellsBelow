@@ -57,7 +57,7 @@ static func entry_bbcode(e: Dictionary, is_new: bool) -> String:
 
 static func news_text(rows: Array, new_labs: Dictionary) -> String:
 	if rows.is_empty():
-		return "Updates from earlier weeks are on the public changelog."
+		return App.tr("news_fmt.updates_from_earlier_weeks_are")
 	var parts: PackedStringArray = []
 	for e in rows:
 		if typeof(e) != TYPE_DICTIONARY:

@@ -55,7 +55,7 @@ static func setup_boss(host: Node, title: String, floor_n: int) -> void:
 	host.arc_deg = 140.0 if title != "Gate Master" else 360.0
 	host.size_u = float(d.size) * 1.55
 	host.base_mod = Color(1.15, 0.72, 0.55) if title != "Gate Master" else Color(0.72, 0.58, 1.18)
-	host.tag.text = "%s  ·  Lv %d" % [title, host.combat_lv]
+	host.tag.text = App.tr("common.lv") % [title, host.combat_lv]
 	host.tag.visible = true
 	host.tag.modulate = Color(1.0, 0.82, 0.35)
 	host.tag.outline_modulate = Color(0, 0, 0)
@@ -86,7 +86,7 @@ static func make_named(host: Node, given: String, _floor_n: int) -> void:
 	host.damage *= App.bal.named_dmg
 	host.size_u *= App.bal.named_scale
 	host.atk_range *= 1.12
-	host.tag.text = "%s  ·  Lv %d" % [host.named_name, host.combat_lv]
+	host.tag.text = App.tr("common.lv") % [host.named_name, host.combat_lv]
 	host.tag.visible = true
 	host.tag.position = Vector3(0.0, 0.08, 0.0)
 	host.tag.modulate = Color(1.0, 0.92, 0.18)

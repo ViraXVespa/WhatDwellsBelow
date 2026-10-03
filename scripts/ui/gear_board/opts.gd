@@ -39,11 +39,11 @@ static func slot_item(slot: String) -> Dictionary:
 static func _weapon_label(w: String) -> String:
 	match w:
 		"staff":
-			return "Lightning Staff"
+			return App.tr("common.lightning_staff")
 		"longbow":
 			return "Longbow"
 		_:
-			return "Great Axe"
+			return App.tr("common.great_axe")
 
 static func options_for(slot: String) -> Array:
 	var out: Array = []

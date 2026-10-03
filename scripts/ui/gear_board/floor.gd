@@ -6,7 +6,7 @@ const StepRow := preload("res://scripts/ui/step_row.gd")
 
 static func footer(ui: CanvasLayer) -> void:
 	var row: HBoxContainer = StepRow.make("Floor:", func(): Act.floor_step(ui, -1), func(): Act.floor_step(ui, 1))
-	var enter: Button = ThemeS.btn("Enter dungeon", func(): Act.enter(ui))
+	var enter: Button = ThemeS.btn(App.tr("floor.enter_dungeon"), func(): Act.enter(ui))
 	enter.set_meta("inv_key", "enter")
 	ui.set_meta("loadout_floor_row", row)
 	ui.set_meta("loadout_floor_lab", StepRow.value_of(row))

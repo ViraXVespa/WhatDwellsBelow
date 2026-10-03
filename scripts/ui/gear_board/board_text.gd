@@ -80,8 +80,8 @@ static func tooltip(ui: CanvasLayer) -> String:
 	var sel := str(ui.inv_sel)
 	if it.is_empty():
 		if slot != "":
-			return "%s — empty\nOpens anything that can go here." % str(Fmt.NAMES.get(slot, slot))
-		return "Empty bag slot."
+			return App.tr("board_text.empty_opens_anything_that_can") % str(Fmt.NAMES.get(slot, slot))
+		return App.tr("board_text.empty_bag_slot")
 	var src := ""
 	if sel.begins_with("opt:") and sel.split(":").size() >= 2:
 		src = sel.split(":")[1]
@@ -121,7 +121,7 @@ static func current_block(it: Dictionary) -> String:
 
 static func forged_block(it: Dictionary) -> String:
 	if it.is_empty():
-		return "Nothing to preview."
+		return App.tr("board_text.nothing_to_preview")
 	var slot := str(it.get("slot", ""))
 	if slot == "potion" or slot == "food" or str(it.get("kind", "")) == "artifact":
 		return current_block(it) + "\nNo forge preview for this."
@@ -141,20 +141,20 @@ static func stat_bits(it: Dictionary) -> String:
 			if id == "":
 				continue
 			listed[id] = true
-			bits.append("%s %s" % [Affix.label_of(id), Affix.format_value(id, float(row.get("value", 0.0)))])
+			bits.append(App.tr("common.text_2") % [Affix.label_of(id), Affix.format_value(id, float(row.get("value", 0.0)))])
 	for id: String in [Affix.ID_DMG, Affix.ID_DEF, Affix.ID_HP]:
 		if listed.has(id):
 			continue
 		var n: float = float(it.get(id, 0))
 		if n != 0.0:
-			bits.append("%s %s" % [Affix.label_of(id), Affix.format_value(id, n)])
+			bits.append(App.tr("common.text_2") % [Affix.label_of(id), Affix.format_value(id, n)])
 	if str(it.get("kind", "")) == "potion" or str(it.get("slot", "")) == "potion":
-		bits.append("Charges %d/%d" % [Fmt._charges(it), Fmt._charge_max(it)])
+		bits.append(App.tr("board_text.charges") % [Fmt._charges(it), Fmt._charge_max(it)])
 		var cd := float(it.get("cooldown", 0.0))
 		if cd <= 0.0 and App.bal:
 			cd = float(App.bal.get("potion_cooldown"))
 		if cd > 0.0:
-			bits.append("Cooldown %.1fs" % cd)
+			bits.append(App.tr("board_text.cooldown_s") % cd)
 	if str(it.get("tool", "")) != "":
 		bits.append("Tool: " + str(it.tool))
 	if str(it.get("weapon", "")) != "":

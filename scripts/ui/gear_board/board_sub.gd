@@ -104,15 +104,15 @@ static func _after_sub(ui: CanvasLayer, sel: String, do_rebuild: bool) -> void:
 static func _unequip_or_keep(ui: CanvasLayer, slot: String, it: Dictionary) -> void:
 	var Act = _act()
 	if Act.locked_slot(slot):
-		Act.st(ui, "Weapon and tool stay equipped.")
+		Act.st(ui, App.tr("common.weapon_and_tool_stay_equipped"))
 		return
 	if Kit.is_starter(App.prog, it) or str(it.get("kit_src", "")) == "starter":
-		Act.st(ui, "Starters stay on the slot.")
+		Act.st(ui, App.tr("board_sub.starters_stay_on_the_slot"))
 		return
 	if Act.town_kit(ui):
 		App.prog.slots[slot] = {}
 		App.prog.hold_pick[slot] = -1
-		Act.st(ui, "Unequipped.")
+		Act.st(ui, App.tr("board_sub.unequipped"))
 		App.save_now()
 		return
 	Act.st(ui, App.prog.unequip_slot(slot))
@@ -123,4 +123,4 @@ static func _apply_inv(ui: CanvasLayer, slot: String, it: Dictionary, src: Strin
 		Act.st(ui, App.prog.equip_uid(int(it.get("uid", 0))))
 		ui.inv_sel = "slot:" + slot
 		return
-	Act.st(ui, "Can't use that here.")
+	Act.st(ui, App.tr("board_sub.can_t_use_that_here"))

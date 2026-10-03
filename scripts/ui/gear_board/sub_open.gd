@@ -25,15 +25,15 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	box.add_theme_constant_override("separation", 6)
 	panel.add_child(box)
 	var head := "Re-equip  " + str(Fmt.NAMES.get(slot, slot))
-	var blurb := "AT RISK gear is lost on death or Dispel."
+	var blurb := App.tr("sub_open.at_risk_gear_is_lost")
 	var blurb_col := Color(0.8, 0.74, 0.64)
 	if load("res://scripts/ui/gear_board/board_sub.gd")._is_anvil(ui):
 		if str(ui.get("anvil_tab")) == "forge":
 			head = "Forge  " + str(Fmt.NAMES.get(slot, slot))
-			blurb = "Set type, rarity, level, and locks."
+			blurb = App.tr("sub_open.set_type_rarity_level_and")
 		else:
 			head = "Analyze  " + str(Fmt.NAMES.get(slot, slot))
-			blurb = "WARNING: Analyzing DESTROYS the selected item. This cannot be undone."
+			blurb = App.tr("sub_open.warning_analyzing_destroys_the_s")
 			blurb_col = Color(0.95, 0.42, 0.28)
 	box.add_child(ThemeS.lab(head, 22, Color(0.95, 0.82, 0.5)))
 	box.add_child(ThemeS.lab(blurb, 16, blurb_col))
@@ -48,9 +48,9 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 		rows = Text.options_for(slot)
 	if rows.is_empty():
 		if load("res://scripts/ui/gear_board/board_sub.gd")._is_anvil(ui):
-			box.add_child(ThemeS.lab("No AT RISK pieces for this slot.", 18, Color(0.78, 0.74, 0.66)))
+			box.add_child(ThemeS.lab(App.tr("sub_open.no_at_risk_pieces_for"), 18, Color(0.78, 0.74, 0.66)))
 		else:
-			box.add_child(ThemeS.lab("Nothing else for this slot.", 18, Color(0.78, 0.74, 0.66)))
+			box.add_child(ThemeS.lab(App.tr("sub_open.nothing_else_for_this_slot"), 18, Color(0.78, 0.74, 0.66)))
 	var grid := HBoxContainer.new()
 	grid.add_theme_constant_override("separation", 8)
 	box.add_child(grid)
@@ -84,7 +84,7 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 		Board.refresh(ui)
 		return
 	var back := Button.new()
-	back.text = "Back"
+	back.text = App.tr("common.back")
 	back.custom_minimum_size = Vector2(0, 40)
 	back.focus_mode = Control.FOCUS_ALL
 	back.add_theme_font_size_override("font_size", 18)
@@ -163,7 +163,7 @@ static func pick(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 static func _apply_loadout(ui: CanvasLayer, slot: String, it: Dictionary, src: String) -> void:
 	var Act = load("res://scripts/ui/gear_board/board_sub.gd")._act()
 	if it.is_empty():
-		Act.st(ui, "Nothing to equip.")
+		Act.st(ui, App.tr("sub_open.nothing_to_equip"))
 		return
 	it["kit_src"] = src
 	App.prog.slots[slot] = it

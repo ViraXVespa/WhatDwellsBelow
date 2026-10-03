@@ -48,7 +48,7 @@ static func keep_old(ui: CanvasLayer) -> void:
 	ui.forge_batch = []
 	ui.forge_picks = []
 	ui.forge_phase = ""
-	ui._st("Kept the old holds. New rolls are gone.")
+	ui._st(App.tr("anvil_forge.kept_the_old_holds_new"))
 	_reload(ui, str(ui.gear_sub_slot))
 
 static func refresh_bar(ui: CanvasLayer) -> void:

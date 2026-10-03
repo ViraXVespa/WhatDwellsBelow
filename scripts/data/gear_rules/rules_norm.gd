@@ -110,15 +110,15 @@ static func _cap_pct(ilvl: int) -> float:
 
 static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 	if p.potion_cd > 0.0:
-		App.toast("Potion cooling down.")
-		return "Not ready."
+		App.toast(App.tr("rules_norm.potion_cooling_down"))
+		return App.tr("rules_norm.not_ready")
 	var ch: int = int(it.get("charges", it.get("stack", 0)))
 	if ch <= 0:
-		App.toast("No charges left this run.")
-		return "Empty."
+		App.toast(App.tr("common.no_charges_left_this_run"))
+		return App.tr("common.empty")
 	var pl: CharacterBody3D = p._player()
 	if pl == null or not pl.has_method("heal"):
-		return "Not now."
+		return App.tr("rules_norm.not_now")
 	var heal := 1.0
 	if App.bal:
 		heal = float(App.bal.get("potion_heal"))
@@ -134,8 +134,8 @@ static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 	if from_slot:
 		p.slots["potion"] = it
 	App.sfx("potion")
-	App.toast("Potion — instant.")
-	return "Potion."
+	App.toast(App.tr("rules_norm.potion_instant"))
+	return App.tr("rules_norm.potion")
 
 static func refill_potion(p: Object) -> void:
 	var it: Dictionary = p.slots.get("potion", {})

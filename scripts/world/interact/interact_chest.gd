@@ -8,7 +8,7 @@ const InteractFx := preload("res://scripts/world/interact/interact_fx.gd")
 
 static func open_chest(host: Node3D) -> String:
 	if host.used:
-		return "Empty."
+		return App.tr("common.empty")
 	host.used = true
 	var gold := int(App.bal.chest_gold_base) + randi() % maxi(1, int(App.bal.chest_gold_span))
 	if host.kind == "chest":
@@ -43,7 +43,7 @@ static func open_chest(host: Node3D) -> String:
 	App.sfx("pickup")
 	Prompt.refresh(host)
 	InteractFx.paint_used_chest(host)
-	var msg := "+%dg" % gold
+	var msg := App.tr("common.g") % gold
 	if art != "":
 		msg += "  ·  Artifact: " + art
 	if msg_gear != "":

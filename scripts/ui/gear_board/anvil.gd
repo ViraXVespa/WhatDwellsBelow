@@ -74,7 +74,7 @@ static func analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 	var it: Dictionary = row.it.duplicate(true) if row.get("it") is Dictionary else {}
 	if it.is_empty() or not ForgeP.can_analyze(App.prog, it):
 		var Act = load("res://scripts/ui/gear_board/board_act.gd")
-		Act.st(ui, "Can't analyze that.")
+		Act.st(ui, App.tr("common.can_t_analyze_that"))
 		return
 	ui.anvil_item = it
 	ui.anvil_src = str(row.get("src", ""))
@@ -84,14 +84,14 @@ static func _commit_analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> v
 	var taken: Dictionary = Town.analyze_destroy(App.prog, row)
 	if taken.is_empty():
 		var Act = load("res://scripts/ui/gear_board/board_act.gd")
-		Act.st(ui, "Can't analyze that.")
+		Act.st(ui, App.tr("common.can_t_analyze_that"))
 		ui.anvil_item = {}
 		ui.anvil_src = ""
 		return
 	ui.anvil_item = {}
 	ui.anvil_src = ""
 	var Act2 = load("res://scripts/ui/gear_board/board_act.gd")
-	Act2.st(ui, "Analyzed. Unlocks ready on the Forge tab.")
+	Act2.st(ui, App.tr("anvil.analyzed_unlocks_ready_on_the"))
 	App.toast("Analyzed — " + str(taken.get("name", "item")))
 	var Sub = load("res://scripts/ui/gear_board/board_sub.gd")
 	if bool(ui.get("gear_sub")):
