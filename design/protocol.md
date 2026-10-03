@@ -15,25 +15,15 @@ If a path file is already loaded, stay on that path.
 - Design or product ambiguity (not only player-facing): web asks one blocking question; Build asks with `ask_user_question` (Build session flow, Design decisions), even under always-allow. Code shape inside one system: Build decides. After a slice: pause and report.
 - Git history on `main` is the game version. `scripts/data/version.json` is the baked copy.
 - When editing GDScript, load `design/gdscript-law.md`. Size splits are `design/refactor.md` for Grok Bot only. Web / chat does not cap-split.
-- Self-verify against the Demo-Complete Checklist in `design/constraints.md` before calling the build complete.
+- Before calling the build complete, self-verify against the Demo-complete checklist in `design/constraints-demo.md`.
 
 ## Long-running
 
-Do not fetch a file already in the loaded set. Live-path code must not share state with an archive.
-One web emit pass is Phase 3 through Phase 4 for one accepted slice. On a multi-slice list, a pasted PASS goes to the next slice Phase 3. Phase 2 returns when the User changes the remaining list or opens a new brainstorm topic.
-Pins are User-only.
+Do not fetch a file already in the loaded set. Live-path code must not share state with an archive. Pins are User-only. (Web emit-pass loop: `web-test.md`.)
 
 ## Database
 
 Open a topic door only when its `Read when` matches, a Job table names it, or the User names that work. Do not treat this paragraph as a read list.
 The design questions that were open when the database was frozen are closed; do not reopen them. A new request raises new questions: ask them (Build: `ask_user_question`), do not invent systems or answers.
 
-## Variation
-
-Numbers, formulas, enemy specifics, and set bonuses start in `design/tunables.md` and the debug menu. They are non-final.
-
-## Loaded set
-
-Default: the agents file, this path file, and (web / Build) this file plus constraints.
-Cap (implementation): boot files + one topic door + one Job sibling + matching gates. Web picture-reads do not expand what a slice may implement.
-Web docs/routing may open the load-graph and topic index without treating that as a second writer.
+Numbers, formulas, enemy specifics and set bonuses start in `design/tunables.md` and the debug menu and are non-final. Load cap: the agents file; web picture-reads do not expand what a slice may implement.

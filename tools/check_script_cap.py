@@ -54,8 +54,9 @@ def main(argv: list[str] | None = None) -> int:
             path = Path(raw)
             if not path.is_absolute():
                 path = root / path
-            if path.is_file():
-                files.append(path)
+            if not path.is_file():
+                agent_log.fail(f"--path {raw}: no such file (give repo-relative .gd paths, or omit for all scripts)")
+            files.append(path)
     elif args.git_changed:
         found = repo_lib.git_changed(root, "scripts")
         if found is None:
@@ -90,6 +91,10 @@ def main(argv: list[str] | None = None) -> int:
         lines.append(f"{size}\t{rel}")
     for name, paths in dupes:
         lines.append(f"DUPE\t{name}\t" + " | ".join(paths))
+    if over:
+        lines.append("next: split the file (BOT.md size flow, design/refactor.md); do not raise --over-kb")
+    if dupes:
+        lines.append("next: DUPE = rename one file; basenames are unique repo-wide")
     body = "\n".join(lines)
     return agent_log.finish(
         "script-cap", root, body, "FAIL" if over or dupes else "PASS", args=args,
@@ -98,4 +103,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

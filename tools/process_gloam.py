@@ -14,9 +14,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = Path(
-    r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images"
-)
+SRC = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images")
 OUT = ROOT / "assets" / "3d"
 THRESH = 64
 FACINGS = ["right", "down_right", "down", "down_left", "left", "up_left", "up", "up_right"]
@@ -266,11 +264,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Key Imagine stills into assets/3d for the Gloam 3D view.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="process_gloam")
+    return agent_log.run_writer("process_gloam", "Key Imagine stills into assets/3d for the Gloam 3D view.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

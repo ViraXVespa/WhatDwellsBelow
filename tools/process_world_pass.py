@@ -18,9 +18,7 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 
-SESSION = Path(
-    r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a08788-1bb6-76c0-8fa8-40b73dda2810\images"
-)
+SESSION = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a08788-1bb6-76c0-8fa8-40b73dda2810\images")
 TILES = ROOT / "assets" / "tiles"
 PROPS = ROOT / "assets" / "sprites" / "props"
 NPCS = ROOT / "assets" / "sprites" / "npcs"
@@ -306,11 +304,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Key and install the Placeholdia / dungeon art pass stills.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="process_world_pass")
+    return agent_log.run_writer("process_world_pass", "Key and install the Placeholdia / dungeon art pass stills.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

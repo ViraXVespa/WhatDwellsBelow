@@ -9,7 +9,7 @@ stderr, de-duplicates by normalized message, prints a report.
   python tools/bot_warnscan.py --list
   python tools/bot_warnscan.py                       # every area
   python tools/bot_warnscan.py --phases 1,2,6 --report _logs/warnscan/report.txt
-  python tools/bot_warnscan.py --areas static,boot --json _logs/warnscan/r.json
+  python tools/bot_warnscan.py --areas static,boot --json-out _logs/warnscan/r.json
   python tools/bot_warnscan.py --areas p3,static --save-baseline _logs/warnscan/base.json  # before a change
   python tools/bot_warnscan.py --areas p3,static --non-leak-diff _logs/warnscan/base.json  # after: NEW/FIXED
   python tools/bot_warnscan.py --renderer both --repeat 3     # headless + real renderer, stable vs flaky tags
@@ -279,14 +279,14 @@ def findings_md(findings: list, ns, secs: float) -> str:
     return "\n".join(out) + "\n"
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Headless runtime-warning sweep (zero-warning gate)")
     p.add_argument("--list", action="store_true", help="list areas and exit")
     p.add_argument("--areas", default="", help="comma list of area names (see --list)")
     p.add_argument("--phases", default="", help="shorthand for smoke phases, e.g. 1,2,6")
     p.add_argument("--map-floors", default="1", help="dungeon-map floors to sweep (default 1)")
-    p.add_argument("--map-seed", type=int, default=42)
-    p.add_argument("--timeout", type=int, default=90, help="seconds per run")
+    p.add_argument("--map-seed", type=int, default=42, help="Dungeon-map seed for the map sweep (default 42).")
+    p.add_argument("--timeout", "--timeout-sec", "-TimeoutSec", dest="timeout", type=int, default=90, help="Seconds per run (default 90).")
     p.add_argument("--repeat", type=int, default=1, help="force this many runs of every area (default 1)")
     p.add_argument("--recheck", type=int, default=2, help="extra runs for areas that logged a leak/run failure, to tag stable vs flaky (default 2; 0 off; ignored with --repeat > 1)")
     p.add_argument("--jobs", type=int, default=3, help="areas run in parallel (default 3; each run gets its own user:// dir; 1 = serial)")
@@ -295,12 +295,12 @@ def main() -> int:
                    help="headless (default), real (box display / xvfb, areas tagged @gui; no static) or both")
     p.add_argument("--no-engine-verbose", action="store_true", help="drop Godot --verbose (no leak detail rows)")
     p.add_argument("--report", default="", help="also write the text report here")
-    p.add_argument("--json-out", "--json", dest="json", default="", help="write findings as JSON to this file (--json kept as an alias; takes a path)")
+    p.add_argument("--json-out", dest="json", default="", metavar="PATH", help="Write findings as JSON to this file.")
     p.add_argument("--findings-md", default="", help="write findings grouped by kind with counts as markdown here")
     p.add_argument("--save-baseline", default="", help="write non-leak findings JSON here (run before a change)")
     p.add_argument("--non-leak-diff", default="", help="compare non-leak findings to a --save-baseline file; exit 1 if NEW")
     p.add_argument("--verbose", action="store_true", help="print commands and longer stacks")
-    ns = p.parse_args()
+    ns = p.parse_args(argv)
     root = agent_log.resolve_root(ns)
     floors = [int(x) for x in ns.map_floors.split(",") if x.strip()]
     table = area_table(floors, ns.map_seed)
@@ -400,4 +400,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

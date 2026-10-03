@@ -447,8 +447,8 @@ def write_summary(root: Path, unused, maybe, defs, elapsed: float) -> Path:
 
 def main() -> int:
     parser = agent_log.std_parser("Unused GDScript funcs (--apply deletes them; --dry-run previews).", writes=True)
-    parser.add_argument("--limit", type=int, default=80)
-    parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--limit", type=int, default=80, help="Max rows listed (default 80).")
+    parser.add_argument("--apply", action="store_true", help="DELETE the listed funcs (only when an opt item says so).")
     ns = parser.parse_args()
     started = time.perf_counter()
     root = agent_log.resolve_root(ns)

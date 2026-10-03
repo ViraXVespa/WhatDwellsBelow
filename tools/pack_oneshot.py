@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 from typing import TypeVar
 
@@ -29,6 +28,7 @@ sys.path.insert(0, str(TOOLS))
 
 import i2v_seeds  # noqa: E402
 import pack_locomotion as loc  # noqa: E402
+import agent_log  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -109,21 +109,22 @@ def pack_one(
     return f"{gender} {action} {facing} {len(locked)} -> {dest / (prefix + '_0.png')}"
 
 
-def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--gender", action="append", choices=("male", "female"))
-    p.add_argument("--facing", action="append", choices=KEYS)
-    p.add_argument("--action", action="append", choices=sorted(PREFIX))
-    p.add_argument("--reuse-harvest", action="store_true")
-    p.add_argument("--rim", type=int, default=2)
-    p.add_argument("--rim-hue", type=float, default=26.0)
+def _add_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--gender", action="append", choices=("male", "female"), help="male or female (repeatable; default both).")
+    p.add_argument("--facing", action="append", choices=KEYS, help="Facing to pack (repeatable; default all eight).")
+    p.add_argument("--action", action="append", choices=sorted(PREFIX), help="Action to pack (repeatable; default all).")
+    p.add_argument("--reuse-harvest", action="store_true", help="Reuse frames already extracted.")
+    p.add_argument("--rim", type=int, default=2, help="Rim-clean passes (default 2).")
+    p.add_argument("--rim-hue", type=float, default=26.0, help="Rim hue to clean (default 26).")
     p.add_argument(
         "--frames",
         type=int,
         default=0,
         help="Force frame count. 0 = default (6 for attack/special/gather, all frames for death/dispel).",
     )
-    args = p.parse_args(argv)
+
+
+def _run(args: argparse.Namespace) -> None:
     genders = args.gender or ["male", "female"]
     facings = args.facing or list(KEYS)
     actions = args.action or list(PREFIX)
@@ -151,17 +152,12 @@ def main(argv: list[str] | None = None) -> int:
                         n,
                     )
                 )
-    if not jobs:
-        return 0
-    if len(jobs) == 1:
-        print(pack_one(*jobs[0]))
-        return 0
-    with ProcessPoolExecutor() as pool:
-        futs = [pool.submit(pack_one, *job) for job in jobs]
-        for fut in as_completed(futs):
-            print(fut.result())
-    return 0
+    agent_log.run_jobs([(pack_one, job) for job in jobs])
+
+
+def main(argv: list[str] | None = None) -> int:
+    return agent_log.run_writer("pack_oneshot", "Pack one-shot I2V clips (attack, special, gather, death, dispel) into engine frames.", _run, argv, [globals(), loc.__dict__], add_args=_add_args)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

@@ -333,9 +333,9 @@ def outside_strs(root: Path) -> collections.Counter:
 def main() -> int:
     p = agent_log.std_parser(__doc__, writes=True)
     p.formatter_class = argparse.RawDescriptionHelpFormatter
-    p.add_argument("file")
-    p.add_argument("--list", action="store_true")
-    p.add_argument("--plan")
+    p.add_argument("file", help="The .gd file to split.")
+    p.add_argument("--list", action="store_true", help="List the file's funcs with sizes and exit.")
+    p.add_argument("--plan", help='JSON plan: {"<stem>_<rest>": [func names]}.')
     p.add_argument("--in-folder", action="store_true", help="FILE is a helper in a facade-less cluster folder: new helpers go beside it")
     ns = p.parse_args()
     path = Path(ns.file)
@@ -379,4 +379,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

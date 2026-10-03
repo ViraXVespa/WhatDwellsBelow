@@ -46,6 +46,10 @@ def cmd_check(root: Path, args) -> int:
     lines += [f"UNMAPPED {r}" for r in unmapped] + [f"MISSING {r}" for r in missing]
     echo = f"unmapped={len(unmapped)} missing={len(missing)} mapped={mapped} scripts={len(scripts)}"
     status = "FAIL" if unmapped or missing else "PASS"
+    if status == "FAIL":  # name the offenders in the output, not only the summary file
+        shown = [x for x in lines if x.startswith(("UNMAPPED ", "MISSING "))]
+        echo += "\n" + "\n".join(shown[:10]) + (f"\n... +{len(shown) - 10} more (summary file)" if len(shown) > 10 else "")
+        echo += "\nnext: UNMAPPED -> `code_map.py patch --system <System> --add <path>`; MISSING -> `--remove <path>` (or `--rename OLD=NEW`) on its row"
     return agent_log.finish("code-map-check", root, "\n".join(lines), status, args=args, echo=echo,
                             unmapped=len(unmapped), missing=len(missing), mapped=mapped, scripts=len(scripts))
 
@@ -61,10 +65,11 @@ def cmd_row(root: Path, args) -> int:
     lines += [f"rows_scanned={len(rows)} matches={len(hits)}", "measure=parse design/code-map.md table; do not read the rest of the map", ""]
     if not hits:
         lines.append("NO_ROW")
+        print(f"error: no code-map row lists {needle}; run `code_map.py check` (UNMAPPED lists unmapped scripts) or `code_map.py patch --system S --add {needle}`", file=sys.stderr)
     for r in hits:
         lines += [f"system={r.system}", f"live={r.live}", ""]
     return agent_log.finish("code-map-row", root, "\n".join(lines), "PASS" if hits else "FAIL", args=args,
-                            echo=f"matches={len(hits)}", matches=len(hits))
+                            echo="\n".join(x for x in lines[3:] if x.strip()) if hits else f"matches={len(hits)}", matches=len(hits))
 
 
 def _parse_rename(raw: str) -> tuple[str, str] | None:
@@ -138,7 +143,8 @@ def main(argv: list[str] | None = None) -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("check", help="Diff live .gd files against code-map ticks.")
     s = sub.add_parser("row", help="Print the system row matching a path.")
-    s.add_argument("--path", required=True, help="Live script or scene path")
+    s.add_argument("path_pos", nargs="?", default="", metavar="PATH", help="Live script or scene path (same as --path)")
+    s.add_argument("--path", default="", help="Live script or scene path")
     s = sub.add_parser("patch", help="Patch one system row.")
     s.add_argument("--system", required=True, help="System row name (exact, else unique prefix)")
     s.add_argument("--add", action="append", default=[], help="Live path to add (repeatable)")
@@ -147,9 +153,13 @@ def main(argv: list[str] | None = None) -> int:
     # accept the shared flags after the subcommand too (old tools took --root last)
     for name in ("check", "row", "patch"):
         sub.choices[name].add_argument("--root", default=None, help="Repo root (default: auto).", dest="root_sub")
-        sub.choices[name].add_argument("--json", dest="json_sub", action="store_true")
+        sub.choices[name].add_argument("--json", dest="json_sub", action="store_true", help="Print one JSON object instead of text.")
     sub.choices["patch"].add_argument("--dry-run", dest="dry_sub", action="store_true", help="Print what would change; write nothing.")
     args = ap.parse_args(argv)
+    if args.cmd == "row":
+        args.path = args.path or args.path_pos
+        if not args.path:
+            agent_log.fail("code_map row: pass a PATH (example: code_map.py row scripts/app.gd)")
     args.root = getattr(args, "root_sub", None) or args.root
     args.json = args.json or getattr(args, "json_sub", False)
     args.dry_run = args.dry_run or getattr(args, "dry_sub", False)
@@ -158,4 +168,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

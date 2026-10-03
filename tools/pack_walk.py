@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import imageio_ffmpeg
@@ -23,9 +22,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
-SESSION_VID = Path(
-    r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\videos"
-)
+SESSION_VID = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\videos")
 RAW = ROOT / "_src" / "anim_frames"
 OUT_PLAYER = ROOT / "assets" / "sprites" / "player"
 CANVAS = 128
@@ -108,20 +105,12 @@ def _run() -> None:
             print("missing", vid)
             continue
         jobs.append(("walk", facing, str(vid)))
-    if not jobs:
-        return
-    with ProcessPoolExecutor() as pool:
-        futs = [pool.submit(_pack_one, kind, facing, video) for kind, facing, video in jobs]
-        for fut in as_completed(futs):
-            print(fut.result())
+    agent_log.run_jobs([(_pack_one, job) for job in jobs])
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Extract, key, and pack walk-cycle frames from Imagine videos.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="pack_walk")
+    return agent_log.run_writer("pack_walk", "Extract, key, and pack walk-cycle frames from Imagine videos.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))
