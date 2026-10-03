@@ -355,6 +355,9 @@ shot_flows:
   gear_ui: "camp-anvil-tabs,camp-inventory"
   inventory: "camp-inventory"
   dungeon.gates: "dungeon-gate-shop"
+  dungeon.spawns: "dungeon-f1-spawns,dungeon-f2-spawns,dungeon-f3-spawns,dungeon-f4-spawns"
+  dungeon.props: "dungeon-f1-props,dungeon-f1-boss"
+  dungeon.hud: "dungeon-hud-states"
   ui.pause: "camp-pause-menu"
   ui.run_flow: "camp-recap"
 

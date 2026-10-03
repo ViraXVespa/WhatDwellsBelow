@@ -1,0 +1,67 @@
+{
+  "name": "dungeon-f3-spawns",
+  "about": "Dungeon floor 3, seed 42: the base room guards (orc, imp, archer, spider) with the base chest, then the puzzle room. Enemies are frozen where they spawn, the map stays closed, and each stop teleports the player then waits for the lights.",
+  "scene": "dungeon",
+  "seed": 42,
+  "floor": 3,
+  "zoom": 1.5,
+  "settle_ms": 0,
+  "fixed_fps": 60,
+  "covers": [],
+  "smoke": true,
+  "steps": [
+    {
+      "op": "freeze",
+      "group": "enemies"
+    },
+    {
+      "op": "assert",
+      "target": "App.floor_n",
+      "equals": 3
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            46.5,
+            0,
+            15.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "base-guards"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            77.5,
+            0,
+            18.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "puzzle-room"
+    }
+  ]
+}

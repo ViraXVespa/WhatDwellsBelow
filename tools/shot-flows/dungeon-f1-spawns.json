@@ -1,0 +1,102 @@
+{
+  "name": "dungeon-f1-spawns",
+  "about": "Dungeon floor 1, seed 42 (web ?wdb-seed=42): arrival at the entrance crystal, the slime+goblin pack, the base room guards (archers, bats) with the base chest, and a spider pack. Enemies are frozen where they spawn, the map stays closed, and each stop teleports the player then waits for the lights.",
+  "scene": "dungeon",
+  "seed": 42,
+  "floor": 1,
+  "zoom": 1.5,
+  "settle_ms": 0,
+  "fixed_fps": 60,
+  "covers": [],
+  "smoke": true,
+  "steps": [
+    {
+      "op": "freeze",
+      "group": "enemies"
+    },
+    {
+      "op": "assert",
+      "target": "App.floor_n",
+      "equals": 1
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "arrival"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            28.5,
+            0,
+            42.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "slime-goblin-pack"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            47.0,
+            0,
+            27.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "base-guards-chest"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            64.0,
+            0,
+            57.8
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "spider-pack"
+    },
+    {
+      "op": "assert",
+      "target": "host.types_present",
+      "contains": "archer"
+    }
+  ]
+}

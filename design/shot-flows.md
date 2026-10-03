@@ -7,7 +7,7 @@ Rendering, modes, worker, bands, display, knobs and troubleshooting live in the 
 
 ## Flows
 
-A flow is `tools/shot-flows/<name>.json`: header keys fill unset CLI defaults (`scene hud zoom settle_ms seed floor px pz width height scale`), plus `about`, `mask` (`[[x,y,w,h]]` 1920x1080 rects and `tol` (per-channel delta) that baseline diffs ignore, for live world animation behind a panel), `covers` (state ids it proves), `smoke` (true = also run headless by `bot_smokes.py --flows`), optional `publish` `{dir, prefix}`, and `steps`.
+A flow is `tools/shot-flows/<name>.json`: header keys fill unset CLI defaults (`scene hud zoom settle_ms seed floor px pz width height scale fixed_fps`), plus `about`, `mask` (`[[x,y,w,h]]` 1920x1080 rects and `tol` (per-channel delta) that baseline diffs ignore, for live world animation behind a panel), `covers` (state ids it proves), `smoke` (true = also run headless by `bot_smokes.py --flows`), optional `publish` `{dir, prefix}`, and `steps`.
 
 | Op | Keys | Does |
 |---|---|---|
@@ -19,9 +19,10 @@ A flow is `tools/shot-flows/<name>.json`: header keys fill unset CLI defaults (`
 | `assert_texts` | `root`, `min_font`, `max_chars`, `must_contain`, `forbid` | Checks the visible copy (font floor, line length, wording) |
 | `set` / `call` | `target`, `value` / `method`, `args` | Seeds state (`App.prog.quests_offered`, `App.gold`) or calls a method |
 | `repeat` | `max`, `until`, `steps` | Pages: loop steps until the `until` assert holds (or `max`) |
+| `freeze` | `group`, `on` | Disables (or restores) processing of a node group, e.g. `enemies`; the HUD host keeps running |
 | `wait` `settle` `seed` `hud` `texts` `log` | | `ms` or `frames`; two frames plus a draw; global RNG seed; HUD on or off; text dump alone; a marker |
 
-Targets are dotted paths. The root is an autoload (`App`), `host` (the camp/dungeon scene), `kind:receptionist`, `group:player` or `node:Path`; then properties, child nodes, keys, `[i]`. Example: `host.ui.mode`. Any random state must be seeded or set (the quest board rolls with its own `randomize()`, so a flow sets `quests_offered`); otherwise two runs differ and the diff is noise. The first failing op stops the run with `SHOT: fail op=... why=...`.
+Targets are dotted paths. The root is an autoload (`App`), `host` (the camp/dungeon scene), `kind:receptionist`, `group:player` or `node:Path`; then properties, child nodes, keys, `[i]`. Example: `host.ui.mode`. A `set`/`call` value `{"v3":[x,y,z]}` becomes a Vector3. Any random state must be seeded or set (the quest board rolls with its own `randomize()`, so a flow sets `quests_offered`); otherwise two runs differ and the diff is noise. The first failing op stops the run with `SHOT: fail op=... why=...`.
 
 Worker flags: `--wdb-shot-steps=FILE --wdb-shot-frames=DIR --wdb-shot-nopix=1 --wdb-shot-show=1` (window stays visible). Code: `step_runner.gd` (loop, `flow.json`), `step_ops.gd` (ops), `step_ref.gd` (paths), `step_input.gd` (events), `step_texts.gd` (text dump), all under `scripts/debug/shot_tool/`.
 
@@ -30,6 +31,12 @@ Commands:
 - `python3 tools/run_shot_flow.py --list | --flow N | --all | --smoke [--no-pixels] [--baseline D] [--save-baseline D] [--publish] [--check-published]` flows by name; frames in `_logs/shot-flow/<flow>/`; summary `shot-flow`.
 - `python3 tools/shot_diff.py BEFORE AFTER [--max-ratio R] [--mask X,Y,W,H] [--out DIR]` two PNGs or directories; writes `*.diff.png` (red = changed). Before/after of a change: `--save-baseline /tmp/before` first, then `--baseline /tmp/before` (identical frames print `diff=PASS`).
 - `python3 tools/check_shot_gaps.py [--changed [REF]] [--advisory] [--strict]` which states (`tools/shot-flows/states.json` sources) have no flow, which states are new since REF (uncovered ones FAIL; `--advisory` prints only), flows without a shot or assert, stale or hand-edited published shots.
+
+## Dungeon flows (seed 42)
+
+`dungeon-f{1..4}-spawns`, `dungeon-f1-props`, `dungeon-f1-boss`, `dungeon-hud-states`. Each uses `scene: dungeon`, `seed: 42`, `settle_ms: 0`, `fixed_fps: 60`, `smoke: true`, and starts with `freeze` on `enemies` so packs stay where they spawned. Shot mode seeds the global RNG from the run seed and `fixed_fps` fixes the frame delta, so two runs are byte-identical.
+
+Teleport recipe (the whole floor is populated at boot; the camera follows the player): `call group:player.set_global_position` with `[{"v3":[x,0,z]}]`, `wait` 1500 ms for lights, then `shot`. Stand inside the subject's room or line-of-sight lighting leaves it black. Keep the big map closed. Take coordinates from `Gen.generate` rooms (seed 42). HUD states use `set` (`group:player.hp`, `App.shrine_t`, `App.prog.food_t` with `food_left`, `App.gold`, `App.toast_msg`/`toast_t`); never freeze the host there.
 
 ## Screenshot update step (docs and guide images)
 
