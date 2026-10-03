@@ -12,9 +12,6 @@ static func grid_dims(pt: Node) -> Dictionary:
 static func door_cells(pt: Node, door: Node) -> Array:
 	return Util.door_cells(pt, door)
 
-static func obstacle_cell(pt: Node, c: Vector2i) -> bool:
-	return Util.obstacle_cell(pt, c)
-
 static func prop_cell(pt: Node, c: Vector2i) -> bool:
 	return Util.prop_cell(pt, c)
 
@@ -63,9 +60,6 @@ static func has_wide_los(pt: Node, a: Node, b: Node) -> bool:
 
 static func has_los_from_wide(pt: Node, pos: Vector3, b: Node) -> bool:
 	return Walk.has_los_from_wide(pt, pos, b)
-
-static func grid_floor(pt: Node, c: Vector2i) -> bool:
-	return Cache.grid_floor(pt, c)
 
 static func floor_cell(pt: Node, _grid: PackedByteArray, _w: int, _h: int, c: Vector2i) -> bool:
 	return Cache.floor_cell(pt, c)

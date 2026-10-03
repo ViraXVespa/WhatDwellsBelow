@@ -114,10 +114,6 @@ static func doors(pt: Node) -> Array:
 	fresh(pt)
 	return _doors
 
-static func gate_or_breakable(pt: Node, c: Vector2i) -> bool:
-	fresh(pt)
-	return _obst.has(c)
-
 static func prop(pt: Node, c: Vector2i) -> bool:
 	fresh(pt)
 	return _prop.has(c)

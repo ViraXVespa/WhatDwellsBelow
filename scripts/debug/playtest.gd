@@ -54,14 +54,8 @@ func _notice_range() -> float:
 func _grid_dims() -> Dictionary:
 	return PlaytestNav.grid_dims(self)
 
-func _grid_floor(c: Vector2i) -> bool:
-	return PlaytestNav.grid_floor(self, c)
-
 func _door_cells(door: Node) -> Array:
 	return PlaytestNav.door_cells(self, door)
-
-func _obstacle_cell(c: Vector2i) -> bool:
-	return PlaytestNav.obstacle_cell(self, c)
 
 func _prop_cell(c: Vector2i) -> bool:
 	return PlaytestNav.prop_cell(self, c)

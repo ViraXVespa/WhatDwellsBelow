@@ -23,11 +23,6 @@ static func door_cells(pt: Node, door: Node) -> Array:
 	out.append(pt._cell_of_node(door))
 	return out
 
-static func obstacle_cell(pt: Node, c: Vector2i) -> bool:
-	if pt.get_tree() == null:
-		return false
-	return Cache.gate_or_breakable(pt, c) or pt._door_blocks_cell(c)
-
 static func prop_cell(pt: Node, c: Vector2i) -> bool:
 	if pt.get_tree() == null:
 		return false

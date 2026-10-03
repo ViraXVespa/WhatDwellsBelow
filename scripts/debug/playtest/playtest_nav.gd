@@ -27,14 +27,8 @@ static func has_los_from_wide(pt: Node, pos: Vector3, b: Node) -> bool:
 static func grid_dims(pt: Node) -> Dictionary:
 	return Los.grid_dims(pt)
 
-static func grid_floor(pt: Node, c: Vector2i) -> bool:
-	return Los.grid_floor(pt, c)
-
 static func door_cells(pt: Node, door: Node) -> Array:
 	return Los.door_cells(pt, door)
-
-static func obstacle_cell(pt: Node, c: Vector2i) -> bool:
-	return Los.obstacle_cell(pt, c)
 
 static func prop_cell(pt: Node, c: Vector2i) -> bool:
 	return Los.prop_cell(pt, c)
