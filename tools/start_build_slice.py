@@ -18,15 +18,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
-from load_routes import load_routes, shot_flows, smoke_phases
+from load_routes import check_route, load_routes, shot_flows, smoke_phases
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Resolve a route and print the grok fork argv for a Build slice.", writes=True)
-    ap.add_argument("--door", "-Door", default="")
-    ap.add_argument("--job", "-Job", default="")
-    ap.add_argument("--area", "-Area", default="")
-    ap.add_argument("--ref", "-Ref", default="main")
+    ap.add_argument("--door", "-Door", default="", help="routes.yaml door to start from.")
+    ap.add_argument("--job", "-Job", default="", help="routes.yaml door.job to start from.")
+    ap.add_argument("--area", "-Area", default="", help="Slice name for the worktree slug (default: job, else door).")
+    ap.add_argument("--ref", "-Ref", default="main", help="Git ref to branch from (default main).")
     ap.add_argument("--session", default="", help="Gather session id (default: $GROK_SESSION_ID).")
     ap.add_argument("--launch", "-Launch", action="store_true", help="Actually start grok with the fork argv.")
     args = ap.parse_args(argv)
@@ -34,6 +34,10 @@ def main(argv: list[str] | None = None) -> int:
     raw = (args.area or args.job or args.door).strip()
     if not raw:
         agent_log.fail("pass --door, --job, or --area")
+    if args.door or args.job:
+        bad_route = check_route(load_routes(root), args.door, args.job)
+        if bad_route:
+            agent_log.fail(bad_route)
     slug = re.sub(r"[^a-z0-9._-]+", "-", raw.lower()).strip("-")[:48].strip("-")
     if not slug:
         agent_log.fail("area slug is empty after sanitize")
@@ -98,4 +102,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

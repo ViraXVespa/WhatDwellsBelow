@@ -90,20 +90,8 @@ static func _los(host: Node, ppos: Vector3, dist: float, delta: float) -> bool:
 static func begin_windup(host: Node) -> void:
 	Atk.begin_windup(host)
 
-static func do_attack(host: Node, delta: float) -> void:
-	Atk.do_attack(host, delta)
-
-static func draw_tele(host: Node, active: bool) -> void:
-	Atk.draw_tele(host, active)
-
 static func strike(host: Node) -> void:
 	Atk.strike(host)
-
-static func hit_player(host: Node, player: Node, mult: float = 1.0) -> void:
-	Atk.hit_player(host, player, mult)
-
-static func spawn_shot(host: Node, dir: Vector2) -> void:
-	Atk.spawn_shot(host, dir)
 
 static func start_flee(host: Node) -> void:
 	if host.dead or host.is_boss:

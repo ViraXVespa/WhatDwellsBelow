@@ -1,15 +1,15 @@
 extends Object
 
 const Make := preload("res://scripts/data/progress/progress_make.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
+const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 
 static func required_ok(slot: String, it: Dictionary) -> bool:
 	if it.is_empty() or str(it.get("slot", "")) != slot:
 		return false
 	if slot == "weapon":
-		return Rules.BUILTIN_WEAPONS.find(str(it.get("weapon", ""))) >= 0
+		return Kit.BUILTIN_WEAPONS.find(str(it.get("weapon", ""))) >= 0
 	if slot == "tool":
-		return Rules.BUILTIN_TOOLS.find(str(it.get("tool", ""))) >= 0
+		return Kit.BUILTIN_TOOLS.find(str(it.get("tool", ""))) >= 0
 	return false
 
 static func required_piece(p: Object, slot: String) -> Dictionary:
@@ -23,11 +23,11 @@ static func required_piece(p: Object, slot: String) -> Dictionary:
 			return hold
 	if slot == "weapon":
 		var w := str(p.pick_weapon)
-		if Rules.BUILTIN_WEAPONS.find(w) < 0:
+		if Kit.BUILTIN_WEAPONS.find(w) < 0:
 			w = "great_axe"
 		return Make.make_weapon(p, w, "white")
 	var t := str(p.tool_type)
-	if Rules.BUILTIN_TOOLS.find(t) < 0:
+	if Kit.BUILTIN_TOOLS.find(t) < 0:
 		t = "pickaxe"
 	return Make.make_tool(p, t)
 

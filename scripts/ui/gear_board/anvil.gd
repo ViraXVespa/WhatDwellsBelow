@@ -1,10 +1,7 @@
 ﻿extends Object
 
-const Text := preload("res://scripts/ui/gear_board/board_text.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
 const Town := preload("res://scripts/data/progress/progress_town.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
-const Prompts := preload("res://scripts/input/prompts.gd")
 const View := preload("res://scripts/ui/gear_board/anvil_view.gd")
 const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
 
@@ -27,9 +24,6 @@ static func hint_parts(ui: CanvasLayer) -> Array:
 	parts.append({"action": "ui_accept", "verb": "select a slot", "gap": true})
 	parts.append({"action": "ui_cancel", "verb": "back"})
 	return parts
-
-static func hint_line(ui: CanvasLayer) -> String:
-	return Prompts.verb_lines(hint_parts(ui))
 
 static func options_for(slot: String, ui: CanvasLayer) -> Array:
 	if slot == "potion" or slot == "food":
@@ -102,6 +96,3 @@ static func _commit_analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> v
 	var Sub = load("res://scripts/ui/gear_board/board_sub.gd")
 	if bool(ui.get("gear_sub")):
 		Sub.open_sub(ui, slot)
-
-static func restore(_ui: CanvasLayer) -> void:
-	pass

@@ -98,6 +98,3 @@ static func _cut(pt: Node, p: Node, dest: Node) -> Vector2:
 	if pt._dist(p, dest) > 1.7:
 		return pt._any_open(p)
 	return Vector2.ZERO
-
-static func astar(pt: Node, p: Node, dest: Node) -> Array[Vector2i]:
-	return Util.astar(pt, p, dest)

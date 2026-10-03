@@ -19,11 +19,11 @@ from run_build_gate import child
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Import check, then optional phase smokes.", json_out=True)
-    ap.add_argument("--with-smokes", "-WithSmokes", action="store_true")
-    ap.add_argument("--phases", "-Phases", nargs="+", default=["1,2,3,4,5,6,7,8,9"])
-    ap.add_argument("--import-timeout-sec", "-ImportTimeoutSec", type=int, default=180)
-    ap.add_argument("--smoke-timeout-sec", "-SmokeTimeoutSec", type=int, default=120)
-    ap.add_argument("--force", "-Force", action="store_true")
+    ap.add_argument("--with-smokes", "-WithSmokes", action="store_true", help="Also run the headless smoke phases.")
+    ap.add_argument("--phases", "-Phases", nargs="+", default=["1,2,3,4,5,6,7,8,9"], help="Smoke phases with --with-smokes (default 1-9).")
+    ap.add_argument("--import-timeout-sec", "-ImportTimeoutSec", type=int, default=180, help="Editor import timeout in seconds (default 180).")
+    ap.add_argument("--smoke-timeout-sec", "-SmokeTimeoutSec", type=int, default=120, help="Seconds per smoke phase (default 120).")
+    ap.add_argument("--force", "-Force", action="store_true", help="Run even when Godot is already running on this path.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     pids = [p["pid"] for p in godot_lib.procs_on_path(root)]
@@ -51,4 +51,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

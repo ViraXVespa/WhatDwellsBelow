@@ -1,13 +1,10 @@
 extends Object
 
-const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const Util := preload("res://scripts/debug/playtest_ai/ai_util.gd")
 const Act := preload("res://scripts/debug/playtest_ai/ai_act.gd")
-const Goals := preload("res://scripts/debug/playtest_goals.gd")
 const NEAR := 22.0
 const SEE := 28.0
 const CLOSE := 2.4
-const START := 24.0
 const GATHER := 9.0
 const Core := preload("res://scripts/debug/playtest_ai/ai_core.gd")
 const Misc := preload("res://scripts/debug/playtest_ai/ai_misc.gd")
@@ -24,14 +21,8 @@ static func alive_enemy(n: Node) -> bool:
 static func notice_range(pt: Node) -> float:
 	return Util.notice_range(pt)
 
-static func try_staff_special(pt: Node, d: float, los: bool) -> void:
-	Util.try_staff_special(pt, d, los)
-
 static func fight(pt: Node, p: Node, enemy: Node) -> void:
 	Act.fight(pt, p, enemy)
-
-static func approach_boss(pt: Node, p: Node, boss: Node) -> void:
-	Act.approach_boss(pt, p, boss)
 
 static func wander(pt: Node, p: Node, delta: float) -> void:
 	Util.wander(pt, p, delta)

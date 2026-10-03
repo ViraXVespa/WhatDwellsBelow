@@ -13,9 +13,6 @@ static func catalog_models() -> Array:
 	out.append({"id": "gate_master", "label": "Gate Master", "dir": "res://assets/sprites/enemies/gate_master/"})
 	return out
 
-static func model_count() -> int:
-	return catalog_models().size()
-
 static func scan(base: String) -> Dictionary:
 	var out := {}
 	out["idle_none"] = {}

@@ -19,9 +19,9 @@ import agent_log
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Run an agent python script and clean up its ephemeral copy.")
-    ap.add_argument("--script", "-Script", required=True)
-    ap.add_argument("--keep-script", "-KeepScript", action="store_true")
-    ap.add_argument("--cleanup", "-Cleanup", action="store_true")
+    ap.add_argument("--script", "-Script", required=True, help="Python source file to run as an agent script.")
+    ap.add_argument("--keep-script", "-KeepScript", action="store_true", help="Keep the script after the run.")
+    ap.add_argument("--cleanup", "-Cleanup", action="store_true", help="Delete the script after the run (only scripts under _logs/agent-py/).")
     ap.add_argument("script_args", nargs="*", help="Arguments passed to the script.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
@@ -54,4 +54,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

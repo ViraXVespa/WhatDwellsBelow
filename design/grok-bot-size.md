@@ -3,7 +3,6 @@
 Status: protocol  
 Read when: Grok Bot Job table → size sweep  
 
-
 ## Size split quick path
 
 Read only this file, `BOT.md`, and `design/refactor.md` rules 1-7 (skip the reuse, extract, and doc-split sections). Run `python3 tools/bot_status.py` (prints only the over-10KB list; `--sweep` lists 5-10KB rows). Per file:
@@ -14,52 +13,19 @@ Read only this file, `BOT.md`, and `design/refactor.md` rules 1-7 (skip the reus
 4. Changelog entry and code-map row via `doc_patch.py` / `patch_code_map.py` (design/tools.md), prove per BOT.md (Prove list), commit, push.
 5. Rough edges: per BOT.md (After-cluster report), fix them in the same PR before the next file.
 
-## Mandate
+## Scope
 
-Size, prove, changelog, and `version.json` rules live in `BOT.md`.
+Live `scripts/**/*.gd` size only (`rglob`, includes `scripts/*.gd`). Not a feature slice, not the staged reuse brief. No behavior change.
 
-Start with `python3 tools/bot_status.py`. Sweep live `scripts/**/*.gd` for size (`rglob`, includes `scripts/*.gd`). Not a feature slice. Not the staged reuse-map brief.
-
-- Ship floor: every touched live script under **10KB**.
-- Sweep target: under **5KB** when whole functions can move. If a single function is over 5KB, leave it whole and report it.
-- Files already under the relevant cap are not split “for cleanliness.”
-- No behavior change.
-- Over-10KB live scripts left on `main` by Grok Build are expected input to this job, not a missed Build split.
-
-Out of scope: `scenes/`, `assets/`, `tools/` (unless a preload path must change), `archives/`, pinned commits, `project.godot` unless a moved script must be registered.
+- Ship floor: every touched live script under **10KB**. Sweep target: under **5KB** when whole functions can move; a single function over 5KB stays whole and is reported. Files already under the relevant cap are not split "for cleanliness."
+- Over-10KB scripts left on `main` by Grok Build are expected input, not a missed Build split.
+- Out of scope: `scenes/`, `assets/`, `tools/` (unless a preload path must change), `archives/`, pinned commits, `project.godot` unless a moved script must be registered.
 
 ## Read set
 
-1. This file
-2. `design/refactor.md` (recipe only)
-3. One `design/code-map.md` **system row** for the cluster about to be edited
-4. After inventory: only the live `.gd` files in that one cluster
-5. At ship: `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
-
-Do not open the staged reuse brief, `design/doc-refactor.md`, or the other Bot flow siblings.
-
-## Inventory
-
-Do not edit yet. Show the ranked list first.
-
-1. `python3 tools/check_script_cap.py` plus `python3 tools/bot_status.py`
-2. Rank: over 10KB first, then over 5KB where whole functions can move
-3. Optional func inventory: `python3 tools/summarize_scripts.py --over-kb 5 --top-funcs 3`
-
-Inventory and before/after sizes use `os.path.getsize`.
+This file, `design/refactor.md` (recipe only), one `design/code-map.md` system row for the cluster about to be edited, then only that cluster's live `.gd` files. Do not open the staged reuse brief, `design/doc-refactor.md`, or the other Bot flow siblings.
 
 ## Pass
 
-1. Split every over-10KB live script with `design/refactor.md`. Facade keeps the public path. Stop each file at under 10KB.
-2. Then split over-5KB files only when whole functions can move.
-3. One size PR may batch over-10KB then over-5KB clusters. Do not start extract, relocate, or reuse-map work in this PR. Stale design-doc lines that name moved symbols: flag them in the PR body per BOT.md (Allowlist). Do not add allowlist rows.
-
-Each new `.gd` needs a `.uid` sidecar: use the import step in BOT.md Smokes.
-
-Work in `/workspace/WhatDwellsBelow`. Commit per cluster on the Bot branch.
-
-## Verify
-
-Prove per BOT.md.
-
-PR body: `gh api -X PATCH` per BOT.md (publishing note). Do not use `gh pr edit`.
+Inventory first, no edits: `python3 tools/check_script_cap.py` plus `bot_status.py`; rank over 10KB, then over 5KB where whole functions can move (optional `python3 tools/summarize_scripts.py --over-kb 5 --top-funcs 3`). Show the ranked list. Sizes use `os.path.getsize`.
+Split every over-10KB script first (each to under 10KB), then over-5KB files only when whole functions can move. One size PR may batch both; no extract, relocate or reuse-map work in it. Stale design-doc lines that name moved symbols: flag them in the PR body (`BOT.md` Prove). Do not add allowlist rows. Each new `.gd` needs a `.uid` sidecar (`BOT.md` Smokes).

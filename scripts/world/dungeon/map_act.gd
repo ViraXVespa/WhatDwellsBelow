@@ -2,7 +2,8 @@ extends RefCounted
 
 ## Large floor-map zoom / pan. World camera is LookCtrl; this only moves map_rect.
 
-const ZOOM_MAX := 10.0
+const T := preload("res://scripts/data/tunables.gd")
+const ZOOM_MAX := T.MAP_ZOOM_MAX
 const FRAME_PAD := 96.0
 const FRAME_CAP := 800.0
 
@@ -44,7 +45,7 @@ static func zoom_at(host: Node, gain: float, focus: Vector2) -> void:
 		return
 	var rect: TextureRect = host.map_rect
 	var z0 := _z(host)
-	var z1 := clampf(z0 * gain, 1.0, ZOOM_MAX)
+	var z1 := clampf(z0 * gain, T.MAP_ZOOM_MIN, ZOOM_MAX)
 	if absf(z1 - z0) < 0.0001:
 		return
 	var u := Vector2.ZERO
@@ -60,7 +61,7 @@ static func zoom_player(host: Node, delta_z: float) -> void:
 	if not is_open(host):
 		return
 	var z0 := _z(host)
-	var z1 := clampf(z0 + delta_z, 1.0, ZOOM_MAX)
+	var z1 := clampf(z0 + delta_z, T.MAP_ZOOM_MIN, ZOOM_MAX)
 	if absf(z1 - z0) < 0.0001:
 		return
 	zoom_at(host, z1 / z0, _player_focus(host))
@@ -101,7 +102,7 @@ static func _z(host: Node) -> float:
 	return float(host.get_meta("map_zoom", 1.0))
 
 static func _set_z(host: Node, z: float) -> void:
-	host.set_meta("map_zoom", clampf(z, 1.0, ZOOM_MAX))
+	host.set_meta("map_zoom", clampf(z, T.MAP_ZOOM_MIN, ZOOM_MAX))
 
 static func _frame(host: Node) -> Rect2:
 	var vp := host.get_viewport().get_visible_rect().size

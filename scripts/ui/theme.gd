@@ -1,6 +1,5 @@
 extends Object
 
-const Prompts := preload("res://scripts/input/prompts.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 
 const PROMPT_GOLD := Color(0.86, 0.80, 0.66)
@@ -186,53 +185,6 @@ static func skill_tip(id: String, lv: int) -> String:
 			now = "Now: no listed bonus."
 			per = "No per-level bonus is defined."
 	return "%s  ·  Level %d\n\n%s\n\n%s" % [n, lv, now, per]
-
-static func _joy_btn(i: int) -> String:
-	match i:
-		JOY_BUTTON_A:
-			return "A"
-		JOY_BUTTON_B:
-			return "B"
-		JOY_BUTTON_X:
-			return "X"
-		JOY_BUTTON_Y:
-			return "Y"
-		JOY_BUTTON_LEFT_SHOULDER:
-			return "LB"
-		JOY_BUTTON_RIGHT_SHOULDER:
-			return "RB"
-		JOY_BUTTON_LEFT_STICK:
-			return "L3"
-		JOY_BUTTON_RIGHT_STICK:
-			return "R3"
-		JOY_BUTTON_START:
-			return "Start"
-		JOY_BUTTON_BACK:
-			return "View"
-		JOY_BUTTON_DPAD_UP:
-			return "D-pad Up"
-		JOY_BUTTON_DPAD_DOWN:
-			return "D-pad Down"
-		JOY_BUTTON_DPAD_LEFT:
-			return "D-pad Left"
-		JOY_BUTTON_DPAD_RIGHT:
-			return "D-pad Right"
-	return "Pad " + str(i)
-
-static func _joy_axis(axis: int, val: float) -> String:
-	if axis == JOY_AXIS_TRIGGER_RIGHT:
-		return "RT"
-	if axis == JOY_AXIS_TRIGGER_LEFT:
-		return "LT"
-	if axis == JOY_AXIS_LEFT_X:
-		return "Left Stick X"
-	if axis == JOY_AXIS_LEFT_Y:
-		return "Left Stick Y"
-	if axis == JOY_AXIS_RIGHT_X:
-		return "Right Stick X"
-	if axis == JOY_AXIS_RIGHT_Y:
-		return "Right Stick Y"
-	return "Axis %d%s" % [axis, "+" if val >= 0.0 else "-"]
 
 static func sb(bg: Color, border: Color) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()

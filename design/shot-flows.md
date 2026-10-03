@@ -7,7 +7,7 @@ Rendering, modes, worker, bands, display, knobs and troubleshooting live in the 
 
 ## Flows
 
-A flow is `tools/shot-flows/<name>.json`: header keys fill unset CLI defaults (`scene hud zoom settle_ms seed floor px pz width height scale`), plus `about`, `covers` (state ids it proves), `smoke` (true = also run headless by `bot_smokes.py --flows`), optional `publish` `{dir, prefix}`, and `steps`.
+A flow is `tools/shot-flows/<name>.json`: header keys fill unset CLI defaults (`scene hud zoom settle_ms seed floor px pz width height scale`), plus `about`, `mask` (`[[x,y,w,h]]` 1920x1080 rects and `tol` (per-channel delta) that baseline diffs ignore, for live world animation behind a panel), `covers` (state ids it proves), `smoke` (true = also run headless by `bot_smokes.py --flows`), optional `publish` `{dir, prefix}`, and `steps`.
 
 | Op | Keys | Does |
 |---|---|---|
@@ -28,7 +28,7 @@ Worker flags: `--wdb-shot-steps=FILE --wdb-shot-frames=DIR --wdb-shot-nopix=1 --
 Commands:
 - `python3 tools/run_shots.py --steps tools/shot-flows/X.json [--no-pixels] [--out P]` one flow, summary `shots`.
 - `python3 tools/run_shot_flow.py --list | --flow N | --all | --smoke [--no-pixels] [--baseline D] [--save-baseline D] [--publish] [--check-published]` flows by name; frames in `_logs/shot-flow/<flow>/`; summary `shot-flow`.
-- `python3 tools/shot_diff.py BEFORE AFTER [--max-ratio R] [--out DIR]` two PNGs or directories; writes `*.diff.png` (red = changed). Before/after of a change: `--save-baseline /tmp/before` first, then `--baseline /tmp/before` (identical frames print `diff=PASS`).
+- `python3 tools/shot_diff.py BEFORE AFTER [--max-ratio R] [--mask X,Y,W,H] [--out DIR]` two PNGs or directories; writes `*.diff.png` (red = changed). Before/after of a change: `--save-baseline /tmp/before` first, then `--baseline /tmp/before` (identical frames print `diff=PASS`).
 - `python3 tools/check_shot_gaps.py [--changed [REF]] [--advisory] [--strict]` which states (`tools/shot-flows/states.json` sources) have no flow, which states are new since REF (uncovered ones FAIL; `--advisory` prints only), flows without a shot or assert, stale or hand-edited published shots.
 
 ## Screenshot update step (docs and guide images)

@@ -1,6 +1,5 @@
 extends Object
 
-const Combat := preload("res://scripts/combat/combat.gd")
 static func _mask_pack(spr: Sprite3D) -> Dictionary:
 	var _fac = load("res://scripts/combat/cover.gd")
 	if spr.has_meta("cover_pack"):

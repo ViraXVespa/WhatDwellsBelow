@@ -11,9 +11,6 @@ static func rebuild(host: Node) -> void:
 	apply_col(host)
 	host.call_deferred("_focus_col")
 
-static func rebuild_list(host: Node) -> void:
-	SplitView.rebuild_list(host)
-
 static func rebuild_info(host: Node) -> void:
 	for c: Node in host.info_box.get_children():
 		c.queue_free()
@@ -28,28 +25,10 @@ static func rebuild_info(host: Node) -> void:
 	SplitView.wire_vert(host.info_btns)
 	path_text(host)
 
-static func paint_list(host: Node) -> void:
-	SplitView.paint_list(host)
-
-static func place_chevron(host: Node) -> void:
-	SplitView.place_chevron(host)
-
 static func apply_col(host: Node) -> void:
 	SplitView.apply_col(host)
 	hint(host)
 	path_text(host)
-
-static func set_col_focus(host: Node) -> void:
-	SplitView.set_col_focus(host)
-
-static func focus_col(host: Node) -> void:
-	SplitView.focus_col(host)
-
-static func first_enabled_info(host: Node) -> Button:
-	return SplitView.first_enabled_info(host)
-
-static func wire_vert(btns: Array) -> void:
-	SplitView.wire_vert(btns)
 
 static func add_info_btn(host: Node, b: Button) -> void:
 	host.info_box.add_child(b)

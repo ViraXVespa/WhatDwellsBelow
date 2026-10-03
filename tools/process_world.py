@@ -13,9 +13,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = Path(
-    r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5Crepos%5CGrokSandbox%5Cwhat-dwells-below\01a01725-c75b-79f2-967f-30d19272bef6\images"
-)
+SRC = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CGrokSandbox%5Cwhat-dwells-below\01a01725-c75b-79f2-967f-30d19272bef6\images")
 THRESH = 58
 CANVAS = 128
 
@@ -150,11 +148,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("process_world")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="process_world")
+    return agent_log.run_writer("process_world", 'Key and fit the _src world stills (tiles, props) into assets/.', _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

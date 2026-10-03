@@ -1,7 +1,5 @@
 # Utility functions for PlaytestLOS
 
-const Combat := preload("res://scripts/combat/combat.gd")
-
 static func world3(pt: Node) -> World3D:
 	var tree: SceneTree = pt.get_tree()
 	if tree == null or tree.root == null:

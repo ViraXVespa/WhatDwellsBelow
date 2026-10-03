@@ -13,9 +13,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = Path(
-    r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5CRepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images"
-)
+SRC = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5CRepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images")
 FRAMES = ROOT / "_src" / "anim_frames"
 OUT = ROOT / "assets" / "live" / "player"
 MAGENTA = (239, 19, 106)
@@ -83,11 +81,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Pack corrected left-facing player sheets with magenta key + despill.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="pack_facing_fix")
+    return agent_log.run_writer("pack_facing_fix", "Pack corrected left-facing player sheets with magenta key + despill.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

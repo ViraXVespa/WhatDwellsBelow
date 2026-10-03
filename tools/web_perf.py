@@ -112,8 +112,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--chrome", default=os.environ.get("CHROME_BIN", ""), help="Chrome/Chromium binary (default PATH).")
     ap.add_argument("--long-ms", type=float, default=50.0, help="A frame over this many ms is long (default 50).")
     ap.add_argument("--timeout-sec", type=int, default=120, help="Load timeout.")
-    ap.add_argument("--width", type=int, default=1280)
-    ap.add_argument("--height", type=int, default=720)
+    ap.add_argument("--width", type=int, default=1280, help="Viewport width in px (default 1280).")
+    ap.add_argument("--height", type=int, default=720, help="Viewport height in px (default 720).")
     ap.add_argument("--mbps", type=float, default=0.0, help="Throttle the network to this many Mbit/s (default off).")
     ap.add_argument("--repeat", type=int, default=1, help="Runs per flow; the report holds the median (default 1).")
     ap.add_argument("--baseline", default="", help="Saved report (e.g. tools/web-perf-baseline.json) to diff against.")
@@ -194,4 +194,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

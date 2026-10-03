@@ -18,7 +18,7 @@ static func begin_run(host: Node) -> void:
 	host.run_seed = randi()
 	if host.run_seed == 0:
 		host.run_seed = 1
-	var fixed: int = CliArgs.seed_arg(0)
+	var fixed: int = CliArgs.int_arg("--wdb-seed", 0)
 	if fixed > 0:
 		host.run_seed = fixed
 		seed(fixed)

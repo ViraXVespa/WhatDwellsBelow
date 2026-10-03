@@ -73,11 +73,6 @@ func _process(_delta: float) -> void:
 		_emit_joy(JOY_BUTTON_Y, y)
 		_was_y = y
 
-static func browser_pad_connected() -> bool:
-	if not OS.has_feature("web"):
-		return not Input.get_connected_joypads().is_empty()
-	return js_pad_any()
-
 static func js_pad_any() -> bool:
 	var raw := str(JavaScriptBridge.eval("""
 		(function () {
@@ -89,9 +84,6 @@ static func js_pad_any() -> bool:
 		})();
 	""", true))
 	return raw == "1"
-
-func connected() -> bool:
-	return device_ok or browser_pad_connected()
 
 func _emit_joy(button: JoyButton, pressed: bool) -> void:
 	var ev := InputEventJoypadButton.new()

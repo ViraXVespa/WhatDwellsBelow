@@ -7,7 +7,6 @@ const LayoutS := preload("res://scripts/world/camp/layout.gd")
 const Util := preload("res://scripts/world/camp_build/build_util.gd")
 const Parts := preload("res://scripts/world/camp_build/build_parts.gd")
 
-
 static func generated(host: Node3D) -> Node3D:
 	var n: Node = host.get_node_or_null("Generated")
 	if n is Node3D:
@@ -56,18 +55,12 @@ static func outer_grass(host: Node3D) -> void:
 	MeshS.grass_pad(host, Vector3((x0 + ix0) * 0.5, y, (iz0 + iz1) * 0.5), Vector2(ix0 - x0, iz1 - iz0), tex, fb)
 	MeshS.grass_pad(host, Vector3((ix1 + x1) * 0.5, y, (iz0 + iz1) * 0.5), Vector2(x1 - ix1, iz1 - iz0), tex, fb)
 
-static func tile_layer(host: Node3D, tex_path: String, points: Array, fallback: Color) -> void:
-	MeshS.tile_layer(host, tex_path, points, fallback)
-
 static func buildings(host: Node3D) -> void:
 	Parts.guild(host)
 	var lay: Node3D = LayoutS.of(host)
 	var stall_at: Vector3 = lay.stall_pos()
 	var stall_box: Vector3 = lay.stall_box
 	Parts.solid(host, stall_at, stall_box, Color(0.55, 0.35, 0.2), "res://assets/sprites/buildings/stall.png", true)
-
-static func guild_roofs(host: Node3D) -> void:
-	MeshS.guild_roofs(host)
 
 static func quiet_shadows(host: Node3D) -> void:
 	var stack: Array[Node] = [host]
@@ -134,28 +127,6 @@ static func dump_meshes(root: Node) -> void:
 			other += 1
 			print("CAMP_MESH other name=", n.name, " mesh=", mi.mesh.get_class() if mi.mesh else "null")
 	print("CAMP_MESH totals boxes=", boxes, " sprites=", sprites, " other=", other)
-
-static func sweep(root: Node) -> void:
-	if root == null:
-		return
-	var nodes: Array = root.find_children("*", "MeshInstance3D", true, false)
-	var i: int = 0
-	while i < nodes.size():
-		var node: MeshInstance3D = nodes[i]
-		i += 1
-		if node == null or not is_instance_valid(node):
-			continue
-		var at: Vector3 = node.global_position
-		var outside: bool = at.x < 1.0 or at.x > 33.0 or at.z < -2.0 or at.z > 26.0
-		var near_origin: bool = at.length() < 1.5
-		if not outside and not near_origin:
-			continue
-		var path: String = str(node.get_path())
-		var low: String = path.to_lower()
-		if low.contains("fence") or low.contains("ground") or low.contains("grass") or low.contains("yard"):
-			continue
-		printerr("sweep drop %s at=%s" % [path, at])
-		node.queue_free()
 
 static func stamp_actor_blobs(host: Node3D) -> void:
 	if host == null:

@@ -1,7 +1,5 @@
 extends Object
 
-const GameVer := preload("res://scripts/data/game_ver.gd")
-
 static func esc_bb(t: String) -> String:
 	return t.replace("[", "[lb]")
 

@@ -1,8 +1,5 @@
 extends Object
 
-const Gen := preload("res://scripts/dungeon/gen.gd")
-const Roster := preload("res://scripts/combat/roster.gd")
-
 static func p3(host: Node) -> void:
 	var _fac = load("res://scripts/debug/smoke_early.gd")
 	var data: Dictionary = host.get("data")

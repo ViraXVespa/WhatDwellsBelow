@@ -21,7 +21,7 @@ SCRIPT = re.compile(r'^script\s*=\s*ExtResource\("([^"]+)"\)')
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List .tscn nodes + scripts (headers only).", json_out=True)
     ap.add_argument("--path", "-Path", nargs="+", default=["scenes"], help="Scene file(s) or dir(s).")
-    ap.add_argument("--max-nodes", "-MaxNodes", type=int, default=200)
+    ap.add_argument("--max-nodes", "-MaxNodes", type=int, default=200, help="Max nodes listed per scene (default 200).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     paths = agent_log.split_list(args.path)
@@ -33,6 +33,8 @@ def main(argv: list[str] | None = None) -> int:
             scenes += [s for s in p.rglob("*.tscn") if "archives" not in s.parts and ".archive_worktrees" not in s.parts]
         elif p.suffix.lower() == ".tscn" and p.is_file():
             scenes.append(p)
+    if not scenes:
+        agent_log.fail(f"no .tscn found under {', '.join(paths)} (give scene files or folders, default: scenes)")
     body = [f"root=. path={','.join(paths)} scenes={len(scenes)} maxNodes={args.max_nodes}",
             "measure=parse .tscn headers; do not open scene bodies in chat", ""]
     nodes = scripts = 0
@@ -67,4 +69,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

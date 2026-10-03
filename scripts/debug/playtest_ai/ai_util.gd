@@ -2,9 +2,6 @@ extends Object
 
 const Move := preload("res://scripts/debug/playtest_ai/util_move.gd")
 
-const CRYSTAL_IN := 2.4
-const CRYSTAL_OUT := 5.5
-
 static func weapon_range() -> float:
 	var w: String = str(App.weapon)
 	if w == "longbow":
@@ -117,9 +114,6 @@ static func tool_ok(n: Node) -> bool:
 	if k == "mine":
 		return tool == "pickaxe"
 	return true
-
-static func is_clerk_kind(k: String) -> bool:
-	return k == "extract_gate" or k.find("clerk") >= 0 or k.find("patty") >= 0 or k.find("misc") >= 0
 
 static func is_loot_kind(k: String) -> bool:
 	return k == "mine" or k == "wood" or k.find("chest") >= 0

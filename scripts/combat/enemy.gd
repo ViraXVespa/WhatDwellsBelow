@@ -82,9 +82,6 @@ func take_hit(raw: float, from_dir: Vector2, crit: bool) -> void:
 func apply_stagger(sec: float) -> void:
 	Hit.apply_stagger(self, sec)
 
-func _float(amount: int, crit: bool) -> void:
-	Hit.float_num(self, amount, crit)
-
 func _die() -> void:
 	Hit.die(self)
 

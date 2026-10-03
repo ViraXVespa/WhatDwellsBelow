@@ -9,10 +9,6 @@ static func preview(host: Node, i: int) -> void:
 	host.mode = "info"
 	Split.preview(host, i)
 
-static func list_pressed(host: Node, i: int) -> void:
-	host.mode = "info"
-	Split.list_pressed(host, i)
-
 static func enter_detail(host: Node) -> void:
 	Split.enter_detail(host)
 

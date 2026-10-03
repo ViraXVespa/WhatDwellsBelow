@@ -283,8 +283,11 @@ def timing_job(args, job: str, title: str, flag: str, running: str, extra: list[
     body = [f"{title} root=.", f"status={r['status']} wall_ms={r['ms']} errBytes={r['err_bytes']} outBytes={r['out_bytes']}",
             "", "--- LOAD lines ---"] + (loads or ["(no LOAD: lines - check err.log if TIMEOUT)"])
     body += ["", "--- errors ---"] + (errs[:40] or ["(none)"])
-    return agent_log.finish(job, root, "\n".join(body), "FAIL" if fail else "PASS", args=args,
-                            fail_signals=fail, total_ms=total or -1)
+    marks = sorted(((int(m.group(2)), m.group(1)) for h in loads if (m := re.search(r"mark=(\w+) t=\d+ dt=(\d+)", h))), reverse=True)
+    echo = [body[0], body[1], "slowest: " + " ".join(f"{n}={dt}ms" for dt, n in marks[:5])]
+    echo += ["errors:"] + errs[:5] if errs else []
+    return agent_log.finish(job, root, "\n".join(body), "FAIL" if fail else "PASS", args=args, legacy=False,
+                            echo="\n".join(echo), fail_signals=fail, total_ms=total or -1)
 
 
 def timing_parser(desc: str) -> "argparse.ArgumentParser":
@@ -297,7 +300,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Probe the per-path Godot lock: lock, print, unlock. --display reports the GUI display choice.")
     ap.add_argument("--display", action="store_true", help="print which display GUI runs (shots, bakes) will use, then exit")
     ap.add_argument("--path", "-Path", default=None, help="Godot --path to lock (default: repo root).")
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=120)
+    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=120, help="Seconds to wait for the lock (default 120).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if args.display:
@@ -315,4 +318,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

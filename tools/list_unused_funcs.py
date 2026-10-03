@@ -31,34 +31,30 @@ VIRTUAL = frozenset({
 })
 
 
+IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+KEY_AFTER = re.compile(r"[ \t]*:(?!=)")  # {"key": v}
+KEY_BEFORE = re.compile(r"(?:\.get|\.has|\.erase)\([ \t]*$|(?<=[\w)\]])\[[ \t]*$")  # d.get("key"), d["key"]
+DYN = re.compile(r"call|connect|Callable|has_method|emit_signal|method=|bind|callback")
+
+
 def scan(line: str):
+    """Yield (identifier, in_quote). A string literal only yields when the whole literal is one
+    identifier (a method/signal name); prose such as "sweep drop %s" is not a reference."""
     i = 0
     n = len(line)
-    quote = ""
+    triple = '"""' in line or "'''" in line  # multi-line string edge (GLSL): count every word, never lose a hit
     while i < n:
         ch = line[i]
-        if quote:
-            if ch == "\\" and i + 1 < n:
-                i += 2
-                continue
-            if ch == quote:
-                quote = ""
-                i += 1
-                continue
-            if ch.isalpha() or ch == "_":
-                j = i + 1
-                while j < n and (line[j].isalnum() or line[j] == "_"):
-                    j += 1
-                yield line[i:j], True
-                i = j
-                continue
-            i += 1
-            continue
-        if ch == "#":
+        if ch == "#" and not triple:
             return
-        if ch in "\"'":
-            quote = ch
-            i += 1
+        if ch in "\"'" and not triple:
+            j = i + 1
+            while j < n and line[j] != ch:
+                j += 2 if line[j] == "\\" else 1
+            lit = line[i + 1:j]
+            if IDENT.fullmatch(lit) and not (KEY_AFTER.match(line, j + 1) or KEY_BEFORE.search(line, 0, i)):
+                yield lit, True
+            i = j + 1
             continue
         if ch.isalpha() or ch == "_":
             j = i + 1
@@ -71,34 +67,53 @@ def scan(line: str):
 
 
 def files_of(root: Path) -> list[Path]:
+    """GDScript plus every non-script file that can name a func (scenes, flow json, web shells)."""
     found = sorted((root / "scripts").rglob("*.gd"))
-    scenes = root / "scenes"
-    if scenes.is_dir():
-        found.extend(sorted(scenes.rglob("*.tscn")))
+    for sub, pats in (("scenes", ("*.tscn", "*.tres")), ("tools", ("*.json", "*.js", "*.html")), ("site", ("*.js", "*.html"))):
+        base = root / sub
+        if base.is_dir():
+            for pat in pats:
+                found.extend(sorted(base.rglob(pat)))
     project = root / "project.godot"
     if project.is_file():
         found.append(project)
     return found
 
 
+DECL_RE = re.compile(r"^(const|signal)[ \t]+([A-Za-z_][A-Za-z0-9_]*)")
+# Tunable registry: read by tools/tunables.py and docs, so an unreferenced const is a knob, not dead code.
+KEEP_DECLS = frozenset({"scripts/data/tunables.gd"})
+
+
 def collect(root: Path):
+    """Returns (unused funcs, maybe funcs, defs, dynamic funcs, unused const/signal decls).
+    maybe = named only by a whole-string literal outside a call context; dynamic = such a literal
+    on a call/connect/Callable line (live)."""
     hits: Counter[str] = Counter()
     quoted: Counter[str] = Counter()
+    dyn: Counter[str] = Counter()
     defs: list[tuple[str, int, str]] = []
+    decls: list[tuple[str, int, str, int]] = []
     sizes: dict[str, int] = {}
     for path in files_of(root):
         rel = path.relative_to(root).as_posix()
-        if rel.endswith(".gd"):
+        is_gd = rel.endswith(".gd")
+        if is_gd:
             sizes[rel] = path.stat().st_size
         text = path.read_text(encoding="utf-8", errors="replace")
         for lineno, raw in enumerate(text.splitlines(), 1):
             skip = ""
-            if rel.endswith(".gd"):
-                matched = FUNC_RE.match(raw.split("#", 1)[0])
+            if is_gd:
+                head = raw.split("#", 1)[0]
+                matched = FUNC_RE.match(head)
                 if matched:
                     skip = matched.group(1)
                     if skip not in VIRTUAL:
                         defs.append((rel, lineno, skip))
+                matched = DECL_RE.match(head)
+                if matched and rel not in KEEP_DECLS:
+                    skip = matched.group(2)
+                    decls.append((rel, lineno, skip, sizes.get(rel, 0)))
             skipped = False
             for name, in_quote in scan(raw):
                 if skip and not skipped and not in_quote and name == skip:
@@ -107,15 +122,162 @@ def collect(root: Path):
                 hits[name] += 1
                 if in_quote:
                     quoted[name] += 1
+                    if DYN.search(raw) or not is_gd:
+                        dyn[name] += 1
     unused = []
     maybe = []
+    dynamic = []
     for rel, lineno, name in defs:
         used = hits[name]
+        row = (rel, lineno, name, sizes.get(rel, 0))
         if used == 0:
-            unused.append((rel, lineno, name, sizes.get(rel, 0)))
+            unused.append(row)
         elif quoted[name] == used:
-            maybe.append((rel, lineno, name, sizes.get(rel, 0)))
-    return unused, maybe, defs
+            (dynamic if dyn[name] else maybe).append(row)
+    dead_decls = [row for row in decls if hits[row[2]] == 0]
+    return unused, maybe, defs, dynamic, dead_decls
+
+
+ALIAS_RE = re.compile(r"^(?:static[ \t]+)?const[ \t]+([A-Za-z_]\w*)[ \t]*(?::[^=]*)?:?=[ \t]*(?:pre)?load\([ \t]*[\"']res://([^\"']+\.gd)[\"']")
+CLASS_RE = re.compile(r"^class_name[ \t]+([A-Za-z_]\w*)")
+EXTENDS_RE = re.compile(r"^extends[ \t]+(?:\"res://([^\"]+\.gd)\"|([A-Za-z_]\w*))")
+USE_RE = re.compile(r"(?:([A-Za-z_]\w*)[ \t]*\.[ \t]*|(\.)[ \t]*)?\b([A-Za-z_]\w*)\b")
+
+
+def code_of(raw: str) -> str:
+    """Line with comments and string literals blanked (whole-identifier literals are kept as dynamic refs elsewhere)."""
+    if '"""' in raw or "'''" in raw:
+        return raw
+    out = []
+    i = 0
+    n = len(raw)
+    while i < n:
+        ch = raw[i]
+        if ch == "#":
+            break
+        if ch in "\"'":
+            j = i + 1
+            while j < n and raw[j] != ch:
+                j += 2 if raw[j] == "\\" else 1
+            out.append(" " * (j + 1 - i))
+            i = j + 1
+            continue
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
+def collision_dead(root: Path, plain_unused: list) -> list[tuple[str, int, str, int]]:
+    """Funcs whose name is defined in 2+ files, so the bare-name count cannot tell them apart.
+    A def is dead when nothing resolves to it: no `Alias.name` whose alias preloads that file (or
+    class_name), no bare call in its own file, no receiver we cannot resolve (`host.name`, `x.name`,
+    `).name`), no whole-string reference. Unresolved receivers count for every same-named def."""
+    texts: dict[str, list[str]] = {}
+    sizes: dict[str, int] = {}
+    parent: dict[str, str] = {}
+    other_words: set[str] = set()
+    alias: dict[str, dict[str, str]] = defaultdict(dict)
+    klass: dict[str, str] = {}
+    defs_by: dict[str, list[tuple[str, int]]] = defaultdict(list)
+    for path in files_of(root):
+        rel = path.relative_to(root).as_posix()
+        if not rel.endswith(".gd"):
+            other_words.update(IDENT.findall(path.read_text(encoding="utf-8", errors="replace")))
+            continue
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        texts[rel] = lines
+        sizes[rel] = path.stat().st_size
+        for lineno, raw in enumerate(lines, 1):
+            head = raw.split("#", 1)[0]
+            matched = EXTENDS_RE.match(head)
+            if matched:
+                parent[rel] = matched.group(1) or matched.group(2)
+            matched = FUNC_RE.match(head)
+            if matched and matched.group(1) not in VIRTUAL:
+                defs_by[matched.group(1)].append((rel, lineno))
+            matched = ALIAS_RE.match(head)
+            if matched:
+                alias[rel][matched.group(1)] = matched.group(2)
+            matched = CLASS_RE.match(head)
+            if matched:
+                klass[matched.group(1)] = rel
+    multi = {n: d for n, d in defs_by.items() if len({r for r, _ in d}) > 1}
+    live: set[tuple[str, str]] = set()
+    everyone: set[str] = {n for n in multi if n in other_words}
+
+    def mark(target: str, name: str) -> None:
+        while target and (target, name) not in live:
+            live.add((target, name))
+            up = parent.get(target, "")
+            target = up if up.endswith(".gd") else klass.get(up, "")
+
+    own = {n: {r for r, _ in d} for n, d in multi.items()}
+    for rel, lines in texts.items():
+        for raw in lines:
+            for name, in_quote in scan(raw):
+                if in_quote and name in multi:
+                    everyone.add(name)
+            if not any(n in raw for n in multi):
+                continue
+            code = code_of(raw)
+            is_def = FUNC_RE.match(code) is not None
+            for m in USE_RE.finditer(code):
+                name = m.group(3)
+                if name not in multi:
+                    continue
+                if is_def and FUNC_RE.match(code).group(1) == name and m.start(3) == code.index(name):
+                    continue
+                recv, dot = m.group(1), m.group(2)
+                if recv in ("self", "super"):
+                    recv = None
+                if recv:
+                    target = alias[rel].get(recv) or klass.get(recv)
+                    if target:
+                        mark(target, name)
+                    else:
+                        everyone.add(name)
+                elif dot:
+                    everyone.add(name)
+                elif rel in own[name]:
+                    mark(rel, name)
+                else:
+                    everyone.add(name)
+    seen = {(r, ln) for r, ln, _n, _s in plain_unused}
+    dead = []
+    for name, found in multi.items():
+        if name in everyone:
+            continue
+        for rel, lineno in found:
+            if (rel, name) not in live and (rel, lineno) not in seen:
+                dead.append((rel, lineno, name, sizes.get(rel, 0)))
+    return sorted(dead)
+
+
+def dead_aliases(root: Path, known: list) -> list[tuple[str, int, str, int]]:
+    """`const X := preload(...)` aliases never used in their own file and never read as `.X` elsewhere
+    (the bare-name count cannot see these when other files reuse the alias name)."""
+    texts: dict[str, list[str]] = {}
+    for path in files_of(root):
+        if path.suffix == ".gd":
+            texts[path.relative_to(root).as_posix()] = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    dotted: set[str] = set()
+    for lines in texts.values():
+        for raw in lines:
+            dotted.update(re.findall(r"\.[ \t]*([A-Za-z_]\w*)", code_of(raw)))
+    seen = {(r, ln) for r, ln, _n, _s in known}
+    dead = []
+    for rel, lines in texts.items():
+        for lineno, raw in enumerate(lines, 1):
+            matched = ALIAS_RE.match(raw.split("#", 1)[0])
+            if not matched or (rel, lineno) in seen or rel in KEEP_DECLS:
+                continue
+            name = matched.group(1)
+            if name in dotted:
+                continue
+            uses = sum(1 for i, ln in enumerate(lines, 1) if i != lineno for n, _q in scan(ln) if n == name)
+            if uses == 0:
+                dead.append((rel, lineno, name, 0))
+    return dead
 
 
 DECL_END = re.compile(
@@ -175,8 +337,6 @@ def collapse_blanks(lines: list[str]) -> str:
 
 
 
-def reach_tree(root: Path) -> list[tuple[str, int, str]]:
-    return []
 def apply_unused(root: Path, unused: list[tuple[str, int, str, int]]) -> int:
     by_file: dict[str, list[int]] = defaultdict(list)
     for rel, lineno, _name, _nbytes in unused:
@@ -185,21 +345,25 @@ def apply_unused(root: Path, unused: list[tuple[str, int, str, int]]) -> int:
     for rel, linenos in by_file.items():
         path = root / rel
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        funcs_cut = False
         for lineno in sorted(set(linenos), reverse=True):
             idx = lineno - 1
             if idx < 0 or idx >= len(lines):
                 print("skip\t%s:%s\tmissing" % (rel, lineno))
                 continue
-            if FUNC_RE.match(lines[idx].split("#", 1)[0]) is None:
-                print("skip\t%s:%s\tnot a func line" % (rel, lineno))
+            head = lines[idx].split("#", 1)[0]
+            is_func = FUNC_RE.match(head) is not None
+            if not is_func and DECL_RE.match(head) is None:
+                print("skip\t%s:%s\tnot a func/const/signal line" % (rel, lineno))
                 continue
+            funcs_cut = funcs_cut or is_func
             start = span_start(lines, idx)
             end = span_end(lines, idx)
             del lines[start:end]
             deleted += 1
         text = collapse_blanks(lines)
         path.write_text(text, encoding="utf-8", newline=chr(10))
-        if not FUNC_RE.search(text):
+        if funcs_cut and not FUNC_RE.search(text):
             res = "res://" + rel
             held = False
             for other in files_of(root):
@@ -211,51 +375,9 @@ def apply_unused(root: Path, unused: list[tuple[str, int, str, int]]) -> int:
                     break
             if not held:
                 path.unlink()
+                path.with_name(path.name + ".uid").unlink(missing_ok=True)
                 print("deleted_file\t%s" % rel)
     return deleted
-
-
-
-def reach_dead(root: Path) -> list[tuple[str, int, str]]:
-    files = files_of(root)
-    defs = []
-    code_hits = defaultdict(set)
-    quote_hits = defaultdict(set)
-    call_quotes = defaultdict(set)
-    for path in files:
-        rel = path.relative_to(root).as_posix()
-        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-        for lineno, raw in enumerate(lines, 1):
-            head = raw.split("#", 1)[0]
-            matched = FUNC_RE.match(head) if rel.endswith(".gd") else None
-            if matched and matched.group(1) not in VIRTUAL:
-                defs.append((rel, lineno, matched.group(1)))
-            connectish = "connect" in head or ".call" in head or "Callable" in head
-            skipped = False
-            for name, in_quote in scan(raw):
-                if matched and not skipped and not in_quote and name == matched.group(1):
-                    skipped = True
-                    continue
-                if in_quote:
-                    quote_hits[name].add(rel)
-                    if connectish or not rel.endswith(".gd"):
-                        call_quotes[name].add(rel)
-                    continue
-                code_hits[name].add(rel)
-    dead = []
-    for rel, lineno, name in defs:
-        if not name.startswith("_"):
-            continue
-        callers = set(code_hits.get(name, ()))
-        callers.discard(rel)
-        if callers:
-            continue
-        if rel in code_hits.get(name, ()):
-            continue
-        if call_quotes.get(name) or quote_hits.get(name):
-            continue
-        dead.append((rel, lineno, name))
-    return dead
 
 
 
@@ -429,56 +551,77 @@ def apply_facade_auto(root: Path, do_delete: bool = True) -> int:
     return deleted
 
 
-def write_summary(root: Path, unused, maybe, defs, elapsed: float) -> Path:
+def write_summary(root: Path, found: dict, nfuncs: int, elapsed: float) -> Path:
     log_dir = root / "_logs" / "unused-funcs"
     log_dir.mkdir(parents=True, exist_ok=True)
     summary = log_dir / "summary.txt"
     rows = []
-    for kind, items in (("unused", unused), ("maybe", maybe)):
+    for kind, items in found.items():
         for rel, lineno, name, nbytes in items:
             rows.append("%s\t%s:%s\t%s\t%s" % (kind, rel, lineno, name, nbytes))
-    rows.append("funcs_scanned=%s" % len(defs))
-    rows.append("unused_count=%s" % len(unused))
-    rows.append("maybe_count=%s" % len(maybe))
+    rows.append("funcs_scanned=%s" % nfuncs)
+    for kind, items in found.items():
+        rows.append("%s_count=%s" % (kind, len(items)))
     rows.append("seconds=%.2f" % elapsed)
     summary.write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
     return summary
 
 
 def main() -> int:
-    parser = agent_log.std_parser("Unused GDScript funcs (--apply deletes them; --dry-run previews).", writes=True)
-    parser.add_argument("--limit", type=int, default=80)
-    parser.add_argument("--apply", action="store_true")
+    parser = agent_log.std_parser(
+        "Unused GDScript funcs, consts and signals (--apply deletes the unused ones; --dry-run previews). "
+        "unused = zero references anywhere; shadowed = name defined in 2+ files and no use resolves to this def (alias/class_name/extends aware, unresolved receivers keep every same-named def); maybe = only a bare-name string literal outside a call "
+        "(check by hand); dynamic = named in call_deferred/call/connect/Callable/scene (live, listed in the summary). "
+        "scripts/data/tunables.gd consts are knobs and never listed.", writes=True)
+    parser.add_argument("--limit", type=int, default=80, help="Max rows listed (default 80).")
+    parser.add_argument("--apply", action="store_true", help="DELETE the listed funcs (only when an opt item says so).")
     ns = parser.parse_args()
     started = time.perf_counter()
     root = agent_log.resolve_root(ns)
     if ns.apply and ns.dry_run:
         ns.apply = False
         print("dry-run: --apply skipped, listing only")
-    unused, maybe, defs = collect(root)
+    unused, maybe, defs, dynamic, decls = collect(root)
+    shadowed = collision_dead(root, unused)
+    decls = decls + dead_aliases(root, decls)
     deleted = 0
     if ns.apply:
-        deleted = apply_unused(root, unused)
+        for _pass in range(8):
+            cut = apply_unused(root, unused + decls + shadowed)
+            deleted += cut
+            unused, maybe, defs, dynamic, decls = collect(root)
+            shadowed = collision_dead(root, unused)
+            decls = decls + dead_aliases(root, decls)
+            if cut == 0 or not (unused or decls or shadowed):
+                break
         deleted += apply_facade_auto(root, True)
+        unused, maybe, defs, dynamic, decls = collect(root)
+        shadowed = collision_dead(root, unused)
+        decls = decls + dead_aliases(root, decls)
     else:
         apply_facade_auto(root, False)
-        unused, maybe, defs = collect(root)
     elapsed = time.perf_counter() - started
-    summary = write_summary(root, unused, maybe, defs, elapsed)
+    found = {"unused": unused, "shadowed": shadowed, "decl": decls, "maybe": maybe, "dynamic": dynamic}
+    summary = write_summary(root, found, len(defs), elapsed)
     shown = 0
-    for rel, lineno, name, nbytes in unused:
-        if shown >= ns.limit:
-            break
-        print("unused\t%s:%s\t%s\t%s" % (rel, lineno, name, nbytes))
-        shown += 1
+    for kind in ("unused", "shadowed", "decl", "maybe"):
+        for rel, lineno, name, nbytes in found[kind]:
+            if shown >= ns.limit:
+                break
+            print("%s\t%s:%s\t%s\t%s" % (kind, rel, lineno, name, nbytes))
+            shown += 1
     print("funcs_scanned=%s" % len(defs))
     print("unused_count=%s" % len(unused))
+    print("shadowed_count=%s" % len(shadowed))
+    print("decl_count=%s" % len(decls))
     print("maybe_count=%s" % len(maybe))
+    print("dynamic_count=%s" % len(dynamic))
     print("deleted=%s" % deleted)
     print("seconds=%.2f" % elapsed)
     print("full=%s" % agent_log.rel(root, summary))
     print("report=PASS")
-    return agent_log.emit_result("FAIL" if ns.apply and unused else "PASS", summary=agent_log.rel(root, summary), scanned=len(defs), unused=len(unused), maybe=len(maybe), deleted=deleted)
+    left = len(unused) + len(decls) + len(shadowed)
+    return agent_log.emit_result("FAIL" if ns.apply and left else "PASS", summary=agent_log.rel(root, summary), scanned=len(defs), unused=len(unused), shadowed=len(shadowed), decl=len(decls), maybe=len(maybe), dynamic=len(dynamic), deleted=deleted)
 
 
 if __name__ == "__main__":

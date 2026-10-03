@@ -21,7 +21,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List git-changed paths in scope with sizes.", json_out=True)
     ap.add_argument("--scope", "-Scope", nargs="+", default=DEFAULT_SCOPE, help="Path prefixes, comma or space separated.")
     ap.add_argument("--head", "-Head", action="store_true", help="Append HEAD sha and recent log.")
-    ap.add_argument("--log-count", "-LogCount", type=int, default=10)
+    ap.add_argument("--log-count", "-LogCount", type=int, default=10, help="Log lines shown with --head (default 10).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     scope = [s.replace("\\", "/").strip("/") for s in agent_log.split_list(args.scope)]
@@ -54,4 +54,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))
