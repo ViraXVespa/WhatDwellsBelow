@@ -1,0 +1,67 @@
+{
+  "name": "dungeon-f1-boss",
+  "about": "Dungeon floor 1, seed 42: the boss room with the Floor Guardian and its HUD boss bar, then the stairs beside the locked boss door. Enemies are frozen where they spawn, the map stays closed, and each stop teleports the player then waits for the lights.",
+  "scene": "dungeon",
+  "seed": 42,
+  "floor": 1,
+  "zoom": 1.5,
+  "settle_ms": 0,
+  "fixed_fps": 60,
+  "covers": [],
+  "smoke": true,
+  "steps": [
+    {
+      "op": "freeze",
+      "group": "enemies"
+    },
+    {
+      "op": "assert",
+      "target": "App.floor_n",
+      "equals": 1
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            382.5,
+            0,
+            315.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "boss-bar"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            384.5,
+            0,
+            319.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "stairs-door"
+    }
+  ]
+}

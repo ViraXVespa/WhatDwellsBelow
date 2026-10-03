@@ -1,0 +1,89 @@
+{
+  "name": "dungeon-f2-spawns",
+  "about": "Dungeon floor 2, seed 42: the base room guards (beetle, skeleton, wolf), a shaman+goblin+wolf pack, and the ghost shop in its room. Enemies are frozen where they spawn, the map stays closed, and each stop teleports the player then waits for the lights.",
+  "scene": "dungeon",
+  "seed": 42,
+  "floor": 2,
+  "zoom": 1.5,
+  "settle_ms": 0,
+  "fixed_fps": 60,
+  "covers": [],
+  "smoke": true,
+  "steps": [
+    {
+      "op": "freeze",
+      "group": "enemies"
+    },
+    {
+      "op": "assert",
+      "target": "App.floor_n",
+      "equals": 2
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            60.5,
+            0,
+            18.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "base-guards"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            21.5,
+            0,
+            62.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "shaman-pack"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            102.5,
+            0,
+            28.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "ghost-shop"
+    }
+  ]
+}

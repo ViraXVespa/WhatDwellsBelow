@@ -35,7 +35,7 @@ WARN_BYTES = 2048
 RENDER_DRIVER = "opengl3"
 RENDER_METHOD = "gl_compatibility"
 # Flow-file header keys that fill an unset CLI default (scene, hud, zoom, ...).
-FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "width", "height")
+FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "width", "height", "fixed_fps")
 
 
 def _load_recipe(root: Path, name: str) -> dict:
@@ -100,6 +100,8 @@ def _extra_flags(args: argparse.Namespace) -> list[str]:
 def _godot_args(root: Path, png: Path, args: argparse.Namespace, scale_pct: int, poses: str) -> list[str]:
     head = (["--headless", "--display-driver", "headless", "--audio-driver", "Dummy"] if args.no_pixels else
             ["--audio-driver", "Dummy", "--rendering-method", RENDER_METHOD, "--rendering-driver", RENDER_DRIVER])
+    if args.fixed_fps > 0:
+        head = head + ["--fixed-fps", str(args.fixed_fps)]  # fixed frame delta: repeatable animation and AI
     godot_args = head + [
         "--path", str(root),
         "--",
@@ -185,6 +187,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--frames-dir", default="", help="with --steps: where numbered frames and flow.json go (default: the PNG dir)")
     p.add_argument("--no-pixels", action="store_true",
                    help="with --steps: headless run, steps and asserts only, no PNGs (works without a display)")
+    p.add_argument("--fixed-fps", type=int, default=0, help="engine fixed frame delta (e.g. 60) so animation and AI repeat; 0 = real time. Flow key: fixed_fps.")
     p.add_argument("--taskbar", type=int, default=0, help=argparse.SUPPRESS)
     return p
 

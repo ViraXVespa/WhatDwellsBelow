@@ -79,6 +79,7 @@ static func route_boot() -> bool:
 			App.begin_run()
 			App.floor_n = ShotTool.floor_n()
 			App.run_seed = ShotTool.run_seed()
+			seed(App.run_seed)
 		return true
 	if phase(1) or phase(2):
 		App.go_foundation()
