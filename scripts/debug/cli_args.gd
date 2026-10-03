@@ -11,6 +11,11 @@ static func args() -> PackedStringArray:
 static func has(flag: String) -> bool:
 	return flag in args()
 
+## Seed flag: 0 is not a valid seed, so it reads as 1.
+static func seed_arg(key: String, fallback: int) -> int:
+	var n: int = int_arg(key, fallback)
+	return 1 if n == 0 else n
+
 static func int_arg(key: String, fallback: int) -> int:
 	var prefix: String = key + "="
 	for a: String in args():

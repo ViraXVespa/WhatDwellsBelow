@@ -102,10 +102,7 @@ static func build_slot_btn(_ui: CanvasLayer, slot: String) -> Button:
 	b.focus_mode = Control.FOCUS_ALL
 	b.disabled = false
 	b.text = ""
-	b.icon = Icons.tex_for_slot(slot, it)
-	b.expand_icon = true
-	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	b.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+	Icons.fit_btn(b, Icons.tex_for_slot(slot, it))
 	_paint_item_btn(b, it)
 	if Text.has_unseen(slot):
 		b.text = "▸"
@@ -129,10 +126,7 @@ static func build_bag_cell(_ui: CanvasLayer, it: Dictionary) -> Button:
 	b.focus_mode = Control.FOCUS_ALL
 	b.disabled = false
 	if Icons.has_item_icon(it):
-		b.icon = Icons.tex_for_item(it)
-		b.expand_icon = true
-		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		b.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+		Icons.fit_btn(b, Icons.tex_for_item(it))
 	else:
 		b.text = Text.item_cell(it)
 		b.add_theme_font_size_override("font_size", 14)
