@@ -68,7 +68,7 @@ Not a boot step. Not a Job flow. When a cluster needs a headless prove,
 run `python3 tools/bot_smokes.py --phases 1,2,6` from the repo root.
 Setup downloads the official 4.7.2 Linux tools binary only if the pin is missing.
 Binary: `GODOT_BIN`, else the pin `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
-New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets`, and commit the `.uid` files only. That is the import, not an editor session.
+New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets docs icon.svg.import` (the import also rewrites those `.import` files; a fresh worktree needs this import once before any smoke, else P1 fails with no marker), and commit the `.uid` files only. That is the import, not an editor session.
 Do not run editor playtest. Do not schedule a routine that launches Godot.
 Shots and light bakes are not headless: `run_shots.py`, `run_shot_flow.py` and `run_bake_camp.py` pick the box display themselves (`$DISPLAY`, a live X socket, else `xvfb-run`; `python3 tools/godot_lib.py --display`). Menu/NPC proof: `bot_smokes.py --door D --flows` (headless asserts) and `design/shot-flows.md`. Required Bot gate: `check_shot_gaps.py --changed` (run by `bot_smokes.py` unless `--no-gaps`, and by `run_build_gate.py --batch`) FAILS on a new UI state with no shot flow; add a small flow in `tools/shot-flows/` in the same PR. Published shots go to `_out/shots/<flow>/`; never write under `assets/` (Grok Build places those).
 
@@ -79,7 +79,7 @@ Tools: `design/tools.md` is the catalog (single source: what each tool does, `--
 
 ## Hard stops
 
-No new player-facing systems, tunables, combat feel, editor playtest,
+No new player-facing systems, enemy types (ask the User), tunables, combat feel, editor playtest,
 art/I2V, locale sweeps, or pause redesign.
 Smokes are headless (see Smokes); shots and bakes use the box display. Do not install a Windows or Steam Godot. Do not open the editor.
 Do not enable Execution on Local Computer.
@@ -94,7 +94,7 @@ Do not declare the whole sweep done and then start a second flow.
 
 ## After-cluster report
 
-PR URL, squash-merge reminder, path + bytes before/after, changelog path if
-shipping, what is still over 10KB, next printed item.
+PR URL, squash-merge reminder, path + bytes before/after, changelog path (every
+PR ships one, docs/tools-only included: `design/versioning-log.md`), what is still over 10KB, next printed item.
 
 No loops: batch same-kind fixes, run gates once per batch, at most 2 reruns, then report (`design/tools.md` rule 10). Rough edges: the rule is `design/tools.md` rule 9; apply it at the end of each file in a size pass. Anything not fixable (outside the allowlist) goes in the PR body for the User.

@@ -27,11 +27,11 @@ Plain text, no code fence when emitted. Body shape:
 | Web Phase 7 | This file’s **body shape** only. Writes **one** new `design/changelog/{label}.md`. `{label}` is baked `version.json` `label` with patch + 1 (ignore stamp commits). Do not read older changelog files. Do not write that number back into this file. Do not emit `changelog.json`. First heading `## {label}`, never `# {label}`. |
 | Grok Build mid-week slice / catch-up | Nothing under `design/changelog/`. Git + User-named work. |
 | Grok Build named pin / revert, or User asks what shipped | This file’s body shape. Name next work only if the User asked. Still not every `0.N.*` file. |
-| Grok Bot | Reads baked `version.json` only to name `{label}` (patch + 1). Writes **one** new `design/changelog/{label}.md` per shipping PR. First heading `## {label}`, never `# {label}`. Does not hand-edit `changelog.json`. Optional sweep notes go in `_logs/` only. |
+| Grok Bot | Reads baked `version.json` only to name `{label}` (patch + 1). Writes **one** new `design/changelog/{label}.md` for every PR (docs/tools-only included). First heading `## {label}`, never `# {label}`. Does not hand-edit `changelog.json`. Optional sweep notes go in `_logs/` only. |
 | Named revert / what was 0.1.4? | That one file (flat or under `design/changelog/archive/{epoch}.{series}/`). |
 | Game | `version.json` + `changelog.json`. |
 
-the changelog directory is not required. Pages `/changelog/` is the public index.
+Every Bot PR ships its entry, docs-only and tools-only PRs included (no player-visible change: say so in a bullet and keep the `Summary:` line short). `{label}` is the patch after the newest stamp on `origin/main`; CI stamps in merge order, so if `main` moved before your merge, rename the file to the new next label (`python3 tools/doc_patch.py next-label`). Pages `/changelog/` is the public index.
 
 ## In-game
 
