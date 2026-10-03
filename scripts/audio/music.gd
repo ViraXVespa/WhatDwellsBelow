@@ -6,6 +6,7 @@ extends Node
 var player: AudioStreamPlayer
 var kind := ""
 var passed_intro := false
+var _dungeon_stream: Resource = null
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -17,18 +18,29 @@ func _ready() -> void:
 
 const LT := preload("res://scripts/debug/load_timing.gd")
 
-func play_dungeon() -> void:
-	kind = "dungeon"
-	passed_intro = false
+func _dungeon_path() -> String:
 	var path := "res://assets/audio/music_dungeon.mp3"
 	if not ResourceLoader.exists(path):
 		path = "res://assets/audio/music_dungeon.wav"
-	if not ResourceLoader.exists(path):
+	return path if ResourceLoader.exists(path) else ""
+
+## Called first in the hub preload so the dungeon track is decoded and held before anything else loads.
+func preload_dungeon() -> void:
+	var path := _dungeon_path()
+	if _dungeon_stream == null and path != "":
+		_dungeon_stream = load(path)
+
+func play_dungeon() -> void:
+	kind = "dungeon"
+	passed_intro = false
+	if _dungeon_path() == "":
 		return
-	var s: Resource = load(path)
+	preload_dungeon()
+	var s: Resource = _dungeon_stream
 	LT.dmark("music_load")
 	if s is AudioStreamMP3:
 		(s as AudioStreamMP3).loop = false
+	player.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 	player.stream = s
 	_apply_vol()
 	player.play(0.0)
@@ -44,6 +56,7 @@ func play_hub() -> void:
 	if s is AudioStreamWAV:
 		var w := s as AudioStreamWAV
 		w.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	player.playback_type = AudioServer.PLAYBACK_TYPE_DEFAULT
 	player.stream = s
 	_apply_vol()
 	player.play(0.0)

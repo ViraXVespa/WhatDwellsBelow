@@ -4,6 +4,7 @@ extends Object
 
 const Anim := preload("res://scripts/world/player/player_anim.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
+const T := preload("res://scripts/data/tunables.gd")
 
 static func _warmup_hub(host: Node) -> void:
 	LoadTiming.mark("warmup_begin")
@@ -72,6 +73,10 @@ static func hub_preload_paths(_host: Node) -> PackedStringArray:
 	])
 
 static func preload_hub(host: Node, _t0: int = 0) -> void:
+	if host.music and host.music.has_method("preload_dungeon"):
+		var t_mus: int = Time.get_ticks_msec()
+		host.music.preload_dungeon()
+		LoadTiming.note("music_dungeon", "dt=%d" % (Time.get_ticks_msec() - t_mus))
 	var paths := hub_preload_paths(host)
 	var n: int = paths.size()
 	if n <= 0:
@@ -112,26 +117,30 @@ static func hub_status_for(path: String) -> String:
 
 static func pump_fps(host: Node, hub: bool) -> void:
 	var good: int = 0
+	var steady: int = 0
 	var n: int = 0
 	var last_dt: int = 0
-	while n < 12:
+	var prev_dt: int = -1
+	while n < int(T.WARM_FRAMES_MAX):
 		var t0: int = Time.get_ticks_usec()
 		RenderingServer.force_draw()
 		await host.get_tree().process_frame
 		last_dt = int((Time.get_ticks_usec() - t0) / 1000.0)
 		n += 1
-		if last_dt <= 17:
-			good += 1
-			if good >= 2:
-				break
-		else:
-			good = 0
+		good = good + 1 if last_dt <= 17 else 0
+		steady = steady + 1 if prev_dt >= 0 and absi(last_dt - prev_dt) <= int(T.WARM_STEADY_MS) else 0
+		prev_dt = last_dt
+		# Stable: two fast frames, or a slow device whose last few frames all took about the same time.
+		if good >= 2 or steady >= int(T.WARM_STEADY_N):
+			break
 	var ok_s: String = "1" if good >= 2 else "0"
 	if hub:
 		LoadTiming.note("warm_frames", str(n))
 		LoadTiming.note("fps_ok", ok_s)
 		LoadTiming.note("warm_last_dt", str(last_dt))
+		LoadTiming.note("warm_steady", str(steady))
 	else:
 		LoadTiming.dnote("warm_frames", str(n))
 		LoadTiming.dnote("fps_ok", ok_s)
 		LoadTiming.dnote("warm_last_dt", str(last_dt))
+		LoadTiming.dnote("warm_steady", str(steady))

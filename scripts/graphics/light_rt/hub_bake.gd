@@ -7,13 +7,28 @@ const HubShadow := preload("res://scripts/graphics/light_rt/hub_shadow.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
 
+## The PNG on disk when it exists (dev runs); otherwise the imported copy inside an export (web, packed desktop).
+static func _baked_image(path: String) -> Image:
+	var abs_path: String = ProjectSettings.globalize_path(path)
+	if FileAccess.file_exists(abs_path):
+		var img := Image.new()
+		return img if img.load(abs_path) == OK else null
+	if not ResourceLoader.exists(path):
+		return null
+	var tex: Texture2D = load(path) as Texture2D
+	var src: Image = tex.get_image() if tex != null else null
+	if src == null:
+		return null
+	if src.is_compressed():
+		src.decompress()
+	if src.get_format() != Image.FORMAT_RGBA8:
+		src.convert(Image.FORMAT_RGBA8)
+	return src
+
 static func _try_hub_baked() -> bool:
 	var rt: Variant = load(RT_PATH)
-	var abs_path: String = ProjectSettings.globalize_path(rt.HUB_LIGHT_PATH)
-	if not FileAccess.file_exists(abs_path):
-		return false
-	var img := Image.new()
-	if img.load(abs_path) != OK:
+	var img: Image = _baked_image(rt.HUB_LIGHT_PATH)
+	if img == null:
 		return false
 	if img.get_width() < 16 or img.get_height() < 16:
 		return false
