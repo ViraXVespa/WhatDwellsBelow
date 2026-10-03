@@ -11,7 +11,7 @@
     "steps": [{"shot": "camp"}, {"hold": "w", "ms": 1000}, {"hold": "w", "ms": 100}, {"key": "e"}, {"wait": 500}, {"hold": "w", "ms": 100}, {"key": "e"}, {"wait": 500}, {"hold": "w", "ms": 100}, {"key": "e"}, {"wait": 700}, {"shot": "loadout"},
       {"key": "s"}, {"key": "s"}, {"key": "s"}, {"key": "s"}, {"wait": 300}, {"phase": "_enter"}, {"key": "Enter"}, {"settle": 30000, "min": 1500, "as": "dungeon_load_ms"}, {"wait": 500}, {"shot": "dungeon-start"},
       {"phase": "walk"}, {"hold": "d", "ms": 2000}, {"hold": "s", "ms": 2000}, {"hold": "a", "ms": 2000}, {"hold": "w", "ms": 2000}, {"shot": "dungeon-end"}]},
-  "dungeon-fight": {"about": "Camp, then the debug playtester (window.wdbPlaytest, ?wdb-playtest) runs one fresh Great Axe AI run on floor 1 with seed 42 (?wdb-seed=42) for 30 s of sim time. play_runs lists each run's kills/damage so repeatability is visible.",
-    "boot": true, "query": "wdb-seed=42&wdb-playtest", "expect_change": [["camp", "fight"]],
-    "steps": [{"shot": "camp"}, {"phase": "_enter"}, {"eval": "window.wdbPlaytest(30)"}, {"settle": 30000, "min": 1500, "as": "dungeon_load_ms"}, {"phase": "fight"}, {"waitplay": 60000}, {"shot": "fight"}, {"phase": "_end"}]}
+  "dungeon-fight": {"about": "Camp, then the debug playtester (window.wdbPlaytest, ?wdb-playtest) runs one fresh Great Axe AI run on floor 1 with seed 42 (?wdb-seed=42) for 30 s of sim time, then 6 s without it (phase _after, a rough no-playtester reference). fps includes playtester overhead: compare only with itself. play_runs lists each run's kills/damage so repeatability is visible.",
+    "boot": true, "playtest": true, "query": "wdb-seed=42&wdb-playtest", "expect_change": [["camp", "fight"]],
+    "steps": [{"shot": "camp"}, {"phase": "_enter"}, {"eval": "window.wdbPlaytest(30)"}, {"settle": 30000, "min": 1500, "as": "dungeon_load_ms"}, {"phase": "fight"}, {"waitplay": 60000}, {"shot": "fight"}, {"phase": "_after"}, {"wait": 6000}, {"phase": "_end"}]}
 }

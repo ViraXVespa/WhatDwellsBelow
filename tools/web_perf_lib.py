@@ -7,7 +7,7 @@ from pathlib import Path
 
 # Runs before the page: per-phase rAF frame times, wasm compile timing, 500 ms JS heap / wasm memory (engine.rtenv.HEAPU8) sampler.
 INIT = """
-window.__wp={ph:'_boot',f:{},t:0,comp:[],heap:0,wasm:0,gone:0,seen:0,errs:0,t0:performance.now()};
+window.__wp={ph:'_boot',f:{},t:0,comp:[],cerr:{},cmsg:[],heap:0,wasm:0,gone:0,seen:0,errs:0,t0:performance.now()};
 (function(){var W=window.__wp;
 ['instantiateStreaming','compileStreaming','instantiate','compile'].forEach(function(k){var o=WebAssembly[k];
 if(!o)return;WebAssembly[k]=function(){var s=performance.now();return o.apply(WebAssembly,arguments).then(function(r){
@@ -18,9 +18,10 @@ setInterval(samp,500);
 (function l(t){var b=document.getElementById('wdb-boot');if(b)W.seen=1;
 if(W.seen&&!b&&!W.gone){W.gone=performance.now()}
 if(W.t&&W.gone){(W.f[W.ph]=W.f[W.ph]||[]).push(t-W.t)}W.t=t;requestAnimationFrame(l)})(0);
-window.addEventListener('error',function(){W.errs++});window.__wpSamp=samp})();
+window.addEventListener('error',function(){W.errs++});
+var ce=console.error;console.error=function(){var m=Array.prototype.join.call(arguments,' ');if(/keyboard_get_keycode_from_physical|Not supported by this display server/.test(m))return ce.apply(console,arguments);W.cerr[W.ph]=(W.cerr[W.ph]||0)+1;if(W.cmsg.length<4&&W.ph[0]!='_')W.cmsg.push(W.ph+': '+Array.prototype.join.call(arguments,' ').slice(0,140));return ce.apply(console,arguments)};window.__wpSamp=samp})();
 """
-PLAY = ("seed", "floor", "end_cond", "duration", "kills", "dmg_dealt", "dmg_taken", "crits", "combat_t", "near_death")
+PLAY = ("stuck_t", "seed", "floor", "end_cond", "duration", "kills", "dmg_dealt", "dmg_taken", "crits", "combat_t", "near_death")
 READY = "!!window.__wp.gone&&!!document.getElementById('canvas')"
 
 
@@ -127,6 +128,6 @@ def measure(url: str, chrome: str, steps: list[dict], long_ms: float, timeout_s:
            **_stats(meas, long_ms), "heap_mb": round(max(w["heap"], m.get("JSHeapUsedSize", 0)) / 1048576, 1),
            "wasm_mem_mb": round(w["wasm"] / 1048576, 1), "dom_nodes": int(m.get("Nodes", 0)),
            "transfer_mb": round(sum(b for _, b, _, _ in res) / 1048576, 2), "page_errors": len(errs) + w["errs"],
-           "phases": ph, "marks": marks, "play": {k: play[k] for k in PLAY if k in play} if play else {}, "shots": shots,
+           "phases": ph, "marks": marks, "console_msgs": w["cmsg"], "console_errors": {k: v for k, v in w["cerr"].items() if not k.startswith("_")}, "play": {k: play[k] for k in PLAY if k in play} if play else {}, "shots": shots,
            "assets": sorted(({"file": n, "kb": round(b / 1024)} for n, b, _, _ in res if b > 262144), key=lambda a: -a["kb"])}
     return rep

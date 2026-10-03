@@ -8,7 +8,7 @@ tools/web-perf-flows.json (steps: phase wait settle key hold click eval waitplay
 (navigation to the engine overlay gone), its breakdown (wasm_dl_ms, wasm_compile_ms, init_ms), frame ms/fps and long
 frames per phase, JS heap and wasm memory peaks (sampled every 500 ms; wasm memory never shrinks), transfer sizes and
 page errors. Writes _logs/web-perf/report.json. --baseline F diffs against a saved file (tools/web-perf-baseline.json);
-a metric worse than its threshold is WORSE (RESULT INFO, exit 0 unless --strict). --repeat N takes the median of N runs.
+a metric worse than its threshold is WORSE; a playtester flow whose run errors, stalls or ends early is INVALID (flagged, never baselined) (RESULT INFO, exit 0 unless --strict). --repeat N takes the median of N runs.
 --mbps throttles the network. Needs `pip install playwright` and Chrome/Chromium; no browser download. Software GL:
 compare runs on the same machine only. Not a numbered smoke.
 """
@@ -56,6 +56,7 @@ def median(runs: list[dict]) -> dict:
     for k in SCALAR:
         rep[k] = round(statistics.median(r[k] for r in runs), 2)
     rep["runs"] = len(runs)
+    rep["invalid"] = sorted({x for r in runs for x in r.get("invalid", [])})
     if any(r["play"] for r in runs):
         rep["play_runs"] = [r["play"] for r in runs]  # per-run playtester telemetry: what differs between runs
     return rep
@@ -72,6 +73,26 @@ def diff(cur: dict, base: dict, pct: float | None) -> list[str]:
             if d > floor and (b <= 0 or d * 100 / b > (lim if pct is None else pct)):
                 out.append("WORSE %s %s -> %s" % (k, b, a))
     return out
+
+
+def health(rep: dict) -> list[str]:
+    """Playtester health for one run (flows with a play result or a waitplay step); a non-empty list = INVALID, never baselined."""
+    p, bad = rep["play"], []
+    if not p:
+        return ["INVALID no playtester result (never started or stalled)"]
+    if p.get("end_cond") != "interrupted playtest":
+        bad.append("INVALID run ended early: %s" % p.get("end_cond"))
+    if p.get("kills", 0) < 1:
+        bad.append("INVALID playtester made no kills")
+    if p.get("stuck_t", 0) > 5.0:
+        bad.append("INVALID playtester stuck %ss" % p.get("stuck_t"))
+    ce = sum(rep["console_errors"].values())
+    if ce:
+        bad.append("INVALID %d console errors during the run, first: %s" % (ce, " | ".join(rep.get("console_msgs", []))[:300]))
+    mx = max((v["max_frame_ms"] for k, v in rep["phases"].items() if not k.startswith("_")), default=0)
+    if mx > 1500:
+        bad.append("INVALID frame stall %sms" % mx)
+    return bad
 
 
 def stuck(flow: dict, shots: dict) -> list[str]:
@@ -128,6 +149,8 @@ def main(argv: list[str] | None = None) -> int:
             steps = (boot if flows[n].get("boot") else []) + flows[n]["steps"]
             runs = [web_perf_lib.measure(url, chrome, steps, args.long_ms, args.timeout_sec, (args.width, args.height), shots,
                                          n, args.mbps, flows[n].get("query", "")) for _ in range(max(args.repeat, 1))]
+            for r in runs:
+                r["invalid"] = health(r) if flows[n].get("playtest") else []
             reps[n] = median(runs)
     except Exception as e:  # load timeout, Chrome launch
         return agent_log.finish(JOB, root, "error: %s" % str(e).splitlines()[0], "FAIL", args=args, flow=args.flow)
@@ -145,7 +168,7 @@ def main(argv: list[str] | None = None) -> int:
         bp = root / args.save_baseline
         old = json.loads(bp.read_text(encoding="utf-8")) if bp.is_file() else {"flows": {}}
         old.update({k: v for k, v in full.items() if k != "flows"})
-        old["flows"].update({n: {k: v for k, v in r.items() if k != "assets"} for n, r in reps.items()})
+        old["flows"].update({n: {k: v for k, v in r.items() if k != "assets"} for n, r in reps.items() if not r["invalid"]})
         bp.parent.mkdir(parents=True, exist_ok=True)
         bp.write_text(json.dumps(old, indent=1) + "\n", encoding="utf-8")
     base = json.loads((root / args.baseline).read_text(encoding="utf-8")) if args.baseline else {"flows": {}}
@@ -157,11 +180,13 @@ def main(argv: list[str] | None = None) -> int:
         lines += ["  play %s" % json.dumps(p, sort_keys=True) for p in r.get("play_runs", [])]
         lines += ["  phase %s %s" % (k, " ".join("%s=%s" % (a, b) for a, b in v.items())) for k, v in r["phases"].items()]
         lines += ["  big_asset %(file)s %(kb)s KB" % a for a in r["assets"][:4]]
-        notes = stuck(flows[n], r["shots"])
+        notes = stuck(flows[n], r["shots"]) + r["invalid"]
+        if args.save_baseline and r["invalid"]:
+            notes.append("NOTE flow %s NOT saved to the baseline (INVALID run)" % n)
         if args.baseline:
             notes += diff(r, base["flows"][n], args.max_worse_pct) if n in base["flows"] else ["NOTE no baseline for flow %s" % n]
         lines += ["  " + x for x in notes]
-        flags += sum(1 for x in notes if x.startswith(("WORSE", "STUCK")))
+        flags += sum(1 for x in notes if x.startswith(("WORSE", "STUCK", "INVALID")))
     status = "FAIL" if flags and args.strict else ("INFO" if flags else "PASS")
     first = next(iter(reps.values()))
     return agent_log.finish(JOB, root, "\n".join(lines), status, args=args, flows=",".join(names), load_ms=first["load_ms"],

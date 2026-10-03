@@ -243,121 +243,136 @@
    "runs": 3
   },
   "dungeon-fight": {
-   "load_ms": 2936,
-   "wall_ms": 2941,
-   "wasm_dl_ms": 272,
-   "wasm_compile_ms": 358,
-   "pck_end_ms": 878,
-   "init_ms": 2090,
-   "frames": 838,
-   "avg_fps": 29.1,
-   "avg_frame_ms": 34.3,
-   "p95_frame_ms": 50,
-   "max_frame_ms": 166.7,
-   "long_frames": 25,
-   "heap_mb": 327.8,
-   "wasm_mem_mb": 263.9,
+   "load_ms": 2946,
+   "wall_ms": 2953,
+   "wasm_dl_ms": 310,
+   "wasm_compile_ms": 364,
+   "pck_end_ms": 884,
+   "init_ms": 1942,
+   "frames": 709,
+   "avg_fps": 24.7,
+   "avg_frame_ms": 40.5,
+   "p95_frame_ms": 66.7,
+   "max_frame_ms": 183.3,
+   "long_frames": 77,
+   "heap_mb": 334.3,
+   "wasm_mem_mb": 264.3,
    "dom_nodes": 93,
-   "transfer_mb": 80.27,
+   "transfer_mb": 82.23,
    "page_errors": 2,
    "phases": {
     "_boot": {
-     "frames": 365,
-     "avg_fps": 17.0,
-     "avg_frame_ms": 58.9,
-     "p95_frame_ms": 66.6,
-     "max_frame_ms": 5433.1,
-     "long_frames": 26
+     "frames": 328,
+     "avg_fps": 14.7,
+     "avg_frame_ms": 68.1,
+     "p95_frame_ms": 100,
+     "max_frame_ms": 5699.7,
+     "long_frames": 42
     },
     "_enter": {
      "frames": 23,
-     "avg_fps": 4.2,
-     "avg_frame_ms": 236.9,
-     "p95_frame_ms": 316.6,
-     "max_frame_ms": 3316.5,
-     "long_frames": 13
+     "avg_fps": 4.5,
+     "avg_frame_ms": 222.5,
+     "p95_frame_ms": 300,
+     "max_frame_ms": 2816.5,
+     "long_frames": 12
     },
     "fight": {
-     "frames": 838,
-     "avg_fps": 29.1,
-     "avg_frame_ms": 34.3,
+     "frames": 709,
+     "avg_fps": 24.6,
+     "avg_frame_ms": 40.7,
+     "p95_frame_ms": 66.7,
+     "max_frame_ms": 200.1,
+     "long_frames": 77
+    },
+    "_after": {
+     "frames": 180,
+     "avg_fps": 29.8,
+     "avg_frame_ms": 33.5,
      "p95_frame_ms": 50,
-     "max_frame_ms": 150,
-     "long_frames": 24
+     "max_frame_ms": 50.1,
+     "long_frames": 3
     },
     "_end": {
      "frames": 2,
-     "avg_fps": 40.0,
-     "avg_frame_ms": 25.0,
-     "p95_frame_ms": 16.7,
+     "avg_fps": 30.0,
+     "avg_frame_ms": 33.3,
+     "p95_frame_ms": 33.3,
      "max_frame_ms": 33.3,
      "long_frames": 0
     }
    },
    "marks": {
-    "camp_load_ms": 9379,
-    "dungeon_load_ms": 3112
+    "camp_load_ms": 10179,
+    "dungeon_load_ms": 3168
    },
+   "console_msgs": [],
+   "console_errors": {},
    "play": {
+    "stuck_t": 0,
     "seed": 42,
     "floor": 1,
     "end_cond": "interrupted playtest",
-    "duration": 29.9836333333334,
+    "duration": 29.9915222222223,
     "kills": 7,
-    "dmg_dealt": 409.267447288903,
-    "dmg_taken": 52.2329061430329,
-    "crits": 2,
-    "combat_t": 19.8779,
+    "dmg_dealt": 421.51645014119,
+    "dmg_taken": 25.7170192707526,
+    "crits": 3,
+    "combat_t": 12.8675333333334,
     "near_death": 0
    },
    "shots": {
     "title": 55.7,
     "camp": 115.9,
-    "fight": 23.8
+    "fight": 31.3
    },
+   "invalid": [],
    "runs": 3,
    "play_runs": [
     {
+     "stuck_t": 0,
      "seed": 42,
      "floor": 1,
      "end_cond": "interrupted playtest",
-     "duration": 30.0056481481483,
+     "duration": 29.9851952380953,
      "kills": 7,
-     "dmg_dealt": 439.667166761471,
-     "dmg_taken": 48.2579094719223,
+     "dmg_dealt": 409.153119780853,
+     "dmg_taken": 51.3153958911688,
      "crits": 2,
-     "combat_t": 18.442137037037,
+     "combat_t": 19.8204444444445,
      "near_death": 0
     },
     {
+     "stuck_t": 0,
      "seed": 42,
      "floor": 1,
      "end_cond": "interrupted playtest",
-     "duration": 29.9836333333334,
+     "duration": 29.9915222222223,
      "kills": 7,
-     "dmg_dealt": 409.267447288903,
-     "dmg_taken": 52.2329061430329,
-     "crits": 2,
-     "combat_t": 19.8779,
+     "dmg_dealt": 421.51645014119,
+     "dmg_taken": 25.7170192707526,
+     "crits": 3,
+     "combat_t": 12.8675333333334,
      "near_death": 0
     },
     {
+     "stuck_t": 0,
      "seed": 42,
      "floor": 1,
      "end_cond": "interrupted playtest",
-     "duration": 29.9945666666667,
+     "duration": 30.0162666666667,
      "kills": 7,
      "dmg_dealt": 409.267447288903,
-     "dmg_taken": 50.5901625612927,
+     "dmg_taken": 51.9826624326847,
      "crits": 2,
-     "combat_t": 19.8392333333334,
+     "combat_t": 19.8060666666666,
      "near_death": 0
     }
    ]
   }
  },
- "build_id": "103e455a08339ca4",
- "site": "/workspace/webperf-site2",
+ "build_id": "da064ac4533c3581",
+ "site": "/workspace/webperf-site3",
  "chrome": "google-chrome",
  "viewport": "1280x720"
 }

@@ -23,4 +23,5 @@ static func publish(d: Dictionary) -> void:
 		return
 	d["seed"] = App.run_seed
 	d["floor"] = App.floor_n
+	d["stuck_t"] = snappedf(float(App.playtest.stuck_t), 0.1)
 	JavaScriptBridge.eval("window.__wdbPlay=" + JSON.stringify(d), true)
