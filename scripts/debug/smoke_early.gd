@@ -90,6 +90,3 @@ static func force_flee_any(host: Node) -> String:
 		if who:
 			return str(who.get("type_id"))
 	return ""
-
-static func p4_after_flee(host: Node) -> void:
-	P4.p4_after_flee(host)

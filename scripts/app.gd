@@ -270,9 +270,6 @@ func set_sprite_mip_sharp(on: bool) -> void:
 func set_sprite_mip_bias(v: float) -> void:
 	AppSet.set_sprite_mip_bias(self, v)
 
-func set_display_mode(mode: String) -> void:
-	AppSet.set_display_mode(self, mode)
-
 func set_web_fullscreen(on: bool) -> void:
 	AppSet.set_web_fullscreen(self, on)
 
@@ -344,6 +341,3 @@ func pause_just() -> bool:
 
 func swallow_close_pad() -> void:
 	Pad.swallow_close()
-
-func web_buttons() -> PackedFloat32Array:
-	return Pad.web_buttons()

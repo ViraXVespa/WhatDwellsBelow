@@ -28,9 +28,6 @@ static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Di
 static func starter(p: Object, slot: String) -> Dictionary:
 	return Make.starter(p, slot)
 
-static func required_ok(slot: String, it: Dictionary) -> bool:
-	return Req.required_ok(slot, it)
-
 static func required_piece(p: Object, slot: String) -> Dictionary:
 	return Req.required_piece(p, slot)
 
@@ -236,11 +233,3 @@ static func drop_stash(p: Object, uid: int) -> String:
 			App.toast("Discarded " + str(it.name))
 			return "Discarded."
 	return "Gone."
-
-static func give_or_drop(p: Object, it: Dictionary, pos: Vector3) -> bool:
-	if it.is_empty():
-		return false
-	if add_item(p, it):
-		return true
-	App.spawn_floor_item(it, pos)
-	return false

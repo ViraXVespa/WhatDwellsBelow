@@ -87,9 +87,3 @@ static func close() -> PackedStringArray:
 	stamp = ""
 	Prune._prune()
 	return out
-
-static func _prune() -> void:
-	Prune._prune()
-
-static func _digest() -> String:
-	return Digest._digest()

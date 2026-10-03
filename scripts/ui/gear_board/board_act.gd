@@ -41,20 +41,6 @@ static func bag_primary(ui: CanvasLayer) -> void:
 static func drop(ui: CanvasLayer) -> void:
 	Items.drop(ui)
 
-static func destroy(ui: CanvasLayer) -> void:
-	Items.destroy(ui)
-
-static func cycle_tip(ui: CanvasLayer) -> void:
-	Inp.cycle_tip(ui)
-
-static func cycle_stats(ui: CanvasLayer, d: int) -> void:
-	Inp.cycle_stats(ui, d)
-
-static func toggle_char(ui: CanvasLayer) -> void:
-	App.set_character("female" if App.character_type == "male" else "male")
-	App.save_now()
-	rebuild(ui)
-
 static func floor_step(ui: CanvasLayer, d: int) -> void:
 	ui.loadout_floor = clampi(int(ui.loadout_floor) + d, 1, App.prog.deepest)
 	Board.refresh(ui)

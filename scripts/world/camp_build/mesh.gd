@@ -20,22 +20,6 @@ static func roof_mat(
 static func tarp_mat(dim: Vector2, world_min: Vector3) -> Material:
 	return Mat.tarp_mat(dim, world_min)
 
-static func awning_mat(dim: Vector2, world_min: Vector3) -> Material:
-	return Mat.awning_mat(dim, world_min)
-
-static func wrap_mat(
-	path: String,
-	dim: Vector2,
-	world_min: Vector3,
-	fallback: Color,
-	tint: Color,
-	single_sheet: bool = false,
-	russet: bool = false,
-	tile: float = Mat.TILE_W,
-	uv_off: Vector2 = Vector2.ZERO
-) -> Material:
-	return Mat.wrap_mat(path, dim, world_min, fallback, tint, single_sheet, russet, tile, uv_off)
-
 static func attach_awning(
 	body: Node3D,
 	box_size: Vector3,
@@ -90,26 +74,6 @@ static func _band(host: Node3D, x0: int, z0: int, x1: int, z1: int, y: float, te
 	var c := Vector3(float(x0) + sx * 0.5, y, float(z0) + sz * 0.5)
 	grass_pad(host, c, Vector2(sx, sz), tex_path, fallback)
 
-static func tile_layer(host: Node3D, tex_path: String, points: Array, fallback: Color) -> void:
-	if points.is_empty():
-		return
-	var mesh := PlaneMesh.new()
-	mesh.size = Vector2(T.TILE, T.TILE)
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = mesh
-	mm.instance_count = points.size()
-	var i: int = 0
-	while i < points.size():
-		var xf := Transform3D.IDENTITY
-		xf.origin = points[i]
-		mm.set_instance_transform(i, xf)
-		i += 1
-	var inst := MultiMeshInstance3D.new()
-	inst.multimesh = mm
-	inst.material_override = GroundShader.material(tex_path, fallback)
-	host.add_child(inst)
-
 static func grass_pad(
 
 	host: Node3D, center: Vector3, dim: Vector2, tex_path: String, fallback: Color
@@ -133,9 +97,6 @@ static func grass_pad(
 	inst.material_override = GroundShader.material(tex_path, fallback)
 
 	host.add_child(inst)
-
-static func guild_roofs(_host: Node3D) -> void:
-	pass
 
 static func wall_box(body: Node3D, box_size: Vector3, col: Color) -> void:
 	var st := SurfaceTool.new()

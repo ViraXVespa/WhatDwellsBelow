@@ -129,12 +129,6 @@ static func _cap_verb(verb_text: String) -> String:
 		return ""
 	return verb_text.substr(0, 1).to_upper() + verb_text.substr(1)
 
-static func hint_line(host: Control, action: String, verb_text: String, font_size: int = 16, color: Color = ThemeS.PROMPT_GOLD) -> void:
-	fill(host, [{"action": action, "verb": verb_text}], font_size, color)
-
-static func verb(host: Control, action: String, verb_text: String, font_size: int = 16, color: Color = ThemeS.PROMPT_GOLD) -> void:
-	hint_line(host, action, verb_text, font_size, color)
-
 static func _row_action(row: Dictionary) -> String:
 	if bool(row.get("page_prev", false)) or str(row.get("kind", "")) == "page_prev":
 		return Prompts.page_prev()

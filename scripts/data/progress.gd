@@ -90,9 +90,6 @@ func bag_full() -> bool:
 func add_item(it: Dictionary) -> bool:
 	return Gear.add_item(self, it)
 
-func bag_can_accept(it: Dictionary) -> bool:
-	return Gear.bag_can_accept(self, it)
-
 func add_to_bag(it: Dictionary) -> bool:
 	return Gear.add_to_bag(self, it)
 
@@ -117,9 +114,6 @@ func take_slot(slot: String) -> Dictionary:
 func drop_stash(uid: int) -> String:
 	return Gear.drop_stash(self, uid)
 
-func give_or_drop(it: Dictionary, pos: Vector3) -> bool:
-	return Gear.give_or_drop(self, it, pos)
-
 func use_from_bag(uid: int) -> String:
 	return Gear.use_from_bag(self, uid)
 
@@ -135,29 +129,8 @@ func tick_food(delta: float) -> void:
 func clear_food() -> void:
 	Boot.clear_food(self)
 
-func skill_xp(id: String) -> float:
-	return CombatP.skill_xp(self, id)
-
 func skill_lv(id: String) -> int:
 	return CombatP.skill_lv(self, id)
-
-func xp_period() -> float:
-	return CombatP.xp_period()
-
-func xp_unit() -> float:
-	return CombatP.xp_unit()
-
-func xp_to_reach(level: int) -> float:
-	return CombatP.xp_to_reach(level)
-
-func level_from_xp(total: float) -> int:
-	return CombatP.level_from_xp(self, total)
-
-func xp_to_next(total: float) -> float:
-	return CombatP.xp_to_next(self, total)
-
-func xp_ratio(total: float) -> float:
-	return CombatP.xp_ratio(self, total)
 
 func add_run_xp(id: String, amt: float) -> void:
 	CombatP.add_run_xp(self, id, amt)
@@ -182,15 +155,6 @@ func skill_grant_hit(is_special := false) -> void:
 
 func keep_fragments() -> void:
 	CombatP.keep_fragments(self)
-
-func melee_lv_f() -> float:
-	return CombatP.melee_lv_f(self)
-
-func magic_lv_f() -> float:
-	return CombatP.magic_lv_f(self)
-
-func ranged_lv_f() -> float:
-	return CombatP.ranged_lv_f(self)
 
 func combat_lv_f() -> float:
 	return CombatP.combat_lv_f(self)
@@ -237,9 +201,6 @@ func extract_all(role: String) -> String:
 func extract_one(it: Dictionary, role: String) -> String:
 	return Town.extract_one(self, it, role)
 
-func analyze_destroy(row: Dictionary) -> Dictionary:
-	return Town.analyze_destroy(self, row)
-
 func forge_cost(slot: String, rarity: String, ilvl: int, lock_n: int) -> Dictionary:
 	return ForgeP.forge_cost(self, slot, rarity, ilvl, lock_n)
 
@@ -251,9 +212,6 @@ func can_pay(c: Dictionary) -> bool:
 
 func can_pay_forge(c: Dictionary) -> bool:
 	return ForgeP.can_pay(self, c)
-
-func pay(c: Dictionary) -> void:
-	ForgeP.pay(self, c)
 
 func pay_forge(c: Dictionary) -> bool:
 	return ForgeP.pay(self, c)

@@ -45,6 +45,3 @@ static func away_open(pt: Node, p: Node, node: Node) -> Vector2:
 		if stepped.length() >= 0.35 and stepped.dot(away) >= 0.12:
 			return stepped
 	return Vector2.ZERO
-
-static func nearest_boss(pt: Node, p: Node) -> Node:
-	return Pick.nearest(pt, p, "enemies", 10.0, func(n: Node) -> bool: return pt._alive_enemy(n) and pt._is_boss(n))

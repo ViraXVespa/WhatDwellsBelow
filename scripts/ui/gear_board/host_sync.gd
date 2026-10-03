@@ -7,33 +7,6 @@ const Floor := preload("res://scripts/ui/gear_board/floor.gd")
 const Tip := preload("res://scripts/ui/gear_board/tip.gd")
 const Build := preload("res://scripts/ui/gear_board/board_build.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
-static func apply_pending() -> void:
-	var Board = load("res://scripts/ui/gear_board.gd")
-	if Board.pending_kit.is_empty():
-		return
-	for slot: Variant in Board.pending_kit.keys():
-		var s := str(slot)
-		var it: Dictionary = Board.pending_kit[slot]
-		if it.is_empty():
-			continue
-		if str(it.get("kit_src", "")) == "bank":
-			var uid := int(it.get("uid", 0))
-			var keep: Array = []
-			for raw: Variant in App.prog.bank_items:
-				if raw is Dictionary and int(raw.uid) != uid:
-					keep.append(raw)
-			App.prog.bank_items = keep
-		App.prog.slots[s] = it.duplicate(true)
-		if s == "weapon":
-			App.prog.pick_weapon = str(it.get("weapon", App.prog.pick_weapon))
-			App.weapon = App.prog.pick_weapon
-		if s == "tool":
-			App.prog.tool_type = str(it.get("tool", App.prog.tool_type))
-	Board.pending_kit.clear()
-	if App.prog.has_method("_clamp_food_slot"):
-		App.prog._clamp_food_slot()
-	if App.prog.has_method("_refresh_player_hp"):
-		App.prog._refresh_player_hp()
 
 static func refresh(ui: CanvasLayer) -> void:
 	if ui.get("gear_stats_title") != null and ui.gear_stats_title:

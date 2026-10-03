@@ -28,9 +28,6 @@ static func hint_parts(ui: CanvasLayer) -> Array:
 	parts.append({"action": "ui_cancel", "verb": "back"})
 	return parts
 
-static func hint_line(ui: CanvasLayer) -> String:
-	return Prompts.verb_lines(hint_parts(ui))
-
 static func options_for(slot: String, ui: CanvasLayer) -> Array:
 	if slot == "potion" or slot == "food":
 		return []
@@ -102,6 +99,3 @@ static func _commit_analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> v
 	var Sub = load("res://scripts/ui/gear_board/board_sub.gd")
 	if bool(ui.get("gear_sub")):
 		Sub.open_sub(ui, slot)
-
-static func restore(_ui: CanvasLayer) -> void:
-	pass

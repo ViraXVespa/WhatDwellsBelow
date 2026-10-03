@@ -161,9 +161,6 @@ static func migrate(p: Object) -> void:
 static func type_of(it: Dictionary) -> String:
 	return Affix.type_of(it)
 
-static func _type_of(it: Dictionary) -> String:
-	return Affix.type_of(it)
-
 static func _stat_key(id: String) -> String:
 	return Affix.stat_key(id)
 

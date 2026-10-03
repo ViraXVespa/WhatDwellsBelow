@@ -93,12 +93,6 @@ static func bind_event(row: Dictionary) -> InputEvent:
 static func event_in_pool(e: InputEvent, pool: String) -> bool:
 	return Pool.event_in_pool(e, pool)
 
-static func events_equal(a: InputEvent, b: InputEvent) -> bool:
-	return Pool.events_equal(a, b)
-
-static func pool_events(action: String, pool: String) -> Array:
-	return Pool.pool_events(action, pool)
-
 static func slot_event(action: String, pool: String, slot: int) -> InputEvent:
 	return Pool.slot_event(action, pool, slot)
 
@@ -116,9 +110,6 @@ static func reset() -> void:
 
 static func register() -> void:
 	Defaults.register()
-
-static func apply_pc_defaults() -> void:
-	Defaults.apply_pc_defaults()
 
 static func ensure_key(action: String, keycode: int) -> void:
 	Defaults.ensure_key(action, keycode)

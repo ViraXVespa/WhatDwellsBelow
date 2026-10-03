@@ -6,9 +6,6 @@ const Opts := preload("res://scripts/ui/gear_board/opts.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
 
-static func item_short(it: Dictionary) -> String:
-	return Fmt.item_short(it)
-
 static func item_cell(it: Dictionary) -> String:
 	return Fmt.item_cell(it)
 
@@ -23,9 +20,6 @@ static func hint_parts(ui: CanvasLayer) -> Array:
 	parts.append({"action": "gear_drop", "verb": "drop", "gap": true})
 	parts.append({"action": "gear_tip", "verb": "tip off/on/forge"})
 	return parts
-
-static func hint_line(ui: CanvasLayer) -> String:
-	return Prompts.verb_lines(hint_parts(ui))
 
 static func selected_slot(ui: CanvasLayer) -> String:
 	var sel := str(ui.inv_sel)

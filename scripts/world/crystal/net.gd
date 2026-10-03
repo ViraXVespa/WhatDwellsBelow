@@ -61,9 +61,6 @@ static func landing_cell(host: Node) -> Vector2i:
 		return warp
 	return Vector2i(host.data.spawn)
 
-static func cl_at(host: Node, cell: Vector2i) -> int:
-	return Threat.walk_level(App.floor_n, cell, host.travel_dist, int(host.data.w), host.travel_cap)
-
 static func place_floor(host: Node) -> void:
 	var Place: GDScript = load("res://scripts/world/crystal/crystal_place.gd") as GDScript
 	Place.place_entrance(host)

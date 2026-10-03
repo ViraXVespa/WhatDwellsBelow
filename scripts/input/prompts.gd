@@ -120,24 +120,6 @@ static func chip_for(action: String) -> String:
 		return id.substr(6).to_upper()
 	return id.to_upper()
 
-static func verb_line(action: String, verb: String) -> String:
-	var chip := chip_for(action)
-	if verb == "":
-		return chip
-	return "%s %s" % [chip, verb]
-
-## Hint row: chips joined by three spaces. Rows are {action, verb}; non-dicts and empty actions are skipped.
-static func verb_lines(parts: Array) -> String:
-	var bits: PackedStringArray = PackedStringArray()
-	for row: Variant in parts:
-		if not (row is Dictionary):
-			continue
-		var action := str(row.get("action", ""))
-		if action == "":
-			continue
-		bits.append(verb_line(action, str(row.get("verb", ""))))
-	return "   ".join(bits)
-
 static func _joy_btn(i: int) -> String:
 	match i:
 		JOY_BUTTON_A:

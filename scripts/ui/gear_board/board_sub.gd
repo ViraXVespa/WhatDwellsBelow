@@ -59,9 +59,6 @@ static func _add_strip(box: Control, parts: Array) -> void:
 	PromptView.fill(strip, parts)
 	box.add_child(strip)
 
-static func _wire_opt_focus(opts: Array[Button], back: Button) -> void:
-	Open._wire_opt_focus(opts, back)
-
 static func _paint_opt(b: Button, it: Dictionary) -> void:
 	var fill: Color = Icons.rarity_fill(it)
 	var border: Color = Icons.rarity_border(it)
@@ -121,9 +118,6 @@ static func _unequip_or_keep(ui: CanvasLayer, slot: String, it: Dictionary) -> v
 		App.save_now()
 		return
 	Act.st(ui, App.prog.unequip_slot(slot))
-
-static func _apply_loadout(ui: CanvasLayer, slot: String, it: Dictionary, src: String) -> void:
-	Open._apply_loadout(ui, slot, it, src)
 
 static func _apply_inv(ui: CanvasLayer, slot: String, it: Dictionary, src: String) -> void:
 	var Act = _act()

@@ -21,7 +21,6 @@ const SKILL_NAMES := {
 const COL_PERM := Color(0.72, 0.56, 0.28)
 const COL_GAIN := Color(0.46, 0.78, 0.42)
 const COL_DUNGEON := Color(0.86, 0.74, 0.32)
-const COL_TRACK := Color(0.18, 0.14, 0.1)
 
 static func skill_title(id: String) -> String:
 	return str(SKILL_NAMES.get(id, id))

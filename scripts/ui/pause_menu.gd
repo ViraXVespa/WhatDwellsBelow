@@ -22,7 +22,6 @@ const Flow := preload("res://scripts/ui/pause_menu/menu_flow.gd")
 
 const TAB_SETTINGS := 0
 const TAB_INV := 1
-const TAB_SKILLS := 2
 
 const SKILL_NAMES := {
 	"axe": "Great Axe",
@@ -37,18 +36,6 @@ const SKILL_NAMES := {
 	"wood": "Woodcutting",
 	"smith": "Smithing",
 }
-
-const SLOT_NAMES := {
-	"weapon": "Weapon",
-	"tool": "Tool",
-	"potion": "Potion",
-	"food": "Food",
-	"head": "Head",
-	"body": "Body",
-	"legs": "Legs",
-}
-
-const BAG_COLS := 7
 
 var open: bool = false
 var tab: int = 0

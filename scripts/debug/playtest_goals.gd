@@ -26,12 +26,6 @@ static func role_has_cargo(pt: Node, role: String) -> bool:
 static func dismiss_world_ui(pt: Node) -> bool:
 	return Near.dismiss_world_ui(pt)
 
-static func nearest_visible_threat(pt: Node, p: Node) -> Node:
-	return Near.nearest_visible_threat(pt, p)
-
-static func nearest_room_threat(pt: Node, p: Node, radius: float = ROOM) -> Node:
-	return Best.nearest_room_threat(pt, p, radius)
-
 static func nearest_foe(pt: Node, p: Node) -> Node:
 	var seen: Node = Near.nearest_visible_threat(pt, p)
 	if seen:
@@ -40,9 +34,6 @@ static func nearest_foe(pt: Node, p: Node) -> Node:
 
 static func nearest_hunt(pt: Node, p: Node) -> Node:
 	return Near.nearest_hunt(pt, p)
-
-static func nearest_boss(pt: Node, p: Node) -> Node:
-	return Best.nearest_boss(pt, p)
 
 static func closest_kind(pt: Node, p: Node, kind: String, radius: float) -> Node:
 	return Best.closest_kind(pt, p, kind, radius)

@@ -10,9 +10,6 @@ const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const HostBuild := preload("res://scripts/ui/gear_board/host_build.gd")
 const Sync := preload("res://scripts/ui/gear_board/host_sync.gd")
 
-static func ensure_host(ui: CanvasLayer) -> void:
-	HostBuild.ensure_host(ui)
-
 static func _watch_hover(ui: CanvasLayer, b: Control, key: String) -> void:
 	b.mouse_entered.connect(func():
 		if bool(ui.get("gear_sub")):
@@ -105,6 +102,3 @@ static func find_sel(ui: CanvasLayer) -> Control:
 
 static func refresh(ui: CanvasLayer) -> void:
 	Sync.refresh(ui)
-
-static func apply_pending() -> void:
-	Sync.apply_pending()
