@@ -4,7 +4,7 @@ Live outline fills per room and hall shape only. It does not run floor-wide miss
 
 
 Status: binding design + live snapshot  
-Read when: maze carve, hall segments, size rebalance ledger, accidental jogs, angled halls, deadend termini, unused stone, hug clearance, outline spans
+Read when: maze carve, hall segments, size rebalance ledger, accidental jogs, deadend termini, unused stone, hug clearance, outline spans
 
 ## Overall structure
 
@@ -20,7 +20,7 @@ Read when: maze carve, hall segments, size rebalance ledger, accidental jogs, an
 Grid size, room count, room size ranges, and connection algorithm (MST + extra loops) are fully tunable.
 Target: floors MUST feel expansive enough to support a 5–10 minute first successful extraction for a new player and longer skilled runs, but rooms and combat MUST be dense enough that the player is not wandering empty halls for long stretches.
 
-Halls are 2–4 tiles wide. Width 3 is the mode. A connection is a segment plus width. Cardinal connections stay a winding span on the 1 m grid; width still changes at `hall_w_interval` on those. After carve, clean one-tile teeth and accidental stair-steps. Keep intentional maze jogs. An off-axis corridor is rare: snap the room-to-room segment to 27 / 33 / 45 only when it sits within `angled_snap_deg` and the cardinal dogleg is at least `angled_vs_dogleg_min` tiles longer. Cap those halls with `angled_corridor_max` and short corner cuts with `corner_chord_max`. Raise that cap only in a carve slice. The cleaned 1 m grid is the maze. Angled pieces are packets on top of it, not load-bearing feel and not a floor-wide rim.
+Halls are 2–4 tiles wide. Width 3 is the mode. A connection is a segment plus width. Cardinal connections stay a winding span on the 1 m grid; width still changes at `hall_w_interval` on those. After carve, clean one-tile teeth and accidental stair-steps. Keep intentional maze jogs. The cleaned 1 m grid is the maze. There is no floor-wide rim.
 
 Room bands span the full interior; leftover slots are skipped inside the grid so the last row is not left uncarved.
 Live extra loops copy the grid and carve. A hug reverts, then retries through offset waypoints so `gen_extra_loops` is a landed-count, not an attempt-count. Stubs stop instead of crossing the hug band.
@@ -33,9 +33,9 @@ Hug mask `_near` is dilated room AABBs plus hall-axis paint. Do not rebuild it f
 
 The 1 m FLOOR/WALL grid is the maze: rooms, connection endpoints, hall-width budget, doors, stairs, prop snaps, ambush anchors, fog, minimap, crystal separation, stream chunk index, default walk, default collision, and default floor/wall skin. Room rectangles stay unpadded and axis-aligned. Do not pad rooms so they merge through a 1 m wall. Unused stone is any cell that was never carved.
 
-Silhouette order is fixed. Carve the 1 m grid. Clean one-tile teeth and accidental stair-steps. Do not fillet or jag the whole rim. `outline_fillet_frac` and `outline_jag_frac` are unused law. Wear is a shader concern. Do not author both rims as a floor-wide polyline and rasterize that as walk truth. Do not merge every room and hall into one hull and fill that.
+Silhouette order is fixed. Carve the 1 m grid. Clean one-tile teeth and accidental stair-steps. Do not fillet or jag the whole rim. Wear is a shader concern. Do not author both rims as a floor-wide polyline and rasterize that as walk truth. Do not merge every room and hall into one hull and fill that.
 
-Gen publishes hall runs from that carve: one corridor is one wall pair. An angled piece is a closed packet for one rare off-axis hall or short corner chord: a floor band, the two long wall runs, and collision hulls that match that mesh. Brick and torch mounts on that piece read its runs. Walk, lights, and snaps inside the piece follow the packet. Outside the piece, occupancy is the cleaned grid. `outline_fine_m` is piece-bake resolution only. Do not keep a floor-wide fine solid as a second dungeon. Do not ship a floor-wide trace-then-repair loop as the silhouette. Do not stamp rim_closed OK to hide holes on hall-local spans.
+Gen publishes hall runs from that carve: one corridor is one wall pair. Outline resolution is fixed at 1 m (no tunable). Do not keep a floor-wide fine solid as a second dungeon. Do not ship a floor-wide trace-then-repair loop as the silhouette. Do not stamp rim_closed OK to hide holes on hall-local spans.
 
 Live outline publishes spans from room and hall shapes after join-ends only. This page is the contract that slice implements. Outline bake is this job (`outline.gd`). Do not author arches or modular kits. One brick sheet stays a volume concern; this job does not add a second rock sheet.
 
@@ -94,14 +94,6 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 | `crystal_deadend_sep` | 32 |
 | `crystal_cl_band` | 2 |
 | `crystal_deadend_len` | 28 |
-| `outline_fine_m` | 0.25 (piece bake only) |
-| `outline_fillet_frac` | unused law |
-| `outline_jag_frac` | unused law |
-| `angled_corridor_max` | 4 |
-| `corner_chord_max` | 8 |
-| `angled_deg` | 27 / 33 / 45 |
-| `angled_snap_deg` | 6 |
-| `angled_vs_dogleg_min` | 12 |
 
 `gen.gd` clamps to minimum 24×24 and at least 6 rooms.
 Boss room is farthest from spawn that still meets `Rooms.min_boss_sep` = max(16, max(w,h) * 0.5).

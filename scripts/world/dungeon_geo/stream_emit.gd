@@ -36,7 +36,7 @@ static func _mask(host: Node) -> Dictionary:
 	var w: int = int(host.data.w)
 	var h: int = int(host.data.h)
 	if host.data.has("solid") and host.data["solid"] is PackedByteArray:
-		var fine: float = float(host.data.get("outline_fine_m", 0.25))
+		var fine: float = float(host.data.get("outline_fine_m", 1.0))
 		if fine < 0.2:
 			fine = 0.25
 		return {

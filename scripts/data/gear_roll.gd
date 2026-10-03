@@ -156,7 +156,7 @@ static func _roll_value(id: String, ilvl: int, quality: float, luck: float) -> f
 	var lk: float = clampf(luck, 0.5, 1.25)
 	if Affix.kind_of(id) == Affix.KIND_PCT:
 		return (0.02 + Balance.f("affix_pct_per_lv", 0.004) * float(ilvl)) * q * lk
-	return (Balance.f("affix_flat_base", 2.0) + Balance.f("affix_flat_per_lv", 0.65) * float(ilvl)) * q * lk
+	return (Balance.f("affix_flat_base", 2.0) + Balance.f("affix_flat_per_lv", 0.35) * float(ilvl)) * q * lk
 
 static func _wpn_name(type_id: String) -> String:
 	match type_id:

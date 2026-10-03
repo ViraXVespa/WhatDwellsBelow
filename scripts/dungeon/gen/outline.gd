@@ -124,20 +124,16 @@ static func _stamp_rect(solid: PackedByteArray, sw: int, sh: int, spans: Array, 
 	_emit_edge(spans, grid, gw, gh, per, Vector2(x1, y1), Vector2(x0, y1), Vector2(0.0, -1.0), horiz, vert, skip_rims)
 	_emit_edge(spans, grid, gw, gh, per, Vector2(x0, y1), Vector2(x0, y0), Vector2(1.0, 0.0), horiz, vert, skip_rims)
 
-static func _fine_m(bal: Object) -> float:
-	var m: float = 1.0
-	if bal != null:
-		m = float(bal.get("outline_fine_m"))
-	if m >= 0.87:
-		return 1.0
-	return 1.0
+## Outline resolution is fixed at 1 m (no tunable).
+const FINE_M := 1.0
 
 static func _per_m(fine_m: float) -> int:
 	return clampi(int(round(1.0 / maxf(fine_m, 0.25))), 1, 4)
 
 static func stamp(data: Dictionary, rng: RandomNumberGenerator, bal: Object) -> void:
 	var _rng: RandomNumberGenerator = rng
-	var fine_m: float = _fine_m(bal)
+	var _bal: Object = bal
+	var fine_m: float = FINE_M
 	var per: int = _per_m(fine_m)
 	var grid: PackedByteArray = data["grid"]
 	var w: int = int(data["w"])
