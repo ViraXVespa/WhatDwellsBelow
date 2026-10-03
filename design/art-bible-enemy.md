@@ -3,7 +3,7 @@
 Status: binding design (one capped test run, vision-described, needs a human glance and a retest in Build: see Results)
 Read when: prompting enemy directional reference sets, enemy props or hands per facing, enemy Bible test plan
 
-art is already open when this sibling is loaded. Do not reopen art_pipeline from this file. Imagine runs only through the isolated-media gate (CLI Build). Structure only, not style.
+Imagine runs only through the isolated-media gate (CLI Build). Structure only, not style.
 
 ## Where things stand
 
@@ -24,11 +24,11 @@ art is already open when this sibling is loaded. Do not reopen art_pipeline from
 | Left | far, mostly hidden | near side, fully visible | |
 | Down-Left | far, viewer-left, behind body | near, viewer-right | |
 
-Mirror rule: flipping Right gives a Left with the hands swapped (a right-hand prop lands in the left hand). Mirror only symmetric or two-handed props, or when the User accepts the swap; else generate Left, Up-Left, Down-Left on their own. A far-hand prop must still show a visible piece in profile (staff head, bow tip).
+Mirror rule: flipping Right gives a Left with the hands swapped (a right-hand prop lands in the left hand). Mirror only symmetric or two-handed props, or when the User accepts the swap (option b below). A far-hand prop must still show a visible piece in profile (staff head, bow tip).
 
 ## Prop and hand table (single source for prompts)
 
-No game data holds props (`roster.gd` has role and move only). Rows come from a vision read of the live stills; hands marked ? are unverified (User confirms; Build edits only this table).
+No game data holds props (`roster.gd` has role and move only). Rows come from a vision read of the live stills; ? = unverified (User confirms; Build edits only this table).
 
 | Enemy | Props (exactly these) | Hand | Notes |
 |---|---|---|---|
@@ -55,33 +55,38 @@ Facing phrases (one per cell): Down "face and chest toward the viewer"; Up "back
 
 `{HAND_RULES}`, one clause per prop: "the {PROP} is in its right hand: at the image's left side in Down, right side in Up, near side in Right, and only the {VISIBLE_PIECE} shows in Left." Two-handed: name both hands and the grip.
 
-## Recipe
+## Recipe (sheets are the only route)
 
-1. Down figure first, alone (props and palette proof).
-2. Symmetric, two-handed or single-fixed-hand types (wolf, shaman, orc): one 3x3 sheet in one pass (best identity per `art-bible-character` Appendix D). Asymmetric props (archer bow): NO sheet; one single-figure image per facing, assemble the cells.
-3. Score every cell; a cell failing ONLY on props or hand is regenerated alone (or `image_edit` against the passing Down cell, restating the failing clause first). Cap: 3 prompt revisions per failure class, then stop and report.
-4. Checklist per cell: (a) every prop, no extras; (b) facing matches; (c) correct hand for that facing; (d) identity and palette match Down. All four to pass.
-5. After accept: `plate_remap.py`, square, split, nearest-neighbor cleanup as the player Bible.
+Separate figures drift in look and palette. Every enemy is ONE 3x3 sheet in one pass (`art-bible-character` Appendix D).
+
+1. Fill the template from the prop table; run the sheet.
+2. Score every cell with the checklist: (a) every prop, no extras; (b) facing matches; (c) correct hand for that facing; (d) identity and palette consistent across the sheet. All four to pass.
+3. Cap: 3 prompt revisions per failure class, then stop and report.
+4. After accept: `plate_remap.py`, square, split, nearest-neighbor cleanup as the player Bible.
+
+Asymmetric props (bow) can fail the Right column. Options inside one sheet, choice OPEN for the User:
+- (a) Symmetric or two-handed props, or a fixed-hand prop that tests stable (shaman staff, orc axe v2 style).
+- (b) Use the mirror rule above and accept the prop swapping hands on the Right cell.
+- (c) Fix only the failing cell with an edit pass inside the finished sheet, then a human check.
 
 ## Template notes (from the test runs)
 
-- Describe facing in image-edge terms ("viewer's RIGHT" was drawn facing left): "face, chest, bow and arrow point toward the RIGHT EDGE of the image; bow in the left hand = the arm farther from the camera, extended toward the right edge; right hand = near arm pulls the string; quiver on the left side of the image".
-- Spell out each cell's side of every prop and asymmetric armour piece (orc: pauldron on the LEFT shoulder, per view). Keep clauses short (long geometry lowered facing accuracy).
+- Describe facing in image-edge terms in the sheet's cell clauses ("viewer's RIGHT" was drawn facing left): "face, chest, bow and arrow point toward the RIGHT EDGE of the image; bow in the left hand = the arm farther from the camera, extended toward the right edge; right hand = near arm pulls the string; quiver on the left side of the image".
+- Spell out each cell's side of every prop and asymmetric armour piece (orc: pauldron on the LEFT shoulder, per view). Short clauses: long geometry lowered facing accuracy.
 - "Exactly one {PROP}". Two-handed prop: BOTH hands in EVERY figure, including Up with the haft seen from behind; fix the grip ("right hand higher").
-- "The Right figure is NOT a flipped Left figure; never mirror" helps orc but does not stop sheet re-mirroring of asymmetric props.
+- "The Right figure is NOT a flipped Left figure; never mirror" helps orc, not asymmetric props.
 
 ## Failure modes (observed, bible_* and archer_* samples under the sessions path, not in git)
 
-- The generator mirrors right-facing profile cells from left-facing ones. Orc v1: axe hand changed, Up view had no axe. Archer sheets v1, v2, v4: Right column mirrored (bow in the right hand); v4 also flipped the Down cell's hands.
+- The generator mirrors right-facing profile cells from left-facing ones. Orc v1: axe hand changed, no axe in Up. Archer sheets v1, v2, v4: Right column mirrored (bow in right hand); v4 also flipped Down's hands.
 - Archer v3 (long near/far arm geometry, "Left and Right cells must look different"): WORSE, most figures faced left. Cap of 3 revisions reached for sheets.
-- Single-figure images work: archer_left_single P; archer_right_single v1 ("viewer's RIGHT") F, drawn facing left; v2 (edge wording) P.
-- Wolf v1 and shaman v1 pass a sheet as-is (skull shows in the far-hand Left view).
-- Mirroring is acceptable only for symmetric or two-handed props.
-- The test generator may differ from Build's: retest the final template once in Build before relying on it.
+- Edge wording fixed facing in one-figure probes (archer_left_single P; archer_right_single v1 "viewer's RIGHT" F, v2 edge wording P). Not recommended: separately generated figures drift in look and palette.
+- Wolf v1 and shaman v1 pass as-is (skull shows in the far-hand Left view).
+- The test generator may differ from Build's: retest the final template once in Build.
 
 ## Results (vision-described, needs a human glance)
 
-P = pass, F = fail. 11 images: 7 sheets (bible_orc_v1/v2, bible_archer_v1/v2/v3/v4, bible_shaman_v1, bible_wolf_v1) and 3 archer singles.
+P = pass, F = fail. 11 images: 8 sheets (bible_orc_v1/v2, bible_archer_v1/v2/v3/v4, bible_shaman_v1, bible_wolf_v1) and 3 one-figure probes.
 
 | Enemy (best run) | Dn | DR | R | UR | Up | UL | L | DL |
 |---|---|---|---|---|---|---|---|---|
@@ -89,5 +94,5 @@ P = pass, F = fail. 11 images: 7 sheets (bible_orc_v1/v2, bible_archer_v1/v2/v3/
 | shaman v1 | P | P | P | P | P | P | P | P |
 | orc v2 (v1 failed props and hands) | P | P | P | P | P | P | P | P |
 | archer sheet v2 (v1, v3, v4 worse) | P | P | F mirror | P | P | P | P | P |
-| archer singles (L v1; R v2 edge wording) | - | - | P | - | - | - | P | - |
+| archer one-figure probes (not recommended: drifts) | - | - | P | - | - | - | P | - |
 
