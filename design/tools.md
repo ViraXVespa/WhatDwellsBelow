@@ -35,7 +35,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 
 - **Bot:** boot with `bot_status.py`, then the one flow doc from `BOT.md` (size, extract, reuse, relocate, docs, opt). Prove and smokes: `BOT.md` (single copy). Never open the Build docs (`pc-offload.md`, `tools-build.md`, `tools-media.md`) or Imagine/I2V skills.
 - **Web/chat:** documentation slices go through the `doc_patch.py` CLI or import (`doc-library.md`); `check_load_graph.py`; `run_shots.py --mode web` (prints its RESULT line, no scratch needed); scripted flows `run_shot_flow.py` (`shot-tool.md`). Godot runners are the User's: `web-session.md` names them.
-- **Build (User PC):** measure with `file_stat.py` (not `python -c`), `list_xref.py`, `list_changed.py`, `list_oversize_scripts.py`; after a `.gd` slice `run_build_gate.py`; web build performance after an export: `web_perf.py` (advisory, `tools-build.md`); edit one code-map row with `code_map.py patch`; park opt items with `bot_opt.py`. Runner rules: `pc-offload.md`. Do not run a full-repo Bot size sweep.
+- **Build (User PC):** measure with `file_stat.py` (not `python -c`), `list_xref.py`, `list_changed.py`, `list_oversize_scripts.py`; after a `.gd` slice `run_build_gate.py`; web build performance after a fresh `export_web.py --out DIR`: `web_perf.py --site DIR --flow all --baseline tools/web-perf-baseline.json` (advisory, `tools-build.md`); edit one code-map row with `code_map.py patch`; park opt items with `bot_opt.py`. Runner rules: `pc-offload.md`. Do not run a full-repo Bot size sweep.
 
 ## Catalog: shared and Bot tools
 

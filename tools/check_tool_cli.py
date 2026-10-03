@@ -32,6 +32,8 @@ WRITERS = {
     "week_pin", "write_utf8_file", "list_unused_funcs", "bot_opt", "split_funcs", "facade_requal",
     "move_script_cluster", "archive_prior_changelogs", "enable_texture_mips",
 }
+# flags `--help` must list (tool contract extras beyond --root/--dry-run); web_perf is advisory, so it needs --strict to fail
+REQUIRED_HELP = {"web_perf": ("--flow", "--baseline", "--save-baseline", "--strict", "--repeat", "--site"), "export_web": ("--out",)}
 ADVISORY_PS1_OK = ("python",)
 PRINT_STR = re.compile(r"print\(\s*f?[\"']([^\"']*)[\"']")
 
@@ -99,6 +101,9 @@ def check_py(root: Path, path: Path, bad: list[str], tally: dict[str, int]) -> N
         bad.append(f"HELP    {path.name}: --help exit {proc.returncode}")
     elif "usage" not in proc.stdout.lower():
         bad.append(f"HELP    {path.name}: --help printed no usage")
+    for flag in REQUIRED_HELP.get(name, ()):
+        if flag not in proc.stdout:
+            bad.append(f"FLAG    {path.name}: --help does not list {flag}")
     if snapshot(root) != before:
         bad.append(f"MUTATE  {path.name}: --help changed files")
 
