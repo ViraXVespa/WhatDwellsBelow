@@ -93,15 +93,16 @@ static func tick_pressure(host: Node, delta: float, grew: bool) -> void:
 		host.noreveal_t += delta
 	if host.pressure_cd_t > 0.0:
 		return
+	if not (host.idle_t >= App.bal.idle_timer or host.noreveal_t >= App.bal.noreveal_timer):
+		return
 	if host.is_safe_world(host.player.global_position):
 		return
 	if not _pressure_cap(host):
 		return
-	if host.idle_t >= App.bal.idle_timer or host.noreveal_t >= App.bal.noreveal_timer:
-		pressure_spawn(host)
-		host.idle_t = 0.0
-		host.noreveal_t = 0.0
-		host.pressure_cd_t = App.bal.pressure_cd
+	pressure_spawn(host)
+	host.idle_t = 0.0
+	host.noreveal_t = 0.0
+	host.pressure_cd_t = App.bal.pressure_cd
 
 static func pressure_spawn(host: Node) -> int:
 	if host.player and host.is_safe_world(host.player.global_position):

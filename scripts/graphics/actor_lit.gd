@@ -19,7 +19,7 @@ var spr: Sprite3D
 var marks: Array[MeshInstance3D] = []
 var _game: Color = Color.WHITE
 var _sent: Color = Color(-1.0, -1.0, -1.0, -1.0)
-var _key_at: Array[String] = []
+var _key_at: Array[Array] = []
 var _away_at: Array[Vector2] = []
 var _stretch_at: Array[float] = []
 var _alpha_at: Array[float] = []
@@ -51,7 +51,7 @@ func _ready() -> void:
 		mesh_node.top_level = true
 		marks.append(mesh_node)
 		add_child(mesh_node)
-		_key_at.append("")
+		_key_at.append([])
 		_away_at.append(K.SUN_AWAY)
 		_stretch_at.append(K.HUB_STRETCH)
 		var start_a: float = 0.0
@@ -154,7 +154,7 @@ func _sync_slot(slot: int, tex: Texture2D, soles: Vector4, fl: Vector2, fr: Vect
 	if _src_at[slot].length_squared() > 0.0004:
 		src = _src_at[slot] - feet
 	var reach: Vector2 = dir * _stretch_at[slot]
-	var key: String = "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
+	var key: Array = [
 		tex.get_instance_id(), px, _flip,
 		snappedf(fl.x, 0.01), snappedf(fl.y, 0.01),
 		snappedf(fr.x, 0.01), snappedf(fr.y, 0.01),
