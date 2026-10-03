@@ -57,7 +57,7 @@ Do not attach PNG bytes to the CLI transcript.
 
 ## What it can stage today
 
-- Scenes `dungeon`, `camp`, `hub`; camera pose (`--px --pz --cx --cz --zoom`, recipes); HUD on/off; window size (`--width --height`).
+- Scenes `dungeon`, `camp`, `hub` (HUD on shows the HUD and minimap only; the full-screen dungeon map stays closed); camera pose (`--px --pz --cx --cz --zoom`, recipes); HUD on/off; window size (`--width --height`).
 - **Scripted flows** (`--steps FILE`, or `run_shot_flow.py`): talk to an NPC or open any panel, press gamepad / key / action input, set game state, wait, shoot every page, assert state and text. One worker boot runs the whole list. Ops below. This is the answer to "a menu, dialogue or tutorial page needs a picture".
 - Still not staged: crop-to-object beyond `crop` on a Control, dungeon-side UI states without a flow of their own (add the flow, not a hand run).
 

@@ -23,7 +23,7 @@ static func _apply_pose(host: Node) -> void:
 		prompt_n.visible = Args.hud_on()
 	var map_n: Node = host.get("map_layer") as Node
 	if map_n != null:
-		map_n.visible = Args.hud_on()
+		map_n.visible = false  # the full-screen map is toggled by the player, never part of the HUD (HUD on used to open it over the scene)
 	var z: float = Args.zoom()
 	App.cam_zoom = z
 	var rig: Node = host.get_tree().get_first_node_in_group("camera_rig")
