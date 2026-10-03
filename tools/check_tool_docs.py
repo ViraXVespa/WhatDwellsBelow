@@ -20,6 +20,7 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 import repo_lib
+from bot_smokes import VERSION as ENGINE_PIN
 
 CATALOGS = ("tools.md", "tools-lint.md", "tools-build.md", "tools-shims.md", "tools-media.md")
 ROW = re.compile(r"^\|\s*`([^`|]+)`\s*\|.*\|\s*([BWD]+)\s*\|[^|]*\|\s*([YN])\s*\|\s*$")
@@ -30,6 +31,7 @@ SUFFIX = (".gd", ".py", ".md", ".tscn", ".json", ".yaml", ".yml", ".ps1", ".cfg"
 TICK = re.compile(r"`([^`\n]+)`")
 PATH_SKIP = ("_logs/", "_out/", "user://", "http", ".godot/", "docs/", "design/changelog/")
 NARR = re.compile(r"\b(will be added|to be added|TODO|TBD|legacy|formerly|previously|no longer|used to|not yet|for now|old flat|temporary|deprecated|obsolete|superseded)\b", re.I)
+ENGINE_VER = re.compile(r"\b4\.\d+\.\d+\b")  # Godot 4.x.y mentions in docs / CI must equal bot_smokes.VERSION
 MEMBER = re.compile(r"^\s*(?:static\s+)?(?:func|var|const|signal|enum|class)\s+(\w+)", re.M)
 
 
@@ -83,6 +85,10 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
                 m = re.match(r"^([A-Z]\w+)\.(\w+)(?:\(.*)?$", tok)
                 if m and m.group(1) in classes and m.group(2) not in classes[m.group(1)]:
                     bad.append(f"IDENT   {name}:{no}: {m.group(1)}.{m.group(2)}")
+    for f in [*_doc_files(root, tracked), root / ".github/workflows/pages.yml"]:
+        if f.is_file() and f.is_relative_to(root):
+            for no, line in enumerate(f.read_text(encoding="utf-8-sig", errors="replace").splitlines(), 1):
+                bad += [f"ENGINE  {f.relative_to(root).as_posix()}:{no}: {v} != pinned {ENGINE_PIN}" for v in ENGINE_VER.findall(line) if v != ENGINE_PIN]
     return bad, narr
 
 

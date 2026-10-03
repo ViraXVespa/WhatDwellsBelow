@@ -30,12 +30,13 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import gd_lib
 
 ROOT = agent_log.repo_root()
 SCAN_ROOTS = ("scripts", "design", "scenes", "assets", "tools", ".grok", ".github")
 SCAN_FILES = ("project.godot", "AGENTS.md", "README.md", "BOT.md", "GROK-BOT.md", "export_presets.cfg")
 SCAN_SUFFIXES = {".gd", ".tscn", ".tres", ".gdshader", ".md", ".json", ".godot", ".cfg", ".txt", ".py", ".ps1", ".yml", ".yaml"}
-SKIP_PREFIXES = ("archives/", ".archive_worktrees/", "design/changelog/", "_logs/")  # repo-root relative
+SKIP_PREFIXES = (*(d + "/" for d in gd_lib.SKIP_PARTS), "design/changelog/", "_logs/")  # repo-root relative
 SKIP_FILES = ("scripts/data/changelog.json", "tools/move_script_cluster.py")
 
 

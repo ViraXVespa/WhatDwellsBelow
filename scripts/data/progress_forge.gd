@@ -4,7 +4,7 @@ const Book := preload("res://scripts/data/progress_forge/book.gd")
 const Act := preload("res://scripts/data/progress_forge/forge_act.gd")
 
 const HOLD_CAP := 3
-const FORGE_SLOTS: PackedStringArray = ["weapon", "tool", "head", "body", "legs"]
+const FORGE_SLOTS: PackedStringArray = Book.FORGE_SLOTS
 
 static func book(p: Object) -> Dictionary:
 	return Book.book(p)

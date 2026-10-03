@@ -2,6 +2,7 @@ extends Object
 
 const Bag := preload("res://scripts/data/progress_gear/gear_bag.gd")
 const Norm := preload("res://scripts/data/gear_rules/rules_norm.gd")
+const Affix := preload("res://scripts/data/affixes.gd")
 
 static func use_from_bag(p: Object, uid: int) -> String:
 	var it: Dictionary = {}
@@ -92,7 +93,7 @@ static func hp(p: Object) -> int:
 
 static func stat(p: Object, key: String) -> float:
 	var n := 0.0
-	for s: String in ["weapon", "tool", "head", "body", "legs"]:
+	for s: String in Affix.FORGE_SLOTS:
 		var it: Dictionary = p.slots.get(s, {})
 		if it.is_empty():
 			continue

@@ -3,6 +3,7 @@ extends Object
 ## Enemy hit / stagger / death / loot.
 
 const Threat := preload("res://scripts/combat/threat.gd")
+const Affix := preload("res://scripts/data/affixes.gd")
 const HpBarS := preload("res://scripts/combat/hp_bar.gd")
 const FloatS := preload("res://scripts/combat/float_num.gd")
 
@@ -83,7 +84,7 @@ static func drop_loot(host: CharacterBody3D) -> void:
 		var rarity := "white"
 		if randf() < App.bal.enemy_gear_green:
 			rarity = "green"
-		var item := App.prog.make_armor(["head", "body", "legs"][randi() % 3], rarity)
+		var item := App.prog.make_armor(Affix.ARMOR_SLOTS[randi() % Affix.ARMOR_SLOTS.size()], rarity)
 		if not App.prog.add_item(item):
 			App.spawn_floor_item(item, host.global_position)
 		else:

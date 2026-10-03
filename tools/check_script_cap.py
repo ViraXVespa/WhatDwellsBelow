@@ -20,7 +20,8 @@ import agent_log
 import gd_lib
 import repo_lib
 
-DEFAULT_OVER_KB = 10
+DEFAULT_OVER_KB = gd_lib.SHIP_BYTES // 1000
+SWEEP_OVER_KB = gd_lib.SWEEP_BYTES / 1000
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -55,9 +56,9 @@ def main(argv: list[str] | None = None) -> int:
     root = agent_log.resolve_root(args)
     if args.sweep:
         args.list, args.under_kb = True, 10.0
-        args.over_kb = 5.0 if args.over_kb is None else args.over_kb
+        args.over_kb = SWEEP_OVER_KB if args.over_kb is None else args.over_kb
     if args.over_kb is None:
-        args.over_kb = 5.0 if args.list else DEFAULT_OVER_KB
+        args.over_kb = SWEEP_OVER_KB if args.list else DEFAULT_OVER_KB
     limit = int(round(args.over_kb * 1000))
     if args.list:
         hi = int(round(args.under_kb * 1000)) if args.under_kb > 0 else None

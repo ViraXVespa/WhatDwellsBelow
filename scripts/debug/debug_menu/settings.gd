@@ -2,6 +2,8 @@ extends Object
 const MenuUtil := preload("res://scripts/ui/pause_menu/menu_util.gd")
 
 const T := preload("res://scripts/data/tunables.gd")
+const Affix := preload("res://scripts/data/affixes.gd")
+const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
@@ -86,10 +88,10 @@ static func grant_anvil_kit(host) -> void:
 		return
 	var added: int = 0
 	var kit: Array[Dictionary] = []
-	for wpn in ["great_axe", "staff", "longbow"]:
+	for wpn in Kit.BUILTIN_WEAPONS:
 		kit.append(p.make_weapon(wpn, "green", 4))
 		kit.append(p.make_weapon(wpn, "blue", 6))
-	for slot in ["head", "body", "legs"]:
+	for slot in Affix.ARMOR_SLOTS:
 		kit.append(p.make_armor(slot, "green", 4))
 		kit.append(p.make_armor(slot, "blue", 6))
 	for it in kit:

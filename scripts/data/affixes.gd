@@ -19,7 +19,9 @@ const ID_GATHER_SPD := "gather_spd"
 const ID_GATHER_POW := "gather_pow"
 const ID_YIELD := "yield_chance"
 
+## Slot rosters: the one home for equip/forge and armor slot lists (call sites reference these).
 const FORGE_SLOTS: PackedStringArray = ["weapon", "tool", "head", "body", "legs"]
+const ARMOR_SLOTS: PackedStringArray = ["head", "body", "legs"]
 
 static func defs() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []

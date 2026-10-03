@@ -12,6 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
+import gd_lib
 
 EXT = re.compile(r'^\[ext_resource[^\]]*\bpath="([^"]+)"[^\]]*\bid="([^"]+)"')
 NODE = re.compile(r'^\[node\s+name="([^"]+)"(?:\s+type="([^"]*)")?(?:\s+parent="([^"]*)")?')
@@ -30,7 +31,7 @@ def main(argv: list[str] | None = None) -> int:
         p = Path(raw)
         p = p if p.is_absolute() else root / p
         if p.is_dir():
-            scenes += [s for s in p.rglob("*.tscn") if "archives" not in s.parts and ".archive_worktrees" not in s.parts]
+            scenes += [s for s in p.rglob("*.tscn") if not set(gd_lib.SKIP_PARTS) & set(s.parts)]
         elif p.suffix.lower() == ".tscn" and p.is_file():
             scenes.append(p)
     if not scenes:

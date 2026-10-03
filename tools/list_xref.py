@@ -14,8 +14,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
+import gd_lib
 
-SKIP = {"archives", ".archive_worktrees", "_logs", "docs", ".git"}
+SKIP = {*gd_lib.SKIP_PARTS, "_logs", "docs", ".git"}
 
 
 def main(argv: list[str] | None = None) -> int:

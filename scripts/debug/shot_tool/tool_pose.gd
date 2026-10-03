@@ -29,13 +29,13 @@ static func _apply_pose(host: Node) -> void:
 	var rig: Node = host.get_tree().get_first_node_in_group("camera_rig")
 	if rig == null and player != null:
 		rig = player.get_node_or_null("CameraRig")
+	var T = load("res://scripts/data/tunables.gd")
 	if rig != null and rig.has_method("apply_size"):
-		var T = load("res://scripts/data/tunables.gd")
 		rig.warm_hold = true
 		rig.call("apply_size", 1080.0 / float(T.PX) / maxf(0.01, z))
 	var cam: Camera3D = host.get_viewport().get_camera_3d()
 	if cam != null:
-		cam.size = 1080.0 / 64.0 / maxf(0.01, z)
+		cam.size = 1080.0 / float(T.PX) / maxf(0.01, z)
 		cam.far = maxf(cam.far, cam.size * 3.0)
 		printerr("SHOT: mark=camsize size=%s zoom=%s" % [str(cam.size), str(z)])
 	if cam != null and false:

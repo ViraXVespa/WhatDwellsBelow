@@ -5,7 +5,7 @@ const Affix := preload("res://scripts/data/affixes.gd")
 static func normalize_prog(p: Object) -> void:
 	if p == null:
 		return
-	for s: String in ["weapon", "tool", "head", "body", "legs"]:
+	for s: String in Affix.FORGE_SLOTS:
 		var eq: Variant = p.slots.get(s, {})
 		if eq is Dictionary and not eq.is_empty():
 			p.slots[s] = normalize_item(eq)
