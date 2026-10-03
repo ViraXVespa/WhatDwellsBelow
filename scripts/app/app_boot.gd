@@ -5,6 +5,7 @@ const AnimS := preload("res://scripts/debug/anim_browser.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const WebHook := preload("res://scripts/debug/web_hook.gd")
 const LocS := preload("res://scripts/app/app_loc.gd")
+const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 
 static func _ready(host: Node) -> void:
 	LocS.setup()
@@ -79,6 +80,7 @@ static func hitstop(host: Node, sec: float) -> void:
 static func _process(host: Node, delta: float) -> void:
 	App.Pad.tick()
 	HitchLog.tick(host, delta)
+	DynRes.tick(host)
 	if host._in_world() and not host.ui_open:
 		var vp := host.get_viewport()
 		if vp and vp.gui_get_focus_owner() != null:
