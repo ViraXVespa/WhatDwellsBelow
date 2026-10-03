@@ -39,3 +39,4 @@ Open reuse findings (`python3 tools/list_dupes.py --lang all`; regenerate the ra
 | D4 | `goals_best` / `goals_near` enemy scan preludes, `map_rim` / `map_spec` span loops | 8-9 line scan twins | thresholds and step math differ; map loops are pixel loops |
 | D5 | `title` / `fs_gate` card VBox | 10-line twins | `fs_gate` is web-only; needs a browser run |
 | D6 | tool `sys.path` + import headers (6+ files), `make_p*_sfx`, `pack_*` mains | 8-13 line twins | must run before `import`; audio and art tools need assets to compare |
+| D7 | `board_host` / `host_sync` `focus_entered` closure, `props_place` / `spawn` placement loop, `tip` guard blocks, `schema_a` / `schema_b` heads | 8-10 line twins | focus closure is B13 (pad/touch pass); placement loop sits on the seeded gen order; rest below the line-count bar |

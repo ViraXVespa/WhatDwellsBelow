@@ -169,8 +169,8 @@ static func _mouse(i: int) -> String:
 static func _layout_code(e: InputEventKey) -> int:
 	var phys: int = int(e.physical_keycode)
 	if phys != 0:
-		if DisplayServer.get_name() == "headless":
-			return phys  # headless has no keyboard layout query (engine logs an error); same result as mapped == 0
+		if DisplayServer.get_name() == "headless" or OS.has_feature("web"):
+			return phys  # headless and web have no keyboard layout query (engine logs an error); same result as mapped == 0
 		var mapped: int = int(DisplayServer.keyboard_get_keycode_from_physical(phys as Key))
 		if mapped != 0:
 			return mapped
