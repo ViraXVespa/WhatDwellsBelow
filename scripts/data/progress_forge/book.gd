@@ -2,7 +2,7 @@ extends Object
 
 const Affix := preload("res://scripts/data/affixes.gd")
 
-const FORGE_SLOTS: PackedStringArray = ["weapon", "tool", "head", "body", "legs"]
+const FORGE_SLOTS: PackedStringArray = Affix.FORGE_SLOTS
 
 static func book(p: Object) -> Dictionary:
 	var raw: Variant = p.get("forge_book")

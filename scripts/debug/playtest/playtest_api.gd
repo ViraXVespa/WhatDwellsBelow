@@ -3,6 +3,7 @@
 ## State, public API, and live driver. playtest.gd extends this.
 
 const Store := preload("res://scripts/data/save_store.gd")
+const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const PlaytestAI := preload("res://scripts/debug/playtest_ai.gd")
 const PlaytestGoals := preload("res://scripts/debug/playtest_goals.gd")
 const PlaytestSim := preload("res://scripts/debug/playtest/sim.gd")
@@ -73,7 +74,7 @@ func interrupt() -> void:
 
 func queue_batch() -> String:
 	interrupted = false
-	var weapons: PackedStringArray = PackedStringArray(["great_axe", "staff", "longbow"])
+	var weapons: PackedStringArray = PackedStringArray(Kit.BUILTIN_WEAPONS)
 	var tools: PackedStringArray = PackedStringArray(["pickaxe", "hatchet", "pickaxe"])
 	var genders: PackedStringArray = PackedStringArray(["male", "female", "male"])
 	for kind: String in ["fresh", "progressed"]:

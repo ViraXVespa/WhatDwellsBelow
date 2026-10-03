@@ -1,6 +1,7 @@
 extends Object
 
 const Fmt := preload("res://scripts/ui/gear_board/text_fmt.gd")
+const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 
 static var seen_uids: Dictionary = {}
 
@@ -72,7 +73,7 @@ static func options_for(slot: String) -> Array:
 				out.append({"it": raw, "src": "bag", "uid": uid})
 		return out
 	if slot == "weapon":
-		for w: String in ["great_axe", "staff", "longbow"]:
+		for w: String in Kit.BUILTIN_WEAPONS:
 			var tmpl := "weapon:" + w
 			if seen_tmpl.has(tmpl):
 				continue

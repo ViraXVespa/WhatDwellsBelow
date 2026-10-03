@@ -2,6 +2,8 @@ extends Object
 
 ## Quest kill/fetch/ore notes and completion.
 
+const Affix := preload("res://scripts/data/affixes.gd")
+
 static func note_kill(p: Object, type_id: String, named: String) -> void:
 	if p.quest_active.is_empty():
 		return
@@ -45,7 +47,7 @@ static func try_complete(p: Object) -> void:
 	App.quest_named_name = ""
 
 static func unowned_gear(p: Object) -> Dictionary:
-	for s: String in ["head", "body", "legs"]:
+	for s: String in Affix.ARMOR_SLOTS:
 		if (p.holds[s] as Array).is_empty():
 			return p.make_armor(s, "green")
 	return p.make_weapon(p.pick_weapon, "green")

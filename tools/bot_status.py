@@ -17,8 +17,8 @@ import agent_log
 import gd_lib
 import repo_lib
 
-SHIP_BYTES = 10_000
-SWEEP_BYTES = 5_000
+SHIP_BYTES = gd_lib.SHIP_BYTES
+SWEEP_BYTES = gd_lib.SWEEP_BYTES
 ALLOW_FILE = repo_lib.ALLOW_FILE
 REUSE_FILE = "design/reuse-map.md"
 OPT_FILE = "design/grok-bot-opt.md"

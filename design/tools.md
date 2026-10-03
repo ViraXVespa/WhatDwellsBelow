@@ -45,7 +45,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 |---|---|---|---|---|
 | `bot_status.py` | Punch list: over-10KB/5KB, reuse brief, opt queue; `--prove` = script cap + allowlist + load graph | BD | `--help` | Y |
 | `check_script_cap.py` | Script size owner: 10KB cap + duplicate-basename check (`dupes=`): `--git-changed`, `--path`; `--sweep` lists 5-10KB, `--list --over-kb N` any size range | BWD | `--help` | Y |
-| `check_load_graph.py` | Doc routing vs `design/routes.yaml` (prints PASS/FAIL, no summary); also FAILs a boot file over its `boot_bytes` budget | BWD | `--help` | Y |
+| `check_load_graph.py` | Doc routing vs `design/routes.yaml` (PASS/FAIL, no summary): `smokes`/`shot_flows` keys, phases and flow files; boot file over its `boot_bytes` | BWD | `--help` | Y |
 | `code_map.py` | Code map: `check` (live `.gd` vs `design/code-map.md` ticks; exits 1 on new UNMAPPED or missing, older UNMAPPED are expected), `row --path P`, `patch --system S ...`. Summaries: `code-map-*`. | BD | `--help` | Y |
 | `check_code_map.py` | Shim -> `code_map.py check`, one release | BD | `--help` | Y |
 | `bot_smokes.py` | Headless smokes on the Linux VM (`--phases`, or `--door` / `--job` for the `routes.yaml` `smokes` map; `--for FILE` prints the covering phases and warnscan areas, runs nothing). Also runs `check_shot_gaps.py --changed` as a required gate (`--no-gaps` skips). Pin, install, `.uid` import: BOT.md Smokes. | B | `--help` | Y |
@@ -55,7 +55,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `bot_opt.py` | Opt queue: `--list`, `--id`, `--status opt-N=done`, `--add`, `--remove`. Never hand-edit the queue block. Summary: `bot-opt`. | BD | `--help` | Y |
 | `bot_allow.txt` | Allowlist: the paths the Bot may change; read by CI and `bot_status --prove`. Deny lines first. Authority for Bot scope. | BWD | - | Y |
 | `check_tool_cli.py` | CLI contract check over `tools/` (see Contract above) plus the `.ps1` shim check; `--smoke-run` runs every tool in a throwaway copy (crash, noise, `--json`, dry-run purity). Run after adding or editing a tool. | BWD | `--help` | Y |
-| `check_tool_docs.py` | Catalog check: every `tools/` file has a row, `A=Y` rows are allowed by `bot_allow.txt` (glob-aware), rows name real files. Run after adding or renaming a tool. Doc sweeps: `--stale-refs` (dead paths and identifiers fail) and `--narration` (history-sounding lines, advisory). | BWD | `--help` | Y |
+| `check_tool_docs.py` | Catalog check: every `tools/` file has a row, `A=Y` rows are allowed by `bot_allow.txt` (glob-aware), rows name real files. Doc sweeps: `--stale-refs` (dead paths, identifiers and Godot version drift fail) and `--narration` (history-sounding lines, advisory). | BWD | `--help` | Y |
 
 ### Split, code map, doc edits, inventory and lint
 

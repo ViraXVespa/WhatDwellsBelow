@@ -1,6 +1,7 @@
 extends Object
 
 const Store := preload("res://scripts/data/save_store.gd")
+const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const WebHook := preload("res://scripts/debug/web_hook.gd")
 const LiveSmoke := preload("res://scripts/debug/playtest/live_smoke.gd")
 const Recs := preload("res://scripts/debug/playtest/recs.gd")
@@ -144,7 +145,7 @@ static func stop_live(pt: Node) -> void:
 		pt.last_summary += "\nBatch: " + pth
 
 static func sim_save(pt: Node, kind: String, progressed: bool) -> void:
-	var weapons: PackedStringArray = PackedStringArray(["great_axe", "staff", "longbow"])
+	var weapons: PackedStringArray = PackedStringArray(Kit.BUILTIN_WEAPONS)
 	var tweaks: Array = [
 		{},
 		{"axe_damage": App.bal.axe_damage * 1.2},

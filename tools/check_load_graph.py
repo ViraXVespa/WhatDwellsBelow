@@ -49,6 +49,7 @@ from load_routes import (  # noqa: E402
     job_read_when,
     load_routes,
     parked_job_files,
+    SMOKE_PHASES,
     resolve_route_ref,
     role_of,
     skill_files,
@@ -544,6 +545,23 @@ def increment6_schema_fails(routes: dict) -> list[str]:
     return fails
 
 
+def route_map_fails(root: Path, routes: dict) -> list[str]:
+    """routes.yaml smokes / shot_flows: keys must be doors or jobs, phases in SMOKE_PHASES, flows real files."""
+    fails: list[str] = []
+    known = set(routes.get("doors") or {}) | set(job_index(routes)["by_id"])
+    for name, allow in (("smokes", {"default"}), ("shot_flows", set())):
+        raw = routes.get(name) or {}
+        for key, val in raw.items() if isinstance(raw, dict) else []:
+            if key not in known | allow:
+                fails.append(f"{name} key is not a door or job: {key}")
+            for tok in [t for t in str(val).replace(" ", "").split(",") if t]:
+                if name == "smokes" and not (tok.isdigit() and int(tok) in SMOKE_PHASES):
+                    fails.append(f"smokes.{key} phase {tok!r} not in {SMOKE_PHASES[0]}-{SMOKE_PHASES[-1]}")
+                if name == "shot_flows" and not (root / "tools" / "shot-flows" / f"{tok}.json").is_file():
+                    fails.append(f"shot_flows.{key} flow has no tools/shot-flows/{tok}.json")
+    return fails
+
+
 def boot_budget_fails(root: Path, routes: dict) -> list[str]:
     """Every boot_max path needs a routes.yaml boot_bytes budget; on-disk size must not exceed it."""
     budgets = boot_bytes(routes)
@@ -829,6 +847,7 @@ def main() -> int:
             fails.append(f"file has multiple route roles: {posix} -> {meaningful}")
 
     fails.extend(increment6_schema_fails(routes))
+    fails.extend(route_map_fails(root, routes))
     fails.extend(read_when_overlaps(routes))
     fails.extend(conflict_fails(routes))
 

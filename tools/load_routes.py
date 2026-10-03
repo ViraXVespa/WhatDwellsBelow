@@ -6,6 +6,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+SMOKE_PHASES = tuple(range(1, 10))  # numbered smoke phases (scripts/debug/smoke.gd --wdb-phaseN-smoke); every tool derives from this
+
 
 ROUTES_REL = "design/routes.yaml"
 

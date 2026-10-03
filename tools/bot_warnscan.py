@@ -52,6 +52,7 @@ import agent_log  # noqa: E402
 from bot_smokes import resolve_bin  # noqa: E402
 from bot_warnscan_lib import changed_areas, flake_label, merge, mode_label, parse_stream, run_failure  # noqa: E402
 from godot_lib import XVFB_SCREEN, pick_display  # noqa: E402
+from load_routes import SMOKE_PHASES  # noqa: E402
 
 BOOT_FRAMES = 600
 HARNESS = """extends SceneTree
@@ -95,6 +96,8 @@ def area_table(floors: list[int], seed: int) -> dict[str, tuple[list[str], str]]
         8: "camp: hub spots, buildings, save backup, archive",
         9: "dungeon: audio, archive catalog, anim models",
     }
+    if tuple(desc) != SMOKE_PHASES:
+        raise SystemExit(f"bot_warnscan area_table phases {tuple(desc)} != load_routes.SMOKE_PHASES {SMOKE_PHASES}")
     t: dict[str, tuple[list[str], str]] = {}
     for n, d in desc.items():
         t[f"p{n}"] = ([f"--wdb-phase{n}-smoke"], d)

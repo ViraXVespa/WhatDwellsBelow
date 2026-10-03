@@ -28,7 +28,7 @@ import agent_log
 import gd_lib
 
 KINDS = ("exact", "shape", "near", "block", "nblock")
-SKIP = {"archives", ".archive_worktrees", "_logs", "docs", ".git", "assets", "__pycache__"}
+SKIP = {*gd_lib.SKIP_PARTS, "_logs", "docs", ".git", "assets", "__pycache__"}
 IDENT = re.compile(r"\b[A-Za-z_]\w*\b")
 LOCAL = re.compile(r"^\s*(?:var|for)\s+(\w+)")
 TRIVIAL = re.compile(r"^(pass|return|return null|return false|return true|else:|\)|\]|\})$")

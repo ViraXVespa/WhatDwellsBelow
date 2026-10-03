@@ -27,14 +27,15 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+from load_routes import SMOKE_PHASES
 from agent_log import repo_root  # noqa: F401  (bot_warnscan imports it from here)
 
 VERSION = "4.7.2"
-ZIP_NAME = "Godot_v4.7.2-stable_linux.x86_64.zip"
-BIN_NAME = "Godot_v4.7.2-stable_linux.x86_64"
+BIN_NAME = f"Godot_v{VERSION}-stable_linux.x86_64"
+ZIP_NAME = BIN_NAME + ".zip"
 ZIP_URL = (
     "https://github.com/godotengine/godot-builds/releases/download/"
-    "4.7.2-stable/" + ZIP_NAME
+    f"{VERSION}-stable/" + ZIP_NAME
 )
 STEAM_WIN = (
     "C:\\Program Files (x86)\\Steam\\steamapps\\common\\"
@@ -68,7 +69,7 @@ def setup(pin: Path) -> Path:
     if sys.platform != "linux":
         raise SystemExit(
             "FAIL setup: Linux pin missing. On Windows set GODOT_BIN "
-            "or install the Steam 4.7.2 tools build. This runner does not "
+            f"or install the Steam {VERSION} tools build. This runner does not "
             "download the Windows editor."
         )
     pin.parent.mkdir(parents=True, exist_ok=True)
@@ -135,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--for", dest="for_files", nargs="+", default=[], metavar="FILE",
                    help="Repo file(s): print the warnscan areas and smoke phases that load them, then exit (no Godot; same source as bot_warnscan --changed).")
     p.add_argument("--doctor", action="store_true", help="Check the pinned Godot binary and print the setup state; run nothing.")
-    p.add_argument("--setup", action="store_true", help="Download the official 4.7.2 Linux binary if the pin is missing, then exit.")
+    p.add_argument("--setup", action="store_true", help=f"Download the official {VERSION} Linux binary if the pin is missing, then exit.")
     p.add_argument("--phases", default="", help="Smoke phases, comma list (example 1,2,6).")
     p.add_argument("--door", default="", help="Phases mapped to this routes.yaml door (instead of --phases).")
     p.add_argument("--job", default="", help="Phases mapped to this routes.yaml door.job (instead of --phases).")
@@ -159,8 +160,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"warn: python3 tools/bot_warnscan.py --areas {','.join(areas) or 'static'}   (or --changed)")
         return agent_log.emit_result("INFO", phases=run, areas=",".join(areas))
     for tok in [t for t in ns.phases.replace(" ", "").split(",") if t]:
-        if not tok.isdigit() or not 0 <= int(tok) <= 9:
-            agent_log.fail(f"bad phase {tok!r} in --phases. Valid phases are 1-9 (comma list, example 1,2,6)")
+        if not tok.isdigit() or int(tok) not in (0, *SMOKE_PHASES):
+            agent_log.fail(f"bad phase {tok!r} in --phases. Valid phases are {SMOKE_PHASES[0]}-{SMOKE_PHASES[-1]} (comma list, example 1,2,6)")
     if ns.door or ns.job:
         from load_routes import check_route, load_routes
         bad_route = check_route(load_routes(root), ns.door, ns.job)
@@ -211,7 +212,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"gaps={'PASS' if grc == 0 else 'FAIL'}\t{mode}")
             rc |= 1 if grc else 0
     for n in phases:
-        if n < 1 or n > 9:
+        if n not in SMOKE_PHASES:
             print(f"P{n}=FAIL\tout_of_range")
             rc = 1
             continue

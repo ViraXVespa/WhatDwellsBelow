@@ -3,6 +3,7 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Inv := preload("res://scripts/ui/progress_ui/inv.gd")
 const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
+const Affix := preload("res://scripts/data/affixes.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 
 static func rebuild_shop(ui) -> void:
@@ -29,7 +30,7 @@ static func rebuild_shop(ui) -> void:
 			if str(it.kind) == "artifact" or str(it.kind) == "weapon" or str(it.kind) == "head" or str(it.kind) == "body" or str(it.kind) == "legs":
 				var uid := int(it.uid)
 				ui.box.add_child(ThemeS.btn(App.tr("shop.pawn_g") % [it.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, App.tr("shop.pawn_item"), App.tr("shop.pawn_for_g") % [it.name, int(App.bal.pawn_gold)], func(): pawn(ui, uid))))
-		for s in ["weapon", "tool", "head", "body", "legs"]:
+		for s in Affix.FORGE_SLOTS:
 			var eq: Dictionary = App.prog.slots.get(s, {})
 			if eq.is_empty():
 				continue
