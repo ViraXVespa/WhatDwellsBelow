@@ -46,7 +46,7 @@ Categories (27). Left column: Player, Movement, Combat, Cover, Aim & Lock, Adren
 - HUD scale slider
 - UI text floor slider (8–24, default 14). Applied scale is `clamp(floor / (UI_TEXT_REF × screen_per_design), 1.0, 2.5)`. Floor is saved; applied scale is recomputed on resize
 - Force touch overlay toggle. Session-only. Bypasses web / mobile UA / keyboard / pad checks so desktop can preview the cluster in Placeholdia or the dungeon. Overlay still hides while `App.ui_open`
-- Sprite filter cycle over all five Godot Sprite3D modes (nearest, nearest+mips, nearest+mips+aniso, linear+mips, linear+mips+aniso)
+- Sprite filter cycle over all five Godot Sprite3D modes (nearest, nearest+mips, nearest+mips+aniso, linear, linear+mips)
 - Mip blend Sharp / Smooth (`rendering/textures/default_filters/use_nearest_mipmap_filter`)
 - Mip bias slider (−2..2). Stored and persisted; Sprite3D has no lod-bias hook yet so the picture does not change
 - Touch stick deadzone slider, plus reset. RT is press-and-hold only; there is no double-tap latch

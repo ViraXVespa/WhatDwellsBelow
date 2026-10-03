@@ -111,10 +111,10 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | Aim-line on / opacity / width | on | true / 0.85 / 0.08 | Bow line is shoulder height. Mesh hidden until `update_line`. |
 | Aim-line use weapon range / length | — | true / 4.0 | Gear `atk_range` extends reach |
 | Cover full-band / edge mult | — | 0.18 / 0.35 | Full damage until the last 18% of fan radius |
-| Cover columns / alpha | — | 28 / 0.4 | Opaque mask grid |
+| Cover columns / alpha | — | 24 / 0.4 | Opaque mask grid |
 | Pierce stop | — | 0.85 | Arrow despawns at this coverage |
-| Arrow tip radius | — | 0.16 | Head disk. Far hosts skip `hit_shot`. |
-| Bow path width | — | 0.08 | Special spread line width |
+| Arrow tip radius | — | 0.28 | Head disk. Far hosts skip `hit_shot`. |
+| Bow path width | — | 0.12 | Special spread line width |
 
 ## Gathering (hit-based)
 

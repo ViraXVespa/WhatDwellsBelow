@@ -22,7 +22,7 @@ Same rules as above: new file under `assets/audio/`, one `_load` line, one `App.
 | Anvil, loadout crystal, quest board, vendor, dumpster, billboard panel opens | `interact_act.gd` `open_chest` (one branch per kind) | `panel_open` / `p10_panel_open.wav` (shared) | 0.15 s soft wooden or paper rustle, no pitch |
 | Stairs descend | `interact_act.gd` stairs branch, `App.next_floor()` | `stairs` / `p10_stairs.wav` | 0.5 s stone steps down plus a short echo |
 | Enemy death | `enemy_hit.gd` `die` | `enemy_die` / `p10_enemy_die.wav` | 0.3 s comic poof or squelch; readable over `hit` |
-| Enemy hits player (impact, not the hurt VO) | `enemy_ai.gd` `hit_player` | `player_struck` / `p10_player_struck.wav` | 0.2 s dull thump, lower than `hit`; the hurt VO already plays in `player_act.gd` |
+| Enemy hits player (impact, not the hurt VO) | `enemy_atk.gd` `hit_player` | `player_struck` / `p10_player_struck.wav` | 0.2 s dull thump, lower than `hit`; the hurt VO already plays in `player_act.gd` |
 | Chest open | `interact_act.gd` `open_chest` chest branch (today plays `pickup`) | `chest` / `p10_chest.wav` | 0.4 s creak then latch click |
 | Quest accept | `quest_roll.gd` `accept_quest` | `quest_accept` / `p10_quest_accept.wav` | 0.3 s two-note stamp or seal, hopeful |
 

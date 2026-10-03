@@ -104,9 +104,9 @@ Normal combat rooms pack `room_pack` enemies. Streaming keeps that count inside 
 | `angled_vs_dogleg_min` | 12 |
 
 `gen.gd` clamps to minimum 24×24 and at least 6 rooms.
-Boss room is farthest from spawn that still meets `_min_boss_sep = max(16, max(w,h) * 0.5)`.
+Boss room is farthest from spawn that still meets `Rooms.min_boss_sep` = max(16, max(w,h) * 0.5).
 cycle_of(n)     = (n - 1) / 5
 loop_index(n)   = ((n - 1) % 5) + 1
 is_gate_master  = loop_index == 5
 
-Live winding stays on the 1 m cardinal grid. `_carve_band` is not used for room-to-room links.
+Live winding stays on the 1 m cardinal grid; room-to-room links are not band stamps.
