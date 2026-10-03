@@ -69,6 +69,12 @@ gates:
   constraints_demo:
     file: design/constraints-demo.md
     when: calling_build_complete
+  inventory_forge:
+    file: design/inventory-forge.md
+    when: anvil_forge_flow
+  audio_sfx:
+    file: design/audio-sfx.md
+    when: wiring_or_generating_sfx_cue
   art_attack_log:
     file: design/art-attack-keyframes-log.md
     when: attack_keyframe_roll_history
