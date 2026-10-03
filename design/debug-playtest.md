@@ -109,3 +109,7 @@ Events: `begin`, `wait`, `decide`, `step`, `act`, `beat`, `combat`, `end`.
 - `beat` is sparse (skipped when gold / kills / hp / goal are unchanged)
 - `tel.cfg` is omitted; `cfg_hash` on `begin` is enough
 - Root `end_cond` / `fail` come from the `end` event, not from an empty tel stamp
+
+## Web perf hook (opt-in URL args)
+
+`scripts/debug/cli_args.gd` also reads URL params that start with `wdb-` on web (`?wdb-seed=42` reads as `--wdb-seed=42`). `AppRun.begin_run` reads it with `CliArgs.int_arg("--wdb-seed", 0)` (not `seed_arg`, which maps 0 to 1) and, when positive, uses it as the run seed and seeds the global RNG; without the param the seed stays `randi()`. `?wdb-playtest` makes `scripts/debug/web_hook.gd` register `window.wdbPlaytest(sec)`, which enqueues one fresh Great Axe live run at real time (`scale` 1) through the playtester above; the finished run's telemetry (plus `stuck_t`) lands in `window.__wdbPlay`; `web_perf.py` marks a run INVALID when it ends early, makes no kills, is stuck, stalls or logs console errors. `tools/web_perf.py` flow `dungeon-fight` uses both. Normal URLs register nothing.

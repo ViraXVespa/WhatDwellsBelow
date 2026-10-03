@@ -55,16 +55,4 @@ count, pending opt ids. Do not walk the game tree.
 
 Then one job from the printed list.
 
-After a saved size skill, an optional main-changed routine may run status
-then size-only. Wake with python3 tools/bot_status.py. If over_10kb count is
-0, report and stop. If over_10kb count is above 0, open only
-design/grok-bot-size.md. Commit on bot/* only. Do not start reuse, extract,
-relocate, docs, or opt from that wake. Do not schedule a routine that
-commits until that skill exists.
-
-## Where the rules live
-
-- This file — you
-- BOT.md — the Bot
-- python3 tools/bot_status.py — punch list
-- design/reuse-map.md and design/grok-bot-opt.md — queues (markdown only)
+After a saved size skill, an optional main-changed routine may run the wake rule in BOT.md (status, then size-only). Do not schedule a routine that commits until that skill exists.

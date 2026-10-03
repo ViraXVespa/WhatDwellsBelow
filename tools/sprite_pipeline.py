@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
+import agent_log  # noqa: E402
 import sprite_lib  # noqa: E402
 
 MAGENTA = (255, 0, 255, 255)
@@ -463,20 +464,14 @@ def write_palette(im: Image.Image, dest: Path) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    import sys
-    from pathlib import Path as _P
-
-    sys.path.insert(0, str(_P(__file__).resolve().parent))
-    import agent_log
-
     ap = agent_log.std_parser("Sprite pipeline: seeds | key (matte + 128 fit) | matte | flatten.")
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("seeds", help="Extract seeds: SRC DEST_DIR")
-    s.add_argument("src", type=Path); s.add_argument("dest", type=Path)
+    s.add_argument("src", type=Path, help="Source image."); s.add_argument("dest", type=Path, help="Output folder for the seed cells.")
     for name, helptext in (("key", "matte + 128 fit"), ("alpha", "alias of key"), ("fit", "alias of key"),
                            ("matte", "matte only"), ("flatten", "range-key flatten")):
         s = sub.add_parser(name, help=f"SRC.png DEST.png ({helptext})")
-        s.add_argument("src", type=Path); s.add_argument("dest", type=Path)
+        s.add_argument("src", type=Path, help="Source image."); s.add_argument("dest", type=Path, help="Output PNG path.")
     args = ap.parse_args(argv)
     if args.cmd == "seeds":
         print(json.dumps(extract_seeds(args.src, args.dest), indent=2))
@@ -489,4 +484,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

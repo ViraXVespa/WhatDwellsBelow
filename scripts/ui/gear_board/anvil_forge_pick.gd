@@ -21,14 +21,7 @@ static func _fill_pick(ui: CanvasLayer, box: Control, slot: String) -> Control:
 		var it: Dictionary = row.it if row.get("it") is Dictionary else {}
 		var on := _picked(ui, key)
 		var inv_key := "opt:forge:%s:%s" % [slot, key]
-		var b := Button.new()
-		b.text = ""
-		b.custom_minimum_size = Vector2(72, 72)
-		b.focus_mode = Control.FOCUS_ALL
-		b.icon = Icons.tex_for_item(it)
-		b.expand_icon = true
-		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		b.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+		var b := Icons.pick_btn(it)
 		b.set_meta("forge_key", key)
 		b.set_meta("inv_key", inv_key)
 		b.set_meta("inv_it", it.duplicate(true))

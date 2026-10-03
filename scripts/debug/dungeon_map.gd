@@ -22,10 +22,7 @@ static func _arg_int(key: String, fallback: int) -> int:
 	return CliArgs.int_arg(key, fallback)
 
 static func run_seed() -> int:
-	var n: int = _arg_int("--wdb-dungeon-map-seed", 42)
-	if n == 0:
-		return 1
-	return n
+	return CliArgs.seed_arg("--wdb-dungeon-map-seed", 42)
 
 static func floor_n() -> int:
 	return maxi(1, _arg_int("--wdb-dungeon-map-floor", 1))

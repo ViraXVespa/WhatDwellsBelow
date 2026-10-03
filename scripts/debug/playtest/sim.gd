@@ -1,6 +1,7 @@
 extends Object
 
 const Store := preload("res://scripts/data/save_store.gd")
+const WebHook := preload("res://scripts/debug/web_hook.gd")
 const Recs := preload("res://scripts/debug/playtest/recs.gd")
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const PlaytestLogBatch := preload("res://scripts/debug/playtest_log/batch.gd")
@@ -110,6 +111,7 @@ static func finish_job(pt: Node, cond: String, force_end: bool) -> void:
 	PlaytestLog.finish(pt, end_s, fail_s)
 	PlaytestLogBatch.note_run()
 	pt.history.append(App.tel.to_dict())
+	WebHook.publish(App.tel.to_dict())
 	pt._save_history()
 	reset_ai_state(pt)
 	if pt.queue.is_empty() or pt.interrupted:

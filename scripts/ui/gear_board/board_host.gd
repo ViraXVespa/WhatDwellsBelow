@@ -1,17 +1,10 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Text := preload("res://scripts/ui/gear_board/board_text.gd")
 const Act := preload("res://scripts/ui/gear_board/board_act.gd")
-const Floor := preload("res://scripts/ui/gear_board/floor.gd")
-const Tip := preload("res://scripts/ui/gear_board/tip.gd")
 const Build := preload("res://scripts/ui/gear_board/board_build.gd")
-const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const HostBuild := preload("res://scripts/ui/gear_board/host_build.gd")
 const Sync := preload("res://scripts/ui/gear_board/host_sync.gd")
-
-static func ensure_host(ui: CanvasLayer) -> void:
-	HostBuild.ensure_host(ui)
 
 static func _watch_hover(ui: CanvasLayer, b: Control, key: String) -> void:
 	b.mouse_entered.connect(func():
@@ -105,6 +98,3 @@ static func find_sel(ui: CanvasLayer) -> Control:
 
 static func refresh(ui: CanvasLayer) -> void:
 	Sync.refresh(ui)
-
-static func apply_pending() -> void:
-	Sync.apply_pending()

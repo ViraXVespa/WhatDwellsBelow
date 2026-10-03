@@ -39,9 +39,6 @@ func _draw_pad() -> void:
 func _knob(c: Vector2, r: float) -> void:
 	Draw.knob(self, c, r)
 
-func _glyph(action: String, c: Vector2, r: float, dim := false) -> void:
-	Draw.glyph(self, action, c, r, dim)
-
 func _drag(idx: int, pos: Vector2) -> void:
 	PadInput.drag(self, idx, pos)
 

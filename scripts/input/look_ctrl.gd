@@ -7,21 +7,21 @@ const T := preload("res://scripts/data/tunables.gd")
 const MapAct := preload("res://scripts/world/dungeon/map_act.gd")
 
 static var mode := false
-static var wheel_step := 0.08
-static var pinch_gain := 1.15
-static var stick_zoom := 0.9
-static var stick_hud := 0.35
-static var stick_pan := 520.0
+static var wheel_step := T.LOOK_WHEEL_STEP
+static var pinch_gain := T.LOOK_PINCH_GAIN
+static var stick_zoom := T.LOOK_STICK_ZOOM
+static var stick_hud := T.LOOK_STICK_HUD
+static var stick_pan := T.LOOK_STICK_PAN
 
 static var _was_toggle := false
 static var _was_blocked := false
 
 static func reset_defaults() -> void:
-	wheel_step = 0.08
-	pinch_gain = 1.15
-	stick_zoom = 0.9
-	stick_hud = 0.35
-	stick_pan = 520.0
+	wheel_step = T.LOOK_WHEEL_STEP
+	pinch_gain = T.LOOK_PINCH_GAIN
+	stick_zoom = T.LOOK_STICK_ZOOM
+	stick_hud = T.LOOK_STICK_HUD
+	stick_pan = T.LOOK_STICK_PAN
 
 static func clear() -> void:
 	mode = false

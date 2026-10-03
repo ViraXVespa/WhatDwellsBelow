@@ -1,6 +1,5 @@
 extends Object
 
-const Anim := preload("res://scripts/world/player/player_anim.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const AppRunS := preload("res://scripts/app/app_run.gd")
 
@@ -173,14 +172,8 @@ static func dungeon_load_timing_async(host: Node) -> void:
 static func pump_fps(host: Node, hub: bool) -> void:
 	await Hub.pump_fps(host, hub)
 
-static func hub_preload_paths(_host: Node) -> PackedStringArray:
-	return Hub.hub_preload_paths(_host)
-
 static func preload_hub(host: Node, _t0: int = 0) -> void:
 	Hub.preload_hub(host, _t0)
-
-static func hub_status_for(path: String) -> String:
-	return Hub.hub_status_for(path)
 
 static func launch_archive(host: Node, id: String) -> void:
 	if host._menu_loading:

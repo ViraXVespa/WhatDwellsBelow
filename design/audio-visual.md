@@ -1,15 +1,9 @@
 ﻿# Audio, visual, splash
 
 Status: binding design + live snapshot  
-Read when: music, splash stills, presentation rules
+Read when: music, SFX, splash stills, presentation rules
 Code: `scripts/audio/music.gd`, `scripts/audio/sfx.gd`, `scripts/ui/splash.gd`, `scripts/ui/fs_gate.gd`, `scripts/boot.gd`, `scripts/title.gd`, `scripts/world/sprite_filter.gd`, `tools/enable_texture_mips.py`, `.github/workflows/pages.yml`  
 
-
-This file is the door. SFX bodies live in the Job sibling; open it only when its row matches.
-
-| Job | Open |
-|-----|------|
-| sfx wiring, silent events, wav ids, appendix E | `design/audio-visual-sfx.md` |
 
 ## Music
 
@@ -26,9 +20,35 @@ This file is the door. SFX bodies live in the Job sibling; open it only when its
 
 Live default loop offset: `BITTER_LOOP_DEFAULT = 15.52`.
 
-## SFX
+## SFX – minimum required set (Appendix E)
 
-Cue list, wiring recipe and the silent-cue table: Job table.
+All volumes are controlled by the SFX slider. Additional short UI, weapon-specific, and ambient sounds may be added.
+
+| SFX | Notes |
+|-----|-------|
+| Melee hit | |
+| Player hurt | Separate male and female VO performances of equal scope |
+| Special / Slam impact | |
+| Dash | |
+| Mining hit | |
+| Woodcutting hit | |
+| Breakable smash | |
+| Item pickup | |
+| UI click / confirm / cancel | |
+| Level-up | |
+| Adrenaline Rush start (warcry) | Separate male and female performances of equal scope |
+| Adrenaline Rush loop (woosh / crackle) | |
+| Critical hit | |
+| Potion use | Instant heal; distinct from food |
+| Food use | Heal-over-time start; distinct from potion |
+| Deathrattle “hurk” | Separate male and female performances of equal scope |
+| Comedic thud (“Dispel”) | |
+| Consciousness-transfer (enter dungeon) | Short presentation beat |
+| Wake-up (return to Placeholdia) | Short presentation beat |
+
+### Cue wiring and missing SFX
+
+Where cues come from, how Build wires one, and the silent-today event table: `audio-sfx.md` (opened when wiring or generating a cue).
 
 ## Visual and art rules
 
@@ -41,13 +61,13 @@ Cue list, wiring recipe and the silent-cue table: Job table.
 - Mip blend Sharp / Smooth is a debug Settings toggle (`use_nearest_mipmap_filter`). Default is Smooth.
 - Mip bias is stored for later; Sprite3D has no lod-bias hook yet.
 - All characters use Y-billboard so they remain upright under the orthographic camera.
-- Character art, 8-dir Bible layout, male/female parity, paper-doll overlays, required body states, and I2V plate law: art_pipeline. Body-state list and idle-still rule: player. Voice-over sets: player and the SFX sibling.
+- Character art, 8-dir Bible layout, male/female parity, paper-doll overlays, required body states, and I2V plate law: art_pipeline. Body-state list and idle-still rule: player. Voice-over sets: player and the SFX table above.
 - Wall height, tile size (1 unit = 64 px), and depth-sorting SHOULD produce correct layering. Arbitrary popping MUST be avoided wherever possible, but it is not a hard failure if a small amount remains after best-effort sorting.
 - Buildings in Placeholdia MUST have actual depth and realistic dimensions.
 - Lighting, fog color/density, and void plane MUST create a clear visual contrast between the warmer Placeholdia hub and the colder, darker dungeon floors. That contrast is product law. World env, ground shader, wall volume, light RT, and actor shadows belong to the graphics owner.
 - Consciousness-transfer VFX on dungeon enter and wake-up VFX on return to Placeholdia are required presentation beats.
 
-Live world art (2026-09-09 pass): Placeholdia and dungeon tiles, building facades, hub/dungeon props, hub NPCs, ghost shopkeep, dummy, boss door, and cracked wall were replaced to match the locked player Bibles. Installer `tools/process_world_pass.py`. Key native-resolution stills, then nearest-neighbor fit; do not downscale before chroma key. Player I2V, enemy stills, and UI icons were not in that pass. Placeholder policy below still applies.
+World art pass history (2026-09-09): `design/changelog/archive/world-art-2026-09-09.md`.
 
 ## Credit splash → title sequence
 

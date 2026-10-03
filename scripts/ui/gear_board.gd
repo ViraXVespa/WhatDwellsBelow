@@ -1,19 +1,11 @@
 extends Object
 
-const ThemeS := preload("res://scripts/ui/theme.gd")
 const Text := preload("res://scripts/ui/gear_board/board_text.gd")
-const Act := preload("res://scripts/ui/gear_board/board_act.gd")
-const Floor := preload("res://scripts/ui/gear_board/floor.gd")
 const Tip := preload("res://scripts/ui/gear_board/tip.gd")
-const Build := preload("res://scripts/ui/gear_board/board_build.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Host := preload("res://scripts/ui/gear_board/board_host.gd")
 
 static var pending_kit: Dictionary = {}
-
-static func ensure_host(ui: CanvasLayer) -> void:
-
-	Host.ensure_host(ui)
 
 static func is_loadout(ui: CanvasLayer) -> bool:
 	return str(ui.get("gear_mode")) == "loadout"
@@ -35,9 +27,6 @@ static func _watch_hover(ui: CanvasLayer, b: Control, key: String) -> void:
 
 static func hide_tip(ui: CanvasLayer) -> void:
 	Tip.hide_tip(ui)
-
-static func ensure_tip(ui: CanvasLayer) -> void:
-	Tip.ensure_tip(ui)
 
 static func place_tip(ui: CanvasLayer) -> void:
 	Tip.place_tip(ui)
@@ -74,10 +63,6 @@ static func bag_grid(ui: CanvasLayer) -> void:
 
 	Host.bag_grid(ui)
 
-static func bag_cell(ui: CanvasLayer, it: Dictionary) -> Button:
-
-	return Host.bag_cell(ui, it)
-
 static func find_sel(ui: CanvasLayer) -> Control:
 
 	return Host.find_sel(ui)
@@ -98,7 +83,3 @@ static func clear_sub(ui: CanvasLayer) -> void:
 		old.name = "gear_sub_dead"
 		old.queue_free()
 		old = ui.get_node_or_null("gear_sub_panel")
-
-static func apply_pending() -> void:
-
-	Host.apply_pending()

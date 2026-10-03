@@ -1,34 +1,10 @@
-﻿# Audio: SFX cues and wiring
+﻿# SFX cue wiring and missing SFX
 
 Status: binding design + live snapshot  
-Read when: wiring or adding an SFX cue, the Appendix E minimum set, the silent-cue table  
-Code: `scripts/audio/sfx.gd`, `scripts/audio/music.gd`  
+Read when: wiring a new SFX cue, generating a placeholder cue, or asking which events are still silent
+Code: `scripts/audio/sfx.gd`
 
-## SFX – minimum required set (Appendix E)
-
-All volumes are controlled by the SFX slider. Additional short UI, weapon-specific, and ambient sounds may be added.
-
-| SFX | Notes |
-|-----|-------|
-| Melee hit | |
-| Player hurt | Separate male and female VO performances of equal scope |
-| Special / Slam impact | |
-| Dash | |
-| Mining hit | |
-| Woodcutting hit | |
-| Breakable smash | |
-| Item pickup | |
-| UI click / confirm / cancel | |
-| Level-up | |
-| Adrenaline Rush start (warcry) | Separate male and female performances of equal scope |
-| Adrenaline Rush loop (woosh / crackle) | |
-| Critical hit | |
-| Potion use | Instant heal; distinct from food |
-| Food use | Heal-over-time start; distinct from potion |
-| Deathrattle “hurk” | Separate male and female performances of equal scope |
-| Comedic thud (“Dispel”) | |
-| Consciousness-transfer (enter dungeon) | Short presentation beat |
-| Wake-up (return to Placeholdia) | Short presentation beat |
+The required SFX list stays on the audio-visual page.
 
 ## Where cues come from, and how Build wires one
 - Assets: `assets/audio/` (`p2_*`, `p9_*` and `sfx_*` wavs, `music_*`). `sfx.gd` `_ready()` maps each cue id to a file (`_load("hit", "res://assets/audio/p2_hit.wav")`); a missing file loads silent, so check the path.

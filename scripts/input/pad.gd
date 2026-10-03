@@ -204,23 +204,3 @@ static func _dt() -> float:
 	if loop is SceneTree:
 		return (loop as SceneTree).root.get_process_delta_time()
 	return 0.016666
-
-static func web_buttons() -> PackedFloat32Array:
-	if not OS.has_feature("web"):
-		return PackedFloat32Array()
-	var raw := str(JavaScriptBridge.eval("""
-		(function () {
-			var pads = navigator.getGamepads ? navigator.getGamepads() : [];
-			for (var i = 0; i < pads.length; i++) {
-				if (!pads[i] || !pads[i].buttons) continue;
-				return JSON.stringify(pads[i].buttons.map(function (b) { return b.value; }));
-			}
-			return "[]";
-		})();
-	""", true))
-	var parsed: Variant = JSON.parse_string(raw)
-	var out := PackedFloat32Array()
-	if parsed is Array:
-		for v in parsed:
-			out.append(float(v))
-	return out

@@ -11,17 +11,23 @@ import struct
 import wave
 from pathlib import Path
 
+import agent_log
+
 SR = 22050
 
 
 def _write(path: Path, frames: list[int]) -> None:
     """Mono 16-bit wav from int samples; creates parent folders."""
+    if agent_log.DRY_RUN:
+        print(f"would write {path}")
+        return
     path.parent.mkdir(parents=True, exist_ok=True)
     with wave.open(str(path), "w") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
         w.setframerate(SR)
         w.writeframes(b"".join(struct.pack("<h", f) for f in frames))
+    print(f"wrote {path}")
 
 
 def write_wav(path: Path, samples: list[float], scale: int = 32000) -> None:

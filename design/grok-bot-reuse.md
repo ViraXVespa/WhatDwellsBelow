@@ -5,10 +5,7 @@ Read when: Grok Bot Job table → staged reuse-map brief
 
 Binding for **Grok Bot** when the User names the staged reuse PR / reuse-map / quota reset with a brief ready.
 
-
 ## Mandate
-
-Size, prove, changelog, and `version.json` rules live in `BOT.md`.
 
 Confirm `reuse_brief count` from `python3 tools/bot_status.py`. The current body of `design/reuse-map.md` is **one** PR goal. Implement that brief. Do not take a subset. Do not invent rows. Do not start a size sweep, extract hunt, relocate, or doc facade pass in the same session.
 
@@ -20,13 +17,11 @@ Still refactor-shaped unless a row the User wrote is explicit and legal. No inve
 
 ## Read set
 
-1. This file
-2. `design/reuse-map.md` (the brief)
-3. `design/refactor.md` when a touched file must split (recipe only)
-4. One `design/code-map.md` **system row** for each cluster the brief names
+1. `design/reuse-map.md` (the brief)
+2. `design/refactor.md` when a touched file must split (recipe only)
+3. One `design/code-map.md` **system row** for each cluster the brief names
    (Finding new candidates is a separate User-named sweep: `python3 tools/list_dupes.py --md PATH`, then tier the groups; only near-identical bodies move to a shared module.)
-5. After that: only the live `.gd` files in the active cluster
-6. At ship: `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
+4. After that: only the live `.gd` files in the active cluster
 
 Do not walk the live tree to rediscover copies the brief does not name.
 
@@ -36,7 +31,4 @@ Do not walk the live tree to rediscover copies the brief does not name.
 2. Implement the brief as one branch / one PR.
 3. Update `design/code-map.md` when a new public helper path appears. Hot paths (gen, shaders, pixel loops, tool output): capture a golden BEFORE (gen result md5, camp/dungeon shots with `shot_diff.py`, old-vs-new bytes for tools) and revert any item that is not identical; keep GLSL text textually identical.
 4. Clear the completed Brief items from `design/reuse-map.md` in the same PR. Leave the how-to headers. No Ready / Done columns.
-5. Prove per BOT.md.
-## Verify
-
-Prove per BOT.md.
+5. Prove: `BOT.md`.

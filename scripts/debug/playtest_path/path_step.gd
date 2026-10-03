@@ -1,6 +1,5 @@
 extends Object
 
-const Util := preload("res://scripts/debug/playtest_path/path_util.gd")
 const REACH := 36
 const Nav := preload("res://scripts/debug/playtest_path/path_nav.gd")
 

@@ -2,7 +2,6 @@ extends Object
 
 const Gen := preload("res://scripts/dungeon/gen.gd")
 const PlayerS := preload("res://scripts/world/player.gd")
-const Roster := preload("res://scripts/combat/roster.gd")
 const DoorS := preload("res://scripts/world/boss_door.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")

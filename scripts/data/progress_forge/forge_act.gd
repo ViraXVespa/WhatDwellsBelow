@@ -69,9 +69,6 @@ static func holds_of(p: Object, slot: String, type_id: String) -> Array:
 			out.append(raw)
 	return out
 
-static func hold_open(p: Object, slot: String, type_id: String) -> int:
-	return HOLD_CAP - holds_of(p, slot, type_id).size()
-
 static func set_holds_for_type(p: Object, slot: String, type_id: String, keep: Array) -> String:
 	var rest: Array = []
 	for raw: Variant in p.holds.get(slot, []):
@@ -122,9 +119,6 @@ static func add_hold(p: Object, it: Dictionary) -> String:
 	p.add_perm_xp("smith", Balance.f("xp_smith", 12.0))
 	App.save_now()
 	return "Forged into a hold (%d/%d)." % [holds_of(p, slot, type_id).size(), HOLD_CAP]
-
-static func place_hold(p: Object, it: Dictionary) -> void:
-	add_hold(p, it)
 
 static func replace_hold(p: Object, a, b, c = 0, d = {}) -> String:
 	if a is Dictionary:

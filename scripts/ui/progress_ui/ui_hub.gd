@@ -16,12 +16,6 @@ static func rebuild_anvil(ui: CanvasLayer) -> void:
 	ui.gear_mode = "anvil"
 	Board.build(ui, "anvil")
 
-static func toggle_char(ui) -> void:
-	GearAct.toggle_char(ui)
-
-static func floor_step(ui, d: int) -> void:
-	GearAct.floor_step(ui, d)
-
 static func enter(ui) -> void:
 	GearAct.enter(ui)
 

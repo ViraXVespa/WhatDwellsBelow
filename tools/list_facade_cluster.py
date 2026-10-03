@@ -18,7 +18,7 @@ import agent_log
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List a facade + stem-folder helpers by size (no body reads).", json_out=True)
     ap.add_argument("facade_pos", nargs="?", default="", help="Facade .gd path or cluster folder (same as --facade).")
-    ap.add_argument("--facade", "-Facade", default="")
+    ap.add_argument("--facade", "-Facade", default="", help="Facade .gd path or cluster folder (or pass it as the argument).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     facade = args.facade or args.facade_pos
@@ -51,4 +51,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

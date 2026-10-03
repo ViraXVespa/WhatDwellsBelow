@@ -12,7 +12,9 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 
-IMG = Path(r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a03e55-f390-7750-ab00-b30f1e6ba566\images")
+ROOT = Path(__file__).resolve().parent.parent
+
+IMG = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a03e55-f390-7750-ab00-b30f1e6ba566\images")
 KEYS = ["up", "down", "left", "right", "up_left", "up_right", "down_left", "down_right"]
 
 
@@ -58,11 +60,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("pack_p2_art")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="pack_p2_art")
+    return agent_log.run_writer("pack_p2_art", 'Key and fit Phase 2 equipment and fx stills from a Grok session into assets/sprites and assets/fx.', _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

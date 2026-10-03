@@ -5,6 +5,7 @@
 var players: Dictionary = {}
 var loop_player: AudioStreamPlayer
 var adrenaline_loop := false
+var _played := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -51,6 +52,7 @@ func _load(sfx_id: String, path: String) -> void:
 	players[sfx_id] = p
 
 func play(sfx_id: String) -> void:
+	_played = true
 	var key := sfx_id
 	if sfx_id == "hurt" or sfx_id == "warcry" or sfx_id == "hurk":
 		key = "%s_%s" % [sfx_id, App.character_type]
@@ -86,3 +88,11 @@ func _apply_one(p: AudioStreamPlayer) -> void:
 func _process(_delta: float) -> void:
 	if adrenaline_loop and loop_player.stream and not loop_player.playing:
 		loop_player.play()
+
+func _exit_tree() -> void:
+	# Stop and let the mixer drain before the tree frees: a hit just before quit otherwise leaves its playback in the AudioServer (leaked at exit).
+	for k in players.keys():
+		players[k].stop()
+	loop_player.stop()
+	if _played:
+		OS.delay_msec(60)

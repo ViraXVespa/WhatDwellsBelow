@@ -3,9 +3,6 @@ extends Object
 const Los := preload("res://scripts/debug/playtest_los.gd")
 const Path := preload("res://scripts/debug/playtest_path.gd")
 
-static func world3(pt: Node) -> World3D:
-	return Los.world3(pt)
-
 static func has_los(pt: Node, a: Node, b: Node) -> bool:
 	return Los.has_los(pt, a, b)
 
@@ -107,6 +104,3 @@ static func follow_goal(pt: Node, p: Node, dest: Node) -> void:
 
 static func follow_or_direct(pt: Node, p: Node, dest: Node) -> Vector2:
 	return Path.follow_or_direct(pt, p, dest)
-
-static func astar(pt: Node, p: Node, dest: Node) -> Array[Vector2i]:
-	return Path.astar(pt, p, dest)

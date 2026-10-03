@@ -21,7 +21,6 @@ WRITTEN: list[str] = []
 def write_wav(path: Path, samples: list[float]) -> None:
     al.write_pcm(path, samples)
     WRITTEN.append(path.name)
-    print(f"wrote {agent_log.rel(ROOT, path)} ({len(samples) / SR:.2f}s)")
 
 
 def env(i: int, n: int, attack: float = 0.01, release: float = 0.08) -> float:
@@ -106,17 +105,15 @@ def sfx() -> None:
     write_wav(OUT / "sfx_hurt.wav", mix(tone(180, 0.11, 0.2, "sq"), tone(90, 0.14, 0.12, "noise")))
 
 
-def main(argv: list[str] | None = None) -> int:
-    global ROOT, OUT
-    ap = agent_log.std_parser("Write tiny placeholder WAV loops and one-shot SFX. Final music is by Vira.")
-    args = ap.parse_args(argv)
-    ROOT = agent_log.resolve_root(args)
-    OUT = ROOT / "assets" / "audio"
+def _run() -> None:
     loop_hub()
     loop_dungeon()
     sfx()
-    return agent_log.emit_result("PASS", written=len(WRITTEN), dir="assets/audio")
+
+
+def main(argv: list[str] | None = None) -> int:
+    return agent_log.run_writer("make_placeholder_audio", "Write tiny placeholder WAV loops and one-shot SFX. Final music is by Vira.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

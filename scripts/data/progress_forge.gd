@@ -18,9 +18,6 @@ static func unlocks_for(p: Object, slot: String, type_id: String, rarity: String
 static func max_ilvl_rarity(p: Object, slot: String, type_id: String, rarity: String) -> int:
 	return Book.max_ilvl_rarity(p, slot, type_id, rarity)
 
-static func max_ilvl_type(p: Object, slot: String, type_id: String) -> int:
-	return Book.max_ilvl_type(p, slot, type_id)
-
 static func max_ilvl(p: Object, slot: String, type_id: String) -> int:
 	return Book.max_ilvl(p, slot, type_id)
 
@@ -57,9 +54,6 @@ static func pay(p: Object, c: Dictionary) -> bool:
 static func holds_of(p: Object, slot: String, type_id: String) -> Array:
 	return Act.holds_of(p, slot, type_id)
 
-static func hold_open(p: Object, slot: String, type_id: String) -> int:
-	return Act.hold_open(p, slot, type_id)
-
 static func set_holds_for_type(p: Object, slot: String, type_id: String, keep: Array) -> String:
 	return Act.set_holds_for_type(p, slot, type_id, keep)
 
@@ -74,12 +68,6 @@ static func forge_hold(p: Object, slot: String, type_id: String, rarity: String,
 	var it: Dictionary = make_forged(p, slot, type_id, rarity, ilvl, locked)
 	return add_hold(p, it)
 
-static func place_hold(p: Object, it: Dictionary) -> void:
-	Act.place_hold(p, it)
-
-static func replace_hold(p: Object, a, b, c = 0, d = {}) -> String:
-	return Act.replace_hold(p, a, b, c, d)
-
 static func to_meta(p: Object) -> Dictionary:
 	return Act.to_meta(p)
 
@@ -88,6 +76,3 @@ static func from_meta(p: Object, d: Dictionary) -> void:
 
 static func type_of(it: Dictionary) -> String:
 	return Book.type_of(it)
-
-static func _type_of(it: Dictionary) -> String:
-	return Book._type_of(it)

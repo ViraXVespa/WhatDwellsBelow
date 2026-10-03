@@ -15,10 +15,10 @@ import agent_log
 
 def main() -> int:
     ap = agent_log.std_parser("Add a grok_web_wN catalog row for HEAD (does not bump version.json).", writes=True)
-    ap.add_argument("--id", required=True)
-    ap.add_argument("--label", required=True)
-    ap.add_argument("--desc", required=True)
-    ap.add_argument("--commit", required=True)
+    ap.add_argument("--id", required=True, help="Week id to pin.")
+    ap.add_argument("--label", required=True, help="Week label.")
+    ap.add_argument("--desc", required=True, help="Week description.")
+    ap.add_argument("--commit", required=True, help="Commit SHA to pin.")
     args = ap.parse_args()
     root = agent_log.resolve_root(args)
     cat_path = root / "scripts" / "data" / "archive_catalog.json"
@@ -61,4 +61,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

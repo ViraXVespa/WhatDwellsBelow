@@ -38,10 +38,6 @@ RENDER_METHOD = "gl_compatibility"
 FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "width", "height")
 
 
-def _root() -> Path:
-    return agent_log.repo_root(_TOOLS.parent)
-
-
 def _load_recipe(root: Path, name: str) -> dict:
     path = root / "tools" / "shot-recipes.json"
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -167,19 +163,19 @@ def apply_flow_header(args: argparse.Namespace, header: dict, given: set[str]) -
 def build_parser() -> argparse.ArgumentParser:
     p = agent_log.std_parser("Capture a play-camera postcard, or run a scripted shot flow (--steps).",
                              writes=True, json_out=True)
-    p.add_argument("--mode", choices=("web", "build", "user"), default="user")
-    p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--scene", choices=("dungeon", "camp", "hub"), default="dungeon")
-    p.add_argument("--floor", type=int, default=1)
+    p.add_argument("--mode", choices=("web", "build", "user"), default="user", help="web copies the PNG to the clipboard, user opens it, build does neither and scales down (default user).")
+    p.add_argument("--seed", type=int, default=42, help="Dungeon seed (default 42).")
+    p.add_argument("--scene", choices=("dungeon", "camp", "hub"), default="dungeon", help="Scene to shoot: dungeon, camp or hub (default dungeon).")
+    p.add_argument("--floor", type=int, default=1, help="Dungeon floor (default 1).")
     p.add_argument("--scale", type=int, default=0, help="PNG scale percent; 0 picks mode default")
-    p.add_argument("--settle-ms", type=int, default=SETTLE_MS)
-    p.add_argument("--timeout-sec", type=int, default=TIMEOUT_SEC)
+    p.add_argument("--settle-ms", type=int, default=SETTLE_MS, help="Milliseconds to wait before the capture.")
+    p.add_argument("--timeout-sec", type=int, default=TIMEOUT_SEC, help="Godot timeout in seconds.")
     p.add_argument("--out", default="", help="PNG path override (with --steps: the last frame)")
     p.add_argument("--show", action="store_true", help="leave the Godot window visible")
     p.add_argument("--hud", type=int, default=-1, help="1=HUD on, 0=HUD off; -1 uses recipe")
     p.add_argument("--width", type=int, default=0, help="window width px (0 keeps the project size)")
     p.add_argument("--height", type=int, default=0, help="window height px (0 keeps the project size)")
-    p.add_argument("--zoom", type=float, default=1.0)
+    p.add_argument("--zoom", type=float, default=1.0, help="Camera zoom (default 1.0).")
     p.add_argument("--px", default="", help="player world X; empty keeps spawn")
     p.add_argument("--pz", default="", help="player world Z; empty keeps spawn")
     p.add_argument("--cx", type=float, default=0.0, help="camera look offset X")
@@ -263,7 +259,7 @@ def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     args = p.parse_args(argv)
     given = {a.lstrip("-").replace("-", "_").split("=")[0] for a in argv if a.startswith("--")}
-    root = Path(args.root).resolve() if args.root else _root()
+    root = agent_log.resolve_root(args)
     res = capture(args, root, given)
     png = res["png"]
     clip = opened = "n/a"
@@ -307,12 +303,12 @@ def main(argv: list[str] | None = None) -> int:
     text = "\n".join(lines) + "\n"
     summary.write_text(text, encoding="utf-8")
     if args.json:
-        print(json.dumps({"band": res["band"], "status": res["status"], "png": rel(root, png), "frames": frames,
-                          "checks": flow.get("checks", []), "fail": flow.get("fail", ""), "summary": rel(root, summary)}))
+        agent_log.print_json({"band": res["band"], "status": res["status"], "png": rel(root, png), "frames": frames,
+                              "checks": flow.get("checks", []), "fail": flow.get("fail", ""), "summary": rel(root, summary)})
     else:
         sys.stdout.write(text)
     return 0 if res["band"] != "fail" else 1
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

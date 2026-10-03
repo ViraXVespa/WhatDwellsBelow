@@ -41,9 +41,6 @@ func _ready() -> void:
 static func catalog_models() -> Array:
 	return AnimScan.catalog_models()
 
-static func model_count() -> int:
-	return AnimScan.model_count()
-
 func _build() -> void:
 	Ui.build(self)
 

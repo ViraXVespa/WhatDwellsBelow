@@ -818,15 +818,15 @@ def export_bible(
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(
+    p = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments).", 
         description="Exact integer nearest-neighbor scale, then #FF00FF pad. No key, no 1024 fit."
     )
     src = p.add_mutually_exclusive_group(required=True)
     src.add_argument("--cell", type=Path, help="One splice still, same as Paint.NET 400%%")
     src.add_argument("--bible", type=Path, help="Locked 3x3 Bible; split then scale each cell")
-    p.add_argument("--dest", required=True, type=Path)
-    p.add_argument("--scale", type=int, default=SCALE)
-    p.add_argument("--facing", default="down")
+    p.add_argument("--dest", required=True, type=Path, help="Output folder for the seed image and prompt.")
+    p.add_argument("--scale", type=int, default=SCALE, help="Integer nearest-neighbour scale for the seed cell.")
+    p.add_argument("--facing", default="down", help="Facing, e.g. down, up_left (default down).")
     p.add_argument(
         "--action",
         default="walk",

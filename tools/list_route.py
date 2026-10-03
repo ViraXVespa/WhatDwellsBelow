@@ -14,6 +14,9 @@ import agent_log
 from load_routes import job_index, job_read_when, load_routes, shot_flows, smoke_phases
 
 
+FULL_GATES = False  # set by --gates
+
+
 def _gate_lines(data: dict) -> list[str]:
     gates = data.get("gates")
     if not isinstance(gates, dict):
@@ -22,8 +25,12 @@ def _gate_lines(data: dict) -> list[str]:
     for spec in gates.values():
         if isinstance(spec, dict):
             stem = str(spec.get("file") or "").removeprefix("design/").removesuffix(".md")
-            parts.append("%s=%s" % (stem, spec.get("when") or ""))
-    return ["gates\tdesign/<name>.md, open only when its when matches: " + " ".join(parts)] if parts else []
+            parts.append("%s=%s" % (stem, spec.get("when") or "") if FULL_GATES else stem)
+    if not parts:
+        return []
+    if FULL_GATES:
+        return ["gates\tdesign/<name>.md, open only when its when matches: " + " ".join(parts)]
+    return [f"gates\t{len(parts)} gate docs, open one only when its trigger applies; `list_route.py --gates` lists names and triggers"]
 
 
 def _door_card(data: dict, door_name: str) -> list[str]:
@@ -53,7 +60,7 @@ def _door_card(data: dict, door_name: str) -> list[str]:
         lines.append("job\t(none)")
     lines.extend(_gate_lines(data))
     lines.append("smokes\t%s" % ",".join(map(str, smoke_phases(data, door=door_name))))
-    lines.append("flows\t%s" % ",".join(shot_flows(data, door=door_name)))
+    lines.append("flows\t%s" % (",".join(shot_flows(data, door=door_name)) or "none"))
     lines.append("note\topen one job sibling only; gates only if when matches")
     return lines
 
@@ -79,16 +86,26 @@ def _job_card(data: dict, job_id: str) -> list[str]:
     ]
     lines.extend(_gate_lines(data))
     lines.append("smokes\t%s" % ",".join(map(str, smoke_phases(data, door=door_name, job=job_id))))
-    lines.append("flows\t%s" % ",".join(shot_flows(data, door=door_name, job=job_id)))
+    lines.append("flows\t%s" % (",".join(shot_flows(data, door=door_name, job=job_id)) or "none"))
     lines.append("note\topen this job sibling only; gates only if when matches")
     return lines
 
 
 def parse_args(argv: list[str]):
-    parser = agent_log.std_parser("Print one door or job card from design/routes.yaml.", json_out=True)
-    parser.add_argument("--door", "-Door", default="")
-    parser.add_argument("--job", "-Job", default="")
-    return parser.parse_args(argv)
+    parser = agent_log.std_parser("Print one door or job card from design/routes.yaml (no argument: list the doors).")
+    parser.add_argument("target", nargs="?", default="", help="Door name, or door.job for a job card (same as --door / --job).")
+    parser.add_argument("--door", "-Door", default="", help="Door name (print its card).")
+    parser.add_argument("--job", "-Job", default="", help="Job id door.job (print its card).")
+    parser.add_argument("--gates", action="store_true", help="Print the full gate triggers (default: gate names only).")
+    args = parser.parse_args(argv)
+    global FULL_GATES
+    FULL_GATES = args.gates
+    if args.target and not (args.door or args.job):
+        if "." in args.target:
+            args.job = args.target
+        else:
+            args.door = args.target
+    return args
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -98,7 +115,8 @@ def main(argv: list[str] | None = None) -> int:
     if not args.door and not args.job:
         doors = data.get("doors") if isinstance(data.get("doors"), dict) else {}
         menu = "\n".join("door\t%s\t%s" % (n, (s or {}).get("read_when", "")) for n, s in doors.items())
-        agent_log.fail("need --door <name> or --job <door.job> (example: --job debug.smokes). doors:\n" + menu)
+        menu += "\nnext\tpass a door name, or door.job for a job card (example: debug.smokes)"
+        return agent_log.finish("route", root, menu, "INFO", args=args, legacy=False, doors=len(doors))
     if args.job:
         lines = _job_card(data, args.job.strip())
     else:
@@ -108,4 +126,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

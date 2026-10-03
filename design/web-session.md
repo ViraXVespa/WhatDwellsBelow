@@ -32,8 +32,7 @@ Do not open the Build path file, `BOT.md`, or Grok Bot Job files from this path 
 
 ## Read vs write
 
-When the User is present: picture-read is uncapped inside `design/` and the live tree the thread is talking about. Load-graph, topic index, and extra code-map rows are allowed on a docs or routing pass.
-Implementation default is one writer door. A packed pass is the exception above. `conflicts_with` still blocks implementing both cores in one slice.
+Picture-read when the User is present: `protocol.md` (Core rules). Implementation default is one writer door. A packed pass is the exception above. `conflicts_with` still blocks implementing both cores in one slice.
 Inspect the live tree from **one system row** in `design/code-map.md` when editing live files.
 
 ## Phases
@@ -51,28 +50,11 @@ If no park is named and no gather was requested, confirm ready. Default mode is 
 
 ### Phase 2 — Discuss
 
-Discuss only. Do not emit. Do not freeze a goal here.
-Subject change is not a phase change. Owner doors bound writes, not talk.
-This phase ends only when the User names the next phase. Do not treat "stop asking", "fix it", or a locked concept as a phase advance.
-
-### End of brainstorm
-
-Ask once: emit in this chat, or park. Default if unanswered: stay in discuss.
-
-Emit here when the topic is settled enough that Phase 3 would not invent a system, the work fits a short series of scratch slices, and open questions are closed or explicitly deferred.
-Park when questions remain, the work is a new system / a pile of new live modules, or the User wants a fresh focused chat.
-Do not self-park because the thread is long or a RESULT already landed. Stop the emit loop only when the User says the session is going off the rails, or names park / stop.
-If quality looks like it is slipping, say that in one sentence and ask. Do not quietly drop the rest of the list.
-
-A park from brainstorm must carry: mandate, frozen decisions, open questions, likely Source / Docs paths, tests that would prove it, why parked. Do not park leftover slices without that packet.
+Discuss only; no emit. Rules, end of brainstorm, park packet: `web-discuss.md`, opened at Phase 2 and not before.
 
 ### Phase 3 — Goal, questions, plan, emit list
 
-Name the goal for this emit pass. Ask only what cannot be inferred.
-Split the list: **Source** (`scripts/`, `scenes/`, `assets/`, `tools/`, `project.godot`, other non-doc live files) and **Docs**. Mark each path `new`, `revise`, or `delete`.
-Phase 3 may list multiple slices, or one packed pass with several named owners. A packed pass still lists Source/Docs and prove per owner. One scratch may own those cores when the packed-pass rule holds.
-
-This phase ends when the User accepts the list. Do not start Phase 4 without that. If Source is empty, Phase 4 is docs-only.
+Goal, questions, Source/Docs emit list; the User accepts it before Phase 4. Rules: `web-plan.md`, opened at Phase 3 and not before.
 
 ### Phase 4 — Emit
 
@@ -80,9 +62,7 @@ One action, one `tools/_scratch.py`. The emit rules (scratch shape, revise-from-
 
 ### Phase 5 — Test
 
-Review the Phase 4 RESULT. Mechanical errors (failed replace, missing required sentence, checker FAIL on a line just written): emit the corrected Phase 4 scratch in the same turn. The corrected scratch owns only the failed step plus leftover cites that scan named. Already-landed files stay untouched. A judgment call the agent cannot infer: one blocking question, then wait.
-
-After a pasted PASS on an accepted multi-slice list: go immediately to Phase 3 of the next unlanded slice (short: goal + paths + tests). Do not return to Phase 2 unless the User changes the remaining list or opens a new brainstorm topic.
+Review the pasted Phase 4 RESULT. Rules (corrected scratch, next slice): `web-test.md`, opened at Phase 5 and not before.
 
 ## Do not
 

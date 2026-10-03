@@ -4,12 +4,7 @@ extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 const Stamp := preload("res://scripts/graphics/light_stamp.gd")
-const Plan := preload("res://scripts/graphics/torch_plan.gd")
-const HitchLog := preload("res://scripts/debug/hitch_log.gd")
-const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
-const HubShadow := preload("res://scripts/graphics/light_rt/hub_shadow.gd")
 const HubBake := preload("res://scripts/graphics/light_rt/hub_bake.gd")
-const Lights := preload("res://scripts/graphics/light_rt/lights.gd")
 const Publish := preload("res://scripts/graphics/light_rt/publish.gd")
 
 const COL_TORCH := Color(1.0, 0.48, 0.16)

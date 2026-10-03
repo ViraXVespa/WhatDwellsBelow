@@ -3,13 +3,13 @@
 ## All Phase 2 combat numbers. Mutated by the secret debug menu.
 ## Bump BAL_REV when shipping new defaults that old saves should receive.
 const Schema := preload("res://scripts/data/balance/schema.gd")
-const Tune := preload("res://scripts/data/tunables.gd")
+const T := preload("res://scripts/data/tunables.gd")
 const Enemies := preload("res://scripts/data/balance/enemies.gd")
 const Migrate := preload("res://scripts/data/balance/migrate.gd")
 const Access := preload("res://scripts/data/balance/access.gd")
 const BAL_REV := 13
 
-var move_speed := 4.5
+var move_speed := T.MOVE_SPEED
 var dash_speed_mult := 2.8
 var dash_duration := 0.28
 var dash_cooldown := 1.1
@@ -244,7 +244,7 @@ var potion_cooldown := 1.2
 var vendor_potion_cost := 15.0
 var vendor_food_cost := 8.0
 var vendor_ore_gold := 3.0
-var bitter_loop_offset := 15.52
+var bitter_loop_offset := T.BITTER_LOOP_DEFAULT
 var music_fade := 0.35
 var playtest_scale := 6.0
 var playtest_limit := 90.0
@@ -299,19 +299,19 @@ var quest_xp_a := 24.0
 var quest_xp_b := 16.0
 
 var near_death_hp := 0.2
-var ground_px_per_m: float = Tune.GROUND_PX_PER_M
-var ground_hash_m: float = Tune.GROUND_HASH_M
-var ground_variants: float = Tune.GROUND_VARIANTS
-var ground_wear: float = Tune.GROUND_WEAR
-var light_torch_range: float = Tune.LIGHT_TORCH_RANGE
-var light_torch_energy: float = Tune.LIGHT_TORCH_ENERGY
-var light_crystal_range: float = Tune.LIGHT_CRYSTAL_RANGE
-var light_crystal_energy: float = Tune.LIGHT_CRYSTAL_ENERGY
-var light_fire_range: float = Tune.LIGHT_FIRE_RANGE
-var light_fire_energy: float = Tune.LIGHT_FIRE_ENERGY
-var light_sun_range: float = Tune.LIGHT_SUN_RANGE
-var light_sun_energy: float = Tune.LIGHT_SUN_ENERGY
-var light_source_cap: float = Tune.LIGHT_SOURCE_CAP
+var ground_px_per_m: float = T.GROUND_PX_PER_M
+var ground_hash_m: float = T.GROUND_HASH_M
+var ground_variants: float = T.GROUND_VARIANTS
+var ground_wear: float = T.GROUND_WEAR
+var light_torch_range: float = T.LIGHT_TORCH_RANGE
+var light_torch_energy: float = T.LIGHT_TORCH_ENERGY
+var light_crystal_range: float = T.LIGHT_CRYSTAL_RANGE
+var light_crystal_energy: float = T.LIGHT_CRYSTAL_ENERGY
+var light_fire_range: float = T.LIGHT_FIRE_RANGE
+var light_fire_energy: float = T.LIGHT_FIRE_ENERGY
+var light_sun_range: float = T.LIGHT_SUN_RANGE
+var light_sun_energy: float = T.LIGHT_SUN_ENERGY
+var light_source_cap: float = T.LIGHT_SOURCE_CAP
 var cam_pitch := -58.0
 var cam_height := 14.0
 var look_lift := 0.42

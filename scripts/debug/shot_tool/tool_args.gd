@@ -43,10 +43,7 @@ static func scene_name() -> String:
 	return "dungeon"
 
 static func run_seed() -> int:
-	var n: int = _arg_int("--wdb-shot-seed", 42)
-	if n == 0:
-		return 1
-	return n
+	return CliArgs.seed_arg("--wdb-shot-seed", 42)
 
 static func floor_n() -> int:
 	return maxi(1, _arg_int("--wdb-shot-floor", 1))

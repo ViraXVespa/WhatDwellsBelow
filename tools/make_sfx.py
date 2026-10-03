@@ -5,7 +5,7 @@
     python3 tools/make_sfx.py [--only p9_wood ...] [--prefix p2_] [--dry-run]
     python3 tools/make_sfx.py --check        # render to temp, FAIL if a committed wav differs (proof for the old cues)
 
-Writes assets/audio/<name>.wav; a new file there is a Build access confirm (design audio-visual-sfx door).
+Writes assets/audio/<name>.wav; a new file there is a Build access confirm (design audio-sfx door).
 """
 from __future__ import annotations
 

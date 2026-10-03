@@ -120,24 +120,6 @@ static func chip_for(action: String) -> String:
 		return id.substr(6).to_upper()
 	return id.to_upper()
 
-static func verb_line(action: String, verb: String) -> String:
-	var chip := chip_for(action)
-	if verb == "":
-		return chip
-	return "%s %s" % [chip, verb]
-
-## Hint row: chips joined by three spaces. Rows are {action, verb}; non-dicts and empty actions are skipped.
-static func verb_lines(parts: Array) -> String:
-	var bits: PackedStringArray = PackedStringArray()
-	for row: Variant in parts:
-		if not (row is Dictionary):
-			continue
-		var action := str(row.get("action", ""))
-		if action == "":
-			continue
-		bits.append(verb_line(action, str(row.get("verb", ""))))
-	return "   ".join(bits)
-
 static func _joy_btn(i: int) -> String:
 	match i:
 		JOY_BUTTON_A:
@@ -187,8 +169,8 @@ static func _mouse(i: int) -> String:
 static func _layout_code(e: InputEventKey) -> int:
 	var phys: int = int(e.physical_keycode)
 	if phys != 0:
-		if DisplayServer.get_name() == "headless":
-			return phys  # headless has no keyboard layout query (engine logs an error); same result as mapped == 0
+		if DisplayServer.get_name() == "headless" or OS.has_feature("web"):
+			return phys  # headless and web have no keyboard layout query (engine logs an error); same result as mapped == 0
 		var mapped: int = int(DisplayServer.keyboard_get_keycode_from_physical(phys as Key))
 		if mapped != 0:
 			return mapped

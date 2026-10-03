@@ -41,6 +41,22 @@ static func tex_for_slot(slot: String, it: Dictionary) -> Texture2D:
 static func tex_for_item(it: Dictionary) -> Texture2D:
 	return _load_path(_item_path(it))
 
+## Button shows `tex` centered and scaled to the button.
+static func fit_btn(b: Button, tex: Texture2D) -> void:
+	b.icon = tex
+	b.expand_icon = true
+	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	b.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+
+## Focusable 72x72 icon-only button for item `it` (forge pick and sub-pick grids).
+static func pick_btn(it: Dictionary) -> Button:
+	var b := Button.new()
+	b.text = ""
+	b.custom_minimum_size = Vector2(72, 72)
+	b.focus_mode = Control.FOCUS_ALL
+	fit_btn(b, tex_for_item(it))
+	return b
+
 static func has_item_icon(it: Dictionary) -> bool:
 	return _item_path(it) != ""
 

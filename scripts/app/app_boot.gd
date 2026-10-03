@@ -3,6 +3,7 @@ extends Object
 const DebugS := preload("res://scripts/debug/debug_menu.gd")
 const AnimS := preload("res://scripts/debug/anim_browser.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+const WebHook := preload("res://scripts/debug/web_hook.gd")
 
 static func _ready(host: Node) -> void:
 	host.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -14,6 +15,7 @@ static func _ready(host: Node) -> void:
 	host.tel = App.TelS.new()
 	host.playtest = App.PlayS.new()
 	host.add_child(host.playtest)
+	WebHook.register()
 	host.pause_menu = App.PauseS.new()
 	host.add_child(host.pause_menu)
 	host.recap = App.RecapS.new()

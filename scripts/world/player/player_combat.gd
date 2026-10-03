@@ -1,7 +1,5 @@
 ﻿extends Object
 
-const PlayerHit := preload("res://scripts/combat/player_hit.gd")
-
 static func try_dash(p: CharacterBody3D, move: Vector2) -> void:
 	(load("res://scripts/world/player/player_setup.gd") as GDScript).ensure_combat_fx(p)
 	if App.ui_open or p.interact_lock > 0.0:

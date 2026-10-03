@@ -151,9 +151,6 @@ func _on_play() -> void:
 func _open_read(i: int) -> void:
 	Act.open_read(self, i)
 
-func _play() -> void:
-	Act.play(self)
-
 func _read_doc(id: String, doc_name: String) -> String:
 	return Act.read_doc(self, id, doc_name)
 

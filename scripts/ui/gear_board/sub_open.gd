@@ -4,10 +4,7 @@ const Board := preload("res://scripts/ui/gear_board.gd")
 const Text := preload("res://scripts/ui/gear_board/board_text.gd")
 const Fmt := preload("res://scripts/ui/gear_board/text_fmt.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
-const PromptView := preload("res://scripts/ui/prompt_view.gd")
-const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
 
 static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	Board.clear_sub(ui)
@@ -63,14 +60,7 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 		var key := "opt:%s:%s:%d" % [str(row.src), slot, int(row.uid)]
 		var pick_row: Dictionary = row.duplicate(true)
 		pick_row.it = it.duplicate(true)
-		var b := Button.new()
-		b.text = ""
-		b.custom_minimum_size = Vector2(72, 72)
-		b.focus_mode = Control.FOCUS_ALL
-		b.icon = Icons.tex_for_item(it)
-		b.expand_icon = true
-		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		b.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+		var b := Icons.pick_btn(it)
 		load("res://scripts/ui/gear_board/board_sub.gd")._paint_opt(b, it)
 		b.set_meta("inv_key", key)
 		b.set_meta("inv_it", it.duplicate(true))

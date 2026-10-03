@@ -54,9 +54,30 @@ gates:
   tunables_world:
     file: design/tunables-world.md
     when: world_economy_or_ui_number_change
+  web_discuss:
+    file: design/web-discuss.md
+    when: web_phase_2_discuss
+  web_plan:
+    file: design/web-plan.md
+    when: web_phase_3_plan
   web_emit:
     file: design/web-emit.md
     when: web_phase_4_emit
+  web_test:
+    file: design/web-test.md
+    when: web_phase_5_test
+  constraints_demo:
+    file: design/constraints-demo.md
+    when: calling_build_complete
+  inventory_forge:
+    file: design/inventory-forge.md
+    when: anvil_forge_flow
+  audio_sfx:
+    file: design/audio-sfx.md
+    when: wiring_or_generating_sfx_cue
+  art_attack_log:
+    file: design/art-attack-keyframes-log.md
+    when: attack_keyframe_roll_history
   versioning:
     file: design/versioning.md
     when: named_pin_or_archive
@@ -200,9 +221,8 @@ doors:
       smokes: design/debug-smokes.md
   audio_visual:
     file: design/audio-visual.md
-    read_when: "music, splash stills, presentation rules"
-    jobs:
-      sfx: design/audio-visual-sfx.md
+    read_when: "music, SFX, splash stills, presentation rules"
+    jobs: {}
   save_tech:
     file: design/save-tech.md
     read_when: "persistence, wasm headers, autoloads, perf"
@@ -284,7 +304,6 @@ job_read_when:
   graphics.volume: "exposed coplanar brick runs, BoxMesh retirement, BoxShape on welded mass, provided ribbon"
   graphics.buffer: "four-texel radiance buffer, disc blobs, fine occupancy"
   graphics.actor: "billboard-alpha squash quads, player yard-mannequin foes, source-offset"
-  audio_visual.sfx: "sfx wiring, silent events, wav ids, appendix E"
   save_tech.persist: "primary backup wipe, game_ver stamp, isolated AI profiles"
   save_tech.web: "COOP COEP off, id.txt querybust, serviceworker rename"
   save_tech.runtime: "borderless exclusive, mip decode ban, Compatibility preferred"
@@ -347,8 +366,16 @@ shot_gaps:
 
 # Web build performance (tools/web_perf.py, headless Chrome on the exported site): Build prove, advisory only, never a gate.
 web_perf:
-  flows: "title-idle,camp-walk"
+  flows: "title-idle,camp-walk,camp-pause,camp-shop,dungeon-walk,dungeon-fight"
+  baseline: tools/web-perf-baseline.json
   gate: advisory
+  # door -> flows to run after a fresh export for a slice in that door (python3 tools/web_perf.py --flow A,B --baseline <baseline>)
+  by_door:
+    default: "title-idle,camp-walk"
+    ui: "camp-pause,camp-shop"
+    graphics: "camp-walk,dungeon-walk,dungeon-fight"
+    player: "camp-walk,dungeon-walk,dungeon-fight"
+    interactables: "camp-shop,dungeon-walk"
 
 conflicts_with:
   inventory:
@@ -403,6 +430,16 @@ boot_max:
   bot:
     - AGENTS.md
     - BOT.md
+
+# Boot file byte budgets: current size + ~5%, rounded up to 50. check_load_graph.py fails a boot_max file above its cap.
+# Lower after a trim; raise only on a User go.
+boot_bytes:
+  AGENTS.md: 2500
+  BOT.md: 7300
+  design/web-session.md: 5750
+  design/protocol.md: 2950
+  design/constraints.md: 2650
+  design/grok-build.md: 6600
 
 fetch_ban:
   design/web-session.md:

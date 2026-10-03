@@ -1,13 +1,14 @@
 extends CanvasLayer
 
-const ThemeS := preload("res://scripts/ui/theme.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const CrystalNet := preload("res://scripts/world/crystal/net.gd")
 const Util := preload("res://scripts/ui/crystal_ui/ui_util.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const MenuPad := preload("res://scripts/ui/menu_pad.gd")
-const Pages := preload("res://scripts/ui/crystal_ui/ui_pages.gd")
+const Net := preload("res://scripts/ui/crystal_ui/pages_net.gd")
+const Local := preload("res://scripts/ui/crystal_ui/pages_local.gd")
+const Floors := preload("res://scripts/ui/crystal_ui/pages_floors.gd")
 
 const ZOOM_NEAR := 96
 
@@ -66,11 +67,11 @@ func _rebuild() -> void:
 	map_mark = null
 	Plate.dim(self)
 	if page == "local":
-		Pages.page_local(self)
+		Local.page_local(self)
 	elif page == "floors" or page == "band":
-		Pages.page_floors(self)
+		Floors.page_floors(self)
 	else:
-		Pages.page_root(self)
+		Net.page_root(self)
 	_paint_hint()
 	call_deferred("_focus")
 
@@ -155,7 +156,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if page == "local" or page == "floors" or page == "band":
 		var td := MenuPad.tab_delta(event)
 		if td != 0:
-			Pages.cycle_net(self, td)
+			Net.cycle_net(self, td)
 			get_viewport().set_input_as_handled()
 			return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):

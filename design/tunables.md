@@ -48,7 +48,6 @@ Forge keys missing from `balance.gd` fall back inside `progress_forge.gd` / `gea
 | `BITTER_LOOP_DEFAULT` | 15.52 |
 | `PATREON_URL` | https://www.patreon.com/cw/ViraXVespa |
 | `ARCHIVE_ID_FULL_3D` | full_3d_pass |
-| `ARCHIVE_LABEL_FULL_3D` | Full 3D Pass |
 | Archive catalog | `scripts/data/archive_catalog.json` |
 | `TOUCH_DEAD` | 0.24 |
 

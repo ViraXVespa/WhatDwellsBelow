@@ -43,25 +43,6 @@ static func equip_item(ui: CanvasLayer) -> void:
 	ui.inv_sel = "slot:" + slot
 	act(ui, msg)
 
-static func unequip_item(ui: CanvasLayer) -> void:
-	if View.from_bag(ui):
-		ui._st("Already in the bag.")
-		return
-	var slot: String = View.selected_slot(ui)
-	if slot == "":
-		ui._st("Nothing to unequip.")
-		return
-	var msg: String = App.prog.unequip_slot(slot)
-	if msg.begins_with("Unequipped"):
-		var it: Dictionary = {}
-		if App.prog.bag.size() > 0:
-			var last: Variant = App.prog.bag[App.prog.bag.size() - 1]
-			if last is Dictionary:
-				it = last
-		if not it.is_empty():
-			ui.inv_sel = "bag:" + str(int(it.uid))
-	act(ui, msg)
-
 static func drop_item(ui: CanvasLayer) -> void:
 	if not App.in_dungeon:
 		ui._st("Drop on the dungeon floor only.")

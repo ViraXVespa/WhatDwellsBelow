@@ -3,25 +3,25 @@
 Status: suggested starts + live snapshot  
 Read when: the work changes a dungeon-gen, enemy, progression, anvil or UI-feel number  
 
-Same table shape and rules as the tunables door. `python3 tools/tunables.py get|set|add --key KEY` reads both files.
+Same table shape and rules as the tunables door; `tools/tunables.py get|set|add --key KEY` reads both files.
 
 ## Dungeon generation
 
 | Parameter | Suggested start | Live default | Notes |
 |-----------|-----------------|--------------|-------|
 | Floor grid size | 48×48 – 64×64 | **432×432** | Geo streams like enemies |
-| Rooms | — | **128** | Dense enough that empty walks stay short |
+| Rooms | — | **128** | Keeps empty walks short |
 | Room min / max | — | 5 / 9 | |
 | Extra loops | — | 8 | MST + extra loops |
-| Hall hug gap min / default | 3 / 4 | **3 / 4** | Unused cells between two hall floors. Reject closer loops |
-| Hall width min / mode / max | 2 / 3 / 4 | **2 / 3 / 4** | Mode 3; changes every `hall_w_interval` |
+| Hall hug gap min / default | 3 / 4 | **3 / 4** | Unused cells between hall floors; closer loops rejected |
+| Hall width min / mode / max | 2 / 3 / 4 | **2 / 3 / 4** | Mode changes every `hall_w_interval` |
 | Hall width interval | 10 | **10** | Tiles along a winding path |
 | Hall width min / mode pct | 0.15 / 0.60 | **0.15 / 0.60** | Remainder is max width |
-| Fog of war reveal radius | 5 tiles | 5 | Map disk only. 3D chunks are not fog-gated |
+| Fog of war reveal radius | 5 tiles | 5 | Map disk only; 3D chunks are not fog-gated |
 | Max Extraction Gates per floor (`max_clerks`) | 3 | 3 | |
 | Ghost shop chance | ~33 % | 0.33 | Always in safe room |
 | Named monster rate | ~1 every 3 floors | 3 | |
-| Flee events per full clear | Average 2 | 2 | Small speed boost on fleeing enemy |
+| Flee events per full clear | Average 2 | 2 | Small speed boost when fleeing |
 | Idle / no-reveal timers | 20–30 s | 24 / 22 | Outside safe rooms |
 | Pressure count / radius / cd | — | 3 / 5 / 18 | |
 | Pressure waves per floor | 3 | **3** | Caps idle/pressure XP |
@@ -31,22 +31,22 @@ Same table shape and rules as the tunables door. `python3 tools/tunables.py get|
 | Geo chunk (cells) | — | **32** | `geo_stream.gd` |
 | Geo ring in / out | — | **1 / 2** | Chunks around the player |
 | Geo jobs per follow | — | **3** | 9 on a long tick |
-| Crystal min separation | 56 cells | **56** | Between every crystal, including dead-ends |
-| Crystal clear radius | 12 cells | **12** | Enemies that block activation |
+| Crystal min separation | 56 cells | **56** | Between every crystal, dead-ends included |
+| Crystal clear radius | 12 cells | **12** | Enemies block activation |
 | Crystal arrive radius | 8 cells | **8** | No respawn after a hop |
 | Crystal extra max | 6 | **6** | Plus the entrance crystal |
-| Crystal place chance | 0.50 | **0.50** | Per extra CL band after the first extra |
+| Crystal place chance | 0.50 | **0.50** | Per extra CL band after the first |
 | Crystal CL band | 2 | **2** | Walk-level CL per placement band |
 | Crystal dead-end sep | 32 | **32** | Minimum Manhattan from spawn |
-| Crystal dead-end length | 28 | **28** | Spur walk to the nearest multi-exit room |
-| Outline fine size (`outline_fine_m`) | 0.25 m | **0.25** | Piece-bake resolution only. Not a floor-wide polyline |
-| Outline fillet fraction (`outline_fillet_frac`) | unused | **unused** | Not a rim operator. Wear is shader-side |
-| Outline jag fraction (`outline_jag_frac`) | unused | **unused** | Not a rim operator. Wear is shader-side |
+| Crystal dead-end length | 28 | **28** | Spur walk to nearest multi-exit room |
+| Outline fine size (`outline_fine_m`) | 0.25 m | **0.25** | Piece-bake resolution only, not a floor-wide polyline |
+| Outline fillet fraction (`outline_fillet_frac`) | unused | **unused** | Wear is shader-side |
+| Outline jag fraction (`outline_jag_frac`) | unused | **unused** | Wear is shader-side |
 | Angled corridors max (`angled_corridor_max`) | 4 | **4** | First-class off-axis halls per floor |
 | Corner chords max (`corner_chord_max`) | 8 | **8** | Short turn cuts per floor |
 | Angled degrees (`angled_deg`) | 27 / 33 / 45 | **27 / 33 / 45** | Snap targets |
-| Angled snap (`angled_snap_deg`) | 6 | **6** | Degrees off a target before the link stays cardinal |
-| Angled vs dogleg (`angled_vs_dogleg_min`) | 12 | **12** | Extra cardinal tiles before an angled piece wins | |
+| Angled snap (`angled_snap_deg`) | 6 | **6** | Degrees off target before the link stays cardinal |
+| Angled vs dogleg (`angled_vs_dogleg_min`) | 12 | **12** | Extra cardinal tiles before angled wins |
 
 ## Enemies and combat level
 
@@ -83,7 +83,7 @@ Same table shape and rules as the tunables door. `python3 tools/tunables.py get|
 | `xp_per_kill` | **22** |
 | `xp_kill_hp` / `xp_kill_def` | **11.0 / 11.0** |
 
-Roster HP: `enemies.gd`. CL 17 budget and rank-multiplier feel live on combat. Enemy walk vs crystal labels live on the enemies and dungeon doors.
+Roster HP: `enemies.gd`. CL 17 budget and rank multipliers: combat. Walk vs crystal labels: enemies and dungeon.
 
 ## Progression and economy
 
@@ -91,8 +91,7 @@ Roster HP: `enemies.gd`. CL 17 budget and rank-multiplier feel live on combat. E
 |-----------|-----------------|--------------|-------|
 | Bag capacity | 28 | 28 | |
 | Food bring max | 20 | 20 | |
-| Permanent XP keep rate on death | 15–25 % | **0.20** | Must feel meaningful after a good run |
-| Kill HP XP / kill Defense XP | — | **11.0 / 11.0** | On top of hit/heal XP |
+| Permanent XP keep rate on death | 15–25 % | **0.20** | Meaningful after a good run |
 | Shrine damage buff | +20 % / 45 s | 0.2 / 45 | |
 | Campfire heal | 40 % max HP | 0.4 | |
 | Food HoT total (X) | 40 HP | 40 | Delivered over Y seconds |
@@ -104,7 +103,7 @@ Roster HP: `enemies.gd`. CL 17 budget and rank-multiplier feel live on combat. E
 
 ## Anvil / affixes
 
-Fallbacks in `progress_forge.gd` / `gear_roll.gd` until these keys exist on `App.bal`. Root is not a forge material.
+Fallbacks in `progress_forge.gd` / `gear_roll.gd` until these keys exist on `App.bal`. Root is no forge material.
 
 | Key | Fallback | Role |
 |-----|----------|------|
@@ -125,19 +124,19 @@ Fallbacks in `progress_forge.gd` / `gear_roll.gd` until these keys exist on `App
 | `affix_flat_per_lv` | 0.65 | Flat per item level |
 | `affix_pct_per_lv` | 0.004 | Percent affix per item level (plus 0.02 floor) |
 
-Roll rules and holds cap live on inventory (gear job).
+Roll rules and the holds cap: inventory (gear job).
 
 ## UI / feel targets
 
 | Parameter | Suggested start | Notes |
 |-----------|-----------------|-------|
-| Camera zoom range | 1.0 – 4.0 | Persisted in save. Default 1.75. Wheel / pinch / look-mode RS also write `App.set_zoom`. |
+| Camera zoom range | 1.0 – 4.0 | Saved. Default 1.75. Wheel / pinch / look-mode RS also write `App.set_zoom`. |
 | HUD scale range | 0.7 – 1.4 | System slider and look-mode RS X. |
-| UI text floor | 14 | Debug Settings slider (8–24). Applied scale is `clamp(floor / (UI_TEXT_REF × screen_per_design), 1.0, 2.5)`. Floor is saved; applied scale is recomputed on resize. |
-| Look wheel step | 0.08 | Per notch. Debug Settings slider. |
-| Look pinch gain | 1.15 | Debug Settings slider. |
-| Look stick zoom / HUD / pan | 0.9 / 0.35 / 520 | Debug Settings sliders. |
-| Map zoom range | 1.0 – 10.0 | Fit to 10×. Independent of world camera. |
+| UI text floor | 14 | Debug slider (8–24). Floor is saved; applied scale (clamp formula: debug menu) is recomputed on resize. |
+| Look wheel step | 0.08 | Per notch; debug slider. |
+| Look pinch gain | 1.15 | Debug slider. |
+| Look stick zoom / HUD / pan | 0.9 / 0.35 / 520 | Debug sliders. |
+| Map zoom range | 1.0 – 10.0 | Fit to 10×, independent of world camera. |
 | Touch stick deadzone | 0.24 | Same magnitude idea as pad sticks. Debug Settings slider. |
 | Display mode | borderless | Desktop: windowed / borderless / exclusive. Web: `web_fullscreen` off until a gesture. |
 | Target first-extraction time | 5–10 min | New player on gamepad |

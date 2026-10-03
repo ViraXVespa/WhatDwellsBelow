@@ -1,7 +1,7 @@
 extends Object
 
 const Gear := preload("res://scripts/data/progress_gear.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
+const Norm := preload("res://scripts/data/gear_rules/rules_norm.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const Town := preload("res://scripts/data/progress/progress_town.gd")
 
@@ -57,7 +57,7 @@ static func begin_run_loadout(p: Object) -> void:
 		p.slots["food"] = keep_food
 	else:
 		p.slots["food"] = p._slot_for_run("food")
-	Rules.refill_potion(p)
+	Norm.refill_potion(p)
 	p.tool_type = str(p.slots.tool.get("tool", p.tool_type))
 	App.weapon = str(p.slots.weapon.get("weapon", p.pick_weapon))
 	App.gold = 0

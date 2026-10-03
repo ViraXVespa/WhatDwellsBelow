@@ -1,6 +1,5 @@
 extends Object
 
-const Combat := preload("res://scripts/combat/combat.gd")
 const Hit := preload("res://scripts/combat/cover/cover_hit.gd")
 
 static func _fan_hits_sprite(origin: Vector3, aim: Vector2, rng: float, half: float, host: Node3D) -> bool:

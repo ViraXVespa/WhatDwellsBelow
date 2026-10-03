@@ -5,9 +5,6 @@ const Util := preload("res://scripts/debug/playtest_los/los_util.gd")
 const Walk := preload("res://scripts/debug/playtest_los/los_walk.gd")
 const Door := preload("res://scripts/debug/playtest_los/los_door.gd")
 
-static func world3(pt: Node) -> World3D:
-	return Util.world3(pt)
-
 static func grid_dims(pt: Node) -> Dictionary:
 	return Util.grid_dims(pt)
 

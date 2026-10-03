@@ -62,9 +62,6 @@ static func apply_saved() -> void:
 		return
 	lock_landscape()
 
-static func set_desktop_mode(mode: String, persist: bool = true) -> void:
-	Web.set_desktop_mode(mode, persist)
-
 static func cycle_desktop() -> void:
 	Desk.cycle_desktop()
 
@@ -94,9 +91,6 @@ static func web_label() -> String:
 
 static func try_fullscreen_gesture() -> bool:
 	return Desk.try_fullscreen_gesture()
-
-static func try_install_prompt() -> bool:
-	return Desk.try_install_prompt()
 
 static func toggle_alt_enter() -> void:
 	Desk.toggle_alt_enter()
@@ -144,9 +138,6 @@ static func _js_request_fs() -> void:
 
 static func _js_exit_fs() -> void:
 	Desk._js_exit_fs()
-
-static func _js_close() -> void:
-	Desk._js_close()
 
 static func _js_flag(src: String) -> bool:
 	return str(JavaScriptBridge.eval(src, true)) == "1"

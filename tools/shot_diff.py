@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Before/after diff of shot PNGs (two files, or two directories paired by file name).
 
-  python3 tools/shot_diff.py BEFORE AFTER [--tol 0] [--max-ratio 0.02] [--out DIR] [--json]
+  python3 tools/shot_diff.py BEFORE AFTER [--tol 0] [--max-ratio 0.02] [--mask X,Y,W,H] [--out DIR] [--json]
 
 Identical bytes short-circuit (no Pillow needed). Otherwise Pillow + numpy count changed pixels
 (any channel differs by more than --tol), the changed bounding box and the max channel delta, and
 write NAME.diff.png (dimmed BEFORE with changed pixels in red) under --out. Importable:
-compare(a, b, tol, out_png) and compare_dirs(a, b, tol, out_dir).
+compare(a, b, tol, out_png, masks) and compare_dirs(a, b, tol, out_dir, masks).
 
 RESULT PASS = all identical, INFO = changed but within --max-ratio (or no limit given),
 FAIL = size mismatch, a frame only on one side, or over --max-ratio.
@@ -30,8 +30,17 @@ def _sha(p: Path) -> str:
     return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
-def compare(a: Path, b: Path, tol: int = 0, out_png: Path | None = None) -> dict:
-    """Compare two PNGs. status: same | changed | size | missing."""
+def parse_mask(text: str) -> tuple[int, int, int, int]:
+    try:
+        x, y, w, h = (int(v) for v in text.replace(" ", "").split(","))
+    except ValueError:
+        agent_log.fail(f"bad --mask {text!r}: want X,Y,W,H in pixels of a 1920x1080 frame (example 1040,20,260,100)")
+    return x, y, w, h
+
+
+def compare(a: Path, b: Path, tol: int = 0, out_png: Path | None = None, masks: list | None = None) -> dict:
+    """Compare two PNGs. status: same | changed | size | missing. masks: [(x, y, w, h)] in 1920x1080 pixels, ignored
+    (live-world sprites that animate between runs)."""
     if not a.is_file() or not b.is_file():
         return {"status": "missing", "name": b.name, "changed_px": 0, "ratio": 0.0}
     if _sha(a) == _sha(b):
@@ -49,6 +58,9 @@ def compare(a: Path, b: Path, tol: int = 0, out_png: Path | None = None) -> dict
     xa = np.asarray(ia).astype(int)
     xb = np.asarray(ib).astype(int)
     delta = np.abs(xa - xb).max(axis=2)
+    k = ia.size[0] / 1920.0
+    for mx, my, mw, mh in masks or []:
+        delta[int(my * k):int((my + mh) * k) + 1, int(mx * k):int((mx + mw) * k) + 1] = 0
     mask = delta > tol
     n = int(mask.sum())
     total = int(mask.size)
@@ -66,7 +78,7 @@ def compare(a: Path, b: Path, tol: int = 0, out_png: Path | None = None) -> dict
     return res
 
 
-def compare_dirs(a: Path, b: Path, tol: int = 0, out_dir: Path | None = None) -> list[dict]:
+def compare_dirs(a: Path, b: Path, tol: int = 0, out_dir: Path | None = None, masks: list | None = None) -> list[dict]:
     names = sorted({p.name for p in a.glob("*.png")} | {p.name for p in b.glob("*.png")})
     rows = []
     for nm in names:
@@ -75,7 +87,7 @@ def compare_dirs(a: Path, b: Path, tol: int = 0, out_dir: Path | None = None) ->
         elif not (b / nm).is_file():
             rows.append({"status": "removed", "name": nm, "changed_px": 0, "ratio": 0.0})
         else:
-            rows.append(compare(a / nm, b / nm, tol, (out_dir / (nm[:-4] + ".diff.png")) if out_dir else None))
+            rows.append(compare(a / nm, b / nm, tol, (out_dir / (nm[:-4] + ".diff.png")) if out_dir else None, masks))
     return rows
 
 
@@ -89,13 +101,15 @@ def verdict(rows: list[dict], max_ratio: float | None) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Diff shot PNGs: before vs after (files or directories).", writes=True, json_out=True)
-    p.add_argument("before")
-    p.add_argument("after")
+    p.add_argument("before", help="Before PNG (or a folder of PNGs).")
+    p.add_argument("after", help="After PNG (or a folder of PNGs).")
     p.add_argument("--tol", type=int, default=0, help="per-channel delta that still counts as unchanged")
     p.add_argument("--max-ratio", type=float, default=None, help="FAIL when a frame changes more than this fraction of pixels")
     p.add_argument("--out", default="", help="diff PNG directory (default _logs/shot-diff)")
+    p.add_argument("--mask", action="append", default=[], metavar="X,Y,W,H", help="Ignore this rectangle (pixels of a 1920x1080 frame; repeatable).")
     args = p.parse_args(argv)
-    root = Path(args.root).resolve() if args.root else agent_log.repo_root(_TOOLS.parent)
+    masks = [parse_mask(m) for m in args.mask]
+    root = agent_log.resolve_root(args)
     a, b = Path(args.before), Path(args.after)
     out_dir = Path(args.out) if args.out else root / "_logs" / "shot-diff"
     if not args.dry_run:
@@ -106,9 +120,9 @@ def main(argv: list[str] | None = None) -> int:
         agent_log.fail(f"not found: {a if not a.exists() else b}")
     sink = None if args.dry_run else out_dir
     if a.is_dir():
-        rows = compare_dirs(a, b, args.tol, sink)
+        rows = compare_dirs(a, b, args.tol, sink, masks)
     else:
-        rows = [compare(a, b, args.tol, (out_dir / (b.stem + ".diff.png")) if sink else None)]
+        rows = [compare(a, b, args.tol, (out_dir / (b.stem + ".diff.png")) if sink else None, masks)]
     status = verdict(rows, args.max_ratio)
     lines = [f"shot-diff before={a} after={b} tol={args.tol}"]
     for r in rows:
@@ -123,11 +137,11 @@ def main(argv: list[str] | None = None) -> int:
         summary.parent.mkdir(parents=True, exist_ok=True)
         summary.write_text("\n".join(lines + [res]) + "\n", encoding="utf-8")
     if args.json:
-        print(json.dumps({"status": status, "rows": rows}))
+        agent_log.print_json({"status": status, "rows": rows})
     else:
         print("\n".join(lines + [res]))
     return agent_log.exit_code(status)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

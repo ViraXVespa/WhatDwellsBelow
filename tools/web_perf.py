@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Advisory performance run of the EXPORTED web build (docs/ or _pages/) in headless Chrome.
+"""Advisory performance run of the EXPORTED web build in headless Chrome. Never a gate.
 
-  python3 tools/web_perf.py [--site docs] [--flow title-idle|camp-walk] [--save-baseline F | --baseline F]
+  python3 tools/web_perf.py [--site DIR | --url U] [--flow NAME[,NAME]|all] [--save-baseline F | --baseline F]
 
-Serves --site (or uses --url), loads it, replays a flow from tools/web-perf-flows.json (key, hold, click, wait,
-shot steps; shots land in _logs/web-perf/), and records load time (navigation to first frame after the engine overlay hides), per-frame
-times (avg/p95/max fps, frames over --long-ms), JS heap and wasm/DOM counters (CDP), and asset
-transfer sizes. Writes _logs/web-perf/report.json. --baseline F diffs against a saved report; a metric
-worse than --max-worse-pct is flagged WORSE (RESULT INFO, exit 0 unless --strict). Needs
-`pip install playwright` and a Chrome/Chromium (--chrome or $CHROME_BIN or PATH); no browser download.
-Software GL in headless boxes is slow: compare runs on the same machine only. Not a numbered smoke.
+Serves --site (default docs; use a fresh `export_web.py --out DIR`, docs/ may be stale) and replays flows from
+tools/web-perf-flows.json (steps: phase wait settle key hold click eval waitplay shot; `query` adds URL args like wdb-seed=42; `boot` prepends the splash/title steps). Reports load_ms
+(navigation to the engine overlay gone), its breakdown (wasm_dl_ms, wasm_compile_ms, init_ms), frame ms/fps and long
+frames per phase, JS heap and wasm memory peaks (sampled every 500 ms; wasm memory never shrinks), transfer sizes and
+page errors. Writes _logs/web-perf/report.json. --baseline F diffs against a saved file (tools/web-perf-baseline.json);
+a metric worse than its threshold is WORSE; a playtester flow whose run errors, stalls or ends early is INVALID (flagged, never baselined) (RESULT INFO, exit 0 unless --strict). --repeat N takes the median of N runs.
+--mbps throttles the network. Needs `pip install playwright` and Chrome/Chromium; no browser download. Software GL:
+compare runs on the same machine only. Not a numbered smoke.
 """
 from __future__ import annotations
 
@@ -21,7 +22,6 @@ import shutil
 import statistics
 import sys
 import threading
-import time
 from pathlib import Path
 
 _TOOLS = Path(__file__).resolve().parent
@@ -29,12 +29,16 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import web_perf_lib
 
 JOB = "web-perf"
 FLOWS = "tools/web-perf-flows.json"
-RAF = ("window.__wp={f:[],t:0};(function l(t){if(window.__wp.t){window.__wp.f.push(t-window.__wp.t)}"
-       "window.__wp.t=t;requestAnimationFrame(l)})(0);requestAnimationFrame(function l(t){requestAnimationFrame(l)});")
-UP = {"load_ms", "avg_frame_ms", "p95_frame_ms", "max_frame_ms", "long_frames", "heap_mb", "transfer_mb"}
+# metric: (max worse %, min absolute change). Down-is-bad metrics are in DOWN. Wall-clock and JS heap (GC timing, bimodal 77/136 MB in camp) are noisy, so wide; wasm_mem_mb is the steady one.
+UP = {"load_ms": (40, 1500), "init_ms": (50, 1000), "avg_frame_ms": (30, 5), "p95_frame_ms": (40, 10), "long_frames": (60, 5),
+      "heap_mb": (60, 40), "wasm_mem_mb": (10, 16), "transfer_mb": (5, 0.5), "page_errors": (0, 1)}
+DOWN = {"avg_fps": (30, 3)}
+SCALAR = ("load_ms", "wall_ms", "wasm_dl_ms", "wasm_compile_ms", "pck_end_ms", "init_ms", "frames", "avg_fps", "avg_frame_ms",
+          "p95_frame_ms", "max_frame_ms", "long_frames", "heap_mb", "wasm_mem_mb", "dom_nodes", "transfer_mb", "page_errors")
 
 
 def serve(site: Path):
@@ -42,95 +46,88 @@ def serve(site: Path):
         def log_message(self, *a):
             pass
 
-    h = functools.partial(Quiet, directory=str(site))
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), h)
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(site)))
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     return srv
 
 
-def run_flow(page, steps: list[dict], out: Path) -> None:
-    for s in steps:
-        if "wait" in s:
-            page.wait_for_timeout(int(s["wait"]))
-        elif "click" in s:  # [x, y] as fractions of the viewport (also focuses the canvas)
-            v = page.viewport_size
-            page.mouse.click(v["width"] * s["click"][0], v["height"] * s["click"][1])
-        elif "shot" in s:
-            page.screenshot(path=str(out / (s["shot"] + ".png")))
-        elif "key" in s:
-            page.keyboard.press(s["key"])
-        elif "hold" in s:
-            page.keyboard.down(s["hold"])
-            page.wait_for_timeout(int(s.get("ms", 500)))
-            page.keyboard.up(s["hold"])
+def median(runs: list[dict]) -> dict:
+    rep = dict(runs[len(runs) // 2])
+    for k in SCALAR:
+        rep[k] = round(statistics.median(r[k] for r in runs), 2)
+    rep["runs"] = len(runs)
+    rep["invalid"] = sorted({x for r in runs for x in r.get("invalid", [])})
+    if any(r["play"] for r in runs):
+        rep["play_runs"] = [r["play"] for r in runs]  # per-run playtester telemetry: what differs between runs
+    return rep
 
 
-def measure(url: str, chrome: str, steps: list[dict], long_ms: float, timeout_s: int, size: tuple[int, int], out: Path) -> dict:
-    from playwright.sync_api import sync_playwright
-
-    with sync_playwright() as pw:
-        br = pw.chromium.launch(executable_path=chrome, headless=True,
-                                args=["--enable-precise-memory-info", "--use-gl=angle", "--use-angle=swiftshader",
-                                      "--enable-unsafe-swiftshader", "--autoplay-policy=no-user-gesture-required"])
-        ctx = br.new_context(viewport={"width": size[0], "height": size[1]}, service_workers="block")
-        page = ctx.new_page()
-        page.add_init_script(RAF)
-        cdp = ctx.new_cdp_session(page)
-        cdp.send("Performance.enable")
-        t0 = time.time()
-        page.goto(url, wait_until="commit")
-        page.wait_for_function("(()=>{const s=document.getElementById('status');window.__wp.seen=window.__wp.seen||!!s;"
-                               "return window.__wp.seen&&!s&&!!document.getElementById('canvas')})()",
-                               timeout=timeout_s * 1000)
-        load_ms = (time.time() - t0) * 1000
-        page.evaluate("window.__wp.f.length=0")
-        run_flow(page, steps, out)
-        frames = page.evaluate("window.__wp.f")
-        m = {x["name"]: x["value"] for x in cdp.send("Performance.getMetrics")["metrics"]}
-        res = page.evaluate("performance.getEntriesByType('resource').map(r=>[r.name.split('/').pop(),r.transferSize||r.encodedBodySize||0])")
-        br.close()
-    fs = sorted(frames) or [0.0]
-    return {
-        "load_ms": round(load_ms), "frames": len(frames),
-        "avg_fps": round(1000 / statistics.mean(fs), 1) if frames else 0,
-        "avg_frame_ms": round(statistics.mean(fs), 1), "p95_frame_ms": round(fs[int(len(fs) * 0.95) - 1 if len(fs) > 1 else 0], 1),
-        "max_frame_ms": round(fs[-1], 1), "long_frames": sum(1 for x in fs if x > long_ms),
-        "heap_mb": round(m.get("JSHeapUsedSize", 0) / 1048576, 1), "dom_nodes": int(m.get("Nodes", 0)),
-        "transfer_mb": round(sum(b for _, b in res) / 1048576, 2),
-        "assets": sorted(({"file": n, "kb": round(b / 1024)} for n, b in res if b > 262144), key=lambda a: -a["kb"]),
-    }
+def diff(cur: dict, base: dict, pct: float | None) -> list[str]:
+    out = []
+    for table, sign in ((UP, 1), (DOWN, -1)):
+        for k, (lim, floor) in sorted(table.items()):
+            a, b = cur.get(k), base.get(k)
+            if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+                continue
+            d = (a - b) * sign
+            if d > floor and (b <= 0 or d * 100 / b > (lim if pct is None else pct)):
+                out.append("WORSE %s %s -> %s" % (k, b, a))
+    return out
 
 
-def diff(cur: dict, base: dict, pct: float) -> list[str]:
-    out = ["NOTE baseline flow %s differs from %s" % (base.get("flow"), cur.get("flow"))] if base.get("flow") != cur.get("flow") else []
-    for k in sorted(UP):
-        a, b = cur.get(k), base.get(k)
-        if isinstance(a, (int, float)) and isinstance(b, (int, float)) and b > 0 and (a - b) * 100 / b > pct:
-            out.append("WORSE %s %s -> %s (+%.0f%%)" % (k, b, a, (a - b) * 100 / b))
-    if cur.get("avg_fps") and base.get("avg_fps") and (base["avg_fps"] - cur["avg_fps"]) * 100 / base["avg_fps"] > pct:
-        out.append("WORSE avg_fps %s -> %s" % (base["avg_fps"], cur["avg_fps"]))
+def health(rep: dict) -> list[str]:
+    """Playtester health for one run (flows with a play result or a waitplay step); a non-empty list = INVALID, never baselined."""
+    p, bad = rep["play"], []
+    if not p:
+        return ["INVALID no playtester result (never started or stalled)"]
+    if p.get("end_cond") != "interrupted playtest":
+        bad.append("INVALID run ended early: %s" % p.get("end_cond"))
+    if p.get("kills", 0) < 1:
+        bad.append("INVALID playtester made no kills")
+    if p.get("stuck_t", 0) > 5.0:
+        bad.append("INVALID playtester stuck %ss" % p.get("stuck_t"))
+    ce = sum(rep["console_errors"].values())
+    if ce:
+        bad.append("INVALID %d console errors during the run, first: %s" % (ce, " | ".join(rep.get("console_msgs", []))[:300]))
+    mx = max((v["max_frame_ms"] for k, v in rep["phases"].items() if not k.startswith("_")), default=0)
+    if mx > 1500:
+        bad.append("INVALID frame stall %sms" % mx)
+    return bad
+
+
+def stuck(flow: dict, shots: dict) -> list[str]:
+    """expect_change: [[shot_a, shot_b], ...]; mean luminance within 10% means the flow stayed on that screen."""
+    out = []
+    for a, b in flow.get("expect_change") or []:
+        if shots.get(a, -1) >= 0 and shots.get(b, -1) >= 0 and abs(shots[a] - shots[b]) * 100 / max(shots[a], 1) < 10:
+            out.append("STUCK shots %s and %s look the same (luminance %s vs %s): the flow did not change screens" % (a, b, shots[a], shots[b]))
     return out
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Advisory perf run of the exported web build in headless Chrome.", json_out=True)
-    ap.add_argument("--site", default="docs", help="Exported site dir (default docs).")
+    ap.add_argument("--site", default="docs", help="Exported site dir (default docs; may be stale, export with export_web.py --out).")
     ap.add_argument("--url", default="", help="Test this URL instead of serving --site.")
-    ap.add_argument("--flow", default="title-idle", help="Flow name in %s." % FLOWS)
+    ap.add_argument("--flow", default="title-idle", help="Flow name(s), comma separated, or all (see %s)." % FLOWS)
     ap.add_argument("--chrome", default=os.environ.get("CHROME_BIN", ""), help="Chrome/Chromium binary (default PATH).")
     ap.add_argument("--long-ms", type=float, default=50.0, help="A frame over this many ms is long (default 50).")
     ap.add_argument("--timeout-sec", type=int, default=120, help="Load timeout.")
-    ap.add_argument("--width", type=int, default=1280)
-    ap.add_argument("--height", type=int, default=720)
-    ap.add_argument("--baseline", default="", help="Saved report to diff against.")
-    ap.add_argument("--save-baseline", default="", help="Copy this run's report here.")
-    ap.add_argument("--max-worse-pct", type=float, default=25.0, help="Flag a metric worse by more than this (default 25).")
-    ap.add_argument("--strict", action="store_true", help="Exit 1 when a metric is WORSE (default advisory).")
+    ap.add_argument("--width", type=int, default=1280, help="Viewport width in px (default 1280).")
+    ap.add_argument("--height", type=int, default=720, help="Viewport height in px (default 720).")
+    ap.add_argument("--mbps", type=float, default=0.0, help="Throttle the network to this many Mbit/s (default off).")
+    ap.add_argument("--repeat", type=int, default=1, help="Runs per flow; the report holds the median (default 1).")
+    ap.add_argument("--baseline", default="", help="Saved report (e.g. tools/web-perf-baseline.json) to diff against.")
+    ap.add_argument("--save-baseline", default="", help="Write this run's report here (merges flows into an existing file).")
+    ap.add_argument("--max-worse-pct", type=float, default=None, help="One percent for every metric (default: per-metric table).")
+    ap.add_argument("--strict", action="store_true", help="Exit 1 when a metric is WORSE or a flow is STUCK (default advisory).")
     args = ap.parse_args(sys.argv[1:] if argv is None else argv)
     root = agent_log.resolve_root(args)
     flows = json.loads((root / FLOWS).read_text(encoding="utf-8"))
-    if args.flow not in flows:
-        agent_log.fail("unknown flow %s. flows: %s" % (args.flow, ", ".join(sorted(flows))))
+    boot = flows.pop("_boot")
+    names = sorted(flows) if args.flow == "all" else [n for n in args.flow.split(",") if n]
+    for n in names:
+        if n not in flows:
+            agent_log.fail("unknown flow %s. flows: %s" % (n, ", ".join(sorted(flows))))
     chrome = args.chrome or shutil.which("google-chrome") or shutil.which("chromium") or shutil.which("chromium-browser") or ""
     if not chrome:
         agent_log.fail("no Chrome/Chromium: pass --chrome or set CHROME_BIN")
@@ -141,37 +138,60 @@ def main(argv: list[str] | None = None) -> int:
     site, srv, url = root / args.site, None, args.url
     if not url:
         if not (site / "index.html").is_file():
-            agent_log.fail("no exported site at %s (python3 tools/export_web.py)" % args.site)
+            agent_log.fail("no exported site at %s (python3 tools/export_web.py --out DIR)" % args.site)
         srv = serve(site)
         url = "http://127.0.0.1:%d/index.html" % srv.server_address[1]
+    shots = root / "_logs" / JOB
+    shots.mkdir(parents=True, exist_ok=True)
+    reps: dict[str, dict] = {}
     try:
-        shots = root / "_logs" / JOB
-        shots.mkdir(parents=True, exist_ok=True)
-        rep = measure(url, chrome, flows[args.flow]["steps"], args.long_ms, args.timeout_sec, (args.width, args.height), shots)
+        for n in names:
+            steps = (boot if flows[n].get("boot") else []) + flows[n]["steps"]
+            runs = [web_perf_lib.measure(url, chrome, steps, args.long_ms, args.timeout_sec, (args.width, args.height), shots,
+                                         n, args.mbps, flows[n].get("query", "")) for _ in range(max(args.repeat, 1))]
+            for r in runs:
+                r["invalid"] = health(r) if flows[n].get("playtest") else []
+            reps[n] = median(runs)
     except Exception as e:  # load timeout, Chrome launch
         return agent_log.finish(JOB, root, "error: %s" % str(e).splitlines()[0], "FAIL", args=args, flow=args.flow)
     finally:
         if srv:
             srv.shutdown()
-    rep.update(flow=args.flow, site=args.site if not args.url else args.url, chrome=Path(chrome).name)
+    label = ""
+    if (site / "build_id.txt").is_file():
+        label = (site / "build_id.txt").read_text(encoding="utf-8").strip()
+    full = {"build_id": label, "site": args.site if not args.url else args.url, "chrome": Path(chrome).name,
+            "viewport": "%dx%d" % (args.width, args.height), "flows": reps}
     out = root / "_logs" / JOB / "report.json"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(rep, indent=1), encoding="utf-8")
+    out.write_text(json.dumps(full, indent=1), encoding="utf-8")
     if args.save_baseline:
         bp = root / args.save_baseline
+        old = json.loads(bp.read_text(encoding="utf-8")) if bp.is_file() else {"flows": {}}
+        old.update({k: v for k, v in full.items() if k != "flows"})
+        old["flows"].update({n: {k: v for k, v in r.items() if k != "assets"} for n, r in reps.items() if not r["invalid"]})
         bp.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(out, bp)
-    worse = []
-    if args.baseline:
-        worse = diff(rep, json.loads((root / args.baseline).read_text(encoding="utf-8")), args.max_worse_pct)
-    lines = ["%s=%s" % (k, v) for k, v in rep.items() if k != "assets"] + ["big_asset %(file)s %(kb)s KB" % a for a in rep["assets"][:5]] + worse
-    worse = [w for w in worse if w.startswith("WORSE")] if not args.baseline else worse
-    n_worse = sum(1 for w in worse if w.startswith("WORSE"))
-    status = "FAIL" if n_worse and args.strict else ("INFO" if n_worse else "PASS")
-    return agent_log.finish(JOB, root, "\n".join(lines), status, args=args, flow=args.flow, load_ms=rep["load_ms"],
-                            avg_fps=rep["avg_fps"], p95_ms=rep["p95_frame_ms"], long=rep["long_frames"],
-                            heap_mb=rep["heap_mb"], mb=rep["transfer_mb"], worse=n_worse)
+        bp.write_text(json.dumps(old, indent=1) + "\n", encoding="utf-8")
+    base = json.loads((root / args.baseline).read_text(encoding="utf-8")) if args.baseline else {"flows": {}}
+    lines, flags = ["build_id=%s chrome=%s viewport=%s" % (label, full["chrome"], full["viewport"])], 0
+    for n, r in reps.items():
+        lines.append("flow %s" % n)
+        lines += ["  %s=%s" % (k, r[k]) for k in SCALAR]
+        lines += ["  mark %s=%s" % kv for kv in r["marks"].items()]
+        lines += ["  play %s" % json.dumps(p, sort_keys=True) for p in r.get("play_runs", [])]
+        lines += ["  phase %s %s" % (k, " ".join("%s=%s" % (a, b) for a, b in v.items())) for k, v in r["phases"].items()]
+        lines += ["  big_asset %(file)s %(kb)s KB" % a for a in r["assets"][:4]]
+        notes = stuck(flows[n], r["shots"]) + r["invalid"]
+        if args.save_baseline and r["invalid"]:
+            notes.append("NOTE flow %s NOT saved to the baseline (INVALID run)" % n)
+        if args.baseline:
+            notes += diff(r, base["flows"][n], args.max_worse_pct) if n in base["flows"] else ["NOTE no baseline for flow %s" % n]
+        lines += ["  " + x for x in notes]
+        flags += sum(1 for x in notes if x.startswith(("WORSE", "STUCK", "INVALID")))
+    status = "FAIL" if flags and args.strict else ("INFO" if flags else "PASS")
+    first = next(iter(reps.values()))
+    return agent_log.finish(JOB, root, "\n".join(lines), status, args=args, flows=",".join(names), load_ms=first["load_ms"],
+                            avg_fps=first["avg_fps"], heap_mb=first["heap_mb"], wasm_mb=first["wasm_mem_mb"], flagged=flags)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

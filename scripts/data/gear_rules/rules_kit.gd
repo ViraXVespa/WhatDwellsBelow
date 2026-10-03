@@ -74,32 +74,6 @@ static func is_starter(p: Object, it: Dictionary) -> bool:
 			return true
 	return false
 
-static func can_forge(p: Object, it: Dictionary) -> bool:
-	if it.is_empty():
-		return false
-	if str(it.get("kind", "")) == "artifact":
-		return false
-	if str(it.get("slot", "")) == "potion" or str(it.get("slot", "")) == "food":
-		return false
-	if bool(it.get("hold", false)) or str(it.get("kit_src", "")) == "hold":
-		return false
-	if str(it.get("rarity", "white")) == "white":
-		return false
-	if is_starter(p, it):
-		return false
-	return true
-
-static func can_bank(p: Object, it: Dictionary) -> bool:
-	if it.is_empty():
-		return false
-	if str(it.get("kind", "")) == "artifact":
-		return false
-	if bool(it.get("hold", false)):
-		return false
-	if is_starter(p, it):
-		return false
-	return true
-
 static func locked_equip_slot(slot: String) -> bool:
 	return slot == "weapon" or slot == "tool"
 
@@ -211,10 +185,3 @@ static func _restat_white(it: Dictionary, ilvl: int) -> Dictionary:
 
 static func _write_starter_ilvl(it: Dictionary, ilvl: int) -> void:
 	it["ilvl"] = maxi(int(it.get("ilvl", 1)), ilvl)
-
-static func same_white(a: Dictionary, b: Dictionary) -> bool:
-	if a.is_empty() or b.is_empty():
-		return false
-	if str(a.get("rarity", "white")) != "white" or str(b.get("rarity", "white")) != "white":
-		return false
-	return tmpl_key(a) == tmpl_key(b)

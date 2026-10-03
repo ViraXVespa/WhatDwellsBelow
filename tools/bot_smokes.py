@@ -8,11 +8,13 @@ binary only when the pin is missing. Editor playtest is out of scope.
   python tools/bot_smokes.py --setup
   python tools/bot_smokes.py --phases 1,2,6
   python tools/bot_smokes.py --door hub | --job hub.guild   (phases from routes.yaml smokes)
+  python tools/bot_smokes.py --for scripts/world/player.gd   (which phases to run for a file; runs nothing)
 """
 from __future__ import annotations
 
 import argparse
 import os
+import re
 import stat
 import subprocess
 import sys
@@ -121,21 +123,56 @@ def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool) ->
     return 1 if bad else 0
 
 
-def main() -> int:
+def phases_for(root: Path, files: list[str]) -> tuple[list[str], list[str], list[int]]:
+    """(code-map systems, matched doors, phases) for repo files: code_map row -> routes.yaml door by shared name word."""
+    import code_map_lib as cm
+    import md_format_lib as md
+    from load_routes import load_routes, smoke_phases
+    rows = cm.parse_rows(md.read_text(root / "design" / "code-map.md"))
+    data = load_routes(root)
+    systems = sorted({r.system for f in files for r in rows if cm.matches(f, r.listed)})
+    words = {w for s in systems for w in re.split(r"[^a-z0-9]+", s.lower()) if w}
+    doors = sorted(d for d in (data.get("doors") or {}) if words & set(d.split("_")))
+    phases = sorted({n for d in doors for n in smoke_phases(data, door=d)})
+    return systems, doors, phases
+
+
+def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Bot headless phase smokes")
-    p.add_argument("--doctor", action="store_true")
-    p.add_argument("--setup", action="store_true")
-    p.add_argument("--phases", default="")
+    p.add_argument("--for", dest="for_files", nargs="+", default=[], metavar="FILE",
+                   help="Repo file(s): print the code-map system, matching doors and the smoke phases to run, then exit (no Godot).")
+    p.add_argument("--doctor", action="store_true", help="Check the pinned Godot binary and print the setup state; run nothing.")
+    p.add_argument("--setup", action="store_true", help="Download the official 4.7.2 Linux binary if the pin is missing, then exit.")
+    p.add_argument("--phases", default="", help="Smoke phases, comma list (example 1,2,6).")
     p.add_argument("--door", default="", help="Phases mapped to this routes.yaml door (instead of --phases).")
     p.add_argument("--job", default="", help="Phases mapped to this routes.yaml door.job (instead of --phases).")
     p.add_argument("--flows", nargs="?", const="mapped", default="", metavar="NAMES",
                    help="Also run shot flows headless (asserts, no pixels): NAMES comma list, or the --door/--job mapping when bare.")
     p.add_argument("--no-gaps", action="store_true",
                    help="skip check_shot_gaps --changed (Bot gate: a new UI state without a shot flow FAILS this run)")
-    p.add_argument("--timeout", type=int, default=120)
-    p.add_argument("--verbose", action="store_true")
-    ns = p.parse_args()
+    p.add_argument("--timeout", "--timeout-sec", "-TimeoutSec", dest="timeout", type=int, default=120, help="Seconds per smoke phase (default 120).")
+    p.add_argument("--verbose", action="store_true", help="Print each Godot command and longer failure output.")
+    ns = p.parse_args(argv)
     root = agent_log.resolve_root(ns)
+    if ns.for_files:
+        systems, doors, phases = phases_for(root, [f.replace("\\", "/") for f in ns.for_files])
+        if not systems:
+            agent_log.fail(f"{', '.join(ns.for_files)} is in no code-map row; check the path (repo-relative) or run `code_map.py check`")
+        baseline = "1,2,6"
+        run = ",".join(map(str, phases)) or baseline
+        print(f"system={'; '.join(systems)}")
+        print(f"doors={','.join(doors) or 'none match'}" + ("" if phases else f" (no door maps to this system; BOT.md baseline phases {baseline})"))
+        print(f"run: python3 tools/bot_smokes.py --phases {run}")
+        print(f"warn: python3 tools/bot_warnscan.py --areas {','.join('p' + x for x in run.split(','))},static")
+        return agent_log.emit_result("INFO", phases=run, doors=",".join(doors))
+    for tok in [t for t in ns.phases.replace(" ", "").split(",") if t]:
+        if not tok.isdigit() or not 0 <= int(tok) <= 9:
+            agent_log.fail(f"bad phase {tok!r} in --phases. Valid phases are 1-9 (comma list, example 1,2,6)")
+    if ns.door or ns.job:
+        from load_routes import check_route, load_routes
+        bad_route = check_route(load_routes(root), ns.door, ns.job)
+        if bad_route:
+            agent_log.fail(bad_route)
     if (ns.door or ns.job) and not ns.phases:
         from load_routes import load_routes, smoke_phases
         ns.phases = ",".join(map(str, smoke_phases(load_routes(root), door=ns.door.strip(), job=ns.job.strip())))
@@ -191,4 +228,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))
