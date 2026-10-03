@@ -9,8 +9,15 @@ const LOC_START := 1
 const LOC_LOOP := 2
 const LOC_STOP := 3
 
+static var _anim_s: GDScript
+
+static func _anim() -> GDScript:
+	if _anim_s == null:
+		_anim_s = load("res://scripts/world/player/player_anim.gd") as GDScript
+	return _anim_s
+
 static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> Texture2D:
-	var _fac = load("res://scripts/world/player/player_anim.gd")
+	var _fac = _anim()
 	if moving or host.loc_state != LOC_IDLE:
 		Load.ensure_loco(host, key)
 	var start_f: Array = _fac.clip(host.idle_to_walk, key)
@@ -87,7 +94,7 @@ static func _locomotion(host: Node, key: String, moving: bool, delta: float) -> 
 	return _fac.pose_tex(host, key)
 
 static func apply_facing(host: Node, delta: float) -> void:
-	var _fac = load("res://scripts/world/player/player_anim.gd")
+	var _fac = _anim()
 	var key := Facing.from_aim(host.aim_dir)
 	host.facing_key = key
 	var tex: Texture2D = null

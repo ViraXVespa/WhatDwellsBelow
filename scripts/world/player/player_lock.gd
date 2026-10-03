@@ -2,8 +2,12 @@
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
 
+static var _combat_s: GDScript
+
 static func _combat() -> GDScript:
-	return load("res://scripts/combat/combat.gd") as GDScript
+	if _combat_s == null:
+		_combat_s = load("res://scripts/combat/combat.gd") as GDScript
+	return _combat_s
 
 static func ai_on() -> bool:
 	return App.playtest != null and bool(App.playtest.get("ai_on"))

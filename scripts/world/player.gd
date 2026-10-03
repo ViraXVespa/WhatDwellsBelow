@@ -85,7 +85,7 @@ func is_alive() -> bool:
 	return hp > 0.0
 
 func _script_at(path: String) -> GDScript:
-	return load(path) as GDScript
+	return Tick._gd(path)
 
 func take_hit(raw: float, from_dir: Vector2, crit: bool, src := "") -> void:
 	_script_at("res://scripts/world/player/player_act.gd").take_hit(self, raw, from_dir, crit, src)
