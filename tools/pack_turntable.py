@@ -14,9 +14,7 @@ import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
 FRAMES = ROOT / "_src" / "anim_frames"
-IMG = Path(
-    r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5CRepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images"
-)
+IMG = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5CRepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images")
 OUT = ROOT / "assets" / "live" / "player"
 CANVAS = 128
 CHAR_H = 110
@@ -137,11 +135,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Pack 8-dir player sheets from turntable + facing clips, shared scale and torso pin.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="pack_turntable")
+    return agent_log.run_writer("pack_turntable", "Pack 8-dir player sheets from turntable + facing clips, shared scale and torso pin.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

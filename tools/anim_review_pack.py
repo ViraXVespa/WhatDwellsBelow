@@ -116,8 +116,8 @@ def _md(repack: list[dict], good: list[dict], missing: list[str]) -> str:
     return "\n".join(lines)
 
 
-def main() -> int:
-    args = lib.brief_args(agent_log.std_parser(__doc__), "pack_brief")
+def main(argv: list[str] | None = None) -> int:
+    args = lib.brief_args(agent_log.std_parser(__doc__, writes=True), "pack_brief", argv)
     review, missing = lib.load_with_missing(args.review)
 
     rows = lib.clip_rows(review)
@@ -126,15 +126,14 @@ def main() -> int:
     payload = {
         "v": 1,
         "kind": "pack_brief",
-        "review": str(args.review.relative_to(lib.ROOT)) if args.review.is_file() else str(args.review),
+        "review": agent_log.rel(lib.ROOT, args.review),
         "repack": repack,
         "good": good,
         "missing": missing,
     }
     lib.write_brief(args, _md(repack, good, missing), payload)
-    print(f"repack {len(repack)} good {len(good)}")
     return agent_log.emit_result("PASS", repack=len(repack), good=len(good), missing=len(missing))
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

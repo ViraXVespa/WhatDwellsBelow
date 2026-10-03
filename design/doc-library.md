@@ -21,6 +21,7 @@ If a call does not work intuitively, it is designed wrong. Fix `doc_patch` (or t
 | `changelog --bullet B [--label L] [--summary S]` | Write `design/changelog/<label>.md` at the next free label |
 | `next-label` | Print the next free changelog label |
 | `write FILE [--b64 S] [--bom] [--append]` | Write UTF-8 from stdin or base64 (replaces `write_utf8_file.py`) |
+| `replace-file FILE (--from-file NEW \| --b64 S \| stdin)` | Rewrite a whole existing file (multi-line docs), keeping its BOM and EOL; refuses an empty body |
 | `apply plan.json` | Run a list of the above in one go |
 | `check` | The docs checker (`run_checker`): load graph, markdown format, catalog |
 

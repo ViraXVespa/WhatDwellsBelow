@@ -5,10 +5,7 @@ Read when: Grok Bot Job table → named optimization item
 
 Binding for **Grok Bot** optimization sessions only. Grok Build parks items with `tools/bot_opt.py`. Bot does not invent items.
 
-
 ## Mandate
-
-Size, prove, changelog, and `version.json` rules live in `BOT.md`.
 
 Execute **one** User-named item (or the next `pending` item the User named). One PR. No new game systems.
 
@@ -20,25 +17,19 @@ Execute **one** User-named item (or the next `pending` item the User named). One
 
 The Bot-notes Grok Build CLI is the usual parker. It may expand the User's wording from a thin layout check (one code-map row and/or one `list_xref`) and must ask once if an obvious gap is missing. Do not inventory the tree or write a pass plan into the item. Grok Bot investigates, plans, and implements. Park with `python3 tools/bot_opt.py` (read `_logs/bot-opt/summary.txt` only). Print pending ids with `python3 tools/bot_status.py`. Bot loads this mandate, then `--id opt-NNN` for the named item instead of scanning the Queue by hand. Do not add a JSON queue file.
 
-
 ## Read set
 
-1. This file — mandate plus one named item via `python3 tools/bot_opt.py --id opt-NNN`
-2. `design/refactor.md` (recipe only) when a split is required
-3. One `design/code-map.md` **system row** for the named cluster
-4. After the User names the item: only those live `.gd` bodies
-5. At ship: baked `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
+1. `design/refactor.md` (recipe only) when a split is required
+2. One `design/code-map.md` **system row** for the named cluster
+3. After the User names the item: only those live `.gd` bodies
 
 Do not open the other Bot flow siblings. Do not walk the whole live tree.
-
 
 ## Pass
 
 1. User names an item id (or the next pending item). Inventory that cluster with VM prove commands in `BOT.md`. Do not edit yet.
 2. Implement only that item. Mark it `done` in the same PR with `python3 tools/bot_opt.py --status opt-NNN=done`.
-3. Prove per BOT.md.
-3. 
-
+3. Prove: `BOT.md`.
 
 ## Queue
 
@@ -72,7 +63,3 @@ Keep player-facing order and timing unless a listed extract is a no-op move. Sam
 Touched live `scripts/**/*.gd` under 10KB. One PR. Mark this item done in the same PR.
 
 <!-- bot-opt:end -->
-
-## Verify
-
-Prove per BOT.md.

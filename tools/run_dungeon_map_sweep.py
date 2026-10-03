@@ -18,10 +18,10 @@ import agent_log
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Dungeon map smoke across seeds.", json_out=True)
-    ap.add_argument("--count", "-Count", type=int, default=10)
-    ap.add_argument("--floor", "-Floor", type=int, default=1)
-    ap.add_argument("--scale", "-Scale", type=int, default=8)
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=180)
+    ap.add_argument("--count", "-Count", type=int, default=10, help="Number of seeds to sweep (default 10).")
+    ap.add_argument("--floor", "-Floor", type=int, default=1, help="Floor number (default 1).")
+    ap.add_argument("--scale", "-Scale", type=int, default=8, help="Pixels per cell in the map PNGs (default 8).")
+    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=180, help="Godot timeout per seed in seconds (default 180).")
     ap.add_argument("--seeds", "-Seeds", nargs="+", default=[], help="Seeds, 1,2,3 or 1 2 3.")
     ap.add_argument("--seed-list", "-SeedList", default="", help="Comma list; wins over --seeds.")
     args = ap.parse_args(argv)
@@ -61,4 +61,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

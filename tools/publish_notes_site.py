@@ -53,7 +53,7 @@ def publish(root: Path, site: Path) -> dict:
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = agent_log.std_parser("Publish loose version/changelog files for GitHub Pages.", writes=True)
-    parser.add_argument("--site", default="site")
+    parser.add_argument("--site", default="site", help="Site dir to write the notes data into (default site).")
     return parser.parse_args(argv)
 
 
@@ -72,4 +72,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

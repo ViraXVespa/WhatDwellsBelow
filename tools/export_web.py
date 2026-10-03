@@ -26,7 +26,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Export the Web build to docs/ (or _pages/ with --archives).", json_out=True)
     ap.add_argument("--archives", "-Archives", action="store_true", help="Also export catalog archives into _pages/.")
     ap.add_argument("--godot", default="", help="Godot executable (default: GODOT_BIN / Steam / bot pin).")
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=900)
+    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=900, help="Godot export timeout in seconds (default 900).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     exe = godot_lib.godot_exe(args.godot)
@@ -72,4 +72,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

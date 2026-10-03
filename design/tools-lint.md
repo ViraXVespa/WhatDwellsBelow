@@ -26,9 +26,9 @@ Rules, the CLI contract and the surface key (Surf, A) are in `tools.md`. Same ta
 |---|---|---|---|---|
 | `split_funcs.py` | Split a GDScript into the facade + helpers in its stem folder (trimmed unique names; `--dry-run` shows them): `FILE --list`, then `--plan plan.json [--dry-run] [--in-folder]` (`{<stem>_<rest>: [names]}`); node funcs move host-first; runs `facade_requal.py` and a line-multiset check. Flow: grok-bot-size.md. | B | `--help` | Y |
 | `facade_requal.py` | Qualify names that moved to helpers (same folder or the facade's stem folder; `FILE`, `--check`, `--dry-run`, `--sym NAME=Mod`). `split_funcs.py` runs it itself. | B | `--help` | Y |
-| `doc_patch.py` | Idempotent doc edits. CLI: `replace`, `ensure-line`, `set-read-when`, `changelog`, `next-label`, `write`, `apply plan.json`, `check` (`--dry-run`, `--eol keep\|crlf\|lf`); also importable (`write_changelog`, `replace_once`, `replace_func`, `upsert_func`). Keeps each file's BOM and line endings. Detail: `doc-library.md`. | BWD | `--help` | Y |
+| `doc_patch.py` | Idempotent doc edits. CLI: `replace`, `ensure-line`, `set-read-when`, `changelog`, `next-label`, `write`, `replace-file`, `apply plan.json`, `check` (`--dry-run`, `--eol keep\|crlf\|lf`); also importable (`write_changelog`, `replace_once`, `replace_func`, `upsert_func`). Keeps each file's BOM and line endings. Detail: `doc-library.md`. | BWD | `--help` | Y |
 | `md_format_lib.py` | Text I/O for every tool: `read_text`, `write_text` (BOM and EOL kept), `detect_eol`; markdown format checks | BWD | module docstring (no `--help`) | Y |
 | `patch_code_map.py` | Shim -> `code_map.py patch`, one release | BD | `--help` | Y |
 | `code_map_lib.py` | Code-map row parser/writer used by `code_map.py` | BD | module docstring (no `--help`) | Y |
-| `list_oversize_docs.py` | List `design/*.md` by size, OVER at `--over-kb` (default 8) | BD | `--help` | Y |
-| `list_route.py` | Print one `routes.yaml` door or job card (`--job door.job`), incl. smoke phases and shot flows; gates print as one line; no args lists the doors | BD | `--help` | Y |
+| `list_oversize_docs.py` | List `design/*.md` by size, OVER at `--over-kb` (default 8); `--boot` boot-chain bytes, `--dupes` sentences repeated across docs (doc SNR sweep) | BD | `--help` | Y |
+| `list_route.py` | Print one `routes.yaml` door or job card (`--job door.job`), incl. smoke phases and shot flows; gates print as a count (`--gates` lists names and triggers), `flows: none` when empty; no args lists the doors | BD | `--help` | Y |

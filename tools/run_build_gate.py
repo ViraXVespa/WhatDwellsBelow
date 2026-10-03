@@ -28,9 +28,9 @@ def child(root: Path, script: str, job: str, *flags: str) -> tuple[int, list[str
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Post-slice gate: import check (+ optional script cap).", json_out=True)
-    ap.add_argument("--over-kb", "-OverKb", type=float, default=10)
-    ap.add_argument("--import-timeout-sec", "-ImportTimeoutSec", type=int, default=180)
-    ap.add_argument("--skip-import", "-SkipImport", action="store_true")
+    ap.add_argument("--over-kb", "-OverKb", type=float, default=10, help="Script size floor in KB for the cap check (default 10).")
+    ap.add_argument("--import-timeout-sec", "-ImportTimeoutSec", type=int, default=180, help="Editor import timeout in seconds (default 180).")
+    ap.add_argument("--skip-import", "-SkipImport", action="store_true", help="Skip the editor import step.")
     ap.add_argument("--force", "-Force", action="store_true", help="Continue even if Godot is on this path.")
     ap.add_argument("--script-cap", "-ScriptCap", action="store_true", help="Also run check_script_cap --git-changed.")
     ap.add_argument("--batch", action="store_true", help="Import + restore assets/*.import churn + check_load_graph + whole-tree check_script_cap.")
@@ -100,4 +100,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

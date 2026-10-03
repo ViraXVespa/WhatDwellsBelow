@@ -43,7 +43,7 @@ def build_prompt(gender: str) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments).", 
         description="Print the locked 3x3 Character Bible Imagine text. Copy the block. Printer only."
     )
     parser.add_argument(

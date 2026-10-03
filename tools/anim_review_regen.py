@@ -86,8 +86,8 @@ def _md(regen: list[dict], prompts: dict[str, str], missing: list[str]) -> str:
     return "\n".join(lines)
 
 
-def main() -> int:
-    args = lib.brief_args(agent_log.std_parser(__doc__), "regen_brief")
+def main(argv: list[str] | None = None) -> int:
+    args = lib.brief_args(agent_log.std_parser(__doc__, writes=True), "regen_brief", argv)
     review, missing = lib.load_with_missing(args.review)
 
     regen = [r for r in lib.clip_rows(review) if r["state"] == "regenerate"]
@@ -95,14 +95,13 @@ def main() -> int:
     payload = {
         "v": 1,
         "kind": "regen_brief",
-        "review": str(args.review),
+        "review": agent_log.rel(lib.ROOT, args.review),
         "regenerate": [{**row, "prompt": prompts.get(row["key"], "")} for row in regen],
         "missing": missing,
     }
     lib.write_brief(args, _md(regen, prompts, missing), payload)
-    print(f"regenerate {len(regen)}")
     return agent_log.emit_result("PASS", regenerate=len(regen), missing=len(missing))
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

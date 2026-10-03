@@ -3,28 +3,19 @@
 Status: protocol  
 Read when: Grok Bot Job table → ad-hoc extract or existing-owner routing  
 
-Boot `BOT.md` + `python3 tools/bot_status.py` first. Binding for **Grok Bot** extract sessions only. This is not the staged reuse-map PR (the reuse Bot job). This is not a size sweep. User-gated: do not start this flow unless the User named extract / DRY / shared helpers / an owner route *and* did not hand a non-empty the staged reuse brief brief.
-
+Binding for **Grok Bot** extract sessions only. This is not the staged reuse-map PR (the reuse Bot job). This is not a size sweep. User-gated: do not start this flow unless the User named extract / DRY / shared helpers / an owner route *and* did not hand over a non-empty staged reuse brief.
 
 ## Mandate
 
-Size, prove, changelog, and `version.json` rules live in `BOT.md`.
-
 Move near-identical control flow (renamed locals OK) to one owner. No behavior change. No new game systems.
 
-- Prefer a **new shared module** when the same flow spans systems and the current owner would blow 10KB or is the wrong concern.
-- Prefer an **existing owner** only when that script already is the concern and stays under 10KB after the calls land.
-- Never grow an owner just to avoid a new file.
-- Never treat vaguely similar features as the same flow.
-- Do not keep splitting toward 5KB in this flow.
+Owner choice (new shared module vs existing owner) and the near-identical test: `refactor.md` (New shared modules and reuse). An existing owner must stay under 10KB after the calls land. Do not keep splitting toward 5KB in this flow.
 
 ## Read set
 
-1. This file
-2. `design/refactor.md` (recipe only)
-3. One `design/code-map.md` **system row** for the named cluster
-4. After the User names the cluster: only those live `.gd` bodies
-5. At ship: `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
+1. `design/refactor.md` (recipe only)
+2. One `design/code-map.md` **system row** for the named cluster
+3. After the User names the cluster: only those live `.gd` bodies
 
 Do not open the staged reuse brief (empty template is not a worklist). Do not walk the whole live tree to rediscover copies. Ask if the pair is not actually the same flow.
 
@@ -52,11 +43,6 @@ Keep these as separate concerns unless the User overrides a specific row:
 1. Name the cluster and the intended owner or new module. Wait if that is not already explicit.
 2. Verify both bodies before moving.
 3. Route call sites. A new shared module goes in its owner's stem folder (refactor.md, Cluster folders). Update `design/code-map.md` in the same PR when a new public helper path appears.
-4. Prove per BOT.md.
-4. 
+4. Prove: `BOT.md`.
 
-Public entry points that must not change when a helper is split: `App.playtest`, `App.set_zoom` / `App.set_hud_scale` / `App.set_volume`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.
-
-## Verify
-
-Prove per BOT.md.
+Public entry points that must not change when a helper is split are listed in `design/code-map.md`.

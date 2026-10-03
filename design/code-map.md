@@ -3,13 +3,9 @@
 Status: index  
 Read when: you need a live script or scene for a named system
 
-This file is the live-path map. It is not a boot file and not a topic index.
+Game code only (tools live in the `design/tools.md` catalog). Open **only the matching system row**, not the rest of the table. When Grok Bot splits a live script, update this file in the same slice.
 
-Open **only the matching system row**. Do not read the rest of the table “for context.” Do not walk `assets/` unless the task names sprites or audio.
-
-When Grok Bot splits a live script, update **this** file in the same slice.
-
-Each facade sits beside its cluster folder (`scripts/<area>/<stem>.gd` + `<stem>/`, refactor.md). A bare `name.gd` in a row is a helper in that folder; basenames are unique repo-wide, so `code_map.py row --path <full path>` and `list_xref.py` find it. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`. The 10KB ship floor is Bot-owned. Grok Build does not split from this page.
+Each facade sits beside its cluster folder (`scripts/<area>/<stem>.gd` + `<stem>/`, refactor.md). A bare `name.gd` in a row is a helper in that folder; basenames are unique repo-wide, so `code_map.py row --path <full path>` and `list_xref.py` find it. Facades keep the original public path; helpers take `host` / `pt` / `ui` / `p`.
 
 | System | Live files |
 |--------|------------|
@@ -22,7 +18,6 @@ Each facade sits beside its cluster folder (`scripts/<area>/<stem>.gd` + `<stem>
 | Numbers | `scripts/data/balance.gd` (facade; helper `access.gd`), `schema.gd`, `tunables.gd`; `scripts/data/balance/` |
 | Version / changelog | `scripts/data/version.json`, `scripts/data/changelog.json`, `scripts/data/game_ver.gd`; `tools/build_changelog.py`; Pages loose `/data/` notes |
 | Web export | `tools/web_shell.html`, `tools/export_web.py`, `tools/publish_notes_site.py`, `tools/pages_game_hash.py`, `tools/enable_texture_mips.py`, `tools/web_postexport.py`; `export_presets.cfg`; `.github/workflows/version.yml`, `.github/workflows/pages.yml` |
-| Tools | Catalog `design/tools.md`; `tools/check_tool_docs.py`, `tools/md_format_lib.py`, `tools/doc_patch.py`, `tools/code_map_lib.py`, `tools/patch_code_map.py`, `tools/tunables_lib.py`, `code_map.py`, `tunables.py`, `agent_log.py`, `repo_lib.py`, `gd_lib.py`, `godot_lib.py`, `check_tool_cli.py`, `sprite_lib.py`, `audio_lib.py` |
 | Dungeon | `scripts/dungeon/gen.gd` + `carve.gd` (facade; helpers `carve_hall.gd`, `carve_near.gd`), `rooms.gd`, `doors.gd`, `outline.gd`; `scripts/world/dungeon.gd` + `dungeon_boot.gd`, `dungeon_geo.gd`, `geo_stream.gd` (facade; helpers `stream_clip.gd`, `stream_emit.gd`), `wall_rects.gd`, `minimap.gd`, `map_act.gd`, `dungeon_cells.gd`, `dungeon_stream.gd` + `queue.gd`, `stream_act.gd`, `dungeon_props.gd`, `dungeon_pack.gd`, `net.gd`, `floor_crystal.gd`, `spawn.gd`, `props_place.gd`, `crystal_place.gd`, `boss_door.gd`, `depth.gd`; `scripts/dungeon/gen/`; `scripts/world/dungeon/` |
 | Hub | `scripts/world/camp.gd` + `warm.gd`, `camp_build.gd` (facade; helpers `build_util.gd`, `build_parts.gd`), `camp_view.gd`; `interact.gd`, `interact_fx.gd`, `mesh.gd` (facade; helpers `mesh_prim.gd`, `mesh_mat.gd`, `mesh_tent.gd`), `roof.gd`, `layout.gd`, `banner.gd`; `scripts/graphics/wrap_shader.gd`, `light_rt.gd` (facade; helpers `hub_bake.gd`, `hub_cast.gd`, `hub_shadow.gd`, `lights.gd`, `publish.gd`); `scripts/combat/dummy.gd`; `scripts/world/interact/` |
 | Gather | `scripts/world/gather/gather_node.gd`, `rules.gd`, `breakable.gd`, `pickup.gd` |
@@ -38,4 +33,3 @@ Each facade sits beside its cluster folder (`scripts/<area>/<stem>.gd` + `<stem>
 
 Public entry points that must not change when a helper is split: `App.playtest`, `App.set_zoom` / `App.set_hud_scale` / `App.set_volume`, `Gen.generate` / `Gen.make_opening`, `EnemyAI.tick`, `SmokeLate.p5`–`p9`, `ProgressGear.make_*`.
 
-Live `player_anim.gd` plays unarmed idle stills plus `idle_to_walk` / looping `walk` / `walk_to_idle` from the locked Bible harvest. Title → Play warms those loco frames and frames the full yard under the solid loader (hub).
