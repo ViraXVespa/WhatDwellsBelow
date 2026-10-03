@@ -10,6 +10,9 @@ const DIR := "res://scripts/data/locale/"
 
 static func setup() -> void:
 	for code: String in LOCALES:
+		var have: Translation = TranslationServer.get_translation_object(code)
+		if have != null and have.locale == code:
+			continue  # already registered via project.godot
 		var table: Translation = load(DIR + code + ".po") as Translation
 		if table != null:
 			TranslationServer.add_translation(table)

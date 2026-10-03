@@ -12,7 +12,7 @@ English is the default locale and reads exactly as before. Player-facing strings
 | `scripts/data/locale/en.po` | Source strings: `msgid` = key, `msgstr` = English. Sorted by key. |
 | `scripts/app/app_loc.gd` | `LocS.setup()` (called first in `app_boot._ready`): loads each code in `LOCALES`, picks the locale. |
 
-Why runtime registration: `project.godot` is outside the bot allowlist. Owner follow-up (optional): add `locale/translations=PackedStringArray("res://scripts/data/locale/en.po")` under `[internationalization]`, then the editor and exports know the file without the helper (keep `setup()` for the locale choice).
+Registration: `project.godot` `[internationalization]` lists `en.po` (new locales are also added to `LOCALES` below). `setup()` is idempotent and also picks the locale.
 
 Locale choice: default `en`. `--wdb-locale=xx` (web: `?wdb-locale=xx`) selects another code in `LOCALES`; unknown codes fall back to `en`. `LocS.set_locale(code)` is the hook for a future settings UI. The OS locale is ignored on purpose. Nothing is saved yet.
 
@@ -58,13 +58,13 @@ Not converted (about 130 prose strings, plus short words and labels counted by h
 
 Out of scope by design: `debug/*`, smokes, playtest and log text, ids and node names.
 
-## Open questions
+## Decisions (owner delegated, 2026-10-03)
 
-- Key scheme: is file-stem keys fine, or should keys be semantic (`menu.pause.resume`) so moving code does not touch the PO?
-- Plurals: many strings use `%s` for a plural suffix ("piece%s"). Use `tr_n` and PO plural forms?
-- Named placeholders (`{gold}`) instead of positional `%s`/`%d`?
-- Fonts for CJK, Cyrillic, Thai; the bundled UI font is Latin-oriented.
-- Right-to-left layout and mirrored HUD.
-- Item/affix/quest content in data tables: translate by id or by text?
-- Persist the locale in the save slot and add a settings row?
-- Register the PO in `project.godot` (needs owner approval)?
+1. **Keys**: keep `<file stem>.<slug>`. A rename pass is cheap later with a key-map script; not worth doing now.
+2. **Plurals**: use `tr_n` and PO plural forms when a second locale is actually added. Until then `%s` suffix cases stay: `anvil_forge_job.stopped_the_queue_pick_from` ("piece%s") and `forge_act.kept_hold` ("hold%s").
+3. **Placeholders**: new strings use named placeholders: `tr("scope.key").format({"gold": g})` with `{gold}` in the `msgstr`. Existing positional `%s`/`%d` strings convert opportunistically when touched.
+4. **Locale persistence**: save the choice in settings (not the save slot) when a settings row is added. Not built yet.
+5. **Data tables** (catalog, affixes, quests, archives): translate by id, key derived from the id (`item.<id>.name`, `item.<id>.desc`). This is the next pass.
+6. **Fonts and RTL**: deferred until a target language is chosen. Then: pick a UI font with the needed glyphs (CJK/Cyrillic/Thai fallback chain), check label widths, and add mirrored layout for RTL.
+
+Registration: `project.godot` now lists `en.po` under `[internationalization]`. `LocS.setup()` skips a locale that is already registered, so there are no duplicates; it still adds any other code in `LOCALES` and picks the locale.
