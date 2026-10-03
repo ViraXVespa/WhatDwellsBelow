@@ -6,6 +6,8 @@ const Binds := preload("res://scripts/input/binds.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const LocS := preload("res://scripts/app/app_loc.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
+const MenuPad := preload("res://scripts/ui/menu_pad.gd")
+const Split := preload("res://scripts/ui/split_menu.gd")
 
 const ROWS: Array = [
 	{"id": "move_up", "label": "Move up", "kb_only": true},
@@ -45,8 +47,7 @@ static func build(settings: Node) -> void:
 func rebuild() -> void:
 	if host == null or host.info_box == null:
 		return
-	capture_action = ""
-	capture_slot = -1
+	MenuPad.capture_lock = capture_action != ""
 	host.bind_pool = pool
 	View.clear_page(host)
 	_sel_row()
@@ -58,7 +59,7 @@ func rebuild() -> void:
 		Confirm.open(ui, App.tr("binds_page.reset_controls"), App.tr("binds_page.restore_default_controls").format({"which": which}), func() -> void:
 			Binds.reset_pool(pool)
 			App.save_now()
-			rebuild()
+			_end_capture()
 			View.apply_col(host)
 			View.focus_col(host)
 		)
@@ -107,7 +108,7 @@ func _sel_stick(motion: InputEventJoypadMotion) -> void:
 
 func _cycle_pool(_dir: int) -> void:
 	pool = "pad" if pool == "kb" else "kb"
-	rebuild()
+	_end_capture()
 	View.apply_col(host)
 	View.focus_col(host)
 
@@ -161,15 +162,36 @@ func _stick_axis(event: InputEvent) -> bool:
 	var ax: int = (event as InputEventJoypadMotion).axis
 	return ax == JOY_AXIS_LEFT_X or ax == JOY_AXIS_LEFT_Y or ax == JOY_AXIS_RIGHT_X or ax == JOY_AXIS_RIGHT_Y
 
+func _end_capture() -> void:
+	capture_action = ""
+	capture_slot = -1
+	MenuPad.capture_lock = false
+	rebuild()
+
+func _exit_tree() -> void:
+	MenuPad.capture_lock = false
+
+func _process(_dt: float) -> void:
+	if capture_action != "" and (host == null or str(Split.current(host).get("id", "")) != "controls"):
+		_end_capture()
+
+## Capture gets first claim on keys and pad buttons (Space, B, [, ], LB, RB, Backspace bind like any other).
+## Pause (Esc / Start) is not rebindable, so it is the cancel. Mouse clicks stay on the GUI path.
+func _input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton):
+		_capture(event)
+
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		_capture(event)
+
+func _capture(event: InputEvent) -> void:
 	if capture_action == "":
 		return
 	if event.is_echo() or not event.is_pressed():
 		return
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
-		capture_action = ""
-		capture_slot = -1
-		rebuild()
+	if event.is_action_pressed("pause"):
+		_end_capture()
 		get_viewport().set_input_as_handled()
 		return
 	if _stick_axis(event):
@@ -180,7 +202,5 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	Binds.bind_slot(capture_action, pool, capture_slot, event)
 	App.save_now()
-	capture_action = ""
-	capture_slot = -1
-	rebuild()
+	_end_capture()
 	get_viewport().set_input_as_handled()

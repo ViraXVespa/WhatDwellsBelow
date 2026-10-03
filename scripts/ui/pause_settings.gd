@@ -5,6 +5,7 @@ const Split := preload("res://scripts/ui/split_menu.gd")
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const BindsPage := preload("res://scripts/ui/binds_page.gd")
+const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Pages := preload("res://scripts/ui/pause_settings/settings_pages.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
@@ -78,7 +79,11 @@ func split_hint() -> void:
 	if pause == null:
 		return
 	var extra: Array = []
-	if col == "list":
+	if MenuPad.capture_lock:
+		extra.append({"action": "pause", "verb": "cancel", "gap": true})
+		extra.append({"action": "ui_accept", "hide": true})
+		extra.append({"action": "ui_cancel", "hide": true})
+	elif col == "list":
 		var row: Dictionary = Split.current(self)
 		if Split.is_leaf(row):
 			extra.append({"action": "ui_accept", "verb": "select", "gap": true})

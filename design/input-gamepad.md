@@ -63,10 +63,10 @@ Shared classifiers live in `scripts/ui/menu_pad.gd`. Any menu with tabs MUST cal
 | Input | Menu effect |
 |-------|-------------|
 | A / Enter / `ui_accept` | Confirm focused control. Second A confirms a pending prompt. |
-| B / Esc / `ui_cancel` | Close a nested layer (re-equip list, Settings detail column, pending prompt). At root, close the menu. |
-| LB / RB / `[` / `]` | Cycle tabs when the open menu has a tab strip. |
-| Q / LT | Previous gear-board stats page |
-| E / RT | Next gear-board stats page |
+| B / Esc / Backspace / `ui_cancel` | Close a nested layer (re-equip list, Settings detail column, pending prompt). At root, close the menu. Space (dash) does nothing in menus. |
+| LB / RB / `[` / `]` | Cycle tabs when the open menu has a tab strip. Follows the `tab_left` / `tab_right` actions, not fixed keys. |
+| Target-lock key (Q) / LT | Previous gear-board stats page. Keyboard follows the `target_lock` bind; pad follows `special`. |
+| Interact key (E) / RT | Next gear-board stats page. Keyboard follows the `interact` bind (Enter stays confirm); pad follows `attack`. |
 | I / D-pad Right | Gameplay only: open pause on Inventory. MUST NOT change tabs while a menu is already open. |
 
 Exception: the secret Animation Browser keeps LB / RB = previous / next model, LT / RT = animation list, Y / `gear_tip` = review-state cycle, X / `gear_drop` = play/pause, D-pad = Facing/Animation columns, left stick = speed or frame step, and right stick = facing, per debug. While that viewer is open those chords MUST NOT fire world or gear-board actions (X must not drop gear). Keyboard Y types into the notes field when that field has focus; gamepad Y still cycles.

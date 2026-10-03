@@ -149,7 +149,7 @@ static func _unhandled_input(host: CanvasLayer, event: InputEvent) -> void:
 	if host._gear_busy() and GearAct.handle_event(host, event):
 		host.get_viewport().set_input_as_handled()
 		return
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		if host._sub_up() or GearAct.swallowing():
 			if host._sub_up() and not GearAct.swallowing():
 				if host.forge_phase == "work":
