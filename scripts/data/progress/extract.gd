@@ -1,7 +1,7 @@
 ﻿extends Object
 
 const ProgressQuest := preload("res://scripts/data/progress_quest.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
+const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 
 static func _full_mail(role: String) -> bool:
@@ -41,11 +41,11 @@ static func _salvage_spare(p: Object, it: Dictionary) -> bool:
 	return not _beats_keep(it)
 
 static func _mail_item(p: Object, it: Dictionary) -> String:
-	var special := Rules.handle_mail(p, it)
+	var special := Kit.handle_mail(p, it)
 	if special != "":
 		return special
 	if _salvage_spare(p, it):
-		return Rules.grant_smith(p, it)
+		return Kit.grant_smith(p, it)
 	p.bank_items.append(it)
 	App.extracted = true
 	p.mailed_names.append(str(it.name))

@@ -1,6 +1,5 @@
 extends Object
 
-const Prompts := preload("res://scripts/input/prompts.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 
 const PROMPT_GOLD := Color(0.86, 0.80, 0.66)

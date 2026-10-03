@@ -1,11 +1,7 @@
 extends Object
 
-const ThemeS := preload("res://scripts/ui/theme.gd")
 const Text := preload("res://scripts/ui/gear_board/board_text.gd")
-const Act := preload("res://scripts/ui/gear_board/board_act.gd")
-const Floor := preload("res://scripts/ui/gear_board/floor.gd")
 const Tip := preload("res://scripts/ui/gear_board/tip.gd")
-const Build := preload("res://scripts/ui/gear_board/board_build.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Host := preload("res://scripts/ui/gear_board/board_host.gd")
 

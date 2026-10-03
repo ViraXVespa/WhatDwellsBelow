@@ -2,8 +2,6 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
-const ForgeP := preload("res://scripts/data/progress_forge.gd")
-const StepRow := preload("res://scripts/ui/step_row.gd")
 const QTY_MAX := 9
 
 static func _lock_row(ui: CanvasLayer, box: Control, slot: String, book: Dictionary) -> void:

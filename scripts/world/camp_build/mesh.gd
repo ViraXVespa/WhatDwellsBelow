@@ -7,8 +7,6 @@ const Mat := preload("res://scripts/world/camp_build/mesh_mat.gd")
 const Tent := preload("res://scripts/world/camp_build/mesh_tent.gd")
 const LayoutS := preload("res://scripts/world/camp/layout.gd")
 
-const LightRt := preload("res://scripts/graphics/light_rt.gd")
-
 static func roof_mat(
 	dim: Vector2,
 	world_min: Vector3,

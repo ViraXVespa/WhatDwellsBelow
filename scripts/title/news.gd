@@ -2,7 +2,6 @@ extends Object
 
 const GameVer := preload("res://scripts/data/game_ver.gd")
 const Show := preload("res://scripts/title/news_show.gd")
-const Fmt := preload("res://scripts/title/news_fmt.gd")
 
 static func all_entries() -> Array:
 	var rows: Array = []

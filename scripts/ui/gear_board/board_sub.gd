@@ -1,10 +1,8 @@
 extends Object
 
 const Board := preload("res://scripts/ui/gear_board.gd")
-const Text := preload("res://scripts/ui/gear_board/board_text.gd")
-const Fmt := preload("res://scripts/ui/gear_board/text_fmt.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
+const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
@@ -108,7 +106,7 @@ static func _unequip_or_keep(ui: CanvasLayer, slot: String, it: Dictionary) -> v
 	if Act.locked_slot(slot):
 		Act.st(ui, "Weapon and tool stay equipped.")
 		return
-	if Rules.is_starter(App.prog, it) or str(it.get("kit_src", "")) == "starter":
+	if Kit.is_starter(App.prog, it) or str(it.get("kit_src", "")) == "starter":
 		Act.st(ui, "Starters stay on the slot.")
 		return
 	if Act.town_kit(ui):

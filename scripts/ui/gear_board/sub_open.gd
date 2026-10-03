@@ -4,10 +4,7 @@ const Board := preload("res://scripts/ui/gear_board.gd")
 const Text := preload("res://scripts/ui/gear_board/board_text.gd")
 const Fmt := preload("res://scripts/ui/gear_board/text_fmt.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
-const PromptView := preload("res://scripts/ui/prompt_view.gd")
-const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
 
 static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	Board.clear_sub(ui)

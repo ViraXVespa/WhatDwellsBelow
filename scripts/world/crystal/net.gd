@@ -1,6 +1,5 @@
 ﻿extends Object
 
-const Threat := preload("res://scripts/combat/threat.gd")
 const Balance := preload("res://scripts/data/balance.gd")
 
 const META_ON := "crystal_on"

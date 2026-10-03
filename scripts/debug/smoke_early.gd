@@ -1,7 +1,6 @@
 extends Object
 
 const Gen := preload("res://scripts/dungeon/gen.gd")
-const Roster := preload("res://scripts/combat/roster.gd")
 const P4 := preload("res://scripts/debug/smoke_early/early_p4.gd")
 const P3 := preload("res://scripts/debug/smoke_early/early_p3.gd")
 

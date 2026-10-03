@@ -1,7 +1,7 @@
 extends Object
 
 const Bag := preload("res://scripts/data/progress_gear/gear_bag.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
+const Norm := preload("res://scripts/data/gear_rules/rules_norm.gd")
 
 static func use_from_bag(p: Object, uid: int) -> String:
 	var it: Dictionary = {}
@@ -34,7 +34,7 @@ static func use_food(p: Object) -> String:
 	return eat(p, it, true)
 
 static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
-	return Rules.drink(p, it, from_slot)
+	return Norm.drink(p, it, from_slot)
 
 static func eat(p: Object, it: Dictionary, from_slot: bool) -> String:
 	var fid: String = str(it.get("food", "ration"))

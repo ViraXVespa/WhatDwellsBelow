@@ -74,8 +74,8 @@ static func can_analyze(p: Object, it: Dictionary) -> bool:
 		return false
 	if str(it.get("rarity", "white")) == "white":
 		return false
-	var Rules = load("res://scripts/data/gear_rules.gd")
-	if Rules.is_starter(p, it):
+	var Kit = load("res://scripts/data/gear_rules/rules_kit.gd")
+	if Kit.is_starter(p, it):
 		return false
 	return true
 

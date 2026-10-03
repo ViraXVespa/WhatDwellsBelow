@@ -1,7 +1,8 @@
 extends Object
 
 const PATH := "res://scripts/data/archive_catalog.json"
-const NEED: Array[String] = ["classic_2d", "art_experiment", "full_3d_pass", "grok_build_w1", "grok_web_w1"]
+const T := preload("res://scripts/data/tunables.gd")
+const NEED: Array[String] = ["classic_2d", "art_experiment", T.ARCHIVE_ID_FULL_3D, "grok_build_w1", "grok_web_w1"]
 
 static func raw() -> Dictionary:
 	if not FileAccess.file_exists(PATH):

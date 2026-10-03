@@ -2,7 +2,7 @@ extends RefCounted
 
 ## Collect / apply / fresh-delver save payload.
 
-const Rules := preload("res://scripts/data/gear_rules.gd")
+const Norm := preload("res://scripts/data/gear_rules/rules_norm.gd")
 
 static func apply(data: Dictionary) -> bool:
 	var migrated: bool = false
@@ -10,7 +10,7 @@ static func apply(data: Dictionary) -> bool:
 	App.character_chosen = bool(data.get("character_chosen", false))
 	App.cam_zoom = float(data.get("cam_zoom", 1.75))
 	App.hud_scale = float(data.get("hud_scale", 1.0))
-	App.ui_text_floor = float(data.get("ui_text_floor", 14.0))
+	App.ui_text_floor = float(data.get("ui_text_floor", App.T.UI_TEXT_FLOOR))
 	App.vol_master = float(data.get("vol_master", 1.0))
 	App.vol_music = float(data.get("vol_music", 0.7))
 	App.vol_sfx = float(data.get("vol_sfx", 0.85))
@@ -41,7 +41,7 @@ static func apply(data: Dictionary) -> bool:
 	var p: Variant = data.get("prog", {})
 	if p is Dictionary:
 		App.prog.from_meta(p)
-	Rules.normalize_prog(App.prog)
+	Norm.normalize_prog(App.prog)
 	if not App.character_chosen and (App.bank_gold > 0 or App.bank_ore > 0 or App.prog.deepest > 1):
 		App.character_chosen = true
 	var binds: Variant = data.get("binds", [])
@@ -66,7 +66,7 @@ static func fs_kind(raw: String) -> String:
 
 static func fresh_delver() -> void:
 	App.prog.reset_meta()
-	Rules.normalize_prog(App.prog)
+	Norm.normalize_prog(App.prog)
 	App.bank_gold = 0
 	App.bank_ore = 0
 	App.bank_wood = 0
@@ -77,7 +77,7 @@ static func fresh_delver() -> void:
 	App.last_seen_game_ver = ""
 	App.cam_zoom = 1.75
 	App.hud_scale = 1.0
-	App.ui_text_floor = 14.0
+	App.ui_text_floor = App.T.UI_TEXT_FLOOR
 	App.vol_master = 1.0
 	App.vol_music = 0.7
 	App.vol_sfx = 0.85

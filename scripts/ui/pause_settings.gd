@@ -9,8 +9,6 @@ const Pages := preload("res://scripts/ui/pause_settings/settings_pages.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
-const PATREON := "https://www.patreon.com/cw/ViraXVespa"
-
 var pause: CanvasLayer
 var open := true
 var selected := 0
@@ -98,7 +96,7 @@ func split_close() -> void:
 func split_activate_leaf(id: String) -> void:
 	match id:
 		"patreon":
-			OS.shell_open(PATREON)
+			OS.shell_open(App.T.PATREON_URL)
 		"leave":
 			if App.in_dungeon:
 				Confirm.open(pause, "Dispel Avatar", "End this run and return to Placeholdia?", func() -> void:

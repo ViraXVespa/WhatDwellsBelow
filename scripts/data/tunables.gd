@@ -42,15 +42,11 @@ const LIGHT_FIRE_RANGE := 6.0
 const LIGHT_FIRE_ENERGY := 1.0
 const LIGHT_SUN_RANGE := 48.0
 const LIGHT_SUN_ENERGY := 0.9
-const LIGHT_HUB_CRYSTAL_RANGE := 2.4
-const LIGHT_HUB_CRYSTAL_ENERGY := 0.38
-const LIGHT_HUB_SUN_ENERGY := 1.05
 const LIGHT_SOURCE_CAP := 24.0
 const WALL_H := 1.45
 const ARENA := 22
 const PATREON_URL := "https://www.patreon.com/cw/ViraXVespa"
 const ARCHIVE_ID_FULL_3D := "full_3d_pass"
-const ARCHIVE_LABEL_FULL_3D := "Full 3D Pass"
 const ONE_LINER := "A gamepad-first dungeon crawler where you pilot disposable spirit avatars, mail loot home, and slowly remember the skills you earned in the dark."
 const BITTER_YT := "https://youtu.be/b3Cq_-ymFVU?si=YHZRCFmxf88BXmHW"
 const BITTER_SPOTIFY := "https://open.spotify.com/track/5ronKOeupSInit9Y21z80f?si=WB-zeKUGQO6V31dPEITdRA&utm_source=copy-link&context=spotify%3Atrack%3A5ronKOeupSInit9Y21z80f"

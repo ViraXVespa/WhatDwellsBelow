@@ -3,7 +3,6 @@ extends Object
 const Stats := preload("res://scripts/ui/gear_board/stats.gd")
 const Fmt := preload("res://scripts/ui/gear_board/text_fmt.gd")
 const Opts := preload("res://scripts/ui/gear_board/opts.gd")
-const Prompts := preload("res://scripts/input/prompts.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
 
 static func item_cell(it: Dictionary) -> String:

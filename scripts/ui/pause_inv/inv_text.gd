@@ -1,5 +1,4 @@
 extends Object
-const Fmt := preload("res://scripts/ui/gear_board/text_fmt.gd")
 
 static func selected(ui: CanvasLayer) -> Dictionary:
 	if ui.inv_sel.begins_with("slot:"):

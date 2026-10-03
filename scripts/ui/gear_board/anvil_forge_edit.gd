@@ -1,13 +1,11 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Affix := preload("res://scripts/data/affixes.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const StepRow := preload("res://scripts/ui/step_row.gd")
 
 const QTY_MAX := 9
 const Fill := preload("res://scripts/ui/gear_board/anvil_forge_edit_fill.gd")
-const Lock := preload("res://scripts/ui/gear_board/anvil_forge_edit_lock.gd")
 
 static func _fill_edit(ui: CanvasLayer, box: Control, slot: String) -> Control:
 	return Fill._fill_edit(ui, box, slot)

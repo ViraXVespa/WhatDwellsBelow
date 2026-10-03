@@ -253,6 +253,33 @@ def collision_dead(root: Path, plain_unused: list) -> list[tuple[str, int, str, 
     return sorted(dead)
 
 
+def dead_aliases(root: Path, known: list) -> list[tuple[str, int, str, int]]:
+    """`const X := preload(...)` aliases never used in their own file and never read as `.X` elsewhere
+    (the bare-name count cannot see these when other files reuse the alias name)."""
+    texts: dict[str, list[str]] = {}
+    for path in files_of(root):
+        if path.suffix == ".gd":
+            texts[path.relative_to(root).as_posix()] = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    dotted: set[str] = set()
+    for lines in texts.values():
+        for raw in lines:
+            dotted.update(re.findall(r"\.[ \t]*([A-Za-z_]\w*)", code_of(raw)))
+    seen = {(r, ln) for r, ln, _n, _s in known}
+    dead = []
+    for rel, lines in texts.items():
+        for lineno, raw in enumerate(lines, 1):
+            matched = ALIAS_RE.match(raw.split("#", 1)[0])
+            if not matched or (rel, lineno) in seen or rel in KEEP_DECLS:
+                continue
+            name = matched.group(1)
+            if name in dotted:
+                continue
+            uses = sum(1 for i, ln in enumerate(lines, 1) if i != lineno for n, _q in scan(ln) if n == name)
+            if uses == 0:
+                dead.append((rel, lineno, name, 0))
+    return dead
+
+
 DECL_END = re.compile(
     "^(?P<indent>[ " + chr(9) + "]*)(?:static[ " + chr(9) + "]+)?(?:func|const|var|class_name|enum|signal)[ " + chr(9) + "]+"
 )
@@ -556,6 +583,7 @@ def main() -> int:
         print("dry-run: --apply skipped, listing only")
     unused, maybe, defs, dynamic, decls = collect(root)
     shadowed = collision_dead(root, unused)
+    decls = decls + dead_aliases(root, decls)
     deleted = 0
     if ns.apply:
         for _pass in range(8):
@@ -563,11 +591,13 @@ def main() -> int:
             deleted += cut
             unused, maybe, defs, dynamic, decls = collect(root)
             shadowed = collision_dead(root, unused)
+            decls = decls + dead_aliases(root, decls)
             if cut == 0 or not (unused or decls or shadowed):
                 break
         deleted += apply_facade_auto(root, True)
         unused, maybe, defs, dynamic, decls = collect(root)
         shadowed = collision_dead(root, unused)
+        decls = decls + dead_aliases(root, decls)
     else:
         apply_facade_auto(root, False)
     elapsed = time.perf_counter() - started

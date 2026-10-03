@@ -48,7 +48,7 @@ The **facade stays beside its folder** in the area dir. Its **helpers live in a 
 If a file must be split:
 
 1. Split into a helper in the stem folder (`act.gd`, `view.gd`, `boot.gd`, `text.gd`, … with a qualifier where the name would be generic or collide; see Cluster folders).
-2. Keep the original facade (beside its stem folder) as the facade (`App.playtest`, `PauseInv.build`, `Gen.generate`, `EnemyAI.tick`, `SmokeLate.p7`).
+2. Keep the original facade (beside its stem folder) as the facade (`App.playtest`, `PauseMenu.show_menu`, `Gen.generate`, `EnemyAI.tick`, `SmokeLate.p7`).
 3. Helpers are `static func` with `host` / `pt` / `ui` / `p` first.
 4. No circular `preload()`: the facade preloads its helpers; helpers never preload the facade. If a helper needs facade-held `static var` state, use `var rt: Variant = load(RT_PATH)` then `rt.name` (see `publish.gd`). For a node script, the facade stays the owner of state and keeps one-line delegates; each moved instance func becomes `static func name(node: Variant, ...)` in a sibling `extends Object` helper that reads state as `node.field` (see `drive.gd`). Prove by a line-multiset compare against the original after stripping qualifiers, plus smokes before and after. `tools/facade_requal.py` qualifies moved names in the facade.
 5. Godot 4 analyzes a parent script alone. Do not call methods that exist only on a child; call the helper module from the parent.

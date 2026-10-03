@@ -1,10 +1,7 @@
 ﻿extends Object
 
-const Text := preload("res://scripts/ui/gear_board/board_text.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
 const Town := preload("res://scripts/data/progress/progress_town.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
-const Prompts := preload("res://scripts/input/prompts.gd")
 const View := preload("res://scripts/ui/gear_board/anvil_view.gd")
 const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
 

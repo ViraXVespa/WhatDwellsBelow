@@ -3,7 +3,6 @@ extends Object
 const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const PlaytestLogUtil := preload("res://scripts/debug/playtest_log/log_util.gd")
 const Digest := preload("res://scripts/debug/playtest_log/batch_digest.gd")
-const Flags := preload("res://scripts/debug/playtest_log/batch_flags.gd")
 const Prune := preload("res://scripts/debug/playtest_log/batch_prune.gd")
 
 static var active: bool = false

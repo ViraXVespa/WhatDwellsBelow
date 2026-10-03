@@ -1,9 +1,6 @@
 extends CanvasLayer
 
-const ThemeS := preload("res://scripts/ui/theme.gd")
 const RecapBars := preload("res://scripts/ui/recap/bars.gd")
-const Prompts := preload("res://scripts/input/prompts.gd")
-const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Ui := preload("res://scripts/ui/recap/recap_ui.gd")
 const Rebuild := preload("res://scripts/ui/recap/rebuild.gd")
 const Flow := preload("res://scripts/ui/recap/recap_flow.gd")

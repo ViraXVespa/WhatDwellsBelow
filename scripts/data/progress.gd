@@ -1,10 +1,8 @@
 extends RefCounted
 
-const CatalogS := preload("res://scripts/data/catalog.gd")
 const Gear := preload("res://scripts/data/progress_gear.gd")
 const CombatP := preload("res://scripts/data/progress_combat.gd")
 const Town := preload("res://scripts/data/progress/progress_town.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const Boot := preload("res://scripts/data/progress/progress_boot.gd")
 

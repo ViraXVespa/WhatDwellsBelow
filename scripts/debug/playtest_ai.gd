@@ -1,6 +1,5 @@
 extends Object
 
-const PlaytestLog := preload("res://scripts/debug/playtest_log.gd")
 const Util := preload("res://scripts/debug/playtest_ai/ai_util.gd")
 const Act := preload("res://scripts/debug/playtest_ai/ai_act.gd")
 const NEAR := 22.0

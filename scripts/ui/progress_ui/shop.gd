@@ -2,7 +2,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Inv := preload("res://scripts/ui/progress_ui/inv.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
+const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 
 static func rebuild_shop(ui) -> void:
@@ -33,7 +33,7 @@ static func rebuild_shop(ui) -> void:
 			var eq: Dictionary = App.prog.slots.get(s, {})
 			if eq.is_empty():
 				continue
-			if Rules.locked_equip_slot(str(s)):
+			if Kit.locked_equip_slot(str(s)):
 				continue
 			var slot := str(s)
 			ui.box.add_child(ThemeS.btn("Pawn equipped %s  (%dg)" % [eq.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, "Pawn Equipped", "Pawn equipped %s for %dg?" % [eq.name, int(App.bal.pawn_gold)], func(): pawn_slot(ui, slot))))
@@ -98,7 +98,7 @@ static func pawn(ui, uid: int) -> void:
 	ui._show()
 
 static func pawn_slot(ui, slot: String) -> void:
-	if Rules.locked_equip_slot(slot):
+	if Kit.locked_equip_slot(slot):
 		ui._st("Weapon and tool stay equipped.")
 		return
 	var it := App.prog.take_slot(slot)

@@ -1,9 +1,6 @@
 extends RefCounted
 
 const Combat := preload("res://scripts/combat/combat.gd")
-const Cover := preload("res://scripts/combat/cover.gd")
-const ProjS := preload("res://scripts/combat/projectile.gd")
-const PlayerLock := preload("res://scripts/world/player/player_lock.gd")
 const Fx := preload("res://scripts/combat/player_hit/hit_fx.gd")
 
 static func apply_special(host: Node) -> void:
