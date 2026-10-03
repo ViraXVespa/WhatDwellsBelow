@@ -26,6 +26,16 @@ Command: `python3 tools/run_shots.py --mode web|build|user` (optional `--seed`, 
 Needs a real GL window, so a display: a Windows desktop with a GPU, or Linux (picked automatically, see Display; the Bot box has X on `:1` and `:2`). Default: HUD on, spawn pose, zoom 1, no taskbar, window parked off-screen.
 Summary: `_logs/shots/summary.txt`; the last line is `RESULT PASS|INFO|FAIL band=... summary=_logs/shots/summary.txt`. The Godot launch and lock come from `godot_lib.py` (per-path lock, kills only its own pid).
 
+## Full-floor map (`--full-map`)
+
+`python3 tools/run_shots.py --full-map [--seed S] [--floor N] [--max-px 8192] [--keep-tiles] [--out P]` captures a whole dungeon floor and stitches it into one top-down PNG of the real render (the pixel twin of `run_dungeon_map.py` ASCII). Default out: `_logs/shots/fullmap-s{seed}-f{floor}.png`. Seed 42 floor 1 (426 x 414 cells) takes about 3 minutes and gives 6816 x 5569 px at the 8192 cap (native 27264 x 22275). Needs Pillow.
+
+How: the runner writes a one-step flow (`{"op":"sweep"}`, `step_sweep.gd`) and forces scene dungeon, HUD off, zoom 1, 60 fps. The op streams every chunk (`stream_all`), freezes the player, hides the player and enemies, then walks a grid of tiles: teleport the player, `rig.follow`, tick the stream and light a few frames, read the frame. Tile centres are chosen so the camera shift between tiles is a whole number of pixels (`offset_resid` 0.0 in the log), so tiles butt together with no blending. Each tile keeps only its centre (`keep_x` 192, `keep_y` 112 px trimmed per side) because light sources and the light window follow the player, so tile edges are lit differently from play. `--max-px` box-reduces by a power of two until the long side fits (0 = native). `--keep-tiles` keeps `tiles/` and `sweep.json` next to the PNG for debugging.
+
+The log line `SHOT: stitch ...` reports tiles, native and output size, `offset_resid`, and seam numbers (`seam_mean_diff`, `seam_bad_px`: the same world pixels as seen from the two tiles either side of each cut; flicker and light edges cause small differences; seed 42 floor 1: mean 0.17, 12 of 892 cuts over 4, worst 19). Same seed and floor give a byte-identical PNG.
+
+Not shown by design: player, enemies, HUD, minimap. Knobs live on the `sweep` op (`margin`, `frames`, `keep_x`, `keep_y`; see `shot-flows.md`); a new flag is not needed to change them, edit a flow.
+
 ## Source map
 
 | Piece | File |

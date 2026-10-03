@@ -20,6 +20,7 @@ A flow is `tools/shot-flows/<name>.json`: header keys fill unset CLI defaults (`
 | `set` / `call` | `target`, `value` / `method`, `args` | Seeds state (`App.prog.quests_offered`, `App.gold`) or calls a method |
 | `repeat` | `max`, `until`, `steps` | Pages: loop steps until the `until` assert holds (or `max`) |
 | `freeze` | `group`, `on` | Disables (or restores) processing of a node group, e.g. `enemies`; the HUD host keeps running |
+| `sweep` | `margin` (3), `frames` (8), `keep_x` (192), `keep_y` (112) | Full-floor capture: streams the whole floor, tiles it with the play camera (one PNG per tile in the frames dir plus `sweep.json`), player and enemies hidden. Driven by `run_shots.py --full-map` (`shot-tool.md`) |
 | `wait` `settle` `seed` `hud` `texts` `log` | | `ms` or `frames`; two frames plus a draw; global RNG seed; HUD on or off; text dump alone; a marker |
 
 Targets are dotted paths. The root is an autoload (`App`), `host` (the camp/dungeon scene), `kind:receptionist`, `group:player` or `node:Path`; then properties, child nodes, keys, `[i]`. Example: `host.ui.mode`. A `set`/`call` value `{"v3":[x,y,z]}` becomes a Vector3. Any random state must be seeded or set (the quest board rolls with its own `randomize()`, so a flow sets `quests_offered`); otherwise two runs differ and the diff is noise. The first failing op stops the run with `SHOT: fail op=... why=...`.

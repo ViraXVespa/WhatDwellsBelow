@@ -53,7 +53,7 @@ The `.ps1` twins of the Python tools are listed in `tools-shims.md`.
 | `load_routes.py` | Load design/routes.yaml (constrained YAML subset, stdlib only) | D | module docstring (no `--help`) | N |
 | `pages_game_hash.py` | Hash game-affecting paths so Pages can skip a full Godot export | D | `--help` | N |
 | `publish_notes_site.py` | Copy baked version/changelog JSON onto the Pages site as loose /data files | D | `--help` | N |
-| `run_shots.py` | Posed-camera postcard tool (`--mode web/build/user`) or one scripted flow. Not a numbered smoke. Summary: `shots`. | BWD | `--help` | Y |
+| `run_shots.py` | Posed-camera postcard tool (`--mode web/build/user`) one scripted flow, or `--full-map` (whole floor stitched into one PNG). Not a numbered smoke. Summary: `shots`. | BWD | `--help` | Y |
 | `run_shot_flow.py` | Scripted shot flows (`tools/shot-flows/*.json`), baseline diff, `--publish` (to `_out/shots/<flow>/`, refuses `assets/`). Summary: `shot-flow`. | BWD | `--help` | Y |
 | `shot_diff.py` | Before/after diff of shot PNGs (files or dirs): changed pixels, bbox, `*.diff.png`. Summary: `shot-diff`. | BWD | `--help` | Y |
 | `check_shot_gaps.py` | UI states with no shot flow (`--changed`: new since a ref; FAIL for Bot, `--advisory` for Build), flow and published-shot problems. Summary: `shot-gaps`. | BWD | `--help` | Y |
