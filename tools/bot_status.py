@@ -25,13 +25,7 @@ OPT_FILE = "design/grok-bot-opt.md"
 
 
 def list_oversize(root: Path, floor: int) -> list[tuple[int, str]]:
-    rows: list[tuple[int, str]] = []
-    for path in gd_lib.iter_gd(root):
-        size = path.stat().st_size
-        if size >= floor:
-            rows.append((size, agent_log.rel(root, path)))
-    rows.sort(key=lambda row: (-row[0], row[1]))
-    return rows
+    return gd_lib.sizes(root, floor)
 
 
 def parse_reuse_brief(root: Path) -> list[str]:
@@ -122,11 +116,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Also check 10KB ship floor, allowlist on dirty paths, load-graph.",
     )
-    parser.add_argument(
-        "--sweep",
-        action="store_true",
-        help="List the 5-10KB rows too (default: count line only).",
-    )
     return parser.parse_args(argv)
 
 
@@ -163,12 +152,7 @@ def main(argv: list[str] | None = None) -> int:
     for size, rel in ship:
         lines.append(f"{size}\t{rel}")
     lines.append("")
-    lines.append(f"over_5kb_under_10kb count={len(sweep)}")
-    if args.sweep:
-        for size, rel in sweep[:20]:
-            lines.append(f"{size}\t{rel}")
-        if len(sweep) > 20:
-            lines.append(f"... +{len(sweep) - 20} more")
+    lines.append(f"over_5kb_under_10kb count={len(sweep)} (rows: python3 tools/check_script_cap.py --sweep)")
     lines.append("")
     lines.append(f"reuse_brief count={len(brief)} file={REUSE_FILE}")
     if not brief:

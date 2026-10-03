@@ -21,7 +21,6 @@ Rules, the CLI contract and the surface key: `tools.md`. Each `.ps1` forwards it
 | `list_changed.ps1` | Shim -> `list_changed.py` | D | - | N |
 | `list_facade_cluster.ps1` | Shim -> `list_facade_cluster.py` | D | - | N |
 | `list_oversize_docs.ps1` | Shim -> `list_oversize_docs.py` | D | - | N |
-| `list_oversize_scripts.ps1` | Shim -> `list_oversize_scripts.py` | D | - | N |
 | `list_route.ps1` | Shim -> `list_route.py` | D | - | N |
 | `list_scenes.ps1` | Shim -> `list_scenes.py` | D | - | N |
 | `list_xref.ps1` | Shim -> `list_xref.py` | D | - | N |

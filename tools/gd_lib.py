@@ -24,6 +24,16 @@ def iter_gd(root: Path, *, sub: str = "scripts") -> list[Path]:
     return sorted(p for p in base.rglob("*.gd") if p.is_file() and p.relative_to(root).parts[0] not in SKIP_PARTS)
 
 
+def sizes(root: Path, lo: int = 0, hi: int | None = None) -> list[tuple[int, str]]:
+    """(bytes, repo-relative path) of live .gd files with lo <= size < hi, largest first. One owner for every size listing."""
+    rows = []
+    for p in iter_gd(root):
+        n = p.stat().st_size
+        if n >= lo and (hi is None or n < hi):
+            rows.append((n, p.relative_to(root).as_posix()))
+    return sorted(rows, key=lambda r: (-r[0], r[1]))
+
+
 # Cluster-folder naming rule (design/refactor.md "Cluster folders"): helper `<stem>_<rest>.gd` lives at
 # `<dir>/<stem>/<name>.gd` with the repeated stem trimmed (`<rest>`), unless `<rest>` is generic or too short or collides
 # with another basename in the repo; then a qualifier is kept (last stem token, then more tokens, up to the full old name).

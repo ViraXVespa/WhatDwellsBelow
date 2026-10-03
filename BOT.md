@@ -28,7 +28,7 @@ Publish with plain `git push -u origin bot/<flow>` over HTTPS (gh credential hel
 | Doc facade / sibling split | `design/grok-bot-docs.md` |
 | Named optimization item from the parked queue | `design/grok-bot-opt.md` |
 
-Job files do not restate this file: size, prove, changelog and `version.json` rules live here (label math: `design/versioning-log.md` body shape, not the changelog tree or `scripts/data/version.json`, at ship). One flow, one PR, then stop; if the User names more than one job, ask which. Do not declare the whole sweep done and then start a second flow.
+Job files do not restate this file: size, prove, changelog and `version.json` rules live here (label math: `design/versioning-log.md` body shape, not the changelog tree or `scripts/data/version.json`, at ship; `next-label` = highest on disk + 1; same PR: `--label`). One flow, one PR, then stop; if the User names more than one job, ask which. Do not declare the whole sweep done and then start a second flow.
 
 Woke because main moved: run bot_status first. over_10kb count 0: report and stop. Above 0: open only `design/grok-bot-size.md`; no other flow from that wake. Commit on the Bot branch only.
 
@@ -51,7 +51,7 @@ Work only in `/workspace/WhatDwellsBelow`. Never open the Build docs (`design/pc
 
 ## Smokes
 
-Not a boot step or Job flow. When a cluster needs a headless prove: `python3 tools/bot_smokes.py --phases 1,2,6` from the repo root (`bot_smokes.py --for FILE` names the phases that cover a file). Setup downloads the official 4.7.2 Linux tools binary only if the pin is missing. Binary: `GODOT_BIN`, else `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
+Not a boot step or Job flow. When a cluster needs a headless prove: `python3 tools/bot_smokes.py --phases 1,2,6` from the repo root (`--for FILE` names the covering phases). Setup downloads the official 4.7.2 Linux tools binary only if the pin is missing. Binary: `GODOT_BIN`, else `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
 New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets docs icon.svg.import` (the import also rewrites those `.import` files; a fresh worktree needs this import once before any smoke, else P1 fails with no marker), and commit the `.uid` files only.
 No editor playtest, no routine that launches Godot.
 Shots and light bakes are not headless: `run_shots.py`, `run_shot_flow.py`, `run_bake_camp.py` pick the box display themselves (`python3 tools/godot_lib.py --display`). Menu/NPC proof: `bot_smokes.py --door D --flows` and `design/shot-flows.md`. `check_shot_gaps.py --changed` (run by `bot_smokes.py` unless `--no-gaps`, and by `run_build_gate.py --batch`) FAILS on a new UI state with no shot flow; add a small flow in `tools/shot-flows/` in the same PR. Published shots go to `_out/shots/<flow>/`; never write under `assets/`.

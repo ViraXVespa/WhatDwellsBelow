@@ -7,7 +7,7 @@ CLI (no scratch file needed; --dry-run prints "would write" and changes nothing)
     python3 tools/doc_patch.py ensure-line FILE --line "text" [--after "anchor"]
     python3 tools/doc_patch.py set-read-when FILE "when text"
     python3 tools/doc_patch.py changelog --bullet "one line" [--bullet ...] [--label 0.5.11] [--summary "s"]
-    python3 tools/doc_patch.py next-label
+    python3 tools/doc_patch.py next-label     (highest label on disk + 1; a second bullet for the same PR: changelog --label L)
     python3 tools/doc_patch.py write FILE [--b64 S | stdin] [--bom] [--append]
     python3 tools/doc_patch.py replace-file FILE (--from-file NEW | stdin)   # whole-file rewrite, file must exist; BOM + CRLF kept
     python3 tools/doc_patch.py apply plan.json
@@ -318,9 +318,27 @@ def drop_table_column(path: Path, header: str) -> None:
     write_text(path, "".join(out))
 
 
+def _label_key(label: str) -> tuple[int, ...]:
+    return tuple(int(x) for x in label.split("."))
+
+
+def highest_label(root: Path) -> str:
+    """Highest x.y.z label among design/changelog/**/*.md (archive included); '' if none."""
+    found = [p.stem for p in (root / "design" / "changelog").rglob("*.md") if re.fullmatch(r"\d+\.\d+\.\d+", p.stem)]
+    return max(found, key=_label_key) if found else ""
+
+
 def next_label(root: Path | None = None) -> str:
-    """Baked version.json label with patch + 1. Ignore stamp commits."""
-    return repo_lib.next_label(repo_root(root))
+    """Highest label on disk + 1 (stacked PRs own earlier labels), never below the baked version.json label + 1.
+    A second bullet for the same PR passes --label."""
+    root = repo_root(root)
+    label = repo_lib.next_label(root)
+    top = highest_label(root)
+    if top and _label_key(top) >= _label_key(label):
+        parts = list(_label_key(top))
+        parts[-1] += 1
+        label = ".".join(map(str, parts))
+    return label
 
 
 def _ensure_summary(text: str, summary: str) -> tuple[str, bool]:
@@ -538,7 +556,7 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("file", help="Doc file."); s.add_argument("value", help="New text after `Read when:`.")
     s = sub.add_parser("changelog", help="Add bullets to design/changelog/<label>.md.")
     s.add_argument("--bullet", action="append", required=True, help="One changelog bullet (repeat for several)."); s.add_argument("--label", help="Changelog label (default: the next label)."); s.add_argument("--summary", help="Changelog summary line.")
-    sub.add_parser("next-label", help="Print the next changelog label.")
+    sub.add_parser("next-label", help="Print the next changelog label: highest label on disk + 1 (a second bullet for the same PR uses changelog --label).")
     s = sub.add_parser("write", help="Write a file from stdin or --b64 (BOM stripped, EOL kept).")
     s.add_argument("file"); s.add_argument("--b64", help="Body as base64 instead of stdin."); s.add_argument("--bom", action="store_true", help="Write a UTF-8 BOM (default: keep the file's own)."); s.add_argument("--append", action="store_true", help="Append to the file instead of replacing it.")
     s = sub.add_parser("replace-file", help="Rewrite a whole existing file from --from-file / --b64 / stdin (BOM and EOL kept).")
@@ -561,9 +579,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.cmd == "next-label":
             label = next_label(root)
             print(f"next={label}")
-            used = sorted((p.stem for p in (root / "design" / "changelog").glob("*.md")), key=lambda s: [int(x) if x.isdigit() else 0 for x in s.split(".")])
-            if (root / "design" / "changelog" / f"{label}.md").is_file():  # a stacked branch may already own it
-                print(f"note: design/changelog/{label}.md exists (`changelog` appends to it); highest label on disk is {used[-1]}; pass --label for a free one")
+            print(f"highest on disk={highest_label(root) or 'none'}; a second bullet for the same PR: `changelog --label <that label>`")
             return agent_log.emit_result("INFO", next=label)
         elif args.cmd == "write":
             _write_cmd(root, args)

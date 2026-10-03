@@ -35,7 +35,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 
 - **Bot:** `BOT.md` (boot, prove, smokes, Build-doc ban).
 - **Web/chat:** docs go through `doc_patch.py` (`doc-library.md`); `check_load_graph.py`; `run_shots.py --mode web`; scripted flows `run_shot_flow.py` (`shot-tool.md`). Godot runners are the User's (`web-session.md`).
-- **Build (User PC):** `file_stat.py` to measure (not `python -c`), `list_xref.py`, `list_changed.py`, `list_oversize_scripts.py`; `run_build_gate.py` after a `.gd` slice; `web_perf.py` after a fresh `export_web.py --out DIR` (advisory, `tools-build.md`); `code_map.py patch` for one row; `bot_opt.py` to park opt items. Runner rules: `pc-offload.md`. No full-repo Bot size sweep.
+- **Build (User PC):** `file_stat.py` to measure (not `python -c`), `list_xref.py`, `list_changed.py`; `run_build_gate.py` after a `.gd` slice; `web_perf.py` after a fresh `export_web.py --out DIR` (advisory, `tools-build.md`); `code_map.py patch` for one row; `bot_opt.py` to park opt items. Runner rules: `pc-offload.md`. No full-repo Bot size sweep.
 
 ## Catalog: shared and Bot tools
 
@@ -43,8 +43,8 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
-| `bot_status.py` | Punch list: over-10KB/5KB, reuse brief, opt queue; `--prove` = script cap + allowlist + load graph; `--sweep` lists 5-10KB | BD | `--help` | Y |
-| `check_script_cap.py` | Script size cap + duplicate-basename check (`dupes=`): `--git-changed`, `--path`, `--over-kb 5` for the sweep | BWD | `--help` | Y |
+| `bot_status.py` | Punch list: over-10KB/5KB, reuse brief, opt queue; `--prove` = script cap + allowlist + load graph | BD | `--help` | Y |
+| `check_script_cap.py` | Script size owner: 10KB cap + duplicate-basename check (`dupes=`): `--git-changed`, `--path`; `--sweep` lists 5-10KB, `--list --over-kb N` any size range | BWD | `--help` | Y |
 | `check_load_graph.py` | Doc routing vs `design/routes.yaml` (prints PASS/FAIL, no summary); also FAILs a boot file over its `boot_bytes` budget | BWD | `--help` | Y |
 | `code_map.py` | Code map: `check` (live `.gd` vs `design/code-map.md` ticks; exits 1 on new UNMAPPED or missing, older UNMAPPED are expected), `row --path P`, `patch --system S ...`. Summaries: `code-map-*`. | BD | `--help` | Y |
 | `check_code_map.py` | Shim -> `code_map.py check`, one release | BD | `--help` | Y |

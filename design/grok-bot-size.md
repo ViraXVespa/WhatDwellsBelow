@@ -5,7 +5,7 @@ Read when: Grok Bot Job table → size sweep
 
 ## Size split quick path
 
-Read only this file, `BOT.md`, and `design/refactor.md` rules 1-7 (skip the reuse, extract, and doc-split sections). Run `python3 tools/bot_status.py` (prints only the over-10KB list; `--sweep` lists 5-10KB rows). Per file:
+Read only this file, `BOT.md`, and `design/refactor.md` rules 1-7 (skip the reuse, extract, and doc-split sections). Run `python3 tools/bot_status.py` (prints only the over-10KB list; `check_script_cap.py --sweep` lists the 5-10KB rows). Per file:
 
 1. Baseline: `bot_warnscan.py --areas <areas that load it> --save-baseline PATH`, plus `bot_smokes.py --phases 1,2,6,<relevant>`. Run both in the background while reading the file.
 2. Plan: `python3 tools/split_funcs.py FILE --list` (sizes, uses, outside callers). `split_funcs.py` writes new helpers into the facade's stem folder with trimmed unique names (refactor.md, Cluster folders). Keep public funcs and shared consts on the facade; group whole underscore funcs with the statics they own into siblings (static-helper pattern, refactor.md rule 4). Shared consts go in a small leaf helper. Write `plan.json` (`{helper_stem: [names]}`), then `--plan plan.json --dry-run`. Node (instance) funcs move too: they become `static func f(host: <the facade's extends type>, ...)` and the facade keeps a delegate.

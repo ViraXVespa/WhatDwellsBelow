@@ -25,7 +25,6 @@ Rules, CLI contract, surface key: `tools.md`. Runner habits: `pc-offload.md`. Su
 | `list_changed.py` | Git-changed paths with on-disk bytes. Summary: `changed`. | D | `--help` | N |
 | `list_xref.py` | Capped text search (case-insensitive). Summary: `xref`. | D | `--help` | N |
 | `list_scenes.py` | `.tscn` nodes and scripts without dumping scenes. Summary: `scenes`. | D | `--help` | N |
-| `list_oversize_scripts.py` | Live `.gd` by bytes. Summary: `oversize`. | D | `--help` | N |
 | `list_facade_cluster.py` | A facade + its stem-folder helpers by bytes. Summary: `facade-cluster`. | D | `--help` | N |
 | `start_build_slice.py` | Resolve a route and print the `grok --worktree` fork argv. Session id optional (`--session`, `$GROK_SESSION_ID`). Echoes the door/job card, smoke phases and shot flows. Summary: `slice-boot`. | D | `--help` | N |
 | `week_start.py` | Week pin, changelog archive, log clean. **Human-only (QUARANTINE).** Agents must not run it. | D | `--help` | N |
