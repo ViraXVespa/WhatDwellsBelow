@@ -80,7 +80,7 @@ func take_hit(raw: float, _from_dir: Vector2, crit: bool) -> void:
 		return
 	var dmg: float = App.bal.apply_defense(raw, defense)
 	if crit:
-		dmg *= App.bal.crit_mult
+		dmg *= App.bal.crit_mult + App.gear("crit_dmg")
 		flash = 0.16
 	else:
 		flash = 0.08

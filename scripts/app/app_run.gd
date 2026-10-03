@@ -26,7 +26,8 @@ static func begin_run(host: Node) -> void:
 	host.saw_stairs = false
 	host.boss_low = false
 	host.run_xp = 0.0
-	host.adrenaline = false
+	end_adrenaline(host)
+	host.kill_times.clear()
 	host.last_style = "str"
 	host.floors_since_named = 0
 	host.shrine_t = 0.0
@@ -168,11 +169,17 @@ static func spawn_floor_item(host: Node, it: Dictionary, pos := Vector3.INF) -> 
 	PickupS.drop_item(it, at)
 
 static func tick(host: Node, delta: float) -> void:
+	if host.toast_t > 0.0:
+		host.toast_t = maxf(0.0, host.toast_t - delta)
+	# App runs while the tree is paused (menus): play timers (shrine, food, adrenaline, telemetry) wait.
+	if not host.get_tree().paused:
+		tick_play(host, delta)
+	debug_sequence(host, delta)
+
+static func tick_play(host: Node, delta: float) -> void:
 	host.clock += delta
 	if host.shrine_t > 0.0:
 		host.shrine_t = maxf(0.0, host.shrine_t - delta)
-	if host.toast_t > 0.0:
-		host.toast_t = maxf(0.0, host.toast_t - delta)
 	if host.tel and host.in_dungeon:
 		var fighting := false
 		var p := host.get_tree().get_first_node_in_group("player")
@@ -192,7 +199,6 @@ static func tick(host: Node, delta: float) -> void:
 		host.prog.tick_food(delta)
 	if host.adrenaline and host.clock - host.last_kill > host.bal.adrenaline_timeout:
 		end_adrenaline(host)
-	debug_sequence(host, delta)
 
 static func debug_sequence(host: Node, delta: float) -> void:
 	var down := shoulders_down()

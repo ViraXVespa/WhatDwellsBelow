@@ -217,4 +217,4 @@ func _hit(e: Node, cov: float) -> void:
 	if e.has_method("take_hit"):
 		e.take_hit(dealt, dir, crit and Cover.crit_ok(cov))
 	if grant_xp and App.tel:
-		App.tel.note_damage_dealt(dealt if not (crit and Cover.crit_ok(cov)) else dealt * App.bal.crit_mult, crit and Cover.crit_ok(cov))
+		App.tel.note_damage_dealt(dealt if not (crit and Cover.crit_ok(cov)) else dealt * (App.bal.crit_mult + App.gear("crit_dmg")), crit and Cover.crit_ok(cov))
