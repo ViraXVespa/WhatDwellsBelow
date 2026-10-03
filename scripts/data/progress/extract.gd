@@ -49,7 +49,7 @@ static func _mail_item(p: Object, it: Dictionary) -> String:
 	p.bank_items.append(it)
 	App.extracted = true
 	p.mailed_names.append(str(it.name))
-	return "Sent " + str(it.name)
+	return App.tr("extract.sent_name").format({"name": str(it.name)})
 
 static func extract_all(p: Object, role: String) -> String:
 	var g: int = 0

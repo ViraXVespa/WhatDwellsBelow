@@ -2,6 +2,7 @@
 
 ## Live Sprite3D filter. System uses nearest + optional mips/aniso; debug can use 3–4.
 
+const LocS := preload("res://scripts/app/app_loc.gd")
 const FILT_NEAREST := 0
 const FILT_NEAR_MIP := 1
 const FILT_NEAR_ANISO := 2
@@ -23,7 +24,7 @@ static func clamp_id(id: int, allow_linear := false) -> int:
 
 static func label(id: int) -> String:
 	id = clampi(id, 0, FILT_MAX)
-	return LABELS[id]
+	return LocS.tr_or("sprite_filter.label_%d" % id, LABELS[id])
 
 static func mips_on(id: int) -> bool:
 	id = clamp_id(id, true)

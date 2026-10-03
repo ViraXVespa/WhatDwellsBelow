@@ -1,5 +1,6 @@
 # Formatting helpers for gear items
 
+const LocS := preload("res://scripts/app/app_loc.gd")
 const NAMES := {
 	"weapon": "Weapon",
 	"tool": "Tool",
@@ -9,6 +10,9 @@ const NAMES := {
 	"body": "Body",
 	"legs": "Legs",
 }
+
+static func slot_name(slot: String) -> String:
+	return LocS.tr_or("slot." + slot, str(NAMES.get(slot, slot)))
 
 static func item_color(it: Dictionary) -> Color:
 	if it.is_empty():

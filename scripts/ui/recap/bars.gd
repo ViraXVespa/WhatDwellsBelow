@@ -2,6 +2,7 @@ extends Object
 const CombatP := preload("res://scripts/data/progress_combat.gd")
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const LocS := preload("res://scripts/app/app_loc.gd")
 const SkillRow := preload("res://scripts/ui/skill_row_view.gd")
 
 const SKILL_NAMES := {
@@ -23,7 +24,7 @@ const COL_GAIN := Color(0.46, 0.78, 0.42)
 const COL_DUNGEON := Color(0.86, 0.74, 0.32)
 
 static func skill_title(id: String) -> String:
-	return str(SKILL_NAMES.get(id, id))
+	return LocS.tr_or("skill." + id, str(SKILL_NAMES.get(id, id)))
 
 static func skill_lab(text: String, size := 16, col := Color(0.9, 0.84, 0.7)) -> Label:
 	return SkillRow.skill_lab(text, size, col)

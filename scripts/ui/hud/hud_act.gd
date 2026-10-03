@@ -97,10 +97,10 @@ static func paint_prompt(host: CanvasLayer) -> void:
 
 static func style_name() -> String:
 	if App.weapon == "staff":
-		return "Magic"
+		return App.tr("hud_act.style_magic")
 	if App.weapon == "longbow":
-		return "Ranged"
-	return "Melee"
+		return App.tr("hud_act.style_ranged")
+	return App.tr("hud_act.style_melee")
 
 static func fill(r: ColorRect, w: float, t: float) -> void:
 	r.size.x = w * clampf(t, 0.0, 1.0)

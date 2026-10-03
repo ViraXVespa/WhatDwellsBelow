@@ -80,7 +80,7 @@ static func tooltip(ui: CanvasLayer) -> String:
 	var sel := str(ui.inv_sel)
 	if it.is_empty():
 		if slot != "":
-			return App.tr("board_text.empty_opens_anything_that_can") % str(Fmt.NAMES.get(slot, slot))
+			return App.tr("board_text.empty_opens_anything_that_can") % Fmt.slot_name(slot)
 		return App.tr("board_text.empty_bag_slot")
 	var src := ""
 	if sel.begins_with("opt:") and sel.split(":").size() >= 2:
@@ -89,7 +89,7 @@ static func tooltip(ui: CanvasLayer) -> String:
 	if mode >= 2:
 		block = forged_block(it)
 	if slot != "":
-		var head := str(Fmt.NAMES.get(slot, slot))
+		var head := Fmt.slot_name(slot)
 		if src != "":
 			head += "  ·  " + src
 		return "%s\n%s" % [head, block]
@@ -124,10 +124,10 @@ static func forged_block(it: Dictionary) -> String:
 		return App.tr("board_text.nothing_to_preview")
 	var slot := str(it.get("slot", ""))
 	if slot == "potion" or slot == "food" or str(it.get("kind", "")) == "artifact":
-		return current_block(it) + "\nNo forge preview for this."
+		return current_block(it) + App.tr("board_text.no_forge_preview")
 	if str(it.get("rarity", "white")) == "white":
-		return current_block(it) + "\nWhite gear is starter-only. Analyze greens and blues."
-	return current_block(it) + "\nForge tab rolls a new hold from unlocked traits."
+		return current_block(it) + App.tr("board_text.white_gear_is_starter_only")
+	return current_block(it) + App.tr("board_text.forge_tab_rolls_a_new_hold")
 
 static func stat_bits(it: Dictionary) -> String:
 	var bits := PackedStringArray()
@@ -156,9 +156,9 @@ static func stat_bits(it: Dictionary) -> String:
 		if cd > 0.0:
 			bits.append(App.tr("board_text.cooldown_s") % cd)
 	if str(it.get("tool", "")) != "":
-		bits.append("Tool: " + str(it.tool))
+		bits.append(App.tr("board_text.tool_name").format({"tool": str(it.tool)}))
 	if str(it.get("weapon", "")) != "":
-		bits.append("Style: " + str(it.weapon))
+		bits.append(App.tr("board_text.style_weapon").format({"weapon": str(it.weapon)}))
 	return "   ·   ".join(bits)
 
 static func stats_title(ui: CanvasLayer) -> String:

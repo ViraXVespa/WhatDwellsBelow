@@ -23,19 +23,19 @@ const FORGE_SLOTS: PackedStringArray = ["weapon", "tool", "head", "body", "legs"
 
 static func defs() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	out.append(_row(ID_DMG, "Damage", KIND_FLAT, GROUP_COMBAT, true))
-	out.append(_row(ID_DEF, "Defense", KIND_FLAT, GROUP_COMBAT, true))
-	out.append(_row(ID_HP, "Health", KIND_FLAT, GROUP_COMBAT, true))
-	out.append(_row(ID_CRIT_CHANCE, "Crit Chance", KIND_PCT, GROUP_COMBAT, false))
-	out.append(_row(ID_CRIT_DMG, "Crit Damage", KIND_PCT, GROUP_COMBAT, false))
-	out.append(_row(ID_MOVE, "Movement Speed", KIND_PCT, GROUP_COMBAT, false))
-	out.append(_row(ID_ATK_SPD, "Attack Speed", KIND_PCT, GROUP_COMBAT, false))
-	out.append(_row(ID_ATK_RANGE, "Attack Range", KIND_FLAT, GROUP_COMBAT, false))
-	out.append(_row(ID_HP_HIT, "Health on Hit", KIND_FLAT, GROUP_COMBAT, false))
-	out.append(_row(ID_HP_KILL, "Health on Kill", KIND_FLAT, GROUP_COMBAT, false))
-	out.append(_row(ID_GATHER_SPD, "Gather Speed", KIND_PCT, GROUP_TOOL, true))
-	out.append(_row(ID_GATHER_POW, "Gather Power", KIND_FLAT, GROUP_TOOL, false))
-	out.append(_row(ID_YIELD, "Yield Chance", KIND_PCT, GROUP_TOOL, false))
+	out.append(_row(ID_DMG, App.tr("affix.dmg.label"), KIND_FLAT, GROUP_COMBAT, true))
+	out.append(_row(ID_DEF, App.tr("affix.def.label"), KIND_FLAT, GROUP_COMBAT, true))
+	out.append(_row(ID_HP, App.tr("affix.hp.label"), KIND_FLAT, GROUP_COMBAT, true))
+	out.append(_row(ID_CRIT_CHANCE, App.tr("affix.crit_chance.label"), KIND_PCT, GROUP_COMBAT, false))
+	out.append(_row(ID_CRIT_DMG, App.tr("affix.crit_dmg.label"), KIND_PCT, GROUP_COMBAT, false))
+	out.append(_row(ID_MOVE, App.tr("affix.move_spd.label"), KIND_PCT, GROUP_COMBAT, false))
+	out.append(_row(ID_ATK_SPD, App.tr("affix.atk_spd.label"), KIND_PCT, GROUP_COMBAT, false))
+	out.append(_row(ID_ATK_RANGE, App.tr("affix.atk_range.label"), KIND_FLAT, GROUP_COMBAT, false))
+	out.append(_row(ID_HP_HIT, App.tr("affix.hp_on_hit.label"), KIND_FLAT, GROUP_COMBAT, false))
+	out.append(_row(ID_HP_KILL, App.tr("affix.hp_on_kill.label"), KIND_FLAT, GROUP_COMBAT, false))
+	out.append(_row(ID_GATHER_SPD, App.tr("affix.gather_spd.label"), KIND_PCT, GROUP_TOOL, true))
+	out.append(_row(ID_GATHER_POW, App.tr("affix.gather_pow.label"), KIND_FLAT, GROUP_TOOL, false))
+	out.append(_row(ID_YIELD, App.tr("affix.yield_chance.label"), KIND_PCT, GROUP_TOOL, false))
 	return out
 
 static func _row(id: String, label: String, kind: String, group: String, primary: bool) -> Dictionary:

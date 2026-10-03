@@ -10,7 +10,7 @@ English is the default locale and reads exactly as before. Player-facing strings
 | Path | Role |
 |------|------|
 | `scripts/data/locale/en.po` | Source strings: `msgid` = key, `msgstr` = English. Sorted by key. |
-| `scripts/app/app_loc.gd` | `LocS.setup()` (called first in `app_boot._ready`): loads each code in `LOCALES`, picks the locale. |
+| `scripts/app/app_loc.gd` | `LocS.setup()` (called first in `app_boot._ready`): loads each code in `LOCALES`, picks the locale. `LocS.tr_or(key, fallback)` reads const tables. |
 
 Registration: `project.godot` `[internationalization]` lists `en.po` (new locales are also added to `LOCALES` below). `setup()` is idempotent and also picks the locale.
 
@@ -38,23 +38,36 @@ Never rename a shipped key: translators key on it. If the English wording change
 4. Run with `--wdb-locale=de`.
 5. Missing keys show the raw key, which makes gaps easy to spot. Controls only translate when their text is assigned, so a language change at runtime needs the screen rebuilt.
 
-## Status (this pass)
+## Status
 
-Converted: 548 sites, 448 keys (66 are `common.`) in 74 files; 468 of the sites are in static helpers (`App.tr`). Areas (sites): `ui/gear_board` 82, `ui/progress_ui` 67, `world/interact` 54, `ui/theme` 34, `data/progress_gear` 31, `ui/recap` 29, `ui/crystal_ui` 24, `data/progress` 23, `ui/pause_settings*` 36, `ui/hud` 16, `data/progress_quest` 15, `data/gear_rules` 13, `ui/archives_ui*` 17, `ui/fs_gate` 12, `world/gather` 11, `title*` 13, `app/*` 11, `world/*` other 21, `data/progress_forge` 6, `display_mode` 6, others 27.
+**Pass 1** (548 sites, 448 keys, 74 files): menus, prompts, hints, titles, tutorial, quest, shop, dialog labels, plain `tr("key")` swaps. **Pass 2** (+198 keys, 646 total): data tables by id, named-placeholder messages, small leftovers.
 
-Not converted (about 130 prose strings, plus short words and labels counted by hand later):
+Pass 2 by id (const tables keep their English in code as a fallback; a PO entry overrides it through `LocS.tr_or(key, fallback)`):
 
-| Area | Approx. | Why |
-|------|---------|-----|
-| `data/catalog.gd` item names and blurbs | 48 | const data tables; needs a lookup-by-id key scheme |
-| `data/archives/*` | 12 | text built in data modules |
-| `ui/gear_board/*` fragments | 12 | `"Hold  " + name` concatenation |
-| `data/affixes.gd` | 10 | const label table |
-| `ui/binds_page.gd` | 10 | const action-label dict |
-| `ui/progress_ui/shop.gd` | 6 | concatenated messages |
-| `data/progress_gear`, `progress_quest`, `gear_roll`, `progress_forge`, `extract` | 10 | concatenated toasts |
-| `world/sprite_filter.gd`, `boss_door.gd`, `dungeon/gen.gd`, `ui/hud` leftovers | 9 | option names, repeat prompts, boss titles |
-| `world/foundation.gd`, `ui/step_row.gd` | few | const or debug-adjacent |
+| Table | Keys | Read through |
+|-------|------|--------------|
+| `data/catalog.gd` artifacts | `item.<id>.name`, `item.<id>.desc` (24 ids) | `Catalog._loc()` in `pick`/`by_id` |
+| `catalog.gd` set bonus lines | `set.<set>.bonus` (8) | `App.tr` |
+| `data/affixes.gd` | `affix.<id>.label` (13) | `App.tr` in `defs()` |
+| `archive_catalog.json` | `archive.<id>.label`/`.desc` (12 ids) | `ArchivesCatalog.all()` |
+| skills | `skill.<id>` (11) | `bars`, `pause_skills`, `theme.skill_name` |
+| gear slots | `slot.<slot>` (7) | `text_fmt.slot_name()` |
+| binds / controls | `controls.<action>` (15) | `binds_page`, `ui_hub` |
+| sprite filter | `sprite_filter.label_<n>` (5) | `sprite_filter.label()` |
+
+Named-placeholder messages (`tr(k).format({...})`, 25 sites): gear bag toasts, extract, rules_kit, quest, shop, recap, set bonus, board text, anvil/forge picks, sub_open heads, restock, archive launch status, binds reset. Also converted: archive launch statuses, `binds_page` buttons, interact titles (STAIRS...), skill/style names, small labels.
+
+**Not converted** (listed for a later pass):
+
+| Area | Why |
+|------|-----|
+| `dungeon/gen.gd` boss titles "Gate Master"/"Floor Guardian" | compared as ids in combat code; needs role ids first |
+| `ui/hud/hud_act.gd:92` | classifies toasts with `begins_with("Locked")` etc.; needs a kind flag |
+| item names saved in slots (`gear_roll` "Forged ", weapon names, `forge_act`, `progress_make`) | text is persisted in the save; needs name from id at display |
+| `data/tunables.gd` `ONE_LINER` | const; used in about text |
+| `world/foundation.gd` hint, `launch.gd` project-name string | dev text |
+| plural-suffix `%s` (see Decisions 2) | waits for `tr_n` |
+| English fallbacks kept in const tables (catalog 48, binds 6, skills, sprite labels) | harmless duplicates; drop once a second locale exists |
 
 Out of scope by design: `debug/*`, smokes, playtest and log text, ids and node names.
 
@@ -64,7 +77,7 @@ Out of scope by design: `debug/*`, smokes, playtest and log text, ids and node n
 2. **Plurals**: use `tr_n` and PO plural forms when a second locale is actually added. Until then `%s` suffix cases stay: `anvil_forge_job.stopped_the_queue_pick_from` ("piece%s") and `forge_act.kept_hold` ("hold%s").
 3. **Placeholders**: new strings use named placeholders: `tr("scope.key").format({"gold": g})` with `{gold}` in the `msgstr`. Existing positional `%s`/`%d` strings convert opportunistically when touched.
 4. **Locale persistence**: save the choice in settings (not the save slot) when a settings row is added. Not built yet.
-5. **Data tables** (catalog, affixes, quests, archives): translate by id, key derived from the id (`item.<id>.name`, `item.<id>.desc`). This is the next pass.
+5. **Data tables** (catalog, affixes, archives): translate by id, key derived from the id (`item.<id>.name`). Done in pass 2; quest titles still come from generated text.
 6. **Fonts and RTL**: deferred until a target language is chosen. Then: pick a UI font with the needed glyphs (CJK/Cyrillic/Thai fallback chain), check label widths, and add mirrored layout for RTL.
 
 Registration: `project.godot` now lists `en.po` under `[internationalization]`. `LocS.setup()` skips a locale that is already registered, so there are no duplicates; it still adds any other code in `LOCALES` and picks the locale.

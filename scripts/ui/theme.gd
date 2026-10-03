@@ -86,25 +86,25 @@ static func skill_name(id: String) -> String:
 		"axe":
 			return App.tr("common.great_axe")
 		"staff":
-			return "Staff"
+			return App.tr("skill.staff")
 		"bow":
-			return "Longbow"
+			return App.tr("skill.bow")
 		"str":
-			return "Strength"
+			return App.tr("skill.str")
 		"mag":
-			return "Magic"
+			return App.tr("skill.mag")
 		"rng":
-			return "Ranged"
+			return App.tr("skill.rng")
 		"def":
-			return "Defense"
+			return App.tr("skill.def")
 		"hp":
-			return "Hitpoints"
+			return App.tr("skill.hp")
 		"mine":
-			return "Mining"
+			return App.tr("skill.mine")
 		"wood":
-			return "Woodcutting"
+			return App.tr("skill.wood")
 		"smith":
-			return "Smithing"
+			return App.tr("skill.smith")
 	return id
 
 static func _pct(v: float) -> String:

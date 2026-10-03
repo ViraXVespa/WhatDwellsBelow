@@ -4,6 +4,7 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 const Binds := preload("res://scripts/input/binds.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
+const LocS := preload("res://scripts/app/app_loc.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 
 const ROWS: Array = [
@@ -49,12 +50,12 @@ func rebuild() -> void:
 	host.bind_pool = pool
 	View.clear_page(host)
 	_sel_row()
-	var reset: Button = ThemeS.btn("Reset Controls", func() -> void:
+	var reset: Button = ThemeS.btn(App.tr("binds_page.reset_controls"), func() -> void:
 		var ui: Node = host.get("pause") as Node if host else null
 		if ui == null:
 			ui = host
-		var which: String = "Keyboard" if pool == "kb" else "Gamepad"
-		Confirm.open(ui, "Reset Controls", "Restore default " + which + " controls?", func() -> void:
+		var which: String = App.tr("binds_page.keyboard") if pool == "kb" else App.tr("binds_page.gamepad")
+		Confirm.open(ui, App.tr("binds_page.reset_controls"), App.tr("binds_page.restore_default_controls").format({"which": which}), func() -> void:
 			Binds.reset_pool(pool)
 			App.save_now()
 			rebuild()
@@ -69,13 +70,13 @@ func rebuild() -> void:
 			continue
 		if bool(row.get("kb_only", false)) and pool != "kb":
 			continue
-		_bind_row(str(row.get("id", "")), str(row.get("label", "")))
+		_bind_row(str(row.get("id", "")), LocS.tr_or("controls." + str(row.get("id", "")), str(row.get("label", ""))))
 	View.wire_vert(host.info_btns)
 	if host.has_method("split_hint"):
 		host.split_hint()
 
 func _sel_row() -> void:
-	var lab: String = "<  Keyboard  >" if pool == "kb" else "<  Gamepad  >"
+	var lab: String = App.tr("binds_page.keyboard_cycle") if pool == "kb" else App.tr("binds_page.gamepad_cycle")
 	var b: Button = ThemeS.btn(lab, func() -> void: _cycle_pool(1))
 	b.gui_input.connect(_on_sel_input)
 	View.add_page_btn(host, b)

@@ -6,7 +6,7 @@ var vis: MeshInstance3D
 var shape: CollisionShape3D
 var open := false
 var label: Label3D
-var prompt := "Open the guardian door"
+var prompt := tr("boss_door.open_the_guardian_door")
 var kind := "boss_door"
 var reach := 1.85
 var cells: Array = []
@@ -137,7 +137,7 @@ func occupies_cell(c: Vector2i) -> bool:
 
 class Hotspot extends Node3D:
 	var host: Node
-	var prompt := "Open the guardian door"
+	var prompt := App.tr("boss_door.open_the_guardian_door")
 	var kind := "boss_door"
 
 	func _ready() -> void:

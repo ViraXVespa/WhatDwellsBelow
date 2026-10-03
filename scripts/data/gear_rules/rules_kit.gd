@@ -136,7 +136,7 @@ static func handle_mail(p: Object, it: Dictionary) -> String:
 		App.extracted = true
 		p.mailed_names.append(str(it.get("name", "item")))
 		App.toast(App.tr("rules_kit.unlocked_as_a_starter"))
-		return "Unlocked starter: " + str(it.get("name", "item"))
+		return App.tr("rules_kit.unlocked_starter_name").format({"name": str(it.get("name", "item"))})
 	if is_starter(p, it):
 		return grant_smith(p, it)
 	return ""

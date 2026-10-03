@@ -2,6 +2,7 @@ extends Object
 
 ## Eight artifact sets. Bonuses begin at 2 pieces.
 
+const LocS := preload("res://scripts/app/app_loc.gd")
 const SETS: PackedStringArray = ["cinder", "tide", "root", "ash", "spark", "bone", "veil", "iron"]
 
 const ARTS: Array = [
@@ -31,6 +32,12 @@ const ARTS: Array = [
 	{"id": "iron_heart", "name": "Iron Heart", "set": "iron", "desc": "Heavier than it looks. +defense."},
 ]
 
+static func _loc(a: Dictionary) -> Dictionary:
+	var d: Dictionary = a.duplicate()
+	d["name"] = LocS.tr_or("item.%s.name" % a.id, str(a.name))
+	d["desc"] = LocS.tr_or("item.%s.desc" % a.id, str(a.desc))
+	return d
+
 static func pick(rng: RandomNumberGenerator, n: int) -> Array:
 	var pool: Array = ARTS.duplicate()
 	var out: Array = []
@@ -39,14 +46,14 @@ static func pick(rng: RandomNumberGenerator, n: int) -> Array:
 		if pool.is_empty():
 			break
 		var j := rng.randi() % pool.size()
-		out.append(pool[j])
+		out.append(_loc(pool[j]))
 		pool.remove_at(j)
 	return out
 
 static func by_id(id: String) -> Dictionary:
 	for a in ARTS:
 		if str(a.id) == id:
-			return a
+			return _loc(a)
 	return {}
 
 static func set_size(set_id: String) -> int:
@@ -59,21 +66,21 @@ static func set_size(set_id: String) -> int:
 static func set_bonus_line(set_id: String, n: int) -> String:
 	match set_id:
 		"cinder":
-			return "+damage, stronger at 2." if n >= 2 else ""
+			return App.tr("set.cinder.bonus") if n >= 2 else ""
 		"tide":
-			return "+HP, stronger at 2." if n >= 2 else ""
+			return App.tr("set.tide.bonus") if n >= 2 else ""
 		"root":
-			return "+gather luck at 2, more at 3." if n >= 2 else ""
+			return App.tr("set.root.bonus") if n >= 2 else ""
 		"ash":
-			return "+defense at 2, more at 3." if n >= 2 else ""
+			return App.tr("set.ash.bonus") if n >= 2 else ""
 		"spark":
-			return "+crit chance at 2." if n >= 2 else ""
+			return App.tr("set.spark.bonus") if n >= 2 else ""
 		"bone":
-			return "+HP at 2, more at 3." if n >= 2 else ""
+			return App.tr("set.bone.bonus") if n >= 2 else ""
 		"veil":
-			return "+move at 2, more at 3 and 4." if n >= 2 else ""
+			return App.tr("set.veil.bonus") if n >= 2 else ""
 		"iron":
-			return "+defense stacking through 5." if n >= 2 else ""
+			return App.tr("set.iron.bonus") if n >= 2 else ""
 	return ""
 
 static func set_ids() -> PackedStringArray:

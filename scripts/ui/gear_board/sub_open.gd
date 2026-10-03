@@ -24,15 +24,15 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 6)
 	panel.add_child(box)
-	var head := "Re-equip  " + str(Fmt.NAMES.get(slot, slot))
+	var head := App.tr("sub_open.reequip_slot").format({"slot": Fmt.slot_name(slot)})
 	var blurb := App.tr("sub_open.at_risk_gear_is_lost")
 	var blurb_col := Color(0.8, 0.74, 0.64)
 	if load("res://scripts/ui/gear_board/board_sub.gd")._is_anvil(ui):
 		if str(ui.get("anvil_tab")) == "forge":
-			head = "Forge  " + str(Fmt.NAMES.get(slot, slot))
+			head = App.tr("sub_open.forge_slot").format({"slot": Fmt.slot_name(slot)})
 			blurb = App.tr("sub_open.set_type_rarity_level_and")
 		else:
-			head = "Analyze  " + str(Fmt.NAMES.get(slot, slot))
+			head = App.tr("sub_open.analyze_slot").format({"slot": Fmt.slot_name(slot)})
 			blurb = App.tr("sub_open.warning_analyzing_destroys_the_s")
 			blurb_col = Color(0.95, 0.42, 0.28)
 	box.add_child(ThemeS.lab(head, 22, Color(0.95, 0.82, 0.5)))
@@ -186,5 +186,5 @@ static func _apply_loadout(ui: CanvasLayer, slot: String, it: Dictionary, src: S
 		if ui.get("loadout_tool") != null:
 			ui.loadout_tool = str(it.get("tool", ui.loadout_tool))
 		App.prog.tool_type = str(it.get("tool", App.prog.tool_type))
-	Act.st(ui, "Ready: " + str(it.get("name", slot)))
+	Act.st(ui, App.tr("sub_open.ready_name").format({"name": str(it.get("name", slot))}))
 	App.save_now()

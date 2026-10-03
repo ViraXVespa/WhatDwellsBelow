@@ -8,7 +8,7 @@ const GatherRules := preload("res://scripts/world/gather/rules.gd")
 var kind := "mine"
 var hits := 4
 var interval := 2.4
-var prompt := "Gather"
+var prompt := tr("gather_node.gather")
 var spr: Sprite3D
 var label: Label3D
 var busy := false
@@ -49,7 +49,7 @@ func interact(who: Node) -> String:
 	if who and who.has_method("start_gather"):
 		who.start_gather(self)
 		return tr("gather_node.gathering_move_to_stop")
-	return "Gather"
+	return tr("gather_node.gather")
 
 func strike() -> Dictionary:
 	if hits <= 0:

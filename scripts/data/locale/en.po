@@ -20,6 +20,48 @@ msgstr "Pick a slot or bag item first."
 msgid "act_items.starters_aren_t_stored"
 msgstr "Starters aren't stored."
 
+msgid "affix.atk_range.label"
+msgstr "Attack Range"
+
+msgid "affix.atk_spd.label"
+msgstr "Attack Speed"
+
+msgid "affix.crit_chance.label"
+msgstr "Crit Chance"
+
+msgid "affix.crit_dmg.label"
+msgstr "Crit Damage"
+
+msgid "affix.def.label"
+msgstr "Defense"
+
+msgid "affix.dmg.label"
+msgstr "Damage"
+
+msgid "affix.gather_pow.label"
+msgstr "Gather Power"
+
+msgid "affix.gather_spd.label"
+msgstr "Gather Speed"
+
+msgid "affix.hp.label"
+msgstr "Health"
+
+msgid "affix.hp_on_hit.label"
+msgstr "Health on Hit"
+
+msgid "affix.hp_on_kill.label"
+msgstr "Health on Kill"
+
+msgid "affix.move_spd.label"
+msgstr "Movement Speed"
+
+msgid "affix.yield_chance.label"
+msgstr "Yield Chance"
+
+msgid "anvil.analyzed_name"
+msgstr "Analyzed — {name}"
+
 msgid "anvil.analyzed_unlocks_ready_on_the"
 msgstr "Analyzed. Unlocks ready on the Forge tab."
 
@@ -62,6 +104,9 @@ msgstr "Stopped the queue. Pick from the %d finished piece%s."
 msgid "anvil_forge_pick.hold_already_stored_new_this"
 msgstr "Hold = already stored. New = this batch."
 
+msgid "anvil_forge_pick.hold_line"
+msgstr "Hold  {line}"
+
 msgid "anvil_forge_pick.keep_old_holds"
 msgstr "Keep old holds"
 
@@ -73,6 +118,9 @@ msgstr "Keep three. Held pieces start selected. Highlight a piece for its stats.
 
 msgid "anvil_forge_pick.lv_finish_fortune"
 msgstr "%s  lv %d  finish %.2f  fortune %.2f"
+
+msgid "anvil_forge_pick.new_line"
+msgstr "New  {line}"
 
 msgid "anvil_forge_pick.picked"
 msgstr "Picked %d / %d"
@@ -104,6 +152,81 @@ msgstr "Raising Placeholdia…"
 msgid "app_run.already_on_the_surface"
 msgstr "Already on the surface."
 
+msgid "archive.art_experiment.desc"
+msgstr "A 3D look-test snapshot, isolated from the live path."
+
+msgid "archive.art_experiment.label"
+msgstr "Art experiment"
+
+msgid "archive.classic_2d.desc"
+msgstr "Early slice. Flat 2D camera. Frozen as a standalone snapshot."
+
+msgid "archive.classic_2d.label"
+msgstr "Classic 2D"
+
+msgid "archive.full_3d_pass.desc"
+msgstr "The previous live path at GDD handover, frozen before the clean rewrite."
+
+msgid "archive.full_3d_pass.label"
+msgstr "Full 3D Pass"
+
+msgid "archive.grok_build_w1.desc"
+msgstr "First Grok Build week on the live path after the Full 3D Pass handover."
+
+msgid "archive.grok_build_w1.label"
+msgstr "Grok Build Results (Week 1)"
+
+msgid "archive.grok_build_w2.desc"
+msgstr "Grok Build week 2 completion on the live path (0.2.0)."
+
+msgid "archive.grok_build_w2.label"
+msgstr "Grok Build Results (Week 2)"
+
+msgid "archive.grok_build_w3.desc"
+msgstr "Grok Build week 3 completion on the live path (0.3.0)."
+
+msgid "archive.grok_build_w3.label"
+msgstr "Grok Build Results (Week 3)"
+
+msgid "archive.grok_build_w4.desc"
+msgstr "Grok Build week 4 completion on the live path (0.4.0)."
+
+msgid "archive.grok_build_w4.label"
+msgstr "Grok Build Results (Week 4)"
+
+msgid "archive.grok_build_w5.desc"
+msgstr "Grok Build week 5 completion on the live path (0.5.0)."
+
+msgid "archive.grok_build_w5.label"
+msgstr "Grok Build Results (Week 5)"
+
+msgid "archive.grok_web_w1.desc"
+msgstr "Design database split and live path at the end of the first Grok Web week."
+
+msgid "archive.grok_web_w1.label"
+msgstr "Grok Web Results (Week 1)"
+
+msgid "archive.grok_web_w2.desc"
+msgstr "Live path at the end of Grok Web week 2 (0.2.55)."
+
+msgid "archive.grok_web_w2.label"
+msgstr "Grok Web Results (Week 2)"
+
+msgid "archive.grok_web_w3.desc"
+msgstr "Live path at the end of Grok Web week 3 (0.3.43)."
+
+msgid "archive.grok_web_w3.label"
+msgstr "Grok Web Results (Week 3)"
+
+msgid "archive.grok_web_w4.desc"
+msgstr "Live path at the end of Grok Web week 4 (0.4.25)."
+
+msgid "archive.grok_web_w4.label"
+msgstr "Grok Web Results (Week 4)"
+
+msgid "archives_ui.snapshot"
+msgstr "Snapshot"
+
 msgid "archives_ui.snapshots"
 msgstr "Snapshots  ›  %s  ›  %s"
 
@@ -115,6 +238,24 @@ msgstr "Snapshots  ›  %s  ›  Documents"
 
 msgid "archives_ui.standalone_snapshots_title_play"
 msgstr "Standalone snapshots. Title Play always launches the live path."
+
+msgid "binds_page.gamepad"
+msgstr "Gamepad"
+
+msgid "binds_page.gamepad_cycle"
+msgstr "<  Gamepad  >"
+
+msgid "binds_page.keyboard"
+msgstr "Keyboard"
+
+msgid "binds_page.keyboard_cycle"
+msgstr "<  Keyboard  >"
+
+msgid "binds_page.reset_controls"
+msgstr "Reset Controls"
+
+msgid "binds_page.restore_default_controls"
+msgstr "Restore default {which} controls?"
 
 msgid "board_build.analyze_destroys_a_piece_forge"
 msgstr "Analyze DESTROYS a piece. Forge those remains on the Forge tab. Starters stay off the list."
@@ -155,8 +296,23 @@ msgstr "Empty bag slot."
 msgid "board_text.empty_opens_anything_that_can"
 msgstr "%s — empty\nOpens anything that can go here."
 
+msgid "board_text.forge_tab_rolls_a_new_hold"
+msgstr "\nForge tab rolls a new hold from unlocked traits."
+
+msgid "board_text.no_forge_preview"
+msgstr "\nNo forge preview for this."
+
 msgid "board_text.nothing_to_preview"
 msgstr "Nothing to preview."
+
+msgid "board_text.style_weapon"
+msgstr "Style: {weapon}"
+
+msgid "board_text.tool_name"
+msgstr "Tool: {tool}"
+
+msgid "board_text.white_gear_is_starter_only"
+msgstr "\nWhite gear is starter-only. Analyze greens and blues."
 
 msgid "boss_door.open"
 msgstr "OPEN"
@@ -181,6 +337,12 @@ msgstr "Placeholdia  ·  bank %dg  %d ore  %d wood  ·  deepest F%d%s\nCrystal  
 
 msgid "camp_build.camp_mesh_box_parent"
 msgstr "CAMP_MESH box parent="
+
+msgid "combat_xp.active_line"
+msgstr "\nActive: {line}"
+
+msgid "combat_xp.bonus_from_2_pieces"
+msgstr "\nBonus from 2 pieces."
 
 msgid "combat_xp.set"
 msgstr "Set %s  %d/%d"
@@ -347,6 +509,9 @@ msgstr "%s\nReward: %s"
 msgid "common.salvage_spare_gear"
 msgstr "Salvage spare gear"
 
+msgid "common.select"
+msgstr "Select"
+
 msgid "common.send_all"
 msgstr "Send All"
 
@@ -389,6 +554,51 @@ msgstr "Cancel"
 msgid "confirm_dlg.confirm"
 msgstr "Confirm"
 
+msgid "controls.attack"
+msgstr "Attack"
+
+msgid "controls.dash"
+msgstr "Dash"
+
+msgid "controls.food"
+msgstr "Food"
+
+msgid "controls.interact"
+msgstr "Interact"
+
+msgid "controls.inventory"
+msgstr "Inventory"
+
+msgid "controls.look_mode"
+msgstr "Look mode"
+
+msgid "controls.map_view"
+msgstr "Map"
+
+msgid "controls.move_down"
+msgstr "Move down"
+
+msgid "controls.move_left"
+msgstr "Move left"
+
+msgid "controls.move_right"
+msgstr "Move right"
+
+msgid "controls.move_up"
+msgstr "Move up"
+
+msgid "controls.pause"
+msgstr "Pause"
+
+msgid "controls.potion"
+msgstr "Potion"
+
+msgid "controls.special"
+msgstr "Special"
+
+msgid "controls.target_lock"
+msgstr "Target lock"
+
 msgid "display_mode.display_borderless_fullscreen"
 msgstr "Display: Borderless fullscreen"
 
@@ -412,6 +622,9 @@ msgstr "Forged holds stay with you."
 
 msgid "extract.sent_g"
 msgstr "Sent %dg."
+
+msgid "extract.sent_name"
+msgstr "Sent {name}"
 
 msgid "extract.sent_ore"
 msgstr "Sent %d ore."
@@ -491,11 +704,17 @@ msgstr "Click Fullscreen to hide browser chrome. Chromium may also offer an Inst
 msgid "fs_gate.enter_fullscreen"
 msgstr "Enter fullscreen"
 
+msgid "fs_gate.fullscreen"
+msgstr "Fullscreen"
+
 msgid "fs_gate.fullscreen_install"
 msgstr "Fullscreen / Install"
 
 msgid "fs_gate.fullscreen_on_iphone"
 msgstr "Fullscreen on iPhone"
+
+msgid "fs_gate.iphone_safari_cannot_hide"
+msgstr "iPhone Safari cannot hide the browser chrome from a button. Add the game to your Home Screen for a chrome-less launch: tap Share (square with arrow) → Add to Home Screen → Add. Leave Open as Web App on. Then open the icon. You can Continue in this tab without that."
 
 msgid "fs_gate.play_fullscreen"
 msgstr "Play fullscreen"
@@ -551,8 +770,20 @@ msgstr "Tool locked to pickaxe."
 msgid "gear_bag.discarded"
 msgstr "Discarded."
 
+msgid "gear_bag.discarded_name"
+msgstr "Discarded {name}"
+
+msgid "gear_bag.dropped_name"
+msgstr "Dropped {name}"
+
+msgid "gear_bag.equipped_name"
+msgstr "Equipped {name}"
+
 msgid "gear_bag.tool_locked_to_this_run"
 msgstr "Tool locked to %s this run."
+
+msgid "gear_bag.unequipped_name"
+msgstr "Unequipped {name}"
 
 msgid "gear_use.already_eating_that"
 msgstr "Already eating that."
@@ -604,6 +835,15 @@ msgstr "Potion x%d  %.1fs"
 
 msgid "hud_act.shrine_s"
 msgstr "Shrine +%d%%  %ds"
+
+msgid "hud_act.style_magic"
+msgstr "Magic"
+
+msgid "hud_act.style_melee"
+msgstr "Melee"
+
+msgid "hud_act.style_ranged"
+msgstr "Ranged"
 
 msgid "hud_act.text"
 msgstr "%d / %d"
@@ -734,6 +974,48 @@ msgstr "Talk - guild work"
 msgid "interact_prompt.the_fire_is_spent"
 msgstr "The fire is spent."
 
+msgid "interact_prompt.title_anvil"
+msgstr "ANVIL"
+
+msgid "interact_prompt.title_cache"
+msgstr "CACHE"
+
+msgid "interact_prompt.title_campfire"
+msgstr "CAMPFIRE"
+
+msgid "interact_prompt.title_chest"
+msgstr "CHEST"
+
+msgid "interact_prompt.title_controls"
+msgstr "CONTROLS"
+
+msgid "interact_prompt.title_dumpster"
+msgstr "DUMPSTER"
+
+msgid "interact_prompt.title_gate"
+msgstr "GATE"
+
+msgid "interact_prompt.title_lever"
+msgstr "LEVER"
+
+msgid "interact_prompt.title_open"
+msgstr "OPEN"
+
+msgid "interact_prompt.title_plate"
+msgstr "PLATE"
+
+msgid "interact_prompt.title_reception"
+msgstr "RECEPTION"
+
+msgid "interact_prompt.title_shrine"
+msgstr "SHRINE"
+
+msgid "interact_prompt.title_stairs"
+msgstr "STAIRS"
+
+msgid "interact_prompt.title_vendor"
+msgstr "VENDOR"
+
 msgid "interact_prompt.vendor_stall"
 msgstr "Vendor stall"
 
@@ -755,6 +1037,180 @@ msgstr "%s %d/%d%s"
 msgid "inv_act.can_t_use_that"
 msgstr "Can't use that."
 
+msgid "item.ash_bell.desc"
+msgstr "Rings without sound. +defense."
+
+msgid "item.ash_bell.name"
+msgstr "Ash Bell"
+
+msgid "item.ash_cloak.desc"
+msgstr "Sheds in the wind. +defense."
+
+msgid "item.ash_cloak.name"
+msgstr "Ash Cloak"
+
+msgid "item.ash_mask.desc"
+msgstr "A face of grey dust. +defense."
+
+msgid "item.ash_mask.name"
+msgstr "Ash Mask"
+
+msgid "item.bone_ring.desc"
+msgstr "Too small for a human. +HP."
+
+msgid "item.bone_ring.name"
+msgstr "Bone Ring"
+
+msgid "item.bone_splint.desc"
+msgstr "Yellowed and kind. +HP."
+
+msgid "item.bone_splint.name"
+msgstr "Bone Splint"
+
+msgid "item.bone_tooth.desc"
+msgstr "Still sharp. +HP."
+
+msgid "item.bone_tooth.name"
+msgstr "Bone Tooth"
+
+msgid "item.cinder_coil.desc"
+msgstr "Wire hot to the touch. +damage."
+
+msgid "item.cinder_coil.name"
+msgstr "Cinder Coil"
+
+msgid "item.cinder_ember.desc"
+msgstr "A coal that never cools. +damage."
+
+msgid "item.cinder_ember.name"
+msgstr "Cinder Ember"
+
+msgid "item.iron_heart.desc"
+msgstr "Heavier than it looks. +defense."
+
+msgid "item.iron_heart.name"
+msgstr "Iron Heart"
+
+msgid "item.iron_link.desc"
+msgstr "From a longer chain. +defense."
+
+msgid "item.iron_link.name"
+msgstr "Iron Link"
+
+msgid "item.iron_nail.desc"
+msgstr "Bent, not broken. +defense."
+
+msgid "item.iron_nail.name"
+msgstr "Iron Nail"
+
+msgid "item.iron_plate.desc"
+msgstr "Thumb-sized armor. +defense."
+
+msgid "item.iron_plate.name"
+msgstr "Iron Plate"
+
+msgid "item.iron_seal.desc"
+msgstr "A guild stamp gone dark. +defense."
+
+msgid "item.iron_seal.name"
+msgstr "Iron Seal"
+
+msgid "item.root_charm.desc"
+msgstr "Smells like wet soil. +gathering."
+
+msgid "item.root_charm.name"
+msgstr "Root Charm"
+
+msgid "item.root_knot.desc"
+msgstr "Twisted living wood. +gathering."
+
+msgid "item.root_knot.name"
+msgstr "Root Knot"
+
+msgid "item.root_seed.desc"
+msgstr "It wants to sprout. +gathering."
+
+msgid "item.root_seed.name"
+msgstr "Root Seed"
+
+msgid "item.spark_lens.desc"
+msgstr "Catches stray light. +crit."
+
+msgid "item.spark_lens.name"
+msgstr "Spark Lens"
+
+msgid "item.spark_wire.desc"
+msgstr "Bites the fingers. +crit."
+
+msgid "item.spark_wire.name"
+msgstr "Spark Wire"
+
+msgid "item.tide_pearl.desc"
+msgstr "Salt-wet and heavy. +HP."
+
+msgid "item.tide_pearl.name"
+msgstr "Tide Pearl"
+
+msgid "item.tide_scale.desc"
+msgstr "A fish that shouldn't be. +HP."
+
+msgid "item.tide_scale.name"
+msgstr "Tide Scale"
+
+msgid "item.veil_coin.desc"
+msgstr "Both sides the same. +speed."
+
+msgid "item.veil_coin.name"
+msgstr "Veil Coin"
+
+msgid "item.veil_hush.desc"
+msgstr "Quiets the room. +speed."
+
+msgid "item.veil_hush.name"
+msgstr "Veil Hush"
+
+msgid "item.veil_shard.desc"
+msgstr "See-through stone. +speed."
+
+msgid "item.veil_shard.name"
+msgstr "Veil Shard"
+
+msgid "item.veil_thread.desc"
+msgstr "Hard to hold. +speed."
+
+msgid "item.veil_thread.name"
+msgstr "Veil Thread"
+
+msgid "launch.checking_out_sha"
+msgstr "Checking out {sha}…  (B to cancel)"
+
+msgid "launch.checkout_failed"
+msgstr "Checkout failed."
+
+msgid "launch.could_not_launch"
+msgstr "Could not launch archive."
+
+msgid "launch.import_failed"
+msgstr "Import failed."
+
+msgid "launch.importing_archived_project"
+msgstr "Importing archived project…  (B to cancel)"
+
+msgid "launch.isolating_save_data"
+msgstr "Isolating save data…"
+
+msgid "launch.opening_archived_build"
+msgstr "Opening archived build…"
+
+msgid "launch.opening_snapshot"
+msgstr "Opening snapshot…"
+
+msgid "launch.preparing_snapshot"
+msgstr "Preparing snapshot…  (B to cancel)"
+
+msgid "launch.unknown_archive"
+msgstr "Unknown archive."
+
 msgid "loader.loading"
 msgstr "Loading"
 
@@ -763,6 +1219,9 @@ msgstr "%d%%"
 
 msgid "net.the_crystal_takes_you_across"
 msgstr "The crystal takes you across the floor."
+
+msgid "news_fmt.build"
+msgstr "Build"
 
 msgid "news_fmt.updates_from_earlier_weeks_are"
 msgstr "Updates from earlier weeks are on the public changelog."
@@ -911,6 +1370,9 @@ msgstr "No task."
 msgid "quest_roll.none"
 msgstr "None."
 
+msgid "quest_roll.quest_title"
+msgstr "Quest: {title}"
+
 msgid "quest_roll.retrieve_a_guild_cache_from"
 msgstr "Retrieve a guild cache from floor %d"
 
@@ -968,6 +1430,9 @@ msgstr "XP host.draining…"
 msgid "rebuild.you_chose_the_surface"
 msgstr "You chose the surface."
 
+msgid "recap_flow.extracted_bits"
+msgstr "Extracted: {bits}"
+
 msgid "recap_flow.nothing_reached_the_surface"
 msgstr "Nothing reached the surface."
 
@@ -986,6 +1451,18 @@ msgstr "Starting XP"
 msgid "recap_flow.wood"
 msgstr "%d wood"
 
+msgid "restock.a_few_coins"
+msgstr "A few coins."
+
+msgid "restock.guild_restock"
+msgstr "The guild slips you a restock: {msg}"
+
+msgid "restock.potions"
+msgstr "Potions."
+
+msgid "restock.rations"
+msgstr "Rations."
+
 msgid "rules_kit.broken_down_for_smithing"
 msgstr "Broken down for smithing."
 
@@ -994,6 +1471,9 @@ msgstr "Converted %s to smithing XP."
 
 msgid "rules_kit.unlocked_as_a_starter"
 msgstr "Unlocked as a starter."
+
+msgid "rules_kit.unlocked_starter_name"
+msgstr "Unlocked starter: {name}"
 
 msgid "rules_norm.not_now"
 msgstr "Not now."
@@ -1009,6 +1489,30 @@ msgstr "Potion cooling down."
 
 msgid "rules_norm.potion_instant"
 msgstr "Potion — instant."
+
+msgid "set.ash.bonus"
+msgstr "+defense at 2, more at 3."
+
+msgid "set.bone.bonus"
+msgstr "+HP at 2, more at 3."
+
+msgid "set.cinder.bonus"
+msgstr "+damage, stronger at 2."
+
+msgid "set.iron.bonus"
+msgstr "+defense stacking through 5."
+
+msgid "set.root.bonus"
+msgstr "+gather luck at 2, more at 3."
+
+msgid "set.spark.bonus"
+msgstr "+crit chance at 2."
+
+msgid "set.tide.bonus"
+msgstr "+HP, stronger at 2."
+
+msgid "set.veil.bonus"
+msgstr "+move at 2, more at 3 and 4."
 
 msgid "settings_pages.aim_line"
 msgstr "Aim line: %s"
@@ -1058,6 +1562,9 @@ msgstr "Target lock"
 msgid "settings_pages.wipe_all_save_data_and"
 msgstr "Wipe all save data and return to the title screen?"
 
+msgid "shop.artifact_name"
+msgstr "Artifact: {name}"
+
 msgid "shop.bank_g_ore_potions_and"
 msgstr "Bank %dg  %d ore   ·   potions and rations for the next drop."
 
@@ -1106,6 +1613,9 @@ msgstr "Pawn Item"
 msgid "shop.potion_ready"
 msgstr "Potion ready."
 
+msgid "shop.purchased_name"
+msgstr "Purchased {name}"
+
 msgid "shop.ration_packed_in_the_food"
 msgstr "Ration packed in the food slot."
 
@@ -1139,6 +1649,60 @@ msgstr "Two artifacts a visit. Snacks %dg. Artifacts are run-only."
 msgid "shop.vendor_stall"
 msgstr "Vendor Stall"
 
+msgid "skill.axe"
+msgstr "Great Axe"
+
+msgid "skill.bow"
+msgstr "Longbow"
+
+msgid "skill.def"
+msgstr "Defense"
+
+msgid "skill.hp"
+msgstr "Hitpoints"
+
+msgid "skill.mag"
+msgstr "Magic"
+
+msgid "skill.mine"
+msgstr "Mining"
+
+msgid "skill.rng"
+msgstr "Ranged"
+
+msgid "skill.smith"
+msgstr "Smithing"
+
+msgid "skill.staff"
+msgstr "Staff"
+
+msgid "skill.str"
+msgstr "Strength"
+
+msgid "skill.wood"
+msgstr "Woodcutting"
+
+msgid "slot.body"
+msgstr "Body"
+
+msgid "slot.food"
+msgstr "Food"
+
+msgid "slot.head"
+msgstr "Head"
+
+msgid "slot.legs"
+msgstr "Legs"
+
+msgid "slot.potion"
+msgstr "Potion"
+
+msgid "slot.tool"
+msgstr "Tool"
+
+msgid "slot.weapon"
+msgstr "Weapon"
+
 msgid "splash.a_start_to_continue"
 msgstr "A / Start  to continue"
 
@@ -1150,6 +1714,21 @@ msgstr "Proudly Vibecoded with Grok"
 
 msgid "splash.shamelessly"
 msgstr "Shamelessly"
+
+msgid "sprite_filter.label_0"
+msgstr "Nearest"
+
+msgid "sprite_filter.label_1"
+msgstr "Nearest + mips"
+
+msgid "sprite_filter.label_2"
+msgstr "Nearest + mips + aniso"
+
+msgid "sprite_filter.label_3"
+msgstr "Linear"
+
+msgid "sprite_filter.label_4"
+msgstr "Linear + mips"
 
 msgid "stats.all_combat_stats"
 msgstr "All combat stats"
@@ -1175,8 +1754,14 @@ msgstr "%s  —"
 msgid "stats.text_2"
 msgstr "%s  %d/%d"
 
+msgid "sub_open.analyze_slot"
+msgstr "Analyze  {slot}"
+
 msgid "sub_open.at_risk_gear_is_lost"
 msgstr "AT RISK gear is lost on death or Dispel."
+
+msgid "sub_open.forge_slot"
+msgstr "Forge  {slot}"
 
 msgid "sub_open.no_at_risk_pieces_for"
 msgstr "No AT RISK pieces for this slot."
@@ -1186,6 +1771,12 @@ msgstr "Nothing else for this slot."
 
 msgid "sub_open.nothing_to_equip"
 msgstr "Nothing to equip."
+
+msgid "sub_open.ready_name"
+msgstr "Ready: {name}"
+
+msgid "sub_open.reequip_slot"
+msgstr "Re-equip  {slot}"
 
 msgid "sub_open.set_type_rarity_level_and"
 msgstr "Set type, rarity, level, and locks."
@@ -1315,6 +1906,9 @@ msgstr "Active: %s  (%d/%d)"
 
 msgid "ui_hub.guild_tasks"
 msgstr "Guild Tasks"
+
+msgid "ui_hub.target_lock"
+msgstr "Target-lock"
 
 msgid "ui_hub.three_choices_one_active_named"
 msgstr "Three choices. One active. Named vanquish locks that named foe."

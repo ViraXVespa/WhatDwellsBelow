@@ -27,7 +27,7 @@ static func md_inline(t: String) -> String:
 static func entry_bbcode(e: Dictionary, is_new: bool) -> String:
 	var lab := str(e.get("label", "")).strip_edges()
 	if lab == "":
-		lab = "Build"
+		lab = App.tr("news_fmt.build")
 	var head := "[font_size=24][b]%s[/b][/font_size]" % esc_bb(lab)
 	if is_new:
 		head = "[color=#f0d878]%s[/color]" % head

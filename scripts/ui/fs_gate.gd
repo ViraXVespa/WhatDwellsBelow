@@ -154,7 +154,7 @@ func _headline() -> String:
 
 func _body() -> String:
 	if _kind == "ios":
-		return "iPhone Safari cannot hide the browser chrome from a button. Add the game to your Home Screen for a chrome-less launch: tap Share (square with arrow) → Add to Home Screen → Add. Leave Open as Web App on. Then open the icon. You can Continue in this tab without that."
+		return App.tr("fs_gate.iphone_safari_cannot_hide")
 	if _kind == "android":
 		return tr("fs_gate.tap_fullscreen_to_hide_the")
 	return tr("fs_gate.click_fullscreen_to_hide_browser")
@@ -164,7 +164,7 @@ func _action_label() -> String:
 		return tr("fs_gate.try_fullscreen")
 	if _kind == "android":
 		return tr("fs_gate.fullscreen_install")
-	return "Fullscreen"
+	return App.tr("fs_gate.fullscreen")
 
 func _rotate_line() -> String:
 	if Disp.viewport_portrait():

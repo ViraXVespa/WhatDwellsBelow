@@ -41,7 +41,7 @@ static func _weapon_label(w: String) -> String:
 		"staff":
 			return App.tr("common.lightning_staff")
 		"longbow":
-			return "Longbow"
+			return App.tr("skill.bow")
 		_:
 			return App.tr("common.great_axe")
 

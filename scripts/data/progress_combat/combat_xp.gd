@@ -36,9 +36,9 @@ static func set_bonus_text(p, set_id: String) -> String:
 	var need := CatalogS.set_size(set_id)
 	var lines := App.tr("combat_xp.set") % [set_id.capitalize(), n, need]
 	if n >= 2:
-		lines += "\nActive: " + CatalogS.set_bonus_line(set_id, n)
+		lines += App.tr("combat_xp.active_line").format({"line": CatalogS.set_bonus_line(set_id, n)})
 	else:
-		lines += "\nBonus from 2 pieces."
+		lines += App.tr("combat_xp.bonus_from_2_pieces")
 	return lines
 
 static func set_counts(p) -> Dictionary:

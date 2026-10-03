@@ -97,7 +97,7 @@ static func mailed_line(_host: CanvasLayer) -> String:
 		bits.append(App.tr("recap_flow.root") % r)
 	if names.size() > 0:
 		bits.append(", ".join(names))
-	return "Extracted: " + ", ".join(bits)
+	return App.tr("recap_flow.extracted_bits").format({"bits": ", ".join(bits)})
 
 static func skip_drain(host: CanvasLayer) -> void:
 	for id in App.prog.SKILLS:

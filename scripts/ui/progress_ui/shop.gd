@@ -75,8 +75,8 @@ static func buy_art(ui, id: String, nm: String) -> void:
 			continue
 		keep.append(a)
 	ui.shop_spot.stock = keep
-	ui._st("Purchased " + nm)
-	App.toast("Artifact: " + nm)
+	ui._st(App.tr("shop.purchased_name").format({"name": nm}))
+	App.toast(App.tr("shop.artifact_name").format({"name": nm}))
 	ui._rebuild_shop()
 	ui._show()
 

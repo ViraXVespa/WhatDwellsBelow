@@ -92,7 +92,7 @@ static func _commit_analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> v
 	ui.anvil_src = ""
 	var Act2 = load("res://scripts/ui/gear_board/board_act.gd")
 	Act2.st(ui, App.tr("anvil.analyzed_unlocks_ready_on_the"))
-	App.toast("Analyzed — " + str(taken.get("name", "item")))
+	App.toast(App.tr("anvil.analyzed_name").format({"name": str(taken.get("name", "item"))}))
 	var Sub = load("res://scripts/ui/gear_board/board_sub.gd")
 	if bool(ui.get("gear_sub")):
 		Sub.open_sub(ui, slot)

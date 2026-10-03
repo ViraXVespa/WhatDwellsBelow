@@ -158,14 +158,14 @@ static func equip_uid(p: Object, uid: int) -> String:
 			pl.set_weapon(App.weapon)
 	p._sync_artifacts()
 	p._refresh_player_hp()
-	return "Equipped " + str(it.name)
+	return App.tr("gear_bag.equipped_name").format({"name": str(it.name)})
 
 static func drop_uid(p: Object, uid: int) -> String:
 	var it: Dictionary = remove_uid(p, uid)
 	if it.is_empty():
 		return App.tr("common.gone")
 	App.spawn_floor_item(it)
-	App.toast("Dropped " + str(it.name))
+	App.toast(App.tr("gear_bag.dropped_name").format({"name": str(it.name)}))
 	return App.tr("common.dropped")
 
 static func unequip_slot(p: Object, slot: String) -> String:
@@ -185,7 +185,7 @@ static func unequip_slot(p: Object, slot: String) -> String:
 		return App.tr("common.bag_full")
 	p._sync_artifacts()
 	p._refresh_player_hp()
-	return "Unequipped " + str(it.name)
+	return App.tr("gear_bag.unequipped_name").format({"name": str(it.name)})
 
 static func fill_slot_after_remove(p: Object, slot: String) -> void:
 	if slot == "weapon":
@@ -210,7 +210,7 @@ static func drop_slot(p: Object, slot: String) -> String:
 	fill_slot_after_remove(p, slot)
 	p._refresh_player_hp()
 	App.spawn_floor_item(it)
-	App.toast("Dropped " + str(it.name))
+	App.toast(App.tr("gear_bag.dropped_name").format({"name": str(it.name)}))
 	return App.tr("common.dropped")
 
 static func take_slot(p: Object, slot: String) -> Dictionary:
@@ -230,6 +230,6 @@ static func drop_stash(p: Object, uid: int) -> String:
 		if int(p.bank_items[i].uid) == uid:
 			var it: Dictionary = p.bank_items[i]
 			p.bank_items.remove_at(i)
-			App.toast("Discarded " + str(it.name))
+			App.toast(App.tr("gear_bag.discarded_name").format({"name": str(it.name)}))
 			return App.tr("gear_bag.discarded")
 	return App.tr("common.gone")

@@ -80,16 +80,16 @@ func split_rows() -> Array:
 	return out
 
 func split_back_label() -> String:
-	return "Back"
+	return App.tr("common.back")
 
 func split_close() -> void:
 	hide_browser()
 
 func split_path_text() -> String:
 	var e: Dictionary = _cur()
-	var lab: String = str(e.get("label", "Snapshot"))
+	var lab: String = str(e.get("label", App.tr("archives_ui.snapshot")))
 	if col == "list":
-		return "Snapshots"
+		return App.tr("ui_view.snapshots")
 	if mode == "docs":
 		return tr("archives_ui.snapshots_documents") % lab
 	if mode == "read":

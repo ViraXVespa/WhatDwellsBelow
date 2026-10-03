@@ -48,19 +48,19 @@ static func rebuild_controls(ui) -> void:
 	ui.box.add_child(ThemeS.lab(App.tr("common.controls_billboard"), 32, Color(0.95, 0.82, 0.5)))
 	ui.box.add_child(ThemeS.lab(App.tr("ui_hub.what_the_guild_painted_up"), 18, Color(0.82, 0.76, 0.66)))
 	var acts := [
-		["move_left", "Move left"],
-		["move_right", "Move right"],
-		["move_up", "Move up"],
-		["move_down", "Move down"],
-		["attack", "Attack"],
-		["special", "Special"],
-		["dash", "Dash"],
-		["interact", "Interact"],
-		["pause", "Pause"],
-		["potion", "Potion"],
-		["food", "Food"],
-		["map_view", "Map"],
-		["target_lock", "Target-lock"],
+		["move_left", App.tr("controls.move_left")],
+		["move_right", App.tr("controls.move_right")],
+		["move_up", App.tr("controls.move_up")],
+		["move_down", App.tr("controls.move_down")],
+		["attack", App.tr("controls.attack")],
+		["special", App.tr("controls.special")],
+		["dash", App.tr("controls.dash")],
+		["interact", App.tr("controls.interact")],
+		["pause", App.tr("controls.pause")],
+		["potion", App.tr("controls.potion")],
+		["food", App.tr("controls.food")],
+		["map_view", App.tr("controls.map_view")],
+		["target_lock", App.tr("ui_hub.target_lock")],
 	]
 	for pair in acts:
 		var row := HBoxContainer.new()

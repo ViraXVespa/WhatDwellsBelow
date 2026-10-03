@@ -25,5 +25,10 @@ static func requested() -> String:
 			return arg.substr(13)
 	return DEFAULT
 
+## Translated text for `key`, or `fallback` when the key has no entry (for const tables that keep English in code).
+static func tr_or(key: String, fallback: String) -> String:
+	var t: String = TranslationServer.translate(key)
+	return fallback if t == key else t
+
 static func set_locale(code: String) -> void:
 	TranslationServer.set_locale(code if code in LOCALES else DEFAULT)

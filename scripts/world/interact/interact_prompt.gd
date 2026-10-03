@@ -55,43 +55,43 @@ static func refresh(host: Node3D) -> void:
 static func title(host: Node3D) -> String:
 	match host.kind:
 		"stairs":
-			return "STAIRS" if not host.locked else App.tr("interact_prompt.locked_stairs")
+			return App.tr("interact_prompt.title_stairs") if not host.locked else App.tr("interact_prompt.locked_stairs")
 		"crystal":
 			return App.tr("common.floor_crystal")
 		"loadout_crystal":
 			return App.tr("common.floor_crystal")
 		"anvil":
-			return "ANVIL"
+			return App.tr("interact_prompt.title_anvil")
 		"quest_board":
 			return App.tr("interact_prompt.notice_board")
 		"receptionist":
-			return "RECEPTION"
+			return App.tr("interact_prompt.title_reception")
 		"vendor":
-			return "VENDOR"
+			return App.tr("interact_prompt.title_vendor")
 		"dumpster":
-			return "DUMPSTER"
+			return App.tr("interact_prompt.title_dumpster")
 		"billboard":
-			return "CONTROLS"
+			return App.tr("interact_prompt.title_controls")
 		"quest_item":
 			return App.tr("interact_prompt.quest_cache")
 		"chest":
 			return App.tr("interact_prompt.boss_chest")
 		"base_chest":
-			return "CHEST"
+			return App.tr("interact_prompt.title_chest")
 		"puzzle_chest":
-			return "CACHE"
+			return App.tr("interact_prompt.title_cache")
 		"shrine":
-			return "SHRINE"
+			return App.tr("interact_prompt.title_shrine")
 		"campfire":
-			return "CAMPFIRE"
+			return App.tr("interact_prompt.title_campfire")
 		"extract_gate":
 			return App.tr("interact_prompt.extraction_gate") if not host.used else App.tr("interact_prompt.dead_gate")
 		"shop":
 			return App.tr("interact_prompt.ghost_shop")
 		"lever":
-			return "LEVER"
+			return App.tr("interact_prompt.title_lever")
 		"plate":
-			return "PLATE"
+			return App.tr("interact_prompt.title_plate")
 		"gate":
-			return "GATE" if not host.open else "OPEN"
+			return App.tr("interact_prompt.title_gate") if not host.open else App.tr("interact_prompt.title_open")
 	return host.kind

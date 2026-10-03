@@ -50,7 +50,7 @@ static func accept_quest(p: Object, i: int) -> String:
 	else:
 		App.quest_named_type = ""
 		App.quest_named_name = ""
-	App.toast("Quest: " + str(p.quest_active.title))
+	App.toast(App.tr("quest_roll.quest_title").format({"title": str(p.quest_active.title)}))
 	return App.tr("quest_roll.accepted")
 
 static func abandon_quest(p: Object) -> String:

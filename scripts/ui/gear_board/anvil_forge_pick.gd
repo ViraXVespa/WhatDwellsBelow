@@ -83,7 +83,7 @@ static func _pick_rows(ui: CanvasLayer, slot: String) -> Array:
 			"key": "old:" + str(int(it.get("uid", 0))),
 			"it": it,
 			"pre": true,
-			"label": "Hold  " + _cmp_line(it),
+			"label": App.tr("anvil_forge_pick.hold_line").format({"line": _cmp_line(it)}),
 		})
 	var i := 0
 	for raw2: Variant in ui.forge_batch:
@@ -92,7 +92,7 @@ static func _pick_rows(ui: CanvasLayer, slot: String) -> Array:
 				"key": "new:" + str(i),
 				"it": raw2,
 				"pre": false,
-				"label": "New  " + _cmp_line(raw2),
+				"label": App.tr("anvil_forge_pick.new_line").format({"line": _cmp_line(raw2)}),
 			})
 		i += 1
 	return out

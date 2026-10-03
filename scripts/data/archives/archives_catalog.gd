@@ -1,5 +1,6 @@
 extends Object
 
+const LocS := preload("res://scripts/app/app_loc.gd")
 const PATH := "res://scripts/data/archive_catalog.json"
 const T := preload("res://scripts/data/tunables.gd")
 const NEED: Array[String] = ["classic_2d", "art_experiment", T.ARCHIVE_ID_FULL_3D, "grok_build_w1", "grok_web_w1"]
@@ -12,7 +13,19 @@ static func raw() -> Dictionary:
 
 static func all() -> Array:
 	var a: Variant = raw().get("archives", [])
-	return a if a is Array else []
+	if not a is Array:
+		return []
+	var out: Array = []
+	for e in a:
+		out.append(_loc(e) if e is Dictionary else e)
+	return out
+
+static func _loc(e: Dictionary) -> Dictionary:
+	var d: Dictionary = e.duplicate()
+	for f in ["label", "desc"]:
+		if e.has(f):
+			d[f] = LocS.tr_or("archive.%s.%s" % [e.get("id", ""), f], str(e[f]))
+	return d
 
 static func by_id(id: String) -> Dictionary:
 	for e in all():
