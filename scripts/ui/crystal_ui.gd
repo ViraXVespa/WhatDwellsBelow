@@ -160,7 +160,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			Net.cycle_net(self, td)
 			get_viewport().set_input_as_handled()
 			return
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		App.sfx("ui_cancel")
 		_back()
 		get_viewport().set_input_as_handled()

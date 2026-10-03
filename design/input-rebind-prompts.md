@@ -14,6 +14,7 @@ Pause → Settings → Controls.
 - `binds.gd` facades `ensure_mouse` and `ensure_axis` into `defaults.gd`. Pad reset MUST restock left-stick move axes as well as buttons.
 - Exposed actions are gameplay only: move (keyboard), attack, special, dash, target lock, interact, map, inventory, potion, food, look mode (pad). Item tip and drop are not listed.
 - Two slots per action. A new bind that collides inside the same pool swaps with the other action’s slot. Cross-pool events are ignored.
+- Capture: choosing a slot shows `...` and the page takes the next key or pad button before any menu handler. Space, Backspace, B, `[`, `]`, LB and RB bind like any other input and do not act as Back or tab while capturing. Esc / Start (`pause`, not rebindable) cancels; the footer shows only that Cancel. Mouse clicks still use normal button handling; a click on empty space binds that mouse button. Leaving the Controls page ends capture.
 - Gamepad left / right sticks cannot be rebound. Move and aim stay on those axes.
 - First boot and Reset bind keyboard actions to **physical** key positions (`physical_keycode`), so QWERTY W stays the same cap as Dvorak `,`. Glyphs follow the player’s layout.
 - Bind name left-aligned. Assigned glyph(s) right-aligned. Empty slot is an em dash. D-pad chips read UP / DOWN / LEFT / RIGHT, not “DPAD UP”.
@@ -32,7 +33,7 @@ Do not bake `A`, `B`, `ENTER`, `ESC`, `LMB`, or `RMB` into button captions or st
 
 | Surface | Where the glyph lives |
 |---------|------------------------|
-| Menus | Footer strip at the bottom-right of the menu panel. Always Select + Back. Extra actions (drop, tip, zoom) join that strip. |
+| Menus | Footer strip at the bottom-right of the menu panel. Always Select + Back (Recap shows Continue only). Extra actions (drop, tip, zoom) join that strip. |
 | Confirm dialog | Own Select + Back strip on the dialog (above the dimmed pause footer). B / Esc / Cancel closes it and restores prior focus. |
 | Tab headers | LB / RB (or `[` / `]`) on the left and right of the tab row. The row stretches; it scrolls horizontally when tabs overflow. Glyphs MUST follow the current scheme without waiting for a tab change. |
 | Gear stats card | Q / E on keyboard, LT / RT on pad. Not in the footer. Glyphs MUST follow the current scheme without waiting for a focus change. |

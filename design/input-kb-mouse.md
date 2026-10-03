@@ -16,6 +16,6 @@ Mouse wheel zooms world camera or the large map as described under Look mode. It
 - Web / native Android / iOS (`DisplayMode.uses_web_fs_toggle()`): toggle the current fullscreen state through the same path as Pause → Settings → Graphics (`DisplayMode.set_web_fullscreen`). A keydown is a valid gesture for `requestFullscreen`.
 - No-op on `xbox`.
 
-**Esc** opens pause (and backs out of menus). On web it MUST NOT exit browser fullscreen. Only Pause → Settings → Graphics and Alt+Enter leave web fullscreen. `DisplayMode.ensure_web_hooks()` installs a capturing `keydown` listener that `preventDefault`s Escape while `document.fullscreenElement` is set and stashes `window.__wdbEsc`. `DisplayMode.consume_web_esc()` / `Pad.pause_just()` turn that flag into pause so camp and dungeon still call `App.pause_menu.toggle()`.
+**Esc** opens pause (and backs out of menus; Backspace backs out too). **Space** is dash only: it does nothing in menus and is not a confirm key (Enter, E, pad A confirm). On web it MUST NOT exit browser fullscreen. Only Pause → Settings → Graphics and Alt+Enter leave web fullscreen. `DisplayMode.ensure_web_hooks()` installs a capturing `keydown` listener that `preventDefault`s Escape while `document.fullscreenElement` is set and stashes `window.__wdbEsc`. `DisplayMode.consume_web_esc()` / `Pad.pause_just()` turn that flag into pause so camp and dungeon still call `App.pause_menu.toggle()`.
 
 **I** opens pause on Inventory from gameplay only. Same action as D-pad Right. MUST NOT jump tabs while pause or any other `App.ui_open` menu is already up.

@@ -51,6 +51,8 @@ static func accept_pressed(event: InputEvent) -> bool:
 static func handle_input(host, event: InputEvent) -> void:
 	if not host.open or host._busy_anim():
 		return
+	if event is InputEventKey and (event as InputEventKey).keycode == KEY_BACKSPACE and host.get_viewport().gui_get_focus_owner() is LineEdit:
+		return
 	if event.is_action_pressed("tab_right"):
 		shift_page(host, 1)
 		host.get_viewport().set_input_as_handled()
@@ -80,7 +82,7 @@ static func handle_input(host, event: InputEvent) -> void:
 			DebugMenuVal.val_accept(host)
 			host.get_viewport().set_input_as_handled()
 			return
-		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
+		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 			if DebugMenuVal.val_cancel(host):
 				host.get_viewport().set_input_as_handled()
 				return
@@ -92,7 +94,7 @@ static func handle_input(host, event: InputEvent) -> void:
 		host._nudge_focus(-1)
 		host.get_viewport().set_input_as_handled()
 		return
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		if str(host.page) != "values":
 			host.page = "values"
 			host._rebuild()

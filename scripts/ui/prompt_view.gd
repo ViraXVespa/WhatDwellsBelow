@@ -117,6 +117,8 @@ static func merge_parts(extra: Array) -> Array:
 			continue
 		if action != "":
 			seen[action] = true
+		if bool(row.get("hide", false)):
+			continue
 		out.append(row)
 	if not seen.has("ui_accept"):
 		out.insert(0, {"action": "ui_accept", "verb": "Select", "gap": true})

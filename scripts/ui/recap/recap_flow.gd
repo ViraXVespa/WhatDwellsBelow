@@ -34,7 +34,7 @@ static func play(host: CanvasLayer, cond: String) -> void:
 		host.targets[id] = 0.0
 		host.gain_now[id] = 0.0
 	Rebuild.rebuild(host, cond)
-	PromptView.footer(host, [{"action": "ui_accept", "verb": "continue"}])
+	PromptView.footer(host, [{"action": "ui_accept", "verb": "continue"}, {"action": "ui_cancel", "hide": true}])
 	host.set_process(true)
 
 static func tick(host: CanvasLayer, delta: float) -> void:
