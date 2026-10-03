@@ -25,6 +25,9 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     scope = [s.replace("\\", "/").strip("/") for s in agent_log.split_list(args.scope)]
+    nope = [] if args.scope is DEFAULT_SCOPE else [s for s in scope if not (root / s).exists()]
+    if nope:
+        agent_log.fail(f"--scope {', '.join(nope)}: not a repo path (scope = path prefixes, example: --scope scripts tools)")
     _, out = repo_lib.run_git(root, "status", "--porcelain", "--untracked-files=all")
     rows, seen = [], set()
     for line in out.splitlines():

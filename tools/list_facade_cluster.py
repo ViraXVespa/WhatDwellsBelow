@@ -31,7 +31,7 @@ def main(argv: list[str] | None = None) -> int:
         body = [f"root=. folder={agent_log.rel(root, full.resolve())}", f"siblings={len(sibs)}", ""] + [f"{agent_log.rel(root, p)} bytes={p.stat().st_size}" for p in sibs]
         return agent_log.finish("facade-cluster", root, "\n".join(body), "INFO", args=args, siblings=len(sibs), total_bytes=sum(p.stat().st_size for p in sibs))
     if not full.is_file():
-        agent_log.fail(f"missing facade: {facade}")
+        agent_log.fail(f"missing facade: {facade} (give the repo-relative facade .gd path, example: scripts/app.gd)")
     full = full.resolve()
     outer = full.parent.parent / (full.parent.name + ".gd")
     if full.stem != full.parent.name and (full.parent.parent / full.parent.name).is_dir() and outer.is_file():

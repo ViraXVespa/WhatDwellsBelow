@@ -93,6 +93,8 @@ SMOKE: dict[str, list] = {
     "rekey_stills": [(["--dry-run"], _ERR)],
     "report_grok_sessions": [[]], "report_grok_week": [["--dry-run"]],
     "run_shot_flow": [["--list"]],
+    "make_sfx": [["--list"], ["--dry-run", "--prefix", "p2_"], ["--check", "--prefix", "p9_"]],
+    "move_script_cluster": [(["--stem", "zzz", "--from-dir", "scripts/zzz", "--to-dir", "scripts/yyy", "--dry-run"], _ERR)],
     "show_func": [(["--path", "scripts/graphics/mesh_commit.gd", "--name", "no_such_func"], _ERR)],
     "split_funcs": [["scripts/graphics/mesh_commit.gd", "--list"]],
     "summarize_scripts": [[]],

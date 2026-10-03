@@ -124,7 +124,7 @@ def _shown(path: Path) -> str:
 
 def read_text(path: Path) -> str:
     if not path.is_file():
-        raise SystemExit(f"FAIL  missing {path.as_posix()}")
+        raise SystemExit(f"FAIL  missing {_shown(path)} (this op edits an existing file; `doc_patch.py write` creates one)")
     return md.read_text(path)
 
 
@@ -561,6 +561,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.cmd == "next-label":
             label = next_label(root)
             print(f"next={label}")
+            used = sorted((p.stem for p in (root / "design" / "changelog").glob("*.md")), key=lambda s: [int(x) if x.isdigit() else 0 for x in s.split(".")])
+            if (root / "design" / "changelog" / f"{label}.md").is_file():  # a stacked branch may already own it
+                print(f"note: design/changelog/{label}.md exists (`changelog` appends to it); highest label on disk is {used[-1]}; pass --label for a free one")
             return agent_log.emit_result("INFO", next=label)
         elif args.cmd == "write":
             _write_cmd(root, args)

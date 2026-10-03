@@ -43,6 +43,9 @@ def main(argv: list[str] | None = None) -> int:
     root = agent_log.resolve_root(args)
     args.path = agent_log.split_list(args.path)
     paths = [Path(p) for p in args.path] if args.path else None
+    for p in args.path:
+        if not (root / p).exists() and not Path(p).exists():
+            agent_log.fail(f"--path {p}: no such file or folder (give repo-relative .gd paths or a scripts/ folder)")
     files = select(root, paths)
     over_bytes = int(args.over_kb * 1000) if args.over_kb > 0 else 0
 

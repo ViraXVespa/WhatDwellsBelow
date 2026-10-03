@@ -129,12 +129,20 @@ def _err(msg: str) -> None:
     _json_print({"status": "FAIL", "error": msg})
 
 
+def _cwd_rel(name: object) -> object:
+    """Path relative to the cwd when under it (errors print repo-relative paths)."""
+    try:
+        return Path(str(name)).resolve().relative_to(Path.cwd().resolve()).as_posix() if name else name
+    except ValueError:
+        return name
+
+
 def guarded(main, *args: object) -> int:
     """Run main(*args); a missing/unreadable path or a bare SystemExit("msg") becomes `error: ...` + exit 2, not a traceback."""
     try:
         return main(*args)
     except (FileNotFoundError, NotADirectoryError, PermissionError) as exc:
-        name = getattr(exc, "filename", None)
+        name = _cwd_rel(getattr(exc, "filename", None))
         why = "missing path" if isinstance(exc, (FileNotFoundError, NotADirectoryError)) else "no permission"
         _err(f"{why}: {name}" if name else str(exc))
         return 2
@@ -324,7 +332,7 @@ def run_writer(tool: str, desc: str, run, argv: list[str] | None = None, g: "dic
             try:
                 run(args) if add_args else run()
             except (FileNotFoundError, NotADirectoryError) as exc:
-                err = f"missing path: {getattr(exc, 'filename', None) or exc}"
+                err = f"missing path: {_cwd_rel(getattr(exc, 'filename', None)) or exc}"
             except SystemExit as exc:
                 if not isinstance(exc.code, str):
                     raise

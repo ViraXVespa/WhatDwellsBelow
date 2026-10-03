@@ -78,7 +78,7 @@ def collect_files(args: argparse.Namespace) -> list[Path]:
         from_dir = ROOT / from_dir
     files = list_cluster(from_dir, args.stem)
     if not files:
-        raise SystemExit(f"no cluster files for stem={args.stem} in {from_dir}")
+        raise SystemExit(f"no cluster files for stem={args.stem} in {rel(from_dir)}; check --stem/--from-dir (`--list-cluster FACADE` shows a facade and its helpers)")
     return files
 
 

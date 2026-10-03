@@ -9,6 +9,8 @@ Writes assets/audio/<name>.wav; a new file there is a Build access confirm (desi
 """
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import sys
 import tempfile
@@ -62,23 +64,29 @@ def main(argv: list[str] | None = None) -> int:
     out_dir = root / "assets" / "audio"
     if args.check:
         bad = []
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, contextlib.redirect_stdout(io.StringIO()):
             for c in cues:
                 p = Path(tmp) / f"{c['name']}.wav"
                 al.write_wav(p, render(c["graph"]), c["scale"])
                 real = out_dir / p.name
                 if not real.is_file() or real.read_bytes() != p.read_bytes():
                     bad.append(p.name)
-        for n in bad:
+        for n in bad[:8]:
             print(f"differs {n}")
+        if bad:
+            print(f"next: {len(bad)} cue(s) differ from assets/audio; if the spec change is intended run `make_sfx.py --prefix <p2_|p9_>` to rewrite, else revert tools/sfx-cues.json")
         return agent_log.emit_result("FAIL" if bad else "PASS", checked=len(cues), differ=len(bad))
-    for c in cues:
+    for i, c in enumerate(cues):
         path = out_dir / f"{c['name']}.wav"
-        if not args.dry_run:
-            al.write_wav(path, render(c["graph"]), c["scale"])
-        print("sfx", agent_log.rel(root, path) + (" (dry-run)" if args.dry_run else ""))
+        with contextlib.redirect_stdout(io.StringIO()):
+            if not args.dry_run:
+                al.write_wav(path, render(c["graph"]), c["scale"])
+        if i < 8:
+            print("sfx", agent_log.rel(root, path) + (" (dry-run)" if args.dry_run else ""))
+    if len(cues) > 8:
+        print(f"... +{len(cues) - 8} more cues")
     return agent_log.emit_result("PASS", written=0 if args.dry_run else len(cues), dir="assets/audio")
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

@@ -8,7 +8,7 @@ binary only when the pin is missing. Editor playtest is out of scope.
   python tools/bot_smokes.py --setup
   python tools/bot_smokes.py --phases 1,2,6
   python tools/bot_smokes.py --door hub | --job hub.guild   (phases from routes.yaml smokes)
-  python tools/bot_smokes.py --for scripts/world/player.gd   (which phases to run for a file; runs nothing)
+  python tools/bot_smokes.py --for scripts/world/player.gd   (which phases load a file; runs nothing)
 """
 from __future__ import annotations
 
@@ -123,24 +123,17 @@ def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool) ->
     return 1 if bad else 0
 
 
-def phases_for(root: Path, files: list[str]) -> tuple[list[str], list[str], list[int]]:
-    """(code-map systems, matched doors, phases) for repo files: code_map row -> routes.yaml door by shared name word."""
-    import code_map_lib as cm
-    import md_format_lib as md
-    from load_routes import load_routes, smoke_phases
-    rows = cm.parse_rows(md.read_text(root / "design" / "code-map.md"))
-    data = load_routes(root)
-    systems = sorted({r.system for f in files for r in rows if cm.matches(f, r.listed)})
-    words = {w for s in systems for w in re.split(r"[^a-z0-9]+", s.lower()) if w}
-    doors = sorted(d for d in (data.get("doors") or {}) if words & set(d.split("_")))
-    phases = sorted({n for d in doors for n in smoke_phases(data, door=d)})
-    return systems, doors, phases
+def phases_for(files: list[str]) -> tuple[list[str], list[int]]:
+    """(warnscan areas, smoke phases) that load these files: bot_warnscan_lib.changed_areas is the one source."""
+    from bot_warnscan_lib import changed_areas
+    areas = changed_areas(files)
+    return areas, sorted({int(a[1:]) for a in areas if re.fullmatch(r"p\d", a)})
 
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Bot headless phase smokes")
     p.add_argument("--for", dest="for_files", nargs="+", default=[], metavar="FILE",
-                   help="Repo file(s): print the code-map system, matching doors and the smoke phases to run, then exit (no Godot).")
+                   help="Repo file(s): print the warnscan areas and smoke phases that load them, then exit (no Godot; same source as bot_warnscan --changed).")
     p.add_argument("--doctor", action="store_true", help="Check the pinned Godot binary and print the setup state; run nothing.")
     p.add_argument("--setup", action="store_true", help="Download the official 4.7.2 Linux binary if the pin is missing, then exit.")
     p.add_argument("--phases", default="", help="Smoke phases, comma list (example 1,2,6).")
@@ -155,16 +148,16 @@ def main(argv: list[str] | None = None) -> int:
     ns = p.parse_args(argv)
     root = agent_log.resolve_root(ns)
     if ns.for_files:
-        systems, doors, phases = phases_for(root, [f.replace("\\", "/") for f in ns.for_files])
-        if not systems:
-            agent_log.fail(f"{', '.join(ns.for_files)} is in no code-map row; check the path (repo-relative) or run `code_map.py check`")
-        baseline = "1,2,6"
-        run = ",".join(map(str, phases)) or baseline
-        print(f"system={'; '.join(systems)}")
-        print(f"doors={','.join(doors) or 'none match'}" + ("" if phases else f" (no door maps to this system; BOT.md baseline phases {baseline})"))
+        files = [f.replace("\\", "/") for f in ns.for_files]
+        gone = [f for f in files if not (root / f).exists()]
+        if gone:
+            agent_log.fail(f"{', '.join(gone)}: no such file (give repo-relative paths, example: --for scripts/world/player.gd)")
+        areas, phases = phases_for(files)
+        run = ",".join(map(str, phases)) or "1,2,6"
+        print(f"areas={','.join(areas) or 'none'}" + ("" if phases else " (no phase loads it; BOT.md baseline 1,2,6)"))
         print(f"run: python3 tools/bot_smokes.py --phases {run}")
-        print(f"warn: python3 tools/bot_warnscan.py --areas {','.join('p' + x for x in run.split(','))},static")
-        return agent_log.emit_result("INFO", phases=run, doors=",".join(doors))
+        print(f"warn: python3 tools/bot_warnscan.py --areas {','.join(areas) or 'static'}   (or --changed)")
+        return agent_log.emit_result("INFO", phases=run, areas=",".join(areas))
     for tok in [t for t in ns.phases.replace(" ", "").split(",") if t]:
         if not tok.isdigit() or not 0 <= int(tok) <= 9:
             agent_log.fail(f"bad phase {tok!r} in --phases. Valid phases are 1-9 (comma list, example 1,2,6)")
