@@ -8,7 +8,8 @@ Modes:
 
 Scripted flows (open a menu, press pad buttons, shoot every page, assert state): --steps FILE
 (a tools/shot-flows/*.json; see design/shot-flows.md). Whole flows, diffs and publishing: run_shot_flow.py.
-Numbers live here, not in a prompt.
+Whole floor in one image: --full-map [--floor N --seed S --max-px 8192] sweeps the dungeon floor in overlapping play-camera
+tiles (flow op "sweep") and stitches them (needs Pillow). Numbers live here, not in a prompt.
 """
 from __future__ import annotations
 
@@ -162,6 +163,62 @@ def apply_flow_header(args: argparse.Namespace, header: dict, given: set[str]) -
             setattr(args, key, str(header[key]) if key in ("px", "pz") else type(getattr(args, key))(header[key]))
 
 
+def stitch_full_map(tiles_dir: Path, png: Path, max_px: int, keep: bool) -> dict:
+    """Stitch the sweep.json tiles into png. The camera never yaws, so a tile is the same picture shifted: exact integer offsets, no blending."""
+    from PIL import Image
+    import numpy as np
+    import shutil
+
+    Image.MAX_IMAGE_PIXELS = None
+    d = json.loads((tiles_dir / "sweep.json").read_text(encoding="utf-8"))
+    ppu, sp, tw, th, mx, my = d["ppu"], d["sinp"], d["tile_w"], d["tile_h"], d["crop_x"], d["crop_y"]
+    cw, ch = int(-(-d["w"] * ppu // 1)), int(-(-d["h"] * sp * ppu // 1))
+    f = 1
+    while max_px > 0 and max(cw, ch) // f > max_px:
+        f *= 2  # exact box average: every tile piece starts on a multiple of f
+    canvas = Image.new("RGB", (-(-cw // f), -(-ch // f)), (10, 10, 10))
+    place: dict[tuple[int, int], tuple[int, int, Path]] = {}
+    resid = 0.0
+    for t in d["tiles"]:
+        fx, fy = (t["px"] - d["x0"]) * ppu - t["ux"], (t["pz"] - d["z0"]) * sp * ppu - t["uy"]
+        resid = max(resid, abs(fx - round(fx)), abs(fy - round(fy)))
+        ox, oy = round(fx), round(fy)
+        place[(t["r"], t["c"])] = (ox, oy, tiles_dir / "tiles" / t["file"])
+        left, right = (0 if t["c"] == 0 else mx), (tw if t["c"] == d["cols"] - 1 else tw - mx)
+        top, bot = (0 if t["r"] == 0 else my), (th if t["r"] == d["rows"] - 1 else th - my)
+        with Image.open(tiles_dir / "tiles" / t["file"]) as im:
+            piece = im.crop((left, top, right, bot))
+            canvas.paste(piece.reduce(f) if f > 1 else piece, ((ox + left) // f, (oy + top) // f))
+    # Seam check: the same world pixels as seen from the two tiles either side of each cut (a 32 px band each side).
+    means, bad_px = [], 0
+    for (r, c), (ox, oy, fa) in place.items():
+        for dr, dc in ((0, 1), (1, 0)):
+            nb = place.get((r + dr, c + dc))
+            if nb is None:
+                continue
+            x0, y0, x1, y1 = max(ox, nb[0]), max(oy, nb[1]), min(ox, nb[0]) + tw, min(oy, nb[1]) + th
+            if dc:
+                x0, x1 = max(x0, ox + tw - mx - 32), min(x1, ox + tw - mx + 32)
+            else:
+                y0, y1 = max(y0, oy + th - my - 32), min(y1, oy + th - my + 32)
+            if x1 <= x0 or y1 <= y0:
+                continue
+            with Image.open(fa) as ia, Image.open(nb[2]) as ib:
+                pa = np.asarray(ia.convert("RGB").crop((x0 - ox, y0 - oy, x1 - ox, y1 - oy)), dtype=np.int16)
+                pb = np.asarray(ib.convert("RGB").crop((x0 - nb[0], y0 - nb[1], x1 - nb[0], y1 - nb[1])), dtype=np.int16)
+            diff = np.abs(pa - pb).max(axis=2)
+            means.append(float(diff.mean()))
+            bad_px += int((diff > 24).sum())
+    full = (cw, ch)
+    png.parent.mkdir(parents=True, exist_ok=True)
+    canvas.save(png, optimize=False, compress_level=6)
+    if not keep:
+        shutil.rmtree(tiles_dir, ignore_errors=True)
+    return {"tiles": len(d["tiles"]), "full": full, "out": canvas.size, "ppu": ppu, "reduce": f, "offset_resid": round(resid, 3),
+            "seam_pairs": len(means), "seam_mean_diff": round(sum(means) / max(1, len(means)), 3),
+            "seam_worst_pair": round(max(means, default=0.0), 3), "seam_pairs_over_4": sum(m > 4 for m in means), "seam_bad_px": bad_px}
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = agent_log.std_parser("Capture a play-camera postcard, or run a scripted shot flow (--steps).",
                              writes=True, json_out=True)
@@ -188,14 +245,38 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-pixels", action="store_true",
                    help="with --steps: headless run, steps and asserts only, no PNGs (works without a display)")
     p.add_argument("--fixed-fps", type=int, default=0, help="engine fixed frame delta (e.g. 60) so animation and AI repeat; 0 = real time. Flow key: fixed_fps.")
+    p.add_argument("--full-map", action="store_true", help="photograph the whole dungeon floor in overlapping tiles and stitch one PNG (seed 42 floor 1 unless --seed/--floor) at the real game scale (64 px per cell)")
+    p.add_argument("--max-px", type=int, default=8192, help="with --full-map: longest side of the output PNG, 0 = native size (about 27000 px wide on a 432-cell floor); reduced by exact 2x steps")
+    p.add_argument("--keep-tiles", action="store_true", help="with --full-map: keep the raw tiles and sweep.json next to the PNG")
     p.add_argument("--taskbar", type=int, default=0, help=argparse.SUPPRESS)
     return p
+
+
+def setup_full_map(args: argparse.Namespace, root: Path) -> None:
+    """--full-map: write the one-op sweep flow and point --steps, --frames-dir and --out at it."""
+    args.scene, args.hud, args.no_pixels = "dungeon", 0, False
+    args.zoom = 1.0  # the real game scale: lights depend on the distance to the player, so the kept centre of each tile is what play shows
+    args.fixed_fps = args.fixed_fps or 60
+    args.scale = 100
+    out_dir = _out_dir(root)
+    stem = f"fullmap-s{max(1, args.seed)}-f{max(1, args.floor)}"
+    if not args.out:
+        args.out = str(out_dir / (stem + ".png"))
+    tiles = Path(args.out).parent / (stem + "-tiles")
+    flow = {"name": "full-map", "scene": "dungeon", "seed": max(1, args.seed), "floor": max(1, args.floor), "zoom": args.zoom,
+            "hud": 0, "settle_ms": 0, "fixed_fps": args.fixed_fps, "steps": [{"op": "sweep"}]}
+    tiles.mkdir(parents=True, exist_ok=True)
+    (tiles / "full-map-flow.json").write_text(json.dumps(flow, indent=1), encoding="utf-8")
+    args.steps, args.frames_dir = str(tiles / "full-map-flow.json"), str(tiles)
+    args.timeout_sec = max(args.timeout_sec, 900)
 
 
 def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None) -> dict:
     """Run one worker boot and return the result dict (band, png, frames, flow, lines). Writes the summary."""
     given = given or set()
     poses = ""
+    if args.full_map:
+        setup_full_map(args, root)
     if args.steps:
         steps_path = Path(args.steps)
         if not steps_path.is_file():
@@ -238,8 +319,11 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
         agent_log.fail(str(exc))
     shot_hits = _shot_lines(out_dir)
     err_hits = _error_lines(out_dir)
-    nbytes, width, height = _png_info(png)
     shot_ok = any("ok=true" in line for line in shot_hits)
+    if args.full_map and shot_ok and (res["frames_dir"] / "sweep.json").is_file():
+        st = stitch_full_map(res["frames_dir"], png, args.max_px, args.keep_tiles)
+        shot_hits.append("SHOT: stitch " + " ".join(f"{k}={v}" for k, v in st.items()))
+    nbytes, width, height = _png_info(png)
     flow = {}
     flow_json = (res["frames_dir"] / "flow.json") if res["frames_dir"] else None
     if args.steps and flow_json is not None and flow_json.is_file():
