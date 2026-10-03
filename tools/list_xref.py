@@ -24,7 +24,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--pattern", "-Pattern", default="", help="Text to find (or pass it as the argument).")
     ap.add_argument("--path", "-Path", nargs="+", default=["scripts", "scenes", "tools", "design"], help="Files or dirs to search (default scripts scenes tools design).")
     ap.add_argument("--include", "-Include", default="*", help="Filename glob, e.g. *.gd")
-    ap.add_argument("--max-hits", "-MaxHits", type=int, default=30, help="Max hits per file (default 30).")
+    ap.add_argument("--max-hits", "-MaxHits", type=int, default=30, help="Max hits in total (default 30).")
     ap.add_argument("--max-files", "-MaxFiles", type=int, default=20, help="Max files listed (default 20).")
     ap.add_argument("--regex", "-Regex", action="store_true", help="Treat the pattern as a regular expression.")
     args = ap.parse_args(argv)
@@ -72,6 +72,11 @@ def main(argv: list[str] | None = None) -> int:
             f"maxHits={args.max_hits} maxFiles={args.max_files} scanned={scanned} files={len(files_hit)} hits={len(hits)} truncated={trunc}",
             ""] + hits
     echo = f"xref files={len(files_hit)} hits={len(hits)} scanned={scanned} truncated={trunc}"
+    echo += "".join("\n" + h for h in hits[:args.max_hits])
+    if trunc:
+        echo += "\nnext: more hits exist; narrow with --path/--include or raise --max-hits"
+    elif not hits:
+        echo += "\nnext: no match; try a shorter pattern or --regex (search is case-insensitive over scripts scenes tools design)"
     return agent_log.finish("xref", root, "\n".join(body), "INFO", args=args, echo=echo, files=len(files_hit),
                             hits=len(hits), scanned=scanned, truncated=trunc)
 

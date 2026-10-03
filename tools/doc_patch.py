@@ -139,6 +139,15 @@ def write_text(path: Path, text: str) -> None:
     print("  wrote %s (%d bytes)" % (_shown(path), path.stat().st_size))
 
 
+def _miss(where: str, old: str) -> str:
+    try:
+        where = Path(where).resolve().relative_to(Path.cwd()).as_posix()
+    except ValueError:
+        pass
+    return (f"patch miss in {where}: {old[:96]!r} is not in the file. Copy the exact text "
+            "(CRLF/BOM are handled); for a multi-line rewrite use `doc_patch.py replace-file`")
+
+
 def _variants(old: str) -> list[str]:
     return md.path_tick_variants(old)
 
@@ -150,7 +159,7 @@ def replace_once(text: str, old: str, new: str, where: str) -> str:
     if new in text:
         print(f"  skip {where} (already applied)")
         return text
-    raise SystemExit(f"FAIL  patch miss in {where}: {old[:96]!r}")
+    raise SystemExit(_miss(where, old))
 
 
 def replace_once_any(text: str, olds: list[str], new: str, where: str) -> str:
@@ -163,7 +172,7 @@ def replace_once_any(text: str, olds: list[str], new: str, where: str) -> str:
         for cand in _variants(old):
             if cand in text:
                 return text.replace(cand, new, 1)
-    raise SystemExit(f"FAIL  patch miss in {where}: {last[:96]!r}")
+    raise SystemExit(_miss(where, last))
 
 
 

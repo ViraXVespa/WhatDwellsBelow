@@ -16,10 +16,13 @@ import agent_log
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser("Length, newline, BOM, and indent stats without reading into chat.", json_out=True)
-    parser.add_argument("--path", "-Path", action="append", default=[], help="File or directory")
+    parser.add_argument("paths_pos", nargs="*", metavar="PATH", help="File or directory (same as --path)")
+    parser.add_argument("--path", "-Path", action="append", default=[], help="File or directory (repeatable)")
     parser.add_argument("--glob", "-Glob", default="", help="Only under a directory --path")
     parser.add_argument("--max", "-Max", type=int, default=40, help="Max files listed for a directory or glob (default 40).")
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    args.path = list(args.path) + list(args.paths_pos)
+    return args
 
 
 def probe(path: Path) -> dict[str, object]:

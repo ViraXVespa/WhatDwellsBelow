@@ -18,9 +18,18 @@ MAX_LINES = 80
 
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Extract one GDScript declaration.", json_out=True)
-    p.add_argument("--path", required=True, help="Repo-relative .gd path")
-    p.add_argument("--name", required=True, help="func / const / var name")
+    p.add_argument("pos", nargs="*", metavar="PATH NAME", help="Same as --path and --name")
+    p.add_argument("--path", default="", help="Repo-relative .gd path")
+    p.add_argument("--name", default="", help="func / const / var name")
     args = p.parse_args(argv)
+    if len(args.pos) > 2:
+        agent_log.fail("pass at most PATH NAME (example: show_func.py scripts/app.gd _ready)")
+    if args.pos and not args.path:
+        args.path = args.pos[0]
+    if len(args.pos) > 1 and not args.name:
+        args.name = args.pos[1]
+    if not (args.path and args.name):
+        agent_log.fail("pass PATH and NAME (example: show_func.py scripts/app.gd _ready)")
     root = agent_log.resolve_root(args)
     rel = args.path.replace("\\", "/").lstrip("/")
     src = root / rel

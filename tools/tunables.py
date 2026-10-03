@@ -52,8 +52,9 @@ def cmd_get(root: Path, args) -> int:
         print(f"error: no tunable row matches {args.key!r}; --key matches a name or alias substring in design/tunables*.md (try a shorter fragment)", file=sys.stderr)
     for hit in hits:
         lines += tl.format_hit(hit) + [""]
+    shown = [x for x in lines[4:] if x.strip()]  # the rows themselves, not only the summary file
     return agent_log.finish("tunable-row", root, "\n".join(lines), "PASS" if hits else "FAIL", args=args,
-                            echo=f"matches={len(hits)}", matches=len(hits))
+                            echo="\n".join(shown[:30] + ([f"... +{len(shown) - 30} more lines (summary file); use a longer --key"] if len(shown) > 30 else [])) if hits else f"matches={len(hits)}", matches=len(hits))
 
 
 def cmd_set(root: Path, args) -> int:
@@ -86,15 +87,20 @@ def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Read or patch design/tunables.md / tunables-world.md rows.", writes=True, json_out=True)
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("get", help="Print one tunables row.")
-    s.add_argument("--key", required=True, help="Tunable key or unique alias")
+    s.add_argument("key_pos", nargs="?", default="", metavar="KEY", help="Tunable key or unique alias (same as --key)")
+    s.add_argument("--key", default="", help="Tunable key or unique alias")
     s = sub.add_parser("set", help="Patch one Live cell.")
-    s.add_argument("--key", required=True, help="Tunable key or unique alias")
-    s.add_argument("--set", dest="value", required=True, help="New Live cell text")
+    s.add_argument("key_pos", nargs="?", default="", metavar="KEY", help="Tunable key or unique alias (same as --key)")
+    s.add_argument("--key", default="", help="Tunable key or unique alias")
+    s.add_argument("--set", "--value", dest="value", required=True, help="New Live cell text")
     for name in ("get", "set"):
         sub.choices[name].add_argument("--root", default=None, help="Repo root (default: auto).", dest="root_sub")
         sub.choices[name].add_argument("--json", dest="json_sub", action="store_true", help="Print one JSON object instead of text.")
     sub.choices["set"].add_argument("--dry-run", dest="dry_sub", action="store_true", help="Print what would change; write nothing.")
     args = ap.parse_args(argv)
+    args.key = args.key or args.key_pos
+    if not args.key:
+        agent_log.fail(f"tunables {args.cmd}: pass a KEY (example: tunables.py {args.cmd} move_speed)")
     args.root = getattr(args, "root_sub", None) or args.root
     args.json = args.json or getattr(args, "json_sub", False)
     args.dry_run = args.dry_run or getattr(args, "dry_sub", False)

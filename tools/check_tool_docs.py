@@ -128,6 +128,8 @@ def main(argv: list[str] | None = None) -> int:
             if '"""' not in t[:600] and "argparse" not in t:
                 bad.append(f"HELP    {n}: allowlisted .py without docstring or argparse")
     head = f"tool-docs: tools={len(files)} rows={len(rows)} allowlisted={len(allow)} problems={len(bad)}"
+    if bad:
+        bad.append("next: MISSING = add a row to the design/tools*.md catalog (new tool: tools.md rule 5); ALLOWED/ALLOW = fix tools/bot_allow.txt or the A column; then rerun")
     return agent_log.finish("tool-docs", root, "\n".join(bad + [head]), "FAIL" if bad else "PASS", args=args,
                             legacy=False, tools=len(files), rows=len(rows), problems=len(bad))
 

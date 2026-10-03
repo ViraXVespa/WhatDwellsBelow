@@ -944,6 +944,7 @@ def main() -> int:
     n = len(files)
     if fails:
         body = f"FAIL  {len(fails)} load-graph issue(s) across {n} files\n" + "\n".join(f"  - {line}" for line in fails)
+        body += "\nnext: fix the first issue (a doc named in it, or design/routes.yaml); rules in design/load-graph.md"
     else:
         body = f"PASS  {n} files, routes.yaml ok"
     return agent_log.finish(
