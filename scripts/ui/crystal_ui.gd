@@ -148,11 +148,12 @@ func _focus() -> void:
 		return
 	focus_btn.grab_focus()
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if page == "local" and Util.zoom_event(event):
 		_cycle_zoom()
 		get_viewport().set_input_as_handled()
-		return
+
+func _unhandled_input(event: InputEvent) -> void:
 	if page == "local" or page == "floors" or page == "band":
 		var td := MenuPad.tab_delta(event)
 		if td != 0:

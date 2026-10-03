@@ -4,6 +4,21 @@ const InputPad := preload("res://scripts/input/pad.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
+static var _axis_down: Dictionary = {}
+static var _axis_key: Array = []
+static var _axis_res := false
+
+static func _axis_edge(m: InputEventJoypadMotion) -> bool:
+	var key: Array = [Engine.get_process_frames(), m.device, m.axis, m.axis_value]
+	if key == _axis_key:
+		return _axis_res
+	var id: int = m.device * 64 + m.axis * 2 + (1 if m.axis_value > 0.0 else 0)
+	var down: bool = absf(m.axis_value) >= 0.5
+	_axis_res = down and not bool(_axis_down.get(id, false))
+	_axis_down[id] = down
+	_axis_key = key
+	return _axis_res
+
 static func pressed(event: InputEvent) -> bool:
 	InputPad.note_event(event)
 	if Prompts.dirty():
@@ -14,6 +29,8 @@ static func pressed(event: InputEvent) -> bool:
 		return event.pressed and not event.echo
 	if event is InputEventJoypadButton:
 		return event.pressed
+	if event is InputEventJoypadMotion:
+		return _axis_edge(event as InputEventJoypadMotion)
 	if event.is_pressed():
 		return true
 	return false
