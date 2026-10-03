@@ -15,6 +15,8 @@ func _ready() -> void:
 	player.finished.connect(_on_finished)
 	_apply_vol()
 
+const LT := preload("res://scripts/debug/load_timing.gd")
+
 func play_dungeon() -> void:
 	kind = "dungeon"
 	passed_intro = false
@@ -24,11 +26,13 @@ func play_dungeon() -> void:
 	if not ResourceLoader.exists(path):
 		return
 	var s: Resource = load(path)
+	LT.dmark("music_load")
 	if s is AudioStreamMP3:
 		(s as AudioStreamMP3).loop = false
 	player.stream = s
 	_apply_vol()
 	player.play(0.0)
+	LT.dmark("music_play")
 
 func play_hub() -> void:
 	kind = "hub"

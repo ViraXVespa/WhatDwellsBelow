@@ -141,6 +141,7 @@ static func dungeon_load_timing_async(host: Node) -> void:
 			break
 		await host.get_tree().process_frame
 	LoadTiming.dnote("hub_wait_frames", str(hub_guard))
+	LoadTiming.dmark("hub_ready")
 	AppRunS.ensure_dungeon_packed(host)
 	LoadTiming.dmark("dungeon_pack")
 	LoadTiming.dmark("enter_begin")

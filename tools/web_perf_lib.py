@@ -7,7 +7,7 @@ from pathlib import Path
 
 # Runs before the page: per-phase rAF frame times, wasm compile timing, 500 ms JS heap / wasm memory (engine.rtenv.HEAPU8) sampler.
 INIT = """
-window.__wp={ph:'_boot',f:{},t:0,comp:[],cerr:{},cmsg:[],heap:0,wasm:0,gone:0,seen:0,errs:0,t0:performance.now()};
+window.__wp={ph:'_boot',f:{},t:0,comp:[],cerr:{},cmsg:[],load:[],heap:0,wasm:0,gone:0,seen:0,errs:0,t0:performance.now()};
 (function(){var W=window.__wp;
 ['instantiateStreaming','compileStreaming','instantiate','compile'].forEach(function(k){var o=WebAssembly[k];
 if(!o)return;WebAssembly[k]=function(){var s=performance.now();return o.apply(WebAssembly,arguments).then(function(r){
@@ -19,7 +19,7 @@ setInterval(samp,500);
 if(W.seen&&!b&&!W.gone){W.gone=performance.now()}
 if(W.t&&W.gone){(W.f[W.ph]=W.f[W.ph]||[]).push(t-W.t)}W.t=t;requestAnimationFrame(l)})(0);
 window.addEventListener('error',function(){W.errs++});
-var ce=console.error;console.error=function(){W.cerr[W.ph]=(W.cerr[W.ph]||0)+1;if(W.cmsg.length<4&&W.ph[0]!='_')W.cmsg.push(W.ph+': '+Array.prototype.join.call(arguments,' ').slice(0,140));return ce.apply(console,arguments)};window.__wpSamp=samp})();
+var ce=console.error;console.error=function(){var a0=arguments[0];if(typeof a0=='string'&&a0.indexOf('LOAD: ')==0){samp();W.load.push(a0.slice(6)+' wasm='+Math.round(W.wasm/1048576));return}W.cerr[W.ph]=(W.cerr[W.ph]||0)+1;if(W.cmsg.length<4&&W.ph[0]!='_')W.cmsg.push(W.ph+': '+Array.prototype.join.call(arguments,' ').slice(0,140));return ce.apply(console,arguments)};window.__wpSamp=samp})();
 """
 PLAY = ("stuck_t", "seed", "floor", "end_cond", "duration", "kills", "dmg_dealt", "dmg_taken", "crits", "combat_t", "near_death")
 READY = "!!window.__wp.gone&&!!document.getElementById('canvas')"
@@ -78,6 +78,16 @@ def run_flow(page, steps: list[dict], out: Path, tag: str) -> tuple[dict, dict]:
     return shots, marks
 
 
+def _load_marks(lines: list[str]) -> list[list]:
+    """`LOAD: mark=ID t=T dt=D vram=V` lines the engine prints under ?wdb-load-timing-smoke (hub) or ?wdb-dungeon-load-timing-smoke -> [id, t, dt, vram, wasm_mb]."""
+    out = []
+    for ln in lines:
+        kv = dict(x.split("=", 1) for x in ln.split() if "=" in x)
+        if "mark" in kv:
+            out.append([kv["mark"], int(kv.get("t", 0)), int(kv.get("dt", 0)), int(kv.get("vram", 0)), int(kv.get("wasm", 0))])
+    return out
+
+
 def _stats(fs: list[float], long_ms: float) -> dict:
     fs = sorted(fs) or [0.0]
     n = len(fs)
@@ -128,6 +138,6 @@ def measure(url: str, chrome: str, steps: list[dict], long_ms: float, timeout_s:
            **_stats(meas, long_ms), "heap_mb": round(max(w["heap"], m.get("JSHeapUsedSize", 0)) / 1048576, 1),
            "wasm_mem_mb": round(w["wasm"] / 1048576, 1), "dom_nodes": int(m.get("Nodes", 0)),
            "transfer_mb": round(sum(b for _, b, _, _ in res) / 1048576, 2), "page_errors": len(errs) + w["errs"],
-           "phases": ph, "marks": marks, "console_msgs": w["cmsg"], "console_errors": {k: v for k, v in w["cerr"].items() if not k.startswith("_")}, "play": {k: play[k] for k in PLAY if k in play} if play else {}, "shots": shots,
+           "phases": ph, "marks": marks, "load_marks": _load_marks(w["load"]), "console_msgs": w["cmsg"], "console_errors": {k: v for k, v in w["cerr"].items() if not k.startswith("_")}, "play": {k: play[k] for k in PLAY if k in play} if play else {}, "shots": shots,
            "assets": sorted(({"file": n, "kb": round(b / 1024)} for n, b, _, _ in res if b > 262144), key=lambda a: -a["kb"])}
     return rep

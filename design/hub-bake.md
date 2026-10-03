@@ -9,6 +9,7 @@ The hub ships one baked light RT. Offline bake quality is the look lock. Runtime
 
 ## Lock
 - Shipped atlas: `res://assets/baked/hub_light.png` from `LightRt.save_hub_bake`.
+- Exports (web, desktop) cannot read the png off disk: `_try_hub_baked` finds no file, so `prepare_hub` computes the yard at runtime (`_hub_finish_yard`: day gradient, cast skirts, blur). That runtime look differs from the baked atlas (about half the bytes, max 144 apart) and is what the web build shows. Its helpers (`hub_bake` `_paint_flat`, `hub_cast` swept-rect loops, `hub_shadow` `_blur_hub`) are speed-tuned and must stay byte-identical to the plain per-pixel form (2026-10 pass: 3.2 s to 0.4 s).
 - Shipped atlas is the png only. `scenes/camp.tscn` must not embed a second copy.
 - Prove bake: `bake_camp: rt=` at least `1088x1024`, `sub=16`, `shadow_px` not 0 (`run_bake_camp.py` fails any bake with 0, headless or not; the camp node must be in the tree or the projection reads no transforms). The tool picks a display itself (`shot-tool.md` Display). `shadow_px` not 0 is a pipeline check, not a look pass.
 - Prove shot: `python3 tools/run_shots.py --mode web --scene camp --hud 0 --zoom 0.69`. The runner stitches the `tools/shot-recipes.json` poses into one paste. `_arm_capture` must call `_apply_pose` again so settle cannot keep the play crop.

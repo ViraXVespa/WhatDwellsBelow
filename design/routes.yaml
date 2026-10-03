@@ -366,7 +366,7 @@ shot_gaps:
 
 # Web build performance (tools/web_perf.py, headless Chrome on the exported site): Build prove, advisory only, never a gate.
 web_perf:
-  flows: "title-idle,camp-walk,camp-pause,camp-shop,dungeon-walk,dungeon-fight"
+  flows: "title-idle,camp-idle,camp-walk,camp-pause,camp-shop,dungeon-walk,dungeon-fight,hub-load,dungeon-load"
   baseline: tools/web-perf-baseline.json
   gate: advisory
   # door -> flows to run after a fresh export for a slice in that door (python3 tools/web_perf.py --flow A,B --baseline <baseline>)
@@ -376,6 +376,8 @@ web_perf:
     graphics: "camp-walk,dungeon-walk,dungeon-fight"
     player: "camp-walk,dungeon-walk,dungeon-fight"
     interactables: "camp-shop,dungeon-walk"
+    hub: "hub-load,camp-walk"
+    dungeon: "dungeon-load,dungeon-walk"
 
 conflicts_with:
   inventory:

@@ -55,7 +55,9 @@ static func go_dungeon(host: Node) -> void:
 		Engine.time_scale = 1.0
 	if host.music and host.music.has_method("play_dungeon") and str(host.music.get("kind")) != "dungeon":
 		host.music.play_dungeon()
+	App.AppFlow.LoadTiming.dmark("dungeon_music")
 	var packed: PackedScene = ensure_dungeon_packed(host)
+	App.AppFlow.LoadTiming.dmark("dungeon_packed")
 	if packed != null:
 		host.get_tree().call_deferred("change_scene_to_packed", packed)
 	else:

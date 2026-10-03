@@ -56,6 +56,9 @@ def median(runs: list[dict]) -> dict:
     for k in SCALAR:
         rep[k] = round(statistics.median(r[k] for r in runs), 2)
     rep["runs"] = len(runs)
+    if len({len(r.get("load_marks", [])) for r in runs}) == 1:  # engine load marks: median of each mark across the runs
+        rep["load_marks"] = [[m[0]] + [int(statistics.median(r["load_marks"][i][j] for r in runs)) for j in range(1, 5)]
+                             for i, m in enumerate(runs[0].get("load_marks", []))]
     rep["invalid"] = sorted({x for r in runs for x in r.get("invalid", [])})
     if any(r["play"] for r in runs):
         rep["play_runs"] = [r["play"] for r in runs]  # per-run playtester telemetry: what differs between runs
@@ -177,6 +180,7 @@ def main(argv: list[str] | None = None) -> int:
         lines.append("flow %s" % n)
         lines += ["  %s=%s" % (k, r[k]) for k in SCALAR]
         lines += ["  mark %s=%s" % kv for kv in r["marks"].items()]
+        lines += ["  load %s t=%d dt=%d vram=%d wasm=%d" % tuple(m) for m in r.get("load_marks", [])]
         lines += ["  play %s" % json.dumps(p, sort_keys=True) for p in r.get("play_runs", [])]
         lines += ["  phase %s %s" % (k, " ".join("%s=%s" % (a, b) for a, b in v.items())) for k, v in r["phases"].items()]
         lines += ["  big_asset %(file)s %(kb)s KB" % a for a in r["assets"][:4]]
@@ -184,7 +188,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.save_baseline and r["invalid"]:
             notes.append("NOTE flow %s NOT saved to the baseline (INVALID run)" % n)
         if args.baseline:
-            notes += diff(r, base["flows"][n], args.max_worse_pct) if n in base["flows"] else ["NOTE no baseline for flow %s" % n]
+            if flows[n].get("marks_only"):
+                notes.append("NOTE flow %s is marks only (load lines, no frame stats): not diffed" % n)
+            else:
+                notes += diff(r, base["flows"][n], args.max_worse_pct) if n in base["flows"] else ["NOTE no baseline for flow %s" % n]
         lines += ["  " + x for x in notes]
         flags += sum(1 for x in notes if x.startswith(("WORSE", "STUCK", "INVALID")))
     status = "FAIL" if flags and args.strict else ("INFO" if flags else "PASS")
