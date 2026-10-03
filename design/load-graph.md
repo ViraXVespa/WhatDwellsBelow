@@ -10,6 +10,8 @@ Never open `notes/`.
 
 AGENTS.md
     web   -> design/web-session.md -> protocol.md and constraints.md
+            -> phase pages only at their phase: discuss (2), plan (3), emit (4), test (5)
+            -> constraints-demo.md only before calling the build complete
             -> default brainstorm after boot; directed-goal only when the User asks
             -> present-User picture-read uncapped in design/ and the live thread tree
             -> docs/routing may open this file and the topic index; write stays one door
@@ -58,7 +60,7 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 
 ## 10/10 checks
 
-1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints.
+1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints, and each boot file stays under its `boot_bytes` budget in `routes.yaml` (the checker fails above it). Lower a budget after a trim; raise one only on a User go.
 2. Bot boot is BOT.md + one Job sibling (the agents file only if Cursor already loaded it).
 3. No mutual See also.
 4. One job phrase belongs to one door.

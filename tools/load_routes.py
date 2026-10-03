@@ -313,6 +313,18 @@ def boot_max(data: dict[str, Any]) -> dict[str, list[str]]:
     return _str_lists(data, "boot_max")
 
 
+def boot_bytes(data: dict[str, Any]) -> dict[str, int]:
+    """routes.yaml boot_bytes: {boot path: max on-disk bytes}; non-integer values are dropped."""
+    raw = data.get("boot_bytes") or {}
+    out: dict[str, int] = {}
+    for k, val in (raw.items() if isinstance(raw, dict) else []):
+        try:
+            out[str(k)] = int(str(val))
+        except ValueError:
+            continue
+    return out
+
+
 def fetch_ban(data: dict[str, Any]) -> dict[str, list[str]]:
     return _str_lists(data, "fetch_ban")
 

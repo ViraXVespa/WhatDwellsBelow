@@ -54,9 +54,30 @@ gates:
   tunables_world:
     file: design/tunables-world.md
     when: world_economy_or_ui_number_change
+  web_discuss:
+    file: design/web-discuss.md
+    when: web_phase_2_discuss
+  web_plan:
+    file: design/web-plan.md
+    when: web_phase_3_plan
   web_emit:
     file: design/web-emit.md
     when: web_phase_4_emit
+  web_test:
+    file: design/web-test.md
+    when: web_phase_5_test
+  constraints_demo:
+    file: design/constraints-demo.md
+    when: calling_build_complete
+  inventory_forge:
+    file: design/inventory-forge.md
+    when: anvil_forge_flow
+  audio_sfx:
+    file: design/audio-sfx.md
+    when: wiring_or_generating_sfx_cue
+  art_attack_log:
+    file: design/art-attack-keyframes-log.md
+    when: attack_keyframe_roll_history
   versioning:
     file: design/versioning.md
     when: named_pin_or_archive
@@ -399,6 +420,16 @@ boot_max:
   bot:
     - AGENTS.md
     - BOT.md
+
+# Boot file byte budgets: current size + ~5%, rounded up to 50. check_load_graph.py fails a boot_max file above its cap.
+# Lower after a trim; raise only on a User go.
+boot_bytes:
+  AGENTS.md: 2500
+  BOT.md: 7300
+  design/web-session.md: 5750
+  design/protocol.md: 2950
+  design/constraints.md: 2650
+  design/grok-build.md: 6600
 
 fetch_ban:
   design/web-session.md:
