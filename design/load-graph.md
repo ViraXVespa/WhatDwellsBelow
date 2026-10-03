@@ -24,8 +24,8 @@ AGENTS.md
 Then, only if the User named work:
     one topic door -> one Job sibling (if that door has a Job table)
     graphics jobs are env, ground, volume, buffer, actor (not a boot path)
-    grid carve / hall segments / angled pieces -> dungeon then gen
-    gen publishes a cleaned 1 m maze, hall runs, and rare angled packets; stream instances those runs; volume skins provided runs only; buffer occupancy reads the cleaned grid plus piece hulls and mounts on interior faces; outline bake is the gen job
+    grid carve / hall segments -> dungeon then gen
+    gen publishes a cleaned 1 m maze, and hall runs; stream instances those runs; volume skins provided runs only; buffer occupancy reads the cleaned grid and mounts on interior faces; outline bake is the gen job
     (second door only when the User names the owner; conflicts_with is a load ban)
     and one design/code-map.md system row when live files are needed
     and design/tunables.md iff a number changes

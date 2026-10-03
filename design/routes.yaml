@@ -295,7 +295,7 @@ job_read_when:
   hub.guild: "receptionist bust, notice errands, welcome cloth"
   hub.yard: "striking dummy, Label3D priorities, post-rail fence, hopeful ambience, warmup overlay"
   hub.bake: "baked light RT, gable lids, contact puddles, HUB_SUB"
-  dungeon.gen: "maze carve, hall segments, size rebalance ledger, accidental jogs, angled halls, deadend termini, unused stone, hug clearance, outline spans"
+  dungeon.gen: "maze carve, hall segments, size rebalance ledger, accidental jogs, deadend termini, unused stone, hug clearance, outline spans"
   dungeon.gates: "PREPARE plaque, extraction clerks, stair hold, reveal disk"
   dungeon.crystals: "transport decades, warp silence, spur length"
   dungeon.stream: "RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo, clip-free chunk instance"

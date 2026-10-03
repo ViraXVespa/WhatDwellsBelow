@@ -39,14 +39,6 @@ Same table shape and rules as the tunables door; `tools/tunables.py get|set|add 
 | Crystal CL band | 2 | **2** | Walk-level CL per placement band |
 | Crystal dead-end sep | 32 | **32** | Minimum Manhattan from spawn |
 | Crystal dead-end length | 28 | **28** | Spur walk to nearest multi-exit room |
-| Outline fine size (`outline_fine_m`) | 0.25 m | **0.25** | Piece-bake resolution only |
-| Outline fillet fraction (`outline_fillet_frac`) | unused | **unused** | Wear is shader-side |
-| Outline jag fraction (`outline_jag_frac`) | unused | **unused** | Wear is shader-side |
-| Angled corridors max (`angled_corridor_max`) | 4 | **4** | First-class off-axis halls per floor |
-| Corner chords max (`corner_chord_max`) | 8 | **8** | Short turn cuts per floor |
-| Angled degrees (`angled_deg`) | 27 / 33 / 45 | **27 / 33 / 45** | Snap targets |
-| Angled snap (`angled_snap_deg`) | 6 | **6** | Degrees off target before the link stays cardinal |
-| Angled vs dogleg (`angled_vs_dogleg_min`) | 12 | **12** | Extra cardinal tiles before angled wins |
 
 ## Enemies and combat level
 
@@ -78,7 +70,6 @@ Same table shape and rules as the tunables door; `tools/tunables.py get|set|add 
 | `enemy_cl_def` / `enemy_cl_gear_def` | 1.6 / 1.2 |
 | `cl_dealt_up` / `cl_dealt_down` | **1.03 / 0.97** |
 | `cl_received_up` / `cl_received_down` | **0.97 / 1.03** |
-| `cl_xp_up` / `cl_xp_down` | **1.04 / 0.97** |
 | `cl_style_weight` | 0.5 |
 | `xp_per_kill` | **22** |
 | `xp_kill_hp` / `xp_kill_def` | **11.0 / 11.0** |
@@ -103,9 +94,9 @@ Roster HP: `enemies.gd`. CL 17 budget and rank multipliers: combat. Walk vs crys
 
 ## Anvil / affixes
 
-Fallbacks in `progress_forge.gd` / `gear_roll.gd` until these keys exist on `App.bal`. Root is no forge material.
+Live defaults are in `balance.gd` (single source). Code fallbacks in `forge_act.gd` / `gear_roll.gd` only apply when `App.bal` is missing and mirror these. Root is no forge material.
 
-| Key | Fallback | Role |
+| Key | Default | Role |
 |-----|----------|------|
 | `forge_gold` | 18 | Base gold |
 | `forge_gold_per_lv` | 3 | Extra gold per item level above 1 |
@@ -121,7 +112,7 @@ Fallbacks in `progress_forge.gd` / `gear_roll.gd` until these keys exist on `App
 | `forge_time_step` | 1.15 | `base * step^(ilvl - smith)` |
 | `xp_smith` | 12 | Permanent smith XP on a successful hold write |
 | `affix_flat_base` | 2.0 | Flat affix base before level |
-| `affix_flat_per_lv` | 0.65 | Flat per item level |
+| `affix_flat_per_lv` | 0.35 | Flat per item level |
 | `affix_pct_per_lv` | 0.004 | Percent affix per item level (plus 0.02 floor) |
 
 Roll rules and the holds cap: inventory (gear job).

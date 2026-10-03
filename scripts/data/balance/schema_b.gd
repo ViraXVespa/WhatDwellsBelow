@@ -38,7 +38,6 @@ static func rows() -> Array:
 		["potion_heal", 10.0, 400.0, 5.0],
 		["forge_gold", 1.0, 80.0, 1.0],
 		["forge_ore", 1.0, 20.0, 1.0],
-		["forge_root", 0.0, 10.0, 1.0],
 		["forge_time", 0.2, 8.0, 0.1],
 		["forge_gold_per_lv", 0.0, 20.0, 0.5],
 		["forge_ore_per_lv", 0.0, 10.0, 0.5],
