@@ -26,7 +26,7 @@ Rules, CLI contract, surface key: `tools.md`. Runner habits: `pc-offload.md`. Su
 | `list_xref.py` | Capped text search (case-insensitive). Summary: `xref`. | D | `--help` | N |
 | `list_scenes.py` | `.tscn` nodes and scripts without dumping scenes. Summary: `scenes`. | D | `--help` | N |
 | `list_facade_cluster.py` | A facade + its stem-folder helpers by bytes. Summary: `facade-cluster`. | D | `--help` | N |
-| `start_build_slice.py` | Resolve a route; print the `grok --worktree=NAME --ref REF [-r ID --fork-session]` line (default ref the week branch `grok-build-w{N}`; none and no `--ref`: fails, ask the User), job card, phases, merge-back; saves the gather session id for retries. `--selftest`. Summary: `slice-boot`. | D | `--help` | N |
+| `start_build_slice.py` | Resolve a route; print the grok commands that open the worktree (`grok worktree create NAME --ref REF`, then `grok --cwd PATH -r ID --fork-session`; without a gather session a fresh `grok --worktree=NAME --ref REF`) (default ref the week branch `grok-build-w{N}`; none and no `--ref`: fails, ask the User), job card, phases, merge-back; saves the gather session id for retries. `--selftest`. Summary: `slice-boot`. | D | `--help` | N |
 | `week_start.py` | Week start from main: seed `epoch.N.0`, park changelogs, branch `grok-build-w{N}` + seed commit, `grok worktree gc`, locks, logs. Pins only a missing closing-week row (catch-up). **Human-only (QUARANTINE).** | D | `--help` | N |
 
 ### Session reports (User)

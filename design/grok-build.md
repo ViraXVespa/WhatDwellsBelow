@@ -22,7 +22,7 @@ New feature flow (in order; chain the steps and report at the end):
 1. Owner: `python tools/list_route.py --door <door>`. No door or doc owns it (or it needs a second door) = a new or undocumented system: plan it (door, doc name, save keys, entry events, smokes) and ask every open question in one batch (Design: Vira decides); wait.
 2. Design doc first: write or extend the owning topic via `tools/doc_patch.py` (what, where it lives, save keys, entry events), then implement.
 3. Prove: the smoke phases mapped to the door (`routes.yaml` `smokes`, printed by `start_build_slice.py`) plus any assert or phase this feature needs (update or add: `build-job-cycle.md`). Pictures and UI-state proof: `shot-flows.md` (scripted flows via `run_shot_flow.py`, `routes.yaml` `shot_flows` printed by `start_build_slice.py`; `check_shot_gaps.py --changed` for new UI states, advisory: it prints, never fails; published frames go to `_out/shots/<flow>/` and Build places any asset copy itself, tooling never writes under `assets/`; extend the tool when it cannot stage the state).
-4. Ship notes: `code_map.py patch` for touched live scripts, `tunables.md` for any number, `check_load_graph.py` when routes or docs moved. Build writes no changelog files (notes go in the commit message; the week-close `0.N.0.md` is a web session's: `versioning.md`). Then merge back (below) and report with rough edges.
+4. Ship notes: `code_map.py patch` for touched live scripts, `tunables.md` for any number, `check_load_graph.py` when routes or docs moved. Build writes no changelog files (notes go in the commit message; the week-close `0.N.0.md` is a web session's: `versioning.md`). Then merge back (below); report rough edges.
 
 ## Read
 
@@ -32,7 +32,7 @@ Git inventory (not gather): `tools/list_changed.py`. Search: `tools/list_xref.py
 
 ## Work
 
-First message names the area. `python tools/start_build_slice.py --door <door>` (or `--job` / `--area`); it prints the door/job card (gates one line; open one only when its `when` matches), smoke phases, shot flows and the FORK line. `--area` has no route: name a door or job for smokes. Worktrees come from the week branch `grok-build-w{N}` (`--ref` overrides), never main. No week branch and no `--ref`: the tool fails with no FORK line; ask the User (question prompt) whether to start a new week (`python tools/week_start.py`). The gather session id (`--session` / `$GROK_SESSION_ID`) is saved; retries return to it; without one START warns. Change only in the worktree. Web build load/frame/heap checks are advisory: `tools/web_perf.py` on an exported site (`run_shots.py --mode web` is for web sessions, not Build).
+First message names the area. `python tools/start_build_slice.py --door <door>` (or `--job` / `--area`); it prints the door/job card (gates one line; open one only when its `when` matches), smoke phases, shot flows and the FORK line. `--area` has no route: name a door or job for smokes. Worktrees come from the week branch `grok-build-w{N}` (`--ref` overrides), never main. No week branch and no `--ref`: the tool fails with no FORK line; ask the User (question prompt) whether to start a new week (`python tools/week_start.py`). The gather session id (`--session` / `$GROK_SESSION_ID`) is saved; retries return to it; without one START warns. Change only in the worktree. Web build load/frame/heap checks are advisory: `tools/web_perf.py` on an exported site (`run_shots.py --mode web` is Web-only).
 
 Access (permission, not design): if a task needs something outside Build's normal reach (a new asset location, an external tool or network, files outside the allowed set), show the User a one-line confirm first (skipped under always-allow).
 
@@ -41,7 +41,7 @@ Just do: a User-named script rename/move (`move_script_cluster.py --dry-run`, th
 ## Red prove, merge-back
 
 Red prove: one diagnosis and one fix per retry (`tools.md` rule 10). The prove tool prints a fork of the gather session into this worktree (`grok --cwd PATH -r ID --fork-session`): gather context kept, read `git diff grok-build-w{N}...HEAD` (`build-job-cycle.md`).
-Green prove: commit in the worktree (HEAD is detached), then `git merge --no-ff <commit>` in the checkout holding `grok-build-w{N}` (never main), short note in the message; resolve conflicts yourself. A change the User would check by hand (balance, audio, visuals / art, controls) needs a question prompt on whether the playtest looks good, and approval, before the merge. Refactors, tools, docs and tests merge on green.
+Green prove: commit in the worktree (HEAD is detached), then `git merge --no-ff <commit>` in the checkout holding `grok-build-w{N}` (never main: main stays untouched during Build work), short note in the message; resolve conflicts. A change the User would check by hand (balance, audio, visuals / art, controls) needs a question prompt on whether the playtest looks good, and approval, before the merge. Refactors, tools, docs, tests: merge on green.
 
 ## Other roles in this instance
 

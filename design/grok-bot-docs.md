@@ -23,7 +23,7 @@ Do not concatenate all siblings into context. Do not open the staged reuse brief
 
 1. Inventory: `python tools/list_oversize_docs.py` (skips `design/changelog/`). Rank over ~12KB, then over ~8KB. Show worklist.
 2. Split named first. Move existing prose. Fix links and README index rows. Update `design/code-map.md` only if a script path in a row must stay accurate. The Job table must cover every former top-level `##` cluster (or route to an existing sibling topic). Live snapshots travel with the matching sibling, not the door. No `See also` fields (load-graph bans them). Grep for stale "read the whole of X" wording; point at the Job table.
-3. One `design/changelog/{label}.md` for the PR.
+3. One `design/changelog/{label}.md` for the PR (always; `versioning-log.md` rule).
 4. `python tools/check_tool_docs.py --stale-refs --narration` (dead paths and identifiers fail; narration lines are advisory: rewrite in present tense or delete). Prove: `BOT.md`.
 
 ## Signal-to-noise sweep

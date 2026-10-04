@@ -27,13 +27,13 @@ Plain text, no code fence when emitted. Body shape:
 | Web Phase 4 emit | This file’s **body shape** only. Writes **one** new `design/changelog/{label}.md`. `{label}` is baked `version.json` `label` with patch + 1 (ignore stamp commits). Do not read older changelog files. Do not write that number back into this file. Do not emit `changelog.json`. First heading `## {label}`, never `# {label}`. |
 | Grok Build mid-week slice / catch-up | Nothing under `design/changelog/`. Git + User-named work. |
 | Grok Build named pin / revert, or User asks what shipped | This file’s body shape. Name next work only if the User asked. Still not every `0.N.*` file. |
-| Grok Bot | Reads baked `version.json` only to name `{label}` (patch + 1). Writes **one** new `design/changelog/{label}.md` for every PR (docs/tools-only included). First heading `## {label}`, never `# {label}`. Does not hand-edit `changelog.json`. Optional sweep notes go in `_logs/` only. |
+| Grok Bot | Reads baked `version.json` only to name `{label}` (patch + 1). Writes **one** new `design/changelog/{label}.md` for every PR (rule below). First heading `## {label}`, never `# {label}`. Does not hand-edit `changelog.json`. Optional sweep notes go in `_logs/` only. |
 | Named revert / what was 0.1.4? | That one file (flat or under `design/changelog/archive/{epoch}.{series}/`). |
 | Game | `version.json` + `changelog.json`. |
 
 **Week close.** One extra file per week, `design/changelog/0.N.0.md` (patch 0 of the closing series; a whole-week summary in the same body shape), written by a web session the User runs (never Build or the Bot: `versioning.md`). Name it explicitly (it is not patch + 1) and commit it on `grok-build-wN`; its arrival on `main` creates the week's archives (`versioning.md`).
 
-Every Bot PR ships its entry, docs-only and tools-only PRs included. Bullets list player-visible changes only; with none, the one bullet says "No player-visible change" and the `Summary:` line stays short. `{label}` is the patch after the newest stamp on `origin/main`; CI stamps in merge order, so if `main` moved before your merge, rename the file to the new next label (`python tools/doc_patch.py next-label`). Pages `/changelog/` is the public index.
+**Every PR ships an entry; never omit it.** The note is player-facing in tone (plain words, so players know what is being worked on) but is not limited to player-visible changes: docs, tooling and refactor work get a short plain-language bullet too. Shape: the short `Summary:` line plus bullets. `{label}` is the patch after the newest stamp on `origin/main`; CI stamps in merge order, so if `main` moved before your merge, rename the file to the new next label (`python tools/doc_patch.py next-label`). Pages `/changelog/` is the public index.
 
 ## In-game
 
