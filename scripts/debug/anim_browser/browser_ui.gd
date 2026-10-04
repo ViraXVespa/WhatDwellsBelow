@@ -5,10 +5,11 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const Review := preload("res://scripts/debug/anim_browser/review.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 static func build(host: CanvasLayer) -> void:
 	Plate.dim(host)
-	var prev := ThemeS.btn("Previous (LB)", func(): host._shift_model(-1))
+	var prev := ThemeS.btn(Prompts.fmt("Previous ({anim_model_prev})"), func(): host._shift_model(-1))
 	prev.position = Vector2(48, 28)
 	prev.size = Vector2(360, 56)
 	host.add_child(prev)
@@ -17,7 +18,7 @@ static func build(host: CanvasLayer) -> void:
 	host.name_lab.size = Vector2(720, 52)
 	host.name_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	host.add_child(host.name_lab)
-	var nxt := ThemeS.btn("Next (RB)", func(): host._shift_model(1))
+	var nxt := ThemeS.btn(Prompts.fmt("Next ({anim_model_next})"), func(): host._shift_model(1))
 	nxt.position = Vector2(1510, 28)
 	nxt.size = Vector2(360, 56)
 	host.add_child(nxt)
@@ -36,7 +37,7 @@ static func build(host: CanvasLayer) -> void:
 	host.empty_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	host.empty_lab.visible = false
 	host.add_child(host.empty_lab)
-	host.play_btn = ThemeS.btn("Playing 1.0x - X to pause", func(): host._toggle_play())
+	host.play_btn = ThemeS.btn(Prompts.fmt("Playing 1.0x - {gear_drop} to pause"), func(): host._toggle_play())
 	host.play_btn.position = Vector2(48, 850)
 	host.play_btn.size = Vector2(900, 56)
 	host.add_child(host.play_btn)
@@ -49,7 +50,7 @@ static func build(host: CanvasLayer) -> void:
 	host.dir_box.size = Vector2(420, 700)
 	host.dir_box.add_theme_constant_override("separation", 4)
 	host.add_child(host.dir_box)
-	var alab := ThemeS.lab("Animation (LT / RT)", 22, Color(0.92, 0.82, 0.5))
+	var alab := ThemeS.lab(Prompts.fmt("Animation ({anim_list_up} / {anim_list_down})"), 22, Color(0.92, 0.82, 0.5))
 	alab.position = Vector2(1420, 110)
 	alab.size = Vector2(460, 36)
 	host.add_child(alab)

@@ -80,7 +80,7 @@ func split_hint() -> void:
 		return
 	var extra: Array = []
 	if MenuPad.capture_lock:
-		extra.append({"action": "pause", "verb": "cancel", "gap": true})
+		extra.append({"text": tr("binds_page.capture_hint"), "gap": true})
 		extra.append({"action": "ui_accept", "hide": true})
 		extra.append({"action": "ui_cancel", "hide": true})
 	elif col == "list":

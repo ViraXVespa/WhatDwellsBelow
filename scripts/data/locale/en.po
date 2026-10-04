@@ -239,6 +239,9 @@ msgstr "Snapshots  ›  %s  ›  Documents"
 msgid "archives_ui.standalone_snapshots_title_play"
 msgstr "Standalone snapshots. Title Play always launches the live path."
 
+msgid "binds_page.capture_hint"
+msgstr "Press the new input. Click the slot again to cancel."
+
 msgid "binds_page.gamepad"
 msgstr "Gamepad"
 
@@ -333,7 +336,7 @@ msgid "breakable.the_wall_gives"
 msgstr "The wall gives."
 
 msgid "camp.placeholdia_bank_g_ore_wood"
-msgstr "Placeholdia  ·  bank %dg  %d ore  %d wood  ·  deepest F%d%s\nCrystal  ·  Anvil  ·  Vendor  ·  Guild  ·  Billboard  ·  Start pause"
+msgstr "Placeholdia  ·  bank %dg  %d ore  %d wood  ·  deepest F%d%s\nCrystal  ·  Anvil  ·  Vendor  ·  Guild  ·  Billboard  ·  {pause} pause"
 
 msgid "camp_build.camp_mesh_box_parent"
 msgstr "CAMP_MESH box parent="
@@ -696,7 +699,7 @@ msgid "forge_act.the_anvil_won_t_take"
 msgstr "The anvil won't take that."
 
 msgid "fs_gate.a_confirms_the_focused_button"
-msgstr "A confirms the focused button. B / Esc continues."
+msgstr "{ui_accept} confirms the focused button. {ui_cancel} continues."
 
 msgid "fs_gate.click_fullscreen_to_hide_browser"
 msgstr "Click Fullscreen to hide browser chrome. Chromium may also offer an Install prompt — that adds a standalone window. Pause → System or Alt+Enter toggles fullscreen later."
@@ -1182,7 +1185,7 @@ msgid "item.veil_thread.name"
 msgstr "Veil Thread"
 
 msgid "launch.checking_out_sha"
-msgstr "Checking out {sha}…  (B to cancel)"
+msgstr "Checking out {sha}…  ({ui_cancel} to cancel)"
 
 msgid "launch.checkout_failed"
 msgstr "Checkout failed."
@@ -1194,7 +1197,7 @@ msgid "launch.import_failed"
 msgstr "Import failed."
 
 msgid "launch.importing_archived_project"
-msgstr "Importing archived project…  (B to cancel)"
+msgstr "Importing archived project…  ({ui_cancel} to cancel)"
 
 msgid "launch.isolating_save_data"
 msgstr "Isolating save data…"
@@ -1206,7 +1209,7 @@ msgid "launch.opening_snapshot"
 msgstr "Opening snapshot…"
 
 msgid "launch.preparing_snapshot"
-msgstr "Preparing snapshot…  (B to cancel)"
+msgstr "Preparing snapshot…  ({ui_cancel} to cancel)"
 
 msgid "launch.unknown_archive"
 msgstr "Unknown archive."
@@ -1704,7 +1707,7 @@ msgid "slot.weapon"
 msgstr "Weapon"
 
 msgid "splash.a_start_to_continue"
-msgstr "A / Start  to continue"
+msgstr "{ui_accept} / {pause}  to continue"
 
 msgid "splash.a_viraxvespa_production"
 msgstr "A  @ViraXVespa  production"

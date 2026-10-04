@@ -5,6 +5,7 @@ extends Object
 const T := preload("res://scripts/data/tunables.gd")
 const Review := preload("res://scripts/debug/anim_browser/review.gd")
 const Nav := preload("res://scripts/debug/anim_browser/browser_nav.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 const SPEEDS: Array[float] = [0.25, 0.5, 1.0, 1.5, 2.0]
 
@@ -14,10 +15,10 @@ static func toggle_play(host: CanvasLayer) -> void:
 
 static func refresh_play(host: CanvasLayer) -> void:
 	if host.playing:
-		host.play_btn.text = "Playing %.2fx - X to pause" % host.play_speed
+		host.play_btn.text = Prompts.fmt("Playing %.2fx - {gear_drop} to pause") % host.play_speed
 		host.play_btn.add_theme_color_override("font_color", Color(0.85, 1.0, 0.7))
 	else:
-		host.play_btn.text = "Paused %.2fx - X to play" % host.play_speed
+		host.play_btn.text = Prompts.fmt("Paused %.2fx - {gear_drop} to play") % host.play_speed
 		host.play_btn.add_theme_color_override("font_color", Color(1.0, 0.82, 0.45))
 
 static func frames(host: CanvasLayer) -> Array:

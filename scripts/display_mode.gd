@@ -115,14 +115,34 @@ static func consume_web_esc() -> bool:
 	if not is_web():
 		return false
 	Web.ensure_web_hooks()
-	return _js_flag("""
+	var v := str(JavaScriptBridge.eval("""
 		(function () {
 			try {
-				if (window.__wdbEsc) { window.__wdbEsc = 0; return '1'; }
+				if (window.__wdbEsc) { var v = window.__wdbEsc; window.__wdbEsc = 0; return String(v); }
 			} catch (e) {}
 			return '0';
 		})();
-	""")
+	""", true))
+	if v == "2" and not _esc_is_pause():
+		send_esc()
+		return false
+	return v != "0"
+
+## Browser fullscreen swallows Esc; the page hook reports it (2) and F1 (1, always pause). When Esc is
+## not the pause bind, hand the key to the game as a normal Escape press so it acts as its bound action.
+static func _esc_is_pause() -> bool:
+	for e in InputMap.action_get_events("pause"):
+		if e is InputEventKey and (e.physical_keycode == KEY_ESCAPE or e.keycode == KEY_ESCAPE):
+			return true
+	return false
+
+static func send_esc() -> void:
+	for down in [true, false]:
+		var e := InputEventKey.new()
+		e.keycode = KEY_ESCAPE
+		e.physical_keycode = KEY_ESCAPE
+		e.pressed = down
+		Input.parse_input_event(e)
 
 static func lock_landscape() -> void:
 	if not is_web():

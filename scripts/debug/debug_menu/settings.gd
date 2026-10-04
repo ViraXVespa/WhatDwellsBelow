@@ -8,9 +8,10 @@ const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
 const Disp := preload("res://scripts/display_mode.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 static func page_settings(host) -> void:
-	host.status.text = "Settings. In-test options. LB/RB change pages."
+	host.status.text = Prompts.fmt("Settings. In-test options. {tab_left}/{tab_right} change pages.")
 	host.root_box.add_child(_cap("Settings", 24, Color(0.95, 0.8, 0.45)))
 	host.root_box.add_child(_cap("Not yet approved for the System tab. Changes apply live.", 18, Color(0.82, 0.76, 0.66)))
 	host.root_box.add_child(host._btn("Grant anvil test kit", func(): grant_anvil_kit(host)))

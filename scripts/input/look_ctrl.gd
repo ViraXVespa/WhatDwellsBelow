@@ -115,10 +115,7 @@ static func _stick(delta: float) -> void:
 static func _toggle_held() -> bool:
 	if Input.is_action_pressed("look_mode"):
 		return true
-	var pid := _pad_id()
-	if pid < 0:
-		return false
-	return Input.is_joy_button_pressed(pid, JOY_BUTTON_DPAD_DOWN)
+	return load("res://scripts/input/pad.gd").pad_down("look_mode")
 
 static func _rs() -> Vector2:
 	var pid := _pad_id()

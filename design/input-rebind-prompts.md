@@ -11,15 +11,15 @@ Pause → Settings → Controls.
 - Two pools: Keyboard / mouse and Gamepad. A selector at the top of the page switches the list. Switching rebuilds the rows for that pool.
 - The selector wraps both ways (Keyboard ↔ Gamepad). D-pad and arrow keys are discrete. Left-stick X switches once per push past a deadzone and must return to center before another switch. Left-stick Y stays vertical menu navigation.
 - First row after the selector is Reset Controls (that pool only). Confirm via `confirm_dlg.gd` before restocking defaults. Cancel / B / Esc backs out and returns focus to Reset.
-- `binds.gd` facades `ensure_mouse` and `ensure_axis` into `defaults.gd`. Pad reset MUST restock left-stick move axes as well as buttons.
-- Exposed actions are gameplay only: move (keyboard), attack, special, dash, target lock, interact, map, inventory, potion, food, look mode (pad). Item tip and drop are not listed.
-- Two slots per action. A new bind that collides inside the same pool swaps with the other action’s slot. Cross-pool events are ignored.
-- Capture: choosing a slot shows `...` and the page takes the next key or pad button before any menu handler. Space, Backspace, B, `[`, `]`, LB and RB bind like any other input and do not act as Back or tab while capturing. Esc / Start (`pause`, not rebindable) cancels; the footer shows only that Cancel. Mouse clicks still use normal button handling; a click on empty space binds that mouse button. Leaving the Controls page ends capture.
-- Gamepad left / right sticks cannot be rebound. Move and aim stay on those axes.
+- **Single home.** `scripts/input/binds/table.gd` lists every action once: id, label, default keys / mouse / pad buttons / axes, and which pools the page may rebind. `defaults.gd` fills the InputMap from it, Reset Controls restocks from it, the page lists from it, saves cover its ids, and `Pad` tracks pad buttons through the InputMap. No other script names a bind; change a default there only. Pad reset restocks left-stick move axes as well as buttons.
+- Every player action is rebindable: move (keyboard), attack, special, dash, target lock, interact, map, inventory, potion, food, look mode (pad), pause menu, menu tab left / right, item tip, item drop, crystal map zoom. Esc and Start bind like any other input.
+- Two slots per action. A new bind that collides inside the same pool swaps with the other action’s slot; a swap that would leave the other action with no bind in that pool is refused. Cross-pool events are ignored.
+- Capture: choosing a slot shows `...` and the page takes the next key or pad button before any menu handler, so Esc, Start, Space, Backspace, B, `[`, `]`, LB and RB all bind. No input is reserved for cancel: 5 seconds without input, clicking the slot again, or leaving the Controls page ends capture (the footer says so). Mouse clicks still use normal button handling; a click on empty space binds that mouse button.
+- Fixed, not on the page: gamepad sticks (move and aim stay on the axes), menu navigation (`ui_*`: Enter / A accept, Esc / Backspace / B back, arrows / WASD / D-pad move), Alt+Enter, and on web F1 as an extra pause. Esc stays Back inside menus even when it is rebound for the world.
 - First boot and Reset bind keyboard actions to **physical** key positions (`physical_keycode`), so QWERTY W stays the same cap as Dvorak `,`. Glyphs follow the player’s layout.
 - Bind name left-aligned. Assigned glyph(s) right-aligned. Empty slot is an em dash. D-pad chips read UP / DOWN / LEFT / RIGHT, not “DPAD UP”.
 
-`binds.gd` is the facade (`collect` / `apply` / `register` / `ensure_mouse` / `ensure_axis`). Slot math lives in `binds_pool.gd`. The Controls page is `binds_page.gd`.
+`binds.gd` is the facade (`collect` / `apply` / `register` / `reset_pool`). Slot math lives in `binds_pool.gd`. The Controls page is `binds_page.gd`.
 
 ## On-screen prompts
 
@@ -29,7 +29,7 @@ Prompts follow **last used** input. One scheme at a time. `Pad.note_event` sets 
 
 While the web touch overlay is active, `Pad.mode` stays pad so world prompts keep pad glyphs. This slice does not add a `touch/` glyph pack.
 
-Do not bake `A`, `B`, `ENTER`, `ESC`, `LMB`, or `RMB` into button captions or status lines. Verbs stay on the control; glyphs come from the bind.
+Do not bake `A`, `B`, `ENTER`, `ESC`, `LMB`, or `RMB` into button captions, hint text, or status lines. Verbs stay on the control; glyphs come from the bind. Text hints write `{action_id}` tokens and pass through `Prompts.fmt`, which swaps in `Prompts.label(action)` (the current scheme’s bind, e.g. Esc, Start, RT). This covers the locale file, camp, splash, fullscreen gate, archive loader, foundation, and debug status lines. The touch overlay draws the pad glyph of each action’s first pad bind.
 
 | Surface | Where the glyph lives |
 |---------|------------------------|

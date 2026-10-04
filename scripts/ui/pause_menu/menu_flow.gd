@@ -209,7 +209,10 @@ static func _back(host: CanvasLayer) -> void:
 
 static func _process(host: CanvasLayer, delta: float) -> void:
 	if host.open and Disp.consume_web_esc():
-		host._back()
+		if Pad.capture_lock:
+			Disp.send_esc()
+		else:
+			host._back()
 	if host.open and host.tab == host.TAB_INV:
 		GearAct.tick_x(host, delta)
 

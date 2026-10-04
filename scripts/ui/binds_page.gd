@@ -4,33 +4,20 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 const Binds := preload("res://scripts/input/binds.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
+const Table := preload("res://scripts/input/binds/table.gd")
 const LocS := preload("res://scripts/app/app_loc.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Split := preload("res://scripts/ui/split_menu.gd")
 
-const ROWS: Array = [
-	{"id": "move_up", "label": "Move up", "kb_only": true},
-	{"id": "move_down", "label": "Move down", "kb_only": true},
-	{"id": "move_left", "label": "Move left", "kb_only": true},
-	{"id": "move_right", "label": "Move right", "kb_only": true},
-	{"id": "attack", "label": "Attack"},
-	{"id": "special", "label": "Special"},
-	{"id": "dash", "label": "Dash"},
-	{"id": "target_lock", "label": "Target lock"},
-	{"id": "interact", "label": "Interact"},
-	{"id": "map_view", "label": "Map"},
-	{"id": "inventory", "label": "Inventory"},
-	{"id": "potion", "label": "Potion"},
-	{"id": "food", "label": "Food"},
-	{"id": "look_mode", "label": "Look mode", "pad_only": true},
-]
+const CAPTURE_SEC := 5.0
 
 var host: Node
 var pool := "kb"
 var capture_action := ""
 var capture_slot := -1
 var _pool_stick_armed := true
+var _cap_left := 0.0
 
 static func build(settings: Node) -> void:
 	var old: Node = settings.get_node_or_null("bind_catcher")
@@ -65,13 +52,9 @@ func rebuild() -> void:
 		)
 	)
 	View.add_page_btn(host, reset)
-	for raw: Variant in ROWS:
-		var row: Dictionary = raw
-		if bool(row.get("pad_only", false)) and pool != "pad":
-			continue
-		if bool(row.get("kb_only", false)) and pool != "kb":
-			continue
-		_bind_row(str(row.get("id", "")), LocS.tr_or("controls." + str(row.get("id", "")), str(row.get("label", ""))))
+	for row: Dictionary in Table.rebindable():
+		if Table.can_rebind(str(row.id), pool):
+			_bind_row(str(row.id), str(row.label))
 	View.wire_vert(host.info_btns)
 	if host.has_method("split_hint"):
 		host.split_hint()
@@ -129,8 +112,14 @@ func _slot_btn(action: String, slot: int) -> Button:
 	var capturing: bool = capture_action == action and capture_slot == slot
 	var txt: String = "..." if capturing else _slot_text(ev)
 	var b: Button = ThemeS.btn(txt, func() -> void:
+		if capture_action == action and capture_slot == slot:
+			_end_capture()
+			View.apply_col(host)
+			View.focus_col(host)
+			return
 		capture_action = action
 		capture_slot = slot
+		_cap_left = CAPTURE_SEC
 		rebuild()
 		View.apply_col(host)
 		if host.has_method("_focus_col"):
@@ -145,16 +134,7 @@ func _slot_btn(action: String, slot: int) -> Button:
 	return b
 
 func _slot_text(ev: InputEvent) -> String:
-	if ev == null:
-		return "—"
-	var id: String = Prompts.id_for_event(ev)
-	if id == "":
-		return "—"
-	if id.begins_with("mouse/"):
-		return id.replace("mouse/", "").replace("_", " ").to_upper()
-	if id.begins_with("dpad_"):
-		return id.substr(5).to_upper()
-	return id.replace("_", " ").to_upper()
+	return "—" if ev == null else Prompts.label_for_event(ev)
 
 func _stick_axis(event: InputEvent) -> bool:
 	if not (event is InputEventJoypadMotion):
@@ -171,12 +151,16 @@ func _end_capture() -> void:
 func _exit_tree() -> void:
 	MenuPad.capture_lock = false
 
-func _process(_dt: float) -> void:
-	if capture_action != "" and (host == null or str(Split.current(host).get("id", "")) != "controls"):
+func _process(dt: float) -> void:
+	if capture_action == "":
+		return
+	_cap_left -= dt
+	if _cap_left <= 0.0 or host == null or str(Split.current(host).get("id", "")) != "controls":
 		_end_capture()
 
-## Capture gets first claim on keys and pad buttons (Space, B, [, ], LB, RB, Backspace bind like any other).
-## Pause (Esc / Start) is not rebindable, so it is the cancel. Mouse clicks stay on the GUI path.
+## Capture gets first claim on every key and pad button (Esc, Start, Space, B, [, ], LB, RB bind like any other).
+## No input is reserved for cancel: CAPTURE_SEC without input, clicking the slot again, or leaving the page ends it.
+## Mouse clicks stay on the GUI path.
 func _input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton):
 		_capture(event)
@@ -190,17 +174,13 @@ func _capture(event: InputEvent) -> void:
 		return
 	if event.is_echo() or not event.is_pressed():
 		return
-	if event.is_action_pressed("pause"):
-		_end_capture()
-		get_viewport().set_input_as_handled()
-		return
 	if _stick_axis(event):
 		return
 	if not Binds.event_in_pool(event, pool):
 		return
 	if event is InputEventJoypadMotion and absf((event as InputEventJoypadMotion).axis_value) < 0.6:
 		return
-	Binds.bind_slot(capture_action, pool, capture_slot, event)
-	App.save_now()
+	if Binds.bind_slot(capture_action, pool, capture_slot, event):
+		App.save_now()
 	_end_capture()
 	get_viewport().set_input_as_handled()
