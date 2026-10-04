@@ -69,19 +69,23 @@ Intercept (raw tool is a failed lookup, not a fallback):
    week branch: after a green prove and her OK, commit there and plain-push
    the week branch (never main); a true linked worktree merges back with git
    merge --no-ff.
-6. Your first message says whether AGENTS.md and the project skills loaded (if
-   not, say so and read AGENTS.md by hand). Visual work: run
+6. The FIRST command of a slice is start_build_slice.py; your first message
+   gives the statement it prints on whether AGENTS.md and this skill loaded
+   (if not, read AGENTS.md by hand). Visual work: run
    tools/check_gd_load.py once and tools/run_godot_import_check.py, then shoot
    and OPEN the baseline (band=fail is invalid: re-shoot; a missing shot flow
    is step 0: create it, not a stop). Then show the restate as visible text,
    then ask the User as many questions as the job needs, in as many rounds as
    it needs, again whenever a discovery changes what she will see; open with
-   the outcome, any reference picture, and what is out of bounds. Until she
+   Q0: the outcome, any reference picture, what is out of bounds (a layout
+   already built is a Q0 item). Until she
    answers change nothing but shot-flow files and the routes.yaml mapping.
-   Every ask holds the PNG paths and two lists: "Decisions I made that were
-   yours" (incl. new assets, fonts, dependencies, generated images) and
-   "Assumptions carried from memory or docs". After ANY failed or skipped tool
-   step the next message starts "Did not work: <command> <line>". After a
+   Every ask is preceded by its message (option labels are not it) with the
+   PNG paths and three lists: "Decisions I made that were yours" (incl. new
+   assets, fonts, dependencies, generated images), "Assumptions carried from
+   memory or docs", "Also changed". After ANY failed or skipped tool step
+   (non-zero exit included) the next message starts "Did not work:
+   <command> <line>". Opening files on her PC is not showing them. After a
    second rejection offer "send me a reference". After each small batch of
    edits run tools/check_gd_load.py; one unit, open before and after, then
    ask. Commit and push only after she confirms the final shot. No brief for
