@@ -5,6 +5,7 @@ const Inv := preload("res://scripts/ui/progress_ui/inv.gd")
 const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
+const CatalogS := preload("res://scripts/data/catalog.gd")
 
 static func rebuild_shop(ui) -> void:
 	ui._clear()
@@ -17,9 +18,10 @@ static func rebuild_shop(ui) -> void:
 	ui.focus_btn = ThemeS.btn(App.tr("shop.snack_g_hp") % int(App.bal.snack_cost), func(): Confirm.open(ui, App.tr("shop.buy_snack"), App.tr("shop.spend_g_for_a_snack") % int(App.bal.snack_cost), func(): buy_snack(ui)))
 	ui.box.add_child(ui.focus_btn)
 	if ui.shop_spot:
-		for a in ui.shop_spot.stock:
-			var id := str(a.id)
-			var nm := str(a.name)
+		for st in ui.shop_spot.stock:
+			var id := str(st.id)
+			var a: Dictionary = CatalogS.by_id(id)
+			var nm := str(a.get("name", id))
 			var desc := str(a.get("desc", ""))
 			var set_id := str(a.get("set", ""))
 			var extra := ""

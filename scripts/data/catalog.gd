@@ -38,6 +38,7 @@ static func _loc(a: Dictionary) -> Dictionary:
 	d["desc"] = LocS.tr_or("item.%s.desc" % a.id, "")
 	return d
 
+## Ids only (`id`, `set`): text is looked up when drawn (`by_id`), so a language change shows at once.
 static func pick(rng: RandomNumberGenerator, n: int) -> Array:
 	var pool: Array = ARTS.duplicate()
 	var out: Array = []
@@ -46,7 +47,7 @@ static func pick(rng: RandomNumberGenerator, n: int) -> Array:
 		if pool.is_empty():
 			break
 		var j := rng.randi() % pool.size()
-		out.append(_loc(pool[j]))
+		out.append((pool[j] as Dictionary).duplicate())
 		pool.remove_at(j)
 	return out
 

@@ -3,6 +3,7 @@ extends Object
 ## Item display names come from ids: `nk` (name key, one entry) plus `forged`.
 ## The saved `name` is only a cache, refreshed on load and when the language changes.
 
+const LocS := preload("res://scripts/app/app_loc.gd")
 const KEYS: PackedStringArray = ["common.great_axe", "common.lightning_staff", "gear.staff", "gear.longbow", "gear.pickaxe", "gear.hatchet", "gear.potion", "gear.ration", "progress_make.trail_bread", "slot.head", "slot.body", "slot.legs"]
 const ARMOR: PackedStringArray = ["head", "body", "legs"]
 const OLD_FORGED := "Forged "
@@ -27,6 +28,29 @@ static func name_of(it: Dictionary) -> String:
 		s = App.tr("gear.forged").format({"name": s})
 	return s
 
+## Description from ids (kind / slot, rarity, tool, charge_max, artifact id). The saved `desc` is only a cache,
+## re-derived by `migrate` on load and when the language changes. Unknown shapes keep their saved text.
+static func desc_of(it: Dictionary) -> String:
+	var slot: String = str(it.get("slot", ""))
+	if str(it.get("kind", "")) == "artifact":
+		return LocS.tr_or("item.%s.desc" % str(it.get("id", "")), App.tr("progress_make.a_curious_relic"))
+	if slot == "weapon" or slot in ARMOR:
+		return App.tr("gear.desc_piece").format({"rarity": str(it.get("rarity", "white")).capitalize(), "name": _base_name(it)})
+	if slot == "tool":
+		return App.tr("gear.desc_tool").format({"name": _base_name(it)})
+	if slot == "potion":
+		return App.tr("gear.desc_potion").format({"n": int(it.get("charge_max", it.get("charges", 0)))})
+	if slot == "food":
+		return App.tr("gear.desc_food")
+	return str(it.get("desc", ""))
+
+## Name without the Forged prefix.
+static func _base_name(it: Dictionary) -> String:
+	var nk: Variant = it.get("nk", [])
+	if nk is Array and not (nk as Array).is_empty():
+		return App.tr(str((nk as Array)[0]))
+	return str(it.get("name", ""))
+
 ## Name for an item that is being forged now (works for items without a name key too).
 static func forge(it: Dictionary) -> void:
 	it["forged"] = true
@@ -44,6 +68,7 @@ static func migrate(it: Dictionary) -> void:
 		_infer(it)
 	if not (it["nk"] as Array).is_empty():
 		it["name"] = name_of(it)
+	it["desc"] = desc_of(it)
 
 static func _infer(it: Dictionary) -> void:
 	var nm: String = str(it.get("name", ""))
