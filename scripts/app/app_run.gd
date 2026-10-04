@@ -119,13 +119,14 @@ static func on_kill(host: Node) -> void:
 	while host.kill_times.size() > 0 and host.clock - host.kill_times[0] > host.bal.adrenaline_window:
 		host.kill_times.remove_at(0)
 	if host.adrenaline:
-		host.adrenaline_xp += host.bal.adrenaline_xp_stack
+		host.adrenaline_xp = minf(host.adrenaline_xp + host.bal.adrenaline_xp_stack, host.bal.adrenaline_xp_max)
 	elif host.kill_times.size() >= int(host.bal.adrenaline_kills):
 		start_adrenaline(host)
 	var mult: float = host.adrenaline_xp if host.adrenaline else 1.0
 	host.run_xp += host.bal.xp_per_kill * mult
+	# Skill XP is scaled once, in Progress.add_run_xp.
 	if host.prog:
-		var half: float = host.bal.xp_per_kill * 0.5 * (mult if host.adrenaline else 1.0)
+		var half: float = host.bal.xp_per_kill * 0.5
 		if host.weapon == "staff":
 			host.prog.add_run_xp("staff", half)
 			host.prog.add_run_xp(host.last_style if host.last_style == "mag" else "str", half)
@@ -135,14 +136,14 @@ static func on_kill(host: Node) -> void:
 		else:
 			host.prog.add_run_xp("axe", half)
 			host.prog.add_run_xp("str", half)
-		host.prog.add_run_xp("hp", host.bal.xp_kill_hp * mult)
-		host.prog.add_run_xp("def", host.bal.xp_kill_def * mult)
+		host.prog.add_run_xp("hp", host.bal.xp_kill_hp)
+		host.prog.add_run_xp("def", host.bal.xp_kill_def)
 	if host.tel:
 		host.tel.note_kill()
 
 static func start_adrenaline(host: Node) -> void:
 	host.adrenaline = true
-	host.adrenaline_xp = 1.0 + host.bal.adrenaline_xp_stack
+	host.adrenaline_xp = minf(1.0 + host.bal.adrenaline_xp_stack, host.bal.adrenaline_xp_max)
 	if host.tel:
 		host.tel.note_adrenaline()
 	host.sfx("warcry")

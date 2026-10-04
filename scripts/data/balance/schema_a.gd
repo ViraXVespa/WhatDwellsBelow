@@ -58,6 +58,7 @@ static func rows() -> Array:
 		["adrenaline_kills", 1.0, 12.0, 1.0],
 		["adrenaline_speed", 1.0, 3.0, 0.05],
 		["adrenaline_xp_stack", 0.0, 1.0, 0.05],
+		["adrenaline_xp_max", 1.0, 5.0, 0.05],
 		["adrenaline_timeout", 0.5, 12.0, 0.1],
 		["aim_line_on", 0.0, 1.0, 1.0],
 		["aim_line_opacity", 0.05, 1.0, 0.05],

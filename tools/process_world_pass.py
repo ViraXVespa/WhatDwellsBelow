@@ -17,6 +17,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+from gen_prompt_glyphs import FONT  # noqa: E402  (single home for the pixel font)
 
 SESSION = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a08788-1bb6-76c0-8fa8-40b73dda2810\images")
 TILES = ROOT / "assets" / "tiles"
@@ -140,23 +141,8 @@ def wide_out(src: str, dest: Path, max_w: int, quad: str | None = None, key_blac
     print("wide", dest.name, resized.size)
 
 
-_FONT = {
-    "A": ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
-    "C": ["01110", "10001", "10000", "10000", "10000", "10001", "01110"],
-    "D": ["11100", "10010", "10001", "10001", "10001", "10010", "11100"],
-    "E": ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
-    "H": ["10001", "10001", "10001", "11111", "10001", "10001", "10001"],
-    "I": ["11111", "00100", "00100", "00100", "00100", "00100", "11111"],
-    "L": ["10000", "10000", "10000", "10000", "10000", "10000", "11111"],
-    "M": ["10001", "11011", "10101", "10001", "10001", "10001", "10001"],
-    "N": ["10001", "11001", "10101", "10011", "10001", "10001", "10001"],
-    "O": ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
-    "P": ["11110", "10001", "10001", "11110", "10000", "10000", "10000"],
-    "T": ["11111", "00100", "00100", "00100", "00100", "00100", "00100"],
-    "W": ["10001", "10001", "10101", "10101", "10101", "01010", "01010"],
-    "!": ["00100", "00100", "00100", "00100", "00100", "00000", "00100"],
-    " ": ["00000", "00000", "00000", "00000", "00000", "00000", "00000"],
-}
+GLYPH_GAP = 2  # columns between glyphs; banner_out layout and blit_line share it
+_BLANK = ["00000"] * 7
 
 
 def blit_line(
@@ -169,9 +155,9 @@ def blit_line(
 ) -> None:
     px = im.load()
     shadow = (48, 28, 16, 255)
-    gw, gap = 5, 2
+    gw, gap = 5, GLYPH_GAP
     for i, ch in enumerate(text):
-        rows = _FONT.get(ch, _FONT[" "])
+        rows = FONT.get(ch, _BLANK)
         bx = x0 + i * (gw + gap) * scale
         for gy, row in enumerate(rows):
             for gx, bit in enumerate(row):
@@ -222,7 +208,7 @@ def banner_out() -> None:
     inner_w = max(8, cx1 - cx0 - pad_x * 2)
     inner_h = max(8, cy1 - cy0 - pad_y * 2)
     lines = ["WELCOME TO", "PLACEHOLDIA!"]
-    gw, gh, gap, lh = 5, 7, 1, 2
+    gw, gh, gap, lh = 5, 7, GLYPH_GAP, 2
     longest = max(len(line) for line in lines)
     line_w = longest * (gw + gap) - gap
     block_h = len(lines) * gh + (len(lines) - 1) * lh

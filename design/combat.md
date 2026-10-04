@@ -62,7 +62,7 @@ Hits are not cylinder-vs-origin tests. Live registration uses opaque sprite occu
 - Triggers after sufficient kills in a short window (exact threshold tunable).
 - Effects while active:
   - Increased movement speed
-  - Stacking XP bonus
+  - Stacking XP bonus (capped by `adrenaline_xp_max`, 2.0)
   - Flaming aura on the player
   - Continuous wooshing / crackling sound
 - Starts with a warcry.
