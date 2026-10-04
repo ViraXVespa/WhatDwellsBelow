@@ -61,9 +61,11 @@ Intercept (raw tool is a failed lookup, not a fallback):
    runner yourself when it would help future tasks (design/tools.md rule 5)
    and tell the User afterward.
 5. A red prove prints a RETRY prompt: one diagnosis, one fix per retry
-   (design/tools.md rule 10): a fork of the gather session into the same
-   worktree (grok --cwd PATH -r ID --fork-session). Worktrees come from the
-   week branch grok-build-w{N}; a green prove merges back with git merge
+   (design/tools.md rule 10): the User runs `grok -r CHECKPOINT --fork-session`
+   from the worktree directory. Only the User launches grok: the slice starts
+   with `python tools/open_slice.py [AREA]` (a NEW session in a worktree from
+   the week branch grok-build-w{N}); there, start_build_slice.py, gather, then
+   start_build_slice.py --checkpoint. A green prove merges back with git merge
    --no-ff.
 6. Before any edit, restate the ask in your own words and ask the User what
    is unclear. After each small batch of edits run tools/check_gd_load.py.
