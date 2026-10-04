@@ -48,7 +48,7 @@ static func open_chest(host: Node3D) -> String:
 	InteractFx.paint_used_chest(host)
 	var msg := App.tr("common.g") % gold
 	if art != "":
-		msg += "  ·  Artifact: " + art
+		msg += "  ·  " + App.tr("shop.artifact_name").format({"name": art})
 	if msg_gear != "":
 		msg += "  ·  " + msg_gear
 	App.toast(msg)

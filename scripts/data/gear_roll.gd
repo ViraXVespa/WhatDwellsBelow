@@ -74,10 +74,12 @@ static func _build(
 		it["name"] = _wpn_name(type_id)
 	elif slot == "tool":
 		it["tool"] = type_id
-		it["name"] = type_id.capitalize()
+		it["name"] = type_id
 	else:
-		it["name"] = slot.capitalize()
+		it["name"] = slot
 	it["nk"] = ItemNames.base_nk(slot, type_id)
+	if not (it["nk"] as Array).is_empty():
+		it["name"] = ItemNames.name_of(it)
 	if from_forge:
 		ItemNames.forge(it)
 	var ids: PackedStringArray = _pick_ids(slot, rarity, locked, unlocks, from_forge)
@@ -169,4 +171,4 @@ static func _wpn_name(type_id: String) -> String:
 		"longbow":
 			return App.tr("gear.longbow")
 		_:
-			return type_id.capitalize()
+			return type_id

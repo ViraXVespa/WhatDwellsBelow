@@ -55,9 +55,9 @@ static func list_floors(host, box: VBoxContainer, lo: int, hi: int, deepest: int
 		var reached: bool = n <= deepest
 		var title := App.tr("pages_floors.floor") % n
 		if here:
-			title += "  (here)"
+			title += "  " + App.tr("common.here")
 		elif not reached:
-			title += "  (locked)"
+			title += "  " + App.tr("common.locked")
 		var btn := ThemeS.btn(title, func(): host._pick_floor(n), reached and not here)
 		box.add_child(btn)
 		if first == null and reached and not here:

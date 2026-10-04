@@ -1,5 +1,8 @@
 ﻿extends Object
 
+const LocS := preload("res://scripts/app/app_loc.gd")
+const ItemNames := preload("res://scripts/data/item_names.gd")
+
 const GROUP_COMBAT := "combat"
 const GROUP_TOOL := "tool"
 const KIND_FLAT := "flat"
@@ -58,7 +61,7 @@ static func by_id(id: String) -> Dictionary:
 static func label_of(id: String) -> String:
 	var row: Dictionary = by_id(id)
 	if row.is_empty():
-		return id.capitalize()
+		return id
 	return str(row.get("label", id))
 
 static func kind_of(id: String) -> String:
@@ -110,5 +113,5 @@ static func book_key(slot: String, type_id: String, rarity: String) -> String:
 
 static func type_label(slot: String, type_id: String) -> String:
 	if type_id == "":
-		return slot.capitalize()
-	return str(type_id).capitalize()
+		return LocS.tr_or("slot." + slot, slot)
+	return ItemNames.type_name(slot, str(type_id))

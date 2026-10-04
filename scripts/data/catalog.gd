@@ -57,6 +57,9 @@ static func by_id(id: String) -> Dictionary:
 			return _loc(a)
 	return {}
 
+static func set_title(set_id: String) -> String:
+	return LocS.tr_or("set.%s.name" % set_id, set_id)
+
 static func set_size(set_id: String) -> int:
 	var n := 0
 	for a in ARTS:

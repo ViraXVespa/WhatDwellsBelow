@@ -28,7 +28,7 @@ static func make_tool(p: Object, kind: String, rarity: String = "white", ilvl: i
 	return _roll_onto(it, "tool", kind, rarity, ilvl)
 
 static func make_armor(p: Object, slot: String, rarity: String, ilvl: int = 0) -> Dictionary:
-	var it: Dictionary = item(p, slot, App.tr("common.text_2") % [rarity.capitalize(), slot.capitalize()], {
+	var it: Dictionary = item(p, slot, App.tr("slot." + slot), {
 		"slot": slot,
 		"rarity": rarity,
 	})
