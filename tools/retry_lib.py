@@ -3,8 +3,8 @@
 The gather session is the point a retry returns to. `start_build_slice.py` saves its id (`save_gather`) in the git
 common dir, shared by the checkout and every linked worktree; nothing is added to the tree. A red prove prints a
 fork of that session into the SAME worktree (`grok --cwd PATH -r ID --fork-session`; not `--worktree`, which with -r
-resumes into a NEW worktree and cannot be combined with --fork-session), so Build keeps its gather context. The block points at the diff already in the worktree (`git diff BASE...HEAD`, BASE =
-the saved --ref, else the week branch grok-build-w{N}) and asks for one diagnosis and one fix (`design/tools.md`
+resumes into a NEW worktree and cannot be combined with --fork-session), so Build keeps its gather context. The block points at the work already in the worktree (`git diff BASE` against the working tree, so uncommitted edits
+show, plus the untracked files; BASE = the saved --ref, else the week branch grok-build-w{N}) and asks for one diagnosis and one fix (`design/tools.md`
 rule 10). No gather session saved, or no base: the block says so loudly and starts nothing (no fresh session, no
 main). Lookup: the saved worktree path (set by `start_build_slice.py --launch`) or the folder name. grok names the folder itself
 (`~/.grok/worktrees/<repo>/<dir>`; NAME is only its label), so without a match the block lists the saved sessions to
@@ -23,6 +23,7 @@ import repo_lib
 STRONG = re.compile(r"SCRIPT ERROR|Parse Error|Compile Error|ERROR:|TIMEOUT|clean=false|DUPE|assert|mismatch", re.I)
 WEAK = re.compile(r"\bFAIL\b|exit=[1-9]|missing|busy", re.I)
 KEEP = 20
+END = "--- end ---"
 
 
 def pick_red(lines: list[str], n: int = 2) -> list[str]:
@@ -33,11 +34,24 @@ def pick_red(lines: list[str], n: int = 2) -> list[str]:
     return out[:n]
 
 
+def strip(lines: "list[str] | str") -> list[str]:
+    """Drop RETRY blocks (head line through `--- end ---`) from a child summary embedded in a parent's body."""
+    out, skip = [], False
+    for ln in lines.splitlines() if isinstance(lines, str) else lines:
+        skip = skip or ln.startswith("RETRY: red prove")
+        if not skip:
+            out.append(ln)
+        elif ln.strip() == END:
+            skip = False
+    return out
+
+
 def changed_files(root: Path, base: str, limit: int = 8) -> list[str]:
-    code, out = repo_lib.run_git(root, "diff", "--name-only", f"{base}...HEAD")
+    """Files that differ from BASE in the working tree (committed or not) plus untracked ones."""
+    code, out = repo_lib.run_git(root, "diff", "--name-only", base)
     files = out.splitlines() if code == 0 else []
-    if not files:
-        files = repo_lib.git_changed(root) or []
+    code, out = repo_lib.run_git(root, "ls-files", "--others", "--exclude-standard")
+    files += [f for f in (out.splitlines() if code == 0 else []) if f not in files]
     return files[:limit]
 
 
@@ -98,11 +112,11 @@ def block(root: Path, what: str, red: list[str]) -> str:
     session = str(entry.get("session", ""))
     base = str(entry.get("ref", "")) or repo_lib.week_branch(root)
     cands = sorted(((k, v) for k, v in _load(state_path(root)).items() if isinstance(v, dict) and v.get("session")), key=lambda kv: -int(kv[1].get("saved", 0)))
-    seen = pick_red(red) or ["(no red line captured: open the summary named on the RESULT line)"]
+    seen = pick_red(strip(red)) or ["(no red line captured: open the summary named on the RESULT line)"]
     head = f"RETRY: red prove ({what})."
     if not base:
         return "\n".join([head, "NO BASE: no grok-build-w* week branch and no saved --ref, so there is no diff to point a retry at. "
-                           "Ask Vira in a question prompt (she runs `python tools/week_start.py` to start a week). Nothing is started for you."])
+                           "Ask Vira in a question prompt (she runs `python tools/week_start.py` to start a week). Nothing is started for you.", END])
     if not session:
         pick = "".join(f"\n  START {k} ({v.get('ref') or 'week branch'}): grok --cwd {_q(root)} -r {v['session']} --fork-session" for k, v in cands[:3])
         head += (f" NO MATCHING GATHER SESSION for this worktree ({root.name}). "
@@ -114,10 +128,10 @@ def block(root: Path, what: str, red: list[str]) -> str:
         head += (f" Fork the gather session into this worktree (keeps your gather context; no re-gather, no new worktree): "
                  f"`grok --cwd {_q(root)} -r {session} --fork-session`. (Docs do not say if -r finds a session saved under another directory; if grok says it is missing, tell Vira.) Paste:")
     files = changed_files(root, base)
-    ask = (f'The prove "{what}" is red: {" | ".join(seen)}. The work so far is already in this worktree: `git diff {base}...HEAD`. '
+    ask = (f'The prove "{what}" is red: {" | ".join(seen)}. The work so far, committed or not, is in this worktree: `git diff {base}` (working tree) and the untracked files. '
            f"Read only the changed files (start with {', '.join(files) or 'the files in that diff'}), "
            "then give one diagnosis and make one fix. Rerun that prove once and report.")
-    return "\n".join([head, "--- paste ---", ask, "--- end ---"])
+    return "\n".join([head, "--- paste ---", ask, END])
 
 
 if __name__ == "__main__":

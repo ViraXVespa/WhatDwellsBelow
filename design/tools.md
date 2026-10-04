@@ -25,6 +25,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
     - No prove or re-verify cycles on unchanged results. If a check reports nothing new, stop.
     - **Red prove: one diagnosis and one fix per retry.** Diagnose once, fix once (batched), rerun once. Still red: stop and report the log path; do not loop. This is the only statement of the rule; Build's retry (a fork of the gather session) is in `build-job-cycle.md`.
     - Cap: at most 2 gate reruns per task (a full sweep such as `bot_warnscan` or `bot_smokes` counts as one). Anything not trivial becomes a question with options.
+    - Exempt: iterating one visual unit (a screen, a sprite) with the User. Shoot, look, ask, change as often as the User asks. The rerun and retry counts above do not apply to it. Each pass still runs the compile check (`check_gd_load.py`).
 
 11. **Python image deps.** `pip install -r tools/requirements.txt` (Pillow, numpy; opencv-python-headless optional). Shared image code is `tools/imglib/` (`tools-media.md`).
 
@@ -33,7 +34,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 - Shebang `#!/usr/bin/env python3`, `argparse` (`agent_log.std_parser`), a non-mutating `--help`, ASCII output.
 - Ops tools take `--root`, writers take `--dry-run`, every `std_parser` tool takes `--json` (stdout is then one JSON object). Errors go to stderr as `error: ...`. Exit 0 ok, 1 findings, 2 usage.
 - Last line is `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`; no `Summary -> <abs>` line. Exempt: printers and `wdb_scratch_server`.
-- Read and write text through `md_format_lib` (BOM and line endings kept). Paths printed are repo-relative POSIX.
+- Read and write text through `md_format_lib` (BOM and line endings kept). Paths printed are repo-relative POSIX (exception: `list_xref.py` prints the absolute root it scanned).
 
 ## Run when
 

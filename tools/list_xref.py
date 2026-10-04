@@ -2,6 +2,8 @@
 """Capped text search; writes a short hit list instead of dumping ripgrep into chat.
 
     python tools/list_xref.py --pattern pc-offload [--path design --path tools] [--include "*.gd"] [--regex]
+Scans the project that holds the current directory (so a worktree is scanned from inside it), else this tool's own checkout;
+--root overrides. The first output line prints the absolute scanned root, with a WARN when it is not the current directory's project.
 Case-insensitive. Skips top-level archives/, .archive_worktrees/, _logs/, docs/. Summary: _logs/xref/<stamp>-xref.txt.
 Old spellings: -Pattern -Path -Include -MaxHits -MaxFiles -Regex.
 """
@@ -29,7 +31,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-files", "-MaxFiles", type=int, default=20, help="Max files listed (default 20).")
     ap.add_argument("--regex", "-Regex", action="store_true", help="Treat the pattern as a regular expression.")
     args = ap.parse_args(argv)
-    root = agent_log.resolve_root(args)
+    cwd_root = None
+    if not args.root:
+        try:
+            cwd_root = agent_log.repo_root(Path.cwd())
+        except FileNotFoundError:
+            pass
+    root = agent_log.resolve_root(args.root or cwd_root)
     pattern = args.pattern or args.pattern_pos
     if not pattern:
         agent_log.fail("pass --pattern TEXT")
@@ -69,10 +77,11 @@ def main(argv: list[str] | None = None) -> int:
         if trunc:
             break
     mode = "regex" if args.regex else "simple"
-    body = [f"root=. pattern={pattern} mode={mode} include={args.include} path={','.join(paths)}",
+    where = f"root={root}" + (f" WARN: the current directory's project is {cwd_root}, not this root; pass --root {cwd_root}" if cwd_root and cwd_root != root else "")
+    body = [f"{where} pattern={pattern} mode={mode} include={args.include} path={','.join(paths)}",
             f"maxHits={args.max_hits} maxFiles={args.max_files} scanned={scanned} files={len(files_hit)} hits={len(hits)} truncated={trunc}",
             ""] + hits
-    echo = f"xref files={len(files_hit)} hits={len(hits)} scanned={scanned} truncated={trunc}"
+    echo = f"{where}\nxref files={len(files_hit)} hits={len(hits)} scanned={scanned} truncated={trunc}"
     echo += "".join("\n" + h for h in hits[:args.max_hits])
     if trunc:
         echo += "\nnext: more hits exist; narrow with --path/--include or raise --max-hits"

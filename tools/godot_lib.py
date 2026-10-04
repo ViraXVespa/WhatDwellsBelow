@@ -179,11 +179,12 @@ def pick_display() -> tuple[str, str]:
 
 def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path | None = None,
               err_log: Path | None = None, timeout: int = 120, lock_timeout: int = 120,
-              hold: int = 0, exe: str = "", gui: bool = False) -> dict:
+              hold: int = 0, exe: str = "", gui: bool = False, stop_on_compile: bool = True) -> dict:
     """Run Godot under the path lock. status: EXIT=<n> | COMPILE | TIMEOUT. Kills only its own pid.
 
     gui=True: the run needs a real renderer (pixels, light bakes). Uses pick_display(); result["display"]
-    is env|socket|xvfb|none (none still launches, so the run fails loudly)."""
+    is env|socket|xvfb|none (none still launches, so the run fails loudly).
+    stop_on_compile=False lets the run finish after a Parse/Compile Error line (default: kill at the first one)."""
     exe_path = godot_exe(exe)
     path = norm_path(godot_path)
     args = list(args)
@@ -217,7 +218,7 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
             if proc.poll() is not None:
                 ended = True
                 break
-            if COMPILE_RE.search(_read(err_log) + _read(out_log)):
+            if stop_on_compile and COMPILE_RE.search(_read(err_log) + _read(out_log)):
                 compile_hit = True
                 break
             time.sleep(0.25)

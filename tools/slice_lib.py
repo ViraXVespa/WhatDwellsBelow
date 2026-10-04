@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -13,6 +14,21 @@ import retry_lib
 
 CONFIRM = ("CONFIRM (Vira): the Grok docs do not say whether `-r ID` finds a session saved under another working directory "
            "(sessions are stored per directory). If grok reports the session missing, tell Vira.")
+
+
+VISUAL = {"ui", "theme", "visual"}
+
+
+def visual_gap(door: str, job: str, area: str, flows: str) -> str:
+    """Loud failure text for a visual slice (a ui / theme / visual word in the door, job or area name, split on . - / space)
+    whose routes.yaml `shot_flows` maps no flow; '' otherwise. It never picks or invents a flow."""
+    words = {w for name in (door, job, area) for w in re.split(r"[.\-/\s]+", name.lower()) if w}
+    if flows or not words & VISUAL:
+        return ""
+    name = job or door or area
+    return (f"NO SHOT FLOW: {name} is a visual slice and routes.yaml `shot_flows` maps no flow to it, so a visual change could not be shot, opened and shown. "
+            "Nothing is started and no FORK line is printed. Ask the User in a question prompt which screen or state to show, or create the flow first "
+            "(tools may be created: tools.md rule 5; `shot-flows.md` gap process; `run_shot_flow.py --list` shows what exists). Then rerun this command.")
 
 
 def fork_text(wt: str, ref: str, session: str) -> tuple[str, str]:
@@ -59,6 +75,11 @@ def selftest(script: Path) -> int:
         code, out = run(root, "--dry-run")
         if code == 0 or "FORK 1" in out or "FORK grok" in out or "NO WEEK BRANCH" not in out or "week_start.py" not in out:
             bad.append(f"no week branch: code={code} must fail loudly without a FORK line")
+        code, out = run(root, "--area", "ui-demo", "--ref", "HEAD", "--dry-run")
+        if code == 0 or "NO SHOT FLOW" not in out or "FORK 1" in out or "FORK grok" in out or "Ask the User" not in out:
+            bad.append("a visual area with no shot flow must fail loudly with no FORK line")
+        if visual_gap("ui", "ui.pause", "", "camp-pause-menu") or visual_gap("audio_visual", "", "", "") or visual_gap("hub", "", "", ""):
+            bad.append("flows mapped, or a non-visual name, must not fail")
         code, out = run(root, "--ref", "HEAD", "--dry-run")
         if code != 0 or "FORK grok --worktree=wdb-demo-" not in out or "--ref HEAD" not in out or "--fork-session" in out:
             bad.append("--ref HEAD without a session must print the fresh --worktree FORK line")
@@ -103,7 +124,7 @@ def retry_selftest() -> int:
         git(wt, "commit", "-qm", "b")
         red = ["SCRIPT ERROR: Parse Error: x"]
         no_ses = retry_lib.block(wt, "gate", red)
-        for need in ("NO MATCHING GATHER SESSION", "git diff grok-build-w9...HEAD", "No fresh session"):
+        for need in ("NO MATCHING GATHER SESSION", "git diff grok-build-w9", "No fresh session"):
             if need not in no_ses:
                 bad.append(f"no-session block lacks {need!r}")
         if "abc-123" in no_ses:
@@ -123,17 +144,24 @@ def retry_selftest() -> int:
         data.pop("label-only", None)
         retry_lib.state_path(main).write_text(__import__("json").dumps(data), encoding="utf-8")
         with_ses = retry_lib.block(wt, "gate", red)
-        for need in (f"grok --cwd {wt} -r abc-123 --fork-session", "git diff grok-build-w9...HEAD", "b.txt", "one diagnosis"):
+        for need in (f"grok --cwd {wt} -r abc-123 --fork-session", "git diff grok-build-w9", "b.txt", "one diagnosis"):
             if need not in with_ses:
                 bad.append(f"session block lacks {need!r}")
         if retry_lib.save_gather(main, "wdb-x-2", "", "r"):
             bad.append("empty session was saved")
+        (wt / "a.txt").write_text("edited\n")
+        (wt / "new.txt").write_text("untracked\n")
+        dirty = retry_lib.block(wt, "gate", red)
+        if "a.txt" not in dirty or "new.txt" not in dirty:
+            bad.append("uncommitted and untracked files must be listed")
+        if retry_lib.strip(["top", *dirty.splitlines(), "bottom"]) != ["top", "bottom"]:
+            bad.append("a nested RETRY block must be stripped")
         git(main, "branch", "-D", "grok-build-w9")
         gone = retry_lib.block(wt, "gate", red)
         if "NO BASE" not in gone or "git diff" in gone:
             bad.append("no-base block wrong")
         retry_lib.save_gather(main, "wdb-x-1", "abc-123", "my-ref")
-        if "git diff my-ref...HEAD" not in retry_lib.block(wt, "gate", red):
+        if "git diff my-ref`" not in retry_lib.block(wt, "gate", red):
             bad.append("saved ref not used as base")
     for b in bad:
         print("FAIL " + b)

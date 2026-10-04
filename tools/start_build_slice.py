@@ -80,6 +80,9 @@ def main(argv: list[str] | None = None) -> int:
             flows = ",".join(shot_flows(load_routes(root), door=args.door.strip(), job=args.job.strip()))
         except Exception:
             flows = ""
+    gap = slice_lib.visual_gap(args.door, args.job, args.area, flows)
+    if gap:
+        return agent_log.finish("slice-boot", root, gap, "FAIL", args=args, write=not args.dry_run, worktree=wt, session_ready=bool(session), route="no-shot-flow")
     week = repo_lib.week_branch(root)
     if not args.ref and not week:
         msg = ("NO WEEK BRANCH: no grok-build-w* branch exists, and no --ref was given. Nothing is started and no FORK line is printed (main is never the fallback). "
@@ -103,8 +106,9 @@ def main(argv: list[str] | None = None) -> int:
             "read-first=more than one system: list every system the job touches, read each one's doc and code-map row, then change",
             "gather=list_xref / show_func / code_map row for what the job needs; list_changed --history compares docs and code",
             "change=worktree only; this session does not cd. Stop after the FORK lines. Edits belong to the grok process started with --cwd <worktree path>",
-            "prove=UI or theme: shot flow plus the door UI load check, and a missing frame fails. Open the frames. A StyleBoxFlat recolor fails. Code that can fail compile: run_build_gate. Not both for a theme pass (tools.md rule 10)",
-            "visual=before code, ask the material, the one screen, and what must stay. Wait. Finish that screen and open its shot before any other menu. A named worktree is the slice. Do not cut another. Do not edit the main checkout.",
+            "restate=before any edit write the ask in your own words and what would be visible if it worked; ask the User what is unclear (grok-build.md)",
+            "prove=every pass: python tools/check_gd_load.py (loads each changed .gd with autoloads). Visual: shoot a baseline first; one unit, then open before and after and say what is on them, stop and ask the User with the PNG paths; after a rejection ask, do not edit. Read all output (build-job-cycle.md). Gate: run_build_gate once",
+            "worktree=a named worktree is the slice; do not cut another; edit by its path, never the main checkout.",
             f"smokes={smokes or 'n/a'} (run: tools/run_smokes.py --door/--job; add or update asserts for new systems)",
             f"flows={flows or 'n/a'} (headless: tools/bot_smokes.py --flows; pictures: tools/run_shot_flow.py --flow N; UI states: tools/check_shot_gaps.py --changed)",
             f"merge-back=on a green prove: commit in the worktree (its HEAD is detached, there is no branch), then in the checkout that holds {week or 'grok-build-w{N}'} (git worktree list): git merge --no-ff <worktree HEAD sha> (never main); balance, audio, visuals, controls: ask_user_question for playtest approval first",

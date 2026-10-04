@@ -234,7 +234,7 @@ def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], ta
         bad.append(f"NOISE   {label}: {lines} lines (budget {SMOKE_LINES.get(stem, SMOKE_MAX_LINES)})")
     if not out.isascii() and stem not in PRINTERS:
         bad.append(f"ASCII   {label}: non-ASCII output")
-    if sb.as_posix() in out and "--doctor" not in args:  # --doctor echoes the GODOT_BIN pin (a machine path)
+    if sb.as_posix() in out and "--doctor" not in args and stem != "list_xref":  # list_xref's first line prints the absolute root it scanned  # --doctor echoes the GODOT_BIN pin (a machine path)
         bad.append(f"ABSPATH {label}: prints absolute paths (use repo-relative)")
     if "--dry-run" in args and "--help" not in args:
         rc, status = repo_lib.run_git(sb, "status", "--porcelain")

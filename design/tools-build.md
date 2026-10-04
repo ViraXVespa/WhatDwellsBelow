@@ -11,6 +11,7 @@ Rules, CLI contract, surface key: `tools.md`. Runner habits: `pc-offload.md`. Su
 |---|---|---|---|---|
 | `godot_lib.py` | Godot launch + per-path lock library (kills only its own pid, never godot*). `gui=True` runs pick a display. | BD | module docstring (no `--help`) | Y |
 | `run_godot_import_check.py` | Editor import / script-reload check. RESULT `clean=true|false`. Summary: `godot-import-check`. | WD | `--help` | N |
+| `check_gd_load.py` | Compile check: loads each changed or untracked `.gd` (`--files`, `--all`, `--base`) inside the real project with its autoloads, so a stray `)` or a bad reference fails. Lists every failing file with Godot's error lines; prints stderr size and leading lines to read. Imports first if `.godot` is missing. `--selftest` (throwaway project). Summary: `gd-load-check`. | D | `--help` | N |
 | `run_post_split_gate.py` | Import check, then optional smokes. Summary: `post-split-gate`. | D | `--help` | N |
 | `run_smokes.py` | Phase smokes on the PC (Bot VM: `bot_smokes.py`); `--door` / `--job` pick the `routes.yaml` `smokes` phases. Prints `check_shot_gaps.py --changed --advisory`. Summary: `smokes`. | D | `--help` | N |
 | `run_load_timing.py` | Title -> Placeholdia load-timing smoke. Summary: `load-timing`. | WD | `--help` | N |
@@ -23,10 +24,10 @@ Rules, CLI contract, surface key: `tools.md`. Runner habits: `pc-offload.md`. Su
 | `clean_agent_logs.py` | Delete raw logs under `_logs/` (`--new-week` also every stamped summary and index). Summary: `clean`. | D | `--help` | N |
 | `read_summary.py` | Print a job's `index.txt` (newest first), then its newest summary (`--run N`, `--index`, `--path`; no args lists jobs). | WD | `--help` | N |
 | `list_changed.py` | Git-changed paths with on-disk bytes; `--history PATH...` shows each path's recent commits and which is newer (docs vs code). Summary: `changed`. | D | `--help` | N |
-| `list_xref.py` | Capped text search (case-insensitive). Summary: `xref`. | D | `--help` | N |
+| `list_xref.py` | Capped text search (case-insensitive) in the project holding the current directory; prints the absolute root it scanned. Summary: `xref`. | D | `--help` | N |
 | `list_scenes.py` | `.tscn` nodes and scripts without dumping scenes. Summary: `scenes`. | D | `--help` | N |
 | `list_facade_cluster.py` | A facade + its stem-folder helpers by bytes. Summary: `facade-cluster`. | D | `--help` | N |
-| `start_build_slice.py` | Resolve a route; print the grok commands that open the worktree (`grok worktree create NAME --ref REF`, then `grok --cwd PATH -r ID --fork-session`; without a gather session a fresh `grok --worktree=NAME --ref REF`) (default ref the week branch `grok-build-w{N}`; none and no `--ref`: fails, ask the User), job card, phases, merge-back; saves the gather session id for retries. `--selftest`. Summary: `slice-boot`. | D | `--help` | N |
+| `start_build_slice.py` | Resolve a route; print the grok commands that open the worktree (`grok worktree create NAME --ref REF`, then `grok --cwd PATH -r ID --fork-session`; without a gather session a fresh `grok --worktree=NAME --ref REF`) (default ref the week branch `grok-build-w{N}`; none and no `--ref`: fails, ask the User; a ui / theme / visual door, job or area with no `shot_flows`: fails, ask the User or create the flow), job card, phases, merge-back; saves the gather session id for retries. `--selftest`. Summary: `slice-boot`. | D | `--help` | N |
 | `week_start.py` | Week start from main: seed `epoch.N.0`, park changelogs, branch `grok-build-w{N}` + seed commit, `grok worktree gc`, locks, logs. Pins only a missing closing-week row (catch-up). **Human-only (QUARANTINE).** | D | `--help` | N |
 
 ### Session reports (User)

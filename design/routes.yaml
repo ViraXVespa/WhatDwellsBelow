@@ -364,6 +364,7 @@ shot_flows:
   dungeon: "dungeon-f1-spawns,dungeon-f2-spawns,dungeon-f3-spawns,dungeon-f4-spawns,dungeon-f1-props,dungeon-f1-boss,dungeon-hud-states,dungeon-f1-ambush,dungeon-f2-ambush,dungeon-f3-ambush,dungeon-f4-ambush,dungeon-f3-elites,dungeon-all-enemies"
   ui.pause: "camp-pause-menu"
   ui.run_flow: "camp-recap"
+  ui.hud: "dungeon-hud-states"
 
 # New UI states with no shot flow (check_shot_gaps.py --changed): Bot and Build both FAIL
 # on a new uncovered state (bot_smokes.py, run_build_gate.py --batch, and a Build UI or theme prove).

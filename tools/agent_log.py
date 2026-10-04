@@ -245,8 +245,9 @@ def finish(
         import retry_lib
 
         note = retry_lib.block(root, retry[0], retry[1])
+        body = "\n".join(retry_lib.strip(body))
         body = (body.rstrip("\n") + "\n\n" if body else "") + note
-        echo = None if echo is None else echo.rstrip("\n") + "\n\n" + note
+        echo = None if echo is None else "\n".join(retry_lib.strip(echo)).rstrip("\n") + "\n\n" + note
     if write:
         d = ensure_agent_log_dir(job, root)
         path = run_log_lib.summary_path(d, job)
