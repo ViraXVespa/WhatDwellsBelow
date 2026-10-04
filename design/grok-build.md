@@ -3,7 +3,7 @@
 Status: protocol
 Read when: Grok Build (CLI) path; every CLI instance after a gap
 
-**Intent.** Vira is the conduit for design; Build is the conduit for implementation. Make her vision real with little friction. The design docs are a living plan, not a fixed route. Defer to her on design; suggest improvements and ask in the moment with a question prompt. Hard rules: gates before a PR, no hand-edited PNGs, no gate loops, never push `main`.
+**Intent.** Vira is the conduit for design; Build is the conduit for implementation. Make her vision real with little friction. The design docs are a living plan, not a fixed route. Defer to her on design; suggest improvements and ask in the moment with a question prompt. Hard rules: gates before a PR, no gate loops, never push `main`.
 
 You can write the live tree. Second topic door: read it when the job touches that system (read-first, below); ask the User to name the owner before adding a new cross-system owner. Concurrent CLI chats: Slice, Bot notes, PC offload, Smoke tests. Do not fold in another role unless named.
 
@@ -21,7 +21,7 @@ Classify the request: **new feature / new system** (something the game lacks, or
 New feature flow (in order; chain the steps and report at the end):
 1. Owner: `python tools/list_route.py --door <door>`. No door or doc owns it (or it needs a second door) = a new or undocumented system: plan it (door, doc name, save keys, entry events, smokes) and ask every open question in one batch (Design: Vira decides); wait.
 2. Design doc first: write or extend the owning topic via `tools/doc_patch.py` (what, where it lives, save keys, entry events), then implement.
-3. Prove: the smoke phases mapped to the door (`routes.yaml` `smokes`, printed by `start_build_slice.py`) plus any assert or phase this feature needs (update or add: `build-job-cycle.md`). Pictures and UI-state proof: `shot-flows.md` (scripted flows via `run_shot_flow.py`, `routes.yaml` `shot_flows` printed by `start_build_slice.py`; `check_shot_gaps.py --changed` for new UI states, advisory: it prints, never fails; published frames go to `_out/shots/<flow>/` and Build places any asset copy itself, tooling never writes under `assets/`; extend the tool when it cannot stage the state).
+3. Prove: match the change. A UI, theme, or other visual change proves with the door's shot flow (`run_shot_flow.py`, `routes.yaml` `shot_flows`) and that door's UI load check (`routes.yaml` `smokes`; the `ui` door is phase 7). Look at the frames. `check_shot_gaps.py --changed` failing is a failed prove, not a print. An import check (`run_build_gate.py`) or an unrelated smoke set is for a code change that can fail compile, not for a theme pass. Packing and image tools may write under `assets/` when that is their job.
 4. Ship notes: `code_map.py patch` for touched live scripts, `tunables.md` for any number, `check_load_graph.py` when routes or docs moved. Build writes no changelog files (notes go in the commit message; the week-close `0.N.0.md` is a web session's: `versioning.md`). Then merge back (below); report rough edges.
 
 ## Read
@@ -56,4 +56,4 @@ Archive pins are CI-only (`versioning.md`, `archive_catalog.json`); do not inven
 
 Proof rules (`prove.md`): one-line intended outcome before a behavior change; a missing required asset fails loudly (no fallback without the User's OK); report "gates pass", not "proved"; look and sound are unverified until the User confirms.
 
-Gates: `design/tools.md` rule 10 (batch, once, at most 2 reruns). Prefer `python tools/run_build_gate.py` and `python tools/read_summary.py --job build-gate` (import check plus an advisory `check_shot_gaps.py --changed` print). Never hand-edit `version.json`. Do not commit `_logs/`. Report rough edges (rule 9) and fix tool ones in the same task.
+Gates: `design/tools.md` rule 10 (batch, once, at most 2 reruns). A code change uses `python tools/run_build_gate.py` and `python tools/read_summary.py --job build-gate`. A UI or theme change uses `run_shot_flow.py` and the door's UI load check; a missing or stale frame fails the prove. Never hand-edit `version.json`. Do not commit `_logs/`. Report rough edges (rule 9) and fix tool ones in the same task.
