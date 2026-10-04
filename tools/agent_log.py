@@ -117,6 +117,20 @@ def resolve_root(args_or_hint: object = None) -> Path:
         fail(str(exc))
 
 
+def cwd_scan_root(args: object) -> tuple[Path, str]:
+    """(root, `root=<absolute>` line) for a tool that scans a project: --root, else the current directory's project (else the tool's own).
+    The line carries a WARN when the scanned root is not the current directory's project."""
+    hint = getattr(args, "root", None)
+    cwd_root = None
+    if not hint:
+        try:
+            cwd_root = repo_root(Path.cwd())
+        except FileNotFoundError:
+            pass
+    root = resolve_root(hint or cwd_root)
+    return root, f"root={root}" + (f" WARN: the current directory's project is {cwd_root}, not this root; pass --root {cwd_root}" if cwd_root and cwd_root != root else "")
+
+
 def fail(msg: str, code: int = 2) -> "None":
     print(f"error: {msg}", file=sys.stderr)
     raise SystemExit(code)

@@ -1,4 +1,4 @@
-"""start_build_slice.py / open_slice.py helpers: the START lines, the area check, the worktree checkpoint, the NO SHOT FLOW check and the selftests (`python tools/start_build_slice.py --selftest`)."""
+"""start_build_slice.py / open_slice.py helpers: the START lines, the area check, the worktree checkpoint, the STEP 0 (missing flow) note and the selftests (`python tools/start_build_slice.py --selftest`)."""
 from __future__ import annotations
 
 import os
@@ -14,23 +14,25 @@ import retry_lib
 VISUAL = {"ui", "theme", "visual"}
 
 
-def visual_gap(door: str, job: str, area: str, flows: str) -> str:
-    """Loud failure text for a visual slice (a ui / theme / visual word in the door, job or area name, split on . - / space)
-    whose routes.yaml `shot_flows` maps no flow; '' otherwise. It never picks or invents a flow."""
+def step0_note(door: str, job: str, area: str, flows: str, near: str = "") -> str:
+    """STEP 0 text for a visual slice (a ui / theme / visual word in the door, job or area name, split on . - / space) whose routes.yaml
+    `shot_flows` maps no flow to it; '' otherwise. A note, never a stop: creating the flow is the first job step. `near` = flows mapped
+    to the door only, shown as possibly another screen."""
     words = {w for name in (door, job, area) for w in re.split(r"[.\-/\s]+", name.lower()) if w}
     if flows or not words & VISUAL:
         return ""
     name = job or door or area
-    return (f"NO SHOT FLOW: {name} is a visual slice and routes.yaml `shot_flows` maps no flow to it, so a visual change could not be shot, opened and shown. "
-            "Nothing is started and no START line is printed. Ask the User in a question prompt which screen or state to show, or create the flow first "
-            "(tools may be created: tools.md rule 5; `shot-flows.md` gap process; `run_shot_flow.py --list` shows what exists). Then rerun this command.")
+    return (f"STEP 0 (not a stop): no shot flow is mapped to {name} in routes.yaml `shot_flows`. Creating or adjusting the flow for the exact screen is the first job step, "
+            "and flow files (tools/shot-flows/) plus the routes.yaml mapping may be edited before the User answers. In the worktree: `python tools/run_shot_flow.py --list` "
+            "shows what exists; copy the nearest flow (shot-flows.md, New UI state checklist), point it at the screen, map it by job, shoot it and OPEN the PNG. "
+            "Say whether that PNG is the screen being changed, and send its path with the ask."
+            + (f" Mapped to the door only, so possibly another screen: {near}." if near else ""))
 
 
 def slice_check(root: Path, name: str) -> tuple[str, str, str, str]:
-    """(door, job, flows, gap) for an area the user typed: a routes.yaml job or door when it is one, else a free area name.
-    gap is the NO SHOT FLOW text for a visual slice with no mapped flow, else ''."""
-    door = job = ""
-    flows = ""
+    """(door, job, flows, note) for an area the user typed: a routes.yaml job or door when it is one, else a free area name.
+    flows = the job's own mapping (no door fallback); note = the STEP 0 text for a visual slice with no flow, else ''."""
+    door = job = flows = near = ""
     try:
         from load_routes import check_route, load_routes, shot_flows
 
@@ -39,10 +41,12 @@ def slice_check(root: Path, name: str) -> tuple[str, str, str, str]:
             job = name
         elif name and not check_route(data, name, ""):
             door = name
-        flows = ",".join(shot_flows(data, door=door, job=job)) if (door or job) else ""
+        if door or job:
+            flows = ",".join(shot_flows(data, door=door, job=job, job_only=True))
+            near = ",".join(shot_flows(data, door=door or job.split(".", 1)[0])) if job and not flows else ""
     except Exception:
         pass
-    return door, job, flows, visual_gap(door, job, "" if (door or job) else name, flows)
+    return door, job, flows, step0_note(door, job, "" if (door or job) else name, flows, near)
 
 
 FORK_FACT = ("A fork keeps the directory of the session it forks, and --fork-session cannot be combined with --worktree, so a session "
@@ -55,11 +59,11 @@ def start_text(wt: str, ref: str) -> str:
             "START 2 (a NEW session; its directory is then the worktree): cd <that path>   then   grok\n"
             f"Or both in one step: grok --worktree={wt} --ref {ref}\n"
             "This session stops here: no gather, no edits, and it never starts grok (no fork, no headless run, no --prompt-file, no --max-turns).\n"
-            "Paste the task into the new session: restate the ask, gather, then `python tools/start_build_slice.py --checkpoint`.\n" + FORK_FACT)
+            "Paste the task into the new session: open the baseline picture, restate the ask, ask your questions, gather, then `python tools/start_build_slice.py --checkpoint`.\n" + FORK_FACT)
 
 
 def in_worktree_text() -> str:
-    return ("IN A WORKTREE: this directory is the slice; do not create another. Restate the ask, gather, then run "
+    return ("IN A WORKTREE: this directory is the slice; do not create another. Open the baseline picture, restate the ask, ask the User your questions, gather, then run "
             "`python tools/start_build_slice.py --checkpoint`. This tool never starts grok.")
 
 
@@ -112,10 +116,15 @@ def selftest(script: Path) -> int:
         if code == 0 or "START 1" in out or "NO WEEK BRANCH" not in out or "week_start.py" not in out:
             bad.append(f"no week branch: code={code} must fail loudly without a START line")
         code, out = run(root, "--dry-run", area="ui-demo")
-        if code == 0 or "NO SHOT FLOW" not in out or "START 1" in out or "Ask the User" not in out:
-            bad.append("a visual area with no shot flow must fail loudly with no START line")
-        if visual_gap("ui", "ui.pause", "", "camp-pause-menu") or visual_gap("audio_visual", "", "", "") or visual_gap("hub", "", "", ""):
-            bad.append("flows mapped, or a non-visual name, must not fail")
+        if code == 0 or "NO WEEK BRANCH" not in out:
+            bad.append("no week branch still fails for a visual area")
+        if not step0_note("", "", "ui-demo", "") or "not a stop" not in step0_note("ui", "ui.x", "", "", "camp-a") or "camp-a" not in step0_note("ui", "ui.x", "", "", "camp-a"):
+            bad.append("a visual slice with no flow must give the STEP 0 note (naming the door-only flows)")
+        if step0_note("ui", "ui.pause", "", "camp-pause-menu") or step0_note("audio_visual", "", "", "") or step0_note("hub", "", "", ""):
+            bad.append("flows mapped, or a non-visual name, must give no note")
+        code, out = run(root, "--area", "ui-demo", "--ref", "HEAD", "--dry-run", area="")
+        if code != 0 or "STEP 0 (not a stop)" not in out or "START 1" not in out:
+            bad.append("a visual area with no flow must print STEP 0 and still print START, exit 0")
         code, out = run(root, "--ref", "HEAD", "--dry-run")
         if code != 0 or "grok worktree create wdb-demo-" not in out or "grok --worktree=wdb-demo-" not in out or "cd <that path>" not in out or "--ref HEAD" not in out:
             bad.append("--ref HEAD must print the worktree create, cd + grok, and one-step lines")

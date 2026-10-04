@@ -86,7 +86,7 @@ def _job_card(data: dict, job_id: str) -> list[str]:
     ]
     lines.extend(_gate_lines(data))
     lines.append("smokes\t%s" % ",".join(map(str, smoke_phases(data, door=door_name, job=job_id))))
-    lines.append("flows\t%s" % (",".join(shot_flows(data, door=door_name, job=job_id)) or "none"))
+    lines.append("flows\t%s" % (",".join(shot_flows(data, door=door_name, job=job_id, job_only=True)) or "none"))
     lines.append("note\topen this job sibling only; gates only if when matches")
     return lines
 

@@ -34,7 +34,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 - Shebang `#!/usr/bin/env python3`, `argparse` (`agent_log.std_parser`), a non-mutating `--help`, ASCII output.
 - Ops tools take `--root`, writers take `--dry-run`, every `std_parser` tool takes `--json` (stdout is then one JSON object). Errors go to stderr as `error: ...`. Exit 0 ok, 1 findings, 2 usage.
 - Last line is `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`; no `Summary -> <abs>` line. Exempt: printers and `wdb_scratch_server`.
-- Read and write text through `md_format_lib` (BOM and line endings kept). Paths printed are repo-relative POSIX (exception: `list_xref.py` prints the absolute root it scanned).
+- Read and write text through `md_format_lib` (BOM and line endings kept). Paths printed are repo-relative POSIX (exception: `list_xref.py`, `show_func.py`, `file_stat.py`, `list_changed.py` and `read_summary.py` print the absolute root they read, with a WARN when it is not the current directory's project).
 
 ## Run when
 

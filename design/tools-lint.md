@@ -9,7 +9,7 @@ Rules, the CLI contract and the surface key (Surf, A) are in `tools.md`. Same ta
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
-| `file_stat.py` | Bytes, BOM, CRLF/LF, indent for a path or glob (verify a split kept them). Summary: `file-stat`. | BD | `--help` | Y |
+| `file_stat.py` | Bytes, BOM, CRLF/LF, indent for a path or glob (verify a split kept them); prints the absolute root it read. Summary: `file-stat`. | BD | `--help` | Y |
 | `summarize_scripts.py` | Func inventory per `.gd` (`--path`, `--top-funcs`) | BD | `--help` | Y |
 | `lint_hostify.py` | Advisory scan for `:=`/load inference and host pitfalls; always exits 0 (RESULT INFO) | BD | `--help` | Y |
 | `list_dupes.py` | Duplicate finder (read-only): exact / shape / near function clones and verbatim or literal-masked line blocks across `scripts/**/*.gd` and `tools/*.py`, ranked by (copies-1) x lines. `--lang gd\|py\|all`, `--min-lines`, `--min-block`, `--md PATH`. Feeds `design/reuse-map.md`. Summary: `dupes`. | B | `--help` | Y |
@@ -20,7 +20,7 @@ Rules, the CLI contract and the surface key (Surf, A) are in `tools.md`. Same ta
 | `agent_log.py` | Run helpers: `std_parser`, `resolve_root`, `finish`/`emit_result` (RESULT line, `retry=` for the red-prove prompt), stamped `_logs/<job>` paths. `--selftest` checks the log layout. | BD | `--help` | Y |
 | `run_log_lib.py` | Run-log layout: one `<stamp>-<job>.txt` per run, `index.txt` newest first, keep the last 20, `clear` for the weekly clean | BD | module docstring (no `--help`) | Y |
 | `retry_lib.py` | Red-prove RETRY block: `grok -r CHECKPOINT --fork-session` for the User to run from the worktree, plus the paste-ready prompt (failed prove, red lines, files in the diff from the week branch); saves/reads the checkpoint (gather session id). `--selftest` | BD | module docstring (no `--help`) | Y |
-| `slice_lib.py` | `start_build_slice.py --selftest` cases and the `open_slice.py` area check (no week branch fails, NO SHOT FLOW, START lines, checkpoint) | D | module docstring (no `--help`) | Y |
+| `slice_lib.py` | `start_build_slice.py --selftest` cases and the `open_slice.py` area check (no week branch fails, the STEP 0 missing-flow note, START lines, checkpoint) | D | module docstring (no `--help`) | Y |
 | `bot_gate_lib.py` | Bot-mode switch for the Bot's own checks (`--bot`, `WDB_BOT`, CI) and the Bot budgets in `bot_budgets.json` | BWD | module docstring (no `--help`) | Y |
 | `bot_budgets.json` | Budgets read by `bot_gate_lib` in Bot mode | B | - | Y |
 | `write_utf8_file.py` | Shim -> `doc_patch.py write` (`--path`, `--bom`, `--b64`), one release | BD | `--help` | Y |
@@ -37,4 +37,4 @@ Rules, the CLI contract and the surface key (Surf, A) are in `tools.md`. Same ta
 | `patch_code_map.py` | Shim -> `code_map.py patch`, one release | BD | `--help` | Y |
 | `code_map_lib.py` | Code-map row parser/writer used by `code_map.py` | BD | module docstring (no `--help`) | Y |
 | `list_oversize_docs.py` | Bot-only doc sweep (runs with `--bot`): `design/*.md` by size, `--boot` boot-chain bytes, `--dupes` sentences repeated across docs | B | `--help` | Y |
-| `list_route.py` | Print one `routes.yaml` door or job card (`--job door.job`), incl. smoke phases and shot flows; gates print as a count (`--gates` lists names and triggers), `flows: none` when empty; no args lists the doors | BD | `--help` | Y |
+| `list_route.py` | Print one `routes.yaml` door or job card (`--job door.job`), incl. smoke phases and shot flows; gates print as a count (`--gates` lists names and triggers), `flows: none` when empty (a job shows only its own key); no args lists the doors | BD | `--help` | Y |

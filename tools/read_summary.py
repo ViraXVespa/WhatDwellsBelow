@@ -27,10 +27,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--index", action="store_true", help="Print only the run index of the job.")
     ap.add_argument("--run", type=int, default=1, help="Which run's summary to print: 1 = newest (default), 2 = the one before.")
     args = ap.parse_args(argv)
-    root = agent_log.resolve_root(args)
+    root, where = agent_log.cwd_scan_root(args)
     job = args.job or args.job_pos
     logs = root / "_logs"
     names = sorted(d.name for d in logs.iterdir() if d.is_dir() and run_log_lib.latest(d)) if logs.is_dir() else []
+    print(where)
     if not job and not args.path:
         print("usage: python tools/read_summary.py --job <name>")
         print("jobs: " + (", ".join(names) or "(none yet)"))

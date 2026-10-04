@@ -9,8 +9,9 @@ handing the terminal over (inherited stdio; the exit code of grok on Windows, os
 the session starts blank. The prompt is read by this tool and passed as one argument. It never uses --fork-session (cannot be
 combined with --worktree), -p, --prompt-file or --max-turns (those make single-turn headless runs). If grok is not on PATH, or
 the launch fails, the command is printed to copy and the exit code is 1.
-With AREA (a routes.yaml door, door.job, or a free name) the slice-boot checks run first, so a visual slice with no shot_flows
-fails (NO SHOT FLOW) before anything starts. Without AREA there are no checks: Build runs start_build_slice.py inside the worktree.
+With AREA (a routes.yaml door, door.job, or a free name) the area is resolved first; a visual slice with no shot_flows prints a STEP 0
+note (creating the flow is the first job step, not a stop) and the launch continues. Without AREA there are no checks: Build runs
+start_build_slice.py inside the worktree.
 This is the only tool that launches grok for a Build slice (the isolated-media runner is the other launcher, under its own gate).
 --selftest: dry-run cases in a throwaway repo; no grok is ever started.
 """
@@ -66,10 +67,9 @@ def main(argv: list[str] | None = None) -> int:
         return end("NO WEEK BRANCH: no grok-build-w* branch exists and no --ref was given, so nothing is started (main is never the fallback). "
                    "Ask Vira whether to start a new week (`python tools/week_start.py`), or pass --ref REF.", "FAIL", route="no-week-branch")
     area = args.area.strip()
+    note = ""
     if area:
-        _, _, _, gap = slice_lib.slice_check(root, area)
-        if gap:
-            return end(gap, "FAIL", route="no-shot-flow")
+        _, _, _, note = slice_lib.slice_check(root, area)
     prompt = args.prompt
     if args.prompt_file:
         try:
@@ -84,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
     exe = shutil.which("grok")
     cmd = build_argv(exe or "grok", name, ref, prompt)
     lines = [f"repo={root} ref={ref} worktree={name}", f"COMMAND (run from the repo root): {show(cmd)}"]
-    lines.append(f"area={area}: slice-boot checks passed." if area else
+    lines.append((f"area={area}: resolved." + (f"\n{note}" if note else "")) if area else
                  "No area given, so no route checks ran. In the new session Build runs `python tools/start_build_slice.py --door <door>` (it says IN A WORKTREE).")
     if dry:
         return end("\n".join(lines + ["dry run: grok was not started."]), "PASS", route="dry-run")
@@ -146,10 +146,10 @@ def selftest(script: Path) -> int:
         if code == 0 or "BAD PROMPT" not in out:
             bad.append("a prompt starting with '-' must fail")
         code, out = run(root, "--dry-run", "ui-demo")
-        if code == 0 or "NO SHOT FLOW" not in out or "COMMAND" in out:
-            bad.append("a visual area with no shot flow must fail before any command")
+        if code != 0 or "STEP 0 (not a stop)" not in out or "COMMAND" not in out:
+            bad.append("a visual area with no shot flow must print STEP 0 and still print the command")
         code, out = run(root, "--dry-run", "player")
-        if code != 0 or "wdb-player-" not in out or "slice-boot checks passed" not in out:
+        if code != 0 or "wdb-player-" not in out or "resolved" not in out:
             bad.append("a plain area names the worktree and passes the checks")
         gitdir = str(Path(shutil.which("git") or "").parent)
         if not shutil.which("grok", path=gitdir):  # PATH = git's folder only, so grok cannot be found or started

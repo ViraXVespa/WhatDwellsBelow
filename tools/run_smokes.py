@@ -25,7 +25,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--door", default="", help="Run the phases mapped to this routes.yaml door.")
     ap.add_argument("--job", default="", help="Run the phases mapped to this routes.yaml door.job.")
     ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=120, help="Seconds per smoke phase (default 120).")
-    ap.add_argument("--no-gaps", action="store_true", help="skip the advisory check_shot_gaps --changed print")
+    ap.add_argument("--no-gaps", action="store_true", help="skip the mid-slice check_shot_gaps --changed print (the END gate is run_build_gate.py, required per routes.yaml)")
     ap.add_argument("--verbose-godot", "-VerboseGodot", action="store_true", help="Pass --verbose to Godot (leak detail rows).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
@@ -61,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
         if shot_gaps_mode(load_routes(root), "build") != "off":
             adv = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "check_shot_gaps.py"),
                                   "--changed", "--advisory", "--root", str(root)], check=False)
-            body += [f"--- shot gaps advisory exit={adv.returncode} (never fails Build) ---", ""]
+            body += [f"--- shot gaps advisory exit={adv.returncode} (mid-slice print; the END gate run_build_gate.py is required) ---", ""]
     return agent_log.finish("smokes", root, "\n".join(body), "FAIL" if fail else "PASS", args=args, retry=(f"run_smokes.py phases {','.join(map(str, phases))}", body), fail_signals=fail)
 
 

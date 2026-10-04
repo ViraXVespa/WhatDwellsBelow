@@ -351,8 +351,10 @@ smokes:
   art_pipeline: "9"
   archives: "9"
 
-# Build prove: scripted shot flows (tools/shot-flows/*.json) per door or door.job (job key wins). Headless asserts:
-# bot_smokes.py --flows; pictures: run_shot_flow.py --flow N. Printed by list_route and start_build_slice.
+# Build prove: scripted shot flows (tools/shot-flows/*.json) per door or door.job. A job maps only to its own key (its door's flows
+# are shown as "door-level, maybe not this screen", never as the job's). A visual job with no key gets a STEP 0 note at slice start
+# (creating the flow and adding its key here is the first job step, not a stop). Headless asserts: bot_smokes.py --flows;
+# pictures: run_shot_flow.py --flow N. Printed by list_route and start_build_slice.
 shot_flows:
   hub: "camp-receptionist-menu,camp-anvil-tabs,camp-billboard-controls,camp-npc-panels,camp-inventory"
   hub.guild: "camp-receptionist-menu"
@@ -367,8 +369,8 @@ shot_flows:
   ui.run_flow: "camp-recap"
   ui.hud: "dungeon-hud-states"
 
-# New UI states with no shot flow (check_shot_gaps.py --changed): Bot and Build both FAIL
-# on a new uncovered state (bot_smokes.py, run_build_gate.py --batch, and a Build UI or theme prove).
+# New UI states with no shot flow (check_shot_gaps.py --changed): Bot and Build both FAIL at the END gates (bot_smokes.py,
+# run_build_gate.py, a Build UI or theme prove) on a new uncovered state. The START of a slice never fails on a missing flow.
 shot_gaps:
   bot: required
   build: required

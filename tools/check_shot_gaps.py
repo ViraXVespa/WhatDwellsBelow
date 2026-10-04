@@ -11,8 +11,10 @@ interact:K; an assert on host.ui.mode equals M covers ui:M). Reports:
   problem   a flow with no shot or no assert, a covers entry naming no state, a publish manifest that is
             missing files or stale (file sha differs from shots.json).
 RESULT PASS = no gaps or problems, INFO = gaps only, FAIL = problems, uncovered new states, or gaps under --strict.
-Gate mode (routes.yaml shot_gaps): Bot = required (bot_smokes.py, run_build_gate.py --batch call it with --changed and
-FAIL on a new gap); Build = advisory (run_smokes.py, plain run_build_gate.py pass --advisory: prints, status INFO, exit 0).
+Gate mode (routes.yaml shot_gaps: bot required, build required): the END gates FAIL on a new uncovered state - bot_smokes.py,
+run_build_gate.py (--batch reads the bot key, plain reads the build key) and a Build UI or theme prove. run_smokes.py (mid-slice
+smoke run) only prints it with --advisory. The START of a slice never fails on a missing flow (start_build_slice.py prints a
+STEP 0 note); the flow must exist before the prove passes.
 """
 from __future__ import annotations
 

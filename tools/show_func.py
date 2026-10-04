@@ -30,10 +30,10 @@ def main(argv: list[str] | None = None) -> int:
         args.name = args.pos[1]
     if not (args.path and args.name):
         agent_log.fail("pass PATH and NAME (example: show_func.py scripts/app.gd _ready)")
-    root = agent_log.resolve_root(args)
+    root, where = agent_log.cwd_scan_root(args)
     rel = args.path.replace("\\", "/").lstrip("/")
     src = root / rel
-    head = [f"show_func path={rel} name={args.name}", "root=."]
+    head = [f"show_func path={rel} name={args.name}", where]
     if not src.is_file():
         agent_log.finish("show-func", root, "\n".join(head), "FAIL", args=args, legacy=False, error="missing")
         return 2

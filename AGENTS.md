@@ -14,7 +14,7 @@ Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 | **Web / chat** | You cannot write the repo | `design/web-session.md`. Never assume a disk write landed. |
 | **Grok Bot** | Grok Bot / The Refactorer, or a named Bot / refactor sweep | `BOT.md`, then `python tools/bot_status.py`, then one printed Job file. Refactor only, plus a `tools/` runner the User approved. Smokes, shots, gates: `BOT.md`. Ship via branch + PR. |
 
-If unsure: ask once, then **web / chat**.
+If unsure: ask, then **web / chat**.
 
 ## Shared
 
@@ -37,4 +37,4 @@ Do not fetch this file again. Routing work: `design/load-graph.md`.
 
 Build pickup is git plus `read_summary.py --job <name>` (`_logs/` is PC job output). Fresh Build: this file, then `design/grok-build.md`. A doc and its code disagree: compare history (`list_changed.py --history`, `design/prove.md`), trust the newer, ask if unclear.
 Imagine (Build only): `design/isolated-media.md` first. Web / chat and Grok Bot never run the isolated runner.
-Chain related steps; report when done, with the rough edges you hit (`tools.md` rule 9). Build and Web may add a tool that will help later (rule 5) and tell the User.
+Ask as many questions, in as many rounds, as the job needs. Report when done, with rough edges (`tools.md` rule 9). Build and Web may add a tool that will help later (rule 5) and tell the User.
