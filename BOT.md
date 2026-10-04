@@ -44,7 +44,7 @@ Proof recipes by change kind (shots, layout, keying) and extend-the-tools-not-wo
 CI: .github/workflows/bot-gate.yml. Allowlist: tools/bot_allow.txt (default deny; deny lines first).
 Stale docs: `design/` and `tools/` are allowlisted, so fix stale doc lines in the job you are on. When the current truth is unclear, do not guess: list the line under `Stale doc lines (for the User)` in the PR body (file, line, what it says, what it might say).
 Measure: os.path.getsize (10,000-byte floor). Touched live `scripts/**/*.gd` ship under 10KB; split with `design/refactor.md` (recipe only; the 5KB target is only `design/grok-bot-size.md`).
-Do not open `design/reuse-map.md` except from `design/grok-bot-reuse.md` when that brief is not the empty template.
+Do not open the reuse map except from `design/grok-bot-reuse.md` when that brief is not the empty template.
 New `tools/` runners: `design/tools.md` rule 5 (propose first). Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
 Gates: batch same-kind fixes, run once, at most 2 reruns (`design/tools.md` rule 10).
 
