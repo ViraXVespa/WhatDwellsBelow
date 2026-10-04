@@ -1,5 +1,6 @@
 extends Object
 
+const LocS := preload("res://scripts/app/app_loc.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const Balance := preload("res://scripts/data/balance.gd")
@@ -68,7 +69,7 @@ static func cancel_job(ui: CanvasLayer) -> void:
 	if ui.get("forge_batch") is Array:
 		made = ui.forge_batch.size()
 	if made > 0:
-		ui._st(App.tr("anvil_forge_job.stopped_the_queue_pick_from") % [made, "" if made == 1 else "s"])
+		ui._st(LocS.plural("anvil_forge_job.stopped_the_queue_pick_from", made) % made)
 		_open_pick(ui)
 		return
 	ui.forge_phase = ""

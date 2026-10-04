@@ -17,10 +17,11 @@ static func loop_index(floor_n: int) -> int:
 static func is_gate_master(floor_n: int) -> bool:
 	return loop_index(floor_n) == 5
 
+static func boss_role(floor_n: int) -> String:
+	return "gate_master" if is_gate_master(floor_n) else "guardian"
+
 static func boss_title(floor_n: int) -> String:
-	if is_gate_master(floor_n):
-		return "Gate Master"
-	return "Floor Guardian"
+	return App.tr("boss." + boss_role(floor_n))
 
 static func idx(x: int, y: int, w: int) -> int:
 	return Doors.idx(x, y, w)
@@ -40,6 +41,7 @@ static func generate(floor_n: int, run_seed: int, bal: Object) -> Dictionary:
 			data["floor"] = floor_n
 			data["cycle"] = cycle_of(floor_n)
 			data["boss_title"] = boss_title(floor_n)
+			data["boss_role"] = boss_role(floor_n)
 			data["gate_master"] = is_gate_master(floor_n)
 			LoadTiming.dmark("gen_carve")
 			Outline.stamp(data, rng, bal)
@@ -156,6 +158,7 @@ static func _fallback(floor_n: int, w: int, h: int, bal: Object) -> Dictionary:
 	data["floor"] = floor_n
 	data["cycle"] = cycle_of(floor_n)
 	data["boss_title"] = boss_title(floor_n)
+	data["boss_role"] = boss_role(floor_n)
 	data["gate_master"] = is_gate_master(floor_n)
 	Outline.stamp(data, rng, bal)
 	return data

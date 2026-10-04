@@ -29,13 +29,14 @@ static func setup(host: Node, id: String, floor_n: int, named := false, given_na
 	HpBarS.ensure(host)
 	host.call_deferred("_mark_post")
 
-static func setup_boss(host: Node, title: String, floor_n: int) -> void:
+static func setup_boss(host: Node, role: String, floor_n: int) -> void:
 	host.is_boss = true
+	host.boss_role = role
 	host.add_to_group("boss")
 	var id := "orc"
 	host.role = "melee"
 	host.move_kind = "walk"
-	if title == "Gate Master":
+	if role == "gate_master":
 		id = "shaman"
 		host.role = "mage"
 		host.move_kind = "walk"
@@ -44,22 +45,22 @@ static func setup_boss(host: Node, title: String, floor_n: int) -> void:
 	host.combat_lv = resolve_cl(host, floor_n, true)
 	var scaled: Dictionary = Threat.apply(float(d.hp) * App.bal.enemy_hp_mult, float(d.dmg) * App.bal.enemy_dmg_mult * 1.8, float(d.def) + 10.0, host.combat_lv)
 	var mult: float = App.bal.boss_hp_mult
-	if title == "Gate Master":
+	if role == "gate_master":
 		mult *= 1.35
 	host.hp = float(scaled.hp) * mult
 	host.max_hp = host.hp
 	host.damage = float(scaled.dmg)
 	host.defense = float(scaled.def)
 	host.move_spd = float(d.spd) * 0.85 * App.bal.enemy_speed_mult
-	host.atk_range = 2.4 if title != "Gate Master" else 4.6
-	host.arc_deg = 140.0 if title != "Gate Master" else 360.0
+	host.atk_range = 2.4 if role != "gate_master" else 4.6
+	host.arc_deg = 140.0 if role != "gate_master" else 360.0
 	host.size_u = float(d.size) * 1.55
-	host.base_mod = Color(1.15, 0.72, 0.55) if title != "Gate Master" else Color(0.72, 0.58, 1.18)
-	host.tag.text = App.tr("common.lv") % [title, host.combat_lv]
+	host.base_mod = Color(1.15, 0.72, 0.55) if role != "gate_master" else Color(0.72, 0.58, 1.18)
+	host.tag.text = App.tr("common.lv") % [App.tr("boss." + role), host.combat_lv]
 	host.tag.visible = true
 	host.tag.modulate = Color(1.0, 0.82, 0.35)
 	host.tag.outline_modulate = Color(0, 0, 0)
-	load_tex(host, title)
+	load_tex(host, role)
 	HpBarS.ensure(host)
 	host.call_deferred("_mark_post")
 
@@ -94,15 +95,15 @@ static func make_named(host: Node, given: String, _floor_n: int) -> void:
 	host.tag.outline_size = 12
 	host.base_mod *= Color(1.08, 1.05, 0.9)
 
-static func load_tex(host: Node, boss_title := "") -> void:
+static func load_tex(host: Node, role := "") -> void:
 	if host.spr == null:
 		return
 	var path := "res://assets/sprites/enemies/%s/idle_down.png" % host.type_id
-	if boss_title == "Floor Guardian":
+	if role == "guardian":
 		var g := "res://assets/sprites/enemies/guardian/idle_down.png"
 		if ResourceLoader.exists(g):
 			path = g
-	elif boss_title == "Gate Master":
+	elif role == "gate_master":
 		var m := "res://assets/sprites/enemies/gate_master/idle_down.png"
 		if ResourceLoader.exists(m):
 			path = m

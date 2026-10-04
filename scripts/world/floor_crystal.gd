@@ -23,8 +23,9 @@ func refresh() -> void:
 		super.refresh()
 		return
 	locked = false
+	prompt_locked = not crystal_on and CrystalNet.area_hostile(self)
 	if not crystal_on:
-		prompt = tr("floor_crystal.clear_the_area_to_activate") if CrystalNet.area_hostile(self) else tr("floor_crystal.activate_crystal")
+		prompt = tr("floor_crystal.clear_the_area_to_activate") if prompt_locked else tr("floor_crystal.activate_crystal")
 	else:
 		prompt = tr("floor_crystal.transport_network")
 	if label:

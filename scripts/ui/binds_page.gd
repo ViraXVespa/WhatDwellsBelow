@@ -10,20 +10,20 @@ const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Split := preload("res://scripts/ui/split_menu.gd")
 
 const ROWS: Array = [
-	{"id": "move_up", "label": "Move up", "kb_only": true},
-	{"id": "move_down", "label": "Move down", "kb_only": true},
-	{"id": "move_left", "label": "Move left", "kb_only": true},
-	{"id": "move_right", "label": "Move right", "kb_only": true},
-	{"id": "attack", "label": "Attack"},
-	{"id": "special", "label": "Special"},
-	{"id": "dash", "label": "Dash"},
-	{"id": "target_lock", "label": "Target lock"},
-	{"id": "interact", "label": "Interact"},
-	{"id": "map_view", "label": "Map"},
-	{"id": "inventory", "label": "Inventory"},
-	{"id": "potion", "label": "Potion"},
-	{"id": "food", "label": "Food"},
-	{"id": "look_mode", "label": "Look mode", "pad_only": true},
+	{"id": "move_up", "kb_only": true},
+	{"id": "move_down", "kb_only": true},
+	{"id": "move_left", "kb_only": true},
+	{"id": "move_right", "kb_only": true},
+	{"id": "attack"},
+	{"id": "special"},
+	{"id": "dash"},
+	{"id": "target_lock"},
+	{"id": "interact"},
+	{"id": "map_view"},
+	{"id": "inventory"},
+	{"id": "potion"},
+	{"id": "food"},
+	{"id": "look_mode", "pad_only": true},
 ]
 
 var host: Node
@@ -71,7 +71,7 @@ func rebuild() -> void:
 			continue
 		if bool(row.get("kb_only", false)) and pool != "kb":
 			continue
-		_bind_row(str(row.get("id", "")), LocS.tr_or("controls." + str(row.get("id", "")), str(row.get("label", ""))))
+		_bind_row(str(row.get("id", "")), LocS.tr_or("controls." + str(row.get("id", "")), str(row.get("id", "")).capitalize()))
 	View.wire_vert(host.info_btns)
 	if host.has_method("split_hint"):
 		host.split_hint()

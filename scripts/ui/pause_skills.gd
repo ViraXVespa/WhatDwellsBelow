@@ -7,7 +7,7 @@ const LocS := preload("res://scripts/app/app_loc.gd")
 const SkillRow := preload("res://scripts/ui/skill_row_view.gd")
 
 static func skill_title(ui: CanvasLayer, id: String) -> String:
-	return LocS.tr_or("skill." + id, str(ui.SKILL_NAMES.get(id, id)))
+	return LocS.tr_or("skill." + id, id)
 
 static func perm_line(ui: CanvasLayer, id: String, perm: float) -> String:
 	return App.tr("common.lv_next_level_xp_total") % [

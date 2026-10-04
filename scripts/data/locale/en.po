@@ -6,6 +6,7 @@ msgstr ""
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 msgid "act_items.destroyed"
@@ -99,7 +100,9 @@ msgid "anvil_forge_job.s_left_on_this_piece"
 msgstr "%.1fs left on this piece. Back stops the queue."
 
 msgid "anvil_forge_job.stopped_the_queue_pick_from"
-msgstr "Stopped the queue. Pick from the %d finished piece%s."
+msgid_plural "anvil_forge_job.stopped_the_queue_pick_from"
+msgstr[0] "Stopped the queue. Pick from the %d finished piece."
+msgstr[1] "Stopped the queue. Pick from the %d finished pieces."
 
 msgid "anvil_forge_pick.hold_already_stored_new_this"
 msgstr "Hold = already stored. New = this batch."
@@ -313,6 +316,12 @@ msgstr "Tool: {tool}"
 
 msgid "board_text.white_gear_is_starter_only"
 msgstr "\nWhite gear is starter-only. Analyze greens and blues."
+
+msgid "boss.gate_master"
+msgstr "Gate Master"
+
+msgid "boss.guardian"
+msgstr "Floor Guardian"
 
 msgid "boss_door.open"
 msgstr "OPEN"
@@ -690,7 +699,9 @@ msgid "flow_hub.warming_things_up_for_you"
 msgstr "Warming things up for you..."
 
 msgid "forge_act.kept_hold"
-msgstr "Kept %d hold%s."
+msgid_plural "forge_act.kept_hold"
+msgstr[0] "Kept %d hold."
+msgstr[1] "Kept %d holds."
 
 msgid "forge_act.the_anvil_won_t_take"
 msgstr "The anvil won't take that."
@@ -766,6 +777,27 @@ msgstr "Tool locked to hatchet."
 
 msgid "gather_node.tool_locked_to_pickaxe"
 msgstr "Tool locked to pickaxe."
+
+msgid "gear.forged"
+msgstr "Forged {name}"
+
+msgid "gear.hatchet"
+msgstr "Hatchet"
+
+msgid "gear.longbow"
+msgstr "Longbow"
+
+msgid "gear.pickaxe"
+msgstr "Pickaxe"
+
+msgid "gear.potion"
+msgstr "Potion"
+
+msgid "gear.ration"
+msgstr "Ration"
+
+msgid "gear.staff"
+msgstr "Staff"
 
 msgid "gear_bag.discarded"
 msgstr "Discarded."
@@ -1217,6 +1249,9 @@ msgstr "Loading"
 msgid "loader.text"
 msgstr "%d%%"
 
+msgid "locale.name"
+msgstr "English"
+
 msgid "net.the_crystal_takes_you_across"
 msgstr "The crystal takes you across the floor."
 
@@ -1540,6 +1575,9 @@ msgstr "HUD scale"
 
 msgid "settings_pages.keep_a_copy_when"
 msgstr "Keep a copy when"
+
+msgid "settings_pages.language"
+msgstr "Language: {name}"
 
 msgid "settings_pages.master_volume"
 msgstr "Master volume"
