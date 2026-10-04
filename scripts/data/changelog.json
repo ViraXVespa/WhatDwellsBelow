@@ -3,6 +3,66 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.5.21",
+			"points": [
+				{
+					"text": "Gear: the Crit Damage affix now raises crit damage and the Movement Speed affix now speeds you up; both showed on gear but did nothing."
+				},
+				{
+					"text": "Potions cool down in 8 seconds, and old saves pick up the new value."
+				},
+				{
+					"text": "Adrenaline: the XP bonus is capped at 2x and no longer inflates skill XP."
+				},
+				{
+					"text": "Pausing (pause menu, inventory and other full-screen menus) also pauses the shrine buff, food healing, potion cooldown and the adrenaline window. Starting a new run clears adrenaline."
+				},
+				{
+					"text": "Enemy packs that flee are picked at random each run (about four per floor) instead of always the first two."
+				},
+				{
+					"text": "Controls: every player action can be rebound, including Pause (Esc/Start), menu tabs, item tip and drop, and crystal zoom. A swap that would leave another action unbound is refused. Swaps and refusals show a message. Picking a slot waits for your next input, and keys that go Back (Esc, Backspace, B, Start) ask you to confirm before binding. Sticks and menu navigation stay fixed."
+				},
+				{
+					"text": "Key and button hints in menus and messages follow your current bindings."
+				},
+				{
+					"text": "Menus: Space (dash) no longer acts in menus; Backspace goes Back like Esc and B; Enter, E and pad A on the title, splash and fullscreen prompt press once instead of twice; the recap Back hint is gone."
+				},
+				{
+					"text": "Crystal network map: Tab (Y on a pad) zooms the map, and trigger pulls turn one stats page at a time."
+				},
+				{
+					"text": "Settings: Graphics has a Render scale row (Auto, 1.0, 0.8, 0.6) and Gameplay has a Language row (English only). Both are saved."
+				},
+				{
+					"text": "The 3D view lowers its resolution in small steps when the frame rate stays low on slow machines (not when you pick a fixed Render scale)."
+				},
+				{
+					"text": "Placeholdia loads almost 4 seconds faster in the web build."
+				},
+				{
+					"text": "Placeholdia: the hall, wing and stall now cast clean shadows that follow their shapes and meet the walls."
+				},
+				{
+					"text": "Dungeon: walking into a new area no longer stutters while the torch light updates."
+				},
+				{
+					"text": "Hub and dungeon music stream in and load first."
+				},
+				{
+					"text": "Sound: the previously unused second recordings for dash, hit, level and slam play at random with the originals, and the body hit layers under the hurt voice."
+				},
+				{
+					"text": "Web: fewer console warnings, and audio no longer leaks on exit."
+				},
+				{
+					"text": "Text: items, rarity words, set names, tools, weapons, boss titles and shop stock are translated by id, plurals follow the language, and the chosen language is saved. Old saves carry over."
+				}
+			],
+			"summary": "This update makes every action rebindable, adds Render scale and Language settings, and fixes gear, potion, adrenaline and pause bugs. Menus read and respond more cleanly, the Placeholdia hub loads faster on the web, and the game's text is now ready for translation (English is unchanged)."
+		},
+		{
 			"label": "0.5.10",
 			"points": [
 				{
