@@ -3,7 +3,6 @@
 
 Usage (from repo root):
   python tools/lint_hostify.py
-  powershell -File tools/lint_hostify.ps1
 
 Output: _logs/hostify-lint/<stamp>-hostify-lint.txt
 See design/refactor-hostify.md (Hostify pitfalls).

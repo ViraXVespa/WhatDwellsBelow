@@ -3,14 +3,14 @@
 Status: protocol  
 Read when: running, adding, or documenting a tool (Bot, web/chat, or Build)  
 
-Single source for what each tool is, which surface runs it, and its gotchas. Siblings: `tools-lint.md` (inventory, dupe, dead code, doc edits), `tools-build.md` (Windows runners, release), `tools-shims.md` (`.ps1` twins), `tools-media.md` (media pipeline), `pc-offload.md` (Build-only rules). `check_tool_docs.py` keeps the tables in step with `tools/`.
+Single source for what each tool is, which surface runs it, and its gotchas. Siblings: `tools-lint.md` (inventory, dupe, dead code, doc edits), `tools-build.md` (Windows runners, release), `tools-media.md` (media pipeline), `pc-offload.md` (Build-only rules). `check_tool_docs.py` keeps the tables in step with `tools/`.
 
 Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if the Bot may run the tool (A=N is fine either way).
 
 ## Rules
 
 1. **Bot scope.** The Bot runs only tools marked `A=Y` here and changes only the paths its scope allows (`BOT.md`; CI `bot-gate.yml`).
-2. **Platform.** Every tool is Python: `python3 tools/X.py` (Windows PC: `python`). A `.ps1` is a one-release shim forwarding to the `.py` twin. Windows and Godot rules: `pc-offload.md`.
+2. **Platform.** Every tool is Python: `python3 tools/X.py` (Windows PC: `python`). Windows and Godot rules: `pc-offload.md`.
 3. **Usage truth.** `python3 tools/X.py --help` for every CLI tool; `*_lib.py` files have a module docstring. Docs do not repeat flags.
 4. **Summaries.** Every run writes its own `_logs/<job>/<stamp>-<job>.txt` (gitignored, never overwritten) and lists it in that folder's `index.txt`, newest first; the last 20 runs are kept. `read_summary.py --job <name>` prints the index, then the newest. Worktrees have their own `_logs/`, cleared weekly. Read the final `RESULT` line, then the summary once, not raw logs or script bodies. Lookup tools (`list_xref.py`, `code_map.py row`, `tunables.py get`, `list_route.py`) print their rows.
 5. **New tool.** Build and Web create a tool on their own when it would reasonably help future tasks (not a one-off), then tell the User afterward: name, command, what it saves. Add its row here, then run `check_tool_docs.py` and `check_tool_cli.py`. The Bot adds a tool only when the User approved it this session.
@@ -56,7 +56,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `bot_warnscan_lib.py` | Log parser for `bot_warnscan.py` | B | module docstring (no `--help`) | Y |
 | `bot_opt.py` | Opt queue: `--list`, `--id`, `--status opt-N=done`, `--add`, `--remove`. Never hand-edit the queue block. Summary: `bot-opt`. | BD | `--help` | Y |
 | `bot_allow.txt` | Bot scope: the paths the Bot may change; read by CI. Deny lines first. | BWD | - | Y |
-| `check_tool_cli.py` | CLI contract check over `tools/` (see Contract above) plus the `.ps1` shim check; `--smoke-run` runs every tool in a throwaway copy. | BWD | `--help` | Y |
+| `check_tool_cli.py` | CLI contract check over `tools/` (see Contract above); `--smoke-run` runs every tool in a throwaway copy. | BWD | `--help` | Y |
 | `check_tool_docs.py` | Catalog check: every `tools/` file has a row, `A=Y` rows are allowed by `bot_allow.txt` (glob-aware), rows name real files. `--stale-refs` fails on dead paths, identifiers and Godot version drift; `--narration` is advisory. | BWD | `--help` | Y |
 
 ### Split, code map, doc edits, inventory and lint

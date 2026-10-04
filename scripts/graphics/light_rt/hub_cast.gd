@@ -229,19 +229,5 @@ static func _hub_post(pos: Vector3, box: Vector3, sx: float, sz: float) -> Dicti
 		"ridge": 1.05,
 		"h": 1.05
 	}
-static func _hub_roof_h(wx: float, wz: float, b: Dictionary) -> float:
-	var dx: float = absf(wx - float(b["x"])) - float(b["hx"])
-	var dz: float = absf(wz - float(b["z"])) - float(b["hz"])
-	if dx > 0.04 or dz > 0.04:
-		return 0.0
-	var kind: String = str(b.get("kind", "box"))
-	if kind == "gable" or kind == "tarp":
-		var along: float = absf(wz - float(b["z"])) / maxf(float(b["hz"]), 0.001)
-		return lerpf(float(b["ridge"]), float(b["eave"]), clampf(along, 0.0, 1.0))
-	if kind == "awning":
-		var wall_z: float = float(b["z"]) - float(b["hz"])
-		var along_s: float = (wz - wall_z) / maxf(float(b["hz"]) * 2.0, 0.001)
-		return lerpf(float(b["eave"]), float(b["hem"]), clampf(along_s, 0.0, 1.0))
-	return float(b.get("h", 1.0))
 static func _hub_inside(wx: float, wz: float, b: Dictionary) -> bool:
 	return absf(wx - float(b["x"])) <= float(b["hx"]) and absf(wz - float(b["z"])) <= float(b["hz"])

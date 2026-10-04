@@ -8,7 +8,6 @@ Usage (from repo root):
   python tools/move_script_cluster.py --dry-run --plan plan.json     (batch: {"scripts/ui/hud": ["scripts/ui/hud.gd", ...], ...})
   python tools/move_script_cluster.py --dry-run --map map.json       (exact old->new: {"scripts/ui/hud/hud.gd": "scripts/ui/hud.gd", "scripts/ui/hud/hud_act.gd": "scripts/ui/hud/hud_act.gd"})
   python tools/move_script_cluster.py --list-cluster scripts/graphics/light_rt.gd   (facade + its <stem>/ helpers)
-  powershell -File tools/move_script_cluster.ps1 ...
 
 One run = one rewrite pass over every group in the plan/map (single regex pass, so chained moves cannot double-rewrite).
 Rewrites exact paths (`res://`, bare) and, for renamed files, bare old basenames in prose/code-map rows (written
@@ -35,7 +34,7 @@ import gd_lib
 ROOT = agent_log.repo_root()
 SCAN_ROOTS = ("scripts", "design", "scenes", "assets", "tools", ".grok", ".github")
 SCAN_FILES = ("project.godot", "AGENTS.md", "README.md", "BOT.md", "GROK-BOT.md", "export_presets.cfg")
-SCAN_SUFFIXES = {".gd", ".tscn", ".tres", ".gdshader", ".md", ".json", ".godot", ".cfg", ".txt", ".py", ".ps1", ".yml", ".yaml"}
+SCAN_SUFFIXES = {".gd", ".tscn", ".tres", ".gdshader", ".md", ".json", ".godot", ".cfg", ".txt", ".py", ".yml", ".yaml"}
 SKIP_PREFIXES = (*(d + "/" for d in gd_lib.SKIP_PARTS), "design/changelog/", "_logs/")  # repo-root relative
 SKIP_FILES = ("scripts/data/changelog.json", "tools/move_script_cluster.py")
 

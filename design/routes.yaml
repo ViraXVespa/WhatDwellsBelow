@@ -105,9 +105,6 @@ gates:
   tools_build:
     file: design/tools-build.md
     when: windows_runner_or_release_tool
-  tools_shims:
-    file: design/tools-shims.md
-    when: powershell_twin_tool
   tools_media:
     file: design/tools-media.md
     when: media_pipeline_tool

@@ -22,12 +22,12 @@ import agent_log
 import repo_lib
 from bot_smokes import VERSION as ENGINE_PIN
 
-CATALOGS = ("tools.md", "tools-lint.md", "tools-build.md", "tools-shims.md", "tools-media.md")
+CATALOGS = ("tools.md", "tools-lint.md", "tools-build.md", "tools-media.md")
 ROW = re.compile(r"^\|\s*`([^`|]+)`\s*\|.*\|\s*([BWD]+)\s*\|[^|]*\|\s*([YN])\s*\|\s*$")
 
 
 SKILL_DIR = Path("/home/box/agent-data/workflows")
-SUFFIX = (".gd", ".py", ".md", ".tscn", ".json", ".yaml", ".yml", ".ps1", ".cfg", ".html", ".txt", ".shader", ".tres", ".uid")
+SUFFIX = (".gd", ".py", ".md", ".tscn", ".json", ".yaml", ".yml", ".cfg", ".html", ".txt", ".shader", ".tres", ".uid")
 TICK = re.compile(r"`([^`\n]+)`")
 PATH_SKIP = ("_logs/", "_out/", "user://", "http", ".godot/", "docs/", "design/changelog/")
 NARR = re.compile(r"\b(will be added|to be added|TODO|TBD|legacy|formerly|previously|no longer|used to|not yet|for now|old flat|temporary|deprecated|obsolete|superseded)\b", re.I)

@@ -1,7 +1,7 @@
 extends RefCounted
 
-## Staged Stamp.paint: walk rows, floor clear, one disc per light, lift, walls and blit in small units.
-## step(budget_us) runs units until the budget is spent (negative: all). The result is the same as one paint.
+## Staged stamp: walk rows, floor clear, one disc per light, lift, walls and blit in small units.
+## step(budget_us) runs units until the budget is spent (negative: all). The pixels do not depend on how many frames it takes.
 ## The float buffers stay static (their wall texels carry over between stamps, as before).
 
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")

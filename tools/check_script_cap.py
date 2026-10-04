@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Script name check: FAIL (exit 1) when two live scripts/**/*.gd share a basename (dupes=). Linux twin of check_script_cap.ps1.
+"""Script name check: FAIL (exit 1) when two live scripts/**/*.gd share a basename (dupes=).
 
     check_script_cap.py [--git-changed | --path P]    basenames must stay unique repo-wide
     check_script_cap.py --selftest                    the checks below in a throwaway repo

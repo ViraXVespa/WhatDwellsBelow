@@ -4,7 +4,7 @@ Status: protocol for agents on a local checkout
 Read when: inventorying live files, running a listed runner, reading that runner's _logs summary, or adding a new local runner
 The tool catalog (what each tool is, surfaces, gotchas) is `design/tools.md`; this file keeps only the Build / Windows habits.
 
-The cloud Refactorer does not use this file (BOT.md). Every runner is Python (`.ps1` files are shims). Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. Agents should **read only the job summary (`python3 tools/read_summary.py --job <name>`, then the final `RESULT` line)** those tools write - not raw Godot logs, not whole script bodies just to inventory.
+The cloud Refactorer does not use this file (BOT.md). Every runner is Python. Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. Agents should **read only the job summary (`python3 tools/read_summary.py --job <name>`, then the final `RESULT` line)** those tools write - not raw Godot logs, not whole script bodies just to inventory.
 
 `_logs/` is gitignored: tools write summaries there; never commit it. `_logs/grok-bot-sweep.md` is not a Bot door.
 
@@ -13,7 +13,7 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Gro
 ## Rules
 
 1. Prefer filesystem `Length` (dir / Get-Item / Get-ChildItem) over reading file contents to measure size.
-2. After a preferred runner finishes, run `python tools/read_summary.py --job <name>` once and stop. Once per job and once per slice are the same rule: one read of that job's summary, except a planned gather list may read it once after each distinct planned call (Job cycle). Do not open `tools/*.ps1` / `tools/*.py` to learn flags; `--help` is the usage.
+2. After a preferred runner finishes, run `python tools/read_summary.py --job <name>` once and stop. Once per job and once per slice are the same rule: one read of that job's summary, except a planned gather list may read it once after each distinct planned call (Job cycle). Do not open `tools/*.py` to learn flags; `--help` is the usage.
 3. Do not dump whole `.gd` files into chat unless editing them or the User asked.
 4. Steam Godot under redirected IO often leaves Process `ExitCode` null - runners treat null as 0. Headless smokes need `--display-driver headless --audio-driver Dummy`. Compile check needs `--headless --editor --import --path <WDB_ROOT> --quit`.
 5. ASCII hyphens only in tool output and PowerShell double-quoted strings (no em dashes).

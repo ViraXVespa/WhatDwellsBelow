@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Godot launch + per-path lock for the run_* tools (python port of invoke_godot/godot_lock).
+"""Godot launch + per-path lock for the run_* tools.
 
 Rules: the lock key is the normalized --path dir; wait until that path is free;
 a timeout or compile error kills ONLY the pid this call started, never godot*.

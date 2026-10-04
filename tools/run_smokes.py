@@ -3,7 +3,7 @@
 
     python3 tools/run_smokes.py [--phases 1,2,3 | --door D | --job door.job] [--timeout-sec 120] [--verbose-godot]
 --door / --job pick the phases mapped in routes.yaml `smokes` (Build prove). Neither: all nine.
-Old PowerShell spellings work: -Phases 4,5 -TimeoutSec 60 -VerboseGodot.
+CamelCase spellings work too: -Phases 4,5 -TimeoutSec 60 -VerboseGodot.
 Summary: _logs/smokes/<stamp>-smokes.txt. Bot VM: use bot_smokes.py instead.
 """
 from __future__ import annotations

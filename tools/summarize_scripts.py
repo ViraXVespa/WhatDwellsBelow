@@ -5,7 +5,6 @@ Usage (from repo root):
   python tools/summarize_scripts.py
   python tools/summarize_scripts.py --path scripts/combat/enemy.gd
   python tools/summarize_scripts.py --top-funcs 8
-  powershell -File tools/summarize_scripts.ps1
 
 Output: _logs/script-summary/<stamp>-script-summary.txt
 """

@@ -55,7 +55,7 @@ The Bot alone enforces size; Build and Web never measure or split, and the size 
 - Docs: topic door under 4KB, sibling under 8KB, hard stop ~12KB (`design/grok-bot-docs.md`). Boot-file budgets: `tools/bot_budgets.json` (`check_load_graph.py --bot`).
 - Flow: `bot_status.py --bot`, then split with `design/refactor.md` (recipe only).
 
-Work only in `/workspace/WhatDwellsBelow`. Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `design/tools-shims.md`, `design/tools-media.md` except its imglib section), the pc-offload skill, or Imagine / I2V skills. No Windows checkout, `WDB_ROOT`, or Steam Godot.
+Work only in `/workspace/WhatDwellsBelow`. Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `design/tools-media.md` except its imglib section), the pc-offload skill, or Imagine / I2V skills. No Windows checkout, `WDB_ROOT`, or Steam Godot.
 
 ## Smokes
 
@@ -65,7 +65,7 @@ No editor playtest, no routine that launches Godot.
 Shots and light bakes are not headless: `run_shots.py`, `run_shot_flow.py`, `run_bake_camp.py` pick the box display themselves (`python3 tools/godot_lib.py --display`). Menu/NPC proof: `bot_smokes.py --door D --flows`, `shot-flows.md`. `check_shot_gaps.py --changed` (run by `bot_smokes.py` unless `--no-gaps`, and by `run_build_gate.py --batch`) FAILS on a new UI state with no shot flow; add a small flow in `tools/shot-flows/` in the same PR. Published shots go to `_out/shots/<flow>/`; never write under `assets/`.
 
 Warning sweep (User-named only): `python3 tools/bot_warnscan.py` runs every smoke area plus boot/static, exits 0 only on zero findings, and does not fix game code. `--list`, `--repeat 2`, `--findings-md PATH`. Before/after a change: `--save-baseline PATH`, then `--non-leak-diff PATH` with the same `--areas` (prints NEW and FIXED, exits 1 only on NEW). One-shot gate: `python3 tools/run_build_gate.py --batch --warnscan-baseline PATH --areas ...`. Targeted areas for a split: the smoke phases that load the file, `dungeon-load-timing`, `map-f1`, `static`.
-Tools: `design/tools.md` is the catalog. The Bot runs only `A=Y` tools, as `python3 tools/X.py`, never the `.ps1` shims. Every tool ends with a `RESULT PASS|FAIL|INFO ... summary=<path>` line.
+Tools: `design/tools.md` is the catalog. The Bot runs only `A=Y` tools, as `python3 tools/X.py`. Every tool ends with a `RESULT PASS|FAIL|INFO ... summary=<path>` line.
 
 ## Hard stops
 

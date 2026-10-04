@@ -272,7 +272,7 @@ def finalize_turn(turn: Turn) -> Turn:
     slash = chr(92)
     for tool, target in turn.paths:
         norm = target.replace(slash, "/").lower()
-        if tool in READ_TOOLS or norm.endswith((".gd", ".md", ".ps1", ".py", ".tscn", ".json")):
+        if tool in READ_TOOLS or norm.endswith((".gd", ".md", ".py", ".tscn", ".json")):
             path_hits[norm] = path_hits.get(norm, 0) + 1
         if "summary.txt" in norm:
             summary_hits += 1

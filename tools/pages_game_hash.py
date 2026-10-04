@@ -20,7 +20,7 @@ GAME_FILES = (
     "tools/web_postexport.py",
     "tools/web_shell.html",
     "tools/enable_texture_mips.py",
-    "tools/export_web.ps1",
+    "tools/export_web.py",
     "tools/publish_notes_site.py",
 )
 

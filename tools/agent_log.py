@@ -102,7 +102,7 @@ def std_parser(description: str, *, writes: bool = False, json_out: bool = True)
 
 
 def split_list(values: object, cast: type = str) -> list:
-    """Flatten ['a,b', 'c'] (comma/space separated, PowerShell style) into [a, b, c]."""
+    """Flatten ['a,b', 'c'] (comma or space separated) into [a, b, c]."""
     out: list = []
     for v in values or []:
         out += [cast(p) for p in re.split(r"[,\s]+", str(v)) if p]

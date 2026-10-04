@@ -3,7 +3,7 @@
 
 Rewrites tracked ``*.import`` files under ``assets/sprites``, ``assets/tiles``,
 ``assets/props``, and ``assets/fx``. Leaves ``assets/ui`` and non-texture
-imports alone. ``tools/export_web.ps1`` runs this before headless ``--import``
+imports alone. ``tools/export_web.py`` runs this before headless ``--import``
 so the web PCK ships baked mip chains.
 """
 

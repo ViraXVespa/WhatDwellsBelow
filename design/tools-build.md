@@ -1,7 +1,7 @@
 # Tools catalog: Windows, release, session tools
 
 Status: protocol  
-Read when: running a `.ps1` runner, a Pages/release tool, or a session report (User PC / Build only)  
+Read when: running a Windows runner, a Pages/release tool, or a session report (User PC / Build only)  
 
 Rules, CLI contract, surface key: `tools.md`. Runner habits: `pc-offload.md`. Summaries: `_logs/<job>/<stamp>-<job>.txt` plus `index.txt`. Not for the Bot.
 
@@ -28,10 +28,6 @@ Rules, CLI contract, surface key: `tools.md`. Runner habits: `pc-offload.md`. Su
 | `list_facade_cluster.py` | A facade + its stem-folder helpers by bytes. Summary: `facade-cluster`. | D | `--help` | N |
 | `start_build_slice.py` | Resolve a route; print the `grok --worktree=NAME --ref REF [-r ID --fork-session]` line (default ref `grok-build-w{N}`, else main), job card, phases, merge-back. Summary: `slice-boot`. | D | `--help` | N |
 | `week_start.py` | Week start from main: seed `epoch.N.0`, park changelogs, branch `grok-build-w{N}` + seed commit, `grok worktree gc`, locks, logs. Pins only a missing closing-week row (catch-up). **Human-only (QUARANTINE).** | D | `--help` | N |
-
-### PowerShell shims
-
-The `.ps1` twins of the Python tools are listed in `tools-shims.md`.
 
 ### Session reports (User)
 

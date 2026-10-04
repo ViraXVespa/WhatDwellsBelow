@@ -4,7 +4,6 @@
 Per tool: python3 shebang, argparse, main guard, `--help` exits 0 and writes
 nothing, ASCII print strings, --root on ops tools, --dry-run on writers, RESULT
 via agent_log. Libs (`*_lib.py`, agent_log's siblings without a main guard) are skipped.
-Also checks each tools/*.ps1 is a thin shim that calls python.
 
 `--smoke-run` also executes every tool in a throwaway copy of the repo (never the live tree): bad flag and bad
 `--root` must exit 2 with an `error:` line, and each SMOKE case (read-only or `--dry-run` args) must not crash,
@@ -279,16 +278,9 @@ def smoke_run(root: Path, only: list[str], bad: list[str]) -> tuple[int, int, li
     return tools, runs, table
 
 
-def check_ps1(path: Path, bad: list[str]) -> None:
-    src = path.read_text(encoding="utf-8-sig").lower()
-    if "python" not in src or len(src) > 3000:
-        bad.append(f"SHIM    {path.name}: .ps1 must be a thin shim calling the python twin")
-
-
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Check tools/*.py against the CLI contract.", json_out=True)
     ap.add_argument("--only", action="append", default=[], help="Only these tool stems (repeatable).")
-    ap.add_argument("--no-ps1", action="store_true", help="Skip the .ps1 shim check.")
     ap.add_argument("--smoke-run", action="store_true", help="Also run every tool's probes and SMOKE cases in a throwaway repo copy (about a minute).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
@@ -299,20 +291,15 @@ def main(argv: list[str] | None = None) -> int:
         if args.only and path.stem not in args.only:
             continue
         check_py(root, path, bad, tally)
-    ps1 = 0
-    if not args.no_ps1 and not args.only:
-        for path in sorted(tools.glob("*.ps1")):
-            ps1 += 1
-            check_ps1(path, bad)
     smoke: dict = {}
     table: list[str] = []
     if args.smoke_run:
         n_tools, n_runs, table = smoke_run(root, args.only, bad)
         smoke = {"smoke_tools": n_tools, "smoke_runs": n_runs}
-    lines = [f"tool-cli: checked={tally['checked']} libs={tally['libs']} ps1={ps1} problems={len(bad)}"] + bad
+    lines = [f"tool-cli: checked={tally['checked']} libs={tally['libs']} problems={len(bad)}"] + bad
     status = "FAIL" if bad else "PASS"
     return agent_log.finish("tool-cli", root, "\n".join(lines + table), status, args=args, echo="\n".join(lines),
-                            checked=tally["checked"], ps1=ps1, problems=len(bad), **smoke)
+                            checked=tally["checked"], problems=len(bad), **smoke)
 
 
 if __name__ == "__main__":

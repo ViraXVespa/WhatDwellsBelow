@@ -405,12 +405,12 @@ def run_checker(root: Path | None = None) -> int:
     return proc.returncode
 
 JOB_SCRIPTS = {
-    "build-gate": "run_build_gate.ps1",
-    "dungeon-map": "run_dungeon_map.ps1",
-    "load-timing": "run_load_timing.ps1",
-    "dungeon-load-timing": "run_dungeon_load_timing.ps1",
-    "smokes": "run_smokes.ps1",
-}  # stems; run_prove() picks the .py twin when it exists, else the .ps1
+    "build-gate": "run_build_gate.py",
+    "dungeon-map": "run_dungeon_map.py",
+    "load-timing": "run_load_timing.py",
+    "dungeon-load-timing": "run_dungeon_load_timing.py",
+    "smokes": "run_smokes.py",
+}  # prove runners by job
 
 
 def out(text: str) -> None:
@@ -430,13 +430,13 @@ def compile_broke(body: str) -> bool:
 
 
 def dump_job(root: Path | None, job: str, script: str | None = None) -> tuple[int, str]:
-    """Run a prove runner (tools/<stem>.py if it exists, else the .ps1), print the run's newest summary body, return (rc, body)."""
+    """Run a prove runner (tools/<stem>.py), print the run's newest summary body, return (rc, body)."""
     root = repo_root(root)
     name = script or JOB_SCRIPTS.get(job)
     if not name:
         raise SystemExit(f"FAIL  unknown prove job {job!r}")
     py = root / "tools" / (Path(name).stem + ".py")
-    cmd = [sys.executable, str(py)] if py.is_file() else ["powershell", "-File", str(root / "tools" / name)]
+    cmd = [sys.executable, str(py)]
     proc = subprocess.run(cmd, cwd=str(root), capture_output=True)
     exact = run_log_lib.latest(root / "_logs" / job) or root / "_logs" / job / "summary.txt"
     hits = [exact] if exact.is_file() else sorted(

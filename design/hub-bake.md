@@ -20,7 +20,7 @@ The hub light is baked only: the game never renders it. Offline bake quality is 
 - Play zoom 0.69 is how we judge roofs and puddles (stall, hall, dumpster, receptionist). The 0.38 postcard is the wide frame only.
 
 ## Look
-- Yard atlas paints a warm sun disc plus a small crystal bump by hand at `HUB_SUB`. Do not send hub through `Stamp.paint`.
+- Yard atlas paints a warm sun disc plus a small crystal bump by hand at `HUB_SUB`. Do not send hub through `Stamp` (`light_stamp.gd`).
 - Cream field `Color(0.98, 0.96, 0.93)` is the floor under the sun, not the finished picture.
 - Building interiors are not written. Roofs, awnings, and the stall tarp sample `light_tex`. Dirt owns the yard.
 - Shadows fall the way the player blob does (`HubCast.AWAY`, +X +Z). Do not invent a second sun or a different vector. Building shadows come from the meshes (see Lock); props are `_hub_yard_boxes` blobs; actors carry their own blob. The edge is the one 3x3 blur. No skirt smear. No shed AABB.
