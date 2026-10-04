@@ -111,4 +111,6 @@ static func run(b: Object, old_rev: int, bal_rev: int) -> bool:
 		b.affix_luck_max = 1.25
 		b.affix_white_quality = 0.5
 		b.affix_white_luck = 0.75
+	if old_rev < 14:
+		b.potion_cooldown = 8.0
 	return true

@@ -45,6 +45,7 @@ var sprite_mip_bias: float = Def.sprite_mip_bias
 var display_mode: String = Def.display_mode
 var display_fs_kind: String = Def.display_fs_kind
 var web_fullscreen: bool = Def.web_fullscreen
+var render_scale: float = Def.render_scale
 var target_lock_pref: bool = Def.target_lock_pref
 var salvage_dupes: bool = Def.salvage_dupes
 var salvage_finish: float = Def.salvage_finish

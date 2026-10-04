@@ -7,15 +7,15 @@ Code: `scripts/audio/sfx.gd`
 The required SFX list stays on the audio-visual page.
 
 ## Where cues come from, and how Build wires one
-- Assets: `assets/audio/` (`p2_*`, `p9_*` and `sfx_*` wavs, `music_*`). `sfx.gd` `_ready()` maps each cue id to a file (`_load("hit", "res://assets/audio/p2_hit.wav")`); a missing file loads silent, so check the path.
+- Assets: `assets/audio/` (`p2_*`, `p9_*` and `sfx_*` wavs, `music_*`). `sfx.gd` `FILES` is the one cue table (id to path; `_ready()` loads each; smoke 9 checks every path exists); a missing file loads silent, so check the path.
 - Play: `App.sfx("id")` at the event (`App.sfx` forwards to the `sfx.gd` node). `hurt`, `warcry` and `hurk` resolve to `_male` / `_female` by `App.character_type`. The adrenaline loop is `set_adrenaline(true/false)` from `app_run.gd`.
 - Volume: every player is on the Master bus at `vol_sfx * vol_master`; there are no custom buses. Music is `music.gd`.
-- New cue: reuse a file already under `assets/audio/` when one fits. A new file is an access confirm (new asset location) and `isolated-media.md` if Imagined. Then add one `_load` line and one `App.sfx` call, and run smoke 9.
-- Unused wavs `sfx_dash`, `sfx_hit`, `sfx_level`, `sfx_slam` are the original cues for dash, hit, level-up and slam. Each event already plays its `p2_*` / `p9_*` replacement (`dash`, `hit`, `level`, `slam` in `sfx.gd`), so they stay unwired; `sfx_hurt` and `sfx_mine` are live fallbacks.
+- New cue: reuse a file already under `assets/audio/` when one fits. A new file is an access confirm (new asset location) and `isolated-media.md` if Imagined. Then add one `FILES` row and one `App.sfx` call, and run smoke 9.
+- `sfx_dash`, `sfx_hit`, `sfx_level`, `sfx_slam` are second recordings (`ALTS`): each play of `dash`, `hit`, `level`, `slam` picks the `p2_*` / `p9_*` file or its alt at random (private RNG). `sfx_hurt` is the body hit layered under the hurt voice (`LAYERS`). `p2_warcry.wav` is unused.
 - An event listed under Missing SFX stays silent until the User approves wiring it: ask, do not add.
 
 ## Missing SFX (silent today; Build may generate these on request, not wire them)
-Same rules as above: new file under `assets/audio/`, one `_load` line, one `App.sfx` call. Short, dry, placeholder-grade, matched to the existing `sfx_ui` / `p9_*` loudness.
+Same rules as above: new file under `assets/audio/`, one `FILES` row, one `App.sfx` call. Short, dry, placeholder-grade, matched to the existing `sfx_ui` / `p9_*` loudness.
 
 | Event | Code location | Cue id / file | Duration and character |
 |-------|---------------|---------------|------------------------|

@@ -3,6 +3,7 @@ extends RefCounted
 ## Collect / apply / fresh-delver save payload.
 
 const Norm := preload("res://scripts/data/gear_rules/rules_norm.gd")
+const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 
 ## One home for pref/bank defaults: apply() fallbacks, fresh_delver() and App's initial vars all read these.
 const DEF := {
@@ -20,6 +21,7 @@ const DEF := {
 	"display_mode": "borderless",
 	"display_fs_kind": "borderless",
 	"web_fullscreen": false,
+	"render_scale": 0.0,
 	"aim_line_on": true,
 	"aim_line_opacity": 0.85,
 	"target_lock_pref": false,
@@ -48,6 +50,7 @@ static func apply(data: Dictionary) -> bool:
 	App.display_mode = display_mode(str(data.get("display_mode", DEF.display_mode)))
 	App.display_fs_kind = fs_kind(str(data.get("display_fs_kind", DEF.display_fs_kind)))
 	App.web_fullscreen = bool(data.get("web_fullscreen", DEF.web_fullscreen))
+	App.render_scale = DynRes.snap(float(data.get("render_scale", DEF.render_scale)))
 	App.bal.aim_line_on = bool(data.get("aim_line_on", DEF.aim_line_on))
 	App.bal.aim_line_opacity = float(data.get("aim_line_opacity", DEF.aim_line_opacity))
 	App.target_lock_pref = bool(data.get("target_lock_pref", DEF.target_lock_pref))
@@ -119,8 +122,7 @@ static func fresh_delver() -> void:
 	App.salvage_dupes = DEF.salvage_dupes
 	App.salvage_finish = DEF.salvage_finish
 	App.salvage_fortune = DEF.salvage_fortune
-	App.bal.aim_line_on = DEF.aim_line_on
-	App.bal.aim_line_opacity = DEF.aim_line_opacity
+	App.render_scale = DEF.render_scale
 	App.reset_binds()
 	_apply_prefs()
 

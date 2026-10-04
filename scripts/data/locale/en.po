@@ -1520,6 +1520,9 @@ msgstr "Aim line: %s"
 msgid "settings_pages.aim_line_opacity"
 msgstr "Aim line opacity"
 
+msgid "settings_pages.auto"
+msgstr "Auto"
+
 msgid "settings_pages.break_down_mailed_copies_you"
 msgstr "Break down mailed copies you already know, unless they beat the bars below."
 
@@ -1549,6 +1552,9 @@ msgstr "Music volume"
 
 msgid "settings_pages.off"
 msgstr "Off"
+
+msgid "settings_pages.render_scale"
+msgstr "Render scale: %s"
 
 msgid "settings_pages.sfx_volume"
 msgstr "SFX volume"
