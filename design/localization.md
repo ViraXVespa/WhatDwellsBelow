@@ -21,13 +21,13 @@ English is the default and only shipped locale. Player-facing strings go through
 |------|------|
 | `scripts/data/locale/en.po` | Source strings, sorted by key. Plural entries use `msgid_plural` and `msgstr[n]`. |
 | `scripts/app/app_loc.gd` | `LocS`: `setup`, `set_locale`, `apply_saved`, `next_locale`, `name_of`, `plural(key, n)`, `tr_or(key, fallback)`. |
-| `scripts/data/item_names.gd` | `ItemNames`: `base_nk`, `name_of`, `desc_of`, `forge`, `refresh`, `migrate` (old saves). |
+| `scripts/data/item_names.gd` | `ItemNames`: `base_nk`, `name_of`, `desc_of`, `rarity_name`, `type_name`, `forge`, `refresh`, `migrate` (old saves). |
 
 Registration: `project.godot` `[internationalization]` lists `en.po`. `setup()` skips locales already registered, so there are no duplicates. The OS locale is ignored on purpose.
 
 ## Key naming
 
-`<file stem>.<slug>`, lowercase, dots and underscores only. The slug is the first words of the English text (about five words, 32 chars). A string used in two or more places is `common.<slug>`. Collisions get `_2`. Keys never look like English text, so a Control's auto-translate cannot double-translate. Id-derived keys: `item.<id>.name`, `item.<id>.desc`, `gear.desc_piece` / `desc_tool` / `desc_potion` / `desc_food`, `skill.<id>`, `slot.<slot>`, `boss.<role>`, `gear.<type>`. Never rename a shipped key; if the wording changes, edit only the `msgstr`.
+`<file stem>.<slug>`, lowercase, dots and underscores only. The slug is the first words of the English text (about five words, 32 chars). A string used in two or more places is `common.<slug>`. Collisions get `_2`. Keys never look like English text, so a Control's auto-translate cannot double-translate. Id-derived keys: `item.<id>.name`, `item.<id>.desc`, `rarity.<id>`, `set.<id>.name`, `gear.desc_piece` / `desc_tool` / `desc_potion` / `desc_food`, `skill.<id>`, `slot.<slot>`, `boss.<role>`, `gear.<type>`. Never rename a shipped key; if the wording changes, edit only the `msgstr`.
 
 ## Add a string
 
@@ -51,7 +51,7 @@ Player-facing sites are converted (menus, prompts, tutorial, quest, shop, tables
 | Left in English | Why |
 |-----------------|-----|
 | `archive_catalog.json` label/desc | shared data file; the PO overrides it by `archive.<id>.*` |
-| rarity words in item text (`Blue`) | `rarity.capitalize()` of the id, no keys yet |
+| `input/prompts.gd` key and button names (`Esc`, `D-pad Up`, `LMB`) | hardware labels derived from the bind id; `sprite_filter.gd` keeps `Filter %d` as its missing-key default |
 | `data/tunables.gd` `ONE_LINER`, `foundation.gd` hint, `launch.gd` name | const or dev text |
 | `debug/*`, smokes, logs, ids, node names | out of scope |
 

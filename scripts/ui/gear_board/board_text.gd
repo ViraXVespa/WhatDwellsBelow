@@ -98,16 +98,16 @@ static func tooltip(ui: CanvasLayer) -> String:
 
 static func current_block(it: Dictionary) -> String:
 	var lines := PackedStringArray()
-	var head := str(it.get("name", "Item"))
+	var head := ItemNames.name_of(it)
 	var rare := str(it.get("rarity", "white"))
 	if rare != "":
-		head += "  ·  " + rare.capitalize()
+		head += "  ·  " + ItemNames.rarity_name(rare)
 	if int(it.get("ilvl", 0)) > 0:
-		head += "  ·  Lv%d" % int(it.get("ilvl", 1))
+		head += "  ·  " + App.tr("board_text.level").format({"n": int(it.get("ilvl", 1))})
 	if bool(it.get("hold", false)):
-		head += "  ·  forged hold"
+		head += "  ·  " + App.tr("board_text.forged_hold")
 	if Fmt.is_risk(it):
-		head += "  ·  lost on death unless mailed"
+		head += "  ·  " + App.tr("board_text.lost_on_death_unless_mailed")
 	lines.append(head)
 	var desc := ItemNames.desc_of(it)
 	if desc != "":
@@ -157,9 +157,9 @@ static func stat_bits(it: Dictionary) -> String:
 		if cd > 0.0:
 			bits.append(App.tr("board_text.cooldown_s") % cd)
 	if str(it.get("tool", "")) != "":
-		bits.append(App.tr("board_text.tool_name").format({"tool": str(it.tool)}))
+		bits.append(App.tr("board_text.tool_name").format({"tool": ItemNames.type_name("tool", str(it.tool))}))
 	if str(it.get("weapon", "")) != "":
-		bits.append(App.tr("board_text.style_weapon").format({"weapon": str(it.weapon)}))
+		bits.append(App.tr("board_text.style_weapon").format({"weapon": ItemNames.type_name("weapon", str(it.weapon))}))
 	return "   ·   ".join(bits)
 
 static func stats_title(ui: CanvasLayer) -> String:

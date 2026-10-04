@@ -317,6 +317,15 @@ msgstr "%s — empty\nOpens anything that can go here."
 msgid "board_text.forge_tab_rolls_a_new_hold"
 msgstr "\nForge tab rolls a new hold from unlocked traits."
 
+msgid "board_text.forged_hold"
+msgstr "forged hold"
+
+msgid "board_text.level"
+msgstr "Lv{n}"
+
+msgid "board_text.lost_on_death_unless_mailed"
+msgstr "lost on death unless mailed"
+
 msgid "board_text.no_forge_preview"
 msgstr "\nNo forge preview for this."
 
@@ -464,6 +473,9 @@ msgstr "Gone."
 msgid "common.great_axe"
 msgstr "Great Axe"
 
+msgid "common.here"
+msgstr "(here)"
+
 msgid "common.holds_full"
 msgstr "Holds full."
 
@@ -478,6 +490,9 @@ msgstr "Lightning Staff"
 
 msgid "common.local_transport_network"
 msgstr "Local Transport Network"
+
+msgid "common.locked"
+msgstr "(locked)"
 
 msgid "common.lv"
 msgstr "%s  ·  Lv %d"
@@ -1444,6 +1459,15 @@ msgstr "Task abandoned."
 msgid "quest_roll.vanquish_a_named_foe"
 msgstr "Vanquish a named foe"
 
+msgid "rarity.blue"
+msgstr "Blue"
+
+msgid "rarity.green"
+msgstr "Green"
+
+msgid "rarity.white"
+msgstr "White"
+
 msgid "rebuild.a_fragment_remains"
 msgstr "A fragment remains."
 
@@ -1555,26 +1579,50 @@ msgstr "Potion — instant."
 msgid "set.ash.bonus"
 msgstr "+defense at 2, more at 3."
 
+msgid "set.ash.name"
+msgstr "Ash"
+
 msgid "set.bone.bonus"
 msgstr "+HP at 2, more at 3."
+
+msgid "set.bone.name"
+msgstr "Bone"
 
 msgid "set.cinder.bonus"
 msgstr "+damage, stronger at 2."
 
+msgid "set.cinder.name"
+msgstr "Cinder"
+
 msgid "set.iron.bonus"
 msgstr "+defense stacking through 5."
+
+msgid "set.iron.name"
+msgstr "Iron"
 
 msgid "set.root.bonus"
 msgstr "+gather luck at 2, more at 3."
 
+msgid "set.root.name"
+msgstr "Root"
+
 msgid "set.spark.bonus"
 msgstr "+crit chance at 2."
+
+msgid "set.spark.name"
+msgstr "Spark"
 
 msgid "set.tide.bonus"
 msgstr "+HP, stronger at 2."
 
+msgid "set.tide.name"
+msgstr "Tide"
+
 msgid "set.veil.bonus"
 msgstr "+move at 2, more at 3 and 4."
+
+msgid "set.veil.name"
+msgstr "Veil"
 
 msgid "settings_pages.aim_line"
 msgstr "Aim line: %s"
@@ -1854,6 +1902,12 @@ msgstr "Set type, rarity, level, and locks."
 
 msgid "sub_open.warning_analyzing_destroys_the_s"
 msgstr "WARNING: Analyzing DESTROYS the selected item. This cannot be undone."
+
+msgid "text_fmt.hold"
+msgstr "hold"
+
+msgid "text_fmt.relic"
+msgstr "relic"
 
 msgid "theme.each_level_2g_1_ore"
 msgstr "Each level: −2g −1 ore on forge cost.\nEach level after 1: 12% faster forging.\nEvery 4 levels: +1 extra forged weapon damage."

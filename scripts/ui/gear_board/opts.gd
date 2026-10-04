@@ -2,6 +2,7 @@ extends Object
 
 const Fmt := preload("res://scripts/ui/gear_board/text_fmt.gd")
 const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
+const ItemNames := preload("res://scripts/data/item_names.gd")
 
 static var seen_uids: Dictionary = {}
 
@@ -31,7 +32,8 @@ static func slot_item(slot: String) -> Dictionary:
 			"slot": "tool",
 			"kind": "tool",
 			"tool": t,
-			"name": t.capitalize(),
+			"name": ItemNames.type_name("tool", t),
+			"nk": ItemNames.base_nk("tool", t),
 			"rarity": "white",
 			"kit_src": "starter",
 		}

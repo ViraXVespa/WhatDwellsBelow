@@ -57,7 +57,7 @@ static func is_builtin_starter(it: Dictionary) -> bool:
 		return BUILTIN_WEAPONS.find(_weapon_id(it)) >= 0
 	if slot == "tool" and str(it.get("rarity", "white")) == "white":
 		return BUILTIN_TOOLS.find(_tool_id(it)) >= 0
-	if slot == "potion" and str(it.get("name", "Potion")) == "Potion" and str(it.get("rarity", "white")) == "white":
+	if slot == "potion" and it.get("nk", []) == ["gear.potion"] and str(it.get("rarity", "white")) == "white":
 		return true
 	return false
 

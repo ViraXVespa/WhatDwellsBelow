@@ -28,6 +28,15 @@ static func name_of(it: Dictionary) -> String:
 		s = App.tr("gear.forged").format({"name": s})
 	return s
 
+## Rarity word from its id (`rarity.<id>`); the id itself when the key is missing.
+static func rarity_name(id: String) -> String:
+	return LocS.tr_or("rarity." + id, id)
+
+## Weapon / tool / armor type name from its name key; the id when the type has none.
+static func type_name(slot: String, type_id: String) -> String:
+	var nk: Array = base_nk(slot, type_id)
+	return App.tr(str(nk[0])) if not nk.is_empty() else type_id
+
 ## Description from ids (kind / slot, rarity, tool, charge_max, artifact id). The saved `desc` is only a cache,
 ## re-derived by `migrate` on load and when the language changes. Unknown shapes keep their saved text.
 static func desc_of(it: Dictionary) -> String:
@@ -35,7 +44,7 @@ static func desc_of(it: Dictionary) -> String:
 	if str(it.get("kind", "")) == "artifact":
 		return LocS.tr_or("item.%s.desc" % str(it.get("id", "")), App.tr("progress_make.a_curious_relic"))
 	if slot == "weapon" or slot in ARMOR:
-		return App.tr("gear.desc_piece").format({"rarity": str(it.get("rarity", "white")).capitalize(), "name": _base_name(it)})
+		return App.tr("gear.desc_piece").format({"rarity": rarity_name(str(it.get("rarity", "white"))), "name": _base_name(it)})
 	if slot == "tool":
 		return App.tr("gear.desc_tool").format({"name": _base_name(it)})
 	if slot == "potion":
