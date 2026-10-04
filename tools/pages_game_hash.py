@@ -20,7 +20,7 @@ GAME_FILES = (
     "tools/web_postexport.py",
     "tools/web_shell.html",
     "tools/enable_texture_mips.py",
-    "tools/export_web.ps1",
+    "tools/export_web.py",
     "tools/publish_notes_site.py",
 )
 
@@ -88,14 +88,12 @@ def main(argv: list[str] | None = None) -> int:
     root = agent_log.resolve_root(args)
     digest, count = game_hash(root)
     summary = "game_hash=%s files=%s\n" % (digest, count)
-    log = root / "_logs" / "pages-game-hash" / "summary.txt"
-    log.parent.mkdir(parents=True, exist_ok=True)
-    log.write_text(summary, encoding="utf-8")
+    log = agent_log.write_summary("pages-game-hash", root, summary, "PASS", f"game_hash={digest}")
     if args.out:
         Path(args.out).write_text(digest + "\n", encoding="utf-8")
     print(summary, end="")
-    return agent_log.emit_result("PASS", game_hash=digest, files=count, summary="_logs/pages-game-hash/summary.txt")
+    return agent_log.emit_result("PASS", game_hash=digest, files=count, summary=agent_log.rel(root, log))
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

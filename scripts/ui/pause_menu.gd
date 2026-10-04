@@ -1,54 +1,20 @@
 extends CanvasLayer
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const CatalogS := preload("res://scripts/data/catalog.gd")
 const T := preload("res://scripts/data/tunables.gd")
-const PauseInv := preload("res://scripts/ui/pause_inv.gd")
+const InvView := preload("res://scripts/ui/pause_inv/inv_view.gd")
 const PauseSkills := preload("res://scripts/ui/pause_skills.gd")
 const PauseSettings := preload("res://scripts/ui/pause_settings.gd")
-const GearAct := preload("res://scripts/ui/gear_board/board_act.gd")
-const Board := preload("res://scripts/ui/gear_board.gd")
 const Util := preload("res://scripts/ui/pause_menu/menu_util.gd")
 const View := preload("res://scripts/ui/pause_menu/pause_menu_view.gd")
 const Pad := preload("res://scripts/ui/menu_pad.gd")
-const Prompts := preload("res://scripts/input/prompts.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
-const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 const Disp := preload("res://scripts/display_mode.gd")
-const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
-const Split := preload("res://scripts/ui/split_menu.gd")
 const Flow := preload("res://scripts/ui/pause_menu/menu_flow.gd")
 
 const TAB_SETTINGS := 0
 const TAB_INV := 1
-const TAB_SKILLS := 2
-
-const SKILL_NAMES := {
-	"axe": "Great Axe",
-	"staff": "Staff",
-	"bow": "Longbow",
-	"str": "Strength",
-	"mag": "Magic",
-	"rng": "Ranged",
-	"def": "Defense",
-	"hp": "Hitpoints",
-	"mine": "Mining",
-	"wood": "Woodcutting",
-	"smith": "Smithing",
-}
-
-const SLOT_NAMES := {
-	"weapon": "Weapon",
-	"tool": "Tool",
-	"potion": "Potion",
-	"food": "Food",
-	"head": "Head",
-	"body": "Body",
-	"legs": "Legs",
-}
-
-const BAG_COLS := 7
 
 var open: bool = false
 var tab: int = 0
@@ -137,10 +103,10 @@ func _cap(text: String, size: int = 18, col: Color = Color(0.9, 0.84, 0.7)) -> L
 	return l
 
 func _inv() -> void:
-	PauseInv.build(self)
+	InvView.build(self)
 
 func _inv_find_sel() -> Control:
-	return PauseInv.find_sel(self)
+	return InvView.find_sel(self)
 
 func _skills() -> void:
 	PauseSkills.build(self)

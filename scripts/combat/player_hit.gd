@@ -35,12 +35,6 @@ static func apply_basic(host: Node) -> void:
 static func apply_special(host: Node) -> void:
 	Atk.apply_special(host)
 
-static func hit_arc(host: Node, rng: float, arc: float, dmg: float, need_los: bool, stagger: bool) -> void:
-	Fx.hit_arc(host, rng, arc, dmg, need_los, stagger)
-
-static func hit_circle(host: Node, origin: Vector3, radius: float, dmg: float, need_los: bool, stagger: bool, xp := "auto", is_special := false) -> void:
-	Fx.hit_circle(host, origin, radius, dmg, need_los, stagger, xp, is_special)
-
 static func scaled_dmg(base: float, is_special: bool) -> float:
 	var d: float = base * App.prog.skill_dmg_mult(is_special) + App.prog.gear_dmg()
 	if App.shrine_t > 0.0:

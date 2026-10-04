@@ -5,8 +5,14 @@ extends Object
 const Depth := preload("res://scripts/world/depth.gd")
 const PlayerAnim := preload("res://scripts/world/player/player_anim.gd")
 
+static var _gd_at: Dictionary = {}
+
 static func _gd(path: String) -> GDScript:
-	return load(path) as GDScript
+	var s: GDScript = _gd_at.get(path) as GDScript
+	if s == null:
+		s = load(path) as GDScript
+		_gd_at[path] = s
+	return s
 
 static func physics(host: CharacterBody3D, delta: float) -> void:
 	if bool(App.get("_menu_loading")):
@@ -65,7 +71,7 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 		PlayerCombat.try_special(host)
 		PlayerCombat.try_basic(host)
 		PlayerCombat.try_dash(host, move)
-	var spd: float = App.bal.move_speed * (1.0 + float(App.prog.set_stats().spd))
+	var spd: float = App.bal.move_speed * (1.0 + App.gear("move_spd"))
 	if App.adrenaline:
 		spd *= App.bal.adrenaline_speed
 	if host.atk_state == host.ATK_BASIC:

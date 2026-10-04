@@ -3,7 +3,9 @@
 from pathlib import Path
 from PIL import Image
 import math
-from sprite_lib import dist, fit_box  # noqa: E402
+from imglib import imgio  # noqa: E402
+from imglib.color import dist  # noqa: E402
+from imglib.geom import fit_box  # noqa: E402
 import sys
 
 _TOOLS = Path(__file__).resolve().parent
@@ -13,9 +15,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = Path(
-    r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5CRepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images"
-)
+SRC = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5CRepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images")
 FRAMES = ROOT / "_src" / "anim_frames"
 OUT = ROOT / "assets" / "live" / "player"
 MAGENTA = (239, 19, 106)
@@ -66,13 +66,13 @@ def pack_cycle(folder: str, prefix: str, picks: list[int]) -> None:
         if not src.exists():
             print("missing", src)
             continue
-        save_img(Image.open(src), OUT / f"{prefix}_{i}.png")
+        save_img(imgio.load(src), OUT / f"{prefix}_{i}.png")
 
 
 def _run() -> None:
-    save_img(Image.open(SRC / "190.jpg"), OUT / "left.png")
-    save_img(Image.open(SRC / "188.jpg"), OUT / "up_left.png")
-    save_img(Image.open(SRC / "189.jpg"), OUT / "down_left.png")
+    save_img(imgio.load(SRC / "190.jpg"), OUT / "left.png")
+    save_img(imgio.load(SRC / "188.jpg"), OUT / "up_left.png")
+    save_img(imgio.load(SRC / "189.jpg"), OUT / "down_left.png")
     pack_cycle("player_walk_left", "walk_left", WALK_PICKS)
     pack_cycle("player_walk_up_left", "walk_up_left", WALK_PICKS)
     pack_cycle("player_walk_down_left", "walk_down_left", WALK_PICKS)
@@ -83,11 +83,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Pack corrected left-facing player sheets with magenta key + despill.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="pack_facing_fix")
+    return agent_log.run_writer("pack_facing_fix", "Pack corrected left-facing player sheets with magenta key + despill.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

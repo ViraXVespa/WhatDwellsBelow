@@ -10,6 +10,8 @@ Never open `notes/`.
 
 AGENTS.md
     web   -> design/web-session.md -> protocol.md and constraints.md
+            -> phase pages only at their phase: discuss (2), plan (3), emit (4), test (5)
+            -> constraints-demo.md only before calling the build complete
             -> default brainstorm after boot; directed-goal only when the User asks
             -> present-User picture-read uncapped in design/ and the live thread tree
             -> docs/routing may open this file and the topic index; write stays one door
@@ -22,16 +24,16 @@ AGENTS.md
 Then, only if the User named work:
     one topic door -> one Job sibling (if that door has a Job table)
     graphics jobs are env, ground, volume, buffer, actor (not a boot path)
-    grid carve / hall segments / angled pieces -> dungeon then gen
-    gen publishes a cleaned 1 m maze, hall runs, and rare angled packets; stream instances those runs; volume skins provided runs only; buffer occupancy reads the cleaned grid plus piece hulls and mounts on interior faces; outline bake is the gen job
-    (second door only when the User names the owner; conflicts_with is a load ban)
+    grid carve / hall segments -> dungeon then gen
+    gen publishes a cleaned 1 m maze, and hall runs; stream instances those runs; volume skins provided runs only; buffer occupancy reads the cleaned grid and mounts on interior faces; outline bake is the gen job
+    (Build reads every door a multi-system job touches; web asks the User to name the owner for a second door; conflicts_with limits web implementation)
     and one design/code-map.md system row when live files are needed
     and design/tunables.md iff a number changes
     and design/versioning-log.md iff shipping a label
     and design/versioning.md iff the User named a pin or archive
     and design/isolated-media.md iff Grok Build is about to call Imagine
     and design/gdscript-law.md iff editing GDScript
-    and design/tools.md iff running, adding, or documenting a tool (sibling tools-lint.md; Build-only siblings tools-build.md, tools-shims.md, tools-media.md)
+    and design/tools.md iff running, adding, or documenting a tool (sibling tools-lint.md; Build-only siblings tools-build.md, tools-media.md)
     and design/doc-library.md iff editing docs by script or changing doc_patch / md_format_lib
     and design/pc-offload.md iff inventory, verify, Windows write, or a new local runner
 
@@ -39,7 +41,7 @@ Imagine tool calls use the isolated-media **gate** only. Do not also open art_pi
 Build repo skills live at `.grok/skills/` (Imagine / I2V / pc-offload). They are not the Grok Bot skill library.
 Imagine / I2V skills cite the isolated-media gate only and stay Build-only.
 The pc-offload skill cites the pc-offload catalog for Grok Build on the User PC.
-Types / warnings / tabs / 10KB live in `design/gdscript-law.md`, not the agents file.
+Types / warnings / tabs live in `design/gdscript-law.md`, not the agents file.
 Art Bible / pack / review / I2V unit prompt use design/art-pipeline.md then one sibling.
 
 Recipes (never boot): design/refactor.md, design/doc-refactor.md.
@@ -52,13 +54,13 @@ Path session files do not point back at AGENTS as a fetch.
 Topic siblings do not point at path files.
 topics index and design/code-map.md do not point at each other.
 Callers link a facade, never an art / UI / input / inventory / debug / hub / dungeon / save-tech / archives sibling.
-conflicts_with is a load ban: do not open the second door in the pair unless the User names the owner.
+conflicts_with: web does not implement both cores of a listed pair in one slice. Build reads every door a multi-system job touches (read-first, `grok-build.md`).
 See also is never a read list.
 The checker fails leftover relic-index names and `notes/<file>` cites.
 
 ## 10/10 checks
 
-1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints.
+1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints, The Bot's per-file boot budgets (`tools/bot_budgets.json`) are checked only with `check_load_graph.py --bot`.
 2. Bot boot is BOT.md + one Job sibling (the agents file only if Cursor already loaded it).
 3. No mutual See also.
 4. One job phrase belongs to one door.

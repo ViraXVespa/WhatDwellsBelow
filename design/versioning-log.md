@@ -1,6 +1,6 @@
 # Changelog body and ship label
 
-Status: binding design
+Status: current plan
 Read when: writing a changelog entry, title “what’s new”, web Phase 7 ship, or Grok Bot PR close-out
 
 Week pins and archive catalog ids stay on `design/versioning.md`. Open that file only when the User named a pin or archive.
@@ -27,11 +27,13 @@ Plain text, no code fence when emitted. Body shape:
 | Web Phase 7 | This file’s **body shape** only. Writes **one** new `design/changelog/{label}.md`. `{label}` is baked `version.json` `label` with patch + 1 (ignore stamp commits). Do not read older changelog files. Do not write that number back into this file. Do not emit `changelog.json`. First heading `## {label}`, never `# {label}`. |
 | Grok Build mid-week slice / catch-up | Nothing under `design/changelog/`. Git + User-named work. |
 | Grok Build named pin / revert, or User asks what shipped | This file’s body shape. Name next work only if the User asked. Still not every `0.N.*` file. |
-| Grok Bot | Reads baked `version.json` only to name `{label}` (patch + 1). Writes **one** new `design/changelog/{label}.md` per shipping PR. First heading `## {label}`, never `# {label}`. Does not hand-edit `changelog.json`. Optional sweep notes go in `_logs/` only. |
+| Grok Bot | Reads baked `version.json` only to name `{label}` (patch + 1). Writes **one** new `design/changelog/{label}.md` for every PR (docs/tools-only included). First heading `## {label}`, never `# {label}`. Does not hand-edit `changelog.json`. Optional sweep notes go in `_logs/` only. |
 | Named revert / what was 0.1.4? | That one file (flat or under `design/changelog/archive/{epoch}.{series}/`). |
 | Game | `version.json` + `changelog.json`. |
 
-the changelog directory is not required. Pages `/changelog/` is the public index.
+**Week close.** One extra file per week, `design/changelog/0.N.0.md` (patch 0 of the closing series; a whole-week summary in the same body shape), from Web Phase 7 or from Build when the User asks. Name it explicitly (it is not patch + 1) and commit it on `grok-build-wN`; its arrival on `main` creates the week's archives (`versioning.md`).
+
+Every Bot PR ships its entry, docs-only and tools-only PRs included (no player-visible change: say so in a bullet and keep the `Summary:` line short). `{label}` is the patch after the newest stamp on `origin/main`; CI stamps in merge order, so if `main` moved before your merge, rename the file to the new next label (`python tools/doc_patch.py next-label`). Pages `/changelog/` is the public index.
 
 ## In-game
 

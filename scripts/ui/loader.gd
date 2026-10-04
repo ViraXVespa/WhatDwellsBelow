@@ -26,7 +26,7 @@ func _ready() -> void:
 	_dim.color = DIM_SOLID
 	_dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_dim)
-	_title = _lab("Loading", 36, Color(0.95, 0.86, 0.55))
+	_title = _lab(tr("loader.loading"), 36, Color(0.95, 0.86, 0.55))
 	add_child(_title)
 	_status = _lab("", 20, Color(0.82, 0.76, 0.64))
 	add_child(_status)
@@ -106,7 +106,7 @@ func _vp() -> Vector2:
 		var r := vp.get_visible_rect().size
 		if r.x > 1.0 and r.y > 1.0:
 			return r
-	return Vector2(1920, 1080)
+	return load("res://scripts/data/tunables.gd").base_size()
 
 func _layout_bar() -> void:
 	var s := _vp()
@@ -137,7 +137,7 @@ func _layout_bar() -> void:
 func _sync_bar() -> void:
 	_layout_bar()
 	if _pct:
-		_pct.text = "%d%%" % int(round(clampf(_shown, 0.0, 1.0) * 100.0))
+		_pct.text = tr("loader.text") % int(round(clampf(_shown, 0.0, 1.0) * 100.0))
 
 func _lab(text: String, font_px: int, col: Color) -> Label:
 	var l := Label.new()

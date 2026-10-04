@@ -1,66 +1,40 @@
 ﻿# Design-doc facades
 
 Status: protocol  
-Read when: splitting topic `design/*.md` into a door + siblings; Grok Bot doc facade flow  
-
+Read when: splitting topic `design/*.md` into a door + siblings; Grok Bot doc facade flow
 
 ## Goal
 
-Cut routing tokens without losing binding comprehension. Do not change binding meaning. Move existing prose; fix links / README index rows.
+Cut routing tokens without losing comprehension. Do not change what the docs say. Move existing prose; fix links / README index rows.
 
 ## Model (match art-pipeline)
 
-- art_pipeline is the template.
-- Facade keeps: Status, Read when, Code (if any).
-- Facade states it is the door and has a **Job → Open** table.
-- Sibling files hold the heavy sections.
-- Callers keep linking the **facade path** (the UI door) unless they need one sibling.
+- art_pipeline is the template. One **door** (facade) keeps Status, Read when, Code (if any), and a **Job → Open** table; siblings hold the heavy sections tied to one job.
+- Callers keep linking the **facade path** unless they need one sibling.
 
-## Caps (soft)
+## Caps
 
-- **Facade (door):** prefer under **4KB** — Job table + non-negotiables only; no live-snapshot dumps.
-- **Sibling:** prefer under **8KB** — one job cluster; split again if a single `##` section dominates.
-- **Hard stop:** **~12KB** — do not leave a touched topic file above ~12KB if a legal section split exists.
-- Sizes use filesystem Length (same spirit as scripts). Prefer `tools/list_oversize_docs.py` when present.
+The Bot's doc size targets live in `grok-bot-docs.md`; `tools/list_oversize_docs.py --bot` lists sizes.
 
-## In scope
+## Scope
 
-- Topic files under `design/*.md` (and later `design/<area>/` if a cluster earns a folder).
-- Protocol family updates required by the split (the one Bot Job file, this file, `design/README.md` index rows, `design/code-map.md` only if a script path must stay accurate).
-- One `design/changelog/{label}.md` per shipping PR.
-
-## Out of scope
-
-- Changing binding rules, tunables, or player-facing meaning.
-- Rewriting `design/changelog/**` history (archiving prior series is separate: `design/versioning.md`).
-- `docs/` Pages export tree.
-- Mixing a doc sweep into a live script size sweep without User go.
-- Treating a sibling list as a file the agent must open.
+In: topic files under `design/*.md`; protocol-family updates the split needs (the Bot Job file, this file, `design/README.md` index rows, `design/code-map.md` only if a script path must stay accurate); one `design/changelog/{label}.md` per shipping PR.
+Out: changing rules, tunables or player-facing meaning; rewriting `design/changelog/**` history (archiving: `design/versioning.md`); the `docs/` Pages tree; mixing a doc sweep into a live script size sweep without User go; treating a sibling list as a file the agent must open.
 
 ## Pass order
 
-1. Inventory topic files by Length; rank over ~12KB, then over ~8KB.
-2. Show worklist; do not edit yet.
-3. Split doors first (ui, debug, input, inventory, then other fat topics).
-4. Update README "How to use" / topic index so agents open the facade, then only named.
-5. Grep for stale "read the whole of X" wording; point at the job table.
+1. Inventory by Length, largest first (targets: `grok-bot-docs.md`). Show the worklist; do not edit yet.
+2. Split doors first (ui, debug, input, inventory, then other fat topics).
+3. Update README "How to use" / topic index so agents open the facade, then only the named sibling.
+4. Grep for stale "read the whole of X" wording; point at the Job table.
 
 ## Facade checklist
 
-- [ ] Job table covers every former top-level `##` cluster (or explicitly routes to an existing sibling topic such as `gear-ui.md`).
-- [ ] Preamble non-negotiables that apply to every job stay on the facade.
-- [ ] Live snapshots travel with matching sibling (not the door).
-- [ ] Sibling bodies name no `design/*.md` paths. Job targets stay on the door Job table and in `design/routes.yaml`.
-- [ ] No behavior / binding change.
+- [ ] Job table covers every former top-level `##` cluster (or routes to an existing sibling topic such as `gear-ui.md`).
+- [ ] Preamble rules that apply to every job stay on the door; live snapshots travel with the matching sibling.
+- [ ] Sibling bodies name no `design/*.md` paths (job targets stay on the door Job table and in `design/routes.yaml`).
+- [ ] No behavior or rule change.
 
 ## Token rules
 
-- After inventory, open **one** facade and **only** sibling_for_the_active.
-- Do not concatenate all siblings into chat "for context."
-- Prefer Length summaries / headings lists over pasting whole markdown bodies.
-
-## Door + siblings layout
-
-- One **door** (facade) file with a **Job → Open** table.
-- Siblings contain heavy sections tied to specific jobs.
-- Callers link to facade_unless_a_specific is required.
+After inventory open **one** door and only the sibling for the active job. Do not concatenate siblings into chat; prefer Length summaries and heading lists over whole bodies.

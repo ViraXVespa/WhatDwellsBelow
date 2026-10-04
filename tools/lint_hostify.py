@@ -3,9 +3,8 @@
 
 Usage (from repo root):
   python tools/lint_hostify.py
-  powershell -File tools/lint_hostify.ps1
 
-Output: _logs/hostify-lint/summary.txt
+Output: _logs/hostify-lint/<stamp>-hostify-lint.txt
 See design/refactor-hostify.md (Hostify pitfalls).
 
 Exit 0 always (advisory report). Read RESULT hits= in the summary.
@@ -104,4 +103,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Find reused/duplicated code: whole functions (exact, or same shape with renamed params/locals) and line-block clones.
 
-    python3 tools/list_dupes.py [--lang gd|py|all] [--min-lines 4] [--min-block 8] [--top 40] [--md PATH] [--json]
+    python tools/list_dupes.py [--lang gd|py|all] [--min-lines 4] [--min-block 8] [--top 40] [--md PATH] [--json]
 
 gd = scripts/**/*.gd, py = tools/*.py (archives, .archive_worktrees, _logs skipped). Kinds, ranked by score
 (copies-1)*lines:
@@ -10,7 +10,7 @@ gd = scripts/**/*.gd, py = tools/*.py (archives, .archive_worktrees, _logs skipp
   near    same shape once string and number literals are masked too (a shared helper takes the literals as args)
   block   >= --min-block consecutive code lines repeated verbatim in 2+ places (not inside an already reported function)
   nblock  the same, with string/number literals masked (copies differ only in constants)
-Read-only. Summary: _logs/dupes/summary.txt; --md writes the ranked list (location, lines, copies) for design/reuse-map.md.
+Read-only. Summary: _logs/dupes/<stamp>-dupes.txt; --md writes the ranked list (location, lines, copies) for design/reuse-map.md.
 Result: RESULT INFO exact= shape= near= block= nblock= (always INFO; this is a finder, not a gate).
 """
 from __future__ import annotations
@@ -28,7 +28,7 @@ import agent_log
 import gd_lib
 
 KINDS = ("exact", "shape", "near", "block", "nblock")
-SKIP = {"archives", ".archive_worktrees", "_logs", "docs", ".git", "assets", "__pycache__"}
+SKIP = {*gd_lib.SKIP_PARTS, "_logs", "docs", ".git", "assets", "__pycache__"}
 IDENT = re.compile(r"\b[A-Za-z_]\w*\b")
 LOCAL = re.compile(r"^\s*(?:var|for)\s+(\w+)")
 TRIVIAL = re.compile(r"^(pass|return|return null|return false|return true|else:|\)|\]|\})$")
@@ -248,7 +248,7 @@ def drop_inside_funcs(blocks: list[dict], fgroups: list[dict]) -> list[dict]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Find duplicated functions and code blocks (exact, same-shape, block clones).", json_out=True)
-    ap.add_argument("--lang", choices=("gd", "py", "all"), default="all")
+    ap.add_argument("--lang", choices=("gd", "py", "all"), default="all", help="Which sources to scan: gd, py or all (default all).")
     ap.add_argument("--min-lines", type=int, default=4, help="min function body lines for exact/shape groups")
     ap.add_argument("--min-block", type=int, default=8, help="min consecutive repeated code lines for block clones")
     ap.add_argument("--top", type=int, default=40, help="rows shown per kind in the console summary")
@@ -268,13 +268,15 @@ def main(argv: list[str] | None = None) -> int:
         md = ["| Kind | Score | Lines | Copies | Where |", "|---|---|---|---|---|"]
         md += ["| %s | %d | %d | %d | %s |" % (r["kind"], r["score"], r["lines"], r["copies"], "<br>".join("`%s`" % w for w in r["where"])) for r in rows]
         Path(args.md).write_text("\n".join(md) + "\n", encoding="utf-8")
-    res = agent_log.result_line("INFO", "_logs/dupes/summary.txt", **cnt)
     d = agent_log.ensure_agent_log_dir("dupes", root)
-    (d / "summary.txt").write_text("\n".join(lines + [res]) + "\n", encoding="utf-8")
-    (d / "rows.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
-    print(json.dumps({"status": "INFO", "counts": cnt, "rows": rows}) if args.json else "\n".join(lines + [res]))
+    agent_log.run_path("dupes", root, "rows.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
+    res = agent_log.write_run_file(root, d, "dupes", "\n".join(lines), "INFO", **cnt)
+    if args.json:
+        agent_log.print_json({"status": "INFO", "counts": cnt, "rows": rows})
+    else:
+        print("\n".join(lines + [res]))
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

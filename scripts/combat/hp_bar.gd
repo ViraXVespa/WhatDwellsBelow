@@ -131,7 +131,7 @@ func _place_lv(alpha: float) -> void:
 	if _combat_lv <= 0 or _name_owns_lv():
 		_lv.visible = false
 		return
-	_lv.text = "Lv %d" % _combat_lv
+	_lv.text = tr("hp_bar.lv") % _combat_lv
 	var col := _lv_color()
 	col.a = alpha
 	_lv.modulate = col

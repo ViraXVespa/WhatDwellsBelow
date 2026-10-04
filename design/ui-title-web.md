@@ -1,6 +1,6 @@
 ﻿# Title, web fullscreen gate, loading
 
-Status: binding design  
+Status: current plan  
 Read when: title / play menu, web fullscreen gate, loader  
 
 

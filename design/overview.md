@@ -1,6 +1,6 @@
 ﻿# Overview, scope, and lore
 
-Status: binding design  
+Status: current plan  
 Read when: scoping inclusion, pillar prose, vision copy
 Code: `README.md`, `scripts/data/tunables.gd` (`ONE_LINER`), `scripts/app.gd`  
 
@@ -11,7 +11,7 @@ Code: `README.md`, `scripts/data/tunables.gd` (`ONE_LINER`), `scripts/app.gd`
 What Dwells Below
 
 **One-line Public Description**
-A gamepad-first dungeon crawler where you pilot disposable spirit avatars, mail loot home, and slowly remember the skills you earned in the dark.
+The one-line pitch is the tagline in `README.md` (single copy).
 
 **Core Fantasy**
 You are a dungeon delver employed by a known and trusted guild. You repeatedly descend into a shifting underground complex from a temporary surface camp called Placeholdia, fight, gather, and attempt to extract resources and gear. Death loses almost everything you were carrying; successful extraction banks permanent progress. The surface is slightly absurd and hopeful; the depths are dangerous and increasingly hostile.
@@ -52,7 +52,7 @@ Hard constraints, demo-complete bar, and the full in-scope contract: the constra
 - All numeric values are exposed in the debug menu and treated as tunable.
 - The demo runs at a consistent 60 FPS (higher allowed) on target hardware.
 - Every system that ships is considered production/Gold and will not be rewritten for the full game.
-- Player-facing UI and HUD use dungeon theming. Default / unskinned engine controls MUST NOT appear on the playable path. The secret debug menu is exempt.
+- Player-facing UI and HUD use dungeon theming; the unskinned-controls ban and the debug-menu exemption live in feel.
 
 ## 3. Core fantasy and lore (demo-visible only)
 

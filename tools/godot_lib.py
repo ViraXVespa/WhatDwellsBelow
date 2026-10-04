@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Godot launch + per-path lock for the run_* tools (python port of invoke_godot/godot_lock).
+"""Godot launch + per-path lock for the run_* tools.
 
 Rules: the lock key is the normalized --path dir; wait until that path is free;
 a timeout or compile error kills ONLY the pid this call started, never godot*.
 
-    python3 tools/godot_lib.py --path . --timeout-sec 5     # lock probe: locks, prints, unlocks
-    python3 tools/godot_lib.py --display                    # which display GUI runs (shots, bakes) will use
+    python tools/godot_lib.py --path . --timeout-sec 5     # lock probe: locks, prints, unlocks
+    python tools/godot_lib.py --display                    # which display GUI runs (shots, bakes) will use
 
 GUI runs (`run_godot(..., gui=True)`) need a real renderer: pick_display() takes $DISPLAY, else the first live
 X socket, else wraps the command in xvfb-run (software GL). Headless smokes never need a display.
@@ -267,8 +267,7 @@ def grep_logs(logs: list[Path], pattern: str) -> list[str]:
 def timing_job(args, job: str, title: str, flag: str, running: str, extra: list[str] | None = None) -> int:
     """Shared body of run_load_timing / run_dungeon_load_timing: run one --wdb-*-smoke, parse LOAD: lines."""
     root = agent_log.resolve_root(args)
-    out_dir = agent_log.ensure_agent_log_dir(job, root)
-    out_log, err_log = out_dir / "out.log", out_dir / "err.log"
+    out_log, err_log = agent_log.run_path(job, root, "out.log"), agent_log.run_path(job, root, "err.log")
     print(running)
     r = run_godot(root, root, headless_args(root, flag, *(extra or [])), out_log, err_log, args.timeout_sec)
     loads = grep_logs([err_log, out_log], r"^LOAD:")
@@ -281,10 +280,13 @@ def timing_job(args, job: str, title: str, flag: str, running: str, extra: list[
     fail = int(r["status"] == "TIMEOUT") + int(r["status"].startswith("EXIT=") and r["status"] != "EXIT=0")
     fail += int(bool(errs)) + int(not has_ok or total == "")
     body = [f"{title} root=.", f"status={r['status']} wall_ms={r['ms']} errBytes={r['err_bytes']} outBytes={r['out_bytes']}",
-            "", "--- LOAD lines ---"] + (loads or ["(no LOAD: lines - check err.log if TIMEOUT)"])
+            "", "--- LOAD lines ---"] + (loads or ["(no LOAD: lines - check the err log if TIMEOUT)"])
     body += ["", "--- errors ---"] + (errs[:40] or ["(none)"])
-    return agent_log.finish(job, root, "\n".join(body), "FAIL" if fail else "PASS", args=args,
-                            fail_signals=fail, total_ms=total or -1)
+    marks = sorted(((int(m.group(2)), m.group(1)) for h in loads if (m := re.search(r"mark=(\w+) t=\d+ dt=(\d+)", h))), reverse=True)
+    echo = [body[0], body[1], "slowest: " + " ".join(f"{n}={dt}ms" for dt, n in marks[:5])]
+    echo += ["errors:"] + errs[:5] if errs else []
+    return agent_log.finish(job, root, "\n".join(body), "FAIL" if fail else "PASS", args=args, legacy=False,
+                            echo="\n".join(echo), retry=(f"{job} (load timing)", body), fail_signals=fail, total_ms=total or -1)
 
 
 def timing_parser(desc: str) -> "argparse.ArgumentParser":
@@ -297,7 +299,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Probe the per-path Godot lock: lock, print, unlock. --display reports the GUI display choice.")
     ap.add_argument("--display", action="store_true", help="print which display GUI runs (shots, bakes) will use, then exit")
     ap.add_argument("--path", "-Path", default=None, help="Godot --path to lock (default: repo root).")
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=120)
+    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=120, help="Seconds to wait for the lock (default 120).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if args.display:
@@ -315,4 +317,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

@@ -20,16 +20,18 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 import repo_lib
+from bot_smokes import VERSION as ENGINE_PIN
 
-CATALOGS = ("tools.md", "tools-lint.md", "tools-build.md", "tools-shims.md", "tools-media.md")
+CATALOGS = ("tools.md", "tools-lint.md", "tools-build.md", "tools-media.md")
 ROW = re.compile(r"^\|\s*`([^`|]+)`\s*\|.*\|\s*([BWD]+)\s*\|[^|]*\|\s*([YN])\s*\|\s*$")
 
 
 SKILL_DIR = Path("/home/box/agent-data/workflows")
-SUFFIX = (".gd", ".py", ".md", ".tscn", ".json", ".yaml", ".yml", ".ps1", ".cfg", ".html", ".txt", ".shader", ".tres", ".uid")
+SUFFIX = (".gd", ".py", ".md", ".tscn", ".json", ".yaml", ".yml", ".cfg", ".html", ".txt", ".shader", ".tres", ".uid")
 TICK = re.compile(r"`([^`\n]+)`")
 PATH_SKIP = ("_logs/", "_out/", "user://", "http", ".godot/", "docs/", "design/changelog/")
 NARR = re.compile(r"\b(will be added|to be added|TODO|TBD|legacy|formerly|previously|no longer|used to|not yet|for now|old flat|temporary|deprecated|obsolete|superseded)\b", re.I)
+ENGINE_VER = re.compile(r"\b4\.\d+\.\d+\b")  # Godot 4.x.y mentions in docs / CI must equal bot_smokes.VERSION
 MEMBER = re.compile(r"^\s*(?:static\s+)?(?:func|var|const|signal|enum|class)\s+(\w+)", re.M)
 
 
@@ -47,8 +49,9 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
     names = {g.rsplit("/", 1)[-1] for g in tracked}
     gone = subprocess.run(["git", "log", "--diff-filter=D", "--name-only", "--pretty=format:"], cwd=root, capture_output=True, text=True).stdout.split("\n")
     gone_names = {g.rsplit("/", 1)[-1] for g in gone if g} - names
-    ignored = subprocess.run(["git", "ls-files", "--others", "--ignored", "--exclude-standard", "--directory"], cwd=root, capture_output=True, text=True).stdout.split("\n")
-    ignored = tuple(i for i in ignored if i)
+    def ignored(tok: str) -> bool:
+        """Gitignored runtime paths (tools/anim_review/...) are not dead refs even when the dir is absent."""
+        return subprocess.run(["git", "check-ignore", "-q", "--", tok], cwd=root, capture_output=True).returncode == 0
     classes: dict[str, set[str]] = {}
     for g in tracked:
         if g.endswith(".gd"):
@@ -74,7 +77,7 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
                 if " " in tok or any(c in tok for c in "*<>{}$%|=()[]\\:,;~") or tok.startswith(("-", ".", "/")) or any(tok.startswith(s) for s in PATH_SKIP):
                     pass
                 elif tok.endswith(SUFFIX) and "." in tok.rsplit("/", 1)[-1]:
-                    if tok.endswith("_scratch.py") or (ignored and tok.startswith(ignored)) or (not f.is_relative_to(root) and (f.parent / tok).exists()):
+                    if tok.endswith("_scratch.py") or ignored(tok) or (not f.is_relative_to(root) and (f.parent / tok).exists()):
                         continue
                     if tok.rstrip("/") not in tracked and not (root / tok).exists() and not any(g.endswith("/" + tok) for g in tracked) and (("/" in tok) or tok in gone_names):
                         bad.append(f"PATH    {name}:{no}: {tok}")
@@ -82,6 +85,10 @@ def stale_refs(root: Path, narration: bool) -> tuple[list[str], list[str]]:
                 m = re.match(r"^([A-Z]\w+)\.(\w+)(?:\(.*)?$", tok)
                 if m and m.group(1) in classes and m.group(2) not in classes[m.group(1)]:
                     bad.append(f"IDENT   {name}:{no}: {m.group(1)}.{m.group(2)}")
+    for f in [*_doc_files(root, tracked), root / ".github/workflows/pages.yml"]:
+        if f.is_file() and f.is_relative_to(root):
+            for no, line in enumerate(f.read_text(encoding="utf-8-sig", errors="replace").splitlines(), 1):
+                bad += [f"ENGINE  {f.relative_to(root).as_posix()}:{no}: {v} != pinned {ENGINE_PIN}" for v in ENGINE_VER.findall(line) if v != ENGINE_PIN]
     return bad, narr
 
 
@@ -128,9 +135,11 @@ def main(argv: list[str] | None = None) -> int:
             if '"""' not in t[:600] and "argparse" not in t:
                 bad.append(f"HELP    {n}: allowlisted .py without docstring or argparse")
     head = f"tool-docs: tools={len(files)} rows={len(rows)} allowlisted={len(allow)} problems={len(bad)}"
+    if bad:
+        bad.append("next: MISSING = add a row to the design/tools*.md catalog (new tool: tools.md rule 5); ALLOWED/ALLOW = fix tools/bot_allow.txt or the A column; then rerun")
     return agent_log.finish("tool-docs", root, "\n".join(bad + [head]), "FAIL" if bad else "PASS", args=args,
                             legacy=False, tools=len(files), rows=len(rows), problems=len(bad))
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

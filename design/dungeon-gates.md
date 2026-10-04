@@ -1,6 +1,6 @@
 # Dungeon — gates, stairs, fog
 
-Status: binding design + live snapshot  
+Status: current plan + live snapshot  
 Read when: PREPARE plaque, extraction clerks, stair hold, reveal disk
 
 

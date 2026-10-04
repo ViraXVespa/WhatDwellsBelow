@@ -1,6 +1,6 @@
 # Inventory / gear rules (door)
 
-Status: binding design  
+Status: current plan  
 Read when: affixes, artifacts, mailing
 
 | Job | Open |

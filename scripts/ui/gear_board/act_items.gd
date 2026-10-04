@@ -48,19 +48,19 @@ static func bag_primary(ui: CanvasLayer) -> void:
 
 static func drop(ui: CanvasLayer) -> void:
 	if str(ui.get("gear_mode")) == "anvil":
-		st(ui, "Use Analyze to destroy a piece.")
+		st(ui, App.tr("common.use_analyze_to_destroy_a"))
 		return
 	if not App.in_dungeon:
-		st(ui, "Drop on the dungeon floor only.")
+		st(ui, App.tr("common.drop_on_the_dungeon_floor"))
 		return
 	var it := Text.selected(ui)
 	if it.is_empty():
-		st(ui, "Nothing to drop.")
+		st(ui, App.tr("common.nothing_to_drop"))
 		return
 	var sel := str(ui.inv_sel)
 	var slot := Text.selected_slot(ui)
 	if sel.begins_with("slot:") and locked_slot(slot):
-		st(ui, "Weapon and tool stay equipped.")
+		st(ui, App.tr("common.weapon_and_tool_stay_equipped"))
 		return
 	var msg := ""
 	if sel.begins_with("bag:"):
@@ -68,7 +68,7 @@ static func drop(ui: CanvasLayer) -> void:
 	elif sel.begins_with("slot:"):
 		msg = App.prog.drop_slot(slot)
 	else:
-		st(ui, "Pick a slot or bag item first.")
+		st(ui, App.tr("act_items.pick_a_slot_or_bag"))
 		return
 	ui.inv_sel = "slot:" + (slot if slot != "" else "weapon")
 	st(ui, msg)
@@ -76,19 +76,19 @@ static func drop(ui: CanvasLayer) -> void:
 
 static func destroy(ui: CanvasLayer) -> void:
 	if str(ui.get("gear_mode")) == "anvil":
-		st(ui, "Use Analyze to destroy a piece.")
+		st(ui, App.tr("common.use_analyze_to_destroy_a"))
 		return
 	var sel := str(ui.inv_sel)
 	var it := Text.selected(ui)
 	var slot := Text.selected_slot(ui)
 	if sel.begins_with("slot:") and locked_slot(slot):
-		st(ui, "Weapon and tool stay equipped.")
+		st(ui, App.tr("common.weapon_and_tool_stay_equipped"))
 		return
 	if sel.begins_with("opt:") and locked_slot(slot) and str(sel.split(":")[1] if sel.split(":").size() > 1 else "") == "equipped":
-		st(ui, "Weapon and tool stay equipped.")
+		st(ui, App.tr("common.weapon_and_tool_stay_equipped"))
 		return
 	if it.is_empty() and not sel.begins_with("slot:"):
-		st(ui, "Nothing to destroy.")
+		st(ui, App.tr("act_items.nothing_to_destroy"))
 		return
 	if sel.begins_with("bag:"):
 		App.prog.remove_uid(int(it.uid))
@@ -107,15 +107,15 @@ static func destroy(ui: CanvasLayer) -> void:
 		elif src == "bag":
 			App.prog.remove_uid(int(it.uid))
 		elif src == "starter":
-			st(ui, "Starters aren't stored.")
+			st(ui, App.tr("act_items.starters_aren_t_stored"))
 			return
 		else:
-			st(ui, "Can't destroy that.")
+			st(ui, App.tr("common.can_t_destroy_that"))
 			return
 	else:
-		st(ui, "Can't destroy that.")
+		st(ui, App.tr("common.can_t_destroy_that"))
 		return
-	st(ui, "Destroyed.")
+	st(ui, App.tr("act_items.destroyed"))
 	App.save_now()
 	ui.inv_sel = "slot:" + (slot if slot != "" else "weapon")
 	rebuild(ui)

@@ -1,0 +1,29 @@
+﻿# SFX cue wiring and missing SFX
+
+Status: current plan + live snapshot  
+Read when: wiring a new SFX cue, generating a placeholder cue, or asking which events are still silent
+Code: `scripts/audio/sfx.gd`
+
+The required SFX list stays on the audio-visual page.
+
+## Where cues come from, and how Build wires one
+- Assets: `assets/audio/` (`p2_*`, `p9_*` and `sfx_*` wavs, `music_*`). `sfx.gd` `FILES` is the one cue table (id to path; `_ready()` loads each; smoke 9 checks every path exists); a missing file loads silent, so check the path.
+- Play: `App.sfx("id")` at the event (`App.sfx` forwards to the `sfx.gd` node). `hurt`, `warcry` and `hurk` resolve to `_male` / `_female` by `App.character_type`. The adrenaline loop is `set_adrenaline(true/false)` from `app_run.gd`.
+- Volume: every player is on the Master bus at `vol_sfx * vol_master`; there are no custom buses. Music is `music.gd`.
+- New cue: reuse a file already under `assets/audio/` when one fits. A new file is an access confirm (new asset location) and `isolated-media.md` if Imagined. Then add one `FILES` row and one `App.sfx` call, and run smoke 9.
+- `sfx_dash`, `sfx_hit`, `sfx_level`, `sfx_slam` are second recordings (`ALTS`): each play of `dash`, `hit`, `level`, `slam` picks the `p2_*` / `p9_*` file or its alt at random (private RNG). `sfx_hurt` is the body hit layered under the hurt voice (`LAYERS`).
+- An event listed under Missing SFX stays silent until the User approves wiring it: ask, do not add.
+
+## Missing SFX (silent today; Build may generate these on request, not wire them)
+Same rules as above: new file under `assets/audio/`, one `FILES` row, one `App.sfx` call. Short, dry, placeholder-grade, matched to the existing `sfx_ui` / `p9_*` loudness.
+
+| Event | Code location | Cue id / file | Duration and character |
+|-------|---------------|---------------|------------------------|
+| Anvil, loadout crystal, quest board, vendor, dumpster, billboard panel opens | `interact_act.gd` `open_chest` (one branch per kind) | `panel_open` / `p10_panel_open.wav` (shared) | 0.15 s soft wooden or paper rustle, no pitch |
+| Stairs descend | `interact_act.gd` stairs branch, `App.next_floor()` | `stairs` / `p10_stairs.wav` | 0.5 s stone steps down plus a short echo |
+| Enemy death | `enemy_hit.gd` `die` | `enemy_die` / `p10_enemy_die.wav` | 0.3 s comic poof or squelch; readable over `hit` |
+| Enemy hits player (impact, not the hurt VO) | `enemy_atk.gd` `hit_player` | `player_struck` / `p10_player_struck.wav` | 0.2 s dull thump, lower than `hit`; the hurt VO already plays in `player_act.gd` |
+| Chest open | `interact_act.gd` `open_chest` chest branch (today plays `pickup`) | `chest` / `p10_chest.wav` | 0.4 s creak then latch click |
+| Quest accept | `quest_roll.gd` `accept_quest` | `quest_accept` / `p10_quest_accept.wav` | 0.3 s two-note stamp or seal, hopeful |
+
+Generate a placeholder wav with `python tools/make_sfx.py --only <id>`: add one entry to `tools/sfx-cues.json` (sine, noise, mix, cat nodes; the 21 existing p2/p9 cues live there, byte-identical, `--check` proves it). No new `make_pN` script.

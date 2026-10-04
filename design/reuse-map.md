@@ -17,7 +17,7 @@ If Brief is empty, stop and report empty. Do not start a size sweep. If Brief ha
 
 ## Brief
 
-Open reuse findings (`python3 tools/list_dupes.py --lang all`; regenerate the ranked list with `--md PATH`). Shared homes already in the tree: `ScrollBox` (pause/recap scroll + tip), `Balance.f` and `App.gear` readers, `Pick.nearest` (playtest goals), `mesh_commit.gd`, `ThemeS.fill`, `UiSession.status`, `Prompts.verb_lines`, `split_menu_view._ring`, `chrome._pane`, `GroundShader.TAP_BODY` / `TAP_MIX`, `gen._result`; tools: `sprite_lib` (chroma, flood, pockets, fit), `repo_lib.under` / `write_text_nl`, `anim_review_lib.brief_args`, `audio_lib._write`, `load_routes._str_lists`. Hot paths (gen, shaders, pixel loops, tool output) need a golden compare before and after (`design/grok-bot-reuse.md`). The rest needs a design call, a web run, or touches a hot pixel loop, so Bot does not take it without a User go:
+Open reuse findings (`python tools/list_dupes.py --lang all`; regenerate the ranked list with `--md PATH`). Shared homes already in the tree: `ScrollBox` (pause/recap scroll + tip), `Balance.f` and `App.gear` readers, `Pick.nearest` (playtest goals), `mesh_commit.gd`, `ThemeS.fill`, `UiSession.status`, `Prompts.verb_lines`, `split_menu_view._ring`, `chrome._pane`, `GroundShader.TAP_BODY` / `TAP_MIX`, `gen._result`, `Icons.fit_btn` / `Icons.pick_btn`, `CliArgs.seed_arg`; tools: `imglib` (chroma, flood, pockets, fit, flip, scale), `repo_lib.under` / `write_text_nl`, `anim_review_lib.brief_args`, `audio_lib._write`, `load_routes._str_lists`. Hot paths (gen, shaders, pixel loops, tool output) need a golden compare before and after (`design/grok-bot-reuse.md`). The rest needs a design call, a web run, or touches a hot pixel loop, so Bot does not take it without a User go:
 
 | Rank | Where (copies) | Shape | Why left |
 |---|---|---|---|
@@ -33,3 +33,10 @@ Open reuse findings (`python3 tools/list_dupes.py --lang all`; regenerate the ra
 | C5 | `run_bake_camp`, `run_dungeon_map`, `run_godot_import_check`, `export_web`, `run_build_gate`, `run_post_split_gate` Godot-run heads | 8-12 line argument/launch twins | each prints its own `RESULT` line; fold into `godot_lib` only with a runner-wide pass |
 | C7 | `i2v_seeds` prompt text, `web_postexport`, other in-file twins | text/data twins | prompt data; not code |
 | C-key | `pack_*` / `process_*` per-pixel `key()` loops | key rules differ per asset class | merging changes art output |
+| D1 | `camp.gd` / `foundation.gd` hint-label setup | 7-line `Label` font/outline twins | HUD label look; needs a camp HUD shot proof |
+| D2 | `ui_flow` / `recap_ui` dim + panel + edge, `ui_flow._input` / `_unhandled_input` | 12-line panel and 9-line input twins | colors, rects and guards differ; needs a Bot-level UI call |
+| D3 | `playtest_api.reset_progressed_template` / `sim.prep_slot` | progressed-slot setup twins | bank numbers differ (24/16 vs 20/12); unify changes playtest runs |
+| D4 | `goals_best` / `goals_near` enemy scan preludes, `map_rim` / `map_spec` span loops | 8-9 line scan twins | thresholds and step math differ; map loops are pixel loops |
+| D5 | `title` / `fs_gate` card VBox | 10-line twins | `fs_gate` is web-only; needs a browser run |
+| D6 | tool `sys.path` + import headers (6+ files), `make_p*_sfx`, `pack_*` mains | 8-13 line twins | must run before `import`; audio and art tools need assets to compare |
+| D7 | `board_host` / `host_sync` `focus_entered` closure, `props_place` / `spawn` placement loop, `tip` guard blocks, `schema_a` / `schema_b` heads | 8-10 line twins | focus closure is B13 (pad/touch pass); placement loop sits on the seeded gen order; rest below the line-count bar |

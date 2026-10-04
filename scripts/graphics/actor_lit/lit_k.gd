@@ -4,8 +4,6 @@ extends Object
 
 const SUN_AWAY := Vector2(0.406138, 0.913811)
 const SUN_ELEV := 0.45
-const TORCH_H := 1.65
-const MARK_MAX := 1.8
 const HUB_STRETCH := 0.72
 const HUB_ALPHA := 0.55
 const D_NEAR := 0.12

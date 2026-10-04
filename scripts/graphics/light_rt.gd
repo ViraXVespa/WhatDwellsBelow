@@ -4,12 +4,7 @@ extends Object
 
 const T := preload("res://scripts/data/tunables.gd")
 const Stamp := preload("res://scripts/graphics/light_stamp.gd")
-const Plan := preload("res://scripts/graphics/torch_plan.gd")
-const HitchLog := preload("res://scripts/debug/hitch_log.gd")
-const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
-const HubShadow := preload("res://scripts/graphics/light_rt/hub_shadow.gd")
 const HubBake := preload("res://scripts/graphics/light_rt/hub_bake.gd")
-const Lights := preload("res://scripts/graphics/light_rt/lights.gd")
 const Publish := preload("res://scripts/graphics/light_rt/publish.gd")
 
 const COL_TORCH := Color(1.0, 0.48, 0.16)
@@ -34,6 +29,7 @@ static var _live := ""
 static var _knob := ""
 static var _bill: GDScript
 static var _img: Image
+static var _job: RefCounted
 static var _solid: PackedByteArray = PackedByteArray()
 static var _sw := 0
 static var _sh := 0
@@ -99,6 +95,7 @@ static func reset_floor() -> void:
 	_plan_dirty = true
 	_live = ""
 	_knob = ""
+	_job = null
 	_rect = Rect2i(-1, -1, 0, 0)
 static func maintain(host: Node) -> void:
 	Publish.maintain(host)

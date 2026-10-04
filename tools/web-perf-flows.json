@@ -1,6 +1,23 @@
 {
-  "title-idle": {"about": "Load, pass the fullscreen gate, sit on the title screen.", "steps": [{"wait": 1500}, {"key": "Escape"}, {"wait": 8000}, {"shot": "title"}]},
-  "camp-walk": {"about": "Load, pass the gate, click Play, walk. UNPROVEN: the Play click did not start a run in headless Chrome on the box; read the shots.",
-    "steps": [{"wait": 1500}, {"key": "Escape"}, {"wait": 3000}, {"click": [0.41, 0.533]}, {"wait": 10000}, {"shot": "camp-start"},
-      {"hold": "d", "ms": 3000}, {"hold": "s", "ms": 3000}, {"hold": "a", "ms": 3000}, {"hold": "w", "ms": 3000}, {"shot": "camp-end"}]}
+  "_boot": [{"phase": "_boot"}, {"wait": 2500}, {"key": "Enter"}, {"wait": 2500}, {"key": "Enter"}, {"wait": 3500}, {"shot": "title"}, {"key": "Enter"}, {"settle": 30000, "min": 2000, "as": "camp_load_ms"}],
+  "title-idle": {"about": "Load, sit on the splash (no input) for 6 s.", "steps": [{"phase": "splash"}, {"wait": 6000}, {"shot": "splash"}]},
+  "camp-walk": {"about": "Splash, title (Enter on Play - Male), then walk the Placeholdia camp in a square.", "boot": true, "expect_change": [["title", "camp-start"]],
+    "steps": [{"shot": "camp-start"}, {"phase": "walk"}, {"hold": "d", "ms": 3000}, {"hold": "s", "ms": 3000}, {"hold": "a", "ms": 3000}, {"hold": "w", "ms": 3000}, {"shot": "camp-end"}]},
+  "camp-idle": {"about": "Camp, stand still with no UI for 4 s: the reference for camp-pause and camp-shop (what the menus add on top of the 3D town).", "boot": true,
+    "steps": [{"shot": "camp"}, {"phase": "idle"}, {"wait": 4000}, {"shot": "camp-idle"}]},
+  "hub-load": {"about": "Engine load marks only: boots straight into Play (?wdb-load-timing-smoke), prints the Title to Placeholdia breakdown (preload, camp_light, camp build, warmup) as load lines. Frame stats are not meaningful.", "marks_only": true, "query": "wdb-load-timing-smoke",
+    "steps": [{"phase": "load"}, {"wait": 14000}]},
+  "dungeon-load": {"about": "Engine load marks only: Placeholdia to dungeon floor 1 seed 42 (?wdb-dungeon-load-timing-smoke): music_play, gen, visuals, light, warm-up as load lines with wasm memory. Frame stats are not meaningful.", "marks_only": true, "query": "wdb-dungeon-load-timing-smoke",
+    "steps": [{"phase": "load"}, {"wait": 14000}]},
+  "camp-pause": {"about": "Camp, open the pause menu (Escape), sit 4 s, close.", "boot": true, "expect_change": [["camp", "pause"]],
+    "steps": [{"shot": "camp"}, {"phase": "pause"}, {"key": "Escape"}, {"wait": 4000}, {"shot": "pause"}, {"key": "Escape"}, {"wait": 500}]},
+  "camp-shop": {"about": "Camp, walk to the vendor stall, open the shop (E), sit 4 s, leave.", "boot": true, "expect_change": [["camp", "shop"]],
+    "steps": [{"shot": "camp"}, {"hold": "d", "ms": 1900}, {"hold": "w", "ms": 1300}, {"wait": 300}, {"phase": "shop"}, {"key": "e"}, {"wait": 4000}, {"shot": "shop"}, {"key": "Escape"}, {"wait": 500}]},
+  "dungeon-walk": {"about": "Camp, floor crystal loadout (E), Enter dungeon (floor 1, seed 42), walk the entrance room in a square. _enter holds the scene-change hitch and dungeon_load_ms.", "boot": true, "query": "wdb-seed=42", "expect_change": [["camp", "loadout"], ["camp", "dungeon-start"]],
+    "steps": [{"shot": "camp"}, {"hold": "w", "ms": 1000}, {"hold": "w", "ms": 100}, {"key": "e"}, {"wait": 500}, {"hold": "w", "ms": 100}, {"key": "e"}, {"wait": 500}, {"hold": "w", "ms": 100}, {"key": "e"}, {"wait": 700}, {"shot": "loadout"},
+      {"key": "s"}, {"key": "s"}, {"key": "s"}, {"key": "s"}, {"wait": 300}, {"phase": "_enter"}, {"key": "Enter"}, {"settle": 30000, "min": 1500, "as": "dungeon_load_ms"}, {"wait": 500}, {"shot": "dungeon-start"},
+      {"phase": "walk"}, {"hold": "d", "ms": 2000}, {"hold": "s", "ms": 2000}, {"hold": "a", "ms": 2000}, {"hold": "w", "ms": 2000}, {"shot": "dungeon-end"}]},
+  "dungeon-fight": {"about": "Camp, then the debug playtester (window.wdbPlaytest, ?wdb-playtest) runs one fresh Great Axe AI run on floor 1 with seed 42 (?wdb-seed=42) for 30 s of sim time, then 6 s without it (phase _after, a rough no-playtester reference). fps includes playtester overhead: compare only with itself. play_runs lists each run's kills/damage so repeatability is visible.",
+    "boot": true, "playtest": true, "query": "wdb-seed=42&wdb-playtest", "expect_change": [["camp", "fight"]],
+    "steps": [{"shot": "camp"}, {"phase": "_enter"}, {"eval": "window.wdbPlaytest(30)"}, {"settle": 30000, "min": 1500, "as": "dungeon_load_ms"}, {"phase": "fight"}, {"waitplay": 60000}, {"shot": "fight"}, {"phase": "_after"}, {"wait": 6000}, {"phase": "_end"}]}
 }

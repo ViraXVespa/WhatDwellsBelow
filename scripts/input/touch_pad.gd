@@ -3,6 +3,7 @@
 ## Web-only virtual pad state. TouchHud writes sticks/buttons; Pad reads them.
 
 const WebPad := preload("res://scripts/web_pad.gd")
+const T := preload("res://scripts/data/tunables.gd")
 
 const ACTIONS: PackedStringArray = [
 	"attack", "special", "dash", "interact", "pause",
@@ -18,13 +19,13 @@ static var aim := Vector2.ZERO
 static var move_live := false
 static var down: Dictionary = {}
 static var attack_latch := false
-static var tap_window := 0.28
-static var dead := 0.24
+static var tap_window := T.TOUCH_TAP_WINDOW
+static var dead := T.TOUCH_DEAD
 static var _attack_finger := false
 
 static func reset_defaults() -> void:
-	tap_window = 0.28
-	dead = 0.24
+	tap_window = T.TOUCH_TAP_WINDOW
+	dead = T.TOUCH_DEAD
 	attack_latch = false
 
 static func tick() -> void:

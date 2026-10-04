@@ -8,8 +8,8 @@ const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const HOLD_CAP := 3
 
 static func _fill_pick(ui: CanvasLayer, box: Control, slot: String) -> Control:
-	box.add_child(ThemeS.lab("Keep three. Held pieces start selected. Highlight a piece for its stats.", 16, Color(0.82, 0.76, 0.66)))
-	box.add_child(ThemeS.lab("Picked %d / %d" % [_picked_n(ui), HOLD_CAP], 18, Color(0.95, 0.8, 0.45)))
+	box.add_child(ThemeS.lab(App.tr("anvil_forge_pick.keep_three_held_pieces_start"), 16, Color(0.82, 0.76, 0.66)))
+	box.add_child(ThemeS.lab(App.tr("anvil_forge_pick.picked") % [_picked_n(ui), HOLD_CAP], 18, Color(0.95, 0.8, 0.45)))
 	var grid := HBoxContainer.new()
 	grid.add_theme_constant_override("separation", 8)
 	box.add_child(grid)
@@ -21,14 +21,7 @@ static func _fill_pick(ui: CanvasLayer, box: Control, slot: String) -> Control:
 		var it: Dictionary = row.it if row.get("it") is Dictionary else {}
 		var on := _picked(ui, key)
 		var inv_key := "opt:forge:%s:%s" % [slot, key]
-		var b := Button.new()
-		b.text = ""
-		b.custom_minimum_size = Vector2(72, 72)
-		b.focus_mode = Control.FOCUS_ALL
-		b.icon = Icons.tex_for_item(it)
-		b.expand_icon = true
-		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		b.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+		var b := Icons.pick_btn(it)
 		b.set_meta("forge_key", key)
 		b.set_meta("inv_key", inv_key)
 		b.set_meta("inv_it", it.duplicate(true))
@@ -46,15 +39,15 @@ static func _fill_pick(ui: CanvasLayer, box: Control, slot: String) -> Control:
 			first = b
 		if key == want:
 			hit = b
-	var tag := ThemeS.lab("Hold = already stored. New = this batch.", 14, Color(0.72, 0.68, 0.58))
+	var tag := ThemeS.lab(App.tr("anvil_forge_pick.hold_already_stored_new_this"), 14, Color(0.72, 0.68, 0.58))
 	box.add_child(tag)
-	var go: Button = ThemeS.btn("Keep selected", func(): _commit_picks(ui, slot))
+	var go: Button = ThemeS.btn(App.tr("anvil_forge_pick.keep_selected"), func(): _commit_picks(ui, slot))
 	go.set_meta("forge_key", "keep")
 	go.disabled = _picked_n(ui) == 0
 	box.add_child(go)
 	if want == "keep" and not go.disabled:
 		hit = go
-	var dump: Button = ThemeS.btn("Keep old holds", func(): load("res://scripts/ui/gear_board/anvil_forge.gd").keep_old(ui))
+	var dump: Button = ThemeS.btn(App.tr("anvil_forge_pick.keep_old_holds"), func(): load("res://scripts/ui/gear_board/anvil_forge.gd").keep_old(ui))
 	dump.set_meta("forge_key", "dump")
 	box.add_child(dump)
 	if want == "dump":
@@ -90,7 +83,7 @@ static func _pick_rows(ui: CanvasLayer, slot: String) -> Array:
 			"key": "old:" + str(int(it.get("uid", 0))),
 			"it": it,
 			"pre": true,
-			"label": "Hold  " + _cmp_line(it),
+			"label": App.tr("anvil_forge_pick.hold_line").format({"line": _cmp_line(it)}),
 		})
 	var i := 0
 	for raw2: Variant in ui.forge_batch:
@@ -99,7 +92,7 @@ static func _pick_rows(ui: CanvasLayer, slot: String) -> Array:
 				"key": "new:" + str(i),
 				"it": raw2,
 				"pre": false,
-				"label": "New  " + _cmp_line(raw2),
+				"label": App.tr("anvil_forge_pick.new_line").format({"line": _cmp_line(raw2)}),
 			})
 		i += 1
 	return out
@@ -142,7 +135,7 @@ static func _commit_picks(ui: CanvasLayer, slot: String) -> void:
 	load("res://scripts/ui/gear_board/anvil_forge.gd")._reload(ui, slot)
 
 static func _cmp_line(it: Dictionary) -> String:
-	return "%s  lv %d  finish %.2f  fortune %.2f" % [
+	return App.tr("anvil_forge_pick.lv_finish_fortune") % [
 		str(it.get("name", "piece")),
 		maxi(1, int(it.get("ilvl", 1))),
 		float(it.get("quality", 0.5)),

@@ -3,25 +3,57 @@ extends Object
 ## Hub yard shadow boxes: building skirts cast onto the baked hub light image.
 
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
+## Shadows fall along AWAY (+X +Z, same as the actor blobs); REACH metres of ground per metre of height.
+## Shade runs SHADE_NEAR at the caster to SHADE_TIP at its far end (last 1 - TIP_FROM of the length).
+## hub_shadow.gd uses the same numbers for the mesh shadows.
+const AWAY := Vector2(0.406138, 0.913811)
+const REACH := 0.85
+const SHADE_NEAR := 0.46
+const SHADE_TIP := 0.86
+const TIP_FROM := 0.62
 
-static func _hub_cast_buildings(img: Image, x0: int, z0: int, layout: Node) -> void:
+static func shade_at(fade: float) -> float:
+	return lerpf(SHADE_NEAR, SHADE_TIP, clampf((fade - TIP_FROM) / (1.0 - TIP_FROM), 0.0, 1.0))
+
+## meshed: the bake draws gable, awning, tarp and post shadows from their meshes (hub_shadow.gd); only the tarp lid stays a box.
+static func _hub_cast_buildings(img: Image, x0: int, z0: int, layout: Node, meshed: bool = false) -> int:
 	var rt: Variant = load(RT_PATH)
 	if img == null:
-		return
-	var away := Vector2(0.406138, 0.913811)
-	var boxes: Array = _hub_yard_boxes(layout, false)
+		return 0
+	var away: Vector2 = AWAY
+	var boxes: Array = _hub_yard_boxes(layout, meshed)
 	var sub: float = float(rt.HUB_SUB)
 	var w: int = img.get_width()
 	var h: int = img.get_height()
+	var wrote: int = 0
 	var i: int = 0
 	while i < boxes.size():
 		var b: Dictionary = boxes[i]
-		_hub_stamp_skirt(img, x0, z0, sub, w, h, b, away)
+		if meshed and b.get("kind", "") == "tarp":
+			wrote += _hub_stamp_lid(img, x0, z0, sub, w, h, b)
+		else:
+			wrote += _hub_stamp_skirt(img, x0, z0, sub, w, h, b, away)
 		i += 1
+	return wrote
+## The tarp lid samples the atlas, so its footprint takes the near shade; its shadow comes from the meshes.
+static func _hub_stamp_lid(img: Image, x0: int, z0: int, sub: float, w: int, h: int, b: Dictionary) -> int:
+	var px0: int = clampi(int(floor((float(b["x"]) - float(b["hx"]) - float(x0)) * sub)), 0, w - 1)
+	var px1: int = clampi(int(ceil((float(b["x"]) + float(b["hx"]) - float(x0)) * sub)), 0, w)
+	var pz0: int = clampi(int(floor((float(b["z"]) - float(b["hz"]) - float(z0)) * sub)), 0, h - 1)
+	var pz1: int = clampi(int(ceil((float(b["z"]) + float(b["hz"]) - float(z0)) * sub)), 0, h)
+	var wrote: int = 0
+	for y in range(pz0, pz1):
+		for x in range(px0, px1):
+			if not _hub_inside(float(x0) + (float(x) + 0.5) / sub, float(z0) + (float(y) + 0.5) / sub, b):
+				continue
+			var c: Color = img.get_pixel(x, y)
+			img.set_pixel(x, y, Color(minf(c.r, SHADE_NEAR), minf(c.g, SHADE_NEAR), minf(c.b, SHADE_NEAR), 1.0))
+			wrote += 1
+	return wrote
 static func _hub_stamp_skirt(
 	img: Image, x0: int, z0: int, sub: float, w: int, h: int, b: Dictionary, away: Vector2
 ) -> int:
-	var reach: float = float(b["h"]) * 0.85
+	var reach: float = float(b["h"]) * REACH
 	var cx: float = float(b["x"])
 	var cz: float = float(b["z"])
 	var hx: float = float(b["hx"])
@@ -34,31 +66,64 @@ static func _hub_stamp_skirt(
 	var px1: int = clampi(int(ceil((cx + hx + pad - float(x0)) * sub)), 0, w)
 	var pz0: int = clampi(int(floor((cz - hz - pad - float(z0)) * sub)), 0, h - 1)
 	var pz1: int = clampi(int(ceil((cz + hz + pad - float(z0)) * sub)), 0, h)
+	# A pixel only changes when its 20-step ray (reaching back ax*reach, az*reach) comes within 0.04 of the box,
+	# or it lies inside a tarp. Narrow the loops to that swept rectangle (plus 1 px); the rest wrote nothing.
+	var sx_lo: float = minf(0.0, -ax * reach)
+	var sx_hi: float = maxf(0.0, -ax * reach)
+	var sz_lo: float = minf(0.0, -az * reach)
+	var sz_hi: float = maxf(0.0, -az * reach)
+	var m: float = 0.05
+	px0 = maxi(px0, int(floor((cx - hx - m - sx_hi - float(x0)) * sub)) - 1)
+	px1 = mini(px1, int(ceil((cx + hx + m - sx_lo - float(x0)) * sub)) + 1)
+	pz0 = maxi(pz0, int(floor((cz - hz - m - sz_hi - float(z0)) * sub)) - 1)
+	pz1 = mini(pz1, int(ceil((cz + hz + m - sz_lo - float(z0)) * sub)) + 1)
 	var kind: String = str(b.get("kind", ""))
+	var tarp: bool = kind == "tarp"
+	var ridge_eave: bool = kind == "gable" or tarp
+	var awning: bool = kind == "awning"
+	var ridge: float = float(b["ridge"]) if b.has("ridge") else 0.0
+	var eave: float = float(b["eave"]) if b.has("eave") else 0.0
+	var hem: float = float(b["hem"]) if b.has("hem") else 0.0
+	var flat: float = float(b.get("h", 1.0))
+	var hz_div: float = maxf(hz, 0.001)
+	var hz2_div: float = maxf(hz * 2.0, 0.001)
+	var ts := PackedFloat64Array()
+	var lim := PackedFloat64Array()
+	var shade := PackedFloat64Array()
+	for step in 20:
+		var t: float = reach * float(step) / 19.0
+		ts.append(t)
+		lim.append(t / REACH + 0.03)
+		var fade: float = clampf(t / maxf(reach, 0.001), 0.0, 1.0)
+		shade.append(shade_at(fade))
 	var wrote: int = 0
 	var y: int = pz0
 	while y < pz1:
 		var x: int = px0
+		var wz: float = float(z0) + (float(y) + 0.5) / sub
 		while x < px1:
 			var wx: float = float(x0) + (float(x) + 0.5) / sub
-			var wz: float = float(z0) + (float(y) + 0.5) / sub
-			var inside: bool = _hub_inside(wx, wz, b)
-			if inside and kind != "tarp":
+			var inside: bool = absf(wx - cx) <= hx and absf(wz - cz) <= hz
+			if inside and not tarp:
 				x += 1
 				continue
 			var best: float = 1.0
-			if inside and kind == "tarp":
+			if inside and tarp:
 				best = 0.8
 			var step: int = 0
 			while step < 20:
-				var t: float = reach * float(step) / 19.0
-				var sx: float = wx - ax * t
-				var sz: float = wz - az * t
-				var roof: float = _hub_roof_h(sx, sz, b)
-				if roof > t / 0.85 + 0.03:
-					var fade: float = clampf(t / maxf(reach, 0.001), 0.0, 1.0)
-					var tip: float = clampf((fade - 0.62) / 0.38, 0.0, 1.0)
-					best = minf(best, lerpf(0.46, 0.86, tip))
+				var sx: float = wx - ax * ts[step]
+				var sz: float = wz - az * ts[step]
+				var dx: float = absf(sx - cx) - hx
+				var dz: float = absf(sz - cz) - hz
+				if dx <= 0.04 and dz <= 0.04:
+					var roof: float = flat
+					if ridge_eave:
+						roof = lerpf(ridge, eave, clampf(absf(sz - cz) / hz_div, 0.0, 1.0))
+					elif awning:
+						roof = lerpf(eave, hem, clampf((sz - (cz - hz)) / hz2_div, 0.0, 1.0))
+					if roof > lim[step]:
+						best = minf(best, shade[step])
 				step += 1
 			if best > 0.96:
 				x += 1
@@ -69,9 +134,13 @@ static func _hub_stamp_skirt(
 			x += 1
 		y += 1
 	return wrote
-static func _hub_yard_boxes(layout: Node, _bake: bool) -> Array:
+static func _hub_yard_boxes(layout: Node, meshed: bool) -> Array:
 	var boxes: Array = []
 	if layout != null and layout.has_method("hall_pos"):
+		_hub_prop_blobs(layout, boxes)
+		if meshed:
+			boxes.append(_hub_tarp(layout.stall_pos(), layout.stall_box))
+			return boxes
 		var hp: Vector3 = layout.hall_pos()
 		var hb: Vector3 = layout.hall_box
 		boxes.append(_hub_gable(hp, hb))
@@ -83,7 +152,6 @@ static func _hub_yard_boxes(layout: Node, _bake: bool) -> Array:
 		var sp: Vector3 = layout.stall_pos()
 		var sb: Vector3 = layout.stall_box
 		boxes.append(_hub_tarp(sp, sb))
-		_hub_prop_blobs(layout, boxes)
 		boxes.append(_hub_post(sp, sb, -1.0, -1.0))
 		boxes.append(_hub_post(sp, sb, 1.0, -1.0))
 		boxes.append(_hub_post(sp, sb, -1.0, 1.0))
@@ -161,19 +229,5 @@ static func _hub_post(pos: Vector3, box: Vector3, sx: float, sz: float) -> Dicti
 		"ridge": 1.05,
 		"h": 1.05
 	}
-static func _hub_roof_h(wx: float, wz: float, b: Dictionary) -> float:
-	var dx: float = absf(wx - float(b["x"])) - float(b["hx"])
-	var dz: float = absf(wz - float(b["z"])) - float(b["hz"])
-	if dx > 0.04 or dz > 0.04:
-		return 0.0
-	var kind: String = str(b.get("kind", "box"))
-	if kind == "gable" or kind == "tarp":
-		var along: float = absf(wz - float(b["z"])) / maxf(float(b["hz"]), 0.001)
-		return lerpf(float(b["ridge"]), float(b["eave"]), clampf(along, 0.0, 1.0))
-	if kind == "awning":
-		var wall_z: float = float(b["z"]) - float(b["hz"])
-		var along_s: float = (wz - wall_z) / maxf(float(b["hz"]) * 2.0, 0.001)
-		return lerpf(float(b["eave"]), float(b["hem"]), clampf(along_s, 0.0, 1.0))
-	return float(b.get("h", 1.0))
 static func _hub_inside(wx: float, wz: float, b: Dictionary) -> bool:
 	return absf(wx - float(b["x"])) <= float(b["hx"]) and absf(wz - float(b["z"])) <= float(b["hz"])

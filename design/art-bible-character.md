@@ -1,6 +1,6 @@
 # Character Bible, prompt template and method reliability
 
-Status: binding design
+Status: current plan
 Read when: authoring or locking a Character Bible, using the Bible prompt template, or judging method reliability
 
 art is already open when this sibling is loaded. Do not reopen art_pipeline from this file.
@@ -9,7 +9,7 @@ art is already open when this sibling is loaded. Do not reopen art_pipeline from
 
 Create and lock one primary 3×3 Character Bible on a solid chroma plate for each character type (male and female).
 
-Strict cell layout (do not swap, reverse rows, reverse columns, or move any figure). Print the locked Imagine text with `python3 tools/bible_prompt.py --gender male` (or `female`). Copy the printed block. Do not invent a second Bible template.
+Strict cell layout (do not swap, reverse rows, reverse columns, or move any figure). Print the locked Imagine text with `python tools/bible_prompt.py --gender male` (or `female`). Copy the printed block. Do not invent a second Bible template.
 
 **Requirements:**
 
@@ -71,7 +71,7 @@ Save the squared, remapped sheet as the locked Bible.
 
 ## Appendix C — Character Bible prompt template
 
-Print the locked 3×3 Imagine text with `python3 tools/bible_prompt.py --gender male` (or `female`). Copy the printed block. Do not invent a second Bible template. Magenta plate `#FF00FF`. Printer only — do not send Imagine from that path unless the User says to.
+Print the locked 3×3 Imagine text with `python tools/bible_prompt.py --gender male` (or `female`). Copy the printed block. Do not invent a second Bible template. Magenta plate `#FF00FF`. Printer only — do not send Imagine from that path unless the User says to.
 
 ## Appendix D — Method reliability
 

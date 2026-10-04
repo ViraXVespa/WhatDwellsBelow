@@ -2,7 +2,6 @@ extends Object
 
 const Gen := preload("res://scripts/dungeon/gen.gd")
 const PlayerS := preload("res://scripts/world/player.gd")
-const Roster := preload("res://scripts/combat/roster.gd")
 const DoorS := preload("res://scripts/world/boss_door.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
@@ -140,7 +139,7 @@ static func spawns(host: Node) -> void:
 	LoadTiming.dnote("spawn_jobs", "deferred")
 	LoadTiming.dmark("spawn_jobs")
 	var bp: Vector2i = host.data.boss
-	var boss_job: Dictionary = DungeonStream.new_job(host, "boss", bp, {}, PackedStringArray(), false, str(host.data.boss_title))
+	var boss_job: Dictionary = DungeonStream.new_job(host, "boss", bp, {}, PackedStringArray(), false, str(host.data.boss_role))
 	host.spawn_jobs.append(boss_job)
 	LoadTiming.dmark("spawn_boss")
 	var SpawnS: GDScript = load("res://scripts/world/dungeon_props/spawn.gd") as GDScript

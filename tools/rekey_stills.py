@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sys
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 from PIL import Image
@@ -19,10 +18,11 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+from imglib import geom, imgio
 
-SESS = Path(r"C:\Users\Vira\.grok\sessions")
-P4 = SESS / r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a03e55-f390-7750-ab00-b30f1e6ba566\images"
-LIVE = SESS / r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images"
+SESS = agent_log.grok_sessions()
+P4 = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a03e55-f390-7750-ab00-b30f1e6ba566\images")
+LIVE = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images")
 FRAMES = ROOT / "_src" / "anim_frames"
 SPR = ROOT / "assets" / "sprites"
 FX = ROOT / "assets" / "fx"
@@ -53,7 +53,7 @@ def prep(im: Image.Image) -> Image.Image:
 
 
 def key_still(src: Path) -> Image.Image:
-    raw = prep(Image.open(src))
+    raw = prep(imgio.load(src))
     remapped, _vis, _info = pr.remap(raw)
     return sp.key_to_alpha(remapped, spill_flood=False)
 
@@ -63,14 +63,10 @@ def fit_square(keyed: Image.Image, canvas: int) -> Image.Image:
 
 
 def fit_width(keyed: Image.Image, width: int) -> Image.Image:
-    bbox = keyed.getbbox()
-    if bbox is None:
+    out = geom.fit_axis(keyed, width=width, to_int=round)
+    if out is None:
         return Image.new("RGBA", (width, width), (0, 0, 0, 0))
-    cropped = keyed.crop(bbox)
-    scale = width / max(1, cropped.size[0])
-    nw = width
-    nh = max(1, int(round(cropped.size[1] * scale)))
-    return cropped.resize((nw, nh), Image.Resampling.NEAREST)
+    return out
 
 
 def write(im: Image.Image, dest: Path) -> None:
@@ -90,7 +86,7 @@ def rekey(src: Path, dest: Path, canvas: int, wide: bool = False) -> Image.Image
 
 
 def fill_dirs(down: Image.Image, dest_dir: Path, prefix: str) -> None:
-    flipped = down.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    flipped = geom.flip(down)
     for k in DIRS:
         write(flipped if k in LEFT else down, dest_dir / f"{prefix}_{k}.png")
 
@@ -129,12 +125,7 @@ def _enemy_job(name: str, typ: str) -> str:
 
 
 def _run_pool(jobs: list) -> None:
-    if not jobs:
-        return
-    with ProcessPoolExecutor() as pool:
-        futs = [pool.submit(fn, *args) for fn, args in jobs]
-        for fut in as_completed(futs):
-            fut.result()
+    agent_log.run_jobs(jobs)
 
 
 def _run() -> None:
@@ -230,7 +221,7 @@ def _run() -> None:
 
     axe_right = SPR / "player" / "male" / "equip_great_axe_right.png"
     if axe_right.exists():
-        Image.open(axe_right).transpose(Image.Transpose.FLIP_LEFT_RIGHT).save(
+        geom.flip(Image.open(axe_right)).save(
             SPR / "player" / "male" / "equip_great_axe_left.png"
         )
     for gender in ("male", "female"):
@@ -300,11 +291,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Re-key live stills from Grok session sources with plate_remap + sprite_pipeline.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="rekey_stills")
+    return agent_log.run_writer("rekey_stills", "Re-key live stills from Grok session sources with plate_remap + sprite_pipeline.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

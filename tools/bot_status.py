@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Linux-first Grok Bot punch list. Read queues on disk; do not invent rows."""
+"""Linux-first Grok Bot punch list (Bot and CI only: pass --bot, or CI sets it). Read queues on disk; do not invent rows."""
 
 from __future__ import annotations
 
@@ -14,24 +14,19 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import bot_gate_lib
 import gd_lib
 import repo_lib
 
-SHIP_BYTES = 10_000
-SWEEP_BYTES = 5_000
+SHIP_BYTES = bot_gate_lib.SHIP_BYTES
+SWEEP_BYTES = bot_gate_lib.SWEEP_BYTES
 ALLOW_FILE = repo_lib.ALLOW_FILE
 REUSE_FILE = "design/reuse-map.md"
 OPT_FILE = "design/grok-bot-opt.md"
 
 
 def list_oversize(root: Path, floor: int) -> list[tuple[int, str]]:
-    rows: list[tuple[int, str]] = []
-    for path in gd_lib.iter_gd(root):
-        size = path.stat().st_size
-        if size >= floor:
-            rows.append((size, agent_log.rel(root, path)))
-    rows.sort(key=lambda row: (-row[0], row[1]))
-    return rows
+    return gd_lib.sizes(root, floor)
 
 
 def parse_reuse_brief(root: Path) -> list[str]:
@@ -100,7 +95,7 @@ def run_load_graph(root: Path) -> str:
     if not script.is_file():
         return "skip (missing tools/check_load_graph.py)"
     proc = subprocess.run(
-        [sys.executable, str(script), "--root", str(root)],
+        [sys.executable, str(script), "--root", str(root), "--bot"],
         cwd=root,
         check=False,
         capture_output=True,
@@ -117,21 +112,20 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser(
         "Print the Grok Bot punch list from live queues and file sizes.", json_out=True
     )
+    bot_gate_lib.add_flag(parser)
     parser.add_argument(
         "--prove",
         action="store_true",
-        help="Also check 10KB ship floor, allowlist on dirty paths, load-graph.",
-    )
-    parser.add_argument(
-        "--sweep",
-        action="store_true",
-        help="List the 5-10KB rows too (default: count line only).",
+        help="Also check the ship floor, allowlist on dirty paths, load-graph.",
     )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
+    if not bot_gate_lib.enabled(args):
+        agent_log.resolve_root(args)
+        return bot_gate_lib.not_run("bot punch list")
     try:
         root = agent_log.resolve_root(args)
     except FileNotFoundError as exc:
@@ -163,12 +157,7 @@ def main(argv: list[str] | None = None) -> int:
     for size, rel in ship:
         lines.append(f"{size}\t{rel}")
     lines.append("")
-    lines.append(f"over_5kb_under_10kb count={len(sweep)}")
-    if args.sweep:
-        for size, rel in sweep[:20]:
-            lines.append(f"{size}\t{rel}")
-        if len(sweep) > 20:
-            lines.append(f"... +{len(sweep) - 20} more")
+    lines.append(f"over_5kb_under_10kb count={len(sweep)} (rows: python tools/check_script_cap.py --sweep)")
     lines.append("")
     lines.append(f"reuse_brief count={len(brief)} file={REUSE_FILE}")
     if not brief:
@@ -216,4 +205,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

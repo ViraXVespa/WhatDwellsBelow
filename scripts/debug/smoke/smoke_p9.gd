@@ -19,10 +19,10 @@ static func p9(host: Node) -> void:
 	if App.music:
 		mus = str(App.music.get("kind")) == "dungeon"
 	printerr("P9: dungeon_music=" + str(mus))
-	var sfx_need: PackedStringArray = PackedStringArray(["p9_potion.wav", "p9_food.wav", "p9_wood.wav", "p9_thud.wav", "p9_enter.wav", "p9_wake.wav", "p9_hurt_male.wav", "p9_hurt_female.wav", "p9_warcry_male.wav", "p9_warcry_female.wav", "p9_hurk_male.wav", "p9_hurk_female.wav"])
+	var sfx_need: Array = App.SfxS.FILES.values() + [App.SfxS.LOOP_PATH]
 	var sfx_ok: bool = true
 	for n: String in sfx_need:
-		if not ResourceLoader.exists("res://assets/audio/" + n) and not FileAccess.file_exists("res://assets/audio/" + n):
+		if not ResourceLoader.exists(n) and not FileAccess.file_exists(n):
 			sfx_ok = false
 	printerr("P9: sfx_ok=" + str(sfx_ok))
 	var models: Array = AnimS.catalog_models()

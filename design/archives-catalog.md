@@ -1,7 +1,7 @@
 # Archives — catalog and pins
 
-Status: binding design  
-Read when: classic_2d entry, snapshot tags, week ritual freeze
+Status: current plan  
+Read when: classic_2d entry, snapshot tags, week pins, the week-close archive workflow
 
 
 ## Selectable builds
@@ -25,24 +25,29 @@ The Archives browser lists every catalog row. Play on a row launches **that comm
 | grok_web_w4 | Grok Web Results (Week 4) | `313bb3e3dce29a3d75f4214c0cdadfe16ef9ba00` |
 | grok_build_w5 | Grok Build Results (Week 5) | `75b3bea979bf0fc530ab9660ca177c327eb465d8` |
 
-After each Grok Build week ritual, also list `grok_web_w{N-1}` and `grok_build_wN` as specified in the versioning gate. Those rows use the same isolation rules as the rows above.
+Each week adds `grok_web_w{N}` and `grok_build_w{N}` (sequence: `versioning.md`). Both pin the week-close merge commit, so the two builds are identical on purpose. Those rows use the same isolation rules as the rows above. Rows up to week 5 come from the older flow (web = end of week, build = seed commit) and stay as they are.
 
 No hybrid mode. No shared runtime state, scenes, scripts, or saves. Local Play stamps `application/config/name` on the worktree only (`What Dwells Below — <label>`). Pages exports do the same for IndexedDB isolation.
 
-Tags: `archive/classic-2d`, `archive/art-experiment`, `archive/full-3d-pass`, `archive/grok-build-w1`, `archive/grok-web-w1`, `archive/grok-build-w2`, `archive/grok-web-w2`, `archive/grok-build-w3`, `archive/grok-web-w3`, plus `archive/grok-web-w{N-1}` and `archive/grok-build-wN` when later pins exist.
+Tags: `archive/classic-2d`, `archive/art-experiment`, `archive/full-3d-pass`, `archive/grok-build-w1`, `archive/grok-web-w1`, `archive/grok-build-w2`, `archive/grok-web-w2`, `archive/grok-build-w3`, `archive/grok-web-w3`, plus `archive/grok-web-w{N}` and `archive/grok-build-w{N}` for later weeks. CI creates and pushes the weekly tags.
 
-## Creating a new archive
+## Creating any other archive
 
-Core rule above still applies (no project-tree copies into `archives/`).
-
-User-ordered archives:
+Core rule above still applies (no project-tree copies into `archives/`). User-ordered archives:
 
 1. Pick the commit to freeze. Tag it `archive/<id>`.
-2. Add a catalog row (id, label, desc, commit, pages_slug, docs).
+2. `python tools/week_pin.py --id ID --label L --desc D --commit SHA` (row, no tag).
 3. After Pages deploy, Play that row and confirm it is that SHA with zero live-path state. Report to the User.
 
-Standing Grok Build week pins (no extra prompt). Week-start: `tools/week_start.py`. Week-label math: the versioning gate.
+Weekly pins are automatic (below). `week_pin.py --web N` / `--build N [--commit SHA]` (`--dry-run` first) is the same code by hand: row, notes, local tag; a rerun adds nothing and only fills in a missing tag. Do not move a pin on a resume after corruption.
 
-1. At init of week N (not a corruption resume): pin current `main` as `grok_web_w{N-1}` — Grok Web Results (Week N-1). Copy that week’s notes from `design/changelog/0.{N-1}.*.md` or `design/changelog/archive/0.{N-1}/` into `archives/docs/grok_web_w{N-1}/`. Prefer running `tools/archive_prior_changelogs.py` when series advances so the live folder stays current-series only. Attach the `design/` tree that exists **on that commit** in `docs[]`.
-2. On the User’s completion commit `0.N.0`: pin it as `grok_build_wN` — Grok Build Results (Week N). Copy the **previous** week’s changelog files (flat or under `design/changelog/archive/`) into `archives/docs/grok_build_wN/` if they exist. Run `tools/archive_prior_changelogs.py` after the series seed so prior flat files are parked. Attach the `design/` tree on that commit in `docs[]`.
-3. Do not move the web pin if the User later says this is a resume after corruption.
+## Week-close archives (CI)
+
+`.github/workflows/archive.yml` runs on every push to `main` that is not `[skip ci]`. It waits for the Version stamp of that push to finish, then runs `tools/ci_archive.py --before <push base> --commit <pushed sha> --commit-changes --push origin`:
+
+1. **Detect.** The push adds `design/changelog/{epoch}.{N}.0.md` (patch 0, a new file directly in that folder). Moves into `archive/`, `chore: stamp` and other `[skip ci]` commits never match. No such file: stop.
+2. **Pin both.** For `grok_web_wN` and `grok_build_wN`, independently: add the missing catalog row at the pushed commit (an existing tag keeps its commit), copy series `N` notes to `archives/docs/<id>/`, create the missing tag `archive/grok-web-wN` / `archive/grok-build-wN`. Row and tag both present: nothing happens, so reruns are safe.
+3. **Commit and push.** `chore: archive week N [skip ci]` touches only the catalog and `archives/docs/`. New tags are pushed first, then the commit; a rejected push fetches, rebases that one commit and retries (3 times). Never forced, nothing deleted. The `[skip ci]` commit starts no Version, Pages or archive run.
+4. **Pages.** That commit starts no Pages deploy, so the job dispatches `pages.yml` once when something changed; the new rows then export.
+
+Recovery: Actions, Archive, Run workflow, input `week` = N (skips detection; `commit` optional, default the branch tip). Local proof with no GitHub: `python tools/ci_archive.py --selftest` (temp origin, squash-merge, stamp commit, rerun, tag repair, push race) and `--dry-run`. If a week is closed without CI, `week_start.py` pins the missing rows at HEAD as catch-up.

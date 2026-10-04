@@ -1,6 +1,6 @@
 # Hub — Anvil, vendor, dumpster
 
-Status: binding design  
+Status: current plan  
 Read when: ore-for-gold stall, dumpster flavor, plaza_tarp host
 
 

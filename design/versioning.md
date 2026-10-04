@@ -1,7 +1,7 @@
 # Versioning and changelog
 
-Status: binding design  
-Read when: stamping a build, adding an archive pin, or the User named a pin or archive  
+Status: current plan  
+Read when: stamping a build, the week sequence, or the User named a pin or archive  
 
 
 ## Scheme
@@ -22,7 +22,7 @@ Do not store a moving “this web goal is …” patch in this file. Do not inve
 ## Source of truth
 
 **Git history on `main` assigns the number.**  
-The User’s push *is* the bump. `patch` counts only user commits after the last baked `scripts/data/version.json` change, then adds that count to the baked patch. Automated stamp commits (`chore: stamp … [skip ci]`, any `[skip ci]` subject, `github-actions[bot]` bookkeeping) MUST NOT increment `patch`. The public label MUST never rewind.
+The User’s push *is* the bump. `patch` counts only user commits after the last baked `scripts/data/version.json` change, then adds that count to the baked patch. Automated stamp commits (`chore: stamp … [skip ci]`, any `[skip ci]` subject, `github-actions[bot]` bookkeeping) must not increment `patch`. The public label never rewinds.
 
 **`scripts/data/version.json` is the baked copy** the game, title, and changelog script read. Godot and the web export must not call `git`. CI overwrites this file from `main`; agents do not treat it as the ledger and do not hand-edit it in a web Phase 7 unless the User is seeding the file for the first time.
 
@@ -36,7 +36,7 @@ CI on each user push to `main` (not on `[skip ci]` stamp pushes):
 6. If generated outputs changed, commit them with `[skip ci]`.
 7. Deploy Pages from the user push. Pages stamps the same number in the export workspace before Godot runs, because a `GITHUB_TOKEN` stamp push does not start a new workflow. Include `/changelog/`.
 
-Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/changelog/{label}.md` still get a patch number and an empty player note. `doc_patch.py next-label` is baked patch + 1 on the **current** series only. A series seed (`0.N.0`, later `1.M.0`) is the User’s named completion commit, not that tool.
+Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/changelog/{label}.md` still get a patch number and an empty player note. `doc_patch.py next-label` is baked patch + 1 on the **current** series only. A series seed (`0.N.0`, later `1.M.0`) comes from `week_start.py` (Week sequence), not that tool.
 
 ### Merge shape (Grok Bot and multi-commit PRs)
 
@@ -48,22 +48,16 @@ Never auto-bump `epoch` or `series`. Extra user pushes with no new `design/chang
 | **Rebase and merge** (N commits) | `+N` |
 | **Create a merge commit** (merge commit + N branch commits) | `+N` or `+N+1` depending on whether the merge commit’s subject is counted |
 
-Grok Bot PRs MUST squash-merge. A multi-commit branch is fine on the PR; it must become **one** user commit on `main`.
+Grok Bot PRs squash-merge. A multi-commit branch is fine on the PR; it must become **one** user commit on `main`.
 
-## Week pins (User-only)
+## Week sequence (defined once)
 
-Several concurrent Grok Build CLI sessions may share one week. The User’s single completion commit is `0.N.0` (later `1.M.0` when they name a major) and is tagged as that series open.
+Series `N` is week `N`. The epoch is the User's alone; no tool changes it. In order:
 
-Agents do not create week pins. A mid-week new CLI chat is a catch-up: no pin. Resume after corruption does not move the web pin and does not create a second Grok Build pin for that week.
+1. **Week start.** On an up-to-date `main` the User runs `tools/week_start.py` (`--dry-run` first). It seeds `version.json` as `{epoch}.{N}.0` with `open_commit` = HEAD, parks older changelogs, creates and switches to the local branch `grok-build-w{N}`, commits the seed there (`Grok Build Week N`), runs `grok worktree gc`, deletes Godot locks and clears logs. It pins nothing (catch-up only, below). Then `git push -u origin grok-build-w{N}`.
+2. **Work.** Build cuts worktrees from `grok-build-w{N}` and merges back into it (`grok-build.md`). Build never touches `main`.
+3. **Week close.** A web session, or Build when the User asks, writes the one week-close changelog `design/changelog/0.N.0.md` onto the branch (`versioning-log.md`).
+4. **Merge.** The User squash-merges `grok-build-w{N}` into `main`: one commit, the `0.N.0` build. If `main` moved and `version.json` conflicts, merge `main` into the branch first and keep the branch's `version.json`; CI regenerates `changelog.json`.
+5. **Archives (CI, nothing to do).** On that push `.github/workflows/archive.yml` runs `tools/ci_archive.py` after the Version stamp. It tags `archive/grok-web-w{N}` and `archive/grok-build-w{N}` on the merge commit, adds both catalog rows (`grok_web_wN`, `grok_build_wN`: the same commit, so the two builds are identical on purpose), copies series `N` notes to `archives/docs/<id>/`, commits `chore: archive week N [skip ci]`, pushes commit and tags, and re-runs Pages so the rows export. Detection, recovery, manual run: `archives-catalog.md`.
 
-Pin ids when the User already named a pin or archive:
-
-- `grok_web_w{N-1}` — label `Grok Web Results (Week {N-1})` (completed week web results).
-- `grok_build_wN` — label `Grok Build Results (Week N)` on the User’s `0.N.0` completion commit. Do not invent that SHA.
-
-Archive `docs` follow archives. Changelog museum copies for those rows:
-
-- Web Results Week N-1 → that week’s per-build markdown from `design/changelog/` or `design/changelog/archive/0.{N-1}/` (copy under `archives/docs/grok_web_w{N-1}/` so the pin can show files that were not on the old SHA).
-- Build Results Week N → previous week’s per-build markdown, if any, under `archives/docs/grok_build_wN/`.
-
-Also attach the `design/` file tree as it exists **on the pinned commit** (`docs[]` paths that `git show` can resolve). No other new archives unless the User asks.
+Resume after corruption and mid-week catch-up chats pin nothing. Archive `docs` list `design/` as it is on the pinned commit plus the copied notes. No other new archives unless the User asks. `open_commit` in `version.json` is the commit the series opened from. Rows older than the CI flow are not rewritten (`grok_build_w5` is a seed pin); if the closing series has no web or build row, `week_start.py` pins the missing one at HEAD as catch-up and prints the tag to push.

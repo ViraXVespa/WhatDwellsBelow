@@ -11,7 +11,7 @@ static func sets_blurb() -> String:
 	for s in CatalogS.SETS:
 		var n: int = int(c.get(s, 0))
 		if n > 0:
-			bits.append("%s %d/%d%s" % [s, n, CatalogS.set_size(s), " *" if n >= 2 else ""])
+			bits.append(App.tr("inv.text") % [s, n, CatalogS.set_size(s), " *" if n >= 2 else ""])
 	return "Sets: " + (", ".join(bits) if bits.size() > 0 else "none")
 
 static func rebuild_inv(ui) -> void:
@@ -21,21 +21,21 @@ static func rebuild_inv(ui) -> void:
 
 static func rebuild_extract(ui) -> void:
 	ui._clear()
-	var title := "Extraction Gate"
+	var title := App.tr("common.extraction_gate")
 	if ui.extract_role == "misc":
-		title = "Extraction Gate"
+		title = App.tr("common.extraction_gate")
 	elif ui.extract_role == "gather":
-		title = "Extraction Gate"
+		title = App.tr("common.extraction_gate")
 	ui.box.add_child(ThemeS.lab(title, 32, Color(0.95, 0.82, 0.5)))
-	ui.box.add_child(ThemeS.lab("Mail goods to the surface. Artifacts stay with you (run-only).", 18, Color(0.82, 0.76, 0.66)))
+	ui.box.add_child(ThemeS.lab(App.tr("inv.mail_goods_to_the_surface"), 18, Color(0.82, 0.76, 0.66)))
 	ui.status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
 	ui.box.add_child(ui.status)
-	ui.focus_btn = ThemeS.btn("Send All", func(): Confirm.open(ui, "Send All", "Mail all extractable goods to the surface?", func(): ui._do_send_all()))
+	ui.focus_btn = ThemeS.btn(App.tr("common.send_all"), func(): Confirm.open(ui, App.tr("common.send_all"), App.tr("inv.mail_all_extractable_goods_to"), func(): ui._do_send_all()))
 	ui.box.add_child(ui.focus_btn)
 	for it in App.prog.extractable(ui.extract_role):
 		var cap := str(it.get("name", "?"))
 		if it.has("n"):
 			cap += "  x%d" % int(it.n)
 		var copy: Dictionary = it.duplicate(true)
-		ui.box.add_child(ThemeS.btn("Send  " + cap, func(): Confirm.open(ui, "Send Item", "Mail %s to the surface?" % cap, func(): ui._do_send_one(copy))))
-	ui.box.add_child(ThemeS.btn("Leave", func(): ui.close_ui()))
+		ui.box.add_child(ThemeS.btn("Send  " + cap, func(): Confirm.open(ui, App.tr("inv.send_item"), App.tr("inv.mail_to_the_surface") % cap, func(): ui._do_send_one(copy))))
+	ui.box.add_child(ThemeS.btn(App.tr("common.leave"), func(): ui.close_ui()))

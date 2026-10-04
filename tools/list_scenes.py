@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """List .tscn nodes and attached scripts without dumping scene files into chat.
 
-    python3 tools/list_scenes.py [--path scenes/dungeon.tscn] [--max-nodes 200]
-Summary: _logs/scenes/summary.txt. Old spellings: -Path -MaxNodes.
+    python tools/list_scenes.py [--path scenes/dungeon.tscn] [--max-nodes 200]
+Summary: _logs/scenes/<stamp>-scenes.txt. Old spellings: -Path -MaxNodes.
 """
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
+import gd_lib
 
 EXT = re.compile(r'^\[ext_resource[^\]]*\bpath="([^"]+)"[^\]]*\bid="([^"]+)"')
 NODE = re.compile(r'^\[node\s+name="([^"]+)"(?:\s+type="([^"]*)")?(?:\s+parent="([^"]*)")?')
@@ -21,7 +22,7 @@ SCRIPT = re.compile(r'^script\s*=\s*ExtResource\("([^"]+)"\)')
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List .tscn nodes + scripts (headers only).", json_out=True)
     ap.add_argument("--path", "-Path", nargs="+", default=["scenes"], help="Scene file(s) or dir(s).")
-    ap.add_argument("--max-nodes", "-MaxNodes", type=int, default=200)
+    ap.add_argument("--max-nodes", "-MaxNodes", type=int, default=200, help="Max nodes listed per scene (default 200).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     paths = agent_log.split_list(args.path)
@@ -30,9 +31,11 @@ def main(argv: list[str] | None = None) -> int:
         p = Path(raw)
         p = p if p.is_absolute() else root / p
         if p.is_dir():
-            scenes += [s for s in p.rglob("*.tscn") if "archives" not in s.parts and ".archive_worktrees" not in s.parts]
+            scenes += [s for s in p.rglob("*.tscn") if not set(gd_lib.SKIP_PARTS) & set(s.parts)]
         elif p.suffix.lower() == ".tscn" and p.is_file():
             scenes.append(p)
+    if not scenes:
+        agent_log.fail(f"no .tscn found under {', '.join(paths)} (give scene files or folders, default: scenes)")
     body = [f"root=. path={','.join(paths)} scenes={len(scenes)} maxNodes={args.max_nodes}",
             "measure=parse .tscn headers; do not open scene bodies in chat", ""]
     nodes = scripts = 0
@@ -67,4 +70,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

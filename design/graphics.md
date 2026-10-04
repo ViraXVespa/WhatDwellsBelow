@@ -1,6 +1,6 @@
 # Graphics
 
-Status: binding design + live snapshot
+Status: current plan + live snapshot
 Read when: cel-look owner, dual-palette atmosphere
 Code: `scripts/graphics/`
 

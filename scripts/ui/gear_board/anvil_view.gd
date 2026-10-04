@@ -10,7 +10,7 @@ static func tab(ui: CanvasLayer) -> String:
 static func footer(ui: CanvasLayer) -> void:
 	_tabs(ui)
 	ui.box.add_child(ThemeS.lab(
-		"Bank %dg  %d ore  %d wood  Carried %dg  %d ore  %d wood" % [
+		App.tr("anvil_view.bank_g_ore_wood_carried") % [
 			App.bank_gold, App.bank_ore, App.bank_wood,
 			App.gold, App.ore, App.wood,
 		],
@@ -44,8 +44,8 @@ static func _tabs(ui: CanvasLayer) -> void:
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 10)
-	var a: Button = ThemeS.btn("Analyze", func(): set_tab(ui, "analyze"))
-	var f: Button = ThemeS.btn("Forge", func(): set_tab(ui, "forge"))
+	var a: Button = ThemeS.btn(App.tr("anvil_view.analyze"), func(): set_tab(ui, "analyze"))
+	var f: Button = ThemeS.btn(App.tr("anvil_view.forge"), func(): set_tab(ui, "forge"))
 	a.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	f.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	a.custom_minimum_size = Vector2(160, 44)
@@ -93,19 +93,19 @@ static func set_tab(ui: CanvasLayer, t: String) -> void:
 	ui.call_deferred("_show")
 
 static func _analyze_body(ui: CanvasLayer, smith: int) -> void:
-	ui.status.text = "Smithing %d. Open a slot to analyze an AT RISK piece." % smith
+	ui.status.text = App.tr("anvil_view.smithing_open_a_slot_to") % smith
 
 static func _forge_body(ui: CanvasLayer, smith: int) -> void:
 	if float(ui.get("forge_t")) > 0.0:
-		ui.status.text = "Smithing %d. Forging… %.1fs." % [smith, float(ui.forge_t)]
+		ui.status.text = App.tr("anvil_view.smithing_forging_s") % [smith, float(ui.forge_t)]
 		return
 	var book: Dictionary = {}
 	if App.prog.get("forge_book") is Dictionary:
 		book = App.prog.forge_book
 	if book.is_empty():
-		ui.status.text = "Smithing %d. Analyze a piece before you can forge." % smith
+		ui.status.text = App.tr("anvil_view.smithing_analyze_a_piece_before") % smith
 		return
-	ui.status.text = "Smithing %d. Open a slot to set type, rarity, level, and locks." % smith
+	ui.status.text = App.tr("anvil_view.smithing_open_a_slot_to_2") % smith
 
 static func _paint_on(b: Button) -> void:
 	var ink := Color(0.92, 0.84, 0.62)

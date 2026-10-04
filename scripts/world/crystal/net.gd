@@ -1,6 +1,5 @@
 ﻿extends Object
 
-const Threat := preload("res://scripts/combat/threat.gd")
 const Balance := preload("res://scripts/data/balance.gd")
 
 const META_ON := "crystal_on"
@@ -60,9 +59,6 @@ static func landing_cell(host: Node) -> Vector2i:
 	if warp.x >= 0 and host._is_floor_cell(warp):
 		return warp
 	return Vector2i(host.data.spawn)
-
-static func cl_at(host: Node, cell: Vector2i) -> int:
-	return Threat.walk_level(App.floor_n, cell, host.travel_dist, int(host.data.w), host.travel_cap)
 
 static func place_floor(host: Node) -> void:
 	var Place: GDScript = load("res://scripts/world/crystal/crystal_place.gd") as GDScript
@@ -226,7 +222,7 @@ static func warp_local(host: Node, cell: Vector2i) -> void:
 	host._reveal_around(cell, int(App.bal.fog_radius) + 2)
 	silence_near(host, cell)
 	host.fog_dirty = true
-	App.toast("The crystal takes you across the floor.")
+	App.toast(App.tr("net.the_crystal_takes_you_across"))
 
 static func warp_floor(n: int) -> void:
 	n = clampi(n, 1, maxi(1, int(App.prog.deepest)))

@@ -6,14 +6,9 @@ extends Object
 ## A 4-neighbor does not open a cell past the lip.
 ## Wall texels stay dark except the neighbor sample along the bake. SUB stays 4.
 
-const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const K := preload("res://scripts/graphics/light_stamp/stamp_k.gd")
-const Fov := preload("res://scripts/graphics/light_stamp/fov.gd")
-const Grid := preload("res://scripts/graphics/light_stamp/stamp_grid.gd")
+const Job := preload("res://scripts/graphics/light_stamp/stamp_job.gd")
 const COL_FLOOR := Color(0.50, 0.56, 0.74)
-static var _rr_buf: PackedFloat32Array = PackedFloat32Array()
-static var _gg_buf: PackedFloat32Array = PackedFloat32Array()
-static var _bb_buf: PackedFloat32Array = PackedFloat32Array()
 
 static func solid_open(
 	solid: PackedByteArray,
@@ -50,8 +45,7 @@ static func near_open(
 				return true
 	return false
 
-static func paint(
-	img: Image,
+static func begin(
 	tw: int,
 	th: int,
 	lights: Array,
@@ -63,33 +57,8 @@ static func paint(
 	x0: int = 0,
 	z0: int = 0,
 	loops: Array = []
-) -> void:
-	var iw: int = tw * K.SUB
-	var ih: int = th * K.SUB
-	var pxn: int = iw * ih
-	var walk: PackedByteArray = Grid._walk_mask(solid, sw, sh, n, x0, z0, iw, ih, loops)
-	HitchLog.mark("light_walk")
-	if _rr_buf.size() != pxn:
-		_rr_buf.resize(pxn)
-		_gg_buf.resize(pxn)
-		_bb_buf.resize(pxn)
-	var rr: PackedFloat32Array = _rr_buf
-	var gg: PackedFloat32Array = _gg_buf
-	var bb: PackedFloat32Array = _bb_buf
-	var zi: int = 0
-	while zi < Grid._floor_n:
-		var fi: int = Grid._floor_ix[zi]
-		rr[fi] = 0.0
-		gg[fi] = 0.0
-		bb[fi] = 0.0
-		zi += 1
-	for src in lights:
-		var item: Dictionary = src
-		Fov._disc(rr, gg, bb, walk, iw, ih, item, x0, z0, loops, n)
-	HitchLog.mark("light_disc")
-	Grid._lift_floor(rr, gg, bb, walk, iw, ih, ambient, n)
-	HitchLog.mark("light_lift")
-	Grid._walls(rr, gg, bb, walk, iw, ih, n)
-	HitchLog.mark("light_walls")
-	Grid._blit(img, rr, gg, bb, walk, iw, ih)
-	HitchLog.mark("light_blit")
+) -> RefCounted:
+	return Job.new().setup({
+		"tw": tw, "th": th, "lights": lights, "ambient": ambient, "solid": solid,
+		"sw": sw, "sh": sh, "n": n, "x0": x0, "z0": z0, "loops": loops,
+	})

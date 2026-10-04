@@ -1,0 +1,97 @@
+{
+  "name": "dungeon-hud-states",
+  "about": "Dungeon floor 1, seed 42, HUD on: the default HUD at the entrance, then the hurt/buffed HUD (low HP, potion cooldown, shrine and food buffs, gold/ore/wood counts) and a toast. State is set with `set`; the map stays closed.",
+  "scene": "dungeon",
+  "seed": 42,
+  "floor": 1,
+  "zoom": 1.5,
+  "settle_ms": 0,
+  "fixed_fps": 60,
+  "covers": [],
+  "smoke": true,
+  "steps": [
+    {
+      "op": "freeze",
+      "group": "enemies"
+    },
+    {
+      "op": "assert",
+      "target": "App.floor_n",
+      "equals": 1
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "hud-default"
+    },
+    {
+      "op": "wait",
+      "ms": 600
+    },
+    {
+      "op": "set",
+      "target": "group:player.hp",
+      "value": 28
+    },
+    {
+      "op": "set",
+      "target": "App.prog.potion_cd",
+      "value": 8
+    },
+    {
+      "op": "set",
+      "target": "App.shrine_t",
+      "value": 90
+    },
+    {
+      "op": "set",
+      "target": "App.prog.food_t",
+      "value": 45
+    },
+    {
+      "op": "set",
+      "target": "App.prog.food_left",
+      "value": 20
+    },
+    {
+      "op": "set",
+      "target": "App.gold",
+      "value": 340
+    },
+    {
+      "op": "set",
+      "target": "App.ore",
+      "value": 12
+    },
+    {
+      "op": "set",
+      "target": "App.wood",
+      "value": 7
+    },
+    {
+      "op": "shot",
+      "name": "hud-buffs-low-hp"
+    },
+    {
+      "op": "wait",
+      "ms": 200
+    },
+    {
+      "op": "set",
+      "target": "App.toast_msg",
+      "value": "Shot flow toast"
+    },
+    {
+      "op": "set",
+      "target": "App.toast_t",
+      "value": 30
+    },
+    {
+      "op": "shot",
+      "name": "hud-toast"
+    }
+  ]
+}

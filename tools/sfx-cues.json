@@ -1,0 +1,26 @@
+{
+"_about": "Cue specs for tools/make_sfx.py. graph nodes: [sine freq dur vol decay power] [noise dur vol seed] [mix node...] [cat node...]. A new cue is one entry here.",
+"cues": [
+{"name": "p2_hit", "scale": 32000, "graph": ["mix", ["sine", 180, 0.08, 0.4, true, 1.0], ["noise", 0.09, 0.25, 0.0]]},
+{"name": "p2_crit", "scale": 32000, "graph": ["mix", ["sine", 520, 0.12, 0.35, true, 1.0], ["sine", 780, 0.12, 0.25, true, 1.0]]},
+{"name": "p2_slam", "scale": 32000, "graph": ["mix", ["sine", 70, 0.22, 0.5, true, 1.0], ["noise", 0.2, 0.35, 0.0]]},
+{"name": "p2_dash", "scale": 32000, "graph": ["sine", 240, 0.14, 0.25, true, 1.0]},
+{"name": "p2_bolt", "scale": 32000, "graph": ["mix", ["sine", 880, 0.16, 0.3, true, 1.0], ["noise", 0.16, 0.2, 0.0]]},
+{"name": "p2_bow", "scale": 32000, "graph": ["sine", 420, 0.07, 0.28, true, 1.0]},
+{"name": "p2_adrenaline_loop", "scale": 32000, "graph": ["mix", ["cat", ["sine", 90, 0.4, 0.12, false, 1.0], ["sine", 110, 0.4, 0.1, false, 1.0]], ["noise", 0.8, 0.05, 0.0]]},
+{"name": "p9_potion", "scale": 30000, "graph": ["mix", ["sine", 520, 0.12, 0.28, true, 0.7], ["sine", 780, 0.16, 0.22, true, 0.7]]},
+{"name": "p9_food", "scale": 30000, "graph": ["mix", ["sine", 180, 0.18, 0.3, true, 0.7], ["sine", 240, 0.22, 0.18, true, 0.7]]},
+{"name": "p9_wood", "scale": 30000, "graph": ["mix", ["sine", 140, 0.1, 0.32, true, 0.7], ["noise", 0.12, 0.22, 9]]},
+{"name": "p9_thud", "scale": 30000, "graph": ["mix", ["sine", 55, 0.28, 0.5, true, 0.7], ["noise", 0.22, 0.3, 3]]},
+{"name": "p9_enter", "scale": 30000, "graph": ["mix", ["sine", 180, 0.45, 0.22, false, 0.7], ["sine", 360, 0.45, 0.12, true, 0.7]]},
+{"name": "p9_wake", "scale": 30000, "graph": ["mix", ["sine", 220, 0.55, 0.2, true, 0.7], ["sine", 330, 0.7, 0.12, true, 0.7]]},
+{"name": "p9_ui_cancel", "scale": 30000, "graph": ["sine", 220, 0.07, 0.22, true, 0.7]},
+{"name": "p9_hurt_male", "scale": 30000, "graph": ["mix", ["sine", 140, 0.22, 0.4, true, 0.7], ["sine", 210.0, 0.22, 0.13999999999999999, true, 0.7], ["noise", 0.22, 0.06, 140]]},
+{"name": "p9_hurt_female", "scale": 30000, "graph": ["mix", ["sine", 210, 0.22, 0.38, true, 0.7], ["sine", 315.0, 0.22, 0.13299999999999998, true, 0.7], ["noise", 0.22, 0.06, 210]]},
+{"name": "p9_warcry_male", "scale": 30000, "graph": ["mix", ["mix", ["sine", 160, 0.38, 0.42, true, 0.7], ["sine", 240.0, 0.38, 0.147, true, 0.7], ["noise", 0.38, 0.06, 160]], ["sine", 80, 0.38, 0.2, true, 0.7]]},
+{"name": "p9_warcry_female", "scale": 30000, "graph": ["mix", ["mix", ["sine", 240, 0.38, 0.4, true, 0.7], ["sine", 360.0, 0.38, 0.13999999999999999, true, 0.7], ["noise", 0.38, 0.06, 240]], ["sine", 120, 0.38, 0.16, true, 0.7]]},
+{"name": "p9_hurk_male", "scale": 30000, "graph": ["mix", ["mix", ["sine", 110, 0.32, 0.45, true, 0.7], ["sine", 165.0, 0.32, 0.1575, true, 0.7], ["noise", 0.32, 0.06, 110]], ["noise", 0.28, 0.12, 4]]},
+{"name": "p9_hurk_female", "scale": 30000, "graph": ["mix", ["mix", ["sine", 175, 0.32, 0.42, true, 0.7], ["sine", 262.5, 0.32, 0.147, true, 0.7], ["noise", 0.32, 0.06, 175]], ["noise", 0.28, 0.1, 5]]},
+{"name": "p9_level", "scale": 30000, "graph": ["mix", ["sine", 440, 0.18, 0.28, true, 0.7], ["sine", 660, 0.22, 0.2, true, 0.7], ["sine", 880, 0.26, 0.14, true, 0.7]]}
+]
+}

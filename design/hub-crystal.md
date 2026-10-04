@@ -1,6 +1,6 @@
 # Hub — Floor Crystal and wake-up
 
-Status: binding design  
+Status: current plan  
 Read when: consciousness-transfer VFX, Dispel wake-up, deepest row
 
 

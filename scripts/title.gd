@@ -58,32 +58,32 @@ func _ready() -> void:
 	card.alignment = BoxContainer.ALIGNMENT_CENTER
 	card.add_theme_constant_override("separation", 14)
 	add_child(card)
-	card.add_child(_lab("WHAT DWELLS BELOW", 48, Color(0.92, 0.78, 0.48)))
+	card.add_child(_lab(tr("title.what_dwells_below"), 48, Color(0.92, 0.78, 0.48)))
 	card.add_child(_lab(App.T.ONE_LINER, 18, Color(0.78, 0.72, 0.62)))
-	card.add_child(_lab("Version: %s" % GameVer.label(), 16, Color(0.7, 0.62, 0.48)))
+	card.add_child(_lab(tr("title.version") % GameVer.label(), 16, Color(0.7, 0.62, 0.48)))
 	var play_a: Button = null
 	var play_b: Button = null
 	var updates: Button = null
 	var archives: Button = null
 	if App.character_chosen:
-		play_a = _btn("Play", func(): _play(App.character_type))
+		play_a = _btn(tr("common.play"), func(): _play(App.character_type))
 		card.add_child(play_a)
 	else:
-		card.add_child(_lab("Choose a delver  ·  switch later from pause.", 18, Color(0.95, 0.86, 0.4)))
+		card.add_child(_lab(tr("title.choose_a_delver_switch_later"), 18, Color(0.95, 0.86, 0.4)))
 		var row := HBoxContainer.new()
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		row.add_theme_constant_override("separation", 16)
 		row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		card.add_child(row)
-		play_a = _btn("Play — Male", func(): _play("male"))
-		play_b = _btn("Play — Female", func(): _play("female"))
+		play_a = _btn(tr("title.play_male"), func(): _play("male"))
+		play_b = _btn(tr("title.play_female"), func(): _play("female"))
 		row.add_child(play_a)
 		row.add_child(play_b)
-	updates = _btn("Updates", _open_updates)
+	updates = _btn(tr("title.updates"), _open_updates)
 	card.add_child(updates)
-	archives = _btn("Archives", _open_archives)
+	archives = _btn(tr("title.archives"), _open_archives)
 	card.add_child(archives)
-	card.add_child(_lab("Dungeon Music: Bitter - by Vira X Vespa", 16, Color(0.62, 0.66, 0.7)))
+	card.add_child(_lab(tr("title.dungeon_music_bitter_by_vira"), 16, Color(0.62, 0.66, 0.7)))
 	_title_btns.clear()
 	for b in [play_a, play_b, updates, archives]:
 		if b:

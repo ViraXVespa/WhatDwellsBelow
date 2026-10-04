@@ -4,18 +4,11 @@ const Touch := preload("res://scripts/input/touch_pad.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 
-const PAD := {
-	"interact": JOY_BUTTON_A,
-	"dash": JOY_BUTTON_B,
-	"target_lock": JOY_BUTTON_RIGHT_STICK,
-	"pause": JOY_BUTTON_START,
-	"map_view": JOY_BUTTON_BACK,
-	"potion": JOY_BUTTON_DPAD_UP,
-	"food": JOY_BUTTON_DPAD_LEFT,
-	"look_mode": JOY_BUTTON_DPAD_DOWN,
-	"tab_left": JOY_BUTTON_LEFT_SHOULDER,
-	"tab_right": JOY_BUTTON_RIGHT_SHOULDER,
-}
+## Actions whose press edge Pad tracks. Which pad button or trigger drives each comes from the InputMap (binds/table.gd).
+const TRACKED: PackedStringArray = [
+	"interact", "dash", "target_lock", "pause", "map_view", "potion", "food", "look_mode",
+	"tab_left", "tab_right", "attack", "special",
+]
 
 static var was: Dictionary = {}
 static var edge: Dictionary = {}
@@ -110,14 +103,20 @@ static func held(action: String) -> bool:
 		return true
 	if Input.is_action_pressed(action):
 		return true
+	return pad_down(action)
+
+## True while any pad button or trigger bound to `action` (in the live InputMap) is down on the first pad.
+static func pad_down(action: String) -> bool:
 	var pid := id()
-	if pid >= 0:
-		if action == "attack" and Input.get_joy_axis(pid, JOY_AXIS_TRIGGER_RIGHT) > 0.45:
+	if pid < 0 or not InputMap.has_action(action):
+		return false
+	for e in InputMap.action_get_events(action):
+		if e is InputEventJoypadButton and Input.is_joy_button_pressed(pid, (e as InputEventJoypadButton).button_index):
 			return true
-		if action == "special" and Input.get_joy_axis(pid, JOY_AXIS_TRIGGER_LEFT) > 0.45:
-			return true
-		if PAD.has(action) and Input.is_joy_button_pressed(pid, PAD[action] as JoyButton):
-			return true
+		if e is InputEventJoypadMotion:
+			var m := e as InputEventJoypadMotion
+			if signf(Input.get_joy_axis(pid, m.axis)) == signf(m.axis_value) and absf(Input.get_joy_axis(pid, m.axis)) > 0.45:
+				return true
 	return false
 
 static func just(action: String) -> bool:
@@ -167,22 +166,10 @@ static func tick() -> void:
 	elif stick(JOY_AXIS_RIGHT_X, JOY_AXIS_RIGHT_Y).length() >= 0.24:
 		_set_mode(true)
 	edge.clear()
-	var names: Array = PAD.keys()
-	names.append_array(["attack", "special"])
-	for action in names:
-		var key := str(action)
+	for key in TRACKED:
 		var now := held(key)
-		if now and id() >= 0:
-			var pid := id()
-			var from_pad := false
-			if key == "attack" and Input.get_joy_axis(pid, JOY_AXIS_TRIGGER_RIGHT) > 0.45:
-				from_pad = true
-			elif key == "special" and Input.get_joy_axis(pid, JOY_AXIS_TRIGGER_LEFT) > 0.45:
-				from_pad = true
-			elif PAD.has(key) and Input.is_joy_button_pressed(pid, PAD[key] as JoyButton):
-				from_pad = true
-			if from_pad:
-				_set_mode(true)
+		if now and pad_down(key):
+			_set_mode(true)
 		if blocked(key) or eat_pause:
 			edge[key] = false
 		else:
@@ -191,9 +178,7 @@ static func tick() -> void:
 	if eat_pause:
 		var held_close := Input.is_action_pressed("pause") or Input.is_action_pressed("ui_cancel") or Input.is_action_pressed("dash")
 		if not held_close:
-			var pid := id()
-			if pid >= 0:
-				held_close = Input.is_joy_button_pressed(pid, JOY_BUTTON_START) or Input.is_joy_button_pressed(pid, JOY_BUTTON_B)
+			held_close = pad_down("pause") or pad_down("ui_cancel")
 		if not held_close and Touch.held("pause"):
 			held_close = true
 		if not held_close:
@@ -204,23 +189,3 @@ static func _dt() -> float:
 	if loop is SceneTree:
 		return (loop as SceneTree).root.get_process_delta_time()
 	return 0.016666
-
-static func web_buttons() -> PackedFloat32Array:
-	if not OS.has_feature("web"):
-		return PackedFloat32Array()
-	var raw := str(JavaScriptBridge.eval("""
-		(function () {
-			var pads = navigator.getGamepads ? navigator.getGamepads() : [];
-			for (var i = 0; i < pads.length; i++) {
-				if (!pads[i] || !pads[i].buttons) continue;
-				return JSON.stringify(pads[i].buttons.map(function (b) { return b.value; }));
-			}
-			return "[]";
-		})();
-	""", true))
-	var parsed: Variant = JSON.parse_string(raw)
-	var out := PackedFloat32Array()
-	if parsed is Array:
-		for v in parsed:
-			out.append(float(v))
-	return out

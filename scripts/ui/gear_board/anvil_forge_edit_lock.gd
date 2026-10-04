@@ -2,8 +2,6 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
-const ForgeP := preload("res://scripts/data/progress_forge.gd")
-const StepRow := preload("res://scripts/ui/step_row.gd")
 const QTY_MAX := 9
 
 static func _lock_row(ui: CanvasLayer, box: Control, slot: String, book: Dictionary) -> void:
@@ -18,7 +16,7 @@ static func _lock_row(ui: CanvasLayer, box: Control, slot: String, book: Diction
 			known.append(str(x))
 	if known.is_empty():
 		return
-	box.add_child(ThemeS.lab("Lock traits  (%d/%d)" % [ui.forge_locks.size(), cap], 16, Color(0.82, 0.76, 0.66)))
+	box.add_child(ThemeS.lab(App.tr("anvil_forge_edit_lock.lock_traits") % [ui.forge_locks.size(), cap], 16, Color(0.82, 0.76, 0.66)))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
 	for id: String in known:

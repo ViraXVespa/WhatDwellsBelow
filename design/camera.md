@@ -1,6 +1,6 @@
 ﻿# Camera and presentation
 
-Status: binding design + live snapshot  
+Status: current plan + live snapshot  
 Read when: Camera3D, zoom, renderer, depth sorting
 Code: `scripts/data/tunables.gd`, `scripts/world/camera_rig.gd`, `scripts/world/camp/warm.gd`, `scripts/input/look_ctrl.gd`, `scripts/app.gd`, `project.godot`  
 
@@ -50,6 +50,6 @@ Sprite3D filter is not the project canvas default. Live default is nearest + mip
 | `MAP_ZOOM_MIN` / `MAP_ZOOM_MAX` | 1.0 / 10.0 |
 | `TILE` / `PX` | 1.0 / 64 |
 
-`project.godot`: viewport 1920×1080, `canvas_items` stretch, aspect `expand`, `default_texture_filter = 0` (nearest, canvas/HUD only), renderer `gl_compatibility`.
+`project.godot`: viewport 1920×1080 (the only source: code reads it via `Tunables.base_size()`), `canvas_items` stretch, aspect `expand`, `default_texture_filter = 0` (nearest, canvas/HUD only), renderer `gl_compatibility`.
 
 Hub warmup (`warm.gd`): yard center from `camp_build.gd` slab + `GRASS_PAD`; `cam.size = max(span_x, span_z) * 1.25`. `apply_size` is unclamped. `restore_user` calls `apply_zoom(App.cam_zoom)`.

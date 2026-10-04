@@ -3,7 +3,7 @@
 
 Rewrites tracked ``*.import`` files under ``assets/sprites``, ``assets/tiles``,
 ``assets/props``, and ``assets/fx``. Leaves ``assets/ui`` and non-texture
-imports alone. ``tools/export_web.ps1`` runs this before headless ``--import``
+imports alone. ``tools/export_web.py`` runs this before headless ``--import``
 so the web PCK ships baked mip chains.
 """
 
@@ -19,14 +19,7 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-
-FOLDERS = (
-    ROOT / "assets" / "sprites",
-    ROOT / "assets" / "tiles",
-    ROOT / "assets" / "props",
-    ROOT / "assets" / "fx",
-)
+MIP_DIRS = ("sprites", "tiles", "props", "fx")  # under assets/
 
 FLAG = "mipmaps/generate"
 ON = "mipmaps/generate=true"
@@ -99,7 +92,7 @@ def _enable(text: str) -> tuple[str, str]:
 
 
 def patch_file(path: pathlib.Path, write: bool) -> str:
-    text = path.read_text(encoding="utf-8")
+    text = path.read_bytes().decode("utf-8")  # no newline translation: keep each file's CRLF
     if not _is_texture_import(text):
         return "skip"
     new, action = _enable(text)
@@ -111,12 +104,7 @@ def patch_file(path: pathlib.Path, write: bool) -> str:
 
 
 def iter_imports(root: pathlib.Path) -> list[pathlib.Path]:
-    folders = (
-        root / "assets" / "sprites",
-        root / "assets" / "tiles",
-        root / "assets" / "props",
-        root / "assets" / "fx",
-    )
+    folders = [root / "assets" / d for d in MIP_DIRS]
     found: list[pathlib.Path] = []
     for folder in folders:
         if not folder.is_dir():
@@ -125,9 +113,10 @@ def iter_imports(root: pathlib.Path) -> list[pathlib.Path]:
     return found
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = agent_log.std_parser("Enable mipmaps/generate on 3D world texture imports.", writes=True)
-    args = parser.parse_args()
+    parser.add_argument("--verbose", "-v", action="store_true", help="List every changed file (default: the first 10 and a count).")
+    args = parser.parse_args(argv)
     root = agent_log.resolve_root(args)
     write = not args.dry_run
     counts = {"on": 0, "insert": 0, "already": 0, "skip": 0}
@@ -135,12 +124,16 @@ def main() -> int:
     if not paths:
         print(f"no .import files under 3D asset folders in {root.as_posix()}")
         return agent_log.emit_result("INFO", files=0, dry_run=args.dry_run)
+    changed: list[str] = []
     for path in paths:
         action = patch_file(path, write)
         counts[action] = counts.get(action, 0) + 1
-        rel = path.relative_to(root).as_posix()
         if action in ("on", "insert"):
-            print(f"{action}\t{rel}")
+            changed.append(f"{action}\t{path.relative_to(root).as_posix()}")
+    if changed:
+        print("\n".join(changed if args.verbose else changed[:10]))
+    if len(changed) > 10 and not args.verbose:
+        print(f"... {len(changed) - 10} more (--verbose lists them)")
     print(
         "mipmaps generate=true "
         f"flipped={counts['on']} inserted={counts['insert']} "
@@ -151,4 +144,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

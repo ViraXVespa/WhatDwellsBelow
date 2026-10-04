@@ -1,6 +1,5 @@
 extends Object
 
-const CatalogS := preload("res://scripts/data/catalog.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
 const Stat := preload("res://scripts/data/progress_combat/stat.gd")
 const Xp := preload("res://scripts/data/progress_combat/combat_xp.gd")
@@ -55,7 +54,7 @@ static func add_perm_xp(p, id: String, amt: float) -> void:
 	p.skills_perm[id] = float(p.skills_perm.get(id, 0.0)) + amt
 	if skill_lv(p, id) > before:
 		App.sfx("level")
-		App.toast("Level up — %s %d" % [id, skill_lv(p, id)])
+		App.toast(App.tr("common.level_up") % [id, skill_lv(p, id)])
 
 static func skill_dmg_mult(p, is_special := false) -> float:
 	return Stat.skill_dmg_mult(p, is_special)

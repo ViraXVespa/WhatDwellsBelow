@@ -2,9 +2,9 @@
 """Run scripted shot flows (tools/shot-flows/*.json): open an NPC menu or screen, press pad/key input,
 set state, shoot every page, assert, then diff against a baseline or publish to _out/shots/<flow>/ (never assets/: Grok Build places those).
 
-  python3 tools/run_shot_flow.py --list
-  python3 tools/run_shot_flow.py --flow camp-receptionist-menu [--baseline DIR] [--save-baseline DIR] [--publish]
-  python3 tools/run_shot_flow.py --smoke --no-pixels        # every smoke:true flow, headless, asserts only
+  python tools/run_shot_flow.py --list
+  python tools/run_shot_flow.py --flow camp-receptionist-menu [--baseline DIR] [--save-baseline DIR] [--publish]
+  python tools/run_shot_flow.py --smoke --no-pixels        # every smoke:true flow, headless, asserts only
 
 Each flow is one worker boot (run_shots.py --steps). Frames land in _logs/shot-flow/<flow>/ as
 NN-name.png (plus NN-name.texts.json and flow.json). Flow format and ops: design/shot-flows.md.
@@ -131,7 +131,7 @@ def run_one(root: Path, name: str, flow: dict, args, out_root: Path) -> dict:
             bdir.mkdir()
             for png in base.glob("[0-9]*.png"):
                 shutil.copyfile(png, bdir / png.name)
-            rows = shot_diff.compare_dirs(bdir, tmp, args.tol, fdir / "diff")
+            rows = shot_diff.compare_dirs(bdir, tmp, max(args.tol, int(flow.get("tol", 0))), fdir / "diff", [tuple(m) for m in flow.get("mask", [])])
             row["diff_status"] = shot_diff.verdict(rows, args.max_ratio)
             row["diff"] = [{k: r.get(k) for k in ("name", "status", "changed_px", "ratio", "bbox")} for r in rows]
             shutil.rmtree(tmp)
@@ -162,7 +162,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--smoke", action="store_true", help="every flow marked smoke:true")
     p.add_argument("--no-pixels", action="store_true", help="headless: steps and asserts only, no PNGs, no display needed")
     p.add_argument("--scale", type=int, default=0, help="PNG scale percent (default: the flow's scale, else 100)")
-    p.add_argument("--timeout-sec", type=int, default=run_shots.TIMEOUT_SEC)
+    p.add_argument("--timeout-sec", type=int, default=run_shots.TIMEOUT_SEC, help="Godot timeout per flow in seconds.")
     p.add_argument("--out-dir", default="", help="frames root (default _logs/shot-flow)")
     p.add_argument("--baseline", default="", help="directory of earlier frames (BASE/<flow>/NN-name.png) to diff against")
     p.add_argument("--save-baseline", default="", help="copy this run's frames to DIR/<flow>/ (run before the change)")
@@ -173,7 +173,7 @@ def main(argv: list[str] | None = None) -> int:
                    help="after capture, FAIL when the flow's published shots no longer match (UI changed: re-publish)")
     p.add_argument("--publish-dir", default="", help="publish here instead of the flow's publish.dir (assets/ is refused)")
     args = p.parse_args(argv)
-    root = Path(args.root).resolve() if args.root else agent_log.repo_root(_TOOLS.parent)
+    root = agent_log.resolve_root(args)
     flows = list_flows(root)
     if args.list:
         for n, d in flows.items():
@@ -207,18 +207,19 @@ def main(argv: list[str] | None = None) -> int:
         if r.get("published"):
             lines.append("  published: %(dir)s files=%(files)d" % r["published"])
     out_root.mkdir(parents=True, exist_ok=True)
-    summary = out_root / "summary.txt"
-    res = agent_log.result_line(status, rel(root, summary), flows=len(rows), pass_=sum(1 for r in rows if r["ok"]),
-                                fail=len(bad_run), stale=len(stale), changed=len(changed), frames=sum(r["frames"] for r in rows))
-    res = res.replace("pass_=", "pass=")
-    if not args.dry_run:
-        summary.write_text("\n".join(lines + [res]) + "\n", encoding="utf-8")
+    if status == "FAIL" and not args.dry_run:
+        import retry_lib
+
+        lines += ["", retry_lib.block(root, "run_shot_flow.py --flow " + ",".join(todo), lines)]
+    res = agent_log.write_run_file(root, out_root, JOB, "\n".join(lines), status, write=not args.dry_run, flows=len(rows),
+                                   **{"pass": sum(1 for r in rows if r["ok"])}, fail=len(bad_run), stale=len(stale),
+                                   changed=len(changed), frames=sum(r["frames"] for r in rows))
     if args.json:
-        print(json.dumps({"status": status, "flows": rows}))
+        agent_log.print_json({"status": status, "flows": rows})
     else:
         print("\n".join(lines + [res]))
     return agent_log.exit_code(status)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

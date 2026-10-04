@@ -49,7 +49,7 @@ func _die() -> void:
 			body.collision_layer = 0
 		if reveal and reveal.has_method("unlock_hidden"):
 			reveal.unlock_hidden()
-		App.toast("The wall gives.")
+		App.toast(tr("breakable.the_wall_gives"))
 		var tw := create_tween()
 		if mesh:
 			tw.tween_property(mesh, "scale", Vector3(0.2, 0.2, 0.2), 0.2)
@@ -112,7 +112,7 @@ func _wall() -> void:
 	mesh.material_override = m
 	add_child(mesh)
 	var lab := Label3D.new()
-	lab.text = "CRACKED"
+	lab.text = tr("breakable.cracked")
 	lab.position = Vector3(0.0, 1.55, 0.0)
 	lab.font_size = 28
 	lab.outline_size = 8

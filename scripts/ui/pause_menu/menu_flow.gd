@@ -2,17 +2,11 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const WipeChildren := preload("res://scripts/ui/wipe_children.gd")
-const CatalogS := preload("res://scripts/data/catalog.gd")
 const T := preload("res://scripts/data/tunables.gd")
-const PauseInv := preload("res://scripts/ui/pause_inv.gd")
-const PauseSkills := preload("res://scripts/ui/pause_skills.gd")
-const PauseSettings := preload("res://scripts/ui/pause_settings.gd")
 const GearAct := preload("res://scripts/ui/gear_board/board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Util := preload("res://scripts/ui/pause_menu/menu_util.gd")
-const View := preload("res://scripts/ui/pause_menu/pause_menu_view.gd")
 const Pad := preload("res://scripts/ui/menu_pad.gd")
-const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
@@ -215,7 +209,10 @@ static func _back(host: CanvasLayer) -> void:
 
 static func _process(host: CanvasLayer, delta: float) -> void:
 	if host.open and Disp.consume_web_esc():
-		host._back()
+		if Pad.capture_lock:
+			Disp.send_esc()
+		else:
+			host._back()
 	if host.open and host.tab == host.TAB_INV:
 		GearAct.tick_x(host, delta)
 

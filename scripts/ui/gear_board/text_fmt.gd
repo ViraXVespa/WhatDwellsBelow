@@ -1,14 +1,9 @@
 # Formatting helpers for gear items
 
-const NAMES := {
-	"weapon": "Weapon",
-	"tool": "Tool",
-	"potion": "Potion",
-	"food": "Food",
-	"head": "Head",
-	"body": "Body",
-	"legs": "Legs",
-}
+const LocS := preload("res://scripts/app/app_loc.gd")
+const CatalogS := preload("res://scripts/data/catalog.gd")
+static func slot_name(slot: String) -> String:
+	return LocS.tr_or("slot." + slot, slot)
 
 static func item_color(it: Dictionary) -> Color:
 	if it.is_empty():
@@ -62,31 +57,15 @@ static func _tmpl(it: Dictionary) -> String:
 		return "potion:" + str(it.get("name", "Potion"))
 	return "%s:%s:%s" % [slot, str(it.get("name", "")), str(it.get("rarity", "white"))]
 
-static func item_short(it: Dictionary) -> String:
-	if it.is_empty():
-		return "empty"
-	var nm: String = str(it.get("name", "item"))
-	if str(it.get("kind", "")) == "potion" or str(it.get("slot", "")) == "potion":
-		return "%s  %d/%d" % [nm, _charges(it), _charge_max(it)]
-	var stack: int = int(it.get("stack", 1))
-	if stack > 1:
-		nm += "  x%d" % stack
-	var rare: String = str(it.get("rarity", "white"))
-	if rare != "" and rare != "white" and str(it.get("kind", "")) != "artifact":
-		nm += "  [%s]" % rare
-	if bool(it.get("hold", false)):
-		nm += "  (hold)"
-	return nm
-
 static func item_cell(it: Dictionary) -> String:
-	var nm: String = str(it.get("name", "item"))
+	var nm: String = str(it.get("name", ""))
 	if str(it.get("kind", "")) == "potion" or str(it.get("slot", "")) == "potion":
 		return "%s\n%d/%d" % [nm, _charges(it), _charge_max(it)]
 	var stack: int = int(it.get("stack", 1))
 	if stack > 1:
 		nm += "\nx%d" % stack
 	elif bool(it.get("hold", false)):
-		nm += "\nhold"
+		nm += "\n" + App.tr("text_fmt.hold")
 	elif str(it.get("kind", "")) == "artifact":
-		nm += "\n" + str(it.get("set", "relic"))
+		nm += "\n" + (CatalogS.set_title(str(it.get("set", ""))) if str(it.get("set", "")) != "" else App.tr("text_fmt.relic"))
 	return nm

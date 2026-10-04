@@ -4,11 +4,12 @@ extends Object
 
 const Anim := preload("res://scripts/world/player/player_anim.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
+const T := preload("res://scripts/data/tunables.gd")
 
 static func _warmup_hub(host: Node) -> void:
 	LoadTiming.mark("warmup_begin")
 	if host.loader:
-		host.loader.set_status("Warming things up for you...")
+		host.loader.set_status(App.tr("flow_hub.warming_things_up_for_you"))
 		if host.loader.has_method("set_solid"):
 			host.loader.set_solid(true)
 		host.loader.set_progress(0.94)
@@ -72,6 +73,10 @@ static func hub_preload_paths(_host: Node) -> PackedStringArray:
 	])
 
 static func preload_hub(host: Node, _t0: int = 0) -> void:
+	if host.music and host.music.has_method("preload_dungeon"):
+		var t_mus: int = Time.get_ticks_msec()
+		host.music.preload_dungeon()
+		LoadTiming.note("music_dungeon", "dt=%d" % (Time.get_ticks_msec() - t_mus))
 	var paths := hub_preload_paths(host)
 	var n: int = paths.size()
 	if n <= 0:
@@ -90,7 +95,7 @@ static func preload_hub(host: Node, _t0: int = 0) -> void:
 			host.loader.set_status(hub_status_for(path))
 		var t_file: int = Time.get_ticks_msec()
 		ResourceLoader.load(path)
-		LoadTiming.note("file", "%s dt=%d" % [path.get_file(), Time.get_ticks_msec() - t_file])
+		LoadTiming.note("file", App.tr("flow_hub.dt") % [path.get_file(), Time.get_ticks_msec() - t_file])
 		if host.loader:
 			host.loader.set_progress(0.08 + float(i + 1) / float(n) * 0.62)
 		i += 1
@@ -99,39 +104,43 @@ static func preload_hub(host: Node, _t0: int = 0) -> void:
 
 static func hub_status_for(path: String) -> String:
 	if path.ends_with("camp.tscn") or path.ends_with("camp.gd"):
-		return "Unfolding Placeholdia…"
+		return App.tr("flow_hub.unfolding_placeholdia")
 	if path.find("/player/") >= 0:
-		return "Waking a delver…"
+		return App.tr("flow_hub.waking_a_delver")
 	if path.find("music_hub") >= 0:
-		return "Tuning the square…"
+		return App.tr("flow_hub.tuning_the_square")
 	if path.find("buildings") >= 0 or path.find("banner") >= 0:
-		return "Raising the guild row…"
+		return App.tr("flow_hub.raising_the_guild_row")
 	if path.find("tiles") >= 0:
-		return "Gathering the square…"
-	return "Crossing the veil…"
+		return App.tr("common.gathering_the_square")
+	return App.tr("flow_hub.crossing_the_veil")
 
 static func pump_fps(host: Node, hub: bool) -> void:
 	var good: int = 0
+	var steady: int = 0
 	var n: int = 0
 	var last_dt: int = 0
-	while n < 12:
+	var prev_dt: int = -1
+	while n < int(T.WARM_FRAMES_MAX):
 		var t0: int = Time.get_ticks_usec()
 		RenderingServer.force_draw()
 		await host.get_tree().process_frame
 		last_dt = int((Time.get_ticks_usec() - t0) / 1000.0)
 		n += 1
-		if last_dt <= 17:
-			good += 1
-			if good >= 2:
-				break
-		else:
-			good = 0
+		good = good + 1 if last_dt <= 17 else 0
+		steady = steady + 1 if prev_dt >= 0 and absi(last_dt - prev_dt) <= int(T.WARM_STEADY_MS) else 0
+		prev_dt = last_dt
+		# Stable: two fast frames, or a slow device whose last few frames all took about the same time.
+		if good >= 2 or steady >= int(T.WARM_STEADY_N):
+			break
 	var ok_s: String = "1" if good >= 2 else "0"
 	if hub:
 		LoadTiming.note("warm_frames", str(n))
 		LoadTiming.note("fps_ok", ok_s)
 		LoadTiming.note("warm_last_dt", str(last_dt))
+		LoadTiming.note("warm_steady", str(steady))
 	else:
 		LoadTiming.dnote("warm_frames", str(n))
 		LoadTiming.dnote("fps_ok", ok_s)
 		LoadTiming.dnote("warm_last_dt", str(last_dt))
+		LoadTiming.dnote("warm_steady", str(steady))

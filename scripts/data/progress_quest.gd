@@ -23,12 +23,6 @@ static func note_fetch(p: Object) -> void:
 static func quest_extract_ore(p: Object, n: int) -> void:
 	Prog.quest_extract_ore(p, n)
 
-static func try_complete(p: Object) -> void:
-	Prog.try_complete(p)
-
-static func unowned_gear(p: Object) -> Dictionary:
-	return Prog.unowned_gear(p)
-
 static func to_meta(p: Object) -> Dictionary:
 	return Meta.to_meta(p)
 

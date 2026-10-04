@@ -4,6 +4,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const AnimReview := preload("res://scripts/debug/anim_review.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 static func model_id(host: Node) -> String:
 	var models: Array = host.models
@@ -13,7 +14,7 @@ static func model_id(host: Node) -> String:
 	return str(m.get("id", m.get("label", "")))
 
 static func build(host: Node) -> void:
-	var review_btn: Button = ThemeS.btn("Good  (Y)", func(): cycle(host))
+	var review_btn: Button = ThemeS.btn(Prompts.fmt("Good  ({gear_tip})"), func(): cycle(host))
 	review_btn.position = Vector2(980, 860)
 	review_btn.size = Vector2(900, 48)
 	host.add_child(review_btn)
@@ -60,7 +61,7 @@ static func refresh(host: Node) -> void:
 	review_btn.disabled = false
 	var facing := str(host.facing)
 	var st := AnimReview.state_of(id, facing, anim)
-	review_btn.text = "%s  (Y)" % AnimReview.label_of(id, facing, anim)
+	review_btn.text = Prompts.fmt("%s  ({gear_tip})") % AnimReview.label_of(id, facing, anim)
 	if st == AnimReview.REPACK:
 		review_btn.add_theme_color_override("font_color", Color(1.0, 0.82, 0.45))
 	elif st == AnimReview.REGEN:

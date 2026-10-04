@@ -18,7 +18,6 @@ FILE_SUFFIXES = (
     ".tscn",
     ".json",
     ".py",
-    ".ps1",
     ".html",
     ".cfg",
     ".yml",

@@ -17,6 +17,7 @@ TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS))
 
 import sprite_pipeline as sp  # noqa: E402
+from imglib import geom, imgio  # noqa: E402
 
 SCALE = 4
 # After 400% NN, pad #FF00FF so lifted feet / swinging arms stay on-plate.
@@ -529,7 +530,7 @@ def build_overlay_prompt(facing: str, tool: str) -> str:
 def scale_nn(im: Image.Image, factor: int) -> Image.Image:
     im = im.convert("RGBA")
     w, h = im.size
-    return im.resize((w * factor, h * factor), Image.Resampling.NEAREST)
+    return geom.scale_nearest(im, size=(w * factor, h * factor))
 
 
 def figure_bbox(im: Image.Image) -> tuple[int, int, int, int] | None:
@@ -743,7 +744,7 @@ def export_cell(
     overlay: str = "",
 ) -> dict:
     dest_dir.mkdir(parents=True, exist_ok=True)
-    raw = Image.open(src).convert("RGBA")
+    raw = imgio.load(src)
     plate = pad_chroma(scale_nn(raw, factor), PAD_FRAC)
     path = dest_dir / f"seed_i2v_{facing}_x{factor}.png"
     plate.save(path)
@@ -788,7 +789,7 @@ def export_bible(
     overlay: str = "",
 ) -> dict:
     dest_dir.mkdir(parents=True, exist_ok=True)
-    raw = Image.open(src).convert("RGBA")
+    raw = imgio.load(src)
     named = dict(zip(sp.CELL_NAMES, sp.split_equal_3x3(raw)))
     write_palette(
         raw,
@@ -818,15 +819,15 @@ def export_bible(
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(
+    p = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments).", 
         description="Exact integer nearest-neighbor scale, then #FF00FF pad. No key, no 1024 fit."
     )
     src = p.add_mutually_exclusive_group(required=True)
     src.add_argument("--cell", type=Path, help="One splice still, same as Paint.NET 400%%")
     src.add_argument("--bible", type=Path, help="Locked 3x3 Bible; split then scale each cell")
-    p.add_argument("--dest", required=True, type=Path)
-    p.add_argument("--scale", type=int, default=SCALE)
-    p.add_argument("--facing", default="down")
+    p.add_argument("--dest", required=True, type=Path, help="Output folder for the seed image and prompt.")
+    p.add_argument("--scale", type=int, default=SCALE, help="Integer nearest-neighbour scale for the seed cell.")
+    p.add_argument("--facing", default="down", help="Facing, e.g. down, up_left (default down).")
     p.add_argument(
         "--action",
         default="walk",

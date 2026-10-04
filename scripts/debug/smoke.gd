@@ -11,6 +11,7 @@ const CliArgs := preload("res://scripts/debug/cli_args.gd")
 const Early := preload("res://scripts/debug/smoke_early.gd")
 const Late := preload("res://scripts/debug/smoke/smoke_late.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
+const PlaytestLive := preload("res://scripts/debug/playtest/live_smoke.gd")
 const DungeonMap := preload("res://scripts/debug/dungeon_map.gd")
 const ShotTool := preload("res://scripts/debug/shot_tool.gd")
 
@@ -22,6 +23,8 @@ static func args() -> PackedStringArray:
 	return CliArgs.args()
 
 static func active() -> bool:
+	if PlaytestLive.active():
+		return true
 	for a: String in args():
 		var s: String = str(a)
 		if s.begins_with("--wdb-phase") and s.find("smoke") >= 0:
@@ -45,6 +48,9 @@ static func hold_player() -> bool:
 static func route_boot() -> bool:
 	if "--wdb-bake-camp" in args():
 		App.call_deferred("_bake_camp")
+		return true
+	if PlaytestLive.active():
+		PlaytestLive.start()
 		return true
 	if LoadTiming.hub_active():
 		App.character_type = "male"
@@ -73,6 +79,7 @@ static func route_boot() -> bool:
 			App.begin_run()
 			App.floor_n = ShotTool.floor_n()
 			App.run_seed = ShotTool.run_seed()
+			seed(App.run_seed)
 		return true
 	if phase(1) or phase(2):
 		App.go_foundation()

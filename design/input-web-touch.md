@@ -1,6 +1,6 @@
 ﻿# Web touch input
 
-Status: binding design  
+Status: current plan  
 Read when: web touch pad / touch HUD input  
 
 
@@ -26,7 +26,7 @@ No right aim well. Auto-aim / target-lock stays armed for the whole touch sessio
 | Control | Behavior |
 |---------|----------|
 | Left half, below the HUD | Dynamic move stick. Finger-down parks with no chrome. The well appears under that finger only after a directional drag past `TOUCH_DEAD`, and only if pinch is not already active |
-| Right-hand cluster | Low-right (about 86% × 78% of the viewport, clamped off the bezel). Small top row: map / food / potion / pause, centered on the 2×2. Large 2×2 under it (25% bigger than the pre-tune wells, grown top-left): attack / special on top, interact / dash on the bottom |
+| Right-hand cluster | Low-right (about 86% × 78% of the viewport, clamped off the bezel). Small top row: map / food / potion / pause, centered on the 2×2. Large 2×2 under it (25% larger wells, grown top-left): attack / special on top, interact / dash on the bottom |
 | RT glyph | Hold-to-attack while the finger is down. No double-tap latch |
 | LT / B / A glyphs | Special, dash, interact |
 | Menu / View glyphs | Pause, map. Map well stays visible in Placeholdia but is disabled (no tap) |

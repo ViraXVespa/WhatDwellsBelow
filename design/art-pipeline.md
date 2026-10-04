@@ -1,8 +1,8 @@
 # Player sprite and paper-doll generation pipeline
 
-Status: binding design  
+Status: current plan  
 Read when: sprite frames, paper plates, sheet harvest
-Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/bible_prompt.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `tools/run_isolated_grok.py`, `assets/sprites/player/`  
+Code: `tools/sprite_pipeline.py`, `tools/i2v_seeds.py`, `tools/bible_prompt.py`, `tools/attack_keyframes.py`, `tools/plate_remap.py`, `tools/imglib/`, `tools/img_inspect.py`, `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/rekey_stills.py`, `tools/process_*.py`, `tools/pack_*.py`, `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `tools/run_isolated_grok.py`, `assets/sprites/player/`  
 
 This file is the door. Do not run `tools/bible_prompt.py` unless you are writing or locking a Bible. Do not load Appendix D unless you are choosing a generation method. Do not load Job siblings until a table row matches. Do not load art_pipeline.attack_keyframes unless the User is resuming that parked pipeline.
 
@@ -14,6 +14,7 @@ This file is the door. Do not run `tools/bible_prompt.py` unless you are writing
 | parked | parked |
 | canon bible, layer law, quality floor | `design/art-bible.md` |
 | identity sketch, template wording, reliability notes | `design/art-bible-character.md` |
+| enemy facings, prop hands, mirror swap, quiver and staff | `design/art-bible-enemy.md` |
 
 I2V stays in Grok Build unless the User says otherwise. I2V stays in a slice thread (not Bot notes, PC offload, or smoke tests). One unit per review gate. Mid-week new CLI chat is a catch-up: no week pin.
 

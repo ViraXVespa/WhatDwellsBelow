@@ -1,6 +1,5 @@
 extends Object
 
-const Prompts := preload("res://scripts/input/prompts.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 
 const PROMPT_GOLD := Color(0.86, 0.80, 0.66)
@@ -85,27 +84,27 @@ static func skill_row() -> PanelContainer:
 static func skill_name(id: String) -> String:
 	match id:
 		"axe":
-			return "Great Axe"
+			return App.tr("common.great_axe")
 		"staff":
-			return "Staff"
+			return App.tr("skill.staff")
 		"bow":
-			return "Longbow"
+			return App.tr("skill.bow")
 		"str":
-			return "Strength"
+			return App.tr("skill.str")
 		"mag":
-			return "Magic"
+			return App.tr("skill.mag")
 		"rng":
-			return "Ranged"
+			return App.tr("skill.rng")
 		"def":
-			return "Defense"
+			return App.tr("skill.def")
 		"hp":
-			return "Hitpoints"
+			return App.tr("skill.hp")
 		"mine":
-			return "Mining"
+			return App.tr("skill.mine")
 		"wood":
-			return "Woodcutting"
+			return App.tr("skill.wood")
 		"smith":
-			return "Smithing"
+			return App.tr("skill.smith")
 	return id
 
 static func _pct(v: float) -> String:
@@ -123,116 +122,69 @@ static func skill_tip(id: String, lv: int) -> String:
 	match id:
 		"axe":
 			if ranks <= 0:
-				now = "Now: no damage bonus yet."
+				now = App.tr("common.now_no_damage_bonus_yet")
 			else:
-				now = "Now: +%s Great Axe damage.\n\t  +%s Great Axe special damage." % [_pct(ranks * wpn), _pct(ranks * spec)]
-			per = "Each level after 1: +%s Great Axe damage, +%s special damage." % [_pct(wpn), _pct(spec)]
+				now = App.tr("theme.now_great_axe_damage_great") % [_pct(ranks * wpn), _pct(ranks * spec)]
+			per = App.tr("theme.each_level_after_1_great") % [_pct(wpn), _pct(spec)]
 		"staff":
 			if ranks <= 0:
-				now = "Now: no damage bonus yet."
+				now = App.tr("common.now_no_damage_bonus_yet")
 			else:
-				now = "Now: +%s staff damage.\n\t  +%s staff special damage." % [_pct(ranks * wpn), _pct(ranks * spec)]
-			per = "Each level after 1: +%s staff damage, +%s special damage." % [_pct(wpn), _pct(spec)]
+				now = App.tr("theme.now_staff_damage_staff_special") % [_pct(ranks * wpn), _pct(ranks * spec)]
+			per = App.tr("theme.each_level_after_1_staff") % [_pct(wpn), _pct(spec)]
 		"bow":
 			if ranks <= 0:
-				now = "Now: no damage bonus yet."
+				now = App.tr("common.now_no_damage_bonus_yet")
 			else:
-				now = "Now: +%s Longbow damage.\n\t  +%s Longbow special damage." % [_pct(ranks * wpn), _pct(ranks * spec)]
-			per = "Each level after 1: +%s Longbow damage, +%s special damage." % [_pct(wpn), _pct(spec)]
+				now = App.tr("theme.now_longbow_damage_longbow_speci") % [_pct(ranks * wpn), _pct(ranks * spec)]
+			per = App.tr("theme.each_level_after_1_longbow") % [_pct(wpn), _pct(spec)]
 		"str":
 			if ranks <= 0:
-				now = "Now: no style bonus yet."
+				now = App.tr("common.now_no_style_bonus_yet")
 			else:
-				now = "Now: +%s melee-style damage (Great Axe and staff melee)." % _pct(ranks * sty)
-			per = "Each level after 1: +%s style damage." % _pct(sty)
+				now = App.tr("theme.now_melee_style_damage_great") % _pct(ranks * sty)
+			per = App.tr("common.each_level_after_1_style") % _pct(sty)
 		"mag":
 			if ranks <= 0:
-				now = "Now: no style bonus yet."
+				now = App.tr("common.now_no_style_bonus_yet")
 			else:
-				now = "Now: +%s magic-style damage (staff special)." % _pct(ranks * sty)
-			per = "Each level after 1: +%s style damage." % _pct(sty)
+				now = App.tr("theme.now_magic_style_damage_staff") % _pct(ranks * sty)
+			per = App.tr("common.each_level_after_1_style") % _pct(sty)
 		"rng":
 			if ranks <= 0:
-				now = "Now: no style bonus yet."
+				now = App.tr("common.now_no_style_bonus_yet")
 			else:
-				now = "Now: +%s ranged-style damage (Longbow)." % _pct(ranks * sty)
-			per = "Each level after 1: +%s style damage." % _pct(sty)
+				now = App.tr("theme.now_ranged_style_damage_longbow") % _pct(ranks * sty)
+			per = App.tr("common.each_level_after_1_style") % _pct(sty)
 		"def":
 			var dnow := float(ranks) * float(App.bal.skill_def_per_lv)
 			if ranks <= 0:
-				now = "Now: no defense bonus yet."
+				now = App.tr("theme.now_no_defense_bonus_yet")
 			else:
-				now = "Now: +%.1f defense." % dnow
-			per = "Each level after 1: +%.1f defense." % float(App.bal.skill_def_per_lv)
+				now = App.tr("theme.now_defense") % dnow
+			per = App.tr("theme.each_level_after_1_defense") % float(App.bal.skill_def_per_lv)
 		"hp":
 			var hnow := int(round(float(ranks) * float(App.bal.skill_hp_per_lv)))
 			if ranks <= 0:
-				now = "Now: no Hitpoints bonus yet."
+				now = App.tr("theme.now_no_hitpoints_bonus_yet")
 			else:
-				now = "Now: +%d max HP." % hnow
-			per = "Each level after 1: +%d max HP." % int(round(float(App.bal.skill_hp_per_lv)))
+				now = App.tr("theme.now_max_hp") % hnow
+			per = App.tr("theme.each_level_after_1_max") % int(round(float(App.bal.skill_hp_per_lv)))
 		"mine":
-			now = "Now: +%s mining success chance." % _pct(float(lv) * float(App.bal.skill_gather))
-			per = "Each level: +%s mining success chance." % _pct(float(App.bal.skill_gather))
+			now = App.tr("theme.now_mining_success_chance") % _pct(float(lv) * float(App.bal.skill_gather))
+			per = App.tr("theme.each_level_mining_success_chance") % _pct(float(App.bal.skill_gather))
 		"wood":
-			now = "Now: +%s woodcutting success chance." % _pct(float(lv) * float(App.bal.skill_gather))
-			per = "Each level: +%s woodcutting success chance." % _pct(float(App.bal.skill_gather))
+			now = App.tr("theme.now_woodcutting_success_chance") % _pct(float(lv) * float(App.bal.skill_gather))
+			per = App.tr("theme.each_level_woodcutting_success_c") % _pct(float(App.bal.skill_gather))
 		"smith":
 			var speed := 1.0 + float(ranks) * 0.12
 			var extra := int(lv / 4.0)
-			now = "Now: forge cost −%dg −%d ore.\n\t  Forge time ÷ %.2f.\n\t  Forged weapons +%d extra damage." % [lv * 2, lv, speed, extra]
-			per = "Each level: −2g −1 ore on forge cost.\nEach level after 1: 12% faster forging.\nEvery 4 levels: +1 extra forged weapon damage."
+			now = App.tr("theme.now_forge_cost_g_ore") % [lv * 2, lv, speed, extra]
+			per = App.tr("theme.each_level_2g_1_ore")
 		_:
-			now = "Now: no listed bonus."
-			per = "No per-level bonus is defined."
-	return "%s  ·  Level %d\n\n%s\n\n%s" % [n, lv, now, per]
-
-static func _joy_btn(i: int) -> String:
-	match i:
-		JOY_BUTTON_A:
-			return "A"
-		JOY_BUTTON_B:
-			return "B"
-		JOY_BUTTON_X:
-			return "X"
-		JOY_BUTTON_Y:
-			return "Y"
-		JOY_BUTTON_LEFT_SHOULDER:
-			return "LB"
-		JOY_BUTTON_RIGHT_SHOULDER:
-			return "RB"
-		JOY_BUTTON_LEFT_STICK:
-			return "L3"
-		JOY_BUTTON_RIGHT_STICK:
-			return "R3"
-		JOY_BUTTON_START:
-			return "Start"
-		JOY_BUTTON_BACK:
-			return "View"
-		JOY_BUTTON_DPAD_UP:
-			return "D-pad Up"
-		JOY_BUTTON_DPAD_DOWN:
-			return "D-pad Down"
-		JOY_BUTTON_DPAD_LEFT:
-			return "D-pad Left"
-		JOY_BUTTON_DPAD_RIGHT:
-			return "D-pad Right"
-	return "Pad " + str(i)
-
-static func _joy_axis(axis: int, val: float) -> String:
-	if axis == JOY_AXIS_TRIGGER_RIGHT:
-		return "RT"
-	if axis == JOY_AXIS_TRIGGER_LEFT:
-		return "LT"
-	if axis == JOY_AXIS_LEFT_X:
-		return "Left Stick X"
-	if axis == JOY_AXIS_LEFT_Y:
-		return "Left Stick Y"
-	if axis == JOY_AXIS_RIGHT_X:
-		return "Right Stick X"
-	if axis == JOY_AXIS_RIGHT_Y:
-		return "Right Stick Y"
-	return "Axis %d%s" % [axis, "+" if val >= 0.0 else "-"]
+			now = App.tr("theme.now_no_listed_bonus")
+			per = App.tr("theme.no_per_level_bonus_is")
+	return App.tr("theme.level") % [n, lv, now, per]
 
 static func sb(bg: Color, border: Color) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()

@@ -60,8 +60,5 @@ static func set_sprite_mip_bias(host: Node, v: float) -> void:
 	host.sprite_mip_bias = clampf(v, -2.0, 2.0)
 	App.SpriteFilt.apply_tree()
 
-static func set_display_mode(_host: Node, mode: String) -> void:
-	App.Disp.set_desktop_mode(mode)
-
 static func set_web_fullscreen(_host: Node, on: bool) -> void:
 	App.Disp.set_web_fullscreen(on)

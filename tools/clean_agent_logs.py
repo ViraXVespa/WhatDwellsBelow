@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Housekeep _logs/ so runners do not clog the disk. Never touches files outside _logs/.
 
-    python3 tools/clean_agent_logs.py [--keep-raw] [--max-age-hours 24] [--dry-run]
-    python3 tools/clean_agent_logs.py --new-week     # human-only: wipes old summaries + scratch dirs
-Default: delete raw *.log / *.err (keep summary.txt). Summary: _logs/clean/summary.txt.
+    python tools/clean_agent_logs.py [--keep-raw] [--max-age-hours 24] [--dry-run]
+    python tools/clean_agent_logs.py --new-week     # human-only: wipes every run summary, index and raw log + scratch dirs
+Default: delete raw *.log / *.err (run summaries and index.txt stay; each run keeps its own stamped files and the
+newest 20 stay per folder, run_log_lib.py). Summary: _logs/clean/ (its own stamped run files).
 Old spellings: -KeepRaw -MaxAgeHours -WhatIf -NewWeek.
 """
 from __future__ import annotations
@@ -15,13 +16,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
+import run_log_lib
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Delete raw logs (and with --new-week old summaries) under _logs/.", writes=True, json_out=True)
-    ap.add_argument("--keep-raw", "-KeepRaw", action="store_true")
-    ap.add_argument("--max-age-hours", "-MaxAgeHours", type=float, default=0)
-    ap.add_argument("--new-week", "-NewWeek", action="store_true")
+    ap.add_argument("--keep-raw", "-KeepRaw", action="store_true", help="Keep raw .log/.err files (summaries still follow --max-age-hours).")
+    ap.add_argument("--max-age-hours", "-MaxAgeHours", type=float, default=0, help="Only delete raw logs older than this many hours (default 0 = all).")
+    ap.add_argument("--new-week", "-NewWeek", action="store_true", help="Also delete old summaries (start of a week).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     logs = root / "_logs"
@@ -46,8 +48,10 @@ def main(argv: list[str] | None = None) -> int:
         for d in ("sess", "patch-scratch"):
             remove(logs / d, "DELDIR")
         remove(logs / "patch-lock" / "apply.lock", "DEL")
-        for d in sorted(p for p in logs.iterdir() if p.is_dir() and p.name not in ("sess", "patch-scratch", "patch-lock", "clean")):
-            remove(d / "summary.txt", "DEL")
+        skip = ("sess", "patch-scratch", "patch-lock", "clean")
+        for d in sorted(p for p in logs.rglob("*") if p.is_dir() and p.relative_to(logs).parts[0] not in skip):
+            for f in sorted(f for f in d.iterdir() if f.is_file() and (run_log_lib.stamp_of(f.name) or f.name in (run_log_lib.INDEX, run_log_lib.LEGACY))):
+                remove(f, "DEL")
         for f in sorted(p for p in logs.iterdir() if p.is_file()):
             remove(f, "DEL")
     else:
@@ -55,7 +59,8 @@ def main(argv: list[str] | None = None) -> int:
         for f in sorted(p for p in logs.rglob("*") if p.is_file()):
             raw = f.suffix in (".log", ".err")
             old = cutoff is not None and f.stat().st_mtime < cutoff
-            if f.name.lower() != "summary.txt" and ((raw and not args.keep_raw) or old):
+            keep_name = f.name.lower() in (run_log_lib.LEGACY, run_log_lib.INDEX) or (f.suffix == ".txt" and run_log_lib.stamp_of(f.name))
+            if not keep_name and ((raw and not args.keep_raw) or old):
                 remove(f, "DEL")
             else:
                 st["kept"] += 1
@@ -70,4 +75,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

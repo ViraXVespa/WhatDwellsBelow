@@ -1,8 +1,10 @@
 {
   "name": "dungeon-gate-shop",
-  "about": "Dungeon: open the extract gate by interacting, then the ghost shop panel by calling its open method (shops spawn only on some floors; a null spot shows the empty stock), shoot each, close with B. Template for dungeon-only panels.",
+  "about": "Dungeon: open the extract gate by interacting, then the ghost shop panel by calling its open method (shops spawn only on some floors; a null spot shows the empty stock), shoot each, close with B. Template for dungeon-only panels. The world behind the panels animates (a bat at top right differs per run), so baseline diffs ignore the `mask` rectangle and any change under `tol` (torch flicker).",
   "scene": "dungeon",
   "seed": 1,
+  "mask": [[1040, 20, 260, 100]],
+  "tol": 3,
   "floor": 1,
   "settle_ms": 1500,
   "covers": ["interact:extract_gate", "ui:extract", "ui:shop"],

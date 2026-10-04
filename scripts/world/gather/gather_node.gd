@@ -8,7 +8,7 @@ const GatherRules := preload("res://scripts/world/gather/rules.gd")
 var kind := "mine"
 var hits := 4
 var interval := 2.4
-var prompt := "Gather"
+var prompt := tr("gather_node.gather")
 var spr: Sprite3D
 var label: Label3D
 var busy := false
@@ -31,25 +31,25 @@ func setup(k: String, pos: Vector3) -> void:
 	refresh()
 
 func refresh() -> void:
-	prompt = "Gather"
+	prompt = tr("gather_node.gather")
 	if label:
-		label.text = "ORE" if kind == "mine" else "WOOD"
+		label.text = tr("gather_node.ore") if kind == "mine" else "WOOD"
 		label.modulate = Color(0.75, 0.9, 1.0) if kind == "mine" else Color(0.7, 0.9, 0.55)
 
 func interact(who: Node) -> String:
 	if hits <= 0:
 		return ""
 	if kind == "mine" and App.prog.tool_type != "pickaxe":
-		App.toast("Need a pickaxe this run.")
-		return "Tool locked to hatchet."
+		App.toast(tr("gather_node.need_a_pickaxe_this_run"))
+		return tr("gather_node.tool_locked_to_hatchet")
 	if kind == "wood" and App.prog.tool_type != "hatchet":
-		App.toast("Need a hatchet this run.")
-		return "Tool locked to pickaxe."
+		App.toast(tr("gather_node.need_a_hatchet_this_run"))
+		return tr("gather_node.tool_locked_to_pickaxe")
 	_sync_interval()
 	if who and who.has_method("start_gather"):
 		who.start_gather(self)
-		return "Gathering…  (move to stop)"
-	return "Gather"
+		return tr("gather_node.gathering_move_to_stop")
+	return tr("gather_node.gather")
 
 func strike() -> Dictionary:
 	if hits <= 0:
@@ -92,12 +92,12 @@ func strike() -> Dictionary:
 			gold = 1 + randi() % 3
 			App.gain_gold(gold)
 	App.sfx("wood" if kind == "wood" else "mine")
-	var msg := "clink…"
+	var msg := tr("gather_node.clink")
 	if ok:
 		if kind == "wood":
-			msg = "+1 wood"
+			msg = tr("gather_node.1_wood")
 		else:
-			msg = "+1 ore"
+			msg = tr("gather_node.1_ore")
 		if gold > 0:
 			msg += "  +%dg" % gold
 	App.toast(msg)
@@ -108,7 +108,7 @@ func strike() -> Dictionary:
 	else:
 		refresh()
 		if label:
-			label.text = ("%s  %d" % [label.text, hits])
+			label.text = (tr("gather_node.text") % [label.text, hits])
 	return {"ok": ok, "done": done, "ore": ore, "wood": wood, "gold": gold}
 
 func _sync_interval() -> void:

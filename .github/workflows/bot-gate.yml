@@ -28,7 +28,9 @@ jobs:
           set -euo pipefail
           BASE="origin/${GITHUB_BASE_REF}"
           git fetch origin "${GITHUB_BASE_REF}" --depth=1
+          # changed.txt keeps deletions (the allowlist step must see them); changed_live.txt is what still exists
           git diff --name-only "${BASE}...HEAD" > /tmp/changed.txt || true
+          git diff --name-only --diff-filter=d "${BASE}...HEAD" > /tmp/changed_live.txt || true
           echo "count=$(wc -l < /tmp/changed.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
           echo "Changed files:"
           cat /tmp/changed.txt || true
@@ -37,7 +39,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t GD < <(grep -E '(^|/)scripts/.*\.gd$' /tmp/changed.txt || true)
+          mapfile -t GD < <(grep -E '(^|/)scripts/.*\.gd$' /tmp/changed_live.txt || true)
           if [ "${#GD[@]}" -eq 0 ]; then
             echo "No changed scripts/**/*.gd"
             exit 0

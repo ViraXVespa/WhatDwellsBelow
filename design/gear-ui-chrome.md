@@ -1,6 +1,6 @@
 # Anvil tabs, slot actions, focus, live scripts
 
-Status: binding design  
+Status: current plan  
 Read when: Analyze Forge bumpers, verbs, deferred teardown, script map  
 
 

@@ -17,10 +17,10 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+from imglib import geom, imgio  # noqa: E402
+from gen_prompt_glyphs import FONT  # noqa: E402  (single home for the pixel font)
 
-SESSION = Path(
-    r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a08788-1bb6-76c0-8fa8-40b73dda2810\images"
-)
+SESSION = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a08788-1bb6-76c0-8fa8-40b73dda2810\images")
 TILES = ROOT / "assets" / "tiles"
 PROPS = ROOT / "assets" / "sprites" / "props"
 NPCS = ROOT / "assets" / "sprites" / "npcs"
@@ -37,7 +37,7 @@ QUADS = {
 
 
 def load(name: str) -> Image.Image:
-    return Image.open(SESSION / name).convert("RGBA")
+    return imgio.load(SESSION / name)
 
 
 def crop_frac(im: Image.Image, frac: tuple[float, float, float, float]) -> Image.Image:
@@ -129,36 +129,16 @@ def wide_out(src: str, dest: Path, max_w: int, quad: str | None = None, key_blac
                 r, g, b, a = px[x, y]
                 if a > 0 and r < 18 and g < 18 and b < 18:
                     px[x, y] = (0, 0, 0, 0)
-    bbox = keyed.getbbox()
-    if bbox is None:
+    resized = geom.fit_axis(keyed, width=max_w)
+    if resized is None:
         raise SystemExit(f"empty {src}")
-    cropped = keyed.crop(bbox)
-    scale = max_w / cropped.size[0]
-    nw = max_w
-    nh = max(1, int(cropped.size[1] * scale))
-    resized = cropped.resize((nw, nh), Image.Resampling.NEAREST)
     dest.parent.mkdir(parents=True, exist_ok=True)
     resized.save(dest)
     print("wide", dest.name, resized.size)
 
 
-_FONT = {
-    "A": ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
-    "C": ["01110", "10001", "10000", "10000", "10000", "10001", "01110"],
-    "D": ["11100", "10010", "10001", "10001", "10001", "10010", "11100"],
-    "E": ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
-    "H": ["10001", "10001", "10001", "11111", "10001", "10001", "10001"],
-    "I": ["11111", "00100", "00100", "00100", "00100", "00100", "11111"],
-    "L": ["10000", "10000", "10000", "10000", "10000", "10000", "11111"],
-    "M": ["10001", "11011", "10101", "10001", "10001", "10001", "10001"],
-    "N": ["10001", "11001", "10101", "10011", "10001", "10001", "10001"],
-    "O": ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
-    "P": ["11110", "10001", "10001", "11110", "10000", "10000", "10000"],
-    "T": ["11111", "00100", "00100", "00100", "00100", "00100", "00100"],
-    "W": ["10001", "10001", "10101", "10101", "10101", "01010", "01010"],
-    "!": ["00100", "00100", "00100", "00100", "00100", "00000", "00100"],
-    " ": ["00000", "00000", "00000", "00000", "00000", "00000", "00000"],
-}
+GLYPH_GAP = 2  # columns between glyphs; banner_out layout and blit_line share it
+_BLANK = ["00000"] * 7
 
 
 def blit_line(
@@ -171,9 +151,9 @@ def blit_line(
 ) -> None:
     px = im.load()
     shadow = (48, 28, 16, 255)
-    gw, gap = 5, 2
+    gw, gap = 5, GLYPH_GAP
     for i, ch in enumerate(text):
-        rows = _FONT.get(ch, _FONT[" "])
+        rows = FONT.get(ch, _BLANK)
         bx = x0 + i * (gw + gap) * scale
         for gy, row in enumerate(rows):
             for gx, bit in enumerate(row):
@@ -198,7 +178,7 @@ def cloth_box(im: Image.Image) -> tuple[int, int, int, int]:
     cloth = a & (r > g + 15) & (r > b + 15) & (r > 70)
     ys, xs = np.where(cloth)
     if xs.size < 80:
-        bbox = im.getbbox()
+        bbox = geom.bbox(im)
         if bbox is None:
             return (0, 0, im.size[0], im.size[1])
         return bbox
@@ -208,12 +188,7 @@ def cloth_box(im: Image.Image) -> tuple[int, int, int, int]:
 def banner_out() -> None:
     dest = PROPS / "welcome_banner.png"
     keyed = key_sprite(load("14.jpg"))
-    bbox = keyed.getbbox()
-    cropped = keyed.crop(bbox)
-    scale = 512 / cropped.size[0]
-    nw = 512
-    nh = max(1, int(cropped.size[1] * scale))
-    out = cropped.resize((nw, nh), Image.Resampling.NEAREST)
+    out = geom.fit_axis(keyed, width=512, empty="whole")
     w, h = out.size
     cx0 = int(w * 0.20)
     cy0 = int(h * 0.40)
@@ -224,7 +199,7 @@ def banner_out() -> None:
     inner_w = max(8, cx1 - cx0 - pad_x * 2)
     inner_h = max(8, cy1 - cy0 - pad_y * 2)
     lines = ["WELCOME TO", "PLACEHOLDIA!"]
-    gw, gh, gap, lh = 5, 7, 1, 2
+    gw, gh, gap, lh = 5, 7, GLYPH_GAP, 2
     longest = max(len(line) for line in lines)
     line_w = longest * (gw + gap) - gap
     block_h = len(lines) * gh + (len(lines) - 1) * lh
@@ -270,8 +245,8 @@ def recut_sprites() -> None:
 
 
 def mix_path() -> None:
-    dirt = Image.open(TILES / "plaza_ground.png").convert("RGB")
-    cobble = Image.open(TILES / "plaza_path.png").convert("RGB")
+    dirt = imgio.load(TILES / "plaza_ground.png", "RGB")
+    cobble = imgio.load(TILES / "plaza_path.png", "RGB")
     cobble = cobble.resize(dirt.size, Image.Resampling.BOX)
     mixed = Image.blend(dirt, cobble, 0.28)
     mixed.save(TILES / "plaza_path.png")
@@ -306,11 +281,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Key and install the Placeholdia / dungeon art pass stills.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="process_world_pass")
+    return agent_log.run_writer("process_world_pass", "Key and install the Placeholdia / dungeon art pass stills.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

@@ -2,46 +2,13 @@
 
 ## Two-column Values categories. Expand-in-place under the category cell.
 
-const CATS: Array[String] = [
-	"Player",
-	"Movement",
-	"Combat",
-	"Great Axe",
-	"Enemies",
-	"Camera",
-	"Dungeon",
-	"Ground",
-	"Economy",
-	"UI",
-	"Other",
-]
+const Map := preload("res://scripts/debug/debug_menu/val_cat_map.gd")
 
 static func _val():
 	return load("res://scripts/debug/debug_menu/menu_val.gd")
 
 static func cat_of(name: String) -> String:
-	var n: String = name.to_lower()
-	if n.begins_with("axe") or n.begins_with("ga_") or n.contains("greataxe") or n.contains("great_axe"):
-		return "Great Axe"
-	if n.begins_with("enemy") or n.begins_with("mob") or n.begins_with("ai_") or n.begins_with("aggro"):
-		return "Enemies"
-	if n.begins_with("cam") or n.begins_with("zoom") or n.begins_with("look"):
-		return "Camera"
-	if n.begins_with("ground"):
-		return "Ground"
-	if n.begins_with("floor") or n.begins_with("room") or n.begins_with("dung") or n.begins_with("door") or n.begins_with("spawn"):
-		return "Dungeon"
-	if n.begins_with("gold") or n.begins_with("ore") or n.begins_with("root") or n.begins_with("shop") or n.begins_with("price"):
-		return "Economy"
-	if n.begins_with("ui_") or n.begins_with("hud") or n.begins_with("tip") or n.begins_with("font"):
-		return "UI"
-	if n.begins_with("atk") or n.begins_with("hit") or n.begins_with("hurt") or n.begins_with("poise") or n.begins_with("iframe") or n.begins_with("special"):
-		return "Combat"
-	if n.begins_with("walk") or n.begins_with("dash") or n.begins_with("spd") or n.begins_with("move") or n.begins_with("accel"):
-		return "Movement"
-	if n.begins_with("hp") or n.begins_with("player") or n.begins_with("stam") or n.begins_with("heal"):
-		return "Player"
-	return "Other"
+	return Map.cat_of(name)
 
 static func _left_n(n: int) -> int:
 	return int(ceili(float(n) / 2.0))
@@ -78,11 +45,11 @@ static func build(host) -> void:
 	grid.add_child(col0)
 	grid.add_child(col1)
 	host.root_box.add_child(grid)
-	var n: int = CATS.size()
+	var n: int = Map.CATS.size()
 	var left_n: int = _left_n(n)
 	for i in n:
 		var parent: Control = col0 if i < left_n else col1
-		_add_cat(host, parent, CATS[i], i)
+		_add_cat(host, parent, Map.CATS[i], i)
 	host.val_cat_i = 0
 	host.val_mode = "cats"
 	paint_cats(host)

@@ -23,19 +23,19 @@ static func _apply_pose(host: Node) -> void:
 		prompt_n.visible = Args.hud_on()
 	var map_n: Node = host.get("map_layer") as Node
 	if map_n != null:
-		map_n.visible = Args.hud_on()
+		map_n.visible = false  # the full-screen map is toggled by the player, never part of the HUD (HUD on used to open it over the scene)
 	var z: float = Args.zoom()
 	App.cam_zoom = z
 	var rig: Node = host.get_tree().get_first_node_in_group("camera_rig")
 	if rig == null and player != null:
 		rig = player.get_node_or_null("CameraRig")
+	var T = load("res://scripts/data/tunables.gd")
 	if rig != null and rig.has_method("apply_size"):
-		var T = load("res://scripts/data/tunables.gd")
 		rig.warm_hold = true
-		rig.call("apply_size", 1080.0 / float(T.PX) / maxf(0.01, z))
+		rig.call("apply_size", T.base_size().y / float(T.PX) / maxf(0.01, z))
 	var cam: Camera3D = host.get_viewport().get_camera_3d()
 	if cam != null:
-		cam.size = 1080.0 / 64.0 / maxf(0.01, z)
+		cam.size = T.base_size().y / float(T.PX) / maxf(0.01, z)
 		cam.far = maxf(cam.far, cam.size * 3.0)
 		printerr("SHOT: mark=camsize size=%s zoom=%s" % [str(cam.size), str(z)])
 	if cam != null and false:

@@ -3,8 +3,12 @@ extends Object
 const DebugS := preload("res://scripts/debug/debug_menu.gd")
 const AnimS := preload("res://scripts/debug/anim_browser.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+const WebHook := preload("res://scripts/debug/web_hook.gd")
+const LocS := preload("res://scripts/app/app_loc.gd")
+const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 
 static func _ready(host: Node) -> void:
+	LocS.setup()
 	host.process_mode = Node.PROCESS_MODE_ALWAYS
 	host.bal = App.BalanceS.new()
 	host.prog = App.ProgressS.new()
@@ -14,6 +18,7 @@ static func _ready(host: Node) -> void:
 	host.tel = App.TelS.new()
 	host.playtest = App.PlayS.new()
 	host.add_child(host.playtest)
+	WebHook.register()
 	host.pause_menu = App.PauseS.new()
 	host.add_child(host.pause_menu)
 	host.recap = App.RecapS.new()
@@ -75,19 +80,32 @@ static func hitstop(host: Node, sec: float) -> void:
 static func _process(host: Node, delta: float) -> void:
 	App.Pad.tick()
 	HitchLog.tick(host, delta)
+	DynRes.tick(host)
 	if host._in_world() and not host.ui_open:
 		var vp := host.get_viewport()
 		if vp and vp.gui_get_focus_owner() != null:
 			vp.gui_release_focus()
-	elif (host.ui_open or not host._in_world()) and host.pad_just("interact"):
-		var f := host.get_viewport().gui_get_focus_owner()
-		if f is BaseButton and not (f as BaseButton).disabled:
-			(f as BaseButton).pressed.emit()
 	App.AppRun.tick(host, delta)
 
 static func _input(host: Node, event: InputEvent) -> void:
 	App.Pad.note_event(event)
 	if App.Disp.handle_input(event):
+		host.get_viewport().set_input_as_handled()
+		return
+	_press_focused(host, event)
+
+## Outside the world (title, splash, fullscreen gate) accept presses the focused button once, on key / button
+## down. Taking the event here keeps the GUI's own ui_accept from pressing it a second time on release.
+static func _press_focused(host: Node, event: InputEvent) -> void:
+	if host.ui_open or host._in_world() or not (event is InputEventKey or event is InputEventJoypadButton):
+		return
+	if not event.is_pressed() or event.is_echo():
+		return
+	if not (event.is_action_pressed("interact") or event.is_action_pressed("ui_accept")):
+		return
+	var f := host.get_viewport().gui_get_focus_owner()
+	if f is BaseButton and not (f as BaseButton).disabled and not (f as BaseButton).toggle_mode:
+		(f as BaseButton).pressed.emit()
 		host.get_viewport().set_input_as_handled()
 
 static func _unhandled_input(host: Node, event: InputEvent) -> void:

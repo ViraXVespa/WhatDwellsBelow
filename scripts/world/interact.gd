@@ -10,6 +10,7 @@ var kind := "crystal"
 var locked := false
 var pending := false
 var prompt := ""
+var prompt_locked := false
 var spr: Sprite3D
 var mesh: MeshInstance3D
 var label: Label3D

@@ -1,6 +1,7 @@
 ﻿extends Object
 
 const Cat := preload("res://scripts/data/archives/archives_catalog.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 static func run(host: Node, id: String) -> void:
 	host.archive_cancel = false
@@ -8,11 +9,11 @@ static func run(host: Node, id: String) -> void:
 	var e := Cat.by_id(id)
 	var label := str(e.get("label", id))
 	if host.loader:
-		host.loader.begin(label, "Preparing snapshot…  (B to cancel)")
+		host.loader.begin(label, Prompts.fmt(App.tr("launch.preparing_snapshot")))
 		host.loader.set_progress(0.02)
 	await host.get_tree().process_frame
 	if e.is_empty():
-		await fail(host, "Unknown archive.")
+		await fail(host, App.tr("launch.unknown_archive"))
 		return
 	if OS.has_feature("web") or not can_spawn_local() or not git_repo() or not have_git():
 		await open_pages(host, e)
@@ -23,31 +24,31 @@ static func run(host: Node, id: String) -> void:
 		await cancel(host)
 		return
 	if not worktree_ready(wt, sha):
-		set_status(host, "Checking out %s…  (B to cancel)" % sha.substr(0, 7), 0.08)
+		set_status(host, Prompts.fmt(App.tr("launch.checking_out_sha").format({"sha": sha.substr(0, 7)})), 0.08)
 		var ok := await ensure_worktree(host, wt, sha)
 		if host.archive_cancel:
 			await cancel(host)
 			return
 		if not ok:
-			await fail(host, "Checkout failed.")
+			await fail(host, App.tr("launch.checkout_failed"))
 			return
 	else:
-		set_status(host, "Opening snapshot…", 0.4)
+		set_status(host, App.tr("launch.opening_snapshot"), 0.4)
 		await beat(host, 0.2)
 	if host.archive_cancel:
 		await cancel(host)
 		return
-	set_status(host, "Isolating save data…", 0.45)
+	set_status(host, App.tr("launch.isolating_save_data"), 0.45)
 	stamp_name(wt, label)
 	await host.get_tree().process_frame
 	if not imported(wt):
-		set_status(host, "Importing archived project…  (B to cancel)", 0.48)
+		set_status(host, Prompts.fmt(App.tr("launch.importing_archived_project")), 0.48)
 		var ok2 := await run_wait(host, OS.get_executable_path(), PackedStringArray(["--headless", "--path", wt, "--import"]), 0.48, 0.9)
 		if host.archive_cancel:
 			await cancel(host)
 			return
 		if not ok2 or not imported(wt):
-			await fail(host, "Import failed.")
+			await fail(host, App.tr("launch.import_failed"))
 			return
 	if host.archive_cancel:
 		await cancel(host)
@@ -56,7 +57,7 @@ static func run(host: Node, id: String) -> void:
 	await beat(host, 0.15)
 	var pid := OS.create_process(OS.get_executable_path(), PackedStringArray(["--path", wt]))
 	if pid == -1:
-		await fail(host, "Could not launch archive.")
+		await fail(host, App.tr("launch.could_not_launch"))
 		return
 	if host.loader:
 		host.loader.finish()
@@ -156,9 +157,9 @@ static func run_wait(host: Node, exe: String, args: PackedStringArray, lo: float
 static func open_pages(host: Node, e: Dictionary) -> void:
 	var url := Cat.pages_url(e)
 	if url == "":
-		await fail(host, "Could not launch archive.")
+		await fail(host, App.tr("launch.could_not_launch"))
 		return
-	set_status(host, "Opening archived build…", 0.55)
+	set_status(host, App.tr("launch.opening_archived_build"), 0.55)
 	await beat(host, 0.35)
 	if host.archive_cancel:
 		await cancel(host)

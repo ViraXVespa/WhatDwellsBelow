@@ -1,6 +1,6 @@
 # Dungeon — streaming
 
-Status: binding design + live snapshot  
+Status: current plan + live snapshot  
 Read when: RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo, clip-free chunk instance
 
 ## Live snapshot — streaming
@@ -15,7 +15,7 @@ Stream instances gen's published runs. Ribbon boxes fire when those runs exist, 
 | `STREAM_OUT` | 42 | Live job despawns if not in combat |
 | `CHUNK` | 32 | Geometry job size |
 | `RING_IN` / `RING_OUT` | 1 / 2 | Geo chunks kept around the player |
-| `PER_FRAME` | 1 | Neighbor geo chunks built per follow after the current chunk. Boot passes delta 0 so it does not trip a burst. |
+| `PER_FRAME` | 3 | Neighbor geo chunks built per follow after the current chunk. The first two frames build 1 so boot does not trip a burst. |
 
 Job states: `pending`, `live`, `cleared`. Do not stream out an enemy the player is fighting.
 Geometry jobs never go `cleared`; they sleep back to `pending`.

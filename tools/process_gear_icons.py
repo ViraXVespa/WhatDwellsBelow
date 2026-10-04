@@ -6,7 +6,8 @@ import sys
 from pathlib import Path
 
 from PIL import Image
-from sprite_lib import fit_box  # noqa: E402
+from imglib import imgio  # noqa: E402
+from imglib.geom import fit_box  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
@@ -45,7 +46,7 @@ EXPECTED = (
 
 
 def key_still(src: Path) -> Image.Image:
-    raw = Image.open(src).convert("RGBA")
+    raw = imgio.load(src)
     remapped, _vis, _info = pr.remap(raw)
     return sp.key_to_alpha(remapped, spill_flood=False)
 
@@ -82,11 +83,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("process_gear_icons")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="process_gear_icons")
+    return agent_log.run_writer("process_gear_icons", 'Key _src/gear/*.jpg through the live still pipeline into assets/ui/gear/*.png.', _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

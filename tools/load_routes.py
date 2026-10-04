@@ -6,6 +6,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+SMOKE_PHASES = tuple(range(1, 10))  # numbered smoke phases (scripts/debug/smoke.gd --wdb-phaseN-smoke); every tool derives from this
+
 
 ROUTES_REL = "design/routes.yaml"
 
@@ -238,6 +240,17 @@ def job_read_when(data: dict[str, Any]) -> dict[str, str]:
     if not isinstance(raw, dict):
         return {}
     return {str(key): str(val) for key, val in raw.items()}
+
+
+def check_route(data: dict[str, Any], door: str = "", job: str = "") -> str:
+    """Error text naming the valid doors/jobs when door or job is not in routes.yaml, else ''."""
+    doors = sorted((data.get("doors") or {}).keys())
+    if door.strip() and door.strip() not in doors:
+        return f"unknown door {door.strip()!r}. doors: {', '.join(doors)}"
+    jobs = sorted(job_index(data)["by_id"])
+    if job.strip() and job.strip() not in jobs:
+        return f"unknown job {job.strip()!r} (use door.job). jobs: {', '.join(jobs)}"
+    return ""
 
 
 def smoke_phases(data: dict[str, Any], door: str = "", job: str = "") -> list[int]:

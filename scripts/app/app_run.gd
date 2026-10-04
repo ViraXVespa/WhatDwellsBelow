@@ -1,5 +1,7 @@
 extends Object
 
+const CliArgs := preload("res://scripts/debug/cli_args.gd")
+
 static var _dungeon_packed: PackedScene = null
 
 static func ensure_dungeon_packed(host: Node) -> PackedScene:
@@ -16,11 +18,16 @@ static func begin_run(host: Node) -> void:
 	host.run_seed = randi()
 	if host.run_seed == 0:
 		host.run_seed = 1
+	var fixed: int = CliArgs.int_arg("--wdb-seed", 0)
+	if fixed > 0:
+		host.run_seed = fixed
+		seed(fixed)
 	host.boss_dead = false
 	host.saw_stairs = false
 	host.boss_low = false
 	host.run_xp = 0.0
-	host.adrenaline = false
+	end_adrenaline(host)
+	host.kill_times.clear()
 	host.last_style = "str"
 	host.floors_since_named = 0
 	host.shrine_t = 0.0
@@ -49,7 +56,9 @@ static func go_dungeon(host: Node) -> void:
 		Engine.time_scale = 1.0
 	if host.music and host.music.has_method("play_dungeon") and str(host.music.get("kind")) != "dungeon":
 		host.music.play_dungeon()
+	App.AppFlow.LoadTiming.dmark("dungeon_music")
 	var packed: PackedScene = ensure_dungeon_packed(host)
+	App.AppFlow.LoadTiming.dmark("dungeon_packed")
 	if packed != null:
 		host.get_tree().call_deferred("change_scene_to_packed", packed)
 	else:
@@ -78,7 +87,7 @@ static func end_run(host: Node, cond: String, killer := "") -> void:
 	if host.recap and bool(host.recap.get("open")):
 		return
 	if not host.in_dungeon:
-		host.toast("Already on the surface.")
+		host.toast(App.tr("app_run.already_on_the_surface"))
 		return
 	if host.playtest and bool(host.playtest.get("live_running")):
 		host.finish_end(cond, killer)
@@ -110,13 +119,14 @@ static func on_kill(host: Node) -> void:
 	while host.kill_times.size() > 0 and host.clock - host.kill_times[0] > host.bal.adrenaline_window:
 		host.kill_times.remove_at(0)
 	if host.adrenaline:
-		host.adrenaline_xp += host.bal.adrenaline_xp_stack
+		host.adrenaline_xp = minf(host.adrenaline_xp + host.bal.adrenaline_xp_stack, host.bal.adrenaline_xp_max)
 	elif host.kill_times.size() >= int(host.bal.adrenaline_kills):
 		start_adrenaline(host)
 	var mult: float = host.adrenaline_xp if host.adrenaline else 1.0
 	host.run_xp += host.bal.xp_per_kill * mult
+	# Skill XP is scaled once, in Progress.add_run_xp.
 	if host.prog:
-		var half: float = host.bal.xp_per_kill * 0.5 * (mult if host.adrenaline else 1.0)
+		var half: float = host.bal.xp_per_kill * 0.5
 		if host.weapon == "staff":
 			host.prog.add_run_xp("staff", half)
 			host.prog.add_run_xp(host.last_style if host.last_style == "mag" else "str", half)
@@ -126,14 +136,14 @@ static func on_kill(host: Node) -> void:
 		else:
 			host.prog.add_run_xp("axe", half)
 			host.prog.add_run_xp("str", half)
-		host.prog.add_run_xp("hp", host.bal.xp_kill_hp * mult)
-		host.prog.add_run_xp("def", host.bal.xp_kill_def * mult)
+		host.prog.add_run_xp("hp", host.bal.xp_kill_hp)
+		host.prog.add_run_xp("def", host.bal.xp_kill_def)
 	if host.tel:
 		host.tel.note_kill()
 
 static func start_adrenaline(host: Node) -> void:
 	host.adrenaline = true
-	host.adrenaline_xp = 1.0 + host.bal.adrenaline_xp_stack
+	host.adrenaline_xp = minf(1.0 + host.bal.adrenaline_xp_stack, host.bal.adrenaline_xp_max)
 	if host.tel:
 		host.tel.note_adrenaline()
 	host.sfx("warcry")
@@ -160,11 +170,17 @@ static func spawn_floor_item(host: Node, it: Dictionary, pos := Vector3.INF) -> 
 	PickupS.drop_item(it, at)
 
 static func tick(host: Node, delta: float) -> void:
+	if host.toast_t > 0.0:
+		host.toast_t = maxf(0.0, host.toast_t - delta)
+	# App runs while the tree is paused (menus): play timers (shrine, food, adrenaline, telemetry) wait.
+	if not host.get_tree().paused:
+		tick_play(host, delta)
+	debug_sequence(host, delta)
+
+static func tick_play(host: Node, delta: float) -> void:
 	host.clock += delta
 	if host.shrine_t > 0.0:
 		host.shrine_t = maxf(0.0, host.shrine_t - delta)
-	if host.toast_t > 0.0:
-		host.toast_t = maxf(0.0, host.toast_t - delta)
 	if host.tel and host.in_dungeon:
 		var fighting := false
 		var p := host.get_tree().get_first_node_in_group("player")
@@ -184,7 +200,6 @@ static func tick(host: Node, delta: float) -> void:
 		host.prog.tick_food(delta)
 	if host.adrenaline and host.clock - host.last_kill > host.bal.adrenaline_timeout:
 		end_adrenaline(host)
-	debug_sequence(host, delta)
 
 static func debug_sequence(host: Node, delta: float) -> void:
 	var down := shoulders_down()

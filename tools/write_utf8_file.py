@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shim (one release): same as `python3 tools/doc_patch.py write FILE [--b64 S] [--bom] [--append]`.
+"""Shim (one release): same as `python tools/doc_patch.py write FILE [--b64 S] [--bom] [--append]`.
 
 Writes UTF-8 text from stdin or --b64 without shell expansion. Keeps the file's own
 line ending (CRLF for new files). Flags: --path (required), --b64, --bom, --append.
@@ -30,4 +30,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

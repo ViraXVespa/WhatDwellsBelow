@@ -1,6 +1,6 @@
 # Archives — browser UI
 
-Status: binding design + live snapshot  
+Status: current plan + live snapshot  
 Read when: split chevron, Documents reader, dim inactive columnstack
 
 
@@ -23,7 +23,7 @@ Two columns. Only one column is active.
 
 Documents: `archives/docs/<id>/` first, else `git show <sha>:<path>` locally, else GitHub raw on web. Truncate long files. Documents and reader stay a right-column mode stack; B steps read → docs → info → list.
 
-List MUST include every catalog row, including Classic 2D, Art experiment, Full 3D Pass, Grok Build Results (Week 1–3), Grok Web Results (Week 1–3), Grok Build Results (Week 4) once that pin exists, and any week pins added by the ritual above. Videos do not exist yet; the Video button stays disabled until they do.
+List MUST include every catalog row, including Classic 2D, Art experiment, Full 3D Pass, Grok Build Results (Week 1–3), Grok Web Results (Week 1–3), Grok Build Results (Week 4) once that pin exists, and any week pins added by the ritual above. Videos do not exist; the Video button stays disabled until they do.
 
 ## Live snapshot
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Shot-gap check: which UI states (menus, NPC panels, pages) have no shot flow, and are flows/published shots healthy.
 
-  python3 tools/check_shot_gaps.py [--changed [REF]] [--advisory] [--strict] [--json]
+  python tools/check_shot_gaps.py [--changed [REF]] [--advisory] [--strict] [--json]
 
 States come from tools/shot-flows/states.json (regexes over the UI/interact sources; add a source for a new
 menu). A flow covers a state when it lists it in `covers`, or derives it (an `interact` op for kind K covers
@@ -116,7 +116,7 @@ def main(argv: list[str] | None = None) -> int:
                    help="print everything but never FAIL (Build gate); the Bot gate runs without it")
     p.add_argument("--strict", action="store_true", help="FAIL on any uncovered state, not just new ones")
     args = p.parse_args(argv)
-    root = Path(args.root).resolve() if args.root else agent_log.repo_root(_TOOLS.parent)
+    root = agent_log.resolve_root(args)
     cfg = json.loads((root / CFG).read_text(encoding="utf-8"))
     ignore = cfg.get("ignore", {})
     states = find_states(root, cfg)
@@ -146,17 +146,15 @@ def main(argv: list[str] | None = None) -> int:
         if args.advisory:
             lines.append("advisory: new gaps / problems above do not fail this gate (Build); Bot gate requires them fixed")
     out_dir = agent_log.ensure_agent_log_dir("shot-gaps", root)
-    summary = out_dir / "summary.txt"
-    res = agent_log.result_line(status, rel(root, summary), states=len(states), gaps=len(gaps), new_gaps=len(new_gaps),
-                                problems=len(problems), flows=len(flows))
-    summary.write_text("\n".join(lines + [res]) + "\n", encoding="utf-8")
+    res = agent_log.write_run_file(root, out_dir, "shot-gaps", "\n".join(lines), status, states=len(states), gaps=len(gaps),
+                                   new_gaps=len(new_gaps), problems=len(problems), flows=len(flows))
     if args.json:
-        print(json.dumps({"status": status, "states": states, "gaps": gaps, "new": new, "problems": problems,
-                          "covered": covered}))
+        agent_log.print_json({"status": status, "states": states, "gaps": gaps, "new": new, "problems": problems,
+                              "covered": covered})
     else:
         print("\n".join(lines + [res]))
     return agent_log.exit_code(status)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

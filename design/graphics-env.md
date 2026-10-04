@@ -1,6 +1,6 @@
 # Graphics env
 
-Status: binding design + live snapshot
+Status: current plan + live snapshot
 Read when: hearth-warm hole-cold Environment, abyss-plinth, caller redirect
 
 `scripts/graphics/env_kit.gd` owns WorldEnvironment plus DirectionalLight3D. Callers: `camp_build.world`, `dungeon_geo.world`, `foundation.gd`.

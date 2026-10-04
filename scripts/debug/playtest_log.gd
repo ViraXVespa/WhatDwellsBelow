@@ -5,6 +5,7 @@ extends Object
 
 const PlaytestLogUtil := preload("res://scripts/debug/playtest_log/log_util.gd")
 const Core := preload("res://scripts/debug/playtest_log/log_core.gd")
+const CliArgs := preload("res://scripts/debug/cli_args.gd")
 
 # Facade aliases — callers still use PlaytestLog.started / .file_name / etc.
 static var events: Array:
@@ -36,10 +37,21 @@ static var end_fail: String:
 static func _dir() -> String:
 	return Core._dir()
 
+static func off() -> bool:
+	# No journal on web (IndexedDB writes + event building cost frames) or with --wdb-pt-nolog; telemetry and the web hook still report.
+	return OS.has_feature("web") or CliArgs.has("--wdb-pt-nolog")
+
 static func begin(pt: Node) -> void:
+	if off():
+		Core.events = []
+		Core.started = true
+		Core.ended = false
+		return
 	Core.begin(pt)
 
 static func wait(pt: Node, reason: String) -> void:
+	if off():
+		return
 	if Core.events.size() > 0:
 		var last: Variant = Core.events[Core.events.size() - 1]
 		if last is Dictionary and str(last.get("ev", "")) == "wait" and str(last.get("reason", "")) == reason:
@@ -53,6 +65,8 @@ static func wait(pt: Node, reason: String) -> void:
 	})
 
 static func goal(pt: Node, p: Node, name: String, extra: Dictionary = {}) -> void:
+	if off():
+		return
 	if name == Core.last_goal and extra.is_empty():
 		return
 	Core.last_goal = name
@@ -68,6 +82,8 @@ static func goal(pt: Node, p: Node, name: String, extra: Dictionary = {}) -> voi
 	Core.events.append(ev)
 
 static func act(pt: Node, p: Node) -> void:
+	if off():
+		return
 	if not pt.dash and not pt.special and not pt.potion and not pt.interact:
 		return
 	var ev: Dictionary = {
@@ -87,6 +103,8 @@ static func act(pt: Node, p: Node) -> void:
 	Core.events.append(ev)
 
 static func beat(pt: Node, p: Node) -> void:
+	if off():
+		return
 	Core.beat(pt, p)
 
 static func _check_combat(pt: Node) -> void:
@@ -128,9 +146,13 @@ static func _scan_dists(near: Array) -> Dictionary:
 	return {"gather_d": gather_d, "gather_k": gather_k, "clerk_d": clerk_d}
 
 static func decide(pt: Node, p: Node, name: String, why: String, extra: Dictionary = {}) -> void:
+	if off():
+		return
 	Core.decide(pt, p, name, why, extra)
 
 static func step(pt: Node, p: Node) -> void:
+	if off():
+		return
 	Core.step(pt, p)
 
 static func finish(pt: Node, cond: String, fail: String = "") -> void:
@@ -139,6 +161,9 @@ static func finish(pt: Node, cond: String, fail: String = "") -> void:
 	Core.ended = true
 	Core.end_cond = cond
 	Core.end_fail = fail if fail != "" else cond
+	if off():
+		Core.started = false
+		return
 	var pl: Node = null
 	if pt.get_tree():
 		pl = pt.get_tree().get_first_node_in_group("player")
@@ -157,6 +182,8 @@ static func finish(pt: Node, cond: String, fail: String = "") -> void:
 	Core.started = false
 
 static func _flush(pt: Node) -> void:
+	if off():
+		return
 	if Core.file_name == "":
 		Core.file_name = PlaytestLogUtil._stamp(pt)
 	PlaytestLogUtil._flush(Core.file_name, Core.events, Core.end_cond, Core.end_fail)

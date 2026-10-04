@@ -68,4 +68,5 @@ static func _emit_mark(id: String) -> void:
 	var elapsed: int = now - t0
 	var dt: int = now - last
 	last = now
-	printerr("LOAD: mark=%s t=%d dt=%d" % [id, elapsed, dt])
+	var vram: int = int(Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1048576)
+	printerr("LOAD: mark=%s t=%d dt=%d vram=%d" % [id, elapsed, dt, vram])

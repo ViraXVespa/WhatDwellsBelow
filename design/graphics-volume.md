@@ -1,6 +1,6 @@
 # Graphics volume
 
-Status: binding design + live snapshot
+Status: current plan + live snapshot
 Read when: exposed coplanar brick runs, BoxMesh retirement, BoxShape on welded mass, provided ribbon
 
 Dungeon wall visuals stop being one 1 m cell slab per cell (WallRects.faces / per-cell quads). BoxMesh retirement means that slab skin, not a Godot BoxMesh type hunt. Skin gen's provided hall runs as one thin ribbon per run (any heading, same brick sheet). Live already has a delta-span path and a faces fallback. When published runs exist for a chunk, do not keep the 1 m faces skin in that chunk. Live from_faces skips ortho faces, tops, ends, and void fill if any ribbon is present. A walkable hall with no ribbon or cap on a published run is a volume miss. Do not invent rims. Do not extract a new silhouette from the walk mask. Do not bake outline. Gen solid is the one bake; paint it bounded by the provided runs. Ortho faces from the solid are a fallback only when published runs are empty.

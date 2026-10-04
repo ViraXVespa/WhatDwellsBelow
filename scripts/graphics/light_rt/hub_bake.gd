@@ -4,23 +4,56 @@ extends Object
 
 const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 const HubShadow := preload("res://scripts/graphics/light_rt/hub_shadow.gd")
+const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
+const HUB_FIELD := Color(0.98, 0.96, 0.93, 1.0)
+## Bake stamp: first 16 hex of the SHA-256 of hub_light.png's RGBA8 pixels. The hub loads only a baked image with this
+## stamp and the Layout's size; anything else is a hard error (no runtime fallback). Change the hub light code or
+## Layout boxes -> rebake with tools/run_bake_camp.py, review the shots, paste its `stamp=` here
+## (tools/check_hub_bake.py checks the committed png against it).
+const HUB_BAKE_STAMP := "2db52d08a413a31c"
 
-static func _try_hub_baked() -> bool:
+## The PNG on disk when it exists (dev runs); otherwise the imported copy inside an export (web, packed desktop).
+static func _baked_image(path: String) -> Image:
+	var abs_path: String = ProjectSettings.globalize_path(path)
+	var src: Image = null
+	if FileAccess.file_exists(abs_path):
+		src = Image.new()
+		if src.load(abs_path) != OK:
+			return null
+	elif ResourceLoader.exists(path):
+		var tex: Texture2D = load(path) as Texture2D
+		src = tex.get_image() if tex != null else null
+	if src == null:
+		return null
+	if src.is_compressed():
+		src.decompress()
+	if src.get_format() != Image.FORMAT_RGBA8:
+		src.convert(Image.FORMAT_RGBA8)
+	return src
+
+static func _stamp_of(img: Image) -> String:
+	var ctx := HashingContext.new()
+	ctx.start(HashingContext.HASH_SHA256)
+	ctx.update(img.get_data())
+	return ctx.finish().hex_encode().substr(0, 16)
+
+static func _fatal(msg: String) -> void:
+	var full: String = "FATAL hub light: %s Rebake with tools/run_bake_camp.py, review, then set HUB_BAKE_STAMP (design/hub-bake.md)." % msg
+	push_error(full)
+	OS.crash(full)
+
+## The baked hub image, checked for file, size and stamp. Any miss is fatal: the game never renders the hub light itself.
+static func _load_baked(iw: int, ih: int) -> Image:
 	var rt: Variant = load(RT_PATH)
-	var abs_path: String = ProjectSettings.globalize_path(rt.HUB_LIGHT_PATH)
-	if not FileAccess.file_exists(abs_path):
-		return false
-	var img := Image.new()
-	if img.load(abs_path) != OK:
-		return false
-	if img.get_width() < 16 or img.get_height() < 16:
-		return false
-	rt._img = img
-	rt._gpu = ImageTexture.create_from_image(img)
-	rt.tex = rt._gpu
-	rt._push()
-	return true
+	var img: Image = _baked_image(rt.HUB_LIGHT_PATH)
+	if img == null:
+		_fatal("%s is missing or unreadable." % rt.HUB_LIGHT_PATH)
+	elif img.get_width() != iw or img.get_height() != ih:
+		_fatal("%s is %dx%d, the Layout needs %dx%d (stale bake)." % [rt.HUB_LIGHT_PATH, img.get_width(), img.get_height(), iw, ih])
+	elif _stamp_of(img) != HUB_BAKE_STAMP:
+		_fatal("%s stamp %s does not match HUB_BAKE_STAMP %s (stale bake)." % [rt.HUB_LIGHT_PATH, _stamp_of(img), HUB_BAKE_STAMP])
+	return img
 
 static func _hub_make_rt(x0: int, z0: int, tw: int, th: int) -> void:
 	var rt: Variant = load(RT_PATH)
@@ -28,7 +61,7 @@ static func _hub_make_rt(x0: int, z0: int, tw: int, th: int) -> void:
 	var iw: int = tw * n
 	var ih: int = th * n
 	var img: Image = Image.create(iw, ih, false, Image.FORMAT_RGBA8)
-	img.fill(Color(0.98, 0.96, 0.93, 1.0))
+	img.fill(HUB_FIELD)
 	rt.origin = Vector2(float(x0), float(z0))
 	rt.span = Vector2(float(tw), float(th))
 	rt._img = img
@@ -47,22 +80,20 @@ static func rebuild_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	rt.origin = Vector2(float(x0), float(z0))
 	rt.span = Vector2(float(tw), float(th))
 	_hub_make_rt(x0, z0, tw, th)
-	_hub_finish_yard(x0, z0, layout)
+## The bake: a fresh field image through _hub_render, nothing else on top, saved as the png.
 static func save_hub_bake() -> void:
 	var rt: Variant = load(RT_PATH)
 	if rt._img == null:
 		push_error("bake_camp: rt._img null")
 		return
-	var x0: int = int(rt.origin.x)
-	var z0: int = int(rt.origin.y)
-	HubShadow._hub_fill_black(rt._img)
-	_hub_paint_day(rt._img, x0, z0, rt._hub_layout)
-	var nwrite: int = HubShadow._hub_lock_shadows(rt._img, rt.origin, rt._hub_layout)
-	HubShadow._blur_hub(rt._img)
+	var img: Image = Image.create(rt._img.get_width(), rt._img.get_height(), false, Image.FORMAT_RGBA8)
+	img.fill(HUB_FIELD)
+	var nwrite: int = _hub_render(img, int(rt.origin.x), int(rt.origin.y), rt._hub_layout)
 	var abs_path: String = ProjectSettings.globalize_path(rt.HUB_LIGHT_PATH)
 	DirAccess.make_dir_recursive_absolute(abs_path.get_base_dir())
-	rt._img.save_png(abs_path)
-	printerr("bake_camp: shadow_px=%d %dx%d" % [nwrite, rt._img.get_width(), rt._img.get_height()])
+	img.save_png(abs_path)
+	printerr("bake_camp: shadow_px=%d %dx%d" % [nwrite, img.get_width(), img.get_height()])
+	printerr("bake_camp: stamp=%s" % _stamp_of(img))
 static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2, layout: Node = null) -> void:
 	var rt: Variant = load(RT_PATH)
 	rt._props.clear()
@@ -78,10 +109,12 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	var th: int = maxi(1, z1 - z0)
 	rt.origin = Vector2(float(x0), float(z0))
 	rt.span = Vector2(float(tw), float(th))
-	if _try_hub_baked():
-		return
-	_hub_make_rt(x0, z0, tw, th)
-	_hub_finish_yard(x0, z0, layout)
+	var img: Image = _load_baked(tw * rt.HUB_SUB, th * rt.HUB_SUB)
+	rt._img = img
+	rt._gpu = ImageTexture.create_from_image(img)
+	rt.tex = rt._gpu
+	rt._push()
+	LoadTiming.note("hub_light", "baked")
 static func _hub_paint_day(img: Image, x0: int, z0: int, _layout: Node) -> void:
 	var rt: Variant = load(RT_PATH)
 	if img == null:
@@ -98,6 +131,9 @@ static func _hub_paint_day(img: Image, x0: int, z0: int, _layout: Node) -> void:
 	var h: int = img.get_height()
 	var warm := Color(1.0, 0.82, 0.55)
 	var y: int = 0
+	if ax < 0.0 and _is_flat(img):
+		_paint_flat(img, x0, z0, sub, mid, ax, az, warm)
+		y = h
 	while y < h:
 		var x: int = 0
 		while x < w:
@@ -117,10 +153,14 @@ static func _hub_paint_day(img: Image, x0: int, z0: int, _layout: Node) -> void:
 	if rt.hub_crystal.length() < 0.2:
 		return
 	var cr: float = 4.2
-	var y2: int = 0
-	while y2 < h:
-		var x2: int = 0
-		while x2 < w:
+	# Only pixels within cr of the crystal change; skip the rest of the image.
+	var gx0: int = clampi(int(floor((rt.hub_crystal.x - cr - float(x0)) * sub)) - 2, 0, w)
+	var gx1: int = clampi(int(ceil((rt.hub_crystal.x + cr - float(x0)) * sub)) + 2, 0, w)
+	var y2: int = clampi(int(floor((rt.hub_crystal.y - cr - float(z0)) * sub)) - 2, 0, h)
+	var gy1: int = clampi(int(ceil((rt.hub_crystal.y + cr - float(z0)) * sub)) + 2, 0, h)
+	while y2 < gy1:
+		var x2: int = gx0
+		while x2 < gx1:
 			var wx2: float = float(x0) + (float(x2) + 0.5) / sub
 			var wz2: float = float(z0) + (float(y2) + 0.5) / sub
 			var dc: float = Vector2(wx2 - rt.hub_crystal.x, wz2 - rt.hub_crystal.y).length()
@@ -141,15 +181,57 @@ static func _hub_paint_day(img: Image, x0: int, z0: int, _layout: Node) -> void:
 				)
 			x2 += 1
 		y2 += 1
-static func _hub_finish_yard(x0: int, z0: int, layout: Node) -> void:
-	var rt: Variant = load(RT_PATH)
-	if rt._img == null:
-		return
-	HubShadow._hub_fill_black(rt._img)
-	_hub_paint_day(rt._img, x0, z0, layout)
-	HubCast._hub_cast_buildings(rt._img, x0, z0, layout)
-	HubShadow._blur_hub(rt._img)
-	if rt._gpu != null:
-		rt._gpu.set_image(rt._img)
-	rt.tex = rt._gpu
-	rt._push()
+static func _is_flat(img: Image) -> bool:
+	if img.get_format() != Image.FORMAT_RGBA8:
+		return false
+	var ref: Image = Image.create(img.get_width(), img.get_height(), false, Image.FORMAT_RGBA8)
+	ref.fill(img.get_pixel(0, 0))
+	return ref.get_data() == img.get_data()
+static func _mix(c: Color, warm: Color, k: float) -> Color:
+	return Color(c.r + (warm.r - c.r) * k, c.g + (warm.g - c.g) * k, c.b + (warm.b - c.b) * k, 1.0)
+static func _paint_flat(img: Image, x0: int, z0: int, sub: float, mid: Vector2, ax: float, az: float, warm: Color) -> void:
+	# One flat colour in, so a pixel depends only on u = clamp(0.55 - along / 36). u is 0 or 1 outside a band
+	# in each row (monotone in x): fill those spans natively, set pixels only in the band. Same maths per pixel.
+	var w: int = img.get_width()
+	var h: int = img.get_height()
+	var c: Color = img.get_pixel(0, 0)
+	var col0: Color = _mix(c, warm, 0.48 * 0.0)
+	var col1: Color = _mix(c, warm, 0.48 * 1.0)
+	var dr: float = warm.r - c.r
+	var dg: float = warm.g - c.g
+	var db: float = warm.b - c.b
+	var xs := PackedFloat64Array()
+	xs.resize(w)
+	for x in w:
+		xs[x] = (float(x0) + (float(x) + 0.5) / sub - mid.x) * ax
+	for y in h:
+		var rowz: float = (float(z0) + (float(y) + 0.5) / sub - mid.y) * az
+		var a: int = _first_u(xs, rowz, w, false)
+		var b: int = _first_u(xs, rowz, w, true)
+		if a > 0:
+			img.fill_rect(Rect2i(0, y, a, 1), col0)
+		if b < w:
+			img.fill_rect(Rect2i(b, y, w - b, 1), col1)
+		for x in range(a, b):
+			var k: float = 0.48 * clampf(0.55 - (xs[x] + rowz) / 36.0, 0.0, 1.0)
+			img.set_pixel(x, y, Color(c.r + dr * k, c.g + dg * k, c.b + db * k, 1.0))
+static func _first_u(xs: PackedFloat64Array, rowz: float, w: int, full: bool) -> int:
+	# First x with u > 0 (or u >= 1 when full). u never decreases with x here.
+	var lo: int = 0
+	var hi: int = w
+	while lo < hi:
+		var m: int = (lo + hi) >> 1
+		var u: float = clampf(0.55 - (xs[m] + rowz) / 36.0, 0.0, 1.0)
+		if (u >= 1.0) if full else (u > 0.0):
+			hi = m
+		else:
+			lo = m + 1
+	return lo
+## Day gradient, prop skirts, mesh shadows (each shadow takes the darker of what is there, so nothing darkens twice),
+## one blur, on a field-filled image. Only the bake (save_hub_bake) calls this.
+static func _hub_render(img: Image, x0: int, z0: int, layout: Node) -> int:
+	_hub_paint_day(img, x0, z0, layout)
+	var wrote: int = HubCast._hub_cast_buildings(img, x0, z0, layout, true)
+	wrote += HubShadow._hub_mesh_shadows(img, Vector2(float(x0), float(z0)), layout)
+	HubShadow._blur_hub(img)
+	return wrote

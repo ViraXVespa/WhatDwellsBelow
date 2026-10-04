@@ -1,0 +1,199 @@
+{
+  "name": "dungeon-f1-props",
+  "about": "Dungeon floor 1, seed 42: the puzzle room (chest, plate, cracked wall), a mine node beside the second crystal, pots, barrels, a shrine, a campfire, a wood grove room and an extract gate. Enemies are frozen where they spawn, the map stays closed, and each stop teleports the player then waits for the lights.",
+  "scene": "dungeon",
+  "seed": 42,
+  "floor": 1,
+  "zoom": 1.5,
+  "settle_ms": 0,
+  "fixed_fps": 60,
+  "covers": [],
+  "smoke": true,
+  "steps": [
+    {
+      "op": "freeze",
+      "group": "enemies"
+    },
+    {
+      "op": "assert",
+      "target": "App.floor_n",
+      "equals": 1
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            94.5,
+            0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "puzzle-room"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            89.5,
+            0,
+            44.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "mine-crystal"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            17.5,
+            0,
+            84.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "pots"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            125.5,
+            0,
+            63.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "barrels"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            61.5,
+            0,
+            268.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "shrine"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            314.5,
+            0,
+            189.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "campfire"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            169.0,
+            0,
+            128.0
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "wood-room"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            281.5,
+            0,
+            140.0
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "extract-gate"
+    }
+  ]
+}

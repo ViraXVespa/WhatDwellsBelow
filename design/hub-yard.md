@@ -1,6 +1,6 @@
 # Hub — yard chrome and live snapshot
 
-Status: binding design  
+Status: current plan  
 Read when: striking dummy, Label3D priorities, post-rail fence, hopeful ambience, warmup overlay
 
 

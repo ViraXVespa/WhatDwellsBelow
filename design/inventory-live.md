@@ -1,6 +1,6 @@
 ﻿# Inventory live snapshots
 
-Status: binding design  
+Status: current plan  
 Read when: catalog sets or required slots live snapshot  
 
 

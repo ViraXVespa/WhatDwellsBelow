@@ -1,6 +1,6 @@
 # Archives — Play and Pages
 
-Status: binding design  
+Status: current plan  
 Read when: worktree minimize, Godot child restore, slug copyhit
 
 
@@ -24,6 +24,6 @@ GitHub Actions (`.github/workflows/pages.yml`) always exports HEAD. That live ex
 
 Catalog pins are exported by `tools/export_archives.py` as best-effort. A pin that fails `git worktree add`, `project.godot` stamp, `--import`, or `--export-release Web` is logged (Godot stdout/stderr included) and skipped. It MUST NOT fail the live deploy. Each pin uses its own `XDG_CACHE_HOME` and a wiped worktree `.godot/`. Do not change `HOME` during archive export; export templates stay in the runner user dir.
 
-Archive wasm/pck is not stored on `main`. CI restores `.archive_export_cache/` with key `wdb-pages-archives-` plus `hashFiles('scripts/data/archive_catalog.json')`, and `restore-keys` of `wdb-pages-archives-`. A cache hit for `{id}/{commit}/index.html` is copied into `site/<pages_slug>/`. A miss exports that pin once, then stores it under `{id}/{commit}/`. A later catalog-hash key miss still restores the previous cache so unchanged pins are not rebuilt. Local preview: `python3 tools/export_web.py -Archives` → `_pages/`, same helper and gitignored `.archive_export_cache/`.
+Archive wasm/pck is not stored on `main`. CI restores `.archive_export_cache/` with key `wdb-pages-archives-` plus `hashFiles('scripts/data/archive_catalog.json')`, and `restore-keys` of `wdb-pages-archives-`. A cache hit for `{id}/{commit}/index.html` is copied into `site/<pages_slug>/`. A miss exports that pin once, then stores it under `{id}/{commit}/`. A later catalog-hash key miss still restores the previous cache so unchanged pins are not rebuilt. Local preview: `python tools/export_web.py -Archives` → `_pages/`, same helper and gitignored `.archive_export_cache/`.
 
 Repo setting: Pages source = GitHub Actions.

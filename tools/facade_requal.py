@@ -149,8 +149,8 @@ def main() -> int:
     p = agent_log.std_parser(__doc__, writes=True)
     p.formatter_class = argparse.RawDescriptionHelpFormatter
     p.add_argument("file")
-    p.add_argument("--sym", action="append", default=[], metavar="NAME=Mod")
-    p.add_argument("--check", action="store_true")
+    p.add_argument("--sym", action="append", default=[], metavar="NAME=Mod", help="NAME=Module: qualify NAME as Module.NAME (repeatable).")
+    p.add_argument("--check", action="store_true", help="Report unqualified moved names and exit 1 if any; edit nothing.")
     p.add_argument("--all", action="store_true", help="also rewrite comment/string matches")
     ns = p.parse_args()
     path = Path(ns.file)
@@ -196,4 +196,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

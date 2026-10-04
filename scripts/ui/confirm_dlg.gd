@@ -26,7 +26,8 @@ static func close(parent: Node) -> void:
 		if is_instance_valid(focus_to) and not focus_to.is_queued_for_deletion():
 			focus_to.call_deferred("grab_focus")
 
-static func open(parent: Node, title: String, body: String, on_yes: Callable) -> void:
+## on_no runs when the player cancels (Cancel button, Back or pause key); closing by code does not call it.
+static func open(parent: Node, title: String, body: String, on_yes: Callable, on_no := Callable()) -> void:
 	var prev: Control = parent.get_viewport().gui_get_focus_owner() if parent.get_viewport() else null
 	var prev_footer: Array = []
 	if parent is CanvasLayer:
@@ -58,7 +59,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable) ->
 	msg.size = Vector2(736, 120)
 	msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(msg)
-	var yes: Button = ThemeS.btn("Confirm", func() -> void:
+	var yes: Button = ThemeS.btn(App.tr("confirm_dlg.confirm"), func() -> void:
 		close(parent)
 		if on_yes.is_valid():
 			on_yes.call()
@@ -66,7 +67,11 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable) ->
 	yes.position = Vector2(592, 520)
 	yes.size = Vector2(340, 52)
 	root.add_child(yes)
-	var no: Button = ThemeS.btn("Cancel", func() -> void: close(parent))
+	var no: Button = ThemeS.btn(App.tr("confirm_dlg.cancel"), func() -> void:
+		close(parent)
+		if on_no.is_valid():
+			on_no.call()
+	)
 	no.position = Vector2(980, 520)
 	no.size = Vector2(340, 52)
 	no.shortcut = _cancel_shortcut()
@@ -87,6 +92,8 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable) ->
 	root.gui_input.connect(func(event: InputEvent) -> void:
 		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 			close(parent)
+			if on_no.is_valid():
+				on_no.call()
 			root.accept_event()
 	)
 	App.sfx("ui")

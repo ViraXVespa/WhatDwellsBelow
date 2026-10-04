@@ -5,6 +5,7 @@ import hmac
 import json
 import os
 import subprocess
+import sys
 import threading
 import time
 import uuid
@@ -84,7 +85,7 @@ def run_job(job_id: str, code: str) -> None:
         kwargs["creationflags"] = CREATE_NO_WINDOW
 
     try:
-        proc = subprocess.Popen(["python", "-u", r"tools\_scratch.py"], **kwargs)
+        proc = subprocess.Popen([sys.executable, "-u", str(Path("tools") / "_scratch.py")], **kwargs)
     except Exception as exc:
         with JOBS_LOCK:
             job["done"] = True
@@ -226,8 +227,8 @@ class Handler(BaseHTTPRequestHandler):
 def main(argv: list[str] | None = None) -> int:
     global HOST, PORT
     ap = agent_log.std_parser("Token-protected local HTTP runner for web scratch files (needs WDB_SCRATCH_TOKEN; WDB_ROOT is the --root default).")
-    ap.add_argument("--host", default=HOST)
-    ap.add_argument("--port", type=int, default=PORT)
+    ap.add_argument("--host", default=HOST, help="Bind address.")
+    ap.add_argument("--port", type=int, default=PORT, help="Port.")
     args = ap.parse_args(argv)
     HOST, PORT = args.host, args.port
     hint = args.root or os.environ.get("WDB_ROOT") or None
@@ -240,4 +241,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

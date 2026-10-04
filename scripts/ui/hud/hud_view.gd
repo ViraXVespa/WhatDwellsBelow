@@ -37,8 +37,8 @@ static func build(host: CanvasLayer) -> void:
 	host.pot_lab = lab(host.strip, Vector2(136, 44), Vector2(160, 22), 14)
 	host.dash_fill = meter(host.strip, Vector2(280, 48), Vector2(112, 16), Color(0.3, 0.7, 0.85))
 	host.spec_fill = meter(host.strip, Vector2(400, 48), Vector2(112, 16), Color(0.9, 0.55, 0.2))
-	lab(host.strip, Vector2(280, 64), Vector2(112, 18), 13).text = "Dash"
-	lab(host.strip, Vector2(400, 64), Vector2(112, 18), 13).text = "Special"
+	lab(host.strip, Vector2(280, 64), Vector2(112, 18), 13).text = App.tr("hud_view.dash")
+	lab(host.strip, Vector2(400, 64), Vector2(112, 18), 13).text = App.tr("hud_view.special")
 	host.lvl = lab(host.strip, Vector2(112, 86), Vector2(280, 28), 22)
 	host.floor_lab = lab(host.strip, Vector2(400, 86), Vector2(120, 28), 28)
 	host.res = lab(host.strip, Vector2(112, 114), Vector2(410, 24), 18)

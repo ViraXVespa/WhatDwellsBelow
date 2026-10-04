@@ -17,6 +17,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+from imglib import geom
 
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 FRAME_COUNT = 6
@@ -67,19 +68,19 @@ def flip_set(src_prefix: str, dest_prefix: str, folder: Path) -> None:
     for i in range(FRAME_COUNT):
         src = folder / f"{src_prefix}_{i}.png"
         dest = folder / f"{dest_prefix}_{i}.png"
-        Image.open(src).transpose(Image.FLIP_LEFT_RIGHT).save(dest)
+        geom.flip(Image.open(src)).save(dest)
         print("flip", dest)
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Extract evenly spaced walk frames from an I2V clip (Section 19).")
-    ap.add_argument("video", type=Path)
-    ap.add_argument("dest_dir", type=Path)
-    ap.add_argument("prefix")
+    ap.add_argument("video", type=Path, help="Input video file.")
+    ap.add_argument("dest_dir", type=Path, help="Directory the harvested frames go in.")
+    ap.add_argument("prefix", help="Frame file name prefix.")
     args = ap.parse_args(argv)
     out = harvest(args.video, args.dest_dir, args.prefix)
     return agent_log.emit_result("PASS" if out else "FAIL", frames=len(out))
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

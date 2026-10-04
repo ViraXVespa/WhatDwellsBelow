@@ -1,6 +1,6 @@
 # Bible lock, plate remap, overlays, quality bar
 
-Status: binding design
+Status: current plan
 Read when: locking a Character Bible, plate remap, overlays, or the quality bar
 
 art is already open when this sibling is loaded. Do not reopen art_pipeline from this file.
@@ -36,7 +36,7 @@ Body clips stay unarmed. Weapons and gathering tools are **overlay layers**.
 - Engine draw order is body, then tool/weapon (weapon behind the body only when a facing requires it for a back grip; document that facing if used).
 - Other handedness is a runtime flip of the authored body (character-left-hand high) plus Left/Right remap. Flip the overlay with that body. Do not author a second grip sheet.
 
-Do not bake a held axe, staff, bow, pick, or hatchet into a body frame. The Dispel knife is the only baked prop, and only on the Dispel clip.
+Do not bake a held axe, staff, bow, pick, or hatchet into a body frame. The Dispel knife is the only baked prop, and only on the Dispel clip. Bible and reference stills that show a held weapon or prop draw it at rest (carried, never aimed, drawn or swung) so it can be animated later; the swing or draw comes from the animation.
 
 ## 19.3 Review gate (mandatory)
 

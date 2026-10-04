@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Export the GitHub Pages build (Godot Web, no threads). Windows/Steam Godot or $GODOT_BIN.
 
-    python3 tools/export_web.py [--archives] [--godot PATH]
+    python tools/export_web.py [--archives] [--out DIR] [--godot PATH]
 Live-only writes docs/. --archives writes a combined site to _pages/ (gitignored); archive pins are
 best-effort, cached under .archive_export_cache/. Logs: _logs/export-web/. Old spelling: -Archives.
 """
@@ -26,14 +26,14 @@ def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Export the Web build to docs/ (or _pages/ with --archives).", json_out=True)
     ap.add_argument("--archives", "-Archives", action="store_true", help="Also export catalog archives into _pages/.")
     ap.add_argument("--godot", default="", help="Godot executable (default: GODOT_BIN / Steam / bot pin).")
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=900)
+    ap.add_argument("--out", default="", help="Export here instead of docs/ (scratch dir for web_perf; not committed).")
+    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=900, help="Godot export timeout in seconds (default 900).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     exe = godot_lib.godot_exe(args.godot)
-    out_dir = root / ("_pages" if args.archives else "docs")
+    out_dir = Path(args.out).resolve() if args.out else root / ("_pages" if args.archives else "docs")
     out_html = out_dir / "index.html"
     out_dir.mkdir(parents=True, exist_ok=True)
-    logs = agent_log.ensure_agent_log_dir("export-web", root)
     body, fail = [f"root=. out={agent_log.rel(root, out_dir)} archives={args.archives}"], ""
 
     def step(name: str, code: int) -> bool:
@@ -42,7 +42,7 @@ def main(argv: list[str] | None = None) -> int:
 
     def godot(name: str, *ga: str) -> bool:
         print(name)
-        r = godot_lib.run_godot(root, root, list(ga), logs / f"{name}.out.log", logs / f"{name}.err.log", args.timeout_sec,
+        r = godot_lib.run_godot(root, root, list(ga), agent_log.run_path("export-web", root, f"{name}.out.log"), agent_log.run_path("export-web", root, f"{name}.err.log"), args.timeout_sec,
                                 exe=str(exe))
         body.append(f"{name} status={r['status']} ms={r['ms']}")
         return not r["timed_out"] and r["exit_code"] == 0
@@ -72,4 +72,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

@@ -1,6 +1,8 @@
 extends Object
 
 const Fmt := preload("res://scripts/ui/gear_board/text_fmt.gd")
+const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
+const ItemNames := preload("res://scripts/data/item_names.gd")
 
 static var seen_uids: Dictionary = {}
 
@@ -30,7 +32,8 @@ static func slot_item(slot: String) -> Dictionary:
 			"slot": "tool",
 			"kind": "tool",
 			"tool": t,
-			"name": t.capitalize(),
+			"name": ItemNames.type_name("tool", t),
+			"nk": ItemNames.base_nk("tool", t),
 			"rarity": "white",
 			"kit_src": "starter",
 		}
@@ -39,11 +42,11 @@ static func slot_item(slot: String) -> Dictionary:
 static func _weapon_label(w: String) -> String:
 	match w:
 		"staff":
-			return "Lightning Staff"
+			return App.tr("common.lightning_staff")
 		"longbow":
-			return "Longbow"
+			return App.tr("skill.bow")
 		_:
-			return "Great Axe"
+			return App.tr("common.great_axe")
 
 static func options_for(slot: String) -> Array:
 	var out: Array = []
@@ -72,7 +75,7 @@ static func options_for(slot: String) -> Array:
 				out.append({"it": raw, "src": "bag", "uid": uid})
 		return out
 	if slot == "weapon":
-		for w: String in ["great_axe", "staff", "longbow"]:
+		for w: String in Kit.BUILTIN_WEAPONS:
 			var tmpl := "weapon:" + w
 			if seen_tmpl.has(tmpl):
 				continue

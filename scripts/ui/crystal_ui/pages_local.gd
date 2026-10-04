@@ -35,26 +35,26 @@ static func page_local(host) -> void:
 	box.add_theme_constant_override("separation", 8)
 	host.add_child(box)
 	Net.net_tabs(host, box)
-	box.add_child(ThemeS.lab("Local Transport Network", 28, Color(0.95, 0.82, 0.5)))
-	box.add_child(ThemeS.lab("Bound crystals on this floor.", 18, Color(0.78, 0.74, 0.66)))
+	box.add_child(ThemeS.lab(App.tr("common.local_transport_network"), 28, Color(0.95, 0.82, 0.5)))
+	box.add_child(ThemeS.lab(App.tr("pages_local.bound_crystals_on_this_floor"), 18, Color(0.78, 0.74, 0.66)))
 	host.status = ThemeS.lab(Util.zoom_tip(host), 18, Color(0.7, 0.66, 0.58))
 	box.add_child(host.status)
 	var first: Button = null
 	for n: Node in CrystalNet.activated_on_floor(host.host):
 		var cell: Vector2i = Vector2i(n.get("crystal_cell"))
 		var here: bool = host.spot != null and Vector2i(host.spot.get("crystal_cell")) == cell
-		var title := "Entrance  ·  CL %d" % int(n.get("crystal_cl"))
+		var title := App.tr("pages_local.entrance_cl") % int(n.get("crystal_cl"))
 		if not bool(n.get("crystal_gate")):
-			title = "CL %d Crystal" % int(n.get("crystal_cl"))
+			title = App.tr("pages_local.cl_crystal") % int(n.get("crystal_cl"))
 		if here:
-			title += "  (here)"
+			title += "  " + App.tr("common.here")
 		var b := ThemeS.btn(title, func(): host._pick_local(cell), not here)
 		b.focus_entered.connect(func(): host._aim(cell))
 		box.add_child(b)
 		if first == null and not here:
 			first = b
 			host._aim(cell)
-	var back := ThemeS.btn("Back", func(): host._back())
+	var back := ThemeS.btn(App.tr("common.back"), func(): host._back())
 	box.add_child(back)
 	host.focus_btn = first if first else back
 	if first == null:

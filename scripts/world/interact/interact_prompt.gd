@@ -5,47 +5,48 @@
 static func refresh(host: Node3D) -> void:
 	if host.kind == "stairs":
 		host.locked = not App.boss_dead
-		host.prompt = "Locked. Defeat the guardian." if host.locked else "Descend"
+		host.prompt = App.tr("interact_prompt.locked_defeat_the_guardian") if host.locked else App.tr("interact_prompt.descend")
 	elif host.kind == "loadout_crystal":
 		host.locked = false
-		host.prompt = "Loadout / enter dungeon"
+		host.prompt = App.tr("interact_prompt.loadout_enter_dungeon")
 	elif host.kind == "anvil":
-		host.prompt = "Anvil"
+		host.prompt = App.tr("common.anvil")
 	elif host.kind == "quest_board":
-		host.prompt = "Guild tasks"
+		host.prompt = App.tr("interact_prompt.guild_tasks")
 	elif host.kind == "receptionist":
-		host.prompt = "Talk - guild work"
+		host.prompt = App.tr("interact_prompt.talk_guild_work")
 	elif host.kind == "vendor":
-		host.prompt = "Vendor stall"
+		host.prompt = App.tr("interact_prompt.vendor_stall")
 	elif host.kind == "dumpster":
-		host.prompt = "Read the dumpster"
+		host.prompt = App.tr("interact_prompt.read_the_dumpster")
 	elif host.kind == "billboard":
-		host.prompt = "Controls Billboard"
+		host.prompt = App.tr("common.controls_billboard")
 	elif host.kind == "quest_item":
-		host.prompt = "Take the guild cache"
+		host.prompt = App.tr("interact_prompt.take_the_guild_cache")
 	elif host.kind == "shrine":
-		host.prompt = "Already used." if host.used else "Pray  (+%d%% dmg)" % int(App.bal.shrine_dmg * 100.0)
+		host.prompt = App.tr("interact_prompt.already_used") if host.used else App.tr("interact_prompt.pray_dmg") % int(App.bal.shrine_dmg * 100.0)
 	elif host.kind == "campfire":
-		host.prompt = "The fire is spent." if host.used else "Sit  (heal)"
+		host.prompt = App.tr("interact_prompt.the_fire_is_spent") if host.used else App.tr("interact_prompt.sit_heal")
 	elif host.kind == "extract_gate":
-		host.prompt = "Spent. The portal is dark." if host.used else "Extraction Gate"
+		host.prompt = App.tr("interact_prompt.spent_the_portal_is_dark") if host.used else App.tr("common.extraction_gate")
 	elif host.kind == "shop":
-		host.prompt = "Ghost Shop"
+		host.prompt = App.tr("common.ghost_shop")
 	elif host.kind == "lever":
-		host.prompt = "Pull lever"
+		host.prompt = App.tr("interact_prompt.pull_lever")
 	elif host.kind == "plate":
-		host.prompt = "Step the plate"
+		host.prompt = App.tr("interact_prompt.step_the_plate")
 	elif host.kind == "gate":
 		host.prompt = ""
 	elif host.kind.ends_with("chest"):
 		if host.used:
-			host.prompt = "Empty."
+			host.prompt = App.tr("common.empty")
 		elif host.hidden:
 			host.prompt = ""
 		else:
-			host.prompt = "Open chest"
+			host.prompt = App.tr("interact_prompt.open_chest")
 	else:
-		host.prompt = "Interact"
+		host.prompt = App.tr("interact_prompt.interact")
+	host.prompt_locked = (host.kind == "stairs" and host.locked) or (host.used and (host.kind in ["shrine", "campfire", "extract_gate"] or host.kind.ends_with("chest")))
 	if host.label:
 		host.label.text = title(host)
 		if host.hidden:
@@ -55,43 +56,43 @@ static func refresh(host: Node3D) -> void:
 static func title(host: Node3D) -> String:
 	match host.kind:
 		"stairs":
-			return "STAIRS" if not host.locked else "LOCKED STAIRS"
+			return App.tr("interact_prompt.title_stairs") if not host.locked else App.tr("interact_prompt.locked_stairs")
 		"crystal":
-			return "FLOOR CRYSTAL"
+			return App.tr("common.floor_crystal")
 		"loadout_crystal":
-			return "FLOOR CRYSTAL"
+			return App.tr("common.floor_crystal")
 		"anvil":
-			return "ANVIL"
+			return App.tr("interact_prompt.title_anvil")
 		"quest_board":
-			return "NOTICE BOARD"
+			return App.tr("interact_prompt.notice_board")
 		"receptionist":
-			return "RECEPTION"
+			return App.tr("interact_prompt.title_reception")
 		"vendor":
-			return "VENDOR"
+			return App.tr("interact_prompt.title_vendor")
 		"dumpster":
-			return "DUMPSTER"
+			return App.tr("interact_prompt.title_dumpster")
 		"billboard":
-			return "CONTROLS"
+			return App.tr("interact_prompt.title_controls")
 		"quest_item":
-			return "QUEST CACHE"
+			return App.tr("interact_prompt.quest_cache")
 		"chest":
-			return "BOSS CHEST"
+			return App.tr("interact_prompt.boss_chest")
 		"base_chest":
-			return "CHEST"
+			return App.tr("interact_prompt.title_chest")
 		"puzzle_chest":
-			return "CACHE"
+			return App.tr("interact_prompt.title_cache")
 		"shrine":
-			return "SHRINE"
+			return App.tr("interact_prompt.title_shrine")
 		"campfire":
-			return "CAMPFIRE"
+			return App.tr("interact_prompt.title_campfire")
 		"extract_gate":
-			return "EXTRACTION GATE" if not host.used else "DEAD GATE"
+			return App.tr("interact_prompt.extraction_gate") if not host.used else App.tr("interact_prompt.dead_gate")
 		"shop":
-			return "GHOST SHOP"
+			return App.tr("interact_prompt.ghost_shop")
 		"lever":
-			return "LEVER"
+			return App.tr("interact_prompt.title_lever")
 		"plate":
-			return "PLATE"
+			return App.tr("interact_prompt.title_plate")
 		"gate":
-			return "GATE" if not host.open else "OPEN"
+			return App.tr("interact_prompt.title_gate") if not host.open else App.tr("interact_prompt.title_open")
 	return host.kind

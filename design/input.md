@@ -1,6 +1,6 @@
 ﻿# Input (door)
 
-Status: binding design  
+Status: current plan  
 Read when: device binds, aim
 
 | Job | Open |

@@ -11,9 +11,6 @@ static func rebuild(host: Node) -> void:
 	apply_col(host)
 	host.call_deferred("_focus_col")
 
-static func rebuild_list(host: Node) -> void:
-	SplitView.rebuild_list(host)
-
 static func rebuild_info(host: Node) -> void:
 	for c: Node in host.info_box.get_children():
 		c.queue_free()
@@ -28,28 +25,10 @@ static func rebuild_info(host: Node) -> void:
 	SplitView.wire_vert(host.info_btns)
 	path_text(host)
 
-static func paint_list(host: Node) -> void:
-	SplitView.paint_list(host)
-
-static func place_chevron(host: Node) -> void:
-	SplitView.place_chevron(host)
-
 static func apply_col(host: Node) -> void:
 	SplitView.apply_col(host)
 	hint(host)
 	path_text(host)
-
-static func set_col_focus(host: Node) -> void:
-	SplitView.set_col_focus(host)
-
-static func focus_col(host: Node) -> void:
-	SplitView.focus_col(host)
-
-static func first_enabled_info(host: Node) -> Button:
-	return SplitView.first_enabled_info(host)
-
-static func wire_vert(btns: Array) -> void:
-	SplitView.wire_vert(btns)
 
 static func add_info_btn(host: Node, b: Button) -> void:
 	host.info_box.add_child(b)
@@ -80,32 +59,32 @@ static func path_text(host: Node) -> void:
 	if host.has_method("split_path_text"):
 		host._path.text = str(host.split_path_text())
 		return
-	host._path.text = "Snapshots"
+	host._path.text = App.tr("ui_view.snapshots")
 
 static func info_panel(host: Node) -> void:
 	var e: Dictionary = host._cur()
 	if e.is_empty():
-		host.info_box.add_child(ThemeS.lab("No archives.", 22, Color(0.85, 0.7, 0.55)))
+		host.info_box.add_child(ThemeS.lab(App.tr("ui_view.no_archives"), 22, Color(0.85, 0.7, 0.55)))
 		return
 	host.info_box.add_child(ThemeS.lab(str(e.label), 28, Color(0.95, 0.86, 0.55)))
 	host.info_box.add_child(ThemeS.lab(str(e.desc), 20, Color(0.88, 0.82, 0.72)))
 	var docs: PackedStringArray = host._docs_of(e)
 	var has_video: bool = str(e.get("video", "")) != ""
-	add_info_btn(host, ThemeS.btn("Video", host._on_video, has_video))
-	add_info_btn(host, ThemeS.btn("Documents", host._on_docs, docs.size() > 0))
-	add_info_btn(host, ThemeS.btn("Play", host._on_play))
+	add_info_btn(host, ThemeS.btn(App.tr("ui_view.video"), host._on_video, has_video))
+	add_info_btn(host, ThemeS.btn(App.tr("ui_view.documents"), host._on_docs, docs.size() > 0))
+	add_info_btn(host, ThemeS.btn(App.tr("common.play"), host._on_play))
 
 static func docs_panel(host: Node) -> void:
 	var e: Dictionary = host._cur()
-	host.info_box.add_child(ThemeS.lab("%s — Documents" % str(e.label), 26, Color(0.95, 0.86, 0.55)))
+	host.info_box.add_child(ThemeS.lab(App.tr("ui_view.documents_2") % str(e.label), 26, Color(0.95, 0.86, 0.55)))
 	var docs: PackedStringArray = host._docs_of(e)
 	if docs.is_empty():
-		host.info_box.add_child(ThemeS.lab("No documents for this build.", 20, Color(0.8, 0.74, 0.64)))
+		host.info_box.add_child(ThemeS.lab(App.tr("common.no_documents_for_this_build"), 20, Color(0.8, 0.74, 0.64)))
 	var n: int = docs.size()
 	for i: int in n:
 		var ii: int = i
 		add_info_btn(host, ThemeS.btn(Docs.display_name(str(docs[i])), func() -> void: host._open_read(ii)))
-	add_info_btn(host, ThemeS.btn("Back to info", host._back))
+	add_info_btn(host, ThemeS.btn(App.tr("ui_view.back_to_info"), host._back))
 
 static func read_panel(host: Node) -> void:
 	var e: Dictionary = host._cur()
@@ -114,4 +93,4 @@ static func read_panel(host: Node) -> void:
 	var name: String = str(docs[doc_i]) if doc_i >= 0 and doc_i < docs.size() else ""
 	host.info_box.add_child(ThemeS.lab(Docs.display_name(name), 24, Color(0.95, 0.86, 0.55)))
 	host.info_box.add_child(ThemeS.lab(host._read_doc(str(e.get("id", "")), name), 16, Color(0.86, 0.82, 0.74)))
-	add_info_btn(host, ThemeS.btn("Back to documents", host._back))
+	add_info_btn(host, ThemeS.btn(App.tr("ui_view.back_to_documents"), host._back))

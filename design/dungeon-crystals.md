@@ -1,6 +1,6 @@
 # Dungeon — floor crystals
 
-Status: binding design  
+Status: current plan  
 Read when: transport decades, warp silence, spur length
 
 

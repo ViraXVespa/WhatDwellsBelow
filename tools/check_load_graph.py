@@ -17,7 +17,7 @@ built-in fetch-ban phrases; topic-body cycle graph.
 Increment 6: require job_read_when, job_parked, conflicts_with, boot_max,
 and fetch_ban in routes.yaml; parked jobs stay out of live Job tables.
 
-Increment 7: path files must contain the load-ban sentence; door Job-cell
+Increment 7: path files must contain their second-door sentence ("Second topic door: ..."); door Job-cell
 tokens must be a subset of that job's job_read_when tokens.
 """
 from __future__ import annotations
@@ -32,6 +32,7 @@ if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
 import agent_log  # noqa: E402
+import bot_gate_lib  # noqa: E402
 from load_routes import (  # noqa: E402
     CYCLE_ROLES,
     TOPIC_CYCLE_ROLES,
@@ -48,6 +49,7 @@ from load_routes import (  # noqa: E402
     job_read_when,
     load_routes,
     parked_job_files,
+    SMOKE_PHASES,
     resolve_route_ref,
     role_of,
     skill_files,
@@ -543,6 +545,42 @@ def increment6_schema_fails(routes: dict) -> list[str]:
     return fails
 
 
+def route_map_fails(root: Path, routes: dict) -> list[str]:
+    """routes.yaml smokes / shot_flows: keys must be doors or jobs, phases in SMOKE_PHASES, flows real files."""
+    fails: list[str] = []
+    known = set(routes.get("doors") or {}) | set(job_index(routes)["by_id"])
+    for name, allow in (("smokes", {"default"}), ("shot_flows", set())):
+        raw = routes.get(name) or {}
+        for key, val in raw.items() if isinstance(raw, dict) else []:
+            if key not in known | allow:
+                fails.append(f"{name} key is not a door or job: {key}")
+            for tok in [t for t in str(val).replace(" ", "").split(",") if t]:
+                if name == "smokes" and not (tok.isdigit() and int(tok) in SMOKE_PHASES):
+                    fails.append(f"smokes.{key} phase {tok!r} not in {SMOKE_PHASES[0]}-{SMOKE_PHASES[-1]}")
+                if name == "shot_flows" and not (root / "tools" / "shot-flows" / f"{tok}.json").is_file():
+                    fails.append(f"shot_flows.{key} flow has no tools/shot-flows/{tok}.json")
+    return fails
+
+
+def boot_budget_fails(root: Path, routes: dict) -> list[str]:
+    """Bot mode only: every boot_max path needs a budget in tools/bot_budgets.json; on-disk size must not exceed it."""
+    budgets = bot_gate_lib.boot_budgets(root)
+    if not budgets:
+        return []
+    fails: list[str] = []
+    boot_paths = sorted({p for paths in boot_max(routes).values() for p in paths})
+    for posix in boot_paths:
+        cap = budgets.get(posix)
+        if cap is None:
+            fails.append(f"missing budget for boot file {posix} in {bot_gate_lib.BUDGETS}")
+            continue
+        path = root / posix
+        size = path.stat().st_size if path.is_file() else 0
+        if size > cap:
+            fails.append(f"boot file over byte budget: {posix} is {size} bytes, budget {cap} ({bot_gate_lib.BUDGETS})")
+    return fails
+
+
 def boot_instruct_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     fails: list[str] = []
     listed = boot_max(routes)
@@ -659,9 +697,7 @@ def citation_budget_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     return fails
 
 
-LOAD_BAN_NEEDLE = (
-    "Second topic door: ask the User to name the owner first."
-)
+LOAD_BAN_NEEDLE = "Second topic door:"  # each path file states its own rule for a second door
 
 
 def job_table_rows(text: str) -> list[tuple[str, str]]:
@@ -718,6 +754,7 @@ def job_cell_token_fails(routes: dict, texts: dict[str, str]) -> list[str]:
 
 def main() -> int:
     ap = agent_log.std_parser("Check design-doc routing against design/routes.yaml.", json_out=True)
+    bot_gate_lib.add_flag(ap)
     args = ap.parse_args()
     root = agent_log.resolve_root(args)
     if not (root / "AGENTS.md").is_file() or not (root / "design").is_dir():
@@ -809,6 +846,7 @@ def main() -> int:
             fails.append(f"file has multiple route roles: {posix} -> {meaningful}")
 
     fails.extend(increment6_schema_fails(routes))
+    fails.extend(route_map_fails(root, routes))
     fails.extend(read_when_overlaps(routes))
     fails.extend(conflict_fails(routes))
 
@@ -931,6 +969,8 @@ def main() -> int:
     fails.extend(fetch_ban_fails(routes, texts))
     fails.extend(recipe_phrase_fails(routes, texts))
     fails.extend(boot_instruct_fails(routes, texts))
+    if bot_gate_lib.enabled(args):
+        fails.extend(boot_budget_fails(root, routes))
     fails.extend(citation_budget_fails(routes, texts))
     fails.extend(load_ban_fails(routes, texts))
     fails.extend(job_cell_token_fails(routes, texts))
@@ -944,6 +984,7 @@ def main() -> int:
     n = len(files)
     if fails:
         body = f"FAIL  {len(fails)} load-graph issue(s) across {n} files\n" + "\n".join(f"  - {line}" for line in fails)
+        body += "\nnext: fix the first issue (a doc named in it, or design/routes.yaml); rules in design/load-graph.md"
     else:
         body = f"PASS  {n} files, routes.yaml ok"
     return agent_log.finish(
@@ -953,4 +994,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

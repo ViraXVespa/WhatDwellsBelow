@@ -1,21 +1,21 @@
 ﻿# I2V unit, seed, and prompt
 
-Status: binding design  
+Status: current plan  
 Read when: preparing or retrying one player I2V clip  
 Code: `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/run_isolated_grok.py`
 
 
 Always work **one unit** at a time. A unit is exactly one **character type** + one **facing** + one **action**. After the seed and prompt exist, stop and wait for the User.
 
-Generate the clip with `tools/run_isolated_grok.py --kind i2v --seed <png> --prompt-file <txt>` (isolated_media). Do not call `image_to_video` in the game-repo session unless that file’s exception table matches. The child does not harvest or pack.
+Generate the clip with `tools/run_isolated_grok.py --kind i2v --seed <png> --prompt-file <txt>` (isolated_media); never `image_to_video` in the game-repo session unless that file’s exception table matches. The child does not harvest or pack.
 
 ## Prompts
 
-I2V prompts come from `tools/i2v_seeds.py` (`build_prompt()` + `MOTION[action]` + facing lock + identity lock). Identity is per gender and facing: `IDENTITY_LOCK["female_up"]` is used for the female Up cell and omits neckband language because that still has no visible band. Do not invent a second walk prompt in this file.
+I2V prompts come from `tools/i2v_seeds.py` (`build_prompt()` + `MOTION[action]` + facing lock + identity lock). Identity is per gender and facing: `IDENTITY_LOCK["female_up"]` is used for the female Up cell and omits neckband language because that still has no visible band.
 
 Do not seed I2V from a mid-action video extract, and do not name pack-slot indices in the prompt. Seed is the idle Bible cell (opaque plate). Packer cuts frames after the User accepts the clip.
 
-Identity lock is per player gender and facing. Male and female each have their own `IDENTITY_LOCK` in `tools/i2v_seeds.py`. Do not copy male outfit language onto the female character. Pass `--gender male` or `--gender female`, or infer it from `bible_locked_male.png` / `bible_locked_female.png`. Where the still shows it, copy a short green neckband worn only around the neck, same bulk as the still. A little more of that same band may show at the nape when hair moves. Do not grow extra length or hanging cloth. Female Up uses `IDENTITY_LOCK["female_up"]` and MUST NOT mention a neckband, wrap, scarf, collar, or green cloth.
+Male and female each have their own `IDENTITY_LOCK` in `tools/i2v_seeds.py`; do not copy male outfit language onto the female character. Pass `--gender male` or `--gender female`, or infer it from `bible_locked_male.png` / `bible_locked_female.png`. Where the still shows it, copy a short green neckband worn only around the neck, same bulk as the still. A little more of that same band may show at the nape when hair moves. Do not grow extra length or hanging cloth. Female Up uses `IDENTITY_LOCK["female_up"]` and MUST NOT mention a neckband, wrap, scarf, collar, or green cloth.
 
 Grok Build I2V uses that body as-is. The web-browser preamble (image-to-video / do not output a still / no fixed duration) is **only** added when `tools/i2v_seeds.py --test` is passed. Bundled `game-animation-frames` 6s/10s cinema notes do not override this file.
 
@@ -23,7 +23,7 @@ Grok Build I2V uses that body as-is. The web-browser preamble (image-to-video / 
 
 Walk uses the walk wrapper in `tools/i2v_seeds.py`: **hold** the idle still, walk in place, then settle and **hold** that still so the clip start is idle-to-walk and the clip end is walk-to-idle. Do not treat the whole clip as a looping gait. One-shot actions use the one-shot wrapper (start on the still, finish the motion, recover or hold; do not claim a walk loop). One-shot heads are **planted** (no treadmill, no marching). Attack / special / gather keep the live MOTION beat sheet, worded as an objectless mime: no new props at any point. Dispel is the knife exception.
 
-Parked: posed attack *stills* are not this file. Open art_pipeline.attack_keyframes and run `python3 tools/attack_keyframes.py --resume` only when the User resumes that pipeline. Do not substitute those still prompts for I2V `MOTION`.
+Parked: posed attack *stills* are not this file. Open art_pipeline.attack_keyframes and run `python tools/attack_keyframes.py --resume` only when the User resumes that pipeline. Do not substitute those still prompts for I2V `MOTION`.
 
 `--action gather` (Animation Browser name with no tool suffix) writes **both** gather sheets. Unknown actions MUST NOT fall back to `walk`.
 
@@ -49,7 +49,7 @@ Legal I2V `--action` values:
 
 Game facing is a locked view copied from the still (`FACING_LOCK` in `tools/i2v_seeds.py`), from the first frame. Down is marching in place toward the camera (both shoulders visible). Walk is in place as if on an invisible treadmill; do not draw a treadmill machine. Do not name a travel heading. Start/stop feet are “one foot” then “the other foot.”
 
-After the User accepts the clip, harvest and pack (art_pipeline.pack). Then stop again if the next unit is not already named.
+After the User accepts the clip, harvest and pack (art_pipeline.pack); stop again unless the next unit is named.
 
 ## Seed still
 
@@ -69,7 +69,7 @@ Priority:
 3. **Video-fill / last accepted clip, only if the User asks.**
    - Last resort for a single facing + action.
 
-Do **not** seed I2V from a keyed transparent PNG. Overlay stills that go to I2V keep an opaque `#FF00FF` plate.
+Do **not** seed I2V from a keyed transparent PNG; overlay stills that go to I2V keep an opaque `#FF00FF` plate.
 
 Switch to the full locked Bible only if the User saw the single-still I2V fail, or the clip needs more than one facing **and** the User approved that seed. Prompts MUST still name the primary facing.
 
@@ -81,7 +81,7 @@ That language means the locked Bible, not the reference JPG. Dispel is the excep
 
 Generate one full cardinal direction (Down + Left + Right + Up) completely before deriving diagonals, unless the User orders a different facing next. Horizontal flip is acceptable for opposite sides when the design is mostly symmetric; asymmetric details (neckband bulk, hair) MUST be corrected or regenerated.
 
-Suggested first proof (do not run ahead of review): one gender, facing Down, one walk I2V.
+Suggested first proof: one gender, facing Down, one walk I2V (do not run ahead of review).
 
 ## What the walk I2V is for
 
@@ -96,4 +96,4 @@ In-game **idle is not an I2V product**. Idle is the directional key still for th
 
 `idle_to_walk` and `walk_to_idle` MUST exist for every facing and both genders. They are first-class engine states. They are **not** separate I2V units unless the User rejects the walk clip and asks for a dedicated pass.
 
-If the walk I2V fails the start/stop plant, reject the clip and regenerate that unit. Do not invent a second method in this file.
+If the walk I2V fails the start/stop plant, reject the clip and regenerate that unit.

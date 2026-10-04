@@ -1,6 +1,6 @@
 # Placeholdia Hub Summary
 
-Status: binding design  
+Status: current plan  
 Read when: Placeholdia, camp benches
 Code: `scripts/world/camp.gd` (facade, `@tool` preview), `scripts/world/camp/layout.gd` (script-default pose / eave / UV; scene exports override), `scripts/world/camp/warm.gd` (Title → Play GPU frame), `scripts/world/camp_build.gd` (ground, guild, realize), `scripts/world/camp_build/mesh.gd` (roofs, tarp, awning), `scripts/world/camp_build/roof.gd`, `scripts/world/camp/camp_view.gd` (fence), `scripts/world/camera_rig.gd`, `scripts/world/interact.gd`, `scripts/world/interact/interact_fx.gd`, `scripts/combat/dummy.gd`, `scripts/app/app_flow.gd`, `scripts/ui/loader.gd`, `scenes/camp.tscn`  
 

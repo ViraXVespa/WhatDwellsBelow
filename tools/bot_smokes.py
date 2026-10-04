@@ -8,11 +8,13 @@ binary only when the pin is missing. Editor playtest is out of scope.
   python tools/bot_smokes.py --setup
   python tools/bot_smokes.py --phases 1,2,6
   python tools/bot_smokes.py --door hub | --job hub.guild   (phases from routes.yaml smokes)
+  python tools/bot_smokes.py --for scripts/world/player.gd   (which phases load a file; runs nothing)
 """
 from __future__ import annotations
 
 import argparse
 import os
+import re
 import stat
 import subprocess
 import sys
@@ -25,14 +27,15 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+from load_routes import SMOKE_PHASES
 from agent_log import repo_root  # noqa: F401  (bot_warnscan imports it from here)
 
 VERSION = "4.7.2"
-ZIP_NAME = "Godot_v4.7.2-stable_linux.x86_64.zip"
-BIN_NAME = "Godot_v4.7.2-stable_linux.x86_64"
+BIN_NAME = f"Godot_v{VERSION}-stable_linux.x86_64"
+ZIP_NAME = BIN_NAME + ".zip"
 ZIP_URL = (
     "https://github.com/godotengine/godot-builds/releases/download/"
-    "4.7.2-stable/" + ZIP_NAME
+    f"{VERSION}-stable/" + ZIP_NAME
 )
 STEAM_WIN = (
     "C:\\Program Files (x86)\\Steam\\steamapps\\common\\"
@@ -66,7 +69,7 @@ def setup(pin: Path) -> Path:
     if sys.platform != "linux":
         raise SystemExit(
             "FAIL setup: Linux pin missing. On Windows set GODOT_BIN "
-            "or install the Steam 4.7.2 tools build. This runner does not "
+            f"or install the Steam {VERSION} tools build. This runner does not "
             "download the Windows editor."
         )
     pin.parent.mkdir(parents=True, exist_ok=True)
@@ -121,21 +124,49 @@ def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool) ->
     return 1 if bad else 0
 
 
-def main() -> int:
+def phases_for(files: list[str]) -> tuple[list[str], list[int]]:
+    """(warnscan areas, smoke phases) that load these files: bot_warnscan_lib.changed_areas is the one source."""
+    from bot_warnscan_lib import changed_areas
+    areas = changed_areas(files)
+    return areas, sorted({int(a[1:]) for a in areas if re.fullmatch(r"p\d", a)})
+
+
+def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Bot headless phase smokes")
-    p.add_argument("--doctor", action="store_true")
-    p.add_argument("--setup", action="store_true")
-    p.add_argument("--phases", default="")
+    p.add_argument("--for", dest="for_files", nargs="+", default=[], metavar="FILE",
+                   help="Repo file(s): print the warnscan areas and smoke phases that load them, then exit (no Godot; same source as bot_warnscan --changed).")
+    p.add_argument("--doctor", action="store_true", help="Check the pinned Godot binary and print the setup state; run nothing.")
+    p.add_argument("--setup", action="store_true", help=f"Download the official {VERSION} Linux binary if the pin is missing, then exit.")
+    p.add_argument("--phases", default="", help="Smoke phases, comma list (example 1,2,6).")
     p.add_argument("--door", default="", help="Phases mapped to this routes.yaml door (instead of --phases).")
     p.add_argument("--job", default="", help="Phases mapped to this routes.yaml door.job (instead of --phases).")
     p.add_argument("--flows", nargs="?", const="mapped", default="", metavar="NAMES",
                    help="Also run shot flows headless (asserts, no pixels): NAMES comma list, or the --door/--job mapping when bare.")
     p.add_argument("--no-gaps", action="store_true",
                    help="skip check_shot_gaps --changed (Bot gate: a new UI state without a shot flow FAILS this run)")
-    p.add_argument("--timeout", type=int, default=120)
-    p.add_argument("--verbose", action="store_true")
-    ns = p.parse_args()
+    p.add_argument("--timeout", "--timeout-sec", "-TimeoutSec", dest="timeout", type=int, default=120, help="Seconds per smoke phase (default 120).")
+    p.add_argument("--verbose", action="store_true", help="Print each Godot command and longer failure output.")
+    ns = p.parse_args(argv)
     root = agent_log.resolve_root(ns)
+    if ns.for_files:
+        files = [f.replace("\\", "/") for f in ns.for_files]
+        gone = [f for f in files if not (root / f).exists()]
+        if gone:
+            agent_log.fail(f"{', '.join(gone)}: no such file (give repo-relative paths, example: --for scripts/world/player.gd)")
+        areas, phases = phases_for(files)
+        run = ",".join(map(str, phases)) or "1,2,6"
+        print(f"areas={','.join(areas) or 'none'}" + ("" if phases else " (no phase loads it; BOT.md baseline 1,2,6)"))
+        print(f"run: python tools/bot_smokes.py --phases {run}")
+        print(f"warn: python tools/bot_warnscan.py --areas {','.join(areas) or 'static'}   (or --changed)")
+        return agent_log.emit_result("INFO", phases=run, areas=",".join(areas))
+    for tok in [t for t in ns.phases.replace(" ", "").split(",") if t]:
+        if not tok.isdigit() or int(tok) not in (0, *SMOKE_PHASES):
+            agent_log.fail(f"bad phase {tok!r} in --phases. Valid phases are {SMOKE_PHASES[0]}-{SMOKE_PHASES[-1]} (comma list, example 1,2,6)")
+    if ns.door or ns.job:
+        from load_routes import check_route, load_routes
+        bad_route = check_route(load_routes(root), ns.door, ns.job)
+        if bad_route:
+            agent_log.fail(bad_route)
     if (ns.door or ns.job) and not ns.phases:
         from load_routes import load_routes, smoke_phases
         ns.phases = ",".join(map(str, smoke_phases(load_routes(root), door=ns.door.strip(), job=ns.job.strip())))
@@ -181,7 +212,7 @@ def main() -> int:
             print(f"gaps={'PASS' if grc == 0 else 'FAIL'}\t{mode}")
             rc |= 1 if grc else 0
     for n in phases:
-        if n < 1 or n > 9:
+        if n not in SMOKE_PHASES:
             print(f"P{n}=FAIL\tout_of_range")
             rc = 1
             continue
@@ -191,4 +222,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

@@ -1,8 +1,8 @@
 ﻿# Playtest / AI player and journal
 
-Status: binding design  
+Status: current plan  
 Read when: automated playtest or playtest journal  
-Code: `scripts/debug/`, scripts/combat/debug_menu paths may be under `scripts/debug/debug_menu/`  
+Code: `scripts/debug/`  
 
 
 ## Automated Playtest / AI Player system
@@ -98,7 +98,7 @@ Per weapon (Great Axe / Lightning Staff / Longbow), while that weapon was equipp
   Windows: `%APPDATA%\Godot\app_userdata\What Dwells Below\playtest\runs`
 - Name: `run_YYYYMMDD_HHMMSS_<save>_<weapon>.json`
 - Envelope: `kind: wdb_playtest_journal`, `ver: 2`
-- Not written on web. Not part of the Medium-bar A–F telemetry set. Not an analytics product.
+- Not written on web (the journal is off there, and with `--wdb-pt-nolog` on desktop: no event building, no file or batch writes; telemetry and the web hook still report). Not part of the Medium-bar A–F telemetry set. Not an analytics product.
 
 Purpose: let an agent reconstruct why the bot chose a goal and whether grid floor, `_dir_open`, and `test_move` disagreed. MUST NOT grow into heatmaps, session replay, input recordings, per-frame combat traces, per-projectile logs, or exploration pathing maps.
 
@@ -109,3 +109,17 @@ Events: `begin`, `wait`, `decide`, `step`, `act`, `beat`, `combat`, `end`.
 - `beat` is sparse (skipped when gold / kills / hp / goal are unchanged)
 - `tel.cfg` is omitted; `cfg_hash` on `begin` is enough
 - Root `end_cond` / `fail` come from the `end` event, not from an empty tel stamp
+
+## Live driver rules (`playtest/playtest_api.gd`, `playtest/pt_gate.gd`)
+
+- **Ready gate.** The AI acts only when the dungeon scene is ready, the player exists, the tree is not paused, no menu load is running and no enter/wake transition is playing. While gated it zeroes input, sets `ai_on` false and forces `Engine.time_scale` 1.0. Soft gates (paused / transition / loading / scene_not_ready) fail open after 15 s so a stuck overlay cannot stall a run; a hard gate (no dungeon / no player) for 90 s ends the run as `stalled`.
+- **Clocks.** `sim_t` counts every tick; `act_t` counts only ticks where the AI acted. The run limit (`limit`, smoke 8 s) uses `act_t`, so load and gate time never eat the budget.
+- **Speed.** Default is 1.0 for every run. Faster testing (up to 6x) is opt-in behind its own flag `--wdb-pt-fast` (URL `?wdb-pt-fast`): only then is the job `scale` (default queue `App.bal.playtest_scale`) applied, and only while acting; loads, recap and gates always run at 1.0, and smokes and the web hook stay at 1.0. The scale actually used is `time_scale` in the run telemetry. At scale S the physics delta is S/60, so 6x means 0.1 s ticks; do not take frame or load timings from a scaled run.
+- **Think cadence.** `THINK_DT` 0.12 sim-seconds. `think` receives the sim-time since the previous think (not one physics tick), so the unstick, lock, flee and dash timers run in real seconds.
+- **Decision cost.** Per-run `think_ms` (avg per think incl. journal), `think_max_ms`, `phys_ms` (whole playtest physics tick) plus `gate_s`, `gate_over`, `unstick_n`, `stuck_max` ride on the run row (`perf_report()`), print in `window.__wdbPlay`, and `web_perf.py` lists them under `play`. `playtest_los/los_cache.gd` keeps one per-physics-frame snapshot (grid, closed doors, gate/breakable/prop cells, foe list with distances, A* answers, `dir_open` per heading) so the dozens of steer/path/foe queries per think do not rescan groups; answers are identical to scanning.
+- **Natural play** (`playtest_ai/ai_human.gd`, state `pt.hum`): reaction delay 0.18-0.34 s on first contact (0.06-0.14 s when switching foe; skipped when a foe is within 2.6), aim wobble (a new offset every 0.45 s, about 3 deg up close and 4 deg at range), strafe side kept at least 0.9 s (no flicker), dash away after a hit of at least 7% max HP with a foe within 3.2. Random draws use `pt.rng`, seeded from the run seed, never the global RNG. Same seed and same load alignment replay the same run (desktop: `--fixed-fps 60` removes frame-timing noise). Opt-in `--wdb-pt-repeat` (URL `?wdb-pt-repeat`) also reseeds the global RNG before every think from (run seed, think index), so enemy and crit rolls cannot drift apart between runs; without it runs stay random.
+- **Live smoke.** `--wdb-playtest-live-smoke` (`playtest/live_smoke.gd`, routed by `smoke.gd`) boots straight into one live AI run and prints `PT:` lines (kills, crits, damage, end condition, perf, time_scale, stuck). Args: `--wdb-seed=N`, `--wdb-pt-weapon=great_axe|staff|longbow`, `--wdb-pt-sec=S` (sim seconds of acting), `--wdb-pt-scale=X` (needs `--wdb-pt-fast`). Watchdog quits with `PT: timeout=1`.
+
+## Web perf hook (opt-in URL args)
+
+`scripts/debug/cli_args.gd` also reads URL params that start with `wdb-` on web (`?wdb-seed=42` reads as `--wdb-seed=42`). `AppRun.begin_run` reads it with `CliArgs.int_arg("--wdb-seed", 0)` (not `seed_arg`, which maps 0 to 1) and, when positive, uses it as the run seed and seeds the global RNG; without the param the seed stays `randi()`. `?wdb-playtest` makes `scripts/debug/web_hook.gd` register `window.wdbPlaytest(sec)`, which enqueues one fresh Great Axe live run at real time (`scale` 1) through the playtester above; the finished run's telemetry (plus `stuck_t`) lands in `window.__wdbPlay`; `web_perf.py` marks a run INVALID when it ends early, makes no kills, is stuck (`stuck_t`, or `stuck_max` over 6 s), has a gate that never opened, runs at a time scale other than 1.0, stalls or logs console errors. `tools/web_perf.py` flow `dungeon-fight` uses both. Normal URLs register nothing.

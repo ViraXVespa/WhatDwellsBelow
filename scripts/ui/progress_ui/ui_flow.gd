@@ -1,17 +1,11 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const CatalogS := preload("res://scripts/data/catalog.gd")
-const Inv := preload("res://scripts/ui/progress_ui/inv.gd")
-const Shop := preload("res://scripts/ui/progress_ui/shop.gd")
-const Hub := preload("res://scripts/ui/progress_ui/ui_hub.gd")
 const GearAct := preload("res://scripts/ui/gear_board/board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Anvil := preload("res://scripts/ui/gear_board/anvil.gd")
 const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
 const MenuPad := preload("res://scripts/ui/menu_pad.gd")
-const Prompts := preload("res://scripts/input/prompts.gd")
-const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 
@@ -108,7 +102,7 @@ static func open_flavor(host: CanvasLayer, title: String, body: String) -> void:
 	host._clear()
 	host.box.add_child(ThemeS.lab(title, 28, Color(0.95, 0.82, 0.5)))
 	host.box.add_child(ThemeS.lab(body, 22, Color(0.88, 0.82, 0.7)))
-	host.focus_btn = ThemeS.btn("Leave", func(): host.close_ui())
+	host.focus_btn = ThemeS.btn(App.tr("common.leave"), func(): host.close_ui())
 	host.box.add_child(host.focus_btn)
 	host._show()
 
@@ -120,7 +114,7 @@ static func _process(host: CanvasLayer, delta: float) -> void:
 	host.forge_t = maxf(0.0, host.forge_t - delta)
 	if host.status:
 		var done: int = maxi(0, host.forge_need - host.forge_left) + 1
-		host.status.text = "Forging %d of %d… %.1fs." % [mini(done, maxi(1, host.forge_need)), maxi(1, host.forge_need), host.forge_t]
+		host.status.text = App.tr("ui_flow.forging_of_s") % [mini(done, maxi(1, host.forge_need)), maxi(1, host.forge_need), host.forge_t]
 	if host.forge_t > 0.0:
 		if host.gear_sub:
 			ForgeUI.refresh_bar(host)
@@ -155,7 +149,7 @@ static func _unhandled_input(host: CanvasLayer, event: InputEvent) -> void:
 	if host._gear_busy() and GearAct.handle_event(host, event):
 		host.get_viewport().set_input_as_handled()
 		return
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		if host._sub_up() or GearAct.swallowing():
 			if host._sub_up() and not GearAct.swallowing():
 				if host.forge_phase == "work":
@@ -172,7 +166,7 @@ static func _unhandled_input(host: CanvasLayer, event: InputEvent) -> void:
 		elif host.forge_t > 0.0:
 			ForgeUI.cancel_job(host)
 			App.sfx("ui_cancel")
-			host._st("Forge cancelled. Materials stay spent.")
+			host._st(App.tr("common.forge_cancelled_materials_stay_s"))
 		else:
 			App.sfx("ui_cancel")
 			host.close_ui()

@@ -1,0 +1,90 @@
+name: Archive
+
+# Week-close archives. A push to main that adds design/changelog/{epoch}.{N}.0.md (the squash-merge of
+# grok-build-wN) tags archive/grok-web-wN and archive/grok-build-wN on it, adds both catalog rows and the
+# archives/docs copies, pushes them, and re-runs Pages. All logic lives in tools/ci_archive.py
+# (python3 tools/ci_archive.py --selftest proves it with no GitHub). Idempotent; never forces or deletes.
+# The archive commit is "[skip ci]", so Version, Pages and this workflow ignore it.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      week:
+        description: "Recovery: week number N to archive (pins grok_web_wN and grok_build_wN). Leave empty on a push."
+        required: false
+        type: string
+      commit:
+        description: "Recovery: commit to pin (default: the current tip of main)."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: archive
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip ci]')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Wait for the Version stamp of this push
+        if: ${{ github.event_name == 'push' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          sleep 20
+          for _ in $(seq 1 60); do
+            open="$(gh run list --workflow version.yml --commit "$GITHUB_SHA" --json status --jq '[.[] | select(.status != "completed")] | length')"
+            if [ "$open" = "0" ]; then
+              echo "Version finished for $GITHUB_SHA"
+              exit 0
+            fi
+            echo "Version still running ($open); waiting"
+            sleep 15
+          done
+          echo "Version still running after 15 minutes; continuing (a rejected push is fetched and rebased)"
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pin web and build archives
+        id: archive
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          PUSHED: ${{ github.sha }}
+          WEEK: ${{ inputs.week }}
+          COMMIT: ${{ inputs.commit }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          args=(--root . --commit-changes --push origin --branch main)
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            [[ "$WEEK" =~ ^[0-9]+$ ]] || { echo "input week must be a number"; exit 1; }
+            COMMIT="${COMMIT:-$(git rev-parse HEAD)}"
+            [[ "$COMMIT" =~ ^[0-9a-fA-F]{7,40}$ ]] || { echo "input commit must be a SHA"; exit 1; }
+            args+=(--week "$WEEK" --commit "$COMMIT")
+          else
+            args+=(--before "$BEFORE" --commit "$PUSHED")
+          fi
+          python3 tools/ci_archive.py "${args[@]}"
+
+      - name: Re-run Pages so the new archives export
+        if: ${{ steps.archive.outputs.changed == '1' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run pages.yml --ref main

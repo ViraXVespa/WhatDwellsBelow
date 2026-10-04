@@ -11,13 +11,20 @@ Enemy clips get warning.txt (and notes.txt when present) until that pipeline exi
 
 from __future__ import annotations
 
-import argparse
 import shutil
+import sys
+from pathlib import Path
 
 from PIL import Image
 
+_TOOLS = Path(__file__).resolve().parent
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
+import agent_log
 import anim_review_lib as lib
 import i2v_seeds
+from imglib import imgio
 import sprite_pipeline as sp
 
 
@@ -25,7 +32,7 @@ def _cell_for(gender: str, facing: str) -> Image.Image | None:
     bible = lib.BIBLE.get(gender)
     if bible is None or not bible.is_file():
         return None
-    raw = Image.open(bible).convert("RGBA")
+    raw = imgio.load(bible)
     cells = dict(zip(sp.CELL_NAMES, sp.split_equal_3x3(raw)))
     key = facing if facing in cells else "down"
     im = cells.get(key)
@@ -76,18 +83,19 @@ def _write_enemy(folder: lib.Path, row: dict) -> str:
     return "enemy-warning"
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--review", type=lib.Path, default=lib.REVIEW_PATH)
-    ap.add_argument("--dest", type=lib.Path, default=lib.REVIEW_DIR / "regen_tree")
-    args = ap.parse_args()
-
+def main(argv: list[str] | None = None) -> int:
+    ap = agent_log.std_parser(__doc__, writes=True)
+    ap.add_argument("--dest", type=Path, default=None, help="Output tree (default tools/anim_review/regen_tree). It is wiped first.")
+    args = lib.brief_args(ap, None, argv)
+    dest = args.dest or lib.REVIEW_DIR / "regen_tree"
+    if args.dry_run:
+        n = len([r for r in lib.clip_rows(lib.load_review(args.review)) if r["state"] == "regenerate"])
+        return agent_log.emit_result("INFO", dest=agent_log.rel(lib.ROOT, dest), regenerate=n, dry_run=True)
+    args.dest = dest
     _wipe(args.dest)
     if not args.review.is_file():
-        lib.write_text(args.dest / "warning.txt", f"no review file at {args.review}")
-        print(f"wiped {args.dest}")
-        print("no review.json")
-        return 0
+        lib.write_text(args.dest / "warning.txt", f"no review file at {agent_log.rel(lib.ROOT, args.review)}")
+        return agent_log.emit_result("INFO", dest=agent_log.rel(lib.ROOT, dest), regenerate=0, error="no-review-json")
 
     regen = [r for r in lib.clip_rows(lib.load_review(args.review)) if r["state"] == "regenerate"]
     counts = {"ok": 0, "missing-bible": 0, "enemy-warning": 0}
@@ -98,10 +106,9 @@ def main() -> int:
         else:
             status = _write_enemy(folder, row)
         counts[status] = counts.get(status, 0) + 1
-    print(f"wiped {args.dest}")
-    print(f"regenerate {len(regen)} ok {counts['ok']} missing-bible {counts['missing-bible']} enemy {counts['enemy-warning']}")
-    return 0
+    return agent_log.emit_result("PASS", dest=agent_log.rel(lib.ROOT, dest), regenerate=len(regen), ok=counts["ok"],
+                                 missing_bible=counts["missing-bible"], enemy=counts["enemy-warning"])
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

@@ -1,6 +1,6 @@
 ﻿# Balancing, feel, and polish targets
 
-Status: binding design  
+Status: current plan  
 Read when: difficulty, raid-timer, parity, polish
 
 

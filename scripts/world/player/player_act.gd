@@ -131,10 +131,12 @@ static func refresh_prompt(host: Node) -> void:
 			if d < best_d:
 				best_d = d
 				best = n
+	App.interact_locked = false
 	if best and best.get("prompt") != null:
 		App.interact_prompt = str(best.prompt)
+		App.interact_locked = best.get("prompt_locked") == true
 	elif host.gathering:
-		App.interact_prompt = "Gathering…"
+		App.interact_prompt = App.tr("player_act.gathering")
 	else:
 		App.interact_prompt = ""
 
@@ -150,6 +152,7 @@ static func try_interact(host: Node) -> void:
 				best_d = d
 				best = n
 	if best and best.has_method("interact"):
+		App.interact_locked = false
 		var msg: String = str(best.interact(host))
 		App.interact_prompt = msg
 	else:

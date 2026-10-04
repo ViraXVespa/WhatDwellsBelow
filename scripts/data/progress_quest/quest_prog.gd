@@ -2,6 +2,8 @@ extends Object
 
 ## Quest kill/fetch/ore notes and completion.
 
+const Affix := preload("res://scripts/data/affixes.gd")
+
 static func note_kill(p: Object, type_id: String, named: String) -> void:
 	if p.quest_active.is_empty():
 		return
@@ -32,20 +34,20 @@ static func try_complete(p: Object) -> void:
 		var sb: String = p.SKILLS[randi() % p.SKILLS.size()]
 		p.skills_perm[sa] = float(p.skills_perm.get(sa, 0.0)) + App.bal.quest_xp_a
 		p.skills_perm[sb] = float(p.skills_perm.get(sb, 0.0)) + App.bal.quest_xp_b
-		App.toast("Quest complete — %s / %s XP." % [sa, sb])
+		App.toast(App.tr("quest_prog.quest_complete_xp") % [sa, sb])
 		p._refresh_player_hp()
 	elif rw == "gear":
 		p.bank_items.append(unowned_gear(p))
-		App.toast("Quest complete — gear mailed to stash.")
+		App.toast(App.tr("quest_prog.quest_complete_gear_mailed_to"))
 	else:
 		App.bank_gold += int(App.bal.quest_gold)
-		App.toast("Quest complete — %dg banked." % int(App.bal.quest_gold))
+		App.toast(App.tr("quest_prog.quest_complete_g_banked") % int(App.bal.quest_gold))
 	p.quest_active = {}
 	App.quest_named_type = ""
 	App.quest_named_name = ""
 
 static func unowned_gear(p: Object) -> Dictionary:
-	for s: String in ["head", "body", "legs"]:
+	for s: String in Affix.ARMOR_SLOTS:
 		if (p.holds[s] as Array).is_empty():
 			return p.make_armor(s, "green")
 	return p.make_weapon(p.pick_weapon, "green")

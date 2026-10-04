@@ -1,6 +1,6 @@
 # Re-equip and Anvil submenus
 
-Status: binding design  
+Status: current plan  
 Read when: re-equip lists, submenu chrome  
 
 

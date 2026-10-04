@@ -2,6 +2,7 @@ extends Object
 
 const SEE := 36.0
 const Pick := preload("res://scripts/debug/playtest_goals/pick.gd")
+const Cache := preload("res://scripts/debug/playtest_los/los_cache.gd")
 const ROOM := 11.0
 
 static func _gatherable(n: Node, tool: String) -> bool:
@@ -47,14 +48,13 @@ static func best_clerk(pt: Node, p: Node) -> Node:
 static func nearest_hunt(pt: Node, p: Node) -> Node:
 	var best: Node = null
 	var best_d: float = 14.0
-	var tree: SceneTree = pt.get_tree()
-	if tree == null:
+	if pt.get_tree() == null:
 		return null
-	for n: Node in tree.get_nodes_in_group("enemies"):
-		if not pt._alive_enemy(n):
-			continue
-		var d: float = pt._dist(p, n)
-		if pt._is_boss(n):
+	Cache.foes(pt, p)
+	for i: int in Cache.foe_n.size():
+		var n: Node = Cache.foe_n[i]
+		var d: float = Cache.foe_d[i]
+		if Cache.foe_boss[i] == 1:
 			if d > 10.0:
 				continue
 		elif d > best_d:
@@ -64,7 +64,7 @@ static func nearest_hunt(pt: Node, p: Node) -> Node:
 		if pt._has_los(p, n):
 			continue
 		var score: float = d
-		if pt._is_boss(n):
+		if Cache.foe_boss[i] == 1:
 			score -= 1.5
 		if score < best_d:
 			best_d = score
@@ -75,7 +75,7 @@ static func nearest_hunt(pt: Node, p: Node) -> Node:
 
 static func dismiss_world_ui(pt: Node) -> bool:
 	var w: Node = pt._world_ui()
-	if w == null or not bool(w.get("open")):
+	if w == null or not (w.get("open") == true):
 		if not App.ui_open:
 			return false
 		w = pt._world_ui()
@@ -101,16 +101,15 @@ static func dismiss_world_ui(pt: Node) -> bool:
 static func nearest_visible_threat(pt: Node, p: Node) -> Node:
 	var best: Node = null
 	var best_d: float = maxf(pt._notice_range(), 8.0)
-	var tree: SceneTree = pt.get_tree()
-	if tree == null:
+	if pt.get_tree() == null:
 		return null
-	for n: Node in tree.get_nodes_in_group("enemies"):
-		if not pt._alive_enemy(n):
-			continue
-		var d: float = pt._dist(p, n)
+	Cache.foes(pt, p)
+	for i: int in Cache.foe_n.size():
+		var n: Node = Cache.foe_n[i]
+		var d: float = Cache.foe_d[i]
 		if d >= best_d:
 			continue
-		if pt._is_boss(n) and d > 6.5:
+		if Cache.foe_boss[i] == 1 and d > 6.5:
 			continue
 		if pt._door_between(p, n):
 			continue
