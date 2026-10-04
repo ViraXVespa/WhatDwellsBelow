@@ -68,7 +68,7 @@ Intercept (raw tool is a failed lookup, not a fallback):
 6. Before any edit, restate the ask in your own words and ask the User what
    is unclear. After each small batch of edits run tools/check_gd_load.py.
    Visual work: baseline shot, one unit, open before and after, then stop and
-   ask the User with the PNG paths (design/grok-build.md).
+   ask the User with the PNG paths.
 
 Two compacts on the same slice: stop and start a new session in this instance.
 Do not reload this skill or the plan set because compact fired.
