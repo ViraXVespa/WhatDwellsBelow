@@ -235,7 +235,7 @@ def main(argv: list[str] | None = None) -> int:
     configure(agent_log.repo_root(hint), os.environ.get("WDB_SCRATCH_TOKEN", ""))
     print(f"WDB scratch server on http://{HOST}:{PORT}")
     print(f"scratch file: {agent_log.rel(ROOT, SCRATCH)}")
-    agent_log.emit_result("INFO", status="listening", host=HOST, port=PORT)
+    agent_log.emit_result("INFO", state="listening", host=HOST, port=PORT)
     ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()
     return 0
 
