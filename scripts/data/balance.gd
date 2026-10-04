@@ -71,6 +71,7 @@ var adrenaline_window := 4.5
 var adrenaline_kills := 4
 var adrenaline_speed := 1.35
 var adrenaline_xp_stack := 0.15
+var adrenaline_xp_max := 2.0
 var adrenaline_timeout := 4.5
 
 var aim_line_on := true

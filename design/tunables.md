@@ -109,7 +109,7 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | Crit mult | 2× | 2.0 | Gear adds `crit_dmg` on top |
 | Adrenaline kill window | 4.5 s | 4.5 | |
 | Adrenaline kill threshold | 4 | 4 | |
-| Adrenaline speed / XP stack / timeout | — | 1.35 / 0.15 / 4.5 | |
+| Adrenaline speed / XP stack / XP max / timeout | — | 1.35 / 0.15 / 2.0 / 4.5 | |
 | Knockback / hitstop | — | 3.4 / 0.055 | Dummy ignores knockback |
 | Player max HP | — | 100 | |
 | Hurt i-frame | — | 0.35 | |
