@@ -4,10 +4,12 @@
     python3 tools/run_bake_camp.py [--timeout-sec 180] [--headless]
 
 Default is a real renderer: uses $DISPLAY / a live X socket, else xvfb-run (godot_lib.pick_display), software GL
-is fine. --headless (or no display and no xvfb-run) forces the headless driver: the shadow projection is CPU-side,
-so it gives the same atlas. shadow_px=0 is a FAIL in either mode (the camp node must be in the scene tree).
+is fine. --headless (or no display and no xvfb-run) forces the headless driver. The atlas is the runtime yard render
+(day gradient, cast skirts, blur: all CPU), saved as is. shadow_px=0 is a FAIL in either mode (no box cast: the Layout
+did not realize). After a bake, review the shots, then paste RESULT stamp= into HUB_BAKE_STAMP (hub_bake.gd): until
+then the game ignores the png and computes the yard at runtime.
 Never rewrites camp.tscn. Per-path Godot lock; never kills godot*.
-Summary: _logs/bake-camp/<stamp>-bake-camp.txt; RESULT carries clean=, shadow_px=, display=.
+Summary: _logs/bake-camp/<stamp>-bake-camp.txt; RESULT carries clean=, shadow_px=, stamp=, display=.
 """
 from __future__ import annotations
 
@@ -38,14 +40,16 @@ def main(argv: list[str] | None = None) -> int:
     hard = any(godot_lib.HARD_RE.search(h) for h in hits)
     px = [int(m.group(1)) for h in hits for m in [re.search(r"shadow_px=(\d+)", h)] if m]
     shadow = px[-1] if px else 0
+    stamps = [m.group(1) for h in hits for m in [re.search(r"stamp=([0-9a-f]+)", h)] if m]
+    stamp = stamps[-1] if stamps else "none"
     clean = r["status"] == "EXIT=0" and not hard
     status = "PASS" if clean else "FAIL"
     if clean and shadow == 0:
         status = "FAIL"
-    body = ["bake camp root=.", f"status={r['status']} ms={r['ms']} display={kind} shadow_px={shadow} errBytes={r['err_bytes']} outBytes={r['out_bytes']}",
+    body = ["bake camp root=.", f"status={r['status']} ms={r['ms']} display={kind} shadow_px={shadow} stamp={stamp} errBytes={r['err_bytes']} outBytes={r['out_bytes']}",
             "", "--- highlights ---"] + (hits[:120] or ["(no SCRIPT ERROR / WARNING highlights)"])
     return agent_log.finish("bake-camp", root, "\n".join(body), status, args=args,
-                            clean=str(clean).lower(), shadow_px=shadow, display=kind)
+                            clean=str(clean).lower(), shadow_px=shadow, stamp=stamp, display=kind)
 
 
 if __name__ == "__main__":
