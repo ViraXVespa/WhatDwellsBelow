@@ -609,7 +609,7 @@ msgid "controls.move_up"
 msgstr "Move up"
 
 msgid "controls.pause"
-msgstr "Pause menu"
+msgstr "Pause"
 
 msgid "controls.potion"
 msgstr "Potion"
