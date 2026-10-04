@@ -61,9 +61,10 @@ Intercept (raw tool is a failed lookup, not a fallback):
    runner yourself when it would help future tasks (design/tools.md rule 5)
    and tell the User afterward.
 5. A red prove prints a RETRY prompt: one diagnosis, one fix per retry
-   (design/tools.md rule 10), in the same worktree as a fresh session.
-   Worktrees come from the week branch grok-build-w{N}; a green prove merges
-   back with git merge --no-ff.
+   (design/tools.md rule 10): a fork of the gather session into the same
+   worktree (grok --cwd PATH -r ID --fork-session). Worktrees come from the
+   week branch grok-build-w{N}; a green prove merges back with git merge
+   --no-ff.
 
 Two compacts on the same slice: stop and start a new session in this instance.
 Do not reload this skill or the plan set because compact fired.

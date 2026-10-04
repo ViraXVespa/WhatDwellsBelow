@@ -34,8 +34,9 @@ Do not open the Build path file, `BOT.md`, or Grok Bot Job files from this path 
 
 ## Read vs write
 
-Picture-read when the User is present: `protocol.md` (Core rules). Implementation default is one writer door. A packed pass is the exception above. `conflicts_with` still blocks implementing both cores in one slice.
-Inspect the live tree from **one system row** in `code-map.md`.
+When the User is present: picture-read is uncapped inside `design/` and the live tree the thread is talking about. Load-graph, topic index, and extra code-map rows are allowed on a docs or routing pass.
+Implementation default is one writer door. A packed pass is the exception above. `conflicts_with` still blocks implementing both cores in one slice.
+Inspect the live tree from **one system row** in `design/code-map.md` when editing live files.
 
 ## Phases
 

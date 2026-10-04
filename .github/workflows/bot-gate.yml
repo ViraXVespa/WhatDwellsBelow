@@ -36,6 +36,7 @@ jobs:
           cat /tmp/changed.txt || true
 
       - name: Script cap on changed gd
+        if: startsWith(github.head_ref, 'bot/')
         shell: bash
         run: |
           set -euo pipefail
