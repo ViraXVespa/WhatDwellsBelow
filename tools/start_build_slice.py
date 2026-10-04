@@ -7,11 +7,13 @@ fork that session into a new id. A worktree is DETACHED at its base commit: comm
 
     python tools/start_build_slice.py --door dungeon | --job ui.pause | --area player [--ref REF] [--launch] [--dry-run]
 Writes a postcard (a new _logs/slice-boot/<stamp>-slice-boot.txt per run) and prints the FORK and RETRY lines.
-Worktrees come from the week branch grok-build-w{series} (series from scripts/data/version.json); --ref overrides;
-main is the fallback when the week branch does not exist. Does not edit the live tree or kill Godot; spawns grok
-only with --launch. Gather session id: --session or $GROK_SESSION_ID (optional). Without one the FORK line starts a
-fresh session in the worktree (no -r, no --fork-session), WARN says so, RESULT INFO, exit 0. A red prove prints its
-own paste-ready RETRY prompt (retry_lib.py); the retry runs in the same worktree. Old spellings: -Door -Job -Area -Ref -Launch -WhatIf.
+Worktrees come from the week branch grok-build-w{series} (series from scripts/data/version.json); --ref overrides.
+No week branch and no --ref: RESULT FAIL, no FORK line, and the message says to ask Vira (a question prompt) whether
+to start a new week (`python tools/week_start.py`). Does not edit the live tree or kill Godot; spawns grok only with
+--launch. Gather session id: --session or $GROK_SESSION_ID. It is saved (retry_lib.save_gather, in the git common
+dir) so a red prove can fork it back into the worktree: the gather session is the point retries return to. Without
+one the FORK line starts a fresh session, WARN says so, and a retry says there is no gather session to fork from.
+--selftest runs the cases below in a throwaway repo. Old spellings: -Door -Job -Area -Ref -Launch -WhatIf.
 """
 from __future__ import annotations
 
@@ -26,6 +28,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 import repo_lib
+import retry_lib
 from load_routes import check_route, load_routes, shot_flows, smoke_phases
 
 
@@ -34,10 +37,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--door", "-Door", default="", help="routes.yaml door to start from.")
     ap.add_argument("--job", "-Job", default="", help="routes.yaml door.job to start from.")
     ap.add_argument("--area", "-Area", default="", help="Slice name for the worktree slug (default: job, else door).")
-    ap.add_argument("--ref", "-Ref", default="", help="Git ref to branch from (default: the week branch grok-build-w{series}, else main).")
-    ap.add_argument("--session", default="", help="Gather session id, optional (default: $GROK_SESSION_ID). Saving it is allowed, not required.")
+    ap.add_argument("--ref", "-Ref", default="", help="Git ref to branch from (default: the week branch grok-build-w{series}; none exists: the run fails).")
+    ap.add_argument("--session", default="", help="Gather session id (default: $GROK_SESSION_ID); saved so a red prove can fork it into the worktree.")
     ap.add_argument("--launch", "-Launch", action="store_true", help="Actually start grok with the fork argv.")
+    ap.add_argument("--selftest", action="store_true", help="Run the week-branch / FORK / saved-session cases in a throwaway repo.")
     args = ap.parse_args(argv)
+    if args.selftest:
+        import slice_lib
+
+        return slice_lib.selftest(Path(__file__).resolve())
     root = agent_log.resolve_root(args)
     raw = (args.area or args.job or args.door).strip()
     if not raw:
@@ -73,14 +81,19 @@ def main(argv: list[str] | None = None) -> int:
         except Exception:
             flows = ""
     week = repo_lib.week_branch(root)
-    ref = args.ref or week or "main"
-    ref_note = "--ref given" if args.ref else (f"week branch {week}" if week else "fallback: no grok-build-w* week branch exists yet")
+    if not args.ref and not week:
+        msg = ("NO WEEK BRANCH: no grok-build-w* branch exists, and no --ref was given. Nothing is started and no FORK line is printed (main is never the fallback). "
+               "Ask Vira in a question prompt whether to start a new week; she runs `python tools/week_start.py`. Then rerun this command (or pass --ref REF if she names one).")
+        return agent_log.finish("slice-boot", root, msg, "FAIL", args=args, write=not args.dry_run, worktree=wt, session_ready=bool(session), route="no-week-branch")
+    ref = args.ref or week
+    ref_note = "--ref given" if args.ref else f"week branch {week}"
     fork = f"grok --worktree={wt} --ref {ref}" + (f" -r {session} --fork-session" if session else "")
-    warn = "" if session else ("WARN no gather session id: this FORK starts a fresh session in the worktree, without your gather context. "
+    warn = "" if session else ("WARN no gather session id: this FORK starts a fresh session in the worktree, without your gather context, and a red prove will have no gather session to fork from. "
                                "Pass --session ID or set $GROK_SESSION_ID to fork from the gather session.")
-    retry = (f"RETRY a red prove runs in this same worktree ({wt}) as a fresh session: no fork, no new worktree "
-             f"(`grok worktree list` prints its path; `grok --cwd <path>`). The prove tool "
-             f"prints the paste-ready prompt (failed prove, red output, files in `git diff {week or 'main'}...HEAD`).")
+    saved = "" if args.dry_run else retry_lib.save_gather(root, wt, session, args.ref)
+    retry = ("RETRY a red prove forks the saved gather session into this worktree "
+             f"(`grok --cwd <path of {wt}> -r {session} --fork-session`; the prove tool prints it with the diff `git diff {args.ref or week}...HEAD`)." if session else
+             f"RETRY no gather session: a red prove will say there is none to fork from and start nothing; ask Vira for the session id.")
     launch = "skipped"
     if args.launch and not args.dry_run:
         grok = shutil.which("grok")
@@ -99,7 +112,8 @@ def main(argv: list[str] | None = None) -> int:
             f"smokes={smokes or 'n/a'} (run: tools/run_smokes.py --door/--job; add or update asserts for new systems)",
             f"flows={flows or 'n/a'} (headless: tools/bot_smokes.py --flows; pictures: tools/run_shot_flow.py --flow N; UI states: tools/check_shot_gaps.py --changed)",
             f"merge-back=on a green prove: commit in the worktree (its HEAD is detached, there is no branch), then in the checkout that holds {week or 'grok-build-w{N}'} (git worktree list): git merge --no-ff <worktree HEAD sha> (never main); balance, audio, visuals, controls: ask_user_question for playtest approval first",
-            "revert=the worktree's git history", "return=you launch the FORK line; the CLI does not start it for you", "",
+            "revert=a retry forks the saved gather session into the worktree; git history holds the code", f"gather-session-saved={saved or 'no'}",
+            "return=you launch the FORK line; the CLI does not start it for you", "",
             f"FORK {fork}", *([warn] if warn else []), retry, ""]
     if route_lines:
         body += ["--- route ---"] + route_lines + [""]

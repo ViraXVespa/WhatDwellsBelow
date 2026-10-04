@@ -41,4 +41,4 @@ One Build session owns catalog / runner / skill optimizations. Keep the session 
 - Ask first: a generic markdown or pickup writer; a suite of extra doc runners; a skill rewrite that pastes the catalog into every Build boot.
 - Do not: Imagine / I2V; Grok Bot PRs; week pin ritual; tree dumps or whole tool bodies in chat; parking Bot opt notes; folding slice work into this thread.
 - Report when done. Pickup is git plus the `_logs/<job>/` postcards.
-- Overlap: Bot-notes parks queue items with `bot_opt.py`; Smoke-tests writes phase coverage; Slice sessions consume this catalog. This session does not park Bot notes or add smoke assertions unless the User names that. Slice sessions do not add runners unless named in that thread.
+- Overlap: Bot-notes parks queue items with `bot_opt.py`; Smoke-tests writes phase coverage; Slice sessions consume this catalog. This session does not park Bot notes or add smoke assertions unless the User names that.

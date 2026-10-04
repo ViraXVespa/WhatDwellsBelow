@@ -23,7 +23,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 10. **No loops (gates and fixes).** One copy of the rule; entry docs, jobs and skills point here.
     - Batch all same-kind fixes into one edit pass (every rename, every cast, every path), then run the gates once for the batch, not after each small edit.
     - No prove or re-verify cycles on unchanged results. If a check reports nothing new, stop.
-    - **Red prove: one diagnosis and one fix per retry.** Diagnose once, fix once (batched), rerun once. Still red: stop and report the log path; do not loop. This is the only statement of the rule; Build's retry session is in `build-job-cycle.md`.
+    - **Red prove: one diagnosis and one fix per retry.** Diagnose once, fix once (batched), rerun once. Still red: stop and report the log path; do not loop. This is the only statement of the rule; Build's retry (a fork of the gather session) is in `build-job-cycle.md`.
     - Cap: at most 2 gate reruns per task (a full sweep such as `bot_warnscan` or `bot_smokes` counts as one). Anything not trivial becomes a question with options.
 
 11. **Python image deps.** `pip install -r tools/requirements.txt` (Pillow, numpy; opencv-python-headless optional). Shared image code is `tools/imglib/` (`tools-media.md`).

@@ -51,7 +51,7 @@ Compile pitfalls of facade + `static func(host, ...)` splits, typing rules for m
 
 ## Tokens and after a split
 
-One `design/code-map.md` row + the cluster is enough; do not load the design corpus, read bodies to measure them, or dump whole files when a diff will do. After a split update `design/code-map.md` when a new sibling or shared module must be listed; leave topic design files alone unless behavior changed. Bot does not write extract results into `design/reuse-map.md` (web / chat Phase 7 owns that brief).
+One `design/code-map.md` row + the cluster is enough; do not load the design corpus, read bodies to measure them, or dump whole files when a diff will do. After a split update `design/code-map.md` when a new sibling or shared module must be listed; leave topic design files alone unless behavior changed. Bot does not write extract results into `design/reuse-map.md` (web / chat Phase 4 emit owns that brief).
 
 ## Parked folder moves
 

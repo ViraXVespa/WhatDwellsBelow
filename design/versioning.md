@@ -24,7 +24,7 @@ Do not store a moving “this web goal is …” patch in this file. Do not inve
 **Git history on `main` assigns the number.**  
 The User’s push *is* the bump. `patch` counts only user commits after the last baked `scripts/data/version.json` change, then adds that count to the baked patch. Automated stamp commits (`chore: stamp … [skip ci]`, any `[skip ci]` subject, `github-actions[bot]` bookkeeping) must not increment `patch`. The public label never rewinds.
 
-**`scripts/data/version.json` is the baked copy** the game, title, and changelog script read. Godot and the web export must not call `git`. CI overwrites this file from `main`; agents do not treat it as the ledger and do not hand-edit it in a web Phase 7 unless the User is seeding the file for the first time.
+**`scripts/data/version.json` is the baked copy** the game, title, and changelog script read. Godot and the web export must not call `git`. CI overwrites this file from `main`; agents do not treat it as the ledger and do not hand-edit it in a web Phase 4 emit unless the User is seeding the file for the first time.
 
 CI on each user push to `main` (not on `[skip ci]` stamp pushes):
 
@@ -55,8 +55,8 @@ Grok Bot PRs squash-merge. A multi-commit branch is fine on the PR; it must beco
 Series `N` is week `N`. The epoch is the User's alone; no tool changes it. In order:
 
 1. **Week start.** On an up-to-date `main` the User runs `tools/week_start.py` (`--dry-run` first). It seeds `version.json` as `{epoch}.{N}.0` with `open_commit` = HEAD, parks older changelogs, creates and switches to the local branch `grok-build-w{N}`, commits the seed there (`Grok Build Week N`), runs `grok worktree gc`, deletes Godot locks and clears logs. It pins nothing (catch-up only, below). Then `git push -u origin grok-build-w{N}`.
-2. **Work.** Build cuts worktrees from `grok-build-w{N}` and merges back into it (`grok-build.md`). Build never touches `main`.
-3. **Week close.** A web session, or Build when the User asks, writes the one week-close changelog `design/changelog/0.N.0.md` onto the branch (`versioning-log.md`).
+2. **Work.** Build cuts worktrees from `grok-build-w{N}` and merges back into it (`grok-build.md`). Build never touches `main`. With no week branch (and no `--ref`) `start_build_slice.py` fails: Build asks the User whether to start a new week; main is never the fallback.
+3. **Week close.** A web session the User runs writes the one week-close changelog `design/changelog/0.N.0.md` onto the branch (`versioning-log.md`). Build never writes it, and neither does the Bot. This is the one statement of who writes it.
 4. **Merge.** The User squash-merges `grok-build-w{N}` into `main`: one commit, the `0.N.0` build. If `main` moved and `version.json` conflicts, merge `main` into the branch first and keep the branch's `version.json`; CI regenerates `changelog.json`.
 5. **Archives (CI, nothing to do).** On that push `.github/workflows/archive.yml` runs `tools/ci_archive.py` after the Version stamp. It tags `archive/grok-web-w{N}` and `archive/grok-build-w{N}` on the merge commit, adds both catalog rows (`grok_web_wN`, `grok_build_wN`: the same commit, so the two builds are identical on purpose), copies series `N` notes to `archives/docs/<id>/`, commits `chore: archive week N [skip ci]`, pushes commit and tags, and re-runs Pages so the rows export. Detection, recovery, manual run: `archives-catalog.md`.
 

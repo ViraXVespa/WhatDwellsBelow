@@ -98,7 +98,7 @@ SMOKE: dict[str, list] = {
     "show_func": [(["--path", "scripts/graphics/mesh_commit.gd", "--name", "no_such_func"], _ERR)],
     "split_funcs": [["scripts/graphics/mesh_commit.gd", "--list"]],
     "summarize_scripts": [[]],
-    "start_build_slice": [["--door", "debug", "--job", "debug.smokes", "--dry-run"]],
+    "start_build_slice": [["--door", "debug", "--job", "debug.smokes", "--dry-run", "--ref", "HEAD"], ["--selftest"]],
     "tunables": [["get", "--key", "x"], ["get", "x"]],
     "week_pin": [["--dry-run", "--id", "smoke", "--label", "l", "--desc", "d", "--commit", "abc"], ["--dry-run", "--web", "5"], ["--dry-run", "--build", "6"]],
     "week_start": [["--dry-run"]],
