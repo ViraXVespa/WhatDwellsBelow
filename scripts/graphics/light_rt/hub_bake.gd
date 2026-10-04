@@ -7,9 +7,11 @@ const HubShadow := preload("res://scripts/graphics/light_rt/hub_shadow.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
 const HUB_FIELD := Color(0.98, 0.96, 0.93, 1.0)
-## Bake stamp: hub_light.png loads (disk or export) only when its pixels hash to this. "" or any mismatch means
-## the yard is computed at runtime. Rebake with tools/run_bake_camp.py, review the shots, paste its `stamp=` here.
-const HUB_BAKE_STAMP := ""
+## Bake stamp: first 16 hex of the SHA-256 of hub_light.png's RGBA8 pixels. The hub loads only a baked image with this
+## stamp and the Layout's size; anything else is a hard error (no runtime fallback). Change the hub light code or
+## Layout boxes -> rebake with tools/run_bake_camp.py, review the shots, paste its `stamp=` here
+## (tools/check_hub_bake.py checks the committed png against it).
+const HUB_BAKE_STAMP := "f205c66ffc7b5e69"
 
 ## The PNG on disk when it exists (dev runs); otherwise the imported copy inside an export (web, packed desktop).
 static func _baked_image(path: String) -> Image:
@@ -36,22 +38,23 @@ static func _stamp_of(img: Image) -> String:
 	ctx.update(img.get_data())
 	return ctx.finish().hex_encode().substr(0, 16)
 
-static func _try_hub_baked() -> bool:
-	if HUB_BAKE_STAMP == "":
-		return false
+static func _fatal(msg: String) -> void:
+	var full: String = "FATAL hub light: %s Rebake with tools/run_bake_camp.py, review, then set HUB_BAKE_STAMP (design/hub-bake.md)." % msg
+	printerr(full)
+	push_error(full)
+	OS.crash(full)
+
+## The baked hub image, checked for file, size and stamp. Any miss is fatal: the game never renders the hub light itself.
+static func _load_baked(iw: int, ih: int) -> Image:
 	var rt: Variant = load(RT_PATH)
 	var img: Image = _baked_image(rt.HUB_LIGHT_PATH)
 	if img == null:
-		return false
-	if img.get_width() < 16 or img.get_height() < 16:
-		return false
-	if _stamp_of(img) != HUB_BAKE_STAMP:
-		return false
-	rt._img = img
-	rt._gpu = ImageTexture.create_from_image(img)
-	rt.tex = rt._gpu
-	rt._push()
-	return true
+		_fatal("%s is missing or unreadable." % rt.HUB_LIGHT_PATH)
+	elif img.get_width() != iw or img.get_height() != ih:
+		_fatal("%s is %dx%d, the Layout needs %dx%d (stale bake)." % [rt.HUB_LIGHT_PATH, img.get_width(), img.get_height(), iw, ih])
+	elif _stamp_of(img) != HUB_BAKE_STAMP:
+		_fatal("%s stamp %s does not match HUB_BAKE_STAMP %s (stale bake)." % [rt.HUB_LIGHT_PATH, _stamp_of(img), HUB_BAKE_STAMP])
+	return img
 
 static func _hub_make_rt(x0: int, z0: int, tw: int, th: int) -> void:
 	var rt: Variant = load(RT_PATH)
@@ -78,8 +81,7 @@ static func rebuild_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	rt.origin = Vector2(float(x0), float(z0))
 	rt.span = Vector2(float(tw), float(th))
 	_hub_make_rt(x0, z0, tw, th)
-	_hub_finish_yard(x0, z0, layout)
-## Bakes exactly what the runtime computes: a fresh field image through _hub_render, nothing else on top.
+## The bake: a fresh field image through _hub_render, nothing else on top, saved as the png.
 static func save_hub_bake() -> void:
 	var rt: Variant = load(RT_PATH)
 	if rt._img == null:
@@ -108,13 +110,12 @@ static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	var th: int = maxi(1, z1 - z0)
 	rt.origin = Vector2(float(x0), float(z0))
 	rt.span = Vector2(float(tw), float(th))
-	if _try_hub_baked():
-		LoadTiming.note("hub_light", "baked")
-		return
-	LoadTiming.note("hub_light", "runtime")
-	_hub_make_rt(x0, z0, tw, th)
-	LoadTiming.mark("light_make_rt")
-	_hub_finish_yard(x0, z0, layout)
+	var img: Image = _load_baked(tw * rt.HUB_SUB, th * rt.HUB_SUB)
+	rt._img = img
+	rt._gpu = ImageTexture.create_from_image(img)
+	rt.tex = rt._gpu
+	rt._push()
+	LoadTiming.note("hub_light", "baked")
 static func _hub_paint_day(img: Image, x0: int, z0: int, _layout: Node) -> void:
 	var rt: Variant = load(RT_PATH)
 	if img == null:
@@ -227,21 +228,9 @@ static func _first_u(xs: PackedFloat64Array, rowz: float, w: int, full: bool) ->
 		else:
 			lo = m + 1
 	return lo
-## Day gradient, cast skirts, one blur on a field-filled image. The runtime yard and the bake both run this.
+## Day gradient, cast skirts, one blur on a field-filled image. Only the bake (save_hub_bake) calls this.
 static func _hub_render(img: Image, x0: int, z0: int, layout: Node) -> int:
 	_hub_paint_day(img, x0, z0, layout)
-	LoadTiming.mark("light_paint")
 	var wrote: int = HubCast._hub_cast_buildings(img, x0, z0, layout)
-	LoadTiming.mark("light_cast")
 	HubShadow._blur_hub(img)
-	LoadTiming.mark("light_blur")
 	return wrote
-static func _hub_finish_yard(x0: int, z0: int, layout: Node) -> void:
-	var rt: Variant = load(RT_PATH)
-	if rt._img == null:
-		return
-	_hub_render(rt._img, x0, z0, layout)
-	if rt._gpu != null:
-		rt._gpu.set_image(rt._img)
-	rt.tex = rt._gpu
-	rt._push()
