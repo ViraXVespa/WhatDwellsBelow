@@ -5,12 +5,12 @@ Read when: Grok Build (CLI) path; every CLI instance after a gap
 
 **Intent.** Vira is the conduit for design; Build is the conduit for implementation. Make her vision real with little friction. The design docs are a living plan, not a fixed route. Defer to her on design; suggest improvements and ask in the moment with a question prompt. Hard rules: gates before a PR, no gate loops, never push `main`.
 
-You can write the live tree. Second topic door: read it when the job touches that system; ask the User to name the owner before adding a new cross-system owner. Concurrent CLI chats: Slice, Bot notes, PC offload, Smoke tests. Do not fold in another role unless named.
+You can write the live tree. Second topic door: read it when the job touches that system; ask the User to name the owner before adding a new cross-system owner. Do not fold in another role unless named.
 
 ## Design: Vira decides
 
-A design or product question the docs do not settle (what a feature does, where it lives, who owns it, a new door or doc, copy and lore, save or entry behavior, scope splits, which of two valid routes) goes to the User with `ask_user_question`, before the design doc or any code. You may offer an improvement the same way. One batched call; each question gets 2-4 concrete options you write. Mark one recommended only for code shape or process, never for a look, a feel or a scope. Plain-text questions do not count.
-Always-allow covers permissions only (Access, below), never a design question. A dismissed or timed-out question is not an answer: stop and report. No subagent deliberation; the User chooses. With no `ask_user_question` tool, ask in one plain message and stop.
+A design or product question the docs do not settle (what a feature does, where it lives, who owns it, a new door or doc, copy and lore, save or entry behavior, scope splits, which of two valid routes) goes to the User with `ask_user_question`, before the design doc or any code. Improvements go the same way. One batched call; each question gets 2-4 concrete options you write. Mark one recommended only for code shape or process, never for a look, a feel or a scope. Plain-text questions do not count.
+Always-allow covers permissions only (Access), never a design question. A dismissed or timed-out question is not an answer: stop and report. No subagent deliberation; the User chooses. With no `ask_user_question` tool, ask in one plain message and stop.
 Build decides code shape inside one system and starts open numbers coherent (debug menu, `tunables.md`).
 Doc and code disagree: trust the newer (`list_changed.py --history`), ask if unclear.
 
@@ -40,11 +40,11 @@ Git inventory (not gather): `tools/list_changed.py`. Search: `tools/list_xref.py
 
 ## Work
 
-First message names the area. `python tools/start_build_slice.py --door <door>` (or `--job` / `--area`) prints the door card, smoke phases, shot flows and the FORK lines. A visual door, job or area with no `shot_flows` fails there: ask the User or create the flow. Worktrees come from the week branch `grok-build-w{N}` (`--ref` overrides), never main; no week branch and no `--ref`: it fails with no FORK line, ask the User (question prompt) whether to start a new week (`python tools/week_start.py`). The gather session id (`--session` / `$GROK_SESSION_ID`) is saved; retries return to it. The shell starts in the main checkout: do not edit there. Change only in the slice worktree, by its path. `grok worktree create` does not change this session's directory. A worktree the User names is the slice; do not cut a second. If this session's directory is not that path, stop and give `grok --cwd <that path> -r <gather id> --fork-session`. After the FORK lines are printed, this session stops; edits happen in the process that command starts.
+First message names the area. In the main checkout run `python tools/start_build_slice.py --door <door>` (or `--job` / `--area`): it prints the door card, smoke phases, shot flows and the START lines (the worktree, then a NEW session in it). A visual door, job or area with no `shot_flows` fails there: ask the User or create the flow. Worktrees come from the week branch `grok-build-w{N}` (`--ref` overrides), never main; no week branch and no `--ref`: no START line, ask the User (question prompt) whether to start a new week (`python tools/week_start.py`). Then this session stops: no gather, no edits. A fork keeps its parent's directory and `--fork-session` cannot be combined with `--worktree`, so only a session started fresh in the worktree works there. The User runs START and pastes the task; restate, gather and change happen in that session. A named worktree is the slice; do not cut a second. When gather is done run `python tools/start_build_slice.py --checkpoint` (saves `$GROK_SESSION_ID`; empty: ask the User, `/session-info`) so a red prove can be forked later. **Build never launches grok**: no fork, no headless run, no `--prompt-file` / `--max-turns`; print the command, the User runs it (the isolated-media runner is the one exception).
 
-Access (permission, not design): if a task needs something outside Build's normal reach (a new asset location, an external tool or network, files outside the allowed set), show the User a one-line confirm first (skipped under always-allow).
+Access (permission, not design): if a task needs something outside Build's normal reach (a new asset location, an external tool or network, files outside the allowed set), show the User a one-line confirm first.
 
-Just do: a User-named script rename/move (`move_script_cluster.py --dry-run`, then run), helpers and APIs inside one system (new helper files go in the facade's stem folder, `refactor.md`), and a tool that would help future tasks (`tools.md` rule 5; tell the User after). Ask first: a new cross-system owner, a named live-module replace, a greenfield rewrite, or copying archive scenes over live.
+Just do: a User-named script rename/move (`move_script_cluster.py --dry-run`, then run), helpers and APIs inside one system (`refactor.md` for placement), and a tool that would help future tasks (`tools.md` rule 5; tell the User after). Ask first: a new cross-system owner, a named live-module replace, a greenfield rewrite, or copying archive scenes over live.
 
 ## Red prove, merge-back
 
@@ -54,11 +54,11 @@ Red prove, merge-back, the playtest confirm: `build-job-cycle.md`. One diagnosis
 
 - Bot notes: park with `python tools/bot_opt.py`; do not implement them or open a Bot PR.
 - Tools: `design/tools.md`; PC offload: `design/pc-offload.md`. You may edit or add a tool in the same task.
-- Smoke tests: Build updates or adds the asserts for any system it implements (`build-job-cycle.md`); the smoke session is `debug-smokes.md`.
-- I2V: this path, isolated-media gate, stay in the slice thread. Archive pins are CI-only (`versioning.md`); do not invent pin SHAs.
+- Smoke tests: Build updates or adds the asserts for what it implements (`build-job-cycle.md`; `debug-smokes.md`).
+- I2V: isolated-media gate, in the slice thread. Archive pins are CI-only (`versioning.md`); do not invent them.
 
 ## After a job
 
-Proof rules (`prove.md`): one-line intended outcome before a behavior change; a missing required asset fails loudly (no fallback without the User's OK); report "gates pass", not "proved". Do not ask the User for the playtest confirm until the compile check passed, every output was read, and (visual) the before and after PNGs were opened and described. The confirm question carries a summary of what changed, plus the PNG paths. Look and sound stay unverified until the User confirms.
+Proof rules (`prove.md`): one-line intended outcome before a behavior change; a missing required asset fails loudly (no fallback without the User's OK); report "gates pass", not "proved". Do not ask the User for the playtest confirm until the compile check passed, every output was read, and (visual) the before and after PNGs were opened and described. The confirm question carries a summary of what changed, plus the PNG paths. Look and sound stay unverified until confirmed.
 
-Gates: `design/tools.md` rule 10 (batch, once, at most 2 reruns; iterating one visual unit with the User is exempt). Code: `check_gd_load.py` each pass, then `python tools/run_build_gate.py` and `python tools/read_summary.py --job build-gate` once. A visual change adds `run_shot_flow.py` and the door's UI load check; a missing or stale frame fails the prove. Never hand-edit `version.json`. Do not commit `_logs/`. Report rough edges (rule 9) and fix tool ones in the same task.
+Gates: `design/tools.md` rule 10 (batch, once, at most 2 reruns; iterating one visual unit with the User is exempt). Code: `check_gd_load.py` each pass, then `python tools/run_build_gate.py` and `python tools/read_summary.py --job build-gate` once. A visual change adds `run_shot_flow.py` and the door's UI load check; a missing or stale frame fails the prove. Never hand-edit `version.json` or commit `_logs/`. Report rough edges (rule 9) and fix tool ones in the same task.
