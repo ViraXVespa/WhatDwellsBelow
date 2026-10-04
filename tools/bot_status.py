@@ -116,7 +116,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--prove",
         action="store_true",
-        help="Also check the ship floor, allowlist on dirty paths, load-graph.",
+        help="Also check the allowlist on dirty paths and the load graph.",
     )
     return parser.parse_args(argv)
 

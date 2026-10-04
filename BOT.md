@@ -76,4 +76,4 @@ Open the reuse map only from `design/grok-bot-reuse.md`. Do not walk design/ bey
 
 ## After-cluster report
 
-PR URL, squash-merge reminder, path + bytes before/after, changelog path (every PR ships one, docs/tools-only included: `design/versioning-log.md`), what is still over the floor, next printed item, and the rough edges you hit (`design/tools.md` rule 9). Anything not fixable (outside the allowlist) goes in the PR body for the User.
+PR URL, squash-merge reminder, path + bytes before/after, changelog path (every PR ships one, never omitted; tone and shape: `design/versioning-log.md`), what is still over the floor, next printed item, and the rough edges you hit (`design/tools.md` rule 9). Anything not fixable (outside the allowlist) goes in the PR body for the User.

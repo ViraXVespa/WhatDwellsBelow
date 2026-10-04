@@ -2,7 +2,8 @@
 
 Size limits are enforced by the Bot and by CI, never by Build or Web. A size check runs when the Bot passes
 `--bot` (flag hidden from --help), when WDB_BOT is set, or when GitHub Actions runs it (GITHUB_ACTIONS). Anyone
-else gets an INFO line and exit 0, with no limit, byte count or list printed.
+else gets an INFO line and exit 0, with no limit, byte count or list printed. On Actions, a pull_request from a
+branch that does not start with `bot/` (the Build week PR) counts as "anyone else"; main pushes and `bot/` PRs run them.
 `tools/bot_budgets.json` holds the per-file byte budgets of the boot files (read only in Bot mode).
 """
 from __future__ import annotations
@@ -24,7 +25,11 @@ def add_flag(ap: argparse.ArgumentParser) -> None:
 
 
 def enabled(args: object = None) -> bool:
-    return bool(getattr(args, "bot", False) or os.environ.get("WDB_BOT") or os.environ.get("GITHUB_ACTIONS") == "true")
+    if getattr(args, "bot", False) or os.environ.get("WDB_BOT"):
+        return True
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        return False
+    return os.environ.get("GITHUB_EVENT_NAME") != "pull_request" or os.environ.get("GITHUB_HEAD_REF", "").startswith("bot/")
 
 
 def not_run(what: str, **kv: object) -> int:

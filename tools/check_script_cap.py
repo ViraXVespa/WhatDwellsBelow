@@ -5,7 +5,7 @@
     check_script_cap.py --selftest                    the checks below in a throwaway repo
 A `--path` that is not on disk (a script the change deleted: CI passes every changed path) is skipped with a note,
 never an error. A `--path` that exists but is not a file still exits 2.
-The Bot and CI also run the size checks of this tool (BOT.md); outside them only the name check runs.
+The Bot and CI run more checks (BOT.md); outside them only the name check runs.
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         default=[],
         help="Explicit script path (repeatable). Relative to --root unless absolute.",
     )
-    parser.add_argument("--selftest", action="store_true", help="Check the deleted-path skip, dupes and the Bot size cap in a throwaway repo.")
+    parser.add_argument("--selftest", action="store_true", help="Check the deleted-path skip, dupes and the Bot checks in a throwaway repo.")
     return parser.parse_args(argv)
 
 
