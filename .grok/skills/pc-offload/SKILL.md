@@ -2,32 +2,27 @@
 name: pc-offload
 description: >
   Run local PC inventory, search, scene, code-map, Godot import, smoke,
-  gate, route-card, summary-read, and Grok session pack/report tools for
-  What Dwells Below. Use when about to measure files, list changed paths,
+  gate, route-card and summary-read tools for What Dwells Below. Use when about to measure files, list changed paths,
   search the tree, open many untouched scripts
   or scenes, write multi-line files on Windows, or run import/smokes/gates.
-  Do not use for Imagine stills or I2V (those stay Build-only and must not
-  be copied to Cursor).
+  Do not use for Imagine stills or I2V (those stay Build-only).
 when-to-use: >
   measure files (file_stat.py; not python -c), inventory scripts, list changed files, git inventory,
   docs-vs-code history (list_changed --history),
   repo search (list_xref, not grep), code-map row, patch code-map row,
   check code-map coverage, scene nodes, Godot import,
   smokes, load timing, dungeon map, build gate, post-split gate,
-  Windows write_utf8_file, run_agent_py, show_func, bot-opt queue,
-  read_summary, list_route, pack_grok_sessions, report_grok_sessions,
-  add a new local runner. If this session already opened this skill
+  Windows write (doc_patch.py write), run_agent_py, show_func, bot-opt queue,
+  read_summary, list_route, show_png, add a new local runner. If this session already opened this skill
   or design/pc-offload.md, do not open them again.
 user-invocable: true
-cursor-copy: true
 metadata:
   short-description: Offload inventory and verify to the local PC
-  cursor-copy: true
 ---
 
 # PC offload
 
-Open design/pc-offload.md only for inventory, verify, a Windows write or a new local runner, and design/tools.md only when running, adding or documenting a tool (design/load-graph.md); each once per session. Do not reopen this skill or those files after compact.
+Open design/pc-offload.md only for inventory, verify, a Windows write or a new local runner, and design/tools.md only when running, adding or documenting a tool (design/load-graph.md); each once per session.
 
 You are on a local checkout. Do not measure files by reading their bodies.
 Do not paste raw Godot logs, whole .gd files, whole .tscn files, or
@@ -43,7 +38,7 @@ Intercept (raw tool is a failed lookup, not a fallback):
 - bytes / newlines / indent / BOM on a live path -> tools/file_stat.py (not python -c)
 - python -c for bytes, newlines, tabs, or indent -> tools/file_stat.py
 - python -c / double-quoted PowerShell body / echo Set-Content of a script ->
-  single-quoted here-string piped to tools/write_utf8_file.py, then
+  single-quoted here-string piped to tools/doc_patch.py write FILE, then
   tools/run_agent_py.py
 - open tools/*.py to learn flags -> catalog row only
 - read the same job summary again this slice -> stop;
@@ -61,12 +56,13 @@ Intercept (raw tool is a failed lookup, not a fallback):
 4. If no row exists and the work would be expensive in-session, write the
    runner yourself when it would help future tasks (design/tools.md rule 5)
    and tell the User afterward.
-5. Build slices: the first command is python tools/start_build_slice.py; it
-   prints the slice rules (statement, Q0, ledger, "Did not work:", showing,
-   handoff, checkpoint, merge-back) and the docs to read, the single source.
-   Only the User launches grok.
+5. Build slices: the first command is python tools/start_build_slice.py,
+   before any memory topic; it prints the slice rules (session facts, Q0,
+   ledger, "Did not work:", show_png.py for pictures she should see, handoff,
+   checkpoint, merge-back) and the docs to read, the single source. A later
+   run says where the slice stands. Only the User launches grok.
 
-Two compacts on the same slice: stop and start a new session in this instance.
-Do not reload this skill or the plan set because compact fired.
+Two compacts on the same slice: write the handoff (start_build_slice.py --handoff)
+and start a fresh session.
 
-Imagine-isolated and i2v-isolated must stay skipped. Cursor skill copies are
+Imagine-isolated and i2v-isolated must stay skipped.
