@@ -63,15 +63,22 @@ def start_text(wt: str, ref: str) -> str:
             "Paste the task into the new session: open the baseline picture, show the restate, ask your questions, gather, then `python tools/start_build_slice.py --checkpoint`.\n" + FORK_FACT)
 
 
-def in_worktree_text(sdir: Path | None = None) -> str:
-    """The first-message text Build reads when this tool is its first command. `sdir` = the running session's folder (session_lib), when known."""
-    return "\n".join([
+def in_worktree_text(sdir: Path | None = None, handoff: bool = False) -> str:
+    """The first-message text Build reads when this tool is its first command. `sdir` = the running session's folder (session_lib), when known.
+    `handoff`: the session was opened from a survey handoff, so the survey ORDER and Q0 lines give way to the handoff line."""
+    start = [
         "IN A WORKTREE: this directory is the slice; do not create another. This tool is the first command of a slice.",
         session_lib.statement(sdir),
+    ]
+    if handoff:
+        start.append("ORDER (handoff): `python tools/check_gd_load.py` once and `python tools/run_godot_import_check.py` (a fresh worktree has nothing imported); open the baselines the handoff lists "
+                     "(re-shoot only one that is missing or band=fail); read the files it lists; then the first unit. Ask about what Open questions lists or what a discovery changes.")
+    return "\n".join(start + ([] if handoff else [
         "ORDER: `python tools/check_gd_load.py` once and `python tools/run_godot_import_check.py` (a fresh worktree has nothing imported); shoot and OPEN the baseline "
         "(band=fail is invalid: fix the cause, re-shoot); write the survey or restate as visible text; then Q0; then your other questions.",
         "Q0, in every slice, even when the prompt gives a look: what should the result look like; is there a reference (a picture, a game, a screen); what is out of bounds, "
         "including frames or layouts already built. A layout or frame inherited from earlier work is a Q0 item, never only a ledger line.",
+    ]) + [
         "AN ASK IS ALWAYS PRECEDED BY ITS MESSAGE: the survey or restate, every PNG path with a one-line description of it, the ledger lists, and `Did not work:` if any. "
         "Option labels are not the message; an ask with no text is a protocol break. Realise it was not sent: send it before your next tool call. In a survey of several surfaces the "
         "survey comes first; which group, the order and what she wants for each are separate questions after it.",
@@ -81,7 +88,9 @@ def in_worktree_text(sdir: Path | None = None) -> str:
         "DID NOT WORK: any non-zero exit, `RESULT FAIL`, or skipped step, exploratory ones too, opens your next message as `Did not work: <command> <one line>`. "
         "`python tools/did_not_work.py` lists them from the session.",
         "SHOWING: opening a file on her PC (explorer, Start-Process) is not showing it; put the paths and descriptions in the message. Opening one needs a ledger entry.",
-        "Then gather and run `python tools/start_build_slice.py --checkpoint`. This tool never starts grok.",
+        "Then gather and run `python tools/start_build_slice.py --checkpoint` (the point a red prove forks back to)."
+        + ("" if handoff else " A survey of several surfaces ends at her answers to its first ask: `python tools/start_build_slice.py --handoff`, then stop; a fresh session implements.")
+        + " This tool never starts grok.",
     ])
 
 

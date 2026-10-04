@@ -40,7 +40,15 @@ static func scene_name() -> String:
 	var s: String = _arg_str("--wdb-shot-scene", "dungeon")
 	if s == "camp" or s == "hub":
 		return "camp"
+	if s in SCREENS:
+		return s
 	return "dungeon"
+
+## Menu screens a flow can boot instead of a world: --wdb-shot-scene=title|splash|fs_gate.
+const SCREENS := {"title": "res://scenes/title.tscn", "splash": "res://scenes/splash.tscn", "fs_gate": "res://scenes/fs_gate.tscn"}
+
+static func screen_path() -> String:
+	return str(SCREENS.get(scene_name(), ""))
 
 static func run_seed() -> int:
 	return CliArgs.seed_arg("--wdb-shot-seed", 42)

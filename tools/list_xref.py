@@ -5,6 +5,8 @@
 Scans the project that holds the current directory (so a worktree is scanned from inside it), else this tool's own checkout;
 --root overrides. The first output line prints the absolute scanned root, with a WARN when it is not the current directory's project.
 Case-insensitive. Skips top-level archives/, .archive_worktrees/, _logs/, docs/. Summary: _logs/xref/<stamp>-xref.txt.
+Default output is an INDEX when a search hits many places: per-file hit counts with each file's first matching line, most hits first. Then
+`--expand FILE` (repeatable) lists every hit in that file, and `--all` prints the old flat hit list. A search with only a few hits prints them directly.
 --texts searches the visible text of the last shot-flow runs instead (_logs/shot-flow/**/*.texts.json): the way to find which words a screen shows.
 Old spellings: -Pattern -Path -Include -MaxHits -MaxFiles -Regex.
 """
@@ -31,6 +33,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-hits", "-MaxHits", type=int, default=30, help="Max hits in total (default 30).")
     ap.add_argument("--max-files", "-MaxFiles", type=int, default=20, help="Max files listed (default 20).")
     ap.add_argument("--regex", "-Regex", action="store_true", help="Treat the pattern as a regular expression.")
+    ap.add_argument("--expand", action="append", default=[], metavar="FILE", help="List every hit in this file (repo-relative path or a unique end of it); repeat for more files.")
+    ap.add_argument("--all", action="store_true", help="Print the flat hit list instead of the per-file index.")
     ap.add_argument("--texts", action="store_true", help="Search the shot-flow text dumps (_logs/shot-flow/**/*.texts.json) instead of the source folders.")
     args = ap.parse_args(argv)
     if args.texts:
@@ -48,6 +52,8 @@ def main(argv: list[str] | None = None) -> int:
         agent_log.fail("pass --pattern TEXT")
     rx = re.compile(pattern if args.regex else re.escape(pattern), re.IGNORECASE)
     paths = agent_log.split_list(args.path)
+    if not args.all:  # the index and --expand need whole counts; --max-hits / --max-files shape only the flat --all list
+        args.max_hits, args.max_files = max(args.max_hits, 3000), max(args.max_files, 600)
     hits: list[str] = []
     files_hit: set[str] = set()
     scanned, trunc = 0, False
@@ -81,15 +87,32 @@ def main(argv: list[str] | None = None) -> int:
                     hits.append(f"{rel}:{n}:{text[:160] + '...' if len(text) > 160 else text}")
         if trunc:
             break
+    by_file: dict[str, list[str]] = {}
+    for h in hits:
+        by_file.setdefault(h.split(":", 1)[0], []).append(h)
+    expand = [f for f in args.expand if f]
+    index = not args.all and not expand and len(hits) > 6 and len(by_file) > 1
+    if expand:
+        picked = {rel for rel in by_file if any(rel == e or rel.endswith("/" + e.lstrip("/")) for e in expand)}
+        hits = [h for rel in sorted(picked) for h in by_file[rel]]
+        if not hits:
+            agent_log.fail("no hits in %s for %r; files with hits: %s" % (", ".join(expand), pattern, ", ".join(sorted(by_file)) or "none"))
     mode = "regex" if args.regex else "simple"
     where = f"root={root}" + (f" WARN: the current directory's project is {cwd_root}, not this root; pass --root {cwd_root}" if cwd_root and cwd_root != root else "")
     body = [f"{where} pattern={pattern} mode={mode} include={args.include} path={','.join(paths)}",
-            f"maxHits={args.max_hits} maxFiles={args.max_files} scanned={scanned} files={len(files_hit)} hits={len(hits)} truncated={trunc}",
+            f"scanned={scanned} files={len(files_hit)} hits={len(hits)} truncated={trunc}",
             ""] + hits
     echo = f"{where}\nxref files={len(files_hit)} hits={len(hits)} scanned={scanned} truncated={trunc}"
-    echo += "".join("\n" + h for h in hits[:args.max_hits])
+    if index:
+        ranked = sorted(by_file.items(), key=lambda kv: (-len(kv[1]), kv[0]))
+        echo += "".join(f"\n{len(v):>3}  {k}  first: {v[0].split(':', 2)[1]}: {v[0].split(':', 2)[2][:90]}" for k, v in ranked[:14])
+        if len(ranked) > 14:
+            echo += f"\n... and {len(ranked) - 14} more files: narrow with --path"
+        echo += "\nnext: `--expand FILE` lists one file's hits; `--all` lists every hit"
+    else:
+        echo += "".join("\n" + h for h in hits[:args.max_hits])
     if trunc:
-        echo += "\nnext: more hits exist; narrow with --path/--include or raise --max-hits"
+        echo += "\nnext: more hits exist; narrow with --path/--include"
     elif not hits and args.texts:
         echo += "\nnext: no match in the shot-flow text dumps" + ("" if (root / "_logs" / "shot-flow").is_dir() else " (none yet: run `python tools/run_shot_flow.py --flow NAME` first)")
     elif not hits:

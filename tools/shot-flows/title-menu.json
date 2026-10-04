@@ -1,0 +1,63 @@
+{
+  "name": "title-menu",
+  "about": "The title / play menu on a fresh, isolated save: the first-launch card (choose a delver), the Updates overlay, then B dismisses it. The dismiss saves only to the smoke slot; the flow fails if the live save changes.",
+  "scene": "title",
+  "hud": 0,
+  "settle_ms": 1200,
+  "smoke": true,
+  "steps": [
+    {
+      "op": "device",
+      "kind": "pad"
+    },
+    {
+      "op": "wait",
+      "ms": 600
+    },
+    {
+      "op": "shot",
+      "name": "title-card",
+      "texts": true
+    },
+    {
+      "op": "assert_texts",
+      "min_font": 14
+    },
+    {
+      "op": "call",
+      "target": "host",
+      "method": "_open_updates"
+    },
+    {
+      "op": "wait",
+      "ms": 500
+    },
+    {
+      "op": "assert",
+      "target": "host._news_open",
+      "equals": true
+    },
+    {
+      "op": "shot",
+      "name": "title-updates",
+      "texts": true
+    },
+    {
+      "op": "press",
+      "pad": "B"
+    },
+    {
+      "op": "wait",
+      "ms": 400
+    },
+    {
+      "op": "assert",
+      "target": "host._news_open",
+      "equals": false
+    },
+    {
+      "op": "shot",
+      "name": "title-after-dismiss"
+    }
+  ]
+}

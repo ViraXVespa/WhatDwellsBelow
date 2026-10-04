@@ -6,5 +6,9 @@
 		"design/protocol.md": 2950,
 		"design/constraints.md": 2650,
 		"design/grok-build.md": 7750
+	},
+	"set_bytes": {
+		"build_boot": {"bytes": 16600, "files": ["AGENTS.md", "design/grok-build.md", "design/protocol.md", "design/constraints.md"]},
+		"build_start_read": {"bytes": 39500, "files": ["AGENTS.md", "design/grok-build.md", "design/protocol.md", "design/constraints.md", ".grok/skills/pc-offload/SKILL.md", "design/build-job-cycle.md"]}
 	}
 }

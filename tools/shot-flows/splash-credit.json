@@ -1,0 +1,24 @@
+{
+  "name": "splash-credit",
+  "about": "The credit splash (portrait, Grok / xAI marks) as the player sees it first.",
+  "scene": "splash",
+  "hud": 0,
+  "settle_ms": 1200,
+  "smoke": true,
+  "steps": [
+    {
+      "op": "wait",
+      "ms": 600
+    },
+    {
+      "op": "assert",
+      "target": "host.scene_file_path",
+      "equals": "res://scenes/splash.tscn"
+    },
+    {
+      "op": "shot",
+      "name": "splash",
+      "texts": true
+    }
+  ]
+}

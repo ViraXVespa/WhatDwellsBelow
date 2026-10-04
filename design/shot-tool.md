@@ -66,7 +66,7 @@ fail: timeout, nonzero Godot exit, no image, or script error.
 
 ## What it can stage today
 
-- Scenes `dungeon`, `camp`, `hub` (HUD on shows the HUD and minimap only; the full-screen dungeon map stays closed); camera pose (`--px --pz --cx --cz --zoom`, recipes); HUD on/off; window size (`--width --height`).
+- Scenes `dungeon`, `camp`, `hub`, and the menu screens `title`, `splash`, `fs_gate` (`--scene`; isolated save, see `shot-flows.md`) (HUD on shows the HUD and minimap only; the full-screen dungeon map stays closed); camera pose (`--px --pz --cx --cz --zoom`, recipes); HUD on/off; window size (`--width --height`).
 - **Scripted flows** (`--steps FILE`, or `run_shot_flow.py`): talk to an NPC or open any panel, press gamepad / key / action input, set game state, wait, shoot every page, assert state and text, in one worker boot. This is the answer to "a menu, dialogue or tutorial page needs a picture".
 - Not staged: crop-to-object beyond `crop` on a Control; dungeon UI states without a flow (add the flow).
 

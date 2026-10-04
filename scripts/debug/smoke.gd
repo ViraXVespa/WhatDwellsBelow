@@ -73,6 +73,10 @@ static func route_boot() -> bool:
 		App.character_type = "male"
 		App.character_chosen = true
 		ShotTool.hide_window()
+		if not ShotTool.screen_path().is_empty():
+			App.character_chosen = false
+			ShotTool.boot_screen(App.get_tree())
+			return true
 		if ShotTool.scene_name() == "camp":
 			App.go_camp()
 		else:

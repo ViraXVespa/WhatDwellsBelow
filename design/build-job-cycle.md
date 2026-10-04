@@ -53,21 +53,36 @@ A new numbered phase, `--wdb-*-smoke` flag, or host scene is allowed only when t
 
 ## Slice messages (visual work)
 
-The full form of the rules in the session flow doc.
+The session flow doc holds the rules; `start_build_slice.py` prints them. Details that doc leaves out:
+- The first-message statement is read from the session's own files; unreadable: "not verified" and `/session-info`. An unknown `--area` WARNs with the valid doors.
+- A brief that says "shoot nothing" never covers the baselines. A frame, layout or look already built is a Q0 item to keep, change or drop.
+- "Also changed" lists shared scripts touched with the screens that use them (`python tools/list_xref.py NAME`), states not shot, writes outside the worktree (Grok memory files included), windows opened on her PC.
+- Showing is the path plus a description in the message; opening a file on her PC is not showing it.
 
-- **First command and statement.** `start_build_slice.py` is the first command of a slice, before any file read. In a worktree it prints the first-message statement from the session's own files: whether the agents file was auto-loaded or read by hand, and whether the skills were listed at the start or found by path. When the session files cannot be read it prints "not verified" and points at `/session-info`; say that, do not guess. An unknown `--area` prints a WARN with the valid doors (free area names are allowed).
-- **Order.** `check_gd_load.py` once, `run_godot_import_check.py`, baseline shots opened, then the survey or restate as text, then Q0. Baseline shots are always allowed; a brief that says "shoot nothing" never covers them.
-- **Q0** is asked in every slice, even when the brief names a look: result look, reference, out of bounds. A frame, layout or look already built in the repo is inherited: it is a Q0 item for her to keep, change or drop, never only an assumptions-ledger line.
-- **An ask is preceded by its message.** The message holds the survey or restate, each PNG path with a line saying what is on it, the ledger and any `Did not work:`. The option labels of `ask_user_question` are not that message. If an ask went out without it, send the message before the next tool call. For several surfaces: survey first, then which group, then the order, then what she wants for each surface, as separate questions.
-- **Ledger** (three short lines, each overrulable): "Decisions I made that were yours" (with the alternative), "Assumptions carried from memory or docs", "Also changed". Also changed lists: shared scripts touched with the screens that use them (`python tools/list_xref.py <name>`), states that were not shot, writes outside the worktree (Grok memory files included), windows opened on her PC.
-- **Outside the worktree.** Build writes there only through `tools/run_isolated_grok.py` and the checkpoint file. Anything else, a memory-file edit included, is a ledger entry.
-- **Showing.** A shot is shown when its path and a description are in the message. Opening a file or folder on her PC (explorer, `Start-Process`) is not showing it and goes in the ledger.
-- **Failed step.** Any non-zero exit or `RESULT FAIL`, exploratory runs included, and any skipped step. The next message starts `Did not work: <command> <one line>`. `python tools/did_not_work.py` lists a session's failed steps and which were not reported.
-- **Shared tools.** `python tools/list_xref.py --texts <word>` searches the words in shot-flow text dumps (after a `run_shot_flow.py`).
+## Survey, then a fresh session
+
+A survey of several surfaces reads widely, and every later call re-reads that context. So it ends at her answers to its first ask, and a fresh session implements:
+
+1. Survey from text: `python tools/run_shot_flow.py --survey` (a line per flow: about, states, last shot, band); `python tools/list_route.py --digest --door D` for several jobs. Open pictures only for the group or unit being compared. `run_shot_flow.py --sheet FLOW` tiles one flow's frames into a labeled sheet; fine text is not readable on it.
+2. Send the survey message and ask (Q0, then which group, order and wants).
+3. After her answers: `python tools/start_build_slice.py --handoff` writes `_logs/handoff/handoff.md` (gitignored, never committed). Fill every `<fill>` line: task in her words, Q0 answers, her decisions, chosen surfaces in order, the ledger lists, baselines for the chosen surface (absolute PNG path and a line on what is on it), files and functions to touch, Did-not-work items, open questions. Run `--handoff` again: it validates, saves the survey's shot-flow and `routes.yaml` edits next to the file, and prints the command she runs from the main checkout: `python tools/open_slice.py AREA --prompt-file PATH`. This session then stops.
+4. The fresh session's first command is `start_build_slice.py --door D --from-handoff PATH`: a compact start summary, the saved edits put back, and the baselines to open (those only). It does not re-run the survey. Answers in the handoff stand; it asks about the open questions and what a discovery changes.
+
+`--checkpoint` is a different thing: it saves an implementation session so a red prove forks back to it. One surface or a small change needs no handoff: continue in place.
+
+## Reading habits
+
+- Route first: the route card's read list, not sibling docs. A script of the system being edited: `show_func.py`, not the whole file; an edited file is not re-read in full. A search: `list_xref.py` (an index; `--expand FILE`), never a repo-root `list_dir` (`list_route.py` lists the doors).
+- A picture is read only for the unit being compared (before and after). Another session's memory `_inbox` files are not read.
+- Shared tool changes get a `list_xref` listing under "Also changed".
+
+## Permissions
+
+Access (permission, not design): something outside Build's normal reach (a new asset location, a generated image, an external tool or network, files outside the allowed set) gets a one-line User confirm first. Just do: a named script rename/move (`move_script_cluster.py --dry-run`, then run), helpers and APIs inside one system (`refactor.md`), a tool that would help later (`tools.md` rule 5; tell the User). Ask first: a cross-system owner, a named live-module replace, a greenfield rewrite, archive scenes copied over live.
 
 ## Next-session brief
 
-A brief for a new Build session is lean. It has: the task in her words; where the last result and its handoff notes live (commit, docs); "first message: the statement `start_build_slice.py` prints"; "Q0 first"; baseline shots are allowed and expected; run `start_build_slice.py --checkpoint` when the gather is done; commit and push only after she confirms ("Settled? commit?"). It never forbids questions, never sets limits on the run, and does not restate rules the session flow doc already holds.
+A brief for a new Build session is lean: the task in her words; where the last result and its handoff notes live (commit, docs); the first command and statement; Q0 first; baselines allowed and expected; `--checkpoint` when the gather is done; commit and push only after she confirms ("Settled? commit?"). It never forbids questions, never sets limits on the run, and does not restate rules the session flow doc holds. A survey handoff file is such a brief.
 
 ## Red prove and merge-back
 

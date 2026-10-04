@@ -36,6 +36,7 @@ TIMEOUT_SEC = 180
 WARN_BYTES = 2048
 RENDER_DRIVER = "opengl3"
 RENDER_METHOD = "gl_compatibility"
+SCREENS = ("title", "splash", "fs_gate")  # menu screens the worker can boot (scripts/debug/shot_tool/tool_args.gd)
 # Flow-file header keys that fill an unset CLI default (scene, hud, zoom, ...).
 FLOW_KEYS = ("scene", "hud", "zoom", "settle_ms", "seed", "floor", "px", "pz", "width", "height", "fixed_fps")
 
@@ -80,7 +81,7 @@ def _extra_flags(args: argparse.Namespace) -> list[str]:
         f"--wdb-shot-zoom={args.zoom}",
         f"--wdb-shot-cx={args.cx}",
         f"--wdb-shot-cz={args.cz}",
-        "--wdb-shot-scene=camp" if args.scene in ("camp", "hub") else "--wdb-shot-scene=dungeon",
+        "--wdb-shot-scene=camp" if args.scene in ("camp", "hub") else (f"--wdb-shot-scene={args.scene}" if args.scene in SCREENS else "--wdb-shot-scene=dungeon"),
     ]
     if args.width > 0:
         extra.append(f"--wdb-shot-width={args.width}")
@@ -223,7 +224,7 @@ def build_parser() -> argparse.ArgumentParser:
                              writes=True, json_out=True)
     p.add_argument("--mode", choices=("web", "build", "user"), default="user", help="web copies the PNG to the clipboard, user opens it, build does neither and scales down (default user).")
     p.add_argument("--seed", type=int, default=42, help="Dungeon seed (default 42).")
-    p.add_argument("--scene", choices=("dungeon", "camp", "hub"), default="dungeon", help="Scene to shoot: dungeon, camp or hub (default dungeon).")
+    p.add_argument("--scene", choices=("dungeon", "camp", "hub", *SCREENS), default="dungeon", help="Scene to shoot: dungeon, camp or hub (default dungeon), or a menu screen: title, splash, fs_gate (isolated save).")
     p.add_argument("--floor", type=int, default=1, help="Dungeon floor (default 1).")
     p.add_argument("--scale", type=int, default=0, help="PNG scale percent; 0 picks mode default")
     p.add_argument("--settle-ms", type=int, default=SETTLE_MS, help="Milliseconds to wait before the capture.")

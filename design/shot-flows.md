@@ -60,7 +60,7 @@ Extending the tool is part of the task (no hand-driven Godot, no scratch, no PNG
 3. A new worker flag or `run_shots.py` argument is the last resort: parse in `tool_args.gd`, add the matching argument.
 4. Document it in the table below and in `--help` (`check_tool_cli.py`).
 
-A screen the worker cannot stage today (the title / play menu, the loader, the web fullscreen gate and touch overlay; it boots only camp or dungeon): report it as "not pictured" in the survey with the reason, tell her, and carry on with the surfaces that can be shot. Whether to teach the worker a new scene (this gap process) is her call, asked as a question with the survey. Do not stand in a picture of another screen.
+Menu screens boot from a flow header `"scene": "title"` (flow `title-menu`), `"splash"` (`splash-credit`) or `"fs_gate"` (`fs-gate`). They run on an isolated save: a shot boot never loads `user://live`, a dismiss writes only the smoke slot, and the flow fails (`isolation`) if the live save changes or the isolation cannot be proven. The title shows its first-launch card (choose a delver). Not staged: the touch overlay (needs a touch device). A screen the worker cannot stage is reported as "not pictured" in the survey with the reason; whether to extend the worker (this gap process) is her call. Do not stand in a picture of another screen.
 
 | Knob | Stages | Used for |
 |---|---|---|

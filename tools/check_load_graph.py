@@ -581,6 +581,16 @@ def boot_budget_fails(root: Path, routes: dict) -> list[str]:
     return fails
 
 
+def set_budget_fails(root: Path) -> list[str]:
+    """Bot mode only: the groups of files Build reads together (boot set, start-read set) stay within their summed on-disk budget."""
+    fails: list[str] = []
+    for name, (cap, files) in bot_gate_lib.set_budgets(root).items():
+        total = sum((root / f).stat().st_size for f in files if (root / f).is_file())
+        if total > cap:
+            fails.append(f"read set over byte budget: {name} is {total} bytes, budget {cap} ({bot_gate_lib.BUDGETS})")
+    return fails
+
+
 def boot_instruct_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     fails: list[str] = []
     listed = boot_max(routes)
@@ -971,6 +981,7 @@ def main() -> int:
     fails.extend(boot_instruct_fails(routes, texts))
     if bot_gate_lib.enabled(args):
         fails.extend(boot_budget_fails(root, routes))
+        fails.extend(set_budget_fails(root))
     fails.extend(citation_budget_fails(routes, texts))
     fails.extend(load_ban_fails(routes, texts))
     fails.extend(job_cell_token_fails(routes, texts))

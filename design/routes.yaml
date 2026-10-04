@@ -368,6 +368,7 @@ shot_flows:
   ui.pause: "camp-pause-menu,camp-pause-pages"
   ui.run_flow: "camp-recap,dungeon-map-crystal"
   ui.hud: "dungeon-hud-states"
+  ui.title_web: "title-menu,splash-credit,fs-gate"
 
 # New UI states with no shot flow (check_shot_gaps.py --changed): Bot and Build both FAIL at the END gates (bot_smokes.py,
 # run_build_gate.py, a Build UI or theme prove) on a new uncovered state. The START of a slice never fails on a missing flow.

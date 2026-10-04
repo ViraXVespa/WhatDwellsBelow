@@ -2,7 +2,7 @@
 """Open a Build slice: the USER runs this (PowerShell on Windows). It starts grok in a NEW worktree cut from the week branch.
 
     python tools/open_slice.py [AREA_OR_NAME] [--prompt TEXT | --prompt-file PATH] [--ref REF] [--dry-run]
-It prints the prompt it passes as one info line (length, first 60 characters, sha256) and logs it. --prompt-file reads a file as is; --prompt takes text.
+It prints the prompt it passes as one info line (length, first 60 characters, sha256) and logs it. --prompt-file reads a file as is; --prompt takes text. A prompt that starts `# Handoff:` is a survey handoff (start_build_slice.py --handoff): it must be filled in, and the line `handoff:` summarizes it.
 Finds the repo from this file's location and the week branch grok-build-w{N} (none and no --ref: fails). The worktree name is
 generated (wdb-<area or slice>-<YYYYMMDD-HHMM>). It prints, then runs from the repo root with a plain args list (no shell):
     grok --worktree=NAME --ref WEEKBRANCH [PROMPT]
@@ -29,6 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
+import handoff_lib
 import repo_lib
 import slice_lib
 
@@ -78,6 +79,14 @@ def main(argv: list[str] | None = None) -> int:
         except OSError as exc:
             return end(f"CANNOT READ --prompt-file: {exc}", "FAIL", route="bad-prompt")
     prompt = prompt.strip()
+    hand_note = ""
+    if prompt.startswith("# Handoff:"):
+        bad = handoff_lib.check(root, prompt)
+        if bad:
+            return end("HANDOFF NOT READY (" + (args.prompt_file or "--prompt") + "):\n- " + "\n- ".join(bad) + "\nFinish it in the survey session (`python tools/start_build_slice.py --handoff`), then rerun this.", "FAIL", route="bad-handoff")
+        head, secs = handoff_lib.parse(prompt)
+        n = len(handoff_lib.baselines(root, secs.get("Baselines for the chosen surface", "")))
+        hand_note = f"handoff: survey done, area={head.get('area', '')}, {n} baseline(s) to open, first unit = {(secs.get('Chosen surfaces, in order', '').splitlines() or [''])[0].strip()!r}"
     if prompt.startswith("-") or len(prompt) > 30000:
         return end("BAD PROMPT: it must not start with '-' (grok would read a flag) and must fit on a command line. Shorten it or start blank.", "FAIL", route="bad-prompt")
     slug = re.sub(r"[^a-z0-9._-]+", "-", (area or "slice").lower()).strip("-")[:48].strip("-") or "slice"
@@ -89,6 +98,7 @@ def main(argv: list[str] | None = None) -> int:
 
     warn = slice_lib.area_warning(root, area) if area else ""
     lines.append(f"prompt: {len(prompt)} chars, starts {prompt[:60]!r}, sha256 {hashlib.sha256(prompt.encode('utf-8')).hexdigest()[:12]}" if prompt else "prompt: none (a blank session)")
+    lines += [hand_note] if hand_note else []
     lines.append((f"area={area}: resolved." + (f"\n{warn}" if warn else "") + (f"\n{note}" if note else "")) if area else
                  "No area given, so no route checks ran. In the new session Build runs `python tools/start_build_slice.py --door <door>` (it says IN A WORKTREE).")
     if dry:
@@ -149,6 +159,10 @@ def selftest(script: Path) -> int:
         code, out = run(root, "--dry-run", "--prompt-file", str(root / "p.txt"))
         if code != 0 or "from file" not in out:
             bad.append("--prompt-file must be read by the tool and passed as the prompt")
+        (root / "hand.md").write_text("# Handoff: ui\narea: ui\n## Task (her words)\n<fill: x>\n", encoding="utf-8")
+        code, out = run(root, "--dry-run", "--prompt-file", str(root / "hand.md"))
+        if code == 0 or "HANDOFF NOT READY" not in out or "COMMAND" in out:
+            bad.append("an unfilled handoff must fail with no command")
         code, out = run(root, "--dry-run", "--prompt", "-p x")
         if code == 0 or "BAD PROMPT" not in out:
             bad.append("a prompt starting with '-' must fail")

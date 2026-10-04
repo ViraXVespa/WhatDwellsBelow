@@ -3,6 +3,8 @@
 set state, shoot every page, assert, then diff against a baseline or publish to _out/shots/<flow>/ (never assets/: Grok Build places those).
 
   python tools/run_shot_flow.py --list
+  python tools/run_shot_flow.py --survey [--flow A,B]   # one text line per flow: about, states, last shot, band (no picture needed)
+  python tools/run_shot_flow.py --sheet NAME            # tile a flow's last frames into one sheet.png (labels; small text is not readable on it)
   python tools/run_shot_flow.py --flow camp-receptionist-menu [--baseline DIR] [--save-baseline DIR] [--publish]
   python tools/run_shot_flow.py --smoke --no-pixels        # every smoke:true flow, headless, asserts only
 
@@ -40,6 +42,49 @@ def list_flows(root: Path) -> dict[str, dict]:
         data["_file"] = f
         out[str(data.get("name") or f.stem)] = data
     return out
+
+
+def _shot_names(steps: list) -> list[str]:
+    out: list[str] = []
+    for s in steps:
+        if isinstance(s, dict):
+            if s.get("op") == "shot":
+                out.append(str(s.get("name", "")))
+            out += _shot_names(s.get("steps", []) if isinstance(s.get("steps"), list) else [])
+    return out
+
+
+def survey_lines(root: Path, flows: dict[str, dict], names: list[str]) -> list[str]:
+    """One text line per flow, so a survey needs no picture: about | states | last shot | band."""
+    lines = []
+    for n in names or list(flows):
+        d = flows[n]
+        fdir = root / "_logs" / JOB / n
+        pngs = sorted(fdir.glob("[0-9]*.png")) if fdir.is_dir() else []
+        band = "never shot"
+        if (fdir / "flow.json").is_file():
+            try:
+                band = "good" if json.loads((fdir / "flow.json").read_text(encoding="utf-8")).get("ok") else "fail"
+            except ValueError:
+                band = "unreadable"
+        about = str(d.get("about", "")).split(". ")[0][:110]
+        states = _shot_names(d.get("steps", []))
+        lines.append("%s | %s | states: %s | last shot: %s | band: %s" % (
+            n, about, ",".join(states) or "none", rel(root, pngs[-1]) if pngs else "none", band))
+    return lines
+
+
+def contact_sheet(root: Path, name: str) -> Path | None:
+    """Tile a flow's numbered frames into <flow dir>/sheet.png (imglib montage); None when there are no frames."""
+    fdir = root / "_logs" / JOB / name
+    pngs = sorted(fdir.glob("[0-9]*.png"))
+    if not pngs:
+        return None
+    from imglib import compare, imgio
+
+    cols = min(4, len(pngs))
+    sheet = compare.montage([imgio.load(p) for p in pngs], [p.stem for p in pngs], cols=cols, cell=(480, 270))
+    return imgio.save(sheet, fdir / "sheet.png")
 
 
 def pick(flows: dict[str, dict], names: list[str], smoke: bool, every: bool) -> list[str]:
@@ -157,6 +202,8 @@ def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Run scripted shot flows: capture, assert, diff against a baseline, publish.",
                              writes=True, json_out=True)
     p.add_argument("--list", action="store_true", help="list flows and exit")
+    p.add_argument("--survey", action="store_true", help="one text line per flow (about, states, last shot, band); no Godot run")
+    p.add_argument("--sheet", default="", metavar="FLOW", help="tile FLOW's last frames into one sheet.png (labels; fine text is not readable on it)")
     p.add_argument("--flow", action="append", default=[], help="flow name (repeat or comma-separate)")
     p.add_argument("--all", action="store_true", help="every flow")
     p.add_argument("--smoke", action="store_true", help="every flow marked smoke:true")
@@ -181,8 +228,23 @@ def main(argv: list[str] | None = None) -> int:
                                                              ",".join(d.get("covers", [])), d.get("about", "")[:80]))
         return agent_log.emit_result("PASS", flows=len(flows))
     names = agent_log.split_list(args.flow)
+    if args.survey:
+        bad = [n for n in names if n not in flows]
+        if bad:
+            agent_log.fail("unknown flow %s. flows: %s" % (", ".join(bad), ", ".join(flows)))
+        for ln in survey_lines(root, flows, names):
+            print(ln)
+        return agent_log.emit_result("PASS", flows=len(names) or len(flows))
+    if args.sheet:
+        if args.sheet not in flows:
+            agent_log.fail("unknown flow %s. flows: %s" % (args.sheet, ", ".join(flows)))
+        out = contact_sheet(root, args.sheet)
+        if out is None:
+            agent_log.fail("no frames for %s yet: run `python tools/run_shot_flow.py --flow %s` first" % (args.sheet, args.sheet))
+        print("sheet: %s (labels are frame names; open a single frame to read small text)" % rel(root, out))
+        return agent_log.emit_result("PASS", sheet=rel(root, out))
     if not (names or args.all or args.smoke):
-        agent_log.fail("name a flow (--flow N), or use --all / --smoke / --list")
+        agent_log.fail("name a flow (--flow N), or use --all / --smoke / --list / --survey")
     todo = pick(flows, names, args.smoke, args.all)
     out_root = Path(args.out_dir) if args.out_dir else root / "_logs" / JOB
     rows = [run_one(root, n, flows[n], args, out_root) for n in todo]
