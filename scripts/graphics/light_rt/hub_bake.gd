@@ -31,7 +31,10 @@ static func _baked_image(path: String) -> Image:
 	return src
 
 static func _stamp_of(img: Image) -> String:
-	return img.get_data().sha256_buffer().hex_encode().substr(0, 16)
+	var ctx := HashingContext.new()
+	ctx.start(HashingContext.HASH_SHA256)
+	ctx.update(img.get_data())
+	return ctx.finish().hex_encode().substr(0, 16)
 
 static func _try_hub_baked() -> bool:
 	if HUB_BAKE_STAMP == "":
