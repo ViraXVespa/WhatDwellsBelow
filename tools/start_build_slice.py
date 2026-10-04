@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """Slice boot for Grok Build: resolve one routes.yaml door/job, print the grok fork argv.
+Flags checked against the Grok CLI docs (docs.x.ai/build/cli/reference, docs.x.ai/build/features/worktrees):
+--worktree[=NAME] new git worktree (use the = form so a prompt is not read as the name), --ref REF the branch/tag/commit
+it is cut from (clean checkout; without it the worktree starts from HEAD plus uncommitted changes), -r ID --fork-session
+fork that session into a new id. A worktree is DETACHED at its base commit: commit there, merge the commit back.
 
     python3 tools/start_build_slice.py --door dungeon | --job ui.pause | --area player [--ref REF] [--launch] [--dry-run]
 Writes a postcard (a new _logs/slice-boot/<stamp>-slice-boot.txt per run) and prints the FORK and RETRY lines.
@@ -74,7 +78,8 @@ def main(argv: list[str] | None = None) -> int:
     fork = f"grok --worktree={wt} --ref {ref}" + (f" -r {session} --fork-session" if session else "")
     warn = "" if session else ("WARN no gather session id: this FORK starts a fresh session in the worktree, without your gather context. "
                                "Pass --session ID or set $GROK_SESSION_ID to fork from the gather session.")
-    retry = (f"RETRY a red prove runs in this same worktree ({wt}) as a fresh session: no fork, no new worktree. The prove tool "
+    retry = (f"RETRY a red prove runs in this same worktree ({wt}) as a fresh session: no fork, no new worktree "
+             f"(`grok worktree list` prints its path; `grok --cwd <path>`). The prove tool "
              f"prints the paste-ready prompt (failed prove, red output, files in `git diff {week or 'main'}...HEAD`).")
     launch = "skipped"
     if args.launch and not args.dry_run:
@@ -93,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
             "prove=run_build_gate (import check) and/or the listed smoke set; gates once per batch (tools.md rule 10)",
             f"smokes={smokes or 'n/a'} (run: tools/run_smokes.py --door/--job; add or update asserts for new systems)",
             f"flows={flows or 'n/a'} (headless: tools/bot_smokes.py --flows; pictures: tools/run_shot_flow.py --flow N; UI states: tools/check_shot_gaps.py --changed)",
-            f"merge-back=on a green prove: git switch {week or 'grok-build-w{N}'}, then git merge --no-ff this worktree's branch (never main); balance, audio, visuals, controls: ask_user_question for playtest approval first",
+            f"merge-back=on a green prove: commit in the worktree (its HEAD is detached, there is no branch), then in the checkout that holds {week or 'grok-build-w{N}'} (git worktree list): git merge --no-ff <worktree HEAD sha> (never main); balance, audio, visuals, controls: ask_user_question for playtest approval first",
             "revert=the worktree's git history", "return=you launch the FORK line; the CLI does not start it for you", "",
             f"FORK {fork}", *([warn] if warn else []), retry, ""]
     if route_lines:

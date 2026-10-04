@@ -39,5 +39,5 @@ def block(root: Path, what: str, red: list[str]) -> str:
     ask = (f'The prove "{what}" is red: {" | ".join(seen)}. Run `git diff {base}...HEAD` to see what is done, '
            f"read only the changed files (start with {', '.join(files) or 'the files in that diff'}), "
            "then give one diagnosis and make one fix. Rerun that prove once and report.")
-    return "\n".join([f"RETRY: red prove ({what}). Start a fresh session in this worktree ({root.name}); no fork, no new worktree. Paste:",
+    return "\n".join([f"RETRY: red prove ({what}). Start a fresh session in this worktree ({root.name}; grok --cwd PATH, PATH from grok worktree list); no fork, no new worktree. Paste:",
                       "--- paste ---", ask, "--- end ---"])

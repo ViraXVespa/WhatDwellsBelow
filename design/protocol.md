@@ -19,7 +19,7 @@ If a path file is already loaded, stay on that path.
 
 ## Long-running
 
-Do not fetch a file already in the loaded set. Live-path code must not share state with an archive. Archive pins are User-only. (Web emit-pass loop: `web-test.md`.)
+Do not fetch a file already in the loaded set. Live-path code must not share state with an archive. Archive pins are CI-only (`ci_archive.py`); agents never pin. (Web emit-pass loop: `web-test.md`.)
 
 ## Database
 

@@ -26,8 +26,8 @@ Rules, CLI contract, surface key: `tools.md`. Runner habits: `pc-offload.md`. Su
 | `list_xref.py` | Capped text search (case-insensitive). Summary: `xref`. | D | `--help` | N |
 | `list_scenes.py` | `.tscn` nodes and scripts without dumping scenes. Summary: `scenes`. | D | `--help` | N |
 | `list_facade_cluster.py` | A facade + its stem-folder helpers by bytes. Summary: `facade-cluster`. | D | `--help` | N |
-| `start_build_slice.py` | Resolve a route and print the `grok --worktree` launch line from the week branch (`--ref`, default `grok-build-w{N}`, else main). Gather session id optional (`--session`). Echoes the job card, phases, flows and merge-back. Summary: `slice-boot`. | D | `--help` | N |
-| `week_start.py` | Week start: web pin, version seed `epoch.N+1.0` with `open_commit`, local branch `grok-build-w{N+1}`, changelog archive, lock deletion, `grok worktree gc`, log clean (`--dry-run` lists them). **Human-only (QUARANTINE).** Agents must not run it. | D | `--help` | N |
+| `start_build_slice.py` | Resolve a route; print the `grok --worktree=NAME --ref REF [-r ID --fork-session]` line (default ref `grok-build-w{N}`, else main), job card, phases, merge-back. Summary: `slice-boot`. | D | `--help` | N |
+| `week_start.py` | Week start from main: seed `epoch.N.0`, park changelogs, branch `grok-build-w{N}` + seed commit, `grok worktree gc`, locks, logs. Pins nothing. **Human-only (QUARANTINE).** | D | `--help` | N |
 
 ### PowerShell shims
 
@@ -68,4 +68,5 @@ The `.ps1` twins of the Python tools are listed in `tools-shims.md`.
 | `web-perf-flows.json` | Flows for `web_perf.py` (`_boot` is the shared prefix). `dungeon-fight` runs the playtester: compare its fps only with itself; INVALID runs are never baselined; `expect_change` pairs must differ (else STUCK). | BD | - | N |
 | `web_perf.py` | Advisory perf run of the EXPORTED web build in headless Chrome via playwright (`pip install playwright`; system Chrome). Default `--site docs/` may be stale: export with `export_web.py --out DIR`. `--baseline` (`tools/web-perf-baseline.json`) flags WORSE (INFO; `--strict` exits 1). Never a gate; software GL; `camp-idle` is the no-UI reference for `camp-pause`/`camp-shop`; `hub-load` / `dungeon-load` print the engine load marks (not diffed); dungeon flows use `?wdb-seed=42`. Summary: `web-perf`. | BD | `--help` | Y |
 | `web_perf_lib.py` | Browser side of `web_perf.py` (init script, flow replay, one page load). | BD | docstring | Y |
-| `week_pin.py` | Catalog row plus local tag: `--web N` (`grok_web_wN`), `--build N` (`grok_build_wN`), or `--id`. Human week ritual. | D | `--help` | N |
+| `week_pin.py` | Catalog row, notes, local tag: `--web N`, `--build N`, `--id`. Idempotent. | D | `--help` | N |
+| `ci_archive.py` | CI: a merge adding `design/changelog/0.N.0.md` pins web + build week N (tags, rows, docs) and pushes. `--dry-run`, `--selftest`. | D | `--help` | N |

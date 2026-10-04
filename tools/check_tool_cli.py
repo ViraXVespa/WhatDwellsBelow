@@ -39,7 +39,7 @@ EXEMPT_RESULT = {"agent_log", "wdb_scratch_server"}  # run helper itself; long-r
 WRITERS = {
     "doc_patch", "patch_code_map", "code_map", "tunables", "build_changelog",
     "week_pin", "write_utf8_file", "list_unused_funcs", "bot_opt", "split_funcs", "facade_requal",
-    "move_script_cluster", "archive_prior_changelogs", "enable_texture_mips",
+    "move_script_cluster", "archive_prior_changelogs", "enable_texture_mips", "ci_archive",
 }
 # flags `--help` must list (tool contract extras beyond --root/--dry-run); web_perf is advisory, so it needs --strict to fail
 REQUIRED_HELP = {"web_perf": ("--flow", "--baseline", "--save-baseline", "--strict", "--repeat", "--site"), "export_web": ("--out",)}
@@ -61,7 +61,8 @@ SMOKE: dict[str, list] = {
     "build_changelog": [["--dry-run"]],
     "check_code_map": [[]],
     "check_load_graph": [[], ["--bot"]],
-    "check_script_cap": [[], ["--git-changed"], ["--sweep"], ["--bot"], ["--bot", "--sweep"], ["--bot", "--list", "--over-kb", "8"]],
+    "check_script_cap": [[], ["--git-changed"], ["--sweep"], ["--bot"], ["--bot", "--sweep"], ["--bot", "--list", "--over-kb", "8"], ["--selftest"]],
+    "ci_archive": [["--dry-run"], ["--selftest"]],
     "check_shot_gaps": [[]],
     "check_tool_docs": [[]],
     "clean_agent_logs": [["--dry-run"]],

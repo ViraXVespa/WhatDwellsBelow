@@ -31,6 +31,8 @@ Plain text, no code fence when emitted. Body shape:
 | Named revert / what was 0.1.4? | That one file (flat or under `design/changelog/archive/{epoch}.{series}/`). |
 | Game | `version.json` + `changelog.json`. |
 
+**Week close.** One extra file per week, `design/changelog/0.N.0.md` (patch 0 of the closing series; a whole-week summary in the same body shape), from Web Phase 7 or from Build when the User asks. Name it explicitly (it is not patch + 1) and commit it on `grok-build-wN`; its arrival on `main` creates the week's archives (`versioning.md`).
+
 Every Bot PR ships its entry, docs-only and tools-only PRs included (no player-visible change: say so in a bullet and keep the `Summary:` line short). `{label}` is the patch after the newest stamp on `origin/main`; CI stamps in merge order, so if `main` moved before your merge, rename the file to the new next label (`python3 tools/doc_patch.py next-label`). Pages `/changelog/` is the public index.
 
 ## In-game
