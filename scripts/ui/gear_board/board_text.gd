@@ -4,6 +4,7 @@ const Stats := preload("res://scripts/ui/gear_board/stats.gd")
 const Fmt := preload("res://scripts/ui/gear_board/text_fmt.gd")
 const Opts := preload("res://scripts/ui/gear_board/opts.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
+const ItemNames := preload("res://scripts/data/item_names.gd")
 
 static func item_cell(it: Dictionary) -> String:
 	return Fmt.item_cell(it)
@@ -108,7 +109,7 @@ static func current_block(it: Dictionary) -> String:
 	if Fmt.is_risk(it):
 		head += "  ·  lost on death unless mailed"
 	lines.append(head)
-	var desc := str(it.get("desc", ""))
+	var desc := ItemNames.desc_of(it)
 	if desc != "":
 		lines.append(desc)
 	var stats := stat_bits(it)

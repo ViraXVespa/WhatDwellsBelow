@@ -11,7 +11,7 @@ English is the default and only shipped locale. Player-facing strings go through
 2. `tr()` looks the key up in the active language's PO file. `scripts/data/locale/en.po` pairs each key (`msgid`) with its English text (`msgstr`). Change a sentence by editing the `msgstr`; the key stays.
 3. A key with no entry shows as the raw key, so gaps are easy to spot.
 4. At startup `LocS.setup()` (`app_loc.gd`) loads every code in `LOCALES` and picks one: the `--wdb-locale=xx` flag, else the language saved in the save payload, else `en`.
-5. Things that are ids (items, artifacts, skills, slots, boss roles) store the id, not the text. Screens turn the id into text with `tr()` when they draw. Saved items keep a name key (`nk`, for example `["gear.longbow"]`) and a `forged` flag; `ItemNames.name_of()` builds the name from them, and the saved `name` is a cache that `ItemNames.refresh()` rewrites on load and on language change.
+5. Things that are ids (items, artifacts, skills, slots, boss roles) store the id, not the text. Screens turn the id into text with `tr()` when they draw. Saved items keep a name key (`nk`, for example `["gear.longbow"]`) and a `forged` flag; `ItemNames.name_of()` builds the name from them, and the saved `name` is a cache that `ItemNames.refresh()` rewrites on load and on language change. The description works the same way: `ItemNames.desc_of()` derives it from slot, rarity, tool, `charge_max` or the artifact id (`item.<id>.desc`), and `desc` is a cache rewritten by the same calls. The ghost shop stock holds ids only; the shop screen looks up name and text when it draws.
 6. The Gameplay settings page has a Language row. It cycles `LOCALES`; with one language it changes nothing. The choice is saved as `locale` with the other preferences.
 7. Controls only translate when their text is assigned, so a language change shows after a screen rebuild (the row rebuilds its page).
 
@@ -21,13 +21,13 @@ English is the default and only shipped locale. Player-facing strings go through
 |------|------|
 | `scripts/data/locale/en.po` | Source strings, sorted by key. Plural entries use `msgid_plural` and `msgstr[n]`. |
 | `scripts/app/app_loc.gd` | `LocS`: `setup`, `set_locale`, `apply_saved`, `next_locale`, `name_of`, `plural(key, n)`, `tr_or(key, fallback)`. |
-| `scripts/data/item_names.gd` | `ItemNames`: `base_nk`, `name_of`, `forge`, `refresh`, `migrate` (old saves). |
+| `scripts/data/item_names.gd` | `ItemNames`: `base_nk`, `name_of`, `desc_of`, `forge`, `refresh`, `migrate` (old saves). |
 
 Registration: `project.godot` `[internationalization]` lists `en.po`. `setup()` skips locales already registered, so there are no duplicates. The OS locale is ignored on purpose.
 
 ## Key naming
 
-`<file stem>.<slug>`, lowercase, dots and underscores only. The slug is the first words of the English text (about five words, 32 chars). A string used in two or more places is `common.<slug>`. Collisions get `_2`. Keys never look like English text, so a Control's auto-translate cannot double-translate. Id-derived keys: `item.<id>.name`, `skill.<id>`, `slot.<slot>`, `boss.<role>`, `gear.<type>`. Never rename a shipped key; if the wording changes, edit only the `msgstr`.
+`<file stem>.<slug>`, lowercase, dots and underscores only. The slug is the first words of the English text (about five words, 32 chars). A string used in two or more places is `common.<slug>`. Collisions get `_2`. Keys never look like English text, so a Control's auto-translate cannot double-translate. Id-derived keys: `item.<id>.name`, `item.<id>.desc`, `gear.desc_piece` / `desc_tool` / `desc_potion` / `desc_food`, `skill.<id>`, `slot.<slot>`, `boss.<role>`, `gear.<type>`. Never rename a shipped key; if the wording changes, edit only the `msgstr`.
 
 ## Add a string
 
@@ -51,7 +51,7 @@ Player-facing sites are converted (menus, prompts, tutorial, quest, shop, tables
 | Left in English | Why |
 |-----------------|-----|
 | `archive_catalog.json` label/desc | shared data file; the PO overrides it by `archive.<id>.*` |
-| item `desc` text and shop `stock` text in saves | persisted prose; refreshed only when an item is re-rolled or restocked |
+| rarity words in item text (`Blue`) | `rarity.capitalize()` of the id, no keys yet |
 | `data/tunables.gd` `ONE_LINER`, `foundation.gd` hint, `launch.gd` name | const or dev text |
 | `debug/*`, smokes, logs, ids, node names | out of scope |
 

@@ -542,9 +542,6 @@ msgstr "Send All"
 msgid "common.starter_leveled_to"
 msgstr "Starter leveled to %d."
 
-msgid "common.text"
-msgstr "%s %s."
-
 msgid "common.text_2"
 msgstr "%s %s"
 
@@ -807,6 +804,18 @@ msgstr "Tool locked to hatchet."
 
 msgid "gather_node.tool_locked_to_pickaxe"
 msgstr "Tool locked to pickaxe."
+
+msgid "gear.desc_food"
+msgstr "Heal-over-time."
+
+msgid "gear.desc_piece"
+msgstr "{rarity} {name}."
+
+msgid "gear.desc_potion"
+msgstr "Instant heal. {n} charges per run."
+
+msgid "gear.desc_tool"
+msgstr "Run tool. Locked to {name}."
 
 msgid "gear.forged"
 msgstr "Forged {name}"
@@ -1389,18 +1398,6 @@ msgstr "You wake in Placeholdia."
 
 msgid "progress_make.a_curious_relic"
 msgstr "A curious relic."
-
-msgid "progress_make.a_run_only_relic"
-msgstr "A run-only relic."
-
-msgid "progress_make.heal_over_time"
-msgstr "Heal-over-time."
-
-msgid "progress_make.instant_heal_charges_per_run"
-msgstr "Instant heal. %d charges per run."
-
-msgid "progress_make.run_tool_locked_to"
-msgstr "Run tool. Locked to %s."
 
 msgid "progress_make.trail_bread"
 msgstr "Trail Bread"
