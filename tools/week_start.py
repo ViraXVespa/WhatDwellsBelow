@@ -29,7 +29,7 @@ TOOLS = Path(__file__).resolve().parent
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Human-only week start: pin, seed version, week branch, archive, gc, clean.", writes=True, json_out=True)
+    ap = agent_log.std_parser("Human-only week start: seed version, week branch, changelog archive, catch-up pins, gc, clean.", writes=True, json_out=True)
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     dry = args.dry_run

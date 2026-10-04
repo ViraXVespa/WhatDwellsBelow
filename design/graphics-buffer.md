@@ -21,4 +21,4 @@ Build Imagine: unlit 4-facing torch-and-bracket bible only, isolated, wording li
 
 Invented range, energy, and cap values go in tunables and debug. Do not retune those values to fake smoothness.
 
-Hub sun uses building occupancy. Hub crystal disc does not. Hub RT gets a 3x3 blur. Actor crystal squash is player-only.
+The hub RT is baked offline (`hub-bake.md`): sun disc and crystal bump by hand, mesh shadows, one 3x3 blur. Building interiors are not written. Actor crystal squash is player-only.
