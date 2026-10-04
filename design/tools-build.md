@@ -17,7 +17,7 @@ Rules, CLI contract, surface key: `tools.md`. Runner habits: `pc-offload.md`. Su
 | `run_dungeon_load_timing.py` | Placeholdia -> Dungeon load-timing smoke. Summary: `dungeon-load-timing`. | WD | `--help` | N |
 | `run_dungeon_map.py` | Dungeon generation map smoke. Summary: `dungeon-map`. | WD | `--help` | N |
 | `run_dungeon_map_sweep.py` | Map smoke over seeds. Summary: `dungeon-map-sweep`. | D | `--help` | N |
-| `run_bake_camp.py` | Bake `hub_light.png` through `--wdb-bake-camp` on a real renderer (auto display; `--headless` gives the same atlas; `shadow_px=0` FAILs). Never rewrites `camp.tscn`. Summary: `bake-camp`. | BD | `--help` | Y |
+| `run_bake_camp.py` | Bake `hub_light.png` through `--wdb-bake-camp` on a real renderer (auto display; prints `stamp=`; `shadow_px=0` FAILs). Never rewrites `camp.tscn`. Summary: `bake-camp`. | BD | `--help` | Y |
 | `export_web.py` | Export the GitHub Pages build (Godot Web, no threads; runs `enable_texture_mips.py` before `--import`). `--archives` adds the `_pages/` site; `--out DIR` exports to a scratch dir. | D | `--help` | N |
 | `run_agent_py.py` | Run an ephemeral script from `_logs/agent-py/` and delete it after. Prefer a real tool. Summary: `agent-py`. | D | `--help` | N |
 | `clean_agent_logs.py` | Delete raw logs under `_logs/` (`--new-week` also every stamped summary and index). Summary: `clean`. | D | `--help` | N |

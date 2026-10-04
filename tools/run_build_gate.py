@@ -4,7 +4,7 @@
     python3 tools/run_build_gate.py [--skip-import] [--force]
     python3 tools/run_build_gate.py --batch --warnscan-baseline B.json [--areas p6,static]
 --batch = import + restore `.import` churn under assets/ + check_load_graph + the script-name check (duplicate
-basenames) + `--warnscan-baseline` adds `bot_warnscan --non-leak-diff B` (same --areas as the baseline). Run it once
+basenames) + check_hub_bake (png vs HUB_BAKE_STAMP) + `--warnscan-baseline` adds `bot_warnscan --non-leak-diff B` (same --areas as the baseline). Run it once
 per batch. Refuses (exit 2) if Godot is already on this --path unless --force. Old spellings: -SkipImport -Force
 -ImportTimeoutSec. Each run writes _logs/build-gate/<stamp>-build-gate.txt; read it with read_summary.py --job build-gate.
 """
@@ -83,6 +83,10 @@ def main(argv: list[str] | None = None) -> int:
             code, lines = child(root, "check_script_cap.py", "script-cap", *bot_flag)
             body += [f"--- script names exit={code} ---"] + (lines or ["(missing summary)"]) + [""]
             fail += int(code != 0)
+        print("== hub bake stamp ==")
+        code, lines = child(root, "check_hub_bake.py", "hub-bake")
+        body += [f"--- hub bake stamp exit={code} ---"] + lines[-3:] + [""]
+        fail += int(code != 0)
     if args.warnscan_baseline:
         print("== warnscan non-leak diff ==")
         flags = ["--non-leak-diff", args.warnscan_baseline] + (["--areas", args.areas] if args.areas else [])

@@ -6,8 +6,8 @@
 Default is a real renderer: uses $DISPLAY / a live X socket, else xvfb-run (godot_lib.pick_display), software GL
 is fine. --headless (or no display and no xvfb-run) forces the headless driver. The atlas is the runtime yard render
 (day gradient, cast skirts, blur: all CPU), saved as is. shadow_px=0 is a FAIL in either mode (no box cast: the Layout
-did not realize). After a bake, review the shots, then paste RESULT stamp= into HUB_BAKE_STAMP (hub_bake.gd): until
-then the game ignores the png and computes the yard at runtime.
+did not realize). After a bake, review the shots, then paste RESULT stamp= into HUB_BAKE_STAMP (hub_bake.gd): the game
+loads only a png with that stamp and crashes at the hub otherwise (check_hub_bake.py is the no-Godot check).
 Never rewrites camp.tscn. Per-path Godot lock; never kills godot*.
 Summary: _logs/bake-camp/<stamp>-bake-camp.txt; RESULT carries clean=, shadow_px=, stamp=, display=.
 """
