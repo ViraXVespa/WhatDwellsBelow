@@ -5,7 +5,7 @@ Read when: running a Windows runner, a Pages/release tool, or a session report (
 
 Rules, CLI contract, surface key: `tools.md`. Runner habits: `pc-offload.md`. Summaries: `_logs/<job>/<stamp>-<job>.txt` plus `index.txt`. Not for the Bot.
 
-### Runners and Windows tools (Python; `python3 tools/X.py`)
+### Runners and Windows tools (Python; `python tools/X.py`)
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|

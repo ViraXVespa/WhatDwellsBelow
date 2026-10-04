@@ -22,13 +22,13 @@ Unattended play-camera postcard. Godot paints a real GPU frame; Python owns mode
 - build: scaled PNG (default 50 percent) under `_logs/shots/`.
 - user: full-res PNG and open it when done.
 
-Command: `python3 tools/run_shots.py --mode web|build|user` (optional `--seed`, `--floor`, `--scale`, `--settle-ms`, `--timeout-sec`, `--show`, `--out`, `--hud 0|1`, `--fixed-fps N`, `--width`, `--height`, `--zoom`, `--px`, `--pz`, `--cx`, `--cz`, `--steps`, `--no-pixels`, `--dry-run`, `--json`; `--help` is the truth). Presets live in `tools/shot-recipes.json`.
+Command: `python tools/run_shots.py --mode web|build|user` (optional `--seed`, `--floor`, `--scale`, `--settle-ms`, `--timeout-sec`, `--show`, `--out`, `--hud 0|1`, `--fixed-fps N`, `--width`, `--height`, `--zoom`, `--px`, `--pz`, `--cx`, `--cz`, `--steps`, `--no-pixels`, `--dry-run`, `--json`; `--help` is the truth). Presets live in `tools/shot-recipes.json`.
 Needs a real GL window, so a display: a Windows desktop with a GPU, or Linux (picked automatically, see Display; the Bot box has X on `:1` and `:2`). Default: HUD on, spawn pose, zoom 1, window parked off-screen.
 Summary: `_logs/shots/<stamp>-shots.txt` (also the `summary=` of the last line, `RESULT PASS|INFO|FAIL band=...`). The Godot launch and lock come from `godot_lib.py` (per-path lock, kills only its own pid).
 
 ## Full-floor map (`--full-map`)
 
-`python3 tools/run_shots.py --full-map [--seed S] [--floor N] [--max-px 8192] [--keep-tiles] [--out P]` captures a whole dungeon floor and stitches it into one top-down PNG of the real render (the pixel twin of `run_dungeon_map.py` ASCII). Default out: `_logs/shots/fullmap-s{seed}-f{floor}.png`. Seed 42 floor 1 takes about 3 minutes and gives 6816 x 5569 px at the 8192 cap (native 27264 x 22275). Needs Pillow.
+`python tools/run_shots.py --full-map [--seed S] [--floor N] [--max-px 8192] [--keep-tiles] [--out P]` captures a whole dungeon floor and stitches it into one top-down PNG of the real render (the pixel twin of `run_dungeon_map.py` ASCII). Default out: `_logs/shots/fullmap-s{seed}-f{floor}.png`. Seed 42 floor 1 takes about 3 minutes and gives 6816 x 5569 px at the 8192 cap (native 27264 x 22275). Needs Pillow.
 
 How: the runner writes a one-step flow (`{"op":"sweep"}`, `step_sweep.gd`) and forces scene dungeon, HUD off, zoom 1, 60 fps. The op streams every chunk (`stream_all`), freezes the player, hides the player and enemies, then walks a grid of tiles: teleport the player, `rig.follow`, tick the stream and light a few frames, read the frame. Tile centres make the camera shift a whole number of pixels (`offset_resid` 0.0 in the log), so tiles butt together with no blending. Each tile keeps only its centre (`keep_x` 192, `keep_y` 112 px trimmed per side) because the light window follows the player. `--max-px` box-reduces by a power of two until the long side fits (0 = native). `--keep-tiles` keeps `tiles/` and `sweep.json` for debugging.
 
@@ -72,11 +72,11 @@ fail: timeout, nonzero Godot exit, no image, or script error.
 
 ## Display
 
-Shots need a real GL frame; `godot_lib.pick_display()` chooses: `$DISPLAY` if the X server answers, else the first live socket in `/tmp/.X11-unix`, else the command is wrapped in `xvfb-run` (software GL is fine). `python3 tools/godot_lib.py --display` prints the choice. Windows needs no display. Headless Godot cannot draw pixels, so `--no-pixels` flows (asserts only) and the smokes are the only headless runs. `run_bake_camp.py` uses the same pick; its shadow projection is CPU-side, so a headless bake gives the same atlas (`--headless` forces the old driver).
+Shots need a real GL frame; `godot_lib.pick_display()` chooses: `$DISPLAY` if the X server answers, else the first live socket in `/tmp/.X11-unix`, else the command is wrapped in `xvfb-run` (software GL is fine). `python tools/godot_lib.py --display` prints the choice. Windows needs no display. Headless Godot cannot draw pixels, so `--no-pixels` flows (asserts only) and the smokes are the only headless runs. `run_bake_camp.py` uses the same pick; its shadow projection is CPU-side, so a headless bake gives the same atlas (`--headless` forces the old driver).
 
 ## Add or change a knob
 
-One flag or one preset, one prove shot, then stop. Edit `tools/shot-recipes.json` or a constant in `tools/run_shots.py`. New flag: parse in `tool_args.gd`, apply in `tool_pose.gd`, `capture.gd` or the step modules, add the `run_shots.py` argument (forwarded by `_extra_flags`). Prove with one `python3 tools/run_shots.py --mode build` shot, read `_logs/shots/<stamp>-shots.txt`, then `check_tool_cli.py`.
+One flag or one preset, one prove shot, then stop. Edit `tools/shot-recipes.json` or a constant in `tools/run_shots.py`. New flag: parse in `tool_args.gd`, apply in `tool_pose.gd`, `capture.gd` or the step modules, add the `run_shots.py` argument (forwarded by `_extra_flags`). Prove with one `python tools/run_shots.py --mode build` shot, read `_logs/shots/<stamp>-shots.txt`, then `check_tool_cli.py`.
 
 ## Troubleshooting
 

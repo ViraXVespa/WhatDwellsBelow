@@ -3,7 +3,7 @@
 (cluster folder layout, design/refactor.md). Also lists legacy loose `<stem>_*.gd` beside the facade if any remain.
 A helper path inside a cluster folder resolves to its facade. Facade-less families (no `<stem>.gd`): pass the cluster folder itself (lists its *.gd).
 
-    python3 tools/list_facade_cluster.py --facade scripts/combat/enemy.gd
+    python tools/list_facade_cluster.py --facade scripts/combat/enemy.gd
 Summary: _logs/facade-cluster/<stamp>-facade-cluster.txt. Old spelling: -Facade.
 """
 from __future__ import annotations

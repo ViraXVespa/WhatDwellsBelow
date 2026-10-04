@@ -23,7 +23,7 @@ Grok Build I2V uses that body as-is. The web-browser preamble (image-to-video / 
 
 Walk uses the walk wrapper in `tools/i2v_seeds.py`: **hold** the idle still, walk in place, then settle and **hold** that still so the clip start is idle-to-walk and the clip end is walk-to-idle. Do not treat the whole clip as a looping gait. One-shot actions use the one-shot wrapper (start on the still, finish the motion, recover or hold; do not claim a walk loop). One-shot heads are **planted** (no treadmill, no marching). Attack / special / gather keep the live MOTION beat sheet, worded as an objectless mime: no new props at any point. Dispel is the knife exception.
 
-Parked: posed attack *stills* are not this file. Open art_pipeline.attack_keyframes and run `python3 tools/attack_keyframes.py --resume` only when the User resumes that pipeline. Do not substitute those still prompts for I2V `MOTION`.
+Parked: posed attack *stills* are not this file. Open art_pipeline.attack_keyframes and run `python tools/attack_keyframes.py --resume` only when the User resumes that pipeline. Do not substitute those still prompts for I2V `MOTION`.
 
 `--action gather` (Animation Browser name with no tool suffix) writes **both** gather sheets. Unknown actions MUST NOT fall back to `walk`.
 

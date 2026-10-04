@@ -7,8 +7,8 @@ reports, ASCII output, repo-relative POSIX paths, one final line
 Each run writes its own `_logs/<job>/<stamp>-<job>.txt` (gitignored, never overwritten) and `index.txt` lists
 the newest runs first (`run_log_lib.py`). No session keys.
 
-    python3 tools/agent_log.py <job>     # prints dir/index for a job, makes the dir
-    python3 tools/agent_log.py --selftest   # run-log layout check in a throwaway folder
+    python tools/agent_log.py <job>     # prints dir/index for a job, makes the dir
+    python tools/agent_log.py --selftest   # run-log layout check in a throwaway folder
 """
 from __future__ import annotations
 

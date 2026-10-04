@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Housekeep _logs/ so runners do not clog the disk. Never touches files outside _logs/.
 
-    python3 tools/clean_agent_logs.py [--keep-raw] [--max-age-hours 24] [--dry-run]
-    python3 tools/clean_agent_logs.py --new-week     # human-only: wipes every run summary, index and raw log + scratch dirs
+    python tools/clean_agent_logs.py [--keep-raw] [--max-age-hours 24] [--dry-run]
+    python tools/clean_agent_logs.py --new-week     # human-only: wipes every run summary, index and raw log + scratch dirs
 Default: delete raw *.log / *.err (run summaries and index.txt stay; each run keeps its own stamped files and the
 newest 20 stay per folder, run_log_lib.py). Summary: _logs/clean/ (its own stamped run files).
 Old spellings: -KeepRaw -MaxAgeHours -WhatIf -NewWeek.

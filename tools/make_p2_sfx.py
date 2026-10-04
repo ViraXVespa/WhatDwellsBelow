@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shim (one release): use `python3 tools/make_sfx.py --prefix p2_` instead. Same cues, byte-identical wavs."""
+"""Shim (one release): use `python tools/make_sfx.py --prefix p2_` instead. Same cues, byte-identical wavs."""
 import sys
 from pathlib import Path
 

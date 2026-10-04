@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Advisory performance run of the EXPORTED web build in headless Chrome. Never a gate.
 
-  python3 tools/web_perf.py [--site DIR | --url U] [--flow NAME[,NAME]|all] [--save-baseline F | --baseline F]
+  python tools/web_perf.py [--site DIR | --url U] [--flow NAME[,NAME]|all] [--save-baseline F | --baseline F]
 
 Serves --site (default docs; use a fresh `export_web.py --out DIR`, docs/ may be stale) and replays flows from
 tools/web-perf-flows.json (steps: phase wait settle key hold click eval waitplay shot; `query` adds URL args like wdb-seed=42; `boot` prepends the splash/title steps). Reports load_ms
@@ -147,7 +147,7 @@ def main(argv: list[str] | None = None) -> int:
     site, srv, url = root / args.site, None, args.url
     if not url:
         if not (site / "index.html").is_file():
-            agent_log.fail("no exported site at %s (python3 tools/export_web.py --out DIR)" % args.site)
+            agent_log.fail("no exported site at %s (python tools/export_web.py --out DIR)" % args.site)
         srv = serve(site)
         url = "http://127.0.0.1:%d/index.html" % srv.server_address[1]
     shots = root / "_logs" / JOB

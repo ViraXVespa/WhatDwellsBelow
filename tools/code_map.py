@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """design/code-map.md CLI: check, row, patch (check_code_map.py and patch_code_map.py are shims to it).
 
-    python3 tools/code_map.py check
-    python3 tools/code_map.py row --path scripts/foo/bar.gd
-    python3 tools/code_map.py patch --system "Debug" --add scripts/x.gd [--remove p] [--rename old=new] [--dry-run]
+    python tools/code_map.py check
+    python tools/code_map.py row --path scripts/foo/bar.gd
+    python tools/code_map.py patch --system "Debug" --add scripts/x.gd [--remove p] [--rename old=new] [--dry-run]
 
 Logic lives in code_map_lib (rows, ticks, add/remove/rename). The three old script
 names stay as shims for one release. Summaries: _logs/code-map-{check,row,patch}/.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Shot-gap check: which UI states (menus, NPC panels, pages) have no shot flow, and are flows/published shots healthy.
 
-  python3 tools/check_shot_gaps.py [--changed [REF]] [--advisory] [--strict] [--json]
+  python tools/check_shot_gaps.py [--changed [REF]] [--advisory] [--strict] [--json]
 
 States come from tools/shot-flows/states.json (regexes over the UI/interact sources; add a source for a new
 menu). A flow covers a state when it lists it in `covers`, or derives it (an `interact` op for kind K covers

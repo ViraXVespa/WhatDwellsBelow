@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Hub bake check: the committed assets/baked/hub_light.png must match HUB_BAKE_STAMP in hub_bake.gd.
 
-    python3 tools/check_hub_bake.py [--root R] [--json]
+    python tools/check_hub_bake.py [--root R] [--json]
 
 The game loads only a baked hub image whose size matches the Layout and whose RGBA8 pixels hash to HUB_BAKE_STAMP
 (first 16 hex of SHA-256), and crashes with a FATAL message otherwise. This is the same hash without Godot, so a stale

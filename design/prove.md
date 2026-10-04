@@ -36,8 +36,8 @@ One standard for every surface: the cheapest check that would fail if the change
 
 | Case | Command |
 |---|---|
-| P1 boot, P2 weapons, P3 floor, P4 roster, P5 gather, P6 forge and quests, P8 hub and save, P9 audio | `python3 tools/bot_smokes.py --phases N,...` (Build: `run_smokes.py`) |
-| P7 HUD, pause, recap and `smoke_binds.gd` (bind table, swap / refuse, Back-key confirm, toasts, hint tokens) | `python3 tools/bot_smokes.py --phases 7` |
+| P1 boot, P2 weapons, P3 floor, P4 roster, P5 gather, P6 forge and quests, P8 hub and save, P9 audio | `python tools/bot_smokes.py --phases N,...` (Build: `run_smokes.py`) |
+| P7 HUD, pause, recap and `smoke_binds.gd` (bind table, swap / refuse, Back-key confirm, toasts, hint tokens) | `python tools/bot_smokes.py --phases 7` |
 | Phases for a file or door | `bot_smokes.py --for FILE`, `--door D`, `--job D.J` |
 | Menu and NPC flows, headless asserts | `bot_smokes.py --door D --flows` |
 | New UI state has a flow | `check_shot_gaps.py --changed` |
@@ -47,9 +47,9 @@ One standard for every surface: the cheapest check that would fail if the change
 
 ## Recipes
 
-**Doc and code disagree.** Enough to pick the current one: `python3 tools/list_changed.py --history DOC CODE` lists each path's latest commits (and flags uncommitted edits) and prints `newer=`. Trust the newer, and fix the older in the same job when that is a plain correction. Still unclear (similar dates, an uncommitted edit): Build asks with a question prompt, Web asks one question, Bot lists the line under `Stale doc lines (for the User)`.
+**Doc and code disagree.** Enough to pick the current one: `python tools/list_changed.py --history DOC CODE` lists each path's latest commits (and flags uncommitted edits) and prints `newer=`. Trust the newer, and fix the older in the same job when that is a plain correction. Still unclear (similar dates, an uncommitted edit): Build asks with a question prompt, Web asks one question, Bot lists the line under `Stale doc lines (for the User)`.
 
-Each says when it is enough. Image checks use `python3 tools/img_inspect.py CMD ...` (programmatic eyes: facts as text, optional annotated PNG; the library is `tools/imglib/`, `tools-media.md`). The `--json` flag gives one object.
+Each says when it is enough. Image checks use `python tools/img_inspect.py CMD ...` (programmatic eyes: facts as text, optional annotated PNG; the library is `tools/imglib/`, `tools-media.md`). The `--json` flag gives one object.
 
 **Same as main (shots).** Enough for a change that must not alter pixels. Fixed seed flows only (`fixed_fps`, `seed`; two runs are byte-identical). On a `main` checkout and on the branch: `run_shot_flow.py --all --save-baseline DIR`; then `shot_diff.py MAIN_DIR BRANCH_DIR --out OUT`. Expected diffs are the ones the change asked for; any other changed region is a finding. Frame-level detail: `img_inspect.py diff A B --png OUT`.
 

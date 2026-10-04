@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Editor import / script-reload check. Per-path Godot lock; never kills godot*.
 
-    python3 tools/run_godot_import_check.py [--timeout-sec 180]
+    python tools/run_godot_import_check.py [--timeout-sec 180]
 Summary: _logs/godot-import-check/<stamp>-godot-import-check.txt; RESULT carries clean=true|false.
 """
 from __future__ import annotations

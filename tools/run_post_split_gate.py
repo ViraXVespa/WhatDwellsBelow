@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Post-split gate: import check, then optional smokes. One summary.
 
-    python3 tools/run_post_split_gate.py [--with-smokes [--phases 1,2,6]] [--force]
+    python tools/run_post_split_gate.py [--with-smokes [--phases 1,2,6]] [--force]
 Refuses (exit 2) if any Godot is running unless --force (it never kills it). Old spellings:
 -WithSmokes -Phases -ImportTimeoutSec -SmokeTimeoutSec -Force. Summary: _logs/post-split-gate/<stamp>-post-split-gate.txt
 """

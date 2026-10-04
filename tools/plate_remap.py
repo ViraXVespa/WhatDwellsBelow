@@ -8,8 +8,8 @@ The plate is found by imglib.key.plate_mask: Lab distance to several colours sam
 (a generated plate drifts in shade and carries JPEG noise), a hue band, then connected components. Every
 plate pixel ends exactly (255, 0, 255); the edge band is shifted by its plate mix.
 
-  python3 tools/plate_remap.py SRC DEST
-  python3 tools/plate_remap.py SRC DEST --wand 48 --edge 5 --mask DEST.mask.png
+  python tools/plate_remap.py SRC DEST
+  python tools/plate_remap.py SRC DEST --wand 48 --edge 5 --mask DEST.mask.png
 """
 from __future__ import annotations
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Dungeon generation map smoke (--wdb-dungeon-map-smoke). Per-path Godot lock.
 
-    python3 tools/run_dungeon_map.py [--seed 42 --floor 1 --scale 8 --timeout-sec 180]
+    python tools/run_dungeon_map.py [--seed 42 --floor 1 --scale 8 --timeout-sec 180]
 Old spellings: -Seed -Floor -Scale -TimeoutSec. Summary: _logs/dungeon-map/<stamp>-dungeon-map.txt
 """
 from __future__ import annotations

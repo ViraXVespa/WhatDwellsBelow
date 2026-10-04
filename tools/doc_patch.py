@@ -3,15 +3,15 @@
 
 CLI (no scratch file needed; --dry-run prints "would write" and changes nothing):
 
-    python3 tools/doc_patch.py replace FILE --old "x" --new "y"
-    python3 tools/doc_patch.py ensure-line FILE --line "text" [--after "anchor"]
-    python3 tools/doc_patch.py set-read-when FILE "when text"
-    python3 tools/doc_patch.py changelog --bullet "one line" [--bullet ...] [--label 0.5.11] [--summary "s"]
-    python3 tools/doc_patch.py next-label     (highest label on disk + 1; a second bullet for the same PR: changelog --label L)
-    python3 tools/doc_patch.py write FILE [--b64 S | stdin] [--bom] [--append]
-    python3 tools/doc_patch.py replace-file FILE (--from-file NEW | stdin)   # whole-file rewrite, file must exist; BOM + CRLF kept
-    python3 tools/doc_patch.py apply plan.json
-    python3 tools/doc_patch.py check
+    python tools/doc_patch.py replace FILE --old "x" --new "y"
+    python tools/doc_patch.py ensure-line FILE --line "text" [--after "anchor"]
+    python tools/doc_patch.py set-read-when FILE "when text"
+    python tools/doc_patch.py changelog --bullet "one line" [--bullet ...] [--label 0.5.11] [--summary "s"]
+    python tools/doc_patch.py next-label     (highest label on disk + 1; a second bullet for the same PR: changelog --label L)
+    python tools/doc_patch.py write FILE [--b64 S | stdin] [--bom] [--append]
+    python tools/doc_patch.py replace-file FILE (--from-file NEW | stdin)   # whole-file rewrite, file must exist; BOM + CRLF kept
+    python tools/doc_patch.py apply plan.json
+    python tools/doc_patch.py check
 
 Library: scratch runners import this module instead of copying replace logic:
 

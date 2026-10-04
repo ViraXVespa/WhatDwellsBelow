@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Week-close archives in CI: both pins (web + build) for week N, created on the merge that adds design/changelog/0.N.0.md.
 
-    python3 tools/ci_archive.py --before SHA --commit SHA --commit-changes --push origin   # what .github/workflows/archive.yml runs
-    python3 tools/ci_archive.py --dry-run [--before SHA] [--commit SHA]                    # same detection, writes nothing
-    python3 tools/ci_archive.py --week N [--commit SHA] ...                                # manual: skip detection (workflow_dispatch)
-    python3 tools/ci_archive.py --selftest                                                # throwaway origin + clones, no GitHub
+    python tools/ci_archive.py --before SHA --commit SHA --commit-changes --push origin   # what .github/workflows/archive.yml runs
+    python tools/ci_archive.py --dry-run [--before SHA] [--commit SHA]                    # same detection, writes nothing
+    python tools/ci_archive.py --week N [--commit SHA] ...                                # manual: skip detection (workflow_dispatch)
+    python tools/ci_archive.py --selftest                                                # throwaway origin + clones, no GitHub
 
 Trigger: a file `design/changelog/{epoch}.{N}.0.md` ADDED between --before and --commit (default HEAD^ .. HEAD), the
 squash-merge of grok-build-wN. Files moved into design/changelog/archive/ and [skip ci] stamp commits never match.

@@ -315,7 +315,7 @@ def main(argv: list[str] | None = None) -> int:
         return agent_log.emit_result("INFO", mode="list")
     exe = resolve_bin()
     if exe is None:
-        agent_log.fail("warnscan: no Godot binary; run python3 tools/bot_smokes.py --setup")
+        agent_log.fail("warnscan: no Godot binary; run python tools/bot_smokes.py --setup")
     names = pick_areas(ns, table) if (ns.areas or ns.phases or not ns.changed) else []
     if ns.changed:
         paths = changed_paths(root, ns.changed)

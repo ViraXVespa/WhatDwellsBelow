@@ -376,7 +376,7 @@ web_perf:
   flows: "title-idle,camp-idle,camp-walk,camp-pause,camp-shop,dungeon-walk,dungeon-fight,hub-load,dungeon-load"
   baseline: tools/web-perf-baseline.json
   gate: advisory
-  # door -> flows to run after a fresh export for a slice in that door (python3 tools/web_perf.py --flow A,B --baseline <baseline>)
+  # door -> flows to run after a fresh export for a slice in that door (python tools/web_perf.py --flow A,B --baseline <baseline>)
   by_door:
     default: "title-idle,camp-walk"
     ui: "camp-pause,camp-shop"

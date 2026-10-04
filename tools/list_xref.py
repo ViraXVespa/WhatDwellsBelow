@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Capped text search; writes a short hit list instead of dumping ripgrep into chat.
 
-    python3 tools/list_xref.py --pattern pc-offload [--path design --path tools] [--include "*.gd"] [--regex]
+    python tools/list_xref.py --pattern pc-offload [--path design --path tools] [--include "*.gd"] [--regex]
 Case-insensitive. Skips top-level archives/, .archive_worktrees/, _logs/, docs/. Summary: _logs/xref/<stamp>-xref.txt.
 Old spellings: -Pattern -Path -Include -MaxHits -MaxFiles -Regex.
 """

@@ -26,4 +26,4 @@ Same rules as above: new file under `assets/audio/`, one `FILES` row, one `App.s
 | Chest open | `interact_act.gd` `open_chest` chest branch (today plays `pickup`) | `chest` / `p10_chest.wav` | 0.4 s creak then latch click |
 | Quest accept | `quest_roll.gd` `accept_quest` | `quest_accept` / `p10_quest_accept.wav` | 0.3 s two-note stamp or seal, hopeful |
 
-Generate a placeholder wav with `python3 tools/make_sfx.py --only <id>`: add one entry to `tools/sfx-cues.json` (sine, noise, mix, cat nodes; the 21 existing p2/p9 cues live there, byte-identical, `--check` proves it). No new `make_pN` script.
+Generate a placeholder wav with `python tools/make_sfx.py --only <id>`: add one entry to `tools/sfx-cues.json` (sine, noise, mix, cat nodes; the 21 existing p2/p9 cues live there, byte-identical, `--check` proves it). No new `make_pN` script.

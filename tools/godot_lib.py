@@ -4,8 +4,8 @@
 Rules: the lock key is the normalized --path dir; wait until that path is free;
 a timeout or compile error kills ONLY the pid this call started, never godot*.
 
-    python3 tools/godot_lib.py --path . --timeout-sec 5     # lock probe: locks, prints, unlocks
-    python3 tools/godot_lib.py --display                    # which display GUI runs (shots, bakes) will use
+    python tools/godot_lib.py --path . --timeout-sec 5     # lock probe: locks, prints, unlocks
+    python tools/godot_lib.py --display                    # which display GUI runs (shots, bakes) will use
 
 GUI runs (`run_godot(..., gui=True)`) need a real renderer: pick_display() takes $DISPLAY, else the first live
 X socket, else wraps the command in xvfb-run (software GL). Headless smokes never need a display.

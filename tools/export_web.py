@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Export the GitHub Pages build (Godot Web, no threads). Windows/Steam Godot or $GODOT_BIN.
 
-    python3 tools/export_web.py [--archives] [--out DIR] [--godot PATH]
+    python tools/export_web.py [--archives] [--out DIR] [--godot PATH]
 Live-only writes docs/. --archives writes a combined site to _pages/ (gitignored); archive pins are
 best-effort, cached under .archive_export_cache/. Logs: _logs/export-web/. Old spelling: -Archives.
 """

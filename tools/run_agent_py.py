@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Run a python script; delete it afterwards when it lives under _logs/agent-py/.
 
-    python3 tools/run_agent_py.py --script _logs/agent-py/patch.py
-    python3 tools/run_agent_py.py --script tools/x.py --keep-script
+    python tools/run_agent_py.py --script _logs/agent-py/patch.py
+    python tools/run_agent_py.py --script tools/x.py --keep-script
 Checked-in scripts are never deleted; --cleanup outside _logs/agent-py/ is refused.
 Prefer a real tool (see design/tools.md) over a scratch. Summary: _logs/agent-py/<stamp>-agent-py.txt
 Old spellings: -Script -KeepScript -Cleanup.

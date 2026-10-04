@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Find reused/duplicated code: whole functions (exact, or same shape with renamed params/locals) and line-block clones.
 
-    python3 tools/list_dupes.py [--lang gd|py|all] [--min-lines 4] [--min-block 8] [--top 40] [--md PATH] [--json]
+    python tools/list_dupes.py [--lang gd|py|all] [--min-lines 4] [--min-block 8] [--top 40] [--md PATH] [--json]
 
 gd = scripts/**/*.gd, py = tools/*.py (archives, .archive_worktrees, _logs skipped). Kinds, ranked by score
 (copies-1)*lines:

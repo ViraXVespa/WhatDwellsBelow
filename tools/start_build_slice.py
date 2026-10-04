@@ -5,7 +5,7 @@ Flags checked against the Grok CLI docs (docs.x.ai/build/cli/reference, docs.x.a
 it is cut from (clean checkout; without it the worktree starts from HEAD plus uncommitted changes), -r ID --fork-session
 fork that session into a new id. A worktree is DETACHED at its base commit: commit there, merge the commit back.
 
-    python3 tools/start_build_slice.py --door dungeon | --job ui.pause | --area player [--ref REF] [--launch] [--dry-run]
+    python tools/start_build_slice.py --door dungeon | --job ui.pause | --area player [--ref REF] [--launch] [--dry-run]
 Writes a postcard (a new _logs/slice-boot/<stamp>-slice-boot.txt per run) and prints the FORK and RETRY lines.
 Worktrees come from the week branch grok-build-w{series} (series from scripts/data/version.json); --ref overrides;
 main is the fallback when the week branch does not exist. Does not edit the live tree or kill Godot; spawns grok

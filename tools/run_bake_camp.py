@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Bake the hub light atlas (assets/baked/hub_light.png) through the --wdb-bake-camp hook.
 
-    python3 tools/run_bake_camp.py [--timeout-sec 180] [--headless]
+    python tools/run_bake_camp.py [--timeout-sec 180] [--headless]
 
 Default is a real renderer: uses $DISPLAY / a live X socket, else xvfb-run (godot_lib.pick_display), software GL
 is fine. --headless (or no display and no xvfb-run) forces the headless driver. The atlas is the runtime yard render

@@ -9,7 +9,7 @@ of that branch adds design/changelog/0.N.0.md (ci_archive.py). Catch-up only: wh
 `grok_web_w{series}` / `grok_build_w{series}` row (CI did not run), the missing rows are pinned at HEAD with local
 tags. Never bumps the epoch, kills Godot, pushes, or writes leave-off. --dry-run prints "would ..." lines.
 
-    python3 tools/week_start.py [--dry-run]       # old: -WhatIf
+    python tools/week_start.py [--dry-run]       # old: -WhatIf
 Each run writes _logs/week-start/<stamp>-week-start.txt (read_summary.py --job week-start).
 """
 from __future__ import annotations

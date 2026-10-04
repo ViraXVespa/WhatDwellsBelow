@@ -7,7 +7,7 @@
 <stamp> is local time YYYYMMDD-HHMMSS (+NN when two runs of one job start in the same second). Keep-count pruning
 runs on every write: the 20 newest stamps stay per folder, older stamped files go. The weekly clear is
 `clean_agent_logs.py --new-week`. Read a job with `read_summary.py --job NAME` (index first, then the newest summary).
-`python3 tools/agent_log.py --selftest` checks this layout in a throwaway folder.
+`python tools/agent_log.py --selftest` checks this layout in a throwaway folder.
 """
 from __future__ import annotations
 

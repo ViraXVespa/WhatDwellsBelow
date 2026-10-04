@@ -5,6 +5,7 @@ import hmac
 import json
 import os
 import subprocess
+import sys
 import threading
 import time
 import uuid
@@ -84,7 +85,7 @@ def run_job(job_id: str, code: str) -> None:
         kwargs["creationflags"] = CREATE_NO_WINDOW
 
     try:
-        proc = subprocess.Popen(["python", "-u", r"tools\_scratch.py"], **kwargs)
+        proc = subprocess.Popen([sys.executable, "-u", str(Path("tools") / "_scratch.py")], **kwargs)
     except Exception as exc:
         with JOBS_LOCK:
             job["done"] = True

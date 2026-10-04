@@ -40,7 +40,7 @@ A `.gd` body is tabs. `write_text` turns a leading run of four spaces into one t
 
 Docs in this pass: same scratch updates topic files, one code-map row, and tunables the slice made wrong, writes `design/changelog/{label}.md` via `doc_patch.write_changelog`, and runs `tools/check_load_graph.py`. A later scratch in the same emit pass is a delta. Skip every path whose write already printed `wrote`, `deleted`, or `already applied` / `already gone`. Do not re-emit the whole Phase 3 list. Do not rewrite a file that already matches the accepted goal unless that file is why RESULT failed.
 
-When a slice needs a visual proof, run `python3 tools/run_shots.py --mode web` and paste the clipboard image with the printed RESULT. Prove from work that landed, using only existing runners. The scratch runs the test through `doc_patch.dump_job(ROOT, job)` (or `run_checker` for the load-graph). `dump_job` returns `(rc, body)` and already prints the summary. Unpack it: `rc, body = dp.dump_job(ROOT, job)`. Never `sys.exit(dp.dump_job(...))` — a tuple exit is a false fail. After the process exits, print the summary file body only if you did not call `dump_job`, never the `Summary ->` path. Last line is `RESULT checker=PASS|FAIL` or `RESULT gate=PASS|FAIL` plus any extra marks. `sys.exit(int)` only: `sys.exit(0)` on PASS and `sys.exit(1)` on FAIL. If `dump_job` / import check reports a parse or compile error, stop; do not start a longer Godot prove.
+When a slice needs a visual proof, run `python tools/run_shots.py --mode web` and paste the clipboard image with the printed RESULT. Prove from work that landed, using only existing runners. The scratch runs the test through `doc_patch.dump_job(ROOT, job)` (or `run_checker` for the load-graph). `dump_job` returns `(rc, body)` and already prints the summary. Unpack it: `rc, body = dp.dump_job(ROOT, job)`. Never `sys.exit(dp.dump_job(...))` — a tuple exit is a false fail. After the process exits, print the summary file body only if you did not call `dump_job`, never the `Summary ->` path. Last line is `RESULT checker=PASS|FAIL` or `RESULT gate=PASS|FAIL` plus any extra marks. `sys.exit(int)` only: `sys.exit(0)` on PASS and `sys.exit(1)` on FAIL. If `dump_job` / import check reports a parse or compile error, stop; do not start a longer Godot prove.
 
 | Work that landed | Prove | Dump |
 |------|-------|------|
@@ -51,7 +51,7 @@ When a slice needs a visual proof, run `python3 tools/run_shots.py --mode web` a
 | Gen / map shape | `tools/run_dungeon_map.py` | dungeon-map summary |
 | Named phase assert | `tools/run_smokes.py` | smokes summary |
 | GDScript import / COMPILE | `tools/run_godot_import_check.py` via `dump_job(..., "godot-import-check", script="run_godot_import_check.py")` | godot-import-check summary; fail on COMPILE or clean=false |
-| Postcard shot | `python3 tools/run_shots.py --mode web` from the scratch (same flags the slice named) | shots summary; User pastes the clipboard image |
+| Postcard shot | `python tools/run_shots.py --mode web` from the scratch (same flags the slice named) | shots summary; User pastes the clipboard image |
 
 A slice that only edits protocol docs does not boot Godot. If there is no runner for that work, say so and prove with the load-graph / gate only.
 

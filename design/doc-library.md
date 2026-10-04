@@ -11,7 +11,7 @@ If a call does not work intuitively, it is designed wrong. Fix `doc_patch` (or t
 
 ## doc_patch CLI
 
-`python3 tools/doc_patch.py <cmd>` (`--dry-run` prints "would write" and changes nothing; `--eol keep|crlf|lf`, default keep):
+`python tools/doc_patch.py <cmd>` (`--dry-run` prints "would write" and changes nothing; `--eol keep|crlf|lf`, default keep):
 
 | Cmd | Does |
 |---|---|

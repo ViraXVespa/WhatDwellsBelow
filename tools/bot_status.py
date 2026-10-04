@@ -157,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
     for size, rel in ship:
         lines.append(f"{size}\t{rel}")
     lines.append("")
-    lines.append(f"over_5kb_under_10kb count={len(sweep)} (rows: python3 tools/check_script_cap.py --sweep)")
+    lines.append(f"over_5kb_under_10kb count={len(sweep)} (rows: python tools/check_script_cap.py --sweep)")
     lines.append("")
     lines.append(f"reuse_brief count={len(brief)} file={REUSE_FILE}")
     if not brief:

@@ -156,8 +156,8 @@ def main(argv: list[str] | None = None) -> int:
         areas, phases = phases_for(files)
         run = ",".join(map(str, phases)) or "1,2,6"
         print(f"areas={','.join(areas) or 'none'}" + ("" if phases else " (no phase loads it; BOT.md baseline 1,2,6)"))
-        print(f"run: python3 tools/bot_smokes.py --phases {run}")
-        print(f"warn: python3 tools/bot_warnscan.py --areas {','.join(areas) or 'static'}   (or --changed)")
+        print(f"run: python tools/bot_smokes.py --phases {run}")
+        print(f"warn: python tools/bot_warnscan.py --areas {','.join(areas) or 'static'}   (or --changed)")
         return agent_log.emit_result("INFO", phases=run, areas=",".join(areas))
     for tok in [t for t in ns.phases.replace(" ", "").split(",") if t]:
         if not tok.isdigit() or int(tok) not in (0, *SMOKE_PHASES):

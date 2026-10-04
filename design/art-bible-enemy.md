@@ -13,7 +13,7 @@ Imagine runs only through the isolated-media gate (CLI Build). Samples stay out 
 
 ## Props, hands and the prompt (one home: the tool)
 
-`python3 tools/bible_prompt.py --enemy ID` prints the filled prompt; `--list-enemies` lists the ids with props, hands and idle poses; `--body "clause"` sets the body description. The prop and hand table, the template, the edge wording and the idle rule live in `tools/bible_prompt.py`; edit them there. A `?` in the data is an unverified hand: the output marks it UNKNOWN and stderr names it. No `?` is open today.
+`python tools/bible_prompt.py --enemy ID` prints the filled prompt; `--list-enemies` lists the ids with props, hands and idle poses; `--body "clause"` sets the body description. The prop and hand table, the template, the edge wording and the idle rule live in `tools/bible_prompt.py`; edit them there. A `?` in the data is an unverified hand: the output marks it UNKNOWN and stderr names it. No `?` is open today.
 
 **Idle rule (every bible that shows a held weapon or prop):** props are at rest, carried, never aimed, drawn or swung, so they can be animated later. Examples: bow hangs at the side in the left hand with the string undrawn and the arrow not nocked; axe held two-handed low; staff planted upright; crossbow lowered, muzzle down.
 

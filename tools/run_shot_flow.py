@@ -2,9 +2,9 @@
 """Run scripted shot flows (tools/shot-flows/*.json): open an NPC menu or screen, press pad/key input,
 set state, shoot every page, assert, then diff against a baseline or publish to _out/shots/<flow>/ (never assets/: Grok Build places those).
 
-  python3 tools/run_shot_flow.py --list
-  python3 tools/run_shot_flow.py --flow camp-receptionist-menu [--baseline DIR] [--save-baseline DIR] [--publish]
-  python3 tools/run_shot_flow.py --smoke --no-pixels        # every smoke:true flow, headless, asserts only
+  python tools/run_shot_flow.py --list
+  python tools/run_shot_flow.py --flow camp-receptionist-menu [--baseline DIR] [--save-baseline DIR] [--publish]
+  python tools/run_shot_flow.py --smoke --no-pixels        # every smoke:true flow, headless, asserts only
 
 Each flow is one worker boot (run_shots.py --steps). Frames land in _logs/shot-flow/<flow>/ as
 NN-name.png (plus NN-name.texts.json and flow.json). Flow format and ops: design/shot-flows.md.

@@ -33,7 +33,7 @@ A new numbered phase, `--wdb-*-smoke` flag, or host scene is allowed only when t
 
 **Merge-back** on a green prove: commit in the worktree (its HEAD is detached; there is no branch), then `git merge --no-ff <that commit>` in the checkout that holds `grok-build-w{N}` (never main), with a short note in the commit message; resolve conflicts yourself. Anything the User would check by hand (game balance, audio, visuals / art, controls) first needs a question prompt asking whether the playtest looks good; wait for approval before the merge. Refactors, tools, docs and tests merge automatically on green. Build writes no per-slice changelog files (a web session writes the week-close `0.N.0.md`; Build only when the User asks).
 
-Read each job summary once via `python3 tools/read_summary.py --job <name>` (index first, newest run). Do not open summary files directly.
+Read each job summary once via `python tools/read_summary.py --job <name>` (index first, newest run). Do not open summary files directly.
 
 A same-command rerun is valid only for `truncated`, crash, `busy` lock, or wrong scene, and then the same command once. A follow-up job with a new field named from a summary key is fine without waiting for the User.
 

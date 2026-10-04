@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shim (one release): use `python3 tools/code_map.py check` instead. Same flags and exit codes."""
+"""Shim (one release): use `python tools/code_map.py check` instead. Same flags and exit codes."""
 import sys
 from pathlib import Path
 

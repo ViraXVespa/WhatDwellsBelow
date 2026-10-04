@@ -7,7 +7,7 @@ For **Grok Bot** when the User names the staged reuse PR / reuse-map / quota res
 
 ## Mandate
 
-Confirm `reuse_brief count` from `python3 tools/bot_status.py`. The current body of `design/reuse-map.md` is **one** PR goal. Implement that brief. Do not take a subset. Do not invent rows. Do not start a size sweep, extract hunt, relocate, or doc facade pass in the same session.
+Confirm `reuse_brief count` from `python tools/bot_status.py`. The current body of `design/reuse-map.md` is **one** PR goal. Implement that brief. Do not take a subset. Do not invent rows. Do not start a size sweep, extract hunt, relocate, or doc facade pass in the same session.
 
 Web / chat writes that file in a Phase 4 emit. The Bot clears the completed Brief items from `design/reuse-map.md` on the same PR (keep the how-to headers). Do not add Ready / Done columns. After the User squash-merges, stop.
 
@@ -20,7 +20,7 @@ Still refactor-shaped unless a row the User wrote is explicit and legal. No inve
 1. `design/reuse-map.md` (the brief)
 2. `design/refactor.md` when a touched file must split (recipe only)
 3. One `design/code-map.md` **system row** for each cluster the brief names
-   (Finding new candidates is a separate User-named sweep: `python3 tools/list_dupes.py --md PATH`, then tier the groups; only near-identical bodies move to a shared module.)
+   (Finding new candidates is a separate User-named sweep: `python tools/list_dupes.py --md PATH`, then tier the groups; only near-identical bodies move to a shared module.)
 4. After that: only the live `.gd` files in the active cluster
 
 Do not walk the live tree to rediscover copies the brief does not name.

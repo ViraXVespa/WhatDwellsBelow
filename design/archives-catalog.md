@@ -36,7 +36,7 @@ Tags: `archive/classic-2d`, `archive/art-experiment`, `archive/full-3d-pass`, `a
 Core rule above still applies (no project-tree copies into `archives/`). User-ordered archives:
 
 1. Pick the commit to freeze. Tag it `archive/<id>`.
-2. `python3 tools/week_pin.py --id ID --label L --desc D --commit SHA` (row, no tag).
+2. `python tools/week_pin.py --id ID --label L --desc D --commit SHA` (row, no tag).
 3. After Pages deploy, Play that row and confirm it is that SHA with zero live-path state. Report to the User.
 
 Weekly pins are automatic (below). `week_pin.py --web N` / `--build N [--commit SHA]` (`--dry-run` first) is the same code by hand: row, notes, local tag; a rerun adds nothing and only fills in a missing tag. Do not move a pin on a resume after corruption.
@@ -50,4 +50,4 @@ Weekly pins are automatic (below). `week_pin.py --web N` / `--build N [--commit 
 3. **Commit and push.** `chore: archive week N [skip ci]` touches only the catalog and `archives/docs/`. New tags are pushed first, then the commit; a rejected push fetches, rebases that one commit and retries (3 times). Never forced, nothing deleted. The `[skip ci]` commit starts no Version, Pages or archive run.
 4. **Pages.** That commit starts no Pages deploy, so the job dispatches `pages.yml` once when something changed; the new rows then export.
 
-Recovery: Actions, Archive, Run workflow, input `week` = N (skips detection; `commit` optional, default the branch tip). Local proof with no GitHub: `python3 tools/ci_archive.py --selftest` (temp origin, squash-merge, stamp commit, rerun, tag repair, push race) and `--dry-run`. If a week is closed without CI, `week_start.py` pins the missing rows at HEAD as catch-up.
+Recovery: Actions, Archive, Run workflow, input `week` = N (skips detection; `commit` optional, default the branch tip). Local proof with no GitHub: `python tools/ci_archive.py --selftest` (temp origin, squash-merge, stamp commit, rerun, tag repair, push race) and `--dry-run`. If a week is closed without CI, `week_start.py` pins the missing rows at HEAD as catch-up.

@@ -1,4 +1,4 @@
-"""Self-test for imglib on small synthetic images (about 2 s). `python3 tools/img_inspect.py selftest`.
+"""Self-test for imglib on small synthetic images (about 2 s). `python tools/img_inspect.py selftest`.
 
 Each check is (name, ok, detail). A change to key.py / compare.py / look.py runs this once; it is not a
 substitute for the before/after pixel diff of the tool that adopts the change (design/prove.md).

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Grok Build post-slice gate: editor import check. One batch gate for a fix pass:
 
-    python3 tools/run_build_gate.py [--skip-import] [--force]
-    python3 tools/run_build_gate.py --batch --warnscan-baseline B.json [--areas p6,static]
+    python tools/run_build_gate.py [--skip-import] [--force]
+    python tools/run_build_gate.py --batch --warnscan-baseline B.json [--areas p6,static]
 --batch = import + restore `.import` churn under assets/ + check_load_graph + the script-name check (duplicate
 basenames) + check_hub_bake (png vs HUB_BAKE_STAMP) + `--warnscan-baseline` adds `bot_warnscan --non-leak-diff B` (same --areas as the baseline). Run it once
 per batch. Refuses (exit 2) if Godot is already on this --path unless --force. Old spellings: -SkipImport -Force

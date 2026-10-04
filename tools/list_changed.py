@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """List git-changed paths with on-disk bytes (git status --porcelain), largest first; or compare change history.
 
-    python3 tools/list_changed.py [--scope scripts,tools] [--head] [--log-count 10]
-    python3 tools/list_changed.py --history DOC.md CODE.gd [MORE ...] [--per-path 5]
+    python tools/list_changed.py [--scope scripts,tools] [--head] [--log-count 10]
+    python tools/list_changed.py --history DOC.md CODE.gd [MORE ...] [--per-path 5]
 --history: for each path its latest commits (date, sha, subject), then which path changed last. A doc and its code
 disagree: the newer change is probably the truth; if the dates are close or the subjects do not explain it, ask.
 Read the summary, do not paste git diffs. Each run writes _logs/changed/<stamp>-changed.txt (read_summary.py --job changed).

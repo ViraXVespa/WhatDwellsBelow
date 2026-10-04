@@ -4,7 +4,7 @@ Status: protocol for agents on a local checkout
 Read when: inventorying live files, running a listed runner, reading that runner's _logs summary, or adding a new local runner
 The tool catalog (what each tool is, surfaces, gotchas) is `design/tools.md`; this file keeps only the Build / Windows habits.
 
-The cloud Refactorer does not use this file (BOT.md). Every runner is Python. Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. Agents should **read only the job summary (`python3 tools/read_summary.py --job <name>`, then the final `RESULT` line)** those tools write - not raw Godot logs, not whole script bodies just to inventory.
+The cloud Refactorer does not use this file (BOT.md). Every runner is Python. Run heavy inventory / Godot / smoke work on the **User's PC** via these tools. Agents should **read only the job summary (`python tools/read_summary.py --job <name>`, then the final `RESULT` line)** those tools write - not raw Godot logs, not whole script bodies just to inventory.
 
 `_logs/` is gitignored: tools write summaries there; never commit it. `_logs/grok-bot-sweep.md` is not a Bot door.
 

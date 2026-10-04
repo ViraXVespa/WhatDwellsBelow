@@ -28,10 +28,10 @@ Targets are dotted paths. The root is an autoload (`App`), `host` (the camp/dung
 Worker flags: `--wdb-shot-steps=FILE --wdb-shot-frames=DIR --wdb-shot-nopix=1 --wdb-shot-show=1`. Code: `step_runner.gd` (loop, `flow.json`), `step_ops.gd` (ops), `step_ref.gd` (paths), `step_input.gd` (events), `step_texts.gd` (text dump) in `scripts/debug/shot_tool/`.
 
 Commands:
-- `python3 tools/run_shots.py --steps tools/shot-flows/X.json [--no-pixels] [--out P]` one flow, summary `shots`.
-- `python3 tools/run_shot_flow.py --list | --flow N | --all | --smoke [--no-pixels] [--baseline D] [--save-baseline D] [--publish] [--check-published]` flows by name; frames in `_logs/shot-flow/<flow>/`; summary `shot-flow`.
-- `python3 tools/shot_diff.py BEFORE AFTER [--max-ratio R] [--mask X,Y,W,H] [--out DIR]` two PNGs or directories; writes `*.diff.png` (red = changed). Other checks on a frame (layout, contrast, diff heatmap): `img_inspect.py` (`prove.md`).
-- `python3 tools/check_shot_gaps.py [--changed [REF]] [--advisory] [--strict]` which states (`tools/shot-flows/states.json` sources) have no flow, which states are new since REF (uncovered ones FAIL; `--advisory` prints only), flows without a shot or assert, stale or hand-edited published shots.
+- `python tools/run_shots.py --steps tools/shot-flows/X.json [--no-pixels] [--out P]` one flow, summary `shots`.
+- `python tools/run_shot_flow.py --list | --flow N | --all | --smoke [--no-pixels] [--baseline D] [--save-baseline D] [--publish] [--check-published]` flows by name; frames in `_logs/shot-flow/<flow>/`; summary `shot-flow`.
+- `python tools/shot_diff.py BEFORE AFTER [--max-ratio R] [--mask X,Y,W,H] [--out DIR]` two PNGs or directories; writes `*.diff.png` (red = changed). Other checks on a frame (layout, contrast, diff heatmap): `img_inspect.py` (`prove.md`).
+- `python tools/check_shot_gaps.py [--changed [REF]] [--advisory] [--strict]` which states (`tools/shot-flows/states.json` sources) have no flow, which states are new since REF (uncovered ones FAIL; `--advisory` prints only), flows without a shot or assert, stale or hand-edited published shots.
 
 ## Dungeon flows (seed 42)
 

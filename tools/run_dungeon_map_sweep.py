@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run run_dungeon_map over several seeds; one sweep table.
 
-    python3 tools/run_dungeon_map_sweep.py [--count 10] [--seed-list 42,7,9 | --seeds 42 7 9] [--floor 1 --scale 8]
+    python tools/run_dungeon_map_sweep.py [--count 10] [--seed-list 42,7,9 | --seeds 42 7 9] [--floor 1 --scale 8]
 Old spellings: -Count -Floor -Scale -TimeoutSec -Seeds -SeedList. Output: _logs/dungeon-map-sweep/<stamp>-dungeon-map-sweep.txt
 """
 from __future__ import annotations

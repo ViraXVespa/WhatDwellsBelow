@@ -30,6 +30,6 @@ def require_cv2(what: str) -> None:
     """Raise SystemExit with an install hint when OpenCV is missing."""
     if not HAVE_CV2:
         raise SystemExit(
-            f"error: {what} needs OpenCV (cv2). Install: python3 -m pip install -r tools/requirements.txt "
-            "(PEP 668 systems: python3 -m venv --system-site-packages VENV, then VENV/bin/python)"
+            f"error: {what} needs OpenCV (cv2). Install: python -m pip install -r tools/requirements.txt "
+            "(PEP 668 systems: python -m venv --system-site-packages VENV, then VENV/bin/python)"
         )

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """design/tunables.md and tunables-world.md CLI: get, set, add.
 
-    python3 tools/tunables.py get --key <key-or-alias>
-    python3 tools/tunables.py set --key <key-or-alias> --set "new Live cell" [--dry-run]
-    python3 tools/tunables.py add --after <existing-key> --key NEW_KEY --set "Live cell" [--dry-run]
+    python tools/tunables.py get --key <key-or-alias>
+    python tools/tunables.py set --key <key-or-alias> --set "new Live cell" [--dry-run]
+    python tools/tunables.py add --after <existing-key> --key NEW_KEY --set "Live cell" [--dry-run]
 
 Logic lives in tunables_lib. The two old script names stay as shims for one release.
 Summaries: _logs/tunable-row/ and _logs/tunable-patch/.

@@ -14,7 +14,7 @@ Publish with plain `git push -u origin bot/<flow>` over HTTPS (gh credential hel
 ## Boot
 
 1. Read this file. If the agents file already routed you here, do not fetch it again.
-2. Run: python3 tools/bot_status.py --bot
+2. Run: python tools/bot_status.py --bot
 3. Pick one printed flow. Do not invent reuse-map or opt-queue rows.
 4. Open only that Job file. When editing GDScript, also load `design/gdscript-law.md`.
 5. After a cluster, drop those file bodies and report.
@@ -34,11 +34,11 @@ Woke because main moved: `bot_status.py --bot` first. over_10kb 0: report and st
 
 ## Prove
 
-- python3 tools/check_script_cap.py --bot --git-changed
-- python3 tools/check_load_graph.py --bot
-- python3 tools/bot_status.py --bot --prove
-- python3 tools/check_code_map.py (no new UNMAPPED for files you touched; older ones are expected)
-- python3 tools/check_tool_docs.py (only when `tools/` or the catalog changed); `--stale-refs` after any doc edit that names paths
+- python tools/check_script_cap.py --bot --git-changed
+- python tools/check_load_graph.py --bot
+- python tools/bot_status.py --bot --prove
+- python tools/check_code_map.py (no new UNMAPPED for files you touched; older ones are expected)
+- python tools/check_tool_docs.py (only when `tools/` or the catalog changed); `--stale-refs` after any doc edit that names paths
 
 Proof recipes by change kind (shots, layout, keying) and extend-the-tools-not-work-around-them: `design/prove.md`.
 Proof rules (`prove.md`): one-line intended outcome first; a missing required asset fails loudly (no fallback without the User's OK); report "gates pass", not "proved"; look and sound stay unverified until the User confirms. Say plainly when a message or handoff to a worker did not arrive.
@@ -59,13 +59,14 @@ Work only in `/workspace/WhatDwellsBelow`. Never open the Build docs (`design/pc
 
 ## Smokes
 
-When a cluster needs a headless prove: `python3 tools/bot_smokes.py --phases 1,2,6` from the repo root (`--for FILE` names the covering phases). Binary: `GODOT_BIN`, else `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
+When a cluster needs a headless prove: `python tools/bot_smokes.py --phases 1,2,6` from the repo root (`--for FILE` names the covering phases). Binary: `GODOT_BIN`, else `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
 New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets docs icon.svg.import` (the import also rewrites those `.import` files; a fresh worktree needs this import once before any smoke, else P1 fails with no marker), and commit the `.uid` files only.
 No editor playtest, no routine that launches Godot.
-Shots and light bakes are not headless: `run_shots.py`, `run_shot_flow.py`, `run_bake_camp.py` pick the box display themselves (`python3 tools/godot_lib.py --display`). Menu/NPC proof: `bot_smokes.py --door D --flows`, `shot-flows.md`. `check_shot_gaps.py --changed` (run by `bot_smokes.py` unless `--no-gaps`, and by `run_build_gate.py --batch`) FAILS on a new UI state with no shot flow; add a small flow in `tools/shot-flows/` in the same PR. Published shots go to `_out/shots/<flow>/`; never write under `assets/`.
+Shots and light bakes are not headless: `run_shots.py`, `run_shot_flow.py`, `run_bake_camp.py` pick the box display themselves (`python tools/godot_lib.py --display`). Menu/NPC proof: `bot_smokes.py --door D --flows`, `shot-flows.md`. `check_shot_gaps.py --changed` (run by `bot_smokes.py` unless `--no-gaps`, and by `run_build_gate.py --batch`) FAILS on a new UI state with no shot flow; add a small flow in `tools/shot-flows/` in the same PR. Published shots go to `_out/shots/<flow>/`; never write under `assets/`.
 
-Warning sweep (User-named only): `python3 tools/bot_warnscan.py` runs every smoke area plus boot/static, exits 0 only on zero findings, and does not fix game code. `--list`, `--repeat 2`, `--findings-md PATH`. Before/after a change: `--save-baseline PATH`, then `--non-leak-diff PATH` with the same `--areas` (prints NEW and FIXED, exits 1 only on NEW). One-shot gate: `python3 tools/run_build_gate.py --batch --warnscan-baseline PATH --areas ...`. Targeted areas for a split: the smoke phases that load the file, `dungeon-load-timing`, `map-f1`, `static`.
-Tools: `design/tools.md` is the catalog. The Bot runs only `A=Y` tools, as `python3 tools/X.py`. Every tool ends with a `RESULT PASS|FAIL|INFO ... summary=<path>` line.
+Warning sweep (User-named only): `python tools/bot_warnscan.py` runs every smoke area plus boot/static, exits 0 only on zero findings, and does not fix game code. `--list`, `--repeat 2`, `--findings-md PATH`. Before/after a change: `--save-baseline PATH`, then `--non-leak-diff PATH` with the same `--areas` (prints NEW and FIXED, exits 1 only on NEW). One-shot gate: `python tools/run_build_gate.py --batch --warnscan-baseline PATH --areas ...`. Targeted areas for a split: the smoke phases that load the file, `dungeon-load-timing`, `map-f1`, `static`.
+The Bot's Linux box has only `python3`; run `python3` wherever a doc says `python`.
+Tools: `design/tools.md` is the catalog. The Bot runs only `A=Y` tools, as `python tools/X.py`. Every tool ends with a `RESULT PASS|FAIL|INFO ... summary=<path>` line.
 
 ## Hard stops
 

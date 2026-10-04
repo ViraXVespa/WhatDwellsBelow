@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Before/after diff of shot PNGs (two files, or two directories paired by file name).
 
-  python3 tools/shot_diff.py BEFORE AFTER [--tol 0] [--max-ratio 0.02] [--mask X,Y,W,H] [--out DIR] [--json]
+  python tools/shot_diff.py BEFORE AFTER [--tol 0] [--max-ratio 0.02] [--mask X,Y,W,H] [--out DIR] [--json]
 
 Identical bytes short-circuit (no Pillow needed). Otherwise imglib.compare (Pillow + numpy) counts changed pixels
 (any channel differs by more than --tol), the changed bounding box and the max channel delta, and
@@ -48,7 +48,7 @@ def compare(a: Path, b: Path, tol: int = 0, out_png: Path | None = None, masks: 
     try:
         from imglib import compare as cmp, imgio
     except ImportError:
-        agent_log.fail("shot_diff needs Pillow and numpy for non-identical PNGs (python3 -m pip install -r tools/requirements.txt)")
+        agent_log.fail("shot_diff needs Pillow and numpy for non-identical PNGs (python -m pip install -r tools/requirements.txt)")
     ia, ib = imgio.load(a), imgio.load(b)
     if ia.size != ib.size:
         return {"status": "size", "name": b.name, "before": list(ia.size), "after": list(ib.size),

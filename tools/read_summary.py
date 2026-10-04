@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Print a job's runs: the index first (newest run first), then the newest run's summary.
 
-    python3 tools/read_summary.py --job build-gate          # index + newest summary
-    python3 tools/read_summary.py --job build-gate --index  # the index only
-    python3 tools/read_summary.py --job build-gate --run 2  # the 2nd newest run (1 = newest)
-    python3 tools/read_summary.py --path _logs/smokes/<stamp>-p1-err.log
+    python tools/read_summary.py --job build-gate          # index + newest summary
+    python tools/read_summary.py --job build-gate --index  # the index only
+    python tools/read_summary.py --job build-gate --run 2  # the 2nd newest run (1 = newest)
+    python tools/read_summary.py --path _logs/smokes/<stamp>-p1-err.log
 Every run keeps its own timestamped file under _logs/<job>/ and index.txt lists the last 20 (run_log_lib.py).
 No --job/--path lists the job dirs found under _logs/. Exit 0 ok, 1 missing, 2 usage.
 Old spellings: -Job -Path -Root.
@@ -32,7 +32,7 @@ def main(argv: list[str] | None = None) -> int:
     logs = root / "_logs"
     names = sorted(d.name for d in logs.iterdir() if d.is_dir() and run_log_lib.latest(d)) if logs.is_dir() else []
     if not job and not args.path:
-        print("usage: python3 tools/read_summary.py --job <name>")
+        print("usage: python tools/read_summary.py --job <name>")
         print("jobs: " + (", ".join(names) or "(none yet)"))
         return 2
     if args.path:

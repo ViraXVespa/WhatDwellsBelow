@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Add a weekly archive pin to scripts/data/archive_catalog.json (the `archives` rows) and tag the commit.
 
-    python3 tools/week_pin.py --web N   [--commit SHA] [--dry-run]   # grok_web_wN   + tag archive/grok-web-wN
-    python3 tools/week_pin.py --build N [--commit SHA] [--dry-run]   # grok_build_wN + tag archive/grok-build-wN
-    python3 tools/week_pin.py --id ID --label L --desc D --commit SHA [--dry-run]   # any other row (no tag)
+    python tools/week_pin.py --web N   [--commit SHA] [--dry-run]   # grok_web_wN   + tag archive/grok-web-wN
+    python tools/week_pin.py --build N [--commit SHA] [--dry-run]   # grok_build_wN + tag archive/grok-build-wN
+    python tools/week_pin.py --id ID --label L --desc D --commit SHA [--dry-run]   # any other row (no tag)
 --commit defaults to HEAD. Idempotent: a row that exists is left alone and a missing tag is created at the row's
 commit ("exists", exit 0). The tag is local; CI (ci_archive.py) pushes it, else the User does. --web N and --build N
 both copy the changelog notes of series N into archives/docs/<id>/ (from design/changelog/ or

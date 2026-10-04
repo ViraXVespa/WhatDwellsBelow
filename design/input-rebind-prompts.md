@@ -40,7 +40,7 @@ Do not bake `A`, `B`, `ENTER`, `ESC`, `LMB`, or `RMB` into button captions, hint
 | World HUD | `interact` glyph + the verb from `scripts/world/interact.gd`. Locked / spent lines are text only. Look-mode cue under the minimap while look mode or the large map is active. |
 | Touch overlay | Pad glyphs on the virtual buttons (`rt`, `lt`, `a`, `b`, `menu`, `view`, `dpad_up`, `dpad_left`). No lock / R3 well. |
 
-Glyph PNGs: `assets/ui/prompts/kb/`, `assets/ui/prompts/pad/`, `assets/ui/prompts/mouse/`. Regenerate with `python3 tools/gen_prompt_glyphs.py`. Keyboard arrows are stemmed arrows on the key cap, not `UP` / `DN` / empty `<` `>` stamps.
+Glyph PNGs: `assets/ui/prompts/kb/`, `assets/ui/prompts/pad/`, `assets/ui/prompts/mouse/`. Regenerate with `python tools/gen_prompt_glyphs.py`. Keyboard arrows are stemmed arrows on the key cap, not `UP` / `DN` / empty `<` `>` stamps.
 
 Helpers: `Prompts.texture_for(action)`, `Prompts.texture_for_event`, `PromptView.fill`, `PromptView.footer(ui, extra_parts)`, `PromptView.pulse`.
 
