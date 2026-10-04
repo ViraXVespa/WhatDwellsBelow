@@ -1,4 +1,4 @@
-"""Geometry helpers: bbox, crop, fit, nearest scale, flip, grid split."""
+"""Geometry helpers: bbox, crop, fit, nearest scale and shrink, flip, grid split."""
 from __future__ import annotations
 
 from PIL import Image
@@ -22,6 +22,35 @@ def scale_nearest(im: Image.Image, factor: float | None = None, size: tuple[int,
     if size is None:
         size = (max(1, round(im.width * float(factor))), max(1, round(im.height * float(factor))))
     return im.resize(size, Image.Resampling.NEAREST)
+
+
+def shrink(im: Image.Image, cap: int) -> Image.Image:
+    """Nearest-neighbour shrink so the longest side is at most `cap` (returned as is when it already is)."""
+    w, h = im.size
+    m = max(w, h)
+    if m <= cap:
+        return im
+    s = cap / m
+    return im.resize((max(1, int(w * s)), max(1, int(h * s))), Image.Resampling.NEAREST)
+
+
+def fit_axis(im: Image.Image, *, width: int | None = None, height: int | None = None, to_int=int, empty: str = "none"):
+    """Crop to `im.getbbox()` and nearest-scale so the width (or the height) equals the given size.
+
+    The other side follows the aspect (at least 1 px, `to_int` turns it into pixels). Empty image: None, or the
+    whole image as the box when `empty="whole"`.
+    """
+    box = im.getbbox()
+    if box is None and empty != "whole":
+        return None
+    cropped = im.crop(box) if box is not None else im.copy()
+    if width is not None:
+        scale = width / max(1, cropped.size[0])
+        size = (width, max(1, to_int(cropped.size[1] * scale)))
+    else:
+        scale = height / max(1, cropped.size[1])
+        size = (max(1, to_int(cropped.size[0] * scale)), height)
+    return cropped.resize(size, Image.Resampling.NEAREST)
 
 
 def flip(im: Image.Image, horizontal: bool = True) -> Image.Image:

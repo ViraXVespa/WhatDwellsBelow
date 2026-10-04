@@ -16,7 +16,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 import i2v_seeds  # noqa: E402
 import plate_remap as pr  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
-from sprite_lib import shrink_keyed as _shrink_keyed  # noqa: E402
+from imglib import geom, imgio  # noqa: E402
 import agent_log  # noqa: E402
 
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
@@ -75,14 +75,14 @@ def extract(video: Path, dest: Path, fps: int = 8, reuse: bool = False) -> list[
 
 def bible_cell(gender: str, facing: str) -> Image.Image:
     if gender not in _BIBLE_CELLS:
-        bible = Image.open(BIBLES[gender]).convert("RGBA")
+        bible = imgio.load(BIBLES[gender])
         _BIBLE_CELLS[gender] = dict(zip(sp.CELL_NAMES, sp.split_equal_3x3(bible)))
     return _BIBLE_CELLS[gender][facing]
 
 
 def _stamp(im: Image.Image, size: tuple[int, int] = COMPARE_SIZE) -> Image.Image:
     """Plate-ignored figure stamp for idle compare. Not a shipping matte."""
-    im = im.convert("RGBA").resize(size, Image.Resampling.NEAREST)
+    im = geom.scale_nearest(im.convert("RGBA"), size=size)
     arr = np.asarray(im)
     rgb = arr[:, :, :3].astype(np.int16)
     alpha = arr[:, :, 3]
@@ -100,7 +100,7 @@ def _stamp(im: Image.Image, size: tuple[int, int] = COMPARE_SIZE) -> Image.Image
     scale = min(size[0] / cw, size[1] / ch)
     nw = max(1, int(cw * scale))
     nh = max(1, int(ch * scale))
-    rsz = Image.fromarray(crop, "RGB").resize((nw, nh), Image.Resampling.NEAREST)
+    rsz = geom.scale_nearest(Image.fromarray(crop, "RGB"), size=(nw, nh))
     canvas = Image.new("RGB", size, (0, 0, 0))
     canvas.paste(rsz, ((size[0] - nw) // 2, size[1] - nh))
     return canvas
@@ -135,7 +135,7 @@ def _pad(items: list, n: int) -> list:
 
 
 def _figure_keep(im: Image.Image, size: tuple[int, int] = EXTENT_SIZE) -> np.ndarray:
-    im = im.convert("RGBA").resize(size, Image.Resampling.NEAREST)
+    im = geom.scale_nearest(im.convert("RGBA"), size=size)
     arr = np.asarray(im)
     rgb = arr[:, :, :3].astype(np.int16)
     alpha = arr[:, :, 3]
@@ -440,7 +440,7 @@ def finish_matte(im: Image.Image, rim: int, hue_width: float) -> Image.Image:
 def key_fit(im: Image.Image, rim: int = 2, rim_hue: float = 26.0) -> Image.Image:
     remapped, _vis, _info = pr.remap(im.convert("RGBA"))
     keyed = sp.key_to_alpha(remapped, spill_flood=False)
-    fitted = sp.fit_canvas(_shrink_keyed(keyed), key=False)
+    fitted = sp.fit_canvas(geom.shrink(keyed, KEYED_CAP), key=False)
     return finish_matte(fitted, rim, rim_hue)
 
 
@@ -469,7 +469,7 @@ def write_seq(frames: list[Image.Image], dest: Path, prefix: str) -> None:
 
 
 def pack_idle(gender: str) -> None:
-    bible = Image.open(BIBLES[gender]).convert("RGBA")
+    bible = imgio.load(BIBLES[gender])
     cells = dict(zip(sp.CELL_NAMES, sp.split_equal_3x3(bible)))
     out = OUT / gender
     out.mkdir(parents=True, exist_ok=True)
@@ -490,7 +490,7 @@ def pack_clip(
     vid = Path(video)
     raw_dir = RAW / f"{gender}_{facing}"
     paths = extract(vid, raw_dir, reuse=reuse)
-    images = [Image.open(p).convert("RGBA") for p in paths]
+    images = [imgio.load(p) for p in paths]
     start_p, mid_p, stop_p = split_phases(images, bible_cell(gender, facing), facing)
     idle = key_fit(bible_cell(gender, facing), rim=0, rim_hue=26.0)
     start_c = [clean(im, rim, rim_hue) for im in start_p]

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Key Imagine stills into assets/3d for the Gloam 3D view."""
 from pathlib import Path
-from PIL import Image, ImageOps, ImageFilter
+from PIL import Image, ImageFilter
 import math
 import shutil
-from sprite_lib import dist, fit_box  # noqa: E402
+from imglib import geom, imgio  # noqa: E402
+from imglib.color import dist  # noqa: E402
+from imglib.geom import fit_box  # noqa: E402
 import sys
 
 _TOOLS = Path(__file__).resolve().parent
@@ -53,7 +55,7 @@ def fit(im: Image.Image, canvas: int, pad: int = 8) -> Image.Image:
 
 
 def sprite(name: str, dest: Path, canvas: int = 256) -> Image.Image:
-    im = fit(key(Image.open(SRC / name)), canvas)
+    im = fit(key(imgio.load(SRC / name)), canvas)
     dest.parent.mkdir(parents=True, exist_ok=True)
     im.save(dest)
     print("sprite", dest.relative_to(ROOT))
@@ -67,13 +69,12 @@ def copy_img(src: Path, dest: Path) -> None:
 
 
 def mirror_file(src: Path, dest: Path) -> None:
-    im = Image.open(src).convert("RGBA")
-    ImageOps.mirror(im).save(dest)
+    geom.flip(imgio.load(src)).save(dest)
     print("mirror", dest.relative_to(ROOT))
 
 
 def tile(name: str, dest: Path, size: int = 128) -> None:
-    im = Image.open(SRC / name).convert("RGB")
+    im = imgio.load(SRC / name, "RGB")
     im = im.resize((size, size), Image.Resampling.LANCZOS)
     arr = im
     rolled = Image.new("RGB", (size, size))
@@ -86,7 +87,7 @@ def tile(name: str, dest: Path, size: int = 128) -> None:
 
 
 def preview_2x2(path: Path, dest: Path) -> None:
-    t = Image.open(path).convert("RGB")
+    t = imgio.load(path, "RGB")
     s = t.size[0]
     out = Image.new("RGB", (s * 2, s * 2))
     for y in range(2):

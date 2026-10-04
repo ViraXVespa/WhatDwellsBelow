@@ -13,6 +13,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+from imglib import imgio
 
 ROOT = Path(__file__).resolve().parent.parent
 SESSION = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images")
@@ -33,7 +34,7 @@ JOBS = [
 
 
 def key_and_fit(src: Path, dest: Path, canvas: int) -> None:
-    raw = Image.open(src).convert("RGBA")
+    raw = imgio.load(src)
     remapped, _vis, _info = pr.remap(raw)
     keyed = key_to_alpha(remapped, spill_flood=False)
     out = fit_canvas(keyed, canvas, key=False)

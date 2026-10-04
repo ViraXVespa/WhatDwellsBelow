@@ -3,7 +3,9 @@
 from pathlib import Path
 from PIL import Image
 import math
-from sprite_lib import dist, fit_box  # noqa: E402
+from imglib import imgio  # noqa: E402
+from imglib.color import dist  # noqa: E402
+from imglib.geom import fit_box  # noqa: E402
 import sys
 
 _TOOLS = Path(__file__).resolve().parent
@@ -64,13 +66,13 @@ def pack_cycle(folder: str, prefix: str, picks: list[int]) -> None:
         if not src.exists():
             print("missing", src)
             continue
-        save_img(Image.open(src), OUT / f"{prefix}_{i}.png")
+        save_img(imgio.load(src), OUT / f"{prefix}_{i}.png")
 
 
 def _run() -> None:
-    save_img(Image.open(SRC / "190.jpg"), OUT / "left.png")
-    save_img(Image.open(SRC / "188.jpg"), OUT / "up_left.png")
-    save_img(Image.open(SRC / "189.jpg"), OUT / "down_left.png")
+    save_img(imgio.load(SRC / "190.jpg"), OUT / "left.png")
+    save_img(imgio.load(SRC / "188.jpg"), OUT / "up_left.png")
+    save_img(imgio.load(SRC / "189.jpg"), OUT / "down_left.png")
     pack_cycle("player_walk_left", "walk_left", WALK_PICKS)
     pack_cycle("player_walk_up_left", "walk_up_left", WALK_PICKS)
     pack_cycle("player_walk_down_left", "walk_down_left", WALK_PICKS)

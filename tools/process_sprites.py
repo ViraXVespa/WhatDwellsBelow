@@ -2,7 +2,8 @@
 from pathlib import Path
 from PIL import Image
 import math
-from sprite_lib import dist  # noqa: E402
+from imglib import imgio  # noqa: E402
+from imglib.color import dist  # noqa: E402
 import sys
 
 _TOOLS = Path(__file__).resolve().parent
@@ -30,7 +31,7 @@ CANVAS = 128
 
 
 def key_and_fit(src: Path, dest: Path) -> None:
-    im = Image.open(src).convert("RGBA")
+    im = imgio.load(src)
     px = im.load()
     w, h = im.size
     for y in range(h):

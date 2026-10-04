@@ -17,6 +17,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+from imglib import geom
 
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 FRAME_COUNT = 6
@@ -67,7 +68,7 @@ def flip_set(src_prefix: str, dest_prefix: str, folder: Path) -> None:
     for i in range(FRAME_COUNT):
         src = folder / f"{src_prefix}_{i}.png"
         dest = folder / f"{dest_prefix}_{i}.png"
-        Image.open(src).transpose(Image.FLIP_LEFT_RIGHT).save(dest)
+        geom.flip(Image.open(src)).save(dest)
         print("flip", dest)
 
 

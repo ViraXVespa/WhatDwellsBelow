@@ -38,6 +38,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 import agent_log
+from imglib import imgio
 from repo_lib import under as _under  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -166,7 +167,7 @@ def key_pipeline(path: Path) -> np.ndarray:
     import plate_remap as pr  # noqa: E402
     import sprite_pipeline as sp  # noqa: E402
 
-    im = Image.open(path).convert("RGBA")
+    im = imgio.load(path)
     remapped, _vis, _info = pr.remap(im)
     keyed = sp.key_to_alpha(remapped, spill_flood=False)
     w, h = keyed.size

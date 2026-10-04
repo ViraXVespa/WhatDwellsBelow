@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 from pathlib import Path
-from PIL import Image, ImageOps
+from PIL import Image
 import math
-from sprite_lib import dist  # noqa: E402
+from imglib import geom, imgio  # noqa: E402
+from imglib.color import dist  # noqa: E402
 import sys
 
 _TOOLS = Path(__file__).resolve().parent
@@ -24,9 +25,9 @@ def sample_bg(im: Image.Image) -> tuple:
 
 
 def key_and_fit(src: Path, dest: Path, flip: bool = False) -> None:
-    im = Image.open(src).convert("RGBA")
+    im = imgio.load(src)
     if flip:
-        im = ImageOps.mirror(im)
+        im = geom.flip(im)
     bg = sample_bg(im)
     px = im.load()
     w, h = im.size
@@ -35,19 +36,7 @@ def key_and_fit(src: Path, dest: Path, flip: bool = False) -> None:
             r, g, b, a = px[x, y]
             if dist((r, g, b), bg) <= THRESH:
                 px[x, y] = (0, 0, 0, 0)
-    bbox = im.getbbox()
-    if not bbox:
-        raise SystemExit(f"empty {src}")
-    cropped = im.crop(bbox)
-    pad = 8
-    box = Image.new("RGBA", (cropped.size[0] + pad * 2, cropped.size[1] + pad * 2), (0, 0, 0, 0))
-    box.paste(cropped, (pad, pad), cropped)
-    scale = min(CANVAS / box.size[0], CANVAS / box.size[1])
-    nw = max(1, int(box.size[0] * scale))
-    nh = max(1, int(box.size[1] * scale))
-    resized = box.resize((nw, nh), Image.Resampling.NEAREST)
-    canvas = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
-    canvas.paste(resized, ((CANVAS - nw) // 2, (CANVAS - nh) // 2), resized)
+    canvas = geom.fit_box(im, CANVAS, 8, to_int=int, empty_exit=f"empty {src}")
     dest.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(dest)
     print("wrote", dest)

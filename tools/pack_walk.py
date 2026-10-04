@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 import plate_remap as pr  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
-from sprite_lib import shrink_keyed as _shrink_keyed  # noqa: E402
+from imglib import geom, imgio  # noqa: E402
 
 _TOOLS = Path(__file__).resolve().parent
 if str(_TOOLS) not in sys.path:
@@ -66,7 +66,7 @@ def extract(src: Path, dest_dir: Path, fps: int = 8) -> list[Path]:
 def fit(im: Image.Image, canvas: int = CANVAS) -> Image.Image:
     remapped, _vis, _info = pr.remap(im.convert("RGBA"))
     keyed = sp.key_to_alpha(remapped, spill_flood=False)
-    return sp.fit_canvas(_shrink_keyed(keyed), canvas, key=False)
+    return sp.fit_canvas(geom.shrink(keyed, KEYED_CAP), canvas, key=False)
 
 
 def pick_loop(paths: list[Path], count: int = 4) -> list[Path]:
@@ -88,7 +88,7 @@ def _pack_one(kind: str, facing: str, video: str) -> str:
     wrote = []
     for i, src in enumerate(chosen):
         dest = OUT_PLAYER / f"{kind}_{facing}_{i}.png"
-        fit(Image.open(src)).save(dest)
+        fit(imgio.load(src)).save(dest)
         wrote.append(dest.name)
     return f"{kind} {facing} " + " ".join(wrote)
 

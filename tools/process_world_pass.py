@@ -17,6 +17,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+from imglib import geom, imgio  # noqa: E402
 from gen_prompt_glyphs import FONT  # noqa: E402  (single home for the pixel font)
 
 SESSION = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a08788-1bb6-76c0-8fa8-40b73dda2810\images")
@@ -36,7 +37,7 @@ QUADS = {
 
 
 def load(name: str) -> Image.Image:
-    return Image.open(SESSION / name).convert("RGBA")
+    return imgio.load(SESSION / name)
 
 
 def crop_frac(im: Image.Image, frac: tuple[float, float, float, float]) -> Image.Image:
@@ -128,14 +129,9 @@ def wide_out(src: str, dest: Path, max_w: int, quad: str | None = None, key_blac
                 r, g, b, a = px[x, y]
                 if a > 0 and r < 18 and g < 18 and b < 18:
                     px[x, y] = (0, 0, 0, 0)
-    bbox = keyed.getbbox()
-    if bbox is None:
+    resized = geom.fit_axis(keyed, width=max_w)
+    if resized is None:
         raise SystemExit(f"empty {src}")
-    cropped = keyed.crop(bbox)
-    scale = max_w / cropped.size[0]
-    nw = max_w
-    nh = max(1, int(cropped.size[1] * scale))
-    resized = cropped.resize((nw, nh), Image.Resampling.NEAREST)
     dest.parent.mkdir(parents=True, exist_ok=True)
     resized.save(dest)
     print("wide", dest.name, resized.size)
@@ -182,7 +178,7 @@ def cloth_box(im: Image.Image) -> tuple[int, int, int, int]:
     cloth = a & (r > g + 15) & (r > b + 15) & (r > 70)
     ys, xs = np.where(cloth)
     if xs.size < 80:
-        bbox = im.getbbox()
+        bbox = geom.bbox(im)
         if bbox is None:
             return (0, 0, im.size[0], im.size[1])
         return bbox
@@ -192,12 +188,7 @@ def cloth_box(im: Image.Image) -> tuple[int, int, int, int]:
 def banner_out() -> None:
     dest = PROPS / "welcome_banner.png"
     keyed = key_sprite(load("14.jpg"))
-    bbox = keyed.getbbox()
-    cropped = keyed.crop(bbox)
-    scale = 512 / cropped.size[0]
-    nw = 512
-    nh = max(1, int(cropped.size[1] * scale))
-    out = cropped.resize((nw, nh), Image.Resampling.NEAREST)
+    out = geom.fit_axis(keyed, width=512, empty="whole")
     w, h = out.size
     cx0 = int(w * 0.20)
     cy0 = int(h * 0.40)
@@ -254,8 +245,8 @@ def recut_sprites() -> None:
 
 
 def mix_path() -> None:
-    dirt = Image.open(TILES / "plaza_ground.png").convert("RGB")
-    cobble = Image.open(TILES / "plaza_path.png").convert("RGB")
+    dirt = imgio.load(TILES / "plaza_ground.png", "RGB")
+    cobble = imgio.load(TILES / "plaza_path.png", "RGB")
     cobble = cobble.resize(dirt.size, Image.Resampling.BOX)
     mixed = Image.blend(dirt, cobble, 0.28)
     mixed.save(TILES / "plaza_path.png")

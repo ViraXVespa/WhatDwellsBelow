@@ -18,6 +18,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+from imglib import geom, imgio
 
 SESS = agent_log.grok_sessions()
 P4 = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a03e55-f390-7750-ab00-b30f1e6ba566\images")
@@ -52,7 +53,7 @@ def prep(im: Image.Image) -> Image.Image:
 
 
 def key_still(src: Path) -> Image.Image:
-    raw = prep(Image.open(src))
+    raw = prep(imgio.load(src))
     remapped, _vis, _info = pr.remap(raw)
     return sp.key_to_alpha(remapped, spill_flood=False)
 
@@ -62,14 +63,10 @@ def fit_square(keyed: Image.Image, canvas: int) -> Image.Image:
 
 
 def fit_width(keyed: Image.Image, width: int) -> Image.Image:
-    bbox = keyed.getbbox()
-    if bbox is None:
+    out = geom.fit_axis(keyed, width=width, to_int=round)
+    if out is None:
         return Image.new("RGBA", (width, width), (0, 0, 0, 0))
-    cropped = keyed.crop(bbox)
-    scale = width / max(1, cropped.size[0])
-    nw = width
-    nh = max(1, int(round(cropped.size[1] * scale)))
-    return cropped.resize((nw, nh), Image.Resampling.NEAREST)
+    return out
 
 
 def write(im: Image.Image, dest: Path) -> None:
@@ -89,7 +86,7 @@ def rekey(src: Path, dest: Path, canvas: int, wide: bool = False) -> Image.Image
 
 
 def fill_dirs(down: Image.Image, dest_dir: Path, prefix: str) -> None:
-    flipped = down.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    flipped = geom.flip(down)
     for k in DIRS:
         write(flipped if k in LEFT else down, dest_dir / f"{prefix}_{k}.png")
 
@@ -224,7 +221,7 @@ def _run() -> None:
 
     axe_right = SPR / "player" / "male" / "equip_great_axe_right.png"
     if axe_right.exists():
-        Image.open(axe_right).transpose(Image.Transpose.FLIP_LEFT_RIGHT).save(
+        geom.flip(Image.open(axe_right)).save(
             SPR / "player" / "male" / "equip_great_axe_left.png"
         )
     for gender in ("male", "female"):

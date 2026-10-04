@@ -24,6 +24,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 import anim_review_lib as lib
 import i2v_seeds
+from imglib import imgio
 import sprite_pipeline as sp
 
 
@@ -31,7 +32,7 @@ def _cell_for(gender: str, facing: str) -> Image.Image | None:
     bible = lib.BIBLE.get(gender)
     if bible is None or not bible.is_file():
         return None
-    raw = Image.open(bible).convert("RGBA")
+    raw = imgio.load(bible)
     cells = dict(zip(sp.CELL_NAMES, sp.split_equal_3x3(raw)))
     key = facing if facing in cells else "down"
     im = cells.get(key)

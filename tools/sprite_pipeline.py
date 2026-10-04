@@ -133,7 +133,7 @@ def composite_bible(cell_paths: dict[str, Path], dest: Path, cell: int = 256) ->
     order = CELL_NAMES
     for i, name in enumerate(order):
         p = cell_paths[name]
-        im = Image.open(p).convert("RGBA")
+        im = imgio.load(p)
         im = fit_canvas(im, cell)
         bg = Image.new("RGBA", (cell, cell), MAGENTA)
         bg.paste(im, (0, 0), im)

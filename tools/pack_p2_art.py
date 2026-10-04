@@ -11,6 +11,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+from imglib import geom
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -43,9 +44,9 @@ def _run() -> None:
     }
     for dest, src in jobs.items():
         save(IMG / src, Path(dest))
-    Image.open("assets/sprites/player/male/equip_great_axe_right.png").transpose(
-        Image.FLIP_LEFT_RIGHT
-    ).save("assets/sprites/player/male/equip_great_axe_left.png")
+    geom.flip(Image.open("assets/sprites/player/male/equip_great_axe_right.png")).save(
+        "assets/sprites/player/male/equip_great_axe_left.png"
+    )
     for gender in ["male", "female"]:
         for wpn in ["great_axe", "staff", "longbow"]:
             down = Path(f"assets/sprites/player/{gender}/equip_{wpn}_down.png")

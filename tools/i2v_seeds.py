@@ -17,6 +17,7 @@ TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS))
 
 import sprite_pipeline as sp  # noqa: E402
+from imglib import geom, imgio  # noqa: E402
 
 SCALE = 4
 # After 400% NN, pad #FF00FF so lifted feet / swinging arms stay on-plate.
@@ -529,7 +530,7 @@ def build_overlay_prompt(facing: str, tool: str) -> str:
 def scale_nn(im: Image.Image, factor: int) -> Image.Image:
     im = im.convert("RGBA")
     w, h = im.size
-    return im.resize((w * factor, h * factor), Image.Resampling.NEAREST)
+    return geom.scale_nearest(im, size=(w * factor, h * factor))
 
 
 def figure_bbox(im: Image.Image) -> tuple[int, int, int, int] | None:
@@ -743,7 +744,7 @@ def export_cell(
     overlay: str = "",
 ) -> dict:
     dest_dir.mkdir(parents=True, exist_ok=True)
-    raw = Image.open(src).convert("RGBA")
+    raw = imgio.load(src)
     plate = pad_chroma(scale_nn(raw, factor), PAD_FRAC)
     path = dest_dir / f"seed_i2v_{facing}_x{factor}.png"
     plate.save(path)
@@ -788,7 +789,7 @@ def export_bible(
     overlay: str = "",
 ) -> dict:
     dest_dir.mkdir(parents=True, exist_ok=True)
-    raw = Image.open(src).convert("RGBA")
+    raw = imgio.load(src)
     named = dict(zip(sp.CELL_NAMES, sp.split_equal_3x3(raw)))
     write_palette(
         raw,

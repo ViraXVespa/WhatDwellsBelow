@@ -30,6 +30,7 @@ import i2v_seeds  # noqa: E402
 import pack_locomotion as loc  # noqa: E402
 import agent_log  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
+from imglib import imgio  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "_src" / "oneshot"
@@ -98,7 +99,7 @@ def pack_one(
         n = FIXED_N.get(action)
     if n:
         paths = even_pick(paths, n)
-    raw = [Image.open(p).convert("RGBA") for p in paths]
+    raw = [imgio.load(p) for p in paths]
     cleaned = [loc.clean(im, rim, rim_hue) for im in raw]
     ref = loc.bible_cell(gender, facing)
     idle = loc.key_fit(ref, rim=0, rim_hue=rim_hue) if ref is not None else None

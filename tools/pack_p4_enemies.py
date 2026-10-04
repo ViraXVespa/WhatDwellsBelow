@@ -12,7 +12,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
-from sprite_lib import fit_box
+from imglib.geom import fit_box, flip
 
 CANVAS = 128
 PAD = 8
@@ -64,7 +64,7 @@ def pack_one(src: Path, dest_dir: Path) -> Path:
     out = fit_local(im)
     down = dest_dir / "idle_down.png"
     out.save(down)
-    flipped = out.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    flipped = flip(out)
     for k in KEYS:
         p = dest_dir / f"idle_{k}.png"
         if k in ("left", "up_left", "down_left"):
