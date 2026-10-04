@@ -120,7 +120,7 @@ static func p5(host: Node) -> void:
 		ui._buy_snack()
 		if shop and shop.stock.size() > 0:
 			var a: Dictionary = shop.stock[0]
-			ui._buy_art(str(a.id), str(a.name))
+			ui._buy_art(str(a.id), str(load("res://scripts/data/catalog.gd").by_id(str(a.id)).name))
 		ui.close_ui()
 	printerr("P5: shop artifacts=" + str(App.run_artifacts.size()) + " snack_buys=" + str(App.shop_buys))
 	var gate_open0: bool = false
