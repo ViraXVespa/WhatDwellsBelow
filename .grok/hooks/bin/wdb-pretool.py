@@ -142,7 +142,7 @@ def main() -> int:
         if repo is not None and not isolated and hits_tree(blob, repo):
             return out(
                 "deny",
-                "Tree grep/list_dir over scripts|design|tools|scenes is denied. Use list_xref.ps1.",
+                "Tree grep/list_dir over scripts|design|tools|scenes is denied. Use tools/list_xref.py.",
             )
 
     if name in READ_TOOLS or "read" in name.lower():
@@ -150,7 +150,7 @@ def main() -> int:
             if is_fat_log(item):
                 return out(
                     "deny",
-                    "Raw Godot logs under _logs/ are denied. Read summary.txt via read_summary.ps1.",
+                    "Raw Godot logs under _logs/ are denied. Read the job summary via tools/read_summary.py --job <name>.",
                 )
 
     return out("allow")
