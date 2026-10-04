@@ -14,7 +14,7 @@ This is a curated table, not a list of every balance key. A number with no row h
 
 List one key with `python3 tools/tunables.py get --key CAM_PITCH` (summary: `_logs/tunable-row/summary.txt`). Patch one Live cell with `python3 tools/tunables.py set --key CAM_PITCH --set -58` (summary: `_logs/tunable-patch/summary.txt`). Do not open this whole file to change one number.
 
-`BAL_REV` is 13. Old saves pick up shipped default retunes through `migrate.gd`.
+`BAL_REV` is 14. Old saves pick up shipped default retunes through `migrate.gd`.
 
 Forge keys missing from `balance.gd` fall back inside `progress_forge.gd` / `gear_roll.gd`; a slice that adds a key also adds it to balance and the debug menu.
 

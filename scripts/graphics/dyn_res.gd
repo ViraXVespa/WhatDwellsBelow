@@ -4,6 +4,7 @@ extends Object
 ## for one DYNRES_WINDOW_S window; then drops one DYNRES_STEP, never under DYNRES_MIN. Climbs back one step
 ## after DYNRES_RECOVER_WINDOWS windows at or over DYNRES_FPS_HIGH. A climb that gets undone doubles the wait.
 ## Off: DYNRES_ON false in tunables.gd, or the launch flag --wdb-no-dynres (web: ?wdb-no-dynres).
+## Player setting App.render_scale: 0 = Auto (all of the above); 1.0 / 0.8 / 0.6 pin the scale and stop Auto.
 const T := preload("res://scripts/data/tunables.gd")
 const CliArgs := preload("res://scripts/debug/cli_args.gd")
 
@@ -15,6 +16,7 @@ static var _good := 0
 static var _wait := 0
 static var _probe := false
 static var _off := -1
+static var _pinned := false
 
 static func enabled() -> bool:
 	if _off < 0:
@@ -27,8 +29,35 @@ static func scale() -> float:
 static func _max_drop() -> int:
 	return int(round((1.0 - T.DYNRES_MIN) / T.DYNRES_STEP))
 
+## The saved value if it is one of RENDER_SCALE_OPTS, else 0 (Auto).
+static func snap(v: float) -> float:
+	for o: float in T.RENDER_SCALE_OPTS:
+		if absf(o - v) < 0.01:
+			return o
+	return 0.0
+
+static func _pin(host: Node, v: float) -> void:
+	_acc = 0.0
+	_n = 0
+	_drop = 0
+	_good = 0
+	_wait = 0
+	_probe = false
+	_pinned = true
+	var root: Window = host.get_tree().root
+	if not is_equal_approx(root.scaling_3d_scale, v):
+		root.scaling_3d_scale = v
+
 ## Real time (not Engine.time_scale), so hit-stop does not look like a slow frame.
 static func tick(host: Node) -> void:
+	var pref: float = snap(float(host.render_scale))
+	if pref > 0.0:
+		_last_us = Time.get_ticks_usec()
+		_pin(host, pref)
+		return
+	if _pinned:
+		_pinned = false
+		host.get_tree().root.scaling_3d_scale = 1.0
 	var now: int = Time.get_ticks_usec()
 	var dt: float = float(now - _last_us) / 1000000.0
 	_last_us = now

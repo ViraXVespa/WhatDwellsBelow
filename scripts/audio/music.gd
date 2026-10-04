@@ -12,6 +12,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	player = AudioStreamPlayer.new()
 	player.bus = "Master"
+	player.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 	add_child(player)
 	player.finished.connect(_on_finished)
 	_apply_vol()
@@ -40,7 +41,6 @@ func play_dungeon() -> void:
 	LT.dmark("music_load")
 	if s is AudioStreamMP3:
 		(s as AudioStreamMP3).loop = false
-	player.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 	player.stream = s
 	_apply_vol()
 	player.play(0.0)
@@ -56,7 +56,6 @@ func play_hub() -> void:
 	if s is AudioStreamWAV:
 		var w := s as AudioStreamWAV
 		w.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	player.playback_type = AudioServer.PLAYBACK_TYPE_DEFAULT
 	player.stream = s
 	_apply_vol()
 	player.play(0.0)

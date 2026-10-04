@@ -20,6 +20,7 @@ static func collect() -> Dictionary:
 		"display_mode": App.display_mode,
 		"display_fs_kind": App.display_fs_kind,
 		"web_fullscreen": App.web_fullscreen,
+		"render_scale": App.render_scale,
 		"aim_line_on": App.bal.aim_line_on,
 		"aim_line_opacity": App.bal.aim_line_opacity,
 		"target_lock_pref": bool(App.get("target_lock_pref")),

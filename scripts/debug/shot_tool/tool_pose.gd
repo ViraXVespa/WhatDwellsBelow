@@ -32,10 +32,10 @@ static func _apply_pose(host: Node) -> void:
 	var T = load("res://scripts/data/tunables.gd")
 	if rig != null and rig.has_method("apply_size"):
 		rig.warm_hold = true
-		rig.call("apply_size", 1080.0 / float(T.PX) / maxf(0.01, z))
+		rig.call("apply_size", T.base_size().y / float(T.PX) / maxf(0.01, z))
 	var cam: Camera3D = host.get_viewport().get_camera_3d()
 	if cam != null:
-		cam.size = 1080.0 / float(T.PX) / maxf(0.01, z)
+		cam.size = T.base_size().y / float(T.PX) / maxf(0.01, z)
 		cam.far = maxf(cam.far, cam.size * 3.0)
 		printerr("SHOT: mark=camsize size=%s zoom=%s" % [str(cam.size), str(z)])
 	if cam != null and false:

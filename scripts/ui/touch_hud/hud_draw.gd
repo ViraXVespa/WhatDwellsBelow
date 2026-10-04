@@ -3,6 +3,7 @@ extends Object
 ## Touch HUD layout and pad drawing.
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
+const T := preload("res://scripts/data/tunables.gd")
 const PadInput := preload("res://scripts/ui/touch_hud/hud_input.gd")
 
 const GLYPH := {
@@ -51,7 +52,7 @@ static func tick(host: CanvasLayer, _delta: float) -> void:
 
 static func layout(host: CanvasLayer) -> void:
 	var vp := host.get_viewport().get_visible_rect().size
-	var sc: float = clampf(minf(vp.x, vp.y) / 1080.0, 0.7, 1.35)
+	var sc: float = clampf(minf(vp.x, vp.y) / T.base_size().y, 0.7, 1.35)
 	host._move_r = 98.0 * sc
 	var sr0 := 28.0 * sc
 	var gap0 := 6.0 * sc

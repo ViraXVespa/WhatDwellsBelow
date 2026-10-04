@@ -38,13 +38,12 @@ static func make_armor(p: Object, slot: String, rarity: String, ilvl: int = 0) -
 
 static func make_potion(p: Object, n: int) -> Dictionary:
 	var charges: int = n if n > 0 else 2
-	var cd: float = Balance.f("potion_cooldown", 8.0)
 	return item(p, "potion", "Potion", {
 		"slot": "potion",
 		"stack": 1,
 		"charges": charges,
 		"charge_max": charges,
-		"cooldown": cd,
+		"cooldown": 0.0,
 		"desc": App.tr("progress_make.instant_heal_charges_per_run") % charges,
 	})
 

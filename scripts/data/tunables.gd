@@ -56,6 +56,7 @@ const DYNRES_RECOVER_WINDOWS := 8
 const DYNRES_BACKOFF_MAX := 8
 const DYNRES_HITCH_S := 0.5
 const FLEE_PACK_MEAN := 4.0
+const RENDER_SCALE_OPTS: Array[float] = [0.0, 1.0, 0.8, 0.6]
 const WALL_H := 1.45
 const ARENA := 22
 const PATREON_URL := "https://www.patreon.com/cw/ViraXVespa"
@@ -69,3 +70,7 @@ const TOUCH_DEAD := 0.24
 
 static func archive_catalog() -> Array:
 	return load("res://scripts/data/archives/archives_catalog.gd").all()
+
+## Design size from project.godot (display/window/size): the one place code reads it.
+static func base_size() -> Vector2:
+	return Vector2(float(ProjectSettings.get_setting("display/window/size/viewport_width")), float(ProjectSettings.get_setting("display/window/size/viewport_height")))

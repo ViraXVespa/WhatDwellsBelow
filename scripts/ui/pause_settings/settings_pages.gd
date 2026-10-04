@@ -7,6 +7,7 @@ const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const Disp := preload("res://scripts/display_mode.gd")
+const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 
 static func page_gameplay(host: Node) -> void:
 	var ch: Button = ThemeS.btn(App.tr("settings_pages.character") % App.character_type, func() -> void:
@@ -123,6 +124,15 @@ static func page_graphics(host: Node) -> void:
 			View.apply_col(host)
 			View.focus_col(host)
 		))
+	View.add_page_btn(host, ThemeS.btn(App.tr("settings_pages.render_scale") % _scale_label(float(App.render_scale)), func() -> void:
+		var opts: Array[float] = T.RENDER_SCALE_OPTS
+		var i: int = opts.find(DynRes.snap(float(App.render_scale)))
+		App.render_scale = opts[(i + 1) % opts.size()]
+		App.save_now()
+		host.split_build_page("graphics")
+		View.apply_col(host)
+		View.focus_col(host)
+	))
 	var aim_on: bool = bool(App.bal.aim_line_on)
 	View.add_page_btn(host, ThemeS.btn(App.tr("settings_pages.aim_line") % ("On" if aim_on else App.tr("settings_pages.off")), func() -> void:
 		App.bal.aim_line_on = not App.bal.aim_line_on
@@ -134,6 +144,9 @@ static func page_graphics(host: Node) -> void:
 	_slider(host, App.tr("settings_pages.aim_line_opacity"), float(App.bal.aim_line_opacity), 0.05, 1.0, 0.05, func(v: float) -> void:
 		App.bal.aim_line_opacity = v
 	)
+
+static func _scale_label(v: float) -> String:
+	return App.tr("settings_pages.auto") if DynRes.snap(v) <= 0.0 else "%.1f" % v
 
 static func _set_filter(host: Node, mips_on: bool, aniso_on: bool) -> void:
 	var id: int = SpriteFilt.from_flags(mips_on, aniso_on)

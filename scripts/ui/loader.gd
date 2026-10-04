@@ -106,7 +106,7 @@ func _vp() -> Vector2:
 		var r := vp.get_visible_rect().size
 		if r.x > 1.0 and r.y > 1.0:
 			return r
-	return Vector2(1920, 1080)
+	return load("res://scripts/data/tunables.gd").base_size()
 
 func _layout_bar() -> void:
 	var s := _vp()

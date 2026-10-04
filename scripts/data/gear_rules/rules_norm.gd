@@ -9,6 +9,9 @@ static func normalize_prog(p: Object) -> void:
 		var eq: Variant = p.slots.get(s, {})
 		if eq is Dictionary and not eq.is_empty():
 			p.slots[s] = normalize_item(eq)
+	var pot: Variant = p.slots.get("potion", {})
+	if pot is Dictionary and not pot.is_empty():
+		p.slots["potion"] = normalize_item(pot)
 	_norm_list(p.bag)
 	if p.get("bank_items") is Array:
 		_norm_list(p.bank_items)
@@ -33,6 +36,8 @@ static func normalize_item(it: Dictionary) -> Dictionary:
 		return it
 	var kind: String = str(it.get("kind", ""))
 	var slot: String = str(it.get("slot", ""))
+	if slot == "potion":
+		it["cooldown"] = 0.0  # potions use the live potion_cooldown tunable, not a baked copy
 	if kind == "artifact" or slot == "potion" or slot == "food" or kind == "food":
 		return it
 	if slot != "weapon" and slot != "tool" and slot != "head" and slot != "body" and slot != "legs":
