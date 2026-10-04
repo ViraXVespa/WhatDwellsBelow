@@ -48,7 +48,7 @@ Do not open the reuse map except from `design/grok-bot-reuse.md` when that brief
 New `tools/` runners: `design/tools.md` rule 5 (propose first). Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
 Gates: batch same-kind fixes, run once, at most 2 reruns (`design/tools.md` rule 10).
 
-Work only in `/workspace/WhatDwellsBelow`. Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `design/tools-shims.md`, `design/tools-media.md`), the pc-offload skill, or Imagine / I2V skills. No Windows checkout, `WDB_ROOT`, or Steam Godot.
+Work only in `/workspace/WhatDwellsBelow`. Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `design/tools-shims.md`, `design/tools-media.md` except its imglib section), the pc-offload skill, or Imagine / I2V skills. No Windows checkout, `WDB_ROOT`, or Steam Godot.
 
 ## Smokes
 

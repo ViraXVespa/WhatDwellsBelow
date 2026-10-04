@@ -11,7 +11,7 @@ One standard for every surface: the cheapest check that would fail if the change
 |---|---|---|
 | Bot | `bot_status.py --prove`, `bot_smokes.py`, `bot_warnscan.py`, shots | `BOT.md` Prove and Smokes |
 | Build | gather once, change once, prove once: `run_build_gate.py`, the `routes.yaml` `smokes` / `shot_flows` for the door | `build-job-cycle.md` |
-| Web / chat | cannot run Godot: the emit scratch runs the runners through the `doc_patch` lib (`dump_job`) and the User pastes the RESULT; a missing check is added the same way, as a tool or recipe in that scratch | `web-test.md`, `web-emit.md`, `doc-library.md` |
+| Web / chat | cannot run Godot: the emit scratch runs the runners through the `doc_patch` lib (`dump_job`) and the User pastes the RESULT; a missing check is added the same way, as a tool or recipe in that scratch; a Build brief only for work Web cannot do (`web-emit.md`) | `web-test.md`, `web-emit.md`, `doc-library.md` |
 
 ## By change kind
 

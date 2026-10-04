@@ -10,7 +10,6 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
 | `audio_lib.py` | Placeholder audio helpers (`write_wav`, `write_pcm`, `sine`, `noise`, `mix`, `mix_norm`) behind the `make_*` audio tools; WAV output byte-identical | D | module docstring (no `--help`) | N |
-| `sprite_lib.py` | Shim -> `imglib` (`dist`, `chroma_alpha`, `flood_border`, `fill_pockets`, `fit_box`), plus `neighbors8`, `shrink_keyed`, `KEYED_CAP`; one release. Per-class `key()` rules stay in their tools | D | module docstring (no `--help`) | N |
 | `anim_review_lib.py` | Read helpers for the Animation Browser review tools, plus the shared pack/regen brief CLI and writer (`brief_args`, `load_with_missing`, `add_missing`, `write_brief`). Allowlisted but only supports non-Bot tools. | D | module docstring (no `--help`) | Y |
 | `anim_review_pack.py` | Build a Grok-readable pack brief from Animation Browser review.json | D | `--help` | N |
 | `anim_review_regen.py` | Build a Grok-readable regen brief from Animation Browser review.json | D | `--help` | N |
@@ -47,9 +46,9 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | `shot-recipes.json` | Sidecar data for the tool of the same stem | D | - | N |
 | `sprite_pipeline.py` | Section 19 cleanup: Paint.NET-style outside wand + Color-to-Alpha lip + 128 fit (keying and fit in `imglib`) | D | `--help` | N |
 
-### Image library `tools/imglib/` (shared; rows marked Y run on the Bot)
+### Image library `tools/imglib/` (shared; the Bot may read this section; rows marked Y run on the Bot)
 
-Install: `pip install -r tools/requirements.txt` (Pillow, numpy; OpenCV optional, `IMGLIB_NO_CV2=1` forces the pure-python path). New image logic goes in the library and the tools import it; per-asset key rules, banner and glyph drawing and the one-off `process_*` passes stay in their tools. An adopted helper ships with a before/after pixel diff of 0. Proof recipes: `prove.md`.
+Install: `pip install -r tools/requirements.txt` (Pillow, numpy; OpenCV optional, `IMGLIB_NO_CV2=1` forces the pure-python path). New image logic goes in the library and the tools import it; per-asset key rules, banner and glyph drawing and the one-off `process_*` passes stay in their tools. The pack_* / process_* passes import these helpers (`imgio.load`, `geom.flip`, `scale_nearest`, `shrink`, `fit_box`, `fit_axis`); an adopted helper ships with a before/after pixel diff of 0. Proof recipes: `prove.md`.
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
@@ -59,7 +58,7 @@ Install: `pip install -r tools/requirements.txt` (Pillow, numpy; OpenCV optional
 | Module | Owns |
 |---|---|
 | `imglib/imgio.py` | `load` / `save`, numpy round trip, `MAGENTA`, `hex_of` (named `imgio`, not `io`, to keep stdlib names free) |
-| `imglib/geom.py` | `bbox`, `crop`, `scale_nearest`, `flip`, `grid_split`, `fit_box` |
+| `imglib/geom.py` | `bbox`, `crop`, `scale_nearest`, `shrink`, `flip`, `grid_split`, `fit_box` (square canvas), `fit_axis` (crop, then scale to a width or height) |
 | `imglib/color.py` | Lab distance, hue, `background_refs`, `palette`, WCAG `contrast_ratio` |
 | `imglib/key.py` | plate mask, `remap_plate` (every plate pixel exactly #FF00FF), border flood, pockets, `chroma_alpha`, spill (hue band follows the key and the plate refs), `key_to_alpha` |
 | `imglib/compare.py` | `delta_map`, `diff`, `heatmap`, `montage`, `checker` (behind `shot_diff.py` and the `run_shots.py` seam check) |
