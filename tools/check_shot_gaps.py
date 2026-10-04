@@ -118,7 +118,7 @@ def main(argv: list[str] | None = None) -> int:
                    help="print everything but never FAIL (Build gate); the Bot gate runs without it")
     p.add_argument("--strict", action="store_true", help="FAIL on any uncovered state, not just new ones")
     args = p.parse_args(argv)
-    root = agent_log.resolve_root(args)
+    root, where = agent_log.cwd_scan_root(args)
     cfg = json.loads((root / CFG).read_text(encoding="utf-8"))
     ignore = cfg.get("ignore", {})
     states = find_states(root, cfg)
@@ -135,7 +135,7 @@ def main(argv: list[str] | None = None) -> int:
         base = find_states(root, cfg, args.changed)
         new = sorted(s for s in states if s not in base)
     new_gaps = [s for s in new if s in gaps]
-    lines = [f"shot-gaps root=. states={len(states)} covered={len(states) - len(gaps) - sum(1 for s in states if s in ignore and s not in covered)} "
+    lines = [f"shot-gaps {where} states={len(states)} covered={len(states) - len(gaps) - sum(1 for s in states if s in ignore and s not in covered)} "
              f"ignored={sum(1 for s in states if s in ignore)} flows={len(flows)}"]
     lines += [f"gap      {s}  ({states[s]})" for s in gaps]
     lines += [f"new      {s}  covered={'no' if s in gaps else 'yes'}" for s in new]

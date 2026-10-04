@@ -427,7 +427,7 @@ def allowed_citations(data: dict[str, Any], posix: str) -> set[str]:
     if role == "gate":
         return {posix} | gates | indexes | notes
     if role == "skill":
-        return {posix} | gates | indexes | notes | skills
+        return {posix} | gates | indexes | notes | skills | agents  # a skill may tell Build to read the agents file by hand (worktree sessions do not always auto-load it)
     if role in {"index", "notes"}:
         return all_route_files(data)
     if role == "door":

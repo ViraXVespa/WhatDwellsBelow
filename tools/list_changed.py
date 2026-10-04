@@ -50,7 +50,7 @@ def history(root: Path, args: argparse.Namespace, where: str) -> int:
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List git-changed paths in scope with sizes.", json_out=True)
     ap.add_argument("--scope", "-Scope", nargs="+", default=DEFAULT_SCOPE, help="Path prefixes, comma or space separated.")
-    ap.add_argument("--head", "-Head", action="store_true", help="Append HEAD sha and recent log.")
+    ap.add_argument("--head", "-Head", action="store_true", help="Print the HEAD sha and the recent log.")
     ap.add_argument("--log-count", "-LogCount", type=int, default=10, help="Log lines shown with --head (default 10).")
     ap.add_argument("--history", nargs="+", metavar="PATH", default=[], help="Compare the change history of these paths (a doc and its code): latest commits each, and which changed last.")
     ap.add_argument("--per-path", type=int, default=5, help="With --history: commits listed per path (default 5).")
@@ -85,6 +85,8 @@ def main(argv: list[str] | None = None) -> int:
         log = repo_lib.run_git(root, "log", "-n", str(args.log_count), "--oneline")[1].splitlines()
         body += ["", f"HEAD={sha}", f"logCount={len(log)}"] + [f"  {ln}" for ln in log]
     echo = [where, f"Changed in scope: {len(rows)} paths"] + [f"{s:>3} {n:6d}  {r}" for n, s, r in rows[:30]]
+    if args.head:
+        echo += [f"HEAD={sha}"] + [f"  {ln}" for ln in log]
     if len(rows) > 30:
         echo.append(f"... +{len(rows) - 30} more (see summary)")
     return agent_log.finish("changed", root, "\n".join(body), "INFO", args=args, echo="\n".join(echo), count=len(rows))

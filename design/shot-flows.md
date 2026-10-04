@@ -60,6 +60,8 @@ Extending the tool is part of the task (no hand-driven Godot, no scratch, no PNG
 3. A new worker flag or `run_shots.py` argument is the last resort: parse in `tool_args.gd`, add the matching argument.
 4. Document it in the table below and in `--help` (`check_tool_cli.py`).
 
+A screen the worker cannot stage today (the title / play menu, the loader, the web fullscreen gate and touch overlay; it boots only camp or dungeon): report it as "not pictured" in the survey with the reason, tell her, and carry on with the surfaces that can be shot. Whether to teach the worker a new scene (this gap process) is her call, asked as a question with the survey. Do not stand in a picture of another screen.
+
 | Knob | Stages | Used for |
 |---|---|---|
 | `--steps`, `--frames-dir`, `--no-pixels` | scripted flows, numbered frames, headless asserts | NPC/menu/page captures (first row) |

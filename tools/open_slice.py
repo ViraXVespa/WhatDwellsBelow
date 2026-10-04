@@ -2,6 +2,7 @@
 """Open a Build slice: the USER runs this (PowerShell on Windows). It starts grok in a NEW worktree cut from the week branch.
 
     python tools/open_slice.py [AREA_OR_NAME] [--prompt TEXT | --prompt-file PATH] [--ref REF] [--dry-run]
+It prints the prompt it passes as one info line (length, first 60 characters, sha256) and logs it. --prompt-file reads a file as is; --prompt takes text.
 Finds the repo from this file's location and the week branch grok-build-w{N} (none and no --ref: fails). The worktree name is
 generated (wdb-<area or slice>-<YYYYMMDD-HHMM>). It prints, then runs from the repo root with a plain args list (no shell):
     grok --worktree=NAME --ref WEEKBRANCH [PROMPT]
@@ -84,7 +85,11 @@ def main(argv: list[str] | None = None) -> int:
     exe = shutil.which("grok")
     cmd = build_argv(exe or "grok", name, ref, prompt)
     lines = [f"repo={root} ref={ref} worktree={name}", f"COMMAND (run from the repo root): {show(cmd)}"]
-    lines.append((f"area={area}: resolved." + (f"\n{note}" if note else "")) if area else
+    import hashlib
+
+    warn = slice_lib.area_warning(root, area) if area else ""
+    lines.append(f"prompt: {len(prompt)} chars, starts {prompt[:60]!r}, sha256 {hashlib.sha256(prompt.encode('utf-8')).hexdigest()[:12]}" if prompt else "prompt: none (a blank session)")
+    lines.append((f"area={area}: resolved." + (f"\n{warn}" if warn else "") + (f"\n{note}" if note else "")) if area else
                  "No area given, so no route checks ran. In the new session Build runs `python tools/start_build_slice.py --door <door>` (it says IN A WORKTREE).")
     if dry:
         return end("\n".join(lines + ["dry run: grok was not started."]), "PASS", route="dry-run")
@@ -138,6 +143,8 @@ def selftest(script: Path) -> int:
         cmd = next((ln for ln in out.splitlines() if ln.startswith("COMMAND")), "")
         if code != 0 or not cmd.endswith(("hello there'", "hello there\"")):
             bad.append("--prompt must be the last argument")
+        if "prompt: 11 chars, starts 'hello there'" not in out or "sha256 " not in out:
+            bad.append("the prompt length, first 60 chars and sha must be printed")
         (root / "p.txt").write_text("from file\n", encoding="utf-8")
         code, out = run(root, "--dry-run", "--prompt-file", str(root / "p.txt"))
         if code != 0 or "from file" not in out:

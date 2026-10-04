@@ -44,6 +44,31 @@ Smokes at prove: the phases mapped to the door or job in `routes.yaml` `smokes` 
 
 A new numbered phase, `--wdb-*-smoke` flag, or host scene is allowed only when the feature is new and no mapped phase fits (add it with the feature; name it in the report). A new catalog runner is fine when it would reasonably help future tasks (`tools.md` rule 5). A postcard or shot flow (`shot-tool.md`) is a deliverable or a visual check, not the build gate or a smoke; the headless flow asserts (`bot_smokes.py --flows`) may be named in the prove step. When a task needs a picture the tool cannot stage, extend the tool inside the change job (`shot-flows.md` gap process); do not hand-drive Godot or edit a PNG. A red postcard (`fail` band) gets one same-command rerun only for `truncated`, timeout or `busy`; otherwise fix the tool or script.
 
+## New feature flow
+
+1. Owner: `python tools/list_route.py --door <door>`. No door or doc owns it (or it needs a second door) = a new system: plan it (door, doc name, save keys, entry events, smokes), ask every open question, again as answers raise more; wait.
+2. Design doc first: write or extend the owning topic via `tools/doc_patch.py`, then implement.
+3. Prove, matched to the change (`prove.md`): `check_gd_load.py` each pass; a visual change adds its `shot_flows` (`check_shot_gaps.py --changed` failing fails the prove).
+4. Ship notes: `code_map.py patch` for touched live scripts, `tunables.md` for any number, `check_load_graph.py` when routes or docs moved. No changelog files from Build (commit message: `versioning.md`).
+
+## Slice messages (visual work)
+
+The full form of the rules in the session flow doc.
+
+- **First command and statement.** `start_build_slice.py` is the first command of a slice, before any file read. In a worktree it prints the first-message statement from the session's own files: whether the agents file was auto-loaded or read by hand, and whether the skills were listed at the start or found by path. When the session files cannot be read it prints "not verified" and points at `/session-info`; say that, do not guess. An unknown `--area` prints a WARN with the valid doors (free area names are allowed).
+- **Order.** `check_gd_load.py` once, `run_godot_import_check.py`, baseline shots opened, then the survey or restate as text, then Q0. Baseline shots are always allowed; a brief that says "shoot nothing" never covers them.
+- **Q0** is asked in every slice, even when the brief names a look: result look, reference, out of bounds. A frame, layout or look already built in the repo is inherited: it is a Q0 item for her to keep, change or drop, never only an assumptions-ledger line.
+- **An ask is preceded by its message.** The message holds the survey or restate, each PNG path with a line saying what is on it, the ledger and any `Did not work:`. The option labels of `ask_user_question` are not that message. If an ask went out without it, send the message before the next tool call. For several surfaces: survey first, then which group, then the order, then what she wants for each surface, as separate questions.
+- **Ledger** (three short lines, each overrulable): "Decisions I made that were yours" (with the alternative), "Assumptions carried from memory or docs", "Also changed". Also changed lists: shared scripts touched with the screens that use them (`python tools/list_xref.py <name>`), states that were not shot, writes outside the worktree (Grok memory files included), windows opened on her PC.
+- **Outside the worktree.** Build writes there only through `tools/run_isolated_grok.py` and the checkpoint file. Anything else, a memory-file edit included, is a ledger entry.
+- **Showing.** A shot is shown when its path and a description are in the message. Opening a file or folder on her PC (explorer, `Start-Process`) is not showing it and goes in the ledger.
+- **Failed step.** Any non-zero exit or `RESULT FAIL`, exploratory runs included, and any skipped step. The next message starts `Did not work: <command> <one line>`. `python tools/did_not_work.py` lists a session's failed steps and which were not reported.
+- **Shared tools.** `python tools/list_xref.py --texts <word>` searches the words in shot-flow text dumps (after a `run_shot_flow.py`).
+
+## Next-session brief
+
+A brief for a new Build session is lean. It has: the task in her words; where the last result and its handoff notes live (commit, docs); "first message: the statement `start_build_slice.py` prints"; "Q0 first"; baseline shots are allowed and expected; run `start_build_slice.py --checkpoint` when the gather is done; commit and push only after she confirms ("Settled? commit?"). It never forbids questions, never sets limits on the run, and does not restate rules the session flow doc already holds.
+
 ## Red prove and merge-back
 
 **Retry** (one diagnosis, one fix: `tools.md` rule 10). The checkpoint (the worktree's gather session) is the point a retry returns to. A red prove prints a RETRY block: the command `grok -r <checkpoint> --fork-session` for the User to run from the worktree directory (a fork keeps the directory of the session it forks, which is the worktree; no `--cwd`, never `--worktree`; gather context kept), and a paste-ready prompt: which prove failed, the red output in a line or two, the files in `git diff grok-build-w{N}` (working tree, so uncommitted edits show; untracked files are listed too) to look at first, and the ask for one diagnosis and one fix. The forked session does not re-gather: it reads only the changed files, diagnoses once, fixes once and reruns once. No checkpoint saved for this worktree: the block says so and forks nothing; run `--checkpoint` in the gather session, or ask the User for its id (`grok sessions list` in the worktree). Still red: stop and report. The worktree's git history holds the code.

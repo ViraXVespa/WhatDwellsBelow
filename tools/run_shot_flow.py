@@ -173,7 +173,7 @@ def main(argv: list[str] | None = None) -> int:
                    help="after capture, FAIL when the flow's published shots no longer match (UI changed: re-publish)")
     p.add_argument("--publish-dir", default="", help="publish here instead of the flow's publish.dir (assets/ is refused)")
     args = p.parse_args(argv)
-    root = agent_log.resolve_root(args)
+    root, where = agent_log.cwd_scan_root(args)
     flows = list_flows(root)
     if args.list:
         for n, d in flows.items():
@@ -191,7 +191,7 @@ def main(argv: list[str] | None = None) -> int:
     changed = [r for r in rows if r.get("diff_status") == "INFO"]
     stale = [r for r in rows if r.get("stale")]
     status = "FAIL" if (bad_run or bad_diff or stale) else ("INFO" if changed else "PASS")
-    lines = ["shot-flow root=. no_pixels=%s" % args.no_pixels]
+    lines = ["shot-flow %s no_pixels=%s" % (where, args.no_pixels)]
     for r in rows:
         lines.append("%s band=%s ok=%s steps=%s frames=%s diff=%s fail=%s dir=%s" % (
             r["flow"], r["band"], r["ok"], r["steps"], r["frames"], r.get("diff_status", "-"), r["fail"] or "-", r["dir"]))

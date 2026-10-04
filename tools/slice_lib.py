@@ -10,6 +10,7 @@ from pathlib import Path
 
 import agent_log
 import retry_lib
+import session_lib
 
 VISUAL = {"ui", "theme", "visual"}
 
@@ -62,13 +63,54 @@ def start_text(wt: str, ref: str) -> str:
             "Paste the task into the new session: open the baseline picture, show the restate, ask your questions, gather, then `python tools/start_build_slice.py --checkpoint`.\n" + FORK_FACT)
 
 
-def in_worktree_text() -> str:
-    return ("IN A WORKTREE: this directory is the slice; do not create another. First message to the User: say whether AGENTS.md and the project skills loaded "
-            "(if not, say so and read AGENTS.md and design/grok-build.md by hand). Before the baseline run `python tools/check_gd_load.py` once and "
-            "`python tools/run_godot_import_check.py` (a fresh worktree has nothing imported); a baseline with band=fail is invalid: fix the cause and re-shoot. "
-            "Open the baseline, then write the restate as visible text in the message, then ask your questions (open with what the result should look like and whether the User has a reference). "
-            "After ANY failed or skipped tool step, your next message to the User starts with \"Did not work: <command> <one line of its output>\". "
-            "Gather, then run `python tools/start_build_slice.py --checkpoint`. This tool never starts grok.")
+def in_worktree_text(sdir: Path | None = None) -> str:
+    """The first-message text Build reads when this tool is its first command. `sdir` = the running session's folder (session_lib), when known."""
+    return "\n".join([
+        "IN A WORKTREE: this directory is the slice; do not create another. This tool is the first command of a slice.",
+        session_lib.statement(sdir),
+        "ORDER: `python tools/check_gd_load.py` once and `python tools/run_godot_import_check.py` (a fresh worktree has nothing imported); shoot and OPEN the baseline "
+        "(band=fail is invalid: fix the cause, re-shoot); write the survey or restate as visible text; then Q0; then your other questions.",
+        "Q0, in every slice, even when the prompt gives a look: what should the result look like; is there a reference (a picture, a game, a screen); what is out of bounds, "
+        "including frames or layouts already built. A layout or frame inherited from earlier work is a Q0 item, never only a ledger line.",
+        "AN ASK IS ALWAYS PRECEDED BY ITS MESSAGE: the survey or restate, every PNG path with a one-line description of it, the ledger lists, and `Did not work:` if any. "
+        "Option labels are not the message; an ask with no text is a protocol break. Realise it was not sent: send it before your next tool call. In a survey of several surfaces the "
+        "survey comes first; which group, the order and what she wants for each are separate questions after it.",
+        "LEDGER, three lines, in every ask: \"Decisions I made that were yours\" (incl. new assets, fonts, dependencies, generated images); \"Assumptions carried from memory or docs\"; "
+        "\"Also changed\" (shared code and the other screens that use it, filled from `python tools/list_xref.py NAME` for each shared script you touched; states not shot; "
+        "writes outside the worktree, Grok memory files included; windows or programs opened on her PC). Build writes nothing outside the worktree except tools/run_isolated_grok.py and the checkpoint file.",
+        "DID NOT WORK: any non-zero exit, `RESULT FAIL`, or skipped step, exploratory ones too, opens your next message as `Did not work: <command> <one line>`. "
+        "`python tools/did_not_work.py` lists them from the session.",
+        "SHOWING: opening a file on her PC (explorer, Start-Process) is not showing it; put the paths and descriptions in the message. Opening one needs a ledger entry.",
+        "Then gather and run `python tools/start_build_slice.py --checkpoint`. This tool never starts grok.",
+    ])
+
+
+def doors_hint(root: Path) -> str:
+    """'doors: a, b, c; jobs are door.job (python tools/list_route.py lists them)' from routes.yaml, or ''."""
+    try:
+        from load_routes import load_routes
+
+        doors = sorted((load_routes(root).get("doors") or {}).keys())
+    except Exception:
+        return ""
+    return f"doors: {', '.join(doors)}; jobs are door.job (`python tools/list_route.py` lists them)" if doors else ""
+
+
+def area_warning(root: Path, area: str, door: str = "", job: str = "") -> str:
+    """WARN text when --area is neither a routes.yaml door nor a job: it then only names the worktree and gives no route card."""
+    area = area.strip()
+    if not area or area in (door, job):
+        return ""
+    try:
+        from load_routes import check_route, load_routes
+
+        data = load_routes(root)
+        if ("." in area and not check_route(data, "", area)) or (not check_route(data, area, "")):
+            return ""
+    except Exception:
+        return ""
+    return (f"WARN: --area {area!r} is not a routes.yaml door or job, so it only names the worktree and gives no route card, smokes or flows. "
+            f"Valid: {doors_hint(root) or 'see design/routes.yaml'}. Use --door / --job for the card; a free name is fine for a new, undocumented system (ask the User).")
 
 
 def worktree_kind(root: Path) -> str:
@@ -216,6 +258,28 @@ def selftest(script: Path) -> int:
         code, out = run(clone, "--checkpoint", env="sess-2")
         if code != 0 or "grok -r sess-2 --fork-session" not in out or retry_lib.gather_for(clone).get("session") != "sess-2":
             bad.append("--checkpoint must work in a Grok clone")
+        code, out = run(clone, "--dry-run")
+        for need in ("This tool is the first command", "First-message statement", "not verified", "/session-info", "Q0", "AN ASK IS ALWAYS PRECEDED BY ITS MESSAGE", "Option labels are not the message",
+                     "Also changed", "Grok memory files", "DID NOT WORK", "did_not_work.py", "opening a file on her PC", "inherited from earlier work"):
+            if need.lower() not in out.lower():
+                bad.append(f"the worktree first-message text lacks {need!r}")
+        # routes fixture: a door with a visual job; the flow is created first (mapped), then the door prints no STEP 0; an unknown --area warns and lists the doors
+        (clone / "design").mkdir(exist_ok=True)
+        routes = clone / "design" / "routes.yaml"
+        routes.write_text('version: 1\ndoors:\n  ui:\n    file: design/ui.md\n    read_when: "x"\n    jobs:\n      pause: design/ui-pause.md\nshot_flows:\n  ui: "door-flow"\n', encoding="utf-8")
+        code, out = run(clone, "--job", "ui.pause", "--dry-run", area="")
+        if code != 0 or "IN A WORKTREE" not in out or "STEP 0 (not a stop)" not in out or "door-flow" not in out or out.index("IN A WORKTREE") > out.index("STEP 0"):
+            bad.append("a visual job with no flow of its own must print IN A WORKTREE, then STEP 0 naming the door-level flows")
+        routes.write_text(routes.read_text(encoding="utf-8") + '  ui.pause: "own-flow"\n', encoding="utf-8")
+        code, out = run(clone, "--job", "ui.pause", "--dry-run", area="")
+        if code != 0 or "STEP 0" in out:
+            bad.append("once the flow is created and mapped by job, the door must print no STEP 0")
+        code, out = run(clone, "--door", "ui", "--area", "ui-redesign", "--dry-run", area="")
+        if code != 0 or "WARN: --area 'ui-redesign'" not in out or "doors: ui" not in out:
+            bad.append("an unknown --area must warn and list the valid doors")
+        code, out = run(clone, area="", *())
+        if code == 0 or "--door D" not in out or "doors: ui" not in out:
+            bad.append("no --door/--job/--area must fail with the usage and the valid doors (so --help is not needed)")
         plain = Path(td) / "plain" / "worktrees" / "repos-demo" / "wdb-demo-3"
         plain.parent.mkdir(parents=True)
         git(Path(td), "clone", "-q", str(root), str(plain))

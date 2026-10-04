@@ -98,12 +98,14 @@ SMOKE: dict[str, list] = {
     "show_func": [(["--path", "scripts/graphics/mesh_commit.gd", "--name", "no_such_func"], _ERR)],
     "split_funcs": [["scripts/graphics/mesh_commit.gd", "--list"]],
     "summarize_scripts": [[]],
+    "did_not_work": [["--selftest"]],
     "open_slice": [["--dry-run", "--ref", "HEAD"], ["--dry-run", "--ref", "HEAD", "player"], ["--selftest"]],
     "start_build_slice": [["--door", "debug", "--job", "debug.smokes", "--dry-run", "--ref", "HEAD"], ["--selftest"]],
     "tunables": [["get", "--key", "x"], ["get", "x"]],
     "week_pin": [["--dry-run", "--id", "smoke", "--label", "l", "--desc", "d", "--commit", "abc"], ["--dry-run", "--web", "5"], ["--dry-run", "--build", "6"]],
     "week_start": [["--dry-run"]],
 }
+ABS_ROOT_TOOLS = {"list_xref", "open_slice", "show_func", "file_stat", "list_changed", "read_summary", "check_shot_gaps", "run_shot_flow", "run_godot_import_check"}  # print the absolute root they read
 SMOKE_MAX_LINES = 40  # stdout line budget per smoke run
 SMOKE_LINES = {"list_dupes": 70, "bot_status": 60, "list_oversize_docs": 120}  # per-tool override for reports that are the payload
 SMOKE_NO_RESULT = PRINTERS | {"agent_log", "wdb_scratch_server"}
@@ -235,7 +237,7 @@ def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], ta
         bad.append(f"NOISE   {label}: {lines} lines (budget {SMOKE_LINES.get(stem, SMOKE_MAX_LINES)})")
     if not out.isascii() and stem not in PRINTERS:
         bad.append(f"ASCII   {label}: non-ASCII output")
-    if sb.as_posix() in out and "--doctor" not in args and stem not in ("list_xref", "open_slice", "show_func", "file_stat", "list_changed", "read_summary"):  # these print the absolute root they scanned / run from  # --doctor echoes the GODOT_BIN pin (a machine path)
+    if sb.as_posix() in out and "--doctor" not in args and stem not in ABS_ROOT_TOOLS:  # these print the absolute root they scanned / run from  # --doctor echoes the GODOT_BIN pin (a machine path)
         bad.append(f"ABSPATH {label}: prints absolute paths (use repo-relative)")
     if "--dry-run" in args and "--help" not in args:
         rc, status = repo_lib.run_git(sb, "status", "--porcelain")

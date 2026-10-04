@@ -5,6 +5,7 @@
 Scans the project that holds the current directory (so a worktree is scanned from inside it), else this tool's own checkout;
 --root overrides. The first output line prints the absolute scanned root, with a WARN when it is not the current directory's project.
 Case-insensitive. Skips top-level archives/, .archive_worktrees/, _logs/, docs/. Summary: _logs/xref/<stamp>-xref.txt.
+--texts searches the visible text of the last shot-flow runs instead (_logs/shot-flow/**/*.texts.json): the way to find which words a screen shows.
 Old spellings: -Pattern -Path -Include -MaxHits -MaxFiles -Regex.
 """
 from __future__ import annotations
@@ -30,7 +31,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-hits", "-MaxHits", type=int, default=30, help="Max hits in total (default 30).")
     ap.add_argument("--max-files", "-MaxFiles", type=int, default=20, help="Max files listed (default 20).")
     ap.add_argument("--regex", "-Regex", action="store_true", help="Treat the pattern as a regular expression.")
+    ap.add_argument("--texts", action="store_true", help="Search the shot-flow text dumps (_logs/shot-flow/**/*.texts.json) instead of the source folders.")
     args = ap.parse_args(argv)
+    if args.texts:
+        args.path = ["_logs/shot-flow"]
+        args.include = "*.texts.json" if args.include == "*" else args.include
     cwd_root = None
     if not args.root:
         try:
@@ -53,7 +58,7 @@ def main(argv: list[str] | None = None) -> int:
             continue
         cands = [base] if base.is_file() else sorted(base.rglob("*"))
         for f in cands:
-            if not f.is_file() or SKIP & set(f.relative_to(root).parts[:1]) or not fnmatch.fnmatch(f.name, args.include):
+            if not f.is_file() or (SKIP & set(f.relative_to(root).parts[:1]) and not args.texts) or not fnmatch.fnmatch(f.name, args.include):
                 continue
             scanned += 1
             if len(files_hit) >= args.max_files or len(hits) >= args.max_hits:
@@ -85,6 +90,8 @@ def main(argv: list[str] | None = None) -> int:
     echo += "".join("\n" + h for h in hits[:args.max_hits])
     if trunc:
         echo += "\nnext: more hits exist; narrow with --path/--include or raise --max-hits"
+    elif not hits and args.texts:
+        echo += "\nnext: no match in the shot-flow text dumps" + ("" if (root / "_logs" / "shot-flow").is_dir() else " (none yet: run `python tools/run_shot_flow.py --flow NAME` first)")
     elif not hits:
         echo += "\nnext: no match; try a shorter pattern or --regex (search is case-insensitive over scripts scenes tools design)"
     return agent_log.finish("xref", root, "\n".join(body), "INFO", args=args, echo=echo, files=len(files_hit),
