@@ -1,6 +1,6 @@
 ﻿# Bag and equipment
 
-Status: binding design  
+Status: current plan  
 Read when: bag, equipment slots, food vs potion  
 
 

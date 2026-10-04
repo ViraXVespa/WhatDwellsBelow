@@ -1,6 +1,6 @@
 # Archives — browser UI
 
-Status: binding design + live snapshot  
+Status: current plan + live snapshot  
 Read when: split chevron, Documents reader, dim inactive columnstack
 
 

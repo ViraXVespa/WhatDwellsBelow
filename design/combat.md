@@ -1,6 +1,6 @@
 # Combat
 
-Status: binding design  
+Status: current plan  
 Read when: strike detection, dash, lock, juice, crits
 Code: `scripts/combat/combat.gd`, `cover.gd`, `player_hit.gd`, `threat.gd`, `aim_line.gd`, `projectile.gd`, `telegraph.gd`, `float_num.gd`, `dummy.gd`, `enemy_ai.gd`, `scripts/world/player.gd`, `player_combat.gd`  
 

@@ -1,6 +1,6 @@
 ﻿# Edge cases and failure modes
 
-Status: binding design  
+Status: current plan  
 Read when: empty-death toast, full-pack toast, save fallback, confirm accidents
 
 

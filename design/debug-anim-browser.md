@@ -1,6 +1,6 @@
 ﻿# Animation Browser
 
-Status: binding design  
+Status: current plan  
 Read when: animation browser debug page  
 Code: `scripts/debug/`  
 

@@ -1,6 +1,6 @@
 # Save — display, performance, renderer
 
-Status: binding design  
+Status: current plan  
 Read when: borderless exclusive, mip decode ban, Compatibility preferred
 
 

@@ -3,11 +3,11 @@
 Status: protocol  
 Read when: Grok Bot Job table → doc facade / sibling split  
 
-Binding for **Grok Bot** documentation facade sweeps only. Recipe: `design/doc-refactor.md`. No binding-meaning change. No live `.gd` size sweep in this PR unless a touched script path in a code map row must stay accurate.
+For **Grok Bot** documentation facade sweeps only. Recipe: `design/doc-refactor.md`. No change of meaning. No live `.gd` size sweep in this PR unless a touched script path in a code map row must stay accurate.
 
 ## Mandate
 
-Split fat topic `design/*.md` files to the art_pipeline door + siblings layout, or trim them for signal-to-noise (below). Caps (door 4KB, sibling 8KB, hard stop ~12KB), pass order and facade checklist: `design/doc-refactor.md`. One facade plus its new siblings per editing focus. Show the worklist; do not edit yet.
+Split fat topic `design/*.md` files to the art_pipeline door + siblings layout, or trim them for signal-to-noise (below). Pass order and facade checklist: `design/doc-refactor.md`. Caps (Bot-only): a door stays under 4KB (Job table and rules, no live-snapshot dumps), a sibling under 8KB (one job cluster; split again if one `##` section dominates), hard stop ~12KB: do not leave a touched topic file above it if a legal split exists. Rank over ~12KB first, then over ~8KB. One facade plus its new siblings per editing focus. Show the worklist; do not edit yet.
 
 Out of scope: rewriting `design/changelog/**` history, `docs/` Pages export, mixing this sweep into a live script size sweep without User go, inventing systems.
 

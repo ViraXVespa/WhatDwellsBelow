@@ -1,6 +1,6 @@
 # Save — persistence and version
 
-Status: binding design  
+Status: current plan  
 Read when: primary backup wipe, game_ver stamp, isolated AI profiles
 
 

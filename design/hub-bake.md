@@ -1,6 +1,6 @@
 # Placeholdia Hub Bake
 
-Status: binding design  
+Status: current plan  
 Read when: hub light, roofs, camp shot, wow pass  
 Code: `scripts/graphics/light_rt.gd` (`HUB_SUB`), `scripts/graphics/light_rt/hub_bake.gd` (`_hub_make_rt`, `_hub_paint_day`, `save_hub_bake`), `scripts/graphics/light_rt/hub_cast.gd` (`_hub_stamp_skirt`), `scripts/app/app_bake.gd` (`--wdb-bake-camp`: realizes the Layout camp in memory and adds it to the scene tree before baking), `scripts/graphics/wrap_shader.gd`, `scripts/world/camp_build.gd`, `scripts/world/camp_build/mesh.gd`, `scripts/world/camp/layout.gd`, `assets/baked/hub_light.png`, `tools/run_bake_camp.py`
 

@@ -17,7 +17,7 @@ Read only this file, `BOT.md`, and `design/refactor.md` rules 1-7 (skip the reus
 
 Live `scripts/**/*.gd` size only (`rglob`, includes `scripts/*.gd`). Not a feature slice, not the staged reuse brief. No behavior change.
 
-- Ship floor: every touched live script under **10KB**. Sweep target: under **5KB** when whole functions can move; a single function over 5KB stays whole and is reported. Files already under the relevant cap are not split "for cleanliness."
+- Floors live in `BOT.md` (Caps). Ship floor: every touched live script under **10KB**; never leave a touched file over it if a legal split can fix it. Sweep target: under **5KB** when whole functions can move; a single function over 5KB stays whole and is reported. Files already under the relevant cap are not split "for cleanliness."
 - Over-10KB scripts left on `main` by Grok Build are expected input, not a missed Build split.
 - Out of scope: `scenes/`, `assets/`, `tools/` (unless a preload path must change), `archives/`, pinned commits, `project.godot` unless a moved script must be registered.
 

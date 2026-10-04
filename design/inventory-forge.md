@@ -1,6 +1,6 @@
 ﻿# Gear forge flow
 
-Status: binding design  
+Status: current plan  
 Read when: working on the Anvil Forge: type selector, item-level and quantity steppers, locks, cost, craft queue, results screen
 
 Rules for forging. Rarity, affix, Analyze, duplicate and starter rules stay on the gear page.

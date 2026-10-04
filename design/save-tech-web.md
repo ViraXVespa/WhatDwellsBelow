@@ -1,6 +1,6 @@
 # Save — web export and cache
 
-Status: binding design  
+Status: current plan  
 Read when: COOP COEP off, id.txt querybust, serviceworker rename
 
 

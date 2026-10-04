@@ -1,6 +1,6 @@
 # Animation Browser review briefs
 
-Status: binding design  
+Status: current plan  
 Read when: packing an Animation Browser brief, regen tree, or review ledger  
 Code: `tools/anim_review_lib.py`, `tools/anim_review_pack.py`, `tools/anim_review_regen.py`, `tools/anim_review_tree.py`, `scripts/debug/anim_browser.gd`
 

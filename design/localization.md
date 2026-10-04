@@ -1,6 +1,6 @@
 # Localization
 
-Status: binding design  
+Status: current plan  
 Read when: tr(), translation keys, adding a locale, converting a string, item names, plurals  
 
 English is the default and only shipped locale. Player-facing strings go through `tr()`; the English text lives in one PO file.

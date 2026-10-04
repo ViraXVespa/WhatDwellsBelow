@@ -1,6 +1,6 @@
 # Changelog body and ship label
 
-Status: binding design
+Status: current plan
 Read when: writing a changelog entry, title “what’s new”, web Phase 7 ship, or Grok Bot PR close-out
 
 Week pins and archive catalog ids stay on `design/versioning.md`. Open that file only when the User named a pin or archive.

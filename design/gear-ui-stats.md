@@ -1,6 +1,6 @@
 # Stats card and tooltips
 
-Status: binding design  
+Status: current plan  
 Read when: kit deltas, combat totals, hover highlight, Y preview  
 
 

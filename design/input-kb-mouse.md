@@ -1,6 +1,6 @@
 ﻿# Keyboard / mouse
 
-Status: binding design  
+Status: current plan  
 Read when: keyboard / mouse fallback  
 
 

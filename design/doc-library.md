@@ -1,6 +1,6 @@
 # Doc library: doc_patch, md_format_lib, code_map_lib
 
-Status: binding  
+Status: protocol  
 Read when: editing docs, code-map rows or tool text by script; changing `doc_patch.py`, `md_format_lib.py` or `code_map_lib.py`  
 
 Docs are edited by tools, not by hand-rolled scripts. Everything is idempotent: run twice, same bytes. Catalog and tool rules: `tools.md`.

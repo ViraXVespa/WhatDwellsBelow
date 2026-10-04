@@ -1,6 +1,6 @@
 ﻿# Pause menu
 
-Status: binding design  
+Status: current plan  
 Read when: pause menu layout / tabs / behavior  
 
 

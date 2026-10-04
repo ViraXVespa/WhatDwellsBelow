@@ -1,6 +1,6 @@
 ﻿# Gear rules and crafting
 
-Status: binding design  
+Status: current plan  
 Read when: gear rules, item level, affixes, analyze, duplicates, forge, whites, options source  
 
 

@@ -1,6 +1,6 @@
 ﻿# Debug tools (door)
 
-Status: binding design  
+Status: current plan  
 Read when: secret console, playtest, journal, smoke
 Code: `scripts/debug/` (menu helpers in `scripts/debug/debug_menu/`)
 

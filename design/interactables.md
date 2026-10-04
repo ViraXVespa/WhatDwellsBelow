@@ -1,6 +1,6 @@
 # Interactables and world objects
 
-Status: binding design  
+Status: current plan  
 Read when: gathering swings, shops, shrines, puzzles, extract-wells
 Code: `scripts/world/gather/gather_node.gd`, `breakable.gd`, `interact.gd`, `interact_act.gd`, `interact_prompt.gd`, `interact_chest.gd`, `interact_fx.gd`, `dungeon_props.gd`, `props_place.gd`, `floor_crystal.gd`, `net.gd`, `pickup.gd`, `scripts/ui/hud.gd`, `scripts/input/prompts.gd`  
 

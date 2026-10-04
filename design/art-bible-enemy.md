@@ -1,6 +1,6 @@
 # Enemy directional Bible: layout, props and hands
 
-Status: binding design (test runs vision-described; a human glance and a Build retest are still needed)
+Status: current plan (test runs vision-described; a human glance and a Build retest are still needed)
 Read when: prompting enemy directional reference sets, enemy props or hands per facing
 
 Imagine runs only through the isolated-media gate (CLI Build). Samples stay out of git (`$WDB_GROK_SESSIONS`, `agent_log.grok_sessions()`).

@@ -1,6 +1,6 @@
 ﻿# Harvest, pack, and cleanup
 
-Status: binding design  
+Status: current plan  
 Read when: the User has accepted an I2V clip and it is time to harvest or pack  
 Code: `tools/pack_locomotion.py`, `tools/pack_oneshot.py`, `tools/plate_remap.py`, `tools/sprite_pipeline.py`
 

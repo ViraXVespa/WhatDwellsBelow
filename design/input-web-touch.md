@@ -1,6 +1,6 @@
 ﻿# Web touch input
 
-Status: binding design  
+Status: current plan  
 Read when: web touch pad / touch HUD input  
 
 

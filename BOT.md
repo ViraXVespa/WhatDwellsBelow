@@ -14,7 +14,7 @@ Publish with plain `git push -u origin bot/<flow>` over HTTPS (gh credential hel
 ## Boot
 
 1. Read this file. If the agents file already routed you here, do not fetch it again.
-2. Run: python3 tools/bot_status.py
+2. Run: python3 tools/bot_status.py --bot
 3. Pick one printed flow. Do not invent reuse-map or opt-queue rows.
 4. Open only that Job file. When editing GDScript, also load `design/gdscript-law.md`.
 5. After a cluster, drop those file bodies and report.
@@ -30,23 +30,30 @@ Publish with plain `git push -u origin bot/<flow>` over HTTPS (gh credential hel
 
 Job files do not restate this file: size, prove, changelog and `version.json` rules live here (label math: `design/versioning-log.md` body shape, not the changelog tree or `scripts/data/version.json`, at ship; `next-label` = highest on disk + 1; same PR: `--label`). One flow, one PR, then stop; if the User names more than one job, ask which.
 
-Woke because main moved: run bot_status first. over_10kb count 0: report and stop. Above 0: open only `design/grok-bot-size.md`; no other flow from that wake. Commit on the Bot branch only.
+Woke because main moved: run `bot_status.py --bot` first. over_10kb count 0: report and stop. Above 0: open only `design/grok-bot-size.md`; no other flow from that wake. Commit on the Bot branch only.
 
 ## Prove
 
-- python3 tools/check_script_cap.py --git-changed
-- python3 tools/check_load_graph.py
-- python3 tools/bot_status.py --prove
+- python3 tools/check_script_cap.py --bot --git-changed
+- python3 tools/check_load_graph.py --bot
+- python3 tools/bot_status.py --bot --prove
 - python3 tools/check_code_map.py (no new UNMAPPED for files you touched; older ones are expected)
 - python3 tools/check_tool_docs.py (only when `tools/` or the catalog changed); `--stale-refs` after any doc edit that names paths
 
 Proof recipes by change kind (shots, layout, keying) and extend-the-tools-not-work-around-them: `design/prove.md`.
 CI: .github/workflows/bot-gate.yml. Allowlist: tools/bot_allow.txt (default deny; deny lines first).
 Stale docs: `design/` and `tools/` are allowlisted, so fix stale doc lines in the job you are on. When the current truth is unclear, do not guess: list the line under `Stale doc lines (for the User)` in the PR body (file, line, what it says, what it might say).
-Measure: os.path.getsize (10,000-byte floor). Touched live `scripts/**/*.gd` ship under 10KB; split with `design/refactor.md` (recipe only; the 5KB target is only `design/grok-bot-size.md`).
 Do not open the reuse map except from `design/grok-bot-reuse.md` when that brief is not the empty template.
-New `tools/` runners: `design/tools.md` rule 5 (propose first). Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
+New `tools/` runners: only after the User approves one this session (`design/tools.md` rule 5). Minimum compile wiring on a moved line is allowed: `load()` / `preload()`, a one-line facade delegate, `host` / `pt` / `ui` / `p` on a moved `static func`, and `: Type` on a line already being moved.
 Gates: batch same-kind fixes, run once, at most 2 reruns (`design/tools.md` rule 10).
+Logs: every run writes `_logs/<job>/<stamp>-<job>.txt` plus `index.txt`; read with `read_summary.py --job <name>`.
+
+## Caps (Bot-only)
+
+The Bot alone enforces size; Build and Web never measure or split, and the size tools run only for the Bot (`--bot`, `WDB_BOT`) or in CI (`bot-gate.yml`). Measure with `os.path.getsize`.
+- Scripts: every live `scripts/**/*.gd` under 10,000 bytes (ship floor); the 5,000-byte sweep applies only in `design/grok-bot-size.md`. Do not split a file under its floor, except in extract work. Leftovers from Build are expected input.
+- Docs: topic door under 4KB, sibling under 8KB, hard stop ~12KB (`design/grok-bot-docs.md`). Boot-file budgets: `tools/bot_budgets.json`, checked by `check_load_graph.py --bot`.
+- Flow: `bot_status.py --bot`, then split with `design/refactor.md` (recipe only).
 
 Work only in `/workspace/WhatDwellsBelow`. Never open the Build docs (`design/pc-offload.md`, `design/tools-build.md`, `design/tools-shims.md`, `design/tools-media.md` except its imglib section), the pc-offload skill, or Imagine / I2V skills. No Windows checkout, `WDB_ROOT`, or Steam Godot.
 
@@ -69,4 +76,4 @@ Bot may save its own skill after two good clusters.
 
 ## After-cluster report
 
-PR URL, squash-merge reminder, path + bytes before/after, changelog path (every PR ships one, docs/tools-only included: `design/versioning-log.md`), what is still over 10KB, next printed item, and the rough edges you hit (`design/tools.md` rule 9). Anything not fixable (outside the allowlist) goes in the PR body for the User.
+PR URL, squash-merge reminder, path + bytes before/after, changelog path (every PR ships one, docs/tools-only included: `design/versioning-log.md`), what is still over the floor, next printed item, and the rough edges you hit (`design/tools.md` rule 9). Anything not fixable (outside the allowlist) goes in the PR body for the User.

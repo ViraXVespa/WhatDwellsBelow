@@ -1,6 +1,6 @@
 ﻿# Isolated media jobs
 
-Status: binding design  
+Status: current plan  
 Read when: Grok Build is about to call Imagine (`image_gen`, `image_edit`, `image_to_video`) or stage a tile / character still / UI still / I2V unit  
 Code: `tools/run_isolated_grok.py`  
 Skills: `.grok/skills/imagine-isolated/SKILL.md`, `.grok/skills/i2v-isolated/SKILL.md`

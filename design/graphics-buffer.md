@@ -1,6 +1,6 @@
 # Graphics buffer
 
-Status: binding design + live snapshot
+Status: current plan + live snapshot
 Read when: four-texel radiance buffer, disc blobs, fine occupancy
 
 The light RT is a small texture lights are stamped into. Ground, walls, and actors sample it. Actors may query nearest_cast (one) or up to three in-range casts, nearest first. Stamp, occupancy, and the source list do not change for that query. Stamp density is four texels per tile (`SUB` 4). Do not retune range or energy to fake smoothness.

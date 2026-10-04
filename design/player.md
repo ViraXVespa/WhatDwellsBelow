@@ -1,6 +1,6 @@
 # Player avatar, movement, and facing
 
-Status: binding design  
+Status: current plan  
 Read when: movement, collision, character select, eight-dir body
 Code: `scripts/world/player.gd`, `player_anim.gd`, `anim_load.gd`, `anim_loco.gd`, `facing.gd`  
 

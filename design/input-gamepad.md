@@ -1,6 +1,6 @@
 ﻿# Gamepad and shared menu input
 
-Status: binding design  
+Status: current plan  
 Read when: gamepad layout, look mode, or universal menus  
 
 

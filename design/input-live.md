@@ -1,6 +1,6 @@
 ﻿# Input live snapshots
 
-Status: binding design  
+Status: current plan  
 Read when: live snapshot for binds or web_pad  
 
 

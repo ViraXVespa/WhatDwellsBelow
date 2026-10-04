@@ -1,6 +1,6 @@
 # Hub — guild, quests, banner
 
-Status: binding design  
+Status: current plan  
 Read when: receptionist bust, notice errands, welcome cloth
 
 

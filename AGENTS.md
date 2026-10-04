@@ -2,6 +2,8 @@
 
 Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 
+**Intent (Build).** Vira is the conduit for design; Grok Build is the conduit for implementation. Make her vision real with little friction. Design docs are the living plan, the road we are building and not the route we have to take; the game is an evolving ecosystem. Defer to her on design, and suggest improvements or ask in the moment with a question prompt (nothing to write down). Hard rules stay: gates before a PR, no hand-edited PNGs, no gate loops, never push `main`.
+
 ## Path
 
 | Path | Recognize | Deliver |
@@ -19,18 +21,18 @@ Navigation is only `design/routes.yaml`. `See also:` is forbidden.
 
 | Need | File |
 |------|------|
-| Law (web / Build) | `design/protocol.md` + `design/constraints.md` |
+| Plan (web / Build) | `design/protocol.md` + `design/constraints.md` |
 | GDScript types / warnings / tabs | `design/gdscript-law.md` |
 | Live code map (one system row) | `design/code-map.md` |
 | New or moved script placement (cluster folders) | `design/refactor.md` (Cluster folders section only) |
 | Numbers (when they change) | `design/tunables.md` |
-| Tools (what runs where, allowlist) | `design/tools.md` |
+| Tools (what runs where, new-tool rule) | `design/tools.md` |
 | Prove a change (any surface), extend a tool instead of working around it | `design/prove.md` |
 | Windows inventory / verify / write | pc-offload skill + `design/pc-offload.md` |
 
-Load cap (implementation): this file + the path file + (web / Build) the law pair + one writer door + one Job sibling + gates whose `when` matches. A second writer door only when the User names the owner.
+Reading (implementation): this file + the path file + (web / Build) the plan pair + the topic doc and gates whose `when` matches. **A job that touches several systems: read first.** List every system, then read each one's doc and code-map row before changing anything (no tunnel vision).
 Do not fetch this file again. Open `design/load-graph.md` or the topic index when the User named routing work, or on a web docs/routing pass.
 
-Build pickup is git plus `_logs/<job>/summary.txt`. Those files are PC job output, not web-chat memory. Fresh Build: this file, then `design/grok-build.md` (its first step classifies the request as new feature or change). Pins are User-only.
+Build pickup is git plus `read_summary.py --job <name>` (`_logs/` is PC job output, not web-chat memory). Fresh Build: this file, then `design/grok-build.md` (its first step classifies the request as new feature or change). Archive pins are User-only. A doc and its code disagree: compare their history (`list_changed.py --history`, `design/prove.md`), trust the newer, ask if unclear.
 Imagine (Build only): `design/isolated-media.md` first. Web / chat and Grok Bot never run the isolated runner.
-After a slice: stop and report, with the rough edges you hit (`design/tools.md` rule 9).
+Chain related steps; report when the work is done, with the rough edges you hit (`design/tools.md` rule 9). Build and Web may add a tool that will help later (rule 5) and tell the User afterward.

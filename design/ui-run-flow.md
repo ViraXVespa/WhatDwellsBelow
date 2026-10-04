@@ -1,6 +1,6 @@
 # Run-flow UI (extract, shop, quest, recap, map, toasts)
 
-Status: binding design  
+Status: current plan  
 Read when: extraction gate, ghost shop, quest, recap, minimap, crystal map UI, toasts  
 
 

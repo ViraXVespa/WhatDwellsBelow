@@ -1,6 +1,6 @@
 # Attack keyframes: roll history
 
-Status: archive (parked experiment log, not law)
+Status: archive (parked experiment log, not the plan)
 Read when: the User asks why a phrase is banned in the attack keyframe prompt, or asks for an old roll (`coil_v22`..`coil_v31`, 2026-09-16 web Imagine)
 
 Evidence behind the banned phrases and derived rules in the attack keyframes page. Not a boot file and not a read list; the rules there are the binding copy.

@@ -1,6 +1,6 @@
 # Tools catalog: media and art pipeline
 
-Status: binding  
+Status: protocol  
 Read when: running a still/I2V/pack/sprite/audio tool (Build / User only)  
 
 Rules, the CLI contract and the surface key are in `tools.md`; flows live in the `art-*.md` docs and the Imagine / I2V skills. The Bot uses only the `A=Y` rows.

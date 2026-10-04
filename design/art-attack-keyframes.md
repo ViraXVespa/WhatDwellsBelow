@@ -1,6 +1,6 @@
 # Attack body keyframes (posed stills)
 
-Status: parked experiment. Not live I2V law.
+Status: parked experiment. Not the live I2V plan.
 Read when: the User resumes the attack animation keyframe pipeline, two-hand body stills, coil stills, or names this file.
 Code: `tools/attack_keyframes.py`
 

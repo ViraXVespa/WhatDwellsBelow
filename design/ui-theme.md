@@ -1,6 +1,6 @@
 ﻿# UI theme
 
-Status: binding design  
+Status: current plan  
 Read when: playable surface theme tokens  
 
 

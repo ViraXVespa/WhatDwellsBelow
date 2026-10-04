@@ -1,6 +1,6 @@
 # Postcard shot tool
 
-Status: binding design
+Status: current plan
 Read when: postcard shot, run_shots, visual proof clipboard, _logs/shots, changing a shot knob
 
 Not a numbered P1-P9 smoke. Not Imagine. A tool that misbehaves gets fixed (below), not worked around with a scratch or hand-driven Godot.
@@ -24,7 +24,7 @@ Unattended play-camera postcard. Godot paints a real GPU frame; Python owns mode
 
 Command: `python3 tools/run_shots.py --mode web|build|user` (optional `--seed`, `--floor`, `--scale`, `--settle-ms`, `--timeout-sec`, `--show`, `--out`, `--hud 0|1`, `--fixed-fps N`, `--width`, `--height`, `--zoom`, `--px`, `--pz`, `--cx`, `--cz`, `--steps`, `--no-pixels`, `--dry-run`, `--json`; `--help` is the truth). Presets live in `tools/shot-recipes.json`.
 Needs a real GL window, so a display: a Windows desktop with a GPU, or Linux (picked automatically, see Display; the Bot box has X on `:1` and `:2`). Default: HUD on, spawn pose, zoom 1, window parked off-screen.
-Summary: `_logs/shots/summary.txt`; the last line is `RESULT PASS|INFO|FAIL band=... summary=_logs/shots/summary.txt`. The Godot launch and lock come from `godot_lib.py` (per-path lock, kills only its own pid).
+Summary: `_logs/shots/<stamp>-shots.txt` (also the `summary=` of the last line, `RESULT PASS|INFO|FAIL band=...`). The Godot launch and lock come from `godot_lib.py` (per-path lock, kills only its own pid).
 
 ## Full-floor map (`--full-map`)
 
@@ -76,7 +76,7 @@ Shots need a real GL frame; `godot_lib.pick_display()` chooses: `$DISPLAY` if th
 
 ## Add or change a knob
 
-One flag or one preset, one prove shot, then stop. Edit `tools/shot-recipes.json` or a constant in `tools/run_shots.py`. New flag: parse in `tool_args.gd`, apply in `tool_pose.gd`, `capture.gd` or the step modules, add the `run_shots.py` argument (forwarded by `_extra_flags`). Prove with one `python3 tools/run_shots.py --mode build` shot, read `_logs/shots/summary.txt`, then `check_tool_cli.py`.
+One flag or one preset, one prove shot, then stop. Edit `tools/shot-recipes.json` or a constant in `tools/run_shots.py`. New flag: parse in `tool_args.gd`, apply in `tool_pose.gd`, `capture.gd` or the step modules, add the `run_shots.py` argument (forwarded by `_extra_flags`). Prove with one `python3 tools/run_shots.py --mode build` shot, read `_logs/shots/<stamp>-shots.txt`, then `check_tool_cli.py`.
 
 ## Troubleshooting
 

@@ -3,7 +3,7 @@
 Status: protocol
 Read when: web / chat Phase 4 emit, a Build co-op prompt, a scratch helper question, or fetching a live path
 
-Binding for **web / chat** only. Grok Build and Grok Bot ignore it. Phases, flows and the Do-not list stay on the web door.
+For **web / chat** only. Grok Build and Grok Bot ignore it. Phases, flows and the Do-not list stay on the web door.
 
 ## Phase 4 — Emit
 

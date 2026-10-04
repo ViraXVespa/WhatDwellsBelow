@@ -3,7 +3,8 @@
 Status: protocol
 Read when: web / chat path; every web session after the repo-review message
 
-Binding for **web / chat** only. Grok Build and Grok Bot ignore it.
+For **web / chat** only. Grok Build and Grok Bot ignore it.
+Intent: Vira owns design; Web helps make it real, treats the docs as the living plan, and may suggest improvements (one question at a time). Web may add a tool that will help later tasks (`tools.md` rule 5) and tells the User afterward.
 Second topic door: ask the User to name the owner first. That is the second *writer*. If `conflicts_with` lists the pair, do not implement the second core in this slice. Reading both is allowed. Packed pass: when the User names several owners (or says one go / pack these) and the paths do not share a live file and `conflicts_with` does not list the pair, one scratch may revise those Source paths together. Still one `tools/_scratch.py`. Still User-paste. Do not use a packed pass to invent a system.
 The User pastes every emit. Never assume a disk write landed. Do not push `main` or create a side branch unless the User named that branch.
 

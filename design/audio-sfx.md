@@ -1,6 +1,6 @@
 ﻿# SFX cue wiring and missing SFX
 
-Status: binding design + live snapshot  
+Status: current plan + live snapshot  
 Read when: wiring a new SFX cue, generating a placeholder cue, or asking which events are still silent
 Code: `scripts/audio/sfx.gd`
 

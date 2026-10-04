@@ -1,6 +1,6 @@
 # Tools catalog: PowerShell shims
 
-Status: binding  
+Status: protocol  
 Read when: running a `.ps1` twin of a Python tool (User PC / Build only)  
 
 Rules, the CLI contract and the surface key: `tools.md`. Each `.ps1` forwards its arguments to the `.py` twin (old `-Flag` spellings work), is kept one release, and is run as `powershell -File tools/<name>.ps1`; new work uses `python tools/X.py`. Windows proof of the shims is pending a User run. `check_tool_docs.py` reads this file too.

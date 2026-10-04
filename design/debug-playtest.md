@@ -1,6 +1,6 @@
 ﻿# Playtest / AI player and journal
 
-Status: binding design  
+Status: current plan  
 Read when: automated playtest or playtest journal  
 Code: `scripts/debug/`  
 

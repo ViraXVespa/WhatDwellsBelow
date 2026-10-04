@@ -1,6 +1,6 @@
 # Postcard shot tool: flows and process
 
-Status: binding design
+Status: current plan
 Read when: writing or running a `tools/shot-flows/*.json` flow, updating guide images, adding a shot for a new UI state, or a task needs a shot the tool cannot stage
 
 Rendering, modes, worker, bands, display, knobs and troubleshooting live in the shot-tool door. A tool that misbehaves gets fixed, not worked around.

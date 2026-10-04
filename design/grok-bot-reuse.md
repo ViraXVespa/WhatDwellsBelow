@@ -3,7 +3,7 @@
 Status: protocol  
 Read when: Grok Bot Job table → staged reuse-map brief  
 
-Binding for **Grok Bot** when the User names the staged reuse PR / reuse-map / quota reset with a brief ready.
+For **Grok Bot** when the User names the staged reuse PR / reuse-map / quota reset with a brief ready.
 
 ## Mandate
 

@@ -1,6 +1,6 @@
 # Dungeon — streaming
 
-Status: binding design + live snapshot  
+Status: current plan + live snapshot  
 Read when: RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo, clip-free chunk instance
 
 ## Live snapshot — streaming

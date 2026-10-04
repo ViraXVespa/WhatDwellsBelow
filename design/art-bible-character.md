@@ -1,6 +1,6 @@
 # Character Bible, prompt template and method reliability
 
-Status: binding design
+Status: current plan
 Read when: authoring or locking a Character Bible, using the Bible prompt template, or judging method reliability
 
 art is already open when this sibling is loaded. Do not reopen art_pipeline from this file.

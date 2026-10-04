@@ -1,6 +1,6 @@
 # Gear board layout and plates
 
-Status: binding design  
+Status: current plan  
 Read when: armor columns, plate icons, rarity wash, stepper neighbors  
 
 

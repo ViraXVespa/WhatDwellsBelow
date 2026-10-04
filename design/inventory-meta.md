@@ -1,6 +1,6 @@
 ﻿# Artifacts, extraction, vendor
 
-Status: binding design  
+Status: current plan  
 Read when: artifacts/collections, extraction mailing, vendor restock  
 
 

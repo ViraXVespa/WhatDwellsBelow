@@ -1,6 +1,6 @@
 # Demo-complete bar
 
-Status: binding design  
+Status: current plan  
 Read when: before calling the demo or build complete (self-verify against this page)
 
 The Hard constraints stay on the constraints door; the checklist below includes them by reference.

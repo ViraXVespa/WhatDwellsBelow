@@ -1,6 +1,6 @@
 # Graphics ground
 
-Status: binding design + live snapshot
+Status: current plan + live snapshot
 Read when: hashed field albedo, shared spatial shader, turf quilts, carved planes
 
 One spatial shader on Placeholdia grass pads, packed yard, and dungeon chunk floors.

@@ -1,6 +1,6 @@
 # UI (door)
 
-Status: binding design  
+Status: current plan  
 Read when: pause panels, fullscreen drape, play-menu
 
 | Job | Open |

@@ -1,6 +1,6 @@
 # Bible lock, plate remap, overlays, quality bar
 
-Status: binding design
+Status: current plan
 Read when: locking a Character Bible, plate remap, overlays, or the quality bar
 
 art is already open when this sibling is loaded. Do not reopen art_pipeline from this file.

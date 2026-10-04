@@ -3,7 +3,7 @@
 Status: protocol
 Read when: editing or emitting GDScript
 
-Tabs, types, and warnings live only here. Do not copy these rules back into the agents file. The 10KB ship floor is documented under Script cap. Grok Bot owns it. Grok Build does not measure or split.
+Tabs, types, and warnings live only here. Do not copy these rules back into the agents file.
 
 ## Indent
 
@@ -32,11 +32,6 @@ Keep the Godot output log clean. New or rewritten lines must not introduce these
 - Private facade fields used only by a sibling helper (`host._news_scroll`, `host._list_root`, HUD prompt slots): keep the var on the host. Do not delete the field. Project-wide, `unused_private_class_variable` is ignored in `project.godot` (`[debug] gdscript/warnings/unused_private_class_variable=0`) because hostify helpers read those fields via `host._...` — do not re-enable it without a new plan, and do not sprinkle per-var `@warning_ignore` for this warning.
 - Do not use `@warning_ignore` to hide a real unused value or a live shadow.
 
-## Script cap (10KB)
+## Placement
 
-Every live `scripts/**/*.gd` that ships must stay under **10,000 bytes**. That floor is not a Grok Build in-slice rule.
-
-- New script files and helpers go in the facade's stem folder with trimmed unique names (refactor.md, Cluster folders: read that section only).
-- Grok Build does not measure size, does not split for the cap, and does not open the refactor recipe for bytes. Over-cap files MAY remain on `main` until a Grok Bot size sweep.
-- Web / chat does not cap-split. Over-cap files MAY remain until a Grok Bot size sweep.
-- Grok Bot is the size owner. It uses the refactor recipe on every task. 10KB is the ship floor. The under-5KB sweep target is only the Bot size job. On the Bot VM measure with `os.path.getsize` via `python3 tools/check_script_cap.py` / `python3 tools/bot_status.py`. That matches `Get-Item Length`.
+New script files and helpers go in the facade's stem folder with trimmed unique names (`refactor.md`, Cluster folders: read that section only).

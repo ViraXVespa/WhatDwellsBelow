@@ -1,6 +1,6 @@
 ﻿# Secret debug / balance menu
 
-Status: binding design  
+Status: current plan  
 Read when: secret debug menu / balance page  
 Code: `scripts/debug/`  
 

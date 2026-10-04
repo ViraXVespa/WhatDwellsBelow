@@ -1,6 +1,6 @@
 ﻿# Skills, XP, and combat level
 
-Status: binding design + live snapshot  
+Status: current plan + live snapshot  
 Read when: XP, forging, formula
 Code: `scripts/data/progress.gd`, `scripts/data/progress_combat.gd`, `scripts/data/progress_forge.gd`, `scripts/data/gear_roll.gd`, `scripts/app.gd`, `scripts/ui/hud.gd`, `scripts/ui/pause_menu.gd`, `scripts/data/balance.gd`, `scripts/combat/threat.gd`  
 

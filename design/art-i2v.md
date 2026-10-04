@@ -1,6 +1,6 @@
 ﻿# I2V unit, seed, and prompt
 
-Status: binding design  
+Status: current plan  
 Read when: preparing or retrying one player I2V clip  
 Code: `tools/i2v_seeds.py`, `tools/plate_remap.py`, `tools/run_isolated_grok.py`
 

@@ -1,6 +1,6 @@
 # Dungeon generation and floors
 
-Status: binding design + live snapshot  
+Status: current plan + live snapshot  
 Read when: gen, streaming, guardian doors, fog, crystals
 Code: `scripts/dungeon/gen.gd`, `scripts/world/dungeon.gd`, `dungeon_boot.gd`, `dungeon_stream.gd`, `geo_stream.gd`, `map_act.gd`, `dungeon_props.gd`, `boss_door.gd`, `net.gd`, `crystal_place.gd`, `floor_crystal.gd`
 

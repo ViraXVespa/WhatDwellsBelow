@@ -1,6 +1,6 @@
 # Archives — Play and Pages
 
-Status: binding design  
+Status: current plan  
 Read when: worktree minimize, Godot child restore, slug copyhit
 
 

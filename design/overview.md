@@ -1,6 +1,6 @@
 ﻿# Overview, scope, and lore
 
-Status: binding design  
+Status: current plan  
 Read when: scoping inclusion, pillar prose, vision copy
 Code: `README.md`, `scripts/data/tunables.gd` (`ONE_LINER`), `scripts/app.gd`  
 

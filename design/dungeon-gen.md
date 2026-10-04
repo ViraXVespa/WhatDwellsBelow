@@ -3,7 +3,7 @@
 Live outline fills per room and hall shape only. It does not run floor-wide missing-rim or hole-seal repair. rim_closed is not a pass gate.
 
 
-Status: binding design + live snapshot  
+Status: current plan + live snapshot  
 Read when: maze carve, hall segments, size rebalance ledger, accidental jogs, deadend termini, unused stone, hug clearance, outline spans
 
 ## Overall structure

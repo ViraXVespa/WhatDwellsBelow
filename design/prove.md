@@ -1,6 +1,6 @@
 # Prove standard
 
-Status: binding
+Status: protocol
 Read when: choosing, running or reporting the proof for a change (Bot, Build or web / chat)
 
 One standard for every surface: the cheapest check that would fail if the change were wrong, run once, reported as command plus `RESULT` line plus counts. Gate loops: `tools.md` rule 10. Tools and recipes grow with the work: if a proof needs a check no tool does, extend the library (`imglib`, the shot tools, a gate) in the same job and add its recipe here; do not eyeball it, hand-drive Godot or work around it.
@@ -9,15 +9,15 @@ One standard for every surface: the cheapest check that would fail if the change
 
 | Surface | Runs the proof | Rules |
 |---|---|---|
-| Bot | `bot_status.py --prove`, `bot_smokes.py`, `bot_warnscan.py`, shots | `BOT.md` Prove and Smokes |
-| Build | gather once, change once, prove once: `run_build_gate.py`, the `routes.yaml` `smokes` / `shot_flows` for the door | `build-job-cycle.md` |
+| Bot | its Prove gate, `bot_smokes.py`, `bot_warnscan.py`, shots | `BOT.md` Prove and Smokes |
+| Build | gather, change, prove: `run_build_gate.py`, the `routes.yaml` `smokes` / `shot_flows` for the door; a red prove prints its RETRY prompt | `build-job-cycle.md` |
 | Web / chat | cannot run Godot: the emit scratch runs the runners through the `doc_patch` lib (`dump_job`) and the User pastes the RESULT; a missing check is added the same way, as a tool or recipe in that scratch; a Build brief only for work Web cannot do (`web-emit.md`) | `web-test.md`, `web-emit.md`, `doc-library.md` |
 
 ## By change kind
 
 | Change | Minimum proof |
 |---|---|
-| Code (`.gd`) | compile and cap: `run_build_gate.py --batch` (Bot: `check_script_cap.py --git-changed`, `bot_status.py --prove`); the smoke phases that load the file (`bot_smokes.py --for FILE`); a pure refactor also needs "same as main" |
+| Code (`.gd`) | compile: `run_build_gate.py --batch` (Bot: its Prove gate in `BOT.md`); the smoke phases that load the file (`bot_smokes.py --for FILE`); a pure refactor also needs "same as main" |
 | Art, keying | "key is clean", then "looks the same as main" for every sprite that uses it |
 | UI | the shot flow for the state (`run_shot_flow.py --flow N`), then "layout is clean" and "text readable" |
 | Input | P7 binds smoke (`bot_smokes.py --phases 7`) plus the controls flows (`--flows camp-pause-menu,camp-billboard-controls`) |
@@ -38,6 +38,8 @@ One standard for every surface: the cheapest check that would fail if the change
 | Web build size and frame time | `web_perf.py` (advisory) |
 
 ## Recipes
+
+**Doc and code disagree.** Enough to pick the current one: `python3 tools/list_changed.py --history DOC CODE` lists each path's latest commits (and flags uncommitted edits) and prints `newer=`. Trust the newer, and fix the older in the same job when that is a plain correction. Still unclear (similar dates, an uncommitted edit): Build asks with a question prompt, Web asks one question, Bot lists the line under `Stale doc lines (for the User)`.
 
 Each says when it is enough. Image checks use `python3 tools/img_inspect.py CMD ...` (programmatic eyes: facts as text, optional annotated PNG; the library is `tools/imglib/`, `tools-media.md`). The `--json` flag gives one object.
 

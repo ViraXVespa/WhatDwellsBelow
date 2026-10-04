@@ -3,7 +3,7 @@
 Status: protocol
 Read when: web / chat Phase 2 (discuss), or ending a brainstorm (emit here or park)
 
-Binding for **web / chat** only. Grok Build and Grok Bot ignore it. Flows, Phase 1 and the Do-not list stay on the web door.
+For **web / chat** only. Grok Build and Grok Bot ignore it. Flows, Phase 1 and the Do-not list stay on the web door.
 
 ## Phase 2 — Discuss
 

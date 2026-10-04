@@ -1,6 +1,6 @@
 ﻿# Rebinding, prompts, aim-line
 
-Status: binding design  
+Status: current plan  
 Read when: rebinding, on-screen prompts, or aim-line  
 
 

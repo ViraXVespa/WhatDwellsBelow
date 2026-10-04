@@ -1,6 +1,6 @@
 ﻿# HUD and web touch overlay
 
-Status: binding design  
+Status: current plan  
 Read when: gauntlet HUD strip or web touch overlay  
 
 

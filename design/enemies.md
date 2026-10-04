@@ -1,6 +1,6 @@
 ﻿# Enemies
 
-Status: binding design + live snapshot  
+Status: current plan + live snapshot  
 Read when: roster, AI, pressure
 Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/threat.gd`, `scripts/data/balance/enemies.gd`  
 

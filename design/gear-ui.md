@@ -1,6 +1,6 @@
 # Shared gear board (door)
 
-Status: binding design  
+Status: current plan  
 Read when: gear-board, doll slots, flyouts, Anvil card
 Code: `scripts/ui/gear_board.gd`, `board_build.gd`, `floor.gd`, `tip.gd`, `board_text.gd`, `opts.gd`, `stats.gd`, `board_act.gd`, `board_sub.gd`, `anvil.gd`, `anvil_view.gd`, `anvil_forge.gd`, `gear_icons.gd`, `step_row.gd`, `scripts/ui/menu_pad.gd`, `scripts/ui/pause_menu.gd`, `scripts/ui/pause_inv/inv_view.gd`, `scripts/ui/progress_ui.gd`, `scripts/ui/progress_ui/ui_hub.gd`, `scripts/ui/progress_ui/inv.gd`  
 
