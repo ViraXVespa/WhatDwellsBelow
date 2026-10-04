@@ -65,12 +65,28 @@ Intercept (raw tool is a failed lookup, not a fallback):
    from the worktree directory. Only the User launches grok: the slice starts
    with `python tools/open_slice.py [AREA]` (a NEW session in a worktree from
    the week branch grok-build-w{N}); there, start_build_slice.py, gather, then
-   start_build_slice.py --checkpoint. A green prove merges back with git merge
-   --no-ff.
-6. Before any edit, restate the ask in your own words and ask the User what
-   is unclear. After each small batch of edits run tools/check_gd_load.py.
-   Visual work: baseline shot, one unit, open before and after, then stop and
-   ask the User with the PNG paths.
+   start_build_slice.py --checkpoint. A Grok worktree is a full clone on the
+   week branch: after a green prove and her OK, commit there and plain-push
+   the week branch (never main); a true linked worktree merges back with git
+   merge --no-ff.
+6. Your first message says whether AGENTS.md and the project skills loaded (if
+   not, say so and read AGENTS.md by hand). Visual work: run
+   tools/check_gd_load.py once and tools/run_godot_import_check.py, then shoot
+   and OPEN the baseline (band=fail is invalid: re-shoot; a missing shot flow
+   is step 0: create it, not a stop). Then show the restate as visible text,
+   then ask the User as many questions as the job needs, in as many rounds as
+   it needs, again whenever a discovery changes what she will see; open with
+   the outcome, any reference picture, and what is out of bounds. Until she
+   answers change nothing but shot-flow files and the routes.yaml mapping.
+   Every ask holds the PNG paths and two lists: "Decisions I made that were
+   yours" (incl. new assets, fonts, dependencies, generated images) and
+   "Assumptions carried from memory or docs". After ANY failed or skipped tool
+   step the next message starts "Did not work: <command> <line>". After a
+   second rejection offer "send me a reference". After each small batch of
+   edits run tools/check_gd_load.py; one unit, open before and after, then
+   ask. Commit and push only after she confirms the final shot. No brief for
+   another session or process may forbid questions, and Build sets it no run
+   limits (turns, permissions).
 
 Two compacts on the same slice: stop and start a new session in this instance.
 Do not reload this skill or the plan set because compact fired.
