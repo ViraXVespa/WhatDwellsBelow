@@ -4,20 +4,22 @@ extends Object
 
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
 
-static func _hub_cast_buildings(img: Image, x0: int, z0: int, layout: Node) -> void:
+static func _hub_cast_buildings(img: Image, x0: int, z0: int, layout: Node) -> int:
 	var rt: Variant = load(RT_PATH)
 	if img == null:
-		return
+		return 0
 	var away := Vector2(0.406138, 0.913811)
 	var boxes: Array = _hub_yard_boxes(layout, false)
 	var sub: float = float(rt.HUB_SUB)
 	var w: int = img.get_width()
 	var h: int = img.get_height()
+	var wrote: int = 0
 	var i: int = 0
 	while i < boxes.size():
 		var b: Dictionary = boxes[i]
-		_hub_stamp_skirt(img, x0, z0, sub, w, h, b, away)
+		wrote += _hub_stamp_skirt(img, x0, z0, sub, w, h, b, away)
 		i += 1
+	return wrote
 static func _hub_stamp_skirt(
 	img: Image, x0: int, z0: int, sub: float, w: int, h: int, b: Dictionary, away: Vector2
 ) -> int:

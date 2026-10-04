@@ -6,17 +6,22 @@ const HubCast := preload("res://scripts/graphics/light_rt/hub_cast.gd")
 const HubShadow := preload("res://scripts/graphics/light_rt/hub_shadow.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
+const HUB_FIELD := Color(0.98, 0.96, 0.93, 1.0)
+## Bake stamp: hub_light.png loads (disk or export) only when its pixels hash to this. "" or any mismatch means
+## the yard is computed at runtime. Rebake with tools/run_bake_camp.py, review the shots, paste its `stamp=` here.
+const HUB_BAKE_STAMP := ""
 
 ## The PNG on disk when it exists (dev runs); otherwise the imported copy inside an export (web, packed desktop).
 static func _baked_image(path: String) -> Image:
 	var abs_path: String = ProjectSettings.globalize_path(path)
+	var src: Image = null
 	if FileAccess.file_exists(abs_path):
-		var img := Image.new()
-		return img if img.load(abs_path) == OK else null
-	if not ResourceLoader.exists(path):
-		return null
-	var tex: Texture2D = load(path) as Texture2D
-	var src: Image = tex.get_image() if tex != null else null
+		src = Image.new()
+		if src.load(abs_path) != OK:
+			return null
+	elif ResourceLoader.exists(path):
+		var tex: Texture2D = load(path) as Texture2D
+		src = tex.get_image() if tex != null else null
 	if src == null:
 		return null
 	if src.is_compressed():
@@ -25,12 +30,19 @@ static func _baked_image(path: String) -> Image:
 		src.convert(Image.FORMAT_RGBA8)
 	return src
 
+static func _stamp_of(img: Image) -> String:
+	return img.get_data().sha256_buffer().hex_encode().substr(0, 16)
+
 static func _try_hub_baked() -> bool:
+	if HUB_BAKE_STAMP == "":
+		return false
 	var rt: Variant = load(RT_PATH)
 	var img: Image = _baked_image(rt.HUB_LIGHT_PATH)
 	if img == null:
 		return false
 	if img.get_width() < 16 or img.get_height() < 16:
+		return false
+	if _stamp_of(img) != HUB_BAKE_STAMP:
 		return false
 	rt._img = img
 	rt._gpu = ImageTexture.create_from_image(img)
@@ -44,7 +56,7 @@ static func _hub_make_rt(x0: int, z0: int, tw: int, th: int) -> void:
 	var iw: int = tw * n
 	var ih: int = th * n
 	var img: Image = Image.create(iw, ih, false, Image.FORMAT_RGBA8)
-	img.fill(Color(0.98, 0.96, 0.93, 1.0))
+	img.fill(HUB_FIELD)
 	rt.origin = Vector2(float(x0), float(z0))
 	rt.span = Vector2(float(tw), float(th))
 	rt._img = img
@@ -64,21 +76,20 @@ static func rebuild_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2,
 	rt.span = Vector2(float(tw), float(th))
 	_hub_make_rt(x0, z0, tw, th)
 	_hub_finish_yard(x0, z0, layout)
+## Bakes exactly what the runtime computes: a fresh field image through _hub_render, nothing else on top.
 static func save_hub_bake() -> void:
 	var rt: Variant = load(RT_PATH)
 	if rt._img == null:
 		push_error("bake_camp: rt._img null")
 		return
-	var x0: int = int(rt.origin.x)
-	var z0: int = int(rt.origin.y)
-	HubShadow._hub_fill_black(rt._img)
-	_hub_paint_day(rt._img, x0, z0, rt._hub_layout)
-	var nwrite: int = HubShadow._hub_lock_shadows(rt._img, rt.origin, rt._hub_layout)
-	HubShadow._blur_hub(rt._img)
+	var img: Image = Image.create(rt._img.get_width(), rt._img.get_height(), false, Image.FORMAT_RGBA8)
+	img.fill(HUB_FIELD)
+	var nwrite: int = _hub_render(img, int(rt.origin.x), int(rt.origin.y), rt._hub_layout)
 	var abs_path: String = ProjectSettings.globalize_path(rt.HUB_LIGHT_PATH)
 	DirAccess.make_dir_recursive_absolute(abs_path.get_base_dir())
-	rt._img.save_png(abs_path)
-	printerr("bake_camp: shadow_px=%d %dx%d" % [nwrite, rt._img.get_width(), rt._img.get_height()])
+	img.save_png(abs_path)
+	printerr("bake_camp: shadow_px=%d %dx%d" % [nwrite, img.get_width(), img.get_height()])
+	printerr("bake_camp: stamp=%s" % _stamp_of(img))
 static func prepare_hub(x0: int, z0: int, x1: int, z1: int, crystal_xz: Vector2, layout: Node = null) -> void:
 	var rt: Variant = load(RT_PATH)
 	rt._props.clear()
@@ -213,17 +224,20 @@ static func _first_u(xs: PackedFloat64Array, rowz: float, w: int, full: bool) ->
 		else:
 			lo = m + 1
 	return lo
+## Day gradient, cast skirts, one blur on a field-filled image. The runtime yard and the bake both run this.
+static func _hub_render(img: Image, x0: int, z0: int, layout: Node) -> int:
+	_hub_paint_day(img, x0, z0, layout)
+	LoadTiming.mark("light_paint")
+	var wrote: int = HubCast._hub_cast_buildings(img, x0, z0, layout)
+	LoadTiming.mark("light_cast")
+	HubShadow._blur_hub(img)
+	LoadTiming.mark("light_blur")
+	return wrote
 static func _hub_finish_yard(x0: int, z0: int, layout: Node) -> void:
 	var rt: Variant = load(RT_PATH)
 	if rt._img == null:
 		return
-	# _hub_make_rt just filled the whole image with the field colour, so _hub_fill_black would change nothing.
-	_hub_paint_day(rt._img, x0, z0, layout)
-	LoadTiming.mark("light_paint")
-	HubCast._hub_cast_buildings(rt._img, x0, z0, layout)
-	LoadTiming.mark("light_cast")
-	HubShadow._blur_hub(rt._img)
-	LoadTiming.mark("light_blur")
+	_hub_render(rt._img, x0, z0, layout)
 	if rt._gpu != null:
 		rt._gpu.set_image(rt._img)
 	rt.tex = rt._gpu
