@@ -1,5 +1,6 @@
 ﻿extends Object
 
+const ItemNames := preload("res://scripts/data/item_names.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
 const Balance := preload("res://scripts/data/balance.gd")
 
@@ -73,11 +74,14 @@ static func _build(
 		it["name"] = _wpn_name(type_id)
 	elif slot == "tool":
 		it["tool"] = type_id
-		it["name"] = type_id.capitalize()
+		it["name"] = type_id
 	else:
-		it["name"] = slot.capitalize()
+		it["name"] = slot
+	it["nk"] = ItemNames.base_nk(slot, type_id)
+	if not (it["nk"] as Array).is_empty():
+		it["name"] = ItemNames.name_of(it)
 	if from_forge:
-		it["name"] = "Forged " + str(it.get("name", "item"))
+		ItemNames.forge(it)
 	var ids: PackedStringArray = _pick_ids(slot, rarity, locked, unlocks, from_forge)
 	var rows: Array = []
 	for id: String in ids:
@@ -156,15 +160,15 @@ static func _roll_value(id: String, ilvl: int, quality: float, luck: float) -> f
 	var lk: float = clampf(luck, 0.5, 1.25)
 	if Affix.kind_of(id) == Affix.KIND_PCT:
 		return (0.02 + Balance.f("affix_pct_per_lv", 0.004) * float(ilvl)) * q * lk
-	return (Balance.f("affix_flat_base", 2.0) + Balance.f("affix_flat_per_lv", 0.65) * float(ilvl)) * q * lk
+	return (Balance.f("affix_flat_base", 2.0) + Balance.f("affix_flat_per_lv", 0.35) * float(ilvl)) * q * lk
 
 static func _wpn_name(type_id: String) -> String:
 	match type_id:
 		"great_axe":
-			return "Great Axe"
+			return App.tr("common.great_axe")
 		"staff":
-			return "Staff"
+			return App.tr("gear.staff")
 		"longbow":
-			return "Longbow"
+			return App.tr("gear.longbow")
 		_:
-			return type_id.capitalize()
+			return type_id

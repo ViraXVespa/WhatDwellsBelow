@@ -34,7 +34,7 @@ static func play(host: CanvasLayer, cond: String) -> void:
 		host.targets[id] = 0.0
 		host.gain_now[id] = 0.0
 	Rebuild.rebuild(host, cond)
-	PromptView.footer(host, [{"action": "ui_accept", "verb": "continue"}])
+	PromptView.footer(host, [{"action": "ui_accept", "verb": "continue"}, {"action": "ui_cancel", "hide": true}])
 	host.set_process(true)
 
 static func tick(host: CanvasLayer, delta: float) -> void:
@@ -85,19 +85,19 @@ static func mailed_line(_host: CanvasLayer) -> String:
 	var r: int = int(App.prog.mailed_root)
 	var names: PackedStringArray = App.prog.mailed_names
 	if g + o + w + r + names.size() <= 0:
-		return "Nothing reached the surface."
+		return App.tr("recap_flow.nothing_reached_the_surface")
 	var bits: PackedStringArray = PackedStringArray()
 	if g > 0:
 		bits.append("%dg" % g)
 	if o > 0:
-		bits.append("%d ore" % o)
+		bits.append(App.tr("recap_flow.ore") % o)
 	if w > 0:
-		bits.append("%d wood" % w)
+		bits.append(App.tr("recap_flow.wood") % w)
 	if r > 0:
-		bits.append("%d root" % r)
+		bits.append(App.tr("recap_flow.root") % r)
 	if names.size() > 0:
 		bits.append(", ".join(names))
-	return "Extracted: " + ", ".join(bits)
+	return App.tr("recap_flow.extracted_bits").format({"bits": ", ".join(bits)})
 
 static func skip_drain(host: CanvasLayer) -> void:
 	for id in App.prog.SKILLS:
@@ -111,7 +111,7 @@ static func _lock_in(host: CanvasLayer) -> Button:
 	mark_starting(host)
 	RecapBars.refresh(host)
 	if host.flavor:
-		host.flavor.text = "Permanent totals locked in."
+		host.flavor.text = App.tr("recap_flow.permanent_totals_locked_in")
 	if host.mailed_lab:
 		host.mailed_lab.text = mailed_line(host)
 	var cont := continue_btn(host)
@@ -140,7 +140,7 @@ static func finish(host: CanvasLayer) -> void:
 
 static func mark_starting(host: CanvasLayer) -> void:
 	if host.head_right:
-		host.head_right.text = "Starting XP"
+		host.head_right.text = App.tr("recap_flow.starting_xp")
 
 static func handle_unhandled(host: CanvasLayer, event: InputEvent) -> void:
 	if not host.open:

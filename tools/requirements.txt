@@ -1,0 +1,5 @@
+# Python image deps for tools/imglib and the media tools (design/tools.md "Python image deps").
+Pillow>=10
+numpy>=1.24
+# Optional: components, morphology and template matching run faster with it; imglib falls back without it.
+opencv-python-headless>=4.8

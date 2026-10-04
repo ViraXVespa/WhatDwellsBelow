@@ -5,11 +5,11 @@ const Split := preload("res://scripts/ui/split_menu.gd")
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const BindsPage := preload("res://scripts/ui/binds_page.gd")
+const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Pages := preload("res://scripts/ui/pause_settings/settings_pages.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
-
-const PATREON := "https://www.patreon.com/cw/ViraXVespa"
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 var pause: CanvasLayer
 var open := true
@@ -23,6 +23,7 @@ var list_btns: Array = []
 var info_btns: Array = []
 var back_btn: Button
 var status: Label
+var bind_note := ""
 var _list_root: Control
 var _info_root: Control
 var _list_rule: ColorRect
@@ -56,18 +57,18 @@ func _setup() -> void:
 
 func split_rows() -> Array:
 	var out: Array = [
-		{"id": "gameplay", "label": "Gameplay", "kind": "page"},
-		{"id": "audio", "label": "Audio", "kind": "page"},
-		{"id": "graphics", "label": "Graphics", "kind": "page"},
-		{"id": "controls", "label": "Controls", "kind": "page"},
-		{"id": "patreon", "label": "Patreon", "kind": "leaf"},
+		{"id": "gameplay", "label": tr("pause_settings.gameplay"), "kind": "page"},
+		{"id": "audio", "label": tr("pause_settings.audio"), "kind": "page"},
+		{"id": "graphics", "label": tr("pause_settings.graphics"), "kind": "page"},
+		{"id": "controls", "label": tr("pause_settings.controls"), "kind": "page"},
+		{"id": "patreon", "label": tr("pause_settings.patreon"), "kind": "leaf"},
 	]
 	if App.in_dungeon:
-		out.append({"id": "leave", "label": "Dispel", "kind": "leaf"})
+		out.append({"id": "leave", "label": tr("pause_settings.dispel"), "kind": "leaf"})
 	else:
-		out.append({"id": "leave", "label": "Main Menu", "kind": "leaf"})
+		out.append({"id": "leave", "label": tr("common.main_menu"), "kind": "leaf"})
 	if not Disp.is_xbox():
-		out.append({"id": "quit", "label": "Quit", "kind": "leaf"})
+		out.append({"id": "quit", "label": tr("pause_settings.quit"), "kind": "leaf"})
 	return out
 
 func split_back_label() -> String:
@@ -80,7 +81,11 @@ func split_hint() -> void:
 	if pause == null:
 		return
 	var extra: Array = []
-	if col == "list":
+	if MenuPad.capture_lock:
+		extra.append({"text": Prompts.fmt(tr("binds_page.capture_hint")), "gap": true})
+		extra.append({"action": "ui_accept", "hide": true})
+		extra.append({"action": "ui_cancel", "hide": true})
+	elif col == "list":
 		var row: Dictionary = Split.current(self)
 		if Split.is_leaf(row):
 			extra.append({"action": "ui_accept", "verb": "select", "gap": true})
@@ -89,6 +94,8 @@ func split_hint() -> void:
 		extra.append({"action": "ui_cancel", "verb": "close"})
 	else:
 		extra.append({"action": "ui_cancel", "verb": "back"})
+	if bind_note != "" and str(Split.current(self).get("id", "")) == "controls":
+		extra.insert(0, {"text": bind_note})
 	PromptView.footer(pause, extra)
 
 func split_close() -> void:
@@ -98,15 +105,15 @@ func split_close() -> void:
 func split_activate_leaf(id: String) -> void:
 	match id:
 		"patreon":
-			OS.shell_open(PATREON)
+			OS.shell_open(App.T.PATREON_URL)
 		"leave":
 			if App.in_dungeon:
-				Confirm.open(pause, "Dispel Avatar", "End this run and return to Placeholdia?", func() -> void:
+				Confirm.open(pause, tr("pause_settings.dispel_avatar"), tr("pause_settings.end_this_run_and_return"), func() -> void:
 					pause.close_ui()
 					App.end_run("dispel")
 				)
 			else:
-				Confirm.open(pause, "Main Menu", "Return to the title screen?", func() -> void:
+				Confirm.open(pause, tr("common.main_menu"), tr("pause_settings.return_to_the_title_screen"), func() -> void:
 					pause.close_ui()
 					App.go_title()
 				)
@@ -125,14 +132,14 @@ func split_build_page(id: String) -> void:
 		"controls":
 			BindsPage.build(self)
 		"patreon":
-			_leaf_copy("Support development on Patreon. Opens in your browser.")
+			_leaf_copy(tr("pause_settings.support_development_on_patreon_o"))
 		"leave":
 			if App.in_dungeon:
-				_leaf_copy("End this run and return to Placeholdia. Unextracted loot is lost.")
+				_leaf_copy(tr("pause_settings.end_this_run_and_return_2"))
 			else:
-				_leaf_copy("Return to the title screen.")
+				_leaf_copy(tr("pause_settings.return_to_the_title_screen_2"))
 		"quit":
-			_leaf_copy("Close the game.")
+			_leaf_copy(tr("pause_settings.close_the_game"))
 		_:
 			pass
 	View.wire_vert(info_btns)

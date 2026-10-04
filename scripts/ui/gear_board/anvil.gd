@@ -1,10 +1,7 @@
 ﻿extends Object
 
-const Text := preload("res://scripts/ui/gear_board/board_text.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
 const Town := preload("res://scripts/data/progress/progress_town.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
-const Prompts := preload("res://scripts/input/prompts.gd")
 const View := preload("res://scripts/ui/gear_board/anvil_view.gd")
 const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
 
@@ -27,9 +24,6 @@ static func hint_parts(ui: CanvasLayer) -> Array:
 	parts.append({"action": "ui_accept", "verb": "select a slot", "gap": true})
 	parts.append({"action": "ui_cancel", "verb": "back"})
 	return parts
-
-static func hint_line(ui: CanvasLayer) -> String:
-	return Prompts.verb_lines(hint_parts(ui))
 
 static func options_for(slot: String, ui: CanvasLayer) -> Array:
 	if slot == "potion" or slot == "food":
@@ -80,7 +74,7 @@ static func analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> void:
 	var it: Dictionary = row.it.duplicate(true) if row.get("it") is Dictionary else {}
 	if it.is_empty() or not ForgeP.can_analyze(App.prog, it):
 		var Act = load("res://scripts/ui/gear_board/board_act.gd")
-		Act.st(ui, "Can't analyze that.")
+		Act.st(ui, App.tr("common.can_t_analyze_that"))
 		return
 	ui.anvil_item = it
 	ui.anvil_src = str(row.get("src", ""))
@@ -90,18 +84,15 @@ static func _commit_analyze(ui: CanvasLayer, slot: String, row: Dictionary) -> v
 	var taken: Dictionary = Town.analyze_destroy(App.prog, row)
 	if taken.is_empty():
 		var Act = load("res://scripts/ui/gear_board/board_act.gd")
-		Act.st(ui, "Can't analyze that.")
+		Act.st(ui, App.tr("common.can_t_analyze_that"))
 		ui.anvil_item = {}
 		ui.anvil_src = ""
 		return
 	ui.anvil_item = {}
 	ui.anvil_src = ""
 	var Act2 = load("res://scripts/ui/gear_board/board_act.gd")
-	Act2.st(ui, "Analyzed. Unlocks ready on the Forge tab.")
-	App.toast("Analyzed — " + str(taken.get("name", "item")))
+	Act2.st(ui, App.tr("anvil.analyzed_unlocks_ready_on_the"))
+	App.toast(App.tr("anvil.analyzed_name").format({"name": str(taken.get("name", "item"))}))
 	var Sub = load("res://scripts/ui/gear_board/board_sub.gd")
 	if bool(ui.get("gear_sub")):
 		Sub.open_sub(ui, slot)
-
-static func restore(_ui: CanvasLayer) -> void:
-	pass

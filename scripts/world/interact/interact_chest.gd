@@ -3,12 +3,15 @@
 ## Chest loot open for world interactables.
 
 const Catalog := preload("res://scripts/data/catalog.gd")
+const Affix := preload("res://scripts/data/affixes.gd")
+const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const Prompt := preload("res://scripts/world/interact/interact_prompt.gd")
 const InteractFx := preload("res://scripts/world/interact/interact_fx.gd")
 
 static func open_chest(host: Node3D) -> String:
 	if host.used:
-		return "Empty."
+		App.interact_locked = true
+		return App.tr("common.empty")
 	host.used = true
 	var gold := int(App.bal.chest_gold_base) + randi() % maxi(1, int(App.bal.chest_gold_span))
 	if host.kind == "chest":
@@ -34,18 +37,18 @@ static func open_chest(host: Node3D) -> String:
 	elif randf() < App.bal.chest_green_chance:
 		rarity = "green"
 	if host.kind == "chest" or randf() < App.bal.chest_gear_chance:
-		var gear: Dictionary = App.prog.make_armor(["head", "body", "legs"][randi() % 3], rarity)
+		var gear: Dictionary = App.prog.make_armor(Affix.ARMOR_SLOTS[randi() % Affix.ARMOR_SLOTS.size()], rarity)
 		if host.kind == "chest" and randf() < 0.5:
-			gear = App.prog.make_weapon(["great_axe", "staff", "longbow"][randi() % 3], rarity)
+			gear = App.prog.make_weapon(Kit.BUILTIN_WEAPONS[randi() % Kit.BUILTIN_WEAPONS.size()], rarity)
 		msg_gear = str(gear.name)
 		if not App.prog.add_item(gear):
 			App.spawn_floor_item(gear, host.global_position)
 	App.sfx("pickup")
 	Prompt.refresh(host)
 	InteractFx.paint_used_chest(host)
-	var msg := "+%dg" % gold
+	var msg := App.tr("common.g") % gold
 	if art != "":
-		msg += "  ·  Artifact: " + art
+		msg += "  ·  " + App.tr("shop.artifact_name").format({"name": art})
 	if msg_gear != "":
 		msg += "  ·  " + msg_gear
 	App.toast(msg)

@@ -3,7 +3,8 @@
 from pathlib import Path
 from PIL import Image
 import math
-from sprite_lib import dist  # noqa: E402
+from imglib import geom, imgio  # noqa: E402
+from imglib.color import dist  # noqa: E402
 import sys
 
 _TOOLS = Path(__file__).resolve().parent
@@ -14,9 +15,7 @@ import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
 FRAMES = ROOT / "_src" / "anim_frames"
-IMG = Path(
-    r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5CRepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images"
-)
+IMG = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5CRepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images")
 OUT = ROOT / "assets" / "live" / "player"
 CANVAS = 128
 CHAR_H = 110
@@ -68,14 +67,10 @@ def torso_x(im: Image.Image) -> int:
 
 def place(im: Image.Image) -> Image.Image:
     im = key(im)
-    bbox = im.getbbox()
-    if not bbox:
+    ch = geom.fit_axis(im, height=CHAR_H)
+    if ch is None:
         return Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
-    ch = im.crop(bbox)
-    scale = CHAR_H / max(1, ch.size[1])
-    nw = max(1, int(ch.size[0] * scale))
     nh = CHAR_H
-    ch = ch.resize((nw, nh), Image.Resampling.NEAREST)
     tx = torso_x(ch)
     out = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
     x0 = CANVAS // 2 - tx
@@ -101,20 +96,20 @@ def pack_list(folder: str, idxs: list, dest_prefix: str) -> None:
         if not p.exists():
             print("missing", p)
             continue
-        save(Image.open(p), OUT / f"{dest_prefix}_{n}.png")
+        save(imgio.load(p), OUT / f"{dest_prefix}_{n}.png")
         n += 1
 
 
 def _run() -> None:
     # Idles from stills + turntable
-    save(Image.open(ROOT / "assets" / "live" / "player" / "down.png"), OUT / "down.png")
-    save(Image.open(IMG / "191.jpg"), OUT / "right.png")
-    save(Image.open(IMG / "192.jpg"), OUT / "down_right.png")
-    save(Image.open(IMG / "193.jpg"), OUT / "up_right.png")
-    save(Image.open(IMG / "194.jpg"), OUT / "down_left.png")
-    save(Image.open(frame("turn_walk", 30)), OUT / "left.png")
-    save(Image.open(frame("turn_walk", 45)), OUT / "up.png")
-    save(Image.open(frame("turn_walk", 60)), OUT / "up_left.png")
+    save(imgio.load(ROOT / "assets" / "live" / "player" / "down.png"), OUT / "down.png")
+    save(imgio.load(IMG / "191.jpg"), OUT / "right.png")
+    save(imgio.load(IMG / "192.jpg"), OUT / "down_right.png")
+    save(imgio.load(IMG / "193.jpg"), OUT / "up_right.png")
+    save(imgio.load(IMG / "194.jpg"), OUT / "down_left.png")
+    save(imgio.load(frame("turn_walk", 30)), OUT / "left.png")
+    save(imgio.load(frame("turn_walk", 45)), OUT / "up.png")
+    save(imgio.load(frame("turn_walk", 60)), OUT / "up_left.png")
 
     pack_list("turn_walk", [0, 8, 12, 16], "walk_down")
     pack_list("turn_walk", [28, 30, 32, 36], "walk_left")
@@ -137,11 +132,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Pack 8-dir player sheets from turntable + facing clips, shared scale and torso pin.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="pack_turntable")
+    return agent_log.run_writer("pack_turntable", "Pack 8-dir player sheets from turntable + facing clips, shared scale and torso pin.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

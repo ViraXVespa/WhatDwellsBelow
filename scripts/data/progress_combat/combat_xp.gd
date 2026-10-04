@@ -34,11 +34,11 @@ static func refresh_player_hp(p) -> void:
 static func set_bonus_text(p, set_id: String) -> String:
 	var n: int = int(set_counts(p).get(set_id, 0))
 	var need := CatalogS.set_size(set_id)
-	var lines := "Set %s  %d/%d" % [set_id.capitalize(), n, need]
+	var lines := App.tr("combat_xp.set") % [CatalogS.set_title(set_id), n, need]
 	if n >= 2:
-		lines += "\nActive: " + CatalogS.set_bonus_line(set_id, n)
+		lines += App.tr("combat_xp.active_line").format({"line": CatalogS.set_bonus_line(set_id, n)})
 	else:
-		lines += "\nBonus from 2 pieces."
+		lines += App.tr("combat_xp.bonus_from_2_pieces")
 	return lines
 
 static func set_counts(p) -> Dictionary:
@@ -64,5 +64,5 @@ static func add_run_xp(p, id: String, amt: float) -> void:
 	p.skills_run[id] = float(p.skills_run.get(id, 0.0)) + amt
 	if _fac.skill_lv(p, id) > before:
 		App.sfx("level")
-		App.toast("Level up — %s %d" % [id, _fac.skill_lv(p, id)])
+		App.toast(App.tr("common.level_up") % [id, _fac.skill_lv(p, id)])
 		p._refresh_player_hp()

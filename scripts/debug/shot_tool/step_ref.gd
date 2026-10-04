@@ -5,6 +5,9 @@ extends RefCounted
 ## child nodes, dictionary keys or [index]. Values from JSON are cleaned (integral floats become ints).
 
 static func clean(v: Variant) -> Variant:
+	if v is Dictionary and (v as Dictionary).has("v3"):
+		var c: Array = (v as Dictionary).v3
+		return Vector3(float(c[0]), float(c[1]), float(c[2]))
 	if v is float and is_equal_approx(v, roundf(v)) and absf(v) < 1.0e9:
 		return int(v)
 	if v is Array:

@@ -1,6 +1,5 @@
 extends Object
 
-const Cat := preload("res://scripts/data/archives/archives_catalog.gd")
 const CLIP := 4000
 
 static func names(e: Dictionary) -> PackedStringArray:

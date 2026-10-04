@@ -34,7 +34,7 @@ static func ensure_web_hooks() -> void:
 				if (!document.fullscreenElement) return;
 				e.preventDefault();
 				if (e.stopPropagation) e.stopPropagation();
-				window.__wdbEsc = 1;
+				window.__wdbEsc = 2;
 			}, true);
 			document.addEventListener('fullscreenchange', function () {
 				try {

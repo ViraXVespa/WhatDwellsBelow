@@ -3,7 +3,6 @@
 const GatherS := preload("res://scripts/world/gather/gather_node.gd")
 const BreakS := preload("res://scripts/world/breakable.gd")
 const SpotS := preload("res://scripts/world/interact.gd")
-const Gate := preload("res://scripts/world/dungeon/dungeon_gate.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
 const Spawn := preload("res://scripts/world/dungeon_props/spawn.gd")
 const Place := preload("res://scripts/world/dungeon_props/props_place.gd")
@@ -62,9 +61,6 @@ static func scatter_counts(host: Node, eager: bool = true) -> void:
 	Place.place_n(host, rooms, int(App.bal.campfire_count), "campfire", eager)
 	Place.place_n(host, rooms, int(App.bal.shrine_count), "shrine", eager)
 
-static func place_n(host: Node, rooms: Array, n: int, what: String) -> void:
-	Place.place_n(host, rooms, n, what)
-
 static func puzzle_cells(src: Variant) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	if src is Array:
@@ -117,6 +113,3 @@ static func place_one(host: Node, kind: String, prefer: Dictionary) -> Vector2i:
 		host._note("shop")
 	host._mark_cell(cell)
 	return cell
-
-static func ensure_world(host: Node) -> void:
-	Spawn.ensure_world(host)

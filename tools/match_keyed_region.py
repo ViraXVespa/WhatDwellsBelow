@@ -11,7 +11,7 @@ its short side, and most of that box has to agree.
   python tools/match_keyed_region.py --report
   python tools/match_keyed_region.py --organize
   python tools/match_keyed_region.py --fill-missing
-  python tools/match_keyed_region.py --fill-missing --what-if
+  python tools/match_keyed_region.py --fill-missing --dry-run
 
 --pipeline runs plate_remap + key_to_alpha on one pair. The library scan uses
 the flat mask so it can cover every session still and _src frame.
@@ -24,7 +24,7 @@ copied to every matching live path, not kept only for the closest live.
 
 --fill-missing reads _src/manifest.json, scores _old plus already placed
 _src/sources files against unmatched lives, and copies hits to
-_src/sources/<live path>. It never moves _old. --what-if prints that plan.
+_src/sources/<live path>. It never moves _old. --dry-run (alias --what-if) prints that plan.
 """
 from __future__ import annotations
 
@@ -37,15 +37,12 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
+import agent_log
+from imglib import imgio
 from repo_lib import under as _under  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-SESS_ROOT = (
-    Path.home()
-    / ".grok"
-    / "sessions"
-    / "C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow"
-)
+SESS_ROOT = agent_log.grok_sessions("C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow")
 SRC_ROOT = ROOT / "_src"
 TOOLS_SRC = ROOT / "tools" / "_src"
 OLD_ROOT = ROOT / "_old"
@@ -170,7 +167,7 @@ def key_pipeline(path: Path) -> np.ndarray:
     import plate_remap as pr  # noqa: E402
     import sprite_pipeline as sp  # noqa: E402
 
-    im = Image.open(path).convert("RGBA")
+    im = imgio.load(path)
     remapped, _vis, _info = pr.remap(im)
     keyed = sp.key_to_alpha(remapped, spill_flood=False)
     w, h = keyed.size
@@ -371,7 +368,7 @@ def score_pair(live: Path, src: Path, pipeline: bool = False) -> dict:
 
 def _iso_roots() -> list[Path]:
     roots: list[Path] = []
-    sessions = Path.home() / ".grok" / "sessions"
+    sessions = agent_log.grok_sessions()
     if sessions.is_dir():
         for child in sessions.iterdir():
             if "wdb-iso" in child.name.lower():
@@ -1111,15 +1108,15 @@ def self_test() -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Match keyed source regions to live assets.")
-    parser.add_argument("live", nargs="?", type=Path)
-    parser.add_argument("src", nargs="?", type=Path)
+    parser = argparse.ArgumentParser(epilog="No --root: explicit-path tool, exempt by design (paths are arguments). Session store: $WDB_GROK_SESSIONS (default C:\\Users\\Vira\\.grok\\sessions).", description="Match keyed source regions to live assets.")
+    parser.add_argument("live", nargs="?", type=Path, help="Live sprite PNG to patch.")
+    parser.add_argument("src", nargs="?", type=Path, help="Source still the region is taken from.")
     parser.add_argument("--pipeline", action="store_true", help="Key one pair with plate_remap + key_to_alpha")
     parser.add_argument("--report", action="store_true", help="Scan and print a summary. Do not move files.")
     parser.add_argument("--organize", action="store_true", help="Put matching sources in _src and the rest in _old.")
     parser.add_argument("--fill-missing", action="store_true", help="Copy _old and placed sources onto unmatched lives.")
-    parser.add_argument("--what-if", action="store_true", help="With --fill-missing, print copies and do not write.")
-    parser.add_argument("--self-test", action="store_true")
+    parser.add_argument("--dry-run", "--what-if", dest="what_if", action="store_true", help="With --fill-missing, print copies and do not write.")
+    parser.add_argument("--self-test", action="store_true", help="Run the built-in synthetic self test and exit.")
     args = parser.parse_args()
 
     if args.self_test:

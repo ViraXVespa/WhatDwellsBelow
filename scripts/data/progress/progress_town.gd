@@ -79,15 +79,6 @@ static func note_kill(p: Object, type_id: String, named: String) -> void:
 static func note_fetch(p: Object) -> void:
 	Quest.note_fetch(p)
 
-static func quest_extract_ore(p: Object, n: int) -> void:
-	Quest.quest_extract_ore(p, n)
-
-static func try_complete(p: Object) -> void:
-	Quest.try_complete(p)
-
-static func unowned_gear(p: Object) -> Dictionary:
-	return Quest.unowned_gear(p)
-
 static func to_meta(p: Object) -> Dictionary:
 	return Quest.to_meta(p)
 

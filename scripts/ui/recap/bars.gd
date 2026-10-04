@@ -2,29 +2,15 @@ extends Object
 const CombatP := preload("res://scripts/data/progress_combat.gd")
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const LocS := preload("res://scripts/app/app_loc.gd")
 const SkillRow := preload("res://scripts/ui/skill_row_view.gd")
-
-const SKILL_NAMES := {
-	"axe": "Great Axe",
-	"staff": "Staff",
-	"bow": "Longbow",
-	"str": "Strength",
-	"mag": "Magic",
-	"rng": "Ranged",
-	"def": "Defense",
-	"hp": "Hitpoints",
-	"mine": "Mining",
-	"wood": "Woodcutting",
-	"smith": "Smithing",
-}
 
 const COL_PERM := Color(0.72, 0.56, 0.28)
 const COL_GAIN := Color(0.46, 0.78, 0.42)
 const COL_DUNGEON := Color(0.86, 0.74, 0.32)
-const COL_TRACK := Color(0.18, 0.14, 0.1)
 
 static func skill_title(id: String) -> String:
-	return str(SKILL_NAMES.get(id, id))
+	return LocS.tr_or("skill." + id, id)
 
 static func skill_lab(text: String, size := 16, col := Color(0.9, 0.84, 0.7)) -> Label:
 	return SkillRow.skill_lab(text, size, col)
@@ -156,21 +142,21 @@ static func refresh(host: Node) -> void:
 		var gain := float(host.gain_now.get(id, 0.0))
 		var perm_total := start + gain
 		var run_total := start + run_left
-		(rec.perm_lab as Label).text = "%s Lv %d | Next Level: %dXP | Total XP: %dXP" % [
+		(rec.perm_lab as Label).text = App.tr("common.lv_next_level_xp_total") % [
 			skill_title(id),
 			CombatP.level_from_xp(App.prog, perm_total),
 			int(round(CombatP.xp_to_next(App.prog, perm_total))),
 			int(round(perm_total)),
 		]
 		if host.applied:
-			(rec.run_lab as Label).text = "%s Lv %d | Next Level: %dXP | Total XP: %dXP" % [
+			(rec.run_lab as Label).text = App.tr("common.lv_next_level_xp_total") % [
 				skill_title(id),
 				CombatP.level_from_xp(App.prog, start),
 				int(round(CombatP.xp_to_next(App.prog, start))),
 				int(round(start)),
 			]
 		else:
-			(rec.run_lab as Label).text = "%s Lv %d | This Run: %dXP | Next Level: %dXP" % [
+			(rec.run_lab as Label).text = App.tr("common.lv_this_run_xp_next") % [
 				skill_title(id),
 				CombatP.level_from_xp(App.prog, run_total),
 				int(round(run_left)),

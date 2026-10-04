@@ -4,31 +4,30 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const Text := preload("res://scripts/ui/gear_board/board_text.gd")
 const Fmt := preload("res://scripts/ui/gear_board/text_fmt.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
-const Floor := preload("res://scripts/ui/gear_board/floor.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 
 static func build_title(_ui: CanvasLayer, mode: String, _title_col: Color) -> String:
-	var title := "Inventory"
+	var title := App.tr("board_build.inventory")
 	if mode == "loadout":
-		title = "Floor Crystal — Loadout"
+		title = App.tr("board_build.floor_crystal_loadout")
 		_title_col = Color(0.6, 0.9, 1.0)
 	elif mode == "anvil":
-		title = "Anvil"
+		title = App.tr("common.anvil")
 		_title_col = Color(0.95, 0.78, 0.42)
 	return title
 
 static func build_subtitle(_ui: CanvasLayer, mode: String) -> String:
 	if mode == "loadout":
-		return "Choose holds or stash gear. Only floors you have reached."
+		return App.tr("board_build.choose_holds_or_stash_gear")
 	elif mode == "anvil":
-		return "Analyze DESTROYS a piece. Forge those remains on the Forge tab. Starters stay off the list."
+		return App.tr("board_build.analyze_destroys_a_piece_forge")
 	return ""
 
 static func build_status_text(mode: String) -> String:
 	if mode == "loadout" or mode == "anvil":
 		return ""
-	return "Carried  %dg   %d ore   %d wood   bag %d/%d" % [App.gold, App.ore, App.wood, App.prog.bag_count(), int(App.bal.bag_cap)]
+	return App.tr("board_build.carried_g_ore_wood_bag") % [App.gold, App.ore, App.wood, App.prog.bag_count(), int(App.bal.bag_cap)]
 
 static func plain_lab(t: String, size: int, col: Color) -> Label:
 	var l := Label.new()
@@ -102,10 +101,7 @@ static func build_slot_btn(_ui: CanvasLayer, slot: String) -> Button:
 	b.focus_mode = Control.FOCUS_ALL
 	b.disabled = false
 	b.text = ""
-	b.icon = Icons.tex_for_slot(slot, it)
-	b.expand_icon = true
-	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	b.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+	Icons.fit_btn(b, Icons.tex_for_slot(slot, it))
 	_paint_item_btn(b, it)
 	if Text.has_unseen(slot):
 		b.text = "▸"
@@ -129,10 +125,7 @@ static func build_bag_cell(_ui: CanvasLayer, it: Dictionary) -> Button:
 	b.focus_mode = Control.FOCUS_ALL
 	b.disabled = false
 	if Icons.has_item_icon(it):
-		b.icon = Icons.tex_for_item(it)
-		b.expand_icon = true
-		b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		b.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+		Icons.fit_btn(b, Icons.tex_for_item(it))
 	else:
 		b.text = Text.item_cell(it)
 		b.add_theme_font_size_override("font_size", 14)

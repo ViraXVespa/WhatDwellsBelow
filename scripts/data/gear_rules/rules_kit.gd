@@ -57,7 +57,7 @@ static func is_builtin_starter(it: Dictionary) -> bool:
 		return BUILTIN_WEAPONS.find(_weapon_id(it)) >= 0
 	if slot == "tool" and str(it.get("rarity", "white")) == "white":
 		return BUILTIN_TOOLS.find(_tool_id(it)) >= 0
-	if slot == "potion" and str(it.get("name", "Potion")) == "Potion" and str(it.get("rarity", "white")) == "white":
+	if slot == "potion" and it.get("nk", []) == ["gear.potion"] and str(it.get("rarity", "white")) == "white":
 		return true
 	return false
 
@@ -73,32 +73,6 @@ static func is_starter(p: Object, it: Dictionary) -> bool:
 		if raw is Dictionary and tmpl_key(raw) == key:
 			return true
 	return false
-
-static func can_forge(p: Object, it: Dictionary) -> bool:
-	if it.is_empty():
-		return false
-	if str(it.get("kind", "")) == "artifact":
-		return false
-	if str(it.get("slot", "")) == "potion" or str(it.get("slot", "")) == "food":
-		return false
-	if bool(it.get("hold", false)) or str(it.get("kit_src", "")) == "hold":
-		return false
-	if str(it.get("rarity", "white")) == "white":
-		return false
-	if is_starter(p, it):
-		return false
-	return true
-
-static func can_bank(p: Object, it: Dictionary) -> bool:
-	if it.is_empty():
-		return false
-	if str(it.get("kind", "")) == "artifact":
-		return false
-	if bool(it.get("hold", false)):
-		return false
-	if is_starter(p, it):
-		return false
-	return true
 
 static func locked_equip_slot(slot: String) -> bool:
 	return slot == "weapon" or slot == "tool"
@@ -117,8 +91,8 @@ static func grant_smith(p: Object, it: Dictionary) -> String:
 	var xp := smith_xp_for(it)
 	p.add_perm_xp("smith", xp)
 	App.extracted = true
-	App.toast("Broken down for smithing.")
-	return "Converted %s to smithing XP." % str(it.get("name", "item"))
+	App.toast(App.tr("rules_kit.broken_down_for_smithing"))
+	return App.tr("rules_kit.converted_to_smithing_xp") % str(it.get("name", "item"))
 
 static func unlock_starter(p: Object, it: Dictionary) -> void:
 	var slot: String = str(it.get("slot", ""))
@@ -152,7 +126,7 @@ static func starter_ilvl(p: Object, it: Dictionary) -> int:
 
 static func handle_mail(p: Object, it: Dictionary) -> String:
 	if it.is_empty():
-		return "Nothing."
+		return App.tr("common.nothing")
 	if str(it.get("kind", "")) == "artifact" or bool(it.get("hold", false)):
 		return ""
 	if str(it.get("rarity", "white")) == "white":
@@ -161,8 +135,8 @@ static func handle_mail(p: Object, it: Dictionary) -> String:
 		unlock_starter(p, it)
 		App.extracted = true
 		p.mailed_names.append(str(it.get("name", "item")))
-		App.toast("Unlocked as a starter.")
-		return "Unlocked starter: " + str(it.get("name", "item"))
+		App.toast(App.tr("rules_kit.unlocked_as_a_starter"))
+		return App.tr("rules_kit.unlocked_starter_name").format({"name": str(it.get("name", "item"))})
 	if is_starter(p, it):
 		return grant_smith(p, it)
 	return ""
@@ -176,8 +150,8 @@ static func _mail_white(p: Object, it: Dictionary) -> String:
 	_apply_starter_level(p, it, incoming)
 	App.extracted = true
 	p.mailed_names.append(str(it.get("name", "item")))
-	App.toast("Starter leveled to %d." % incoming)
-	return "Starter leveled to %d." % incoming
+	App.toast(App.tr("common.starter_leveled_to") % incoming)
+	return App.tr("common.starter_leveled_to") % incoming
 
 static func _apply_starter_level(p: Object, it: Dictionary, ilvl: int) -> void:
 	var slot: String = str(it.get("slot", ""))
@@ -211,10 +185,3 @@ static func _restat_white(it: Dictionary, ilvl: int) -> Dictionary:
 
 static func _write_starter_ilvl(it: Dictionary, ilvl: int) -> void:
 	it["ilvl"] = maxi(int(it.get("ilvl", 1)), ilvl)
-
-static func same_white(a: Dictionary, b: Dictionary) -> bool:
-	if a.is_empty() or b.is_empty():
-		return false
-	if str(a.get("rarity", "white")) != "white" or str(b.get("rarity", "white")) != "white":
-		return false
-	return tmpl_key(a) == tmpl_key(b)

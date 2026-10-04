@@ -20,7 +20,7 @@ Two-item columns (weapon/potion and tool/food) MUST be vertically centered again
 
 Loadout MUST NOT show a top summary line of weapon / tool / deepest floor. Character switching lives on Pause → Settings → Gameplay, not on this board.
 
-Floor labels stay on one horizontal line (`AUTOWRAP_OFF`). `−` disables at floor 1. `+` disables at `App.prog.deepest`. Disabled steppers use `FOCUS_NONE` and drop out of the keyboard / gamepad chain. Navigating onto a now-disabled stepper moves focus to the other live stepper, or to **Enter dungeon** if both are dead. From Legs / Food, down lands on `+` when it is live, else `−`. From Potion, down lands on `−` when it is live, else `+`.
+Floor labels stay on one horizontal line (`AUTOWRAP_OFF`). `−` disables at floor 1. `+` disables at `App.prog.deepest`. Disabled steppers use `FOCUS_NONE` and drop out of the keyboard / gamepad chain. Navigating onto a disabled stepper moves focus to the other live stepper, or to **Enter dungeon** if both are dead. From Legs / Food, down lands on `+` when it is live, else `−`. From Potion, down lands on `−` when it is live, else `+`.
 
 The Floor Crystal dungeon-level picker and the Anvil item-level / quantity pickers MUST share `scripts/ui/step_row.gd` so disable, spacing, and neighbor retargeting stay one design.
 

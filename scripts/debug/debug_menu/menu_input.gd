@@ -44,12 +44,12 @@ static func shift_page(host, delta_i: int) -> void:
 static func accept_pressed(event: InputEvent) -> bool:
 	if event.is_action_pressed("ui_accept") or event.is_action_pressed("interact"):
 		return true
-	if event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_A:
-		return true
 	return false
 
 static func handle_input(host, event: InputEvent) -> void:
 	if not host.open or host._busy_anim():
+		return
+	if event is InputEventKey and (event as InputEventKey).keycode == KEY_BACKSPACE and host.get_viewport().gui_get_focus_owner() is LineEdit:
 		return
 	if event.is_action_pressed("tab_right"):
 		shift_page(host, 1)
@@ -80,7 +80,7 @@ static func handle_input(host, event: InputEvent) -> void:
 			DebugMenuVal.val_accept(host)
 			host.get_viewport().set_input_as_handled()
 			return
-		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
+		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 			if DebugMenuVal.val_cancel(host):
 				host.get_viewport().set_input_as_handled()
 				return
@@ -92,7 +92,7 @@ static func handle_input(host, event: InputEvent) -> void:
 		host._nudge_focus(-1)
 		host.get_viewport().set_input_as_handled()
 		return
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("dash"):
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		if str(host.page) != "values":
 			host.page = "values"
 			host._rebuild()

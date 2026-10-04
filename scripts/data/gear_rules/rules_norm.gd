@@ -1,14 +1,18 @@
 extends Object
 
 const Affix := preload("res://scripts/data/affixes.gd")
+const ItemNames := preload("res://scripts/data/item_names.gd")
 
 static func normalize_prog(p: Object) -> void:
 	if p == null:
 		return
-	for s: String in ["weapon", "tool", "head", "body", "legs"]:
+	for s: String in Affix.FORGE_SLOTS:
 		var eq: Variant = p.slots.get(s, {})
 		if eq is Dictionary and not eq.is_empty():
 			p.slots[s] = normalize_item(eq)
+	var pot: Variant = p.slots.get("potion", {})
+	if pot is Dictionary and not pot.is_empty():
+		p.slots["potion"] = normalize_item(pot)
 	_norm_list(p.bag)
 	if p.get("bank_items") is Array:
 		_norm_list(p.bank_items)
@@ -31,8 +35,11 @@ static func _norm_list(arr: Array) -> void:
 static func normalize_item(it: Dictionary) -> Dictionary:
 	if it.is_empty():
 		return it
+	ItemNames.migrate(it)
 	var kind: String = str(it.get("kind", ""))
 	var slot: String = str(it.get("slot", ""))
+	if slot == "potion":
+		it["cooldown"] = 0.0  # potions use the live potion_cooldown tunable, not a baked copy
 	if kind == "artifact" or slot == "potion" or slot == "food" or kind == "food":
 		return it
 	if slot != "weapon" and slot != "tool" and slot != "head" and slot != "body" and slot != "legs":
@@ -110,15 +117,15 @@ static func _cap_pct(ilvl: int) -> float:
 
 static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 	if p.potion_cd > 0.0:
-		App.toast("Potion cooling down.")
-		return "Not ready."
+		App.toast(App.tr("rules_norm.potion_cooling_down"))
+		return App.tr("rules_norm.not_ready")
 	var ch: int = int(it.get("charges", it.get("stack", 0)))
 	if ch <= 0:
-		App.toast("No charges left this run.")
-		return "Empty."
+		App.toast(App.tr("common.no_charges_left_this_run"))
+		return App.tr("common.empty")
 	var pl: CharacterBody3D = p._player()
 	if pl == null or not pl.has_method("heal"):
-		return "Not now."
+		return App.tr("rules_norm.not_now")
 	var heal := 1.0
 	if App.bal:
 		heal = float(App.bal.get("potion_heal"))
@@ -134,8 +141,8 @@ static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 	if from_slot:
 		p.slots["potion"] = it
 	App.sfx("potion")
-	App.toast("Potion — instant.")
-	return "Potion."
+	App.toast(App.tr("rules_norm.potion_instant"))
+	return App.tr("rules_norm.potion")
 
 static func refill_potion(p: Object) -> void:
 	var it: Dictionary = p.slots.get("potion", {})

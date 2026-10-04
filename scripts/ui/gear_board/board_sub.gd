@@ -1,10 +1,8 @@
 extends Object
 
 const Board := preload("res://scripts/ui/gear_board.gd")
-const Text := preload("res://scripts/ui/gear_board/board_text.gd")
-const Fmt := preload("res://scripts/ui/gear_board/text_fmt.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
+const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
@@ -59,9 +57,6 @@ static func _add_strip(box: Control, parts: Array) -> void:
 	PromptView.fill(strip, parts)
 	box.add_child(strip)
 
-static func _wire_opt_focus(opts: Array[Button], back: Button) -> void:
-	Open._wire_opt_focus(opts, back)
-
 static func _paint_opt(b: Button, it: Dictionary) -> void:
 	var fill: Color = Icons.rarity_fill(it)
 	var border: Color = Icons.rarity_border(it)
@@ -109,21 +104,18 @@ static func _after_sub(ui: CanvasLayer, sel: String, do_rebuild: bool) -> void:
 static func _unequip_or_keep(ui: CanvasLayer, slot: String, it: Dictionary) -> void:
 	var Act = _act()
 	if Act.locked_slot(slot):
-		Act.st(ui, "Weapon and tool stay equipped.")
+		Act.st(ui, App.tr("common.weapon_and_tool_stay_equipped"))
 		return
-	if Rules.is_starter(App.prog, it) or str(it.get("kit_src", "")) == "starter":
-		Act.st(ui, "Starters stay on the slot.")
+	if Kit.is_starter(App.prog, it) or str(it.get("kit_src", "")) == "starter":
+		Act.st(ui, App.tr("board_sub.starters_stay_on_the_slot"))
 		return
 	if Act.town_kit(ui):
 		App.prog.slots[slot] = {}
 		App.prog.hold_pick[slot] = -1
-		Act.st(ui, "Unequipped.")
+		Act.st(ui, App.tr("board_sub.unequipped"))
 		App.save_now()
 		return
 	Act.st(ui, App.prog.unequip_slot(slot))
-
-static func _apply_loadout(ui: CanvasLayer, slot: String, it: Dictionary, src: String) -> void:
-	Open._apply_loadout(ui, slot, it, src)
 
 static func _apply_inv(ui: CanvasLayer, slot: String, it: Dictionary, src: String) -> void:
 	var Act = _act()
@@ -131,4 +123,4 @@ static func _apply_inv(ui: CanvasLayer, slot: String, it: Dictionary, src: Strin
 		Act.st(ui, App.prog.equip_uid(int(it.get("uid", 0))))
 		ui.inv_sel = "slot:" + slot
 		return
-	Act.st(ui, "Can't use that here.")
+	Act.st(ui, App.tr("board_sub.can_t_use_that_here"))

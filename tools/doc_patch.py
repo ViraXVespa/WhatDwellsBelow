@@ -7,8 +7,9 @@ CLI (no scratch file needed; --dry-run prints "would write" and changes nothing)
     python3 tools/doc_patch.py ensure-line FILE --line "text" [--after "anchor"]
     python3 tools/doc_patch.py set-read-when FILE "when text"
     python3 tools/doc_patch.py changelog --bullet "one line" [--bullet ...] [--label 0.5.11] [--summary "s"]
-    python3 tools/doc_patch.py next-label
+    python3 tools/doc_patch.py next-label     (highest label on disk + 1; a second bullet for the same PR: changelog --label L)
     python3 tools/doc_patch.py write FILE [--b64 S | stdin] [--bom] [--append]
+    python3 tools/doc_patch.py replace-file FILE (--from-file NEW | stdin)   # whole-file rewrite, file must exist; BOM + CRLF kept
     python3 tools/doc_patch.py apply plan.json
     python3 tools/doc_patch.py check
 
@@ -23,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import collections
 import json
 import re
 import subprocess
@@ -122,7 +124,7 @@ def _shown(path: Path) -> str:
 
 def read_text(path: Path) -> str:
     if not path.is_file():
-        raise SystemExit(f"FAIL  missing {path.as_posix()}")
+        raise SystemExit(f"FAIL  missing {_shown(path)} (this op edits an existing file; `doc_patch.py write` creates one)")
     return md.read_text(path)
 
 
@@ -137,6 +139,15 @@ def write_text(path: Path, text: str) -> None:
     print("  wrote %s (%d bytes)" % (_shown(path), path.stat().st_size))
 
 
+def _miss(where: str, old: str) -> str:
+    try:
+        where = Path(where).resolve().relative_to(Path.cwd()).as_posix()
+    except ValueError:
+        pass
+    return (f"patch miss in {where}: {old[:96]!r} is not in the file. Copy the exact text "
+            "(CRLF/BOM are handled); for a multi-line rewrite use `doc_patch.py replace-file`")
+
+
 def _variants(old: str) -> list[str]:
     return md.path_tick_variants(old)
 
@@ -148,7 +159,7 @@ def replace_once(text: str, old: str, new: str, where: str) -> str:
     if new in text:
         print(f"  skip {where} (already applied)")
         return text
-    raise SystemExit(f"FAIL  patch miss in {where}: {old[:96]!r}")
+    raise SystemExit(_miss(where, old))
 
 
 def replace_once_any(text: str, olds: list[str], new: str, where: str) -> str:
@@ -161,7 +172,7 @@ def replace_once_any(text: str, olds: list[str], new: str, where: str) -> str:
         for cand in _variants(old):
             if cand in text:
                 return text.replace(cand, new, 1)
-    raise SystemExit(f"FAIL  patch miss in {where}: {last[:96]!r}")
+    raise SystemExit(_miss(where, last))
 
 
 
@@ -307,9 +318,27 @@ def drop_table_column(path: Path, header: str) -> None:
     write_text(path, "".join(out))
 
 
+def _label_key(label: str) -> tuple[int, ...]:
+    return tuple(int(x) for x in label.split("."))
+
+
+def highest_label(root: Path) -> str:
+    """Highest x.y.z label among design/changelog/**/*.md (archive included); '' if none."""
+    found = [p.stem for p in (root / "design" / "changelog").rglob("*.md") if re.fullmatch(r"\d+\.\d+\.\d+", p.stem)]
+    return max(found, key=_label_key) if found else ""
+
+
 def next_label(root: Path | None = None) -> str:
-    """Baked version.json label with patch + 1. Ignore stamp commits."""
-    return repo_lib.next_label(repo_root(root))
+    """Highest label on disk + 1 (stacked PRs own earlier labels), never below the baked version.json label + 1.
+    A second bullet for the same PR passes --label."""
+    root = repo_root(root)
+    label = repo_lib.next_label(root)
+    top = highest_label(root)
+    if top and _label_key(top) >= _label_key(label):
+        parts = list(_label_key(top))
+        parts[-1] += 1
+        label = ".".join(map(str, parts))
+    return label
 
 
 def _ensure_summary(text: str, summary: str) -> tuple[str, bool]:
@@ -461,12 +490,14 @@ def _run_op(root: Path, op: dict) -> None:
         write_changelog(root, list(op["bullets"]), op.get("label"), op.get("summary"))
     elif kind == "write":
         write_text(path, op["text"])
+    elif kind == "replace-file":
+        replace_file(path, op["text"])
     elif kind == "replace-func":
         replace_func(path, op["name"], op["src"])
     elif kind == "upsert-func":
         upsert_func(path, op["name"], op["src"])
     else:
-        raise SystemExit(f"FAIL  unknown op {kind!r} (replace, ensure-line, set-read-when, changelog, write, replace-func, upsert-func)")
+        raise SystemExit(f"FAIL  unknown op {kind!r} (replace, ensure-line, set-read-when, changelog, write, replace-file, replace-func, upsert-func)")
 
 
 def _write_cmd(root: Path, args: argparse.Namespace) -> None:
@@ -485,24 +516,53 @@ def _write_cmd(root: Path, args: argparse.Namespace) -> None:
     print("  wrote %s (%d bytes)" % (_shown(path), path.stat().st_size))
 
 
+def replace_file(path: Path, body: str) -> tuple[int, int]:
+    """Rewrite an existing file with `body`, keeping its BOM and line endings. Returns (lines added, lines removed)."""
+    if not path.is_file():
+        raise SystemExit(f"FAIL  replace-file needs an existing file, missing {_shown(path)} (use `write` to create one)")
+    if not body.strip():
+        raise SystemExit("FAIL  replace-file got an empty body; refusing to blank " + _shown(path))
+    old = read_text(path).splitlines()
+    new = md.force_lf(body).splitlines()
+    gone = collections.Counter(old) - collections.Counter(new)
+    added = collections.Counter(new) - collections.Counter(old)
+    write_text(path, body)
+    return sum(added.values()), sum(gone.values())
+
+
+def _replace_file_cmd(root: Path, args: argparse.Namespace) -> tuple[int, int]:
+    if args.from_file:
+        body = md.read_text(args.from_file)
+    elif args.b64 is not None:
+        body = base64.b64decode(args.b64).decode("utf-8-sig")
+    elif sys.stdin.isatty():
+        raise SystemExit("FAIL  replace-file needs the new text: --from-file PATH, --b64 S, or pipe it on stdin")
+    else:
+        body = sys.stdin.buffer.read().decode("utf-8-sig")
+    path = Path(args.file)
+    return replace_file(path if path.is_absolute() else root / path, body)
+
+
 def main(argv: list[str] | None = None) -> int:
     global DRY, EOL
     ap = agent_log.std_parser("Idempotent text/doc edits without a scratch file.", writes=True)
     ap.add_argument("--eol", choices=("keep", "crlf", "lf"), default="keep", help="Line ending for written files (default keep the file's own).")
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("replace", help="Replace the first occurrence (idempotent).")
-    s.add_argument("file"); s.add_argument("--old"); s.add_argument("--old-file"); s.add_argument("--new"); s.add_argument("--new-file")
+    s.add_argument("file"); s.add_argument("--old", help="Text to find (first occurrence)."); s.add_argument("--old-file", help="File holding the text to find (multi-line)."); s.add_argument("--new", help="Replacement text."); s.add_argument("--new-file", help="File holding the replacement text (multi-line).")
     s = sub.add_parser("ensure-line", help="Add a line if missing.")
-    s.add_argument("file"); s.add_argument("--line", required=True); s.add_argument("--after")
+    s.add_argument("file", help="Doc file."); s.add_argument("--line", required=True, help="The line to add if it is missing."); s.add_argument("--after", help="Anchor line text: insert after it (default: end of file).")
     s = sub.add_parser("set-read-when", help="Set the 'Read when:' line.")
-    s.add_argument("file"); s.add_argument("value")
+    s.add_argument("file", help="Doc file."); s.add_argument("value", help="New text after `Read when:`.")
     s = sub.add_parser("changelog", help="Add bullets to design/changelog/<label>.md.")
-    s.add_argument("--bullet", action="append", required=True); s.add_argument("--label"); s.add_argument("--summary")
-    sub.add_parser("next-label", help="Print the next changelog label.")
+    s.add_argument("--bullet", action="append", required=True, help="One changelog bullet (repeat for several)."); s.add_argument("--label", help="Changelog label (default: the next label)."); s.add_argument("--summary", help="Changelog summary line.")
+    sub.add_parser("next-label", help="Print the next changelog label: highest label on disk + 1 (a second bullet for the same PR uses changelog --label).")
     s = sub.add_parser("write", help="Write a file from stdin or --b64 (BOM stripped, EOL kept).")
-    s.add_argument("file"); s.add_argument("--b64"); s.add_argument("--bom", action="store_true"); s.add_argument("--append", action="store_true")
+    s.add_argument("file"); s.add_argument("--b64", help="Body as base64 instead of stdin."); s.add_argument("--bom", action="store_true", help="Write a UTF-8 BOM (default: keep the file's own)."); s.add_argument("--append", action="store_true", help="Append to the file instead of replacing it.")
+    s = sub.add_parser("replace-file", help="Rewrite a whole existing file from --from-file / --b64 / stdin (BOM and EOL kept).")
+    s.add_argument("file"); s.add_argument("--from-file", help="File with the new text (default: stdin)."); s.add_argument("--b64", help="Body as base64 instead of stdin.")
     s = sub.add_parser("apply", help="Run a JSON plan: {\"ops\": [{op, file, ...}], \"check\": true} or a bare list.")
-    s.add_argument("plan")
+    s.add_argument("plan", help="JSON plan file.")
     sub.add_parser("check", help="Run tools/check_load_graph.py.")
     args = ap.parse_args(argv)
     DRY, EOL = bool(args.dry_run), args.eol
@@ -519,9 +579,13 @@ def main(argv: list[str] | None = None) -> int:
         elif args.cmd == "next-label":
             label = next_label(root)
             print(f"next={label}")
+            print(f"highest on disk={highest_label(root) or 'none'}; a second bullet for the same PR: `changelog --label <that label>`")
             return agent_log.emit_result("INFO", next=label)
         elif args.cmd == "write":
             _write_cmd(root, args)
+        elif args.cmd == "replace-file":
+            plus, minus = _replace_file_cmd(root, args)
+            return agent_log.emit_result("PASS", cmd="replace-file", added=plus, removed=minus, dry_run=DRY)
         elif args.cmd == "apply":
             plan = json.loads(md.read_text(args.plan))
             ops = plan["ops"] if isinstance(plan, dict) else plan
@@ -543,4 +607,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

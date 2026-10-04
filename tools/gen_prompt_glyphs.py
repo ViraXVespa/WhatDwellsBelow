@@ -18,6 +18,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 
 ROOT = Path(__file__).resolve().parents[1] / "assets" / "ui" / "prompts"
+REPO = Path(__file__).resolve().parents[1]
 
 INK = (16, 12, 8, 255)
 FACE = (220, 204, 158, 255)
@@ -83,6 +84,7 @@ FONT = {
     ".": ["00000", "00000", "00000", "00000", "00000", "01100", "01100"],
     "[": ["01110", "01000", "01000", "01000", "01000", "01000", "01110"],
     "]": ["01110", "00010", "00010", "00010", "00010", "00010", "01110"],
+    "!": ["00100", "00100", "00100", "00100", "00100", "00000", "00100"],
 }
 
 
@@ -381,11 +383,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Chunky pixel prompt glyphs. Run from repo root:")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="gen_prompt_glyphs")
+    return agent_log.run_writer("gen_prompt_glyphs", "Chunky pixel prompt glyphs. Run from repo root:", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

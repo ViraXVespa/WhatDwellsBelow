@@ -2,7 +2,7 @@ extends Object
 
 const Affix := preload("res://scripts/data/affixes.gd")
 
-const FORGE_SLOTS: PackedStringArray = ["weapon", "tool", "head", "body", "legs"]
+const FORGE_SLOTS: PackedStringArray = Affix.FORGE_SLOTS
 
 static func book(p: Object) -> Dictionary:
 	var raw: Variant = p.get("forge_book")
@@ -74,8 +74,8 @@ static func can_analyze(p: Object, it: Dictionary) -> bool:
 		return false
 	if str(it.get("rarity", "white")) == "white":
 		return false
-	var Rules = load("res://scripts/data/gear_rules.gd")
-	if Rules.is_starter(p, it):
+	var Kit = load("res://scripts/data/gear_rules/rules_kit.gd")
+	if Kit.is_starter(p, it):
 		return false
 	return true
 
@@ -159,9 +159,6 @@ static func migrate(p: Object) -> void:
 	p.analyzed = []
 
 static func type_of(it: Dictionary) -> String:
-	return Affix.type_of(it)
-
-static func _type_of(it: Dictionary) -> String:
 	return Affix.type_of(it)
 
 static func _stat_key(id: String) -> String:

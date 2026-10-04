@@ -1,6 +1,7 @@
 extends Object
 
 const Grid := preload("res://scripts/debug/debug_menu/val_grid.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 static func page_values(host) -> void:
 	host.val_i = 0
@@ -13,7 +14,7 @@ static func page_values(host) -> void:
 		host.set("val_cat_i", 0)
 	else:
 		host.val_cat_i = 0
-	host.status.text = "Values. Up/Down a column. Left/Right columns. A opens a category."
+	host.status.text = Prompts.fmt("Values. Up/Down a column. Left/Right columns. {ui_accept} opens a category.")
 	host.fly = Label.new()
 	host.fly.add_theme_font_size_override("font_size", 16)
 	host.fly.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -96,15 +97,15 @@ static func val_paint(host) -> void:
 		else:
 			lab.remove_theme_color_override("font_color")
 	if str(host.val_mode) == "cats":
-		host.status.text = "Values. Up/Down a column. Left/Right columns. A opens a category. B closes."
+		host.status.text = Prompts.fmt("Values. Up/Down a column. Left/Right columns. {ui_accept} opens a category. {ui_cancel} closes.")
 		load("res://scripts/debug/debug_menu/menu_val.gd").val_reveal.bind(host).call_deferred()
 		return
 	var cur: Dictionary = host.val_rows[host.val_i]
 	load("res://scripts/debug/debug_menu/menu_val.gd").fly(host, str(cur.name))
 	if host.val_edit:
-		host.status.text = "Editing %s — Up/Down changes value. B unfocuses." % str(cur.name)
+		host.status.text = Prompts.fmt("Editing %s — Up/Down changes value. {ui_cancel} unfocuses.") % str(cur.name)
 	else:
-		host.status.text = "Vars. Up/Down move. A edits. B back to categories."
+		host.status.text = Prompts.fmt("Vars. Up/Down move. {ui_accept} edits. {ui_cancel} back to categories.")
 	load("res://scripts/debug/debug_menu/menu_val.gd").val_reveal.bind(host).call_deferred()
 
 static func val_nudge(host, delta_i: int) -> void:

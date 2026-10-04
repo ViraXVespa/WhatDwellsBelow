@@ -35,8 +35,8 @@ static func refresh() -> void:
 static func _vp_size() -> Vector2:
 	var loop := Engine.get_main_loop()
 	if loop == null:
-		return Vector2(1920, 1080)
+		return T.base_size()
 	var tree := loop as SceneTree
 	if tree == null or tree.root == null:
-		return Vector2(1920, 1080)
+		return T.base_size()
 	return tree.root.get_visible_rect().size

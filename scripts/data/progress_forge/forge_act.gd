@@ -1,5 +1,7 @@
 extends Object
 
+const ItemNames := preload("res://scripts/data/item_names.gd")
+const LocS := preload("res://scripts/app/app_loc.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
 const Roll := preload("res://scripts/data/gear_roll.gd")
 const Balance := preload("res://scripts/data/balance.gd")
@@ -69,9 +71,6 @@ static func holds_of(p: Object, slot: String, type_id: String) -> Array:
 			out.append(raw)
 	return out
 
-static func hold_open(p: Object, slot: String, type_id: String) -> int:
-	return HOLD_CAP - holds_of(p, slot, type_id).size()
-
 static func set_holds_for_type(p: Object, slot: String, type_id: String, keep: Array) -> String:
 	var rest: Array = []
 	for raw: Variant in p.holds.get(slot, []):
@@ -91,7 +90,7 @@ static func set_holds_for_type(p: Object, slot: String, type_id: String, keep: A
 		n += 1
 	p.holds[slot] = rest
 	App.save_now()
-	return "Kept %d hold%s." % [n, "" if n == 1 else "s"]
+	return LocS.plural("forge_act.kept_hold", n) % n
 
 static func make_forged(p: Object, slot: String, type_id: String, rarity: String, ilvl: int, locked: PackedStringArray) -> Dictionary:
 	var Book = load("res://scripts/data/progress_forge/book.gd")
@@ -104,27 +103,24 @@ static func make_forged(p: Object, slot: String, type_id: String, rarity: String
 	it["hold"] = true
 	it["extract"] = false
 	it["kit_src"] = "hold"
-	if not str(it.get("name", "")).begins_with("Forged "):
-		it["name"] = "Forged " + str(it.get("name", "item"))
+	if not bool(it.get("forged", false)):
+		ItemNames.forge(it)
 	return it
 
 static func add_hold(p: Object, it: Dictionary) -> String:
 	var slot := str(it.get("slot", ""))
 	var type_id := type_of(it)
 	if slot == "" or type_id == "":
-		return "The anvil won't take that."
+		return App.tr("forge_act.the_anvil_won_t_take")
 	var h: Array = p.holds.get(slot, [])
 	if holds_of(p, slot, type_id).size() >= HOLD_CAP:
-		return "Holds full."
+		return App.tr("common.holds_full")
 	h.append(it)
 	p.holds[slot] = h
 	p.forge_count += 1
 	p.add_perm_xp("smith", Balance.f("xp_smith", 12.0))
 	App.save_now()
-	return "Forged into a hold (%d/%d)." % [holds_of(p, slot, type_id).size(), HOLD_CAP]
-
-static func place_hold(p: Object, it: Dictionary) -> void:
-	add_hold(p, it)
+	return App.tr("common.forged_into_a_hold") % [holds_of(p, slot, type_id).size(), HOLD_CAP]
 
 static func replace_hold(p: Object, a, b, c = 0, d = {}) -> String:
 	if a is Dictionary:
@@ -148,13 +144,13 @@ static func replace_hold(p: Object, a, b, c = 0, d = {}) -> String:
 				h.remove_at(i)
 				break
 	if holds_of(p, slot, type_id).size() >= HOLD_CAP:
-		return "Holds full."
+		return App.tr("common.holds_full")
 	h.append(it)
 	p.holds[slot] = h
 	p.forge_count += 1
 	p.add_perm_xp("smith", Balance.f("xp_smith", 12.0))
 	App.save_now()
-	return "Forged into a hold (%d/%d)." % [holds_of(p, slot, type_id).size(), HOLD_CAP]
+	return App.tr("common.forged_into_a_hold") % [holds_of(p, slot, type_id).size(), HOLD_CAP]
 
 static func to_meta(p: Object) -> Dictionary:
 	var Book = load("res://scripts/data/progress_forge/book.gd")

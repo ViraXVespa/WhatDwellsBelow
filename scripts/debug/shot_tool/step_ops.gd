@@ -210,6 +210,12 @@ static func run(st: Dictionary, op: String, step: Dictionary) -> void:
 					n.set("visible", bool(step.get("on", true)))
 		"seed":
 			seed(int(step.get("value", 1)))
+		"freeze":
+			var mode: Node.ProcessMode = Node.PROCESS_MODE_DISABLED if bool(step.get("on", true)) else Node.PROCESS_MODE_INHERIT
+			for n: Node in (st.host as Node).get_tree().get_nodes_in_group(str(step.get("group", "enemies"))):
+				n.process_mode = mode
+		"sweep":
+			await (load("res://scripts/debug/shot_tool/step_sweep.gd") as GDScript).call("run", st, step)
 		"log":
 			printerr("SHOT: log %s" % str(step.get("msg", "")))
 		_:

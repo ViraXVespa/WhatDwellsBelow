@@ -1,0 +1,89 @@
+{
+  "name": "dungeon-f3-ambush",
+  "about": "Dungeon floor 3, seed 42: three hall ambush groups (archer-orc, imp-spider, skeleton-spider). Enemies are frozen where they spawn, the map stays closed, and each stop stands three cells from the group's spot then waits for the lights.",
+  "scene": "dungeon",
+  "seed": 42,
+  "floor": 3,
+  "zoom": 1.5,
+  "settle_ms": 0,
+  "fixed_fps": 60,
+  "covers": [],
+  "smoke": true,
+  "steps": [
+    {
+      "op": "freeze",
+      "group": "enemies"
+    },
+    {
+      "op": "assert",
+      "target": "App.floor_n",
+      "equals": 3
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            197.5,
+            0,
+            280.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "archer-orc"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            212.5,
+            0,
+            405.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "imp-spider"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            265.5,
+            0,
+            283.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "skeleton-spider"
+    }
+  ]
+}

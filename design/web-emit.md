@@ -59,7 +59,7 @@ Any slice that creates or edits a `.py` file must prove those files in the same 
 
 ## Build co-op prompts
 
-A prompt for Grok Build is a sealed brief, not a session export. Only: named job, writer door, in-scope paths, out-of-scope one-liners, prove runner. Do not pack web protocol, park theory, hitch hypotheses, or "while you are in there." Do not echo the gather report into the brief. If a sentence would make Build invent a step the named job and door would not already require, delete it. If the brief needs a second page, it is two jobs.
+Web writes a Build brief only when the User asks for one, and only for work Web cannot do itself: a large new system, video assets, tiled assets, or anything else Build must tackle. All other work stays on the web route: the scratch script (`doc_patch`, tool and recipe changes) and the Bot work queues. A prompt for Grok Build is a sealed brief, not a session export. Only: named job, writer door, in-scope paths, out-of-scope one-liners, prove runner. Do not pack web protocol, park theory, hitch hypotheses, or "while you are in there." Do not echo the gather report into the brief. If a sentence would make Build invent a step the named job and door would not already require, delete it. If the brief needs a second page, it is two jobs.
 
 ## Scratch helpers
 

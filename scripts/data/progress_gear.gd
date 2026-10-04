@@ -27,20 +27,11 @@ static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Di
 static func starter(p: Object, slot: String) -> Dictionary:
 	return Bag.starter(p, slot)
 
-static func required_ok(slot: String, it: Dictionary) -> bool:
-	return Bag.required_ok(slot, it)
-
 static func required_piece(p: Object, slot: String) -> Dictionary:
 	return Bag.required_piece(p, slot)
 
 static func ensure_required_slots(p: Object) -> void:
 	Bag.ensure_required_slots(p)
-
-static func bag_stack_index(p: Object, it: Dictionary) -> int:
-	return Bag.bag_stack_index(p, it)
-
-static func bag_can_accept(p: Object, it: Dictionary) -> bool:
-	return Bag.bag_can_accept(p, it)
 
 static func add_item(p: Object, it: Dictionary) -> bool:
 	return Bag.add_item(p, it)
@@ -60,9 +51,6 @@ static func drop_uid(p: Object, uid: int) -> String:
 static func unequip_slot(p: Object, slot: String) -> String:
 	return Bag.unequip_slot(p, slot)
 
-static func fill_slot_after_remove(p: Object, slot: String) -> void:
-	Bag.fill_slot_after_remove(p, slot)
-
 static func drop_slot(p: Object, slot: String) -> String:
 	return Bag.drop_slot(p, slot)
 
@@ -72,9 +60,6 @@ static func take_slot(p: Object, slot: String) -> Dictionary:
 static func drop_stash(p: Object, uid: int) -> String:
 	return Bag.drop_stash(p, uid)
 
-static func give_or_drop(p: Object, it: Dictionary, pos: Vector3) -> bool:
-	return Bag.give_or_drop(p, it, pos)
-
 static func use_from_bag(p: Object, uid: int) -> String:
 	return Use.use_from_bag(p, uid)
 
@@ -83,15 +68,6 @@ static func use_potion(p: Object) -> String:
 
 static func use_food(p: Object) -> String:
 	return Use.use_food(p)
-
-static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
-	return Use.drink(p, it, from_slot)
-
-static func eat(p: Object, it: Dictionary, from_slot: bool) -> String:
-	return Use.eat(p, it, from_slot)
-
-static func consume(p: Object, it: Dictionary, from_slot: bool) -> void:
-	Use.consume(p, it, from_slot)
 
 static func tick_food(p: Object, delta: float) -> void:
 	Use.tick_food(p, delta)

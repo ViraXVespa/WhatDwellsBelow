@@ -5,6 +5,7 @@ const G := preload("res://scripts/debug/playtest_goals.gd")
 const L := preload("res://scripts/debug/playtest_log.gd")
 const A := preload("res://scripts/debug/playtest_ai/ai_act.gd")
 const CLOSE := 2.4
+const Human := preload("res://scripts/debug/playtest_ai/ai_human.gd")
 
 static func use_prop(pt: Node, p: Node, dest: Node, _reach: float = 1.18) -> void:
 	if dest == null or not is_instance_valid(dest):
@@ -36,7 +37,7 @@ static func use_prop(pt: Node, p: Node, dest: Node, _reach: float = 1.18) -> voi
 static func _wants_clerk(pt: Node, n: Node) -> bool:
 	if n == null or not is_instance_valid(n) or U._banned(pt, n):
 		return false
-	if bool(n.get("used")):
+	if (n.get("used") == true):
 		return false
 	var k: String = str(n.get("kind"))
 	if k != "extract_gate" and k.find("clerk") < 0 and k != "patty" and k != "receptionist":
@@ -110,10 +111,17 @@ static func _engage(pt: Node, p: Node, foe: Node, why: String) -> void:
 	U.note_threat(pt, p, foe)
 	_clear_lock(pt)
 	L.decide(pt, p, "fight", why, L.target(foe))
+	var d: float = pt._dist(p, foe)
+	if Human.reacting(pt, foe, d):
+		pt.attack = false
+		pt.aim = pt._xz_to(p, foe)
+		return
 	if pt._is_boss(foe):
 		A.approach_boss(pt, p, foe)
 	else:
 		A.fight(pt, p, foe)
+	Human.dodge(pt, p, foe, d)
+	Human.blur_aim(pt, d)
 
 static func _done_with_clerk(pt: Node, n: Node) -> void:
 	var _fac = load("res://scripts/debug/playtest_ai.gd")

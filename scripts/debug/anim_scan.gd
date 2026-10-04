@@ -2,6 +2,7 @@ extends Object
 
 const Facing := preload("res://scripts/world/facing.gd")
 const Roster := preload("res://scripts/combat/roster.gd")
+const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 
 static func catalog_models() -> Array:
 	var out: Array = []
@@ -13,9 +14,6 @@ static func catalog_models() -> Array:
 	out.append({"id": "gate_master", "label": "Gate Master", "dir": "res://assets/sprites/enemies/gate_master/"})
 	return out
 
-static func model_count() -> int:
-	return catalog_models().size()
-
 static func scan(base: String) -> Dictionary:
 	var out := {}
 	out["idle_none"] = {}
@@ -23,7 +21,7 @@ static func scan(base: String) -> Dictionary:
 		out[k] = {}
 		put_single(out[k], "idle", base + "idle_%s.png" % k)
 		put_seq(out[k], "walk", base + "walk_%s_" % k)
-		for w in ["great_axe", "staff", "longbow"]:
+		for w in Kit.BUILTIN_WEAPONS:
 			put_seq(out[k], "attack_%s" % w, base + "atk_%s_%s_" % [w, k])
 			put_seq(out[k], "special_%s" % w, base + "spc_%s_%s_" % [w, k])
 		put_single(out[k], "strike", base + "strike_%s.png" % k)

@@ -3,6 +3,7 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
+const ItemNames := preload("res://scripts/data/item_names.gd")
 const StepRow := preload("res://scripts/ui/step_row.gd")
 const QTY_MAX := 9
 const Lock := preload("res://scripts/ui/gear_board/anvil_forge_edit_lock.gd")
@@ -11,14 +12,14 @@ static func _fill_edit(ui: CanvasLayer, box: Control, slot: String) -> Control:
 	var _fac = load("res://scripts/ui/gear_board/anvil_forge_edit.gd")
 	var types: PackedStringArray = ForgeP.types_for(App.prog, slot)
 	if types.is_empty():
-		box.add_child(ThemeS.lab("Analyze this slot before you can forge it.", 18, Color(0.78, 0.74, 0.66)))
+		box.add_child(ThemeS.lab(App.tr("anvil_forge_edit_fill.analyze_this_slot_before_you"), 18, Color(0.78, 0.74, 0.66)))
 		return null
 	_fac._ensure(ui, slot, types)
 	var want := str(ui.get_meta("forge_focus", ""))
 	var hit: Control = null
 	var first: Control = null
 	if types.size() > 1:
-		box.add_child(ThemeS.lab("Type", 16, Color(0.82, 0.76, 0.66)))
+		box.add_child(ThemeS.lab(App.tr("anvil_forge_edit_fill.type"), 16, Color(0.82, 0.76, 0.66)))
 		var trow := HBoxContainer.new()
 		trow.add_theme_constant_override("separation", 8)
 		for id: String in types:
@@ -33,14 +34,14 @@ static func _fill_edit(ui: CanvasLayer, box: Control, slot: String) -> Control:
 			if key == want:
 				hit = b
 		box.add_child(trow)
-	box.add_child(ThemeS.lab("Rarity", 16, Color(0.82, 0.76, 0.66)))
+	box.add_child(ThemeS.lab(App.tr("anvil_forge_edit_fill.rarity"), 16, Color(0.82, 0.76, 0.66)))
 	var rarow := HBoxContainer.new()
 	rarow.add_theme_constant_override("separation", 8)
 	for rare: String in ["green", "blue"]:
 		var rr := rare
 		var key := "rare:" + rr
 		var can: bool = ForgeP.can_forge_rarity(App.prog, slot, str(ui.forge_type), rare)
-		var rb: Button = ThemeS.btn(rare.capitalize(), func(): _fac._set_rare(ui, slot, rr, key))
+		var rb: Button = ThemeS.btn(ItemNames.rarity_name(rare), func(): _fac._set_rare(ui, slot, rr, key))
 		rb.set_meta("forge_key", key)
 		rb.disabled = not can
 		rb.focus_mode = Control.FOCUS_NONE if not can else Control.FOCUS_ALL
@@ -54,7 +55,7 @@ static func _fill_edit(ui: CanvasLayer, box: Control, slot: String) -> Control:
 	var book: Dictionary = ForgeP.unlocks_for(App.prog, slot, str(ui.forge_type), str(ui.forge_rarity))
 	var max_lv: int = maxi(1, int(book.get("ilvl", ForgeP.max_ilvl(App.prog, slot, str(ui.forge_type)))))
 	ui.forge_ilvl = clampi(int(ui.get("forge_ilvl")), 1, max_lv)
-	var lvrow: HBoxContainer = StepRow.make("Item Level:", func(): _fac._nudge_lv(ui, slot, -1, "lv-"), func(): _fac._nudge_lv(ui, slot, 1, "lv+"))
+	var lvrow: HBoxContainer = StepRow.make(App.tr("anvil_forge_edit_fill.item_level"), func(): _fac._nudge_lv(ui, slot, -1, "lv-"), func(): _fac._nudge_lv(ui, slot, 1, "lv+"))
 	StepRow.paint(lvrow, str(int(ui.forge_ilvl)), "(Max: %d)" % max_lv, int(ui.forge_ilvl) <= 1, int(ui.forge_ilvl) >= max_lv)
 	_fac._tag(lvrow, "lv-", "lv+", want)
 	if want == "lv-" or want == "lv+":
@@ -84,11 +85,11 @@ static func _fill_edit(ui: CanvasLayer, box: Control, slot: String) -> Control:
 	else:
 		pay_ok = App.prog.can_pay(bill)
 	box.add_child(ThemeS.lab(
-		"Cost %dg  %d ore  %d wood\tWait %.1fs each" % [int(bill.gold), int(bill.ore), int(bill.wood), wait],
+		App.tr("anvil_forge_edit_fill.cost_g_ore_wood_wait") % [int(bill.gold), int(bill.ore), int(bill.wood), wait],
 		16,
 		Color(0.8, 0.85, 0.7) if pay_ok else Color(0.95, 0.55, 0.4),
 	))
-	var go: Button = ThemeS.btn("Forge x%d" % qty, func(): load("res://scripts/ui/gear_board/anvil_forge.gd").start(ui))
+	var go: Button = ThemeS.btn(App.tr("anvil_forge_edit_fill.forge_x") % qty, func(): load("res://scripts/ui/gear_board/anvil_forge.gd").start(ui))
 	go.set_meta("forge_key", "go")
 	go.disabled = not pay_ok
 	go.focus_mode = Control.FOCUS_NONE if go.disabled else Control.FOCUS_ALL

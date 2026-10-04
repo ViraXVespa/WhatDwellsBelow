@@ -23,10 +23,11 @@ func refresh() -> void:
 		super.refresh()
 		return
 	locked = false
+	prompt_locked = not crystal_on and CrystalNet.area_hostile(self)
 	if not crystal_on:
-		prompt = "Clear the area to activate." if CrystalNet.area_hostile(self) else "Activate crystal"
+		prompt = tr("floor_crystal.clear_the_area_to_activate") if prompt_locked else tr("floor_crystal.activate_crystal")
 	else:
-		prompt = "Transport network"
+		prompt = tr("floor_crystal.transport_network")
 	if label:
 		label.text = _title()
 		label.visible = not hidden
@@ -42,8 +43,8 @@ func _title() -> String:
 	if kind != "crystal":
 		return super._title()
 	if crystal_gate:
-		return "ENTRANCE CRYSTAL  ·  CL %d" % crystal_cl
-	return "FLOOR CRYSTAL  ·  CL %d" % crystal_cl
+		return tr("floor_crystal.entrance_crystal_cl") % crystal_cl
+	return tr("floor_crystal.floor_crystal_cl") % crystal_cl
 
 func interact(who: Node) -> String:
 	if kind != "crystal":
@@ -56,7 +57,7 @@ func interact(who: Node) -> String:
 			return prompt
 		CrystalNet.activate(self)
 		refresh()
-		App.toast("Crystal bound to this floor.")
+		App.toast(tr("floor_crystal.crystal_bound_to_this_floor"))
 	var CrystalUIS: GDScript = load("res://scripts/ui/crystal_ui.gd") as GDScript
 	CrystalUIS.open(self)
-	return "The crystal hums."
+	return tr("floor_crystal.the_crystal_hums")

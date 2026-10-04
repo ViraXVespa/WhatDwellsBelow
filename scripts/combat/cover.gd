@@ -74,12 +74,6 @@ static func _radial_q(dist: float, rng: float) -> float:
 	var u := clampf((t - start) / tip, 0.0, 1.0)
 	return lerpf(1.0, edge, u)
 
-static func _fan_hits_sprite(origin: Vector3, aim: Vector2, rng: float, half: float, host: Node3D) -> bool:
-	return Geom._fan_hits_sprite(origin, aim, rng, half, host)
-
-static func _disk_hits_sprite(origin: Vector3, radius: float, host: Node3D) -> bool:
-	return Geom._disk_hits_sprite(origin, radius, host)
-
 static func _sprite_pts_cells(spr: Sprite3D, pack: Dictionary, c: Vector3, rx: Vector3, up: Vector3) -> Array[Vector3]:
 	return Geom._sprite_pts_cells(spr, pack, c, rx, up)
 

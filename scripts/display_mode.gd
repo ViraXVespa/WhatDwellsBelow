@@ -62,19 +62,16 @@ static func apply_saved() -> void:
 		return
 	lock_landscape()
 
-static func set_desktop_mode(mode: String, persist: bool = true) -> void:
-	Web.set_desktop_mode(mode, persist)
-
 static func cycle_desktop() -> void:
 	Desk.cycle_desktop()
 
 static func desktop_label() -> String:
 	var cur: String = str(App.display_mode)
 	if cur == "windowed":
-		return "Display: Windowed"
+		return App.tr("display_mode.display_windowed")
 	if cur == "exclusive":
-		return "Display: True fullscreen"
-	return "Display: Borderless fullscreen"
+		return App.tr("display_mode.display_true_fullscreen")
+	return App.tr("display_mode.display_borderless_fullscreen")
 
 static func set_web_fullscreen(on: bool, persist: bool = true) -> void:
 	Web.set_web_fullscreen(on, persist)
@@ -87,16 +84,13 @@ static func toggle_web_fullscreen() -> void:
 
 static func web_label() -> String:
 	if is_web() and Web.is_fullscreen_now():
-		return "Fullscreen: On"
+		return App.tr("common.fullscreen_on")
 	if bool(App.web_fullscreen):
-		return "Fullscreen: On"
-	return "Fullscreen: Off"
+		return App.tr("common.fullscreen_on")
+	return App.tr("display_mode.fullscreen_off")
 
 static func try_fullscreen_gesture() -> bool:
 	return Desk.try_fullscreen_gesture()
-
-static func try_install_prompt() -> bool:
-	return Desk.try_install_prompt()
 
 static func toggle_alt_enter() -> void:
 	Desk.toggle_alt_enter()
@@ -121,14 +115,34 @@ static func consume_web_esc() -> bool:
 	if not is_web():
 		return false
 	Web.ensure_web_hooks()
-	return _js_flag("""
+	var v := str(JavaScriptBridge.eval("""
 		(function () {
 			try {
-				if (window.__wdbEsc) { window.__wdbEsc = 0; return '1'; }
+				if (window.__wdbEsc) { var v = window.__wdbEsc; window.__wdbEsc = 0; return String(v); }
 			} catch (e) {}
 			return '0';
 		})();
-	""")
+	""", true))
+	if v == "2" and not _esc_is_pause():
+		send_esc()
+		return false
+	return v != "0"
+
+## Browser fullscreen swallows Esc; the page hook reports it (2) and F1 (1, always pause). When Esc is
+## not the pause bind, hand the key to the game as a normal Escape press so it acts as its bound action.
+static func _esc_is_pause() -> bool:
+	for e in InputMap.action_get_events("pause"):
+		if e is InputEventKey and (e.physical_keycode == KEY_ESCAPE or e.keycode == KEY_ESCAPE):
+			return true
+	return false
+
+static func send_esc() -> void:
+	for down in [true, false]:
+		var e := InputEventKey.new()
+		e.keycode = KEY_ESCAPE
+		e.physical_keycode = KEY_ESCAPE
+		e.pressed = down
+		Input.parse_input_event(e)
 
 static func lock_landscape() -> void:
 	if not is_web():
@@ -144,9 +158,6 @@ static func _js_request_fs() -> void:
 
 static func _js_exit_fs() -> void:
 	Desk._js_exit_fs()
-
-static func _js_close() -> void:
-	Desk._js_close()
 
 static func _js_flag(src: String) -> bool:
 	return str(JavaScriptBridge.eval(src, true)) == "1"

@@ -2,6 +2,7 @@ extends Object
 
 const REACH := 36
 const Util := preload("res://scripts/debug/playtest_path/path_util.gd")
+const Cache := preload("res://scripts/debug/playtest_los/los_cache.gd")
 const Nav := preload("res://scripts/debug/playtest_path/path_nav.gd")
 const Step := preload("res://scripts/debug/playtest_path/path_step.gd")
 
@@ -81,7 +82,14 @@ static func has_path(pt: Node, p: Node, dest: Node) -> bool:
 	var goal: Vector2i = pt._stand_cell(p, dest)
 	var md: int = Util._manh(start, goal)
 	if md <= REACH:
-		return not Util.astar(pt, p, dest).is_empty()
+		# Same (start, goal) asked again in this physics frame (hunt/clerk/chest/fight all test the same foe): reuse the answer.
+		var key := Vector4i(start.x, start.y, goal.x, goal.y)
+		var hit: Variant = Cache.path_get(pt, key)
+		if hit != null:
+			return bool(hit)
+		var ok: bool = not Util.astar(pt, p, dest).is_empty()
+		Cache.path_put(pt, key, ok)
+		return ok
 	var mid: Vector2i = Util._toward(pt, start, goal)
 	return Util._manh(start, mid) >= 3
 
@@ -98,6 +106,3 @@ static func _cut(pt: Node, p: Node, dest: Node) -> Vector2:
 	if pt._dist(p, dest) > 1.7:
 		return pt._any_open(p)
 	return Vector2.ZERO
-
-static func astar(pt: Node, p: Node, dest: Node) -> Array[Vector2i]:
-	return Util.astar(pt, p, dest)

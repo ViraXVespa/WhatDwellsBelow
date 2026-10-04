@@ -3,7 +3,9 @@ from pathlib import Path
 from PIL import Image
 import math
 import shutil
-from sprite_lib import dist, fit_box  # noqa: E402
+from imglib import geom, imgio  # noqa: E402
+from imglib.color import dist  # noqa: E402
+from imglib.geom import fit_box  # noqa: E402
 import sys
 
 _TOOLS = Path(__file__).resolve().parent
@@ -13,9 +15,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = Path(
-    r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5Crepos%5CGrokSandbox%5Cwhat-dwells-below\01a01725-c75b-79f2-967f-30d19272bef6\images"
-)
+SRC = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CGrokSandbox%5Cwhat-dwells-below\01a01725-c75b-79f2-967f-30d19272bef6\images")
 THRESH = 58
 CANVAS = 128
 
@@ -46,14 +46,14 @@ def fit(im: Image.Image, canvas: int, pad: int = 6) -> Image.Image:
 
 
 def sprite(src_name: str, dest: Path, canvas: int = CANVAS) -> None:
-    im = key(Image.open(SRC / src_name))
+    im = key(imgio.load(SRC / src_name))
     dest.parent.mkdir(parents=True, exist_ok=True)
     fit(im, canvas).save(dest)
     print("sprite", dest)
 
 
 def crop_tile(src_name: str, dest: Path, box_frac, size: int = 64) -> None:
-    im = Image.open(SRC / src_name).convert("RGB")
+    im = imgio.load(SRC / src_name, "RGB")
     w, h = im.size
     x0, y0, x1, y1 = box_frac
     crop = im.crop((int(w * x0), int(h * y0), int(w * x1), int(h * y1)))
@@ -64,7 +64,7 @@ def crop_tile(src_name: str, dest: Path, box_frac, size: int = 64) -> None:
 
 
 def wall_tile(src_name: str, dest: Path, size: int = 64) -> None:
-    im = Image.open(SRC / src_name).convert("RGBA")
+    im = imgio.load(SRC / src_name)
     px = im.load()
     w, h = im.size
     fill = (48, 54, 68, 255)
@@ -73,7 +73,7 @@ def wall_tile(src_name: str, dest: Path, size: int = 64) -> None:
             r, g, b, a = px[x, y]
             if r > 225 and g > 225 and b > 225:
                 px[x, y] = fill
-    bbox = im.getbbox()
+    bbox = geom.bbox(im)
     cropped = im.crop(bbox)
     tile = cropped.resize((size, size), Image.Resampling.BOX)
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -82,13 +82,8 @@ def wall_tile(src_name: str, dest: Path, size: int = 64) -> None:
 
 
 def building(src_name: str, dest: Path, max_w: int) -> None:
-    im = key(Image.open(SRC / src_name))
-    bbox = im.getbbox()
-    cropped = im.crop(bbox)
-    scale = max_w / cropped.size[0]
-    nw = max_w
-    nh = max(1, int(cropped.size[1] * scale))
-    resized = cropped.resize((nw, nh), Image.Resampling.NEAREST)
+    im = key(imgio.load(SRC / src_name))
+    resized = geom.fit_axis(im, width=max_w, empty="whole")
     dest.parent.mkdir(parents=True, exist_ok=True)
     resized.save(dest)
     print("building", dest, resized.size)
@@ -106,7 +101,7 @@ def _run() -> None:
     crop_tile("37.jpg", tiles / "plaza_ground_b.png", (0.05, 0.40, 0.55, 0.90))
     wall_tile("42.jpg", tiles / "dungeon_wall.png")
 
-    wall = Image.open(tiles / "dungeon_wall.png").convert("RGB")
+    wall = imgio.load(tiles / "dungeon_wall.png", "RGB")
     px = wall.load()
     w, h = wall.size
     for y in range(h):
@@ -146,15 +141,12 @@ def _run() -> None:
         for y in range(2):
             for x in range(2):
                 canvas.paste(t, (x * t.size[0], y * t.size[1]))
-        canvas.resize((256, 256), Image.Resampling.NEAREST).save(check / f"{name}_2x2.png")
+        geom.scale_nearest(canvas, size=(256, 256)).save(check / f"{name}_2x2.png")
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("process_world")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="process_world")
+    return agent_log.run_writer("process_world", 'Key and fit the _src world stills (tiles, props) into assets/.', _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

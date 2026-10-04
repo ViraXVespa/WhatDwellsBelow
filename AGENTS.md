@@ -8,7 +8,7 @@ Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 |------|-----------|---------|
 | **Grok Build (CLI)** | You can write the checkout | `design/grok-build.md`. Edit live files. Same-system APIs just do; design decisions, a new cross-system owner or a named live-module replace are asked first (`ask_user_question`, even under always-allow). |
 | **Web / chat** | You cannot write the repo | `design/web-session.md`. Never assume a disk write landed. |
-| **Grok Bot** | Grok Bot / The Refactorer, or a named Bot / refactor sweep | `BOT.md`, then `python3 tools/bot_status.py`, then one printed Job file. Refactor only, except a `tools/` runner the User approved this session. Approved smoke runner: `python3 tools/bot_smokes.py` (headless phases, `--flows` shot-flow asserts, and the required `check_shot_gaps.py --changed` gate; setup if the Linux pin is missing). Shots and bakes pick a box display themselves (`design/shot-tool.md`). Ship via branch + PR. |
+| **Grok Bot** | Grok Bot / The Refactorer, or a named Bot / refactor sweep | `BOT.md`, then `python3 tools/bot_status.py`, then one printed Job file. Refactor only, except a `tools/` runner the User approved this session. Smokes, shots and gates: `BOT.md`. Ship via branch + PR. |
 
 If unsure: ask once, then **web / chat**.
 
@@ -25,14 +25,12 @@ Navigation is only `design/routes.yaml`. `See also:` is forbidden.
 | New or moved script placement (cluster folders) | `design/refactor.md` (Cluster folders section only) |
 | Numbers (when they change) | `design/tunables.md` |
 | Tools (what runs where, allowlist) | `design/tools.md` |
+| Prove a change (any surface), extend a tool instead of working around it | `design/prove.md` |
 | Windows inventory / verify / write | pc-offload skill + `design/pc-offload.md` |
 
 Load cap (implementation): this file + the path file + (web / Build) the law pair + one writer door + one Job sibling + gates whose `when` matches. A second writer door only when the User names the owner.
-Web / chat, User present: picture-read is uncapped inside `design/` and the live tree the thread is on. Load-graph, topic index, and extra code-map rows are allowed on a docs or routing pass. That is not a license to implement two writer doors in one slice.
 Do not fetch this file again. Open `design/load-graph.md` or the topic index when the User named routing work, or on a web docs/routing pass.
-Web default after boot is brainstorm. Goal names are memory. Directed-goal starts when the User asks for the list / Phase 3 / emit.
 
 Build pickup is git plus `_logs/<job>/summary.txt`. Those files are PC job output, not web-chat memory. Fresh Build: this file, then `design/grok-build.md` (its first step classifies the request as new feature or change). Pins are User-only.
-Web build-coop / build-week gather with pack_grok_sessions / report_grok_sessions; the paste is the packet.
-Build tile/sheet Imagine: `design/isolated-media.md` first. Web / chat may generate non-tile images. Web does not spawn the isolated media runner and does not Imagine tiled world assets. Grok Bot does not run Imagine.
+Imagine (Build only): `design/isolated-media.md` first. Web / chat and Grok Bot never run the isolated runner.
 After a slice: stop and report, with the rough edges you hit (`design/tools.md` rule 9).

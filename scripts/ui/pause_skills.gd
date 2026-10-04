@@ -3,13 +3,14 @@ const CombatP := preload("res://scripts/data/progress_combat.gd")
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const TipPlace := preload("res://scripts/ui/tip_place.gd")
+const LocS := preload("res://scripts/app/app_loc.gd")
 const SkillRow := preload("res://scripts/ui/skill_row_view.gd")
 
-static func skill_title(ui: CanvasLayer, id: String) -> String:
-	return str(ui.SKILL_NAMES.get(id, id))
+static func skill_title(_ui: CanvasLayer, id: String) -> String:
+	return LocS.tr_or("skill." + id, id)
 
 static func perm_line(ui: CanvasLayer, id: String, perm: float) -> String:
-	return "%s Lv %d | Next Level: %dXP | Total XP: %dXP" % [
+	return App.tr("common.lv_next_level_xp_total") % [
 		skill_title(ui, id),
 		CombatP.level_from_xp(App.prog, perm),
 		int(round(CombatP.xp_to_next(App.prog, perm))),
@@ -18,7 +19,7 @@ static func perm_line(ui: CanvasLayer, id: String, perm: float) -> String:
 
 static func run_line(ui: CanvasLayer, id: String, perm: float, runx: float) -> String:
 	var live: float = perm + runx
-	return "%s Lv %d | This Run: %dXP | Next Level: %dXP" % [
+	return App.tr("common.lv_this_run_xp_next") % [
 		skill_title(ui, id),
 		CombatP.level_from_xp(App.prog, live),
 		int(round(runx)),
@@ -73,8 +74,8 @@ static func paint_tip(ui: CanvasLayer) -> void:
 	ui.tip_host.z_index = 90
 
 static func build(ui: CanvasLayer) -> void:
-	ui.box.add_child(ui._cap("Combat Level %d" % App.prog.combat_lv(), 24, Color(0.95, 0.8, 0.45)))
-	ui.box.add_child(ui._cap("Highlight a skill for its bonuses.", 16, Color(0.78, 0.74, 0.66)))
+	ui.box.add_child(ui._cap(App.tr("pause_skills.combat_level") % App.prog.combat_lv(), 24, Color(0.95, 0.8, 0.45)))
+	ui.box.add_child(ui._cap(App.tr("pause_skills.highlight_a_skill_for_its"), 16, Color(0.78, 0.74, 0.66)))
 	var perm_col: Color = Color(0.72, 0.56, 0.28)
 	var run_col: Color = Color(0.86, 0.74, 0.32)
 	var first: PanelContainer = null
@@ -82,8 +83,8 @@ static func build(ui: CanvasLayer) -> void:
 		var heads: HBoxContainer = HBoxContainer.new()
 		heads.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		heads.add_theme_constant_override("separation", 24)
-		heads.add_child(skill_lab("Permanent", 18, Color(0.95, 0.8, 0.45)))
-		heads.add_child(skill_lab("Dungeon XP", 18, Color(0.95, 0.8, 0.45)))
+		heads.add_child(skill_lab(App.tr("pause_skills.permanent"), 18, Color(0.95, 0.8, 0.45)))
+		heads.add_child(skill_lab(App.tr("common.dungeon_xp"), 18, Color(0.95, 0.8, 0.45)))
 		ui.box.add_child(heads)
 		for id: String in App.prog.SKILLS:
 			var perm: float = float(App.prog.skills_perm.get(id, 0.0))

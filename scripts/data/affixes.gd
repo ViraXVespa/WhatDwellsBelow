@@ -1,5 +1,8 @@
 ﻿extends Object
 
+const LocS := preload("res://scripts/app/app_loc.gd")
+const ItemNames := preload("res://scripts/data/item_names.gd")
+
 const GROUP_COMBAT := "combat"
 const GROUP_TOOL := "tool"
 const KIND_FLAT := "flat"
@@ -19,23 +22,25 @@ const ID_GATHER_SPD := "gather_spd"
 const ID_GATHER_POW := "gather_pow"
 const ID_YIELD := "yield_chance"
 
+## Slot rosters: the one home for equip/forge and armor slot lists (call sites reference these).
 const FORGE_SLOTS: PackedStringArray = ["weapon", "tool", "head", "body", "legs"]
+const ARMOR_SLOTS: PackedStringArray = ["head", "body", "legs"]
 
 static func defs() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	out.append(_row(ID_DMG, "Damage", KIND_FLAT, GROUP_COMBAT, true))
-	out.append(_row(ID_DEF, "Defense", KIND_FLAT, GROUP_COMBAT, true))
-	out.append(_row(ID_HP, "Health", KIND_FLAT, GROUP_COMBAT, true))
-	out.append(_row(ID_CRIT_CHANCE, "Crit Chance", KIND_PCT, GROUP_COMBAT, false))
-	out.append(_row(ID_CRIT_DMG, "Crit Damage", KIND_PCT, GROUP_COMBAT, false))
-	out.append(_row(ID_MOVE, "Movement Speed", KIND_PCT, GROUP_COMBAT, false))
-	out.append(_row(ID_ATK_SPD, "Attack Speed", KIND_PCT, GROUP_COMBAT, false))
-	out.append(_row(ID_ATK_RANGE, "Attack Range", KIND_FLAT, GROUP_COMBAT, false))
-	out.append(_row(ID_HP_HIT, "Health on Hit", KIND_FLAT, GROUP_COMBAT, false))
-	out.append(_row(ID_HP_KILL, "Health on Kill", KIND_FLAT, GROUP_COMBAT, false))
-	out.append(_row(ID_GATHER_SPD, "Gather Speed", KIND_PCT, GROUP_TOOL, true))
-	out.append(_row(ID_GATHER_POW, "Gather Power", KIND_FLAT, GROUP_TOOL, false))
-	out.append(_row(ID_YIELD, "Yield Chance", KIND_PCT, GROUP_TOOL, false))
+	out.append(_row(ID_DMG, App.tr("affix.dmg.label"), KIND_FLAT, GROUP_COMBAT, true))
+	out.append(_row(ID_DEF, App.tr("affix.def.label"), KIND_FLAT, GROUP_COMBAT, true))
+	out.append(_row(ID_HP, App.tr("affix.hp.label"), KIND_FLAT, GROUP_COMBAT, true))
+	out.append(_row(ID_CRIT_CHANCE, App.tr("affix.crit_chance.label"), KIND_PCT, GROUP_COMBAT, false))
+	out.append(_row(ID_CRIT_DMG, App.tr("affix.crit_dmg.label"), KIND_PCT, GROUP_COMBAT, false))
+	out.append(_row(ID_MOVE, App.tr("affix.move_spd.label"), KIND_PCT, GROUP_COMBAT, false))
+	out.append(_row(ID_ATK_SPD, App.tr("affix.atk_spd.label"), KIND_PCT, GROUP_COMBAT, false))
+	out.append(_row(ID_ATK_RANGE, App.tr("affix.atk_range.label"), KIND_FLAT, GROUP_COMBAT, false))
+	out.append(_row(ID_HP_HIT, App.tr("affix.hp_on_hit.label"), KIND_FLAT, GROUP_COMBAT, false))
+	out.append(_row(ID_HP_KILL, App.tr("affix.hp_on_kill.label"), KIND_FLAT, GROUP_COMBAT, false))
+	out.append(_row(ID_GATHER_SPD, App.tr("affix.gather_spd.label"), KIND_PCT, GROUP_TOOL, true))
+	out.append(_row(ID_GATHER_POW, App.tr("affix.gather_pow.label"), KIND_FLAT, GROUP_TOOL, false))
+	out.append(_row(ID_YIELD, App.tr("affix.yield_chance.label"), KIND_PCT, GROUP_TOOL, false))
 	return out
 
 static func _row(id: String, label: String, kind: String, group: String, primary: bool) -> Dictionary:
@@ -56,7 +61,7 @@ static func by_id(id: String) -> Dictionary:
 static func label_of(id: String) -> String:
 	var row: Dictionary = by_id(id)
 	if row.is_empty():
-		return id.capitalize()
+		return id
 	return str(row.get("label", id))
 
 static func kind_of(id: String) -> String:
@@ -108,5 +113,5 @@ static func book_key(slot: String, type_id: String, rarity: String) -> String:
 
 static func type_label(slot: String, type_id: String) -> String:
 	if type_id == "":
-		return slot.capitalize()
-	return str(type_id).capitalize()
+		return LocS.tr_or("slot." + slot, slot)
+	return ItemNames.type_name(slot, str(type_id))

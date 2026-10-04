@@ -9,9 +9,21 @@ stderr, de-duplicates by normalized message, prints a report.
   python tools/bot_warnscan.py --list
   python tools/bot_warnscan.py                       # every area
   python tools/bot_warnscan.py --phases 1,2,6 --report _logs/warnscan/report.txt
-  python tools/bot_warnscan.py --areas static,boot --json _logs/warnscan/r.json
+  python tools/bot_warnscan.py --areas static,boot --json-out _logs/warnscan/r.json
   python tools/bot_warnscan.py --areas p3,static --save-baseline _logs/warnscan/base.json  # before a change
   python tools/bot_warnscan.py --areas p3,static --non-leak-diff _logs/warnscan/base.json  # after: NEW/FIXED
+  python tools/bot_warnscan.py --renderer both --repeat 3     # headless + real renderer, stable vs flaky tags
+
+Cheap by default: 1 run per area, areas in parallel (--jobs, each run gets its own
+user:// via XDG_DATA_HOME), then areas that logged a leak or run failure are re-run
+--recheck times (default 2) so each finding is tagged stable or flaky. Timing smokes
+(load-timing, dungeon-load-timing) run alone, after the pool.
+  python tools/bot_warnscan.py --changed               # quick: static + areas for paths changed vs origin/main
+  python tools/bot_warnscan.py --repeat 3 --recheck 0  # force 3 runs of every area
+
+--renderer real|both runs the areas (except static) on the box display (godot_lib.pick_display, else
+xvfb-run) as `<area>@gui`. Findings in a re-run area are tagged `stable` (logged every run) or
+`flaky <area> n/m`; with --renderer both it also tags gui-only / headless-only.
 
 --non-leak-diff ignores leak findings (they vary run to run) and ignores the
 site, so warnings in moved code are not NEW. Exit 0 if nothing NEW, else 1.
@@ -23,6 +35,7 @@ Logs: _logs/warnscan/<area>.{out,err}.txt (gitignored). No game files change.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
 import os
 import signal
@@ -37,7 +50,9 @@ if str(TOOLS_DIR) not in sys.path:
 
 import agent_log  # noqa: E402
 from bot_smokes import resolve_bin  # noqa: E402
-from bot_warnscan_lib import merge, parse_stream, run_failure  # noqa: E402
+from bot_warnscan_lib import changed_areas, flake_label, merge, mode_label, parse_stream, run_failure  # noqa: E402
+from godot_lib import XVFB_SCREEN, pick_display  # noqa: E402
+from load_routes import SMOKE_PHASES  # noqa: E402
 
 BOOT_FRAMES = 600
 HARNESS = """extends SceneTree
@@ -81,6 +96,8 @@ def area_table(floors: list[int], seed: int) -> dict[str, tuple[list[str], str]]
         8: "camp: hub spots, buildings, save backup, archive",
         9: "dungeon: audio, archive catalog, anim models",
     }
+    if tuple(desc) != SMOKE_PHASES:
+        raise SystemExit(f"bot_warnscan area_table phases {tuple(desc)} != load_routes.SMOKE_PHASES {SMOKE_PHASES}")
     t: dict[str, tuple[list[str], str]] = {}
     for n, d in desc.items():
         t[f"p{n}"] = ([f"--wdb-phase{n}-smoke"], d)
@@ -97,8 +114,8 @@ def area_table(floors: list[int], seed: int) -> dict[str, tuple[list[str], str]]
     return t
 
 
-def godot_cmd(exe: Path, root: Path, name: str, uargs: list[str], ns, log_dir: Path) -> list[str]:
-    cmd = [str(exe), "--headless", "--display-driver", "headless", "--audio-driver", "Dummy", "--debug"]
+def godot_cmd(exe: Path, root: Path, name: str, uargs: list[str], ns, log_dir: Path, gui: bool = False) -> list[str]:
+    cmd = [str(exe), "--audio-driver", "Dummy", "--debug"] if gui else [str(exe), "--headless", "--display-driver", "headless", "--audio-driver", "Dummy", "--debug"]
     if not ns.no_engine_verbose:
         cmd.append("--verbose")
     if name == "boot":
@@ -111,11 +128,22 @@ def godot_cmd(exe: Path, root: Path, name: str, uargs: list[str], ns, log_dir: P
     return cmd
 
 
-def run_one(cmd: list[str], out: Path, err: Path, timeout: int) -> tuple[str, int]:
+def gui_launch() -> tuple[list[str], dict | None]:
+    """(argv prefix, env) for a real-renderer run: live X as is, else xvfb-run. Exit 2 when no display."""
+    kind, disp = pick_display()
+    if kind == "xvfb":
+        return ["xvfb-run", "-a", "-s", XVFB_SCREEN], None
+    if disp:
+        return [], dict(os.environ, DISPLAY=disp)
+    agent_log.fail("warnscan: --renderer real needs a display (no live X, no xvfb-run)")
+    return [], None
+
+
+def run_one(cmd: list[str], out: Path, err: Path, timeout: int, env: dict | None = None) -> tuple[str, int]:
     """Returns (status, returncode). status: ok | timeout | signal."""
     with out.open("w", encoding="utf-8") as so, err.open("w", encoding="utf-8") as se:
         proc = subprocess.Popen(
-            cmd, stdin=subprocess.DEVNULL, stdout=so, stderr=se, start_new_session=True,
+            cmd, stdin=subprocess.DEVNULL, stdout=so, stderr=se, start_new_session=True, env=env,
         )
         try:
             rc = proc.wait(timeout=timeout)
@@ -124,6 +152,35 @@ def run_one(cmd: list[str], out: Path, err: Path, timeout: int) -> tuple[str, in
             proc.wait()
             return "timeout", -9
     return ("signal" if rc < 0 else "ok"), rc
+
+
+def run_job(j: dict, ns) -> dict:
+    """One Godot run -> the job dict plus found/status/rc/dt (thread-safe: no shared state)."""
+    ts = time.time()
+    status, rc = run_one(j["cmd"], j["out"], j["err"], ns.timeout, j["env"])
+    if ns.verbose:
+        print("run\t" + " ".join(j["cmd"]), flush=True)
+    found = []
+    for stream, path in (("out", j["out"]), ("err", j["err"])):
+        found += parse_stream(path.read_text(encoding="utf-8", errors="replace"), j["label"], stream)
+    if status == "timeout":
+        found.append(run_failure(j["label"], f"timeout after {ns.timeout}s (process group killed)"))
+    elif status == "signal":
+        found.append(run_failure(j["label"], f"killed by signal {-rc}"))
+    elif rc != 0:
+        found.append(run_failure(j["label"], f"nonzero exit {rc}"))
+    return {**j, "found": found, "status": status, "rc": rc, "dt": time.time() - ts}
+
+
+def changed_paths(root: Path, base: str) -> list[str]:
+    """Paths changed vs BASE (merge-base diff), plus uncommitted and untracked ones."""
+    out: set[str] = set()
+    for args in (["diff", "--name-only", f"{base}...HEAD"], ["diff", "--name-only", "HEAD"], ["ls-files", "-o", "--exclude-standard"]):
+        r = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+        if r.returncode != 0 and "..." in args[-1]:
+            agent_log.fail(f"warnscan: git diff against {base} failed: {r.stderr.strip()[:120]}")
+        out.update(x.strip() for x in r.stdout.splitlines() if x.strip())
+    return sorted(out)
 
 
 def pick_areas(ns, table: dict) -> list[str]:
@@ -140,9 +197,21 @@ def pick_areas(ns, table: dict) -> list[str]:
     return list(dict.fromkeys(names))
 
 
+SERIAL = {"load-timing", "dungeon-load-timing"}  # timing smokes: never beside other Godot runs
+SUSPECT = {"leak", "run-fail", "crash"}  # kinds worth a targeted re-run (they vary run to run)
+
+
+def tags(f, ns) -> str:
+    """'  [stable] [gui-only]' style suffix; empty for a single plain run."""
+    t = [flake_label(f, ns.ran)]
+    if ns.renderer == "both":
+        t.append(mode_label(f))
+    return "".join(f"  [{x}]" for x in t if x)
+
+
 def render(rows: list[tuple], findings: list, ns, secs: float) -> str:
     total = sum(f.count for f in findings)
-    out = [f"warnscan areas={len(rows)} repeat={ns.repeat} elapsed={secs:.0f}s", ""]
+    out = [f"warnscan areas={len({r[0].split('.r')[0] for r in rows})} repeat={ns.repeat} recheck={ns.recheck} elapsed={secs:.0f}s jobs={ns.jobs} runs={len(rows)}", ""]
     out.append(f"{'AREA':<25}{'RESULT':<9}{'SECS':>6}  {'EXIT':<8}FINDINGS")
     for name, status, rc, dt, n in rows:
         out.append(f"{name:<25}{'PASS' if n == 0 else 'FAIL':<9}{dt:>6.1f}  {status if status != 'ok' else rc!s:<8}{n}")
@@ -150,7 +219,7 @@ def render(rows: list[tuple], findings: list, ns, secs: float) -> str:
     order = sorted(findings, key=lambda f: (f.kind, -f.count))
     for i, f in enumerate(order, 1):
         areas = ",".join(f"{a}x{c}" if c > 1 else a for a, c in f.areas.items())
-        out.append(f"\n[{i}] {f.kind}  x{f.count}  areas: {areas}")
+        out.append(f"\n[{i}] {f.kind}  x{f.count}  areas: {areas}{tags(f, ns)}")
         out.append(f"    {f.samples[0] if f.samples else f.msg}")
         for extra in f.samples[1:]:
             out.append(f"    also: {extra}")
@@ -161,13 +230,14 @@ def render(rows: list[tuple], findings: list, ns, secs: float) -> str:
             out.append(f"    hint: {f.hint}")
         for s in f.stack[: (8 if ns.verbose else 4)]:
             out.append(f"    | {s.strip()}")
-    out.append(f"\nRESULT={'PASS' if not findings else 'FAIL'} unique={len(findings)} total={total}")
+    bad = [f for f in findings if f.kind != "env-artifact"]
+    out.append(f"\nRESULT={'PASS' if not bad else 'FAIL'} unique={len(findings)} total={total} (env-artifact kinds do not fail)")
     return "\n".join(out) + "\n"
 
 
 def non_leak_rows(findings: list) -> list[dict]:
     return [{"kind": f.kind, "norm": f.norm, "site": f.site, "areas": sorted(f.areas)}
-            for f in findings if f.kind != "leak"]
+            for f in findings if f.kind not in ("leak", "env-artifact")]
 
 
 def diff_rows(cur: list[dict], base: list[dict]) -> tuple[list[dict], list[dict]]:
@@ -195,37 +265,45 @@ def diff_rows(cur: list[dict], base: list[dict]) -> tuple[list[dict], list[dict]
 
 def findings_md(findings: list, ns, secs: float) -> str:
     """Findings grouped by kind (errors, gdscript warnings, leaks) with counts, one line per cause."""
-    out = [f"# Warning findings", "", f"areas={ns.areas or 'all'} repeat={ns.repeat} elapsed={secs:.0f}s unique={len(findings)}", ""]
+    out = [f"# Warning findings", "", f"areas={ns.areas or ('changed' if ns.changed else 'all')} repeat={ns.repeat} recheck={ns.recheck} elapsed={secs:.0f}s unique={len(findings)}", ""]
     kinds: dict[str, list] = {}
     for f in findings:
         kinds.setdefault(f.kind, []).append(f)
     out += ["| kind | unique | total |", "|---|---|---|"]
     out += [f"| {k} | {len(v)} | {sum(x.count for x in v)} |" for k, v in sorted(kinds.items())]
+    if any(n > 1 for n in ns.ran.values()):
+        fl = [flake_label(f, ns.ran).startswith("flaky") for f in findings]
+        out += ["", f"stable={fl.count(False)} flaky={fl.count(True)} (stable = logged in every repeat of every area)"]
     for k, v in sorted(kinds.items()):
         out += ["", f"## {k}", ""]
         for f in sorted(v, key=lambda x: -x.count):
             first = f.msg.splitlines()[0][:160]
-            out.append(f"- x{f.count} `{f.site or '-'}` {first}" + (f" (hint: {f.hint})" if f.hint else ""))
+            out.append(f"- x{f.count}{tags(f, ns)} `{f.site or '-'}` {first}" + (f" (hint: {f.hint})" if f.hint else ""))
     return "\n".join(out) + "\n"
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Headless runtime-warning sweep (zero-warning gate)")
     p.add_argument("--list", action="store_true", help="list areas and exit")
     p.add_argument("--areas", default="", help="comma list of area names (see --list)")
     p.add_argument("--phases", default="", help="shorthand for smoke phases, e.g. 1,2,6")
     p.add_argument("--map-floors", default="1", help="dungeon-map floors to sweep (default 1)")
-    p.add_argument("--map-seed", type=int, default=42)
-    p.add_argument("--timeout", type=int, default=90, help="seconds per run")
-    p.add_argument("--repeat", type=int, default=1, help="runs per area (leaks can vary run to run)")
+    p.add_argument("--map-seed", type=int, default=42, help="Dungeon-map seed for the map sweep (default 42).")
+    p.add_argument("--timeout", "--timeout-sec", "-TimeoutSec", dest="timeout", type=int, default=90, help="Seconds per run (default 90).")
+    p.add_argument("--repeat", type=int, default=1, help="force this many runs of every area (default 1)")
+    p.add_argument("--recheck", type=int, default=2, help="extra runs for areas that logged a leak/run failure, to tag stable vs flaky (default 2; 0 off; ignored with --repeat > 1)")
+    p.add_argument("--jobs", type=int, default=3, help="areas run in parallel (default 3; each run gets its own user:// dir; 1 = serial)")
+    p.add_argument("--changed", nargs="?", const="origin/main", default="", metavar="BASE", help="quick mode: static + the areas that load the paths changed vs BASE (default origin/main) and the worktree")
+    p.add_argument("--renderer", choices=("headless", "real", "both"), default="headless",
+                   help="headless (default), real (box display / xvfb, areas tagged @gui; no static) or both")
     p.add_argument("--no-engine-verbose", action="store_true", help="drop Godot --verbose (no leak detail rows)")
     p.add_argument("--report", default="", help="also write the text report here")
-    p.add_argument("--json-out", "--json", dest="json", default="", help="write findings as JSON to this file (--json kept as an alias; takes a path)")
+    p.add_argument("--json-out", dest="json", default="", metavar="PATH", help="Write findings as JSON to this file.")
     p.add_argument("--findings-md", default="", help="write findings grouped by kind with counts as markdown here")
     p.add_argument("--save-baseline", default="", help="write non-leak findings JSON here (run before a change)")
     p.add_argument("--non-leak-diff", default="", help="compare non-leak findings to a --save-baseline file; exit 1 if NEW")
     p.add_argument("--verbose", action="store_true", help="print commands and longer stacks")
-    ns = p.parse_args()
+    ns = p.parse_args(argv)
     root = agent_log.resolve_root(ns)
     floors = [int(x) for x in ns.map_floors.split(",") if x.strip()]
     table = area_table(floors, ns.map_seed)
@@ -238,37 +316,60 @@ def main() -> int:
     exe = resolve_bin()
     if exe is None:
         agent_log.fail("warnscan: no Godot binary; run python3 tools/bot_smokes.py --setup")
-    names = pick_areas(ns, table)
+    names = pick_areas(ns, table) if (ns.areas or ns.phases or not ns.changed) else []
+    if ns.changed:
+        paths = changed_paths(root, ns.changed)
+        names = list(dict.fromkeys(names + [n for n in changed_areas(paths) if n in table]))
+        print(f"changed paths={len(paths)} -> areas {','.join(names)}", flush=True)
     log_dir = root / "_logs" / "warnscan"
     log_dir.mkdir(parents=True, exist_ok=True)
     for old in log_dir.glob("*.txt"):
         old.unlink()
     (log_dir / "_static_load.gd").write_text(HARNESS, encoding="utf-8", newline="\n")
+    gui_prefix, gui_env = gui_launch() if ns.renderer != "headless" else ([], None)
+    modes = {"headless": [False], "real": [True], "both": [False, True]}[ns.renderer]
+    labels = [(n, g) for n in names for g in modes if not (g and n == "static")]  # static has no renderer
+    ns.jobs = max(1, ns.jobs)
+
+    def job(name: str, gui: bool, run: int) -> dict:
+        label = f"{name}@gui" if gui else name
+        tag = label if run == 1 else f"{label}.r{run}"
+        cmd = godot_cmd(exe, root, name, table[name][0], ns, log_dir, gui)
+        env = gui_env if gui else None
+        if ns.jobs > 1:  # parallel runs must not share saves
+            env = dict(env or os.environ, XDG_DATA_HOME=str(log_dir / "xdg" / tag))
+        return {"name": name, "label": label, "tag": tag, "run": run, "cmd": (gui_prefix if gui else []) + cmd,
+                "env": env, "out": log_dir / f"{tag}.out.txt", "err": log_dir / f"{tag}.err.txt"}
+
     merged: dict = {}
     rows: list[tuple] = []
+    ran: dict[str, int] = {}
+    ns.ran = ran
     t0 = time.time()
-    for name in names:
-        uargs = table[name][0]
-        cmd = godot_cmd(exe, root, name, uargs, ns, log_dir)
-        for r in range(ns.repeat):
-            tag = name if ns.repeat == 1 else f"{name}.r{r + 1}"
-            out, err = log_dir / f"{tag}.out.txt", log_dir / f"{tag}.err.txt"
-            if ns.verbose:
-                print("run\t" + " ".join(cmd), flush=True)
-            ts = time.time()
-            status, rc = run_one(cmd, out, err, ns.timeout)
-            found = []
-            for stream, path in (("out", out), ("err", err)):
-                found += parse_stream(path.read_text(encoding="utf-8", errors="replace"), name, stream)
-            if status == "timeout":
-                found.append(run_failure(name, f"timeout after {ns.timeout}s (process group killed)"))
-            elif status == "signal":
-                found.append(run_failure(name, f"killed by signal {-rc}"))
-            elif rc != 0:
-                found.append(run_failure(name, f"nonzero exit {rc}"))
-            merge(merged, found)
-            rows.append((tag, status, rc, time.time() - ts, len(found)))
-            print(f"{tag}\t{'PASS' if not found else 'FAIL'}\tfindings={len(found)}", flush=True)
+
+    def execute(jobs: list[dict]) -> None:
+        pool = [j for j in jobs if j["name"] not in SERIAL]
+        serial = [j for j in jobs if j["name"] in SERIAL]
+        done: dict[str, dict] = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=ns.jobs) as ex:
+            for r in ex.map(lambda j: run_job(j, ns), pool):
+                done[r["tag"]] = r
+        for j in serial:
+            done[j["tag"]] = run_job(j, ns)
+        for j in jobs:  # merge in submission order so reports are stable
+            r = done[j["tag"]]
+            merge(merged, r["found"], r["run"])
+            ran[r["label"]] = ran.get(r["label"], 0) + 1
+            rows.append((r["tag"], r["status"], r["rc"], r["dt"], len(r["found"])))
+            print(f"{r['tag']}\t{'PASS' if not r['found'] else 'FAIL'}\tfindings={len(r['found'])}", flush=True)
+
+    execute([job(n, g, r + 1) for n, g in labels for r in range(ns.repeat)])
+    if ns.repeat == 1 and ns.recheck > 0:
+        sus = [(n, g) for n, g in labels
+               if any(f.kind in SUSPECT and (f"{n}@gui" if g else n) in f.areas for f in merged.values())]
+        if sus:
+            print(f"recheck {ns.recheck}x: {','.join(n + ('@gui' if g else '') for n, g in sus)}", flush=True)
+            execute([job(n, g, r + 2) for n, g in sus for r in range(ns.recheck)])
     text = render(rows, list(merged.values()), ns, time.time() - t0)
     print("\n" + text)
     if ns.report:
@@ -280,7 +381,8 @@ def main() -> int:
     if ns.json:
         Path(ns.json).parent.mkdir(parents=True, exist_ok=True)
         data = [{"kind": f.kind, "message": f.msg, "site": f.site, "count": f.count,
-                 "areas": f.areas, "first": f.first, "hint": f.hint, "stack": f.stack}
+                 "areas": f.areas, "first": f.first, "hint": f.hint, "stack": f.stack,
+                 "flake": flake_label(f, ns.ran), "mode": mode_label(f) if ns.renderer == "both" else ""}
                 for f in merged.values()]
         Path(ns.json).write_text(json.dumps(data, indent=2), encoding="utf-8")
     rows_now = non_leak_rows(list(merged.values()))
@@ -296,8 +398,9 @@ def main() -> int:
                 print(f"{tag}\t{r['kind']}\t{r['site'] or '-'}\t{r['norm'][:110]}")
         print(f"non-leak-diff: baseline={len(base)} now={len(rows_now)} new={len(new)} fixed={len(fixed)}")
         return agent_log.emit_result("FAIL" if new else "PASS", baseline=len(base), now=len(rows_now), new=len(new), fixed=len(fixed))
-    return agent_log.emit_result("FAIL" if merged else "PASS", findings=len(merged))
+    bad = [f for f in merged.values() if f.kind != "env-artifact"]
+    return agent_log.emit_result("FAIL" if bad else "PASS", findings=len(merged), env_artifacts=len(merged) - len(bad))
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

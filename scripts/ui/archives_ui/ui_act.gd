@@ -9,10 +9,6 @@ static func preview(host: Node, i: int) -> void:
 	host.mode = "info"
 	Split.preview(host, i)
 
-static func list_pressed(host: Node, i: int) -> void:
-	host.mode = "info"
-	Split.list_pressed(host, i)
-
 static func enter_detail(host: Node) -> void:
 	Split.enter_detail(host)
 
@@ -30,7 +26,7 @@ static func info_gui(host: Node, event: InputEvent) -> void:
 static func on_video(host: Node) -> void:
 	if host.col != "detail":
 		enter_detail(host)
-	host._st("No video for this build.")
+	host._st(App.tr("ui_act.no_video_for_this_build"))
 
 static func on_docs(host: Node) -> void:
 	if host.col != "detail":
@@ -54,7 +50,7 @@ static func open_docs(host: Node) -> void:
 	var e: Dictionary = host._cur()
 	var docs: PackedStringArray = host._docs_of(e)
 	if docs.is_empty():
-		host._st("No documents for this build.")
+		host._st(App.tr("common.no_documents_for_this_build"))
 		return
 	host.mode = "docs"
 	host.col = "detail"
@@ -86,14 +82,14 @@ static func read_doc(host: Node, id: String, name: String) -> String:
 			host.http_key = key
 			host.http_busy = true
 			host.http.request(url)
-			return "Loading…"
+			return App.tr("ui_act.loading")
 	return "(missing)"
 
 static func http_done(host: Node, code: int, body: PackedByteArray) -> void:
 	host.http_busy = false
 	var key: String = str(host.http_key)
 	host.http_key = ""
-	var text: String = "(missing)"
+	var text: String = App.tr("ui_act.missing")
 	if code == 200 and not body.is_empty():
 		text = Docs.clip(body.get_string_from_utf8())
 	if key != "":

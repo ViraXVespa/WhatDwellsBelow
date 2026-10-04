@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,6 +30,13 @@ END = "<!-- bot-opt:end -->"
 NEXT_RE = re.compile(r"<!-- bot-opt:next=(\d+) -->")
 HEAD_RE = re.compile(r"^### (opt-\d+) \((pending|done|dropped)\)\s*$")
 STATUSES = ("pending", "done", "dropped")
+ERRORS = {
+    "bad-status": "--status wants opt-N=STATUS with STATUS one of {statuses} (example: --status opt-003=done)",
+    "bad-id": "bad id; use opt-003 or 3 (see --list)",
+    "not-found": "no item {id}; ids are listed above (--list shows them)",
+    "missing-queue": "the opt queue file is missing",
+    "need-title-cluster": "--add/--replace need --title and --cluster (and --files, --body or --body-file)",
+}
 TITLE_MAX = 120
 CLUSTER_MAX = 80
 
@@ -97,6 +105,8 @@ def _end(root: Path, args: argparse.Namespace, lines: list[str], echo: str | Non
     while lines and not lines[-1].strip():
         lines.pop()
     status = "FAIL" if "error" in kv else "PASS"
+    if "error" in kv:
+        print("error: " + ERRORS.get(kv["error"], kv["error"]).format(**kv, statuses=", ".join(STATUSES)), file=sys.stderr)
     return agent_log.finish("bot-opt", root, "\n".join(lines), status, args=args, echo=echo, **kv)
 
 
@@ -333,7 +343,7 @@ def main() -> int:
         lines += ["", "RESULT action=" + action + " error=missing-queue"]
         return _end(root, args, lines, None)
 
-    parsed = parse_queue(queue_path.read_text(encoding="utf-8"))
+    parsed = parse_queue(md.read_text(queue_path))
     if isinstance(parsed, str):
         lines += ["", f"RESULT action={action} error={parsed}"]
         return _end(root, args, lines, None)
@@ -343,7 +353,7 @@ def main() -> int:
         if args.dry_run:
             return
         block = render_block(new_next, new_items)
-        md.write_utf8(queue_path, prefix + block + suffix)
+        md.write_text(queue_path, prefix + block + suffix)  # keeps the file's BOM and line endings
 
     if action == "list":
         lines.append(f"next={next_id:03d}")
@@ -444,4 +454,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

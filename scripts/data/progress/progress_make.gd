@@ -3,66 +3,64 @@
 const CatalogS := preload("res://scripts/data/catalog.gd")
 const Roll := preload("res://scripts/data/gear_roll.gd")
 const Balance := preload("res://scripts/data/balance.gd")
+const ItemNames := preload("res://scripts/data/item_names.gd")
 
 static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:
-	var n: String = "Great Axe"
+	var n: String = App.tr("common.great_axe")
 	if wpn == "staff":
-		n = "Lightning Staff"
+		n = App.tr("common.lightning_staff")
 	elif wpn == "longbow":
-		n = "Longbow"
+		n = App.tr("gear.longbow")
 	var it: Dictionary = item(p, "weapon", n, {
 		"slot": "weapon",
 		"weapon": wpn,
 		"rarity": rarity,
-		"desc": "%s %s." % [rarity.capitalize(), n],
 	})
 	return _roll_onto(it, "weapon", wpn, rarity, ilvl)
 
 static func make_tool(p: Object, kind: String, rarity: String = "white", ilvl: int = 0) -> Dictionary:
-	var n: String = "Pickaxe" if kind == "pickaxe" else "Hatchet"
+	var n: String = App.tr("gear.pickaxe") if kind == "pickaxe" else App.tr("gear.hatchet")
 	var it: Dictionary = item(p, "tool", n, {
 		"slot": "tool",
 		"tool": kind,
 		"rarity": rarity,
-		"desc": "Run tool. Locked to %s." % kind,
 	})
 	return _roll_onto(it, "tool", kind, rarity, ilvl)
 
 static func make_armor(p: Object, slot: String, rarity: String, ilvl: int = 0) -> Dictionary:
-	var it: Dictionary = item(p, slot, "%s %s" % [rarity.capitalize(), slot.capitalize()], {
+	var it: Dictionary = item(p, slot, App.tr("slot." + slot), {
 		"slot": slot,
 		"rarity": rarity,
-		"desc": "%s %s." % [rarity.capitalize(), slot.capitalize()],
 	})
 	return _roll_onto(it, slot, slot, rarity, ilvl)
 
 static func make_potion(p: Object, n: int) -> Dictionary:
 	var charges: int = n if n > 0 else 2
-	var cd: float = Balance.f("potion_cooldown", 8.0)
-	return item(p, "potion", "Potion", {
+	return item(p, "potion", App.tr("gear.potion"), {
 		"slot": "potion",
+		"nk": ["gear.potion"],
 		"stack": 1,
 		"charges": charges,
 		"charge_max": charges,
-		"cooldown": cd,
-		"desc": "Instant heal. %d charges per run." % charges,
+		"cooldown": 0.0,
 	})
 
 static func make_food(p: Object, fid: String, n: int) -> Dictionary:
-	var nm: String = "Ration" if fid == "ration" else "Trail Bread"
-	return item(p, "food", nm, {"slot": "food", "food": fid, "stack": n, "desc": "Heal-over-time."})
+	var nm: String = App.tr("gear.ration") if fid == "ration" else App.tr("progress_make.trail_bread")
+	return item(p, "food", nm, {"slot": "food", "nk": ["gear.ration" if fid == "ration" else "progress_make.trail_bread"], "food": fid, "stack": n})
 
 static func make_artifact(p: Object, id: String) -> Dictionary:
 	var a: Dictionary = CatalogS.by_id(id)
 	if a.is_empty():
-		a = {"id": id, "name": id, "set": "", "desc": "A curious relic."}
-	return item(p, "artifact", str(a.name), {"id": id, "set": str(a.get("set", "")), "desc": str(a.get("desc", "A run-only relic.")), "extract": false})
+		a = {"id": id, "name": id, "set": ""}
+	return item(p, "artifact", str(a.name), {"id": id, "nk": ["item.%s.name" % id] if str(a.get("set", "")) != "" else [], "set": str(a.get("set", "")), "extract": false})
 
 static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Dictionary:
 	var it: Dictionary = {
 		"uid": p.next_uid,
 		"id": kind + "_" + str(p.next_uid),
 		"name": name,
+		"nk": extra.get("nk", []),
 		"kind": kind,
 		"slot": extra.get("slot", kind),
 		"weapon": extra.get("weapon", ""),
@@ -70,7 +68,7 @@ static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Di
 		"food": extra.get("food", ""),
 		"set": extra.get("set", ""),
 		"rarity": extra.get("rarity", "white"),
-		"desc": extra.get("desc", ""),
+		"desc": "",
 		"stack": extra.get("stack", 1),
 		"dmg": extra.get("dmg", 0),
 		"def": extra.get("def", 0),
@@ -86,6 +84,7 @@ static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Di
 	}
 	if extra.has("id"):
 		it.id = str(extra.id)
+	it["desc"] = ItemNames.desc_of(it)
 	p.next_uid += 1
 	return it
 
@@ -104,7 +103,9 @@ static func starter(p: Object, slot: String) -> Dictionary:
 
 static func _roll_onto(it: Dictionary, slot: String, type_id: String, rarity: String, ilvl: int) -> Dictionary:
 	var lv: int = ilvl if ilvl > 0 else _area_ilvl()
-	return Roll.stamp(it, Roll.roll_dungeon(slot, type_id, rarity, lv))
+	var rolled: Dictionary = Roll.stamp(it, Roll.roll_dungeon(slot, type_id, rarity, lv))
+	rolled["desc"] = ItemNames.desc_of(rolled)
+	return rolled
 
 static func _area_ilvl() -> int:
 	var floor_n: int = 1

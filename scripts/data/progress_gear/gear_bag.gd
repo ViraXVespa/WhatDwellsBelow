@@ -1,7 +1,7 @@
 extends Object
 
 const Make := preload("res://scripts/data/progress/progress_make.gd")
-const Rules := preload("res://scripts/data/gear_rules.gd")
+const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const Req := preload("res://scripts/data/progress_gear/gear_req.gd")
 
 static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -> Dictionary:
@@ -27,9 +27,6 @@ static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Di
 
 static func starter(p: Object, slot: String) -> Dictionary:
 	return Make.starter(p, slot)
-
-static func required_ok(slot: String, it: Dictionary) -> bool:
-	return Req.required_ok(slot, it)
 
 static func required_piece(p: Object, slot: String) -> Dictionary:
 	return Req.required_piece(p, slot)
@@ -60,20 +57,20 @@ static func bag_can_accept(p: Object, it: Dictionary) -> bool:
 static func _has_white_copy(p: Object, it: Dictionary) -> bool:
 	if str(it.get("rarity", "white")) != "white":
 		return false
-	var key := Rules.tmpl_key(it)
+	var key := Kit.tmpl_key(it)
 	var eq: Dictionary = p.slots.get(str(it.get("slot", "")), {})
-	if not eq.is_empty() and Rules.tmpl_key(eq) == key:
+	if not eq.is_empty() and Kit.tmpl_key(eq) == key:
 		return true
 	for raw: Variant in p.bag:
-		if raw is Dictionary and Rules.tmpl_key(raw) == key and str(raw.get("rarity", "white")) == "white":
+		if raw is Dictionary and Kit.tmpl_key(raw) == key and str(raw.get("rarity", "white")) == "white":
 			return true
-	return Rules.is_starter(p, it)
+	return Kit.is_starter(p, it)
 
 static func add_item(p: Object, it: Dictionary) -> bool:
 	if it.is_empty():
 		return false
 	if str(it.get("rarity", "white")) == "white" and _has_white_copy(p, it):
-		Rules.grant_smith(p, it)
+		Kit.grant_smith(p, it)
 		return true
 	if str(it.kind) == "food":
 		var slot_it: Dictionary = p.slots.get("food", {})
@@ -109,7 +106,7 @@ static func add_to_bag(p: Object, it: Dictionary) -> bool:
 		p.bag[idx] = b
 		return true
 	if p.bag_full():
-		App.toast("Bag full.")
+		App.toast(App.tr("common.bag_full"))
 		return false
 	p.bag.append(it)
 	if str(it.kind) == "artifact":
@@ -131,26 +128,26 @@ static func remove_uid(p: Object, uid: int) -> Dictionary:
 static func equip_uid(p: Object, uid: int) -> String:
 	var it: Dictionary = remove_uid(p, uid)
 	if it.is_empty():
-		return "Gone."
+		return App.tr("common.gone")
 	var slot: String = str(it.get("slot", ""))
 	if p.SLOTS.find(slot) < 0:
 		add_to_bag(p, it)
-		return "Can't equip that."
+		return App.tr("common.can_t_equip_that")
 	if slot == "tool":
 		var t: String = str(it.get("tool", ""))
 		if t != "" and t != p.tool_type:
 			add_to_bag(p, it)
-			return "Tool locked to %s this run." % p.tool_type
+			return App.tr("gear_bag.tool_locked_to_this_run") % p.tool_type
 	var cur: Dictionary = p.slots.get(slot, {})
 	if not cur.is_empty():
 		if not bag_can_accept(p, cur):
 			add_to_bag(p, it)
-			return "Bag full."
+			return App.tr("common.bag_full")
 		p.slots[slot] = {}
 		if not add_to_bag(p, cur):
 			p.slots[slot] = cur
 			add_to_bag(p, it)
-			return "Bag full."
+			return App.tr("common.bag_full")
 	p.slots[slot] = it
 	if slot == "food":
 		p._clamp_food_slot()
@@ -161,34 +158,34 @@ static func equip_uid(p: Object, uid: int) -> String:
 			pl.set_weapon(App.weapon)
 	p._sync_artifacts()
 	p._refresh_player_hp()
-	return "Equipped " + str(it.name)
+	return App.tr("gear_bag.equipped_name").format({"name": str(it.name)})
 
 static func drop_uid(p: Object, uid: int) -> String:
 	var it: Dictionary = remove_uid(p, uid)
 	if it.is_empty():
-		return "Gone."
+		return App.tr("common.gone")
 	App.spawn_floor_item(it)
-	App.toast("Dropped " + str(it.name))
-	return "Dropped."
+	App.toast(App.tr("gear_bag.dropped_name").format({"name": str(it.name)}))
+	return App.tr("common.dropped")
 
 static func unequip_slot(p: Object, slot: String) -> String:
 	if p.SLOTS.find(slot) < 0:
-		return "No slot."
-	if Rules.locked_equip_slot(slot):
-		return "Weapon and tool stay equipped."
+		return App.tr("common.no_slot")
+	if Kit.locked_equip_slot(slot):
+		return App.tr("common.weapon_and_tool_stay_equipped")
 	var it: Dictionary = p.slots.get(slot, {})
 	if it.is_empty():
-		return "Empty."
+		return App.tr("common.empty")
 	if not bag_can_accept(p, it):
-		App.toast("Bag full.")
-		return "Bag full."
+		App.toast(App.tr("common.bag_full"))
+		return App.tr("common.bag_full")
 	p.slots[slot] = {}
 	if not add_to_bag(p, it):
 		p.slots[slot] = it
-		return "Bag full."
+		return App.tr("common.bag_full")
 	p._sync_artifacts()
 	p._refresh_player_hp()
-	return "Unequipped " + str(it.name)
+	return App.tr("gear_bag.unequipped_name").format({"name": str(it.name)})
 
 static func fill_slot_after_remove(p: Object, slot: String) -> void:
 	if slot == "weapon":
@@ -204,22 +201,22 @@ static func fill_slot_after_remove(p: Object, slot: String) -> void:
 
 static func drop_slot(p: Object, slot: String) -> String:
 	if p.SLOTS.find(slot) < 0:
-		return "No slot."
-	if Rules.locked_equip_slot(slot):
-		return "Weapon and tool stay equipped."
+		return App.tr("common.no_slot")
+	if Kit.locked_equip_slot(slot):
+		return App.tr("common.weapon_and_tool_stay_equipped")
 	var it: Dictionary = p.slots.get(slot, {})
 	if it.is_empty():
-		return "Empty."
+		return App.tr("common.empty")
 	fill_slot_after_remove(p, slot)
 	p._refresh_player_hp()
 	App.spawn_floor_item(it)
-	App.toast("Dropped " + str(it.name))
-	return "Dropped."
+	App.toast(App.tr("gear_bag.dropped_name").format({"name": str(it.name)}))
+	return App.tr("common.dropped")
 
 static func take_slot(p: Object, slot: String) -> Dictionary:
 	if p.SLOTS.find(slot) < 0:
 		return {}
-	if Rules.locked_equip_slot(slot):
+	if Kit.locked_equip_slot(slot):
 		return {}
 	var it: Dictionary = p.slots.get(slot, {})
 	if it.is_empty():
@@ -233,14 +230,6 @@ static func drop_stash(p: Object, uid: int) -> String:
 		if int(p.bank_items[i].uid) == uid:
 			var it: Dictionary = p.bank_items[i]
 			p.bank_items.remove_at(i)
-			App.toast("Discarded " + str(it.name))
-			return "Discarded."
-	return "Gone."
-
-static func give_or_drop(p: Object, it: Dictionary, pos: Vector3) -> bool:
-	if it.is_empty():
-		return false
-	if add_item(p, it):
-		return true
-	App.spawn_floor_item(it, pos)
-	return false
+			App.toast(App.tr("gear_bag.discarded_name").format({"name": str(it.name)}))
+			return App.tr("gear_bag.discarded")
+	return App.tr("common.gone")

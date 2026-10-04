@@ -1,10 +1,8 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
-const Text := preload("res://scripts/ui/gear_board/board_text.gd")
-const Act := preload("res://scripts/ui/gear_board/board_act.gd")
+const Affix := preload("res://scripts/data/affixes.gd")
 const Floor := preload("res://scripts/ui/gear_board/floor.gd")
-const Tip := preload("res://scripts/ui/gear_board/tip.gd")
 const Build := preload("res://scripts/ui/gear_board/board_build.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Sync := preload("res://scripts/ui/gear_board/host_sync.gd")
@@ -43,7 +41,7 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	ui.box.add_child(row)
 	row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, ["weapon", "potion"], true))
-	row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, ["head", "body", "legs"], false))
+	row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, Array(Affix.ARMOR_SLOTS), false))
 	row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, ["tool", "food"], true))
 	row.add_child(Build.build_stats_card(ui))
 	if ui.focus_btn == null:

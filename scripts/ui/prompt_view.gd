@@ -117,23 +117,19 @@ static func merge_parts(extra: Array) -> Array:
 			continue
 		if action != "":
 			seen[action] = true
+		if bool(row.get("hide", false)):
+			continue
 		out.append(row)
 	if not seen.has("ui_accept"):
-		out.insert(0, {"action": "ui_accept", "verb": "Select", "gap": true})
+		out.insert(0, {"action": "ui_accept", "verb": App.tr("common.select"), "gap": true})
 	if not seen.has("ui_cancel"):
-		out.append({"action": "ui_cancel", "verb": "Back"})
+		out.append({"action": "ui_cancel", "verb": App.tr("common.back")})
 	return out
 
 static func _cap_verb(verb_text: String) -> String:
 	if verb_text == "":
 		return ""
 	return verb_text.substr(0, 1).to_upper() + verb_text.substr(1)
-
-static func hint_line(host: Control, action: String, verb_text: String, font_size: int = 16, color: Color = ThemeS.PROMPT_GOLD) -> void:
-	fill(host, [{"action": action, "verb": verb_text}], font_size, color)
-
-static func verb(host: Control, action: String, verb_text: String, font_size: int = 16, color: Color = ThemeS.PROMPT_GOLD) -> void:
-	hint_line(host, action, verb_text, font_size, color)
 
 static func _row_action(row: Dictionary) -> String:
 	if bool(row.get("page_prev", false)) or str(row.get("kind", "")) == "page_prev":

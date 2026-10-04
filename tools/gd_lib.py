@@ -9,7 +9,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-SKIP_PARTS = ("archives", ".archive_worktrees")
+SKIP_PARTS = ("archives", ".archive_worktrees")  # top-level dirs every file walker skips; other tools derive from this
+SHIP_BYTES = 10_000  # BOT.md script cap
+SWEEP_BYTES = 5_000  # Bot sweep floor
 RE_FUNC = re.compile(r"^(static\s+)?func\s+(\w+)\s*\(")
 DECL = re.compile(
     r"^(?P<indent>\t*)(?:static\s+)?(?:func|const|var|class_name|enum)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)"
@@ -22,6 +24,16 @@ def iter_gd(root: Path, *, sub: str = "scripts") -> list[Path]:
     if not base.is_dir():
         return []
     return sorted(p for p in base.rglob("*.gd") if p.is_file() and p.relative_to(root).parts[0] not in SKIP_PARTS)
+
+
+def sizes(root: Path, lo: int = 0, hi: int | None = None) -> list[tuple[int, str]]:
+    """(bytes, repo-relative path) of live .gd files with lo <= size < hi, largest first. One owner for every size listing."""
+    rows = []
+    for p in iter_gd(root):
+        n = p.stat().st_size
+        if n >= lo and (hi is None or n < hi):
+            rows.append((n, p.relative_to(root).as_posix()))
+    return sorted(rows, key=lambda r: (-r[0], r[1]))
 
 
 # Cluster-folder naming rule (design/refactor.md "Cluster folders"): helper `<stem>_<rest>.gd` lives at

@@ -2,6 +2,7 @@ extends Object
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const Util := preload("res://scripts/debug/playtest_los/los_util.gd")
+const Cache := preload("res://scripts/debug/playtest_los/los_cache.gd")
 
 static func has_wide_los(pt: Node, a: Node, b: Node) -> bool:
 	if pt._door_between(a, b):
@@ -29,6 +30,15 @@ static func dir_open(pt: Node, p: Node, dir: Vector2) -> bool:
 	if dir.length() < 0.01:
 		return true
 	var n: Vector2 = dir.normalized()
+	# Same heading asked again this physics frame (safe_step then steer, step_dir's 8 probes): body and world have not moved.
+	var hit: Variant = Cache.dir_get(pt, n)
+	if hit != null:
+		return bool(hit)
+	var ok: bool = _dir_open(pt, p, n)
+	Cache.dir_put(n, ok)
+	return ok
+
+static func _dir_open(pt: Node, p: Node, n: Vector2) -> bool:
 	if pt._dir_hits_door(p, n):
 		return false
 	var pos: Vector3 = (p as Node3D).global_position

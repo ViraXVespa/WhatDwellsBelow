@@ -26,7 +26,7 @@ Read when: gamepad layout, look mode, or universal menus
 - D-pad Left: Use equipped food
 - D-pad Right: From gameplay only, open pause on the Inventory tab. MUST NOT jump tabs or fire inventory while any menu is already open (`App.ui_open`). In menus D-pad Right stays `ui_right`.
 - D-pad Down: Toggle look mode. World-only and large-map-only. MUST NOT fire as look-mode while pause, debug, recap, title, or any `App.ui_open` menu is up (`ui_down` stays menu navigation). Opening those menus clears look mode.
-- Menu / Start: Pause. In an open menu, also acts as back / close.
+- Menu / Start: Pause (the `pause` bind). In an open menu, also acts as back / close.
 - View / Back: Toggle large map overlay (game continues running underneath)
 - LB / RB: Cycle tabs inside any menu that has tabs. Do not invent a second bumper path.
 
@@ -63,14 +63,14 @@ Shared classifiers live in `scripts/ui/menu_pad.gd`. Any menu with tabs MUST cal
 | Input | Menu effect |
 |-------|-------------|
 | A / Enter / `ui_accept` | Confirm focused control. Second A confirms a pending prompt. |
-| B / Esc / `ui_cancel` | Close a nested layer (re-equip list, Settings detail column, pending prompt). At root, close the menu. |
-| LB / RB / `[` / `]` | Cycle tabs when the open menu has a tab strip. |
-| Q / LT | Previous gear-board stats page |
-| E / RT | Next gear-board stats page |
+| B / Esc / Backspace / `ui_cancel` | Close a nested layer (re-equip list, Settings detail column, pending prompt). At root, close the menu. Space (dash) does nothing in menus. |
+| LB / RB / `[` / `]` | Cycle tabs when the open menu has a tab strip. Follows the `tab_left` / `tab_right` actions, not fixed keys. |
+| Target-lock key (Q) / LT | Previous gear-board stats page. Keyboard follows the `target_lock` bind; pad follows `special`. |
+| Interact key (E) / RT | Next gear-board stats page. Keyboard follows the `interact` bind (Enter stays confirm); pad follows `attack`. |
 | I / D-pad Right | Gameplay only: open pause on Inventory. MUST NOT change tabs while a menu is already open. |
 
 Exception: the secret Animation Browser keeps LB / RB = previous / next model, LT / RT = animation list, Y / `gear_tip` = review-state cycle, X / `gear_drop` = play/pause, D-pad = Facing/Animation columns, left stick = speed or frame step, and right stick = facing, per debug. While that viewer is open those chords MUST NOT fire world or gear-board actions (X must not drop gear). Keyboard Y types into the notes field when that field has focus; gamepad Y still cycles.
 
-Menu actions (`ui_*`, pause, tab bumpers, gear tip / drop, crystal zoom) are **not** on the player rebind page.
+Menu navigation (`ui_*`) is fixed. Pause, tab bumpers, gear tip / drop, and crystal zoom are on the rebind page like every other action; defaults live in `scripts/input/binds/table.gd`.
 
 Touch overlay MUST hide while any menu is open (`App.ui_open`). Menu navigation on a phone is finger-tap on the control, not virtual A / B. D-pad Down in a menu is only `ui_down`.

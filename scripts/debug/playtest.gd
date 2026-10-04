@@ -6,9 +6,6 @@ const PlaytestGoals2 := preload("res://scripts/debug/playtest_goals.gd")
 func _use_prop(p: Node, dest: Node, _reach: float = 1.18) -> void:
 	PlaytestAI.use_prop(self, p, dest)
 
-func _wander(p: Node, delta: float) -> void:
-	PlaytestAI.wander(self, p, delta)
-
 func _weapon_range() -> float:
 	return PlaytestAI.weapon_range()
 
@@ -57,14 +54,8 @@ func _notice_range() -> float:
 func _grid_dims() -> Dictionary:
 	return PlaytestNav.grid_dims(self)
 
-func _grid_floor(c: Vector2i) -> bool:
-	return PlaytestNav.grid_floor(self, c)
-
 func _door_cells(door: Node) -> Array:
 	return PlaytestNav.door_cells(self, door)
-
-func _obstacle_cell(c: Vector2i) -> bool:
-	return PlaytestNav.obstacle_cell(self, c)
 
 func _prop_cell(c: Vector2i) -> bool:
 	return PlaytestNav.prop_cell(self, c)
@@ -90,9 +81,6 @@ func _walk_clear(a: Node, b: Node) -> bool:
 func _stand_cell(p: Node, dest: Node) -> Vector2i:
 	return PlaytestNav.stand_cell(self, p, dest)
 
-func _nearest_visible_threat(p: Node) -> Node:
-	return PlaytestGoals2.nearest_visible_threat(self, p)
-
 func _nearest_hunt(p: Node) -> Node:
 	return PlaytestGoals2.nearest_hunt(self, p)
 
@@ -111,9 +99,6 @@ func _dir_hits_door(p: Node, dir: Vector2) -> bool:
 func _door_away(p: Node) -> Vector2:
 	return PlaytestNav.door_away(self, p)
 
-func _approach_boss(p: Node, boss: Node) -> void:
-	PlaytestAI.approach_boss(self, p, boss)
-
 func _door_bypass(p: Node, boss: Node) -> Vector2:
 	return PlaytestNav.door_bypass(self, p, boss)
 
@@ -128,9 +113,6 @@ func _in_primary(d: float) -> bool:
 
 func _lock_aim(p: Node, enemy: Node) -> void:
 	aim = _xz_to(p, enemy)
-
-func _fight(p: Node, enemy: Node) -> void:
-	PlaytestAI.fight(self, p, enemy)
 
 func _los_reposition(p: Node, target: Node) -> Vector2:
 	return PlaytestNav.los_reposition(self, p, target)

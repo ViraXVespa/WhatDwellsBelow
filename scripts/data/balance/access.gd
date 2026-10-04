@@ -20,6 +20,8 @@ static func setv(host: RefCounted, name: String, value: float) -> void:
 	if Enemies.write_stat(host.enemy_stats, name, value):
 		return
 	var cur: Variant = host.get(name)
+	if cur == null:
+		return
 	if cur is bool:
 		host.set(name, value >= 0.5)
 	elif cur is int:

@@ -2,6 +2,7 @@ extends Object
 
 const SEE := 36.0
 const ROOM := 11.0
+const Cache := preload("res://scripts/debug/playtest_los/los_cache.gd")
 const Near := preload("res://scripts/debug/playtest_goals/goals_near.gd")
 const Best := preload("res://scripts/debug/playtest_goals/goals_best.gd")
 
@@ -26,12 +27,6 @@ static func role_has_cargo(pt: Node, role: String) -> bool:
 static func dismiss_world_ui(pt: Node) -> bool:
 	return Near.dismiss_world_ui(pt)
 
-static func nearest_visible_threat(pt: Node, p: Node) -> Node:
-	return Near.nearest_visible_threat(pt, p)
-
-static func nearest_room_threat(pt: Node, p: Node, radius: float = ROOM) -> Node:
-	return Best.nearest_room_threat(pt, p, radius)
-
 static func nearest_foe(pt: Node, p: Node) -> Node:
 	var seen: Node = Near.nearest_visible_threat(pt, p)
 	if seen:
@@ -40,9 +35,6 @@ static func nearest_foe(pt: Node, p: Node) -> Node:
 
 static func nearest_hunt(pt: Node, p: Node) -> Node:
 	return Near.nearest_hunt(pt, p)
-
-static func nearest_boss(pt: Node, p: Node) -> Node:
-	return Best.nearest_boss(pt, p)
 
 static func closest_kind(pt: Node, p: Node, kind: String, radius: float) -> Node:
 	return Best.closest_kind(pt, p, kind, radius)
@@ -59,7 +51,7 @@ static func mail_at(pt: Node, clerk: Node) -> void:
 	App.note_clerk()
 	App.prog.extract_all(role)
 	var ui: Node = pt._world_ui()
-	if ui and bool(ui.get("open")) and ui.has_method("close_ui"):
+	if ui and (ui.get("open") == true) and ui.has_method("close_ui"):
 		ui.close_ui()
 
 static func clerk_role(n: Node) -> String:
@@ -106,13 +98,13 @@ static func reachable_kind(pt: Node, p: Node, prefix: String) -> Node:
 
 static func crowd(pt: Node, p: Node) -> int:
 	var n_hit: int = 0
-	var tree: SceneTree = pt.get_tree()
-	if tree == null:
+	if pt.get_tree() == null:
 		return 0
-	for e: Node in tree.get_nodes_in_group("enemies"):
-		if not pt._alive_enemy(e) or pt._is_boss(e):
+	Cache.foes(pt, p)
+	for i: int in Cache.foe_n.size():
+		if Cache.foe_boss[i] == 1:
 			continue
-		if pt._dist(p, e) <= 2.4 and pt._has_los(p, e):
+		if Cache.foe_d[i] <= 2.4 and pt._has_los(p, Cache.foe_n[i]):
 			n_hit += 1
 	return n_hit
 

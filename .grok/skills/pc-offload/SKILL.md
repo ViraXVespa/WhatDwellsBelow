@@ -38,7 +38,7 @@ Intercept (raw tool is a failed lookup, not a fallback):
 - list_dir of those trees -> list_xref.py or list_scenes.py
 - git status / git log / git diff in chat -> tools/list_changed.py
 - open whole design/code-map.md -> tools/code_map.py (row / patch / check)
-- size / newlines / indent / BOM on a live path -> tools/file_stat.py (not python -c; oversize inventory stays list_oversize_scripts.py)
+- size / newlines / indent / BOM on a live path -> tools/file_stat.py (not python -c; size inventory: check_script_cap.py --sweep)
 - python -c for bytes, newlines, tabs, or indent -> tools/file_stat.py
 - python -c / double-quoted PowerShell body / echo Set-Content of a script ->
   single-quoted here-string piped to tools/write_utf8_file.py, then

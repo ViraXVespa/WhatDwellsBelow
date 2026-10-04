@@ -54,9 +54,30 @@ gates:
   tunables_world:
     file: design/tunables-world.md
     when: world_economy_or_ui_number_change
+  web_discuss:
+    file: design/web-discuss.md
+    when: web_phase_2_discuss
+  web_plan:
+    file: design/web-plan.md
+    when: web_phase_3_plan
   web_emit:
     file: design/web-emit.md
     when: web_phase_4_emit
+  web_test:
+    file: design/web-test.md
+    when: web_phase_5_test
+  constraints_demo:
+    file: design/constraints-demo.md
+    when: calling_build_complete
+  inventory_forge:
+    file: design/inventory-forge.md
+    when: anvil_forge_flow
+  audio_sfx:
+    file: design/audio-sfx.md
+    when: wiring_or_generating_sfx_cue
+  art_attack_log:
+    file: design/art-attack-keyframes-log.md
+    when: attack_keyframe_roll_history
   versioning:
     file: design/versioning.md
     when: named_pin_or_archive
@@ -75,6 +96,9 @@ gates:
   tools_lint:
     file: design/tools-lint.md
     when: size_dupe_or_dead_code_tool
+  prove:
+    file: design/prove.md
+    when: choose_run_or_report_a_proof
   doc_library:
     file: design/doc-library.md
     when: doc_edit_tool
@@ -114,6 +138,10 @@ doors:
       kb_mouse: design/input-kb-mouse.md
       web_touch: design/input-web-touch.md
       input_live: design/input-live.md
+  localization:
+    file: design/localization.md
+    read_when: "tr(), translation keys, adding a locale"
+    jobs: {}
   camera:
     file: design/camera.md
     read_when: "Camera3D, zoom, renderer, depth sorting"
@@ -231,6 +259,7 @@ doors:
       attack_keyframes: design/art-attack-keyframes.md
       bible: design/art-bible.md
       bible_character: design/art-bible-character.md
+      enemy_bible: design/art-bible-enemy.md
   archives:
     file: design/archives.md
     read_when: "Pages builds, catalog pins"
@@ -265,6 +294,7 @@ job_read_when:
   art_pipeline.attack_keyframes: "resume parked, attack keyframes"
   art_pipeline.bible: "canon bible, layer law, quality floor"
   art_pipeline.bible_character: "identity sketch, template wording, reliability notes"
+  art_pipeline.enemy_bible: "enemy facings, prop hands, mirror swap, quiver and staff"
   gear_ui.board: "armor columns, plate icons, rarity wash, stepper neighbors"
   gear_ui.stats: "kit deltas, combat totals, hover highlight, Y preview"
   gear_ui.reequip: "re-equip lists, submenu chrome"
@@ -274,7 +304,7 @@ job_read_when:
   hub.guild: "receptionist bust, notice errands, welcome cloth"
   hub.yard: "striking dummy, Label3D priorities, post-rail fence, hopeful ambience, warmup overlay"
   hub.bake: "baked light RT, gable lids, contact puddles, HUB_SUB"
-  dungeon.gen: "maze carve, hall segments, size rebalance ledger, accidental jogs, angled halls, deadend termini, unused stone, hug clearance, outline spans"
+  dungeon.gen: "maze carve, hall segments, size rebalance ledger, accidental jogs, deadend termini, unused stone, hug clearance, outline spans"
   dungeon.gates: "PREPARE plaque, extraction clerks, stair hold, reveal disk"
   dungeon.crystals: "transport decades, warp silence, spur length"
   dungeon.stream: "RING_IN chunks, STREAM_OUT despawn, PER_FRAME geo, clip-free chunk instance"
@@ -334,6 +364,9 @@ shot_flows:
   gear_ui: "camp-anvil-tabs,camp-inventory"
   inventory: "camp-inventory"
   dungeon.gates: "dungeon-gate-shop"
+  dungeon: "dungeon-f1-spawns,dungeon-f2-spawns,dungeon-f3-spawns,dungeon-f4-spawns,dungeon-f1-props,dungeon-f1-boss,dungeon-hud-states,dungeon-f1-ambush,dungeon-f2-ambush,dungeon-f3-ambush,dungeon-f4-ambush,dungeon-f3-elites,dungeon-all-enemies"
+  ui.pause: "camp-pause-menu"
+  ui.run_flow: "camp-recap"
 
 # New UI states with no shot flow (check_shot_gaps.py --changed): Bot gate = required (bot_smokes.py and
 # run_build_gate.py --batch FAIL on a new uncovered state); Build gate = advisory (printed, never fails).
@@ -343,8 +376,18 @@ shot_gaps:
 
 # Web build performance (tools/web_perf.py, headless Chrome on the exported site): Build prove, advisory only, never a gate.
 web_perf:
-  flows: "title-idle,camp-walk"
+  flows: "title-idle,camp-idle,camp-walk,camp-pause,camp-shop,dungeon-walk,dungeon-fight,hub-load,dungeon-load"
+  baseline: tools/web-perf-baseline.json
   gate: advisory
+  # door -> flows to run after a fresh export for a slice in that door (python3 tools/web_perf.py --flow A,B --baseline <baseline>)
+  by_door:
+    default: "title-idle,camp-walk"
+    ui: "camp-pause,camp-shop"
+    graphics: "camp-walk,dungeon-walk,dungeon-fight"
+    player: "camp-walk,dungeon-walk,dungeon-fight"
+    interactables: "camp-shop,dungeon-walk"
+    hub: "hub-load,camp-walk"
+    dungeon: "dungeon-load,dungeon-walk"
 
 conflicts_with:
   inventory:
@@ -399,6 +442,16 @@ boot_max:
   bot:
     - AGENTS.md
     - BOT.md
+
+# Boot file byte budgets: current size + ~5%, rounded up to 50. check_load_graph.py fails a boot_max file above its cap.
+# Lower after a trim; raise only on a User go.
+boot_bytes:
+  AGENTS.md: 2500
+  BOT.md: 7300
+  design/web-session.md: 5750
+  design/protocol.md: 2950
+  design/constraints.md: 2650
+  design/grok-build.md: 6600
 
 fetch_ban:
   design/web-session.md:

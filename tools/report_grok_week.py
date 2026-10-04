@@ -38,13 +38,13 @@ PER_SESSION_THOUGHTS = 4
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser("Pack every WDB Grok session root in a week window.")
-    parser.add_argument("--since", default=WEEK5_SINCE)
-    parser.add_argument("--until", default=WEEK5_UNTIL)
-    parser.add_argument("--top", type=int, default=DEFAULT_TOP)
-    parser.add_argument("--out-dir", default="")
-    parser.add_argument("--pack-dir", default="")
-    parser.add_argument("--copy-path", default="")
-    parser.add_argument("--what-if", action="store_true")
+    parser.add_argument("--since", default=WEEK5_SINCE, help="First day, YYYY-MM-DD (default: the pinned week start).")
+    parser.add_argument("--until", default=WEEK5_UNTIL, help="Last day, YYYY-MM-DD (default: the pinned week end).")
+    parser.add_argument("--top", type=int, default=DEFAULT_TOP, help="Rows shown per table.")
+    parser.add_argument("--out-dir", default="", help="Output dir (default _logs/grok-week).")
+    parser.add_argument("--pack-dir", default="", help="Pack dir to read (default _logs/grok-sessions-pack).")
+    parser.add_argument("--copy-path", default="", help="Also copy the report to this path.")
+    parser.add_argument("--dry-run", "--what-if", dest="what_if", action="store_true", help="Print what would be written; write nothing.")
     return parser.parse_args(argv)
 
 
@@ -309,4 +309,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

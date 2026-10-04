@@ -1,7 +1,5 @@
 extends Object
 
-const GameVer := preload("res://scripts/data/game_ver.gd")
-
 static func esc_bb(t: String) -> String:
 	return t.replace("[", "[lb]")
 
@@ -29,7 +27,7 @@ static func md_inline(t: String) -> String:
 static func entry_bbcode(e: Dictionary, is_new: bool) -> String:
 	var lab := str(e.get("label", "")).strip_edges()
 	if lab == "":
-		lab = "Build"
+		lab = App.tr("news_fmt.build")
 	var head := "[font_size=24][b]%s[/b][/font_size]" % esc_bb(lab)
 	if is_new:
 		head = "[color=#f0d878]%s[/color]" % head
@@ -59,7 +57,7 @@ static func entry_bbcode(e: Dictionary, is_new: bool) -> String:
 
 static func news_text(rows: Array, new_labs: Dictionary) -> String:
 	if rows.is_empty():
-		return "Updates from earlier weeks are on the public changelog."
+		return App.tr("news_fmt.updates_from_earlier_weeks_are")
 	var parts: PackedStringArray = []
 	for e in rows:
 		if typeof(e) != TYPE_DICTIONARY:

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Fail if live scripts/**/*.gd are at or over the ship floor, or if two scripts share a basename (dupes=). Linux twin of check_script_cap.ps1. Grok Bot owns this cap. Grok Build prove does not run it unless the User named size."""
+"""Script size owner: FAIL (exit 1) if live scripts/**/*.gd are at or over the ship floor, or two scripts share a basename (dupes=). Linux twin of check_script_cap.ps1. Grok Bot owns this cap. Grok Build prove does not run it unless the User named size.
+
+    check_script_cap.py [--git-changed | --path P]    the gate (10,000 bytes)
+    check_script_cap.py --sweep                        list the 5-10KB scripts (inventory, exit 0)
+    check_script_cap.py --list [--over-kb 5] [--under-kb N]   list scripts in a size range, largest first (exit 0)
+"""
 
 from __future__ import annotations
 
@@ -15,7 +20,8 @@ import agent_log
 import gd_lib
 import repo_lib
 
-DEFAULT_OVER_KB = 10
+DEFAULT_OVER_KB = gd_lib.SHIP_BYTES // 1000
+SWEEP_OVER_KB = gd_lib.SWEEP_BYTES / 1000
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -24,9 +30,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--over-kb", "-OverKb",
         dest="over_kb",
         type=float,
-        default=DEFAULT_OVER_KB,
-        help="Bot-owned ship floor in KB. Limit is round(over_kb * 1000) bytes (default 10 -> 10000). Pass 5 for the Bot sweep target.",
+        default=None,
+        help="Bot-owned ship floor in KB. Limit is round(over_kb * 1000) bytes (default 10 -> 10000; 5 with --list). Pass 5 for the Bot sweep target.",
     )
+    parser.add_argument("--list", action="store_true", help="Inventory mode: list scripts at or over --over-kb (default 5), largest first; never fails.")
+    parser.add_argument("--under-kb", "-UnderKb", type=float, default=0, help="With --list: only scripts under this size in KB (0 = no upper bound).")
+    parser.add_argument("--sweep", action="store_true", help="Same as --list --over-kb 5 --under-kb 10 (the Bot sweep rows).")
     parser.add_argument(
         "--git-changed", "-GitChanged",
         dest="git_changed",
@@ -45,7 +54,21 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     root = agent_log.resolve_root(args)
+    if args.sweep:
+        args.list, args.under_kb = True, 10.0
+        args.over_kb = SWEEP_OVER_KB if args.over_kb is None else args.over_kb
+    if args.over_kb is None:
+        args.over_kb = SWEEP_OVER_KB if args.list else DEFAULT_OVER_KB
     limit = int(round(args.over_kb * 1000))
+    if args.list:
+        hi = int(round(args.under_kb * 1000)) if args.under_kb > 0 else None
+        rows = gd_lib.sizes(root, limit, hi)
+        under = f"{args.under_kb:g}" if hi else "none"
+        body = ["root=.", f"overKb={args.over_kb:g} underKb={under} count={len(rows)}", "measure=on-disk bytes", "", "bytes\tpath"] + [f"{n}\t{r}" for n, r in rows]
+        echo = [f"{len(rows)} scripts >= {args.over_kb:g}KB" + (f" and < {args.under_kb:g}KB" if hi else "")] + [f"{n:6d}  {r}" for n, r in rows[:30]]
+        if len(rows) > 30:
+            echo.append(f"... +{len(rows) - 30} more (summary file)")
+        return agent_log.finish("script-cap", root, "\n".join(body), "INFO", args=args, echo="\n".join(echo), count=len(rows))
 
     args.path = agent_log.split_list(args.path)
     if args.path:
@@ -54,8 +77,9 @@ def main(argv: list[str] | None = None) -> int:
             path = Path(raw)
             if not path.is_absolute():
                 path = root / path
-            if path.is_file():
-                files.append(path)
+            if not path.is_file():
+                agent_log.fail(f"--path {raw}: no such file (give repo-relative .gd paths, or omit for all scripts)")
+            files.append(path)
     elif args.git_changed:
         found = repo_lib.git_changed(root, "scripts")
         if found is None:
@@ -90,6 +114,10 @@ def main(argv: list[str] | None = None) -> int:
         lines.append(f"{size}\t{rel}")
     for name, paths in dupes:
         lines.append(f"DUPE\t{name}\t" + " | ".join(paths))
+    if over:
+        lines.append("next: split the file (BOT.md size flow, design/refactor.md); do not raise --over-kb")
+    if dupes:
+        lines.append("next: DUPE = rename one file; basenames are unique repo-wide")
     body = "\n".join(lines)
     return agent_log.finish(
         "script-cap", root, body, "FAIL" if over or dupes else "PASS", args=args,
@@ -98,4 +126,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

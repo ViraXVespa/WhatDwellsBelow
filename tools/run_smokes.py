@@ -16,21 +16,27 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
 import godot_lib
-from load_routes import load_routes, smoke_phases
+from load_routes import SMOKE_PHASES, check_route, load_routes, smoke_phases
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Run Godot phase smokes (--wdb-phaseN-smoke).", json_out=True)
-    ap.add_argument("--phases", "-Phases", nargs="+", default=["1,2,3,4,5,6,7,8,9"], help="Phase numbers, 1,2,6 or 1 2 6.")
+    ap.add_argument("--phases", "-Phases", nargs="+", default=[",".join(map(str, SMOKE_PHASES))], help="Phase numbers, 1,2,6 or 1 2 6.")
     ap.add_argument("--door", default="", help="Run the phases mapped to this routes.yaml door.")
     ap.add_argument("--job", default="", help="Run the phases mapped to this routes.yaml door.job.")
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=120)
+    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=120, help="Seconds per smoke phase (default 120).")
     ap.add_argument("--no-gaps", action="store_true", help="skip the advisory check_shot_gaps --changed print")
-    ap.add_argument("--verbose-godot", "-VerboseGodot", action="store_true")
+    ap.add_argument("--verbose-godot", "-VerboseGodot", action="store_true", help="Pass --verbose to Godot (leak detail rows).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     phases = agent_log.split_list(args.phases, int)
+    bad = [n for n in phases if n not in SMOKE_PHASES]
+    if bad:
+        agent_log.fail(f"bad phase {bad[0]} in --phases. Valid phases are {SMOKE_PHASES[0]}-{SMOKE_PHASES[-1]} (example: --phases 1,2,6)")
     if args.door or args.job:
+        bad_route = check_route(load_routes(root), args.door, args.job)
+        if bad_route:
+            agent_log.fail(bad_route)
         phases = smoke_phases(load_routes(root), door=args.door.strip(), job=args.job.strip())
     d = agent_log.ensure_agent_log_dir("smokes", root)
     for f in d.glob("p*-*.log"):
@@ -65,4 +71,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

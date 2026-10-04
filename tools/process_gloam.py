@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Key Imagine stills into assets/3d for the Gloam 3D view."""
 from pathlib import Path
-from PIL import Image, ImageOps, ImageFilter
+from PIL import Image, ImageFilter
 import math
 import shutil
-from sprite_lib import dist, fit_box  # noqa: E402
+from imglib import geom, imgio  # noqa: E402
+from imglib.color import dist  # noqa: E402
+from imglib.geom import fit_box  # noqa: E402
 import sys
 
 _TOOLS = Path(__file__).resolve().parent
@@ -14,9 +16,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = Path(
-    r"C:\Users\Vira\.grok\sessions\C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images"
-)
+SRC = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images")
 OUT = ROOT / "assets" / "3d"
 THRESH = 64
 FACINGS = ["right", "down_right", "down", "down_left", "left", "up_left", "up", "up_right"]
@@ -55,7 +55,7 @@ def fit(im: Image.Image, canvas: int, pad: int = 8) -> Image.Image:
 
 
 def sprite(name: str, dest: Path, canvas: int = 256) -> Image.Image:
-    im = fit(key(Image.open(SRC / name)), canvas)
+    im = fit(key(imgio.load(SRC / name)), canvas)
     dest.parent.mkdir(parents=True, exist_ok=True)
     im.save(dest)
     print("sprite", dest.relative_to(ROOT))
@@ -69,13 +69,12 @@ def copy_img(src: Path, dest: Path) -> None:
 
 
 def mirror_file(src: Path, dest: Path) -> None:
-    im = Image.open(src).convert("RGBA")
-    ImageOps.mirror(im).save(dest)
+    geom.flip(imgio.load(src)).save(dest)
     print("mirror", dest.relative_to(ROOT))
 
 
 def tile(name: str, dest: Path, size: int = 128) -> None:
-    im = Image.open(SRC / name).convert("RGB")
+    im = imgio.load(SRC / name, "RGB")
     im = im.resize((size, size), Image.Resampling.LANCZOS)
     arr = im
     rolled = Image.new("RGB", (size, size))
@@ -88,7 +87,7 @@ def tile(name: str, dest: Path, size: int = 128) -> None:
 
 
 def preview_2x2(path: Path, dest: Path) -> None:
-    t = Image.open(path).convert("RGB")
+    t = imgio.load(path, "RGB")
     s = t.size[0]
     out = Image.new("RGB", (s * 2, s * 2))
     for y in range(2):
@@ -266,11 +265,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Key Imagine stills into assets/3d for the Gloam 3D view.")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="process_gloam")
+    return agent_log.run_writer("process_gloam", "Key Imagine stills into assets/3d for the Gloam 3D view.", _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

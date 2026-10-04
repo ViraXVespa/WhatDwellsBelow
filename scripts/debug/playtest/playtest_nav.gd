@@ -3,9 +3,6 @@ extends Object
 const Los := preload("res://scripts/debug/playtest_los.gd")
 const Path := preload("res://scripts/debug/playtest_path.gd")
 
-static func world3(pt: Node) -> World3D:
-	return Los.world3(pt)
-
 static func has_los(pt: Node, a: Node, b: Node) -> bool:
 	return Los.has_los(pt, a, b)
 
@@ -30,14 +27,8 @@ static func has_los_from_wide(pt: Node, pos: Vector3, b: Node) -> bool:
 static func grid_dims(pt: Node) -> Dictionary:
 	return Los.grid_dims(pt)
 
-static func grid_floor(pt: Node, c: Vector2i) -> bool:
-	return Los.grid_floor(pt, c)
-
 static func door_cells(pt: Node, door: Node) -> Array:
 	return Los.door_cells(pt, door)
-
-static func obstacle_cell(pt: Node, c: Vector2i) -> bool:
-	return Los.obstacle_cell(pt, c)
 
 static func prop_cell(pt: Node, c: Vector2i) -> bool:
 	return Los.prop_cell(pt, c)
@@ -107,6 +98,3 @@ static func follow_goal(pt: Node, p: Node, dest: Node) -> void:
 
 static func follow_or_direct(pt: Node, p: Node, dest: Node) -> Vector2:
 	return Path.follow_or_direct(pt, p, dest)
-
-static func astar(pt: Node, p: Node, dest: Node) -> Array[Vector2i]:
-	return Path.astar(pt, p, dest)

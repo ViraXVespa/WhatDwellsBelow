@@ -3,18 +3,10 @@ extends Object
 ## Touch HUD layout and pad drawing.
 
 const Touch := preload("res://scripts/input/touch_pad.gd")
+const T := preload("res://scripts/data/tunables.gd")
 const PadInput := preload("res://scripts/ui/touch_hud/hud_input.gd")
-
-const GLYPH := {
-	"attack": "res://assets/ui/prompts/pad/rt.png",
-	"special": "res://assets/ui/prompts/pad/lt.png",
-	"dash": "res://assets/ui/prompts/pad/b.png",
-	"interact": "res://assets/ui/prompts/pad/a.png",
-	"pause": "res://assets/ui/prompts/pad/menu.png",
-	"map_view": "res://assets/ui/prompts/pad/view.png",
-	"potion": "res://assets/ui/prompts/pad/dpad_up.png",
-	"food": "res://assets/ui/prompts/pad/dpad_left.png",
-}
+const Binds := preload("res://scripts/input/binds.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 const INK := Color(0.92, 0.84, 0.62, 0.78)
 const INK_DIM := Color(0.92, 0.84, 0.62, 0.28)
@@ -34,10 +26,6 @@ static func ready(host: CanvasLayer) -> void:
 	host.root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	host.root.draw.connect(host._draw_pad)
 	host.add_child(host.root)
-	for action in GLYPH.keys():
-		var p := str(GLYPH[action])
-		if ResourceLoader.exists(p):
-			host._tex[action] = load(p)
 
 static func tick(host: CanvasLayer, _delta: float) -> void:
 	var pad_on := Touch.wants_show()
@@ -51,7 +39,7 @@ static func tick(host: CanvasLayer, _delta: float) -> void:
 
 static func layout(host: CanvasLayer) -> void:
 	var vp := host.get_viewport().get_visible_rect().size
-	var sc: float = clampf(minf(vp.x, vp.y) / 1080.0, 0.7, 1.35)
+	var sc: float = clampf(minf(vp.x, vp.y) / T.base_size().y, 0.7, 1.35)
 	host._move_r = 98.0 * sc
 	var sr0 := 28.0 * sc
 	var gap0 := 6.0 * sc
@@ -115,9 +103,14 @@ static func knob(host: CanvasLayer, c: Vector2, r: float) -> void:
 	host.root.draw_arc(c, r, 0.0, TAU, 32, RING, 2.0, true)
 
 static func glyph(host: CanvasLayer, action: String, c: Vector2, r: float, dim := false) -> void:
-	if not host._tex.has(action):
+	var p: String = Prompts.path_for_event(Binds.slot_event(action, "pad", 0), "pad")
+	if p == "":
 		return
-	var tex: Texture2D = host._tex[action]
+	if not host._tex.has(p):
+		host._tex[p] = load(p) if ResourceLoader.exists(p) else null
+	var tex: Texture2D = host._tex[p]
+	if tex == null:
+		return
 	var s := r * 1.15
 	var dest := Rect2(c - Vector2(s, s) * 0.5, Vector2(s, s))
 	host.root.draw_texture_rect(tex, dest, false, INK_DIM if dim else INK)

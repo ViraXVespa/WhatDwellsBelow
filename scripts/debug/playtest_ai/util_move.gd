@@ -39,6 +39,9 @@ static func tick_motion(pt: Node, p: Node, delta: float) -> void:
 	pt.set_meta("dash_cd", maxf(0.0, load("res://scripts/debug/playtest_ai/ai_util.gd")._meta_f(pt, "dash_cd", 0.0) - delta))
 
 static func do_unstick(pt: Node) -> void:
+	if pt.get("perf") is Dictionary:
+		pt.perf["unstick_n"] = int(pt.perf.get("unstick_n", 0)) + 1
+		pt.perf["stuck_max"] = maxf(float(pt.perf.get("stuck_max", 0.0)), pt.stuck_t)
 	load("res://scripts/debug/playtest_ai/ai_util.gd")._ban(pt, load("res://scripts/debug/playtest_ai/ai_util.gd")._meta_n(pt, "lock_n"))
 	if pt.path_goal:
 		load("res://scripts/debug/playtest_ai/ai_util.gd")._ban(pt, pt.path_goal)

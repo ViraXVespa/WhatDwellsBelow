@@ -5,6 +5,7 @@ extends Object
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Text := preload("res://scripts/ui/gear_board/board_text.gd")
 const Pad := preload("res://scripts/ui/menu_pad.gd")
+const InputPad := preload("res://scripts/input/pad.gd")
 const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
 const Sub := preload("res://scripts/ui/gear_board/board_sub.gd")
 const Items := preload("res://scripts/ui/gear_board/act_items.gd")
@@ -28,7 +29,7 @@ static func tick_x(ui: CanvasLayer, delta: float) -> void:
 		ui.gear_x_hold = 0.0
 		ui.gear_x_fired = false
 		return
-	var down := Input.is_action_pressed("gear_drop") or Input.is_physical_key_pressed(KEY_X) or joy_down(JOY_BUTTON_X)
+	var down := Input.is_action_pressed("gear_drop") or InputPad.pad_down("gear_drop")
 	if down:
 		ui.gear_x_hold = float(ui.gear_x_hold) + delta
 		if float(ui.gear_x_hold) >= HOLD_DESTROY and not bool(ui.gear_x_fired):
@@ -39,12 +40,6 @@ static func tick_x(ui: CanvasLayer, delta: float) -> void:
 			Items.drop(ui)
 		ui.gear_x_hold = 0.0
 		ui.gear_x_fired = false
-
-static func joy_down(btn: int) -> bool:
-	for id: int in Input.get_connected_joypads():
-		if Input.is_joy_button_pressed(id, btn):
-			return true
-	return false
 
 static func input_tick(ui: CanvasLayer, event: InputEvent) -> bool:
 	return handle_event(ui, event)
@@ -96,14 +91,7 @@ static func back_sub(ui: CanvasLayer) -> void:
 static func is_tip(event: InputEvent) -> bool:
 	if event is InputEventMouse:
 		return false
-	if event.is_action_pressed("gear_tip") and not event.is_echo():
-		return true
-	if event is InputEventKey and event.pressed and not event.echo:
-		var k := event as InputEventKey
-		return k.physical_keycode == KEY_Y or k.keycode == KEY_Y
-	if event is InputEventJoypadButton and event.pressed:
-		return (event as InputEventJoypadButton).button_index == JOY_BUTTON_Y
-	return false
+	return event.is_action_pressed("gear_tip") and not event.is_echo()
 
 static func cycle_tip(ui: CanvasLayer) -> void:
 	ui.gear_tip_mode = (int(ui.gear_tip_mode) + 1) % 3

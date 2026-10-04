@@ -10,11 +10,11 @@ Every value **MUST** be exposed in the debug menu and treated as non-final.
 Suggested starts are seeds only.
 Live defaults are what `balance.gd` / `tunables.gd` ship today.  
 If you change a live default, update this table in the same slice.
-This is a curated table, not a list of every balance key. A number with no row here: add one (name, suggested, live, note) in the same slice, via `tunables.py`; do not hunt for a row that does not exist.
+This is a curated table, not a list of every balance key. A number with no row here: add one in the same slice: `python3 tools/tunables.py add --after <neighbor key> --key NEW_KEY --set <live>` (same table, other cells `-`; fill suggested and note with `doc_patch.py replace`); do not hunt for a row that does not exist.
 
 List one key with `python3 tools/tunables.py get --key CAM_PITCH` (summary: `_logs/tunable-row/summary.txt`). Patch one Live cell with `python3 tools/tunables.py set --key CAM_PITCH --set -58` (summary: `_logs/tunable-patch/summary.txt`). Do not open this whole file to change one number.
 
-`BAL_REV` is 13. Old saves pick up shipped default retunes through `migrate.gd`.
+`BAL_REV` is 14. Old saves pick up shipped default retunes through `migrate.gd`.
 
 Forge keys missing from `balance.gd` fall back inside `progress_forge.gd` / `gear_roll.gd`; a slice that adds a key also adds it to balance and the debug menu.
 
@@ -48,9 +48,14 @@ Forge keys missing from `balance.gd` fall back inside `progress_forge.gd` / `gea
 | `BITTER_LOOP_DEFAULT` | 15.52 |
 | `PATREON_URL` | https://www.patreon.com/cw/ViraXVespa |
 | `ARCHIVE_ID_FULL_3D` | full_3d_pass |
-| `ARCHIVE_LABEL_FULL_3D` | Full 3D Pass |
 | Archive catalog | `scripts/data/archive_catalog.json` |
 | `TOUCH_DEAD` | 0.24 |
+| `DYNRES_ON` | true. Off: false here, or launch flag `--wdb-no-dynres` (web `?wdb-no-dynres`) |
+| `DYNRES_FPS_LOW` / `DYNRES_FPS_HIGH` | 40 / 55 (3D scale drops under LOW, may climb back at HIGH+) |
+| `DYNRES_STEP` / `DYNRES_MIN` | 0.1 / 0.6 (`scaling_3d_scale` starts 1.0; `dyn_res.gd`) |
+| `DYNRES_WINDOW_S` / `DYNRES_HITCH_S` | 1.5 / 0.5 (fps window; longer frames are ignored) |
+| `DYNRES_RECOVER_WINDOWS` / `DYNRES_BACKOFF_MAX` | 8 / 8 (windows at HIGH per climb; a failed climb doubles the wait up to 8x) |
+| `WARM_FRAMES_MAX` | 6 (`pump_fps` cap; early exit on 2 frames <= 17 ms or `WARM_STEADY_N` 3 deltas within `WARM_STEADY_MS` 3 ms) |
 
 ## Ground field
 
@@ -65,7 +70,7 @@ World-xz sheets on grass pads, packed yard, and dungeon floors. Debug menu categ
 
 ## Light buffer
 
-Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub adds one wide sun disc. Debug menu reads the same keys. Do not retune range or energy to fake smoothness.
+Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub adds one wide sun disc. Debug menu category Lighting reads the same keys. Do not retune range or energy to fake smoothness.
 
 | Key | Live |
 |-----|------|
@@ -104,7 +109,7 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | Crit mult | 2× | 2.0 | Gear adds `crit_dmg` on top |
 | Adrenaline kill window | 4.5 s | 4.5 | |
 | Adrenaline kill threshold | 4 | 4 | |
-| Adrenaline speed / XP stack / timeout | — | 1.35 / 0.15 / 4.5 | |
+| Adrenaline speed / XP stack / XP max / timeout | — | 1.35 / 0.15 / 2.0 / 4.5 | |
 | Knockback / hitstop | — | 3.4 / 0.055 | Dummy ignores knockback |
 | Player max HP | — | 100 | |
 | Hurt i-frame | — | 0.35 | |
@@ -112,10 +117,10 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | Aim-line on / opacity / width | on | true / 0.85 / 0.08 | Bow line is shoulder height. Mesh hidden until `update_line`. |
 | Aim-line use weapon range / length | — | true / 4.0 | Gear `atk_range` extends reach |
 | Cover full-band / edge mult | — | 0.18 / 0.35 | Full damage until the last 18% of fan radius |
-| Cover columns / alpha | — | 28 / 0.4 | Opaque mask grid |
-| Pierce stop | — | 0.85 | Arrow despawns at this coverage |
-| Arrow tip radius | — | 0.16 | Head disk. Far hosts skip `hit_shot`. |
-| Bow path width | — | 0.08 | Special spread line width |
+| Cover columns / alpha | — | 24 / 0.4 | Opaque mask grid |
+| Pierce stop | — | 0.85 | Arrow despawns at this coverage. Fixed in `Cover.stops_arrow`, no key |
+| Arrow tip radius | — | 0.28 | Head disk. Far hosts skip `hit_shot`. |
+| Bow path width | — | 0.12 | Special spread line width |
 
 ## Gathering (hit-based)
 

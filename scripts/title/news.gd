@@ -2,7 +2,6 @@ extends Object
 
 const GameVer := preload("res://scripts/data/game_ver.gd")
 const Show := preload("res://scripts/title/news_show.gd")
-const Fmt := preload("res://scripts/title/news_fmt.gd")
 
 static func all_entries() -> Array:
 	var rows: Array = []
@@ -39,21 +38,6 @@ static func open_updates(host: Node) -> void:
 
 static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	Show.show_news(host, older, new_labs)
-
-static func lock_news_focus(close_btn: Button, older_btn: Button) -> void:
-	Fmt.lock_news_focus(close_btn, older_btn)
-
-static func esc_bb(t: String) -> String:
-	return Fmt.esc_bb(t)
-
-static func md_inline(t: String) -> String:
-	return Fmt.md_inline(t)
-
-static func entry_bbcode(e: Dictionary, is_new: bool) -> String:
-	return Fmt.entry_bbcode(e, is_new)
-
-static func news_text(rows: Array, new_labs: Dictionary) -> String:
-	return Fmt.news_text(rows, new_labs)
 
 static func dismiss(host: Node) -> void:
 	if App.has_method("ack_game_ver"):

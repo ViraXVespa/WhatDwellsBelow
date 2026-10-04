@@ -8,10 +8,12 @@ const LOGO_XAI := "res://assets/ui/logo_xai.png"
 const TAG := "res://assets/ui/splash_shamelessly.png"
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 var _done := false
 var fade: ColorRect
 var card: Control
+var _cont: Label
 var _t := 0.0
 
 func _ready() -> void:
@@ -65,7 +67,7 @@ func _ready() -> void:
 	card.add_theme_constant_override("separation", 14)
 	add_child(card)
 
-	card.add_child(_lab("A  @ViraXVespa  production", 20, Color(0.78, 0.62, 0.86)))
+	card.add_child(_lab(tr("splash.a_viraxvespa_production"), 20, Color(0.78, 0.62, 0.86)))
 	card.add_child(_credit())
 
 	var marks := HBoxContainer.new()
@@ -76,7 +78,8 @@ func _ready() -> void:
 	marks.add_child(_mark(LOGO_GROK, "GROK"))
 	marks.add_child(_mark(LOGO_XAI, "xAI"))
 
-	card.add_child(_lab("A / Start  to continue", 16, Color(0.7, 0.68, 0.74, 0.8)))
+	_cont = _lab(Prompts.fmt(tr("splash.a_start_to_continue")), 16, Color(0.7, 0.68, 0.74, 0.8))
+	card.add_child(_cont)
 
 	fade = ColorRect.new()
 	ThemeS.fill(fade)
@@ -114,7 +117,7 @@ func _credit() -> Control:
 	var shell := Control.new()
 	shell.custom_minimum_size = Vector2(0, 216)
 	shell.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var line := _lab("Proudly Vibecoded with Grok", 40, Color(0.98, 0.86, 0.38))
+	var line := _lab(tr("splash.proudly_vibecoded_with_grok"), 40, Color(0.98, 0.86, 0.38))
 	line.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	line.offset_top = -58.0
 	line.offset_bottom = 0.0
@@ -144,7 +147,7 @@ func _credit() -> Control:
 		tag.rotation_degrees = -7.0
 		shell.add_child(tag)
 	else:
-		var tag := _lab("Shamelessly", 52, Color(1.0, 0.32, 0.62))
+		var tag := _lab(tr("splash.shamelessly"), 52, Color(1.0, 0.32, 0.62))
 		tag.rotation_degrees = -8.0
 		tag.position = Vector2(-79, 87)
 		shell.add_child(tag)
@@ -204,6 +207,8 @@ func _lab(text: String, font_px: int, col: Color) -> Label:
 
 func _process(delta: float) -> void:
 	_t += delta
+	if _cont:
+		_cont.text = Prompts.fmt(tr("splash.a_start_to_continue"))
 	if _t < 0.7:
 		fade.color.a = 1.0 - _t / 0.7
 		card.modulate.a = clampf(_t / 0.45, 0.0, 1.0)

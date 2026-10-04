@@ -92,10 +92,10 @@ func _take(p: Node) -> void:
 			_block_t = 0.45
 			return
 		p.heal(App.bal.orb_heal)
-		App.toast("+HP")
+		App.toast(tr("pickup.hp"))
 	elif kind == "gold":
 		App.gain_gold(maxi(1, amount))
-		App.toast("+%dg" % maxi(1, amount))
+		App.toast(tr("common.g") % maxi(1, amount))
 	elif kind == "item":
 		if not App.prog.add_item(item):
 			_block_t = 1.2

@@ -1,5 +1,6 @@
 extends Object
 
+const LocS := preload("res://scripts/app/app_loc.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const Balance := preload("res://scripts/data/balance.gd")
@@ -27,7 +28,7 @@ static func start(ui: CanvasLayer) -> void:
 	else:
 		paid = ForgeP.pay(App.prog, cost)
 	if not paid:
-		ui._st("Not enough banked materials.")
+		ui._st(App.tr("anvil_forge_job.not_enough_banked_materials"))
 		return
 	ui.forge_batch = []
 	ui.forge_picks = []
@@ -35,7 +36,7 @@ static func start(ui: CanvasLayer) -> void:
 	ui.forge_left = qty
 	ui.forge_phase = "work"
 	_spin_next(ui, slot, type_id, rarity, ilvl)
-	ui._st("Forging 1 of %d…" % qty)
+	ui._st(App.tr("anvil_forge_job.forging_1_of") % qty)
 	load("res://scripts/ui/gear_board/anvil_forge.gd")._reload(ui, slot)
 
 static func finish(ui: CanvasLayer) -> void:
@@ -68,11 +69,11 @@ static func cancel_job(ui: CanvasLayer) -> void:
 	if ui.get("forge_batch") is Array:
 		made = ui.forge_batch.size()
 	if made > 0:
-		ui._st("Stopped the queue. Pick from the %d finished piece%s." % [made, "" if made == 1 else "s"])
+		ui._st(LocS.plural("anvil_forge_job.stopped_the_queue_pick_from", made) % made)
 		_open_pick(ui)
 		return
 	ui.forge_phase = ""
-	ui._st("Forge cancelled. Materials stay spent.")
+	ui._st(App.tr("common.forge_cancelled_materials_stay_s"))
 	load("res://scripts/ui/gear_board/anvil_forge.gd")._reload(ui, str(ui.gear_sub_slot))
 
 static func refresh_bar(ui: CanvasLayer) -> void:
@@ -86,13 +87,13 @@ static func refresh_bar(ui: CanvasLayer) -> void:
 	var lab: Node = panel.find_child("forge_bar_lab", true, false)
 	if lab is Label:
 		var done: int = maxi(0, int(ui.forge_need) - int(ui.forge_left)) + 1
-		(lab as Label).text = "Forging %d of %d" % [mini(done, maxi(1, int(ui.forge_need))), maxi(1, int(ui.forge_need))]
+		(lab as Label).text = App.tr("common.forging_of") % [mini(done, maxi(1, int(ui.forge_need))), maxi(1, int(ui.forge_need))]
 
 static func _fill_work(ui: CanvasLayer, box: Control) -> Control:
 	var need: int = maxi(1, int(ui.get("forge_need")))
 	var left: int = maxi(0, int(ui.get("forge_left")))
 	var done: int = clampi(need - left + 1, 1, need)
-	var lab := ThemeS.lab("Forging %d of %d" % [done, need], 20, Color(0.95, 0.82, 0.5))
+	var lab := ThemeS.lab(App.tr("common.forging_of") % [done, need], 20, Color(0.95, 0.82, 0.5))
 	lab.name = "forge_bar_lab"
 	box.add_child(lab)
 	var wait: float = maxf(0.01, float(ui.get("forge_wait")))
@@ -104,7 +105,7 @@ static func _fill_work(ui: CanvasLayer, box: Control) -> Control:
 	bar.custom_minimum_size = Vector2(520, 28)
 	bar.show_percentage = false
 	box.add_child(bar)
-	box.add_child(ThemeS.lab("%.1fs left on this piece. Back stops the queue." % float(ui.forge_t), 16, Color(0.82, 0.76, 0.66)))
+	box.add_child(ThemeS.lab(App.tr("anvil_forge_job.s_left_on_this_piece") % float(ui.forge_t), 16, Color(0.82, 0.76, 0.66)))
 	return null
 
 static func _spin_next(ui: CanvasLayer, slot: String, type_id: String, rarity: String, ilvl: int) -> void:

@@ -2,7 +2,8 @@
 from pathlib import Path
 from PIL import Image
 import math
-from sprite_lib import dist  # noqa: E402
+from imglib import imgio  # noqa: E402
+from imglib.color import dist  # noqa: E402
 import sys
 
 _TOOLS = Path(__file__).resolve().parent
@@ -30,7 +31,7 @@ CANVAS = 128
 
 
 def key_and_fit(src: Path, dest: Path) -> None:
-    im = Image.open(src).convert("RGBA")
+    im = imgio.load(src)
     px = im.load()
     w, h = im.size
     for y in range(h):
@@ -70,11 +71,8 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("process_sprites")
-    ap.parse_args(argv)
-    _run()
-    return agent_log.emit_result("PASS", tool="process_sprites")
+    return agent_log.run_writer("process_sprites", 'Key numbered _src stills (1.jpg ...) into engine sprites.', _run, argv, globals())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

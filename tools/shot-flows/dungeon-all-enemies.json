@@ -1,0 +1,269 @@
+{
+  "name": "dungeon-all-enemies",
+  "about": "Dungeon floor 1, seed 42: all twelve normal enemy types in two rows (slime bat spider wolf beetle wisp / goblin orc skeleton archer shaman imp) in the empty extract-gate room. They are added with host._add_enemy once the player is in the room, then frozen.",
+  "scene": "dungeon",
+  "seed": 42,
+  "floor": 1,
+  "zoom": 2.0,
+  "settle_ms": 0,
+  "fixed_fps": 60,
+  "covers": [],
+  "smoke": true,
+  "steps": [
+    {
+      "op": "freeze",
+      "group": "enemies"
+    },
+    {
+      "op": "assert",
+      "target": "App.floor_n",
+      "equals": 1
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            418.5,
+            0,
+            373.3
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "call",
+      "target": "host",
+      "method": "_add_enemy",
+      "args": [
+        "slime",
+        {
+          "v3": [
+            414.75,
+            0,
+            368.6
+          ]
+        },
+        9001,
+        false,
+        ""
+      ]
+    },
+    {
+      "op": "call",
+      "target": "host",
+      "method": "_add_enemy",
+      "args": [
+        "bat",
+        {
+          "v3": [
+            416.25,
+            0,
+            368.6
+          ]
+        },
+        9001,
+        false,
+        ""
+      ]
+    },
+    {
+      "op": "call",
+      "target": "host",
+      "method": "_add_enemy",
+      "args": [
+        "spider",
+        {
+          "v3": [
+            417.75,
+            0,
+            368.6
+          ]
+        },
+        9001,
+        false,
+        ""
+      ]
+    },
+    {
+      "op": "call",
+      "target": "host",
+      "method": "_add_enemy",
+      "args": [
+        "wolf",
+        {
+          "v3": [
+            419.25,
+            0,
+            368.6
+          ]
+        },
+        9001,
+        false,
+        ""
+      ]
+    },
+    {
+      "op": "call",
+      "target": "host",
+      "method": "_add_enemy",
+      "args": [
+        "beetle",
+        {
+          "v3": [
+            420.75,
+            0,
+            368.6
+          ]
+        },
+        9001,
+        false,
+        ""
+      ]
+    },
+    {
+      "op": "call",
+      "target": "host",
+      "method": "_add_enemy",
+      "args": [
+        "wisp",
+        {
+          "v3": [
+            422.25,
+            0,
+            368.6
+          ]
+        },
+        9001,
+        false,
+        ""
+      ]
+    },
+    {
+      "op": "call",
+      "target": "host",
+      "method": "_add_enemy",
+      "args": [
+        "goblin",
+        {
+          "v3": [
+            414.75,
+            0,
+            370.90000000000003
+          ]
+        },
+        9001,
+        false,
+        ""
+      ]
+    },
+    {
+      "op": "call",
+      "target": "host",
+      "method": "_add_enemy",
+      "args": [
+        "orc",
+        {
+          "v3": [
+            416.25,
+            0,
+            370.90000000000003
+          ]
+        },
+        9001,
+        false,
+        ""
+      ]
+    },
+    {
+      "op": "call",
+      "target": "host",
+      "method": "_add_enemy",
+      "args": [
+        "skeleton",
+        {
+          "v3": [
+            417.75,
+            0,
+            370.90000000000003
+          ]
+        },
+        9001,
+        false,
+        ""
+      ]
+    },
+    {
+      "op": "call",
+      "target": "host",
+      "method": "_add_enemy",
+      "args": [
+        "archer",
+        {
+          "v3": [
+            419.25,
+            0,
+            370.90000000000003
+          ]
+        },
+        9001,
+        false,
+        ""
+      ]
+    },
+    {
+      "op": "call",
+      "target": "host",
+      "method": "_add_enemy",
+      "args": [
+        "shaman",
+        {
+          "v3": [
+            420.75,
+            0,
+            370.90000000000003
+          ]
+        },
+        9001,
+        false,
+        ""
+      ]
+    },
+    {
+      "op": "call",
+      "target": "host",
+      "method": "_add_enemy",
+      "args": [
+        "imp",
+        {
+          "v3": [
+            422.25,
+            0,
+            370.90000000000003
+          ]
+        },
+        9001,
+        false,
+        ""
+      ]
+    },
+    {
+      "op": "freeze",
+      "group": "enemies"
+    },
+    {
+      "op": "wait",
+      "ms": 500
+    },
+    {
+      "op": "shot",
+      "name": "lineup"
+    }
+  ]
+}

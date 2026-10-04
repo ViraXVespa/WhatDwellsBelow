@@ -23,9 +23,9 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     job = args.job or args.job_pos
+    logs = root / "_logs"
+    names = sorted(d.name for d in logs.iterdir() if (d / "summary.txt").is_file()) if logs.is_dir() else []
     if not job and not args.path:
-        logs = root / "_logs"
-        names = sorted(d.name for d in logs.iterdir() if (d / "summary.txt").is_file()) if logs.is_dir() else []
         print("usage: python3 tools/read_summary.py --job <name>")
         print("jobs: " + (", ".join(names) or "(none yet)"))
         return 2
@@ -33,11 +33,11 @@ def main(argv: list[str] | None = None) -> int:
     if not full.is_absolute():
         full = root / full
     if not full.is_file():
-        print(f"missing {agent_log.rel(root, full)}")
+        print(f"error: missing {agent_log.rel(root, full)}; jobs with a summary: {', '.join(names) or '(none yet)'}", file=sys.stderr)
         return 1
     sys.stdout.write(full.read_text(encoding="utf-8", errors="replace"))
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(agent_log.guarded(main))

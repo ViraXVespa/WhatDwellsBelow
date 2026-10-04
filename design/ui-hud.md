@@ -24,10 +24,10 @@ The HUD is a persistent horizontal strip that MUST remain visible at all times d
 | Boss / Floor Guardian / Gate Master HP bar | Appears only while the boss is alive and in range / engaged |
 | Interact prompt | Last-used `interact` glyph plus the verb from the focused interactable. Locked / spent lines are text only |
 
-Bag-fullness indicator is explicitly removed and MUST NOT appear.
+There is no bag-fullness indicator and one MUST NOT appear.
 All cooldowns MUST show both a visual fill/sweep and be understandable at a glance. Exact pixel positions, colors, and sizes are left to implementation so long as the information hierarchy is preserved and the strip does not obscure critical gameplay.
 
-The web touch overlay sits on `CanvasLayer` 28 (HUD is 20, pause is 55). The move stick lives in the left half below the HUD. The right cluster is a 2×2 of large wells (attack / special / interact / dash) with a row of four small wells above it (map, food, potion, pause). Live anchor is about 86% across and 78% down the viewport, clamped off the bezel. The right cluster is 25% larger than the pre-tune wells and grows toward the top-left so dash / special stay put. It must not cover the gauntlet strip or the minimap. A look-mode cue may appear under the minimap.
+The web touch overlay sits on `CanvasLayer` 28 (HUD is 20, pause is 55). The move stick lives in the left half below the HUD. The right cluster is a 2×2 of large wells (attack / special / interact / dash) with a row of four small wells above it (map, food, potion, pause). Live anchor is about 86% across and 78% down the viewport, clamped off the bezel. The right cluster is uses 25% larger wells and grows toward the top-left so dash / special stay put. It must not cover the gauntlet strip or the minimap. A look-mode cue may appear under the minimap.
 
 ## Web touch overlay
 

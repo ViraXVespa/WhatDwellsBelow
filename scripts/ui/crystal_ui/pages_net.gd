@@ -28,8 +28,8 @@ static func net_tabs(host, box: VBoxContainer) -> void:
 	var local_ok := CrystalNet.local_unlocked(host.host)
 	var floor_ok := CrystalNet.floor_unlocked()
 	var on_local: bool = str(host.page) == "local"
-	var b1 := ThemeS.btn("Local", func(): go_local(host), local_ok)
-	var b2 := ThemeS.btn("Floors", func(): go_floors(host), floor_ok)
+	var b1 := ThemeS.btn(App.tr("pages_net.local"), func(): go_local(host), local_ok)
+	var b2 := ThemeS.btn(App.tr("pages_net.floors"), func(): go_floors(host), floor_ok)
 	b1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b1.custom_minimum_size = Vector2(160, 44)
@@ -67,25 +67,25 @@ static func page_root(host) -> void:
 	box.size = Vector2(816, 556)
 	box.add_theme_constant_override("separation", 10)
 	host.add_child(box)
-	box.add_child(ThemeS.lab("Floor Crystal", 30, Color(0.95, 0.82, 0.5)))
+	box.add_child(ThemeS.lab(App.tr("pages_net.floor_crystal"), 30, Color(0.95, 0.82, 0.5)))
 	var cl := 1
 	if host.spot:
 		cl = int(host.spot.get("crystal_cl"))
-	box.add_child(ThemeS.lab("F%d  ·  CL %d" % [App.floor_n, cl], 20, Color(0.78, 0.86, 0.9)))
+	box.add_child(ThemeS.lab(App.tr("pages_net.f_cl") % [App.floor_n, cl], 20, Color(0.78, 0.86, 0.9)))
 	var local_ok := CrystalNet.local_unlocked(host.host)
 	var floor_ok := CrystalNet.floor_unlocked()
-	var b1 := ThemeS.btn("Local Transport Network", func(): go_local(host), local_ok)
+	var b1 := ThemeS.btn(App.tr("common.local_transport_network"), func(): go_local(host), local_ok)
 	if not local_ok:
-		b1.text = "Local Transport Network  (bind another crystal)"
+		b1.text = App.tr("pages_net.local_transport_network_bind_ano")
 	box.add_child(b1)
 	host.focus_btn = b1 if local_ok else null
-	var b2 := ThemeS.btn("Floor Transport Network", func(): go_floors(host), floor_ok)
+	var b2 := ThemeS.btn(App.tr("common.floor_transport_network"), func(): go_floors(host), floor_ok)
 	if not floor_ok:
-		b2.text = "Floor Transport Network  (reach a deeper floor)"
+		b2.text = App.tr("pages_net.floor_transport_network_reach_a")
 	box.add_child(b2)
 	if host.focus_btn == null and floor_ok:
 		host.focus_btn = b2
-	var back := ThemeS.btn("Back", func(): host.close_ui())
+	var back := ThemeS.btn(App.tr("common.back"), func(): host.close_ui())
 	box.add_child(back)
 	if host.focus_btn == null:
 		host.focus_btn = back

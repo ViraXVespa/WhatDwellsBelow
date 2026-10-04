@@ -1,8 +1,6 @@
 extends Object
 
-const ThemeS := preload("res://scripts/ui/theme.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
-const CrystalNet := preload("res://scripts/world/crystal/net.gd")
 
 const ZOOM_NEAR := 96
 
@@ -20,11 +18,11 @@ static func zoom_view(ui: CanvasLayer, host: Node) -> int:
 static func zoom_tip(ui: CanvasLayer) -> String:
 	match ui.zoom_lv:
 		1:
-			return "Zoom: mid"
+			return App.tr("ui_util.zoom_mid")
 		2:
-			return "Zoom: full floor"
+			return App.tr("ui_util.zoom_full_floor")
 		_:
-			return "Zoom: close"
+			return App.tr("ui_util.zoom_close")
 
 static func zoom_event(event: InputEvent) -> bool:
 	return event.is_action_pressed("crystal_zoom")

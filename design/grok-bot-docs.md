@@ -3,43 +3,35 @@
 Status: protocol  
 Read when: Grok Bot Job table → doc facade / sibling split  
 
-Boot `BOT.md` + `python3 tools/bot_status.py` first. Binding for **Grok Bot** documentation facade sweeps only. Recipe: `design/doc-refactor.md`. No binding-meaning change. No live `.gd` size sweep in this PR unless a touched script path in a code map row must stay accurate.
-
+Binding for **Grok Bot** documentation facade sweeps only. Recipe: `design/doc-refactor.md`. No binding-meaning change. No live `.gd` size sweep in this PR unless a touched script path in a code map row must stay accurate.
 
 ## Mandate
 
-Size, prove, changelog, and `version.json` rules live in `BOT.md`.
-
-Split fat topic `design/*.md` files to art_pipeline + siblings layout. Caps, pass order, and facade checklist live in `design/doc-refactor.md`.
-
-- Door: prefer under **4KB** — Job table + non-negotiables. No live-snapshot dumps.
-- Sibling: prefer under **8KB**. Split again if one `##` section dominates.
-- Hard stop: do not leave a **touched** topic file above **~12KB** if a legal section split exists.
-- Callers keep linking the **facade path** unless they need one sibling.
-- One facade plus its new siblings per editing focus. Show the worklist; do not edit yet.
+Split fat topic `design/*.md` files to the art_pipeline door + siblings layout, or trim them for signal-to-noise (below). Caps (door 4KB, sibling 8KB, hard stop ~12KB), pass order and facade checklist: `design/doc-refactor.md`. One facade plus its new siblings per editing focus. Show the worklist; do not edit yet.
 
 Out of scope: rewriting `design/changelog/**` history, `docs/` Pages export, mixing this sweep into a live script size sweep without User go, inventing systems.
 
 ## Read set
 
-1. This file
-2. `design/doc-refactor.md`
-3. The `design/README.md` topic index row for the door
-4. After inventory: that one door and only sibling_for_the_active
-5. At ship: `design/versioning-log.md` body shape — not the changelog tree and not `scripts/data/version.json`
+1. `design/doc-refactor.md`
+2. The `design/README.md` topic index row for the door
+3. After inventory: that one door and only the sibling for the active job
 
-Do not concatenate all siblings into context. Do not open the staged reuse brief. Prefer Length / heading lists over pasting whole markdown bodies. Oversize list: file Length (skip `design/changelog/`).
+Do not concatenate all siblings into context. Do not open the staged reuse brief. Prefer Length / heading lists over pasting whole markdown bodies.
 
 ## Pass
 
-1. Inventory topic files by Length. Rank over ~12KB, then over ~8KB. Show worklist.
-2. Split named first. Move existing prose. Fix links and README index rows. Update `design/code-map.md` only if a script path in a row must stay accurate.
-3. Job table must cover every former top-level `##` cluster (or route to an existing sibling topic).
-4. Live snapshots travel with matching sibling, not the door.
-5. Sibling `See also` may name boundary **topic doors** only. It must not name the parent already open, siblings of current, path/session files, or a path that does not exist. See also is never a read list.
-6. Grep for stale “read the whole of X” wording; point at the Job table.
-7. One `design/changelog/{label}.md` for the PR.
-8. `python3 tools/check_tool_docs.py --stale-refs` (dead paths and identifiers in docs; `--narration` lists stale-sounding lines to rewrite in present tense). Prove per BOT.md.
-## Verify
+1. Inventory: `python3 tools/list_oversize_docs.py` (skips `design/changelog/`). Rank over ~12KB, then over ~8KB. Show worklist.
+2. Split named first. Move existing prose. Fix links and README index rows. Update `design/code-map.md` only if a script path in a row must stay accurate. The Job table must cover every former top-level `##` cluster (or route to an existing sibling topic). Live snapshots travel with the matching sibling, not the door. No `See also` fields (load-graph bans them). Grep for stale "read the whole of X" wording; point at the Job table.
+3. One `design/changelog/{label}.md` for the PR.
+4. `python3 tools/check_tool_docs.py --stale-refs --narration` (dead paths and identifiers fail; narration lines are advisory: rewrite in present tense or delete). Prove: `BOT.md`.
 
-Prove per BOT.md.
+## Signal-to-noise sweep
+
+When the User asks for a trim rather than a split. Binding meaning and live rules stay; only noise goes.
+
+1. Measure: `python3 tools/list_oversize_docs.py --boot --dupes` (sizes, boot-chain bytes per path, sentences repeated across docs; add `--over-kb 6` to widen the band).
+2. Pick one canonical home per repeated rule (the file that owns the topic: `design/tools.md` for tool and gate rules, `BOT.md` for Bot rules, `design/refactor.md` for placement and owner rules). Elsewhere keep a one-line pointer or nothing.
+3. Delete obsolete history prose, boilerplate headers that restate another file, empty numbered stubs. Boot-chain files (the agents file, path files, `BOT.md`) get the hardest cut: every token is paid on every cold start.
+4. Rewrite CRLF/BOM files through `md_format_lib` or an editor that keeps both; compare `git diff --stat` for whole-file churn.
+5. Gates once: `check_tool_docs.py --stale-refs --narration`, `check_load_graph.py`, `check_tool_docs.py`, `check_tool_cli.py` if a tool changed. Design choices that are the User's go in the PR body as numbered questions with options.

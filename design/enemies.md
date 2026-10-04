@@ -16,7 +16,7 @@ Code: `scripts/combat/enemy.gd`, `roster.gd`, `telegraph.gd`, `scripts/combat/th
 
 ## Art and I2V
 
-Enemy frames follow art_pipeline. There is not a second enemy pipeline. 8-dir Bible layout, plate seed, remap, and review-gate law live there.
+Enemy frames follow art_pipeline (directional sets with props: its enemy_bible job). There is not a second enemy pipeline. 8-dir Bible layout, plate seed, remap, and review-gate law live there.
 
 ## Roles present in demo
 
@@ -52,7 +52,7 @@ Floor Guardians (floors 1–4) and the Gate Master (floor 5) MUST have high heal
 Floor band, rank-multiplier feel, and the floor-1 CL 17 budget: combat. Live keys: the tunables gate.
 
 - Enemy CL is walked from spawn travel distance (`Threat.level_at`).
-- Base HP lives in `enemies.gd` and is about double the pre-retune table. Packs MUST take more than one swing.
+- Base HP lives in `enemies.gd` and holds the values. Packs MUST take more than one swing.
 
 ## AI behavior
 
@@ -106,3 +106,7 @@ Live AI defaults: leash 9, hunt 1.8, reaggro 0.6, aggro 7.5, flee speed ×1.45, 
 Room pack 3. Base guards 5. Ambush cap 40, spacing 10, pack 1–2.
 
 Enemy combat level keys: the tunables gate. Player-facing CL feel: combat.
+
+## Add an enemy type (live files)
+
+One id (`wolf`) lives in: `roster.gd` (`IDS`, `POOLS` so every floor keeps at least 5 types, the `_all()` row: role, move, dmg, spd, range, def, size, arc; no hp), `scripts/data/balance/enemies.gd` (`IDS` plus the live row, the one source of hp; its `e_<id>_*` keys feed `App.bal` and the debug menu, and `Roster.def` prefers them over the `roster.gd` row), art `assets/sprites/enemies/<id>/idle_down.png` (`enemy_setup.gd` loads it by id; produce it through art_pipeline), then the roster and HP lines above and the HP row in the tunables gate. Prove with smoke 4. A new role or family, or any 13th type even inside an existing family, is the User's call: ask (`ask_user_question`), never add one on your own. The Bot never adds enemy types.

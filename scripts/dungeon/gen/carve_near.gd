@@ -79,9 +79,6 @@ static func _hug_gap() -> int:
 		gap = int(App.bal.get("hall_hug_gap"))
 	return maxi(floor_min, gap)
 
-static func _in_room(r: Dictionary, x: int, y: int) -> bool:
-	return x >= int(r.x) and y >= int(r.y) and x < int(r.x) + int(r.w) and y < int(r.y) + int(r.h)
-
 static func _cell_hugs(grid: PackedByteArray, w: int, h: int, x: int, y: int, gap: int, a: Dictionary, b: Dictionary) -> bool:
 	var r: int = maxi(1, gap)
 	var ax0: int = int(a["x"])
@@ -110,13 +107,6 @@ static func _cell_hugs(grid: PackedByteArray, w: int, h: int, x: int, y: int, ga
 			xx += 1
 		yy += 1
 	return false
-
-static func _restore(grid: PackedByteArray, saved: PackedByteArray) -> void:
-	var i: int = 0
-	var n: int = mini(grid.size(), saved.size())
-	while i < n:
-		grid[i] = saved[i]
-		i += 1
 
 static func _axis_hugs(grid: PackedByteArray, w: int, h: int, a: Vector2i, b: Vector2i, gap: int, ra: Dictionary, rb: Dictionary) -> bool:
 	var heading: Vector2i = Vector2i(0, 0)

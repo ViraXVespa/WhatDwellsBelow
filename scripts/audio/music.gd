@@ -6,29 +6,45 @@ extends Node
 var player: AudioStreamPlayer
 var kind := ""
 var passed_intro := false
+var _dungeon_stream: Resource = null
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	player = AudioStreamPlayer.new()
 	player.bus = "Master"
+	player.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 	add_child(player)
 	player.finished.connect(_on_finished)
 	_apply_vol()
 
-func play_dungeon() -> void:
-	kind = "dungeon"
-	passed_intro = false
+const LT := preload("res://scripts/debug/load_timing.gd")
+
+func _dungeon_path() -> String:
 	var path := "res://assets/audio/music_dungeon.mp3"
 	if not ResourceLoader.exists(path):
 		path = "res://assets/audio/music_dungeon.wav"
-	if not ResourceLoader.exists(path):
+	return path if ResourceLoader.exists(path) else ""
+
+## Called first in the hub preload so the dungeon track is decoded and held before anything else loads.
+func preload_dungeon() -> void:
+	var path := _dungeon_path()
+	if _dungeon_stream == null and path != "":
+		_dungeon_stream = load(path)
+
+func play_dungeon() -> void:
+	kind = "dungeon"
+	passed_intro = false
+	if _dungeon_path() == "":
 		return
-	var s: Resource = load(path)
+	preload_dungeon()
+	var s: Resource = _dungeon_stream
+	LT.dmark("music_load")
 	if s is AudioStreamMP3:
 		(s as AudioStreamMP3).loop = false
 	player.stream = s
 	_apply_vol()
 	player.play(0.0)
+	LT.dmark("music_play")
 
 func play_hub() -> void:
 	kind = "hub"
@@ -70,3 +86,9 @@ func _process(_delta: float) -> void:
 		return
 	if player.get_playback_position() + 0.05 >= loop_offset():
 		passed_intro = true
+
+func _exit_tree() -> void:
+	# Stop and let the mixer drain before the tree frees, or the playback is reported leaked at exit.
+	if player.stream != null:
+		player.stop()
+		OS.delay_msec(60)

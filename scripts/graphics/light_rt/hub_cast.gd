@@ -34,31 +34,65 @@ static func _hub_stamp_skirt(
 	var px1: int = clampi(int(ceil((cx + hx + pad - float(x0)) * sub)), 0, w)
 	var pz0: int = clampi(int(floor((cz - hz - pad - float(z0)) * sub)), 0, h - 1)
 	var pz1: int = clampi(int(ceil((cz + hz + pad - float(z0)) * sub)), 0, h)
+	# A pixel only changes when its 20-step ray (reaching back ax*reach, az*reach) comes within 0.04 of the box,
+	# or it lies inside a tarp. Narrow the loops to that swept rectangle (plus 1 px); the rest wrote nothing.
+	var sx_lo: float = minf(0.0, -ax * reach)
+	var sx_hi: float = maxf(0.0, -ax * reach)
+	var sz_lo: float = minf(0.0, -az * reach)
+	var sz_hi: float = maxf(0.0, -az * reach)
+	var m: float = 0.05
+	px0 = maxi(px0, int(floor((cx - hx - m - sx_hi - float(x0)) * sub)) - 1)
+	px1 = mini(px1, int(ceil((cx + hx + m - sx_lo - float(x0)) * sub)) + 1)
+	pz0 = maxi(pz0, int(floor((cz - hz - m - sz_hi - float(z0)) * sub)) - 1)
+	pz1 = mini(pz1, int(ceil((cz + hz + m - sz_lo - float(z0)) * sub)) + 1)
 	var kind: String = str(b.get("kind", ""))
+	var tarp: bool = kind == "tarp"
+	var ridge_eave: bool = kind == "gable" or tarp
+	var awning: bool = kind == "awning"
+	var ridge: float = float(b["ridge"]) if b.has("ridge") else 0.0
+	var eave: float = float(b["eave"]) if b.has("eave") else 0.0
+	var hem: float = float(b["hem"]) if b.has("hem") else 0.0
+	var flat: float = float(b.get("h", 1.0))
+	var hz_div: float = maxf(hz, 0.001)
+	var hz2_div: float = maxf(hz * 2.0, 0.001)
+	var ts := PackedFloat64Array()
+	var lim := PackedFloat64Array()
+	var shade := PackedFloat64Array()
+	for step in 20:
+		var t: float = reach * float(step) / 19.0
+		ts.append(t)
+		lim.append(t / 0.85 + 0.03)
+		var fade: float = clampf(t / maxf(reach, 0.001), 0.0, 1.0)
+		var tip: float = clampf((fade - 0.62) / 0.38, 0.0, 1.0)
+		shade.append(lerpf(0.46, 0.86, tip))
 	var wrote: int = 0
 	var y: int = pz0
 	while y < pz1:
 		var x: int = px0
+		var wz: float = float(z0) + (float(y) + 0.5) / sub
 		while x < px1:
 			var wx: float = float(x0) + (float(x) + 0.5) / sub
-			var wz: float = float(z0) + (float(y) + 0.5) / sub
-			var inside: bool = _hub_inside(wx, wz, b)
-			if inside and kind != "tarp":
+			var inside: bool = absf(wx - cx) <= hx and absf(wz - cz) <= hz
+			if inside and not tarp:
 				x += 1
 				continue
 			var best: float = 1.0
-			if inside and kind == "tarp":
+			if inside and tarp:
 				best = 0.8
 			var step: int = 0
 			while step < 20:
-				var t: float = reach * float(step) / 19.0
-				var sx: float = wx - ax * t
-				var sz: float = wz - az * t
-				var roof: float = _hub_roof_h(sx, sz, b)
-				if roof > t / 0.85 + 0.03:
-					var fade: float = clampf(t / maxf(reach, 0.001), 0.0, 1.0)
-					var tip: float = clampf((fade - 0.62) / 0.38, 0.0, 1.0)
-					best = minf(best, lerpf(0.46, 0.86, tip))
+				var sx: float = wx - ax * ts[step]
+				var sz: float = wz - az * ts[step]
+				var dx: float = absf(sx - cx) - hx
+				var dz: float = absf(sz - cz) - hz
+				if dx <= 0.04 and dz <= 0.04:
+					var roof: float = flat
+					if ridge_eave:
+						roof = lerpf(ridge, eave, clampf(absf(sz - cz) / hz_div, 0.0, 1.0))
+					elif awning:
+						roof = lerpf(eave, hem, clampf((sz - (cz - hz)) / hz2_div, 0.0, 1.0))
+					if roof > lim[step]:
+						best = minf(best, shade[step])
 				step += 1
 			if best > 0.96:
 				x += 1

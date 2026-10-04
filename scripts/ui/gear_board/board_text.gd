@@ -3,11 +3,8 @@ extends Object
 const Stats := preload("res://scripts/ui/gear_board/stats.gd")
 const Fmt := preload("res://scripts/ui/gear_board/text_fmt.gd")
 const Opts := preload("res://scripts/ui/gear_board/opts.gd")
-const Prompts := preload("res://scripts/input/prompts.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
-
-static func item_short(it: Dictionary) -> String:
-	return Fmt.item_short(it)
+const ItemNames := preload("res://scripts/data/item_names.gd")
 
 static func item_cell(it: Dictionary) -> String:
 	return Fmt.item_cell(it)
@@ -23,9 +20,6 @@ static func hint_parts(ui: CanvasLayer) -> Array:
 	parts.append({"action": "gear_drop", "verb": "drop", "gap": true})
 	parts.append({"action": "gear_tip", "verb": "tip off/on/forge"})
 	return parts
-
-static func hint_line(ui: CanvasLayer) -> String:
-	return Prompts.verb_lines(hint_parts(ui))
 
 static func selected_slot(ui: CanvasLayer) -> String:
 	var sel := str(ui.inv_sel)
@@ -87,8 +81,8 @@ static func tooltip(ui: CanvasLayer) -> String:
 	var sel := str(ui.inv_sel)
 	if it.is_empty():
 		if slot != "":
-			return "%s — empty\nOpens anything that can go here." % str(Fmt.NAMES.get(slot, slot))
-		return "Empty bag slot."
+			return App.tr("board_text.empty_opens_anything_that_can") % Fmt.slot_name(slot)
+		return App.tr("board_text.empty_bag_slot")
 	var src := ""
 	if sel.begins_with("opt:") and sel.split(":").size() >= 2:
 		src = sel.split(":")[1]
@@ -96,7 +90,7 @@ static func tooltip(ui: CanvasLayer) -> String:
 	if mode >= 2:
 		block = forged_block(it)
 	if slot != "":
-		var head := str(Fmt.NAMES.get(slot, slot))
+		var head := Fmt.slot_name(slot)
 		if src != "":
 			head += "  ·  " + src
 		return "%s\n%s" % [head, block]
@@ -104,18 +98,18 @@ static func tooltip(ui: CanvasLayer) -> String:
 
 static func current_block(it: Dictionary) -> String:
 	var lines := PackedStringArray()
-	var head := str(it.get("name", "Item"))
+	var head := ItemNames.name_of(it)
 	var rare := str(it.get("rarity", "white"))
 	if rare != "":
-		head += "  ·  " + rare.capitalize()
+		head += "  ·  " + ItemNames.rarity_name(rare)
 	if int(it.get("ilvl", 0)) > 0:
-		head += "  ·  Lv%d" % int(it.get("ilvl", 1))
+		head += "  ·  " + App.tr("board_text.level").format({"n": int(it.get("ilvl", 1))})
 	if bool(it.get("hold", false)):
-		head += "  ·  forged hold"
+		head += "  ·  " + App.tr("board_text.forged_hold")
 	if Fmt.is_risk(it):
-		head += "  ·  lost on death unless mailed"
+		head += "  ·  " + App.tr("board_text.lost_on_death_unless_mailed")
 	lines.append(head)
-	var desc := str(it.get("desc", ""))
+	var desc := ItemNames.desc_of(it)
 	if desc != "":
 		lines.append(desc)
 	var stats := stat_bits(it)
@@ -128,13 +122,13 @@ static func current_block(it: Dictionary) -> String:
 
 static func forged_block(it: Dictionary) -> String:
 	if it.is_empty():
-		return "Nothing to preview."
+		return App.tr("board_text.nothing_to_preview")
 	var slot := str(it.get("slot", ""))
 	if slot == "potion" or slot == "food" or str(it.get("kind", "")) == "artifact":
-		return current_block(it) + "\nNo forge preview for this."
+		return current_block(it) + App.tr("board_text.no_forge_preview")
 	if str(it.get("rarity", "white")) == "white":
-		return current_block(it) + "\nWhite gear is starter-only. Analyze greens and blues."
-	return current_block(it) + "\nForge tab rolls a new hold from unlocked traits."
+		return current_block(it) + App.tr("board_text.white_gear_is_starter_only")
+	return current_block(it) + App.tr("board_text.forge_tab_rolls_a_new_hold")
 
 static func stat_bits(it: Dictionary) -> String:
 	var bits := PackedStringArray()
@@ -148,24 +142,24 @@ static func stat_bits(it: Dictionary) -> String:
 			if id == "":
 				continue
 			listed[id] = true
-			bits.append("%s %s" % [Affix.label_of(id), Affix.format_value(id, float(row.get("value", 0.0)))])
+			bits.append(App.tr("common.text_2") % [Affix.label_of(id), Affix.format_value(id, float(row.get("value", 0.0)))])
 	for id: String in [Affix.ID_DMG, Affix.ID_DEF, Affix.ID_HP]:
 		if listed.has(id):
 			continue
 		var n: float = float(it.get(id, 0))
 		if n != 0.0:
-			bits.append("%s %s" % [Affix.label_of(id), Affix.format_value(id, n)])
+			bits.append(App.tr("common.text_2") % [Affix.label_of(id), Affix.format_value(id, n)])
 	if str(it.get("kind", "")) == "potion" or str(it.get("slot", "")) == "potion":
-		bits.append("Charges %d/%d" % [Fmt._charges(it), Fmt._charge_max(it)])
+		bits.append(App.tr("board_text.charges") % [Fmt._charges(it), Fmt._charge_max(it)])
 		var cd := float(it.get("cooldown", 0.0))
 		if cd <= 0.0 and App.bal:
 			cd = float(App.bal.get("potion_cooldown"))
 		if cd > 0.0:
-			bits.append("Cooldown %.1fs" % cd)
+			bits.append(App.tr("board_text.cooldown_s") % cd)
 	if str(it.get("tool", "")) != "":
-		bits.append("Tool: " + str(it.tool))
+		bits.append(App.tr("board_text.tool_name").format({"tool": ItemNames.type_name("tool", str(it.tool))}))
 	if str(it.get("weapon", "")) != "":
-		bits.append("Style: " + str(it.weapon))
+		bits.append(App.tr("board_text.style_weapon").format({"weapon": ItemNames.type_name("weapon", str(it.weapon))}))
 	return "   ·   ".join(bits)
 
 static func stats_title(ui: CanvasLayer) -> String:

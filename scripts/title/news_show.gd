@@ -20,7 +20,7 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	box.offset_bottom = 280
 	box.add_theme_constant_override("separation", 12)
 	host._news_layer.add_child(box)
-	box.add_child(host._lab("What's new", 32, Color(0.92, 0.78, 0.48)))
+	box.add_child(host._lab(App.tr("news_show.what_s_new"), 32, Color(0.92, 0.78, 0.48)))
 	var text_shell := Control.new()
 	text_shell.custom_minimum_size = Vector2(720, 320)
 	text_shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -62,11 +62,11 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	body.focus_mode = Control.FOCUS_NONE
 	body.text = Fmt.news_text(Fac.all_entries(), new_labs)
 	scroll.add_child(body)
-	var close_btn: Button = host._btn("Close", host._dismiss_news)
+	var close_btn: Button = host._btn(App.tr("common.close"), host._dismiss_news)
 	box.add_child(close_btn)
 	var older_btn: Button = null
 	if older:
-		older_btn = host._btn("Earlier weeks", host._open_older)
+		older_btn = host._btn(App.tr("news_show.earlier_weeks"), host._open_older)
 		box.add_child(older_btn)
 	Fmt.lock_news_focus(close_btn, older_btn)
 	close_btn.grab_focus()

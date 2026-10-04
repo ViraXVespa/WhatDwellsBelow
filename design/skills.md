@@ -41,7 +41,7 @@ Live ids: `axe`, `staff`, `bow`, `str`, `mag`, `rng`, `def`, `hp`, `mine`, `wood
 
 - Defeating an enemy grants weapon + partner-style XP (existing split of `xp_per_kill`).
 - The same kill ALSO grants Hitpoints XP and Defense XP. This stacks on top of Defense-from-being-hit and Hitpoints-from-heal.
-- Live `xp_kill_hp` / `xp_kill_def` and `xp_per_kill`: the tunables gate (adrenaline applies).
+- Live `xp_kill_hp` / `xp_kill_def` and `xp_per_kill`: the tunables gate (`add_run_xp` applies adrenaline once).
 
 ## Combat level
 
@@ -89,6 +89,6 @@ style_f  = melee_f | magic_f | ranged_f from the equipped weapon
 HUD ints = max(1, round(those scores))
 
 Example: lv 11 / 11 / 11 / 11 → combat 11.  
-Fragment rate is `App.bal.xp_keep` (live 0.20). Adrenaline multiplies run XP in `add_run_xp`.
+Fragment rate is `App.bal.xp_keep` (live 0.20). Adrenaline multiplies run XP once, in `add_run_xp`; the stack (`adrenaline_xp_stack` per kill) is capped at `adrenaline_xp_max` (2.0).
 
-Player CL is ~1/4 of the old sum-of-four-skills value. Floor span and per-CL enemy rates live in the tunables gate so same-floor raw stats stay in the same ballpark.
+Player CL is ~1/4 of the sum of the four skills. Floor span and per-CL enemy rates live in the tunables gate so same-floor raw stats stay in the same ballpark.

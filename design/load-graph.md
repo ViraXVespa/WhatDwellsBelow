@@ -10,6 +10,8 @@ Never open `notes/`.
 
 AGENTS.md
     web   -> design/web-session.md -> protocol.md and constraints.md
+            -> phase pages only at their phase: discuss (2), plan (3), emit (4), test (5)
+            -> constraints-demo.md only before calling the build complete
             -> default brainstorm after boot; directed-goal only when the User asks
             -> present-User picture-read uncapped in design/ and the live thread tree
             -> docs/routing may open this file and the topic index; write stays one door
@@ -22,8 +24,8 @@ AGENTS.md
 Then, only if the User named work:
     one topic door -> one Job sibling (if that door has a Job table)
     graphics jobs are env, ground, volume, buffer, actor (not a boot path)
-    grid carve / hall segments / angled pieces -> dungeon then gen
-    gen publishes a cleaned 1 m maze, hall runs, and rare angled packets; stream instances those runs; volume skins provided runs only; buffer occupancy reads the cleaned grid plus piece hulls and mounts on interior faces; outline bake is the gen job
+    grid carve / hall segments -> dungeon then gen
+    gen publishes a cleaned 1 m maze, and hall runs; stream instances those runs; volume skins provided runs only; buffer occupancy reads the cleaned grid and mounts on interior faces; outline bake is the gen job
     (second door only when the User names the owner; conflicts_with is a load ban)
     and one design/code-map.md system row when live files are needed
     and design/tunables.md iff a number changes
@@ -58,7 +60,7 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 
 ## 10/10 checks
 
-1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints.
+1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints, and each boot file stays under its `boot_bytes` budget in `routes.yaml` (the checker fails above it). Lower a budget after a trim; raise one only on a User go.
 2. Bot boot is BOT.md + one Job sibling (the agents file only if Cursor already loaded it).
 3. No mutual See also.
 4. One job phrase belongs to one door.
