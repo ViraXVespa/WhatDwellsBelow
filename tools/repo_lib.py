@@ -6,6 +6,7 @@ Import-only. Root discovery and RESULT/summary live in agent_log.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from fnmatch import fnmatch
 from pathlib import Path
@@ -71,6 +72,19 @@ def allowed(rel: str, globs: list[str]) -> bool:
 
 def read_version(root: Path) -> dict:
     return json.loads((root / VERSION_FILE).read_text(encoding="utf-8-sig"))
+
+
+def week_branch(root: Path) -> str:
+    """Current week branch grok-build-w{N}: the highest N among local grok-build-w* branches that match the
+    version.json series or are an ancestor of HEAD (a worktree cut before the seed still sees its week). '' if none."""
+    code, out = run_git(root, "for-each-ref", "--format=%(refname:short)", "refs/heads/grok-build-w*")
+    names = [n for n in out.splitlines() if code == 0 and re.fullmatch(r"grok-build-w\d+", n)]
+    try:
+        series = int(read_version(root)["series"])
+    except (OSError, KeyError, ValueError):
+        series = -1
+    keep = [n for n in names if int(n.rsplit("w", 1)[1]) == series or run_git(root, "merge-base", "--is-ancestor", n, "HEAD")[0] == 0]
+    return max(keep, key=lambda n: int(n.rsplit("w", 1)[1]), default="")
 
 
 def next_label(root: Path) -> str:
