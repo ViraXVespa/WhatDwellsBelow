@@ -71,8 +71,8 @@ func _ready() -> void:
 func setup(id: String, floor_n: int, named := false, given_name := "") -> void:
 	EnemySetup.setup(self, id, floor_n, named, given_name)
 
-func setup_boss(role: String, floor_n: int) -> void:
-	EnemySetup.setup_boss(self, role, floor_n)
+func setup_boss(b_role: String, floor_n: int) -> void:
+	EnemySetup.setup_boss(self, b_role, floor_n)
 
 func _mark_post() -> void:
 	Hit.mark_post(self)

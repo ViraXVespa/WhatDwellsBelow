@@ -6,7 +6,7 @@ const TipPlace := preload("res://scripts/ui/tip_place.gd")
 const LocS := preload("res://scripts/app/app_loc.gd")
 const SkillRow := preload("res://scripts/ui/skill_row_view.gd")
 
-static func skill_title(ui: CanvasLayer, id: String) -> String:
+static func skill_title(_ui: CanvasLayer, id: String) -> String:
 	return LocS.tr_or("skill." + id, id)
 
 static func perm_line(ui: CanvasLayer, id: String, perm: float) -> String:
