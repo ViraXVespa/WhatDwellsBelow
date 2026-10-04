@@ -29,4 +29,6 @@ Read each job summary once via `python3 tools/read_summary.py --job <name>`. The
 
 A second job in the same Grok Build session is allowed only when a **new field** is named first. Do not wait for the User between job 1 and job 2 when that field is named. Still pause and report after every job. The field must already be a key printed by that job's summary template, or `truncated` / crash / `busy` / wrong scene. Do not invent a key the template does not print. "Add a field so I can rerun" is invalid. The only valid same-command rerun is `truncated`, crash, `busy` lock, or wrong scene, and then the same command once.
 
+Proof recipes by change kind: `prove.md`. A proof that needs a check no tool does: extend the library (`imglib`, shot tools) in the change job and add the recipe there; do not work around it.
+
 Concurrent agents share catalog tools. They do not share summary files: each session writes under `_logs/`. Pins are User-only.

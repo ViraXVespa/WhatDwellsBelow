@@ -25,6 +25,7 @@ Navigation is only `design/routes.yaml`. `See also:` is forbidden.
 | New or moved script placement (cluster folders) | `design/refactor.md` (Cluster folders section only) |
 | Numbers (when they change) | `design/tunables.md` |
 | Tools (what runs where, allowlist) | `design/tools.md` |
+| Prove a change (any surface), extend a tool instead of working around it | `design/prove.md` |
 | Windows inventory / verify / write | pc-offload skill + `design/pc-offload.md` |
 
 Load cap (implementation): this file + the path file + (web / Build) the law pair + one writer door + one Job sibling + gates whose `when` matches. A second writer door only when the User names the owner.

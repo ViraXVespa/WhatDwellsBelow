@@ -96,6 +96,9 @@ gates:
   tools_lint:
     file: design/tools-lint.md
     when: size_dupe_or_dead_code_tool
+  prove:
+    file: design/prove.md
+    when: choose_run_or_report_a_proof
   doc_library:
     file: design/doc-library.md
     when: doc_edit_tool

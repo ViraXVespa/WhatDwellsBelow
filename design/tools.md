@@ -10,12 +10,12 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 ## Rules
 
 1. **Allowlist.** `tools/bot_allow.txt` is the authority for the Bot: it runs only tools marked `A=Y` here and changes only allowlisted paths (CI `bot-gate.yml` and `bot_status.py --prove` read it). 
-2. **Platform.** Every tool is Python: `python3 tools/X.py` (Windows PC: `python`). A `.ps1` is a one-release shim forwarding to the `.py` twin (old `-OverKb` and new `--over-kb` both work). Windows quoting and Godot rules: `pc-offload.md`.
+2. **Platform.** Every tool is Python: `python3 tools/X.py` (Windows PC: `python`). A `.ps1` is a one-release shim forwarding to the `.py` twin. Windows quoting and Godot rules: `pc-offload.md`.
 3. **Usage truth.** `python3 tools/X.py --help` for every CLI tool (`check_tool_cli.py` keeps that true); `*_lib.py` files have a module docstring. Docs do not repeat flags.
 4. **Summaries.** Runners write `_logs/<job>/summary.txt` (gitignored, one dir per job). Read the final `RESULT` line, then the summary once, not raw logs or script bodies. Lookup tools (`list_xref.py`, `code_map.py row`, `tunables.py get`, `list_route.py`) print their rows: no second read.
 5. **New tool.** Propose first (Build: `ask_user_question`; name, command, what it saves), implement after approval. Add its row here (and the allowlist line if the Bot may run it), then run `check_tool_docs.py` and `check_tool_cli.py`.
 6. **Duplicates are shims.** A renamed or folded tool stays a shim (docstring starts `"""Shim`) for one release. New logic goes in the owner: `agent_log` (run helpers), `repo_lib` (git, allowlist, version), `gd_lib` (`.gd` funcs), `md_format_lib` (text write), `doc_patch` (doc edits).
-7. **Tools, not scratches.** Would you need it again? Update the tool or propose a new one; a scratch is only for a niche one-off, in temp. Web doc edits: `doc_patch.py` CLI (`doc-library.md`).
+7. **Tools, not scratches.** Would you need it again? Update the tool or propose a new one; a scratch is only for a niche one-off, in temp. Web doc edits: `doc_patch.py` CLI (`doc-library.md`). A proof with no tool: extend the library in the same job (`prove.md`).
 8. **Fix the tool.** A tool that does not work intuitively is designed wrong: fix it, do not work around it.
 9. **Rough edges (end of every task).** List the rough edges you hit (a guessed flag, an output re-run, a scratch, a doc that lied) and fix them in the same PR when allowed, else name them in the report.
 10. **No loops (gates and fixes).** One copy of the rule; entry docs, jobs and skills point here.
@@ -23,6 +23,8 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
     - No prove or re-verify cycles on unchanged results. If a check reports nothing new, stop.
     - A failed gate gets one diagnosis, then one batched fix, then one rerun. Still failing: stop and report to the User with the log path; do not loop.
     - Cap: at most 2 gate reruns per task (a full sweep such as `bot_warnscan` or `bot_smokes` counts as one). Anything not trivial becomes a question with options, not more iterations.
+
+11. **Python image deps.** `pip install -r tools/requirements.txt` (Pillow, numpy; opencv-python-headless optional). Shared image code is `tools/imglib/` (`tools-media.md`).
 
 ## Contract (enforced by `check_tool_cli.py`)
 
@@ -46,10 +48,10 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `bot_status.py` | Punch list: over-10KB/5KB, reuse brief, opt queue; `--prove` = script cap + allowlist + load graph | BD | `--help` | Y |
 | `check_script_cap.py` | Script size owner: 10KB cap + duplicate-basename check (`dupes=`): `--git-changed`, `--path`; `--sweep` lists 5-10KB, `--list --over-kb N` any size range | BWD | `--help` | Y |
 | `check_load_graph.py` | Doc routing vs `design/routes.yaml` (PASS/FAIL, no summary): `smokes`/`shot_flows` keys, phases and flow files; boot file over its `boot_bytes` | BWD | `--help` | Y |
-| `code_map.py` | Code map: `check` (live `.gd` vs `design/code-map.md` ticks; exits 1 on new UNMAPPED or missing, older UNMAPPED are expected), `row --path P`, `patch --system S ...`. Summaries: `code-map-*`. | BD | `--help` | Y |
+| `code_map.py` | Code map: `check` (live `.gd` vs `design/code-map.md` ticks; exits 1 on new UNMAPPED or missing, older UNMAPPED are expected), `row --path P`, `patch --system S ...`. | BD | `--help` | Y |
 | `check_code_map.py` | Shim -> `code_map.py check`, one release | BD | `--help` | Y |
 | `bot_smokes.py` | Headless smokes on the Linux VM (`--phases`, or `--door` / `--job` for the `routes.yaml` `smokes` map; `--for FILE` prints the covering phases and warnscan areas, runs nothing). Also runs `check_shot_gaps.py --changed` as a required gate (`--no-gaps` skips). Pin, install, `.uid` import: BOT.md Smokes. | B | `--help` | Y |
-| `bot_warnscan.py` | Warning sweep by area (leak / run-fail areas are rechecked and tagged stable / flaky). `--save-baseline` before, `--non-leak-diff` after (same `--areas`); `--changed` is the quick run; `--renderer real\|both` adds box-display runs (an xvfb V-Sync warning is env-artifact, never fails). Procedure: BOT.md Smokes. | B | `--help` | Y |
+| `bot_warnscan.py` | Warning sweep by area (leak / run-fail areas are rechecked and tagged stable / flaky). `--save-baseline` before, `--non-leak-diff` after (same `--areas`); `--changed` is the quick run; `--renderer real\|both` adds box-display runs. Procedure: BOT.md Smokes. | B | `--help` | Y |
 | `run_build_gate.py` | One batch gate: editor import (restores `assets/*.import` churn), `--script-cap` (changed) or `--batch` (import + `check_load_graph` + whole-tree cap and dupes), `--warnscan-baseline B` adds the non-leak diff. Once per batch (rule 10). Summary: `build-gate`. | BWD | `--help` | Y |
 | `bot_warnscan_lib.py` | Log parser for `bot_warnscan.py` | B | module docstring (no `--help`) | Y |
 | `bot_opt.py` | Opt queue: `--list`, `--id`, `--status opt-N=done`, `--add`, `--remove`. Never hand-edit the queue block. Summary: `bot-opt`. | BD | `--help` | Y |

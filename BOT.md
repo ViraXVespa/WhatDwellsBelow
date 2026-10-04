@@ -9,7 +9,7 @@ The only Bot constitution. Second topic door: ask the User to name the owner fir
 
 Clone github.com/ViraXVespa/WhatDwellsBelow to /workspace/WhatDwellsBelow and work that tree. Fresh `bot/<flow>` branch per flow (from `origin/main`; e.g. `bot/size-xyz`). One open Bot PR. Commit per cluster. User squash-merges. Never push main. Never merge the PR.
 
-Publish with plain `git push -u origin bot/<flow>` over HTTPS (gh credential helper) to `bot/*` or the PR branch only. No force pushes, ever. Open the PR with `gh pr create` (if that fails, GitHub MCP `create_pull_request`). Edit a PR body with `gh api -X PATCH repos/<repo>/pulls/N -F body=@file` (`gh pr edit` fails on the Projects classic shutdown). The box repo identity is Grok Bot (grok-bot@users.noreply.github.com), so plain `git commit` works.
+Publish with plain `git push -u origin bot/<flow>` over HTTPS (gh credential helper) to `bot/*` or the PR branch only. No force pushes, ever. Open the PR with `gh pr create` (if that fails, GitHub MCP `create_pull_request`). Edit a PR body with `gh api -X PATCH repos/<repo>/pulls/N -F body=@file` (`gh pr edit` fails on the Projects classic shutdown). The box git identity is Grok Bot, so plain `git commit` works.
 
 ## Boot
 
@@ -28,7 +28,7 @@ Publish with plain `git push -u origin bot/<flow>` over HTTPS (gh credential hel
 | Doc facade / sibling split | `design/grok-bot-docs.md` |
 | Named optimization item from the parked queue | `design/grok-bot-opt.md` |
 
-Job files do not restate this file: size, prove, changelog and `version.json` rules live here (label math: `design/versioning-log.md` body shape, not the changelog tree or `scripts/data/version.json`, at ship; `next-label` = highest on disk + 1; same PR: `--label`). One flow, one PR, then stop; if the User names more than one job, ask which. Do not declare the whole sweep done and then start a second flow.
+Job files do not restate this file: size, prove, changelog and `version.json` rules live here (label math: `design/versioning-log.md` body shape, not the changelog tree or `scripts/data/version.json`, at ship; `next-label` = highest on disk + 1; same PR: `--label`). One flow, one PR, then stop; if the User names more than one job, ask which.
 
 Woke because main moved: run bot_status first. over_10kb count 0: report and stop. Above 0: open only `design/grok-bot-size.md`; no other flow from that wake. Commit on the Bot branch only.
 
@@ -40,6 +40,7 @@ Woke because main moved: run bot_status first. over_10kb count 0: report and sto
 - python3 tools/check_code_map.py (no new UNMAPPED for files you touched; older ones are expected)
 - python3 tools/check_tool_docs.py (only when `tools/` or the catalog changed); `--stale-refs` after any doc edit that names paths
 
+Proof recipes by change kind (shots, layout, keying) and extend-the-tools-not-work-around-them: `design/prove.md`.
 CI: .github/workflows/bot-gate.yml. Allowlist: tools/bot_allow.txt (default deny; deny lines first).
 Stale docs: `design/` and `tools/` are allowlisted, so fix stale doc lines in the job you are on. When the current truth is unclear, do not guess: list the line under `Stale doc lines (for the User)` in the PR body (file, line, what it says, what it might say).
 Measure: os.path.getsize (10,000-byte floor). Touched live `scripts/**/*.gd` ship under 10KB; split with `design/refactor.md` (recipe only; the 5KB target is only `design/grok-bot-size.md`).
@@ -51,7 +52,7 @@ Work only in `/workspace/WhatDwellsBelow`. Never open the Build docs (`design/pc
 
 ## Smokes
 
-Not a boot step or Job flow. When a cluster needs a headless prove: `python3 tools/bot_smokes.py --phases 1,2,6` from the repo root (`--for FILE` names the covering phases). Setup downloads the official 4.7.2 Linux tools binary only if the pin is missing. Binary: `GODOT_BIN`, else `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
+When a cluster needs a headless prove: `python3 tools/bot_smokes.py --phases 1,2,6` from the repo root (`--for FILE` names the covering phases). Setup downloads the official 4.7.2 Linux tools binary only if the pin is missing. Binary: `GODOT_BIN`, else `/workspace/godot/Godot_v4.7.2-stable_linux.x86_64` (the `godot` symlink may not be on PATH).
 New `.gd` files need `.uid` sidecars: run the pinned binary once with `--headless --display-driver headless --audio-driver Dummy --editor --import --path . --quit`, then `git checkout -- assets docs icon.svg.import` (the import also rewrites those `.import` files; a fresh worktree needs this import once before any smoke, else P1 fails with no marker), and commit the `.uid` files only.
 No editor playtest, no routine that launches Godot.
 Shots and light bakes are not headless: `run_shots.py`, `run_shot_flow.py`, `run_bake_camp.py` pick the box display themselves (`python3 tools/godot_lib.py --display`). Menu/NPC proof: `bot_smokes.py --door D --flows` and `design/shot-flows.md`. `check_shot_gaps.py --changed` (run by `bot_smokes.py` unless `--no-gaps`, and by `run_build_gate.py --batch`) FAILS on a new UI state with no shot flow; add a small flow in `tools/shot-flows/` in the same PR. Published shots go to `_out/shots/<flow>/`; never write under `assets/`.
@@ -64,7 +65,7 @@ Tools: `design/tools.md` is the catalog. The Bot runs only `A=Y` tools, as `pyth
 No new player-facing systems, enemy types (ask the User), tunables, combat feel, editor playtest, art/I2V, locale sweeps, pause redesign, `Entity.gd`, UI framework, ECS, or flattening hostify clusters back into one oversized script. No Windows or Steam Godot; do not open the editor or enable Execution on Local Computer.
 Behavior changes, drive-by renames, comment rewrites, wholesale retypes and reformats are out unless a User-named `design/grok-bot-opt.md` item lists them.
 Do not walk design/ for context beyond this file and the one Job file. Do not pin weeks or run `tools/week_start.py` (human-only). Do not invent numbers.
-Bot may save its own skill after two good clusters (skills are the account private library).
+Bot may save its own skill after two good clusters.
 
 ## After-cluster report
 
