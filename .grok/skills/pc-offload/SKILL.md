@@ -44,7 +44,7 @@ Intercept (raw tool is a failed lookup, not a fallback):
 - python -c / double-quoted PowerShell body / echo Set-Content of a script ->
   single-quoted here-string piped to tools/write_utf8_file.py, then
   tools/run_agent_py.py
-- open tools/*.ps1 or tools/*.py to learn flags -> catalog row only
+- open tools/*.py to learn flags -> catalog row only
 - read the same job summary again this slice -> stop;
   one read via tools/read_summary.py --job <name> (index first, newest run;
   every run has its own stamped file, never open _logs files directly)
