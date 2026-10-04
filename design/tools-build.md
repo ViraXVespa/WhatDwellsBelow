@@ -52,7 +52,7 @@ Rules, CLI contract, surface key: `tools.md`. Runner habits: `pc-offload.md`. Su
 | `run_shots.py` | Posed-camera postcard tool (`--mode web/build/user`) one scripted flow, or `--full-map` (whole floor in one PNG). Not a numbered smoke. Summary: `shots`. | BWD | `--help` | Y |
 | `run_shot_flow.py` | Scripted shot flows (`tools/shot-flows/*.json`), baseline diff, `--publish` (to `_out/shots/<flow>/`, refuses `assets/`). Summary: `shot-flow`. | BWD | `--help` | Y |
 | `shot_diff.py` | Before/after diff of shot PNGs (files or dirs): changed pixels, bbox, `*.diff.png`. Summary: `shot-diff`. | BWD | `--help` | Y |
-| `check_shot_gaps.py` | UI states with no shot flow (`--changed`: new since a ref; FAIL for Bot, `--advisory` for Build), flow and published-shot problems. Summary: `shot-gaps`. | BWD | `--help` | Y |
+| `check_shot_gaps.py` | UI states with no shot flow (`--changed`: new since a ref; FAIL for Bot and for a Build UI or theme prove), flow and published-shot problems. Summary: `shot-gaps`. | BWD | `--help` | Y |
 | `shot_clip_lib.py` | Clipboard paste and open-in-viewer helpers for `run_shots.py` | WD | module docstring (no `--help`) | Y |
 | `show_func.py` | Extract one func/const/var (`--path`, `--name`). Summary: `show-func`. | D | `--help` | N |
 | `tunables.py` | `get` / `set` / `add` on a row of `design/tunables.md` and `tunables-world.md`; `set` needs exactly one hit. Summaries: `tunable-row`, `tunable-patch`. | D | `--help` | N |

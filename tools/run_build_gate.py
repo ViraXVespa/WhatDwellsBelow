@@ -40,7 +40,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--areas", default="", help="bot_warnscan areas for --warnscan-baseline (must match the baseline run).")
     ap.add_argument("--shot-gaps", choices=("required", "advisory", "off"), default="",
                     help="check_shot_gaps --changed: required FAILS on a new uncovered UI state, advisory only prints. "
-                         "Default: routes.yaml shot_gaps (bot=required with --batch, build=advisory otherwise).")
+                         "Default: routes.yaml shot_gaps (bot=required with --batch, build=required otherwise).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if not args.force and not args.skip_import:

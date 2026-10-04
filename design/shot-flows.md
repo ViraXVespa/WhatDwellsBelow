@@ -41,7 +41,7 @@ Teleport recipe (the whole floor is populated at boot; the camera follows the pl
 
 ## Screenshot update step (docs and guide images)
 
-`run_shot_flow.py --flow N --publish` copies the frames to `_out/shots/<flow>/` (git-ignored) and writes `<prefix>shots.json` (file, sha256, size); a flow's `publish: {"dir","prefix"}` or `--publish-dir` picks another folder. **The tooling never writes under `assets/`**: a path that resolves into it is refused (`error: refusing to publish ...`) and `check_shot_gaps.py` reports a flow that names one. Grok Build decides where a guide image lives and copies the frames there. After a UI change `--flow N --check-published` FAILs with the stale files; re-run `--publish` and hand the frames over. `check_shot_gaps.py` flags a published file that differs from `shots.json`.
+`run_shot_flow.py --flow N --publish` copies the frames to `_out/shots/<flow>/` (git-ignored) and writes `<prefix>shots.json` (file, sha256, size); a flow's `publish: {"dir","prefix"}` or `--publish-dir` picks another folder. Packing and image tools may write under `assets/` when that is their job. A published shot still lives under `_out/shots/<flow>/` until a tool copies it. Grok Build decides where a guide image lives and copies the frames there. After a UI change `--flow N --check-published` FAILs with the stale files; re-run `--publish` and hand the frames over. `check_shot_gaps.py` flags a published file that differs from `shots.json`.
 
 ## New UI state checklist (Build)
 

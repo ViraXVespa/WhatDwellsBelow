@@ -369,7 +369,7 @@ shot_flows:
 # run_build_gate.py --batch FAIL on a new uncovered state); Build gate = advisory (printed, never fails).
 shot_gaps:
   bot: required
-  build: advisory
+  build: required
 
 # Web build performance (tools/web_perf.py, headless Chrome on the exported site): Build prove, advisory only, never a gate.
 web_perf:
