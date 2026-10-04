@@ -3,7 +3,7 @@
 
   python3 tools/shot_diff.py BEFORE AFTER [--tol 0] [--max-ratio 0.02] [--mask X,Y,W,H] [--out DIR] [--json]
 
-Identical bytes short-circuit (no Pillow needed). Otherwise Pillow + numpy count changed pixels
+Identical bytes short-circuit (no Pillow needed). Otherwise imglib.compare (Pillow + numpy) counts changed pixels
 (any channel differs by more than --tol), the changed bounding box and the max channel delta, and
 write NAME.diff.png (dimmed BEFORE with changed pixels in red) under --out. Importable:
 compare(a, b, tol, out_png, masks) and compare_dirs(a, b, tol, out_dir, masks).
@@ -46,35 +46,21 @@ def compare(a: Path, b: Path, tol: int = 0, out_png: Path | None = None, masks: 
     if _sha(a) == _sha(b):
         return {"status": "same", "name": b.name, "changed_px": 0, "ratio": 0.0}
     try:
-        import numpy as np
-        from PIL import Image
+        from imglib import compare as cmp, imgio
     except ImportError:
-        agent_log.fail("shot_diff needs Pillow and numpy for non-identical PNGs (pip install pillow numpy)")
-    ia = Image.open(a).convert("RGBA")
-    ib = Image.open(b).convert("RGBA")
+        agent_log.fail("shot_diff needs Pillow and numpy for non-identical PNGs (python3 -m pip install -r tools/requirements.txt)")
+    ia, ib = imgio.load(a), imgio.load(b)
     if ia.size != ib.size:
         return {"status": "size", "name": b.name, "before": list(ia.size), "after": list(ib.size),
                 "changed_px": 0, "ratio": 1.0}
-    xa = np.asarray(ia).astype(int)
-    xb = np.asarray(ib).astype(int)
-    delta = np.abs(xa - xb).max(axis=2)
     k = ia.size[0] / 1920.0
-    for mx, my, mw, mh in masks or []:
-        delta[int(my * k):int((my + mh) * k) + 1, int(mx * k):int((mx + mw) * k) + 1] = 0
-    mask = delta > tol
-    n = int(mask.sum())
-    total = int(mask.size)
-    res = {"status": "changed" if n else "same", "name": b.name, "changed_px": n, "ratio": round(n / total, 6),
-           "max_delta": int(delta.max()), "bbox": None}
-    if n:
-        ys, xs = np.where(mask)
-        res["bbox"] = [int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1]
-        if out_png is not None:
-            out_png.parent.mkdir(parents=True, exist_ok=True)
-            vis = (xa[:, :, :3] * 0.35).astype("uint8")
-            vis[mask] = (255, 40, 40)
-            Image.fromarray(vis, "RGB").save(out_png)
-            res["diff_png"] = str(out_png)
+    ign = [(mx * k, my * k, (mx + mw) * k, (my + mh) * k) for mx, my, mw, mh in masks or []]
+    d = cmp.diff(ia, ib, tol, ign)
+    res = {"status": d["status"], "name": b.name, "changed_px": d["changed_px"], "ratio": d["ratio"],
+           "max_delta": d["max_delta"], "bbox": d["bbox"]}
+    if d["changed_px"] and out_png is not None:
+        imgio.save(cmp.heatmap(ia, ib, tol, ign), out_png)
+        res["diff_png"] = str(out_png)
     return res
 
 

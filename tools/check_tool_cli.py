@@ -72,6 +72,7 @@ SMOKE: dict[str, list] = {
     "file_stat": [["--path", "tools"], ["tools/agent_log.py"]],
     "gen_prompt_glyphs": [["--dry-run"]],
     "godot_lib": [["--display"]],
+    "img_inspect": [["selftest"]],
     "lint_hostify": [[]],
     "list_changed": [[]],
     "list_dupes": [["--lang", "py"]],

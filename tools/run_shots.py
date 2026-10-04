@@ -166,8 +166,8 @@ def apply_flow_header(args: argparse.Namespace, header: dict, given: set[str]) -
 def stitch_full_map(tiles_dir: Path, png: Path, max_px: int, keep: bool) -> dict:
     """Stitch the sweep.json tiles into png. The camera never yaws, so a tile is the same picture shifted: exact integer offsets, no blending."""
     from PIL import Image
-    import numpy as np
     import shutil
+    from imglib import compare
 
     Image.MAX_IMAGE_PIXELS = None
     d = json.loads((tiles_dir / "sweep.json").read_text(encoding="utf-8"))
@@ -204,9 +204,8 @@ def stitch_full_map(tiles_dir: Path, png: Path, max_px: int, keep: bool) -> dict
             if x1 <= x0 or y1 <= y0:
                 continue
             with Image.open(fa) as ia, Image.open(nb[2]) as ib:
-                pa = np.asarray(ia.convert("RGB").crop((x0 - ox, y0 - oy, x1 - ox, y1 - oy)), dtype=np.int16)
-                pb = np.asarray(ib.convert("RGB").crop((x0 - nb[0], y0 - nb[1], x1 - nb[0], y1 - nb[1])), dtype=np.int16)
-            diff = np.abs(pa - pb).max(axis=2)
+                diff = compare.delta_map(ia.convert("RGB").crop((x0 - ox, y0 - oy, x1 - ox, y1 - oy)),
+                                         ib.convert("RGB").crop((x0 - nb[0], y0 - nb[1], x1 - nb[0], y1 - nb[1])))
             means.append(float(diff.mean()))
             bad_px += int((diff > 24).sum())
     full = (cw, ch)
