@@ -4,9 +4,9 @@ Status: binding design
 Read when: live snapshot for binds or web_pad  
 
 
-## Live snapshot — PC defaults (`binds.gd`)
+## Live snapshot — defaults (`scripts/input/binds/table.gd`)
 
-These are implementation defaults, not a replacement for rebinding.
+`table.gd` is the only place defaults are written; this table mirrors it. Every row is rebindable on Pause → Settings → Controls.
 
 | Action | Keys |
 |--------|------|
@@ -18,19 +18,19 @@ These are implementation defaults, not a replacement for rebinding.
 | Target-lock | Q |
 | Interact | E / Enter |
 | Inventory | I |
-| Pause | Esc |
+| Pause | Esc / Start (web: also F1) |
 | Map | M |
 | Potion | F |
 | Food | C |
 | Look mode | D-pad Down (pad only) |
 | Zoom | Mouse wheel |
-| Menu tabs | `[` / `]` |
+| Menu tabs | `[` / `]` (LB / RB) |
 | Gear tip | Y |
 | Gear drop | X |
 | Crystal zoom | Tab |
 | Display toggle | Alt+Enter (desktop and web, not rebindable) |
 
-`binds.apply_pc_defaults()` strips `KEY_R` from special.
+`defaults.gd` also strips Space from Godot’s `ui_accept` / `ui_select`, so Space never confirms in a menu.
 
 The target-lock key (Q) pages stats only while a gear board is open; during gameplay it remains target-lock. The interact key (E, not Enter) pages stats only while a gear board is open; during gameplay it remains interact. Both follow rebinding. LMB / RMB never page the stats card.
 

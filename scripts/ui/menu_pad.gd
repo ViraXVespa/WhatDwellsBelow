@@ -44,12 +44,6 @@ static func is_back(event: InputEvent) -> bool:
 		return false
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		return true
-	if event is InputEventKey:
-		var k := event as InputEventKey
-		if k.keycode == KEY_ESCAPE or k.physical_keycode == KEY_ESCAPE:
-			return true
-	if event is InputEventJoypadButton:
-		return (event as InputEventJoypadButton).button_index == JOY_BUTTON_B
 	return false
 
 static func is_tab_prev(event: InputEvent) -> bool:

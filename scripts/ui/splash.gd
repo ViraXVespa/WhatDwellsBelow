@@ -8,10 +8,12 @@ const LOGO_XAI := "res://assets/ui/logo_xai.png"
 const TAG := "res://assets/ui/splash_shamelessly.png"
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 var _done := false
 var fade: ColorRect
 var card: Control
+var _cont: Label
 var _t := 0.0
 
 func _ready() -> void:
@@ -76,7 +78,8 @@ func _ready() -> void:
 	marks.add_child(_mark(LOGO_GROK, "GROK"))
 	marks.add_child(_mark(LOGO_XAI, "xAI"))
 
-	card.add_child(_lab(tr("splash.a_start_to_continue"), 16, Color(0.7, 0.68, 0.74, 0.8)))
+	_cont = _lab(Prompts.fmt(tr("splash.a_start_to_continue")), 16, Color(0.7, 0.68, 0.74, 0.8))
+	card.add_child(_cont)
 
 	fade = ColorRect.new()
 	ThemeS.fill(fade)
@@ -204,6 +207,8 @@ func _lab(text: String, font_px: int, col: Color) -> Label:
 
 func _process(delta: float) -> void:
 	_t += delta
+	if _cont:
+		_cont.text = Prompts.fmt(tr("splash.a_start_to_continue"))
 	if _t < 0.7:
 		fade.color.a = 1.0 - _t / 0.7
 		card.modulate.a = clampf(_t / 0.45, 0.0, 1.0)

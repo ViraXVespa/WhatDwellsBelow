@@ -4,6 +4,7 @@ extends Control
 
 const Disp := preload("res://scripts/display_mode.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 const SplitView := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 
 var _kind: String = "web"
@@ -169,7 +170,7 @@ func _action_label() -> String:
 func _rotate_line() -> String:
 	if Disp.viewport_portrait():
 		return tr("fs_gate.rotate_the_device_to_landscape")
-	return tr("fs_gate.a_confirms_the_focused_button")
+	return Prompts.fmt(tr("fs_gate.a_confirms_the_focused_button"))
 
 func _lab(t: String, font_px: int, col: Color) -> Label:
 	var l: Label = ThemeS.lab(t, font_px, col)

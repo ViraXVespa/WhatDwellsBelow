@@ -9,6 +9,7 @@ const Warm := preload("res://scripts/world/camp/warm.gd")
 const LayoutS := preload("res://scripts/world/camp/layout.gd")
 
 const Banner := preload("res://scripts/world/camp/banner.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 var player: CharacterBody3D
 var dummy: CharacterBody3D
 var ui: CanvasLayer
@@ -151,7 +152,7 @@ func _process(_delta: float) -> void:
 		var hot := ""
 		if App.prog.food_t > 0.0:
 			hot = "  ·  Food HoT %ds" % int(ceil(App.prog.food_t))
-		hint.text = tr("camp.placeholdia_bank_g_ore_wood") % [App.bank_gold, App.bank_ore, App.bank_wood, App.prog.deepest, hot]
+		hint.text = Prompts.fmt(tr("camp.placeholdia_bank_g_ore_wood")) % [App.bank_gold, App.bank_ore, App.bank_wood, App.prog.deepest, hot]
 	if prompt:
 		prompt.text = App.interact_prompt
 

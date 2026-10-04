@@ -1,6 +1,7 @@
 ﻿extends Object
 
 const Cat := preload("res://scripts/data/archives/archives_catalog.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 static func run(host: Node, id: String) -> void:
 	host.archive_cancel = false
@@ -8,7 +9,7 @@ static func run(host: Node, id: String) -> void:
 	var e := Cat.by_id(id)
 	var label := str(e.get("label", id))
 	if host.loader:
-		host.loader.begin(label, App.tr("launch.preparing_snapshot"))
+		host.loader.begin(label, Prompts.fmt(App.tr("launch.preparing_snapshot")))
 		host.loader.set_progress(0.02)
 	await host.get_tree().process_frame
 	if e.is_empty():
@@ -23,7 +24,7 @@ static func run(host: Node, id: String) -> void:
 		await cancel(host)
 		return
 	if not worktree_ready(wt, sha):
-		set_status(host, App.tr("launch.checking_out_sha").format({"sha": sha.substr(0, 7)}), 0.08)
+		set_status(host, Prompts.fmt(App.tr("launch.checking_out_sha").format({"sha": sha.substr(0, 7)})), 0.08)
 		var ok := await ensure_worktree(host, wt, sha)
 		if host.archive_cancel:
 			await cancel(host)
@@ -41,7 +42,7 @@ static func run(host: Node, id: String) -> void:
 	stamp_name(wt, label)
 	await host.get_tree().process_frame
 	if not imported(wt):
-		set_status(host, App.tr("launch.importing_archived_project"), 0.48)
+		set_status(host, Prompts.fmt(App.tr("launch.importing_archived_project")), 0.48)
 		var ok2 := await run_wait(host, OS.get_executable_path(), PackedStringArray(["--headless", "--path", wt, "--import"]), 0.48, 0.9)
 		if host.archive_cancel:
 			await cancel(host)

@@ -44,8 +44,6 @@ static func shift_page(host, delta_i: int) -> void:
 static func accept_pressed(event: InputEvent) -> bool:
 	if event.is_action_pressed("ui_accept") or event.is_action_pressed("interact"):
 		return true
-	if event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_A:
-		return true
 	return false
 
 static func handle_input(host, event: InputEvent) -> void:

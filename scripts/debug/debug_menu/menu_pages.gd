@@ -1,6 +1,7 @@
 ﻿# Playtest and animation browser pages for DebugMenu
 
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 static func page_playtest(host) -> void:
 	host.status.text = "Live AI. Queue closes this menu so the avatar can move. Logs go to user://playtest/runs/"
@@ -28,7 +29,7 @@ static func page_playtest(host) -> void:
 	host.root_box.add_child(n)
 
 static func page_anim(host) -> void:
-	host.status.text = "Animation Browser. Press A on Open to launch the viewer. B returns to Values."
+	host.status.text = Prompts.fmt("Animation Browser. Press {ui_accept} on Open to launch the viewer. {ui_cancel} returns to Values.")
 	var hint := Label.new()
 	hint.text = "This tab does not open the viewer by itself. Confirm the prompt below."
 	hint.add_theme_font_size_override("font_size", 20)

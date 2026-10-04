@@ -6,6 +6,7 @@ const PlayerS := preload("res://scripts/world/player.gd")
 const DummyS := preload("res://scripts/combat/dummy.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
 const EnvKit := preload("res://scripts/graphics/env_kit.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 var player: CharacterBody3D
 var hint: Label
@@ -207,4 +208,4 @@ func _refresh_hint() -> void:
 	var lock := ""
 	if player and player.get("lock_armed"):
 		lock = "  ·  LOCK"
-	hint.text = "Phase 2  ·  %s  ·  %s%s\nRT attack  ·  LT special  ·  B dash  ·  R3 lock  ·  1/2/3 weapons\nLB/RB character  ·  Start title" % [App.character_type, w, lock]
+	hint.text = Prompts.fmt("Phase 2  ·  %s  ·  %s%s\n{attack} attack  ·  {special} special  ·  {dash} dash  ·  {target_lock} lock\n{tab_left}/{tab_right} character  ·  {pause} title") % [App.character_type, w, lock]

@@ -120,6 +120,47 @@ static func chip_for(action: String) -> String:
 		return id.substr(6).to_upper()
 	return id.to_upper()
 
+## Readable name of one event ("Esc", "Start", "RT", "D-pad Up", "LMB"). Pure text, derived from the bind.
+static func label_for_event(e: InputEvent) -> String:
+	var id := id_for_event(e)
+	if e == null or id == "":
+		return ""
+	if e is InputEventJoypadButton or e is InputEventJoypadMotion:
+		const NAMES := {"menu": "Start", "view": "View", "ls": "L3", "rs": "R3"}
+		if e is InputEventJoypadMotion and id in ["ls", "rs"]:
+			return "L-stick" if id == "ls" else "R-stick"
+		if NAMES.has(id):
+			return NAMES[id]
+		if id.begins_with("dpad_"):
+			return "D-pad " + id.substr(5).capitalize()
+		return id.to_upper()
+	if id.begins_with("mouse/"):
+		return id.substr(6).to_upper()
+	if id == "lbracket":
+		return "["
+	if id == "rbracket":
+		return "]"
+	return id.to_upper() if id.length() <= 2 else id.capitalize()
+
+## Name of the current scheme's bind for an action (follows rebinding); the action id when unbound.
+static func label(action: String) -> String:
+	var s := label_for_event(event_for(action))
+	return s if s != "" else action.replace("_", " ")
+
+## Replaces {action_id} tokens in hint text with label(action_id). Other braces ({sha}) are left alone.
+static func fmt(text: String) -> String:
+	var out := ""
+	var rest := text
+	while true:
+		var a := rest.find("{")
+		var b := rest.find("}", a + 1)
+		if a < 0 or b < 0:
+			break
+		var name := rest.substr(a + 1, b - a - 1)
+		out += rest.substr(0, a) + (label(name) if InputMap.has_action(name) else "{" + name + "}")
+		rest = rest.substr(b + 1)
+	return out + rest
+
 static func _joy_btn(i: int) -> String:
 	match i:
 		JOY_BUTTON_A:
