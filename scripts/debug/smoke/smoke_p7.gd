@@ -1,5 +1,7 @@
 extends Object
 
+const Binds7 := preload("res://scripts/debug/smoke/smoke_binds.gd")
+
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
 
@@ -28,6 +30,8 @@ static func p7(host: Node) -> void:
 			sys = true
 	printerr("P7: system_dispel_aim=" + str(sys))
 	App.pause_menu.close_ui()
+	Binds7.run()
+	printerr("P7: binds_flows=true")
 	App.debug.show_menu()
 	printerr("P7: debug_open=" + str(App.debug.open))
 	App.debug.page = "anim"

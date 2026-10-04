@@ -9,6 +9,7 @@ const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Pages := preload("res://scripts/ui/pause_settings/settings_pages.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const Prompts := preload("res://scripts/input/prompts.gd")
 
 var pause: CanvasLayer
 var open := true
@@ -22,6 +23,7 @@ var list_btns: Array = []
 var info_btns: Array = []
 var back_btn: Button
 var status: Label
+var bind_note := ""
 var _list_root: Control
 var _info_root: Control
 var _list_rule: ColorRect
@@ -80,7 +82,7 @@ func split_hint() -> void:
 		return
 	var extra: Array = []
 	if MenuPad.capture_lock:
-		extra.append({"text": tr("binds_page.capture_hint"), "gap": true})
+		extra.append({"text": Prompts.fmt(tr("binds_page.capture_hint")), "gap": true})
 		extra.append({"action": "ui_accept", "hide": true})
 		extra.append({"action": "ui_cancel", "hide": true})
 	elif col == "list":
@@ -92,6 +94,8 @@ func split_hint() -> void:
 		extra.append({"action": "ui_cancel", "verb": "close"})
 	else:
 		extra.append({"action": "ui_cancel", "verb": "back"})
+	if bind_note != "" and str(Split.current(self).get("id", "")) == "controls":
+		extra.insert(0, {"text": bind_note})
 	PromptView.footer(pause, extra)
 
 func split_close() -> void:

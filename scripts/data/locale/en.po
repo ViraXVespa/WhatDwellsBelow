@@ -242,8 +242,14 @@ msgstr "Snapshots  ›  %s  ›  Documents"
 msgid "archives_ui.standalone_snapshots_title_play"
 msgstr "Standalone snapshots. Title Play always launches the live path."
 
+msgid "binds_page.back_key_body"
+msgstr "{input_name} also goes Back in menus. Bind it to {action_name} anyway? Confirm binds it. Cancel keeps things as they were."
+
+msgid "binds_page.back_key_title"
+msgstr "Bind {input_name}?"
+
 msgid "binds_page.capture_hint"
-msgstr "Press the new input. Click the slot again to cancel."
+msgstr "Press the new input, or click the slot to cancel. {ui_cancel} asks first."
 
 msgid "binds_page.gamepad"
 msgstr "Gamepad"
@@ -262,6 +268,12 @@ msgstr "Reset Controls"
 
 msgid "binds_page.restore_default_controls"
 msgstr "Restore default {which} controls?"
+
+msgid "binds_page.swap_refused"
+msgstr "Can't swap {input_name}: {action_name} would be left with no input."
+
+msgid "binds_page.swapped"
+msgstr "{input_name} binding swapped!"
 
 msgid "board_build.analyze_destroys_a_piece_forge"
 msgstr "Analyze DESTROYS a piece. Forge those remains on the Forge tab. Starters stay off the list."
