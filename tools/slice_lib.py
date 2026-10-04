@@ -59,18 +59,47 @@ def start_text(wt: str, ref: str) -> str:
             "START 2 (a NEW session; its directory is then the worktree): cd <that path>   then   grok\n"
             f"Or both in one step: grok --worktree={wt} --ref {ref}\n"
             "This session stops here: no gather, no edits, and it never starts grok (no fork, no headless run, no --prompt-file, no --max-turns).\n"
-            "Paste the task into the new session: open the baseline picture, restate the ask, ask your questions, gather, then `python tools/start_build_slice.py --checkpoint`.\n" + FORK_FACT)
+            "Paste the task into the new session: open the baseline picture, show the restate, ask your questions, gather, then `python tools/start_build_slice.py --checkpoint`.\n" + FORK_FACT)
 
 
 def in_worktree_text() -> str:
-    return ("IN A WORKTREE: this directory is the slice; do not create another. Open the baseline picture, restate the ask, ask the User your questions, gather, then run "
-            "`python tools/start_build_slice.py --checkpoint`. This tool never starts grok.")
+    return ("IN A WORKTREE: this directory is the slice; do not create another. First message to the User: say whether AGENTS.md and the project skills loaded "
+            "(if not, say so and read AGENTS.md and design/grok-build.md by hand). Before the baseline run `python tools/check_gd_load.py` once and "
+            "`python tools/run_godot_import_check.py` (a fresh worktree has nothing imported); a baseline with band=fail is invalid: fix the cause and re-shoot. "
+            "Open the baseline, then write the restate as visible text in the message, then ask your questions (open with what the result should look like and whether the User has a reference). "
+            "After ANY failed or skipped tool step, your next message to the User starts with \"Did not work: <command> <one line of its output>\". "
+            "Gather, then run `python tools/start_build_slice.py --checkpoint`. This tool never starts grok.")
+
+
+def worktree_kind(root: Path) -> str:
+    """Which worktree shape root is: 'clone' = a Grok worktree (a full clone: `.git` is a directory, git dir == common dir, HEAD on the week
+    branch), found by its place `<...>/.grok/worktrees/<repo>/<name>` (seen in a real session: C:\\Users\\Vira\\.grok\\worktrees\\repos-whatdwellsbelow\\wdb-...);
+    'linked' = a true `git worktree add` (git dir differs from the shared one); '' = a main checkout."""
+    try:
+        parts = [p.lower() for p in root.resolve().parts]
+    except OSError:
+        parts = []
+    for i in range(1, len(parts)):
+        if parts[i] == "worktrees" and parts[i - 1] == ".grok" and len(parts) - i - 1 == 2 and (root / ".git").exists():
+            return "clone"
+    out = [subprocess.run(["git", "rev-parse", f"--{k}"], cwd=root, capture_output=True, text=True).stdout.strip() for k in ("git-dir", "git-common-dir")]
+    return "linked" if bool(out[0] and out[1]) and (root / out[0]).resolve() != (root / out[1]).resolve() else ""
 
 
 def is_linked(root: Path) -> bool:
-    """True when root is a linked git worktree (its git dir differs from the shared one)."""
-    out = [subprocess.run(["git", "rev-parse", f"--{k}"], cwd=root, capture_output=True, text=True).stdout.strip() for k in ("git-dir", "git-common-dir")]
-    return bool(out[0] and out[1]) and (root / out[0]).resolve() != (root / out[1]).resolve()
+    """True when root is a slice worktree of either shape (see worktree_kind)."""
+    return bool(worktree_kind(root))
+
+
+def merge_back_text(kind: str, week: str) -> str:
+    """The merge-back card line for the shape. The clone route is what a real session did (a push of the week branch); whether it is the intended route is the User's to confirm."""
+    ask = "balance, audio, visuals, controls: ask the User for playtest approval first. Commit and push only after she says the final shot is settled (or told you to commit now)"
+    if kind == "clone":
+        return (f"merge-back=this worktree is a full clone ON the week branch {week or 'grok-build-w{N}'} (not detached, no separate branch): on a green prove and her OK, commit here "
+                f"and `git push origin {week or 'grok-build-w{N}'}` (plain push, never main, no force); nothing to merge by hand. {ask}")
+    wk = week or "grok-build-w{N}"
+    return (f"merge-back=on a green prove and her OK: commit in the worktree (linked worktree, HEAD is detached), then in the checkout that holds {wk} (git worktree list): "
+            f"git merge --no-ff <worktree HEAD sha> (never main). {ask}")
 
 
 def checkpoint(root: Path, args) -> int:
@@ -79,12 +108,14 @@ def checkpoint(root: Path, args) -> int:
         return agent_log.finish("slice-boot", root, msg, "FAIL", args=args, write=not args.dry_run, route=route)
 
     if not is_linked(root):
-        return fail("NOT A WORKTREE: this is the main checkout, so no checkpoint is saved. Run `python tools/start_build_slice.py --door <door>`, "
+        return fail("NOT A WORKTREE: this directory is a main checkout (not under .grok/worktrees/, and not a linked git worktree), so no checkpoint is saved. "
+                    "Say so in your next message to the User (\"Did not work: --checkpoint, not a worktree\"). Run `python tools/start_build_slice.py --door <door>`, "
                     "have the User run its START lines, and run --checkpoint in that NEW session after gather.", "checkpoint-main")
     session = (args.session or os.environ.get("GROK_SESSION_ID", "")).strip()
     if not re.fullmatch(r"[A-Za-z0-9._-]{1,128}", session):
-        return fail("NO SESSION ID: $GROK_SESSION_ID is empty in this session and no --session was given. Nothing is saved. Ask the User in a question prompt "
-                    "for this session's id (`/session-info` in grok, or `grok sessions list` run in this directory), then rerun with --session ID.", "checkpoint-no-id")
+        return fail("NO SESSION ID: $GROK_SESSION_ID is empty in this session and no --session was given. Nothing is saved, so a red prove could not be forked. "
+                    "Start your next message to the User with \"Did not work: --checkpoint (no session id)\", and ask her in a question prompt for this session's id "
+                    "(she types `/session-info` in grok, or runs `grok sessions list` in this directory), then rerun with --session ID.", "checkpoint-no-id")
     saved = "" if args.dry_run else retry_lib.save_gather(root, root.name, session, args.ref, str(root))
     msg = (f"CHECKPOINT saved: session {session} for worktree {root}. A red prove prints `grok -r {session} --fork-session` to run from this directory; "
            "the fork stays in this worktree because this session already lives here.")
@@ -123,8 +154,8 @@ def selftest(script: Path) -> int:
         if step0_note("ui", "ui.pause", "", "camp-pause-menu") or step0_note("audio_visual", "", "", "") or step0_note("hub", "", "", ""):
             bad.append("flows mapped, or a non-visual name, must give no note")
         code, out = run(root, "--area", "ui-demo", "--ref", "HEAD", "--dry-run", area="")
-        if code != 0 or "STEP 0 (not a stop)" not in out or "START 1" not in out:
-            bad.append("a visual area with no flow must print STEP 0 and still print START, exit 0")
+        if code != 0 or "START 1" not in out:
+            bad.append("a visual area with no flow must still print START in a main checkout, exit 0")
         code, out = run(root, "--ref", "HEAD", "--dry-run")
         if code != 0 or "grok worktree create wdb-demo-" not in out or "grok --worktree=wdb-demo-" not in out or "cd <that path>" not in out or "--ref HEAD" not in out:
             bad.append("--ref HEAD must print the worktree create, cd + grok, and one-step lines")
@@ -156,6 +187,40 @@ def selftest(script: Path) -> int:
         code, out = run(wt, "--ref", "HEAD", "--dry-run")
         if code != 0 or "IN A WORKTREE" not in out or "START 1" in out:
             bad.append("boot inside a worktree must say it is the slice and print no START lines")
+        if worktree_kind(wt) != "linked" or "HEAD is detached" not in out or "git merge --no-ff" not in out:
+            bad.append("a linked worktree must be kind 'linked' and print the detached-HEAD merge-back")
+        # Grok's real shape: a FULL CLONE under .grok/worktrees/<repo>/<name>: .git is a directory, git dir == common dir, HEAD on the week branch
+        clone = Path(td) / "home" / ".grok" / "worktrees" / "repos-demo" / "wdb-demo-2"
+        clone.parent.mkdir(parents=True)
+        git(Path(td), "clone", "-q", str(root), str(clone))
+        git(clone, "checkout", "-q", "-B", "grok-build-w9", "origin/grok-build-w9")
+        (clone / "project.godot").write_text("")
+        (clone / "scripts" / "data").mkdir(parents=True, exist_ok=True)
+        (clone / "scripts" / "data" / "version.json").write_text('{"epoch": 0, "series": 9, "patch": 0}\n')
+        if not (clone / ".git").is_dir() or worktree_kind(clone) != "clone" or not is_linked(clone):
+            bad.append("a full clone under .grok/worktrees must be recognised as a Grok worktree")
+        code, out = run(clone, "--dry-run")
+        if code != 0 or "IN A WORKTREE" not in out or "START 1" in out or "full clone ON the week branch" not in out or "git push origin grok-build-w9" not in out or "HEAD is detached" in out:
+            bad.append("boot in a Grok clone must say IN A WORKTREE and give the clone merge-back (push of the week branch), not the detached text")
+        if "worktree=wdb-demo-2" not in out or "Did not work:" not in out:
+            bad.append("boot in a worktree must name the folder as the worktree and state the Did not work rule")
+        code, out = run(clone, "--dry-run", area="ui-demo")
+        if code != 0 or "IN A WORKTREE" not in out or out.index("IN A WORKTREE") > out.index("STEP 0 (not a stop)"):
+            bad.append("the worktree test must come before the STEP 0 note, and a Grok clone must pass with the note")
+        code, out = run(root, "--dry-run", area="ui-demo")
+        if "STEP 0" in out or "START 1" not in out:
+            bad.append("a main checkout prints START lines and no STEP 0 note")
+        code, out = run(clone, "--checkpoint")
+        if code == 0 or "NO SESSION ID" not in out or "Did not work: --checkpoint" not in out or "/session-info" not in out or "grok sessions list" not in out:
+            bad.append("--checkpoint in a clone with no id must fail with the Did not work line and where to get the id")
+        code, out = run(clone, "--checkpoint", env="sess-2")
+        if code != 0 or "grok -r sess-2 --fork-session" not in out or retry_lib.gather_for(clone).get("session") != "sess-2":
+            bad.append("--checkpoint must work in a Grok clone")
+        plain = Path(td) / "plain" / "worktrees" / "repos-demo" / "wdb-demo-3"
+        plain.parent.mkdir(parents=True)
+        git(Path(td), "clone", "-q", str(root), str(plain))
+        if worktree_kind(plain) != "" or worktree_kind(root) != "":
+            bad.append("a full clone outside .grok/worktrees, and the main checkout, are not worktrees")
     for b in bad:
         print("FAIL " + b)
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))

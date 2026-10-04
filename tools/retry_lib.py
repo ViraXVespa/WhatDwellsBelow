@@ -116,8 +116,8 @@ def block(root: Path, what: str, red: list[str]) -> str:
                            "Ask Vira in a question prompt (she runs `python tools/week_start.py` to start a week). Nothing is started for you.", END])
     if not session:
         head += (f" NO CHECKPOINT for this worktree ({root.name}): the gather session was not recorded, so there is nothing to fork. Nothing is forked or started for you. "
-                 "Run `python tools/start_build_slice.py --checkpoint` in the session that did the gather, or ask Vira in a question prompt for its id "
-                 "(`grok sessions list` in this directory). Paste only after that:")
+                 "Your next message to Vira starts with \"Did not work: no checkpoint was saved\". Run `python tools/start_build_slice.py --checkpoint` in the session that did the gather, "
+                 "or ask Vira in a question prompt for its id (`/session-info`, or `grok sessions list` in this directory). Paste only after that:")
     else:
         head += (f" The User runs, from the worktree directory (`cd {_q(root)}`): `grok -r {session} --fork-session`. The fork's directory is the checkpoint's, "
                  "which is this worktree; gather context is kept, no re-gather. Paste:")

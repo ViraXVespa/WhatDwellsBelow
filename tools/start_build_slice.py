@@ -59,7 +59,8 @@ def main(argv: list[str] | None = None) -> int:
     slug = re.sub(r"[^a-z0-9._-]+", "-", raw.lower()).strip("-")[:48].strip("-")
     if not slug:
         agent_log.fail("area slug is empty after sanitize")
-    wt = f"wdb-{slug}-{dt.datetime.now():%Y%m%d-%H%M}"
+    kind = slice_lib.worktree_kind(root)
+    wt = root.name if kind else f"wdb-{slug}-{dt.datetime.now():%Y%m%d-%H%M}"
     route_lines, route = [], "skipped"
     if args.door or args.job:
         if args.dry_run:
@@ -86,7 +87,7 @@ def main(argv: list[str] | None = None) -> int:
             near = ",".join(shot_flows(load_routes(root), door=args.job.split(".", 1)[0]))
         except Exception:
             near = ""
-    note = slice_lib.step0_note(args.door, args.job, args.area, flows, near)
+    note = slice_lib.step0_note(args.door, args.job, args.area, flows, near) if kind else ""
     week = repo_lib.week_branch(root)
     if not args.ref and not week:
         msg = ("NO WEEK BRANCH: no grok-build-w* branch exists, and no --ref was given. Nothing is started and no START line is printed (main is never the fallback). "
@@ -94,24 +95,23 @@ def main(argv: list[str] | None = None) -> int:
         return agent_log.finish("slice-boot", root, msg, "FAIL", args=args, write=not args.dry_run, worktree=wt, route="no-week-branch")
     ref = args.ref or week
     ref_note = "--ref given" if args.ref else f"week branch {week}"
-    linked = slice_lib.is_linked(root)
-    start = slice_lib.in_worktree_text() if linked else slice_lib.start_text(wt, ref)
+    start = slice_lib.in_worktree_text() if kind else slice_lib.start_text(wt, ref)
     card = [f"door={args.door} job={args.job} area={args.area} ref={ref} ({ref_note}) worktree={wt}",
             f"smokes={smokes or 'n/a'} (run: tools/run_smokes.py --door/--job; add or update asserts for new systems)",
             f"flows={flows or 'none mapped to this job'} (headless: tools/bot_smokes.py --flows; pictures: tools/run_shot_flow.py --flow N; UI states: tools/check_shot_gaps.py --changed)",
-            "gather (in the worktree session)=visual: shoot and OPEN the baseline picture first; restate the ask; ask the User as many questions as the job needs, as often as needed; list_xref / show_func / code_map row for what the job needs; more than one system: read each one's doc and code-map row first",
-            "prove=every pass: python tools/check_gd_load.py. Visual: one unit, open before and after, stop and ask the User with the PNG paths plus two lists (Decisions I made that were yours; Assumptions carried from memory or docs); read all output (build-job-cycle.md). Gate: run_build_gate once",
-            f"merge-back=on a green prove: commit in the worktree (HEAD is detached), then in the checkout that holds {week or 'grok-build-w{N}'} (git worktree list): git merge --no-ff <worktree HEAD sha> (never main); balance, audio, visuals, controls: ask_user_question for playtest approval first",
+            "gather (in the worktree session)=visual: import first (check_gd_load.py once, run_godot_import_check.py), then shoot and OPEN the baseline (band=fail is not a baseline); show the restate as visible text; ask the User as many questions as the job needs, as often as needed, opening with the outcome and any reference picture; list_xref / show_func / code_map row for what the job needs; more than one system: read each one's doc and code-map row first",
+            "prove=every pass: python tools/check_gd_load.py. Visual: one unit, open before and after, stop and ask the User with the PNG paths in the ask text plus two lists (Decisions I made that were yours, incl. new assets, fonts, dependencies, generated images; Assumptions carried from memory or docs); a failed or skipped step opens your next message with 'Did not work: <command> <line>'; read all output (build-job-cycle.md). Gate: run_build_gate once",
+            slice_lib.merge_back_text(kind or "linked", week or ref),
             "retry=a red prove prints `grok -r CHECKPOINT --fork-session` to run from the worktree, with the diff to read"]
-    card += [note] if note else []
-    body = card + ["", start, ""] + (["--- route ---"] + route_lines + [""] if route_lines else [])
+    body = card + ["", start, ""] + ([note, ""] if note else []) + (["--- route ---"] + route_lines + [""] if route_lines else [])
     if route == "ok":
         head = "\n".join(l for l in route_lines if not l.startswith(("Summary", "RESULT")))
     elif route.startswith("exit"):
         head = "route failed:\n" + "\n".join(route_lines)
     else:
         head = f"smokes={smokes or 'n/a'} flows={flows or 'n/a'}" + ("" if smokes else " (--area has no route card; name a door/job for smokes)")
-    echo = f"worktree={wt} ref={ref} ({ref_note})\n{head}" + ("" if route.startswith("exit") else (f"\n{note}" if note else "") + f"\n{start}")
+    merge = slice_lib.merge_back_text(kind, week or ref) if kind else ""
+    echo = f"worktree={wt} ref={ref} ({ref_note})\n{head}" + ("" if route.startswith("exit") else f"\n{start}" + (f"\n{merge}" if merge else "") + (f"\n{note}" if note else ""))
     return agent_log.finish("slice-boot", root, "\n".join(body), "FAIL" if route.startswith("exit") else "PASS",
                             args=args, write=not args.dry_run, echo=echo, worktree=wt, route=route)
 

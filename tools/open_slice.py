@@ -61,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
         return agent_log.finish("open-slice", root, msg, status, args=args, write=not dry, **kv)
 
     if slice_lib.is_linked(root):
-        return end(f"IN A WORKTREE: {root} is a linked worktree. Run `python tools/open_slice.py` from the main checkout.", "FAIL", route="in-worktree")
+        return end(f"IN A WORKTREE: {root} is already a worktree (a Grok clone under .grok/worktrees, or a linked git worktree). Run `python tools/open_slice.py` from the main checkout.", "FAIL", route="in-worktree")
     ref = args.ref or repo_lib.week_branch(root)
     if not ref:
         return end("NO WEEK BRANCH: no grok-build-w* branch exists and no --ref was given, so nothing is started (main is never the fallback). "
@@ -162,6 +162,13 @@ def selftest(script: Path) -> int:
         code, out = run(wt, "--dry-run")
         if code == 0 or "IN A WORKTREE" not in out:
             bad.append("inside a linked worktree it must refuse")
+        clone = Path(td) / "h" / ".grok" / "worktrees" / "repos-x" / "wdb-clone"
+        clone.parent.mkdir(parents=True)
+        git(Path(td), "clone", "-q", str(root), str(clone))
+        (clone / "project.godot").write_text("")
+        code, out = run(clone, "--dry-run")
+        if code == 0 or "IN A WORKTREE" not in out:
+            bad.append("inside a Grok clone worktree (.git is a directory) it must refuse")
     for b in bad:
         print("FAIL " + b)
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
