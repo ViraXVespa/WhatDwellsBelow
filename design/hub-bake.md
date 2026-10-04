@@ -2,15 +2,16 @@
 
 Status: current plan  
 Read when: hub light, roofs, camp shot, wow pass  
-Code: `scripts/graphics/light_rt.gd` (`HUB_SUB`), `scripts/graphics/light_rt/hub_bake.gd` (`_hub_make_rt`, `_hub_paint_day`, `_hub_render`, `_load_baked`, `save_hub_bake`, `HUB_BAKE_STAMP`), `scripts/graphics/light_rt/hub_cast.gd` (`_hub_stamp_skirt`), `scripts/app/app_bake.gd` (`--wdb-bake-camp`: realizes the Layout camp in memory and adds it to the scene tree before baking), `scripts/graphics/wrap_shader.gd`, `scripts/world/camp_build.gd`, `scripts/world/camp_build/mesh.gd`, `scripts/world/camp/layout.gd`, `assets/baked/hub_light.png`, `tools/run_bake_camp.py`, `tools/check_hub_bake.py`
+Code: `scripts/graphics/light_rt.gd` (`HUB_SUB`), `scripts/graphics/light_rt/hub_bake.gd` (`_hub_make_rt`, `_hub_paint_day`, `_hub_render`, `_load_baked`, `save_hub_bake`, `HUB_BAKE_STAMP`), `scripts/graphics/light_rt/hub_cast.gd` (`_hub_stamp_skirt`), `scripts/graphics/light_rt/hub_shadow.gd` (`_hub_mesh_shadows`), `scripts/app/app_bake.gd` (`--wdb-bake-camp`: realizes the Layout camp in memory and adds it to the scene tree before baking), `scripts/graphics/wrap_shader.gd`, `scripts/world/camp_build.gd`, `scripts/world/camp_build/mesh.gd`, `scripts/world/camp/layout.gd`, `assets/baked/hub_light.png`, `tools/run_bake_camp.py`, `tools/check_hub_bake.py`
 
-The hub light is baked only: the game never renders it. Offline bake quality is the look lock. Runtime `camp_light` milliseconds are not. Ortho-down at play zoom is the judge. Roofs read through lid shade and tile grain. The yard reads through a shadow projected from the real hall, wing, stall, and awning boxes. Height sets the length. Hall and wing are real gables. The stall tarp is pitched over the counter. Collision comes from those meshes.
+The hub light is baked only: the game never renders it. Offline bake quality is the look lock. Runtime `camp_light` milliseconds are not. Ortho-down at play zoom is the judge. Roofs read through lid shade and tile grain. The yard reads through a shadow projected from the real hall, wing, stall, and awning meshes. Height sets the length. Hall and wing are real gables. The stall tarp is pitched over the counter. Collision comes from those meshes.
 - Building collision is the live wall, gable, awning, and stall-pitch meshes. Do not put the player on a box lid.
 
 ## Lock
 - No runtime render. `prepare_hub` loads `res://assets/baked/hub_light.png` (from disk in the editor, from the imported texture in an export) and checks it: file present, size equals the Layout (`tw*HUB_SUB` by `th*HUB_SUB`, 1088x1024 today), and `HUB_BAKE_STAMP`. Any miss is a hard error (`_fatal`: `printerr`, `push_error`, `OS.crash`) that names the cause and the rebake steps. There is no fallback, so a missing or stale bake breaks the hub on purpose.
-- Stamp: `HUB_BAKE_STAMP` (`hub_bake.gd`) is the first 16 hex of the SHA-256 of the png's RGBA8 pixels, printed by the bake as `stamp=`. Current bake: `f205c66ffc7b5e69`.
-- One render, bake only: `_hub_render` (day gradient, cast skirts from `_hub_yard_boxes`, one 3x3 blur) on a fresh field-filled image, saved by `LightRt.save_hub_bake`. No second paint, no mesh projection, no extra blur (the 2026-10-02 file had all three and was not the intended look). Its output is the look main showed before the bake existed.
+- Stamp: `HUB_BAKE_STAMP` (`hub_bake.gd`) is the first 16 hex of the SHA-256 of the png's RGBA8 pixels, printed by the bake as `stamp=`. Current bake: `2db52d08a413a31c`.
+- One render, bake only: `_hub_render` on a fresh field-filled image, saved by `LightRt.save_hub_bake`: day gradient (`_hub_paint_day`), soft skirts for the props (`hub_cast.gd`, plus the tarp lid at the near shade), then the mesh shadows (`hub_shadow.gd`), then one 3x3 blur. No second paint, no fill, no second blur.
+- Mesh shadows: every visible, shadow-casting `MeshInstance3D` and building `Sprite3D` under the camp is projected triangle by triangle onto the ground along `HubCast.AWAY` (+X +Z, the actor blobs' direction) at `HubCast.REACH` metres per metre of height; a point on the ground stays put, so walls and posts join their shadow. Shade comes from the caster height at each pixel (`HubCast.shade_at`: near shade at the base, tip shade at the top), the same numbers as the skirts. Each pixel keeps the darker of what is there and the new shade, so shadows never stack. A body's parts share one top. Skipped: meshes with shadows off (fence rails and posts), ground planes, anything under 0.2 m tall, and the footprint of each body's ground parts (roofs sample the atlas there). The camp must be in the tree (`app_bake.gd`) so global transforms are valid.
 - Any change to the hub light code (`hub_bake`, `hub_cast`, `hub_shadow`), `HUB_SUB`, or the Layout boxes, size, awnings or crystal needs a rebake and a new stamp in the same commit. A stale png fails `python3 tools/check_hub_bake.py` (run by `run_build_gate.py --batch`) and crashes the hub.
 - Rebake: `python3 tools/run_bake_camp.py` (not headless). It must print `RESULT PASS`, `shadow_px` not 0 and `stamp=<hex>`. Review the shots (`run_shots.py --scene camp --hud 0 --mode build`), paste the stamp into `HUB_BAKE_STAMP`, commit png and stamp together, run `check_hub_bake.py`.
 - Shipped atlas is the png only. `scenes/camp.tscn` must not embed a second copy.
@@ -22,7 +23,7 @@ The hub light is baked only: the game never renders it. Offline bake quality is 
 - Yard atlas paints a warm sun disc plus a small crystal bump by hand at `HUB_SUB`. Do not send hub through `Stamp.paint`.
 - Cream field `Color(0.98, 0.96, 0.93)` is the floor under the sun, not the finished picture.
 - Building interiors are not written. Roofs, awnings, and the stall tarp sample `light_tex`. Dirt owns the yard.
-- Shadows fall with the player blob: down-left, -X +Z. Do not invent a second sun, and do not lock a +X vector over the blob. Shadows come from the Layout boxes (`_hub_yard_boxes`: gables, awnings, tarp, posts, prop blobs), cast as feathered skirts; actors carry their own blob. Feather the edge. No skirt smear. No shed AABB.
+- Shadows fall with the player blob: down-left, -X +Z. Do not invent a second sun, and do not lock a +X vector over the blob. Building shadows come from the meshes (see Lock); props are `_hub_yard_boxes` blobs; actors carry their own blob. The edge is the one 3x3 blur. No skirt smear. No shed AABB.
 - Finish and save use the same skirt. Then one 3x3 blur.
 - Hall and wing lids are two-slope gables, not a south-falling shed. WrapShader russet is the lid color, matching the awning red, not the sun disc. Each slope runs from the ridge to its eave. `shade_hi` stays high enough that the eave is still tile. Tile `uv_scale` uses the slope length.
 - Stall tarp is a pitched sheet over the counter, high enough to cover the goods, one sheet of `plaza_tarp.png`. No lid wrap term on the cloth. A small rumple is not the pitch.
@@ -31,7 +32,7 @@ The hub light is baked only: the game never renders it. Offline bake quality is 
 
 ## Allowed
 - `HUB_SUB` 16 or higher. Raise it when puddles look stair-stepped.
-- Skirts from the live Layout boxes. Spend bake time.
+- Mesh shadows from the live camp. Spend bake time.
 - Ground, roofs, awnings, and the stall tarp sample `light_tex`.
 - One EnvKit on Camp only. It must not second-light a lid.
 

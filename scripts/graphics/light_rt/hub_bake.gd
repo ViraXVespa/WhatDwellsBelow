@@ -11,7 +11,7 @@ const HUB_FIELD := Color(0.98, 0.96, 0.93, 1.0)
 ## stamp and the Layout's size; anything else is a hard error (no runtime fallback). Change the hub light code or
 ## Layout boxes -> rebake with tools/run_bake_camp.py, review the shots, paste its `stamp=` here
 ## (tools/check_hub_bake.py checks the committed png against it).
-const HUB_BAKE_STAMP := "f205c66ffc7b5e69"
+const HUB_BAKE_STAMP := "2db52d08a413a31c"
 
 ## The PNG on disk when it exists (dev runs); otherwise the imported copy inside an export (web, packed desktop).
 static func _baked_image(path: String) -> Image:
@@ -227,9 +227,11 @@ static func _first_u(xs: PackedFloat64Array, rowz: float, w: int, full: bool) ->
 		else:
 			lo = m + 1
 	return lo
-## Day gradient, cast skirts, one blur on a field-filled image. Only the bake (save_hub_bake) calls this.
+## Day gradient, prop skirts, mesh shadows (each shadow takes the darker of what is there, so nothing darkens twice),
+## one blur, on a field-filled image. Only the bake (save_hub_bake) calls this.
 static func _hub_render(img: Image, x0: int, z0: int, layout: Node) -> int:
 	_hub_paint_day(img, x0, z0, layout)
-	var wrote: int = HubCast._hub_cast_buildings(img, x0, z0, layout)
+	var wrote: int = HubCast._hub_cast_buildings(img, x0, z0, layout, true)
+	wrote += HubShadow._hub_mesh_shadows(img, Vector2(float(x0), float(z0)), layout)
 	HubShadow._blur_hub(img)
 	return wrote
