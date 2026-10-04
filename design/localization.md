@@ -46,7 +46,7 @@ Registration: `project.godot` `[internationalization]` lists `en.po`. `setup()` 
 
 ## Status
 
-Player-facing sites are converted (menus, prompts, tutorial, quest, shop, tables by id, named-placeholder messages). Const tables hold no English: `LocS.tr_or(key, fallback)` uses an id or `capitalize()` default for a missing key only. Boss titles carry a role id (`gate_master`, `guardian`) through `Gen.boss_role` into combat. The HUD prompt colour reads the `prompt_locked` flag (`App.interact_locked`), not text.
+Player-facing sites are converted (menus, prompts, tutorial, quest, shop, tables by id, named-placeholder messages). Const tables hold no English: `LocS.tr_or(key, fallback)` uses an id or `capitalize()` default for a missing key only. The one exception is the bind table (`input/binds/table.gd`), whose `label` is the missing-key default for `controls.<id>`. Boss titles carry a role id (`gate_master`, `guardian`) through `Gen.boss_role` into combat. The HUD prompt colour reads the `prompt_locked` flag (`App.interact_locked`), not text.
 
 | Left in English | Why |
 |-----------------|-----|
