@@ -11,7 +11,7 @@ The required SFX list stays on the audio-visual page.
 - Play: `App.sfx("id")` at the event (`App.sfx` forwards to the `sfx.gd` node). `hurt`, `warcry` and `hurk` resolve to `_male` / `_female` by `App.character_type`. The adrenaline loop is `set_adrenaline(true/false)` from `app_run.gd`.
 - Volume: every player is on the Master bus at `vol_sfx * vol_master`; there are no custom buses. Music is `music.gd`.
 - New cue: reuse a file already under `assets/audio/` when one fits. A new file is an access confirm (new asset location) and `isolated-media.md` if Imagined. Then add one `FILES` row and one `App.sfx` call, and run smoke 9.
-- `sfx_dash`, `sfx_hit`, `sfx_level`, `sfx_slam` are second recordings (`ALTS`): each play of `dash`, `hit`, `level`, `slam` picks the `p2_*` / `p9_*` file or its alt at random (private RNG). `sfx_hurt` is the body hit layered under the hurt voice (`LAYERS`). `p2_warcry.wav` is unused.
+- `sfx_dash`, `sfx_hit`, `sfx_level`, `sfx_slam` are second recordings (`ALTS`): each play of `dash`, `hit`, `level`, `slam` picks the `p2_*` / `p9_*` file or its alt at random (private RNG). `sfx_hurt` is the body hit layered under the hurt voice (`LAYERS`).
 - An event listed under Missing SFX stays silent until the User approves wiring it: ask, do not add.
 
 ## Missing SFX (silent today; Build may generate these on request, not wire them)
@@ -26,4 +26,4 @@ Same rules as above: new file under `assets/audio/`, one `FILES` row, one `App.s
 | Chest open | `interact_act.gd` `open_chest` chest branch (today plays `pickup`) | `chest` / `p10_chest.wav` | 0.4 s creak then latch click |
 | Quest accept | `quest_roll.gd` `accept_quest` | `quest_accept` / `p10_quest_accept.wav` | 0.3 s two-note stamp or seal, hopeful |
 
-Generate a placeholder wav with `python3 tools/make_sfx.py --only <id>`: add one entry to `tools/sfx-cues.json` (sine, noise, mix, cat nodes; the 22 existing p2/p9 cues live there, byte-identical, `--check` proves it). No new `make_pN` script.
+Generate a placeholder wav with `python3 tools/make_sfx.py --only <id>`: add one entry to `tools/sfx-cues.json` (sine, noise, mix, cat nodes; the 21 existing p2/p9 cues live there, byte-identical, `--check` proves it). No new `make_pN` script.

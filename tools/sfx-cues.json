@@ -5,7 +5,6 @@
 {"name": "p2_crit", "scale": 32000, "graph": ["mix", ["sine", 520, 0.12, 0.35, true, 1.0], ["sine", 780, 0.12, 0.25, true, 1.0]]},
 {"name": "p2_slam", "scale": 32000, "graph": ["mix", ["sine", 70, 0.22, 0.5, true, 1.0], ["noise", 0.2, 0.35, 0.0]]},
 {"name": "p2_dash", "scale": 32000, "graph": ["sine", 240, 0.14, 0.25, true, 1.0]},
-{"name": "p2_warcry", "scale": 32000, "graph": ["mix", ["sine", 220, 0.28, 0.35, true, 1.0], ["sine", 330, 0.28, 0.2, true, 1.0]]},
 {"name": "p2_bolt", "scale": 32000, "graph": ["mix", ["sine", 880, 0.16, 0.3, true, 1.0], ["noise", 0.16, 0.2, 0.0]]},
 {"name": "p2_bow", "scale": 32000, "graph": ["sine", 420, 0.07, 0.28, true, 1.0]},
 {"name": "p2_adrenaline_loop", "scale": 32000, "graph": ["mix", ["cat", ["sine", 90, 0.4, 0.12, false, 1.0], ["sine", 110, 0.4, 0.1, false, 1.0]], ["noise", 0.8, 0.05, 0.0]]},

@@ -29,6 +29,7 @@ static var _live := ""
 static var _knob := ""
 static var _bill: GDScript
 static var _img: Image
+static var _job: RefCounted
 static var _solid: PackedByteArray = PackedByteArray()
 static var _sw := 0
 static var _sh := 0
@@ -94,6 +95,7 @@ static func reset_floor() -> void:
 	_plan_dirty = true
 	_live = ""
 	_knob = ""
+	_job = null
 	_rect = Rect2i(-1, -1, 0, 0)
 static func maintain(host: Node) -> void:
 	Publish.maintain(host)

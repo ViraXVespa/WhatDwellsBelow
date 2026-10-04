@@ -3,15 +3,15 @@
 Status: protocol
 Read when: Grok Build (CLI) path; every CLI instance after a gap
 
-**Intent.** Vira is the conduit for design; Build is the conduit for implementation. Make her vision real with little friction. The design docs are a living plan, the road we are building and not the route we have to take, and the game is an evolving ecosystem. Defer to her on design; suggest improvements and ask in the moment with a question prompt (nothing to write down). Hard rules stay firm: gates before a PR, no hand-edited PNGs, no gate loops, never push `main`.
+**Intent.** Vira is the conduit for design; Build is the conduit for implementation. Make her vision real with little friction. The design docs are a living plan, not a fixed route. Defer to her on design; suggest improvements and ask in the moment with a question prompt. Hard rules: gates before a PR, no hand-edited PNGs, no gate loops, never push `main`.
 
-You can write the live tree. Second topic door: read it when the job touches that system (read-first, below); ask the User to name the owner before adding a new cross-system owner. Concurrent CLI chats: Slice, Bot notes, PC offload, Smoke tests. Do not fold another role into this thread unless the User names it here.
+You can write the live tree. Second topic door: read it when the job touches that system (read-first, below); ask the User to name the owner before adding a new cross-system owner. Concurrent CLI chats: Slice, Bot notes, PC offload, Smoke tests. Do not fold another role in unless the User names it.
 
 ## Design: Vira decides
 
-A design or product question the docs do not settle (what a feature does, where it lives, who owns it, a new door or doc, copy and lore, save or entry behavior, scope splits, which of two valid routes) goes to the User with `ask_user_question`, before the design doc or any code. You may offer an improvement the same way. One batched call; each question gets 2-4 concrete options, recommended first and marked. Plain-text questions in the transcript do not count.
+A design or product question the docs do not settle (what a feature does, where it lives, who owns it, a new door or doc, copy and lore, save or entry behavior, scope splits, which of two valid routes) goes to the User with `ask_user_question`, before the design doc or any code. You may offer an improvement the same way. One batched call; each question gets 2-4 concrete options, recommended first and marked. Plain-text questions do not count.
 Always-allow covers permissions only (Access, below), never a design question. A dismissed or timed-out question is not an answer: stop and report. No subagent deliberation; the User chooses. With no `ask_user_question` tool, ask in one plain message and stop.
-Build decides code shape inside one system and starts open numbers coherent (exposed in the debug menu and `tunables.md`).
+Build decides code shape inside one system and starts open numbers coherent (debug menu, `tunables.md`).
 A doc and the code disagree: compare their change history, trust the newer, ask if still unclear (`prove.md`, `list_changed.py --history`).
 
 ## First (once, before anything else)
@@ -28,7 +28,7 @@ New feature flow (in order; chain the steps and report at the end):
 
 Agents file once, then this file. Plan pair only if missing. Then the named topic. **A job that touches more than one system: read first.** List every system it touches, then read each one's doc and `code_map.py row` before changing anything. Imagine: `design/isolated-media.md` before any Imagine call. Gather / change / prove: `design/build-job-cycle.md`.
 
-Git inventory (not gather): `tools/list_changed.py`. Search: `tools/list_xref.py`, not grep. Extract: `python3 tools/show_func.py --path <script> --name <func>`. No `python -c`. Do not start by archiving the live path. Do not resume unnamed work from git status.
+Git inventory (not gather): `tools/list_changed.py`. Search: `tools/list_xref.py`, not grep. Extract: `python3 tools/show_func.py --path <script> --name <func>`. No `python -c`. Do not archive the live path first or resume unnamed work from git status.
 
 ## Work
 
@@ -50,8 +50,10 @@ Green prove: commit in the worktree (HEAD is detached), then `git merge --no-ff 
 - Smoke tests: Build runs the mapped phases at prove and updates or adds the asserts for any system it implements (`build-job-cycle.md`). The dedicated smoke session is `debug-smokes.md`. Bot limits stay in `BOT.md`.
 - I2V: this path, isolated-media gate, stay in the slice thread.
 
-Archive pins are CI-only (`versioning.md`). Archives are pinned commits in `scripts/data/archive_catalog.json`. Do not invent pin SHAs.
+Archive pins are CI-only (`versioning.md`, `archive_catalog.json`); do not invent pin SHAs.
 
 ## After a job
 
-Gates: `design/tools.md` rule 10 (batch, once, at most 2 reruns). Prefer `python3 tools/run_build_gate.py` and `python3 tools/read_summary.py --job build-gate` (import check plus an advisory `check_shot_gaps.py --changed` print). Never hand-edit `scripts/data/version.json`. Do not commit `_logs/`. Report the rough edges you hit (rule 9) and fix tool ones in the same task.
+Proof rules (`prove.md`): one-line intended outcome before a behavior change; a missing required asset fails loudly (no fallback without the User's OK); report "gates pass", not "proved"; look and sound are unverified until the User confirms.
+
+Gates: `design/tools.md` rule 10 (batch, once, at most 2 reruns). Prefer `python3 tools/run_build_gate.py` and `python3 tools/read_summary.py --job build-gate` (import check plus an advisory `check_shot_gaps.py --changed` print). Never hand-edit `version.json`. Do not commit `_logs/`. Report rough edges (rule 9) and fix tool ones in the same task.

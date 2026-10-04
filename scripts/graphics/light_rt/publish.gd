@@ -7,18 +7,26 @@ const Plan := preload("res://scripts/graphics/torch_plan.gd")
 const HitchLog := preload("res://scripts/debug/hitch_log.gd")
 const Lights := preload("res://scripts/graphics/light_rt/lights.gd")
 const RT_PATH := "res://scripts/graphics/light_rt.gd"
+## Walking restamps run in units of at most this many microseconds per frame (the first stamp, under the cover, runs whole).
+const STAGE_US := 4000
 
 static func maintain(host: Node) -> void:
 	var rt: Variant = load(RT_PATH)
 	if host == null or host.get("data") == null:
 		return
-	var rect: Rect2i = _ring_rect(host)
-	if rect.size.x < 1 or rect.size.y < 1:
-		return
 	var mode := ""
 	if App.present:
 		mode = str(App.present.get("_mode"))
 	var entering: bool = mode == "enter_hold" or mode == "enter_fade" or rt._rect.size.x < 1
+	if rt._job != null:
+		if not entering:
+			_advance()
+			return
+		rt._job = null
+		rt._knob = ""
+	var rect: Rect2i = _ring_rect(host)
+	if rect.size.x < 1 or rect.size.y < 1:
+		return
 	var key: String = Lights._knob_key()
 	var live: String = Lights._live_key(host)
 	var need_plan: bool = rt._plan_dirty or not rt._planned or (rt._plan_partial and not entering)
@@ -42,14 +50,20 @@ static func maintain(host: Node) -> void:
 			LoadTiming.dnote("light_kind", "stamp")
 		rt._rect = rect
 		rt._knob = key
-		_publish_dungeon(host, rect)
+		var job: RefCounted = _begin_dungeon(host, rect)
+		if entering:
+			job.step(-1)
+			_commit(job)
+		else:
+			rt._job = job
+			_advance()
 		return
 	HitchLog.mark("light_refill")
 	if LoadTiming:
 		LoadTiming.dnote("light_kind", "refill")
 	rt._live = live
 	_refill(host)
-static func _publish_dungeon(host: Node, rect: Rect2i) -> void:
+static func _begin_dungeon(host: Node, rect: Rect2i) -> RefCounted:
 	var x0: int = rect.position.x
 	var z0: int = rect.position.y
 	var tw: int = rect.size.x
@@ -67,42 +81,31 @@ static func _publish_dungeon(host: Node, rect: Rect2i) -> void:
 	var loops: Array = []
 	if host.data.has("outline_loops") and host.data["outline_loops"] is Array:
 		loops = host.data["outline_loops"]
-	_publish(x0, z0, tw, th, lights, Stamp.COL_FLOOR, solid, sw, sh, n, loops)
+	return Stamp.begin(tw, th, lights, Stamp.COL_FLOOR, solid, sw, sh, n, x0, z0, loops)
 
-static func _publish(
-	x0: int,
-	z0: int,
-	tw: int,
-	th: int,
-	lights: Array,
-	ambient: Color,
-	solid: PackedByteArray,
-	sw: int,
-	sh: int,
-	n: int,
-	loops: Array = []
-) -> void:
+static func _advance() -> void:
 	var rt: Variant = load(RT_PATH)
-	var iw: int = tw * maxi(1, n)
-	var ih: int = th * maxi(1, n)
-	var img: Image = rt._img
-	if img == null or img.get_width() != iw or img.get_height() != ih:
-		img = Image.create(iw, ih, false, Image.FORMAT_RGBA8)
-	img.fill(Color(0, 0, 0, 1))
-	Stamp.paint(img, tw, th, lights, ambient, solid, sw, sh, n, x0, z0, loops)
-	rt.origin = Vector2(float(x0), float(z0))
-	rt.span = Vector2(float(tw), float(th))
-	rt._img = img
-	rt._solid = solid
-	rt._sw = sw
-	rt._sh = sh
-	rt._sn = n
-	_keep_casts(x0, z0, tw, th, lights)
+	var job: RefCounted = rt._job
+	if job.step(STAGE_US):
+		rt._job = null
+		_commit(job)
+
+## Swap the finished stamp in: image, origin, span and solid together, then one upload.
+static func _commit(job: RefCounted) -> void:
+	var rt: Variant = load(RT_PATH)
+	rt._img = job.image()
+	rt.origin = Vector2(float(job.x0), float(job.z0))
+	rt.span = Vector2(float(job.tw), float(job.th))
+	rt._solid = job.solid
+	rt._sw = job.sw
+	rt._sh = job.sh
+	rt._sn = job.n
+	_keep_casts(job.x0, job.z0, job.tw, job.th, job.lights)
 	# hub lift skipped: warm fill flattened the yard RT
 	if rt._gpu == null:
-		rt._gpu = ImageTexture.create_from_image(img)
+		rt._gpu = ImageTexture.create_from_image(rt._img)
 	else:
-		rt._gpu.set_image(img)
+		rt._gpu.set_image(rt._img)
 	HitchLog.mark("light_gpu")
 	rt.tex = rt._gpu
 	rt._push()

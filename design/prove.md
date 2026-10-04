@@ -5,6 +5,14 @@ Read when: choosing, running or reporting the proof for a change (Bot, Build or 
 
 One standard for every surface: the cheapest check that would fail if the change were wrong, run once, reported as command plus `RESULT` line plus counts. Gate loops: `tools.md` rule 10. Tools and recipes grow with the work: if a proof needs a check no tool does, extend the library (`imglib`, the shot tools, a gate) in the same job and add its recipe here; do not eyeball it, hand-drive Godot or work around it.
 
+## Proof rules (every surface)
+
+- **No silent fallback.** A required asset or file that is missing or invalid fails loudly (error plus stop). A fallback exists only with the User's explicit OK.
+- **Intent first.** Before changing a behavior, state the intended outcome in one line, from the User's words or the design docs, and prove against that line. Unclear: ask with a question prompt.
+- **Prove against intent, not yourself.** Compare with the intent and with a reference the User confirmed. "Same as before" counts only when before is what the User wanted; a prior run of the same code is not enough.
+- **Say what was shown.** Passing gates are "gates pass", never "proved". Visual and audio results are unverified until the User confirms; give the crops, numbers or paths and say so.
+- **Fix the bug, keep the improvement.** A bug in a feature is a reason to find the cause and fix it, not to delete the feature.
+
 ## Surfaces
 
 | Surface | Runs the proof | Rules |
