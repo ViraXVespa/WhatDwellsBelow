@@ -364,9 +364,9 @@ shot_flows:
   inventory: "camp-inventory"
   dungeon.gates: "dungeon-gate-shop"
   dungeon: "dungeon-f1-spawns,dungeon-f2-spawns,dungeon-f3-spawns,dungeon-f4-spawns,dungeon-f1-props,dungeon-f1-boss,dungeon-hud-states,dungeon-f1-ambush,dungeon-f2-ambush,dungeon-f3-ambush,dungeon-f4-ambush,dungeon-f3-elites,dungeon-all-enemies"
-  ui: "camp-pause-inventory"
-  ui.pause: "camp-pause-menu"
-  ui.run_flow: "camp-recap"
+  ui: "camp-pause-inventory,camp-overlays"
+  ui.pause: "camp-pause-menu,camp-pause-pages"
+  ui.run_flow: "camp-recap,dungeon-map-crystal"
   ui.hud: "dungeon-hud-states"
 
 # New UI states with no shot flow (check_shot_gaps.py --changed): Bot and Build both FAIL at the END gates (bot_smokes.py,

@@ -6,6 +6,8 @@ Read when: pause menu layout / tabs / behavior
 
 ## Pause menu
 
+The open pause is a journal binder (ui-theme). The current build still draws one book with a center crease. That crease is not the layout rule. The next pass places each tab's contents as its own document in the binder so rows are not cut by the gutter. Bookmark tabs, ink, and the prompt footer stay.
+
 Opened with Menu / Start / Esc. Freezes gameplay.
 Every menu (including this one) MUST open with valid initial focus so it is immediately navigable by gamepad.
 

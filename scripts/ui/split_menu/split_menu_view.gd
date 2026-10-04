@@ -36,11 +36,8 @@ static func tune_scroll(sc: ScrollContainer) -> void:
 	if sc == null or not is_instance_valid(sc):
 		return
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	var need := false
-	if sc.size.y > 1.0 and sc.get_child_count() > 0 and sc.get_child(0) is Control:
-		var c: Control = sc.get_child(0) as Control
-		need = c.get_combined_minimum_size().y > sc.size.y + 2.0
-	sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS if need else ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	sc.follow_focus = true
 
 static func tune_host(host: Node) -> void:
 	if not _live(host):

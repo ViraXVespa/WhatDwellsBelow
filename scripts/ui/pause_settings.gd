@@ -10,6 +10,7 @@ const Pages := preload("res://scripts/ui/pause_settings/settings_pages.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
+const Journal := preload("res://scripts/ui/pause_menu/journal_page.gd")
 
 var pause: CanvasLayer
 var open := true
@@ -38,11 +39,15 @@ static func build(ui: CanvasLayer) -> void:
 	host.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var body_h: float = 800.0
+	var span: float = 1752.0
 	if ui.scroll:
 		ui.scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		if ui.scroll.size.y > 1.0:
 			body_h = ui.scroll.size.y
-	host.custom_minimum_size = Vector2(1400, body_h)
+		if ui.scroll.size.x > 10.0:
+			span = ui.scroll.size.x
+	host.custom_minimum_size = Vector2(span, body_h)
+	host.size = Vector2(span, body_h)
 	ui.box.add_child(host)
 	host._setup()
 
@@ -53,6 +58,7 @@ func _setup() -> void:
 	split_page = "gameplay"
 	View.setup_embed(self, self)
 	Split.rebuild(self)
+	_fit_journal_columns()
 	_sync_leaf()
 
 func split_rows() -> Array:
@@ -147,8 +153,44 @@ func split_build_page(id: String) -> void:
 	_sync_leaf()
 	View.tune_host(self)
 
+func _fit_journal_columns() -> void:
+	var span: float = size.x
+	if pause and pause.scroll and pause.scroll.size.x > 10.0:
+		span = pause.scroll.size.x
+	if span < 10.0:
+		return
+	var page: float = (span - Journal.GUTTER) * 0.5
+	var list_end: float = page - 24.0
+	var info_x: float = page + Journal.GUTTER + 24.0
+	_span_col(_list_root, 0.0, list_end, 8.0, 0.0)
+	_span_col(_list_rule, 0.0, list_end, 0.0, 6.0)
+	_span_col(_info_root, info_x, span - 10.0, 8.0, 0.0)
+	_span_col(_info_rule, info_x, span - 10.0, 0.0, 6.0)
+	if _chevron:
+		_chevron.anchor_left = 0.0
+		_chevron.anchor_right = 0.0
+		_chevron.anchor_bottom = 0.0
+		_chevron.offset_left = list_end - 28.0
+		_chevron.offset_right = list_end - 4.0
+
+func _span_col(node: Control, x0: float, x1: float, top: float, band_h: float) -> void:
+	if node == null:
+		return
+	node.anchor_left = 0.0
+	node.anchor_right = 0.0
+	node.anchor_top = 0.0
+	node.offset_left = x0
+	node.offset_right = x1
+	node.offset_top = top
+	if band_h > 0.0:
+		node.anchor_bottom = 0.0
+		node.offset_bottom = top + band_h
+	else:
+		node.anchor_bottom = 1.0
+		node.offset_bottom = -88.0
+
 func _leaf_copy(text: String) -> void:
-	var lab: Label = ThemeS.lab(text, 22, Color(0.88, 0.82, 0.72))
+	var lab: Label = ThemeS.lab(text, 26, ThemeS.INK)
 	lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lab.size_flags_horizontal = Control.SIZE_EXPAND_FILL

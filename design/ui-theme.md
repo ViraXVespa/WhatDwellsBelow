@@ -21,3 +21,11 @@ Three control weights:
 - Danger: paper, a dried-ink red rule and red type. Dispel, Main Menu, Quit, Delete Save, Reset Controls, pawn, abandon, and the Confirm button on those prompts.
 
 The selected pause or anvil tab uses the deeper paper and the ink underline. Hover on that tab lifts the paper so the pointer is still visible. Rarity washes stay green and blue. At-risk plates keep a red rule. Gameplay meter fills (health, potion, dash, special, boss) stay their own colors. Text that sits on the world, outside a paper chip, stays light.
+
+## Binder
+
+The pause container keeps the journal materials: leather, paper fiber, dark ink, bookmark tabs. It does not have to be one open book with a binding down the middle. Treat it as a binder that holds separate documents. A settings page, a skill list, a confirm slip, and the inventory sheet are papers in that binder. Each document is sized to what it has to say, so a control row is never split by a gutter.
+
+The two-page crease on the current pause is a step, not the rule for the next pass. Inventory, as approved on the field-journal commit, stays the material and type reference. Do not throw that look away. The next layout pass reworks the container so a document can be one sheet, two sheets, or a slip on top, whichever lets the controls sit cleanly.
+
+Words, gamepad order, and what each control does stay unless a later answer changes them. Debug screens stay plain.

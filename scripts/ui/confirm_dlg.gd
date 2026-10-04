@@ -4,6 +4,7 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const Journal := preload("res://scripts/ui/pause_menu/journal_page.gd")
 
 const NODE_NAME := "confirm_dlg"
 
@@ -48,8 +49,21 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 	root.set_meta("prev_footer", prev_footer)
 	parent.add_child(root)
 	Plate.dim(root)
-	Plate.plate(root, Vector2(560, 280), Vector2(800, 360))
-	Plate.edge(root, Vector2(560, 280), 800.0)
+	var card := Vector2(560, 280)
+	var card_sz := Vector2(800, 360)
+	var paper := TextureRect.new()
+	paper.texture = Journal._tex_at(Journal.PAPER_PATH)
+	paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	paper.stretch_mode = TextureRect.STRETCH_SCALE
+	paper.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	paper.position = card
+	paper.size = card_sz
+	root.add_child(paper)
+	Plate.edge(root, card, card_sz.x)
+	Plate.edge(root, card + Vector2(0, card_sz.y - 3.0), card_sz.x)
+	Plate.edge(root, card, 3.0, card_sz.y)
+	Plate.edge(root, card + Vector2(card_sz.x - 3.0, 0), 3.0, card_sz.y)
 	var cap: Label = ThemeS.lab(title, 28, ThemeS.INK)
 	cap.position = Vector2(592, 308)
 	cap.size = Vector2(736, 40)

@@ -1,0 +1,31 @@
+{
+  "name": "camp-overlays",
+  "about": "Placeholdia: the travel loader card, the wake hold, the enter hold, and the archives browser. Survey frames. Each overlay is closed before the next one opens.",
+  "scene": "camp",
+  "hud": 0,
+  "settle_ms": 1500,
+  "smoke": true,
+  "steps": [
+    {"op": "device", "kind": "pad"},
+    {"op": "call", "target": "App.loader", "method": "begin", "args": ["Descending", "The stairs take you"]},
+    {"op": "call", "target": "App.loader", "method": "set_progress", "args": [0.62]},
+    {"op": "wait", "ms": 400},
+    {"op": "shot", "name": "loader", "texts": true},
+    {"op": "call", "target": "App.loader", "method": "finish"},
+    {"op": "set", "target": "App.ui_open", "value": false},
+    {"op": "call", "target": "App.present", "method": "cover_wake"},
+    {"op": "wait", "ms": 300},
+    {"op": "shot", "name": "wake-hold", "texts": true},
+    {"op": "call", "target": "App.present", "method": "hide_overlay"},
+    {"op": "call", "target": "App.present", "method": "cover_enter"},
+    {"op": "wait", "ms": 300},
+    {"op": "shot", "name": "enter-hold", "texts": true},
+    {"op": "call", "target": "App.present", "method": "hide_overlay"},
+    {"op": "call", "target": "App.archives_ui", "method": "show_browser"},
+    {"op": "assert", "target": "App.archives_ui.open", "equals": true},
+    {"op": "wait", "ms": 400},
+    {"op": "shot", "name": "archives", "texts": true},
+    {"op": "call", "target": "App.archives_ui", "method": "hide_browser"},
+    {"op": "assert", "target": "App.archives_ui.open", "equals": false}
+  ]
+}
