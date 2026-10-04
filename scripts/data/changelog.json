@@ -3,6 +3,27 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.5.22",
+			"points": [
+				{
+					"text": "Behind the scenes: when a check fails during development, the retry picks up from where the planning conversation left off instead of starting over."
+				},
+				{
+					"text": "Starting a new piece of work now stops and asks first if no week of work is open, instead of quietly building on the wrong base."
+				},
+				{
+					"text": "The weekly summary of changes is written in one place only, so it can't be written twice or missed."
+				},
+				{
+					"text": "Every update now carries a short note like this one, even when the work is behind the scenes."
+				},
+				{
+					"text": "Developer tool help text is tidier and no longer mentions internal checks."
+				}
+			],
+			"summary": "This update tidies how the game gets built behind the scenes so new work lands with fewer mix-ups. Nothing in the game itself changes."
+		},
+		{
 			"label": "0.5.21",
 			"points": [
 				{
