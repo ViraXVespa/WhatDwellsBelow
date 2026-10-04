@@ -67,5 +67,5 @@ static func item_cell(it: Dictionary) -> String:
 	elif bool(it.get("hold", false)):
 		nm += "\n" + App.tr("text_fmt.hold")
 	elif str(it.get("kind", "")) == "artifact":
-		nm += "\n" + (CatalogS.set_name(str(it.get("set", ""))) if str(it.get("set", "")) != "" else App.tr("text_fmt.relic"))
+		nm += "\n" + (CatalogS.set_title(str(it.get("set", ""))) if str(it.get("set", "")) != "" else App.tr("text_fmt.relic"))
 	return nm

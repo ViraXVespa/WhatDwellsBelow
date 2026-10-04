@@ -88,7 +88,7 @@ static func artifact_block() -> String:
 		var n := int(counts.get(sid, 0))
 		if n <= 0:
 			continue
-		var bit := App.tr("stats.text_2") % [CatalogS.set_name(sid), n, CatalogS.set_size(sid)]
+		var bit := App.tr("stats.text_2") % [CatalogS.set_title(sid), n, CatalogS.set_size(sid)]
 		if n >= 2:
 			bit += "  —  " + CatalogS.set_bonus_line(sid, n)
 		lines.append(bit)

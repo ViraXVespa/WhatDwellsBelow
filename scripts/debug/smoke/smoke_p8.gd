@@ -81,7 +81,7 @@ static func p8(host: Node) -> void:
 	d_ok = d_ok and str(d_art.desc) != "" and str(d_art.desc) != "item.cinder_ember.desc" and str(d_art.desc) != "Old English text."
 	d_ok = d_ok and str(ItemNames.desc_of(App.prog.make_food("ration", 1))) == "Heal-over-time."
 	d_ok = d_ok and ItemNames.rarity_name("blue") == "Blue" and ItemNames.rarity_name("zz") == "zz" and App.tr("board_text.level").format({"n": 3}) == "Lv3"
-	d_ok = d_ok and load("res://scripts/data/catalog.gd").set_name("cinder") == "Cinder"
+	d_ok = d_ok and load("res://scripts/data/catalog.gd").set_title("cinder") == "Cinder"
 	printerr("P8: item_desc_derived=" + str(d_ok))
 	assert(d_ok)
 	printerr("P8: item_names_migrate=" + str(names_ok) + " locale=" + str(StoreS.collect().get("locale", "")))
