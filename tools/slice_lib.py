@@ -1,4 +1,4 @@
-"""start_build_slice.py helpers: the START lines, the worktree checkpoint, the NO SHOT FLOW check and the selftests (`python tools/start_build_slice.py --selftest`)."""
+"""start_build_slice.py / open_slice.py helpers: the START lines, the area check, the worktree checkpoint, the NO SHOT FLOW check and the selftests (`python tools/start_build_slice.py --selftest`)."""
 from __future__ import annotations
 
 import os
@@ -24,6 +24,25 @@ def visual_gap(door: str, job: str, area: str, flows: str) -> str:
     return (f"NO SHOT FLOW: {name} is a visual slice and routes.yaml `shot_flows` maps no flow to it, so a visual change could not be shot, opened and shown. "
             "Nothing is started and no START line is printed. Ask the User in a question prompt which screen or state to show, or create the flow first "
             "(tools may be created: tools.md rule 5; `shot-flows.md` gap process; `run_shot_flow.py --list` shows what exists). Then rerun this command.")
+
+
+def slice_check(root: Path, name: str) -> tuple[str, str, str, str]:
+    """(door, job, flows, gap) for an area the user typed: a routes.yaml job or door when it is one, else a free area name.
+    gap is the NO SHOT FLOW text for a visual slice with no mapped flow, else ''."""
+    door = job = ""
+    flows = ""
+    try:
+        from load_routes import check_route, load_routes, shot_flows
+
+        data = load_routes(root)
+        if "." in name and not check_route(data, "", name):
+            job = name
+        elif name and not check_route(data, name, ""):
+            door = name
+        flows = ",".join(shot_flows(data, door=door, job=job)) if (door or job) else ""
+    except Exception:
+        pass
+    return door, job, flows, visual_gap(door, job, "" if (door or job) else name, flows)
 
 
 FORK_FACT = ("A fork keeps the directory of the session it forks, and --fork-session cannot be combined with --worktree, so a session "

@@ -20,7 +20,7 @@ Rules, the CLI contract and the surface key (Surf, A) are in `tools.md`. Same ta
 | `agent_log.py` | Run helpers: `std_parser`, `resolve_root`, `finish`/`emit_result` (RESULT line, `retry=` for the red-prove prompt), stamped `_logs/<job>` paths. `--selftest` checks the log layout. | BD | `--help` | Y |
 | `run_log_lib.py` | Run-log layout: one `<stamp>-<job>.txt` per run, `index.txt` newest first, keep the last 20, `clear` for the weekly clean | BD | module docstring (no `--help`) | Y |
 | `retry_lib.py` | Red-prove RETRY block: `grok -r CHECKPOINT --fork-session` for the User to run from the worktree, plus the paste-ready prompt (failed prove, red lines, files in the diff from the week branch); saves/reads the checkpoint (gather session id). `--selftest` | BD | module docstring (no `--help`) | Y |
-| `slice_lib.py` | `start_build_slice.py --selftest` cases (no week branch fails, NO SHOT FLOW, START lines, checkpoint) | D | module docstring (no `--help`) | Y |
+| `slice_lib.py` | `start_build_slice.py --selftest` cases and the `open_slice.py` area check (no week branch fails, NO SHOT FLOW, START lines, checkpoint) | D | module docstring (no `--help`) | Y |
 | `bot_gate_lib.py` | Bot-mode switch for the Bot's own checks (`--bot`, `WDB_BOT`, CI) and the Bot budgets in `bot_budgets.json` | BWD | module docstring (no `--help`) | Y |
 | `bot_budgets.json` | Budgets read by `bot_gate_lib` in Bot mode | B | - | Y |
 | `write_utf8_file.py` | Shim -> `doc_patch.py write` (`--path`, `--bom`, `--b64`), one release | BD | `--help` | Y |
