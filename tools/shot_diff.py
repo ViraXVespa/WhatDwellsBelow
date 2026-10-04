@@ -114,14 +114,10 @@ def main(argv: list[str] | None = None) -> int:
     for r in rows:
         extra = f" max_delta={r.get('max_delta')} bbox={r.get('bbox')}" if r["status"] == "changed" else ""
         lines.append(f"{r['status']:8s} {r['name']} changed_px={r['changed_px']} ratio={r['ratio']}{extra}")
-    summary = root / "_logs" / "shot-diff" / "summary.txt"
-    res = agent_log.result_line(status, rel(root, summary), frames=len(rows),
-                                same=sum(r["status"] == "same" for r in rows),
-                                changed=sum(r["status"] == "changed" for r in rows),
-                                bad=sum(r["status"] in ("size", "missing", "added", "removed") for r in rows))
-    if not args.dry_run:
-        summary.parent.mkdir(parents=True, exist_ok=True)
-        summary.write_text("\n".join(lines + [res]) + "\n", encoding="utf-8")
+    res = agent_log.write_run_file(root, root / "_logs" / "shot-diff", "shot-diff", "\n".join(lines), status, write=not args.dry_run,
+                                   frames=len(rows), same=sum(r["status"] == "same" for r in rows),
+                                   changed=sum(r["status"] == "changed" for r in rows),
+                                   bad=sum(r["status"] in ("size", "missing", "added", "removed") for r in rows))
     if args.json:
         agent_log.print_json({"status": status, "rows": rows})
     else:

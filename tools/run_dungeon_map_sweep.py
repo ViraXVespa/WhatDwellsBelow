@@ -2,7 +2,7 @@
 """Run run_dungeon_map over several seeds; one sweep table.
 
     python3 tools/run_dungeon_map_sweep.py [--count 10] [--seed-list 42,7,9 | --seeds 42 7 9] [--floor 1 --scale 8]
-Old spellings: -Count -Floor -Scale -TimeoutSec -Seeds -SeedList. Output: _logs/dungeon-map-sweep/summary.txt
+Old spellings: -Count -Floor -Scale -TimeoutSec -Seeds -SeedList. Output: _logs/dungeon-map-sweep/<stamp>-dungeon-map-sweep.txt
 """
 from __future__ import annotations
 
@@ -34,12 +34,12 @@ def main(argv: list[str] | None = None) -> int:
             if s not in seeds:
                 seeds.append(s)
     runner = Path(__file__).resolve().parent / "run_dungeon_map.py"
-    summary = agent_log.agent_summary_path("dungeon-map", root)
     rows, fail_n = [], 0
     for i, seed in enumerate(seeds, 1):
         print(f"sweep {i}/{len(seeds)} seed={seed}")
         code = subprocess.run([sys.executable, str(runner), "--root", str(root), "--seed", str(seed), "--floor", str(args.floor),
                                "--scale", str(args.scale), "--timeout-sec", str(args.timeout_sec)]).returncode
+        summary = agent_log.agent_summary_path("dungeon-map", root)  # the run that just finished
         found = {"spec": "?", "rim": "?", "span": "?", "gates": "?", "ok": "?"}
         names = {"rim_closed": "rim", "span_on_solid": "span", "gates_placed": "gates"}
         for ln in (summary.read_text(encoding="utf-8").splitlines() if summary.is_file() else []):

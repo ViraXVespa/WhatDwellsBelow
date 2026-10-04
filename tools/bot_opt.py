@@ -9,7 +9,7 @@
     python tools/bot_opt.py --status opt-001=done
     python tools/bot_opt.py --remove opt-001
 
-Writes _logs/bot-opt/summary.txt. Agents read that file only.
+Writes _logs/bot-opt/<stamp>-bot-opt.txt. Agents read that file only.
 Do not open design/grok-bot-opt.md to park or list items.
 """
 from __future__ import annotations

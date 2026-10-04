@@ -7,7 +7,7 @@ Default is a real renderer: uses $DISPLAY / a live X socket, else xvfb-run (godo
 is fine. --headless (or no display and no xvfb-run) forces the headless driver: the shadow projection is CPU-side,
 so it gives the same atlas. shadow_px=0 is a FAIL in either mode (the camp node must be in the scene tree).
 Never rewrites camp.tscn. Per-path Godot lock; never kills godot*.
-Summary: _logs/bake-camp/summary.txt; RESULT carries clean=, shadow_px=, display=.
+Summary: _logs/bake-camp/<stamp>-bake-camp.txt; RESULT carries clean=, shadow_px=, display=.
 """
 from __future__ import annotations
 
@@ -28,8 +28,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--headless", action="store_true", help="force the headless driver (same atlas, no display needed)")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
-    d = agent_log.ensure_agent_log_dir("bake-camp", root)
-    out_log, err_log = d / "bake-out.log", d / "bake-err.log"
+    out_log, err_log = agent_log.run_path("bake-camp", root, "bake-out.log"), agent_log.run_path("bake-camp", root, "bake-err.log")
     kind = "headless" if args.headless else godot_lib.pick_display()[0]
     gui = kind != "headless" and kind != "none"
     print(f"Baking hub light (display={kind})...")

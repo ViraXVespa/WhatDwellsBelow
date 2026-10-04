@@ -10,7 +10,7 @@ gd = scripts/**/*.gd, py = tools/*.py (archives, .archive_worktrees, _logs skipp
   near    same shape once string and number literals are masked too (a shared helper takes the literals as args)
   block   >= --min-block consecutive code lines repeated verbatim in 2+ places (not inside an already reported function)
   nblock  the same, with string/number literals masked (copies differ only in constants)
-Read-only. Summary: _logs/dupes/summary.txt; --md writes the ranked list (location, lines, copies) for design/reuse-map.md.
+Read-only. Summary: _logs/dupes/<stamp>-dupes.txt; --md writes the ranked list (location, lines, copies) for design/reuse-map.md.
 Result: RESULT INFO exact= shape= near= block= nblock= (always INFO; this is a finder, not a gate).
 """
 from __future__ import annotations
@@ -268,10 +268,9 @@ def main(argv: list[str] | None = None) -> int:
         md = ["| Kind | Score | Lines | Copies | Where |", "|---|---|---|---|---|"]
         md += ["| %s | %d | %d | %d | %s |" % (r["kind"], r["score"], r["lines"], r["copies"], "<br>".join("`%s`" % w for w in r["where"])) for r in rows]
         Path(args.md).write_text("\n".join(md) + "\n", encoding="utf-8")
-    res = agent_log.result_line("INFO", "_logs/dupes/summary.txt", **cnt)
     d = agent_log.ensure_agent_log_dir("dupes", root)
-    (d / "summary.txt").write_text("\n".join(lines + [res]) + "\n", encoding="utf-8")
-    (d / "rows.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
+    agent_log.run_path("dupes", root, "rows.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
+    res = agent_log.write_run_file(root, d, "dupes", "\n".join(lines), "INFO", **cnt)
     if args.json:
         agent_log.print_json({"status": "INFO", "counts": cnt, "rows": rows})
     else:

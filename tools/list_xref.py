@@ -2,7 +2,7 @@
 """Capped text search; writes a short hit list instead of dumping ripgrep into chat.
 
     python3 tools/list_xref.py --pattern pc-offload [--path design --path tools] [--include "*.gd"] [--regex]
-Case-insensitive. Skips top-level archives/, .archive_worktrees/, _logs/, docs/. Summary: _logs/xref/summary.txt.
+Case-insensitive. Skips top-level archives/, .archive_worktrees/, _logs/, docs/. Summary: _logs/xref/<stamp>-xref.txt.
 Old spellings: -Pattern -Path -Include -MaxHits -MaxFiles -Regex.
 """
 from __future__ import annotations

@@ -146,10 +146,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.advisory:
             lines.append("advisory: new gaps / problems above do not fail this gate (Build); Bot gate requires them fixed")
     out_dir = agent_log.ensure_agent_log_dir("shot-gaps", root)
-    summary = out_dir / "summary.txt"
-    res = agent_log.result_line(status, rel(root, summary), states=len(states), gaps=len(gaps), new_gaps=len(new_gaps),
-                                problems=len(problems), flows=len(flows))
-    summary.write_text("\n".join(lines + [res]) + "\n", encoding="utf-8")
+    res = agent_log.write_run_file(root, out_dir, "shot-gaps", "\n".join(lines), status, states=len(states), gaps=len(gaps),
+                                   new_gaps=len(new_gaps), problems=len(problems), flows=len(flows))
     if args.json:
         agent_log.print_json({"status": status, "states": states, "gaps": gaps, "new": new, "problems": problems,
                               "covered": covered})

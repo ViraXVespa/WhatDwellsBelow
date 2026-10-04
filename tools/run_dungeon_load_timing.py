@@ -2,7 +2,7 @@
 """Placeholdia -> Dungeon load-timing smoke. Per-path Godot lock; never kills godot*.
 
     python3 tools/run_dungeon_load_timing.py [--timeout-sec 180]
-Summary: _logs/dungeon-load-timing/summary.txt (python twin of the .ps1).
+Summary: _logs/dungeon-load-timing/<stamp>-dungeon-load-timing.txt (python twin of the .ps1).
 """
 from __future__ import annotations
 

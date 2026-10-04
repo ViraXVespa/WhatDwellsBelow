@@ -207,12 +207,13 @@ def main(argv: list[str] | None = None) -> int:
         if r.get("published"):
             lines.append("  published: %(dir)s files=%(files)d" % r["published"])
     out_root.mkdir(parents=True, exist_ok=True)
-    summary = out_root / "summary.txt"
-    res = agent_log.result_line(status, rel(root, summary), flows=len(rows), pass_=sum(1 for r in rows if r["ok"]),
-                                fail=len(bad_run), stale=len(stale), changed=len(changed), frames=sum(r["frames"] for r in rows))
-    res = res.replace("pass_=", "pass=")
-    if not args.dry_run:
-        summary.write_text("\n".join(lines + [res]) + "\n", encoding="utf-8")
+    if status == "FAIL" and not args.dry_run:
+        import retry_lib
+
+        lines += ["", retry_lib.block(root, "run_shot_flow.py --flow " + ",".join(todo), lines)]
+    res = agent_log.write_run_file(root, out_root, JOB, "\n".join(lines), status, write=not args.dry_run, flows=len(rows),
+                                   **{"pass": sum(1 for r in rows if r["ok"])}, fail=len(bad_run), stale=len(stale),
+                                   changed=len(changed), frames=sum(r["frames"] for r in rows))
     if args.json:
         agent_log.print_json({"status": status, "flows": rows})
     else:

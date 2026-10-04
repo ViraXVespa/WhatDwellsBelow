@@ -2,7 +2,7 @@
 """List .tscn nodes and attached scripts without dumping scene files into chat.
 
     python3 tools/list_scenes.py [--path scenes/dungeon.tscn] [--max-nodes 200]
-Summary: _logs/scenes/summary.txt. Old spellings: -Path -MaxNodes.
+Summary: _logs/scenes/<stamp>-scenes.txt. Old spellings: -Path -MaxNodes.
 """
 from __future__ import annotations
 

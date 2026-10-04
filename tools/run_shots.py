@@ -25,6 +25,7 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 import godot_lib
+import run_log_lib
 import shot_clip_lib
 from agent_log import rel
 
@@ -119,22 +120,21 @@ def _godot_args(root: Path, png: Path, args: argparse.Namespace, scale_pct: int,
     return godot_args
 
 
-def _log_lines(out_dir: Path, keep) -> list[str]:
+def _log_lines(logs: list[Path], keep) -> list[str]:
     hits: list[str] = []
-    for name in ("err.log", "out.log"):
-        path = out_dir / name
+    for path in logs:
         if path.is_file():
             hits += [ln for ln in path.read_text(encoding="utf-8", errors="replace").splitlines() if keep(ln)]
     return hits
 
 
-def _shot_lines(out_dir: Path) -> list[str]:
-    return _log_lines(out_dir, lambda ln: ln.startswith("SHOT:"))
+def _shot_lines(logs: list[Path]) -> list[str]:
+    return _log_lines(logs, lambda ln: ln.startswith("SHOT:"))
 
 
-def _error_lines(out_dir: Path) -> list[str]:
+def _error_lines(logs: list[Path]) -> list[str]:
     needles = ("SCRIPT ERROR:", "Parse Error", "Compile Error", "ERROR: Failed to")
-    return _log_lines(out_dir, lambda ln: any(n in ln for n in needles))
+    return _log_lines(logs, lambda ln: any(n in ln for n in needles))
 
 
 def _png_info(png: Path) -> tuple[int, int, int]:
@@ -311,13 +311,14 @@ def capture(args: argparse.Namespace, root: Path, given: set[str] | None = None)
     if args.dry_run:
         res.update(band="dry", status="DRY", lines=[], ok=True)
         return res
+    out_log, err_log = run_log_lib.run_path(out_dir, JOB, "out.log"), run_log_lib.run_path(out_dir, JOB, "err.log")
     try:
-        run = godot_lib.run_godot(root, root, godot_args, out_dir / "out.log", out_dir / "err.log", max(1, args.timeout_sec),
+        run = godot_lib.run_godot(root, root, godot_args, out_log, err_log, max(1, args.timeout_sec),
                                   gui=not args.no_pixels)
     except (FileNotFoundError, godot_lib.GodotBusy) as exc:
         agent_log.fail(str(exc))
-    shot_hits = _shot_lines(out_dir)
-    err_hits = _error_lines(out_dir)
+    shot_hits = _shot_lines([err_log, out_log])
+    err_hits = _error_lines([err_log, out_log])
     shot_ok = any("ok=true" in line for line in shot_hits)
     if args.full_map and shot_ok and (res["frames_dir"] / "sweep.json").is_file():
         st = stitch_full_map(res["frames_dir"], png, args.max_px, args.keep_tiles)
@@ -378,21 +379,19 @@ def main(argv: list[str] | None = None) -> int:
     lines += ["", "--- errors ---"]
     lines += res.get("errors", [])[:40] or ["(none)"]
     lines.append("")
-    summary = res["out_dir"] / "summary.txt"
     status = {"fail": "FAIL", "warn": "INFO"}.get(res["band"], "PASS")
     kv = dict(band=res["band"], shot_ok=str(res.get("shot_ok", False)).lower(), bytes=res.get("bytes", 0), clipboard=clip, open=opened)
     if args.steps:
         kv.update(frames=len(frames), steps=flow.get("steps", 0))
     if args.dry_run:
         kv = {"band": "dry"}
-    lines.append(agent_log.result_line(status, rel(root, summary), **kv))
-    text = "\n".join(lines) + "\n"
-    summary.write_text(text, encoding="utf-8")
+    result = agent_log.write_run_file(root, res["out_dir"], JOB, "\n".join(lines), status, write=not args.dry_run, **kv)
     if args.json:
         agent_log.print_json({"band": res["band"], "status": res["status"], "png": rel(root, png), "frames": frames,
-                              "checks": flow.get("checks", []), "fail": flow.get("fail", ""), "summary": rel(root, summary)})
+                              "checks": flow.get("checks", []), "fail": flow.get("fail", ""),
+                              "summary": result.rsplit("summary=", 1)[-1] if "summary=" in result else ""})
     else:
-        sys.stdout.write(text)
+        sys.stdout.write("\n".join(lines + [result]) + "\n")
     return 0 if res["band"] != "fail" else 1
 
 

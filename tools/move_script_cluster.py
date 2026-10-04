@@ -13,7 +13,7 @@ Usage (from repo root):
 One run = one rewrite pass over every group in the plan/map (single regex pass, so chained moves cannot double-rewrite).
 Rewrites exact paths (`res://`, bare) and, for renamed files, bare old basenames in prose/code-map rows (written
 as the bare new basename). Globs like `dir/stem*.gd` and string-built paths need the manual pass in design/refactor.md; keeps BOM and CRLF/LF as found. Skips design/changelog/ and
-scripts/data/changelog.json (history). Writes _logs/move-cluster/summary.txt. Does not commit.
+scripts/data/changelog.json (history). Writes _logs/move-cluster/<stamp>-move-cluster.txt. Does not commit.
 """
 from __future__ import annotations
 

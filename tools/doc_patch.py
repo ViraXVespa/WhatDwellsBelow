@@ -38,6 +38,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 import gd_lib
 import md_format_lib as md
+import run_log_lib
 import repo_lib
 
 DRY = False  # set by the CLI --dry-run; library callers may set dp.DRY = True
@@ -429,7 +430,7 @@ def compile_broke(body: str) -> bool:
 
 
 def dump_job(root: Path | None, job: str, script: str | None = None) -> tuple[int, str]:
-    """Run a prove runner (tools/<stem>.py if it exists, else the .ps1), print its summary.txt body, return (rc, body)."""
+    """Run a prove runner (tools/<stem>.py if it exists, else the .ps1), print the run's newest summary body, return (rc, body)."""
     root = repo_root(root)
     name = script or JOB_SCRIPTS.get(job)
     if not name:
@@ -437,7 +438,7 @@ def dump_job(root: Path | None, job: str, script: str | None = None) -> tuple[in
     py = root / "tools" / (Path(name).stem + ".py")
     cmd = [sys.executable, str(py)] if py.is_file() else ["powershell", "-File", str(root / "tools" / name)]
     proc = subprocess.run(cmd, cwd=str(root), capture_output=True)
-    exact = root / "_logs" / job / "summary.txt"
+    exact = run_log_lib.latest(root / "_logs" / job) or root / "_logs" / job / "summary.txt"
     hits = [exact] if exact.is_file() else sorted(
         (
             p
@@ -458,9 +459,10 @@ def dump_job(root: Path | None, job: str, script: str | None = None) -> tuple[in
     broke = "COMPILE" in body or "clean=false" in body or compile_broke(body)
     if broke and hits:
         extra: list[str] = []
+        stamp = run_log_lib.stamp_of(hits[0].name)
         for p in hits[0].parent.glob("*"):
             n = p.name.lower()
-            if p.is_file() and ("err" in n) and p.suffix.lower() in {".log", ".txt"}:
+            if p.is_file() and ("err" in n) and p.suffix.lower() in {".log", ".txt"} and run_log_lib.stamp_of(p.name) == stamp:
                 extra.append(p.read_text(encoding="utf-8-sig", errors="replace")[-4000:])
         if extra:
             out("--- err log ---")

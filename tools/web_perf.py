@@ -7,7 +7,7 @@ Serves --site (default docs; use a fresh `export_web.py --out DIR`, docs/ may be
 tools/web-perf-flows.json (steps: phase wait settle key hold click eval waitplay shot; `query` adds URL args like wdb-seed=42; `boot` prepends the splash/title steps). Reports load_ms
 (navigation to the engine overlay gone), its breakdown (wasm_dl_ms, wasm_compile_ms, init_ms), frame ms/fps and long
 frames per phase, JS heap and wasm memory peaks (sampled every 500 ms; wasm memory never shrinks), transfer sizes and
-page errors. Writes _logs/web-perf/report.json. --baseline F diffs against a saved file (tools/web-perf-baseline.json);
+page errors. Writes a stamped _logs/web-perf/<stamp>-report.json per run. --baseline F diffs against a saved file (tools/web-perf-baseline.json);
 a metric worse than its threshold is WORSE; a playtester flow whose run errors, stalls or ends early is INVALID (flagged, never baselined) (RESULT INFO, exit 0 unless --strict). --repeat N takes the median of N runs.
 --mbps throttles the network. Needs `pip install playwright` and Chrome/Chromium; no browser download. Software GL:
 compare runs on the same machine only. Not a numbered smoke.
@@ -171,7 +171,7 @@ def main(argv: list[str] | None = None) -> int:
         label = (site / "build_id.txt").read_text(encoding="utf-8").strip()
     full = {"build_id": label, "site": args.site if not args.url else args.url, "chrome": Path(chrome).name,
             "viewport": "%dx%d" % (args.width, args.height), "flows": reps}
-    out = root / "_logs" / JOB / "report.json"
+    out = agent_log.run_path(JOB, root, "report.json")
     out.write_text(json.dumps(full, indent=1), encoding="utf-8")
     if args.save_baseline:
         bp = root / args.save_baseline
@@ -181,7 +181,7 @@ def main(argv: list[str] | None = None) -> int:
         bp.parent.mkdir(parents=True, exist_ok=True)
         bp.write_text(json.dumps(old, indent=1) + "\n", encoding="utf-8")
     base = json.loads((root / args.baseline).read_text(encoding="utf-8")) if args.baseline else {"flows": {}}
-    lines, flags = ["build_id=%s chrome=%s viewport=%s" % (label, full["chrome"], full["viewport"])], 0
+    lines, flags = ["build_id=%s chrome=%s viewport=%s report=%s" % (label, full["chrome"], full["viewport"], agent_log.rel(root, out))], 0
     for n, r in reps.items():
         lines.append("flow %s" % n)
         lines += ["  %s=%s" % (k, r[k]) for k in SCALAR]

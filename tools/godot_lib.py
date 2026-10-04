@@ -267,8 +267,7 @@ def grep_logs(logs: list[Path], pattern: str) -> list[str]:
 def timing_job(args, job: str, title: str, flag: str, running: str, extra: list[str] | None = None) -> int:
     """Shared body of run_load_timing / run_dungeon_load_timing: run one --wdb-*-smoke, parse LOAD: lines."""
     root = agent_log.resolve_root(args)
-    out_dir = agent_log.ensure_agent_log_dir(job, root)
-    out_log, err_log = out_dir / "out.log", out_dir / "err.log"
+    out_log, err_log = agent_log.run_path(job, root, "out.log"), agent_log.run_path(job, root, "err.log")
     print(running)
     r = run_godot(root, root, headless_args(root, flag, *(extra or [])), out_log, err_log, args.timeout_sec)
     loads = grep_logs([err_log, out_log], r"^LOAD:")
@@ -281,13 +280,13 @@ def timing_job(args, job: str, title: str, flag: str, running: str, extra: list[
     fail = int(r["status"] == "TIMEOUT") + int(r["status"].startswith("EXIT=") and r["status"] != "EXIT=0")
     fail += int(bool(errs)) + int(not has_ok or total == "")
     body = [f"{title} root=.", f"status={r['status']} wall_ms={r['ms']} errBytes={r['err_bytes']} outBytes={r['out_bytes']}",
-            "", "--- LOAD lines ---"] + (loads or ["(no LOAD: lines - check err.log if TIMEOUT)"])
+            "", "--- LOAD lines ---"] + (loads or ["(no LOAD: lines - check the err log if TIMEOUT)"])
     body += ["", "--- errors ---"] + (errs[:40] or ["(none)"])
     marks = sorted(((int(m.group(2)), m.group(1)) for h in loads if (m := re.search(r"mark=(\w+) t=\d+ dt=(\d+)", h))), reverse=True)
     echo = [body[0], body[1], "slowest: " + " ".join(f"{n}={dt}ms" for dt, n in marks[:5])]
     echo += ["errors:"] + errs[:5] if errs else []
     return agent_log.finish(job, root, "\n".join(body), "FAIL" if fail else "PASS", args=args, legacy=False,
-                            echo="\n".join(echo), fail_signals=fail, total_ms=total or -1)
+                            echo="\n".join(echo), retry=(f"{job} (load timing)", body), fail_signals=fail, total_ms=total or -1)
 
 
 def timing_parser(desc: str) -> "argparse.ArgumentParser":

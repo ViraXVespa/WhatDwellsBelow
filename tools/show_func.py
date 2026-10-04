@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract one GDScript func/const into _logs/show-func/summary.txt (first 80 lines)."""
+"""Extract one GDScript func/const into _logs/show-func/<stamp>-show-func.txt (first 80 lines)."""
 from __future__ import annotations
 
 import re

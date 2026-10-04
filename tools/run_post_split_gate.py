@@ -3,7 +3,7 @@
 
     python3 tools/run_post_split_gate.py [--with-smokes [--phases 1,2,6]] [--force]
 Refuses (exit 2) if any Godot is running unless --force (it never kills it). Old spellings:
--WithSmokes -Phases -ImportTimeoutSec -SmokeTimeoutSec -Force. Summary: _logs/post-split-gate/summary.txt
+-WithSmokes -Phases -ImportTimeoutSec -SmokeTimeoutSec -Force. Summary: _logs/post-split-gate/<stamp>-post-split-gate.txt
 """
 from __future__ import annotations
 
@@ -30,9 +30,9 @@ def main(argv: list[str] | None = None) -> int:
     pids = [p["pid"] for p in godot_lib.procs_on_path(root)]
     if pids and not args.force:
         msg = f"Godot already running on this path (pids={','.join(map(str, pids))}). Pass --force to continue, or wait."
-        agent_log.write_summary("post-split-gate", root, msg)
+        path = agent_log.write_summary("post-split-gate", root, msg, "FAIL", "busy=1")
         print(msg, file=sys.stderr)
-        agent_log.emit_result("FAIL", "_logs/post-split-gate/summary.txt", busy=1)
+        agent_log.emit_result("FAIL", agent_log.rel(root, path), busy=1)
         return 2
     body = [f"root=. withSmokes={args.with_smokes} force={args.force}", ""]
     fail = 0
@@ -48,7 +48,7 @@ def main(argv: list[str] | None = None) -> int:
         fail += int(code != 0) + int(not lines)
     else:
         body += ["--- smokes skipped (pass --with-smokes to run) ---", ""]
-    return agent_log.finish("post-split-gate", root, "\n".join(body), "FAIL" if fail else "PASS", args=args, fail_signals=fail)
+    return agent_log.finish("post-split-gate", root, "\n".join(body), "FAIL" if fail else "PASS", args=args, retry=("run_post_split_gate.py", body), fail_signals=fail)
 
 
 if __name__ == "__main__":

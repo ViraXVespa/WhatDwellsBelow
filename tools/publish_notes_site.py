@@ -47,7 +47,7 @@ def publish(root: Path, site: Path) -> dict:
         "wrote data/version.json data/changelog.json data/notes.js\n"
         % (label, site, label, len(entries))
     )
-    write_text_nl(root / "_logs" / "notes-site" / "summary.txt", summary)
+    agent_log.write_summary("notes-site", root, summary, "PASS", f"label={label}")
     return {"label": label, "entries": len(entries), "site": str(site)}
 
 

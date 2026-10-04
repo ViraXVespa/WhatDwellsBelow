@@ -4,9 +4,11 @@
 Contract (see design/tools.md): argparse, --root, --dry-run on writers, --json on
 reports, ASCII output, repo-relative POSIX paths, one final line
 `RESULT <PASS|FAIL|INFO> k=v ... summary=<rel>`, exit 0 ok / 1 findings / 2 usage.
-Summaries go to `_logs/<job>/summary.txt` (gitignored). No session keys.
+Each run writes its own `_logs/<job>/<stamp>-<job>.txt` (gitignored, never overwritten) and `index.txt` lists
+the newest runs first (`run_log_lib.py`). No session keys.
 
-    python3 tools/agent_log.py <job>     # prints dir/summary for a job, makes the dir
+    python3 tools/agent_log.py <job>     # prints dir/index for a job, makes the dir
+    python3 tools/agent_log.py --selftest   # run-log layout check in a throwaway folder
 """
 from __future__ import annotations
 
@@ -18,6 +20,8 @@ import os
 import re
 import sys
 from pathlib import Path
+
+import run_log_lib
 
 _JOB_KEY = re.compile(r"^[A-Za-z0-9._-]+$")
 STATUSES = ("PASS", "FAIL", "INFO")
@@ -183,7 +187,9 @@ def agent_log_dir(job: str, root: Path | None = None) -> Path:
 
 
 def agent_summary_path(job: str, root: Path | None = None) -> Path:
-    return agent_log_dir(job, root) / "summary.txt"
+    """The newest run's summary file of `job` (a missing summary.txt path when the job has not run)."""
+    d = agent_log_dir(job, root)
+    return run_log_lib.latest(d) or d / run_log_lib.LEGACY
 
 
 def ensure_agent_log_dir(job: str, root: Path | None = None) -> Path:
@@ -192,11 +198,26 @@ def ensure_agent_log_dir(job: str, root: Path | None = None) -> Path:
     return path
 
 
-def write_summary(job: str, root: Path, body: str) -> Path:
-    path = agent_summary_path(job, root)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(body.rstrip("\n") + "\n", encoding="utf-8")
-    return path
+def run_path(job: str, root: Path, name: str) -> Path:
+    """This run's own raw log or artifact path: _logs/<job>/<stamp>-<name>. Never reused by a later run."""
+    return run_log_lib.run_path(ensure_agent_log_dir(job, root), job, name)
+
+
+def write_summary(job: str, root: Path, body: str, status: str = "INFO", note: str = "") -> Path:
+    """Write this run's summary (a new file per run), update index.txt, prune to the newest 20 runs."""
+    return run_log_lib.write_summary(ensure_agent_log_dir(job, root), job, body, status, note)
+
+
+def write_run_file(root: Path, d: Path, job: str, body: str, status: str, write: bool = True, **kv: object) -> str:
+    """Run summary for a tool with its own out folder `d`: body + RESULT line (naming the new stamped file),
+    indexed and pruned like finish(); write=False (dry run) writes nothing. Returns the RESULT line to print last."""
+    if not write:
+        return result_line(status, None, **kv)
+    p = run_log_lib.summary_path(d, job)
+    res = result_line(status, rel(root, p), **kv)
+    p.write_text((body.rstrip("\n") + "\n" if body else "") + res + "\n", encoding="utf-8")
+    run_log_lib.record(d, p, status, " ".join(f"{k}={v}" for k, v in kv.items() if v is not None))
+    return res
 
 
 def finish(
@@ -209,19 +230,30 @@ def finish(
     legacy: bool = False,
     write: bool = True,
     echo: str | None = None,
+    retry: tuple[str, list[str]] | None = None,
     **kv: object,
 ) -> int:
-    """Write the summary, print body + legacy line + final RESULT, return the exit code.
+    """Write this run's summary file, print body + legacy line + final RESULT, return the exit code.
 
     echo: print this instead of body on stdout (body still goes to the summary file).
+    retry: (prove name, red lines) of a Build prove; on FAIL the paste-ready RETRY block is added (retry_lib.py).
     With --json (args.json) prints one JSON object and nothing else.
     """
     summary_rel = None
     path = None
+    if retry and status == "FAIL":
+        import retry_lib
+
+        note = retry_lib.block(root, retry[0], retry[1])
+        body = (body.rstrip("\n") + "\n\n" if body else "") + note
+        echo = None if echo is None else echo.rstrip("\n") + "\n\n" + note
     if write:
-        summary_rel = f"_logs/{job}/summary.txt"
+        d = ensure_agent_log_dir(job, root)
+        path = run_log_lib.summary_path(d, job)
+        summary_rel = rel(root, path)
         res = result_line(status, summary_rel, **kv)
-        path = write_summary(job, root, body.rstrip("\n") + "\n" + res if body else res)
+        path.write_text((body.rstrip("\n") + "\n" + res if body else res) + "\n", encoding="utf-8")
+        run_log_lib.record(d, path, status, " ".join(f"{k}={v}" for k, v in kv.items() if v is not None))
     else:
         res = result_line(status, None, **kv)
     if getattr(args, "json", False) is True:
@@ -357,7 +389,16 @@ def main(argv: list[str] | None = None) -> int:
     ap = std_parser("Print (and create) the _logs/<job> directory for a job.")
     ap.add_argument("job", nargs="?", default="", help="Job name, e.g. build-gate.")
     ap.add_argument("--job", dest="job_opt", default="", help="Same as the positional job.")
+    ap.add_argument("--selftest", action="store_true", help="Check the run-log layout (stamped files, index, prune, clear) in a temp folder.")
     args = ap.parse_args(argv)
+    if args.selftest:
+        import tempfile
+
+        with tempfile.TemporaryDirectory(prefix="wdb-runlog-") as tmp:
+            bad = run_log_lib.selftest(Path(tmp))
+        for b in bad:
+            print(f"selftest: {b}")
+        return emit_result("FAIL" if bad else "PASS", None, checks=8, problems=len(bad))
     job = args.job_opt or args.job
     try:
         root = resolve_root(args)
@@ -369,8 +410,8 @@ def main(argv: list[str] | None = None) -> int:
         fail(str(exc))
     print(f"job={job}")
     print(f"dir=_logs/{job}")
-    print(f"summary=_logs/{job}/summary.txt")
-    print(result_line("INFO", f"_logs/{job}/summary.txt", job=job))
+    print(f"index=_logs/{job}/index.txt")
+    print(result_line("INFO", f"_logs/{job}/index.txt", job=job))
     return 0
 
 

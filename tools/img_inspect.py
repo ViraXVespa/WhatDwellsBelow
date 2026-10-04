@@ -181,11 +181,8 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     root = agent_log.resolve_root(args)
     status, lines, kv = run(args)
-    summary = root / "_logs" / "img-inspect" / "summary.txt"
-    res = agent_log.result_line(status, rel(root, summary), cmd=args.cmd, **kv)
-    if not args.dry_run:
-        summary.parent.mkdir(parents=True, exist_ok=True)
-        summary.write_text("\n".join(lines + [res]) + "\n", encoding="utf-8")
+    res = agent_log.write_run_file(root, root / "_logs" / "img-inspect", "img-inspect", "\n".join(lines), status,
+                                   write=not args.dry_run, cmd=args.cmd, **kv)
     if args.json:
         agent_log.print_json({"status": status, "cmd": args.cmd, "lines": lines, **kv})
     else:

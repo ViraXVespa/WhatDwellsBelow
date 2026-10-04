@@ -552,9 +552,6 @@ def apply_facade_auto(root: Path, do_delete: bool = True) -> int:
 
 
 def write_summary(root: Path, found: dict, nfuncs: int, elapsed: float) -> Path:
-    log_dir = root / "_logs" / "unused-funcs"
-    log_dir.mkdir(parents=True, exist_ok=True)
-    summary = log_dir / "summary.txt"
     rows = []
     for kind, items in found.items():
         for rel, lineno, name, nbytes in items:
@@ -563,8 +560,7 @@ def write_summary(root: Path, found: dict, nfuncs: int, elapsed: float) -> Path:
     for kind, items in found.items():
         rows.append("%s_count=%s" % (kind, len(items)))
     rows.append("seconds=%.2f" % elapsed)
-    summary.write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
-    return summary
+    return agent_log.write_summary("unused-funcs", root, "\n".join(rows), "INFO", f"funcs_scanned={nfuncs}")
 
 
 def main() -> int:

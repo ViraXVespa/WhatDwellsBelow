@@ -2,7 +2,7 @@
 """Title -> Placeholdia load-timing smoke. Per-path Godot lock; never kills godot*.
 
     python3 tools/run_load_timing.py [--timeout-sec 180]
-Summary: _logs/load-timing/summary.txt (python twin of run_load_timing.ps1).
+Summary: _logs/load-timing/<stamp>-load-timing.txt (python twin of run_load_timing.ps1).
 """
 from __future__ import annotations
 
