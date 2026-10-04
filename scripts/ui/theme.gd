@@ -18,6 +18,18 @@ const PROMPT_GOLD := PROMPT_INK
 const PROMPT_OUTLINE := Color(0.05, 0.03, 0.02)
 const PROMPT_OUTLINE_SIZE := 5
 
+static var _ink: Font
+
+static func ink_font() -> Font:
+	if _ink != null:
+		return _ink
+	var face: SystemFont = SystemFont.new()
+	face.font_names = PackedStringArray(["Ink Free", "Segoe Script", "Segoe Print"])
+	face.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
+	face.hinting = TextServer.HINTING_NONE
+	_ink = face
+	return _ink
+
 static func text_scale() -> float:
 	return UiText.applied()
 
@@ -43,6 +55,7 @@ static func lab(
 	l.horizontal_alignment = align
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if autowrap else TextServer.AUTOWRAP_OFF
 	l.clip_text = false
+	l.add_theme_font_override("font", ink_font())
 	l.add_theme_font_size_override("font_size", font_px(size))
 	l.add_theme_color_override("font_color", col)
 	if outline:
@@ -54,6 +67,7 @@ static func btn(t: String, cb: Callable, enabled: bool = true, role: String = "s
 	var b := Button.new()
 	b.text = t
 	b.custom_minimum_size = UiText.min_size(0.0, 44.0)
+	b.add_theme_font_override("font", ink_font())
 	b.add_theme_font_size_override("font_size", font_px(20))
 	_apply(b, role, false)
 	b.disabled = not enabled
@@ -62,22 +76,84 @@ static func btn(t: String, cb: Callable, enabled: bool = true, role: String = "s
 	return b
 
 static func paint_tab(b: Button, on: bool, role: String = "secondary") -> void:
-	_apply(b, role, on)
+	var word: Color = INK if on else INK_SOFT
+	var edge: Color = INK
+	if role == "danger":
+		word = DANGER
+		edge = DANGER
+	b.add_theme_color_override("font_color", word)
+	b.add_theme_color_override("font_hover_color", INK)
+	b.add_theme_color_override("font_focus_color", edge)
+	b.add_theme_color_override("font_pressed_color", INK)
+	b.add_theme_color_override("font_disabled_color", INK_FAINT)
+	var paper: Color = Color(0.93, 0.86, 0.72, 0.96)
+	var hover: Color = Color(0.98, 0.94, 0.86, 1.0)
+	var foot: int = 3 if on else 1
+	b.add_theme_stylebox_override("normal", _ink_box(paper, edge, 1, foot))
+	b.add_theme_stylebox_override("hover", _ink_box(hover, edge, 1, maxi(foot, 2)))
+	b.add_theme_stylebox_override("pressed", _ink_box(PAPER_DEEP, edge, 1, 3))
+	b.add_theme_stylebox_override("focus", _ink_box(PAPER_DEEP, edge, 1, 3))
+	b.add_theme_stylebox_override("disabled", _ink_box(paper, RULE_QUIET, 1, 1))
+
+static func paint_bookmark(b: Button, on: bool) -> void:
+	var word: Color = INK if on else INK_SOFT
+	var paper: Color = Color(0.86, 0.78, 0.64, 1.0) if on else Color(0.91, 0.85, 0.73, 1.0)
+	var edge: Color = INK if on else Color(INK.r, INK.g, INK.b, 0.45)
+	b.add_theme_color_override("font_color", word)
+	b.add_theme_color_override("font_hover_color", INK)
+	b.add_theme_color_override("font_focus_color", INK)
+	b.add_theme_color_override("font_pressed_color", INK)
+	b.add_theme_color_override("font_disabled_color", INK_FAINT)
+	var normal: StyleBoxFlat = _bookmark_box(paper, edge, 2 if on else 0)
+	var hover: StyleBoxFlat = _bookmark_box(Color(0.96, 0.91, 0.82, 1.0), INK, 2 if on else 0)
+	b.add_theme_stylebox_override("normal", normal)
+	b.add_theme_stylebox_override("hover", hover)
+	b.add_theme_stylebox_override("pressed", _bookmark_box(PAPER_DEEP, INK, 2))
+	b.add_theme_stylebox_override("focus", _bookmark_box(paper, INK, 2))
+	b.add_theme_stylebox_override("disabled", _bookmark_box(paper, RULE_QUIET, 0))
+
+static func _bookmark_box(bg: Color, edge: Color, underline: int) -> StyleBoxFlat:
+	var s: StyleBoxFlat = _ink_box(bg, edge, 1, 0)
+	s.border_width_bottom = underline
+	s.border_width_top = 1
+	s.border_width_left = 1
+	s.border_width_right = 1
+	s.corner_radius_top_left = 4
+	s.corner_radius_top_right = 4
+	s.corner_radius_bottom_left = 0
+	s.corner_radius_bottom_right = 0
+	s.content_margin_left = 16
+	s.content_margin_right = 16
+	s.content_margin_top = 6
+	s.content_margin_bottom = 8
+	return s
 
 static func paint_plate(b: Button, fill: Color, border: Color, on: bool = false) -> void:
-	var base := PAPER
+	var wash: Color = Color(0, 0, 0, 0)
 	if _wash(fill):
-		base = PAPER.lerp(Color(fill.r, fill.g, fill.b, 1.0), 0.45)
-	var edge: Color = border if _signal(border) else RULE
-	var shown: Color = base.lerp(PAPER_DEEP, 0.55) if on else base
+		wash = Color(fill.r, fill.g, fill.b, 0.22)
+	var edge: Color = border if _signal(border) else Color(INK.r, INK.g, INK.b, 0.55)
+	var shown: Color = wash
 	var rim: Color = INK if on else edge
-	var width: int = 2 if on else 1
-	var foot: int = 4 if on else width
-	b.add_theme_stylebox_override("normal", _box(shown, rim, width, foot))
-	b.add_theme_stylebox_override("hover", _box(shown.lerp(PAPER_LIFT, 0.4), rim, width, 4))
-	b.add_theme_stylebox_override("pressed", _box(PAPER_DEEP, INK, 1, 4))
-	b.add_theme_stylebox_override("focus", _box(shown.lerp(PAPER_LIFT, 0.25), INK, 1, 4))
-	b.add_theme_stylebox_override("disabled", _box(PAPER, RULE_QUIET, 1, 1))
+	var foot: int = 3 if on else 1
+	b.add_theme_stylebox_override("normal", _ink_box(shown, rim, 1, foot))
+	b.add_theme_stylebox_override("hover", _ink_box(Color(INK.r, INK.g, INK.b, 0.06), INK, 1, 2))
+	b.add_theme_stylebox_override("pressed", _ink_box(Color(INK.r, INK.g, INK.b, 0.1), INK, 1, 3))
+	b.add_theme_stylebox_override("focus", _ink_box(Color(PAPER_DEEP.r, PAPER_DEEP.g, PAPER_DEEP.b, 0.72), INK, 1, 3))
+	b.add_theme_stylebox_override("disabled", _ink_box(Color(0, 0, 0, 0), Color(INK.r, INK.g, INK.b, 0.22), 1, 1))
+
+static func _ink_box(bg: Color, border: Color, width: int, foot: int) -> StyleBoxFlat:
+	var s: StyleBoxFlat = StyleBoxFlat.new()
+	s.bg_color = bg
+	s.border_color = border
+	s.set_border_width_all(width)
+	s.border_width_bottom = foot
+	s.set_corner_radius_all(0)
+	s.content_margin_left = 6
+	s.content_margin_right = 6
+	s.content_margin_top = 4
+	s.content_margin_bottom = 4
+	return s
 
 static func skill_row_sb(lit: bool) -> StyleBoxFlat:
 	var s: StyleBoxFlat = _box(PAPER_DEEP, INK, 1, 3) if lit else _box(PAPER, RULE_QUIET, 1, 1)

@@ -70,6 +70,21 @@ static func place_bar(ui: CanvasLayer, bar: Control = null) -> void:
 	var panel := _menu_panel(ui)
 	var vp := ui.get_viewport().get_visible_rect().size
 	var pos := Vector2.ZERO
+	var page: Node = ui.get_node_or_null("journal_page")
+	if page is Control and panel:
+		var book: Control = page as Control
+		var Page: GDScript = load("res://scripts/ui/pause_menu/journal_page.gd")
+		var pad: float = float(Page.PAD)
+		var gutter: float = float(Page.GUTTER)
+		var bottom: float = float(Page.BOTTOM)
+		var page_w: float = (book.size.x - pad * 2.0 - gutter) * 0.5
+		var bar_w: float = minf(720.0, page_w - 36.0)
+		var right_edge: float = book.position.x + pad + page_w + gutter + page_w
+		pos = Vector2(right_edge - bar_w - 18.0, book.position.y + book.size.y - bottom - BAR_H - 6.0)
+		bar.position = pos
+		bar.size = Vector2(bar_w, BAR_H)
+		bar.custom_minimum_size = Vector2(bar_w, BAR_H)
+		return
 	if panel:
 		pos = Vector2(
 			panel.position.x + panel.size.x - BAR_W - BAR_INSET.x,
@@ -154,9 +169,9 @@ static func _paint(host: Control, parts: Array, font_size: int, color: Color) ->
 			else:
 				host.add_child(_lab(Prompts.chip_for(action), font_size, color))
 			if verb_text != "":
-				host.add_child(_lab(verb_text, font_size, color))
+				host.add_child(_lab(verb_text, font_size, color, _journal_host(host)))
 		elif text != "":
-			host.add_child(_lab(text, font_size, color))
+			host.add_child(_lab(text, font_size, color, _journal_host(host)))
 		if bool(rec.get("gap", false)):
 			var gap := Control.new()
 			gap.custom_minimum_size = Vector2(16, 1)
@@ -178,13 +193,19 @@ static func _glyph(tex: Texture2D, font_size: int) -> TextureRect:
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return r
 
-static func _lab(text: String, font_size: int, color: Color) -> Label:
+static func _journal_host(host: Control) -> bool:
+	var parent: Node = host.get_parent()
+	return parent != null and parent.get_node_or_null("journal_page") != null
+
+static func _lab(text: String, font_size: int, color: Color, ink: bool = false) -> Label:
 	var l := Label.new()
 	l.text = text
+	if ink:
+		l.add_theme_font_override("font", ThemeS.ink_font())
 	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", color)
 	l.add_theme_color_override("font_outline_color", ThemeS.PROMPT_OUTLINE)
-	l.add_theme_constant_override("outline_size", ThemeS.PROMPT_OUTLINE_SIZE)
+	l.add_theme_constant_override("outline_size", 0 if ink else ThemeS.PROMPT_OUTLINE_SIZE)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return l

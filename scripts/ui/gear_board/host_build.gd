@@ -21,25 +21,32 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 	load("res://scripts/ui/gear_board.gd").clear_sub(ui)
 	var title_col := ThemeS.INK
 	var title := Build.build_title(ui, mode, title_col)
-	ui.box.add_child(ThemeS.lab(title, 28, title_col))
+	var journal: bool = ui.has_meta("journal_sheet") and mode == "inv"
+	var title_px: int = 32 if journal else 28
+	var title_lab: Label = ThemeS.lab(title, title_px, title_col)
 	var subtitle := Build.build_subtitle(ui, mode)
-	if subtitle != "":
-		ui.box.add_child(ThemeS.lab(subtitle, 16, ThemeS.INK_SOFT))
 	var status_text := Build.build_status_text(mode)
 	if status_text != "":
 		ui.status = ThemeS.lab(status_text, 18, ThemeS.INK)
 	else:
 		ui.status = ThemeS.lab("", 16, ThemeS.INK_SOFT)
-	ui.box.add_child(ui.status)
+	if journal:
+		_journal_pages(ui, _fac as GDScript, title_lab)
+	else:
+		ui.box.add_child(title_lab)
+		if subtitle != "":
+			ui.box.add_child(ThemeS.lab(subtitle, 16, ThemeS.INK_SOFT))
+		ui.box.add_child(ui.status)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	ui.box.add_child(row)
-	row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, ["weapon", "potion"], true))
-	row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, Array(Affix.ARMOR_SLOTS), false))
-	row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, ["tool", "food"], true))
-	row.add_child(Build.build_stats_card(ui))
+	if not journal:
+		ui.box.add_child(row)
+		row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, ["weapon", "potion"], true))
+		row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, Array(Affix.ARMOR_SLOTS), false))
+		row.add_child(load("res://scripts/ui/gear_board.gd")._slot_col(ui, ["tool", "food"], true))
+		row.add_child(Build.build_stats_card(ui))
 	if ui.focus_btn == null:
 		var hit: Control = _fac.find_sel(ui)
 		if hit:
@@ -59,6 +66,50 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 			if is_instance_valid(ui):
 				load("res://scripts/ui/gear_board.gd")._flag(ui, "gear_booting", false)
 		, CONNECT_ONE_SHOT)
+
+static func _journal_pages(ui: CanvasLayer, fac: GDScript, title_lab: Label) -> void:
+	var page: GDScript = load("res://scripts/ui/pause_menu/journal_page.gd")
+	var gear: GDScript = load("res://scripts/ui/gear_board.gd")
+	var spread: HBoxContainer = HBoxContainer.new()
+	spread.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spread.add_theme_constant_override("separation", int(page.GUTTER))
+	var left: VBoxContainer = VBoxContainer.new()
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.add_theme_constant_override("separation", 10)
+	var right: VBoxContainer = VBoxContainer.new()
+	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right.add_theme_constant_override("separation", 8)
+	var left_pad: MarginContainer = MarginContainer.new()
+	left_pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_pad.add_theme_constant_override("margin_left", 18)
+	left_pad.add_theme_constant_override("margin_right", 36)
+	left_pad.add_theme_constant_override("margin_top", 18)
+	left_pad.add_child(left)
+	var right_pad: MarginContainer = MarginContainer.new()
+	right_pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_pad.add_theme_constant_override("margin_left", 36)
+	right_pad.add_theme_constant_override("margin_right", 22)
+	right_pad.add_theme_constant_override("margin_top", 18)
+	right_pad.add_child(right)
+	spread.add_child(left_pad)
+	spread.add_child(right_pad)
+	ui.box.add_child(spread)
+	left.add_child(title_lab)
+	left.add_child(ui.status)
+	var slots: HBoxContainer = HBoxContainer.new()
+	slots.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slots.alignment = BoxContainer.ALIGNMENT_CENTER
+	slots.add_theme_constant_override("separation", 14)
+	slots.add_child(gear._slot_col(ui, ["weapon", "potion"], true))
+	slots.add_child(gear._slot_col(ui, Array(Affix.ARMOR_SLOTS), false))
+	slots.add_child(gear._slot_col(ui, ["tool", "food"], true))
+	left.add_child(slots)
+	right.add_child(Build.build_stats_card(ui))
+	ui.set_meta("journal_column", left)
+	if ui.focus_btn == null:
+		var hit: Control = fac.find_sel(ui)
+		if hit:
+			ui.focus_btn = hit
 
 static func ensure_host(ui: CanvasLayer) -> void:
 	if ui.get("gear_stat_page") == null:

@@ -108,6 +108,9 @@ static func _rebuild(host: CanvasLayer) -> void:
 	host.gear_page_left = null
 	host.gear_page_right = null
 	var names: PackedStringArray = PackedStringArray(["Settings", "Inventory", "Skills"])
+	var journal_tabs: bool = host.has_meta("journal_sheet")
+	if journal_tabs:
+		host.tabs.alignment = BoxContainer.ALIGNMENT_BEGIN
 	for i: int in 3:
 		var ii: int = i
 		var b: Button = ThemeS.btn(names[i], func():
@@ -117,11 +120,27 @@ static func _rebuild(host: CanvasLayer) -> void:
 			host.sys_page = "main"
 			host._rebuild()
 		)
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		b.custom_minimum_size = UiText.min_size(160.0, 44.0)
-		if i == host.tab:
-			ThemeS.paint_tab(b, true)
-		host.tabs.add_child(b)
+		var journal: bool = journal_tabs
+		var tall: float = 52.0 if i == host.tab else 38.0
+		b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER if journal else Control.SIZE_EXPAND_FILL
+		b.custom_minimum_size = UiText.min_size(112.0 if journal else 160.0, tall if journal else 44.0)
+		if journal:
+			ThemeS.paint_bookmark(b, i == host.tab)
+		else:
+			ThemeS.paint_tab(b, i == host.tab)
+		if journal and i != host.tab:
+			var hold: MarginContainer = MarginContainer.new()
+			hold.size_flags_vertical = Control.SIZE_SHRINK_END
+			hold.add_theme_constant_override("margin_bottom", 10)
+			hold.add_child(b)
+			host.tabs.add_child(hold)
+		else:
+			host.tabs.add_child(b)
+		if journal and i < 2:
+			var gap: Control = Control.new()
+			gap.custom_minimum_size = Vector2(10, 1)
+			gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			host.tabs.add_child(gap)
 	PromptView.fill(host.tab_left, [{"action": "tab_left"}], 16, ThemeS.INK_SOFT)
 	PromptView.fill(host.tab_right, [{"action": "tab_right"}], 16, ThemeS.INK_SOFT)
 	match host.tab:
@@ -132,9 +151,28 @@ static func _rebuild(host: CanvasLayer) -> void:
 		_:
 			host._skills()
 	host._paint_menu_hint()
+	_paint_page(host)
 	host.call_deferred("_focus")
-	if host.tab_scroll and host.tabs.get_child_count() > host.tab:
-		host.tab_scroll.ensure_control_visible(host.tabs.get_child(host.tab) as Control)
+	if host.tab_scroll:
+		var seen: int = 0
+		for child: Node in host.tabs.get_children():
+			var btn: Button = child as Button
+			if child is MarginContainer and child.get_child_count() > 0:
+				btn = child.get_child(0) as Button
+			if btn == null:
+				continue
+			if seen == host.tab:
+				host.tab_scroll.ensure_control_visible(btn)
+				break
+			seen += 1
+
+static func _paint_page(host: CanvasLayer) -> void:
+	var page: Node = host.get_node_or_null("journal_page")
+	if page is CanvasItem:
+		(page as CanvasItem).visible = true
+	var edge: Node = host.get_node_or_null("menu_edge")
+	if edge is CanvasItem:
+		(edge as CanvasItem).visible = false
 
 static func _paint_menu_hint(host: CanvasLayer) -> void:
 	if host.tab == host.TAB_INV:

@@ -40,18 +40,22 @@ static func slot_btn(ui: CanvasLayer, slot: String) -> Button:
 	return Sync.slot_btn(ui, slot)
 
 static func bag_grid(ui: CanvasLayer) -> void:
-	ui.box.add_child(ThemeS.lab(App.tr("board_host.bag"), 20, ThemeS.INK))
+	var column: Node = ui.box
+	if ui.has_meta("journal_column") and ui.get_meta("journal_column") is Node:
+		column = ui.get_meta("journal_column")
+	column.add_child(ThemeS.lab(App.tr("board_host.bag"), 20, ThemeS.INK))
 	var grid := GridContainer.new()
 	grid.columns = 7
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 8)
+	var gap: int = 6 if ui.has_meta("journal_sheet") else 8
+	grid.add_theme_constant_override("h_separation", gap)
+	grid.add_theme_constant_override("v_separation", gap)
 	var cap: int = maxi(int(App.bal.bag_cap), App.prog.bag.size())
 	for i: int in cap:
 		var it: Dictionary = {}
 		if i < App.prog.bag.size() and App.prog.bag[i] is Dictionary:
 			it = App.prog.bag[i]
 		grid.add_child(bag_cell(ui, it))
-	ui.box.add_child(grid)
+	column.add_child(grid)
 
 static func bag_cell(ui: CanvasLayer, it: Dictionary) -> Button:
 	var b := Build.build_bag_cell(ui, it)

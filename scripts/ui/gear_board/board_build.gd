@@ -34,6 +34,7 @@ static func plain_lab(t: String, size: int, col: Color) -> Label:
 	l.text = t
 	l.autowrap_mode = TextServer.AUTOWRAP_OFF
 	l.clip_text = false
+	l.add_theme_font_override("font", ThemeS.ink_font())
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", col)
 	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
@@ -53,7 +54,12 @@ static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.focus_mode = Control.FOCUS_NONE
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.12, 0.1, 0.08), Color(0.45, 0.34, 0.18)))
+	if ui.has_meta("journal_sheet"):
+		panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		panel.custom_minimum_size = Vector2(0, 0)
+		panel.add_theme_stylebox_override("panel", ThemeS._ink_box(Color(0, 0, 0, 0), ThemeS.INK, 1, 1))
+	else:
+		panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.12, 0.1, 0.08), Color(0.45, 0.34, 0.18)))
 	var vb := VBoxContainer.new()
 	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vb.add_theme_constant_override("separation", 8)
@@ -86,6 +92,13 @@ static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vb.add_child(body)
+	if ui.has_meta("journal_sheet"):
+		body.visible = false
+		var rows: VBoxContainer = VBoxContainer.new()
+		rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		rows.add_theme_constant_override("separation", 0)
+		vb.add_child(rows)
+		ui.set_meta("journal_stat_rows", rows)
 	ui.gear_stats_title = mid
 	ui.gear_stats = body
 	ui.gear_page_left = left
