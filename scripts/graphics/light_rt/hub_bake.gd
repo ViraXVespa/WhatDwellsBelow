@@ -40,7 +40,6 @@ static func _stamp_of(img: Image) -> String:
 
 static func _fatal(msg: String) -> void:
 	var full: String = "FATAL hub light: %s Rebake with tools/run_bake_camp.py, review, then set HUB_BAKE_STAMP (design/hub-bake.md)." % msg
-	printerr(full)
 	push_error(full)
 	OS.crash(full)
 
