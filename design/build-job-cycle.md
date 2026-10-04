@@ -13,7 +13,9 @@ Gather is planned `list_xref` plus planned `show_func` plus one `code_map.py row
 
 Name a **planned gather list** (distinct xref patterns and show-func names, as long as the systems need) before the first catalog call. Those planned calls are one gather phase; add to the list when a new system turns up. Do not repeat the same command with the same args.
 
-Change is one slice in a Grok worktree cut from the week branch `grok-build-w{N}`. Prove matches the change, once. A UI, theme, or other visual change is the door's shot flow plus that door's UI load check. An import check or an unrelated smoke set is for a code change that can fail compile. Do not run both for a theme pass, and do not import, then smoke, then import.
+Change is one slice in a Grok worktree cut from the week branch `grok-build-w{N}`. The shell starts in the main checkout. Do not edit there. A worktree the User already named is the slice. Do not cut another.
+
+A visual restyle asks, then waits: what the surface is made of, which one screen is first, and what must stay. The first code is that one screen. Prove matches the change, once. A UI, theme, or other visual change is that screen's shot flow, opened and described, plus that door's UI load check. If the frames are the old widgets with new colors, the prove fails. Do not sweep the other surfaces. An import check or an unrelated smoke set is for a code change that can fail compile. Do not run both for a theme pass, and do not import, then smoke, then import.
 
 Smokes at prove: the phases mapped to the door or job in `routes.yaml` `smokes` (printed by `list_route` and `start_build_slice`; `run_smokes.py --door D` or `--job door.job` runs them). A system the slice implements or changes gets its asserts updated in the mapped phase helper (`debug-smokes.md`), or a new assert there, in the same change job. Unit runners (run the runner; do not open smoke helpers just to pick the command):
 

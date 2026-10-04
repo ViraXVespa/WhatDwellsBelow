@@ -14,6 +14,12 @@ Always-allow covers permissions only (Access, below), never a design question. A
 Build decides code shape inside one system and starts open numbers coherent (debug menu, `tunables.md`).
 Doc and code disagree: compare their change history, trust the newer, ask if unclear (`prove.md`, `list_changed.py --history`).
 
+A visual restyle (a look, a theme, or a material name such as journal, paper, or wood) is not settled by a palette. Before any doc or code, ask in one batch: what the surface is made of, which one screen is finished first, and what must stay (layout, verbs, gameplay colors). Options are objects and screens, not hex swatches. Wait. A metaphor the User already used is not an answer to those three questions. Ask them anyway.
+
+Do not get hung up. The shell starts in the main checkout. That directory is not the slice. Do not edit it. "No hand-edited PNGs" means do not paint pixels in an image editor. It does not mean the look stays a `StyleBoxFlat` recolor. When a flat box cannot show the material, use the image tools. An import check, or a smoke that only asserts nodes exist, is not a look. Do not ask the User to playtest until you have opened the shot and the material is visible in it.
+
+Finish that one screen. Capture its shot flow, open the frames, and say what is on them. If the frame is the old control with new colors, it fails. Stop and change that screen. Do not sweep the other menus until that frame is the thing the User named.
+
 ## First (once, before anything else)
 
 Classify the request: **new feature / new system** (something the game lacks, or a rework of a player-facing system) or **change to what exists** (fix, tune, refactor, same-system API), from the User's wording ("add", "new", "rework" vs "fix", "tweak", "rename"). If unclear, ask once (options: new feature / change to existing; recommend the one the wording leans to).
@@ -32,7 +38,7 @@ Git inventory (not gather): `tools/list_changed.py`. Search: `tools/list_xref.py
 
 ## Work
 
-First message names the area. `python tools/start_build_slice.py --door <door>` (or `--job` / `--area`); it prints the door/job card (gates one line; open one only when its `when` matches), smoke phases, shot flows and the FORK line. `--area` has no route: name a door or job for smokes. Worktrees come from the week branch `grok-build-w{N}` (`--ref` overrides), never main. No week branch and no `--ref`: the tool fails with no FORK line; ask the User (question prompt) whether to start a new week (`python tools/week_start.py`). The gather session id (`--session` / `$GROK_SESSION_ID`) is saved; retries return to it; without one START warns. Change only in the worktree. `grok worktree create` does not change this session's directory. After the FORK lines are printed, this session stops. Edits happen in the process started by `grok --cwd <worktree path> -r <gather id> --fork-session`. Web build load/frame/heap checks are advisory: `tools/web_perf.py` on an exported site (`run_shots.py --mode web` is Web-only).
+First message names the area. `python tools/start_build_slice.py --door <door>` (or `--job` / `--area`); it prints the door/job card (gates one line; open one only when its `when` matches), smoke phases, shot flows and the FORK line. `--area` has no route: name a door or job for smokes. Worktrees come from the week branch `grok-build-w{N}` (`--ref` overrides), never main. No week branch and no `--ref`: the tool fails with no FORK line; ask the User (question prompt) whether to start a new week (`python tools/week_start.py`). The gather session id (`--session` / `$GROK_SESSION_ID`) is saved; retries return to it; without one START warns. Change only in the worktree. `grok worktree create` does not change this session's directory. If the User names an existing worktree, that path is the slice. Do not cut a second one. If this session's directory is not that path, stop and give `grok --cwd <that path> -r <gather id> --fork-session`. After the FORK lines are printed, this session stops. Edits happen in the process started by that command. Web build load/frame/heap checks are advisory: `tools/web_perf.py` on an exported site (`run_shots.py --mode web` is Web-only).
 
 Access (permission, not design): if a task needs something outside Build's normal reach (a new asset location, an external tool or network, files outside the allowed set), show the User a one-line confirm first (skipped under always-allow).
 
@@ -54,6 +60,6 @@ Archive pins are CI-only (`versioning.md`, `archive_catalog.json`); do not inven
 
 ## After a job
 
-Proof rules (`prove.md`): one-line intended outcome before a behavior change; a missing required asset fails loudly (no fallback without the User's OK); report "gates pass", not "proved"; look and sound are unverified until the User confirms.
+Proof rules (`prove.md`): one-line intended outcome before a behavior change; a missing required asset fails loudly (no fallback without the User's OK); report "gates pass", not "proved". For a visual change, open the shot PNGs and say what material is on them. A recolor is not ready for the playtest question. Look and sound stay unverified until the User confirms.
 
 Gates: `design/tools.md` rule 10 (batch, once, at most 2 reruns). A code change uses `python tools/run_build_gate.py` and `python tools/read_summary.py --job build-gate`. A UI or theme change uses `run_shot_flow.py` and the door's UI load check; a missing or stale frame fails the prove. Never hand-edit `version.json`. Do not commit `_logs/`. Report rough edges (rule 9) and fix tool ones in the same task.

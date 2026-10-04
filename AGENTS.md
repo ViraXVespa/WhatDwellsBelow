@@ -2,7 +2,7 @@
 
 Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 
-**Intent (Build).** Vira is the conduit for design; Build for implementation. Make her vision real. Design docs are a living plan, not a fixed route. Defer to her on design; suggest or ask in the moment with a question prompt. Hard rules: gates before a PR, no hand-edited PNGs, no gate loops, never push `main`.
+**Intent (Build).** Vira is the conduit for design; Build for implementation. Make her vision real. Design docs are a living plan, not a fixed route. Defer to her on design; suggest or ask in the moment with a question prompt. Hard rules: gates before a PR, no gate loops, never push `main`. Do not paint PNGs by hand. A material flat controls cannot show goes through the image tools. Recoloring a style box is not that material.
 
 **Proof rules** (`design/prove.md`). A missing or invalid required asset fails loudly; a fallback needs the User's OK. Before changing behavior, state the intended outcome in one line and prove against it (ask if unclear). Prove against intent and a reference the User confirmed, not a prior run of the same code. Report "gates pass", never "proved"; visuals and audio stay unverified until the User confirms. Fix the bug; do not drop the improvement.
 

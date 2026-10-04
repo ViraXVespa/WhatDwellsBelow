@@ -365,8 +365,8 @@ shot_flows:
   ui.pause: "camp-pause-menu"
   ui.run_flow: "camp-recap"
 
-# New UI states with no shot flow (check_shot_gaps.py --changed): Bot gate = required (bot_smokes.py and
-# run_build_gate.py --batch FAIL on a new uncovered state); Build gate = advisory (printed, never fails).
+# New UI states with no shot flow (check_shot_gaps.py --changed): Bot and Build both FAIL
+# on a new uncovered state (bot_smokes.py, run_build_gate.py --batch, and a Build UI or theme prove).
 shot_gaps:
   bot: required
   build: required

@@ -10,7 +10,7 @@ One standard for every surface: the cheapest check that would fail if the change
 - **No silent fallback.** A required asset or file that is missing or invalid fails loudly (error plus stop). A fallback exists only with the User's explicit OK.
 - **Intent first.** Before changing a behavior, state the intended outcome in one line, from the User's words or the design docs, and prove against that line. Unclear: ask with a question prompt.
 - **Prove against intent, not yourself.** Compare with the intent and with a reference the User confirmed. "Same as before" counts only when before is what the User wanted; a prior run of the same code is not enough.
-- **Say what was shown.** Passing gates are "gates pass", never "proved". Visual and audio results are unverified until the User confirms; give the crops, numbers or paths and say so.
+- **Say what was shown.** Passing gates are "gates pass", never "proved". For a visual change, open the shot PNGs and describe the material on the screen. A palette swap of the same widgets fails that description. Visual and audio results are unverified until the User confirms. Do not ask for that confirm until the frames show the material. Give the crops, numbers or paths and say so.
 - **Fix the bug, keep the improvement.** A bug in a feature is a reason to find the cause and fix it, not to delete the feature.
 
 ## Surfaces
@@ -18,7 +18,7 @@ One standard for every surface: the cheapest check that would fail if the change
 | Surface | Runs the proof | Rules |
 |---|---|---|
 | Bot | its Prove gate, `bot_smokes.py`, `bot_warnscan.py`, shots | `BOT.md` Prove and Smokes |
-| Build | gather, change, prove: `run_build_gate.py`, the `routes.yaml` `smokes` / `shot_flows` for the door; a red prove prints its RETRY prompt | `build-job-cycle.md` |
+| Build | gather, change, prove: a visual change uses the door's `shot_flows` (open the frames) and its UI load check; a compile change uses `run_build_gate.py`. Not both for a theme pass. A red prove prints its RETRY prompt | `build-job-cycle.md` |
 | Web / chat | cannot run Godot: the emit scratch runs the runners through the `doc_patch` lib (`dump_job`) and the User pastes the RESULT; a missing check is added the same way, as a tool or recipe in that scratch; a Build brief only for work Web cannot do (`web-emit.md`) | `web-test.md`, `web-emit.md`, `doc-library.md` |
 
 ## By change kind
@@ -27,7 +27,7 @@ One standard for every surface: the cheapest check that would fail if the change
 |---|---|
 | Code (`.gd`) | compile: `run_build_gate.py --batch` (Bot: its Prove gate in `BOT.md`); the smoke phases that load the file (`bot_smokes.py --for FILE`); a pure refactor also needs "same as main" |
 | Art, keying | "key is clean", then "looks the same as main" for every sprite that uses it |
-| UI | the shot flow for the state (`run_shot_flow.py --flow N`), then "layout is clean" and "text readable" |
+| UI | one screen first. Its shot flow (`run_shot_flow.py --flow N`). Open the frames. The named material has to be visible. A recolor fails. Then "layout is clean" and "text readable" |
 | Input | P7 binds smoke (`bot_smokes.py --phases 7`) plus the controls flows (`--flows camp-pause-menu,camp-billboard-controls`) |
 | Save data | P8 (`bot_smokes.py --phases 8`: save backup on the smoke slot) |
 | Tools, docs | `check_tool_cli.py`, `check_tool_docs.py --stale-refs`, `check_load_graph.py`; `img_inspect.py selftest` for imglib |
