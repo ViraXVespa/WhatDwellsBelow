@@ -7,7 +7,7 @@
     python tools/read_summary.py --path _logs/smokes/<stamp>-p1-err.log
 Every run keeps its own timestamped file under _logs/<job>/ and index.txt lists the last 20 (run_log_lib.py).
 No --job/--path lists the job dirs found under _logs/. Exit 0 ok, 1 missing, 2 usage.
-Old spellings: -Job -Path -Root.
+
 """
 from __future__ import annotations
 
@@ -22,8 +22,8 @@ import run_log_lib
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Print a job's run index and newest summary, or a repo file.")
     ap.add_argument("job_pos", nargs="?", default="", help="Job name (same as --job).")
-    ap.add_argument("--job", "-Job", default="", help="Job name, e.g. smokes.")
-    ap.add_argument("--path", "-Path", default="", help="Repo-relative or absolute file to print.")
+    ap.add_argument("--job", default="", help="Job name, e.g. smokes.")
+    ap.add_argument("--path", default="", help="Repo-relative or absolute file to print.")
     ap.add_argument("--index", action="store_true", help="Print only the run index of the job.")
     ap.add_argument("--run", type=int, default=1, help="Which run's summary to print: 1 = newest (default), 2 = the one before.")
     args = ap.parse_args(argv)

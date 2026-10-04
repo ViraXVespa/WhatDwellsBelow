@@ -4,7 +4,7 @@
 A helper path inside a cluster folder resolves to its facade. Facade-less families (no `<stem>.gd`): pass the cluster folder itself (lists its *.gd).
 
     python tools/list_facade_cluster.py --facade scripts/combat/enemy.gd
-Summary: _logs/facade-cluster/<stamp>-facade-cluster.txt. Old spelling: -Facade.
+Summary: _logs/facade-cluster/<stamp>-facade-cluster.txt.
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ import agent_log
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List a facade + stem-folder helpers by size (no body reads).", json_out=True)
     ap.add_argument("facade_pos", nargs="?", default="", help="Facade .gd path or cluster folder (same as --facade).")
-    ap.add_argument("--facade", "-Facade", default="", help="Facade .gd path or cluster folder (or pass it as the argument).")
+    ap.add_argument("--facade", default="", help="Facade .gd path or cluster folder (or pass it as the argument).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     facade = args.facade or args.facade_pos

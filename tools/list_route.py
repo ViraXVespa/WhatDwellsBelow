@@ -101,8 +101,10 @@ def _door_card(data: dict, door_name: str) -> list[str]:
     lines.extend(_gate_lines(data))
     lines.append("smokes\t%s" % ",".join(map(str, smoke_phases(data, door=door_name))))
     lines.append("flows\t%s" % (",".join(shot_flows(data, door=door_name)) or "none"))
-    lines.append("read\topen the one job doc whose read_when matches the task; not its siblings")
-    lines.append("survey\tseveral jobs: `python tools/list_route.py --digest --door %s` (headings with line numbers), then open only the sections you choose" % door_name)
+    if len(jobs or {}) >= 2:
+        lines.append("read\tsurvey of several jobs: `python tools/list_route.py --digest --door %s` (headings with line numbers); job docs are optional, open a section only for what you choose" % door_name)
+    else:
+        lines.append("read\topen the one job doc whose read_when matches the task; not its siblings")
     lines.append("also\tgates only if their trigger applies; `code_map.py row` / `show_func.py` for scripts, not whole files")
     return lines
 
@@ -139,8 +141,8 @@ def _job_card(data: dict, job_id: str) -> list[str]:
 def parse_args(argv: list[str]):
     parser = agent_log.std_parser("Print one door or job card from design/routes.yaml (no argument: list the doors).")
     parser.add_argument("target", nargs="?", default="", help="Door name, or door.job for a job card (same as --door / --job).")
-    parser.add_argument("--door", "-Door", default="", help="Door name (print its card).")
-    parser.add_argument("--job", "-Job", default="", help="Job id door.job (print its card).")
+    parser.add_argument("--door", default="", help="Door name (print its card).")
+    parser.add_argument("--job", default="", help="Job id door.job (print its card).")
     parser.add_argument("--digest", action="store_true", help="With --door / --job: each doc's Status, Read when and headings with line numbers (for a survey over several jobs).")
     parser.add_argument("--gates", action="store_true", help="Print the full gate triggers (default: gate names only).")
     args = parser.parse_args(argv)

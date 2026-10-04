@@ -74,7 +74,7 @@ def procs_on_path(path: Path | str) -> list[dict]:
     needle = norm_path(path).lower()
     hits: list[dict] = []
     if os.name == "nt":
-        cmd = ["powershell", "-NoProfile", "-Command",
+        cmd = ["powershell", "-NoProfile",
                "Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^godot' } | "
                "Select-Object ProcessId,CommandLine | ConvertTo-Json -Compress"]
         try:
@@ -248,6 +248,28 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
             "display": (dkind if gui else "n/a")}
 
 
+def restore_import_churn(root: Path) -> tuple[int, int]:
+    """Undo what a Godot import writes into tracked sidecars: restore every modified tracked `*.import` (assets/, docs/, icon.svg.import)
+    and delete untracked `*.import` whose source file is tracked. Paths go to git on stdin, so the Windows command-line length never applies.
+    Returns (restored, removed). Do not call it after an intended `.import` edit."""
+    def git(*a: str, data: bytes = b"") -> bytes:
+        return subprocess.run(["git", *a], cwd=root, input=data, capture_output=True).stdout
+
+    mod = [p for p in git("ls-files", "-m", "-z", "--", "*.import").split(b"\0") if p]
+    if mod:
+        git("checkout", "--pathspec-from-file=-", "--pathspec-file-nul", data=b"\0".join(mod) + b"\0")
+    tracked = set(git("ls-files", "-z").decode("utf-8", "replace").split("\0"))
+    gone = 0
+    for p in git("ls-files", "-o", "--exclude-standard", "-z", "--", "*.import").decode("utf-8", "replace").split("\0"):
+        if p.endswith(".import") and p[:-7] in tracked:
+            try:
+                (root / p).unlink()
+                gone += 1
+            except OSError:
+                pass
+    return len(mod), gone
+
+
 def headless_args(root: Path, *app_args: str) -> list[str]:
     """Standard smoke argv: headless, dummy audio, --path root, then `-- app_args`."""
     a = ["--headless", "--display-driver", "headless", "--audio-driver", "Dummy", "--path", str(root)]
@@ -292,15 +314,15 @@ def timing_job(args, job: str, title: str, flag: str, running: str, extra: list[
 
 def timing_parser(desc: str) -> "argparse.ArgumentParser":
     ap = agent_log.std_parser(desc, json_out=True)
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=180, help="Godot timeout (default 180).")
+    ap.add_argument("--timeout-sec", type=int, default=180, help="Godot timeout (default 180).")
     return ap
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Probe the per-path Godot lock: lock, print, unlock. --display reports the GUI display choice.")
     ap.add_argument("--display", action="store_true", help="print which display GUI runs (shots, bakes) will use, then exit")
-    ap.add_argument("--path", "-Path", default=None, help="Godot --path to lock (default: repo root).")
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=120, help="Seconds to wait for the lock (default 120).")
+    ap.add_argument("--path", default=None, help="Godot --path to lock (default: repo root).")
+    ap.add_argument("--timeout-sec", type=int, default=120, help="Seconds to wait for the lock (default 120).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if args.display:

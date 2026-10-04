@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""Capped text search; writes a short hit list instead of dumping ripgrep into chat.
+"""Text search; writes a short hit list instead of dumping ripgrep into chat.
 
     python tools/list_xref.py --pattern pc-offload [--path design --path tools] [--include "*.gd"] [--regex]
 Scans the project that holds the current directory (so a worktree is scanned from inside it), else this tool's own checkout;
 --root overrides. The first output line prints the absolute scanned root, with a WARN when it is not the current directory's project.
 Case-insensitive. Skips top-level archives/, .archive_worktrees/, _logs/, docs/. Summary: _logs/xref/<stamp>-xref.txt.
 Default output is an INDEX when a search hits many places: per-file hit counts with each file's first matching line, most hits first. Then
-`--expand FILE` (repeatable) lists every hit in that file, and `--all` prints the old flat hit list. A search with only a few hits prints them directly.
+`--expand FILE` (repeatable) lists every hit in that file. A search with only a few hits prints them directly.
 --texts searches the visible text of the last shot-flow runs instead (_logs/shot-flow/**/*.texts.json): the way to find which words a screen shows.
-Old spellings: -Pattern -Path -Include -MaxHits -MaxFiles -Regex.
+
 """
 from __future__ import annotations
 
+import argparse
 import fnmatch
 import re
 import sys
@@ -25,16 +26,16 @@ SKIP = {*gd_lib.SKIP_PARTS, "_logs", "docs", ".git"}
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Capped text search over scripts/scenes/tools/design.", json_out=True)
+    ap = agent_log.std_parser("Text search over scripts/scenes/tools/design.", json_out=True)
     ap.add_argument("pattern_pos", nargs="?", default="", help="Pattern (same as --pattern).")
-    ap.add_argument("--pattern", "-Pattern", default="", help="Text to find (or pass it as the argument).")
-    ap.add_argument("--path", "-Path", nargs="+", default=["scripts", "scenes", "tools", "design"], help="Files or dirs to search (default scripts scenes tools design).")
-    ap.add_argument("--include", "-Include", default="*", help="Filename glob, e.g. *.gd")
-    ap.add_argument("--max-hits", "-MaxHits", type=int, default=30, help="Max hits in total (default 30).")
-    ap.add_argument("--max-files", "-MaxFiles", type=int, default=20, help="Max files listed (default 20).")
-    ap.add_argument("--regex", "-Regex", action="store_true", help="Treat the pattern as a regular expression.")
+    ap.add_argument("--pattern", default="", help="Text to find (or pass it as the argument).")
+    ap.add_argument("--path", nargs="+", default=["scripts", "scenes", "tools", "design"], help="Files or dirs to search (default scripts scenes tools design).")
+    ap.add_argument("--include", default="*", help="Filename glob, e.g. *.gd")
+    ap.add_argument("--max-hits", type=int, default=30, help=argparse.SUPPRESS)
+    ap.add_argument("--max-files", type=int, default=20, help=argparse.SUPPRESS)
+    ap.add_argument("--regex", action="store_true", help="Treat the pattern as a regular expression.")
     ap.add_argument("--expand", action="append", default=[], metavar="FILE", help="List every hit in this file (repo-relative path or a unique end of it); repeat for more files.")
-    ap.add_argument("--all", action="store_true", help="Print the flat hit list instead of the per-file index.")
+    ap.add_argument("--all", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--texts", action="store_true", help="Search the shot-flow text dumps (_logs/shot-flow/**/*.texts.json) instead of the source folders.")
     args = ap.parse_args(argv)
     if args.texts:
@@ -102,13 +103,13 @@ def main(argv: list[str] | None = None) -> int:
     body = [f"{where} pattern={pattern} mode={mode} include={args.include} path={','.join(paths)}",
             f"scanned={scanned} files={len(files_hit)} hits={len(hits)} truncated={trunc}",
             ""] + hits
-    echo = f"{where}\nxref files={len(files_hit)} hits={len(hits)} scanned={scanned} truncated={trunc}"
+    echo = f"{where}\nxref files={len(files_hit)} hits={len(hits)} scanned={scanned}"
     if index:
         ranked = sorted(by_file.items(), key=lambda kv: (-len(kv[1]), kv[0]))
         echo += "".join(f"\n{len(v):>3}  {k}  first: {v[0].split(':', 2)[1]}: {v[0].split(':', 2)[2][:90]}" for k, v in ranked[:14])
         if len(ranked) > 14:
             echo += f"\n... and {len(ranked) - 14} more files: narrow with --path"
-        echo += "\nnext: `--expand FILE` lists one file's hits; `--all` lists every hit"
+        echo += "\nnext: `--expand FILE` lists one file's hits"
     else:
         echo += "".join("\n" + h for h in hits[:args.max_hits])
     if trunc:

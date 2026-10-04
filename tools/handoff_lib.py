@@ -25,7 +25,7 @@ SECTIONS = [
     ("Her decisions", "<fill: each answer she gave, one line each, or none>"),
     ("Chosen surfaces, in order", "<fill: one per line, the first is this session's unit>"),
     ("Ledger", "Decisions I made that were yours: <fill or none>\nAssumptions carried from memory or docs: <fill or none>\nAlso changed: <fill or none>"),
-    ("Baselines for the chosen surface", "<fill: absolute PNG path - one line on what is on it>"),
+    ("Baselines for the chosen surface", "<fill: absolute PNG path - one line on what is on it; or `none` and the flow names to shoot>"),
     ("Files and functions to touch", "<fill: path: function>"),
     ("Did not work", "<fill or none>"),
     ("Open questions", "<fill or none>"),
@@ -46,7 +46,7 @@ def skeleton(root: Path, area: str, door: str, job: str, session: str = "") -> s
     first = f'python tools/start_build_slice.py --door {door or "<door>"}' + (f" --job {job}" if job else "") + f' --from-handoff "{path}"'
     head = [f"# Handoff: {area}", f"area: {area}", f"door: {door}", f"job: {job}",
             f"from: survey session {session or '(id unknown)'} in {root}",
-            f"Your first command, before any file read: {first}",
+            f"Your first command, before any file read or memory topic: {first}",
             "The survey is done and the answers below stand; ask again only what Open questions lists or what a discovery changes. "
             "Open no pictures except the baselines listed for the chosen surface.", ""]
     body: list[str] = []
@@ -78,7 +78,7 @@ def baselines(root: Path, body: str) -> list[tuple[str, bool, str]]:
     out = []
     for line in body.splitlines():
         line = line.strip().lstrip("-* ").strip()
-        if not line or line.lower() == "none":
+        if not line or line.lower().startswith("none"):
             continue
         m = re.split(r"\s+(?:-|\u2014|\u2013)\s+", line, maxsplit=1)
         p, note = m[0].strip().strip('"`'), (m[1].strip() if len(m) > 1 else "")
@@ -119,6 +119,12 @@ def survey_edits(root: Path) -> list[str]:
         if p and not p.startswith("_logs/"):
             paths.append(p)
     return paths
+
+
+def sidecars(paths: list[str]) -> tuple[list[str], int]:
+    """(paths without Godot `.import` sidecars, how many sidecars there were): the sidecars are import churn, so they are counted, not listed."""
+    keep = [p for p in paths if not p.endswith(".import")]
+    return keep, len(paths) - len(keep)
 
 
 def save_edits(root: Path) -> tuple[list[str], list[str]]:
@@ -177,7 +183,8 @@ def start_block(root: Path, path: Path) -> list[str]:
     for title in ("Chosen surfaces, in order", "Files and functions to touch", "Did not work", "Open questions"):
         lines.append(f"{title}: " + " | ".join(l.strip().lstrip("-* ") for l in secs.get(title, "").splitlines() if l.strip()))
     bl = baselines(root, secs.get("Baselines for the chosen surface", ""))
-    lines.append("Open these baselines (only these): " + ("; ".join(f"{p}{'' if ok else ' (MISSING: re-shoot it)'} - {n}" for p, ok, n in bl) or "none listed"))
+    lines.append("Open these baselines (only these): " + ("; ".join(f"{p}{'' if ok else ' (MISSING: re-shoot it)'} - {n}" for p, ok, n in bl)
+                                                           or "none listed (the Baselines section names the flows to shoot)"))
     lines += restore_edits(path, root)
     bad = check(root, text)
     if bad:
@@ -238,7 +245,12 @@ def selftest(script: Path) -> list[str]:
             text = re.sub(r"(## " + re.escape(title) + r"\n)(.*?)(\n\n|\Z)", lambda m: m.group(1) + "filled line\n\n", text, count=1, flags=re.S)
         text = re.sub(r"(## Baselines for the chosen surface\n)filled line", lambda m: m.group(1) + f"{png} - the pause page, before", text)
         hp.write_text(text, encoding="utf-8")
+        (survey / "assets").mkdir()
+        (survey / "assets" / "churn-one.png.import").write_text("x")
+        (survey / "assets" / "churn-two.png.import").write_text("x")
         code, out = run(survey, "--handoff")
+        if "churn-one" in out or "2 Godot .import sidecars" not in out:
+            bad.append("Godot .import sidecars must be counted in the handoff output, not listed by name")
         if code != 0 or 'open_slice.py ui --prompt-file "' not in out or "new-flow.json" not in out or "routes.yaml" not in out:
             bad.append(f"a filled handoff must pass, print the open_slice command and name the saved survey edits (code={code})")
         if not (hp.parent / EDITS_DIR / "files" / "tools" / "shot-flows" / "new-flow.json").is_file():

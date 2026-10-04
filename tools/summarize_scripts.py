@@ -36,9 +36,9 @@ def select(root: Path, paths: list[Path] | None) -> list[Path]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Func-level script inventory for live .gd files.", json_out=True)
-    ap.add_argument("--path", "-Path", action="append", default=[], help="Limit to one or more .gd paths")
-    ap.add_argument("--over-kb", "-OverKb", type=float, default=0.0, help=argparse.SUPPRESS)
-    ap.add_argument("--top-funcs", "-TopFuncs", type=int, default=6, help="Largest funcs to list per file")
+    ap.add_argument("--path", action="append", default=[], help="Limit to one or more .gd paths")
+    ap.add_argument("--over-kb", type=float, default=0.0, help=argparse.SUPPRESS)
+    ap.add_argument("--top-funcs", type=int, default=6, help="Largest funcs to list per file")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     args.path = agent_log.split_list(args.path)

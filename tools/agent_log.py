@@ -93,9 +93,9 @@ class _Parser(argparse.ArgumentParser):
 def std_parser(description: str, *, writes: bool = False, json_out: bool = True) -> argparse.ArgumentParser:
     """Parser with --root, --json and (writes=True) --dry-run. json_out stays for old callers; every tool gets --json."""
     ap = _Parser(description=description)
-    ap.add_argument("--root", "-Root", default=None, help="Repo root (default: auto-discovered).")
+    ap.add_argument("--root", default=None, help="Repo root (default: auto-discovered).")
     if writes:
-        ap.add_argument("--dry-run", "-DryRun", "-WhatIf", dest="dry_run", action="store_true", help="Print what would change; write nothing.")
+        ap.add_argument("--dry-run", dest="dry_run", action="store_true", help="Print what would change; write nothing.")
     if json_out:
         ap.add_argument("--json", dest="json", action="store_true", help="Print one JSON object (status, summary, counts) instead of text.")
     return ap

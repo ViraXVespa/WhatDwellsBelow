@@ -61,7 +61,7 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 ## 10/10 checks
 
 1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints, The Bot's per-file boot budgets (`tools/bot_budgets.json`) are checked only with `check_load_graph.py --bot`.
-2. Bot boot is BOT.md + one Job sibling (the agents file only if Cursor already loaded it).
+2. Bot boot is BOT.md + one Job sibling.
 3. No mutual See also.
 4. One job phrase belongs to one door.
 5. Doors with a Job table stay thin.

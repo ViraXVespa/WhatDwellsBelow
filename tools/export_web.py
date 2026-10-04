@@ -3,7 +3,7 @@
 
     python tools/export_web.py [--archives] [--out DIR] [--godot PATH]
 Live-only writes docs/. --archives writes a combined site to _pages/ (gitignored); archive pins are
-best-effort, cached under .archive_export_cache/. Logs: _logs/export-web/. Old spelling: -Archives.
+best-effort, cached under .archive_export_cache/. Logs: _logs/export-web/.
 """
 from __future__ import annotations
 
@@ -24,10 +24,10 @@ def py(*a: str) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Export the Web build to docs/ (or _pages/ with --archives).", json_out=True)
-    ap.add_argument("--archives", "-Archives", action="store_true", help="Also export catalog archives into _pages/.")
+    ap.add_argument("--archives", action="store_true", help="Also export catalog archives into _pages/.")
     ap.add_argument("--godot", default="", help="Godot executable (default: GODOT_BIN / Steam / bot pin).")
     ap.add_argument("--out", default="", help="Export here instead of docs/ (scratch dir for web_perf; not committed).")
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=900, help="Godot export timeout in seconds (default 900).")
+    ap.add_argument("--timeout-sec", type=int, default=900, help="Godot export timeout in seconds (default 900).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     exe = godot_lib.godot_exe(args.godot)

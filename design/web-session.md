@@ -48,7 +48,7 @@ The User tells the agent to review the repo.
 
 If the agents file already routed here, do not re-read it. Load `design/protocol.md` and `design/constraints.md` only when missing.
 If the first message names a park, load only that Open file after the law pair and continue; with a mandate, Phase 2 is optional. Closing a finished park deletes the Open file and its parked-tasks row (not rewritten as closed).
-If the User names build-coop or build-week, emit one gather scratch only (no game writes): `pack_grok_sessions` / `report_grok_sessions`, and `read_summary` only if the User also named a PC job. The User click-runs it; the paste is the packet. `_logs/sess/` is PC job output.
+If the User names build-coop or build-week, there is no gather tool: use `read_summary` only if the User also named a PC job (no game writes). `_logs/sess/` is PC job output.
 If no park or gather is named, confirm ready (brainstorm; no implementation).
 
 ### Phase 2 — Discuss

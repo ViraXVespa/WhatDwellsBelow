@@ -34,18 +34,18 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser("Check live scripts/**/*.gd: basenames unique repo-wide.", json_out=True)
     bot_gate_lib.add_flag(parser)
     sup = argparse.SUPPRESS  # Bot-only size options: BOT.md
-    parser.add_argument("--over-kb", "-OverKb", dest="over_kb", type=float, default=None, help=sup)
+    parser.add_argument("--over-kb", dest="over_kb", type=float, default=None, help=sup)
     parser.add_argument("--list", action="store_true", help=sup)
-    parser.add_argument("--under-kb", "-UnderKb", type=float, default=0, help=sup)
+    parser.add_argument("--under-kb", type=float, default=0, help=sup)
     parser.add_argument("--sweep", action="store_true", help=sup)
     parser.add_argument(
-        "--git-changed", "-GitChanged",
+        "--git-changed",
         dest="git_changed",
         action="store_true",
         help="Only files listed by git status --porcelain -- scripts.",
     )
     parser.add_argument(
-        "--path", "-Path",
+        "--path",
         action="append",
         default=[],
         help="Explicit script path (repeatable). Relative to --root unless absolute.",

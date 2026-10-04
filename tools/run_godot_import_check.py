@@ -16,7 +16,7 @@ import godot_lib
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Headless editor import check.", json_out=True)
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=180, help="Godot timeout in seconds (default 180).")
+    ap.add_argument("--timeout-sec", type=int, default=180, help="Godot timeout in seconds (default 180).")
     args = ap.parse_args(argv)
     root, where = agent_log.cwd_scan_root(args)
     out_log = agent_log.run_path("godot-import-check", root, "import-out.log")

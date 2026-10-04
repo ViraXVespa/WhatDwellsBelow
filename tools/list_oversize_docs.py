@@ -60,7 +60,7 @@ def dupe_report(root: Path, min_chars: int) -> tuple[list[str], int]:
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List design/*.md by os.path.getsize; OVER marks files at or over --over-kb. --boot / --dupes: doc SNR sweep.", json_out=True)
     bot_gate_lib.add_flag(ap)
-    ap.add_argument("--over-kb", "-OverKb", type=float, default=8.0, help="limit = round(kb * 1000) bytes")
+    ap.add_argument("--over-kb", type=float, default=8.0, help="limit = round(kb * 1000) bytes")
     ap.add_argument("--boot", action="store_true", help="print bytes per boot chain (routes.yaml boot_max)")
     ap.add_argument("--dupes", action="store_true", help="print sentences repeated across docs")
     ap.add_argument("--min-chars", type=int, default=60, help="--dupes minimum normalized sentence length (default 60)")

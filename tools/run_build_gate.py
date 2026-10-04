@@ -3,10 +3,10 @@
 
     python tools/run_build_gate.py [--skip-import] [--force]
     python tools/run_build_gate.py --batch --warnscan-baseline B.json [--areas p6,static]
---batch = import + restore `.import` churn under assets/ + check_load_graph + the script-name check (duplicate
+    python tools/run_build_gate.py --batch --visual ui.pause     (the job's shot flows in the same call; look at the frames, then show_png.py)
+--batch = import + restore `.import` churn + check_load_graph + the script-name check (duplicate
 basenames) + check_hub_bake (png vs HUB_BAKE_STAMP) + `--warnscan-baseline` adds `bot_warnscan --non-leak-diff B` (same --areas as the baseline). Run it once
-per batch. Refuses (exit 2) if Godot is already on this --path unless --force. Old spellings: -SkipImport -Force
--ImportTimeoutSec. Each run writes _logs/build-gate/<stamp>-build-gate.txt; read it with read_summary.py --job build-gate.
+per batch. Refuses (exit 2) if Godot is already on this --path unless --force. Each run writes _logs/build-gate/<stamp>-build-gate.txt; read it with read_summary.py --job build-gate.
 """
 from __future__ import annotations
 
@@ -31,11 +31,12 @@ def child(root: Path, script: str, job: str, *flags: str) -> tuple[int, list[str
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Post-slice gate: editor import check, load graph and script names.", json_out=True)
     bot_gate_lib.add_flag(ap)
-    ap.add_argument("--import-timeout-sec", "-ImportTimeoutSec", type=int, default=180, help="Editor import timeout in seconds (default 180).")
-    ap.add_argument("--skip-import", "-SkipImport", action="store_true", help="Skip the editor import step.")
-    ap.add_argument("--force", "-Force", action="store_true", help="Continue even if Godot is on this path.")
-    ap.add_argument("--script-cap", "-ScriptCap", action="store_true", help=argparse.SUPPRESS)
-    ap.add_argument("--batch", action="store_true", help="Import + restore assets/*.import churn + check_load_graph + script names (duplicate basenames).")
+    ap.add_argument("--import-timeout-sec", type=int, default=180, help="Editor import timeout in seconds (default 180).")
+    ap.add_argument("--skip-import", action="store_true", help="Skip the editor import step.")
+    ap.add_argument("--force", action="store_true", help="Continue even if Godot is on this path.")
+    ap.add_argument("--script-cap", action="store_true", help=argparse.SUPPRESS)
+    ap.add_argument("--batch", action="store_true", help="Import + restore .import churn + check_load_graph + script names (duplicate basenames).")
+    ap.add_argument("--visual", default="", metavar="JOB", help="Also run the shot flows routes.yaml maps to JOB (door.job, or a door) in one call (run_shot_flow.py --job) and list the frames.")
     ap.add_argument("--warnscan-baseline", default="", help="Also run bot_warnscan --non-leak-diff against this --save-baseline file.")
     ap.add_argument("--areas", default="", help="bot_warnscan areas for --warnscan-baseline (must match the baseline run).")
     ap.add_argument("--shot-gaps", choices=("required", "advisory", "off"), default="",
@@ -68,23 +69,8 @@ def main(argv: list[str] | None = None) -> int:
     else:
         body += ["--- import skipped ---", ""]
     if not args.skip_import and (args.batch or args.warnscan_baseline):
-        ch = subprocess.run(["git", "status", "--porcelain", "--", "assets"], cwd=root, capture_output=True, text=True).stdout.splitlines()
-        imp = [ln[3:].strip() for ln in ch if ln[:2].strip() == "M" and ln.rstrip().endswith(".import")]
-        if imp:
-            # One git checkout of every assets/*.import path overflows the
-            # Windows command line (WinError 206) on a fresh worktree.
-            batch: list[str] = []
-            budget = 0
-            for rel in imp:
-                if batch and budget + len(rel) + 1 > 24000:
-                    subprocess.run(["git", "checkout", "--", *batch], cwd=root, check=False)
-                    batch = []
-                    budget = 0
-                batch.append(rel)
-                budget += len(rel) + 1
-            if batch:
-                subprocess.run(["git", "checkout", "--", *batch], cwd=root, check=False)
-        body += [f"--- restored {len(imp)} assets/*.import files ---", ""]
+        n, gone = godot_lib.restore_import_churn(root)
+        body += [f"--- restored {n} .import files, removed {gone} stray ones ---", ""]
     if args.batch:
         print("== load graph ==")
         code, lines = child(root, "check_load_graph.py", "load-graph", *bot_flag)
@@ -99,6 +85,14 @@ def main(argv: list[str] | None = None) -> int:
         code, lines = child(root, "check_hub_bake.py", "hub-bake")
         body += [f"--- hub bake stamp exit={code} ---"] + lines[-3:] + [""]
         fail += int(code != 0)
+    if args.visual:
+        print("== visual prove (%s) ==" % args.visual)
+        p = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "run_shot_flow.py"), "--root", str(root), "--job", args.visual],
+                           cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        out = (p.stdout + p.stderr).strip().splitlines()
+        print("\n".join(out))
+        body += [f"--- visual {args.visual} exit={p.returncode} ---"] + out + [""]
+        fail += int(p.returncode != 0)
     if args.warnscan_baseline:
         print("== warnscan non-leak diff ==")
         flags = ["--non-leak-diff", args.warnscan_baseline] + (["--areas", args.areas] if args.areas else [])

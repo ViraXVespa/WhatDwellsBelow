@@ -37,7 +37,7 @@ Woke because main moved: `bot_status.py --bot` first. over_10kb 0: report and st
 - python tools/check_script_cap.py --bot --git-changed
 - python tools/check_load_graph.py --bot
 - python tools/bot_status.py --bot --prove
-- python tools/check_code_map.py (no new UNMAPPED for files you touched; older ones are expected)
+- python tools/code_map.py check (no new UNMAPPED for files you touched; older ones are expected)
 - python tools/check_tool_docs.py (only when `tools/` or the catalog changed); `--stale-refs` after any doc edit that names paths
 
 Proof recipes by change kind (shots, layout, keying) and extend-the-tools-not-work-around-them: `design/prove.md`.

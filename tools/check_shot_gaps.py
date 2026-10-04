@@ -91,6 +91,9 @@ def flow_problems(root: Path, name: str, flow: dict, states: dict) -> list[str]:
     for c in flow.get("covers", []):
         if c not in states:
             probs.append(f"{name}: covers {c} but no such state in the sources")
+    by = str(flow.get("covered_by") or "")
+    if by and not (root / run_shot_flow.FLOW_DIR / f"{by}.json").is_file():
+        probs.append(f"{name}: covered_by {by} but no such flow")
     pub = flow.get("publish") or {}
     if pub.get("dir") and run_shot_flow.publish_blocked(root, root / pub["dir"]):
         probs.append(f"{name}: publish.dir {pub['dir']} is under assets/ (tooling never publishes there; use _out/shots/{name})")

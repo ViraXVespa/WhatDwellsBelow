@@ -21,11 +21,11 @@ Rules, the CLI contract and the surface key (Surf, A) are in `tools.md`. Same ta
 | `run_log_lib.py` | Run-log layout: one `<stamp>-<job>.txt` per run, `index.txt` newest first, keep the last 20, `clear` for the weekly clean | BD | module docstring (no `--help`) | Y |
 | `retry_lib.py` | Red-prove RETRY block: `grok -r CHECKPOINT --fork-session` for the User to run from the worktree, plus the paste-ready prompt (failed prove, red lines, files in the diff from the week branch); saves/reads the checkpoint (gather session id). `--selftest` | BD | module docstring (no `--help`) | Y |
 | `handoff_lib.py` | The survey -> implement handoff file (`_logs/handoff/handoff.md`): skeleton, validation, saved survey edits and the compact start summary for `start_build_slice.py --handoff` / `--from-handoff`; `open_slice.py` validates a `# Handoff:` prompt | D | module docstring (no `--help`) | Y |
-| `session_lib.py` | Finds a Grok session folder and reads `prompt_context.json`, the early skills reminder and `chat_history.jsonl` for `start_build_slice.py` and `did_not_work.py` | D | module docstring (no `--help`) | Y |
-| `slice_lib.py` | `start_build_slice.py --selftest` cases and the `open_slice.py` area check (no week branch fails, the STEP 0 missing-flow note, START lines, checkpoint, both worktree shapes: Grok clone and linked) | D | module docstring (no `--help`) | Y |
+| `session_lib.py` | Finds a Grok session folder and reads `prompt_context.json`, the early skills reminder, `prompt_history.jsonl` and `chat_history.jsonl` for the session facts of `start_build_slice.py` | D | module docstring (no `--help`) | Y |
+| `slice_state.py` | `_logs/slice-state.json` and the `SLICE ALREADY STARTED` text of `start_build_slice.py` (steps read from disk: import, baseline shots, checkpoint, handoff) | D | module docstring (no `--help`) | Y |
+| `slice_lib.py` | `start_build_slice.py` card text (survey / implementation / handoff ORDER), `--selftest` cases (main checkout, Grok clone, second run, survey vs job, checkpoint) and the `open_slice.py` area check | D | module docstring (no `--help`) | Y |
 | `bot_gate_lib.py` | Bot-mode switch for the Bot's own checks (`--bot`, `WDB_BOT`, CI) and the Bot budgets in `bot_budgets.json` | BWD | module docstring (no `--help`) | Y |
 | `bot_budgets.json` | Budgets read by `bot_gate_lib` in Bot mode | B | - | Y |
-| `write_utf8_file.py` | Shim -> `doc_patch.py write` (`--path`, `--bom`, `--b64`), one release | BD | `--help` | Y |
 
 ### Split, code map and doc edits
 
@@ -36,7 +36,6 @@ Rules, the CLI contract and the surface key (Surf, A) are in `tools.md`. Same ta
 | `doc_patch.py` | Idempotent doc edits. CLI: `replace`, `ensure-line`, `set-read-when`, `changelog`, `next-label`, `write`, `replace-file`, `apply plan.json`, `check` (`--dry-run`, `--eol keep\|crlf\|lf`); also importable (`write_changelog`, `replace_once`, `replace_func`, `upsert_func`). Keeps each file's BOM and line endings. Detail: `doc-library.md`. | BWD | `--help` | Y |
 | `check_hub_bake.py` | Committed `hub_light.png` pixel hash vs `HUB_BAKE_STAMP` in `hub_bake.gd` (the game crashes on a mismatch). Run by `run_build_gate.py --batch`. Summary: `hub-bake`. | BWD | `--help` | Y |
 | `md_format_lib.py` | Text I/O for every tool: `read_text`, `write_text` (BOM and EOL kept), `detect_eol`; markdown format checks | BWD | module docstring (no `--help`) | Y |
-| `patch_code_map.py` | Shim -> `code_map.py patch`, one release | BD | `--help` | Y |
 | `code_map_lib.py` | Code-map row parser/writer used by `code_map.py` | BD | module docstring (no `--help`) | Y |
 | `list_oversize_docs.py` | Bot-only doc sweep (runs with `--bot`): `design/*.md` by size, `--boot` boot-chain bytes, `--dupes` sentences repeated across docs | B | `--help` | Y |
 | `list_route.py` | Print one `routes.yaml` door or job card (`--job door.job`) with its read list (the one doc to read, others only on their trigger; `--digest` prints headings with line numbers for a multi-job survey), incl. smoke phases and shot flows; gates print as a count (`--gates` lists names and triggers), `flows: none` when empty (a job shows only its own key); no args lists the doors | BD | `--help` | Y |

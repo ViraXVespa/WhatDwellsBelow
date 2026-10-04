@@ -21,12 +21,12 @@ from load_routes import SMOKE_PHASES, check_route, load_routes, smoke_phases
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Run Godot phase smokes (--wdb-phaseN-smoke).", json_out=True)
-    ap.add_argument("--phases", "-Phases", nargs="+", default=[",".join(map(str, SMOKE_PHASES))], help="Phase numbers, 1,2,6 or 1 2 6.")
+    ap.add_argument("--phases", nargs="+", default=[",".join(map(str, SMOKE_PHASES))], help="Phase numbers, 1,2,6 or 1 2 6.")
     ap.add_argument("--door", default="", help="Run the phases mapped to this routes.yaml door.")
     ap.add_argument("--job", default="", help="Run the phases mapped to this routes.yaml door.job.")
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=120, help="Seconds per smoke phase (default 120).")
+    ap.add_argument("--timeout-sec", type=int, default=120, help="Seconds per smoke phase (default 120).")
     ap.add_argument("--no-gaps", action="store_true", help="skip the mid-slice check_shot_gaps --changed print (the END gate is run_build_gate.py, required per routes.yaml)")
-    ap.add_argument("--verbose-godot", "-VerboseGodot", action="store_true", help="Pass --verbose to Godot (leak detail rows).")
+    ap.add_argument("--verbose-godot", action="store_true", help="Pass --verbose to Godot (leak detail rows).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     phases = agent_log.split_list(args.phases, int)

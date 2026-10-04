@@ -1,4 +1,4 @@
-"""Read the running Grok session's own files (library for did_not_work.py and the first-message facts of start_build_slice.py).
+"""Read the running Grok session's own files (library for the first-message facts and the slice state of start_build_slice.py).
 
 Layout seen in real sessions: <sessions>/<url-encoded cwd>/<session id>/{chat_history.jsonl, prompt_context.json, terminal/}. <sessions> is
 $WDB_GROK_SESSIONS, else C:\\Users\\Vira\\.grok\\sessions, else ~/.grok/sessions. The session id is $GROK_SESSION_ID. Everything here is best effort:
@@ -79,44 +79,23 @@ def context_facts(sdir: Path | None) -> dict:
     return out
 
 
+def prompt_facts(sdir: Path | None) -> dict:
+    """{'time': ISO str, 'chars': int} of this session's first prompt from <sessions>/<cwd>/prompt_history.jsonl, or {} (not verified)."""
+    if sdir is None:
+        return {}
+    sid = sdir.name
+    for r in _rows(sdir.parent / "prompt_history.jsonl"):
+        if r.get("session_id") == sid:
+            return {"time": str(r.get("timestamp", "")), "chars": len(str(r.get("prompt", "")))}
+    return {}
+
+
 def statement(sdir: Path | None) -> str:
-    """The exact first-message line for the User: what is true about AGENTS.md and the skills, or how to check."""
+    """The first-message facts, only what was read from the session's files; Build then says which of AGENTS.md and the skill it opened."""
     f = context_facts(sdir)
-    how = "Could not read this session's files, so say \"not verified\" and check `/session-info` (or the context shown at the top of the session) for the agents file and the skill list."
+    ask = "In your first message say which of AGENTS.md and the pc-offload skill you actually opened, or that you opened neither; write 'loaded' or 'read' only for what you opened."
     if f["agents"] is None and f["skill_at_start"] is None:
-        return "First-message statement: " + how
-    a = ("AGENTS.md: auto-loaded (" + ", ".join(f["agents"]) + ")") if f["agents"] else "AGENTS.md: read by hand (the session's agents_md_files is empty)" if f["agents"] is not None else "AGENTS.md: not verified"
-    s = {True: "skills: pc-offload listed at start", False: "skills: found by path (pc-offload was not in the list at start)", None: "skills: not verified"}[f["skill_at_start"]]
-    return f"First-message statement, copy it exactly: \"{a}; {s}\". Never write 'loaded' for what you did not verify."
-
-
-def failed_steps(rows: list[dict]) -> list[dict]:
-    """Failed tool steps in order: {'i', 'tool', 'what', 'why', 'reported'}; reported = a later assistant text says 'Did not work'."""
-    calls: dict[str, tuple[str, str]] = {}
-    out: list[dict] = []
-    last_dnw = -1
-    for i, r in enumerate(rows):
-        t = r.get("type")
-        if t == "assistant":
-            if "did not work" in _text(r.get("content")).lower():
-                last_dnw = i
-            for c in r.get("tool_calls") or []:
-                try:
-                    a = json.loads(c.get("arguments") or "{}")
-                except ValueError:
-                    a = {}
-                what = a.get("command") or a.get("target_file") or a.get("file_path") or a.get("path") or a.get("description") or ""
-                calls[str(c.get("id"))] = (str(c.get("name", "?")), " ".join(str(what).split())[:120])
-        elif t == "tool_result":
-            body = _text(r.get("content"))
-            m = re.match(r"exit: (-?\d+)", body)
-            bad = (m is not None and (m.group(1) != "0" or re.search(r"^RESULT FAIL", body, re.M) is not None)) or (m is None and body.startswith("Error"))
-            if not bad:
-                continue
-            lines = body.splitlines()
-            why = next((ln.strip() for ln in lines if re.search(r"^RESULT FAIL|error|Error|FAIL|not found|does not exist", ln)), "") or (lines[0] if lines else "")
-            tool, what = calls.get(str(r.get("tool_call_id")), ("?", ""))
-            out.append({"i": i, "tool": tool, "what": what, "why": why[:160], "reported": False})
-    for s in out:
-        s["reported"] = last_dnw > s["i"]
-    return out
+        return "Session facts: not verified (this session's files could not be read; `/session-info` shows the agents file and skill list). " + ask
+    a = f"prompt_context.json: agents_md_files=[{', '.join(f['agents'])}]" if f["agents"] is not None else "agents_md_files: not verified"
+    s = {True: "pc-offload is in the skills list at start", False: "pc-offload is not in the skills list at start", None: "skills list at start: not verified"}[f["skill_at_start"]]
+    return f"Session facts: {a}; {s}. " + ask

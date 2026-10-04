@@ -5,7 +5,7 @@
     python tools/run_agent_py.py --script tools/x.py --keep-script
 Checked-in scripts are never deleted; --cleanup outside _logs/agent-py/ is refused.
 Prefer a real tool (see design/tools.md) over a scratch. Summary: _logs/agent-py/<stamp>-agent-py.txt
-Old spellings: -Script -KeepScript -Cleanup.
+
 """
 from __future__ import annotations
 
@@ -19,9 +19,9 @@ import agent_log
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Run an agent python script and clean up its ephemeral copy.")
-    ap.add_argument("--script", "-Script", required=True, help="Python source file to run as an agent script.")
-    ap.add_argument("--keep-script", "-KeepScript", action="store_true", help="Keep the script after the run.")
-    ap.add_argument("--cleanup", "-Cleanup", action="store_true", help="Delete the script after the run (only scripts under _logs/agent-py/).")
+    ap.add_argument("--script", required=True, help="Python source file to run as an agent script.")
+    ap.add_argument("--keep-script", action="store_true", help="Keep the script after the run.")
+    ap.add_argument("--cleanup", action="store_true", help="Delete the script after the run (only scripts under _logs/agent-py/).")
     ap.add_argument("script_args", nargs="*", help="Arguments passed to the script.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)

@@ -21,7 +21,7 @@ The **facade stays beside its folder** in the area dir. Its **helpers live in a 
 - **Basenames are unique repo-wide** (`check_script_cap.py` fails on `dupes=`). `split_funcs.py --dry-run` prints the names; rule: `gd_lib.helper_basenames`.
 - A new helper from a split or extract goes into the facade's folder (`split_funcs.py` creates it; `--in-folder` for facade-less families). 
 - A move or rename carries `.uid` sidecars and every `res://` / bare path (`move_script_cluster.py`, below).
-- **Manual checks after any move or rename** (the tool cannot see these): prose globs (`dir/stem*.gd`, `stem_*`), the OLD basename of every renamed file repo-wide in md / yaml / py / json / gd (skip `design/changelog/`), string-built paths (`"res://scripts/" + ...`, `%s`), shot / smoke / tool code that names a script file, and the four `wdb-*` skills in `/home/box/agent-data/workflows`. One batch, gates once (`design/tools.md` rule 10). Then editor import, `check_load_graph`, `check_code_map`, `check_script_cap`, `bot_warnscan --areas static --non-leak-diff`.
+- **Manual checks after any move or rename** (the tool cannot see these): prose globs (`dir/stem*.gd`, `stem_*`), the OLD basename of every renamed file repo-wide in md / yaml / py / json / gd (skip `design/changelog/`), string-built paths (`"res://scripts/" + ...`, `%s`), shot / smoke / tool code that names a script file, and the four `wdb-*` skills in `/home/box/agent-data/workflows`. One batch, gates once (`design/tools.md` rule 10). Then editor import, `check_load_graph`, `code_map.py check`, `check_script_cap`, `bot_warnscan --areas static --non-leak-diff`.
 
 ## Split recipe
 

@@ -7,7 +7,7 @@ Rendering, modes, worker, bands, display, knobs and troubleshooting live in the 
 
 ## Flows
 
-A flow is `tools/shot-flows/<name>.json`: header keys fill unset CLI defaults (`scene hud zoom settle_ms seed floor px pz width height scale fixed_fps`), plus `about`, `mask` (`[[x,y,w,h]]` 1920x1080 rects and `tol` (per-channel delta) that baseline diffs ignore, for live world animation behind a panel), `covers` (state ids it proves), `smoke` (true = also run headless by `bot_smokes.py --flows`), optional `publish` `{dir, prefix}`, and `steps`.
+A flow is `tools/shot-flows/<name>.json`: header keys fill unset CLI defaults (`scene hud zoom settle_ms seed floor px pz width height scale fixed_fps`), plus `about`, `mask` (`[[x,y,w,h]]` 1920x1080 rects and `tol` (per-channel delta) that baseline diffs ignore, for live world animation behind a panel), `covers` (state ids it proves), `covered_by` (another flow that shoots and asserts everything this one does: `run_shot_flow.py` skips this flow when that one is picked too; `check_shot_gaps.py` fails a name that is no flow), `smoke` (true = also run headless by `bot_smokes.py --flows`), optional `publish` `{dir, prefix}`, and `steps`.
 
 | Op | Keys | Does |
 |---|---|---|
@@ -45,11 +45,11 @@ Teleport recipe (the whole floor is populated at boot; the camera follows the pl
 
 ## New UI state checklist (Build)
 
-This is STEP 0 of a visual slice with no flow for its screen: `start_build_slice.py` prints a note (exit 0), not a stop. Do 2, map it (3) and shoot and OPEN the baseline before the questions; say whether that PNG is the screen being changed and send its path with the ask. Flow files and the `routes.yaml` mapping may be edited before the User answers. The end gates stay (1).
+This is STEP 0 of a visual slice with no flow for its screen: `start_build_slice.py` prints a note (exit 0), not a stop. Do 2, map it (3), shoot the baseline and look at it before the questions; `show_png.py` opens it for her; say whether that PNG is the screen being changed and put its path in the message. Flow files and the `routes.yaml` mapping may be edited before the User answers. The end gates stay (1).
 
 1. A new menu, NPC panel or page: add its mode/kind strings to a `states.json` source if the regexes miss them; `check_shot_gaps.py --changed` must list it as covered. Gate: **required for Bot and for Build** (`bot_smokes.py`, `run_build_gate.py --batch`, and a Build UI or theme prove FAIL on a new uncovered state). `routes.yaml` `shot_gaps` sets the mode. `--shot-gaps off|advisory|required` overrides it.
 2. Copy the nearest flow (`camp-receptionist-menu` NPC menu, `camp-anvil-tabs` pages, `camp-billboard-controls` static panel, `camp-npc-panels` several NPC panels, `camp-inventory` panel opened by its method, `dungeon-gate-shop` dungeon-only panels, `camp-pause-menu` pause/split menu, `camp-pause-inventory` pause Inventory tab, `camp-recap` delve recap), change the `interact`, state and asserts, set `covers`, add `smoke: true`.
-3. `run_shot_flow.py --flow N`. Open the frames and say what is on them. A visual change then stops for the User (`build-job-cycle.md`). `--no-pixels` is the cheap rerun after the frames have been opened. Map the flow by its job in `routes.yaml` `shot_flows` (a job maps only to its own key) so `start_build_slice.py` prints it.
+3. `run_shot_flow.py --flow N`, or `--job J` for every flow the job maps (one call, one summary, the frame lists; `--changed` picks the flows whose file or job doc changed). Look at the frames, `show_png.py` the ones the ask refers to, and say what is on them. Each flow is one Godot boot (the tool runs one steps file per boot), so a job maps a flow only when no other flow of the job already shoots and asserts its frames; one that does is marked `covered_by` it. A visual change then stops for the User (`build-job-cycle.md`). `--no-pixels` is the cheap rerun after the frames have been opened. Map the flow by its job in `routes.yaml` `shot_flows` (a job maps only to its own key) so `start_build_slice.py` prints it.
 4. The report names the flow, the frames and the `check_shot_gaps.py` RESULT.
 
 ## Gap process: the task needs a shot the tool cannot stage

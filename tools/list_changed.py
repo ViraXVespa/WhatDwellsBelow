@@ -6,7 +6,7 @@
 --history: for each path its latest commits (date, sha, subject), then which path changed last. A doc and its code
 disagree: the newer change is probably the truth; if the dates are close or the subjects do not explain it, ask.
 Read the summary, do not paste git diffs. Each run writes _logs/changed/<stamp>-changed.txt (read_summary.py --job changed).
-Old spellings: -Scope -Head -LogCount.
+
 """
 from __future__ import annotations
 
@@ -49,9 +49,9 @@ def history(root: Path, args: argparse.Namespace, where: str) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List git-changed paths in scope with sizes.", json_out=True)
-    ap.add_argument("--scope", "-Scope", nargs="+", default=DEFAULT_SCOPE, help="Path prefixes, comma or space separated.")
-    ap.add_argument("--head", "-Head", action="store_true", help="Print the HEAD sha and the recent log.")
-    ap.add_argument("--log-count", "-LogCount", type=int, default=10, help="Log lines shown with --head (default 10).")
+    ap.add_argument("--scope", nargs="+", default=DEFAULT_SCOPE, help="Path prefixes, comma or space separated.")
+    ap.add_argument("--head", action="store_true", help="Print the HEAD sha and the recent log.")
+    ap.add_argument("--log-count", type=int, default=10, help="Log lines shown with --head (default 10).")
     ap.add_argument("--history", nargs="+", metavar="PATH", default=[], help="Compare the change history of these paths (a doc and its code): latest commits each, and which changed last.")
     ap.add_argument("--per-path", type=int, default=5, help="With --history: commits listed per path (default 5).")
     args = ap.parse_args(argv)

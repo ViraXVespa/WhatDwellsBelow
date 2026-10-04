@@ -100,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
     lines.append(f"prompt: {len(prompt)} chars, starts {prompt[:60]!r}, sha256 {hashlib.sha256(prompt.encode('utf-8')).hexdigest()[:12]}" if prompt else "prompt: none (a blank session)")
     lines += [hand_note] if hand_note else []
     lines.append((f"area={area}: resolved." + (f"\n{warn}" if warn else "") + (f"\n{note}" if note else "")) if area else
-                 "No area given, so no route checks ran. In the new session Build runs `python tools/start_build_slice.py --door <door>` (it says IN A WORKTREE).")
+                 "No area given, so no route checks ran. In the new session Build runs `python tools/start_build_slice.py --door <door>` (the card; a later run says where the slice stands).")
     if dry:
         return end("\n".join(lines + ["dry run: grok was not started."]), "PASS", route="dry-run")
     if not exe:

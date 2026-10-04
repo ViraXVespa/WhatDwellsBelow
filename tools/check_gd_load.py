@@ -89,7 +89,7 @@ def main(argv: list[str] | None = None) -> int:
     if not (root / ".godot" / "imported").is_dir():
         print("importing the project first (no .godot/imported)...")
         godot_lib.run_godot(root, root, ["--headless", "--editor", "--import", "--path", str(root), "--quit"], timeout=args.timeout_sec)
-        subprocess.run(["git", "checkout", "--", "assets", "icon.svg.import"], cwd=root, capture_output=True)
+        godot_lib.restore_import_churn(root)
     r = godot_lib.run_godot(root, root, ["--headless", "--audio-driver", "Dummy", "--path", str(root), "--script", str(loader), "--", str(lst)],
                             out_log, err_log, args.timeout_sec, stop_on_compile=False)
     seen = {}

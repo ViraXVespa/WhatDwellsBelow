@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Shared markdown formatting helpers for surgical doc edits.
 
-Used by bot_opt, code_map_lib, patch_code_map, doc_patch, and the tool CLIs.
+Used by bot_opt, code_map_lib, doc_patch, and the tool CLIs.
 Single home for text I/O: read_text (BOM/EOL aware), detect_eol, write_text (EOL kept).
 Not a markdown engine, CommonMark parser, or doc framework.
 """

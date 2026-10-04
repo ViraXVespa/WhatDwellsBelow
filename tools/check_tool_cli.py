@@ -36,8 +36,8 @@ PRINTERS = {"bible_prompt", "attack_keyframes", "i2v_seeds", "read_summary"}
 NO_ROOT: set[str] = set()
 EXEMPT_RESULT = {"agent_log", "wdb_scratch_server"}  # run helper itself; long-running HTTP server
 WRITERS = {
-    "doc_patch", "patch_code_map", "code_map", "tunables", "build_changelog",
-    "week_pin", "write_utf8_file", "list_unused_funcs", "bot_opt", "split_funcs", "facade_requal",
+    "doc_patch", "code_map", "tunables", "build_changelog",
+    "week_pin", "list_unused_funcs", "bot_opt", "split_funcs", "facade_requal",
     "move_script_cluster", "archive_prior_changelogs", "enable_texture_mips", "ci_archive",
 }
 # flags `--help` must list (tool contract extras beyond --root/--dry-run); web_perf is advisory, so it needs --strict to fail
@@ -58,7 +58,6 @@ SMOKE: dict[str, list] = {
     "bot_status": [[], ["--bot"]],
     "bot_warnscan": [["--list"]],
     "build_changelog": [["--dry-run"]],
-    "check_code_map": [[]],
     "check_load_graph": [[], ["--bot"]],
     "check_script_cap": [[], ["--git-changed"], ["--sweep"], ["--bot"], ["--bot", "--sweep"], ["--bot", "--list", "--over-kb", "8"], ["--selftest"]],
     "ci_archive": [["--dry-run"], ["--selftest"]],
@@ -82,7 +81,7 @@ SMOKE: dict[str, list] = {
     "list_scenes": [[]],
     "list_unused_funcs": [["--dry-run"]],
     "list_xref": [["bot_status"], ["bot_status", "--all"]],
-    "make_p2_sfx": [["--dry-run"]], "make_p9_sfx": [["--dry-run"]], "make_placeholder_audio": [["--dry-run"]],
+    "make_placeholder_audio": [["--dry-run"]],
     "pack_facing_fix": [(["--dry-run"], _ERR)], "pack_locomotion": [["--dry-run"]], "pack_oneshot": [["--dry-run"]],
     "pack_p2_art": [(["--dry-run"], _ERR)], "pack_turntable": [(["--dry-run"], _ERR)], "pack_walk": [(["--dry-run"], _ERR)],
     "pages_game_hash": [[]],
@@ -91,14 +90,13 @@ SMOKE: dict[str, list] = {
     "process_world": [(["--dry-run"], _ERR)], "process_world_pass": [(["--dry-run"], _ERR)],
     "read_summary": [["bot-status"], ["bot-status", "--index"]],
     "rekey_stills": [(["--dry-run"], _ERR)],
-    "report_grok_sessions": [[]], "report_grok_week": [["--dry-run"]],
-    "run_shot_flow": [["--list"], ["--survey", "--flow", "camp-inventory"]],
+    "run_shot_flow": [["--list"], ["--survey", "--flow", "camp-inventory"], ["--selftest"]],
+    "show_png": [["--selftest"]],
     "make_sfx": [["--list"], ["--dry-run", "--prefix", "p2_"], ["--check", "--prefix", "p9_"]],
     "move_script_cluster": [(["--stem", "zzz", "--from-dir", "scripts/zzz", "--to-dir", "scripts/yyy", "--dry-run"], _ERR)],
     "show_func": [(["--path", "scripts/graphics/mesh_commit.gd", "--name", "no_such_func"], _ERR)],
     "split_funcs": [["scripts/graphics/mesh_commit.gd", "--list"]],
     "summarize_scripts": [[]],
-    "did_not_work": [["--selftest"]],
     "bot_load_audit": [["--selftest"]],
     "open_slice": [["--dry-run", "--ref", "HEAD"], ["--dry-run", "--ref", "HEAD", "player"], ["--selftest"]],
     "start_build_slice": [["--door", "debug", "--job", "debug.smokes", "--dry-run", "--ref", "HEAD"], ["--selftest"]],

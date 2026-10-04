@@ -6,9 +6,12 @@ set state, shoot every page, assert, then diff against a baseline or publish to 
   python tools/run_shot_flow.py --survey [--flow A,B]   # one text line per flow: about, states, last shot, band (no picture needed)
   python tools/run_shot_flow.py --sheet NAME            # tile a flow's last frames into one sheet.png (labels; small text is not readable on it)
   python tools/run_shot_flow.py --flow camp-receptionist-menu [--baseline DIR] [--save-baseline DIR] [--publish]
+  python tools/run_shot_flow.py --job ui.pause [--save-baseline DIR]   # every flow routes.yaml maps to the job (a door name: its door flows), one call, one summary
+  python tools/run_shot_flow.py --changed               # the flows whose JSON changed, plus those mapped to a job whose doc changed
   python tools/run_shot_flow.py --smoke --no-pixels        # every smoke:true flow, headless, asserts only
 
-Each flow is one worker boot (run_shots.py --steps). Frames land in _logs/shot-flow/<flow>/ as
+Each flow is one worker boot (run_shots.py --steps); the shot tool cannot run two step files in one boot. Flows picked together are run in one call and
+deduplicated: a flow with `covered_by: OTHER` is skipped when OTHER is picked too (OTHER shoots and asserts everything it does; `--no-dedupe` runs both). Frames land in _logs/shot-flow/<flow>/ as
 NN-name.png (plus NN-name.texts.json and flow.json). Flow format and ops: design/shot-flows.md.
 """
 from __future__ import annotations
@@ -85,6 +88,59 @@ def contact_sheet(root: Path, name: str) -> Path | None:
     cols = min(4, len(pngs))
     sheet = compare.montage([imgio.load(p) for p in pngs], [p.stem for p in pngs], cols=cols, cell=(480, 270))
     return imgio.save(sheet, fdir / "sheet.png")
+
+
+def job_flows(root: Path, flows: dict[str, dict], job: str) -> list[str]:
+    """Flow names routes.yaml maps to `job` (door.job: its own mapping; a door name: the door's mapping)."""
+    from load_routes import check_route, load_routes, shot_flows
+
+    data = load_routes(root)
+    door, jb = (job.split(".", 1)[0], job) if "." in job else (job, "")
+    bad = check_route(data, door, jb)
+    if bad:
+        agent_log.fail(bad)
+    names = shot_flows(data, door=door, job=jb, job_only=bool(jb))
+    if not names:
+        agent_log.fail("no shot_flows mapped to %s in design/routes.yaml (a visual job maps its flow there)" % job)
+    missing = [n for n in names if n not in flows]
+    if missing:
+        agent_log.fail("routes.yaml maps %s to unknown flow %s. flows: %s" % (job, ", ".join(missing), ", ".join(flows)))
+    return names
+
+
+def changed_flows(root: Path, flows: dict[str, dict]) -> list[str]:
+    """Flows whose JSON file changed (git status), plus the flows mapped to a job whose doc changed."""
+    import subprocess
+    from load_routes import load_routes, shot_flows
+
+    out = subprocess.run(["git", "status", "--porcelain=v1", "-uall"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
+    files = {ln[3:].strip().strip('"').split(" -> ")[-1] for ln in out.splitlines() if len(ln) > 3}
+    picked = [n for n, d in flows.items() if rel(root, d["_file"]) in files]
+    try:
+        for door, spec in (load_routes(root).get("doors") or {}).items():
+            for jb, doc in ((spec or {}).get("jobs") or {}).items():
+                if isinstance(doc, str) and doc in files:
+                    picked += [n for n in shot_flows(load_routes(root), door=door, job=f"{door}.{jb}", job_only=True) if n in flows]
+    except Exception:
+        pass
+    return list(dict.fromkeys(picked))
+
+
+def plan(flows: dict[str, dict], todo: list[str], dedupe: bool = True) -> tuple[list[str], list[str]]:
+    """(flows to run, note lines): a flow `covered_by` another picked flow is skipped; picked flows that cover a common state are noted."""
+    run, notes = [], []
+    for n in todo:
+        by = str(flows[n].get("covered_by") or "")
+        if dedupe and by and by != n and by in todo:
+            notes.append("skipped %s: covered by %s, which is picked too (its frames and asserts are in that flow)" % (n, by))
+        else:
+            run.append(n)
+    for i, a in enumerate(run):
+        for b in run[i + 1:]:
+            both = sorted(set(flows[a].get("covers", [])) & set(flows[b].get("covers", [])))
+            if both:
+                notes.append("overlap: %s and %s both cover %s" % (a, b, ", ".join(both)))
+    return run, notes
 
 
 def pick(flows: dict[str, dict], names: list[str], smoke: bool, every: bool) -> list[str]:
@@ -198,13 +254,33 @@ def run_one(root: Path, name: str, flow: dict, args, out_root: Path) -> dict:
     return row
 
 
+def selftest() -> int:
+    """plan(): a flow covered_by a picked flow is skipped; alone it runs; common `covers` ids are noted."""
+    fl = {"a": {"covered_by": "b"}, "b": {"covers": ["ui:x"]}, "c": {"covers": ["ui:x"]}}
+    bad = []
+    run, notes = plan(fl, ["a", "b"])
+    if run != ["b"] or "skipped a: covered by b" not in notes[0]:
+        bad.append("a covered flow must be skipped when its cover is picked")
+    if plan(fl, ["a"])[0] != ["a"] or plan(fl, ["a", "b"], False)[0] != ["a", "b"]:
+        bad.append("a covered flow runs alone, and with --no-dedupe")
+    if "overlap: b and c both cover ui:x" not in plan(fl, ["b", "c"])[1]:
+        bad.append("two picked flows covering one state must be noted")
+    for b in bad:
+        print("FAIL " + b)
+    return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
+
+
 def main(argv: list[str] | None = None) -> int:
     p = agent_log.std_parser("Run scripted shot flows: capture, assert, diff against a baseline, publish.",
                              writes=True, json_out=True)
     p.add_argument("--list", action="store_true", help="list flows and exit")
+    p.add_argument("--selftest", action="store_true", help="run the dedupe cases (no Godot)")
     p.add_argument("--survey", action="store_true", help="one text line per flow (about, states, last shot, band); no Godot run")
     p.add_argument("--sheet", default="", metavar="FLOW", help="tile FLOW's last frames into one sheet.png (labels; fine text is not readable on it)")
     p.add_argument("--flow", action="append", default=[], help="flow name (repeat or comma-separate)")
+    p.add_argument("--job", action="append", default=[], metavar="JOB", help="every flow routes.yaml maps to JOB (door.job, or a door name); one call, one summary")
+    p.add_argument("--changed", action="store_true", help="flows whose JSON changed, plus those mapped to a job whose doc changed")
+    p.add_argument("--no-dedupe", action="store_true", help="run a flow even when a picked flow covers it (covered_by)")
     p.add_argument("--all", action="store_true", help="every flow")
     p.add_argument("--smoke", action="store_true", help="every flow marked smoke:true")
     p.add_argument("--no-pixels", action="store_true", help="headless: steps and asserts only, no PNGs, no display needed")
@@ -220,12 +296,14 @@ def main(argv: list[str] | None = None) -> int:
                    help="after capture, FAIL when the flow's published shots no longer match (UI changed: re-publish)")
     p.add_argument("--publish-dir", default="", help="publish here instead of the flow's publish.dir (assets/ is refused)")
     args = p.parse_args(argv)
+    if args.selftest:
+        return selftest()
     root, where = agent_log.cwd_scan_root(args)
     flows = list_flows(root)
     if args.list:
         for n, d in flows.items():
-            print("%s\tsmoke=%s\tsteps=%d\tcovers=%s\t%s" % (n, str(bool(d.get("smoke"))).lower(), len(d.get("steps", [])),
-                                                             ",".join(d.get("covers", [])), d.get("about", "")[:80]))
+            print("%s\tsmoke=%s\tsteps=%d\tcovers=%s\tcovered_by=%s\t%s" % (n, str(bool(d.get("smoke"))).lower(), len(d.get("steps", [])),
+                                                                           ",".join(d.get("covers", [])), d.get("covered_by", "-"), d.get("about", "")[:80]))
         return agent_log.emit_result("PASS", flows=len(flows))
     names = agent_log.split_list(args.flow)
     if args.survey:
@@ -243,9 +321,17 @@ def main(argv: list[str] | None = None) -> int:
             agent_log.fail("no frames for %s yet: run `python tools/run_shot_flow.py --flow %s` first" % (args.sheet, args.sheet))
         print("sheet: %s (labels are frame names; open a single frame to read small text)" % rel(root, out))
         return agent_log.emit_result("PASS", sheet=rel(root, out))
+    for j in agent_log.split_list(args.job):
+        names += job_flows(root, flows, j)
+    if args.changed:
+        names += changed_flows(root, flows)
+        if not names and not (args.all or args.smoke):
+            print("no changed flow files and no changed job doc with a mapped flow: nothing to run")
+            return agent_log.emit_result("PASS", flows=0)
+    names = list(dict.fromkeys(names))
     if not (names or args.all or args.smoke):
-        agent_log.fail("name a flow (--flow N), or use --all / --smoke / --list / --survey")
-    todo = pick(flows, names, args.smoke, args.all)
+        agent_log.fail("name a flow (--flow N), a job (--job J), or use --changed / --all / --smoke / --list / --survey")
+    todo, notes = plan(flows, pick(flows, names, args.smoke, args.all), not args.no_dedupe)
     out_root = Path(args.out_dir) if args.out_dir else root / "_logs" / JOB
     rows = [run_one(root, n, flows[n], args, out_root) for n in todo]
     bad_run = [r for r in rows if not r["ok"] and not args.dry_run]
@@ -253,13 +339,15 @@ def main(argv: list[str] | None = None) -> int:
     changed = [r for r in rows if r.get("diff_status") == "INFO"]
     stale = [r for r in rows if r.get("stale")]
     status = "FAIL" if (bad_run or bad_diff or stale) else ("INFO" if changed else "PASS")
-    lines = ["shot-flow %s no_pixels=%s" % (where, args.no_pixels)]
+    lines = ["shot-flow %s no_pixels=%s" % (where, args.no_pixels)] + notes
     for r in rows:
         lines.append("%s band=%s ok=%s steps=%s frames=%s diff=%s fail=%s dir=%s" % (
             r["flow"], r["band"], r["ok"], r["steps"], r["frames"], r.get("diff_status", "-"), r["fail"] or "-", r["dir"]))
         for d in r.get("diff", []) if isinstance(r.get("diff"), list) else []:
             if d["status"] != "same":
                 lines.append("  %s %s changed_px=%s ratio=%s bbox=%s" % (d["status"], d["name"], d["changed_px"], d["ratio"], d["bbox"]))
+        if r["frames"] and not args.no_pixels and not args.dry_run:
+            lines.append("  frames: " + " ".join(sorted(x.name for x in (root / r["dir"]).glob("[0-9]*.png"))))
         if r.get("cmd"):
             lines.append("  cmd: " + r["cmd"])
         for e in r.get("errors", []):

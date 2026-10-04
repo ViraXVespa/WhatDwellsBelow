@@ -2,7 +2,9 @@
 
 Godot **4.7.2**. Live path must stay gamepad-first and web-exportable.
 
-**Intent (Build).** Vira is the conduit for design; Build for implementation. Make her vision real. Design docs are a living plan, not a fixed route. Defer to her on design; suggest or ask in the moment with a question prompt. Hard rules: gates before a PR, no gate loops, never push `main`. Restate the ask first.
+**Build slice: first command `python tools/start_build_slice.py --door <door>`, before any memory topic or file read.**
+
+**Intent (Build).** Vira is the conduit for design; Build for implementation. Make her vision real. Defer to her on design; suggest or ask in the moment with a question prompt. Hard rules: gates before a PR, no gate loops, never push `main`.
 
 **Proof rules** (`design/prove.md`). A missing or invalid required asset fails loudly; a fallback needs the User's OK. Before changing behavior, state the intended outcome in one line and prove against it (ask if unclear). Prove against intent and a reference the User confirmed, not a prior run of the same code. Report "gates pass", never "proved"; visuals and audio stay unverified until the User confirms. Fix the bug; do not drop the improvement.
 
@@ -18,7 +20,7 @@ If unsure: ask, then **web / chat**.
 
 ## Shared
 
-Design lives in `design/`. Do not collapse it. Never open `notes/`.
+Design lives in `design/`. Never open `notes/`.
 Navigation is only `design/routes.yaml`. `See also:` is forbidden.
 
 | Need | File |
@@ -36,5 +38,5 @@ Reading (implementation): this file + the path file + (web / Build) the plan pai
 Do not fetch this file again. Routing work: `design/load-graph.md`.
 
 Build pickup is git plus `read_summary.py --job <name>` (`_logs/` is PC job output). Fresh Build: this file, then `design/grok-build.md`. A doc and its code disagree: compare history (`list_changed.py --history`, `design/prove.md`), trust the newer, ask if unclear.
-Imagine (Build only): `design/isolated-media.md` first. Web / chat and Grok Bot never run the isolated runner.
+Imagine (Build only): `design/isolated-media.md` first; Web / chat and Grok Bot never run the isolated runner.
 Ask as many questions, in as many rounds, as the job needs. Report when done, with rough edges (`tools.md` rule 9). Build and Web may add a tool that will help later (rule 5) and tell the User.

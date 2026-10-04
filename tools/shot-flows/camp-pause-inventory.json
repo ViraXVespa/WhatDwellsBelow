@@ -1,6 +1,7 @@
 {
   "name": "camp-pause-inventory",
   "about": "Placeholdia: open pause on the Inventory tab (App.pause_menu.show_inventory), shoot it, close it. Look proof for the pause inventory page.",
+  "covered_by": "camp-pause-pages",
   "scene": "camp",
   "hud": 0,
   "settle_ms": 1500,

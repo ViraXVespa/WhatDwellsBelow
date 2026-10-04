@@ -1,4 +1,4 @@
-"""start_build_slice.py / open_slice.py helpers: the START lines, the area check, the worktree checkpoint, the STEP 0 (missing flow) note and the selftests (`python tools/start_build_slice.py --selftest`)."""
+"""start_build_slice.py / open_slice.py helpers: the start-card text, the area check, the worktree checkpoint, the STEP 0 (missing flow) note and the selftests (`python tools/start_build_slice.py --selftest`)."""
 from __future__ import annotations
 
 import os
@@ -25,7 +25,7 @@ def step0_note(door: str, job: str, area: str, flows: str, near: str = "") -> st
     name = job or door or area
     return (f"STEP 0 (not a stop): no shot flow is mapped to {name} in routes.yaml `shot_flows`. Creating or adjusting the flow for the exact screen is the first job step, "
             "and flow files (tools/shot-flows/) plus the routes.yaml mapping may be edited before the User answers. In the worktree: `python tools/run_shot_flow.py --list` "
-            "shows what exists; copy the nearest flow (shot-flows.md, New UI state checklist), point it at the screen, map it by job, shoot it and OPEN the PNG. "
+            "shows what exists; copy the nearest flow (shot-flows.md, New UI state checklist), point it at the screen, map it by job, shoot it and look at it. "
             "Say whether that PNG is the screen being changed, and send its path with the ask."
             + (f" Mapped to the door only, so possibly another screen: {near}." if near else ""))
 
@@ -50,47 +50,57 @@ def slice_check(root: Path, name: str) -> tuple[str, str, str, str]:
     return door, job, flows, step0_note(door, job, "" if (door or job) else name, flows, near)
 
 
-FORK_FACT = ("A fork keeps the directory of the session it forks, and --fork-session cannot be combined with --worktree, so a session "
-             "cannot be moved into a worktree. Only a session that already lives in the worktree is forked.")
+Q0 = ("Q0, in every slice, even when the prompt gives a look: what should the result look like; is there a reference (a picture, a game, a screen); what is out of bounds, "
+      "including frames or layouts already built. A layout or frame inherited from earlier work is a Q0 item, never only a ledger line.")
 
 
-def start_text(wt: str, ref: str) -> str:
-    """The START lines for the main-checkout session: the user runs them; this session then stops."""
-    return (f"START 1 (creates the worktree and prints its path): grok worktree create {wt} --ref {ref}\n"
-            "START 2 (a NEW session; its directory is then the worktree): cd <that path>   then   grok\n"
-            f"Or both in one step: grok --worktree={wt} --ref {ref}\n"
-            "This session stops here: no gather, no edits, and it never starts grok (no fork, no headless run, no --prompt-file, no --max-turns).\n"
-            "Paste the task into the new session: open the baseline picture, show the restate, ask your questions, gather, then `python tools/start_build_slice.py --checkpoint`.\n" + FORK_FACT)
+def is_survey(root: Path, door: str, job: str, area: str, handoff: bool) -> bool:
+    """A survey slice: a door (not a job) with several jobs and no handoff yet. It surveys from text and ends in `--handoff`."""
+    if handoff or job.strip() or area.strip() or not door.strip():
+        return False
+    try:
+        from load_routes import load_routes
+
+        jobs = ((load_routes(root).get("doors") or {}).get(door.strip()) or {}).get("jobs") or {}
+        return len(jobs) >= 2
+    except Exception:
+        return False
 
 
-def in_worktree_text(sdir: Path | None = None, handoff: bool = False) -> str:
-    """The first-message text Build reads when this tool is its first command. `sdir` = the running session's folder (session_lib), when known.
-    `handoff`: the session was opened from a survey handoff, so the survey ORDER and Q0 lines give way to the handoff line."""
+def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implement") -> str:
+    """The first-message text Build reads when this tool is its first command. `sdir` = the running session's folder (session_lib).
+    `mode`: 'implement' (a job), 'survey' (a door with several jobs: text survey, ends in --handoff) or 'handoff' (a fresh session from a handoff)."""
     start = [
-        "IN A WORKTREE: this directory is the slice; do not create another. This tool is the first command of a slice.",
+        "IN A WORKTREE: this directory is the slice; do not create another. This tool is the first command of a slice; a later run says where the slice stands (`--full` reprints this).",
         session_lib.statement(sdir),
     ]
-    if handoff:
-        start.append("ORDER (handoff): `python tools/check_gd_load.py` once and `python tools/run_godot_import_check.py` (a fresh worktree has nothing imported); open the baselines the handoff lists "
-                     "(re-shoot only one that is missing or band=fail); read the files it lists; then the first unit. Ask about what Open questions lists or what a discovery changes.")
-    return "\n".join(start + ([] if handoff else [
-        "ORDER: `python tools/check_gd_load.py` once and `python tools/run_godot_import_check.py` (a fresh worktree has nothing imported); shoot and OPEN the baseline "
-        "(band=fail is invalid: fix the cause, re-shoot); write the survey or restate as visible text; then Q0; then your other questions.",
-        "Q0, in every slice, even when the prompt gives a look: what should the result look like; is there a reference (a picture, a game, a screen); what is out of bounds, "
-        "including frames or layouts already built. A layout or frame inherited from earlier work is a Q0 item, never only a ledger line.",
-    ]) + [
-        "AN ASK IS ALWAYS PRECEDED BY ITS MESSAGE: the survey or restate, every PNG path with a one-line description of it, the ledger lists, and `Did not work:` if any. "
-        "Option labels are not the message; an ask with no text is a protocol break. Realise it was not sent: send it before your next tool call. In a survey of several surfaces the "
-        "survey comes first; which group, the order and what she wants for each are separate questions after it.",
+    if mode == "handoff":
+        order = [("ORDER (handoff): `python tools/check_gd_load.py` once and `python tools/run_godot_import_check.py` (a fresh worktree has nothing imported; it takes about a minute: start it with "
+                  "`block_until_ms 0` and poll the output once, no skill needed); open the baselines the handoff lists (re-shoot only one that is missing or band=fail); read the files it lists; "
+                  "then the first unit. Ask about what Open questions lists or what a discovery changes.")]
+    elif mode == "survey":
+        order = [("ORDER (survey): no import check and no shots yet. Survey from text: `python tools/run_shot_flow.py --survey`, `python tools/list_route.py --digest --door D`; write the survey as visible text, "
+                  "then Q0, then which group first. A baseline you did not shoot in a survey is not a `Did not work` item. After her answers to the first ask: `python tools/start_build_slice.py --handoff`, then stop."),
+                 Q0]
+    else:
+        order = [("ORDER: `python tools/check_gd_load.py` once and `python tools/run_godot_import_check.py` (a fresh worktree has nothing imported; it takes about a minute: start it with "
+                  "`block_until_ms 0` and poll the output once, no skill needed); shoot the baseline and look at it yourself (band=fail is invalid: fix the cause, re-shoot); "
+                  "write the restate as visible text; then Q0; then your other questions."),
+                 Q0]
+    return "\n".join(start + order + [
+        "EVERY ASK has its own message first, a re-ask after changes included (\"same as before\" is not a message): the survey or restate, every PNG path with a one-line description "
+        "(a changed set of pictures is a new list), the three ledger lines and `Did not work:` if any. Order: shoot, look at the pictures yourself, "
+        "`python tools/show_png.py PATH=description ...` (opens them for her; expected, not a ledger item), the message, the ask. Option labels are not the message. "
+        "Realise it was not sent: send it before your next tool call. In a survey of several surfaces the survey comes first; which group, the order and what she wants for each are separate questions after it.",
         "LEDGER, three lines, in every ask: \"Decisions I made that were yours\" (incl. new assets, fonts, dependencies, generated images); \"Assumptions carried from memory or docs\"; "
         "\"Also changed\" (shared code and the other screens that use it, filled from `python tools/list_xref.py NAME` for each shared script you touched; states not shot; "
-        "writes outside the worktree, Grok memory files included; windows or programs opened on her PC). Build writes nothing outside the worktree except tools/run_isolated_grok.py and the checkpoint file.",
+        "every write outside the worktree, Grok memory files included; temp files; reverts of generated churn such as `git checkout -- docs`). "
+        f"Temp files go under `{(root / '_logs').as_posix()}/`; the commit message file is `{(root / '_logs' / 'commit-msg.txt').as_posix()}` (`git commit -F`). "
+        "Before you write \"nothing was written outside this worktree\", check what you wrote and say exactly that.",
         "DID NOT WORK: any non-zero exit, `RESULT FAIL`, or skipped step, exploratory ones too, opens your next message as `Did not work: <command> <one line>`. "
-        "`python tools/did_not_work.py` lists them from the session.",
-        "SHOWING: opening a file on her PC (explorer, Start-Process) is not showing it; put the paths and descriptions in the message. Opening one needs a ledger entry.",
-        "Then gather and run `python tools/start_build_slice.py --checkpoint` (the point a red prove forks back to)."
-        + ("" if handoff else " A survey of several surfaces ends at her answers to its first ask: `python tools/start_build_slice.py --handoff`, then stop; a fresh session implements.")
-        + " This tool never starts grok.",
+        "A step this card's ORDER leaves out (a survey's baseline) is not skipped.",
+        ("This tool never starts grok." if mode == "survey" else
+         "Then gather and run `python tools/start_build_slice.py --checkpoint` (the point a red prove forks back to). This tool never starts grok."),
     ])
 
 
@@ -142,15 +152,11 @@ def is_linked(root: Path) -> bool:
     return bool(worktree_kind(root))
 
 
-def merge_back_text(kind: str, week: str) -> str:
-    """The merge-back card line for the shape. The clone route is what a real session did (a push of the week branch); whether it is the intended route is the User's to confirm."""
+def merge_back_text(week: str) -> str:
+    """The merge-back card line: a Grok worktree is a full clone on the week branch, so a green prove ends in a plain push of it."""
     ask = "balance, audio, visuals, controls: ask the User for playtest approval first. Commit and push only after she says the final shot is settled (or told you to commit now)"
-    if kind == "clone":
-        return (f"merge-back=this worktree is a full clone ON the week branch {week or 'grok-build-w{N}'} (not detached, no separate branch): on a green prove and her OK, commit here "
-                f"and `git push origin {week or 'grok-build-w{N}'}` (plain push, never main, no force); nothing to merge by hand. {ask}")
-    wk = week or "grok-build-w{N}"
-    return (f"merge-back=on a green prove and her OK: commit in the worktree (linked worktree, HEAD is detached), then in the checkout that holds {wk} (git worktree list): "
-            f"git merge --no-ff <worktree HEAD sha> (never main). {ask}")
+    return (f"merge-back=this worktree is a full clone ON the week branch {week or 'grok-build-w{N}'} (not detached, no separate branch): on a green prove and her OK, commit here "
+            f"and `git push origin {week or 'grok-build-w{N}'}` (plain push, never main, no force); nothing to merge by hand. {ask}")
 
 
 def checkpoint(root: Path, args) -> int:
@@ -159,9 +165,8 @@ def checkpoint(root: Path, args) -> int:
         return agent_log.finish("slice-boot", root, msg, "FAIL", args=args, write=not args.dry_run, route=route)
 
     if not is_linked(root):
-        return fail("NOT A WORKTREE: this directory is a main checkout (not under .grok/worktrees/, and not a linked git worktree), so no checkpoint is saved. "
-                    "Say so in your next message to the User (\"Did not work: --checkpoint, not a worktree\"). Run `python tools/start_build_slice.py --door <door>`, "
-                    "have the User run its START lines, and run --checkpoint in that NEW session after gather.", "checkpoint-main")
+        return fail("NOT A WORKTREE: this directory is a main checkout (not under .grok/worktrees/, and not a Grok worktree), so no checkpoint is saved. "
+                    "Say so in your next message to the User (\"Did not work: --checkpoint, not a worktree\"). A slice is a Grok worktree: she starts one with `python tools/open_slice.py`, and --checkpoint runs in that session after gather.", "checkpoint-main")
     session = (args.session or os.environ.get("GROK_SESSION_ID", "")).strip()
     if not re.fullmatch(r"[A-Za-z0-9._-]{1,128}", session):
         return fail("NO SESSION ID: $GROK_SESSION_ID is empty in this session and no --session was given. Nothing is saved, so a red prove could not be forked. "
@@ -174,7 +179,7 @@ def checkpoint(root: Path, args) -> int:
 
 
 def selftest(script: Path) -> int:
-    """Boot: no week branch fails; a week branch prints START (no fork); a visual area with no flow fails. Checkpoint: main refuses, a worktree saves."""
+    """Main checkout says no slice starts there; a Grok clone prints the card, then SLICE ALREADY STARTED (--full reprints); survey vs implementation ORDER; checkpoint."""
     me = str(script)
     bad: list[str] = []
 
@@ -194,52 +199,17 @@ def selftest(script: Path) -> int:
         (root / "project.godot").write_text("")
         (root / "scripts" / "data").mkdir(parents=True)
         (root / "scripts" / "data" / "version.json").write_text('{"epoch": 0, "series": 9, "patch": 0}\n')
-        code, out = run(root, "--dry-run")
-        if code == 0 or "START 1" in out or "NO WEEK BRANCH" not in out or "week_start.py" not in out:
-            bad.append(f"no week branch: code={code} must fail loudly without a START line")
-        code, out = run(root, "--dry-run", area="ui-demo")
-        if code == 0 or "NO WEEK BRANCH" not in out:
-            bad.append("no week branch still fails for a visual area")
         if not step0_note("", "", "ui-demo", "") or "not a stop" not in step0_note("ui", "ui.x", "", "", "camp-a") or "camp-a" not in step0_note("ui", "ui.x", "", "", "camp-a"):
             bad.append("a visual slice with no flow must give the STEP 0 note (naming the door-only flows)")
         if step0_note("ui", "ui.pause", "", "camp-pause-menu") or step0_note("audio_visual", "", "", "") or step0_note("hub", "", "", ""):
             bad.append("flows mapped, or a non-visual name, must give no note")
-        code, out = run(root, "--area", "ui-demo", "--ref", "HEAD", "--dry-run", area="")
-        if code != 0 or "START 1" not in out:
-            bad.append("a visual area with no flow must still print START in a main checkout, exit 0")
-        code, out = run(root, "--ref", "HEAD", "--dry-run")
-        if code != 0 or "grok worktree create wdb-demo-" not in out or "grok --worktree=wdb-demo-" not in out or "cd <that path>" not in out or "--ref HEAD" not in out:
-            bad.append("--ref HEAD must print the worktree create, cd + grok, and one-step lines")
-        git(root, "branch", "grok-build-w9")
         code, out = run(root, "--dry-run")
-        if code != 0 or "--ref grok-build-w9" not in out or "main" in out.split("START 1", 1)[1].split("\n", 1)[0]:
-            bad.append("a week branch must give START --ref grok-build-w9")
-        for banned in ("--cwd", "--launch", "--max-turns", "--prompt-file\n"):
-            if banned in out.replace("no --prompt-file, no --max-turns", ""):
-                bad.append(f"START output must not contain {banned!r}")
+        if code != 0 or "MAIN CHECKOUT" not in out or "open_slice.py" not in out or "IN A WORKTREE" in out or "START 1" in out:
+            bad.append("a main checkout must say no slice starts there and name open_slice.py")
         code, out = run(root, "--checkpoint", env="sess-1")
         if code == 0 or "NOT A WORKTREE" not in out:
             bad.append("--checkpoint in the main checkout must fail")
-        wt = Path(td) / "wdb-demo-1"
-        git(root, "worktree", "add", "-q", "--detach", str(wt), "grok-build-w9")
-        (wt / "project.godot").write_text("")
-        code, out = run(wt, "--checkpoint")
-        if code == 0 or "NO SESSION ID" not in out or "grok sessions list" not in out:
-            bad.append("--checkpoint with no id must fail and say where to get it")
-        code, out = run(wt, "--checkpoint", "--dry-run", env="sess-1")
-        saved = retry_lib.state_path(root)
-        if code != 0 or (saved and saved.is_file() and "sess-1" in saved.read_text(encoding="utf-8")):
-            bad.append("--checkpoint --dry-run must pass and save nothing")
-        code, out = run(wt, "--checkpoint", env="sess-1")
-        if code != 0 or "grok -r sess-1 --fork-session" not in out or "--cwd" in out:
-            bad.append("--checkpoint must save and print `grok -r ID --fork-session` without --cwd")
-        if retry_lib.gather_for(wt).get("session") != "sess-1":
-            bad.append("the checkpoint was not saved for the worktree")
-        code, out = run(wt, "--ref", "HEAD", "--dry-run")
-        if code != 0 or "IN A WORKTREE" not in out or "START 1" in out:
-            bad.append("boot inside a worktree must say it is the slice and print no START lines")
-        if worktree_kind(wt) != "linked" or "HEAD is detached" not in out or "git merge --no-ff" not in out:
-            bad.append("a linked worktree must be kind 'linked' and print the detached-HEAD merge-back")
+        git(root, "branch", "grok-build-w9")
         # Grok's real shape: a FULL CLONE under .grok/worktrees/<repo>/<name>: .git is a directory, git dir == common dir, HEAD on the week branch
         clone = Path(td) / "home" / ".grok" / "worktrees" / "repos-demo" / "wdb-demo-2"
         clone.parent.mkdir(parents=True)
@@ -251,34 +221,56 @@ def selftest(script: Path) -> int:
         if not (clone / ".git").is_dir() or worktree_kind(clone) != "clone" or not is_linked(clone):
             bad.append("a full clone under .grok/worktrees must be recognised as a Grok worktree")
         code, out = run(clone, "--dry-run")
-        if code != 0 or "IN A WORKTREE" not in out or "START 1" in out or "full clone ON the week branch" not in out or "git push origin grok-build-w9" not in out or "HEAD is detached" in out:
-            bad.append("boot in a Grok clone must say IN A WORKTREE and give the clone merge-back (push of the week branch), not the detached text")
+        if code != 0 or "IN A WORKTREE" not in out or "full clone ON the week branch" not in out or "git push origin grok-build-w9" not in out:
+            bad.append("boot in a Grok clone must say IN A WORKTREE and give the merge-back (push of the week branch)")
         if "worktree=wdb-demo-2" not in out or "Did not work:" not in out:
             bad.append("boot in a worktree must name the folder as the worktree and state the Did not work rule")
-        code, out = run(clone, "--dry-run", area="ui-demo")
-        if code != 0 or "IN A WORKTREE" not in out or out.index("IN A WORKTREE") > out.index("STEP 0 (not a stop)"):
-            bad.append("the worktree test must come before the STEP 0 note, and a Grok clone must pass with the note")
-        code, out = run(root, "--dry-run", area="ui-demo")
-        if "STEP 0" in out or "START 1" not in out:
-            bad.append("a main checkout prints START lines and no STEP 0 note")
+        for need in ("This tool is the first command", "Session facts", "not verified", "/session-info", "Q0", "EVERY ASK has its own message first", "Option labels are not the message",
+                     "Also changed", "Grok memory files", "DID NOT WORK", "show_png.py", "not a ledger item", "commit-msg.txt", "check what you wrote", "block_until_ms 0", "inherited from earlier work"):
+            if need.lower() not in out.lower():
+                bad.append(f"the worktree first-message text lacks {need!r}")
+        for banned in ("did_not_work", "windows or programs opened", "is not showing it", "read by hand", "found by path", "shoot and open"):
+            if banned in out.lower():
+                bad.append(f"the worktree first-message text must not contain {banned!r}")
+        # first run (not dry) writes the state; the second run says where the slice stands; --full reprints the card; a dry run always prints the card
+        code, out = run(clone)
+        if code != 0 or "IN A WORKTREE" not in out or not (clone / "_logs" / "slice-state.json").is_file():
+            bad.append("the first run must print the card and write _logs/slice-state.json")
+        code, out = run(clone)
+        if code != 0 or "SLICE ALREADY STARTED" not in out or "Resuming at" not in out or "IN A WORKTREE" in out or "open_slice prompt not verified" not in out:
+            bad.append("a second run must print SLICE ALREADY STARTED, the steps and the next one, not the card")
+        code, out = run(clone, "--full")
+        if code != 0 or "IN A WORKTREE" not in out or "SLICE ALREADY STARTED" in out:
+            bad.append("--full must reprint the whole card")
+        code, out = run(clone, "--dry-run")
+        if "IN A WORKTREE" not in out:
+            bad.append("a dry run must preview the card even when the slice started")
+        # checkpoint in the clone
         code, out = run(clone, "--checkpoint")
         if code == 0 or "NO SESSION ID" not in out or "Did not work: --checkpoint" not in out or "/session-info" not in out or "grok sessions list" not in out:
             bad.append("--checkpoint in a clone with no id must fail with the Did not work line and where to get the id")
+        code, out = run(clone, "--checkpoint", "--dry-run", env="sess-1")
+        saved = retry_lib.state_path(clone)
+        if code != 0 or (saved and saved.is_file() and "sess-1" in saved.read_text(encoding="utf-8")):
+            bad.append("--checkpoint --dry-run must pass and save nothing")
         code, out = run(clone, "--checkpoint", env="sess-2")
-        if code != 0 or "grok -r sess-2 --fork-session" not in out or retry_lib.gather_for(clone).get("session") != "sess-2":
-            bad.append("--checkpoint must work in a Grok clone")
-        code, out = run(clone, "--dry-run")
-        for need in ("This tool is the first command", "First-message statement", "not verified", "/session-info", "Q0", "AN ASK IS ALWAYS PRECEDED BY ITS MESSAGE", "Option labels are not the message",
-                     "Also changed", "Grok memory files", "DID NOT WORK", "did_not_work.py", "opening a file on her PC", "inherited from earlier work"):
-            if need.lower() not in out.lower():
-                bad.append(f"the worktree first-message text lacks {need!r}")
-        # routes fixture: a door with a visual job; the flow is created first (mapped), then the door prints no STEP 0; an unknown --area warns and lists the doors
+        if code != 0 or "grok -r sess-2 --fork-session" not in out or "--cwd" in out or retry_lib.gather_for(clone).get("session") != "sess-2":
+            bad.append("--checkpoint must save and print `grok -r ID --fork-session` without --cwd")
+        code, out = run(clone)
+        if "checkpoint yes" not in out:
+            bad.append("the second run must show the checkpoint it finds")
+        # routes fixture: a door with two jobs is a survey (text ORDER, no baseline shot); a job is an implementation slice; the flow is created first, then no STEP 0
         (clone / "design").mkdir(exist_ok=True)
         routes = clone / "design" / "routes.yaml"
-        routes.write_text('version: 1\ndoors:\n  ui:\n    file: design/ui.md\n    read_when: "x"\n    jobs:\n      pause: design/ui-pause.md\nshot_flows:\n  ui: "door-flow"\n', encoding="utf-8")
+        routes.write_text('version: 1\ndoors:\n  ui:\n    file: design/ui.md\n    read_when: "x"\n    jobs:\n      pause: design/ui-pause.md\n      menu: design/ui-menu.md\nshot_flows:\n  ui: "door-flow"\n', encoding="utf-8")
+        code, out = run(clone, "--door", "ui", "--dry-run", area="")
+        if code != 0 or "ORDER (survey)" not in out or "not a `Did not work` item" not in out or "shoot the baseline" in out or "mode=survey" not in out:
+            bad.append("a door with several jobs must print the survey ORDER (text survey, the unshot baseline is not a Did-not-work item)")
         code, out = run(clone, "--job", "ui.pause", "--dry-run", area="")
         if code != 0 or "IN A WORKTREE" not in out or "STEP 0 (not a stop)" not in out or "door-flow" not in out or out.index("IN A WORKTREE") > out.index("STEP 0"):
             bad.append("a visual job with no flow of its own must print IN A WORKTREE, then STEP 0 naming the door-level flows")
+        if "ORDER: " not in out or "ORDER (survey)" in out or "mode=implement" not in out:
+            bad.append("a job is an implementation slice (the baseline ORDER)")
         routes.write_text(routes.read_text(encoding="utf-8") + '  ui.pause: "own-flow"\n', encoding="utf-8")
         code, out = run(clone, "--job", "ui.pause", "--dry-run", area="")
         if code != 0 or "STEP 0" in out:
