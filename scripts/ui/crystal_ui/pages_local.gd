@@ -47,7 +47,7 @@ static func page_local(host) -> void:
 		if not bool(n.get("crystal_gate")):
 			title = App.tr("pages_local.cl_crystal") % int(n.get("crystal_cl"))
 		if here:
-			title += "  (here)"
+			title += "  " + App.tr("common.here")
 		var b := ThemeS.btn(title, func(): host._pick_local(cell), not here)
 		b.focus_entered.connect(func(): host._aim(cell))
 		box.add_child(b)

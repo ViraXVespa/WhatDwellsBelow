@@ -3,6 +3,7 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
+const ItemNames := preload("res://scripts/data/item_names.gd")
 const StepRow := preload("res://scripts/ui/step_row.gd")
 const QTY_MAX := 9
 const Lock := preload("res://scripts/ui/gear_board/anvil_forge_edit_lock.gd")
@@ -40,7 +41,7 @@ static func _fill_edit(ui: CanvasLayer, box: Control, slot: String) -> Control:
 		var rr := rare
 		var key := "rare:" + rr
 		var can: bool = ForgeP.can_forge_rarity(App.prog, slot, str(ui.forge_type), rare)
-		var rb: Button = ThemeS.btn(rare.capitalize(), func(): _fac._set_rare(ui, slot, rr, key))
+		var rb: Button = ThemeS.btn(ItemNames.rarity_name(rare), func(): _fac._set_rare(ui, slot, rr, key))
 		rb.set_meta("forge_key", key)
 		rb.disabled = not can
 		rb.focus_mode = Control.FOCUS_NONE if not can else Control.FOCUS_ALL
