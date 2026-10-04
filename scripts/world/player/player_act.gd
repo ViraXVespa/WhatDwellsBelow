@@ -134,7 +134,7 @@ static func refresh_prompt(host: Node) -> void:
 	App.interact_locked = false
 	if best and best.get("prompt") != null:
 		App.interact_prompt = str(best.prompt)
-		App.interact_locked = bool(best.get("prompt_locked"))
+		App.interact_locked = best.get("prompt_locked") == true
 	elif host.gathering:
 		App.interact_prompt = App.tr("player_act.gathering")
 	else:
