@@ -1,0 +1,89 @@
+{
+  "name": "dungeon-f2-ambush",
+  "about": "Dungeon floor 2, seed 42: three hall ambush groups (wolf-skeleton, shaman-goblin, beetle-wolf). Enemies are frozen where they spawn, the map stays closed, and each stop stands three cells from the group's spot then waits for the lights.",
+  "scene": "dungeon",
+  "seed": 42,
+  "floor": 2,
+  "zoom": 1.5,
+  "settle_ms": 0,
+  "fixed_fps": 60,
+  "covers": [],
+  "smoke": true,
+  "steps": [
+    {
+      "op": "freeze",
+      "group": "enemies"
+    },
+    {
+      "op": "assert",
+      "target": "App.floor_n",
+      "equals": 2
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            108.5,
+            0,
+            165.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "wolf-skeleton"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            202.5,
+            0,
+            178.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "shaman-goblin"
+    },
+    {
+      "op": "call",
+      "target": "group:player",
+      "method": "set_global_position",
+      "args": [
+        {
+          "v3": [
+            408.5,
+            0,
+            208.5
+          ]
+        }
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "shot",
+      "name": "beetle-wolf"
+    }
+  ]
+}

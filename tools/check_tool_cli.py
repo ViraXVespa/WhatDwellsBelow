@@ -53,7 +53,7 @@ SMOKE: dict[str, list] = {
     "anim_review_pack": [["--dry-run"]], "anim_review_regen": [["--dry-run"]], "anim_review_tree": [["--dry-run"]],
     "archive_prior_changelogs": [["--dry-run"]],
     "attack_keyframes": [["--beats"]],
-    "bible_prompt": [["--gender", "female"]],
+    "bible_prompt": [["--gender", "female"], ["--enemy", "archer"], ["--list-enemies"]],
     "bot_opt": [["--list"]],
     "bot_smokes": [["--doctor"], ["--for", "scripts/app.gd"]],
     "bot_status": [[]],
