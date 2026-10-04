@@ -55,6 +55,7 @@ var floor_n := 1
 var run_seed := 1
 var boss_dead := false
 var interact_prompt := ""
+var interact_locked := false
 var floors_since_named := 99
 var quest_named_type := ""
 var quest_named_name := ""

@@ -27,6 +27,7 @@ var move_spd := 3.0
 var atk_range := 1.2
 var arc_deg := 90.0
 var is_boss := false
+var boss_role := ""
 var is_named := false
 var named_name := ""
 var group_id := 0
@@ -70,8 +71,8 @@ func _ready() -> void:
 func setup(id: String, floor_n: int, named := false, given_name := "") -> void:
 	EnemySetup.setup(self, id, floor_n, named, given_name)
 
-func setup_boss(title: String, floor_n: int) -> void:
-	EnemySetup.setup_boss(self, title, floor_n)
+func setup_boss(b_role: String, floor_n: int) -> void:
+	EnemySetup.setup_boss(self, b_role, floor_n)
 
 func _mark_post() -> void:
 	Hit.mark_post(self)
@@ -100,8 +101,7 @@ func _physics_process(delta: float) -> void:
 
 func kill_tag() -> String:
 	if is_boss:
-		var title := str(tag.text) if tag else ""
-		return "gate_master" if title.begins_with("Gate Master") else "guardian"
+		return "gate_master" if boss_role == "gate_master" else "guardian"
 	return type_id
 
 func _player() -> Node3D:

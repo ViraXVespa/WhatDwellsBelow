@@ -1,5 +1,7 @@
 extends Object
 
+const ItemNames := preload("res://scripts/data/item_names.gd")
+const LocS := preload("res://scripts/app/app_loc.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
 const Roll := preload("res://scripts/data/gear_roll.gd")
 const Balance := preload("res://scripts/data/balance.gd")
@@ -88,7 +90,7 @@ static func set_holds_for_type(p: Object, slot: String, type_id: String, keep: A
 		n += 1
 	p.holds[slot] = rest
 	App.save_now()
-	return App.tr("forge_act.kept_hold") % [n, "" if n == 1 else "s"]
+	return LocS.plural("forge_act.kept_hold", n) % n
 
 static func make_forged(p: Object, slot: String, type_id: String, rarity: String, ilvl: int, locked: PackedStringArray) -> Dictionary:
 	var Book = load("res://scripts/data/progress_forge/book.gd")
@@ -101,8 +103,8 @@ static func make_forged(p: Object, slot: String, type_id: String, rarity: String
 	it["hold"] = true
 	it["extract"] = false
 	it["kit_src"] = "hold"
-	if not str(it.get("name", "")).begins_with("Forged "):
-		it["name"] = "Forged " + str(it.get("name", "item"))
+	if not bool(it.get("forged", false)):
+		ItemNames.forge(it)
 	return it
 
 static func add_hold(p: Object, it: Dictionary) -> String:

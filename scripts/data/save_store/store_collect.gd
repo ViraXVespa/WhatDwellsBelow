@@ -2,6 +2,7 @@ extends RefCounted
 
 ## Build the save JSON dictionary.
 
+const LocS := preload("res://scripts/app/app_loc.gd")
 static func collect() -> Dictionary:
 	return {
 		"v": 1,
@@ -32,6 +33,7 @@ static func collect() -> Dictionary:
 		"bank_wood": App.bank_wood,
 		"bank_root": App.bank_root,
 		"last_seen_game_ver": App.last_seen_game_ver,
+		"locale": LocS.current,
 		"binds": App.collect_binds(),
 		"debug_bal": App.bal.snapshot(),
 		"prog": App.prog.to_meta(),

@@ -2,6 +2,7 @@ extends RefCounted
 
 ## Collect / apply / fresh-delver save payload.
 
+const LocS := preload("res://scripts/app/app_loc.gd")
 const Norm := preload("res://scripts/data/gear_rules/rules_norm.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
 
@@ -62,6 +63,7 @@ static func apply(data: Dictionary) -> bool:
 	App.bank_wood = int(data.get("bank_wood", DEF.bank_wood))
 	App.bank_root = int(data.get("bank_root", DEF.bank_root))
 	App.last_seen_game_ver = str(data.get("last_seen_game_ver", DEF.last_seen_game_ver))
+	LocS.apply_saved(str(data.get("locale", "")))
 	var db: Variant = data.get("debug_bal", {})
 	if db is Dictionary:
 		for k in (db as Dictionary).keys():

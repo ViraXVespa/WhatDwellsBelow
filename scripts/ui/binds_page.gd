@@ -54,7 +54,7 @@ func rebuild() -> void:
 	View.add_page_btn(host, reset)
 	for row: Dictionary in Table.rebindable():
 		if Table.can_rebind(str(row.id), pool):
-			_bind_row(str(row.id), str(row.label))
+			_bind_row(str(row.id), LocS.tr_or("controls." + str(row.id), str(row.label)))
 	View.wire_vert(host.info_btns)
 	if host.has_method("split_hint"):
 		host.split_hint()

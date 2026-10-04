@@ -50,20 +50,20 @@ func _ready() -> void:
 	tag.visible = false
 	add_child(tag)
 
-func setup_boss(title: String, floor_n: int) -> void:
+func setup_boss(role: String, floor_n: int) -> void:
 	is_boss = true
 	add_to_group("boss")
 	var cycle := int((maxi(1, floor_n) - 1) / 5.0)
 	var mult: float = App.bal.boss_hp_mult * (1.0 + App.bal.cycle_hp * float(cycle))
-	if title == "Gate Master":
+	if role == "gate_master":
 		mult *= 1.35
 	hp = App.bal.dummy_hp * mult
 	max_hp = hp
 	defense = App.bal.dummy_defense + 8.0 + float(cycle) * 4.0
 	spr.pixel_size *= 1.35
 	spr.position.y *= 1.2
-	spr.modulate = Color(1.15, 0.7, 0.55) if title != "Gate Master" else Color(0.7, 0.55, 1.15)
-	tag.text = title
+	spr.modulate = Color(1.15, 0.7, 0.55) if role != "gate_master" else Color(0.7, 0.55, 1.15)
+	tag.text = App.tr("boss." + role)
 	tag.visible = true
 	tag.modulate = Color(1.0, 0.82, 0.35)
 	_pin_bar()

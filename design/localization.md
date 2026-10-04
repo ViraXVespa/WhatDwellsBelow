@@ -1,83 +1,66 @@
 # Localization
 
 Status: binding design  
-Read when: tr(), translation keys, adding a locale, converting a string  
+Read when: tr(), translation keys, adding a locale, converting a string, item names, plurals  
 
-English is the default locale and reads exactly as before. Player-facing strings go through Godot's `tr()`; the English text lives in one PO file.
+English is the default and only shipped locale. Player-facing strings go through `tr()`; the English text lives in one PO file.
+
+## How localization works here
+
+1. Code never holds a sentence. It holds a key such as `pause_menu.resume_run` and asks `tr(key)` (or `App.tr(key)` in a `static func`).
+2. `tr()` looks the key up in the active language's PO file. `scripts/data/locale/en.po` pairs each key (`msgid`) with its English text (`msgstr`). Change a sentence by editing the `msgstr`; the key stays.
+3. A key with no entry shows as the raw key, so gaps are easy to spot.
+4. At startup `LocS.setup()` (`app_loc.gd`) loads every code in `LOCALES` and picks one: the `--wdb-locale=xx` flag, else the language saved in the save payload, else `en`.
+5. Things that are ids (items, artifacts, skills, slots, boss roles) store the id, not the text. Screens turn the id into text with `tr()` when they draw. Saved items keep a name key (`nk`, for example `["gear.longbow"]`) and a `forged` flag; `ItemNames.name_of()` builds the name from them, and the saved `name` is a cache that `ItemNames.refresh()` rewrites on load and on language change.
+6. The Gameplay settings page has a Language row. It cycles `LOCALES`; with one language it changes nothing. The choice is saved as `locale` with the other preferences.
+7. Controls only translate when their text is assigned, so a language change shows after a screen rebuild (the row rebuilds its page).
 
 ## Files
 
 | Path | Role |
 |------|------|
-| `scripts/data/locale/en.po` | Source strings: `msgid` = key, `msgstr` = English. Sorted by key. |
-| `scripts/app/app_loc.gd` | `LocS.setup()` (called first in `app_boot._ready`): loads each code in `LOCALES`, picks the locale. `LocS.tr_or(key, fallback)` reads const tables. |
+| `scripts/data/locale/en.po` | Source strings, sorted by key. Plural entries use `msgid_plural` and `msgstr[n]`. |
+| `scripts/app/app_loc.gd` | `LocS`: `setup`, `set_locale`, `apply_saved`, `next_locale`, `name_of`, `plural(key, n)`, `tr_or(key, fallback)`. |
+| `scripts/data/item_names.gd` | `ItemNames`: `base_nk`, `name_of`, `forge`, `refresh`, `migrate` (old saves). |
 
-Registration: `project.godot` `[internationalization]` lists `en.po` (new locales are also added to `LOCALES` below). `setup()` is idempotent and also picks the locale.
-
-Locale choice: default `en`. `--wdb-locale=xx` (web: `?wdb-locale=xx`) selects another code in `LOCALES`; unknown codes fall back to `en`. `LocS.set_locale(code)` is the hook for a future settings UI. The OS locale is ignored on purpose. Nothing is saved.
+Registration: `project.godot` `[internationalization]` lists `en.po`. `setup()` skips locales already registered, so there are no duplicates. The OS locale is ignored on purpose.
 
 ## Key naming
 
-`<file stem>.<slug>`, lowercase, dots and underscores only (`pause_menu.resume_run`). The slug is the first words of the English text (about five words, 32 chars). A string used in two or more places is `common.<slug>` (`common.back`). Collisions get `_2`. Keys never look like English text, so a Control's auto-translate cannot double-translate.
-
-Never rename a shipped key: translators key on it. If the English wording changes, edit only the `msgstr`.
+`<file stem>.<slug>`, lowercase, dots and underscores only. The slug is the first words of the English text (about five words, 32 chars). A string used in two or more places is `common.<slug>`. Collisions get `_2`. Keys never look like English text, so a Control's auto-translate cannot double-translate. Id-derived keys: `item.<id>.name`, `skill.<id>`, `slot.<slot>`, `boss.<role>`, `gear.<type>`. Never rename a shipped key; if the wording changes, edit only the `msgstr`.
 
 ## Add a string
 
-1. Pick a key by the rules above and add a `msgid`/`msgstr` pair to `en.po`, in sorted order (escape `\\ \" \n \t`).
-2. In code write `tr("scope.key")`. Inside a `static func` write `App.tr("scope.key")` (`tr` is an instance method; `App` is an autoload).
-3. Formatting stays positional: `tr("hud.gold_fmt") % [gold]`, with `%s`/`%d` kept in the `msgstr`. Do not build sentences by `+` concatenation; make one key with a placeholder instead.
-4. Never call `tr()` in a class-level `const`/`var` initialiser, in a func signature default, or for ids, node names, dict lookup keys, log or debug text.
-5. Run the English check: every key must translate to its `msgstr` and every converted site must read the same as before.
+1. Add a `msgid`/`msgstr` pair to `en.po`, in sorted order (escape `\\ \" \n \t`).
+2. Write `tr("scope.key")`, or `App.tr(...)` inside a `static func`.
+3. New strings use named placeholders: `tr(k).format({"gold": g})` with `{gold}` in the `msgstr`. Do not build sentences by `+`.
+4. Never call `tr()` in a class-level `const`/`var` initialiser, a func default, or for ids, node names, dict keys, log or debug text.
+5. Run the English check: every key translates to its `msgstr`; converted sites read as before.
 
 ## Add a locale
 
-1. Copy `en.po` to `<code>.po` (for example `de.po`) in the same folder.
-2. Set the `Language:` header; translate each `msgstr`. Leave `msgid` alone.
-3. Add the code to `LOCALES` in `app_loc.gd`.
-4. Run with `--wdb-locale=de`.
-5. Missing keys show the raw key, which makes gaps easy to spot. Controls only translate when their text is assigned, so a language change at runtime needs the screen rebuilt.
+1. Copy `en.po` to `<code>.po`, set `Language:` and `Plural-Forms:`, translate each `msgstr` (and every `msgstr[n]`).
+2. Add the code to `LOCALES` in `app_loc.gd` and set a `locale.name` entry (shown in the Language row).
+3. Run with `--wdb-locale=<code>`, or pick it in settings.
+4. Check fonts and layout (Decisions 5-6) before shipping a language.
 
 ## Status
 
-**Pass 1** (548 sites, 448 keys, 74 files): menus, prompts, hints, titles, tutorial, quest, shop, dialog labels, plain `tr("key")` swaps. **Pass 2** (+198 keys, 646 total): data tables by id, named-placeholder messages, small leftovers.
+Player-facing sites are converted (menus, prompts, tutorial, quest, shop, tables by id, named-placeholder messages). Const tables hold no English: `LocS.tr_or(key, fallback)` uses an id or `capitalize()` default for a missing key only. Boss titles carry a role id (`gate_master`, `guardian`) through `Gen.boss_role` into combat. The HUD prompt colour reads the `prompt_locked` flag (`App.interact_locked`), not text.
 
-Pass 2 by id (const tables keep their English in code as a fallback; a PO entry overrides it through `LocS.tr_or(key, fallback)`):
+| Left in English | Why |
+|-----------------|-----|
+| `archive_catalog.json` label/desc | shared data file; the PO overrides it by `archive.<id>.*` |
+| item `desc` text and shop `stock` text in saves | persisted prose; refreshed only when an item is re-rolled or restocked |
+| `data/tunables.gd` `ONE_LINER`, `foundation.gd` hint, `launch.gd` name | const or dev text |
+| `debug/*`, smokes, logs, ids, node names | out of scope |
 
-| Table | Keys | Read through |
-|-------|------|--------------|
-| `data/catalog.gd` artifacts | `item.<id>.name`, `item.<id>.desc` (24 ids) | `Catalog._loc()` in `pick`/`by_id` |
-| `catalog.gd` set bonus lines | `set.<set>.bonus` (8) | `App.tr` |
-| `data/affixes.gd` | `affix.<id>.label` (13) | `App.tr` in `defs()` |
-| `archive_catalog.json` | `archive.<id>.label`/`.desc` (12 ids) | `ArchivesCatalog.all()` |
-| skills | `skill.<id>` (11) | `bars`, `pause_skills`, `theme.skill_name` |
-| gear slots | `slot.<slot>` (7) | `text_fmt.slot_name()` |
-| binds / controls | `controls.<action>` (15) | `binds_page`, `ui_hub` |
-| sprite filter | `sprite_filter.label_<n>` (5) | `sprite_filter.label()` |
+## Decisions
 
-Named-placeholder messages (`tr(k).format({...})`, 25 sites): gear bag toasts, extract, rules_kit, quest, shop, recap, set bonus, board text, anvil/forge picks, sub_open heads, restock, archive launch status, binds reset. Also converted: archive launch statuses, `binds_page` buttons, interact titles (STAIRS...), skill/style names, small labels.
-
-**Not converted** (listed for a later pass):
-
-| Area | Why |
-|------|-----|
-| `dungeon/gen.gd` boss titles "Gate Master"/"Floor Guardian" | compared as ids in combat code; needs role ids first |
-| `ui/hud/hud_act.gd:92` | classifies toasts with `begins_with("Locked")` etc.; needs a kind flag |
-| item names saved in slots (`gear_roll` "Forged ", weapon names, `forge_act`, `progress_make`) | text is persisted in the save; needs name from id at display |
-| `data/tunables.gd` `ONE_LINER` | const; used in about text |
-| `world/foundation.gd` hint, `launch.gd` project-name string | dev text |
-| plural-suffix `%s` (see Decisions 2) | waits for `tr_n` |
-| English fallbacks kept in const tables (catalog 48, binds 6, skills, sprite labels) | harmless duplicates; drop once a second locale exists |
-
-Out of scope by design: `debug/*`, smokes, playtest and log text, ids and node names.
-
-## Decisions (owner delegated, 2026-10-03)
-
-1. **Keys**: keep `<file stem>.<slug>`. A rename pass is cheap later with a key-map script; not planned.
-2. **Plurals**: use `tr_n` and PO plural forms when a second locale is actually added. Until then `%s` suffix cases stay: `anvil_forge_job.stopped_the_queue_pick_from` ("piece%s") and `forge_act.kept_hold` ("hold%s").
-3. **Placeholders**: new strings use named placeholders: `tr("scope.key").format({"gold": g})` with `{gold}` in the `msgstr`. Existing positional `%s`/`%d` strings convert opportunistically when touched.
-4. **Locale persistence**: save the choice in settings (not the save slot) when a settings row is added. Not built.
-5. **Data tables** (catalog, affixes, archives): translate by id, key derived from the id (`item.<id>.name`). Done in pass 2; quest titles still come from generated text.
-6. **Fonts and RTL**: deferred until a target language is chosen. Then: pick a UI font with the needed glyphs (CJK/Cyrillic/Thai fallback chain), check label widths, and add mirrored layout for RTL.
-
-Registration: `project.godot` lists `en.po` under `[internationalization]`. `LocS.setup()` skips a locale that is already registered, so there are no duplicates; it still adds any other code in `LOCALES` and picks the locale.
+1. **Keys**: keep `<file stem>.<slug>`; a rename pass can use a key-map script later.
+2. **Plurals**: `LocS.plural(key, n)` wraps `tr_n`; the PO holds `msgid_plural` and `msgstr[n]`; callers write `LocS.plural(k, n) % n`. English `Plural-Forms: nplurals=2; plural=(n != 1);`. Used by `forge_act.kept_hold` and `anvil_forge_job.stopped_the_queue_pick_from`. Languages with more forms only add `msgstr[n]` lines.
+3. **Placeholders**: named for new strings; positional strings convert when touched.
+4. **Persistence**: `locale` is stored in the save payload next to the other preferences (there is no separate settings file). A launch flag beats the saved value. A missing or unknown value means `en`.
+5. **Fonts (plan)**: before a CJK, Cyrillic, Thai or Arabic locale, choose a UI font with the glyphs, set a fallback chain on the theme, and check label widths and truncation on the longest screens.
+6. **Right-to-left (plan, not built)**: set `Control.layout_direction` from the locale, mirror HBox order and anchors, align text to the start side, test bidi runs (numbers, item names inside sentences), and keep arrow glyphs and the HUD layout flippable. No RTL code exists; no locale needs it.
+7. **Names from ids**: `nk` plus `forged` is the truth, `name` a cache. `ItemNames.migrate` runs in `Norm.normalize_item`: it infers `nk` from an old English `name` (exact match to a known key, optionally "Forged "), and leaves unmatched names untouched.

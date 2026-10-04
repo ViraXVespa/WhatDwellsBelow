@@ -1,5 +1,6 @@
 ﻿extends Object
 
+const ItemNames := preload("res://scripts/data/item_names.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
 const Balance := preload("res://scripts/data/balance.gd")
 
@@ -76,8 +77,9 @@ static func _build(
 		it["name"] = type_id.capitalize()
 	else:
 		it["name"] = slot.capitalize()
+	it["nk"] = ItemNames.base_nk(slot, type_id)
 	if from_forge:
-		it["name"] = "Forged " + str(it.get("name", "item"))
+		ItemNames.forge(it)
 	var ids: PackedStringArray = _pick_ids(slot, rarity, locked, unlocks, from_forge)
 	var rows: Array = []
 	for id: String in ids:
@@ -161,10 +163,10 @@ static func _roll_value(id: String, ilvl: int, quality: float, luck: float) -> f
 static func _wpn_name(type_id: String) -> String:
 	match type_id:
 		"great_axe":
-			return "Great Axe"
+			return App.tr("common.great_axe")
 		"staff":
-			return "Staff"
+			return App.tr("gear.staff")
 		"longbow":
-			return "Longbow"
+			return App.tr("gear.longbow")
 		_:
 			return type_id.capitalize()

@@ -1,6 +1,7 @@
 extends Object
 
 const Affix := preload("res://scripts/data/affixes.gd")
+const ItemNames := preload("res://scripts/data/item_names.gd")
 
 static func normalize_prog(p: Object) -> void:
 	if p == null:
@@ -34,6 +35,7 @@ static func _norm_list(arr: Array) -> void:
 static func normalize_item(it: Dictionary) -> Dictionary:
 	if it.is_empty():
 		return it
+	ItemNames.migrate(it)
 	var kind: String = str(it.get("kind", ""))
 	var slot: String = str(it.get("slot", ""))
 	if slot == "potion":

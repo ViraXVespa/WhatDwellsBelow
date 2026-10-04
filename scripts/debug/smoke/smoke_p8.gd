@@ -1,6 +1,7 @@
 extends Object
 
 const StoreS := preload("res://scripts/data/save_store.gd")
+const Norm := preload("res://scripts/data/gear_rules/rules_norm.gd")
 const CatS := preload("res://scripts/data/archives/archives_catalog.gd")
 
 static var enter_flag: bool = false
@@ -68,6 +69,12 @@ static func p8(host: Node) -> void:
 	var fr_str: float = float(App.prog.skills_perm.get("str", 0))
 	printerr("P8: playtest_isolated=" + str(pt_str >= 400.0 and fr_str < 50.0 and StoreS.dir_for("fresh") != StoreS.dir_for("live")))
 	printerr("P8: live_dir=" + StoreS.dir_for("live") + " fresh_dir=" + StoreS.dir_for("fresh") + " prog_dir=" + StoreS.dir_for("progressed"))
+	var old_item: Dictionary = Norm.normalize_item({"name": "Forged Longbow", "kind": "gear", "slot": "weapon", "weapon": "longbow", "id": "weapon_9"})
+	var names_ok: bool = old_item.get("nk", []) == ["gear.longbow"] and bool(old_item.get("forged", false)) and str(old_item.name) == "Forged Longbow"
+	var odd_item: Dictionary = Norm.normalize_item({"name": "Rusty Thing", "kind": "gear", "slot": "weapon", "id": "weapon_8"})
+	names_ok = names_ok and (odd_item.nk as Array).is_empty() and str(odd_item.name) == "Rusty Thing"
+	printerr("P8: item_names_migrate=" + str(names_ok) + " locale=" + str(StoreS.collect().get("locale", "")))
+	assert(names_ok)
 	printerr("P8: arch_n=" + str(CatS.all().size()))
 	printerr("P8: arch_classic=" + str(not CatS.by_id("classic_2d").is_empty()))
 	printerr("P8: arch_art=" + str(not CatS.by_id("art_experiment").is_empty()))

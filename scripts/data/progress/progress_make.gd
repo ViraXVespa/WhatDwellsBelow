@@ -9,7 +9,7 @@ static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -
 	if wpn == "staff":
 		n = App.tr("common.lightning_staff")
 	elif wpn == "longbow":
-		n = "Longbow"
+		n = App.tr("gear.longbow")
 	var it: Dictionary = item(p, "weapon", n, {
 		"slot": "weapon",
 		"weapon": wpn,
@@ -19,7 +19,7 @@ static func make_weapon(p: Object, wpn: String, rarity: String, ilvl: int = 0) -
 	return _roll_onto(it, "weapon", wpn, rarity, ilvl)
 
 static func make_tool(p: Object, kind: String, rarity: String = "white", ilvl: int = 0) -> Dictionary:
-	var n: String = "Pickaxe" if kind == "pickaxe" else "Hatchet"
+	var n: String = App.tr("gear.pickaxe") if kind == "pickaxe" else App.tr("gear.hatchet")
 	var it: Dictionary = item(p, "tool", n, {
 		"slot": "tool",
 		"tool": kind,
@@ -38,8 +38,9 @@ static func make_armor(p: Object, slot: String, rarity: String, ilvl: int = 0) -
 
 static func make_potion(p: Object, n: int) -> Dictionary:
 	var charges: int = n if n > 0 else 2
-	return item(p, "potion", "Potion", {
+	return item(p, "potion", App.tr("gear.potion"), {
 		"slot": "potion",
+		"nk": ["gear.potion"],
 		"stack": 1,
 		"charges": charges,
 		"charge_max": charges,
@@ -48,20 +49,21 @@ static func make_potion(p: Object, n: int) -> Dictionary:
 	})
 
 static func make_food(p: Object, fid: String, n: int) -> Dictionary:
-	var nm: String = "Ration" if fid == "ration" else App.tr("progress_make.trail_bread")
-	return item(p, "food", nm, {"slot": "food", "food": fid, "stack": n, "desc": App.tr("progress_make.heal_over_time")})
+	var nm: String = App.tr("gear.ration") if fid == "ration" else App.tr("progress_make.trail_bread")
+	return item(p, "food", nm, {"slot": "food", "nk": ["gear.ration" if fid == "ration" else "progress_make.trail_bread"], "food": fid, "stack": n, "desc": App.tr("progress_make.heal_over_time")})
 
 static func make_artifact(p: Object, id: String) -> Dictionary:
 	var a: Dictionary = CatalogS.by_id(id)
 	if a.is_empty():
 		a = {"id": id, "name": id, "set": "", "desc": App.tr("progress_make.a_curious_relic")}
-	return item(p, "artifact", str(a.name), {"id": id, "set": str(a.get("set", "")), "desc": str(a.get("desc", App.tr("progress_make.a_run_only_relic"))), "extract": false})
+	return item(p, "artifact", str(a.name), {"id": id, "nk": ["item.%s.name" % id] if str(a.get("set", "")) != "" else [], "set": str(a.get("set", "")), "desc": str(a.get("desc", App.tr("progress_make.a_run_only_relic"))), "extract": false})
 
 static func item(p: Object, kind: String, name: String, extra: Dictionary) -> Dictionary:
 	var it: Dictionary = {
 		"uid": p.next_uid,
 		"id": kind + "_" + str(p.next_uid),
 		"name": name,
+		"nk": extra.get("nk", []),
 		"kind": kind,
 		"slot": extra.get("slot", kind),
 		"weapon": extra.get("weapon", ""),

@@ -10,6 +10,7 @@ const InteractFx := preload("res://scripts/world/interact/interact_fx.gd")
 
 static func open_chest(host: Node3D) -> String:
 	if host.used:
+		App.interact_locked = true
 		return App.tr("common.empty")
 	host.used = true
 	var gold := int(App.bal.chest_gold_base) + randi() % maxi(1, int(App.bal.chest_gold_span))

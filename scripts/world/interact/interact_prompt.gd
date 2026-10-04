@@ -46,6 +46,7 @@ static func refresh(host: Node3D) -> void:
 			host.prompt = App.tr("interact_prompt.open_chest")
 	else:
 		host.prompt = App.tr("interact_prompt.interact")
+	host.prompt_locked = (host.kind == "stairs" and host.locked) or (host.used and (host.kind in ["shrine", "campfire", "extract_gate"] or host.kind.ends_with("chest")))
 	if host.label:
 		host.label.text = title(host)
 		if host.hidden:

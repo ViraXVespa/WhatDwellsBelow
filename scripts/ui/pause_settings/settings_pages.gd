@@ -8,6 +8,8 @@ const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
+const LocS := preload("res://scripts/app/app_loc.gd")
+const ItemNames := preload("res://scripts/data/item_names.gd")
 
 static func page_gameplay(host: Node) -> void:
 	var ch: Button = ThemeS.btn(App.tr("settings_pages.character") % App.character_type, func() -> void:
@@ -22,6 +24,14 @@ static func page_gameplay(host: Node) -> void:
 		View.focus_col(host)
 	)
 	View.add_page_btn(host, ch)
+	View.add_page_btn(host, ThemeS.btn(App.tr("settings_pages.language").format({"name": LocS.name_of(LocS.current)}), func() -> void:
+		LocS.set_locale(LocS.next_locale())
+		ItemNames.refresh(App.prog)
+		App.save_now()
+		host.split_build_page("gameplay")
+		View.apply_col(host)
+		View.focus_col(host)
+	))
 	var lock_on: bool = bool(App.get("target_lock_pref"))
 	var lock: CheckBox = _check(App.tr("settings_pages.target_lock"), lock_on, func(on: bool) -> void:
 		App.target_lock_pref = on

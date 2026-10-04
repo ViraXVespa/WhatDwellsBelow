@@ -16,20 +16,6 @@ const Flow := preload("res://scripts/ui/pause_menu/menu_flow.gd")
 const TAB_SETTINGS := 0
 const TAB_INV := 1
 
-const SKILL_NAMES := {
-	"axe": "Great Axe",
-	"staff": "Staff",
-	"bow": "Longbow",
-	"str": "Strength",
-	"mag": "Magic",
-	"rng": "Ranged",
-	"def": "Defense",
-	"hp": "Hitpoints",
-	"mine": "Mining",
-	"wood": "Woodcutting",
-	"smith": "Smithing",
-}
-
 var open: bool = false
 var tab: int = 0
 var box: VBoxContainer
