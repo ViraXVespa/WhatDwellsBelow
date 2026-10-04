@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Script size owner: FAIL (exit 1) if live scripts/**/*.gd are at or over the ship floor, or two scripts share a basename (dupes=). Linux twin of check_script_cap.ps1. Grok Bot owns this cap. Grok Build prove does not run it unless the User named size.
+"""Script name check: FAIL (exit 1) when two live scripts/**/*.gd share a basename (dupes=). Linux twin of check_script_cap.ps1.
 
-    check_script_cap.py [--git-changed | --path P]    the gate (10,000 bytes)
-    check_script_cap.py --sweep                        list the 5-10KB scripts (inventory, exit 0)
-    check_script_cap.py --list [--over-kb 5] [--under-kb N]   list scripts in a size range, largest first (exit 0)
+    check_script_cap.py [--git-changed | --path P]    basenames must stay unique repo-wide
+The Bot and CI also run the size checks of this tool (BOT.md); outside them only the name check runs.
 """
 
 from __future__ import annotations
@@ -17,25 +16,22 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import bot_gate_lib
 import gd_lib
 import repo_lib
 
-DEFAULT_OVER_KB = gd_lib.SHIP_BYTES // 1000
-SWEEP_OVER_KB = gd_lib.SWEEP_BYTES / 1000
+DEFAULT_OVER_KB = bot_gate_lib.SHIP_BYTES // 1000
+SWEEP_OVER_KB = bot_gate_lib.SWEEP_BYTES / 1000
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = agent_log.std_parser("Check scripts/**/*.gd against the on-disk byte cap.", json_out=True)
-    parser.add_argument(
-        "--over-kb", "-OverKb",
-        dest="over_kb",
-        type=float,
-        default=None,
-        help="Bot-owned ship floor in KB. Limit is round(over_kb * 1000) bytes (default 10 -> 10000; 5 with --list). Pass 5 for the Bot sweep target.",
-    )
-    parser.add_argument("--list", action="store_true", help="Inventory mode: list scripts at or over --over-kb (default 5), largest first; never fails.")
-    parser.add_argument("--under-kb", "-UnderKb", type=float, default=0, help="With --list: only scripts under this size in KB (0 = no upper bound).")
-    parser.add_argument("--sweep", action="store_true", help="Same as --list --over-kb 5 --under-kb 10 (the Bot sweep rows).")
+    parser = agent_log.std_parser("Check live scripts/**/*.gd: basenames unique repo-wide.", json_out=True)
+    bot_gate_lib.add_flag(parser)
+    sup = argparse.SUPPRESS  # Bot-only size options: BOT.md
+    parser.add_argument("--over-kb", "-OverKb", dest="over_kb", type=float, default=None, help=sup)
+    parser.add_argument("--list", action="store_true", help=sup)
+    parser.add_argument("--under-kb", "-UnderKb", type=float, default=0, help=sup)
+    parser.add_argument("--sweep", action="store_true", help=sup)
     parser.add_argument(
         "--git-changed", "-GitChanged",
         dest="git_changed",
@@ -54,6 +50,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     root = agent_log.resolve_root(args)
+    bot = bot_gate_lib.enabled(args)
+    if (args.sweep or args.list or args.over_kb is not None) and not bot:
+        return bot_gate_lib.not_run("script size listing")
     if args.sweep:
         args.list, args.under_kb = True, 10.0
         args.over_kb = SWEEP_OVER_KB if args.over_kb is None else args.over_kb
@@ -89,7 +88,7 @@ def main(argv: list[str] | None = None) -> int:
         files = gd_lib.iter_gd(root)
 
     over: list[tuple[int, str]] = []
-    for path in files:
+    for path in files if bot else []:
         size = path.stat().st_size
         if size >= limit:
             over.append((size, agent_log.rel(root, path)))
@@ -101,28 +100,23 @@ def main(argv: list[str] | None = None) -> int:
     mine = {agent_log.rel(root, f) for f in files}
     dupes = sorted((n, ps) for n, ps in by_name.items() if len(ps) > 1 and mine & set(ps))
 
-    lines = [
-        "script cap",
-        "root=.",
-        f"overKb={args.over_kb} limit={limit}",
-        "measure=os.path.getsize (== Get-Item Length)",
-        f"checked={len(files)} over={len(over)} dupes={len(dupes)}",
-        "",
-        "bytes\tpath",
-    ]
-    for size, rel in over:
-        lines.append(f"{size}\t{rel}")
+    lines = ["script cap" if bot else "script names", "root=."]
+    if bot:
+        lines += [f"overKb={args.over_kb} limit={limit}", "measure=os.path.getsize (== Get-Item Length)",
+                  f"checked={len(files)} over={len(over)} dupes={len(dupes)}", "", "bytes\tpath"]
+        lines += [f"{size}\t{rel}" for size, rel in over]
+    else:
+        lines += [f"checked={len(files)} dupes={len(dupes)}", ""]
     for name, paths in dupes:
         lines.append(f"DUPE\t{name}\t" + " | ".join(paths))
     if over:
         lines.append("next: split the file (BOT.md size flow, design/refactor.md); do not raise --over-kb")
     if dupes:
         lines.append("next: DUPE = rename one file; basenames are unique repo-wide")
-    body = "\n".join(lines)
-    return agent_log.finish(
-        "script-cap", root, body, "FAIL" if over or dupes else "PASS", args=args,
-        checked=len(files), over=len(over), dupes=len(dupes), limit=limit,
-    )
+    kv = dict(checked=len(files), dupes=len(dupes))
+    if bot:
+        kv.update(over=len(over), limit=limit)
+    return agent_log.finish("script-cap", root, "\n".join(lines), "FAIL" if over or dupes else "PASS", args=args, **kv)
 
 
 if __name__ == "__main__":

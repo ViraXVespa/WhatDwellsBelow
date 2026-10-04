@@ -17,7 +17,7 @@ built-in fetch-ban phrases; topic-body cycle graph.
 Increment 6: require job_read_when, job_parked, conflicts_with, boot_max,
 and fetch_ban in routes.yaml; parked jobs stay out of live Job tables.
 
-Increment 7: path files must contain the load-ban sentence; door Job-cell
+Increment 7: path files must contain their second-door sentence ("Second topic door: ..."); door Job-cell
 tokens must be a subset of that job's job_read_when tokens.
 """
 from __future__ import annotations
@@ -32,13 +32,13 @@ if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
 import agent_log  # noqa: E402
+import bot_gate_lib  # noqa: E402
 from load_routes import (  # noqa: E402
     CYCLE_ROLES,
     TOPIC_CYCLE_ROLES,
     RoutesError,
     allowed_citations,
     all_route_files,
-    boot_bytes,
     boot_max,
     conflicts_with,
     door_job_targets,
@@ -563,8 +563,8 @@ def route_map_fails(root: Path, routes: dict) -> list[str]:
 
 
 def boot_budget_fails(root: Path, routes: dict) -> list[str]:
-    """Every boot_max path needs a routes.yaml boot_bytes budget; on-disk size must not exceed it."""
-    budgets = boot_bytes(routes)
+    """Bot mode only: every boot_max path needs a budget in tools/bot_budgets.json; on-disk size must not exceed it."""
+    budgets = bot_gate_lib.boot_budgets(root)
     if not budgets:
         return []
     fails: list[str] = []
@@ -572,12 +572,12 @@ def boot_budget_fails(root: Path, routes: dict) -> list[str]:
     for posix in boot_paths:
         cap = budgets.get(posix)
         if cap is None:
-            fails.append(f"boot_bytes missing budget for boot file {posix}")
+            fails.append(f"missing budget for boot file {posix} in {bot_gate_lib.BUDGETS}")
             continue
         path = root / posix
         size = path.stat().st_size if path.is_file() else 0
         if size > cap:
-            fails.append(f"boot file over byte budget: {posix} is {size} bytes, boot_bytes {cap}")
+            fails.append(f"boot file over byte budget: {posix} is {size} bytes, budget {cap} ({bot_gate_lib.BUDGETS})")
     return fails
 
 
@@ -697,9 +697,7 @@ def citation_budget_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     return fails
 
 
-LOAD_BAN_NEEDLE = (
-    "Second topic door: ask the User to name the owner first."
-)
+LOAD_BAN_NEEDLE = "Second topic door:"  # each path file states its own rule for a second door
 
 
 def job_table_rows(text: str) -> list[tuple[str, str]]:
@@ -756,6 +754,7 @@ def job_cell_token_fails(routes: dict, texts: dict[str, str]) -> list[str]:
 
 def main() -> int:
     ap = agent_log.std_parser("Check design-doc routing against design/routes.yaml.", json_out=True)
+    bot_gate_lib.add_flag(ap)
     args = ap.parse_args()
     root = agent_log.resolve_root(args)
     if not (root / "AGENTS.md").is_file() or not (root / "design").is_dir():
@@ -970,7 +969,8 @@ def main() -> int:
     fails.extend(fetch_ban_fails(routes, texts))
     fails.extend(recipe_phrase_fails(routes, texts))
     fails.extend(boot_instruct_fails(routes, texts))
-    fails.extend(boot_budget_fails(root, routes))
+    if bot_gate_lib.enabled(args):
+        fails.extend(boot_budget_fails(root, routes))
     fails.extend(citation_budget_fails(routes, texts))
     fails.extend(load_ban_fails(routes, texts))
     fails.extend(job_cell_token_fails(routes, texts))

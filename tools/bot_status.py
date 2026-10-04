@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Linux-first Grok Bot punch list. Read queues on disk; do not invent rows."""
+"""Linux-first Grok Bot punch list (Bot and CI only: pass --bot, or CI sets it). Read queues on disk; do not invent rows."""
 
 from __future__ import annotations
 
@@ -14,11 +14,12 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import bot_gate_lib
 import gd_lib
 import repo_lib
 
-SHIP_BYTES = gd_lib.SHIP_BYTES
-SWEEP_BYTES = gd_lib.SWEEP_BYTES
+SHIP_BYTES = bot_gate_lib.SHIP_BYTES
+SWEEP_BYTES = bot_gate_lib.SWEEP_BYTES
 ALLOW_FILE = repo_lib.ALLOW_FILE
 REUSE_FILE = "design/reuse-map.md"
 OPT_FILE = "design/grok-bot-opt.md"
@@ -94,7 +95,7 @@ def run_load_graph(root: Path) -> str:
     if not script.is_file():
         return "skip (missing tools/check_load_graph.py)"
     proc = subprocess.run(
-        [sys.executable, str(script), "--root", str(root)],
+        [sys.executable, str(script), "--root", str(root), "--bot"],
         cwd=root,
         check=False,
         capture_output=True,
@@ -111,16 +112,20 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser(
         "Print the Grok Bot punch list from live queues and file sizes.", json_out=True
     )
+    bot_gate_lib.add_flag(parser)
     parser.add_argument(
         "--prove",
         action="store_true",
-        help="Also check 10KB ship floor, allowlist on dirty paths, load-graph.",
+        help="Also check the ship floor, allowlist on dirty paths, load-graph.",
     )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
+    if not bot_gate_lib.enabled(args):
+        agent_log.resolve_root(args)
+        return bot_gate_lib.not_run("bot punch list")
     try:
         root = agent_log.resolve_root(args)
     except FileNotFoundError as exc:

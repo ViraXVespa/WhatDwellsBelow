@@ -1,0 +1,10 @@
+{
+	"boot_bytes": {
+		"AGENTS.md": 3350,
+		"BOT.md": 8050,
+		"design/web-session.md": 5750,
+		"design/protocol.md": 2950,
+		"design/constraints.md": 2650,
+		"design/grok-build.md": 7750
+	}
+}

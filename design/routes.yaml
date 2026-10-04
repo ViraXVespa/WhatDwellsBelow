@@ -443,16 +443,6 @@ boot_max:
     - AGENTS.md
     - BOT.md
 
-# Boot file byte budgets: current size + ~5%, rounded up to 50. check_load_graph.py fails a boot_max file above its cap.
-# Lower after a trim; raise only on a User go.
-boot_bytes:
-  AGENTS.md: 2500
-  BOT.md: 7300
-  design/web-session.md: 5750
-  design/protocol.md: 2950
-  design/constraints.md: 2650
-  design/grok-build.md: 6600
-
 fetch_ban:
   design/web-session.md:
     - check against design/

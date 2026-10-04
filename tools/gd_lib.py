@@ -10,8 +10,6 @@ import re
 from pathlib import Path
 
 SKIP_PARTS = ("archives", ".archive_worktrees")  # top-level dirs every file walker skips; other tools derive from this
-SHIP_BYTES = 10_000  # BOT.md script cap
-SWEEP_BYTES = 5_000  # Bot sweep floor
 RE_FUNC = re.compile(r"^(static\s+)?func\s+(\w+)\s*\(")
 DECL = re.compile(
     r"^(?P<indent>\t*)(?:static\s+)?(?:func|const|var|class_name|enum)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)"

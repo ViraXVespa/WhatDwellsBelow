@@ -19,6 +19,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import bot_gate_lib
 
 _SENT = re.compile(r"(?<=[.!?:;])\s+|\n+")
 
@@ -58,12 +59,16 @@ def dupe_report(root: Path, min_chars: int) -> tuple[list[str], int]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("List design/*.md by os.path.getsize; OVER marks files at or over --over-kb. --boot / --dupes: doc SNR sweep.", json_out=True)
-    ap.add_argument("--over-kb", "-OverKb", type=float, default=8.0, help="limit = round(kb * 1000) bytes (default 8)")
+    bot_gate_lib.add_flag(ap)
+    ap.add_argument("--over-kb", "-OverKb", type=float, default=8.0, help="limit = round(kb * 1000) bytes (default: the Bot doc budget)")
     ap.add_argument("--boot", action="store_true", help="print bytes per boot chain (routes.yaml boot_max)")
     ap.add_argument("--dupes", action="store_true", help="print sentences repeated across docs")
     ap.add_argument("--min-chars", type=int, default=60, help="--dupes minimum normalized sentence length (default 60)")
     ap.add_argument("--all", action="store_true", help="list every doc (default: only OVER-limit docs)")
     args = ap.parse_args(sys.argv[1:] if argv is None else argv)
+    if not bot_gate_lib.enabled(args):
+        agent_log.resolve_root(args)
+        return bot_gate_lib.not_run("doc size listing")
     root = agent_log.resolve_root(args)
     limit = round(args.over_kb * 1000)
     files = sorted((f for f in (root / "design").glob("*.md")), key=lambda f: -f.stat().st_size)

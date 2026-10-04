@@ -4,13 +4,14 @@
 Usage (from repo root):
   python tools/summarize_scripts.py
   python tools/summarize_scripts.py --path scripts/combat/enemy.gd
-  python tools/summarize_scripts.py --over-kb 5 --top-funcs 8
+  python tools/summarize_scripts.py --top-funcs 8
   powershell -File tools/summarize_scripts.ps1
 
-Output: _logs/script-summary/summary.txt
+Output: _logs/script-summary/<stamp>-script-summary.txt
 """
 from __future__ import annotations
 
+import argparse
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -37,7 +38,7 @@ def select(root: Path, paths: list[Path] | None) -> list[Path]:
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Func-level script inventory for live .gd files.", json_out=True)
     ap.add_argument("--path", "-Path", action="append", default=[], help="Limit to one or more .gd paths")
-    ap.add_argument("--over-kb", "-OverKb", type=float, default=0.0, help="Only list files >= this many KB (0=all)")
+    ap.add_argument("--over-kb", "-OverKb", type=float, default=0.0, help=argparse.SUPPRESS)
     ap.add_argument("--top-funcs", "-TopFuncs", type=int, default=6, help="Largest funcs to list per file")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
@@ -52,7 +53,7 @@ def main(argv: list[str] | None = None) -> int:
     lines: list[str] = [
         f"script summary {datetime.now().astimezone().isoformat()}",
         "root=.",
-        f"files={len(files)} over_kb={args.over_kb} top_funcs={args.top_funcs}",
+        f"files={len(files)} top_funcs={args.top_funcs}",
         "",
     ]
     listed = 0
