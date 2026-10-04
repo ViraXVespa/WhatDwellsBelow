@@ -7,6 +7,7 @@ var open := false
 var _target := 0.0
 var _shown := 0.0
 var _dim: ColorRect
+var _card: ColorRect
 var _title: Label
 var _status: Label
 var _pct: Label
@@ -26,23 +27,27 @@ func _ready() -> void:
 	_dim.color = DIM_SOLID
 	_dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_dim)
-	_title = _lab(tr("loader.loading"), 36, Color(0.95, 0.86, 0.55))
+	_card = ColorRect.new()
+	_card.color = Plate.PLATE
+	_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_card)
+	_title = _lab(tr("loader.loading"), 36, Color(0.24, 0.15, 0.09))
 	add_child(_title)
-	_status = _lab("", 20, Color(0.82, 0.76, 0.64))
+	_status = _lab("", 20, Color(0.40, 0.28, 0.18))
 	add_child(_status)
 	_edge = ColorRect.new()
 	_edge.color = Plate.EDGE
 	_edge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_edge)
 	_track = ColorRect.new()
-	_track.color = Color(0.16, 0.12, 0.09, 1)
+	_track.color = Color(0.55, 0.42, 0.30, 1)
 	_track.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_track)
 	_fill = ColorRect.new()
-	_fill.color = Color(0.92, 0.74, 0.32, 1)
+	_fill.color = Color(0.24, 0.15, 0.09, 1)
 	_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_track.add_child(_fill)
-	_pct = _lab("0%", 18, Color(0.95, 0.88, 0.62))
+	_pct = _lab("0%", 18, Color(0.24, 0.15, 0.09))
 	add_child(_pct)
 	_layout_bar()
 
@@ -115,6 +120,9 @@ func _layout_bar() -> void:
 	if _dim:
 		_dim.position = Vector2.ZERO
 		_dim.size = s
+	if _card:
+		_card.position = Vector2(cx - 520.0, cy - 120.0)
+		_card.size = Vector2(1040.0, 240.0)
 	if _title:
 		_title.position = Vector2(cx - 480.0, cy - 90.0)
 		_title.size = Vector2(960.0, 50.0)
@@ -147,7 +155,7 @@ func _lab(text: String, font_px: int, col: Color) -> Label:
 	l.add_theme_font_size_override("font_size", font_px)
 	l.add_theme_color_override("font_color", col)
 	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	l.add_theme_constant_override("outline_size", 6)
+	l.add_theme_constant_override("outline_size", 0)
 	l.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.focus_mode = Control.FOCUS_NONE

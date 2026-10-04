@@ -6,8 +6,8 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 
 const TRACK_COL := Color(0.18, 0.14, 0.1)
 
-static func skill_lab(text: String, size: int = 16, col: Color = Color(0.9, 0.84, 0.7)) -> Label:
-	var l: Label = ThemeS.lab(text, size, col, HORIZONTAL_ALIGNMENT_LEFT, false, true)
+static func skill_lab(text: String, size: int = 16, col: Color = ThemeS.INK) -> Label:
+	var l: Label = ThemeS.lab(text, size, col, HORIZONTAL_ALIGNMENT_LEFT, false, false)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	l.custom_minimum_size = Vector2(0, 22)

@@ -33,7 +33,7 @@ The web touch overlay sits on `CanvasLayer` 28 (HUD is 20, pause is 55). The mov
 
 Binding rules live in input. UI rules for this slice:
 
-- Drawn in-theme (dark well, gold ring, pad glyphs). No default engine buttons.
+- Drawn in-theme (paper well, brown rule, ink glyph). No default engine buttons.
 - No right aim well. No lock button. Auto-aim stays on while the overlay is active.
 - Hidden while `App.ui_open` so pause, gear, recap, title, and debug stay tappable.
 - Hidden on title / foundation. Shown only in Placeholdia and the dungeon when the device check passes, or when Debug Settings **Force touch overlay** is on (session-only; still hidden while `App.ui_open`).
@@ -43,7 +43,7 @@ Binding rules live in input. UI rules for this slice:
 
 ## Live snapshot — HUD / pause
 
-`hud.gd` facade plus `hud_view.gd` / `hud_act.gd`: strip top-left, minimap top-right, boss bar when near, toast, interact glyph row, look-mode cue under the minimap. Level string uses combat level and parenthetical style level.
+`hud.gd` facade plus `hud_view.gd` / `hud_act.gd`: paper strip top-left with a brown rule, ink type on the strip, minimap top-right in a thin rule, boss bar when near, toast, interact glyph row, look-mode cue under the minimap. Meter fills keep their own colors. Toast and the look cue stay light because they sit on the world. Level string uses combat level and parenthetical style level.
 Pause Skills also shows run XP earned this descent.
 Inventory and loadout share `Board.build`. Bag grid is 7 columns. Stats pages: kit bonuses, combat, utility, artifacts (artifacts omitted on loadout). Stats card is not in the focus chain. Pages change with Q / LT and E / RT. Pause tabs change with LB / RB via `menu_pad.gd`. Default tab is Settings (`pause_settings.gd`). The current tab uses hover-panel chrome and darker tan text. Camera zoom and HUD scale write `App.set_zoom` / `App.set_hud_scale` and apply without a restart. Display mode writes `DisplayMode.cycle_desktop` or `DisplayMode.toggle_web_fullscreen` from Settings → Graphics. Alt+Enter also toggles display through `DisplayMode.handle_input`. Small windows multiply HUD chrome and Theme fonts by `UiText.applied()` from a saved text floor (debug slider, default 14). Sprite filter is Mipmaps / Anisotropic checkboxes through `App.set_sprite_filter`. Loadout opens focused on **Enter dungeon**.
 `confirm_dlg.gd` restores prior focus on cancel and draws Select / Back on the dialog itself. `PromptView.pulse()` refreshes tab chips, gear page glyphs, and footers when `Pad.mode` flips.

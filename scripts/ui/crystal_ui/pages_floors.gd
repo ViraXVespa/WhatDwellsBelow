@@ -14,13 +14,13 @@ static func page_floors(host) -> void:
 	box.add_theme_constant_override("separation", 8)
 	host.add_child(box)
 	Net.net_tabs(host, box)
-	box.add_child(ThemeS.lab(App.tr("common.floor_transport_network"), 28, Color(0.95, 0.82, 0.5)))
+	box.add_child(ThemeS.lab(App.tr("common.floor_transport_network"), 28, ThemeS.INK))
 	var deepest := maxi(1, int(App.prog.deepest))
 	if str(host.page) == "band":
-		box.add_child(ThemeS.lab(App.tr("common.floors") % [host.band_lo, host.band_hi], 20, Color(0.78, 0.86, 0.9)))
+		box.add_child(ThemeS.lab(App.tr("common.floors") % [host.band_lo, host.band_hi], 20, ThemeS.INK_SOFT))
 		list_floors(host, box, host.band_lo, mini(host.band_hi, deepest), deepest)
 	elif deepest > 10:
-		box.add_child(ThemeS.lab(App.tr("common.deepest_floor") % deepest, 20, Color(0.78, 0.86, 0.9)))
+		box.add_child(ThemeS.lab(App.tr("common.deepest_floor") % deepest, 20, ThemeS.INK_SOFT))
 		var lo := 1
 		var first: Button = null
 		while lo <= deepest:
@@ -35,7 +35,7 @@ static func page_floors(host) -> void:
 			lo += 10
 		host.focus_btn = first
 	else:
-		box.add_child(ThemeS.lab(App.tr("common.deepest_floor") % deepest, 20, Color(0.78, 0.86, 0.9)))
+		box.add_child(ThemeS.lab(App.tr("common.deepest_floor") % deepest, 20, ThemeS.INK_SOFT))
 		list_floors(host, box, 1, deepest, deepest)
 	var back := ThemeS.btn(App.tr("common.back"), func(): host._back())
 	box.add_child(back)

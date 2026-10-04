@@ -1,6 +1,7 @@
 ﻿extends Object
 
 const ScrollBox := preload("res://scripts/ui/scroll_box.gd")
+const Plate := preload("res://scripts/ui/plate_chrome.gd")
 
 static func build(host: CanvasLayer) -> void:
 	host.layer = 55
@@ -8,17 +9,17 @@ static func build(host: CanvasLayer) -> void:
 	host.process_mode = Node.PROCESS_MODE_ALWAYS
 	var dim: ColorRect = ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.03, 0.02, 0.02, 0.78)
+	dim.color = Plate.DIM
 	host.add_child(dim)
 	var panel: ColorRect = ColorRect.new()
-	panel.color = Color(0.13, 0.1, 0.08, 0.96)
+	panel.color = Plate.PLATE
 	panel.position = Vector2(220, 36)
 	panel.size = Vector2(1480, 980)
 	host.add_child(panel)
 	var edge: ColorRect = ColorRect.new()
-	edge.color = Color(0.55, 0.42, 0.22, 1)
+	edge.color = Plate.EDGE
 	edge.position = Vector2(220, 36)
-	edge.size = Vector2(1480, 8)
+	edge.size = Vector2(1480, Plate.EDGE_H)
 	host.add_child(edge)
 	host.tab_wrap = HBoxContainer.new()
 	host.tab_wrap.position = Vector2(244, 56)

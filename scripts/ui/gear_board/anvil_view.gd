@@ -15,7 +15,7 @@ static func footer(ui: CanvasLayer) -> void:
 			App.gold, App.ore, App.wood,
 		],
 		16,
-		Color(0.8, 0.85, 0.7),
+		ThemeS.INK_SOFT,
 	))
 	var smith: int = App.prog.skill_lv("smith")
 	if tab(ui) == "forge":
@@ -60,8 +60,8 @@ static func _tabs(ui: CanvasLayer) -> void:
 	shell.add_child(left)
 	shell.add_child(sc)
 	shell.add_child(right)
-	PromptView.fill(left, [{"action": "tab_left"}], 16, Color(0.72, 0.66, 0.52))
-	PromptView.fill(right, [{"action": "tab_right"}], 16, Color(0.72, 0.66, 0.52))
+	PromptView.fill(left, [{"action": "tab_left"}], 16, ThemeS.INK_SOFT)
+	PromptView.fill(right, [{"action": "tab_right"}], 16, ThemeS.INK_SOFT)
 	ui.box.add_child(shell)
 
 static func drop_sub(ui: CanvasLayer) -> void:
@@ -108,11 +108,4 @@ static func _forge_body(ui: CanvasLayer, smith: int) -> void:
 	ui.status.text = App.tr("anvil_view.smithing_open_a_slot_to_2") % smith
 
 static func _paint_on(b: Button) -> void:
-	var ink := Color(0.92, 0.84, 0.62)
-	b.add_theme_color_override("font_color", ink)
-	b.add_theme_color_override("font_hover_color", ink)
-	b.add_theme_color_override("font_focus_color", ink)
-	b.add_theme_stylebox_override("normal", ThemeS.sb(Color(0.3, 0.22, 0.14), Color(0.75, 0.58, 0.28)))
-	b.add_theme_stylebox_override("focus", ThemeS.sb(Color(0.3, 0.22, 0.14), Color(0.75, 0.58, 0.28)))
-	b.add_theme_stylebox_override("hover", ThemeS.sb(Color(0.38, 0.28, 0.16), Color(0.95, 0.78, 0.35)))
-	b.add_theme_stylebox_override("pressed", ThemeS.sb(Color(0.38, 0.28, 0.16), Color(0.95, 0.78, 0.35)))
+	ThemeS.paint_tab(b, true)

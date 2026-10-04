@@ -31,7 +31,7 @@ static func make_tip(host: CanvasLayer) -> void:
 	host.tip_lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	host.tip_lab.custom_minimum_size = UiText.min_size(380.0, 0.0)
 	host.tip_lab.add_theme_font_size_override("font_size", UiText.font_px(18))
-	host.tip_lab.add_theme_color_override("font_color", Color(0.93, 0.86, 0.72))
+	host.tip_lab.add_theme_color_override("font_color", ThemeS.INK)
 	host.tip_lab.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
 	host.tip_lab.add_theme_constant_override("outline_size", 6)
 	host.tip_host.add_child(host.tip_lab)

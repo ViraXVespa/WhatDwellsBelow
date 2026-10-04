@@ -3,7 +3,7 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const PauseSkills := preload("res://scripts/ui/pause_skills.gd")
 
-static func cap(_ui: Node, text: String, size: int = 18, col: Color = Color(0.9, 0.84, 0.7)) -> Label:
+static func cap(_ui: Node, text: String, size: int = 18, col: Color = ThemeS.INK) -> Label:
 	# No outline: matches prior pause chrome look.
 	return ThemeS.lab(text, size, col, HORIZONTAL_ALIGNMENT_LEFT, false, false)
 
@@ -21,10 +21,10 @@ static func slider_row(
 	var row := VBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
 	var top := HBoxContainer.new()
-	top.add_child(cap(ui, title, 18, Color(0.9, 0.84, 0.7)))
+	top.add_child(cap(ui, title, 18, ThemeS.INK))
 	if show_value:
 		top.add_spacer(false)
-		top.add_child(cap(ui, "%.2f" % value, 16, Color(0.82, 0.76, 0.66)))
+		top.add_child(cap(ui, "%.2f" % value, 16, ThemeS.INK_SOFT))
 	row.add_child(top)
 	var slider := HSlider.new()
 	slider.min_value = lo
@@ -34,6 +34,7 @@ static func slider_row(
 	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	slider.custom_minimum_size = Vector2(slider_w, 32.0 * ThemeS.text_scale())
 	slider.focus_mode = Control.FOCUS_ALL
+	ThemeS.skin_slider(slider)
 	slider.value_changed.connect(on_change)
 	row.add_child(slider)
 	return row

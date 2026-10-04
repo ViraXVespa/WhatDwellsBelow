@@ -7,18 +7,18 @@ static func slot_name(slot: String) -> String:
 
 static func item_color(it: Dictionary) -> Color:
 	if it.is_empty():
-		return Color(0.62, 0.58, 0.52)
+		return Color(0.45, 0.36, 0.28)
 	if is_risk(it):
-		return Color(0.95, 0.55, 0.38)
+		return Color(0.55, 0.16, 0.11)
 	match str(it.get("rarity", "white")):
 		"green":
-			return Color(0.55, 0.86, 0.52)
+			return Color(0.16, 0.40, 0.14)
 		"blue":
-			return Color(0.52, 0.7, 1.0)
+			return Color(0.14, 0.26, 0.48)
 		_:
 			if str(it.get("kind", "")) == "artifact":
-				return Color(0.92, 0.78, 0.48)
-			return Color(0.92, 0.84, 0.62)
+				return Color(0.42, 0.24, 0.08)
+			return Color(0.24, 0.15, 0.09)
 
 static func is_risk(it: Dictionary) -> bool:
 	if it.is_empty():

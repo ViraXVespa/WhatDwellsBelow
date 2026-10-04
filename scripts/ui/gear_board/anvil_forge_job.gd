@@ -93,7 +93,7 @@ static func _fill_work(ui: CanvasLayer, box: Control) -> Control:
 	var need: int = maxi(1, int(ui.get("forge_need")))
 	var left: int = maxi(0, int(ui.get("forge_left")))
 	var done: int = clampi(need - left + 1, 1, need)
-	var lab := ThemeS.lab(App.tr("common.forging_of") % [done, need], 20, Color(0.95, 0.82, 0.5))
+	var lab := ThemeS.lab(App.tr("common.forging_of") % [done, need], 20, ThemeS.INK)
 	lab.name = "forge_bar_lab"
 	box.add_child(lab)
 	var wait: float = maxf(0.01, float(ui.get("forge_wait")))
@@ -105,7 +105,7 @@ static func _fill_work(ui: CanvasLayer, box: Control) -> Control:
 	bar.custom_minimum_size = Vector2(520, 28)
 	bar.show_percentage = false
 	box.add_child(bar)
-	box.add_child(ThemeS.lab(App.tr("anvil_forge_job.s_left_on_this_piece") % float(ui.forge_t), 16, Color(0.82, 0.76, 0.66)))
+	box.add_child(ThemeS.lab(App.tr("anvil_forge_job.s_left_on_this_piece") % float(ui.forge_t), 16, ThemeS.INK_SOFT))
 	return null
 
 static func _spin_next(ui: CanvasLayer, slot: String, type_id: String, rarity: String, ilvl: int) -> void:

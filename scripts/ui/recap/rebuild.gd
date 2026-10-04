@@ -28,7 +28,7 @@ static func rebuild(host: CanvasLayer, cond: String) -> void:
 		title = App.tr("rebuild.deep_enough_to_matter")
 		sub = App.tr("rebuild.the_gate_remembers")
 	host.last_title = title
-	host.box.add_child(ThemeS.lab(title, 32, Color(0.95, 0.82, 0.5)))
+	host.box.add_child(ThemeS.lab(title, 32, ThemeS.INK))
 	host.box.add_child(ThemeS.lab(sub, 22, Color(0.82, 0.76, 0.66)))
 	var end_n := "“Dispel”" if cond == "dispel" else ("Death" if cond == "death" else cond)
 	host.box.add_child(ThemeS.lab(App.tr("rebuild.end_floor_f") % [end_n, App.floor_n], 18, Color(0.8, 0.75, 0.65)))
@@ -39,13 +39,13 @@ static func rebuild(host: CanvasLayer, cond: String) -> void:
 		kills = int(App.tel.kills)
 	host.box.add_child(ThemeS.lab(App.tr("rebuild.run_s_kills") % [dur, kills, App.weapon, App.prog.tool_type, App.character_type], 18, Color(0.82, 0.76, 0.66)))
 	host.box.add_child(ThemeS.lab(App.tr("rebuild.carried_g_ore_wood_bag") % [App.gold, App.ore, App.wood, App.prog.bag_count()], 18, Color(0.82, 0.76, 0.66)))
-	host.flavor = ThemeS.lab(App.tr("rebuild.xp_host_draining"), 18, Color(0.9, 0.84, 0.7))
+	host.flavor = ThemeS.lab(App.tr("rebuild.xp_host_draining"), 18, ThemeS.INK_SOFT)
 	host.box.add_child(host.flavor)
 	var heads := HBoxContainer.new()
 	heads.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heads.add_theme_constant_override("separation", 24)
-	heads.add_child(RecapBars.skill_lab(App.tr("rebuild.permanent_xp"), 18, Color(0.95, 0.8, 0.45)))
-	host.head_right = RecapBars.skill_lab(App.tr("common.dungeon_xp"), 18, Color(0.95, 0.8, 0.45))
+	heads.add_child(RecapBars.skill_lab(App.tr("rebuild.permanent_xp"), 18, ThemeS.INK))
+	host.head_right = RecapBars.skill_lab(App.tr("common.dungeon_xp"), 18, ThemeS.INK)
 	heads.add_child(host.head_right)
 	host.box.add_child(heads)
 	host.skill_labs.clear()
@@ -70,9 +70,9 @@ static func rebuild(host: CanvasLayer, cond: String) -> void:
 		host.skill_labs[id] = perm_block.lab
 		if first == null:
 			first = perm_block.wrap
-	host.mailed_lab = ThemeS.lab("", 18, Color(0.78, 0.86, 0.7))
+	host.mailed_lab = ThemeS.lab("", 18, Color(0.16, 0.38, 0.16))
 	host.box.add_child(host.mailed_lab)
-	var cont := ThemeS.btn(App.tr("common.continue"), func(): host._finish())
+	var cont := ThemeS.btn(App.tr("common.continue"), func(): host._finish(), true, "primary")
 	cont.set_meta("recap_continue", true)
 	cont.disabled = true
 	host.box.add_child(cont)

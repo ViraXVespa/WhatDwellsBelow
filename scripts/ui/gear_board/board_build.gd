@@ -37,14 +37,14 @@ static func plain_lab(t: String, size: int, col: Color) -> Label:
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", col)
 	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	l.add_theme_constant_override("outline_size", 6)
+	l.add_theme_constant_override("outline_size", 0)
 	return l
 
 static func sync_chrome(ui: CanvasLayer) -> void:
 	if ui.get("gear_page_left") is Control:
-		PromptView.fill(ui.gear_page_left, [{"action": Prompts.page_prev()}], 16, Color(0.72, 0.66, 0.52))
+		PromptView.fill(ui.gear_page_left, [{"action": Prompts.page_prev()}], 16, ThemeS.INK_SOFT)
 	if ui.get("gear_page_right") is Control:
-		PromptView.fill(ui.gear_page_right, [{"action": Prompts.page_next()}], 16, Color(0.72, 0.66, 0.52))
+		PromptView.fill(ui.gear_page_right, [{"action": Prompts.page_next()}], 16, ThemeS.INK_SOFT)
 
 static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	var panel := PanelContainer.new()
@@ -66,7 +66,7 @@ static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	left.custom_minimum_size = Vector2(84, 28)
 	left.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var mid := plain_lab("", 20, Color(1, 0.92, 0.55))
+	var mid := plain_lab("", 20, ThemeS.INK)
 	mid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mid.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -80,7 +80,7 @@ static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	head.add_child(mid)
 	head.add_child(right)
 	vb.add_child(head)
-	var body := plain_lab("", 16, Color(0.9, 0.84, 0.7))
+	var body := plain_lab("", 16, ThemeS.INK_SOFT)
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -107,7 +107,7 @@ static func build_slot_btn(_ui: CanvasLayer, slot: String) -> Button:
 		b.text = "▸"
 		b.alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		b.add_theme_font_size_override("font_size", 18)
-		b.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
+		b.add_theme_color_override("font_color", ThemeS.INK)
 	return b
 
 static func build_bag_cell(_ui: CanvasLayer, it: Dictionary) -> Button:
@@ -134,12 +134,4 @@ static func build_bag_cell(_ui: CanvasLayer, it: Dictionary) -> Button:
 	return b
 
 static func _paint_item_btn(b: Button, it: Dictionary) -> void:
-	var fill: Color = Icons.rarity_fill(it)
-	var border: Color = Icons.rarity_border(it)
-	var hover: Color = fill.lightened(0.12)
-	var press: Color = fill.darkened(0.12)
-	b.add_theme_stylebox_override("normal", ThemeS.sb(fill, border))
-	b.add_theme_stylebox_override("hover", ThemeS.sb(hover, border))
-	b.add_theme_stylebox_override("pressed", ThemeS.sb(press, border))
-	b.add_theme_stylebox_override("focus", ThemeS.sb(hover, border))
-	b.add_theme_stylebox_override("disabled", ThemeS.sb(Color(0.11, 0.09, 0.08), Color(0.22, 0.18, 0.14)))
+	ThemeS.paint_plate(b, Icons.rarity_fill(it), Icons.rarity_border(it), false)

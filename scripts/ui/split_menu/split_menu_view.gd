@@ -6,9 +6,9 @@ const Chrome := preload("res://scripts/ui/split_menu/chrome.gd")
 
 const COL_LIVE := Color(1, 1, 1, 1)
 const COL_DIM := Color(0.55, 0.52, 0.48, 1)
-const RULE_ON := Color(0.95, 0.78, 0.35, 1)
-const RULE_OFF := Color(0.35, 0.28, 0.18, 1)
-const GOLD := Color(1, 0.92, 0.45, 1)
+const RULE_ON := Color(0.45, 0.32, 0.20, 1)
+const RULE_OFF := Color(0.45, 0.32, 0.20, 0.35)
+const GOLD := Color(0.24, 0.15, 0.09, 1)
 
 static func _live(host: Node) -> bool:
 	return host != null and is_instance_valid(host)
@@ -60,7 +60,9 @@ static func rebuild_list(host: Node) -> void:
 	for i: int in n:
 		var row: Dictionary = Split.row_at(host, i)
 		var ii: int = i
-		var b: Button = ThemeS.btn(str(row.get("label", row.get("id", ""))), func() -> void: host._on_list_pressed(ii))
+		var role: String = str(row.get("role", "secondary"))
+		var b: Button = ThemeS.btn(str(row.get("label", row.get("id", ""))), func() -> void: host._on_list_pressed(ii), true, role)
+		b.set_meta("role", role)
 		b.focus_entered.connect(func() -> void: host._on_list_focus(ii))
 		b.mouse_entered.connect(func() -> void: host._on_list_hover(ii))
 		host.list_box.add_child(b)
@@ -111,10 +113,8 @@ static func paint_list(host: Node) -> void:
 		var b: Button = host.list_btns[i]
 		if not is_instance_valid(b):
 			continue
-		if i == selected:
-			b.add_theme_color_override("font_color", GOLD)
-		else:
-			b.remove_theme_color_override("font_color")
+		var role: String = str(b.get_meta("role", "secondary"))
+		ThemeS.paint_tab(b, i == selected, role)
 	if host.has_method("_place_chevron"):
 		host.call_deferred("_place_chevron")
 	else:

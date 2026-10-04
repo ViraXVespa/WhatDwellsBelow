@@ -120,17 +120,10 @@ static func _rebuild(host: CanvasLayer) -> void:
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.custom_minimum_size = UiText.min_size(160.0, 44.0)
 		if i == host.tab:
-			var ink := Color(0.92, 0.84, 0.62)
-			b.add_theme_color_override("font_color", ink)
-			b.add_theme_color_override("font_hover_color", ink)
-			b.add_theme_color_override("font_focus_color", ink)
-			b.add_theme_stylebox_override("normal", ThemeS.sb(Color(0.3, 0.22, 0.14), Color(0.75, 0.58, 0.28)))
-			b.add_theme_stylebox_override("focus", ThemeS.sb(Color(0.3, 0.22, 0.14), Color(0.75, 0.58, 0.28)))
-			b.add_theme_stylebox_override("hover", ThemeS.sb(Color(0.38, 0.28, 0.16), Color(0.95, 0.78, 0.35)))
-			b.add_theme_stylebox_override("pressed", ThemeS.sb(Color(0.38, 0.28, 0.16), Color(0.95, 0.78, 0.35)))
+			ThemeS.paint_tab(b, true)
 		host.tabs.add_child(b)
-	PromptView.fill(host.tab_left, [{"action": "tab_left"}], 16, Color(0.72, 0.66, 0.52))
-	PromptView.fill(host.tab_right, [{"action": "tab_right"}], 16, Color(0.72, 0.66, 0.52))
+	PromptView.fill(host.tab_left, [{"action": "tab_left"}], 16, ThemeS.INK_SOFT)
+	PromptView.fill(host.tab_right, [{"action": "tab_right"}], 16, ThemeS.INK_SOFT)
 	match host.tab:
 		host.TAB_SETTINGS:
 			host._system()

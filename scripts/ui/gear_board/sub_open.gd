@@ -26,7 +26,7 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 	panel.add_child(box)
 	var head := App.tr("sub_open.reequip_slot").format({"slot": Fmt.slot_name(slot)})
 	var blurb := App.tr("sub_open.at_risk_gear_is_lost")
-	var blurb_col := Color(0.8, 0.74, 0.64)
+	var blurb_col := ThemeS.INK_SOFT
 	if load("res://scripts/ui/gear_board/board_sub.gd")._is_anvil(ui):
 		if str(ui.get("anvil_tab")) == "forge":
 			head = App.tr("sub_open.forge_slot").format({"slot": Fmt.slot_name(slot)})
@@ -34,8 +34,8 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 		else:
 			head = App.tr("sub_open.analyze_slot").format({"slot": Fmt.slot_name(slot)})
 			blurb = App.tr("sub_open.warning_analyzing_destroys_the_s")
-			blurb_col = Color(0.95, 0.42, 0.28)
-	box.add_child(ThemeS.lab(head, 22, Color(0.95, 0.82, 0.5)))
+			blurb_col = ThemeS.DANGER
+	box.add_child(ThemeS.lab(head, 22, ThemeS.INK))
 	box.add_child(ThemeS.lab(blurb, 16, blurb_col))
 	if load("res://scripts/ui/gear_board/board_sub.gd")._is_anvil(ui) and str(ui.get("anvil_tab")) == "forge":
 		load("res://scripts/ui/gear_board/board_sub.gd")._open_forge(ui, box, slot)
@@ -48,9 +48,9 @@ static func open_sub(ui: CanvasLayer, slot: String) -> void:
 		rows = Text.options_for(slot)
 	if rows.is_empty():
 		if load("res://scripts/ui/gear_board/board_sub.gd")._is_anvil(ui):
-			box.add_child(ThemeS.lab(App.tr("sub_open.no_at_risk_pieces_for"), 18, Color(0.78, 0.74, 0.66)))
+			box.add_child(ThemeS.lab(App.tr("sub_open.no_at_risk_pieces_for"), 18, ThemeS.INK_SOFT))
 		else:
-			box.add_child(ThemeS.lab(App.tr("sub_open.nothing_else_for_this_slot"), 18, Color(0.78, 0.74, 0.66)))
+			box.add_child(ThemeS.lab(App.tr("sub_open.nothing_else_for_this_slot"), 18, ThemeS.INK_SOFT))
 	var grid := HBoxContainer.new()
 	grid.add_theme_constant_override("separation", 8)
 	box.add_child(grid)

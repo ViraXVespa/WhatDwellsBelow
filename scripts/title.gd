@@ -28,26 +28,10 @@ func _ready() -> void:
 		art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(art)
-	var plate := TextureRect.new()
+	var plate := Panel.new()
 	plate.set_anchors_preset(Control.PRESET_CENTER)
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var grad := Gradient.new()
-	grad.offsets = PackedFloat32Array([0.0, 0.90, 1.0])
-	grad.colors = PackedColorArray([
-		Color(0.0, 0.0, 0.0, 0.72),
-		Color(0.0, 0.0, 0.0, 0.72),
-		Color(0.0, 0.0, 0.0, 0.0)
-	])
-	var gt := GradientTexture2D.new()
-	gt.gradient = grad
-	gt.fill = GradientTexture2D.FILL_SQUARE
-	gt.fill_from = Vector2(0.5, 0.5)
-	gt.fill_to = Vector2(0.97, 0.5)
-	gt.width = 512
-	gt.height = 384
-	plate.texture = gt
-	plate.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	plate.stretch_mode = TextureRect.STRETCH_SCALE
+	plate.add_theme_stylebox_override("panel", ThemeS.sb(ThemeS.PAPER, ThemeS.RULE))
 	add_child(plate)
 	var card := VBoxContainer.new()
 	card.set_anchors_preset(Control.PRESET_CENTER)
@@ -58,32 +42,32 @@ func _ready() -> void:
 	card.alignment = BoxContainer.ALIGNMENT_CENTER
 	card.add_theme_constant_override("separation", 14)
 	add_child(card)
-	card.add_child(_lab(tr("title.what_dwells_below"), 48, Color(0.92, 0.78, 0.48)))
-	card.add_child(_lab(App.T.ONE_LINER, 18, Color(0.78, 0.72, 0.62)))
-	card.add_child(_lab(tr("title.version") % GameVer.label(), 16, Color(0.7, 0.62, 0.48)))
+	card.add_child(_lab(tr("title.what_dwells_below"), 48, ThemeS.INK))
+	card.add_child(_lab(App.T.ONE_LINER, 18, ThemeS.INK_SOFT))
+	card.add_child(_lab(tr("title.version") % GameVer.label(), 16, ThemeS.INK_FAINT))
 	var play_a: Button = null
 	var play_b: Button = null
 	var updates: Button = null
 	var archives: Button = null
 	if App.character_chosen:
-		play_a = _btn(tr("common.play"), func(): _play(App.character_type))
+		play_a = _btn(tr("common.play"), func(): _play(App.character_type), "primary")
 		card.add_child(play_a)
 	else:
-		card.add_child(_lab(tr("title.choose_a_delver_switch_later"), 18, Color(0.95, 0.86, 0.4)))
+		card.add_child(_lab(tr("title.choose_a_delver_switch_later"), 18, ThemeS.INK))
 		var row := HBoxContainer.new()
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		row.add_theme_constant_override("separation", 16)
 		row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		card.add_child(row)
-		play_a = _btn(tr("title.play_male"), func(): _play("male"))
-		play_b = _btn(tr("title.play_female"), func(): _play("female"))
+		play_a = _btn(tr("title.play_male"), func(): _play("male"), "primary")
+		play_b = _btn(tr("title.play_female"), func(): _play("female"), "primary")
 		row.add_child(play_a)
 		row.add_child(play_b)
 	updates = _btn(tr("title.updates"), _open_updates)
 	card.add_child(updates)
 	archives = _btn(tr("title.archives"), _open_archives)
 	card.add_child(archives)
-	card.add_child(_lab(tr("title.dungeon_music_bitter_by_vira"), 16, Color(0.62, 0.66, 0.7)))
+	card.add_child(_lab(tr("title.dungeon_music_bitter_by_vira"), 16, ThemeS.INK_FAINT))
 	_title_btns.clear()
 	for b in [play_a, play_b, updates, archives]:
 		if b:
@@ -159,13 +143,13 @@ func _focus_first() -> void:
 		return
 
 func _lab(text: String, font_px: int, col: Color) -> Label:
-	var l: Label = ThemeS.lab(text, font_px, col, HORIZONTAL_ALIGNMENT_CENTER, true, true)
+	var l: Label = ThemeS.lab(text, font_px, col, HORIZONTAL_ALIGNMENT_CENTER, true, false)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.focus_mode = Control.FOCUS_NONE
 	return l
 
-func _btn(text: String, cb: Callable) -> Button:
-	var b: Button = ThemeS.btn(text, cb)
+func _btn(text: String, cb: Callable, role: String = "secondary") -> Button:
+	var b: Button = ThemeS.btn(text, cb, true, role)
 	var sc: float = ThemeS.text_scale()
 	b.custom_minimum_size = Vector2(280.0 * sc, 56.0 * sc)
 	b.focus_mode = Control.FOCUS_ALL

@@ -46,8 +46,8 @@ static func net_tabs(host, box: VBoxContainer) -> void:
 	shell.add_child(left)
 	shell.add_child(sc)
 	shell.add_child(right)
-	PromptView.fill(left, [{"action": "tab_left"}], 16, Color(0.72, 0.66, 0.52))
-	PromptView.fill(right, [{"action": "tab_right"}], 16, Color(0.72, 0.66, 0.52))
+	PromptView.fill(left, [{"action": "tab_left"}], 16, ThemeS.INK_SOFT)
+	PromptView.fill(right, [{"action": "tab_right"}], 16, ThemeS.INK_SOFT)
 	box.add_child(shell)
 
 static func cycle_net(host, dir: int) -> void:
@@ -67,11 +67,11 @@ static func page_root(host) -> void:
 	box.size = Vector2(816, 556)
 	box.add_theme_constant_override("separation", 10)
 	host.add_child(box)
-	box.add_child(ThemeS.lab(App.tr("pages_net.floor_crystal"), 30, Color(0.95, 0.82, 0.5)))
+	box.add_child(ThemeS.lab(App.tr("pages_net.floor_crystal"), 30, ThemeS.INK))
 	var cl := 1
 	if host.spot:
 		cl = int(host.spot.get("crystal_cl"))
-	box.add_child(ThemeS.lab(App.tr("pages_net.f_cl") % [App.floor_n, cl], 20, Color(0.78, 0.86, 0.9)))
+	box.add_child(ThemeS.lab(App.tr("pages_net.f_cl") % [App.floor_n, cl], 20, ThemeS.INK_SOFT))
 	var local_ok := CrystalNet.local_unlocked(host.host)
 	var floor_ok := CrystalNet.floor_unlocked()
 	var b1 := ThemeS.btn(App.tr("common.local_transport_network"), func(): go_local(host), local_ok)
@@ -89,7 +89,7 @@ static func page_root(host) -> void:
 	box.add_child(back)
 	if host.focus_btn == null:
 		host.focus_btn = back
-	host.status = ThemeS.lab("", 18, Color(0.7, 0.66, 0.58))
+	host.status = ThemeS.lab("", 18, ThemeS.INK_FAINT)
 	box.add_child(host.status)
 
 static func go_local(host) -> void:

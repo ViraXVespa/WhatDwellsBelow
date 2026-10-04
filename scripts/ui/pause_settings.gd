@@ -64,11 +64,11 @@ func split_rows() -> Array:
 		{"id": "patreon", "label": tr("pause_settings.patreon"), "kind": "leaf"},
 	]
 	if App.in_dungeon:
-		out.append({"id": "leave", "label": tr("pause_settings.dispel"), "kind": "leaf"})
+		out.append({"id": "leave", "label": tr("pause_settings.dispel"), "kind": "leaf", "role": "danger"})
 	else:
-		out.append({"id": "leave", "label": tr("common.main_menu"), "kind": "leaf"})
+		out.append({"id": "leave", "label": tr("common.main_menu"), "kind": "leaf", "role": "danger"})
 	if not Disp.is_xbox():
-		out.append({"id": "quit", "label": tr("pause_settings.quit"), "kind": "leaf"})
+		out.append({"id": "quit", "label": tr("pause_settings.quit"), "kind": "leaf", "role": "danger"})
 	return out
 
 func split_back_label() -> String:
@@ -111,12 +111,12 @@ func split_activate_leaf(id: String) -> void:
 				Confirm.open(pause, tr("pause_settings.dispel_avatar"), tr("pause_settings.end_this_run_and_return"), func() -> void:
 					pause.close_ui()
 					App.end_run("dispel")
-				)
+				, Callable(), "danger")
 			else:
 				Confirm.open(pause, tr("common.main_menu"), tr("pause_settings.return_to_the_title_screen"), func() -> void:
 					pause.close_ui()
 					App.go_title()
-				)
+				, Callable(), "danger")
 		"quit":
 			Disp.request_quit()
 

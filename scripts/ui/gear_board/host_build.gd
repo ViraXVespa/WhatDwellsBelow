@@ -19,21 +19,17 @@ static func build(ui: CanvasLayer, mode: String) -> void:
 	load("res://scripts/ui/gear_board.gd")._flag(ui, "gear_tip_ready", false)
 	load("res://scripts/ui/gear_board.gd")._flag(ui, "gear_booting", true)
 	load("res://scripts/ui/gear_board.gd").clear_sub(ui)
-	var title_col := Color(0.95, 0.82, 0.5)
-	if mode == "loadout":
-		title_col = Color(0.6, 0.9, 1.0)
-	elif mode == "anvil":
-		title_col = Color(0.95, 0.78, 0.42)
+	var title_col := ThemeS.INK
 	var title := Build.build_title(ui, mode, title_col)
 	ui.box.add_child(ThemeS.lab(title, 28, title_col))
 	var subtitle := Build.build_subtitle(ui, mode)
 	if subtitle != "":
-		ui.box.add_child(ThemeS.lab(subtitle, 16, Color(0.82, 0.76, 0.66)))
+		ui.box.add_child(ThemeS.lab(subtitle, 16, ThemeS.INK_SOFT))
 	var status_text := Build.build_status_text(mode)
 	if status_text != "":
-		ui.status = ThemeS.lab(status_text, 18, Color(0.95, 0.8, 0.45))
+		ui.status = ThemeS.lab(status_text, 18, ThemeS.INK)
 	else:
-		ui.status = ThemeS.lab("", 16, Color(0.78, 0.74, 0.66))
+		ui.status = ThemeS.lab("", 16, ThemeS.INK_SOFT)
 	ui.box.add_child(ui.status)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)

@@ -1,5 +1,6 @@
 extends Object
 
+const ThemeS := preload("res://scripts/ui/theme.gd")
 const Text := preload("res://scripts/ui/gear_board/board_text.gd")
 const Act := preload("res://scripts/ui/gear_board/board_act.gd")
 const Floor := preload("res://scripts/ui/gear_board/floor.gd")
@@ -13,9 +14,9 @@ static func refresh(ui: CanvasLayer) -> void:
 		ui.gear_stats.text = Text.stats_body(ui)
 	load("res://scripts/ui/gear_board.gd")._paint_hint(ui)
 	if ui.get("gear_page_left") != null and ui.gear_page_left:
-		PromptView.fill(ui.gear_page_left, [{"page_prev": true}], 16, Color(0.72, 0.66, 0.52))
+		PromptView.fill(ui.gear_page_left, [{"page_prev": true}], 16, ThemeS.INK_SOFT)
 	if ui.get("gear_page_right") != null and ui.gear_page_right:
-		PromptView.fill(ui.gear_page_right, [{"page_next": true}], 16, Color(0.72, 0.66, 0.52))
+		PromptView.fill(ui.gear_page_right, [{"page_next": true}], 16, ThemeS.INK_SOFT)
 	Floor.sync(ui)
 	if load("res://scripts/ui/gear_board.gd")._on(ui, "gear_tip_ready") or load("res://scripts/ui/gear_board.gd")._on(ui, "gear_hover"):
 		load("res://scripts/ui/gear_board.gd").place_tip(ui)

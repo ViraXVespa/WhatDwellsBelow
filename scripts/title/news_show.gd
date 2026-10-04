@@ -2,6 +2,7 @@ extends Object
 
 const Fmt := preload("res://scripts/title/news_fmt.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
+const ThemeS := preload("res://scripts/ui/theme.gd")
 
 static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	var Fac = load("res://scripts/title/news.gd")
@@ -20,7 +21,7 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	box.offset_bottom = 280
 	box.add_theme_constant_override("separation", 12)
 	host._news_layer.add_child(box)
-	box.add_child(host._lab(App.tr("news_show.what_s_new"), 32, Color(0.92, 0.78, 0.48)))
+	box.add_child(host._lab(App.tr("news_show.what_s_new"), 32, ThemeS.INK))
 	var text_shell := Control.new()
 	text_shell.custom_minimum_size = Vector2(720, 320)
 	text_shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -55,9 +56,8 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.custom_minimum_size = Vector2(668, 0)
 	body.add_theme_font_size_override("normal_font_size", 18)
-	body.add_theme_color_override("default_color", Color(0.86, 0.8, 0.7))
-	body.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	body.add_theme_constant_override("outline_size", 4)
+	body.add_theme_color_override("default_color", ThemeS.INK)
+	body.add_theme_constant_override("outline_size", 0)
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.focus_mode = Control.FOCUS_NONE
 	body.text = Fmt.news_text(Fac.all_entries(), new_labs)

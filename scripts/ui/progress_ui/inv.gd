@@ -26,11 +26,11 @@ static func rebuild_extract(ui) -> void:
 		title = App.tr("common.extraction_gate")
 	elif ui.extract_role == "gather":
 		title = App.tr("common.extraction_gate")
-	ui.box.add_child(ThemeS.lab(title, 32, Color(0.95, 0.82, 0.5)))
-	ui.box.add_child(ThemeS.lab(App.tr("inv.mail_goods_to_the_surface"), 18, Color(0.82, 0.76, 0.66)))
-	ui.status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
+	ui.box.add_child(ThemeS.lab(title, 32, ThemeS.INK))
+	ui.box.add_child(ThemeS.lab(App.tr("inv.mail_goods_to_the_surface"), 18, ThemeS.INK_SOFT))
+	ui.status = ThemeS.lab("", 20, ThemeS.INK)
 	ui.box.add_child(ui.status)
-	ui.focus_btn = ThemeS.btn(App.tr("common.send_all"), func(): Confirm.open(ui, App.tr("common.send_all"), App.tr("inv.mail_all_extractable_goods_to"), func(): ui._do_send_all()))
+	ui.focus_btn = ThemeS.btn(App.tr("common.send_all"), func(): Confirm.open(ui, App.tr("common.send_all"), App.tr("inv.mail_all_extractable_goods_to"), func(): ui._do_send_all()), true, "primary")
 	ui.box.add_child(ui.focus_btn)
 	for it in App.prog.extractable(ui.extract_role):
 		var cap := str(it.get("name", "?"))

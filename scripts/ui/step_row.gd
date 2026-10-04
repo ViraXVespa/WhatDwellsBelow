@@ -7,17 +7,17 @@ static func make(caption: String, on_down: Callable, on_up: Callable) -> HBoxCon
 	row.add_theme_constant_override("separation", 8)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	var cap: Label = _row_lab(caption, 20, Color(0.92, 0.84, 0.62))
+	var cap: Label = _row_lab(caption, 20, ThemeS.INK)
 	cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	row.add_child(cap)
 	var minus: Button = ThemeS.btn("−", on_down)
 	row.add_child(minus)
-	var nlab: Label = _row_lab("", 22, Color(0.95, 0.82, 0.5))
+	var nlab: Label = _row_lab("", 22, ThemeS.INK)
 	nlab.custom_minimum_size = Vector2(48, 44)
 	row.add_child(nlab)
 	var plus: Button = ThemeS.btn("+", on_up)
 	row.add_child(plus)
-	var suf: Label = _row_lab("", 20, Color(0.82, 0.76, 0.66))
+	var suf: Label = _row_lab("", 20, ThemeS.INK_SOFT)
 	suf.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	row.add_child(suf)
 	row.set_meta("step_caption", cap)

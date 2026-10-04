@@ -27,7 +27,7 @@ static func close(parent: Node) -> void:
 			focus_to.call_deferred("grab_focus")
 
 ## on_no runs when the player cancels (Cancel button, Back or pause key); closing by code does not call it.
-static func open(parent: Node, title: String, body: String, on_yes: Callable, on_no := Callable()) -> void:
+static func open(parent: Node, title: String, body: String, on_yes: Callable, on_no: Callable = Callable(), role: String = "primary") -> void:
 	var prev: Control = parent.get_viewport().gui_get_focus_owner() if parent.get_viewport() else null
 	var prev_footer: Array = []
 	if parent is CanvasLayer:
@@ -50,11 +50,11 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 	Plate.dim(root)
 	Plate.plate(root, Vector2(560, 280), Vector2(800, 360))
 	Plate.edge(root, Vector2(560, 280), 800.0)
-	var cap: Label = ThemeS.lab(title, 28, Color(0.95, 0.86, 0.55))
+	var cap: Label = ThemeS.lab(title, 28, ThemeS.INK)
 	cap.position = Vector2(592, 308)
 	cap.size = Vector2(736, 40)
 	root.add_child(cap)
-	var msg: Label = ThemeS.lab(body, 20, Color(0.86, 0.8, 0.7))
+	var msg: Label = ThemeS.lab(body, 20, ThemeS.INK_SOFT)
 	msg.position = Vector2(592, 360)
 	msg.size = Vector2(736, 120)
 	msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -63,7 +63,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 		close(parent)
 		if on_yes.is_valid():
 			on_yes.call()
-	)
+	, true, role)
 	yes.position = Vector2(592, 520)
 	yes.size = Vector2(340, 52)
 	root.add_child(yes)
@@ -71,7 +71,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 		close(parent)
 		if on_no.is_valid():
 			on_no.call()
-	)
+	, true, "secondary")
 	no.position = Vector2(980, 520)
 	no.size = Vector2(340, 52)
 	no.shortcut = _cancel_shortcut()

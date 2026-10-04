@@ -91,9 +91,4 @@ static func _find_key(root: Node, key: String) -> Control:
 	return null
 
 static func _paint_on(b: Button) -> void:
-	var ink := Color(0.92, 0.84, 0.62)
-	b.add_theme_color_override("font_color", ink)
-	b.add_theme_stylebox_override("normal", ThemeS.sb(Color(0.3, 0.22, 0.14), Color(0.75, 0.58, 0.28)))
-	b.add_theme_stylebox_override("focus", ThemeS.sb(Color(0.3, 0.22, 0.14), Color(0.75, 0.58, 0.28)))
-	b.add_theme_stylebox_override("hover", ThemeS.sb(Color(0.38, 0.28, 0.16), Color(0.95, 0.78, 0.35)))
-	b.add_theme_stylebox_override("pressed", ThemeS.sb(Color(0.38, 0.28, 0.16), Color(0.95, 0.78, 0.35)))
+	ThemeS.paint_tab(b, true)

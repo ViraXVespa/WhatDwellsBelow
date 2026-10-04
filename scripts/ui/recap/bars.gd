@@ -12,7 +12,7 @@ const COL_DUNGEON := Color(0.86, 0.74, 0.32)
 static func skill_title(id: String) -> String:
 	return LocS.tr_or("skill." + id, id)
 
-static func skill_lab(text: String, size := 16, col := Color(0.9, 0.84, 0.7)) -> Label:
+static func skill_lab(text: String, size: int = 16, col: Color = ThemeS.INK) -> Label:
 	return SkillRow.skill_lab(text, size, col)
 
 static func make_block(host: Node, id: String, kind: String) -> Dictionary:
@@ -21,7 +21,7 @@ static func make_block(host: Node, id: String, kind: String) -> Dictionary:
 	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	inner.add_theme_constant_override("separation", 4)
-	var lab := skill_lab("", 16, Color(0.9, 0.84, 0.7))
+	var lab := skill_lab("", 16, ThemeS.INK)
 	inner.add_child(lab)
 	var track := SkillRow.make_track()
 	inner.add_child(track)

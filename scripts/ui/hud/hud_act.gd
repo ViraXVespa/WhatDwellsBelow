@@ -3,6 +3,7 @@ extends Object
 ## HUD refresh. Host is the CanvasLayer at scripts/ui/hud.gd.
 
 const Prompts := preload("res://scripts/input/prompts.gd")
+const ThemeS := preload("res://scripts/ui/theme.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Look := preload("res://scripts/input/look_ctrl.gd")
 const View := preload("res://scripts/ui/hud/hud_view.gd")
@@ -91,9 +92,9 @@ static func paint_prompt(host: CanvasLayer) -> void:
 		return
 	var locked: bool = App.interact_locked
 	if locked:
-		PromptView.fill(host.prompt_row, [{"text": text}], 16, Color(0.95, 0.82, 0.4))
+		PromptView.fill(host.prompt_row, [{"text": text}], 16, ThemeS.INK)
 	else:
-		PromptView.fill(host.prompt_row, [{"action": "interact", "verb": text}], 16, Color(0.95, 0.82, 0.4))
+		PromptView.fill(host.prompt_row, [{"action": "interact", "verb": text}], 16, ThemeS.INK)
 
 static func style_name() -> String:
 	if App.weapon == "staff":

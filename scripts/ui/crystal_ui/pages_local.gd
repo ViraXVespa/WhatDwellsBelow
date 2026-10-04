@@ -35,9 +35,9 @@ static func page_local(host) -> void:
 	box.add_theme_constant_override("separation", 8)
 	host.add_child(box)
 	Net.net_tabs(host, box)
-	box.add_child(ThemeS.lab(App.tr("common.local_transport_network"), 28, Color(0.95, 0.82, 0.5)))
-	box.add_child(ThemeS.lab(App.tr("pages_local.bound_crystals_on_this_floor"), 18, Color(0.78, 0.74, 0.66)))
-	host.status = ThemeS.lab(Util.zoom_tip(host), 18, Color(0.7, 0.66, 0.58))
+	box.add_child(ThemeS.lab(App.tr("common.local_transport_network"), 28, ThemeS.INK))
+	box.add_child(ThemeS.lab(App.tr("pages_local.bound_crystals_on_this_floor"), 18, ThemeS.INK_SOFT))
+	host.status = ThemeS.lab(Util.zoom_tip(host), 18, ThemeS.INK_FAINT)
 	box.add_child(host.status)
 	var first: Button = null
 	for n: Node in CrystalNet.activated_on_floor(host.host):

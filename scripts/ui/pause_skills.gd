@@ -26,7 +26,7 @@ static func run_line(ui: CanvasLayer, id: String, perm: float, runx: float) -> S
 		int(round(CombatP.xp_to_next(App.prog, live))),
 	]
 
-static func skill_lab(text: String, size: int = 16, col: Color = Color(0.9, 0.84, 0.7)) -> Label:
+static func skill_lab(text: String, size: int = 16, col: Color = ThemeS.INK) -> Label:
 	return SkillRow.skill_lab(text, size, col)
 
 static func skill_block(ui: CanvasLayer, id: String, kind: String, text: String, ratio: float, fill_col: Color) -> PanelContainer:
@@ -74,8 +74,8 @@ static func paint_tip(ui: CanvasLayer) -> void:
 	ui.tip_host.z_index = 90
 
 static func build(ui: CanvasLayer) -> void:
-	ui.box.add_child(ui._cap(App.tr("pause_skills.combat_level") % App.prog.combat_lv(), 24, Color(0.95, 0.8, 0.45)))
-	ui.box.add_child(ui._cap(App.tr("pause_skills.highlight_a_skill_for_its"), 16, Color(0.78, 0.74, 0.66)))
+	ui.box.add_child(ui._cap(App.tr("pause_skills.combat_level") % App.prog.combat_lv(), 24, ThemeS.INK))
+	ui.box.add_child(ui._cap(App.tr("pause_skills.highlight_a_skill_for_its"), 16, ThemeS.INK_SOFT))
 	var perm_col: Color = Color(0.72, 0.56, 0.28)
 	var run_col: Color = Color(0.86, 0.74, 0.32)
 	var first: PanelContainer = null
@@ -83,8 +83,8 @@ static func build(ui: CanvasLayer) -> void:
 		var heads: HBoxContainer = HBoxContainer.new()
 		heads.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		heads.add_theme_constant_override("separation", 24)
-		heads.add_child(skill_lab(App.tr("pause_skills.permanent"), 18, Color(0.95, 0.8, 0.45)))
-		heads.add_child(skill_lab(App.tr("common.dungeon_xp"), 18, Color(0.95, 0.8, 0.45)))
+		heads.add_child(skill_lab(App.tr("pause_skills.permanent"), 18, ThemeS.INK))
+		heads.add_child(skill_lab(App.tr("common.dungeon_xp"), 18, ThemeS.INK))
 		ui.box.add_child(heads)
 		for id: String in App.prog.SKILLS:
 			var perm: float = float(App.prog.skills_perm.get(id, 0.0))

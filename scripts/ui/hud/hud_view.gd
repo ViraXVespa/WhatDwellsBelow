@@ -8,12 +8,12 @@ static func build(host: CanvasLayer) -> void:
 	host.strip = Control.new()
 	host.add_child(host.strip)
 	var bg := ColorRect.new()
-	bg.color = Color(0.08, 0.06, 0.05, 0.88)
+	bg.color = ThemeS.PAPER
 	bg.size = Vector2(host.STRIP_W, host.STRIP_H)
 	host.strip.add_child(bg)
 	var edge := ColorRect.new()
-	edge.color = Color(0.55, 0.42, 0.22, 1)
-	edge.size = Vector2(host.STRIP_W, 5)
+	edge.color = ThemeS.RULE
+	edge.size = Vector2(host.STRIP_W, 3)
 	host.strip.add_child(edge)
 	host.portrait = TextureRect.new()
 	host.portrait.position = Vector2(10, 14)
@@ -53,7 +53,7 @@ static func build(host: CanvasLayer) -> void:
 	host.shrine_icon.visible = false
 	host.strip.add_child(host.shrine_icon)
 	host.shrine_lab = lab(host.strip, Vector2(42, 142), Vector2(220, 28), 18)
-	host.shrine_lab.add_theme_color_override("font_color", Color(1.0, 0.72, 0.35))
+	host.shrine_lab.add_theme_color_override("font_color", Color(0.55, 0.28, 0.08))
 	host.food_icon = TextureRect.new()
 	host.food_icon.position = Vector2(270, 140)
 	host.food_icon.size = Vector2(28, 28)
@@ -65,20 +65,20 @@ static func build(host: CanvasLayer) -> void:
 	host.food_icon.visible = false
 	host.strip.add_child(host.food_icon)
 	host.food_lab = lab(host.strip, Vector2(302, 142), Vector2(220, 28), 18)
-	host.food_lab.add_theme_color_override("font_color", Color(0.7, 0.92, 0.5))
+	host.food_lab.add_theme_color_override("font_color", Color(0.18, 0.40, 0.14))
 	host.prompt_row = HBoxContainer.new()
 	host.prompt_row.position = Vector2(10, 168)
 	host.prompt_row.size = Vector2(520, 24)
 	host.prompt_row.add_theme_constant_override("separation", 8)
 	host.prompt_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	host.strip.add_child(host.prompt_row)
-	host.toast = lab(host, Vector2(24, 16 + host.STRIP_H + 8), Vector2(540, 28), 20)
+	host.toast = lab(host, Vector2(24, 16 + host.STRIP_H + 8), Vector2(540, 28), 20, true)
 	host.toast.add_theme_color_override("font_color", Color(1.0, 0.88, 0.45))
 	host.boss_wrap = Control.new()
 	host.boss_wrap.size = Vector2(520, 50)
 	host.add_child(host.boss_wrap)
 	host.boss_fill = meter(host.boss_wrap, Vector2(0, 18), Vector2(360, 18), Color(0.75, 0.15, 0.2))
-	host.boss_lab = lab(host.boss_wrap, Vector2(0, 0), Vector2(360, 20), 16)
+	host.boss_lab = lab(host.boss_wrap, Vector2(0, 0), Vector2(360, 20), 16, true)
 	host.mini_wrap = Control.new()
 	host.add_child(host.mini_wrap)
 	host.mini_map = TextureRect.new()
@@ -87,9 +87,15 @@ static func build(host: CanvasLayer) -> void:
 	host.mini_map.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	host.mini_map.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	host.mini_map.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var mini_frame := ColorRect.new()
+	mini_frame.color = ThemeS.RULE
+	mini_frame.position = Vector2(-3, -3)
+	mini_frame.size = Vector2(host.MINI_W + 6, host.MINI_H + 6)
+	mini_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	host.mini_wrap.add_child(mini_frame)
 	host.mini_wrap.add_child(host.mini_map)
-	host.fps_lab = lab(host, Vector2.ZERO, Vector2(140, 28), 16)
-	host.look_lab = lab(host, Vector2.ZERO, Vector2(420, 28), 16)
+	host.fps_lab = lab(host, Vector2.ZERO, Vector2(140, 28), 16, true)
+	host.look_lab = lab(host, Vector2.ZERO, Vector2(420, 28), 16, true)
 	host.look_lab.add_theme_color_override("font_color", Color(0.95, 0.82, 0.45))
 	layout(host)
 	load_portrait(host)
@@ -123,7 +129,7 @@ static func load_portrait(host: CanvasLayer) -> void:
 
 static func meter(owner: Control, pos: Vector2, sz: Vector2, col: Color) -> ColorRect:
 	var back := ColorRect.new()
-	back.color = Color(0.12, 0.1, 0.09, 1)
+	back.color = Color(0.55, 0.42, 0.30, 1)
 	back.position = pos
 	back.size = sz
 	owner.add_child(back)
@@ -134,13 +140,15 @@ static func meter(owner: Control, pos: Vector2, sz: Vector2, col: Color) -> Colo
 	owner.add_child(fill)
 	return fill
 
-static func lab(owner: Node, pos: Vector2, sz: Vector2, fs: int) -> Label:
+static func lab(owner: Node, pos: Vector2, sz: Vector2, fs: int, over_world: bool = false) -> Label:
 	var l := Label.new()
 	l.position = pos
 	l.size = sz
 	l.add_theme_font_size_override("font_size", fs)
-	l.add_theme_color_override("font_color", Color(0.92, 0.86, 0.72))
-	l.add_theme_color_override("font_outline_color", ThemeS.PROMPT_OUTLINE)
-	l.add_theme_constant_override("outline_size", ThemeS.PROMPT_OUTLINE_SIZE)
+	var col: Color = Color(0.95, 0.90, 0.78) if over_world else ThemeS.INK
+	l.add_theme_color_override("font_color", col)
+	if over_world:
+		l.add_theme_color_override("font_outline_color", ThemeS.PROMPT_OUTLINE)
+		l.add_theme_constant_override("outline_size", ThemeS.PROMPT_OUTLINE_SIZE)
 	owner.add_child(l)
 	return l
