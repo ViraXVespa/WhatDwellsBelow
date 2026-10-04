@@ -26,6 +26,6 @@ The selected pause or anvil tab uses the deeper paper and the ink underline. Hov
 
 The pause container keeps the journal materials: leather, paper fiber, dark ink, bookmark tabs. It does not have to be one open book with a binding down the middle. Treat it as a binder that holds separate documents. A settings page, a skill list, a confirm slip, and the inventory sheet are papers in that binder. Each document is sized to what it has to say, so a control row is never split by a gutter.
 
-The two-page crease on the current pause is a step, not the rule for the next pass. Inventory, as approved on the field-journal commit, stays the material and type reference. Do not throw that look away. The next layout pass reworks the container so a document can be one sheet, two sheets, or a slip on top, whichever lets the controls sit cleanly.
+The pause is not one open book. Settings is two sheets, the left one shorter than the right. Inventory is two even sheets. Skills is two sheets split right of center. A confirm is a slip on top. Inventory, as approved on the field-journal commit, stays the material and type reference. Do not throw that look away. A document is one sheet, two sheets, or a slip on top, whichever lets the controls sit cleanly.
 
 Words, gamepad order, and what each control does stay unless a later answer changes them. Debug screens stay plain.

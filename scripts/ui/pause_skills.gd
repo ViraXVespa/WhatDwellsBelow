@@ -46,11 +46,16 @@ static func tip_lv(_ui: CanvasLayer, id: String, kind: String) -> int:
 		return CombatP.level_from_xp(App.prog, perm + runx)
 	return CombatP.level_from_xp(App.prog, perm)
 
-static func _page_w(ui: CanvasLayer) -> float:
+static func _pair(ui: CanvasLayer) -> Array:
 	var span: float = 1752.0
 	if ui.scroll and ui.scroll.size.x > 10.0:
 		span = ui.scroll.size.x
-	return (span - Journal.GUTTER) * 0.5
+	return Journal.pair(span, Journal.SKILLS_LEFT)
+
+static func _page_w(ui: CanvasLayer) -> float:
+	var cols: Array = _pair(ui)
+	var left_box: Rect2 = cols[0]
+	return left_box.size.x
 
 static func _left_col(ui: CanvasLayer) -> VBoxContainer:
 	var col := VBoxContainer.new()
@@ -65,16 +70,17 @@ static func paint_tip(ui: CanvasLayer) -> void:
 		if ui.tip_host:
 			ui.tip_host.visible = false
 		return
-	var page: float = _page_w(ui)
+	var cols: Array = _pair(ui)
+	var right_box: Rect2 = cols[1]
 	var origin: Vector2 = ui.scroll.position if ui.scroll else Vector2(84, 102)
-	var w: float = page - 36.0
+	var w: float = right_box.size.x - 36.0
 	ui.tip_lab.text = ThemeS.skill_tip(ui.tip_id, tip_lv(ui, ui.tip_id, ui.tip_kind))
 	ui.tip_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	ui.tip_lab.add_theme_font_override("font", ThemeS.ink_font())
 	ui.tip_lab.add_theme_constant_override("outline_size", 0)
 	ui.tip_lab.custom_minimum_size = Vector2(w - 28.0, 0.0)
 	var h: float = maxf(120.0, ui.tip_lab.get_minimum_size().y + 28.0)
-	ui.tip_host.position = Vector2(origin.x + page + Journal.GUTTER + 18.0, origin.y + 8.0)
+	ui.tip_host.position = Vector2(origin.x + right_box.position.x + 18.0, origin.y + 8.0)
 	ui.tip_host.size = Vector2(w, h)
 	ui.tip_host.visible = true
 	ui.tip_host.z_index = 4

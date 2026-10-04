@@ -59,4 +59,4 @@ static func build(host: CanvasLayer) -> void:
 	host.tab_wrap.add_child(host.tab_left)
 	host.tab_wrap.add_child(host.tab_scroll)
 	host.tab_wrap.add_child(host.tab_right)
-	ScrollBox.build(host, Vector2(left_x, panel.position.y + Journal.TOP), Vector2(content_w, panel.size.y - Journal.TOP - Journal.BOTTOM), 8)
+	ScrollBox.build(host, Vector2(left_x, panel.position.y + Journal.TOP + Journal.TEXT_DROP), Vector2(content_w, panel.size.y - Journal.TOP - Journal.BOTTOM - Journal.TEXT_DROP), 8)

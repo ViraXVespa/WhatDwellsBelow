@@ -159,13 +159,16 @@ func _fit_journal_columns() -> void:
 		span = pause.scroll.size.x
 	if span < 10.0:
 		return
-	var page: float = (span - Journal.GUTTER) * 0.5
-	var list_end: float = page - 24.0
-	var info_x: float = page + Journal.GUTTER + 24.0
+	var cols: Array = Journal.pair(span, Journal.SETTINGS_LEFT)
+	var left_box: Rect2 = cols[0]
+	var right_box: Rect2 = cols[1]
+	var list_end: float = left_box.size.x - 16.0
+	var info_x: float = right_box.position.x + 16.0
+	var info_end: float = right_box.position.x + right_box.size.x - 10.0
 	_span_col(_list_root, 0.0, list_end, 8.0, 0.0)
 	_span_col(_list_rule, 0.0, list_end, 0.0, 6.0)
-	_span_col(_info_root, info_x, span - 10.0, 8.0, 0.0)
-	_span_col(_info_rule, info_x, span - 10.0, 0.0, 6.0)
+	_span_col(_info_root, info_x, info_end, 8.0, 0.0)
+	_span_col(_info_rule, info_x, info_end, 0.0, 6.0)
 	if _chevron:
 		_chevron.anchor_left = 0.0
 		_chevron.anchor_right = 0.0

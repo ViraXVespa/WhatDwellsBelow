@@ -51,6 +51,26 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 	Plate.dim(root)
 	var card := Vector2(560, 280)
 	var card_sz := Vector2(800, 360)
+	var back: ColorRect = ColorRect.new()
+	back.color = Color(0.95, 0.90, 0.80, 1.0)
+	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	back.position = card
+	back.size = card_sz
+	root.add_child(back)
+	if parent.has_meta("journal_sheet"):
+		var lip_tones: Array[Color] = [
+			Color(0.78, 0.68, 0.52, 1.0),
+			Color(0.62, 0.50, 0.36, 1.0),
+			Color(0.48, 0.36, 0.24, 1.0),
+		]
+		for i: int in lip_tones.size():
+			var step: float = float(i) * 4.0
+			var lip: ColorRect = ColorRect.new()
+			lip.color = lip_tones[i]
+			lip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			lip.position = Vector2(card.x + 12.0, card.y + card_sz.y + step)
+			lip.size = Vector2(card_sz.x - 28.0, 4.0)
+			root.add_child(lip)
 	var paper := TextureRect.new()
 	paper.texture = Journal._tex_at(Journal.PAPER_PATH)
 	paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE

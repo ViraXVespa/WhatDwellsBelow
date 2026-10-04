@@ -71,7 +71,19 @@ def main(argv: list[str] | None = None) -> int:
         ch = subprocess.run(["git", "status", "--porcelain", "--", "assets"], cwd=root, capture_output=True, text=True).stdout.splitlines()
         imp = [ln[3:].strip() for ln in ch if ln[:2].strip() == "M" and ln.rstrip().endswith(".import")]
         if imp:
-            subprocess.run(["git", "checkout", "--", *imp], cwd=root)
+            # One git checkout of every assets/*.import path overflows the
+            # Windows command line (WinError 206) on a fresh worktree.
+            batch: list[str] = []
+            budget = 0
+            for rel in imp:
+                if batch and budget + len(rel) + 1 > 24000:
+                    subprocess.run(["git", "checkout", "--", *batch], cwd=root, check=False)
+                    batch = []
+                    budget = 0
+                batch.append(rel)
+                budget += len(rel) + 1
+            if batch:
+                subprocess.run(["git", "checkout", "--", *batch], cwd=root, check=False)
         body += [f"--- restored {len(imp)} assets/*.import files ---", ""]
     if args.batch:
         print("== load graph ==")

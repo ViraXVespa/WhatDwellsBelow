@@ -20,6 +20,26 @@ const PAD: float = 52.0
 const TOP: float = 86.0
 const GUTTER: float = 34.0
 const BOTTOM: float = 52.0
+## Bookmarks hang on the top of the paper. Text starts below that overlap.
+const TEXT_DROP: float = 18.0
+const KIND_ONE: int = 0
+const KIND_TWO: int = 1
+## Share of the usable width given to the left sheet. The gap sits after it.
+const SETTINGS_LEFT: float = 0.34
+const SKILLS_LEFT: float = 0.68
+const EVEN_LEFT: float = 0.5
+
+var kind: int = KIND_TWO
+var left_share: float = EVEN_LEFT
+
+static func pair(span: float, share: float) -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	var usable: float = maxf(8.0, span - GUTTER)
+	var clamped: float = clampf(share, 0.22, 0.78)
+	var left_w: float = usable * clamped
+	out.append(Rect2(0.0, 0.0, left_w, 0.0))
+	out.append(Rect2(left_w + GUTTER, 0.0, usable - left_w, 0.0))
+	return out
 
 static func place(node: Control, panel_pos: Vector2, panel_size: Vector2) -> void:
 	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -28,27 +48,60 @@ static func place(node: Control, panel_pos: Vector2, panel_size: Vector2) -> voi
 	node.size = panel_size
 	node.queue_redraw()
 
+func set_layout(next_kind: int, share: float) -> void:
+	if kind == next_kind and is_equal_approx(left_share, share):
+		return
+	kind = next_kind
+	left_share = share
+	queue_redraw()
+
 func _draw() -> void:
 	if size.x < 32.0 or size.y < 32.0:
 		return
 	draw_texture_rect(_tex_at(LEATHER_PATH), Rect2(Vector2.ZERO, size), true)
-	var page_w: float = (size.x - PAD * 2.0 - GUTTER) * 0.5
-	var page_h: float = size.y - TOP - BOTTOM
-	if page_w < 8.0 or page_h < 8.0:
+	var sheets: Array[Rect2] = _sheets()
+	if sheets.is_empty():
 		return
-	var left: Rect2 = Rect2(PAD, TOP, page_w, page_h)
-	var right: Rect2 = Rect2(PAD + page_w + GUTTER, TOP, page_w, page_h)
-	draw_rect(Rect2(left.position.x + 6.0, left.position.y + left.size.y - 2.0, page_w - 22.0, 14.0), Color(0.04, 0.02, 0.01, 0.35))
-	draw_rect(Rect2(right.position.x + 16.0, right.position.y + right.size.y - 2.0, page_w - 22.0, 14.0), Color(0.04, 0.02, 0.01, 0.32))
 	var page_tex: Texture2D = _tex_at(PAPER_PATH)
-	draw_texture_rect(page_tex, left, true)
-	draw_texture_rect(page_tex, right, true)
-	_crease(left, right)
-	draw_line(left.position, left.position + Vector2(0.0, page_h), Color(0.55, 0.40, 0.26, 0.45), 1.0)
-	draw_line(right.position + Vector2(page_w, 0.0), right.position + Vector2(page_w, page_h), Color(0.55, 0.40, 0.26, 0.45), 1.0)
-	_sheet_edges(left, right)
+	var last: int = sheets.size() - 1
+	for i: int in sheets.size():
+		var sheet: Rect2 = sheets[i]
+		_drop(sheet)
+		draw_texture_rect(page_tex, sheet, true)
+		_rule(sheet)
+		_sheet_edges(sheet, i == 0, i == last)
 
-func _sheet_edges(left: Rect2, right: Rect2) -> void:
+func _sheets() -> Array[Rect2]:
+	var page_h: float = size.y - TOP - BOTTOM
+	var out: Array[Rect2] = []
+	if page_h < 8.0:
+		return out
+	if kind == KIND_TWO:
+		var cols: Array[Rect2] = pair(size.x - PAD * 2.0, left_share)
+		if cols[0].size.x < 8.0 or cols[1].size.x < 8.0:
+			return out
+		out.append(Rect2(PAD + cols[0].position.x, TOP, cols[0].size.x, page_h))
+		out.append(Rect2(PAD + cols[1].position.x, TOP, cols[1].size.x, page_h))
+		return out
+	var one_w: float = size.x - PAD * 2.0
+	if one_w < 8.0:
+		return out
+	out.append(Rect2(PAD, TOP, one_w, page_h))
+	return out
+
+func _drop(sheet: Rect2) -> void:
+	draw_rect(Rect2(sheet.position.x + 10.0, sheet.position.y + sheet.size.y - 2.0, sheet.size.x - 20.0, 14.0), Color(0.04, 0.02, 0.01, 0.32))
+
+func _rule(sheet: Rect2) -> void:
+	var tone: Color = Color(0.55, 0.40, 0.26, 0.55)
+	var origin: Vector2 = sheet.position
+	var far: Vector2 = sheet.position + sheet.size
+	draw_line(origin, Vector2(far.x, origin.y), tone, 1.0)
+	draw_line(origin, Vector2(origin.x, far.y), tone, 1.0)
+	draw_line(Vector2(far.x, origin.y), far, tone, 1.0)
+	draw_line(Vector2(origin.x, far.y), far, tone, 1.0)
+
+func _sheet_edges(sheet: Rect2, stack_left: bool, stack_right: bool) -> void:
 	var tones: Array[Color] = [
 		Color(0.78, 0.68, 0.52, 1.0),
 		Color(0.62, 0.50, 0.36, 1.0),
@@ -57,18 +110,8 @@ func _sheet_edges(left: Rect2, right: Rect2) -> void:
 	for i: int in tones.size():
 		var tone: Color = tones[i]
 		var step: float = float(i) * 4.0
-		draw_rect(Rect2(left.position.x - 4.0 - step, left.position.y + 8.0 + step, 4.0, left.size.y - 10.0), tone)
-		draw_rect(Rect2(right.position.x + right.size.x + step, right.position.y + 8.0 + step, 4.0, right.size.y - 10.0), tone)
-		draw_rect(Rect2(left.position.x + 10.0, left.position.y + left.size.y + step, left.size.x - 26.0, 4.0), tone)
-		draw_rect(Rect2(right.position.x + 16.0, right.position.y + right.size.y + step, right.size.x - 26.0, 4.0), tone)
-
-func _crease(left: Rect2, right: Rect2) -> void:
-	var y: float = left.position.y
-	var h: float = left.size.y
-	var x: float = left.position.x + left.size.x
-	draw_rect(Rect2(x - 12.0, y, 12.0, h), Color(0.28, 0.18, 0.10, 0.16))
-	draw_rect(Rect2(right.position.x, y, 12.0, h), Color(0.28, 0.18, 0.10, 0.16))
-	draw_rect(Rect2(x, y, GUTTER, h), Color(0.36, 0.22, 0.13, 0.72))
-	draw_rect(Rect2(x + GUTTER * 0.5 - 2.0, y, 4.0, h), Color(0.14, 0.08, 0.05, 0.45))
-	draw_line(Vector2(x + 1.0, y), Vector2(x + 1.0, y + h), Color(0.96, 0.91, 0.82, 0.45), 1.0)
-	draw_line(Vector2(right.position.x - 1.0, y), Vector2(right.position.x - 1.0, y + h), Color(0.96, 0.91, 0.82, 0.35), 1.0)
+		if stack_left:
+			draw_rect(Rect2(sheet.position.x - 4.0 - step, sheet.position.y + 8.0 + step, 4.0, sheet.size.y - 10.0), tone)
+		if stack_right:
+			draw_rect(Rect2(sheet.position.x + sheet.size.x + step, sheet.position.y + 8.0 + step, 4.0, sheet.size.y - 10.0), tone)
+		draw_rect(Rect2(sheet.position.x + 12.0, sheet.position.y + sheet.size.y + step, sheet.size.x - 24.0, 4.0), tone)

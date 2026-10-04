@@ -13,6 +13,7 @@ const UiText := preload("res://scripts/ui/ui_text.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const Split := preload("res://scripts/ui/split_menu.gd")
+const Journal: GDScript = preload("res://scripts/ui/pause_menu/journal_page.gd")
 
 static func toggle(host: CanvasLayer) -> void:
 	if host.open:
@@ -170,6 +171,13 @@ static func _paint_page(host: CanvasLayer) -> void:
 	var page: Node = host.get_node_or_null("journal_page")
 	if page is CanvasItem:
 		(page as CanvasItem).visible = true
+		if page.has_method("set_layout"):
+			var share: float = Journal.EVEN_LEFT
+			if host.tab == host.TAB_SETTINGS:
+				share = Journal.SETTINGS_LEFT
+			elif host.tab != host.TAB_INV:
+				share = Journal.SKILLS_LEFT
+			page.call("set_layout", Journal.KIND_TWO, share)
 	var edge: Node = host.get_node_or_null("menu_edge")
 	if edge is CanvasItem:
 		(edge as CanvasItem).visible = false
