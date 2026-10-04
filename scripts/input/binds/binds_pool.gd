@@ -43,15 +43,23 @@ static func slot_event(action: String, pool: String, slot: int) -> InputEvent:
 		return null
 	return evs[slot]
 
+const REFUSED := 0
+const BOUND := 1
+const SWAPPED := 2
+## The action that held ev during the last bind_slot call ("" when none); names the partner of a swap or refusal.
+static var last_other := ""
+
 ## Writes ev into one slot; an equal event on another action swaps in the displaced one.
-## Returns false (no change) for a fixed pool, a stick axis, or a swap that would leave the other action unbound.
-static func bind_slot(action: String, pool: String, slot: int, ev: InputEvent) -> bool:
+## Returns BOUND, SWAPPED (the other action took the displaced event), or REFUSED (no change: fixed pool, stick axis,
+## or a swap that would leave the other action unbound).
+static func bind_slot(action: String, pool: String, slot: int, ev: InputEvent) -> int:
+	last_other = ""
 	if not Table.can_rebind(action, pool) or not event_in_pool(ev, pool):
-		return false
+		return REFUSED
 	if ev is InputEventJoypadMotion:
 		var ax: int = (ev as InputEventJoypadMotion).axis
 		if ax == JOY_AXIS_LEFT_X or ax == JOY_AXIS_LEFT_Y or ax == JOY_AXIS_RIGHT_X or ax == JOY_AXIS_RIGHT_Y:
-			return false
+			return REFUSED
 	if not InputMap.has_action(action):
 		InputMap.add_action(action, 0.25)
 	var other_act: String = ""
@@ -67,12 +75,17 @@ static func bind_slot(action: String, pool: String, slot: int, ev: InputEvent) -
 		if other_act != "":
 			break
 	var displaced: InputEvent = slot_event(action, pool, slot)
+	last_other = other_act
+	if other_act == action and displaced == null:
+		last_other = ""
+		return REFUSED
 	if other_act != "" and displaced == null and pool_events(other_act, pool).size() < 2:
-		return false
+		return REFUSED
 	_write_slot(action, pool, slot, ev)
 	if other_act != "":
 		_write_slot(other_act, pool, other_slot, displaced)
-	return true
+		return SWAPPED
+	return BOUND
 
 static func _write_slot(action: String, pool: String, slot: int, ev: InputEvent) -> void:
 	var keep: Array = []

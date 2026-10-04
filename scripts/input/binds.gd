@@ -3,6 +3,9 @@
 const Pool := preload("res://scripts/input/binds/binds_pool.gd")
 const Defaults := preload("res://scripts/input/binds/defaults.gd")
 const Table := preload("res://scripts/input/binds/table.gd")
+const REFUSED := Pool.REFUSED
+const BOUND := Pool.BOUND
+const SWAPPED := Pool.SWAPPED
 
 ## Saved / reset actions: every row of table.gd (the single home for bindings).
 static func actions() -> PackedStringArray:
@@ -85,8 +88,12 @@ static func event_in_pool(e: InputEvent, pool: String) -> bool:
 static func slot_event(action: String, pool: String, slot: int) -> InputEvent:
 	return Pool.slot_event(action, pool, slot)
 
-static func bind_slot(action: String, pool: String, slot: int, ev: InputEvent) -> bool:
+static func bind_slot(action: String, pool: String, slot: int, ev: InputEvent) -> int:
 	return Pool.bind_slot(action, pool, slot, ev)
+
+## Action that shared the last bound / refused event ("" when none).
+static func last_other() -> String:
+	return Pool.last_other
 
 static func reset_pool(pool: String) -> void:
 	Pool.reset_pool(pool)
