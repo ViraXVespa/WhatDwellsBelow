@@ -41,14 +41,16 @@ def _git(root: Path, *a: str) -> str:
     return p.stdout.strip() if p.returncode == 0 else ""
 
 
-def skeleton(root: Path, area: str, door: str, job: str, session: str = "") -> str:
+def skeleton(root: Path, area: str, door: str, job: str, session: str = "", units: list[str] | None = None, done: list[str] | None = None) -> str:
     path = handoff_path(root)
     first = f'python tools/start_build_slice.py --door {door or "<door>"}' + (f" --job {job}" if job else "") + f' --from-handoff "{path}"'
-    head = [f"# Handoff: {area}", f"area: {area}", f"door: {door}", f"job: {job}",
-            f"from: survey session {session or '(id unknown)'} in {root}",
-            f"Your first command, before any file read or memory topic: {first}",
-            "The survey is done and the answers below stand; ask again only what Open questions lists or what a discovery changes. "
-            "Open no pictures except the baselines listed for the chosen surface.", ""]
+    head = [f"# Handoff: {area}", f"area: {area}", f"door: {door}", f"job: {job}"]
+    if units:  # a door worked as a queue of units: the order and what is done travel with the handoff
+        head += ["units: " + ", ".join(units), "done: " + (", ".join(done) if done else "none")]
+    head += [f"from: survey session {session or '(id unknown)'} in {root}",
+             f"Your first command, before any file read or memory topic: {first}",
+             "The survey is done and the answers below stand; ask again only what Open questions lists or what a discovery changes. "
+             "Open no pictures except the baselines listed for the chosen surface.", ""]
     body: list[str] = []
     for title, hint in SECTIONS:
         body += [f"## {title}", hint, ""]
@@ -65,7 +67,7 @@ def parse(text: str) -> tuple[dict[str, str], dict[str, str]]:
             cur = line[3:].strip()
             secs[cur] = ""
         elif cur is None:
-            m = re.match(r"(area|door|job):\s*(.*)$", line)
+            m = re.match(r"(area|door|job|units|done):\s*(.*)$", line)
             if m:
                 head[m.group(1)] = m.group(2).strip()
         else:
@@ -87,18 +89,43 @@ def baselines(root: Path, body: str) -> list[tuple[str, bool, str]]:
     return out
 
 
+def code_names(root: Path, body: str) -> list[str]:
+    """Problems with `path: name, name` lines of the Files and functions section: the file must exist, and each plain identifier listed must be in it (a func, const or var)."""
+    bad: list[str] = []
+    for line in body.splitlines():
+        m = re.match(r"[-*\s]*`?([\w./-]+\.(?:gd|py))`?\s*:\s*(.+)$", line.strip())
+        if not m:
+            continue
+        f = root / m.group(1)
+        if not f.is_file():
+            bad.append(f"Files and functions: no file {m.group(1)}")
+            continue
+        src = f.read_text(encoding="utf-8-sig", errors="replace")
+        for piece in re.split(r"\.\s", m.group(2), maxsplit=1)[0].split(","):
+            name = piece.strip().strip("`")
+            if re.fullmatch(r"[A-Za-z_]\w*", name) and not re.search(r"\b%s\b" % re.escape(name), src):
+                bad.append(f"Files and functions: {m.group(1)} has no {name}")
+    return bad
+
+
 def check(root: Path, text: str) -> list[str]:
     """Problems that stop the handoff from being ready."""
     head, secs = parse(text)
     bad: list[str] = []
     if not head.get("area"):
         bad.append("header has no `area:` line")
+    if head.get("units"):
+        units = [u.strip() for u in head["units"].split(",") if u.strip()]
+        done = [u.strip() for u in head.get("done", "").split(",") if u.strip() and u.strip() != "none"]
+        if any("." not in u for u in units) or [d for d in done if d not in units]:
+            bad.append("header `units:` / `done:` must be door.job ids, and done a subset of units")
     for title, _ in SECTIONS:
         body = secs.get(title)
         if body is None:
             bad.append(f"section missing: {title}")
         elif not body or FILL in body:
             bad.append(f"section not filled in: {title}")
+    bad += code_names(root, secs.get("Files and functions to touch", ""))
     for p, ok, note in baselines(root, secs.get("Baselines for the chosen surface", "")):
         if not ok:
             bad.append(f"baseline not found: {p}")
@@ -171,7 +198,7 @@ def command(root: Path, area: str, path: Path) -> str:
     return f'python tools/open_slice.py {area} --prompt-file "{path}"'
 
 
-def start_block(root: Path, path: Path) -> list[str]:
+def start_block(root: Path, path: Path, queue: bool = False) -> list[str]:
     """What a fresh session prints for --from-handoff: where it came from and what to open; the full text is already its first message."""
     try:
         text = path.read_text(encoding="utf-8-sig")
@@ -180,7 +207,13 @@ def start_block(root: Path, path: Path) -> list[str]:
     head, secs = parse(text)
     lines = [f"HANDOFF from {path}: survey done. area={head.get('area', '')} door={head.get('door', '')} job={head.get('job', '')}",
              "Do not re-run the survey and do not open pictures other than the baselines below. Q0 answers, decisions and the ledger are in the handoff; they stand."]
-    for title in ("Chosen surfaces, in order", "Files and functions to touch", "Did not work", "Open questions"):
+    if head.get("units"):
+        units = [u.strip() for u in head["units"].split(",") if u.strip()]
+        done = [u.strip() for u in head.get("done", "").split(",") if u.strip() and u.strip() != "none"]
+        cur = next((u for u in units if u not in done), "")
+        lines.append(f"Units, her order: {', '.join(units)}. Done: {', '.join(done) or 'none'}. Current: {cur or 'all done'}. "
+                     "After a unit is committed and shown, `python tools/start_build_slice.py --next` prints the next unit's card (no new survey).")
+    for title in (() if queue else ("Chosen surfaces, in order", "Files and functions to touch", "Did not work", "Open questions")):  # a queue: those sections are in the first message already
         lines.append(f"{title}: " + " | ".join(l.strip().lstrip("-* ") for l in secs.get(title, "").splitlines() if l.strip()))
     bl = baselines(root, secs.get("Baselines for the chosen surface", ""))
     lines.append("Open these baselines (only these): " + ("; ".join(f"{p}{'' if ok else ' (MISSING: re-shoot it)'} - {n}" for p, ok, n in bl)
@@ -227,6 +260,14 @@ def selftest(script: Path) -> list[str]:
         code, out = run(main, "--handoff", "--door", "ui")
         if code == 0 or "worktree" not in out.lower():
             bad.append("--handoff in a main checkout must fail and say it belongs in the survey worktree")
+        sk = skeleton(survey, "ui", "ui", "", "s1", ["ui.a", "ui.b"], ["ui.a"])
+        first_line = next((l for l in sk.splitlines() if l.startswith("Your first command")), "")
+        if parse(sk)[0].get("units") != "ui.a, ui.b" or parse(sk)[0].get("done") != "ui.a" or "--job" in first_line:
+            bad.append("a skeleton for a unit queue must carry units / done header lines and a first command without --job")
+        if not any("units" in b for b in check(survey, "area: x\nunits: nodot\ndone: none\n")) or any("units" in b for b in check(survey, sk)):
+            bad.append("check must reject units that are not door.job ids and accept a queue with done a subset of units")
+        if not any("no file" in b for b in code_names(survey, "- scripts/none.gd: f")) or code_names(survey, "- design/ui.md: not an identifier here"):
+            bad.append("Files and functions: a missing file must be named; a description that is not a plain name is not checked")
         hp = handoff_path(survey)
         (survey / "_logs").mkdir(exist_ok=True)
         (survey / "_logs" / "slice-state.json").write_text('{"door": "ui", "job": "", "area": ""}\n', encoding="utf-8")

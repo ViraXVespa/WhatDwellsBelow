@@ -98,7 +98,7 @@ func _cap(text: String, size: int = 18, col: Color = ThemeS.INK) -> Label:
 	l.custom_minimum_size = UiText.min_size(520.0, 26.0)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
+	l.add_theme_color_override("font_outline_color", ThemeS.OUTLINE)
 	l.add_theme_constant_override("outline_size", 0)
 	return l
 

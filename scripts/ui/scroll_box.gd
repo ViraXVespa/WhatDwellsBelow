@@ -5,6 +5,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
+const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 
 static func build(host: CanvasLayer, pos: Vector2, size: Vector2, sep: int) -> void:
 	host.scroll = ScrollContainer.new()
@@ -22,17 +23,9 @@ static func build(host: CanvasLayer, pos: Vector2, size: Vector2, sep: int) -> v
 	make_tip(host)
 
 static func make_tip(host: CanvasLayer) -> void:
-	host.tip_host = PanelContainer.new()
-	host.tip_host.visible = false
-	host.tip_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	host.tip_host.z_index = 20
-	host.tip_host.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.09, 0.07, 0.05, 0.97), Color(0.85, 0.68, 0.32)))
+	host.tip_host = UiBuild.tip_panel(20)
 	host.tip_lab = Label.new()
-	host.tip_lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	host.tip_lab.custom_minimum_size = UiText.min_size(380.0, 0.0)
-	host.tip_lab.add_theme_font_size_override("font_size", UiText.font_px(18))
-	host.tip_lab.add_theme_color_override("font_color", ThemeS.INK)
-	host.tip_lab.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	host.tip_lab.add_theme_constant_override("outline_size", 6)
+	UiBuild.tip_text(host.tip_lab, UiText.font_px(18))
 	host.tip_host.add_child(host.tip_lab)
 	host.add_child(host.tip_host)

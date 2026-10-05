@@ -44,9 +44,11 @@ def clock(iso: str) -> str:
         return "?"
 
 
-def new(root: Path, door: str, job: str, area: str, mode: str, sdir: Path | None) -> dict:
-    """The state a first run records."""
+def new(root: Path, door: str, job: str, area: str, mode: str, sdir: Path | None, units: list[str] | None = None, done: list[str] | None = None) -> dict:
+    """The state a first run records. A door worked as a unit queue also carries the ordered units, which are done and the current one (the job)."""
     st = {"v": 1, "first_run": now(), "door": door, "job": job, "area": area, "mode": mode, "session": os.environ.get("GROK_SESSION_ID", "")}
+    if units:
+        st.update({"units": units, "done": done or [], "unit": job})
     pf = session_lib.prompt_facts(sdir)
     if pf:
         st["prompt"] = pf
@@ -82,6 +84,8 @@ def next_step(st: dict, s: dict) -> str:
         return "`python tools/check_gd_load.py` and `python tools/run_godot_import_check.py`"
     if not s["baseline shots"]:
         return "the baseline (the handoff's PNGs, else shoot the flows), look at it, `python tools/show_png.py`, then the restate and Q0"
+    if st.get("units"):
+        return f"the unit in hand ({st.get('unit', '')}): edit, prove, commit_slice.py, then `python tools/start_build_slice.py --next` (message first)"
     return "the unit in hand: edit, prove, then the next ask (message first)"
 
 
@@ -94,7 +98,9 @@ def short(root: Path, st: dict) -> str:
     sid = os.environ.get("GROK_SESSION_ID", "")
     other = f" (first run by session {st['session']}; this is {sid})" if st.get("session") and sid and sid != st["session"] else ""
     done = "; ".join(f"{k} {'yes' if v is True else 'no' if v is False else v}" for k, v in s.items())
-    return (f"SLICE ALREADY STARTED: {area} ({st.get('mode', '?')} session), first run {clock(st.get('first_run', ''))}{by}{other}.\n"
+    queue = (f"Units: {st.get('unit', '?')} is current ({(st['units'].index(st['unit']) + 1) if st.get('unit') in st['units'] else '?'} of {len(st['units'])}); done: {', '.join(st.get('done') or []) or 'none'}. "
+             "`--door D --full` reprints this unit's card; `--next` marks it done and prints the next.\n") if st.get("units") else ""
+    return (f"SLICE ALREADY STARTED: {area} ({st.get('mode', '?')} session), first run {clock(st.get('first_run', ''))}{by}{other}.\n" + queue +
             f"Steps found now: {done}.\n"
             f"Resuming at: {next_step(st, s)}.\n"
             "Nothing to redo. `python tools/start_build_slice.py --door D --full` prints the whole card again.")

@@ -34,6 +34,7 @@ import repo_lib
 import session_lib
 import slice_lib
 import slice_state
+import unit_lib
 from load_routes import check_route, job_flow_map, load_routes, shot_flows, smoke_phases
 
 
@@ -63,7 +64,7 @@ def write_handoff(root: Path, args) -> int:
             return end("no slice state found here: pass --door D (or --job / --area) so the handoff names the area: " + (slice_lib.doors_hint(root) or "see design/routes.yaml"), "FAIL", "handoff-no-area")
         if not args.dry_run:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(handoff_lib.skeleton(root, area, door, job, os.environ.get("GROK_SESSION_ID", "")), encoding="utf-8")
+            path.write_text(handoff_lib.skeleton(root, area, door, "" if st.get("units") else job, os.environ.get("GROK_SESSION_ID", ""), st.get("units"), st.get("done")), encoding="utf-8")
         return end(f"HANDOFF skeleton written: {path}\nFill every <fill ...> line (write `none` where nothing applies; baselines are `absolute PNG path - what is on it`, only the chosen surface's), "
                    "then run `python tools/start_build_slice.py --handoff` again. The file is under _logs/, so it is not committed. After it passes this session stops; it does not implement.", "INFO", "handoff-skeleton")
     bad = handoff_lib.check(root, path.read_text(encoding="utf-8-sig"))
@@ -79,6 +80,31 @@ def write_handoff(root: Path, args) -> int:
     return end("\n".join(lines), "PASS", "handoff-ready")
 
 
+def unit_state_note(job: str, units: list[str]) -> str:
+    """' state NAME' for a unit that is one shot of a shared flow, else ''."""
+    if not units or job not in units:
+        return ""
+    state = unit_lib.job_state(load_routes(Path(__file__).resolve().parents[1]), job)
+    return f" state {state}" if state else ""
+
+
+def advance(root: Path, args) -> str:
+    """--next: mark the slice's current unit done in the slice state and make the next unit current. Returns the door; the caller prints the next card."""
+    st = slice_state.load(root)
+    if not st.get("units"):
+        agent_log.fail("no unit queue in this slice. Start one with `python tools/start_build_slice.py --door ui` (a door with unit_queue in routes.yaml).")
+    left, _ = handoff_lib.sidecars(handoff_lib.survey_edits(root))
+    if left:
+        agent_log.fail("the current unit has uncommitted changes (" + ", ".join(left[:6]) + (", ..." if len(left) > 6 else "") + "): run_build_gate, then commit_slice.py, then --next. Nothing was advanced.")
+    done = list(st.get("done") or [])
+    if st.get("unit") and st["unit"] not in done:
+        done.append(st["unit"])
+    nxt = unit_lib.pick(st["units"], done)
+    st.update({"done": done, "unit": nxt, "job": nxt})
+    slice_state.save(root, st)
+    return st.get("door", "")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Resolve a route and print the grok commands that open a Build slice (never starts grok).", writes=True)
     ap.add_argument("--door", default="", help="routes.yaml door to start from.")
@@ -90,6 +116,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--checkpoint", action="store_true", help="In the worktree session, after gather: save this session's id for a red prove's fork.")
     ap.add_argument("--session", default="", help="With --checkpoint: the session id (default: $GROK_SESSION_ID; else `grok sessions list` in this directory).")
     ap.add_argument("--handoff", action="store_true", help="Survey session, after her answers to the first ask: write the handoff skeleton, or validate the filled one and print the open_slice command.")
+    ap.add_argument("--next", action="store_true", help="Unit queue (a door with unit_queue in routes.yaml): mark the current unit done and print the next unit's card.")
     ap.add_argument("--from-handoff", default="", metavar="PATH", help="Fresh implementation session: print the compact start summary from this handoff file.")
     ap.add_argument("--selftest", action="store_true", help="Run the boot / checkpoint / retry cases in a throwaway repo.")
     args = ap.parse_args(argv)
@@ -107,6 +134,10 @@ def main(argv: list[str] | None = None) -> int:
         return slice_lib.checkpoint(root, args)
     if args.handoff:
         return write_handoff(root, args)
+    compact = bool(args.next)  # the next unit of a queue: the rules were printed on the first card, so only the unit's lines are
+    if args.next:
+        door = advance(root, args)
+        args.door, args.job, args.full = door, "", True
     raw = (args.area or args.job or args.door).strip()
     if not raw:
         agent_log.fail("pass --door D, --job door.job, or --area NAME (example: python tools/start_build_slice.py --door ui). "
@@ -118,6 +149,18 @@ def main(argv: list[str] | None = None) -> int:
     kind = slice_lib.worktree_kind(root)
     wt = root.name
     st = slice_state.load(root) if kind else {}
+    units: list[str] = []
+    done: list[str] = []
+    if kind and args.door.strip() and not args.job.strip() and not args.area.strip() and unit_lib.queue(load_routes(root), args.door.strip()):
+        try:
+            head = handoff_lib.parse(Path(args.from_handoff).read_text(encoding="utf-8-sig"))[0] if args.from_handoff else {}
+        except OSError:
+            head = {}
+        units, done = unit_lib.plan(load_routes(root), args.door.strip(), st, head)
+        args.job = unit_lib.pick(units, done)
+        if not args.job:
+            msg = f"ALL UNITS DONE for door {args.door}: {', '.join(units)}. Nothing is queued; `python tools/start_build_slice.py --handoff` writes the closing handoff."
+            return agent_log.finish("slice-boot", root, msg, "PASS", args=args, write=not args.dry_run, echo=msg, worktree=wt, route="units-done")
     same = not st or not (args.door or args.job) or (st.get("door", ""), st.get("job", "")) == (args.door.strip(), args.job.strip())
     if st and same and not args.full and not args.dry_run:
         text = slice_state.short(root, st)
@@ -129,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             cmd = [sys.executable, str(Path(__file__).resolve().parent / "list_route.py"), "--root", str(root)]
             cmd += (["--door", args.door] if args.door else []) + (["--job", args.job] if args.job else [])
+            cmd += (["--units", ",".join(units), "--done", ",".join(done)] if units else [])
             p = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
             route = "ok" if p.returncode == 0 else f"exit={p.returncode}"
             route_lines = (p.stdout + p.stderr).splitlines()
@@ -166,19 +210,19 @@ def main(argv: list[str] | None = None) -> int:
     survey = slice_lib.is_survey(root, args.door, args.job, args.area, bool(args.from_handoff))
     mode = "handoff" if args.from_handoff else "survey" if survey else "implement"
     sdir = session_lib.session_dir()
-    start = slice_lib.in_worktree_text(root, sdir, mode)
-    hand = handoff_lib.start_block(root, Path(args.from_handoff)) if args.from_handoff else []
+    start = slice_lib.in_worktree_text(root, sdir, mode) if not compact else "RULES: unchanged since this slice's first card (`--full` reprints them). Per ask: message first, ledger, Did not work; commit only on her yes."
+    hand = handoff_lib.start_block(root, Path(args.from_handoff), bool(units)) if args.from_handoff else []
     warn = slice_lib.area_warning(root, args.area, args.door, args.job)
     if not args.dry_run:
-        first = slice_state.new(root, args.door.strip(), args.job.strip(), args.area.strip(), mode, sdir)
+        first = slice_state.new(root, args.door.strip(), args.job.strip(), args.area.strip(), mode, sdir, units, done)
         if st:
             first.update({k: st[k] for k in ("first_run", "session", "prompt") if k in st})
         slice_state.save(root, first)
     card = [f"door={args.door} job={args.job} area={args.area} ref={ref} ({ref_note}) worktree={wt} mode={mode}",
             f"smokes={smokes or 'n/a'} (run: tools/run_smokes.py --door/--job; add or update asserts for new systems)",
-            f"flows={('per job: ' + per_job) if per_job else (flows or 'none mapped to this job')} (pictures: tools/run_shot_flow.py --job J, one boot; UI states: tools/check_shot_gaps.py --changed)",
+            f"flows={('per job: ' + per_job) if per_job else (flows or 'none mapped to this job')}{unit_state_note(args.job, units)} (pictures: tools/run_shot_flow.py --job J, one boot; UI states: tools/check_shot_gaps.py --changed)",
             "prove=every pass python tools/check_gd_load.py; visual: one unit, shot and shown (show_png.py) before and after, then ask with the paths in the message; gate: run_build_gate once (build-job-cycle.md)",
-            slice_lib.merge_back_text(week or ref)]
+            slice_lib.merge_back_text(week or ref) if not compact else f"merge-back: as on the first card (plain push of {week or ref})"]
     body = card + ([warn] if warn else []) + ["", start, ""] + (hand + [""] if hand else []) + ([note, ""] if note else []) + (["--- route ---"] + route_lines + [""] if route_lines else [])
     if route == "ok":
         head = "\n".join(l for l in route_lines if not l.startswith(("Summary", "RESULT")))
@@ -186,7 +230,7 @@ def main(argv: list[str] | None = None) -> int:
         head = "route failed:\n" + "\n".join(route_lines)
     else:
         head = f"smokes={smokes or 'n/a'} flows={('per job: ' + per_job) if per_job else (flows or 'n/a')}" + ("" if smokes else " (--area has no route card; name a door/job for smokes)")
-    echo = f"worktree={wt} ref={ref} ({ref_note}) mode={mode}\n{head}" + ("" if route.startswith("exit") else f"\n{start}\n{slice_lib.merge_back_text(week or ref)}" + (f"\n{note}" if note else "")) + (f"\n{warn}" if warn else "") + ("\n" + "\n".join(hand) if hand else "")
+    echo = f"worktree={wt} ref={ref} ({ref_note}) mode={mode}\n{head}" + ("" if route.startswith("exit") else f"\n{start}\n{slice_lib.merge_back_text(week or ref) if not compact else ''}" + (f"\n{note}" if note else "")) + (f"\n{warn}" if warn else "") + ("\n" + "\n".join(hand) if hand else "")
     return agent_log.finish("slice-boot", root, "\n".join(body), "FAIL" if route.startswith("exit") else "PASS",
                             args=args, write=not args.dry_run, echo=echo, worktree=wt, route=route)
 

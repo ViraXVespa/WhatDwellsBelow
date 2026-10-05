@@ -87,6 +87,10 @@ def main(argv: list[str] | None = None) -> int:
         head, secs = handoff_lib.parse(prompt)
         n = len(handoff_lib.baselines(root, secs.get("Baselines for the chosen surface", "")))
         hand_note = f"handoff: survey done, area={head.get('area', '')}, {n} baseline(s) to open, first unit = {(secs.get('Chosen surfaces, in order', '').splitlines() or [''])[0].strip()!r}"
+        if head.get("units"):
+            us = [u.strip() for u in head["units"].split(",") if u.strip()]
+            dn = [u.strip() for u in head.get("done", "").split(",") if u.strip() and u.strip() != "none"]
+            hand_note += f"; unit queue {len(us)} (done {len(dn)}), next = {next((u for u in us if u not in dn), 'none')}; the session walks it with start_build_slice.py --next"
     if prompt.startswith("-") or len(prompt) > 30000:
         return end("BAD PROMPT: it must not start with '-' (grok would read a flag) and must fit on a command line. Shorten it or start blank.", "FAIL", route="bad-prompt")
     slug = re.sub(r"[^a-z0-9._-]+", "-", (area or "slice").lower()).strip("-")[:48].strip("-") or "slice"

@@ -63,7 +63,10 @@ def is_survey(root: Path, door: str, job: str, area: str, handoff: bool) -> bool
     try:
         from load_routes import load_routes
 
-        jobs = ((load_routes(root).get("doors") or {}).get(door.strip()) or {}).get("jobs") or {}
+        data = load_routes(root)
+        if (data.get("unit_queue") or {}).get(door.strip()):
+            return False  # a door worked as a unit queue is not surveyed: the first unit not done is the slice
+        jobs = ((data.get("doors") or {}).get(door.strip()) or {}).get("jobs") or {}
         return len(jobs) >= 2
     except Exception:
         return False
@@ -94,7 +97,7 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
         "(a changed set of pictures is a new list), the three ledger lines and `Did not work:` if any. Order: shoot, look at the pictures yourself, "
         "`python tools/show_png.py PATH=description ...` (opens them for her; expected, not a ledger item), the message, the ask. Option labels are not the message. "
         "Realise it was not sent: send it before your next tool call. In a survey of several surfaces the survey comes first; which group, the order and what she wants for each are separate questions after it.",
-        "LEDGER, three lines, in every ask: \"Decisions I made that were yours\" (incl. new assets, fonts, dependencies, generated images); \"Assumptions carried from memory or docs\"; "
+        "LEDGER, three lines, in every ask: \"Decisions I made that were yours\" (incl. new assets, fonts, dependencies, generated images, and look details you chose inside her rule: never \"none\" for those); \"Assumptions carried from memory or docs\"; "
         "\"Also changed\" (shared code and the other screens that use it, filled from `python tools/list_xref.py NAME` for each shared script you touched; states not shot; "
         "every write outside the worktree, Grok memory files included; temp files; reverts of generated churn such as `git checkout -- docs`). "
         f"Temp files go under `{(root / '_logs').as_posix()}/`; the commit message file is `{(root / '_logs' / 'commit-msg.txt').as_posix()}` (`git commit -F`). "
@@ -105,7 +108,10 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
         "ASK BEFORE THE CODE, not in a ledger line: a change in what a control does or in save or entry behaviour (a button that now saves, a changed trade) is her decision.",
         ("This tool never starts grok." if mode == "survey" else
          "COMMIT only when she says so, with `python tools/commit_slice.py` (it needs a passing `python tools/run_build_gate.py --batch --visual JOB` after your last edit; gate not run: "
-         "`--gate-skipped \"why\"`, and open your final message with `Did not work: gate not run (why)`). This tool never starts grok."),
+         "`--gate-skipped \"why\"`, and open your final message with `Did not work: gate not run (why)`). "
+         "THE END OF A UNIT: the settle ask shows the before and after PNG paths together, offers \"Good for now: commit, push, next unit\" and \"Change it\" (no \"Recommended\" on approving your own work), and your final message names the frames you opened. "
+         "After her yes: gate, `commit_slice.py`, the push from the merge-back line, then `python tools/start_build_slice.py --next` for the next unit of a queue (its card, no new survey), or `--handoff` to write the next handoff (queue and done prefilled). "
+         "Gates pass; that is not proof of a screen you did not open. This tool never starts grok."),
     ])
 
 
@@ -306,6 +312,28 @@ def selftest(script: Path) -> int:
         code, out = run(clone, area="", *())
         if code == 0 or "--door D" not in out or "doors: ui" not in out:
             bad.append("no --door/--job/--area must fail with the usage and the valid doors (so --help is not needed)")
+        # unit queue: a door with unit_queue is not surveyed; the first unit not done is the slice; --next moves on once the unit is committed
+        (clone / "design" / "ui-pause.md").write_text("# Pause\n\n## Inventory tab\n- x\n", encoding="utf-8")
+        routes.write_text(routes.read_text(encoding="utf-8") + '  ui.menu: "menu-flow"\nunit_queue:\n  ui: "ui.pause, ui.menu"\nunit_docs:\n  ui.pause: "design/ui-pause.md#Inventory tab"\nshot_states:\n  ui.menu: "open"\n', encoding="utf-8")
+        (clone / "_logs" / "slice-state.json").unlink()
+        code, out = run(clone, "--door", "ui", area="")
+        st_units = (__import__("json").loads((clone / "_logs" / "slice-state.json").read_text(encoding="utf-8")).get("units") or []) if (clone / "_logs" / "slice-state.json").is_file() else []
+        if code != 0 or "ORDER (survey)" in out or "ui.pause (1 of 2)" not in out or "design/ui-pause.md L3-4 (## Inventory tab)" not in out or st_units != ["ui.pause", "ui.menu"]:
+            bad.append("a door with unit_queue must start its first unit (not a survey): the unit line, the doc line range, the units in the state")
+        code, out = run(clone, "--door", "ui", area="")
+        if code != 0 or "SLICE ALREADY STARTED" not in out or "ui.pause is current (1 of 2)" not in out or "--next" not in out:
+            bad.append("a second run on a unit queue must say which unit is current and name --next")
+        code, out = run(clone, "--next", area="")
+        if code == 0 or "uncommitted" not in out:
+            bad.append("--next with the unit's changes uncommitted must fail and advance nothing")
+        git(clone, "add", "-A")
+        git(clone, "commit", "-qm", "unit")
+        code, out = run(clone, "--next", area="")
+        if code != 0 or "ui.menu (2 of 2)" not in out or "done: ui.pause" not in out or "state open" not in out or "RULES: unchanged" not in out or "IN A WORKTREE" in out:
+            bad.append("--next must mark the unit done and print the next unit's card (its flow state included)")
+        code, out = run(clone, "--next", area="")
+        if code != 0 or "ALL UNITS DONE" not in out:
+            bad.append("--next after the last unit must say all units are done")
         plain = Path(td) / "plain" / "worktrees" / "repos-demo" / "wdb-demo-3"
         plain.parent.mkdir(parents=True)
         git(Path(td), "clone", "-q", str(root), str(plain))

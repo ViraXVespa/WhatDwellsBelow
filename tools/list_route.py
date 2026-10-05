@@ -17,6 +17,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import unit_lib
 from load_routes import job_flow_map, job_index, job_read_when, load_routes, shot_flows, smoke_phases
 
 
@@ -116,7 +117,7 @@ def _door_card(data: dict, door_name: str) -> list[str]:
     return lines
 
 
-def _job_card(data: dict, job_id: str) -> list[str]:
+def _job_card(data: dict, job_id: str, root: Path | None = None, units: list[str] | None = None, done: list[str] | None = None) -> list[str]:
     idx = job_index(data)["by_id"]
     if job_id not in idx:
         if "." not in job_id:
@@ -137,10 +138,16 @@ def _job_card(data: dict, job_id: str) -> list[str]:
     ]
     lines.extend(_gate_lines(data))
     lines.append("smokes\t%s" % ",".join(map(str, smoke_phases(data, door=door_name, job=job_id))))
-    lines.append("flows\t%s" % (",".join(shot_flows(data, door=door_name, job=job_id, job_only=True)) or "none"))
+    unit = unit_lib.lines(root, data, job_id, units or unit_lib.queue(data, door_name), done) if root else []
+    if not unit:
+        lines.append("flows\t%s" % (",".join(shot_flows(data, door=door_name, job=job_id, job_only=True)) or "none"))
     sibs = [k for k in ((doors.get(door_name) or {}).get("jobs") or {}) if "%s.%s" % (door_name, k) != job_id] if isinstance(doors, dict) else []
-    lines.append("read\t%s now (this job's doc)" % idx[job_id])
-    lines.append("also\t%s only if the job doc points to it%s" % (door_file or "(no door doc)", "; another %s job (%s) only if the task names its read_when" % (door_name, ", ".join(sibs)) if sibs else ""))
+    if unit:
+        lines.extend(unit)
+        return lines
+    else:
+        lines.append("read\t%s now (this job's doc)" % idx[job_id])
+        lines.append("also\t%s only if the job doc points to it%s" % (door_file or "(no door doc)", "; another %s job (%s) only if the task names its read_when" % (door_name, ", ".join(sibs)) if sibs else ""))
     lines.append("also\tgates only if their trigger applies; `code_map.py row` / `show_func.py` for scripts, not whole files")
     return lines
 
@@ -151,6 +158,8 @@ def parse_args(argv: list[str]):
     parser.add_argument("--door", default="", help="Door name (print its card).")
     parser.add_argument("--job", default="", help="Job id door.job (print its card).")
     parser.add_argument("--digest", action="store_true", help="With --door: one line per doc (Read when, section count) for a survey over several jobs; with --job: that doc's Status, Read when and headings with line numbers.")
+    parser.add_argument("--units", default="", help="With --job: the unit order in hand (comma list; default: routes.yaml unit_queue).")
+    parser.add_argument("--done", default="", help="With --job: the units already done (comma list).")
     parser.add_argument("--gates", action="store_true", help="Print the full gate triggers (default: gate names only).")
     args = parser.parse_args(argv)
     global FULL_GATES
@@ -179,7 +188,7 @@ def main(argv: list[str] | None = None) -> int:
             agent_log.fail("--digest needs a known --door or --job")
         return agent_log.finish("route", root, "\n".join(lines), "PASS", args=args, legacy=False, door=door, cards=len(lines))
     if args.job:
-        lines = _job_card(data, args.job.strip())
+        lines = _job_card(data, args.job.strip(), root, unit_lib.split(args.units), unit_lib.split(args.done))
     else:
         lines = _door_card(data, args.door.strip())
     return agent_log.finish("route", root, "\n".join(lines), "PASS", args=args, legacy=False,

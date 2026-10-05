@@ -9,7 +9,7 @@ const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
-const VendorFrame: GDScript = preload("res://scripts/ui/progress_ui/vendor_frame.gd")
+const FrameSet: GDScript = preload("res://scripts/ui/progress_ui/frame_set.gd")
 const DumpsterFrame: GDScript = preload("res://scripts/ui/progress_ui/dumpster_frame.gd")
 
 static func _ready(host: CanvasLayer) -> void:
@@ -38,8 +38,7 @@ static func _ready(host: CanvasLayer) -> void:
 	scroll.position = Vector2(384, 104)
 	scroll.size = Vector2(1152, 832)
 	host.add_child(scroll)
-	VendorFrame.mount(host)
-	DumpsterFrame.mount(host)
+	FrameSet.mount(host)
 	host.box = VBoxContainer.new()
 	host.box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.box.add_theme_constant_override("separation", 8)

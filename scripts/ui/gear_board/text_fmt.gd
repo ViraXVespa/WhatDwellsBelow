@@ -1,6 +1,7 @@
 # Formatting helpers for gear items
 
 const LocS := preload("res://scripts/app/app_loc.gd")
+const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 const CatalogS := preload("res://scripts/data/catalog.gd")
 static func slot_name(slot: String) -> String:
 	return LocS.tr_or("slot." + slot, slot)
@@ -18,7 +19,7 @@ static func item_color(it: Dictionary) -> Color:
 		_:
 			if str(it.get("kind", "")) == "artifact":
 				return Color(0.42, 0.24, 0.08)
-			return Color(0.24, 0.15, 0.09)
+			return Tok.INK
 
 static func is_risk(it: Dictionary) -> bool:
 	if it.is_empty():

@@ -1,22 +1,24 @@
 extends Object
 
 const UiText := preload("res://scripts/ui/ui_text.gd")
+const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 
-const INK := Color(0.24, 0.15, 0.09)
-const INK_SOFT := Color(0.40, 0.28, 0.18)
-const INK_FAINT := Color(0.52, 0.40, 0.30)
-const PAPER := Color(0.95, 0.90, 0.80, 0.98)
-const PAPER_DEEP := Color(0.84, 0.76, 0.62, 1.0)
-const PAPER_HOVER := Color(0.90, 0.83, 0.70, 1.0)
-const PAPER_LIFT := Color(0.98, 0.95, 0.88, 1.0)
-const RULE := Color(0.45, 0.32, 0.20, 1.0)
-const RULE_QUIET := Color(0.45, 0.32, 0.20, 0.40)
-const DANGER := Color(0.55, 0.16, 0.11)
-const DANGER_RULE := Color(0.58, 0.24, 0.16)
-const PROMPT_INK := INK_SOFT
-const PROMPT_GOLD := PROMPT_INK
-const PROMPT_OUTLINE := Color(0.05, 0.03, 0.02)
-const PROMPT_OUTLINE_SIZE := 5
+const INK: Color = Tok.INK
+const INK_SOFT: Color = Tok.INK_SOFT
+const INK_FAINT: Color = Tok.INK_FAINT
+const PAPER: Color = Tok.PAPER
+const PAPER_DEEP: Color = Tok.PAPER_DEEP
+const PAPER_HOVER: Color = Tok.PAPER_HOVER
+const PAPER_LIFT: Color = Tok.PAPER_LIFT
+const RULE: Color = Tok.RULE
+const RULE_QUIET: Color = Tok.RULE_QUIET
+const DANGER: Color = Tok.DANGER
+const DANGER_RULE: Color = Tok.DANGER_RULE
+const PROMPT_INK: Color = Tok.INK_SOFT
+const PROMPT_GOLD: Color = Tok.INK_SOFT
+const OUTLINE: Color = Tok.OUTLINE
+const PROMPT_OUTLINE: Color = Tok.OUTLINE
+const PROMPT_OUTLINE_SIZE: int = Tok.PROMPT_OUTLINE_SIZE
 
 static var _ink: Font
 
@@ -59,8 +61,8 @@ static func lab(
 	l.add_theme_font_size_override("font_size", font_px(size))
 	l.add_theme_color_override("font_color", col)
 	if outline:
-		l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-		l.add_theme_constant_override("outline_size", 6)
+		l.add_theme_color_override("font_outline_color", Tok.OUTLINE)
+		l.add_theme_constant_override("outline_size", Tok.OUTLINE_SIZE)
 	return l
 
 static func btn(t: String, cb: Callable, enabled: bool = true, role: String = "secondary") -> Button:
@@ -86,8 +88,8 @@ static func paint_tab(b: Button, on: bool, role: String = "secondary") -> void:
 	b.add_theme_color_override("font_focus_color", edge)
 	b.add_theme_color_override("font_pressed_color", INK)
 	b.add_theme_color_override("font_disabled_color", INK_FAINT)
-	var paper: Color = Color(0.93, 0.86, 0.72, 0.96)
-	var hover: Color = Color(0.98, 0.94, 0.86, 1.0)
+	var paper: Color = Tok.BTN_PAPER
+	var hover: Color = Tok.BTN_HOVER
 	var foot: int = 3 if on else 1
 	b.add_theme_stylebox_override("normal", _ink_box(paper, edge, 1, foot))
 	b.add_theme_stylebox_override("hover", _ink_box(hover, edge, 1, maxi(foot, 2)))

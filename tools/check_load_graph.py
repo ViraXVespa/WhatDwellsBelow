@@ -33,6 +33,7 @@ if str(TOOLS_DIR) not in sys.path:
 
 import agent_log  # noqa: E402
 import bot_gate_lib  # noqa: E402
+import unit_lib  # noqa: E402
 from load_routes import (  # noqa: E402
     CYCLE_ROLES,
     TOPIC_CYCLE_ROLES,
@@ -606,7 +607,7 @@ def fetch_ban_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     return fails
 
 
-CAP_RE = re.compile(r"script cap|size cap|line cap|over the (?:\w+ )?cap|near the (?:\w+ )?cap|ship floor|size floor|byte budget", re.I)
+CAP_RE = re.compile(r"script cap|size cap|line cap|over the (?:\w+ )?cap|near the (?:\w+ )?cap|ship floor|size floor|byte budget|(?:under|over) \d+ ?KB", re.I)
 CAP_OK = ("BOT.md", "GROK-BOT.md", "design/refactor.md")
 
 
@@ -814,6 +815,7 @@ def main() -> int:
 
     fails.extend(increment6_schema_fails(routes))
     fails.extend(route_map_fails(root, routes))
+    fails.extend(unit_lib.unit_fails(root, routes))
     fails.extend(read_when_overlaps(routes))
     fails.extend(conflict_fails(routes))
 

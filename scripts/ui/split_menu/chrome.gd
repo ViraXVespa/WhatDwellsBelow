@@ -2,12 +2,13 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
+const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 
 const COL_LIVE := Color(1, 1, 1, 1)
 const COL_DIM := Color(0.55, 0.52, 0.48, 1)
-const RULE_ON := Color(0.45, 0.32, 0.20, 1)
-const RULE_OFF := Color(0.45, 0.32, 0.20, 0.35)
-const GOLD := Color(0.24, 0.15, 0.09, 1)
+const RULE_ON: Color = Tok.RULE
+const RULE_OFF: Color = Color(Tok.RULE, 0.35)
+const GOLD: Color = Tok.INK
 
 static func setup_overlay(host: Node, title_text: String, hint_text: String) -> void:
 	host.layer = 62

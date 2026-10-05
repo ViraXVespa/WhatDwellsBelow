@@ -305,7 +305,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--survey", action="store_true", help="one text line per flow (about, states, last shot, band); no Godot run")
     p.add_argument("--sheet", default="", metavar="FLOW", help="tile FLOW's last frames into one sheet.png (labels; fine text is not readable on it)")
     p.add_argument("--flow", action="append", default=[], help="flow name (repeat or comma-separate)")
-    p.add_argument("--job", action="append", default=[], metavar="JOB", help="every flow routes.yaml maps to JOB (door.job, or a door name); one call, one summary")
+    p.add_argument("--job", action="append", default=[], metavar="JOB", help="every flow routes.yaml maps to JOB (door.job, or a door name); one call, one summary; a unit job with a routes.yaml shot_states entry re-shoots only that state")
     p.add_argument("--state", default="", metavar="NAME", help="with one --flow: re-shoot only that flow's state NAME (steps up to its shot); prints it as changed or same")
     p.add_argument("--changed", action="store_true", help="flows whose JSON changed, plus those mapped to a job whose doc changed")
     p.add_argument("--no-dedupe", action="store_true", help="run a flow even when a picked flow covers it (covered_by)")
@@ -357,6 +357,11 @@ def main(argv: list[str] | None = None) -> int:
             print("no changed flow files and no changed job doc with a mapped flow: nothing to run")
             return agent_log.emit_result("PASS", flows=0)
     names = list(dict.fromkeys(names))
+    jobs = agent_log.split_list(args.job)
+    if not args.state and len(jobs) == 1 and len(names) == 1 and not (args.all or args.smoke or args.changed):
+        from load_routes import load_routes
+        import unit_lib
+        args.state = unit_lib.job_state(load_routes(root), jobs[0])  # a unit that is one state of a shared flow (routes.yaml shot_states)
     if not (names or args.all or args.smoke):
         agent_log.fail("name a flow (--flow N), a job (--job J), or use --changed / --all / --smoke / --list / --survey")
     out_root = Path(args.out_dir) if args.out_dir else root / "_logs" / JOB
@@ -413,7 +418,8 @@ def main(argv: list[str] | None = None) -> int:
         lines += ["", retry_lib.block(root, "run_shot_flow.py --flow " + ",".join(t.split("~")[0] for t in todo), lines)]
     res = agent_log.write_run_file(root, out_root, JOB, "\n".join(lines), status, write=not args.dry_run, flows=len(rows),
                                    **{"pass": sum(1 for r in rows if r["ok"])}, fail=len(bad_run), stale=len(stale),
-                                   changed=len(changed), frames=sum(r["frames"] for r in rows))
+                                   changed=len(changed) + sum(1 for n in notes if "CHANGED" in n), frames=sum(r["frames"] for r in rows),
+                                   uncompared=sum(r["frames"] for r in rows if r["frames"] and not r.get("diff_status")))  # uncompared = frames with no earlier frame to diff: changed=0 then proves nothing
     if args.json:
         agent_log.print_json({"status": status, "flows": rows})
     else:

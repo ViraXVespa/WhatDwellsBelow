@@ -52,7 +52,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 	var card := Vector2(560, 280)
 	var card_sz := Vector2(800, 360)
 	var back: ColorRect = ColorRect.new()
-	back.color = Color(0.95, 0.90, 0.80, 1.0)
+	back.color = Color(ThemeS.PAPER, 1.0)
 	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	back.position = card
 	back.size = card_sz
