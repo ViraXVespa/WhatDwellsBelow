@@ -8,8 +8,9 @@ const VendorFrame: GDScript = preload("res://scripts/ui/progress_ui/vendor_frame
 const DumpsterFrame: GDScript = preload("res://scripts/ui/progress_ui/dumpster_frame.gd")
 const ControlsFrame: GDScript = preload("res://scripts/ui/progress_ui/controls_frame.gd")
 const AnvilFrame: GDScript = preload("res://scripts/ui/progress_ui/anvil_frame.gd")
+const CrystalFrame: GDScript = preload("res://scripts/ui/progress_ui/crystal_frame.gd")
 
-const SKINS: Array = [VendorFrame, DumpsterFrame, ControlsFrame, AnvilFrame]
+const SKINS: Array = [VendorFrame, DumpsterFrame, ControlsFrame, AnvilFrame, CrystalFrame]
 
 static func mount(host: CanvasLayer) -> void:
 	for skin: GDScript in SKINS:
