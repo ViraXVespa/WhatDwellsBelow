@@ -58,8 +58,9 @@ Intercept (raw tool is a failed lookup, not a fallback):
    and tell the User afterward.
 5. Build slices: the first command is python tools/start_build_slice.py,
    before any memory topic; it prints the slice rules (session facts, Q0,
-   ledger, "Did not work:", show_png.py for pictures she should see, handoff,
-   checkpoint, merge-back) and the docs to read, the single source. A later
+   ledger, "Did not work:" from start_build_slice.py --failed, show_png.py for
+   pictures she should see, handoff, commit_slice.py, merge-back) and the docs
+   to read, the single source. A later
    run says where the slice stands. Only the User launches grok.
 
 Two compacts on the same slice: write the handoff (start_build_slice.py --handoff)
