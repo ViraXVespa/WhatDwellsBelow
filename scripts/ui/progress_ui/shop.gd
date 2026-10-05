@@ -1,6 +1,7 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const VendorFrame: GDScript = preload("res://scripts/ui/progress_ui/vendor_frame.gd")
 const Inv := preload("res://scripts/ui/progress_ui/inv.gd")
 const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
@@ -115,15 +116,19 @@ static func pawn_slot(ui, slot: String) -> void:
 
 static func rebuild_vendor(ui) -> void:
 	ui._clear()
-	ui.box.add_child(ThemeS.lab(App.tr("shop.vendor_stall"), 32, ThemeS.INK))
-	ui.box.add_child(ThemeS.lab(App.tr("shop.bank_g_ore_potions_and") % [App.bank_gold, App.bank_ore], 18, ThemeS.INK_SOFT))
-	ui.status = ThemeS.lab("", 20, ThemeS.INK)
-	ui.box.add_child(ui.status)
+	VendorFrame.prepare(ui)
 	ui.focus_btn = ThemeS.btn(App.tr("shop.buy_potion_g") % int(App.bal.vendor_potion_cost), func(): vend_potion(ui), true, "primary")
+	VendorFrame.dress(ui.focus_btn, true)
 	ui.box.add_child(ui.focus_btn)
-	ui.box.add_child(ThemeS.btn(App.tr("shop.buy_ration_g_food_slot") % int(App.bal.vendor_food_cost), func(): vend_food(ui), true, "primary"))
-	ui.box.add_child(ThemeS.btn(App.tr("shop.sell_1_ore_g") % int(App.bal.vendor_ore_gold), func(): vend_sell(ui), true, "primary"))
-	ui.box.add_child(ThemeS.btn(App.tr("common.leave"), func(): ui.close_ui()))
+	var ration: Button = ThemeS.btn(App.tr("shop.buy_ration_g_food_slot") % int(App.bal.vendor_food_cost), func(): vend_food(ui), true, "primary")
+	VendorFrame.dress(ration, true)
+	ui.box.add_child(ration)
+	var sell: Button = ThemeS.btn(App.tr("shop.sell_1_ore_g") % int(App.bal.vendor_ore_gold), func(): vend_sell(ui), true, "primary")
+	VendorFrame.dress(sell, true)
+	ui.box.add_child(sell)
+	var leave: Button = ThemeS.btn(App.tr("common.leave"), func(): ui.close_ui())
+	VendorFrame.dress(leave, false)
+	ui.box.add_child(leave)
 
 static func vend_potion(ui) -> void:
 	var cost := int(App.bal.vendor_potion_cost)
@@ -140,6 +145,7 @@ static func vend_potion(ui) -> void:
 		ui._st(App.tr("common.bag_full"))
 		return
 	ui._st(App.tr("shop.potion_ready"))
+	VendorFrame.refresh_bank(ui)
 	App.save_now()
 
 static func vend_food(ui) -> void:
@@ -159,6 +165,7 @@ static func vend_food(ui) -> void:
 		fd.stack = mini(int(fd.get("stack", 0)) + 1, cap)
 		App.prog.slots["food"] = fd
 	ui._st(App.tr("shop.ration_packed_in_the_food"))
+	VendorFrame.refresh_bank(ui)
 	App.save_now()
 
 static func vend_sell(ui) -> void:
@@ -168,4 +175,6 @@ static func vend_sell(ui) -> void:
 	App.bank_ore -= 1
 	App.bank_gold += int(App.bal.vendor_ore_gold)
 	ui._st(App.tr("shop.sold_1_ore"))
+	VendorFrame.refresh_bank(ui)
 	App.save_now()
+

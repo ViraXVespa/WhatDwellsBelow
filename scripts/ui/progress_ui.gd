@@ -9,6 +9,7 @@ const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const Flow := preload("res://scripts/ui/progress_ui/ui_flow.gd")
+const VendorFrame: GDScript = preload("res://scripts/ui/progress_ui/vendor_frame.gd")
 
 var open := false
 var mode := ""
@@ -79,6 +80,7 @@ func close_ui() -> void:
 	Flow.close_ui(self)
 
 func _show() -> void:
+	VendorFrame.apply(self)
 	open = true
 	visible = true
 	UiSession.open(self)

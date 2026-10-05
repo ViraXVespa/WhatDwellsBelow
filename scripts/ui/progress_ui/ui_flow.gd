@@ -9,6 +9,7 @@ const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
+const VendorFrame: GDScript = preload("res://scripts/ui/progress_ui/vendor_frame.gd")
 
 static func _ready(host: CanvasLayer) -> void:
 	host.layer = 45
@@ -20,19 +21,23 @@ static func _ready(host: CanvasLayer) -> void:
 	dim.color = Plate.DIM
 	host.add_child(dim)
 	var panel := ColorRect.new()
+	panel.name = "plate"
 	panel.color = Plate.PLATE
 	panel.position = Vector2(360, 80)
 	panel.size = Vector2(1200, 920)
 	host.add_child(panel)
 	var edge := ColorRect.new()
+	edge.name = "plate_edge"
 	edge.color = Plate.EDGE
 	edge.position = Vector2(360, 80)
 	edge.size = Vector2(1200, Plate.EDGE_H)
 	host.add_child(edge)
 	var scroll := ScrollContainer.new()
+	scroll.name = "plate_scroll"
 	scroll.position = Vector2(384, 104)
 	scroll.size = Vector2(1152, 832)
 	host.add_child(scroll)
+	VendorFrame.mount(host)
 	host.box = VBoxContainer.new()
 	host.box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.box.add_theme_constant_override("separation", 8)

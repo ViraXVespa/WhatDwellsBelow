@@ -19,6 +19,8 @@ Live scripts: board `scripts/ui/gear_board.gd` in `gear_mode="anvil"`; tabs `anv
 - Sells basic food and potions.
 - 3D stall box with `stall.png` south face and a `plaza_tarp` top plane (one canvas sheet; guild roofs stay `plaza_roof`).
 - Stall box and tarp plane follow `Layout/Stall` and stall eave / UV exports.
+- The stall menu is its own front: wood posts, an olive awning, and a counter. It does not use `stall.png`. The title and the bank line sit on a name board under the beam. Buy, sell, and leave are planks on the counter, with the journal ink underline for focus. Leave is the quieter plank. The cream plate stays in place for the other progress panels. A clear plate the size of this front only holds the prompt footer.
+- Words stay: Vendor Stall, the bank line, Buy potion, Buy ration, Sell 1 ore, Leave. The bank line updates after a purchase or a sale.
 
 ## Dumpster
 - Flavor object only. No interaction or gameplay effect.

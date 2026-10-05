@@ -6,13 +6,13 @@ Read when: playable surface theme tokens
 
 ## UI theme (playable surfaces)
 
-Every player-facing UI and HUD element in the live path MUST be designed with dungeon theming and MUST NOT ship as a default, unskinned, or engine-debug control. This includes the gauntlet strip, pause menu, Extraction Gate UI, Ghost Shop, anvil, Floor Crystal loadout UI, quest UI, Controls Billboard, recap, maps, toasts, title / credit flow, the web fullscreen gate, confirmation prompts, the title “what’s new” overlay, the web touch overlay, and any other surface a normal player can open.
+Player-facing UI is skinned. The pause uses the field journal. Other surfaces match the object they represent and stay cohesive with that journal work: the same ink, handwriting, and focus underline, on that object's own frame. Nothing a normal player opens ships as a default, unskinned, or engine-debug control. This includes the gauntlet strip, pause menu, Extraction Gate UI, Ghost Shop, anvil, Floor Crystal loadout UI, quest UI, Controls Billboard, recap, maps, toasts, title / credit flow, the web fullscreen gate, confirmation prompts, the title “what’s new” overlay, the web touch overlay, and any other surface a normal player can open.
 
 The secret debug menu (including Automated Playtest, profiles, Animation Browser chrome, Settings tab, and raw value editors) MAY use default or lightly skinned engine controls. Appearance there is not a Demo-Complete art requirement. Its plate stays the plain dark board. Shared buttons may follow the player skin.
 
 ## Field journal
 
-Player surfaces use one skin: warm paper, dark ink, and a thin brown rule. Corners are soft. Focus is an ink underline along the bottom of the control, with a deeper paper fill. There is very little gold.
+The pause uses this skin: warm paper, dark ink, and a thin brown rule. Corners are soft. Focus is an ink underline along the bottom of the control, with a deeper paper fill. There is very little gold. Other surfaces keep the ink, the handwriting, and the underline, and draw them on the object that surface represents.
 
 Three control weights:
 
