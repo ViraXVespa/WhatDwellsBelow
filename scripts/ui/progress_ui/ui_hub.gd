@@ -5,6 +5,7 @@ const Board := preload("res://scripts/ui/gear_board.gd")
 const GearAct := preload("res://scripts/ui/gear_board/board_act.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
+const ControlsFrame := preload("res://scripts/ui/progress_ui/controls_frame.gd")
 
 static func rebuild_loadout(ui: CanvasLayer) -> void:
 	ui._clear()
@@ -55,8 +56,7 @@ static func rebuild_quest(ui) -> void:
 
 static func rebuild_controls(ui) -> void:
 	ui._clear()
-	ui.box.add_child(ThemeS.lab(App.tr("common.controls_billboard"), 32, ThemeS.INK))
-	ui.box.add_child(ThemeS.lab(App.tr("ui_hub.what_the_guild_painted_up"), 18, ThemeS.INK_SOFT))
+	ControlsFrame.prepare(ui)
 	var acts := [
 		["move_left", App.tr("controls.move_left")],
 		["move_right", App.tr("controls.move_right")],
@@ -75,7 +75,8 @@ static func rebuild_controls(ui) -> void:
 	for pair in acts:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 10)
-		PromptView.fill(row, [{"action": str(pair[0]), "verb": str(pair[1])}], 18, ThemeS.INK)
+		PromptView.fill(row, [{"action": str(pair[0]), "verb": str(pair[1])}], 18, ThemeS.PAPER)
 		ui.box.add_child(row)
 	ui.focus_btn = ThemeS.btn(App.tr("common.leave"), func(): ui.close_ui())
+	ControlsFrame.dress(ui.focus_btn)
 	ui.box.add_child(ui.focus_btn)
