@@ -61,7 +61,9 @@ Intercept (raw tool is a failed lookup, not a fallback):
    ledger, "Did not work:" from start_build_slice.py --failed, show_png.py for
    pictures she should see, handoff, commit_slice.py, merge-back) and the docs
    to read, the single source. A later
-   run says where the slice stands. Only the User launches grok.
+   run says where the slice stands. A door with a unit queue (ui) is worked one
+   unit at a time: start_build_slice.py --next after each committed unit prints the
+   next unit's card, no new survey. Only the User launches grok.
 
 Two compacts on the same slice: write the handoff (start_build_slice.py --handoff)
 and start a fresh session.
