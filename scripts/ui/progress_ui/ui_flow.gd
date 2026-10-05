@@ -10,6 +10,7 @@ const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const VendorFrame: GDScript = preload("res://scripts/ui/progress_ui/vendor_frame.gd")
+const DumpsterFrame: GDScript = preload("res://scripts/ui/progress_ui/dumpster_frame.gd")
 
 static func _ready(host: CanvasLayer) -> void:
 	host.layer = 45
@@ -38,6 +39,7 @@ static func _ready(host: CanvasLayer) -> void:
 	scroll.size = Vector2(1152, 832)
 	host.add_child(scroll)
 	VendorFrame.mount(host)
+	DumpsterFrame.mount(host)
 	host.box = VBoxContainer.new()
 	host.box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.box.add_theme_constant_override("separation", 8)
@@ -106,9 +108,9 @@ static func open_flavor(host: CanvasLayer, title: String, body: String) -> void:
 	host.mode = "flavor"
 	host._drop_sub()
 	host._clear()
-	host.box.add_child(ThemeS.lab(title, 28, ThemeS.INK))
-	host.box.add_child(ThemeS.lab(body, 22, ThemeS.INK_SOFT))
+	DumpsterFrame.prepare(host, title, body)
 	host.focus_btn = ThemeS.btn(App.tr("common.leave"), func(): host.close_ui())
+	DumpsterFrame.dress(host.focus_btn)
 	host.box.add_child(host.focus_btn)
 	host._show()
 

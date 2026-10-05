@@ -10,6 +10,7 @@ const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const Flow := preload("res://scripts/ui/progress_ui/ui_flow.gd")
 const VendorFrame: GDScript = preload("res://scripts/ui/progress_ui/vendor_frame.gd")
+const DumpsterFrame: GDScript = preload("res://scripts/ui/progress_ui/dumpster_frame.gd")
 
 var open := false
 var mode := ""
@@ -81,6 +82,7 @@ func close_ui() -> void:
 
 func _show() -> void:
 	VendorFrame.apply(self)
+	DumpsterFrame.apply(self)
 	open = true
 	visible = true
 	UiSession.open(self)
