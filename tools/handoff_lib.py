@@ -227,8 +227,15 @@ def selftest(script: Path) -> list[str]:
         code, out = run(main, "--handoff", "--door", "ui")
         if code == 0 or "worktree" not in out.lower():
             bad.append("--handoff in a main checkout must fail and say it belongs in the survey worktree")
-        code, out = run(survey, "--handoff", "--door", "ui", "--job", "ui.pause", "--area", "ui")
         hp = handoff_path(survey)
+        (survey / "_logs").mkdir(exist_ok=True)
+        (survey / "_logs" / "slice-state.json").write_text('{"door": "ui", "job": "", "area": ""}\n', encoding="utf-8")
+        code, out = run(survey, "--handoff")
+        if code != 0 or not hp.is_file() or "area: ui" not in hp.read_text(encoding="utf-8"):
+            bad.append("a bare --handoff must take the door from _logs/slice-state.json")
+        if hp.is_file():
+            hp.unlink()
+        code, out = run(survey, "--handoff", "--door", "ui", "--job", "ui.pause", "--area", "ui")
         if code != 0 or not hp.is_file() or "fill" not in out.lower() or "open_slice.py" in out:
             bad.append("--handoff with no file must write the skeleton, say what to fill, and print no launch command yet")
         code, out = run(survey, "--handoff")

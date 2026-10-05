@@ -5,6 +5,7 @@ the first-message rules). A later run in the same worktree prints `SLICE ALREADY
 
     python tools/start_build_slice.py --door dungeon | --job ui.pause | --area player [--full] [--ref REF] [--dry-run]
     python tools/start_build_slice.py --checkpoint [--session ID] [--ref REF]
+    python tools/start_build_slice.py --failed                                       (the Did not work lines for your next message, from this session's failed tool results)
     python tools/start_build_slice.py --handoff [--door D] [--job J] [--area A]      (survey session, after her answers to the first ask)
     python tools/start_build_slice.py --door D --from-handoff PATH                   (the fresh implementation session)
 The first run writes _logs/slice-state.json (never committed) and a postcard _logs/slice-boot/<stamp>-slice-boot.txt. A door with several jobs and no
@@ -33,7 +34,7 @@ import repo_lib
 import session_lib
 import slice_lib
 import slice_state
-from load_routes import check_route, load_routes, shot_flows, smoke_phases
+from load_routes import check_route, job_flow_map, load_routes, shot_flows, smoke_phases
 
 
 def not_carried(other: list[str]) -> str:
@@ -54,11 +55,12 @@ def write_handoff(root: Path, args) -> int:
         return end("NOT A WORKTREE: --handoff belongs in the survey session's worktree (a Grok clone under .grok/worktrees). In a main checkout there is no survey to hand off.", "FAIL", "handoff-main")
     path = handoff_lib.handoff_path(root)
     old = handoff_lib.parse(path.read_text(encoding="utf-8-sig"))[0] if path.is_file() else {}
-    door, job = args.door.strip() or old.get("door", ""), args.job.strip() or old.get("job", "")
-    area = args.area.strip() or old.get("area", "") or job or door
+    st = slice_state.load(root)
+    door, job = args.door.strip() or old.get("door", "") or st.get("door", ""), args.job.strip() or old.get("job", "") or st.get("job", "")
+    area = args.area.strip() or old.get("area", "") or st.get("area", "") or job or door
     if not path.is_file():
         if not area:
-            return end("pass --door D (or --job / --area) so the handoff names the area: " + (slice_lib.doors_hint(root) or "see design/routes.yaml"), "FAIL", "handoff-no-area")
+            return end("no slice state found here: pass --door D (or --job / --area) so the handoff names the area: " + (slice_lib.doors_hint(root) or "see design/routes.yaml"), "FAIL", "handoff-no-area")
         if not args.dry_run:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(handoff_lib.skeleton(root, area, door, job, os.environ.get("GROK_SESSION_ID", "")), encoding="utf-8")
@@ -84,6 +86,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--area", default="", help="Slice name for the worktree slug (default: job, else door).")
     ap.add_argument("--ref", default="", help="Base ref for the retry diff and the merge-back line (default: the week branch grok-build-w{series}).")
     ap.add_argument("--full", action="store_true", help="Reprint the whole start card in a slice that already started (a later run prints where the slice stands).")
+    ap.add_argument("--failed", action="store_true", help="Print the `Did not work:` lines built from this session's failed tool results since your last ask.")
     ap.add_argument("--checkpoint", action="store_true", help="In the worktree session, after gather: save this session's id for a red prove's fork.")
     ap.add_argument("--session", default="", help="With --checkpoint: the session id (default: $GROK_SESSION_ID; else `grok sessions list` in this directory).")
     ap.add_argument("--handoff", action="store_true", help="Survey session, after her answers to the first ask: write the handoff skeleton, or validate the filled one and print the open_slice command.")
@@ -97,13 +100,16 @@ def main(argv: list[str] | None = None) -> int:
             print("FAIL " + b)
         return code if not extra else agent_log.emit_result("FAIL", None, cmd="selftest", problems=len(extra))
     root = agent_log.resolve_root(args)
+    if args.failed:
+        print(session_lib.failed_block())
+        return agent_log.emit_result("PASS", cmd="failed")
     if args.checkpoint:
         return slice_lib.checkpoint(root, args)
     if args.handoff:
         return write_handoff(root, args)
     raw = (args.area or args.job or args.door).strip()
     if not raw:
-        agent_log.fail("pass --door D, --job door.job, or --area NAME (example: python tools/start_build_slice.py --door ui); after gather: --checkpoint. "
+        agent_log.fail("pass --door D, --job door.job, or --area NAME (example: python tools/start_build_slice.py --door ui). "
                        + (slice_lib.doors_hint(root) or "doors and jobs are in design/routes.yaml"))
     if args.door or args.job:
         bad_route = check_route(load_routes(root), args.door, args.job)
@@ -141,6 +147,12 @@ def main(argv: list[str] | None = None) -> int:
             flows = ",".join(shot_flows(load_routes(root), door=args.door.strip(), job=args.job.strip(), job_only=True))
         except Exception:
             flows = ""
+    per_job = ""
+    if args.door and not args.job:
+        try:
+            per_job = job_flow_map(load_routes(root), args.door.strip())
+        except Exception:
+            per_job = ""
     near = ""
     if args.job and not flows:
         try:
@@ -164,17 +176,16 @@ def main(argv: list[str] | None = None) -> int:
         slice_state.save(root, first)
     card = [f"door={args.door} job={args.job} area={args.area} ref={ref} ({ref_note}) worktree={wt} mode={mode}",
             f"smokes={smokes or 'n/a'} (run: tools/run_smokes.py --door/--job; add or update asserts for new systems)",
-            f"flows={flows or 'none mapped to this job'} (pictures: tools/run_shot_flow.py --job J, one boot; UI states: tools/check_shot_gaps.py --changed)",
+            f"flows={('per job: ' + per_job) if per_job else (flows or 'none mapped to this job')} (pictures: tools/run_shot_flow.py --job J, one boot; UI states: tools/check_shot_gaps.py --changed)",
             "prove=every pass python tools/check_gd_load.py; visual: one unit, shot and shown (show_png.py) before and after, then ask with the paths in the message; gate: run_build_gate once (build-job-cycle.md)",
-            slice_lib.merge_back_text(week or ref),
-            "retry=a red prove prints `grok -r CHECKPOINT --fork-session` to run from the worktree, with the diff to read"]
+            slice_lib.merge_back_text(week or ref)]
     body = card + ([warn] if warn else []) + ["", start, ""] + (hand + [""] if hand else []) + ([note, ""] if note else []) + (["--- route ---"] + route_lines + [""] if route_lines else [])
     if route == "ok":
         head = "\n".join(l for l in route_lines if not l.startswith(("Summary", "RESULT")))
     elif route.startswith("exit"):
         head = "route failed:\n" + "\n".join(route_lines)
     else:
-        head = f"smokes={smokes or 'n/a'} flows={flows or 'n/a'}" + ("" if smokes else " (--area has no route card; name a door/job for smokes)")
+        head = f"smokes={smokes or 'n/a'} flows={('per job: ' + per_job) if per_job else (flows or 'n/a')}" + ("" if smokes else " (--area has no route card; name a door/job for smokes)")
     echo = f"worktree={wt} ref={ref} ({ref_note}) mode={mode}\n{head}" + ("" if route.startswith("exit") else f"\n{start}\n{slice_lib.merge_back_text(week or ref)}" + (f"\n{note}" if note else "")) + (f"\n{warn}" if warn else "") + ("\n" + "\n".join(hand) if hand else "")
     return agent_log.finish("slice-boot", root, "\n".join(body), "FAIL" if route.startswith("exit") else "PASS",
                             args=args, write=not args.dry_run, echo=echo, worktree=wt, route=route)

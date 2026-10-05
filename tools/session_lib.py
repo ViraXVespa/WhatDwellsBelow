@@ -93,9 +93,60 @@ def prompt_facts(sdir: Path | None) -> dict:
 def statement(sdir: Path | None) -> str:
     """The first-message facts, only what was read from the session's files; Build then says which of AGENTS.md and the skill it opened."""
     f = context_facts(sdir)
-    ask = "In your first message say which of AGENTS.md and the pc-offload skill you actually opened, or that you opened neither; write 'loaded' or 'read' only for what you opened."
+    ask = ("Your first text to her, before your next tool call, says which of AGENTS.md and the pc-offload skill you actually opened, or that you opened neither; "
+           "write 'loaded' or 'read' only for what you opened. It is not kept for the first ask.")
     if f["agents"] is None and f["skill_at_start"] is None:
         return "Session facts: not verified (this session's files could not be read; `/session-info` shows the agents file and skill list). " + ask
     a = f"prompt_context.json: agents_md_files=[{', '.join(f['agents'])}]" if f["agents"] is not None else "agents_md_files: not verified"
     s = {True: "pc-offload is in the skills list at start", False: "pc-offload is not in the skills list at start", None: "skills list at start: not verified"}[f["skill_at_start"]]
     return f"Session facts: {a}; {s}. " + ask
+
+
+FAIL_TEXT = re.compile(r"^(Error|The string to replace was not found|File not found|.{0,80}(does not exist|No such file))", re.S)
+
+
+def failed_since_ask(rows: list[dict]) -> list[dict]:
+    """Failed tool steps after the last ask_user_question call (all of them when there was no ask yet), in order: {'tool', 'what', 'why'}.
+    Failed = a terminal result with a non-zero exit or a `RESULT FAIL` line, or another tool whose result starts with an error."""
+    calls: dict[str, tuple[str, str]] = {}
+    start = 0
+    for i, r in enumerate(rows):
+        if r.get("type") == "assistant":
+            for c in r.get("tool_calls") or []:
+                if c.get("name") == "ask_user_question":
+                    start = i
+    out: list[dict] = []
+    for i, r in enumerate(rows):
+        t = r.get("type")
+        if t == "assistant":
+            for c in r.get("tool_calls") or []:
+                try:
+                    a = json.loads(c.get("arguments") or "{}")
+                except ValueError:
+                    a = {}
+                what = a.get("command") or a.get("target_file") or a.get("file_path") or a.get("path") or a.get("description") or ""
+                calls[str(c.get("id"))] = (str(c.get("name", "?")), " ".join(str(what).split())[:120])
+        elif t == "tool_result" and i > start:
+            body = _text(r.get("content"))
+            m = re.match(r"exit: (-?\d+)", body)
+            bad = (m is not None and (m.group(1) != "0" or re.search(r"^RESULT FAIL", body, re.M) is not None)) or (m is None and FAIL_TEXT.match(body) is not None)
+            if not bad:
+                continue
+            lines = [ln.strip() for ln in body.splitlines() if ln.strip()]
+            why = next((ln for ln in lines if re.search(r"^RESULT FAIL|error|Error|FAIL|not found|does not exist|not exist", ln)), "") or (lines[0] if lines else "")
+            tool, what = calls.get(str(r.get("tool_call_id")), ("?", ""))
+            out.append({"tool": tool, "what": what, "why": why[:160]})
+    return out
+
+
+def failed_block(sdir: Path | None = None) -> str:
+    """The `Did not work:` lines for the next message, built from this session's own tool results (see failed_since_ask); '' text says none or not verified."""
+    sdir = sdir or session_dir()
+    rows = _rows(sdir / "chat_history.jsonl") if sdir else []
+    if not rows:
+        return "Did not work: not verified here (this session's record could not be read); write it from your own tool results."
+    steps = failed_since_ask(rows)
+    if not steps:
+        return "Did not work: none in this session's tool results since your last ask."
+    return "Did not work (from this session's tool results since your last ask; paste as the first lines of the message):\n" + "\n".join(
+        f"Did not work: {x['what'] or x['tool']} - {x['why']}" for x in steps)

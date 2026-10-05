@@ -82,8 +82,6 @@ def next_step(st: dict, s: dict) -> str:
         return "`python tools/check_gd_load.py` and `python tools/run_godot_import_check.py`"
     if not s["baseline shots"]:
         return "the baseline (the handoff's PNGs, else shoot the flows), look at it, `python tools/show_png.py`, then the restate and Q0"
-    if not s["checkpoint"]:
-        return "gather, then `python tools/start_build_slice.py --checkpoint`"
     return "the unit in hand: edit, prove, then the next ask (message first)"
 
 

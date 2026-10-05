@@ -3,8 +3,8 @@
 
     python tools/list_route.py --door ui          # door card + what to read: the one job doc that matches, others only on their trigger
     python tools/list_route.py --job ui.pause     # job card + read list
-    python tools/list_route.py --digest --door ui # several jobs (a survey): each doc's Status / Read when and its headings with line numbers;
-                                                  # open a section by line range after choosing, not the whole sibling
+    python tools/list_route.py --digest --door ui # several jobs (a survey): one line per doc (its Read when and the section count), no sibling headings
+    python tools/list_route.py --digest --job ui.pause  # the chosen unit's doc: Status, Read when and its headings with line numbers
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
-from load_routes import job_index, job_read_when, load_routes, shot_flows, smoke_phases
+from load_routes import job_flow_map, job_index, job_read_when, load_routes, shot_flows, smoke_phases
 
 
 FULL_GATES = False  # set by --gates
@@ -29,18 +29,22 @@ def _ascii(text: str) -> str:
     return text.encode("ascii", "replace").decode("ascii")
 
 
-def _digest(root: Path, rel_path: str) -> list[str]:
-    """Status, Read when and the headings (with line numbers, code fences skipped) of one doc."""
+def _digest(root: Path, rel_path: str, headings: bool = True) -> list[str]:
+    """Status, Read when and the headings (with line numbers, code fences skipped) of one doc; headings=False: one line, Read when and the section count."""
     f = root / rel_path
     if not f.is_file():
         return [f"{rel_path}\t(missing)"]
-    out, fence = [f"{rel_path}"], False
+    out, fence, when, n_sec = [f"{rel_path}"], False, "", 0
     for n, line in enumerate(f.read_text(encoding="utf-8-sig").splitlines(), 1):
         if line.startswith("```"):
             fence = not fence
-        elif not fence and (line.startswith("#") or line.startswith(("Status:", "Read when:"))):
+        elif not fence and line.startswith("Read when:"):
+            when = _ascii(line.strip())[:110]
+        if not fence and line.startswith("##"):
+            n_sec += 1
+        if headings and not fence and (line.startswith("#") or line.startswith(("Status:", "Read when:"))):
             out.append(f"  L{n}\t{_ascii(line.strip())[:110]}")
-    return out
+    return out if headings else [f"{rel_path}\t{when or 'Read when: (none)'}\t{n_sec} sections"]
 
 
 def _digest_lines(root: Path, data: dict, door: str, job: str) -> list[str]:
@@ -53,7 +57,9 @@ def _digest_lines(root: Path, data: dict, door: str, job: str) -> list[str]:
     files += [str(p) for k, p in jobs.items() if isinstance(p, str) and (not job or f"{door}.{k}" == job)]
     lines: list[str] = []
     for rel_path in [f for f in files if f]:
-        lines += _digest(root, rel_path)
+        lines += _digest(root, rel_path, headings=bool(job))
+    if not job:
+        lines.append("A survey is written from these lines. Open a doc only for the unit she chooses: `python tools/list_route.py --digest --job J` prints its headings with line numbers.")
     return lines
 
 
@@ -100,9 +106,10 @@ def _door_card(data: dict, door_name: str) -> list[str]:
         lines.append("job\t(none)")
     lines.extend(_gate_lines(data))
     lines.append("smokes\t%s" % ",".join(map(str, smoke_phases(data, door=door_name))))
-    lines.append("flows\t%s" % (",".join(shot_flows(data, door=door_name)) or "none"))
+    per_job = job_flow_map(data, door_name) if len(jobs or {}) >= 2 else ""
+    lines.append("flows\t%s" % (("per job: " + per_job if per_job else ",".join(shot_flows(data, door=door_name))) or "none"))
     if len(jobs or {}) >= 2:
-        lines.append("read\tsurvey of several jobs: `python tools/list_route.py --digest --door %s` (headings with line numbers); job docs are optional, open a section only for what you choose" % door_name)
+        lines.append("read\tsurvey of several jobs: `python tools/list_route.py --digest --door %s` (one line per doc); do not open the job docs until she chooses a unit" % door_name)
     else:
         lines.append("read\topen the one job doc whose read_when matches the task; not its siblings")
     lines.append("also\tgates only if their trigger applies; `code_map.py row` / `show_func.py` for scripts, not whole files")
@@ -143,7 +150,7 @@ def parse_args(argv: list[str]):
     parser.add_argument("target", nargs="?", default="", help="Door name, or door.job for a job card (same as --door / --job).")
     parser.add_argument("--door", default="", help="Door name (print its card).")
     parser.add_argument("--job", default="", help="Job id door.job (print its card).")
-    parser.add_argument("--digest", action="store_true", help="With --door / --job: each doc's Status, Read when and headings with line numbers (for a survey over several jobs).")
+    parser.add_argument("--digest", action="store_true", help="With --door: one line per doc (Read when, section count) for a survey over several jobs; with --job: that doc's Status, Read when and headings with line numbers.")
     parser.add_argument("--gates", action="store_true", help="Print the full gate triggers (default: gate names only).")
     args = parser.parse_args(argv)
     global FULL_GATES

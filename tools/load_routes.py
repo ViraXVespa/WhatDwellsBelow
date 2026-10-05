@@ -280,6 +280,14 @@ def shot_flows(data: dict[str, Any], door: str = "", job: str = "", job_only: bo
     return []
 
 
+def job_flow_map(data: dict[str, Any], door: str) -> str:
+    """'ui.pause=a,b; ui.run_flow=c' : the flows each job of `door` maps to (empty when none maps)."""
+    raw = data.get("shot_flows") or {}
+    if not isinstance(raw, dict):
+        return ""
+    return "; ".join("%s=%s" % (k, str(v).replace(" ", "")) for k, v in raw.items() if str(k).startswith(door + ".") and v)
+
+
 def shot_gaps_mode(data: dict[str, Any], who: str) -> str:
     """'required' | 'advisory' | 'off' for new-UI-state shot gaps, per agent (bot, build). Default: bot required, build advisory."""
     raw = data.get("shot_gaps") or {}

@@ -606,6 +606,22 @@ def fetch_ban_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     return fails
 
 
+CAP_RE = re.compile(r"script cap|size cap|line cap|over the (?:\w+ )?cap|near the (?:\w+ )?cap|ship floor|size floor|byte budget", re.I)
+CAP_OK = ("BOT.md", "GROK-BOT.md", "design/refactor.md")
+
+
+def cap_wording_fails(texts: dict[str, str]) -> list[str]:
+    """Size and cap wording belongs to the Bot only: no such phrase in a doc Build or Web can open (the Bot docs, BOT.md and refactor.md are exempt)."""
+    fails: list[str] = []
+    for posix, body in sorted(texts.items()):
+        if posix.startswith(("design/changelog/", "design/grok-bot-")) or posix in CAP_OK:
+            continue
+        m = CAP_RE.search(body)
+        if m:
+            fails.append(f"size/cap wording in a Build-facing doc: {posix} ({m.group(0)!r}); caps stay Bot-only")
+    return fails
+
+
 def smash_fails(root: Path, texts: dict[str, str]) -> list[str]:
     fails: list[str] = []
     for posix, body in texts.items():
@@ -914,6 +930,7 @@ def main() -> int:
     fails.extend(index_topic_cite_fails(routes, texts))
     fails.extend(smash_fails(root, texts))
     fails.extend(fetch_ban_fails(routes, texts))
+    fails.extend(cap_wording_fails(texts))
     fails.extend(boot_instruct_fails(routes, texts))
     if bot_gate_lib.enabled(args):
         fails.extend(boot_budget_fails(root, routes))

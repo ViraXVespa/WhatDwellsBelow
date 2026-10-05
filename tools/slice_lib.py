@@ -51,7 +51,9 @@ def slice_check(root: Path, name: str) -> tuple[str, str, str, str]:
 
 
 Q0 = ("Q0, in every slice, even when the prompt gives a look: what should the result look like; is there a reference (a picture, a game, a screen); what is out of bounds, "
-      "including frames or layouts already built. A layout or frame inherited from earlier work is a Q0 item, never only a ledger line.")
+      "including frames or layouts already built. A layout or frame inherited from earlier work is a Q0 item, never only a ledger line. "
+      "Look options differ in kind (one look shared by every screen, a look per screen or object, a new look, her words), not in detail, and are not all built on one existing look. "
+      "Each option says `reuse <the existing asset or look>` or `draw new`; an option that only names an asset (\"the stall prop\") is not an option yet.")
 
 
 def is_survey(root: Path, door: str, job: str, area: str, handoff: bool) -> bool:
@@ -97,10 +99,13 @@ def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implemen
         "every write outside the worktree, Grok memory files included; temp files; reverts of generated churn such as `git checkout -- docs`). "
         f"Temp files go under `{(root / '_logs').as_posix()}/`; the commit message file is `{(root / '_logs' / 'commit-msg.txt').as_posix()}` (`git commit -F`). "
         "Before you write \"nothing was written outside this worktree\", check what you wrote and say exactly that.",
-        "DID NOT WORK: any non-zero exit, `RESULT FAIL`, or skipped step, exploratory ones too, opens your next message as `Did not work: <command> <one line>`. "
+        "DID NOT WORK: any non-zero exit, `RESULT FAIL`, failed edit or skipped step, exploratory ones too, opens your next message. Do not write it from memory: "
+        "`python tools/start_build_slice.py --failed` prints the lines from this session's failed tool results since your last ask (`show_png.py` prints them too); paste them first, and say so when there are none. "
         "A step this card's ORDER leaves out (a survey's baseline) is not skipped.",
+        "ASK BEFORE THE CODE, not in a ledger line: a change in what a control does or in save or entry behaviour (a button that now saves, a changed trade) is her decision.",
         ("This tool never starts grok." if mode == "survey" else
-         "Then gather and run `python tools/start_build_slice.py --checkpoint` (the point a red prove forks back to). This tool never starts grok."),
+         "COMMIT only when she says so, with `python tools/commit_slice.py` (it needs a passing `python tools/run_build_gate.py --batch --visual JOB` after your last edit; gate not run: "
+         "`--gate-skipped \"why\"`, and open your final message with `Did not work: gate not run (why)`). This tool never starts grok."),
     ])
 
 
@@ -226,12 +231,29 @@ def selftest(script: Path) -> int:
         if "worktree=wdb-demo-2" not in out or "Did not work:" not in out:
             bad.append("boot in a worktree must name the folder as the worktree and state the Did not work rule")
         for need in ("This tool is the first command", "Session facts", "not verified", "/session-info", "Q0", "EVERY ASK has its own message first", "Option labels are not the message",
-                     "Also changed", "Grok memory files", "DID NOT WORK", "show_png.py", "not a ledger item", "commit-msg.txt", "check what you wrote", "block_until_ms 0", "inherited from earlier work"):
+                     "Also changed", "Grok memory files", "DID NOT WORK", "show_png.py", "not a ledger item", "commit-msg.txt", "check what you wrote", "block_until_ms 0", "inherited from earlier work",
+                     "start_build_slice.py --failed", "ASK BEFORE THE CODE", "reuse <the existing asset or look>", "commit_slice.py", "gate not run", "before your next tool call"):
             if need.lower() not in out.lower():
                 bad.append(f"the worktree first-message text lacks {need!r}")
-        for banned in ("did_not_work", "windows or programs opened", "is not showing it", "read by hand", "found by path", "shoot and open"):
+        for banned in ("--checkpoint", "retry=", "did_not_work", "windows or programs opened", "is not showing it", "read by hand", "found by path", "shoot and open"):
             if banned in out.lower():
                 bad.append(f"the worktree first-message text must not contain {banned!r}")
+        rows = [{"type": "assistant", "tool_calls": [{"id": "a", "name": "run_terminal_command", "arguments": '{"command": "python tools/x.py"}'}]},
+                {"type": "tool_result", "tool_call_id": "a", "content": "exit: 2\nx.py: error: bad flag"},
+                {"type": "assistant", "tool_calls": [{"id": "b", "name": "search_replace", "arguments": '{"file_path": "f.gd"}'}]},
+                {"type": "tool_result", "tool_call_id": "b", "content": "The string to replace was not found in the file"},
+                {"type": "assistant", "tool_calls": [{"id": "c", "name": "run_terminal_command", "arguments": '{"command": "python tools/ok.py"}'}]},
+                {"type": "tool_result", "tool_call_id": "c", "content": "exit: 0\nfine"},
+                {"type": "assistant", "tool_calls": [{"id": "q", "name": "ask_user_question", "arguments": "{}"}]},
+                {"type": "tool_result", "tool_call_id": "q", "content": "answer"},
+                {"type": "assistant", "tool_calls": [{"id": "d", "name": "run_terminal_command", "arguments": '{"command": "python tools/y.py"}'}]},
+                {"type": "tool_result", "tool_call_id": "d", "content": "exit: 0\nRESULT FAIL x=1"}]
+        got = session_lib.failed_since_ask(rows[:6])
+        if [g["what"] for g in got] != ["python tools/x.py", "f.gd"]:
+            bad.append(f"failed steps before any ask: the non-zero exit and the failed edit, not the pass: {got}")
+        got = session_lib.failed_since_ask(rows)
+        if [g["what"] for g in got] != ["python tools/y.py"]:
+            bad.append(f"failed steps after the last ask: only the RESULT FAIL one: {got}")
         # first run (not dry) writes the state; the second run says where the slice stands; --full reprints the card; a dry run always prints the card
         code, out = run(clone)
         if code != 0 or "IN A WORKTREE" not in out or not (clone / "_logs" / "slice-state.json").is_file():
@@ -275,6 +297,9 @@ def selftest(script: Path) -> int:
         code, out = run(clone, "--job", "ui.pause", "--dry-run", area="")
         if code != 0 or "STEP 0" in out:
             bad.append("once the flow is created and mapped by job, the door must print no STEP 0")
+        code, out = run(clone, "--door", "ui", "--dry-run", area="")
+        if code != 0 or "per job: ui.pause=own-flow" not in out:
+            bad.append("a door with several jobs must show each job's own flows on the card")
         code, out = run(clone, "--door", "ui", "--area", "ui-redesign", "--dry-run", area="")
         if code != 0 or "WARN: --area 'ui-redesign'" not in out or "doors: ui" not in out:
             bad.append("an unknown --area must warn and list the valid doors")

@@ -4,7 +4,7 @@
     python tools/list_xref.py --pattern pc-offload [--path design --path tools] [--include "*.gd"] [--regex]
 Scans the project that holds the current directory (so a worktree is scanned from inside it), else this tool's own checkout;
 --root overrides. The first output line prints the absolute scanned root, with a WARN when it is not the current directory's project.
-Case-insensitive. Skips top-level archives/, .archive_worktrees/, _logs/, docs/. Summary: _logs/xref/<stamp>-xref.txt.
+Case-insensitive. Skips top-level archives/, .archive_worktrees/, _logs/, docs/ and the Bot's own docs (BOT.md, design/grok-bot-*.md). Summary: _logs/xref/<stamp>-xref.txt.
 Default output is an INDEX when a search hits many places: per-file hit counts with each file's first matching line, most hits first. Then
 `--expand FILE` (repeatable) lists every hit in that file. A search with only a few hits prints them directly.
 --texts searches the visible text of the last shot-flow runs instead (_logs/shot-flow/**/*.texts.json): the way to find which words a screen shows.
@@ -23,6 +23,11 @@ import agent_log
 import gd_lib
 
 SKIP = {*gd_lib.SKIP_PARTS, "_logs", "docs", ".git"}
+
+
+def BOT_DOCS(rel: str) -> bool:
+    """The Bot's own docs are not Build's search scope."""
+    return rel == "BOT.md" or (rel.startswith("design/grok-bot-") and rel.endswith(".md"))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -66,6 +71,8 @@ def main(argv: list[str] | None = None) -> int:
         cands = [base] if base.is_file() else sorted(base.rglob("*"))
         for f in cands:
             if not f.is_file() or (SKIP & set(f.relative_to(root).parts[:1]) and not args.texts) or not fnmatch.fnmatch(f.name, args.include):
+                continue
+            if BOT_DOCS(f.relative_to(root).as_posix()):
                 continue
             scanned += 1
             if len(files_hit) >= args.max_files or len(hits) >= args.max_hits:

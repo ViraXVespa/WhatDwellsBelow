@@ -2,7 +2,7 @@
 """Open PNGs for the User in her default viewer, and print the path + description lines to paste into the message.
 
     python tools/show_png.py PATH[=one-line description] [PATH[=description] ...] [--no-open]
-Run it once, with every picture the next ask refers to, after you have looked at them yourself and before you write the message and ask.
+Run it once, with every picture the next ask refers to, after you have looked at them yourself and before you write the message and ask. It also prints the `Did not work:` lines built from this session's failed tool results since your last ask; they open the message.
 Windows: each file opens through the default viewer (os.startfile), in the order given. Elsewhere (a Linux box, CI) nothing can open on her
 screen: the lines are printed and the run still passes. A path that is not a file fails (exit 1) and nothing is opened.
 Relative paths are taken from the current directory (the worktree).
@@ -17,6 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
+import session_lib
 
 EXT = re.compile(r"^(.*?\.(?:png|jpe?g|webp|gif|bmp))(?:=(.*))?$", re.I)
 
@@ -87,6 +88,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{p} - {d or '(no description given: say what is on it)'}")
     where = "opened on her screen" if n else "not opened (no viewer here); list them in the message"
     print(f"{where}: {n} of {len(rows)}")
+    print(session_lib.failed_block())
     return agent_log.emit_result("PASS", opened=n, files=len(rows))
 
 

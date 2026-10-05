@@ -366,7 +366,8 @@ shot_flows:
   dungeon: "dungeon-f1-spawns,dungeon-f2-spawns,dungeon-f3-spawns,dungeon-f4-spawns,dungeon-f1-props,dungeon-f1-boss,dungeon-hud-states,dungeon-f1-ambush,dungeon-f2-ambush,dungeon-f3-ambush,dungeon-f4-ambush,dungeon-f3-elites,dungeon-all-enemies"
   ui: "camp-pause-pages,camp-overlays"
   ui.pause: "camp-pause-pages"
-  ui.run_flow: "camp-recap,dungeon-map-crystal"
+  ui.run_flow: "camp-recap,dungeon-map-crystal,camp-npc-panels,camp-billboard-controls,dungeon-gate-shop"
+  ui.gear_entry: "camp-anvil-tabs"
   ui.hud: "dungeon-hud-states"
   ui.title_web: "title-menu,splash-credit,fs-gate"
 

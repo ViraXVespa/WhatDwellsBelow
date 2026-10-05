@@ -8,6 +8,7 @@ set state, shoot every page, assert, then diff against a baseline or publish to 
   python tools/run_shot_flow.py --flow camp-receptionist-menu [--baseline DIR] [--save-baseline DIR] [--publish]
   python tools/run_shot_flow.py --job ui.pause [--save-baseline DIR]   # every flow routes.yaml maps to the job (a door name: its door flows), one call, one summary
   python tools/run_shot_flow.py --changed               # the flows whose JSON changed, plus those mapped to a job whose doc changed
+  python tools/run_shot_flow.py --flow N --state NAME   # re-shoot one state of a flow (its steps up to that shot only); prints that frame as changed or same
   python tools/run_shot_flow.py --smoke --no-pixels        # every smoke:true flow, headless, asserts only
 
 Each flow is one worker boot (run_shots.py --steps); the shot tool cannot run two step files in one boot. Flows picked together are run in one call and
@@ -124,6 +125,28 @@ def changed_flows(root: Path, flows: dict[str, dict]) -> list[str]:
     except Exception:
         pass
     return list(dict.fromkeys(picked))
+
+
+def state_flow(flow: dict, state: str, path: Path) -> dict | None:
+    """The flow cut after its top-level `shot` named `state`: earlier shots and their text asserts are dropped (setup steps stay). None when there is no such shot."""
+    steps = flow.get("steps", [])
+    idx = next((i for i, s in enumerate(steps) if isinstance(s, dict) and s.get("op") == "shot" and s.get("name") == state), -1)
+    if idx < 0:
+        return None
+    keep = [s for s in steps[:idx] if not (isinstance(s, dict) and s.get("op") in ("shot", "assert_texts"))] + [steps[idx]]
+    return {**{k: v for k, v in flow.items() if k not in ("_file", "steps")}, "steps": keep, "_file": path}
+
+
+def state_frame(fdir: Path, state: str) -> Path | None:
+    hits = sorted(fdir.glob("[0-9]*-%s.png" % state)) if fdir.is_dir() else []
+    return hits[0] if hits else None
+
+
+def state_verdict(old: bytes | None, new: Path) -> str:
+    """'same' | 'changed' | 'new' for a re-shot state against the frame it replaces."""
+    if old is None:
+        return "new (no earlier frame of this state to compare)"
+    return "same as the earlier frame" if hashlib.sha256(old).digest() == hashlib.sha256(new.read_bytes()).digest() else "CHANGED against the earlier frame"
 
 
 def plan(flows: dict[str, dict], todo: list[str], dedupe: bool = True) -> tuple[list[str], list[str]]:
@@ -265,6 +288,10 @@ def selftest() -> int:
         bad.append("a covered flow runs alone, and with --no-dedupe")
     if "overlap: b and c both cover ui:x" not in plan(fl, ["b", "c"])[1]:
         bad.append("two picked flows covering one state must be noted")
+    st = {"name": "f", "steps": [{"op": "device"}, {"op": "shot", "name": "a"}, {"op": "assert_texts"}, {"op": "press"}, {"op": "shot", "name": "b"}, {"op": "press"}]}
+    cut = state_flow(st, "b", Path("x.json"))
+    if cut is None or [s["op"] for s in cut["steps"]] != ["device", "press", "shot"] or state_flow(st, "zz", Path("x.json")) is not None:
+        bad.append("--state keeps the setup steps and the named shot, drops earlier shots and text asserts, and refuses an unknown state")
     for b in bad:
         print("FAIL " + b)
     return agent_log.emit_result("FAIL" if bad else "PASS", None, cmd="selftest", problems=len(bad))
@@ -279,6 +306,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--sheet", default="", metavar="FLOW", help="tile FLOW's last frames into one sheet.png (labels; fine text is not readable on it)")
     p.add_argument("--flow", action="append", default=[], help="flow name (repeat or comma-separate)")
     p.add_argument("--job", action="append", default=[], metavar="JOB", help="every flow routes.yaml maps to JOB (door.job, or a door name); one call, one summary")
+    p.add_argument("--state", default="", metavar="NAME", help="with one --flow: re-shoot only that flow's state NAME (steps up to its shot); prints it as changed or same")
     p.add_argument("--changed", action="store_true", help="flows whose JSON changed, plus those mapped to a job whose doc changed")
     p.add_argument("--no-dedupe", action="store_true", help="run a flow even when a picked flow covers it (covered_by)")
     p.add_argument("--all", action="store_true", help="every flow")
@@ -331,9 +359,31 @@ def main(argv: list[str] | None = None) -> int:
     names = list(dict.fromkeys(names))
     if not (names or args.all or args.smoke):
         agent_log.fail("name a flow (--flow N), a job (--job J), or use --changed / --all / --smoke / --list / --survey")
-    todo, notes = plan(flows, pick(flows, names, args.smoke, args.all), not args.no_dedupe)
     out_root = Path(args.out_dir) if args.out_dir else root / "_logs" / JOB
-    rows = [run_one(root, n, flows[n], args, out_root) for n in todo]
+    if args.state:
+        if len(names) != 1 or args.all or args.smoke or args.changed:
+            agent_log.fail("--state NAME goes with exactly one --flow N (example: python tools/run_shot_flow.py --flow camp-npc-panels --state vendor)")
+        base = names[0]
+        if base not in flows:
+            agent_log.fail("unknown flow %s. flows: %s" % (base, ", ".join(flows)))
+        sname = "%s~%s" % (base, args.state)
+        cut = state_flow(flows[base], args.state, out_root / ("%s.steps.json" % sname))
+        if cut is None:
+            agent_log.fail("flow %s has no top-level shot named %r. states: %s" % (base, args.state, ", ".join(_shot_names(flows[base].get("steps", []))) or "none"))
+        prev = state_frame(out_root / sname, args.state) or state_frame(out_root / base, args.state)
+        old = prev.read_bytes() if prev else None
+        out_root.mkdir(parents=True, exist_ok=True)
+        if not args.dry_run:
+            (out_root / ("%s.steps.json" % sname)).write_text(json.dumps({k: v for k, v in cut.items() if k != "_file"}, indent=1), encoding="utf-8")
+        rows = [run_one(root, sname, cut, args, out_root)]
+        notes = []
+        fr = state_frame(out_root / sname, args.state)
+        if fr is not None and not args.dry_run:
+            notes.append("state %s: %s (%s)" % (args.state, state_verdict(old, fr), rel(root, fr)))
+        todo = [sname]
+    else:
+        todo, notes = plan(flows, pick(flows, names, args.smoke, args.all), not args.no_dedupe)
+        rows = [run_one(root, n, flows[n], args, out_root) for n in todo]
     bad_run = [r for r in rows if not r["ok"] and not args.dry_run]
     bad_diff = [r for r in rows if r.get("diff_status") == "FAIL"]
     changed = [r for r in rows if r.get("diff_status") == "INFO"]
@@ -360,7 +410,7 @@ def main(argv: list[str] | None = None) -> int:
     if status == "FAIL" and not args.dry_run:
         import retry_lib
 
-        lines += ["", retry_lib.block(root, "run_shot_flow.py --flow " + ",".join(todo), lines)]
+        lines += ["", retry_lib.block(root, "run_shot_flow.py --flow " + ",".join(t.split("~")[0] for t in todo), lines)]
     res = agent_log.write_run_file(root, out_root, JOB, "\n".join(lines), status, write=not args.dry_run, flows=len(rows),
                                    **{"pass": sum(1 for r in rows if r["ok"])}, fail=len(bad_run), stale=len(stale),
                                    changed=len(changed), frames=sum(r["frames"] for r in rows))
