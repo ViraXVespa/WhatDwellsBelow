@@ -427,7 +427,7 @@ unit_docs:
 # One unit's code: `path: function, function` entries separated by `;` (open them with show_func.py, not whole).
 unit_files:
   ui.controls: "scripts/ui/progress_ui/ui_hub.gd: rebuild_controls; scripts/ui/progress_ui.gd: open_controls; scripts/ui/progress_ui/controls_frame.gd: spec, build, place, dress; scripts/ui/progress_ui/controls_art.gd: grain, face, post, bracket, plank"
-  ui.anvil: "scripts/ui/progress_ui/ui_hub.gd: rebuild_anvil; scripts/ui/progress_ui/ui_flow.gd: open_anvil; scripts/ui/gear_board/board_sub.gd: open_sub, _open_forge"
+  ui.anvil: "scripts/ui/progress_ui/ui_hub.gd: rebuild_anvil; scripts/ui/progress_ui/ui_flow.gd: open_anvil; scripts/ui/gear_board/board_sub.gd: open_sub, _open_forge; scripts/ui/progress_ui/anvil_frame.gd: spec, build, place; scripts/ui/progress_ui/anvil_art.gd: stump, shadow, anvil"
   ui.loadout: "scripts/ui/progress_ui/ui_hub.gd: rebuild_loadout; scripts/ui/progress_ui/ui_flow.gd: open_loadout"
   ui.extract: "scripts/ui/progress_ui/inv.gd: rebuild_extract; scripts/ui/progress_ui.gd: open_extract, _extract_all; scripts/ui/confirm_dlg.gd"
   ui.ghost_shop: "scripts/ui/progress_ui/shop.gd: rebuild_shop; scripts/ui/progress_ui.gd: open_shop"

@@ -15,6 +15,10 @@ static func rebuild_loadout(ui: CanvasLayer) -> void:
 static func rebuild_anvil(ui: CanvasLayer) -> void:
 	ui._clear()
 	ui.gear_mode = "anvil"
+	var pad := Control.new()
+	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pad.custom_minimum_size = Vector2(0, 12)
+	ui.box.add_child(pad)
 	Board.build(ui, "anvil")
 
 static func enter(ui) -> void:

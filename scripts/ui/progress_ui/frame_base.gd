@@ -9,6 +9,7 @@ extends Object
 
 const Plate: GDScript = preload("res://scripts/ui/plate_chrome.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
+const PromptView: GDScript = preload("res://scripts/ui/prompt_view.gd")
 
 const PLATE_POS: Vector2 = Vector2(360, 80)
 const PLATE_SIZE: Vector2 = Vector2(1200, 920)
@@ -63,8 +64,10 @@ static func _fit(host: CanvasLayer, chrome: Control, spec: Dictionary, plate: Co
 	chrome.size = span
 	edge.visible = false
 	plate.color = UiBuild.Tok.CLEAR
-	plate.position = pos
-	plate.size = Vector2(span.x, span.y + float(spec["footer"]))
+	var inset: Vector2 = spec.get("plate_inset", Vector2.ZERO)
+	plate.position = pos + Vector2(inset.x, 0.0)
+	plate.size = Vector2(span.x - inset.x * 2.0, span.y - inset.y + float(spec["footer"]))
+	PromptView.place_bar(host)
 	scroll.position = spec["rows_pos"]
 	scroll.size = spec["rows_size"]
 	UiBuild.bars(scroll, false)
