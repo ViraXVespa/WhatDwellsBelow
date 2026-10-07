@@ -4,6 +4,7 @@
     python tools/task.py list [--owner build|web|bot]
     python tools/task.py show ID
     python tools/task.py new ID|opt-next --owner bot --title "..." --done-when "..." --resume "..." [--needs ID,ID] [--body-file PATH]
+    python tools/task.py update ID [--status S] [--needs ID,ID] [--section TITLE --body TEXT | --body-file PATH]
     python tools/task.py done ID [--changelog design/changelog/X.Y.Z.md]
     python tools/task.py index | check
 
@@ -36,6 +37,13 @@ def main(argv: list[str] | None = None) -> int:
     nw.add_argument("--needs", default="", help="Comma-separated task ids this waits on (makes it blocked).")
     nw.add_argument("--body", default="", help="Body markdown (sections start `## `).")
     nw.add_argument("--body-file", dest="body_file", default="")
+    up = sub.add_parser("update", help="Change a task's status / needs, or replace one ## section (added when missing).")
+    up.add_argument("id")
+    up.add_argument("--status", choices=task_lib.STATUSES, default="")
+    up.add_argument("--needs", default=None, help="Comma-separated ids, or none.")
+    up.add_argument("--section", default="", help="Section title to replace, e.g. 'Open questions'.")
+    up.add_argument("--body", default="")
+    up.add_argument("--body-file", dest="body_file", default="")
     dn = sub.add_parser("done", help="Finish a task: delete it, unblock dependants, one changelog line.")
     dn.add_argument("id")
     dn.add_argument("--changelog", default="", help="Changelog file for the line (default: the newest design/changelog entry main does not have).")
@@ -49,7 +57,7 @@ def main(argv: list[str] | None = None) -> int:
     def end(body: str, status: str, **kv: object) -> int:
         return agent_log.finish("task", root, body, status, args=args, write=not dry, cmd=args.cmd, **kv)
 
-    if args.cmd in ("show", "done") and args.id not in tasks:
+    if args.cmd in ("show", "done", "update") and args.id not in tasks:
         print(f"error: no task {args.id}; open tasks: {', '.join(tasks) or 'none'}", file=sys.stderr)
         return end("", "FAIL", error="not-found")
     if args.cmd == "list":
@@ -77,6 +85,24 @@ def main(argv: list[str] | None = None) -> int:
             md.write_text(p, task_lib.skeleton(args.id, args.owner, args.title, args.done_when, args.resume, needs, body), mkdir=True)
             task_lib.write_index(root)
         return end(("would write " if dry else "wrote ") + f"{task_lib.TASKS_REL}/{args.id}.md and the README index", "PASS", id=args.id, changed=0 if dry else 1)
+    if args.cmd == "update":
+        p = root / tasks[args.id]["path"]
+        needs = task_lib.split(args.needs) if args.needs is not None else None
+        missing = [n for n in (needs or []) if n not in tasks or n == args.id]
+        body = md.read_text(args.body_file) if args.body_file else args.body
+        if missing or (args.section and not body.strip()) or not (args.status or needs is not None or args.section):
+            print("error: update needs --status, --needs (open task ids) or --section with a body", file=sys.stderr)
+            return end("", "FAIL", error="bad-update")
+        changed = []
+        if not dry:
+            if args.status and task_lib.set_head(p, "status", args.status):
+                changed.append("status")
+            if needs is not None and task_lib.set_head(p, "needs", ", ".join(needs) or "none"):
+                changed.append("needs")
+            if args.section and task_lib.set_section(p, args.section, body):
+                changed.append(args.section)
+            task_lib.write_index(root)
+        return end(f"{tasks[args.id]['path']}: " + (", ".join(changed) or ("would update" if dry else "no change")), "PASS", id=args.id, changed=len(changed))
     if args.cmd == "done":
         log = (root / args.changelog) if args.changelog else task_lib.changelog_target(root)
         if log is None:

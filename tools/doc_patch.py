@@ -393,6 +393,14 @@ def write_changelog(root: Path, bullets: list[str], label: str | None = None, su
     return path
 
 
+def task(argv: list[str]) -> str:
+    """Run `tools/task.py ARGV` (new / update / show / list / done) from a scratch; returns its output, raises on a non-zero exit."""
+    p = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "task.py"), *argv], capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if p.returncode != 0:
+        raise RuntimeError(f"task.py {' '.join(argv)} failed:\n{p.stdout}{p.stderr}")
+    return p.stdout
+
+
 def run_checker(root: Path | None = None) -> int:
     root = repo_root(root)
     print("running tools/check_load_graph.py")

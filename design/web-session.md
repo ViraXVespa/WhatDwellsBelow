@@ -67,6 +67,8 @@ One action, one `tools/_scratch.py`. The emit rules (scratch shape, revise-from-
 
 Review the pasted Phase 4 RESULT. Rules (corrected scratch, next slice): `web-test.md`, opened at Phase 5 and not before.
 
+Session end (any phase): the task offer in `web-discuss.md` (End of session).
+
 ## Do not
 
 - Never hand the User a prove command list or a `prove:` homework list; the scratch runs the runners.

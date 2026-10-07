@@ -33,7 +33,7 @@ if __name__ == "__main__":
     main()
 ```
 
-Callables (`replace_func`, `upsert_func`, `ensure_line`, `write_text`, `write_changelog`, `run_checker`, `dump_job`) and the matching `doc_patch.py` CLI subcommands: `doc-library.md`. If a call does not behave intuitively, fix `doc_patch` (direct `python` file), do not work around it.
+Callables (`replace_func`, `upsert_func`, `ensure_line`, `write_text`, `write_changelog`, `task`, `run_checker`, `dump_job`) and the matching `doc_patch.py` CLI subcommands: `doc-library.md`. If a call does not behave intuitively, fix `doc_patch` (direct `python` file), do not work around it.
 
 A `.gd` body is tabs. `write_text` turns a leading run of four spaces into one tab, but the scratch still emits tabs. Do not prepend above `from __future__ import`. A `.py` write that does not compile, or that moves that import, is refused. `run_shots.py` stays hidden. `--show` only when the User asks to see the window.
 

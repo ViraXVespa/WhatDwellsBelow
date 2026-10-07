@@ -54,7 +54,7 @@ SMOKE: dict[str, list] = {
     "attack_keyframes": [["--beats"]],
     "bible_prompt": [["--gender", "female"], ["--enemy", "archer"], ["--list-enemies"]],
     "bot_opt": [["--list"]],
-    "task": [["list"], ["check"], ["show", "opt-003"], ["--dry-run", "index"]],
+    "task": [["list"], ["check"], ["show", "opt-003"], ["--dry-run", "index"], ["--dry-run", "update", "opt-003", "--status", "open"]],
     "bot_smokes": [["--doctor"], ["--for", "scripts/app.gd"]],
     "bot_status": [[], ["--bot"]],
     "bot_warnscan": [["--list"]],

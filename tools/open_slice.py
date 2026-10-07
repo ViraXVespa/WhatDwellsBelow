@@ -13,6 +13,11 @@ the launch fails, the command is printed to copy and the exit code is 1.
 With AREA (a routes.yaml door, door.job, or a free name) the area is resolved first; a visual slice with no shot_flows prints a STEP 0
 note (creating the flow is the first job step, not a stop) and the launch continues. Without AREA there are no checks: Build runs
 start_build_slice.py inside the worktree.
+--task ID reads design/tasks/ID.md: with no prompt given it writes a short first message (the start command for AREA, then `task.py show ID`).
+A task with `needs-local: _src` (or --local _src) gets the main checkout's gitignored `_src/` linked into the worktree (a directory junction on
+Windows, a symlink elsewhere). `grok --worktree` makes its folder itself, so that launch is three steps instead:
+    grok worktree create NAME --ref WEEKBRANCH   (prints the worktree path)   ->   link PATH/_src to ROOT/_src   ->   grok --cwd PATH [PROMPT]
+A missing `_src`, a link that git would not ignore, or a create that prints no folder fails loudly. Only a task that names it gets the link.
 This is the only tool that launches grok for a Build slice (the isolated-media runner is the other launcher, under its own gate).
 --selftest: dry-run cases in a throwaway repo; no grok is ever started.
 """
@@ -32,6 +37,7 @@ import agent_log
 import handoff_lib
 import repo_lib
 import slice_lib
+import task_lib
 
 BANNED = ("--fork-session", "--max-turns", "--prompt-file", "-p")
 
@@ -46,12 +52,48 @@ def build_argv(grok: str, name: str, ref: str, prompt: str) -> list[str]:
     return [grok, f"--worktree={name}", "--ref", ref] + ([prompt] if prompt else [])
 
 
+def link_local(src: Path, dst: Path) -> None:
+    """dst -> src: a directory junction on Windows (no admin needed), a symlink elsewhere. An existing link to src is kept."""
+    if dst.is_symlink() or dst.exists():
+        if dst.resolve() == src.resolve():
+            return
+        raise OSError(f"{dst} already exists and is not a link to {src}")
+    if os.name == "nt":
+        p = subprocess.run(["cmd", "/c", "mklink", "/J", str(dst), str(src)], capture_output=True, text=True)
+        if p.returncode != 0:
+            raise OSError(f"mklink /J failed: {(p.stdout + p.stderr).strip()}")
+    else:
+        os.symlink(src, dst, target_is_directory=True)
+
+
+def attach_local(root: Path, wt: Path, names: list[str]) -> list[str]:
+    """Link each main-checkout folder into the worktree and check git ignores it there; returns the lines to print."""
+    out = []
+    for n in names:
+        link_local(root / n, wt / n)
+        if subprocess.run(["git", "check-ignore", "-q", n], cwd=wt).returncode != 0:
+            os.unlink(wt / n) if os.name != "nt" else os.rmdir(wt / n)
+            raise OSError(f"git does not ignore {n} in {wt}; the link was removed")
+        out.append(f"linked {wt / n} -> {root / n} (read only by rule: edits change the main checkout's {n})")
+    return out
+
+
+def task_prompt(tid: str, path: str, area: str, names: list[str]) -> str:
+    start = (f"python tools/start_build_slice.py {'--job' if '.' in area else '--door'} {area}, then " if area else "") + f"python tools/task.py show {tid}"
+    text = f"Task {tid} ({path}). Your first command, before any file read or memory topic: {start}; read that task file whole."
+    for n in names:
+        text += f" `{n}` here is a link to the main checkout's {n} (source plates): read from it only; never edit, move or delete anything in it, because that changes the real {n}."
+    return text
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Start grok in a new worktree from the week branch (user-run launcher).", writes=True)
     ap.add_argument("area", nargs="?", default="", help="routes.yaml door, door.job, or a free slice name (runs the slice-boot checks).")
     ap.add_argument("--prompt", default="", help="First message for the new session (optional).")
     ap.add_argument("--prompt-file", default="", help="Read the first message from this file (this tool reads it; grok gets it as one argument).")
     ap.add_argument("--ref", default="", help="Git ref to base the worktree on (default: the week branch grok-build-w{N}).")
+    ap.add_argument("--task", default="", metavar="ID", help="A design/tasks task: its needs-local folders are linked in; with no prompt, a short first message names it.")
+    ap.add_argument("--local", action="append", default=[], choices=task_lib.LOCAL, help="Link this main-checkout folder into the worktree (repeatable).")
     ap.add_argument("--selftest", action="store_true", help="Run dry-run cases in a throwaway repo; never starts grok.")
     args = ap.parse_args(argv)
     if args.selftest:
@@ -79,6 +121,18 @@ def main(argv: list[str] | None = None) -> int:
         except OSError as exc:
             return end(f"CANNOT READ --prompt-file: {exc}", "FAIL", route="bad-prompt")
     prompt = prompt.strip()
+    local = list(dict.fromkeys(args.local))
+    if args.task:
+        t = task_lib.load(root).get(args.task.strip())
+        if not t:
+            return end(f"NO TASK {args.task}: open tasks are `python tools/task.py list`.", "FAIL", route="no-task")
+        local = list(dict.fromkeys(local + task_lib.split(t.get("needs-local", ""))))
+        prompt = prompt or task_prompt(args.task.strip(), t["path"], area, local)
+        if subprocess.run(["git", "cat-file", "-e", f"{ref}:{t['path']}"], cwd=root, capture_output=True).returncode != 0:
+            note = (note + "\n" if note else "") + f"WARN: {t['path']} is not on {ref}, so the new worktree will not have it. Merge main into {ref} first, or pass --ref."
+    missing = [n for n in local if not (root / n).is_dir()]
+    if missing:
+        return end(f"LOCAL FOLDER MISSING: {', '.join(missing)} is not in {root}. This task needs the main checkout's source plates there; restore them, then rerun.", "FAIL", route="no-local")
     hand_note = ""
     if prompt.startswith("# Handoff:"):
         bad = handoff_lib.check(root, prompt)
@@ -105,6 +159,33 @@ def main(argv: list[str] | None = None) -> int:
     lines += [hand_note] if hand_note else []
     lines.append((f"area={area}: resolved." + (f"\n{warn}" if warn else "") + (f"\n{note}" if note else "")) if area else
                  "No area given, so no route checks ran. In the new session Build runs `python tools/start_build_slice.py --door <door>` (the card; a later run says where the slice stands).")
+    if local:
+        create = [exe or "grok", "worktree", "create", name, "--ref", ref]
+        lines[1] = f"COMMANDS (run from the repo root; {', '.join(local)} needs a pre-made worktree): 1) {show(create)}  2) link PATH/{local[0]} to {root / local[0]} (Windows: mklink /J)  3) {show([exe or 'grok', '--cwd', 'PATH'] + ([prompt] if prompt else []))}"
+        if dry:
+            return end("\n".join(lines + ["dry run: grok was not started; no worktree or link was made."]), "PASS", route="dry-run-local")
+        if not exe:
+            return end("\n".join(lines + ["GROK NOT FOUND on PATH. Run the three COMMANDS above yourself from the repo root."]), "FAIL", route="no-grok")
+        p = subprocess.run(create, cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        wt = Path((p.stdout.strip().splitlines() or [""])[-1].strip())
+        if p.returncode != 0 or not str(wt) or not wt.is_dir():
+            return end("\n".join(lines + [f"WORKTREE CREATE FAILED (exit {p.returncode}): {(p.stdout + p.stderr).strip()[:400]}"]), "FAIL", route="create-failed")
+        try:
+            lines += attach_local(root, wt, local)
+        except OSError as exc:
+            return end("\n".join(lines + [f"LINK FAILED: {exc}. The worktree is at {wt}; nothing was started."]), "FAIL", route="link-failed")
+        cmd = [exe, "--cwd", str(wt)] + ([prompt] if prompt else [])
+        end("\n".join(lines + [f"worktree {wt}", "Starting grok now (this terminal is handed over)."]), "PASS", route="launch-local")
+        sys.stdout.flush()
+        try:
+            if os.name == "nt":
+                return subprocess.call(cmd, cwd=wt)
+            os.chdir(wt)
+            os.execvp(exe, cmd)
+        except OSError as exc:
+            print(f"error: launch failed ({exc}). Copy and run: {show(cmd)}", file=sys.stderr)
+            return 1
+        return 0
     if dry:
         return end("\n".join(lines + ["dry run: grok was not started."]), "PASS", route="dry-run")
     if not exe:
@@ -176,6 +257,37 @@ def selftest(script: Path) -> int:
         code, out = run(root, "--dry-run", "player")
         if code != 0 or "wdb-player-" not in out or "resolved" not in out:
             bad.append("a plain area names the worktree and passes the checks")
+        (root / ".gitignore").write_text("_src\n", encoding="utf-8")
+        (root / "design" / "tasks").mkdir(parents=True)
+        (root / "design" / "tasks" / "art.md").write_text("# Art\n\nid: art\nowner: build\nstatus: open\ndone-when: x\nresume: y\nneeds-local: _src\n", encoding="utf-8")
+        code, out = run(root, "--dry-run", "player", "--task", "art")
+        if code == 0 or "LOCAL FOLDER MISSING" not in out:
+            bad.append("a task that needs _src must fail loudly when the main checkout has none")
+        (root / "_src").mkdir()
+        code, out = run(root, "--dry-run", "art_pipeline.pack", "--task", "art")
+        if code != 0 or "worktree create wdb-art_pipeline.pack-" not in out or "--cwd" not in out or "start_build_slice.py --job art_pipeline.pack" not in out or "never edit" not in out:
+            bad.append("a task with needs-local must print create / link / --cwd steps and a first message with the start command and the read-only rule")
+        code, out = run(root, "--dry-run", "player")
+        if "worktree create" in out:
+            bad.append("no task and no --local: the plain --worktree launch, no link")
+        lw = Path(td) / "lw"
+        git(root, "add", ".gitignore")
+        git(root, "commit", "-qm", "ign")
+        git(Path(td), "clone", "-q", str(root), str(lw))
+        try:
+            attach_local(root, lw, ["_src"])
+            if not (lw / "_src").is_symlink() or "_src" in subprocess.run(["git", "status", "--porcelain"], cwd=lw, capture_output=True, text=True).stdout:
+                bad.append("the linked _src must be a link and not show in git status")
+        except OSError as exc:
+            bad.append(f"attach_local failed: {exc}")
+        (lw / ".gitignore").write_text("", encoding="utf-8")
+        os.unlink(lw / "_src")
+        try:
+            attach_local(root, lw, ["_src"])
+            bad.append("a link git would not ignore must fail")
+        except OSError:
+            if (lw / "_src").is_symlink():
+                bad.append("a refused link must be removed")
         gitdir = str(Path(shutil.which("git") or "").parent)
         if not shutil.which("grok", path=gitdir):  # PATH = git's folder only, so grok cannot be found or started
             code, out = run(root, "player", env={**os.environ, "PATH": gitdir})

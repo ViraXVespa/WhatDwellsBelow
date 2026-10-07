@@ -27,7 +27,7 @@ If a call does not work intuitively, it is designed wrong. Fix `doc_patch` (or t
 
 ## Library (import from a scratch only when the CLI cannot express it)
 
-`replace_once`, `replace_once_any`, `replace_func`, `upsert_func` (new function), `replace_block`, `patch_file`, `ensure_line`, `set_read_when`, `drop_citations`, `drop_table_column`, `next_label`, `write_changelog`, `write_text`, `run_checker`, `dump_job` (runs a prove job, prints its summary body; never print `Summary ->` paths). `append_funcs` does not exist. `replace_func` fails when the name appears twice. A `.gd` body is tabs.
+`replace_once`, `replace_once_any`, `replace_func`, `upsert_func` (new function), `replace_block`, `patch_file`, `ensure_line`, `set_read_when`, `drop_citations`, `drop_table_column`, `next_label`, `write_changelog`, `task` (runs `task.py`: new / update / show / list / done), `write_text`, `run_checker`, `dump_job` (runs a prove job, prints its summary body; never print `Summary ->` paths). `append_funcs` does not exist. `replace_func` fails when the name appears twice. A `.gd` body is tabs.
 
 ## md_format_lib
 

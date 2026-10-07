@@ -21,3 +21,7 @@ Do not self-park because the thread is long or a RESULT already landed. Stop the
 If quality looks like it is slipping, say that in one sentence and ask. Do not quietly drop the rest of the list.
 
 A park is a task file with owner web (`design/tasks/README.md`). A park from brainstorm must carry: mandate, frozen decisions, open questions, likely Source / Docs paths, tests that would prove it, why parked. Do not park leftover slices without that packet.
+
+## End of session
+
+When a brainstorm or emit loop stops and a task was named, decided, or left open, ask once: record it in a task file? Only on her yes, emit one scratch that calls `dp.task(["new", ...])` or `dp.task(["update", ID, "--section", TITLE, "--body", TEXT])` (fields and the other-owner rule: `design/tasks/README.md`), then `dp.run_checker(ROOT)`. A no ends the session with nothing written.
