@@ -3,6 +3,15 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.6.2",
+			"points": [
+				{
+					"text": "Added dialog notes for the guild receptionist."
+				}
+			],
+			"summary": "Guild receptionist update prep."
+		},
+		{
 			"label": "0.6.1",
 			"points": [
 				{
