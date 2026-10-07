@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Key _src/gear/*.jpg through the live still pipeline into assets/ui/gear/*.png
+# Key _src/sources/assets/ui/gear/*.jpg through the live still pipeline into assets/ui/gear/*.png
 from __future__ import annotations
 
 import sys
@@ -20,7 +20,10 @@ if str(_TOOLS) not in sys.path:
 
 import agent_log
 
-SRC = ROOT / "_src" / "gear"
+SRC = ROOT / "_src" / "sources" / "assets" / "ui" / "gear"
+_LEGACY_GEAR = ROOT / "_src" / "gear"
+if not SRC.is_dir() and _LEGACY_GEAR.is_dir():
+    SRC = _LEGACY_GEAR
 DEST = ROOT / "assets" / "ui" / "gear"
 CANVAS = 64
 PAD = 2
@@ -83,7 +86,7 @@ def _run() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    return agent_log.run_writer("process_gear_icons", 'Key _src/gear/*.jpg through the live still pipeline into assets/ui/gear/*.png.', _run, argv, globals())
+    return agent_log.run_writer("process_gear_icons", 'Key _src/sources/assets/ui/gear/*.jpg through the live still pipeline into assets/ui/gear/*.png.', _run, argv, globals())
 
 
 if __name__ == "__main__":

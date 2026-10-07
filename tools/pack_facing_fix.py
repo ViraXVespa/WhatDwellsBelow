@@ -3,8 +3,8 @@
 from pathlib import Path
 from PIL import Image
 import math
-from imglib import imgio  # noqa: E402
-from imglib.color import dist  # noqa: E402
+import numpy as np
+from imglib import imgio, key as plate_key  # noqa: E402
 from imglib.geom import fit_box  # noqa: E402
 import sys
 
@@ -18,36 +18,20 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5CRepos%5CWhatDwellsBelow\01a01c9b-e657-73d2-9eee-65d986e4e859\images")
 FRAMES = ROOT / "_src" / "anim_frames"
 OUT = ROOT / "assets" / "live" / "player"
-MAGENTA = (239, 19, 106)
 LAWN = (124, 252, 0)
 WALK_PICKS = [8, 12, 16, 20]
 ATK_PICKS = [8, 18, 28, 38]
 
 
 def key(im: Image.Image) -> Image.Image:
-    im = im.convert("RGBA")
-    px = im.load()
-    w, h = im.size
-    for y in range(h):
-        for x in range(w):
-            r, g, b, a = px[x, y]
-            if dist((r, g, b), MAGENTA) <= 90:
-                px[x, y] = (0, 0, 0, 0)
-                continue
-            if r > 160 and g < 90 and b > 50 and r > g + 40:
-                px[x, y] = (0, 0, 0, 0)
-                continue
-            if dist((r, g, b), LAWN) <= 72:
-                px[x, y] = (0, 0, 0, 0)
-                continue
-            if g > 150 and g > r + 40 and g > b + 40:
-                px[x, y] = (0, 0, 0, 0)
-                continue
-            # despill: leftover green fringe on otherwise-character pixels
-            if g > r + 24 and g > b + 12 and g > 90:
-                ng = int((r + b) * 0.5)
-                px[x, y] = (r, ng, b, a)
-    return im
+    keyed = plate_key.punch(im)
+    arr = np.array(keyed)
+    rgb = arr[:, :, :3].astype(np.float32)
+    r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
+    lawn_d = np.sqrt(((rgb - np.array(LAWN, np.float32)) ** 2).sum(axis=-1))
+    lawn = (lawn_d <= 72.0) | ((g > 150) & (g > r + 40) & (g > b + 40))
+    arr[lawn] = 0
+    return Image.fromarray(arr, "RGBA")
 
 
 def fit(im: Image.Image, canvas: int = 128, pad: int = 6) -> Image.Image:

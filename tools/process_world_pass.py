@@ -17,7 +17,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
-from imglib import geom, imgio  # noqa: E402
+from imglib import geom, imgio, key as plate_key  # noqa: E402
 from gen_prompt_glyphs import FONT  # noqa: E402  (single home for the pixel font)
 
 SESSION = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow\01a08788-1bb6-76c0-8fa8-40b73dda2810\images")
@@ -89,19 +89,18 @@ def tile_out(src: str, dest: Path, size: int = 128, quad: str | None = None) -> 
 
 def key_sprite(im: Image.Image) -> Image.Image:
     im = im.convert("RGBA")
+    rgb = np.array(im)[:, :, :3]
+    corners = np.stack([rgb[2, 2], rgb[2, -3], rgb[-3, 2], rgb[-3, -3]], axis=0)
+    if plate_key.looks_like_plate(corners.mean(axis=0)):
+        return plate_key.punch(im)
     arr = np.array(im)
-    rgb = arr[:, :, :3].astype(np.float32)
-    corners = np.stack(
-        [rgb[2, 2], rgb[2, -3], rgb[-3, 2], rgb[-3, -3]],
-        axis=0,
-    )
     bg = corners.mean(axis=0)
-    dist = np.sqrt(((rgb - bg) ** 2).sum(axis=2))
+    dist = np.sqrt(((rgb.astype(np.float32) - bg) ** 2).sum(axis=2))
     mag = np.array([255.0, 0.0, 255.0], dtype=np.float32)
-    dmag = np.sqrt(((rgb - mag) ** 2).sum(axis=2))
+    dmag = np.sqrt(((rgb.astype(np.float32) - mag) ** 2).sum(axis=2))
     keyed = (dist <= 62.0) | (dmag <= 72.0)
-    arr[:, :, 3] = np.where(keyed, 0, arr[:, :, 3])
-    return Image.fromarray(arr, "RGBA")
+    arr[keyed] = 0
+    return Image.fromarray(plate_key.strip_rim(arr), "RGBA")
 
 
 def sprite_out(src: str, dest: Path, canvas: int = 128, quad: str | None = None) -> None:

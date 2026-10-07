@@ -3,8 +3,8 @@
 from pathlib import Path
 from PIL import Image
 import math
-from imglib import geom, imgio  # noqa: E402
-from imglib.color import dist  # noqa: E402
+from imglib import geom, imgio, key as plate_key  # noqa: E402
+import numpy as np
 import sys
 
 _TOOLS = Path(__file__).resolve().parent
@@ -19,30 +19,20 @@ IMG = agent_log.grok_sessions(r"C%3A%5CUsers%5CVira%5Csource%5CRepos%5CWhatDwell
 OUT = ROOT / "assets" / "live" / "player"
 CANVAS = 128
 CHAR_H = 110
-MAGENTA = (239, 19, 106)
 LAWN = (124, 252, 0)
 PICKS = [8, 12, 16, 20]
 ATK_PICKS = [8, 18, 28, 38]
 
 
 def key(im: Image.Image) -> Image.Image:
-    im = im.convert("RGBA")
-    px = im.load()
-    w, h = im.size
-    for y in range(h):
-        for x in range(w):
-            r, g, b, a = px[x, y]
-            if dist((r, g, b), MAGENTA) <= 92:
-                px[x, y] = (0, 0, 0, 0)
-            elif r > 160 and g < 95 and b > 45 and r > g + 30:
-                px[x, y] = (0, 0, 0, 0)
-            elif dist((r, g, b), LAWN) <= 72:
-                px[x, y] = (0, 0, 0, 0)
-            elif g > 150 and g > r + 40 and g > b + 40:
-                px[x, y] = (0, 0, 0, 0)
-            elif g > r + 28 and g > b + 16 and g > 100:
-                px[x, y] = (r, int((r + b) * 0.5), b, a)
-    return im
+    keyed = plate_key.punch(im)
+    arr = np.array(keyed)
+    rgb = arr[:, :, :3].astype(np.float32)
+    r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
+    lawn_d = np.sqrt(((rgb - np.array(LAWN, np.float32)) ** 2).sum(axis=-1))
+    lawn = (lawn_d <= 72.0) | ((g > 150) & (g > r + 40) & (g > b + 40))
+    arr[lawn] = 0
+    return Image.fromarray(arr, "RGBA")
 
 
 def torso_x(im: Image.Image) -> int:

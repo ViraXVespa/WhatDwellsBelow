@@ -12,6 +12,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+from imglib import key as plate_key
 from imglib.geom import fit_box, flip
 
 CANVAS = 128
@@ -29,28 +30,8 @@ KEYS = [
 ]
 
 
-def is_bg(r: int, g: int, b: int) -> bool:
-    if r > 180 and b > 140 and g < 100:
-        return True
-    if r > 200 and b > 80 and g < 70:
-        return True
-    if r > 150 and b > 150 and g < 120 and abs(r - b) < 90:
-        return True
-    return False
-
-
 def key_bg(im: Image.Image) -> Image.Image:
-    im = im.convert("RGBA")
-    px = im.load()
-    w, h = im.size
-    for y in range(h):
-        for x in range(w):
-            r, g, b, a = px[x, y]
-            if a == 0:
-                continue
-            if is_bg(r, g, b):
-                px[x, y] = (0, 0, 0, 0)
-    return im
+    return plate_key.punch(im)
 
 
 def fit_local(im: Image.Image) -> Image.Image:

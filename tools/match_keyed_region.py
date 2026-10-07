@@ -38,7 +38,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 import agent_log
-from imglib import imgio
+from imglib import imgio, key as plate_key
 from repo_lib import under as _under  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -143,23 +143,23 @@ def looks_finished_sprite(path: Path) -> bool:
 
 
 def key_flat(arr: np.ndarray) -> np.ndarray:
-    """Knock out an existing matte, near-magenta, and a flat border plate."""
-    rgb = arr[:, :, :3].astype(np.float32)
+    """Knock out a magenta plate and its pink lip. Clear RGB too, so a later resize cannot bleed pink.
+
+    A flat black or white border is not a chroma plate. The old `med.min() < 30` test treated those
+    borders as plate and ate dark outlines.
+    """
+    rgb = np.ascontiguousarray(arr[:, :, :3])
     alpha = arr[:, :, 3]
     border = np.concatenate([rgb[0], rgb[-1], rgb[:, 0], rgb[:, -1]], axis=0)
     med = np.median(border, axis=0)
-    std = float(border.std(axis=0).mean())
-    dist_mag = np.sqrt(((rgb - MAG) ** 2).sum(axis=-1))
-    dist_med = np.sqrt(((rgb - med) ** 2).sum(axis=-1))
-    med_mag = float(np.sqrt(((med - MAG) ** 2).sum()))
-    flat = std < 18.0 and (med_mag < 90.0 or float(med.max()) > 200.0 or float(med.min()) < 30.0)
-    plate = alpha < 16
-    plate |= dist_mag <= 70.0
-    if flat:
-        plate |= dist_med <= 42.0
     out = arr.copy()
-    out[plate, 3] = 0
-    return out
+    if plate_key.looks_like_plate(med):
+        mask, _refs, _d = plate_key.plate_mask(rgb, alpha=alpha)
+        out[mask] = 0
+    else:
+        dist_mag = np.sqrt(((rgb.astype(np.float32) - MAG) ** 2).sum(axis=-1))
+        out[(alpha < 16) | (dist_mag <= 48.0)] = 0
+    return plate_key.strip_rim(out)
 
 
 def key_pipeline(path: Path) -> np.ndarray:
@@ -464,6 +464,11 @@ def _window_rank(window: str) -> tuple[int, int]:
     return rank, flip
 
 
+def _same_stem(origin: Path, live: str) -> bool:
+    """True when the source file name is the live asset name."""
+    return origin.stem.lower() == Path(live).stem.lower()
+
+
 def _better(new: dict, old: dict) -> bool:
     if new["mad"] + 1.5 < old["mad"]:
         return True
@@ -607,8 +612,13 @@ def scan_with_near(images: list[Path], lives: dict) -> tuple[list[dict | None], 
                 }
                 current = best[hit]
                 take = current is None or _better(row, current)
-                if not take and current is not None and abs(row["mad"] - current["mad"]) <= 1.5:
-                    take = rank < current["rank"] and _window_rank(name) <= _window_rank(current["window"])
+                if current is not None and abs(float(row["mad"]) - float(current["mad"])) <= 1.5:
+                    named = _same_stem(path, lives["rels"][hit])
+                    other = _same_stem(current["origin"], lives["rels"][hit])
+                    if named != other:
+                        take = named
+                    elif not take:
+                        take = rank < current["rank"] and _window_rank(name) <= _window_rank(current["window"])
                 if take:
                     best[hit] = row
     near: list[dict | None] = [None] * count
@@ -616,8 +626,8 @@ def scan_with_near(images: list[Path], lives: dict) -> tuple[list[dict | None], 
         origin_index = int(near_origin[hit])
         near[hit] = {
             "mad": float(near_mad[hit]),
-            "agree": float(agree[hit]),
-            "overlap": float(overlap[hit]),
+            "agree": float(near_agree[hit]),
+            "overlap": float(near_overlap[hit]),
             "window": near_window[hit],
             "kind": near_kind[hit],
             "origin": images[origin_index],
@@ -1085,6 +1095,48 @@ def summarize(plan: dict) -> str:
     return "\n".join(lines)
 
 
+_SOURCE_INDEX: dict[str, Path] | None = None
+
+
+def source_index() -> dict[str, Path]:
+    """Live asset path -> unkeyed file under _src/sources. First manifest row wins."""
+    global _SOURCE_INDEX
+    if _SOURCE_INDEX is None:
+        index: dict[str, Path] = {}
+        manifest = SRC_ROOT / "manifest.json"
+        if manifest.is_file():
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+            for entry in data.get("entries", []):
+                live = str(entry.get("live", "")).replace("\\", "/")
+                if not live or live in index:
+                    continue
+                index[live] = SRC_ROOT / str(entry.get("source", ""))
+        _SOURCE_INDEX = index
+    return _SOURCE_INDEX
+
+
+def source_for(live: str) -> Path | None:
+    """Absolute unkeyed source for a live asset path, or None when the manifest has no row."""
+    text = live.replace("\\", "/")
+    if text.startswith("./"):
+        text = text[2:]
+    return source_index().get(text)
+
+
+def resolve_source(dest: Path, fallback: Path | None = None) -> Path | None:
+    """Manifest source when that file is on disk, otherwise an existing fallback path."""
+    try:
+        rel = dest.resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        rel = dest.as_posix()
+    found = source_for(rel)
+    if found is not None and found.is_file():
+        return found
+    if fallback is not None and fallback.is_file():
+        return fallback
+    return None
+
+
 def self_test() -> None:
     axe = ROOT / "assets" / "ui" / "gear" / "head.png"
     src = SRC_ROOT / "gear" / "head.jpg"
@@ -1104,6 +1156,16 @@ def self_test() -> None:
         raise SystemExit("self-test: head icon did not match its source")
     if bad["accept"]:
         raise SystemExit("self-test: head icon matched a walk frame")
+    found = source_for("assets/ui/gear/head.png")
+    if found is None or not found.is_file():
+        raise SystemExit("self-test: manifest source for head.png is missing")
+    lip = np.zeros((40, 40, 4), np.uint8)
+    lip[:, :] = (255, 0, 255, 255)
+    lip[10:30, 10:30] = (40, 90, 50, 255)
+    lip[30, 10:30] = (240, 200, 220, 255)
+    keyed = key_flat(lip)
+    if int(keyed[30, 15, 3]) != 0 or int(keyed[20, 20, 3]) == 0 or int(keyed[0, 0].sum()) != 0:
+        raise SystemExit(f"self-test: pink lip survived key_flat {keyed[30, 15].tolist()} body {keyed[20, 20].tolist()} corner {keyed[0, 0].tolist()}")
     print("self-test ok")
 
 
