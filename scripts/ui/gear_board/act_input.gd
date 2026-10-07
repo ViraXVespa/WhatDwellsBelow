@@ -12,13 +12,15 @@ const Items := preload("res://scripts/ui/gear_board/act_items.gd")
 
 const HOLD_DESTROY := 0.55
 
+## Eats the Back press that closed a sub-panel so the same press does not also close the board.
+## Frame-based: a 350 ms wall-clock window ate the next real Back press too.
 static var swallow_until := 0
 
 static func swallow_cancel() -> void:
-	swallow_until = Time.get_ticks_msec() + 350
+	swallow_until = Engine.get_process_frames() + 2
 
 static func swallowing() -> bool:
-	return Time.get_ticks_msec() < swallow_until
+	return Engine.get_process_frames() < swallow_until
 
 static func tick_x(ui: CanvasLayer, delta: float) -> void:
 	if str(ui.get("gear_mode")) == "anvil":

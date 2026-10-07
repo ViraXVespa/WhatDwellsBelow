@@ -114,6 +114,8 @@ static func open_flavor(host: CanvasLayer, title: String, body: String) -> void:
 	host._show()
 
 static func _process(host: CanvasLayer, delta: float) -> void:
+	if host.open:
+		MenuPad.web_back()
 	if host.open and host._gear_busy():
 		GearAct.tick_x(host, delta)
 	if host.forge_t <= 0.0:

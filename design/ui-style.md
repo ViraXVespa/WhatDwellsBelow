@@ -16,6 +16,12 @@ One place per job, so a screen only fills in what is its own. Existing screens r
 - Scroll bars: `bars(scroll, shown)`. Bars are hidden on object frames (the rows still scroll with the pad), shown on the cream plate.
 - Tooltips: `tip_panel`, `tip_text` (used by the scroll box and the gear board).
 - Use these before writing a local copy; add a builder here when a second screen needs it.
+## Button hints (`prompt_view.gd`, `prompt_chip.gd`)
+- Each glyph + verb pair in a hint strip is a chip. Click or tap presses that action while the pointer is down and lets go on release, the same path as the key or pad press, so the menu's own handler decides what it does. The Back chip is the touch way out of every menu.
+- Chips have `focus_mode` NONE: no tab, highlight or select focus, and the menu keeps its focus.
+- A strip that only lists binds (the controls sign rows, the world HUD prompt) sets `prompt_tap` false on its host.
+- A scheme change (pad, keys, touch) swaps the glyphs inside the same chips, so the press that changed the scheme still lands.
+- Guard: `python tools/run_smokes.py --phases 6` opens every hub menu and closes it by each Back bind, by the Back chip, and after going one to three levels in.
 
 ## Object frames (`scripts/ui/progress_ui/`)
 A frame re-skins the progress panel host for one object (stall, bin). `frame_base.gd` owns what every frame shares: the chrome layer under the host, the cream plate every other mode keeps, the footer room, the button row (the host's scroll area) and its separation. `frame_set.gd` lists the skins.
