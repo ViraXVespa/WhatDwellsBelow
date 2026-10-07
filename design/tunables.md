@@ -141,4 +141,4 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 ## World, economy and UI sections
 
 Dungeon generation, Enemies and combat level, Progression and economy, Anvil / affixes and UI / feel targets are in `tunables-world.md`. `tools/tunables.py` finds a key in either file.
-
+- `max_clerks` 12. Hall-torch cadence 7–11 on runs of 8+. Hall-traveler cadence 14–18 on runs of 10+.

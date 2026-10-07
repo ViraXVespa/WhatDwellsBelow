@@ -126,6 +126,7 @@ static func build(host: Node, props: Array, clip: Rect2i = Rect2i()) -> Array[Di
 		used[at] = true
 		out.append(hall_site)
 	Grid._thin_arr(hall, mouth, map_w, map_h, hall_ix)
+	_hall_rhythm(host, hall, hall_ix, map_w, map_h, per, used, out)
 	var hi3: int = 0
 	while hi3 < hall_ix.size():
 		var i4: int = hall_ix[hi3]
@@ -227,6 +228,57 @@ static func _span_list(host: Node) -> Array:
 	if raw is Array:
 		return raw
 	return []
+
+static func _hall_rhythm(host: Node, hall: PackedByteArray, hall_ix: PackedInt32Array, map_w: int, map_h: int, per: int, used: Dictionary, out: Array[Dictionary]) -> void:
+	var seed_n := 1
+	if App != null:
+		seed_n = int(App.run_seed) * 17 + int(App.floor_n) * 31
+	var seen := PackedByteArray()
+	seen.resize(map_w * map_h)
+	seen.fill(0)
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	var hi := 0
+	while hi < hall_ix.size():
+		var start_i: int = hall_ix[hi]
+		hi += 1
+		if start_i < 0 or start_i >= hall.size() or hall[start_i] == 0 or seen[start_i] != 0:
+			continue
+		var run: Array[Vector2i] = []
+		var stack: Array[int] = [start_i]
+		seen[start_i] = 1
+		while not stack.is_empty():
+			var cur: int = stack.pop_back()
+			var cy := int(float(cur) / float(map_w))
+			var cx := cur - cy * map_w
+			run.append(Vector2i(cx, cy))
+			for d in dirs:
+				var nx := cx + d.x
+				var ny := cy + d.y
+				if nx < 1 or ny < 1 or nx >= map_w - 1 or ny >= map_h - 1:
+					continue
+				var ni := ny * map_w + nx
+				if hall[ni] == 0 or seen[ni] != 0:
+					continue
+				seen[ni] = 1
+				stack.append(ni)
+		if run.size() < 8:
+			continue
+		var step := 7 + int(abs(seed_n + run[0].x * 13 + run[0].y * 29)) % 5
+		var phase := int(abs(seed_n + run[0].y * 7)) % step
+		var i2 := phase
+		while i2 < run.size():
+			var spot: Vector2i = run[i2]
+			i2 += step
+			if _taken(used, spot):
+				continue
+			var site: Dictionary = Spans._span_at(per, spot)
+			if site.is_empty():
+				continue
+			var mounted := Vector2i(int(site["fx"]), int(site["fz"]))
+			if _taken(used, mounted):
+				continue
+			used[mounted] = true
+			out.append(site)
 
 static func _taken(used: Dictionary, cell: Vector2i) -> bool:
 	for z in range(-2, 3):

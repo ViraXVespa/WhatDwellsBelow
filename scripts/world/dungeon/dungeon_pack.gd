@@ -2,7 +2,7 @@ extends Object
 
 const Roster := preload("res://scripts/combat/roster.gd")
 const T := preload("res://scripts/data/tunables.gd")
-const FLEE_KINDS: PackedStringArray = ["room", "fill", "named", "ambush"]
+const FLEE_KINDS: PackedStringArray = ["room", "fill", "named", "ambush", "hall"]
 
 ## Decided once per pack (group id): chance is FLEE_PACK_MEAN over this floor's pack count, drawn from a
 ## generator seeded by run seed + floor + group id, so a seed replays and floor_rng is not disturbed.

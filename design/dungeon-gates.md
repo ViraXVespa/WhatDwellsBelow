@@ -21,8 +21,8 @@ Read when: PREPARE plaque, extraction clerks, stair hold, reveal disk
 ## Extraction Gate limits
 
 - Maximum one ghost shop per floor.
-- Exactly three Extraction Gates per floor (tunable cap `max_clerks`, default 3).
-- Gate rooms MUST be spread across the floor (minimum separation 28 cells).
+- Exactly twelve Extraction Gates per floor (tunable cap `max_clerks`, default 12).
+- Gate rooms MUST be spread across the floor. Separation starts at 28 cells and steps down by 4 until twelve candidate rooms are marked (floor 8). If the floor has fewer legal rooms, every legal room is marked.
 
 Mail-legal goods and one-use visit rules: inventory.meta and interactables.
 

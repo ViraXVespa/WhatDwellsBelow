@@ -88,7 +88,7 @@ static func shuffle_i(rng: RandomNumberGenerator, arr: Array) -> void:
 		arr[j] = tmp
 
 static func assign_extract_gates(rooms: Array, rng: RandomNumberGenerator, bal: Object) -> void:
-	var want := maxi(1, mini(3, int(bal.get("max_clerks"))))
+	var want := maxi(1, int(bal.get("max_clerks")))
 	var spawn: Vector2i = Vector2i.ZERO
 	var sr: Dictionary = find_kind(rooms, "spawn")
 	if not sr.is_empty():
@@ -103,40 +103,47 @@ static func assign_extract_gates(rooms: Array, rng: RandomNumberGenerator, bal: 
 	shuffle_i(rng, cands)
 	var picked: Array = []
 	var min_sep := 28
-	for _n in want:
-		var best := -1
-		var best_s := -1.0
+	while min_sep >= 8:
+		picked = []
+		for _n in want:
+			var best := -1
+			var best_s := -1.0
+			for i in cands:
+				if picked.has(i):
+					continue
+				var c: Vector2i = Carve.center(rooms[i])
+				var s := float(absi(c.x - spawn.x) + absi(c.y - spawn.y))
+				var ok := true
+				for j in picked:
+					var d: Vector2i = Carve.center(rooms[j])
+					var sep := absi(c.x - d.x) + absi(c.y - d.y)
+					if sep < min_sep:
+						ok = false
+						break
+					s = minf(s, float(sep))
+				if ok and s > best_s:
+					best_s = s
+					best = i
+			if best < 0:
+				break
+			picked.append(best)
+		if picked.size() >= want or picked.size() >= cands.size():
+			break
+		min_sep -= 4
+	if picked.size() < want:
 		for i in cands:
+			if picked.size() >= want:
+				break
 			if picked.has(i):
 				continue
-			var c: Vector2i = Carve.center(rooms[i])
-			var s := float(absi(c.x - spawn.x) + absi(c.y - spawn.y))
-			var ok := true
-			for j in picked:
-				var d: Vector2i = Carve.center(rooms[j])
-				var sep := absi(c.x - d.x) + absi(c.y - d.y)
-				if sep < min_sep:
-					ok = false
-					break
-				s = minf(s, float(sep))
-			if ok and s > best_s:
-				best_s = s
-				best = i
-		if best < 0:
-			for i in cands:
-				if not picked.has(i):
-					best = i
-					break
-		if best < 0:
-			break
-		picked.append(best)
-		rooms[best].kind = "extract_gate"
+			picked.append(i)
+	for i in picked:
+		rooms[i].kind = "extract_gate"
 	if picked.is_empty():
 		for r in rooms:
 			if str(r.kind) == "normal" and int(r.w) >= 5 and int(r.y) >= 1:
 				r.kind = "extract_gate"
 				break
-
 static func assign_kinds(rng: RandomNumberGenerator, grid: PackedByteArray, w: int, h: int, rooms: Array, bal: Object) -> void:
 	var spawn_i := 0
 	var best_s := 1 << 30

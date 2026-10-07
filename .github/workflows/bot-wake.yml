@@ -24,7 +24,7 @@ jobs:
         run: |
           set -euo pipefail
           python tools/bot_status.py --root . | tee /tmp/bot-status.txt
-          python tools/check_script_cap.py --root .
+          python tools/check_script_cap.py --root . || true  # a FAIL here is the alert itself; keep going to the ping
           count=$(sed -n 's/^over_10kb count=//p' /tmp/bot-status.txt | head -1)
           count=${count:-0}
           echo "over_10kb=${count}" >> "$GITHUB_OUTPUT"

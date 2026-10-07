@@ -10,6 +10,7 @@ static func queue_initial(host: Node, pool: PackedStringArray) -> void:
 		queue_room(host, r, pool)
 	queue_pool(host, pool)
 	queue_named(host, pool)
+	queue_hall(host, pool)
 
 static func queue_room(host: Node, r: Dictionary, pool: PackedStringArray) -> void:
 	var kind: String = str(r.get("kind", "normal"))
@@ -120,6 +121,107 @@ static func _land(host: Node, cell: Vector2i) -> Vector2i:
 			if host._is_floor_cell(n):
 				return n
 	return cell
+
+static func queue_hall(host: Node, pool: PackedStringArray) -> void:
+	if pool.is_empty():
+		return
+	var grid: PackedByteArray = host.data.grid
+	var w: int = int(host.data.w)
+	var h: int = int(host.data.h)
+	if w < 3 or h < 3 or grid.is_empty():
+		return
+	var roomish := PackedByteArray()
+	roomish.resize(w * h)
+	roomish.fill(0)
+	for r in host.data.get("rooms", []):
+		var x0 := int(r.x)
+		var y0 := int(r.y)
+		var x1 := x0 + int(r.w)
+		var y1 := y0 + int(r.h)
+		var yy := y0
+		while yy < y1:
+			if yy >= 0 and yy < h:
+				var row := yy * w
+				var xx := x0
+				while xx < x1:
+					if xx >= 0 and xx < w:
+						roomish[row + xx] = 1
+					xx += 1
+			yy += 1
+	var ambush := {}
+	for spot in host.data.get("ambushes", []):
+		ambush[Vector2i(spot)] = true
+	var halls: Array[Vector2i] = []
+	for y in range(1, h - 1):
+		var row2 := y * w
+		for x in range(1, w - 1):
+			var i := row2 + x
+			if grid[i] != Gen.FLOOR or roomish[i] != 0:
+				continue
+			var nbs := 0
+			if grid[i + 1] == Gen.FLOOR:
+				nbs += 1
+			if grid[i - 1] == Gen.FLOOR:
+				nbs += 1
+			if grid[i + w] == Gen.FLOOR:
+				nbs += 1
+			if grid[i - w] == Gen.FLOOR:
+				nbs += 1
+			if nbs >= 2:
+				halls.append(Vector2i(x, y))
+	if halls.is_empty():
+		return
+	var seed_n := int(App.run_seed) * 17 + int(App.floor_n) * 31
+	var seen := PackedByteArray()
+	seen.resize(w * h)
+	seen.fill(0)
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	var placed: Array[Vector2i] = []
+	for start in halls:
+		var si := start.y * w + start.x
+		if seen[si] != 0:
+			continue
+		var run: Array[Vector2i] = []
+		var stack: Array[int] = [si]
+		seen[si] = 1
+		while not stack.is_empty():
+			var cur: int = stack.pop_back()
+			var cy := int(float(cur) / float(w))
+			var cx := cur - cy * w
+			run.append(Vector2i(cx, cy))
+			for d in dirs:
+				var nx := cx + d.x
+				var ny := cy + d.y
+				if nx < 1 or ny < 1 or nx >= w - 1 or ny >= h - 1:
+					continue
+				var ni := ny * w + nx
+				if seen[ni] != 0:
+					continue
+				if grid[ni] != Gen.FLOOR or roomish[ni] != 0:
+					continue
+				seen[ni] = 1
+				stack.append(ni)
+		if run.size() < 10:
+			continue
+		var step := 14 + int(abs(seed_n + run[0].x * 13 + run[0].y * 29)) % 5
+		var phase := int(abs(seed_n + run[0].y * 7 + run[0].x)) % step
+		var i2 := phase
+		while i2 < run.size():
+			var cell: Vector2i = run[i2]
+			i2 += step
+			if ambush.has(cell) or host._near_spawn(cell) or CrystalNet.blocks_spawn(host, cell):
+				continue
+			var crowded := false
+			for prev in placed:
+				if absi(prev.x - cell.x) + absi(prev.y - cell.y) < 10:
+					crowded = true
+					break
+			if crowded:
+				continue
+			var ids := PackedStringArray()
+			ids.append(pool[host.floor_rng.randi() % pool.size()])
+			host.spawn_jobs.append(new_job(host, "hall", cell, {}, ids, false, ""))
+			placed.append(cell)
 
 static func new_job(host: Node, kind: String, cell: Vector2i, room: Dictionary, ids: PackedStringArray, named: bool, nname: String) -> Dictionary:
 	var gid: int = host.next_group

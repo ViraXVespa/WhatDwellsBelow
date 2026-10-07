@@ -22,9 +22,9 @@ static func ensure_world(host: Node) -> void:
 		_fac.place_one(host, "wood", prefer)
 	if int(host.counts.get("break", 0)) < 1:
 		_fac.place_one(host, "break", prefer)
-	if int(host.counts.get("extract_gate", 0)) < 3:
+	if int(host.counts.get("extract_gate", 0)) < int(App.bal.max_clerks):
 		for r in host.data.get("rooms", []):
-			if int(host.counts.get("extract_gate", 0)) >= 3:
+			if int(host.counts.get("extract_gate", 0)) >= int(App.bal.max_clerks):
 				break
 			if str(r.get("kind", "")) != "normal":
 				continue
