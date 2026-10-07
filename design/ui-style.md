@@ -18,6 +18,8 @@ One place per job, so a screen only fills in what is its own. Existing screens r
 - Use these before writing a local copy; add a builder here when a second screen needs it.
 ## Button hints (`prompt_view.gd`, `prompt_chip.gd`)
 - Each glyph + verb pair in a hint strip is a chip. Click or tap presses that action while the pointer is down and lets go on release, the same path as the key or pad press, so the menu's own handler decides what it does. The Back chip is the touch way out of every menu.
+- Hover tints a chip (`Tok.CHIP_HOVER`) and a press flashes it darker for a beat (`Tok.CHIP_PRESS`), back to `Tok.CHIP_REST`. It is a modulate over the chip's own glyph and word, so it suits every frame. Read-only strips get neither.
+- The death recap shows no Back hint; Continue is its only way out.
 - Chips have `focus_mode` NONE: no tab, highlight or select focus, and the menu keeps its focus.
 - A strip that only lists binds (the controls sign rows, the world HUD prompt) sets `prompt_tap` false on its host.
 - A scheme change (pad, keys, touch) swaps the glyphs inside the same chips, so the press that changed the scheme still lands.

@@ -6,6 +6,7 @@ extends Object
 ## Prints "P6: esc_<menu>_<how>=true|false" rows and "P6: escape_ok=".
 
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 
 static func run(host: Node) -> void:
 	var tree: SceneTree = host.get_tree()
@@ -118,6 +119,33 @@ static func run(host: Node) -> void:
 		printerr("P6: tap_accept_%s=%s" % [m2[0], tap_ok])
 		ok = ok and tap_ok
 		_force_close(tree)
+		await tree.process_frame
+	ui.open_vendor()
+	for i: int in 3:
+		await tree.process_frame
+	var tc: Control = _chip(tree, "ui_cancel")
+	var tint_ok: bool = false
+	if tc:
+		tc.mouse_entered.emit()
+		var hov: bool = tc.modulate == Tok.CHIP_HOVER
+		tc.mouse_exited.emit()
+		tint_ok = hov and tc.modulate == Tok.CHIP_REST and tc.focus_mode == Control.FOCUS_NONE
+	printerr("P6: chip_tint_ok=" + str(tint_ok))
+	ok = ok and tint_ok
+	_force_close(tree)
+	App.recap.play("death")
+	for i: int in 3:
+		await tree.process_frame
+	var rb: Control = _chip(tree, "ui_cancel")
+	var rc: Control = _chip(tree, "ui_accept")
+	var recap_ok: bool = rb == null and rc != null
+	printerr("P6: recap_no_back=" + str(recap_ok))
+	ok = ok and recap_ok
+	App.recap.set("open", false)
+	App.recap.set("draining", false)
+	App.recap.visible = false
+	_force_close(tree)
+	for i: int in 3:
 		await tree.process_frame
 	printerr("P6: escape_ok=" + str(ok))
 	assert(ok)
