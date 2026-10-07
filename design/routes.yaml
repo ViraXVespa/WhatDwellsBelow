@@ -22,8 +22,7 @@ indexes:
 
 notes_exempt:
   - design/reuse-map.md
-  - design/parked-tasks.md
-  - design/ui-handoff.md
+  - design/tasks/README.md
 
 parked_jobs:
   - design/art-attack-keyframes.md

@@ -17,12 +17,13 @@ import agent_log
 import bot_gate_lib
 import gd_lib
 import repo_lib
+import task_lib
 
 SHIP_BYTES = bot_gate_lib.SHIP_BYTES
 SWEEP_BYTES = bot_gate_lib.SWEEP_BYTES
 ALLOW_FILE = repo_lib.ALLOW_FILE
 REUSE_FILE = "design/reuse-map.md"
-OPT_FILE = "design/grok-bot-opt.md"
+OPT_FILE = "design/tasks/opt-*.md"
 
 
 def list_oversize(root: Path, floor: int) -> list[tuple[int, str]]:
@@ -54,26 +55,9 @@ def parse_reuse_brief(root: Path) -> list[str]:
 
 
 def parse_opt_queue(root: Path) -> list[dict[str, str]]:
-    path = root / OPT_FILE
-    if not path.is_file():
-        return []
-    text = path.read_text(encoding="utf-8")
-    items: list[dict[str, str]] = []
-    for block in re.finditer(
-        r"(?ims)^###\s+(opt-\d+)\s*\(([^)]+)\)\s*$(.*?)(?=^###\s+opt-\d+|\Z)",
-        text,
-    ):
-        oid, status, body = block.group(1), block.group(2).strip(), block.group(3)
-        title = ""
-        tmatch = re.search(r"(?im)^\s*Title:\s*(.+)$", body)
-        if tmatch:
-            title = tmatch.group(1).strip()
-        items.append({"id": oid, "status": status.lower(), "title": title})
-    if items:
-        return items
-    for oid, status in re.findall(r"(?i)\b(opt-\d+)\s*\(([^)]+)\)", text):
-        items.append({"id": oid, "status": status.strip().lower(), "title": ""})
-    return items
+    """Bot opt items: the owner-bot task files design/tasks/opt-N.md (a done item is deleted)."""
+    return [{"id": tid, "status": t.get("status", ""), "title": t.get("title", "")}
+            for tid, t in sorted(task_lib.load(root).items()) if t.get("owner") == "bot" and tid.startswith("opt-")]
 
 
 def git_state(root: Path) -> dict[str, str]:
@@ -168,7 +152,7 @@ def main(argv: list[str] | None = None) -> int:
             lines.append(f"{idx}. {snippet}")
     lines.append("")
     lines.append(
-        f"opt_queue pending={len(pending_opts)} total={len(opts)} file={OPT_FILE}"
+        f"opt_queue open={len(pending_opts)} files={OPT_FILE} (python tools/task.py show opt-N)"
     )
     for item in pending_opts:
         title = f" {item['title']}" if item["title"] else ""

@@ -26,7 +26,7 @@ The repo skill `.grok/skills/pc-offload/SKILL.md` is the early intercept for Gro
 
 ## Build habits
 
-- Skill + catalog intercept before opening many untouched siblings. Tool choice: `design/tools.md` (Run when). Do not open `design/code-map.md` or the opt queue file for row/queue jobs; use the catalog tools.
+- Skill + catalog intercept before opening many untouched siblings. Tool choice: `design/tools.md` (Run when). Do not open `design/code-map.md` or a list of task files for row/task jobs; use the catalog tools (`task.py list`).
 - While editing: prefer `file_stat.py` and Length summaries over reading untouched siblings.
 - After a slice that touched `.gd`: `run_build_gate.py` unless the User says skip.
 - Dedicated PC-offload CLI: see **Dedicated Grok Build session** below. Other Grok Build roles use this catalog; they do not rewrite those habits.
@@ -41,4 +41,4 @@ One Build session owns catalog / runner / skill optimizations. Keep the session 
 - Ask first: a generic markdown or pickup writer; a suite of extra doc runners; a skill rewrite that pastes the catalog into every Build boot.
 - Do not: Imagine / I2V; Grok Bot PRs; week pin ritual; tree dumps or whole tool bodies in chat; parking Bot opt notes; folding slice work into this thread.
 - Report when done. Pickup is git plus the `_logs/<job>/` postcards.
-- Overlap: Bot-notes parks queue items with `bot_opt.py`; Smoke-tests writes phase coverage; Slice sessions consume this catalog. This session does not park Bot notes or add smoke assertions unless the User names that.
+- Overlap: Bot-notes parks opt items with `task.py new opt-next --owner bot`; Smoke-tests writes phase coverage; Slice sessions consume this catalog. This session does not park Bot notes or add smoke assertions unless the User names that.

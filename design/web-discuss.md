@@ -20,4 +20,4 @@ Park when questions remain, the work is a new system / a pile of new live module
 Do not self-park because the thread is long or a RESULT already landed. Stop the emit loop only when the User says the session is going off the rails, or names park / stop.
 If quality looks like it is slipping, say that in one sentence and ask. Do not quietly drop the rest of the list.
 
-A park from brainstorm must carry: mandate, frozen decisions, open questions, likely Source / Docs paths, tests that would prove it, why parked. Do not park leftover slices without that packet.
+A park is a task file with owner web (`design/tasks/README.md`). A park from brainstorm must carry: mandate, frozen decisions, open questions, likely Source / Docs paths, tests that would prove it, why parked. Do not park leftover slices without that packet.

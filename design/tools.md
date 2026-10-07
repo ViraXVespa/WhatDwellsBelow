@@ -40,7 +40,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 
 - **Bot:** `BOT.md` (boot, prove, smokes, Build-doc ban).
 - **Web/chat:** docs go through `doc_patch.py` (`doc-library.md`); `check_load_graph.py`; `run_shots.py --mode web`; scripted flows `run_shot_flow.py` (`shot-tool.md`). Godot runners are the User's (`web-session.md`).
-- **Build (User PC):** `file_stat.py` to measure (not `python -c`), `list_xref.py`, `list_changed.py`; `run_build_gate.py` after a `.gd` slice; `list_changed.py --history` when a doc and its code disagree (`prove.md`); `web_perf.py` after a fresh `export_web.py --out DIR` (advisory, `tools-build.md`); `code_map.py patch` for one row; `bot_opt.py` to park opt items. Runner rules: `pc-offload.md`.
+- **Build (User PC):** `file_stat.py` to measure (not `python -c`), `list_xref.py`, `list_changed.py`; `run_build_gate.py` after a `.gd` slice; `list_changed.py --history` when a doc and its code disagree (`prove.md`); `web_perf.py` after a fresh `export_web.py --out DIR` (advisory, `tools-build.md`); `code_map.py patch` for one row; `task.py` for task files (`design/tasks/README.md`). Runner rules: `pc-offload.md`.
 
 ## Catalog: shared and Bot tools
 
@@ -48,7 +48,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 
 | Tool | Does | Surf | Use | A |
 |---|---|---|---|---|
-| `bot_status.py` | Bot punch list (reuse brief, opt queue); `--prove` adds the Bot checks. Bot/CI only; elsewhere it prints "not run". | B | `--help` | Y |
+| `bot_status.py` | Bot punch list (reuse brief, open opt tasks); `--prove` adds the Bot checks. Bot/CI only; elsewhere it prints "not run". | B | `--help` | Y |
 | `check_script_cap.py` | Duplicate script-name check (`dupes=`): `--git-changed`, `--path`. The Bot's own checks run only with `--bot` (`BOT.md`). | BWD | `--help` | Y |
 | `check_load_graph.py` | Doc routing vs `design/routes.yaml` (PASS/FAIL, no summary): `smokes`/`shot_flows` keys, phases and flow files; the Bot adds boot budgets (`--bot`) | BWD | `--help` | Y |
 | `code_map.py` | Code map: `check` (live `.gd` vs `design/code-map.md` ticks; exits 1 on new UNMAPPED or missing, older UNMAPPED are expected), `row --path P`, `patch --system S ...`. | BD | `--help` | Y |
@@ -57,7 +57,8 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `run_build_gate.py` | One batch gate: editor import (restores `.import` churn), `--batch` (import + `check_load_graph` + script-name check + `check_hub_bake`), `--visual JOB` adds the job's shot flows in the same call, `--warnscan-baseline B` adds the non-leak diff. A red result prints the RETRY prompt. Once per batch. Summary: `build-gate`. | BWD | `--help` | Y |
 | `bot_load_audit.py` | Audit of one Grok Build session's reads before its first ask (`--session DIR` / `--file chat_history.jsonl`, `--selftest`). Bot/CI only; elsewhere it prints "not run". | B | `--help` | Y |
 | `bot_warnscan_lib.py` | Log parser for `bot_warnscan.py` | B | module docstring (no `--help`) | Y |
-| `bot_opt.py` | Opt queue: `--list`, `--id`, `--status opt-N=done`, `--add`, `--remove`. Never hand-edit the queue block. Summary: `bot-opt`. | BD | `--help` | Y |
+| `task.py` | Task files in `design/tasks/` for Web, Build and Bot: `list`, `show`, `new` (`opt-next` for a Bot opt item), `done`, `index`, `check`. Summary: `task`. | BWD | `--help` | Y |
+| `bot_opt.py` | Shim for one release: forwards `--list` / `--id` / `--status opt-N=done` to `task.py`. | BD | `--help` | Y |
 | `bot_allow.txt` | Bot scope: the paths the Bot may change; read by CI. Deny lines first. | BWD | - | Y |
 | `check_tool_cli.py` | CLI contract check over `tools/` (see Contract above); `--smoke-run` runs every tool in a throwaway copy. | BWD | `--help` | Y |
 | `check_tool_docs.py` | Catalog check: every `tools/` file has a row, `A=Y` rows are allowed by `bot_allow.txt` (glob-aware), rows name real files. `--stale-refs` fails on dead paths, identifiers and Godot version drift; `--narration` is advisory. | BWD | `--help` | Y |
