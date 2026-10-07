@@ -3,6 +3,21 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.6.1",
+			"points": [
+				{
+					"text": "Extraction gates default to 12; separation shrinks from 28 until that many can place."
+				},
+				{
+					"text": "Hall torches keep a seeded cadence so long corridors read as distinct paths."
+				},
+				{
+					"text": "Hall travelers spawn on corridor runs, separate from room packs and ambushes."
+				}
+			],
+			"summary": "Twelve gates, hall torches, hall travelers."
+		},
+		{
 			"label": "0.6.0",
 			"points": [
 				{
