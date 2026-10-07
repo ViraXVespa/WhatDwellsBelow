@@ -3,6 +3,15 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.6.3",
+			"points": [
+				{
+					"text": "Work that spans sessions now lives in one task list, so unfinished plans, asset fixes and saved dialog carry over cleanly."
+				}
+			],
+			"summary": "One shared task list for ongoing work."
+		},
+		{
 			"label": "0.6.2",
 			"points": [
 				{
