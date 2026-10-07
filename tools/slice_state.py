@@ -4,7 +4,7 @@ The first run in a worktree writes `_logs/slice-state.json` (under _logs/, so it
 open_slice.py started the session with (the prompt's length and time, read from the session's prompt_history.jsonl). Every later run prints
 `SLICE ALREADY STARTED` with the steps found on disk and the next one; `--full` prints the whole start card again. Steps are read from the
 tree and the git common dir at the time of the run, never kept as a claim: import (.godot/imported), baseline shots (_logs/shot-flow),
-checkpoint (retry_lib), handoff (_logs/handoff/handoff.md).
+checkpoint (retry_lib), handoff (the task file design/tasks/ID.md).
 """
 from __future__ import annotations
 

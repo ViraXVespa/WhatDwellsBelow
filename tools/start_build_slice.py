@@ -6,8 +6,9 @@ the first-message rules). A later run in the same worktree prints `SLICE ALREADY
     python tools/start_build_slice.py --door dungeon | --job ui.pause | --area player [--full] [--ref REF] [--dry-run]
     python tools/start_build_slice.py --checkpoint [--session ID] [--ref REF]
     python tools/start_build_slice.py --failed                                       (the Did not work lines for your next message, from this session's failed tool results)
-    python tools/start_build_slice.py --handoff [--door D] [--job J] [--area A]      (survey session, after her answers to the first ask)
+    python tools/start_build_slice.py --handoff [--task ID] [--door D] [--job J] [--area A]   (survey session, after her answers to the first ask)
     python tools/start_build_slice.py --door D --from-handoff PATH                   (the fresh implementation session)
+    python tools/start_build_slice.py --door D --from-task ID                        (resume a committed task, design/tasks/ID.md)
 The first run writes _logs/slice-state.json (never committed) and a postcard _logs/slice-boot/<stamp>-slice-boot.txt. A door with several jobs and no
 --job is a survey slice (text survey, ends in --handoff); a job is an implementation slice. Run in a main checkout it only says so: the User starts a
 slice with `python tools/open_slice.py [AREA]`. A ui / theme / visual slice with no shot_flows for its job prints a STEP 0 note (creating the flow is the
@@ -15,9 +16,9 @@ first job step; exit 0). A job maps only to its own shot_flows key, never to the
 --checkpoint (implementation session, when gather is done): saves this session's id ($GROK_SESSION_ID, else --session ID) for this worktree
 in the git common dir (retry_lib.save_gather; nothing is added to the tree). A red prove then prints `grok -r ID --fork-session` to
 run from the worktree. Run in the main checkout, or with no id: RESULT FAIL. This tool never starts grok.
---handoff is for survey -> implement: it writes (first run) or validates (later runs) _logs/handoff/handoff.md, saves the survey's shot-flow / routes.yaml
-edits next to it, and prints the one command she runs from the main checkout (`python tools/open_slice.py AREA --prompt-file PATH`). The fresh session's
-first command, --from-handoff, prints the compact start summary and puts the saved edits back.
+--handoff is for survey -> implement: it writes (first run) or validates (later runs) the task file design/tasks/ID.md (ID: --task, else the door),
+saves it and the survey's shot-flow / routes.yaml edits to _logs/handoff/survey-edits, and prints the one command she runs from the main checkout (`python tools/open_slice.py AREA --prompt-file PATH`). The fresh session's
+first command, --from-handoff, prints the compact start summary, puts the saved edits back and points the task's first command at --from-task.
 --selftest runs the cases below in a throwaway repo.
 """
 from __future__ import annotations
@@ -34,6 +35,7 @@ import repo_lib
 import session_lib
 import slice_lib
 import slice_state
+import task_lib
 import unit_lib
 from load_routes import check_route, job_flow_map, load_routes, shot_flows, smoke_phases
 
@@ -54,7 +56,7 @@ def write_handoff(root: Path, args) -> int:
 
     if not slice_lib.worktree_kind(root):
         return end("NOT A WORKTREE: --handoff belongs in the survey session's worktree (a Grok clone under .grok/worktrees). In a main checkout there is no survey to hand off.", "FAIL", "handoff-main")
-    path = handoff_lib.handoff_path(root)
+    path = handoff_lib.handoff_path(root, args.task.strip())
     old = handoff_lib.parse(path.read_text(encoding="utf-8-sig"))[0] if path.is_file() else {}
     st = slice_state.load(root)
     door, job = args.door.strip() or old.get("door", "") or st.get("door", ""), args.job.strip() or old.get("job", "") or st.get("job", "")
@@ -64,9 +66,10 @@ def write_handoff(root: Path, args) -> int:
             return end("no slice state found here: pass --door D (or --job / --area) so the handoff names the area: " + (slice_lib.doors_hint(root) or "see design/routes.yaml"), "FAIL", "handoff-no-area")
         if not args.dry_run:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(handoff_lib.skeleton(root, area, door, "" if st.get("units") else job, os.environ.get("GROK_SESSION_ID", ""), st.get("units"), st.get("done")), encoding="utf-8")
+            path.write_text(handoff_lib.skeleton(root, area, door, "" if st.get("units") else job, os.environ.get("GROK_SESSION_ID", ""), st.get("units"), st.get("done"), path.stem), encoding="utf-8")
+            task_lib.write_index(root)
         return end(f"HANDOFF skeleton written: {path}\nFill every <fill ...> line (write `none` where nothing applies; baselines are `absolute PNG path - what is on it`, only the chosen surface's), "
-                   "then run `python tools/start_build_slice.py --handoff` again. The file is under _logs/, so it is not committed. After it passes this session stops; it does not implement.", "INFO", "handoff-skeleton")
+                   "then run `python tools/start_build_slice.py --handoff` again. It is a task file (design/tasks/README.md); the fresh session commits it with its first unit. After it passes this session stops; it does not implement.", "INFO", "handoff-skeleton")
     bad = handoff_lib.check(root, path.read_text(encoding="utf-8-sig"))
     if bad:
         return end("HANDOFF not ready (" + str(path) + "):\n- " + "\n- ".join(bad), "FAIL", "handoff-incomplete")
@@ -102,6 +105,9 @@ def advance(root: Path, args) -> str:
     nxt = unit_lib.pick(st["units"], done)
     st.update({"done": done, "unit": nxt, "job": nxt})
     slice_state.save(root, st)
+    tp = task_lib.task_path(root, st["task"]) if st.get("task") else None
+    if tp and tp.is_file():
+        task_lib.set_head(tp, "done", ", ".join(done) or "none")
     return st.get("door", "")
 
 
@@ -118,6 +124,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--handoff", action="store_true", help="Survey session, after her answers to the first ask: write the handoff skeleton, or validate the filled one and print the open_slice command.")
     ap.add_argument("--next", action="store_true", help="Unit queue (a door with unit_queue in routes.yaml): mark the current unit done and print the next unit's card.")
     ap.add_argument("--from-handoff", default="", metavar="PATH", help="Fresh implementation session: print the compact start summary from this handoff file.")
+    ap.add_argument("--from-task", dest="from_task", default="", metavar="ID", help="Resume a committed Build task: the summary from design/tasks/ID.md (no survey edits restored).")
+    ap.add_argument("--task", default="", metavar="ID", help="With --handoff: the task id (default: the slice's task, else its door).")
     ap.add_argument("--selftest", action="store_true", help="Run the boot / checkpoint / retry cases in a throwaway repo.")
     args = ap.parse_args(argv)
     if args.selftest:
@@ -134,6 +142,11 @@ def main(argv: list[str] | None = None) -> int:
         return slice_lib.checkpoint(root, args)
     if args.handoff:
         return write_handoff(root, args)
+    if args.from_task:
+        tp = task_lib.task_path(root, args.from_task.strip())
+        if not tp.is_file():
+            agent_log.fail(f"no task file {task_lib.TASKS_REL}/{args.from_task.strip()}.md; open tasks: `python tools/task.py list --owner build`")
+        args.from_handoff = str(tp)
     compact = bool(args.next)  # the next unit of a queue: the rules were printed on the first card, so only the unit's lines are
     if args.next:
         door = advance(root, args)
@@ -159,7 +172,7 @@ def main(argv: list[str] | None = None) -> int:
         units, done = unit_lib.plan(load_routes(root), args.door.strip(), st, head)
         args.job = unit_lib.pick(units, done)
         if not args.job:
-            msg = f"ALL UNITS DONE for door {args.door}: {', '.join(units)}. Nothing is queued; `python tools/start_build_slice.py --handoff` writes the closing handoff."
+            msg = f"ALL UNITS DONE for door {args.door}: {', '.join(units)}. Nothing is queued. Finished: `python tools/task.py done ID` in the last unit's commit; more to hand on: `python tools/start_build_slice.py --handoff`."
             return agent_log.finish("slice-boot", root, msg, "PASS", args=args, write=not args.dry_run, echo=msg, worktree=wt, route="units-done")
     same = not st or not (args.door or args.job) or (st.get("door", ""), st.get("job", "")) == (args.door.strip(), args.job.strip())
     if st and same and not args.full and not args.dry_run:
@@ -211,12 +224,19 @@ def main(argv: list[str] | None = None) -> int:
     mode = "handoff" if args.from_handoff else "survey" if survey else "implement"
     sdir = session_lib.session_dir()
     start = slice_lib.in_worktree_text(root, sdir, mode) if not compact else "RULES: unchanged since this slice's first card (`--full` reprints them). Per ask: message first, ledger, Did not work; commit only on her yes."
-    hand = handoff_lib.start_block(root, Path(args.from_handoff), bool(units)) if args.from_handoff else []
+    hand = handoff_lib.start_block(root, Path(args.from_handoff), bool(units), restore=not args.from_task) if args.from_handoff else []
+    tfile = Path(args.from_handoff) if args.from_handoff else None
+    tid = tfile.stem if tfile and tfile.parent.name == "tasks" else ""
     warn = slice_lib.area_warning(root, args.area, args.door, args.job)
     if not args.dry_run:
         first = slice_state.new(root, args.door.strip(), args.job.strip(), args.area.strip(), mode, sdir, units, done)
         if st:
-            first.update({k: st[k] for k in ("first_run", "session", "prompt") if k in st})
+            first.update({k: st[k] for k in ("first_run", "session", "prompt", "task") if k in st})
+        if tid:
+            first["task"] = tid
+            local = task_lib.task_path(root, tid)
+            if local.is_file() and task_lib.set_head(local, "first", handoff_lib.from_task_cmd(args.door.strip(), tid)):
+                hand.append(f"task {task_lib.TASKS_REL}/{tid}.md: its first command now reads --from-task {tid}; commit it with this unit")
         slice_state.save(root, first)
     card = [f"door={args.door} job={args.job} area={args.area} ref={ref} ({ref_note}) worktree={wt} mode={mode}",
             f"smokes={smokes or 'n/a'} (run: tools/run_smokes.py --door/--job; add or update asserts for new systems)",

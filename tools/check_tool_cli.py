@@ -37,7 +37,7 @@ NO_ROOT: set[str] = set()
 EXEMPT_RESULT = {"agent_log", "wdb_scratch_server"}  # run helper itself; long-running HTTP server
 WRITERS = {
     "doc_patch", "code_map", "tunables", "build_changelog",
-    "week_pin", "list_unused_funcs", "bot_opt", "split_funcs", "facade_requal",
+    "week_pin", "list_unused_funcs", "bot_opt", "task", "split_funcs", "facade_requal",
     "move_script_cluster", "archive_prior_changelogs", "enable_texture_mips", "ci_archive",
 }
 # flags `--help` must list (tool contract extras beyond --root/--dry-run); web_perf is advisory, so it needs --strict to fail
@@ -54,6 +54,7 @@ SMOKE: dict[str, list] = {
     "attack_keyframes": [["--beats"]],
     "bible_prompt": [["--gender", "female"], ["--enemy", "archer"], ["--list-enemies"]],
     "bot_opt": [["--list"]],
+    "task": [["list"], ["check"], ["show", "opt-003"], ["--dry-run", "index"]],
     "bot_smokes": [["--doctor"], ["--for", "scripts/app.gd"]],
     "bot_status": [[], ["--bot"]],
     "bot_warnscan": [["--list"]],

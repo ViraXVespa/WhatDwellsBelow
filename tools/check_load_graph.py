@@ -33,6 +33,7 @@ if str(TOOLS_DIR) not in sys.path:
 
 import agent_log  # noqa: E402
 import bot_gate_lib  # noqa: E402
+import task_lib  # noqa: E402
 import unit_lib  # noqa: E402
 from load_routes import (  # noqa: E402
     CYCLE_ROLES,
@@ -57,6 +58,7 @@ from load_routes import (  # noqa: E402
 )
 
 CHANGELOG_PREFIX = "design/changelog/"
+TASKS_PREFIX = "design/tasks/"
 CITE_RE = re.compile(
     r"(?:`)?((?:design/[\w./-]+\.md)|AGENTS\.md)(?:`)?"
 )
@@ -162,8 +164,8 @@ def scanned_md_files(root: Path) -> list[Path]:
     design = root / "design"
     for path in sorted(design.rglob("*.md")):
         posix = rel(path, root)
-        if posix.startswith(CHANGELOG_PREFIX):
-            continue
+        if posix.startswith(CHANGELOG_PREFIX) or (posix.startswith(TASKS_PREFIX) and posix != TASKS_PREFIX + "README.md"):
+            continue  # task files are checked by task_lib.fails, not classified as docs
         out.append(path)
     skills_root = root / ".grok" / "skills"
     if skills_root.is_dir():
@@ -816,6 +818,8 @@ def main() -> int:
     fails.extend(increment6_schema_fails(routes))
     fails.extend(route_map_fails(root, routes))
     fails.extend(unit_lib.unit_fails(root, routes))
+    fails.extend(task_lib.fails(root))
+    fails.extend(cap_wording_fails({rel(p, root): p.read_text(encoding="utf-8-sig") for p in task_lib.files(root)}))
     fails.extend(read_when_overlaps(routes))
     fails.extend(conflict_fails(routes))
 

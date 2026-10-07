@@ -15,7 +15,7 @@ Publish with plain `git push -u origin bot/<flow>` over HTTPS (gh credential hel
 
 1. Read this file. If the agents file already routed you here, do not fetch it again.
 2. Run: python tools/bot_status.py --bot
-3. Pick one printed flow. Do not invent reuse-map or opt-queue rows.
+3. Pick one printed flow. Do not invent reuse-map rows or opt tasks.
 4. Open only that Job file. When editing GDScript, also load `design/gdscript-law.md`.
 5. After a cluster, drop those file bodies and report.
 
@@ -26,7 +26,7 @@ Publish with plain `git push -u origin bot/<flow>` over HTTPS (gh credential hel
 | Staged reuse-map brief as one PR | `design/grok-bot-reuse.md` |
 | Parked / named folder relocate | `design/grok-bot-relocate.md` |
 | Doc facade / sibling split | `design/grok-bot-docs.md` |
-| Named optimization item from the parked queue | `design/grok-bot-opt.md` |
+| Named optimization item (an opt task) | `design/grok-bot-opt.md` |
 
 Job files do not restate this file: size, prove, changelog and `version.json` rules live here (label math: `design/versioning-log.md` body shape, not the changelog tree or `scripts/data/version.json`, at ship; `next-label` = highest on disk + 1; same PR: `--label`). One flow, one PR, then stop; if the User names more than one job, ask which.
 
@@ -71,7 +71,7 @@ Tools: `design/tools.md` is the catalog. The Bot runs only `A=Y` tools, as `pyth
 ## Hard stops
 
 No new player-facing systems, enemy types (ask the User), tunables, combat feel, editor playtest, art/I2V, locale sweeps, pause redesign, `Entity.gd`, UI framework, ECS, or flattening hostify clusters back into one oversized script. No Windows or Steam Godot; do not open the editor or enable Execution on Local Computer.
-Behavior changes, drive-by renames, comment rewrites, wholesale retypes and reformats are out unless a User-named `design/grok-bot-opt.md` item lists them.
+Behavior changes, drive-by renames, comment rewrites, wholesale retypes and reformats are out unless a User-named opt item lists them.
 Open the reuse map only from `design/grok-bot-reuse.md`. Do not walk design/ beyond this file and the one Job file. Do not pin weeks or run `tools/week_start.py` (human-only). Do not invent numbers. Bot may save its own skill after two good clusters.
 
 ## After-cluster report

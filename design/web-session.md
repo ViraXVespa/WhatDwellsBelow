@@ -26,7 +26,7 @@ Naming a goal is memory, not a mode switch. Several goals may sit in memory. Dir
 | brainstorm | default after boot | discuss across subject swaps; no Phase 3 nudge |
 | directed-goal | User asks for the list / Phase 3 / emit | phases 3-4 on the accepted list |
 | build-coop | User names it | small fixes on Build work; gather first |
-| parked | User names a parked task | existing park table |
+| parked | User names a parked task | `design/tasks/README.md` (owner web) |
 | perf | User drops hitch / load-timing output | measure first; one hitch class per emit |
 | build-week | User names it | process recommendations; gather first |
 
@@ -47,7 +47,7 @@ Move only when the User names the next phase (except the multi-slice loop below)
 The User tells the agent to review the repo.
 
 If the agents file already routed here, do not re-read it. Load `design/protocol.md` and `design/constraints.md` only when missing.
-If the first message names a park, load only that Open file after the law pair and continue; with a mandate, Phase 2 is optional. Closing a finished park deletes the Open file and its parked-tasks row (not rewritten as closed).
+If the first message names a park (a task id or its words), load only that task file and what its `resume` line names, after the law pair, and continue; with a mandate, Phase 2 is optional. A finished park is closed with `task.py done` (`design/tasks/README.md`).
 If the User names build-coop or build-week, there is no gather tool: use `read_summary` only if the User also named a PC job (no game writes). `_logs/sess/` is PC job output.
 If no park or gather is named, confirm ready (brainstorm; no implementation).
 

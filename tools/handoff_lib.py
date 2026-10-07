@@ -1,23 +1,27 @@
 """Survey -> implement handoff for Grok Build (library for start_build_slice.py and open_slice.py; import only).
 
-A survey session ends when she has answered its first ask: Build writes `_logs/handoff/handoff.md` (gitignored, so never committed) and stops.
+A survey session ends when she has answered its first ask: Build writes the handoff as a task file, `design/tasks/<id>.md` (task_lib; the id
+defaults to the door), and stops.
 `python tools/start_build_slice.py --handoff` writes the skeleton, then validates the filled file and prints the one command she runs from the
 main checkout: `python tools/open_slice.py AREA --prompt-file PATH`. The file becomes the first message of a NEW session, whose first command
-`start_build_slice.py --door D --from-handoff PATH` prints a compact start summary. This is not the checkpoint: `--checkpoint` saves the id of an
+`start_build_slice.py --door D --from-handoff PATH` prints a compact start summary and points the file's first command at `--from-task ID`, so
+the committed task resumes from any checkout. This is not the checkpoint: `--checkpoint` saves the id of an
 implementation session so a red prove can fork it; the handoff moves a survey into a fresh implementation session.
 The fresh worktree is cut from the week branch, so survey-session edits to shot-flow files and the routes.yaml mapping are saved to
-`_logs/handoff/survey-edits/` and put back by `--from-handoff` (a file that differs is only listed when the week branch moved).
+`_logs/handoff/survey-edits/` (the task file with them) and put back by `--from-handoff` (a file that differs is only listed when the week branch moved).
 """
 from __future__ import annotations
 
+import json
 import re
 import shutil
 import subprocess
 from pathlib import Path
 
-HANDOFF_REL = "_logs/handoff/handoff.md"
-EDITS_DIR = "survey-edits"
-CARRY = ("tools/shot-flows/", "design/routes.yaml")  # the only files a survey session may change before she answers
+import task_lib
+
+EDITS_REL = "_logs/handoff/survey-edits"
+CARRY = ("tools/shot-flows/", "design/routes.yaml", "design/tasks/")  # the only files a survey session may change before she answers
 FILL = "<fill"
 SECTIONS = [
     ("Task (her words)", "<fill: the task as she wrote it>"),
@@ -32,8 +36,30 @@ SECTIONS = [
 ]
 
 
-def handoff_path(root: Path) -> Path:
-    return root / HANDOFF_REL
+def task_id(root: Path, task: str = "") -> str:
+    """The handoff's task id: given, else the slice state's task, else its door."""
+    if task:
+        return task
+    try:
+        st = json.loads((root / "_logs" / "slice-state.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        st = {}
+    return str(st.get("task") or st.get("door") or "")
+
+
+def handoff_path(root: Path, task: str = "") -> Path:
+    return task_lib.task_path(root, task_id(root, task) or "handoff")
+
+
+def edits_dir(handoff: Path) -> Path:
+    """Where a handoff's survey edits live: <survey root>/_logs/handoff/survey-edits (an old _logs handoff kept them beside itself)."""
+    if handoff.parent.name == "tasks" and handoff.parent.parent.name == "design":
+        return handoff.parents[2] / EDITS_REL
+    return handoff.parent / "survey-edits"
+
+
+def from_task_cmd(door: str, tid: str) -> str:
+    return f"python tools/start_build_slice.py --door {door or '<door>'} --from-task {tid}"
 
 
 def _git(root: Path, *a: str) -> str:
@@ -41,10 +67,11 @@ def _git(root: Path, *a: str) -> str:
     return p.stdout.strip() if p.returncode == 0 else ""
 
 
-def skeleton(root: Path, area: str, door: str, job: str, session: str = "", units: list[str] | None = None, done: list[str] | None = None) -> str:
-    path = handoff_path(root)
+def skeleton(root: Path, area: str, door: str, job: str, session: str = "", units: list[str] | None = None, done: list[str] | None = None, task: str = "") -> str:
+    path = handoff_path(root, task)
     first = f'python tools/start_build_slice.py --door {door or "<door>"}' + (f" --job {job}" if job else "") + f' --from-handoff "{path}"'
-    head = [f"# Handoff: {area}", f"area: {area}", f"door: {door}", f"job: {job}"]
+    head = [f"# Handoff: {area}", f"id: {path.stem}", "owner: build", "status: active", "done-when: <fill: when this task is finished, in her words>",
+            f"area: {area}", f"door: {door}", f"job: {job}"]
     if units:  # a door worked as a queue of units: the order and what is done travel with the handoff
         head += ["units: " + ", ".join(units), "done: " + (", ".join(done) if done else "none")]
     head += [f"from: survey session {session or '(id unknown)'} in {root}",
@@ -112,6 +139,8 @@ def check(root: Path, text: str) -> list[str]:
     """Problems that stop the handoff from being ready."""
     head, secs = parse(text)
     bad: list[str] = []
+    if any(FILL in line for line in text.split("\n## ", 1)[0].splitlines()):
+        bad.append("header has an unfilled line (done-when)")
     if not head.get("area"):
         bad.append("header has no `area:` line")
     if head.get("units"):
@@ -155,8 +184,8 @@ def sidecars(paths: list[str]) -> tuple[list[str], int]:
 
 
 def save_edits(root: Path) -> tuple[list[str], list[str]]:
-    """Copy the carried survey edits next to the handoff; returns (saved, not_carried)."""
-    dest = handoff_path(root).parent / EDITS_DIR
+    """Copy the carried survey edits (the task file too) to _logs/handoff/survey-edits; returns (saved, not_carried)."""
+    dest = root / EDITS_REL
     if dest.exists():
         shutil.rmtree(dest)
     saved, other = [], []
@@ -175,7 +204,7 @@ def save_edits(root: Path) -> tuple[list[str], list[str]]:
 
 def restore_edits(handoff: Path, root: Path) -> list[str]:
     """Put the saved survey edits into this (fresh) worktree: new files always; a file that exists is replaced only when HEAD is the survey's base."""
-    src = handoff.parent / EDITS_DIR
+    src = edits_dir(handoff)
     files = src / "files"
     if not files.is_dir():
         return []
@@ -198,7 +227,7 @@ def command(root: Path, area: str, path: Path) -> str:
     return f'python tools/open_slice.py {area} --prompt-file "{path}"'
 
 
-def start_block(root: Path, path: Path, queue: bool = False) -> list[str]:
+def start_block(root: Path, path: Path, queue: bool = False, restore: bool = True) -> list[str]:
     """What a fresh session prints for --from-handoff: where it came from and what to open; the full text is already its first message."""
     try:
         text = path.read_text(encoding="utf-8-sig")
@@ -218,7 +247,7 @@ def start_block(root: Path, path: Path, queue: bool = False) -> list[str]:
     bl = baselines(root, secs.get("Baselines for the chosen surface", ""))
     lines.append("Open these baselines (only these): " + ("; ".join(f"{p}{'' if ok else ' (MISSING: re-shoot it)'} - {n}" for p, ok, n in bl)
                                                            or "none listed (the Baselines section names the flows to shoot)"))
-    lines += restore_edits(path, root)
+    lines += restore_edits(path, root) if restore else []
     bad = check(root, text)
     if bad:
         lines.append("HANDOFF problems: " + "; ".join(bad))
@@ -268,7 +297,7 @@ def selftest(script: Path) -> list[str]:
             bad.append("check must reject units that are not door.job ids and accept a queue with done a subset of units")
         if not any("no file" in b for b in code_names(survey, "- scripts/none.gd: f")) or code_names(survey, "- design/ui.md: not an identifier here"):
             bad.append("Files and functions: a missing file must be named; a description that is not a plain name is not checked")
-        hp = handoff_path(survey)
+        hp = survey / "design" / "tasks" / "ui.md"
         (survey / "_logs").mkdir(exist_ok=True)
         (survey / "_logs" / "slice-state.json").write_text('{"door": "ui", "job": "", "area": ""}\n', encoding="utf-8")
         code, out = run(survey, "--handoff")
@@ -291,6 +320,7 @@ def selftest(script: Path) -> list[str]:
         text = hp.read_text(encoding="utf-8")
         for title, _ in SECTIONS:
             text = re.sub(r"(## " + re.escape(title) + r"\n)(.*?)(\n\n|\Z)", lambda m: m.group(1) + "filled line\n\n", text, count=1, flags=re.S)
+        text = text.replace("<fill: when this task is finished, in her words>", "when she says so")
         text = re.sub(r"(## Baselines for the chosen surface\n)filled line", lambda m: m.group(1) + f"{png} - the pause page, before", text)
         hp.write_text(text, encoding="utf-8")
         (survey / "assets").mkdir()
@@ -301,7 +331,7 @@ def selftest(script: Path) -> list[str]:
             bad.append("Godot .import sidecars must be counted in the handoff output, not listed by name")
         if code != 0 or 'open_slice.py ui --prompt-file "' not in out or "new-flow.json" not in out or "routes.yaml" not in out:
             bad.append(f"a filled handoff must pass, print the open_slice command and name the saved survey edits (code={code})")
-        if not (hp.parent / EDITS_DIR / "files" / "tools" / "shot-flows" / "new-flow.json").is_file():
+        if not (survey / EDITS_REL / "files" / "tools" / "shot-flows" / "new-flow.json").is_file():
             bad.append("the survey's new flow file must be saved next to the handoff")
         text2 = hp.read_text(encoding="utf-8").replace(f"{png} - the pause page, before", f"{png}")
         hp.write_text(text2, encoding="utf-8")
@@ -320,6 +350,12 @@ def selftest(script: Path) -> list[str]:
             bad.append("--from-handoff must not print the survey ORDER/Q0 text again")
         if "ledger" not in out.lower() or "Did not work" not in out:
             bad.append("--from-handoff keeps the ledger and Did not work rules")
-        if not (fresh / "tools" / "shot-flows" / "new-flow.json").is_file():
-            bad.append("the survey's flow file must exist in the fresh worktree")
+        if not (fresh / "tools" / "shot-flows" / "new-flow.json").is_file() or not (fresh / "design" / "tasks" / "ui.md").is_file():
+            bad.append("the survey's flow file and task file must exist in the fresh worktree")
+        code, out = run(fresh, "--door", "ui", "--from-task", "ui", "--dry-run")
+        if code != 0 or "HANDOFF from" not in out or "restored" in out:
+            bad.append(f"--from-task ID must print the summary from design/tasks/ID.md without restoring survey edits (code={code})")
+        code, out = run(fresh, "--door", "ui", "--from-task", "nope", "--dry-run")
+        if code == 0:
+            bad.append("--from-task with no such task file must fail")
     return bad

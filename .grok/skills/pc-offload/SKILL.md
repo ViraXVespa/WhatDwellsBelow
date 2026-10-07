@@ -12,7 +12,7 @@ when-to-use: >
   repo search (list_xref, not grep), code-map row, patch code-map row,
   check code-map coverage, scene nodes, Godot import,
   smokes, load timing, dungeon map, build gate, post-split gate,
-  Windows write (doc_patch.py write), run_agent_py, show_func, bot-opt queue,
+  Windows write (doc_patch.py write), run_agent_py, show_func, task files (task.py),
   read_summary, list_route, show_png, add a new local runner. If this session already opened this skill
   or design/pc-offload.md, do not open them again.
 user-invocable: true
@@ -63,7 +63,8 @@ Intercept (raw tool is a failed lookup, not a fallback):
    to read, the single source. A later
    run says where the slice stands. A door with a unit queue (ui) is worked one
    unit at a time: start_build_slice.py --next after each committed unit prints the
-   next unit's card, no new survey. Only the User launches grok.
+   next unit's card, no new survey. A committed task resumes with
+   start_build_slice.py --door D --from-task ID (task.py list). Only the User launches grok.
 
 Two compacts on the same slice: write the handoff (start_build_slice.py --handoff)
 and start a fresh session.

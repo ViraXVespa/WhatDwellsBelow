@@ -1,15 +1,17 @@
 # Handoff: ui
 
-Status: current plan
-Read when: the next ui unit after the extraction gate
-
+id: ui-restyle
+title: UI restyle, remaining units
+owner: build
+status: open
+done-when: the ghost shop, death recap, quest notice board and guild receptionist units are committed after Vira saw each one
 area: ui
 door: ui
 job:
 units: ui.controls, ui.anvil, ui.loadout, ui.extract, ui.ghost_shop, ui.recap, ui.quest_board, ui.receptionist
 done: ui.controls, ui.anvil, ui.loadout, ui.extract
 from: implementation session on grok-build-w6 after the extraction gate page
-Your first command, before any file read or memory topic: python tools/start_build_slice.py --door ui --from-handoff "design/ui-handoff.md"
+Your first command, before any file read or memory topic: python tools/start_build_slice.py --door ui --from-task ui-restyle
 The survey is done and the answers below stand; ask again only what Open questions lists or what a discovery changes. Open no pictures except the baselines listed for the chosen surface.
 
 ## Task (her words)
