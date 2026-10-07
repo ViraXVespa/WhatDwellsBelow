@@ -67,6 +67,10 @@ static func slot_btn(ui: CanvasLayer, slot: String) -> Button:
 	if blocked:
 		b.disabled = true
 		b.focus_mode = Control.FOCUS_NONE
+	elif str(ui.get("gear_mode")) == "extract":
+		b.pressed.connect(func():
+			load("res://scripts/ui/progress_ui/inv.gd").send_slot(ui, slot)
+		)
 	else:
 		b.pressed.connect(func():
 			if bool(ui.get("gear_sub")):

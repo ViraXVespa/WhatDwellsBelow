@@ -15,6 +15,8 @@ static func build_title(_ui: CanvasLayer, mode: String, _title_col: Color) -> St
 	elif mode == "anvil":
 		title = App.tr("common.anvil")
 		_title_col = Color(0.95, 0.78, 0.42)
+	elif mode == "extract":
+		title = App.tr("common.extraction_gate")
 	return title
 
 static func build_subtitle(_ui: CanvasLayer, mode: String) -> String:
@@ -22,6 +24,8 @@ static func build_subtitle(_ui: CanvasLayer, mode: String) -> String:
 		return App.tr("board_build.choose_holds_or_stash_gear")
 	elif mode == "anvil":
 		return App.tr("board_build.analyze_destroys_a_piece_forge")
+	elif mode == "extract":
+		return App.tr("inv.mail_goods_to_the_surface")
 	return ""
 
 static func build_status_text(mode: String) -> String:

@@ -50,6 +50,8 @@ static func bag_grid(ui: CanvasLayer) -> void:
 	grid.add_theme_constant_override("h_separation", gap)
 	grid.add_theme_constant_override("v_separation", gap)
 	var cap: int = maxi(int(App.bal.bag_cap), App.prog.bag.size())
+	if str(ui.get("gear_mode")) == "extract":
+		cap = maxi(7, App.prog.bag.size())
 	for i: int in cap:
 		var it: Dictionary = {}
 		if i < App.prog.bag.size() and App.prog.bag[i] is Dictionary:
@@ -69,7 +71,10 @@ static func bag_cell(ui: CanvasLayer, it: Dictionary) -> Button:
 			ui.inv_sel = key
 			load("res://scripts/ui/gear_board.gd")._arm_tip(ui)
 			Sync.refresh(ui)
-			Act.bag_primary(ui)
+			if str(ui.get("gear_mode")) == "extract":
+				load("res://scripts/ui/progress_ui/inv.gd").send_bag(ui, it)
+			else:
+				Act.bag_primary(ui)
 		)
 		b.focus_entered.connect(func():
 			if load("res://scripts/ui/gear_board.gd")._on(ui, "gear_sub"):

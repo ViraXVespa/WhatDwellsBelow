@@ -25,6 +25,8 @@ A flow is `tools/shot-flows/<name>.json`: header keys fill unset CLI defaults (`
 
 Targets are dotted paths. The root is an autoload (`App`), `host` (the camp/dungeon scene), `kind:receptionist`, `group:player` or `node:Path`; then properties, child nodes, keys, `[i]`. Example: `host.ui.mode`. A `set`/`call` value `{"v3":[x,y,z]}` becomes a Vector3. Seed or set any random state (the quest board rolls its own `randomize()`, so a flow sets `quests_offered`), or two runs differ and the diff is noise. The first failing op stops the run with `SHOT: fail op=... why=...`.
 
+A screen that lists what the delver is carrying is stocked before the shot. A fresh dungeon boot only has the starter potion and ration, which hides the gear board, the unsafe pile, and the resources. The extract flow calls `App.prog.stock_extract_shot` before it opens the gate: a worn green weapon, a worn blue helm, an unsafe body in the bag, an artifact that stays, and ore, wood, gold, and root. Do not shoot that screen on the starter kit.
+
 Worker flags: `--wdb-shot-steps=FILE --wdb-shot-frames=DIR --wdb-shot-nopix=1 --wdb-shot-show=1`. Code: `step_runner.gd` (loop, `flow.json`), `step_ops.gd` (ops), `step_ref.gd` (paths), `step_input.gd` (events), `step_texts.gd` (text dump) in `scripts/debug/shot_tool/`.
 
 Commands:
