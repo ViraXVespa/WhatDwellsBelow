@@ -129,6 +129,7 @@ static func finish(host: CanvasLayer) -> void:
 	host.visible = false
 	host.set_process(false)
 	UiSession.close(host)
+	App.swallow_close_pad()
 	App.prog.lose_unextracted()
 	App.save_now()
 	if App.playtest and App.playtest.has_method("consume_recap") and App.playtest.consume_recap():

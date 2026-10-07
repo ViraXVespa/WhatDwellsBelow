@@ -147,6 +147,9 @@ static func run(host: Node) -> void:
 	_force_close(tree)
 	for i: int in 3:
 		await tree.process_frame
+	var bleed_ok: bool = await _bleed(host, tree, ui)
+	printerr("P6: no_bleed_ok=" + str(bleed_ok))
+	ok = ok and bleed_ok
 	printerr("P6: escape_ok=" + str(ok))
 	assert(ok)
 
@@ -157,6 +160,61 @@ static func _spot(host: Node) -> Node:
 	var n: Node3D = s.new()
 	host.add_child(n)
 	return n
+
+## The press that closes a menu (a Back-chip click is also the attack mouse button; pad A on Leave) must
+## not reach the world while it is still held: no attack or interact, then a fresh press works again.
+static func _bleed(host: Node, tree: SceneTree, ui: Variant) -> bool:
+	var p: Node = tree.get_first_node_in_group("player")
+	var ok: bool = true
+	for how: String in ["chip", "pad_a"]:
+		var w0: int = 0
+		while int(p.get("atk_state")) != 0 and w0 < 240:
+			await tree.process_frame
+			w0 += 1
+		ui.open_flavor("Dumpster", "x")
+		for i: int in 3:
+			await tree.process_frame
+		if how == "chip":
+			Input.action_press("attack")
+			var c: Control = _chip(tree, "ui_cancel")
+			var at: Vector2 = c.get_global_rect().get_center()
+			_click(at, true)
+		else:
+			Input.action_press("interact")
+			var a := InputEventJoypadButton.new()
+			a.button_index = JOY_BUTTON_A
+			_send(a, true)
+			await tree.process_frame
+			if App.ui_open:
+				var f: Control = host.get_viewport().gui_get_focus_owner()
+				if f is BaseButton:
+					(f as BaseButton).pressed.emit()
+		var leak: bool = false
+		for i: int in 8:
+			await tree.process_frame
+			var w: Array = [App.pad_held("attack"), App.pad_held("interact"), App.pad_just("interact"), int(p.get("atk_state")), App.ui_open, i]
+			if w[0] or w[1] or w[2] or w[3] != 0:
+				leak = true
+				printerr("P6: leak_%s %s" % [how, w])
+		var closed: bool = not App.ui_open
+		Input.action_release("attack")
+		Input.action_release("interact")
+		var up := InputEventJoypadButton.new()
+		up.button_index = JOY_BUTTON_A
+		_send(up, false)
+		_click(Vector2.ZERO, false)
+		for i: int in 3:
+			await tree.process_frame
+		Input.action_press("attack")
+		await tree.process_frame
+		var fresh: bool = App.pad_held("attack")
+		Input.action_release("attack")
+		for i: int in 30:
+			await tree.process_frame
+		printerr("P6: bleed_%s closed=%s leak=%s fresh_ok=%s" % [how, closed, leak, fresh])
+		ok = ok and closed and not leak and fresh
+		_force_close(tree)
+	return ok
 
 static func _send(ev: InputEvent, down: bool) -> void:
 	if ev is InputEventKey:
