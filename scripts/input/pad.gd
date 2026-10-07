@@ -98,7 +98,18 @@ static func aim() -> Vector2:
 		return v
 	return stick(JOY_AXIS_RIGHT_X, JOY_AXIS_RIGHT_Y)
 
+## Gameplay actions still held from the press that closed a menu (a Back-chip click is also an attack
+## mouse button). They read as up until that input is let go, so a close never bleeds into the world.
+static var eat_held: Dictionary = {}
+
 static func held(action: String) -> bool:
+	if eat_held.has(action):
+		if _raw_held(action):
+			return false
+		eat_held.erase(action)
+	return _raw_held(action)
+
+static func _raw_held(action: String) -> bool:
 	if Touch.held(action):
 		return true
 	if Input.is_action_pressed(action):
@@ -148,6 +159,8 @@ static func swallow_close() -> void:
 	for action in ["dash", "attack", "special", "interact", "potion", "food", "target_lock", "pause"]:
 		edge[action] = false
 		was[action] = true
+		if action != "pause" and _raw_held(action):
+			eat_held[action] = true
 	eat_pause = true
 	Look.clear()
 

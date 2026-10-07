@@ -79,6 +79,7 @@ static func rebuild_controls(ui) -> void:
 	for pair in acts:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 10)
+		row.set_meta("prompt_tap", false)
 		PromptView.fill(row, [{"action": str(pair[0]), "verb": str(pair[1])}], 18, ThemeS.PAPER)
 		ui.box.add_child(row)
 	ui.focus_btn = ThemeS.btn(App.tr("common.leave"), func(): ui.close_ui())

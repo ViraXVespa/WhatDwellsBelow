@@ -3,6 +3,8 @@ extends Object
 const InputPad := preload("res://scripts/input/pad.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const Disp := preload("res://scripts/display_mode.gd")
+const Chip := preload("res://scripts/ui/prompt_chip.gd")
 
 static var _axis_down: Dictionary = {}
 static var _axis_key: Array = []
@@ -20,6 +22,13 @@ static func _axis_edge(m: InputEventJoypadMotion) -> bool:
 	_axis_down[id] = down
 	_axis_key = key
 	return _axis_res
+
+## Web fullscreen keeps Esc from the game and only flags it. A menu that pauses the tree calls this each
+## frame so that flagged Esc still reaches it as Back (the pause menu reads the flag itself).
+static func web_back() -> void:
+	if Disp.consume_web_esc():
+		Chip.fire("ui_cancel", true)
+		Chip.fire("ui_cancel", false)
 
 static func pressed(event: InputEvent) -> bool:
 	InputPad.note_event(event)

@@ -87,6 +87,7 @@ static func paint_prompt(host: CanvasLayer) -> void:
 		return
 	host._prompt_shown = text
 	host._prompt_scheme = scheme
+	host.prompt_row.set_meta("prompt_tap", false)
 	if text == "":
 		PromptView.fill(host.prompt_row, [])
 		return

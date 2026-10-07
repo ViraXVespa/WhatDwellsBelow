@@ -148,6 +148,9 @@ func _focus() -> void:
 		return
 	focus_btn.grab_focus()
 
+func _process(_delta: float) -> void:
+	MenuPad.web_back()
+
 func _input(event: InputEvent) -> void:
 	if page == "local" and Util.zoom_event(event):
 		_cycle_zoom()

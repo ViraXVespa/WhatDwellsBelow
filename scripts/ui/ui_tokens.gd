@@ -21,6 +21,10 @@ const OUTLINE: Color = Color(0.05, 0.03, 0.02)
 const OUTLINE_SIZE: int = 6
 const PROMPT_OUTLINE_SIZE: int = 5
 const CLEAR: Color = Color(0, 0, 0, 0)
+## Tappable hint chips (prompt_chip.gd): a modulate over the chip's own glyph and word, so it suits any frame.
+const CHIP_REST: Color = Color(1, 1, 1, 1)
+const CHIP_HOVER: Color = Color(1.18, 1.12, 1.02, 1)
+const CHIP_PRESS: Color = Color(0.72, 0.66, 0.58, 1)
 
 ## The same colour with another alpha (HUD draws, washes).
 static func fade(col: Color, alpha: float) -> Color:

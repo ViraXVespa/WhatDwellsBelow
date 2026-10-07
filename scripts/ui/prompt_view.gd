@@ -3,6 +3,7 @@ extends Object
 const Prompts := preload("res://scripts/input/prompts.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const WipeChildren := preload("res://scripts/ui/wipe_children.gd")
+const Chip := preload("res://scripts/ui/prompt_chip.gd")
 
 const BAR_NAME := "gear_hint_bar"
 const HOST_GROUP := "wdb_prompt_host"
@@ -154,6 +155,10 @@ static func _row_action(row: Dictionary) -> String:
 	return str(row.get("action", ""))
 
 static func _paint(host: Control, parts: Array, font_size: int, color: Color) -> void:
+	var sig := "%s|%d|%s" % [str(parts), font_size, color]
+	if host.get_meta("prompt_sig", "") == sig and _swap_glyphs(host, font_size, color):
+		return
+	host.set_meta("prompt_sig", sig)
 	WipeChildren.wipe(host)
 	for row: Variant in parts:
 		if not (row is Dictionary):
@@ -163,13 +168,17 @@ static func _paint(host: Control, parts: Array, font_size: int, color: Color) ->
 		var verb_text := _cap_verb(str(rec.get("verb", "")))
 		var text := str(rec.get("text", ""))
 		if action != "":
+			var chip := Chip.make(host, action)
+			if not bool(host.get_meta("prompt_tap", true)):
+				chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			host.add_child(chip)
 			var tex: Texture2D = Prompts.texture_for(action)
 			if tex:
-				host.add_child(_glyph(tex, font_size))
+				chip.add_child(_glyph(tex, font_size))
 			else:
-				host.add_child(_lab(Prompts.chip_for(action), font_size, color))
+				chip.add_child(_lab(Prompts.chip_for(action), font_size, color))
 			if verb_text != "":
-				host.add_child(_lab(verb_text, font_size, color, _journal_host(host)))
+				chip.add_child(_lab(verb_text, font_size, color, _journal_host(host)))
 		elif text != "":
 			host.add_child(_lab(text, font_size, color, _journal_host(host)))
 		if bool(rec.get("gap", false)):
@@ -177,6 +186,24 @@ static func _paint(host: Control, parts: Array, font_size: int, color: Color) ->
 			gap.custom_minimum_size = Vector2(16, 1)
 			gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			host.add_child(gap)
+
+## Same rows, new input scheme: swap each chip's glyph in place. Keeping the chips alive means the click
+## or tap that flipped the scheme still lands on the chip under the pointer.
+static func _swap_glyphs(host: Control, font_size: int, color: Color) -> bool:
+	for c: Node in host.get_children():
+		if not c.has_meta(Chip.META):
+			continue
+		if c.get_child_count() == 0 or c.get_child(0).is_queued_for_deletion():
+			return false
+		var action := str(c.get_meta(Chip.META))
+		var tex: Texture2D = Prompts.texture_for(action)
+		var old: Node = c.get_child(0)
+		var glyph: Control = _glyph(tex, font_size) if tex else _lab(Prompts.chip_for(action), font_size, color)
+		c.remove_child(old)
+		old.queue_free()
+		c.add_child(glyph)
+		c.move_child(glyph, 0)
+	return true
 
 static func _glyph(tex: Texture2D, font_size: int) -> TextureRect:
 	var r := TextureRect.new()

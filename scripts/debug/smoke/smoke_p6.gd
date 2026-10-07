@@ -2,6 +2,7 @@ extends Object
 
 const Cat := preload("res://scripts/data/catalog.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
+const Escape := preload("res://scripts/debug/smoke/smoke_escape.gd")
 
 static func tree(host: Node) -> SceneTree:
 	return host.get_tree()
@@ -101,4 +102,5 @@ static func p6(host: Node) -> void:
 	var extra2: Dictionary = {"kind": "loot", "name": "Spare", "uid": 9002}
 	var blocked2: bool = not App.prog.add_to_bag(extra2)
 	printerr("P6: toast_hold=" + str(App.toast_t) + " hold_ok=" + str(is_equal_approx(App.toast_t, hold) and blocked2 and App.toast_msg == "Bag full."))
+	await Escape.run(host)
 	quit_in(host, 0.4)
