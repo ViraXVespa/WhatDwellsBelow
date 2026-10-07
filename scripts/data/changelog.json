@@ -3,6 +3,24 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.6.5",
+			"points": [
+				{
+					"text": "Every menu can now be closed by tapping or clicking its Back hint, and the other button hints in menus work the same way. Hints light up under the pointer and flash when pressed."
+				},
+				{
+					"text": "Back no longer gets ignored for a moment after closing a gear pick in the inventory, loadout or anvil."
+				},
+				{
+					"text": "Clicking, tapping or pressing a button to close a menu no longer makes your character attack or interact the moment it closes."
+				},
+				{
+					"text": "Esc closes town menus again in a fullscreen browser."
+				}
+			],
+			"summary": "Menus close reliably by tap, click, pad and key."
+		},
+		{
 			"label": "0.6.4",
 			"points": [
 				{
