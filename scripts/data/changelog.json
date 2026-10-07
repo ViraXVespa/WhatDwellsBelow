@@ -3,6 +3,15 @@
 	"generated_from": "design/changelog",
 	"entries": [
 		{
+			"label": "0.6.4",
+			"points": [
+				{
+					"text": "Asset fix sessions can now reach the original source art safely, and brainstorm chats can end by saving their plan for later."
+				}
+			],
+			"summary": "Task follow-ups for art and planning sessions."
+		},
+		{
 			"label": "0.6.3",
 			"points": [
 				{
