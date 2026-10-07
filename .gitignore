@@ -15,7 +15,7 @@ docs/archives/
 _logs/
 
 # Local scratch from asset processing
-_src/
+_src
 _old/
 _atk_*.jpg
 _inspect_*.jpg

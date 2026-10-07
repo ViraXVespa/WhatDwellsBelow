@@ -18,10 +18,11 @@ README = "README.md"
 BEGIN, END = "<!-- tasks:begin -->", "<!-- tasks:end -->"
 OWNERS = ("build", "web", "bot")
 STATUSES = ("open", "active", "blocked")
-KEYS = ("id", "title", "owner", "status", "done-when", "resume", "needs", "area", "door", "job", "units", "done", "from")
+KEYS = ("id", "title", "owner", "status", "done-when", "resume", "needs", "needs-local", "area", "door", "job", "units", "done", "from")
 ID_RE = re.compile(r"[a-z0-9][a-z0-9-]*$")
 FIRST_RE = re.compile(r"Your first command[^:]*:\s*(.+)$")
 FILL = "<fill"
+LOCAL = ("_src",)  # main-checkout-only (gitignored) folders open_slice.py may link into a worktree
 OPT_FLOOR = 4  # the old grok-bot-opt.md queue ended at opt-004; opt ids are never reused
 
 
@@ -86,6 +87,25 @@ def set_head(path: Path, key: str, value: str) -> bool:
     return False
 
 
+def set_section(path: Path, title: str, body: str) -> bool:
+    """Replace the body of `## title` (added at the end when missing); True when the file changed."""
+    text, eol, bom = md.read_text(path, with_meta=True)
+    lines = text.rstrip("\n").split("\n")
+    start = next((i for i, l in enumerate(lines) if l.strip() == f"## {title}"), -1)
+    new_body = body.strip("\n").split("\n")
+    if start < 0:
+        out = lines + ["", f"## {title}"] + new_body
+    else:
+        end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+        tail = [""] + lines[end:] if end < len(lines) else []
+        out = lines[:start + 1] + new_body + tail
+    new = "\n".join(out) + "\n"
+    if new == text:
+        return False
+    md.write_text(path, new, eol="crlf" if eol == "\r\n" else "lf", bom=bom)
+    return True
+
+
 def index_lines(tasks: dict[str, dict[str, str]]) -> list[str]:
     rows = ["id | owner | status | title | needs", "--- | --- | --- | --- | ---"]
     for tid, t in sorted(tasks.items(), key=lambda kv: (OWNERS.index(kv[1].get("owner")) if kv[1].get("owner") in OWNERS else 9, kv[0])):
@@ -137,6 +157,9 @@ def fails(root: Path) -> list[str]:
         for n in needs:
             if n not in tasks:
                 out.append(f"{where}: needs {n}, which is not an open task")
+        for loc in split(t.get("needs-local", "")):
+            if loc not in LOCAL:
+                out.append(f"{where}: needs-local {loc} is not one of {', '.join(LOCAL)}")
         if t.get("status") == "blocked" and not needs:
             out.append(f"{where}: blocked with no `needs:` (name what it waits on, or make it open)")
     p = d / README

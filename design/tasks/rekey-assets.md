@@ -4,7 +4,11 @@ id: rekey-assets
 owner: build
 status: open
 done-when: every asset below keys cleanly (Vira confirms each), and slot_legs.png links to the empty leg slot asset
-resume: python tools/start_build_slice.py --job art_pipeline.pack (then read this file; keying tools: tools-media.md)
+resume: python tools/open_slice.py art_pipeline.pack --task rekey-assets (from the main checkout; it links _src in)
+needs-local: _src
+
+## Source plates
+`_src` in the worktree is a link to the main checkout's source plates: read from it only, never edit, move or delete in it. Keying tools: `tools-media.md`.
 
 ## Issues (her words)
 ### assets/fx

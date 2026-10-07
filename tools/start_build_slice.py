@@ -228,6 +228,10 @@ def main(argv: list[str] | None = None) -> int:
     tfile = Path(args.from_handoff) if args.from_handoff else None
     tid = tfile.stem if tfile and tfile.parent.name == "tasks" else ""
     warn = slice_lib.area_warning(root, args.area, args.door, args.job)
+    linked = [n for n in task_lib.LOCAL if (root / n).is_symlink() or getattr(root / n, "is_junction", lambda: False)()]
+    if linked:
+        warn = (warn + "\n" if warn else "") + (f"LOCAL: {', '.join(linked)} links to the main checkout's source plates. Read from it only; never edit, move or delete in it "
+                                                 "(that changes the real folder). Write outputs to the live asset paths.")
     if not args.dry_run:
         first = slice_state.new(root, args.door.strip(), args.job.strip(), args.area.strip(), mode, sdir, units, done)
         if st:
