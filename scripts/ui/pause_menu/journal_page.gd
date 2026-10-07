@@ -4,18 +4,6 @@ extends Control
 
 const PAPER_PATH: String = "res://assets/ui/journal/paper.png"
 const LEATHER_PATH: String = "res://assets/ui/journal/leather.png"
-
-static var _tex: Dictionary = {}
-
-static func _tex_at(rel: String) -> Texture2D:
-	if _tex.has(rel) and _tex[rel] is Texture2D:
-		return _tex[rel]
-	var img: Image = Image.new()
-	var err: Error = img.load(rel)
-	var made: ImageTexture = ImageTexture.create_from_image(img) if err == OK else ImageTexture.new()
-	_tex[rel] = made
-	return made
-
 const PAD: float = 52.0
 const TOP: float = 86.0
 const GUTTER: float = 34.0
@@ -29,8 +17,20 @@ const SETTINGS_LEFT: float = 0.34
 const SKILLS_LEFT: float = 0.68
 const EVEN_LEFT: float = 0.5
 
+static var _tex: Dictionary = {}
 var kind: int = KIND_TWO
 var left_share: float = EVEN_LEFT
+
+static func _tex_at(rel: String) -> Texture2D:
+	if _tex.has(rel) and _tex[rel] is Texture2D:
+		return _tex[rel]
+	var loaded: Resource = load(rel)
+	if not loaded is Texture2D:
+		push_error("journal page texture missing: %s" % rel)
+		assert(loaded is Texture2D, "journal page texture missing: %s" % rel)
+		return loaded as Texture2D
+	_tex[rel] = loaded
+	return loaded as Texture2D
 
 static func pair(span: float, share: float) -> Array[Rect2]:
 	var out: Array[Rect2] = []

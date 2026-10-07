@@ -1,4 +1,4 @@
-﻿# UI style: tokens, builders, object frames
+﻿﻿# UI style: tokens, builders, object frames
 
 Status: current plan  
 Read when: restyle, builders, skin hooks, scrollbar hiding  
@@ -34,7 +34,7 @@ A skin is a script with static hooks:
 Add a frame: write `<object>_frame.gd` (+ `<object>_art.gd` for code-drawn pictures), list it in `frame_set.gd`, set the host `mode` when it opens. A frame takes the hooks it needs and adds its own pieces; it need not look like another.
 
 ## Web export (flagged, not changed)
-- `journal_page._tex_at` reads `res://assets/ui/journal/*.png` with `Image.load`; a web export ships imported textures, so loose PNGs under res:// may be absent there. Use `load()` when that page is touched.
-- `ThemeS.ink_font()` asks for Windows font names; a browser may not have them. Check text fit on the web build.
+- `journal_page._tex_at` loads `res://assets/ui/journal/paper.png` and `leather.png` with `load()` so the imported textures ship in the web pack. A missing page texture errors; it does not cache an empty image.
+- `ThemeS.ink_font()` returns the shipped `res://assets/ui/journal/ink.ttf` (Patrick Hand, OFL). SystemFont is not used; the web export has no Windows faces.
 - Frame art is drawn in code (no file reads).
 - A missing asset fails loudly; no fallback texture or color.

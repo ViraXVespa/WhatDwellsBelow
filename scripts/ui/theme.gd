@@ -25,13 +25,12 @@ static var _ink: Font
 static func ink_font() -> Font:
 	if _ink != null:
 		return _ink
-	var face: SystemFont = SystemFont.new()
-	face.font_names = PackedStringArray(["Ink Free", "Segoe Script", "Segoe Print"])
-	face.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
-	face.hinting = TextServer.HINTING_NONE
-	_ink = face
+	var loaded: Resource = load("res://assets/ui/journal/ink.ttf")
+	if not loaded is Font:
+		push_error("ink font missing: res://assets/ui/journal/ink.ttf")
+		assert(loaded is Font, "ink font missing: res://assets/ui/journal/ink.ttf")
+	_ink = loaded as Font
 	return _ink
-
 static func text_scale() -> float:
 	return UiText.applied()
 
