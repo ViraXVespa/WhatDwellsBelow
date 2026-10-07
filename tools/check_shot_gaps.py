@@ -11,8 +11,10 @@ interact:K; an assert on host.ui.mode equals M covers ui:M). Reports:
   problem   a flow with no shot or no assert, a covers entry naming no state, a publish manifest that is
             missing files or stale (file sha differs from shots.json).
 RESULT PASS = no gaps or problems, INFO = gaps only, FAIL = problems, uncovered new states, or gaps under --strict.
-Gate mode (routes.yaml shot_gaps): Bot = required (bot_smokes.py, run_build_gate.py --batch call it with --changed and
-FAIL on a new gap); Build = advisory (run_smokes.py, plain run_build_gate.py pass --advisory: prints, status INFO, exit 0).
+Gate mode (routes.yaml shot_gaps: bot required, build required): the END gates FAIL on a new uncovered state - bot_smokes.py,
+run_build_gate.py (--batch reads the bot key, plain reads the build key) and a Build UI or theme prove. run_smokes.py (mid-slice
+smoke run) only prints it with --advisory. The START of a slice never fails on a missing flow (start_build_slice.py prints a
+STEP 0 note); the flow must exist before the prove passes.
 """
 from __future__ import annotations
 
@@ -89,6 +91,9 @@ def flow_problems(root: Path, name: str, flow: dict, states: dict) -> list[str]:
     for c in flow.get("covers", []):
         if c not in states:
             probs.append(f"{name}: covers {c} but no such state in the sources")
+    by = str(flow.get("covered_by") or "")
+    if by and not (root / run_shot_flow.FLOW_DIR / f"{by}.json").is_file():
+        probs.append(f"{name}: covered_by {by} but no such flow")
     pub = flow.get("publish") or {}
     if pub.get("dir") and run_shot_flow.publish_blocked(root, root / pub["dir"]):
         probs.append(f"{name}: publish.dir {pub['dir']} is under assets/ (tooling never publishes there; use _out/shots/{name})")
@@ -116,7 +121,7 @@ def main(argv: list[str] | None = None) -> int:
                    help="print everything but never FAIL (Build gate); the Bot gate runs without it")
     p.add_argument("--strict", action="store_true", help="FAIL on any uncovered state, not just new ones")
     args = p.parse_args(argv)
-    root = agent_log.resolve_root(args)
+    root, where = agent_log.cwd_scan_root(args)
     cfg = json.loads((root / CFG).read_text(encoding="utf-8"))
     ignore = cfg.get("ignore", {})
     states = find_states(root, cfg)
@@ -133,7 +138,7 @@ def main(argv: list[str] | None = None) -> int:
         base = find_states(root, cfg, args.changed)
         new = sorted(s for s in states if s not in base)
     new_gaps = [s for s in new if s in gaps]
-    lines = [f"shot-gaps root=. states={len(states)} covered={len(states) - len(gaps) - sum(1 for s in states if s in ignore and s not in covered)} "
+    lines = [f"shot-gaps {where} states={len(states)} covered={len(states) - len(gaps) - sum(1 for s in states if s in ignore and s not in covered)} "
              f"ignored={sum(1 for s in states if s in ignore)} flows={len(flows)}"]
     lines += [f"gap      {s}  ({states[s]})" for s in gaps]
     lines += [f"new      {s}  covered={'no' if s in gaps else 'yes'}" for s in new]

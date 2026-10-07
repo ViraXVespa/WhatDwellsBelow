@@ -23,8 +23,9 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 10. **No loops (gates and fixes).** One copy of the rule; entry docs, jobs and skills point here.
     - Batch all same-kind fixes into one edit pass (every rename, every cast, every path), then run the gates once for the batch, not after each small edit.
     - No prove or re-verify cycles on unchanged results. If a check reports nothing new, stop.
-    - **Red prove: one diagnosis and one fix per retry.** Diagnose once, fix once (batched), rerun once. Still red: stop and report the log path; do not loop. This is the only statement of the rule; Build's retry (a fork of the gather session) is in `build-job-cycle.md`.
+    - **Red prove: one diagnosis and one fix per retry.** Diagnose once, fix once (batched), rerun once. Still red: stop and report the log path; do not loop. This is the only statement of the rule; Build's retry (a fork of the checkpoint session) is in `build-job-cycle.md`.
     - Cap: at most 2 gate reruns per task (a full sweep such as `bot_warnscan` or `bot_smokes` counts as one). Anything not trivial becomes a question with options.
+    - Exempt: iterating one visual unit (a screen, a sprite) with the User. Shoot, look, ask, change as often as the User asks. The rerun and retry counts above do not apply to it. Each pass still runs the compile check (`check_gd_load.py`).
 
 11. **Python image deps.** `pip install -r tools/requirements.txt` (Pillow, numpy; opencv-python-headless optional). Shared image code is `tools/imglib/` (`tools-media.md`).
 
@@ -33,7 +34,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 - Shebang `#!/usr/bin/env python3`, `argparse` (`agent_log.std_parser`), a non-mutating `--help`, ASCII output.
 - Ops tools take `--root`, writers take `--dry-run`, every `std_parser` tool takes `--json` (stdout is then one JSON object). Errors go to stderr as `error: ...`. Exit 0 ok, 1 findings, 2 usage.
 - Last line is `RESULT <PASS|FAIL|INFO> k=v ... summary=<repo-relative path>`; no `Summary -> <abs>` line. Exempt: printers and `wdb_scratch_server`.
-- Read and write text through `md_format_lib` (BOM and line endings kept). Paths printed are repo-relative POSIX.
+- Read and write text through `md_format_lib` (BOM and line endings kept). Paths printed are repo-relative POSIX (exception: `list_xref.py`, `show_func.py`, `file_stat.py`, `list_changed.py`, `read_summary.py`, `check_shot_gaps.py`, `run_shot_flow.py` and `run_godot_import_check.py` print the absolute root they read, with a WARN when it is not the current directory's project).
 
 ## Run when
 
@@ -51,10 +52,10 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 | `check_script_cap.py` | Duplicate script-name check (`dupes=`): `--git-changed`, `--path`. The Bot's own checks run only with `--bot` (`BOT.md`). | BWD | `--help` | Y |
 | `check_load_graph.py` | Doc routing vs `design/routes.yaml` (PASS/FAIL, no summary): `smokes`/`shot_flows` keys, phases and flow files; the Bot adds boot budgets (`--bot`) | BWD | `--help` | Y |
 | `code_map.py` | Code map: `check` (live `.gd` vs `design/code-map.md` ticks; exits 1 on new UNMAPPED or missing, older UNMAPPED are expected), `row --path P`, `patch --system S ...`. | BD | `--help` | Y |
-| `check_code_map.py` | Shim -> `code_map.py check`, one release | BD | `--help` | Y |
 | `bot_smokes.py` | Headless smokes on the Linux VM (`--phases`, or `--door` / `--job` for the `routes.yaml` `smokes` map; `--for FILE` prints the covering phases and warnscan areas, runs nothing). Also runs `check_shot_gaps.py --changed` as a required gate (`--no-gaps` skips). Pin, install, `.uid` import: BOT.md Smokes. | B | `--help` | Y |
 | `bot_warnscan.py` | Warning sweep by area (leak / run-fail areas are rechecked and tagged stable / flaky). `--save-baseline` before, `--non-leak-diff` after (same `--areas`); `--changed` is the quick run; `--renderer real\|both` adds box-display runs. Procedure: BOT.md Smokes. | B | `--help` | Y |
-| `run_build_gate.py` | One batch gate: editor import (restores `assets/*.import` churn), `--batch` (import + `check_load_graph` + script-name check + `check_hub_bake`), `--warnscan-baseline B` adds the non-leak diff. A red result prints the RETRY prompt. Once per batch. Summary: `build-gate`. | BWD | `--help` | Y |
+| `run_build_gate.py` | One batch gate: editor import (restores `.import` churn), `--batch` (import + `check_load_graph` + script-name check + `check_hub_bake`), `--visual JOB` adds the job's shot flows in the same call, `--warnscan-baseline B` adds the non-leak diff. A red result prints the RETRY prompt. Once per batch. Summary: `build-gate`. | BWD | `--help` | Y |
+| `bot_load_audit.py` | Audit of one Grok Build session's reads before its first ask (`--session DIR` / `--file chat_history.jsonl`, `--selftest`). Bot/CI only; elsewhere it prints "not run". | B | `--help` | Y |
 | `bot_warnscan_lib.py` | Log parser for `bot_warnscan.py` | B | module docstring (no `--help`) | Y |
 | `bot_opt.py` | Opt queue: `--list`, `--id`, `--status opt-N=done`, `--add`, `--remove`. Never hand-edit the queue block. Summary: `bot-opt`. | BD | `--help` | Y |
 | `bot_allow.txt` | Bot scope: the paths the Bot may change; read by CI. Deny lines first. | BWD | - | Y |

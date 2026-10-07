@@ -4,9 +4,9 @@
 Walk / idle_to_walk / walk_to_idle stay in pack_locomotion.py.
 
 Drop videos at:
-  _src/oneshot/{gender}_{action}_{facing}.mp4
+  _src/sources/clips/oneshot/{gender}_{action}_{facing}.mp4
 Example:
-  _src/oneshot/female_attack_great_axe_down.mp4
+  _src/sources/clips/oneshot/female_attack_great_axe_down.mp4
 
 Attack, special, and gather default to 6 frames so every facing of that
 action shares a count. Death and Dispel keep the clip length (Dispel is
@@ -33,7 +33,7 @@ import sprite_pipeline as sp  # noqa: E402
 from imglib import imgio  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "_src" / "oneshot"
+SRC = loc.clip_dir("oneshot")
 HARVEST = ROOT / "_src" / "oneshot_harvest"
 OUT = ROOT / "assets" / "sprites" / "player"
 KEYS = list(i2v_seeds.BODY_CELLS)

@@ -26,7 +26,7 @@ func _ready() -> void:
 
 	var bg := ColorRect.new()
 	ThemeS.fill(bg)
-	bg.color = Color(0.06, 0.05, 0.045, 1)
+	bg.color = ThemeS.PAPER
 	add_child(bg)
 
 	var card := VBoxContainer.new()
@@ -39,14 +39,14 @@ func _ready() -> void:
 	card.add_theme_constant_override("separation", 16)
 	add_child(card)
 
-	card.add_child(_lab(tr("fs_gate.what_dwells_below"), 40, Color(0.92, 0.78, 0.48)))
-	card.add_child(_lab(_headline(), 26, Color(0.95, 0.86, 0.4)))
-	card.add_child(_lab(_body(), 18, Color(0.78, 0.72, 0.62)))
+	card.add_child(_lab(tr("fs_gate.what_dwells_below"), 40, ThemeS.INK))
+	card.add_child(_lab(_headline(), 26, ThemeS.INK))
+	card.add_child(_lab(_body(), 18, ThemeS.INK_SOFT))
 
-	_hint = _lab(_rotate_line(), 16, Color(0.7, 0.62, 0.48))
+	_hint = _lab(_rotate_line(), 16, ThemeS.INK_FAINT)
 	card.add_child(_hint)
 
-	_action = ThemeS.btn(_action_label(), _on_action)
+	_action = ThemeS.btn(_action_label(), _on_action, true, "primary")
 	_size_btn(_action)
 	card.add_child(_action)
 

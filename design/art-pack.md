@@ -11,7 +11,7 @@ Walk harvest targets **8 frames** for `walk` when the clip supports it. `idle_to
 
 The same frame-count rule applies to every animation state: all eight facings of that state share one frame count. Attack / special / gather pack to 6 frames per facing. Death and Dispel keep the accepted clip length (Dispel may be long); those two states still share one count across the eight facings.
 
-Pack one-shots with `tools/pack_oneshot.py` from `_src/oneshot/{gender}_{action}_{facing}.mp4`. Walk harvest stays `tools/pack_locomotion.py`.
+Pack one-shots with `tools/pack_oneshot.py` from `_src/sources/clips/oneshot/{gender}_{action}_{facing}.mp4`. Walk harvest stays `tools/pack_locomotion.py` and reads `_src/sources/clips/walk_final/{gender}_{facing}.mp4`.
 
 Idle is not harvested from the video. Walk-clip state cuts stay with the I2V-unit job on art.
 

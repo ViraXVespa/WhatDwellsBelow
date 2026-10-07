@@ -1,0 +1,20 @@
+{
+  "name": "camp-pause-inventory",
+  "about": "Placeholdia: open pause on the Inventory tab (App.pause_menu.show_inventory), shoot it, close it. Look proof for the pause inventory page.",
+  "covered_by": "camp-pause-pages",
+  "scene": "camp",
+  "hud": 0,
+  "settle_ms": 1500,
+  "smoke": true,
+  "steps": [
+    {"op": "device", "kind": "pad"},
+    {"op": "call", "target": "App.pause_menu", "method": "show_inventory"},
+    {"op": "assert", "target": "App.pause_menu.visible", "equals": true},
+    {"op": "assert", "target": "App.pause_menu.tab", "equals": 1},
+    {"op": "wait", "ms": 400},
+    {"op": "shot", "name": "pause-inventory", "texts": true},
+    {"op": "assert_texts", "min_font": 14, "must_contain": ["Inventory"]},
+    {"op": "call", "target": "App.pause_menu", "method": "close_ui"},
+    {"op": "assert", "target": "App.pause_menu.visible", "equals": false}
+  ]
+}

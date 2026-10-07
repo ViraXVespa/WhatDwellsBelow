@@ -7,6 +7,7 @@ const Args := preload("res://scripts/debug/shot_tool/tool_args.gd")
 const Capture := preload("res://scripts/debug/shot_tool/capture.gd")
 const Ops := preload("res://scripts/debug/shot_tool/step_ops.gd")
 const Ref := preload("res://scripts/debug/shot_tool/step_ref.gd")
+const Guard := preload("res://scripts/debug/shot_tool/save_guard.gd")
 
 static func _load(path: String) -> Array:
 	var raw: String = FileAccess.get_file_as_string(path)
@@ -45,6 +46,9 @@ static func _list(st: Dictionary, steps: Array) -> void:
 
 static func _finish(st: Dictionary) -> void:
 	var host: Node = st.host
+	var leaked: String = Guard.check()
+	if str(st.fail).is_empty() and not leaked.is_empty():
+		Ops.fail(st, "isolation", leaked)
 	var ok: bool = str(st.fail).is_empty()
 	var report: Dictionary = {"ok": ok, "fail": st.fail, "steps": st.ran, "frames": st.frames, "checks": st.checks}
 	var f: FileAccess = FileAccess.open(Args.frames_dir().path_join("flow.json"), FileAccess.WRITE)

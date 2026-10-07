@@ -74,7 +74,7 @@ def procs_on_path(path: Path | str) -> list[dict]:
     needle = norm_path(path).lower()
     hits: list[dict] = []
     if os.name == "nt":
-        cmd = ["powershell", "-NoProfile", "-Command",
+        cmd = ["powershell", "-NoProfile",
                "Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^godot' } | "
                "Select-Object ProcessId,CommandLine | ConvertTo-Json -Compress"]
         try:
@@ -179,11 +179,12 @@ def pick_display() -> tuple[str, str]:
 
 def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path | None = None,
               err_log: Path | None = None, timeout: int = 120, lock_timeout: int = 120,
-              hold: int = 0, exe: str = "", gui: bool = False) -> dict:
+              hold: int = 0, exe: str = "", gui: bool = False, stop_on_compile: bool = True) -> dict:
     """Run Godot under the path lock. status: EXIT=<n> | COMPILE | TIMEOUT. Kills only its own pid.
 
     gui=True: the run needs a real renderer (pixels, light bakes). Uses pick_display(); result["display"]
-    is env|socket|xvfb|none (none still launches, so the run fails loudly)."""
+    is env|socket|xvfb|none (none still launches, so the run fails loudly).
+    stop_on_compile=False lets the run finish after a Parse/Compile Error line (default: kill at the first one)."""
     exe_path = godot_exe(exe)
     path = norm_path(godot_path)
     args = list(args)
@@ -217,7 +218,7 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
             if proc.poll() is not None:
                 ended = True
                 break
-            if COMPILE_RE.search(_read(err_log) + _read(out_log)):
+            if stop_on_compile and COMPILE_RE.search(_read(err_log) + _read(out_log)):
                 compile_hit = True
                 break
             time.sleep(0.25)
@@ -245,6 +246,28 @@ def run_godot(root: Path, godot_path: Path | str, args: list[str], out_log: Path
             "ms": int((time.monotonic() - t0) * 1000), "err_bytes": size(err_log),
             "out_bytes": size(out_log), "godot_path": path, "exe": str(exe_path),
             "display": (dkind if gui else "n/a")}
+
+
+def restore_import_churn(root: Path) -> tuple[int, int]:
+    """Undo what a Godot import writes into tracked sidecars: restore every modified tracked `*.import` (assets/, docs/, icon.svg.import)
+    and delete untracked `*.import` whose source file is tracked. Paths go to git on stdin, so the Windows command-line length never applies.
+    Returns (restored, removed). Do not call it after an intended `.import` edit."""
+    def git(*a: str, data: bytes = b"") -> bytes:
+        return subprocess.run(["git", *a], cwd=root, input=data, capture_output=True).stdout
+
+    mod = [p for p in git("ls-files", "-m", "-z", "--", "*.import").split(b"\0") if p]
+    if mod:
+        git("checkout", "--pathspec-from-file=-", "--pathspec-file-nul", data=b"\0".join(mod) + b"\0")
+    tracked = set(git("ls-files", "-z").decode("utf-8", "replace").split("\0"))
+    gone = 0
+    for p in git("ls-files", "-o", "--exclude-standard", "-z", "--", "*.import").decode("utf-8", "replace").split("\0"):
+        if p.endswith(".import") and p[:-7] in tracked:
+            try:
+                (root / p).unlink()
+                gone += 1
+            except OSError:
+                pass
+    return len(mod), gone
 
 
 def headless_args(root: Path, *app_args: str) -> list[str]:
@@ -291,15 +314,15 @@ def timing_job(args, job: str, title: str, flag: str, running: str, extra: list[
 
 def timing_parser(desc: str) -> "argparse.ArgumentParser":
     ap = agent_log.std_parser(desc, json_out=True)
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=180, help="Godot timeout (default 180).")
+    ap.add_argument("--timeout-sec", type=int, default=180, help="Godot timeout (default 180).")
     return ap
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Probe the per-path Godot lock: lock, print, unlock. --display reports the GUI display choice.")
     ap.add_argument("--display", action="store_true", help="print which display GUI runs (shots, bakes) will use, then exit")
-    ap.add_argument("--path", "-Path", default=None, help="Godot --path to lock (default: repo root).")
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=120, help="Seconds to wait for the lock (default 120).")
+    ap.add_argument("--path", default=None, help="Godot --path to lock (default: repo root).")
+    ap.add_argument("--timeout-sec", type=int, default=120, help="Seconds to wait for the lock (default 120).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     if args.display:

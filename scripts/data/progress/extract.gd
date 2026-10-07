@@ -3,9 +3,64 @@
 const ProgressQuest := preload("res://scripts/data/progress_quest.gd")
 const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const ForgeP := preload("res://scripts/data/progress_forge.gd")
+const Bag := preload("res://scripts/data/progress_gear/gear_bag.gd")
 
 static func _full_mail(role: String) -> bool:
 	return role == "" or role == "patty" or role == "gate"
+
+## Bag goods the gate will take. Artifacts and forged holds stay.
+static func _bag_mailable(it: Variant) -> bool:
+	if typeof(it) != TYPE_DICTIONARY:
+		return false
+	return it.get("extract", true) and str(it.get("kind", "")) != "artifact" and not bool(it.get("hold", false))
+
+## Worn pieces worth mailing. A white weapon or tool is the piece the slot refills with, so it stays.
+static func _equipped_listed(it: Dictionary, slot: String) -> bool:
+	if it.is_empty():
+		return false
+	if not it.get("extract", true):
+		return false
+	if str(it.get("kind", "")) == "artifact" or bool(it.get("hold", false)):
+		return false
+	if (slot == "weapon" or slot == "tool") and str(it.get("rarity", "white")) == "white":
+		return false
+	return true
+
+## Shot kit: a starter-only delver hides this screen. Worn green weapon, worn blue helm,
+## an unsafe body in the bag, an artifact that stays, and resources.
+static func stock_extract_shot(p: Object) -> void:
+	App.ore = 6
+	App.wood = 4
+	App.gold = 25
+	p.root = 3
+	var wpn_id := str(p.pick_weapon) if str(p.pick_weapon) != "" else "great_axe"
+	var wpn := Bag.make_weapon(p, wpn_id, "green", 4)
+	p.slots["weapon"] = wpn
+	App.weapon = str(wpn.get("weapon", wpn_id))
+	p.slots["head"] = Bag.make_armor(p, "head", "blue", 4)
+	Bag.add_to_bag(p, Bag.make_armor(p, "body", "green", 3))
+	Bag.add_to_bag(p, Bag.make_artifact(p, "cinder_ember"))
+	var pl: Node = p._player() if p.has_method("_player") else null
+	if pl and pl.has_method("set_weapon"):
+		pl.set_weapon(App.weapon)
+	if p.has_method("_refresh_player_hp"):
+		p._refresh_player_hp()
+
+static func _take_equipped(p: Object, slot: String) -> Dictionary:
+	var it: Dictionary = p.slots.get(slot, {})
+	if not _equipped_listed(it, slot):
+		return {}
+	var copy: Dictionary = it.duplicate(true)
+	copy.erase("from_slot")
+	if slot == "weapon" or slot == "tool":
+		Bag.fill_slot_after_remove(p, slot)
+	else:
+		p.slots[slot] = {}
+	if p.has_method("_sync_artifacts"):
+		p._sync_artifacts()
+	if p.has_method("_refresh_player_hp"):
+		p._refresh_player_hp()
+	return copy
 
 static func extractable(p: Object, role: String = "") -> Array:
 	var out: Array = []
@@ -22,8 +77,16 @@ static func extractable(p: Object, role: String = "") -> Array:
 		if App.gold > 0:
 			out.append({"kind": "gold", "name": "Gold", "n": App.gold})
 		for it: Variant in p.bag:
-			if it.get("extract", true) and str(it.kind) != "artifact" and not bool(it.get("hold", false)):
+			if _bag_mailable(it):
 				out.append(it)
+		if _full_mail(role):
+			for slot_name: String in p.SLOTS:
+				var worn: Dictionary = p.slots.get(slot_name, {})
+				if not _equipped_listed(worn, slot_name):
+					continue
+				var copy: Dictionary = worn.duplicate(true)
+				copy["from_slot"] = slot_name
+				out.append(copy)
 	return out
 
 static func _beats_keep(it: Dictionary) -> bool:
@@ -78,12 +141,22 @@ static func extract_all(p: Object, role: String) -> String:
 		p.mailed_gold += g
 		var keep: Array = []
 		for it: Variant in p.bag:
-			if it.get("extract", true) and str(it.kind) != "artifact" and not bool(it.get("hold", false)):
+			if _bag_mailable(it):
 				_mail_item(p, it)
 				items += 1
 			else:
 				keep.append(it)
 		p.bag = keep
+		if _full_mail(role):
+			for slot_name: String in p.SLOTS:
+				var worn: Dictionary = p.slots.get(slot_name, {})
+				if not _equipped_listed(worn, slot_name):
+					continue
+				var taken := _take_equipped(p, slot_name)
+				if taken.is_empty():
+					continue
+				_mail_item(p, taken)
+				items += 1
 	App.extracted = g + o + w + r + items > 0
 	if App.extracted:
 		App.toast(App.tr("extract.sent_to_the_surface"))
@@ -125,8 +198,13 @@ static func extract_one(p: Object, it: Dictionary, role: String) -> String:
 		return App.tr("extract.sent_root") % nr
 	if role == "gather":
 		return App.tr("extract.this_gate_takes_ore_wood")
-	if it.has("from_slot"):
-		return App.tr("extract.unequip_that_first")
+	if str(it.get("from_slot", "")) != "":
+		if not _full_mail(role):
+			return App.tr("extract.this_gate_takes_ore_wood")
+		var taken := _take_equipped(p, str(it.get("from_slot", "")))
+		if taken.is_empty():
+			return App.tr("common.gone")
+		return _mail_item(p, taken)
 	if it.has("uid"):
 		var got: Dictionary = p.remove_uid(int(it.uid))
 		if got.is_empty():

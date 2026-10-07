@@ -10,6 +10,7 @@
 const Args := preload("res://scripts/debug/shot_tool/tool_args.gd")
 const Pose := preload("res://scripts/debug/shot_tool/tool_pose.gd")
 const Capture := preload("res://scripts/debug/shot_tool/capture.gd")
+const Guard := preload("res://scripts/debug/shot_tool/save_guard.gd")
 
 const FLAG := Args.FLAG
 
@@ -18,6 +19,28 @@ static func active() -> bool:
 
 static func scene_name() -> String:
 	return Args.scene_name()
+
+## Non-empty when the flow boots a menu screen (title / splash / fs_gate) instead of a world.
+static func screen_path() -> String:
+	return Args.screen_path()
+
+## Boot a menu screen for the shot tool: refuse (fail loudly) unless saves are isolated, then load the scene and arm the capture on it.
+static func boot_screen(tree: SceneTree) -> void:
+	var why: String = Guard.arm()
+	if not why.is_empty():
+		printerr("SHOT: ok=false err=isolation %s" % why)
+		tree.quit(1)
+		return
+	var want: String = Args.screen_path()
+	tree.call_deferred("change_scene_to_file", want)
+	for _i: int in 900:
+		await tree.process_frame
+		var cs: Node = tree.current_scene
+		if cs != null and cs.scene_file_path == want:
+			attach_dungeon(cs)
+			return
+	printerr("SHOT: ok=false err=screen_never_loaded %s" % want)
+	tree.quit(1)
 
 static func run_seed() -> int:
 	return Args.run_seed()

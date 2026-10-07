@@ -73,7 +73,21 @@ def main(argv: list[str] | None = None) -> int:
             agent_log.fail(f"branch {branch} exists: week {new_series} is already started (nothing changed)")
     cat = json.loads(cat_p.read_text(encoding="utf-8-sig"))
     have = {b.get("id") for b in cat.get("archives", [])} if isinstance(cat, dict) else set()
-    # 1. catch-up pins for the closing week (normally CI made them on the week-close merge)
+    # 1. week branch first. A failed switch must leave the tree untouched.
+    br = "would-create"
+    if dry:
+        say(f"branch={branch} would-create at {sha[:12]}")
+    else:
+        got = repo_lib.run_git(root, "switch", "-c", branch)
+        if got[0] != 0:
+            detail = got[1].strip() if len(got) > 1 and got[1] else ""
+            say(f"branch={branch} switch failed")
+            if detail:
+                say(detail)
+            agent_log.fail(f"git switch -c {branch} failed; no seed written", 1)
+        br = "created"
+        say(f"branch={branch} created at {sha[:12]}")
+    # 2. catch-up pins, seed, and parked changelogs now land on the week branch
     catch, catch_tags = 0, []
     for kind in ("web", "build"):
         spec = week_pin.pin_spec(kind, series)
@@ -85,7 +99,6 @@ def main(argv: list[str] | None = None) -> int:
         say(f"pin={spec['id']} MISSING: catch-up {w}add commit={sha} tag={spec['tag']}")
         if py("week_pin.py", f"--{kind}", str(series), "--commit", sha, *(["--dry-run"] if dry else [])) != 0:
             agent_log.fail("week_pin.py failed", 1)
-    # 2. seed
     if patch == 0 and old == new_label:
         seed = "skipped"
         say(f"seed=already {new_label}")
@@ -95,20 +108,17 @@ def main(argv: list[str] | None = None) -> int:
         if not dry:
             data = {"epoch": epoch, "series": new_series, "patch": 0, "label": new_label, "open_commit": sha}
             ver_p.write_text(json.dumps(data, indent="\t") + "\n", encoding="utf-8")
-    # 3. park old changelogs, then the week branch with the seed commit (local only)
     arch = "whatif" if dry else ("ok" if py("archive_prior_changelogs.py") == 0 else "error")
     if dry:
         py("archive_prior_changelogs.py", "--dry-run")
     say(f"archive_changelogs={arch}")
-    br = "would-create"
     if not dry:
-        br = "created"
         paths = ["scripts/data/version.json", "scripts/data/archive_catalog.json", "design/changelog", "archives/docs"]
-        if repo_lib.run_git(root, "switch", "-c", branch)[0] != 0:
+        if repo_lib.run_git(root, "add", "-A", "--", *paths)[0] != 0 or repo_lib.run_git(root, "commit", "-m", f"Grok Build Week {new_series}", "--", *paths)[0] != 0:
             br = "error"
-        elif repo_lib.run_git(root, "add", "-A", "--", *paths)[0] != 0 or repo_lib.run_git(root, "commit", "-m", f"Grok Build Week {new_series}", "--", *paths)[0] != 0:
-            br = "error"
-    say(f"branch={branch} {w}create at {sha[:12]} and commit the seed (Grok Build Week {new_series})" if br != "error" else f"branch={branch} switch or seed commit failed")
+            say(f"branch={branch} seed commit failed")
+        else:
+            say(f"branch={branch} committed the seed (Grok Build Week {new_series})")
     say(f"push=User runs: git push -u origin {branch}" + (f" and git push origin {' '.join(catch_tags)} (catch-up tags)" if catch else "") + " (never main; CI archives on the squash-merge)")
     # 4. housekeeping
     gc = "skipped"

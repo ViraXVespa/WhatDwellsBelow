@@ -29,6 +29,8 @@ ALPHA_SNAP_LOW = 10
 ALPHA_SNAP_HIGH = 242
 MATTE_CUT = 128
 PLATE_HUE = 310.0
+RIM_HUE_WIDTH = 40.0
+RIM_SPILL_MIN = 8
 
 
 def components(mask: np.ndarray):
@@ -311,6 +313,51 @@ def eat_spill(arr: np.ndarray, refs) -> np.ndarray:
     return arr
 
 
+def looks_like_plate(rgb) -> bool:
+    """True when one RGB colour is the magenta plate (near #FF00FF or the same hue)."""
+    pix = np.array(rgb, dtype=np.uint8).reshape(1, 1, 3)
+    if float(rgb_dist(pix, [KEY_RGB])[0, 0]) < 90.0:
+        return True
+    h, s, v = hsv(pix)
+    return bool(float(hue_gap(h, 300.0)[0, 0]) <= 28.0 and float(s[0, 0]) >= 0.35 and float(v[0, 0]) >= 0.35)
+
+
+def strip_rim(arr: np.ndarray, hue_width: float = RIM_HUE_WIDTH, passes: int = 12) -> np.ndarray:
+    """Delete a chroma lip on the matte edge. Interior cloth (maroon, skin, green) stays.
+
+    A light pink fringe such as (240, 200, 220) is still the plate: hue near 300 and both red and blue
+    above green. Maroon sits nearer red, so a hue width of 40 leaves it. Each pass peels one pixel.
+    Removed pixels are (0, 0, 0, 0) so a later resize cannot bleed pink RGB back in.
+    """
+    width = float(hue_width)
+    for _ in range(max(0, passes)):
+        arr[arr[:, :, 3] < 16] = 0
+        clear = arr[:, :, 3] == 0
+        if not clear.any():
+            break
+        rim = dilate(clear, 1) & ~clear
+        rgb = arr[:, :, :3]
+        r = rgb[:, :, 0].astype(np.int16)
+        g = rgb[:, :, 1].astype(np.int16)
+        b = rgb[:, :, 2].astype(np.int16)
+        spill = np.maximum(0, np.minimum(r, b) - g)
+        h, s, v = hsv(rgb)
+        near = hue_gap(h, 300.0) <= width
+        lip = rim & near & (v >= 0.12) & (spill >= RIM_SPILL_MIN) & ((s >= 0.08) | (spill >= 18))
+        bright = rim & (hue_gap(h, PLATE_HUE) <= 30.0) & (s >= 0.55) & (v >= 0.55)
+        hit = lip | bright
+        if not hit.any():
+            break
+        arr[hit] = 0
+    return arr
+
+
+def punch(im: Image.Image, spill_flood: bool = False) -> Image.Image:
+    """Remap a chroma plate to exact #FF00FF, then key it and strip the pink lip."""
+    remapped, _vis, _info = remap_plate(im)
+    return key_to_alpha(remapped, spill_flood=spill_flood)
+
+
 def key_to_alpha(im: Image.Image, spill_flood: bool = True, tol: float = LAB_TOL, refs=None) -> Image.Image:
     """Outside wand deletes the plate; spill walk + invert-C2A eat the pink lip; binary matte.
 
@@ -332,4 +379,5 @@ def key_to_alpha(im: Image.Image, spill_flood: bool = True, tol: float = LAB_TOL
     keep = arr[:, :, 3] >= MATTE_CUT
     arr[~keep] = 0
     arr[keep, 3] = 255
+    arr = strip_rim(arr)
     return Image.fromarray(arr, "RGBA")

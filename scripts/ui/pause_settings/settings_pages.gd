@@ -54,7 +54,7 @@ static func page_gameplay(host: Node) -> void:
 		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		host.info_box.add_child(hint)
-		var keep: Label = ThemeS.lab(App.tr("settings_pages.keep_a_copy_when"), 20, Color(0.9, 0.84, 0.7))
+		var keep: Label = ThemeS.lab(App.tr("settings_pages.keep_a_copy_when"), 20, ThemeS.INK)
 		keep.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		keep.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		host.info_box.add_child(keep)
@@ -75,8 +75,8 @@ static func page_gameplay(host: Node) -> void:
 			App.wipe_save()
 			host.pause.close_ui()
 			App.go_title()
-		)
-	)
+		, Callable(), "danger")
+	, true, "danger")
 	View.add_page_btn(host, wipe)
 
 static func page_audio(host: Node) -> void:
@@ -88,7 +88,7 @@ static func page_graphics(host: Node) -> void:
 	var filt: int = SpriteFilt.clamp_id(int(App.sprite_filter), false)
 	var mips_on: bool = SpriteFilt.mips_on(filt)
 	var aniso_on: bool = SpriteFilt.aniso_on(filt)
-	var cap: Label = ThemeS.lab(App.tr("settings_pages.sprite_filtering"), 20, Color(0.9, 0.84, 0.7))
+	var cap: Label = ThemeS.lab(App.tr("settings_pages.sprite_filtering"), 20, ThemeS.INK)
 	cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.info_box.add_child(cap)
@@ -190,6 +190,7 @@ static func _slider(host: Node, title: String, value: float, lo: float, hi: floa
 static func _check(title: String, on: bool, on_change: Callable) -> CheckBox:
 	var b := CheckBox.new()
 	b.text = title
+	ThemeS.skin_check(b)
 	b.button_pressed = on
 	b.focus_mode = Control.FOCUS_ALL
 	b.toggled.connect(on_change)

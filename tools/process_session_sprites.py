@@ -4,6 +4,7 @@ from pathlib import Path
 
 from PIL import Image
 
+import match_keyed_region as matcher
 import plate_remap as pr
 from sprite_pipeline import fit_canvas, key_to_alpha
 import sys
@@ -34,7 +35,10 @@ JOBS = [
 
 
 def key_and_fit(src: Path, dest: Path, canvas: int) -> None:
-    raw = imgio.load(src)
+    use = matcher.resolve_source(dest, src)
+    if use is None:
+        raise SystemExit(f"missing source for {dest.relative_to(ROOT)}")
+    raw = imgio.load(use)
     remapped, _vis, _info = pr.remap(raw)
     keyed = key_to_alpha(remapped, spill_flood=False)
     out = fit_canvas(keyed, canvas, key=False)

@@ -11,6 +11,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import match_keyed_region as matcher
 from imglib import geom
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -20,7 +21,10 @@ KEYS = ["up", "down", "left", "right", "up_left", "up_right", "down_left", "down
 
 
 def save(src: Path, dest: Path) -> None:
-    im = range_key(Image.open(src))
+    use = matcher.resolve_source(ROOT / dest, src)
+    if use is None:
+        raise SystemExit(f"missing source for {dest}")
+    im = range_key(Image.open(use))
     im = quantize_palette(fit_canvas(im, 128))
     dest.parent.mkdir(parents=True, exist_ok=True)
     im.save(dest)

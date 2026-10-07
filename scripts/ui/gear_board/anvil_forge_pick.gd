@@ -8,8 +8,8 @@ const ForgeP := preload("res://scripts/data/progress_forge.gd")
 const HOLD_CAP := 3
 
 static func _fill_pick(ui: CanvasLayer, box: Control, slot: String) -> Control:
-	box.add_child(ThemeS.lab(App.tr("anvil_forge_pick.keep_three_held_pieces_start"), 16, Color(0.82, 0.76, 0.66)))
-	box.add_child(ThemeS.lab(App.tr("anvil_forge_pick.picked") % [_picked_n(ui), HOLD_CAP], 18, Color(0.95, 0.8, 0.45)))
+	box.add_child(ThemeS.lab(App.tr("anvil_forge_pick.keep_three_held_pieces_start"), 16, ThemeS.INK_SOFT))
+	box.add_child(ThemeS.lab(App.tr("anvil_forge_pick.picked") % [_picked_n(ui), HOLD_CAP], 18, ThemeS.INK))
 	var grid := HBoxContainer.new()
 	grid.add_theme_constant_override("separation", 8)
 	box.add_child(grid)
@@ -39,9 +39,9 @@ static func _fill_pick(ui: CanvasLayer, box: Control, slot: String) -> Control:
 			first = b
 		if key == want:
 			hit = b
-	var tag := ThemeS.lab(App.tr("anvil_forge_pick.hold_already_stored_new_this"), 14, Color(0.72, 0.68, 0.58))
+	var tag := ThemeS.lab(App.tr("anvil_forge_pick.hold_already_stored_new_this"), 14, ThemeS.INK_SOFT)
 	box.add_child(tag)
-	var go: Button = ThemeS.btn(App.tr("anvil_forge_pick.keep_selected"), func(): _commit_picks(ui, slot))
+	var go: Button = ThemeS.btn(App.tr("anvil_forge_pick.keep_selected"), func(): _commit_picks(ui, slot), true, "primary")
 	go.set_meta("forge_key", "keep")
 	go.disabled = _picked_n(ui) == 0
 	box.add_child(go)
@@ -59,15 +59,7 @@ static func _fill_pick(ui: CanvasLayer, box: Control, slot: String) -> Control:
 	return load("res://scripts/ui/gear_board/anvil_forge.gd")._keep(ui, use)
 
 static func _paint_opt(b: Button, it: Dictionary, on: bool) -> void:
-	var fill_c: Color = Icons.rarity_fill(it)
-	var border: Color = Icons.rarity_border(it)
-	if on:
-		border = Color(0.95, 0.78, 0.35)
-		fill_c = fill_c.lightened(0.08)
-	b.add_theme_stylebox_override("normal", ThemeS.sb(fill_c, border))
-	b.add_theme_stylebox_override("hover", ThemeS.sb(fill_c.lightened(0.12), border))
-	b.add_theme_stylebox_override("pressed", ThemeS.sb(fill_c.darkened(0.1), border))
-	b.add_theme_stylebox_override("focus", ThemeS.sb(fill_c.lightened(0.14), border))
+	ThemeS.paint_plate(b, Icons.rarity_fill(it), Icons.rarity_border(it), on)
 
 static func _pick_rows(ui: CanvasLayer, slot: String) -> Array:
 	var out: Array = []

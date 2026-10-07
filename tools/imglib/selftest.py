@@ -49,6 +49,16 @@ def run() -> list[tuple[str, bool, str]]:
     exact, truth = _on_plate(sp, [(255, 0, 255)] * 4, False)
     k = np.array(key.key_to_alpha(exact))[..., 3] > 0
     out.append(("key exact plate", int((truth ^ k).sum()) == 0, f"wrong px {int((truth ^ k).sum())}"))
+    lip = np.zeros((80, 80, 4), np.uint8)
+    lip[:, :] = (255, 0, 255, 255)
+    lip[20:60, 20:60] = (40, 90, 50, 255)
+    lip[59, 20:60] = (150, 40, 70, 255)
+    lip[60, 20:60] = (240, 200, 220, 255)
+    keyed = np.array(key.key_to_alpha(Image.fromarray(lip)))
+    body_ok = tuple(int(v) for v in keyed[40, 40]) == (40, 90, 50, 255)
+    cloth_ok = tuple(int(v) for v in keyed[59, 30]) == (150, 40, 70, 255)
+    lip_gone = int(keyed[60, 30, 3]) == 0 and int(keyed[0, 0].sum()) == 0
+    out.append(("key light-pink lip", body_ok and cloth_ok and lip_gone, f"body {keyed[40, 40].tolist()} cloth {keyed[59, 30].tolist()} lip {keyed[60, 30].tolist()}"))
     drift, truth = _on_plate(sp, [(255, 0, 192), (252, 0, 237), (248, 0, 158), (234, 0, 183)], True)
     k = np.array(key.key_to_alpha(drift))[..., 3] > 0
     miss = int(((~truth) & k).sum())

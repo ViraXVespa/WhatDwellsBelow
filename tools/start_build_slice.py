@@ -1,65 +1,170 @@
 #!/usr/bin/env python3
-"""Slice boot for Grok Build: resolve one routes.yaml door/job, print the grok commands that open the slice worktree.
-Flags checked against the Grok CLI docs (docs.x.ai/build/cli/reference, /build/features/worktrees, /build/features/sessions and
-the grok-build user guide 14-headless-mode.md, 17-sessions.md): `grok worktree create NAME --ref REF` makes the worktree without a
-session and prints its path (the only stdout); `grok --cwd PATH -r ID --fork-session` forks a session into a new id there;
-`--worktree` with `-r` resumes into a NEW worktree and cannot be combined with --fork-session, so it is used only for a fresh
-session. REF = clean checkout of that branch/tag/commit. A worktree is DETACHED at its base commit: commit there, merge back.
+"""First command of a Grok Build slice, run inside the slice worktree: resolve one routes.yaml door/job and print the start card (route, smokes, shot flows,
+the first-message rules). A later run in the same worktree prints `SLICE ALREADY STARTED` with the steps found and the next one; `--full` reprints the card.
+`GROK_SESSION_ID` is set in a session's tool environment; `grok sessions list` (current directory) and `/session-info` show it.
 
-    python tools/start_build_slice.py --door dungeon | --job ui.pause | --area player [--ref REF] [--launch] [--dry-run]
-Writes a postcard (a new _logs/slice-boot/<stamp>-slice-boot.txt per run) and prints the FORK and RETRY lines.
-Worktrees come from the week branch grok-build-w{series} (series from scripts/data/version.json); --ref overrides.
-No week branch and no --ref: RESULT FAIL, no FORK line, and the message says to ask Vira (a question prompt) whether
-to start a new week (`python tools/week_start.py`). Does not edit the live tree or kill Godot; spawns grok only with
---launch. Gather session id: --session or $GROK_SESSION_ID. It is saved (retry_lib.save_gather, in the git common
-dir) so a red prove can fork it back into the worktree: the gather session is the point retries return to. Without
-one the FORK line starts a fresh session (--worktree=NAME), WARN says so, and a retry says there is no gather session.
---launch runs `grok worktree create`, saves the printed path (the retry matches on it), then starts the fork.
---selftest runs the cases below in a throwaway repo. Old spellings: -Door -Job -Area -Ref -Launch -WhatIf.
+    python tools/start_build_slice.py --door dungeon | --job ui.pause | --area player [--full] [--ref REF] [--dry-run]
+    python tools/start_build_slice.py --checkpoint [--session ID] [--ref REF]
+    python tools/start_build_slice.py --failed                                       (the Did not work lines for your next message, from this session's failed tool results)
+    python tools/start_build_slice.py --handoff [--door D] [--job J] [--area A]      (survey session, after her answers to the first ask)
+    python tools/start_build_slice.py --door D --from-handoff PATH                   (the fresh implementation session)
+The first run writes _logs/slice-state.json (never committed) and a postcard _logs/slice-boot/<stamp>-slice-boot.txt. A door with several jobs and no
+--job is a survey slice (text survey, ends in --handoff); a job is an implementation slice. Run in a main checkout it only says so: the User starts a
+slice with `python tools/open_slice.py [AREA]`. A ui / theme / visual slice with no shot_flows for its job prints a STEP 0 note (creating the flow is the
+first job step; exit 0). A job maps only to its own shot_flows key, never to the door's.
+--checkpoint (implementation session, when gather is done): saves this session's id ($GROK_SESSION_ID, else --session ID) for this worktree
+in the git common dir (retry_lib.save_gather; nothing is added to the tree). A red prove then prints `grok -r ID --fork-session` to
+run from the worktree. Run in the main checkout, or with no id: RESULT FAIL. This tool never starts grok.
+--handoff is for survey -> implement: it writes (first run) or validates (later runs) _logs/handoff/handoff.md, saves the survey's shot-flow / routes.yaml
+edits next to it, and prints the one command she runs from the main checkout (`python tools/open_slice.py AREA --prompt-file PATH`). The fresh session's
+first command, --from-handoff, prints the compact start summary and puts the saved edits back.
+--selftest runs the cases below in a throwaway repo.
 """
 from __future__ import annotations
 
-import datetime as dt
 import os
-import re
 import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agent_log
+import handoff_lib
 import repo_lib
-import retry_lib
+import session_lib
 import slice_lib
-from load_routes import check_route, load_routes, shot_flows, smoke_phases
+import slice_state
+import unit_lib
+from load_routes import check_route, job_flow_map, load_routes, shot_flows, smoke_phases
+
+
+def not_carried(other: list[str]) -> str:
+    """The 'changed here but not carried' line: files listed by name; Godot .import sidecars only counted."""
+    files, n = handoff_lib.sidecars(other)
+    if not files and not n:
+        return "No other changes here."
+    return ("Changed here but not carried (the fresh worktree is cut from the week branch and will not have them): " + (", ".join(files) or "no files")
+            + (f"; plus {n} Godot .import sidecars (import churn, not carried)" if n else ""))
+
+
+def write_handoff(root: Path, args) -> int:
+    """--handoff: in the survey worktree, write the skeleton (first run) or validate the filled file, save the survey edits and print the launch command."""
+    def end(msg: str, status: str, route: str) -> int:
+        return agent_log.finish("slice-boot", root, msg, status, args=args, write=not args.dry_run, route=route)
+
+    if not slice_lib.worktree_kind(root):
+        return end("NOT A WORKTREE: --handoff belongs in the survey session's worktree (a Grok clone under .grok/worktrees). In a main checkout there is no survey to hand off.", "FAIL", "handoff-main")
+    path = handoff_lib.handoff_path(root)
+    old = handoff_lib.parse(path.read_text(encoding="utf-8-sig"))[0] if path.is_file() else {}
+    st = slice_state.load(root)
+    door, job = args.door.strip() or old.get("door", "") or st.get("door", ""), args.job.strip() or old.get("job", "") or st.get("job", "")
+    area = args.area.strip() or old.get("area", "") or st.get("area", "") or job or door
+    if not path.is_file():
+        if not area:
+            return end("no slice state found here: pass --door D (or --job / --area) so the handoff names the area: " + (slice_lib.doors_hint(root) or "see design/routes.yaml"), "FAIL", "handoff-no-area")
+        if not args.dry_run:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(handoff_lib.skeleton(root, area, door, "" if st.get("units") else job, os.environ.get("GROK_SESSION_ID", ""), st.get("units"), st.get("done")), encoding="utf-8")
+        return end(f"HANDOFF skeleton written: {path}\nFill every <fill ...> line (write `none` where nothing applies; baselines are `absolute PNG path - what is on it`, only the chosen surface's), "
+                   "then run `python tools/start_build_slice.py --handoff` again. The file is under _logs/, so it is not committed. After it passes this session stops; it does not implement.", "INFO", "handoff-skeleton")
+    bad = handoff_lib.check(root, path.read_text(encoding="utf-8-sig"))
+    if bad:
+        return end("HANDOFF not ready (" + str(path) + "):\n- " + "\n- ".join(bad), "FAIL", "handoff-incomplete")
+    saved, other = handoff_lib.save_edits(root) if not args.dry_run else ([], handoff_lib.survey_edits(root))
+    lines = [f"HANDOFF ready: {path}",
+             "Survey edits saved for the fresh session (it puts them back): " + (", ".join(saved) if saved else "none"),
+             not_carried(other),
+             "THIS SESSION STOPS HERE; it does not implement. Tell the User to run, from the main checkout (not here):",
+             handoff_lib.command(root, area, path),
+             "(The file is the new session's first message. `--checkpoint` is different: it saves an implementation session for a red prove's retry fork.)"]
+    return end("\n".join(lines), "PASS", "handoff-ready")
+
+
+def unit_state_note(job: str, units: list[str]) -> str:
+    """' state NAME' for a unit that is one shot of a shared flow, else ''."""
+    if not units or job not in units:
+        return ""
+    state = unit_lib.job_state(load_routes(Path(__file__).resolve().parents[1]), job)
+    return f" state {state}" if state else ""
+
+
+def advance(root: Path, args) -> str:
+    """--next: mark the slice's current unit done in the slice state and make the next unit current. Returns the door; the caller prints the next card."""
+    st = slice_state.load(root)
+    if not st.get("units"):
+        agent_log.fail("no unit queue in this slice. Start one with `python tools/start_build_slice.py --door ui` (a door with unit_queue in routes.yaml).")
+    left, _ = handoff_lib.sidecars(handoff_lib.survey_edits(root))
+    if left:
+        agent_log.fail("the current unit has uncommitted changes (" + ", ".join(left[:6]) + (", ..." if len(left) > 6 else "") + "): run_build_gate, then commit_slice.py, then --next. Nothing was advanced.")
+    done = list(st.get("done") or [])
+    if st.get("unit") and st["unit"] not in done:
+        done.append(st["unit"])
+    nxt = unit_lib.pick(st["units"], done)
+    st.update({"done": done, "unit": nxt, "job": nxt})
+    slice_state.save(root, st)
+    return st.get("door", "")
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = agent_log.std_parser("Resolve a route and print the grok fork argv for a Build slice.", writes=True)
-    ap.add_argument("--door", "-Door", default="", help="routes.yaml door to start from.")
-    ap.add_argument("--job", "-Job", default="", help="routes.yaml door.job to start from.")
-    ap.add_argument("--area", "-Area", default="", help="Slice name for the worktree slug (default: job, else door).")
-    ap.add_argument("--ref", "-Ref", default="", help="Git ref to branch from (default: the week branch grok-build-w{series}; none exists: the run fails).")
-    ap.add_argument("--session", default="", help="Gather session id (default: $GROK_SESSION_ID); saved so a red prove can fork it into the worktree.")
-    ap.add_argument("--launch", "-Launch", action="store_true", help="Actually start grok with the fork argv.")
-    ap.add_argument("--selftest", action="store_true", help="Run the week-branch / FORK / saved-session cases in a throwaway repo.")
+    ap = agent_log.std_parser("Resolve a route and print the grok commands that open a Build slice (never starts grok).", writes=True)
+    ap.add_argument("--door", default="", help="routes.yaml door to start from.")
+    ap.add_argument("--job", default="", help="routes.yaml door.job to start from.")
+    ap.add_argument("--area", default="", help="Slice name for the worktree slug (default: job, else door).")
+    ap.add_argument("--ref", default="", help="Base ref for the retry diff and the merge-back line (default: the week branch grok-build-w{series}).")
+    ap.add_argument("--full", action="store_true", help="Reprint the whole start card in a slice that already started (a later run prints where the slice stands).")
+    ap.add_argument("--failed", action="store_true", help="Print the `Did not work:` lines built from this session's failed tool results since your last ask.")
+    ap.add_argument("--checkpoint", action="store_true", help="In the worktree session, after gather: save this session's id for a red prove's fork.")
+    ap.add_argument("--session", default="", help="With --checkpoint: the session id (default: $GROK_SESSION_ID; else `grok sessions list` in this directory).")
+    ap.add_argument("--handoff", action="store_true", help="Survey session, after her answers to the first ask: write the handoff skeleton, or validate the filled one and print the open_slice command.")
+    ap.add_argument("--next", action="store_true", help="Unit queue (a door with unit_queue in routes.yaml): mark the current unit done and print the next unit's card.")
+    ap.add_argument("--from-handoff", default="", metavar="PATH", help="Fresh implementation session: print the compact start summary from this handoff file.")
+    ap.add_argument("--selftest", action="store_true", help="Run the boot / checkpoint / retry cases in a throwaway repo.")
     args = ap.parse_args(argv)
     if args.selftest:
-        return slice_lib.selftest(Path(__file__).resolve())
+        code = slice_lib.selftest(Path(__file__).resolve())
+        extra = handoff_lib.selftest(Path(__file__).resolve())
+        for b in extra:
+            print("FAIL " + b)
+        return code if not extra else agent_log.emit_result("FAIL", None, cmd="selftest", problems=len(extra))
     root = agent_log.resolve_root(args)
+    if args.failed:
+        print(session_lib.failed_block())
+        return agent_log.emit_result("PASS", cmd="failed")
+    if args.checkpoint:
+        return slice_lib.checkpoint(root, args)
+    if args.handoff:
+        return write_handoff(root, args)
+    compact = bool(args.next)  # the next unit of a queue: the rules were printed on the first card, so only the unit's lines are
+    if args.next:
+        door = advance(root, args)
+        args.door, args.job, args.full = door, "", True
     raw = (args.area or args.job or args.door).strip()
     if not raw:
-        agent_log.fail("pass --door, --job, or --area")
+        agent_log.fail("pass --door D, --job door.job, or --area NAME (example: python tools/start_build_slice.py --door ui). "
+                       + (slice_lib.doors_hint(root) or "doors and jobs are in design/routes.yaml"))
     if args.door or args.job:
         bad_route = check_route(load_routes(root), args.door, args.job)
         if bad_route:
             agent_log.fail(bad_route)
-    slug = re.sub(r"[^a-z0-9._-]+", "-", raw.lower()).strip("-")[:48].strip("-")
-    if not slug:
-        agent_log.fail("area slug is empty after sanitize")
-    wt = f"wdb-{slug}-{dt.datetime.now():%Y%m%d-%H%M}"
-    session = args.session or os.environ.get("GROK_SESSION_ID", "")
-    session = session.strip() if re.fullmatch(r"[A-Za-z0-9._-]{1,128}", session.strip()) else ""
+    kind = slice_lib.worktree_kind(root)
+    wt = root.name
+    st = slice_state.load(root) if kind else {}
+    units: list[str] = []
+    done: list[str] = []
+    if kind and args.door.strip() and not args.job.strip() and not args.area.strip() and unit_lib.queue(load_routes(root), args.door.strip()):
+        try:
+            head = handoff_lib.parse(Path(args.from_handoff).read_text(encoding="utf-8-sig"))[0] if args.from_handoff else {}
+        except OSError:
+            head = {}
+        units, done = unit_lib.plan(load_routes(root), args.door.strip(), st, head)
+        args.job = unit_lib.pick(units, done)
+        if not args.job:
+            msg = f"ALL UNITS DONE for door {args.door}: {', '.join(units)}. Nothing is queued; `python tools/start_build_slice.py --handoff` writes the closing handoff."
+            return agent_log.finish("slice-boot", root, msg, "PASS", args=args, write=not args.dry_run, echo=msg, worktree=wt, route="units-done")
+    same = not st or not (args.door or args.job) or (st.get("door", ""), st.get("job", "")) == (args.door.strip(), args.job.strip())
+    if st and same and not args.full and not args.dry_run:
+        text = slice_state.short(root, st)
+        return agent_log.finish("slice-boot", root, text, "PASS", args=args, write=True, echo=text, worktree=wt, route="already-started")
     route_lines, route = [], "skipped"
     if args.door or args.job:
         if args.dry_run:
@@ -67,9 +172,15 @@ def main(argv: list[str] | None = None) -> int:
         else:
             cmd = [sys.executable, str(Path(__file__).resolve().parent / "list_route.py"), "--root", str(root)]
             cmd += (["--door", args.door] if args.door else []) + (["--job", args.job] if args.job else [])
+            cmd += (["--units", ",".join(units), "--done", ",".join(done)] if units else [])
             p = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
             route = "ok" if p.returncode == 0 else f"exit={p.returncode}"
             route_lines = (p.stdout + p.stderr).splitlines()
+    if not kind:
+        msg = ("MAIN CHECKOUT: no slice starts here. A slice is a Grok worktree; the User starts it with `python tools/open_slice.py [AREA]` from this checkout "
+               "(it prints the grok command), and this tool is the first command inside that worktree.")
+        return agent_log.finish("slice-boot", root, "\n".join([msg, ""] + route_lines), "FAIL" if route.startswith("exit") else "PASS", args=args, write=not args.dry_run, echo=msg,
+                                worktree=wt, route="main-checkout")
     smokes = flows = ""
     if args.door or args.job:
         try:
@@ -77,52 +188,51 @@ def main(argv: list[str] | None = None) -> int:
         except Exception:
             smokes = ""
         try:
-            flows = ",".join(shot_flows(load_routes(root), door=args.door.strip(), job=args.job.strip()))
+            flows = ",".join(shot_flows(load_routes(root), door=args.door.strip(), job=args.job.strip(), job_only=True))
         except Exception:
             flows = ""
+    per_job = ""
+    if args.door and not args.job:
+        try:
+            per_job = job_flow_map(load_routes(root), args.door.strip())
+        except Exception:
+            per_job = ""
+    near = ""
+    if args.job and not flows:
+        try:
+            near = ",".join(shot_flows(load_routes(root), door=args.job.split(".", 1)[0]))
+        except Exception:
+            near = ""
+    note = slice_lib.step0_note(args.door, args.job, args.area, flows, near)
     week = repo_lib.week_branch(root)
-    if not args.ref and not week:
-        msg = ("NO WEEK BRANCH: no grok-build-w* branch exists, and no --ref was given. Nothing is started and no FORK line is printed (main is never the fallback). "
-               "Ask Vira in a question prompt whether to start a new week; she runs `python tools/week_start.py`. Then rerun this command (or pass --ref REF if she names one).")
-        return agent_log.finish("slice-boot", root, msg, "FAIL", args=args, write=not args.dry_run, worktree=wt, session_ready=bool(session), route="no-week-branch")
     ref = args.ref or week
-    ref_note = "--ref given" if args.ref else f"week branch {week}"
-    fork, note = slice_lib.fork_text(wt, ref, session)
-    warn = note if session else ("WARN no gather session id: this FORK starts a fresh session in the worktree, without your gather context, and a red prove will have no gather session to fork from. "
-                               "Pass --session ID or set $GROK_SESSION_ID to fork from the gather session.")
-    launch, path = "skipped", ""
-    if args.launch and not args.dry_run:
-        launch, path = slice_lib.launch(root, wt, ref, session)
-    saved = "" if args.dry_run else retry_lib.save_gather(root, wt, session, args.ref, path)
-    retry = ("RETRY a red prove prints a fork of the saved gather session into this worktree "
-             f"(`grok --cwd <worktree path> -r {session} --fork-session`, with the diff `git diff {args.ref or week}...HEAD`)." if session else
-             f"RETRY no gather session: a red prove will say there is none to fork from and start nothing; ask Vira for the session id.")
-    body = [f"root=. door={args.door} job={args.job} area={args.area} slug={slug}", f"ref={ref} ({ref_note}) worktree={wt}",
-            f"session={session or 'none'} session_ready={bool(session)} route={route}", f"dry_run={args.dry_run} launch={launch}",
-            "boot=list_route (door resolve; not gather)",
-            "read-first=more than one system: list every system the job touches, read each one's doc and code-map row, then change",
-            "gather=list_xref / show_func / code_map row for what the job needs; list_changed --history compares docs and code",
-            "change=worktree only; do not edit the live checkout",
-            "prove=run_build_gate (import check) and/or the listed smoke set; gates once per batch (tools.md rule 10)",
+    ref_note = "--ref given" if args.ref else f"week branch {week or 'none found'}"
+    survey = slice_lib.is_survey(root, args.door, args.job, args.area, bool(args.from_handoff))
+    mode = "handoff" if args.from_handoff else "survey" if survey else "implement"
+    sdir = session_lib.session_dir()
+    start = slice_lib.in_worktree_text(root, sdir, mode) if not compact else "RULES: unchanged since this slice's first card (`--full` reprints them). Per ask: message first, ledger, Did not work; commit only on her yes."
+    hand = handoff_lib.start_block(root, Path(args.from_handoff), bool(units)) if args.from_handoff else []
+    warn = slice_lib.area_warning(root, args.area, args.door, args.job)
+    if not args.dry_run:
+        first = slice_state.new(root, args.door.strip(), args.job.strip(), args.area.strip(), mode, sdir, units, done)
+        if st:
+            first.update({k: st[k] for k in ("first_run", "session", "prompt") if k in st})
+        slice_state.save(root, first)
+    card = [f"door={args.door} job={args.job} area={args.area} ref={ref} ({ref_note}) worktree={wt} mode={mode}",
             f"smokes={smokes or 'n/a'} (run: tools/run_smokes.py --door/--job; add or update asserts for new systems)",
-            f"flows={flows or 'n/a'} (headless: tools/bot_smokes.py --flows; pictures: tools/run_shot_flow.py --flow N; UI states: tools/check_shot_gaps.py --changed)",
-            f"merge-back=on a green prove: commit in the worktree (its HEAD is detached, there is no branch), then in the checkout that holds {week or 'grok-build-w{N}'} (git worktree list): git merge --no-ff <worktree HEAD sha> (never main); balance, audio, visuals, controls: ask_user_question for playtest approval first",
-            "revert=a retry forks the saved gather session into the worktree; git history holds the code", f"gather-session-saved={saved or 'no'}",
-            "return=you run the FORK line(s); the CLI does not start it for you", "",
-            fork, *([warn] if warn else []), retry, ""]
-    if route_lines:
-        body += ["--- route ---"] + route_lines + [""]
+            f"flows={('per job: ' + per_job) if per_job else (flows or 'none mapped to this job')}{unit_state_note(args.job, units)} (pictures: tools/run_shot_flow.py --job J, one boot; UI states: tools/check_shot_gaps.py --changed)",
+            "prove=every pass python tools/check_gd_load.py; visual: one unit, shot and shown (show_png.py) before and after, then ask with the paths in the message; gate: run_build_gate once (build-job-cycle.md)",
+            slice_lib.merge_back_text(week or ref) if not compact else f"merge-back: as on the first card (plain push of {week or ref})"]
+    body = card + ([warn] if warn else []) + ["", start, ""] + (hand + [""] if hand else []) + ([note, ""] if note else []) + (["--- route ---"] + route_lines + [""] if route_lines else [])
     if route == "ok":
         head = "\n".join(l for l in route_lines if not l.startswith(("Summary", "RESULT")))
     elif route.startswith("exit"):
         head = "route failed:\n" + "\n".join(route_lines)
     else:
-        head = f"smokes={smokes or 'n/a'} flows={flows or 'n/a'}" + ("" if smokes else " (--area has no route card; name a door/job for smokes)")
-    tail = "" if route.startswith("exit") else f"\n{fork}" + (f"\n{warn}" if warn else "") + f"\n{retry}\nlaunch={launch}"
-    code = agent_log.finish("slice-boot", root, "\n".join(body), "FAIL" if route.startswith("exit") else ("PASS" if session else "INFO"),
-                            args=args, write=not args.dry_run, echo=f"worktree={wt} ref={ref} ({ref_note})\n{head}{tail}",
-                            worktree=wt, session_ready=bool(session), route=route, launch=launch)
-    return code
+        head = f"smokes={smokes or 'n/a'} flows={('per job: ' + per_job) if per_job else (flows or 'n/a')}" + ("" if smokes else " (--area has no route card; name a door/job for smokes)")
+    echo = f"worktree={wt} ref={ref} ({ref_note}) mode={mode}\n{head}" + ("" if route.startswith("exit") else f"\n{start}\n{slice_lib.merge_back_text(week or ref) if not compact else ''}" + (f"\n{note}" if note else "")) + (f"\n{warn}" if warn else "") + ("\n" + "\n".join(hand) if hand else "")
+    return agent_log.finish("slice-boot", root, "\n".join(body), "FAIL" if route.startswith("exit") else "PASS",
+                            args=args, write=not args.dry_run, echo=echo, worktree=wt, route=route)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const View := preload("res://scripts/ui/split_menu/split_menu_view.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
+const Journal := preload("res://scripts/ui/pause_menu/journal_page.gd")
 
 const NODE_NAME := "confirm_dlg"
 
@@ -27,7 +28,7 @@ static func close(parent: Node) -> void:
 			focus_to.call_deferred("grab_focus")
 
 ## on_no runs when the player cancels (Cancel button, Back or pause key); closing by code does not call it.
-static func open(parent: Node, title: String, body: String, on_yes: Callable, on_no := Callable()) -> void:
+static func open(parent: Node, title: String, body: String, on_yes: Callable, on_no: Callable = Callable(), role: String = "primary") -> void:
 	var prev: Control = parent.get_viewport().gui_get_focus_owner() if parent.get_viewport() else null
 	var prev_footer: Array = []
 	if parent is CanvasLayer:
@@ -48,13 +49,46 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 	root.set_meta("prev_footer", prev_footer)
 	parent.add_child(root)
 	Plate.dim(root)
-	Plate.plate(root, Vector2(560, 280), Vector2(800, 360))
-	Plate.edge(root, Vector2(560, 280), 800.0)
-	var cap: Label = ThemeS.lab(title, 28, Color(0.95, 0.86, 0.55))
+	var card := Vector2(560, 280)
+	var card_sz := Vector2(800, 360)
+	var back: ColorRect = ColorRect.new()
+	back.color = Color(ThemeS.PAPER, 1.0)
+	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	back.position = card
+	back.size = card_sz
+	root.add_child(back)
+	if parent.has_meta("journal_sheet"):
+		var lip_tones: Array[Color] = [
+			Color(0.78, 0.68, 0.52, 1.0),
+			Color(0.62, 0.50, 0.36, 1.0),
+			Color(0.48, 0.36, 0.24, 1.0),
+		]
+		for i: int in lip_tones.size():
+			var step: float = float(i) * 4.0
+			var lip: ColorRect = ColorRect.new()
+			lip.color = lip_tones[i]
+			lip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			lip.position = Vector2(card.x + 12.0, card.y + card_sz.y + step)
+			lip.size = Vector2(card_sz.x - 28.0, 4.0)
+			root.add_child(lip)
+	var paper := TextureRect.new()
+	paper.texture = Journal._tex_at(Journal.PAPER_PATH)
+	paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	paper.stretch_mode = TextureRect.STRETCH_SCALE
+	paper.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	paper.position = card
+	paper.size = card_sz
+	root.add_child(paper)
+	Plate.edge(root, card, card_sz.x)
+	Plate.edge(root, card + Vector2(0, card_sz.y - 3.0), card_sz.x)
+	Plate.edge(root, card, 3.0, card_sz.y)
+	Plate.edge(root, card + Vector2(card_sz.x - 3.0, 0), 3.0, card_sz.y)
+	var cap: Label = ThemeS.lab(title, 28, ThemeS.INK)
 	cap.position = Vector2(592, 308)
 	cap.size = Vector2(736, 40)
 	root.add_child(cap)
-	var msg: Label = ThemeS.lab(body, 20, Color(0.86, 0.8, 0.7))
+	var msg: Label = ThemeS.lab(body, 20, ThemeS.INK_SOFT)
 	msg.position = Vector2(592, 360)
 	msg.size = Vector2(736, 120)
 	msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -63,7 +97,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 		close(parent)
 		if on_yes.is_valid():
 			on_yes.call()
-	)
+	, true, role)
 	yes.position = Vector2(592, 520)
 	yes.size = Vector2(340, 52)
 	root.add_child(yes)
@@ -71,7 +105,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 		close(parent)
 		if on_no.is_valid():
 			on_no.call()
-	)
+	, true, "secondary")
 	no.position = Vector2(980, 520)
 	no.size = Vector2(340, 52)
 	no.shortcut = _cancel_shortcut()

@@ -7,7 +7,7 @@
     python tools/read_summary.py --path _logs/smokes/<stamp>-p1-err.log
 Every run keeps its own timestamped file under _logs/<job>/ and index.txt lists the last 20 (run_log_lib.py).
 No --job/--path lists the job dirs found under _logs/. Exit 0 ok, 1 missing, 2 usage.
-Old spellings: -Job -Path -Root.
+
 """
 from __future__ import annotations
 
@@ -22,15 +22,16 @@ import run_log_lib
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Print a job's run index and newest summary, or a repo file.")
     ap.add_argument("job_pos", nargs="?", default="", help="Job name (same as --job).")
-    ap.add_argument("--job", "-Job", default="", help="Job name, e.g. smokes.")
-    ap.add_argument("--path", "-Path", default="", help="Repo-relative or absolute file to print.")
+    ap.add_argument("--job", default="", help="Job name, e.g. smokes.")
+    ap.add_argument("--path", default="", help="Repo-relative or absolute file to print.")
     ap.add_argument("--index", action="store_true", help="Print only the run index of the job.")
     ap.add_argument("--run", type=int, default=1, help="Which run's summary to print: 1 = newest (default), 2 = the one before.")
     args = ap.parse_args(argv)
-    root = agent_log.resolve_root(args)
+    root, where = agent_log.cwd_scan_root(args)
     job = args.job or args.job_pos
     logs = root / "_logs"
     names = sorted(d.name for d in logs.iterdir() if d.is_dir() and run_log_lib.latest(d)) if logs.is_dir() else []
+    print(where)
     if not job and not args.path:
         print("usage: python tools/read_summary.py --job <name>")
         print("jobs: " + (", ".join(names) or "(none yet)"))

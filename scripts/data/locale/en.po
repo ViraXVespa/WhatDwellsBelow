@@ -668,8 +668,17 @@ msgstr "Artifacts cannot be mailed."
 msgid "extract.banked_g_ore_wood_root"
 msgstr "Banked %dg, %d ore, %d wood, %d root, %d items."
 
+msgid "extract.carried"
+msgstr "Carried"
+
+msgid "extract.equipped"
+msgstr "Equipped"
+
 msgid "extract.forged_holds_stay_with_you"
 msgstr "Forged holds stay with you."
+
+msgid "extract.resources"
+msgstr "Resources"
 
 msgid "extract.sent_g"
 msgstr "Sent %dg."
@@ -694,6 +703,9 @@ msgstr "This gate takes ore, wood, and root."
 
 msgid "extract.unequip_that_first"
 msgstr "Unequip that first."
+
+msgid "extract.unsafe"
+msgstr "Unsafe"
 
 msgid "floor.enter_dungeon"
 msgstr "Enter dungeon"

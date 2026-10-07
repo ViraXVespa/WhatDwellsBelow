@@ -11,6 +11,8 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import match_keyed_region as matcher
+from imglib import key as plate_key
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "assets" / "sprites" / "player"
@@ -25,20 +27,14 @@ FILES = {
     "left": SESSION / "4.jpg",
 }
 
-BG = (239, 19, 106)
-THRESH = 55
 CANVAS = 128
 
 
 def key_and_fit(src: Path, dest: Path) -> None:
-    im = imgio.load(src)
-    px = im.load()
-    w, h = im.size
-    for y in range(h):
-        for x in range(w):
-            r, g, b, a = px[x, y]
-            if dist((r, g, b), BG) <= THRESH:
-                px[x, y] = (0, 0, 0, 0)
+    use = matcher.resolve_source(dest, src)
+    if use is None:
+        raise SystemExit(f"missing source for {dest}")
+    im = plate_key.punch(imgio.load(use))
     bbox = im.getbbox()
     if not bbox:
         raise SystemExit(f"empty after key: {src}")
@@ -62,11 +58,7 @@ def key_and_fit(src: Path, dest: Path) -> None:
 
 
 def _run() -> None:
-    if not SESSION.exists():
-        raise SystemExit("Set SESSION to a folder of raw Imagine stills (down/right/up/left jpgs).")
     for name, src in FILES.items():
-        if not src.exists():
-            raise SystemExit(f"missing {src}")
         key_and_fit(src, OUT / f"{name}.png")
 
 

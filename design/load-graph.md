@@ -40,7 +40,7 @@ Then, only if the User named work:
 Imagine tool calls use the isolated-media **gate** only. Do not also open art_pipeline to generate.
 Build repo skills live at `.grok/skills/` (Imagine / I2V / pc-offload). They are not the Grok Bot skill library.
 Imagine / I2V skills cite the isolated-media gate only and stay Build-only.
-The pc-offload skill cites the pc-offload catalog for Grok Build on the User PC.
+The pc-offload skill cites the pc-offload catalog for Grok Build on the User PC, and may name the agents file where it tells Build to read it by hand (a worktree session does not always auto-load it).
 Types / warnings / tabs live in `design/gdscript-law.md`, not the agents file.
 Art Bible / pack / review / I2V unit prompt use design/art-pipeline.md then one sibling.
 
@@ -61,7 +61,7 @@ The checker fails leftover relic-index names and `notes/<file>` cites.
 ## 10/10 checks
 
 1. Boot is at most AGENTS + path file + (web/Build) protocol + constraints, The Bot's per-file boot budgets (`tools/bot_budgets.json`) are checked only with `check_load_graph.py --bot`.
-2. Bot boot is BOT.md + one Job sibling (the agents file only if Cursor already loaded it).
+2. Bot boot is BOT.md + one Job sibling.
 3. No mutual See also.
 4. One job phrase belongs to one door.
 5. Doors with a Job table stay thin.

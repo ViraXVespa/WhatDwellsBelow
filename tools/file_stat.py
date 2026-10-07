@@ -17,9 +17,9 @@ import agent_log
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = agent_log.std_parser("Length, newline, BOM, and indent stats without reading into chat.", json_out=True)
     parser.add_argument("paths_pos", nargs="*", metavar="PATH", help="File or directory (same as --path)")
-    parser.add_argument("--path", "-Path", action="append", default=[], help="File or directory (repeatable)")
-    parser.add_argument("--glob", "-Glob", default="", help="Only under a directory --path")
-    parser.add_argument("--max", "-Max", type=int, default=40, help="Max files listed for a directory or glob (default 40).")
+    parser.add_argument("--path", action="append", default=[], help="File or directory (repeatable)")
+    parser.add_argument("--glob", default="", help="Only under a directory --path")
+    parser.add_argument("--max", type=int, default=40, help="Max files listed for a directory or glob (default 40).")
     args = parser.parse_args(argv)
     args.path = list(args.path) + list(args.paths_pos)
     return args
@@ -81,10 +81,10 @@ def collect(root: Path, paths: list[str], glob: str, cap: int) -> list[dict[str,
     return [probe(path) for path in hits[: max(1, cap)]]
 
 
-def render(rows: list[dict[str, object]], root: Path) -> str:
+def render(rows: list[dict[str, object]], root: Path, where: str) -> str:
     lines = [
         "file-stat",
-        "root=.",
+        where,
         f"count={len(rows)}",
         "path\tbytes\tlines\tlf\tcrlf\ttabs\tspace_indent\tbom\texists",
     ]
@@ -103,13 +103,13 @@ def render(rows: list[dict[str, object]], root: Path) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
-    root = agent_log.resolve_root(args)
+    root, where = agent_log.cwd_scan_root(args)
     args.path = agent_log.split_list(args.path)
     rows = collect(root, list(args.path), args.glob, int(args.max))
     missing = sum(1 for r in rows if not r["exists"])
     if missing:
         print(f"error: {missing} path(s) not found (exists=0 rows); pass files or directories relative to the repo root", file=sys.stderr)
-    return agent_log.finish("file-stat", root, render(rows, root), "FAIL" if missing else "PASS",
+    return agent_log.finish("file-stat", root, render(rows, root, where), "FAIL" if missing else "PASS",
                             args=args, legacy=False, count=len(rows), missing=missing)
 
 

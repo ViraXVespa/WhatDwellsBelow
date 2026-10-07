@@ -47,8 +47,8 @@ func rebuild() -> void:
 			_end_capture()
 			View.apply_col(host)
 			View.focus_col(host)
-		)
-	)
+		, Callable(), "danger")
+	, true, "danger")
 	View.add_page_btn(host, reset)
 	for row: Dictionary in Table.rebindable():
 		if Table.can_rebind(str(row.id), pool):
@@ -100,7 +100,7 @@ func _bind_row(action: String, label: String) -> void:
 	var shell := HBoxContainer.new()
 	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	shell.add_theme_constant_override("separation", 8)
-	var name_lab: Label = ThemeS.lab(label, 20, Color(0.92, 0.86, 0.72))
+	var name_lab: Label = ThemeS.lab(label, 20, ThemeS.INK)
 	name_lab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	shell.add_child(name_lab)

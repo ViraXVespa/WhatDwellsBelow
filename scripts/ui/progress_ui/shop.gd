@@ -1,6 +1,7 @@
 extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const VendorFrame: GDScript = preload("res://scripts/ui/progress_ui/vendor_frame.gd")
 const Inv := preload("res://scripts/ui/progress_ui/inv.gd")
 const Kit := preload("res://scripts/data/gear_rules/rules_kit.gd")
 const Affix := preload("res://scripts/data/affixes.gd")
@@ -9,13 +10,13 @@ const CatalogS := preload("res://scripts/data/catalog.gd")
 
 static func rebuild_shop(ui) -> void:
 	ui._clear()
-	ui.box.add_child(ThemeS.lab(App.tr("common.ghost_shop"), 32, Color(0.75, 0.9, 1.0)))
-	ui.box.add_child(ThemeS.lab(App.tr("shop.two_artifacts_a_visit_snacks") % int(App.bal.snack_cost), 18, Color(0.82, 0.76, 0.66)))
-	ui.box.add_child(ThemeS.lab(App.tr("shop.gold_bought") % [App.gold, int(ui.shop_spot.get("bought") if ui.shop_spot else 0), int(App.bal.shop_buy_max)], 20, Color(0.9, 0.88, 0.78)))
-	ui.box.add_child(ThemeS.lab(Inv.sets_blurb(), 18, Color(0.85, 0.72, 0.45)))
-	ui.status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
+	ui.box.add_child(ThemeS.lab(App.tr("common.ghost_shop"), 32, ThemeS.INK))
+	ui.box.add_child(ThemeS.lab(App.tr("shop.two_artifacts_a_visit_snacks") % int(App.bal.snack_cost), 18, ThemeS.INK_SOFT))
+	ui.box.add_child(ThemeS.lab(App.tr("shop.gold_bought") % [App.gold, int(ui.shop_spot.get("bought") if ui.shop_spot else 0), int(App.bal.shop_buy_max)], 20, ThemeS.INK))
+	ui.box.add_child(ThemeS.lab(Inv.sets_blurb(), 18, Color(0.42, 0.26, 0.10)))
+	ui.status = ThemeS.lab("", 20, ThemeS.INK)
 	ui.box.add_child(ui.status)
-	ui.focus_btn = ThemeS.btn(App.tr("shop.snack_g_hp") % int(App.bal.snack_cost), func(): Confirm.open(ui, App.tr("shop.buy_snack"), App.tr("shop.spend_g_for_a_snack") % int(App.bal.snack_cost), func(): buy_snack(ui)))
+	ui.focus_btn = ThemeS.btn(App.tr("shop.snack_g_hp") % int(App.bal.snack_cost), func(): Confirm.open(ui, App.tr("shop.buy_snack"), App.tr("shop.spend_g_for_a_snack") % int(App.bal.snack_cost), func(): buy_snack(ui)), true, "primary")
 	ui.box.add_child(ui.focus_btn)
 	if ui.shop_spot:
 		for st in ui.shop_spot.stock:
@@ -27,11 +28,11 @@ static func rebuild_shop(ui) -> void:
 			var extra := ""
 			if set_id != "":
 				extra = "\n" + App.prog.set_bonus_text(set_id)
-			ui.box.add_child(ThemeS.btn(App.tr("shop.buy_g") % [nm, int(App.bal.art_cost), desc, extra], func(): Confirm.open(ui, App.tr("shop.buy_artifact"), App.tr("shop.spend_g_for") % [int(App.bal.art_cost), nm], func(): buy_art(ui, id, nm))))
+			ui.box.add_child(ThemeS.btn(App.tr("shop.buy_g") % [nm, int(App.bal.art_cost), desc, extra], func(): Confirm.open(ui, App.tr("shop.buy_artifact"), App.tr("shop.spend_g_for") % [int(App.bal.art_cost), nm], func(): buy_art(ui, id, nm)), true, "primary"))
 		for it in App.prog.bag:
 			if str(it.kind) == "artifact" or str(it.kind) == "weapon" or str(it.kind) == "head" or str(it.kind) == "body" or str(it.kind) == "legs":
 				var uid := int(it.uid)
-				ui.box.add_child(ThemeS.btn(App.tr("shop.pawn_g") % [it.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, App.tr("shop.pawn_item"), App.tr("shop.pawn_for_g") % [it.name, int(App.bal.pawn_gold)], func(): pawn(ui, uid))))
+				ui.box.add_child(ThemeS.btn(App.tr("shop.pawn_g") % [it.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, App.tr("shop.pawn_item"), App.tr("shop.pawn_for_g") % [it.name, int(App.bal.pawn_gold)], func(): pawn(ui, uid), Callable(), "danger"), true, "danger"))
 		for s in Affix.FORGE_SLOTS:
 			var eq: Dictionary = App.prog.slots.get(s, {})
 			if eq.is_empty():
@@ -39,7 +40,7 @@ static func rebuild_shop(ui) -> void:
 			if Kit.locked_equip_slot(str(s)):
 				continue
 			var slot := str(s)
-			ui.box.add_child(ThemeS.btn(App.tr("shop.pawn_equipped_g") % [eq.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, App.tr("shop.pawn_equipped"), App.tr("shop.pawn_equipped_for_g") % [eq.name, int(App.bal.pawn_gold)], func(): pawn_slot(ui, slot))))
+			ui.box.add_child(ThemeS.btn(App.tr("shop.pawn_equipped_g") % [eq.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, App.tr("shop.pawn_equipped"), App.tr("shop.pawn_equipped_for_g") % [eq.name, int(App.bal.pawn_gold)], func(): pawn_slot(ui, slot), Callable(), "danger"), true, "danger"))
 	ui.box.add_child(ThemeS.btn(App.tr("common.leave"), func(): ui.close_ui()))
 
 static func buy_snack(ui) -> void:
@@ -115,15 +116,19 @@ static func pawn_slot(ui, slot: String) -> void:
 
 static func rebuild_vendor(ui) -> void:
 	ui._clear()
-	ui.box.add_child(ThemeS.lab(App.tr("shop.vendor_stall"), 32, Color(0.95, 0.82, 0.5)))
-	ui.box.add_child(ThemeS.lab(App.tr("shop.bank_g_ore_potions_and") % [App.bank_gold, App.bank_ore], 18, Color(0.82, 0.76, 0.66)))
-	ui.status = ThemeS.lab("", 20, Color(0.95, 0.8, 0.45))
-	ui.box.add_child(ui.status)
-	ui.focus_btn = ThemeS.btn(App.tr("shop.buy_potion_g") % int(App.bal.vendor_potion_cost), func(): vend_potion(ui))
+	VendorFrame.prepare(ui)
+	ui.focus_btn = ThemeS.btn(App.tr("shop.buy_potion_g") % int(App.bal.vendor_potion_cost), func(): vend_potion(ui), true, "primary")
+	VendorFrame.dress(ui.focus_btn, true)
 	ui.box.add_child(ui.focus_btn)
-	ui.box.add_child(ThemeS.btn(App.tr("shop.buy_ration_g_food_slot") % int(App.bal.vendor_food_cost), func(): vend_food(ui)))
-	ui.box.add_child(ThemeS.btn(App.tr("shop.sell_1_ore_g") % int(App.bal.vendor_ore_gold), func(): vend_sell(ui)))
-	ui.box.add_child(ThemeS.btn(App.tr("common.leave"), func(): ui.close_ui()))
+	var ration: Button = ThemeS.btn(App.tr("shop.buy_ration_g_food_slot") % int(App.bal.vendor_food_cost), func(): vend_food(ui), true, "primary")
+	VendorFrame.dress(ration, true)
+	ui.box.add_child(ration)
+	var sell: Button = ThemeS.btn(App.tr("shop.sell_1_ore_g") % int(App.bal.vendor_ore_gold), func(): vend_sell(ui), true, "primary")
+	VendorFrame.dress(sell, true)
+	ui.box.add_child(sell)
+	var leave: Button = ThemeS.btn(App.tr("common.leave"), func(): ui.close_ui())
+	VendorFrame.dress(leave, false)
+	ui.box.add_child(leave)
 
 static func vend_potion(ui) -> void:
 	var cost := int(App.bal.vendor_potion_cost)
@@ -140,6 +145,7 @@ static func vend_potion(ui) -> void:
 		ui._st(App.tr("common.bag_full"))
 		return
 	ui._st(App.tr("shop.potion_ready"))
+	VendorFrame.refresh_bank(ui)
 	App.save_now()
 
 static func vend_food(ui) -> void:
@@ -159,6 +165,7 @@ static func vend_food(ui) -> void:
 		fd.stack = mini(int(fd.get("stack", 0)) + 1, cap)
 		App.prog.slots["food"] = fd
 	ui._st(App.tr("shop.ration_packed_in_the_food"))
+	VendorFrame.refresh_bank(ui)
 	App.save_now()
 
 static func vend_sell(ui) -> void:
@@ -168,4 +175,6 @@ static func vend_sell(ui) -> void:
 	App.bank_ore -= 1
 	App.bank_gold += int(App.bal.vendor_ore_gold)
 	ui._st(App.tr("shop.sold_1_ore"))
+	VendorFrame.refresh_bank(ui)
 	App.save_now()
+

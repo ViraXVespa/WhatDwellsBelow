@@ -199,6 +199,9 @@ func extract_all(role: String) -> String:
 func extract_one(it: Dictionary, role: String) -> String:
 	return Town.extract_one(self, it, role)
 
+func stock_extract_shot() -> void:
+	Town.stock_extract_shot(self)
+
 func forge_cost(slot: String, rarity: String, ilvl: int, lock_n: int) -> Dictionary:
 	return ForgeP.forge_cost(self, slot, rarity, ilvl, lock_n)
 

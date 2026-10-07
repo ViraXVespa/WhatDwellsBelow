@@ -10,6 +10,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 import i2v_seeds  # noqa: E402
+import match_keyed_region as matcher  # noqa: E402
 import plate_remap as pr  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
 
@@ -76,10 +77,11 @@ def write(im: Image.Image, dest: Path) -> None:
 
 
 def rekey(src: Path, dest: Path, canvas: int, wide: bool = False) -> Image.Image | None:
-    if not src.exists():
-        print(f"missing {src}", flush=True)
+    use = matcher.resolve_source(dest, src)
+    if use is None:
+        print(f"missing {dest.relative_to(ROOT)}", flush=True)
         return None
-    keyed = key_still(src)
+    keyed = key_still(use)
     out = fit_width(keyed, canvas) if wide else fit_square(keyed, canvas)
     write(out, dest)
     return out

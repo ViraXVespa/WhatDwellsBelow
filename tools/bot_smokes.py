@@ -143,8 +143,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--flows", nargs="?", const="mapped", default="", metavar="NAMES",
                    help="Also run shot flows headless (asserts, no pixels): NAMES comma list, or the --door/--job mapping when bare.")
     p.add_argument("--no-gaps", action="store_true",
-                   help="skip check_shot_gaps --changed (Bot gate: a new UI state without a shot flow FAILS this run)")
-    p.add_argument("--timeout", "--timeout-sec", "-TimeoutSec", dest="timeout", type=int, default=120, help="Seconds per smoke phase (default 120).")
+                   help="skip check_shot_gaps --changed (end gate: a new UI state without a shot flow FAILS this run)")
+    p.add_argument("--timeout", "--timeout-sec", dest="timeout", type=int, default=120, help="Seconds per smoke phase (default 120).")
     p.add_argument("--verbose", action="store_true", help="Print each Godot command and longer failure output.")
     ns = p.parse_args(argv)
     root = agent_log.resolve_root(ns)

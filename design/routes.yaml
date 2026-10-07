@@ -23,6 +23,7 @@ indexes:
 notes_exempt:
   - design/reuse-map.md
   - design/parked-tasks.md
+  - design/ui-handoff.md
 
 parked_jobs:
   - design/art-attack-keyframes.md
@@ -215,6 +216,15 @@ doors:
       pause: design/ui-pause.md
       run_flow: design/ui-run-flow.md
       gear_entry: design/ui-gear-entry.md
+      style: design/ui-style.md
+      controls: design/ui-unit-controls.md
+      anvil: design/ui-unit-anvil.md
+      loadout: design/ui-unit-loadout.md
+      extract: design/ui-unit-extract.md
+      ghost_shop: design/ui-unit-ghost-shop.md
+      recap: design/ui-unit-recap.md
+      quest_board: design/ui-unit-quest-board.md
+      receptionist: design/ui-unit-receptionist.md
   debug:
     file: design/debug.md
     read_when: "secret console, playtest, journal, smoke"
@@ -281,6 +291,15 @@ job_read_when:
   ui.pause: "inventory tab, skills tab, settings page"
   ui.run_flow: "recap reel, ghost vendor pane, quest pane, banner"
   ui.gear_entry: "loadout tray, tooltip shell"
+  ui.style: "restyle, builders, skin hooks, scrollbar hiding"
+  ui.controls: "legend keycaps, bindings legend"
+  ui.anvil: "smithing readout, cost breakdown"
+  ui.loadout: "enter-dungeon footer, weapon tool choice"
+  ui.extract: "send-all banking, banked lines"
+  ui.ghost_shop: "pawn counter, snack prices"
+  ui.recap: "tally sequence, finale bars"
+  ui.quest_board: "pinned parchment, offer cutouts"
+  ui.receptionist: "greeting line, hello bubble"
   debug.menu: "balance sliders, profile banks"
   debug.playtest: "sim walker, recommended config"
   debug.anim_browser: "timeline scrubber, review queue"
@@ -336,6 +355,15 @@ smokes:
   interactables: "5"
   ui: "7"
   ui.run_flow: "5,6,7"
+  ui.controls: "5,6,7"
+  ui.anvil: "5,6,7"
+  ui.loadout: "5,6,7"
+  ui.extract: "5,6,7"
+  ui.ghost_shop: "5,6,7"
+  ui.recap: "5,6,7"
+  ui.quest_board: "5,6,7"
+  ui.receptionist: "6,8"
+  ui.style: "7"
   gear_ui: "6,7"
   hub: "8"
   hub.guild: "6,8"
@@ -351,8 +379,10 @@ smokes:
   art_pipeline: "9"
   archives: "9"
 
-# Build prove: scripted shot flows (tools/shot-flows/*.json) per door or door.job (job key wins). Headless asserts:
-# bot_smokes.py --flows; pictures: run_shot_flow.py --flow N. Printed by list_route and start_build_slice.
+# Build prove: scripted shot flows (tools/shot-flows/*.json) per door or door.job. A job maps only to its own key (its door's flows
+# are shown as "door-level, maybe not this screen", never as the job's). A visual job with no key gets a STEP 0 note at slice start
+# (creating the flow and adding its key here is the first job step, not a stop). Headless asserts: bot_smokes.py --flows;
+# pictures: run_shot_flow.py --flow N. Printed by list_route and start_build_slice.
 shot_flows:
   hub: "camp-receptionist-menu,camp-anvil-tabs,camp-billboard-controls,camp-npc-panels,camp-inventory"
   hub.guild: "camp-receptionist-menu"
@@ -362,14 +392,65 @@ shot_flows:
   inventory: "camp-inventory"
   dungeon.gates: "dungeon-gate-shop"
   dungeon: "dungeon-f1-spawns,dungeon-f2-spawns,dungeon-f3-spawns,dungeon-f4-spawns,dungeon-f1-props,dungeon-f1-boss,dungeon-hud-states,dungeon-f1-ambush,dungeon-f2-ambush,dungeon-f3-ambush,dungeon-f4-ambush,dungeon-f3-elites,dungeon-all-enemies"
-  ui.pause: "camp-pause-menu"
-  ui.run_flow: "camp-recap"
+  ui: "camp-pause-pages,camp-overlays"
+  ui.pause: "camp-pause-pages"
+  ui.run_flow: "camp-recap,dungeon-map-crystal,camp-npc-panels,camp-billboard-controls,dungeon-gate-shop"
+  ui.gear_entry: "camp-anvil-tabs"
+  ui.hud: "dungeon-hud-states"
+  ui.title_web: "title-menu,splash-credit,fs-gate"
+  ui.style: "camp-npc-panels"
+  ui.controls: "camp-billboard-controls"
+  ui.anvil: "camp-anvil-tabs"
+  ui.loadout: "camp-npc-panels"
+  ui.extract: "dungeon-gate-shop"
+  ui.ghost_shop: "dungeon-gate-shop"
+  ui.recap: "camp-recap"
+  ui.quest_board: "camp-npc-panels"
+  ui.receptionist: "camp-receptionist-menu"
 
-# New UI states with no shot flow (check_shot_gaps.py --changed): Bot gate = required (bot_smokes.py and
-# run_build_gate.py --batch FAIL on a new uncovered state); Build gate = advisory (printed, never fails).
+# Unit queue (ui work done one screen at a time): the ordered jobs of a door, her order. start_build_slice.py --door D picks the first
+# not done, `--next` moves on, and the card prints only that unit's flow, state, docs and files. Done units live in the slice state / handoff `done:`.
+unit_queue:
+  ui: "ui.controls, ui.anvil, ui.loadout, ui.extract, ui.ghost_shop, ui.recap, ui.quest_board, ui.receptionist"
+
+# One unit's read list: `path#Heading` entries separated by `;` (the card prints each as path plus its line range). The style doc is read for every ui unit.
+unit_docs:
+  ui: "design/ui-style.md"
+  ui.controls: "design/hub-guild.md#Controls Billboard"
+  ui.anvil: "design/ui-gear-entry.md#Anvil UI; design/gear-ui-chrome.md#Anvil tabs"
+  ui.loadout: "design/ui-gear-entry.md#Loadout UI"
+  ui.extract: "design/ui-run-flow.md#Extraction Gate UI; design/ui-pause.md"
+  ui.ghost_shop: "design/ui-run-flow.md#Ghost Shop UI"
+  ui.recap: "design/ui-run-flow.md#Recap screen (mandatory sequence)"
+  ui.quest_board: "design/ui-run-flow.md#Quest UI; design/hub-guild.md#Guild / Quest Access"
+  ui.receptionist: "design/hub-guild.md#Guild / Quest Access"
+
+# One unit's code: `path: function, function` entries separated by `;` (open them with show_func.py, not whole).
+unit_files:
+  ui.controls: "scripts/ui/progress_ui/ui_hub.gd: rebuild_controls; scripts/ui/progress_ui.gd: open_controls; scripts/ui/progress_ui/controls_frame.gd: spec, build, place, dress; scripts/ui/progress_ui/controls_art.gd: grain, face, post, bracket, plank"
+  ui.anvil: "scripts/ui/progress_ui/ui_hub.gd: rebuild_anvil; scripts/ui/progress_ui/ui_flow.gd: open_anvil; scripts/ui/gear_board/board_sub.gd: open_sub, _open_forge; scripts/ui/progress_ui/anvil_frame.gd: spec, build, place; scripts/ui/progress_ui/anvil_art.gd: stump, shadow, anvil"
+  ui.loadout: "scripts/ui/progress_ui/ui_hub.gd: rebuild_loadout; scripts/ui/progress_ui/ui_flow.gd: open_loadout; scripts/ui/progress_ui/crystal_frame.gd: spec, build, place; scripts/ui/progress_ui/crystal_art.gd: body"
+  ui.extract: "scripts/ui/progress_ui/inv.gd: rebuild_extract, send_slot, send_bag; scripts/ui/progress_ui.gd: open_extract, _extract_all; scripts/ui/confirm_dlg.gd; scripts/ui/progress_ui/extract_frame.gd: spec, build, place; scripts/ui/progress_ui/extract_art.gd: body; scripts/data/progress/extract.gd: extractable, extract_one, extract_all, stock_extract_shot; scripts/ui/gear_board/host_build.gd: build"
+  ui.ghost_shop: "scripts/ui/progress_ui/shop.gd: rebuild_shop; scripts/ui/progress_ui.gd: open_shop"
+  ui.recap: "scripts/ui/recap/rebuild.gd; scripts/ui/recap/recap_ui.gd; scripts/ui/recap.gd: play"
+  ui.quest_board: "scripts/ui/progress_ui/ui_hub.gd: rebuild_quest; scripts/ui/progress_ui.gd: open_quest; scripts/data/progress_quest/quest_roll.gd"
+  ui.receptionist: "scripts/ui/progress_ui/ui_hub.gd: rebuild_quest; scripts/ui/progress_ui.gd: open_quest; scripts/world/interact/interact_act.gd: interact"
+
+# A unit that is one state of a shared flow: the job's flow, cut after that top-level shot (run_shot_flow.py --job J re-shoots only it).
+shot_states:
+  ui.controls: "controls"
+  ui.loadout: "loadout"
+  ui.extract: "extract"
+  ui.ghost_shop: "shop"
+  ui.recap: "recap"
+  ui.quest_board: "quest-board"
+  ui.receptionist: "menu-open"
+
+# New UI states with no shot flow (check_shot_gaps.py --changed): Bot and Build both FAIL at the END gates (bot_smokes.py,
+# run_build_gate.py, a Build UI or theme prove) on a new uncovered state. The START of a slice never fails on a missing flow.
 shot_gaps:
   bot: required
-  build: advisory
+  build: required
 
 # Web build performance (tools/web_perf.py, headless Chrome on the exported site): Build prove, advisory only, never a gate.
 web_perf:
@@ -444,6 +525,8 @@ fetch_ban:
   design/web-session.md:
     - check against design/
     - check the change against design/
+    - check against `design/`
+    - check the change against `design/`
     - reopen the agents file
     - left context
   design/grok-build.md:
@@ -457,3 +540,4 @@ fetch_ban:
     - left context
   design/protocol.md:
     - topic index (one row)
+    - "topic index (one row): `design/README.md`"

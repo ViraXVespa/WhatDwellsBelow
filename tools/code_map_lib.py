@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Parse and mutate the live-files table in design/code-map.md.
 
-Used by code_map.py, patch_code_map.py, and check_code_map.py.
+Used by code_map.py.
 Do not dump the whole map into a session; runners write _logs summaries.
 """
 from __future__ import annotations

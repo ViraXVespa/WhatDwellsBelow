@@ -16,9 +16,9 @@ import godot_lib
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Headless editor import check.", json_out=True)
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=180, help="Godot timeout in seconds (default 180).")
+    ap.add_argument("--timeout-sec", type=int, default=180, help="Godot timeout in seconds (default 180).")
     args = ap.parse_args(argv)
-    root = agent_log.resolve_root(args)
+    root, where = agent_log.cwd_scan_root(args)
     out_log = agent_log.run_path("godot-import-check", root, "import-out.log")
     err_log = agent_log.run_path("godot-import-check", root, "import-err.log")
     print("Running editor import check...")
@@ -27,7 +27,7 @@ def main(argv: list[str] | None = None) -> int:
     hits = godot_lib.grep_logs([err_log, out_log], r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed|WARNING:")
     hard = any(godot_lib.HARD_RE.search(h) for h in hits)
     clean = r["status"] == "EXIT=0" and r["err_bytes"] == 0 and not hard
-    body = ["godot import check root=.", f"status={r['status']} ms={r['ms']} errBytes={r['err_bytes']} outBytes={r['out_bytes']}",
+    body = [f"godot import check {where}", f"status={r['status']} ms={r['ms']} errBytes={r['err_bytes']} outBytes={r['out_bytes']}",
             "", "--- highlights ---"] + (hits[:120] or ["(no SCRIPT ERROR / WARNING highlights)"])
     return agent_log.finish("godot-import-check", root, "\n".join(body), "PASS" if clean else "FAIL", args=args, retry=("run_godot_import_check.py", body),
                             clean=str(clean).lower(), status_godot=r["status"])

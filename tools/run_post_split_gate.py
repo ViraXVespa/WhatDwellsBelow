@@ -2,8 +2,7 @@
 """Post-split gate: import check, then optional smokes. One summary.
 
     python tools/run_post_split_gate.py [--with-smokes [--phases 1,2,6]] [--force]
-Refuses (exit 2) if any Godot is running unless --force (it never kills it). Old spellings:
--WithSmokes -Phases -ImportTimeoutSec -SmokeTimeoutSec -Force. Summary: _logs/post-split-gate/<stamp>-post-split-gate.txt
+Refuses (exit 2) if any Godot is running unless --force (it never kills it). Summary: _logs/post-split-gate/<stamp>-post-split-gate.txt
 """
 from __future__ import annotations
 
@@ -20,11 +19,11 @@ from run_build_gate import child
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Import check, then optional phase smokes.", json_out=True)
-    ap.add_argument("--with-smokes", "-WithSmokes", action="store_true", help="Also run the headless smoke phases.")
-    ap.add_argument("--phases", "-Phases", nargs="+", default=[",".join(map(str, SMOKE_PHASES))], help="Smoke phases with --with-smokes (default 1-9).")
-    ap.add_argument("--import-timeout-sec", "-ImportTimeoutSec", type=int, default=180, help="Editor import timeout in seconds (default 180).")
-    ap.add_argument("--smoke-timeout-sec", "-SmokeTimeoutSec", type=int, default=120, help="Seconds per smoke phase (default 120).")
-    ap.add_argument("--force", "-Force", action="store_true", help="Run even when Godot is already running on this path.")
+    ap.add_argument("--with-smokes", action="store_true", help="Also run the headless smoke phases.")
+    ap.add_argument("--phases", nargs="+", default=[",".join(map(str, SMOKE_PHASES))], help="Smoke phases with --with-smokes (default 1-9).")
+    ap.add_argument("--import-timeout-sec", type=int, default=180, help="Editor import timeout in seconds (default 180).")
+    ap.add_argument("--smoke-timeout-sec", type=int, default=120, help="Seconds per smoke phase (default 120).")
+    ap.add_argument("--force", action="store_true", help="Run even when Godot is already running on this path.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     pids = [p["pid"] for p in godot_lib.procs_on_path(root)]

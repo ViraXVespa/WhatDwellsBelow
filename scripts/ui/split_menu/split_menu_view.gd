@@ -3,12 +3,13 @@ extends Object
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Split := preload("res://scripts/ui/split_menu.gd")
 const Chrome := preload("res://scripts/ui/split_menu/chrome.gd")
+const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 
 const COL_LIVE := Color(1, 1, 1, 1)
 const COL_DIM := Color(0.55, 0.52, 0.48, 1)
-const RULE_ON := Color(0.95, 0.78, 0.35, 1)
-const RULE_OFF := Color(0.35, 0.28, 0.18, 1)
-const GOLD := Color(1, 0.92, 0.45, 1)
+const RULE_ON: Color = Tok.RULE
+const RULE_OFF: Color = Color(Tok.RULE, 0.35)
+const GOLD: Color = Tok.INK
 
 static func _live(host: Node) -> bool:
 	return host != null and is_instance_valid(host)
@@ -36,11 +37,8 @@ static func tune_scroll(sc: ScrollContainer) -> void:
 	if sc == null or not is_instance_valid(sc):
 		return
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	var need := false
-	if sc.size.y > 1.0 and sc.get_child_count() > 0 and sc.get_child(0) is Control:
-		var c: Control = sc.get_child(0) as Control
-		need = c.get_combined_minimum_size().y > sc.size.y + 2.0
-	sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS if need else ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	sc.follow_focus = true
 
 static func tune_host(host: Node) -> void:
 	if not _live(host):
@@ -60,7 +58,9 @@ static func rebuild_list(host: Node) -> void:
 	for i: int in n:
 		var row: Dictionary = Split.row_at(host, i)
 		var ii: int = i
-		var b: Button = ThemeS.btn(str(row.get("label", row.get("id", ""))), func() -> void: host._on_list_pressed(ii))
+		var role: String = str(row.get("role", "secondary"))
+		var b: Button = ThemeS.btn(str(row.get("label", row.get("id", ""))), func() -> void: host._on_list_pressed(ii), true, role)
+		b.set_meta("role", role)
 		b.focus_entered.connect(func() -> void: host._on_list_focus(ii))
 		b.mouse_entered.connect(func() -> void: host._on_list_hover(ii))
 		host.list_box.add_child(b)
@@ -111,10 +111,8 @@ static func paint_list(host: Node) -> void:
 		var b: Button = host.list_btns[i]
 		if not is_instance_valid(b):
 			continue
-		if i == selected:
-			b.add_theme_color_override("font_color", GOLD)
-		else:
-			b.remove_theme_color_override("font_color")
+		var role: String = str(b.get_meta("role", "secondary"))
+		ThemeS.paint_tab(b, i == selected, role)
 	if host.has_method("_place_chevron"):
 		host.call_deferred("_place_chevron")
 	else:

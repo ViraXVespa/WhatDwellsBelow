@@ -33,6 +33,7 @@ if str(TOOLS_DIR) not in sys.path:
 
 import agent_log  # noqa: E402
 import bot_gate_lib  # noqa: E402
+import unit_lib  # noqa: E402
 from load_routes import (  # noqa: E402
     CYCLE_ROLES,
     TOPIC_CYCLE_ROLES,
@@ -146,46 +147,6 @@ REQUIRED_BOOT_MAX = {
         "BOT.md",
     ),
 }
-BUILTIN_FETCH_BANS = {
-    "design/web-session.md": (
-        "check against `design/`",
-        "check the change against `design/`",
-        "reopen the agents file",
-        "left context",
-    ),
-    "design/grok-build.md": (
-        "reopen the agents file",
-        "left context",
-    ),
-    "BOT.md": (
-        "reopen the agents file",
-        "left context",
-    ),
-    "design/grok-bot-size.md": (
-        "reopen the agents file",
-        "left context",
-    ),
-    "design/protocol.md": (
-        "topic index (one row): `design/README.md`",
-    ),
-}
-RECIPE_PHRASE_BANS = (
-    "Grok Bot every task",
-    "open the Bot door",
-    "open the Bot path",
-)
-RITUAL_PHRASES = (
-    "leave-off",
-    "session-log file",
-    "pin scripts",
-    "invent queue rows",
-    "cloud clone",
-    "paste-emit",
-    "share the week pin",
-    "ship per the door",
-    "left context",
-    "full-repo sweep",
-)
 INDEX_NO_TOPIC = (
     "design/README.md",
     "design/code-map.md",
@@ -581,6 +542,16 @@ def boot_budget_fails(root: Path, routes: dict) -> list[str]:
     return fails
 
 
+def set_budget_fails(root: Path) -> list[str]:
+    """Bot mode only: the groups of files Build reads together (boot set, start-read set) stay within their summed on-disk budget."""
+    fails: list[str] = []
+    for name, (cap, files) in bot_gate_lib.set_budgets(root).items():
+        total = sum((root / f).stat().st_size for f in files if (root / f).is_file())
+        if total > cap:
+            fails.append(f"read set over byte budget: {name} is {total} bytes, budget {cap} ({bot_gate_lib.BUDGETS})")
+    return fails
+
+
 def boot_instruct_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     fails: list[str] = []
     listed = boot_max(routes)
@@ -620,11 +591,6 @@ def boot_instruct_fails(routes: dict, texts: dict[str, str]) -> list[str]:
 def fetch_ban_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     fails: list[str] = []
     merged: dict[str, list[str]] = {}
-    for posix, phrases in BUILTIN_FETCH_BANS.items():
-        merged.setdefault(posix, [])
-        for phrase in phrases:
-            if phrase not in merged[posix]:
-                merged[posix].append(phrase)
     for posix, phrases in fetch_ban(routes).items():
         merged.setdefault(posix, [])
         for phrase in phrases:
@@ -641,17 +607,19 @@ def fetch_ban_fails(routes: dict, texts: dict[str, str]) -> list[str]:
     return fails
 
 
-def recipe_phrase_fails(routes: dict, texts: dict[str, str]) -> list[str]:
+CAP_RE = re.compile(r"script cap|size cap|line cap|over the (?:\w+ )?cap|near the (?:\w+ )?cap|ship floor|size floor|byte budget|(?:under|over) \d+ ?KB", re.I)
+CAP_OK = ("BOT.md", "GROK-BOT.md", "design/refactor.md")
+
+
+def cap_wording_fails(texts: dict[str, str]) -> list[str]:
+    """Size and cap wording belongs to the Bot only: no such phrase in a doc Build or Web can open (the Bot docs, BOT.md and refactor.md are exempt)."""
     fails: list[str] = []
-    recipe_files = {str(v) for v in (routes.get("recipes") or {}).values()}
-    for posix in sorted(recipe_files):
-        text = texts.get(posix)
-        if text is None:
+    for posix, body in sorted(texts.items()):
+        if posix.startswith(("design/changelog/", "design/grok-bot-")) or posix in CAP_OK:
             continue
-        lowered = text.lower()
-        for phrase in RECIPE_PHRASE_BANS:
-            if phrase.lower() in lowered:
-                fails.append(f"recipe names bot flow: {posix} ({phrase})")
+        m = CAP_RE.search(body)
+        if m:
+            fails.append(f"size/cap wording in a Build-facing doc: {posix} ({m.group(0)!r}); caps stay Bot-only")
     return fails
 
 
@@ -847,6 +815,7 @@ def main() -> int:
 
     fails.extend(increment6_schema_fails(routes))
     fails.extend(route_map_fails(root, routes))
+    fails.extend(unit_lib.unit_fails(root, routes))
     fails.extend(read_when_overlaps(routes))
     fails.extend(conflict_fails(routes))
 
@@ -861,10 +830,6 @@ def main() -> int:
             fails.append(f"See also field present: {posix}")
         if re.search(r"\bGDD\b|Demo_GDD\.md", text):
             fails.append(f"leftover GDD token: {posix}")
-        lowered = text.lower()
-        for phrase in RITUAL_PHRASES:
-            if phrase.lower() in lowered:
-                fails.append(f"ritual phrase in {posix}: {phrase}")
         if re.search(r"notes/[A-Za-z0-9]", text):
             fails.append(f"names notes/ file: {posix}")
         if posix == "design/doc-refactor.md" and re.search(
@@ -967,10 +932,11 @@ def main() -> int:
     fails.extend(index_topic_cite_fails(routes, texts))
     fails.extend(smash_fails(root, texts))
     fails.extend(fetch_ban_fails(routes, texts))
-    fails.extend(recipe_phrase_fails(routes, texts))
+    fails.extend(cap_wording_fails(texts))
     fails.extend(boot_instruct_fails(routes, texts))
     if bot_gate_lib.enabled(args):
         fails.extend(boot_budget_fails(root, routes))
+        fails.extend(set_budget_fails(root))
     fails.extend(citation_budget_fails(routes, texts))
     fails.extend(load_ban_fails(routes, texts))
     fails.extend(job_cell_token_fails(routes, texts))

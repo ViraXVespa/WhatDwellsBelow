@@ -4,9 +4,10 @@ from pathlib import Path
 from PIL import Image, ImageFilter
 import math
 import shutil
-from imglib import geom, imgio  # noqa: E402
+from imglib import geom, imgio, key as plate_key  # noqa: E402
 from imglib.color import dist  # noqa: E402
 from imglib.geom import fit_box  # noqa: E402
+import numpy as np
 import sys
 
 _TOOLS = Path(__file__).resolve().parent
@@ -40,14 +41,15 @@ def is_green(rgb, bg) -> bool:
 def key(im: Image.Image) -> Image.Image:
     im = im.convert("RGBA")
     bg = sample_bg(im)
-    px = im.load()
-    w, h = im.size
-    for y in range(h):
-        for x in range(w):
-            r, g, b, a = px[x, y]
-            if is_green((r, g, b), bg):
-                px[x, y] = (0, 0, 0, 0)
-    return im
+    if plate_key.looks_like_plate(bg):
+        return plate_key.punch(im)
+    arr = np.array(im)
+    rgb = arr[:, :, :3].astype(np.int16)
+    r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
+    bg_d = np.sqrt(((rgb.astype(np.float32) - np.array(bg, np.float32)) ** 2).sum(axis=-1))
+    green = (bg_d <= THRESH) | ((g > 140) & (g > r + 36) & (g > b + 36))
+    arr[green] = 0
+    return Image.fromarray(plate_key.strip_rim(arr), "RGBA")
 
 
 def fit(im: Image.Image, canvas: int, pad: int = 8) -> Image.Image:

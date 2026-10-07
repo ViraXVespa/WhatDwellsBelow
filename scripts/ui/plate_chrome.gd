@@ -1,11 +1,17 @@
 extends Object
 
+const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
+
 ## Unified dungeon overlay plate tokens + ColorRect helpers (design/reuse-map.md Kit A / BOT-01).
 
-const DIM := Color(0.03, 0.02, 0.02, 0.82)
-const PLATE := Color(0.13, 0.10, 0.08, 0.97)
-const EDGE := Color(0.55, 0.42, 0.22, 1)
-const EDGE_H := 8
+const DIM := Color(0.16, 0.10, 0.06, 0.55)
+const PLATE: Color = Tok.PAPER
+const EDGE: Color = Tok.RULE
+const EDGE_H := 3
+const DIM_PLAIN := Color(0.03, 0.02, 0.02, 0.82)
+const PLATE_PLAIN := Color(0.13, 0.10, 0.08, 0.97)
+const EDGE_PLAIN := Color(0.55, 0.42, 0.22, 1)
+const EDGE_H_PLAIN := 8
 
 static func dim(parent: Node, color: Color = DIM) -> ColorRect:
 	var r := ColorRect.new()

@@ -7,16 +7,17 @@ const T := preload("res://scripts/data/tunables.gd")
 const PadInput := preload("res://scripts/ui/touch_hud/hud_input.gd")
 const Binds := preload("res://scripts/input/binds.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
+const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 
-const INK := Color(0.92, 0.84, 0.62, 0.78)
-const INK_DIM := Color(0.92, 0.84, 0.62, 0.28)
-const WELL := Color(0.22, 0.16, 0.12, 0.32)
-const WELL_DIM := Color(0.16, 0.12, 0.10, 0.20)
-const RING := Color(0.5, 0.38, 0.2, 0.52)
-const RING_DIM := Color(0.4, 0.3, 0.16, 0.26)
-const KNOB := Color(0.9, 0.7, 0.3, 0.82)
-const PRESS := Color(0.16, 0.12, 0.08, 0.48)
-const LATCH := Color(0.95, 0.78, 0.35, 0.78)
+const INK := Color(Tok.INK, 0.94)
+const INK_DIM := Color(Tok.INK_SOFT, 0.55)
+const WELL := Color(Tok.PAPER, 0.90)
+const WELL_DIM := Color(0.90, 0.84, 0.72, 0.55)
+const RING := Color(Tok.RULE, 0.90)
+const RING_DIM := Tok.RULE_QUIET
+const KNOB := Color(Tok.INK, 0.88)
+const PRESS := Color(Tok.PAPER_DEEP, 0.94)
+const LATCH := Color(Tok.DANGER, 0.92)
 
 static func ready(host: CanvasLayer) -> void:
 	host.layer = 28

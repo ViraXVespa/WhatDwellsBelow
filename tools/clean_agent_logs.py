@@ -5,7 +5,7 @@
     python tools/clean_agent_logs.py --new-week     # human-only: wipes every run summary, index and raw log + scratch dirs
 Default: delete raw *.log / *.err (run summaries and index.txt stay; each run keeps its own stamped files and the
 newest 20 stay per folder, run_log_lib.py). Summary: _logs/clean/ (its own stamped run files).
-Old spellings: -KeepRaw -MaxAgeHours -WhatIf -NewWeek.
+
 """
 from __future__ import annotations
 
@@ -21,9 +21,9 @@ import run_log_lib
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Delete raw logs (and with --new-week old summaries) under _logs/.", writes=True, json_out=True)
-    ap.add_argument("--keep-raw", "-KeepRaw", action="store_true", help="Keep raw .log/.err files (summaries still follow --max-age-hours).")
-    ap.add_argument("--max-age-hours", "-MaxAgeHours", type=float, default=0, help="Only delete raw logs older than this many hours (default 0 = all).")
-    ap.add_argument("--new-week", "-NewWeek", action="store_true", help="Also delete old summaries (start of a week).")
+    ap.add_argument("--keep-raw", action="store_true", help="Keep raw .log/.err files (summaries still follow --max-age-hours).")
+    ap.add_argument("--max-age-hours", type=float, default=0, help="Only delete raw logs older than this many hours (default 0 = all).")
+    ap.add_argument("--new-week", action="store_true", help="Also delete old summaries (start of a week).")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     logs = root / "_logs"

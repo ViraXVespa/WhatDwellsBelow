@@ -22,8 +22,6 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | `i2v_seeds.py` | I2V plates: splice or single cell, exact integer nearest-neighbor scale, leave chroma | D | `--help` | N |
 | `make_sfx.py` | Placeholder SFX wavs from `tools/sfx-cues.json` (one entry per cue; sine, noise, mix, cat nodes). `--list`, `--only`, `--prefix`, `--dry-run`, `--check` (render to temp and compare with `assets/audio`; the 21 p2/p9 cues are byte-identical). A new cue is one JSON entry, not a new script | D | `--help` | N |
 | `sfx-cues.json` | Cue specs read by `make_sfx.py` (name, scale, graph) | D | - | N |
-| `make_p2_sfx.py` | Shim -> `make_sfx.py --prefix p2_`, one release | D | `--help` | N |
-| `make_p9_sfx.py` | Shim -> `make_sfx.py --prefix p9_`, one release | D | `--help` | N |
 | `make_placeholder_audio.py` | Write tiny placeholder WAV loops and one-shot SFX. Final music is by Vira | D | `--help` | N |
 | `match_keyed_region.py` | Match a keyed source region against a live sprite, and sort local sources | D | `--help` | N |
 | `pack_facing_fix.py` | Pack corrected left-facing player sheets with magenta key + despill | D | `--help` | N |

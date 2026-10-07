@@ -58,12 +58,7 @@ static func _add_strip(box: Control, parts: Array) -> void:
 	box.add_child(strip)
 
 static func _paint_opt(b: Button, it: Dictionary) -> void:
-	var fill: Color = Icons.rarity_fill(it)
-	var border: Color = Icons.rarity_border(it)
-	b.add_theme_stylebox_override("normal", ThemeS.sb(fill, border))
-	b.add_theme_stylebox_override("hover", ThemeS.sb(fill.lightened(0.12), border))
-	b.add_theme_stylebox_override("pressed", ThemeS.sb(fill.darkened(0.1), border))
-	b.add_theme_stylebox_override("focus", ThemeS.sb(fill.lightened(0.14), border))
+	ThemeS.paint_plate(b, Icons.rarity_fill(it), Icons.rarity_border(it), false)
 
 static func close_sub(ui: CanvasLayer) -> void:
 	var Act = _act()

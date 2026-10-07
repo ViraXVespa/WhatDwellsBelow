@@ -15,6 +15,8 @@ static func build_title(_ui: CanvasLayer, mode: String, _title_col: Color) -> St
 	elif mode == "anvil":
 		title = App.tr("common.anvil")
 		_title_col = Color(0.95, 0.78, 0.42)
+	elif mode == "extract":
+		title = App.tr("common.extraction_gate")
 	return title
 
 static func build_subtitle(_ui: CanvasLayer, mode: String) -> String:
@@ -22,6 +24,8 @@ static func build_subtitle(_ui: CanvasLayer, mode: String) -> String:
 		return App.tr("board_build.choose_holds_or_stash_gear")
 	elif mode == "anvil":
 		return App.tr("board_build.analyze_destroys_a_piece_forge")
+	elif mode == "extract":
+		return App.tr("inv.mail_goods_to_the_surface")
 	return ""
 
 static func build_status_text(mode: String) -> String:
@@ -34,17 +38,18 @@ static func plain_lab(t: String, size: int, col: Color) -> Label:
 	l.text = t
 	l.autowrap_mode = TextServer.AUTOWRAP_OFF
 	l.clip_text = false
+	l.add_theme_font_override("font", ThemeS.ink_font())
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", col)
-	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	l.add_theme_constant_override("outline_size", 6)
+	l.add_theme_color_override("font_outline_color", ThemeS.OUTLINE)
+	l.add_theme_constant_override("outline_size", 0)
 	return l
 
 static func sync_chrome(ui: CanvasLayer) -> void:
 	if ui.get("gear_page_left") is Control:
-		PromptView.fill(ui.gear_page_left, [{"action": Prompts.page_prev()}], 16, Color(0.72, 0.66, 0.52))
+		PromptView.fill(ui.gear_page_left, [{"action": Prompts.page_prev()}], 16, ThemeS.INK_SOFT)
 	if ui.get("gear_page_right") is Control:
-		PromptView.fill(ui.gear_page_right, [{"action": Prompts.page_next()}], 16, Color(0.72, 0.66, 0.52))
+		PromptView.fill(ui.gear_page_right, [{"action": Prompts.page_next()}], 16, ThemeS.INK_SOFT)
 
 static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	var panel := PanelContainer.new()
@@ -53,7 +58,12 @@ static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.focus_mode = Control.FOCUS_NONE
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.12, 0.1, 0.08), Color(0.45, 0.34, 0.18)))
+	if ui.has_meta("journal_sheet"):
+		panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		panel.custom_minimum_size = Vector2(0, 0)
+		panel.add_theme_stylebox_override("panel", ThemeS._ink_box(Color(0, 0, 0, 0), ThemeS.INK, 1, 1))
+	else:
+		panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.12, 0.1, 0.08), Color(0.45, 0.34, 0.18)))
 	var vb := VBoxContainer.new()
 	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vb.add_theme_constant_override("separation", 8)
@@ -66,7 +76,7 @@ static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	left.custom_minimum_size = Vector2(84, 28)
 	left.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var mid := plain_lab("", 20, Color(1, 0.92, 0.55))
+	var mid := plain_lab("", 20, ThemeS.INK)
 	mid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mid.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -80,12 +90,19 @@ static func build_stats_card(ui: CanvasLayer) -> PanelContainer:
 	head.add_child(mid)
 	head.add_child(right)
 	vb.add_child(head)
-	var body := plain_lab("", 16, Color(0.9, 0.84, 0.7))
+	var body := plain_lab("", 16, ThemeS.INK_SOFT)
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vb.add_child(body)
+	if ui.has_meta("journal_sheet"):
+		body.visible = false
+		var rows: VBoxContainer = VBoxContainer.new()
+		rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		rows.add_theme_constant_override("separation", 0)
+		vb.add_child(rows)
+		ui.set_meta("journal_stat_rows", rows)
 	ui.gear_stats_title = mid
 	ui.gear_stats = body
 	ui.gear_page_left = left
@@ -107,7 +124,7 @@ static func build_slot_btn(_ui: CanvasLayer, slot: String) -> Button:
 		b.text = "▸"
 		b.alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		b.add_theme_font_size_override("font_size", 18)
-		b.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
+		b.add_theme_color_override("font_color", ThemeS.INK)
 	return b
 
 static func build_bag_cell(_ui: CanvasLayer, it: Dictionary) -> Button:
@@ -134,12 +151,4 @@ static func build_bag_cell(_ui: CanvasLayer, it: Dictionary) -> Button:
 	return b
 
 static func _paint_item_btn(b: Button, it: Dictionary) -> void:
-	var fill: Color = Icons.rarity_fill(it)
-	var border: Color = Icons.rarity_border(it)
-	var hover: Color = fill.lightened(0.12)
-	var press: Color = fill.darkened(0.12)
-	b.add_theme_stylebox_override("normal", ThemeS.sb(fill, border))
-	b.add_theme_stylebox_override("hover", ThemeS.sb(hover, border))
-	b.add_theme_stylebox_override("pressed", ThemeS.sb(press, border))
-	b.add_theme_stylebox_override("focus", ThemeS.sb(hover, border))
-	b.add_theme_stylebox_override("disabled", ThemeS.sb(Color(0.11, 0.09, 0.08), Color(0.22, 0.18, 0.14)))
+	ThemeS.paint_plate(b, Icons.rarity_fill(it), Icons.rarity_border(it), false)

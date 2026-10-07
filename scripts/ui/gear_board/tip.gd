@@ -1,7 +1,7 @@
 extends Object
 const TipPlace := preload("res://scripts/ui/tip_place.gd")
 
-const ThemeS := preload("res://scripts/ui/theme.gd")
+const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const Text := preload("res://scripts/ui/gear_board/board_text.gd")
 
 static func on(ui: CanvasLayer, key: String) -> bool:
@@ -24,12 +24,8 @@ static func ensure_tip(ui: CanvasLayer) -> void:
 			ui.gear_tip = existing
 		host.z_index = 80
 		return
-	var panel := PanelContainer.new()
+	var panel: PanelContainer = UiBuild.tip_panel(80)
 	panel.name = "gear_tip_host"
-	panel.visible = false
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.z_index = 80
-	panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.09, 0.07, 0.05, 0.97), Color(0.85, 0.68, 0.32)))
 	var pad := MarginContainer.new()
 	pad.name = "pad"
 	pad.add_theme_constant_override("margin_left", 10)
@@ -39,13 +35,9 @@ static func ensure_tip(ui: CanvasLayer) -> void:
 	panel.add_child(pad)
 	var lab := Label.new()
 	lab.name = "lab"
-	lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lab.clip_text = false
 	lab.custom_minimum_size = Vector2(360, 0)
-	lab.add_theme_font_size_override("font_size", 18)
-	lab.add_theme_color_override("font_color", Color(0.93, 0.86, 0.72))
-	lab.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	lab.add_theme_constant_override("outline_size", 6)
+	UiBuild.tip_text(lab, 18)
 	pad.add_child(lab)
 	ui.add_child(panel)
 	ui.gear_tip_host = panel

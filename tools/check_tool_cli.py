@@ -36,8 +36,8 @@ PRINTERS = {"bible_prompt", "attack_keyframes", "i2v_seeds", "read_summary"}
 NO_ROOT: set[str] = set()
 EXEMPT_RESULT = {"agent_log", "wdb_scratch_server"}  # run helper itself; long-running HTTP server
 WRITERS = {
-    "doc_patch", "patch_code_map", "code_map", "tunables", "build_changelog",
-    "week_pin", "write_utf8_file", "list_unused_funcs", "bot_opt", "split_funcs", "facade_requal",
+    "doc_patch", "code_map", "tunables", "build_changelog",
+    "week_pin", "list_unused_funcs", "bot_opt", "split_funcs", "facade_requal",
     "move_script_cluster", "archive_prior_changelogs", "enable_texture_mips", "ci_archive",
 }
 # flags `--help` must list (tool contract extras beyond --root/--dry-run); web_perf is advisory, so it needs --strict to fail
@@ -58,7 +58,6 @@ SMOKE: dict[str, list] = {
     "bot_status": [[], ["--bot"]],
     "bot_warnscan": [["--list"]],
     "build_changelog": [["--dry-run"]],
-    "check_code_map": [[]],
     "check_load_graph": [[], ["--bot"]],
     "check_script_cap": [[], ["--git-changed"], ["--sweep"], ["--bot"], ["--bot", "--sweep"], ["--bot", "--list", "--over-kb", "8"], ["--selftest"]],
     "ci_archive": [["--dry-run"], ["--selftest"]],
@@ -78,11 +77,11 @@ SMOKE: dict[str, list] = {
     "list_dupes": [["--lang", "py"]],
     "list_facade_cluster": [["scripts/graphics/mesh_commit.gd"]],
     "list_oversize_docs": [[], ["--bot"]],
-    "list_route": [[], ["debug.smokes"]],
+    "list_route": [[], ["debug.smokes"], ["--digest", "--door", "debug"]],
     "list_scenes": [[]],
     "list_unused_funcs": [["--dry-run"]],
-    "list_xref": [["bot_status"]],
-    "make_p2_sfx": [["--dry-run"]], "make_p9_sfx": [["--dry-run"]], "make_placeholder_audio": [["--dry-run"]],
+    "list_xref": [["bot_status"], ["bot_status", "--all"]],
+    "make_placeholder_audio": [["--dry-run"]],
     "pack_facing_fix": [(["--dry-run"], _ERR)], "pack_locomotion": [["--dry-run"]], "pack_oneshot": [["--dry-run"]],
     "pack_p2_art": [(["--dry-run"], _ERR)], "pack_turntable": [(["--dry-run"], _ERR)], "pack_walk": [(["--dry-run"], _ERR)],
     "pages_game_hash": [[]],
@@ -91,18 +90,21 @@ SMOKE: dict[str, list] = {
     "process_world": [(["--dry-run"], _ERR)], "process_world_pass": [(["--dry-run"], _ERR)],
     "read_summary": [["bot-status"], ["bot-status", "--index"]],
     "rekey_stills": [(["--dry-run"], _ERR)],
-    "report_grok_sessions": [[]], "report_grok_week": [["--dry-run"]],
-    "run_shot_flow": [["--list"]],
+    "run_shot_flow": [["--list"], ["--survey", "--flow", "camp-inventory"], ["--selftest"]],
+    "show_png": [["--selftest"]], "shot_crop": [["--selftest"]], "commit_slice": [["--selftest"]],
     "make_sfx": [["--list"], ["--dry-run", "--prefix", "p2_"], ["--check", "--prefix", "p9_"]],
     "move_script_cluster": [(["--stem", "zzz", "--from-dir", "scripts/zzz", "--to-dir", "scripts/yyy", "--dry-run"], _ERR)],
     "show_func": [(["--path", "scripts/graphics/mesh_commit.gd", "--name", "no_such_func"], _ERR)],
     "split_funcs": [["scripts/graphics/mesh_commit.gd", "--list"]],
     "summarize_scripts": [[]],
+    "bot_load_audit": [["--selftest"]],
+    "open_slice": [["--dry-run", "--ref", "HEAD"], ["--dry-run", "--ref", "HEAD", "player"], ["--selftest"]],
     "start_build_slice": [["--door", "debug", "--job", "debug.smokes", "--dry-run", "--ref", "HEAD"], ["--selftest"]],
     "tunables": [["get", "--key", "x"], ["get", "x"]],
     "week_pin": [["--dry-run", "--id", "smoke", "--label", "l", "--desc", "d", "--commit", "abc"], ["--dry-run", "--web", "5"], ["--dry-run", "--build", "6"]],
     "week_start": [["--dry-run"]],
 }
+ABS_ROOT_TOOLS = {"list_xref", "open_slice", "show_func", "file_stat", "list_changed", "read_summary", "check_shot_gaps", "run_shot_flow", "run_godot_import_check"}  # print the absolute root they read
 SMOKE_MAX_LINES = 40  # stdout line budget per smoke run
 SMOKE_LINES = {"list_dupes": 70, "bot_status": 60, "list_oversize_docs": 120}  # per-tool override for reports that are the payload
 SMOKE_NO_RESULT = PRINTERS | {"agent_log", "wdb_scratch_server"}
@@ -234,7 +236,7 @@ def smoke_one(sb: Path, stem: str, case: "list[str] | tuple", bad: list[str], ta
         bad.append(f"NOISE   {label}: {lines} lines (budget {SMOKE_LINES.get(stem, SMOKE_MAX_LINES)})")
     if not out.isascii() and stem not in PRINTERS:
         bad.append(f"ASCII   {label}: non-ASCII output")
-    if sb.as_posix() in out and "--doctor" not in args:  # --doctor echoes the GODOT_BIN pin (a machine path)
+    if sb.as_posix() in out and "--doctor" not in args and stem not in ABS_ROOT_TOOLS:  # these print the absolute root they scanned / run from  # --doctor echoes the GODOT_BIN pin (a machine path)
         bad.append(f"ABSPATH {label}: prints absolute paths (use repo-relative)")
     if "--dry-run" in args and "--help" not in args:
         rc, status = repo_lib.run_git(sb, "status", "--porcelain")

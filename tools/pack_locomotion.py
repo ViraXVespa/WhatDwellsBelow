@@ -16,11 +16,21 @@ sys.path.insert(0, str(ROOT / "tools"))
 import i2v_seeds  # noqa: E402
 import plate_remap as pr  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
-from imglib import geom, imgio  # noqa: E402
+from imglib import geom, imgio, key as plate_key  # noqa: E402
 import agent_log  # noqa: E402
 
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
-FINAL = ROOT / "_src" / "walk_final"
+
+
+def clip_dir(name: str) -> Path:
+    """Unkeyed clips live under _src/sources/clips. A legacy _src/<name> folder still works."""
+    modern = ROOT / "_src" / "sources" / "clips" / name
+    if modern.is_dir():
+        return modern
+    return ROOT / "_src" / name
+
+
+FINAL = clip_dir("walk_final")
 OUT = ROOT / "assets" / "sprites" / "player"
 RAW = ROOT / "_src" / "walk_harvest"
 BIBLES = {
@@ -413,10 +423,11 @@ def _magenta_lip(arr: np.ndarray, hue_width: float) -> np.ndarray:
 
 
 def finish_matte(im: Image.Image, rim: int, hue_width: float) -> Image.Image:
-    """Despill then punch a magenta lip at canvas resolution (after 128-fit)."""
+    """Punch the pink lip, then despill a milder cast at canvas resolution (after 128-fit)."""
     if rim <= 0:
         return im
     arr = np.array(im.convert("RGBA"))
+    arr = plate_key.strip_rim(arr, hue_width=max(float(hue_width), plate_key.RIM_HUE_WIDTH), passes=max(rim, 12))
     clear = arr[:, :, 3] < 16
     band = _near_clear(clear, rim + 1)
     rgb = arr[:, :, :3].astype(np.int16)

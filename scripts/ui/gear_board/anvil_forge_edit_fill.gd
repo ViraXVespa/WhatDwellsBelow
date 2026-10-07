@@ -12,14 +12,14 @@ static func _fill_edit(ui: CanvasLayer, box: Control, slot: String) -> Control:
 	var _fac = load("res://scripts/ui/gear_board/anvil_forge_edit.gd")
 	var types: PackedStringArray = ForgeP.types_for(App.prog, slot)
 	if types.is_empty():
-		box.add_child(ThemeS.lab(App.tr("anvil_forge_edit_fill.analyze_this_slot_before_you"), 18, Color(0.78, 0.74, 0.66)))
+		box.add_child(ThemeS.lab(App.tr("anvil_forge_edit_fill.analyze_this_slot_before_you"), 18, ThemeS.INK_SOFT))
 		return null
 	_fac._ensure(ui, slot, types)
 	var want := str(ui.get_meta("forge_focus", ""))
 	var hit: Control = null
 	var first: Control = null
 	if types.size() > 1:
-		box.add_child(ThemeS.lab(App.tr("anvil_forge_edit_fill.type"), 16, Color(0.82, 0.76, 0.66)))
+		box.add_child(ThemeS.lab(App.tr("anvil_forge_edit_fill.type"), 16, ThemeS.INK_SOFT))
 		var trow := HBoxContainer.new()
 		trow.add_theme_constant_override("separation", 8)
 		for id: String in types:
@@ -34,7 +34,7 @@ static func _fill_edit(ui: CanvasLayer, box: Control, slot: String) -> Control:
 			if key == want:
 				hit = b
 		box.add_child(trow)
-	box.add_child(ThemeS.lab(App.tr("anvil_forge_edit_fill.rarity"), 16, Color(0.82, 0.76, 0.66)))
+	box.add_child(ThemeS.lab(App.tr("anvil_forge_edit_fill.rarity"), 16, ThemeS.INK_SOFT))
 	var rarow := HBoxContainer.new()
 	rarow.add_theme_constant_override("separation", 8)
 	for rare: String in ["green", "blue"]:
@@ -87,9 +87,9 @@ static func _fill_edit(ui: CanvasLayer, box: Control, slot: String) -> Control:
 	box.add_child(ThemeS.lab(
 		App.tr("anvil_forge_edit_fill.cost_g_ore_wood_wait") % [int(bill.gold), int(bill.ore), int(bill.wood), wait],
 		16,
-		Color(0.8, 0.85, 0.7) if pay_ok else Color(0.95, 0.55, 0.4),
+		ThemeS.INK_SOFT if pay_ok else ThemeS.DANGER,
 	))
-	var go: Button = ThemeS.btn(App.tr("anvil_forge_edit_fill.forge_x") % qty, func(): load("res://scripts/ui/gear_board/anvil_forge.gd").start(ui))
+	var go: Button = ThemeS.btn(App.tr("anvil_forge_edit_fill.forge_x") % qty, func(): load("res://scripts/ui/gear_board/anvil_forge.gd").start(ui), true, "primary")
 	go.set_meta("forge_key", "go")
 	go.disabled = not pay_ok
 	go.focus_mode = Control.FOCUS_NONE if go.disabled else Control.FOCUS_ALL

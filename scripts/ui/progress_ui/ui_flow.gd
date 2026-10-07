@@ -8,6 +8,9 @@ const ForgeUI := preload("res://scripts/ui/gear_board/anvil_forge.gd")
 const MenuPad := preload("res://scripts/ui/menu_pad.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
+const Plate := preload("res://scripts/ui/plate_chrome.gd")
+const FrameSet: GDScript = preload("res://scripts/ui/progress_ui/frame_set.gd")
+const DumpsterFrame: GDScript = preload("res://scripts/ui/progress_ui/dumpster_frame.gd")
 
 static func _ready(host: CanvasLayer) -> void:
 	host.layer = 45
@@ -16,22 +19,26 @@ static func _ready(host: CanvasLayer) -> void:
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
-	dim.color = Color(0.04, 0.03, 0.02, 0.74)
+	dim.color = Plate.DIM
 	host.add_child(dim)
 	var panel := ColorRect.new()
-	panel.color = Color(0.14, 0.11, 0.09, 0.96)
+	panel.name = "plate"
+	panel.color = Plate.PLATE
 	panel.position = Vector2(360, 80)
 	panel.size = Vector2(1200, 920)
 	host.add_child(panel)
 	var edge := ColorRect.new()
-	edge.color = Color(0.55, 0.42, 0.22, 1)
+	edge.name = "plate_edge"
+	edge.color = Plate.EDGE
 	edge.position = Vector2(360, 80)
-	edge.size = Vector2(1200, 8)
+	edge.size = Vector2(1200, Plate.EDGE_H)
 	host.add_child(edge)
 	var scroll := ScrollContainer.new()
+	scroll.name = "plate_scroll"
 	scroll.position = Vector2(384, 104)
 	scroll.size = Vector2(1152, 832)
 	host.add_child(scroll)
+	FrameSet.mount(host)
 	host.box = VBoxContainer.new()
 	host.box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.box.add_theme_constant_override("separation", 8)
@@ -100,9 +107,9 @@ static func open_flavor(host: CanvasLayer, title: String, body: String) -> void:
 	host.mode = "flavor"
 	host._drop_sub()
 	host._clear()
-	host.box.add_child(ThemeS.lab(title, 28, Color(0.95, 0.82, 0.5)))
-	host.box.add_child(ThemeS.lab(body, 22, Color(0.88, 0.82, 0.7)))
+	DumpsterFrame.prepare(host, title, body)
 	host.focus_btn = ThemeS.btn(App.tr("common.leave"), func(): host.close_ui())
+	DumpsterFrame.dress(host.focus_btn)
 	host.box.add_child(host.focus_btn)
 	host._show()
 

@@ -2,12 +2,13 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
+const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 
 const COL_LIVE := Color(1, 1, 1, 1)
 const COL_DIM := Color(0.55, 0.52, 0.48, 1)
-const RULE_ON := Color(0.95, 0.78, 0.35, 1)
-const RULE_OFF := Color(0.35, 0.28, 0.18, 1)
-const GOLD := Color(1, 0.92, 0.45, 1)
+const RULE_ON: Color = Tok.RULE
+const RULE_OFF: Color = Color(Tok.RULE, 0.35)
+const GOLD: Color = Tok.INK
 
 static func setup_overlay(host: Node, title_text: String, hint_text: String) -> void:
 	host.layer = 62
@@ -16,15 +17,15 @@ static func setup_overlay(host: Node, title_text: String, hint_text: String) -> 
 	Plate.dim(host)
 	Plate.plate(host, Vector2(160, 70), Vector2(1600, 940))
 	Plate.edge(host, Vector2(160, 70), 1600.0)
-	var title: Label = ThemeS.lab(title_text, 32, Color(0.95, 0.86, 0.55))
+	var title: Label = ThemeS.lab(title_text, 32, ThemeS.INK)
 	title.position = Vector2(192, 92)
 	title.size = Vector2(700, 48)
 	host.add_child(title)
-	var hint: Label = ThemeS.lab(hint_text, 18, Color(0.8, 0.76, 0.66))
+	var hint: Label = ThemeS.lab(hint_text, 18, ThemeS.INK_SOFT)
 	hint.position = Vector2(192, 140)
 	hint.size = Vector2(520, 36)
 	host.add_child(hint)
-	host._path = ThemeS.lab("", 18, Color(0.95, 0.86, 0.55))
+	host._path = ThemeS.lab("", 18, ThemeS.INK)
 	host._path.position = Vector2(740, 140)
 	host._path.size = Vector2(980, 36)
 	host.add_child(host._path)
@@ -34,7 +35,7 @@ static func setup_overlay(host: Node, title_text: String, hint_text: String) -> 
 	host._chevron.size = Vector2(24, 36)
 	host._chevron.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	host.add_child(host._chevron)
-	host.status = ThemeS.lab("", 18, Color(0.95, 0.8, 0.45))
+	host.status = ThemeS.lab("", 18, ThemeS.INK)
 	host.status.position = Vector2(192, 920)
 	host.status.size = Vector2(1520, 40)
 	host.add_child(host.status)
@@ -46,7 +47,7 @@ static func setup_embed(host: Node, parent: Control) -> void:
 		shell.set_anchors_preset(Control.PRESET_FULL_RECT)
 		shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	host._path = ThemeS.lab("", 18, Color(0.95, 0.86, 0.55))
+	host._path = ThemeS.lab("", 18, ThemeS.INK)
 	host._path.visible = false
 	parent.add_child(host._path)
 	host._list_rule = ColorRect.new()
@@ -71,7 +72,7 @@ static func setup_embed(host: Node, parent: Control) -> void:
 	host._chevron.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_anchor(host._chevron, 0.29, 0.31, 0.0, 0.0, 0.0, 0.0, 8.0, 44.0)
 	parent.add_child(host._chevron)
-	host.status = ThemeS.lab("", 16, Color(0.95, 0.8, 0.45))
+	host.status = ThemeS.lab("", 16, ThemeS.INK)
 	host.status.visible = false
 	parent.add_child(host.status)
 	host.list_btns = []

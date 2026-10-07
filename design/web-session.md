@@ -4,7 +4,7 @@ Status: protocol
 Read when: web / chat path; every web session after the repo-review message
 
 For **web / chat** only; Build and Bot ignore it.
-Intent: Vira owns design; Web helps make it real, treats the docs as the living plan, and may suggest improvements (one question at a time). Web may add a tool that helps later tasks (`tools.md` rule 5) and tells the User after.
+Intent: Vira owns design; Web helps make it real, treats the docs as the living plan, and may suggest improvements (ask freely). Web may add a tool that helps later tasks (`tools.md` rule 5) and tells the User after.
 Second topic door: ask the User to name the owner first. That is the second *writer*. If `conflicts_with` lists the pair, do not implement the second core in this slice. Reading both is allowed. Packed pass: when the User names several owners (or says one go / pack these) and the paths do not share a live file and `conflicts_with` does not list the pair, one scratch may revise those Source paths together. Still one `tools/_scratch.py`. Still User-paste. No inventing a system in a packed pass.
 The User pastes every emit. Never assume a disk write landed. Do not push `main` or make a side branch unless the User named it.
 
@@ -14,7 +14,7 @@ Proof rules (`prove.md`): intended outcome before a behavior change; a missing r
 I2V and complex animation packing stay in Grok Build unless the User says otherwise.
 Web / chat may generate non-tile images. It does not spawn the isolated media runner or Imagine tiled world assets (floor, brick, dirt, grass, seamless walls).
 
-If the next write would be an assumption, ask one blocking question and wait (not a phase change); do not answer it yourself.
+If the next write would be an assumption, ask, as many questions as needed, and wait (not a phase change); do not answer it yourself.
 
 ## Flows
 
@@ -48,7 +48,7 @@ The User tells the agent to review the repo.
 
 If the agents file already routed here, do not re-read it. Load `design/protocol.md` and `design/constraints.md` only when missing.
 If the first message names a park, load only that Open file after the law pair and continue; with a mandate, Phase 2 is optional. Closing a finished park deletes the Open file and its parked-tasks row (not rewritten as closed).
-If the User names build-coop or build-week, emit one gather scratch only (no game writes): `pack_grok_sessions` / `report_grok_sessions`, and `read_summary` only if the User also named a PC job. The User click-runs it; the paste is the packet. `_logs/sess/` is PC job output.
+If the User names build-coop or build-week, there is no gather tool: use `read_summary` only if the User also named a PC job (no game writes). `_logs/sess/` is PC job output.
 If no park or gather is named, confirm ready (brainstorm; no implementation).
 
 ### Phase 2 — Discuss

@@ -64,22 +64,22 @@ static func path_text(host: Node) -> void:
 static func info_panel(host: Node) -> void:
 	var e: Dictionary = host._cur()
 	if e.is_empty():
-		host.info_box.add_child(ThemeS.lab(App.tr("ui_view.no_archives"), 22, Color(0.85, 0.7, 0.55)))
+		host.info_box.add_child(ThemeS.lab(App.tr("ui_view.no_archives"), 22, ThemeS.INK_SOFT))
 		return
-	host.info_box.add_child(ThemeS.lab(str(e.label), 28, Color(0.95, 0.86, 0.55)))
-	host.info_box.add_child(ThemeS.lab(str(e.desc), 20, Color(0.88, 0.82, 0.72)))
+	host.info_box.add_child(ThemeS.lab(str(e.label), 28, ThemeS.INK))
+	host.info_box.add_child(ThemeS.lab(str(e.desc), 20, ThemeS.INK_SOFT))
 	var docs: PackedStringArray = host._docs_of(e)
 	var has_video: bool = str(e.get("video", "")) != ""
 	add_info_btn(host, ThemeS.btn(App.tr("ui_view.video"), host._on_video, has_video))
 	add_info_btn(host, ThemeS.btn(App.tr("ui_view.documents"), host._on_docs, docs.size() > 0))
-	add_info_btn(host, ThemeS.btn(App.tr("common.play"), host._on_play))
+	add_info_btn(host, ThemeS.btn(App.tr("common.play"), host._on_play, true, "primary"))
 
 static func docs_panel(host: Node) -> void:
 	var e: Dictionary = host._cur()
-	host.info_box.add_child(ThemeS.lab(App.tr("ui_view.documents_2") % str(e.label), 26, Color(0.95, 0.86, 0.55)))
+	host.info_box.add_child(ThemeS.lab(App.tr("ui_view.documents_2") % str(e.label), 26, ThemeS.INK))
 	var docs: PackedStringArray = host._docs_of(e)
 	if docs.is_empty():
-		host.info_box.add_child(ThemeS.lab(App.tr("common.no_documents_for_this_build"), 20, Color(0.8, 0.74, 0.64)))
+		host.info_box.add_child(ThemeS.lab(App.tr("common.no_documents_for_this_build"), 20, ThemeS.INK_SOFT))
 	var n: int = docs.size()
 	for i: int in n:
 		var ii: int = i
@@ -91,6 +91,6 @@ static func read_panel(host: Node) -> void:
 	var docs: PackedStringArray = host._docs_of(e)
 	var doc_i: int = int(host.doc_i)
 	var name: String = str(docs[doc_i]) if doc_i >= 0 and doc_i < docs.size() else ""
-	host.info_box.add_child(ThemeS.lab(Docs.display_name(name), 24, Color(0.95, 0.86, 0.55)))
-	host.info_box.add_child(ThemeS.lab(host._read_doc(str(e.get("id", "")), name), 16, Color(0.86, 0.82, 0.74)))
+	host.info_box.add_child(ThemeS.lab(Docs.display_name(name), 24, ThemeS.INK))
+	host.info_box.add_child(ThemeS.lab(host._read_doc(str(e.get("id", "")), name), 16, ThemeS.INK_SOFT))
 	add_info_btn(host, ThemeS.btn(App.tr("ui_view.back_to_documents"), host._back))

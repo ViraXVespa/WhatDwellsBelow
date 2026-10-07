@@ -1,6 +1,6 @@
 {
   "name": "dungeon-gate-shop",
-  "about": "Dungeon: open the extract gate by interacting, then the ghost shop panel by calling its open method (shops spawn only on some floors; a null spot shows the empty stock), shoot each, close with B. Template for dungeon-only panels. The world behind the panels animates (a bat at top right differs per run), so baseline diffs ignore the `mask` rectangle and any change under `tol` (torch flicker).",
+  "about": "Dungeon: stock a real extract kit (worn green weapon, worn blue helm, unsafe body in the bag, an artifact that stays, ore, wood, gold, root), open the extract gate by interacting, then the ghost shop panel by calling its open method (shops spawn only on some floors; a null spot shows the empty stock), shoot each, close with B. A starter-only delver is not a test of this screen. The world behind the panels animates (a bat at top right differs per run), so baseline diffs ignore the `mask` rectangle and any change under `tol` (torch flicker).",
   "scene": "dungeon",
   "seed": 1,
   "mask": [[1040, 20, 260, 100]],
@@ -11,6 +11,7 @@
   "smoke": true,
   "steps": [
     {"op": "device", "kind": "pad"},
+    {"op": "call", "target": "App.prog", "method": "stock_extract_shot", "args": []},
     {"op": "interact", "kind": "extract_gate", "near": true},
     {"op": "assert", "target": "host.ui.mode", "equals": "extract"},
     {"op": "shot", "name": "extract", "texts": true},

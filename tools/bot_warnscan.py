@@ -289,7 +289,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--phases", default="", help="shorthand for smoke phases, e.g. 1,2,6")
     p.add_argument("--map-floors", default="1", help="dungeon-map floors to sweep (default 1)")
     p.add_argument("--map-seed", type=int, default=42, help="Dungeon-map seed for the map sweep (default 42).")
-    p.add_argument("--timeout", "--timeout-sec", "-TimeoutSec", dest="timeout", type=int, default=90, help="Seconds per run (default 90).")
+    p.add_argument("--timeout", "--timeout-sec", dest="timeout", type=int, default=90, help="Seconds per run (default 90).")
     p.add_argument("--repeat", type=int, default=1, help="force this many runs of every area (default 1)")
     p.add_argument("--recheck", type=int, default=2, help="extra runs for areas that logged a leak/run failure, to tag stable vs flaky (default 2; 0 off; ignored with --repeat > 1)")
     p.add_argument("--jobs", type=int, default=3, help="areas run in parallel (default 3; each run gets its own user:// dir; 1 = serial)")

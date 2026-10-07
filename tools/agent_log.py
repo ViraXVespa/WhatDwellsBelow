@@ -93,9 +93,9 @@ class _Parser(argparse.ArgumentParser):
 def std_parser(description: str, *, writes: bool = False, json_out: bool = True) -> argparse.ArgumentParser:
     """Parser with --root, --json and (writes=True) --dry-run. json_out stays for old callers; every tool gets --json."""
     ap = _Parser(description=description)
-    ap.add_argument("--root", "-Root", default=None, help="Repo root (default: auto-discovered).")
+    ap.add_argument("--root", default=None, help="Repo root (default: auto-discovered).")
     if writes:
-        ap.add_argument("--dry-run", "-DryRun", "-WhatIf", dest="dry_run", action="store_true", help="Print what would change; write nothing.")
+        ap.add_argument("--dry-run", dest="dry_run", action="store_true", help="Print what would change; write nothing.")
     if json_out:
         ap.add_argument("--json", dest="json", action="store_true", help="Print one JSON object (status, summary, counts) instead of text.")
     return ap
@@ -115,6 +115,20 @@ def resolve_root(args_or_hint: object = None) -> Path:
         return repo_root(hint)
     except FileNotFoundError as exc:
         fail(str(exc))
+
+
+def cwd_scan_root(args: object) -> tuple[Path, str]:
+    """(root, `root=<absolute>` line) for a tool that scans a project: --root, else the current directory's project (else the tool's own).
+    The line carries a WARN when the scanned root is not the current directory's project."""
+    hint = getattr(args, "root", None)
+    cwd_root = None
+    if not hint:
+        try:
+            cwd_root = repo_root(Path.cwd())
+        except FileNotFoundError:
+            pass
+    root = resolve_root(hint or cwd_root)
+    return root, f"root={root}" + (f" WARN: the current directory's project is {cwd_root}, not this root; pass --root {cwd_root}" if cwd_root and cwd_root != root else "")
 
 
 def fail(msg: str, code: int = 2) -> "None":
@@ -245,8 +259,9 @@ def finish(
         import retry_lib
 
         note = retry_lib.block(root, retry[0], retry[1])
+        body = "\n".join(retry_lib.strip(body))
         body = (body.rstrip("\n") + "\n\n" if body else "") + note
-        echo = None if echo is None else echo.rstrip("\n") + "\n\n" + note
+        echo = None if echo is None else "\n".join(retry_lib.strip(echo)).rstrip("\n") + "\n\n" + note
     if write:
         d = ensure_agent_log_dir(job, root)
         path = run_log_lib.summary_path(d, job)

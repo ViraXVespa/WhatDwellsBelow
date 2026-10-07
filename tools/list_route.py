@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Print one routes.yaml door or job card. Do not dump the graph."""
+"""Print one routes.yaml door or job card. Do not dump the graph.
+
+    python tools/list_route.py --door ui          # door card + what to read: the one job doc that matches, others only on their trigger
+    python tools/list_route.py --job ui.pause     # job card + read list
+    python tools/list_route.py --digest --door ui # several jobs (a survey): one line per doc (its Read when and the section count), no sibling headings
+    python tools/list_route.py --digest --job ui.pause  # the chosen unit's doc: Status, Read when and its headings with line numbers
+"""
 
 from __future__ import annotations
 
@@ -11,10 +17,51 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
-from load_routes import job_index, job_read_when, load_routes, shot_flows, smoke_phases
+import unit_lib
+from load_routes import job_flow_map, job_index, job_read_when, load_routes, shot_flows, smoke_phases
 
 
 FULL_GATES = False  # set by --gates
+
+
+def _ascii(text: str) -> str:
+    for a, b in (("\u2014", "-"), ("\u2013", "-"), ("\u2192", "->"), ("\u2019", "'"), ("\u201c", '"'), ("\u201d", '"'), ("\u00d7", "x")):
+        text = text.replace(a, b)
+    return text.encode("ascii", "replace").decode("ascii")
+
+
+def _digest(root: Path, rel_path: str, headings: bool = True) -> list[str]:
+    """Status, Read when and the headings (with line numbers, code fences skipped) of one doc; headings=False: one line, Read when and the section count."""
+    f = root / rel_path
+    if not f.is_file():
+        return [f"{rel_path}\t(missing)"]
+    out, fence, when, n_sec = [f"{rel_path}"], False, "", 0
+    for n, line in enumerate(f.read_text(encoding="utf-8-sig").splitlines(), 1):
+        if line.startswith("```"):
+            fence = not fence
+        elif not fence and line.startswith("Read when:"):
+            when = _ascii(line.strip())[:110]
+        if not fence and line.startswith("##"):
+            n_sec += 1
+        if headings and not fence and (line.startswith("#") or line.startswith(("Status:", "Read when:"))):
+            out.append(f"  L{n}\t{_ascii(line.strip())[:110]}")
+    return out if headings else [f"{rel_path}\t{when or 'Read when: (none)'}\t{n_sec} sections"]
+
+
+def _digest_lines(root: Path, data: dict, door: str, job: str) -> list[str]:
+    doors = data.get("doors") if isinstance(data.get("doors"), dict) else {}
+    spec = doors.get(door) if isinstance(doors, dict) else None
+    if not isinstance(spec, dict):
+        return []
+    files = [str(spec.get("file") or "")]
+    jobs = spec.get("jobs") if isinstance(spec.get("jobs"), dict) else {}
+    files += [str(p) for k, p in jobs.items() if isinstance(p, str) and (not job or f"{door}.{k}" == job)]
+    lines: list[str] = []
+    for rel_path in [f for f in files if f]:
+        lines += _digest(root, rel_path, headings=bool(job))
+    if not job:
+        lines.append("A survey is written from these lines. Open a doc only for the unit she chooses: `python tools/list_route.py --digest --job J` prints its headings with line numbers.")
+    return lines
 
 
 def _gate_lines(data: dict) -> list[str]:
@@ -60,12 +107,17 @@ def _door_card(data: dict, door_name: str) -> list[str]:
         lines.append("job\t(none)")
     lines.extend(_gate_lines(data))
     lines.append("smokes\t%s" % ",".join(map(str, smoke_phases(data, door=door_name))))
-    lines.append("flows\t%s" % (",".join(shot_flows(data, door=door_name)) or "none"))
-    lines.append("note\topen one job sibling only; gates only if when matches")
+    per_job = job_flow_map(data, door_name) if len(jobs or {}) >= 2 else ""
+    lines.append("flows\t%s" % (("per job: " + per_job if per_job else ",".join(shot_flows(data, door=door_name))) or "none"))
+    if len(jobs or {}) >= 2:
+        lines.append("read\tsurvey of several jobs: `python tools/list_route.py --digest --door %s` (one line per doc); do not open the job docs until she chooses a unit" % door_name)
+    else:
+        lines.append("read\topen the one job doc whose read_when matches the task; not its siblings")
+    lines.append("also\tgates only if their trigger applies; `code_map.py row` / `show_func.py` for scripts, not whole files")
     return lines
 
 
-def _job_card(data: dict, job_id: str) -> list[str]:
+def _job_card(data: dict, job_id: str, root: Path | None = None, units: list[str] | None = None, done: list[str] | None = None) -> list[str]:
     idx = job_index(data)["by_id"]
     if job_id not in idx:
         if "." not in job_id:
@@ -86,16 +138,28 @@ def _job_card(data: dict, job_id: str) -> list[str]:
     ]
     lines.extend(_gate_lines(data))
     lines.append("smokes\t%s" % ",".join(map(str, smoke_phases(data, door=door_name, job=job_id))))
-    lines.append("flows\t%s" % (",".join(shot_flows(data, door=door_name, job=job_id)) or "none"))
-    lines.append("note\topen this job sibling only; gates only if when matches")
+    unit = unit_lib.lines(root, data, job_id, units or unit_lib.queue(data, door_name), done) if root else []
+    if not unit:
+        lines.append("flows\t%s" % (",".join(shot_flows(data, door=door_name, job=job_id, job_only=True)) or "none"))
+    sibs = [k for k in ((doors.get(door_name) or {}).get("jobs") or {}) if "%s.%s" % (door_name, k) != job_id] if isinstance(doors, dict) else []
+    if unit:
+        lines.extend(unit)
+        return lines
+    else:
+        lines.append("read\t%s now (this job's doc)" % idx[job_id])
+        lines.append("also\t%s only if the job doc points to it%s" % (door_file or "(no door doc)", "; another %s job (%s) only if the task names its read_when" % (door_name, ", ".join(sibs)) if sibs else ""))
+    lines.append("also\tgates only if their trigger applies; `code_map.py row` / `show_func.py` for scripts, not whole files")
     return lines
 
 
 def parse_args(argv: list[str]):
     parser = agent_log.std_parser("Print one door or job card from design/routes.yaml (no argument: list the doors).")
     parser.add_argument("target", nargs="?", default="", help="Door name, or door.job for a job card (same as --door / --job).")
-    parser.add_argument("--door", "-Door", default="", help="Door name (print its card).")
-    parser.add_argument("--job", "-Job", default="", help="Job id door.job (print its card).")
+    parser.add_argument("--door", default="", help="Door name (print its card).")
+    parser.add_argument("--job", default="", help="Job id door.job (print its card).")
+    parser.add_argument("--digest", action="store_true", help="With --door: one line per doc (Read when, section count) for a survey over several jobs; with --job: that doc's Status, Read when and headings with line numbers.")
+    parser.add_argument("--units", default="", help="With --job: the unit order in hand (comma list; default: routes.yaml unit_queue).")
+    parser.add_argument("--done", default="", help="With --job: the units already done (comma list).")
     parser.add_argument("--gates", action="store_true", help="Print the full gate triggers (default: gate names only).")
     args = parser.parse_args(argv)
     global FULL_GATES
@@ -117,8 +181,14 @@ def main(argv: list[str] | None = None) -> int:
         menu = "\n".join("door\t%s\t%s" % (n, (s or {}).get("read_when", "")) for n, s in doors.items())
         menu += "\nnext\tpass a door name, or door.job for a job card (example: debug.smokes)"
         return agent_log.finish("route", root, menu, "INFO", args=args, legacy=False, doors=len(doors))
+    if args.digest:
+        door = args.door.strip() or args.job.split(".", 1)[0]
+        lines = _digest_lines(root, data, door, args.job.strip())
+        if not lines:
+            agent_log.fail("--digest needs a known --door or --job")
+        return agent_log.finish("route", root, "\n".join(lines), "PASS", args=args, legacy=False, door=door, cards=len(lines))
     if args.job:
-        lines = _job_card(data, args.job.strip())
+        lines = _job_card(data, args.job.strip(), root, unit_lib.split(args.units), unit_lib.split(args.done))
     else:
         lines = _door_card(data, args.door.strip())
     return agent_log.finish("route", root, "\n".join(lines), "PASS", args=args, legacy=False,

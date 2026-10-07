@@ -92,14 +92,14 @@ func _cycle_tab(dir: int) -> void:
 func _focus() -> void:
 	Flow._focus(self)
 
-func _cap(text: String, size: int = 18, col: Color = Color(0.9, 0.84, 0.7)) -> Label:
+func _cap(text: String, size: int = 18, col: Color = ThemeS.INK) -> Label:
 	var l: Label = Util.cap(self, text, size, col)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	l.custom_minimum_size = UiText.min_size(520.0, 26.0)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02))
-	l.add_theme_constant_override("outline_size", 6)
+	l.add_theme_color_override("font_outline_color", ThemeS.OUTLINE)
+	l.add_theme_constant_override("outline_size", 0)
 	return l
 
 func _inv() -> void:

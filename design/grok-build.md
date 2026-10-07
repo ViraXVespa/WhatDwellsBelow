@@ -3,57 +3,46 @@
 Status: protocol
 Read when: Grok Build (CLI) path; every CLI instance after a gap
 
-**Intent.** Vira is the conduit for design; Build is the conduit for implementation. Make her vision real with little friction. The design docs are a living plan, not a fixed route. Defer to her on design; suggest improvements and ask in the moment with a question prompt. Hard rules: gates before a PR, no hand-edited PNGs, no gate loops, never push `main`.
-
-You can write the live tree. Second topic door: read it when the job touches that system (read-first, below); ask the User to name the owner before adding a new cross-system owner. Concurrent CLI chats: Slice, Bot notes, PC offload, Smoke tests. Do not fold in another role unless named.
+**Intent.** Vira is the conduit for design; Build is the conduit for implementation and defers to her on design. Make her vision real; ask whenever that helps. The docs are a living plan, not a fixed route. Suggest improvements. Hard rules: gates before a PR, no loops, never `main`. You can write the live tree. Second topic door: read it when the job touches that system.
 
 ## Design: Vira decides
 
-A design or product question the docs do not settle (what a feature does, where it lives, who owns it, a new door or doc, copy and lore, save or entry behavior, scope splits, which of two valid routes) goes to the User with `ask_user_question`, before the design doc or any code. You may offer an improvement the same way. One batched call; each question gets 2-4 concrete options, recommended first and marked. Plain-text questions do not count.
-Always-allow covers permissions only (Access, below), never a design question. A dismissed or timed-out question is not an answer: stop and report. No subagent deliberation; the User chooses. With no `ask_user_question` tool, ask in one plain message and stop.
-Build decides code shape inside one system and starts open numbers coherent (debug menu, `tunables.md`).
-Doc and code disagree: compare their change history, trust the newer, ask if unclear (`prove.md`, `list_changed.py --history`).
+A design or product question the docs do not settle (what a feature does, where it lives, who owns it, a new door or doc, copy and lore, look, layout, material or texture, what counts as done, save or entry behavior, what a button or control does (a trade that now saves), scope splits, which of two valid routes) goes to the User, before the design doc or any code, with `ask_user_question` where it exists (plain text alongside is fine); so do improvements. Ask as many questions as the job needs, in as many rounds as needed, again whenever a discovery changes what she will see or what was assumed. Offer 2-4 options; free text is welcome. Mark one recommended only for code shape or process, never a look, feel or scope.
+Always-allow covers permissions only (Access), never a design question. A dismissed or timed-out question is not an answer: stop and report. No `ask_user_question` tool: ask in plain text and stop.
+Build decides code shape inside one system and starts open numbers coherent (`tunables.md`). Doc and code disagree: trust the newer (`list_changed.py --history`).
+
+## Restate, then change
+
+The first command's card prints the rules for the first message and every ask; follow it, it is the source. In short: visual work imports and shoots the baseline of the screen you will change, then you write the survey or restate as visible text before any question (what was asked, what would be visible if it worked, what you do not yet know). **Q0**, every slice, even when the prompt gives a look: what should the result look like (options that differ in kind, each saying `reuse <existing asset or look>` or `draw new`, not all built on one existing look); any reference (picture, game, screen); what is out of bounds, including frames or layouts already built. Then ask whatever else is unclear, as many rounds as needed, and wait. Until answered change nothing except shot-flow files and the `routes.yaml` mapping.
+
+**Every ask, a re-ask included, has its own message first**: survey or restate, each PNG path with a one-line description, the three ledger lines, `Did not work:` if any. For pictures the order is: shoot, look at them yourself, `python tools/show_png.py PATH=description ...` (opens them on her PC; expected, not a ledger item), the message, the ask. A failed step (non-zero exit, `RESULT FAIL`, a failed edit, a skipped step) opens the next message as `Did not work: <command> <one line>`; `python tools/start_build_slice.py --failed` (and `show_png.py`) print those lines from this session's failed tool results, so none is written from memory.
+
+Finish one unit, show the before and after PNGs and say what is on them, then ask. After a rejection the next step is a question, not an edit; after a second rejection of one thing offer "send me a reference" before more options. Commit and push the slice's work only after she confirms the final shot ("Settled? commit?"), unless she said commit now.
 
 ## First (once, before anything else)
 
-Classify the request: **new feature / new system** (something the game lacks, or a rework of a player-facing system) or **change to what exists** (fix, tune, refactor, same-system API), from the User's wording ("add", "new", "rework" vs "fix", "tweak", "rename"). If unclear, ask once (options: new feature / change to existing; recommend the one the wording leans to).
+Classify the request: **new feature / system** (the game lacks it, or a player-facing rework) or **change to what exists** (fix, tune, refactor, same-system API). If unclear, ask.
 
-New feature flow (in order; chain the steps and report at the end):
-1. Owner: `python tools/list_route.py --door <door>`. No door or doc owns it (or it needs a second door) = a new or undocumented system: plan it (door, doc name, save keys, entry events, smokes) and ask every open question in one batch (Design: Vira decides); wait.
-2. Design doc first: write or extend the owning topic via `tools/doc_patch.py` (what, where it lives, save keys, entry events), then implement.
-3. Prove: the smoke phases mapped to the door (`routes.yaml` `smokes`, printed by `start_build_slice.py`) plus any assert or phase this feature needs (update or add: `build-job-cycle.md`). Pictures and UI-state proof: `shot-flows.md` (scripted flows via `run_shot_flow.py`, `routes.yaml` `shot_flows` printed by `start_build_slice.py`; `check_shot_gaps.py --changed` for new UI states, advisory: it prints, never fails; published frames go to `_out/shots/<flow>/` and Build places any asset copy itself, tooling never writes under `assets/`; extend the tool when it cannot stage the state).
-4. Ship notes: `code_map.py patch` for touched live scripts, `tunables.md` for any number, `check_load_graph.py` when routes or docs moved. Build writes no changelog files (notes go in the commit message; the week-close `0.N.0.md` is a web session's: `versioning.md`). Then merge back (below); report rough edges.
+New feature flow: `build-job-cycle.md`. A new system: plan it and ask every open question.
 
 ## Read
 
-Agents file once, then this file. Plan pair only if missing. Then the named topic. **A job that touches more than one system: read first.** List every system it touches, then read each one's doc and `code_map.py row` before changing anything. Imagine: `design/isolated-media.md` before any Imagine call. Gather / change / prove: `design/build-job-cycle.md`.
+Agents file once, then this file. Plan pair only if missing, then the named topic. Route first: read what the route card names, not sibling docs (`list_route.py --digest --door D`: headings with line numbers). A survey starts from text (`run_shot_flow.py --survey`, `list_route.py --digest --door D`: one line per doc); open a doc only for the unit she chose, a picture only for the unit being compared. Reading habits: `build-job-cycle.md`. **More than one system: read first** (each doc and `code_map.py row`). Imagine: `design/isolated-media.md` first. Gather / change / prove: `build-job-cycle.md`.
 
-Git inventory (not gather): `tools/list_changed.py`. Search: `tools/list_xref.py`, not grep. Extract: `python tools/show_func.py --path <script> --name <func>`. No `python -c`. Do not archive the live path first or resume unnamed work from git status.
+Git inventory (not gather): `tools/list_changed.py`. Search: `tools/list_xref.py` (`--texts` for shot-flow words), not grep. Extract: `python tools/show_func.py --path <script> --name <func>`. No `python -c`.
 
 ## Work
 
-First message names the area. `python tools/start_build_slice.py --door <door>` (or `--job` / `--area`); it prints the door/job card (gates one line; open one only when its `when` matches), smoke phases, shot flows and the FORK line. `--area` has no route: name a door or job for smokes. Worktrees come from the week branch `grok-build-w{N}` (`--ref` overrides), never main. No week branch and no `--ref`: the tool fails with no FORK line; ask the User (question prompt) whether to start a new week (`python tools/week_start.py`). The gather session id (`--session` / `$GROK_SESSION_ID`) is saved; retries return to it; without one START warns. Change only in the worktree. Web build load/frame/heap checks are advisory: `tools/web_perf.py` on an exported site (`run_shots.py --mode web` is Web-only).
+The User starts the slice with `python tools/open_slice.py [AREA]`: a NEW session in a Grok worktree (a week-branch clone). Your FIRST command, before any file read or memory topic, is `python tools/start_build_slice.py --door <door>` (or `--job` / `--area`): the door card, smokes, flows and the session facts. If you are told the slice is already started, run it too: a later run prints `SLICE ALREADY STARTED`, the steps found and the next one (`--full` reprints the card). Your first text to her, before your next tool call, names the area and says which of the agents file and the skill you actually opened. A door with several jobs is a survey from text; it ends at her answers to its first ask: `python tools/start_build_slice.py --handoff`, then stop; she runs the `open_slice.py` command it prints and a fresh session implements from the handoff. A door with `unit_queue` in `routes.yaml` (ui) is not surveyed: it is worked one unit at a time in one session, and `python tools/start_build_slice.py --next` (unit committed) prints the next unit's card, no new survey. A visual job with no `shot_flows` of its own gets a STEP 0 note (exit 0, not a stop): creating the flow is the first job step (`shot-flows.md`). **Only `open_slice.py`, run by the User, launches grok; Build never does** (the isolated-media runner is the one exception).
 
-Access (permission, not design): if a task needs something outside Build's normal reach (a new asset location, an external tool or network, files outside the allowed set), show the User a one-line confirm first (skipped under always-allow).
+Access and Just do / Ask first: `build-job-cycle.md`.
 
-Just do: a User-named script rename/move (`move_script_cluster.py --dry-run`, then run; it rewrites refs), helpers and APIs inside one system (new helper files go in the facade's stem folder, `refactor.md` Cluster folders), and a tool that would reasonably help future tasks (`tools.md` rule 5; tell the User after). Ask first (Design: Vira decides): a new cross-system owner (a new `routes.yaml` door owner), a named live-module replace, a greenfield rewrite, or copying archive scenes over live.
+## Red prove, merge-back, other roles
 
-## Red prove, merge-back
-
-Red prove: one diagnosis and one fix per retry (`tools.md` rule 10). The prove tool prints a fork of the gather session into this worktree (`grok --cwd PATH -r ID --fork-session`): gather context kept, read `git diff grok-build-w{N}...HEAD` (`build-job-cycle.md`).
-Green prove: commit in the worktree (HEAD is detached), then `git merge --no-ff <commit>` in the checkout holding `grok-build-w{N}` (never main: main stays untouched during Build work), short note in the message; resolve conflicts. A change the User would check by hand (balance, audio, visuals / art, controls) needs a question prompt on whether the playtest looks good, and approval, before the merge. Refactors, tools, docs, tests: merge on green.
-
-## Other roles in this instance
-
-- Bot notes: park with `python tools/bot_opt.py`. Do not implement those items or open a Bot PR.
-- Tools: `design/tools.md` (catalog, new-tool rule 5, tools-not-scratches rule 7); PC offload: `design/pc-offload.md`. You may edit or add a tool in the same task.
-- Smoke tests: Build runs the mapped phases at prove and updates or adds the asserts for any system it implements (`build-job-cycle.md`). The dedicated smoke session is `debug-smokes.md`.
-- I2V: this path, isolated-media gate, stay in the slice thread.
-
-Archive pins are CI-only (`versioning.md`, `archive_catalog.json`); do not invent pin SHAs.
+Red prove, merge-back, the playtest confirm: `build-job-cycle.md`; one diagnosis, one fix per retry (`tools.md` rule 10); never merge into main. Bot notes: park with `python tools/bot_opt.py`, no Bot PR. Tools: `design/tools.md`, `design/pc-offload.md`; you may add a tool. Build adds or updates the smoke asserts for what it implements (`debug-smokes.md`). I2V: isolated-media gate.
 
 ## After a job
 
-Proof rules (`prove.md`): one-line intended outcome before a behavior change; a missing required asset fails loudly (no fallback without the User's OK); report "gates pass", not "proved"; look and sound are unverified until the User confirms.
+Proof rules (`prove.md`): one-line intended outcome before a behavior change; a missing required asset fails loudly; report "gates pass", not "proved". Ask the playtest confirm only after the compile check passed, every output was read, and (visual) the PNGs were shown (`show_png.py`) and described; the question carries the change summary and PNG paths. Look and sound stay unverified until confirmed.
 
-Gates: `design/tools.md` rule 10 (batch, once, at most 2 reruns). Prefer `python tools/run_build_gate.py` and `python tools/read_summary.py --job build-gate` (import check plus an advisory `check_shot_gaps.py --changed` print). Never hand-edit `version.json`. Do not commit `_logs/`. Report rough edges (rule 9) and fix tool ones in the same task.
+Gates: `tools.md` rule 10 (batch, once, at most 2 reruns; iterating one visual unit with the User is exempt). Code: `check_gd_load.py` every pass in small batches (read every output you run), then `python tools/run_build_gate.py` (`--batch --visual JOB` for a visual change) and `python tools/read_summary.py --job build-gate` once; commit (only when she says so) with `python tools/commit_slice.py`, which refuses without that gate, or say `Did not work: gate not run (why)`. A visual change adds `run_shot_flow.py --job J` (or `run_build_gate.py --batch --visual J`) and the UI load check; at the END a missing or stale frame fails the prove. Never hand-edit `version.json` or commit `_logs/`. Report rough edges (rule 9).

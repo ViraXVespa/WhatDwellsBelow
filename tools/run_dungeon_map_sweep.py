@@ -2,7 +2,7 @@
 """Run run_dungeon_map over several seeds; one sweep table.
 
     python tools/run_dungeon_map_sweep.py [--count 10] [--seed-list 42,7,9 | --seeds 42 7 9] [--floor 1 --scale 8]
-Old spellings: -Count -Floor -Scale -TimeoutSec -Seeds -SeedList. Output: _logs/dungeon-map-sweep/<stamp>-dungeon-map-sweep.txt
+ Output: _logs/dungeon-map-sweep/<stamp>-dungeon-map-sweep.txt
 """
 from __future__ import annotations
 
@@ -18,12 +18,12 @@ import agent_log
 
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Dungeon map smoke across seeds.", json_out=True)
-    ap.add_argument("--count", "-Count", type=int, default=10, help="Number of seeds to sweep (default 10).")
-    ap.add_argument("--floor", "-Floor", type=int, default=1, help="Floor number (default 1).")
-    ap.add_argument("--scale", "-Scale", type=int, default=8, help="Pixels per cell in the map PNGs (default 8).")
-    ap.add_argument("--timeout-sec", "-TimeoutSec", type=int, default=180, help="Godot timeout per seed in seconds (default 180).")
-    ap.add_argument("--seeds", "-Seeds", nargs="+", default=[], help="Seeds, 1,2,3 or 1 2 3.")
-    ap.add_argument("--seed-list", "-SeedList", default="", help="Comma list; wins over --seeds.")
+    ap.add_argument("--count", type=int, default=10, help="Number of seeds to sweep (default 10).")
+    ap.add_argument("--floor", type=int, default=1, help="Floor number (default 1).")
+    ap.add_argument("--scale", type=int, default=8, help="Pixels per cell in the map PNGs (default 8).")
+    ap.add_argument("--timeout-sec", type=int, default=180, help="Godot timeout per seed in seconds (default 180).")
+    ap.add_argument("--seeds", nargs="+", default=[], help="Seeds, 1,2,3 or 1 2 3.")
+    ap.add_argument("--seed-list", default="", help="Comma list; wins over --seeds.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
     seeds = agent_log.split_list([args.seed_list] if args.seed_list else args.seeds, int)

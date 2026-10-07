@@ -6,6 +6,8 @@ Read when: pause menu layout / tabs / behavior
 
 ## Pause menu
 
+The open pause is a journal binder (ui-theme). Settings is two sheets: the list is the shorter left sheet, and the open page is the wider right sheet, with leather between them. Inventory is two even sheets. Skills is two sheets with the split right of center, so the list is the wide sheet and the tip is the narrow one. A confirm is a slip on top. No center crease cuts a row. Bookmark tabs, ink, and the prompt footer stay.
+
 Opened with Menu / Start / Esc. Freezes gameplay.
 Every menu (including this one) MUST open with valid initial focus so it is immediately navigable by gamepad.
 
@@ -19,7 +21,7 @@ Menu bindings are shared through `scripts/ui/menu_pad.gd` (input):
 
 Select / Back render in a footer strip at the bottom-right of the menu panel via `PromptView.footer`. Button captions stay verbs only. Tab chips and gear page glyphs MUST follow the last-used scheme as soon as the scheme changes; do not wait for a tab change or a new focus owner.
 
-The current pause tab MUST read as selected at a glance: same lighter fill and brighter border as a hovered tab, but keep the darker tan label. Mouse over the already-selected tab uses a second, brighter hover so hover is still visible.
+The current pause tab MUST read as selected at a glance: deeper paper and an ink underline, with dark ink type. Mouse over the already-selected tab lifts the paper so hover is still visible. Dispel, Main Menu, and Quit use the danger weight. Delete Save Data and Reset Controls do too.
 
 Exactly three tabs, in this order, navigable with LB/RB or equivalent:
 1. Settings – default tab when pause opens. Shared two-column split (`split_menu.gd` + `split_menu_view.gd`). Left list, right page or leaf copy. Pages: Gameplay, Audio, Graphics, Controls. Leaves: Patreon, Dispel (dungeon) or Main Menu (Placeholdia / hub), Quit (hidden on Xbox). Leaf rows have no chevron; the right pane shows a short description and stays undimmed. Hover does not change an open submenu. Click a different page while detail is open switches to that page. Click the already-open page returns focus to the left list.

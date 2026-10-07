@@ -8,9 +8,10 @@ One standard for every surface: the cheapest check that would fail if the change
 ## Proof rules (every surface)
 
 - **No silent fallback.** A required asset or file that is missing or invalid fails loudly (error plus stop). A fallback exists only with the User's explicit OK.
-- **Intent first.** Before changing a behavior, state the intended outcome in one line, from the User's words or the design docs, and prove against that line. Unclear: ask with a question prompt.
+- **Intent first.** Before changing anything, state in your own words what was asked and what would be visible or observable if it worked, from the User's words or the design docs, and prove against that. Unclear: ask with a question prompt.
 - **Prove against intent, not yourself.** Compare with the intent and with a reference the User confirmed. "Same as before" counts only when before is what the User wanted; a prior run of the same code is not enough.
-- **Say what was shown.** Passing gates are "gates pass", never "proved". Visual and audio results are unverified until the User confirms; give the crops, numbers or paths and say so.
+- **Say what was shown.** Passing gates are "gates pass", never "proved". For a visual change, import first (`check_gd_load.py`, `run_godot_import_check.py`), shoot a baseline (`band=fail` is not one: re-shoot) and open it first, then open the before and after PNGs and describe what is on each. Visual and audio results are unverified until the User confirms. Do not ask for that confirm before the compile check passed and every output was read; the question carries a change summary and the PNG paths. Give the crops, numbers or paths and say so.
+- **Read what you run.** stderr or check output you did not open cannot be called harmless. A passing check that does not cover the claim is not evidence of it (the import check does not load every script; a smoke that asserts nodes exist does not show a look).
 - **Fix the bug, keep the improvement.** A bug in a feature is a reason to find the cause and fix it, not to delete the feature.
 
 ## Surfaces
@@ -18,16 +19,16 @@ One standard for every surface: the cheapest check that would fail if the change
 | Surface | Runs the proof | Rules |
 |---|---|---|
 | Bot | its Prove gate, `bot_smokes.py`, `bot_warnscan.py`, shots | `BOT.md` Prove and Smokes |
-| Build | gather, change, prove: `run_build_gate.py`, the `routes.yaml` `smokes` / `shot_flows` for the door; a red prove prints its RETRY prompt | `build-job-cycle.md` |
+| Build | gather, change, prove: `check_gd_load.py` every pass; a visual change adds its `shot_flows` (open the frames) and its UI load check; the flow is created at the START (step 0), and a missing or stale frame fails the prove at the END; `run_build_gate.py --batch` once at the end. A red prove prints its RETRY prompt | `build-job-cycle.md` |
 | Web / chat | cannot run Godot: the emit scratch runs the runners through the `doc_patch` lib (`dump_job`) and the User pastes the RESULT; a missing check is added the same way, as a tool or recipe in that scratch; a Build brief only for work Web cannot do (`web-emit.md`) | `web-test.md`, `web-emit.md`, `doc-library.md` |
 
 ## By change kind
 
 | Change | Minimum proof |
 |---|---|
-| Code (`.gd`) | compile: `run_build_gate.py --batch` (Bot: its Prove gate in `BOT.md`); the smoke phases that load the file (`bot_smokes.py --for FILE`); a pure refactor also needs "same as main" |
+| Code (`.gd`) | compile: `check_gd_load.py` each pass, then `run_build_gate.py --batch` once (Bot: its Prove gate in `BOT.md`); the smoke phases that load the file (`bot_smokes.py --for FILE`); a pure refactor also needs "same as main" |
 | Art, keying | "key is clean", then "looks the same as main" for every sprite that uses it |
-| UI | the shot flow for the state (`run_shot_flow.py --flow N`), then "layout is clean" and "text readable" |
+| UI | baseline shot (opened) before the questions; no flow yet: create it first (step 0, `shot-flows.md`). One screen, its shot flow (`run_shot_flow.py --flow N`). Open before and after and say what is on them, then ask the User with the PNG paths. Then "layout is clean" and "text readable" |
 | Input | P7 binds smoke (`bot_smokes.py --phases 7`) plus the controls flows (`--flows camp-pause-menu,camp-billboard-controls`) |
 | Save data | P8 (`bot_smokes.py --phases 8`: save backup on the smoke slot) |
 | Tools, docs | `check_tool_cli.py`, `check_tool_docs.py --stale-refs`, `check_load_graph.py`; `img_inspect.py selftest` for imglib |
@@ -47,7 +48,7 @@ One standard for every surface: the cheapest check that would fail if the change
 
 ## Recipes
 
-**Doc and code disagree.** Enough to pick the current one: `python tools/list_changed.py --history DOC CODE` lists each path's latest commits (and flags uncommitted edits) and prints `newer=`. Trust the newer, and fix the older in the same job when that is a plain correction. Still unclear (similar dates, an uncommitted edit): Build asks with a question prompt, Web asks one question, Bot lists the line under `Stale doc lines (for the User)`.
+**Doc and code disagree.** Enough to pick the current one: `python tools/list_changed.py --history DOC CODE` lists each path's latest commits (and flags uncommitted edits) and prints `newer=`. Trust the newer, and fix the older in the same job when that is a plain correction. Still unclear (similar dates, an uncommitted edit): Build asks with a question prompt, Web asks, Bot lists the line under `Stale doc lines (for the User)`.
 
 Each says when it is enough. Image checks use `python tools/img_inspect.py CMD ...` (programmatic eyes: facts as text, optional annotated PNG; the library is `tools/imglib/`, `tools-media.md`). The `--json` flag gives one object.
 

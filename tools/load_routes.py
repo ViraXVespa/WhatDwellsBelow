@@ -267,16 +267,25 @@ def smoke_phases(data: dict[str, Any], door: str = "", job: str = "") -> list[in
     return [int(x) for x in str(val or "1").replace(" ", "").split(",") if x.isdigit()]
 
 
-def shot_flows(data: dict[str, Any], door: str = "", job: str = "") -> list[str]:
-    """Shot flow names for a door/job: job key, then door key (no default; empty when unmapped)."""
+def shot_flows(data: dict[str, Any], door: str = "", job: str = "", job_only: bool = False) -> list[str]:
+    """Shot flow names for a door/job: job key, then door key (no default; empty when unmapped).
+    job_only: a job maps only to its own key (no door fallback to flows that may show another screen)."""
     raw = data.get("shot_flows") or {}
     if not isinstance(raw, dict):
         return []
     door = door or job.split(".", 1)[0]
-    for key in (job, door):
+    for key in ((job,) if job_only and job else (job, door)):
         if key and raw.get(key):
             return [x for x in str(raw[key]).replace(" ", "").split(",") if x]
     return []
+
+
+def job_flow_map(data: dict[str, Any], door: str) -> str:
+    """'ui.pause=a,b; ui.run_flow=c' : the flows each job of `door` maps to (empty when none maps)."""
+    raw = data.get("shot_flows") or {}
+    if not isinstance(raw, dict):
+        return ""
+    return "; ".join("%s=%s" % (k, str(v).replace(" ", "")) for k, v in raw.items() if str(k).startswith(door + ".") and v)
 
 
 def shot_gaps_mode(data: dict[str, Any], who: str) -> str:
@@ -426,7 +435,7 @@ def allowed_citations(data: dict[str, Any], posix: str) -> set[str]:
     if role == "gate":
         return {posix} | gates | indexes | notes
     if role == "skill":
-        return {posix} | gates | indexes | notes | skills
+        return {posix} | gates | indexes | notes | skills | agents  # a skill may tell Build to read the agents file by hand (worktree sessions do not always auto-load it)
     if role in {"index", "notes"}:
         return all_route_files(data)
     if role == "door":

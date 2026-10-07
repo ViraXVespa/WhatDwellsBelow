@@ -14,7 +14,7 @@ When the current label is newer than saved `last_seen_game_ver`, a “what’s n
 
 - Gamepad-first. A / Start or B / Esc dismisses, writes `last_seen_game_ver` to the current label, saves, and focuses Play.
 - Overlay always lists every `changelog.json` entry, newest first (current series baked into JSON).
-- Entries with `label` greater than `last_seen_game_ver` render bold / gold. First launch or wiped save: only the current build is marked new; older JSON rows still list.
+- Entries with `label` greater than `last_seen_game_ver` render bold dried-ink. First launch or wiped save: only the current build is marked new; older JSON rows still list.
 - Older series: keep the in-series list, plus one control that opens `https://viraxvespa.github.io/WhatDwellsBelow/changelog/`.
 - Body shape on screen: build label as a heading, key points, optional subpoints, then the Summary line. Markdown (`**bold**`, `` `code` ``) renders.
 - Long lists scroll with mouse wheel and right stick. D-pad only moves Close / Earlier weeks.
@@ -43,7 +43,7 @@ If the viewport is taller than wide, the card MUST say to rotate to landscape. L
 ## Live snapshot — title
 
 `title.gd` builds the card and focus graph. `news.gd` builds the overlay.
-- Title backdrop is `assets/ui/load_background.jpg` full-bleed (no global dim). A centered 0.62-alpha black plate sits only behind the title / buttons.
+- Title backdrop is `assets/ui/load_background.jpg` full-bleed (no global dim). A centered paper card sits behind the title and the buttons. Play is the primary weight. Updates and Archives are secondary. New changelog rows are bold dried-ink, not gold.
 Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close is the focused control. Right stick and mouse wheel move `ScrollContainer.scroll_vertical`. Overlay body is a `RichTextLabel` on an opaque panel.
 
 ## Live snapshot — web fullscreen gate
@@ -60,7 +60,7 @@ Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close 
 - `_process` eases `_shown` toward the target.
 - `finish()` snaps to 100%, hides, calls `App.wake_web_pad()`.
 
-Visual: full-viewport dim, heading, status, percent, 720×20 gold fill on a dark track. Positions are computed from `get_viewport().get_visible_rect()` so the overlay stays centered on desktop and the no-threads web export.
+Visual: full-viewport dim, a paper card, ink heading, status, percent, and a 720×20 ink fill on a brown track. Positions are computed from `get_viewport().get_visible_rect()` so the overlay stays centered on desktop and the no-threads web export.
 
 Play → camp pacing in `scripts/app/app_flow.gd`:
 - Preload listed hub assets up to about 70%, with status lines for camp / tiles / buildings / delver / music.

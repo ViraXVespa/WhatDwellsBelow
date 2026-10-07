@@ -11,31 +11,21 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import match_keyed_region as matcher
+from imglib import key as plate_key
 
 ROOT = Path(__file__).resolve().parent.parent
 CANVAS = 128
-THRESH = 62
-
-
-def sample_bg(im: Image.Image) -> tuple:
-    px = im.convert("RGB")
-    w, h = px.size
-    samples = [px.getpixel((2, 2)), px.getpixel((w - 3, 2)), px.getpixel((2, h - 3)), px.getpixel((w - 3, h - 3))]
-    return tuple(int(sum(c[i] for c in samples) / 4) for i in range(3))
 
 
 def key_and_fit(src: Path, dest: Path, flip: bool = False) -> None:
-    im = imgio.load(src)
+    use = matcher.resolve_source(dest, src)
+    if use is None:
+        raise SystemExit(f"missing source for {dest.relative_to(ROOT)}")
+    im = imgio.load(use)
     if flip:
         im = geom.flip(im)
-    bg = sample_bg(im)
-    px = im.load()
-    w, h = im.size
-    for y in range(h):
-        for x in range(w):
-            r, g, b, a = px[x, y]
-            if dist((r, g, b), bg) <= THRESH:
-                px[x, y] = (0, 0, 0, 0)
+    im = plate_key.punch(im)
     canvas = geom.fit_box(im, CANVAS, 8, to_int=int, empty_exit=f"empty {src}")
     dest.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(dest)
