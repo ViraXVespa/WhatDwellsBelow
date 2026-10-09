@@ -59,6 +59,12 @@ def run() -> list[tuple[str, bool, str]]:
     cloth_ok = tuple(int(v) for v in keyed[59, 30]) == (150, 40, 70, 255)
     lip_gone = int(keyed[60, 30, 3]) == 0 and int(keyed[0, 0].sum()) == 0
     out.append(("key light-pink lip", body_ok and cloth_ok and lip_gone, f"body {keyed[40, 40].tolist()} cloth {keyed[59, 30].tolist()} lip {keyed[60, 30].tolist()}"))
+    wood = np.zeros((30, 40, 4), np.uint8)
+    wood[:, :] = (0, 0, 0, 255)
+    wood[8:22, 8:32] = (120, 80, 40, 255)
+    wood_k = np.array(key.key_to_alpha(Image.fromarray(wood)))
+    wood_ok = int((wood_k == wood).sum()) == wood.size
+    out.append(("key ignores non-plate", wood_ok, f"changed px {int((wood_k != wood).any(axis=2).sum())}"))
     drift, truth = _on_plate(sp, [(255, 0, 192), (252, 0, 237), (248, 0, 158), (234, 0, 183)], True)
     k = np.array(key.key_to_alpha(drift))[..., 3] > 0
     miss = int(((~truth) & k).sum())
