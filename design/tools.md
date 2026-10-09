@@ -47,6 +47,7 @@ Surf: **B** Bot (Linux VM), **W** web/chat, **D** Build (User PC). **A**: Y if t
 ### Gates and Bot flows
 
 | Tool | Does | Surf | Use | A |
+| `show_png.py` | Stage prove sheets into one folder and open the first in Photos. `--group` composes one area. | B | `--selftest` | Y |
 |---|---|---|---|---|
 | `bot_status.py` | Bot punch list (reuse brief, open opt tasks); `--prove` adds the Bot checks. Bot/CI only; elsewhere it prints "not run". | B | `--help` | Y |
 | `check_script_cap.py` | Duplicate script-name check (`dupes=`): `--git-changed`, `--path`. The Bot's own checks run only with `--bot` (`BOT.md`). | BWD | `--help` | Y |
