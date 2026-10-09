@@ -1,6 +1,7 @@
 """Geometry helpers: bbox, crop, fit, scale, flip, grid split.
 
 Nearest-neighbour is only for sizing up. Sizing down uses premultiplied Lanczos.
+A heavy shrink also keeps a real near-white run (a string) that the kernel would average away.
 """
 from __future__ import annotations
 
@@ -8,15 +9,7 @@ import numpy as np
 from PIL import Image
 
 
-def resize_rgba(im: Image.Image, size: tuple[int, int]) -> Image.Image:
-    """Scale an RGBA image. Nearest when both sides grow. Premultiplied Lanczos when either side shrinks."""
-    im = im.convert("RGBA")
-    size = (max(1, int(size[0])), max(1, int(size[1])))
-    if size == im.size:
-        return im
-    pure_up = size[0] >= im.size[0] and size[1] >= im.size[1]
-    if pure_up:
-        return im.resize(size, Image.Resampling.NEAREST)
+def _lanczos_down(im: Image.Image, size: tuple[int, int]) -> Image.Image:
     arr = np.array(im, dtype=np.float32)
     alpha = arr[:, :, 3:4] / 255.0
     prem = arr.copy()
@@ -29,6 +22,99 @@ def resize_rgba(im: Image.Image, size: tuple[int, int]) -> Image.Image:
     rgb[nz] = np.clip(scaled[nz, :3] * (255.0 / np.maximum(out_a[nz], 1.0)), 0, 255)
     scaled[:, :, :3] = rgb
     return Image.fromarray(np.clip(np.rint(scaled), 0, 255).astype(np.uint8), "RGBA")
+
+
+def _subject_cell(im: Image.Image, scale: int = 8) -> int:
+    """Pixel size of the subject, or 1 when the subject is not a flat upscale of that cell."""
+    arr = np.array(im.convert("RGBA"))
+    h, w = arr.shape[:2]
+    if h < scale * 8 or w < scale * 8:
+        return 1
+    hh, ww = h - (h % scale), w - (w % scale)
+    block = arr[:hh, :ww].reshape(hh // scale, scale, ww // scale, scale, 4)
+    subject = block[:, :, :, :, 3].max(axis=(1, 3)) > 128
+    if int(subject.sum()) < 20:
+        return 1
+    rgb = block[:, :, :, :, :3].astype(np.int16)
+    spread = (rgb.max(axis=(1, 3)) - rgb.min(axis=(1, 3))).max(axis=2)
+    if float(np.median(spread[subject])) > 6:
+        return 1
+    return scale
+
+
+def _box_reduce(im: Image.Image, scale: int) -> Image.Image:
+    w, h = im.size
+    ww, hh = w - (w % scale), h - (h % scale)
+    arr = np.array(im.crop((0, 0, ww, hh)), dtype=np.float32)
+    alpha = arr[:, :, 3:4] / 255.0
+    prem = arr.copy()
+    prem[:, :, :3] *= alpha
+    cell = prem.reshape(hh // scale, scale, ww // scale, scale, 4).mean(axis=(1, 3))
+    out_a = cell[:, :, 3:4]
+    rgb = np.zeros_like(cell[:, :, :3])
+    nz = out_a[..., 0] > 0.5
+    rgb[nz] = np.clip(cell[nz, :3] * (255.0 / np.maximum(out_a[nz], 1.0)), 0, 255)
+    cell[:, :, :3] = rgb
+    return Image.fromarray(np.clip(np.rint(cell), 0, 255).astype(np.uint8), "RGBA")
+
+
+def _keep_light_run(src: Image.Image, fitted: Image.Image) -> Image.Image:
+    """Put back a near-white run when a heavy shrink averaged it away.
+
+    A solid mass of bright pixels (a face, a highlight) is left to the Lanczos result.
+    This is not an edge lift: only a bin that collected a real run is rewritten.
+    """
+    sw, sh = src.size
+    dw, dh = fitted.size
+    if sw <= dw or sh <= dh:
+        return fitted
+    bin_area = (sw / float(dw)) * (sh / float(dh))
+    if bin_area < 150:
+        return fitted
+    arr = np.array(src)
+    light = (arr[:, :, :3].min(axis=2) > 140) & (arr[:, :, 3] > 80)
+    if int(light.sum()) < 4:
+        return fitted
+    ys, xs = np.nonzero(light)
+    fx = np.clip((xs * (dw / float(sw))).astype(np.int32), 0, dw - 1)
+    fy = np.clip((ys * (dh / float(sh))).astype(np.int32), 0, dh - 1)
+    lin = fy * dw + fx
+    count = np.bincount(lin, minlength=dw * dh)
+    out = np.array(fitted)
+    order = np.argsort(lin)
+    lin_s = lin[order]
+    cols = arr[ys, xs][order]
+    cuts = np.flatnonzero(np.diff(lin_s)) + 1
+    starts = np.r_[0, cuts]
+    ids = lin_s[starts]
+    for gid, start, end in zip(ids, starts, np.r_[cuts, len(lin_s)]):
+        if count[gid] < 4:
+            continue
+        med = np.median(cols[start:end], axis=0)
+        y, x = divmod(int(gid), dw)
+        out[y, x, :3] = med[:3]
+        out[y, x, 3] = max(int(out[y, x, 3]), 210)
+    return Image.fromarray(out, "RGBA")
+
+
+def resize_rgba(im: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """Scale an RGBA image. Nearest when both sides grow. Premultiplied Lanczos when either side shrinks."""
+    im = im.convert("RGBA")
+    size = (max(1, int(size[0])), max(1, int(size[1])))
+    if size == im.size:
+        return im
+    pure_up = size[0] >= im.size[0] and size[1] >= im.size[1]
+    if pure_up:
+        return im.resize(size, Image.Resampling.NEAREST)
+    source = im
+    cell = _subject_cell(im)
+    if cell > 1:
+        im = _box_reduce(im, cell)
+        if im.size == size:
+            return _keep_light_run(source, im)
+        if im.size[0] <= size[0] and im.size[1] <= size[1]:
+            return _keep_light_run(source, im.resize(size, Image.Resampling.NEAREST))
+    return _keep_light_run(source, _lanczos_down(im, size))
 
 
 def bbox(im: Image.Image, alpha_min: int = 1):

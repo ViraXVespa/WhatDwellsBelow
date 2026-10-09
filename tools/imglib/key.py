@@ -234,13 +234,17 @@ def remap_plate(im: Image.Image, tol: float = LAB_TOL, wand_dist: float = 48.0, 
             "pocket_frac": pocket_frac,
         }
         return src, Image.fromarray(vis, "RGBA"), info
-    plate, refs, _d = plate_mask(rgb, refs=found, alpha=arr[:, :, 3], tol=tol, rgb_wand=wand_dist, pocket_frac=pocket_frac)
+    plate, refs, dist = plate_mask(rgb, refs=found, alpha=arr[:, :, 3], tol=tol, rgb_wand=wand_dist, pocket_frac=pocket_frac)
     amt, pick = plate_amount(rgb, refs)
+    # Flat plate (near a border ref) becomes exact #FF00FF. A farther plate-coloured mix
+    # is the glow. Shift it onto the key so colour-to-alpha can keep it. Do not flatten it.
+    solid = plate & (dist <= float(tol) * 1.25)
+    mix = plate & ~solid
     band = dilate(plate, edge) & ~plate
-    hit = band & (amt >= edge_min)
+    hit = (band | mix) & (amt >= edge_min)
     shifted = np.clip(np.rint(rgb.astype(np.float32) + amt[..., None] * (np.array(KEY_RGB, np.float32) - pick)), 0, 255).astype(np.uint8)
     arr[hit, :3] = shifted[hit]
-    arr[plate, :3] = KEY_RGB
+    arr[solid, :3] = KEY_RGB
     arr[:, :, 3] = 255
     vis = np.zeros((h, w, 4), dtype=np.uint8)
     vis[:, :, 3] = 255
@@ -460,22 +464,22 @@ def punch(im: Image.Image, spill_flood: bool = False) -> Image.Image:
 
 
 def key_to_alpha(im: Image.Image, spill_flood: bool = True, tol: float = LAB_TOL, refs=None) -> Image.Image:
-    """Colour-to-alpha against the border plate. The contract is `chroma_alpha` against that key.
+    """One colour-to-alpha against the nearest border-sampled plate key.
 
-    `chroma_alpha` turns a plate mix into partial alpha of the subject colour.
-    `c2a` then snaps alpha under 10 to 0 and over 242 to 255. That snap is the hard matte.
-    This body still walks a fringe and subtracts red-and-blue-above-green. That subtract
-    deleted the veil on the 2026-10-09 open set. Do not add another walk, subtract, or snap.
-    `spill_flood` stays so callers keep one signature. `tol` is the Lab distance of solid
-    plate. `refs` pins the plate colours.
+    Opacity is `chroma_alpha`. The drawn RGB stays, so soft shading and a pale glow stay
+    in the art instead of being rebuilt into a green unmix. Solid plate, including a
+    one-level quantize of the key, becomes transparent black. No fringe walk, no
+    red-and-blue-above-green subtract, and no snap of alpha under 10 or over 242.
+    `spill_flood` and `tol` stay on the signature and do not switch paths. `refs` pins
+    the plate colours.
     """
+    _ = (spill_flood, tol)
     src = im.convert("RGBA")
     arr = np.array(src, dtype=np.uint8, copy=True)
     rgb = arr[:, :, :3]
     src_a = arr[:, :, 3]
-    _ = spill_flood
     if refs is None:
-        found, foreground = border_comparison(rgb)
+        found, _foreground = border_comparison(rgb)
         if found is None:
             exact = (rgb[:, :, 0] >= 250) & (rgb[:, :, 1] <= 8) & (rgb[:, :, 2] >= 250)
             if not np.any(exact):
@@ -484,50 +488,31 @@ def key_to_alpha(im: Image.Image, spill_flood: bool = True, tol: float = LAB_TOL
         refs = list(found)
     else:
         refs = [tuple(int(v) for v in r) for r in refs]
-        _found, foreground = border_comparison(rgb)
-    amount, pick = plate_amount(rgb, refs)
-    dist = delta_e(rgb, refs)
-    hue, sat, val = hsv(rgb)
-    red = rgb[:, :, 0].astype(np.int16)
-    green = rgb[:, :, 1].astype(np.int16)
-    blue = rgb[:, :, 2].astype(np.int16)
-    spill = np.maximum(0, np.minimum(red, blue) - green)
-    clearly = (dist <= float(tol)) | (amount >= 0.88)
-    pale = (
-        (spill >= 12)
-        & (sat < 0.22)
-        & (val > 0.70)
-        & (hue_gap(hue, PLATE_HUE) <= 30.0)
-        & dilate(clearly, 1)
-        & ~clearly
-    )
-    clear = clearly | pale | (src_a == 0)
-    foreground = list(dict.fromkeys(list(foreground) + _edge_foreground(rgb, clear)))
-    cand = ~clear & (spill >= 36) & ((hue_gap(hue, PLATE_HUE) <= 40.0) | (amount >= 0.35))
-    fringe = _touching(cand, clear)
-    # Light plate mixes sit a short way in from the plate: red and blue both above green,
-    # and blue at least near red. A red-dominant colour (maroon, leather) is the subject.
-    radius = max(4, min(rgb.shape[0], rgb.shape[1]) // 32)
-    red_dominant = red > (blue + 30)
-    mild = dilate(clear, radius) & ~clear & (spill >= 12) & ~red_dominant
-    # A light veil (the wisp's outer purple, the shopkeep glow) can be many pixels
-    # thick. Walk it while it stays light and not a red subject colour.
-    light = ~clear & (spill >= 12) & ~red_dominant & (val >= 0.55)
-    # A dark plate mix on the outline (black or feather edge cut with magenta).
-    # Hue stays tight so a purple drawn inside the art is not walked into.
-    dark_plate = ~clear & (spill >= 40) & ~red_dominant & (hue_gap(hue, PLATE_HUE) <= 22.0)
-    fringe = fringe | mild | _touching(light | dark_plate, clear)
-    out = arr.copy()
-    out[clear] = 0
-    if np.any(fringe):
-        recon, alpha = _fringe_color(rgb, pick, amount, foreground)
-        alpha = np.clip(np.rint(alpha.astype(np.float32) * (src_a.astype(np.float32) / 255.0)), 0, 255).astype(np.uint8)
-        # A light tint on a solid pixel loses the plate colour and stays opaque.
-        tint = fringe & (alpha >= 230)
-        out[tint, :3] = recon[tint]
-        soft = fringe & (alpha >= 8) & (alpha < 230)
-        out[soft, :3] = recon[soft]
-        out[soft, 3] = alpha[soft]
-        out[fringe & (alpha < 8)] = 0
-    out[out[:, :, 3] == 0] = 0
+    p = rgb.astype(np.float32) / 255.0
+    opacities = []
+    dists = []
+    for ref in refs:
+        k = np.asarray(ref, dtype=np.float32) / 255.0
+        opacities.append(chroma_alpha(p, k))
+        dists.append(delta_e(rgb, [ref]))
+    dist = np.stack(dists)
+    pick = dist.argmin(axis=0)
+    opacity = np.take_along_axis(np.stack(opacities), pick[None], axis=0)[0]
+    picked_dist = np.take_along_axis(dist, pick[None], axis=0)[0]
+    keys = np.asarray(refs, dtype=np.int16)[pick]
+    near_key = np.max(np.abs(rgb.astype(np.int16) - keys), axis=2) <= 1
+    # `tol` is the Lab distance of solid plate. A mix sits farther out and keeps partial alpha.
+    opacity = np.where(near_key | (picked_dist <= float(tol)), 0.0, opacity)
+    # The interior is the drawing. A round shell against the plate stays partial (the glow).
+    # A square dilate left magenta blocks. Pixels that are still plate-coloured stay partial.
+    shell = max(8, min(rgb.shape[0], rgb.shape[1]) // 24)
+    if HAVE_CV2:
+        inside = cv2.distanceTransform((opacity > 0).astype(np.uint8), cv2.DIST_L2, 5)
+        spill = np.minimum(rgb[:, :, 0].astype(np.int16), rgb[:, :, 2].astype(np.int16)) - rgb[:, :, 1].astype(np.int16)
+        opacity = np.where((opacity > 0.35) & (inside > float(shell)) & (spill < 36), 1.0, opacity)
+    new_a = np.clip(np.rint(src_a.astype(np.float32) * opacity), 0, 255).astype(np.uint8)
+    out = np.zeros_like(arr)
+    visible = new_a > 0
+    out[visible, :3] = rgb[visible]
+    out[visible, 3] = new_a[visible]
     return Image.fromarray(out, "RGBA")

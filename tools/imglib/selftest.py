@@ -55,10 +55,15 @@ def run() -> list[tuple[str, bool, str]]:
     lip[59, 20:60] = (150, 40, 70, 255)
     lip[60, 20:60] = (240, 200, 220, 255)
     keyed = np.array(key.key_to_alpha(Image.fromarray(lip)))
-    body_ok = tuple(int(v) for v in keyed[40, 40]) == (40, 90, 50, 255)
-    cloth_ok = tuple(int(v) for v in keyed[59, 30]) == (150, 40, 70, 255)
-    lip_gone = int(keyed[60, 30, 3]) == 0 and int(keyed[0, 0].sum()) == 0
-    out.append(("key light-pink lip", body_ok and cloth_ok and lip_gone, f"body {keyed[40, 40].tolist()} cloth {keyed[59, 30].tolist()} lip {keyed[60, 30].tolist()}"))
+    # Drawn RGB stays. The light-pink row is a plate mix and stays partial alpha.
+    plate_ok = int(keyed[0, 0, 3]) == 0 and int(keyed[0, 0].sum()) == 0
+    body = keyed[40, 40]
+    cloth = keyed[59, 30]
+    lip_px = keyed[60, 30]
+    body_ok = tuple(int(v) for v in body[:3]) == (40, 90, 50) and int(body[3]) > 200
+    cloth_ok = tuple(int(v) for v in cloth[:3]) == (150, 40, 70) and int(cloth[3]) > 100
+    lip_partial = tuple(int(v) for v in lip_px[:3]) == (240, 200, 220) and 0 < int(lip_px[3]) < 255
+    out.append(("key light-pink lip", plate_ok and body_ok and cloth_ok and lip_partial, f"body {body.tolist()} cloth {cloth.tolist()} lip {lip_px.tolist()}"))
     wood = np.zeros((30, 40, 4), np.uint8)
     wood[:, :] = (0, 0, 0, 255)
     wood[8:22, 8:32] = (120, 80, 40, 255)

@@ -35,9 +35,11 @@ Then the User judges the packed strip. Do not start the next unit until the User
 
 ## Still rekey
 
-The open set is the rekey-assets task. One colour-to-alpha: `tools/imglib/key.py` `chroma_alpha` against the border-sampled key. Strong black, white, and blue border pixels are subject samples. Glow and soft shading stay partial alpha. Solid plate becomes transparent black. `c2a` snaps alpha under 10 to 0 and over 242 to 255. That snap is the hard matte. Do not use it.
+The open set is the rekey-assets task. One colour-to-alpha: `tools/imglib/key.py` `chroma_alpha` against the nearest border-sampled key. Strong black, white, and blue border pixels are subject samples. The drawn RGB stays. Glow and soft shading stay partial alpha. Solid plate, including a one-level quantize of the key and plate within Lab `tol`, becomes transparent black. `c2a` snaps alpha under 10 to 0 and over 242 to 255. That snap is the hard matte. Do not use it.
 
-Do not wrap that in a fringe walk, a subtract of red-and-blue-above-green, or a resize hairline. Those three deleted the veil, the outlines, and the bowstring on 2026-10-09. Do not nearest-upscale the plate before the key. That distorted the female face.
+Pixels deep inside the silhouette (round distance, about a 24th of the shorter side) become opaque so the drawing does not wash out on blue. A plate-coloured pixel stays partial. Remap paints only plate near a border reference. A farther plate-coloured mix is shifted onto the key, not flattened.
+
+Do not wrap the key in a fringe walk, a subtract of red-and-blue-above-green, or a resize hairline. Those three deleted the veil, the outlines, and the bowstring on 2026-10-09. A heavy shrink may put back a near-white run the Lanczos kernel averaged away. That is a run of real pixels, not an edge lift. Do not nearest-upscale the plate before the key. That distorted the female face.
 
 Proof is `python tools/rekey_preview.py`, then `show_png.py` on the paths it prints. The counts are the check. A picture description is not a pixel count. This is not a play-camera shot, and the gate is `run_build_gate.py --batch` with no `--visual`. Do not match the live PNG while the task calls that PNG rejected. The source plate is the reference.
 
