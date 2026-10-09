@@ -22,10 +22,10 @@ If harvest cuts fail but the clip is good, adjust pack points. Do not invent a n
 After the User accepts a clip and harvest exists:
 
 1. If the plate is not `#FF00FF`, run `tools/plate_remap.py` first.
-2. Range-key / wand the `#FF00FF` plate. Despill fringe. `sprite_pipeline.py` `key_to_alpha` punches the plate. Video extracts and session stills pass `spill_flood=False` after remap so compressed maroon / hair / purple cloth is not treated as plate. Then **snap alpha hard** (figure `255`, plate `0`) before any fit so Color-to-Alpha cannot leave a magenta-ish lip on dark backdrops.
-3. Fit each frame to the 128×128 canvas with nearest-neighbor only. Integer scale. No bilinear.
+2. Colour-to-alpha the plate. Sample the plate from the border. Strong black, white, and blue border pixels are subject samples, not the key. Glow and the soft edge stay partial alpha. Solid plate becomes transparent black. Do not invert RGB to despill, and do not snap the fringe to a hard matte.
+3. Fit each frame to the 128×128 canvas. Nearest-neighbor only when sizing up. When sizing down, use a premultiplied high-quality resize.
 4. Snap to the locked palette.
-5. Remove anti-aliased edge pixels.
+5. Keep the soft edge as alpha. Do not strip fringe that colour-to-alpha already turned into transparency.
 6. Align the foot baseline across the strip.
 7. Confirm 8-direction parity and matching frame counts per state.
 

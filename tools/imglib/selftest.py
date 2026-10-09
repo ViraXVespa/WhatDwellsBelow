@@ -66,7 +66,9 @@ def run() -> list[tuple[str, bool, str]]:
     wood_ok = int((wood_k == wood).sum()) == wood.size
     out.append(("key ignores non-plate", wood_ok, f"changed px {int((wood_k != wood).any(axis=2).sum())}"))
     drift, truth = _on_plate(sp, [(255, 0, 192), (252, 0, 237), (248, 0, 158), (234, 0, 183)], True)
-    k = np.array(key.key_to_alpha(drift))[..., 3] > 0
+    drifted = np.array(key.key_to_alpha(drift))
+    # A soft rim may keep partial alpha. Opaque means the plate is still solid.
+    k = drifted[..., 3] > 200
     miss = int(((~truth) & k).sum())
     out.append(("key drifting JPEG plate", miss <= 40, f"plate left opaque {miss} px (<= 40)"))
     r = np.array(key.remap_plate(drift)[0])[..., :3]

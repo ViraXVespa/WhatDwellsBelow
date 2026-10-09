@@ -29,10 +29,9 @@ def _as_rgba(im: Image.Image) -> np.ndarray:
 
 
 def key_to_alpha(im: Image.Image, spill_flood: bool = True) -> Image.Image:
-    """Outside wand deletes the plate; spill walk + invert-C2A eat the pink lip (imglib.key.key_to_alpha).
+    """Colour-to-alpha against the border plate (imglib.key.key_to_alpha).
 
-    Stills with a chroma plate keep spill_flood on. Video extracts should plate-remap first, then pass
-    spill_flood=False so compressed maroon / hair is not treated as plate.
+    Glow and soft edges stay partial. `spill_flood` is accepted and does not switch paths.
     """
     return key.key_to_alpha(im, spill_flood=spill_flood)
 
