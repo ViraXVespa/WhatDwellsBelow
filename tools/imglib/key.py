@@ -345,52 +345,111 @@ def strip_rim(arr: np.ndarray, hue_width: float = RIM_HUE_WIDTH, passes: int = 1
     return arr
 
 
-def border_comparison(rgb: np.ndarray):
-    """Plate colours from the border, plus strong black, white, and blue border colours.
+def _foreground_medians(samples: np.ndarray) -> list:
+    """Strong black, white, and blue colours in `samples` (N x 3). Plate-tinted pixels are left out.
 
-    Plate colours are the colour-to-alpha base. Black, white, and blue are subject samples:
-    they never become a plate reference, and they are a blend target only on the fringe that
-    touches the plate. Returns (plate refs or None, foreground samples).
+    Those three are subject samples. They are never a plate reference. A pixel that still
+    carries the plate (magenta excess in red and blue) is not a clean sample of them.
     """
-    samples = border_samples(rgb)
+    if samples.size == 0:
+        return []
     h, sat, v = hsv(samples.reshape(-1, 1, 3))
     h = np.asarray(h).reshape(-1)
     sat = np.asarray(sat).reshape(-1)
     v = np.asarray(v).reshape(-1)
     peak = samples.max(axis=1).astype(np.int16)
     floor = samples.min(axis=1).astype(np.int16)
-    black = peak <= 48
-    white = (floor >= 210) & (sat <= 0.16)
-    blue = (hue_gap(h, 220.0) <= 45.0) & (sat >= 0.40) & (v >= 0.35)
-    foreground = []
+    spill = np.maximum(0, np.minimum(samples[:, 0], samples[:, 2]).astype(np.int16) - samples[:, 1].astype(np.int16))
+    black = (peak <= 48) & (spill <= 12)
+    white = (floor >= 210) & (sat <= 0.12) & (spill <= 12)
+    blue = (hue_gap(h, 220.0) <= 45.0) & (sat >= 0.40) & (v >= 0.35) & (spill <= 24)
+    found = []
     for mask in (black, white, blue):
         if int(np.asarray(mask).sum()) >= 4:
-            foreground.append(tuple(int(x) for x in np.median(samples[mask], axis=0)))
-    plate_px = (hue_gap(h, PLATE_HUE) <= 36.0) & (sat >= 0.40) & (v >= 0.28) & ~black & ~white & ~blue
+            found.append(tuple(int(x) for x in np.median(samples[mask], axis=0)))
+    return found
+
+
+def border_comparison(rgb: np.ndarray):
+    """Plate colours from the border, plus strong black, white, and blue border colours.
+
+    Plate colours are the colour-to-alpha base. Black, white, and blue are subject samples:
+    they never become a plate reference. Returns (plate refs or None, foreground samples).
+    """
+    samples = border_samples(rgb)
+    h, sat, v = hsv(samples.reshape(-1, 1, 3))
+    h = np.asarray(h).reshape(-1)
+    sat = np.asarray(sat).reshape(-1)
+    v = np.asarray(v).reshape(-1)
+    foreground = _foreground_medians(samples)
+    spill = np.maximum(0, np.minimum(samples[:, 0], samples[:, 2]).astype(np.int16) - samples[:, 1].astype(np.int16))
+    plate_px = (hue_gap(h, PLATE_HUE) <= 36.0) & (sat >= 0.40) & (v >= 0.28) & (spill > 12)
     hits = int(np.asarray(plate_px).sum())
     if hits < 16 or hits / float(max(1, samples.shape[0])) < 0.05:
         return None, foreground
     return background_refs(rgb, hue=PLATE_HUE, hue_tol=36.0, sat_min=0.40, val_min=0.28), foreground
 
 
-def _fringe_color(rgb: np.ndarray, pick: np.ndarray, amount: np.ndarray, foreground: list):
-    """Pull the magenta plate out of a mix. Green is never invented.
+def _edge_foreground(rgb: np.ndarray, plate: np.ndarray) -> list:
+    """Black, white, and blue on the subject edge, where the figure meets the plate."""
+    ring = dilate(plate, 2) & ~plate
+    if not np.any(ring):
+        return []
+    return _foreground_medians(rgb[ring])
 
-    `pick`, `amount` and `foreground` stay in the signature so the border samples
-    remain available. The plate channel is the shared red and blue.
+
+def _touching(cand: np.ndarray, seeds: np.ndarray) -> np.ndarray:
+    """Components of `cand` that touch `seeds`."""
+    if not np.any(cand) or not np.any(seeds):
+        return np.zeros(cand.shape, dtype=bool)
+    n, lab, _areas, _touch = components(cand)
+    if n == 0:
+        return np.zeros(cand.shape, dtype=bool)
+    labels = np.unique(lab[dilate(seeds, 1) & cand])
+    labels = labels[labels > 0]
+    if labels.size == 0:
+        return np.zeros(cand.shape, dtype=bool)
+    return np.isin(lab, labels)
+
+
+def _fringe_color(rgb: np.ndarray, pick: np.ndarray, amount: np.ndarray, foreground: list):
+    """Remove the plate from a mix. Black, white, and blue samples stay those colours.
+
+    The plate shows up as red and blue together above green. Subtract that excess from
+    red and blue. Green is left as drawn, and RGB is never inverted. `amount` is the
+    colour-to-alpha plate fraction. `pick` is the plate colour. `foreground` is the
+    subject samples: when one of them explains the pixel, that colour is kept.
     """
-    _ = (pick, amount, foreground)
-    red = rgb[..., 0].astype(np.float32)
-    green = rgb[..., 1].astype(np.float32)
-    blue = rgb[..., 2].astype(np.float32)
+    p = rgb.astype(np.float32)
+    k = pick.astype(np.float32)
+    red, green, blue = p[..., 0], p[..., 1], p[..., 2]
     spill = np.maximum(0.0, np.minimum(red, blue) - green)
-    recon = np.empty_like(rgb, dtype=np.float32)
-    recon[..., 0] = np.clip(red - spill, 0.0, 255.0)
-    recon[..., 1] = green
-    recon[..., 2] = np.clip(blue - spill, 0.0, 255.0)
-    opacity = 1.0 - np.clip(spill / 255.0, 0.0, 1.0)
-    rgb_u8 = np.clip(np.rint(recon), 0, 255).astype(np.uint8)
-    alpha_u8 = np.clip(np.rint(opacity * 255.0), 0, 255).astype(np.uint8)
+    despill = np.empty_like(p)
+    despill[..., 0] = np.clip(red - spill, 0.0, 255.0)
+    despill[..., 1] = green
+    despill[..., 2] = np.clip(blue - spill, 0.0, 255.0)
+    removed = spill / np.maximum(np.minimum(red, blue), 1.0)
+    alpha = np.clip(1.0 - amount.astype(np.float32), 0.0, 1.0)
+    alpha = np.minimum(alpha, 1.0 - removed)
+    err_best = np.full(p.shape[:2], 1e9, dtype=np.float32)
+    chosen = despill
+    chosen_a = alpha
+    for sample in foreground:
+        s = np.array(sample, dtype=np.float32)
+        sk = s - k
+        denom = np.maximum((sk * sk).sum(axis=-1), 1.0)
+        a = np.clip(((p - k) * sk).sum(axis=-1) / denom, 0.0, 1.0)
+        recon = a[..., None] * s + (1.0 - a[..., None]) * k
+        err = np.sqrt(((p - recon) ** 2).sum(axis=-1) / 3.0)
+        better = err < err_best
+        err_best = np.where(better, err, err_best)
+        chosen = np.where(better[..., None], s, chosen)
+        chosen_a = np.where(better, a, chosen_a)
+    use = err_best <= 18.0
+    out_rgb = np.where(use[..., None], chosen, despill)
+    out_a = np.where(use, chosen_a, alpha)
+    rgb_u8 = np.clip(np.rint(out_rgb), 0, 255).astype(np.uint8)
+    alpha_u8 = np.clip(np.rint(np.clip(out_a, 0.0, 1.0) * 255.0), 0, 255).astype(np.uint8)
     return rgb_u8, alpha_u8
 
 
@@ -401,17 +460,20 @@ def punch(im: Image.Image, spill_flood: bool = False) -> Image.Image:
 
 
 def key_to_alpha(im: Image.Image, spill_flood: bool = True, tol: float = LAB_TOL, refs=None) -> Image.Image:
-    """Colour-to-alpha against the border plate. Glow and soft edges stay partial.
+    """One colour-to-alpha against the border plate. Glow and soft shading stay partial.
 
-    Strong black, white, and blue border pixels are subject samples, not the key. Interior
-    pixels stay as drawn. Solid plate becomes transparent black. RGB is never inverted.
-    `spill_flood` is accepted so callers keep one signature; stills and extracts share this path.
-    `tol` is accepted for the same reason. `refs` pins the plate colours.
+    Solid plate becomes transparent black. A pixel that touches that plate and still carries
+    the plate hue is unmixed, so the subject colour remains and the plate becomes alpha.
+    Strong black, white, and blue samples (image border, or the subject edge) stay those
+    colours when they explain the mix. Interior pixels stay as drawn. RGB is never inverted.
+    `spill_flood` is accepted so callers keep one signature. `tol` is the Lab distance of
+    solid plate. `refs` pins the plate colours.
     """
     src = im.convert("RGBA")
     arr = np.array(src, dtype=np.uint8, copy=True)
     rgb = arr[:, :, :3]
-    foreground: list = []
+    src_a = arr[:, :, 3]
+    _ = spill_flood
     if refs is None:
         found, foreground = border_comparison(rgb)
         if found is None:
@@ -423,35 +485,49 @@ def key_to_alpha(im: Image.Image, spill_flood: bool = True, tol: float = LAB_TOL
     else:
         refs = [tuple(int(v) for v in r) for r in refs]
         _found, foreground = border_comparison(rgb)
-    _ = spill_flood
     amount, pick = plate_amount(rgb, refs)
-    mask, refs, dist = plate_mask(rgb, refs=refs, alpha=arr[:, :, 3], tol=tol)
+    dist = delta_e(rgb, refs)
     hue, sat, val = hsv(rgb)
-    # Blue through violet is a plate-mixed glow. A purple pixel is that glow with the
-    # plate still in it (blue at least near red). Red maroon fails that test and stays.
-    blue = rgb[:, :, 2].astype(np.int16)
     red = rgb[:, :, 0].astype(np.int16)
-    # A plate mix sits near the plate hue and keeps its blue. Grey-blue cloth and red
-    # maroon fail that test, so a tinted body is not treated as glow.
-    plate_mix = (
-        (hue_gap(hue, PLATE_HUE) <= 32.0)
-        & (blue * 2 >= red)
-        & (sat >= 0.12)
-        & (val > 0.12)
-        & (amount < 0.90)
+    green = rgb[:, :, 1].astype(np.int16)
+    blue = rgb[:, :, 2].astype(np.int16)
+    spill = np.maximum(0, np.minimum(red, blue) - green)
+    clearly = (dist <= float(tol)) | (amount >= 0.88)
+    pale = (
+        (spill >= 12)
+        & (sat < 0.22)
+        & (val > 0.70)
+        & (hue_gap(hue, PLATE_HUE) <= 30.0)
+        & dilate(clearly, 1)
+        & ~clearly
     )
-    pale_lip = (sat < 0.22) & (val > 0.70) & (hue_gap(hue, PLATE_HUE) <= 28.0) & (blue + 30 >= red)
-    reached = flood_border(mask | plate_mix).astype(bool)
-    stray = ~mask & dilate(mask, 3) & (hue_gap(hue, PLATE_HUE) <= 26.0) & (sat >= 0.35) & ~plate_mix
-    already = arr[:, :, 3] == 0
-    clear = (mask & ~plate_mix) | (amount >= 0.90) | (dilate(mask, 1) & pale_lip) | stray | already
-    rim = dilate(mask, 2) & (sat <= 0.16) & (amount >= 0.18) & (amount < 0.90) & ~pale_lip & ~plate_mix
-    fringe = (reached & plate_mix & ~clear) | (rim & ~clear)
+    clear = clearly | pale | (src_a == 0)
+    foreground = list(dict.fromkeys(list(foreground) + _edge_foreground(rgb, clear)))
+    cand = ~clear & (spill >= 36) & ((hue_gap(hue, PLATE_HUE) <= 40.0) | (amount >= 0.35))
+    fringe = _touching(cand, clear)
+    # Light plate mixes sit a short way in from the plate: red and blue both above green,
+    # and blue at least near red. A red-dominant colour (maroon, leather) is the subject.
+    radius = max(4, min(rgb.shape[0], rgb.shape[1]) // 32)
+    red_dominant = red > (blue + 30)
+    mild = dilate(clear, radius) & ~clear & (spill >= 12) & ~red_dominant
+    # A light veil (the wisp's outer purple, the shopkeep glow) can be many pixels
+    # thick. Walk it while it stays light and not a red subject colour.
+    light = ~clear & (spill >= 12) & ~red_dominant & (val >= 0.55)
+    # A dark plate mix on the outline (black or feather edge cut with magenta).
+    # Hue stays tight so a purple drawn inside the art is not walked into.
+    dark_plate = ~clear & (spill >= 40) & ~red_dominant & (hue_gap(hue, PLATE_HUE) <= 22.0)
+    fringe = fringe | mild | _touching(light | dark_plate, clear)
     out = arr.copy()
     out[clear] = 0
     if np.any(fringe):
         recon, alpha = _fringe_color(rgb, pick, amount, foreground)
-        out[fringe, :3] = recon[fringe]
-        out[fringe, 3] = alpha[fringe]
+        alpha = np.clip(np.rint(alpha.astype(np.float32) * (src_a.astype(np.float32) / 255.0)), 0, 255).astype(np.uint8)
+        # A light tint on a solid pixel loses the plate colour and stays opaque.
+        tint = fringe & (alpha >= 230)
+        out[tint, :3] = recon[tint]
+        soft = fringe & (alpha >= 8) & (alpha < 230)
+        out[soft, :3] = recon[soft]
+        out[soft, 3] = alpha[soft]
         out[fringe & (alpha < 8)] = 0
+    out[out[:, :, 3] == 0] = 0
     return Image.fromarray(out, "RGBA")

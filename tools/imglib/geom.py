@@ -37,11 +37,21 @@ def resize_rgba(im: Image.Image, size: tuple[int, int]) -> Image.Image:
         pack[:, :, :3] = np.where(solid[..., None], arr[:, :, :3], 0.0)
         pack[:, :, 3] = np.where(solid, 255.0, 0.0)
         pooled = np.array(Image.fromarray(np.clip(np.rint(pack), 0, 255).astype(np.uint8), "RGBA").resize(size, Image.Resampling.BOX), dtype=np.float32)
-        hair = (cover >= 1) & (cover <= 48) & (scaled[:, :, 3] < 170.0)
+        # A thin solid line (a bowstring) falls under the filter. The soft edge of a
+        # solid mass sits next to pixels that stayed opaque, so that edge is left soft.
+        faint = (cover >= 1) & (cover <= 72) & (scaled[:, :, 3] < 150.0)
+        high = scaled[:, :, 3] >= 200.0
+        pad = np.pad(high, 1, mode="constant", constant_values=False)
+        near = (
+            pad[:-2, :-2] | pad[:-2, 1:-1] | pad[:-2, 2:]
+            | pad[1:-1, :-2] | pad[1:-1, 2:]
+            | pad[2:, :-2] | pad[2:, 1:-1] | pad[2:, 2:]
+        )
+        hair = faint & ~near
         if np.any(hair):
             tone = np.clip(pooled[:, :, :3] * (255.0 / np.maximum(pooled[:, :, 3:4], 1.0)), 0, 255)
             scaled[hair, :3] = tone[hair]
-            scaled[hair, 3] = np.maximum(scaled[hair, 3], 210.0)
+            scaled[hair, 3] = np.maximum(scaled[hair, 3], 220.0)
     return Image.fromarray(np.clip(np.rint(scaled), 0, 255).astype(np.uint8), "RGBA")
 
 

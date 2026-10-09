@@ -34,9 +34,13 @@ This session wrote the open-set live PNGs so you can see the attempt. They are n
 - Reference is the source plate beside each live still.
 - First rewrite is the open set. She judges that before any other frame is rewritten.
 - Fixed checklist stays out: dummy, guild, guild_reception, stall, anvil, fence, pickaxe, male edge-cull.
-- Nearest-neighbor only when sizing up. High-quality resize when sizing down.
+- Nearest-neighbor only when sizing up. High-quality resize when sizing down. A downscale that leaves head.png blurry is not the result.
 - slot_legs.png comes from `_src/sources/assets/ui/gear/slot_legs.jpg` (dark greaves on magenta). Not from the extract gate.
-- Live stills of the attempt get committed so the next session can see them. They are not accepted.
+- Live stills of each attempt get committed so the next session can see them. They are not accepted.
+- Translucent areas on the plate stay as partial alpha. Shopkeep glow, the wisp outer layer, arrow shading, and the orb border were deleted. That is a failure. The orb border was the glow and was supposed to come back as alpha.
+- Solid outlines drawn on the plate survive. The hatchet is mostly good and is missing that outline. Other stills lost the same solid edge.
+- The longbow string must read as one string. Sparkles are not a string.
+- Female idle_down still has chunks missing from the arms.
 - Resume in a fresh session.
 
 ## Chosen surfaces, in order
@@ -53,32 +57,46 @@ This session wrote the open-set live PNGs so you can see the attempt. They are n
 Do not reopen: assets/fx/dummy.png, assets/sprites/buildings/guild.png, assets/sprites/buildings/guild_reception.png, assets/sprites/buildings/stall.png, assets/sprites/props/anvil.png, assets/sprites/props/fence.png, assets/ui/gear/pickaxe.png, and the male player frames.
 
 ## Ledger
-Decisions I made that were yours: all eight wisp idles are this one keyed plate, because the only source is idle_up.jpg. The fit ignores alpha below 24 so a faint halo does not shrink the subject. I removed the RGB invert in eat_spill instead of adding another spill case.
-Assumptions carried from memory or docs: stills resolve through the manifest in `_src`. art-pack.md now says soft alpha and a high-quality downscale, matching her 2026-10-09 note. Palette snap was not applied to these stills.
-Also changed: tools/imglib/key.py (key_to_alpha, border_comparison, _fringe_color). tools/imglib/geom.py (resize_rgba, shrink, fit_axis, fit_box). tools/sprite_pipeline.py key_to_alpha docstring. tools/imglib/selftest.py JPEG check now treats alpha above 200 as opaque plate. design/art-pack.md steps 2, 3, and 5. Live PNGs listed above. No `.gd` files. `_src` was not written. Callers of key_to_alpha not run: pack_locomotion.py, pack_walk.py, process_gear_icons.py, rekey_stills.py, process_session_sprites.py, match_keyed_region.py. Callers of fit_box, shrink, and fit_axis not run: pack_locomotion.py, pack_walk.py, pack_turntable.py, pack_facing_fix.py, pack_p4_enemies.py, process_gear_icons.py, process_enemies.py, process_world.py, process_world_pass.py, process_gloam.py, rekey_stills.py.
+Decisions I made that were yours: all eight wisp idles are this one keyed plate. Fringe colour is a despill (subtract min(R, B) - G from R and B), a light-veil walk, and a dark outline only within 22 degrees of the plate. Red-dominant colours were left as drawn. Fit ignores alpha below 24. Canvases stayed 128, orb 48, gear 64. Downscale is premultiplied Lanczos. Hairline lift only where a thin solid line is not the edge of a solid mass.
+Assumptions carried from memory or docs: stills resolve through the manifest in `_src`. slot_legs.jpg is the greaves plate. art-pack.md soft alpha and high-quality downscale still stand. Palette snap was not applied. Her 2026-10-09 review overrides the claim that the veil was kept.
+Also changed: tools/imglib/key.py (key_to_alpha, border_comparison, _fringe_color). tools/imglib/geom.py (resize_rgba hairline). Live PNGs in Chosen surfaces, including all eight wisp idles. This task file. No `.gd` files. `_src` was not written. Previews under `_logs/rekey-look/` (gitignored). Callers of key_to_alpha not run: pack_locomotion.py, pack_walk.py, process_gear_icons.py, rekey_stills.py, process_session_sprites.py, match_keyed_region.py. Callers of fit_box not run: pack_facing_fix.py, pack_p4_enemies.py, process_gear_icons.py, process_gloam.py, process_world.py, process_enemies.py.
 
 ## Baselines for the chosen surface
-C:\Users\Vira\.grok\worktrees\repos-whatdwellsbelow\wdb-art-pipelinepack-20261009-0250\assets\sprites\npcs\shopkeep.png - repo path assets/sprites/npcs/shopkeep.png. Body intact. Magenta gap beside the apron.
-C:\Users\Vira\.grok\worktrees\repos-whatdwellsbelow\wdb-art-pipelinepack-20261009-0250\assets\sprites\enemies\wisp\idle_up.png - repo path assets/sprites/enemies/wisp/idle_up.png. Blue wisp, purple outer edge. The other seven idle facings match this file.
-C:\Users\Vira\.grok\worktrees\repos-whatdwellsbelow\wdb-art-pipelinepack-20261009-0250\assets\fx\arrow.png - repo path assets/fx/arrow.png. Pink fringe on the fletching. Softer outline.
-C:\Users\Vira\.grok\worktrees\repos-whatdwellsbelow\wdb-art-pipelinepack-20261009-0250\assets\sprites\props\hp_orb.png - repo path assets/sprites/props/hp_orb.png. Gem with a purple edge. Much of the canvas is partial alpha.
-C:\Users\Vira\.grok\worktrees\repos-whatdwellsbelow\wdb-art-pipelinepack-20261009-0250\assets\sprites\player\female\idle_down.png - repo path assets/sprites/player/female/idle_down.png. Softer 128. A few magenta pixels on the armor.
-C:\Users\Vira\.grok\worktrees\repos-whatdwellsbelow\wdb-art-pipelinepack-20261009-0250\assets\ui\gear\head.png - repo path assets/ui/gear/head.png. Top hole measured 0. Metal is soft.
-C:\Users\Vira\.grok\worktrees\repos-whatdwellsbelow\wdb-art-pipelinepack-20261009-0250\assets\ui\gear\hatchet.png - repo path assets/ui/gear/hatchet.png. Softer edges. Axe body is mostly partial alpha.
-C:\Users\Vira\.grok\worktrees\repos-whatdwellsbelow\wdb-art-pipelinepack-20261009-0250\assets\ui\gear\longbow.png - repo path assets/ui/gear/longbow.png. String still broken. Bow is mostly partial alpha.
-C:\Users\Vira\.grok\worktrees\repos-whatdwellsbelow\wdb-art-pipelinepack-20261009-0250\assets\ui\gear\slot_legs.png - repo path assets/ui/gear/slot_legs.png. Empty-slot greaves from her jpg. Softer than the file it replaced.
+Current live stills, reviewed by Vira on 2026-10-09. Not accepted.
+
+- assets/sprites/npcs/shopkeep.png. Slightly improved. Huge sections of the translucent glow are missing.
+- assets/sprites/enemies/wisp/idle_up.png, and the other seven idles (same picture). Slightly improved. Huge sections of the translucent outer layer are missing.
+- assets/fx/arrow.png. The translucent shading is gone.
+- assets/sprites/props/hp_orb.png. The translucent border is gone. That border was the glow and was supposed to return as alpha.
+- assets/sprites/player/female/idle_down.png. Chunks of the arms are missing.
+- assets/ui/gear/head.png. Blurry.
+- assets/ui/gear/hatchet.png. Mostly good. Missing the solid outline from the plate.
+- assets/ui/gear/longbow.png. The string reads as sparkles.
+- assets/ui/gear/slot_legs.png. Not called out in this review.
+
+The 2026-10-09-0250 worktree notes (magenta gap, purple wisp edge, pink arrow fringe, partial hatchet) were the attempt before this one.
 
 ## Files and functions to touch
-- tools/imglib/key.py: key_to_alpha, border_comparison, _fringe_color. Plate pixels become transparent black. Plate-hued fringe is despilled by subtracting min(R, B) - G from R and B. Do not bring back the RGB invert.
-- tools/imglib/geom.py: resize_rgba (nearest only when both sides grow; premultiplied Lanczos when either side shrinks; hairline lift), fit_box (crop alpha at 24).
-- tools/imglib/selftest.py: run `python tools/img_inspect.py selftest` after a key change. It passed at the end of this session.
+- tools/imglib/key.py: key_to_alpha, border_comparison, _fringe_color. Solid plate becomes transparent black. The translucent veil must stay as partial alpha. The despill that subtracts min(R, B) - G deleted that veil on shopkeep, the wisp, the arrow, and the orb. Do not bring back the RGB invert. Do not delete glow to make the selftest clean. Solid outlines on the plate have to survive.
+- tools/imglib/geom.py: resize_rgba. Nearest only when both sides grow. Sizing down stays high quality, and head.png must not come out blurry. The hairline lift made the bowstring sparkle. A string has to stay one line. fit_box still crops alpha at 24. Do not throw away a faint halo when that halo is the glow she wants kept.
+- tools/imglib/selftest.py: run `python tools/img_inspect.py selftest` after a key change. It passed. That is not acceptance.
 - The nine live paths above. Write a still only after you have looked at it. She confirms each one.
 - design/art-pack.md if the key contract changes again.
 
 ## Did not work
-Latest `python tools/img_inspect.py selftest` passed (12 checks). Earlier failures in this session, since fixed: light-pink lip recolored the maroon cloth; JPEG plate left 103 then 94 pixels opaque; light-pink lip stayed fully opaque. Do not treat those as open.
+`python tools/img_inspect.py selftest` passed (12 checks) after this key change. A passing selftest is not acceptance.
 
-The live stills are not accepted. Shopkeep gap, wisp edge, arrow fringe, and orb edge still show plate color. Longbow string and hatchet solidity got worse. Do not call the key done.
+Vira reviewed the open set on blue on 2026-10-09. She does not see the set as fixed. Some stills are slightly improved. None are accepted.
+
+- Hatchet is mostly good. It lacks the solid outline the plate has. Many of these plates have a solid edge, and that outline was lost.
+- Shopkeep and the wisp are missing huge sections of their translucent areas.
+- The bowstring does not read as a string. It looks like sparkles.
+- Chunks of the female's arms are missing.
+- The head looks blurry.
+- The arrow has none of its translucent shading.
+- The orb's translucent areas are completely missing. That border was the glow. It was supposed to come back as alpha.
+
+The key cleared plate and subtracted min(R, B) - G on the fringe. That removed the veil instead of storing it as alpha. The hairline lift in resize_rgba broke the string into separate marks. Do not call the key done. Do not treat the older lip and JPEG selftest failures as open.
 
 ## Open questions
 none. The look, the reference, the open set, and the out-of-bounds list are settled above. Ask only if a discovery changes what she will see.
