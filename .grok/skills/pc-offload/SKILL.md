@@ -39,13 +39,15 @@ Intercept (raw tool is a failed lookup, not a fallback):
 - python -c for bytes, newlines, tabs, or indent -> tools/file_stat.py
 - python -c / double-quoted PowerShell body / echo Set-Content of a script ->
   single-quoted here-string piped to tools/doc_patch.py write FILE, then
-  tools/run_agent_py.py
+  tools/run_agent_py.py. A script this session or the next one will run again
+  is FILE under tools/ with a catalog row. run_agent_py.py deletes FILE when
+  it is under _logs/agent-py/
 - open tools/*.py to learn flags -> catalog row only
 - read the same job summary again this slice -> stop;
   one read via tools/read_summary.py --job <name> (index first, newest run;
   every run has its own stamped file, never open _logs files directly)
-- check_load_graph.py after every markdown edit -> only at ship,
-  or when routes or docs moved
+- a design doc, the agents file, or BOT.md edit -> python tools/check_load_graph.py
+  before the change is reported done. RESULT PASS is required. Do not defer it to ship
 - door or job routing by opening README / load-graph / memory topics ->
   tools/list_route.py --door <name> or --job door.job
 

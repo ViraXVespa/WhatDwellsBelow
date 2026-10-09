@@ -28,30 +28,6 @@ def resize_rgba(im: Image.Image, size: tuple[int, int]) -> Image.Image:
     nz = out_a[..., 0] > 0.5
     rgb[nz] = np.clip(scaled[nz, :3] * (255.0 / np.maximum(out_a[nz], 1.0)), 0, 255)
     scaled[:, :, :3] = rgb
-    # A one-pixel line averages away under Lanczos. Keep a hairline of solid source
-    # pixels visible, using that solid colour, without hardening a wide soft glow.
-    solid = arr[:, :, 3] >= 220.0
-    if np.any(solid):
-        cover = np.array(Image.fromarray((solid.astype(np.uint8) * 255), "L").resize(size, Image.Resampling.BOX))
-        pack = np.zeros_like(arr)
-        pack[:, :, :3] = np.where(solid[..., None], arr[:, :, :3], 0.0)
-        pack[:, :, 3] = np.where(solid, 255.0, 0.0)
-        pooled = np.array(Image.fromarray(np.clip(np.rint(pack), 0, 255).astype(np.uint8), "RGBA").resize(size, Image.Resampling.BOX), dtype=np.float32)
-        # A thin solid line (a bowstring) falls under the filter. The soft edge of a
-        # solid mass sits next to pixels that stayed opaque, so that edge is left soft.
-        faint = (cover >= 1) & (cover <= 72) & (scaled[:, :, 3] < 150.0)
-        high = scaled[:, :, 3] >= 200.0
-        pad = np.pad(high, 1, mode="constant", constant_values=False)
-        near = (
-            pad[:-2, :-2] | pad[:-2, 1:-1] | pad[:-2, 2:]
-            | pad[1:-1, :-2] | pad[1:-1, 2:]
-            | pad[2:, :-2] | pad[2:, 1:-1] | pad[2:, 2:]
-        )
-        hair = faint & ~near
-        if np.any(hair):
-            tone = np.clip(pooled[:, :, :3] * (255.0 / np.maximum(pooled[:, :, 3:4], 1.0)), 0, 255)
-            scaled[hair, :3] = tone[hair]
-            scaled[hair, 3] = np.maximum(scaled[hair, 3], 220.0)
     return Image.fromarray(np.clip(np.rint(scaled), 0, 255).astype(np.uint8), "RGBA")
 
 
@@ -115,15 +91,17 @@ def grid_split(im: Image.Image, cols: int, rows: int) -> list[Image.Image]:
     return [im.crop((c * cw, r * ch, (c + 1) * cw, (r + 1) * ch)) for r in range(rows) for c in range(cols)]
 
 
-def fit_box(im, canvas: int, pad: int, *, resample=None, to_int=round, oy=None, empty_exit: str = ""):
+def fit_box(im, canvas: int, pad: int, *, resample=None, to_int=round, oy=None, empty_exit: str = "", alpha_min: int = 24):
     """Crop to the opaque box, pad it, scale to fit `canvas` square, paste centred (oy(nh) sets the y offset).
 
     resample overrides the scale rule. Otherwise nearest when sizing up and premultiplied Lanczos
     when sizing down. to_int turns the scaled size into pixels (round or int). empty_exit raises
     SystemExit(msg) on an empty image instead of returning a blank canvas.
+    alpha_min is the crop floor. Pixels under it do not grow the box, so a glow stored only as
+    faint alpha is cut off. Pass a lower floor when that glow is the result.
     """
     # A faint halo must not expand the fit and shrink the subject.
-    box = bbox(im, 24) or im.getbbox()
+    box = bbox(im, alpha_min) or im.getbbox()
     if not box:
         if empty_exit:
             raise SystemExit(empty_exit)

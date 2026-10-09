@@ -223,7 +223,8 @@ def main(argv: list[str] | None = None) -> int:
     survey = slice_lib.is_survey(root, args.door, args.job, args.area, bool(args.from_handoff))
     mode = "handoff" if args.from_handoff else "survey" if survey else "implement"
     sdir = session_lib.session_dir()
-    start = slice_lib.in_worktree_text(root, sdir, mode) if not compact else "RULES: unchanged since this slice's first card (`--full` reprints them). Per ask: message first, ledger, Did not work; commit only on her yes."
+    screen = bool(flows) or bool(note)
+    start = slice_lib.in_worktree_text(root, sdir, mode, screen) if not compact else "RULES: unchanged since this slice's first card (`--full` reprints them). Per ask: message first, ledger, Did not work; commit only on her yes."
     hand = handoff_lib.start_block(root, Path(args.from_handoff), bool(units), restore=not args.from_task) if args.from_handoff else []
     tfile = Path(args.from_handoff) if args.from_handoff else None
     tid = tfile.stem if tfile and tfile.parent.name == "tasks" else ""

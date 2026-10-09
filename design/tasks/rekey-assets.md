@@ -77,8 +77,12 @@ Current live stills, reviewed by Vira on 2026-10-09. Not accepted.
 The 2026-10-09-0250 worktree notes (magenta gap, purple wisp edge, pink arrow fringe, partial hatchet) were the attempt before this one.
 
 ## Files and functions to touch
-- tools/imglib/key.py: key_to_alpha, border_comparison, _fringe_color. Solid plate becomes transparent black. The translucent veil must stay as partial alpha. The despill that subtracts min(R, B) - G deleted that veil on shopkeep, the wisp, the arrow, and the orb. Do not bring back the RGB invert. Do not delete glow to make the selftest clean. Solid outlines on the plate have to survive.
-- tools/imglib/geom.py: resize_rgba. Nearest only when both sides grow. Sizing down stays high quality, and head.png must not come out blurry. The hairline lift made the bowstring sparkle. A string has to stay one line. fit_box still crops alpha at 24. Do not throw away a faint halo when that halo is the glow she wants kept.
+- Next session, in this order. `python tools/show_func.py tools/imglib/key.py chroma_alpha`, then `c2a`, then `key_to_alpha`. `chroma_alpha` is the colour-to-alpha. `c2a` snaps alpha under 10 to 0 and over 242 to 255. That snap is the hard matte. Do not use it. `key_to_alpha` still walks a fringe and subtracts red-and-blue-above-green, and that subtract deleted the veil. Make `key_to_alpha` one `chroma_alpha` against the border-sampled key, and keep the partial alpha. Do not add another fringe walk, subtract, or resize hairline.
+- `python tools/rekey_preview.py`, then `python tools/show_png.py` on the paths it prints. The counts are the check. A picture description is not a pixel count. `partial` is the veil kept as alpha. `plate_opaque` is solid plate left in the art. `halo_cropped` is faint alpha `fit_box` drops at its default floor of 24. Pass `alpha_min` lower when that glow is the result. This tool stays in `tools/`. Do not write another preview under `_logs/agent-py/`.
+- No play-camera baseline and no `--visual` on the gate. The start card says NO PLAY CAMERA for this job. Q0 is already answered. Open questions are none.
+- Do not match the live PNGs. They are the rejected attempt. The source plates are the reference. Do not call `rekey_stills.prep`. It nearest-upscales a small plate, and that distorted the female face.
+- tools/imglib/key.py: key_to_alpha. Solid plate becomes transparent black. The translucent veil must stay as partial alpha. The despill that subtracts min(R, B) - G deleted that veil on shopkeep, the wisp, the arrow, and the orb. Do not bring back the RGB invert. Do not delete glow to make the selftest clean. Solid outlines on the plate have to survive.
+- tools/imglib/geom.py: resize_rgba. Nearest only when both sides grow. Sizing down stays high quality, and head.png must not come out blurry. The hairline lift that sparkled the bowstring is gone. Do not put it back. fit_box crops alpha below `alpha_min` (default 24). Pass a lower floor when that faint alpha is the glow. Do not throw the glow away.
 - tools/imglib/selftest.py: run `python tools/img_inspect.py selftest` after a key change. It passed. That is not acceptance.
 - The nine live paths above. Write a still only after you have looked at it. She confirms each one.
 - design/art-pack.md if the key contract changes again.
@@ -96,7 +100,7 @@ Vira reviewed the open set on blue on 2026-10-09. She does not see the set as fi
 - The arrow has none of its translucent shading.
 - The orb's translucent areas are completely missing. That border was the glow. It was supposed to come back as alpha.
 
-The key cleared plate and subtracted min(R, B) - G on the fringe. That removed the veil instead of storing it as alpha. The hairline lift in resize_rgba broke the string into separate marks. Do not call the key done. Do not treat the older lip and JPEG selftest failures as open.
+The key cleared plate and subtracted min(R, B) - G on the fringe. That removed the veil instead of storing it as alpha. The hairline lift in resize_rgba broke the string into separate marks. That lift is removed. Do not put it back. Do not call the key done. Do not treat the older lip and JPEG selftest failures as open.
 
 ## Open questions
 none. The look, the reference, the open set, and the out-of-bounds list are settled above. Ask only if a discovery changes what she will see.

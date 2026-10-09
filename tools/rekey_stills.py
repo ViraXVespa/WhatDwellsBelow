@@ -45,7 +45,10 @@ ATK_PICKS = (8, 18, 28, 38)
 
 
 def prep(im: Image.Image) -> Image.Image:
-    """Bible-style 4x NN if the still is small. Do not shrink before remap/key."""
+    """Bible-style 4x NN if the still is small. Do not shrink before remap/key.
+
+    Do not use this on a plate you are about to judge. The nearest upscale distorted the female face.
+    """
     im = im.convert("RGBA")
     w, h = im.size
     if min(w, h) < SMALL:

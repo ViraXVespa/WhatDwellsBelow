@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract one GDScript func/const into _logs/show-func/<stamp>-show-func.txt (first 80 lines)."""
+"""Extract one GDScript or Python declaration into _logs/show-func/<stamp>-show-func.txt (first 80 lines)."""
 from __future__ import annotations
 
 import re
@@ -16,11 +16,37 @@ import gd_lib
 MAX_LINES = 80
 
 
+def py_span(lines: list[str], name: str) -> tuple[int, int] | None:
+    """[start, end) of a column-0 Python def, up to the next column-0 def or class."""
+    start = None
+    for i, line in enumerate(lines):
+        m = re.match(r"^(?:async\s+)?def\s+(\w+)\s*\(", line)
+        if m and m.group(1) == name:
+            start = i
+            break
+    if start is None:
+        return None
+    end = len(lines)
+    for j in range(start + 1, len(lines)):
+        if re.match(r"^(?:async\s+)?def\s+\w+\s*\(|^class\s+\w+", lines[j]):
+            end = j
+            break
+    return start, end
+
+
+def declared_names(lines: list[str], python: bool) -> list[str]:
+    if python:
+        found = [m.group(1) for ln in lines if (m := re.match(r"^(?:async\s+)?def\s+(\w+)\s*\(", ln))]
+    else:
+        found = [m.group(1) for ln in lines if (m := re.match(r"(?:static\s+)?(?:func|const|var|signal|enum)\s+(\w+)", ln))]
+    return sorted(set(found))
+
+
 def main(argv: list[str] | None = None) -> int:
-    p = agent_log.std_parser("Extract one GDScript declaration.", json_out=True)
+    p = agent_log.std_parser("Extract one GDScript or Python declaration.", json_out=True)
     p.add_argument("pos", nargs="*", metavar="PATH NAME", help="Same as --path and --name")
-    p.add_argument("--path", default="", help="Repo-relative .gd path")
-    p.add_argument("--name", default="", help="func / const / var name")
+    p.add_argument("--path", default="", help="Repo-relative .gd or .py path")
+    p.add_argument("--name", default="", help="func / const / var / def name")
     args = p.parse_args(argv)
     if len(args.pos) > 2:
         agent_log.fail("pass at most PATH NAME (example: show_func.py scripts/app.gd _ready)")
@@ -39,9 +65,10 @@ def main(argv: list[str] | None = None) -> int:
         agent_log.finish("show-func", root, "\n".join(head), "FAIL", args=args, legacy=False, error="missing")
         return 2
     body = src.read_text(encoding="utf-8-sig").splitlines()
-    span = gd_lib.decl_span(body, args.name)
+    python = rel.endswith(".py")
+    span = py_span(body, args.name) if python else gd_lib.decl_span(body, args.name)
     if span is None:
-        names = sorted({m.group(1) for ln in body if (m := re.match(r"(?:static\s+)?(?:func|const|var|signal|enum)\s+(\w+)", ln))})
+        names = declared_names(body, python)
         print(f"error: no declaration {args.name!r} in {rel}; declared: {', '.join(names[:40])}" + (" ..." if len(names) > 40 else "") + "; pick one of those names, or search a name that lives inside a function with `python tools/list_xref.py NAME`", file=sys.stderr)
         return agent_log.finish("show-func", root, "\n".join(head), "FAIL", args=args, error="not_found")
     start, end = span

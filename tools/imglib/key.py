@@ -460,14 +460,14 @@ def punch(im: Image.Image, spill_flood: bool = False) -> Image.Image:
 
 
 def key_to_alpha(im: Image.Image, spill_flood: bool = True, tol: float = LAB_TOL, refs=None) -> Image.Image:
-    """One colour-to-alpha against the border plate. Glow and soft shading stay partial.
+    """Colour-to-alpha against the border plate. The contract is `chroma_alpha` against that key.
 
-    Solid plate becomes transparent black. A pixel that touches that plate and still carries
-    the plate hue is unmixed, so the subject colour remains and the plate becomes alpha.
-    Strong black, white, and blue samples (image border, or the subject edge) stay those
-    colours when they explain the mix. Interior pixels stay as drawn. RGB is never inverted.
-    `spill_flood` is accepted so callers keep one signature. `tol` is the Lab distance of
-    solid plate. `refs` pins the plate colours.
+    `chroma_alpha` turns a plate mix into partial alpha of the subject colour.
+    `c2a` then snaps alpha under 10 to 0 and over 242 to 255. That snap is the hard matte.
+    This body still walks a fringe and subtracts red-and-blue-above-green. That subtract
+    deleted the veil on the 2026-10-09 open set. Do not add another walk, subtract, or snap.
+    `spill_flood` stays so callers keep one signature. `tol` is the Lab distance of solid
+    plate. `refs` pins the plate colours.
     """
     src = im.convert("RGBA")
     arr = np.array(src, dtype=np.uint8, copy=True)

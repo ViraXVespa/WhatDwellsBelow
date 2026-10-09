@@ -72,42 +72,59 @@ def is_survey(root: Path, door: str, job: str, area: str, handoff: bool) -> bool
         return False
 
 
-def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implement") -> str:
+def in_worktree_text(root: Path, sdir: Path | None = None, mode: str = "implement", screen: bool = True) -> str:
     """The first-message text Build reads when this tool is its first command. `sdir` = the running session's folder (session_lib).
-    `mode`: 'implement' (a job), 'survey' (a door with several jobs: text survey, ends in --handoff) or 'handoff' (a fresh session from a handoff)."""
+    `mode`: 'implement' (a job), 'survey' (a door with several jobs: text survey, ends in --handoff) or 'handoff' (a fresh session from a handoff).
+    `screen` is false when the job has no shot flow and is not a ui/theme/visual screen: no play-camera baseline."""
     start = [
         "IN A WORKTREE: this directory is the slice; do not create another. This tool is the first command of a slice; a later run says where the slice stands (`--full` reprints this).",
         session_lib.statement(sdir),
     ]
+    no_cam = ("NO PLAY CAMERA: this job has no shot flow and it is not a screen. No play-camera baseline, no new shot flow, and no `--visual` on the gate. "
+              "The gate is `python tools/run_build_gate.py --batch`. A keyed still is proved against its source plate with `python tools/rekey_preview.py`, then `show_png.py` on the paths it prints. "
+              "Pixel counts from that tool are the check. A picture description is not a pixel count. "
+              "A task whose Open questions are none already answered Q0. A picture the task calls rejected is the last attempt, not the reference.")
     if mode == "handoff":
         order = [("ORDER (handoff): `python tools/check_gd_load.py` once and `python tools/run_godot_import_check.py` (a fresh worktree has nothing imported; it takes about a minute: start it with "
-                  "`block_until_ms 0` and poll the output once, no skill needed); open the baselines the handoff lists (re-shoot only one that is missing or band=fail); read the files it lists; "
-                  "then the first unit. Ask about what Open questions lists or what a discovery changes.")]
+                  "`block_until_ms 0` and poll the output once, no skill needed); open the baselines the handoff lists (a shot that is missing or band=fail is re-shot; a still is not a shot); read the files it lists; "
+                  "then the first unit. Ask about what Open questions lists or what a discovery changes."
+                  + ("" if screen else " " + no_cam))]
     elif mode == "survey":
         order = [("ORDER (survey): no import check and no shots yet. Survey from text: `python tools/run_shot_flow.py --survey`, `python tools/list_route.py --digest --door D`; write the survey as visible text, "
                   "then Q0, then which group first. A baseline you did not shoot in a survey is not a `Did not work` item. After her answers to the first ask: `python tools/start_build_slice.py --handoff`, then stop."),
                  Q0]
-    else:
+    elif screen:
         order = [("ORDER: `python tools/check_gd_load.py` once and `python tools/run_godot_import_check.py` (a fresh worktree has nothing imported; it takes about a minute: start it with "
                   "`block_until_ms 0` and poll the output once, no skill needed); shoot the baseline and look at it yourself (band=fail is invalid: fix the cause, re-shoot); "
-                  "write the restate as visible text; then Q0; then your other questions."),
+                  "write the restate as visible text; then Q0; then your other questions. "
+                  "A task whose Open questions are none already answered Q0. Do not ask it again."),
                  Q0]
+    else:
+        order = [("ORDER: `python tools/check_gd_load.py` once and `python tools/run_godot_import_check.py` (a fresh worktree has nothing imported; it takes about a minute: start it with "
+                  "`block_until_ms 0` and poll the output once, no skill needed). " + no_cam + " "
+                  "Write the restate as visible text, then change the code."),
+                 Q0]
+    gate = ("`python tools/run_build_gate.py --batch --visual JOB`" if screen
+            else "`python tools/run_build_gate.py --batch` (no `--visual`: this job has no shot flow)")
     return "\n".join(start + order + [
-        "EVERY ASK has its own message first, a re-ask after changes included (\"same as before\" is not a message): the survey or restate, every PNG path with a one-line description "
-        "(a changed set of pictures is a new list), the three ledger lines and `Did not work:` if any. Order: shoot, look at the pictures yourself, "
-        "`python tools/show_png.py PATH=description ...` (opens them for her; expected, not a ledger item), the message, the ask. Option labels are not the message. "
-        "Realise it was not sent: send it before your next tool call. In a survey of several surfaces the survey comes first; which group, the order and what she wants for each are separate questions after it.",
+        ("EVERY ASK has its own message first, a re-ask after changes included (\"same as before\" is not a message): the survey or restate, every PNG path with a one-line description "
+         "(a changed set of pictures is a new list), the three ledger lines and `Did not work:` if any. "
+         + ("Order: shoot, look at the pictures yourself, " if screen else "Order: run the check, look at the pictures yourself, ")
+         + "`python tools/show_png.py PATH=description ...` (opens them for her; expected, not a ledger item), the message, the ask. Option labels are not the message. "
+         + "Realise it was not sent: send it before your next tool call. In a survey of several surfaces the survey comes first; which group, the order and what she wants for each are separate questions after it."),
         "LEDGER, three lines, in every ask: \"Decisions I made that were yours\" (incl. new assets, fonts, dependencies, generated images, and look details you chose inside her rule: never \"none\" for those); \"Assumptions carried from memory or docs\"; "
         "\"Also changed\" (shared code and the other screens that use it, filled from `python tools/list_xref.py NAME` for each shared script you touched; states not shot; "
         "every write outside the worktree, Grok memory files included; temp files; reverts of generated churn such as `git checkout -- docs`). "
         f"Temp files go under `{(root / '_logs').as_posix()}/`; the commit message file is `{(root / '_logs' / 'commit-msg.txt').as_posix()}` (`git commit -F`). "
+        "A script this session or the next one will run again is a file under tools/ with a catalog row (design/tools.md rule 7). "
+        "`python tools/run_agent_py.py` deletes a script under `_logs/agent-py/` after the run, and `--keep-script` still leaves it gitignored. "
         "Before you write \"nothing was written outside this worktree\", check what you wrote and say exactly that.",
         "DID NOT WORK: any non-zero exit, `RESULT FAIL`, failed edit or skipped step, exploratory ones too, opens your next message. Do not write it from memory: "
         "`python tools/start_build_slice.py --failed` prints the lines from this session's failed tool results since your last ask (`show_png.py` prints them too); paste them first, and say so when there are none. "
         "A step this card's ORDER leaves out (a survey's baseline) is not skipped.",
         "ASK BEFORE THE CODE, not in a ledger line: a change in what a control does or in save or entry behaviour (a button that now saves, a changed trade) is her decision.",
         ("This tool never starts grok." if mode == "survey" else
-         "COMMIT only when she says so, with `python tools/commit_slice.py` (it needs a passing `python tools/run_build_gate.py --batch --visual JOB` after your last edit; gate not run: "
+         "COMMIT only when she says so, with `python tools/commit_slice.py` (it needs a passing " + gate + " after your last edit; gate not run: "
          "`--gate-skipped \"why\"`, and open your final message with `Did not work: gate not run (why)`). "
          "THE END OF A UNIT: the settle ask shows the before and after PNG paths together, offers \"Good for now: commit, push, next unit\" and \"Change it\" (no \"Recommended\" on approving your own work), and your final message names the frames you opened. "
          "After her yes: gate, `commit_slice.py`, the push from the merge-back line, then `python tools/start_build_slice.py --next` for the next unit of a queue (its card, no new survey), or `--handoff` to write the next handoff (queue and done prefilled). "
@@ -244,6 +261,8 @@ def selftest(script: Path) -> int:
         for banned in ("--checkpoint", "retry=", "did_not_work", "windows or programs opened", "is not showing it", "read by hand", "found by path", "shoot and open"):
             if banned in out.lower():
                 bad.append(f"the worktree first-message text must not contain {banned!r}")
+        if "NO PLAY CAMERA" not in out or "shoot the baseline" in out:
+            bad.append("a job with no shot flow must not ask for a play-camera baseline")
         rows = [{"type": "assistant", "tool_calls": [{"id": "a", "name": "run_terminal_command", "arguments": '{"command": "python tools/x.py"}'}]},
                 {"type": "tool_result", "tool_call_id": "a", "content": "exit: 2\nx.py: error: bad flag"},
                 {"type": "assistant", "tool_calls": [{"id": "b", "name": "search_replace", "arguments": '{"file_path": "f.gd"}'}]},
@@ -295,8 +314,8 @@ def selftest(script: Path) -> int:
         if code != 0 or "ORDER (survey)" not in out or "not a `Did not work` item" not in out or "shoot the baseline" in out or "mode=survey" not in out:
             bad.append("a door with several jobs must print the survey ORDER (text survey, the unshot baseline is not a Did-not-work item)")
         code, out = run(clone, "--job", "ui.pause", "--dry-run", area="")
-        if code != 0 or "IN A WORKTREE" not in out or "STEP 0 (not a stop)" not in out or "door-flow" not in out or out.index("IN A WORKTREE") > out.index("STEP 0"):
-            bad.append("a visual job with no flow of its own must print IN A WORKTREE, then STEP 0 naming the door-level flows")
+        if code != 0 or "IN A WORKTREE" not in out or "STEP 0 (not a stop)" not in out or "door-flow" not in out or out.index("IN A WORKTREE") > out.index("STEP 0") or "shoot the baseline" not in out:
+            bad.append("a visual job with no flow of its own must print IN A WORKTREE, then STEP 0 naming the door-level flows, and still ask for the baseline")
         if "ORDER: " not in out or "ORDER (survey)" in out or "mode=implement" not in out:
             bad.append("a job is an implementation slice (the baseline ORDER)")
         routes.write_text(routes.read_text(encoding="utf-8") + '  ui.pause: "own-flow"\n', encoding="utf-8")

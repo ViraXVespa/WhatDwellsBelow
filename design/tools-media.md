@@ -39,6 +39,7 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | `process_sprites.py` | process_sprites.py | D | `--help` | N |
 | `process_world.py` | process_world.py | D | `--help` | N |
 | `process_world_pass.py` | Key and install the Placeholdia / dungeon art pass stills | D | `--help` | N |
+| `rekey_preview.py` | Open-set rekey preview on blue (`_logs/rekey-look/`). Counts are the check. Does not write live assets. Summary: `rekey-preview`. | D | `--help` | N |
 | `rekey_stills.py` | Re-key live stills from Grok session sources with plate_remap + sprite_pipeline | D | `--help` | N |
 | `run_isolated_grok.py` | Stage a scratch directory outside the git tree and run a thin Grok Build media job | D | `--help` | N |
 | `shot-recipes.json` | Sidecar data for the tool of the same stem | D | - | N |
@@ -58,6 +59,6 @@ Install: `pip install -r tools/requirements.txt` (Pillow, numpy; OpenCV optional
 | `imglib/imgio.py` | `load` / `save`, numpy round trip, `MAGENTA`, `hex_of` (named `imgio`, not `io`, to keep stdlib names free) |
 | `imglib/geom.py` | `bbox`, `crop`, `scale_nearest`, `shrink`, `flip`, `grid_split`, `fit_box` (square canvas), `fit_axis` (crop, then scale to a width or height) |
 | `imglib/color.py` | Lab distance, hue, `background_refs`, `palette`, WCAG `contrast_ratio` |
-| `imglib/key.py` | plate mask, `remap_plate` (every plate pixel exactly #FF00FF), border flood, pockets, `chroma_alpha`, spill (hue band follows the key and the plate refs), `key_to_alpha` |
+| `imglib/key.py` | plate mask, `remap_plate` (every plate pixel exactly #FF00FF), border flood, pockets, `chroma_alpha` (the colour-to-alpha; keep partial alpha). `c2a` snaps that to a hard matte. `key_to_alpha` must stay one `chroma_alpha`. A fringe walk or a subtract despill is not the contract |
 | `imglib/compare.py` | `delta_map`, `diff`, `heatmap`, `montage`, `checker` (behind `shot_diff.py` and the `run_shots.py` seam check) |
 | `imglib/look.py` | the `img_inspect.py` checks as functions |

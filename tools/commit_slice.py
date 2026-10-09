@@ -2,7 +2,7 @@
 """Commit the slice after her yes, only when the build gate ran after your last edit, or the skip is said out loud.
 
     python tools/commit_slice.py [--message-file _logs/commit-msg.txt] [--gate-skipped "why"] [--dry-run]
-The gate is `python tools/run_build_gate.py --batch --visual JOB`. This tool reads its newest summary in _logs/build-gate: it must end in
+The gate is `python tools/run_build_gate.py --batch`, plus `--visual JOB` only when that job has a shot flow. This tool reads its newest summary in _logs/build-gate: it must end in
 `RESULT PASS` and be newer than every changed file. With no passing gate it stops (exit 1) and prints both ways forward. `--gate-skipped WHY`
 commits anyway and prints the line `Did not work: gate not run (WHY)` that opens your final message.
 Staged: every change, new `.import` sidecars included; sidecars Godot only modified (churn) are left out and counted. Nothing is pushed.
@@ -69,7 +69,7 @@ def main(argv: list[str] | None = None) -> int:
         agent_log.fail("nothing to commit")
     why = gate_state(root, rows)
     if why and not args.gate_skipped.strip():
-        agent_log.fail(f"gate: {why}. Run `python tools/run_build_gate.py --batch --visual JOB`, or commit with --gate-skipped \"why\" and open your final message with `Did not work: gate not run (why)`")
+        agent_log.fail(f"gate: {why}. Run `python tools/run_build_gate.py --batch` (add `--visual JOB` only when that job has a shot flow), or commit with --gate-skipped \"why\" and open your final message with `Did not work: gate not run (why)`")
     churn = [p for st, p in rows if p.endswith(".import") and st.strip() == "M"]
     paths = [p for _, p in rows if p not in churn]
     if not paths:

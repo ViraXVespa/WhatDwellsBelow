@@ -32,3 +32,13 @@ After the User accepts a clip and harvest exists:
 Do not ship a frame that still has start-chroma rims or a soft magenta halo.
 
 Then the User judges the packed strip. Do not start the next unit until the User says so.
+
+## Still rekey
+
+The open set is the rekey-assets task. One colour-to-alpha: `tools/imglib/key.py` `chroma_alpha` against the border-sampled key. Strong black, white, and blue border pixels are subject samples. Glow and soft shading stay partial alpha. Solid plate becomes transparent black. `c2a` snaps alpha under 10 to 0 and over 242 to 255. That snap is the hard matte. Do not use it.
+
+Do not wrap that in a fringe walk, a subtract of red-and-blue-above-green, or a resize hairline. Those three deleted the veil, the outlines, and the bowstring on 2026-10-09. Do not nearest-upscale the plate before the key. That distorted the female face.
+
+Proof is `python tools/rekey_preview.py`, then `show_png.py` on the paths it prints. The counts are the check. A picture description is not a pixel count. This is not a play-camera shot, and the gate is `run_build_gate.py --batch` with no `--visual`. Do not match the live PNG while the task calls that PNG rejected. The source plate is the reference.
+
+`rekey_preview.py` stays in `tools/`. Do not write another preview under `_logs/agent-py/`. `run_agent_py.py` deletes those after the run.
