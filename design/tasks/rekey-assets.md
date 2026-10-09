@@ -25,7 +25,7 @@ The proof is the open set. She will review a full repack later. Checklist items 
 This session wrote the open-set live PNGs so you can see the attempt. They are not accepted.
 
 ## Q0 answers so far
-- result look: One soft key, reusing the source plates. The same logic has to work on every asset. Soft edges are likely on all of them. Proof is the open set. A full repack comes later, after she says this set is right.
+- result look: One soft key, reusing the source plates. The same logic has to work on every asset. Soft edges are likely on many of them, but not all. Proof is the open set. A full repack comes later, after she says this set is right.
 - reference: The source plates in `_src`. The live sprite should keep that drawing, with the plate and the glow turned into alpha.
 - out of bounds, incl. frames or layouts already built: Dummy, guild, guild reception, stall, anvil, fence, pickaxe, and the male edge-cull stay as the previous session left them. Do not rekey them in this pass. Do not edit `_src`.
 
