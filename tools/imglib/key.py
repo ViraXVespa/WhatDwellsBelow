@@ -206,10 +206,11 @@ def plate_border_refs(rgb: np.ndarray):
 
 def remap_plate(im: Image.Image, tol: float = LAB_TOL, wand_dist: float = 48.0, min_amount: float = 0.72, edge: int = 4,
                 edge_min: float = 0.04, pocket_frac: float = POCKET_FRAC):
-    """Repaint the plate as exact #FF00FF (opaque), shifting edge bleed by its plate mix. Returns (image, debug image, info).
+    """Repaint solid plate as exact #FF00FF (opaque). A farther mix keeps its drawn RGB.
 
-    Every plate pixel ends exactly (255, 0, 255); the edge band (within `edge` px of the plate) is shifted
-    by amount x (key - nearest reference) when the pixel holds at least edge_min of the plate colour.
+    Returns (image, debug image, info). Solid plate near a border reference ends exactly (255, 0, 255).
+    Shifting a farther mix onto the key drew lines along hard pixel edges. Colour-to-alpha keeps that mix
+    as partial alpha without a recolour. The debug image still marks the mix band.
     """
     src = im.convert("RGBA")
     arr = np.array(src, dtype=np.uint8, copy=True)
@@ -235,15 +236,13 @@ def remap_plate(im: Image.Image, tol: float = LAB_TOL, wand_dist: float = 48.0, 
         }
         return src, Image.fromarray(vis, "RGBA"), info
     plate, refs, dist = plate_mask(rgb, refs=found, alpha=arr[:, :, 3], tol=tol, rgb_wand=wand_dist, pocket_frac=pocket_frac)
-    amt, pick = plate_amount(rgb, refs)
+    amt, _pick = plate_amount(rgb, refs)
     # Flat plate (near a border ref) becomes exact #FF00FF. A farther plate-coloured mix
-    # is the glow. Shift it onto the key so colour-to-alpha can keep it. Do not flatten it.
+    # keeps its drawn RGB. Shifting that mix onto the key drew lines on the arrow.
     solid = plate & (dist <= float(tol) * 1.25)
     mix = plate & ~solid
     band = dilate(plate, edge) & ~plate
     hit = (band | mix) & (amt >= edge_min)
-    shifted = np.clip(np.rint(rgb.astype(np.float32) + amt[..., None] * (np.array(KEY_RGB, np.float32) - pick)), 0, 255).astype(np.uint8)
-    arr[hit, :3] = shifted[hit]
     arr[solid, :3] = KEY_RGB
     arr[:, :, 3] = 255
     vis = np.zeros((h, w, 4), dtype=np.uint8)
@@ -468,8 +467,11 @@ def key_to_alpha(im: Image.Image, spill_flood: bool = True, tol: float = LAB_TOL
 
     Opacity is `chroma_alpha`. The drawn RGB stays, so soft shading and a pale glow stay
     in the art instead of being rebuilt into a green unmix. Solid plate, including a
-    one-level quantize of the key, becomes transparent black. No fringe walk, no
-    red-and-blue-above-green subtract, and no snap of alpha under 10 or over 242.
+    one-level quantize of the key, becomes transparent black. A halo around the paint keeps
+    the nearest paint colour, with alpha falling off across about a 16th of the short side.
+    Paint inside that halo becomes opaque, so interior holes fill. No fringe walk, no
+    red-and-blue-above-green subtract, and no snap of
+    alpha under 10 or over 242.
     `spill_flood` and `tol` stay on the signature and do not switch paths. `refs` pins
     the plate colours.
     """
@@ -503,13 +505,36 @@ def key_to_alpha(im: Image.Image, spill_flood: bool = True, tol: float = LAB_TOL
     near_key = np.max(np.abs(rgb.astype(np.int16) - keys), axis=2) <= 1
     # `tol` is the Lab distance of solid plate. A mix sits farther out and keeps partial alpha.
     opacity = np.where(near_key | (picked_dist <= float(tol)), 0.0, opacity)
-    # The interior is the drawing. A round shell against the plate stays partial (the glow).
-    # A square dilate left magenta blocks. Pixels that are still plate-coloured stay partial.
-    shell = max(8, min(rgb.shape[0], rgb.shape[1]) // 24)
+    # The shopkeep bloom is several art pixels of plate around the body, including the
+    # armpits and the gap between the hands and the legs. Chroma leaves that bloom nearly
+    # clear and magenta. Paint the halo in the nearest real paint colour and fade it outward.
+    # Paint itself stays opaque so the interior sections stay filled.
+    spill = np.minimum(rgb[:, :, 0].astype(np.int16), rgb[:, :, 2].astype(np.int16)) - rgb[:, :, 1].astype(np.int16)
     if HAVE_CV2:
-        inside = cv2.distanceTransform((opacity > 0).astype(np.uint8), cv2.DIST_L2, 5)
-        spill = np.minimum(rgb[:, :, 0].astype(np.int16), rgb[:, :, 2].astype(np.int16)) - rgb[:, :, 1].astype(np.int16)
-        opacity = np.where((opacity > 0.35) & (inside > float(shell)) & (spill < 36), 1.0, opacity)
+        inside = cv2.distanceTransform((opacity > 0.02).astype(np.uint8), cv2.DIST_L2, 5)
+        radius = float(max(4, min(rgb.shape[0], rgb.shape[1]) // 16))
+        deep = inside > float(max(4, min(rgb.shape[0], rgb.shape[1]) // 48))
+        # Real paint, including a soft edge that is already mostly the drawing. The bloom
+        # outside it is plate-tinted and is not paint.
+        paint = ((opacity > 0.55) & (spill < 40) & (inside > 1.0)) | (deep & (opacity > 0.35) & (spill < 48))
+        had_mix = opacity > 0.02
+        opacity = np.where(paint, 1.0, opacity)
+        if np.any(paint):
+            # Colour comes from paint that is not itself plate-tinted, so the halo is the
+            # edge colour rather than the magenta mix.
+            seeds = paint & (spill < 12)
+            if not np.any(seeds):
+                seeds = paint
+            mask = np.where(seeds, 0, 255).astype(np.uint8)
+            dist_to, labels = cv2.distanceTransformWithLabels(mask, cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
+            seeds_y, seeds_x = np.nonzero(seeds)
+            lut = np.zeros((int(labels.max()) + 1, 3), np.uint8)
+            lut[labels[seeds_y, seeds_x]] = rgb[seeds_y, seeds_x]
+            # Only where the plate already held a mix. Empty plate stays clear.
+            glow = (~paint) & had_mix & (spill >= 24) & (dist_to > 0.0) & (dist_to <= radius)
+            rgb[glow] = lut[labels][glow]
+            fade = np.clip(1.0 - dist_to / radius, 0.0, 1.0) ** 0.55
+            opacity = np.where(glow, fade * 0.95, opacity)
     new_a = np.clip(np.rint(src_a.astype(np.float32) * opacity), 0, 255).astype(np.uint8)
     out = np.zeros_like(arr)
     visible = new_a > 0

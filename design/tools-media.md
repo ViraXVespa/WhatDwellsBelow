@@ -31,7 +31,7 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | `pack_p4_enemies.py` | Pack Phase 4 enemy stills: magenta key, 128 canvas, 8-dir copies | D | `--help` | N |
 | `pack_turntable.py` | Pack 8-dir player sheets from turntable + facing clips, shared scale and torso pin | D | `--help` | N |
 | `pack_walk.py` | Extract, key, and pack walk-cycle frames from Imagine videos | D | `--help` | N |
-| `plate_remap.py` | Remap a generated chroma plate to exact #FF00FF, including edge bleed (`imglib.key.remap_plate`; `--tol`) | D | `--help` | N |
+| `plate_remap.py` | Remap a generated chroma plate to exact #FF00FF. Solid plate near a border reference only; a farther mix keeps its drawn RGB (`imglib.key.remap_plate`; `--tol`) | D | `--help` | N |
 | `process_enemies.py` | process_enemies.py | D | `--help` | N |
 | `process_gear_icons.py` | process_gear_icons.py | D | `--help` | N |
 | `process_gloam.py` | Key Imagine stills into assets/3d for the Gloam 3D view | D | `--help` | N |

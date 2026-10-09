@@ -41,7 +41,7 @@ The 2026-10-09 pack session wrote the open-set live PNGs from one colour-to-alph
 - Solid outlines drawn on the plate survive. The hatchet is mostly good and is missing that outline. Other stills lost the same solid edge.
 - The longbow string must read as one string. Sparkles are not a string.
 - 2026-10-09, after the colour-to-alpha attempt: close, not accepted. Weird lines remain around the shaft and the rear of the arrow. Lots of edges got way too soft, especially edges that were clearly meant to be hard. Hard edges on the plate stay hard. The next session fixes those two and does not call the set done.
-- Resume in a fresh session.
+- 2026-10-09, later session, shopkeep only: the halo looks good. Body holes stay filled. The halo is the nearest low-spill paint colour, not a magenta tint, with alpha falling off away from the body, about a 16th of the short side, far enough to enter the armpits and the gap between the hands and the legs. She saw it on black beside the previous live shopkeep. That yes is the shopkeep halo. It is not a yes for the rest of the open set. The live `assets/sprites/npcs/shopkeep.png` was not rewritten.
 
 ## Chosen surfaces, in order
 - assets/sprites/npcs/shopkeep.png
@@ -71,25 +71,50 @@ Live stills from the 2026-10-09 colour-to-alpha attempt. Vira called the set clo
 The attempt before this one had lost the glow, the orb border, the hatchet outline, the bowstring, and chunks of the female's arms, and head.png was blurry. Do not return to that fringe subtract.
 
 ## Files and functions to touch
-- Next session, in this order. `python tools/show_func.py tools/imglib/key.py key_to_alpha`, then `remap_plate`. `key_to_alpha` is already one `chroma_alpha`. The drawn RGB stays. Pixels deeper than `shell` from the plate are forced opaque, and that shell is what softened edges that should be hard. `remap_plate` shifts plate-coloured mixes instead of flattening them, and that shift is a suspect for the lines on the arrow shaft and rear. `c2a` snaps alpha under 10 to 0 and over 242 to 255. Do not use it. Do not bring back a fringe walk, a red-and-blue-above-green subtract, or a resize hairline.
-- `python tools/rekey_preview.py`, then `python tools/show_png.py` on the paths it prints. The counts are the check. A picture description is not a pixel count. `partial` is the veil kept as alpha. `plate_opaque` is solid plate left in the art. `halo_cropped` is faint alpha `fit_box` drops at its default floor of 24. Pass `alpha_min` lower when that glow is the result. This tool stays in `tools/`. Do not write another preview under `_logs/agent-py/`.
-- No play-camera baseline and no `--visual` on the gate. The start card says NO PLAY CAMERA for this job. Q0 is already answered. Open questions are none.
-- Do not match the live PNGs. They are the rejected attempt. The source plates are the reference. Do not call `rekey_stills.prep`. It nearest-upscales a small plate, and that distorted the female face.
-- tools/imglib/key.py: key_to_alpha and remap_plate. Keep the veil as partial alpha and keep hard plate edges hard. The shell that forces only the deep interior opaque is what softened those edges. The remap shift is a suspect for the arrow lines. Do not bring back the RGB invert or the fringe subtract. Do not delete glow to make the selftest clean.
-- tools/imglib/geom.py: resize_rgba. Nearest only when both sides grow. Sizing down stays high quality. The hairline lift that sparkled the bowstring stays out. The near-white run keep is only for a run the shrink would average away. fit_box crops alpha below `alpha_min` (default 24). Pass a lower floor when that faint alpha is the glow. Do not throw the glow away.
-- tools/imglib/selftest.py: run `python tools/img_inspect.py selftest` after a key change. It passed. That is not acceptance.
-- The nine live paths above. Write a still only after you have looked at it. She confirms each one.
+The shopkeep halo is accepted. Do not reopen that look. The code is `key_to_alpha` in `tools/imglib/key.py`. Read `## Work this session` before changing it.
+
+- `python tools/show_func.py tools/imglib/key.py key_to_alpha`, then `remap_plate`. One `chroma_alpha`. Drawn RGB stays on the paint. The halo is the nearest low-spill paint colour, alpha falling off over about a 16th of the short side. Empty plate stays clear. `c2a` snaps alpha under 10 to 0 and over 242 to 255. Do not use it. Do not bring back a fringe walk, a red-and-blue-above-green subtract, a resize hairline, the wide shell, or a fade measured from the plate.
+- `remap_plate` flattens solid plate to `#FF00FF`. It does not shift a farther mix.
+- `python tools/rekey_preview.py`, then `python tools/show_png.py` on the paths it prints. The counts are the check. A picture description is not a pixel count. `partial` is the veil kept as alpha. `plate_opaque` is solid plate left in the art. `halo_cropped` is faint alpha `fit_box` drops at its default floor of 24. Pass `alpha_min` lower when that glow is the result. A blue glow is hard to see on the blue composite. Also show it on black. This tool stays in `tools/`. Do not write another preview under `_logs/agent-py/`.
+- No play-camera baseline and no `--visual` on the gate. Q0 is already answered. Open questions are none.
+- Do not match the live PNGs. They are the rejected attempt, except the shopkeep halo, which she accepted from the black preview and which is not yet the live file. The source plates are the reference. Do not call `rekey_stills.prep`. It nearest-upscales a small plate, and that distorted the female face.
+- tools/imglib/geom.py: `resize_rgba`. A flat nearest upscale is reduced to its pixel grid first. Nearest only when both sides then grow. Sizing down stays high quality. The hairline lift that sparkled the bowstring stays out. The near-white run keep is only for a run the shrink would average away. `fit_box` crops alpha below `alpha_min` (default 24). Pass a lower floor when that faint alpha is the glow. Do not throw the glow away.
+- tools/imglib/selftest.py: run `python tools/img_inspect.py selftest` after a key change. A pass is not acceptance.
+- The nine live paths in Chosen surfaces. Write a still only after you have looked at it. She confirms each one. Shopkeep is confirmed. The others are not.
 - design/art-pack.md if the key contract changes again.
 
 ## Did not work
-`python tools/img_inspect.py selftest` passed (12 checks) after the colour-to-alpha change. A passing selftest is not acceptance.
+`python tools/img_inspect.py selftest` passed 12 checks after the accepted halo. A passing selftest is not acceptance of the open set.
 
-Vira reviewed the blue previews on 2026-10-09. She called the set close. It is not accepted.
+This session, before that pass: `python tools/img_inspect.py selftest` failed `key exact plate` (wrong px 560) and recolored the lip cloth. Cause: the halo was painted onto empty plate, and a real edge colour was treated as bloom. Fixed by leaving empty plate clear and keeping opacity above 0.55 as paint. The rerun passed.
 
-- Weird lines remain around the shaft and the rear of the arrow.
-- Lots of edges got way too soft, especially edges that were clearly meant to be hard.
+`python tools/check_tool_cli.py` failed `MUTATE anim_review_pack.py: --help changed files`. This slice did not edit that file. The worktree's changed paths after that check were only the key, geom, plate_remap docstring, art-pack, and tools-media.
 
-Do not call the key done. Do not treat the older lip and JPEG selftest failures as open. The fringe subtract and the resize hairline stay out.
+Shopkeep body holes and the halo are the accepted look. Arrow lines, soft hard-edges, and the other open-set stills are not confirmed. Do not call the set done.
 
 ## Open questions
 none. The look, the reference, the open set, and the out-of-bounds list are settled above. Ask only if a discovery changes what she will see.
+
+## Work this session
+Shopkeep halo accepted 2026-10-09. The rest of the open set is not. Live PNGs were not written. The key change is on `grok-build-w7` in the commit that added this note. Resume with `python tools/open_slice.py art_pipeline.pack --task rekey-assets`.
+
+What she saw: `_logs/prove-view/rekey-shopkeep/01-shopkeep.png` (previous live beside the new still on black). The black still is `_logs/rekey-look/shopkeep-black.png`. Both are gitignored and will not be in a fresh worktree. Blue hid this halo. Show a blue glow on black.
+
+The key now, in `tools/imglib/key.py` `key_to_alpha`:
+
+- Paint stays opaque. That is what put the shopkeep's missing sections back.
+- A plate mix within about a 16th of the short side of real paint (spill under 12) takes that paint colour. Alpha falls off away from the paint (`fade ** 0.55`, times 0.95). Empty plate stays clear.
+- `remap_plate` flattens solid plate to `#FF00FF` and does not shift a farther mix. That shift was the arrow-line suspect.
+- `tools/imglib/geom.py` reduces a flat nearest upscale before the fit. On a keyed image the detector often stops at a small cell. Do not nearest-upscale the plate before the key.
+
+Do not put back the wide shell (short side / 24), the one-pixel snap of every light pixel, or a fade measured from the plate. Those three deleted the glow, reopened the holes, or left a magenta rim.
+
+Counts on the accepted shopkeep fit (128, pad 8, alpha floor 8): partial 1230, opaque 4062. Partial RGB median 127 128 163. `img_inspect.py selftest` then passed 12. An earlier selftest failed (`key exact plate` wrong px 560, and the lip cloth was recolored). Empty plate must stay clear, and paint with opacity above 0.55 stays paint.
+
+Next session, in order:
+
+1. Refit the open set with `python tools/rekey_preview.py`. For a blue glow, also composite on black. Shopkeep is the reference for the halo.
+2. She confirms each still. Write that live PNG only after her yes. Shopkeep's yes is already in. Write `assets/sprites/npcs/shopkeep.png` from this key when she wants it on disk. She has not asked for that write yet.
+3. All eight wisp idles are the one `idle_up.jpg` plate. Do not rekey dummy, guild, guild reception, stall, anvil, fence, pickaxe, or the male frames.
+4. Do not edit `_src`.
+5. Commit only when she says so. Gate is `python tools/run_build_gate.py --batch` with no `--visual`.

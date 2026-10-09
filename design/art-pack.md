@@ -22,8 +22,8 @@ If harvest cuts fail but the clip is good, adjust pack points. Do not invent a n
 After the User accepts a clip and harvest exists:
 
 1. If the plate is not `#FF00FF`, run `tools/plate_remap.py` first.
-2. Colour-to-alpha the plate. Sample the plate from the border. Strong black, white, and blue border pixels are subject samples, not the key. Glow and the soft edge stay partial alpha. Solid plate becomes transparent black. Do not invert RGB to despill, and do not snap the fringe to a hard matte.
-3. Fit each frame to the 128×128 canvas. Nearest-neighbor only when sizing up. When sizing down, use a premultiplied high-quality resize.
+2. Colour-to-alpha the plate. Sample the plate from the border. Strong black, white, and blue border pixels are subject samples, not the key. A halo about a 16th of the short side around the paint is the nearest paint colour, with alpha falling off away from the body. That reaches into concavities such as an armpit. Paint inside the halo becomes opaque, so a hard edge stays hard and interior holes fill. Solid plate becomes transparent black. Do not invert RGB to despill, and do not snap the fringe to a hard matte.
+3. Fit each frame to the 128×128 canvas. A flat nearest upscale is reduced to its pixel grid first. Nearest-neighbor only when sizing up after that. When sizing down, use a premultiplied high-quality resize.
 4. Snap to the locked palette.
 5. Keep the soft edge as alpha. Do not strip fringe that colour-to-alpha already turned into transparency.
 6. Align the foot baseline across the strip.
@@ -37,7 +37,9 @@ Then the User judges the packed strip. Do not start the next unit until the User
 
 The open set is the rekey-assets task. One colour-to-alpha: `tools/imglib/key.py` `chroma_alpha` against the nearest border-sampled key. Strong black, white, and blue border pixels are subject samples. The drawn RGB stays. Glow and soft shading stay partial alpha. Solid plate, including a one-level quantize of the key and plate within Lab `tol`, becomes transparent black. `c2a` snaps alpha under 10 to 0 and over 242 to 255. That snap is the hard matte. Do not use it.
 
-Pixels deep inside the silhouette (round distance, about a 24th of the shorter side) become opaque so the drawing does not wash out on blue. A plate-coloured pixel stays partial. Remap paints only plate near a border reference. A farther plate-coloured mix is shifted onto the key, not flattened.
+A halo about a 16th of the short side around the paint is the nearest paint colour, with alpha falling off away from the body. That is the glow, and it reaches into concavities. Paint inside the halo becomes opaque, so a hard edge stays hard and an interior hole fills. Remap paints only plate near a border reference to exact #FF00FF. It does not shift the drawn RGB of a farther mix.
+
+A source that is a flat nearest upscale is reduced to that pixel grid before the fit. Transparent pixels do not count as colour in the cell test. Nearest-neighbor is only when both sides grow after that reduce. Sizing down stays a premultiplied high-quality resize.
 
 Do not wrap the key in a fringe walk, a subtract of red-and-blue-above-green, or a resize hairline. Those three deleted the veil, the outlines, and the bowstring on 2026-10-09. A heavy shrink may put back a near-white run the Lanczos kernel averaged away. That is a run of real pixels, not an edge lift. Do not nearest-upscale the plate before the key. That distorted the female face.
 

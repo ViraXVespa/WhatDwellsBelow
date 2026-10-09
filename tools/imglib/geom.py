@@ -1,7 +1,9 @@
 """Geometry helpers: bbox, crop, fit, scale, flip, grid split.
 
 Nearest-neighbour is only for sizing up. Sizing down uses premultiplied Lanczos.
-A heavy shrink also keeps a real near-white run (a string) that the kernel would average away.
+A flat nearest upscale is reduced to its pixel grid first. Transparent pixels do not
+count as a second colour in that test. A heavy shrink also keeps a real near-white run
+(a string) that the kernel would average away.
 """
 from __future__ import annotations
 
@@ -24,22 +26,40 @@ def _lanczos_down(im: Image.Image, size: tuple[int, int]) -> Image.Image:
     return Image.fromarray(np.clip(np.rint(scaled), 0, 255).astype(np.uint8), "RGBA")
 
 
-def _subject_cell(im: Image.Image, scale: int = 8) -> int:
-    """Pixel size of the subject, or 1 when the subject is not a flat upscale of that cell."""
-    arr = np.array(im.convert("RGBA"))
+def _cell_spread(arr: np.ndarray, scale: int) -> float:
+    """Median colour spread of opaque pixels in subject cells. Transparent black is not a colour."""
     h, w = arr.shape[:2]
-    if h < scale * 8 or w < scale * 8:
-        return 1
+    if h < scale * 4 or w < scale * 4:
+        return 999.0
     hh, ww = h - (h % scale), w - (w % scale)
     block = arr[:hh, :ww].reshape(hh // scale, scale, ww // scale, scale, 4)
-    subject = block[:, :, :, :, 3].max(axis=(1, 3)) > 128
-    if int(subject.sum()) < 20:
-        return 1
+    opaque = block[:, :, :, :, 3] > 128
     rgb = block[:, :, :, :, :3].astype(np.int16)
-    spread = (rgb.max(axis=(1, 3)) - rgb.min(axis=(1, 3))).max(axis=2)
-    if float(np.median(spread[subject])) > 6:
-        return 1
-    return scale
+    present = np.where(opaque[..., None], rgb, 999)
+    absent = np.where(opaque[..., None], rgb, -999)
+    spread = (absent.max(axis=(1, 3)) - present.min(axis=(1, 3))).max(axis=2)
+    count = opaque.sum(axis=(1, 3))
+    subject = count >= max(1, (scale * scale) // 4)
+    if int(subject.sum()) < 12:
+        return 999.0
+    return float(np.median(spread[subject]))
+
+
+def _subject_cell(im: Image.Image) -> int:
+    """Largest power-of-two cell that is still a flat nearest upscale, or 1.
+
+    A keyed edge cell is subject paint plus transparent black. The black is not a
+    second colour, so it does not reject the grid.
+    """
+    arr = np.array(im.convert("RGBA"))
+    best = 1
+    scale = 2
+    while scale <= 32:
+        if _cell_spread(arr, scale) > 8:
+            break
+        best = scale
+        scale *= 2
+    return best
 
 
 def _box_reduce(im: Image.Image, scale: int) -> Image.Image:
