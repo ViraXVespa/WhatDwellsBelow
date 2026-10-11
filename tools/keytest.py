@@ -8,12 +8,19 @@
 
 Checks per picture (limits in keytest_expect.json, "default" plus per-name overrides):
   plate_left    visible pixels still plate coloured (share of foreground)
-  magenta_left  visible pixels with magenta excess min(R,B)-G > 40 within 14 degrees of the plate hue (share of foreground)
+  magenta_left  visible pixels with magenta excess min(R,B)-G > 40 within 14 degrees of the plate hue, R and B at
+                least half the plate's, within 4 px of transparency (residue sits at the cut; interior paint is the art's) (share of foreground)
   green_specks  soft pixels the despill turned green (G above R and B by 30, source not green, no green paint within 4 px)
   plate_tint    95th percentile, over semi-transparent pixels, of alpha x plate-direction chroma (YCrCb) above
                 the nearby art's, where the hue is pulled toward the plate (within 30 deg, or 90 deg on the violet side): the magenta/violet cast a glow shows over dark or light backgrounds
+  rise, corr    round glows ("radial": true), by radius beyond the hard edge in 2 px steps, per 10 deg sector:
+                the glow's intensity over black must not dip and climb again (rise: 90th pct of the largest
+                climb above the running minimum; two rings fail it) and the alpha must follow the source's
+                glow strength (corr)
   halo          share of the foreground that is soft and more than 4 px beyond the solid art (glow kept)
-  solid         share of the foreground that is fully opaque (minimum)
+  interior      share of paint pixels (more than 3 px from transparency and from any plate-tinted source
+                pixel, magenta excess > 12) that are opaque (minimum). Edges and glows outside the hard edge are partial by design; `solid` (opaque share
+                of the foreground) is reported for information
   fg            foreground share of the picture, within +-fg_tol of the recorded value (over/under keying)
   repeat        keying twice gives identical bytes
 Writes _logs/keytest/<name>.png (keyed), sheets/<name>.png (source | checker | dark | light) and
@@ -89,6 +96,12 @@ def measure(src: Image.Image, keyed: Image.Image, stats: dict) -> dict:
     ph = np.array(Image.fromarray(plate.astype(np.uint8).reshape(1, 1, 3)).convert("HSV"))[0, 0, 0]
     on_hue = np.abs((hsv[..., 0] - int(ph) + 128) % 256 - 128) <= 10
     soft = vis & (a < 255)
+    # interior: more than 3 px from transparency and from any source pixel tinted by the plate (magenta
+    # excess > 12: plate, glow or mix). What is left is paint and must stay opaque.
+    src_ex = np.minimum(s[..., 0], s[..., 2]) - s[..., 1]
+    inner = ~_near((a == 0) | (src_ex > 12), 3)
+    # plate residue is bright like the plate; dark purple paint (a robe) is the art's own colour
+    bright = np.minimum(k[..., 0], k[..., 2]) >= 0.5 * min(int(plate[0]), int(plate[2]))
     src_green = s[..., 1] - np.maximum(s[..., 0], s[..., 2])
     out_green = k[..., 1] - np.maximum(k[..., 0], k[..., 2])
     solid_green = (a == 255) & (out_green > 10)  # green paint nearby makes a green edge legitimate
@@ -116,12 +129,60 @@ def measure(src: Image.Image, keyed: Image.Image, stats: dict) -> dict:
         "plate_tint": round(tint_p95, 1),
         "halo": round(float(halo.sum()) / fg, 4),
         "plate_left": round(float((vis & near_plate).sum()) / fg, 5),
-        "magenta_left": round(float((vis & (ex > 40) & on_hue).sum()) / fg, 5),
+        "magenta_left": round(float((vis & (ex > 40) & on_hue & bright & _near(~vis, 4)).sum()) / fg, 5),
         "green_specks": int((soft & (out_green > 30) & (src_green <= 0) & ~_near(solid_green, 4)).sum()),
         "solid": round(float((a == 255).sum()) / fg, 4),
+        "interior": round(float((inner & (a == 255)).sum()) / max(1, int(inner.sum())), 4),
         "fg": round(fg / a.size, 4),
         "partial": int(soft.sum()),
     }
+
+
+def radial(src: Image.Image, keyed: Image.Image, plate: np.ndarray, span: int = 60, sectors: int = 36):
+    """Round glows (orbs): profiles by radius beyond the opaque art, per angular sector.
+
+    Returns (rise, corr): rise = 90th percentile over sectors of the largest climb, above the running
+    minimum, of the glow's premultiplied intensity seen over black (a dark gap then a brighter band = two
+    rings); corr = correlation of the mean alpha profile with the source's glow strength (the source pixel's
+    position on the plate -> rim-colour line)."""
+    s = np.array(src.convert("RGB")).astype(np.float32)
+    k = np.array(keyed).astype(np.float32)
+    a = k[..., 3] / 255.0
+    ys, xs = np.nonzero(a >= 1.0)
+    cy, cx = np.median(ys), np.median(xs)
+    yy, xx = np.mgrid[:a.shape[0], :a.shape[1]]
+    r = np.sqrt((yy - cy) ** 2 + (xx - cx) ** 2)
+    th = ((np.arctan2(yy - cy, xx - cx) + np.pi) / (2 * np.pi) * sectors).astype(int) % sectors
+    # hard edge per sector: the outermost opaque radius (ignoring stray sparkles: 98th percentile)
+    rises, A, S = [], [], []
+    rim_r = np.zeros(sectors)
+    for q in range(sectors):
+        m = (a >= 1.0) & (th == q)
+        rim_r[q] = np.percentile(r[m], 98) if m.any() else np.nan
+    g_m = (a >= 1.0) & (r > rim_r[th] - 6)
+    g = np.median(s[g_m], axis=0) - plate
+    st = np.clip(((s - plate) * g).sum(-1) / max(float((g * g).sum()), 1.0), 0.0, 1.0)
+    rel = r - rim_r[th]
+    # sparkles and specks drawn in the glow are art of their own, not the glow
+    rel = np.where(_near((a >= 1.0) & (rel > 2), 4), -1e9, rel)
+    for q in range(sectors):
+        pa, ps = [], []
+        for b0 in range(0, span, 2):
+            m = (th == q) & (rel >= b0) & (rel < b0 + 2)
+            if m.any():
+                pa.append(float(a[m].mean()))
+                ps.append(float(st[m].mean()))
+        if len(pa) > 1:
+            pa_, ps_ = np.array(pa), np.array(ps)
+            # climbs the source does not have (sparkles climb in both)
+            ca = np.maximum(pa_[1:] - np.minimum.accumulate(pa_)[:-1], 0.0)
+            cs = np.maximum(ps_[1:] - np.minimum.accumulate(ps_)[:-1], 0.0)
+            rises.append(float(np.max(ca - cs)))
+    for b0 in range(0, span, 2):
+        m = (rel >= b0) & (rel < b0 + 2)
+        A.append(float(a[m].mean()))
+        S.append(float(st[m].mean()))
+    return round(float(np.percentile(rises, 90)), 4), round(float(np.corrcoef(A, S)[0, 1]), 4)
 
 
 def check(name: str, m: dict, exp: dict, recorded: dict) -> list[str]:
@@ -134,12 +195,16 @@ def check(name: str, m: dict, exp: dict, recorded: dict) -> list[str]:
         bad.append(f"magenta_left {m['magenta_left']} > {lim.get('magenta_left', 0.002)}")
     if m["green_specks"] > lim.get("green_specks", 0):
         bad.append(f"green_specks {m['green_specks']} > {lim.get('green_specks', 0)}")
-    if m["solid"] < lim.get("solid", 0.85):
-        bad.append(f"solid {m['solid']} < {lim.get('solid', 0.85)}")
+    if m["interior"] < lim.get("interior", 0.995):
+        bad.append(f"interior {m['interior']} < {lim.get('interior', 0.995)}")
     if name in recorded and abs(m["fg"] - recorded[name]) > lim.get("fg_tol", 0.01):
         bad.append(f"fg {m['fg']} vs recorded {recorded[name]} (+-{lim.get('fg_tol', 0.01)})")
     if m["plate_tint"] > lim.get("plate_tint", 6.0):
         bad.append(f"plate_tint {m['plate_tint']} > {lim.get('plate_tint', 6.0)}")
+    if "rise" in m and m["rise"] > lim.get("rise_max", 0.02):
+        bad.append(f"rise {m['rise']} > {lim.get('rise_max', 0.02)} (radial glow alpha steps back up: rings)")
+    if "corr" in m and m["corr"] < lim.get("corr_min", 0.97):
+        bad.append(f"corr {m['corr']} < {lim.get('corr_min', 0.97)} (glow alpha does not follow the source glow)")
     if m["halo"] < lim.get("halo_min", 0.0):
         bad.append(f"halo {m['halo']} < {lim['halo_min']} (glow beyond the solid rim)")
     if not m["repeat"]:
@@ -198,6 +263,9 @@ def main(argv: list[str] | None = None) -> int:
         again, _ = matte.key(src)
         m = measure(src, keyed, stats)
         m["repeat"] = np.array_equal(np.array(keyed), np.array(again))
+        if in_repo and exp.get(name, {}).get("radial"):
+            pl = np.array([int(stats["plate"][i:i + 2], 16) for i in (1, 3, 5)], np.float32)
+            m["rise"], m["corr"] = radial(src, keyed, pl)
         bad = check(name, m, exp, recorded) if in_repo else check(name, m, {"default": exp.get("default", {})}, {})
         fails += int(bool(bad))
         lines.append(f"{'FAIL' if bad else 'ok  '} {name} plate={stats.get('plate')} ring={stats.get('ring')} "

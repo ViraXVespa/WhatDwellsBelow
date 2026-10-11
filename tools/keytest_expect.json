@@ -3,40 +3,34 @@
     "plate_left": 0.001,
     "magenta_left": 0.002,
     "green_specks": 0,
-    "solid": 0.85,
     "fg_tol": 0.01,
-    "plate_tint": 6.0
+    "plate_tint": 6.0,
+    "interior": 0.995
   },
   "wisp": {
-    "solid": 0.7,
     "halo_min": 0.05
   },
   "shopkeep": {
-    "solid": 0.7,
     "halo_min": 0.05
   },
   "mana_orb": {
-    "solid": 0.7,
-    "halo_min": 0.05
+    "halo_min": 0.05,
+    "radial": true
   },
   "hp_orb": {
-    "solid": 0.7,
-    "plate_tint": 8.0,
-    "halo_min": 0.05
+    "halo_min": 0.05,
+    "radial": true
   },
   "recorded_fg": {
-    "wisp": 0.3942,
-    "shopkeep": 0.3282,
-    "idle_down": 0.1833,
-    "coins": 0.1888,
-    "hp_orb": 0.1898,
-    "mana_orb": 0.2728,
-    "welcome_banner": 0.5463,
-    "hatchet": 0.1337,
-    "head": 0.3584,
-    "longbow": 0.0713
-  },
-  "longbow": {
-    "solid": 0.8
+    "wisp": 0.4023,
+    "shopkeep": 0.3339,
+    "idle_down": 0.182,
+    "coins": 0.1875,
+    "hp_orb": 0.2126,
+    "mana_orb": 0.2839,
+    "welcome_banner": 0.5502,
+    "hatchet": 0.1327,
+    "head": 0.3566,
+    "longbow": 0.0697
   }
 }

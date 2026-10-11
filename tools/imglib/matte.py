@@ -152,76 +152,135 @@ def excess(c: np.ndarray) -> np.ndarray:
     return np.minimum(c[..., 0], c[..., 2]) - c[..., 1]
 
 
-def glow_colour(p: np.ndarray, core: np.ndarray, radius: int) -> np.ndarray:
-    """Local mean colour of the art (core) within `radius` px: the colour a glow next to it carries.
-    A single nearest pixel is too noisy (an outline, a highlight)."""
-    k = (2 * radius + 1, 2 * radius + 1)
-    w = cv2.blur(core.astype(np.float32), k)
-    acc = cv2.blur(p * core[..., None], k)
-    return acc / np.maximum(w[..., None], 1e-3), w > 1e-3
+def colour_field(p: np.ndarray, ref: np.ndarray, scales=(1.5, 4, 12, 36)) -> np.ndarray:
+    """Art colour propagated smoothly outward from `ref` pixels: normalised Gaussian blur summed over
+    scales, so near the rim the paint right behind dominates and further out the wider art colour does.
+    Smooth everywhere (no radius seams)."""
+    w = np.zeros(p.shape[:2], np.float32)
+    acc = np.zeros(p.shape, np.float32)
+    m = ref.astype(np.float32)
+    for sg in scales:
+        k = int(sg * 3) | 1
+        w += cv2.GaussianBlur(m, (k, k), sg)
+        acc += cv2.GaussianBlur(p * m[..., None], (k, k), sg)
+    return acc / np.maximum(w[..., None], 1e-6)
 
 
-def unmix(rgb: np.ndarray, plate, solid: np.ndarray, soft: np.ndarray, core: np.ndarray, glow=None):
-    """Alpha and colour for `soft` pixels: pixel = a*C + (1-a)*P.
+_M = np.array([[0.5, -0.4187, -0.0813], [-0.1687, -0.3313, 0.5]], np.float32)  # RGB -> (Cr, Cb) - 128
 
-    a is the smallest alpha whose colour C is a valid RGB with no more magenta excess than the nearest
-    solid colour F (colour-to-alpha with a spill limit). Returns (alpha, rgb, F).
+
+def _chroma_rgb(u: np.ndarray) -> np.ndarray:
+    """RGB change for a unit (Cr, Cb) chroma step with luma kept."""
+    return np.array([1.402 * u[0], -0.344136 * u[1] - 0.714136 * u[0], 1.772 * u[1]], np.float32)
+
+
+def unmix(rgb: np.ndarray, plate, solid: np.ndarray, soft: np.ndarray, core: np.ndarray, noise=None, t_bg: float = 10.0,
+          fine=None, bg=None, mix=None):
+    """One alpha field over every non-solid pixel: pixel = a*C + (1-a)*P.
+
+    G = the art's colour carried smoothly outward from the rim (colour_field). Two estimates:
+      a_line  projection onto the plate -> G line (a glow of the art's colour fading into the plate)
+      a_own   colour-to-alpha: the largest alpha whose C has no more plate chroma than G (a thin line of
+              its own colour, e.g. a bowstring next to a brown limb)
+    blended by how well the pixel fits the line (confidence, no regime switch). A noise floor fades the
+    alpha to 0 where the pixel is plate within its own noise. Colour: unmixed, plate-direction chroma above
+    G's removed, faint pixels lean to G. Returns (alpha, rgb, G).
     """
     p = rgb.astype(np.float32)
     P = np.array(plate, np.float32)
     alpha = solid.astype(np.float32)
     out = p.copy()
-    if not soft.any() or not solid.any():
+    if not soft.any() or not core.any():
         return alpha, out, p
-    _dist, F = _nearest(p, core if core.any() else solid)
+    # the glow / edge colour is the solid paint right at the rim facing the soft region (a red glow band, a
+    # dark outline), carried outward; not the art's average (that mixes highlights and outlines)
+    rim = solid & cv2.dilate(soft.astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool)
+    G = colour_field(p, rim if rim.any() else core)
+    # the rim itself can carry plate spill; G keeps no more plate-direction chroma than the deeper art
+    pc0 = _M @ P
+    u0 = pc0 / max(float(np.linalg.norm(pc0)), 1e-3)
+    # the plate drifts across an AI picture: P is the local plate, carried in from the background around
+    if bg is not None and bg.any():
+        P = colour_field(p, bg, (120,))
+    deep = colour_field(p, core, (4, 12, 36))
+    over = np.clip((G @ _M.T) @ u0 - np.maximum((deep @ _M.T) @ u0, 0.0), 0.0, None)
+    # only as far as G is itself a plate + deep-art mix (lavender between magenta and pale blue); a glow
+    # colour of its own (red next to a pink plate and a white orb) is off that line and kept
+    dg = deep - P
+    t = np.clip(((G - P) * dg).sum(-1) / np.maximum((dg * dg).sum(-1), 1.0), 0.0, 1.0)
+    off = np.linalg.norm(G - P - t[..., None] * dg, axis=-1) / np.maximum(np.linalg.norm(dg, axis=-1), 1.0)
+    w = np.clip(1.0 - off / 0.25, 0.0, 1.0)
+    G = np.clip(G - (w * over)[..., None] * _chroma_rgb(u0), 0, 255)
     dp = p - P
-    # valid range per channel: C = P + dp/a must lie in [0, 255]
+    gp = G - P
+    gl = np.maximum((gp * gp).sum(-1), 1.0)
+    a_line = np.clip((dp * gp).sum(-1) / gl, 0.0, 1.0)
+    resid = np.linalg.norm(dp - a_line[..., None] * gp, axis=-1)
+    # colour-to-alpha against the plate's chroma direction
+    u = u0
+    L = np.maximum((P @ _M.T) @ u if P.ndim > 1 else float(pc0 @ u), 1e-3)
+    allow = np.clip((G @ _M.T) @ u, 0.0, 0.9 * L)
+    # own-colour alpha: the largest a whose C = P + dp/a has no more magenta excess min(R,B)-G than G
+    # (excess, not the chroma axis: warm paint such as brown wood shares the plate's Cr but has no excess)
+    ex_allow = np.maximum(excess(G), 0.0)
+    a_own = np.zeros(p.shape[:2], np.float32)
+    for i in (0, 2):
+        e = P[..., i] - P[..., 1] if P.ndim > 1 else P[i] - P[1]
+        k = dp[..., i] - dp[..., 1]
+        ai = np.where(e <= ex_allow, 1.0, np.where(k < 0, -k / np.maximum(e - ex_allow, 1e-3), 0.0))
+        a_own = np.maximum(a_own, ai)
+    a_own = np.clip(a_own, 0.0, 1.0)
     need = np.zeros(p.shape[:2], np.float32)
     for c in range(3):
-        lim = np.where(dp[..., c] > 0, 255.0 - P[c], P[c])
+        Pc = P[..., c]
+        lim = np.where(dp[..., c] > 0, 255.0 - Pc, Pc)
         need = np.maximum(need, np.abs(dp[..., c]) / np.maximum(lim, 1.0))
-    # spill limit: excess(C) = min over i in (R, B) of (P_i - P_G) + (dp_i - dp_G)/a <= allow.
-    # Largest alpha that meets it (a = 1 when the pixel itself is within the limit).
-    allow = np.maximum(excess(F), 0.0)
-    best = np.zeros(p.shape[:2], np.float32)
-    for i in (0, 2):
-        e = float(P[i] - P[1])
-        k = dp[..., i] - dp[..., 1]
-        ai = np.where(e <= allow, 1.0, np.where(k < 0, -k / np.maximum(e - allow, 1e-3), 0.0))
-        best = np.maximum(best, ai)
-    a = np.maximum(need, np.minimum(best, 1.0))
-    a = np.clip(a, 0.0, 1.0)
-    a = np.where(a < 0.04, 0.0, np.where(a > 0.97, 1.0, a))
-    col = np.clip(P + dp / np.maximum(a[..., None], 1e-3), 0, 255)
-    # A faint mix carries little colour of its own: lean it toward the nearest strong colour.
-    col = a[..., None] * col + (1 - a[..., None]) * F
-    if glow is not None and glow.any():
-        # Glow: G = local mean colour of the art next to it (the glow's own colour). Alpha is the projection
-        # of the pixel onto the plate -> G line. Colour keeps the unmixed brightness (p - (1-a)P)/a and takes
-        # G's chroma, so a semi-transparent glow carries no plate hue.
-        # near the art: the paint right behind (an outline); further out: the wider art colour (an orb's glow)
-        G, ok = glow_colour(p, core, max(8, min(p.shape[:2]) // 30))
-        G = np.where(ok[..., None], G, F)
-        Gn, okn = glow_colour(p, core, 6)
-        G = np.where(okn[..., None], Gn, G)
-        F = np.where(glow[..., None], G, F)
-        gp = G - P
-        ag = np.clip(((p - P) * gp).sum(-1) / np.maximum((gp * gp).sum(-1), 1.0), 0.0, 1.0)
-        ag = np.where(ag < 0.04, 0.0, np.where(ag > 0.97, 1.0, ag))
-        cg = np.clip(P + dp / np.maximum(ag[..., None], 0.05), 0, 255)
-        y = cv2.cvtColor(np.rint(cg).astype(np.uint8), cv2.COLOR_RGB2YCrCb)
-        gy = cv2.cvtColor(np.rint(G).astype(np.uint8), cv2.COLOR_RGB2YCrCb)
-        y[..., 1:] = gy[..., 1:]
-        cg = cv2.cvtColor(y, cv2.COLOR_YCrCb2RGB).astype(np.float32)
-        # A pixel far off the plate -> G line is its own colour mixed with the plate (a thin bowstring next to
-        # a brown limb): keep the spill-limited alpha and colour from above for it.
-        resid = np.linalg.norm(p - (ag[..., None] * G + (1 - ag[..., None]) * P), axis=-1)
-        on = glow & (resid <= 40.0)
-        a = np.where(on, ag, a)
-        col = np.where(on[..., None], cg, col)
+    a_own = np.maximum(a_own, need)
+    conf = np.clip(1.0 - resid / (0.35 * np.sqrt(gl)), 0.0, 1.0)
+    conf = conf * conf * (3 - 2 * conf)
+    # the line model is for plate mixes: a pixel with no more magenta excess than G is paint, not a mix
+    conf = conf * np.clip((excess(p) - ex_allow) / 20.0, 0.0, 1.0)
+    a_mix = np.maximum(a_line, a_own)
+    a = conf * a_line + (1 - conf) * a_mix
+    # colour from each estimate's own alpha (unmixing with a rescaled alpha would overshoot past G)
+    # on the line the unmixed colour is G itself; the off-line residual is JPEG noise, not colour
+    # on the line the unmixed colour is G plus residual/a; at low alpha that residual is amplified JPEG noise,
+    # so lean to G as alpha falls (an opaque-ish edge keeps its own colour)
+    wl = ((1 - a_line) ** 2)[..., None]
+    col_line = wl * G + (1 - wl) * np.clip(P + dp / np.maximum(a_line[..., None], 0.02), 0, 255)
+    col_own = np.clip(P + dp / np.maximum(a_mix[..., None], 0.02), 0, 255)
+    col = conf[..., None] * col_line + (1 - conf[..., None]) * col_own
+    # noise floor: 3 sigma of the plate's own pixel noise measured along the plate -> G direction
+    cov = np.eye(3, dtype=np.float32) * 9.0 if noise is None else noise
+    sig = np.sqrt(np.maximum(np.einsum("...i,ij,...j->...", gp, cov, gp), 1e-6)) / np.sqrt(gl)
+    floor = np.clip(3.0 * sig / np.sqrt(gl), 0.01, 0.25)
+    # outside a glow (cut edges), JPEG ringing next to the paint is well above the flat plate's noise: use
+    # the background threshold there so the plate around an outline stays clear
+    if fine is not None:
+        floor = np.where(fine, floor, np.maximum(floor, np.clip(2.5 * t_bg / np.sqrt(gl), 0.0, 0.25)))
+    # the same noise band at both ends: within it of the plate is plate, within it of opaque is opaque
+    # within JPEG ringing (10%) of opaque is opaque: a hard pixel edge stays hard
+    top = np.maximum(floor, 0.1)
+    a = np.clip((a - floor) / (1 - floor - top), 0.0, 1.0)
+    a = np.where(a < 0.04, 0.0, a)  # below 4% nothing shows on any background; JPEG specks in the plate
+    # remove chroma toward the plate beyond G's own (YCrCb, luma kept)
+    c = col @ _M.T
+    comp = c @ u
+    # and no further from the plate than G either (JPEG green ringing, amplified by unmixing)
+    gcomp = (G @ _M.T) @ u
+    cut = np.clip(comp - allow, 0.0, None) + np.clip(comp - np.minimum(gcomp, 0.0), None, 0.0)
+    # near-opaque paint with no magenta excess of its own (brown wood) keeps its hue; a plate mix does not
+    keep = np.maximum(np.clip((1.0 - a) * 10.0, 0.0, 1.0), np.clip((excess(p) - ex_allow) / 20.0, 0.0, 1.0))
+    cut = cut * (np.maximum(keep, mix.astype(np.float32)) if mix is not None else keep)
+    c2 = c - cut[..., None] * u
+    y = col @ np.array([0.299, 0.587, 0.114], np.float32)
+    col = np.stack([y + 1.402 * c2[..., 0], y - 0.344136 * c2[..., 1] - 0.714136 * c2[..., 0], y + 1.772 * c2[..., 1]], -1)
+    # a faint pixel carries little colour of its own: lean it to the art colour (keeps a red glow red)
+    w = (conf * (1 - a))[..., None]
+    col = np.clip(w * G + (1 - w) * col, 0, 255)
     alpha[soft] = a[soft]
     out[soft] = col[soft]
-    return alpha, out, F
+    return alpha, out, G
 
 
 def despill(rgb: np.ndarray, F: np.ndarray, mask: np.ndarray) -> np.ndarray:
@@ -268,18 +327,58 @@ def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = Non
     if ring is None:
         ring = max(2, min(rgb.shape[:2]) // 400)
     bg, ring_m, glow, solid, core = trimap(rgb, plate, spread, ring, clear=arr[..., 3] < 8)
-    soft = ring_m | glow
-    res = unmix(rgb, plate, solid, soft, core, glow)
-    alpha, col = res[0], res[1]
-    # despill band: the soft pixels plus solid paint a few px in from the edge (JPEG fringe on outlines).
-    # Alpha there is untouched; only magenta excess above the paint behind it is removed.
-    band = soft | (solid & cv2.dilate((bg | glow).astype(np.uint8), np.ones((4 * ring + 3, 4 * ring + 3), np.uint8)).astype(bool))
-    col = despill(col, res[2], band)
-    art, ok = glow_colour(rgb.astype(np.float32), core, max(6, min(rgb.shape[:2]) // 60))
-    art = np.where(ok[..., None], art, res[2])
-    art = np.where(glow[..., None], res[2], art)  # glow: its own colour G from unmix
-    # glow, and ring pixels that are mostly plate; a near-opaque ring pixel is edge paint and keeps its hue
-    col = chroma_despill(col, art, plate, glow | (ring_m & (alpha < 0.85)))
+    p32 = rgb.astype(np.float32)
+    # plate drift: soft pixels within the plate's own noise of the LOCAL plate colour (carried in from the
+    # background around) and connected to it are background, not a faint glow
+    flat_px = rgb[bg & ~cv2.dilate((~bg).astype(np.uint8), np.ones((9, 9), np.uint8)).astype(bool)].astype(np.float32)
+    noise = np.cov(flat_px.T).astype(np.float32) if len(flat_px) > 64 else None
+    if bg.any():
+        sig = float(np.sqrt(np.trace(noise))) if noise is not None else 6.0
+        Pf = colour_field(p32, bg, (6, 18, 54, 160))
+        drift = (glow | ring_m) & (np.linalg.norm(p32 - Pf, axis=-1) <= max(10.0, 3.0 * sig))
+        drift = _flood_from(drift, bg)
+        bg |= drift
+        glow &= ~drift
+        ring_m &= ~drift
+    # one alpha field over everything that is not solid paint: the edge ring, the glow, and the plate
+    # around the art (a glow fades into the plate; the noise floor zeroes plain plate)
+    reach = max(8, min(rgb.shape[:2]) // 10)
+    near_art = cv2.dilate((~bg).astype(np.uint8), np.ones((2 * reach + 1, 2 * reach + 1), np.uint8)).astype(bool)
+    soft = ring_m | glow | (bg & near_art & (arr[..., 3] >= 8))
+    # solid-looking edge pixels carrying more plate-direction chroma than the deeper art next to them are
+    # plate mix too (pale lavender between a blue glow and the plate): they join the soft region
+    pcv = _M @ np.array(plate, np.float32)
+    u = pcv / max(float(np.linalg.norm(pcv)), 1e-3)
+    deep_col = colour_field(p32, core, (4, 12, 36))
+    edge = cv2.dilate((soft & ~bg | bg).astype(np.uint8), np.ones((6 * ring + 9, 6 * ring + 9), np.uint8)).astype(bool)
+    # ... and that sit on the plate -> art line (a mix of the two, not a colour of its own such as skin)
+    gp = deep_col - np.array(plate, np.float32)
+    dp = p32 - np.array(plate, np.float32)
+    t = np.clip((dp * gp).sum(-1) / np.maximum((gp * gp).sum(-1), 1.0), 0.0, 1.0)
+    on_line = np.linalg.norm(dp - t[..., None] * gp, axis=-1) < 0.2 * np.linalg.norm(gp, axis=-1)
+    # or bright and on the violet side of the plate hue (plate over a pale blue glow: lavender), which dark
+    # purple paint and warm skin are not
+    hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV_FULL).astype(np.int32)
+    ph = int(cv2.cvtColor(np.array(plate, np.uint8).reshape(1, 1, 3), cv2.COLOR_RGB2HSV_FULL)[0, 0, 0])
+    side = (hsv[..., 0] - ph + 128) % 256 - 128
+    violet = (side < 0) & (side >= -64) & (np.minimum(p32[..., 0], p32[..., 2]) >= 0.5 * min(plate[0], plate[2]))
+    dirty = solid & edge & (on_line | violet) & (((p32 @ _M.T) @ u) - np.maximum((deep_col @ _M.T) @ u, 0.0) > 4.0)
+    soft |= dirty
+    solid &= ~dirty
+    # a glow is soft paint reaching past the cut edge: glow pixels more than 2 rings out from the solid art.
+    # Its surroundings get the fine (plate-noise) floor; a plain anti-aliased edge keeps the coarse one.
+    d_solid = cv2.distanceTransform((~solid).astype(np.uint8), cv2.DIST_L2, 5)
+    wide = glow & (d_solid > 2 * ring + 1)
+    fine = cv2.dilate(wide.astype(np.uint8), np.ones((2 * reach + 1, 2 * reach + 1), np.uint8)).astype(bool) & (d_solid > ring)
+    soft &= ~bg | fine  # the plate fades into alpha only around a glow
+    alpha, col, G = unmix(rgb, plate, solid, soft, core, noise, max(10.0, 1.5 * spread), fine, bg, dirty)
+    # inside a wide glow, average the alpha over a small neighbourhood: JPEG blocks otherwise fray the fade
+    calm = fine & soft & (d_solid > 2 * ring + 1)
+    if calm.any():
+        alpha = np.where(calm, cv2.GaussianBlur(alpha, (5, 5), 1.2), alpha)
+    # JPEG fringe on solid outline paint: magenta excess above the art colour removed, alpha untouched
+    band = solid & cv2.dilate((bg | glow).astype(np.uint8), np.ones((4 * ring + 3, 4 * ring + 3), np.uint8)).astype(bool)
+    col = despill(col, G, band)
     a8 = np.rint(alpha * arr[..., 3]).astype(np.uint8)
     out = np.zeros_like(arr)
     out[..., :3] = np.rint(col).astype(np.uint8)
