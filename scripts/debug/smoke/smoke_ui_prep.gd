@@ -10,12 +10,15 @@ const PauseFlow := preload("res://scripts/ui/pause_menu/menu_flow.gd")
 const PauseSkills := preload("res://scripts/ui/pause_skills.gd")
 const TipHover := preload("res://scripts/ui/tip_hover.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const ItemBoard := preload("res://scripts/ui/item_board.gd")
+const Icons := preload("res://scripts/ui/gear_icons.gd")
 const _TipHost := preload("res://scripts/debug/smoke/tip_host.gd")
 
 static func run(host: Node) -> bool:
 	var ok: bool = _tabs()
 	ok = _talk() and ok
 	ok = _tips(host) and ok
+	ok = _board() and ok
 	printerr("P7: ui_prep_ok=" + str(ok))
 	assert(ok, "ui prep checks failed (see P7: lines above)")
 	return ok
@@ -107,3 +110,21 @@ static func _tips(_host: Node) -> bool:
 	host.free()
 	var want: Array = [Vector2(100, 138), Vector2(1496, 872), Vector2(20, 538)]
 	return _say("tip_shared", shown and text_ok and hidden and place == want, str(place))
+
+## Item board: one cell per row with the row's icon, press calls on_pick with the row, bad rows are rejected.
+static func _board() -> bool:
+	var it: Dictionary = App.prog.make_weapon("great_axe", "common")
+	var tex: Texture2D = Icons.tex_for_item(it)
+	var picked: Array = []
+	var rows: Array = [
+		{"id": "a", "tex": tex, "name": "Axe", "price": "5g", "on_pick": func(r): picked.append(r["id"])},
+		{"id": "b", "tex": tex, "name": "Axe 2", "on_pick": func(r): picked.append(r["id"])},
+	]
+	var parent := Control.new()
+	var grid: GridContainer = ItemBoard.build(parent, null, rows, 2)
+	var btn: Button = grid.get_child(1).get_child(0) as Button
+	btn.pressed.emit()
+	var good: bool = tex != null and grid.get_child_count() == 2 and btn.icon == tex and picked == ["b"]
+	good = good and ItemBoard.check([{"id": "x"}]) != "" and ItemBoard.check([{"tex": tex}]) != "" and ItemBoard.check(rows) == ""
+	parent.free()
+	return _say("item_board", good)
