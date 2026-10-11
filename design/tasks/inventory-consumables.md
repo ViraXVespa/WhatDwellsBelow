@@ -46,6 +46,7 @@ One slice updates the bag rules and the vendor/dumpster UIs together. Vendor and
   - Max-stack: “You scavenge some moldy bread from the dumpster... You've reached your limit for hoarding moldy bread and don't want people to start saying weird things about you, so you leave the bread where it is...”
   - Six other food stacks: “You scavenge some moldy bread from the dumpster, but you can't think of how that would be useful to you.”
 - Moldy bread is a weaker version of the starter food (lower heal, minimal or no bonuses). Tunable.
+- Create a new visually distinct moldy-bread asset: icon at `assets/ui/gear/moldy_bread.png`, food id `moldy_bread` (or equivalent), and an entry in `gear_icons.gd` `ITEM_PATHS`. Do not reuse the ration or trail-bread icon.
 
 ## Vendor Talk lines (food-themed)
 - Fresh out of the oven… well, as fresh as Placeholdia gets.
@@ -65,3 +66,5 @@ All ranges, costs, stack caps, heal amounts and bonuses go in design/tunables.md
 - inventory / progress holding and equip logic
 - dumpster interact
 - design/tunables.md
+- assets/ui/gear/moldy_bread.png (new)
+- scripts/ui/gear_icons.gd (ITEM_PATHS entry)
