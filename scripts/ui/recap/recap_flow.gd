@@ -3,6 +3,7 @@ extends Object
 ## Recap play / drain / finish flow.
 
 const RecapBars := preload("res://scripts/ui/recap/bars.gd")
+const TipHover := preload("res://scripts/ui/tip_hover.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const Rebuild := preload("res://scripts/ui/recap/rebuild.gd")
@@ -22,7 +23,7 @@ static func play(host: CanvasLayer, cond: String) -> void:
 	host.rows.clear()
 	host.skill_labs.clear()
 	host.head_right = null
-	RecapBars.hide_tip(host)
+	TipHover.hide(host)
 	var keep: float = App.bal.xp_keep
 	for id in App.prog.SKILLS:
 		var runx := float(App.prog.skills_run.get(id, 0.0))
@@ -124,7 +125,7 @@ static func finish(host: CanvasLayer) -> void:
 		return
 	if not host.open:
 		return
-	RecapBars.hide_tip(host)
+	TipHover.hide(host)
 	host.open = false
 	host.visible = false
 	host.set_process(false)

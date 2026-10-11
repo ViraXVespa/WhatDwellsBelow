@@ -7,6 +7,10 @@ const Talk := preload("res://scripts/data/talk_lines.gd")
 const Collect := preload("res://scripts/data/save_store/store_collect.gd")
 const Data := preload("res://scripts/data/save_store/store_data.gd")
 const PauseFlow := preload("res://scripts/ui/pause_menu/menu_flow.gd")
+const PauseSkills := preload("res://scripts/ui/pause_skills.gd")
+const TipHover := preload("res://scripts/ui/tip_hover.gd")
+const ThemeS := preload("res://scripts/ui/theme.gd")
+const _TipHost := preload("res://scripts/debug/smoke/tip_host.gd")
 
 static func run(host: Node) -> bool:
 	var ok: bool = _tabs()
@@ -76,5 +80,30 @@ static func _talk() -> bool:
 	Talk.cur = keep_cur
 	return good
 
+## Shared tooltip: the pause Skills tab shows its first skill tip on open (same text as before), hides on blur,
+## and place_below keeps the recap placement (below, flipped above near the bottom, clamped at the sides).
 static func _tips(_host: Node) -> bool:
-	return true
+	var pm: CanvasLayer = App.pause_menu
+	pm.show_tab(pm.TAB_SKILLS)
+	var shown: bool = pm.tip_host != null and pm.tip_host.visible and pm.tip_id != ""
+	var text_ok: bool = shown and pm.tip_lab.text == ThemeS.skill_tip(pm.tip_id, PauseSkills.tip_lv(pm, pm.tip_id, pm.tip_kind))
+	pm.get_viewport().gui_release_focus()
+	pm._blur_tip()
+	var hidden: bool = not pm.tip_host.visible and pm.tip_id == ""
+	pm.close_ui()
+	var host := CanvasLayer.new()
+	host.set_script(_TipHost)
+	var anchor := Control.new()
+	host.add_child(anchor)
+	host.tip_host = PanelContainer.new()
+	host.add_child(host.tip_host)
+	App.add_child(host)
+	var place: Array = []
+	for at: Vector2 in [Vector2(100, 100), Vector2(1800, 1000), Vector2(0, 500)]:
+		anchor.position = at
+		anchor.size = Vector2(200, 30)
+		TipHover.place_below(host, anchor, 404.0, 120.0)
+		place.append(host.tip_host.position)
+	host.free()
+	var want: Array = [Vector2(100, 138), Vector2(1496, 872), Vector2(20, 538)]
+	return _say("tip_shared", shown and text_ok and hidden and place == want, str(place))

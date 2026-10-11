@@ -6,6 +6,11 @@ const ThemeS := preload("res://scripts/ui/theme.gd")
 
 const TRACK_COL := Color(0.18, 0.14, 0.1)
 
+## Skill row focus look (TipHover.attach hl).
+static func hl(row: Control, on: bool) -> void:
+	if row is PanelContainer:
+		(row as PanelContainer).add_theme_stylebox_override("panel", ThemeS.skill_row_sb(on))
+
 static func skill_lab(text: String, size: int = 16, col: Color = ThemeS.INK) -> Label:
 	var l: Label = ThemeS.lab(text, size, col, HORIZONTAL_ALIGNMENT_LEFT, false, false)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE

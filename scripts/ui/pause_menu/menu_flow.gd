@@ -6,6 +6,7 @@ const T := preload("res://scripts/data/tunables.gd")
 const GearAct := preload("res://scripts/ui/gear_board/board_act.gd")
 const Board := preload("res://scripts/ui/gear_board.gd")
 const Util := preload("res://scripts/ui/pause_menu/menu_util.gd")
+const TipHover := preload("res://scripts/ui/tip_hover.gd")
 const Pad := preload("res://scripts/ui/menu_pad.gd")
 const PromptView := preload("res://scripts/ui/prompt_view.gd")
 const UiSession := preload("res://scripts/ui/ui_session.gd")
@@ -36,7 +37,7 @@ static func show_menu(host: CanvasLayer) -> void:
 	host.gear_sub_slot = ""
 	host.gear_hover = false
 	host.set_meta("gear_tip_restore", false)
-	Util.hide_tip(host)
+	TipHover.hide(host)
 	Board.hide_tip(host)
 	Board._flag(host, "gear_hover", false)
 	Board._flag(host, "gear_tip_ready", false)
@@ -81,7 +82,7 @@ static func close_ui(host: CanvasLayer, quiet: bool = false) -> void:
 		old.queue_free()
 	if host.gear_tip_host:
 		host.gear_tip_host.visible = false
-	Util.hide_tip(host)
+	TipHover.hide(host)
 	Board.hide_tip(host)
 	Board._flag(host, "gear_hover", false)
 	Board._flag(host, "gear_tip_ready", false)
@@ -101,7 +102,7 @@ static func _store_tip_restore(host: CanvasLayer) -> void:
 	host.set_meta("gear_tip_restore", tip != null and tip.visible)
 
 static func _rebuild(host: CanvasLayer) -> void:
-	Util.hide_tip(host)
+	TipHover.hide(host)
 	Board.hide_tip(host)
 	Board._flag(host, "gear_hover", false)
 	Board._flag(host, "gear_tip_ready", false)

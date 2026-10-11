@@ -39,16 +39,6 @@ static func slider_row(
 	row.add_child(slider)
 	return row
 
-static func blur_tip(ui: CanvasLayer) -> void:
-	ui.tip_from = null
-	ui.tip_id = ""
-	ui.tip_kind = ""
-
-static func hide_tip(ui: CanvasLayer) -> void:
-	blur_tip(ui)
-	if ui.tip_host:
-		ui.tip_host.visible = false
-
 static func paint_tip(ui: CanvasLayer) -> void:
 	var kind: String = str(ui.tip_kind)
 	if kind == "skill" or kind == "perm" or kind == "run":

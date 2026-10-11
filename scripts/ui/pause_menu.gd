@@ -12,6 +12,7 @@ const UiSession := preload("res://scripts/ui/ui_session.gd")
 const UiText := preload("res://scripts/ui/ui_text.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const Flow := preload("res://scripts/ui/pause_menu/menu_flow.gd")
+const TipHover := preload("res://scripts/ui/tip_hover.gd")
 
 const TAB_SETTINGS := "settings"
 const TAB_INV := "inventory"
@@ -122,24 +123,8 @@ func _inv_find_sel() -> Control:
 func _skills() -> void:
 	PauseSkills.build(self)
 
-func _on_skill_focus(id: String, kind: String, from: Control) -> void:
-	if from is PanelContainer:
-		(from as PanelContainer).add_theme_stylebox_override("panel", ThemeS.skill_row_sb(true))
-	tip_id = id
-	tip_kind = kind
-	tip_from = from
-	Util.paint_tip(self)
-
-func _on_skill_blur(from: Control) -> void:
-	if from is PanelContainer and not from.has_focus():
-		(from as PanelContainer).add_theme_stylebox_override("panel", ThemeS.skill_row_sb(false))
-	call_deferred("_blur_tip")
-
 func _blur_tip() -> void:
-	var f: Control = get_viewport().gui_get_focus_owner()
-	if f != null and f.has_meta("skill_id"):
-		return
-	Util.hide_tip(self)
+	TipHover.blur(self, "skill_id")
 
 func _system() -> void:
 	PauseSettings.build(self)
