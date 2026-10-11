@@ -9,7 +9,8 @@ every script and a standalone `--script` parse has no autoloads, so neither stan
 when .godot/imported is missing. Summary: _logs/gd-load-check/; Godot's full stderr is saved next to it and the summary
 prints its leading lines and size, so read them. RESULT carries files= failed=. Small batches: run it after each edit pass.
 Also fails (nul=) on Godot text files under res:// holding a NUL byte or a UTF-16 BOM, on a .gd string escape that makes a
-NUL (\\u0000, \\x00), and on Godot's "Unicode parsing error ... Unexpected NUL" line.
+NUL (\\u0000, \\x00), and on Godot's "Unicode parsing error ... Unexpected NUL" line. Also fails (d3d=) on a tracked texture
+.import with Detect 3D on (detect_3d/compress_to not 0): the editor would rewrite it on import (mipmaps, VRAM compression).
 """
 from __future__ import annotations
 
@@ -89,6 +90,16 @@ def nul_scan(root: Path) -> list[str]:
     return bad
 
 
+def d3d_scan(root: Path) -> list[str]:
+    """Tracked texture .import files with Detect 3D on (project default is off: project.godot [importer_defaults])."""
+    r = subprocess.run(["git", "-C", str(root), "ls-files", "-z", "*.import"], capture_output=True)
+    bad = []
+    for rel in r.stdout.decode("utf-8", "replace").split("\0"):
+        if rel and (root / rel).is_file() and re.search(rb"^detect_3d/compress_to=[1-9]", (root / rel).read_bytes(), re.M):
+            bad.append(f"D3D {rel}: detect_3d/compress_to must be 0 (Detect 3D rewrites the import)")
+    return bad
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Load changed .gd files in the project; a parse or compile error fails.", json_out=True)
     ap.add_argument("--changed", action="store_true", help="Changed and untracked .gd vs BASE (default).")
@@ -126,19 +137,20 @@ def main(argv: list[str] | None = None) -> int:
             errs.append(f"{ln.strip()} {at}".strip())
     bad = [f for f in files if seen.get("res://" + f) != "ok"]
     nul = nul_scan(root) + [e for e in errs if "Unexpected NUL" in e][:1]
+    d3d = d3d_scan(root)
     body = [f"root={root} base={args.base or 'week branch/HEAD'} files={len(files)} failed={len(bad)} status={r['status']} errBytes={r['err_bytes']}", ""]
     for f in bad:
         body.append(f"FAIL {f}" + ("" if "res://" + f in seen else "  (never reported: the run ended first)"))
         body += ["    " + e for e in errs if f in e][:6]
-    body += nul
+    body += nul + d3d[:10]
     if not bad:
         body.append(f"ok: {len(files)} script(s) load and compile with autoloads")
     other = [e for e in errs if not any(f in e for f in bad)]
     body += ["", f"other Godot output lines: {len(other)}, stderr {r['err_bytes']} bytes"
              + (f". Open {agent_log.rel(root, err_log)} before calling any of it harmless; first lines:" if other or r["err_bytes"] else "")]
     body += ["    " + e[:200] for e in other[:8]]
-    return agent_log.finish("gd-load-check", root, "\n".join(body), "FAIL" if bad or nul else "PASS", args=args, retry=("check_gd_load.py", body),
-                            files=len(files), failed=len(bad), nul=len(nul), status_godot=r["status"])
+    return agent_log.finish("gd-load-check", root, "\n".join(body), "FAIL" if bad or nul or d3d else "PASS", args=args, retry=("check_gd_load.py", body),
+                            files=len(files), failed=len(bad), nul=len(nul), d3d=len(d3d), status_godot=r["status"])
 
 
 if __name__ == "__main__":
