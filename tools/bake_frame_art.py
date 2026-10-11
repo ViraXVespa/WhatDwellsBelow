@@ -10,7 +10,6 @@ one is an error. New PNG imports get fix_alpha_border off so the pixels match th
 """
 from __future__ import annotations
 
-import argparse
 import re
 import subprocess
 import sys
@@ -18,10 +17,12 @@ from pathlib import Path
 
 _TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(_TOOLS))
+import agent_log
 import godot_lib
 
 ROOT = _TOOLS.parent
 FRAMES = ROOT / "assets" / "ui" / "frames"
+JOB = "frame-art"
 
 
 def godot(*args: str, timeout: int = 600) -> str:
@@ -49,10 +50,13 @@ def show(out: str) -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--check", action="store_true")
-    ap.add_argument("--time", action="store_true")
-    a = ap.parse_args(argv)
+    global ROOT, FRAMES
+    ap = agent_log.std_parser(__doc__.splitlines()[0])
+    ap.add_argument("--check", action="store_true", help="Compare the code drawing with the committed PNGs; write nothing.")
+    ap.add_argument("--time", action="store_true", help="Time building every skin from the PNGs.")
+    a = ap.parse_args(sys.argv[1:] if argv is None else argv)
+    ROOT = agent_log.resolve_root(a)
+    FRAMES = ROOT / "assets" / "ui" / "frames"
     if a.time:
         ok = show(godot("--", "--wdb-frame-art-time"))
     elif a.check:
@@ -65,9 +69,9 @@ def main(argv: list[str] | None = None) -> int:
             godot("--import")
         out = godot("--", "--wdb-frame-art-check")
         ok = ok and show(out) and re.search(r"stale=0\b", out) is not None
-    print(f"RESULT {'PASS' if ok else 'FAIL'} pngs={len(list(FRAMES.rglob('*.png')))}")
-    return 0 if ok else 1
+    return agent_log.finish(JOB, ROOT, "frame art %s" % ("time" if a.time else "check" if a.check else "bake"), "PASS" if ok else "FAIL",
+                            args=a, pngs=len(list(FRAMES.rglob("*.png"))))
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(agent_log.guarded(main))
