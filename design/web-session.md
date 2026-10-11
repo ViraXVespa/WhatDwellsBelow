@@ -16,6 +16,11 @@ Web / chat may generate non-tile images. It does not spawn the isolated media ru
 
 If the next write would be an assumption, ask, as many questions as needed, and wait (not a phase change); do not answer it yourself.
 
+**Understand before you assume.**
+Seek the full truth in every response. That requires a complete understanding of the systems that own the behavior, look, constraints, and cost before you treat a pattern as inefficient, non-idiomatic, accidental, or better done another way.
+Read the relevant docs, code-map rows, and live files (camera, lighting, shaders, sorting, physics, input, export target, streaming, etc.) first. If those have not been read, stay descriptive or explicitly say what is still unread. Do not lead with the assumption.
+
+
 ## Flows
 
 After Phase 1, default to **brainstorm**. Directed-goal is opt-in.
