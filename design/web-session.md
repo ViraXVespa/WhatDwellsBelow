@@ -33,6 +33,7 @@ Naming a goal is memory, not a mode switch. Several goals may sit in memory. Dir
 | parked | User names a parked task | `design/tasks/README.md` (owner web) |
 | perf | User drops hitch / load-timing output | measure first; one hitch class per emit |
 | build-week | User names it | process recommendations; gather first |
+| sweep | User names it and a goal | three-section report; body-level hot-path reads; stop when another turn is needed |
 
 Do not open the Build path file, `BOT.md`, or Grok Bot Job files from this path unless the User named that path.
 
@@ -84,3 +85,4 @@ Session end (any phase): the task offer in `web-discuss.md` (End of session).
 - Do not emit `_logs/`, `scripts/data/changelog.json`, or a hand-edit of `scripts/data/version.json`.
 - Do not write the label into `design/versioning.md`.
 - Do not start a second emit pass until Phase 3 runs again.
+- Do not add changelog files when working out of a grok-build branch unless the User named changelog as the specific goal of the session.

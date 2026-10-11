@@ -68,6 +68,9 @@ gates:
   web_test:
     file: design/web-test.md
     when: web_phase_5_test
+  web_sweep:
+    file: design/web-sweep.md
+    when: web_sweep_flow
   constraints_demo:
     file: design/constraints-demo.md
     when: calling_build_complete
