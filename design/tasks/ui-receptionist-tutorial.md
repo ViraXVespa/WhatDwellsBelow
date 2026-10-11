@@ -49,3 +49,6 @@ The old “just say Hi” ruling and the shared quest-board branch for the recep
 - scripts/ui/progress_ui.gd
 - scripts/world/interact/interact_act.gd
 - new modular tutorial data + screenshot runner under tools/ or scripts/data/
+
+## Art survey
+- Dialog frame + portrait: now the same flat panel as the quest list. Art adds a speech frame and NPC bust. 9-slice 96x96 (24 px margins) transparent; portrait 256x256 transparent. High. Ref camp-receptionist-menu_01-menu-open.png. Ref shots: Bot survey of grok-build-w7 on 2026-10-11 (not committed; /workspace/png-survey/shots on the box).

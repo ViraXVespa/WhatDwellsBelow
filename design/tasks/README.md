@@ -27,6 +27,7 @@ crystal-frame-pink | build | blocked | Crystal frame studs: stop deriving from t
 inventory-consumables | build | open | Potion and food holding, vendor consumable board, dumpster moldy bread | -
 rekey-assets | build | open | Rekey assets after the keying changes | -
 ui-ghost-shop-icons | build | open | Ghost shop icons matching consumable board | -
+ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
 ui-quest-board-posters | build | open | Quest board posters plus pause Quest tab | -
 ui-recap-skills-style | build | open | Recap matches skills page chrome | -
 ui-receptionist-tutorial | build | open | Receptionist as lore/tutorial How-to-Play guide | -

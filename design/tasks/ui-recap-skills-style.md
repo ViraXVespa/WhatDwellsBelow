@@ -20,3 +20,6 @@ Match the look of the skills page (two sheets, split right of center so the list
 - scripts/ui/recap/rebuild.gd
 - scripts/ui/recap/recap_ui.gd
 - scripts/ui/recap.gd
+
+## Art survey
+- Header plaque + page frame: now a cream box with 22 identical rows. Plaque 600x96 transparent; page 9-slice 128. Med. Rows stay code. Ref camp-recap_01-recap.png. Ref shots: Bot survey of grok-build-w7 on 2026-10-11 (not committed; /workspace/png-survey/shots on the box).

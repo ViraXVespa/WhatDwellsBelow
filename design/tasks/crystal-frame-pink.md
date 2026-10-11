@@ -22,3 +22,6 @@ The pink crystal decorations on the crystal UI frame came from the erroneous key
 
 ## Open questions
 - Whether she wants the studs kept as a design accent in a new colour, or removed.
+
+## Related
+- ui-png-art owns the new crystal background graphic (floor/loadout/teleport). This task keeps the studs only.

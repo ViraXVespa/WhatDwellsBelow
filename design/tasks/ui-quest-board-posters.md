@@ -36,3 +36,6 @@ Posters instead of buttons. Reference: design/refs/ui-quest-board-posters/quest-
 - scripts/ui/progress_ui.gd: open_quest
 - scripts/data/progress_quest/quest_roll.gd
 - pause menu Quest tab
+
+## Art survey
+- Board backdrop, poster sheet, pin: now a flat cream panel with brown bars. Art gives the intended look (poster_art.gd REQUIRED). Board ~1200x700 opaque; poster ~320x420 transparent, text drawn on; pin 32x32. High. Ref camp-npc-panels_02-quest-board.png. Ref shots: Bot survey of grok-build-w7 on 2026-10-11 (not committed; /workspace/png-survey/shots on the box).
