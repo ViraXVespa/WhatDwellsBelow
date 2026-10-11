@@ -185,7 +185,7 @@ def sparkles(rgb, alpha, col, solid0, wide, plate, pale=None):
     colour in range, then composited over the keyed glow carried in from around them: clean dots in their
     own colour, the glow continuous underneath."""
     n, lab, st, _ = cv2.connectedComponentsWithStats(solid0.astype(np.uint8), connectivity=8)
-    near_glow = cv2.dilate(wide.astype(np.uint8), np.ones((9, 9), np.uint8)).astype(bool)
+    near_glow = cv2.dilate(wide.astype(np.uint8), np.ones((41, 41), np.uint8)).astype(bool)
     keep = [i for i in range(1, n) if st[i, cv2.CC_STAT_AREA] < int(2e-3 * solid0.size)]
     sp = np.isin(lab, keep) & near_glow
     if not sp.any():
@@ -201,6 +201,11 @@ def sparkles(rgb, alpha, col, solid0, wide, plate, pale=None):
     up = (p - B) / np.maximum(255.0 - B, 1.0)
     dn = (B - p) / np.maximum(B, 1.0)
     a_s = np.clip(np.maximum(up, dn).max(-1), 0.0, 1.0)
+    # mostly the sparkle's own colour over what is behind: alpha by position on that line where it fits
+    own0 = colour_field(p, sp & ~pale if pale is not None else sp, (1.5, 4))
+    ob = own0 - B
+    a_p = np.clip(((p - B) * ob).sum(-1) / np.maximum((ob * ob).sum(-1), 1.0), 0.0, 1.0)
+    a_s = np.maximum(a_s, a_p)
     # JPEG noise in the glow reads as a little alpha: a soft floor, then a light blur (the source is soft too)
     t = np.clip((a_s - 0.1) / 0.25, 0.0, 1.0)
     a_s = a_s * t * t * (3 - 2 * t)
@@ -214,6 +219,9 @@ def sparkles(rgb, alpha, col, solid0, wide, plate, pale=None):
     allow = np.maximum((own @ _M.T) @ u, 0.0)
     over = np.maximum((K @ _M.T) @ u - allow, 0.0)
     K = np.clip(K - over[..., None] * _chroma_rgb(u), 0, 255)
+    # a faint halo pixel's own colour is too noisy to trust: lean on the sparkle's colour there
+    w_k = np.clip(a_s * 2.0, 0.0, 1.0)[..., None]
+    K = own + (K - own) * w_k
     a_o = a_s + (1 - a_s) * ag
     c_o = (a_s[..., None] * K + (1 - a_s[..., None]) * fg) / np.maximum(a_o[..., None], 1e-3)
     alpha = np.where(S, a_o, alpha)
