@@ -3,7 +3,8 @@ extends Object
 ## First/second open time of every hub menu, after a real title -> hub load.
 ## Run: --wdb-load-timing-smoke --wdb-open-timing (headless or with a renderer).
 ## Line per open: OPEN: <name> pass=<1|2> call_ms (the open call) frame_ms (slowest of the next 4 frames)
-## extra_ms (call + frame over the idle frame). Exit 1 when a first open costs over BUDGET_MS and more than
+## extra_ms (call + frame over the idle frame). With OPEN_SHOTS=<dir> set it also saves the camp view and each open
+## as <dir>/<name><pass>.png (needs a renderer) for before/after shot diffs of every hub menu. Exit 1 when a first open costs over BUDGET_MS and more than
 ## SLACK_MS over its second open (a menu that is slow every time is a build cost, not a first-open stall).
 
 const FLAG := "--wdb-open-timing"
@@ -34,12 +35,14 @@ static func run(tree: SceneTree) -> bool:
 		["ghost_shop", func(): scene.world_ui().open_shop(null)],
 		["pause", func(): App.pause_menu.show_menu()],
 		["pause_inventory", func(): App.pause_menu.show_inventory()],
+		["pause_skills", func(): _pause_tab("skills")],
 		["recap", func(): App.recap.play("death")],
 	]
 	var ok: bool = true
 	var extras: Dictionary = {}
 	for i: int in 10:
 		await tree.process_frame
+	await _shot(tree, "camp")
 	for pass_i: int in 2:
 		for r: Array in rows:
 			var base: float = await _idle(tree)
@@ -54,6 +57,7 @@ static func run(tree: SceneTree) -> bool:
 				var now: int = Time.get_ticks_usec()
 				worst = maxf(worst, float(now - last) / 1000.0)
 				last = now
+			await _shot(tree, str(r[0]) + str(pass_i))
 			var extra: float = call_ms + maxf(0.0, worst - base)
 			printerr("OPEN: %s pass=%d call_ms=%.1f frame_ms=%.1f idle_ms=%.1f extra_ms=%.1f shown=%s" % [r[0], pass_i + 1, call_ms, worst, base, extra, shown])
 			if pass_i == 0:
@@ -64,6 +68,22 @@ static func run(tree: SceneTree) -> bool:
 			_close(scene.world_ui())
 	printerr("OPEN: ok=" + str(ok))
 	return ok
+
+static func _shot(tree: SceneTree, name: String) -> void:
+	if not OS.has_environment("OPEN_SHOTS"):
+		return
+	await RenderingServer.frame_post_draw
+	tree.root.get_texture().get_image().save_png(OS.get_environment("OPEN_SHOTS").path_join(name + ".png"))
+
+## Open the pause menu on one tab.
+static func _pause_tab(id: String) -> void:
+	var pm: CanvasLayer = App.pause_menu
+	pm.show_menu()
+	if pm.has_method("show_tab"):
+		pm.show_tab(id)
+	else:
+		pm.tab = 2
+		pm._rebuild()
 
 ## Median frame time with nothing opening.
 static func _idle(tree: SceneTree) -> float:
