@@ -137,16 +137,18 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | Break count / gold / orb | — | 24 / 0.55 / 0.35 | |
 | Orb heal | — | 18 | |
 
-## Enemy drops (PLACEHOLDER values, user to set)
+## Enemy drops
 
-Each kill rolls each pickup on its own (`enemy_hit.gd` `roll_drops`); a kill can drop nothing. Gear rolls are unchanged (`enemy_gear_*`).
+Each kill rolls each pickup on its own (`enemy_hit.gd` `roll_drops`); a kill can drop nothing (~66 % no gold or orb). Bosses skip the gear roll (their chest is separate).
 
 | Key | Live default | Notes |
 |-----|--------------|-------|
-| `enemy_gold_chance` | 0.5 **placeholder** | Bosses always drop gold. Amount unchanged (`enemy_gold_base` / `_span`) |
-| `enemy_orb_chance` | 0.12 **placeholder** | HP orb, heals `orb_heal` |
-| `enemy_mana_chance` | 0.08 **placeholder** | Mana orb; pickup is a stub until metal-hud-mana lands |
+| `enemy_gold_chance` | 0.25 | Bosses always drop gold. Amount unchanged (`enemy_gold_base` / `_span`) |
+| `enemy_orb_chance` | 0.06 | HP orb, heals `orb_heal` |
+| `enemy_mana_chance` | 0.06 | Mana orb, same as HP orb; pickup is a stub until metal-hud-mana lands |
 | `orb_mana` | 15 **placeholder** | Unused until mana exists |
+| `enemy_gear_chance` + `enemy_gear_floor` × floor | 0.0171 + 0.00286 | ~2 % on floor 1, +0.29 pt per floor (f5 3.1 %, f10 4.6 %) |
+| Normal-kill gold amount | old roll ÷ `enemy_gold_chance`, rounded | Keeps expected gold per kill equal to the old 100 % drop (f1 2.0, f2 2.5); bosses keep the old roll + `boss_gold_extra` |
 | Pickup radius | 0.55 m (unchanged, `pickup.gd`) | No magnet |
 | Crack HP | 8 | 8 | |
 

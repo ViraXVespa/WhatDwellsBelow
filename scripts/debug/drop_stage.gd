@@ -16,13 +16,16 @@ func place(kind: String, dx: float, dz: float) -> void:
 	p.set("life", 0.0)
 	p.set("_block_t", 9999.0)
 
+## `coins` is the total gold; coins / n is the average per kill.
 ## Roll `n` normal (non-boss) kills with the live tunables: counts of none / gold / hp / mana / gear.
 static func sim(n: int) -> Dictionary:
-	var c := {"none": 0, "gold": 0, "hp": 0, "mana": 0, "gear": 0}
+	var c := {"none": 0, "gold": 0, "hp": 0, "mana": 0, "gear": 0, "coins": 0}
 	for i: int in n:
 		var d: PackedStringArray = Hit.roll_drops(false)
 		if randf() < App.bal.enemy_gear_chance + App.bal.enemy_gear_floor * float(App.floor_n):
 			d.append("gear")
+		if d.has("gold"):
+			c.coins += Hit.gold_amount(false)
 		if d.is_empty():
 			c.none += 1
 		for k: String in d:

@@ -65,9 +65,7 @@ static func drop_loot(host: CharacterBody3D) -> void:
 	var parent := host.get_parent()
 	if parent == null:
 		return
-	var gold_n := int(App.bal.enemy_gold_base) + randi() % maxi(1, int(App.bal.enemy_gold_span) + mini(4, App.floor_n))
-	if host.is_boss:
-		gold_n += int(App.bal.boss_gold_extra)
+	var gold_n := gold_amount(host.is_boss)
 	var PickupS := load("res://scripts/world/pickup.gd")
 	for k: String in roll_drops(host.is_boss):
 		var g: Node3D = PickupS.new()
@@ -85,6 +83,14 @@ static func drop_loot(host: CharacterBody3D) -> void:
 		else:
 			App.toast(str(item.name))
 			App.sfx("pickup")
+
+## Coins in one gold drop. Normal kills scale the old roll by 1 / enemy_gold_chance so expected gold per kill matches
+## the old always-drop; bosses (always drop) keep the old roll plus boss_gold_extra.
+static func gold_amount(boss: bool) -> int:
+	var n := int(App.bal.enemy_gold_base) + randi() % maxi(1, int(App.bal.enemy_gold_span) + mini(4, App.floor_n))
+	if boss:
+		return n + int(App.bal.boss_gold_extra)
+	return maxi(1, roundi(float(n) / maxf(0.01, App.bal.enemy_gold_chance)))
 
 ## Walk-over pickups for one kill: "gold" / "hp" / "mana", each its own roll (any mix, or nothing).
 static func roll_drops(boss: bool) -> PackedStringArray:

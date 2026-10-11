@@ -27,7 +27,7 @@ static func run(_host: Node) -> void:
 	if not ok:
 		printerr("SMOKE FAIL: mid-run save kept unextracted gear (run_loss_check.gd)")
 	var Stage: GDScript = load("res://scripts/debug/drop_stage.gd")
-	var sim: Dictionary = Stage.sim(1000)
-	printerr("P3: drop_sim floor=%d n=1000 %s" % [App.floor_n, JSON.stringify(sim)])
-	if int(sim.none) == 0 or int(sim.none) == 1000:
+	var sim: Dictionary = Stage.sim(10000)
+	printerr("P3: drop_sim floor=%d n=10000 %s" % [App.floor_n, JSON.stringify(sim)])
+	if int(sim.none) == 0 or int(sim.none) == 10000:
 		printerr("SMOKE FAIL: enemy drops not randomized (drop_stage.gd sim)")
