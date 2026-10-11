@@ -31,7 +31,8 @@ Replace the shared quest flow. Receptionist is the lore/tutorial system. Talk us
 - Me? I think the dungeon is some kind of alien artifact that uses the allure of treasure to entice people to enter, then harvests the emotional energy of the suffering of death to power their other technology.
 - We don’t know how the extraction gates function. It doesn’t seem to use any kind of magic.
 - The dungeon changes every time someone enters… It almost makes it feel like it’s alive.
-- There is no “secret cow level”. That’s just a weird rumor. I’ve no idea how it started.
+- There is no “secret cow level”. That’s just a weird rumor. I’ve no idea how it started… Or what a 'level' is…
+- Do you ever wonder why enemies drop coins? That's really weird, right? Like… Is their biology economy based or something? Hmm…
 
 ## Ask? (tutorial)
 - Opens submenu “What would you like to know about?”.
@@ -40,9 +41,6 @@ Replace the shared quest flow. Receptionist is the lore/tutorial system. Talk us
 - Modular data: id, title, body, screenshot id/path. New entries are a data addition.
 - Static baked screenshots of the relevant UI (anvil, inventory, extract gate, skills page, etc.).
 - Tooling to regenerate the baked screenshots when the underlying UI locations change. Easy refresh is required.
-
-## Supersedes
-The old “just say Hi” ruling and the shared quest-board branch for the receptionist.
 
 ## Files
 - scripts/ui/progress_ui/ui_hub.gd
