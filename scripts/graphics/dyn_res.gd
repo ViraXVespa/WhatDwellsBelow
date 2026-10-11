@@ -101,3 +101,16 @@ static func _apply(host: Node, level: int) -> void:
 		_wait = 0
 		_probe = false
 	host.get_tree().root.scaling_3d_scale = scale()
+
+## Under a loader: draw two frames at a lower 3D scale, then restore. The first scale change after the reveal
+## otherwise reallocates the 3D buffers and compiles the scaled scene shaders in view (~250 ms on slow GPUs).
+static func warm(host: Node) -> void:
+	if not enabled() or snap(float(host.render_scale)) > 0.0:
+		return
+	var root: Window = host.get_tree().root
+	var keep: float = root.scaling_3d_scale
+	root.scaling_3d_scale = maxf(T.DYNRES_MIN, keep - T.DYNRES_STEP) if keep >= 0.999 else 1.0
+	for i in 2:
+		RenderingServer.force_draw()
+		await host.get_tree().process_frame
+	root.scaling_3d_scale = keep

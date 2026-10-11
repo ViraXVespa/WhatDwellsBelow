@@ -6,6 +6,9 @@ const Anim := preload("res://scripts/world/player/player_anim.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const UiWarm := preload("res://scripts/ui/ui_warm.gd")
+const PlayerSetup := preload("res://scripts/world/player/player_setup.gd")
+const PlayerTick := preload("res://scripts/world/player/player_tick.gd")
+const PLAYER_LAZY: Array[String] = ["res://scripts/world/player/player_act.gd", "res://scripts/world/player/player_lock.gd", "res://scripts/combat/player_hit.gd"]
 
 static func _warmup_hub(host: Node) -> void:
 	LoadTiming.mark("warmup_begin")
@@ -15,6 +18,9 @@ static func _warmup_hub(host: Node) -> void:
 			host.loader.set_solid(true)
 		host.loader.set_progress(0.94)
 	var scene: Node = host.get_tree().current_scene
+	# Everything the first seconds in camp would add (dummy, aim line, telegraph) is built and drawn here, under the loader.
+	if scene and scene.has_method("ensure_dummy"):
+		scene.ensure_dummy()
 	if scene and scene.has_method("warmup"):
 		scene.warmup()
 	LoadTiming.mark("warmup_frame")
@@ -43,6 +49,12 @@ static func _warmup_hub(host: Node) -> void:
 	LoadTiming.mark("warmup_ui")
 	if scene and scene.has_method("warmup_restore"):
 		scene.warmup_restore()
+	if p:
+		PlayerSetup.ensure_combat_fx(p)
+		for path: String in PLAYER_LAZY:  # first unlocked player tick loads these (~130 ms on web)
+			PlayerTick._gd(path)
+		(load("res://scripts/world/player/player_combat.gd") as GDScript).update_aim_line(p)
+		p.set_physics_process(true)
 	await pump_fps(host, true)
 	if host.loader:
 		host.loader.set_progress(0.98)
@@ -125,6 +137,7 @@ static func hub_status_for(path: String) -> String:
 	return App.tr("flow_hub.crossing_the_veil")
 
 static func pump_fps(host: Node, hub: bool) -> void:
+	await (load("res://scripts/graphics/dyn_res.gd") as GDScript).warm(host)
 	var good: int = 0
 	var steady: int = 0
 	var n: int = 0

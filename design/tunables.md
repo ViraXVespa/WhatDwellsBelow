@@ -55,7 +55,7 @@ Forge keys missing from `balance.gd` fall back inside `progress_forge.gd` / `gea
 | `DYNRES_STEP` / `DYNRES_MIN` | 0.1 / 0.6 (`scaling_3d_scale` starts 1.0; `dyn_res.gd`) |
 | `DYNRES_WINDOW_S` / `DYNRES_HITCH_S` | 1.5 / 0.5 (fps window; longer frames are ignored) |
 | `DYNRES_RECOVER_WINDOWS` / `DYNRES_BACKOFF_MAX` | 8 / 8 (windows at HIGH per climb; a failed climb doubles the wait up to 8x) |
-| `WARM_FRAMES_MAX` | 6 (`pump_fps` cap; early exit on 2 frames <= 17 ms or `WARM_STEADY_N` 3 deltas within `WARM_STEADY_MS` 3 ms) |
+| `WARM_FRAMES_MAX` | 6 (`pump_fps` cap; early exit on 2 frames <= 17 ms or `WARM_STEADY_N` 3 deltas within `WARM_STEADY_MS` 3 ms). `pump_fps` first draws 2 frames at one `DYNRES_STEP` lower (`DynRes.warm`), so the first scale drop does not compile in view |
 
 ## Ground field
 
