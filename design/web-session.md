@@ -17,7 +17,7 @@ Web / chat may generate non-tile images. It does not spawn the isolated media ru
 If the next write would be an assumption, ask, as many questions as needed, and wait (not a phase change); do not answer it yourself.
 
 **Review goal.**
-The first section of a review is the requirements each examined system actually has and why (camera, lighting, sorting, export target, refactor constraints, control flow, owning docs and functions). Findings appear only after that section, and only where a requirement is unmet. An observation that has not yet been tied to the owning requirement is incomplete, not a finding.
+Internally establish what each examined system requires and why (camera, lighting, sorting, export target, refactor constraints, control flow, owning docs and functions) before writing. The visible response reports findings only where a requirement is unmet, and lists any systems or claims that still need more investigation. If a request needs multiple turns to investigate fully, say so instead of assuming. An observation that has not yet been tied to the owning requirement is incomplete.
 
 
 ## Flows
