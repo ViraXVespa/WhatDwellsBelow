@@ -82,7 +82,7 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | `LIGHT_FIRE_ENERGY` / `light_fire_energy` | 1.0 |
 | `LIGHT_SUN_RANGE` / `light_sun_range` | 48 |
 | `LIGHT_SUN_ENERGY` / `light_sun_energy` | 0.9 |
-| `LIGHT_SOURCE_CAP` / `light_source_cap` | 24 |
+| `LIGHT_SOURCE_CAP` / `light_source_cap` | 32 |
 
 ## Movement and combat
 
