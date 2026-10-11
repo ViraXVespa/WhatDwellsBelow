@@ -168,6 +168,15 @@ def colour_field(p: np.ndarray, ref: np.ndarray, scales=(1.5, 4, 12, 36)) -> np.
 _M = np.array([[0.5, -0.4187, -0.0813], [-0.1687, -0.3313, 0.5]], np.float32)  # RGB -> (Cr, Cb) - 128
 
 
+def guided(I: np.ndarray, p: np.ndarray, r: int, eps: float) -> np.ndarray:
+    """He et al. guided filter (grey guide), box radius r."""
+    k = (2 * r + 1, 2 * r + 1)
+    mI, mp = cv2.blur(I, k), cv2.blur(p, k)
+    a = (cv2.blur(I * p, k) - mI * mp) / (cv2.blur(I * I, k) - mI * mI + eps)
+    b = mp - a * mI
+    return cv2.blur(a, k) * I + cv2.blur(b, k)
+
+
 def _chroma_rgb(u: np.ndarray) -> np.ndarray:
     """RGB change for a unit (Cr, Cb) chroma step with luma kept."""
     return np.array([1.402 * u[0], -0.344136 * u[1] - 0.714136 * u[0], 1.772 * u[1]], np.float32)
@@ -260,8 +269,10 @@ def unmix(rgb: np.ndarray, plate, solid: np.ndarray, soft: np.ndarray, core: np.
     # the same noise band at both ends: within it of the plate is plate, within it of opaque is opaque
     # within JPEG ringing (10%) of opaque is opaque: a hard pixel edge stays hard
     top = np.maximum(floor, 0.1)
-    a = np.clip((a - floor) / (1 - floor - top), 0.0, 1.0)
-    a = np.where(a < 0.04, 0.0, a)  # below 4% nothing shows on any background; JPEG specks in the plate
+    a_hard = np.clip((a - floor) / (1 - floor - top), 0.0, 1.0)
+    a_hard = np.where(a_hard < 0.04, 0.0, a_hard)  # below 4%: JPEG specks in the plate
+    # in a glow the raw estimate is kept (no snap, no cut); key() smooths it and ramps it out softly
+    a = np.where(fine, a, a_hard) if fine is not None else a_hard
     # remove chroma toward the plate beyond G's own (YCrCb, luma kept)
     c = col @ _M.T
     comp = c @ u
@@ -279,7 +290,9 @@ def unmix(rgb: np.ndarray, plate, solid: np.ndarray, soft: np.ndarray, core: np.
     col = np.clip(w * G + (1 - w) * col, 0, 255)
     alpha[soft] = a[soft]
     out[soft] = col[soft]
-    return alpha, out, G
+    hard = np.zeros_like(alpha)
+    hard[soft] = a_hard[soft]
+    return alpha, out, G, floor, hard
 
 
 def despill(rgb: np.ndarray, F: np.ndarray, mask: np.ndarray) -> np.ndarray:
@@ -352,13 +365,56 @@ def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = Non
     # Its surroundings get the fine (plate-noise) floor; a plain anti-aliased edge keeps the coarse one.
     d_solid = cv2.distanceTransform((~solid).astype(np.uint8), cv2.DIST_L2, 5)
     wide = glow & (d_solid > 2 * ring + 1)
+    # ... and only a real glow (a sizeable connected veil), not plate specks along a cut edge
+    n, lab, st, _ = cv2.connectedComponentsWithStats(wide.astype(np.uint8), connectivity=8)
+    big = [i for i in range(1, n) if st[i, cv2.CC_STAT_AREA] >= max(200, int(2e-3 * wide.size))]
+    wide = np.isin(lab, big) if big else np.zeros_like(wide)
+    onramp = np.zeros_like(solid)
+    if wide.any():
+        # a glow runs on into "solid" paint until it reaches its full colour: paint next to a glow that lies
+        # on the glow's own ramp (offset from the plate along the local glow direction) short of the ramp's
+        # far end nearby is still glow (an orb's red band thinning into the pink)
+        Pv = np.array(plate, np.float32)
+        off = p32 - Pv
+        dirn = colour_field(off, wide, (8, 24))
+        dirn /= np.maximum(np.linalg.norm(dirn, axis=-1, keepdims=True), 1e-3)
+        proj = (off * dirn).sum(-1)
+        res = np.linalg.norm(off - proj[..., None] * dirn, axis=-1)
+        # only the main art: small separate pieces (sparkles in the glow) keep their own crisp shape
+        n2, lab2, st2, _ = cv2.connectedComponentsWithStats(solid.astype(np.uint8), connectivity=8)
+        main = np.isin(lab2, [i for i in range(1, n2) if st2[i, cv2.CC_STAT_AREA] >= int(2e-3 * solid.size)])
+        zone = main & (cv2.distanceTransform((~wide).astype(np.uint8), cv2.DIST_L2, 5) <= 16)
+        ok = zone & (res < 0.25 * np.maximum(proj, 1.0))
+        top_p = cv2.dilate(np.where(ok, proj, 0.0).astype(np.float32), np.ones((17, 17), np.uint8))
+        ramp = ok & (proj < 0.985 * top_p) & (excess(p32) > 12.0)  # still plate-tinted
+        onramp = ramp
+        soft |= ramp
+        solid &= ~ramp
+        glow |= ramp
+        d_solid = cv2.distanceTransform((~solid).astype(np.uint8), cv2.DIST_L2, 5)
     fine = cv2.dilate(wide.astype(np.uint8), np.ones((2 * reach + 1, 2 * reach + 1), np.uint8)).astype(bool) & (d_solid > ring)
     soft &= ~bg | fine  # the plate fades into alpha only around a glow
-    alpha, col, G = unmix(rgb, plate, solid, soft, core, noise, max(10.0, 1.5 * spread), fine, bg, dirty)
-    # inside a wide glow, average the alpha over a small neighbourhood: JPEG blocks otherwise fray the fade
-    calm = fine & soft & (d_solid > 2 * ring + 1)
+    alpha, col, G, floor, a_hard = unmix(rgb, plate, solid, soft, core, noise, max(10.0, 1.5 * spread), fine, bg, dirty)
+    calm = fine & soft
     if calm.any():
-        alpha = np.where(calm, cv2.GaussianBlur(alpha, (5, 5), 1.2), alpha)
+        # glow: edge-aware smoothing (guided by the source's luma) kills JPEG blocks, then a smoothstep
+        # across the plate's noise band (0.5 .. 2 x floor) fades the tail to 0 with no cut
+        guide = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY).astype(np.float32) / 255.0
+        sm = guided(guide, alpha, 6, 1e-3)
+        # plus a normalised blur over glow + paint so the glow meets the paint edge without a torn seam
+        w = (calm | solid).astype(np.float32)
+        sm = cv2.GaussianBlur(sm * w, (0, 0), 2.0) / np.maximum(cv2.GaussianBlur(w, (0, 0), 2.0), 1e-3)
+        f = np.where(calm, floor, 0.0)
+        t = np.clip((sm - 0.5 * f) / np.maximum(1.5 * f, 1e-4), 0.0, 1.0)
+        sm = np.clip(sm, 0.0, 1.0) * t * t * (3 - 2 * t)
+        # the hard-edge ring next to the paint keeps its snap (opaque edge paint stays opaque)
+        edge_px = (a_hard >= 1.0) & (d_solid <= 2 * ring + 1) & ~onramp
+        alpha = np.where(calm, np.where(edge_px, 1.0, sm), alpha)
+        # soften where the glow meets its full-colour band (both on the glow ramp; outlines are not)
+        z = (calm | onramp) & ~edge_px
+        zw = z.astype(np.float32)
+        zb = cv2.GaussianBlur(alpha * zw, (0, 0), 1.5) / np.maximum(cv2.GaussianBlur(zw, (0, 0), 1.5), 1e-3)
+        alpha = np.where(z & (cv2.distanceTransform((~calm).astype(np.uint8), cv2.DIST_L2, 5) <= 6), zb, alpha)
     # JPEG fringe on solid outline paint: magenta excess above the art colour removed, alpha untouched
     band = solid & cv2.dilate((bg | glow).astype(np.uint8), np.ones((4 * ring + 3, 4 * ring + 3), np.uint8)).astype(bool)
     col = despill(col, G, band)
