@@ -16,10 +16,8 @@ Web / chat may generate non-tile images. It does not spawn the isolated media ru
 
 If the next write would be an assumption, ask, as many questions as needed, and wait (not a phase change); do not answer it yourself.
 
-**Understand before you assume.**
-Seek the full truth in every response. That requires a complete understanding of the systems that own the behavior, look, constraints, and cost before you treat a pattern as inefficient, non-idiomatic, accidental, or better done another way.
-Read the relevant docs, code-map rows, and the actual owning functions (not only tool summaries or facades) first. If a claim depends on control flow, call sites, or documented constraints that have not been read, either read them or mark the claim unread.
-Before any efficiency, idiomatic, or “heavier than necessary” claim, either (a) cite the owning function or doc that was read and the control-flow or constraint fact that supports the claim, or (b) mark the claim as unread. Do not place such a claim in a summary table or lead paragraph until one of those is true. Do not lead with the assumption.
+**Review goal.**
+A review first establishes what each examined system requires and why (camera, lighting, sorting, export target, refactor constraints, control flow, owning docs and functions). Only after that does it note mismatches or costs. An observation that has not yet been tied to the owning requirement is incomplete, not a finding.
 
 
 ## Flows
