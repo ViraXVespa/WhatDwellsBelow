@@ -16,6 +16,16 @@ const PLATE_SIZE: Vector2 = Vector2(1200, 920)
 const SCROLL_POS: Vector2 = Vector2(384, 104)
 const SCROLL_SIZE: Vector2 = Vector2(1152, 832)
 
+## The spec() dictionary of a skin: the keys every frame shares, rows separation 8 and blank rows unless opts
+## overrides them (opts also carries plate_inset).
+static func make_spec(mode: String, chrome: String, pos: Vector2, span: Vector2, footer: float, rows_pos: Vector2, rows_size: Vector2, opts: Dictionary = {}) -> Dictionary:
+	var spec: Dictionary = {
+		"mode": mode, "chrome": chrome, "pos": pos, "size": span, "footer": footer,
+		"rows_pos": rows_pos, "rows_size": rows_size, "sep": 8, "blank_rows": true,
+	}
+	spec.merge(opts, true)
+	return spec
+
 static func mount(host: CanvasLayer, skin: GDScript) -> void:
 	var spec: Dictionary = skin.spec()
 	var chrome: Control = Control.new()

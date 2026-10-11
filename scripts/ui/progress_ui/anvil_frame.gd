@@ -5,6 +5,7 @@ extends Object
 ## The cream plate stays for every other progress panel.
 
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
+const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
 const Art: GDScript = preload("res://scripts/ui/progress_ui/anvil_art.gd")
 
 const FRAME_POS: Vector2 = Vector2(340, 24)
@@ -19,12 +20,7 @@ const ANVIL_SIZE: Vector2 = Vector2(440, 269)
 static func spec() -> Dictionary:
 	var rows_pos: Vector2 = Vector2(96, 300)
 	var rows_size: Vector2 = Vector2(FRAME_SIZE.x - 192.0, FRAME_SIZE.y - 300.0 - 72.0)
-	return {
-		"mode": "anvil", "chrome": "anvil_chrome", "pos": FRAME_POS, "size": FRAME_SIZE, "footer": FOOTER_ROOM,
-		"plate_inset": PLATE_INSET,
-		"rows_pos": FRAME_POS + rows_pos, "rows_size": rows_size,
-		"sep": 8, "blank_rows": true,
-	}
+	return FrameBase.make_spec("anvil", "anvil_chrome", FRAME_POS, FRAME_SIZE, FOOTER_ROOM, FRAME_POS + rows_pos, rows_size, {"plate_inset": PLATE_INSET})
 
 ## Skin hook: make the pieces once.
 static func build(chrome: Control) -> void:

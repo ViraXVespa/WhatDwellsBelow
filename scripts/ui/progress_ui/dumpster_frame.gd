@@ -6,6 +6,7 @@ extends Object
 
 const ThemeS: GDScript = preload("res://scripts/ui/theme.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
+const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
 const Art: GDScript = preload("res://scripts/ui/progress_ui/dumpster_art.gd")
 
 const FRAME_POS: Vector2 = Vector2(460, 64)
@@ -38,10 +39,7 @@ const SLAT_POS: Vector2 = Vector2(548, 196)
 
 ## Skin hook: where the frame sits, which mode shows it, where the button row goes.
 static func spec() -> Dictionary:
-	return {
-		"mode": "flavor", "chrome": "dump_chrome", "pos": FRAME_POS, "size": FRAME_SIZE, "footer": FOOTER_ROOM,
-		"rows_pos": FRAME_POS + LEAVE_POS, "rows_size": LEAVE_SIZE, "sep": 0, "blank_rows": true,
-	}
+	return FrameBase.make_spec("flavor", "dump_chrome", FRAME_POS, FRAME_SIZE, FOOTER_ROOM, FRAME_POS + LEAVE_POS, LEAVE_SIZE, {"sep": 0})
 
 ## Skin hook: make the pieces and labels once.
 static func build(chrome: Control) -> void:

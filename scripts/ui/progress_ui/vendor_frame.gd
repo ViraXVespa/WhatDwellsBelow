@@ -6,6 +6,7 @@ extends Object
 
 const ThemeS: GDScript = preload("res://scripts/ui/theme.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
+const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
 const Art: GDScript = preload("res://scripts/ui/progress_ui/vendor_art.gd")
 
 const FRAME_POS: Vector2 = Vector2(390, 110)
@@ -22,11 +23,7 @@ const NAME_H: float = 92.0
 static func spec() -> Dictionary:
 	var inner_x: float = POST_W + 108.0
 	var inner_w: float = FRAME_SIZE.x - POST_W * 2.0 - 216.0
-	return {
-		"mode": "vendor", "chrome": "stall_chrome", "pos": FRAME_POS, "size": FRAME_SIZE, "footer": FOOTER_ROOM,
-		"rows_pos": FRAME_POS + Vector2(inner_x, FRAME_SIZE.y - COUNTER_H + 36.0), "rows_size": Vector2(inner_w, COUNTER_H - 56.0),
-		"sep": 8, "blank_rows": false,
-	}
+	return FrameBase.make_spec("vendor", "stall_chrome", FRAME_POS, FRAME_SIZE, FOOTER_ROOM, FRAME_POS + Vector2(inner_x, FRAME_SIZE.y - COUNTER_H + 36.0), Vector2(inner_w, COUNTER_H - 56.0), {"blank_rows": false})
 
 ## Skin hook: make the pieces and labels once.
 static func build(chrome: Control) -> void:
