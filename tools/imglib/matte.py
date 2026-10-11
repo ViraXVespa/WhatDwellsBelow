@@ -228,6 +228,13 @@ def unmix(rgb: np.ndarray, plate, solid: np.ndarray, soft: np.ndarray, core: np.
     u = u0
     L = np.maximum((P @ _M.T) @ u if P.ndim > 1 else float(pc0 @ u), 1e-3)
     allow = np.clip((G @ _M.T) @ u, 0.0, 0.9 * L)
+    # a glow whose colour sits on the violet side of the plate (between the plate and blue) is most likely
+    # still carrying plate: its allowance is the deeper art's (a blue wisp's tail is blue, not lavender)
+    gh = cv2.cvtColor(np.clip(G, 0, 255).astype(np.uint8), cv2.COLOR_RGB2HSV_FULL)[..., 0].astype(np.int32)
+    ph0 = int(cv2.cvtColor(np.array(plate, np.uint8).reshape(1, 1, 3), cv2.COLOR_RGB2HSV_FULL)[0, 0, 0])
+    gside = (gh - ph0 + 128) % 256 - 128
+    vio = (gside < -8) & (gside >= -64)
+    allow = np.where(vio, np.minimum(allow, np.maximum((deep @ _M.T) @ u, 0.0)), allow)
     # own-colour alpha: the largest a whose C = P + dp/a has no more magenta excess min(R,B)-G than G
     # (excess, not the chroma axis: warm paint such as brown wood shares the plate's Cr but has no excess)
     ex_allow = np.maximum(excess(G), 0.0)
@@ -358,7 +365,12 @@ def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = Non
     ph = int(cv2.cvtColor(np.array(plate, np.uint8).reshape(1, 1, 3), cv2.COLOR_RGB2HSV_FULL)[0, 0, 0])
     side = (hsv[..., 0] - ph + 128) % 256 - 128
     violet = (side < 0) & (side >= -64) & (np.minimum(p32[..., 0], p32[..., 2]) >= 0.5 * min(plate[0], plate[2]))
-    dirty = solid & edge & (on_line | violet) & (((p32 @ _M.T) @ u) - np.maximum((deep_col @ _M.T) @ u, 0.0) > 4.0)
+    comp_px = (p32 @ _M.T) @ u
+    dirty = solid & edge & (on_line | violet) & (comp_px - np.maximum((deep_col @ _M.T) @ u, 0.0) > 4.0)
+    # lavender within 60 deg of the plate on the violet side that carries plate chroma of its own is plate
+    # mix even when the art around it is lavender too (armpit pockets, a wisp's tail)
+    near_any = cv2.distanceTransform((~(bg | soft)).astype(np.uint8), cv2.DIST_L2, 5) <= 48
+    dirty |= solid & near_any & violet & (side >= -43) & (comp_px > 8.0)
     soft |= dirty
     solid &= ~dirty
     # a glow is soft paint reaching past the cut edge: glow pixels more than 2 rings out from the solid art.
