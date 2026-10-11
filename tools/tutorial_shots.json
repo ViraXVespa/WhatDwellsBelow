@@ -1,0 +1,11 @@
+{
+  "about": "How-to-Play screenshots: topic id -> the shot-flow frame that shows it. tutorial_shots.py --run shoots the flows and stages <id>.png in _out/tutorial/; Grok Build copies them to dest (tooling never writes under assets/). A new topic is one row; a new screen needs its flow shot first.",
+  "dest": "assets/ui/tutorial",
+  "topics": {
+    "inventory": {"flow": "camp-inventory", "shot": "inventory"},
+    "extraction": {"flow": "dungeon-gate-shop", "shot": "extract"},
+    "skills": {"flow": "camp-pause-pages", "shot": "pause-skills"},
+    "loadout": {"flow": "dungeon-map-crystal", "shot": "crystal-floors"},
+    "recap": {"flow": "camp-recap", "shot": "recap"}
+  }
+}
