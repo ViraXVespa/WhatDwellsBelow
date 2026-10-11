@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Advisory performance run of the EXPORTED web build in headless Chrome. Never a gate.
+"""Advisory performance run of the EXPORTED web build in headless Chrome. Not a gate, except a flow `assert` breach (FAIL).
 
   python tools/web_perf.py [--site DIR | --url U] [--flow NAME[,NAME]|all] [--save-baseline F | --baseline F]
 
@@ -113,6 +113,21 @@ def stuck(flow: dict, shots: dict) -> list[str]:
     return out
 
 
+def check(flow: dict, rep: dict) -> list[str]:
+    """Flow "assert": {"audio_gaps": max, "p95_frame_ms": max (phase "music" or the measured frames), ...}; a breach is ASSERT (exit 1)."""
+    out, want = [], flow.get("assert") or {}
+    vals = dict(rep.get("audio") or {})
+    ph = rep["phases"].get(flow.get("assert_phase", ""), rep)
+    vals.update({k: ph.get(k) for k in ("p95_frame_ms", "avg_frame_ms", "max_frame_ms")})
+    if want and not vals.get("audio_on", 1):
+        out.append("ASSERT no sound reached the speakers (audio_on=0)")
+    for k, lim in sorted(want.items()):
+        v = vals.get(k)
+        if not isinstance(v, (int, float)) or v > lim:
+            out.append("ASSERT %s=%s over %s" % (k, v, lim))
+    return out
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Advisory perf run of the exported web build in headless Chrome.", json_out=True)
     ap.add_argument("--site", default="docs", help="Exported site dir (default docs; may be stale, export with export_web.py --out).")
@@ -157,7 +172,8 @@ def main(argv: list[str] | None = None) -> int:
         for n in names:
             steps = (boot if flows[n].get("boot") else []) + flows[n]["steps"]
             runs = [web_perf_lib.measure(url, chrome, steps, args.long_ms, args.timeout_sec, (args.width, args.height), shots,
-                                         n, args.mbps, flows[n].get("query", "")) for _ in range(max(args.repeat, 1))]
+                                         n, flows[n].get("mbps", args.mbps), flows[n].get("query", ""), bool(flows[n].get("audio")))
+                    for _ in range(max(args.repeat, 1))]
             for r in runs:
                 r["invalid"] = health(r) if flows[n].get("playtest") else []
             reps[n] = median(runs)
@@ -181,6 +197,7 @@ def main(argv: list[str] | None = None) -> int:
         bp.parent.mkdir(parents=True, exist_ok=True)
         bp.write_text(json.dumps(old, indent=1) + "\n", encoding="utf-8")
     base = json.loads((root / args.baseline).read_text(encoding="utf-8")) if args.baseline else {"flows": {}}
+    hard = 0
     lines, flags = ["build_id=%s chrome=%s viewport=%s report=%s" % (label, full["chrome"], full["viewport"], agent_log.rel(root, out))], 0
     for n, r in reps.items():
         lines.append("flow %s" % n)
@@ -189,8 +206,9 @@ def main(argv: list[str] | None = None) -> int:
         lines += ["  load %s t=%d dt=%d vram=%d wasm=%d" % tuple(m) for m in r.get("load_marks", [])]
         lines += ["  play %s" % json.dumps(p, sort_keys=True) for p in r.get("play_runs", [])]
         lines += ["  phase %s %s" % (k, " ".join("%s=%s" % (a, b) for a, b in v.items())) for k, v in r["phases"].items()]
+        lines += ["  audio %s" % " ".join("%s=%s" % kv for kv in sorted(r["audio"].items()))] if r.get("audio") else []
         lines += ["  big_asset %(file)s %(kb)s KB" % a for a in r["assets"][:4]]
-        notes = stuck(flows[n], r["shots"]) + r["invalid"]
+        notes = stuck(flows[n], r["shots"]) + r["invalid"] + check(flows[n], r)
         if args.save_baseline and r["invalid"]:
             notes.append("NOTE flow %s NOT saved to the baseline (INVALID run)" % n)
         if args.baseline:
@@ -199,8 +217,9 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 notes += diff(r, base["flows"][n], args.max_worse_pct) if n in base["flows"] else ["NOTE no baseline for flow %s" % n]
         lines += ["  " + x for x in notes]
-        flags += sum(1 for x in notes if x.startswith(("WORSE", "STUCK", "INVALID")))
-    status = "FAIL" if flags and args.strict else ("INFO" if flags else "PASS")
+        flags += sum(1 for x in notes if x.startswith(("WORSE", "STUCK", "INVALID", "ASSERT")))
+        hard += sum(1 for x in notes if x.startswith("ASSERT"))
+    status = "FAIL" if (flags and args.strict) or hard else ("INFO" if flags else "PASS")
     first = next(iter(reps.values()))
     return agent_log.finish(JOB, root, "\n".join(lines), status, args=args, flows=",".join(names), load_ms=first["load_ms"],
                             avg_fps=first["avg_fps"], heap_mb=first["heap_mb"], wasm_mb=first["wasm_mem_mb"], flagged=flags)
