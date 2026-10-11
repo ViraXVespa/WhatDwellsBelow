@@ -43,12 +43,25 @@ static func show_menu(host: CanvasLayer) -> void:
 	host._rebuild()
 
 static func show_inventory(host: CanvasLayer) -> void:
+	show_tab(host, host.TAB_INV)
+
+static func show_tab(host: CanvasLayer, id: String) -> void:
+	tab_index(host, id)
 	if not host.open:
 		host.show_menu()
-	if host.tab != host.TAB_INV:
-		host.tab = host.TAB_INV
+	if host.tab != id:
+		host.tab = id
 		host.sys_page = "main"
 		host._rebuild()
+
+## Position of a tab id in host.TABS. An unknown id is a bug: it fails loudly.
+static func tab_index(host: CanvasLayer, id: String) -> int:
+	for i: int in host.TABS.size():
+		if str(host.TABS[i][0]) == id:
+			return i
+	assert(false, "pause menu: unknown tab id " + id)
+	push_error("pause menu: unknown tab id " + id)
+	return 0
 
 ## quiet: the hub load warm closes it without the save and input swallow a player close does.
 static func close_ui(host: CanvasLayer, quiet: bool = false) -> void:
@@ -111,28 +124,29 @@ static func _rebuild(host: CanvasLayer) -> void:
 	host.gear_stats_title = null
 	host.gear_page_left = null
 	host.gear_page_right = null
-	var names: PackedStringArray = PackedStringArray(["Settings", "Inventory", "Skills"])
 	var journal_tabs: bool = host.has_meta("journal_sheet")
 	if journal_tabs:
 		host.tabs.alignment = BoxContainer.ALIGNMENT_BEGIN
-	for i: int in 3:
-		var ii: int = i
-		var b: Button = ThemeS.btn(names[i], func():
-			if host.tab == host.TAB_INV and ii != host.TAB_INV:
+	var count: int = host.TABS.size()
+	var cur: int = tab_index(host, host.tab)
+	for i: int in count:
+		var id: String = str(host.TABS[i][0])
+		var b: Button = ThemeS.btn(str(host.TABS[i][1]), func():
+			if host.tab == host.TAB_INV and id != host.TAB_INV:
 				host._store_tip_restore()
-			host.tab = ii
+			host.tab = id
 			host.sys_page = "main"
 			host._rebuild()
 		)
 		var journal: bool = journal_tabs
-		var tall: float = 52.0 if i == host.tab else 38.0
+		var tall: float = 52.0 if i == cur else 38.0
 		b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER if journal else Control.SIZE_EXPAND_FILL
 		b.custom_minimum_size = UiText.min_size(112.0 if journal else 160.0, tall if journal else 44.0)
 		if journal:
-			ThemeS.paint_bookmark(b, i == host.tab)
+			ThemeS.paint_bookmark(b, i == cur)
 		else:
-			ThemeS.paint_tab(b, i == host.tab)
-		if journal and i != host.tab:
+			ThemeS.paint_tab(b, i == cur)
+		if journal and i != cur:
 			var hold: MarginContainer = MarginContainer.new()
 			hold.size_flags_vertical = Control.SIZE_SHRINK_END
 			hold.add_theme_constant_override("margin_bottom", 10)
@@ -140,20 +154,14 @@ static func _rebuild(host: CanvasLayer) -> void:
 			host.tabs.add_child(hold)
 		else:
 			host.tabs.add_child(b)
-		if journal and i < 2:
+		if journal and i < count - 1:
 			var gap: Control = Control.new()
 			gap.custom_minimum_size = Vector2(10, 1)
 			gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			host.tabs.add_child(gap)
 	PromptView.fill(host.tab_left, [{"action": "tab_left"}], 16, ThemeS.INK_SOFT)
 	PromptView.fill(host.tab_right, [{"action": "tab_right"}], 16, ThemeS.INK_SOFT)
-	match host.tab:
-		host.TAB_SETTINGS:
-			host._system()
-		host.TAB_INV:
-			host._inv()
-		_:
-			host._skills()
+	host.call(str(host.TABS[cur][2]))
 	host._paint_menu_hint()
 	_paint_page(host)
 	host.call_deferred("_focus")
@@ -165,7 +173,7 @@ static func _rebuild(host: CanvasLayer) -> void:
 				btn = child.get_child(0) as Button
 			if btn == null:
 				continue
-			if seen == host.tab:
+			if seen == cur:
 				host.tab_scroll.ensure_control_visible(btn)
 				break
 			seen += 1
@@ -193,7 +201,7 @@ static func _paint_menu_hint(host: CanvasLayer) -> void:
 static func _cycle_tab(host: CanvasLayer, dir: int) -> void:
 	if host.tab == host.TAB_INV:
 		host._store_tip_restore()
-	host.tab = posmod(host.tab + dir, 3)
+	host.tab = str(host.TABS[posmod(tab_index(host, host.tab) + dir, host.TABS.size())][0])
 	host.sys_page = "main"
 	host.pending = false
 	host.pending_id = ""

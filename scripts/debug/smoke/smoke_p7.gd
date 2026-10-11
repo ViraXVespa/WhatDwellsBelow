@@ -16,12 +16,12 @@ static func p7(host: Node) -> void:
 	printerr("P7: hud_bits=" + ", ".join(bits))
 	App.pause_menu.show_menu()
 	printerr("P7: pause_open=" + str(App.pause_menu.open) + " focus=" + str(App.pause_menu.focus_btn != null) + " tab=" + str(App.pause_menu.tab))
-	App.pause_menu.tab = 1
+	App.pause_menu.tab = App.pause_menu.TAB_INV
 	App.pause_menu._rebuild()
-	printerr("P7: pause_skills=" + str(App.pause_menu.tab == 1))
-	App.pause_menu.tab = 2
+	printerr("P7: pause_skills=" + str(App.pause_menu.tab == App.pause_menu.TAB_INV))
+	App.pause_menu.tab = App.pause_menu.TAB_SKILLS
 	App.pause_menu._rebuild()
-	printerr("P7: pause_system=" + str(App.pause_menu.tab == 2))
+	printerr("P7: pause_system=" + str(App.pause_menu.tab == App.pause_menu.TAB_SKILLS))
 	var sys: bool = false
 	for c: Node in App.pause_menu.box.get_children():
 		if c is Button and str((c as Button).text).find("Dispel") >= 0:

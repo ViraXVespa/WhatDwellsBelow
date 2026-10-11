@@ -78,12 +78,7 @@ static func _shot(tree: SceneTree, name: String) -> void:
 ## Open the pause menu on one tab.
 static func _pause_tab(id: String) -> void:
 	var pm: CanvasLayer = App.pause_menu
-	pm.show_menu()
-	if pm.has_method("show_tab"):
-		pm.show_tab(id)
-	else:
-		pm.tab = 2
-		pm._rebuild()
+	pm.show_tab(id)
 
 ## Median frame time with nothing opening.
 static func _idle(tree: SceneTree) -> float:

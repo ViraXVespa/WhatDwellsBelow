@@ -13,11 +13,19 @@ const UiText := preload("res://scripts/ui/ui_text.gd")
 const Disp := preload("res://scripts/display_mode.gd")
 const Flow := preload("res://scripts/ui/pause_menu/menu_flow.gd")
 
-const TAB_SETTINGS := 0
-const TAB_INV := 1
+const TAB_SETTINGS := "settings"
+const TAB_INV := "inventory"
+const TAB_SKILLS := "skills"
+## Tabs in order, by id: [id, label, page builder on this host]. A new tab is one row here (the shot flows and
+## smokes name tabs by id, so a row inserted in the middle moves nothing else).
+const TABS: Array = [
+	[TAB_SETTINGS, "Settings", "_system"],
+	[TAB_INV, "Inventory", "_inv"],
+	[TAB_SKILLS, "Skills", "_skills"],
+]
 
 var open: bool = false
-var tab: int = 0
+var tab: String = TAB_SETTINGS
 var box: VBoxContainer
 var tabs: HBoxContainer
 var tab_wrap: HBoxContainer
@@ -70,6 +78,9 @@ func show_menu() -> void:
 
 func show_inventory() -> void:
 	Flow.show_inventory(self)
+
+func show_tab(id: String) -> void:
+	Flow.show_tab(self, id)
 
 func close_ui() -> void:
 	Flow.close_ui(self)

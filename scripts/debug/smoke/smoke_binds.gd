@@ -61,7 +61,7 @@ static func run() -> void:
 	Binds.reset_pool("kb")
 	# Controls page: Back key asks, Confirm binds, Cancel keeps; other-pool Back cancels; toasts.
 	App.pause_menu.show_menu()
-	App.pause_menu.tab = 0
+	App.pause_menu.tab = App.pause_menu.TAB_SETTINGS
 	App.pause_menu._rebuild()
 	var sh: Node = App.pause_menu._settings_host()
 	assert(sh != null)
