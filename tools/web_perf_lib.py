@@ -44,6 +44,9 @@ window.__wpAudio=function(){var o={gaps:0,zero:0,longest:0,on:0,q:0},mc=window.w
 o.zero+=s.zero;o.longest=Math.max(o.longest,s.longest);o.on|=s.on;o.q+=s.q});var ms=128000/A.rate;
 return {audio_on:o.on,audio_gaps:o.gaps,audio_gap_ms:Math.round(o.longest*ms),audio_silent_ms:Math.round(o.zero*ms),audio_ms:Math.round(o.q*ms)}}})();
 """
+# Headless Chrome paces rAF to 60 Hz, so frame times snap to 16.7 ms steps (33.4 p95 was two vsyncs, not game cost):
+# a WebGL page sits at 59.5 fps with the defaults and ~1300 fps with these. --vsync in web_perf.py restores the pacing.
+UNCAP = ["--disable-frame-rate-limit", "--disable-gpu-vsync", "--disable-background-timer-throttling", "--disable-renderer-backgrounding"]
 PLAY = ("stuck_t", "seed", "floor", "end_cond", "duration", "kills", "dmg_dealt", "dmg_taken", "crits", "combat_t", "near_death",
         "think_ms", "think_max_ms", "think_n", "phys_ms", "gate_s", "gate_over", "unstick_n", "stuck_max", "time_scale")
 READY = "!!window.__wp.gone&&!!document.getElementById('canvas')"
@@ -125,13 +128,14 @@ def _stats(fs: list[float], long_ms: float) -> dict:
 
 
 def measure(url: str, chrome: str, steps: list[dict], long_ms: float, timeout_s: int, size: tuple[int, int], out: Path,
-            tag: str, mbps: float = 0.0, query: str = "", audio: bool = False) -> dict:
+            tag: str, mbps: float = 0.0, query: str = "", audio: bool = False, vsync: bool = False) -> dict:
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as pw:
         br = pw.chromium.launch(executable_path=chrome, headless=True,
                                 args=["--enable-precise-memory-info", "--use-gl=angle", "--use-angle=swiftshader",
-                                      "--enable-unsafe-swiftshader", "--autoplay-policy=no-user-gesture-required"])
+                                      "--enable-unsafe-swiftshader", "--autoplay-policy=no-user-gesture-required"]
+                                + ([] if vsync else UNCAP))
         ctx = br.new_context(viewport={"width": size[0], "height": size[1]}, device_scale_factor=1, service_workers="block")
         page = ctx.new_page()
         errs: list[str] = []
