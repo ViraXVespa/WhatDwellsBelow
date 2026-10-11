@@ -30,7 +30,7 @@ if str(_TOOLS) not in sys.path:
 import agent_log
 
 COMPILE_RE = re.compile(r"Parse Error|Compile Error|Failed to compile|Failed to load script")
-HARD_RE = re.compile(r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed")
+HARD_RE = re.compile(r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed|Lambda capture at index")
 
 
 class GodotBusy(RuntimeError):
@@ -294,7 +294,7 @@ def timing_job(args, job: str, title: str, flag: str, running: str, extra: list[
     print(running)
     r = run_godot(root, root, headless_args(root, flag, *(extra or [])), out_log, err_log, args.timeout_sec)
     loads = grep_logs([err_log, out_log], r"^LOAD:")
-    errs = grep_logs([err_log, out_log], r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed to")
+    errs = grep_logs([err_log, out_log], r"SCRIPT ERROR:|Parse Error|Compile Error|ERROR: Failed to|Lambda capture at index")
     total, has_ok = "", False
     for h in loads:
         m = re.search(r"total_ms=(\d+)", h)

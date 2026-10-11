@@ -103,6 +103,9 @@ def smoke_args(root: Path, phase: int, verbose: bool, flags: list[str] | None = 
     return args
 
 
+# Godot stderr lines that fail a phase. A lambda whose captured node was freed runs with null (stale UI callback).
+FATAL_ERR = ("SCRIPT ERROR", "Lambda capture at index")
+
 # Phase 6 also runs the hub menu open timing (scripts/debug/open_timing.gd): real title -> hub load, then every
 # menu's first and second open; fails when a first open stalls.
 OPEN_TIMING = ["--wdb-load-timing-smoke", "--wdb-open-timing"]
@@ -125,7 +128,7 @@ def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool, ta
         print(f"{tag or f'P{phase}'}=TIMEOUT")
         return 1
     text = err.read_text(encoding="utf-8", errors="replace")
-    bad = "SCRIPT ERROR" in text or proc.returncode != 0
+    bad = any(sig in text for sig in FATAL_ERR) or proc.returncode != 0
     print(f"{tag or f'P{phase}'}={'FAIL' if bad else 'PASS'}\texit={proc.returncode}")
     if bad and tag:
         print("\n".join(ln for ln in text.splitlines() if ln.startswith("OPEN:")))
