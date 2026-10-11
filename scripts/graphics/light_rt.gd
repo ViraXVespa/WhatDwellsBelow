@@ -99,6 +99,8 @@ static func reset_floor() -> void:
 	_rect = Rect2i(-1, -1, 0, 0)
 static func maintain(host: Node) -> void:
 	Publish.maintain(host)
+static func finish_plan(host: Node) -> void:
+	Publish.finish_plan(host)
 static func _push() -> void:
 	var keep: Array[ShaderMaterial] = []
 	for mat in _mats:

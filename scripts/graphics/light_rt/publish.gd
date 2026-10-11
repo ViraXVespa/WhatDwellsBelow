@@ -63,6 +63,17 @@ static func maintain(host: Node) -> void:
 		LoadTiming.dnote("light_kind", "refill")
 	rt._live = live
 	_refill(host)
+## Under the cover, before the reveal: the entering plan only covered the first ring; build the whole floor's plan
+## now, or the first maintain after the fade does it in view (~120 ms on web).
+static func finish_plan(host: Node) -> void:
+	var rt: Variant = load(RT_PATH)
+	if host == null or host.get("data") == null or not rt._plan_partial:
+		return
+	rt._sites = Plan.build(host, rt._props, Rect2i())
+	rt._plan_partial = false
+	rt._plan_dirty = false
+	HitchLog.mark("light_plan_full")
+
 static func _begin_dungeon(host: Node, rect: Rect2i) -> RefCounted:
 	var x0: int = rect.position.x
 	var z0: int = rect.position.y
