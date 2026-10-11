@@ -50,7 +50,8 @@ static func show_inventory(host: CanvasLayer) -> void:
 		host.sys_page = "main"
 		host._rebuild()
 
-static func close_ui(host: CanvasLayer) -> void:
+## quiet: the hub load warm closes it without the save and input swallow a player close does.
+static func close_ui(host: CanvasLayer, quiet: bool = false) -> void:
 	host.open = false
 	host.visible = false
 	host.pending = false
@@ -72,6 +73,8 @@ static func close_ui(host: CanvasLayer) -> void:
 	Board._flag(host, "gear_hover", false)
 	Board._flag(host, "gear_tip_ready", false)
 	UiSession.close(host)
+	if quiet:
+		return
 	App.save_now()
 	App.swallow_close_pad()
 	App.wake_web_pad()

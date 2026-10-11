@@ -1,5 +1,6 @@
 extends Object
 
+const UiWarm := preload("res://scripts/ui/ui_warm.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const AppRunS := preload("res://scripts/app/app_run.gd")
 
@@ -99,6 +100,7 @@ static func play_from_menu_async(host: Node) -> void:
 		host.loader.set_progress(0.08)
 	await host.get_tree().process_frame
 	LoadTiming.mark("loader_paint")
+	UiWarm.start()
 	preload_hub(host)
 	if host.loader:
 		host.loader.set_status(App.tr("app_flow.raising_placeholdia"))

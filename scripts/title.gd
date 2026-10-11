@@ -3,6 +3,7 @@ extends Control
 const GameVer := preload("res://scripts/data/game_ver.gd")
 const News := preload("res://scripts/title/news.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const UiWarm := preload("res://scripts/ui/ui_warm.gd")
 
 var _busy := false
 var _archives_open := false
@@ -12,6 +13,7 @@ var _news_scroll: ScrollContainer = null
 var _title_btns: Array = []
 
 func _ready() -> void:
+	UiWarm.start()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	var fall := ColorRect.new()

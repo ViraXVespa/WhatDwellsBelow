@@ -5,6 +5,7 @@ extends Object
 const Anim := preload("res://scripts/world/player/player_anim.gd")
 const LoadTiming := preload("res://scripts/debug/load_timing.gd")
 const T := preload("res://scripts/data/tunables.gd")
+const UiWarm := preload("res://scripts/ui/ui_warm.gd")
 
 static func _warmup_hub(host: Node) -> void:
 	LoadTiming.mark("warmup_begin")
@@ -38,6 +39,8 @@ static func _warmup_hub(host: Node) -> void:
 		if host.loader:
 			host.loader.set_progress(0.97)
 	LoadTiming.mark("warmup_gpu")
+	await UiWarm.finish(scene)
+	LoadTiming.mark("warmup_ui")
 	if scene and scene.has_method("warmup_restore"):
 		scene.warmup_restore()
 	await pump_fps(host, true)
