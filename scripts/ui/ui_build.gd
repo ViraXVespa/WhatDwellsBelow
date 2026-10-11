@@ -110,6 +110,12 @@ static func tip_panel(z: int) -> PanelContainer:
 	ThemeS.BtnSkin.watch(panel, "panel")
 	return panel
 
+## Outline only behind light text. A dark outline around dark ink thickens every stroke into a smudge (the
+## loadout "Floor" row); light words keep it for contrast on busy art. Same rule as prompt_view's ink labels.
+static func halo(l: Control, col: Color, size: int = Tok.OUTLINE_SIZE) -> void:
+	l.add_theme_color_override("font_outline_color", Tok.OUTLINE)
+	l.add_theme_constant_override("outline_size", size if col.get_luminance() >= 0.5 else 0)
+
 ## Tooltip text: ink with the shared outline.
 static func tip_text(lab: Label, font_px: int) -> void:
 	lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

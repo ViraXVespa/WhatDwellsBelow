@@ -2,7 +2,7 @@ extends Object
 
 ## P7: popups follow the host skin (design/ui-style.md Control skins). Under a crystal host a tooltip panel, a
 ## picker panel and its labels, a confirm card and a scroll bar wear the crystal colours; under a host with no skin
-## (pause journal) the tooltip keeps its paper box. The progress panel maps loadout and extract to crystal and
+## (pause journal) the tooltip keeps its paper box. No dark label under a skin carries an outline. The progress panel maps loadout and extract to crystal and
 ## anvil to neutral through the frames' BTN_SKIN hook.
 
 const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
@@ -10,12 +10,14 @@ const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const Tok := preload("res://scripts/ui/ui_tokens.gd")
 const Confirm := preload("res://scripts/ui/confirm_dlg.gd")
+const StepRow := preload("res://scripts/ui/step_row.gd")
 const FrameSet := preload("res://scripts/ui/progress_ui/frame_set.gd")
 
 static func run(host: Node) -> bool:
 	var want: Dictionary = Tok.SKIN_CRYSTAL
 	var sky := CanvasLayer.new()
 	sky.set_meta("btn_skin", "crystal")
+	sky.set_meta("prompt_ink", true)
 	host.add_child(sky)
 	var tip: PanelContainer = UiBuild.tip_panel(80)
 	sky.add_child(tip)
@@ -34,6 +36,9 @@ static func run(host: Node) -> bool:
 			card = n
 	good = good and card != null and card.color.is_equal_approx(want["panel"])
 	Confirm.close(sky)
+	var row: HBoxContainer = StepRow.make("Floor:", Callable(), Callable())
+	sky.add_child(row)
+	good = good and _no_dark_halo(sky)
 	var sc := ScrollContainer.new()
 	sky.add_child(sc)
 	UiBuild.bars(sc, true)
@@ -53,6 +58,15 @@ static func run(host: Node) -> bool:
 	plain.queue_free()
 	printerr("P7: host_skin=" + str(good) + " " + str(mapped))
 	return good
+
+## Dark text never carries an outline (UiBuild.halo): a dark halo smudges dark ink.
+static func _no_dark_halo(root: Node) -> bool:
+	for n: Node in root.find_children("*", "Label", true, false):
+		var l := n as Label
+		if l.get_theme_color("font_color").get_luminance() < 0.5 and l.get_theme_constant("outline_size") > 0:
+			printerr("P7: dark_halo " + str(l.text) + " " + str(l.get_path()))
+			return false
+	return true
 
 static func _bg(p: PanelContainer) -> Color:
 	var s: StyleBox = p.get_theme_stylebox("panel")

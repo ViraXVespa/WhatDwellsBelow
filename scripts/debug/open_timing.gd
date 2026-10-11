@@ -61,6 +61,10 @@ static func run(tree: SceneTree) -> bool:
 				worst = maxf(worst, float(now - last) / 1000.0)
 				last = now
 			await _shot(tree, str(r[0]) + str(pass_i))
+			var halo: String = _dark_halo(scene.world_ui())
+			if halo != "":
+				printerr("OPEN: dark_halo " + str(r[0]) + " " + halo)
+				ok = false
 			var extra: float = call_ms + maxf(0.0, worst - base)
 			printerr("OPEN: %s pass=%d call_ms=%.1f frame_ms=%.1f idle_ms=%.1f extra_ms=%.1f shown=%s" % [r[0], pass_i + 1, call_ms, worst, base, extra, shown])
 			if pass_i == 0:
@@ -117,3 +121,13 @@ static func _close(ui: CanvasLayer) -> void:
 		ui.close_ui()
 	App.ui_open = false
 	App.get_tree().paused = false
+
+## A skinned menu (not the journal) must not draw dark text with an outline (UiBuild.halo): returns the first offender.
+static func _dark_halo(ui: Node) -> String:
+	if ui == null or not ui.has_method("btn_skin") or not bool(ui.get("open")):
+		return ""
+	for n: Node in ui.find_children("*", "Label", true, false):
+		var l := n as Label
+		if l.is_visible_in_tree() and l.get_theme_color("font_color").get_luminance() < 0.5 and l.get_theme_constant("outline_size") > 0:
+			return l.text
+	return ""

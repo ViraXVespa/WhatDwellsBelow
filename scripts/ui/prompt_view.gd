@@ -222,7 +222,9 @@ static func _glyph(tex: Texture2D, font_size: int) -> TextureRect:
 
 static func _journal_host(host: Control) -> bool:
 	var parent: Node = host.get_parent()
-	return parent != null and parent.get_node_or_null("journal_page") != null
+	## Hosts whose hint bar sits on a light face (meta prompt_ink: the progress panel) draw dark ink words like the
+	## journal: ink font, no outline (a dark halo smudges dark ink; see UiBuild.halo).
+	return parent != null and (parent.get_node_or_null("journal_page") != null or parent.has_meta("prompt_ink"))
 
 static func _lab(text: String, font_size: int, color: Color, ink: bool = false) -> Label:
 	var l := Label.new()

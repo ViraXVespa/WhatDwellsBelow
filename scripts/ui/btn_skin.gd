@@ -56,6 +56,9 @@ static func tint(n: Node, p: Dictionary) -> void:
 		for i: int in inks.size():
 			if src.is_equal_approx(inks[i]):
 				(n as Control).add_theme_color_override(key, p["words"][i])
+		## Outline only behind light words (UiBuild.halo): a dark halo smudges dark ink.
+		if (n as Control).get_theme_color(key).get_luminance() < 0.5:
+			(n as Control).add_theme_constant_override("outline_size", 0)
 	elif n is ColorRect:
 		var r := n as ColorRect
 		var src: Color = r.get_meta("ink_src", r.color)

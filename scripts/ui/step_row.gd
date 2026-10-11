@@ -1,6 +1,7 @@
 ﻿extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
+const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 
 static func make(caption: String, on_down: Callable, on_up: Callable) -> HBoxContainer:
 	var row := HBoxContainer.new()
@@ -58,12 +59,12 @@ static func suffix_of(row: HBoxContainer) -> Label:
 static func _row_lab(t: String, font_px: int, col: Color) -> Label:
 	var l := Label.new()
 	l.text = t
+	l.add_theme_font_override("font", ThemeS.ink_font())
 	l.autowrap_mode = TextServer.AUTOWRAP_OFF
 	l.clip_text = false
 	l.add_theme_font_size_override("font_size", font_px)
 	l.add_theme_color_override("font_color", col)
-	l.add_theme_color_override("font_outline_color", ThemeS.OUTLINE)
-	l.add_theme_constant_override("outline_size", 6)
+	UiBuild.halo(l, col, 6)
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.size_flags_horizontal = Control.SIZE_SHRINK_CENTER

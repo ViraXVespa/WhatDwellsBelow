@@ -68,6 +68,7 @@ func btn_skin() -> String:
 	return _skin_name
 
 func _ready() -> void:
+	set_meta("prompt_ink", true)
 	Flow._ready(self)
 
 func _drop_sub() -> void:
