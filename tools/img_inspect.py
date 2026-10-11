@@ -137,7 +137,7 @@ def run(args) -> tuple[str, list[str], dict]:
         if not refs:
             agent_log.fail("rimclean needs --refs R,G,B (or RRGGBB), one per plate shade")
         im = imgio.load(src)
-        out_im = key.key_to_alpha(im, refs=refs)
+        out_im = key.key_to_alpha(im, plate=refs[0])
         before, after = look.halo(im), look.halo(out_im)
         lines += ["before " + look.fmt_halo(before), "after  " + look.fmt_halo(after)]
         out = _save(out_im, dest, args.dry_run)

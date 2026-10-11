@@ -91,7 +91,7 @@ def _one(root: Path, name: str, live: str, canvas: int, pad: int, out_dir: Path,
         return f"{name} MISSING source for {live}"
     raw = imgio.load(src).convert("RGBA")
     remapped, _vis, info = pr.remap(raw)
-    keyed = key.key_to_alpha(remapped, spill_flood=False)
+    keyed = key.key_to_alpha(raw)
     raw_n = _counts(np.array(keyed))
     cropped = _halo_cropped(keyed)
     fitted = geom.fit_box(keyed, canvas, pad)

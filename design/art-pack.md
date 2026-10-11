@@ -21,8 +21,8 @@ If harvest cuts fail but the clip is good, adjust pack points. Do not invent a n
 
 After the User accepts a clip and harvest exists:
 
-1. If the plate is not `#FF00FF`, run `tools/plate_remap.py` first.
-2. Colour-to-alpha the plate. Sample the plate from the border. Strong black, white, and blue border pixels are subject samples, not the key. A halo about a 16th of the short side around the paint is the nearest paint colour, with alpha falling off away from the body. That reaches into concavities such as an armpit. Paint inside the halo becomes opaque, so a hard edge stays hard and interior holes fill. Solid plate becomes transparent black. Do not invert RGB to despill, and do not snap the fringe to a hard matte.
+1. (No remap step: the keyer samples a drifted plate itself.)
+2. Key the plate with the staged keyer (`Still rekey` below).
 3. Fit each frame to the 128×128 canvas. A flat nearest upscale is reduced to its pixel grid first. Nearest-neighbor only when sizing up after that. When sizing down, use a premultiplied high-quality resize.
 4. Snap to the locked palette.
 5. Keep the soft edge as alpha. Do not strip fringe that colour-to-alpha already turned into transparency.
@@ -35,14 +35,21 @@ Then the User judges the packed strip. Do not start the next unit until the User
 
 ## Still rekey
 
-The open set is the rekey-assets task. One colour-to-alpha: `tools/imglib/key.py` `chroma_alpha` against the nearest border-sampled key. Strong black, white, and blue border pixels are subject samples. The drawn RGB stays. Glow and soft shading stay partial alpha. Solid plate, including a one-level quantize of the key and plate within Lab `tol`, becomes transparent black. `c2a` snaps alpha under 10 to 0 and over 242 to 255. That snap is the hard matte. Do not use it.
+The open set is the rekey-assets task. Regression plates are in `assets/keytest`.
 
-A halo about a 16th of the short side around the paint is the nearest paint colour, with alpha falling off away from the body. That is the glow, and it reaches into concavities. Paint inside the halo becomes opaque, so a hard edge stays hard and an interior hole fills. Remap paints only plate near a border reference to exact #FF00FF. It does not shift the drawn RGB of a farther mix.
+The keyer is `tools/imglib/matte.py` (`key_to_alpha` and `punch` in `imglib/key.py` call it). Key the source plate directly; no remap first. Stages, each with a debug PNG:
+1. Denoise: a 3 px median on the chroma planes only, for classifying. The output keeps the drawn RGB.
+2. Plate: the median of border pixels on the plate hue, per image. Drift such as (242,5,181) is normal.
+3. Trimap: background is the border flood through plate-coloured pixels, plus enclosed plate pockets (gaps between arms or hair strands). Glow is plate-tinted pixels connected to the background (magenta excess min(R,B)-G above the paint behind them): a translucent veil over the plate. Ring is the 2-3 px of paint touching the background. Everything else is solid and stays opaque with its drawn RGB. Purple or maroon paint is not plate unless it is bright and on the plate hue.
+4. Unmix (ring and glow only): pixel = a*C + (1-a)*plate, with the largest alpha whose colour C is valid and carries no more magenta excess than the paint behind it.
+5. Despill (ring, glow and a few px of edge paint only): magenta excess limited to the paint's own.
+No halo is painted; every partial alpha is measured from the plate. OpenCV is required.
+
+Proof: `python tools/keytest.py` keys every plate in `assets/keytest` and checks the numbers in `tools/keytest_expect.json` (plate left, magenta left, green specks, solid share, foreground share against the recorded value, identical repeat, keyer callers). It writes `_logs/keytest/sheets/<name>.png` (source | checker | dark | light) and `overview.png`. Look at the sheets; a PASS is numbers, not the User's yes. `run_build_gate.py --batch` runs it. After an accepted keyer change, `--update` records the new foreground share. `--src DIR --out DIR` runs the generic checks on any folder.
 
 A source that is a flat nearest upscale is reduced to that pixel grid before the fit. Transparent pixels do not count as colour in the cell test. Nearest-neighbor is only when both sides grow after that reduce. Sizing down stays a premultiplied high-quality resize.
 
-Do not wrap the key in a fringe walk, a subtract of red-and-blue-above-green, or a resize hairline. Those three deleted the veil, the outlines, and the bowstring on 2026-10-09. A heavy shrink may put back a near-white run the Lanczos kernel averaged away. That is a run of real pixels, not an edge lift. Do not nearest-upscale the plate before the key. That distorted the female face.
+Do not nearest-upscale the plate before the key. That distorted the female face.
 
-Proof is `python tools/rekey_preview.py`, then `show_png.py` on the paths it prints. The counts are the check. A picture description is not a pixel count. This is not a play-camera shot, and the gate is `run_build_gate.py --batch` with no `--visual`. Do not match the live PNG while the task calls that PNG rejected. The source plate is the reference.
+`rekey_preview.py` fits the open set from `_src` the same way (blue composites). It needs the `_src` link.
 
-`rekey_preview.py` stays in `tools/`. Do not write another preview under `_logs/agent-py/`. `run_agent_py.py` deletes those after the run.

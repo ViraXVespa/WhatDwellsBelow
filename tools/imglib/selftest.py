@@ -55,14 +55,16 @@ def run() -> list[tuple[str, bool, str]]:
     lip[59, 20:60] = (150, 40, 70, 255)
     lip[60, 20:60] = (240, 200, 220, 255)
     keyed = np.array(key.key_to_alpha(Image.fromarray(lip)))
-    # Drawn RGB stays. The light-pink row is a plate mix and stays partial alpha.
+    # Body stays as drawn. The maroon edge row stays opaque paint with its hue. The light-pink row is a
+    # plate mix: partial alpha, and its magenta excess min(R,B)-G is despilled away.
     plate_ok = int(keyed[0, 0, 3]) == 0 and int(keyed[0, 0].sum()) == 0
     body = keyed[40, 40]
     cloth = keyed[59, 30]
     lip_px = keyed[60, 30]
-    body_ok = tuple(int(v) for v in body[:3]) == (40, 90, 50) and int(body[3]) > 200
-    cloth_ok = tuple(int(v) for v in cloth[:3]) == (150, 40, 70) and int(cloth[3]) > 100
-    lip_partial = tuple(int(v) for v in lip_px[:3]) == (240, 200, 220) and 0 < int(lip_px[3]) < 255
+    ex = int(min(int(lip_px[0]), int(lip_px[2])) - int(lip_px[1]))
+    body_ok = tuple(int(v) for v in body[:3]) == (40, 90, 50) and int(body[3]) == 255
+    cloth_ok = int(cloth[3]) > 200 and int(cloth[0]) > int(cloth[1]) and int(cloth[0]) > int(cloth[2]) - 10
+    lip_partial = 0 < int(lip_px[3]) < 255 and ex <= 4
     out.append(("key light-pink lip", plate_ok and body_ok and cloth_ok and lip_partial, f"body {body.tolist()} cloth {cloth.tolist()} lip {lip_px.tolist()}"))
     wood = np.zeros((30, 40, 4), np.uint8)
     wood[:, :] = (0, 0, 0, 255)

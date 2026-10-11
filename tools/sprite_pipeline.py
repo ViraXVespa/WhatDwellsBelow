@@ -28,12 +28,9 @@ def _as_rgba(im: Image.Image) -> np.ndarray:
     return imgio.to_np(im)
 
 
-def key_to_alpha(im: Image.Image, spill_flood: bool = True) -> Image.Image:
-    """Colour-to-alpha against the border plate (imglib.key.key_to_alpha).
-
-    Glow and soft edges stay partial. `spill_flood` is accepted and does not switch paths.
-    """
-    return key.key_to_alpha(im, spill_flood=spill_flood)
+def key_to_alpha(im: Image.Image) -> Image.Image:
+    """Staged plate key (imglib.matte through imglib.key.key_to_alpha)."""
+    return key.key_to_alpha(im)
 
 
 def range_key(im: Image.Image) -> Image.Image:
@@ -44,8 +41,8 @@ def range_key(im: Image.Image) -> Image.Image:
     return Image.fromarray(arr, "RGBA")
 
 
-def flatten_magenta_to_alpha(im: Image.Image, spill_flood: bool = True) -> Image.Image:
-    return key_to_alpha(im, spill_flood=spill_flood)
+def flatten_magenta_to_alpha(im: Image.Image) -> Image.Image:
+    return key_to_alpha(im)
 
 
 def split_equal_3x3(im: Image.Image) -> list[Image.Image]:
@@ -70,10 +67,9 @@ def fit_canvas(
     canvas: int = CANVAS,
     baseline: int | None = None,
     key: bool = True,
-    spill_flood: bool = True,
 ) -> Image.Image:
     if key:
-        im = flatten_magenta_to_alpha(im, spill_flood=spill_flood)
+        im = flatten_magenta_to_alpha(im)
     return geom.fit_box(im, canvas, PAD, oy=lambda nh: max(0, min(canvas - nh, canvas - nh - 2 if baseline is None else baseline - nh)))
 
 

@@ -108,7 +108,7 @@ def sprite_out(src: str, dest: Path, canvas: int = 128, quad: str | None = None)
     if quad:
         im = crop_frac(im, QUADS[quad])
     keyed = key_sprite(im)
-    out = fit_canvas(keyed, canvas, key=False, spill_flood=False)
+    out = fit_canvas(keyed, canvas, key=False)
     dest.parent.mkdir(parents=True, exist_ok=True)
     out.save(dest)
     print("sprite", dest.name, out.size)

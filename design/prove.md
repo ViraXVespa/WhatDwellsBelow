@@ -27,7 +27,7 @@ One standard for every surface: the cheapest check that would fail if the change
 | Change | Minimum proof |
 |---|---|
 | Code (`.gd`) | compile: `check_gd_load.py` each pass, then `run_build_gate.py --batch` once (Bot: its Prove gate in `BOT.md`); the smoke phases that load the file (`bot_smokes.py --for FILE`); a pure refactor also needs "same as main" |
-| Art, keying | source plate beside the keyed still. `rekey_preview.py` counts, then the User looks at the blue composites. Not a play-camera shot. Not the same pixels as a live file the User has rejected |
+| Art, keying | source plate beside the keyed still. `keytest.py` numbers and sheets, `rekey_preview.py` counts, then the User looks at the blue composites. Not a play-camera shot. Not the same pixels as a live file the User has rejected |
 | UI | baseline shot (opened) before the questions; no flow yet: create it first (step 0, `shot-flows.md`). One screen, its shot flow (`run_shot_flow.py --flow N`). Open before and after of one place as one sheet (`show_png.py --group`) and say what is on it, then ask the User with the folder path. Then "layout is clean" and "text readable" |
 | Input | P7 binds smoke (`bot_smokes.py --phases 7`) plus the controls flows (`--flows camp-pause-menu,camp-billboard-controls`) |
 | Save data | P8 (`bot_smokes.py --phases 8`: save backup on the smoke slot) |
@@ -57,7 +57,7 @@ Each says when it is enough. Image checks use `python tools/img_inspect.py CMD .
 
 **Repeatable.** Enough to call a flow stable: run the same flow twice, `shot_diff.py RUN1 RUN2` reports 0 changed. A flow that differs from itself needs a seed, `freeze` or `mask` first (`shot-flows.md`).
 
-**Key is clean.** Enough for a keyed still: `python tools/rekey_preview.py`. Solid plate is transparent (`plate_opaque` near 0). Plate mixed into glow or shading stays partial alpha (`partial` above 0 on a plate that has a veil). Solid outlines from the plate stay opaque. `halo_cropped` is faint alpha `fit_box` drops at its default floor; that glow is not debris. `img_inspect.py halo` flags a pink rim. A veil the User asked to keep as alpha is not a rim to delete. Raw sheets: `plate_remap.py` then `sprite_pipeline.py`. "Looks the same as main" applies only when the live file is the accepted look.
+**Key is clean.** `python tools/keytest.py` passes and the sheets in `_logs/keytest/sheets/` look right on checker, dark and light. For a live still, `python tools/rekey_preview.py` too. Plate mixed into glow stays partial alpha. Solid outlines stay opaque. A veil the User asked to keep as alpha is not a rim to delete. "Looks the same as main" applies only when the live file is the accepted look.
 
 **Layout is clean.** Enough for a screen: `img_inspect.py layout SHOT [--png OUT]` lists off-screen, clipped, outside-safe-area and overlapping elements, near-aligned edges and gaps. Pass `--box X,Y,W,H` per node rect when same-coloured elements touch. Clean: no off-screen, clipped or overlap lines.
 

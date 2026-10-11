@@ -164,12 +164,10 @@ def key_flat(arr: np.ndarray) -> np.ndarray:
 
 def key_pipeline(path: Path) -> np.ndarray:
     sys.path.insert(0, str(ROOT / "tools"))
-    import plate_remap as pr  # noqa: E402
     import sprite_pipeline as sp  # noqa: E402
 
     im = imgio.load(path)
-    remapped, _vis, _info = pr.remap(im)
-    keyed = sp.key_to_alpha(remapped, spill_flood=False)
+    keyed = sp.key_to_alpha(im)
     w, h = keyed.size
     m = max(w, h)
     if m > MAX_SIDE:

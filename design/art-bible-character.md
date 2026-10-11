@@ -89,8 +89,7 @@ Load this appendix only when choosing a generation method.
 | `i2v_seeds.py --test` web preamble | Browser tests only | Do not send in Grok Build I2V |
 | Full-Bible seed | Medium | Only if the User asks after a still-seed miss |
 | Video-fill from last accepted clip | Medium | Last resort, User-asked |
-| `plate_remap.py` before key-to-alpha | High | Required when plate ≠ `#FF00FF` |
-| `spill_flood=False` on video / jpg stills after remap | High | Avoid eating hair / maroon / purple cloth |
+| Staged keyer on the raw plate (`imglib/matte.py`) | High | Samples a drifted plate itself; maroon / purple paint stays |
 | Automatic multi-pass fill-in | Forbidden | One unit, then User review |
 | Overlay I2V / stills for weapons and tools | High | Layers, not baked body props |
 | Isolated Imagine / I2V via `tools/run_isolated_grok.py` | High | Default generate path; see isolated_media |

@@ -11,7 +11,6 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 import i2v_seeds  # noqa: E402
 import match_keyed_region as matcher  # noqa: E402
-import plate_remap as pr  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
 
 _TOOLS = Path(__file__).resolve().parent
@@ -58,8 +57,7 @@ def prep(im: Image.Image) -> Image.Image:
 
 def key_still(src: Path) -> Image.Image:
     raw = prep(imgio.load(src))
-    remapped, _vis, _info = pr.remap(raw)
-    return sp.key_to_alpha(remapped, spill_flood=False)
+    return sp.key_to_alpha(raw)
 
 
 def fit_square(keyed: Image.Image, canvas: int) -> Image.Image:

@@ -11,7 +11,6 @@ from imglib.geom import fit_box  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
-import plate_remap as pr  # noqa: E402
 import sprite_pipeline as sp  # noqa: E402
 
 _TOOLS = Path(__file__).resolve().parent
@@ -50,8 +49,7 @@ EXPECTED = (
 
 def key_still(src: Path) -> Image.Image:
     raw = imgio.load(src)
-    remapped, _vis, _info = pr.remap(raw)
-    return sp.key_to_alpha(remapped, spill_flood=False)
+    return sp.key_to_alpha(raw)
 
 
 def fit_icon(keyed: Image.Image, canvas: int = CANVAS) -> Image.Image:
