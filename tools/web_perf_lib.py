@@ -7,7 +7,7 @@ from pathlib import Path
 
 # Runs before the page: per-phase rAF frame times, wasm compile timing, 500 ms JS heap / wasm memory (engine.rtenv.HEAPU8) sampler.
 INIT = """
-window.__wp={ph:'_boot',f:{},t:0,comp:[],cerr:{},cmsg:[],load:[],heap:0,wasm:0,gone:0,seen:0,errs:0,t0:performance.now()};
+window.__wp={ph:'_boot',e:{},sw:[],f:{},t:0,comp:[],cerr:{},cmsg:[],load:[],heap:0,wasm:0,gone:0,seen:0,errs:0,t0:performance.now()};
 (function(){var W=window.__wp;
 ['instantiateStreaming','compileStreaming','instantiate','compile'].forEach(function(k){var o=WebAssembly[k];
 if(!o)return;WebAssembly[k]=function(){var s=performance.now();return o.apply(WebAssembly,arguments).then(function(r){
@@ -17,7 +17,7 @@ var b=engine.rtenv.HEAPU8.buffer.byteLength;if(b>W.wasm)W.wasm=b}catch(x){}}
 setInterval(samp,500);
 (function l(t){var b=document.getElementById('wdb-boot');if(b)W.seen=1;
 if(W.seen&&!b&&!W.gone){W.gone=performance.now()}
-if(W.t&&W.gone){(W.f[W.ph]=W.f[W.ph]||[]).push(t-W.t)}W.t=t;requestAnimationFrame(l)})(0);
+if(W.t&&W.gone){(W.f[W.ph]=W.f[W.ph]||[]).push(t-W.t);(W.e[W.ph]=W.e[W.ph]||[]).push(t)}W.t=t;requestAnimationFrame(l)})(0);
 window.addEventListener('error',function(){W.errs++});
 var ce=console.error;console.error=function(){var a0=arguments[0];if(typeof a0=='string'&&a0.indexOf('LOAD: ')==0){samp();W.load.push(a0.slice(6)+' wasm='+Math.round(W.wasm/1048576));return}W.cerr[W.ph]=(W.cerr[W.ph]||0)+1;if(W.cmsg.length<4&&W.ph[0]!='_')W.cmsg.push(W.ph+': '+Array.prototype.join.call(arguments,' ').slice(0,140));return ce.apply(console,arguments)};window.__wpSamp=samp})();
 """
@@ -95,7 +95,9 @@ def run_flow(page, steps: list[dict], out: Path, tag: str) -> tuple[dict, dict]:
             v = page.viewport_size
             page.mouse.click(v["width"] * s["click"][0], v["height"] * s["click"][1])
         elif "shot" in s:
+            s0 = page.evaluate("performance.now()")
             png = page.screenshot(path=str(out / ("%s-%s.png" % (tag, s["shot"]))))
+            page.evaluate("s=>window.__wp.sw.push([s,performance.now()])", s0)
             shots[s["shot"]] = _lum(png)
         elif "key" in s:
             page.keyboard.press(s["key"])
@@ -117,6 +119,21 @@ def _load_marks(lines: list[str]) -> list[list]:
         if "mark" in kv:
             out.append([kv["mark"], int(kv.get("t", 0)), int(kv.get("dt", 0)), int(kv.get("vram", 0)), int(kv.get("wasm", 0))])
     return out
+
+
+def _drop_shots(fs: list[float], ends: list[float], sw: list[list[float]]) -> tuple[list[float], int]:
+    """A page screenshot stalls rAF as it returns: drop the frame spanning each shot's end, plus the next frame when it is over 100 ms (the settle)."""
+    keep, n, after = [], 0, False
+    for d, t in zip(fs, ends):
+        if any(t - d <= b < t for _, b in sw):
+            n, after = n + 1, True
+            continue
+        if after and d > 100:
+            n, after = n + 1, False
+            continue
+        after = False
+        keep.append(d)
+    return keep, n
 
 
 def _stats(fs: list[float], long_ms: float) -> dict:
@@ -167,11 +184,12 @@ def measure(url: str, chrome: str, steps: list[dict], long_ms: float, timeout_s:
     wasm, pck = tm.get("index.wasm", (0, 0)), tm.get("index.pck", (0, 0))
     comp = max((e - s for k, s, e in w["comp"] if k != "compile"), default=0)
     gone = w["gone"]
-    ph = {k: _stats(v, long_ms) for k, v in w["f"].items()}
-    meas = [x for k, v in w["f"].items() if not k.startswith("_") for x in v]
+    cut = {k: _drop_shots(v, w["e"].get(k, []), w["sw"]) for k, v in w["f"].items()}
+    ph = {k: dict(_stats(v, long_ms), shot_excluded=n) for k, (v, n) in cut.items()}
+    meas = [x for k, (v, _) in cut.items() if not k.startswith("_") for x in v]
     rep = {"load_ms": round(gone), "wall_ms": round(wall_ms), "wasm_dl_ms": round(wasm[1] - wasm[0]),
            "wasm_compile_ms": round(comp), "pck_end_ms": round(pck[1]), "init_ms": round(gone - max(pck[1], wasm[1])),
-           **_stats(meas, long_ms), "heap_mb": round(max(w["heap"], m.get("JSHeapUsedSize", 0)) / 1048576, 1),
+           **_stats(meas, long_ms), "shot_excluded": sum(n for k, (_, n) in cut.items() if not k.startswith("_")), "heap_mb": round(max(w["heap"], m.get("JSHeapUsedSize", 0)) / 1048576, 1),
            "wasm_mem_mb": round(w["wasm"] / 1048576, 1), "dom_nodes": int(m.get("Nodes", 0)),
            "transfer_mb": round(sum(b for _, b, _, _ in res) / 1048576, 2), "page_errors": len(errs) + w["errs"],
            "phases": ph, "marks": marks, "load_marks": _load_marks(w["load"]), "console_msgs": w["cmsg"], "console_errors": {k: v for k, v in w["cerr"].items() if not k.startswith("_")}, "audio": aud, "play": {k: play[k] for k in PLAY if k in play} if play else {}, "shots": shots,

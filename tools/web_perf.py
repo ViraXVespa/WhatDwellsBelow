@@ -6,7 +6,7 @@
 Serves --site (default docs; use a fresh `export_web.py --out DIR`, docs/ may be stale) and replays flows from
 tools/web-perf-flows.json (steps: phase wait settle key hold click eval waitplay shot; `query` adds URL args like wdb-seed=42; `boot` prepends the splash/title steps). Reports load_ms
 (navigation to the engine overlay gone), its breakdown (wasm_dl_ms, wasm_compile_ms, init_ms), frame ms/fps and long
-frames per phase, JS heap and wasm memory peaks (sampled every 500 ms; wasm memory never shrinks), transfer sizes and
+frames per phase (frames stalled by a flow screenshot are dropped and counted as shot_excluded), JS heap and wasm memory peaks (sampled every 500 ms; wasm memory never shrinks), transfer sizes and
 page errors. Writes a stamped _logs/web-perf/<stamp>-report.json per run. --baseline F diffs against a saved file (tools/web-perf-baseline.json);
 a metric worse than its threshold is WORSE; a playtester flow whose run errors, stalls or ends early is INVALID (flagged, never baselined) (RESULT INFO, exit 0 unless --strict). --repeat N takes the median of N runs.
 --mbps throttles the network. Chrome's 60 Hz frame pacing is off by default (frame times are the game's cost, not 16.7 ms vsync steps); --vsync keeps it. --selftest checks the report logic offline. Needs `pip install playwright` and Chrome/Chromium; no browser download. Software GL:
@@ -37,7 +37,7 @@ UP = {"load_ms": (40, 1500), "init_ms": (50, 1000), "avg_frame_ms": (30, 5), "p9
       "heap_mb": (60, 40), "wasm_mem_mb": (10, 16), "transfer_mb": (5, 0.5), "page_errors": (0, 1)}
 DOWN = {"avg_fps": (30, 3)}
 SCALAR = ("load_ms", "wall_ms", "wasm_dl_ms", "wasm_compile_ms", "pck_end_ms", "init_ms", "frames", "avg_fps", "avg_frame_ms",
-          "p95_frame_ms", "max_frame_ms", "long_frames", "heap_mb", "wasm_mem_mb", "dom_nodes", "transfer_mb", "page_errors")
+          "p95_frame_ms", "max_frame_ms", "long_frames", "shot_excluded", "heap_mb", "wasm_mem_mb", "dom_nodes", "transfer_mb", "page_errors")
 
 
 def median(runs: list[dict]) -> dict:

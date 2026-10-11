@@ -44,11 +44,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
 
+class _Server(http.server.ThreadingHTTPServer):
+    def handle_error(self, request, client_address):  # the browser closing mid-download is not news
+        pass
+
+
 def serve(site: Path, root: Path, port: int = 0) -> http.server.ThreadingHTTPServer:
     out = root / REL
     out.parent.mkdir(parents=True, exist_ok=True)
     STATE["file"] = str(out)
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", port), functools.partial(Handler, directory=str(site)))
+    srv = _Server(("127.0.0.1", port), functools.partial(Handler, directory=str(site)))
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     return srv
 
