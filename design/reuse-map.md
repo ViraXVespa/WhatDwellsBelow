@@ -17,13 +17,7 @@ If Brief is empty, stop and report empty. Do not start a size sweep. If Brief ha
 
 ## Brief  
 
-1. UI art polygon fill: extract the near-identical `_fill` scanline polygon filler from `scripts/ui/progress_ui/anvil_art.gd` and `scripts/ui/progress_ui/crystal_art.gd` into a shared helper (e.g. `art_fill.gd`). Bodies must stay identical.
-
-2. Frame-skin template: consolidate the common `spec()` / `build()` / `place()` skeleton across the `*_frame.gd` family in `scripts/ui/progress_ui/` (crystal_frame, extract_frame, anvil_frame, vendor_frame, and any near twins) on top of the existing `frame_base.gd`. Prefer a data-driven spec or shared helper that keeps the named intent.
-
-3. Dim + plate + edge: extract the three-ColorRect overlay construction (full-rect dim, plate, edge) from `scripts/ui/progress_ui/ui_flow.gd` and any near twins (including the previously noted recap pair). Parameterize only the colors/rects that differ.
-
-4. Thin named-intent wrappers: for pure-data helpers that differ only in constants (`menu_val.gd` val_sb/val_spin_sb, `mesh_mat.gd` tarp_mat/awning_mat, `menu_pad.gd` is_page_prev/is_page_next, and theme.gd StyleBox convenience wrappers that clear the min-line bar), introduce a shared builder that takes the differing palette/action/material args. Do not collapse ones that name distinct intent if the User later objects.
+4. Thin named-intent wrappers, theme part: theme.gd StyleBox convenience wrappers that clear the min-line bar (`_ink_box` / `_box` differ only in corner radius and margins). The val_sb/val_spin_sb, tarp_mat/awning_mat and is_page_prev/is_page_next builders are done.
 
 5. Tool bootstrap + runner heads: extract the repeated `sys.path` insert + common import blocks across tools (bot_status, check_shot_gaps, doc_patch, export_web, and the other copies) into a shared `tools/_boot.py` or equivalent. Also fold the near-identical Godot-launch / `agent_log.finish` tails where the RESULT line can stay tool-specific. Path insert must remain before local imports.
 
