@@ -14,10 +14,13 @@ const BARK: Color = Color(0.34, 0.20, 0.11, 1)
 const FACE: Color = Color(0.90, 0.80, 0.64, 1)
 const RING: Color = Color(0.78, 0.66, 0.48, 1)
 
+const ArtBake: GDScript = preload("res://scripts/ui/progress_ui/art_bake.gd")
+## Folder under assets/ui/frames/ holding this script's baked PNGs.
+const ART := "anvil"
 static var _images: Dictionary = {}
 
 static func stump() -> Texture2D:
-	if _images.has("stump"):
+	if ArtBake.hit(_images, ART, "stump"):
 		return _images["stump"]
 	var w: int = 240
 	var h: int = 160
@@ -44,7 +47,7 @@ static func stump() -> Texture2D:
 	return UiBuild.keep(_images, "stump", img)
 
 static func shadow() -> Texture2D:
-	if _images.has("shadow"):
+	if ArtBake.hit(_images, ART, "shadow"):
 		return _images["shadow"]
 	var w: int = 64
 	var h: int = 16
@@ -61,7 +64,7 @@ static func shadow() -> Texture2D:
 
 ## Side-view anvil, matching the hub prop: horn to the right, flat face, hardy hole, waist, two feet. One mass.
 static func anvil() -> Texture2D:
-	if _images.has("anvil"):
+	if ArtBake.hit(_images, ART, "anvil"):
 		return _images["anvil"]
 	var w: int = 180
 	var h: int = 110

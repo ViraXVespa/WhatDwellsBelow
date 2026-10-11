@@ -1,7 +1,7 @@
 extends Object
 
 ## Hub menus open in one frame. Two parts, both before the hub loader lifts:
-## start() (title screen, then Play): a worker thread draws every object frame's code-drawn art once (cached by
+## start() (title screen, then Play): a worker thread loads every object frame's baked art PNGs once (cached by
 ##   each *_art.gd) and the progress panel scripts load threaded.
 ## finish(scene): makes the hub's menu host, then opens the heavy menus once under the solid loader so fonts,
 ##   frame art and the gear board are on the GPU, and closes them without saving or sounds.

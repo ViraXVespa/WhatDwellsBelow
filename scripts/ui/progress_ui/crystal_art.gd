@@ -27,10 +27,13 @@ const CORE: Color = Color(0.82, 1.0, 1.0, 1)
 const CORE_HOT: Color = Color(0.97, 1.0, 1.0, 1)
 const EDGE: Color = Color(0.04, 0.07, 0.09, 1)
 
+const ArtBake: GDScript = preload("res://scripts/ui/progress_ui/art_bake.gd")
+## Folder under assets/ui/frames/ holding this script's baked PNGs.
+const ART := "crystal"
 static var _images: Dictionary = {}
 
 static func body() -> Texture2D:
-	if _images.has("body"):
+	if ArtBake.hit(_images, ART, "body"):
 		return _images["body"]
 	var img: Image = Image.create(ART_W, ART_H, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))

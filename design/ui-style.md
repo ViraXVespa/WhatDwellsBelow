@@ -26,7 +26,7 @@ One place per job, so a screen only fills in what is its own. Existing screens r
 - Chips have `focus_mode` NONE: no tab, highlight or select focus, and the menu keeps its focus.
 - A strip that only lists binds (the controls sign rows, the world HUD prompt) sets `prompt_tap` false on its host.
 - A scheme change (pad, keys, touch) swaps the glyphs inside the same chips, so the press that changed the scheme still lands.
-- Guard: phase 6 opens every hub menu and closes it by each Back bind, by the Back chip, and after going one to three levels in (`python tools/run_smokes.py --phases 6` and `bot_smokes.py` both run it). The first-open timing (`--wdb-open-timing`, `scripts/debug/open_timing.gd`) runs inside `bot_smokes.py` phase 6 only; run it by hand from `design/debug-smokes.md`.
+- Guard: phase 6 opens every hub menu and closes it by each Back bind, by the Back chip, and after going one to three levels in (`python tools/run_smokes.py --phases 6` and `bot_smokes.py` both run it). The first-open timing (`--wdb-open-timing`, `scripts/debug/open_timing.gd`) runs inside `bot_smokes.py` phase 6 only; run it by hand with `--wdb-load-timing-smoke --wdb-open-timing`.
 
 ## Object frames (`scripts/ui/progress_ui/`)
 A frame re-skins the progress panel host for one object (stall, bin). `frame_base.gd` owns what every frame shares: the chrome layer under the host, the cream plate every other mode keeps, the footer room, the button row (the host's scroll area) and its separation. `frame_set.gd` lists the skins.
@@ -35,12 +35,12 @@ A skin is a script with static hooks:
 - `build(chrome)` makes the pieces and labels once; `place(chrome)` positions them each open.
 - Callers keep their own `prepare` / `dress` per object (text, button look).
 Add a frame: write `<object>_frame.gd` (+ `<object>_art.gd` for code-drawn pictures), list it in `frame_set.gd`, set the host `mode` when it opens. A frame takes the hooks it needs and adds its own pieces; it need not look like another.
-First open: `ui_warm.gd` draws every listed skin's art on a worker from the title screen and opens the heavy menus once behind the hub loader. A new menu or frame gets a row in `scripts/debug/open_timing.gd` (pause tabs are timed from `TABS`), and a warm step if its first open is over budget.
+First open: `ui_warm.gd` loads every listed skin's art on a worker from the title screen and opens the heavy menus once behind the hub loader. A new menu or frame gets a row in `scripts/debug/open_timing.gd` (pause tabs are timed from `TABS`), and a warm step if its first open is over budget.
 
-Open question for her (not decided): how new frames (posters, a desk or dialog box) get their art. Code-drawn art (`*_art.gd`) needs no files and ships on web, but it is slow to draw (crystal about 139 ms) and each frame adds hub load on web, where there is no worker thread. Options: keep code-drawn and accept the web hub-load cost; bake code-drawn art once to a `user://` cache keyed by the script hash (fast after the first run, one more moving part); or PNG art under `assets/ui/` (fastest, needs drawn art and an import). Decide before poster art is drawn.
+Frame art ships as PNG (her decision). Existing frames: the `*_art.gd` code is the source and `python tools/bake_frame_art.py` bakes it to `assets/ui/frames/<art>/<key>.png` (button looks from each `dress()` too); at runtime `art_bake.gd` loads only the PNGs and a missing one is an error. Re-bake after editing any `*_art.gd` or `dress()`; `bake_frame_art.py --check` (also in `bot_smokes.py` phase 6) fails on a stale PNG. Posters and other hand-made art: PNGs under `assets/ui/<object>/` (posters: `assets/ui/posters/`, loader `progress_ui/poster_art.gd`, its `REQUIRED` list names the files); no drawn stand-in. Where hand-made PNG art would clearly beat the code-drawn look is listed in the W7 button-style audit for her.
 
 ## Web export (flagged, not changed)
 - `journal_page._tex_at` loads `res://assets/ui/journal/paper.png` and `leather.png` with `load()` so the imported textures ship in the web pack. A missing page texture errors; it does not cache an empty image.
 - `ThemeS.ink_font()` returns the shipped `res://assets/ui/journal/ink.ttf` (Patrick Hand, OFL). SystemFont is not used; the web export has no Windows faces.
-- Frame art is drawn in code (no file reads). See the open question under Object frames for new frames.
+- Frame art loads from baked PNGs under `assets/ui/frames/` (imported, so they ship in the web pack); see Object frames.
 - A missing asset fails loudly; no fallback texture or color.

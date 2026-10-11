@@ -109,6 +109,8 @@ FATAL_ERR = ("SCRIPT ERROR", "Lambda capture at index")
 # Phase 6 also runs the hub menu open timing (scripts/debug/open_timing.gd): real title -> hub load, then every
 # menu's first and second open; fails when a first open stalls.
 OPEN_TIMING = ["--wdb-load-timing-smoke", "--wdb-open-timing"]
+# ...and the baked frame-art check (art_bake.gd): every committed assets/ui/frames PNG matches what the art code draws.
+FRAME_ART = ["--wdb-frame-art-check"]
 
 
 def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool, tag: str = "", flags: list[str] | None = None) -> int:
@@ -133,7 +135,9 @@ def run_phase(exe: Path, root: Path, phase: int, timeout: int, verbose: bool, ta
     if bad and tag:
         print("\n".join(ln for ln in text.splitlines() if ln.startswith("OPEN:")))
     if phase == 6 and not tag:
-        return max(1 if bad else 0, run_phase(exe, root, 6, timeout, verbose, "open_timing", OPEN_TIMING))
+        timing = run_phase(exe, root, 6, timeout, verbose, "open_timing", OPEN_TIMING)
+        art = run_phase(exe, root, 6, timeout, verbose, "frame_art", FRAME_ART)
+        return max(1 if bad else 0, timing, art)
     return 1 if bad else 0
 
 

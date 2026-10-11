@@ -11,11 +11,14 @@ const CLAY: Color = Color(0.55, 0.24, 0.20, 1)
 const MOUTH: Color = Color(0.11, 0.07, 0.08, 1)
 const PAPER: Color = Color(0.94, 0.86, 0.72, 1)
 
+const ArtBake: GDScript = preload("res://scripts/ui/progress_ui/art_bake.gd")
+## Folder under assets/ui/frames/ holding this script's baked PNGs.
+const ART := "vendor"
 static var _images: Dictionary = {}
 
 static func grain(w: int, h: int, lift: float, foot: int) -> Texture2D:
 	var key: String = "g-%d-%d-%d-%d" % [w, h, int(round(lift * 100.0)), foot]
-	if _images.has(key):
+	if ArtBake.hit(_images, ART, key):
 		return _images[key]
 	var img: Image = Image.create(w, h + foot, false, Image.FORMAT_RGBA8)
 	var face: Color = WOOD.lerp(PAPER, lift)
@@ -43,7 +46,7 @@ static func grain(w: int, h: int, lift: float, foot: int) -> Texture2D:
 
 static func post(flip: bool) -> Texture2D:
 	var key: String = "post-r" if flip else "post-l"
-	if _images.has(key):
+	if ArtBake.hit(_images, ART, key):
 		return _images[key]
 	var w: int = 28
 	var h: int = 160
@@ -70,7 +73,7 @@ static func post(flip: bool) -> Texture2D:
 
 static func awning(w: int, h: int) -> Texture2D:
 	var key: String = "awning-%d-%d" % [w, h]
-	if _images.has(key):
+	if ArtBake.hit(_images, ART, key):
 		return _images[key]
 	var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
@@ -115,7 +118,7 @@ static func ring(img: Image, cx: int, cy: int, radius: int) -> void:
 				img.set_pixel(x, y, iron)
 
 static func bulb() -> Texture2D:
-	if _images.has("bulb"):
+	if ArtBake.hit(_images, ART, "bulb"):
 		return _images["bulb"]
 	var img: Image = Image.create(18, 40, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
@@ -127,7 +130,7 @@ static func bulb() -> Texture2D:
 	return UiBuild.keep(_images, "bulb", img)
 
 static func herb() -> Texture2D:
-	if _images.has("herb"):
+	if ArtBake.hit(_images, ART, "herb"):
 		return _images["herb"]
 	var img: Image = Image.create(18, 40, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
@@ -141,7 +144,7 @@ static func herb() -> Texture2D:
 	return UiBuild.keep(_images, "herb", img)
 
 static func tool() -> Texture2D:
-	if _images.has("tool"):
+	if ArtBake.hit(_images, ART, "tool"):
 		return _images["tool"]
 	var img: Image = Image.create(18, 40, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
@@ -156,7 +159,7 @@ static func tool() -> Texture2D:
 	return UiBuild.keep(_images, "tool", img)
 
 static func crate() -> Texture2D:
-	if _images.has("crate"):
+	if ArtBake.hit(_images, ART, "crate"):
 		return _images["crate"]
 	var img: Image = Image.create(32, 32, false, Image.FORMAT_RGBA8)
 	var face: Color = WOOD.lerp(PAPER, 0.22)
@@ -170,7 +173,7 @@ static func crate() -> Texture2D:
 	return UiBuild.keep(_images, "crate", img)
 
 static func pot() -> Texture2D:
-	if _images.has("pot"):
+	if ArtBake.hit(_images, ART, "pot"):
 		return _images["pot"]
 	var img: Image = Image.create(32, 40, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
@@ -191,7 +194,7 @@ static func pot() -> Texture2D:
 
 static func fill(col: Color) -> Texture2D:
 	var key: String = "fill-%d-%d-%d" % [int(col.r * 255.0), int(col.g * 255.0), int(col.b * 255.0)]
-	if _images.has(key):
+	if ArtBake.hit(_images, ART, key):
 		return _images[key]
 	var img: Image = Image.create(4, 4, false, Image.FORMAT_RGBA8)
 	img.fill(col)

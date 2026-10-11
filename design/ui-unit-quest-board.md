@@ -10,3 +10,4 @@ Read when: pinned parchment, offer cutouts
 - The receptionist has its own entry now; edits here do not change her menu.
 - Surface sections and files: routes.yaml `unit_docs` and `unit_files` (the unit card prints them).
 - Frame work follows the ui style doc.
+- Poster art is hand-made PNG: `assets/ui/posters/board.png`, `poster.png`, `pin.png` (`progress_ui/poster_art.gd` `REQUIRED`; missing = error). She provides the art; none exists yet.
