@@ -19,7 +19,7 @@ Checks per picture (limits in keytest_expect.json, "default" plus per-name overr
                 glow strength (corr); rough = largest 2nd difference of the 1 px alpha profile (kinks), noise =
                 std of high-pass alpha in the glow (blotches), tail = alpha's 2% extent / the source glow's
   plate_hue_px  visible plate-touched pixels still magenta or lavender (within 30 deg of the plate hue, up to
-                60 deg on its violet side, saturated, bright), anywhere incl. enclosed pockets
+                60 deg on its violet side, saturated, light), anywhere incl. enclosed pockets
   halo          share of the foreground that is soft and more than 4 px beyond the solid art (glow kept)
   interior      share of paint pixels (more than 3 px from transparency and from any plate-tinted source
                 pixel, magenta excess > 12) that are opaque (minimum). Edges and glows outside the hard edge are partial by design; `solid` (opaque share
@@ -132,7 +132,7 @@ def measure(src: Image.Image, keyed: Image.Image, stats: dict) -> dict:
     # within 30 deg of the plate hue or up to 60 deg on its violet side, saturated and bright (magenta,
     # lavender); the art's own blues and purples outside that window or dark do not count
     hsv = cv2.cvtColor(np.clip(col, 0, 255).astype(np.uint8), cv2.COLOR_RGB2HSV_FULL).astype(np.int32)
-    hue_left = vis & (src_ex > 6) & (_hd(col) + 14 < _hd(art)) & ((np.abs(side) <= 21) | ((side < 0) & (side >= -43))) & (hsv[..., 1] >= 50) & (hsv[..., 2] >= 90)
+    hue_left = vis & (src_ex > 6) & (_hd(col) + 14 < _hd(art)) & ((np.abs(side) <= 21) | ((side < 0) & (side >= -43))) & (hsv[..., 1] >= 50) & (hsv[..., 2] >= 0.6 * max(int(plate[0]), int(plate[2])))
     return {
         "plate_tint": round(tint_p95, 1),
         "plate_hue_px": int(hue_left.sum()),

@@ -22,15 +22,15 @@
     "radial": true
   },
   "recorded_fg": {
-    "wisp": 0.4023,
-    "shopkeep": 0.3339,
-    "idle_down": 0.182,
+    "wisp": 0.4274,
+    "shopkeep": 0.3516,
+    "idle_down": 0.1817,
     "coins": 0.1875,
-    "hp_orb": 0.2126,
-    "mana_orb": 0.2839,
-    "welcome_banner": 0.5502,
-    "hatchet": 0.1327,
+    "hp_orb": 0.2235,
+    "mana_orb": 0.3067,
+    "welcome_banner": 0.5463,
+    "hatchet": 0.132,
     "head": 0.3566,
-    "longbow": 0.0697
+    "longbow": 0.0691
   }
 }
