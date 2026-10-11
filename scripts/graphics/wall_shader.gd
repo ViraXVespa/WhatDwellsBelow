@@ -15,7 +15,7 @@ static func shader() -> Shader:
 	sh.code = """
 shader_type spatial;
 render_mode unshaded, cull_disabled;
-uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_enable;
+uniform sampler2D albedo_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform sampler2D light_tex : source_color, filter_linear;
 uniform vec2 uv_scale = vec2(1.0);
 uniform vec2 uv_off = vec2(0.0);
@@ -45,7 +45,7 @@ vec3 tap_lit(vec2 xz) {
 
 void fragment() {
 	vec2 xz = world_pos.xz;
-	vec2 uv = fract(side_uv * uv_scale + uv_off);
+	vec2 uv = side_uv * uv_scale + uv_off;
 	vec3 c = texture(albedo_tex, uv).rgb;
 	float h = fract(sin(dot(floor(side_uv * 0.25), vec2(127.1, 311.7))) * 43758.5453);
 	float worn = mix(1.0, mix(0.78, 1.0, h), clamp(wear, 0.0, 1.0));

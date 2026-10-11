@@ -11,7 +11,7 @@ static func wrap_shader() -> Shader:
 	sh.code = """
 shader_type spatial;
 render_mode cull_disabled, unshaded, specular_disabled;
-uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_enable;
+uniform sampler2D albedo_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform sampler2D light_tex : source_color, filter_linear;
 uniform vec2 light_origin = vec2(0.0);
 uniform vec2 light_span = vec2(1.0);
@@ -27,7 +27,7 @@ void vertex() {
 	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
 void fragment() {
-	vec2 uv = fract(UV * uv_scale + uv_off);
+	vec2 uv = UV * uv_scale + uv_off;
 	vec3 c = texture(albedo_tex, uv).rgb;
 	if (russet > 0.5) {
 		float l = dot(c, vec3(0.299, 0.587, 0.114));

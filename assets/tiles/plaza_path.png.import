@@ -3,21 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cydugd7648tfl"
-path.s3tc="res://.godot/imported/plaza_path.png-41335f891d26b01215c6a0370bbae50d.s3tc.ctex"
-path.etc2="res://.godot/imported/plaza_path.png-41335f891d26b01215c6a0370bbae50d.etc2.ctex"
+path="res://.godot/imported/plaza_path.png-41335f891d26b01215c6a0370bbae50d.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://assets/tiles/plaza_path.png"
-dest_files=["res://.godot/imported/plaza_path.png-41335f891d26b01215c6a0370bbae50d.s3tc.ctex", "res://.godot/imported/plaza_path.png-41335f891d26b01215c6a0370bbae50d.etc2.ctex"]
+dest_files=["res://.godot/imported/plaza_path.png-41335f891d26b01215c6a0370bbae50d.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

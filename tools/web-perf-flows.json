@@ -3,6 +3,8 @@
   "title-idle": {"about": "Load, sit on the splash (no input) for 6 s.", "steps": [{"phase": "splash"}, {"wait": 6000}, {"shot": "splash"}]},
   "camp-walk": {"about": "Splash, title (Enter on Play - Male), then walk the Placeholdia camp in a square.", "boot": true, "expect_change": [["title", "camp-start"]],
     "steps": [{"shot": "camp-start"}, {"phase": "walk"}, {"hold": "d", "ms": 3000}, {"hold": "s", "ms": 3000}, {"hold": "a", "ms": 3000}, {"hold": "w", "ms": 3000}, {"shot": "camp-end"}]},
+  "camp-zoom": {"about": "Hub ground look at camera zoom 1, 2 and 4 with render scale pinned at 1.0 (?wdb-no-dynres; window.wdbZoom). Shots only; run with --width 1920 --height 1080.", "boot": true, "query": "wdb-playtest&wdb-no-dynres",
+    "steps": [{"eval": "window.wdbZoom(1.0)"}, {"wait": 1500}, {"shot": "z1"}, {"eval": "window.wdbZoom(2.0)"}, {"wait": 1500}, {"shot": "z2"}, {"eval": "window.wdbZoom(4.0)"}, {"wait": 1500}, {"shot": "z4"}, {"eval": "window.wdbZoom(1.0)"}, {"wait": 500}]},
   "camp-idle": {"about": "Camp, stand still with no UI for 4 s: the reference for camp-pause and camp-shop (what the menus add on top of the 3D town).", "boot": true,
     "steps": [{"shot": "camp"}, {"phase": "idle"}, {"wait": 4000}, {"shot": "camp-idle"}]},
   "hub-load": {"about": "Engine load marks only: boots straight into Play (?wdb-load-timing-smoke), prints the Title to Placeholdia breakdown (preload, camp_light, camp build, warmup) as load lines. Frame stats are not meaningful.", "marks_only": true, "query": "wdb-load-timing-smoke",
