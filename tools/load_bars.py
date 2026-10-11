@@ -3,6 +3,9 @@
 Placeholdia loader (scripts/ui/loader.gd, ?wdb-loader-trace).
 
     python tools/load_bars.py --site DIR [--mbps 16] [--tag NAME]
+    python tools/load_bars.py --desktop [--tag NAME]
+
+--desktop runs the game itself (Godot pin, OpenGL on $DISPLAY) twice instead: cold (shader caches cleared) then warm.
 
 Runs headless Chrome twice on one profile: cold (cache empty, network throttled to --mbps) then cached (reload).
 Each run boots straight into Play (?wdb-load-timing-smoke) and samples every 40 ms: the drawn fill ratio of the web bar,
@@ -135,12 +138,41 @@ def chart(runs: dict, path: Path) -> None:
     img.save(path)
 
 
+def desktop(root: Path, timeout_s: int) -> dict:
+    import shutil
+    import subprocess
+    import godot_lib
+
+    exe = str(godot_lib.godot_exe(""))
+    caches = [root / ".godot" / "shader_cache", Path.home() / ".local/share/godot/app_userdata/What Dwells Below/shader_cache",
+              Path.home() / ".local/share/godot/app_userdata/What Dwells Below/vulkan",
+              Path.home() / ".local/share/godot/app_userdata/What Dwells Below/loader_steps.cfg"]
+    runs = {}
+    for name in ("desktop cold", "desktop warm"):
+        if name.endswith("cold"):
+            for c in caches:
+                shutil.rmtree(c, ignore_errors=True) if c.is_dir() else c.unlink(missing_ok=True)
+        r = subprocess.run([exe, "--path", str(root), "--rendering-driver", "opengl3", "--resolution", "1280x720", "--",
+                            "--wdb-load-timing-smoke", "--wdb-loader-trace"], capture_output=True, text=True, timeout=timeout_s)
+        game = []
+        for ln in (r.stdout + r.stderr).splitlines():
+            if ln.startswith("LOADSTEPS "):
+                print(name, ln)
+            if ln.startswith("LOADTRACE "):
+                parts = ln.split(" ", 4)
+                game.append([int(parts[1]), float(parts[2]), float(parts[3]), parts[4] if len(parts) > 4 else ""])
+        t0 = game[0][0] if game else 0
+        runs[name] = {"web": [], "web_gone_ms": 0, "game": [[g[0] - t0] + g[1:] for g in game]}
+    return runs
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = agent_log.std_parser("Chart both loading bars (web landing + in-game) vs time, cold and cached.", json_out=True)
     ap.add_argument("--site", default="", help="Exported web build dir (tools/export_web.py --out DIR).")
     ap.add_argument("--mbps", type=float, default=16.0, help="Cold-run download throttle in Mbit/s (default 16).")
     ap.add_argument("--tag", default="load-bars", help="Output name under _logs/load-bars/.")
     ap.add_argument("--timeout-sec", type=int, default=240)
+    ap.add_argument("--desktop", action="store_true", help="Trace the desktop game (cold + warm shader cache) instead of web.")
     ap.add_argument("--chart", default="", help="Only redraw the chart from a saved _logs/load-bars JSON.")
     args = ap.parse_args(argv)
     root = agent_log.resolve_root(args)
@@ -148,6 +180,9 @@ def main(argv: list[str] | None = None) -> int:
         src = Path(args.chart)
         chart(json.loads(src.read_text(encoding="utf-8")), src.with_suffix(".png"))
         return agent_log.emit_result("PASS", chart=src.with_suffix(".png").as_posix())
+    if args.desktop:
+        runs = desktop(root, args.timeout_sec)
+        return _report(root, args, runs)
     site = Path(args.site).resolve()
 
     class H(http.server.SimpleHTTPRequestHandler):
@@ -181,6 +216,10 @@ def main(argv: list[str] | None = None) -> int:
         runs["cached"] = run(page, url, args.timeout_sec)
         br.close()
     srv.shutdown()
+    return _report(root, args, runs)
+
+
+def _report(root: Path, args, runs: dict) -> int:
     out = root / "_logs" / "load-bars"
     out.mkdir(parents=True, exist_ok=True)
     (out / f"{args.tag}.json").write_text(json.dumps(runs), encoding="utf-8")

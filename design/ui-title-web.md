@@ -63,6 +63,6 @@ Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close 
 
 Visual: full-viewport dim, a paper card, ink heading, status, percent, and a 720×20 ink fill on a brown track. Positions are computed from `get_viewport().get_visible_rect()` so the overlay stays centered on desktop and the no-threads web export.
 
-Play → camp pacing: milestones `P_*` in `scripts/app/flow_hub.gd`, weighted by measured time (preload, camp build, warm-up frame, menu warm, fps settle with per-frame sub-progress). The camp build and the warm-up frame each block for about a second on web; the bar cannot redraw inside them, so it moves on right after.
+Play → camp pacing: each step's share of the bar is its expected time (`scripts/ui/loader_weights.gd`: per-platform defaults measured on web and desktop, then this machine's last runs from `user://loader_steps.cfg`); the fps settle has time-based sub-progress. `python tools/load_bars.py --desktop` charts the desktop loader cold and warm. The camp build and the warm-up frame each block for about a second on web; the bar cannot redraw inside them, so it moves on right after.
 
 Web landing bar (`tools/web_shell.html`): one eased value draws the fill and the %; download bytes fill to 85%; after the last byte the page's main thread is blocked by wasm compile and engine start, so the % label steps aside and the fill eases toward 97% on the compositor (scaleX transition); it reads 100% only when the engine has started.

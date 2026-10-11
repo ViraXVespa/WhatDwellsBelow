@@ -92,27 +92,33 @@ static func play_from_menu_async(host: Node) -> void:
 	LoadTiming.mark("play_begin")
 	if host.loader:
 		host.loader.begin("Placeholdia", App.tr("common.gathering_the_square"))
-		host.loader.stage(Hub.P_START, Hub.P_PRELOAD)
+	Hub.LoadW.begin()
+	if host.loader:
+		host.loader.stage(0.0, Hub.LoadW.after(&"preload"))
 	await host.get_tree().process_frame
 	LoadTiming.mark("loader_paint")
 	UiWarm.start()
 	preload_hub(host)
 	if host.loader:
 		host.loader.set_status(App.tr("app_flow.raising_placeholdia"))
-		host.loader.stage(Hub.P_PRELOAD, Hub.P_CAMP)
+	Hub.LoadW.done(&"preload")
+	if host.loader:
+		host.loader.stage(Hub.LoadW.at(&"camp"), Hub.LoadW.after(&"camp"))
 	await host.get_tree().process_frame
 	LoadTiming.mark("camp_change")
 	host.go_camp()
 	host.ui_open = true
 	var guard: int = await Leg.wait_scene(host, "camp", "Camp", func():
 		if host.loader:
-			host.loader.stage(Hub.P_PRELOAD, Hub.P_CAMP))
+			host.loader.stage(Hub.LoadW.at(&"camp"), Hub.LoadW.after(&"camp")))
 	LoadTiming.mark("camp_ready")
+	Hub.LoadW.done(&"camp")
 	LoadTiming.note("camp_wait_frames", str(guard))
 	await Hub._warmup_hub(host)
 	var scene: Node = host.get_tree().current_scene
 	if host.loader:
 		host.loader.finish()
+	Hub.LoadW.save()
 	host._menu_loading = false
 	if scene and ("player" in scene) and scene.player:
 		scene.player.set_physics_process(true)
