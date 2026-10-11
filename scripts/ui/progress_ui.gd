@@ -163,6 +163,15 @@ func open_quest() -> void:
 	_rebuild_quest()
 	_show()
 
+## Guild receptionist: its own mode and entry (ui-receptionist-tutorial replaces the body; today it is the quest list).
+func open_receptionist() -> void:
+	mode = "receptionist"
+	_drop_sub()
+	if App.prog.quests_offered.is_empty():
+		App.prog.roll_quests(true)
+	Hub.rebuild_receptionist(self)
+	_show()
+
 func _rebuild_inv() -> void:
 	Inv.rebuild_inv(self)
 

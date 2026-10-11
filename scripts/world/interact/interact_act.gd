@@ -24,10 +24,15 @@ static func interact(host: Node3D, who: Node) -> String:
 		if ui and ui.has_method("open_anvil"):
 			ui.open_anvil()
 		return App.tr("interact_act.the_anvil_waits")
-	if host.kind == "quest_board" or host.kind == "receptionist":
+	if host.kind == "quest_board":
 		var ui := ui_node(host)
 		if ui and ui.has_method("open_quest"):
 			ui.open_quest()
+		return App.tr("interact_act.the_guild_has_work")
+	if host.kind == "receptionist":
+		var ui := ui_node(host)
+		if ui and ui.has_method("open_receptionist"):
+			ui.open_receptionist()
 		return App.tr("interact_act.the_guild_has_work")
 	if host.kind == "vendor":
 		var ui := ui_node(host)

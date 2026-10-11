@@ -58,6 +58,10 @@ static func rebuild_quest(ui) -> void:
 		ui.focus_btn = close
 	ui.box.add_child(close)
 
+## Receptionist body. Until ui-receptionist-tutorial lands it shows the same quest list as the notice board.
+static func rebuild_receptionist(ui) -> void:
+	rebuild_quest(ui)
+
 static func rebuild_controls(ui) -> void:
 	ui._clear()
 	ControlsFrame.prepare(ui)
