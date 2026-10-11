@@ -103,8 +103,8 @@ def smoke_args(root: Path, phase: int, verbose: bool, flags: list[str] | None = 
     return args
 
 
-# Godot stderr lines that fail a phase. A lambda whose captured node was freed runs with null (stale UI callback).
-FATAL_ERR = ("SCRIPT ERROR", "Lambda capture at index")
+# Godot stderr lines that fail a phase. "SMOKE FAIL" is what a smoke check prints on a miss (e.g. smoke/marks_check.gd). A lambda whose captured node was freed runs with null (stale UI callback).
+FATAL_ERR = ("SCRIPT ERROR", "Lambda capture at index", "SMOKE FAIL")
 
 # Phase 6 also runs the hub menu open timing (scripts/debug/open_timing.gd): real title -> hub load, then every
 # menu's first and second open; fails when a first open stalls.

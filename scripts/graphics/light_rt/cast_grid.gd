@@ -24,8 +24,9 @@ static func at(casts: Array[Dictionary], ver: int, world: Vector2) -> PackedInt3
 			for cz in range(lo.y, hi.y + 1):
 				for cx in range(lo.x, hi.x + 1):
 					var k := Vector2i(cx, cz)
-					if not _grid.has(k):
-						_grid[k] = PackedInt32Array()
-					(_grid[k] as PackedInt32Array).append(i)
+					## Packed arrays read out of a Dictionary are copies: append to a local and store it back.
+					var ids: PackedInt32Array = _grid.get(k, PackedInt32Array())
+					ids.append(i)
+					_grid[k] = ids
 	var hit: Variant = _grid.get(_key(world.x, world.y))
 	return hit if hit != null else PackedInt32Array()

@@ -32,9 +32,10 @@ static func _build(lim: float) -> void:
 			continue
 		var p: Vector3 = (e as Node3D).global_position
 		var k: Vector2i = _key(p.x, p.z)
-		if not _grid.has(k):
-			_grid[k] = PackedInt32Array()
-		(_grid[k] as PackedInt32Array).append(i)
+		## Packed arrays read out of a Dictionary are copies: append to a local and store it back.
+		var ids: PackedInt32Array = _grid.get(k, PackedInt32Array())
+		ids.append(i)
+		_grid[k] = ids
 
 ## Candidate indices into near_list() around `at`, ascending.
 static func near(at: Vector3, lim: float) -> PackedInt32Array:
