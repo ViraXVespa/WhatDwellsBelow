@@ -63,6 +63,11 @@ func refresh() -> void:
 func _title() -> String:
 	return Prompt.title(self)
 
+## Loads the action script (hub warm-up, so the first interact does not compile it).
+static func warm() -> void:
+	if _act_s == null:
+		_act_s = load("res://scripts/world/interact/interact_act.gd") as GDScript
+
 func _act() -> GDScript:
 	if _act_s == null:
 		_act_s = load("res://scripts/world/interact/interact_act.gd") as GDScript

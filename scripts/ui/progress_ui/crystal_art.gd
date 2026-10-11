@@ -92,6 +92,7 @@ static func _plinth(img: Image) -> void:
 
 static func _slab(img: Image, x0: int, y0: int, x1: int, y1: int, col: Color, stones: int) -> void:
 	var cuts: Array[int] = [x0]
+	@warning_ignore("integer_division")
 	var step: int = maxi(1, (x1 - x0) / stones)
 	for i: int in range(1, stones):
 		cuts.append(clampi(x0 + i * step + (i * 13) % 9 - 4, x0 + 12, x1 - 12))
@@ -119,7 +120,9 @@ static func _spark(img: Image, cx: int, cy: int, r: int) -> void:
 		var half: int = r - dy
 		for x: int in range(cx - half, cx + half + 1):
 			var d: int = absi(x - cx) + dy
+			@warning_ignore("integer_division")
 			var col: Color = PINK_LIT if d < maxi(2, r / 3) else PINK
+			@warning_ignore("integer_division")
 			if x >= cx and y >= cy and d > r / 2:
 				col = PINK.lerp(EDGE, 0.35)
 			_px(img, x, y, col)

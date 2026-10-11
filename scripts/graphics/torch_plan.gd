@@ -229,7 +229,7 @@ static func _span_list(host: Node) -> Array:
 		return raw
 	return []
 
-static func _hall_rhythm(host: Node, hall: PackedByteArray, hall_ix: PackedInt32Array, map_w: int, map_h: int, per: int, used: Dictionary, out: Array[Dictionary]) -> void:
+static func _hall_rhythm(_host: Node, hall: PackedByteArray, hall_ix: PackedInt32Array, map_w: int, map_h: int, per: int, used: Dictionary, out: Array[Dictionary]) -> void:
 	var seed_n := 1
 	if App != null:
 		seed_n = int(App.run_seed) * 17 + int(App.floor_n) * 31

@@ -62,7 +62,9 @@ static func _bricks(img: Image) -> void:
 	var bh := 10
 	for y: int in ART_H:
 		for x: int in ART_W:
+			@warning_ignore("integer_division")
 			var row: int = int(y / bh)
+			@warning_ignore("integer_division")
 			var shift: int = bw / 2 if row % 2 == 1 else 0
 			var lx: int = (x + shift) % bw
 			var ly: int = y % bh

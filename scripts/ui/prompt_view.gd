@@ -198,7 +198,11 @@ static func _swap_glyphs(host: Control, font_size: int, color: Color) -> bool:
 		var action := str(c.get_meta(Chip.META))
 		var tex: Texture2D = Prompts.texture_for(action)
 		var old: Node = c.get_child(0)
-		var glyph: Control = _glyph(tex, font_size) if tex else _lab(Prompts.chip_for(action), font_size, color)
+		var glyph: Control
+		if tex:
+			glyph = _glyph(tex, font_size)
+		else:
+			glyph = _lab(Prompts.chip_for(action), font_size, color)
 		c.remove_child(old)
 		old.queue_free()
 		c.add_child(glyph)

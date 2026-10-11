@@ -53,6 +53,7 @@ static func _warmup_hub(host: Node) -> void:
 		PlayerSetup.ensure_combat_fx(p)
 		for path: String in PLAYER_LAZY:  # first unlocked player tick loads these (~130 ms on web)
 			PlayerTick._gd(path)
+		(load("res://scripts/world/interact.gd") as GDScript).warm()  # first interact compiles interact_act.gd (~8 ms)
 		(load("res://scripts/world/player/player_combat.gd") as GDScript).update_aim_line(p)
 		p.set_physics_process(true)
 	await pump_fps(host, true)

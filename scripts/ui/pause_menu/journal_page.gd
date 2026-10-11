@@ -75,19 +75,19 @@ func _sheets() -> Array[Rect2]:
 	return sheets_in(size, kind, left_share)
 
 ## Sheet rects (local to the page node) for a page of `size`: one sheet, or two split by `share`.
-static func sheets_in(size: Vector2, kind: int, left_share: float) -> Array[Rect2]:
-	var page_h: float = size.y - TOP - BOTTOM
+static func sheets_in(page_size: Vector2, page_kind: int, share_l: float) -> Array[Rect2]:
+	var page_h: float = page_size.y - TOP - BOTTOM
 	var out: Array[Rect2] = []
 	if page_h < 8.0:
 		return out
-	if kind == KIND_TWO:
-		var cols: Array[Rect2] = pair(size.x - PAD * 2.0, left_share)
+	if page_kind == KIND_TWO:
+		var cols: Array[Rect2] = pair(page_size.x - PAD * 2.0, share_l)
 		if cols[0].size.x < 8.0 or cols[1].size.x < 8.0:
 			return out
 		out.append(Rect2(PAD + cols[0].position.x, TOP, cols[0].size.x, page_h))
 		out.append(Rect2(PAD + cols[1].position.x, TOP, cols[1].size.x, page_h))
 		return out
-	var one_w: float = size.x - PAD * 2.0
+	var one_w: float = page_size.x - PAD * 2.0
 	if one_w < 8.0:
 		return out
 	out.append(Rect2(PAD, TOP, one_w, page_h))

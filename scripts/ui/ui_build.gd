@@ -9,8 +9,8 @@ const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 static var _empty: StyleBoxEmpty
 
 ## A label for a frame's chrome: named, never takes the mouse.
-static func chrome_label(node_name: String, size_px: int, col: Color, wrap: bool, text: String = "") -> Label:
-	var lab: Label = ThemeS.lab(text, size_px, col, HORIZONTAL_ALIGNMENT_CENTER, wrap)
+static func chrome_label(node_name: String, size_px: int, col: Color, wrap_on: bool, text: String = "") -> Label:
+	var lab: Label = ThemeS.lab(text, size_px, col, HORIZONTAL_ALIGNMENT_CENTER, wrap_on)
 	lab.name = node_name
 	lab.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return lab

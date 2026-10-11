@@ -86,6 +86,7 @@ static func awning(w: int, h: int) -> Texture2D:
 			if y > hem:
 				continue
 			var px: Color = OLIVE
+			@warning_ignore("integer_division")
 			if ((x / 4) + (y / 4)) % 2 == 0:
 				px = px.lerp(Color(0, 0, 0, 1), 0.08)
 			if y < 10:
@@ -136,6 +137,7 @@ static func herb() -> Texture2D:
 	img.fill(Color(0, 0, 0, 0))
 	var leaf: Color = Color(0.28, 0.38, 0.18, 1)
 	for y: int in range(8, 38):
+		@warning_ignore("integer_division")
 		var half: int = 3 + ((y / 6) % 3)
 		for x: int in range(9 - half, 9 + half):
 			img.set_pixel(x, y, leaf if (x + y) % 3 != 0 else leaf.lerp(Color(0.5, 0.55, 0.28, 1), 0.4))
