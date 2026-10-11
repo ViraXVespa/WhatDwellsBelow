@@ -17,6 +17,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import os
+
 import numpy as np
 from PIL import Image
 
@@ -175,6 +177,50 @@ def guided(I: np.ndarray, p: np.ndarray, r: int, eps: float) -> np.ndarray:
     a = (cv2.blur(I * p, k) - mI * mp) / (cv2.blur(I * I, k) - mI * mI + eps)
     b = mp - a * mI
     return cv2.blur(a, k) * I + cv2.blur(b, k)
+
+
+def sparkles(rgb, alpha, col, solid0, wide, plate):
+    """Small paint pieces inside a glow (sparkles) are paint over glow over plate. Their pixels are unmixed
+    against what lies behind them (the source just around the sparkle) with the least alpha that keeps the
+    colour in range, then composited over the keyed glow carried in from around them: clean dots in their
+    own colour, the glow continuous underneath."""
+    n, lab, st, _ = cv2.connectedComponentsWithStats(solid0.astype(np.uint8), connectivity=8)
+    near_glow = cv2.dilate(wide.astype(np.uint8), np.ones((9, 9), np.uint8)).astype(bool)
+    keep = [i for i in range(1, n) if st[i, cv2.CC_STAT_AREA] < int(2e-3 * solid0.size)]
+    sp = np.isin(lab, keep) & near_glow
+    if os.environ.get('KDBG'):
+        print('sparkles', int(sp.sum()), len(keep))
+    if not sp.any():
+        return alpha, col
+    # the sparkle with its own halo: grow while the source keeps differing from the glow behind it
+    S = cv2.dilate(sp.astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))).astype(bool)
+    ring_m = cv2.dilate(S.astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool) & ~S
+    p = rgb.astype(np.float32)
+    B = colour_field(p, ring_m, (1.5, 4, 10))                     # what is behind: glow over plate
+    ag = colour_field(np.repeat(alpha[..., None], 3, -1), ring_m, (1.5, 4, 10))[..., 0]
+    fg = colour_field(col * alpha[..., None], ring_m, (1.5, 4, 10))  # keyed glow, premultiplied
+    # least alpha with K = (C - (1-a) B) / a inside 0..255
+    up = (p - B) / np.maximum(255.0 - B, 1.0)
+    dn = (B - p) / np.maximum(B, 1.0)
+    a_s = np.clip(np.maximum(up, dn).max(-1), 0.0, 1.0)
+    # JPEG noise in the glow reads as a little alpha: a soft floor, then a light blur (the source is soft too)
+    t = np.clip((a_s - 0.1) / 0.25, 0.0, 1.0)
+    a_s = a_s * t * t * (3 - 2 * t)
+    a_s = cv2.GaussianBlur(a_s.astype(np.float32), (0, 0), 0.8)
+    a_s = np.where(sp, 1.0, a_s)
+    K = np.clip((p - (1 - a_s[..., None]) * B) / np.maximum(a_s[..., None], 1e-3), 0, 255)
+    # no plate chroma beyond the sparkle's own (its halo is the sparkle's colour, not violet/pink)
+    pc = _M @ np.array(plate, np.float32)
+    u = pc / max(float(np.linalg.norm(pc)), 1e-3)
+    own = colour_field(p, sp, (1.5, 4))
+    allow = np.maximum((own @ _M.T) @ u, 0.0)
+    over = np.maximum((K @ _M.T) @ u - allow, 0.0)
+    K = np.clip(K - over[..., None] * _chroma_rgb(u), 0, 255)
+    a_o = a_s + (1 - a_s) * ag
+    c_o = (a_s[..., None] * K + (1 - a_s[..., None]) * fg) / np.maximum(a_o[..., None], 1e-3)
+    alpha = np.where(S, a_o, alpha)
+    col = np.where(S[..., None], c_o, col)
+    return alpha, col
 
 
 def _chroma_rgb(u: np.ndarray) -> np.ndarray:
@@ -385,6 +431,7 @@ def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = Non
         speck = cv2.dilate(np.isin(lab3, small).astype(np.uint8), np.ones((3, 3), np.uint8)).astype(bool) & hueish & (solid | ring_m)
     near_any = cv2.distanceTransform((~(bg | soft)).astype(np.uint8), cv2.DIST_L2, 5) <= 48
     dirty |= solid & near_any & violet & (side >= -43) & (comp_px > 8.0)
+    solid0 = solid.copy()
     soft |= dirty
     solid &= ~dirty
     # a glow is soft paint reaching past the cut edge: glow pixels more than 2 rings out from the solid art.
@@ -449,6 +496,8 @@ def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = Non
         zw = z.astype(np.float32)
         zb = cv2.GaussianBlur(alpha * zw, (0, 0), 1.5) / np.maximum(cv2.GaussianBlur(zw, (0, 0), 1.5), 1e-3)
         alpha = np.where(z & (cv2.distanceTransform((~calm).astype(np.uint8), cv2.DIST_L2, 5) <= 6), zb, alpha)
+    if wide.any():
+        alpha, col = sparkles(rgb, alpha, col, solid0, wide, plate)
     # JPEG fringe on solid outline paint: magenta excess above the art colour removed, alpha untouched
     band = solid & cv2.dilate((bg | glow).astype(np.uint8), np.ones((4 * ring + 3, 4 * ring + 3), np.uint8)).astype(bool)
     col = despill(col, G, band)
