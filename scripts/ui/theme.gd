@@ -63,7 +63,6 @@ static func lab(
 	if outline:
 		l.add_theme_color_override("font_outline_color", Tok.OUTLINE)
 		l.add_theme_constant_override("outline_size", Tok.OUTLINE_SIZE)
-	BtnSkin.watch(l, "label", [col])
 	return l
 
 static func btn(t: String, cb: Callable, enabled: bool = true, role: String = "secondary") -> Button:

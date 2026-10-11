@@ -2,6 +2,7 @@
 
 ## Title Archives browser. Shared two-column shell.
 
+const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const Docs := preload("res://scripts/data/archives/docs.gd")
 const ArchView := preload("res://scripts/ui/archives_ui/ui_view.gd")
@@ -36,6 +37,7 @@ var _path: Label
 
 func _ready() -> void:
 	set_meta("btn_skin", "title")
+	BtnSkin.follow(self)
 	SplitView.setup_overlay(self, "Archives", tr("archives_ui.standalone_snapshots_title_play"))
 	if _info_root:
 		_info_root.gui_input.connect(_on_info_gui)
@@ -43,8 +45,10 @@ func _ready() -> void:
 	http.timeout = 12.0
 	http.request_completed.connect(_http_done)
 	add_child(http)
+	BtnSkin.follow(self, false)
 
 func show_browser() -> void:
+	BtnSkin.follow(self)
 	open = true
 	visible = true
 	App.ui_open = true
@@ -56,6 +60,7 @@ func show_browser() -> void:
 	Split.rebuild(self)
 
 func hide_browser() -> void:
+	BtnSkin.follow(self, false)
 	open = false
 	visible = false
 	mode = "info"

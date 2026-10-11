@@ -57,9 +57,15 @@ var gear_hint: Control
 var gear_page_left: Control
 var gear_page_right: Control
 
+var _skin_mode: String = "\u0000"
+var _skin_name: String = ""
+
 ## Control skin for buttons built in this panel: the active frame's (FrameBase.btn_skin), else neutral.
 func btn_skin() -> String:
-	return FrameSet.btn_skin(self)
+	if _skin_mode != mode:
+		_skin_mode = mode
+		_skin_name = FrameSet.btn_skin(self)
+	return _skin_name
 
 func _ready() -> void:
 	Flow._ready(self)

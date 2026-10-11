@@ -3,8 +3,7 @@ extends Object
 ## Control skins outside the pause journal: neutral (hub plates, recap, anvil), title (title, news, archives) and
 ## per-object ones a frame names (crystal). Palettes: ui_tokens.gd SKINS. A host picks its skin with meta
 ## "btn_skin" or a btn_skin() method (the progress panel asks its active frame: FrameBase.btn_skin). No skin found
-## (the pause journal) = the paper look stays. ThemeS.btn / paint_tab / paint_plate / lab and Plate.plate / edge
-## call watch(); the control is restyled when it enters the tree (or at once if it already has). Buttons a frame
+## (the pause journal) = the paper look stays. ThemeS.btn / paint_tab / paint_plate call watch(); the control is restyled when it enters the tree (or at once if it already has). Buttons a frame
 ## dresses itself (UiBuild.button_base) keep their frame look.
 
 const Tok := preload("res://scripts/ui/ui_tokens.gd")
@@ -17,6 +16,36 @@ static func watch(c: Control, kind: String, data: Array = []) -> void:
 	elif not c.has_meta("skin_wait"):
 		c.set_meta("skin_wait", true)
 		c.ready.connect(restyle.bind(c), CONNECT_ONE_SHOT)
+
+## Skins with "words"/"panel" (title) also recolour ink labels and cream plates: the host calls follow(self) before
+## it builds, and every Label / ColorRect that enters the tree under it is recoloured.
+## follow(host, false) stops it (a host that stays alive while hidden); leaving the tree stops it too.
+static func follow(host: Node, on: bool = true) -> void:
+	if not host.has_meta("skin_follow"):
+		host.set_meta("skin_follow", _tint.bind(host, palette(str(host.get_meta("btn_skin", "")))))
+		host.tree_exiting.connect(follow.bind(host, false))
+	var cb: Callable = host.get_meta("skin_follow")
+	var sig: Signal = host.get_tree().node_added
+	if on and not sig.is_connected(cb):
+		sig.connect(cb)
+	elif not on and sig.is_connected(cb):
+		sig.disconnect(cb)
+
+static func _tint(n: Node, host: Node, p: Dictionary) -> void:
+	if not is_instance_valid(host) or not host.is_ancestor_of(n):
+		return
+	if n is Label:
+		var src: Color = (n as Label).get_theme_color("font_color")
+		var inks: Array = [Tok.INK, Tok.INK_SOFT, Tok.INK_FAINT]
+		for i: int in inks.size():
+			if src.is_equal_approx(inks[i]):
+				(n as Label).add_theme_color_override("font_color", p["words"][i])
+	elif n is ColorRect:
+		var r := n as ColorRect
+		if r.color.is_equal_approx(Tok.PAPER):
+			r.color = p["panel"]
+		elif r.color.is_equal_approx(Tok.RULE):
+			r.color = p["panel_edge"]
 
 ## The skin name for a control: the nearest ancestor that names one, else "".
 static func skin_of(c: Node) -> String:
@@ -38,7 +67,8 @@ static func palette(name: String) -> Dictionary:
 static func restyle(c: Control) -> void:
 	if not is_instance_valid(c):
 		return
-	var p: Dictionary = palette(skin_of(c))
+	var name: String = skin_of(c)
+	var p: Dictionary = palette(name)
 	if p.is_empty():
 		return
 	var kind: String = str(c.get_meta("skin_kind", ""))
@@ -46,24 +76,11 @@ static func restyle(c: Control) -> void:
 	match kind:
 		"btn":
 			if not c.has_meta("frame_dressed"):
-				button(c as Button, p, str(data[0]) if data.size() > 0 else "secondary", false)
+				button(c as Button, name, str(data[0]) if data.size() > 0 else "secondary", false)
 		"tab":
-			button(c as Button, p, str(data[1]) if data.size() > 1 else "secondary", bool(data[0]))
+			button(c as Button, name, str(data[1]) if data.size() > 1 else "secondary", bool(data[0]))
 		"plate":
-			slot(c as Button, p, data[0], data[1], bool(data[2]))
-		"label":
-			if p.has("words"):
-				var src: Color = data[0]
-				var inks: Array = [Tok.INK, Tok.INK_SOFT, Tok.INK_FAINT]
-				for i: int in inks.size():
-					if src.is_equal_approx(inks[i]):
-						c.add_theme_color_override("font_color", p["words"][i])
-		"plate_rect":
-			if p.has("panel"):
-				(c as ColorRect).color = p["panel"]
-		"edge_rect":
-			if p.has("panel_edge"):
-				(c as ColorRect).color = p["panel_edge"]
+			slot(c as Button, name, data[0], data[1], bool(data[2]))
 
 static func box(bg: Color, edge: Color, width: int, foot: int, radius: int) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
@@ -91,8 +108,33 @@ static func ring(p: Dictionary) -> StyleBoxFlat:
 	s.expand_margin_bottom = 2
 	return s
 
-## A button face set. lit = the selected tab/option.
-static func button(b: Button, p: Dictionary, role: String, lit: bool) -> void:
+static var _faces: Dictionary = {}
+
+## Make every skin's button faces once (UiWarm.start), so a menu's first open only hands them out.
+static func prewarm() -> void:
+	for name: String in Tok.SKINS:
+		for role: String in ["secondary", "primary", "danger"]:
+			for lit: bool in [false, true]:
+				var key: String = name + "|" + role + ("|lit" if lit else "")
+				if not _faces.has(key):
+					_faces[key] = _face(palette(name), role, lit)
+
+## A button face set. lit = the selected tab/option. Boxes are shared per skin, role and lit.
+static func button(b: Button, name: String, role: String, lit: bool) -> void:
+	var key: String = name + "|" + role + ("|lit" if lit else "")
+	if not _faces.has(key):
+		_faces[key] = _face(palette(name), role, lit)
+	_wear(b, _faces[key])
+
+static func _wear(b: Button, f: Dictionary) -> void:
+	b.begin_bulk_theme_override()
+	for state: String in f["boxes"]:
+		b.add_theme_stylebox_override(state, f["boxes"][state])
+	for col: String in f["words"]:
+		b.add_theme_color_override(col, f["words"][col])
+	b.end_bulk_theme_override()
+
+static func _face(p: Dictionary, role: String, lit: bool) -> Dictionary:
 	var r: int = int(p["radius"])
 	var fill: Color = p["primary_fill"] if role == "primary" else p["fill"]
 	var edge: Color = p["primary_edge"] if role == "primary" else p["edge"]
@@ -113,35 +155,36 @@ static func button(b: Button, p: Dictionary, role: String, lit: bool) -> void:
 	press.content_margin_top = 8
 	press.content_margin_bottom = 4
 	var off: StyleBoxFlat = box(p["off"], p["edge_off"], 1, 1, r)
-	b.add_theme_stylebox_override("normal", normal)
-	b.add_theme_stylebox_override("hover", hover)
-	b.add_theme_stylebox_override("pressed", press)
-	b.add_theme_stylebox_override("hover_pressed", press)
-	b.add_theme_stylebox_override("focus", ring(p))
-	b.add_theme_stylebox_override("disabled", off)
-	b.add_theme_color_override("font_color", word)
-	b.add_theme_color_override("font_hover_color", p["word_hi"])
-	b.add_theme_color_override("font_focus_color", p["word_hi"])
-	b.add_theme_color_override("font_pressed_color", p["word_hi"])
-	b.add_theme_color_override("font_hover_pressed_color", p["word_hi"])
-	b.add_theme_color_override("font_disabled_color", p["word_off"])
+	return {
+		"boxes": {"normal": normal, "hover": hover, "pressed": press, "hover_pressed": press, "focus": ring(p), "disabled": off},
+		"words": {"font_color": word, "font_hover_color": p["word_hi"], "font_focus_color": p["word_hi"],
+			"font_pressed_color": p["word_hi"], "font_hover_pressed_color": p["word_hi"], "font_disabled_color": p["word_off"]},
+	}
 
-## Gear slot / item cell: the frame's slot face, tinted by rarity, rarity edge when it has one.
-static func slot(b: Button, p: Dictionary, fill: Color, border: Color, on: bool) -> void:
+## Gear slot / item cell: the frame's slot face, tinted by rarity, rarity edge when it has one. Shared per look.
+static func slot(b: Button, name: String, fill: Color, border: Color, on: bool) -> void:
+	var key: String = "slot|%s|%s|%s|%s" % [name, fill.to_html(), border.to_html(), on]
+	if not _faces.has(key):
+		_faces[key] = _slot_face(palette(name), fill, border, on)
+	_wear(b, _faces[key])
+
+static func _slot_face(p: Dictionary, fill: Color, border: Color, on: bool) -> Dictionary:
 	var r: int = int(p["radius"])
 	var face: Color = p["slot"]
 	if fill.a > 0.05 and (fill.r + fill.g + fill.b) < 2.7:
 		face = face.lerp(Color(fill.r, fill.g, fill.b, face.a), 0.30)
 	var edge: Color = border if border.a > 0.4 else p["slot_edge"]
-	var lit: Color = face.lightened(0.12)
-	b.add_theme_stylebox_override("normal", box(face, p["glow"] if on else edge, 2 if on else 1, 3 if on else 2, r))
-	b.add_theme_stylebox_override("hover", box(lit, p["edge_hi"], 1, 2, r))
-	b.add_theme_stylebox_override("pressed", box(face.darkened(0.12), p["edge_hi"], 1, 1, r))
-	b.add_theme_stylebox_override("focus", ring(p))
-	b.add_theme_stylebox_override("disabled", box(Color(face.r, face.g, face.b, 0.22), Color(p["slot_edge"].r, p["slot_edge"].g, p["slot_edge"].b, 0.35), 1, 1, r))
-	b.add_theme_color_override("font_color", Tok.INK)
-	b.add_theme_color_override("font_hover_color", Tok.INK)
-	b.add_theme_color_override("font_focus_color", Tok.INK)
+	var se: Color = p["slot_edge"]
+	return {
+		"boxes": {
+			"normal": box(face, p["glow"] if on else edge, 2 if on else 1, 3 if on else 2, r),
+			"hover": box(face.lightened(0.12), p["edge_hi"], 1, 2, r),
+			"pressed": box(face.darkened(0.12), p["edge_hi"], 1, 1, r),
+			"focus": ring(p),
+			"disabled": box(Color(face.r, face.g, face.b, 0.22), Color(se.r, se.g, se.b, 0.35), 1, 1, r),
+		},
+		"words": {"font_color": Tok.INK, "font_hover_color": Tok.INK, "font_focus_color": Tok.INK},
+	}
 
 ## Panel box for a skin with a panel colour (title card).
 static func panel_box(name: String) -> StyleBoxFlat:

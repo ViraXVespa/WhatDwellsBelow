@@ -10,6 +10,7 @@ extends Object
 
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const PauseFlow := preload("res://scripts/ui/pause_menu/menu_flow.gd")
+const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
 const HOST_PATH := "res://scripts/ui/progress_ui.gd"
 const FRAME_SET := "res://scripts/ui/progress_ui/frame_set.gd"
 
@@ -19,6 +20,7 @@ static func start() -> void:
 	if _task != -1:
 		return
 	ResourceLoader.load_threaded_request(HOST_PATH)
+	BtnSkin.prewarm()
 	## Web builds have no threads: the art is drawn by finish(), still behind the loader.
 	if not OS.has_feature("threads"):
 		_task = -2

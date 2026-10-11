@@ -15,6 +15,7 @@ var _title_btns: Array = []
 
 func _ready() -> void:
 	set_meta("btn_skin", "title")
+	BtnSkin.follow(self)
 	UiWarm.start()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
