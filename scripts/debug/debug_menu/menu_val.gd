@@ -26,33 +26,28 @@ static func fly(host, name: String) -> void:
 	host.fly.text = "%s  ·  fresh ideal %.2f  ·  progressed ideal %.2f  ·  current %.2f" % [name, f, p, cur]
 
 static func val_sb(_host, sel: bool, edit: bool) -> StyleBoxFlat:
-	var s := StyleBoxFlat.new()
-	s.bg_color = Color(0.08, 0.07, 0.07, 0.55)
-	s.border_color = Color(0.22, 0.18, 0.14, 1)
-	s.set_border_width_all(1)
-	s.set_content_margin_all(8)
-	if sel:
-		s.bg_color = Color(0.22, 0.16, 0.08, 0.95)
-		s.border_color = Color(0.95, 0.78, 0.35, 1)
-		s.set_border_width_all(3)
-	if edit:
-		s.bg_color = Color(0.32, 0.22, 0.08, 1)
-		s.border_color = Color(1, 0.9, 0.45, 1)
-	return s
+	return _val_box(sel, edit, [Color(0.08, 0.07, 0.07, 0.55), Color(0.22, 0.18, 0.14, 1), 8,
+		Color(0.22, 0.16, 0.08, 0.95), 3, Color(0.32, 0.22, 0.08, 1), Color(1, 0.9, 0.45, 1)])
 
 static func val_spin_sb(_host, sel: bool, edit: bool) -> StyleBoxFlat:
+	return _val_box(sel, edit, [Color(0.1, 0.09, 0.08, 1), Color(0.3, 0.24, 0.18, 1), 6,
+		Color(0.18, 0.14, 0.08, 1), 2, Color(0.08, 0.08, 0.1, 1), Color(1, 0.92, 0.5, 1)])
+
+## pal: rest bg, rest border, margin, selected bg, selected border width, editing bg, editing border.
+## Selected always takes the gold border.
+static func _val_box(sel: bool, edit: bool, pal: Array) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
-	s.bg_color = Color(0.1, 0.09, 0.08, 1)
-	s.border_color = Color(0.3, 0.24, 0.18, 1)
+	s.bg_color = pal[0]
+	s.border_color = pal[1]
 	s.set_border_width_all(1)
-	s.set_content_margin_all(6)
+	s.set_content_margin_all(pal[2])
 	if sel:
-		s.bg_color = Color(0.18, 0.14, 0.08, 1)
+		s.bg_color = pal[3]
 		s.border_color = Color(0.95, 0.78, 0.35, 1)
-		s.set_border_width_all(2)
+		s.set_border_width_all(pal[4])
 	if edit:
-		s.bg_color = Color(0.08, 0.08, 0.1, 1)
-		s.border_color = Color(1, 0.92, 0.5, 1)
+		s.bg_color = pal[5]
+		s.border_color = pal[6]
 	return s
 
 static func val_paint(host) -> void:
