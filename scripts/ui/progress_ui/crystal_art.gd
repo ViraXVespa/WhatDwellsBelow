@@ -5,6 +5,7 @@ extends Object
 ## ART_W x ART_H is the source. The frame shows it at 3x, nearest, so the pale rect stays under the gear board.
 
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
+const ArtFill: GDScript = preload("res://scripts/ui/progress_ui/art_fill.gd")
 
 const ART_W: int = 440
 const ART_H: int = 352
@@ -36,12 +37,12 @@ static func body() -> Texture2D:
 	var gem: Array[Vector2i] = [
 		Vector2i(220, 4), Vector2i(14, 50), Vector2i(26, 288), Vector2i(414, 288), Vector2i(426, 50),
 	]
-	_fill(img, gem, GEM)
+	ArtFill.poly(img, gem, GEM)
 	_shade_gem(img)
 	_line(img, 220, 8, 18, 150, GEM_DARK)
 	_line(img, 220, 8, 422, 150, GEM_DARK)
 	_line(img, 30, 52, 410, 52, GEM_DARK)
-	_fill(img, [Vector2i(220, 34), Vector2i(PALE.position.x, PALE.position.y), Vector2i(PALE.position.x, PALE.end.y), Vector2i(PALE.end.x, PALE.end.y), Vector2i(PALE.end.x, PALE.position.y)], FACE)
+	ArtFill.poly(img, [Vector2i(220, 34), Vector2i(PALE.position.x, PALE.position.y), Vector2i(PALE.position.x, PALE.end.y), Vector2i(PALE.end.x, PALE.end.y), Vector2i(PALE.end.x, PALE.position.y)], FACE)
 	_wash_face(img)
 	_plinth(img)
 	_spark(img, 36, 332, 8)
@@ -130,39 +131,6 @@ static func _core(img: Image, cx: int, cy: int) -> void:
 			if d > 12:
 				col = GEM_LIT
 			_px(img, x, y, col)
-
-static func _fill(img: Image, pts: Array[Vector2i], col: Color) -> void:
-	var n: int = pts.size()
-	var miny: int = pts[0].y
-	var maxy: int = pts[0].y
-	for p: Vector2i in pts:
-		miny = mini(miny, p.y)
-		maxy = maxi(maxy, p.y)
-	for y: int in range(miny, maxy + 1):
-		var xs: Array[int] = []
-		for i: int in n:
-			var a: Vector2i = pts[i]
-			var b: Vector2i = pts[(i + 1) % n]
-			if a.y > b.y:
-				var swap: Vector2i = a
-				a = b
-				b = swap
-			if a.y == b.y or y < a.y or y >= b.y:
-				continue
-			var t: float = float(y - a.y) / float(b.y - a.y)
-			xs.append(int(round(float(a.x) + t * float(b.x - a.x))))
-		xs.sort()
-		var j: int = 0
-		while j + 1 < xs.size():
-			var x0: int = xs[j]
-			var x1: int = xs[j + 1]
-			if x0 > x1:
-				var tmp: int = x0
-				x0 = x1
-				x1 = tmp
-			for x: int in range(x0, x1):
-				_px(img, x, y, col)
-			j += 2
 
 static func _line(img: Image, x0: int, y0: int, x1: int, y1: int, col: Color) -> void:
 	var steps: int = maxi(absi(x1 - x0), absi(y1 - y0))
