@@ -19,7 +19,7 @@ Replace the shared quest flow. Receptionist is the lore/tutorial system. Talk us
 ## Talk (lore)
 - Options: Talk and Ask?.
 - Lines change each time the delver re-enters Placeholdia.
-- Seen-tracking: no repeat until the full set has been shown, then it may cycle again.
+- Seen-tracking: no repeat until the full set has been shown, then it may cycle again with the exception of the "First time?" line. That line only appears on the first interaction.
 
 ### Lines (verbatim)
 - First time? I'm sure you'll figure things out, but I'm here if you need me.

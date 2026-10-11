@@ -1,26 +1,38 @@
 # Metal HUD re-theme + danger gem + mana pacing
 
 id: metal-hud-mana
-owner: web
+title: Metal HUD re-theme + danger gem + mana pacing
+owner: build
 status: open
-done-when: User confirms the re-themed HUD, danger gem, and mana pacing feel correct in play
-resume: Open design/tasks/metal-hud-mana.md and continue from the frozen decisions
+done-when: metal-chain HUD strip, danger gem, and mana pacing are in; Vira has seen the strip in play and confirmed the feel
+area: ui
+door: ui
+job: hud
+units: ui.hud
+done:
+
+Your first command, before any file read or memory topic: python tools/start_build_slice.py --door ui --job hud --from-task metal-hud-mana
 
 ## Mandate
+
 Full HUD strip re-theme to metal-chain / dungeon-prisoner language, plus a danger gem indicator and a mana resource that paces special attacks.
 
 ## Frozen decisions
+
 - HUD strip only. Paper/journal look fully replaced by metal-chain / iron / prisoner-in-dungeon visual language. Must respect existing HUD scale setting. Minimap and other layers unchanged.
 - Danger gem: always-visible, shared-frame container on the right side of the strip. Color from expected Threat CL (walk-distance) vs player combat_lv(): solid green when threat <= player CL; transitions to solid yellow at +3; solid red at +7. Mostly transparent gem with animated glow. Settings -> Graphics toggle. Independent of dungeon crystals.
 - Mana: secondary long-term pace limiter for specials (conserve between fights or recover via items). Existing special recovery lengthened so pure-special play is not viable. Regen over time + chance-based mana orbs (like HP orbs) + potions and food also restore mana. Mana bar below HP bar. All numbers tunable in debug menu + design/tunables.md.
 
 ## Wiring left
-- Wire the mana_orb pickup to the real mana: replace the placeholder stub `restore_mana` in `scripts/world/pickup.gd` (it only counts into `mana_stub_total`). Drop chance `enemy_mana_chance`, amount `orb_mana` (`balance.gd`).
+
+- Wire the mana_orb pickup to the real mana: replace the placeholder stub restore_mana in scripts/world/pickup.gd (it only counts into mana_stub_total). Drop chance enemy_mana_chance, amount orb_mana (balance.gd).
 
 ## Open questions
+
 - Exact mana numbers (max, regen rate, special cost, recovery length, orb chance/amount, potion/food mana values). All start as tunables.
 
 ## Likely Source
+
 - revise scripts/ui/hud/hud_view.gd
 - revise scripts/ui/hud/hud_act.gd
 - revise scripts/ui/theme.gd (or new HUD-specific styles)
@@ -32,12 +44,14 @@ Full HUD strip re-theme to metal-chain / dungeon-prisoner language, plus a dange
 - new or revise assets for metal frame / gem if needed
 
 ## Likely Docs
+
 - revise design/ui-hud.md
 - revise design/combat.md
 - revise design/tunables.md
 - revise design/constraints.md if scope note needed
 
 ## Tests that would prove it
+
 - HUD scale still applies correctly.
 - Danger gem color matches Threat vs player CL thresholds.
 - Special cannot be spammed via recovery; mana drains and limits long-term use.
@@ -45,8 +59,10 @@ Full HUD strip re-theme to metal-chain / dungeon-prisoner language, plus a dange
 - Toggle hides the gem.
 - Visual: paper look gone; metal-chain feel present (User confirmation).
 
-## Why parked
-Multi-system change (full visual re-theme + new HUD element + new resource system touching combat, loot, and items). Better as a focused follow-up session than continued discussion in this thread.
+## Notes
+
+Converted from web park to Build handoff. Multi-system (HUD visuals + combat specials + loot + potions/food + settings). Open mana numbers stay as tunables.
 
 ## Art survey
-- Player card and HP/dash/special bars: flat beige card, flat bars. Metal re-theme art: bar frame + trough 9-slice 64x16, card 9-slice 96x96, transparent. High (always on screen). Minimap bezel is outside this task's scope; see ui-png-art. Ref [dungeon-hud-states_01-hud-default](../refs/metal-hud-mana/dungeon-hud-states_01-hud-default.jpg), [dungeon-hud-states_02-hud-buffs-low-hp](../refs/metal-hud-mana/dungeon-hud-states_02-hud-buffs-low-hp.jpg). Ref shots: Bot survey of grok-build-w7 on 2026-10-11.
+
+- Player card and HP/dash/special bars: flat beige card, flat bars. Metal re-theme art: bar frame + trough 9-slice 64x16, card 9-slice 96x96, transparent. High (always on screen). Minimap bezel is outside this task's scope; see ui-png-art. Ref dungeon-hud-states_01-hud-default, dungeon-hud-states_02-hud-buffs-low-hp. Ref shots: Bot survey of grok-build-w7 on 2026-10-11.

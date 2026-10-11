@@ -25,6 +25,7 @@ id | owner | status | title | needs
 --- | --- | --- | --- | ---
 crystal-frame-pink | build | blocked | Crystal frame studs: stop deriving from the mis-keyed pink | rekey-assets
 inventory-consumables | build | open | Potion and food holding, vendor consumable board, dumpster moldy bread | -
+metal-hud-mana | build | open | Metal HUD re-theme + danger gem + mana pacing | -
 rekey-assets | build | open | Rekey assets after the keying changes | -
 ui-ghost-shop-icons | build | open | Ghost shop icons matching consumable board | -
 ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
@@ -32,7 +33,6 @@ ui-quest-board-posters | build | open | Quest board posters plus pause Quest tab
 ui-recap-skills-style | build | open | Recap matches skills page chrome | -
 ui-receptionist-tutorial | build | open | Receptionist as lore/tutorial How-to-Play guide | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
-metal-hud-mana | web | open | Metal HUD re-theme + danger gem + mana pacing | -
 <!-- tasks:end -->
 
 Reference images that a task needs live in `design/refs/<task-id>/`, not in this folder. Tasks link them; checks ignore the refs folder.
