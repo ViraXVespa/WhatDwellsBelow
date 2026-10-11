@@ -14,14 +14,12 @@ compare runs on the same machine only. Not a numbered smoke.
 """
 from __future__ import annotations
 
-import functools
-import http.server
 import json
 import os
 import shutil
 import statistics
 import sys
-import threading
+import time
 from pathlib import Path
 
 _TOOLS = Path(__file__).resolve().parent
@@ -29,6 +27,7 @@ if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
 import agent_log
+import hitch_sink
 import web_perf_lib
 
 JOB = "web-perf"
@@ -41,21 +40,12 @@ SCALAR = ("load_ms", "wall_ms", "wasm_dl_ms", "wasm_compile_ms", "pck_end_ms", "
           "p95_frame_ms", "max_frame_ms", "long_frames", "heap_mb", "wasm_mem_mb", "dom_nodes", "transfer_mb", "page_errors")
 
 
-def serve(site: Path):
-    class Quiet(http.server.SimpleHTTPRequestHandler):
-        def log_message(self, *a):
-            pass
-
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(site)))
-    threading.Thread(target=srv.serve_forever, daemon=True).start()
-    return srv
-
-
 def median(runs: list[dict]) -> dict:
     rep = dict(runs[len(runs) // 2])
     for k in SCALAR:
         rep[k] = round(statistics.median(r[k] for r in runs), 2)
     rep["runs"] = len(runs)
+    rep["hitch_runs"] = [r.get("hitch", []) for r in runs]  # game hitch-log rows per run (hitch_sink.py)
     if len({len(r.get("load_marks", [])) for r in runs}) == 1:  # engine load marks: median of each mark across the runs
         rep["load_marks"] = [[m[0]] + [int(statistics.median(r["load_marks"][i][j] for r in runs)) for j in range(1, 5)]
                              for i, m in enumerate(runs[0].get("load_marks", []))]
@@ -188,7 +178,7 @@ def main(argv: list[str] | None = None) -> int:
     if not url:
         if not (site / "index.html").is_file():
             agent_log.fail("no exported site at %s (python tools/export_web.py --out DIR)" % args.site)
-        srv = serve(site)
+        srv = hitch_sink.serve(site, root)
         url = "http://127.0.0.1:%d/index.html" % srv.server_address[1]
     shots = root / "_logs" / JOB
     shots.mkdir(parents=True, exist_ok=True)
@@ -196,10 +186,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         for n in names:
             steps = (boot if flows[n].get("boot") else []) + flows[n]["steps"]
-            runs = [web_perf_lib.measure(url, chrome, steps, args.long_ms, args.timeout_sec, (args.width, args.height), shots,
+            runs = []
+            for i in range(max(args.repeat, 1)):
+                hitch_sink.STATE["run"] = "%s-%s-%d" % (time.strftime("%Y%m%d-%H%M%S"), n, i)
+                r = web_perf_lib.measure(url, chrome, steps, args.long_ms, args.timeout_sec, (args.width, args.height), shots,
                                          n, flows[n].get("mbps", args.mbps), flows[n].get("query", ""), bool(flows[n].get("audio")),
                                          args.vsync)
-                    for _ in range(max(args.repeat, 1))]
+                r["hitch"] = [h for h in hitch_sink.rows(root, hitch_sink.STATE["run"]) if h.get("ev") == "hitch"]
+                runs.append(r)
             for r in runs:
                 r["invalid"] = health(r) if flows[n].get("playtest") else []
             reps[n] = median(runs)
@@ -219,7 +213,7 @@ def main(argv: list[str] | None = None) -> int:
         bp = root / args.save_baseline
         old = json.loads(bp.read_text(encoding="utf-8")) if bp.is_file() else {"flows": {}}
         old.update({k: v for k, v in full.items() if k != "flows"})
-        old["flows"].update({n: {k: v for k, v in r.items() if k != "assets"} for n, r in reps.items() if not r["invalid"]})
+        old["flows"].update({n: {k: v for k, v in r.items() if k not in ("assets", "hitch", "hitch_runs")} for n, r in reps.items() if not r["invalid"]})
         bp.parent.mkdir(parents=True, exist_ok=True)
         bp.write_text(json.dumps(old, indent=1) + "\n", encoding="utf-8")
     base = json.loads((root / args.baseline).read_text(encoding="utf-8")) if args.baseline else {"flows": {}}
@@ -233,6 +227,9 @@ def main(argv: list[str] | None = None) -> int:
         lines += ["  play %s" % json.dumps(p, sort_keys=True) for p in r.get("play_runs", [])]
         lines += ["  phase %s %s" % (k, " ".join("%s=%s" % (a, b) for a, b in v.items())) for k, v in r["phases"].items()]
         lines += ["  audio %s" % " ".join("%s=%s" % kv for kv in sorted(r["audio"].items()))] if r.get("audio") else []
+        for i, rr in enumerate(r.get("hitch_runs", [])):
+            lines += ["  hitch run%d t=%s dt_ms=%s where=%s nodes=%s draw=%s proc_ms=%s why=%s" % (i, h.get("t"), h.get("dt_ms"), h.get("where"),
+                      h.get("nodes"), h.get("draw"), h.get("proc_ms"), h.get("why", "")) for h in rr if h.get("where") != "boot"]
         lines += ["  big_asset %(file)s %(kb)s KB" % a for a in r["assets"][:4]]
         notes = stuck(flows[n], r["shots"]) + r["invalid"] + check(flows[n], r)
         if args.save_baseline and r["invalid"]:
