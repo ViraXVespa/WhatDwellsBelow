@@ -34,6 +34,7 @@ tools/__pycache__/
 Thumbs.db
 .DS_Store
 *.tmp
+*.bak
 godot-*.log
 godot-*.err
 _godot_*.log
