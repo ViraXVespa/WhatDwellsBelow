@@ -60,6 +60,7 @@ static func ready_floor(host: Node) -> void:
 	LightRtS.reset_floor()
 	LightRtS.maintain(host)
 	LightRtS.maintain(host)
+	(load("res://scripts/graphics/torch_bill.gd") as GDScript).warm(host)
 	HitchLog.mark("dungeon_light")
 	LoadTiming.dmark("light")
 	if App:
