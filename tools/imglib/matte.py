@@ -3,16 +3,15 @@
 Stages (each can dump a debug PNG through `debug=dir`):
   1 denoise   chroma-only median of the YCrCb planes, used to classify (output keeps the drawn RGB)
   2 plate     plate colour per image: median of border pixels near the plate hue (handles drift such as 242,5,181)
-  3 trimap    background = border flood through plate-like chroma + enclosed exact-plate pockets;
-              ring = solid pixels within `ring` px of background; glow = plate-tinted pixels connected to
-              background that are not plate (translucent veil over the plate, incl. a red glow on a pink
-              plate: near-plate bands touching the background are not plate pockets); solid = the rest
-  4 unmix     ring: largest alpha whose colour C = P + (p-P)/a keeps the paint's magenta excess.
-              glow: G = local mean colour of the art behind it; alpha = projection onto the P->G line,
-              colour = unmixed brightness with G's chroma (pixels far off that line use the ring rule)
-  5 despill   magenta excess min(R,B)-G limited to the paint's own (ring, glow, edge paint), then in
-              YCrCb the chroma along the plate's direction beyond the art's is removed (glow, faint ring)
-Solid pixels stay opaque with their drawn RGB. Nothing outside the measured mix gets alpha (no halo).
+  3 trimap    background = border flood through plate-like chroma + enclosed plate pockets, plus soft pixels
+              within the plate's noise of the local plate (drift); solid = paint; everything else (edge ring,
+              glow, plate-mix edge paint such as lavender next to a blue glow) is soft
+  4 unmix     ONE alpha field over all soft pixels (and the plate around a glow): G = the rim paint's colour
+              carried smoothly outward (multi-scale normalised blur); alpha blends, by fit confidence, the
+              projection onto the plate->G line and own-colour C2A (thin lines like a bowstring); a noise
+              floor from the plate's measured noise fades it to 0 (no radius seams, no regime switch)
+  5 despill   plate-direction chroma above G's removed from mixes; magenta excess limited on edge paint
+Solid pixels stay opaque with their drawn RGB. Nothing outside the measured mix gets alpha (no invented halo).
 """
 from __future__ import annotations
 
@@ -292,22 +291,6 @@ def despill(rgb: np.ndarray, F: np.ndarray, mask: np.ndarray) -> np.ndarray:
     out[..., 0] -= cut
     out[..., 2] -= cut
     return np.clip(out, 0, 255)
-
-
-def chroma_despill(rgb: np.ndarray, F: np.ndarray, plate, mask: np.ndarray) -> np.ndarray:
-    """In YCrCb, remove the part of each pixel's chroma that points toward the plate's chroma beyond what
-    the paint behind it (F) has. Hue-correct: a blue glow loses its violet cast, a red glow stays red."""
-    ycc = cv2.cvtColor(np.rint(np.clip(rgb, 0, 255)).astype(np.uint8), cv2.COLOR_RGB2YCrCb).astype(np.float32)
-    fy = cv2.cvtColor(np.rint(F).astype(np.uint8), cv2.COLOR_RGB2YCrCb).astype(np.float32)
-    pc = cv2.cvtColor(np.array(plate, np.uint8).reshape(1, 1, 3), cv2.COLOR_RGB2YCrCb).astype(np.float32)[0, 0, 1:] - 128.0
-    u = pc / max(float(np.linalg.norm(pc)), 1e-3)
-    c = ycc[..., 1:] - 128.0
-    comp = (c * u).sum(-1)
-    allow = np.maximum(((fy[..., 1:] - 128.0) * u).sum(-1), 0.0)
-    cut = np.where(mask, np.clip(comp - allow, 0.0, None), 0.0)
-    ycc[..., 1:] = c - cut[..., None] * u + 128.0
-    back = cv2.cvtColor(np.clip(np.rint(ycc), 0, 255).astype(np.uint8), cv2.COLOR_YCrCb2RGB).astype(np.float32)
-    return np.where(mask[..., None], back, rgb)
 
 
 def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = None, name: str = "key", plate=None):
