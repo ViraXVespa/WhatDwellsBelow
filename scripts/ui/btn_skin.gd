@@ -191,10 +191,13 @@ static func _slot_face(p: Dictionary, fill: Color, border: Color, on: bool) -> D
 
 ## Stats card (gear board "Bonuses" pager) on a host frame: the skin's button face as panel, its words for text.
 static func card(panel: PanelContainer, p: Dictionary, labels: Array) -> void:
-	var s: StyleBoxFlat = box(p["fill"], p["edge"], 1, 2, int(p["radius"]))
-	s.content_margin_left = 10
-	s.content_margin_right = 10
-	panel.add_theme_stylebox_override("panel", s)
+	var key: String = "card|%s" % p["fill"].to_html()
+	if not _faces.has(key):
+		var s: StyleBoxFlat = box(p["fill"], p["edge"], 1, 2, int(p["radius"]))
+		s.content_margin_left = 10
+		s.content_margin_right = 10
+		_faces[key] = s
+	panel.add_theme_stylebox_override("panel", _faces[key])
 	for i: int in labels.size():
 		var l: Label = labels[i]
 		if is_instance_valid(l):
