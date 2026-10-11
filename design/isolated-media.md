@@ -34,7 +34,7 @@ Load `game-asset-core` plus **one** specialist. Do not load other_game_asset_spe
 |---|---|---|---|
 | `tile` | `imagine`, `game-asset-core`, `game-tilesets` | `image_gen` once | World tile / roof / ground / wall. Seamless. Child does not open skill files, retry, or composite. Parent runs the `game-tilesets` 2×2 PIL check. |
 | `character` | `imagine`, `game-asset-core`, `game-character-consistency` | `image_gen` for a new Bible / style candidate; `image_edit` after lock | Character still, facing variant, overlay-on-body. After lock, edit-chain from the locked Bible or body frame. |
-| `i2v` | `imagine`, `game-asset-core`, `game-animation-frames` | `image_to_video` from the staged seed | One unit. Prompt and seed from `tools/i2v_seeds.py`. No fixed 6s/10s clock. Child does not harvest or pack. |
+| `i2v` | `imagine`, `game-asset-core`, `game-animation-frames` | `image_to_video` from the staged seed; walk pins that seed as `first_frame` and `last_frame` via `reference_to_video` | One unit. Prompt and seed from `tools/i2v_seeds.py`. No fixed 6s/10s clock. Child does not harvest or pack. |
 | `ui` | `imagine`, `game-asset-core`, `game-ui-icons` | `image_gen` / `image_edit` | HUD / menu / icon stills. No text in the art. Input glyphs stay `tools/gen_prompt_glyphs.py`. |
 | `still` | `imagine`, `game-asset-core` | `image_gen` / `image_edit` | Fallback only. Prefer a tighter kind. |
 
