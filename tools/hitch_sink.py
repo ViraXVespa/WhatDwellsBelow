@@ -73,21 +73,22 @@ def rows(root: Path, run: str) -> list[dict]:
     return out
 
 
-def main() -> int:
-    import argparse
+def main(argv: list[str] | None = None) -> int:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import agent_log
 
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap = agent_log.std_parser(__doc__.splitlines()[0])
     ap.add_argument("--site", default="docs")
     ap.add_argument("--port", type=int, default=8060)
-    a = ap.parse_args()
-    root = Path(__file__).resolve().parent.parent
+    a = ap.parse_args(argv)
+    root = agent_log.resolve_root(a)
     srv = serve(root / a.site, root, a.port)
     print("http://127.0.0.1:%d/index.html  hitch rows -> %s" % (srv.server_address[1], REL))
     try:
         threading.Event().wait()
     except KeyboardInterrupt:
         srv.shutdown()
-    return 0
+    return agent_log.emit_result("PASS", rows=REL)
 
 
 if __name__ == "__main__":

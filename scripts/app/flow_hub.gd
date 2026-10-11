@@ -8,6 +8,15 @@ const T := preload("res://scripts/data/tunables.gd")
 const UiWarm := preload("res://scripts/ui/ui_warm.gd")
 const PlayerSetup := preload("res://scripts/world/player/player_setup.gd")
 const PlayerTick := preload("res://scripts/world/player/player_tick.gd")
+## Hub loader milestones, weighted by measured time (web, load-timing smoke, ~5.2 s): preload 3 %, camp build 25 %,
+## warm-up frame 15 %, menu warm 22 %, fps settle 35 %. The bar sits at a milestone when it is reached and creeps toward
+## the next one while the step works (scripts/ui/loader.gd stage).
+const P_START := 0.0
+const P_PRELOAD := 0.04
+const P_CAMP := 0.28
+const P_WARM_FRAME := 0.43
+const P_WARM_UI := 0.64
+const P_SETTLE := 0.98
 const PLAYER_LAZY: Array[String] = ["res://scripts/world/player/player_act.gd", "res://scripts/world/player/player_lock.gd", "res://scripts/combat/player_hit.gd"]
 
 static func _warmup_hub(host: Node) -> void:
@@ -16,7 +25,8 @@ static func _warmup_hub(host: Node) -> void:
 		host.loader.set_status(App.tr("flow_hub.warming_things_up_for_you"))
 		if host.loader.has_method("set_solid"):
 			host.loader.set_solid(true)
-		host.loader.set_progress(0.94)
+		host.loader.stage(P_CAMP, P_WARM_FRAME)
+	await host.get_tree().process_frame  # draw the milestone before the blocking warm-up frame
 	var scene: Node = host.get_tree().current_scene
 	# Everything the first seconds in camp would add (dummy, aim line, telegraph) is built and drawn here, under the loader.
 	if scene and scene.has_method("ensure_dummy"):
@@ -42,8 +52,8 @@ static func _warmup_hub(host: Node) -> void:
 		p.loc_t = 0.0
 		p.walk_t = 0.0
 		RenderingServer.force_draw()
-		if host.loader:
-			host.loader.set_progress(0.97)
+	if host.loader:
+		host.loader.stage(P_WARM_FRAME, P_WARM_UI)
 	LoadTiming.mark("warmup_gpu")
 	await UiWarm.finish(scene)
 	LoadTiming.mark("warmup_ui")
@@ -56,9 +66,11 @@ static func _warmup_hub(host: Node) -> void:
 		(load("res://scripts/world/interact.gd") as GDScript).warm()  # first interact compiles interact_act.gd (~8 ms)
 		(load("res://scripts/world/player/player_combat.gd") as GDScript).update_aim_line(p)
 		p.set_physics_process(true)
+	if host.loader:
+		host.loader.stage(P_WARM_UI, P_SETTLE)
 	await pump_fps(host, true)
 	if host.loader:
-		host.loader.set_progress(0.98)
+		host.loader.set_progress(P_SETTLE)
 	LoadTiming.mark("warmup_end")
 
 static func _hub_player(host: Node, scene: Node) -> Node:
@@ -103,7 +115,7 @@ static func preload_hub(host: Node, _t0: int = 0) -> void:
 	var n: int = paths.size()
 	if n <= 0:
 		if host.loader:
-			host.loader.set_progress(0.70)
+			host.loader.set_progress(P_PRELOAD)
 		return
 	LoadTiming.mark("preload_begin")
 	LoadTiming.note("files", str(n))
@@ -119,7 +131,7 @@ static func preload_hub(host: Node, _t0: int = 0) -> void:
 		ResourceLoader.load(path)
 		LoadTiming.note("file", App.tr("flow_hub.dt") % [path.get_file(), Time.get_ticks_msec() - t_file])
 		if host.loader:
-			host.loader.set_progress(0.08 + float(i + 1) / float(n) * 0.62)
+			host.loader.stage_at(P_START, P_PRELOAD, float(i + 1) / float(n))
 		i += 1
 	LoadTiming.mark("preload_end")
 	LoadTiming.note("preload_got", str(n))
@@ -150,6 +162,8 @@ static func pump_fps(host: Node, hub: bool) -> void:
 		await host.get_tree().process_frame
 		last_dt = int((Time.get_ticks_usec() - t0) / 1000.0)
 		n += 1
+		if hub and host.loader and bool(host.loader.get("open")):
+			host.loader.stage_at(P_WARM_UI, P_SETTLE, float(n) / float(T.WARM_FRAMES_MAX))
 		good = good + 1 if last_dt <= 17 else 0
 		steady = steady + 1 if prev_dt >= 0 and absi(last_dt - prev_dt) <= int(T.WARM_STEADY_MS) else 0
 		prev_dt = last_dt

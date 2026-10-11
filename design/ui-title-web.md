@@ -54,16 +54,15 @@ Play / Updates / Archives drop to `FOCUS_NONE` while the overlay is open. Close 
 
 `CanvasLayer` layer 110 on `App`. Survives scene changes. Title → Placeholdia uses `App.play_from_menu` → `AppFlow.play_from_menu_async`.
 
-- `begin(heading, status)` shows the overlay and seeds the bar so it is never stuck at 0%.
+- `begin(heading, status)` shows the overlay at 0%.
 - `set_status(text)`
-- `set_progress(0..1)` only raises the target.
-- `_process` eases `_shown` toward the target.
-- `finish()` snaps to 100%, hides, calls `App.wake_web_pad()`.
+- `set_progress(v)` marks a milestone really reached (capped at 99%); `stage(from, to)` starts a step: the bar eases to `from`, then creeps toward `to` while the step works; `stage_at(from, to, u)` is sub-progress inside a step. The shown value never goes back.
+- The fill and the % label draw the same value (label floored, 100% only from `finish()`).
+- `finish()` fills to 100%, hides, calls `App.wake_web_pad()`.
+- `?wdb-loader-trace` prints one `LOADTRACE` row per frame; `python tools/load_bars.py --site DIR` charts both bars cold and cached.
 
 Visual: full-viewport dim, a paper card, ink heading, status, percent, and a 720×20 ink fill on a brown track. Positions are computed from `get_viewport().get_visible_rect()` so the overlay stays centered on desktop and the no-threads web export.
 
-Play → camp pacing in `scripts/app/app_flow.gd`:
-- Preload listed hub assets up to about 70%, with status lines for camp / tiles / buildings / delver / music.
-- Ease toward 90% while still on the title scene.
-- `go_camp()` (scene instantiate may hitch; the bar is already near the end).
-- After camp is ready, ease 92% → 100% with “The square holds.”, then hide.
+Play → camp pacing: milestones `P_*` in `scripts/app/flow_hub.gd`, weighted by measured time (preload, camp build, warm-up frame, menu warm, fps settle with per-frame sub-progress). The camp build and the warm-up frame each block for about a second on web; the bar cannot redraw inside them, so it moves on right after.
+
+Web landing bar (`tools/web_shell.html`): one eased value draws the fill and the %; download bytes fill to 85%; after the last byte the page's main thread is blocked by wasm compile and engine start, so the % label steps aside and the fill eases toward 97% on the compositor (scaleX transition); it reads 100% only when the engine has started.
