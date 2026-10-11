@@ -16,7 +16,10 @@ Checks per picture (limits in keytest_expect.json, "default" plus per-name overr
   rise, corr    round glows ("radial": true), by radius beyond the hard edge in 2 px steps, per 10 deg sector:
                 the glow's intensity over black must not dip and climb again (rise: 90th pct of the largest
                 climb above the running minimum; two rings fail it) and the alpha must follow the source's
-                glow strength (corr)
+                glow strength (corr); rough = largest 2nd difference of the 1 px alpha profile (kinks), noise =
+                std of high-pass alpha in the glow (blotches), tail = alpha's 2% extent / the source glow's
+  plate_hue_px  visible plate-touched pixels still magenta or lavender (within 30 deg of the plate hue, up to
+                60 deg on its violet side, saturated, bright), anywhere incl. enclosed pockets
   halo          share of the foreground that is soft and more than 4 px beyond the solid art (glow kept)
   interior      share of paint pixels (more than 3 px from transparency and from any plate-tinted source
                 pixel, magenta excess > 12) that are opaque (minimum). Edges and glows outside the hard edge are partial by design; `solid` (opaque share
@@ -125,8 +128,14 @@ def measure(src: Image.Image, keyed: Image.Image, stats: dict) -> dict:
     tint = np.where((_hd(col) + 7 < _hd(art)) & zone, tint, 0.0)
     tint_p95 = float(np.percentile(tint[soft], 95)) if soft.any() else 0.0
     halo = soft & ~_near(a == 255, 4)
+    # plate hue left anywhere (incl. enclosed pockets): visible, plate-touched source pixels whose colour is
+    # within 30 deg of the plate hue or up to 60 deg on its violet side, saturated and bright (magenta,
+    # lavender); the art's own blues and purples outside that window or dark do not count
+    hsv = cv2.cvtColor(np.clip(col, 0, 255).astype(np.uint8), cv2.COLOR_RGB2HSV_FULL).astype(np.int32)
+    hue_left = vis & (src_ex > 6) & (_hd(col) + 14 < _hd(art)) & ((np.abs(side) <= 21) | ((side < 0) & (side >= -43))) & (hsv[..., 1] >= 50) & (hsv[..., 2] >= 90)
     return {
         "plate_tint": round(tint_p95, 1),
+        "plate_hue_px": int(hue_left.sum()),
         "halo": round(float(halo.sum()) / fg, 4),
         "plate_left": round(float((vis & near_plate).sum()) / fg, 5),
         "magenta_left": round(float((vis & (ex > 40) & on_hue & bright & _near(~vis, 4)).sum()) / fg, 5),
@@ -139,9 +148,10 @@ def measure(src: Image.Image, keyed: Image.Image, stats: dict) -> dict:
 
 
 def radial(src: Image.Image, keyed: Image.Image, plate: np.ndarray, span: int = 60, sectors: int = 36):
+    import cv2
     """Round glows (orbs): profiles by radius beyond the opaque art, per angular sector.
 
-    Returns (rise, corr): rise = 90th percentile over sectors of the largest climb, above the running
+    Returns rise, corr, rough, noise, tail (see the module docstring). rise = 90th percentile over sectors of the largest climb, above the running
     minimum, of the glow's premultiplied intensity seen over black (a dark gap then a brighter band = two
     rings); corr = correlation of the mean alpha profile with the source's glow strength (the source pixel's
     position on the plate -> rim-colour line)."""
@@ -182,7 +192,19 @@ def radial(src: Image.Image, keyed: Image.Image, plate: np.ndarray, span: int = 
         m = (rel >= b0) & (rel < b0 + 2)
         A.append(float(a[m].mean()))
         S.append(float(st[m].mean()))
-    return round(float(np.percentile(rises, 90)), 4), round(float(np.corrcoef(A, S)[0, 1]), 4)
+    # 1 px profile out to 90 px: roughness (largest second difference: kinks, plateaus) and tail extent (where
+    # the alpha falls below 2% of its rim value vs where the source glow falls below 2% above its far level)
+    A1 = np.array([a[(rel >= b) & (rel < b + 1)].mean() for b in range(90)])
+    S1 = np.array([st[(rel >= b) & (rel < b + 1)].mean() for b in range(90)])
+    rough = float(np.abs(A1[2:] - 2 * A1[1:-1] + A1[:-2]).max())
+    base = float(np.median(S1[70:]))
+    sn = (S1 - base) / max(float(S1[0]) - base, 1e-3)
+    ta, ts = int(np.argmax(A1 < 0.02 * A1[0])), int(np.argmax(sn < 0.02))
+    # blotchiness: high-pass (minus a 2 px Gaussian) alpha in the glow
+    glow = (rel > 0) & (rel < span) & (a > 0.02) & (a < 0.98)
+    noise = float((a - cv2.GaussianBlur(a, (0, 0), 2.0))[glow].std()) if glow.any() else 0.0
+    return {"rise": round(float(np.percentile(rises, 90)), 4), "corr": round(float(np.corrcoef(A, S)[0, 1]), 4),
+            "rough": round(rough, 4), "noise": round(noise, 4), "tail": round(ta / max(ts, 1), 2)}
 
 
 def check(name: str, m: dict, exp: dict, recorded: dict) -> list[str]:
@@ -199,6 +221,14 @@ def check(name: str, m: dict, exp: dict, recorded: dict) -> list[str]:
         bad.append(f"interior {m['interior']} < {lim.get('interior', 0.995)}")
     if name in recorded and abs(m["fg"] - recorded[name]) > lim.get("fg_tol", 0.01):
         bad.append(f"fg {m['fg']} vs recorded {recorded[name]} (+-{lim.get('fg_tol', 0.01)})")
+    if m["plate_hue_px"] > lim.get("plate_hue_px", 20):
+        bad.append(f"plate_hue_px {m['plate_hue_px']} > {lim.get('plate_hue_px', 20)} (magenta/lavender left)")
+    if "rough" in m:
+        for key, lo, hi, txt in (("rough", None, 0.035, "radial alpha kinks"), ("noise", None, 0.012, "blotchy glow"),
+                                 ("tail", 0.7, None, "glow cut short of the source's")):
+            lim_k = lim.get(key + ("_min" if lo is not None else "_max"), lo if lo is not None else hi)
+            if (lo is not None and m[key] < lim_k) or (hi is not None and m[key] > lim_k):
+                bad.append(f"{key} {m[key]} vs {lim_k} ({txt})")
     if m["plate_tint"] > lim.get("plate_tint", 6.0):
         bad.append(f"plate_tint {m['plate_tint']} > {lim.get('plate_tint', 6.0)}")
     if "rise" in m and m["rise"] > lim.get("rise_max", 0.02):
@@ -265,7 +295,7 @@ def main(argv: list[str] | None = None) -> int:
         m["repeat"] = np.array_equal(np.array(keyed), np.array(again))
         if in_repo and exp.get(name, {}).get("radial"):
             pl = np.array([int(stats["plate"][i:i + 2], 16) for i in (1, 3, 5)], np.float32)
-            m["rise"], m["corr"] = radial(src, keyed, pl)
+            m.update(radial(src, keyed, pl))
         bad = check(name, m, exp, recorded) if in_repo else check(name, m, {"default": exp.get("default", {})}, {})
         fails += int(bool(bad))
         lines.append(f"{'FAIL' if bad else 'ok  '} {name} plate={stats.get('plate')} ring={stats.get('ring')} "

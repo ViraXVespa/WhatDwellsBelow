@@ -234,6 +234,8 @@ def unmix(rgb: np.ndarray, plate, solid: np.ndarray, soft: np.ndarray, core: np.
     ph0 = int(cv2.cvtColor(np.array(plate, np.uint8).reshape(1, 1, 3), cv2.COLOR_RGB2HSV_FULL)[0, 0, 0])
     gside = (gh - ph0 + 128) % 256 - 128
     vio = (gside < -8) & (gside >= -64)
+    if mix is not None:
+        vio = vio | mix  # plate-mixed paint: the deeper art's allowance too (rim colour may itself be mixed)
     allow = np.where(vio, np.minimum(allow, np.maximum((deep @ _M.T) @ u, 0.0)), allow)
     # own-colour alpha: the largest a whose C = P + dp/a has no more magenta excess min(R,B)-G than G
     # (excess, not the chroma axis: warm paint such as brown wood shares the plate's Cr but has no excess)
@@ -369,6 +371,18 @@ def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = Non
     dirty = solid & edge & (on_line | violet) & (comp_px - np.maximum((deep_col @ _M.T) @ u, 0.0) > 4.0)
     # lavender within 60 deg of the plate on the violet side that carries plate chroma of its own is plate
     # mix even when the art around it is lavender too (armpit pockets, a wisp's tail)
+    # small specks of plate hue inside or at the edge of the art (plate seen through a tear in cloth, a tip
+    # pixel mixed with the plate): saturated, plate-hued, magenta-heavy and small. Large ones are paint (a robe).
+    hsv_s = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV_FULL).astype(np.int32)
+    speck = np.zeros_like(solid)
+    hueish = np.abs(side) <= 21
+    hueish &= (hsv_s[..., 1] >= 100) & (excess(p32) > 25)
+    specky = solid & hueish
+    n3, lab3, st3, _ = cv2.connectedComponentsWithStats(specky.astype(np.uint8), connectivity=8)
+    small = [i for i in range(1, n3) if st3[i, cv2.CC_STAT_AREA] <= max(128, int(2e-4 * specky.size))]
+    if small:
+        dirty |= np.isin(lab3, small) & solid
+        speck = cv2.dilate(np.isin(lab3, small).astype(np.uint8), np.ones((3, 3), np.uint8)).astype(bool) & hueish & (solid | ring_m)
     near_any = cv2.distanceTransform((~(bg | soft)).astype(np.uint8), cv2.DIST_L2, 5) <= 48
     dirty |= solid & near_any & violet & (side >= -43) & (comp_px > 8.0)
     soft |= dirty
@@ -406,7 +420,15 @@ def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = Non
         d_solid = cv2.distanceTransform((~solid).astype(np.uint8), cv2.DIST_L2, 5)
     fine = cv2.dilate(wide.astype(np.uint8), np.ones((2 * reach + 1, 2 * reach + 1), np.uint8)).astype(bool) & (d_solid > ring)
     soft &= ~bg | fine  # the plate fades into alpha only around a glow
-    alpha, col, G, floor, a_hard = unmix(rgb, plate, solid, soft, core, noise, max(10.0, 1.5 * spread), fine, bg, dirty)
+    alpha, col, G, floor, a_hard = unmix(rgb, plate, solid, soft, core, noise, max(10.0, 1.5 * spread), fine, bg, dirty | speck)
+    if speck.any():
+        # a plate speck is the plate mixed with the paint around it: alpha along plate -> that paint, colour
+        # the paint's (no plate hue left in the art)
+        D = colour_field(p32, solid & ~speck & ~hueish, (2, 6, 18))
+        pd = np.array(plate, np.float32) - D
+        t = ((p32 - D) * pd).sum(-1) / np.maximum((pd * pd).sum(-1), 1.0)
+        alpha = np.where(speck, np.minimum(alpha, np.clip(1.0 - t, 0.0, 1.0)), alpha)
+        col = np.where(speck[..., None], D, col)
     calm = fine & soft
     if calm.any():
         # glow: edge-aware smoothing (guided by the source's luma) kills JPEG blocks, then a smoothstep
