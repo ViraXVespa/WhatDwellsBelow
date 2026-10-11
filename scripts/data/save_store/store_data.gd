@@ -5,6 +5,7 @@ extends RefCounted
 const LocS := preload("res://scripts/app/app_loc.gd")
 const Norm := preload("res://scripts/data/gear_rules/rules_norm.gd")
 const DynRes := preload("res://scripts/graphics/dyn_res.gd")
+const Talk := preload("res://scripts/data/talk_lines.gd")
 
 ## One home for pref/bank defaults: apply() fallbacks, fresh_delver() and App's initial vars all read these.
 const DEF := {
@@ -75,6 +76,7 @@ static func apply(data: Dictionary) -> bool:
 	if p is Dictionary:
 		App.prog.from_meta(p)
 	Norm.normalize_prog(App.prog)
+	Talk.from_save(data.get("talk"))
 	if not App.character_chosen and (App.bank_gold > 0 or App.bank_ore > 0 or App.prog.deepest > 1):
 		App.character_chosen = true
 	var binds: Variant = data.get("binds", [])
@@ -99,6 +101,7 @@ static func fs_kind(raw: String) -> String:
 
 static func fresh_delver() -> void:
 	App.prog.reset_meta()
+	Talk.reset()
 	Norm.normalize_prog(App.prog)
 	App.bank_gold = DEF.bank_gold
 	App.bank_ore = DEF.bank_ore

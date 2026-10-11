@@ -3,6 +3,7 @@ extends RefCounted
 ## Build the save JSON dictionary.
 
 const LocS := preload("res://scripts/app/app_loc.gd")
+const Talk := preload("res://scripts/data/talk_lines.gd")
 static func collect() -> Dictionary:
 	return {
 		"v": 1,
@@ -37,4 +38,5 @@ static func collect() -> Dictionary:
 		"binds": App.collect_binds(),
 		"debug_bal": App.bal.snapshot(),
 		"prog": App.prog.to_meta(),
+		"talk": Talk.to_save(),
 	}

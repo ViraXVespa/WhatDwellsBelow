@@ -10,6 +10,7 @@ const LayoutS := preload("res://scripts/world/camp/layout.gd")
 
 const Banner := preload("res://scripts/world/camp/banner.gd")
 const Prompts := preload("res://scripts/input/prompts.gd")
+const Talk := preload("res://scripts/data/talk_lines.gd")
 var player: CharacterBody3D
 var dummy: CharacterBody3D
 var ui: CanvasLayer
@@ -27,6 +28,7 @@ func _ready() -> void:
 		Build.realize_editor(self, _layout)
 		return
 	App.in_dungeon = false
+	Talk.on_hub_entry()
 	LoadTiming.mark("camp_enter")
 	Build.world(self)
 	LoadTiming.mark("camp_world")
