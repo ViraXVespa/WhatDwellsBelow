@@ -73,4 +73,4 @@ All ranges, costs, stack caps, heal amounts and bonuses go in design/tunables.md
 - Vendor rows: pale bars over the baked stall; shelf/price-tag row 9-slice 96x32. Med.
 - Vendor crate (code X box) and red jar blob: real icons 64x64 transparent. Med.
 - Dumpster Leave: flat white bar; sticker-style button 9-slice 96x32, 2 states. Low.
-Refs camp-npc-panels_01-vendor.png, camp-npc-panels_03-dumpster.png. Ref shots: Bot survey of grok-build-w7 on 2026-10-11 (not committed; /workspace/png-survey/shots on the box).
+Refs [camp-npc-panels_01-vendor](../refs/inventory-consumables/camp-npc-panels_01-vendor.jpg), [camp-npc-panels_03-dumpster](../refs/inventory-consumables/camp-npc-panels_03-dumpster.jpg). Ref shots: Bot survey of grok-build-w7 on 2026-10-11.
