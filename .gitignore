@@ -47,3 +47,4 @@ tools/_scratch.py
 
 # Shot tooling hand-over folder (run_shot_flow.py --publish); Grok Build places files into assets/ when needed
 _out/
+tools/__scratch.py
