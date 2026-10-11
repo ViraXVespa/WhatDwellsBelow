@@ -5,6 +5,8 @@ extends Object
 ##   each *_art.gd) and the progress panel scripts load threaded.
 ## finish(scene): makes the hub's menu host, then opens the heavy menus once under the solid loader so fonts,
 ##   frame art and the gear board are on the GPU, and closes them without saving or sounds.
+## A new menu, tab or object frame: add its row to open_timing.gd first; if its first open is over the budget,
+## open it in one of the steps below (each step is one hidden frame, so keep the list to the heavy ones).
 
 const UiSession := preload("res://scripts/ui/ui_session.gd")
 const PauseFlow := preload("res://scripts/ui/pause_menu/menu_flow.gd")

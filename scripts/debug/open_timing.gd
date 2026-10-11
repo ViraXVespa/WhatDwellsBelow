@@ -22,6 +22,7 @@ static func run_and_quit(tree: SceneTree) -> void:
 static func run(tree: SceneTree) -> bool:
 	var scene: Node = tree.current_scene
 	var player: Node = tree.get_first_node_in_group("player")
+	## A new hub menu or NPC panel gets a row here (and a step in ui_warm.gd if its first open is over budget).
 	var rows: Array = [
 		["anvil", func(): _interact(tree, "anvil", player)],
 		["loadout_crystal", func(): _interact(tree, "loadout_crystal", player)],
@@ -34,10 +35,12 @@ static func run(tree: SceneTree) -> bool:
 		["extraction_gate", func(): scene.world_ui().open_extract("gate", null)],
 		["ghost_shop", func(): scene.world_ui().open_shop(null)],
 		["pause", func(): App.pause_menu.show_menu()],
-		["pause_inventory", func(): App.pause_menu.show_inventory()],
-		["pause_skills", func(): _pause_tab("skills")],
-		["recap", func(): App.recap.play("death")],
 	]
+	## Every pause tab after the first, by id (a new tab is timed without editing this list).
+	for t: Array in App.pause_menu.TABS.slice(1):
+		var id: String = str(t[0])
+		rows.append(["pause_" + id, func(): _pause_tab(id)])
+	rows.append(["recap", func(): App.recap.play("death")])
 	var ok: bool = true
 	var extras: Dictionary = {}
 	for i: int in 10:

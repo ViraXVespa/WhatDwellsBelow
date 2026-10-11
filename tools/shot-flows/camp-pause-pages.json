@@ -4,6 +4,7 @@
   "scene": "camp",
   "hud": 0,
   "settle_ms": 1500,
+  "covers": ["pause:settings", "pause:inventory", "pause:skills"],
   "smoke": true,
   "steps": [
     {"op": "device", "kind": "pad"},

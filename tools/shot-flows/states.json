@@ -3,7 +3,8 @@
   "sources": [
     {"glob": "scripts/ui/progress_ui.gd", "regex": "\\bmode = \"(\\w+)\"", "prefix": "ui:"},
     {"glob": "scripts/ui/progress_ui/*.gd", "regex": "\\bmode = \"(\\w+)\"", "prefix": "ui:"},
-    {"glob": "scripts/world/interact/interact_act.gd", "regex": "\\.kind == \"(\\w+)\"", "prefix": "interact:"}
+    {"glob": "scripts/world/interact/interact_act.gd", "regex": "\\.kind == \"(\\w+)\"", "prefix": "interact:"},
+    {"glob": "scripts/ui/pause_menu.gd", "regex": "const TAB_\\w+ := \"(\\w+)\"", "prefix": "pause:"}
   ],
   "ignore": {
     "interact:quest_item": "pickup, no panel",
