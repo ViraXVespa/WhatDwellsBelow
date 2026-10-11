@@ -37,15 +37,9 @@ static func apply_stagger(host: CharacterBody3D, sec: float) -> void:
 		host.stagger = maxf(host.stagger, sec)
 
 static func float_num(host: CharacterBody3D, amount: int, crit: bool) -> void:
-	var n: Label3D = FloatS.new()
-	n.setup(amount, crit, host.last_glance and not crit)
+	var glance: bool = host.last_glance and not crit
 	host.last_glance = false
-	n.position = host.global_position + Vector3(0.0, host.size_u * 0.7, 0.0)
-	var parent := host.get_parent()
-	if parent:
-		parent.add_child(n)
-	else:
-		host.add_child(n)
+	FloatS.spawn(host, amount, crit, glance, host.size_u * 0.7)
 
 static func die(host: CharacterBody3D) -> void:
 	if host.dead:

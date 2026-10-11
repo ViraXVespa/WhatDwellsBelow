@@ -184,3 +184,4 @@ static func _keep_casts(x0: int, z0: int, tw: int, th: int, lights: Array) -> vo
 			"reach": reach,
 			"kind": str(item.get("kind", "")),
 		})
+	rt._casts_ver += 1

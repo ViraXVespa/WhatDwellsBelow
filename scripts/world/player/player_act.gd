@@ -1,8 +1,9 @@
 extends Object
 
-const Depth := preload("res://scripts/world/depth.gd")
 const Smoke := preload("res://scripts/debug/smoke.gd")
 const FloatS := preload("res://scripts/combat/float_num.gd")
+const Near := preload("res://scripts/world/player/near_interact.gd")
+const Ground := preload("res://scripts/world/player/ground.gd")
 
 static func take_hit(host: Node, raw: float, from_dir: Vector2, crit: bool, src := "") -> void:
 	if host.hp <= 0.0 or host.exiting:
@@ -32,14 +33,7 @@ static func take_hit(host: Node, raw: float, from_dir: Vector2, crit: bool, src 
 		player_die(host)
 
 static func _float(host: Node, amount: int, crit: bool, glance: bool) -> void:
-	var n: Label3D = FloatS.new()
-	n.setup(amount, crit, glance)
-	n.position = host.global_position + Vector3(0.0, 1.35, 0.0)
-	var world := host.get_parent()
-	if world:
-		world.add_child(n)
-	else:
-		host.add_child(n)
+	FloatS.spawn(host as Node3D, amount, crit, glance, 1.35)
 
 static func player_die(host: Node) -> void:
 	if Smoke.hold_player():
@@ -70,15 +64,11 @@ static func play_exit(host: Node, cond: String, killer := "") -> void:
 
 static func tick_exit(host: Node, delta: float) -> void:
 	host.exit_t += delta
-	host.velocity = Vector3.ZERO
-	host.move_and_slide()
-	host.global_position.y = 0.0
+	Ground.ground(host, Vector3.ZERO)
 	host._apply_facing(delta)
 	if host.body:
-		Depth.apply(host.body, host.global_position)
 		host.body.modulate.a = clampf(1.0 - host.exit_t / 0.9, 0.12, 1.0)
-	if host.rig and host.rig.has_method("follow"):
-		host.rig.follow(host.global_position)
+	Ground.follow(host)
 	if host.exit_t >= 0.9:
 		host.exiting = false
 		App.finish_end(host.exit_cond, host.exit_killer)
@@ -123,14 +113,7 @@ static func tick_gather(host: Node, delta: float, move: Vector2) -> void:
 static func refresh_prompt(host: Node) -> void:
 	if App.ui_open:
 		return
-	var best: Node = null
-	var best_d := 1.35
-	for n in host.get_tree().get_nodes_in_group("interact"):
-		if n is Node3D:
-			var d := Vector2((n as Node3D).global_position.x - host.global_position.x, (n as Node3D).global_position.z - host.global_position.z).length()
-			if d < best_d:
-				best_d = d
-				best = n
+	var best: Node = Near.cached(host as Node3D, 1.35)
 	App.interact_locked = false
 	if best and best.get("prompt") != null:
 		App.interact_prompt = str(best.prompt)
@@ -143,14 +126,7 @@ static func refresh_prompt(host: Node) -> void:
 static func try_interact(host: Node) -> void:
 	if App.ui_open or host.interact_lock > 0.0:
 		return
-	var best: Node = null
-	var best_d := 1.25
-	for n in host.get_tree().get_nodes_in_group("interact"):
-		if n is Node3D:
-			var d := Vector2((n as Node3D).global_position.x - host.global_position.x, (n as Node3D).global_position.z - host.global_position.z).length()
-			if d < best_d:
-				best_d = d
-				best = n
+	var best: Node = Near.nearest(host as Node3D, 1.25)
 	if best and best.has_method("interact"):
 		App.interact_locked = false
 		var msg: String = str(best.interact(host))

@@ -41,6 +41,10 @@ var portrait_path := ""
 
 var _prompt_shown := ""
 var _prompt_scheme := ""
+var _lay_key := Vector3(-1.0, -1.0, -1.0)
+var _txt_key: Array = []
+var _boss: Node = null
+var _boss_n := -1
 
 func _ready() -> void:
 	layer = 20

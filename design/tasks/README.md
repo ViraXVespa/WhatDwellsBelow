@@ -32,7 +32,6 @@ ui-recap-skills-style | build | open | Recap matches skills page chrome | -
 ui-receptionist-tutorial | build | open | Receptionist as lore/tutorial How-to-Play guide | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
 metal-hud-mana | web | open | Metal HUD re-theme + danger gem + mana pacing | -
-opt-005 | bot | open | Hot-path optimization: remove unforced full-list walks and repeated lookups | -
 <!-- tasks:end -->
 
 Reference images that a task needs live in `design/refs/<task-id>/`, not in this folder. Tasks link them; checks ignore the refs folder.

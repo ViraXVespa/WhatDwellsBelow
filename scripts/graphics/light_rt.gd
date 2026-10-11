@@ -2,6 +2,7 @@ extends Object
 
 ## Origin and span are what the floor and wall shaders already sample. The RT is SUB 4 texels per tile.
 
+const CastGrid := preload("res://scripts/graphics/light_rt/cast_grid.gd")
 const T := preload("res://scripts/data/tunables.gd")
 const Stamp := preload("res://scripts/graphics/light_stamp.gd")
 const HubBake := preload("res://scripts/graphics/light_rt/hub_bake.gd")
@@ -35,6 +36,7 @@ static var _sw := 0
 static var _sh := 0
 static var _sn := 0
 static var _casts: Array[Dictionary] = []
+static var _casts_ver := 0
 static var hub_crystal := Vector2.ZERO
 static var _hub_layout: Node
 
@@ -158,8 +160,8 @@ static func nearest_casts(world: Vector2, cap: int = 3) -> Array[Dictionary]:
 	var limit: int = cap
 	if limit < 1:
 		return out
-	for src in _casts:
-		var item: Dictionary = src
+	for ci in CastGrid.at(_casts, _casts_ver, world):
+		var item: Dictionary = _casts[ci]
 		var xz: Vector2 = item["xz"]
 		var reach: float = float(item["reach"])
 		var dist: float = world.distance_to(xz)

@@ -31,23 +31,36 @@ static func tick(host: Node, delta: float) -> void:
 			SpawnS.spawn_world(host)
 	var pc: Vector2i = host._player_cell()
 	var budget: int = SPAWN_BOOT if delta >= 0.9 else SPAWN_PER_TICK
+	_walk_jobs(host, pc, budget)
+	var PropS: GDScript = load("res://scripts/world/dungeon_props/spawn.gd") as GDScript
+	PropS.tick(host, pc, budget)
+	CrystalNet.place_extras(host)
+	GeoStream.tick(host, delta)
+
+## Job walk. Skipped while nothing it could act on changed: same player cell, job count and stream_all as a
+## walk that activated, slept and deferred nothing (job states only move to "cleared" outside this walk).
+static func _walk_jobs(host: Node, pc: Vector2i, budget: int) -> void:
+	var key: Array = [pc, host.spawn_jobs.size(), host.stream_all]
+	if key == host.get_meta("stream_idle", []):
+		return
 	var spawned := 0
+	var busy := false
 	for job in host.spawn_jobs:
 		var st: String = str(job.state)
 		if st == "cleared":
 			continue
 		var d: int = host._cell_manhattan(pc, Act.job_anchor(job))
 		if st == "pending" and (host.stream_all or d <= STREAM_IN):
+			busy = true
 			if not host.stream_all and spawned >= budget:
 				continue
 			Act.activate_job(host, job)
 			spawned += 1
-		elif st == "live" and not host.stream_all and d >= STREAM_OUT and not Act.job_in_combat(host, job):
-			Act.sleep_job(host, job)
-	var PropS: GDScript = load("res://scripts/world/dungeon_props/spawn.gd") as GDScript
-	PropS.tick(host, pc, budget)
-	CrystalNet.place_extras(host)
-	GeoStream.tick(host, delta)
+		elif st == "live" and not host.stream_all and d >= STREAM_OUT:
+			busy = true
+			if not Act.job_in_combat(host, job):
+				Act.sleep_job(host, job)
+	host.set_meta("stream_idle", [] if busy else key)
 
 static func force_all(host: Node) -> void:
 	host.stream_all = true

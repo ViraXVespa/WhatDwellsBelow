@@ -2,6 +2,7 @@
 
 const Combat := preload("res://scripts/combat/combat.gd")
 const Cover := preload("res://scripts/combat/cover.gd")
+const BreakWalk := preload("res://scripts/combat/player_hit/break_walk.gd")
 
 var dir := Vector2.DOWN
 var speed := 14.0
@@ -134,13 +135,11 @@ func _strike(delta: float) -> bool:
 	var best: Node = null
 	var best_cov := 0.0
 	for e in Combat.enemies():
-		if e == null or not is_instance_valid(e):
+		if e == null or not is_instance_valid(e) or not _near_tip(e as Node3D, tip, rad):
 			continue
 		if e.has_method("is_alive") and not e.is_alive():
 			continue
 		if body_hits.has(e.get_instance_id()):
-			continue
-		if not _near_tip(e as Node3D, tip, rad):
 			continue
 		var cov := _cov_at(e as Node3D)
 		if Cover.connected(cov) and cov >= best_cov:
@@ -190,23 +189,14 @@ func _clear_lock() -> void:
 func _smash_breakables(tip: Vector3, rad: float) -> void:
 	if hurt_player:
 		return
-	var tree := get_tree()
-	if tree == null:
-		return
-	for b in tree.get_nodes_in_group("breakables"):
-		if b == null or not is_instance_valid(b) or not (b is Node3D):
-			continue
+	BreakWalk.smash(get_tree(), tip, rad + 1.6, damage, dir, func(b: Node) -> bool:
 		var id := b.get_instance_id()
-		if seen.has(id):
-			continue
-		if not _near_tip(b as Node3D, tip, rad):
-			continue
-		var cov := Cover.hit_shot(tip, dir, rad, b as Node3D)
-		if not Cover.connected(cov):
-			continue
+		if seen.has(id) or not _near_tip(b as Node3D, tip, rad):
+			return false
+		if not Cover.connected(Cover.hit_shot(tip, dir, rad, b as Node3D)):
+			return false
 		seen[id] = true
-		if b.has_method("take_hit"):
-			b.take_hit(damage, dir, false)
+		return true)
 
 func _hit(e: Node, cov: float) -> void:
 	if "last_glance" in e:

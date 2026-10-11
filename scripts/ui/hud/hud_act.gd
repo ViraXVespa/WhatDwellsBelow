@@ -9,7 +9,11 @@ const Look := preload("res://scripts/input/look_ctrl.gd")
 const View := preload("res://scripts/ui/hud/hud_view.gd")
 
 static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
-	View.layout(host)
+	var text_sc: float = App.ui_text_applied() if App.has_method("ui_text_applied") else 1.0
+	var lay_key := Vector3(App.hud_scale * text_sc, host.get_viewport().get_visible_rect().size.x, 0.0)
+	if lay_key != host._lay_key:
+		host._lay_key = lay_key
+		View.layout(host)
 	View.load_portrait(host)
 	var hp := 1.0
 	var maxh := 1.0
@@ -28,7 +32,6 @@ static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
 		else:
 			spec = 1.0
 	fill(host.hp_fill, 280.0, hp / maxh)
-	host.hp_lab.text = App.tr("hud_act.text") % [int(hp), int(maxh)]
 	var pot: Dictionary = App.prog.slots.get("potion", {})
 	var pn := int(pot.get("stack", 0))
 	var pcd: float = App.prog.potion_cd
@@ -42,12 +45,16 @@ static func refresh(host: CanvasLayer, player: Node, dungeon: Node) -> void:
 	fill(host.spec_fill, 112.0, spec)
 	var clv := App.prog.combat_lv()
 	var slv := App.prog.style_lv()
-	if slv < clv:
-		host.lvl.text = App.tr("hud_act.level") % [clv, style_name(), slv]
-	else:
-		host.lvl.text = App.tr("hud_act.level_2") % clv
-	host.res.text = App.tr("hud_act.g_ore_wood") % [App.gold, App.ore, App.wood]
-	host.floor_lab.text = App.tr("hud_act.f") % App.floor_n
+	var txt_key: Array = [int(hp), int(maxh), clv, slv, App.weapon, App.gold, App.ore, App.wood, App.floor_n, TranslationServer.get_locale()]
+	if txt_key != host._txt_key:
+		host._txt_key = txt_key
+		host.hp_lab.text = App.tr("hud_act.text") % [int(hp), int(maxh)]
+		if slv < clv:
+			host.lvl.text = App.tr("hud_act.level") % [clv, style_name(), slv]
+		else:
+			host.lvl.text = App.tr("hud_act.level_2") % clv
+		host.res.text = App.tr("hud_act.g_ore_wood") % [App.gold, App.ore, App.wood]
+		host.floor_lab.text = App.tr("hud_act.f") % App.floor_n
 	if App.shrine_t > 0.0:
 		host.shrine_icon.visible = true
 		host.shrine_lab.visible = true
@@ -108,11 +115,7 @@ static func fill(r: ColorRect, w: float, t: float) -> void:
 	r.size.x = w * clampf(t, 0.0, 1.0)
 
 static func boss(host: CanvasLayer, dungeon: Node, player: Node) -> void:
-	var b: Node = null
-	if dungeon:
-		var arr := dungeon.get_tree().get_nodes_in_group("boss")
-		if arr.size() > 0:
-			b = arr[0]
+	var b: Node = _boss_node(host, dungeon)
 	if b == null or not is_instance_valid(b) or (b.has_method("is_alive") and not b.is_alive()):
 		host.boss_wrap.visible = false
 		return
@@ -130,3 +133,15 @@ static func boss(host: CanvasLayer, dungeon: Node, player: Node) -> void:
 	if b.get("tag") != null and str(b.tag.text) != "":
 		title = str(b.tag.text)
 	host.boss_lab.text = App.tr("hud_act.text_2") % [title, int(bh), int(bm)]
+
+## First "boss" group node, re-fetched only when the group size changes or the cached node is gone.
+static func _boss_node(host: CanvasLayer, dungeon: Node) -> Node:
+	if dungeon == null:
+		return null
+	var n: int = dungeon.get_tree().get_node_count_in_group("boss")
+	var b: Variant = host._boss
+	if n != host._boss_n or (b != null and not is_instance_valid(b)):
+		host._boss_n = n
+		var arr := dungeon.get_tree().get_nodes_in_group("boss")
+		host._boss = arr[0] if arr.size() > 0 else null
+	return host._boss

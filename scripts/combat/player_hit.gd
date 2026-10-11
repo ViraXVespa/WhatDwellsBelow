@@ -6,6 +6,7 @@ const ProjS := preload("res://scripts/combat/projectile.gd")
 const PlayerLock := preload("res://scripts/world/player/player_lock.gd")
 const Atk := preload("res://scripts/combat/player_hit/hit_atk.gd")
 const Fx := preload("res://scripts/combat/player_hit/hit_fx.gd")
+const BreakWalk := preload("res://scripts/combat/player_hit/break_walk.gd")
 
 static func draw_basic_tele(host: Node, _active: bool) -> void:
 	if host.telegraph == null:
@@ -59,26 +60,20 @@ static func grant_hit_xp(xp: String) -> void:
 	App.prog.skill_grant_hit(xp == "magic")
 
 static func hit_breakables_arc(host: Node, rng: float, arc: float, dmg: float, need_los: bool) -> void:
-	for b in host.get_tree().get_nodes_in_group("breakables"):
-		if b == null or not is_instance_valid(b) or not (b is Node3D):
-			continue
-		if not Cover.connected(Cover.hit_arc(host.global_position, host.aim_dir, rng, arc, b as Node3D)):
-			continue
-		if need_los and not Combat.los(host.global_position, (b as Node3D).global_position, host.get_world_3d()):
-			continue
-		if b.has_method("take_hit"):
-			b.take_hit(dmg, host.aim_dir, false)
+	var o: Vector3 = host.global_position
+	var aim: Vector2 = host.aim_dir
+	var world: World3D = host.get_world_3d()
+	BreakWalk.smash(host.get_tree(), o, rng, dmg, aim, func(b: Node) -> bool:
+		if not Cover.connected(Cover.hit_arc(o, aim, rng, arc, b as Node3D)):
+			return false
+		return not need_los or Combat.los(o, (b as Node3D).global_position, world))
 
 static func hit_breakables_circle(host: Node, origin: Vector3, radius: float, dmg: float, need_los: bool) -> void:
-	for b in host.get_tree().get_nodes_in_group("breakables"):
-		if b == null or not is_instance_valid(b) or not (b is Node3D):
-			continue
+	var world: World3D = host.get_world_3d()
+	BreakWalk.smash(host.get_tree(), origin, radius, dmg, host.aim_dir, func(b: Node) -> bool:
 		if not Cover.connected(Cover.hit_circle(origin, radius, b as Node3D)):
-			continue
-		if need_los and not Combat.los(origin, (b as Node3D).global_position, host.get_world_3d()):
-			continue
-		if b.has_method("take_hit"):
-			b.take_hit(dmg, host.aim_dir, false)
+			return false
+		return not need_los or Combat.los(origin, (b as Node3D).global_position, world))
 
 static func spawn_arrow(host: Node, dir: Vector2, dmg: float, rng: float, spd: float, need_los: bool) -> void:
 	var p: Node3D = ProjS.new()
