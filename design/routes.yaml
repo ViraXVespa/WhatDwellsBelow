@@ -23,6 +23,8 @@ indexes:
 notes_exempt:
   - design/reuse-map.md
   - design/tasks/README.md
+  - design/refs/README.md
+
 
 parked_jobs:
   - design/art-attack-keyframes.md

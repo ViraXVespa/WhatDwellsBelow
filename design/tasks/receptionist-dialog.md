@@ -3,9 +3,9 @@
 id: receptionist-dialog
 owner: build
 status: blocked
-done-when: the receptionist menu flow uses these lines, after the ui-restyle receptionist unit (which only says "Hi")
+done-when: the receptionist menu flow uses these lines, after the ui-receptionist-tutorial task lands the Talk / Ask? flow
 resume: python tools/task.py show receptionist-dialog
-needs: ui-restyle
+needs: ui-receptionist-tutorial
 
 ## Lines (verbatim)
 - First time? I'm sure you'll figure things out, but I'm here if you need me.
