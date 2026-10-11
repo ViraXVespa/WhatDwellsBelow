@@ -50,6 +50,11 @@ Move only when the User names the next phase (except the multi-slice loop below)
 
 The User tells the agent to review the repo.
 
+A Phase 1 review response uses this skeleton and no other findings structure:
+- **Findings** (owning requirement was read and is unmet)
+- **Needs investigation** (owning requirement not yet established)
+- **Meets requirements** (owning requirement was read and is met)
+
 If the agents file already routed here, do not re-read it. Load `design/protocol.md` and `design/constraints.md` only when missing.
 If the first message names a park (a task id or its words), load only that task file and what its `resume` line names, after the law pair, and continue; with a mandate, Phase 2 is optional. A finished park is closed with `task.py done` (`design/tasks/README.md`).
 If the User names build-coop or build-week, there is no gather tool: use `read_summary` only if the User also named a PC job (no game writes). `_logs/sess/` is PC job output.
