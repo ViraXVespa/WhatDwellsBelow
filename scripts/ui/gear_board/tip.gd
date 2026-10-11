@@ -1,5 +1,6 @@
 extends Object
 const TipPlace := preload("res://scripts/ui/tip_place.gd")
+const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
 
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const Text := preload("res://scripts/ui/gear_board/board_text.gd")
@@ -122,6 +123,10 @@ static func _place_now(ui: CanvasLayer) -> void:
 		hide_tip(ui)
 		return
 	lab.text = txt
+	var skin: String = BtnSkin.skin_of(host)
+	if str(host.get_meta("skin_now", "")) != skin:
+		host.set_meta("skin_now", skin)
+		BtnSkin.restyle(host)
 	host.visible = true
 	host.reset_size()
 	var view := ui.get_viewport().get_visible_rect().size

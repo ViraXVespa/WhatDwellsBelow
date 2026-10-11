@@ -79,6 +79,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 	paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	paper.position = card
 	paper.size = card_sz
+	paper.set_meta("paper_tex", true)
 	root.add_child(paper)
 	Plate.edge(root, card, card_sz.x)
 	Plate.edge(root, card + Vector2(0, card_sz.y - 3.0), card_sz.x)
@@ -108,6 +109,7 @@ static func open(parent: Node, title: String, body: String, on_yes: Callable, on
 	, true, "secondary")
 	no.position = Vector2(980, 520)
 	no.size = Vector2(340, 52)
+	ThemeS.BtnSkin.watch(root, "panel")
 	no.shortcut = _cancel_shortcut()
 	root.add_child(no)
 	View.wire_vert([yes, no])

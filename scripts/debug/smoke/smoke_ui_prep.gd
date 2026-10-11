@@ -1,7 +1,7 @@
 extends Object
 
 ## P7 checks for the W7 UI prep helpers: pause tabs by id, Talk lines seen tracking and its save field
-## (round trip, older save without it, malformed data rejected), and the shared tooltip helper.
+## (round trip, older save without it, malformed data rejected), the shared tooltip helper, and popups wearing the host skin (smoke_skins.gd).
 
 const Talk := preload("res://scripts/data/talk_lines.gd")
 const Collect := preload("res://scripts/data/save_store/store_collect.gd")
@@ -12,6 +12,7 @@ const TipHover := preload("res://scripts/ui/tip_hover.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const ItemBoard := preload("res://scripts/ui/item_board.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
+const SmokeSkins := preload("res://scripts/debug/smoke/smoke_skins.gd")
 const _TipHost := preload("res://scripts/debug/smoke/tip_host.gd")
 
 static func run(host: Node) -> bool:
@@ -19,6 +20,7 @@ static func run(host: Node) -> bool:
 	ok = _talk() and ok
 	ok = _tips(host) and ok
 	ok = _board() and ok
+	ok = SmokeSkins.run(host) and ok
 	printerr("P7: ui_prep_ok=" + str(ok))
 	assert(ok, "ui prep checks failed (see P7: lines above)")
 	return ok

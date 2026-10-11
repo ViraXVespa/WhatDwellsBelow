@@ -15,6 +15,7 @@ static func build(host: CanvasLayer, pos: Vector2, size: Vector2, sep: int) -> v
 	host.scroll.focus_mode = Control.FOCUS_NONE
 	host.scroll.follow_focus = true
 	host.add_child(host.scroll)
+	UiBuild.ThemeS.BtnSkin.watch(host.scroll, "scroll")
 	host.box = VBoxContainer.new()
 	host.box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.box.custom_minimum_size = Vector2(1400, 0)

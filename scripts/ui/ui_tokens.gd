@@ -32,6 +32,7 @@ static func fade(col: Color, alpha: float) -> Color:
 
 ## Control skins outside the pause journal (btn_skin.gd paints them; the journal keeps the paper look above).
 ## Keys: fill/hover/press/off (button faces), edge/edge_hi/edge_off, glow (focus ring), word/word_hi/word_off,
+## words (ink, soft, faint on panels) / panel / panel_edge: tooltips, pickers, confirms (BtnSkin "panel").
 ## primary_fill/primary_edge, danger_edge/danger_word, slot/slot_edge (gear slot face: light, so item art reads), ring (focus edge width, default 2). "words"/"panel"/"panel_edge" make a
 ## skin recolour ink labels and plates too (title screens).
 const SKIN_NEUTRAL: Dictionary = {
@@ -41,6 +42,8 @@ const SKIN_NEUTRAL: Dictionary = {
 	"word_hi": Color(1.0, 0.96, 0.82), "word_off": Color(0.55, 0.50, 0.44), "primary_fill": Color(0.30, 0.19, 0.10, 0.98),
 	"primary_edge": Color(0.86, 0.66, 0.30), "danger_edge": Color(0.72, 0.30, 0.20), "danger_word": Color(1.0, 0.74, 0.64),
 	"slot": Color(0.84, 0.76, 0.62, 0.92), "slot_edge": Color(0.45, 0.32, 0.20), "radius": 4,
+	"words": [Color(0.96, 0.90, 0.74), Color(0.86, 0.78, 0.62), Color(0.66, 0.58, 0.46)],
+	"panel": Color(0.10, 0.075, 0.055, 1.0), "panel_edge": Color(0.70, 0.54, 0.27),
 }
 const SKIN_TITLE: Dictionary = {
 	"fill": Color(0.13, 0.095, 0.075, 0.94), "hover": Color(0.22, 0.15, 0.10, 0.97), "press": Color(0.08, 0.06, 0.05, 0.97),
@@ -59,5 +62,7 @@ const SKIN_CRYSTAL: Dictionary = {
 	"word_hi": Color(1.0, 1.0, 1.0), "word_off": Color(0.80, 0.92, 0.94), "primary_fill": Color(0.05, 0.24, 0.30, 0.90),
 	"primary_edge": Color(0.36, 0.80, 0.90), "danger_edge": Color(0.93, 0.30, 0.30), "danger_word": Color(1.0, 0.78, 0.78),
 	"slot": Color(0.86, 0.98, 1.0, 0.85), "slot_edge": Color(0.20, 0.62, 0.74), "radius": 3,
+	"words": [Color(0.92, 1.0, 1.0), Color(0.76, 0.92, 0.95), Color(0.56, 0.74, 0.78)],
+	"panel": Color(0.03, 0.15, 0.19, 1.0), "panel_edge": Color(0.36, 0.80, 0.90),
 }
 const SKINS: Dictionary = {"neutral": SKIN_NEUTRAL, "title": SKIN_TITLE, "crystal": SKIN_CRYSTAL}

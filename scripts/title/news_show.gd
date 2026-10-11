@@ -48,6 +48,7 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 	text_shell.add_child(scroll)
+	BtnSkin.watch(scroll, "scroll")
 	host._news_scroll = scroll
 	var body := RichTextLabel.new()
 	body.bbcode_enabled = true

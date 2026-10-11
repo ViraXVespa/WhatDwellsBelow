@@ -21,31 +21,95 @@ static func watch(c: Control, kind: String, data: Array = []) -> void:
 ## it builds, and every Label / ColorRect that enters the tree under it is recoloured.
 ## follow(host, false) stops it (a host that stays alive while hidden); leaving the tree stops it too.
 static func follow(host: Node, on: bool = true) -> void:
-	if not host.has_meta("skin_follow"):
-		host.set_meta("skin_follow", _tint.bind(host, palette(str(host.get_meta("btn_skin", "")))))
-		host.tree_exiting.connect(follow.bind(host, false))
-	var cb: Callable = host.get_meta("skin_follow")
-	var sig: Signal = host.get_tree().node_added
-	if on and not sig.is_connected(cb):
-		sig.connect(cb)
-	elif not on and sig.is_connected(cb):
-		sig.disconnect(cb)
+	if on:
+		_track(host, palette(str(host.get_meta("btn_skin", ""))))
+	else:
+		_untrack(host)
 
-static func _tint(n: Node, host: Node, p: Dictionary) -> void:
-	if not is_instance_valid(host) or not host.is_ancestor_of(n):
-		return
-	if n is Label:
-		var src: Color = (n as Label).get_theme_color("font_color")
-		var inks: Array = [Tok.INK, Tok.INK_SOFT, Tok.INK_FAINT]
+## Roots whose new descendants get tinted: one node_added listener for all (bound copies of one method would
+## count as one connection), freed roots drop out.
+static var _roots: Dictionary = {}
+
+static func _track(root: Node, p: Dictionary) -> void:
+	_roots[root] = p
+	var sig: Signal = root.get_tree().node_added
+	if not sig.is_connected(_added):
+		sig.connect(_added)
+
+static func _added(n: Node) -> void:
+	for root: Variant in _roots.keys():
+		if not is_instance_valid(root):
+			_roots.erase(root)
+		elif (root as Node).is_ancestor_of(n):
+			tint(n, _roots[root])
+			return
+
+## Ink words, cream plates and rules on one node -> the skin's panel colours.
+static func tint(n: Node, p: Dictionary) -> void:
+	var inks: Array = [Tok.INK, Tok.INK_SOFT, Tok.INK_FAINT]
+	if n is RichTextLabel or n is Label:
+		var key: String = "default_color" if n is RichTextLabel else "font_color"
+		var src: Color = n.get_meta("ink_src", (n as Control).get_theme_color(key))
+		n.set_meta("ink_src", src)
+		if src.is_equal_approx(Tok.DANGER):
+			(n as Control).add_theme_color_override(key, p["danger_word"])
 		for i: int in inks.size():
 			if src.is_equal_approx(inks[i]):
-				(n as Label).add_theme_color_override("font_color", p["words"][i])
+				(n as Control).add_theme_color_override(key, p["words"][i])
 	elif n is ColorRect:
 		var r := n as ColorRect
-		if r.color.is_equal_approx(Tok.PAPER):
+		var src: Color = r.get_meta("ink_src", r.color)
+		r.set_meta("ink_src", src)
+		if Color(src, 1.0).is_equal_approx(Color(Tok.PAPER, 1.0)):
 			r.color = p["panel"]
-		elif r.color.is_equal_approx(Tok.RULE):
+		elif src.is_equal_approx(Tok.RULE):
 			r.color = p["panel_edge"]
+	elif n is TextureRect and n.has_meta("paper_tex"):
+		(n as TextureRect).visible = false
+
+## Scroll bars in the skin: a quiet track, the edge colour for the thumb, the bright edge when hovered/dragged.
+static func scroll(sc: ScrollContainer, name: String, p: Dictionary) -> void:
+	var key: String = "bar|" + name
+	if not _faces.has(key):
+		var track: StyleBoxFlat = box(Color(p["panel"].r, p["panel"].g, p["panel"].b, 0.35), Color(0, 0, 0, 0), 0, 0, 3)
+		track.set_content_margin_all(0)
+		var thumb: StyleBoxFlat = box(p["edge"], Color(0, 0, 0, 0), 0, 0, 3)
+		thumb.set_content_margin_all(5)
+		var lit: StyleBoxFlat = box(p["edge_hi"], Color(0, 0, 0, 0), 0, 0, 3)
+		lit.set_content_margin_all(5)
+		_faces[key] = {"scroll": track, "scroll_focus": track, "grabber": thumb, "grabber_highlight": lit, "grabber_pressed": lit}
+	for bar: ScrollBar in [sc.get_v_scroll_bar(), sc.get_h_scroll_bar()]:
+		bar.begin_bulk_theme_override()
+		for state: String in _faces[key]:
+			bar.add_theme_stylebox_override(state, _faces[key][state])
+		bar.end_bulk_theme_override()
+
+## A popup (tooltip, picker, confirm) under a skinned host: skin face, and every ink label in it (now and later)
+## takes the skin's panel words. No skin = paper stays (journal).
+static func pop(c: Control, name: String, p: Dictionary) -> void:
+	if c is PanelContainer:
+		var key: String = "pop|" + name
+		if not _faces.has(key):
+			var s: StyleBoxFlat = box(p["panel"], p["panel_edge"], 2, 2, int(p["radius"]))
+			s.shadow_color = Color(0, 0, 0, 0.45)
+			s.shadow_size = 6
+			_faces[key] = s
+		c.add_theme_stylebox_override("panel", _faces[key])
+	tint_tree(c, p)
+
+static func tint_tree(root: Node, p: Dictionary) -> void:
+	tint(root, p)
+	for n: Node in root.find_children("*", "", true, false):
+		tint(n, p)
+	if root.has_meta("skin_static"):
+		return
+	_track(root, p)
+	if not root.has_meta("skin_untrack"):
+		root.set_meta("skin_untrack", true)
+		root.tree_exiting.connect(_untrack.bind(root))
+
+static func _untrack(root: Node) -> void:
+	_roots.erase(root)
 
 ## The skin name for a control: the nearest ancestor that names one, else "".
 static func skin_of(c: Node) -> String:
@@ -79,6 +143,10 @@ static func restyle(c: Control) -> void:
 				button(c as Button, name, str(data[0]) if data.size() > 0 else "secondary", false)
 		"tab":
 			button(c as Button, name, str(data[1]) if data.size() > 1 else "secondary", bool(data[0]))
+		"panel":
+			pop(c, name, p)
+		"scroll":
+			scroll(c as ScrollContainer, name, p)
 		"card":
 			card(c as PanelContainer, p, data)
 		"plate":

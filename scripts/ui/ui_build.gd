@@ -97,6 +97,7 @@ static func states(button: Button, normal: StyleBox, hover: StyleBox, pressed: S
 static func bars(scroll: ScrollContainer, shown: bool) -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO if shown else ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO if shown else ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	ThemeS.BtnSkin.watch(scroll, "scroll")
 
 ## Tooltip shell: the dark panel every tooltip uses.
 static func tip_panel(z: int) -> PanelContainer:
@@ -105,6 +106,8 @@ static func tip_panel(z: int) -> PanelContainer:
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.z_index = z
 	panel.add_theme_stylebox_override("panel", ThemeS.sb(Color(0.09, 0.07, 0.05, 0.97), Color(0.85, 0.68, 0.32)))
+	panel.set_meta("skin_static", true)
+	ThemeS.BtnSkin.watch(panel, "panel")
 	return panel
 
 ## Tooltip text: ink with the shared outline.

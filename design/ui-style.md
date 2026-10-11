@@ -15,6 +15,7 @@ One place per job, so a screen only fills in what is its own. Existing screens r
 - A host names its skin with meta `btn_skin` or a `btn_skin()` method; the progress panel asks its open frame (`BTN_SKIN` const on the frame script, else `neutral`). No skin found = paper (the journal).
 - `ThemeS.btn`, `paint_tab`, `paint_plate`, `lab` and `Plate.plate` / `edge` register the control; it is restyled on entering the tree. Frame-dressed buttons (`UiBuild.button_base`) keep their frame look.
 - The gear board stats card ("Bonuses" pager) takes the host skin too (`BtnSkin.card`); crystal has one button look (primary = secondary), so the loadout matches the transport pages.
+- Popups take the host skin too (`watch(panel, "panel")`: skin face, ink labels in it turn to the skin `words`, cream/rule rects to `panel`/`panel_edge`, the confirm paper hides): gear tooltips (`UiBuild.tip_panel`, re-skinned when the panel changes frame), the slot picker (`gear_board/sub_open.gd`, its Back too), Analyze/Forge pickers, `confirm_dlg.gd`. Scroll bars (`UiBuild.bars`, `scroll_box.gd`, split columns, news): `watch(scroll, "scroll")`. A new frame gets all of it from `BTN_SKIN`. P7 `smoke_skins.gd` checks it.
 - Focus is a ring drawn over the state (bright edge + glow), so pad focus reads on every face. Gear slots stay light so item art reads.
 - The dungeon floor crystal pages sit on the crystal art (`crystal_ui/ui_util.gd` `crystal_panel`, same place and scale as the loadout frame); long lists scroll with focus.
 

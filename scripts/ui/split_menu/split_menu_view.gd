@@ -39,6 +39,7 @@ static func tune_scroll(sc: ScrollContainer) -> void:
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	sc.follow_focus = true
+	ThemeS.BtnSkin.watch(sc, "scroll")
 
 ## Next-frame tune holds the host weakly: a page wiped in the same frame (pause tab switch) is skipped instead of
 ## calling a lambda whose captured host was freed.
