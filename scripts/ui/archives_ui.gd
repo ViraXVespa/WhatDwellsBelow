@@ -35,6 +35,7 @@ var _chevron: Label
 var _path: Label
 
 func _ready() -> void:
+	set_meta("btn_skin", "title")
 	SplitView.setup_overlay(self, "Archives", tr("archives_ui.standalone_snapshots_title_play"))
 	if _info_root:
 		_info_root.gui_input.connect(_on_info_gui)

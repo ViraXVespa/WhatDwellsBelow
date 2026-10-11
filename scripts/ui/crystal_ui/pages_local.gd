@@ -11,15 +11,16 @@ static func page_local(host) -> void:
 	if host.host and host.host.has_method("_redraw_map"):
 		host.host._redraw_map()
 		CrystalNet.paint(host.host)
-	Util.panel(host, Vector2(80, 80), Vector2(1760, 920))
+	var face: Rect2 = Util.crystal_panel(host)
+	var map_w: float = face.size.y
 	host.map_clip = Control.new()
-	host.map_clip.position = Vector2(112, 128)
-	host.map_clip.size = Vector2(980, 820)
+	host.map_clip.position = face.position
+	host.map_clip.size = Vector2(map_w, face.size.y)
 	host.map_clip.clip_contents = true
 	host.add_child(host.map_clip)
 	host.map_rect = TextureRect.new()
 	host.map_rect.position = Vector2.ZERO
-	host.map_rect.size = Vector2(980, 820)
+	host.map_rect.size = Vector2(map_w, face.size.y)
 	host.map_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	host.map_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	host.map_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -29,11 +30,7 @@ static func page_local(host) -> void:
 	host.map_mark.size = Vector2(10, 10)
 	host.map_mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	host.map_clip.add_child(host.map_mark)
-	var box := VBoxContainer.new()
-	box.position = Vector2(1120, 128)
-	box.size = Vector2(680, 820)
-	box.add_theme_constant_override("separation", 8)
-	host.add_child(box)
+	var box: VBoxContainer = Util.column(host, Rect2(face.position.x + map_w + 24.0, face.position.y, face.size.x - map_w - 24.0, face.size.y), 8)
 	Net.net_tabs(host, box)
 	box.add_child(ThemeS.lab(App.tr("common.local_transport_network"), 28, ThemeS.INK))
 	box.add_child(ThemeS.lab(App.tr("pages_local.bound_crystals_on_this_floor"), 18, ThemeS.INK_SOFT))

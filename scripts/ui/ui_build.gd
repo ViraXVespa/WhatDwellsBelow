@@ -72,6 +72,7 @@ static func tex_box(tex: Texture2D, edge: int, top: int, foot: int, tile: bool, 
 
 ## Centered text, nearest filter, fills its row: the base of every frame's button.
 static func button_base(button: Button) -> void:
+	button.set_meta("frame_dressed", true)
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL

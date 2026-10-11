@@ -57,6 +57,10 @@ var gear_hint: Control
 var gear_page_left: Control
 var gear_page_right: Control
 
+## Control skin for buttons built in this panel: the active frame's (FrameBase.btn_skin), else neutral.
+func btn_skin() -> String:
+	return FrameSet.btn_skin(self)
+
 func _ready() -> void:
 	Flow._ready(self)
 

@@ -30,7 +30,7 @@ static func entry_bbcode(e: Dictionary, is_new: bool) -> String:
 		lab = App.tr("news_fmt.build")
 	var head := "[font_size=24][b]%s[/b][/font_size]" % esc_bb(lab)
 	if is_new:
-		head = "[color=#6b2a14]%s[/color]" % head
+		head = "[color=#e2b862]%s[/color]" % head
 	var lines: PackedStringArray = [head]
 	var points: Variant = e.get("points", [])
 	if points is Array:

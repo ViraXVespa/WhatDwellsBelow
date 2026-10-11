@@ -36,6 +36,14 @@ static func mount(host: CanvasLayer, skin: GDScript) -> void:
 	host.move_child(chrome, 1)
 	skin.build(chrome)
 
+## Skin hook BTN_SKIN (optional const): the control skin (ui_tokens SKINS) for buttons and gear slots while that
+## frame is open. Other modes use "neutral".
+static func btn_skin(host: CanvasLayer, skins: Array) -> String:
+	for skin: GDScript in skins:
+		if str(skin.spec()["mode"]) == str(host.get("mode")) and skin.get("BTN_SKIN") != null:
+			return str(skin.get("BTN_SKIN"))
+	return "neutral"
+
 ## Cream plate for every mode, then the one skin whose mode is active takes the plate over.
 static func apply(host: CanvasLayer, skins: Array) -> void:
 	var plate: ColorRect = host.get_node_or_null("plate") as ColorRect

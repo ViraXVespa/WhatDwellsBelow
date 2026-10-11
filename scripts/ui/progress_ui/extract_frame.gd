@@ -6,6 +6,8 @@ extends Object
 const ThemeS: GDScript = preload("res://scripts/ui/theme.gd")
 const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
+## Its glass face takes the crystal control skin (teal buttons, pale slots).
+const BTN_SKIN := "crystal"
 const Art: GDScript = preload("res://scripts/ui/progress_ui/extract_art.gd")
 
 const SCALE: float = 3.0

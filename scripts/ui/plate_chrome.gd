@@ -1,5 +1,6 @@
 extends Object
 
+const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
 const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
 
 ## Unified dungeon overlay plate tokens + ColorRect helpers (design/reuse-map.md Kit A / BOT-01).
@@ -27,6 +28,8 @@ static func plate(parent: Node, pos: Vector2, size: Vector2, bg: Color = PLATE) 
 	r.position = pos
 	r.size = size
 	parent.add_child(r)
+	if bg == PLATE:
+		BtnSkin.watch(r, "plate_rect")
 	return r
 
 static func edge(parent: Node, pos: Vector2, width: float, height: float = float(EDGE_H)) -> ColorRect:
@@ -36,6 +39,7 @@ static func edge(parent: Node, pos: Vector2, width: float, height: float = float
 	r.size = Vector2(width, height)
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(r)
+	BtnSkin.watch(r, "edge_rect")
 	return r
 
 ## Full-screen dim, cream plate and its top rule, added in that order (progress panel, recap). The rule keeps the

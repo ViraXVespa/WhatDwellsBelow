@@ -8,6 +8,8 @@ const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
 const FrameBase: GDScript = preload("res://scripts/ui/progress_ui/frame_base.gd")
 const Art: GDScript = preload("res://scripts/ui/progress_ui/crystal_art.gd")
 
+## Buttons and gear slots in this frame wear the crystal control skin (ui_tokens SKIN_CRYSTAL).
+const BTN_SKIN := "crystal"
 const SCALE: float = 3.0
 const FRAME_POS: Vector2 = Vector2(300, 12)
 const FRAME_SIZE: Vector2 = Vector2(Art.ART_W * SCALE, Art.ART_H * SCALE)

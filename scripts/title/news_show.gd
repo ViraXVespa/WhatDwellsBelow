@@ -1,5 +1,6 @@
 extends Object
 
+const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
 const Fmt := preload("res://scripts/title/news_fmt.gd")
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
 const ThemeS := preload("res://scripts/ui/theme.gd")
@@ -29,13 +30,13 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	box.add_child(text_shell)
 	var text_bg := ColorRect.new()
 	text_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	text_bg.color = Plate.PLATE
+	text_bg.color = BtnSkin.palette("title")["panel"]
 	text_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	text_shell.add_child(text_bg)
 	var text_edge := ColorRect.new()
 	text_edge.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	text_edge.offset_bottom = float(Plate.EDGE_H)
-	text_edge.color = Plate.EDGE
+	text_edge.color = BtnSkin.palette("title")["panel_edge"]
 	text_edge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	text_shell.add_child(text_edge)
 	var scroll := ScrollContainer.new()
@@ -56,7 +57,7 @@ static func show_news(host: Node, older: bool, new_labs: Dictionary) -> void:
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.custom_minimum_size = Vector2(668, 0)
 	body.add_theme_font_size_override("normal_font_size", 18)
-	body.add_theme_color_override("default_color", ThemeS.INK)
+	body.add_theme_color_override("default_color", BtnSkin.palette("title")["words"][0])
 	body.add_theme_constant_override("outline_size", 0)
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.focus_mode = Control.FOCUS_NONE

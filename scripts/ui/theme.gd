@@ -2,6 +2,7 @@ extends Object
 
 const UiText := preload("res://scripts/ui/ui_text.gd")
 const Tok: GDScript = preload("res://scripts/ui/ui_tokens.gd")
+const BtnSkin := preload("res://scripts/ui/btn_skin.gd")
 
 const INK: Color = Tok.INK
 const INK_SOFT: Color = Tok.INK_SOFT
@@ -62,6 +63,7 @@ static func lab(
 	if outline:
 		l.add_theme_color_override("font_outline_color", Tok.OUTLINE)
 		l.add_theme_constant_override("outline_size", Tok.OUTLINE_SIZE)
+	BtnSkin.watch(l, "label", [col])
 	return l
 
 static func btn(t: String, cb: Callable, enabled: bool = true, role: String = "secondary") -> Button:
@@ -74,6 +76,7 @@ static func btn(t: String, cb: Callable, enabled: bool = true, role: String = "s
 	b.disabled = not enabled
 	if enabled:
 		b.pressed.connect(cb)
+	BtnSkin.watch(b, "btn", [role])
 	return b
 
 static func paint_tab(b: Button, on: bool, role: String = "secondary") -> void:
@@ -95,6 +98,7 @@ static func paint_tab(b: Button, on: bool, role: String = "secondary") -> void:
 	b.add_theme_stylebox_override("pressed", _ink_box(PAPER_DEEP, edge, 1, 3))
 	b.add_theme_stylebox_override("focus", _ink_box(PAPER_DEEP, edge, 1, 3))
 	b.add_theme_stylebox_override("disabled", _ink_box(paper, RULE_QUIET, 1, 1))
+	BtnSkin.watch(b, "tab", [on, role])
 
 static func paint_bookmark(b: Button, on: bool) -> void:
 	var word: Color = INK if on else INK_SOFT
@@ -142,6 +146,7 @@ static func paint_plate(b: Button, fill: Color, border: Color, on: bool = false)
 	b.add_theme_stylebox_override("pressed", _ink_box(Color(INK.r, INK.g, INK.b, 0.1), INK, 1, 3))
 	b.add_theme_stylebox_override("focus", _ink_box(Color(PAPER_DEEP.r, PAPER_DEEP.g, PAPER_DEEP.b, 0.72), INK, 1, 3))
 	b.add_theme_stylebox_override("disabled", _ink_box(Color(0, 0, 0, 0), Color(INK.r, INK.g, INK.b, 0.22), 1, 1))
+	BtnSkin.watch(b, "plate", [fill, border, on])
 
 static func _ink_box(bg: Color, border: Color, width: int, foot: int) -> StyleBoxFlat:
 	var s: StyleBoxFlat = StyleBoxFlat.new()

@@ -1,6 +1,9 @@
 extends Object
 
 const Plate := preload("res://scripts/ui/plate_chrome.gd")
+const UiBuild: GDScript = preload("res://scripts/ui/ui_build.gd")
+const CrystalArt: GDScript = preload("res://scripts/ui/progress_ui/crystal_art.gd")
+const CrystalFrame: GDScript = preload("res://scripts/ui/progress_ui/crystal_frame.gd")
 
 const ZOOM_NEAR := 96
 
@@ -51,3 +54,36 @@ static func panel(ui: CanvasLayer, pos: Vector2, size: Vector2) -> ColorRect:
 	var plate: ColorRect = Plate.plate(ui, pos, size)
 	Plate.edge(ui, pos, size.x)
 	return plate
+
+## Floor-crystal backdrop (the hub loadout frame's art, same place and scale) for the transport pages.
+## Returns the pale facet rect, inset, where a page lays out its content.
+static func crystal_panel(ui: CanvasLayer) -> Rect2:
+	var art := TextureRect.new()
+	art.name = "crystal_body"
+	art.texture = CrystalArt.body()
+	art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = TextureRect.STRETCH_SCALE
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	art.position = CrystalFrame.FRAME_POS
+	art.size = CrystalFrame.FRAME_SIZE
+	ui.add_child(art)
+	var pale: Rect2i = CrystalArt.PALE
+	var s: float = CrystalFrame.SCALE
+	return Rect2(CrystalFrame.FRAME_POS + Vector2(pale.position) * s + Vector2(24, 18), Vector2(pale.size) * s - Vector2(48, 36))
+
+## Scrolling column inside rect (pad focus scrolls it; no bar).
+static func column(ui: CanvasLayer, rect: Rect2, sep: int) -> VBoxContainer:
+	var sc := ScrollContainer.new()
+	sc.position = rect.position
+	sc.size = rect.size
+	sc.follow_focus = true
+	sc.focus_mode = Control.FOCUS_NONE
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	ui.add_child(sc)
+	var box := VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", sep)
+	sc.add_child(box)
+	return box

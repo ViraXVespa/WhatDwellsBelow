@@ -17,5 +17,8 @@ static func mount(host: CanvasLayer) -> void:
 	for skin: GDScript in SKINS:
 		FrameBase.mount(host, skin)
 
+static func btn_skin(host: CanvasLayer) -> String:
+	return FrameBase.btn_skin(host, SKINS)
+
 static func apply(host: CanvasLayer) -> void:
 	FrameBase.apply(host, SKINS)

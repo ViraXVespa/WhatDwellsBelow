@@ -31,6 +31,7 @@ var tip_kind := ""
 var tip_from: Control = null
 
 func _ready() -> void:
+	set_meta("btn_skin", "neutral")
 	Ui.build(self)
 
 func play(cond: String) -> void:
