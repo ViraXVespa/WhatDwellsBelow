@@ -23,14 +23,15 @@ import doc_patch as dp
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def main() -> None:
-    dp.run_checker(ROOT)
-    print("RESULT checker=PASS")
-    sys.exit(0)
+def main() -> int:
+    return dp.run_checker(ROOT)
 
 
 if __name__ == "__main__":
-    main()
+    rc = main()
+    status = "PASS" if rc == 0 else "FAIL"
+    print(f"RESULT checker={status}")
+    raise SystemExit(rc)
 ```
 
 Callables (`replace_func`, `upsert_func`, `ensure_line`, `write_text`, `write_changelog`, `task`, `run_checker`, `dump_job`) and the matching `doc_patch.py` CLI subcommands: `doc-library.md`. If a call does not behave intuitively, fix `doc_patch` (direct `python` file), do not work around it.
@@ -40,7 +41,7 @@ A `.gd` body is tabs. `write_text` turns a leading run of four spaces into one t
 
 Docs in this pass: same scratch updates topic files, one code-map row, and tunables the slice made wrong, writes `design/changelog/{label}.md` via `doc_patch.write_changelog`, and runs `tools/check_load_graph.py`. A later scratch in the same emit pass is a delta. Skip every path whose write already printed `wrote`, `deleted`, or `already applied` / `already gone`. Do not re-emit the whole Phase 3 list. Do not rewrite a file that already matches the accepted goal unless that file is why RESULT failed.
 
-When a slice needs a visual proof, run `python tools/run_shots.py --mode web` and paste the clipboard image with the printed RESULT. Prove from work that landed, using only existing runners. The scratch runs the test through `doc_patch.dump_job(ROOT, job)` (or `run_checker` for the load-graph). `dump_job` returns `(rc, body)` and already prints the summary. Unpack it: `rc, body = dp.dump_job(ROOT, job)`. Never `sys.exit(dp.dump_job(...))` — a tuple exit is a false fail. After the process exits, print the summary file body only if you did not call `dump_job`, never the `Summary ->` path. Last line is `RESULT checker=PASS|FAIL` or `RESULT gate=PASS|FAIL` plus any extra marks. `sys.exit(int)` only: `sys.exit(0)` on PASS and `sys.exit(1)` on FAIL. If `dump_job` / import check reports a parse or compile error, stop; do not start a longer Godot prove.
+When a slice needs a visual proof, run `python tools/run_shots.py --mode web` and paste the clipboard image with the printed RESULT. Prove from work that landed, using only existing runners. The scratch runs the test through `doc_patch.dump_job(ROOT, job)` (or `run_checker` for the load-graph). `dump_job` returns `(rc, body)` and already prints the summary. Unpack it: `rc, body = dp.dump_job(ROOT, job)`. Never `sys.exit(dp.dump_job(...))` — a tuple exit is a false fail. After the process exits, print the summary file body only if you did not call `dump_job`, never the `Summary ->` path. Last line is `RESULT checker=PASS|FAIL` or `RESULT gate=PASS|FAIL` plus any extra marks, taken from the int returned by `main()`. `main()` returns the checker (or gate) exit code. The `if __name__` guard prints the RESULT line and does `raise SystemExit(rc)`. Do not hardcode PASS or call `sys.exit` inside `main()`. If `dump_job` / import check reports a parse or compile error, stop; do not start a longer Godot prove.
 
 | Work that landed | Prove | Dump |
 |------|-------|------|
