@@ -1,5 +1,6 @@
 # English source strings. Keys are stable ids; never rename a shipped key.
 # Add a locale by copying this file to <code>.po and translating each msgstr.
+# NPC Talk lines: talk.<npc>.NN, listed per NPC in scripts/data/talk_lines.gd LINES.
 msgid ""
 msgstr ""
 "Project-Id-Version: What Dwells Below\n"

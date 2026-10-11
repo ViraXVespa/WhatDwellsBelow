@@ -14,7 +14,10 @@ One place per job, so a screen only fills in what is its own. Existing screens r
 - Labels and pictures: `chrome_label`, `piece`, `place`, `keep` (texture cache), `dot` (pixel brush).
 - Boxes and buttons: `blank_box`, `tex_box` (textured state box), `button_base`, `ink_text`, `states` (the five states).
 - Scroll bars: `bars(scroll, shown)`. Bars are hidden on object frames (the rows still scroll with the pad), shown on the cream plate.
-- Tooltips: `tip_panel`, `tip_text` (used by the scroll box and the gear board).
+- Tooltips: `tip_panel`, `tip_text` (used by the scroll box and the gear board). Show and hide on focus or hover through `scripts/ui/tip_hover.gd` (`TipHover.attach`, `show`, `blur`, `place_below`); the pause Skills tab and the recap bars use it. The gear board keeps its own (`gear_board/tip.gd`).
+- Icon grids (consumables, ghost shop, pawn): `scripts/ui/item_board.gd`. Two-sheet journal layouts on any host: `scripts/ui/journal_spread.gd`.
+- Pause tabs: one row each in `pause_menu.gd` `TABS` (id, label, builder). Code, flows and smokes name tabs by id.
+- Text: every new line (Talk lines, tutorial pages, labels) is an en.po key in `scripts/data/locale/en.po`, shown with `App.tr(key)`. Keys are `<owner>.<what>` (Talk: `talk.<npc>.NN`); never rename a shipped key.
 - Use these before writing a local copy; add a builder here when a second screen needs it.
 ## Button hints (`prompt_view.gd`, `prompt_chip.gd`)
 - Each glyph + verb pair in a hint strip is a chip. Click or tap presses that action while the pointer is down and lets go on release, the same path as the key or pad press, so the menu's own handler decides what it does. The Back chip is the touch way out of every menu.
@@ -23,18 +26,21 @@ One place per job, so a screen only fills in what is its own. Existing screens r
 - Chips have `focus_mode` NONE: no tab, highlight or select focus, and the menu keeps its focus.
 - A strip that only lists binds (the controls sign rows, the world HUD prompt) sets `prompt_tap` false on its host.
 - A scheme change (pad, keys, touch) swaps the glyphs inside the same chips, so the press that changed the scheme still lands.
-- Guard: `python tools/run_smokes.py --phases 6` opens every hub menu and closes it by each Back bind, by the Back chip, and after going one to three levels in.
+- Guard: phase 6 opens every hub menu and closes it by each Back bind, by the Back chip, and after going one to three levels in (`python tools/run_smokes.py --phases 6` and `bot_smokes.py` both run it). The first-open timing (`--wdb-open-timing`, `scripts/debug/open_timing.gd`) runs inside `bot_smokes.py` phase 6 only; run it by hand from `design/debug-smokes.md`.
 
 ## Object frames (`scripts/ui/progress_ui/`)
 A frame re-skins the progress panel host for one object (stall, bin). `frame_base.gd` owns what every frame shares: the chrome layer under the host, the cream plate every other mode keeps, the footer room, the button row (the host's scroll area) and its separation. `frame_set.gd` lists the skins.
 A skin is a script with static hooks:
-- `spec()` returns mode, chrome (node name), pos, size, footer, rows_pos, rows_size, sep, blank_rows.
+- `spec()` returns mode, chrome (node name), pos, size, footer, rows_pos, rows_size, sep, blank_rows. Build it with `FrameBase.make_spec(...)` (shared defaults; pass only what differs).
 - `build(chrome)` makes the pieces and labels once; `place(chrome)` positions them each open.
 - Callers keep their own `prepare` / `dress` per object (text, button look).
 Add a frame: write `<object>_frame.gd` (+ `<object>_art.gd` for code-drawn pictures), list it in `frame_set.gd`, set the host `mode` when it opens. A frame takes the hooks it needs and adds its own pieces; it need not look like another.
+First open: `ui_warm.gd` draws every listed skin's art on a worker from the title screen and opens the heavy menus once behind the hub loader. A new menu or frame gets a row in `scripts/debug/open_timing.gd` (pause tabs are timed from `TABS`), and a warm step if its first open is over budget.
+
+Open question for her (not decided): how new frames (posters, a desk or dialog box) get their art. Code-drawn art (`*_art.gd`) needs no files and ships on web, but it is slow to draw (crystal about 139 ms) and each frame adds hub load on web, where there is no worker thread. Options: keep code-drawn and accept the web hub-load cost; bake code-drawn art once to a `user://` cache keyed by the script hash (fast after the first run, one more moving part); or PNG art under `assets/ui/` (fastest, needs drawn art and an import). Decide before poster art is drawn.
 
 ## Web export (flagged, not changed)
 - `journal_page._tex_at` loads `res://assets/ui/journal/paper.png` and `leather.png` with `load()` so the imported textures ship in the web pack. A missing page texture errors; it does not cache an empty image.
 - `ThemeS.ink_font()` returns the shipped `res://assets/ui/journal/ink.ttf` (Patrick Hand, OFL). SystemFont is not used; the web export has no Windows faces.
-- Frame art is drawn in code (no file reads).
+- Frame art is drawn in code (no file reads). See the open question under Object frames for new frames.
 - A missing asset fails loudly; no fallback texture or color.

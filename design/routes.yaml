@@ -300,7 +300,7 @@ job_read_when:
   ui.ghost_shop: "pawn counter, snack prices"
   ui.recap: "tally sequence, finale bars"
   ui.quest_board: "pinned parchment, offer cutouts"
-  ui.receptionist: "greeting line, hello bubble"
+  ui.receptionist: "talk cycle, ask topics"
   debug.menu: "balance sliders, profile banks"
   debug.playtest: "sim walker, recommended config"
   debug.anim_browser: "timeline scrubber, review queue"
@@ -412,6 +412,7 @@ shot_flows:
 # Unit queue (ui work done one screen at a time): the ordered jobs of a door, her order. start_build_slice.py --door D picks the first
 # not done, `--next` moves on, and the card prints only that unit's flow, state, docs and files. Done units live in the slice state / handoff `done:`.
 unit_queue:
+  # Order of the ui units only. Done-state lives in the slice state (start_build_slice), so finished units stay listed.
   ui: "ui.controls, ui.anvil, ui.loadout, ui.extract, ui.ghost_shop, ui.recap, ui.quest_board, ui.receptionist"
 
 # One unit's read list: `path#Heading` entries separated by `;` (the card prints each as path plus its line range). The style doc is read for every ui unit.
@@ -432,10 +433,10 @@ unit_files:
   ui.anvil: "scripts/ui/progress_ui/ui_hub.gd: rebuild_anvil; scripts/ui/progress_ui/ui_flow.gd: open_anvil; scripts/ui/gear_board/board_sub.gd: open_sub, _open_forge; scripts/ui/progress_ui/anvil_frame.gd: spec, build, place; scripts/ui/progress_ui/anvil_art.gd: stump, shadow, anvil"
   ui.loadout: "scripts/ui/progress_ui/ui_hub.gd: rebuild_loadout; scripts/ui/progress_ui/ui_flow.gd: open_loadout; scripts/ui/progress_ui/crystal_frame.gd: spec, build, place; scripts/ui/progress_ui/crystal_art.gd: body"
   ui.extract: "scripts/ui/progress_ui/inv.gd: rebuild_extract, send_slot, send_bag; scripts/ui/progress_ui.gd: open_extract, _extract_all; scripts/ui/confirm_dlg.gd; scripts/ui/progress_ui/extract_frame.gd: spec, build, place; scripts/ui/progress_ui/extract_art.gd: body; scripts/data/progress/extract.gd: extractable, extract_one, extract_all, stock_extract_shot; scripts/ui/gear_board/host_build.gd: build"
-  ui.ghost_shop: "scripts/ui/progress_ui/shop.gd: rebuild_shop; scripts/ui/progress_ui.gd: open_shop"
-  ui.recap: "scripts/ui/recap/rebuild.gd; scripts/ui/recap/recap_ui.gd; scripts/ui/recap.gd: play"
-  ui.quest_board: "scripts/ui/progress_ui/ui_hub.gd: rebuild_quest; scripts/ui/progress_ui.gd: open_quest; scripts/data/progress_quest/quest_roll.gd"
-  ui.receptionist: "scripts/ui/progress_ui/ui_hub.gd: rebuild_quest; scripts/ui/progress_ui.gd: open_quest; scripts/world/interact/interact_act.gd: interact"
+  ui.ghost_shop: "scripts/ui/progress_ui/shop.gd: rebuild_shop; scripts/ui/progress_ui.gd: open_shop; scripts/ui/gear_icons.gd; scripts/ui/item_board.gd"
+  ui.recap: "scripts/ui/recap/rebuild.gd; scripts/ui/recap/recap_ui.gd; scripts/ui/recap.gd: play; scripts/ui/recap/bars.gd; scripts/ui/tip_hover.gd; scripts/ui/pause_skills.gd; scripts/ui/pause_menu/journal_page.gd; scripts/ui/journal_spread.gd"
+  ui.quest_board: "scripts/ui/progress_ui/ui_hub.gd: rebuild_quest; scripts/ui/progress_ui.gd: open_quest; scripts/data/progress_quest/quest_roll.gd; scripts/ui/pause_menu.gd: TABS; scripts/ui/pause_menu/menu_flow.gd; scripts/ui/pause_menu/pause_menu_view.gd; scripts/ui/tip_hover.gd"
+  ui.receptionist: "scripts/ui/progress_ui/ui_hub.gd: rebuild_receptionist; scripts/ui/progress_ui.gd: open_receptionist; scripts/world/interact/interact_act.gd: interact; scripts/data/talk_lines.gd; tools/tutorial_shots.py"
 
 # A unit that is one state of a shared flow: the job's flow, cut after that top-level shot (run_shot_flow.py --job J re-shoots only it).
 shot_states:
