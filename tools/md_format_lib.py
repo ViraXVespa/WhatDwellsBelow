@@ -197,7 +197,7 @@ def write_text(
     path = Path(path)
     prior = path.read_bytes() if path.is_file() else b""
     if eol == "keep":
-        eol = "crlf" if not prior else ("crlf" if detect_eol(prior) == "\r\n" else "lf")
+        eol = "lf" if not prior else ("crlf" if detect_eol(prior) == "\r\n" else "lf")
     if bom is None:
         bom = prior.startswith(b"\xef\xbb\xbf")
     text = ensure_trailing_newline(force_lf(maybe_gd_indent(text, path)))
