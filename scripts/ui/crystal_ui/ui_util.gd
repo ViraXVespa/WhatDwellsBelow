@@ -50,11 +50,6 @@ static func place_mark(ui: CanvasLayer, cell: Vector2i, rx: int, ry: int, rw: in
 	ui.map_mark.visible = true
 	ui.map_mark.color = Color(1.0, 0.92, 0.35, 0.95)
 
-static func panel(ui: CanvasLayer, pos: Vector2, size: Vector2) -> ColorRect:
-	var plate: ColorRect = Plate.plate(ui, pos, size)
-	Plate.edge(ui, pos, size.x)
-	return plate
-
 ## Floor-crystal backdrop (the hub loadout frame's art, same place and scale) for the transport pages.
 ## Returns the pale facet rect, inset, where a page lays out its content.
 static func crystal_panel(ui: CanvasLayer) -> Rect2:

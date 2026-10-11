@@ -10,6 +10,13 @@ One place per job, so a screen only fills in what is its own. Existing screens r
 - Restyle = edit a token (or a skin script), rebuild, shoot. No live skin switching, no autoload.
 - On purpose separate: HUD draw alphas (`touch_hud/hud_draw.gd` builds on tokens), the title / splash / fs-gate / loader / prompt / hud local label twins. Merge one only on her word.
 
+## Control skins (`scripts/ui/btn_skin.gd`)
+- Outside the pause journal, buttons, tabs and gear slots wear a skin from `ui_tokens.gd` `SKINS`: `neutral` (hub cream-plate menus, ghost shop, anvil, recap), `title` (title card, news, archives: also turns ink labels and plates dark), `crystal` (loadout crystal, dungeon floor crystal, extraction gate).
+- A host names its skin with meta `btn_skin` or a `btn_skin()` method; the progress panel asks its open frame (`BTN_SKIN` const on the frame script, else `neutral`). No skin found = paper (the journal).
+- `ThemeS.btn`, `paint_tab`, `paint_plate`, `lab` and `Plate.plate` / `edge` register the control; it is restyled on entering the tree. Frame-dressed buttons (`UiBuild.button_base`) keep their frame look.
+- Focus is a ring drawn over the state (bright edge + glow), so pad focus reads on every face. Gear slots stay light so item art reads.
+- The dungeon floor crystal pages sit on the crystal art (`crystal_ui/ui_util.gd` `crystal_panel`, same place and scale as the loadout frame); long lists scroll with focus.
+
 ## Builders (`scripts/ui/ui_build.gd`)
 - Labels and pictures: `chrome_label`, `piece`, `place`, `keep` (texture cache), `dot` (pixel brush).
 - Boxes and buttons: `blank_box`, `tex_box` (textured state box), `button_base`, `ink_text`, `states` (the five states).
