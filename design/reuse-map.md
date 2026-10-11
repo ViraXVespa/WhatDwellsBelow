@@ -15,12 +15,14 @@ Replace Brief with the full mandate. Multiple clusters in one body still ride th
 
 If Brief is empty, stop and report empty. Do not start a size sweep. If Brief has any content, implement all of it on the current open Bot PR (create that PR if none exists).  
 
-## Brief  
+## Brief
 
-4. Thin named-intent wrappers, theme part: theme.gd StyleBox convenience wrappers that clear the min-line bar (`_ink_box` / `_box` differ only in corner radius and margins). The val_sb/val_spin_sb, tarp_mat/awning_mat and is_page_prev/is_page_next builders are done.
+1. Extract nearest-interact full-list walk to a new shared module. Copies: `scripts/world/player/player_act.gd` `refresh_prompt` / `try_interact`. Same control flow. Owning requirement in `design/refactor.md` “New shared modules and reuse” is unmet. Overlaps opt-005 item 1 (still return the nearest valid prompt within range).
 
-5. Tool bootstrap + runner heads: extract the repeated `sys.path` insert + common import blocks across tools (bot_status, check_shot_gaps, doc_patch, export_web, and the other copies) into a shared `tools/_boot.py` or equivalent. Also fold the near-identical Godot-launch / `agent_log.finish` tails where the RESULT line can stay tool-specific. Path insert must remain before local imports.
+2. Extract floating damage number spawn to a new shared module. Copies: `scripts/world/player/player_act.gd` `_float` and `scripts/combat/enemy/enemy_hit.gd` `float_num`. Same control flow (FloatS.new + setup + parent add). Owning requirement unmet.
 
-6. Enemy setup / state-machine hooks: extract parallel sequences in `scripts/combat/enemy.gd` and the `enemy_*.gd` helpers (state enum handling, timing vars, leash/group checks) into shared helpers without changing combat feel. Golden compare on hit/AI paths if any numeric thresholds move.
+3. Extract breakables hit full-list walk to a new shared module. Copies: `scripts/combat/player_hit.gd` `hit_breakables_arc` / `hit_breakables_circle` and `scripts/combat/projectile.gd` `_smash_breakables`. Same control flow. Owning requirement unmet. Overlaps opt-005 items 4 and 5 (spatial or near-arc subset still fine).
 
-Hot-path (gen, shaders, pixel loops) and art-output items stay out; only implement the six clusters above. Update `design/code-map.md` for any new public helper paths.
+4. Extract actor grounding / present sequence to a new shared module. Copies: `scripts/world/player/player_tick.gd` `physics` / `_loco` and `scripts/world/player/player_act.gd` `tick_exit`. Same control flow (velocity / move_and_slide / y=0 / Depth.apply / facing / rig.follow). Owning requirement unmet.
+
+Prior staged rows (B11–D7) remain deferred per their Why left notes; do not invent work on them in this brief.
