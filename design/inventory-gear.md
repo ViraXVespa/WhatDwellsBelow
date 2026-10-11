@@ -13,6 +13,7 @@ Read when: gear rules, item level, affixes, analyze, duplicates, forge, whites, 
 - The player may maintain up to three forged **holds per type per slot**. Great Axe holds do not share a cap with Staff holds. Pickaxe and hatchet are separate.
 - Forged holds always return to Placeholdia on death or “Dispel”, even if the item was dropped on the floor.
 - All unextracted resources and any non-forged items still in the bag are lost on death or “Dispel”.
+- Quit, crash or tab close mid-run counts as a loss too: a save taken in the dungeon writes empty worn slots and no run root (`quest_meta.gd` `run_live`), so worn run loot never survives a reload. P3 smoke `run_loss_check.gd`.
 - Weapon and tool MUST remain equipped at all times.
 
 ## Item level

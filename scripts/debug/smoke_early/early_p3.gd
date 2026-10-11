@@ -6,6 +6,7 @@ static func p3(host: Node) -> void:
 	var stairs: Variant = host.get("stairs")
 	var door: Variant = host.get("door")
 	(load("res://scripts/debug/smoke/marks_check.gd") as GDScript).run(host)
+	(load("res://scripts/debug/smoke/run_loss_check.gd") as GDScript).run(host)
 	printerr("P3: res=" + ProjectSettings.globalize_path("res://"))
 	printerr("P3: ok=" + str(data.get("ok", false)))
 	printerr("P3: floor=" + str(App.floor_n))
