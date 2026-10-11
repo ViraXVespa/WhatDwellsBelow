@@ -40,6 +40,7 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | `process_world.py` | process_world.py | D | `--help` | N |
 | `process_world_pass.py` | Key and install the Placeholdia / dungeon art pass stills | D | `--help` | N |
 | `keytest.py` | Keying regression on `assets/keytest`: numbers vs `keytest_expect.json`, review sheets in `_logs/keytest/sheets/`. In `run_build_gate.py --batch`. Summary: `keytest`. | BD | `--help` | N |
+| `keytest_expect.json` | Expected keying numbers per `assets/keytest` asset, read by `keytest.py` | D | - | N |
 | `rekey_preview.py` | Open-set rekey preview on blue (`_logs/rekey-look/`). Counts are the check. Does not write live assets. Summary: `rekey-preview`. | D | `--help` | N |
 | `rekey_stills.py` | Re-key live stills from Grok session sources with plate_remap + sprite_pipeline | D | `--help` | N |
 | `run_isolated_grok.py` | Stage a scratch directory outside the git tree and run a thin Grok Build media job | D | `--help` | N |
