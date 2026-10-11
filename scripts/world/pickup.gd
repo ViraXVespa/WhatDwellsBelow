@@ -4,6 +4,12 @@ const BillSpr := preload("res://scripts/world/billboard_spr.gd")
 const Depth := preload("res://scripts/world/depth.gd")
 const SpriteFilt := preload("res://scripts/world/sprite_filter.gd")
 
+const ART := {
+	"hp": "res://assets/sprites/props/hp_orb.png",
+	"mana": "res://assets/sprites/props/mana_orb.png",
+	"gold": "res://assets/sprites/props/coins.png",
+}
+
 var kind := "hp"
 var amount := 0
 var item: Dictionary = {}
@@ -37,11 +43,9 @@ func setup_item(it: Dictionary, pos: Vector3) -> void:
 	_visual()
 
 func _visual() -> void:
-	var path := "res://assets/sprites/props/hp_orb.png"
+	var path: String = ART.get(kind, ART["hp"])
 	spr = BillSpr.make(path, 0.45, 0.0, 0, false)
-	if kind == "gold":
-		spr.modulate = Color(1.0, 0.85, 0.25)
-	elif kind == "item":
+	if kind == "item":
 		var r := str(item.get("rarity", "white"))
 		if r == "blue":
 			spr.modulate = Color(0.45, 0.7, 1.0)
@@ -84,6 +88,13 @@ func _process(delta: float) -> void:
 		if d < 0.55 and _block_t <= 0.0:
 			_take(p)
 
+## PLACEHOLDER: mana does not exist yet (design/tasks/metal-hud-mana.md owns the pool, regen and HUD bar). The orb
+## drops and is picked up; this stub only counts what it would restore. Replace with the real mana restore.
+static var mana_stub_total := 0.0
+
+static func restore_mana(n: float) -> void:
+	mana_stub_total += n
+
 func _take(p: Node) -> void:
 	if kind == "hp" and p.has_method("heal"):
 		var hp_now: float = float(p.get("hp"))
@@ -93,6 +104,9 @@ func _take(p: Node) -> void:
 			return
 		p.heal(App.bal.orb_heal)
 		App.toast(tr("pickup.hp"))
+	elif kind == "mana":
+		restore_mana(App.bal.orb_mana)
+		App.toast(tr("pickup.mana"))
 	elif kind == "gold":
 		App.gain_gold(maxi(1, amount))
 		App.toast(tr("common.g") % maxi(1, amount))

@@ -69,9 +69,10 @@ static func drop_loot(host: CharacterBody3D) -> void:
 	if host.is_boss:
 		gold_n += int(App.bal.boss_gold_extra)
 	var PickupS := load("res://scripts/world/pickup.gd")
-	var g: Node3D = PickupS.new()
-	parent.add_child(g)
-	g.setup("gold", host.global_position + Vector3(randf_range(-0.2, 0.2), 0.0, randf_range(-0.2, 0.2)), gold_n)
+	for k: String in roll_drops(host.is_boss):
+		var g: Node3D = PickupS.new()
+		parent.add_child(g)
+		g.setup(k, host.global_position + Vector3(randf_range(-0.3, 0.3), 0.0, randf_range(-0.3, 0.3)), gold_n if k == "gold" else 0)
 	if host.is_boss:
 		return
 	if randf() < App.bal.enemy_gear_chance + App.bal.enemy_gear_floor * float(App.floor_n):
@@ -84,6 +85,17 @@ static func drop_loot(host: CharacterBody3D) -> void:
 		else:
 			App.toast(str(item.name))
 			App.sfx("pickup")
+
+## Walk-over pickups for one kill: "gold" / "hp" / "mana", each its own roll (any mix, or nothing).
+static func roll_drops(boss: bool) -> PackedStringArray:
+	var out := PackedStringArray()
+	if boss or randf() < App.bal.enemy_gold_chance:
+		out.append("gold")
+	if randf() < App.bal.enemy_orb_chance:
+		out.append("hp")
+	if randf() < App.bal.enemy_mana_chance:
+		out.append("mana")
+	return out
 
 static func mark_post(host: CharacterBody3D) -> void:
 	host.post = host.global_position

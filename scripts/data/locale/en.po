@@ -1418,6 +1418,9 @@ msgstr "Permanent"
 msgid "pickup.hp"
 msgstr "+HP"
 
+msgid "pickup.mana"
+msgstr "+Mana"
+
 msgid "player_act.gathering"
 msgstr "Gathering…"
 

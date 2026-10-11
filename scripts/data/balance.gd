@@ -274,6 +274,12 @@ var enemy_gear_green := 0.18
 var enemy_gold_base := 1.0
 var enemy_gold_span := 2.0
 var boss_gold_extra := 6.0
+## Enemy kill drops, rolled independently (placeholders, design/tunables.md "Enemy drops"). Bosses always drop gold.
+var enemy_gold_chance := 0.5
+var enemy_orb_chance := 0.12
+## Mana orb: drops now; pickup.gd restore_mana is a placeholder stub until mana exists (design/tasks/metal-hud-mana.md).
+var enemy_mana_chance := 0.08
+var orb_mana := 15.0
 var chest_gold_base := 8.0
 var chest_gold_span := 12.0
 var boss_chest_gold := 20.0

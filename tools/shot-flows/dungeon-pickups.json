@@ -1,0 +1,86 @@
+{
+  "name": "dungeon-pickups",
+  "about": "Enemy kill pickups on floor 1 (seed 42): HP orb, mana orb (placeholder stub), coins, laid beside the player at arrival. Close zoom and play zoom.",
+  "scene": "dungeon",
+  "seed": 42,
+  "floor": 1,
+  "zoom": 1.0,
+  "settle_ms": 0,
+  "fixed_fps": 60,
+  "covers": [],
+  "smoke": false,
+  "steps": [
+    {
+      "op": "freeze",
+      "group": "enemies"
+    },
+    {
+      "op": "assert",
+      "target": "App.floor_n",
+      "equals": 1
+    },
+    {
+      "op": "wait",
+      "ms": 1500
+    },
+    {
+      "op": "call",
+      "target": "script:debug/drop_stage",
+      "method": "place",
+      "args": [
+        "hp",
+        -1.0,
+        0.6
+      ]
+    },
+    {
+      "op": "call",
+      "target": "script:debug/drop_stage",
+      "method": "place",
+      "args": [
+        "mana",
+        0.0,
+        0.6
+      ]
+    },
+    {
+      "op": "call",
+      "target": "script:debug/drop_stage",
+      "method": "place",
+      "args": [
+        "gold",
+        1.0,
+        0.6
+      ]
+    },
+    {
+      "op": "assert",
+      "target": "App.bal.enemy_mana_chance",
+      "gt": 0
+    },
+    {
+      "op": "wait",
+      "ms": 500
+    },
+    {
+      "op": "shot",
+      "name": "pickups-close"
+    },
+    {
+      "op": "call",
+      "target": "App",
+      "method": "set_zoom",
+      "args": [
+        1.5
+      ]
+    },
+    {
+      "op": "wait",
+      "ms": 500
+    },
+    {
+      "op": "shot",
+      "name": "pickups-play"
+    }
+  ]
+}

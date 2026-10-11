@@ -136,6 +136,18 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | Mine nodes / wood nodes | — | 18 / 14 | |
 | Break count / gold / orb | — | 24 / 0.55 / 0.35 | |
 | Orb heal | — | 18 | |
+
+## Enemy drops (PLACEHOLDER values, user to set)
+
+Each kill rolls each pickup on its own (`enemy_hit.gd` `roll_drops`); a kill can drop nothing. Gear rolls are unchanged (`enemy_gear_*`).
+
+| Key | Live default | Notes |
+|-----|--------------|-------|
+| `enemy_gold_chance` | 0.5 **placeholder** | Bosses always drop gold. Amount unchanged (`enemy_gold_base` / `_span`) |
+| `enemy_orb_chance` | 0.12 **placeholder** | HP orb, heals `orb_heal` |
+| `enemy_mana_chance` | 0.08 **placeholder** | Mana orb; pickup is a stub until metal-hud-mana lands |
+| `orb_mana` | 15 **placeholder** | Unused until mana exists |
+| Pickup radius | 0.55 m (unchanged, `pickup.gd`) | No magnet |
 | Crack HP | 8 | 8 | |
 
 ## World, economy and UI sections

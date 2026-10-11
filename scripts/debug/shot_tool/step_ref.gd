@@ -1,7 +1,7 @@
 extends RefCounted
 
 ## Shot flow target paths: "App.gold", "host.ui.mode", "kind:receptionist.prompt", "group:player.hp".
-## First token picks the root (autoload name, host, kind:K, group:G, node:Path); the rest are properties,
+## First token picks the root (autoload name, host, kind:K, group:G, node:Path, script:debug/x = a fresh res://scripts/debug/x.gd); the rest are properties,
 ## child nodes, dictionary keys or [index]. Values from JSON are cleaned (integral floats become ints).
 
 static func clean(v: Variant) -> Variant:
@@ -30,6 +30,8 @@ static func _root(host: Node, token: String) -> Variant:
 		return find_kind(host, token.substr(5))
 	if token.begins_with("group:"):
 		return host.get_tree().get_first_node_in_group(token.substr(6))
+	if token.begins_with("script:"):
+		return (load("res://scripts/" + token.substr(7) + ".gd") as GDScript).new()
 	if token.begins_with("node:"):
 		return host.get_node_or_null(token.substr(5))
 	return host.get_tree().root.get_node_or_null(token)

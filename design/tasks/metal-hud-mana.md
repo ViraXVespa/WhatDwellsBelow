@@ -14,6 +14,9 @@ Full HUD strip re-theme to metal-chain / dungeon-prisoner language, plus a dange
 - Danger gem: always-visible, shared-frame container on the right side of the strip. Color from expected Threat CL (walk-distance) vs player combat_lv(): solid green when threat <= player CL; transitions to solid yellow at +3; solid red at +7. Mostly transparent gem with animated glow. Settings -> Graphics toggle. Independent of dungeon crystals.
 - Mana: secondary long-term pace limiter for specials (conserve between fights or recover via items). Existing special recovery lengthened so pure-special play is not viable. Regen over time + chance-based mana orbs (like HP orbs) + potions and food also restore mana. Mana bar below HP bar. All numbers tunable in debug menu + design/tunables.md.
 
+## Wiring left
+- Wire the mana_orb pickup to the real mana: replace the placeholder stub `restore_mana` in `scripts/world/pickup.gd` (it only counts into `mana_stub_total`). Drop chance `enemy_mana_chance`, amount `orb_mana` (`balance.gd`).
+
 ## Open questions
 - Exact mana numbers (max, regen rate, special cost, recovery length, orb chance/amount, potion/food mana values). All start as tunables.
 
