@@ -130,6 +130,20 @@ def _patch_sw(text: str, build_id: str) -> str:
     return text
 
 
+# Music the browser streams itself (scripts/audio/web_music.gd); export_presets.cfg keeps them out of the pck.
+MUSIC = ("assets/audio/music_dungeon.mp3", "assets/audio/music_hub.wav")
+
+
+def _copy_music(out_dir: pathlib.Path, root: pathlib.Path) -> None:
+    dst = out_dir / "music"
+    dst.mkdir(exist_ok=True)
+    for rel in MUSIC:
+        src = root / rel
+        if not src.is_file():
+            raise SystemExit("web_postexport: missing music %s (the web build plays it from music/)" % rel)
+        (dst / src.name).write_bytes(src.read_bytes())
+
+
 def stamp(out_dir: pathlib.Path, root: pathlib.Path, notes_only: bool = False) -> str:
     out_dir.mkdir(parents=True, exist_ok=True)
     html_path = out_dir / "index.html"
@@ -142,6 +156,7 @@ def stamp(out_dir: pathlib.Path, root: pathlib.Path, notes_only: bool = False) -
             )
         print("web_postexport notes-only %s" % out_dir)
         return "notes"
+    _copy_music(out_dir, root)
     build_id = _binary_id(out_dir)
     (out_dir / "build_id.txt").write_text(build_id + "\n", encoding="utf-8")
     if html_path.is_file():

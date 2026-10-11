@@ -54,6 +54,12 @@ static func _hub_player(host: Node, scene: Node) -> Node:
 	return host.get_tree().get_first_node_in_group("player")
 
 static func hub_preload_paths(_host: Node) -> PackedStringArray:
+	var out := _hub_paths()
+	if OS.has_feature("web"):  # the browser plays the music on the web (scripts/audio/web_music.gd); not in the pck
+		out.remove_at(out.find("res://assets/audio/music_hub.wav"))
+	return out
+
+static func _hub_paths() -> PackedStringArray:
 	return PackedStringArray([
 		"res://assets/sprites/buildings/guild.png",
 		"res://assets/sprites/buildings/guild_reception.png",

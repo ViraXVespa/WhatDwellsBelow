@@ -7,6 +7,11 @@ var player: AudioStreamPlayer
 var kind := ""
 var passed_intro := false
 var _dungeon_stream: Resource = null
+## On the web the browser plays the music (scripts/audio/web_music.gd); null on desktop.
+var web: RefCounted = null
+const WebMusic := preload("res://scripts/audio/web_music.gd")
+const WEB_DUNGEON := "music_dungeon.mp3"
+const WEB_HUB := "music_hub.wav"
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -14,6 +19,8 @@ func _ready() -> void:
 	player.bus = "Master"
 	player.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 	add_child(player)
+	if OS.has_feature("web"):
+		web = WebMusic.new()
 	player.finished.connect(_on_finished)
 	_apply_vol()
 
@@ -27,6 +34,9 @@ func _dungeon_path() -> String:
 
 ## Called first in the hub preload so the dungeon track is decoded and held before anything else loads.
 func preload_dungeon() -> void:
+	if web:
+		web.fetch(WEB_DUNGEON)
+		return
 	var path := _dungeon_path()
 	if _dungeon_stream == null and path != "":
 		_dungeon_stream = load(path)
@@ -34,6 +44,11 @@ func preload_dungeon() -> void:
 func play_dungeon() -> void:
 	kind = "dungeon"
 	passed_intro = false
+	if web:
+		web.play(WEB_DUNGEON, loop_offset())
+		_apply_vol()
+		LT.dmark("music_play")
+		return
 	if _dungeon_path() == "":
 		return
 	preload_dungeon()
@@ -49,6 +64,10 @@ func play_dungeon() -> void:
 func play_hub() -> void:
 	kind = "hub"
 	passed_intro = true
+	if web:
+		web.play(WEB_HUB, 0.0)
+		_apply_vol()
+		return
 	var path := "res://assets/audio/music_hub.wav"
 	if not ResourceLoader.exists(path):
 		return
@@ -62,10 +81,14 @@ func play_hub() -> void:
 
 func stop_music() -> void:
 	kind = ""
+	if web:
+		web.stop()
 	if player:
 		player.stop()
 
 func _apply_vol() -> void:
+	if web:
+		web.volume(clampf(App.vol_music * App.vol_master, 0.0, 1.0))
 	if player == null:
 		return
 	player.volume_db = linear_to_db(maxf(0.001, App.vol_music * App.vol_master))
