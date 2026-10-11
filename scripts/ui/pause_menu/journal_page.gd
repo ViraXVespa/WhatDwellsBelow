@@ -72,6 +72,10 @@ func _draw() -> void:
 		_sheet_edges(sheet, i == 0, i == last)
 
 func _sheets() -> Array[Rect2]:
+	return sheets_in(size, kind, left_share)
+
+## Sheet rects (local to the page node) for a page of `size`: one sheet, or two split by `share`.
+static func sheets_in(size: Vector2, kind: int, left_share: float) -> Array[Rect2]:
 	var page_h: float = size.y - TOP - BOTTOM
 	var out: Array[Rect2] = []
 	if page_h < 8.0:
