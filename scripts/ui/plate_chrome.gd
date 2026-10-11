@@ -37,3 +37,27 @@ static func edge(parent: Node, pos: Vector2, width: float, height: float = float
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(r)
 	return r
+
+## Full-screen dim, cream plate and its top rule, added in that order (progress panel, recap). The rule keeps the
+## default mouse filter, unlike edge(). Names go on plate and rule when given. Returns [dim, plate, rule].
+static func overlay(parent: Node, pos: Vector2, size: Vector2, plate_name: String = "", edge_name: String = "") -> Array[ColorRect]:
+	var d := ColorRect.new()
+	d.set_anchors_preset(Control.PRESET_FULL_RECT)
+	d.mouse_filter = Control.MOUSE_FILTER_STOP
+	d.color = DIM
+	parent.add_child(d)
+	var p := ColorRect.new()
+	if plate_name != "":
+		p.name = plate_name
+	p.color = PLATE
+	p.position = pos
+	p.size = size
+	parent.add_child(p)
+	var e := ColorRect.new()
+	if edge_name != "":
+		e.name = edge_name
+	e.color = EDGE
+	e.position = pos
+	e.size = Vector2(size.x, EDGE_H)
+	parent.add_child(e)
+	return [d, p, e]
