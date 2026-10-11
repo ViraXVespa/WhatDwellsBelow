@@ -10,6 +10,9 @@ Checks per picture (limits in keytest_expect.json, "default" plus per-name overr
   plate_left    visible pixels still plate coloured (share of foreground)
   magenta_left  visible pixels with magenta excess min(R,B)-G > 40 within 14 degrees of the plate hue (share of foreground)
   green_specks  soft pixels the despill turned green (G above R and B by 30, source not green, no green paint within 4 px)
+  plate_tint    95th percentile, over semi-transparent pixels, of alpha x plate-direction chroma (YCrCb) above
+                the nearby art's, where the hue is pulled toward the plate (within 30 deg, or 90 deg on the violet side): the magenta/violet cast a glow shows over dark or light backgrounds
+  halo          share of the foreground that is soft and more than 4 px beyond the solid art (glow kept)
   solid         share of the foreground that is fully opaque (minimum)
   fg            foreground share of the picture, within +-fg_tol of the recorded value (over/under keying)
   repeat        keying twice gives identical bytes
@@ -89,7 +92,29 @@ def measure(src: Image.Image, keyed: Image.Image, stats: dict) -> dict:
     src_green = s[..., 1] - np.maximum(s[..., 0], s[..., 2])
     out_green = k[..., 1] - np.maximum(k[..., 0], k[..., 2])
     solid_green = (a == 255) & (out_green > 10)  # green paint nearby makes a green edge legitimate
+    # plate tint: in a semi-transparent pixel, chroma along the plate's chroma direction (YCrCb) beyond what
+    # the opaque art within 40 px carries, times alpha = what shows over a dark or light background.
+    import cv2
+    m = np.array([[0.5, -0.4187, -0.0813], [-0.1687, -0.3313, 0.5]], np.float32)
+    pc = m @ plate.astype(np.float32)
+    u = pc / max(float(np.linalg.norm(pc)), 1e-3)
+    col = k[..., :3].astype(np.float32)
+    opaque = (a == 255).astype(np.float32)
+    art = cv2.blur(col * opaque[..., None], (81, 81)) / np.maximum(cv2.blur(opaque, (81, 81))[..., None], 1e-3)
+    tint = (a / 255.0) * ((col @ m.T) @ u - np.maximum((art @ m.T) @ u, 0.0))
+    # only where the pixel's hue sits closer to the plate hue than the art's does (pulled toward the plate)
+    def _hd(rgb):
+        h = cv2.cvtColor(np.clip(rgb, 0, 255).astype(np.uint8), cv2.COLOR_RGB2HSV_FULL)[..., 0].astype(np.int32)
+        return np.abs((h - int(ph) + 128) % 256 - 128)
+    hc = cv2.cvtColor(np.clip(col, 0, 255).astype(np.uint8), cv2.COLOR_RGB2HSV_FULL)[..., 0].astype(np.int32)
+    side = (hc - int(ph) + 128) % 256 - 128  # < 0: the violet/blue side of the plate
+    zone = (np.abs(side) <= 21) | ((side < 0) & (side >= -64))  # 30 deg either way, 90 deg toward blue
+    tint = np.where((_hd(col) + 7 < _hd(art)) & zone, tint, 0.0)
+    tint_p95 = float(np.percentile(tint[soft], 95)) if soft.any() else 0.0
+    halo = soft & ~_near(a == 255, 4)
     return {
+        "plate_tint": round(tint_p95, 1),
+        "halo": round(float(halo.sum()) / fg, 4),
         "plate_left": round(float((vis & near_plate).sum()) / fg, 5),
         "magenta_left": round(float((vis & (ex > 40) & on_hue).sum()) / fg, 5),
         "green_specks": int((soft & (out_green > 30) & (src_green <= 0) & ~_near(solid_green, 4)).sum()),
@@ -113,6 +138,10 @@ def check(name: str, m: dict, exp: dict, recorded: dict) -> list[str]:
         bad.append(f"solid {m['solid']} < {lim.get('solid', 0.85)}")
     if name in recorded and abs(m["fg"] - recorded[name]) > lim.get("fg_tol", 0.01):
         bad.append(f"fg {m['fg']} vs recorded {recorded[name]} (+-{lim.get('fg_tol', 0.01)})")
+    if m["plate_tint"] > lim.get("plate_tint", 6.0):
+        bad.append(f"plate_tint {m['plate_tint']} > {lim.get('plate_tint', 6.0)}")
+    if m["halo"] < lim.get("halo_min", 0.0):
+        bad.append(f"halo {m['halo']} < {lim['halo_min']} (glow beyond the solid rim)")
     if not m["repeat"]:
         bad.append("repeat: keying twice gave different bytes")
     return bad
