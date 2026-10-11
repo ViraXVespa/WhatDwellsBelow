@@ -19,7 +19,8 @@ Checks per picture (limits in keytest_expect.json, "default" plus per-name overr
                 glow strength (corr); rough = largest 2nd difference of the 1 px alpha profile (kinks), noise =
                 std of high-pass alpha in the glow (blotches), tail = alpha's 2% extent / the source glow's
   plate_hue_px  visible plate-touched pixels still magenta or lavender (within 30 deg of the plate hue, up to
-                60 deg on its violet side, saturated, light), anywhere incl. enclosed pockets
+                60 deg on its violet side, saturated, light; or pale lavender nearer the plate's hue than the
+                art around it), anywhere incl. enclosed pockets
   halo          share of the foreground that is soft and more than 4 px beyond the solid art (glow kept)
   interior      share of paint pixels (more than 3 px from transparency and from any plate-tinted source
                 pixel, magenta excess > 12) that are opaque (minimum). Edges and glows outside the hard edge are partial by design; `solid` (opaque share
@@ -102,7 +103,24 @@ def measure(src: Image.Image, keyed: Image.Image, stats: dict) -> dict:
     # interior: more than 3 px from transparency and from any source pixel tinted by the plate (magenta
     # excess > 12: plate, glow or mix). What is left is paint and must stay opaque.
     src_ex = np.minimum(s[..., 0], s[..., 2]) - s[..., 1]
-    inner = ~_near((a == 0) | (src_ex > 12), 3)
+    # pale lavender in the source (plate seen through a see-through rim) is plate-touched too
+    import cv2
+    _m = np.array([[0.5, -0.4187, -0.0813], [-0.1687, -0.3313, 0.5]], np.float32)
+    _u = _m @ plate.astype(np.float32)
+    _u = _u / max(float(np.linalg.norm(_u)), 1e-3)
+    _op = (a == 255).astype(np.float32)
+    _art = cv2.blur(k[..., :3].astype(np.float32) * _op[..., None], (81, 81)) / np.maximum(cv2.blur(_op, (81, 81))[..., None], 1e-3)
+    _ph = int(cv2.cvtColor(plate.astype(np.uint8).reshape(1, 1, 3), cv2.COLOR_RGB2HSV_FULL)[0, 0, 0])
+
+    def _pale(rgb, lo=-64):
+        hv = cv2.cvtColor(np.clip(rgb, 0, 255).astype(np.uint8), cv2.COLOR_RGB2HSV_FULL).astype(np.int32)
+        sd = (hv[..., 0] - _ph + 128) % 256 - 128
+        ha = cv2.cvtColor(np.clip(_art, 0, 255).astype(np.uint8), cv2.COLOR_RGB2HSV_FULL)[..., 0].astype(np.int32)
+        sa = np.abs((ha - _ph + 128) % 256 - 128)
+        return ((sd >= lo) & (sd <= 0) & (hv[..., 2] >= 150) & (hv[..., 1] >= 35) & ((rgb.astype(np.float32) @ _m.T) @ _u > 4.0)
+                & (np.abs(sd) + 10 < sa))
+    pale_src = _pale(s)
+    inner = ~_near((a == 0) | (src_ex > 12) | pale_src, 3)
     # plate residue is bright like the plate; dark purple paint (a robe) is the art's own colour
     bright = np.minimum(k[..., 0], k[..., 2]) >= 0.5 * min(int(plate[0]), int(plate[2]))
     src_green = s[..., 1] - np.maximum(s[..., 0], s[..., 2])
@@ -132,7 +150,7 @@ def measure(src: Image.Image, keyed: Image.Image, stats: dict) -> dict:
     # within 30 deg of the plate hue or up to 60 deg on its violet side, saturated and bright (magenta,
     # lavender); the art's own blues and purples outside that window or dark do not count
     hsv = cv2.cvtColor(np.clip(col, 0, 255).astype(np.uint8), cv2.COLOR_RGB2HSV_FULL).astype(np.int32)
-    hue_left = vis & (src_ex > 6) & (_hd(col) + 14 < _hd(art)) & ((np.abs(side) <= 21) | ((side < 0) & (side >= -43))) & (hsv[..., 1] >= 50) & (hsv[..., 2] >= 0.6 * max(int(plate[0]), int(plate[2])))
+    hue_left = vis & (src_ex > 6) & (_hd(col) + 14 < _hd(art)) & ((np.abs(side) <= 21) | ((side < 0) & (side >= -43))) & (hsv[..., 1] >= 50) & (hsv[..., 2] >= 0.6 * max(int(plate[0]), int(plate[2]))) | (vis & pale_src & _pale(k[..., :3], -48))
     return {
         "plate_tint": round(tint_p95, 1),
         "plate_hue_px": int(hue_left.sum()),

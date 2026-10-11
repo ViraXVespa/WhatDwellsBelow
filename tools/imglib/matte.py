@@ -179,7 +179,7 @@ def guided(I: np.ndarray, p: np.ndarray, r: int, eps: float) -> np.ndarray:
     return cv2.blur(a, k) * I + cv2.blur(b, k)
 
 
-def sparkles(rgb, alpha, col, solid0, wide, plate):
+def sparkles(rgb, alpha, col, solid0, wide, plate, pale=None):
     """Small paint pieces inside a glow (sparkles) are paint over glow over plate. Their pixels are unmixed
     against what lies behind them (the source just around the sparkle) with the least alpha that keeps the
     colour in range, then composited over the keyed glow carried in from around them: clean dots in their
@@ -188,10 +188,8 @@ def sparkles(rgb, alpha, col, solid0, wide, plate):
     near_glow = cv2.dilate(wide.astype(np.uint8), np.ones((9, 9), np.uint8)).astype(bool)
     keep = [i for i in range(1, n) if st[i, cv2.CC_STAT_AREA] < int(2e-3 * solid0.size)]
     sp = np.isin(lab, keep) & near_glow
-    if os.environ.get('KDBG'):
-        print('sparkles', int(sp.sum()), len(keep))
     if not sp.any():
-        return alpha, col
+        return alpha, col, sp, sp
     # the sparkle with its own halo: grow while the source keeps differing from the glow behind it
     S = cv2.dilate(sp.astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))).astype(bool)
     ring_m = cv2.dilate(S.astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool) & ~S
@@ -212,7 +210,7 @@ def sparkles(rgb, alpha, col, solid0, wide, plate):
     # no plate chroma beyond the sparkle's own (its halo is the sparkle's colour, not violet/pink)
     pc = _M @ np.array(plate, np.float32)
     u = pc / max(float(np.linalg.norm(pc)), 1e-3)
-    own = colour_field(p, sp, (1.5, 4))
+    own = colour_field(p, sp & ~pale if pale is not None else sp, (1.5, 4))
     allow = np.maximum((own @ _M.T) @ u, 0.0)
     over = np.maximum((K @ _M.T) @ u - allow, 0.0)
     K = np.clip(K - over[..., None] * _chroma_rgb(u), 0, 255)
@@ -220,7 +218,7 @@ def sparkles(rgb, alpha, col, solid0, wide, plate):
     c_o = (a_s[..., None] * K + (1 - a_s[..., None]) * fg) / np.maximum(a_o[..., None], 1e-3)
     alpha = np.where(S, a_o, alpha)
     col = np.where(S[..., None], c_o, col)
-    return alpha, col
+    return alpha, col, S, sp
 
 
 def _chroma_rgb(u: np.ndarray) -> np.ndarray:
@@ -431,6 +429,18 @@ def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = Non
         speck = cv2.dilate(np.isin(lab3, small).astype(np.uint8), np.ones((3, 3), np.uint8)).astype(bool) & hueish & (solid | ring_m)
     near_any = cv2.distanceTransform((~(bg | soft)).astype(np.uint8), cv2.DIST_L2, 5) <= 48
     dirty |= solid & near_any & violet & (side >= -43) & (comp_px > 8.0)
+    # pale lavender near background or glow is plate seen through a see-through rim (a ghost's armpits, a
+    # wisp's tail): keyed after unmixing (largest alpha that leaves no plate-ward chroma)
+    # (hue nearer the plate's than the subject's own plate-free colour around it, by 20 deg or more)
+    own_c = colour_field(p32, solid & (comp_px <= 2.0), (4, 12, 36))
+    oh = cv2.cvtColor(np.clip(own_c, 0, 255).astype(np.uint8), cv2.COLOR_RGB2HSV_FULL)[..., 0].astype(np.int32)
+    ph_k = int(cv2.cvtColor(np.array(plate, np.uint8).reshape(1, 1, 3), cv2.COLOR_RGB2HSV_FULL)[0, 0, 0])
+    o_side = np.abs((oh - ph_k + 128) % 256 - 128)
+    cand = solid & (comp_px > 4.0) & (side >= -64) & (side <= 0) & (np.max(p32, -1) >= 150) & (hsv_s[..., 1] >= 35) & (np.abs(side) + 10 < o_side)
+    # ... as whole patches reaching background or glow (a pocket can run far inside the figure)
+    n4, lab4, _, _ = cv2.connectedComponentsWithStats(cand.astype(np.uint8), connectivity=8)
+    touch = np.unique(lab4[cv2.dilate((bg | soft).astype(np.uint8), np.ones((3, 3), np.uint8)).astype(bool) & cand])
+    see = np.isin(lab4, touch[touch > 0])
     solid0 = solid.copy()
     soft |= dirty
     solid &= ~dirty
@@ -443,6 +453,7 @@ def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = Non
     big = [i for i in range(1, n) if st[i, cv2.CC_STAT_AREA] >= max(200, int(2e-3 * wide.size))]
     wide = np.isin(lab, big) if big else np.zeros_like(wide)
     onramp = np.zeros_like(solid)
+    ramp_ok = np.zeros_like(solid)
     if wide.any():
         # a glow runs on into "solid" paint until it reaches its full colour: paint next to a glow that lies
         # on the glow's own ramp (offset from the plate along the local glow direction) short of the ramp's
@@ -461,6 +472,7 @@ def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = Non
         top_p = cv2.dilate(np.where(ok, proj, 0.0).astype(np.float32), np.ones((17, 17), np.uint8))
         ramp = ok & (proj < 0.985 * top_p) & (excess(p32) > 12.0)  # still plate-tinted
         onramp = ramp
+        ramp_ok = ok
         soft |= ramp
         solid &= ~ramp
         glow |= ramp
@@ -497,7 +509,30 @@ def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = Non
         zb = cv2.GaussianBlur(alpha * zw, (0, 0), 1.5) / np.maximum(cv2.GaussianBlur(zw, (0, 0), 1.5), 1e-3)
         alpha = np.where(z & (cv2.distanceTransform((~calm).astype(np.uint8), cv2.DIST_L2, 5) <= 6), zb, alpha)
     if wide.any():
-        alpha, col = sparkles(rgb, alpha, col, solid0, wide, plate)
+        alpha, col, S_sp, sp_core = sparkles(rgb, alpha, col, solid0, wide, plate, see)
+        see = see & ~(S_sp & ~sp_core)  # a sparkle's halo is already unmixed against the glow
+    if wide.any():
+        # the paint's own edge against a wide glow is the glow ramp's business, and sparkles are paint
+        at_glow = cv2.dilate((fine & soft).astype(np.uint8), np.ones((7, 7), np.uint8)).astype(bool)
+    if see.any():
+        cp = float(pcv @ u)
+        a_see = np.clip(1.0 - comp_px / max(cp, 1.0), 0.0, 1.0)
+        k_see = np.clip((p32 - (1 - a_see[..., None]) * np.array(plate, np.float32)) / np.maximum(a_see[..., None], 1e-3), 0, 255)
+        a_new = np.minimum(alpha, a_see)
+        if wide.any():
+            # at a glow the alpha stays the glow ramp's; only the plate-ward chroma goes
+            a_new = np.where(at_glow, alpha, a_new)
+            k_glow = np.clip(p32 - np.maximum(comp_px, 0.0)[..., None] * _chroma_rgb(u), 0, 255)
+            k_see = np.where(at_glow[..., None], k_glow, k_see)
+        col = np.where(see[..., None], k_see, col)
+        alpha = np.where(see, a_new, alpha)
+    # partly transparent pixels left pale lavender (light, between blue and the plate's hue): their
+    # plate-ward chroma is plate, remove it (alpha kept)
+    ch = cv2.cvtColor(np.clip(col, 0, 255).astype(np.uint8), cv2.COLOR_RGB2HSV_FULL)[..., 0].astype(np.int32)
+    c_side = (ch - ph_k + 128) % 256 - 128
+    c_comp = (col.astype(np.float32) @ _M.T) @ u
+    lav = (alpha > 0) & (alpha < 1) & (c_side >= -54) & (c_side <= 0) & (col.max(-1) >= 150) & (c_comp > 0)
+    col = np.where(lav[..., None], np.clip(col - np.maximum(c_comp, 0.0)[..., None] * _chroma_rgb(u), 0, 255), col)
     # JPEG fringe on solid outline paint: magenta excess above the art colour removed, alpha untouched
     band = solid & cv2.dilate((bg | glow).astype(np.uint8), np.ones((4 * ring + 3, 4 * ring + 3), np.uint8)).astype(bool)
     col = despill(col, G, band)
