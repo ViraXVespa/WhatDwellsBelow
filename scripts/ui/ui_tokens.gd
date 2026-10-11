@@ -32,7 +32,7 @@ static func fade(col: Color, alpha: float) -> Color:
 
 ## Control skins outside the pause journal (btn_skin.gd paints them; the journal keeps the paper look above).
 ## Keys: fill/hover/press/off (button faces), edge/edge_hi/edge_off, glow (focus ring), word/word_hi/word_off,
-## primary_fill/primary_edge, danger_edge/danger_word, slot/slot_edge (gear slot face: light, so item art reads). "words"/"panel"/"panel_edge" make a
+## primary_fill/primary_edge, danger_edge/danger_word, slot/slot_edge (gear slot face: light, so item art reads), ring (focus edge width, default 2). "words"/"panel"/"panel_edge" make a
 ## skin recolour ink labels and plates too (title screens).
 const SKIN_NEUTRAL: Dictionary = {
 	"fill": Color(0.19, 0.14, 0.105, 0.97), "hover": Color(0.27, 0.20, 0.14, 1.0), "press": Color(0.12, 0.09, 0.07, 1.0),
@@ -55,7 +55,7 @@ const SKIN_TITLE: Dictionary = {
 const SKIN_CRYSTAL: Dictionary = {
 	"fill": Color(0.05, 0.24, 0.30, 0.90), "hover": Color(0.09, 0.36, 0.44, 0.95), "press": Color(0.03, 0.15, 0.19, 0.95),
 	"off": Color(0.10, 0.20, 0.23, 0.55), "edge": Color(0.36, 0.80, 0.90), "edge_hi": Color(0.70, 0.98, 1.0),
-	"edge_off": Color(0.28, 0.45, 0.50, 0.7), "glow": Color(1.0, 0.74, 0.86), "word": Color(0.88, 1.0, 1.0),
+	"edge_off": Color(0.28, 0.45, 0.50, 0.7), "glow": Color(1.0, 0.45, 0.75), "ring": 3, "word": Color(0.88, 1.0, 1.0),
 	"word_hi": Color(1.0, 1.0, 1.0), "word_off": Color(0.55, 0.68, 0.72), "primary_fill": Color(0.30, 0.07, 0.20, 0.92),
 	"primary_edge": Color(0.93, 0.24, 0.55), "danger_edge": Color(0.93, 0.30, 0.30), "danger_word": Color(1.0, 0.78, 0.78),
 	"slot": Color(0.86, 0.98, 1.0, 0.85), "slot_edge": Color(0.20, 0.62, 0.74), "radius": 3,

@@ -98,9 +98,10 @@ static func box(bg: Color, edge: Color, width: int, foot: int, radius: int) -> S
 
 ## Focus ring drawn over the current state: no fill, bright edge and a soft glow, so gamepad focus always reads.
 static func ring(p: Dictionary) -> StyleBoxFlat:
-	var s: StyleBoxFlat = box(Color(0, 0, 0, 0), p["glow"], 2, 2, int(p["radius"]))
+	var w: int = int(p.get("ring", 2))
+	var s: StyleBoxFlat = box(Color(0, 0, 0, 0), p["glow"], w, w, int(p["radius"]))
 	s.draw_center = false
-	s.shadow_color = Color(p["glow"].r, p["glow"].g, p["glow"].b, 0.45)
+	s.shadow_color = Color(p["glow"].r, p["glow"].g, p["glow"].b, 0.55)
 	s.shadow_size = 5
 	s.expand_margin_left = 2
 	s.expand_margin_right = 2
