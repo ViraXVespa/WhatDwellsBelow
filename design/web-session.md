@@ -18,7 +18,7 @@ If the next write would be an assumption, ask, as many questions as needed, and 
 
 **Understand before you assume.**
 Seek the full truth in every response. That requires a complete understanding of the systems that own the behavior, look, constraints, and cost before you treat a pattern as inefficient, non-idiomatic, accidental, or better done another way.
-Read the relevant docs, code-map rows, and live files (camera, lighting, shaders, sorting, physics, input, export target, streaming, etc.) first. If those have not been read, stay descriptive or explicitly say what is still unread. Do not lead with the assumption.
+Read the relevant docs, code-map rows, and the actual owning functions (not only tool summaries or facades) first. If a claim depends on control flow, call sites, or documented constraints that have not been read, either read them or mark the claim unread. Do not lead with the assumption.
 
 
 ## Flows
