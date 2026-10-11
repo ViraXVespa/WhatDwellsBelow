@@ -30,7 +30,6 @@ ui-quest-board-posters | build | open | Quest board posters plus pause Quest tab
 ui-recap-skills-style | build | open | Recap matches skills page chrome | -
 ui-receptionist-tutorial | build | open | Receptionist as lore/tutorial How-to-Play guide | -
 attack-keyframes | web | open | Attack animation keyframes (parked pipeline) | -
-opt-003 | bot | open | Shared helper for Title/Placeholdia/Dungeon load legs | -
 <!-- tasks:end -->
 
 Reference images that a task needs live in `design/refs/<task-id>/`, not in this folder. Tasks link them; checks ignore the refs folder.

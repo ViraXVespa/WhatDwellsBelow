@@ -59,11 +59,7 @@ static func go_dungeon(host: Node) -> void:
 	App.AppFlow.LoadTiming.dmark("dungeon_music")
 	var packed: PackedScene = ensure_dungeon_packed(host)
 	App.AppFlow.LoadTiming.dmark("dungeon_packed")
-	if packed != null:
-		host.get_tree().call_deferred("change_scene_to_packed", packed)
-	else:
-		host.get_tree().call_deferred("change_scene_to_file", host.DUNGEON_SCENE)
-	host.call_deferred("wake_web_pad")
+	App.AppFlow.Leg.change_scene(host, packed, host.DUNGEON_SCENE)
 
 static func next_floor(host: Node) -> void:
 	var p := host.get_tree().get_first_node_in_group("player")
