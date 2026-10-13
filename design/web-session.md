@@ -32,7 +32,7 @@ Naming a goal is memory, not a mode switch. Several goals may sit in memory. Dir
 | parked | User names a parked task | `design/tasks/README.md` (owner web) |
 | perf | User drops hitch / load-timing output | measure first; one hitch class per emit |
 | build-week | User names it | process recommendations; gather first |
-| sweep | User names it and a goal | three-section report; body-level hot-path reads; stop when another turn is needed |
+| sweep | User names it and a goal | three-section report; body-read every system row’s facade + setup/present/phase/prop files (collision, interact group, multi-step state); mismatch and unpaired free/hide are Findings; stop only when every such file is read or explicitly listed under Needs investigation |
 
 Do not open the Build path file, `BOT.md`, or Grok Bot Job files from this path unless the User named that path.
 
@@ -53,11 +53,6 @@ Move only when the User names the next phase (except the multi-slice loop below)
 ### Phase 1 — Boot
 
 The User tells the agent to review the repo.
-
-A Phase 1 review response uses this skeleton and no other findings structure:
-- **Findings** (full body read; clearly wrong, incomplete edge, resource/lifetime problem, or unintuitive flow under the system’s intent; open tasks and explicit intentional notes excluded)
-- **Needs investigation** (body or context not yet fully read, or defect not yet clear)
-- **Meets requirements** (body read and behavior is correct under the system’s intent)
 
 If the agents file already routed here, do not re-read it. Load `design/protocol.md` and `design/constraints.md` only when missing.
 If the first message names a park (a task id or its words), load only that task file and what its `resume` line names, after the law pair, and continue; with a mandate, Phase 2 is optional. A finished park is closed with `task.py done` (`design/tasks/README.md`).
