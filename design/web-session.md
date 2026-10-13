@@ -43,6 +43,10 @@ When the User is present: picture-read is uncapped inside `design/` and the live
 Implementation default is one writer door. A packed pass is the exception above. `conflicts_with` still blocks implementing both cores in one slice.
 Inspect the live tree from **one system row** in `design/code-map.md` when editing live files.
 
+## GitHub Read Notes
+
+Browse-page summaries are frequently truncated and can end on a clean-looking but incomplete thought. Always read the full file from the session artifact saved under `/home/workdir/artifacts/browsed_files/` when the body matters. Use the summary only as an index of what the file contains so you know which artifact to open.
+
 ## Phases
 
 Move only when the User names the next phase (except the multi-slice loop below). No emit in Phase 1-3.
