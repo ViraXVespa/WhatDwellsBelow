@@ -58,20 +58,40 @@ Do **not** treat the following as bugs:
 - Behavior that matches an open task’s stated rules or an explicit design note
 - Persistence or idle states that the owning doc or code comments describe as intentional
 
-### Failure-mode scan (mandatory before Meets)
+### Risk surface (mandatory before Meets)
 
-Before a system may be listed under Meets requirements, the agent must explicitly check and report the result of each of the following on the player-visible paths. Cite the function. “No such pattern” is an acceptable answer only after the relevant bodies have been opened.
+The eight classic failure modes are a floor, not a ceiling. Before a system may be listed under Meets requirements the agent must open the relevant bodies and cite evidence for every item below on the player-visible paths. “No such pattern” is acceptable only after the bodies are open and the proving lines are quoted. Absence of the citation keeps the system under Needs investigation.
 
-- Static or cached node references (any `static var` holding a Node, or cache keyed only by position/count/frame): is the cached object re-validated with `is_instance_valid` on every read path, including flush and deferred paths? Shared statics that can outlive the node are Findings unless the full lifetime is proven.
-- Item removal / UID paths (`remove_uid`, bag/slot take): does a miss or non-mailable result re-add the item, or can it silently drop? Silent drop is a Finding.
-- Slot or resource writes in multi-step flows (restock, forge, extract, loadout): is the operation a top-up / merge, or a full replacement that discards partial state (charges, stacks, locks)? Overwrite of partial state is a Finding.
-- Mesh / texture assignment on frequent paths (telegraph, HP bar, float numbers, lighting): is the previous mesh/texture freed or is a new one created every update without cleanup? Unpaired assignment is a Finding.
-- Forced position pins after physics (`global_position.y = 0` or equivalent): does this fight any lift, hop, fly, or knock that the same node applies? Fighting lift is a Finding.
-- Array / distance indexing (threat, travel, grid): is every index bounds-checked before use? Unchecked index is a Finding.
-- Animation / clip fallbacks: does an empty or missing clip fall through to a texture, or can the sprite go blank? Empty fall-through that leaves the previous frame or none is a Finding.
-- Interact-group nodes (`interact`, `gates`, `boss_door`): on the open / spent / hidden / used path, is the node removed from the group or freed, and does the prompt still resolve to a correct spent/used string? Left in group without a working spent tooltip is a Finding (unless design explicitly requires the node to stay).
+1. Resource hot paths — any `ImageTexture.create_from_image`, `SurfaceTool.commit`, `.mesh =`, or `.texture =` on a frame or event path. Show the assignment line and the free or reuse of the previous object. Unpaired create/assign is a Finding. Second extract required (see below).
+2. Static or shared caches that hold Nodes or are keyed only by position/count/frame. Show `is_instance_valid` on every read path, including flush and deferred. Shared statics that can outlive the node are Findings unless full lifetime is proven.
+3. Item / UID removal and multi-step economy (extract, restock, forge, loadout, drop). Show whether a miss re-adds the item or can silently drop. Show whether partial state (charges, stacks, locks) is top-up/merge or full overwrite. Show that cancel, tab change, payment failure, or deferred rebuild leaves phase/item/resource fields consistent.
+4. Forced position pins after physics (`global_position.y = 0` or equivalent after `move_and_slide`). Show they do not fight lift, hop, fly, or knock on the same node.
+5. Bounds and indexing (threat, travel, grid, distance arrays). Show the bounds check before every index use.
+6. Animation and clip fallbacks. Show that an empty or missing clip does not leave a blank sprite and does not collapse diagonals.
+7. Interact-group lifetime and prompt resolution (`interact`, `gates`, `boss_door`). Show remove-or-free on open/spent/hidden/used and that the prompt string is a correct spent/used string.
+8. Presentation and feel (facing, vertical motion, feedback, focus/status clear on mode change). Show the actual result path.
+9. Incomplete happy-path edges the design contemplates. Show the common failure cases are handled or explicitly deferred.
 
-The final report for any system moved to Meets must include a one-line “Failure modes: [list of the eight above] — all clear / N Findings” citation. Absence of that line keeps the system under Needs investigation.
+### High-signal re-validation (mandatory every sweep)
+
+Even if a system looks clean, body-read these files (or their current equivalents) and cite the proving lines:
+`near_interact.gd`, `extract.gd`, `projectile.gd` (flush/lock path), `restock.gd`, `enemy_present.gd` (Y-pin), `threat.gd`, animation direction and clip fallback helpers, `hp_bar.gd`, `telegraph.gd`, and any forge/extract multi-step job script.
+
+### Evidence rule
+
+A system may be listed under Meets requirements only with a one-line citation of the proving code for each risk-surface item that applies. “Cleared” or “no such pattern” without the line is not enough.
+
+### Depth-first continue
+
+A turn may not open a new top-level system until every currently open high-signal path has either a Finding or an evidence-cited clear. Request another turn only when no further high-signal files can be opened this turn. The requesting message must still list every Finding discovered so far plus the current open checklist and coverage ledger.
+
+### Second-extract rule
+
+Any file that creates or assigns a mesh or texture, or that performs a multi-step resource write, must be pulled a second time with the instruction “show the exact assignment, free, and early-return lines.” The first extract is structure only.
+
+### Coverage ledger
+
+Every report ends with a short ledger: every directory touched, every high-signal file opened, and status (Finding / evidence-clear / still open). This is the substitute for an external tracker.
 
 ### Reporting
 Use the mandatory Findings / Needs investigation / Meets requirements format.
