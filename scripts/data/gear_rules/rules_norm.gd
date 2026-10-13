@@ -126,12 +126,23 @@ static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 	var pl: CharacterBody3D = p._player()
 	if pl == null or not pl.has_method("heal"):
 		return App.tr("rules_norm.not_now")
-	var heal := 1.0
-	if App.bal:
+	var heal: float = float(it.get("heal", 0.0))
+	if heal <= 0.0 and App.bal:
 		heal = float(App.bal.get("potion_heal"))
-		if heal <= 1.0:
-			heal = float(App.bal.player_max_hp) * heal
-	pl.heal(heal)
+	if heal <= 1.0 and App.bal:
+		heal = float(App.bal.player_max_hp) * heal
+	var secs: float = float(it.get("heal_secs", 0.0))
+	if secs > 0.0:
+		p.potion_hot_t = secs
+		p.potion_hot_left = heal
+	else:
+		pl.heal(heal)
+	var bonus_id: String = str(it.get("bonus_id", ""))
+	var bonus_secs: float = float(it.get("bonus_secs", 0.0))
+	if bonus_id != "" and bonus_secs > 0.0:
+		p.potion_bonus_id = bonus_id
+		p.potion_bonus_amt = float(it.get("bonus_amt", 0.0))
+		p.potion_bonus_t = bonus_secs
 	var cd: float = float(it.get("cooldown", 0.0))
 	if cd <= 0.0 and App.bal:
 		cd = float(App.bal.get("potion_cooldown"))
@@ -140,6 +151,7 @@ static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 	it.stack = 1
 	if from_slot:
 		p.slots["potion"] = it
+		load("res://scripts/data/progress_gear/consumable.gd").sync_slots(p)
 	App.sfx("potion")
 	App.toast(App.tr("rules_norm.potion_instant"))
 	return App.tr("rules_norm.potion")

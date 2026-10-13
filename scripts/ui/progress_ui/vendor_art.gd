@@ -160,9 +160,47 @@ static func tool() -> Texture2D:
 		img.set_pixel(x, 9, head.lerp(ThemeS.INK, 0.25))
 	return UiBuild.keep(_images, "tool", img)
 
+static func shelf(lift: float, foot: int) -> Texture2D:
+	var key: String = "shelf-%d-%d" % [int(round(lift * 100.0)), foot]
+	if ArtBake.hit(_images, ART, key):
+		return _images[key]
+	var w: int = 96
+	var h: int = 32
+	var img: Image = Image.create(w, h + foot, false, Image.FORMAT_RGBA8)
+	var face: Color = Color(0.95, 0.90, 0.78, 1).lerp(Color(1, 1, 1, 1), clampf(lift - 0.7, 0.0, 0.3))
+	if lift < 0.75:
+		face = Color(0.78, 0.70, 0.52, 1)
+	var edge: Color = Color(0.42, 0.30, 0.18, 1)
+	var tag: Color = Color(0.62, 0.46, 0.28, 1)
+	for y: int in h:
+		for x: int in w:
+			var px: Color = face
+			if x < 8:
+				px = tag
+			if x < 2 or x >= w - 2 or y < 2 or y >= h - 2:
+				px = edge
+			img.set_pixel(x, y, px)
+	return UiBuild.keep(_images, key, img)
+
+static func _icon_file(path: String) -> Image:
+	if not ResourceLoader.exists(path):
+		return null
+	var tex: Texture2D = load(path) as Texture2D
+	if tex == null:
+		return null
+	var img: Image = tex.get_image()
+	if img == null:
+		return null
+	if img.get_width() != 64 or img.get_height() != 64:
+		img.resize(64, 64, Image.INTERPOLATE_NEAREST)
+	return img
+
 static func crate() -> Texture2D:
 	if ArtBake.hit(_images, ART, "crate"):
 		return _images["crate"]
+	var filed: Image = _icon_file("res://assets/ui/vendor/crate_icon.png")
+	if filed != null:
+		return UiBuild.keep(_images, "crate", filed)
 	var img: Image = Image.create(32, 32, false, Image.FORMAT_RGBA8)
 	var face: Color = WOOD.lerp(PAPER, 0.22)
 	img.fill(face.lerp(ThemeS.INK, 0.55))
@@ -177,6 +215,9 @@ static func crate() -> Texture2D:
 static func pot() -> Texture2D:
 	if ArtBake.hit(_images, ART, "pot"):
 		return _images["pot"]
+	var filed: Image = _icon_file("res://assets/ui/vendor/jar_icon.png")
+	if filed != null:
+		return UiBuild.keep(_images, "pot", filed)
 	var img: Image = Image.create(32, 40, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
 	for y: int in 40:

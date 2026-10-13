@@ -46,8 +46,19 @@ static func make_potion(p: Object, n: int) -> Dictionary:
 	})
 
 static func make_food(p: Object, fid: String, n: int) -> Dictionary:
-	var nm: String = App.tr("gear.ration") if fid == "ration" else App.tr("progress_make.trail_bread")
-	return item(p, "food", nm, {"slot": "food", "nk": ["gear.ration" if fid == "ration" else "progress_make.trail_bread"], "food": fid, "stack": n})
+	var nm: String = App.tr("gear.ration")
+	var nk: String = "gear.ration"
+	if fid == "stew":
+		nm = App.tr("gear.stew")
+		nk = "gear.stew"
+	elif fid == "moldy_bread":
+		nm = App.tr("gear.moldy_bread")
+		nk = "gear.moldy_bread"
+	elif fid != "ration":
+		nm = App.tr("progress_make.trail_bread")
+		nk = "progress_make.trail_bread"
+	var it: Dictionary = item(p, "food", nm, {"slot": "food", "nk": [nk], "food": fid, "stack": n})
+	return load("res://scripts/data/progress_gear/consumable.gd").decorate_food(it)
 
 static func make_artifact(p: Object, id: String) -> Dictionary:
 	var a: Dictionary = CatalogS.by_id(id)

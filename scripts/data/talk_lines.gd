@@ -8,7 +8,18 @@ extends RefCounted
 
 const SAVE_V := 1
 ## npc id -> Array of en.po keys. Empty until an NPC task adds its lines (receptionist, vendor).
-const LINES: Dictionary = {}
+const LINES: Dictionary = {
+	"vendor": [
+		"talk.vendor.01",
+		"talk.vendor.02",
+		"talk.vendor.03",
+		"talk.vendor.04",
+		"talk.vendor.05",
+		"talk.vendor.06",
+		"talk.vendor.07",
+		"talk.vendor.08",
+	],
+}
 
 static var extra: Dictionary = {}
 static var seen: Dictionary = {}

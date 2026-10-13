@@ -2086,3 +2086,93 @@ msgstr "Snapshots"
 
 msgid "ui_view.video"
 msgstr "Video"
+
+msgid "gear.stew"
+msgstr "Root stew"
+
+msgid "gear.moldy_bread"
+msgstr "Moldy bread"
+
+msgid "potion.pale"
+msgstr "Pale brew"
+
+msgid "potion.green"
+msgstr "Green brew"
+
+msgid "potion.amber"
+msgstr "Amber brew"
+
+msgid "potion.ink"
+msgstr "Ink brew"
+
+msgid "potion.milk"
+msgstr "Milk brew"
+
+msgid "potion.red"
+msgstr "Red brew"
+
+msgid "shop.potions"
+msgstr "Potions"
+
+msgid "shop.food"
+msgstr "Food"
+
+msgid "shop.potion_instant"
+msgstr "instant"
+
+msgid "shop.potion_over_s"
+msgstr "over %ds"
+
+msgid "shop.potion_row"
+msgstr "%s  %d charges  %d hp  %s  %ds cd  %dg"
+
+msgid "shop.food_new"
+msgstr "new kind"
+
+msgid "shop.food_stack"
+msgstr "top up"
+
+msgid "shop.food_row"
+msgstr "%s  %s  %d hp / %ds  %dg"
+
+msgid "shop.potion_hold_full"
+msgstr "You can keep %d different potions up here."
+
+msgid "shop.toss_which"
+msgstr "Your food slots are full. Toss one stack before this new kind."
+
+msgid "shop.toss_stack"
+msgstr "Toss %s x%d"
+
+msgid "dumpster.moldy_ok"
+msgstr "You scavenge some moldy bread from the dumpster... I guess it's better than nothing."
+
+msgid "dumpster.moldy_max"
+msgstr "You scavenge some moldy bread from the dumpster... You've reached your limit for hoarding moldy bread and don't want people to start saying weird things about you, so you leave the bread where it is..."
+
+msgid "dumpster.moldy_full"
+msgstr "You scavenge some moldy bread from the dumpster, but you can't think of how that would be useful to you."
+
+msgid "talk.vendor.01"
+msgstr "Fresh out of the oven… well, as fresh as Placeholdia gets."
+
+msgid "talk.vendor.02"
+msgstr "This ration will keep you upright. The moldy stuff from the dumpster won’t."
+
+msgid "talk.vendor.03"
+msgstr "Careful with the potions—some of them hit harder than they look."
+
+msgid "talk.vendor.04"
+msgstr "You can hold a few different brews up here. Only one goes with you Below."
+
+msgid "talk.vendor.05"
+msgstr "Running low? I always keep a couple of the usuals and something you already like."
+
+msgid "talk.vendor.06"
+msgstr "If your bag’s full of food, you’ll have to toss something before I sell you a new kind."
+
+msgid "talk.vendor.07"
+msgstr "Ore’s fine, but a full stomach is what gets you back to the surface."
+
+msgid "talk.vendor.08"
+msgstr "Don’t ask me what’s in the green one. It works. That’s the warranty."

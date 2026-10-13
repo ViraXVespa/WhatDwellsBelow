@@ -6644,6 +6644,11 @@
       "origin": "_src/sources/assets/ui/gear/longbow.jpg"
     },
     {
+      "live": "assets/ui/gear/moldy_bread.png",
+      "source": "sources/assets/ui/gear/moldy_bread.jpg",
+      "origin": "_src/sources/assets/ui/gear/moldy_bread.jpg"
+    },
+    {
       "live": "assets/ui/gear/pickaxe.png",
       "source": "sources/assets/ui/gear/pickaxe.jpg",
       "origin": "_src/sources/assets/ui/gear/pickaxe.jpg",
@@ -6770,6 +6775,11 @@
       "cell": ""
     },
     {
+      "live": "assets/ui/gear/stew.png",
+      "source": "sources/assets/ui/gear/stew.jpg",
+      "origin": "_src/sources/assets/ui/gear/stew.jpg"
+    },
+    {
       "live": "assets/ui/gear/trail_bread.png",
       "source": "sources/assets/ui/gear/trail_bread.jpg",
       "origin": "_src/sources/assets/ui/gear/trail_bread.jpg",
@@ -6782,6 +6792,16 @@
       "loose": false,
       "opaque_side": 47,
       "cell": ""
+    },
+    {
+      "live": "assets/ui/vendor/crate_icon.png",
+      "source": "sources/assets/ui/vendor/crate_icon.jpg",
+      "origin": "_src/sources/assets/ui/vendor/crate_icon.jpg"
+    },
+    {
+      "live": "assets/ui/vendor/jar_icon.png",
+      "source": "sources/assets/ui/vendor/jar_icon.jpg",
+      "origin": "_src/sources/assets/ui/vendor/jar_icon.jpg"
     }
   ],
   "videos": [

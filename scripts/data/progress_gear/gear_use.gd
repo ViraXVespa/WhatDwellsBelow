@@ -45,11 +45,21 @@ static func eat(p: Object, it: Dictionary, from_slot: bool) -> String:
 	if p.food_t > 0.0 and fid != p.food_id:
 		p.clear_food()
 	p.food_id = fid
-	p.food_t = App.bal.food_hot_y
-	p.food_left = App.bal.food_hot_x
+	var total: float = float(it.get("heal", 0.0))
+	var secs: float = float(it.get("heal_secs", 0.0))
+	if total <= 0.0:
+		total = App.bal.food_hot_x
+	if secs <= 0.0:
+		secs = App.bal.food_hot_y
+	p.food_t = secs
+	p.food_left = total
+	p.food_bonus_id = str(it.get("bonus_id", ""))
+	p.food_bonus_amt = float(it.get("bonus_amt", 0.0))
 	App.sfx("food")
 	App.toast(App.tr("gear_use.food_healing_over_time"))
 	consume(p, it, from_slot)
+	if from_slot:
+		load("res://scripts/data/progress_gear/consumable.gd").sync_slots(p)
 	return App.tr("gear_use.food")
 
 static func consume(p: Object, it: Dictionary, from_slot: bool) -> void:
@@ -70,10 +80,25 @@ static func consume(p: Object, it: Dictionary, from_slot: bool) -> void:
 
 static func tick_food(p: Object, delta: float) -> void:
 	p.potion_cd = maxf(0.0, p.potion_cd - delta)
+	p.potion_bonus_t = maxf(0.0, p.potion_bonus_t - delta)
+	if p.potion_bonus_t <= 0.0:
+		p.potion_bonus_id = ""
+		p.potion_bonus_amt = 0.0
+	if p.potion_hot_t > 0.0:
+		var pot_pl: CharacterBody3D = p._player()
+		var pot_step: float = p.potion_hot_left * delta / maxf(0.1, p.potion_hot_t)
+		pot_step = minf(pot_step, p.potion_hot_left)
+		p.potion_hot_left -= pot_step
+		p.potion_hot_t = maxf(0.0, p.potion_hot_t - delta)
+		if pot_pl and pot_pl.has_method("heal"):
+			pot_pl.heal(pot_step)
+		if p.potion_hot_t <= 0.0 or p.potion_hot_left <= 0.0:
+			p.potion_hot_t = 0.0
+			p.potion_hot_left = 0.0
 	if p.food_t <= 0.0:
 		return
 	var pl: CharacterBody3D = p._player()
-	var step: float = App.bal.food_hot_x * delta / maxf(0.1, App.bal.food_hot_y)
+	var step: float = p.food_left * delta / maxf(0.1, p.food_t)
 	step = minf(step, p.food_left)
 	p.food_left -= step
 	p.food_t = maxf(0.0, p.food_t - delta)
@@ -114,6 +139,10 @@ static func stat(p: Object, key: String) -> float:
 		n += float(sets.get("gather", 0.0))
 	elif sets.has(key):
 		n += float(sets.get(key, 0.0))
+	if p.food_t > 0.0 and str(p.food_bonus_id) == key:
+		n += float(p.food_bonus_amt)
+	if p.potion_bonus_t > 0.0 and str(p.potion_bonus_id) == key:
+		n += float(p.potion_bonus_amt)
 	return n
 
 static func tool_quality(p: Object) -> float:

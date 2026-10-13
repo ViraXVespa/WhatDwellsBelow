@@ -92,14 +92,6 @@ static func options_for(slot: String) -> Array:
 			tl["kit_src"] = "starter"
 			seen_tmpl[tmpl] = true
 			out.append({"it": tl, "src": "starter", "uid": int(tl.uid)})
-	elif slot == "potion":
-		if not seen_tmpl.has("potion:Potion"):
-			var pot: Dictionary = App.prog.make_potion(2)
-			pot["kit_src"] = "starter"
-			pot["charges"] = 2
-			pot["charge_max"] = 2
-			seen_tmpl["potion:Potion"] = true
-			out.append({"it": pot, "src": "starter", "uid": int(pot.uid)})
 	var holds: Array = App.prog.holds.get(slot, [])
 	for h: Variant in holds:
 		if h is Dictionary:

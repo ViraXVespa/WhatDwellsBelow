@@ -154,6 +154,10 @@ func open_loadout() -> void:
 func open_vendor() -> void:
 	mode = "vendor"
 	_drop_sub()
+	if has_meta("vendor_visit"):
+		remove_meta("vendor_visit")
+	if has_meta("vendor_toss"):
+		remove_meta("vendor_toss")
 	_rebuild_vendor()
 	_show()
 

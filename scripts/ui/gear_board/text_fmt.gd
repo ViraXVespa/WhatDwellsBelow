@@ -55,7 +55,7 @@ static func _tmpl(it: Dictionary) -> String:
 	if slot == "tool":
 		return "tool:" + str(it.get("tool", ""))
 	if slot == "potion":
-		return "potion:" + str(it.get("name", "Potion"))
+		return "potion:" + str(it.get("uid", it.get("brew", "potion")))
 	return "%s:%s:%s" % [slot, str(it.get("name", "")), str(it.get("rarity", "white"))]
 
 static func item_cell(it: Dictionary) -> String:

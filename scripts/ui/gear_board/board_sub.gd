@@ -101,7 +101,7 @@ static func _unequip_or_keep(ui: CanvasLayer, slot: String, it: Dictionary) -> v
 	if Act.locked_slot(slot):
 		Act.st(ui, App.tr("common.weapon_and_tool_stay_equipped"))
 		return
-	if Kit.is_starter(App.prog, it) or str(it.get("kit_src", "")) == "starter":
+	if slot != "potion" and slot != "food" and (Kit.is_starter(App.prog, it) or str(it.get("kit_src", "")) == "starter"):
 		Act.st(ui, App.tr("board_sub.starters_stay_on_the_slot"))
 		return
 	if Act.town_kit(ui):

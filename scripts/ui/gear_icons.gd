@@ -26,6 +26,8 @@ const ITEM_PATHS := {
 	"potion": DIR + "potion.png",
 	"food:ration": DIR + "ration.png",
 	"food:trail_bread": DIR + "trail_bread.png",
+	"food:stew": DIR + "stew.png",
+	"food:moldy_bread": DIR + "moldy_bread.png",
 }
 
 static var _cache: Dictionary = {}
@@ -136,10 +138,20 @@ static func _food_key(it: Dictionary) -> String:
 		return "ration"
 	if f == "trail_bread" or f == "bread":
 		return "trail_bread"
+	if f == "stew":
+		return "stew"
+	if f == "moldy_bread" or f == "moldy":
+		return "moldy_bread"
 	var n: String = str(it.get("name", "")).to_lower()
+	if n.find("mold") >= 0:
+		return "moldy_bread"
+	if n.find("stew") >= 0:
+		return "stew"
 	if n.find("ration") >= 0:
 		return "ration"
-	return "trail_bread"
+	if n.find("bread") >= 0:
+		return "trail_bread"
+	return ""
 
 static func _load_path(path: String) -> Texture2D:
 	if path == "":

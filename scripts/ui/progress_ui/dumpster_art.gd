@@ -21,6 +21,29 @@ const ArtBake: GDScript = preload("res://scripts/ui/progress_ui/art_bake.gd")
 const ART := "dumpster"
 static var _images: Dictionary = {}
 
+static func sticker(pressed: bool) -> Texture2D:
+	var key: String = "sticker-press" if pressed else "sticker-rest"
+	if ArtBake.hit(_images, ART, key):
+		return _images[key]
+	var w: int = 96
+	var h: int = 32
+	var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var face: Color = Color(0.93, 0.88, 0.74, 1)
+	if pressed:
+		face = Color(0.72, 0.64, 0.48, 1)
+	var edge: Color = Color(0.28, 0.24, 0.18, 1)
+	var tape: Color = Color(0.78, 0.70, 0.42, 1)
+	for y: int in h:
+		for x: int in w:
+			var px: Color = face
+			var corner: bool = (x < 8 and y < 8) or (x >= w - 8 and y < 8) or (x < 8 and y >= h - 8) or (x >= w - 8 and y >= h - 8)
+			if corner:
+				px = tape
+			if x < 2 or x >= w - 2 or y < 2 or y >= h - 2:
+				px = edge
+			img.set_pixel(x, y, px)
+	return UiBuild.keep(_images, key, img)
+
 static func flap(lift: float, foot: int) -> Texture2D:
 	var key: String = "flap-%d-%d" % [int(round(lift * 100.0)), foot]
 	if ArtBake.hit(_images, ART, key):

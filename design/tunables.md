@@ -152,6 +152,26 @@ Each kill rolls each pickup on its own (`enemy_hit.gd` `roll_drops`); a kill can
 | Pickup radius | 0.55 m (unchanged, `pickup.gd`) | No magnet |
 | Crack HP | 8 | 8 | |
 
+## Consumables (secret debug menu, category Consumables)
+
+Hub holds and vendor rolls. Costs stay `vendor_potion_cost`, `vendor_food_cost`, and `vendor_ore_gold`. Stack size per food kind stays `food_bring_max`.
+
+| Key | Default | What it does |
+|-----|---------|--------------|
+| `potion_hold_max` | 3 | Different potions kept in the hub |
+| `potion_charges_min` / `potion_charges_max` | 1 / 4 | Rolled charge count |
+| `potion_heal_min` / `potion_heal_max` | 40 / 140 | Rolled heal. The starter still uses `potion_heal` |
+| `potion_cd_min` / `potion_cd_max` | 4 / 12 | Rolled cooldown, seconds |
+| `potion_speed_min` / `potion_speed_max` | 0 / 6 | Rolled heal time. 0 is instant |
+| `potion_bonus_chance` | 0.35 | Chance a roll also grants a short stat bonus |
+| `potion_bonus_secs_min` / `potion_bonus_secs_max` | 3 / 6 | How long that bonus lasts |
+| `potion_bonus_flat` / `potion_bonus_pct` | 2 / 0.04 | Size of the bonus, flat or percent by the stat |
+| `food_kind_max` | 6 | Different food stacks in the hub |
+| `food_ration_heal` / `food_ration_secs` / `food_ration_bonus` | 40 / 8 / 1 | Ration heal, seconds, defense |
+| `food_bread_heal` / `food_bread_secs` / `food_bread_bonus` | 28 / 12 / 0.05 | Trail bread heal, seconds, move speed |
+| `food_stew_heal` / `food_stew_secs` / `food_stew_bonus` | 56 / 6 / 4 | Root stew heal, seconds, max health |
+| `food_moldy_heal` / `food_moldy_secs` / `food_moldy_bonus` | 14 / 8 / 0 | Moldy bread. Weaker than the ration, no bonus |
+
 ## World, economy and UI sections
 
 Dungeon generation, Enemies and combat level, Progression and economy, Anvil / affixes and UI / feel targets are in `tunables-world.md`. `tools/tunables.py` finds a key in either file.
