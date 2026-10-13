@@ -36,9 +36,9 @@ User names the flow and a goal (hot-path costs, setup or code-loop issues, missi
 A bug sweep is a focused sub-flow of the web sweep. Use it when the goal is to flag defects for a later task rather than implement changes.
 
 ### Definition of a bug
-A bug is any behavior that fails to meet an owning requirement or produces wrong player-visible results under conditions the design contemplates. This includes:
+A bug is any behavior that produces wrong player-visible results or fails to meet the intent of the system under conditions the design contemplates. Design docs are concept overviews, not exhaustive requirement lists. This includes:
 - Incorrect calculations, fallbacks, or state transitions (even if non-crashing)
-- Incomplete implementations of stated design (happy path works, common edges do not)
+- Incomplete implementations of the happy path (common edges fail)
 - Feel and presentation defects (wrong vertical motion, missing feedback, incorrect facing, visual leaks)
 - Progression and economy gaps (overwrite instead of top-up, silent drops, off-by-one)
 - Input and state lifetime issues (locks, cooldowns, or armed flags that do not decay or clear as designed)
@@ -46,16 +46,16 @@ A bug is any behavior that fails to meet an owning requirement or produces wrong
 - Unexpected behavior (UI focus issues, unnecessary menu steps, unintuitive flows)
 
 Do **not** treat the following as bugs:
-- Missing defensive null/validity checks on paths whose construction order and invariants guarantee the node or value exists (extra checks add hot-path overhead for unreachable cases)
+- Missing defensive null/validity checks on paths whose construction order and invariants guarantee the node or value exists
 - Silent fallbacks or early returns on missing assets when prove.md applies only to test/proof scripts
 - Behavior that matches an open task’s stated rules or an explicit design note
-- Persistence or idle states that the owning doc or code comments describe as intentional (e.g. lock remains armed between combats)
-
-### Required reads before flagging
-- Owning design doc for the system under examination
-- Open tasks in `design/tasks/` that touch the same area
-- Full function bodies (not partial summaries) for any logic that looks suspicious
-- Construction and lifetime paths that establish invariants
+- Persistence or idle states that the owning doc or code comments describe as intentional
 
 ### Reporting
-Use the mandatory Findings / Needs investigation / Meets requirements format. If an item cannot be definitively concluded and needs design confirmation, list it under Findings and also call it out in a short “Needs more information” note at the end of the report. Drop or move to Meets when the full read shows the behavior is intended or covered by an open task.
+Use the mandatory Findings / Needs investigation / Meets requirements format.
+
+- **Findings**: Full relevant body has been read. The behavior is clearly wrong, incomplete on a common edge, a resource/lifetime problem on a frequent path, or an unintuitive flow, judged from the code and surrounding context. Design docs and open tasks are consulted when they exist; anything that matches an open task or an explicit “intentional” note is excluded. Cite the function or pattern.
+- **Needs investigation**: Body or surrounding context not yet fully read, or the defect is not yet clear.
+- **Meets requirements**: Body has been read and the behavior is correct under the system’s intent.
+
+If an item cannot be definitively concluded, list it under Findings and add a short “Needs more information” note at the end of the report.
