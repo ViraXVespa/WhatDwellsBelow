@@ -16,8 +16,7 @@ Web / chat may generate non-tile images. It does not spawn the isolated media ru
 
 If the next write would be an assumption, ask, as many questions as needed, and wait (not a phase change); do not answer it yourself.
 
-**Review goal.**
-Internally establish what each examined system requires and why (camera, lighting, sorting, export target, refactor constraints, control flow, owning docs and functions) before writing. If the owning requirement for a pattern is not yet established, the pattern is listed under “Needs investigation,” not under findings. A finding requires the owning requirement to have been read and found unmet. If a request needs multiple turns to investigate fully, say so instead of assuming.
+If a request needs multiple turns to investigate fully, say so instead of assuming.
 
 
 ## Flows
