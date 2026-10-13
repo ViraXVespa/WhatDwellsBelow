@@ -88,12 +88,10 @@ func _process(delta: float) -> void:
 		if d < 0.55 and _block_t <= 0.0:
 			_take(p)
 
-## PLACEHOLDER: mana does not exist yet (design/tasks/metal-hud-mana.md owns the pool, regen and HUD bar). The orb
-## drops and is picked up; this stub only counts what it would restore. Replace with the real mana restore.
-static var mana_stub_total := 0.0
-
 static func restore_mana(n: float) -> void:
-	mana_stub_total += n
+	if App.prog == null:
+		return
+	App.prog.add_mana(n)
 
 func _take(p: Node) -> void:
 	if kind == "hp" and p.has_method("heal"):
@@ -105,6 +103,9 @@ func _take(p: Node) -> void:
 		p.heal(App.bal.orb_heal)
 		App.toast(tr("pickup.hp"))
 	elif kind == "mana":
+		if float(App.prog.mana) >= App.prog.mana_max():
+			_block_t = 0.45
+			return
 		restore_mana(App.bal.orb_mana)
 		App.toast(tr("pickup.mana"))
 	elif kind == "gold":

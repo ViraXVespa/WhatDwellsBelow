@@ -1667,6 +1667,9 @@ msgstr "Fortune  %.2f"
 msgid "settings_pages.hud_scale"
 msgstr "HUD scale"
 
+msgid "settings_pages.danger_gem"
+msgstr "Danger gem"
+
 msgid "settings_pages.keep_a_copy_when"
 msgstr "Keep a copy when"
 

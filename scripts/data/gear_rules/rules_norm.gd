@@ -137,6 +137,8 @@ static func drink(p: Object, it: Dictionary, from_slot: bool) -> String:
 		p.potion_hot_left = heal
 	else:
 		pl.heal(heal)
+	if App.bal:
+		p.add_mana(float(App.bal.potion_mana))
 	var bonus_id: String = str(it.get("bonus_id", ""))
 	var bonus_secs: float = float(it.get("bonus_secs", 0.0))
 	if bonus_id != "" and bonus_secs > 0.0:

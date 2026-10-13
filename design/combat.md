@@ -10,7 +10,7 @@ Code: `scripts/combat/combat.gd`, `cover.gd`, `player_hit.gd`, `threat.gd`, `aim
 The player may equip one of three weapons: Great Axe, Lightning Staff, or Longbow.  
 Starting weapon is selected in the loadout. Mid-run weapon changes are performed by equipping from the pause-menu inventory.  
 Paper-doll overlays on unarmed body clips: art_pipeline §19.2.4. Attack and special still use a body clip per weapon class with the weapon layered on top.  
-Specials for all weapons are activated with LT.  
+Specials for all weapons are activated with LT. A special spends `special_mana` when the windup completes and does not start when mana is short. Mana refills over time (`mana_regen`), from mana orbs, and from potions and food. A new dive starts mana full. Recovery uses `special_recovery`.  
 All player attacks (basic and special) MUST clearly telegraph their range and provide a visible indication that the attack is currently active.
 
 ## Hit coverage

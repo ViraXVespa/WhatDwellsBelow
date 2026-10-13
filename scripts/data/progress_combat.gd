@@ -133,3 +133,39 @@ static func sync_artifacts(p) -> void:
 
 static func refresh_player_hp(p) -> void:
 	Xp.refresh_player_hp(p)
+
+static func mana_max(_p: Object) -> float:
+	if App.bal == null:
+		return 100.0
+	return maxf(1.0, float(App.bal.mana_max))
+
+static func add_mana(p: Object, n: float) -> void:
+	var cap: float = mana_max(p)
+	p.mana = clampf(float(p.mana) + n, 0.0, cap)
+
+static func spend_mana(p: Object, n: float) -> bool:
+	if n <= 0.0:
+		return true
+	if float(p.mana) < n:
+		return false
+	p.mana = float(p.mana) - n
+	return true
+
+static func tick_mana(p: Object, delta: float) -> void:
+	if App.bal == null or delta <= 0.0:
+		return
+	var rate: float = float(App.bal.mana_regen)
+	if rate <= 0.0:
+		return
+	add_mana(p, rate * delta)
+
+static func food_mana(_p: Object, food_id: String) -> float:
+	if App.bal == null:
+		return 0.0
+	if food_id == "trail_bread":
+		return float(App.bal.food_bread_mana)
+	if food_id == "stew":
+		return float(App.bal.food_stew_mana)
+	if food_id == "moldy_bread":
+		return float(App.bal.food_moldy_mana)
+	return float(App.bal.food_ration_mana)

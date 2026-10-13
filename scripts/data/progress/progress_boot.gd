@@ -40,6 +40,7 @@ static func reset_meta(p: Object) -> void:
 	p.potion_bonus_t = 0.0
 	p.potion_bonus_id = ""
 	p.potion_bonus_amt = 0.0
+	p.mana = p.mana_max()
 	Gear.ensure_required_slots(p)
 	Cons.grant_starters(p)
 
@@ -50,6 +51,7 @@ static func begin_run_loadout(p: Object) -> void:
 	p.bag.clear()
 	p.clear_food()
 	p.potion_cd = 0.0
+	p.mana = p.mana_max()
 	for id in p.SKILLS:
 		p.skills_run[id] = 0.0
 	var keep_pot: Dictionary = (p.slots.get("potion", {}) as Dictionary).duplicate(true)

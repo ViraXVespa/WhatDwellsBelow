@@ -38,6 +38,8 @@ static func physics(host: CharacterBody3D, delta: float) -> void:
 			host.telegraph.hide_now()
 		Ground.follow(host)
 		return
+	if host.hp > 0.0:
+		App.prog.tick_mana(delta)
 	var close_block := false
 	if host.ui_latch:
 		host.ui_latch = false

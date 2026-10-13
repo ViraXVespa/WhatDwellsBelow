@@ -14,7 +14,7 @@ This is a curated table, not a list of every balance key. A number with no row h
 
 List one key with `python tools/tunables.py get --key CAM_PITCH` (summary: `_logs/tunable-row/<stamp>-tunable-row.txt`). Patch one Live cell with `python tools/tunables.py set --key CAM_PITCH --set -58` (summary: `_logs/tunable-patch/<stamp>-tunable-patch.txt`). Do not open this whole file to change one number.
 
-`BAL_REV` is 14. Old saves pick up shipped default retunes through `migrate.gd`.
+`BAL_REV` is 15. Old saves pick up shipped default retunes through `migrate.gd`.
 
 Forge keys missing from `balance.gd` fall back inside `progress_forge.gd` / `gear_roll.gd`; a slice that adds a key also adds it to balance and the debug menu.
 
@@ -93,7 +93,10 @@ Four texels per tile. Dungeon discs are torch, crystal, and campfire. The hub ad
 | Dash duration | 0.28 s | 0.28 | |
 | Dash cooldown | 1.1 s | 1.1 | |
 | Special (LT) wind-up | 0.22 s | 0.22 | Applies to all weapon specials |
-| Special recovery | 0.35 s | 0.35 | |
+| Special recovery | 0.35 s | 1.0 |  |
+| `special_mana` | - | 40 | - |
+| `mana_max` | - | 100 | - |
+| `mana_regen` | - | 3 | - |
 | Attack move mult | — | 0.45 | |
 | Great Axe Slam damage multiplier | 1.8× | 1.8 | vs basic attack |
 | Basic attack arc (Great Axe) | 110° | 110 | |
@@ -145,8 +148,8 @@ Each kill rolls each pickup on its own (`enemy_hit.gd` `roll_drops`); a kill can
 |-----|--------------|-------|
 | `enemy_gold_chance` | 0.25 | Bosses always drop gold. Amount unchanged (`enemy_gold_base` / `_span`) |
 | `enemy_orb_chance` | 0.06 | HP orb, heals `orb_heal` |
-| `enemy_mana_chance` | 0.06 | Mana orb, same as HP orb; pickup is a stub until metal-hud-mana lands |
-| `orb_mana` | 15 **placeholder** | Unused until mana exists |
+| `enemy_mana_chance` | 0.06 | Mana orb, same pickup radius as the HP orb |
+| `orb_mana` | 25 | Restores mana. A full bar does not take the orb |
 | `enemy_gear_chance` + `enemy_gear_floor` × floor | 0.0171 + 0.00286 | ~2 % on floor 1, +0.29 pt per floor (f5 3.1 %, f10 4.6 %) |
 | Normal-kill gold amount | old roll ÷ `enemy_gold_chance`, rounded | Keeps expected gold per kill equal to the old 100 % drop (f1 2.0, f2 2.5); bosses keep the old roll + `boss_gold_extra` |
 | Pickup radius | 0.55 m (unchanged, `pickup.gd`) | No magnet |
@@ -168,9 +171,14 @@ Hub holds and vendor rolls. Costs stay `vendor_potion_cost`, `vendor_food_cost`,
 | `potion_bonus_flat` / `potion_bonus_pct` | 2 / 0.04 | Size of the bonus, flat or percent by the stat |
 | `food_kind_max` | 6 | Different food stacks in the hub |
 | `food_ration_heal` / `food_ration_secs` / `food_ration_bonus` | 40 / 8 / 1 | Ration heal, seconds, defense |
+| `food_ration_mana` | 20 | - |
+| `potion_mana` | 40 | - |
 | `food_bread_heal` / `food_bread_secs` / `food_bread_bonus` | 28 / 12 / 0.05 | Trail bread heal, seconds, move speed |
+| `food_bread_mana` | 15 | - |
 | `food_stew_heal` / `food_stew_secs` / `food_stew_bonus` | 56 / 6 / 4 | Root stew heal, seconds, max health |
+| `food_stew_mana` | 30 | - |
 | `food_moldy_heal` / `food_moldy_secs` / `food_moldy_bonus` | 14 / 8 / 0 | Moldy bread. Weaker than the ration, no bonus |
+| `food_moldy_mana` | 8 | - |
 
 ## World, economy and UI sections
 

@@ -35,6 +35,7 @@ var potion_bonus_id := ""
 var potion_bonus_amt := 0.0
 var food_bonus_id := ""
 var food_bonus_amt := 0.0
+var mana := 100.0
 var root := 0
 var bank_items: Array = []
 var quests_offered: Array = []
@@ -172,6 +173,21 @@ func style_lv_f() -> float:
 
 func combat_lv() -> int:
 	return maxi(1, int(round(combat_lv_f())))
+
+func mana_max() -> float:
+	return CombatP.mana_max(self)
+
+func add_mana(n: float) -> void:
+	CombatP.add_mana(self, n)
+
+func spend_mana(n: float) -> bool:
+	return CombatP.spend_mana(self, n)
+
+func tick_mana(delta: float) -> void:
+	CombatP.tick_mana(self, delta)
+
+func food_mana(food_id: String) -> float:
+	return CombatP.food_mana(self, food_id)
 
 func style_lv() -> int:
 	return maxi(1, int(round(style_lv_f())))

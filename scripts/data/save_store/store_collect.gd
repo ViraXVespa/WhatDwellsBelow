@@ -26,6 +26,7 @@ static func collect() -> Dictionary:
 		"aim_line_on": App.bal.aim_line_on,
 		"aim_line_opacity": App.bal.aim_line_opacity,
 		"target_lock_pref": bool(App.get("target_lock_pref")),
+		"danger_gem": bool(App.get("danger_gem")),
 		"salvage_dupes": bool(App.get("salvage_dupes")),
 		"salvage_finish": float(App.get("salvage_finish")),
 		"salvage_fortune": float(App.get("salvage_fortune")),

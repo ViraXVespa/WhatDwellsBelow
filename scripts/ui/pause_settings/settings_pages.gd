@@ -120,6 +120,13 @@ static func page_graphics(host: Node) -> void:
 		else:
 			App.hud_scale = v
 	)
+	var gem_on: bool = bool(App.get("danger_gem"))
+	var gem_box: CheckBox = _check(App.tr("settings_pages.danger_gem"), gem_on, func(on: bool) -> void:
+		App.danger_gem = on
+		if App.has_method("save_now"):
+			App.save_now()
+	)
+	_add_check_centered(host, gem_box)
 	if Disp.uses_desktop_modes():
 		View.add_page_btn(host, ThemeS.btn(Disp.desktop_label(), func() -> void:
 			Disp.cycle_desktop()

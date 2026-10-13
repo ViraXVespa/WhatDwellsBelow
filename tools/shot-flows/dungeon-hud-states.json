@@ -92,6 +92,32 @@
     {
       "op": "shot",
       "name": "hud-toast"
+    },
+    {
+      "op": "set",
+      "target": "App.prog.mana",
+      "value": 20
+    },
+    {
+      "op": "wait",
+      "ms": 200
+    },
+    {
+      "op": "shot",
+      "name": "hud-low-mana"
+    },
+    {
+      "op": "set",
+      "target": "App.danger_gem",
+      "value": false
+    },
+    {
+      "op": "wait",
+      "ms": 200
+    },
+    {
+      "op": "shot",
+      "name": "hud-gem-off"
     }
   ]
 }

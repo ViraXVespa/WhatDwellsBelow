@@ -55,6 +55,7 @@ static func eat(p: Object, it: Dictionary, from_slot: bool) -> String:
 	p.food_left = total
 	p.food_bonus_id = str(it.get("bonus_id", ""))
 	p.food_bonus_amt = float(it.get("bonus_amt", 0.0))
+	p.add_mana(p.food_mana(fid))
 	App.sfx("food")
 	App.toast(App.tr("gear_use.food_healing_over_time"))
 	consume(p, it, from_slot)

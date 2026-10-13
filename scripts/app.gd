@@ -47,6 +47,7 @@ var display_fs_kind: String = Def.display_fs_kind
 var web_fullscreen: bool = Def.web_fullscreen
 var render_scale: float = Def.render_scale
 var target_lock_pref: bool = Def.target_lock_pref
+var danger_gem: bool = Def.danger_gem
 var salvage_dupes: bool = Def.salvage_dupes
 var salvage_finish: float = Def.salvage_finish
 var salvage_fortune: float = Def.salvage_fortune

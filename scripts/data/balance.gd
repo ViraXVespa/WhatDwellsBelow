@@ -8,14 +8,17 @@ const Enemies := preload("res://scripts/data/balance/enemies.gd")
 const Migrate := preload("res://scripts/data/balance/migrate.gd")
 const Access := preload("res://scripts/data/balance/access.gd")
 const Pref := preload("res://scripts/data/save_store/store_data.gd")
-const BAL_REV := 14
+const BAL_REV := 15
 
 var move_speed := T.MOVE_SPEED
 var dash_speed_mult := 2.8
 var dash_duration := 0.28
 var dash_cooldown := 1.1
 var special_windup := 0.22
-var special_recovery := 0.35
+var special_recovery := 1.0
+var special_mana := 40.0
+var mana_max := 100.0
+var mana_regen := 3.0
 var attack_move_mult := 0.45
 
 var axe_damage := 16.0
@@ -229,6 +232,11 @@ var food_stew_bonus := 4.0
 var food_moldy_heal := 14.0
 var food_moldy_secs := 8.0
 var food_moldy_bonus := 0.0
+var potion_mana := 40.0
+var food_ration_mana := 20.0
+var food_bread_mana := 15.0
+var food_stew_mana := 30.0
+var food_moldy_mana := 8.0
 var forge_gold := 18.0
 var forge_ore := 6.0
 var forge_time := 2.0
@@ -304,9 +312,9 @@ var boss_gold_extra := 6.0
 ## Enemy kill drops, rolled independently (user-set, design/tunables.md "Enemy drops"). Bosses always drop gold.
 var enemy_gold_chance := 0.25
 var enemy_orb_chance := 0.06
-## Mana orb: drops now; pickup.gd restore_mana is a placeholder stub until mana exists (design/tasks/metal-hud-mana.md).
+## Mana orb. Chance and amount. Pickup restores App.prog mana (design/tasks/metal-hud-mana.md).
 var enemy_mana_chance := 0.06
-var orb_mana := 15.0
+var orb_mana := 25.0
 var chest_gold_base := 8.0
 var chest_gold_span := 12.0
 var boss_chest_gold := 20.0
