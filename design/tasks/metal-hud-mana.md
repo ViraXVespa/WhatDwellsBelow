@@ -11,7 +11,7 @@ job: hud
 units: ui.hud
 done:
 
-Your first command, before any file read or memory topic: python tools/start_build_slice.py --door ui --job hud --from-task metal-hud-mana
+Your first command, before any file read or memory topic: python tools/open_slice.py ui.hud --task metal-hud-mana
 
 ## Mandate
 

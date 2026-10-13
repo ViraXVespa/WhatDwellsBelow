@@ -11,7 +11,7 @@ job: ghost_shop
 units: ui.ghost_shop
 done:
 
-Your first command, before any file read or memory topic: python tools/start_build_slice.py --door ui --job ghost_shop --from-task ui-ghost-shop-icons
+Your first command, before any file read or memory topic: python tools/open_slice.py ui.ghost_shop --task ui-ghost-shop-icons
 
 ## Intent
 Icons for artifacts, the pawn list, and snacks. Same visual treatment as the lighter consumable board used by the vendor.

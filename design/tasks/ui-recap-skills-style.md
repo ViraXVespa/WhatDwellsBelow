@@ -11,7 +11,7 @@ job: recap
 units: ui.recap
 done:
 
-Your first command, before any file read or memory topic: python tools/start_build_slice.py --door ui --job recap --from-task ui-recap-skills-style
+Your first command, before any file read or memory topic: python tools/open_slice.py ui.recap --task ui-recap-skills-style
 
 ## Intent
 Match the look of the skills page (two sheets, split right of center so the list is the wide sheet). Tooltips for skill stats. Keep the two-column layout and the XP-drain animation. All existing mandatory sequence and locked flavor lines stay.

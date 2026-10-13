@@ -58,8 +58,11 @@ def edits_dir(handoff: Path) -> Path:
     return handoff.parent / "survey-edits"
 
 
-def from_task_cmd(door: str, tid: str) -> str:
-    return f"python tools/start_build_slice.py --door {door or '<door>'} --from-task {tid}"
+def from_task_cmd(door: str, tid: str, job: str = "") -> str:
+    """User starts with open_slice; Build resumes with start_build_slice --job door.job."""
+    if job and "." in job:
+        return f"python tools/open_slice.py {job} --task {tid}"
+    return f"python tools/open_slice.py {door or '<door>'} --task {tid}"
 
 
 def _git(root: Path, *a: str) -> str:

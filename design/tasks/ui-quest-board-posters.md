@@ -11,7 +11,7 @@ job: quest_board
 units: ui.quest_board
 done:
 
-Your first command, before any file read or memory topic: python tools/start_build_slice.py --door ui --job quest_board --from-task ui-quest-board-posters
+Your first command, before any file read or memory topic: python tools/open_slice.py ui.quest_board --task ui-quest-board-posters
 
 ## Intent
 Posters instead of buttons. Reference: design/refs/ui-quest-board-posters/quest-board.jpg

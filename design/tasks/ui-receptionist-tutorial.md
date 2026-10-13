@@ -11,7 +11,7 @@ job: receptionist
 units: ui.receptionist
 done:
 
-Your first command, before any file read or memory topic: python tools/start_build_slice.py --door ui --job receptionist --from-task ui-receptionist-tutorial
+Your first command, before any file read or memory topic: python tools/open_slice.py ui.receptionist --task ui-receptionist-tutorial
 
 ## Intent
 Replace the shared quest flow. Receptionist is the lore/tutorial system. Talk uses the lines listed below. Ask? is the complete How-to-Play guide with screenshots.

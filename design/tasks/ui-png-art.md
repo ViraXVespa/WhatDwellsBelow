@@ -4,7 +4,7 @@ id: ui-png-art
 owner: build
 status: open
 done-when: high rows have art in game, med/low rows done or dropped by Vira; Vira has seen before/after shots
-resume: Read design/tasks/ui-png-art.md and start with the High rows (crystal background first)
+resume: python tools/open_slice.py ui.style --task ui-png-art
 
 ## Source
 Bot screenshot survey of grok-build-w7 on 2026-10-11, judging where code-drawn UI looks flat. Not user requests, except the crystal background (hers). Overlapping items went to ui-quest-board-posters, ui-receptionist-tutorial, ui-recap-skills-style, inventory-consumables, metal-hud-mana.
