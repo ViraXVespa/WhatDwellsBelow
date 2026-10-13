@@ -367,6 +367,19 @@ def despill(rgb: np.ndarray, F: np.ndarray, mask: np.ndarray) -> np.ndarray:
     return np.clip(out, 0, 255)
 
 
+def _edge_frame(mask: np.ndarray, depth: int = 3) -> np.ndarray:
+    """Crop seams: thin lines of paint along the picture's own border (a dark 1-2 px frame left by a crop or a
+    JPEG edge). They vanish under a 5 px opening; art that really reaches the border is thick there and stays."""
+    h, w = mask.shape
+    if h < 4 * depth or w < 4 * depth:
+        return np.zeros_like(mask)
+    k = np.ones((5, 5), np.uint8)
+    thick = cv2.dilate(cv2.erode(mask.astype(np.uint8), k), k).astype(bool)
+    edge = np.zeros_like(mask)
+    edge[:depth], edge[-depth:], edge[:, :depth], edge[:, -depth:] = True, True, True, True
+    return mask & edge & ~thick
+
+
 def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = None, name: str = "key", plate=None):
     """Key one opaque plate picture. Returns (RGBA image, stats dict). `plate` pins the plate RGB.
 
@@ -549,6 +562,8 @@ def key(im: Image.Image, ring: int | None = None, debug: str | Path | None = Non
     out[..., :3] = np.rint(col).astype(np.uint8)
     out[..., 3] = a8
     out[a8 == 0] = 0
+    frame = _edge_frame(a8 > 0)
+    out[frame] = 0
     stats = {"plate": "#%02X%02X%02X" % plate, "spread": round(spread, 1), "ring": ring,
              "bg": int(bg.sum()), "ring_px": int(ring_m.sum()), "glow": int(glow.sum()), "solid": int(solid.sum())}
     if debug:

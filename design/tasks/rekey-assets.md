@@ -112,3 +112,10 @@ Next session, in order:
 - Building faces (guild, stall, etc.) are getting extra padding they do not need. They should stay tight to their original framing.
 - Some tiles under `_src/sources/assets/tiles/` were never updated by Build. Live tiles and `_src` plates have diverged; Build was supposed to keep the source plates current and failed at that.
 - Keyer detail loss is still open: non-plate assets (tiles, finished UI) and hard-edged pixel art are being filtered and blurred. Early exit in `matte.key` is not firing reliably.
+
+## Build 2026-10-13 (after her full run)
+Live PNGs were not written. Review copy: `python tools/rekey_all_stills.py --out DIR --jobs 8`, then `python tools/rekey_check.py --new DIR`. Sheets (source | live | her run | new) were made in the Bot's box at /workspace/rekey-review/ and are not in the repo.
+- Global quality loss: the shrink box-averaged a guessed pixel grid (`_subject_cell` -> `_box_reduce`) or ran Lanczos on pixel art, blurring every cell edge. Shrinks now take centre medians on cell art and snap hard edges (`geom.cell_reduce`, `snap_edges`; art-pack "Still rekey").
+- Flip, recentring, padding: `rekey_all_stills.py` ignored manifest `flip` and fitted every still into a padded, centred square. Now `geom.fit_like` places each still like live and flip rows mirror their sibling exactly.
+- Tiles and finished pictures (no alpha in live) are kept, never keyed or resized. Stale plates (live is the truth, `_src` not edited): dungeon_floor, foundation_floor, plaza_path, plaza_wall, wall_brick; plus extract_gate_on (other art than live). welcome_banner's plate has no lettering (live does). splash_shamelessly is pink lettering on a pink plate: the key loses it, so live is kept.
+- Check after: canvas 0, quality 7, hard 13, shift 12 (8 wisp idles against the rejected live wisp, 4 female frames), pad 0, mirror 0, plate 0, alpha 0, stale 6, lost 1. Open set still needs her yes per still.
