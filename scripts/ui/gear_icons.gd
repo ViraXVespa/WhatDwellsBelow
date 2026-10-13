@@ -43,6 +43,9 @@ static func tex_for_slot(slot: String, it: Dictionary) -> Texture2D:
 static func tex_for_item(it: Dictionary) -> Texture2D:
 	return _load_path(_item_path(it))
 
+static func tex_snack() -> Texture2D:
+	return _load_path(DIR + "snack.png")
+
 ## Button shows `tex` centered and scaled to the button.
 static func fit_btn(b: Button, tex: Texture2D) -> void:
 	b.icon = tex
@@ -108,6 +111,11 @@ static func _item_path(it: Dictionary) -> String:
 		return str(ITEM_PATHS.get("body", ""))
 	if slot == "legs" or kind == "legs":
 		return str(ITEM_PATHS.get("legs", ""))
+	if slot == "artifact" or kind == "artifact":
+		var art_id: String = str(it.get("id", ""))
+		if art_id == "":
+			return ""
+		return DIR + art_id + ".png"
 	return ""
 
 static func _weapon_key(it: Dictionary) -> String:

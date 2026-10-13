@@ -6802,6 +6802,256 @@
       "live": "assets/ui/vendor/jar_icon.png",
       "source": "sources/assets/ui/vendor/jar_icon.jpg",
       "origin": "_src/sources/assets/ui/vendor/jar_icon.jpg"
+    },
+    {
+      "live": "assets/ui/gear/snack.png",
+      "source": "sources/assets/ui/gear/snack.png",
+      "origin": "_src/sources/assets/ui/gear/snack.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/cinder_ember.png",
+      "source": "sources/assets/ui/gear/cinder_ember.png",
+      "origin": "_src/sources/assets/ui/gear/cinder_ember.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/cinder_coil.png",
+      "source": "sources/assets/ui/gear/cinder_coil.png",
+      "origin": "_src/sources/assets/ui/gear/cinder_coil.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/tide_pearl.png",
+      "source": "sources/assets/ui/gear/tide_pearl.png",
+      "origin": "_src/sources/assets/ui/gear/tide_pearl.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/tide_scale.png",
+      "source": "sources/assets/ui/gear/tide_scale.png",
+      "origin": "_src/sources/assets/ui/gear/tide_scale.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/root_knot.png",
+      "source": "sources/assets/ui/gear/root_knot.png",
+      "origin": "_src/sources/assets/ui/gear/root_knot.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/root_charm.png",
+      "source": "sources/assets/ui/gear/root_charm.png",
+      "origin": "_src/sources/assets/ui/gear/root_charm.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/root_seed.png",
+      "source": "sources/assets/ui/gear/root_seed.png",
+      "origin": "_src/sources/assets/ui/gear/root_seed.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/ash_mask.png",
+      "source": "sources/assets/ui/gear/ash_mask.png",
+      "origin": "_src/sources/assets/ui/gear/ash_mask.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/ash_bell.png",
+      "source": "sources/assets/ui/gear/ash_bell.png",
+      "origin": "_src/sources/assets/ui/gear/ash_bell.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/ash_cloak.png",
+      "source": "sources/assets/ui/gear/ash_cloak.png",
+      "origin": "_src/sources/assets/ui/gear/ash_cloak.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/spark_lens.png",
+      "source": "sources/assets/ui/gear/spark_lens.png",
+      "origin": "_src/sources/assets/ui/gear/spark_lens.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/spark_wire.png",
+      "source": "sources/assets/ui/gear/spark_wire.png",
+      "origin": "_src/sources/assets/ui/gear/spark_wire.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/bone_ring.png",
+      "source": "sources/assets/ui/gear/bone_ring.png",
+      "origin": "_src/sources/assets/ui/gear/bone_ring.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/bone_splint.png",
+      "source": "sources/assets/ui/gear/bone_splint.png",
+      "origin": "_src/sources/assets/ui/gear/bone_splint.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/bone_tooth.png",
+      "source": "sources/assets/ui/gear/bone_tooth.png",
+      "origin": "_src/sources/assets/ui/gear/bone_tooth.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/veil_shard.png",
+      "source": "sources/assets/ui/gear/veil_shard.png",
+      "origin": "_src/sources/assets/ui/gear/veil_shard.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/veil_thread.png",
+      "source": "sources/assets/ui/gear/veil_thread.png",
+      "origin": "_src/sources/assets/ui/gear/veil_thread.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/veil_coin.png",
+      "source": "sources/assets/ui/gear/veil_coin.png",
+      "origin": "_src/sources/assets/ui/gear/veil_coin.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/veil_hush.png",
+      "source": "sources/assets/ui/gear/veil_hush.png",
+      "origin": "_src/sources/assets/ui/gear/veil_hush.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/iron_seal.png",
+      "source": "sources/assets/ui/gear/iron_seal.png",
+      "origin": "_src/sources/assets/ui/gear/iron_seal.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/iron_nail.png",
+      "source": "sources/assets/ui/gear/iron_nail.png",
+      "origin": "_src/sources/assets/ui/gear/iron_nail.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/iron_link.png",
+      "source": "sources/assets/ui/gear/iron_link.png",
+      "origin": "_src/sources/assets/ui/gear/iron_link.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/iron_plate.png",
+      "source": "sources/assets/ui/gear/iron_plate.png",
+      "origin": "_src/sources/assets/ui/gear/iron_plate.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
+    },
+    {
+      "live": "assets/ui/gear/iron_heart.png",
+      "source": "sources/assets/ui/gear/iron_heart.png",
+      "origin": "_src/sources/assets/ui/gear/iron_heart.png",
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "cell": ""
     }
   ],
   "videos": [

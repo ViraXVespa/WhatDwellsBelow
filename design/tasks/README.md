@@ -26,7 +26,6 @@ id | owner | status | title | needs
 crystal-frame-pink | build | blocked | Crystal frame studs: stop deriving from the mis-keyed pink | rekey-assets
 metal-hud-mana | build | open | Metal HUD re-theme + danger gem + mana pacing | -
 rekey-assets | build | open | Rekey assets after the keying changes | -
-ui-ghost-shop-icons | build | open | Ghost shop icons matching consumable board | -
 ui-png-art | build | open | Generated PNG art for flat code-drawn UI | -
 ui-quest-board-posters | build | open | Quest board posters plus pause Quest tab | -
 ui-recap-skills-style | build | open | Recap matches skills page chrome | -

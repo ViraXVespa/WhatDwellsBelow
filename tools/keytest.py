@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Keying regression: key every plate in assets/keytest and check the numbers.
+"""Retired keying regression for assets/keytest.
+
+assets/keytest is gone. Source plates live under _src/sources. The batch gate
+runs process_gear_icons.py --check instead. This tool remains for an old
+folder passed with --src.
 
     python tools/keytest.py                      key assets/keytest, check tools/keytest_expect.json, write sheets
     python tools/keytest.py --only wisp,hp_orb   a subset (names are file stems)

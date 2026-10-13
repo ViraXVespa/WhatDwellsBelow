@@ -432,6 +432,8 @@ def inspect_instruction_count(text: str) -> int | None:
     if j < 0 or j - i > 6:
         return None
     raw = text[i:j].strip()
+    if raw.lower() == "none":
+        return 0
     if not raw.isdigit():
         return None
     return int(raw)

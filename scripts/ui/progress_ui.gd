@@ -145,6 +145,9 @@ func open_shop(spot: Node) -> void:
 	_rebuild_shop()
 	_show()
 
+func open_stocked_shop() -> void:
+	Shop.open_stocked(self)
+
 func open_anvil() -> void:
 	Flow.open_anvil(self)
 

@@ -73,9 +73,9 @@ The attempt before this one had lost the glow, the orb border, the hatchet outli
 ## Files and functions to touch
 2026-10-11: the keyer was rebuilt as a staged pipeline (`tools/imglib/matte.py`; design in `design/art-pack.md` "Still rekey"). The colour-to-alpha, the painted halo, `c2a` and the remap-before-key step are gone. Every partial alpha is now measured from the plate, and nothing is painted around the body. The shopkeep halo she accepted on 2026-10-09 came from the old code: show her the new shopkeep beside it before calling that look kept.
 
-- Regression: `python tools/keytest.py` keys the plates she put in `assets/keytest` (unkeyed sources, same layout as `assets/`) and checks the numbers in `tools/keytest_expect.json`. Sheets: `_logs/keytest/sheets/<name>.png` (source | checker | dark | light). `run_build_gate.py --batch` runs it.
+- Regression: `assets/keytest` is retired. Source plates live under `_src/sources`. `run_build_gate.py --batch` runs `python tools/process_gear_icons.py --check` (each expected gear icon has a plate and a live png).
 - Live stills: `python tools/rekey_preview.py`, then `python tools/show_png.py` on the paths it prints. Write a live PNG only after her yes on that still.
-- A key change: run `python tools/img_inspect.py selftest` and `python tools/keytest.py`, look at the sheets, then `--update` only after she accepts.
+- A key change: run `python tools/img_inspect.py selftest` and `python tools/process_gear_icons.py --check`, look at the stills, then write a live PNG only after she accepts.
 - tools/imglib/geom.py: `resize_rgba` and `fit_box` as before (nearest only when sizing up, premultiplied high-quality downscale, `alpha_min` floor 24; pass a lower floor when faint glow is the result).
 
 ## Did not work

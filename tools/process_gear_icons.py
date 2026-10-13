@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Key _src/sources/assets/ui/gear/*.jpg through the live still pipeline into assets/ui/gear/*.png
+# Key _src/sources/assets/ui/gear/*.(jpg|png) through the live still pipeline into assets/ui/gear/*.png
 from __future__ import annotations
 
 import sys
@@ -46,6 +46,31 @@ EXPECTED = (
     "stew",
     "trail_bread",
     "potion",
+    "snack",
+    "cinder_ember",
+    "cinder_coil",
+    "tide_pearl",
+    "tide_scale",
+    "root_knot",
+    "root_charm",
+    "root_seed",
+    "ash_mask",
+    "ash_bell",
+    "ash_cloak",
+    "spark_lens",
+    "spark_wire",
+    "bone_ring",
+    "bone_splint",
+    "bone_tooth",
+    "veil_shard",
+    "veil_thread",
+    "veil_coin",
+    "veil_hush",
+    "iron_seal",
+    "iron_nail",
+    "iron_link",
+    "iron_plate",
+    "iron_heart",
 )
 
 
@@ -66,7 +91,25 @@ def sources() -> list[Path]:
     return found
 
 
-def _run() -> None:
+def _check() -> None:
+    missing: list[str] = []
+    plates = list(SRC.glob("*")) if SRC.is_dir() else []
+    for name in EXPECTED:
+        found = [p for p in plates if p.stem == name and p.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}]
+        if not found:
+            missing.append(name + " source")
+        if not (DEST / (name + ".png")).is_file():
+            missing.append(name + " live")
+    if missing:
+        print("missing " + ", ".join(missing))
+        raise SystemExit(1)
+    print(f"gear sources ok names={len(EXPECTED)}")
+
+
+def _run(args) -> None:
+    if args.check:
+        _check()
+        return
     if not SRC.is_dir():
         raise SystemExit(f"missing source dir {SRC}")
     DEST.mkdir(parents=True, exist_ok=True)
@@ -85,8 +128,19 @@ def _run() -> None:
         print("extra sources: " + ", ".join(extra), flush=True)
 
 
+def _args(ap) -> None:
+    ap.add_argument("--check", action="store_true", help="Fail if an expected gear icon has no _src plate or live png. Writes nothing.")
+
+
 def main(argv: list[str] | None = None) -> int:
-    return agent_log.run_writer("process_gear_icons", 'Key _src/sources/assets/ui/gear/*.jpg through the live still pipeline into assets/ui/gear/*.png.', _run, argv, globals())
+    return agent_log.run_writer(
+        "process_gear_icons",
+        "Key _src/sources/assets/ui/gear source plates through the live still pipeline into assets/ui/gear/*.png.",
+        _run,
+        argv,
+        globals(),
+        add_args=_args,
+    )
 
 
 if __name__ == "__main__":

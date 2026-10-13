@@ -35,7 +35,7 @@ Then the User judges the packed strip. Do not start the next unit until the User
 
 ## Still rekey
 
-The open set is the rekey-assets task. Regression plates are in `assets/keytest`.
+The open set is the rekey-assets task. Source plates live under `_src/sources`, mirrored to the live path. `assets/keytest` is retired.
 
 The keyer is `tools/imglib/matte.py` (`key_to_alpha` and `punch` in `imglib/key.py` call it). Key the source plate directly; no remap first. Stages, each with a debug PNG:
 1. Denoise: a 3 px median on the chroma planes only, for classifying. The output keeps the drawn RGB.

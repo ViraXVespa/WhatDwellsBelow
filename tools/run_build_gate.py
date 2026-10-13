@@ -5,7 +5,7 @@
     python tools/run_build_gate.py --batch --warnscan-baseline B.json [--areas p6,static]
     python tools/run_build_gate.py --batch --visual ui.pause     (the job's shot flows in the same call; look at the frames, then show_png.py)
 --batch = import + restore `.import` churn + check_load_graph + the script-name check (duplicate
-basenames) + check_hub_bake (png vs HUB_BAKE_STAMP) + keytest (assets/keytest keying regression) + `--warnscan-baseline` adds `bot_warnscan --non-leak-diff B` (same --areas as the baseline). Run it once
+basenames) + check_hub_bake (png vs HUB_BAKE_STAMP) + process_gear_icons --check (each expected gear icon has a plate under _src/sources) + `--warnscan-baseline` adds `bot_warnscan --non-leak-diff B` (same --areas as the baseline). `assets/keytest` is retired. Run it once
 per batch. Refuses (exit 2) if Godot is already on this --path unless --force. Each run writes _logs/build-gate/<stamp>-build-gate.txt; read it with read_summary.py --job build-gate.
 """
 from __future__ import annotations
@@ -81,9 +81,9 @@ def main(argv: list[str] | None = None) -> int:
             code, lines = child(root, "check_script_cap.py", "script-cap", *bot_flag)
             body += [f"--- script names exit={code} ---"] + (lines or ["(missing summary)"]) + [""]
             fail += int(code != 0)
-        print("== keytest ==")
-        code, lines = child(root, "keytest.py", "keytest")
-        body += [f"--- keytest exit={code} (sheets under _logs/keytest/sheets) ---"] + lines[-14:] + [""]
+        print("== gear sources ==")
+        code, lines = child(root, "process_gear_icons.py", "process_gear_icons", "--check")
+        body += [f"--- gear sources exit={code} ---"] + lines[-6:] + [""]
         fail += int(code != 0)
         print("== hub bake stamp ==")
         code, lines = child(root, "check_hub_bake.py", "hub-bake")

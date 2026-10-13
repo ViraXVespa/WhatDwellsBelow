@@ -33,14 +33,15 @@ Rules, the CLI contract and the surface key are in `tools.md`; flows live in the
 | `pack_walk.py` | Extract, key, and pack walk-cycle frames from Imagine videos | D | `--help` | N |
 | `plate_remap.py` | Remap a generated chroma plate to exact #FF00FF. Solid plate near a border reference only; a farther mix keeps its drawn RGB (`imglib.key.remap_plate`; `--tol`) | D | `--help` | N |
 | `process_enemies.py` | process_enemies.py | D | `--help` | N |
-| `process_gear_icons.py` | process_gear_icons.py | D | `--help` | N |
+| `process_gear_icons.py` | Key `_src/sources/assets/ui/gear` plates into `assets/ui/gear`. `--check` fails if an expected icon has no plate or live png. The batch gate runs `--check`. | D | `--help` | N |
+| `slice_shop_icons.py` | Slice the ghost-shop Imagine sheet into gear source plates and keyed 64px icons. Sheet: `_src/sources/assets/ui/shop-icons/shop_icons.png`. | D | `--help` | N |
 | `process_gloam.py` | Key Imagine stills into assets/3d for the Gloam 3D view | D | `--help` | N |
 | `process_session_sprites.py` | Key whatever-magenta Imagine stills and fit them into engine sprites | D | `--help` | N |
 | `process_sprites.py` | process_sprites.py | D | `--help` | N |
 | `process_world.py` | process_world.py | D | `--help` | N |
 | `process_world_pass.py` | Key and install the Placeholdia / dungeon art pass stills | D | `--help` | N |
-| `keytest.py` | Keying regression on `assets/keytest`: numbers vs `keytest_expect.json`, review sheets in `_logs/keytest/sheets/`. In `run_build_gate.py --batch`. Summary: `keytest`. | BD | `--help` | N |
-| `keytest_expect.json` | Expected keying numbers per `assets/keytest` asset, read by `keytest.py` | D | - | N |
+| `keytest.py` | Retired. `assets/keytest` is gone; source plates live under `_src`. Not in the batch gate. | BD | `--help` | N |
+| `keytest_expect.json` | Old expected numbers for `assets/keytest`. Kept beside the retired checker. | D | - | N |
 | `rekey_preview.py` | Open-set rekey preview on blue (`_logs/rekey-look/`). Counts are the check. Does not write live assets. Summary: `rekey-preview`. | D | `--help` | N |
 | `rekey_stills.py` | Re-key live stills from Grok session sources with plate_remap + sprite_pipeline | D | `--help` | N |
 | `run_isolated_grok.py` | Stage a scratch directory outside the git tree and run a thin Grok Build media job | D | `--help` | N |

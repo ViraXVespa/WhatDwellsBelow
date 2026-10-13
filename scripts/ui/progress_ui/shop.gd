@@ -2,6 +2,7 @@ extends Object
 
 const ThemeS := preload("res://scripts/ui/theme.gd")
 const VendorFrame: GDScript = preload("res://scripts/ui/progress_ui/vendor_frame.gd")
+const ShopFrame: GDScript = preload("res://scripts/ui/progress_ui/shop_frame.gd")
 const Icons := preload("res://scripts/ui/gear_icons.gd")
 const Talk := preload("res://scripts/data/talk_lines.gd")
 const Cons := preload("res://scripts/data/progress_gear/consumable.gd")
@@ -19,7 +20,7 @@ static func rebuild_shop(ui) -> void:
 	ui.box.add_child(ThemeS.lab(Inv.sets_blurb(), 18, Color(0.42, 0.26, 0.10)))
 	ui.status = ThemeS.lab("", 20, ThemeS.INK)
 	ui.box.add_child(ui.status)
-	ui.focus_btn = ThemeS.btn(App.tr("shop.snack_g_hp") % int(App.bal.snack_cost), func(): Confirm.open(ui, App.tr("shop.buy_snack"), App.tr("shop.spend_g_for_a_snack") % int(App.bal.snack_cost), func(): buy_snack(ui)), true, "primary")
+	ui.focus_btn = _shelf_row(App.tr("shop.snack_g_hp") % int(App.bal.snack_cost), Icons.tex_snack(), func(): Confirm.open(ui, App.tr("shop.buy_snack"), App.tr("shop.spend_g_for_a_snack") % int(App.bal.snack_cost), func(): buy_snack(ui)))
 	ui.box.add_child(ui.focus_btn)
 	if ui.shop_spot:
 		for st in ui.shop_spot.stock:
@@ -31,11 +32,12 @@ static func rebuild_shop(ui) -> void:
 			var extra := ""
 			if set_id != "":
 				extra = "\n" + App.prog.set_bonus_text(set_id)
-			ui.box.add_child(ThemeS.btn(App.tr("shop.buy_g") % [nm, int(App.bal.art_cost), desc, extra], func(): Confirm.open(ui, App.tr("shop.buy_artifact"), App.tr("shop.spend_g_for") % [int(App.bal.art_cost), nm], func(): buy_art(ui, id, nm)), true, "primary"))
+			var art: Dictionary = {"kind": "artifact", "id": id}
+			ui.box.add_child(_shelf_row(App.tr("shop.buy_g") % [nm, int(App.bal.art_cost), desc, extra], Icons.tex_for_item(art), func(): Confirm.open(ui, App.tr("shop.buy_artifact"), App.tr("shop.spend_g_for") % [int(App.bal.art_cost), nm], func(): buy_art(ui, id, nm))))
 		for it in App.prog.bag:
 			if str(it.kind) == "artifact" or str(it.kind) == "weapon" or str(it.kind) == "head" or str(it.kind) == "body" or str(it.kind) == "legs":
 				var uid := int(it.uid)
-				ui.box.add_child(ThemeS.btn(App.tr("shop.pawn_g") % [it.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, App.tr("shop.pawn_item"), App.tr("shop.pawn_for_g") % [it.name, int(App.bal.pawn_gold)], func(): pawn(ui, uid), Callable(), "danger"), true, "danger"))
+				ui.box.add_child(_shelf_row(App.tr("shop.pawn_g") % [it.name, int(App.bal.pawn_gold)], Icons.tex_for_item(it), func(): Confirm.open(ui, App.tr("shop.pawn_item"), App.tr("shop.pawn_for_g") % [it.name, int(App.bal.pawn_gold)], func(): pawn(ui, uid), Callable(), "danger")))
 		for s in Affix.FORGE_SLOTS:
 			var eq: Dictionary = App.prog.slots.get(s, {})
 			if eq.is_empty():
@@ -43,8 +45,10 @@ static func rebuild_shop(ui) -> void:
 			if Kit.locked_equip_slot(str(s)):
 				continue
 			var slot := str(s)
-			ui.box.add_child(ThemeS.btn(App.tr("shop.pawn_equipped_g") % [eq.name, int(App.bal.pawn_gold)], func(): Confirm.open(ui, App.tr("shop.pawn_equipped"), App.tr("shop.pawn_equipped_for_g") % [eq.name, int(App.bal.pawn_gold)], func(): pawn_slot(ui, slot), Callable(), "danger"), true, "danger"))
-	ui.box.add_child(ThemeS.btn(App.tr("common.leave"), func(): ui.close_ui()))
+			ui.box.add_child(_shelf_row(App.tr("shop.pawn_equipped_g") % [eq.name, int(App.bal.pawn_gold)], Icons.tex_for_item(eq), func(): Confirm.open(ui, App.tr("shop.pawn_equipped"), App.tr("shop.pawn_equipped_for_g") % [eq.name, int(App.bal.pawn_gold)], func(): pawn_slot(ui, slot), Callable(), "danger")))
+	var leave: Button = ThemeS.btn(App.tr("common.leave"), func(): ui.close_ui())
+	ShopFrame.dress(leave)
+	ui.box.add_child(leave)
 
 static func buy_snack(ui) -> void:
 	if App.gold < int(App.bal.snack_cost):
@@ -170,6 +174,32 @@ static func _leave(ui) -> void:
 	if ui.has_meta("vendor_toss"):
 		ui.remove_meta("vendor_toss")
 	ui.close_ui()
+
+static func open_stocked(ui: Node) -> void:
+	var spot: Node = (load("res://scripts/world/interact.gd") as GDScript).new() as Node
+	var rows: Array = [
+		{"id": "cinder_coil", "set": "cinder"},
+		{"id": "tide_pearl", "set": "tide"},
+		{"id": "root_knot", "set": "root"},
+	]
+	spot.set("stock", rows)
+	spot.set("bought", 0)
+	ui.call("open_shop", spot)
+
+static func _shelf_row(line: String, tex: Texture2D, on_press: Callable) -> Button:
+	var b: Button = Button.new()
+	b.text = line
+	b.custom_minimum_size = Vector2(460, 72)
+	b.focus_mode = Control.FOCUS_ALL
+	if tex == null:
+		push_error("shop row has no icon: " + line)
+	else:
+		Icons.fit_btn(b, tex)
+		b.expand_icon = false
+	ShopFrame.dress_shelf(b)
+	b.icon_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	b.pressed.connect(on_press)
+	return b
 
 static func _shelf(it: Dictionary, line: String, on_press: Callable) -> Button:
 	var b: Button = Button.new()
