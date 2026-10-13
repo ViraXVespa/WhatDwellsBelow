@@ -26,6 +26,7 @@ Navigation is only `design/routes.yaml`. `See also:` is forbidden.
 | Need | File |
 |------|------|
 | Plan (web / Build) | `design/protocol.md` + `design/constraints.md` |
+| Bug sweep (web / chat) | `design/web-bug-sweep.md` (read when User asks for a bug sweep) |
 | GDScript types / warnings / tabs | `design/gdscript-law.md` |
 | Live code map (one system row) | `design/code-map.md` |
 | New or moved script placement (cluster folders) | `design/refactor.md` (Cluster folders section only) |
