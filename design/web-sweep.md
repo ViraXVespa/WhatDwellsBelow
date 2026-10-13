@@ -57,12 +57,27 @@ Do **not** treat the following as bugs:
 - Behavior that matches an open task’s stated rules or an explicit design note
 - Persistence or idle states that the owning doc or code comments describe as intentional
 
+### Failure-mode scan (mandatory before Meets)
+
+Before a system may be listed under Meets requirements, the agent must explicitly check and report the result of each of the following on the player-visible paths. Cite the function. “No such pattern” is an acceptable answer only after the relevant bodies have been opened.
+
+- Static or cached node references (any `static var` holding a Node, or cache keyed only by position/count/frame): is the cached object re-validated with `is_instance_valid` on every read path, including flush and deferred paths? Shared statics that can outlive the node are Findings unless the full lifetime is proven.
+- Item removal / UID paths (`remove_uid`, bag/slot take): does a miss or non-mailable result re-add the item, or can it silently drop? Silent drop is a Finding.
+- Slot or resource writes in multi-step flows (restock, forge, extract, loadout): is the operation a top-up / merge, or a full replacement that discards partial state (charges, stacks, locks)? Overwrite of partial state is a Finding.
+- Mesh / texture assignment on frequent paths (telegraph, HP bar, float numbers, lighting): is the previous mesh/texture freed or is a new one created every update without cleanup? Unpaired assignment is a Finding.
+- Forced position pins after physics (`global_position.y = 0` or equivalent): does this fight any lift, hop, fly, or knock that the same node applies? Fighting lift is a Finding.
+- Array / distance indexing (threat, travel, grid): is every index bounds-checked before use? Unchecked index is a Finding.
+- Animation / clip fallbacks: does an empty or missing clip fall through to a texture, or can the sprite go blank? Empty fall-through that leaves the previous frame or none is a Finding.
+- Interact-group nodes (`interact`, `gates`, `boss_door`): on the open / spent / hidden / used path, is the node removed from the group or freed, and does the prompt still resolve to a correct spent/used string? Left in group without a working spent tooltip is a Finding (unless design explicitly requires the node to stay).
+
+The final report for any system moved to Meets must include a one-line “Failure modes: [list of the eight above] — all clear / N Findings” citation. Absence of that line keeps the system under Needs investigation.
+
 ### Reporting
 Use the mandatory Findings / Needs investigation / Meets requirements format.
 
 - **Findings**: Full relevant body has been read. The code produces a wrong, incomplete, leaky, mismatched, or unintuitive player-visible result on a path the design contemplates, judged from the code and surrounding context. Design docs and open tasks are consulted when they exist; exclude only an explicit intentional note or an open task that already covers the exact behavior. Cite the function or pattern. List as soon as the body shows the defect; note “checklist remaining” if the rest of the system is unread.
 - **Needs investigation**: Body or surrounding context not yet fully read, or the defect is not yet clear.
-- **Meets requirements**: Full checklist body-read and no player-visible defect observed on those paths.
+- **Meets requirements**: Full checklist body-read (including Failure-mode scan) and no player-visible defect observed on those paths. Report must include the one-line Failure modes citation.
 
 If an item cannot be definitively concluded, list it under Findings and add a short “Needs more information” note at the end of the report.
 
@@ -77,6 +92,7 @@ Before a system may be moved to Meets requirements or dropped from the open set,
 - [ ] Prop / mesh / collision / banner / spot builders (any file that constructs `StaticBody3D`, `CollisionShape3D`, `MeshInstance3D`, or places a named layout spot)
 - [ ] Interact / open / close / hide / free pairs
 - [ ] Owning design doc (if one exists for the system)
+- [ ] Failure-mode scan (static caches, UID/silent-drop, overwrite-vs-top-up, mesh/texture assignment, Y-pin, bounds, empty-clip, interact-group lifetime)
 
 Source of the list: `python tools/code_map.py sweep --system <Name>` (or with no `--system` for all). A one-line summary or a comment is not a body read. The agent must open the file.
 
