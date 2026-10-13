@@ -118,6 +118,7 @@ def _keep_light_run(src: Image.Image, fitted: Image.Image) -> Image.Image:
 
 
 ALPHA_JUMP = 96.0  # alpha range inside one footprint centre above this: a hard edge, snapped to its side
+SOFT_SHARE = 0.35  # share of a footprint in partial alpha above this: a soft ramp (glow, energy, foliage), never snapped
 CELL_FLAT = 7.0  # median luma spread inside a footprint's centre at or under this: the source is drawn in flat cells
 
 
@@ -161,7 +162,7 @@ def cell_reduce(im: Image.Image, size: tuple[int, int]):
     # a window across a hard edge (paint and clear, little in between) takes the side it is mostly on: hard edges
     # stay hard. A window of partial alpha (glow, translucent shading) keeps its median.
     # (a glow changes slowly across one footprint centre; an edge jumps by more than ALPHA_JUMP inside it)
-    edge = (a.max(axis=2) - a.min(axis=2)) > ALPHA_JUMP
+    edge = _hard_jump(a)
     med_a = np.where(edge, np.where(a.mean(axis=2) >= 128.0, 255.0, 0.0), med_a)
     keep = a >= np.maximum(1.0, med_a[..., None] * 0.5)
     rgb = np.where(keep[..., None], win[..., :3], np.nan)
@@ -173,6 +174,15 @@ def cell_reduce(im: Image.Image, size: tuple[int, int]):
     out = np.dstack([col, med_a])
     out[med_a < 1.0] = 0
     return Image.fromarray(np.clip(np.rint(out), 0, 255).astype(np.uint8), "RGBA")
+
+
+def _hard_jump(a: np.ndarray) -> np.ndarray:
+    """Footprints (.., n alpha samples) holding a hard edge at source scale: clear and paint inside one footprint
+    with few partial pixels between them. A soft ramp (a glow or translucent rim wider than a few source pixels)
+    also spans clear to paint but is mostly partial alpha, and keeps it."""
+    rng = (a.max(axis=-1) - a.min(axis=-1)) > ALPHA_JUMP
+    part = ((a > 16) & (a < 239)).mean(axis=-1)
+    return rng & (part <= SOFT_SHARE)
 
 
 def _line_through(win: np.ndarray, ky: int, kx: int) -> np.ndarray:
@@ -200,7 +210,7 @@ def snap_edges(src: Image.Image, out: Image.Image) -> Image.Image:
     win = full[..., 3]
     ky = max(1, int(round(arr.shape[0] / float(out.size[1]))))
     kx = max(1, int(round(arr.shape[1] / float(out.size[0]))))
-    edge = (win.max(axis=2) - win.min(axis=2)) > ALPHA_JUMP
+    edge = _hard_jump(win)
     line = edge & _line_through(win, ky, kx)
     o = np.array(out)
     side = np.where((win.mean(axis=2) >= 128.0) | line, 255, 0).astype(np.uint8)
