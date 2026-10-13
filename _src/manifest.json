@@ -448,6 +448,20 @@
       "cell": ""
     },
     {
+      "live": "assets/sprites/props/extract_gate_on.png",
+      "source": "sources/assets/sprites/props/extract_gate_on.jpg",
+      "origin": "C:/Users/Vira/.grok/sessions/C%3A%5CUsers%5CVira%5Csource%5Crepos%5CWhatDwellsBelow/01a08788-1bb6-76c0-8fa8-40b73dda2810/images/31.jpg",
+      "mad": 3.14,
+      "agree": 0.992,
+      "overlap": 0.992,
+      "flip": false,
+      "window": "full",
+      "kind": "figure",
+      "loose": false,
+      "opaque_side": 277,
+      "cell": ""
+    },
+    {
       "live": "assets/sprites/props/fence.png",
       "source": "sources/assets/sprites/props/fence.png",
       "origin": "_src/props/fence_n.png",
