@@ -36,8 +36,8 @@ ROOT = Path(__file__).resolve().parents[1]
 FROZEN = ("assets/fx/dummy.png", "assets/sprites/buildings/guild.png", "assets/sprites/buildings/guild_reception.png",
           "assets/sprites/buildings/stall.png", "assets/sprites/props/anvil.png", "assets/sprites/props/fence.png",
           "assets/ui/gear/pickaxe.png", "assets/sprites/player/male/")
-## The live still is known to be other art: the task replaces it (slot_legs comes from the greaves plate).
-NEW_ART = ("assets/ui/gear/slot_legs.png",)
+# replaced art: slot_legs (new art from her jpg), extract_gate_on (live was wrong; the plate wins)
+NEW_ART = ("assets/ui/gear/slot_legs.png", "assets/sprites/props/extract_gate_on.png")
 CLASSES = ("canvas", "quality", "hard", "shift", "pad", "mirror", "plate", "alpha", "stale", "lost")
 
 

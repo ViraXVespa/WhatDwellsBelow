@@ -44,15 +44,7 @@ The 2026-10-09 pack session wrote the open-set live PNGs from one colour-to-alph
 - 2026-10-09, later session, shopkeep only: the halo looks good. Body holes stay filled. The halo is the nearest low-spill paint colour, not a magenta tint, with alpha falling off away from the body, about a 16th of the short side, far enough to enter the armpits and the gap between the hands and the legs. She saw it on black beside the previous live shopkeep. That yes is the shopkeep halo. It is not a yes for the rest of the open set. The live `assets/sprites/npcs/shopkeep.png` was not rewritten.
 
 ## Chosen surfaces, in order
-- assets/sprites/npcs/shopkeep.png
-- assets/sprites/enemies/wisp/ (all eight idle facings; one plate, idle_up.jpg)
-- assets/fx/arrow.png
-- assets/sprites/props/hp_orb.png
-- assets/sprites/player/female/idle_down.png (this frame only)
-- assets/ui/gear/head.png
-- assets/ui/gear/hatchet.png
-- assets/ui/gear/longbow.png
-- assets/ui/gear/slot_legs.png
+- assets/fx/arrow.png: the only open still. Not written. Its `_src` plate has junk along its edges; the plate needs regenerating without it (do not edit `_src`), then rekey and show her.
 
 Do not reopen: assets/fx/dummy.png, assets/sprites/buildings/guild.png, assets/sprites/buildings/guild_reception.png, assets/sprites/buildings/stall.png, assets/sprites/props/anvil.png, assets/sprites/props/fence.png, assets/ui/gear/pickaxe.png, and the male player frames.
 
@@ -117,5 +109,8 @@ Next session, in order:
 Live PNGs were not written. Review copy: `python tools/rekey_all_stills.py --out DIR --jobs 8`, then `python tools/rekey_check.py --new DIR`. Sheets (source | live | her run | new) were made in the Bot's box at /workspace/rekey-review/ and are not in the repo.
 - Global quality loss: the shrink box-averaged a guessed pixel grid (`_subject_cell` -> `_box_reduce`) or ran Lanczos on pixel art, blurring every cell edge. Shrinks now take centre medians on cell art and snap hard edges (`geom.cell_reduce`, `snap_edges`; art-pack "Still rekey").
 - Flip, recentring, padding: `rekey_all_stills.py` ignored manifest `flip` and fitted every still into a padded, centred square. Now `geom.fit_like` places each still like live and flip rows mirror their sibling exactly.
-- Tiles and finished pictures (no alpha in live) are kept, never keyed or resized. Stale plates (live is the truth, `_src` not edited): dungeon_floor, foundation_floor, plaza_path, plaza_wall, wall_brick; plus extract_gate_on (other art than live). welcome_banner's plate has no lettering (live does). splash_shamelessly is pink lettering on a pink plate: the key loses it, so live is kept.
-- Check after: canvas 0, quality 7, hard 13, shift 12 (8 wisp idles against the rejected live wisp, 4 female frames), pad 0, mirror 0, plate 0, alpha 0, stale 6, lost 1. Open set still needs her yes per still.
+- Tiles and finished pictures (no alpha in live) are kept, never keyed or resized. Stale plates (live is the truth, `_src` not edited): dungeon_floor, foundation_floor, plaza_path, plaza_wall, wall_brick. welcome_banner's plate has no lettering (live does). splash_shamelessly is pink lettering on a pink plate: the key loses it, so live is kept.
+- Check after: canvas 0, quality 7, hard 13, shift 12 (8 wisp idles against the rejected live wisp, 4 female frames), pad 0, mirror 0, plate 0, alpha 0, stale 6, lost 1.
+
+## Approved 2026-10-13
+Vira approved every open-set still from the fixed pipeline except the arrow. Written live: shopkeep, the eight wisp idles, hp_orb, female idle_down, head, hatchet, longbow, slot_legs. extract_gate_on: she ruled the live gate wrong, so it is keyed from its plate (`SOURCE_WINS` in rekey_all_stills.py, `NEW_ART` in rekey_check.py). welcome_banner is unchanged: `scripts/world/camp/banner.gd` shows only the PNG and no code draws the text, so the lettering painted into live is the only text in game. Its plate has no lettering.

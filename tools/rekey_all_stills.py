@@ -36,6 +36,10 @@ FROZEN = ("assets/fx/dummy.png", "assets/sprites/buildings/guild.png", "assets/s
           "assets/ui/gear/pickaxe.png", "assets/sprites/player/male/")
 
 
+# live is wrong here (Vira, 2026-10-13): the plate wins even though it is other art than live
+SOURCE_WINS = ("assets/sprites/props/extract_gate_on.png",)
+
+
 def _on_grey(im):
     from PIL import Image
     bg = Image.new("RGBA", im.size, (128, 128, 128, 255))
@@ -89,7 +93,7 @@ def _one(live_rel: str, dry: bool, out: Path | None = None, flip: bool = False, 
             body_live = int((np.asarray(ref.convert("RGBA"))[..., 3] >= 128).sum())
             body_new = int((np.asarray(fitted)[..., 3] >= 128).sum())
             diff = float(np.abs(np.asarray(_on_grey(fitted), np.float32) - np.asarray(_on_grey(ref), np.float32)).mean())
-            if diff > 40.0:
+            if diff > 40.0 and live_rel not in SOURCE_WINS:
                 if not dry and dest != live:
                     dest.parent.mkdir(parents=True, exist_ok=True)
                     dest.write_bytes(live.read_bytes())
