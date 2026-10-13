@@ -32,7 +32,7 @@ One standard for every surface: the cheapest check that would fail if the change
 | Input | P7 binds smoke (`bot_smokes.py --phases 7`) plus the controls flows (`--flows camp-pause-menu,camp-billboard-controls`) |
 | Save data | P8 (`bot_smokes.py --phases 8`: save backup on the smoke slot) |
 | Docs (design docs, the agents file, `BOT.md`) | `check_load_graph.py` in the same change. RESULT PASS is required before the change is reported done. It is not deferred to ship |
-| Tools | `check_tool_cli.py`, `check_tool_docs.py --stale-refs`; a catalog edit also runs `check_load_graph.py`; `img_inspect.py selftest` for imglib |
+| Tools | `check_tool_cli.py`, `check_tool_docs.py --stale-refs`; a catalog edit also runs `check_load_graph.py`; `img_inspect.py selftest` for imglib. A change that touches `design/code-map.md` or adds/moves a live `.gd` also runs `python tools/code_map.py check` (hard FAIL on MISSING or new UNMAPPED). |
 
 ## Existing prove cases
 
